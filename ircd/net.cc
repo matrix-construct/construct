@@ -2908,122 +2908,51 @@ ircd::net::dns::prefetch_A{[]
 /// intermediate results.
 void
 ircd::net::dns::resolve(const hostport &hp,
-                        const opts &opts,
-                        callback_ipport_one callback)
+                        const opts &op,
+                        callback_ipport_one cb)
 {
-	//TODO: ip6
-	auto calluser{[callback(std::move(callback))]
-	(std::exception_ptr eptr, const hostport &hp, const uint32_t &ip)
+	using prototype = void (const hostport &, const opts &, callback_ipport_one);
+
+	static mods::import<prototype> function
 	{
-		if(eptr)
-			return callback(std::move(eptr), hp, {});
+		"s_dns", "_resolve_ipport"
+	};
 
-		if(!ip)
-		{
-			static const net::not_found no_record
-			{
-				"Host has no A record"
-			};
-
-			return callback(std::make_exception_ptr(no_record), hp, {});
-		}
-
-		const ipport ipport{ip, port(hp)};
-		callback(std::move(eptr), hp, ipport);
-	}};
-
-	if(!hp.service)
-		return resolve(hp, opts, [calluser(std::move(calluser))]
-		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
-		{
-			calluser(std::move(eptr), hp, record.ip4);
-		});
-
-	auto srv_opts{opts};
-	srv_opts.nxdomain_exceptions = false;
-	resolve(hp, srv_opts, [opts(opts), calluser(std::move(calluser))]
-	(std::exception_ptr eptr, hostport hp, const rfc1035::record::SRV &record)
-	mutable
-	{
-		if(eptr)
-			return calluser(std::move(eptr), hp, 0);
-
-		if(record.port != 0)
-			hp.port = record.port;
-
-		hp.host = record.tgt?: unmake_SRV_key(hp.host);
-
-		// Have to kill the service name to not run another SRV query now.
-		hp.service = {};
-		opts.srv = {};
-		opts.proto = {};
-
-		net::dns::resolve(hp, opts, [calluser(std::move(calluser))]
-		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
-		{
-			calluser(std::move(eptr), hp, record.ip4);
-		});
-	});
+	function(hp, op, std::move(cb));
 }
 
 /// Convenience callback with a single SRV record which was selected from
 /// the vector with stochastic respect for weighting and priority.
 void
 ircd::net::dns::resolve(const hostport &hp,
-                        const opts &opts,
-                        callback_SRV_one callback)
+                        const opts &op,
+                        callback_SRV_one cb)
 {
-	resolve(hp, opts, [callback(std::move(callback))]
-	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> rrs)
+	using prototype = void (const hostport &, const opts &, callback_SRV_one);
+
+	static mods::import<prototype> function
 	{
-		static const rfc1035::record::SRV empty;
+		"s_dns", "_resolve__SRV"
+	};
 
-		if(eptr)
-			return callback(std::move(eptr), hp, empty);
-
-		//TODO: prng on weight / prio plz
-		for(size_t i(0); i < rrs.size(); ++i)
-		{
-			const auto &rr{*rrs.at(i)};
-			if(rr.type != 33)
-				continue;
-
-			const auto &record(rr.as<const rfc1035::record::SRV>());
-			return callback(std::move(eptr), hp, record);
-		}
-
-		return callback(std::move(eptr), hp, empty);
-	});
+	function(hp, op, std::move(cb));
 }
 
 /// Convenience callback with a single A record which was selected from
 /// the vector randomly.
 void
 ircd::net::dns::resolve(const hostport &hp,
-                        const opts &opts,
-                        callback_A_one callback)
+                        const opts &op,
+                        callback_A_one cb)
 {
-	resolve(hp, opts, [callback(std::move(callback))]
-	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> &rrs)
+	using prototype = void (const hostport &, const opts &, callback_A_one);
+
+	static mods::import<prototype> function
 	{
-		static const rfc1035::record::A empty;
+		"s_dns", "_resolve__A"
+	};
 
-		if(eptr)
-			return callback(std::move(eptr), hp, empty);
-
-		//TODO: prng plz
-		for(size_t i(0); i < rrs.size(); ++i)
-		{
-			const auto &rr{*rrs.at(i)};
-			if(rr.type != 1)
-				continue;
-
-			const auto &record(rr.as<const rfc1035::record::A>());
-			return callback(std::move(eptr), hp, record);
-		}
-
-		return callback(std::move(eptr), hp, empty);
-	});
+	function(hp, op, std::move(cb));
 }
 
 /// Fundamental callback with a vector of abstract resource records.
@@ -3031,32 +2960,15 @@ void
 ircd::net::dns::resolve(const hostport &hp,
                         const opts &op,
                         callback cb)
-try
 {
-	using prototype = void (const hostport &, const opts &, callback &&);
+	using prototype = void (const hostport &, const opts &, callback);
 
-	static mods::import<prototype> _resolve_
+	static mods::import<prototype> function
 	{
-		"s_resolver", "_resolve_"
+		"s_dns", "_resolve__"
 	};
 
-	if(op.cache_check)
-		if(cache::get(hp, op, cb))
-			return;
-
-	_resolve_(hp, op, std::move(cb));
-}
-catch(const mods::unavailable &e)
-{
-	thread_local char buf[128];
-	log::error
-	{
-		log, "Unable to resolve '%s' :%s",
-		string(buf, hp),
-		e.what()
-	};
-
-	throw;
+	function(hp, op, std::move(cb));
 }
 
 /// Really assumptional and hacky right now. We're just assuming the SRV
@@ -3122,7 +3034,7 @@ try
 
 	static mods::import<prototype> function
 	{
-		"s_dns", "cache__put_error"
+		"s_dns", "_put_error"
 	};
 
 	return function(question, code);
@@ -3148,7 +3060,7 @@ try
 
 	static mods::import<prototype> function
 	{
-		"s_dns", "cache__put"
+		"s_dns", "_put"
 	};
 
 	return function(question, answer);
@@ -3181,7 +3093,7 @@ try
 
 	static mods::import<prototype> function
 	{
-		"s_dns", "cache__get"
+		"s_dns", "_get"
 	};
 
 	return function(hp, o, cb);
@@ -3214,7 +3126,7 @@ ircd::net::dns::cache::for_each(const uint16_t &type,
 
 	static mods::import<prototype> function
 	{
-		"s_dns", "cache__for_each"
+		"s_dns", "_for_each"
 	};
 
 	return function(type, c);

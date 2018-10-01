@@ -8,7 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd::net;
 using namespace ircd;
 
 mapi::header
@@ -17,15 +16,187 @@ IRCD_MODULE
 	"Server Domain Names Cache & Modular Components"
 };
 
-std::multimap<std::string, rfc1035::record::A, std::less<>>
-cache_A;
+namespace ircd::net::dns
+{
+	extern "C" void _resolve__(const hostport &, const opts &, callback);
+	extern "C" void _resolve__A(const hostport &, const opts &, callback_A_one);
+	extern "C" void _resolve__SRV(const hostport &, const opts &, callback_SRV_one);
+	extern "C" void _resolve_ipport(const hostport &, const opts &, callback_ipport_one);
+}
 
-std::multimap<std::string, rfc1035::record::SRV, std::less<>>
-cache_SRV;
+/// Convenience composition with a single ipport callback. This is the result of
+/// an automatic chain of queries such as SRV and A/AAAA based on the input and
+/// intermediate results.
+void
+ircd::net::dns::_resolve_ipport(const hostport &hp,
+                                const opts &opts,
+                                callback_ipport_one callback)
+{
+	//TODO: ip6
+	auto calluser{[callback(std::move(callback))]
+	(std::exception_ptr eptr, const hostport &hp, const uint32_t &ip)
+	{
+		if(eptr)
+			return callback(std::move(eptr), hp, {});
 
-extern "C" ircd::rfc1035::record *
-cache__put_error(const rfc1035::question &question,
-                 const uint &code)
+		if(!ip)
+		{
+			static const net::not_found no_record
+			{
+				"Host has no A record"
+			};
+
+			return callback(std::make_exception_ptr(no_record), hp, {});
+		}
+
+		const ipport ipport{ip, port(hp)};
+		callback(std::move(eptr), hp, ipport);
+	}};
+
+	if(!hp.service)
+		return _resolve__A(hp, opts, [calluser(std::move(calluser))]
+		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
+		{
+			calluser(std::move(eptr), hp, record.ip4);
+		});
+
+	auto srv_opts{opts};
+	srv_opts.nxdomain_exceptions = false;
+	_resolve__SRV(hp, srv_opts, [opts(opts), calluser(std::move(calluser))]
+	(std::exception_ptr eptr, hostport hp, const rfc1035::record::SRV &record)
+	mutable
+	{
+		if(eptr)
+			return calluser(std::move(eptr), hp, 0);
+
+		if(record.port != 0)
+			hp.port = record.port;
+
+		hp.host = record.tgt?: unmake_SRV_key(hp.host);
+
+		// Have to kill the service name to not run another SRV query now.
+		hp.service = {};
+		opts.srv = {};
+		opts.proto = {};
+
+		_resolve__A(hp, opts, [calluser(std::move(calluser))]
+		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
+		{
+			calluser(std::move(eptr), hp, record.ip4);
+		});
+	});
+}
+
+/// Convenience callback with a single SRV record which was selected from
+/// the vector with stochastic respect for weighting and priority.
+void
+ircd::net::dns::_resolve__SRV(const hostport &hp,
+                              const opts &opts,
+                              callback_SRV_one callback)
+{
+	_resolve__(hp, opts, [callback(std::move(callback))]
+	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> rrs)
+	{
+		static const rfc1035::record::SRV empty;
+
+		if(eptr)
+			return callback(std::move(eptr), hp, empty);
+
+		//TODO: prng on weight / prio plz
+		for(size_t i(0); i < rrs.size(); ++i)
+		{
+			const auto &rr{*rrs.at(i)};
+			if(rr.type != 33)
+				continue;
+
+			const auto &record(rr.as<const rfc1035::record::SRV>());
+			return callback(std::move(eptr), hp, record);
+		}
+
+		return callback(std::move(eptr), hp, empty);
+	});
+}
+
+/// Convenience callback with a single A record which was selected from
+/// the vector randomly.
+void
+ircd::net::dns::_resolve__A(const hostport &hp,
+                            const opts &opts,
+                            callback_A_one callback)
+{
+	_resolve__(hp, opts, [callback(std::move(callback))]
+	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> &rrs)
+	{
+		static const rfc1035::record::A empty;
+
+		if(eptr)
+			return callback(std::move(eptr), hp, empty);
+
+		//TODO: prng plz
+		for(size_t i(0); i < rrs.size(); ++i)
+		{
+			const auto &rr{*rrs.at(i)};
+			if(rr.type != 1)
+				continue;
+
+			const auto &record(rr.as<const rfc1035::record::A>());
+			return callback(std::move(eptr), hp, record);
+		}
+
+		return callback(std::move(eptr), hp, empty);
+	});
+}
+
+/// Fundamental callback with a vector of abstract resource records.
+void
+ircd::net::dns::_resolve__(const hostport &hp,
+                           const opts &op,
+                           callback cb)
+try
+{
+	using prototype = void (const hostport &, const opts &, callback &&);
+
+	static mods::import<prototype> resolver_resolve
+	{
+		"s_resolver", "_resolve_"
+	};
+
+	if(op.cache_check)
+		if(cache::get(hp, op, cb))
+			return;
+
+	resolver_resolve(hp, op, std::move(cb));
+}
+catch(const mods::unavailable &e)
+{
+	thread_local char buf[128];
+	log::error
+	{
+		log, "Unable to resolve '%s' :%s",
+		string(buf, hp),
+		e.what()
+	};
+
+	throw;
+}
+
+namespace ircd::net::dns::cache
+{
+	std::multimap<std::string, rfc1035::record::A, std::less<>>
+	cache_A;
+
+	std::multimap<std::string, rfc1035::record::SRV, std::less<>>
+	cache_SRV;
+
+	extern "C" rfc1035::record *_put(const rfc1035::question &, const rfc1035::answer &);
+	extern "C" rfc1035::record *_put_error(const rfc1035::question &, const uint &code);
+	extern "C" bool _get(const hostport &, const opts &, const callback &);
+	extern "C" bool _for_each(const uint16_t &type, const closure &);
+}
+
+ircd::rfc1035::record *
+ircd::net::dns::cache::_put_error(const rfc1035::question &question,
+                                  const uint &code)
 {
 	const auto &host
 	{
@@ -81,9 +252,9 @@ cache__put_error(const rfc1035::question &question,
 	return nullptr;
 }
 
-extern "C" ircd::rfc1035::record *
-cache__put(const rfc1035::question &question,
-           const rfc1035::answer &answer)
+ircd::rfc1035::record *
+ircd::net::dns::cache::_put(const rfc1035::question &question,
+                            const rfc1035::answer &answer)
 {
 	const auto &host
 	{
@@ -156,10 +327,10 @@ cache__put(const rfc1035::question &question,
 /// indicates it did not respond and to proceed normally. The response can
 /// be of a cached successful result, or a cached error. Both will return
 /// true.
-extern "C" bool
-cache__get(const hostport &hp,
-           const dns::opts &opts,
-           const dns::callback &cb)
+bool
+ircd::net::dns::cache::_get(const hostport &hp,
+                            const opts &opts,
+                            const callback &cb)
 {
 	// It's no use putting the result record array on the stack in case this
 	// function is either called from an ircd::ctx or calls back an ircd::ctx.
@@ -167,7 +338,7 @@ cache__get(const hostport &hp,
 	// It's better to just force the user to conform here rather than adding
 	// ref counting and other pornographic complications to this cache.
 	const ctx::critical_assertion ca;
-	thread_local std::array<const rfc1035::record *, dns::MAX_COUNT> record;
+	thread_local std::array<const rfc1035::record *, MAX_COUNT> record;
 	std::exception_ptr eptr;
 	size_t count{0};
 
@@ -178,7 +349,7 @@ cache__get(const hostport &hp,
 		thread_local char srvbuf[512];
 		const string_view srvhost
 		{
-			dns::make_SRV_key(srvbuf, hp, opts)
+			make_SRV_key(srvbuf, hp, opts)
 		};
 
 		auto &map{cache_SRV};
@@ -269,9 +440,9 @@ cache__get(const hostport &hp,
 	return count;
 }
 
-extern "C" bool
-cache__for_each(const uint16_t &type,
-                const dns::cache::closure &closure)
+bool
+ircd::net::dns::cache::_for_each(const uint16_t &type,
+                                 const closure &closure)
 {
 	switch(type)
 	{
