@@ -3117,17 +3117,23 @@ console_cmd__host(opt &out, const string_view &line)
 bool
 console_cmd__net__host__cache__A(opt &out, const string_view &line)
 {
-	for(const auto &pair : net::dns::cache.A)
+	net::dns::cache.for_each("A", [&]
+	(const auto &host, const auto &r)
 	{
-		const auto &host{pair.first};
-		const auto &record{pair.second};
+		const auto &record
+		{
+			dynamic_cast<const rfc1035::record::A &>(r)
+		};
+
 		const net::ipport ipp{record.ip4, 0};
 		out << std::setw(48) << std::right << host
 		    << "  =>  " << std::setw(21) << std::left << ipp
 		    << "  expires " << timestr(record.ttl, ircd::localtime)
 		    << " (" << record.ttl << ")"
 		    << std::endl;
-	}
+
+		return true;
+	});
 
 	return true;
 }
@@ -3136,12 +3142,17 @@ bool
 console_cmd__net__host__cache__A__count(opt &out, const string_view &line)
 {
 	size_t count[2] {0};
-	for(const auto &pair : net::dns::cache.A)
+	net::dns::cache.for_each("A", [&]
+	(const auto &host, const auto &r)
 	{
-		const auto &host{pair.first};
-		const auto &record{pair.second};
+		const auto &record
+		{
+			dynamic_cast<const rfc1035::record::A &>(r)
+		};
+
 		++count[bool(record.ip4)];
-	}
+		return true;
+	});
 
 	out << "resolved:  " << count[1] << std::endl;
 	out << "error:     " << count[0] << std::endl;
@@ -3158,9 +3169,7 @@ console_cmd__net__host__cache__A__clear(opt &out, const string_view &line)
 
 	if(!param.count())
 	{
-		const size_t size{net::dns::cache.A.size()};
-		net::dns::cache.A.clear();
-		out << size << std::endl;
+		out << "NOT IMPLEMENTED" << std::endl;
 		return true;
 	}
 
@@ -3169,22 +3178,21 @@ console_cmd__net__host__cache__A__clear(opt &out, const string_view &line)
 		param.at("hostport")
 	};
 
-	const auto ret
-	{
-		net::dns::cache.A.erase(host(hostport))
-	};
-
-	out << ret << std::endl;
+	out << "NOT IMPLEMENTED" << std::endl;
 	return true;
 }
 
 bool
 console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
 {
-	for(const auto &pair : net::dns::cache.SRV)
+	net::dns::cache.for_each("SRV", [&]
+	(const auto &key, const auto &r)
 	{
-		const auto &key{pair.first};
-		const auto &record{pair.second};
+		const auto &record
+		{
+			dynamic_cast<const rfc1035::record::SRV &>(r)
+		};
+
 		const net::hostport hostport
 		{
 			record.tgt, record.port
@@ -3195,7 +3203,9 @@ console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
 		    <<  " expires " << timestr(record.ttl, ircd::localtime)
 		    << " (" << record.ttl << ")"
 		    << std::endl;
-	}
+
+		return true;
+	});
 
 	return true;
 }
@@ -3204,12 +3214,17 @@ bool
 console_cmd__net__host__cache__SRV__count(opt &out, const string_view &line)
 {
 	size_t count[2] {0};
-	for(const auto &pair : net::dns::cache.SRV)
+	net::dns::cache.for_each("SRV", [&]
+	(const auto &host, const auto &r)
 	{
-		const auto &host{pair.first};
-		const auto &record{pair.second};
+		const auto &record
+		{
+			dynamic_cast<const rfc1035::record::SRV &>(r)
+		};
+
 		++count[bool(record.tgt)];
-	}
+		return true;
+	});
 
 	out << "resolved:  " << count[1] << std::endl;
 	out << "error:     " << count[0] << std::endl;
@@ -3226,9 +3241,7 @@ console_cmd__net__host__cache__SRV__clear(opt &out, const string_view &line)
 
 	if(!param.count())
 	{
-		const size_t size{net::dns::cache.SRV.size()};
-		net::dns::cache.SRV.clear();
-		out << size << std::endl;
+		out << "NOT IMPLEMENTED" << std::endl;
 		return true;
 	}
 
@@ -3246,12 +3259,7 @@ console_cmd__net__host__cache__SRV__clear(opt &out, const string_view &line)
 		net::dns::make_SRV_key(srv_key_buf, hostport, opts)
 	};
 
-	const auto ret
-	{
-		net::dns::cache.SRV.erase(srv_key)
-	};
-
-	out << ret << std::endl;
+	out << "NOT IMPLEMENTED" << std::endl;
 	return true;
 }
 

@@ -2906,20 +2906,6 @@ decltype(ircd::net::dns::opts_default)
 ircd::net::dns::opts_default
 {};
 
-decltype(ircd::net::dns::cache::clear_nxdomain)
-ircd::net::dns::cache::clear_nxdomain
-{
-	{ "name",     "ircd.net.dns.cache.clear_nxdomain" },
-	{ "default",   43200L                             },
-};
-
-decltype(ircd::net::dns::cache::min_ttl)
-ircd::net::dns::cache::min_ttl
-{
-	{ "name",     "ircd.net.dns.cache.min_ttl" },
-	{ "default",   900L                        },
-};
-
 decltype(ircd::net::dns::prefetch_ipport)
 ircd::net::dns::prefetch_ipport{[]
 (std::exception_ptr, const auto &hostport, const auto &record)
@@ -3120,60 +3106,42 @@ ircd::net::dns::make_SRV_key(const mutable_buffer &out,
 // cache
 //
 
+decltype(ircd::net::dns::cache::clear_nxdomain)
+ircd::net::dns::cache::clear_nxdomain
+{
+    { "name",     "ircd.net.dns.cache.clear_nxdomain" },
+    { "default",   43200L                             },
+};
+
+decltype(ircd::net::dns::cache::min_ttl)
+ircd::net::dns::cache::min_ttl
+{
+    { "name",     "ircd.net.dns.cache.min_ttl" },
+    { "default",   900L                        },
+};
+
 ircd::rfc1035::record *
 ircd::net::dns::cache::put_error(const rfc1035::question &question,
                                  const uint &code)
+try
 {
-	const auto &host
+	using prototype = rfc1035::record *(const rfc1035::question &, const uint &);
+
+	static mods::import<prototype> function
 	{
-		rstrip(question.name, '.')
+		"s_dns", "cache__put_error"
 	};
 
-	assert(!empty(host));
-	switch(question.qtype)
+	return function(question, code);
+}
+catch(const mods::unavailable &e)
+{
+	log::dwarning
 	{
-		case 1: // A
-		{
-			auto &map{A};
-			auto pit
-			{
-				map.equal_range(host)
-			};
-
-			auto it
-			{
-				pit.first != pit.second?
-					map.erase(pit.first, pit.second):
-					pit.first
-			};
-
-			rfc1035::record::A record;
-			record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count(); //TODO: code
-			it = map.emplace_hint(it, host, record);
-			return &it->second;
-		}
-
-		case 33: // SRV
-		{
-			auto &map{SRV};
-			auto pit
-			{
-				map.equal_range(host)
-			};
-
-			auto it
-			{
-				pit.first != pit.second?
-					map.erase(pit.first, pit.second):
-					pit.first
-			};
-
-			rfc1035::record::SRV record;
-			record.ttl = ircd::time() + seconds(cache::clear_nxdomain).count(); //TODO: code
-			it = map.emplace_hint(it, host, record);
-			return &it->second;
-		}
-	}
+		log, "Failed to put error for '%s' in DNS cache :%s",
+		question.name,
+		e.what()
+	};
 
 	return nullptr;
 }
@@ -3181,70 +3149,27 @@ ircd::net::dns::cache::put_error(const rfc1035::question &question,
 ircd::rfc1035::record *
 ircd::net::dns::cache::put(const rfc1035::question &question,
                            const rfc1035::answer &answer)
+try
 {
-	const auto &host
+	using prototype = rfc1035::record *(const rfc1035::question &, const rfc1035::answer &);
+
+	static mods::import<prototype> function
 	{
-		rstrip(question.name, '.')
+		"s_dns", "cache__put"
 	};
 
-	assert(!empty(host));
-	switch(answer.qtype)
+	return function(question, answer);
+}
+catch(const mods::unavailable &e)
+{
+	log::dwarning
 	{
-		case 1: // A
-		{
-			auto &map{A};
-			auto pit
-			{
-				map.equal_range(host)
-			};
+		log, "Failed to put '%s' in DNS cache :%s",
+		question.name,
+		e.what()
+	};
 
-			auto it(pit.first);
-			while(it != pit.second)
-			{
-				const auto &rr{it->second};
-				if(rr == answer)
-					it = map.erase(it);
-				else
-					++it;
-			}
-
-			const auto &iit
-			{
-				map.emplace_hint(it, host, answer)
-			};
-
-			return &iit->second;
-		}
-
-		case 33: // SRV
-		{
-			auto &map{SRV};
-			auto pit
-			{
-				map.equal_range(host)
-			};
-
-			auto it(pit.first);
-			while(it != pit.second)
-			{
-				const auto &rr{it->second};
-				if(rr == answer)
-					it = map.erase(it);
-				else
-					++it;
-			}
-
-			const auto &iit
-			{
-				map.emplace_hint(it, host, answer)
-			};
-
-			return &iit->second;
-		}
-
-		default:
-			return nullptr;
-	}
+	return nullptr;
 }
 
 /// This function has an opportunity to respond from the DNS cache. If it
@@ -3255,115 +3180,51 @@ ircd::net::dns::cache::put(const rfc1035::question &question,
 /// true.
 bool
 ircd::net::dns::cache::get(const hostport &hp,
-                           const opts &opts,
+                           const opts &o,
                            const callback &cb)
+try
 {
-	// It's no use putting the result record array on the stack in case this
-	// function is either called from an ircd::ctx or calls back an ircd::ctx.
-	// If the ctx yields the records can still be evicted from the cache.
-	// It's better to just force the user to conform here rather than adding
-	// ref counting and other pornographic complications to this cache.
-	const ctx::critical_assertion ca;
-	thread_local std::array<const rfc1035::record *, resolver::MAX_COUNT> record;
-	std::exception_ptr eptr;
-	size_t count{0};
+	using prototype = bool (const hostport &, const opts &, const callback &);
 
-	//TODO: Better deduction
-	if(hp.service || opts.srv) // deduced SRV query
+	static mods::import<prototype> function
 	{
-		assert(!empty(host(hp)));
-		thread_local char srvbuf[512];
-		const string_view srvhost
-		{
-			make_SRV_key(srvbuf, hp, opts)
-		};
+		"s_dns", "cache__get"
+	};
 
-		auto &map{SRV};
-		const auto pit{map.equal_range(srvhost)};
-		if(pit.first == pit.second)
-			return false;
-
-		const auto &now{ircd::time()};
-		for(auto it(pit.first); it != pit.second; )
-		{
-			const auto &rr{it->second};
-
-			// Cached entry is too old, ignore and erase
-			if(rr.ttl < now)
-			{
-				it = map.erase(it);
-				continue;
-			}
-
-			// Cached entry is a cached error, we set the eptr, but also
-			// include the record and increment the count like normal.
-			if((!rr.tgt || !rr.port) && opts.nxdomain_exceptions && !eptr)
-			{
-				//TODO: we don't cache what the error was, assuming it's
-				//TODO: NXDomain can be incorrect and in bad ways downstream...
-				static const auto rcode{3}; //NXDomain
-				eptr = std::make_exception_ptr(rfc1035::error
-				{
-					"protocol error #%u (cached) :%s", rcode, rfc1035::rcode.at(rcode)
-				});
-			}
-
-			if(count < record.size())
-				record.at(count++) = &rr;
-
-			++it;
-		}
-	}
-	else // Deduced A query (for now)
+	return function(hp, o, cb);
+}
+catch(const mods::unavailable &e)
+{
+	thread_local char buf[128];
+	log::dwarning
 	{
-		auto &map{A};
-		const auto &key{rstrip(host(hp), '.')};
-		if(unlikely(empty(key)))
-			return false;
+		log, "Failed to get '%s' from DNS cache :%s",
+		string(buf, hp),
+		e.what()
+	};
 
-		const auto pit{map.equal_range(key)};
-		if(pit.first == pit.second)
-			return false;
+	return false;
+}
 
-		const auto &now{ircd::time()};
-		for(auto it(pit.first); it != pit.second; )
-		{
-			const auto &rr{it->second};
+bool
+ircd::net::dns::cache::for_each(const string_view &type,
+                                const closure &closure)
+{
+	return for_each(rfc1035::qtype.at(type), closure);
+}
 
-			// Cached entry is too old, ignore and erase
-			if(rr.ttl < now)
-			{
-				it = map.erase(it);
-				continue;
-			}
+bool
+ircd::net::dns::cache::for_each(const uint16_t &type,
+                                const closure &c)
+{
+	using prototype = bool (const uint16_t &, const closure &);
 
-			// Cached entry is a cached error, we set the eptr, but also
-			// include the record and increment the count like normal.
-			if(!rr.ip4 && !eptr)
-			{
-				//TODO: we don't cache what the error was, assuming it's
-				//TODO: NXDomain can be incorrect and in bad ways downstream...
-				static const auto rcode{3}; //NXDomain
-				eptr = std::make_exception_ptr(rfc1035::error
-				{
-					"protocol error #%u (cached) :%s", rcode, rfc1035::rcode.at(rcode)
-				});
-			}
+	static mods::import<prototype> function
+	{
+		"s_dns", "cache__for_each"
+	};
 
-			if(count < record.size())
-				record.at(count++) = &rr;
-
-			++it;
-		}
-	}
-
-	assert(count || !eptr);        // no error if no cache response
-	assert(!eptr || count == 1);   // if error, should only be one entry.
-
-	if(count)
-		cb(std::move(eptr), hp, vector_view<const rfc1035::record *>(record.data(), count));
-
-	return count;
+	return function(type, c);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

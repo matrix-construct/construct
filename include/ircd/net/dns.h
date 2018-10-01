@@ -40,6 +40,9 @@ struct ircd::net::dns
 	using callback_SRV_one = std::function<void (std::exception_ptr, const hostport &, const rfc1035::record::SRV &)>;
 	using callback_ipport_one = std::function<void (std::exception_ptr, const hostport &, const ipport &)>;
 
+	// Maximum number of records we present in result vector to any closure
+	static constexpr const size_t &MAX_COUNT {64};
+
 	// (internal) generate strings for rfc1035 questions or dns::cache keys.
 	static string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
 	static string_view unmake_SRV_key(const string_view &);
@@ -99,14 +102,16 @@ struct ircd::net::dns::opts
 /// (internal) DNS cache
 struct ircd::net::dns::cache
 {
+	using closure = std::function<bool (const string_view &, const rfc1035::record &)>;
+
 	static conf::item<seconds> min_ttl;
 	static conf::item<seconds> clear_nxdomain;
 
-	std::multimap<std::string, rfc1035::record::A, std::less<>> A;
-	std::multimap<std::string, rfc1035::record::SRV, std::less<>> SRV;
+	bool for_each(const uint16_t &type, const closure &);
+	bool for_each(const string_view &type, const closure &);
 
-  public:
 	bool get(const hostport &, const opts &, const callback &);
+
 	rfc1035::record *put(const rfc1035::question &, const rfc1035::answer &);
 	rfc1035::record *put_error(const rfc1035::question &, const uint &code);
 };
