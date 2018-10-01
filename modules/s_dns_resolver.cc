@@ -9,42 +9,11 @@
 // full license for this software is available in the LICENSE file.
 
 #include <ircd/asio.h>
-#include "s_resolver.h"
-
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Server Domain Name Resolver", []
-	{
-		assert(!ircd::net::dns::resolver);
-		ircd::net::dns::resolver = new typename ircd::net::dns::resolver{};
-	}, []
-	{
-		delete ircd::net::dns::resolver;
-		ircd::net::dns::resolver = nullptr;
-	}
-};
+#include "s_dns.h"
+#include "s_dns_resolver.h"
 
 decltype(ircd::net::dns::resolver)
 ircd::net::dns::resolver;
-
-extern "C" void
-ircd::net::dns::_resolve_(const hostport &hp,
-                          const opts &opts,
-                          callback &&callback)
-{
-	if(unlikely(!resolver))
-		throw ircd::mods::unavailable
-		{
-			"Resolver module loaded but the service is unavailable."
-		};
-
-	(*resolver)(hp, opts, std::move(callback));
-}
-
-//
-// resolver
-//
 
 decltype(ircd::net::dns::resolver::servers)
 ircd::net::dns::resolver::servers
@@ -86,6 +55,38 @@ ircd::net::dns::resolver::retry_max
 	{ "name",     "ircd.net.dns.resolver.retry_max" },
 	{ "default",   4L                               },
 };
+
+//
+// interface
+//
+
+void
+ircd::net::dns::resolver_call(const hostport &hp,
+                              const opts &opts,
+                              callback &&cb)
+{
+	if(unlikely(!resolver))
+		throw error
+		{
+			"Cannot resolve '%s': resolver unavailable"
+		};
+
+	(*resolver)(hp, opts, std::move(cb));
+}
+
+void
+ircd::net::dns::resolver_init()
+{
+	assert(!ircd::net::dns::resolver);
+	ircd::net::dns::resolver = new typename ircd::net::dns::resolver{};
+}
+
+void
+ircd::net::dns::resolver_fini()
+{
+	delete ircd::net::dns::resolver;
+	ircd::net::dns::resolver = nullptr;
+}
 
 //
 // resolver::resolver

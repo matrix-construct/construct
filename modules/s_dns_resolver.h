@@ -8,13 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::net::dns
-{
-	struct resolver extern *resolver;
-
-	extern "C" void _resolve_(const hostport &, const opts &, callback &&);
-}
-
 struct ircd::net::dns::resolver
 {
 	struct tag;

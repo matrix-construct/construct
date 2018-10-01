@@ -21,9 +21,6 @@ namespace ircd::net::dns
 {
 	struct opts extern const opts_default;
 
-	// Maximum number of records we present in result vector to any closure
-	constexpr const size_t MAX_COUNT {64};
-
 	using callback = std::function<void (std::exception_ptr, const hostport &, const vector_view<const rfc1035::record *> &)>;
 	using callback_A_one = std::function<void (std::exception_ptr, const hostport &, const rfc1035::record::A &)>;
 	using callback_SRV_one = std::function<void (std::exception_ptr, const hostport &, const rfc1035::record::SRV &)>;
@@ -89,14 +86,9 @@ namespace ircd::net::dns::cache
 {
 	using closure = std::function<bool (const string_view &, const rfc1035::record &)>;
 
-	extern conf::item<seconds> min_ttl;
-	extern conf::item<seconds> clear_nxdomain;
-
 	bool for_each(const uint16_t &type, const closure &);
 	bool for_each(const string_view &type, const closure &);
-
 	bool get(const hostport &, const opts &, const callback &);
-
 	rfc1035::record *put(const rfc1035::question &, const rfc1035::answer &);
 	rfc1035::record *put_error(const rfc1035::question &, const uint &code);
 };

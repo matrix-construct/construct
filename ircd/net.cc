@@ -3011,20 +3011,6 @@ ircd::net::dns::make_SRV_key(const mutable_buffer &out,
 // cache
 //
 
-decltype(ircd::net::dns::cache::clear_nxdomain)
-ircd::net::dns::cache::clear_nxdomain
-{
-    { "name",     "ircd.net.dns.cache.clear_nxdomain" },
-    { "default",   43200L                             },
-};
-
-decltype(ircd::net::dns::cache::min_ttl)
-ircd::net::dns::cache::min_ttl
-{
-    { "name",     "ircd.net.dns.cache.min_ttl" },
-    { "default",   900L                        },
-};
-
 ircd::rfc1035::record *
 ircd::net::dns::cache::put_error(const rfc1035::question &question,
                                  const uint &code)
