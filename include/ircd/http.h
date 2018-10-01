@@ -307,6 +307,7 @@ enum ircd::http::code
 	GATEWAY_TIMEOUT                         = 504,
 	HTTP_VERSION_NOT_SUPPORTED              = 505,
 	INSUFFICIENT_STORAGE                    = 507,
+	A_TIMEOUT_OCCURRED                      = 524, // cloudflare
 };
 
 template<class T>

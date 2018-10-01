@@ -100,6 +100,7 @@ ircd::http::reason
 	{ code::GATEWAY_TIMEOUT,                     "Gateway Timeout"                                 },
 	{ code::HTTP_VERSION_NOT_SUPPORTED,          "HTTP Version Not Supported"                      },
 	{ code::INSUFFICIENT_STORAGE,                "Insufficient Storage"                            },
+	{ code::A_TIMEOUT_OCCURRED,                  "A Timeout Occurred"                              },
 };
 
 template<class it,
