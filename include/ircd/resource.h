@@ -144,6 +144,7 @@ struct ircd::resource::response
 	struct chunked;
 
 	static const size_t HEAD_BUF_SZ;
+	static conf::item<std::string> access_control_allow_origin;
 
 	response(client &, const http::code &, const string_view &content_type, const size_t &content_length, const string_view &headers = {});
 	response(client &, const string_view &str, const string_view &content_type, const http::code &, const vector_view<const http::header> &);

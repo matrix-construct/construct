@@ -990,6 +990,13 @@ ircd::resource::response::response(client &client,
 	assert(written == size(content));
 }
 
+decltype(ircd::resource::response::access_control_allow_origin)
+ircd::resource::response::access_control_allow_origin
+{
+	{ "name",      "ircd.resource.access_control.allow_origin" },
+	{ "default",   "*"                                         }
+};
+
 ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const string_view &content_type,
@@ -1018,8 +1025,8 @@ ircd::resource::response::response(client &client,
 		content_type,
 		headers,
 		{
-			{ "Access-Control-Allow-Origin",   "*"                  }, //TODO: XXX
-			{ "X-IRCd-Request-Timer",          rtime,               },
+			{ "Access-Control-Allow-Origin",  string_view(access_control_allow_origin) },
+			{ "X-IRCd-Request-Timer",         rtime                                    },
 		},
 	};
 
