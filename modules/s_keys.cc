@@ -53,25 +53,25 @@ init_my_tls_crt()
 
 	const std::string private_key_path_parts[]
 	{
-		tls_key_dir,
+		std::string{tls_key_dir},
 		m::self::origin + ".crt.key",
 	};
 
 	const std::string public_key_path_parts[]
 	{
-		tls_key_dir,
+		std::string{tls_key_dir},
 		m::self::origin + ".crt.key.pub",
 	};
 
 	const std::string dhparam_path_parts[]
 	{
-		tls_key_dir,
+		std::string{tls_key_dir},
 		m::self::origin + ".crt.dh",
 	};
 
 	const std::string certificate_path_parts[]
 	{
-		tls_key_dir,
+		std::string{tls_key_dir},
 		m::self::origin + ".crt",
 	};
 
@@ -226,7 +226,7 @@ init_my_ed25519()
 
 	const std::string path_parts[]
 	{
-		ed25519_key_dir,
+		std::string{ed25519_key_dir},
 		m::self::origin + ".ed25519",
 	};
 

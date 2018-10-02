@@ -141,6 +141,11 @@ struct ircd::conf::item<std::string>
 :conf::item<>
 ,conf::value<std::string>
 {
+	explicit operator const std::string &() const
+	{
+		return _value;
+	}
+
 	operator string_view() const
 	{
 		return _value;
