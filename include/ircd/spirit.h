@@ -81,6 +81,10 @@ namespace ircd::spirit
 	using karma::attr_cast;
 	using karma::maxwidth;
 	using karma::buffer;
+
+	template<class parent_error> struct expectation_failure;
+
+	extern thread_local char rulebuf[64]; // parse.cc
 }
 
 namespace ircd::spirit::local
@@ -89,3 +93,46 @@ namespace ircd::spirit::local
 	using qi::_2;
 	using qi::_3;
 }
+
+template<class parent_error>
+struct ircd::spirit::expectation_failure
+:parent_error
+{
+	template<class it = const char *>
+	expectation_failure(const qi::expectation_failure<it> &e,
+	                    const ssize_t &show_max = 64);
+
+	template<class it = const char *>
+	expectation_failure(const qi::expectation_failure<it> &e,
+	                    const it &start,
+	                    const ssize_t &show_max = 64);
+};
+
+template<class parent>
+template<class it>
+ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expectation_failure<it> &e,
+		                                                       const ssize_t &show_max)
+:parent
+{
+	"Expected %s. You input %zd invalid characters :%s",
+	ircd::string(rulebuf, e.what_),
+	std::distance(e.first, e.last),
+	string_view{e.first, e.first + std::min(std::distance(e.first, e.last), show_max)}
+}
+{}
+
+template<class parent>
+template<class it>
+ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expectation_failure<it> &e,
+                                                               const it &start,
+		                                                       const ssize_t &show_max)
+:parent
+{
+	"Expected %s. You input %zd invalid characters somewhere between position %zd and %zd: %s",
+	ircd::string(rulebuf, e.what_),
+	std::distance(e.first, e.last),
+	std::distance(start, e.first),
+	std::distance(start, e.last),
+	string_view{e.first, e.first + std::min(std::distance(e.first, e.last), show_max)}
+}
+{}
