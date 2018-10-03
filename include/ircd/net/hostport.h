@@ -78,7 +78,9 @@ ircd::net::hostport::hostport(const string_view &host,
 :host{host}
 ,service{service}
 ,port{port}
-{}
+{
+	rfc3986::valid_host(host);
+}
 
 /// Creates a host:port pair from a hostname and a port number. When
 /// passed to net::dns() no SRV resolution will be done because no
@@ -87,9 +89,10 @@ ircd::net::hostport::hostport(const string_view &host,
 inline
 ircd::net::hostport::hostport(const string_view &host,
                               const uint16_t &port)
-:host{host}
-,service{}
-,port{port}
+:hostport
+{
+	host, string_view{}, port
+}
 {}
 
 /// Creates a host:service or host:port pair from the single string literally
@@ -111,14 +114,19 @@ ircd::net::hostport::hostport(const string_view &amalgam)
 	};
 
 	if(amalgam == host || empty(port))
+	{
+		rfc3986::valid_host(host);
 		return;
+	}
 
 	if(try_lex_cast<uint16_t>(port))
 	{
 		this->service = {};
 		this->port = lex_cast<uint16_t>(port);
+		rfc3986::valid_remote(amalgam);
 	} else {
 		this->service = port;
+		rfc3986::valid_host(host);
 	}
 }
 
