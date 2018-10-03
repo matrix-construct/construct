@@ -29,58 +29,56 @@ IRCD_MODULE
 /// intermediate results.
 void
 ircd::net::dns::_resolve_ipport(const hostport &hp,
-                                const opts &opts,
+                                opts opts,
                                 callback_ipport_one callback)
 {
-	//TODO: ip6
-	auto calluser{[callback(std::move(callback))]
-	(std::exception_ptr eptr, const hostport &hp, const uint32_t &ip)
+	auto handler
 	{
-		if(eptr)
-			return callback(std::move(eptr), hp, {});
-
-		if(!ip)
-		{
-			static const net::not_found no_record
-			{
-				"Host has no A record"
-			};
-
-			return callback(std::make_exception_ptr(no_record), hp, {});
-		}
-
-		const ipport ipport{ip, port(hp)};
-		callback(std::move(eptr), hp, ipport);
-	}};
+		std::bind(&handle_ipport__A, std::move(callback), ph::_1, ph::_2, ph::_3)
+	};
 
 	if(!hp.service)
-		return _resolve__A(hp, opts, [calluser(std::move(calluser))]
-		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
-		{
-			calluser(std::move(eptr), hp, record.ip4);
-		});
+		return _resolve__A(hp, opts, std::move(handler));
 
-	auto srv_opts{opts};
-	srv_opts.nxdomain_exceptions = false;
-	_resolve__SRV(hp, srv_opts, [opts(opts), calluser(std::move(calluser))]
+	opts.nxdomain_exceptions = false;
+	_resolve__SRV(hp, opts, [opts(opts), handler(std::move(handler))]
 	(std::exception_ptr eptr, hostport hp, const rfc1035::record::SRV &record)
 	mutable
 	{
 		if(eptr)
-			return calluser(std::move(eptr), hp, 0);
-
-		if(record.port != 0)
-			hp.port = record.port;
-
-		hp.host = record.tgt?: unmake_SRV_key(hp.host);
-		opts.qtype = 0;
-
-		_resolve__A(hp, opts, [calluser(std::move(calluser))]
-		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
 		{
-			calluser(std::move(eptr), hp, record.ip4);
-		});
+			static const rfc1035::record::A empty;
+			return handler(std::move(eptr), hp, empty);
+		}
+
+		opts.qtype = 0;
+		opts.nxdomain_exceptions = true;
+		hp.host = record.tgt?: unmake_SRV_key(hp.host);
+		hp.port = record.port? record.port : hp.port;
+		_resolve__A(hp, opts, std::move(handler));
 	});
+}
+
+void
+ircd::net::dns::handle_ipport__A(callback_ipport_one callback,
+                                 std::exception_ptr eptr,
+                                 const hostport &hp,
+                                 const rfc1035::record::A &record)
+{
+	static const ircd::net::not_found no_record
+	{
+		"Host has no A record"
+	};
+
+	if(!eptr && !record.ip4)
+		eptr = std::make_exception_ptr(no_record);
+
+	const ipport ipport
+	{
+		record.ip4, port(hp)
+	};
+
+	callback(std::move(eptr), hp, ipport);
 }
 
 /// Convenience callback with a single SRV record which was selected from
@@ -106,27 +104,37 @@ ircd::net::dns::_resolve__SRV(const hostport &hp,
 	if(!opts.qtype)
 		opts.qtype = qtype;
 
-	_resolve__(hp, opts, [callback(std::move(callback))]
-	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> rrs)
+	auto handler
 	{
-		static const rfc1035::record::SRV empty;
+		std::bind(&handle__SRV, std::move(callback), ph::_1, ph::_2, ph::_3)
+	};
 
-		if(eptr)
-			return callback(std::move(eptr), hp, empty);
+	_resolve__(hp, opts, std::move(handler));
+}
 
-		//TODO: prng on weight / prio plz
-		for(size_t i(0); i < rrs.size(); ++i)
-		{
-			const auto &rr{*rrs.at(i)};
-			if(rr.type != 33)
-				continue;
+void
+ircd::net::dns::handle__SRV(callback_SRV_one callback,
+                            std::exception_ptr eptr,
+                            const hostport &hp,
+                            const records &rrs)
+{
+	static const rfc1035::record::SRV empty;
 
-			const auto &record(rr.as<const rfc1035::record::SRV>());
-			return callback(std::move(eptr), hp, record);
-		}
-
+	if(eptr)
 		return callback(std::move(eptr), hp, empty);
-	});
+
+	//TODO: prng on weight / prio plz
+	for(size_t i(0); i < rrs.size(); ++i)
+	{
+		const auto &rr{*rrs.at(i)};
+		if(rr.type != 33)
+			continue;
+
+		const auto &record(rr.as<const rfc1035::record::SRV>());
+		return callback(std::move(eptr), hp, record);
+	}
+
+	return callback(std::move(eptr), hp, empty);
 }
 
 /// Convenience callback with a single A record which was selected from
@@ -152,27 +160,37 @@ ircd::net::dns::_resolve__A(const hostport &hp,
 	if(!opts.qtype)
 		opts.qtype = qtype;
 
-	_resolve__(hp, opts, [callback(std::move(callback))]
-	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> &rrs)
+	auto handler
 	{
-		static const rfc1035::record::A empty;
+		std::bind(&handle__A, std::move(callback), ph::_1, ph::_2, ph::_3)
+	};
 
-		if(eptr)
-			return callback(std::move(eptr), hp, empty);
+	_resolve__(hp, opts, std::move(handler));
+}
 
-		//TODO: prng plz
-		for(size_t i(0); i < rrs.size(); ++i)
-		{
-			const auto &rr{*rrs.at(i)};
-			if(rr.type != 1)
-				continue;
+void
+ircd::net::dns::handle__A(callback_A_one callback,
+                          std::exception_ptr eptr,
+                          const hostport &hp,
+                          const records &rrs)
+{
+	static const rfc1035::record::A empty;
 
-			const auto &record(rr.as<const rfc1035::record::A>());
-			return callback(std::move(eptr), hp, record);
-		}
-
+	if(eptr)
 		return callback(std::move(eptr), hp, empty);
-	});
+
+	//TODO: prng plz
+	for(size_t i(0); i < rrs.size(); ++i)
+	{
+		const auto &rr{*rrs.at(i)};
+		if(rr.type != 1)
+			continue;
+
+		const auto &record(rr.as<const rfc1035::record::A>());
+		return callback(std::move(eptr), hp, record);
+	}
+
+	return callback(std::move(eptr), hp, empty);
 }
 
 /// Fundamental callback with a vector of abstract resource records.

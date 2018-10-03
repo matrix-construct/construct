@@ -2909,7 +2909,7 @@ ircd::net::dns::resolve(const hostport &hp,
                         const opts &op,
                         callback_ipport_one cb)
 {
-	using prototype = void (const hostport &, const opts &, callback_ipport_one);
+	using prototype = void (const hostport &, opts, callback_ipport_one);
 
 	static mods::import<prototype> function
 	{
@@ -2926,7 +2926,7 @@ ircd::net::dns::resolve(const hostport &hp,
                         const opts &op,
                         callback_SRV_one cb)
 {
-	using prototype = void (const hostport &, const opts &, callback_SRV_one);
+	using prototype = void (const hostport &, opts, callback_SRV_one);
 
 	static mods::import<prototype> function
 	{
@@ -2943,7 +2943,7 @@ ircd::net::dns::resolve(const hostport &hp,
                         const opts &op,
                         callback_A_one cb)
 {
-	using prototype = void (const hostport &, const opts &, callback_A_one);
+	using prototype = void (const hostport &, opts, callback_A_one);
 
 	static mods::import<prototype> function
 	{

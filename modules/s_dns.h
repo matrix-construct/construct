@@ -16,10 +16,14 @@ namespace ircd::net::dns
 	// Maximum number of records we present in result vector to any closure
 	constexpr const size_t MAX_COUNT {64};
 
+	static void handle__A(callback_A_one, std::exception_ptr, const hostport &, const records &);
+	static void handle__SRV(callback_SRV_one, std::exception_ptr, const hostport &, const records &);
+	static void handle_ipport__A(callback_ipport_one, std::exception_ptr, const hostport &, const rfc1035::record::A &);
+
 	extern "C" void _resolve__(const hostport &, const opts &, callback);
 	extern "C" void _resolve__A(const hostport &, opts, callback_A_one);
 	extern "C" void _resolve__SRV(const hostport &, opts, callback_SRV_one);
-	extern "C" void _resolve_ipport(const hostport &, const opts &, callback_ipport_one);
+	extern "C" void _resolve_ipport(const hostport &, opts, callback_ipport_one);
 }
 
 //
