@@ -3193,13 +3193,16 @@ console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
 			dynamic_cast<const rfc1035::record::SRV &>(r)
 		};
 
-		const net::hostport hostport
+		thread_local char buf[256];
+		const string_view remote{fmt::sprintf
 		{
-			record.tgt, record.port
-		};
+			buf, "%s:%u",
+			rstrip(record.tgt, '.'),
+			record.port
+		}};
 
 		out << std::setw(48) << std::right << key
-		    << "  =>  " << std::setw(48) << std::left << hostport
+		    << "  =>  " << std::setw(48) << std::left << remote
 		    <<  " expires " << timestr(record.ttl, ircd::localtime)
 		    << " (" << record.ttl << ")"
 		    << std::endl;
