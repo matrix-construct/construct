@@ -106,7 +106,7 @@ inline ircd::net::ipport::operator
 bool()
 const
 {
-	return std::get<PORT>(*this) != 0;
+	return host6(*this) != uint128_t(0);
 }
 
 inline ircd::uint128_t &
