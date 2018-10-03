@@ -30,130 +30,20 @@ ircd::net::dns::cache::cache_A;
 decltype(ircd::net::dns::cache::cache_SRV)
 ircd::net::dns::cache::cache_SRV;
 
-ircd::rfc1035::record *
-ircd::net::dns::cache::_put_error(const rfc1035::question &question,
-                                  const uint &code)
+bool
+ircd::net::dns::cache::_for_each(const uint16_t &type,
+                                 const closure &closure)
 {
-	const auto &host
-	{
-		rstrip(question.name, '.')
-	};
-
-	assert(!empty(host));
-	switch(question.qtype)
+	switch(type)
 	{
 		case 1: // A
-		{
-			auto &map{cache_A};
-			auto pit
-			{
-				map.equal_range(host)
-			};
-
-			auto it
-			{
-				pit.first != pit.second?
-					map.erase(pit.first, pit.second):
-					pit.first
-			};
-
-			rfc1035::record::A record;
-			record.ttl = ircd::time() + seconds(dns::cache::clear_nxdomain).count(); //TODO: code
-			it = map.emplace_hint(it, host, record);
-			return &it->second;
-		}
+			return _for_each_(cache_A, closure);
 
 		case 33: // SRV
-		{
-			auto &map{cache_SRV};
-			auto pit
-			{
-				map.equal_range(host)
-			};
-
-			auto it
-			{
-				pit.first != pit.second?
-					map.erase(pit.first, pit.second):
-					pit.first
-			};
-
-			rfc1035::record::SRV record;
-			record.ttl = ircd::time() + seconds(dns::cache::clear_nxdomain).count(); //TODO: code
-			it = map.emplace_hint(it, host, record);
-			return &it->second;
-		}
-	}
-
-	return nullptr;
-}
-
-ircd::rfc1035::record *
-ircd::net::dns::cache::_put(const rfc1035::question &question,
-                            const rfc1035::answer &answer)
-{
-	const auto &host
-	{
-		rstrip(question.name, '.')
-	};
-
-	assert(!empty(host));
-	switch(answer.qtype)
-	{
-		case 1: // A
-		{
-			auto &map{cache_A};
-			auto pit
-			{
-				map.equal_range(host)
-			};
-
-			auto it(pit.first);
-			while(it != pit.second)
-			{
-				const auto &rr{it->second};
-				if(rr == answer)
-					it = map.erase(it);
-				else
-					++it;
-			}
-
-			const auto &iit
-			{
-				map.emplace_hint(it, host, answer)
-			};
-
-			return &iit->second;
-		}
-
-		case 33: // SRV
-		{
-			auto &map{cache_SRV};
-			auto pit
-			{
-				map.equal_range(host)
-			};
-
-			auto it(pit.first);
-			while(it != pit.second)
-			{
-				const auto &rr{it->second};
-				if(rr == answer)
-					it = map.erase(it);
-				else
-					++it;
-			}
-
-			const auto &iit
-			{
-				map.emplace_hint(it, host, answer)
-			};
-
-			return &iit->second;
-		}
+			return _for_each_(cache_SRV, closure);
 
 		default:
-			return nullptr;
+			return true;
 	}
 }
 
@@ -275,39 +165,117 @@ ircd::net::dns::cache::_get(const hostport &hp,
 	return count;
 }
 
-bool
-ircd::net::dns::cache::_for_each(const uint16_t &type,
-                                 const closure &closure)
+ircd::rfc1035::record *
+ircd::net::dns::cache::_put(const rfc1035::question &question,
+                            const rfc1035::answer &answer)
 {
-	switch(type)
+	const auto &host
+	{
+		rstrip(question.name, '.')
+	};
+
+	assert(!empty(host));
+	switch(answer.qtype)
 	{
 		case 1: // A
-		{
-			for(const auto &pair : cache_A)
-			{
-				const auto &host(pair.first);
-				const auto &record(pair.second);
-				if(!closure(host, record))
-					return false;
-			}
-
-			return true;
-		}
+			return _cache_answer(cache_A, host, answer);
 
 		case 33: // SRV
-		{
-			for(const auto &pair : cache_SRV)
-			{
-				const auto &host(pair.first);
-				const auto &record(pair.second);
-				if(!closure(host, record))
-					return false;
-			}
-
-			return true;
-		}
+			return _cache_answer(cache_SRV, host, answer);
 
 		default:
-			return true;
+			return nullptr;
 	}
+}
+
+ircd::rfc1035::record *
+ircd::net::dns::cache::_put_error(const rfc1035::question &question,
+                                  const uint &code)
+{
+	const auto &host
+	{
+		rstrip(question.name, '.')
+	};
+
+	assert(!empty(host));
+	switch(question.qtype)
+	{
+		case 1: // A
+			return _cache_error<rfc1035::record::A>(cache_A, host);
+
+		case 33: // SRV
+			return _cache_error<rfc1035::record::SRV>(cache_SRV, host);
+
+		default:
+			return nullptr;
+	}
+}
+
+template<class Map>
+ircd::rfc1035::record *
+ircd::net::dns::cache::_cache_answer(Map &map,
+                                     const string_view &host,
+                                     const rfc1035::answer &answer)
+{
+	auto pit
+	{
+		map.equal_range(host)
+	};
+
+	auto it(pit.first);
+	while(it != pit.second)
+	{
+		const auto &rr{it->second};
+		if(rr == answer)
+			it = map.erase(it);
+		else
+			++it;
+	}
+
+	const auto &iit
+	{
+		map.emplace_hint(it, host, answer)
+	};
+
+	return &iit->second;
+}
+
+template<class T,
+         class Map>
+ircd::rfc1035::record *
+ircd::net::dns::cache::_cache_error(Map &map,
+                                    const string_view &host)
+{
+	auto pit
+	{
+		map.equal_range(host)
+	};
+
+	auto it
+	{
+		pit.first != pit.second?
+			map.erase(pit.first, pit.second):
+			pit.first
+	};
+
+	T record;
+	record.ttl = ircd::time() + seconds(dns::cache::clear_nxdomain).count(); //TODO: code
+	it = map.emplace_hint(it, host, record);
+	return &it->second;
+}
+
+template<class Map>
+bool
+ircd::net::dns::cache::_for_each_(Map &map,
+                                  const closure &closure)
+{
+	for(const auto &pair : map)
+	{
+		const auto &host(pair.first);
+		const auto &record(pair.second);
+		if(!closure(host, record))
+			return false;
+	}
+
+	return true;
 }

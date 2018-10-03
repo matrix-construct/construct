@@ -38,6 +38,15 @@ namespace ircd::net::dns::cache
 	extern std::multimap<std::string, rfc1035::record::A, std::less<>> cache_A;
 	extern std::multimap<std::string, rfc1035::record::SRV, std::less<>> cache_SRV;
 
+	template<class Map>
+	static bool _for_each_(Map &, const closure &);
+
+	template<class Map>
+	static rfc1035::record *_cache_answer(Map &, const string_view &host, const rfc1035::answer &);
+
+	template<class T, class Map>
+	static rfc1035::record *_cache_error(Map &, const string_view &host);
+
 	extern "C" rfc1035::record *_put(const rfc1035::question &, const rfc1035::answer &);
 	extern "C" rfc1035::record *_put_error(const rfc1035::question &, const uint &code);
 	extern "C" bool _get(const hostport &, const opts &, const callback &);
