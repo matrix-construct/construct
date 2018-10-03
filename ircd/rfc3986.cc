@@ -99,27 +99,28 @@ struct ircd::rfc3986::grammar
 		,"ip6 literal"
 	};
 
-	const rule<> hostlabel
-	{
-		char_("A-Za-z0-9") >> *(char_("A-Za-z0-9\x2D")) // x2D is '-'
-	};
-
 	const rule<> hostname
 	{
-		hostlabel % '.',
-		"hostname"
+		char_("A-Za-z0-9") >> *(char_("A-Za-z0-9\x2D")) // x2D is '-'
+		,"hostname"
+	};
+
+	const rule<> domain
+	{
+		hostname % '.'
+		,"domain"
 	};
 
 	const rule<> host
 	{
-		ip6_literal | ip4_literal | hostname
-		,"DNS name"
+		ip6_literal | ip4_literal | domain
+		,"host"
 	};
 
 	const rule<> remote
 	{
 		host >> -(':' > port)
-		,"server name"
+		,"remote"
 	};
 
 	grammar()
