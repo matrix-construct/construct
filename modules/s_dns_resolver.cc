@@ -61,20 +61,6 @@ ircd::net::dns::resolver::retry_max
 //
 
 void
-ircd::net::dns::resolver_call(const hostport &hp,
-                              const opts &opts,
-                              callback &&cb)
-{
-	if(unlikely(!resolver))
-		throw error
-		{
-			"Cannot resolve '%s': resolver unavailable"
-		};
-
-	(*resolver)(hp, opts, std::move(cb));
-}
-
-void
 ircd::net::dns::resolver_init()
 {
 	assert(!ircd::net::dns::resolver);
@@ -86,6 +72,20 @@ ircd::net::dns::resolver_fini()
 {
 	delete ircd::net::dns::resolver;
 	ircd::net::dns::resolver = nullptr;
+}
+
+void
+ircd::net::dns::resolver_call(const hostport &hp,
+                              const opts &opts,
+                              callback &&cb)
+{
+	if(unlikely(!resolver))
+		throw error
+		{
+			"Cannot resolve '%s': resolver unavailable"
+		};
+
+	(*resolver)(hp, opts, std::move(cb));
 }
 
 //
@@ -291,22 +291,34 @@ ircd::net::dns::resolver::operator()(const hostport &hp,
 ircd::const_buffer
 ircd::net::dns::resolver::make_query(const mutable_buffer &buf,
                                      const tag &tag)
-const
 {
-	//TODO: Better deduction
-	if(tag.hp.service || tag.opts.srv)
+	thread_local char hostbuf[512];
+	string_view hoststr;
+	switch(tag.opts.qtype)
 	{
-		thread_local char srvbuf[512];
-		const string_view srvhost
+		case 0: throw error
 		{
-			make_SRV_key(srvbuf, host(tag.hp), tag.opts)
+			"A query type is required to form a question."
 		};
 
-		const rfc1035::question question{srvhost, "SRV"};
-		return rfc1035::make_query(buf, tag.id, question);
+		case 33: // SRV
+		{
+			hoststr = make_SRV_key(hostbuf, host(tag.hp), tag.opts);
+			break;
+		}
+
+		default:
+			hoststr = host(tag.hp);
+			break;
 	}
 
-	const rfc1035::question question{host(tag.hp), "A"};
+	assert(hoststr);
+	assert(tag.opts.qtype);
+	const rfc1035::question question
+	{
+		hoststr, tag.opts.qtype
+	};
+
 	return rfc1035::make_query(buf, tag.id, question);
 }
 

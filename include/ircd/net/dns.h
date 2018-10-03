@@ -48,6 +48,13 @@ namespace ircd::net::dns
 /// DNS resolution options
 struct ircd::net::dns::opts
 {
+	/// Specifies the rfc1035 query type. If this is non-zero a query of this
+	/// type will be made or an exception will be thrown if it is not possible
+	/// to make the query with this type. A zero value means automatic and the
+	/// type will deduced and set internally. To translate a string type like
+	/// "SRV" to the type integer for this value see ircd/rfc1035.h.
+	uint16_t qtype {0};
+
 	/// Overrides the SRV query to make for this resolution. If empty an
 	/// SRV query may still be made from other deductions. This string is
 	/// copied at the start of the resolution. It must be a fully qualified

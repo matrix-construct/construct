@@ -178,8 +178,7 @@ ircd::net::dns::cache::_get(const hostport &hp,
 	std::exception_ptr eptr;
 	size_t count{0};
 
-	//TODO: Better deduction
-	if(hp.service || opts.srv) // deduced SRV query
+	if(opts.qtype == 33) // deduced SRV query
 	{
 		assert(!empty(host(hp)));
 		thread_local char srvbuf[512];
@@ -224,7 +223,7 @@ ircd::net::dns::cache::_get(const hostport &hp,
 			++it;
 		}
 	}
-	else // Deduced A query (for now)
+	else if(opts.qtype == 1)
 	{
 		auto &map{cache_A};
 		const auto &key{rstrip(host(hp), '.')};

@@ -73,11 +73,7 @@ ircd::net::dns::_resolve_ipport(const hostport &hp,
 			hp.port = record.port;
 
 		hp.host = record.tgt?: unmake_SRV_key(hp.host);
-
-		// Have to kill the service name to not run another SRV query now.
-		hp.service = {};
-		opts.srv = {};
-		opts.proto = {};
+		opts.qtype = 0;
 
 		_resolve__A(hp, opts, [calluser(std::move(calluser))]
 		(std::exception_ptr eptr, const hostport &hp, const rfc1035::record::A &record)
@@ -91,9 +87,25 @@ ircd::net::dns::_resolve_ipport(const hostport &hp,
 /// the vector with stochastic respect for weighting and priority.
 void
 ircd::net::dns::_resolve__SRV(const hostport &hp,
-                              const opts &opts,
+                              opts opts,
                               callback_SRV_one callback)
 {
+	static const auto &qtype
+	{
+		rfc1035::qtype.at("SRV")
+	};
+
+	if(unlikely(opts.qtype && opts.qtype != qtype))
+		throw error
+		{
+			"Specified query type '%s' (%u) but user's callback is for SRV records only.",
+			rfc1035::rqtype.at(opts.qtype),
+			opts.qtype
+		};
+
+	if(!opts.qtype)
+		opts.qtype = qtype;
+
 	_resolve__(hp, opts, [callback(std::move(callback))]
 	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> rrs)
 	{
@@ -121,9 +133,25 @@ ircd::net::dns::_resolve__SRV(const hostport &hp,
 /// the vector randomly.
 void
 ircd::net::dns::_resolve__A(const hostport &hp,
-                            const opts &opts,
+                            opts opts,
                             callback_A_one callback)
 {
+	static const auto &qtype
+	{
+		rfc1035::qtype.at("A")
+	};
+
+	if(unlikely(opts.qtype && opts.qtype != qtype))
+		throw error
+		{
+			"Specified query type '%s' (%u) but user's callback is for A records only.",
+			rfc1035::rqtype.at(opts.qtype),
+			opts.qtype
+		};
+
+	if(!opts.qtype)
+		opts.qtype = qtype;
+
 	_resolve__(hp, opts, [callback(std::move(callback))]
 	(std::exception_ptr eptr, const hostport &hp, const vector_view<const rfc1035::record *> &rrs)
 	{
@@ -150,12 +178,18 @@ ircd::net::dns::_resolve__A(const hostport &hp,
 /// Fundamental callback with a vector of abstract resource records.
 void
 ircd::net::dns::_resolve__(const hostport &hp,
-                           const opts &op,
+                           const opts &opts,
                            callback cb)
 {
-	if(op.cache_check)
-		if(cache::get(hp, op, cb))
+	if(unlikely(!opts.qtype))
+		throw error
+		{
+			"A query type is required; not specified; cannot be deduced here."
+		};
+
+	if(opts.cache_check)
+		if(cache::get(hp, opts, cb))
 			return;
 
-	resolver_call(hp, op, std::move(cb));
+	resolver_call(hp, opts, std::move(cb));
 }

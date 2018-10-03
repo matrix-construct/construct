@@ -17,8 +17,8 @@ namespace ircd::net::dns
 	constexpr const size_t MAX_COUNT {64};
 
 	extern "C" void _resolve__(const hostport &, const opts &, callback);
-	extern "C" void _resolve__A(const hostport &, const opts &, callback_A_one);
-	extern "C" void _resolve__SRV(const hostport &, const opts &, callback_SRV_one);
+	extern "C" void _resolve__A(const hostport &, opts, callback_A_one);
+	extern "C" void _resolve__SRV(const hostport &, opts, callback_SRV_one);
 	extern "C" void _resolve_ipport(const hostport &, const opts &, callback_ipport_one);
 }
 

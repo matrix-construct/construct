@@ -46,7 +46,7 @@ struct ircd::net::dns::resolver
 	void submit(tag &);
 
 	template<class... A> tag &set_tag(A&&...);
-	const_buffer make_query(const mutable_buffer &buf, const tag &) const;
+	static const_buffer make_query(const mutable_buffer &buf, const tag &);
 	void operator()(const hostport &, const opts &, callback &&);
 
 	bool check_timeout(const uint16_t &id, tag &, const steady_point &expired);
@@ -75,6 +75,8 @@ struct ircd::net::dns::resolver::tag
 	char qbuf[384];
 
 	tag(const hostport &, const dns::opts &, callback &&);
+	tag(tag &&) = delete;
+	tag(const tag &) = delete;
 };
 
 inline
