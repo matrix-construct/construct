@@ -23,6 +23,15 @@ namespace ircd::rfc3986
 	struct encoder extern const encoder;
 	struct decoder extern const decoder;
 
+	void valid_hostname(const string_view &); // name part
+	bool valid_hostname(std::nothrow_t, const string_view &);
+	void valid_domain(const string_view &); // dot delimited hostnames
+	bool valid_domain(std::nothrow_t, const string_view &);
+	void valid_host(const string_view &); // domain | ip4 | ip6
+	bool valid_host(std::nothrow_t, const string_view &);
+	void valid_remote(const string_view &); // host + optional :port
+	bool valid_remote(std::nothrow_t, const string_view &);
+
 	string_view encode(const string_view &url, const mutable_buffer &);
 	string_view decode(const string_view &url, const mutable_buffer &);
 }
