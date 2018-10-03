@@ -741,7 +741,7 @@ ircd::server::peer::handle_error(link &link,
 
 	log::derror
 	{
-		log, "peer(%p) link(%p) [%s]: error: %s",
+		log, "peer(%p) link(%p) [%s]: %s",
 		this,
 		&link,
 		string(remote),
@@ -793,7 +793,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "peer(%p) link(%p) tag(%p) done; error: %s",
+		log, "peer(%p) link(%p) tag(%p) done; %s",
 		this,
 		&link,
 		&tag,
@@ -971,7 +971,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p): error: %s",
+		log, "peer(%p): %s",
 		this,
 		e.what()
 	};

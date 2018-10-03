@@ -402,9 +402,7 @@ ircd::net::read_one(socket &socket,
 //
 
 ircd::net::wait_opts
-const ircd::net::wait_opts_default
-{
-};
+const ircd::net::wait_opts_default;
 
 /// Wait for socket to become "ready" using a ctx::future.
 ircd::ctx::future<void>
