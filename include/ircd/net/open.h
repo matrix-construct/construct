@@ -36,6 +36,7 @@ struct ircd::net::open_opts
 	static conf::item<milliseconds> default_handshake_timeout;
 	static conf::item<bool> default_verify_certificate;
 	static conf::item<bool> default_allow_self_signed;
+	static conf::item<bool> default_allow_self_chain;
 	static conf::item<bool> default_allow_expired;
 
 	// Get the proper target CN from the options structure
@@ -95,7 +96,7 @@ struct ircd::net::open_opts
 
 	/// Option to toggle whether to allow self-signed certificate authorities
 	/// in the chain. This is what corporate network nanny's may use to spy.
-	bool allow_self_chain { false };
+	bool allow_self_chain { default_allow_self_chain };
 
 	/// Option to allow expired certificates.
 	bool allow_expired { default_allow_expired };

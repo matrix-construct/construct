@@ -566,6 +566,13 @@ ircd::net::open_opts::default_allow_self_signed
 	{ "default",  false                              },
 };
 
+decltype(ircd::net::open_opts::default_allow_self_chain)
+ircd::net::open_opts::default_allow_self_chain
+{
+	{ "name",     "ircd.net.open.allow_self_chain"  },
+	{ "default",  false                             },
+};
+
 decltype(ircd::net::open_opts::default_allow_expired)
 ircd::net::open_opts::default_allow_expired
 {
@@ -2666,6 +2673,9 @@ noexcept try
 			reject();
 			break;
 
+		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
+		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
+		case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
 		case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
 			if(opts.allow_self_chain)
 				return true;
