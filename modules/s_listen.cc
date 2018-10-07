@@ -80,18 +80,19 @@ init_listeners()
 //
 
 static void
-create_listener(const m::event &event)
+create_listener(const m::event &event,
+                m::vm::eval &)
 {
 	load_listener(event);
 }
 
 /// Hook for a new listener description being sent.
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 create_listener_hook
 {
 	create_listener,
 	{
-		{ "_site",       "vm.notify"    },
+		{ "_site",       "vm.effect"    },
 		{ "room_id",     "!ircd"        },
 		{ "type",        "ircd.listen"  },
 	}

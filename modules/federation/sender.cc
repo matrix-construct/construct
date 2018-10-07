@@ -26,6 +26,8 @@ static void send(const m::event &, const m::room::id &room_id);
 static void send(const m::event &);
 static void send_worker();
 
+static void handle_notify(const m::event &, m::vm::eval &);
+
 context
 sender
 {
@@ -51,31 +53,56 @@ IRCD_MODULE
 	}
 };
 
+std::deque<std::string>
+notified_queue;
+
+ctx::dock
+notified_dock;
+
+m::hookfn<m::vm::eval &>
+notified
+{
+	handle_notify,
+	{
+		{ "_site",  "vm.notify" },
+	}
+};
+
+void
+handle_notify(const m::event &event,
+              m::vm::eval &eval)
+{
+	if(!my(event))
+		return;
+
+	assert(eval.opts);
+	if(!eval.opts->notify_servers)
+		return;
+
+	notified_queue.emplace_back(json::strung{event});
+	notified_dock.notify_all();
+}
+
 void
 send_worker()
 {
-	// In order to synchronize with the vm core, this context has to
-	// maintain this shared_lock at all times. If this is unlocked we
-	// can miss an event being broadcast.
-	std::unique_lock<decltype(m::vm::accept)> lock
-	{
-		m::vm::accept
-	};
-
 	while(1) try
 	{
-		// reference to the event on the inserter's stack
-		const auto &event
+		notified_dock.wait([]
 		{
-			m::vm::accept.wait(lock)
+			return !notified_queue.empty();
+		});
+
+		const unwind pop{[]
+		{
+			assert(!notified_queue.empty());
+			notified_queue.pop_front();
+		}};
+
+		const m::event event
+		{
+			json::object{notified_queue.front()}
 		};
-
-		if(!my(event))
-			continue;
-
-		assert(event.opts);
-		if(!event.opts->notify_servers)
-			continue;
 
 		send(event);
 	}

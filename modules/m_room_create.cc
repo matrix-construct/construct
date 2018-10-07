@@ -48,7 +48,8 @@ _can_create_room_hookfn
 };
 
 static void
-_created_room(const m::event &event)
+_created_room(const m::event &event,
+              m::vm::eval &)
 {
 	const m::room::id &room_id
 	{
@@ -64,12 +65,12 @@ _created_room(const m::event &event)
 		send(m::my_room, at<"sender"_>(event), "ircd.room", room_id, json::object{});
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _created_room_hookfn
 {
 	_created_room,
 	{
-		{ "_site",    "vm.notify"     },
+		{ "_site",    "vm.effect"     },
 		{ "type",     "m.room.create" },
 	}
 };

@@ -19,12 +19,10 @@ namespace ircd::m::vm
 	struct opts;
 	struct copts;
 	struct eval;
-	struct accepted;
 	enum fault :uint;
 	using fault_t = std::underlying_type<fault>::type;
 
 	extern log::log log;
-	extern ctx::shared_view<accepted> accept;
 	extern uint64_t current_sequence;
 	extern const opts default_opts;
 	extern const copts default_copts;
@@ -242,21 +240,6 @@ struct ircd::m::vm::copts
 
 	/// Whether to log an info message after commit accepted
 	bool infolog_postcommit {false};
-};
-
-struct ircd::m::vm::accepted
-:m::event
-{
-	ctx::ctx *context;
-	const vm::opts *opts;
-	const vm::copts *copts;
-	const event::conforms *report;
-	shared_buffer<mutable_buffer> strung;
-
-	accepted(const m::event &event,
-	         const vm::opts *const &opts,
-	         const vm::copts *const &copts,
-	         const event::conforms *const &report);
 };
 
 struct ircd::m::vm::error

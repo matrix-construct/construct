@@ -25,11 +25,44 @@ namespace ircd::m::sync
 
 namespace ircd::m::sync::longpoll
 {
-	static std::string sync_room(client &, const m::room &, const args &, const vm::accepted &);
-	static std::string sync_rooms(client &, const m::user::id &, const m::room &, const args &, const vm::accepted &);
-	static bool handle(client &, const args &, const vm::accepted &, const m::room &);
-	static bool handle(client &, const args &, const vm::accepted &);
+	struct accepted
+	:m::event
+	{
+		json::strung strung;
+		std::string client_txnid;
+
+		accepted(const m::vm::eval &eval)
+		:strung
+		{
+			*eval.event_
+		}
+		,client_txnid
+		{
+			eval.copts?
+				eval.copts->client_txnid:
+				string_view{}
+		}
+		{
+			const json::object object{this->strung};
+			static_cast<m::event &>(*this) = m::event{object};
+		}
+
+		accepted(accepted &&) = default;
+		accepted(const accepted &) = delete;
+	};
+
+	size_t polling {0};
+	std::deque<accepted> queue;
+	ctx::dock dock;
+
+	static std::string sync_room(client &, const m::room &, const args &, const accepted &);
+	static std::string sync_rooms(client &, const m::user::id &, const m::room &, const args &, const accepted &);
+	static bool handle(client &, const args &, const accepted &, const m::room &);
+	static bool handle(client &, const args &, const accepted &);
 	static void poll(client &, const args &);
+
+	static void handle_notify(const m::event &, m::vm::eval &);
+	extern m::hookfn<m::vm::eval &> notified;
 }
 
 namespace ircd::m::sync::linear

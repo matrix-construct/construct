@@ -130,29 +130,59 @@ catch(const bad_lex_cast &e)
 	};
 }
 
+//
+// longpoll
+//
+
+decltype(ircd::m::sync::longpoll::notified)
+ircd::m::sync::longpoll::notified
+{
+	handle_notify,
+	{
+		{ "_site",  "vm.notify" },
+	}
+};
+
+void
+ircd::m::sync::longpoll::handle_notify(const m::event &event,
+                                       m::vm::eval &eval)
+{
+	assert(eval.opts);
+	if(!eval.opts->notify_clients)
+		return;
+
+	if(!polling)
+		return;
+
+	queue.emplace_back(eval);
+	dock.notify_all();
+}
+
 void
 ircd::m::sync::longpoll::poll(client &client,
                               const args &args)
 try
 {
-	std::unique_lock<decltype(m::vm::accept)> lock
+	++polling;
+	const unwind unpoll{[]
 	{
-		m::vm::accept
-	};
+		--polling;
+	}};
 
 	while(1)
 	{
-		auto &accepted
-		{
-			m::vm::accept.wait_until(lock, args.timesout)
-		};
-
-		assert(accepted.opts);
-		if(!accepted.opts->notify_clients)
+		dock.wait_until(args.timesout);
+		if(queue.empty())
 			continue;
 
-		if(handle(client, args, accepted))
-			return;
+		const auto &a(queue.front());
+		const unwind pop{[]
+		{
+			queue.pop_front();
+		}};
+
+		if(handle(client, args, a))
+			break;
 	}
 }
 catch(const ctx::timeout &e)
@@ -178,7 +208,7 @@ catch(const ctx::timeout &e)
 bool
 ircd::m::sync::longpoll::handle(client &client,
                                 const args &args,
-                                const vm::accepted &event)
+                                const accepted &event)
 {
 	const auto &room_id
 	{
@@ -197,7 +227,7 @@ ircd::m::sync::longpoll::handle(client &client,
 bool
 ircd::m::sync::longpoll::handle(client &client,
                                 const args &args,
-                                const vm::accepted &event,
+                                const accepted &event,
                                 const m::room &room)
 {
 	const m::user::id &user_id
@@ -261,7 +291,7 @@ ircd::m::sync::longpoll::sync_rooms(client &client,
                                     const m::user::id &user_id,
                                     const m::room &room,
                                     const args &args,
-                                    const vm::accepted &event)
+                                    const accepted &event)
 {
 	std::vector<std::string> r;
 	std::vector<json::member> m;
@@ -290,7 +320,7 @@ std::string
 ircd::m::sync::longpoll::sync_room(client &client,
                                    const m::room &room,
                                    const args &args,
-                                   const vm::accepted &accepted)
+                                   const accepted &accepted)
 {
 	const auto &since
 	{
@@ -302,12 +332,12 @@ ircd::m::sync::longpoll::sync_room(client &client,
 	if(defined(json::get<"event_id"_>(event)))
 	{
 		json::strung strung(event);
-		if(accepted.copts && accepted.copts->client_txnid)
+		if(!!accepted.client_txnid)
 			strung = json::insert(strung, json::member
 			{
 				"unsigned", json::members
 				{
-					{ "transaction_id", accepted.copts->client_txnid }
+					{ "transaction_id", accepted.client_txnid }
 				}
 			});
 
@@ -400,6 +430,10 @@ ircd::m::sync::longpoll::sync_room(client &client,
 
 	return json::strung(body);
 }
+
+//
+// linear
+//
 
 bool
 ircd::m::sync::linear::handle(client &client,
@@ -577,6 +611,10 @@ ircd::m::sync::linear::handle(client &client,
 
 	return true;
 }
+
+//
+// polylog
+//
 
 bool
 ircd::m::sync::polylog::handle(client &client,

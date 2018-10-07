@@ -480,10 +480,6 @@ ircd::m::vm::log
 	"vm", 'v'
 };
 
-decltype(ircd::m::vm::accept)
-ircd::m::vm::accept
-{};
-
 decltype(ircd::m::vm::current_sequence)
 ircd::m::vm::current_sequence
 {};
@@ -697,22 +693,6 @@ ircd::m::vm::eval::operator()(const event &event)
 	};
 
 	return ret;
-}
-
-//
-// accepted
-//
-
-ircd::m::vm::accepted::accepted(const m::event &event,
-                                const vm::opts *const &opts,
-                                const vm::copts *const &copts,
-                                const event::conforms *const &report)
-:m::event{event}
-,context{ctx::current}
-,opts{opts}
-,copts{copts}
-,report{report}
-{
 }
 
 ///////////////////////////////////////////////////////////////////////////////

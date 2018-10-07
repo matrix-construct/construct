@@ -323,7 +323,8 @@ post__publicrooms_remote(client &client,
 }
 
 static void
-_create_public_room(const m::event &)
+_create_public_room(const m::event &,
+                    m::vm::eval &)
 {
 	m::create(public_room_id, m::me.user_id);
 }
@@ -331,12 +332,12 @@ _create_public_room(const m::event &)
 /// Create the public rooms room at the appropriate time on startup.
 /// The startup event chosen here is when @ircd joins the !ircd room,
 /// which is a fundamental notification toward the end of init.
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _create_public_hook
 {
 	_create_public_room,
 	{
-		{ "_site",       "vm.notify"      },
+		{ "_site",       "vm.effect"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	}

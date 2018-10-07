@@ -148,19 +148,26 @@ catch(const std::exception &e)
 	};
 }
 
-const m::hookfn<>
+static void
+handle_conf_updated(const m::event &event,
+                    m::vm::eval &)
+{
+	conf_updated(event);
+}
+
+const m::hookfn<m::vm::eval &>
 conf_updated_hook
 {
-	conf_updated,
+	handle_conf_updated,
 	{
-		{ "_site",       "vm.notify"       },
+		{ "_site",       "vm.effect"       },
 		{ "room_id",     "!conf"           },
 		{ "type",        "ircd.conf.item"  },
 	}
 };
 
 static void
-init_conf_items(const m::event &)
+init_conf_items()
 {
 	const m::room::state state
 	{
@@ -189,12 +196,19 @@ init_conf_item(conf::item<> &item)
 	});
 }
 
-const m::hookfn<>
+static void
+handle_init_conf_items(const m::event &,
+                       m::vm::eval &eval)
+{
+	init_conf_items();
+}
+
+const m::hookfn<m::vm::eval &>
 init_conf_items_hook
 {
-	init_conf_items,
+	handle_init_conf_items,
 	{
-		{ "_site",       "vm.notify"      },
+		{ "_site",       "vm.effect"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.member"  },
 		{ "membership",  "join"           },
@@ -228,7 +242,8 @@ catch(const std::exception &e)
 }
 
 static void
-create_conf_room(const m::event &)
+create_conf_room(const m::event &,
+                 m::vm::eval &)
 {
 	m::create(conf_room_id, m::me.user_id);
 
@@ -240,12 +255,12 @@ create_conf_room(const m::event &)
 	}
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 create_conf_room_hook
 {
 	create_conf_room,
 	{
-		{ "_site",       "vm.notify"      },
+		{ "_site",       "vm.effect"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	}
@@ -274,7 +289,7 @@ rehash_conf(const bool &existing)
 void
 reload_conf()
 {
-	init_conf_items(m::event{});
+	init_conf_items();
 }
 
 void

@@ -13,7 +13,8 @@ namespace ircd::m::vm
 	extern hook::site<eval &> commit_hook;  ///< Called when this server issues event
 	extern hook::site<eval &> fetch_hook;   ///< Called to resolve dependencies
 	extern hook::site<eval &> eval_hook;    ///< Called when evaluating event
-	extern hook::site<> notify_hook;        ///< Called after successful evaluation
+	extern hook::site<eval &> notify_hook;  ///< Called to broadcast successful eval
+	extern hook::site<eval &> effect_hook;  ///< Called to apply effects of eval
 
 	static void write_commit(eval &);
 	static fault _eval_edu(eval &, const event &);
@@ -56,6 +57,12 @@ decltype(ircd::m::vm::notify_hook)
 ircd::m::vm::notify_hook
 {
 	{ "name", "vm.notify" }
+};
+
+decltype(ircd::m::vm::effect_hook)
+ircd::m::vm::effect_hook
+{
+	{ "name", "vm.effect" }
 };
 
 //
@@ -466,16 +473,11 @@ try
 	if(ret != fault::ACCEPT)
 		return ret;
 
-	vm::accepted accepted
-	{
-		event, &opts, eval.copts, &report
-	};
+	if(opts.notify)
+		notify_hook(event, eval);
 
 	if(opts.effects)
-		notify_hook(event);
-
-	if(opts.notify)
-		vm::accept(accepted);
+		effect_hook(event, eval);
 
 	if(opts.debuglog_accept)
 		log::debug

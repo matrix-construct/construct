@@ -17,7 +17,7 @@ extern "C" bool verify__keys(const m::keys &) noexcept;
 extern "C" void get__keys(const string_view &server, const string_view &key_id, const m::keys::closure &);
 extern "C" bool query__keys(const string_view &query_server, const m::keys::queries &, const m::keys::closure_bool &);
 
-extern "C" void create_my_key(const m::event &);
+extern "C" void create_my_key(const m::event &, m::vm::eval &);
 static void init_my_ed25519();
 static void init_my_tls_crt();
 extern "C" void init_my_keys();
@@ -276,19 +276,20 @@ init_my_ed25519()
 	};
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 create_my_key_hook
 {
 	create_my_key,
 	{
-		{ "_site",     "vm.notify"           },
+		{ "_site",     "vm.effect"           },
 		{ "room_id",   m::my_node.room_id()  },
 		{ "type",      "m.room.create"       },
 	}
 };
 
 void
-create_my_key(const m::event &)
+create_my_key(const m::event &,
+              m::vm::eval &)
 {
 	const json::members verify_keys_
 	{{

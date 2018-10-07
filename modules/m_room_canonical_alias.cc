@@ -29,7 +29,8 @@ alias_room
 };
 
 void
-_changed_canonical_alias(const m::event &event)
+_changed_canonical_alias(const m::event &event,
+                         m::vm::eval &)
 {
 	const m::room::alias &alias
 	{
@@ -57,12 +58,12 @@ _changed_canonical_alias(const m::event &event)
 	};
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _changed_canonical_alias_hookfn
 {
 	_changed_canonical_alias,
 	{
-		{ "_site",    "vm.notify"               },
+		{ "_site",    "vm.effect"               },
 		{ "type",     "m.room.canonical_alias"  },
 	}
 };

@@ -17,7 +17,8 @@ IRCD_MODULE
 };
 
 static void
-affect_user_room(const m::event &event)
+affect_user_room(const m::event &event,
+                 m::vm::eval &eval)
 {
 	const auto &room_id
 	{
@@ -43,11 +44,11 @@ affect_user_room(const m::event &event)
 	send(user_room, sender, "ircd.member", room_id, at<"content"_>(event));
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 affect_user_room_hookfn
 {
 	{
-		{ "_site",          "vm.notify"     },
+		{ "_site",          "vm.effect"     },
 		{ "type",           "m.room.member" },
 	},
 	affect_user_room
@@ -72,16 +73,17 @@ _can_join_room_hookfn
 };
 
 static void
-_join_room(const m::event &event)
+_join_room(const m::event &event,
+           m::vm::eval &eval)
 {
 
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _join_room_hookfn
 {
 	{
-		{ "_site",          "vm.notify"     },
+		{ "_site",          "vm.effect"     },
 		{ "type",           "m.room.member" },
 		{ "membership",     "join"          },
 	},

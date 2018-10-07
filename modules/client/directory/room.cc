@@ -253,16 +253,16 @@ room_alias_fetch(const mutable_buffer &out,
 	return response;
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _create_alias_room
 {
 	{
-		{ "_site",       "vm.notify"      },
+		{ "_site",       "vm.effect"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	},
 
-	[](const m::event &)
+	[](const m::event &, m::vm::eval &)
 	{
 		m::create(alias_room_id, m::me.user_id);
 	}

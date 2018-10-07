@@ -17,7 +17,8 @@ IRCD_MODULE
 };
 
 static void
-_changed_rules(const m::event &event)
+_changed_rules(const m::event &event,
+               m::vm::eval &)
 {
 	const m::user::id &sender
 	{
@@ -40,12 +41,12 @@ _changed_rules(const m::event &event)
 	send(public_room, sender, "ircd.room", room_id, json::strung{event});
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _changed_rules_hookfn
 {
 	_changed_rules,
 	{
-		{ "_site",    "vm.notify"          },
+		{ "_site",    "vm.effect"          },
 		{ "type",     "m.room.join_rules"  },
 	}
 };

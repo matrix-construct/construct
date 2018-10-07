@@ -366,7 +366,8 @@ handle_my_profile_changed__avatar_url(const m::event &event)
 }
 
 static void
-handle_my_profile_changed(const m::event &event)
+handle_my_profile_changed(const m::event &event,
+                          m::vm::eval &eval)
 {
 	if(!my(event))
 		return;
@@ -389,12 +390,12 @@ handle_my_profile_changed(const m::event &event)
 		return handle_my_profile_changed__avatar_url(event);
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 my_profile_changed
 {
 	handle_my_profile_changed,
 	{
-		{ "_site",  "vm.notify"     },
+		{ "_site",  "vm.effect"     },
 		{ "type",   "ircd.profile"  },
 	}
 };

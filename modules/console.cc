@@ -4163,8 +4163,8 @@ console_cmd__stage__broadcast(opt &out, const string_view &line)
 	{
 		const m::vm::opts opts;
 		const m::event event{stage.at(i)};
-		m::vm::accepted a{event, &opts, nullptr, &opts.report};
-		m::vm::accept(a);
+		//m::vm::accepted a{event, &opts, nullptr, &opts.report};
+		//m::vm::accept(a);
 	}
 
 	return true;
@@ -4477,12 +4477,14 @@ console_cmd__event__sign(opt &out, const string_view &line)
 	if(op == "accept")
 	{
 		const m::vm::opts opts;
+/*
 		m::vm::accepted a
 		{
 			event, &opts, nullptr, &opts.report
 		};
 
 		m::vm::accept(a);
+*/
 	}
 	else if(op == "eval")
 	{
@@ -7462,8 +7464,8 @@ console_cmd__feds__resend(opt &out, const string_view &line)
 	};
 
 	const m::vm::opts opts;
-	m::vm::accepted a{event, &opts, nullptr, &opts.report};
-	m::vm::accept(a);
+//	m::vm::accepted a{event, &opts, nullptr, &opts.report};
+//	m::vm::accept(a);
 	return true;
 }
 

@@ -328,7 +328,8 @@ put__presence_status(client &client,
 }
 
 static void
-handle_my_presence_changed(const m::event &event)
+handle_my_presence_changed(const m::event &event,
+                           m::vm::eval &eval)
 {
 	if(!my(event))
 		return;
@@ -349,12 +350,12 @@ handle_my_presence_changed(const m::event &event)
 
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 my_presence_changed
 {
 	handle_my_presence_changed,
 	{
-		{ "_site",  "vm.notify"      },
+		{ "_site",  "vm.effect"      },
 		{ "type",   "ircd.presence"  },
 	}
 };

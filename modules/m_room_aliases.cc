@@ -29,7 +29,8 @@ alias_room
 };
 
 void
-_changed_aliases(const m::event &event)
+_changed_aliases(const m::event &event,
+                 m::vm::eval &)
 {
 	const m::room::id &room_id
 	{
@@ -61,12 +62,12 @@ _changed_aliases(const m::event &event)
 	}
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 _changed_aliases_hookfn
 {
 	_changed_aliases,
 	{
-		{ "_site",    "vm.notify"       },
+		{ "_site",    "vm.effect"       },
 		{ "type",     "m.room.aliases"  },
 	}
 };

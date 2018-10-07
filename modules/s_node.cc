@@ -49,34 +49,36 @@ exists__nodeid(const m::node::id &node_id)
 }
 
 static void
-create_my_node_room(const m::event &)
+create_my_node_room(const m::event &,
+                    m::vm::eval &)
 {
 	create(m::my_node.room_id(), m::me.user_id);
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 create_my_node_hook
 {
 	create_my_node_room,
 	{
-		{ "_site",       "vm.notify"      },
+		{ "_site",       "vm.effect"      },
 		{ "room_id",     "!nodes"         },
 		{ "type",        "m.room.create"  },
 	}
 };
 
 static void
-create_nodes_room(const m::event &)
+create_nodes_room(const m::event &,
+                  m::vm::eval &)
 {
 	create(nodes_room, m::me.user_id);
 }
 
-const m::hookfn<>
+const m::hookfn<m::vm::eval &>
 create_nodes_hook
 {
 	create_nodes_room,
 	{
-		{ "_site",       "vm.notify"      },
+		{ "_site",       "vm.effect"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	}
