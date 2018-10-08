@@ -3079,18 +3079,16 @@ ircd::m::hook::maps::del(base &hook,
 {
 	size_t ret{0};
 	const auto unmap{[&hook, &ret]
-	(auto &map, const string_view &key)
+	(auto &map, const string_view &value)
 	{
-		auto pit{map.equal_range(key)};
-		for(; pit.first != pit.second; ++pit.first)
+		auto pit{map.equal_range(value)};
+		while(pit.first != pit.second)
 			if(pit.first->second == &hook)
 			{
+				pit.first = map.erase(pit.first);
 				++ret;
-				return map.erase(pit.first);
 			}
-
-		assert(0);
-		return end(map);
+			else ++pit.first;
 	}};
 
 	// Unconditional attempt to remove from always.
