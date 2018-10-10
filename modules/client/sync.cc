@@ -374,10 +374,9 @@ ircd::m::sync::longpoll::sync_room(client &client,
 		false
 	};
 
-	m::event::id::buf last_read_buf;
-	const m::event::id last_read
+	m::event::id::buf last_read
 	{
-		m::receipt::read(last_read_buf, room, args.request.user_id)
+		m::receipt::read(last_read, room, args.request.user_id)
 	};
 
 	const auto last_read_idx
@@ -507,10 +506,9 @@ ircd::m::sync::linear::handle(client &client,
 		const json::strung state_serial{state.data(), state.data() + state.size()};
 		const json::strung ephemeral_serial{ephemeral.data(), ephemeral.data() + ephemeral.size()};
 
-		m::event::id::buf last_read_buf;
-		const m::event::id last_read
+		m::event::id::buf last_read
 		{
-			m::receipt::read(last_read_buf, room_id, sp.user)
+			m::receipt::read(last_read, room_id, sp.user)
 		};
 
 		const auto last_read_idx
@@ -1201,10 +1199,9 @@ ircd::m::sync::polylog::room_unread_notifications(shortpoll &sp,
                                                   json::stack::object &out,
                                                   const m::room &room)
 {
-	m::event::id::buf last_read_buf;
-	const auto last_read
+	m::event::id::buf last_read
 	{
-		m::receipt::read(last_read_buf, room, sp.user)
+		m::receipt::read(last_read, room, sp.user)
 	};
 
 	if(!last_read)
