@@ -103,7 +103,13 @@ struct ircd::m::vm::opts
 	/// Make writes to database
 	bool write {true};
 
-	/// Apply effects of the eval
+	/// Make fetches or false to bypass fetch stage.
+	bool fetch {true};
+
+	/// Call eval hooks or false to bypass this stage.
+	bool eval {true};
+
+	/// Apply effects of this event or false to bypass this stage.
 	bool effects {true};
 
 	/// Broadcast to clients/servers. When true, individual notify options

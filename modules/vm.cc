@@ -596,7 +596,9 @@ enum ircd::m::vm::fault
 ircd::m::vm::_eval_edu(eval &eval,
                        const event &event)
 {
-	eval_hook(event, eval);
+	if(eval.opts->eval)
+		eval_hook(event, eval);
+
 	return fault::ACCEPT;
 }
 
@@ -625,7 +627,13 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		at<"type"_>(event)
 	};
 
-	if(!opts.replays && exists(event_id))  //TODO: exclusivity
+	const bool already_exists
+	{
+		exists(event_id)
+	};
+
+	  //TODO: ABA
+	if(already_exists && !opts.replays)
 		throw error
 		{
 			fault::EXISTS, "Event has already been evaluated."
@@ -646,13 +654,16 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	};
 
 	// Obtain sequence number here
-	eval.sequence = ++vm::current_sequence;
+	if(opts.write)
+		eval.sequence = ++vm::current_sequence;
 
 	// Fetch dependencies
-	fetch_hook(event, eval);
+	if(opts.fetch)
+		fetch_hook(event, eval);
 
 	// Evaluation by module hooks
-	eval_hook(event, eval);
+	if(opts.eval)
+		eval_hook(event, eval);
 
 	if(!opts.write)
 		return fault::ACCEPT;
