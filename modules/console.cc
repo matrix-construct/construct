@@ -7463,9 +7463,19 @@ console_cmd__feds__resend(opt &out, const string_view &line)
 		event_id
 	};
 
-	const m::vm::opts opts;
-//	m::vm::accepted a{event, &opts, nullptr, &opts.report};
-//	m::vm::accept(a);
+	m::vm::opts opts;
+	opts.replays = true;
+	opts.conforming = false;
+	opts.fetch = false;
+	opts.eval = false;
+	opts.write = false;
+	opts.effects = false;
+	opts.notify = true;
+	m::vm::eval
+	{
+		m::event{event}, opts
+	};
+
 	return true;
 }
 
