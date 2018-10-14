@@ -80,7 +80,7 @@ namespace ircd::m::sync::polylog
 	static void room_account_data(shortpoll &, json::stack::object &, const m::room &);
 	static void room_unread_notifications(shortpoll &, json::stack::object &, const m::room &);
 	static void sync_room(shortpoll &, json::stack::object &, const m::room &, const string_view &membership);
-	static void rooms__membership(shortpoll &, json::stack::object &, const string_view &membership);
+	static void sync_rooms(shortpoll &, json::stack::object &, const string_view &membership);
 	static void rooms(shortpoll &, json::stack::object &);
 	static void presence(shortpoll &, json::stack::object &);
 	static void account_data(shortpoll &, json::stack::object &);

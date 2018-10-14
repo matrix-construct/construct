@@ -374,9 +374,10 @@ ircd::m::sync::longpoll::sync_room(client &client,
 		false
 	};
 
-	m::event::id::buf last_read
+	m::event::id::buf last_read_buf;
+	const auto &last_read
 	{
-		m::receipt::read(last_read, room, args.request.user_id)
+		m::receipt::read(last_read_buf, room.room_id, args.request.user_id)
 	};
 
 	const auto last_read_idx
@@ -506,9 +507,10 @@ ircd::m::sync::linear::handle(client &client,
 		const json::strung state_serial{state.data(), state.data() + state.size()};
 		const json::strung ephemeral_serial{ephemeral.data(), ephemeral.data() + ephemeral.size()};
 
-		m::event::id::buf last_read
+		m::event::id::buf last_read_buf;
+		const auto &last_read
 		{
-			m::receipt::read(last_read, room_id, sp.user)
+			m::receipt::read(last_read_buf, room_id, sp.user)
 		};
 
 		const auto last_read_idx
@@ -675,9 +677,6 @@ ircd::m::sync::polylog::presence(shortpoll &sp,
 		sp.user
 	};
 
-try
-{
-
 	mitsein.for_each("join", [&sp, &array]
 	(const m::user &user)
 	{
@@ -716,20 +715,6 @@ try
 			}
 		});
 	});
-
-}
-catch(const json::not_found &e)
-{
-	log::critical
-	{
-		"polylog sync for presence error %lu to %lu (vm @ %zu) :%s"
-		,sp.since
-		,sp.current
-		,m::vm::current_sequence
-		,e.what()
-	};
-}
-
 }
 
 void
@@ -790,42 +775,28 @@ void
 ircd::m::sync::polylog::rooms(shortpoll &sp,
                               json::stack::object &object)
 {
-	{
-		json::stack::member member{object, "join"};
-		json::stack::object object{member};
-		rooms__membership(sp, object, "join");
-	}
-
-	{
-		json::stack::member member{object, "leave"};
-		json::stack::object object{member};
-		rooms__membership(sp, object, "leave");
-	}
-
-	{
-		json::stack::member member{object, "invite"};
-		json::stack::object object{member};
-		rooms__membership(sp, object, "invite");
-	}
+	sync_rooms(sp, object, "invite");
+	sync_rooms(sp, object, "join");
+	sync_rooms(sp, object, "leave");
+	sync_rooms(sp, object, "ban");
 }
 
 void
-ircd::m::sync::polylog::rooms__membership(shortpoll &sp,
-                                          json::stack::object &object,
-                                          const string_view &membership)
+ircd::m::sync::polylog::sync_rooms(shortpoll &sp,
+                                   json::stack::object &out,
+                                   const string_view &membership)
 {
-	sp.rooms.for_each(membership, [&]
-	(const m::room &room, const string_view &)
+	json::stack::member rooms_member{out, membership};
+	json::stack::object rooms_object{rooms_member};
+	sp.rooms.for_each(membership, [&sp, &rooms_object]
+	(const m::room &room, const string_view &membership)
 	{
 		if(head_idx(std::nothrow, room) <= sp.since)
 			return;
 
-		const m::room::id &room_id{room.room_id};
-		json::stack::member member{object, room_id};
+		json::stack::member member{rooms_object, room.room_id};
 		json::stack::object object{member};
-		std::cout << "sync: " << room_id << std::endl;
 		sync_room(sp, object, room, membership);
-		std::cout << "done: " << room_id << std::endl;
 	});
 }
 
@@ -879,9 +850,9 @@ try
 }
 catch(const json::not_found &e)
 {
-	log::error
+	log::critical
 	{
-		"polylog sync for room %s error %lu to %lu (vm @ %zu) :%s"
+		"polylog sync room %s error %lu to %lu (vm @ %zu) :%s"
 		,string_view{room.room_id}
 		,sp.since
 		,sp.current
@@ -902,9 +873,7 @@ ircd::m::sync::polylog::room_state(shortpoll &sp,
 			"content",
 			"depth",
 			"event_id",
-			"membership",
 			"origin_server_ts",
-			//"prev_events",
 			"redacts",
 			"room_id",
 			"sender",
@@ -1000,7 +969,6 @@ ircd::m::sync::polylog::room_timeline_events(shortpoll &sp,
 			"content",
 			"depth",
 			"event_id",
-			"membership",
 			"origin_server_ts",
 			"prev_events",
 			"redacts",
@@ -1199,12 +1167,8 @@ ircd::m::sync::polylog::room_unread_notifications(shortpoll &sp,
                                                   json::stack::object &out,
                                                   const m::room &room)
 {
-	m::event::id::buf last_read
-	{
-		m::receipt::read(last_read, room, sp.user)
-	};
-
-	if(!last_read)
+	m::event::id::buf last_read;
+	if(!m::receipt::read(last_read, room.room_id, sp.user))
 		return;
 
 	const auto last_read_idx
