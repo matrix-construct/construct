@@ -226,7 +226,11 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 
 	log::warning
 	{
-		log, "DNS timeout id:%u on attempt %u", id, tag.tries
+		log, "DNS timeout id:%u on attempt %u of %u '%s'",
+		id,
+		tag.tries,
+		size_t(retry_max),
+		host(tag.hp)
 	};
 
 	tag.last = steady_point{};
@@ -256,7 +260,9 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 
 		log::error
 		{
-			log, "DNS timeout id:%u", id
+			log, "DNS timeout id:%u for '%s'",
+			id,
+			string(tag.hp)
 		};
 
 		tag.cb(std::make_exception_ptr(system_error{ec}), tag.hp, {});
