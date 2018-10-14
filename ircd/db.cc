@@ -1427,8 +1427,13 @@ ircd::db::database::column::column(database *const &d,
 	// Table options
 	//
 
+	// Block based table index type.
+	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
+	table_opts.partition_filters = true;
+
 	// Setup the block size
 	table_opts.block_size = this->descriptor.block_size;
+	table_opts.metadata_block_size = 512;
 
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor.cache_size);
@@ -1448,6 +1453,12 @@ ircd::db::database::column::column(database *const &d,
 	// Tickers::READ_AMP_TOTAL_READ_BYTES / Tickers::READ_AMP_ESTIMATE_USEFUL_BYTES
 	//table_opts.read_amp_bytes_per_bit = 8;
 
+	// Specify that index blocks should use the cache. If not, they will be read into
+	// RAM by rocksdb internally which is bad for a large db and/or small block sizes.
+	table_opts.cache_index_and_filter_blocks = true;
+	table_opts.cache_index_and_filter_blocks_with_high_priority = true;
+
+	// Finally set the table options in the column options.
 	this->options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_opts));
 
 	//
@@ -2330,7 +2341,7 @@ ircd::db::database::cache::DEFAULT_STRICT
 decltype(ircd::db::database::cache::DEFAULT_HI_PRIO)
 ircd::db::database::cache::DEFAULT_HI_PRIO
 {
-	0.04
+	0.10
 };
 
 //
