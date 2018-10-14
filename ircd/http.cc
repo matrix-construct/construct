@@ -746,6 +746,10 @@ ircd::http::throw_error(const qi::expectation_failure<const char *> &e,
 	};
 }
 
+//
+// error
+//
+
 ircd::http::error::error(const http::code &code,
                          std::string content,
                          const vector_view<const header> &headers)
@@ -766,6 +770,10 @@ ircd::http::error::error(const http::code &code,
 {
 	snprintf(buf, sizeof(buf), "%u %s", uint(code), status(code).c_str());
 }
+
+//
+// status
+//
 
 ircd::http::code
 ircd::http::status(const string_view &str)
