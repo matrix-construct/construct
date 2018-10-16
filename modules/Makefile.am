@@ -99,6 +99,7 @@ m_room_join_rules_la_SOURCES = m_room_join_rules.cc
 m_room_history_visibility_la_SOURCES = m_room_history_visibility.cc
 m_room_canonical_alias_la_SOURCES = m_room_canonical_alias.cc
 m_room_aliases_la_SOURCES = m_room_aliases.cc
+m_room_message_la_SOURCES = m_room_message.cc
 
 m_module_LTLIBRARIES = \
 	m_noop.la \
@@ -114,6 +115,7 @@ m_module_LTLIBRARIES = \
 	m_room_history_visibility.la \
 	m_room_canonical_alias.la \
 	m_room_aliases.la \
+	m_room_message.la \
 	###
 
 ###############################################################################
