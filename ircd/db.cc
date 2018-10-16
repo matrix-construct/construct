@@ -7378,6 +7378,7 @@ ircd::db::row::row(database &d,
 	std::vector<Iterator *> iterators;
 	{
 		const ctx::uninterruptible ui;
+		const ctx::critical_assertion ca;
 		throw_on_error
 		{
 			d.d->NewIterators(options, handles, &iterators)
@@ -8693,6 +8694,7 @@ ircd::db::seek(database::column &c,
 	{
 		database &d(*c.d);
 		rocksdb::ColumnFamilyHandle *const &cf(c);
+		const ctx::critical_assertion ca;
 		it.reset(d.d->NewIterator(opts, cf));
 	}
 
