@@ -182,6 +182,7 @@ namespace ircd::m::dbs::desc
 
 	// events index
 	extern conf::item<size_t> events__event_idx__block__size;
+	extern conf::item<size_t> events__event_idx__meta_block__size;
 	extern conf::item<size_t> events__event_idx__cache__size;
 	extern conf::item<size_t> events__event_idx__cache_comp__size;
 	extern const db::descriptor events__event_idx;
@@ -194,12 +195,14 @@ namespace ircd::m::dbs::desc
 
 	// room head mapping sequence
 	extern conf::item<size_t> events__room_head__block__size;
+	extern conf::item<size_t> events__room_head__meta_block__size;
 	extern conf::item<size_t> events__room_head__cache__size;
 	extern const db::prefix_transform events__room_head__pfx;
 	extern const db::descriptor events__room_head;
 
 	// room events sequence
 	extern conf::item<size_t> events__room_events__block__size;
+	extern conf::item<size_t> events__room_events__meta_block__size;
 	extern conf::item<size_t> events__room_events__cache__size;
 	extern conf::item<size_t> events__room_events__cache_comp__size;
 	extern const db::prefix_transform events__room_events__pfx;
@@ -208,6 +211,7 @@ namespace ircd::m::dbs::desc
 
 	// room present joined members sequence
 	extern conf::item<size_t> events__room_joined__block__size;
+	extern conf::item<size_t> events__room_joined__meta_block__size;
 	extern conf::item<size_t> events__room_joined__cache__size;
 	extern conf::item<size_t> events__room_joined__cache_comp__size;
 	extern const db::prefix_transform events__room_joined__pfx;
@@ -215,6 +219,7 @@ namespace ircd::m::dbs::desc
 
 	// room present state mapping sequence
 	extern conf::item<size_t> events__room_state__block__size;
+	extern conf::item<size_t> events__room_state__meta_block__size;
 	extern conf::item<size_t> events__room_state__cache__size;
 	extern conf::item<size_t> events__room_state__cache_comp__size;
 	extern const db::prefix_transform events__room_state__pfx;
@@ -222,6 +227,7 @@ namespace ircd::m::dbs::desc
 
 	// state btree node key-value store
 	extern conf::item<size_t> events__state_node__block__size;
+	extern conf::item<size_t> events__state_node__meta_block__size;
 	extern conf::item<size_t> events__state_node__cache__size;
 	extern conf::item<size_t> events__state_node__cache_comp__size;
 	extern const db::descriptor events__state_node;

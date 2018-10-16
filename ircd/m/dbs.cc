@@ -580,6 +580,13 @@ ircd::m::dbs::desc::events__event_idx__block__size
 	{ "default",  512L                                      },
 };
 
+decltype(ircd::m::dbs::desc::events__event_idx__meta_block__size)
+ircd::m::dbs::desc::events__event_idx__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_idx.meta_block.size" },
+	{ "default",  512L                                           },
+};
+
 decltype(ircd::m::dbs::desc::events__event_idx__cache__size)
 ircd::m::dbs::desc::events__event_idx__cache__size
 {
@@ -648,6 +655,9 @@ ircd::m::dbs::desc::events__event_idx
 
 	// block size
 	size_t(events__event_idx__block__size),
+
+	// meta_block size
+	size_t(events__event_idx__meta_block__size),
 };
 
 decltype(ircd::m::dbs::desc::events__event_bad__cache__size)
@@ -736,6 +746,13 @@ ircd::m::dbs::desc::events__room_head__block__size
 {
 	{ "name",     "ircd.m.dbs.events._room_head.block.size" },
 	{ "default",  512L                                      },
+};
+
+decltype(ircd::m::dbs::desc::events__room_head__meta_block__size)
+ircd::m::dbs::desc::events__room_head__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._room_head.meta_block.size" },
+	{ "default",  512L                                           },
 };
 
 decltype(ircd::m::dbs::desc::events__room_head__cache__size)
@@ -849,6 +866,9 @@ ircd::m::dbs::desc::events__room_head
 
 	// block size
 	size_t(events__room_head__block__size),
+
+	// meta_block size
+	size_t(events__room_head__meta_block__size),
 };
 
 //
@@ -859,7 +879,14 @@ decltype(ircd::m::dbs::desc::events__room_events__block__size)
 ircd::m::dbs::desc::events__room_events__block__size
 {
 	{ "name",     "ircd.m.dbs.events._room_events.block.size" },
-	{ "default",  8192L                                       },
+	{ "default",  4096L                                       },
+};
+
+decltype(ircd::m::dbs::desc::events__room_events__meta_block__size)
+ircd::m::dbs::desc::events__room_events__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._room_events.meta_block.size" },
+	{ "default",  4096L                                            },
 };
 
 decltype(ircd::m::dbs::desc::events__room_events__cache__size)
@@ -1112,6 +1139,9 @@ ircd::m::dbs::desc::events__room_events
 
 	// block size
 	size_t(events__room_events__block__size),
+
+	// meta_block size
+	size_t(events__room_events__meta_block__size),
 };
 
 //
@@ -1123,6 +1153,13 @@ ircd::m::dbs::desc::events__room_joined__block__size
 {
 	{ "name",     "ircd.m.dbs.events._room_joined.block.size" },
 	{ "default",  4096L                                       },
+};
+
+decltype(ircd::m::dbs::desc::events__room_joined__meta_block__size)
+ircd::m::dbs::desc::events__room_joined__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._room_joined.meta_block.size" },
+	{ "default",  4096L                                            },
 };
 
 decltype(ircd::m::dbs::desc::events__room_joined__cache__size)
@@ -1259,6 +1296,9 @@ ircd::m::dbs::desc::events__room_joined
 
 	// block size
 	size_t(events__room_joined__block__size),
+
+	// meta_block size
+	size_t(events__room_joined__meta_block__size),
 };
 
 //
@@ -1269,7 +1309,14 @@ decltype(ircd::m::dbs::desc::events__room_state__block__size)
 ircd::m::dbs::desc::events__room_state__block__size
 {
 	{ "name",     "ircd.m.dbs.events._room_state.block.size" },
-	{ "default",  8192L                                      },
+	{ "default",  512L                                       },
+};
+
+decltype(ircd::m::dbs::desc::events__room_state__meta_block__size)
+ircd::m::dbs::desc::events__room_state__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._room_state.meta_block.size" },
+	{ "default",  512L                                            },
 };
 
 decltype(ircd::m::dbs::desc::events__room_state__cache__size)
@@ -1404,6 +1451,9 @@ ircd::m::dbs::desc::events__room_state
 
 	// block size
 	size_t(events__room_state__block__size),
+
+	// meta_block size
+	size_t(events__room_state__meta_block__size),
 };
 
 //
@@ -1415,6 +1465,13 @@ ircd::m::dbs::desc::events__state_node__block__size
 {
 	{ "name",     "ircd.m.dbs.events._state_node.block.size" },
 	{ "default",  512L                                       },
+};
+
+decltype(ircd::m::dbs::desc::events__state_node__meta_block__size)
+ircd::m::dbs::desc::events__state_node__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._state_node.meta_block.size" },
+	{ "default",  1024L                                           },
 };
 
 decltype(ircd::m::dbs::desc::events__state_node__cache__size)
@@ -1486,6 +1543,9 @@ ircd::m::dbs::desc::events__state_node
 
 	// block size
 	size_t(events__state_node__block__size),
+
+	// meta_block size
+	size_t(events__state_node__meta_block__size),
 };
 
 //
