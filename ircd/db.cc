@@ -7992,6 +7992,10 @@ ircd::db::has(column &column,
 	database::column &c(column);
 
 	// Perform a co-RP query to the filtration
+/*
+	// NOTE disabled for rocksdb >= v5.15 due to a regression
+	// where rocksdb does not init SuperVersion data in the column
+	// family handle and this codepath triggers null derefs and ub.
 	if(c.table_opts.filter_policy)
 	{
 		const auto k(slice(key));
@@ -8001,6 +8005,7 @@ ircd::db::has(column &column,
 		if(!d.d->KeyMayExist(opts, c, k, &discard, nullptr))
 			return false;
 	}
+*/
 
 	const auto it
 	{
