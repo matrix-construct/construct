@@ -67,6 +67,14 @@ struct ircd::db::descriptor
 	/// than this size.
 	size_t block_size { 512 };
 
+	/// Data block size for metadata blocks. Other configuration which may
+	/// not yet be in this descriptor affects the best choice of this param;
+	/// generally these blocks are preloaded on DB open. They can also
+	/// participate in the block cache. At the time this comment was written
+	/// top-level metadata blocks are preloaded and leaf blocks are put in
+	/// the cache.
+	size_t meta_block_size { 512 };
+
 	/// User given compaction callback surface.
 	db::compactor compactor {};
 };

@@ -1444,8 +1444,8 @@ ircd::db::database::column::column(database *const &d,
 	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
 
 	// Setup the block size
-	table_opts.metadata_block_size = 512;
 	table_opts.block_size = this->descriptor.block_size;
+	table_opts.metadata_block_size = this->descriptor.meta_block_size;
 
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor.cache_size);
