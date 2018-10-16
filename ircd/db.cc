@@ -1429,11 +1429,23 @@ ircd::db::database::column::column(database *const &d,
 
 	// Block based table index type.
 	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
+	table_opts.enable_index_compression = false;
 	table_opts.partition_filters = true;
 
+	// Specify that index blocks should use the cache. If not, they will be
+	// pre-read into RAM by rocksdb internally. Because of the above
+	// TwoLevelIndex + partition_filters configuration on RocksDB v5.15 it's
+	// better to use pre-read except in the case of a massive database. No
+	// known deployments which exceed partitioned pre-read exist so these
+	// settings are unconditionally false.
+	table_opts.cache_index_and_filter_blocks = false;
+	table_opts.cache_index_and_filter_blocks_with_high_priority = false;
+	table_opts.pin_top_level_index_and_filter = false;
+	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
+
 	// Setup the block size
-	table_opts.block_size = this->descriptor.block_size;
 	table_opts.metadata_block_size = 512;
+	table_opts.block_size = this->descriptor.block_size;
 
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor.cache_size);
@@ -1452,11 +1464,6 @@ ircd::db::database::column::column(database *const &d,
 
 	// Tickers::READ_AMP_TOTAL_READ_BYTES / Tickers::READ_AMP_ESTIMATE_USEFUL_BYTES
 	//table_opts.read_amp_bytes_per_bit = 8;
-
-	// Specify that index blocks should use the cache. If not, they will be read into
-	// RAM by rocksdb internally which is bad for a large db and/or small block sizes.
-	table_opts.cache_index_and_filter_blocks = true;
-	table_opts.cache_index_and_filter_blocks_with_high_priority = true;
 
 	// Finally set the table options in the column options.
 	this->options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_opts));
