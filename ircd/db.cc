@@ -6355,9 +6355,10 @@ noexcept
 }
 
 rocksdb::Status
-ircd::db::txn::handler::MarkBeginPrepare()
+ircd::db::txn::handler::MarkBeginPrepare(bool b)
 noexcept
 {
+	ircd::assertion("not implemented");
 	return Status::OK();
 }
 
@@ -6365,6 +6366,7 @@ rocksdb::Status
 ircd::db::txn::handler::MarkEndPrepare(const Slice &xid)
 noexcept
 {
+	ircd::assertion("not implemented");
 	return Status::OK();
 }
 
@@ -6372,6 +6374,7 @@ rocksdb::Status
 ircd::db::txn::handler::MarkCommit(const Slice &xid)
 noexcept
 {
+	ircd::assertion("not implemented");
 	return Status::OK();
 }
 
@@ -6379,6 +6382,7 @@ rocksdb::Status
 ircd::db::txn::handler::MarkRollback(const Slice &xid)
 noexcept
 {
+	ircd::assertion("not implemented");
 	return Status::OK();
 }
 

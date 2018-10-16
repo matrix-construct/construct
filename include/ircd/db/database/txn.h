@@ -32,7 +32,7 @@ struct ircd::db::txn::handler
 	Status MarkRollback(const Slice &xid) noexcept override;
 	Status MarkCommit(const Slice &xid) noexcept override;
 	Status MarkEndPrepare(const Slice &xid) noexcept override;
-	Status MarkBeginPrepare() noexcept override;
+	Status MarkBeginPrepare(bool = false) noexcept override;
 
 	Status MergeCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
 	Status SingleDeleteCF(const uint32_t cfid, const Slice &) noexcept override;
