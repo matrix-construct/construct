@@ -181,16 +181,31 @@ void
 ircd::assertion()
 noexcept(RB_DEBUG_LEVEL)
 {
+	static const auto &default_message
+	{
+		"without exception"_sv
+	};
+
+	assertion(default_message);
+}
+
+void
+ircd::assertion(const string_view &msg)
+noexcept(RB_DEBUG_LEVEL)
+{
+	log::critical
+	{
+		"IRCd Assertion :%s", msg
+	};
+
 	if(std::uncaught_exceptions())
 		assertion(std::current_exception());
 
-	log::critical
-	{
-		"IRCd Assertion without exception."
-	};
-
 	assert(0);
-	throw assertive{};
+	throw assertive
+	{
+		"IRCd Assertion :%s", msg
+	};
 }
 
 void

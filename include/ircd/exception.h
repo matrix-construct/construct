@@ -32,6 +32,7 @@ namespace ircd
 	// Terminates in debug mode; throws in release mode; always logs critical.
 	[[noreturn]] void assertion(const std::exception &) noexcept(RB_DEBUG_LEVEL);
 	[[noreturn]] void assertion(std::exception_ptr) noexcept(RB_DEBUG_LEVEL);
+	[[noreturn]] void assertion(const string_view &) noexcept(RB_DEBUG_LEVEL);
 	[[noreturn]] void assertion() noexcept(RB_DEBUG_LEVEL);
 
 	// util
