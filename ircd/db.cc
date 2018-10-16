@@ -7991,12 +7991,15 @@ ircd::db::has(column &column,
 	database::column &c(column);
 
 	// Perform a co-RP query to the filtration
-	const auto k(slice(key));
-	auto opts(make_opts(gopts));
-	opts.read_tier = NON_BLOCKING;
-	thread_local std::string discard;
-	if(!d.d->KeyMayExist(opts, c, k, &discard, nullptr))
-		return false;
+	if(c.table_opts.filter_policy)
+	{
+		const auto k(slice(key));
+		auto opts(make_opts(gopts));
+		opts.read_tier = NON_BLOCKING;
+		thread_local std::string discard;
+		if(!d.d->KeyMayExist(opts, c, k, &discard, nullptr))
+			return false;
+	}
 
 	const auto it
 	{
