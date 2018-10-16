@@ -72,6 +72,9 @@ namespace ircd::m::sync::linear
 
 namespace ircd::m::sync::polylog
 {
+	extern conf::item<bool> prefetch_state;
+	extern conf::item<bool> prefetch_timeline;
+
 	static void room_state(shortpoll &, json::stack::object &, const m::room &);
 	static m::event::id::buf room_timeline_events(shortpoll &, json::stack::array &, const m::room &, bool &limited);
 	static void room_timeline(shortpoll &, json::stack::object &, const m::room &);

@@ -616,6 +616,20 @@ ircd::m::sync::linear::handle(client &client,
 // polylog
 //
 
+ircd::conf::item<bool>
+ircd::m::sync::polylog::prefetch_state
+{
+	{ "name",     "ircd.client.sync.polylog.prefetch.state"  },
+	{ "default",  true                                       },
+};
+
+ircd::conf::item<bool>
+ircd::m::sync::polylog::prefetch_timeline
+{
+	{ "name",     "ircd.client.sync.polylog.prefetch.timeline"  },
+	{ "default",  true                                          },
+};
+
 bool
 ircd::m::sync::polylog::handle(client &client,
                                shortpoll &sp,
@@ -897,14 +911,17 @@ ircd::m::sync::polylog::room_state(shortpoll &sp,
 		room, &fopts
 	};
 
-	state.for_each([&]
-	(const m::event::idx &event_idx)
+	if(bool(prefetch_state))
 	{
-		if(event_idx < sp.since || event_idx >= sp.current)
-			return;
+		state.for_each([&]
+		(const m::event::idx &event_idx)
+		{
+			if(event_idx < sp.since || event_idx >= sp.current)
+				return;
 
-		m::prefetch(event_idx, fopts);
-	});
+			m::prefetch(event_idx, fopts);
+		});
+	}
 
 	state.for_each([&]
 	(const m::event &event)
@@ -1001,7 +1018,8 @@ ircd::m::sync::polylog::room_timeline_events(shortpoll &sp,
 		if(it.event_idx() >= sp.current)
 			break;
 
-		m::prefetch(it.event_idx(), fopts);
+		if(bool(prefetch_timeline))
+			m::prefetch(it.event_idx(), fopts);
 	}
 
 	limited = i >= 10;
