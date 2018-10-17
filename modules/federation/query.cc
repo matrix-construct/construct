@@ -118,38 +118,28 @@ get__query_directory(client &client,
 		url::decode(request.query.at("room_alias"), room_alias)
 	};
 
-	const ircd::m::room::id::buf
-	alias_room_id
+	const auto room_id
 	{
-		"alias", ircd::my_host()
+		m::room_id(room_alias)
 	};
 
-	const m::room alias_room
+	//TODO: servers
+	const std::array<json::value, 1> server
 	{
-		alias_room_id
+		{ room_alias.host() }
 	};
 
-	const m::room::state state
+	const json::value servers
 	{
-		alias_room
+		server.data(), server.size()
 	};
 
-	state.get("ircd.alias", room_alias, [&client, &room_alias]
-	(const m::event &event)
+	return resource::response
 	{
-		const m::room::id &room_id
+		client, json::members
 		{
-			unquote(at<"content"_>(event).at("room_id"))
-		};
-
-		resource::response
-		{
-			client, json::members
-			{
-				{ "room_id", room_id }
-			}
-		};
-	});
-
-	return {};
+			{ "room_id", room_id },
+			{ "servers", servers },
+		}
+	};
 }
