@@ -584,7 +584,7 @@ decltype(ircd::m::dbs::desc::events__event_idx__meta_block__size)
 ircd::m::dbs::desc::events__event_idx__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events._event_idx.meta_block.size" },
-	{ "default",  512L                                           },
+	{ "default",  2048L                                          },
 };
 
 decltype(ircd::m::dbs::desc::events__event_idx__cache__size)
@@ -745,14 +745,14 @@ decltype(ircd::m::dbs::desc::events__room_head__block__size)
 ircd::m::dbs::desc::events__room_head__block__size
 {
 	{ "name",     "ircd.m.dbs.events._room_head.block.size" },
-	{ "default",  512L                                      },
+	{ "default",  4096L                                     },
 };
 
 decltype(ircd::m::dbs::desc::events__room_head__meta_block__size)
 ircd::m::dbs::desc::events__room_head__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events._room_head.meta_block.size" },
-	{ "default",  512L                                           },
+	{ "default",  4096L                                          },
 };
 
 decltype(ircd::m::dbs::desc::events__room_head__cache__size)
@@ -879,7 +879,7 @@ decltype(ircd::m::dbs::desc::events__room_events__block__size)
 ircd::m::dbs::desc::events__room_events__block__size
 {
 	{ "name",     "ircd.m.dbs.events._room_events.block.size" },
-	{ "default",  4096L                                       },
+	{ "default",  512L                                        },
 };
 
 decltype(ircd::m::dbs::desc::events__room_events__meta_block__size)
@@ -1152,7 +1152,7 @@ decltype(ircd::m::dbs::desc::events__room_joined__block__size)
 ircd::m::dbs::desc::events__room_joined__block__size
 {
 	{ "name",     "ircd.m.dbs.events._room_joined.block.size" },
-	{ "default",  4096L                                       },
+	{ "default",  512L                                        },
 };
 
 decltype(ircd::m::dbs::desc::events__room_joined__meta_block__size)
@@ -1316,7 +1316,7 @@ decltype(ircd::m::dbs::desc::events__room_state__meta_block__size)
 ircd::m::dbs::desc::events__room_state__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events._room_state.meta_block.size" },
-	{ "default",  512L                                            },
+	{ "default",  4096L                                           },
 };
 
 decltype(ircd::m::dbs::desc::events__room_state__cache__size)
@@ -1471,7 +1471,7 @@ decltype(ircd::m::dbs::desc::events__state_node__meta_block__size)
 ircd::m::dbs::desc::events__state_node__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events._state_node.meta_block.size" },
-	{ "default",  1024L                                           },
+	{ "default",  512L                                            },
 };
 
 decltype(ircd::m::dbs::desc::events__state_node__cache__size)
