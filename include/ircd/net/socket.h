@@ -104,8 +104,8 @@ struct ircd::net::socket
 	void handshake(const open_opts &, eptr_handler);
 	void connect(const endpoint &, const open_opts &, eptr_handler);
 
-	socket(asio::ssl::context &ssl               = sslv23_client,
-	       boost::asio::io_service *const &ios   = ircd::ios);
+	socket(asio::ssl::context &        = sslv23_client,
+	       boost::asio::io_service &   = ios::get());
 
 	// Socket cannot be copied or moved; must be constructed as shared ptr
 	socket(socket &&) = delete;

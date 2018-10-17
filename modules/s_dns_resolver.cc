@@ -93,7 +93,7 @@ ircd::net::dns::resolver_call(const hostport &hp,
 //
 
 ircd::net::dns::resolver::resolver()
-:ns{*ircd::ios}
+:ns{ios::get()}
 ,reply
 {
 	64_KiB // worst-case UDP datagram size

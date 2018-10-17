@@ -74,11 +74,11 @@ struct ircd::ctx::ctx
 	ctx(const char *const &name                  = "<noname>",
 	    const size_t &stack_max                  = DEFAULT_STACK_SIZE,
 	    const context::flags &flags              = (context::flags)0,
-	    boost::asio::io_service *const &ios      = ircd::ios)
+	    boost::asio::io_service &ios             = ircd::ios::get())
 	:name{name}
 	,flags{flags}
-	,strand{*ios}
-	,alarm{*ios}
+	,strand{ios}
+	,alarm{ios}
 	,stack{stack_max}
 	{}
 

@@ -36,8 +36,6 @@ ircd::net::wait_close_sockets()
 /// Network subsystem initialization
 ircd::net::init::init()
 {
-	assert(ircd::ios);
-
 	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
 	sslv23_client.set_default_verify_paths();
 }
@@ -1096,7 +1094,7 @@ try
 }
 ,a
 {
-	*ircd::ios
+	ios::get()
 }
 {
 	static const auto &max_connections
@@ -1643,7 +1641,7 @@ try
 }
 ,a
 {
-	*ircd::ios
+	ios::get()
 }
 {
 	static const ip::udp::socket::reuse_address reuse_address
@@ -1880,10 +1878,10 @@ ircd::net::socket::instances
 //
 
 ircd::net::socket::socket(asio::ssl::context &ssl,
-                          boost::asio::io_service *const &ios)
+                          boost::asio::io_service &ios)
 :sd
 {
-	*ios
+	ios
 }
 ,ssl
 {
@@ -1891,7 +1889,7 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 }
 ,timer
 {
-	*ios
+	ios
 }
 {
 	++instances;

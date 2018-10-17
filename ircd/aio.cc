@@ -179,7 +179,7 @@ ircd::fs::aio::aio()
 try
 :resfd
 {
-	*ircd::ios, int(syscall(::eventfd, semval, EFD_NONBLOCK))
+	ios::get(), int(syscall(::eventfd, semval, EFD_NONBLOCK))
 }
 {
 	syscall<SYS_io_setup>(MAX_EVENTS, &idp);

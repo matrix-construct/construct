@@ -90,6 +90,7 @@ libircd_la_LIBADD = \
 libircd_la_SOURCES =   \
 	allocator.cc       \
 	exception.cc       \
+	ios.cc             \
 	lexical.cc         \
 	tokens.cc          \
 	json.cc            \

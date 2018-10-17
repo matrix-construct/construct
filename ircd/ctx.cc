@@ -567,7 +567,7 @@ ircd::ctx::this_ctx::yield()
 	});
 
 	// All spurious notifications are ignored until `done`
-	ios->post(restore); do
+	ircd::post(restore); do
 	{
 		wait();
 	}
@@ -842,7 +842,7 @@ ircd::ctx::context::context(const char *const &name,
                             function func)
 :c
 {
-	std::make_unique<ctx>(name, stack_sz, flags, ircd::ios)
+	std::make_unique<ctx>(name, stack_sz, flags, ios::get())
 }
 {
 	auto spawn
@@ -871,7 +871,7 @@ ircd::ctx::context::context(const char *const &name,
 
 	if(flags & POST)
 	{
-		ios->post(std::move(spawn));
+		ios::post(std::move(spawn));
 		return;
 	}
 
@@ -883,7 +883,7 @@ ircd::ctx::context::context(const char *const &name,
 	});
 
 	if(flags & DISPATCH)
-		ios->dispatch(std::move(spawn));
+		ios::dispatch(std::move(spawn));
 	else
 		spawn();
 }
@@ -1720,21 +1720,4 @@ ircd::ctx::list::next(const ctx *const &c)
 {
 	assert(c);
 	return c->node.next;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// ircd/ios.h
-//
-
-void
-ircd::post(std::function<void ()> function)
-{
-	ircd::ios->post(std::move(function));
-}
-
-void
-ircd::dispatch(std::function<void ()> function)
-{
-	ircd::ios->dispatch(std::move(function));
 }

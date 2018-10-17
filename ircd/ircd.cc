@@ -22,24 +22,11 @@ namespace ircd
 	bool nodirect;                               // no use of O_DIRECT.
 
 	std::string _hostname;                       // user's supplied param
-	boost::asio::io_context *ios;                // user's io service
 	ctx::ctx *main_context;                      // Main program loop
 
 	bool set_runlevel(const enum runlevel &);
 	void main() noexcept;
 }
-
-/// Record of the ID of the thread static initialization took place on.
-const std::thread::id
-ircd::static_thread_id
-{
-	std::this_thread::get_id()
-};
-
-/// "main" thread for IRCd; the one the main context landed on.
-std::thread::id
-ircd::thread_id
-{};
 
 /// Sets up the IRCd and its main context, then returns without blocking.
 //
@@ -51,7 +38,7 @@ ircd::thread_id
 ///
 /// init() can only be called from a runlevel::HALT state
 void
-ircd::init(boost::asio::io_context &ios,
+ircd::init(boost::asio::io_context &user_ios,
            const string_view &hostname)
 try
 {
@@ -61,15 +48,7 @@ try
 			"Cannot init() IRCd from runlevel %s", reflect(runlevel)
 		};
 
-	// Sample the ID of this thread. Since this is the first transfer of
-	// control to libircd after static initialization we have nothing to
-	// consider a main thread yet. We need something set for many assertions
-	// to pass until ircd::main() is entered which will reset this to where
-	// ios.run() is really running.
-	ircd::thread_id = std::this_thread::get_id();
-
-	// Global ircd:: reference to the user's io_context
-	ircd::ios = &ios;
+	ios::init(user_ios);
 
 	// Save the hostname param used for m::init later.
 	_hostname = std::string{hostname};
@@ -192,7 +171,7 @@ noexcept try
 	// Resamples the thread this context was executed on which should be where
 	// the user ran ios.run(). The user may have invoked ios.run() on multiple
 	// threads, but we consider this one thread a main thread for now...
-	ircd::thread_id = std::this_thread::get_id();
+	ircd::ios::main_thread_id = std::this_thread::get_id();
 
 	// When this function completes, subsystems are done shutting down and IRCd
 	// transitions to HALT.

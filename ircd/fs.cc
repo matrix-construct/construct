@@ -111,10 +111,9 @@ catch(const std::out_of_range &e)
 ircd::string_view
 ircd::fs::stdin::readline(const mutable_buffer &buf)
 {
-	assert(ircd::ios);
 	boost::asio::posix::stream_descriptor fd
 	{
-		*ircd::ios, dup(STDIN_FILENO)
+		ios::get(), dup(STDIN_FILENO)
 	};
 
 	boost::asio::streambuf sb
