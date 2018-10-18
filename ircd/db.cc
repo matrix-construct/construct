@@ -1428,9 +1428,12 @@ ircd::db::database::column::column(database *const &d,
 	//
 
 	// Block based table index type.
+	table_opts.format_version = 3; // RocksDB >= 5.15 compat only; otherwise use 2.
 	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
-	table_opts.enable_index_compression = false;
 	table_opts.partition_filters = true;
+	table_opts.use_delta_encoding = true;
+	table_opts.enable_index_compression = false;
+	table_opts.read_amp_bytes_per_bit = 4;
 
 	// Specify that index blocks should use the cache. If not, they will be
 	// pre-read into RAM by rocksdb internally. Because of the above
@@ -1446,6 +1449,7 @@ ircd::db::database::column::column(database *const &d,
 	// Setup the block size
 	table_opts.block_size = this->descriptor.block_size;
 	table_opts.metadata_block_size = this->descriptor.meta_block_size;
+	table_opts.block_size_deviation = 5;
 
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor.cache_size);
