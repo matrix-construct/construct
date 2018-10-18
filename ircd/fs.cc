@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_SYS_STAT_H
-#include <RB_INC_SYS_STATVFS_H
 #include <boost/filesystem.hpp>
 #include <ircd/asio.h>
 
@@ -558,13 +557,19 @@ namespace ircd::fs
 	static uint posix_flags(const std::ios::openmode &mode);
 }
 
-#ifdef HAVE_SYS_STAT_H
+#ifdef __linux__
 size_t
 ircd::fs::block_size(const fd &fd)
 {
-	struct stat stat;
-	syscall(::fstat, fd, &stat);
-	return stat.st_blksize;
+	return 512UL;
+}
+#elif defined(HAVE_SYS_STAT_H)
+size_t
+ircd::fs::block_size(const fd &fd)
+{
+	struct stat st;
+	syscall(::fstat, fd, &st);
+	return st.st_blksize;
 }
 #else
 size_t
