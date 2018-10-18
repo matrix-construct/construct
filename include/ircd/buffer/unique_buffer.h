@@ -18,10 +18,11 @@ template<class buffer,
 struct ircd::buffer::unique_buffer
 :buffer
 {
+	static char *allocate(const size_t &size);
+
 	buffer release();
 
 	unique_buffer(const size_t &size);
-	unique_buffer(std::unique_ptr<char[]> &&, const size_t &size);
 	explicit unique_buffer(const buffer &);
 	unique_buffer();
 	unique_buffer(unique_buffer &&) noexcept;
@@ -43,53 +44,28 @@ ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer()
 template<class buffer,
          uint alignment>
 ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const buffer &src)
-:buffer{[&src]() -> buffer
+:unique_buffer
 {
-	std::unique_ptr<char[]> ret
-	{
-		new __attribute__((aligned(16))) char[size(src)]
-	};
-
+	size(src)
+}
+{
 	const mutable_buffer dst
 	{
-		ret.get(), size(src)
+		const_cast<char *>(data(*this)), size(*this)
 	};
 
 	copy(dst, src);
-	return dst;
-}()}
-{
 }
 
 template<class buffer,
          uint alignment>
 ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const size_t &size)
-:unique_buffer<buffer, alignment>
-{
-	std::unique_ptr<char[]>
-	{
-		//TODO: Can't use a template parameter to the attribute even though
-		// it's known at compile time. Hardcoding this until fixed with better
-		// aligned dynamic memory.
-		//new __attribute__((aligned(alignment))) char[size]
-		new __attribute__((aligned(16))) char[size]
-	},
-	size
-}
-{
-	// Alignment can only be 16 bytes for now
-	assert(alignment == 16);
-}
-
-template<class buffer,
-         uint alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(std::unique_ptr<char[]> &&b,
-                                                              const size_t &size)
 :buffer
 {
-	typename buffer::iterator(b.release()), size
+	allocate(size), size
 }
-{}
+{
+}
 
 template<class buffer,
          uint alignment>
@@ -122,7 +98,7 @@ template<class buffer,
 ircd::buffer::unique_buffer<buffer, alignment>::~unique_buffer()
 noexcept
 {
-	delete[] data(*this);
+	std::free(const_cast<char *>(data(*this)));
 }
 
 template<class buffer,
@@ -133,4 +109,22 @@ ircd::buffer::unique_buffer<buffer, alignment>::release()
 	const buffer ret{static_cast<buffer>(*this)};
 	static_cast<buffer &>(*this) = buffer{};
 	return ret;
+}
+
+template<class buffer,
+         uint alignment>
+char *
+ircd::buffer::unique_buffer<buffer, alignment>::allocate(const size_t &size)
+{
+	int errc;
+	void *ret;
+	if(unlikely((errc = ::posix_memalign(&ret, alignment, size)) != 0))
+		throw std::system_error
+		{
+			errc, std::system_category()
+		};
+
+	assert(errc == 0);
+	assert(ret != nullptr);
+	return reinterpret_cast<char *>(ret);
 }
