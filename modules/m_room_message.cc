@@ -27,9 +27,9 @@ _message_notify(const m::event &event,
 
 	log::info
 	{
-		"%s %s said in %s %s :%s%s",
-		json::get<"origin"_>(event),
+		"%s said %s in %s %s :%s%s",
 		json::get<"sender"_>(event),
+		json::get<"event_id"_>(event),
 		json::get<"room_id"_>(event),
 		json::get<"content"_>(event).get("msgtype"),
 		trunc(body, 128),
