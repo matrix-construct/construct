@@ -573,7 +573,7 @@ ircd::smalldate(const time_t &ltime)
 
 	struct tm lt;
 	localtime_r(&ltime, &lt);
-	static char buf[MAX_DATE_STRING];
+	thread_local char buf[MAX_DATE_STRING];
 	snprintf(buf, sizeof(buf), "%d/%d/%d %02d.%02d",
 	         lt.tm_year + 1900,
 	         lt.tm_mon + 1,
