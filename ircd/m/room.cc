@@ -951,56 +951,22 @@ size_t
 ircd::m::room::state::count()
 const
 {
-	if(!present())
-		return m::state::count(root_id);
-
-	db::gopts opts
-	{
-		this->fopts? this->fopts->gopts : db::gopts{}
-	};
-
-	if(!opts.readahead)
-		opts.readahead = 0_KiB;
-
-	size_t ret{0};
-	auto &column{dbs::room_state};
-	for(auto it{column.begin(room_id, opts)}; bool(it); ++it)
-		++ret;
-
-	return ret;
+	return count(string_view{});
 }
 
 size_t
 ircd::m::room::state::count(const string_view &type)
 const
 {
-	if(!type)
-		return count();
-
 	if(!present())
 		return m::state::count(root_id, type);
 
-	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
-	const auto &key
-	{
-		dbs::room_state_key(keybuf, room_id, type)
-	};
-
-	db::gopts opts
-	{
-		this->fopts? this->fopts->gopts : db::gopts{}
-	};
-
-	if(!opts.readahead)
-		opts.readahead = 0_KiB;
-
 	size_t ret{0};
-	auto &column{dbs::room_state};
-	for(auto it{column.begin(key, opts)}; bool(it); ++it)
-		if(std::get<0>(dbs::room_state_key(it->first)) == type)
-			++ret;
-		else
-			break;
+	for_each(type, event::closure_idx{[&ret]
+	(const event::idx &event_idx)
+	{
+		++ret;
+	}});
 
 	return ret;
 }
