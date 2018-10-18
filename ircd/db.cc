@@ -1487,7 +1487,7 @@ ircd::db::database::column::column(database *const &d,
 
 	// Set the compaction priority; this should probably be in the descriptor
 	// but this is currently selected for the general matrix workload.
-	this->options.compaction_pri = rocksdb::CompactionPri::kOldestSmallestSeqFirst;
+	this->options.compaction_pri = rocksdb::CompactionPri::kOldestLargestSeqFirst;
 
 	// Set filter reductions for this column. This means we expect a key to exist.
 	this->options.optimize_filters_for_hits = this->descriptor.expect_queries_hit;
