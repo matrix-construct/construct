@@ -5179,6 +5179,10 @@ try
 {
 	name, this->opts
 }
+,_buffer_align
+{
+	fs::block_size(fd)
+}
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -5417,11 +5421,6 @@ size_t
 ircd::db::database::env::random_access_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	const auto ret
-	{
-		fs::block_size(fd)
-	};
-
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -5429,11 +5428,11 @@ const noexcept
 		d.name,
 		this,
 		int(fd),
-		ret
+		_buffer_align
 	};
 	#endif
 
-	return ret;
+	return _buffer_align;
 }
 
 //
