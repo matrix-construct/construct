@@ -174,6 +174,28 @@ find_cmd(const string_view &line)
 
 int console_command_derived(opt &, const string_view &line);
 
+static int
+_console_command(opt &out,
+                 const string_view &line)
+{
+	const cmd *const cmd
+	{
+		find_cmd(line)
+	};
+
+	if(!cmd)
+		return console_command_derived(out, line);
+
+	const auto args
+	{
+		lstrip(split(line, cmd->name).second, ' ')
+	};
+
+	const auto &ptr{cmd->ptr};
+	using prototype = bool (struct opt &, const string_view &);
+	return ptr.operator()<prototype>(out, args);
+}
+
 /// This function may be linked and called by those wishing to execute a
 /// command. Output from the command will be appended to the provided ostream.
 /// The input to the command is passed in `line`. Since `struct opt` is not
@@ -191,22 +213,7 @@ try
 		has(opts, "html")
 	};
 
-	const cmd *const cmd
-	{
-		find_cmd(line)
-	};
-
-	if(!cmd)
-		return console_command_derived(opt, line);
-
-	const auto args
-	{
-		lstrip(split(line, cmd->name).second, ' ')
-	};
-
-	const auto &ptr{cmd->ptr};
-	using prototype = bool (struct opt &, const string_view &);
-	return ptr.operator()<prototype>(opt, args);
+	return _console_command(opt, line);
 }
 catch(const params::error &e)
 {
