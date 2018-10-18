@@ -974,6 +974,9 @@ size_t
 ircd::m::room::state::count(const string_view &type)
 const
 {
+	if(!type)
+		return count();
+
 	if(!present())
 		return m::state::count(root_id, type);
 
