@@ -310,6 +310,28 @@ console_cmd__test(opt &out, const string_view &line)
 }
 
 //
+// Time cmd prefix (like /usr/bin/time)
+//
+
+bool
+console_cmd__time(opt &out, const string_view &line)
+{
+	ircd::timer timer;
+
+	const auto ret
+	{
+		_console_command(out, line)
+	};
+
+	thread_local char buf[32];
+	out << std::endl
+	    << pretty(buf, timer.at<microseconds>())
+	    << std::endl;
+
+	return ret;
+}
+
+//
 // Derived commands
 //
 
