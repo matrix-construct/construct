@@ -2635,7 +2635,7 @@ const noexcept
 		size(oldval),
 		data(oldval),
 		(const void *)newval,
-		(const void *)skipuntil
+		(const void *)skip
 	};
 	#endif
 
