@@ -197,6 +197,9 @@ size_t
 ircd::m::state::count(const string_view &root,
                       const string_view &type)
 {
+	if(!type)
+		return count(root);
+
 	char buf[KEY_MAX_SZ];
 	const json::array key
 	{
