@@ -14,13 +14,14 @@ namespace ircd::m::sync
 	struct stats;
 	struct shortpoll;
 
-	static long notification_count(const room &, const event::idx &a, const event::idx &b);
-	static long highlight_count(const room &, const user &, const event::idx &a, const event::idx &b);
-
-	static resource::response handle_get(client &, const resource::request &);
-	extern resource::method method_get;
+	extern log::log log;
 	extern const string_view description;
 	extern resource resource;
+	extern resource::method method_get;
+
+	static long notification_count(const room &, const event::idx &a, const event::idx &b);
+	static long highlight_count(const room &, const user &, const event::idx &a, const event::idx &b);
+	static resource::response handle_get(client &, const resource::request &);
 }
 
 namespace ircd::m::sync::longpoll

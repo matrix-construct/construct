@@ -16,6 +16,12 @@ IRCD_MODULE
 	"Client 6.2.1 :Sync"
 };
 
+decltype(ircd::m::sync::log)
+ircd::m::sync::log
+{
+	"sync", 's'
+};
+
 decltype(ircd::m::sync::resource)
 ircd::m::sync::resource
 {
@@ -636,11 +642,32 @@ ircd::m::sync::polylog::handle(client &client,
                                json::stack::object &object)
 try
 {
+	// Generate individual stats for sections
+	#ifdef RB_DEBUG
+	thread_local char iecbuf[64], rembuf[128];
+	sync::stats stats{sp.stats};
+	stats.timer = timer{};
+	#endif
+
 	{
 		json::stack::member member{object, "rooms"};
 		json::stack::object object{member};
 		rooms(sp, object);
 	}
+
+	#ifdef RB_DEBUG
+	log::debug
+	{
+		log, "polylog %s %s rooms %s wc:%zu in %lu$ms",
+		string(rembuf, ircd::remote(sp.client)),
+		string_view{sp.request.user_id},
+		pretty(iecbuf, iec(sp.stats.flush_bytes - stats.flush_bytes)),
+		sp.stats.flush_count - stats.flush_count,
+		stats.timer.at<milliseconds>().count()
+	};
+	stats = sync::stats{sp.stats};
+	stats.timer = timer{};
+	#endif
 
 	{
 		json::stack::member member{object, "presence"};
@@ -648,11 +675,37 @@ try
 		presence(sp, object);
 	}
 
+	#ifdef RB_DEBUG
+	log::debug
+	{
+		log, "polylog %s %s presence %s wc:%zu in %lu$ms",
+		string(rembuf, ircd::remote(sp.client)),
+		string_view{sp.request.user_id},
+		pretty(iecbuf, iec(sp.stats.flush_bytes - stats.flush_bytes)),
+		sp.stats.flush_count - stats.flush_count,
+		stats.timer.at<milliseconds>().count()
+	};
+	stats = sync::stats{sp.stats};
+	stats.timer = timer{};
+	#endif
+
 	{
 		json::stack::member member{object, "account_data"};
 		json::stack::object object{member};
 		account_data(sp, object);
 	}
+
+	#ifdef RB_DEBUG
+	log::debug
+	{
+		log, "polylog %s %s account_data %s wc:%zu in %lu$ms",
+		string(rembuf, ircd::remote(sp.client)),
+		string_view{sp.request.user_id},
+		pretty(iecbuf, iec(sp.stats.flush_bytes - stats.flush_bytes)),
+		sp.stats.flush_count - stats.flush_count,
+		stats.timer.at<milliseconds>().count()
+	};
+	#endif
 
 	{
 		json::stack::member member
@@ -661,7 +714,17 @@ try
 		};
 	}
 
-	std::cout << "polylog sync in: " << sp.stats.timer.at<seconds>().count() << " seconds" << std::endl;
+	#ifdef RB_DEBUG
+	log::debug
+	{
+		log, "polylog %s %s %s wc:%zu in %lu$ms",
+		string(rembuf, ircd::remote(sp.client)),
+		string_view{sp.request.user_id},
+		pretty(iecbuf, iec(sp.stats.flush_bytes)),
+		sp.stats.flush_count,
+		sp.stats.timer.at<milliseconds>().count()
+	};
+	#endif
 
 	return sp.committed;
 }
@@ -669,7 +732,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"polylog sync FAILED %lu to %lu (vm @ %zu) :%s"
+		log, "polylog sync FAILED %lu to %lu (vm @ %zu) :%s"
 		,sp.since
 		,sp.current
 		,m::vm::current_sequence
@@ -777,7 +840,7 @@ catch(const json::not_found &e)
 {
 	log::critical
 	{
-		"polylog sync account data error %lu to %lu (vm @ %zu) :%s"
+		log, "polylog sync account data error %lu to %lu (vm @ %zu) :%s"
 		,sp.since
 		,sp.current
 		,m::vm::current_sequence
@@ -808,9 +871,33 @@ ircd::m::sync::polylog::sync_rooms(shortpoll &sp,
 		if(head_idx(std::nothrow, room) <= sp.since)
 			return;
 
-		json::stack::member member{rooms_object, room.room_id};
-		json::stack::object object{member};
-		sync_room(sp, object, room, membership);
+		// Generate individual stats for this room's sync
+		#ifdef RB_DEBUG
+		sync::stats stats{sp.stats};
+		stats.timer = timer{};
+		#endif
+
+		// This scope ensures the object destructs and flushes before
+		// the log message tallying the stats for this room below.
+		{
+			json::stack::member member{rooms_object, room.room_id};
+			json::stack::object object{member};
+			sync_room(sp, object, room, membership);
+		}
+
+		#ifdef RB_DEBUG
+		thread_local char iecbuf[64], rembuf[128];
+		log::debug
+		{
+			log, "polylog %s %s %s %s wc:%zu in %lu$ms",
+			string(rembuf, ircd::remote(sp.client)),
+			string_view{sp.request.user_id},
+			string_view{room.room_id},
+			pretty(iecbuf, iec(sp.stats.flush_bytes - stats.flush_bytes)),
+			sp.stats.flush_count - stats.flush_count,
+			stats.timer.at<milliseconds>().count()
+		};
+		#endif
 	});
 }
 
@@ -866,7 +953,7 @@ catch(const json::not_found &e)
 {
 	log::critical
 	{
-		"polylog sync room %s error %lu to %lu (vm @ %zu) :%s"
+		log, "polylog sync room %s error %lu to %lu (vm @ %zu) :%s"
 		,string_view{room.room_id}
 		,sp.since
 		,sp.current
