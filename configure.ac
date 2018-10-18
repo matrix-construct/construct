@@ -624,6 +624,8 @@ RB_CHK_SYSHEADER(regex, [REGEX])
 dnl unix platform
 RB_CHK_SYSHEADER(unistd.h, [UNISTD_H])
 RB_CHK_SYSHEADER(sys/time.h, [SYS_TIME_H])
+RB_CHK_SYSHEADER(sys/stat.h, [SYS_STAT_H])
+RB_CHK_SYSHEADER(sys/statvfs.h, [SYS_STATVFS_H])
 RB_CHK_SYSHEADER(sys/resource.h, [SYS_RESOURCE_H])
 RB_CHK_SYSHEADER(sys/syscall.h, [SYS_SYSCALL_H])
 RB_CHK_SYSHEADER(sys/utsname.h, [SYS_UTSNAME_H])
