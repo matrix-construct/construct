@@ -45,6 +45,11 @@ namespace ircd
 	std::string pretty(const human_readable_size &);
 	string_view pretty_only(const mutable_buffer &out, const human_readable_size &);
 	std::string pretty_only(const human_readable_size &);
+
+	// Human readable time suite (for timers and counts; otherwise see date.h)
+	string_view pretty_nanoseconds(const mutable_buffer &out, const long double &);
+	template<class r, class p> string_view pretty(const mutable_buffer &out, const duration<r, p> &);
+	template<class r, class p> std::string pretty(const duration<r, p> &);
 }
 
 namespace ircd
@@ -265,4 +270,26 @@ inline bool
 ircd::try_lex_cast<std::string>(const string_view &s)
 {
 	return true;
+}
+
+template<class rep,
+         class period>
+std::string
+ircd::pretty(const duration<rep, period> &d)
+{
+	return util::string(32, [&d]
+	(const mutable_buffer &out)
+	{
+		return pretty(out, d);
+	});
+}
+
+template<class rep,
+         class period>
+ircd::string_view
+ircd::pretty(const mutable_buffer &out,
+             const duration<rep, period> &d)
+{
+	const auto &ns(duration_cast<nanoseconds>(d));
+	return pretty_nanoseconds(out, ns.count());
 }

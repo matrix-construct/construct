@@ -23,7 +23,86 @@
 //
 
 //
-// Human readable unit suite
+// Human readable time suite
+//
+
+ircd::string_view
+ircd::pretty_nanoseconds(const mutable_buffer &out,
+                         const long double &ns)
+{
+	static const std::array<string_view, 7> unit
+	{
+		"nanoseconds",
+		"microseconds",
+		"milliseconds",
+		"seconds",
+		"minutes",
+		"hours",
+		"days",
+	};
+
+	auto pos(0);
+	long double val(ns);
+
+	// nanoseconds -> microseconds
+	if(val > 1000.0)
+	{
+		val /= 1000;
+		++pos;
+	}
+	else goto done;
+
+	// microseconds -> milliseconds
+	if(val > 1000.0)
+	{
+		val /= 1000;
+		++pos;
+	}
+	else goto done;
+
+	// milliseconds -> seconds
+	if(val > 1000.0)
+	{
+		val /= 1000;
+		++pos;
+	}
+	else goto done;
+
+	// seconds -> minutes
+	if(val > 60.0)
+	{
+		val /= 60;
+		++pos;
+	}
+	else goto done;
+
+	// minutes -> hours
+	if(val > 60.0)
+	{
+		val /= 60;
+		++pos;
+	}
+	else goto done;
+
+	// hours -> days
+	if(val > 12.0)
+	{
+		val /= 12;
+		++pos;
+	}
+	else goto done;
+
+	done:
+	return fmt::sprintf
+	{
+		out, "%.2lf %s",
+		val,
+		unit.at(pos)
+	};
+}
+
+//
+// Human readable space suite
 //
 
 std::string
