@@ -5635,14 +5635,19 @@ console_cmd__room__origins__random(opt &out, const string_view &line)
 bool
 console_cmd__room__state(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id", "event_id_or_type"
+	}};
+
 	const auto &room_id
 	{
-		m::room_id(token(line, ' ', 0))
+		m::room_id(param.at("room_id"))
 	};
 
 	const auto &event_id_or_type
 	{
-		token(line, ' ', 1, {})
+		param.at("event_id_or_type", string_view{})
 	};
 
 	const auto is_event_id
@@ -5662,7 +5667,9 @@ console_cmd__room__state(opt &out, const string_view &line)
 
 	const string_view &type
 	{
-		!is_event_id? event_id_or_type : string_view{}
+		!is_event_id?
+			event_id_or_type:
+			string_view{}
 	};
 
 	state.for_each(type, [&out](const m::event &event)
@@ -5670,6 +5677,50 @@ console_cmd__room__state(opt &out, const string_view &line)
 		out << pretty_oneline(event) << std::endl;
 	});
 
+	return true;
+}
+
+bool
+console_cmd__room__state__count(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id_or_type"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto &event_id_or_type
+	{
+		param.at("event_id_or_type", string_view{})
+	};
+
+	const auto is_event_id
+	{
+		m::has_sigil(event_id_or_type) && valid(m::id::EVENT, event_id_or_type)
+	};
+
+	const m::room room
+	{
+		room_id, is_event_id? event_id_or_type : string_view{}
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	const string_view &type
+	{
+		!is_event_id?
+			event_id_or_type:
+			string_view{}
+	};
+
+	out << state.count(type) << std::endl;
 	return true;
 }
 
