@@ -1168,6 +1168,21 @@ const
 }
 
 //
+// peer::err
+//
+
+ircd::server::peer::err::err(std::exception_ptr eptr)
+:eptr{std::move(eptr)}
+,etime{now<system_point>()}
+{
+}
+
+ircd::server::peer::err::~err()
+noexcept
+{
+}
+
+//
 // link
 //
 

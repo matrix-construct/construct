@@ -120,8 +120,6 @@ struct ircd::server::peer::err
 	std::exception_ptr eptr;
 	system_point etime;
 
-	err(std::exception_ptr eptr)
-	:eptr{std::move(eptr)}
-	,etime{now<system_point>()}
-	{}
+	err(std::exception_ptr);
+	~err() noexcept;
 };
