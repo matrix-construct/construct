@@ -2263,6 +2263,13 @@ ircd::m::dbs::desc::events__origin_server_ts__block__size
 	{ "default",  256L                                             },
 };
 
+decltype(ircd::m::dbs::desc::events__origin_server_ts__meta_block__size)
+ircd::m::dbs::desc::events__origin_server_ts__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.origin_server_ts.meta_block.size"  },
+	{ "default",  256L                                                  },
+};
+
 decltype(ircd::m::dbs::desc::events__origin_server_ts__cache__size)
 ircd::m::dbs::desc::events__origin_server_ts__cache__size
 {
@@ -2349,7 +2356,7 @@ decltype(ircd::m::dbs::desc::events__signatures__block__size)
 ircd::m::dbs::desc::events__signatures__block__size
 {
 	{ "name",     "ircd.m.dbs.events.signatures.block.size"  },
-	{ "default",  512L                                       },
+	{ "default",  1024L                                      },
 };
 
 decltype(ircd::m::dbs::desc::events__signatures__cache__size)
@@ -2432,7 +2439,7 @@ decltype(ircd::m::dbs::desc::events__auth_events__block__size)
 ircd::m::dbs::desc::events__auth_events__block__size
 {
 	{ "name",     "ircd.m.dbs.events.auth_events.block.size"  },
-	{ "default",  512L                                        },
+	{ "default",  1024L                                       },
 };
 
 decltype(ircd::m::dbs::desc::events__auth_events__cache__size)
@@ -2515,6 +2522,13 @@ ircd::m::dbs::desc::events__depth__block__size
 {
 	{ "name",     "ircd.m.dbs.events.depth.block.size"  },
 	{ "default",  256L                                  },
+};
+
+decltype(ircd::m::dbs::desc::events__depth__meta_block__size)
+ircd::m::dbs::desc::events__depth__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.depth.meta_block.size"  },
+	{ "default",  256L                                       },
 };
 
 decltype(ircd::m::dbs::desc::events__depth__cache__size)
@@ -2760,7 +2774,7 @@ decltype(ircd::m::dbs::desc::events__prev_events__block__size)
 ircd::m::dbs::desc::events__prev_events__block__size
 {
 	{ "name",     "ircd.m.dbs.events.prev_events.block.size"  },
-	{ "default",  512L                                        },
+	{ "default",  1024L                                       },
 };
 
 decltype(ircd::m::dbs::desc::events__prev_events__cache__size)

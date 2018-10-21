@@ -107,6 +107,7 @@ namespace ircd::m::dbs::desc
 	extern const db::descriptor events_content;
 
 	extern conf::item<size_t> events__depth__block__size;
+	extern conf::item<size_t> events__depth__meta_block__size;
 	extern conf::item<size_t> events__depth__cache__size;
 	extern conf::item<size_t> events__depth__cache_comp__size;
 	extern const db::descriptor events_depth;
@@ -132,6 +133,7 @@ namespace ircd::m::dbs::desc
 	extern const db::descriptor events_origin;
 
 	extern conf::item<size_t> events__origin_server_ts__block__size;
+	extern conf::item<size_t> events__origin_server_ts__meta_block__size;
 	extern conf::item<size_t> events__origin_server_ts__cache__size;
 	extern conf::item<size_t> events__origin_server_ts__cache_comp__size;
 	extern const db::descriptor events_origin_server_ts;
