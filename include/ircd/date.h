@@ -16,7 +16,6 @@ namespace ircd
 	using microtime_t = std::pair<time_t, int32_t>;
 	using steady_point = time_point<steady_clock>;
 	using system_point = time_point<system_clock>;
-	template<class rep, class period> using duration = std::chrono::duration<rep, period>;
 
 	// Standard time_point samples
 	template<class unit = seconds> unit now();

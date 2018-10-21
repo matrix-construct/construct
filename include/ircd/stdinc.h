@@ -172,6 +172,7 @@ namespace ircd
 	using std::chrono::milliseconds;
 	using std::chrono::microseconds;
 	using std::chrono::nanoseconds;
+	using std::chrono::duration;
 	using std::chrono::duration_cast;
 	using std::chrono::system_clock;
 	using std::chrono::steady_clock;
