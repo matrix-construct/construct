@@ -818,6 +818,10 @@ const
 // to_asio
 //
 
+ircd::ctx::to_asio::to_asio(function handler)
+:handler{std::move(handler)}
+{}
+
 void
 ircd::ctx::to_asio::interrupted(ctx *const &interruptor)
 noexcept

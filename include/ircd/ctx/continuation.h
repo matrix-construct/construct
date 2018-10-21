@@ -74,10 +74,6 @@ struct ircd::ctx::to_asio
 
 	void interrupted(ctx *const &) noexcept final override;
 
-	to_asio(const function &handler = {});
+	to_asio(function handler);
+	to_asio() = default;
 };
-
-inline
-ircd::ctx::to_asio::to_asio(const function &handler)
-:handler{handler}
-{}
