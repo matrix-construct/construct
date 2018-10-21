@@ -2794,6 +2794,17 @@ try
 	property("rocksdb.num-running-flushes");
 	property("rocksdb.actual-delayed-write-rate");
 	property("rocksdb.is-write-stopped");
+
+	if(c)
+	{
+		const db::database::sst::info::vector v{c};
+		for(const auto &info : v)
+		{
+			out << std::endl;
+			_print_sst_info_full(out, info);
+		}
+	}
+
 	return true;
 }
 catch(const std::out_of_range &e)
