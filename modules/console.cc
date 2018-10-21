@@ -2620,23 +2620,27 @@ console_cmd__db__list(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__db(opt &out, const string_view &line)
+console_cmd__db__info(opt &out, const string_view &line)
 try
 {
-	if(empty(line))
-		return console_cmd__db__list(out, line);
-
 	const params param{line, " ",
 	{
-		"dbname"
+		"dbname", "[column]"
 	}};
 
 	auto &d
 	{
-		db::database::get(param.at(0))
+		db::database::get(param.at("dbname"))
 	};
 
-	const auto closeout{[&out, &d]
+	const db::column c
+	{
+		param.at("[column]", string_view{})?
+			db::column{d, param.at("[column]")}:
+			db::column{}
+	};
+
+	const auto closeout{[&out]
 	(const string_view &name, const auto &closure)
 	{
 		out << std::left << std::setw(40) << std::setfill('_') << name << " ";
@@ -2644,31 +2648,44 @@ try
 		out << std::endl;
 	}};
 
-	const auto property{[&out, &d, &closeout]
+	const auto property{[&out, &d, &c, &closeout]
 	(const string_view &prop)
 	{
 		const auto name(lstrip(prop, "rocksdb."));
-		closeout(name, [&out, &d, &prop]
+		closeout(name, [&out, &d, &c, &prop]
 		{
-		    out << db::property(d, prop);
+			if(c)
+				out << db::property(c, prop);
+			else
+				out << db::property(d, prop);
 		});
 	}};
 
-	const auto sizeprop{[&out, &d, &closeout]
+	const auto sizeprop{[&out, &d, &c, &closeout]
 	(const string_view &prop)
 	{
 		const auto name(lstrip(prop, "rocksdb."));
-		closeout(name, [&out, &d, &prop]
+		closeout(name, [&out, &d, &c, &prop]
 		{
-		    out << pretty(iec(db::property(d, prop)));
+			if(c)
+				out << pretty(iec(db::property<db::prop_int>(c, prop)));
+			else
+				out << pretty(iec(db::property(d, prop)));
 		});
 	}};
 
-	closeout("UUID", [&] { out << uuid(d); });
-	closeout("SIZE", [&] { out << pretty(iec(bytes(d))); });
-	closeout("SEQUENCE", [&] { out << sequence(d); });
-	closeout("COLUMNS", [&] { out << d.columns.size(); });
-	closeout("FILES", [&] { out << file_count(d); });
+	if(c)
+	{
+		closeout("SIZE", [&] { out << pretty(iec(bytes(c))); });
+		closeout("FILES", [&] { out << file_count(c); });
+	} else {
+		closeout("UUID", [&] { out << uuid(d); });
+		closeout("SIZE", [&] { out << pretty(iec(bytes(d))); });
+		closeout("SEQUENCE", [&] { out << sequence(d); });
+		closeout("COLUMNS", [&] { out << d.columns.size(); });
+		closeout("FILES", [&] { out << file_count(d); });
+	}
+
 	sizeprop("rocksdb.live-sst-files-size");
 	sizeprop("rocksdb.total-sst-files-size");
 	sizeprop("rocksdb.estimate-live-data-size");
@@ -2679,7 +2696,8 @@ try
 	sizeprop("rocksdb.block-cache-capacity");
 	sizeprop("rocksdb.block-cache-usage");
 	sizeprop("rocksdb.block-cache-pinned-usage");
-	closeout("row cache size", [&] { out << pretty(iec(db::usage(cache(d)))); });
+	if(!c)
+		closeout("row cache size", [&] { out << pretty(iec(db::usage(cache(d)))); });
 	property("rocksdb.estimate-num-keys");
 	property("rocksdb.num-entries-active-mem-table");
 	property("rocksdb.num-entries-imm-mem-tables");
@@ -2706,6 +2724,15 @@ catch(const std::out_of_range &e)
 {
 	out << "No open database by that name" << std::endl;
 	return true;
+}
+
+bool
+console_cmd__db(opt &out, const string_view &line)
+{
+	if(empty(line))
+		return console_cmd__db__list(out, line);
+
+	return console_cmd__db__info(out, line);
 }
 
 //
