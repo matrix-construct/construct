@@ -34,8 +34,8 @@ final
 	static const bool DEFAULT_STRICT;
 
 	database *d;
+	std::shared_ptr<struct database::stats> stats;
 	std::shared_ptr<rocksdb::Cache> c;
-	struct database::stats stats;
 
 	const char *Name() const noexcept override;
 	Status Insert(const Slice &key, void *value, size_t charge, deleter, Handle **, Priority) noexcept override;
@@ -58,6 +58,9 @@ final
 	std::string GetPrintableOptions() const noexcept override;
 	void TEST_mark_as_data_block(const Slice &key, size_t charge) noexcept override;
 
-	cache(database *const &d, const ssize_t &initial_capacity = -1);
+	cache(database *const &,
+	      std::shared_ptr<struct database::stats>,
+	      const ssize_t &initial_capacity = -1);
+
 	~cache() noexcept override;
 };

@@ -740,7 +740,7 @@ try
 }
 ,row_cache
 {
-	std::make_shared<database::cache>(this, 16_MiB)
+	std::make_shared<database::cache>(this, this->stats, 16_MiB)
 }
 ,descriptors
 {
@@ -1379,6 +1379,7 @@ ircd::db::database::column::column(database *const &d,
 ,cmp{d, this->descriptor.cmp}
 ,prefix{d, this->descriptor.prefix}
 ,cfilter{this, this->descriptor.compactor}
+,stats{std::make_shared<struct database::stats>(d)}
 ,handle
 {
 	nullptr, [this](rocksdb::ColumnFamilyHandle *const handle)
@@ -1454,12 +1455,12 @@ ircd::db::database::column::column(database *const &d,
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor.cache_size);
 	if(cache_size != 0)
-		table_opts.block_cache = std::make_shared<database::cache>(d, cache_size);
+		table_opts.block_cache = std::make_shared<database::cache>(d, this->stats, cache_size);
 
 	// Setup the cache for compressed assets.
 	const auto &cache_size_comp(this->descriptor.cache_size_comp);
 	if(cache_size_comp != 0)
-		table_opts.block_cache_compressed = std::make_shared<database::cache>(d, cache_size_comp);
+		table_opts.block_cache_compressed = std::make_shared<database::cache>(d, this->stats, cache_size_comp);
 
 	// Setup the bloom filter.
 	const auto &bloom_bits(this->descriptor.bloom_bits);
@@ -2360,8 +2361,10 @@ ircd::db::database::cache::DEFAULT_HI_PRIO
 //
 
 ircd::db::database::cache::cache(database *const &d,
+                                 std::shared_ptr<struct database::stats> stats,
                                  const ssize_t &initial_capacity)
 :d{d}
+,stats{std::move(stats)}
 ,c
 {
 	rocksdb::NewLRUCache
@@ -2372,7 +2375,6 @@ ircd::db::database::cache::cache(database *const &d,
 		,DEFAULT_HI_PRIO
 	)
 }
-,stats{d}
 {
 	assert(bool(c));
 }
@@ -2400,14 +2402,16 @@ ircd::db::database::cache::Insert(const Slice &key,
 noexcept
 {
 	assert(bool(c));
+	assert(bool(stats));
+
 	const rocksdb::Status &ret
 	{
 		c->Insert(key, value, charge, del, handle, priority)
 	};
 
-	this->stats.recordTick(rocksdb::Tickers::BLOCK_CACHE_ADD, ret.ok());
-	this->stats.recordTick(rocksdb::Tickers::BLOCK_CACHE_ADD_FAILURES, !ret.ok());
-	this->stats.recordTick(rocksdb::Tickers::BLOCK_CACHE_DATA_BYTES_INSERT, ret.ok()? charge : 0UL);
+	stats->recordTick(rocksdb::Tickers::BLOCK_CACHE_ADD, ret.ok());
+	stats->recordTick(rocksdb::Tickers::BLOCK_CACHE_ADD_FAILURES, !ret.ok());
+	stats->recordTick(rocksdb::Tickers::BLOCK_CACHE_DATA_BYTES_INSERT, ret.ok()? charge : 0UL);
 	return ret;
 }
 
@@ -2417,17 +2421,18 @@ ircd::db::database::cache::Lookup(const Slice &key,
 noexcept
 {
 	assert(bool(c));
+	assert(bool(this->stats));
 
 	database::stats::passthru passthru
 	{
-		&this->stats, statistics
+		this->stats.get(), statistics
 	};
 
 	rocksdb::Statistics *const s
 	{
 		statistics?
 			dynamic_cast<rocksdb::Statistics *>(&passthru):
-			dynamic_cast<rocksdb::Statistics *>(&this->stats)
+			dynamic_cast<rocksdb::Statistics *>(this->stats.get())
 	};
 
 	auto *const &ret
@@ -2439,8 +2444,8 @@ noexcept
 	// passing it to Lookup() does nothing internally. We have to do this
 	// here ourselves :/
 
-	this->stats.recordTick(rocksdb::Tickers::BLOCK_CACHE_HIT, bool(ret));
-	this->stats.recordTick(rocksdb::Tickers::BLOCK_CACHE_MISS, !bool(ret));
+	this->stats->recordTick(rocksdb::Tickers::BLOCK_CACHE_HIT, bool(ret));
+	this->stats->recordTick(rocksdb::Tickers::BLOCK_CACHE_MISS, !bool(ret));
 	return ret;
 }
 
@@ -9057,7 +9062,14 @@ ircd::db::ticker(const rocksdb::Cache &cache,
 		dynamic_cast<const database::cache &>(cache)
 	};
 
-	return c.stats.ticker.at(ticker_id);
+	static const uint64_t &zero
+	{
+		0ULL
+	};
+
+	return c.stats?
+		c.stats->ticker.at(ticker_id):
+		zero;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

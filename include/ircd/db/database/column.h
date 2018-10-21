@@ -38,6 +38,7 @@ struct ircd::db::database::column final
 	comparator cmp;
 	prefix_transform prefix;
 	compaction_filter cfilter;
+	std::shared_ptr<struct database::stats> stats;
 	rocksdb::BlockBasedTableOptions table_opts;
 	custom_ptr<rocksdb::ColumnFamilyHandle> handle;
 
