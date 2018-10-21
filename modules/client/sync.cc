@@ -643,11 +643,9 @@ ircd::m::sync::polylog::handle(client &client,
 try
 {
 	// Generate individual stats for sections
-	#ifdef RB_DEBUG
 	thread_local char iecbuf[64], rembuf[128];
 	sync::stats stats{sp.stats};
 	stats.timer = timer{};
-	#endif
 
 	{
 		json::stack::member member{object, "rooms"};
@@ -714,8 +712,7 @@ try
 		};
 	}
 
-	#ifdef RB_DEBUG
-	log::debug
+	log::info
 	{
 		log, "polylog %s %s %s wc:%zu in %lu$ms",
 		string(rembuf, ircd::remote(sp.client)),
@@ -724,7 +721,6 @@ try
 		sp.stats.flush_count,
 		sp.stats.timer.at<milliseconds>().count()
 	};
-	#endif
 
 	return sp.committed;
 }
