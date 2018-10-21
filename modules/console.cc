@@ -2092,18 +2092,18 @@ static void
 _print_sst_info_header(opt &out)
 {
 	out << std::left
-	    << std::setw(14) << "name"
+	    << std::setw(12) << "name"
 	    << std::right
-	    << "  " << std::setw(3) << "ver"
-	    << "  " << std::setw(26) << "bytes"
+	    << "  " << std::setw(6) << "idxs"
+	    << "  " << std::setw(9) << "blocks"
 	    << "  " << std::setw(9) << "entries"
-	    << "  " << std::setw(9) << "reads"
-	    << "  " << std::setw(10) << "compacting"
-	    << "  " << std::setw(28) << "sequence number"
-	    << "  " << std::setw(28) << "key range"
-	    << "  " << std::setw(5) << "level"
+	    << "  " << std::setw(25) << "file size"
+	    << "  " << std::setw(23) << "key range"
+	    << "  " << std::setw(25) << "sequence number"
+	    << "  " << std::setw(32) << "creation"
+	    << "  " << std::setw(3) << "lev"
 	    << std::left
-	    << "  " << std::setw(24) << "column"
+	    << "  " << std::setw(20) << "column"
 	    << std::endl;
 }
 
@@ -2126,17 +2126,93 @@ _print_sst_info(opt &out,
 	};
 
 	out << std::left
-	    << std::setw(14) << f.name
-	    << "  " << std::setw(3) << std::right << f.version
-	    << "  " << std::setw(26) << std::right << pretty(iec(f.size))
+	    << std::setw(12) << f.name
+	    << "  " << std::setw(6) << std::right << f.index_parts
+	    << "  " << std::setw(9) << std::right << f.data_blocks
 	    << "  " << std::setw(9) << std::right << f.entries
-	    << "  " << std::setw(9) << std::right << f.num_reads
-	    << "  " << std::setw(10) << std::right << std::boolalpha << f.compacting
-	    << "  " << std::setw(12) << std::right << f.min_seq << " -> " << std::setw(12) << std::left << f.max_seq
-	    << "  " << std::setw(12) << std::right << min_key << " -> " << std::setw(12) << std::left << max_key
-	    << "  " << std::setw(5) << std::right << f.level
-	    << "  " << std::setw(24) << std::left << f.column
+	    << "  " << std::setw(25) << std::right << pretty(iec(f.size))
+	    << "  " << std::setw(10) << std::right << min_key << " : " << std::setw(10) << std::left << max_key
+	    << "  " << std::setw(11) << std::right << f.min_seq << " : " << std::setw(11) << std::left << f.max_seq
+	    << "  " << std::setw(32) << std::right << timestr(f.created, ircd::localtime)
+	    << "  " << std::setw(3) << std::right << f.level
+	    << "  " << std::setw(20) << std::left << f.column
 	    << std::endl;
+}
+
+static void
+_print_sst_info_full(opt &out,
+                     const db::database::sst::info &f)
+{
+	const uint64_t &min_key
+	{
+		f.min_key.size() == 8?
+			uint64_t(byte_view<uint64_t>(f.min_key)):
+			0UL
+	};
+
+	const uint64_t &max_key
+	{
+		f.max_key.size() == 8?
+			uint64_t(byte_view<uint64_t>(f.max_key)):
+			0UL
+	};
+
+	const auto closeout{[&out]
+	(const string_view &name, const auto &closure)
+	{
+		out << std::left << std::setw(40) << std::setfill('_') << name << " ";
+		closure(out);
+		out << std::endl;
+	}};
+
+	const auto close_auto{[&closeout]
+	(const string_view &name, const auto &value)
+	{
+		closeout(name, [&value](opt &out)
+		{
+			out << value;
+		});
+	}};
+
+	const auto close_size{[&closeout]
+	(const string_view &name, const size_t &value)
+	{
+		closeout(name, [&value](opt &out)
+		{
+			out << pretty(iec(value));
+		});
+	}};
+
+	close_auto("name", f.name);
+	close_auto("directory", f.path);
+	close_auto("column ID", f.cfid);
+	close_auto("column", f.column);
+	close_auto("format", f.format);
+	close_auto("version", f.version);
+	close_auto("creation", timestr(f.created, ircd::localtime));
+	close_auto("level", f.level);
+	close_auto("filter", f.filter);
+	close_auto("comparator", f.comparator);
+	close_auto("merge operator", f.merge_operator);
+	close_auto("prefix extractor", f.prefix_extractor);
+	close_auto("compression", f.compression);
+	close_size("file size", f.size);
+	close_size("top index size", f.top_index_size);
+	close_size("index size", f.index_size);
+	close_size("filter size", f.filter_size);
+	close_size("keys size", f.keys_size);
+	close_size("values size", f.values_size);
+	close_size("data size", f.data_size);
+	close_auto("index parts", f.index_parts);
+	close_auto("data blocks", f.data_blocks);
+	close_auto("entries", f.entries);
+	close_auto("range deletes", f.range_deletes);
+	close_auto("lowest sequence", f.min_seq);
+	close_auto("highest sequence", f.max_seq);
+	close_auto("lowest key", min_key);
+	close_auto("highest key", max_key);
+	close_auto("fixed key length", f.fixed_key_len);
+	close_auto("compacting", f.compacting? "yes"_sv : "no"_sv);
 }
 
 bool
@@ -2243,8 +2319,6 @@ try
 		db::database::get(dbname)
 	};
 
-	_print_sst_info_header(out);
-
 	if(colname == "*")
 	{
 		const auto fileinfos
@@ -2252,6 +2326,7 @@ try
 			db::database::sst::info::vector(database)
 		};
 
+		_print_sst_info_header(out);
 		for(const auto &fileinfo : fileinfos)
 			_print_sst_info(out, fileinfo);
 
@@ -2264,7 +2339,7 @@ try
 	if(startswith(colname, "/"))
 	{
 		const db::database::sst::info info{database, colname};
-		_print_sst_info(out, info);
+		_print_sst_info_full(out, info);
 		return true;
 	}
 
@@ -2274,6 +2349,7 @@ try
 	};
 
 	const db::database::sst::info::vector vector{column};
+	_print_sst_info_header(out);
 	for(const auto &info : vector)
 		_print_sst_info(out, info);
 
