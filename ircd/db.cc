@@ -2794,14 +2794,13 @@ ircd::db::database::sst::dump::dump(db::column column,
 
 ircd::db::database::sst::info::vector::vector(const database &d)
 {
-	const ctx::uninterruptible::nothrow ui;
-	std::vector<rocksdb::LiveFileMetaData> v;
-	d.d->GetLiveFilesMetaData(&v);
-
-	size_t i(0);
-	this->resize(v.size());
-	for(auto &&info : v)
-		this->at(i++).operator=(std::move(info));
+	this->reserve(db::file_count(d));
+	for(const auto &c : d.columns)
+	{
+		db::column column{*c};
+		for(auto &&info : vector(column))
+			this->emplace_back(std::move(info));
+	}
 }
 
 ircd::db::database::sst::info::vector::vector(const db::column &column)
@@ -2813,33 +2812,63 @@ ircd::db::database::sst::info::vector::vector(const db::column &column)
 	rocksdb::ColumnFamilyMetaData cfmd;
 	d.d->GetColumnFamilyMetaData(c, &cfmd);
 
+	rocksdb::TablePropertiesCollection tpc;
+	throw_on_error
+	{
+		d.d->GetPropertiesOfAllTables(c, &tpc)
+	};
+
 	size_t i(0);
-	this->resize(cfmd.file_count);
+	this->resize(std::max(cfmd.file_count, tpc.size()));
 	for(rocksdb::LevelMetaData &level : cfmd.levels)
 		for(rocksdb::SstFileMetaData md : level.files)
 		{
 			auto &info(this->at(i++));
 			info.operator=(std::move(md));
-			info.column = db::name(column);
 			info.level = level.level;
+
+			const auto path(info.path + info.name);
+			auto tp(*tpc.at(path));
+			info.operator=(std::move(tp));
+			tpc.erase(path);
 		}
+
+	for(auto &&kv : tpc)
+	{
+		auto &info(this->at(i++));
+		auto tp(*kv.second);
+		info.operator=(std::move(tp));
+		info.path = kv.first;
+	}
+
+	assert(i == this->size());
 }
 
 //
 // sst::info::info
 //
 
-ircd::db::database::sst::info::info(const database &d,
+ircd::db::database::sst::info::info(const database &d_,
                                     const string_view &filename)
 {
+	auto &d(const_cast<database &>(d_));
 	const ctx::uninterruptible::nothrow ui;
+
 	std::vector<rocksdb::LiveFileMetaData> v;
 	d.d->GetLiveFilesMetaData(&v);
 
 	for(auto &md : v)
 		if(md.name == filename)
 		{
+			rocksdb::TablePropertiesCollection tpc;
+			throw_on_error
+			{
+				d.d->GetPropertiesOfAllTables(d[md.column_family_name], &tpc)
+			};
+
+			auto tp(*tpc.at(md.db_path + md.name));
 			this->operator=(std::move(md));
+			this->operator=(std::move(tp));
 			return;
 		}
 
@@ -2880,6 +2909,33 @@ ircd::db::database::sst::info::operator=(rocksdb::SstFileMetaData &&md)
 	max_key = std::move(md.largestkey);
 	num_reads = std::move(md.num_reads_sampled);
 	compacting = std::move(md.being_compacted);
+	return *this;
+}
+
+ircd::db::database::sst::info &
+ircd::db::database::sst::info::operator=(rocksdb::TableProperties &&tp)
+{
+	column = std::move(tp.column_family_name);
+	filter = std::move(tp.filter_policy_name);
+	comparator = std::move(tp.comparator_name);
+	merge_operator = std::move(tp.merge_operator_name);
+	prefix_extractor = std::move(tp.prefix_extractor_name);
+	compression = std::move(tp.compression_name);
+	format = std::move(tp.format_version);
+	cfid = std::move(tp.column_family_id);
+	data_size = std::move(tp.data_size);
+	index_size = std::move(tp.index_size);
+	top_index_size = std::move(tp.top_level_index_size);
+	filter_size = std::move(tp.filter_size);
+	keys_size = std::move(tp.raw_key_size);
+	values_size = std::move(tp.raw_value_size);
+	index_parts = std::move(tp.index_partitions);
+	data_blocks = std::move(tp.num_data_blocks);
+	entries = std::move(tp.num_entries);
+	range_deletes = std::move(tp.num_range_deletions);
+	fixed_key_len = std::move(tp.fixed_key_len);
+	created = std::move(tp.creation_time);
+	oldest_key = std::move(tp.oldest_key_time);
 	return *this;
 }
 
