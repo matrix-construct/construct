@@ -2798,12 +2798,10 @@ ircd::db::database::sst::info::vector::vector(const database &d)
 	std::vector<rocksdb::LiveFileMetaData> v;
 	d.d->GetLiveFilesMetaData(&v);
 
+	size_t i(0);
 	this->resize(v.size());
-	std::transform(v.begin(), v.end(), this->begin(), []
-	(auto &&info)
-	{
-		return std::move(info);
-	});
+	for(auto &&info : v)
+		this->at(i++).operator=(std::move(info));
 }
 
 ircd::db::database::sst::info::vector::vector(const db::column &column)
@@ -2814,16 +2812,17 @@ ircd::db::database::sst::info::vector::vector(const db::column &column)
 
 	rocksdb::ColumnFamilyMetaData cfmd;
 	d.d->GetColumnFamilyMetaData(c, &cfmd);
-	this->reserve(cfmd.file_count);
+
+	size_t i(0);
+	this->resize(cfmd.file_count);
 	for(rocksdb::LevelMetaData &level : cfmd.levels)
-	{
 		for(rocksdb::SstFileMetaData md : level.files)
 		{
-			this->emplace_back(std::move(md));
-			this->back().column = db::name(column);
-			this->back().level = level.level;
+			auto &info(this->at(i++));
+			info.operator=(std::move(md));
+			info.column = db::name(column);
+			info.level = level.level;
 		}
-	}
 }
 
 //
@@ -2840,7 +2839,7 @@ ircd::db::database::sst::info::info(const database &d,
 	for(auto &md : v)
 		if(md.name == filename)
 		{
-			new (this) info(std::move(md));
+			this->operator=(std::move(md));
 			return;
 		}
 
@@ -2852,32 +2851,36 @@ ircd::db::database::sst::info::info(const database &d,
 	};
 }
 
-ircd::db::database::sst::info::info(rocksdb::LiveFileMetaData &&md)
-:name{std::move(md.name)}
-,path{std::move(md.db_path)}
-,column{std::move(md.column_family_name)}
-,size{md.size}
-,min_seq{md.smallest_seqno}
-,max_seq{md.largest_seqno}
-,min_key{std::move(md.smallestkey)}
-,max_key{std::move(md.largestkey)}
-,num_reads{md.num_reads_sampled}
-,level{md.level}
-,compacting{md.being_compacted}
+ircd::db::database::sst::info &
+ircd::db::database::sst::info::operator=(rocksdb::LiveFileMetaData &&md)
 {
+	name = std::move(md.name);
+	path = std::move(md.db_path);
+	column = std::move(md.column_family_name);
+	size = std::move(md.size);
+	min_seq = std::move(md.smallest_seqno);
+	max_seq = std::move(md.largest_seqno);
+	min_key = std::move(md.smallestkey);
+	max_key = std::move(md.largestkey);
+	num_reads = std::move(md.num_reads_sampled);
+	level = std::move(md.level);
+	compacting = std::move(md.being_compacted);
+	return *this;
 }
 
-ircd::db::database::sst::info::info(rocksdb::SstFileMetaData &&md)
-:name{std::move(md.name)}
-,path{std::move(md.db_path)}
-,size{md.size}
-,min_seq{md.smallest_seqno}
-,max_seq{md.largest_seqno}
-,min_key{std::move(md.smallestkey)}
-,max_key{std::move(md.largestkey)}
-,num_reads{md.num_reads_sampled}
-,compacting{md.being_compacted}
+ircd::db::database::sst::info &
+ircd::db::database::sst::info::operator=(rocksdb::SstFileMetaData &&md)
 {
+	name = std::move(md.name);
+	path = std::move(md.db_path);
+	size = std::move(md.size);
+	min_seq = std::move(md.smallest_seqno);
+	max_seq = std::move(md.largest_seqno);
+	min_key = std::move(md.smallestkey);
+	max_key = std::move(md.largestkey);
+	num_reads = std::move(md.num_reads_sampled);
+	compacting = std::move(md.being_compacted);
+	return *this;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

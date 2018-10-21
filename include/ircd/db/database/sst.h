@@ -39,10 +39,11 @@ struct ircd::db::database::sst::info
 	int32_t version {-1};
 	uint64_t entries {0};
 
-	info() = default;
-	info(rocksdb::SstFileMetaData &&);
-	info(rocksdb::LiveFileMetaData &&);
 	info(const database &, const string_view &filename);
+	info() = default;
+
+	info &operator=(rocksdb::SstFileMetaData &&);
+	info &operator=(rocksdb::LiveFileMetaData &&);
 };
 
 struct ircd::db::database::sst::info::vector
