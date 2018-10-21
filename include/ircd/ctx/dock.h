@@ -248,14 +248,7 @@ inline void
 ircd::ctx::dock::notify(ctx &ctx)
 noexcept
 {
-	// This branch handles dock.notify() being called from outside the context system.
-	// If a context is currently running we can make a direct context-switch with
-	// yield(ctx), otherwise notify(ctx) enqueues the context.
-
-	if(current)
-		ircd::ctx::yield(ctx);
-	else
-		ircd::ctx::notify(ctx);
+	ircd::ctx::notify(ctx);
 }
 
 /// The number of contexts waiting in the queue.
