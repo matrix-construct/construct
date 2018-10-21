@@ -21,10 +21,12 @@ class ircd::ctx::queue
 {
 	struct dock dock;
 	std::queue<T> q;
+	size_t w {0};
 
   public:
-	auto empty() const                           { return q.empty();                               }
-	auto size() const                            { return q.size();                                }
+	size_t empty() const;
+	size_t size() const;
+	size_t waiting() const;
 
 	// Consumer interface; waits for item and std::move() it off the queue
 	template<class time_point> T pop_until(time_point&&);
@@ -77,6 +79,12 @@ template<class T>
 T
 ircd::ctx::queue<T>::pop()
 {
+	++w;
+	const unwind uw{[this]
+	{
+		--w;
+	}};
+
 	dock.wait([this]
 	{
 		return !q.empty();
@@ -93,6 +101,12 @@ template<class duration>
 T
 ircd::ctx::queue<T>::pop_for(const duration &dur)
 {
+	++w;
+	const unwind uw{[this]
+	{
+		--w;
+	}};
+
 	const bool ready
 	{
 		dock.wait_for(dur, [this]
@@ -115,6 +129,12 @@ template<class time_point>
 T
 ircd::ctx::queue<T>::pop_until(time_point&& tp)
 {
+	++w;
+	const unwind uw{[this]
+	{
+		--w;
+	}};
+
 	const bool ready
 	{
 		dock.wait_until(tp, [this]
@@ -130,4 +150,28 @@ ircd::ctx::queue<T>::pop_until(time_point&& tp)
 	auto ret(std::move(q.front()));
 	q.pop();
 	return ret;
+}
+
+template<class T>
+size_t
+ircd::ctx::queue<T>::waiting()
+const
+{
+	return w;
+}
+
+template<class T>
+size_t
+ircd::ctx::queue<T>::size()
+const
+{
+	return q.size();
+}
+
+template<class T>
+size_t
+ircd::ctx::queue<T>::empty()
+const
+{
+	return q.empty();
 }
