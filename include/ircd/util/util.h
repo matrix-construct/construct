@@ -52,6 +52,8 @@ namespace ircd
 #include "iterator.h"
 #include "nothrow.h"
 #include "what.h"
+#include "u2a.h"
+#include "pretty.h"
 
 // Unsorted section
 namespace ircd {

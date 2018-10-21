@@ -31,25 +31,6 @@ namespace ircd
 	// Circular static thread_local buffer
 	const size_t LEX_CAST_BUFS {256}; // plenty
 	template<class T> string_view lex_cast(const T &t);
-
-	// Binary <-> Hex conversion suite
-	const_buffer a2u(const mutable_buffer &out, const const_buffer &in);
-	string_view u2a(const mutable_buffer &out, const const_buffer &in);
-	std::string u2a(const const_buffer &in);
-
-	// Human readable space suite
-	using human_readable_size = std::tuple<uint64_t, long double, const string_view &>;
-	human_readable_size iec(const uint64_t &value);
-	human_readable_size si(const uint64_t &value);
-	string_view pretty(const mutable_buffer &out, const human_readable_size &);
-	std::string pretty(const human_readable_size &);
-	string_view pretty_only(const mutable_buffer &out, const human_readable_size &);
-	std::string pretty_only(const human_readable_size &);
-
-	// Human readable time suite (for timers and counts; otherwise see date.h)
-	string_view pretty_nanoseconds(const mutable_buffer &out, const long double &);
-	template<class r, class p> string_view pretty(const mutable_buffer &out, const duration<r, p> &);
-	template<class r, class p> std::string pretty(const duration<r, p> &);
 }
 
 namespace ircd
@@ -270,26 +251,4 @@ inline bool
 ircd::try_lex_cast<std::string>(const string_view &s)
 {
 	return true;
-}
-
-template<class rep,
-         class period>
-std::string
-ircd::pretty(const duration<rep, period> &d)
-{
-	return util::string(32, [&d]
-	(const mutable_buffer &out)
-	{
-		return pretty(out, d);
-	});
-}
-
-template<class rep,
-         class period>
-ircd::string_view
-ircd::pretty(const mutable_buffer &out,
-             const duration<rep, period> &d)
-{
-	const auto &ns(duration_cast<nanoseconds>(d));
-	return pretty_nanoseconds(out, ns.count());
 }
