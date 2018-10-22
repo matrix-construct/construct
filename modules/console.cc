@@ -1535,10 +1535,10 @@ try
 	}
 
 	// Querying the property for all columns in a loop
-	for(const auto &column_name : database.column_names)
+	for(const auto &column : database.columns)
 	{
-		out << std::setw(16) << std::right << column_name << " : ";
-		query(column_name);
+		out << std::setw(16) << std::right << name(*column) << " : ";
+		query(name(*column));
 	}
 
 	return true;
@@ -1793,8 +1793,8 @@ try
 	if(colname == "*")
 	{
 		stats s_total{0}, comp_total{0};
-		for(const auto &column : database.column_names)
-			query(column, [&](const auto &column, const auto &s, const auto &comp)
+		for(const auto &column : database.columns)
+			query(name(*column), [&](const auto &column, const auto &s, const auto &comp)
 			{
 				s_total += s;
 				comp_total += comp;
@@ -1812,8 +1812,8 @@ try
 	}
 
 	// Querying the cache for all columns in a loop
-	for(const auto &column_name : database.column_names)
-		query(column_name, output);
+	for(const auto &column : database.columns)
+		query(name(*column), output);
 
 	return true;
 }
@@ -1892,8 +1892,8 @@ try
 
 	if(!colname || colname == "**")
 	{
-		for(const auto &colname : database.column_names)
-			clear(colname);
+		for(const auto &column : database.columns)
+			clear(name(*column));
 
 		return true;
 	}
@@ -2034,8 +2034,8 @@ try
 	}
 
 	// Querying the property for all columns in a loop
-	for(const auto &colname : database.column_names)
-		setopt(colname);
+	for(const auto &column : database.columns)
+		setopt(name(*column));
 
 	return true;
 }
@@ -2289,8 +2289,8 @@ console_cmd__db__sst__dump(opt &out, const string_view &line)
 		return true;
 	}
 
-	for(const auto &colname : database.column_names)
-		do_dump(colname);
+	for(const auto &column : database.columns)
+		do_dump(name(*column));
 
 	return true;
 }
@@ -2410,8 +2410,8 @@ try
 		return true;
 	}
 
-	for(const auto &colname : database.column_names)
-		query(colname);
+	for(const auto &column : database.columns)
+		query(name(*column));
 
 	return true;
 }

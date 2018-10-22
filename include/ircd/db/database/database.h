@@ -93,10 +93,10 @@ struct ircd::db::database
 	std::shared_ptr<rocksdb::SstFileManager> ssts;
 	std::shared_ptr<rocksdb::Cache> row_cache;
 	std::vector<descriptor> descriptors;
-	std::vector<string_view> column_names;
-	std::unordered_map<string_view, size_t> column_index;
-	std::vector<std::shared_ptr<column>> columns;
+	std::unordered_map<string_view, std::shared_ptr<column>> column_names;
 	std::unique_ptr<rocksdb::DB> d;
+	std::vector<std::shared_ptr<column>> column_index; // indexed by cfid
+	std::list<std::shared_ptr<column>> columns; // active only
 	std::string uuid;
 	std::unique_ptr<rocksdb::Checkpoint> checkpointer;
 

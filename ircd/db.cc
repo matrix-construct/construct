@@ -766,13 +766,12 @@ try
 	};
 
 	// The names of the columns extracted from the descriptor set
-	std::vector<string_view> ret(descriptors.size());
-	std::transform(begin(descriptors), end(descriptors), begin(ret), [&existing]
-	(const auto &descriptor) -> string_view
+	decltype(this->column_names) ret;
+	for(auto &descriptor : descriptors)
 	{
+		ret.emplace(descriptor.name, std::make_shared<column>(*this, descriptor));
 		existing.erase(descriptor.name);
-		return descriptor.name;
-	});
+	}
 
 	for(const auto &remain : existing)
 		throw error
@@ -781,14 +780,6 @@ try
 			remain,
 			existing.size() - 1
 		};
-
-	return ret;
-}()}
-,column_index{[this]
-{
-	decltype(this->column_index) ret;
-	for(const auto &descriptor : this->descriptors)
-		ret.emplace(descriptor.name, -1);
 
 	return ret;
 }()}
@@ -877,23 +868,13 @@ try
 	// Setup cache
 	opts.row_cache = this->row_cache;
 
-	// Setup column families
-	for(const auto &desc : descriptors)
+	std::vector<rocksdb::ColumnFamilyHandle *> handles; // filled by DB::Open()
+	std::vector<rocksdb::ColumnFamilyDescriptor> columns(this->column_names.size());
+	std::transform(begin(this->column_names), end(this->column_names), begin(columns), []
+	(const auto &pair)
 	{
-		const auto c
-		{
-			std::make_shared<column>(this, desc)
-		};
-
-		columns.emplace_back(c);
-	}
-
-	std::vector<rocksdb::ColumnFamilyHandle *> handles;
-	std::vector<rocksdb::ColumnFamilyDescriptor> columns(this->columns.size());
-	std::transform(begin(this->columns), end(this->columns), begin(columns), []
-	(const auto &column)
-	{
-		return static_cast<const rocksdb::ColumnFamilyDescriptor &>(*column);
+		const auto &column(*pair.second);
+		return static_cast<const rocksdb::ColumnFamilyDescriptor &>(column);
 	});
 
 	// NOTE: rocksdb sez RepairDB is broken; can't use now
@@ -950,11 +931,52 @@ try
 		ptr
 	};
 
-	for(const auto &handle : handles)
+	// Set the handles. We can't throw here so we just log an error.
+	for(const auto &handle : handles) try
 	{
-		this->columns.at(handle->GetID())->handle.reset(handle);
-		this->column_index.at(handle->GetName()) = handle->GetID();
+		this->column_names.at(handle->GetName())->handle.reset(handle);
 	}
+	catch(const std::exception &e)
+	{
+		log::critical
+		{
+			"'%s': Error finding described handle '%s' which RocksDB opened :%s",
+			this->name,
+			handle->GetName(),
+			e.what()
+		};
+	}
+
+	return ret;
+}()}
+,column_index{[this]
+{
+	size_t size{0};
+	for(const auto &p : column_names)
+	{
+		const auto &column(*p.second);
+		if(db::id(column) + 1 > size)
+			size = db::id(column) + 1;
+	}
+
+	// This may have some gaps containing nullptrs where a CFID is unused.
+	decltype(this->column_index) ret(size);
+	for(const auto &p : column_names)
+	{
+		const auto &colptr(p.second);
+		ret.at(db::id(*colptr)) = colptr;
+	}
+
+	return ret;
+}()}
+,columns{[this]
+{
+	// Skip the gaps in the column_index vector to make the columns list
+	// only contain active column instances.
+	decltype(this->columns) ret;
+	for(const auto &ptr : this->column_index)
+		if(ptr)
+			ret.emplace_back(ptr);
 
 	return ret;
 }()}
@@ -981,16 +1003,6 @@ try
 	return checkpointer;
 }()}
 {
-	for(size_t i(0); i < this->columns.size(); ++i)
-		if(db::id(*this->columns[i]) != i)
-			throw error
-			{
-				"Columns misaligned: expecting id[%zd] got id[%u] '%s'",
-				i,
-				db::id(*this->columns[i]),
-				db::name(*this->columns[i])
-			};
-
 	if(ircd::checkdb)
 	{
 		log::notice
@@ -1052,7 +1064,15 @@ noexcept try
 	};
 
 	flush(*this);
+	log::debug
+	{
+		log, "'%s': flushed; closing columns...",
+		name
+	};
+
 	this->checkpointer.reset(nullptr);
+	this->column_names.clear();
+	this->column_index.clear();
 	this->columns.clear();
 	log::debug
 	{
@@ -1170,8 +1190,8 @@ ircd::db::database::operator()(const sopts &sopts,
 ircd::db::database::column &
 ircd::db::database::operator[](const string_view &name)
 {
-	const auto it{column_index.find(name)};
-	if(unlikely(it == std::end(column_index)))
+	const auto it{column_names.find(name)};
+	if(unlikely(it == std::end(column_names)))
 		throw schema_error
 		{
 			"'%s': column '%s' is not available or specified in schema",
@@ -1179,14 +1199,16 @@ ircd::db::database::operator[](const string_view &name)
 			name
 		};
 
-	return operator[](it->second);
+	return operator[](db::id(*it->second));
 }
 
 ircd::db::database::column &
 ircd::db::database::operator[](const uint32_t &id)
 try
 {
-	return *columns.at(id);
+	auto &ret(*column_index.at(id));
+	assert(db::id(ret) == id);
+	return ret;
 }
 catch(const std::out_of_range &e)
 {
@@ -1202,8 +1224,8 @@ const ircd::db::database::column &
 ircd::db::database::operator[](const string_view &name)
 const
 {
-	const auto it{column_index.find(name)};
-	if(unlikely(it == std::end(column_index)))
+	const auto it{column_names.find(name)};
+	if(unlikely(it == std::end(column_names)))
 		throw schema_error
 		{
 			"'%s': column '%s' is not available or specified in schema",
@@ -1211,14 +1233,16 @@ const
 			name
 		};
 
-	return operator[](it->second);
+	return operator[](db::id(*it->second));
 }
 
 const ircd::db::database::column &
 ircd::db::database::operator[](const uint32_t &id)
 const try
 {
-	return *columns.at(id);
+	auto &ret(*column_index.at(id));
+	assert(db::id(ret) == id);
+	return ret;
 }
 catch(const std::out_of_range &e)
 {
@@ -7448,10 +7472,10 @@ ircd::db::row::row(database &d,
 
 	database::column *colptr[column_count];
 	if(colnames.empty())
-		std::transform(begin(d.columns), end(d.columns), colptr, [&colnames]
+		std::transform(begin(d.column_names), end(d.column_names), colptr, [&colnames]
 		(const auto &p)
 		{
-			return p.get();
+			return p.second.get();
 		});
 	else
 		std::transform(begin(colnames), end(colnames), colptr, [&d]
