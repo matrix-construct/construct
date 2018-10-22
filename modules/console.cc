@@ -2635,12 +2635,12 @@ try
 
 	const auto dbname
 	{
-		param.at(0)
+		param.at("dbname")
 	};
 
 	const auto colname
 	{
-		param.at(0)
+		param.at("column")
 	};
 
 	auto &database
@@ -2648,10 +2648,16 @@ try
 		db::database::get(dbname)
 	};
 
-	throw error
+	db::column column
 	{
-		"TODO: please implement."
+		database, colname
 	};
+
+	db::drop(column);
+
+	out << "DROPPED COLUMN " << colname
+	    << " FROM DATABASE " << dbname
+	    << std::endl;
 
 	return true;
 }

@@ -64,6 +64,7 @@ namespace ircd::db
 	void compact(column &, const std::pair<string_view, string_view> &, const int &to_level = -1, const compactor & = {});
 	void compact(column &, const int &level = -1, const compactor & = {});
 	void sort(column &, const bool &blocking = false);
+	void drop(column &); // danger
 }
 
 /// Columns add the ability to run multiple LevelDB's in synchrony under the same

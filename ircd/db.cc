@@ -1331,13 +1331,31 @@ const noexcept
 void
 ircd::db::drop(database::column &c)
 {
-	const ctx::uninterruptible ui;
 	if(!c.handle)
 		return;
+
+	database &d(c);
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const ctx::uninterruptible::nothrow ui;
+	log::debug
+	{
+		log, "'%s':'%s' @%lu DROPPING COLUMN",
+		name(d),
+		name(c),
+		sequence(d)
+	};
 
 	throw_on_error
 	{
 		c.d->d->DropColumnFamily(c.handle.get())
+	};
+
+	log::notice
+	{
+		log, "'%s':'%s' @%lu DROPPED COLUMN",
+		name(d),
+		name(c),
+		sequence(d)
 	};
 }
 
@@ -7766,6 +7784,13 @@ ircd::db::files(const column &column)
 			ret.emplace_back(std::move(file.name));
 
 	return ret;
+}
+
+void
+ircd::db::drop(column &column)
+{
+	database::column &c(column);
+	drop(c);
 }
 
 void
