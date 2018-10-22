@@ -1377,38 +1377,40 @@ ircd::db::name(const database::column &c)
 const ircd::db::descriptor &
 ircd::db::describe(const database::column &c)
 {
-	return c.descriptor;
+	assert(c.descriptor);
+	return *c.descriptor;
 }
 
 //
 // database::column
 //
 
-ircd::db::database::column::column(database *const &d,
-                                   const db::descriptor &descriptor)
+ircd::db::database::column::column(database &d,
+                                   db::descriptor &descriptor)
 :rocksdb::ColumnFamilyDescriptor
 (
 	descriptor.name, database::options{descriptor.options}
 )
-,d{d}
-,key_type{descriptor.type.first}
-,mapped_type{descriptor.type.second}
-,descriptor{descriptor}
-,cmp{d, this->descriptor.cmp}
-,prefix{d, this->descriptor.prefix}
-,cfilter{this, this->descriptor.compactor}
-,stats{std::make_shared<struct database::stats>(d)}
+,d{&d}
+,descriptor{&descriptor}
+,key_type{this->descriptor->type.first}
+,mapped_type{this->descriptor->type.second}
+,cmp{this->d, this->descriptor->cmp}
+,prefix{this->d, this->descriptor->prefix}
+,cfilter{this, this->descriptor->compactor}
+,stats{std::make_shared<struct database::stats>(this->d)}
 ,handle
 {
-	nullptr, [this](rocksdb::ColumnFamilyHandle *const handle)
+	nullptr, [&d](rocksdb::ColumnFamilyHandle *const handle)
 	{
-		if(handle)
-			this->d->d->DestroyColumnFamilyHandle(handle);
+		assert(d.d);
+		if(handle && d.d)
+			d.d->DestroyColumnFamilyHandle(handle);
 	}
 }
 {
 	// If possible, deduce comparator based on type given in descriptor
-	if(!this->descriptor.cmp.less)
+	if(!this->descriptor->cmp.less)
 	{
 		if(key_type == typeid(string_view))
 			this->cmp.user = cmp_string_view{};
@@ -1466,22 +1468,22 @@ ircd::db::database::column::column(database *const &d,
 	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
 
 	// Setup the block size
-	table_opts.block_size = this->descriptor.block_size;
-	table_opts.metadata_block_size = this->descriptor.meta_block_size;
+	table_opts.block_size = this->descriptor->block_size;
+	table_opts.metadata_block_size = this->descriptor->meta_block_size;
 	table_opts.block_size_deviation = 5;
 
 	// Setup the cache for assets.
-	const auto &cache_size(this->descriptor.cache_size);
+	const auto &cache_size(this->descriptor->cache_size);
 	if(cache_size != 0)
-		table_opts.block_cache = std::make_shared<database::cache>(d, this->stats, cache_size);
+		table_opts.block_cache = std::make_shared<database::cache>(this->d, this->stats, cache_size);
 
 	// Setup the cache for compressed assets.
-	const auto &cache_size_comp(this->descriptor.cache_size_comp);
+	const auto &cache_size_comp(this->descriptor->cache_size_comp);
 	if(cache_size_comp != 0)
-		table_opts.block_cache_compressed = std::make_shared<database::cache>(d, this->stats, cache_size_comp);
+		table_opts.block_cache_compressed = std::make_shared<database::cache>(this->d, this->stats, cache_size_comp);
 
 	// Setup the bloom filter.
-	const auto &bloom_bits(this->descriptor.bloom_bits);
+	const auto &bloom_bits(this->descriptor->bloom_bits);
 	if(bloom_bits)
 		table_opts.filter_policy.reset(rocksdb::NewBloomFilterPolicy(bloom_bits, false));
 
@@ -1509,7 +1511,7 @@ ircd::db::database::column::column(database *const &d,
 	this->options.compaction_pri = rocksdb::CompactionPri::kOldestLargestSeqFirst;
 
 	// Set filter reductions for this column. This means we expect a key to exist.
-	this->options.optimize_filters_for_hits = this->descriptor.expect_queries_hit;
+	this->options.optimize_filters_for_hits = this->descriptor->expect_queries_hit;
 
 	// Compression
 	//TODO: descriptor / conf / detect etc...
@@ -1530,7 +1532,7 @@ ircd::db::database::column::column(database *const &d,
 	log::debug
 	{
 		log, "schema '%s' column [%s => %s] cmp[%s] pfx[%s] lru:%s:%s bloom:%zu %s",
-		db::name(*d),
+		db::name(d),
 		demangle(key_type.name()),
 		demangle(mapped_type.name()),
 		this->cmp.Name(),
@@ -1538,7 +1540,7 @@ ircd::db::database::column::column(database *const &d,
 		cache_size? "YES": "NO",
 		cache_size_comp? "YES": "NO",
 		bloom_bits,
-		this->descriptor.name
+		this->descriptor->name
 	};
 }
 
@@ -8216,7 +8218,8 @@ ircd::db::column::operator
 const descriptor &()
 const
 {
-	return c->descriptor;
+	assert(c->descriptor);
+	return *c->descriptor;
 }
 
 //

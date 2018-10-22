@@ -32,9 +32,9 @@ struct ircd::db::database::column final
 ,rocksdb::ColumnFamilyDescriptor
 {
 	database *d;
+	db::descriptor *descriptor;
 	std::type_index key_type;
 	std::type_index mapped_type;
-	db::descriptor descriptor;
 	comparator cmp;
 	prefix_transform prefix;
 	compaction_filter cfilter;
@@ -51,7 +51,7 @@ struct ircd::db::database::column final
 	operator rocksdb::ColumnFamilyHandle *();
 	operator database &();
 
-	explicit column(database *const &d, const db::descriptor &);
+	explicit column(database &d, db::descriptor &);
 	column() = delete;
 	column(column &&) = delete;
 	column(const column &) = delete;
