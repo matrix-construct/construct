@@ -956,16 +956,6 @@ try
 		this->column_index.at(handle->GetName()) = handle->GetID();
 	}
 
-	for(size_t i(0); i < this->columns.size(); ++i)
-		if(db::id(*this->columns[i]) != i)
-			throw error
-			{
-				"Columns misaligned: expecting id[%zd] got id[%u] '%s'",
-				i,
-				db::id(*this->columns[i]),
-				db::name(*this->columns[i])
-			};
-
 	return ret;
 }()}
 ,uuid{[this]
@@ -991,6 +981,16 @@ try
 	return checkpointer;
 }()}
 {
+	for(size_t i(0); i < this->columns.size(); ++i)
+		if(db::id(*this->columns[i]) != i)
+			throw error
+			{
+				"Columns misaligned: expecting id[%zd] got id[%u] '%s'",
+				i,
+				db::id(*this->columns[i]),
+				db::name(*this->columns[i])
+			};
+
 	if(ircd::checkdb)
 	{
 		log::notice
