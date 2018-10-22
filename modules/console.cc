@@ -2191,30 +2191,69 @@ _print_sst_info_full(opt &out,
 	close_auto("column", f.column);
 	close_auto("format", f.format);
 	close_auto("version", f.version);
-	close_auto("creation", timestr(f.created, ircd::localtime));
-	close_auto("level", f.level);
-	close_auto("filter", f.filter);
 	close_auto("comparator", f.comparator);
 	close_auto("merge operator", f.merge_operator);
 	close_auto("prefix extractor", f.prefix_extractor);
-	close_auto("compression", f.compression);
 	close_size("file size", f.size);
-	close_size("top index size", f.top_index_size);
-	close_size("index size", f.index_size);
-	close_size("filter size", f.filter_size);
-	close_size("keys size", f.keys_size);
-	close_size("values size", f.values_size);
-	close_size("data size", f.data_size);
-	close_auto("index parts", f.index_parts);
-	close_auto("data blocks", f.data_blocks);
-	close_auto("entries", f.entries);
-	close_auto("range deletes", f.range_deletes);
+	close_auto("creation", timestr(f.created, ircd::localtime));
+	close_auto("level", f.level);
 	close_auto("lowest sequence", f.min_seq);
 	close_auto("highest sequence", f.max_seq);
 	close_auto("lowest key", min_key);
 	close_auto("highest key", max_key);
 	close_auto("fixed key length", f.fixed_key_len);
+	close_auto("range deletes", f.range_deletes);
 	close_auto("compacting", f.compacting? "yes"_sv : "no"_sv);
+	close_auto("", "");
+
+	close_size("index root size", f.top_index_size);
+	close_auto("index data blocks", f.index_parts);
+	close_size("index data size", f.index_size);
+	close_size("index data block average size", f.index_size / double(f.index_parts));
+	close_size("index data average per-key", f.index_size / double(f.entries));
+	close_size("index data average per-block", f.index_size / double(f.data_blocks));
+	close_auto("index root percent of index", 100.0 * (f.top_index_size / double(f.index_size)));
+	close_auto("index data percent of keys", 100.0 * (f.index_size / double(f.keys_size)));
+	close_auto("index data percent of values", 100.0 * (f.index_size / double(f.values_size)));
+	close_auto("index data percent of data", 100.0 * (f.index_size / double(f.data_size)));
+	close_auto("", "");
+
+	close_auto("filter", f.filter);
+	close_size("filter size", f.filter_size);
+	close_auto("filter average per-key", f.filter_size / double(f.entries));
+	close_auto("filter average per-block", f.filter_size / double(f.data_blocks));
+	close_auto("filter percent of index", 100.0 * (f.filter_size / double(f.index_size)));
+	close_auto("filter percent of data", 100.0 * (f.filter_size / double(f.data_size)));
+	close_auto("filter percent of keys", 100.0 * (f.filter_size / double(f.keys_size)));
+	close_auto("filter percent of values", 100.0 * (f.filter_size / double(f.values_size)));
+	close_auto("", "");
+
+	close_auto("keys", f.entries);
+	close_size("keys size", f.keys_size);
+	close_size("keys average size", f.keys_size / double(f.entries));
+	close_auto("keys percent of values", 100.0 * (f.keys_size / double(f.values_size)));
+	close_auto("keys average per-block", f.entries / double(f.data_blocks));
+	close_auto("keys average per-index", f.entries / double(f.index_parts));
+	close_auto("", "");
+
+	close_auto("values", f.entries);
+	close_size("values size", f.values_size);
+	close_size("values average size", f.values_size / double(f.entries));
+	close_size("values average size per-block", f.values_size / double(f.data_blocks));
+	close_auto("", "");
+
+	const auto blocks_size{f.keys_size + f.values_size};
+	close_auto("blocks", f.data_blocks);
+	close_size("blocks size", blocks_size);
+	close_size("blocks average size", blocks_size / double(f.data_blocks));
+	close_auto("blocks percent of keys", 100.0 * (f.data_blocks / double(f.entries)));
+	close_auto("", "");
+
+	close_auto("data compression", f.compression);
+	close_size("data size", f.data_size);
+	close_size("data blocks average size", f.data_size / double(f.data_blocks));
+	close_auto("data compression percent", 100 - 100.0L * (f.data_size / double(blocks_size)));
+	close_auto("", "");
 }
 
 bool
