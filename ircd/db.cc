@@ -1478,7 +1478,7 @@ ircd::db::database::column::column(database &d,
 	table_opts.partition_filters = true;
 	table_opts.use_delta_encoding = true;
 	table_opts.enable_index_compression = false;
-	table_opts.read_amp_bytes_per_bit = 4;
+	table_opts.read_amp_bytes_per_bit = 8;
 
 	// Specify that index blocks should use the cache. If not, they will be
 	// pre-read into RAM by rocksdb internally. Because of the above
@@ -1494,7 +1494,7 @@ ircd::db::database::column::column(database &d,
 	// Setup the block size
 	table_opts.block_size = this->descriptor->block_size;
 	table_opts.metadata_block_size = this->descriptor->meta_block_size;
-	table_opts.block_size_deviation = 5;
+	table_opts.block_size_deviation = 50;
 
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor->cache_size);
