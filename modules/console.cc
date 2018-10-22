@@ -2102,6 +2102,7 @@ _print_sst_info_header(opt &out)
 	    << "  " << std::setw(25) << "sequence number"
 	    << "  " << std::setw(32) << "creation"
 	    << "  " << std::setw(3) << "lev"
+	    << "  " << std::setw(2) << "ID"
 	    << std::left
 	    << "  " << std::setw(20) << "column"
 	    << std::endl;
@@ -2135,6 +2136,7 @@ _print_sst_info(opt &out,
 	    << "  " << std::setw(11) << std::right << f.min_seq << " : " << std::setw(11) << std::left << f.max_seq
 	    << "  " << std::setw(32) << std::right << timestr(f.created, ircd::localtime)
 	    << "  " << std::setw(3) << std::right << f.level
+	    << "  " << std::setw(2) << std::right << f.cfid
 	    << "  " << std::setw(20) << std::left << f.column
 	    << std::endl;
 }
@@ -2698,6 +2700,37 @@ console_cmd__db__list(opt &out, const string_view &line)
 		    << std::endl;
 	}
 
+	return true;
+}
+
+bool
+console_cmd__db__columns(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname"
+	}};
+
+	auto &d
+	{
+		db::database::get(param.at("dbname"))
+	};
+
+	for(const auto &c : d.columns)
+	{
+		const db::column &column(*c);
+		out << '[' << std::setw(3) << std::right << db::id(column) << ']'
+		    << " " << std::setw(18) << std::left << db::name(column)
+		    << " " << std::setw(25) << std::right << pretty(iec(bytes(column)))
+		    << std::endl;
+	}
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
 	return true;
 }
 
