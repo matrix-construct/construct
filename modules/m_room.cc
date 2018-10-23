@@ -468,6 +468,35 @@ state__rebuild_history(const m::room &room)
 }
 
 extern "C" size_t
+state__prefetch(const m::room::state &state,
+                const string_view &type,
+                const std::pair<m::event::idx, m::event::idx> &range)
+{
+	const m::event::fetch::opts &fopts
+	{
+		state.fopts?
+			*state.fopts:
+			m::event::fetch::default_opts
+	};
+
+	size_t ret{0};
+	state.for_each(type, m::event::closure_idx{[&ret, &fopts, &range]
+	(const m::event::idx &event_idx)
+	{
+		if(event_idx < range.first)
+			return;
+
+		if(range.second && event_idx > range.second)
+			return;
+
+		m::prefetch(event_idx, fopts);
+		++ret;
+	}});
+
+	return ret;
+}
+
+extern "C" size_t
 head__rebuild(const m::room &room)
 {
 	size_t ret{0};

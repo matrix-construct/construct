@@ -6091,6 +6091,62 @@ console_cmd__room__state__rebuild__history(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__state__prefetch(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "[event_id_or_type]", "[type]"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto &event_id_or_type
+	{
+		param.at("[event_id_or_type]", string_view{})
+	};
+
+	const auto is_event_id
+	{
+		m::has_sigil(event_id_or_type) && valid(m::id::EVENT, event_id_or_type)
+	};
+
+	const string_view &event_id
+	{
+		is_event_id?
+			event_id_or_type:
+			string_view{}
+	};
+
+	const auto &type
+	{
+		is_event_id?
+			param.at("[type]", string_view{}):
+			event_id_or_type
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	const size_t prefetched
+	{
+		state.prefetch(type)
+	};
+
+	out << "prefetched " << prefetched << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__count(opt &out, const string_view &line)
 {
 	const params param{line, " ",

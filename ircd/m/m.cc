@@ -2466,6 +2466,30 @@ const
 // m/room.h
 //
 
+size_t
+ircd::m::room::state::prefetch(const event::idx &start,
+                               const event::idx &stop)
+const
+{
+	return prefetch(string_view{}, start, stop);
+}
+
+size_t
+ircd::m::room::state::prefetch(const string_view &type,
+                               const event::idx &start,
+                               const event::idx &stop)
+const
+{
+	using prototype = size_t (const state &, const string_view &, const std::pair<event::idx, event::idx> &);
+
+	static mods::import<prototype> function
+	{
+		"m_room", "state__prefetch"
+	};
+
+	return function(*this, type, std::pair<event::idx, event::idx>{start, stop});
+}
+
 ircd::m::room
 ircd::m::create(const id::room &room_id,
                 const id::user &creator,

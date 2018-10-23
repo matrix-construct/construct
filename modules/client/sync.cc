@@ -995,16 +995,7 @@ ircd::m::sync::polylog::room_state(shortpoll &sp,
 	};
 
 	if(bool(prefetch_state))
-	{
-		state.for_each([&]
-		(const m::event::idx &event_idx)
-		{
-			if(event_idx < sp.since || event_idx >= sp.current)
-				return;
-
-			m::prefetch(event_idx, fopts);
-		});
-	}
+		state.prefetch(sp.since, sp.current);
 
 	state.for_each([&]
 	(const m::event &event)

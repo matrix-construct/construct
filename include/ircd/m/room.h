@@ -298,6 +298,10 @@ struct ircd::m::room::state
 	event::id::buf get(std::nothrow_t, const string_view &type, const string_view &state_key = "") const;
 	event::id::buf get(const string_view &type, const string_view &state_key = "") const;
 
+	// Initiate a database prefetch on the state to cache for future access.
+	size_t prefetch(const string_view &type, const event::idx &start = 0, const event::idx &stop = 0) const;
+	size_t prefetch(const event::idx &start = 0, const event::idx &stop = 0) const;
+
 	state(const m::room &room, const event::fetch::opts *const & = nullptr);
 	state() = default;
 	state(const state &) = delete;
