@@ -221,6 +221,60 @@ ircd::mods::loaded(const string_view &name)
 	return mod::loaded.count(name);
 }
 
+template<> uint8_t *
+ircd::mods::ptr<uint8_t>(mod &mod,
+                         const string_view &sym)
+{
+	return &mod.handle.get<uint8_t>(std::string{sym});
+}
+
+template<>
+const uint8_t *
+ircd::mods::ptr<const uint8_t>(const mod &mod,
+                               const string_view &sym)
+{
+	return &mod.handle.get<const uint8_t>(std::string{sym});
+}
+
+bool
+ircd::mods::unloading(const mod &mod)
+{
+	const auto &list(mod::unloading);
+	return end(list) != std::find(begin(list), end(list), &mod);
+}
+
+bool
+ircd::mods::loading(const mod &mod)
+{
+	const auto &list(mod::loading);
+	return end(list) != std::find(begin(list), end(list), &mod);
+}
+
+bool
+ircd::mods::loaded(const mod &mod)
+{
+	return mod.handle.is_loaded();
+}
+
+bool
+ircd::mods::has(const mod &mod,
+                const string_view &name)
+{
+	return mod.handle.has(std::string{name});
+}
+
+ircd::string_view
+ircd::mods::name(const mod &mod)
+{
+	return mod.name();
+}
+
+ircd::string_view
+ircd::mods::path(const mod &mod)
+{
+	return mod.location();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // mods/import.h
@@ -649,45 +703,6 @@ ircd::mods::paths::added(const string_view &dir)
 const
 {
 	return std::find(begin(), end(), dir) != end();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// mods/mods.h
-//
-
-template<> uint8_t *
-ircd::mods::ptr<uint8_t>(mod &mod,
-                         const string_view &sym)
-{
-	return &mod.handle.get<uint8_t>(std::string{sym});
-}
-
-template<>
-const uint8_t *
-ircd::mods::ptr<const uint8_t>(const mod &mod,
-                               const string_view &sym)
-{
-	return &mod.handle.get<const uint8_t>(std::string{sym});
-}
-
-bool
-ircd::mods::has(const mod &mod,
-                const string_view &name)
-{
-	return mod.handle.has(std::string{name});
-}
-
-ircd::string_view
-ircd::mods::name(const mod &mod)
-{
-	return mod.name();
-}
-
-ircd::string_view
-ircd::mods::path(const mod &mod)
-{
-	return mod.location();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -25,30 +25,22 @@ namespace ircd::mods
 
 	string_view name(const mod &);
 	string_view path(const mod &);
-
+	bool loaded(const mod &);
+	bool loading(const mod &);
+	bool unloading(const mod &);
 	bool has(const mod &, const string_view &sym);
-
 	template<class T = uint8_t> const T *ptr(const mod &, const string_view &sym);
 	template<class T = uint8_t> T *ptr(mod &, const string_view &sym);
-
 	template<class T> const T &get(const mod &, const string_view &sym);
 	template<class T> T &get(mod &, const string_view &sym);
-}
 
-#include "paths.h"
-#include "symbols.h"
-#include "module.h"
-#include "sym_ptr.h"
-#include "import.h"
-#include "import_shared.h"
-
-// misc util
-namespace ircd::mods
-{
+	// Utils by name
 	bool loaded(const string_view &name);
 	bool loading(const string_view &name);
 	bool unloading(const string_view &name);
 	bool available(const string_view &name);
+
+	// Utils by path
 	bool is_module(const string_view &fullpath);
 	bool is_module(const string_view &fullpath, std::nothrow_t);
 	bool is_module(const string_view &fullpath, std::string &why);
@@ -62,6 +54,13 @@ namespace ircd::mods
 	// Potential modules available to load
 	std::forward_list<std::string> available();
 }
+
+#include "paths.h"
+#include "symbols.h"
+#include "module.h"
+#include "sym_ptr.h"
+#include "import.h"
+#include "import_shared.h"
 
 // Exports down into ircd::
 namespace ircd
