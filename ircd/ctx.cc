@@ -956,7 +956,7 @@ noexcept
 	if(current)
 	{
 		const uninterruptible::nothrow ui;
-		interrupt();
+		terminate();
 		join();
 		return;
 	}
