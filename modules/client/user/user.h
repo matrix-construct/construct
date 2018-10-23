@@ -75,12 +75,3 @@ ircd::resource::response
 put__rooms(ircd::client &client,
            const ircd::resource::request &request,
            const ircd::m::user::id &user_id);
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// create.cc
-//
-
-extern "C" ircd::m::user
-user_create(const ircd::m::user::id &,
-            const ircd::json::members &);

@@ -1600,7 +1600,7 @@ ircd::m::create(const id::user &user_id,
 
 	static mods::import<prototype> function
 	{
-		"client_user", "user_create"
+		"m_user", "user_create"
 	};
 
 	return function(user_id, contents);
