@@ -38,6 +38,7 @@ namespace ircd::m::vm
 #include "vm.h"
 #include "room.h"
 #include "user.h"
+#include "users.h"
 #include "rooms.h"
 #include "filter.h"
 #include "events.h"

@@ -7233,6 +7233,22 @@ console_cmd__user__events__count(opt &out, const string_view &line)
 }
 
 //
+// users
+//
+
+bool
+console_cmd__users(opt &out, const string_view &line)
+{
+	m::users::for_each([&out]
+	(const m::user &user)
+	{
+		out << user.user_id << std::endl;
+	});
+
+	return true;
+}
+
+//
 // typing
 //
 

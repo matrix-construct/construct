@@ -1551,6 +1551,42 @@ ircd::m::rooms::for_each(const room::id::closure_bool &closure)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/users.h
+//
+
+void
+ircd::m::users::for_each(const user::closure &closure)
+{
+	for_each(user::closure_bool{[&closure]
+	(const m::user &user)
+	{
+		closure(user);
+		return true;
+	}});
+}
+
+bool
+ircd::m::users::for_each(const user::closure_bool &closure)
+{
+	const m::room::state state
+	{
+		user::users
+	};
+
+	return state.for_each("ircd.user", m::room::state::keys_bool{[&closure]
+	(const string_view &user_id)
+	{
+		const m::user &user
+		{
+			user_id
+		};
+
+		return closure(user);
+	}});
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/user.h
 //
 
