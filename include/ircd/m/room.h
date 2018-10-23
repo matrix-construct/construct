@@ -262,6 +262,7 @@ struct ircd::m::room::state
 	void for_each(const types &) const;
 	bool for_each(const string_view &type, const keys_bool &view) const;
 	void for_each(const string_view &type, const keys &) const;
+	bool for_each(const string_view &type, const string_view &lower_bound, const keys_bool &view) const;
 	bool for_each(const string_view &type, const string_view &lower_bound, const event::closure_idx_bool &view) const;
 	bool for_each(const string_view &type, const string_view &lower_bound, const event::id::closure_bool &view) const;
 	bool for_each(const string_view &type, const string_view &lower_bound, const event::closure_bool &view) const;
