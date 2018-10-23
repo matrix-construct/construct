@@ -128,8 +128,6 @@ noexcept
 		ctx::sleep(3);
 	}
 
-	sendq_context.interrupt();
-	timeout_context.interrupt();
 	assert(tags.empty());
 }
 
