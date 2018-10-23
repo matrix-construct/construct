@@ -1297,49 +1297,6 @@ const
 	return true;
 }
 
-bool
-ircd::m::room::state::for_each(const string_view &type,
-                               const string_view &state_key_lb,
-                               const keys_bool &closure)
-const
-{
-	if(!present())
-		return !m::state::test(root_id, type, state_key_lb, [&closure]
-		(const json::array &key, const string_view &event_id)
-		{
-			char buf[dbs::ROOM_STATE_KEY_MAX_SIZE];
-			return !closure(m::state::unmake_key(buf, key));
-		});
-
-	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
-	const auto &key
-	{
-		dbs::room_state_key(keybuf, room_id, type, state_key_lb)
-	};
-
-	db::gopts opts
-	{
-		this->fopts? this->fopts->gopts : db::gopts{}
-	};
-
-	if(!opts.readahead)
-		opts.readahead = 0_KiB;
-
-	auto &column{dbs::room_state};
-	for(auto it{column.begin(key, opts)}; bool(it); ++it)
-	{
-		const auto key(dbs::room_state_key(it->first));
-		if(std::get<0>(key) == type)
-		{
-			if(!closure(std::get<1>(key)))
-				return false;
-		}
-		else break;
-	}
-
-	return true;
-}
-
 void
 ircd::m::room::state::for_each(const string_view &type,
                                const keys &closure)
@@ -1358,18 +1315,37 @@ ircd::m::room::state::for_each(const string_view &type,
                                const keys_bool &closure)
 const
 {
+	return for_each(type, string_view{}, closure);
+}
+
+bool
+ircd::m::room::state::for_each(const string_view &type,
+                               const string_view &state_key_lb,
+                               const keys_bool &closure)
+const
+{
 	if(!present())
-		return !m::state::test(root_id, type, [&closure]
+	{
+		const auto btree_closure{[&closure]
 		(const json::array &key, const string_view &event_id)
 		{
 			assert(size(key) >= 2);
 			return !closure(unquote(key.at(1)));
-		});
+		}};
+
+		// Must be conditional branch; empty state_key is not accepted by func.
+		return defined(state_key_lb)?
+			!m::state::test(root_id, type, state_key_lb, btree_closure):
+			!m::state::test(root_id, type, btree_closure);
+	}
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	const auto &key
 	{
-		dbs::room_state_key(keybuf, room_id, type)
+		// Must be conditional branch; empty state_key is not accepted by func.
+		defined(state_key_lb)?
+			dbs::room_state_key(keybuf, room_id, type, state_key_lb):
+			dbs::room_state_key(keybuf, room_id, type)
 	};
 
 	db::gopts opts
@@ -1383,14 +1359,14 @@ const
 	auto &column{dbs::room_state};
 	for(auto it{column.begin(key, opts)}; bool(it); ++it)
 	{
-		const auto part
+		const auto key
 		{
 			dbs::room_state_key(it->first)
 		};
 
-		if(std::get<0>(part) == type)
+		if(std::get<0>(key) == type)
 		{
-			if(!closure(std::get<1>(part)))
+			if(!closure(std::get<1>(key)))
 				return false;
 		}
 		else break;
