@@ -49,12 +49,17 @@ struct ircd::net::dns::resolver
 	static const_buffer make_query(const mutable_buffer &buf, const tag &);
 	void operator()(const hostport &, const opts &, callback &&);
 
+	void handle_post_error(const uint16_t id, tag &, const std::system_error &);
+	void post_error(tag &, const std::system_error &ec);
 	bool check_timeout(const uint16_t &id, tag &, const steady_point &expired);
 	void check_timeouts(const milliseconds &timeout);
+	void cancel_all_tags();
 	void timeout_worker();
 	ctx::context timeout_context;
 
 	void flush(const uint16_t &);
+	void sendq_work();
+	void sendq_clear();
 	void sendq_worker();
 	ctx::context sendq_context;
 
