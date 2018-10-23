@@ -86,7 +86,15 @@ ircd::net::dns::resolver_call(const hostport &hp,
 			host(hp)
 		};
 
-	(*resolver)(hp, opts, std::move(cb));
+	auto &resolver{*dns::resolver};
+	if(unlikely(!resolver.ns.is_open()))
+		throw error
+		{
+			"Cannot resolve '%s': resolver is closed.",
+			host(hp)
+		};
+
+	resolver(hp, opts, std::move(cb));
 }
 
 //
