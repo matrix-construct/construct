@@ -53,6 +53,7 @@ namespace ircd::m::state
 	bool prefix_eq(const json::array &a, const json::array &b);
 	json::array make_key(const mutable_buffer &out, const string_view &type, const string_view &state_key);
 	json::array make_key(const mutable_buffer &out, const string_view &type);
+	string_view unmake_key(const mutable_buffer &out, const json::array &);
 
 	id set_node(db::txn &txn, const mutable_buffer &id, const json::object &node);
 	bool get_node(const std::nothrow_t, const string_view &id, const node_closure &);

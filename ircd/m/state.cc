@@ -829,6 +829,22 @@ ircd::m::state::set_node(db::txn &iov,
 	return hashb64;
 }
 
+/// Convenience inverse of make_key.
+ircd::string_view
+ircd::m::state::unmake_key(const mutable_buffer &out,
+                           const json::array &key)
+{
+	window_buffer wb{out};
+	for(const auto &part : key)
+		wb([&part](const mutable_buffer &buf)
+		{
+			assert(json::type(part) == json::STRING);
+			return copy(buf, unquote(part));
+		});
+
+	return wb.completed();
+}
+
 /// Creates a key array from the most common key pattern of a matrix
 /// room (type,state_key).
 ircd::json::array
