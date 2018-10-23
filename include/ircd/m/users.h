@@ -13,6 +13,7 @@
 
 namespace ircd::m::users
 {
+	bool for_each(const string_view &id_lower_bound, const user::closure_bool &);
 	bool for_each(const user::closure_bool &);
 	void for_each(const user::closure &);
 }

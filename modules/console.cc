@@ -7239,11 +7239,25 @@ console_cmd__user__events__count(opt &out, const string_view &line)
 bool
 console_cmd__users(opt &out, const string_view &line)
 {
-	m::users::for_each([&out]
+	const params param{line, " ",
+	{
+		"prefix"
+	}};
+
+	const auto prefix
+	{
+		param.at("prefix", string_view{})
+	};
+
+	m::users::for_each(prefix, m::user::closure_bool{[&out, &prefix]
 	(const m::user &user)
 	{
+		if(prefix && !startswith(user.user_id, prefix))
+			return false;
+
 		out << user.user_id << std::endl;
-	});
+		return true;
+	}});
 
 	return true;
 }
