@@ -8,25 +8,15 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
-
-static void _init();
-static void _fini();
-
-mapi::header
-IRCD_MODULE
-{
-	"Matrix Virtual Machine: Fetch Unit", _init, _fini
-};
-
 // Fetch unit state
-namespace ircd::m::vm::fetch
+namespace ircd::m::fetch
 {
 	struct request;
 
 	extern ctx::dock dock;
 	extern std::set<request, request> fetching;
-	extern hookfn<eval &> hook;
+	extern std::deque<request *> completed;
+	extern hookfn<vm::eval &> hook;
 	extern ctx::context context;
 
 	// worker stack
@@ -35,12 +25,14 @@ namespace ircd::m::vm::fetch
 	static void worker();
 
 	static request &fetch(const m::room::id &, const m::event::id &);
-
 	static void enter(const event &, vm::eval &);
+
+	static void init();
+	static void fini();
 }
 
 /// Fetch entity state
-struct ircd::m::vm::fetch::request
+struct ircd::m::fetch::request
 :m::v1::event
 {
 	using is_transparent = void;
@@ -56,6 +48,9 @@ struct ircd::m::vm::fetch::request
 	time_t finished {0};
 	std::exception_ptr eptr;
 	ctx::dock dock;
+	bool eval {false};
+	bool completed {false};
+	size_t refcnt {0};
 
 	bool operator()(const request &a, const request &b) const;
 	bool operator()(const request &a, const string_view &b) const;
@@ -63,7 +58,7 @@ struct ircd::m::vm::fetch::request
 
 	void finish();
 	void retry();
-	void handle();
+	bool handle();
 
 	string_view select_origin(const string_view &);
 	string_view select_random_origin();

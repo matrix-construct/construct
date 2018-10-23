@@ -47,13 +47,11 @@ moduledir = @moduledir@
 webroot_la_SOURCES = webroot.cc
 console_la_SOURCES = console.cc
 vm_la_SOURCES = vm.cc
-vm_fetch_la_SOURCES = vm_fetch.cc
 
 module_LTLIBRARIES = \
 	webroot.la \
 	console.la \
 	vm.la \
-	vm_fetch.la \
 	###
 
 ###############################################################################
@@ -69,6 +67,7 @@ s_dns_la_SOURCES =  s_dns.cc s_dns_cache.cc s_dns_resolver.cc
 s_node_la_SOURCES = s_node.cc
 s_listen_la_SOURCES = s_listen.cc
 s_keys_la_SOURCES = s_keys.cc
+s_fetch_la_SOURCES = s_fetch.cc
 
 s_module_LTLIBRARIES = \
 	s_conf.la \
@@ -77,6 +76,7 @@ s_module_LTLIBRARIES = \
 	s_node.la \
 	s_listen.la \
 	s_keys.la \
+	s_fetch.la \
 	###
 
 ###############################################################################
