@@ -714,12 +714,12 @@ try
 
 	const unwind reset{[this, &theirs]
 	{
-		assert(loading.top() == this);
-		loading.pop();
+		assert(loading.front() == this);
+		loading.pop_front();
 		std::set_terminate(theirs);
 	}};
 
-	loading.push(this);
+	loading.emplace_front(this);
 	std::set_terminate(ours);
 	return boost::dll::shared_library{path, mode};
 }()}
@@ -766,7 +766,7 @@ try
 
 	if(!loading.empty())
 	{
-		const auto &m(mod::loading.top());
+		const auto &m(mod::loading.front());
 		m->children.emplace_back(this);
 		log::debug
 		{
