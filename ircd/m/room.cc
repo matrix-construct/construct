@@ -1632,7 +1632,7 @@ const
 	(const m::event &event)
 	{
 		closure(event);
-		return false;
+		return true;
 	}});
 }
 
