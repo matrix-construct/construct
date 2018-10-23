@@ -82,7 +82,8 @@ ircd::net::dns::resolver_call(const hostport &hp,
 	if(unlikely(!resolver))
 		throw error
 		{
-			"Cannot resolve '%s': resolver unavailable"
+			"Cannot resolve '%s': resolver unavailable.",
+			host(hp)
 		};
 
 	(*resolver)(hp, opts, std::move(cb));
