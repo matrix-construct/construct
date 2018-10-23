@@ -46,6 +46,8 @@ namespace ircd::mods
 namespace ircd::mods
 {
 	bool loaded(const string_view &name);
+	bool loading(const string_view &name);
+	bool unloading(const string_view &name);
 	bool available(const string_view &name);
 	bool is_module(const string_view &fullpath);
 	bool is_module(const string_view &fullpath, std::nothrow_t);

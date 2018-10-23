@@ -192,6 +192,30 @@ ircd::mods::available(const string_view &name)
 }
 
 bool
+ircd::mods::unloading(const string_view &name)
+{
+	const auto &list(mod::unloading);
+	return end(list) != std::find_if(begin(list), end(list), [&name]
+	(const auto *const &mod)
+	{
+		assert(mod);
+		return mod->name() == name;
+	});
+}
+
+bool
+ircd::mods::loading(const string_view &name)
+{
+	const auto &list(mod::loading);
+	return end(list) != std::find_if(begin(list), end(list), [&name]
+	(const auto *const &mod)
+	{
+		assert(mod);
+		return mod->name() == name;
+	});
+}
+
+bool
 ircd::mods::loaded(const string_view &name)
 {
 	return mod::loaded.count(name);
@@ -675,6 +699,10 @@ decltype(ircd::mods::mod::loading)
 ircd::mods::mod::loading
 {};
 
+decltype(ircd::mods::mod::unloading)
+ircd::mods::mod::unloading
+{};
+
 decltype(ircd::mods::mod::loaded)
 ircd::mods::mod::loaded
 {};
@@ -818,17 +846,7 @@ bool ircd::mapi::static_destruction;
 ircd::mods::mod::~mod()
 noexcept try
 {
-	log::debug
-	{
-		log, "Attempting unload module '%s' @ `%s'",
-		name(),
-		location()
-	};
-
 	unload();
-
-	const size_t erased(loaded.erase(name()));
-	assert(erased == 1);
 }
 catch(const std::exception &e)
 {
@@ -849,6 +867,20 @@ ircd::mods::mod::unload()
 	if(!handle.is_loaded())
 		return false;
 
+	if(mods::unloading(name()))
+		return false;
+
+	// Mark this module in the unloading state.
+	unloading.emplace_front(this);
+
+	log::debug
+	{
+		log, "Attempting unload module '%s' @ `%s'",
+		name(),
+		location()
+	};
+
+	// Call the user's unloading function here.
 	if(header->fini)
 		header->fini();
 
@@ -860,6 +892,8 @@ ircd::mods::mod::unload()
 	std::for_each(rbegin(this->children), rend(this->children), []
 	(mod *const &ptr)
 	{
+		// Only trigger an unload if there is one reference remaining to the module,
+		// in addition to the reference created by invoking shared_from() right here.
 		if(shared_from(*ptr).use_count() <= 2)
 			ptr->unload();
 	});
@@ -874,7 +908,8 @@ ircd::mods::mod::unload()
 	mapi::static_destruction = false;
 	handle.unload();
 	assert(!handle.is_loaded());
-
+	loaded.erase(name());
+	unloading.remove(this);
 	if(!mapi::static_destruction)
 	{
 		log.critical("Module \"%s\" is stuck and failing to unload.", name());

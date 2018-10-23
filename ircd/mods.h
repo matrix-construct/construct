@@ -41,6 +41,7 @@ struct ircd::mods::mod
 :std::enable_shared_from_this<mod>
 {
 	static std::forward_list<mod *> loading; // State of current dlopen() recursion.
+	static std::forward_list<mod *> unloading; // dlclose() is not recursive but we have this
 	static std::map<string_view, mod *, std::less<>> loaded;
 
 	filesystem::path path;
