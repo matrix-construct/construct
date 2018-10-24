@@ -1369,27 +1369,32 @@ ircd::m::dbs::desc::events__room_state__pfx
 ircd::string_view
 ircd::m::dbs::room_state_key(const mutable_buffer &out_,
                              const id::room &room_id,
-                             const string_view &type,
-                             const string_view &state_key)
+                             const string_view &type)
 {
-	mutable_buffer out{out_};
-	consume(out, copy(out, room_id));
-	consume(out, copy(out, "\0"_sv));
-	consume(out, copy(out, type));
-	consume(out, copy(out, "\0"_sv));
-	consume(out, copy(out, state_key));
-	return { data(out_), data(out) };
+	return room_state_key(out_, room_id, type, string_view{});
 }
 
 ircd::string_view
 ircd::m::dbs::room_state_key(const mutable_buffer &out_,
                              const id::room &room_id,
-                             const string_view &type)
+                             const string_view &type,
+                             const string_view &state_key)
 {
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
-	consume(out, copy(out, "\0"_sv));
-	consume(out, copy(out, type));
+
+	if(likely(defined(type)))
+	{
+		consume(out, copy(out, "\0"_sv));
+		consume(out, copy(out, type));
+	}
+
+	if(defined(state_key))
+	{
+		consume(out, copy(out, "\0"_sv));
+		consume(out, copy(out, state_key));
+	}
+
 	return { data(out_), data(out) };
 }
 

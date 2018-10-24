@@ -845,6 +845,13 @@ ircd::m::state::unmake_key(const mutable_buffer &out,
 	return wb.completed();
 }
 
+ircd::json::array
+ircd::m::state::make_key(const mutable_buffer &out,
+                         const string_view &type)
+{
+	return make_key(out, type, string_view{});
+}
+
 /// Creates a key array from the most common key pattern of a matrix
 /// room (type,state_key).
 ircd::json::array
@@ -857,26 +864,15 @@ ircd::m::state::make_key(const mutable_buffer &out,
 		type, state_key
 	};
 
-	const json::value key
+	assert(defined(type));
+	const size_t &part_count
 	{
-		key_parts, 2
-	};
-
-	return { data(out), json::print(out, key) };
-}
-
-ircd::json::array
-ircd::m::state::make_key(const mutable_buffer &out,
-                         const string_view &type)
-{
-	const json::value key_parts[]
-	{
-		type
+		defined(state_key)? 2UL : 1UL
 	};
 
 	const json::value key
 	{
-		key_parts, 1
+		key_parts, part_count
 	};
 
 	return { data(out), json::print(out, key) };
