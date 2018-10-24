@@ -1506,12 +1506,12 @@ ircd::m::rooms::for_each(const user &user,
 	rooms.for_each(closure);
 }
 
-void
+bool
 ircd::m::rooms::for_each(const user &user,
                          const user::rooms::closure_bool &closure)
 {
 	const m::user::rooms rooms{user};
-	rooms.for_each(closure);
+	return rooms.for_each(closure);
 }
 
 void
@@ -1523,13 +1523,13 @@ ircd::m::rooms::for_each(const user &user,
 	rooms.for_each(membership, closure);
 }
 
-void
+bool
 ircd::m::rooms::for_each(const user &user,
                          const string_view &membership,
                          const user::rooms::closure_bool &closure)
 {
 	const m::user::rooms rooms{user};
-	rooms.for_each(membership, closure);
+	return rooms.for_each(membership, closure);
 }
 
 void
@@ -1543,11 +1543,11 @@ ircd::m::rooms::for_each(const room::closure &closure)
 	}});
 }
 
-void
+bool
 ircd::m::rooms::for_each(const room::closure_bool &closure)
 {
-	for_each(room::id::closure_bool{[&closure]
-	(const room::id &room_id)
+	return for_each(room::id::closure_bool{[&closure]
+	(const m::room::id &room_id)
 	{
 		return closure(room_id);
 	}});
@@ -1556,27 +1556,32 @@ ircd::m::rooms::for_each(const room::closure_bool &closure)
 void
 ircd::m::rooms::for_each(const room::id::closure &closure)
 {
-	for_each(room::id::closure_bool{[&closure]
-	(const room::id &room_id)
+	for_each(string_view{}, [&closure]
+	(const m::room::id &room_id)
 	{
 		closure(room_id);
 		return true;
-	}});
+	});
 }
 
-void
+bool
 ircd::m::rooms::for_each(const room::id::closure_bool &closure)
 {
-	const room::state state
+	return for_each(string_view{}, closure);
+}
+
+bool
+ircd::m::rooms::for_each(const string_view &room_id_lb,
+                         const room::id::closure_bool &closure)
+{
+	using prototype = bool (const string_view &, const room::id::closure_bool &);
+
+	static mods::import<prototype> function
 	{
-		my_room
+		"m_rooms", "_for_each"
 	};
 
-	state.for_each("ircd.room", room::state::keys_bool{[&closure]
-	(const string_view &key)
-	{
-		return closure(key);
-	}});
+	return function(room_id_lb, closure);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

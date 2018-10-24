@@ -17,15 +17,16 @@
 namespace ircd::m::rooms
 {
 	// All rooms known to IRCd
-	void for_each(const room::id::closure_bool &);
+	bool for_each(const string_view &room_id_lb, const room::id::closure_bool &);
+	bool for_each(const room::id::closure_bool &);
 	void for_each(const room::id::closure &);
-	void for_each(const room::closure_bool &);
+	bool for_each(const room::closure_bool &);
 	void for_each(const room::closure &);
 
 	// All rooms for a user (alias to interface in user::)
-	void for_each(const user &, const string_view &membership, const user::rooms::closure_bool &);
+	bool for_each(const user &, const string_view &membership, const user::rooms::closure_bool &);
 	void for_each(const user &, const string_view &membership, const user::rooms::closure &);
-	void for_each(const user &, const user::rooms::closure_bool &);
+	bool for_each(const user &, const user::rooms::closure_bool &);
 	void for_each(const user &, const user::rooms::closure &);
 
 	// Linkage to utils that build a publicrooms summary from room state.

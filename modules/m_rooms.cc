@@ -11,6 +11,7 @@
 namespace ircd::m::rooms
 {
 	extern "C" void _summary_chunk(const m::room &room, json::stack::object &obj);
+	extern "C" bool _for_each(const string_view &room_id_lb, const room::id::closure_bool &);
 	static void create_public_room(const m::event &, m::vm::eval &);
 
 	extern const ircd::m::room::id::buf public_room_id;
@@ -48,6 +49,24 @@ ircd::m::rooms::create_public_room(const m::event &,
                                    m::vm::eval &)
 {
 	m::create(public_room_id, m::me.user_id);
+}
+
+bool
+ircd::m::rooms::_for_each(const string_view &room_id_lb,
+                          const room::id::closure_bool &closure)
+{
+	const room::state state
+	{
+		my_room
+	};
+
+	const room::state::keys_bool keys{[&closure]
+	(const string_view &room_id) -> bool
+	{
+		return closure(room_id);
+	}};
+
+	return state.for_each("ircd.room", room_id_lb, keys);
 }
 
 void
