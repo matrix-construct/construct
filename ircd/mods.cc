@@ -30,6 +30,232 @@ ircd::mods::suffix
 	boost::dll::shared_library::suffix()
 };
 
+//
+// mods::mod
+//
+
+decltype(ircd::mods::mod::loading)
+ircd::mods::mod::loading
+{};
+
+decltype(ircd::mods::mod::unloading)
+ircd::mods::mod::unloading
+{};
+
+decltype(ircd::mods::mod::loaded)
+ircd::mods::mod::loaded
+{};
+
+// Allows module to communicate static destruction is taking place when mapi::header
+// destructs. If dlclose() returns without this being set, dlclose() lied about really
+// unloading the module. That is considered a "stuck" module.
+bool
+ircd::mapi::static_destruction;
+
+//
+// mods::mod::mod
+//
+
+ircd::mods::mod::mod(const filesystem::path &path,
+                     const load_mode::type &mode)
+try
+:path{path}
+,mode{mode}
+//,mangles{mods::mangles(path)}
+,handle{[this, &path, &mode]
+{
+	const auto ours([]
+	{
+		log::critical
+		{
+			log, "Error during the static construction of module (fatal) :%s",
+			what(std::current_exception())
+		};
+	});
+
+	const auto theirs
+	{
+		std::get_terminate()
+	};
+
+	const unwind reset{[this, &theirs]
+	{
+		assert(loading.front() == this);
+		loading.pop_front();
+		std::set_terminate(theirs);
+	}};
+
+	loading.emplace_front(this);
+	std::set_terminate(ours);
+	return boost::dll::shared_library{path, mode};
+}()}
+,_name
+{
+	unpostfixed(handle.location().filename().string())
+}
+,_location
+{
+	handle.location().string()
+}
+,header
+{
+	&handle.get<mapi::header>(mapi::header_symbol_name)
+}
+{
+	log::debug
+	{
+		log, "Loaded static segment of '%s' @ `%s' with %zu symbols",
+		name(),
+		location(),
+		mangles.size()
+	};
+
+	if(unlikely(!header))
+		throw error
+		{
+			"Unexpected null header"
+		};
+
+	if(header->magic != mapi::MAGIC)
+		throw error
+		{
+			"Bad magic [%04x] need: [%04x]", header->magic, mapi::MAGIC
+		};
+
+	// Tell the module where to find us.
+	header->self = this;
+
+	// Set some basic metadata
+	auto &meta(header->meta);
+	meta["name"] = name();
+	meta["location"] = location();
+
+	if(!loading.empty())
+	{
+		const auto &m(mod::loading.front());
+		m->children.emplace_back(this);
+		log::debug
+		{
+			log, "Module '%s' recursively loaded by '%s'",
+			name(),
+			m->path.filename().string()
+		};
+	}
+
+	// Without init exception, the module is now considered loaded.
+	assert(!loaded.count(name()));
+	loaded.emplace(name(), this);
+}
+catch(const boost::system::system_error &e)
+{
+	switch(e.code().value())
+	{
+		case boost::system::errc::bad_file_descriptor:
+		{
+			const string_view what(e.what());
+			const auto pos(what.find("undefined symbol: "));
+			if(pos == std::string_view::npos)
+				break;
+
+			const string_view msg(what.substr(pos));
+			const std::string mangled(between(msg, ": ", ")"));
+			const std::string demangled(demangle(mangled));
+			throw error
+			{
+				"undefined symbol: '%s' (%s)", demangled, mangled
+			};
+		}
+
+		default:
+			break;
+	}
+
+	throw error
+	{
+		"%s", string(e)
+	};
+}
+
+ircd::mods::mod::~mod()
+noexcept try
+{
+	unload();
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Module @%p unload: %s",
+		(const void *)this,
+		e.what()
+	};
+
+	if(!ircd::debugmode)
+		return;
+}
+
+bool
+ircd::mods::mod::unload()
+{
+	if(!handle.is_loaded())
+		return false;
+
+	if(mods::unloading(name()))
+		return false;
+
+	// Mark this module in the unloading state.
+	unloading.emplace_front(this);
+
+	log::debug
+	{
+		log, "Attempting unload module '%s' @ `%s'",
+		name(),
+		location()
+	};
+
+	// Call the user's unloading function here.
+	if(header->fini)
+		header->fini();
+
+	// Save the children! dlclose() does not like to be called recursively during static
+	// destruction of a module. The mod ctor recorded all of the modules loaded while this
+	// module was loading so we can reverse the record and unload them here.
+	// Note: If the user loaded more modules from inside their module they will have to dtor them
+	// before 'static destruction' does. They can also do that by adding them to this vector.
+	std::for_each(rbegin(this->children), rend(this->children), []
+	(mod *const &ptr)
+	{
+		// Only trigger an unload if there is one reference remaining to the module,
+		// in addition to the reference created by invoking shared_from() right here.
+		if(shared_from(*ptr).use_count() <= 2)
+			ptr->unload();
+	});
+
+	log::debug
+	{
+		log, "Attempting static unload for '%s' @ `%s'",
+		name(),
+		location()
+	};
+
+	mapi::static_destruction = false;
+	handle.unload();
+	assert(!handle.is_loaded());
+	loaded.erase(name());
+	unloading.remove(this);
+	if(!mapi::static_destruction)
+	{
+		log.critical("Module \"%s\" is stuck and failing to unload.", name());
+		log.critical("Module \"%s\" may result in undefined behavior if not fixed.", name());
+	}
+	else log::info
+	{
+		log, "Unloaded '%s'", name()
+	};
+
+	return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // mods/mods.h (misc util)
@@ -703,237 +929,4 @@ ircd::mods::paths::added(const string_view &dir)
 const
 {
 	return std::find(begin(), end(), dir) != end();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// (internal) mods.h
-//
-
-decltype(ircd::mods::mod::loading)
-ircd::mods::mod::loading
-{};
-
-decltype(ircd::mods::mod::unloading)
-ircd::mods::mod::unloading
-{};
-
-decltype(ircd::mods::mod::loaded)
-ircd::mods::mod::loaded
-{};
-
-ircd::mods::mod::mod(const filesystem::path &path,
-                     const load_mode::type &mode)
-try
-:path{path}
-,mode{mode}
-//,mangles{mods::mangles(path)}
-,handle{[this, &path, &mode]
-{
-	const auto theirs
-	{
-		std::get_terminate()
-	};
-
-	const auto ours([]
-	{
-		log::critical
-		{
-			log, "std::terminate() called during the static construction of a module."
-		};
-
-		if(std::current_exception()) try
-		{
-			std::rethrow_exception(std::current_exception());
-		}
-		catch(const std::exception &e)
-		{
-			log::error
-			{
-				log, "%s", e.what()
-			};
-		}
-	});
-
-	const unwind reset{[this, &theirs]
-	{
-		assert(loading.front() == this);
-		loading.pop_front();
-		std::set_terminate(theirs);
-	}};
-
-	loading.emplace_front(this);
-	std::set_terminate(ours);
-	return boost::dll::shared_library{path, mode};
-}()}
-,_name
-{
-	unpostfixed(handle.location().filename().string())
-}
-,_location
-{
-	handle.location().string()
-}
-,header
-{
-	&handle.get<mapi::header>(mapi::header_symbol_name)
-}
-{
-	log::debug
-	{
-		log, "Loaded static segment of '%s' @ `%s' with %zu symbols",
-		name(),
-		location(),
-		mangles.size()
-	};
-
-	if(unlikely(!header))
-		throw error
-		{
-			"Unexpected null header"
-		};
-
-	if(header->magic != mapi::MAGIC)
-		throw error
-		{
-			"Bad magic [%04x] need: [%04x]", header->magic, mapi::MAGIC
-		};
-
-	// Tell the module where to find us.
-	header->self = this;
-
-	// Set some basic metadata
-	auto &meta(header->meta);
-	meta["name"] = name();
-	meta["location"] = location();
-
-	if(!loading.empty())
-	{
-		const auto &m(mod::loading.front());
-		m->children.emplace_back(this);
-		log::debug
-		{
-			log, "Module '%s' recursively loaded by '%s'",
-			name(),
-			m->path.filename().string()
-		};
-	}
-
-	// Without init exception, the module is now considered loaded.
-	assert(!loaded.count(name()));
-	loaded.emplace(name(), this);
-}
-catch(const boost::system::system_error &e)
-{
-	switch(e.code().value())
-	{
-		case boost::system::errc::bad_file_descriptor:
-		{
-			const string_view what(e.what());
-			const auto pos(what.find("undefined symbol: "));
-			if(pos == std::string_view::npos)
-				break;
-
-			const string_view msg(what.substr(pos));
-			const std::string mangled(between(msg, ": ", ")"));
-			const std::string demangled(demangle(mangled));
-			throw error
-			{
-				"undefined symbol: '%s' (%s)", demangled, mangled
-			};
-		}
-
-		default:
-			break;
-	}
-
-	throw error
-	{
-		"%s", string(e)
-	};
-}
-
-// Allows module to communicate static destruction is taking place when mapi::header
-// destructs. If dlclose() returns without this being set, dlclose() lied about really
-// unloading the module. That is considered a "stuck" module.
-bool ircd::mapi::static_destruction;
-
-ircd::mods::mod::~mod()
-noexcept try
-{
-	unload();
-}
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		log, "Module @%p unload: %s",
-		(const void *)this,
-		e.what()
-	};
-
-	if(!ircd::debugmode)
-		return;
-}
-
-bool
-ircd::mods::mod::unload()
-{
-	if(!handle.is_loaded())
-		return false;
-
-	if(mods::unloading(name()))
-		return false;
-
-	// Mark this module in the unloading state.
-	unloading.emplace_front(this);
-
-	log::debug
-	{
-		log, "Attempting unload module '%s' @ `%s'",
-		name(),
-		location()
-	};
-
-	// Call the user's unloading function here.
-	if(header->fini)
-		header->fini();
-
-	// Save the children! dlclose() does not like to be called recursively during static
-	// destruction of a module. The mod ctor recorded all of the modules loaded while this
-	// module was loading so we can reverse the record and unload them here.
-	// Note: If the user loaded more modules from inside their module they will have to dtor them
-	// before 'static destruction' does. They can also do that by adding them to this vector.
-	std::for_each(rbegin(this->children), rend(this->children), []
-	(mod *const &ptr)
-	{
-		// Only trigger an unload if there is one reference remaining to the module,
-		// in addition to the reference created by invoking shared_from() right here.
-		if(shared_from(*ptr).use_count() <= 2)
-			ptr->unload();
-	});
-
-	log::debug
-	{
-		log, "Attempting static unload for '%s' @ `%s'",
-		name(),
-		location()
-	};
-
-	mapi::static_destruction = false;
-	handle.unload();
-	assert(!handle.is_loaded());
-	loaded.erase(name());
-	unloading.remove(this);
-	if(!mapi::static_destruction)
-	{
-		log.critical("Module \"%s\" is stuck and failing to unload.", name());
-		log.critical("Module \"%s\" may result in undefined behavior if not fixed.", name());
-	}
-	else log::info
-	{
-		log, "Unloaded '%s'", name()
-	};
-
-	return true;
 }
