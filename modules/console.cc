@@ -6017,6 +6017,57 @@ console_cmd__room__state__types(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__state__keys(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "type", "event_id", "prefix"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto &type
+	{
+		param.at("type")
+	};
+
+	const auto &event_id
+	{
+		param.at("event_id", string_view{})
+	};
+
+	const string_view &prefix
+	{
+		param.at("prefix", string_view{})
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	state.for_each(type, prefix, m::room::state::keys_bool{[&out, &prefix]
+	(const string_view &state_key)
+	{
+		if(prefix && !startswith(state_key, prefix))
+			return false;
+
+		out << state_key << std::endl;
+		return true;
+	}});
+
+	return true;
+}
+
+bool
 console_cmd__room__state__force(opt &out, const string_view &line)
 {
 	const params param{line, " ",
