@@ -1532,6 +1532,26 @@ ircd::m::rooms::for_each(const user &user,
 	return rooms.for_each(membership, closure);
 }
 
+bool
+ircd::m::rooms::for_each_public(const room::id::closure_bool &closure)
+{
+	return for_each_public(string_view{}, closure);
+}
+
+bool
+ircd::m::rooms::for_each_public(const string_view &room_id_lb,
+                                const room::id::closure_bool &closure)
+{
+	using prototype = bool (const string_view &, const room::id::closure_bool &);
+
+	static mods::import<prototype> function
+	{
+		"m_rooms", "_for_each_public"
+	};
+
+	return function(room_id_lb, closure);
+}
+
 void
 ircd::m::rooms::for_each(const room::closure &closure)
 {

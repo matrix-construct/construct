@@ -114,14 +114,9 @@ post__publicrooms(client &client,
 	{
 		json::stack::member chunk_m{top, "chunk"};
 		json::stack::array chunk{chunk_m};
-		publix.for_each("ircd.room", since, [&]
-		(const m::event &event)
+		m::rooms::for_each_public(since, [&]
+		(const m::room::id &room_id)
 		{
-			const m::room::id &room_id
-			{
-				at<"state_key"_>(event)
-			};
-
 			json::stack::object obj{chunk};
 			m::rooms::summary_chunk(room_id, obj);
 
