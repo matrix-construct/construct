@@ -10,6 +10,11 @@
 
 namespace ircd::m::rooms
 {
+	extern conf::item<size_t> fetch_limit;
+	extern conf::item<seconds> fetch_timeout;
+	extern "C" std::pair<size_t, std::string> _fetch_update_(const net::hostport &, const string_view &since, const size_t &limit, const seconds &timeout);
+	extern "C" std::pair<size_t, std::string> _fetch_update(const net::hostport &, const string_view &since = {});
+
 	extern "C" void _summary_chunk(const m::room &room, json::stack::object &obj);
 	extern "C" size_t _count_public(const string_view &server);
 	extern "C" bool _for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
@@ -105,6 +110,24 @@ void
 ircd::m::rooms::_summary_chunk(const m::room &room,
                                json::stack::object &obj)
 {
+	if(!exists(room))
+	{
+		const m::room publix{public_room_id};
+		publix.get("ircd.room", room.room_id, [&obj]
+		(const m::event &event)
+		{
+			const json::object &summary
+			{
+				json::at<"content"_>(event)
+			};
+
+			for(const auto &member : summary)
+				json::stack::member m{obj, member.first, member.second};
+		});
+
+		return;
+	}
+
 	static const event::keys keys
 	{
 		event::keys::include
@@ -234,4 +257,81 @@ ircd::m::rooms::_summary_chunk(const m::room &room,
 			}
 		};
 	});
+}
+
+decltype(ircd::m::rooms::fetch_timeout)
+ircd::m::rooms::fetch_timeout
+{
+	{ "name",     "ircd.m.rooms.fetch.timeout" },
+	{ "default",  45L /*  matrix.org :-/    */ },
+};
+
+decltype(ircd::m::rooms::fetch_limit)
+ircd::m::rooms::fetch_limit
+{
+	{ "name",     "ircd.m.rooms.fetch.limit" },
+	{ "default",  64L                        },
+};
+
+std::pair<size_t, std::string>
+ircd::m::rooms::_fetch_update(const net::hostport &hp,
+                              const string_view &since)
+{
+	return _fetch_update_(hp, since, size_t(fetch_limit), seconds(fetch_timeout));
+}
+
+std::pair<size_t, std::string>
+ircd::m::rooms::_fetch_update_(const net::hostport &hp,
+                               const string_view &since,
+                               const size_t &limit,
+                               const seconds &timeout)
+{
+	m::v1::public_rooms::opts opts;
+	opts.limit = limit;
+	opts.since = since;
+	opts.include_all_networks = true;
+	opts.dynamic = true;
+
+	// Buffer for headers and send content only; received content is dynamic
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::v1::public_rooms request
+	{
+		hp, buf, std::move(opts)
+	};
+
+	request.wait(timeout);
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	const json::array &chunk
+	{
+		response.get("chunk")
+	};
+
+	for(const json::object &summary : chunk)
+	{
+		const m::room::id &room_id
+		{
+			unquote(summary.at("room_id"))
+		};
+
+		send(public_room_id, m::me, "ircd.room", room_id, summary);
+	}
+
+	return
+	{
+		response.get("total_room_count_estimate", 0UL),
+		response.get("next_batch", string_view{})
+	};
 }

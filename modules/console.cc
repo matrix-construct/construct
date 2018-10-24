@@ -5184,6 +5184,44 @@ console_cmd__rooms(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__rooms__fetch(opt &out, const string_view &line)
+{
+	using prototype = std::pair<size_t, std::string> (const net::hostport &, const string_view &);
+
+	static mods::import<prototype> fetch_update
+	{
+		"m_rooms", "_fetch_update"
+	};
+
+	const params param{line, " ",
+	{
+		"server", "since"
+	}};
+
+	const net::hostport server
+	{
+		param.at("server")
+	};
+
+	const string_view &since
+	{
+		param.at("since", string_view{})
+	};
+
+	const auto pair
+	{
+		fetch_update(server, since)
+	};
+
+	out << "done" << std::endl
+	    << "total room count estimate: " << pair.first << std::endl
+	    << "next batch: " << pair.second << std::endl
+	    ;
+
+	return true;
+}
+
 //
 // room
 //
