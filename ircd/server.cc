@@ -51,7 +51,6 @@ noexcept
 	interrupt_all();
 	close_all();
 	wait_all();
-	peers.clear();
 	log::debug
 	{
 		log, "All server peers, connections, and requests are clear."
@@ -79,6 +78,8 @@ ircd::server::wait_all()
 			peer_count()
 		};
 	}
+
+	peers.clear();
 }
 
 void
