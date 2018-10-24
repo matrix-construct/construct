@@ -5185,6 +5185,34 @@ console_cmd__rooms(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__rooms__public(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"server|room_id_lb", "limit"
+	}};
+
+	const string_view &key
+	{
+		param.at("server|room_id_lb", string_view{})
+	};
+
+	auto limit
+	{
+		param.at("limit", 32L)
+	};
+
+	m::rooms::for_each_public(key, [&limit, &out]
+	(const m::room::id &room_id) -> bool
+	{
+		out << room_id << std::endl;
+		return --limit > 0;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__rooms__fetch(opt &out, const string_view &line)
 {
 	using prototype = std::pair<size_t, std::string> (const net::hostport &, const string_view &);
