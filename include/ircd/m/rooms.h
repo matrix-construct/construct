@@ -33,6 +33,8 @@ namespace ircd::m::rooms
 	bool for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
 	bool for_each_public(const room::id::closure_bool &);
 
+	size_t count_public(const string_view &server = {});
+
 	// Linkage to utils that build a publicrooms summary from room state.
 	void summary_chunk(const m::room &, json::stack::object &chunk);
 	json::object summary_chunk(const m::room &, const mutable_buffer &out);

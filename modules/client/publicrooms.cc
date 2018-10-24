@@ -16,17 +16,6 @@ IRCD_MODULE
 	"Client 7.5 :Public Rooms"
 };
 
-const ircd::m::room::id::buf
-public_room_id
-{
-    "public", ircd::my_host()
-};
-
-m::room public_
-{
-	public_room_id
-};
-
 resource
 publicrooms_resource
 {
@@ -105,11 +94,6 @@ post__publicrooms(client &client,
 	size_t count{0};
 	m::room::id::buf prev_batch_buf;
 	m::room::id::buf next_batch_buf;
-	const m::room::state publix
-	{
-		public_
-	};
-
 	json::stack::object top{out};
 	{
 		json::stack::member chunk_m{top, "chunk"};
@@ -132,7 +116,7 @@ post__publicrooms(client &client,
 	{
 		top, "total_room_count_estimate", json::value
 		{
-			long(publix.count("ircd.room"))
+			ssize_t(m::rooms::count_public())
 		}
 	};
 
@@ -148,7 +132,7 @@ post__publicrooms(client &client,
 			top, "next_batch", next_batch_buf
 		};
 
-	return {};
+	return response;
 }
 
 resource::method

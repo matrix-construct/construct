@@ -11,12 +11,13 @@
 namespace ircd::m::rooms
 {
 	extern "C" void _summary_chunk(const m::room &room, json::stack::object &obj);
+	extern "C" size_t _count_public(const string_view &server);
 	extern "C" bool _for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
 	extern "C" bool _for_each(const string_view &room_id_lb, const room::id::closure_bool &);
 	static void create_public_room(const m::event &, m::vm::eval &);
 
-	extern const ircd::m::room::id::buf public_room_id;
-	extern m::hookfn<m::vm::eval &> create_public_room_hook;
+	extern const room::id::buf public_room_id;
+	extern m::hookfn<vm::eval &> create_public_room_hook;
 }
 
 ircd::mapi::header
@@ -68,6 +69,18 @@ ircd::m::rooms::_for_each(const string_view &room_id_lb,
 	}};
 
 	return state.for_each("ircd.room", room_id_lb, keys);
+}
+
+size_t
+ircd::m::rooms::_count_public(const string_view &server)
+{
+	const room::state state
+	{
+		public_room_id
+	};
+
+	//TODO: server
+	return state.count("ircd.room");
 }
 
 bool
