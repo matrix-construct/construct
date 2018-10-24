@@ -10,11 +10,16 @@
 
 namespace ircd::m::rooms
 {
+	static string_view make_state_key(const mutable_buffer &out, const m::room::id &);
+	static m::room::id::buf unmake_state_key(const string_view &);
+
 	extern conf::item<size_t> fetch_limit;
 	extern conf::item<seconds> fetch_timeout;
 	extern "C" std::pair<size_t, std::string> _fetch_update_(const net::hostport &, const string_view &since, const size_t &limit, const seconds &timeout);
 	extern "C" std::pair<size_t, std::string> _fetch_update(const net::hostport &, const string_view &since = {});
 
+	static void remote_summary_chunk(const m::room &room, json::stack::object &obj);
+	static void local_summary_chunk(const m::room &room, json::stack::object &obj);
 	extern "C" void _summary_chunk(const m::room &room, json::stack::object &obj);
 	extern "C" size_t _count_public(const string_view &server);
 	extern "C" bool _for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
@@ -79,17 +84,20 @@ ircd::m::rooms::_for_each(const string_view &room_id_lb,
 size_t
 ircd::m::rooms::_count_public(const string_view &server)
 {
-	const room::state state
+	size_t ret{0};
+	const auto count{[&ret]
+	(const m::room::id &room_id)
 	{
-		public_room_id
-	};
+		++ret;
+		return true;
+	}};
 
-	//TODO: server
-	return state.count("ircd.room");
+	for_each_public(server, count);
+	return ret;
 }
 
 bool
-ircd::m::rooms::_for_each_public(const string_view &room_id_lb,
+ircd::m::rooms::_for_each_public(const string_view &key,
                                  const room::id::closure_bool &closure)
 {
 	const room::state state
@@ -97,37 +105,84 @@ ircd::m::rooms::_for_each_public(const string_view &room_id_lb,
 		public_room_id
 	};
 
-	const room::state::keys_bool keys{[&closure]
-	(const string_view &room_id) -> bool
+	const bool is_room_id
 	{
+		m::valid(m::id::ROOM, key)
+	};
+
+	char state_key_buf[256];
+	const auto state_key
+	{
+		is_room_id?
+			make_state_key(state_key_buf, key):
+			key
+	};
+
+	const string_view &server
+	{
+		is_room_id?
+			room::id(key).host():
+			key
+	};
+
+	const room::state::keys_bool keys{[&closure, &server]
+	(const string_view &state_key) -> bool
+	{
+		const auto room_id
+		{
+			unmake_state_key(state_key)
+		};
+
+		if(server && room_id.host() != server)
+			return false;
+
 		return closure(room_id);
 	}};
 
-	return state.for_each("ircd.room", room_id_lb, keys);
+	return state.for_each("ircd.rooms", state_key, keys);
 }
 
 void
 ircd::m::rooms::_summary_chunk(const m::room &room,
                                json::stack::object &obj)
 {
-	if(!exists(room))
+	return exists(room)?
+		local_summary_chunk(room, obj):
+		remote_summary_chunk(room, obj);
+}
+
+void
+ircd::m::rooms::remote_summary_chunk(const m::room &room,
+                                     json::stack::object &obj)
+{
+	const m::room publix
 	{
-		const m::room publix{public_room_id};
-		publix.get("ircd.room", room.room_id, [&obj]
-		(const m::event &event)
+		public_room_id
+	};
+
+	char state_key_buf[256];
+	const auto state_key
+	{
+		make_state_key(state_key_buf, room.room_id)
+	};
+
+	publix.get("ircd.rooms", state_key, [&obj]
+	(const m::event &event)
+	{
+		const json::object &summary
 		{
-			const json::object &summary
-			{
-				json::at<"content"_>(event)
-			};
+			json::at<"content"_>(event)
+		};
 
-			for(const auto &member : summary)
-				json::stack::member m{obj, member.first, member.second};
-		});
+		for(const auto &member : summary)
+			json::stack::member m{obj, member.first, member.second};
+	});
+}
 
-		return;
-	}
-
+void
+ircd::m::rooms::local_summary_chunk(const m::room &room,
+                                    json::stack::object &obj)
+{
 	static const event::keys keys
 	{
 		event::keys::include
@@ -326,12 +381,45 @@ ircd::m::rooms::_fetch_update_(const net::hostport &hp,
 			unquote(summary.at("room_id"))
 		};
 
-		send(public_room_id, m::me, "ircd.room", room_id, summary);
+		char state_key_buf[256];
+		const auto state_key
+		{
+			make_state_key(state_key_buf, room_id)
+		};
+
+		send(public_room_id, m::me, "ircd.rooms", state_key, summary);
 	}
 
 	return
 	{
 		response.get("total_room_count_estimate", 0UL),
-		response.get("next_batch", string_view{})
+		unquote(response.get("next_batch", string_view{}))
+	};
+}
+
+ircd::m::room::id::buf
+ircd::m::rooms::unmake_state_key(const string_view &key)
+{
+	const auto s
+	{
+		split(key, '!')
+	};
+
+	return m::room::id::buf
+	{
+		s.second, s.first
+	};
+}
+
+ircd::string_view
+ircd::m::rooms::make_state_key(const mutable_buffer &buf,
+                               const m::room::id &room_id)
+{
+	mutable_buffer out{buf};
+	consume(out, copy(out, room_id.host()));
+	consume(out, copy(out, room_id.local()));
+	return string_view
+	{
+		data(buf), data(out)
 	};
 }

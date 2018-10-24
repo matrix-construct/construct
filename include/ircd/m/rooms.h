@@ -29,8 +29,11 @@ namespace ircd::m::rooms
 	bool for_each(const user &, const user::rooms::closure_bool &);
 	void for_each(const user &, const user::rooms::closure &);
 
-	// All public rooms only
-	bool for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
+	// All public rooms only; key is either a server hostname or room_id.
+	// - for server hostname: iterates known rooms from that server.
+	// - for room_id: starts iteration from that (or closest) room_id
+	//   which can be used as a since/pagination token.
+	bool for_each_public(const string_view &key, const room::id::closure_bool &);
 	bool for_each_public(const room::id::closure_bool &);
 
 	size_t count_public(const string_view &server = {});

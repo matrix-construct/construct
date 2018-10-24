@@ -1552,7 +1552,7 @@ ircd::m::rooms::for_each_public(const room::id::closure_bool &closure)
 }
 
 bool
-ircd::m::rooms::for_each_public(const string_view &room_id_lb,
+ircd::m::rooms::for_each_public(const string_view &key,
                                 const room::id::closure_bool &closure)
 {
 	using prototype = bool (const string_view &, const room::id::closure_bool &);
@@ -1562,7 +1562,7 @@ ircd::m::rooms::for_each_public(const string_view &room_id_lb,
 		"m_rooms", "_for_each_public"
 	};
 
-	return function(room_id_lb, closure);
+	return function(key, closure);
 }
 
 void
