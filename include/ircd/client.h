@@ -30,6 +30,7 @@ struct ircd::client
 	struct settings;
 	struct request;
 
+	static log::log log;
 	static struct settings settings;
 	static struct conf default_conf;
 	static ctx::dock dock;

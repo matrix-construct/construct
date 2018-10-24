@@ -87,6 +87,12 @@ ircd::client::default_conf
 // linkages
 //
 
+decltype(ircd::client::log)
+ircd::client::log
+{
+	"client", 'C'
+};
+
 /// A general semaphore for the client system; used for coarse operations
 /// like waiting for all clients to disconnect / system shutdown et al.
 decltype(ircd::client::dock)
@@ -131,7 +137,7 @@ noexcept
 
 	log::debug
 	{
-		"All client contexts, connections, and requests are clear.",
+		log, "All client contexts, connections, and requests are clear.",
 	};
 
 	assert(client::map.empty());
@@ -153,7 +159,7 @@ ircd::client::wait_all()
 	if(pool.active())
 		log::dwarning
 		{
-			"Waiting on %zu active of %zu client request contexts; %zu pending; %zu queued.",
+			log, "Waiting on %zu active of %zu client request contexts; %zu pending; %zu queued.",
 			pool.active(),
 			pool.size(),
 			pool.pending(),
@@ -164,12 +170,12 @@ ircd::client::wait_all()
 		if(!dock.wait_for(seconds(2)) && !client::map.empty())
 			log::warning
 			{
-				"Waiting for %zu clients to close...", client::map.size()
+				log, "Waiting for %zu clients to close...", client::map.size()
 			};
 
 	log::debug
 	{
-		"Joining %zu active of %zu client request contexts; %zu pending; %zu queued",
+		log, "Joining %zu active of %zu client request contexts; %zu pending; %zu queued",
 		pool.active(),
 		pool.size(),
 		pool.pending(),
@@ -185,7 +191,7 @@ ircd::client::close_all()
 	if(!client::map.empty())
 		log::debug
 		{
-			"Closing %zu clients", client::map.size()
+			log, "Closing %zu clients", client::map.size()
 		};
 
 	auto it(begin(client::map));
@@ -202,7 +208,7 @@ ircd::client::close_all()
 		{
 			log::derror
 			{
-				"Error disconnecting client @%p: %s", c.get(), e.what()
+				log, "Error disconnecting client @%p: %s", c.get(), e.what()
 			};
 		}
 	}
@@ -214,7 +220,7 @@ ircd::client::interrupt_all()
 	if(pool.active())
 		log::warning
 		{
-			"Interrupting %zu active of %zu client request contexts; %zu pending; %zu queued",
+			log, "Interrupting %zu active of %zu client request contexts; %zu pending; %zu queued",
 			pool.active(),
 			pool.size(),
 			pool.pending(),
@@ -230,7 +236,7 @@ ircd::client::terminate_all()
 	if(pool.active())
 		log::warning
 		{
-			"Terminating %zu active of %zu client request contexts; %zu pending; %zu queued",
+			log, "Terminating %zu active of %zu client request contexts; %zu pending; %zu queued",
 			pool.active(),
 			pool.size(),
 			pool.pending(),
@@ -379,7 +385,7 @@ ircd::handle_client_ready(std::shared_ptr<client> client,
 	if(client::pool.avail() == 0)
 		log::dwarning
 		{
-			"Client context pool exhausted. %zu requests queued.",
+			client::log, "Client context pool exhausted. %zu requests queued.",
 			client::pool.queued()
 		};
 
@@ -420,7 +426,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		"socket(%p) client(%p) (below main) :%s",
+		client::log, "socket(%p) client(%p) (below main) :%s",
 		client->sock.get(),
 		client.get(),
 		e.what()
@@ -440,7 +446,7 @@ ircd::handle_ec(client &client,
 	{
 		log::dwarning
 		{
-			"%s refusing client request in runlevel %s",
+			client::log, "%s refusing client request in runlevel %s",
 			client.loghead(),
 			reflect(runlevel)
 		};
@@ -477,7 +483,7 @@ try
 {
 	log::debug
 	{
-		"%s end of file",
+		client::log, "%s end of file",
 		client.loghead()
 	};
 
@@ -488,7 +494,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"%s end of file :%s",
+		client::log, "%s end of file :%s",
 		client.loghead(),
 		e.what()
 	};
@@ -505,7 +511,7 @@ try
 {
 	log::dwarning
 	{
-		"%s short_read",
+		client::log, "%s short_read",
 		client.loghead()
 	};
 
@@ -516,7 +522,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"%s short_read :%s",
+		client::log, "%s short_read :%s",
 		client.loghead(),
 		e.what()
 	};
@@ -535,7 +541,7 @@ try
 	assert(bool(client.sock));
 	log::debug
 	{
-		"%s disconnecting after inactivity timeout",
+		client::log, "%s disconnecting after inactivity timeout",
 		client.loghead()
 	};
 
@@ -546,7 +552,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		"%s timeout :%s",
+		client::log, "%s timeout :%s",
 		client.loghead(),
 		e.what()
 	};
@@ -563,7 +569,7 @@ ircd::handle_ec_default(client &client,
 	thread_local char buf[256];
 	log::derror
 	{
-		"%s :%s",
+		client::log, "%s :%s",
 		client.loghead(),
 		string(buf, ec)
 	};
@@ -609,7 +615,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"socket(%p) ~client(%p): %s",
+		log, "socket(%p) ~client(%p): %s",
 		sock.get(),
 		this,
 		e.what()
@@ -670,7 +676,7 @@ catch(const ctx::interrupted &e)
 {
 	log::warning
 	{
-		"%s Request interrupted :%s",
+		log, "%s Request interrupted :%s",
 		loghead(),
 		e.what()
 	};
@@ -682,7 +688,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"%s :%s",
+		log, "%s :%s",
 		loghead(),
 		e.what()
 	};
@@ -731,7 +737,7 @@ try
 
 	log::debug
 	{
-		"%s HTTP %s `%s' content-length:%zu have:%zu",
+		log, "%s HTTP %s `%s' content-length:%zu have:%zu",
 		loghead(),
 		head.method,
 		head.path,
@@ -772,7 +778,7 @@ catch(const std::exception &e)
 
 	log::error
 	{
-		"%s HTTP 500 Internal Error: %s",
+		log, "%s HTTP 500 Internal Error: %s",
 		loghead(),
 		e.what()
 	};
@@ -810,7 +816,7 @@ catch(const http::error &e)
 
 	log::derror
 	{
-		"%s HTTP %u %s `%s' :%s",
+		log, "%s HTTP %u %s `%s' :%s",
 		loghead(),
 		uint(e.code),
 		http::status(e.code),
@@ -857,7 +863,7 @@ ircd::client::discard_unconsumed(const http::request::head &head)
 
 	log::debug
 	{
-		"%s discarding %zu unconsumed of %zu bytes content...",
+		log, "%s discarding %zu unconsumed of %zu bytes content...",
 		loghead(),
 		unconsumed,
 		head.content_length
