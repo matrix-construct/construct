@@ -1097,20 +1097,9 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::closure_bool &closure)
 const
 {
-	event::fetch event
-	{
-		fopts
-	};
-
-	return for_each(type, event::closure_idx_bool{[&event, &closure]
-	(const event::idx &event_idx)
-	{
-		if(seek(event, event_idx, std::nothrow))
-			if(!closure(event))
-				return false;
-
-		return true;
-	}});
+	return type?
+		for_each(type, string_view{}, closure):
+		for_each(closure);
 }
 
 void
@@ -1131,28 +1120,9 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::id::closure_bool &closure)
 const
 {
-	if(!type)
-		return for_each(closure);
-
-	if(!present())
-		return !m::state::test(root_id, type, [&closure]
-		(const json::array &key, const string_view &event_id)
-		{
-			return !closure(unquote(event_id));
-		});
-
-	return for_each(type, event::closure_idx_bool{[&closure]
-	(const event::idx &idx)
-	{
-		bool ret{true};
-		event::fetch::event_id(idx, std::nothrow, [&ret, &closure]
-		(const event::id &id)
-		{
-			ret = closure(id);
-		});
-
-		return ret;
-	}});
+	return type?
+		for_each(type, string_view{}, closure):
+		for_each(closure);
 }
 
 void
@@ -1173,40 +1143,9 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::closure_idx_bool &closure)
 const
 {
-	if(!type)
-		return for_each(closure);
-
-	if(!present())
-		return !m::state::test(root_id, type, [&closure]
-		(const json::array &key, const string_view &event_id)
-		{
-			return !closure(index(unquote(event_id), std::nothrow));
-		});
-
-	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
-	const auto &key
-	{
-		dbs::room_state_key(keybuf, room_id, type)
-	};
-
-	db::gopts opts
-	{
-		this->fopts? this->fopts->gopts : db::gopts{}
-	};
-
-	if(!opts.readahead)
-		opts.readahead = 0_KiB;
-
-	auto &column{dbs::room_state};
-	for(auto it{column.begin(key, opts)}; bool(it); ++it)
-		if(std::get<0>(dbs::room_state_key(it->first)) == type)
-		{
-			if(!closure(byte_view<event::idx>(it->second)))
-				return false;
-		}
-		else break;
-
-	return true;
+	return type?
+		for_each(type, string_view{}, closure):
+		for_each(closure);
 }
 
 bool
@@ -1325,27 +1264,17 @@ ircd::m::room::state::for_each(const string_view &type,
 const
 {
 	if(!present())
-	{
-		const auto btree_closure{[&closure]
+		return !m::state::test(root_id, type, state_key_lb, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
 			assert(size(key) >= 2);
 			return !closure(unquote(key.at(1)));
-		}};
-
-		// Must be conditional branch; empty state_key is not accepted by func.
-		return defined(state_key_lb)?
-			!m::state::test(root_id, type, state_key_lb, btree_closure):
-			!m::state::test(root_id, type, btree_closure);
-	}
+		});
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	const auto &key
 	{
-		// Must be conditional branch; empty state_key is not accepted by func.
-		defined(state_key_lb)?
-			dbs::room_state_key(keybuf, room_id, type, state_key_lb):
-			dbs::room_state_key(keybuf, room_id, type)
+		dbs::room_state_key(keybuf, room_id, type, state_key_lb)
 	};
 
 	db::gopts opts
