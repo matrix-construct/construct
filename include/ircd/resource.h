@@ -29,6 +29,7 @@ struct ircd::resource
 	struct request;
 	struct response;
 
+	static log::log log;
 	static std::map<string_view, resource *, iless> resources;
 
 	string_view path;

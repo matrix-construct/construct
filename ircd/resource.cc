@@ -8,6 +8,12 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+decltype(ircd::resource::log)
+ircd::resource::log
+{
+	"resource", 'r'
+};
+
 decltype(ircd::resource::resources)
 ircd::resource::resources
 {};
@@ -129,7 +135,10 @@ ircd::resource::resource(const string_view &path,
 {
 	log::debug
 	{
-		"Registered resource \"%s\"", path.empty()? string_view{"/"} : this->path
+		log, "Registered resource \"%s\"",
+		path.empty()?
+			string_view{"/"}:
+			this->path
 	};
 }
 
@@ -138,7 +147,10 @@ noexcept
 {
 	log::debug
 	{
-		"Unregistered resource \"%s\"", path.empty()? string_view{"/"} : path
+		log, "Unregistered resource \"%s\"",
+		path.empty()?
+			string_view{"/"}:
+			path
 	};
 }
 
@@ -287,7 +299,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		"X-Matrix Authorization from %s: %s",
+		resource::log, "X-Matrix Authorization from %s: %s",
 		string(remote(client)),
 		e.what()
 	};
@@ -330,7 +342,9 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		"Cache warming for '%s' :%s", origin, e.what()
+		resource::log, "Cache warming for '%s' :%s",
+		origin,
+		e.what()
 	};
 }
 
@@ -381,7 +395,7 @@ ircd::resource::operator()(client &client,
 
 			log::derror
 			{
-				"%s Timed out in %s `%s'",
+				log, "%s Timed out in %s `%s'",
 				client.loghead(),
 				head.method,
 				head.path
@@ -1057,14 +1071,16 @@ ircd::resource::response::response(client &client,
 
 	log::logf
 	{
-		log::general, facility,
+		log, facility,
 		"%s HTTP %d %s in %ld$us; %s %s content",
 		client.loghead(),
 		uint(code),
 		http::status(code),
 		request_time,
 		content_type,
-		ssize_t(content_length) >= 0? lex_cast(content_length): "chunked"_sv
+		ssize_t(content_length) >= 0?
+			lex_cast(content_length):
+			"chunked"_sv
 	};
 	#endif
 
