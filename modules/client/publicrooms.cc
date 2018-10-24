@@ -53,6 +53,12 @@ post__publicrooms(client &client,
 		unquote(request["since"])
 	};
 
+	if(since && !valid(m::id::ROOM, since))
+		throw m::BAD_REQUEST
+		{
+			"Invalid since token for this server."
+		};
+
 	const auto &server
 	{
 		request.query["server"]
@@ -78,9 +84,6 @@ post__publicrooms(client &client,
 		request.get<bool>("include_all_networks", false)
 	};
 
-	if(server && server != my_host())
-		return post__publicrooms_remote(client, request, server, search_term, limit);
-
 	resource::response::chunked response
 	{
 		client, http::OK
@@ -98,7 +101,20 @@ post__publicrooms(client &client,
 	{
 		json::stack::member chunk_m{top, "chunk"};
 		json::stack::array chunk{chunk_m};
-		m::rooms::for_each_public(since, [&]
+
+		//TODO: better keying for search terms
+		const string_view &key
+		{
+			since?
+				since:
+			server?
+				server:
+			search_term?
+				search_term:
+			my_host()
+		};
+
+		m::rooms::for_each_public(key, [&]
 		(const m::room::id &room_id)
 		{
 			json::stack::object obj{chunk};
@@ -116,7 +132,7 @@ post__publicrooms(client &client,
 	{
 		top, "total_room_count_estimate", json::value
 		{
-			ssize_t(m::rooms::count_public())
+			ssize_t(m::rooms::count_public(server))
 		}
 	};
 
