@@ -114,114 +114,22 @@ post__publicrooms(client &client,
 	{
 		json::stack::member chunk_m{top, "chunk"};
 		json::stack::array chunk{chunk_m};
-		publix.for_each("ircd.room", since, [&](const m::event &event)
+		publix.for_each("ircd.room", since, [&]
+		(const m::event &event)
 		{
-			const m::room::id room_id{at<"state_key"_>(event)};
-			const m::room::state state{room_id};
+			const m::room::id &room_id
+			{
+				at<"state_key"_>(event)
+			};
+
 			json::stack::object obj{chunk};
+			m::rooms::summary_chunk(room_id, obj);
 
 			if(!count && !empty(since))
 				prev_batch_buf = room_id; //TODO: ???
 
-			// Aliases array
-			{
-				json::stack::member aliases_m{obj, "aliases"};
-				json::stack::array array{aliases_m};
-				state.for_each("m.room.aliases", [&array]
-				(const m::event &event)
-				{
-					const json::array aliases
-					{
-						json::get<"content"_>(event).get("aliases")
-					};
-
-					for(const string_view &alias : aliases)
-						array.append(unquote(alias));
-				});
-			}
-
-			state.get(std::nothrow, "m.room.avatar_url", "", [&obj]
-			(const m::event &event)
-			{
-				json::stack::member
-				{
-					obj, "avatar_url", unquote(json::get<"content"_>(event).get("url"))
-				};
-			});
-
-			state.get(std::nothrow, "m.room.canonical_alias", "", [&obj]
-			(const m::event &event)
-			{
-				json::stack::member
-				{
-					obj, "canonical_alias", unquote(json::get<"content"_>(event).get("alias"))
-				};
-			});
-
-			state.get(std::nothrow, "m.room.guest_access", "", [&obj]
-			(const m::event &event)
-			{
-				json::stack::member
-				{
-					obj, "guest_can_join", json::value
-					{
-						unquote(json::get<"content"_>(event).get("guest_access")) == "can_join"
-					}
-				};
-			});
-
-			state.get(std::nothrow, "m.room.name", "", [&obj]
-			(const m::event &event)
-			{
-				json::stack::member
-				{
-					obj, "name", json::value
-					{
-						unquote(json::get<"content"_>(event).get("name"))
-					}
-				};
-			});
-
-			// num_join_members
-			{
-				const m::room::members members{room_id};
-				json::stack::member
-				{
-					obj, "num_joined_members", json::value
-					{
-						long(members.count("join"))
-					}
-				};
-			}
-
-			json::stack::member
-			{
-				obj, "room_id", room_id
-			};
-
-			state.get(std::nothrow, "m.room.topic", "", [&obj]
-			(const m::event &event)
-			{
-				json::stack::member
-				{
-					obj, "topic", unquote(json::get<"content"_>(event).get("topic"))
-				};
-			});
-
-			state.get(std::nothrow, "m.room.history_visibility", "", [&obj]
-			(const m::event &event)
-			{
-				json::stack::member
-				{
-					obj, "world_readable", json::value
-					{
-						unquote(json::get<"content"_>(event).get("history_visibility")) == "world_readable"
-					}
-				};
-			});
-
 			next_batch_buf = room_id;
-			return count < limit;
+			return ++count < limit;
 		});
 	}
 
@@ -321,24 +229,3 @@ post__publicrooms_remote(client &client,
 		}
 	};
 }
-
-static void
-_create_public_room(const m::event &,
-                    m::vm::eval &)
-{
-	m::create(public_room_id, m::me.user_id);
-}
-
-/// Create the public rooms room at the appropriate time on startup.
-/// The startup event chosen here is when @ircd joins the !ircd room,
-/// which is a fundamental notification toward the end of init.
-const m::hookfn<m::vm::eval &>
-_create_public_hook
-{
-	_create_public_room,
-	{
-		{ "_site",       "vm.effect"      },
-		{ "room_id",     "!ircd"          },
-		{ "type",        "m.room.create"  },
-	}
-};

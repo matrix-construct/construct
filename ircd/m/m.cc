@@ -1468,6 +1468,36 @@ ircd::m::event_filter::event_filter(const mutable_buffer &buf,
 // m/rooms.h
 //
 
+ircd::json::object
+ircd::m::rooms::summary_chunk(const m::room &room,
+                              const mutable_buffer &buf)
+{
+	json::stack out{buf};
+	{
+		json::stack::object obj{out};
+		summary_chunk(room, obj);
+	}
+
+	return json::object
+	{
+		out.completed()
+	};
+}
+
+void
+ircd::m::rooms::summary_chunk(const m::room &room,
+                              json::stack::object &chunk)
+{
+	using prototype = void (const m::room &, json::stack::object &);
+
+	static mods::import<prototype> function
+	{
+		"m_rooms", "_summary_chunk"
+	};
+
+	return function(room, chunk);
+}
+
 void
 ircd::m::rooms::for_each(const user &user,
                          const user::rooms::closure &closure)

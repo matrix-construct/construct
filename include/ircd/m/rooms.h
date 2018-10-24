@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_M_ROOMS_H
 
-/// Convenience iterface for iterations of rooms
+/// Convenience iterface for rooms; utilities for the server's collection of
+/// rooms and some rooms list related linkages.
 ///
 namespace ircd::m::rooms
 {
@@ -26,4 +27,8 @@ namespace ircd::m::rooms
 	void for_each(const user &, const string_view &membership, const user::rooms::closure &);
 	void for_each(const user &, const user::rooms::closure_bool &);
 	void for_each(const user &, const user::rooms::closure &);
+
+	// Linkage to utils that build a publicrooms summary from room state.
+	void summary_chunk(const m::room &, json::stack::object &chunk);
+	json::object summary_chunk(const m::room &, const mutable_buffer &out);
 }
