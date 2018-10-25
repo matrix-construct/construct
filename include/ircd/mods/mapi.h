@@ -15,66 +15,85 @@
 namespace ircd::mapi
 {
 	struct header;
+	struct metablock;
 	using magic_t = uint16_t;
 	using version_t = uint16_t;
-	using metadata = std::map<string_view, string_view, std::less<>>;
-	using init_function = std::function<void ()>;
-	using fini_function = std::function<void ()>;
+	using meta_data = std::map<string_view, string_view, std::less<>>;
+	using init_func = std::function<void ()>;
+	using fini_func = std::function<void ()>;
 
+	/// Used to communicate whether a module unload actually took place. dlclose() is allowed to return
+	/// success but the actual static destruction of the module's contents doesn't lie. (mods.cc)
+	extern bool static_destruction;
+
+	/// The name of the header variable in the module must match this string
 	const char *const header_symbol_name
 	{
 		"IRCD_MODULE"
 	};
-
-	constexpr const magic_t MAGIC
-	{
-		0x4D41
-	};
-
-	// Used to communicate whether a module unload actually took place. dlclose() is allowed to return
-	// success but the actual static destruction of the module's contents doesn't lie. (mods.cc)
-	extern bool static_destruction;
 }
+
+/// The magic number at the front of the header
+constexpr const ircd::mapi::magic_t
+IRCD_MAPI_MAGIC
+{
+	0x4D41
+};
+
+/// The version number of this module's header.
+constexpr const ircd::mapi::version_t
+IRCD_MAPI_VERSION
+{
+	4
+};
 
 struct ircd::mapi::header
 {
-	magic_t magic;                               // The magic must match MAGIC
-	version_t version;                           // Version indicator
-	int64_t timestamp;                           // Module's compile epoch
-	init_function init;                          // Executed after dlopen()
-	fini_function fini;                          // Executed before dlclose()
-	metadata meta;                               // Various key-value metadata
-	mods::mod *self;                             // Module instance once loaded
+	const magic_t magic {IRCD_MAPI_MAGIC};       // The magic must match
+	const version_t version {IRCD_MAPI_VERSION}; // Version indicator
+	const int32_t _reserved_ {0};                // MBZ
+	const int64_t timestamp {RB_DATECODE};       // Module's compile epoch
+	std::unique_ptr<metablock> meta;             // Non-standard-layout header data
+	mods::mod *self {nullptr};                   // Point to mod instance once loaded
 
 	// get and set metadata
-	auto &operator[](const string_view &s) const;
-	auto &operator[](const string_view &s);
+	const string_view &operator[](const string_view &s) const;
+	string_view &operator[](const string_view &s);
 
 	// become self
 	operator const mods::mod &() const;
 	operator mods::mod &();
 
-	header(const string_view &desc = "<no description>",
-	       init_function = {},
-	       fini_function = {});
+	header(const string_view &  = "<no description>",
+	       init_func            = {},
+	       fini_func            = {});
 
+	header(header &&) = delete;
+	header(const header &) = delete;
 	~header() noexcept;
 };
 
-inline
-ircd::mapi::header::header(const string_view &desc,
-                           init_function init,
-                           fini_function fini)
-:magic(MAGIC)
-,version(4)
-,timestamp(RB_DATECODE)
-,init{std::move(init)}
-,fini{std::move(fini)}
-,meta
+struct ircd::mapi::metablock
 {
-	{ "description", desc }
+	init_func init;                    // Executed after dlopen()
+	fini_func fini;                    // Executed before dlclose()
+	meta_data meta;                    // Various key-value metadata
+};
+
+inline
+ircd::mapi::header::header(const string_view &description,
+                           init_func init,
+                           fini_func fini)
+:meta
+{
+	new metablock
+	{
+		std::move(init), std::move(fini), meta_data
+		{
+			{ "description", description }
+		}
+	}
 }
-,self{nullptr}
 {
 }
 
@@ -85,30 +104,15 @@ noexcept
 	static_destruction = true;
 }
 
-inline ircd::mapi::header::operator
-mods::mod &()
-{
-	assert(self);
-	return *self;
-}
+static_assert
+(
+	std::is_standard_layout<ircd::mapi::header>(),
+	"The MAPI header must be standard layout so the magic and version numbers"
+	" can be parsed from the shared object file by external applications."
+);
 
-inline ircd::mapi::header::operator
-const mods::mod &()
-const
-{
-	assert(self);
-	return *self;
-}
-
-inline auto &
-ircd::mapi::header::operator[](const string_view &key)
-{
-	return meta[key];
-}
-
-inline auto &
-ircd::mapi::header::operator[](const string_view &key)
-const
-{
-	return meta.at(key);
-}
+static_assert
+(
+	sizeof(ircd::mapi::header) == 2 + 2 + 4 + 8 + 8 + 8,
+	"The MAPI header size has changed on this platform."
+);

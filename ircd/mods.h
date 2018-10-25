@@ -54,9 +54,10 @@ struct ircd::mods::mod
 	mapi::header *header;
 
 	// Metadata
-	auto &operator[](const std::string &s) const { return header->meta.operator[](s);              }
-	auto &operator[](const std::string &s)       { return header->meta.operator[](s);              }
+	const string_view &operator[](const string_view &s) const;
+	string_view &operator[](const string_view &s);
 
+	// Convenience accessors
 	auto &name() const                           { return _name;                                   }
 	auto &location() const                       { return _location;                               }
 	auto &version() const                        { return header->version;                         }

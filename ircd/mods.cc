@@ -116,19 +116,18 @@ try
 			"Unexpected null header"
 		};
 
-	if(header->magic != mapi::MAGIC)
+	if(header->magic != IRCD_MAPI_MAGIC)
 		throw error
 		{
-			"Bad magic [%04x] need: [%04x]", header->magic, mapi::MAGIC
+			"Bad magic [%04x] need: [%04x]", header->magic, IRCD_MAPI_MAGIC
 		};
 
 	// Tell the module where to find us.
 	header->self = this;
 
 	// Set some basic metadata
-	auto &meta(header->meta);
-	meta["name"] = name();
-	meta["location"] = location();
+	(*this)["name"] = name();
+	(*this)["location"] = location();
 
 	if(!loading.empty())
 	{
@@ -214,8 +213,10 @@ ircd::mods::mod::unload()
 	};
 
 	// Call the user's unloading function here.
-	if(header->fini)
-		header->fini();
+	assert(header);
+	assert(header->meta);
+	if(header->meta->fini)
+		header->meta->fini();
 
 	// Save the children! dlclose() does not like to be called recursively during static
 	// destruction of a module. The mod ctor recorded all of the modules loaded while this
@@ -254,6 +255,56 @@ ircd::mods::mod::unload()
 	};
 
 	return true;
+}
+
+ircd::string_view &
+ircd::mods::mod::operator[](const string_view &key)
+{
+	assert(header);
+	return header->operator[](key);
+}
+
+const ircd::string_view &
+ircd::mods::mod::operator[](const string_view &key)
+const
+{
+	assert(header);
+	return header->operator[](key);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// mods/mapi.h
+//
+
+ircd::mapi::header::operator
+mods::mod &()
+{
+	assert(self);
+	return *self;
+}
+
+ircd::mapi::header::operator
+const mods::mod &()
+const
+{
+	assert(self);
+	return *self;
+}
+
+ircd::string_view &
+ircd::mapi::header::operator[](const string_view &key)
+{
+	assert(meta);
+	return meta->meta[key];
+}
+
+const ircd::string_view &
+ircd::mapi::header::operator[](const string_view &key)
+const
+{
+	assert(meta);
+	return meta->meta.at(key);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -594,8 +645,10 @@ try
 	// Call the user-supplied init function well after fully loading and
 	// construction of the module. This way the init function sees the module
 	// as loaded and can make shared_ptr references, etc.
-	if(ret->header->init)
-		ret->header->init();
+	assert(ret->header);
+	assert(ret->header->meta);
+	if(ret->header->meta->init)
+		ret->header->meta->init();
 
 	log::info
 	{
