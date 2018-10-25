@@ -30,6 +30,8 @@ namespace ircd::m
 	bool exists(const id::room_alias &, const bool &remote = false);
 	uint version(const id::room &);
 	bool federate(const id::room &);
+	id::user::buf creator(const id::room &);
+	bool creator(const id::room &, const id::user &);
 
 	// [GET]
 	id::room room_id(const mutable_buffer &, const id::room_alias &);

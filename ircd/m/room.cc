@@ -168,6 +168,49 @@ ircd::m::version(const id::room &room_id)
 }
 
 bool
+ircd::m::creator(const id::room &room_id,
+                 const id::user &user_id)
+{
+	const auto creator_user_id
+	{
+		creator(room_id)
+	};
+
+	return creator_user_id == user_id;
+}
+
+ircd::m::id::user::buf
+ircd::m::creator(const id::room &room_id)
+{
+	// Query the sender field of the event to get the creator. This is for
+	// future compatibility if the content.creator field gets eliminated.
+	static const event::fetch::opts fopts
+	{
+		event::keys::include
+		{
+			"sender",
+		}
+	};
+
+	const room::state state
+	{
+		room_id, &fopts
+	};
+
+	id::user::buf ret;
+	state.get("m.room.create", "", [&ret]
+	(const m::event &event)
+	{
+		ret = user::id
+		{
+			json::get<"sender"_>(event)
+		};
+	});
+
+	return ret;
+}
+
+bool
 ircd::m::federate(const id::room &room_id)
 {
 	static const m::event::fetch::opts fopts
