@@ -38,7 +38,11 @@ _changed_rules(const m::event &event,
 		at<"room_id"_>(event)
 	};
 
-	send(public_room, sender, "ircd.room", room_id, json::strung{event});
+	// This call sends a message to the !public room to list this room in the
+	// public rooms list. We set an empty summary for this room because we
+	// already have its state on this server; saving a summary object in the
+	// event sent to !public is only for rooms whose state is not synced.
+	m::rooms::summary_set(room_id, json::object{});
 }
 
 const m::hookfn<m::vm::eval &>
