@@ -1072,9 +1072,10 @@ ircd::resource::response::response(client &client,
 	log::logf
 	{
 		log, facility,
-		"%s HTTP %d %s in %ld$us; %s %s content",
+		"%s HTTP %d `%s' %s in %ld$us; %s content-length:%s",
 		client.loghead(),
 		uint(code),
+		client.request.head.path,
 		http::status(code),
 		request_time,
 		content_type,

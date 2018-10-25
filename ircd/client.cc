@@ -737,7 +737,7 @@ try
 
 	log::debug
 	{
-		log, "%s HTTP %s `%s' content-length:%zu have:%zu",
+		resource::log, "%s HTTP %s `%s' content-length:%zu have:%zu",
 		loghead(),
 		head.method,
 		head.path,
@@ -816,7 +816,7 @@ catch(const http::error &e)
 
 	log::derror
 	{
-		log, "%s HTTP %u %s `%s' :%s",
+		resource::log, "%s HTTP %u %s `%s' :%s",
 		loghead(),
 		uint(e.code),
 		http::status(e.code),
