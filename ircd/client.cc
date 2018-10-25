@@ -816,11 +816,11 @@ catch(const http::error &e)
 
 	log::derror
 	{
-		resource::log, "%s HTTP %u %s `%s' :%s",
+		resource::log, "%s HTTP %u `%s' %s :%s",
 		loghead(),
 		uint(e.code),
-		http::status(e.code),
 		head.uri,
+		http::status(e.code),
 		e.content
 	};
 
