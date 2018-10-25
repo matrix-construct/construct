@@ -3704,8 +3704,8 @@ ircd::m::_hook_match(const m::event &matching,
 		if(at<"state_key"_>(matching) != json::get<"state_key"_>(event))
 			return false;
 
-	if(json::get<"membership"_>(matching))
-		if(at<"membership"_>(matching) != json::get<"membership"_>(event))
+	if(membership(matching))
+		if(membership(matching) != membership(event))
 			return false;
 
 	if(json::get<"content"_>(matching))
