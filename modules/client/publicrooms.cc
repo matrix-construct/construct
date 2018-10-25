@@ -33,24 +33,30 @@ flush_hiwat
 };
 
 static resource::response
-post__publicrooms_since(client &client,
-                        const resource::request &request,
-                        const string_view &since);
+get__publicrooms(client &,
+                 const resource::request &);
 
-static resource::response
-post__publicrooms_remote(client &client,
-                         const resource::request &request,
-                         const string_view &server,
-                         const string_view &search,
-                         const size_t &limit);
+resource::method
+post_method
+{
+	publicrooms_resource, "POST", get__publicrooms
+};
+
+resource::method
+get_method
+{
+	publicrooms_resource, "GET", get__publicrooms
+};
 
 resource::response
-post__publicrooms(client &client,
-                  const resource::request &request)
+get__publicrooms(client &client,
+                 const resource::request &request)
 {
 	const string_view &since
 	{
-		unquote(request["since"])
+		request.has("since")?
+			unquote(request["since"]):
+			request.query["since"]
 	};
 
 	if(since && !valid(m::id::ROOM, since))
@@ -76,7 +82,9 @@ post__publicrooms(client &client,
 
 	const uint8_t limit
 	{
-		uint8_t(request.get<ushort>("limit", 16U))
+		request.has("limit")?
+			uint8_t(request.at<ushort>("limit")):
+			uint8_t(request.query.get<ushort>("limit", 16U))
 	};
 
 	const bool include_all_networks
@@ -149,78 +157,4 @@ post__publicrooms(client &client,
 		};
 
 	return response;
-}
-
-resource::method
-post_method
-{
-	publicrooms_resource, "POST", post__publicrooms
-};
-
-resource::response
-get__publicrooms(client &client,
-                 const resource::request &request)
-{
-	const auto &server
-	{
-		request.query["server"]
-	};
-
-	const auto &since
-	{
-		request.query["since"]
-	};
-
-	const uint8_t limit
-	{
-		request.query["limit"]?
-			uint8_t(lex_cast<ushort>(request.query["limit"])):
-			uint8_t(16U)
-	};
-
-	std::vector<json::value> chunk;
-	const string_view next_batch;
-	const string_view prev_batch;
-	const int64_t total_room_count_estimate{0};
-
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "chunk",                      { chunk.data(), chunk.size() } },
-			{ "next_batch",                 next_batch                     },
-			{ "prev_batch",                 prev_batch                     },
-			{ "total_room_count_estimate",  total_room_count_estimate      },
-		}
-	};
-}
-
-resource::method
-get_method
-{
-	publicrooms_resource, "GET", get__publicrooms
-};
-
-static resource::response
-post__publicrooms_remote(client &client,
-                         const resource::request &request,
-                         const string_view &server,
-                         const string_view &search,
-                         const size_t &limit)
-{
-	std::vector<json::value> chunk;
-	int64_t total_room_count_estimate{0};
-	const string_view next_batch;
-	const string_view prev_batch;
-
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "chunk",                      { chunk.data(), chunk.size() } },
-			{ "next_batch",                 next_batch                     },
-			{ "prev_batch",                 prev_batch                     },
-			{ "total_room_count_estimate",  total_room_count_estimate      },
-		}
-	};
 }
