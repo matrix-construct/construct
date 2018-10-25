@@ -1378,11 +1378,63 @@ const
 	return true;
 }
 
+/// Figure out if this instance of room::state is presenting the current
+/// "present" state of the room or the state of the room at some previous
+/// event. This is an important distinction because the present state of
+/// the room should provide optimal performance for the functions of this
+/// interface by using the present state table. Prior states will use the
+/// state btree.
 bool
 ircd::m::room::state::present()
 const
 {
-	return !event_id || !root_id || std::get<0>(top(room_id)) == event_id;
+	// When no event_id is passed to the state constructor that immediately
+	// indicates the present state of the room is sought.
+	if(!event_id)
+		return true;
+
+	// When an event_id is passed but no state btree root_id was found
+	// that means there is no state btree generated for this room or at
+	// this event_id. Right now we fall back to using the present state
+	// of the room, which may be confusing behavior. In production this
+	// shouldn't happen; if it does, the ctor should probably throw rather
+	// than this. We just fallback to considering present state here.
+	if(!root_id)
+		return true;
+
+	// Check the cached value from a previous false result of this function
+	// before doing any real work/IO below. If this function ever returned
+	// false it will never return true after.
+	if(_not_present)
+		return false;
+
+	const auto head_id
+	{
+		m::head(std::nothrow, room_id)
+	};
+
+	// If the event_id passed is exactly the latest event we can obviously
+	// consider this the present state.
+	if(!head_id || head_id == event_id)
+		return true;
+
+	m::state::id_buffer root_id_buf;
+	const auto head_root
+	{
+		dbs::state_root(root_id_buf, room_id, head_id)
+	};
+
+	// If the room's state has not changed between the event_id desired
+	// here and the latest event we can also consider this the present state.
+	if(head_root && head_root == root_id)
+		return true;
+
+	// This result is cacheable because once it's no longer the present
+	// it will never be again. Panta chorei kai ouden menei. Note that this
+	// is a const member function; the cache variable is an appropriate case
+	// for the 'mutable' keyword.
+	_not_present = true;
+	return false;
 }
 
 //

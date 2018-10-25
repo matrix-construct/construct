@@ -255,6 +255,7 @@ struct ircd::m::room::state
 	m::state::id_buffer root_id_buf;
 	m::state::id root_id;
 	const event::fetch::opts *fopts {nullptr};
+	mutable bool _not_present {false}; // cached result of !present()
 
 	bool present() const;
 
