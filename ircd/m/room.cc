@@ -263,6 +263,70 @@ ircd::m::my(const room &room)
 // room
 //
 
+/// Test of the join_rule of the room is the argument.
+bool
+ircd::m::room::join_rule(const string_view &rule)
+const
+{
+	char buf[32];
+	return join_rule(mutable_buffer{buf}) == rule;
+}
+
+/// Receive the join_rule of the room into buffer of sufficient size.
+/// The protocol does not specify a join_rule string longer than 7
+/// characters but do be considerate of the future. This function
+/// properly defaults the string as per the protocol spec.
+ircd::string_view
+ircd::m::room::join_rule(const mutable_buffer &out)
+const
+{
+	static const string_view default_join_rule
+	{
+		"invite"
+	};
+
+	string_view ret
+	{
+		default_join_rule
+	};
+
+	const event::keys::include keys
+	{
+		"content"
+	};
+
+	const m::event::fetch::opts fopts
+	{
+		keys, this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	const room::state state
+	{
+		*this, &fopts
+	};
+
+	state.get(std::nothrow, "m.room.join_rules", "", [&ret, &out]
+	(const m::event &event)
+	{
+		const auto &content
+		{
+			json::get<"content"_>(event)
+		};
+
+		const string_view &rule
+		{
+			content.get("join_rule", default_join_rule)
+		};
+
+		ret = string_view
+		{
+			data(out), copy(out, unquote(rule))
+		};
+	});
+
+	return ret;
+}
+
 /// The only joined members are from our origin (local only). This indicates
 /// we won't have any other federation servers to query for room data, nor do
 /// we need to broadcast events to the federation. This is not an authority
