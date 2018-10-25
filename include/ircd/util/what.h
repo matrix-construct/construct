@@ -15,23 +15,3 @@ namespace ircd::util
 {
 	string_view what(const std::exception_ptr eptr = std::current_exception()) noexcept;
 }
-
-/// Get what() from exception_ptr
-///
-inline ircd::string_view
-ircd::util::what(const std::exception_ptr eptr)
-noexcept try
-{
-	if(likely(eptr))
-		std::rethrow_exception(eptr);
-
-	return {};
-}
-catch(const std::exception &e)
-{
-	return e.what();
-}
-catch(...)
-{
-	return {};
-}

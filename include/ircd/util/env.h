@@ -15,24 +15,3 @@ namespace ircd::util
 {
 	string_view getenv(const string_view &);
 }
-
-inline ircd::string_view
-ircd::util::getenv(const string_view &key)
-{
-	if(unlikely(size(key) > 127))
-		throw std::runtime_error
-		{
-			"getenv(): variable key is too long."
-		};
-
-	// Ensure the key is null terminated for the std:: call.
-	char keystr[128];
-	const size_t len{copy(keystr, key)};
-	keystr[std::min(len, sizeof(keystr) - 1)] = '\0';
-	const string_view var
-	{
-		std::getenv(keystr)
-	};
-
-	return var;
-}

@@ -15,8 +15,15 @@
 // String generating patterns
 //
 
-namespace ircd {
-namespace util {
+namespace ircd::util
+{
+	std::string string(const char *const &buf, const size_t &size);
+	std::string string(const uint8_t *const &buf, const size_t &size);
+	std::string string(const size_t &size, const std::function<size_t (const mutable_buffer &)> &closure);
+	std::string string(const size_t &size, const std::function<string_view (const mutable_buffer &)> &closure);
+	template<class T> std::string string(const mutable_buffer &buf, const T &s);
+	template<class T> std::string string(const T &s);
+}
 
 /// This is the ubiquitous ircd::string() template serving as the "toString()"
 /// for the project. Particpating types that want to have a string(T)
@@ -24,8 +31,8 @@ namespace util {
 /// this is primarily for debug strings, not meant for performance or service.
 ///
 template<class T>
-auto
-string(const T &s)
+std::string
+ircd::util::string(const T &s)
 {
 	std::stringstream ss;
 	ss << s;
@@ -35,67 +42,12 @@ string(const T &s)
 /// Alternative to ircd::string() using a provided buffer for the
 /// std::stringstream to avoid allocating one.
 template<class T>
-auto
-string(const mutable_buffer &buf,
-       const T &s)
+std::string
+ircd::util::string(const mutable_buffer &buf,
+                   const T &s)
 {
 	std::stringstream ss;
 	pubsetbuf(ss, buf);
 	ss << s;
 	return ss.str();
 }
-
-inline auto
-string(const char *const &buf,
-       const size_t &size)
-{
-	return std::string{buf, size};
-}
-
-inline auto
-string(const uint8_t *const &buf,
-       const size_t &size)
-{
-	return string(reinterpret_cast<const char *>(buf), size);
-}
-
-/// Close over the common pattern to write directly into a post-C++11 standard
-/// string through the data() member requiring a const_cast. Closure returns
-/// the final size of the data written into the buffer.
-inline auto
-string(const size_t &size,
-       const std::function<size_t (const mutable_buffer &)> &closure)
-{
-	std::string ret(size, char{});
-	const mutable_buffer buf
-	{
-		const_cast<char *>(ret.data()), ret.size()
-	};
-
-	const size_t consumed
-	{
-		closure(buf)
-	};
-
-	assert(consumed <= buffer::size(buf));
-	data(buf)[consumed] = '\0';
-	ret.resize(consumed);
-	return ret;
-}
-
-/// Close over the common pattern to write directly into a post-C++11 standard
-/// string through the data() member requiring a const_cast. Closure returns
-/// a view of the data actually written to the buffer.
-inline auto
-string(const size_t &size,
-       const std::function<string_view (const mutable_buffer &)> &closure)
-{
-	return string(size, [&closure]
-	(const mutable_buffer &buffer)
-	{
-		return ircd::size(closure(buffer));
-	});
-}
-
-} // namespace util
-} // namespace ircd

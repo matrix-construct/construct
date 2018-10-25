@@ -70,15 +70,7 @@ using custom_ptr = std::unique_ptr<T, std::function<void (T *)>>;
 // Misc size() participants.
 //
 
-inline size_t
-size(std::ostream &s)
-{
-	const auto cur(s.tellp());
-	s.seekp(0, std::ios::end);
-	const auto ret(s.tellp());
-	s.seekp(cur, std::ios::beg);
-	return ret;
-}
+size_t size(std::ostream &s);
 
 template<size_t SIZE>
 constexpr size_t
