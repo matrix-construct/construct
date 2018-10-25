@@ -20,6 +20,11 @@ static void
 _can_create_room(const m::event &event,
                  m::vm::eval &eval)
 {
+	const m::event::id &event_id
+	{
+		at<"event_id"_>(event)
+	};
+
 	const m::room::id &room_id
 	{
 		at<"room_id"_>(event)
@@ -33,8 +38,45 @@ _can_create_room(const m::event &event,
 	if(room_id.host() != sender.host())
 		throw m::ACCESS_DENIED
 		{
-			"sender must be on the room_id's host"
+			"Room on '%s' cannot be created by sender on '%s'",
+			room_id.host(),
+			sender.host()
 		};
+
+	if(room_id.host() != event_id.host())
+		throw m::ACCESS_DENIED
+		{
+			"Room on '%s' cannot be created by event from '%s'",
+			room_id.host(),
+			event_id.host()
+		};
+
+	if(room_id.host() != at<"origin"_>(event))
+		throw m::ACCESS_DENIED
+		{
+			"Room on '%s' cannot be created by event originating from '%s'",
+			room_id.host(),
+			at<"origin"_>(event)
+		};
+
+	const json::object &content
+	{
+		at<"content"_>(event)
+	};
+
+	// note: this is a purposely weak check of the content.creator field.
+	// This server accepts a missing content.creator field entirely because
+	// it considers the sender of the create event as the room creator.
+	// Nevertheless if the content.creator field was specified it must match
+	// the sender or we reject.
+	if(content.has("creator"))
+		if(unquote(content.at("creator")) != sender)
+			throw m::ACCESS_DENIED
+			{
+				"Room %s creator must be the sender %s",
+				string_view{room_id},
+				string_view{sender}
+			};
 }
 
 const m::hookfn<m::vm::eval &>
@@ -42,7 +84,7 @@ _can_create_room_hookfn
 {
 	_can_create_room,
 	{
-		{ "_site",    "vm.commit"     },
+		{ "_site",    "vm.eval"       },
 		{ "type",     "m.room.create" },
 	}
 };
@@ -63,6 +105,14 @@ _created_room(const m::event &event,
 
 	if(local != "users") //TODO: circ dep
 		send(m::my_room, at<"sender"_>(event), "ircd.room", room_id, json::object{});
+
+	log::debug
+	{
+		"Creation of room %s by %s (%s)",
+		string_view{room_id},
+		at<"sender"_>(event),
+		at<"event_id"_>(event)
+	};
 }
 
 const m::hookfn<m::vm::eval &>
