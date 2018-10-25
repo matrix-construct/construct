@@ -74,7 +74,7 @@ struct ircd::net::dns::resolver::tag
 	dns::opts opts;       // note: invalid after query sent
 	const_buffer question;
 	callback cb;
-	steady_point last {};
+	steady_point last {steady_point::min()};
 	uint8_t tries {0};
 	char hostbuf[256];
 	char qbuf[384];

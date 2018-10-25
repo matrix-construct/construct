@@ -255,7 +255,7 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
                                         tag &tag,
                                         const steady_point &cutoff)
 {
-	if(tag.last == steady_point{})
+	if(tag.last == steady_point::min())
 		return false;
 
 	if(tag.last > cutoff)
@@ -270,7 +270,7 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 		host(tag.hp)
 	};
 
-	tag.last = steady_point{};
+	tag.last = steady_point::min();
 	if(tag.tries < size_t(retry_max))
 	{
 		submit(tag);
@@ -551,7 +551,7 @@ try
 	}};
 
 	assert(tag.tries > 0);
-	tag.last = steady_point{};
+	tag.last = steady_point::min();
 	handle_reply(header, body, tag);
 }
 catch(const std::exception &e)
