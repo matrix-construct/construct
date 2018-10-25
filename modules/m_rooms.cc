@@ -12,11 +12,12 @@ namespace ircd::m::rooms
 {
 	static string_view make_state_key(const mutable_buffer &out, const m::room::id &);
 	static m::room::id::buf unmake_state_key(const string_view &);
+	extern "C" event::id::buf _summary_set(const m::room::id &, const json::object &);
 
-	extern conf::item<size_t> fetch_limit;
-	extern conf::item<seconds> fetch_timeout;
 	extern "C" std::pair<size_t, std::string> _fetch_update_(const net::hostport &, const string_view &since, const size_t &limit, const seconds &timeout);
 	extern "C" std::pair<size_t, std::string> _fetch_update(const net::hostport &, const string_view &since = {});
+	extern conf::item<size_t> fetch_limit;
+	extern conf::item<seconds> fetch_timeout;
 
 	static void remote_summary_chunk(const m::room &room, json::stack::object &obj);
 	static void local_summary_chunk(const m::room &room, json::stack::object &obj);
@@ -26,8 +27,8 @@ namespace ircd::m::rooms
 	extern "C" bool _for_each(const string_view &room_id_lb, const room::id::closure_bool &);
 	static void create_public_room(const m::event &, m::vm::eval &);
 
-	extern const room::id::buf public_room_id;
 	extern m::hookfn<vm::eval &> create_public_room_hook;
+	extern const room::id::buf public_room_id;
 }
 
 ircd::mapi::header
@@ -381,13 +382,7 @@ ircd::m::rooms::_fetch_update_(const net::hostport &hp,
 			unquote(summary.at("room_id"))
 		};
 
-		char state_key_buf[256];
-		const auto state_key
-		{
-			make_state_key(state_key_buf, room_id)
-		};
-
-		send(public_room_id, m::me, "ircd.rooms", state_key, summary);
+		_summary_set(room_id, summary);
 	}
 
 	return
@@ -395,6 +390,19 @@ ircd::m::rooms::_fetch_update_(const net::hostport &hp,
 		response.get("total_room_count_estimate", 0UL),
 		unquote(response.get("next_batch", string_view{}))
 	};
+}
+
+ircd::m::event::id::buf
+ircd::m::rooms::_summary_set(const m::room::id &room_id,
+                             const json::object &summary)
+{
+	char state_key_buf[256];
+	const auto state_key
+	{
+		make_state_key(state_key_buf, room_id)
+	};
+
+	return send(public_room_id, m::me, "ircd.rooms", state_key, summary);
 }
 
 ircd::m::room::id::buf

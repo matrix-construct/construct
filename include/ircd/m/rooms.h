@@ -41,4 +41,6 @@ namespace ircd::m::rooms
 	// Linkage to utils that build a publicrooms summary from room state.
 	void summary_chunk(const m::room &, json::stack::object &chunk);
 	json::object summary_chunk(const m::room &, const mutable_buffer &out);
+	event::id::buf summary_set(const m::room::id &, const json::object &summary);
+	event::id::buf summary_set(const m::room &);
 }

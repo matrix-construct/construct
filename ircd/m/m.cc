@@ -1468,6 +1468,43 @@ ircd::m::event_filter::event_filter(const mutable_buffer &buf,
 // m/rooms.h
 //
 
+ircd::m::event::id::buf
+ircd::m::rooms::summary_set(const m::room &room)
+{
+	if(!exists(room))
+		throw m::NOT_FOUND
+		{
+			"Cannot set a summary for room '%s' which I have no state for",
+			string_view{room.room_id}
+		};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		48_KiB
+	};
+
+	const json::object summary
+	{
+		summary_chunk(room, buf)
+	};
+
+	return summary_set(room.room_id, summary);
+}
+
+ircd::m::event::id::buf
+ircd::m::rooms::summary_set(const m::room::id &room_id,
+                            const json::object &summary)
+{
+	using prototype = event::id::buf (const m::room::id &, const json::object &);
+
+	static mods::import<prototype> function
+	{
+		"m_rooms", "_summary_set"
+	};
+
+	return function(room_id, summary);
+}
+
 ircd::json::object
 ircd::m::rooms::summary_chunk(const m::room &room,
                               const mutable_buffer &buf)
