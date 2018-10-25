@@ -95,7 +95,7 @@ put__send_join(client &client,
 			"Event type must be m.room.member"
 		};
 
-	if(json::get<"membership"_>(event) != "join")
+	if(json::get<"membership"_>(event) && json::get<"membership"_>(event) != "join")
 		throw m::error
 		{
 			http::NOT_MODIFIED, "M_INVALID_MEMBERSHIP",
@@ -118,6 +118,7 @@ put__send_join(client &client,
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	m::vm::eval eval
 	{
 		event, vmopts
