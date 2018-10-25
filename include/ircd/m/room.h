@@ -410,6 +410,7 @@ struct ircd::m::room::power
 	using closure = std::function<void (const string_view &, const int64_t &)>;
 	using closure_bool = std::function<bool (const string_view &, const int64_t &)>;
 
+	static const int64_t default_creator_level;
 	static const int64_t default_power_level;
 	static const int64_t default_event_level;
 	static const int64_t default_user_level;

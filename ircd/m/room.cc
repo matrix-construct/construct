@@ -1958,6 +1958,12 @@ const
 // room::power
 //
 
+decltype(ircd::m::room::power::default_creator_level)
+ircd::m::room::power::default_creator_level
+{
+	100
+};
+
 decltype(ircd::m::room::power::default_power_level)
 ircd::m::room::power::default_power_level
 {
@@ -2006,7 +2012,7 @@ const try
 		default_user_level
 	};
 
-	view([&user_id, &ret]
+	const auto closure{[&user_id, &ret]
 	(const json::object &content)
 	{
 		const json::object &users
@@ -2015,7 +2021,16 @@ const try
 		};
 
 		ret = users.at<int64_t>(user_id);
-	});
+	}};
+
+	const bool has_power_levels_event
+	{
+		view(closure)
+	};
+
+	if(!has_power_levels_event)
+		if(creator(room, user_id))
+			ret = default_creator_level;
 
 	return ret;
 }
