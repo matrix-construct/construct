@@ -54,3 +54,27 @@ _changed_rules_hookfn
 		{ "type",     "m.room.join_rules"  },
 	}
 };
+
+static void
+_changed_rules_notify(const m::event &event,
+                      m::vm::eval &)
+{
+	log::info
+	{
+		"%s changed join_rules in %s [%s] to %s",
+		json::get<"sender"_>(event),
+		json::get<"room_id"_>(event),
+		json::get<"event_id"_>(event),
+		json::get<"content"_>(event).get("join_rule"),
+	};
+}
+
+const m::hookfn<m::vm::eval &>
+_changed_rules_notify_hookfn
+{
+	_changed_rules_notify,
+	{
+		{ "_site",    "vm.notify"          },
+		{ "type",     "m.room.join_rules"  },
+	}
+};
