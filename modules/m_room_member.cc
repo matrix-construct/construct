@@ -17,6 +17,104 @@ IRCD_MODULE
 };
 
 static void
+_can_join_room(const m::event &event,
+               m::vm::eval &eval)
+{
+	const m::room room
+	{
+		at<"room_id"_>(event) //TODO: state at prev/auth whatever
+	};
+
+	const m::user::id &sender
+	{
+		at<"sender"_>(event)
+	};
+
+	// Fetch the user's membership from the room's state.
+	char membership_buf[32];
+	const string_view membership
+	{
+		room.membership(membership_buf, sender)
+	};
+
+	// If the user is already in the "join" state no further checks here.
+	if(membership == "join")
+		return;
+
+	// If the user is in the "ban" state here no further checks either.
+	if(membership == "ban")
+		throw m::FORBIDDEN
+		{
+			"%s is banned from room %s",
+			string_view{sender},
+			string_view{room.room_id}
+		};
+
+	// Fetch the join_rules from the room's state.
+	char join_rule_buf[32];
+	const string_view join_rule
+	{
+		room.join_rule(mutable_buffer(join_rule_buf))
+	};
+
+	// If the room is "public" no further checks here.
+	if(join_rule == "public")
+		return;
+
+	if(join_rule != "invite")
+		log::dwarning
+		{
+			"Unsupported join_rule '%s' for room %s. Defaulting to 'invite'.",
+			join_rule,
+			string_view{room.room_id}
+		};
+
+	// The room is "invite" and the user is invited; no further checks here.
+	if(membership == "invite")
+		return;
+
+	// The room is invite and the user is not in the room, either in "leave"
+	// state or no membership state (!membership).
+	if(membership && membership != "leave")
+		log::dwarning
+		{
+			"Unsupported membership state '%s' for %s in room %s.",
+			membership,
+			string_view{sender},
+			string_view{room.room_id}
+		};
+
+	const m::room::power power
+	{
+		room
+	};
+
+	// The user has power to manipulate an m.room.member state event; note
+	// this branch will accept a room creator joining the room right after
+	// creation when no power_levels, join_rules, etc exist yet.
+	if(power(sender, "events", "m.room.member", sender))
+		return;
+
+	throw m::FORBIDDEN
+	{
+		"%s cannot join room %s",
+		string_view{sender},
+		string_view{room.room_id}
+	};
+}
+
+const m::hookfn<m::vm::eval &>
+_can_join_room_hookfn
+{
+	{
+		{ "_site",          "vm.eval"       },
+		{ "type",           "m.room.member" },
+		{ "membership",     "join"          },
+	},
+	_can_join_room
+};
+
+static void
 affect_user_room(const m::event &event,
                  m::vm::eval &eval)
 {
@@ -52,24 +150,6 @@ affect_user_room_hookfn
 		{ "type",           "m.room.member" },
 	},
 	affect_user_room
-};
-
-static void
-_can_join_room(const m::event &event,
-               m::vm::eval &eval)
-{
-
-}
-
-const m::hookfn<m::vm::eval &>
-_can_join_room_hookfn
-{
-	{
-		{ "_site",          "vm.commit"     },
-		{ "type",           "m.room.member" },
-		{ "membership",     "join"          },
-	},
-	_can_join_room
 };
 
 static void
