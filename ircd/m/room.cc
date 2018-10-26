@@ -2049,7 +2049,8 @@ ircd::m::room::power::default_user_level
 bool
 ircd::m::room::power::operator()(const m::user::id &user_id,
                                  const string_view &prop,
-                                 const string_view &type)
+                                 const string_view &type,
+                                 const string_view &state_key)
 const
 {
 	const auto &user_level
@@ -2059,6 +2060,8 @@ const
 
 	const auto &required_level
 	{
+		prop == "events" && defined(state_key)?
+			level_state(type, state_key):
 		prop == "events"?
 			level_event(type):
 			level(prop)
@@ -2079,12 +2082,17 @@ const try
 	const auto closure{[&user_id, &ret]
 	(const json::object &content)
 	{
+		const auto users_default
+		{
+			content.get<int64_t>("users_default", default_user_level)
+		};
+
 		const json::object &users
 		{
 			content.at("users")
 		};
 
-		ret = users.at<int64_t>(user_id);
+		ret = users.get<int64_t>(user_id, users_default);
 	}};
 
 	const bool has_power_levels_event
@@ -2115,12 +2123,17 @@ const try
 	view([&type, &ret]
 	(const json::object &content)
 	{
-		const json::object &events
+		const auto &events_default
 		{
-			content.at("events")
+			content.get<int64_t>("events_default", default_event_level)
 		};
 
-		ret = events.at<int64_t>(type);
+		const json::object &events
+		{
+			content.get("events")
+		};
+
+		ret = events.get<int64_t>(type, events_default);
 	});
 
 	return ret;
@@ -2128,6 +2141,39 @@ const try
 catch(const json::error &e)
 {
 	return default_event_level;
+}
+
+int64_t
+ircd::m::room::power::level_state(const string_view &type,
+                                  const string_view &state_key)
+const try
+{
+	int64_t ret
+	{
+		default_power_level
+	};
+
+	view([&type, &ret]
+	(const json::object &content)
+	{
+		const auto &state_default
+		{
+			content.get<int64_t>("state_default", default_power_level)
+		};
+
+		const json::object &events
+		{
+			content.get("events")
+		};
+
+		ret = events.get<int64_t>(type, state_default);
+	});
+
+	return ret;
+}
+catch(const json::error &e)
+{
+	return default_power_level;
 }
 
 int64_t

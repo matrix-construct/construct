@@ -443,11 +443,12 @@ struct ircd::m::room::power
 	// This suite queries with full defaulting logic as per the spec. These
 	// always return suitable results.
 	int64_t level(const string_view &prop) const;
+	int64_t level_state(const string_view &type, const string_view &state_key = {}) const;
 	int64_t level_event(const string_view &type) const;
 	int64_t level_user(const m::id::user &) const;
 
 	// all who attain great power and riches make use of either force or fraud"
-	bool operator()(const m::id::user &, const string_view &prop, const string_view &type = {}) const;
+	bool operator()(const m::id::user &, const string_view &prop, const string_view &type = {}, const string_view &state_key = {}) const;
 
 	power(const m::room &room)
 	:room{room}
