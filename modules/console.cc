@@ -2830,19 +2830,37 @@ try
 
 	if(c)
 	{
+		out << db::describe(c).explain
+		    << std::endl;
+
 		closeout("SIZE", [&] { out << pretty(iec(bytes(c))); });
 		closeout("FILES", [&] { out << file_count(c); });
 	} else {
-		closeout("UUID", [&] { out << uuid(d); });
-		closeout("SIZE", [&] { out << pretty(iec(bytes(d))); });
-		closeout("SEQUENCE", [&] { out << sequence(d); });
-		closeout("COLUMNS", [&] { out << d.columns.size(); });
-		closeout("FILES", [&] { out << file_count(d); });
+		closeout("uuid", [&] { out << uuid(d); });
+		closeout("size", [&] { out << pretty(iec(bytes(d))); });
+		closeout("columns", [&] { out << d.columns.size(); });
+		closeout("files", [&] { out << file_count(d); });
+		closeout("sequence", [&] { out << sequence(d); });
 	}
 
-	sizeprop("rocksdb.live-sst-files-size");
-	sizeprop("rocksdb.total-sst-files-size");
-	sizeprop("rocksdb.estimate-live-data-size");
+	property("rocksdb.estimate-num-keys");
+	property("rocksdb.background-errors");
+	property("rocksdb.base-level");
+	property("rocksdb.num-live-versions");
+	property("rocksdb.current-super-version-number");
+	property("rocksdb.min-log-number-to-keep");
+	property("rocksdb.is-file-deletions-enabled");
+	property("rocksdb.is-write-stopped");
+	property("rocksdb.actual-delayed-write-rate");
+	property("rocksdb.num-entries-active-mem-table");
+	property("rocksdb.num-deletes-active-mem-table");
+	property("rocksdb.mem-table-flush-pending");
+	property("rocksdb.num-running-flushes");
+	property("rocksdb.compaction-pending");
+	property("rocksdb.num-running-compactions");
+	sizeprop("rocksdb.estimate-pending-compaction-bytes");
+	property("rocksdb.num-snapshots");
+	property("rocksdb.oldest-snapshot-time");
 	sizeprop("rocksdb.size-all-mem-tables");
 	sizeprop("rocksdb.cur-size-all-mem-tables");
 	sizeprop("rocksdb.cur-size-active-mem-table");
@@ -2852,26 +2870,10 @@ try
 	sizeprop("rocksdb.block-cache-pinned-usage");
 	if(!c)
 		closeout("row cache size", [&] { out << pretty(iec(db::usage(cache(d)))); });
-	property("rocksdb.estimate-num-keys");
-	property("rocksdb.num-entries-active-mem-table");
-	property("rocksdb.num-entries-imm-mem-tables");
-	property("rocksdb.num-deletes-active-mem-table");
-	property("rocksdb.num-deletes-imm-mem-tables");
-	property("rocksdb.num-immutable-mem-table");
-	property("rocksdb.num-snapshots");
-	property("rocksdb.oldest-snapshot-time");
-	property("rocksdb.min-log-number-to-keep");
-	property("rocksdb.num-live-versions");
-	property("rocksdb.current-super-version-number");
-	property("rocksdb.base-level");
-	property("rocksdb.mem-table-flush-pending");
-	property("rocksdb.compaction-pending");
-	sizeprop("rocksdb.estimate-pending-compaction-bytes");
-	property("rocksdb.is-file-deletions-enabled");
-	property("rocksdb.num-running-compactions");
-	property("rocksdb.num-running-flushes");
-	property("rocksdb.actual-delayed-write-rate");
-	property("rocksdb.is-write-stopped");
+
+	sizeprop("rocksdb.estimate-live-data-size");
+	sizeprop("rocksdb.live-sst-files-size");
+	sizeprop("rocksdb.total-sst-files-size");
 
 	if(c)
 	{
@@ -2880,6 +2882,22 @@ try
 		{
 			out << std::endl;
 			_print_sst_info_full(out, info);
+		}
+	}
+	else
+	{
+		out << std::endl;
+		for(const auto &column : d.columns)
+		{
+			const auto explain
+			{
+				split(db::describe(*column).explain, '\n').first
+			};
+
+			out << std::left << std::setfill (' ') << std::setw(3) << db::id(*column)
+			    << " " << std::setw(20) << db::name(*column)
+			    << " " << std::setw(24) << pretty(iec(db::bytes(*column)))
+			    << " :" << explain << std::endl;
 		}
 	}
 
