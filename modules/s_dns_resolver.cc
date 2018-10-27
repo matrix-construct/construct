@@ -127,7 +127,7 @@ noexcept
 {
 	ns.close();
 	sendq_context.terminate();
-	timeout_context.interrupt();
+	timeout_context.terminate();
 	while(!tags.empty())
 	{
 		log::warning
@@ -206,10 +206,9 @@ try
 		check_timeouts(milliseconds(timeout));
 	}
 }
-catch(const ctx::interrupted &)
+catch(const ctx::terminated &)
 {
 	cancel_all_tags();
-	return;
 }
 
 void
