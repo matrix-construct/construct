@@ -2060,10 +2060,8 @@ const
 
 	const auto &required_level
 	{
-		prop == "events" && defined(state_key)?
-			level_state(type, state_key):
 		prop == "events"?
-			level_event(type):
+			level_event(type, state_key):
 			level(prop)
 	};
 
@@ -2144,10 +2142,13 @@ catch(const json::error &e)
 }
 
 int64_t
-ircd::m::room::power::level_state(const string_view &type,
+ircd::m::room::power::level_event(const string_view &type,
                                   const string_view &state_key)
 const try
 {
+	if(!defined(state_key))
+		return level_event(type);
+
 	int64_t ret
 	{
 		default_power_level

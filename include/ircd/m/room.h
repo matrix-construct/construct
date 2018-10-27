@@ -441,9 +441,14 @@ struct ircd::m::room::power
 	size_t count_levels() const;
 
 	// This suite queries with full defaulting logic as per the spec. These
-	// always return suitable results.
+	// always return suitable results. When determining power to change a state
+	// event rather than a non-state event, the state_key must always be
+	// defined. If the state_key is a default constructed string_view{} (which
+	// means !defined(state_key) and is not the same as string_view{""} for
+	// the common state_key="") then the interface considers your query for
+	// a non-state event rather than a state_event. Be careful.
 	int64_t level(const string_view &prop) const;
-	int64_t level_state(const string_view &type, const string_view &state_key = {}) const;
+	int64_t level_event(const string_view &type, const string_view &state_key) const;
 	int64_t level_event(const string_view &type) const;
 	int64_t level_user(const m::id::user &) const;
 
