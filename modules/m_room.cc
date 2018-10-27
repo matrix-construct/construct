@@ -467,6 +467,13 @@ state__rebuild_history(const m::room &room)
 	return ret;
 }
 
+conf::item<ulong>
+state__prefetch__yield_modulus
+{
+	{ "name",     "ircd.m.room.state_prefetch.yield_modulus" },
+	{ "default",  256L                                       },
+};
+
 extern "C" size_t
 state__prefetch(const m::room::state &state,
                 const string_view &type,
@@ -491,6 +498,10 @@ state__prefetch(const m::room::state &state,
 
 		m::prefetch(event_idx, fopts);
 		++ret;
+
+		const ulong ym(state__prefetch__yield_modulus);
+		if(ym && ret % ym == 0)
+			ctx::yield();
 	}});
 
 	return ret;
