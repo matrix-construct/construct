@@ -620,10 +620,20 @@ ircd::m::dbs::desc::events__event_idx
 	"_event_idx",
 
 	// explanation
-	R"(### developer note:
+	R"(Maps matrix event_id strings into internal index numbers.
+
+	event_id => event_idx
 
 	The key is an event_id and the value is the index number to be used as the
-	key to all the event data columns.
+	key to all the event data columns. The index number is referred to as the
+	event_idx and is a fixed 8 byte unsigned integer. All other columns which
+	may key on an event_id string instead use this event_idx index number. The
+	index number was generated sequentially based on the order the event was
+	written to the database. Index numbers start at 1 because 0 is used as a
+	sentinel value and is not valid. The index numbers throughout the database
+	generally do not have gaps and can be iterated, however gaps may exist when
+	an event is erased from the database (which is rare for the matrix
+	application).
 
 	)",
 
@@ -660,6 +670,10 @@ ircd::m::dbs::desc::events__event_idx
 	size_t(events__event_idx__meta_block__size),
 };
 
+//
+// event_bad
+//
+
 decltype(ircd::m::dbs::desc::events__event_bad__cache__size)
 ircd::m::dbs::desc::events__event_bad__cache__size
 {
@@ -693,20 +707,16 @@ ircd::m::dbs::desc::events__event_bad
 	"_event_bad",
 
 	// explanation
-	R"(### developer note:
+	R"(Collects mxids of events which are purposely not in the database.
+
+	event_id => (unused 8 byte integer)
 
 	The key is an event_id. The mere existence of the key indicates we do not
 	have this event; it will not be a key found in the event_idx and will not
 	have its own idx number and we know nothing else about this event.
-	
-	However the value is an optional index number of *another* event which is
-	recommended to be used when this missing event was essential. For example,
-	if other servers accept the bad event and then continue a room DAG it is
-	essential we know the last good prev reference to have an unbroken trace.
-	Such a prev reference will be recorded in this value for said use.
 
-	If this column has no value or a zero value it is being used to blacklist
-	an event_id for some other reason.
+	This column is used to blacklist event_ids to prevent various application
+	functionality from chasing and redetermining their invalidity.
 
 	)",
 
@@ -813,20 +823,6 @@ ircd::m::dbs::room_head_key(const string_view &amalgam)
 
 /// This column stores unreferenced (head) events for a room.
 ///
-/// [room_id | event_id => event_idx]
-///
-/// The key is composed of two parts: the room_id which forms a domain for
-/// iteration, and the event_id of the unreferenced event.
-///
-/// The value is a gratuitious event_idx of the event_id in the key. This
-/// allows foregoing the query for event_id=>event_idx when one wants to fetch
-/// more data for the event.
-///
-/// The way this column works is simple: when the m::vm writes any event (that
-/// means full valid acceptance) it will SET an entry into this column for it.
-/// At that time the prev_events of that event will be iterated and DELETE
-/// ops will be appended in the transaction.
-///
 const ircd::db::descriptor
 ircd::m::dbs::desc::events__room_head
 {
@@ -834,7 +830,20 @@ ircd::m::dbs::desc::events__room_head
 	"_room_head",
 
 	// explanation
-	R"(### developer note:
+	R"(Unreferenced events in a room.
+
+	[room_id | event_id => event_idx]
+
+	The key is a room_id and event_id concatenation. The value is an event_idx
+	of the event_id in the key. The key amalgan was specifically selected to
+	allow for DELETES sent to the WAL "in the blind" for all prev_events when
+	any new event is saved to the database, without making any read IO's to
+	look up anything about the prev reference to remove.
+
+	This is a fast-moving column where unreferenced events are inserted and
+	then deleted the first time another event is seen which references it so
+	it collects a lot of DELETE commands in the WAL and has to be compacted
+	often to reduce them out.
 
 	)",
 
@@ -1104,10 +1113,9 @@ ircd::m::dbs::desc::events__room_events
 	"_room_events",
 
 	// explanation
-	R"(### developer note:
+	R"(Indexes events in timeline sequence for a room; maps to m::state root.
 
-	the prefix transform is in effect. this column indexes events by
-	room_id offering an iterable bound of the index prefixed by room_id
+	[room_id | depth + event_idx => state_root]
 
 	)",
 
@@ -1261,10 +1269,9 @@ ircd::m::dbs::desc::events__room_joined
 	"_room_joined",
 
 	// explanation
-	R"(### developer note:
+	R"(Specifically indexes joined members of a room for fast iteration.
 
-	the prefix transform is in effect. this column indexes events by
-	room_id offering an iterable bound of the index prefixed by room_id
+	[room_id | origin + mxid] => event_idx
 
 	)",
 
@@ -1424,7 +1431,14 @@ ircd::m::dbs::desc::events__room_state
 	"_room_state",
 
 	// explanation
-	R"(### developer note:
+	R"(The present state of the room.
+
+	[room_id | type + state_key] => event_idx
+
+	This column is also known as the "present state table." It contains the
+	very important present state of the room for this server. The key contains
+	plaintext room_id, type and state_key elements for direct point-lookup as
+	well as iteration. The value is the index of the apropos state event.
 
 	)",
 
@@ -1516,7 +1530,10 @@ ircd::m::dbs::desc::events__state_node
 	"_state_node",
 
 	// explanation
-	R"(### developer note:
+	R"(Node data in the m::state b-tree.
+
+	The key is the node_id (a hash of the node's value). The value is JSON.
+	See the m::state system for more information.
 
 	)",
 
@@ -1603,16 +1620,17 @@ ircd::m::dbs::desc::events_event_id
 	"event_id",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the event_id property of an event.
 
-	10.1
-	The id of event.
+	As with all direct event columns the key is an event_idx and the value
+	is the data for the event. It should be mentioned for this column
+	specifically that event_id's are already saved in the _event_idx column
+	however that is a mapping of event_id to event_idx whereas this is a
+	mapping of event_idx to event_id.
 
 	10.4
 	MUST NOT exceed 255 bytes.
 
-	### developer note:
-	key is event_idx number.
 	)",
 
 	// typing (key, value)
@@ -1691,7 +1709,7 @@ ircd::m::dbs::desc::events_type
 	"type",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the type property of an event.
 
 	10.1
 	The type of event. This SHOULD be namespaced similar to Java package naming conventions
@@ -1780,7 +1798,7 @@ ircd::m::dbs::desc::events_content
 	"content",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the content property of an event.
 
 	10.1
 	The fields in this object will vary depending on the type of event. When interacting
@@ -1869,7 +1887,7 @@ ircd::m::dbs::desc::events_redacts
 	"redacts",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the redacts property of an event.
 
 	### developer note:
 	key is event_idx number.
@@ -1952,7 +1970,7 @@ ircd::m::dbs::desc::events_room_id
 	"room_id",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the room_id property of an event.
 
 	10.2 (apropos room events)
 	Required. The ID of the room associated with this event.
@@ -2040,7 +2058,7 @@ ircd::m::dbs::desc::events_sender
 	"sender",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the sender property of an event.
 
 	10.2 (apropos room events)
 	Required. Contains the fully-qualified ID of the user who sent this event.
@@ -2128,7 +2146,7 @@ ircd::m::dbs::desc::events_state_key
 	"state_key",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the state_key property of an event.
 
 	10.3 (apropos room state events)
 	A unique key which defines the overwriting semantics for this piece of room state.
@@ -2218,7 +2236,7 @@ ircd::m::dbs::desc::events_origin
 	"origin",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the origin property of an event.
 
 	FEDERATION 4.1
 	DNS name of homeserver that created this PDU
@@ -2310,7 +2328,7 @@ ircd::m::dbs::desc::events_origin_server_ts
 	"origin_server_ts",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the origin_server_ts property of an event.
 
 	FEDERATION 4.1
 	Timestamp in milliseconds on origin homeserver when this PDU was created.
@@ -2399,7 +2417,7 @@ ircd::m::dbs::desc::events_signatures
 	"signatures",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the signatures property of an event.
 
 	### developer note:
 	key is event_idx number.
@@ -2482,7 +2500,7 @@ ircd::m::dbs::desc::events_auth_events
 	"auth_events",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the auth_events property of an event.
 
 	### developer note:
 	key is event_idx number..
@@ -2571,7 +2589,7 @@ ircd::m::dbs::desc::events_depth
 	"depth",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the depth property of an event.
 
 	### developer note:
 	key is event_idx number. value is long integer
@@ -2653,7 +2671,7 @@ ircd::m::dbs::desc::events_hashes
 	"hashes",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the hashes property of an event.
 
 	### developer note:
 	key is event_idx number..
@@ -2735,7 +2753,7 @@ ircd::m::dbs::desc::events_membership
 	"membership",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the membership property of an event.
 
 	### developer note:
 	key is event_idx number.
@@ -2817,7 +2835,7 @@ ircd::m::dbs::desc::events_prev_events
 	"prev_events",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the prev_events property of an event.
 
 	### developer note:
 	key is event_idx number.
@@ -2899,7 +2917,7 @@ ircd::m::dbs::desc::events_prev_state
 	"prev_state",
 
 	// explanation
-	R"(### protocol note:
+	R"(Stores the prev_state property of an event.
 
 	### developer note:
 	key is event_idx number.
@@ -2947,8 +2965,8 @@ ircd::m::dbs::desc::events__default
 	"default",
 
 	// explanation
-	R"(
-		This column is unused but required.
+	R"(This column is unused but required by the database software.
+
 	)",
 
 	// typing (key, value)
