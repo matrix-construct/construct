@@ -1130,7 +1130,13 @@ ircd::openssl::bio::read(const const_buffer &buf,
 {
 	const custom_ptr<BIO> bp
 	{
+// OpenSSL branch
+#if !defined(LIBRESSL_VERSION_NUMBER)
 		BIO_new_mem_buf(data(buf), size(buf)), BIO_free
+// LibreSSL branch
+#else
+		BIO_new_mem_buf((void *)data(buf), size(buf)), BIO_free
+#endif
 	};
 
 	closure(bp.get());
