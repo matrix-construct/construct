@@ -13,18 +13,22 @@
 
 namespace ircd::ctx
 {
-	struct shared_state_base;
-	template<class T = void> struct shared_state;
-	template<> struct shared_state<void>;
-	template<class T> struct promise;
-	template<> struct promise<void>;
 	enum class future_state :uintptr_t;
+	struct shared_state_base;
+	struct promise_base;
 
-	template<class T> future_state state(const shared_state<T> &);
-	template<class T> bool is(const shared_state<T> &, const future_state &);
-	template<class T> void set(shared_state<T> &, const future_state &);
-	template<> void set(shared_state<void> &, const future_state &);
-	template<class T> void notify(shared_state<T> &);
+	template<class T> struct shared_state;
+	template<> struct shared_state<void>;
+
+	IRCD_EXCEPTION(ircd::ctx::error, future_error)
+
+	future_state state(const shared_state_base &);
+	bool is(const shared_state_base &, const future_state &);
+	void set(shared_state_base &, const future_state &);
+	size_t refcount(const shared_state_base &);
+	void invalidate(shared_state_base &);
+	void update(shared_state_base &);
+	void notify(shared_state_base &);
 }
 
 /// Internal state enumeration for the promise / future / related. These can
@@ -33,11 +37,11 @@ namespace ircd::ctx
 enum class ircd::ctx::future_state
 :uintptr_t
 {
-	INVALID = 0, ///< Null.
-	PENDING,     ///< Promise is attached and busy.
-	READY,       ///< Result ready; promise is gone.
-	OBSERVED,    ///< Special case for when_*(); not a state; promise is gone.
-	RETRIEVED,   ///< User retrieved future value; promise is gone.
+	INVALID    = 0,  ///< Null.
+	PENDING    = 1,  ///< Promise is attached and busy.
+	READY      = 2,  ///< Result ready; promise is gone.
+	OBSERVED   = 3,  ///< Special case for when_*(); not a state; promise is gone.
+	RETRIEVED  = 4,  ///< User retrieved future value; promise is gone.
 };
 
 /// Internal Non-template base of the state object shared by promise and
@@ -48,8 +52,14 @@ struct ircd::ctx::shared_state_base
 	mutable dock cond;
 	std::exception_ptr eptr;
 	std::function<void (shared_state_base &)> then;
+	union
+	{
+		promise_base *p {nullptr};
+		future_state st;
+	};
 
-	shared_state_base();
+	shared_state_base(promise_base &p);
+	shared_state_base() = default;
 	shared_state_base(shared_state_base &&) = default;
 	shared_state_base(const shared_state_base &) = delete;
 	shared_state_base &operator=(shared_state_base &&) = default;
@@ -62,22 +72,14 @@ template<class T>
 struct ircd::ctx::shared_state
 :shared_state_base
 {
-	using value_type      = T;
-	using pointer_type    = T *;
-	using reference_type  = T &;
+	using value_type = T;
+	using pointer_type = T *;
+	using reference_type = T &;
 
-	union
-	{
-		promise<T> *p {nullptr};
-		future_state st;
-	};
 	T val;
 
-	shared_state(promise<T> &p)
-	:p{&p}
-	{}
-
-	shared_state() = default;
+	using shared_state_base::shared_state_base;
+	using shared_state_base::operator=;
 };
 
 /// Internal shared state between future and promise when there is no future
@@ -86,119 +88,8 @@ template<>
 struct ircd::ctx::shared_state<void>
 :shared_state_base
 {
-	using value_type      = void;
+	using value_type = void;
 
-	union
-	{
-		promise<void> *p {nullptr};
-		future_state st;
-	};
-
-	shared_state(promise<void> &p)
-	:p{&p}
-	{}
-
-	shared_state() = default;
+	using shared_state_base::shared_state_base;
+	using shared_state_base::operator=;
 };
-
-/// Internal use
-template<class T>
-void
-ircd::ctx::notify(shared_state<T> &st)
-{
-	if(!st.then)
-	{
-		st.cond.notify_all();
-		return;
-	}
-
-	if(!current)
-	{
-		st.cond.notify_all();
-		assert(bool(st.then));
-		st.then(st);
-		return;
-	}
-
-	const stack_usage_assertion sua;
-	st.cond.notify_all();
-	assert(bool(st.then));
-	st.then(st);
-}
-
-/// Internal use
-template<class T>
-void
-ircd::ctx::set(shared_state<T> &st,
-               const future_state &state)
-{
-	switch(state)
-	{
-		case future_state::INVALID:  assert(0);  return;
-		case future_state::PENDING:  assert(0);  return;
-		case future_state::OBSERVED:
-		case future_state::READY:
-		case future_state::RETRIEVED:
-		default:
-			st.st = state;
-			return;
-	}
-}
-
-/// Internal use
-template<>
-inline void
-ircd::ctx::set(shared_state<void> &st,
-               const future_state &state)
-{
-	switch(state)
-	{
-		case future_state::INVALID:  assert(0);  return;
-		case future_state::PENDING:  assert(0);  return;
-		case future_state::READY:
-		case future_state::OBSERVED:
-		case future_state::RETRIEVED:
-		default:
-			st.st = state;
-			return;
-	}
-}
-
-/// Internal; check if the current state is something; safe but unnecessary
-/// for public use.
-template<class T>
-bool
-ircd::ctx::is(const shared_state<T> &st,
-              const future_state &state_)
-{
-	switch(st.st)
-	{
-		case future_state::READY:
-		case future_state::OBSERVED:
-		case future_state::RETRIEVED:
-			return state_ == st.st;
-
-		default: switch(state_)
-		{
-			case future_state::INVALID:
-				return st.p == nullptr;
-
-			case future_state::PENDING:
-				return uintptr_t(st.p) >= 0x1000;
-
-			default:
-				return false;
-		}
-	}
-}
-
-/// Internal; get the current state of the shared_state; safe but unnecessary
-/// for public use.
-template<class T>
-ircd::ctx::future_state
-ircd::ctx::state(const shared_state<T> &st)
-{
-	return uintptr_t(st.p) >= 0x1000?
-		future_state::PENDING:
-		st.st;
-}

@@ -129,7 +129,7 @@ ircd::ctx::when::all_then(promise<void> &p)
 	if(refcount(p.state()) < 2)
 		return p.set_value();
 
-	return remove(p.state(), p);
+	return p.remove(p.state(), p);
 }
 
 /// In order for this template to be reusable with std::set iterations we

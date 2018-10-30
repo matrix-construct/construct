@@ -1480,11 +1480,380 @@ ircd::ctx::ole::pop()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ctx/promise.h
+//
+
+//
+// promise<void>
+//
+
+void
+ircd::ctx::promise<void>::set_value()
+{
+	check_pending();
+	make_ready();
+}
+
+ircd::ctx::shared_state<void> &
+ircd::ctx::promise<void>::state()
+{
+	return promise_base::state<void>();
+}
+
+const ircd::ctx::shared_state<void> &
+ircd::ctx::promise<void>::state()
+const
+{
+	return promise_base::state<void>();
+}
+
+//
+// promise_base::promise_base
+//
+
+ircd::ctx::promise_base::promise_base(promise_base &&o)
+noexcept
+:st{std::move(o.st)}
+,next{std::move(o.next)}
+{
+	if(st)
+	{
+		update(*this, o);
+		o.st = nullptr;
+	}
+}
+
+ircd::ctx::promise_base::promise_base(const promise_base &o)
+:st{o.st}
+,next{nullptr}
+{
+	append(*this, const_cast<promise_base &>(o));
+}
+
+ircd::ctx::promise_base &
+ircd::ctx::promise_base::operator=(promise_base &&o)
+noexcept
+{
+	this->~promise_base();
+	st = std::move(o.st);
+	next = std::move(o.next);
+	if(!st)
+		return *this;
+
+	update(*this, o);
+	o.st = nullptr;
+	return *this;
+}
+
+ircd::ctx::promise_base::~promise_base()
+noexcept
+{
+	if(!valid())
+		return;
+
+	if(refcount(state()) == 1)
+		set_exception(std::make_exception_ptr(broken_promise()));
+	else
+		remove(state(), *this);
+}
+
+void
+ircd::ctx::promise_base::set_exception(std::exception_ptr eptr)
+{
+	check_pending();
+	state().eptr = std::move(eptr);
+	make_ready();
+}
+
+void
+ircd::ctx::promise_base::make_ready()
+{
+	auto &st(state());
+
+	// First we have to chase the linked list of promises reachable
+	// from this shared_state. invalidate() will null their pointer
+	// to the shared_state indicating the promise was already satisfied.
+	// This is done first because the set() to the READY writes to the
+	// same union as the promise pointer (see shared_state.h).
+	invalidate(st);
+
+	// Now set the shared_state to READY. We know the location of the
+	// shared state by saving it in this frame earlier, otherwise invalidate()
+	// would have nulled it.
+	set(st, future_state::READY);
+
+	// Finally call the notify() routine which will tell the future the promise
+	// was satisfied and the value/exception is ready for them. This call may
+	// notify an ircd::ctx and/or post a function to the ircd::ios for a then()
+	// callback etc.
+	notify(st);
+
+	// At this point the future should not longer be considered valid; no longer
+	// referring to the shared_state.
+	assert(!valid());
+}
+
+void
+ircd::ctx::promise_base::check_pending()
+const
+{
+	assert(valid());
+	if(unlikely(!is(state(), future_state::PENDING)))
+		throw promise_already_satisfied{};
+}
+
+bool
+ircd::ctx::promise_base::operator!()
+const
+{
+	return !valid();
+}
+
+ircd::ctx::promise_base::operator bool()
+const
+{
+	return valid();
+}
+
+bool
+ircd::ctx::promise_base::valid()
+const
+{
+	return bool(st);
+}
+
+ircd::ctx::shared_state_base &
+ircd::ctx::promise_base::state()
+{
+	assert(valid());
+	return *st;
+}
+
+const ircd::ctx::shared_state_base &
+ircd::ctx::promise_base::state()
+const
+{
+	assert(valid());
+	return *st;
+}
+
+/// Internal semantics; chases the linked list of promises and adds a reference
+/// to a new copy at the end (for copy semantic).
+void
+ircd::ctx::promise_base::append(promise_base &new_,
+                                promise_base &old)
+{
+	if(!old.next)
+	{
+		old.next = &new_;
+		return;
+	}
+
+	promise_base *next{old.next};
+	for(; next->next; next = next->next);
+	next->next = &new_;
+}
+
+/// Internal semantics; updates the location of a promise within the linked
+/// list of related promises (for move semantic).
+void
+ircd::ctx::promise_base::update(promise_base &new_,
+                                promise_base &old)
+{
+	assert(old.st);
+	auto &st{*old.st};
+	if(!is(st, future_state::PENDING))
+		return;
+
+	if(st.p == &old)
+	{
+		st.p = &new_;
+		return;
+	}
+
+	promise_base *last{st.p};
+	for(promise_base *next{last->next}; next; last = next, next = last->next)
+		if(next == &old)
+		{
+			last->next = &new_;
+			break;
+		}
+}
+
+/// Internal semantics; removes the promise from the linked list of promises.
+/// Because the linked list of promises is a forward singly-linked list this
+/// operation requires a reference to the list's head in shared_state_base
+/// (for dtor semantic).
+void
+ircd::ctx::promise_base::remove(shared_state_base &st,
+                                promise_base &p)
+{
+	if(!is(st, future_state::PENDING))
+		return;
+
+	if(st.p == &p)
+	{
+		st.p = p.next;
+		return;
+	}
+
+	promise_base *last{st.p};
+	for(promise_base *next{last->next}; next; last = next, next = last->next)
+		if(next == &p)
+		{
+			last->next = p.next;
+			break;
+		}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ctx/shared_shared.h
 //
 
-// Linkage
-ircd::ctx::shared_state_base::shared_state_base()
+/// Internal use
+void
+ircd::ctx::notify(shared_state_base &st)
+{
+	if(!st.then)
+	{
+		st.cond.notify_all();
+		return;
+	}
+
+	if(!current)
+	{
+		st.cond.notify_all();
+		assert(bool(st.then));
+		st.then(st);
+		return;
+	}
+
+	const stack_usage_assertion sua;
+	st.cond.notify_all();
+	assert(bool(st.then));
+	st.then(st);
+}
+
+/// Internal use; chases the linked list of promises starting from the head
+/// in the shared_state and invalidates all of their references to the shared
+/// state. This will cause the promise to no longer be valid().
+///
+void
+ircd::ctx::invalidate(shared_state_base &st)
+{
+	if(is(st, future_state::PENDING))
+		for(promise_base *p{st.p}; p; p = p->next)
+			p->st = nullptr;
+}
+
+/// Internal use; chases the linked list of promises starting from the head in
+/// the shared_state and updates the location of the shared_state within each
+/// promise. This is used to tell the promises when the shared_state itself
+/// has relocated.
+///
+void
+ircd::ctx::update(shared_state_base &st)
+{
+	if(is(st, future_state::PENDING))
+		for(promise_base *p{st.p}; p; p = p->next)
+			p->st = &st;
+}
+
+/// Internal use; returns the number of copies of the promise reachable from
+/// the linked list headed by the shared state. This is used to indicate when
+/// the last copy has destructed which may result in a broken_promise exception
+/// being sent to the future.
+size_t
+ircd::ctx::refcount(const shared_state_base &st)
+{
+	size_t ret{0};
+	if(is(st, future_state::PENDING))
+		for(const promise_base *p{st.p}; p; p = p->next)
+			++ret;
+
+	return ret;
+}
+
+/// Internal use; sets the state indicator within the shared_state object. Take
+/// special note that this data is unionized. Setting a state here will clobber
+/// the shared_state's reference to its promise.
+void
+ircd::ctx::set(shared_state_base &st,
+               const future_state &state)
+{
+	switch(state)
+	{
+		case future_state::INVALID:  assert(0);  return;
+		case future_state::PENDING:  assert(0);  return;
+		case future_state::OBSERVED:
+		case future_state::READY:
+		case future_state::RETRIEVED:
+		default:
+			st.st = state;
+			return;
+	}
+}
+
+/// Internal; check if the current state is something; safe but unnecessary
+/// for public use. Take special note here that the state value is unionized.
+///
+/// A PENDING state returned here does not mean the state contains the
+/// enumerated PENDING value itself, but instead contains a valid pointer
+/// to a promise.
+///
+/// An INVALID state shares a zero/null value in the unionized data.
+bool
+ircd::ctx::is(const shared_state_base &st,
+              const future_state &state_)
+{
+	switch(st.st)
+	{
+		case future_state::READY:
+		case future_state::OBSERVED:
+		case future_state::RETRIEVED:
+			return state_ == st.st;
+
+		default: switch(state_)
+		{
+			case future_state::INVALID:
+				return st.p == nullptr;
+
+			case future_state::PENDING:
+				return uintptr_t(st.p) >= 0x1000;
+
+			default:
+				return false;
+		}
+	}
+}
+
+/// Internal; get the current state of the shared_state; safe but unnecessary
+/// for public use.
+///
+/// NOTE: This operates over a union of a pointer and an enum class. The
+/// way we determine whether the data is a pointer or an enum value is
+/// with a test of the value being >= the system's page size. This assumes
+/// the system does not use the first page of a process's address space
+/// to fault on null pointer dereference. This assumption may not hold on
+/// all systems or in all environments.
+///
+/// Alternatively, we can switch this to checking whether the value is simply
+/// above the few low-numbered enum values.
+ircd::ctx::future_state
+ircd::ctx::state(const shared_state_base &st)
+{
+	return uintptr_t(st.p) >= ircd::info::page_size?
+		future_state::PENDING:
+		st.st;
+}
+
+//
+// shared_state_base::shared_state_base
+//
+
+ircd::ctx::shared_state_base::shared_state_base(promise_base &p)
+:p{&p}
 {
 }
 
