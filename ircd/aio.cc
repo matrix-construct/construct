@@ -77,12 +77,20 @@ ircd::fs::aio::request::read::read(const int &fd,
                                    const mutable_buffer &buf,
                                    const read_opts &opts)
 :request{fd}
+,iov
+{
+	// struct iovec
+	{
+		buffer::data(buf),
+		buffer::size(buf)
+	},
+}
 {
 	aio_reqprio = opts.priority;
-	aio_lio_opcode = IOCB_CMD_PREAD;
+	aio_lio_opcode = IOCB_CMD_PREADV;
 
-	aio_buf = uintptr_t(buffer::data(buf));
-	aio_nbytes = buffer::size(buf);
+	aio_buf = uintptr_t(iov.data());
+	aio_nbytes = iov.size();
 	aio_offset = opts.offset;
 }
 
@@ -117,12 +125,20 @@ ircd::fs::aio::request::write::write(const int &fd,
                                      const const_buffer &buf,
                                      const write_opts &opts)
 :request{fd}
+,iov
+{{
+	// struct iovec
+	{
+		const_cast<char *>(buffer::data(buf)),
+		buffer::size(buf)
+	},
+}}
 {
 	aio_reqprio = opts.priority;
-	aio_lio_opcode = IOCB_CMD_PWRITE;
+	aio_lio_opcode = IOCB_CMD_PWRITEV;
 
-	aio_buf = uintptr_t(buffer::data(buf));
-	aio_nbytes = buffer::size(buf);
+	aio_buf = uintptr_t(iov.data());
+	aio_nbytes = iov.size();
 	aio_offset = opts.offset;
 }
 

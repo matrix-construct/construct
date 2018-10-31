@@ -85,6 +85,8 @@ struct ircd::fs::aio::request
 struct ircd::fs::aio::request::read
 :request
 {
+	std::array<struct iovec, 1> iov;
+
 	read(const int &fd, const mutable_buffer &, const read_opts &);
 };
 
@@ -92,6 +94,8 @@ struct ircd::fs::aio::request::read
 struct ircd::fs::aio::request::write
 :request
 {
+	std::array<struct iovec, 1> iov;
+
 	write(const int &fd, const const_buffer &, const write_opts &);
 };
 
