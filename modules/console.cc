@@ -1353,6 +1353,42 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__errors(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname",
+	}};
+
+	const auto dbname
+	{
+		param.at("dbname")
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	const auto &errors
+	{
+		db::errors(database)
+	};
+
+	size_t i(0);
+	for(const auto &error : errors)
+		out << std::setw(2) << std::left << (i++) << ':' << error << std::endl;
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__ticker(opt &out, const string_view &line)
 try
 {
@@ -2928,6 +2964,15 @@ try
 			    << " " << std::setw(24) << pretty(iec(db::bytes(*column)))
 			    << " :" << explain << std::endl;
 		}
+	}
+
+	if(!c && !errors(d).empty())
+	{
+		size_t i(0);
+		out << std::endl;
+		out << "ERRORS (" << errors(d).size() << "): " << std::endl;
+		for(const auto &error : errors(d))
+			out << std::setw(2) << (i++) << ':' << error << std::endl;
 	}
 
 	return true;

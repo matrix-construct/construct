@@ -19,6 +19,7 @@ namespace ircd::db
 	const std::string &name(const database &);
 	const std::string &uuid(const database &);
 	uint64_t sequence(const database &); // Latest sequence number
+	const std::vector<std::string> &errors(const database &);
 	std::vector<std::string> files(const database &, uint64_t &msz);
 	std::vector<std::string> files(const database &);
 	size_t file_count(const database &);
@@ -100,6 +101,7 @@ struct ircd::db::database
 	std::list<std::shared_ptr<column>> columns; // active only
 	std::string uuid;
 	std::unique_ptr<rocksdb::Checkpoint> checkpointer;
+	std::vector<std::string> errors;
 
 	operator std::shared_ptr<database>()         { return shared_from_this();                      }
 	operator const rocksdb::DB &() const         { return *d;                                      }

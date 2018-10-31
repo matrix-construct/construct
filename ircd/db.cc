@@ -379,10 +379,16 @@ ircd::db::resume(database &d)
 	assert(d.d);
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const auto errors
+	{
+		db::errors(d)
+	};
+
 	log::debug
 	{
-		log, "'%s': Attempting to resume @%lu",
+		log, "'%s': Attempting to resume from %zu errors @%lu",
 		name(d),
+		errors.size(),
 		sequence(d)
 	};
 
@@ -391,11 +397,14 @@ ircd::db::resume(database &d)
 		d.d->Resume()
 	};
 
+	d.errors.clear();
+
 	log::info
 	{
-		log, "'%s': Resumed normal operation at sequence number %lu.",
+		log, "'%s': Resumed normal operation at sequence number %lu; cleared %zu errors",
 		name(d),
-		sequence(d)
+		sequence(d),
+		errors.size()
 	};
 }
 
@@ -535,6 +544,12 @@ ircd::db::files(const database &cd,
 	};
 
 	return ret;
+}
+
+const std::vector<std::string> &
+ircd::db::errors(const database &d)
+{
+	return d.errors;
 }
 
 uint64_t
@@ -2371,15 +2386,17 @@ ircd::db::database::events::OnBackgroundError(rocksdb::BackgroundErrorReason rea
                                               rocksdb::Status *const status)
 noexcept
 {
+	assert(d);
 	assert(status);
-	log::error
+
+	thread_local char buf[1024];
+	const string_view str{fmt::sprintf
 	{
-		rog, "'%s' background %s error in %s :%s",
-		d->name,
+		buf, "%s error in %s :%s",
 		reflect(status->severity()),
 		reflect(reason),
 		status->ToString()
-	};
+	}};
 
 	// This is a legitimate when we want to use it. If the error is not
 	// suppressed the DB will enter read-only mode and will require a
@@ -2389,8 +2406,25 @@ noexcept
 		false
 	};
 
+	const log::facility fac
+	{
+		ignore?
+			log::facility::DERROR:
+			log::facility::ERROR
+	};
+
+	log::logf
+	{
+		log, fac, "'%s': %s", d->name, str
+	};
+
 	if(ignore)
+	{
 		*status = rocksdb::Status::OK();
+		return;
+	}
+
+	d->errors.emplace_back(str);
 }
 
 void
