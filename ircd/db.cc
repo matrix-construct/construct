@@ -2348,8 +2348,9 @@ noexcept
 	assert(status);
 	log::error
 	{
-		rog, "'%s' background error in %s :%s",
+		rog, "'%s' background %s error in %s :%s",
 		d->name,
+		reflect(status->severity()),
 		reflect(reason),
 		status->ToString()
 	};
@@ -9893,6 +9894,24 @@ ircd::db::reflect(const rocksdb::Env::IOPriority &p)
 	}
 
 	return "IO_????"_sv;
+}
+
+ircd::string_view
+ircd::db::reflect(const rocksdb::Status::Severity &s)
+{
+	using Severity = rocksdb::Status::Severity;
+
+	switch(s)
+	{
+		case Severity::kNoError:             return "NONE";
+		case Severity::kSoftError:           return "SOFT";
+		case Severity::kHardError:           return "HARD";
+		case Severity::kFatalError:          return "FATAL";
+		case Severity::kUnrecoverableError:  return "UNRECOVERABLE";
+		case Severity::kMaxSeverity:         break;
+	}
+
+	return "?????";
 }
 
 ircd::string_view

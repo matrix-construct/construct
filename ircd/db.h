@@ -53,6 +53,7 @@ namespace ircd::db
 	extern ctx::mutex write_mutex;
 
 	// reflections
+	string_view reflect(const rocksdb::Status::Severity &);
 	string_view reflect(const rocksdb::Env::Priority &p);
 	string_view reflect(const rocksdb::Env::IOPriority &p);
 	string_view reflect(const rocksdb::WriteStallCondition &);
