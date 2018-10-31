@@ -1321,6 +1321,14 @@ const noexcept
 		user.successor(*key);
 }
 
+bool
+ircd::db::database::comparator::IsSameLengthImmediateSuccessor(const Slice &s,
+                                                               const Slice &t)
+const noexcept
+{
+	return rocksdb::Comparator::IsSameLengthImmediateSuccessor(s, t);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // database::prefix_transform
