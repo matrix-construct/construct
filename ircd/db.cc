@@ -2345,31 +2345,12 @@ ircd::db::database::events::OnBackgroundError(rocksdb::BackgroundErrorReason rea
                                               rocksdb::Status *const status)
 noexcept
 {
-	string_view str{"?????"}; switch(reason)
-	{
-		case rocksdb::BackgroundErrorReason::kFlush:
-			str = "FLUSH";
-			break;
-
-		case rocksdb::BackgroundErrorReason::kCompaction:
-			str = "COMPACTION";
-			break;
-
-		case rocksdb::BackgroundErrorReason::kWriteCallback:
-			str = "WRITE";
-			break;
-
-		case rocksdb::BackgroundErrorReason::kMemTable:
-			str = "MEMTABLE";
-			break;
-	}
-
 	assert(status);
 	log::error
 	{
 		rog, "'%s' background error in %s :%s",
 		d->name,
-		str,
+		reflect(reason),
 		status->ToString()
 	};
 }
@@ -2378,32 +2359,13 @@ void
 ircd::db::database::events::OnStallConditionsChanged(const rocksdb::WriteStallInfo &info)
 noexcept
 {
-	static const auto str{[]
-	(const rocksdb::WriteStallCondition &c)
-	-> string_view
-	{
-		switch(c)
-		{
-			case rocksdb::WriteStallCondition::kNormal:
-				return "NORMAL";
-
-			case rocksdb::WriteStallCondition::kDelayed:
-				return "DELAYED";
-
-			case rocksdb::WriteStallCondition::kStopped:
-				return "STOPPED";
-		}
-
-		return "??????";
-	}};
-
 	log::warning
 	{
 		rog, "'%s' stall condition column[%s] %s -> %s",
 		d->name,
 		info.cf_name,
-		str(info.condition.prev),
-		str(info.condition.cur),
+		reflect(info.condition.prev),
+		reflect(info.condition.cur)
 	};
 }
 
@@ -9873,6 +9835,37 @@ ircd::db::reflect(const op &op)
 	}
 
 	return "?????";
+}
+
+ircd::string_view
+ircd::db::reflect(const rocksdb::WriteStallCondition &c)
+{
+	using rocksdb::WriteStallCondition;
+
+	switch(c)
+	{
+		case WriteStallCondition::kNormal:   return "NORMAL";
+		case WriteStallCondition::kDelayed:  return "DELAYED";
+		case WriteStallCondition::kStopped:  return "STOPPED";
+	}
+
+	return "??????";
+}
+
+ircd::string_view
+ircd::db::reflect(const rocksdb::BackgroundErrorReason &r)
+{
+	using rocksdb::BackgroundErrorReason;
+
+	switch(r)
+	{
+		case BackgroundErrorReason::kFlush:          return "FLUSH";
+		case BackgroundErrorReason::kCompaction:     return "COMPACTION";
+		case BackgroundErrorReason::kWriteCallback:  return "WRITE";
+		case BackgroundErrorReason::kMemTable:       return "MEMTABLE";
+	}
+
+	return "??????";
 }
 
 ircd::string_view

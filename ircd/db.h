@@ -55,6 +55,8 @@ namespace ircd::db
 	// reflections
 	string_view reflect(const rocksdb::Env::Priority &p);
 	string_view reflect(const rocksdb::Env::IOPriority &p);
+	string_view reflect(const rocksdb::WriteStallCondition &);
+	string_view reflect(const rocksdb::BackgroundErrorReason &);
 	string_view reflect(const rocksdb::RandomAccessFile::AccessPattern &p);
 	const std::string &reflect(const rocksdb::Tickers &);
 	const std::string &reflect(const rocksdb::Histograms &);
