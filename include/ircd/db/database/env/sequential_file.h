@@ -26,6 +26,7 @@ struct ircd::db::database::env::sequential_file final
 	database &d;
 	fs::fd::opts opts;
 	fs::fd fd;
+	size_t _buffer_align;
 	off_t offset;
 
 	bool use_direct_io() const noexcept override;

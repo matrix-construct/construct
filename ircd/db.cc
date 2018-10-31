@@ -4252,14 +4252,19 @@ try
 {
 	name, this->opts
 }
+,_buffer_align
+{
+	fs::block_size(fd)
+}
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': opened wfile:%p fd:%d '%s'",
+		log, "'%s': opened wfile:%p fd:%d bs:%zu '%s'",
 		d->name,
 		this,
 		int(fd),
+		_buffer_align,
 		name
 	};
 	#endif
@@ -5003,6 +5008,10 @@ try
 {
 	name, this->opts
 }
+,_buffer_align
+{
+	fs::block_size(fd)
+}
 ,offset
 {
 	0
@@ -5011,10 +5020,11 @@ try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': opened seqfile:%p fd:%d '%s'",
+		log, "'%s': opened seqfile:%p fd:%d bs:%zu '%s'",
 		d->name,
 		this,
 		int(fd),
+		_buffer_align,
 		name
 	};
 	#endif
@@ -5266,21 +5276,10 @@ size_t
 ircd::db::database::env::sequential_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	const auto ret
+	const auto &ret
 	{
-		fs::block_size(fd)
+		_buffer_align
 	};
-
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		"'%s': seqfile:%p fd:%d required alignment (logical block size) %zu",
-		d.name,
-		this,
-		int(fd),
-		ret
-	};
-	#endif
 
 	return ret;
 }
@@ -5322,10 +5321,11 @@ try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': opened rfile:%p fd:%d '%s'",
+		log, "'%s': opened rfile:%p fd:%d bs:%zu '%s'",
 		d->name,
 		this,
 		int(fd),
+		_buffer_align,
 		name
 	};
 	#endif
@@ -5556,18 +5556,12 @@ size_t
 ircd::db::database::env::random_access_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
+	const auto &ret
 	{
-		"'%s': rfile:%p fd:%d required alignment (logical block size) %zu",
-		d.name,
-		this,
-		int(fd),
 		_buffer_align
 	};
-	#endif
 
-	return _buffer_align;
+	return ret;
 }
 
 //
@@ -5603,14 +5597,19 @@ try
 {
 	name, this->opts
 }
+,_buffer_align
+{
+	fs::block_size(fd)
+}
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': opened rwfile:%p fd:%d '%s'",
+		log, "'%s': opened rwfile:%p fd:%d bs:%zu '%s'",
 		d->name,
 		this,
 		int(fd),
+		_buffer_align,
 		name
 	};
 	#endif
@@ -5650,7 +5649,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': opened rwfile:%p fd:%d '%s'",
+		log, "'%s': close rwfile:%p fd:%d '%s'",
 		d.name,
 		this,
 		int(fd)
@@ -5967,21 +5966,10 @@ size_t
 ircd::db::database::env::random_rw_file::GetRequiredBufferAlignment()
 const noexcept
 {
-	const auto ret
+	const auto &ret
 	{
-		fs::block_size(fd)
+		_buffer_align
 	};
-
-	#ifdef RB_DEBUG_DB_ENV
-	log::debug
-	{
-		"'%s': rwfile:%p fd:%d required alignment (logical block size) %zu",
-		d.name,
-		this,
-		int(fd),
-		ret
-	};
-	#endif
 
 	return ret;
 }

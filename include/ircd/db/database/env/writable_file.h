@@ -28,6 +28,7 @@ struct ircd::db::database::env::writable_file final
 	fs::fd::opts opts;
 	fs::fd fd;
 	IOPriority prio {IO_LOW};
+	size_t _buffer_align;
 	size_t preallocation_block_size {0};
 	size_t preallocation_last_block {0};
 
