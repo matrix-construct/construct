@@ -2382,24 +2382,27 @@ noexcept
 	(const rocksdb::WriteStallCondition &c)
 	-> string_view
 	{
-		return
-			c == rocksdb::WriteStallCondition::kNormal?
-				"NORMAL"_sv:
-			c == rocksdb::WriteStallCondition::kDelayed?
-				"DELAYED"_sv:
-			c == rocksdb::WriteStallCondition::kStopped?
-				"STOPPED"_sv:
-				"UNKNOWN"_sv;
+		switch(c)
+		{
+			case rocksdb::WriteStallCondition::kNormal:
+				return "NORMAL";
+
+			case rocksdb::WriteStallCondition::kDelayed:
+				return "DELAYED";
+
+			case rocksdb::WriteStallCondition::kStopped:
+				return "STOPPED";
+		}
+
+		return "??????";
 	}};
 
 	log::warning
 	{
-		rog, "'%s' stall condition column[%s] %d (%s) -> %d (%s)",
+		rog, "'%s' stall condition column[%s] %s -> %s",
 		d->name,
 		info.cf_name,
-		info.condition.prev,
 		str(info.condition.prev),
-		info.condition.cur,
 		str(info.condition.cur),
 	};
 }
