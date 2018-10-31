@@ -8469,9 +8469,13 @@ console_cmd__fed__state_ids(opt &out, const string_view &line)
 		response["pdu_ids"]
 	};
 
+	out << "AUTH:" << std::endl;
 	for(const string_view &event_id : auth_chain)
 		out << unquote(event_id) << std::endl;
 
+	out << std::endl;
+
+	out << "STATE:" << std::endl;
 	for(const string_view &event_id : pdus)
 		out << unquote(event_id) << std::endl;
 
