@@ -29,8 +29,5 @@ struct ircd::db::database::comparator final
 	bool Equal(const Slice &a, const Slice &b) const noexcept override;
 	const char *Name() const noexcept override;
 
-	comparator(database *const &d, db::comparator user)
-	:d{d}
-	,user{std::move(user)}
-	{}
+	comparator(database *const &d, db::comparator user);
 };

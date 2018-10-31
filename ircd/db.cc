@@ -1259,6 +1259,16 @@ catch(const std::out_of_range &e)
 // database::comparator
 //
 
+ircd::db::database::comparator::comparator(database *const &d,
+                                           db::comparator user)
+:d{d}
+,user
+{
+	std::move(user)
+}
+{
+}
+
 const char *
 ircd::db::database::comparator::Name()
 const noexcept
