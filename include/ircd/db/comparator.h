@@ -35,6 +35,7 @@ struct ircd::db::comparator
 	std::function<bool (const string_view &, const string_view &)> equal;
 	std::function<void (std::string &, const string_view &)> separator;
 	std::function<void (std::string &)> successor;
+	bool hashable {true};
 };
 
 struct ircd::db::cmp_string_view

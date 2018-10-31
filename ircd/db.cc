@@ -1329,6 +1329,15 @@ const noexcept
 	return rocksdb::Comparator::IsSameLengthImmediateSuccessor(s, t);
 }
 
+bool
+ircd::db::database::comparator::CanKeysWithDifferentByteContentsBeEqual()
+const noexcept
+{
+	// When keys with different byte contents can be equal the keys are
+	// not hashable.
+	return !user.hashable;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // database::prefix_transform

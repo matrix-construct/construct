@@ -23,6 +23,7 @@ struct ircd::db::database::comparator final
 	database *d;
 	db::comparator user;
 
+	bool CanKeysWithDifferentByteContentsBeEqual() const noexcept; //TODO: override
 	bool IsSameLengthImmediateSuccessor(const Slice &s, const Slice &t) const noexcept override;
 	void FindShortestSeparator(std::string *start, const Slice &limit) const noexcept override;
 	void FindShortSuccessor(std::string *key) const noexcept override;
