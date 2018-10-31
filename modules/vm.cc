@@ -701,18 +701,35 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		return fault::ACCEPT;
 	}
 
-	int64_t top;
-	id::event::buf head;
-	std::tie(head, top, std::ignore) = m::top(std::nothrow, room_id);
-	if(top < 0 && (opts.head_must_exist || opts.history))
+	const bool require_head
+	{
+		opts.head_must_exist || opts.history
+	};
+
+	const id::event::buf head
+	{
+		require_head?
+			m::head(std::nothrow, room_id):
+			id::event::buf{}
+	};
+
+	if(unlikely(require_head && !head))
 		throw error
 		{
-			fault::STATE, "Found nothing for room %s",
+			fault::STATE, "Required head for room %s not found.",
 			string_view{room_id}
 		};
 
-	m::room room{room_id, head};
-	m::room::state state{room};
+	const m::room room
+	{
+		room_id, head
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
 	wopts.root_in = state.root_id;
 	dbs::write(txn, event, wopts);
 	write_commit(eval);
