@@ -1324,6 +1324,35 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__resume(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname",
+	}};
+
+	const auto dbname
+	{
+		param.at("dbname")
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	resume(database);
+	out << "resumed database " << dbname << std::endl;
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__ticker(opt &out, const string_view &line)
 try
 {

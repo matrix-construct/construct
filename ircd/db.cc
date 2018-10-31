@@ -373,6 +373,32 @@ ircd::db::check(database &d)
 	};
 }
 
+void
+ircd::db::resume(database &d)
+{
+	assert(d.d);
+	const ctx::uninterruptible::nothrow ui;
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	log::debug
+	{
+		log, "'%s': Attempting to resume @%lu",
+		name(d),
+		sequence(d)
+	};
+
+	throw_on_error
+	{
+		d.d->Resume()
+	};
+
+	log::info
+	{
+		log, "'%s': Resumed normal operation at sequence number %lu.",
+		name(d),
+		sequence(d)
+	};
+}
+
 /// Writes a snapshot of this database to the directory specified. The
 /// snapshot consists of hardlinks to the bulk data files of this db, but
 /// copies the other stuff that usually gets corrupted. The directory can
@@ -2354,6 +2380,17 @@ noexcept
 		reflect(reason),
 		status->ToString()
 	};
+
+	// This is a legitimate when we want to use it. If the error is not
+	// suppressed the DB will enter read-only mode and will require a
+	// call to db::resume() to clear the error (i.e by admin at console).
+	const bool ignore
+	{
+		false
+	};
+
+	if(ignore)
+		*status = rocksdb::Status::OK();
 }
 
 void
