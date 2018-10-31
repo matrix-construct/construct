@@ -646,20 +646,13 @@ ircd::m::vm::_eval_pdu(eval &eval,
 				"Signature verification failed"
 			};
 
-	const size_t reserve_bytes
-	{
-		opts.reserve_bytes == size_t(-1)?
-			json::serialized(event):
-			opts.reserve_bytes
-	};
+	// Fetch dependencies
+	if(opts.fetch)
+		fetch_hook(event, eval);
 
 	// Obtain sequence number here
 	if(opts.write)
 		eval.sequence = ++vm::current_sequence;
-
-	// Fetch dependencies
-	if(opts.fetch)
-		fetch_hook(event, eval);
 
 	// Evaluation by module hooks
 	if(opts.eval)
@@ -667,6 +660,13 @@ ircd::m::vm::_eval_pdu(eval &eval,
 
 	if(!opts.write)
 		return fault::ACCEPT;
+
+	const size_t reserve_bytes
+	{
+		opts.reserve_bytes == size_t(-1)?
+			json::serialized(event):
+			opts.reserve_bytes
+	};
 
 	db::txn txn
 	{
