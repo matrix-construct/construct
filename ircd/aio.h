@@ -94,7 +94,7 @@ struct ircd::fs::aio::request::read
 struct ircd::fs::aio::request::write
 :request
 {
-	std::array<struct iovec, 1> iov;
+	std::array<struct iovec, 2> iov;
 
 	write(const int &fd, const const_buffer &, const write_opts &);
 };

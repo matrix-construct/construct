@@ -44,6 +44,9 @@ struct ircd::fs::write_opts
 	/// Offset in the file to start the write from.
 	off_t offset {0};
 
+	/// Alignment requirement.
+	size_t alignment {0};
+
 	/// Request priority (this option may be improved, avoid for now)
 	int16_t priority {0};
 
