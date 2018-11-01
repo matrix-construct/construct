@@ -29,10 +29,9 @@ struct ircd::fs::fd
 	int fdno{-1};
 
   public:
-	operator const int &() const
-	{
-		return fdno;
-	}
+	operator const int &() const;
+	operator bool() const;
+	bool operator!() const;
 
 	fd(const string_view &path, const opts &);
 	fd(const string_view &path);
@@ -69,3 +68,24 @@ struct ircd::fs::fd::opts
 	opts(const std::ios::openmode &);
 	opts() = default;
 };
+
+inline bool
+ircd::fs::fd::operator!()
+const
+{
+	return !bool(*this);
+}
+
+inline ircd::fs::fd::operator
+bool()
+const
+{
+	return int(*this) >= 0;
+}
+
+inline ircd::fs::fd::operator
+const int &()
+const
+{
+	return fdno;
+}
