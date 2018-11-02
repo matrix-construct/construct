@@ -10,7 +10,6 @@
 
 #include <RB_INC_SYS_RESOURCE_H
 #include <RB_INC_UNISTD_H
-#include <boost/version.hpp>
 
 void
 ircd::info::init()
@@ -38,12 +37,11 @@ ircd::info::dump()
 	// assumed for this execution.
 	log::info
 	{
-		"%s. boost %u.%u.%u. RocksDB %s. SpiderMonkey %s. sodium %s. %s. libmagic %d.",
+		"%s. glibc %s. boost %s. RocksDB %s. SpiderMonkey %s. sodium %s. %s. libmagic %d.",
 		PACKAGE_STRING,
-		boost_version[0],
-		boost_version[1],
-		boost_version[2],
-		db::version,
+		glibc_version_str,
+		boost_version_str,
+		db::version_str,
 		js::version(js::ver::IMPLEMENTATION),
 		nacl::version(),
 		openssl::version(),
@@ -179,13 +177,25 @@ ircd::info::startup
 // System / platform information
 //
 
-const int
-glibc[3]
+decltype(ircd::info::glibc_version)
+ircd::info::glibc_version
 {
 	__GNU_LIBRARY__,
 	__GLIBC__,
 	__GLIBC_MINOR__,
 };
+
+char ircd_info_glibc_version_str_buf[32];
+decltype(ircd::info::glibc_version_str)
+ircd::info::glibc_version_str
+(
+	ircd_info_glibc_version_str_buf,
+    ::snprintf(ircd_info_glibc_version_str_buf, sizeof(ircd_info_glibc_version_str_buf),
+               "%d.%d.%d",
+               glibc_version[0],
+               glibc_version[1],
+               glibc_version[2])
+);
 
 #ifdef HAVE_SYS_UTSNAME_H
 decltype(ircd::info::utsname)
@@ -278,15 +288,6 @@ ircd::info::constructive_interference
 //
 // Third party dependency information
 //
-
-/// Boost version indicator for compiled header files.
-decltype(ircd::info::boost_version)
-ircd::info::boost_version
-{
-	BOOST_VERSION / 100000,
-	BOOST_VERSION / 100 % 1000,
-	BOOST_VERSION % 100,
-};
 
 /// Provides tcmalloc version information if tcmalloc is linked in to IRCd.
 struct ircd::info::tc_version

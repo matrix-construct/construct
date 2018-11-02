@@ -130,22 +130,27 @@ namespace ircd::db
 	static void init_test_direct_io();
 	static void init_compressions();
 	static void init_directory();
-	static void init_version();
 }
 
-static char ircd_db_version[64];
-const char *const ircd::db::version(ircd_db_version);
-
-// Renders a version string from the defines included here.
-__attribute__((constructor))
-void
-ircd::db::init_version()
+decltype(ircd::db::version)
+ircd::db::version
 {
-	::snprintf(ircd_db_version, sizeof(ircd_db_version), "%d.%d.%d",
-	           ROCKSDB_MAJOR,
-	           ROCKSDB_MINOR,
-	           ROCKSDB_PATCH);
-}
+	ROCKSDB_MAJOR,
+	ROCKSDB_MINOR,
+	ROCKSDB_PATCH
+};
+
+char ircd_db_version_str_buf[64];
+decltype(ircd::db::version_str)
+ircd::db::version_str
+(
+	ircd_db_version_str_buf,
+	::snprintf(ircd_db_version_str_buf, sizeof(ircd_db_version_str_buf),
+	           "%u.%u.%u",
+	           version[0],
+	           version[1],
+	           version[2])
+);
 
 //
 // init::init

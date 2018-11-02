@@ -85,7 +85,8 @@ enum class ircd::db::pos
 //
 namespace ircd::db
 {
-	extern const char *const version;
+	extern const uint version[3];
+	extern const string_view version_str;
 
 	// Utils for "name:checkpoint" string amalgam
 	std::string namepoint(const string_view &name, const uint64_t &checkpoint);

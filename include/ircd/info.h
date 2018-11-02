@@ -49,13 +49,11 @@ namespace ircd::info
 	extern const size_t rlimit_rss;
 	extern const size_t rlimit_nofile;
 
-	extern const int glibc[3];
+	extern const int glibc_version[3];
+	extern const string_view glibc_version_str;
 	#ifdef HAVE_SYS_UTSNAME_H
 	extern const ::utsname utsname;
 	#endif
-
-	// Third party information
-	extern const uint boost_version[3];
 
 	// Extended information
 	extern const std::vector<info::line> myinfo;

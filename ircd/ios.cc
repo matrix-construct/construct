@@ -8,7 +8,29 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <boost/version.hpp>
 #include <ircd/asio.h>
+
+/// Boost version indicator for compiled header files.
+decltype(ircd::boost_version)
+ircd::boost_version
+{
+	BOOST_VERSION / 100000,
+	BOOST_VERSION / 100 % 1000,
+	BOOST_VERSION % 100,
+};
+
+char ircd_boost_version_str_buf[32];
+decltype(ircd::boost_version_str)
+ircd::boost_version_str
+(
+	ircd_boost_version_str_buf,
+	::snprintf(ircd_boost_version_str_buf, sizeof(ircd_boost_version_str_buf),
+	           "%u.%u.%u",
+	           boost_version[0],
+	           boost_version[1],
+	           boost_version[2])
+);
 
 /// Record of the ID of the thread static initialization took place on.
 decltype(ircd::ios::static_thread_id)
