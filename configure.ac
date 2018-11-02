@@ -657,7 +657,8 @@ AC_CHECK_FUNCS([        \
 	strlcat             \
 	strnlen             \
 	snprintf            \
-	vsnprintf
+	vsnprintf           \
+	posix_fadvise       \
 ])
 
 AC_SEARCH_LIBS(dlinfo, dl, AC_DEFINE(HAVE_DLINFO, 1, [Define if you have dlinfo]))

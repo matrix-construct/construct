@@ -4677,7 +4677,13 @@ noexcept try
 	};
 	#endif
 
-	//syscall(::posix_fadvise, fd, offset, length, FADV_DONTNEED);
+	if(opts.direct)
+		return Status::OK();
+
+	#if defined(HAVE_POSIX_FADVISE) && defined(FADV_DONTNEED)
+	syscall(::posix_fadvise, fd, offset, length, FADV_DONTNEED);
+	#endif
+
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -5109,6 +5115,7 @@ noexcept
 	#endif
 
 	this->hint = hint;
+	//TODO: fcntl F_SET_FILE_RW_HINT
 }
 
 rocksdb::Env::WriteLifeTimeHint
@@ -5423,6 +5430,13 @@ noexcept try
 	};
 	#endif
 
+	if(opts.direct)
+		return Status::OK();
+
+	#if defined(HAVE_POSIX_FADVISE) && defined(FADV_DONTNEED)
+	syscall(::posix_fadvise, fd, offset, length, FADV_DONTNEED);
+	#endif
+
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -5671,6 +5685,13 @@ noexcept
 		offset,
 		length
 	};
+	#endif
+
+	if(opts.direct)
+		return Status::OK();
+
+	#if defined(HAVE_POSIX_FADVISE) && defined(FADV_DONTNEED)
+	syscall(::posix_fadvise, fd, offset, length, FADV_DONTNEED);
 	#endif
 
 	return Status::OK();
