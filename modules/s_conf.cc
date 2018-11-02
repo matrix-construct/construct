@@ -10,6 +10,7 @@
 
 using namespace ircd;
 
+extern "C" void default_conf(const string_view &prefix);
 extern "C" void rehash_conf(const string_view &prefix, const bool &existing);
 extern "C" void reload_conf();
 extern "C" void refresh_conf();
@@ -287,6 +288,25 @@ rehash_conf(const string_view &prefix,
 				continue;
 
 		create_conf_item(key, *item);
+	}
+}
+
+void
+default_conf(const string_view &prefix)
+{
+	for(const auto &p : conf::items)
+	{
+		const auto &key{p.first};
+		if(prefix && !startswith(key, prefix))
+			continue;
+
+		const auto &item{p.second}; assert(item);
+		const auto value
+		{
+			unquote(item->feature["default"])
+		};
+
+		conf::set(key, value);
 	}
 }
 

@@ -833,6 +833,42 @@ console_cmd__conf__rehash(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__conf__default(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"prefix"
+	}};
+
+	using prototype = void (const string_view &);
+	static mods::import<prototype> default_conf
+	{
+		"s_conf", "default_conf"
+	};
+
+	string_view prefix
+	{
+		param.at("prefix", "*"_sv)
+	};
+
+	if(prefix == "*")
+		prefix = string_view{};
+
+	default_conf(prefix);
+
+	out << "Set runtime conf items"
+	    << (prefix? " with the prefix "_sv : string_view{})
+	    << (prefix? prefix : string_view{})
+	    << " to their default value."
+	    << std::endl
+	    << "Note: These values must be saved with the rehash command"
+	    << " to survive a restart/reload."
+	    << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__conf__reload(opt &out, const string_view &line)
 {
 	using prototype = void ();
