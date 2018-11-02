@@ -799,22 +799,33 @@ console_cmd__conf__rehash(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"force"
+		"prefix", "force"
 	}};
 
-	using prototype = void (const bool &);
+	using prototype = void (const string_view &, const bool &);
 	static mods::import<prototype> rehash_conf
 	{
 		"s_conf", "rehash_conf"
 	};
+
+	string_view prefix
+	{
+		param.at("prefix", "*"_sv)
+	};
+
+	if(prefix == "*")
+		prefix = string_view{};
 
 	const bool force
 	{
 		param["force"] == "force"
 	};
 
-	rehash_conf(force);
+	rehash_conf(prefix, force);
+
 	out << "Saved runtime conf items"
+	    << (prefix? " with the prefix "_sv : string_view{})
+	    << (prefix? prefix : string_view{})
 	    << " from the current state into !conf:" << my_host()
 	    << std::endl;
 

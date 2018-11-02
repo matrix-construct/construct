@@ -10,7 +10,7 @@
 
 using namespace ircd;
 
-extern "C" void rehash_conf(const bool &existing = false);
+extern "C" void rehash_conf(const string_view &prefix, const bool &existing);
 extern "C" void reload_conf();
 extern "C" void refresh_conf();
 static void init_conf_item(conf::item<> &);
@@ -51,7 +51,7 @@ on_run()
 	// Suppress errors for this scope.
 	const unwind uw{[] { item_error_log = true; }};
 	item_error_log = false;
-	rehash_conf(false);
+	rehash_conf({}, false);
 }
 
 /// Waits for the daemon to transition to the RUN state so we can gather all
@@ -267,7 +267,8 @@ create_conf_room_hook
 };
 
 void
-rehash_conf(const bool &existing)
+rehash_conf(const string_view &prefix,
+            const bool &existing)
 {
 	const m::room::state state
 	{
@@ -277,6 +278,9 @@ rehash_conf(const bool &existing)
 	for(const auto &p : conf::items)
 	{
 		const auto &key{p.first};
+		if(prefix && !startswith(key, prefix))
+			continue;
+
 		const auto &item{p.second}; assert(item);
 		if(!existing)
 			if(state.has("ircd.conf.item", key))
