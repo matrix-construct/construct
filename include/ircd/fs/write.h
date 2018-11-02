@@ -41,10 +41,17 @@ struct ircd::fs::write_opts
 	write_opts() = default;
 	write_opts(const off_t &);
 
-	/// Offset in the file to start the write from.
+	/// Offset in the file to start the write from. For append() if this zero
+	/// then it will be internally set to the end of the file; otherwise if
+	/// this is set it will write to that offset, even for append(), unless
+	/// the host system later ignores the offset due to the file's openmode.
 	off_t offset {0};
 
-	/// Alignment requirement.
+	/// Alignment requirement value. This value may take on several meanings
+	/// and should remain zero for most users. Most users should conduct their
+	/// own alignment of userspace buffer addresses and sizes and file offsets.
+	/// Currently for append() this will zero-extend a write to the alignment
+	/// leading to a file which may be larger than the user expects with gaps.
 	size_t alignment {0};
 
 	/// Request priority. Higher value request will take priority over lower
