@@ -96,6 +96,8 @@ namespace ircd::m::dbs::desc
 	// Direct columns
 	//
 
+	extern conf::item<size_t> events___event__meta_block__size;
+
 	extern conf::item<size_t> events__auth_events__block__size;
 	extern conf::item<size_t> events__auth_events__cache__size;
 	extern conf::item<size_t> events__auth_events__cache_comp__size;

@@ -1574,6 +1574,13 @@ ircd::m::dbs::desc::events__state_node
 // Direct column descriptors
 //
 
+decltype(ircd::m::dbs::desc::events___event__meta_block__size)
+ircd::m::dbs::desc::events___event__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.__event.meta_block.size" },
+	{ "default",  8192L                                       },
+};
+
 //
 // event_id
 //
@@ -1661,6 +1668,9 @@ ircd::m::dbs::desc::events_event_id
 
 	// block size
 	size_t(events__event_id__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -1750,6 +1760,9 @@ ircd::m::dbs::desc::events_type
 
 	// block size
 	size_t(events__type__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -1839,6 +1852,9 @@ ircd::m::dbs::desc::events_content
 
 	// block size
 	size_t(events__content__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -1922,6 +1938,9 @@ ircd::m::dbs::desc::events_redacts
 
 	// block size
 	size_t(events__redacts__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2010,6 +2029,9 @@ ircd::m::dbs::desc::events_room_id
 
 	// block size
 	size_t(events__room_id__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2098,6 +2120,9 @@ ircd::m::dbs::desc::events_sender
 
 	// block size
 	size_t(events__sender__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2188,6 +2213,9 @@ ircd::m::dbs::desc::events_state_key
 
 	// block size
 	size_t(events__state_key__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2273,6 +2301,9 @@ ircd::m::dbs::desc::events_origin
 
 	// block size
 	size_t(events__origin__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2369,6 +2400,9 @@ ircd::m::dbs::desc::events_origin_server_ts
 
 	// block size
 	size_t(events__origin_server_ts__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2452,6 +2486,9 @@ ircd::m::dbs::desc::events_signatures
 
 	// block size
 	size_t(events__signatures__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2534,6 +2571,9 @@ ircd::m::dbs::desc::events_auth_events
 
 	// block size
 	size_t(events__auth_events__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2623,6 +2663,9 @@ ircd::m::dbs::desc::events_depth
 
 	// block size
 	size_t(events__depth__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2705,6 +2748,9 @@ ircd::m::dbs::desc::events_hashes
 
 	// block size
 	size_t(events__hashes__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2787,6 +2833,9 @@ ircd::m::dbs::desc::events_membership
 
 	// block size
 	size_t(events__membership__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2869,6 +2918,9 @@ ircd::m::dbs::desc::events_prev_events
 
 	// block size
 	size_t(events__prev_events__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 //
@@ -2951,6 +3003,9 @@ ircd::m::dbs::desc::events_prev_state
 
 	// block size
 	size_t(events__prev_state__block__size),
+
+	// meta_block size
+	size_t(events___event__meta_block__size),
 };
 
 namespace ircd::m::dbs::desc
