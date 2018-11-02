@@ -652,7 +652,11 @@ ircd::fs::path_str(const string_view &s)
 //
 
 ircd::fs::fd::opts::opts(const std::ios::openmode &mode)
-:flags
+:mode
+{
+	mode
+}
+,flags
 {
 	posix_flags(mode)
 }

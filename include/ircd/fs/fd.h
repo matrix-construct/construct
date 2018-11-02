@@ -45,6 +45,9 @@ struct ircd::fs::fd
 
 struct ircd::fs::fd::opts
 {
+	/// std openmode passed from ctor.
+	std::ios::openmode mode {std::ios::openmode(0)};
+
 	/// open(2) flags. Usually generated from ios::open_mode ctor.
 	ulong flags {0};
 
