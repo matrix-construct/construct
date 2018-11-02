@@ -260,6 +260,10 @@ noexcept
 		"IRCd Terminate without exception"
 	};
 
+	fputs("\nIRCd Terminate without exception\n", stderr);
+
+	::fflush(stdout);
+	::fflush(stderr);
 	std::terminate();
 }
 
@@ -272,5 +276,9 @@ noexcept
 		"IRCd Terminated: %s", e.what()
 	};
 
-	throw e;
+	fprintf(stderr, "\nIRCd Terminated: %s\n", e.what());
+
+	::fflush(stdout);
+	::fflush(stderr);
+	std::terminate();
 }
