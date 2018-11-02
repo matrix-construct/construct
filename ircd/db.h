@@ -56,6 +56,7 @@ namespace ircd::db
 	string_view reflect(const rocksdb::Status::Severity &);
 	string_view reflect(const rocksdb::Env::Priority &p);
 	string_view reflect(const rocksdb::Env::IOPriority &p);
+	string_view reflect(const rocksdb::Env::WriteLifeTimeHint &);
 	string_view reflect(const rocksdb::WriteStallCondition &);
 	string_view reflect(const rocksdb::BackgroundErrorReason &);
 	string_view reflect(const rocksdb::RandomAccessFile::AccessPattern &p);

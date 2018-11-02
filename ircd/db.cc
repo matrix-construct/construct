@@ -9982,6 +9982,24 @@ ircd::db::reflect(const rocksdb::Env::IOPriority &p)
 }
 
 ircd::string_view
+ircd::db::reflect(const rocksdb::Env::WriteLifeTimeHint &h)
+{
+	using WriteLifeTimeHint = rocksdb::Env::WriteLifeTimeHint;
+
+	switch(h)
+	{
+		case WriteLifeTimeHint::WLTH_NOT_SET:   return "NOT_SET";
+		case WriteLifeTimeHint::WLTH_NONE:      return "NONE";
+		case WriteLifeTimeHint::WLTH_SHORT:     return "SHORT";
+		case WriteLifeTimeHint::WLTH_MEDIUM:    return "MEDIUM";
+		case WriteLifeTimeHint::WLTH_LONG:      return "LONG";
+		case WriteLifeTimeHint::WLTH_EXTREME:   return "EXTREME";
+	}
+
+	return "WLTH_????"_sv;
+}
+
+ircd::string_view
 ircd::db::reflect(const rocksdb::Status::Severity &s)
 {
 	using Severity = rocksdb::Status::Severity;
