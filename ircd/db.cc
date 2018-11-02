@@ -2429,6 +2429,15 @@ noexcept
 		return;
 	}
 
+	// Downgrade select fatal errors to hard errors. If this downgrade
+	// does not occur then it can never be cleared by a db::resume() and
+	// the daemon must be restarted.
+
+	if(reason == rocksdb::BackgroundErrorReason::kCompaction)
+		if(status->severity() == rocksdb::Status::kFatalError)
+			*status = rocksdb::Status(*status, rocksdb::Status::kHardError);
+
+	// Save the error string to the database instance for later examination.
 	d->errors.emplace_back(str);
 }
 
