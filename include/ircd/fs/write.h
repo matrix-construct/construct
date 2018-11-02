@@ -47,13 +47,6 @@ struct ircd::fs::write_opts
 	/// the host system later ignores the offset due to the file's openmode.
 	off_t offset {0};
 
-	/// Alignment requirement value. This value may take on several meanings
-	/// and should remain zero for most users. Most users should conduct their
-	/// own alignment of userspace buffer addresses and sizes and file offsets.
-	/// Currently for append() this will zero-extend a write to the alignment
-	/// leading to a file which may be larger than the user expects with gaps.
-	size_t alignment {0};
-
 	/// Request priority. Higher value request will take priority over lower
 	/// value. Lowest value is zero. Negative value will receive a contextual
 	/// value internally (generally just zero). Default is -1.

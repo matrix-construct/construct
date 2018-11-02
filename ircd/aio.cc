@@ -15,8 +15,6 @@
 
 namespace ircd::fs
 {
-	extern char _zero_pads_[4096];
-	static size_t _zero_pads_required(const size_t &buf_size, const size_t &alignment);
 	static int reqprio(int);
 }
 
@@ -139,10 +137,6 @@ ircd::fs::aio::request::write::write(const int &fd,
 		const_cast<char *>(buffer::data(buf)),
 		buffer::size(buf)
 	},
-	{
-		_zero_pads_,
-		_zero_pads_required(buffer::size(buf), opts.alignment)
-	},
 }}
 {
 	aio_reqprio = reqprio(opts.priority);
@@ -191,32 +185,6 @@ ircd::fs::prefetch__aio(const fd &fd,
 //
 // internal util
 //
-
-decltype(ircd::fs::_zero_pads_)
-__attribute__((aligned(512)))
-ircd::fs::_zero_pads_
-{
-	0
-};
-
-size_t
-ircd::fs::_zero_pads_required(const size_t &buf_size,
-                              const size_t &alignment)
-{
-	if(!alignment || buf_size == alignment)
-		return 0;
-
-	if(unlikely(alignment > sizeof(_zero_pads_)))
-		throw error
-		{
-			make_error_code(std::errc::invalid_argument),
-			"Alignment %zu exceeds maximum of %zu",
-			alignment,
-			sizeof(_zero_pads_)
-		};
-
-	return alignment - (buf_size % alignment);
-}
 
 int
 ircd::fs::reqprio(int input)
