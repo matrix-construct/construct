@@ -11,6 +11,11 @@
 #pragma once
 #define HAVE_IRCD_BUFFER_UNIQUE_BUFFER_H
 
+namespace ircd::buffer
+{
+	std::unique_ptr<char, decltype(&std::free)> aligned_alloc(const size_t &align, const size_t &size);
+}
+
 /// Like unique_ptr, this template holds ownership of an allocated buffer
 ///
 template<class buffer,
@@ -116,6 +121,19 @@ template<class buffer,
 char *
 ircd::buffer::unique_buffer<buffer, alignment>::allocate(const size_t &size)
 {
+	return aligned_alloc(alignment, size).release();
+}
+
+inline std::unique_ptr<char, decltype(&std::free)>
+ircd::buffer::aligned_alloc(const size_t &align,
+                            const size_t &size)
+{
+	static const size_t &align_default{16};
+	const size_t &alignment
+	{
+		align?: align_default
+	};
+
 	int errc;
 	void *ret;
 	if(unlikely((errc = ::posix_memalign(&ret, alignment, size)) != 0))
@@ -126,5 +144,8 @@ ircd::buffer::unique_buffer<buffer, alignment>::allocate(const size_t &size)
 
 	assert(errc == 0);
 	assert(ret != nullptr);
-	return reinterpret_cast<char *>(ret);
+	return std::unique_ptr<char, decltype(&std::free)>
+	{
+		reinterpret_cast<char *>(ret), std::free
+	};
 }
