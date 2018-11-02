@@ -77,11 +77,12 @@ ircd::info::dump()
 	// This message flashes posix information about the resource limits
 	log::debug
 	{
-		"AS=%lu DATA=%lu RSS=%lu NOFILE=%zu",
+		"AS=%lu DATA=%lu RSS=%lu NOFILE=%zu; aio_reqprio_max=%d",
 		rlimit_as,
 		rlimit_data,
 		rlimit_rss,
-		rlimit_nofile
+		rlimit_nofile,
+		aio_reqprio_max
 	};
 }
 
@@ -196,6 +197,14 @@ ircd::info::glibc_version_str
                glibc_version[1],
                glibc_version[2])
 );
+
+decltype(ircd::info::aio_reqprio_max)
+ircd::info::aio_reqprio_max
+{
+	#ifdef _SC_AIO_PRIO_DELTA_MAX
+	int(syscall(::sysconf, _SC_AIO_PRIO_DELTA_MAX))
+	#endif
+};
 
 #ifdef HAVE_SYS_UTSNAME_H
 decltype(ircd::info::utsname)

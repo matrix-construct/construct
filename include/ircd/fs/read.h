@@ -36,8 +36,10 @@ struct ircd::fs::read_opts
 	/// Offset in the file to start the read from.
 	off_t offset {0};
 
-	/// Request priority (this option may be improved, avoid for now)
-	int16_t priority {0};
+	/// Request priority. Higher value request will take priority over lower
+	/// value. Lowest value is zero. Negative value will receive a contextual
+	/// value internally (generally just zero). Default is -1.
+	int8_t priority {-1};
 };
 
 inline

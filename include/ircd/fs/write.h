@@ -47,8 +47,10 @@ struct ircd::fs::write_opts
 	/// Alignment requirement.
 	size_t alignment {0};
 
-	/// Request priority (this option may be improved, avoid for now)
-	int16_t priority {0};
+	/// Request priority. Higher value request will take priority over lower
+	/// value. Lowest value is zero. Negative value will receive a contextual
+	/// value internally (generally just zero). Default is -1.
+	int8_t priority {-1};
 
 	/// for allocate()
 	bool keep_size {false};

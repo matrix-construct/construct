@@ -17,6 +17,7 @@ namespace ircd::fs
 {
 	extern char _zero_pads_[4096];
 	static size_t _zero_pads_required(const size_t &buf_size, const size_t &alignment);
+	static int reqprio(int);
 }
 
 //
@@ -27,7 +28,7 @@ ircd::fs::aio::request::fsync::fsync(const int &fd,
                                      const fsync_opts &opts)
 :request{fd}
 {
-	aio_reqprio = opts.priority;
+	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_FSYNC;
 
 	aio_buf = 0;
@@ -55,7 +56,7 @@ ircd::fs::aio::request::fdsync::fdsync(const int &fd,
                                        const fsync_opts &opts)
 :request{fd}
 {
-	aio_reqprio = opts.priority;
+	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_FDSYNC;
 
 	aio_buf = 0;
@@ -92,7 +93,7 @@ ircd::fs::aio::request::read::read(const int &fd,
 	},
 }
 {
-	aio_reqprio = opts.priority;
+	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_PREADV;
 
 	aio_buf = uintptr_t(iov.data());
@@ -144,7 +145,7 @@ ircd::fs::aio::request::write::write(const int &fd,
 	},
 }}
 {
-	aio_reqprio = opts.priority;
+	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_PWRITEV;
 
 	aio_buf = uintptr_t(iov.data());
@@ -215,6 +216,18 @@ ircd::fs::_zero_pads_required(const size_t &buf_size,
 		};
 
 	return alignment - (buf_size % alignment);
+}
+
+int
+ircd::fs::reqprio(int input)
+{
+	// no use for negative values yet; make them zero.
+	input = std::max(input, 0);
+
+	// value is reduced to system maximum.
+	input = std::min(input, ircd::info::aio_reqprio_max);
+
+	return input;
 }
 
 //
