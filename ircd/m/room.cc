@@ -826,6 +826,17 @@ ircd::m::room::messages::fetch(std::nothrow_t)
 // room::state
 //
 
+decltype(ircd::m::room::state::disable_history)
+ircd::m::room::state::disable_history
+{
+	{ "name",     "ircd.m.room.state.disable_history" },
+	{ "default",  false                               },
+};
+
+//
+// room::state::state
+//
+
 ircd::m::room::state::state(const m::room &room,
                             const event::fetch::opts *const &fopts)
 :room_id
@@ -840,7 +851,7 @@ ircd::m::room::state::state(const m::room &room,
 }
 ,root_id
 {
-	event_id?
+	event_id && !bool(disable_history)?
 		dbs::state_root(root_id_buf, room_id, event_id):
 		m::state::id{}
 }
