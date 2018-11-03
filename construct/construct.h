@@ -9,12 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 //
-// construct.cc
-//
-
-extern std::unique_ptr<boost::asio::io_service> ios;
-
-//
 // console.cc
 //
 

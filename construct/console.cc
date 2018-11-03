@@ -9,9 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 #include <ircd/ircd.h>
-#include <ircd/asio.h>
-#include <ircd/m/m.h>
-#include <ircd/util/params.h>
 #include "construct.h"
 
 using namespace ircd;

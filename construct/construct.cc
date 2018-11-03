@@ -9,12 +9,10 @@
 // full license for this software is available in the LICENSE file.
 
 #include <ircd/ircd.h>
-#include <ircd/asio.h>
 #include <RB_INC_SYS_RESOURCE_H
+#include <ircd/asio.h>
 #include "lgetopt.h"
 #include "construct.h"
-
-namespace fs = ircd::fs;
 
 static void sigfd_handler(const boost::system::error_code &, int) noexcept;
 static bool startup_checks();
@@ -201,6 +199,8 @@ bool
 startup_checks()
 try
 {
+	namespace fs = ircd::fs;
+
 	fs::chdir(fs::get(fs::PREFIX));
 	return true;
 }
