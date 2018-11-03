@@ -833,6 +833,13 @@ ircd::m::room::state::disable_history
 	{ "default",  false                               },
 };
 
+decltype(ircd::m::room::state::readahead_size)
+ircd::m::room::state::readahead_size
+{
+	{ "name",     "ircd.m.room.state.readahead_size" },
+	{ "default",  0L                                 },
+};
+
 //
 // room::state::state
 //
@@ -1187,7 +1194,7 @@ const
 	};
 
 	if(!opts.readahead)
-		opts.readahead = 0_KiB;
+		opts.readahead = size_t(readahead_size);
 
 	auto &column{dbs::room_state};
 	for(auto it{column.begin(room_id, opts)}; bool(it); ++it)
@@ -1340,7 +1347,7 @@ const
 	};
 
 	if(!opts.readahead)
-		opts.readahead = 0_KiB;
+		opts.readahead = size_t(readahead_size);
 
 	auto &column{dbs::room_state};
 	for(auto it{column.begin(key, opts)}; bool(it); ++it)
@@ -1401,7 +1408,7 @@ const
 	};
 
 	if(!opts.readahead)
-		opts.readahead = 0_KiB;
+		opts.readahead = size_t(readahead_size);
 
 	auto &column{dbs::room_state};
 	for(auto it{column.begin(key, opts)}; bool(it); ++it)

@@ -255,6 +255,7 @@ struct ircd::m::room::state
 	using types_bool = std::function<bool (const string_view &)>;
 
 	static conf::item<bool> disable_history;
+	static conf::item<size_t> readahead_size;
 
 	room::id room_id;
 	event::id::buf event_id;
