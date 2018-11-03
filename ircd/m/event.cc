@@ -1391,15 +1391,28 @@ ircd::m::seek(event::fetch &fetch,
 
 ircd::m::event::idx
 ircd::m::index(const event &event)
+try
 {
 	return index(at<"event_id"_>(event));
+}
+catch(const json::not_found &)
+{
+	throw m::NOT_FOUND
+	{
+		"Cannot find index for event without an event_id."
+	};
 }
 
 ircd::m::event::idx
 ircd::m::index(const event &event,
                std::nothrow_t)
+try
 {
 	return index(at<"event_id"_>(event), std::nothrow);
+}
+catch(const json::not_found &)
+{
+	return 0;
 }
 
 ircd::m::event::idx
