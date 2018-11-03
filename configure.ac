@@ -720,8 +720,6 @@ AM_COND_IF(LINUX,
 
 if test "$aio" = "yes"; then
 	IRCD_DEFINE(USE_AIO, [1], [Linux AIO is supported and will be used])
-else
-	IRCD_DEFINE(USE_AIO, [0], [Define to 1 if you want AIO support (linux only)])
 fi
 
 AM_CONDITIONAL([AIO], [[[[ $aio = yes ]]]])
