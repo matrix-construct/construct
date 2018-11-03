@@ -275,15 +275,27 @@ ircd::db::direct_io_test_file_path()
 	return fs::make_path(parts);
 }
 
+decltype(ircd::db::compressions)
+ircd::db::compressions;
+
 void
 ircd::db::init_compressions()
 {
-	const auto compressions
+	auto supported
 	{
 		rocksdb::GetSupportedCompressions()
 	};
 
-	if(compressions.empty())
+	for(const rocksdb::CompressionType &type : supported)
+	{
+		auto &string(compressions.at(uint(type)));
+		throw_on_error
+		{
+			rocksdb::GetStringFromCompressionType(&string, type)
+		};
+	}
+
+	if(supported.empty())
 		log::warning
 		{
 			"No compression libraries have been linked with the DB."

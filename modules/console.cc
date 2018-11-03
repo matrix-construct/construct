@@ -1192,6 +1192,20 @@ console_cmd__ctx(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__db__compressions(opt &out, const string_view &line)
+{
+	out << "Available compressions:"
+	    << std::endl
+	    << std::endl;
+
+	for(const auto &name : db::compressions)
+		if(!name.empty())
+			out << name << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__db__sync(opt &out, const string_view &line)
 try
 {

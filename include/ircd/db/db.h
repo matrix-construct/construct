@@ -87,6 +87,7 @@ namespace ircd::db
 {
 	extern const uint version[3];
 	extern const string_view version_str;
+	extern std::array<std::string, 16> compressions;
 
 	// Utils for "name:checkpoint" string amalgam
 	std::string namepoint(const string_view &name, const uint64_t &checkpoint);
