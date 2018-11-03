@@ -76,6 +76,7 @@ namespace ircd::db
 	// Database options creator
 	bool optstr_find_and_remove(std::string &optstr, const std::string &what);
 	rocksdb::DBOptions make_dbopts(std::string optstr, std::string *const &out = nullptr, bool *read_only = nullptr, bool *fsck = nullptr);
+	rocksdb::CompressionType find_supported_compression(const std::string &);
 
 	// Validation functors
 	bool valid(const rocksdb::Iterator &);

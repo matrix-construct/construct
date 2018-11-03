@@ -1627,8 +1627,7 @@ ircd::db::database::column::column(database &d,
 	this->options.optimize_filters_for_hits = this->descriptor->expect_queries_hit;
 
 	// Compression
-	//TODO: descriptor / conf / detect etc...
-	this->options.compression = rocksdb::kSnappyCompression;
+	this->options.compression = find_supported_compression(this->descriptor->compression);
 	//this->options.compression = rocksdb::kNoCompression;
 
 	//TODO: descriptor / conf
@@ -9602,6 +9601,29 @@ const
 //
 // Misc
 //
+
+rocksdb::CompressionType
+ircd::db::find_supported_compression(const std::string &list)
+{
+	rocksdb::CompressionType ret
+	{
+		rocksdb::kNoCompression
+	};
+
+	tokens(list, ';', [&ret]
+	(const string_view &name)
+	{
+		for(size_t i(0); i < db::compressions.size(); ++i)
+			if(!db::compressions.at(i).empty())
+				if(name == db::compressions.at(i))
+				{
+					ret = rocksdb::CompressionType(i);
+					break;
+				}
+	});
+
+	return ret;
+}
 
 rocksdb::DBOptions
 ircd::db::make_dbopts(std::string optstr,
