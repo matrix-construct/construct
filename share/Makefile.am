@@ -4,7 +4,6 @@
 #
 
 datadir = @datadir@/$(PACKAGE_TARNAME)
-data_DATA = share/
 
 install-mkdirs:
 	-@if test ! -d $(datadir); then \
