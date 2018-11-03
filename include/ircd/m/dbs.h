@@ -97,6 +97,7 @@ namespace ircd::m::dbs::desc
 	//
 
 	extern conf::item<size_t> events___event__meta_block__size;
+	extern conf::item<size_t> events___event__bloom__bits;
 
 	extern conf::item<size_t> events__auth_events__block__size;
 	extern conf::item<size_t> events__auth_events__cache__size;
@@ -189,12 +190,14 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__event_idx__meta_block__size;
 	extern conf::item<size_t> events__event_idx__cache__size;
 	extern conf::item<size_t> events__event_idx__cache_comp__size;
+	extern conf::item<size_t> events__event_idx__bloom__bits;
 	extern const db::descriptor events__event_idx;
 
 	// events blacklist
 	extern conf::item<size_t> events__event_bad__block__size;
 	extern conf::item<size_t> events__event_bad__cache__size;
 	extern conf::item<size_t> events__event_bad__cache_comp__size;
+	extern conf::item<size_t> events__event_bad__bloom__bits;
 	extern const db::descriptor events__event_bad;
 
 	// room head mapping sequence
@@ -218,6 +221,7 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__room_joined__meta_block__size;
 	extern conf::item<size_t> events__room_joined__cache__size;
 	extern conf::item<size_t> events__room_joined__cache_comp__size;
+	extern conf::item<size_t> events__room_joined__bloom__bits;
 	extern const db::prefix_transform events__room_joined__pfx;
 	extern const db::descriptor events__room_joined;
 
@@ -226,6 +230,7 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__room_state__meta_block__size;
 	extern conf::item<size_t> events__room_state__cache__size;
 	extern conf::item<size_t> events__room_state__cache_comp__size;
+	extern conf::item<size_t> events__room_state__bloom__bits;
 	extern const db::prefix_transform events__room_state__pfx;
 	extern const db::descriptor events__room_state;
 
@@ -234,6 +239,7 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__state_node__meta_block__size;
 	extern conf::item<size_t> events__state_node__cache__size;
 	extern conf::item<size_t> events__state_node__cache_comp__size;
+	extern conf::item<size_t> events__state_node__bloom__bits;
 	extern const db::descriptor events__state_node;
 }
 

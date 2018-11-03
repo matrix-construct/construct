@@ -613,6 +613,13 @@ ircd::m::dbs::desc::events__event_idx__cache_comp__size
 	}
 };
 
+decltype(ircd::m::dbs::desc::events__event_idx__bloom__bits)
+ircd::m::dbs::desc::events__event_idx__bloom__bits
+{
+	{ "name",     "ircd.m.dbs.events._event_idx.bloom.bits" },
+	{ "default",  9L                                        },
+};
+
 const ircd::db::descriptor
 ircd::m::dbs::desc::events__event_idx
 {
@@ -658,7 +665,7 @@ ircd::m::dbs::desc::events__event_idx
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events__event_idx__bloom__bits),
 
 	// expect queries hit
 	false,
@@ -698,6 +705,13 @@ ircd::m::dbs::desc::events__event_bad__cache_comp__size
 		const size_t &value{events__event_bad__cache_comp__size};
 		db::capacity(db::cache_compressed(event_bad), value);
 	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_bad__bloom__bits)
+ircd::m::dbs::desc::events__event_bad__bloom__bits
+{
+	{ "name",     "ircd.m.dbs.events._event_bad.bloom.bits" },
+	{ "default",  10L                                       },
 };
 
 const ircd::db::descriptor
@@ -741,7 +755,7 @@ ircd::m::dbs::desc::events__event_bad
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events__event_bad__bloom__bits),
 
 	// expect queries hit
 	false,
@@ -868,7 +882,7 @@ ircd::m::dbs::desc::events__room_head
 	0, //no compresed cache
 
 	// bloom filter bits
-	0,
+	0, //table too ephemeral for bloom generation/usefulness
 
 	// expect queries hit
 	false,
@@ -1196,6 +1210,13 @@ ircd::m::dbs::desc::events__room_joined__cache_comp__size
 	}
 };
 
+decltype(ircd::m::dbs::desc::events__room_joined__bloom__bits)
+ircd::m::dbs::desc::events__room_joined__bloom__bits
+{
+	{ "name",     "ircd.m.dbs.events._room_joined.bloom.bits" },
+	{ "default",  6L                                          },
+};
+
 /// Prefix transform for the events__room_joined
 ///
 const ircd::db::prefix_transform
@@ -1296,7 +1317,7 @@ ircd::m::dbs::desc::events__room_joined
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events__room_joined__bloom__bits),
 
 	// expect queries hit
 	false,
@@ -1350,6 +1371,13 @@ ircd::m::dbs::desc::events__room_state__cache_comp__size
 		const size_t &value{events__room_state__cache_comp__size};
 		db::capacity(db::cache_compressed(room_state), value);
 	}
+};
+
+decltype(ircd::m::dbs::desc::events__room_state__bloom__bits)
+ircd::m::dbs::desc::events__room_state__bloom__bits
+{
+	{ "name",     "ircd.m.dbs.events._room_state.bloom.bits" },
+	{ "default",  10L                                        },
 };
 
 /// prefix transform for type,state_key in room_id
@@ -1463,7 +1491,7 @@ ircd::m::dbs::desc::events__room_state
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events__room_state__bloom__bits),
 
 	// expect queries hit
 	false,
@@ -1519,6 +1547,13 @@ ircd::m::dbs::desc::events__state_node__cache_comp__size
 	}
 };
 
+decltype(ircd::m::dbs::desc::events__state_node__bloom__bits)
+ircd::m::dbs::desc::events__state_node__bloom__bits
+{
+	{ "name",     "ircd.m.dbs.events._state_node.bloom.bits" },
+	{ "default",  0L                                         },
+};
+
 /// State nodes are pieces of the m::state:: b-tree. The key is the hash
 /// of the value, which serves as the ID of the node when referenced in
 /// the tree. see: m/state.h for details.
@@ -1558,7 +1593,7 @@ ircd::m::dbs::desc::events__state_node
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events__state_node__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -1579,6 +1614,13 @@ ircd::m::dbs::desc::events___event__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events.__event.meta_block.size" },
 	{ "default",  8192L                                       },
+};
+
+decltype(ircd::m::dbs::desc::events___event__bloom__bits)
+ircd::m::dbs::desc::events___event__bloom__bits
+{
+	{ "name",     "ircd.m.dbs.events.__event.bloom.bits" },
+	{ "default",  8L                                     },
 };
 
 //
@@ -1661,7 +1703,7 @@ ircd::m::dbs::desc::events_event_id
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -1753,7 +1795,7 @@ ircd::m::dbs::desc::events_type
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -1845,7 +1887,7 @@ ircd::m::dbs::desc::events_content
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -1931,7 +1973,7 @@ ircd::m::dbs::desc::events_redacts
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	false,
@@ -2022,7 +2064,7 @@ ircd::m::dbs::desc::events_room_id
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -2113,7 +2155,7 @@ ircd::m::dbs::desc::events_sender
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -2206,7 +2248,7 @@ ircd::m::dbs::desc::events_state_key
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	false,
@@ -2294,7 +2336,7 @@ ircd::m::dbs::desc::events_origin
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -2393,7 +2435,7 @@ ircd::m::dbs::desc::events_origin_server_ts
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -2479,7 +2521,7 @@ ircd::m::dbs::desc::events_signatures
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -2564,7 +2606,7 @@ ircd::m::dbs::desc::events_auth_events
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	false,
@@ -2656,7 +2698,7 @@ ircd::m::dbs::desc::events_depth
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -2741,7 +2783,7 @@ ircd::m::dbs::desc::events_hashes
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -2826,7 +2868,7 @@ ircd::m::dbs::desc::events_membership
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	false,
@@ -2911,7 +2953,7 @@ ircd::m::dbs::desc::events_prev_events
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	true,
@@ -2996,7 +3038,7 @@ ircd::m::dbs::desc::events_prev_state
 	bool(events_cache_comp_enable)? -1 : 0,
 
 	// bloom filter bits
-	10,
+	size_t(events___event__bloom__bits),
 
 	// expect queries hit
 	false,
