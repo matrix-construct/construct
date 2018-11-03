@@ -892,6 +892,9 @@ ircd::m::dbs::desc::events__room_head
 
 	// meta_block size
 	size_t(events__room_head__meta_block__size),
+
+	// compression
+	{}, // no compression for this column
 };
 
 //
@@ -1518,7 +1521,7 @@ decltype(ircd::m::dbs::desc::events__state_node__meta_block__size)
 ircd::m::dbs::desc::events__state_node__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events._state_node.meta_block.size" },
-	{ "default",  4096L                                           },
+	{ "default",  1024L                                           },
 };
 
 decltype(ircd::m::dbs::desc::events__state_node__cache__size)
@@ -1613,7 +1616,7 @@ decltype(ircd::m::dbs::desc::events___event__meta_block__size)
 ircd::m::dbs::desc::events___event__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events.__event.meta_block.size" },
-	{ "default",  8192L                                       },
+	{ "default",  long(8_KiB)                                 },
 };
 
 decltype(ircd::m::dbs::desc::events___event__bloom__bits)
@@ -2609,7 +2612,7 @@ ircd::m::dbs::desc::events_auth_events
 	size_t(events___event__bloom__bits),
 
 	// expect queries hit
-	false,
+	true,
 
 	// block size
 	size_t(events__auth_events__block__size),
@@ -3041,7 +3044,7 @@ ircd::m::dbs::desc::events_prev_state
 	size_t(events___event__bloom__bits),
 
 	// expect queries hit
-	false,
+	true,
 
 	// block size
 	size_t(events__prev_state__block__size),

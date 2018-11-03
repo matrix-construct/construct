@@ -1574,7 +1574,7 @@ ircd::db::database::column::column(database &d,
 	// better to use pre-read except in the case of a massive database. No
 	// known deployments which exceed partitioned pre-read exist so these
 	// settings are unconditionally false.
-	table_opts.cache_index_and_filter_blocks = false;
+	table_opts.cache_index_and_filter_blocks = true;
 	table_opts.cache_index_and_filter_blocks_with_high_priority = false;
 	table_opts.pin_top_level_index_and_filter = false;
 	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
