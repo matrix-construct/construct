@@ -25,7 +25,8 @@ namespace ircd::m
 
 	// [GET]
 	bool exists(const id::event &);
-	bool bad(const id::event &, uint64_t &);
+	bool exists(const id::event &, const bool &good);
+	bool good(const id::event &);
 	bool bad(const id::event &);
 
 	// Equality tests the event_id only! know this.
@@ -216,6 +217,7 @@ struct ircd::m::event::fetch
 	static bool event_id(const idx &, std::nothrow_t, const id::closure &);
 	static void event_id(const idx &, const id::closure &);
 
+	friend bool index(const id &, std::nothrow_t, const closure_idx &);
 	friend idx index(const id &, std::nothrow_t);
 	friend idx index(const id &);
 	friend idx index(const event &, std::nothrow_t);

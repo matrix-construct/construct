@@ -4885,23 +4885,16 @@ console_cmd__event__bad(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	m::event::idx workaround;
 	const bool b
 	{
-		bad(event_id, workaround)
+		bad(event_id)
 	};
 
 	out << event_id << "is"
-	    << (b? " " : " NOT ") << "BAD";
+	    << (b? " " : " NOT ")
+	    << "BAD"
+	    << std::endl;
 
-	if(b && workaround != m::event::idx(-1))
-		m::event::fetch::event_id(workaround, std::nothrow, [&out]
-		(const m::event::id &event_id)
-		{
-			out << " and a workaround is " << event_id;
-		});
-
-	out << std::endl;
 	return true;
 }
 

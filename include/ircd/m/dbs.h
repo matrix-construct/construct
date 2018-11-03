@@ -31,7 +31,6 @@ namespace ircd::m::dbs
 
 	// Event metadata columns
 	extern db::column event_idx;       // event_id => event_idx
-	extern db::column event_bad;       // event_id => event_idx
 	extern db::index room_head;        // room_id | event_id => event_idx
 	extern db::index room_events;      // room_id | depth, event_idx => state_root
 	extern db::index room_joined;      // room_id | origin, member => event_idx
@@ -192,13 +191,6 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__event_idx__cache_comp__size;
 	extern conf::item<size_t> events__event_idx__bloom__bits;
 	extern const db::descriptor events__event_idx;
-
-	// events blacklist
-	extern conf::item<size_t> events__event_bad__block__size;
-	extern conf::item<size_t> events__event_bad__cache__size;
-	extern conf::item<size_t> events__event_bad__cache_comp__size;
-	extern conf::item<size_t> events__event_bad__bloom__bits;
-	extern const db::descriptor events__event_bad;
 
 	// room head mapping sequence
 	extern conf::item<size_t> events__room_head__block__size;

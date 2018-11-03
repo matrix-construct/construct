@@ -204,36 +204,29 @@ ircd::m::operator==(const event &a, const event &b)
 bool
 ircd::m::bad(const id::event &event_id)
 {
-	auto &column
+	bool ret {false};
+	index(event_id, std::nothrow, [&ret]
+	(const event::idx &event_idx)
 	{
-		dbs::event_bad
-	};
+		ret = event_idx == 0;
+	});
 
-	return has(column, event_id);
+	return ret;
 }
 
 bool
-ircd::m::bad(const id::event &event_id,
-             uint64_t &idx)
+ircd::m::good(const id::event &event_id)
 {
-	auto &column
-	{
-		dbs::event_bad
-	};
+	return index(event_id, std::nothrow) != 0;
+}
 
-	bool ret;
-	const string_view value
-	{
-		read(column, event_id, ret, mutable_buffer
-		{
-			reinterpret_cast<char *>(&idx), sizeof(idx)
-		})
-	};
-
-	if(!value)
-		idx = uint64_t(-1);
-
-	return ret;
+bool
+ircd::m::exists(const id::event &event_id,
+                const bool &good)
+{
+	return good?
+		m::good(event_id):
+		m::exists(event_id);
 }
 
 bool
@@ -1432,19 +1425,36 @@ ircd::m::event::idx
 ircd::m::index(const event::id &event_id,
                std::nothrow_t)
 {
+	event::idx ret{0};
+	index(event_id, std::nothrow, [&ret]
+	(const event::idx &event_idx)
+	{
+		ret = event_idx;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::index(const event::id &event_id,
+               std::nothrow_t,
+               const event::closure_idx &closure)
+{
 	auto &column
 	{
 		dbs::event_idx
 	};
 
-	event::idx ret{0};
-	column(event_id, std::nothrow, [&ret]
+	return column(event_id, std::nothrow, [&closure]
 	(const string_view &value)
 	{
-		ret = byte_view<event::idx>(value);
-	});
+		const event::idx &event_idx
+		{
+			byte_view<event::idx>(value)
+		};
 
-	return ret;
+		closure(event_idx);
+	});
 }
 
 void

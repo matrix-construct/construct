@@ -26,11 +26,6 @@ decltype(ircd::m::dbs::event_idx)
 ircd::m::dbs::event_idx
 {};
 
-/// Linkage for a reference to the event_bad column.
-decltype(ircd::m::dbs::event_bad)
-ircd::m::dbs::event_bad
-{};
-
 /// Linkage for a reference to the room_head column
 decltype(ircd::m::dbs::room_head)
 ircd::m::dbs::room_head
@@ -101,7 +96,6 @@ ircd::m::dbs::init::init(std::string dbopts)
 
 	// Cache the columns for the metadata
 	event_idx = db::column{*events, desc::events__event_idx.name};
-	event_bad = db::column{*events, desc::events__event_bad.name};
 	room_head = db::index{*events, desc::events__room_head.name};
 	room_events = db::index{*events, desc::events__room_events.name};
 	room_joined = db::index{*events, desc::events__room_joined.name};
@@ -127,15 +121,25 @@ ircd::m::dbs::blacklist(db::txn &txn,
                         const event::id &event_id,
                         const write_opts &opts)
 {
+	// An entry in the event_idx column with a value 0 is blacklisting
+	// because 0 is not a valid event_idx. Thus a value here can only
+	// have the value zero.
+	assert(opts.event_idx == 0);
+	assert(!event_id.empty());
+
+	static const m::event::idx &zero_idx{0UL};
+	static const byte_view<string_view> zero_value
+	{
+		zero_idx
+	};
+
 	db::txn::append
 	{
-		txn, event_bad,
+		txn, event_idx,
 		{
 			opts.op,
 			string_view{event_id},
-			opts.event_idx != uint64_t(-1) && opts.op == db::op::SET?
-				byte_view<string_view>(opts.event_idx):
-				string_view{}
+			zero_value
 		}
 	};
 }
@@ -675,90 +679,6 @@ ircd::m::dbs::desc::events__event_idx
 
 	// meta_block size
 	size_t(events__event_idx__meta_block__size),
-};
-
-//
-// event_bad
-//
-
-decltype(ircd::m::dbs::desc::events__event_bad__cache__size)
-ircd::m::dbs::desc::events__event_bad__cache__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events._event_bad.cache.size" },
-		{ "default",  long(16_MiB)                              },
-	}, []
-	{
-		const size_t &value{events__event_bad__cache__size};
-		db::capacity(db::cache(event_bad), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__event_bad__cache_comp__size)
-ircd::m::dbs::desc::events__event_bad__cache_comp__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events._event_bad.cache_comp.size" },
-		{ "default",  long(16_MiB)                                   },
-	}, []
-	{
-		const size_t &value{events__event_bad__cache_comp__size};
-		db::capacity(db::cache_compressed(event_bad), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__event_bad__bloom__bits)
-ircd::m::dbs::desc::events__event_bad__bloom__bits
-{
-	{ "name",     "ircd.m.dbs.events._event_bad.bloom.bits" },
-	{ "default",  10L                                       },
-};
-
-const ircd::db::descriptor
-ircd::m::dbs::desc::events__event_bad
-{
-	// name
-	"_event_bad",
-
-	// explanation
-	R"(Collects mxids of events which are purposely not in the database.
-
-	event_id => (unused 8 byte integer)
-
-	The key is an event_id. The mere existence of the key indicates we do not
-	have this event; it will not be a key found in the event_idx and will not
-	have its own idx number and we know nothing else about this event.
-
-	This column is used to blacklist event_ids to prevent various application
-	functionality from chasing and redetermining their invalidity.
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(string_view), typeid(uint64_t)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// cache size
-	bool(events_cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(events_cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(events__event_bad__bloom__bits),
-
-	// expect queries hit
-	false,
 };
 
 //
@@ -3148,10 +3068,6 @@ ircd::m::dbs::desc::events
 	// (state tree node id) => (state tree node)
 	// Mapping of state tree node id to node data.
 	events__state_node,
-
-	// event_id => uint64_t
-	// Mapping of faulty event_id to possible alternative event_idx.
-	events__event_bad,
 
 	// (room_id, event_id) => (event_idx)
 	// Mapping of all current head events for a room.
