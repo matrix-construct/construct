@@ -85,6 +85,7 @@ struct ircd::json::value
 	explicit operator int64_t() const;
 	explicit operator std::string() const;       ///< NOTE full stringify() of value
 
+	value(const members &); // alloc = true
 	value(const struct member *const &, const size_t &len);
 	value(std::unique_ptr<const struct member[]> &&, const size_t &len); // alloc = true
 	value(const struct value *const &, const size_t &len);
@@ -95,14 +96,19 @@ struct ircd::json::value
 	explicit value(const std::string &);
 	value(const string_view &sv, const enum type &);
 	value(const string_view &sv);
-	value(const json::object &);
-	value(const json::array &);
 	value(const char *const &, const enum type &);
 	value(const char *const &s);
-	explicit value(const int64_t &);
 	explicit value(const double &);
+	explicit value(const int64_t &);
+	explicit value(const int32_t &);
+	explicit value(const uint32_t &);
+	explicit value(const int16_t &);
+	explicit value(const uint16_t &);
+	explicit value(const int8_t &);
+	explicit value(const uint8_t &);
 	explicit value(const bool &);
-	value(const members &); // alloc = true
+	value(const json::object &);
+	value(const json::array &);
 	value(const nullptr_t &);
 	value();
 	value(value &&) noexcept;
