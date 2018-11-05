@@ -68,6 +68,8 @@ namespace ircd::m::sync::longpoll
 
 namespace ircd::m::sync::linear
 {
+	extern conf::item<size_t> delta_max;
+
 	static bool handle(client &, shortpoll &, json::stack::object &);
 }
 

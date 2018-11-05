@@ -109,16 +109,16 @@ try
 		sp.out
 	};
 
-	static const auto max_linear_sync
+	const size_t linear_delta_max
 	{
-		384 //TODO: conf
+		linear::delta_max
 	};
 
 	const bool shortpolled
 	{
 		sp.delta == 0?
 			false:
-		sp.delta > max_linear_sync?
+		sp.delta > linear_delta_max?
 			polylog::handle(client, sp, top):
 			linear::handle(client, sp, top)
 	};
@@ -440,6 +440,13 @@ ircd::m::sync::longpoll::sync_room(client &client,
 //
 // linear
 //
+
+decltype(ircd::m::sync::linear::delta_max)
+ircd::m::sync::linear::delta_max
+{
+	{ "name",     "ircd.client.sync.linear.delta.max" },
+	{ "default",  1024                                },
+};
 
 bool
 ircd::m::sync::linear::handle(client &client,
