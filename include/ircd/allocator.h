@@ -111,22 +111,22 @@ struct ircd::allocator::state
 /// template as we are here.
 ///
 template<class T,
-         size_t max>
+         size_t MAX>
 struct ircd::allocator::fixed
 :state
 {
 	struct allocator;
 	using value = std::aligned_storage<sizeof(T), alignof(T)>;
 
-	std::array<word_t, max / 8> avail {{0}};
-	std::array<typename value::type, max> buf;
+	std::array<word_t, MAX / 8> avail {{0}};
+	std::array<typename value::type, MAX> buf;
 
   public:
 	allocator operator()();
 	operator allocator();
 
 	fixed()
-	:state{max, avail.data()}
+	:state{MAX, avail.data()}
 	{}
 };
 
@@ -139,8 +139,8 @@ struct ircd::allocator::fixed
 /// at its construction.
 ///
 template<class T,
-         size_t size>
-struct ircd::allocator::fixed<T, size>::allocator
+         size_t SIZE>
+struct ircd::allocator::fixed<T, SIZE>::allocator
 {
 	using value_type         = T;
 	using pointer            = T *;
@@ -153,14 +153,25 @@ struct ircd::allocator::fixed<T, size>::allocator
 	fixed *s;
 
   public:
-	template<class U, size_t S> struct rebind
+	template<class U> struct rebind
 	{
-		using other = typename fixed<U, S>::allocator;
+		using other = typename fixed<U, SIZE>::allocator;
 	};
 
-	size_type max_size() const                   { return size;                                    }
-	auto address(reference x) const              { return &x;                                      }
-	auto address(const_reference x) const        { return &x;                                      }
+	size_type max_size() const
+	{
+		return SIZE;
+	}
+
+	auto address(reference x) const
+	{
+		return &x;
+	}
+
+	auto address(const_reference x) const
+	{
+		return &x;
+	}
 
 	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
 	{
@@ -175,10 +186,12 @@ struct ircd::allocator::fixed<T, size>::allocator
 		s->state::deallocate(p - base, n);
 	}
 
-	template<class U, size_t S>
-	allocator(const typename fixed<U, S>::allocator &) noexcept
-	:s{reinterpret_cast<fixed *>(s.s)}
-	{}
+	template<class U, size_t OTHER_SIZE>
+	allocator(const typename fixed<U, OTHER_SIZE>::allocator &) noexcept
+	:s{reinterpret_cast<fixed<T, SIZE> *>(s.s)}
+	{
+		static_assert(OTHER_SIZE == SIZE);
+	}
 
 	allocator(fixed &s) noexcept
 	:s{&s}
@@ -199,16 +212,16 @@ struct ircd::allocator::fixed<T, size>::allocator
 };
 
 template<class T,
-         size_t size>
-typename ircd::allocator::fixed<T, size>::allocator
-ircd::allocator::fixed<T, size>::operator()()
+         size_t SIZE>
+typename ircd::allocator::fixed<T, SIZE>::allocator
+ircd::allocator::fixed<T, SIZE>::operator()()
 {
 	return { *this };
 }
 
 template<class T,
-         size_t size>
-ircd::allocator::fixed<T, size>::operator
+         size_t SIZE>
+ircd::allocator::fixed<T, SIZE>::operator
 allocator()
 {
 	return { *this };
