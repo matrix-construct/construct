@@ -306,8 +306,7 @@ try
 }
 catch(const std::exception &e)
 {
-	ircd::assertion(e);
-	return;
+	ircd::assertion{e};
 }
 
 bool

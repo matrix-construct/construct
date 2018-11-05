@@ -21,19 +21,9 @@ namespace boost::system
 
 namespace ircd
 {
-	// Root exception
-	struct exception;
-
-	// Prefer ircd::terminate() to std::terminate() if possible.
-	[[noreturn]] void terminate(const std::exception &) noexcept;
-	[[noreturn]] void terminate(std::exception_ptr) noexcept;
-	[[noreturn]] void terminate() noexcept;
-
-	// Terminates in debug mode; throws in release mode; always logs critical.
-	[[noreturn]] void assertion(const std::exception &) noexcept(RB_DEBUG_LEVEL);
-	[[noreturn]] void assertion(std::exception_ptr) noexcept(RB_DEBUG_LEVEL);
-	[[noreturn]] void assertion(const string_view &) noexcept(RB_DEBUG_LEVEL);
-	[[noreturn]] void assertion() noexcept(RB_DEBUG_LEVEL);
+	struct terminate;
+	struct assertion;
+	struct exception; // Root exception
 
 	// util
 	std::error_code make_error_code(const int &code = errno);
@@ -108,6 +98,26 @@ struct ircd::exception
 	{
 		buf[0] = '\0';
 	}
+};
+
+/// Terminates in debug mode; throws in release mode; always logs critical.
+/// Not a replacement for a standard assert() macro. Used specifically when
+/// the assert should also be hit in release-mode when NDEBUG is set. This
+/// is basically the project's soft assert for now.
+struct ircd::assertion
+{
+	[[noreturn]] assertion(const std::exception &) noexcept(RB_DEBUG_LEVEL);
+	[[noreturn]] assertion(std::exception_ptr) noexcept(RB_DEBUG_LEVEL);
+	[[noreturn]] assertion(const string_view &) noexcept(RB_DEBUG_LEVEL);
+	[[noreturn]] assertion() noexcept(RB_DEBUG_LEVEL);
+};
+
+/// Always prefer ircd::terminate() to std::terminate() for all project code.
+struct ircd::terminate
+{
+	[[noreturn]] terminate(const std::exception &) noexcept;
+	[[noreturn]] terminate(std::exception_ptr) noexcept;
+	[[noreturn]] terminate() noexcept;
 };
 
 /// Exception generator convenience macro

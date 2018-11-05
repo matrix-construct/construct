@@ -177,20 +177,16 @@ noexcept
 	return size;
 }
 
-void
-ircd::assertion()
+ircd::assertion::assertion()
 noexcept(RB_DEBUG_LEVEL)
+:assertion
 {
-	static const auto &default_message
-	{
-		"without exception"_sv
-	};
-
-	assertion(default_message);
+	"without exception"_sv
+}
+{
 }
 
-void
-ircd::assertion(const string_view &msg)
+ircd::assertion::assertion(const string_view &msg)
 noexcept(RB_DEBUG_LEVEL)
 {
 	log::critical
@@ -199,7 +195,10 @@ noexcept(RB_DEBUG_LEVEL)
 	};
 
 	if(std::uncaught_exceptions())
-		assertion(std::current_exception());
+		assertion
+		{
+			std::current_exception()
+		};
 
 	assert(0);
 	throw assertive
@@ -208,23 +207,21 @@ noexcept(RB_DEBUG_LEVEL)
 	};
 }
 
-void
-ircd::assertion(std::exception_ptr eptr)
+ircd::assertion::assertion(std::exception_ptr eptr)
 noexcept(RB_DEBUG_LEVEL) try
 {
 	std::rethrow_exception(eptr);
 }
 catch(const std::exception &e)
 {
-	assertion(e);
+	assertion{e};
 }
 
-void
-ircd::assertion(const std::exception &e)
+ircd::assertion::assertion(const std::exception &e)
 noexcept(RB_DEBUG_LEVEL)
 {
 	#ifdef RB_DEBUG
-		terminate(e);
+		terminate{e};
 	#else
 		log::critical
 		{
@@ -235,15 +232,16 @@ noexcept(RB_DEBUG_LEVEL)
 	#endif
 }
 
-void
-ircd::terminate()
+ircd::terminate::terminate()
 noexcept
+:terminate
 {
-	terminate(std::current_exception());
+	std::current_exception()
+}
+{
 }
 
-void
-ircd::terminate(std::exception_ptr eptr)
+ircd::terminate::terminate(std::exception_ptr eptr)
 noexcept
 {
 	if(eptr) try
@@ -252,7 +250,7 @@ noexcept
 	}
 	catch(const std::exception &e)
 	{
-		terminate(e);
+		terminate{e};
 	}
 
 	log::critical
@@ -267,8 +265,7 @@ noexcept
 	std::terminate();
 }
 
-void
-ircd::terminate(const std::exception &e)
+ircd::terminate::terminate(const std::exception &e)
 noexcept
 {
 	log::critical
@@ -277,8 +274,7 @@ noexcept
 	};
 
 	fprintf(stderr, "\nIRCd Terminated: %s\n", e.what());
-
-	::fflush(stdout);
 	::fflush(stderr);
+	::fflush(stdout);
 	std::terminate();
 }
