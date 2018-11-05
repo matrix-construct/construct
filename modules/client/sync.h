@@ -231,7 +231,7 @@ struct ircd::m::sync::shortpoll
 
 	unique_buffer<mutable_buffer> buf
 	{
-		96_KiB
+		std::max(size_t(96_KiB), size_t(flush_hiwat))
 	};
 
 	std::unique_ptr<resource::response::chunked> response;
