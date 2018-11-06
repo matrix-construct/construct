@@ -252,6 +252,10 @@ ircd::resource::method::method(struct resource &resource,
 {
 	std::make_unique<const struct opts>(std::move(opts))
 }
+,stats
+{
+	std::make_unique<struct stats>()
+}
 ,methods_it{[this, &name]
 {
 	const auto iit
@@ -284,6 +288,8 @@ ircd::resource::method::operator()(client &client,
                                    const http::request::head &head,
                                    const string_view &content_partial)
 {
+	stats->requests++;
+
 	// Bail out if the method limited the amount of content and it was exceeded.
 	if(head.content_length > opts->payload_max)
 		throw http::error
@@ -410,7 +416,9 @@ ircd::resource::method::operator()(client &client,
 	}
 
 	// Finally handle the request.
+	stats->handles++;
 	call_handler(client, client.request);
+	stats->handled++;
 }
 
 void
@@ -481,6 +489,8 @@ const
 		name,
 		resource->path
 	};
+
+	stats->timeouts++;
 
 	// The interrupt is effective when the socket has already been
 	// closed and/or the client is still stuck in a request for

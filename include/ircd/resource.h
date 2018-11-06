@@ -131,6 +131,14 @@ struct ircd::resource::method::opts
 	std::pair<string_view, string_view> mime;
 };
 
+struct ircd::resource::method::stats
+{
+	uint64_t requests {0};
+	uint64_t timeouts {0};
+	uint64_t handles {0};
+	uint64_t handled {0};
+};
+
 struct ircd::resource::request
 :json::object
 {
