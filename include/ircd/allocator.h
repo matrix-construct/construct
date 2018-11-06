@@ -20,6 +20,7 @@
 namespace ircd::allocator
 {
 	struct state;
+	struct scope;
 	struct profile;
 	template<class T = char> struct dynamic;
 	template<class T = char, size_t = 512> struct fixed;
@@ -58,6 +59,41 @@ struct ircd::allocator::profile
 	/// Explicitly enabled by define at compile time only. Note: replaces
 	/// global `new` and `delete` when enabled.
 	static thread_local profile this_thread;
+};
+
+/// This object hooks and replaces global ::malloc() and family for the
+/// lifetime of the instance, redirecting those calls to the user's provided
+/// callbacks. This functionality may not be available on all platforms so it
+/// cannot be soley relied upon in a production release. It may still be used
+/// optimistically as an optimization in production.
+///
+/// This device is useful to control dynamic memory at level where specific
+/// class allocators are too fine-grained and replacing global new is too
+/// coarse (and far too intrusive to the whole process). Instead this works
+/// on the stack for everything further up the stack.
+///
+/// This class is friendly. It takes control from any other previous instance
+/// of allocator::scope and then restores their control after this goes out of
+/// scope. Once all instances of allocator::scope go out of scope, the previous
+/// global __malloc_hook is reinstalled.
+///
+struct ircd::allocator::scope
+{
+	using alloc_closure = std::function<void *(const size_t &)>;
+	using realloc_closure = std::function<void *(void *const &ptr, const size_t &)>;
+	using free_closure = std::function<void (void *const &ptr)>;
+
+	static scope *current;
+	scope *theirs;
+	alloc_closure user_alloc;
+	realloc_closure user_realloc;
+	free_closure user_free;
+
+  public:
+	scope(alloc_closure = {}, realloc_closure = {}, free_closure = {});
+	scope(const scope &) = delete;
+	scope(scope &&) = delete;
+	~scope();
 };
 
 /// Internal state structure for some of these tools. This is a very small and

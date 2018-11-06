@@ -135,6 +135,242 @@ const
 }
 
 //
+// allocator::scope
+//
+
+namespace ircd::allocator
+{
+	void *(*their_malloc_hook)(size_t, const void *);
+	static void *malloc_hook(size_t, const void *);
+	static void install_malloc_hook();
+	static void uninstall_malloc_hook();
+
+	void *(*their_realloc_hook)(void *, size_t, const void *);
+	static void *realloc_hook(void *, size_t, const void *);
+	static void install_realloc_hook();
+	static void uninstall_realloc_hook();
+
+	void (*their_free_hook)(void *, const void *);
+	static void free_hook(void *, const void *);
+	static void install_free_hook();
+	static void uninstall_free_hook();
+}
+
+decltype(ircd::allocator::scope::current)
+ircd::allocator::scope::current;
+
+ircd::allocator::scope::scope(alloc_closure ac,
+                              realloc_closure rc,
+                              free_closure fc)
+:theirs
+{
+	current
+}
+,user_alloc
+{
+	std::move(ac)
+}
+,user_realloc
+{
+	std::move(rc)
+}
+,user_free
+{
+	std::move(fc)
+}
+{
+	// If an allocator::scope instance already exists somewhere
+	// up the stack, *current will already be set. We only install
+	// our global hook handlers at the first instance ctor and
+	// uninstall it after that first instance dtors.
+	if(!current)
+	{
+		install_malloc_hook();
+		install_realloc_hook();
+		install_free_hook();
+	}
+
+	current = this;
+}
+
+ircd::allocator::scope::~scope()
+noexcept
+{
+	assert(current);
+	current = theirs;
+
+	// Reinstall the pre-existing hooks after our last scope instance
+	// has destructed (the first to have constructed). We know this when
+	// current becomes null.
+	if(!current)
+	{
+		uninstall_malloc_hook();
+		uninstall_realloc_hook();
+		uninstall_free_hook();
+	}
+}
+
+void
+ircd::allocator::free_hook(void *const ptr,
+                           const void *const caller)
+{
+	// Once we've hooked we put back their hook before calling the user
+	// so they can passthru to the function without hooking themselves.
+	uninstall_free_hook();
+	const unwind rehook_ours
+	{
+		install_free_hook
+	};
+
+	assert(scope::current);
+	if(scope::current->user_free)
+		scope::current->user_free(ptr);
+	else
+		::free(ptr);
+}
+
+void *
+ircd::allocator::realloc_hook(void *const ptr,
+                              size_t size,
+                              const void *const caller)
+{
+	// Once we've hooked we put back their hook before calling the user
+	// so they can passthru to the function without hooking themselves.
+	uninstall_realloc_hook();
+	const unwind rehook_ours
+	{
+		install_realloc_hook
+	};
+
+	assert(scope::current);
+	return scope::current->user_realloc?
+		scope::current->user_realloc(ptr, size):
+		::realloc(ptr, size);
+}
+
+void *
+ircd::allocator::malloc_hook(size_t size,
+                             const void *const caller)
+{
+	// Once we've hooked we put back their hook before calling the user
+	// so they can passthru to the function without hooking themselves.
+	uninstall_malloc_hook();
+	const unwind rehook_ours
+	{
+		install_malloc_hook
+	};
+
+	assert(scope::current);
+	return scope::current->user_alloc?
+		scope::current->user_alloc(size):
+		::malloc(size);
+}
+
+#if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+void
+ircd::allocator::install_malloc_hook()
+{
+	assert(!their_malloc_hook);
+	their_malloc_hook = __malloc_hook;
+	__malloc_hook = malloc_hook;
+}
+#pragma GCC diagnostic pop
+#else
+void
+ircd::allocator::install_malloc_hook()
+{
+}
+#endif
+
+#if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+void
+ircd::allocator::uninstall_malloc_hook()
+{
+	assert(their_malloc_hook);
+	__malloc_hook = their_malloc_hook;
+}
+#pragma GCC diagnostic pop
+#else
+void
+ircd::allocator::uninstall_malloc_hook()
+{
+}
+#endif
+
+#if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+void
+ircd::allocator::install_realloc_hook()
+{
+	assert(!their_realloc_hook);
+	their_realloc_hook = __realloc_hook;
+	__realloc_hook = realloc_hook;
+}
+#pragma GCC diagnostic pop
+#else
+void
+ircd::allocator::install_realloc_hook()
+{
+}
+#endif
+
+#if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+void
+ircd::allocator::uninstall_realloc_hook()
+{
+	assert(their_realloc_hook);
+	__realloc_hook = their_realloc_hook;
+}
+#else
+void
+ircd::allocator::uninstall_realloc_hook()
+{
+}
+#endif
+
+#if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+void
+ircd::allocator::install_free_hook()
+{
+	assert(!their_free_hook);
+	their_free_hook = __free_hook;
+	__free_hook = free_hook;
+}
+#pragma GCC diagnostic pop
+#else
+void
+ircd::allocator::install_free_hook()
+{
+}
+#endif
+
+#if defined(__GNU_LIBRARY__) && defined(HAVE_MALLOC_H)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+void
+ircd::allocator::uninstall_free_hook()
+{
+	assert(their_free_hook);
+	__free_hook = their_free_hook;
+}
+#pragma GCC diagnostic pop
+#else
+void
+ircd::allocator::uninstall_free_hook()
+{
+}
+#endif
+
+//
 // allocator::profile
 //
 
