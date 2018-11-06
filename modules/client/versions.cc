@@ -19,7 +19,7 @@ IRCD_MODULE
 resource
 versions_resource
 {
-	"/_matrix/client/versions", resource::opts
+	"/_matrix/client/versions",
 	{
 		"(2.1) Gets the versions of the specification supported by the server."
 	}

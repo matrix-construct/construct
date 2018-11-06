@@ -33,8 +33,7 @@ struct ircd::resource
 	static std::map<string_view, resource *, iless> resources;
 
 	string_view path;
-	string_view description;
-	enum flag flags;
+	std::unique_ptr<const struct opts> opts;
 	std::map<string_view, method *> methods;
 	unique_const_iterator<decltype(resources)> resources_it;
 
@@ -48,7 +47,7 @@ struct ircd::resource
 
 	void operator()(client &, const http::request::head &, const string_view &content_partial);
 
-	resource(const string_view &path, const opts &);
+	resource(const string_view &path, struct opts);
 	resource(const string_view &path);
 	resource() = default;
 	virtual ~resource() noexcept;
@@ -82,6 +81,51 @@ struct ircd::resource::opts
 		0,   // minimum params
 		15   // maximum params
 	};
+};
+
+struct ircd::resource::method
+{
+	enum flag :uint;
+	struct opts;
+	using handler = std::function<response (client &, request &)>;
+
+	struct resource *resource;
+	string_view name;
+	handler function;
+	std::unique_ptr<const struct opts> opts;
+	unique_const_iterator<decltype(resource::methods)> methods_it;
+
+  public:
+	virtual response operator()(client &, request &);
+
+	method(struct resource &, const string_view &name, handler, struct opts);
+	method(struct resource &, const string_view &name, handler);
+	virtual ~method() noexcept;
+};
+
+enum ircd::resource::method::flag
+:uint
+{
+	REQUIRES_AUTH         = 0x01,
+	RATE_LIMITED          = 0x02,
+	VERIFY_ORIGIN         = 0x04,
+	CONTENT_DISCRETION    = 0x08,
+};
+
+struct ircd::resource::method::opts
+{
+	flag flags {(flag)0};
+
+	/// Timeout specific to this resource.
+	seconds timeout {30s};
+
+	/// The maximum size of the Content-Length for this method. Anything
+	/// larger will be summarily rejected with a 413.
+	size_t payload_max {128_KiB};
+
+	/// MIME type; first part is the Registry (i.e application) and second
+	/// part is the format (i.e json). Empty value means nothing rejected.
+	std::pair<string_view, string_view> mime;
 };
 
 struct ircd::resource::request
@@ -184,46 +228,4 @@ struct ircd::resource::response::chunked
 	chunked(chunked &&) noexcept;
 	chunked() = default;
 	~chunked() noexcept;
-};
-
-struct ircd::resource::method
-{
-	using handler = std::function<response (client &, request &)>;
-
-	enum flag
-	{
-		REQUIRES_AUTH         = 0x01,
-		RATE_LIMITED          = 0x02,
-		VERIFY_ORIGIN         = 0x04,
-		CONTENT_DISCRETION    = 0x08,
-	};
-
-	struct opts
-	{
-		flag flags {(flag)0};
-
-		/// Timeout specific to this resource.
-		seconds timeout {30s};
-
-		/// The maximum size of the Content-Length for this method. Anything
-		/// larger will be summarily rejected with a 413.
-		size_t payload_max {128_KiB};
-
-		/// MIME type; first part is the Registry (i.e application) and second
-		/// part is the format (i.e json). Empty value means nothing rejected.
-		std::pair<string_view, string_view> mime;
-	};
-
-	string_view name;
-	struct resource *resource;
-	handler function;
-	struct opts opts;
-	unique_const_iterator<decltype(resource::methods)> methods_it;
-
-  public:
-	virtual response operator()(client &, request &);
-
-	method(struct resource &, const string_view &name, const handler &, const struct opts &);
-	method(struct resource &, const string_view &name, const handler &);
-	virtual ~method() noexcept;
 };

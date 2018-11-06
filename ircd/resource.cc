@@ -64,7 +64,7 @@ ircd::resource::find(const string_view &path_)
 
 		--it;
 		rpath = it->first;
-		if(~it->second->flags & it->second->DIRECTORY)
+		if(~it->second->opts->flags & it->second->DIRECTORY)
 			continue;
 
 		// If the closest directory still doesn't match hand this off to the
@@ -75,13 +75,13 @@ ircd::resource::find(const string_view &path_)
 
 	// Check if the resource is a directory; if not, it can only
 	// handle exact path matches.
-	if(~it->second->flags & it->second->DIRECTORY && path != rpath)
+	if(~it->second->opts->flags & it->second->DIRECTORY && path != rpath)
 		throw http::error
 		{
 			http::code::NOT_FOUND
 		};
 
-	if(it->second->flags & it->second->DIRECTORY)
+	if(it->second->opts->flags & it->second->DIRECTORY)
 	{
 		const auto rem(lstrip(path, rpath));
 		if(!empty(rem) && !startswith(rem, '/'))
@@ -101,19 +101,21 @@ ircd::resource::find(const string_view &path_)
 ircd::resource::resource(const string_view &path)
 :resource
 {
-	path, opts{}
+	path, {}
 }
 {
 }
 
 ircd::resource::resource(const string_view &path,
-                         const opts &opts)
+                         struct opts opts)
 :path
 {
 	rstrip(path, '/')
 }
-,description{opts.description}
-,flags{opts.flags}
+,opts
+{
+	std::make_unique<const struct opts>(std::move(opts))
+}
 ,resources_it{[this]
 {
 	const auto iit
@@ -189,7 +191,7 @@ ircd::authenticate(client &client,
 
 	const bool requires_auth
 	{
-		method.opts.flags & method.REQUIRES_AUTH
+		method.opts->flags & method.REQUIRES_AUTH
 	};
 
 	if(!request.access_token && requires_auth)
@@ -239,7 +241,7 @@ try
 {
 	const bool required
 	{
-		method.opts.flags & method.VERIFY_ORIGIN
+		method.opts->flags & method.VERIFY_ORIGIN
 	};
 
 	const auto authorization
@@ -360,7 +362,7 @@ ircd::resource::operator()(client &client,
 	};
 
 	// Bail out if the method limited the amount of content and it was exceeded.
-	if(head.content_length > method.opts.payload_max)
+	if(head.content_length > method.opts->payload_max)
 		throw http::error
 		{
 			http::PAYLOAD_TOO_LARGE
@@ -368,12 +370,12 @@ ircd::resource::operator()(client &client,
 
 	// Check if the resource method wants a specific MIME type. If no option
 	// is given by the resource then any Content-Type by the client will pass.
-	if(method.opts.mime.first)
+	if(method.opts->mime.first)
 	{
 		const auto &ct(split(head.content_type, ';'));
 		const auto &supplied(split(ct.first, '/'));
 		const auto &charset(ct.second);
-		const auto &required(method.opts.mime);
+		const auto &required(method.opts->mime);
 		if(required.first != supplied.first
 		||(required.second && required.second != supplied.second))
 			throw http::error
@@ -387,7 +389,7 @@ ircd::resource::operator()(client &client,
 	// disable this in its options structure.
 	const net::scope_timeout timeout
 	{
-		*client.sock, method.opts.timeout, [&client, &head]
+		*client.sock, method.opts->timeout, [&client, &head]
 		(const bool &timed_out)
 		{
 			if(!timed_out)
@@ -433,7 +435,7 @@ ircd::resource::operator()(client &client,
 		content_partial
 	};
 
-	if(content_remain && ~method.opts.flags & method.CONTENT_DISCRETION)
+	if(content_remain && ~method.opts->flags & method.CONTENT_DISCRETION)
 	{
 		// Copy any partial content to the final contiguous allocated buffer;
 		client.content_buffer = unique_buffer<mutable_buffer>{head.content_length};
@@ -585,24 +587,40 @@ ircd::resource::allow_methods_list(const mutable_buffer &buf)
 	return { data(buf), len };
 }
 
+//
+// method::method
+//
+
 ircd::resource::method::method(struct resource &resource,
                                const string_view &name,
-                               const handler &handler)
+                               handler function)
 :method
 {
-	resource, name, handler, {}
+	resource, name, std::move(function), {}
 }
 {
 }
 
 ircd::resource::method::method(struct resource &resource,
                                const string_view &name,
-                               const handler &handler,
-                               const struct opts &opts)
-:name{name}
-,resource{&resource}
-,function{handler}
-,opts{opts}
+                               handler function,
+                               struct opts opts)
+:resource
+{
+	&resource
+}
+,name
+{
+	name
+}
+,function
+{
+	std::move(function)
+}
+,opts
+{
+	std::make_unique<const struct opts>(std::move(opts))
+}
 ,methods_it{[this, &name]
 {
 	const auto iit

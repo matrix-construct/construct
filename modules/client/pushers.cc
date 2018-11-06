@@ -19,7 +19,7 @@ IRCD_MODULE
 ircd::resource
 pushers_resource
 {
-	"/_matrix/client/r0/pushers/", resource::opts
+	"/_matrix/client/r0/pushers/",
 	{
 		"(11.12.1) Pushers",
 		resource::DIRECTORY,

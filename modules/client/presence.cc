@@ -19,7 +19,7 @@ IRCD_MODULE
 ircd::resource
 presence_resource
 {
-	"/_matrix/client/r0/presence/", resource::opts
+	"/_matrix/client/r0/presence/",
 	{
 		"(11.6.2) Presence",
 		resource::DIRECTORY,

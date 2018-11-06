@@ -19,7 +19,7 @@ IRCD_MODULE
 resource
 join_resource
 {
-	"/_matrix/client/r0/join/", resource::opts
+	"/_matrix/client/r0/join/",
 	{
 		"(7.4.2.3) Join room_id or alias.",
 		resource::DIRECTORY,

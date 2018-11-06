@@ -19,7 +19,7 @@ IRCD_MODULE
 ircd::resource
 keys_upload_resource
 {
-	"/_matrix/client/unstable/keys/upload/", resource::opts
+	"/_matrix/client/unstable/keys/upload/",
 	{
 		"(11.10.2.1) Keys Upload",
 		resource::DIRECTORY,
@@ -29,7 +29,7 @@ keys_upload_resource
 ircd::resource
 keys_query_resource
 {
-	"/_matrix/client/unstable/keys/query", resource::opts
+	"/_matrix/client/unstable/keys/query",
 	{
 		"(11.10.2.2) Keys Query",
 	}

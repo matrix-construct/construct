@@ -3891,17 +3891,17 @@ console_cmd__resource(opt &out, const string_view &line)
 	{
 		const auto &r(*p.second);
 		out << '`' << p.first << '\''
-		    << (r.flags & resource::DIRECTORY? " DIRECTORY" : "")
+		    << (r.opts->flags & resource::DIRECTORY? " DIRECTORY" : "")
 		    << std::endl;
 
 		for(const auto &mp : p.second->methods)
 		{
 			const auto &m(*mp.second);
 			out << mp.first
-			    << (m.opts.flags & resource::method::REQUIRES_AUTH? " REQUIRES_AUTH" : "")
-			    << (m.opts.flags & resource::method::RATE_LIMITED? " RATE_LIMITED" : "")
-			    << (m.opts.flags & resource::method::VERIFY_ORIGIN? " VERIFY_ORIGIN" : "")
-			    << (m.opts.flags & resource::method::CONTENT_DISCRETION? " CONTENT_DISCRETION" : "")
+			    << (m.opts->flags & resource::method::REQUIRES_AUTH? " REQUIRES_AUTH" : "")
+			    << (m.opts->flags & resource::method::RATE_LIMITED? " RATE_LIMITED" : "")
+			    << (m.opts->flags & resource::method::VERIFY_ORIGIN? " VERIFY_ORIGIN" : "")
+			    << (m.opts->flags & resource::method::CONTENT_DISCRETION? " CONTENT_DISCRETION" : "")
 			    << std::endl;
 		}
 
