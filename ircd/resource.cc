@@ -156,200 +156,6 @@ noexcept
 	};
 }
 
-namespace ircd
-{
-	static void cache_warm_origin(const string_view &origin);
-	static string_view verify_origin(client &client, resource::method &method, resource::request &request);
-	static string_view authenticate(client &client, resource::method &method, resource::request &request);
-}
-
-/// Authenticate a client based on access_token either in the query string or
-/// in the Authentication bearer header. If a token is found the user_id owning
-/// the token is copied into the request. If it is not found or it is invalid
-/// then the method being requested is checked to see if it is required. If so
-/// the appropriate exception is thrown.
-ircd::string_view
-ircd::authenticate(client &client,
-                   resource::method &method,
-                   resource::request &request)
-{
-	request.access_token =
-	{
-		request.query["access_token"]
-	};
-
-	if(empty(request.access_token))
-	{
-		const auto authorization
-		{
-			split(request.head.authorization, ' ')
-		};
-
-		if(iequals(authorization.first, "bearer"_sv))
-			request.access_token = authorization.second;
-	}
-
-	const bool requires_auth
-	{
-		method.opts->flags & method.REQUIRES_AUTH
-	};
-
-	if(!request.access_token && requires_auth)
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_MISSING_TOKEN",
-			"Credentials for this method are required but missing."
-		};
-
-	if(!request.access_token)
-		return {};
-
-	static const m::event::fetch::opts fopts
-	{
-		m::event::keys::include
-		{
-			"sender"
-		}
-	};
-
-	const m::room::state tokens{m::user::tokens, &fopts};
-	tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&request]
-	(const m::event &event)
-	{
-		// The user sent this access token to the tokens room
-		request.user_id = m::user::id
-		{
-			at<"sender"_>(event)
-		};
-	});
-
-	if(!request.user_id && requires_auth)
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_UNKNOWN_TOKEN",
-			"Credentials for this method are required but invalid."
-		};
-
-	return request.user_id;
-}
-
-ircd::string_view
-ircd::verify_origin(client &client,
-                    resource::method &method,
-                    resource::request &request)
-try
-{
-	const bool required
-	{
-		method.opts->flags & method.VERIFY_ORIGIN
-	};
-
-	const auto authorization
-	{
-		split(request.head.authorization, ' ')
-	};
-
-	const bool supplied
-	{
-		iequals(authorization.first, "X-Matrix"_sv)
-	};
-
-	if(!supplied && !required)
-		return {};
-
-	if(!supplied && required)
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_MISSING_AUTHORIZATION",
-			"Required X-Matrix Authorization was not supplied"
-		};
-
-	const m::request::x_matrix x_matrix
-	{
-		request.head.authorization
-	};
-
-	const m::request object
-	{
-		x_matrix.origin, my_host(), method.name, request.head.uri, request.content
-	};
-
-	if(!object.verify(x_matrix.key, x_matrix.sig))
-		throw m::error
-		{
-			http::FORBIDDEN, "M_INVALID_SIGNATURE",
-			"The X-Matrix Authorization is invalid."
-		};
-
-	request.node_id = {m::node::id::origin, x_matrix.origin};
-	request.origin = x_matrix.origin;
-
-	// If we have an error cached from previously not being able to
-	// contact this origin we can clear that now that they're alive.
-	server::errclear(request.origin);
-
-	// The origin was verified so we can invoke the cache warming now.
-	cache_warm_origin(request.origin);
-
-	return request.origin;
-}
-catch(const m::error &)
-{
-	throw;
-}
-catch(const std::exception &e)
-{
-	log::derror
-	{
-		resource::log, "X-Matrix Authorization from %s: %s",
-		string(remote(client)),
-		e.what()
-	};
-
-	throw m::error
-	{
-		http::UNAUTHORIZED, "M_UNKNOWN_ERROR",
-		"An error has prevented authorization: %s",
-		e.what()
-	};
-}
-
-ircd::conf::item<ircd::seconds>
-cache_warmup_time
-{
-	{ "name",     "ircd.cache_warmup_time" },
-	{ "default",  3600L                    },
-};
-
-/// We can smoothly warmup some memory caches after daemon startup as the
-/// requests trickle in from remote servers. This function is invoked after
-/// a remote contacts and reveals its identity with the X-Matrix verification.
-///
-/// This process helps us avoid cold caches for the first requests coming from
-/// our server. Such requests are often parallel requests, for ex. to hundreds
-/// of servers in a Matrix room at the same time.
-///
-/// This function does nothing after the cache warmup period has ended.
-void
-ircd::cache_warm_origin(const string_view &origin)
-try
-{
-	if(ircd::uptime() > seconds(cache_warmup_time))
-		return;
-
-	// Make a query through SRV and A records.
-	net::dns::resolve(origin, net::dns::prefetch_ipport);
-}
-catch(const std::exception &e)
-{
-	log::derror
-	{
-		resource::log, "Cache warming for '%s' :%s",
-		origin,
-		e.what()
-	};
-}
-
 void
 ircd::resource::operator()(client &client,
                            const http::request::head &head,
@@ -361,194 +167,12 @@ ircd::resource::operator()(client &client,
 		operator[](head.method)
 	};
 
-	// Bail out if the method limited the amount of content and it was exceeded.
-	if(head.content_length > method.opts->payload_max)
-		throw http::error
-		{
-			http::PAYLOAD_TOO_LARGE
-		};
-
-	// Check if the resource method wants a specific MIME type. If no option
-	// is given by the resource then any Content-Type by the client will pass.
-	if(method.opts->mime.first)
-	{
-		const auto &ct(split(head.content_type, ';'));
-		const auto &supplied(split(ct.first, '/'));
-		const auto &charset(ct.second);
-		const auto &required(method.opts->mime);
-		if(required.first != supplied.first
-		||(required.second && required.second != supplied.second))
-			throw http::error
-			{
-				http::UNSUPPORTED_MEDIA_TYPE
-			};
-	}
-
-	// This timer will keep the request from hanging forever for whatever
-	// reason. The resource method may want to do its own timing and can
-	// disable this in its options structure.
-	const net::scope_timeout timeout
-	{
-		*client.sock, method.opts->timeout, [&client, &head]
-		(const bool &timed_out)
-		{
-			if(!timed_out)
-				return;
-
-			log::derror
-			{
-				log, "%s Timed out in %s `%s'",
-				client.loghead(),
-				head.method,
-				head.path
-			};
-
-			// The interrupt is effective when the socket has already been
-			// closed and/or the client is still stuck in a request for
-			// some reason.
-			if(client.reqctx)
-				ctx::interrupt(*client.reqctx);
-
-			//TODO: If we know that no response has been sent yet
-			//TODO: we can respond with http::REQUEST_TIMEOUT instead.
-			client.close(net::dc::RST, net::close_ignore);
-		}
-	};
-
-	// Content that hasn't yet arrived is remaining
-	const size_t content_remain
-	{
-		head.content_length - client.content_consumed
-	};
-
-	// View of the content that will be passed to the resource handler. Starts
-	// with the content received so far which is actually in the head's buffer.
-	// One of three things can happen now:
-	//
-	// - There is no more content so we pass this as-is right to the resource.
-	// - There is more content, so we allocate a content buffer, copy what we
-	// have to it, read the rest off the socket, and then reassign this view.
-	// - There is more content, but the resource wants to read it off the
-	// socket on its own terms, so we pass this as-is.
-	string_view content
-	{
-		content_partial
-	};
-
-	if(content_remain && ~method.opts->flags & method.CONTENT_DISCRETION)
-	{
-		// Copy any partial content to the final contiguous allocated buffer;
-		client.content_buffer = unique_buffer<mutable_buffer>{head.content_length};
-		memcpy(data(client.content_buffer), data(content_partial), size(content_partial));
-
-		// Setup a window inside the buffer for the remaining socket read.
-		const mutable_buffer content_remain_buffer
-		{
-			data(client.content_buffer) + size(content_partial), content_remain
-		};
-
-		// Read the remaining content off the socket.
-		client.content_consumed += read_all(*client.sock, content_remain_buffer);
-		assert(client.content_consumed == head.content_length);
-		content = string_view
-		{
-			data(client.content_buffer), head.content_length
-		};
-	}
-
-	client.request = resource::request
-	{
-		head, content
-	};
-
-	// We take the extra step here to clear the assignment to client.request
-	// when this request stack has finished for two reasons:
-	// - It allows other ctxs to peep at the client::list to see what this
-	//   client/ctx/request is currently working on with some more safety.
-	// - It prevents an easy source for stale refs wrt the longpoll thing.
-	const unwind clear_request{[&client]
-	{
-		client.request = {};
-	}};
-
-	const auto pathparm
-	{
-		lstrip(head.path, this->path)
-	};
-
-	client.request.parv =
-	{
-		client.request.param, tokens(pathparm, '/', client.request.param)
-	};
-
-	// Client access token verified here. On success, user_id owning the token
-	// is copied into the client.request structure. On failure, the method is
-	// checked to see if it requires authentication and if so, this throws.
-	authenticate(client, method, client.request);
-
-	// Server X-Matrix header verified here. Similar to client auth, origin
-	// which has been authed is referenced in the client.request. If the method
-	// requires, and auth fails or not provided, this function throws.
-	verify_origin(client, method, client.request);
-
-	// Finally handle the request.
-	handle_request(client, method, client.request);
-}
-
-void
-ircd::resource::handle_request(client &client,
-                               method &method,
-                               resource::request &request)
-try
-{
-	method(client, request);
-}
-catch(const json::not_found &e)
-{
-	throw m::error
-	{
-		http::NOT_FOUND, "M_BAD_JSON", "Required JSON field: %s", e.what()
-	};
-}
-catch(const json::print_error &e)
-{
-	throw m::error
-	{
-		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
-	};
-}
-catch(const json::error &e)
-{
-	throw m::error
-	{
-		http::BAD_REQUEST, "M_NOT_JSON", "%s", e.what()
-	};
-}
-catch(const mods::unavailable &e)
-{
-	throw m::UNAVAILABLE
-	{
-		"%s", e.what()
-	};
-}
-catch(const std::out_of_range &e)
-{
-	throw m::error
-	{
-		http::NOT_FOUND, "M_NOT_FOUND", "%s", e.what()
-	};
-}
-catch(const ctx::timeout &e)
-{
-	throw m::error
-	{
-		http::BAD_GATEWAY, "M_REQUEST_TIMEOUT", "%s", e.what()
-	};
+	method(client, head, content_partial);
 }
 
 ircd::resource::method &
 ircd::resource::operator[](const string_view &name)
-try
+const try
 {
 	return *methods.at(name);
 }
@@ -568,6 +192,7 @@ catch(const std::out_of_range &e)
 
 ircd::string_view
 ircd::resource::allow_methods_list(const mutable_buffer &buf)
+const
 {
 	size_t len(0);
 	if(likely(size(buf)))
@@ -590,6 +215,12 @@ ircd::resource::allow_methods_list(const mutable_buffer &buf)
 //
 // method::method
 //
+
+namespace ircd
+{
+	extern conf::item<seconds> cache_warmup_time;
+	static void cache_warm_origin(const string_view &origin);
+}
 
 ircd::resource::method::method(struct resource &resource,
                                const string_view &name,
@@ -648,18 +279,395 @@ noexcept
 {
 }
 
-ircd::resource::response
+void
 ircd::resource::method::operator()(client &client,
-                                   request &request)
+                                   const http::request::head &head,
+                                   const string_view &content_partial)
+{
+	// Bail out if the method limited the amount of content and it was exceeded.
+	if(head.content_length > opts->payload_max)
+		throw http::error
+		{
+			http::PAYLOAD_TOO_LARGE
+		};
+
+	// Check if the resource method wants a specific MIME type. If no option
+	// is given by the resource then any Content-Type by the client will pass.
+	if(opts->mime.first)
+	{
+		const auto &ct(split(head.content_type, ';'));
+		const auto &supplied(split(ct.first, '/'));
+		const auto &charset(ct.second);
+		const auto &required(opts->mime);
+		if(required.first != supplied.first
+		||(required.second && required.second != supplied.second))
+			throw http::error
+			{
+				http::UNSUPPORTED_MEDIA_TYPE
+			};
+	}
+
+	// This timer will keep the request from hanging forever for whatever
+	// reason. The resource method may want to do its own timing and can
+	// disable this in its options structure.
+	const net::scope_timeout timeout
+	{
+		*client.sock, opts->timeout, [this, &client]
+		(const bool &timed_out)
+		{
+			if(timed_out)
+				this->handle_timeout(client);
+		}
+	};
+
+	// Content that hasn't yet arrived is remaining
+	const size_t content_remain
+	{
+		head.content_length - client.content_consumed
+	};
+
+	// View of the content that will be passed to the resource handler. Starts
+	// with the content received so far which is actually in the head's buffer.
+	// One of three things can happen now:
+	//
+	// - There is no more content so we pass this as-is right to the resource.
+	// - There is more content, so we allocate a content buffer, copy what we
+	// have to it, read the rest off the socket, and then reassign this view.
+	// - There is more content, but the resource wants to read it off the
+	// socket on its own terms, so we pass this as-is.
+	string_view content
+	{
+		content_partial
+	};
+
+	if(content_remain && ~opts->flags & CONTENT_DISCRETION)
+	{
+		// Copy any partial content to the final contiguous allocated buffer;
+		client.content_buffer = unique_buffer<mutable_buffer>{head.content_length};
+		memcpy(data(client.content_buffer), data(content_partial), size(content_partial));
+
+		// Setup a window inside the buffer for the remaining socket read.
+		const mutable_buffer content_remain_buffer
+		{
+			data(client.content_buffer) + size(content_partial), content_remain
+		};
+
+		// Read the remaining content off the socket.
+		client.content_consumed += read_all(*client.sock, content_remain_buffer);
+		assert(client.content_consumed == head.content_length);
+		content = string_view
+		{
+			data(client.content_buffer), head.content_length
+		};
+	}
+
+	client.request = resource::request
+	{
+		head, content
+	};
+
+	// We take the extra step here to clear the assignment to client.request
+	// when this request stack has finished for two reasons:
+	// - It allows other ctxs to peep at the client::list to see what this
+	//   client/ctx/request is currently working on with some more safety.
+	// - It prevents an easy source for stale refs wrt the longpoll thing.
+	const unwind clear_request{[&client]
+	{
+		client.request = {};
+	}};
+
+	const auto pathparm
+	{
+		lstrip(head.path, resource->path)
+	};
+
+	client.request.parv =
+	{
+		client.request.param, tokens(pathparm, '/', client.request.param)
+	};
+
+	// Client access token verified here. On success, user_id owning the token
+	// is copied into the client.request structure. On failure, the method is
+	// checked to see if it requires authentication and if so, this throws.
+	authenticate(client, client.request);
+
+	// Server X-Matrix header verified here. Similar to client auth, origin
+	// which has been authed is referenced in the client.request. If the method
+	// requires, and auth fails or not provided, this function throws.
+	// Otherwise it returns a string_view of the origin name in
+	// client.request.origin, or an empty string_view if an origin was not
+	// apropos for this request (i.e a client request rather than federation).
+	if(verify_origin(client, client.request))
+	{
+		assert(client.request.origin);
+
+		// If we have an error cached from previously not being able to
+		// contact this origin we can clear that now that they're alive.
+		server::errclear(client.request.origin);
+
+		// The origin was verified so we can invoke the cache warming now.
+		cache_warm_origin(client.request.origin);
+	}
+
+	// Finally handle the request.
+	call_handler(client, client.request);
+}
+
+void
+ircd::resource::method::call_handler(client &client,
+                                     resource::request &request)
 try
 {
-	return function(client, request);
+	function(client, request);
+}
+catch(const json::print_error &e)
+{
+	throw m::error
+	{
+		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
+	};
+}
+catch(const json::not_found &e)
+{
+	throw m::error
+	{
+		http::NOT_FOUND, "M_BAD_JSON", "Required JSON field: %s", e.what()
+	};
+}
+catch(const json::error &e)
+{
+	throw m::error
+	{
+		http::BAD_REQUEST, "M_NOT_JSON", "%s", e.what()
+	};
+}
+catch(const ctx::timeout &e)
+{
+	throw m::error
+	{
+		http::BAD_GATEWAY, "M_REQUEST_TIMEOUT", "%s", e.what()
+	};
+}
+catch(const mods::unavailable &e)
+{
+	throw m::UNAVAILABLE
+	{
+		"%s", e.what()
+	};
 }
 catch(const std::bad_function_call &e)
 {
-	throw http::error
+	throw m::UNAVAILABLE
 	{
-		http::SERVICE_UNAVAILABLE
+		"%s", e.what()
+	};
+}
+catch(const std::out_of_range &e)
+{
+	throw m::error
+	{
+		http::NOT_FOUND, "M_NOT_FOUND", "%s", e.what()
+	};
+}
+
+void
+ircd::resource::method::handle_timeout(client &client)
+const
+{
+	log::derror
+	{
+		log, "%s Timed out in %s `%s'",
+		client.loghead(),
+		name,
+		resource->path
+	};
+
+	// The interrupt is effective when the socket has already been
+	// closed and/or the client is still stuck in a request for
+	// some reason.
+	if(client.reqctx)
+		ctx::interrupt(*client.reqctx);
+
+	//TODO: If we know that no response has been sent yet
+	//TODO: we can respond with http::REQUEST_TIMEOUT instead.
+	client.close(net::dc::RST, net::close_ignore);
+}
+
+/// Authenticate a client based on access_token either in the query string or
+/// in the Authentication bearer header. If a token is found the user_id owning
+/// the token is copied into the request. If it is not found or it is invalid
+/// then the method being requested is checked to see if it is required. If so
+/// the appropriate exception is thrown.
+ircd::string_view
+ircd::resource::method::authenticate(client &client,
+                                     resource::request &request)
+const
+{
+	request.access_token =
+	{
+		request.query["access_token"]
+	};
+
+	if(empty(request.access_token))
+	{
+		const auto authorization
+		{
+			split(request.head.authorization, ' ')
+		};
+
+		if(iequals(authorization.first, "bearer"_sv))
+			request.access_token = authorization.second;
+	}
+
+	const bool requires_auth
+	{
+		opts->flags & REQUIRES_AUTH
+	};
+
+	if(!request.access_token && requires_auth)
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_MISSING_TOKEN",
+			"Credentials for this method are required but missing."
+		};
+
+	if(!request.access_token)
+		return {};
+
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"sender"
+		}
+	};
+
+	const m::room::state tokens{m::user::tokens, &fopts};
+	tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&request]
+	(const m::event &event)
+	{
+		// The user sent this access token to the tokens room
+		request.user_id = m::user::id
+		{
+			at<"sender"_>(event)
+		};
+	});
+
+	if(!request.user_id && requires_auth)
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_UNKNOWN_TOKEN",
+			"Credentials for this method are required but invalid."
+		};
+
+	return request.user_id;
+}
+
+ircd::string_view
+ircd::resource::method::verify_origin(client &client,
+                                      request &request)
+const try
+{
+	const bool required
+	{
+		opts->flags & VERIFY_ORIGIN
+	};
+
+	const auto authorization
+	{
+		split(request.head.authorization, ' ')
+	};
+
+	const bool supplied
+	{
+		iequals(authorization.first, "X-Matrix"_sv)
+	};
+
+	if(!supplied && !required)
+		return {};
+
+	if(!supplied && required)
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_MISSING_AUTHORIZATION",
+			"Required X-Matrix Authorization was not supplied"
+		};
+
+	const m::request::x_matrix x_matrix
+	{
+		request.head.authorization
+	};
+
+	const m::request object
+	{
+		x_matrix.origin, my_host(), name, request.head.uri, request.content
+	};
+
+	if(!object.verify(x_matrix.key, x_matrix.sig))
+		throw m::error
+		{
+			http::FORBIDDEN, "M_INVALID_SIGNATURE",
+			"The X-Matrix Authorization is invalid."
+		};
+
+	request.node_id = {m::node::id::origin, x_matrix.origin};
+	request.origin = x_matrix.origin;
+	return request.origin;
+}
+catch(const m::error &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		resource::log, "X-Matrix Authorization from %s: %s",
+		string(remote(client)),
+		e.what()
+	};
+
+	throw m::error
+	{
+		http::UNAUTHORIZED, "M_UNKNOWN_ERROR",
+		"An error has prevented authorization: %s",
+		e.what()
+	};
+}
+
+decltype(ircd::cache_warmup_time)
+ircd::cache_warmup_time
+{
+	{ "name",     "ircd.cache_warmup_time" },
+	{ "default",  3600L                    },
+};
+
+/// We can smoothly warmup some memory caches after daemon startup as the
+/// requests trickle in from remote servers. This function is invoked after
+/// a remote contacts and reveals its identity with the X-Matrix verification.
+///
+/// This process helps us avoid cold caches for the first requests coming from
+/// our server. Such requests are often parallel requests, for ex. to hundreds
+/// of servers in a Matrix room at the same time.
+///
+/// This function does nothing after the cache warmup period has ended.
+void
+ircd::cache_warm_origin(const string_view &origin)
+try
+{
+	if(ircd::uptime() > seconds(cache_warmup_time))
+		return;
+
+	// Make a query through SRV and A records.
+	net::dns::resolve(origin, net::dns::prefetch_ipport);
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		resource::log, "Cache warming for '%s' :%s",
+		origin,
+		e.what()
 	};
 }
 

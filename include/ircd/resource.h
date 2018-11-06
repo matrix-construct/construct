@@ -37,20 +37,16 @@ struct ircd::resource
 	std::map<string_view, method *> methods;
 	unique_const_iterator<decltype(resources)> resources_it;
 
-	string_view allow_methods_list(const mutable_buffer &buf);
-
-  private:
-	virtual void handle_request(client &, method &, resource::request &);
+	string_view allow_methods_list(const mutable_buffer &buf) const;
+	method &operator[](const string_view &path) const;
 
   public:
-	method &operator[](const string_view &path);
-
 	void operator()(client &, const http::request::head &, const string_view &content_partial);
 
 	resource(const string_view &path, struct opts);
 	resource(const string_view &path);
 	resource() = default;
-	virtual ~resource() noexcept;
+	~resource() noexcept;
 
 	static resource &find(const string_view &path);
 };
@@ -87,16 +83,23 @@ struct ircd::resource::method
 {
 	enum flag :uint;
 	struct opts;
+	struct stats;
 	using handler = std::function<response (client &, request &)>;
 
 	struct resource *resource;
 	string_view name;
 	handler function;
 	std::unique_ptr<const struct opts> opts;
+	std::unique_ptr<struct stats> stats;
 	unique_const_iterator<decltype(resource::methods)> methods_it;
 
+	string_view verify_origin(client &, request &) const;
+	string_view authenticate(client &, request &) const;
+	void handle_timeout(client &) const;
+	void call_handler(client &, request &);
+
   public:
-	response operator()(client &, request &);
+	void operator()(client &, const http::request::head &, const string_view &content_partial);
 
 	method(struct resource &, const string_view &name, handler, struct opts);
 	method(struct resource &, const string_view &name, handler);
