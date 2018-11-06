@@ -96,11 +96,11 @@ struct ircd::resource::method
 	unique_const_iterator<decltype(resource::methods)> methods_it;
 
   public:
-	virtual response operator()(client &, request &);
+	response operator()(client &, request &);
 
 	method(struct resource &, const string_view &name, handler, struct opts);
 	method(struct resource &, const string_view &name, handler);
-	virtual ~method() noexcept;
+	~method() noexcept;
 };
 
 enum ircd::resource::method::flag
