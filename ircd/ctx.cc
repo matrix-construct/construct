@@ -1588,7 +1588,7 @@ ircd::ctx::promise_base::make_ready()
 	// callback etc.
 	notify(st);
 
-	// At this point the future should not longer be considered valid; no longer
+	// At this point the future should no longer be considered valid; no longer
 	// referring to the shared_state.
 	assert(!valid());
 }
