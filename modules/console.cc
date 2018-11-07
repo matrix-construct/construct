@@ -3831,6 +3831,10 @@ console_cmd__client(opt &out, const string_view &line)
 		    << "  " << left << setw(22) << remote(*client)
 		    ;
 
+		out << " | RDY " << right << setw(4) << client->ready_count
+		    << " | REQ " << right << setw(4) << client->request_count
+		    ;
+
 		if(bool(client->sock))
 		{
 			const auto stat

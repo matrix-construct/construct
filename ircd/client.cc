@@ -406,6 +406,7 @@ try
 	assert(ctx::current);
 	assert(!client->reqctx);
 	client->reqctx = ctx::current;
+	client->ready_count++;
 	const unwind reset{[&client]
 	{
 		assert(bool(client));
@@ -710,12 +711,16 @@ catch(const ctx::terminated &)
 ///
 /// This function is timed. The timeout will prevent a client from
 /// sending a partial request and leave us waiting for the rest.
-/// As of right now this timeout extends to our handling of the
-/// request too.
 bool
 ircd::client::handle_request(parse::capstan &pc)
 try
 {
+	timer = ircd::timer{};
+	++request_count;
+
+	// This timeout covers the reception of a complete HTTP head. If the
+	// head was fragmented and has not entirely arrived yet this function
+	// will block this request context below. The timeout limits that.
 	net::scope_timeout timeout
 	{
 		*sock, conf->request_timeout
@@ -723,7 +728,6 @@ try
 
 	// This is the first read off the wire. The headers are entirely read and
 	// the tape is advanced.
-	timer = ircd::timer{};
 	const http::request::head head{pc};
 	head_length = pc.parsed - data(head_buffer);
 	content_consumed = std::min(pc.unparsed(), head.content_length);

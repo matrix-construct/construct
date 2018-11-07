@@ -51,6 +51,8 @@ struct ircd::client
 	std::shared_ptr<socket> sock;
 	net::ipport local;
 	uint64_t id {++ctr};
+	uint64_t ready_count {0};
+	uint64_t request_count {0};
 	ctx::ctx *reqctx {nullptr};
 	ircd::timer timer;
 	size_t head_length {0};
