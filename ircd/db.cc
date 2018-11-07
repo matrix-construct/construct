@@ -2278,10 +2278,9 @@ noexcept
 {
 	log::info
 	{
-		rog, "'%s' flush begin column[%s] path[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		rog, "'%s' flush begin column[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
 		d->name,
 		info.cf_name,
-		info.file_path,
 		info.thread_id,
 		info.job_id,
 		info.triggered_writes_slowdown,
