@@ -800,17 +800,24 @@ bool
 ircd::client::resource_request(const http::request::head &head)
 try
 {
+	auto &resource
+	{
+		// throws HTTP 404 if not found.
+		ircd::resource::find(head.path)
+	};
+
+	auto &method
+	{
+		// throws HTTP 405 if not found.
+		resource[head.method]
+	};
+
 	const string_view content_partial
 	{
 		data(head_buffer) + head_length, content_consumed
 	};
 
-	auto &resource
-	{
-		ircd::resource::find(head.path)
-	};
-
-	resource(*this, head, content_partial);
+	method(*this, head, content_partial);
 	discard_unconsumed(head);
 	return true;
 }

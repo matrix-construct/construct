@@ -38,10 +38,9 @@ struct ircd::resource
 	unique_const_iterator<decltype(resources)> resources_it;
 
 	string_view allow_methods_list(const mutable_buffer &buf) const;
-	method &operator[](const string_view &path) const;
 
   public:
-	void operator()(client &, const http::request::head &, const string_view &content_partial);
+	method &operator[](const string_view &name) const;
 
 	resource(const string_view &path, struct opts);
 	resource(const string_view &path);

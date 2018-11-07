@@ -156,20 +156,6 @@ noexcept
 	};
 }
 
-void
-ircd::resource::operator()(client &client,
-                           const http::request::head &head,
-                           const string_view &content_partial)
-{
-	// Find the method or METHOD_NOT_ALLOWED
-	auto &method
-	{
-		operator[](head.method)
-	};
-
-	method(client, head, content_partial);
-}
-
 ircd::resource::method &
 ircd::resource::operator[](const string_view &name)
 const try
@@ -178,7 +164,7 @@ const try
 }
 catch(const std::out_of_range &e)
 {
-	char buf[128];
+	thread_local char buf[512];
 	const http::header headers[]
 	{
 		{ "Allow", allow_methods_list(buf) }
