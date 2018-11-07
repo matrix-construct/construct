@@ -48,7 +48,6 @@ get(const tuple &t,
 		val<idx>(t)
 	};
 
-	using value_type = tuple_value_type<tuple, idx>;
 	return defined(json::value(ret))? ret : def;
 }
 
@@ -81,7 +80,6 @@ get(tuple &t,
 		get<hash, tuple>(t)
 	};
 
-	using value_type = decltype(ret);
 	return defined(json::value(ret))? ret : def;
 }
 

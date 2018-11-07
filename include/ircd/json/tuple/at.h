@@ -29,7 +29,6 @@ at(const tuple &t)
 		val<idx>(t)
 	};
 
-	using value_type = tuple_value_type<tuple, idx>;
 	if(!defined(json::value(ret)))
 		throw not_found
 		{
@@ -54,7 +53,6 @@ at(tuple &t)
 		val<idx>(t)
 	};
 
-	using value_type = tuple_value_type<tuple, idx>;
 	if(!defined(json::value(ret)))
 		throw not_found
 		{
