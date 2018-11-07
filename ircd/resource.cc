@@ -274,7 +274,7 @@ ircd::resource::method::operator()(client &client,
                                    const http::request::head &head,
                                    const string_view &content_partial)
 {
-	stats->requests++;
+	++stats->requests;
 
 	// Bail out if the method limited the amount of content and it was exceeded.
 	if(head.content_length > opts->payload_max)
@@ -402,9 +402,7 @@ ircd::resource::method::operator()(client &client,
 	}
 
 	// Finally handle the request.
-	stats->handles++;
 	call_handler(client, client.request);
-	stats->handled++;
 }
 
 void
@@ -413,9 +411,11 @@ ircd::resource::method::call_handler(client &client,
 try
 {
 	function(client, request);
+	++stats->completions;
 }
 catch(const json::print_error &e)
 {
+	++stats->internal_errors;
 	throw m::error
 	{
 		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
@@ -451,6 +451,7 @@ catch(const mods::unavailable &e)
 }
 catch(const std::bad_function_call &e)
 {
+	++stats->internal_errors;
 	throw m::UNAVAILABLE
 	{
 		"%s", e.what()
@@ -458,10 +459,16 @@ catch(const std::bad_function_call &e)
 }
 catch(const std::out_of_range &e)
 {
-	throw m::error
+	++stats->internal_errors;
+	throw m::NOT_FOUND
 	{
-		http::NOT_FOUND, "M_NOT_FOUND", "%s", e.what()
+		"%s", e.what()
 	};
+}
+catch(...)
+{
+	++stats->internal_errors;
+	throw;
 }
 
 void

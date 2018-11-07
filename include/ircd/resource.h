@@ -132,10 +132,10 @@ struct ircd::resource::method::opts
 
 struct ircd::resource::method::stats
 {
-	uint64_t requests {0};
-	uint64_t timeouts {0};
-	uint64_t handles {0};
-	uint64_t handled {0};
+	uint64_t requests {0};            // The method was found and called.
+	uint64_t timeouts {0};            // The method's timeout was exceeded.
+	uint64_t completions {0};         // The handler returned without throwing.
+	uint64_t internal_errors {0};     // The handler threw a very bad exception.
 };
 
 struct ircd::resource::request
