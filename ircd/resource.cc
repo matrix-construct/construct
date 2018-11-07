@@ -8,6 +8,8 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <ircd/asio.h>
+
 decltype(ircd::resource::log)
 ircd::resource::log
 {
@@ -273,6 +275,7 @@ void
 ircd::resource::method::operator()(client &client,
                                    const http::request::head &head,
                                    const string_view &content_partial)
+try
 {
 	++stats->requests;
 
@@ -403,6 +406,27 @@ ircd::resource::method::operator()(client &client,
 
 	// Finally handle the request.
 	call_handler(client, client.request);
+	++stats->completions;
+}
+catch(const http::error &e)
+{
+	if(unlikely(e.code == http::INTERNAL_SERVER_ERROR))
+		++stats->internal_errors;
+
+	throw;
+}
+catch(const boost::system::system_error &)
+{
+	throw;
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(...)
+{
+	++stats->internal_errors;
+	throw;
 }
 
 void
@@ -411,11 +435,9 @@ ircd::resource::method::call_handler(client &client,
 try
 {
 	function(client, request);
-	++stats->completions;
 }
 catch(const json::print_error &e)
 {
-	++stats->internal_errors;
 	throw m::error
 	{
 		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
@@ -451,7 +473,6 @@ catch(const mods::unavailable &e)
 }
 catch(const std::bad_function_call &e)
 {
-	++stats->internal_errors;
 	throw m::UNAVAILABLE
 	{
 		"%s", e.what()
@@ -459,16 +480,10 @@ catch(const std::bad_function_call &e)
 }
 catch(const std::out_of_range &e)
 {
-	++stats->internal_errors;
 	throw m::NOT_FOUND
 	{
 		"%s", e.what()
 	};
-}
-catch(...)
-{
-	++stats->internal_errors;
-	throw;
 }
 
 void
