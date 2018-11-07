@@ -3891,25 +3891,63 @@ console_cmd__client__spawn(opt &out, const string_view &line)
 bool
 console_cmd__resource(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"path", "method"
+	}};
+
+	const auto path
+	{
+		param["path"]
+	};
+
+	const auto method
+	{
+		param["method"]
+	};
+
+	if(path && method)
+	{
+		const auto &r
+		{
+			resource::find(path)
+		};
+
+		const auto &m
+		{
+			r[method]
+		};
+
+		out << method << " "
+		    << path
+		    << std::endl;
+
+		out << (m.opts->flags & resource::method::REQUIRES_AUTH? " REQUIRES_AUTH" : "")
+		    << (m.opts->flags & resource::method::RATE_LIMITED? " RATE_LIMITED" : "")
+		    << (m.opts->flags & resource::method::VERIFY_ORIGIN? " VERIFY_ORIGIN" : "")
+		    << (m.opts->flags & resource::method::CONTENT_DISCRETION? " CONTENT_DISCRETION" : "")
+		    << std::endl;
+
+		return true;
+	}
+
 	for(const auto &p : resource::resources)
 	{
 		const auto &r(*p.second);
-		out << '`' << p.first << '\''
-		    << (r.opts->flags & resource::DIRECTORY? " DIRECTORY" : "")
-		    << std::endl;
-
 		for(const auto &mp : p.second->methods)
 		{
-			const auto &m(*mp.second);
-			out << mp.first
-			    << (m.opts->flags & resource::method::REQUIRES_AUTH? " REQUIRES_AUTH" : "")
-			    << (m.opts->flags & resource::method::RATE_LIMITED? " RATE_LIMITED" : "")
-			    << (m.opts->flags & resource::method::VERIFY_ORIGIN? " VERIFY_ORIGIN" : "")
-			    << (m.opts->flags & resource::method::CONTENT_DISCRETION? " CONTENT_DISCRETION" : "")
+			assert(mp.second);
+			const auto &m{*mp.second};
+			out << std::setw(56) << std::left << p.first
+			    << " "
+			    << std::setw(7) << mp.first
+			    << std::right
+			    << " | REQ " << std::setw(8) << m.stats->requests
+			    << " | RET " << std::setw(8) << m.stats->completions
+			    << " | TIM " << std::setw(8) << m.stats->timeouts
+			    << " | ERR " << std::setw(8) << m.stats->internal_errors
 			    << std::endl;
 		}
-
-		out << std::endl;
 	}
 
 	return true;
