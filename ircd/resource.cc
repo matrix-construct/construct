@@ -425,7 +425,7 @@ catch(const json::not_found &e)
 {
 	throw m::error
 	{
-		http::NOT_FOUND, "M_BAD_JSON", "Required JSON field: %s", e.what()
+		http::BAD_REQUEST, "M_BAD_JSON", "Required JSON field: %s", e.what()
 	};
 }
 catch(const json::error &e)
