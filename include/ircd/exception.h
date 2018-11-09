@@ -27,6 +27,9 @@ namespace ircd
 	struct exception; // Root exception
 
 	// util
+	bool system_category(const std::error_category &) noexcept;
+	bool system_category(const std::error_code &) noexcept;
+	bool is(const std::error_code &, const std::errc &) noexcept;
 	std::error_code make_error_code(const int &code = errno);
 	std::error_code make_error_code(const std::error_code &);
 	std::error_code make_error_code(const std::system_error &);
@@ -39,11 +42,6 @@ namespace ircd
 	std::system_error make_system_error(const boost::system::system_error &);
 	template<class... args> std::exception_ptr make_system_eptr(args&&...);
 	template<class... args> [[noreturn]] void throw_system_error(args&&...);
-
-	bool system_category(const std::error_category &);
-	bool system_category(const std::error_code &);
-	bool system_category(const boost::system::error_category &);
-	bool system_category(const boost::system::error_code &);
 
 	string_view string(const mutable_buffer &, const std::error_code &);
 	string_view string(const mutable_buffer &, const std::system_error &);

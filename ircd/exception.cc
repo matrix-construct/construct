@@ -88,25 +88,23 @@ ircd::string(const mutable_buffer &buf,
 }
 
 bool
-ircd::system_category(const boost::system::error_code &ec)
+ircd::is(const std::error_code &ec,
+         const std::errc &errc)
+noexcept
 {
-	return system_category(ec.category());
-}
-
-bool
-ircd::system_category(const boost::system::error_category &ec)
-{
-	return ec == boost::system::system_category();
+	return system_category(ec) && ec.value() == int(errc);
 }
 
 bool
 ircd::system_category(const std::error_code &ec)
+noexcept
 {
 	return system_category(ec.category());
 }
 
 bool
 ircd::system_category(const std::error_category &ec)
+noexcept
 {
 	return ec == std::system_category() ||
 	       ec == std::generic_category() ||

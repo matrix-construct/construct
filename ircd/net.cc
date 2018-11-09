@@ -2228,10 +2228,10 @@ noexcept try
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
 
-	if(!timedout && ec != errc::operation_canceled && !fini)
+	if(!timedout && !is(ec, errc::operation_canceled) && !fini)
 		cancel_timeout();
 
-	if(timedout && system_category(ec) && ec == errc::operation_canceled)
+	if(timedout && is(ec, errc::operation_canceled))
 		ec = make_error_code(errc::timed_out);
 
 	if(unlikely(!ec && !sd.is_open()))
@@ -2393,10 +2393,10 @@ noexcept try
 	};
 
 	// The timer was set by socket::connect() and may need to be canceled.
-	if(!timedout && ec != errc::operation_canceled && !fini)
+	if(!timedout && !is(ec, errc::operation_canceled) && !fini)
 		cancel_timeout();
 
-	if(timedout && ec == errc::operation_canceled && system_category(ec))
+	if(timedout && is(ec, errc::operation_canceled))
 		ec = make_error_code(errc::timed_out);
 
 	// A connect error; abort here by calling the user back with error.
