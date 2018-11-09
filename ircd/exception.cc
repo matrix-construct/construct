@@ -153,6 +153,10 @@ ircd::make_error_code(const std::error_code &ec)
 	return ec;
 }
 
+//
+// exception
+//
+
 ssize_t
 ircd::exception::generate(const char *const &fmt,
                           const va_rtti &ap)
@@ -176,6 +180,10 @@ noexcept
 
 	return size;
 }
+
+//
+// assertion
+//
 
 ircd::assertion::assertion()
 noexcept(RB_DEBUG_LEVEL)
@@ -231,6 +239,10 @@ noexcept(RB_DEBUG_LEVEL)
 		throw e;
 	#endif
 }
+
+//
+// terminate
+//
 
 ircd::terminate::terminate()
 noexcept
