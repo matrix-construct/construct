@@ -18,16 +18,13 @@ namespace ircd::buffer
 
 /// Like unique_ptr, this template holds ownership of an allocated buffer
 ///
-template<class buffer,
-         uint alignment>
+template<class buffer>
 struct ircd::buffer::unique_buffer
 :buffer
 {
-	static char *allocate(const size_t &size);
-
 	buffer release();
 
-	unique_buffer(const size_t &size);
+	unique_buffer(const size_t &size, const size_t &align = 0);
 	explicit unique_buffer(const buffer &);
 	unique_buffer();
 	unique_buffer(unique_buffer &&) noexcept;
@@ -37,18 +34,16 @@ struct ircd::buffer::unique_buffer
 	~unique_buffer() noexcept;
 };
 
-template<class buffer,
-         uint alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer()
+template<class buffer>
+ircd::buffer::unique_buffer<buffer>::unique_buffer()
 :buffer
 {
 	nullptr, nullptr
 }
 {}
 
-template<class buffer,
-         uint alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const buffer &src)
+template<class buffer>
+ircd::buffer::unique_buffer<buffer>::unique_buffer(const buffer &src)
 :unique_buffer
 {
 	size(src)
@@ -62,19 +57,18 @@ ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const buffer &src)
 	copy(dst, src);
 }
 
-template<class buffer,
-         uint alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(const size_t &size)
+template<class buffer>
+ircd::buffer::unique_buffer<buffer>::unique_buffer(const size_t &size,
+                                                   const size_t &align)
 :buffer
 {
-	allocate(size), size
+	aligned_alloc(align, size).release(), size
 }
 {
 }
 
-template<class buffer,
-         uint alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::unique_buffer(unique_buffer &&other)
+template<class buffer>
+ircd::buffer::unique_buffer<buffer>::unique_buffer(unique_buffer &&other)
 noexcept
 :buffer
 {
@@ -84,10 +78,9 @@ noexcept
 	get<0>(other) = nullptr;
 }
 
-template<class buffer,
-         uint alignment>
-ircd::buffer::unique_buffer<buffer, alignment> &
-ircd::buffer::unique_buffer<buffer, alignment>::operator=(unique_buffer &&other)
+template<class buffer>
+ircd::buffer::unique_buffer<buffer> &
+ircd::buffer::unique_buffer<buffer>::operator=(unique_buffer &&other)
 noexcept
 {
 	this->~unique_buffer();
@@ -98,30 +91,20 @@ noexcept
 	return *this;
 }
 
-template<class buffer,
-         uint alignment>
-ircd::buffer::unique_buffer<buffer, alignment>::~unique_buffer()
+template<class buffer>
+ircd::buffer::unique_buffer<buffer>::~unique_buffer()
 noexcept
 {
 	std::free(const_cast<char *>(data(*this)));
 }
 
-template<class buffer,
-         uint alignment>
+template<class buffer>
 buffer
-ircd::buffer::unique_buffer<buffer, alignment>::release()
+ircd::buffer::unique_buffer<buffer>::release()
 {
 	const buffer ret{static_cast<buffer>(*this)};
 	static_cast<buffer &>(*this) = buffer{};
 	return ret;
-}
-
-template<class buffer,
-         uint alignment>
-char *
-ircd::buffer::unique_buffer<buffer, alignment>::allocate(const size_t &size)
-{
-	return aligned_alloc(alignment, size).release();
 }
 
 inline std::unique_ptr<char, decltype(&std::free)>

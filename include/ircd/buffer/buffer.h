@@ -38,7 +38,7 @@ namespace ircd::buffer
 	struct mutable_buffer;
 	struct window_buffer;
 	template<class buffer, size_t SIZE> struct fixed_buffer;
-	template<class buffer, uint align = 16> struct unique_buffer;
+	template<class buffer> struct unique_buffer;
 	template<class buffer> struct shared_buffer;
 
 	template<size_t SIZE> using fixed_const_buffer = fixed_buffer<const_buffer, SIZE>;
