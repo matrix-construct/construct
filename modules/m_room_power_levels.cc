@@ -66,7 +66,7 @@ _has_power(const m::event &event,
 	};
 
 	if(!power(sender, "events", type, state_key))
-		log::error //TODO: throw
+		log::warning //TODO: throw
 		{
 			"Power violation %s in %s for %s %s,%s",
 			string_view{sender},

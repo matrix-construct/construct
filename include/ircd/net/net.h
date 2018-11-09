@@ -30,7 +30,7 @@ namespace ircd::net
 	IRCD_EXCEPTION(error, not_found)
 
 	// SNOMASK 'N' "net"
-	extern struct log::log log;
+	extern log::log log;
 }
 
 #include "hostport.h"
