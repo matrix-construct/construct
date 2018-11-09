@@ -43,7 +43,7 @@ namespace ircd
 #include "info.h"
 #include "nacl.h"
 #include "rand.h"
-#include "hash.h"
+#include "crh.h"
 #include "ed25519.h"
 #include "color.h"
 #include "lex_cast.h"

@@ -54,6 +54,7 @@ namespace ircd
 #include "what.h"
 #include "u2a.h"
 #include "pretty.h"
+#include "hash.h"
 
 // Unsorted section
 namespace ircd {

@@ -102,7 +102,7 @@ libircd_la_SOURCES =   \
 	conf.cc            \
 	rfc1459.cc         \
 	rand.cc            \
-	hash.cc            \
+	crh.cc             \
 	base.cc            \
 	parse.cc           \
 	openssl.cc         \

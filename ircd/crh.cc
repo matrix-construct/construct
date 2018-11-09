@@ -8,6 +8,14 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+//
+// This file anchors the abstract ircd::crh::hash vtable and default
+// functionalities. Various implementations of crh::hash will be contained
+// within other units where the third-party dependency which implements it
+// is included (ex. openssl.cc). This is so we don't include and mix
+// everything here just for hash functions.
+//
+
 ircd::crh::hash::~hash()
 noexcept
 {
