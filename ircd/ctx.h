@@ -40,8 +40,6 @@ struct ircd::ctx::profile
 struct ircd::ctx::ctx
 :instance_list<ctx>
 {
-	using error_code = boost::system::error_code;
-
 	static uint64_t id_ctr;                      // monotonic
 
 	uint64_t id {++id_ctr};                      // Unique runtime ID

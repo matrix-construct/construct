@@ -26,9 +26,7 @@ namespace ircd::server
 	IRCD_EXCEPTION(error, unavailable);
 	IRCD_EXCEPTION(error, canceled);
 
-	using error_code = boost::system::error_code;
-
-	extern ircd::log::log log;
+	extern log::log log;
 }
 
 #include "tag.h"

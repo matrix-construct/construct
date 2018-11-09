@@ -126,6 +126,7 @@ ircd::net::socket::operator()(args&&... a)
 template<class iov>
 size_t
 ircd::net::socket::read_all(iov&& bufs)
+try
 {
 	static const auto completion
 	{
@@ -147,20 +148,25 @@ ircd::net::socket::read_all(iov&& bufs)
 	};
 
 	if(!ret)
-		throw boost::system::system_error
+		throw std::system_error
 		{
-			boost::asio::error::eof
+			boost::asio::error::eof, boost::asio::error::get_misc_category()
 		};
 
 	in.bytes += ret;
 	++in.calls;
 	return ret;
 }
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
 
 /// Yields ircd::ctx until remote has sent at least some data.
 template<class iov>
 size_t
 ircd::net::socket::read_few(iov&& bufs)
+try
 {
 	const auto interruption{[this]
 	(ctx::ctx *const &) noexcept
@@ -177,20 +183,25 @@ ircd::net::socket::read_few(iov&& bufs)
 	};
 
 	if(!ret)
-		throw boost::system::system_error
+		throw std::system_error
 		{
-			boost::asio::error::eof
+			asio::error::eof, asio::error::get_misc_category()
 		};
 
 	in.bytes += ret;
 	++in.calls;
 	return ret;
 }
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
 
 /// Non-blocking; as much as possible without blocking
 template<class iov>
 size_t
 ircd::net::socket::read_any(iov&& bufs)
+try
 {
 	assert(!blocking(*this));
 	static const auto completion
@@ -207,11 +218,16 @@ ircd::net::socket::read_any(iov&& bufs)
 	++in.calls;
 	return ret;
 }
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
 
 /// Non-blocking; One system call only; never throws eof;
 template<class iov>
 size_t
 ircd::net::socket::read_one(iov&& bufs)
+try
 {
 	assert(!blocking(*this));
 	const size_t ret
@@ -223,11 +239,16 @@ ircd::net::socket::read_one(iov&& bufs)
 	++in.calls;
 	return ret;
 }
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
 
 /// Yields ircd::ctx until all buffers are sent.
 template<class iov>
 size_t
 ircd::net::socket::write_all(iov&& bufs)
+try
 {
 	static const auto completion
 	{
@@ -252,11 +273,16 @@ ircd::net::socket::write_all(iov&& bufs)
 	++out.calls;
 	return ret;
 }
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
 
 /// Yields ircd::ctx until one or more bytes are sent.
 template<class iov>
 size_t
 ircd::net::socket::write_few(iov&& bufs)
+try
 {
 	const auto interruption{[this]
 	(ctx::ctx *const &) noexcept
@@ -276,11 +302,16 @@ ircd::net::socket::write_few(iov&& bufs)
 	++out.calls;
 	return ret;
 }
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
 
 /// Non-blocking; writes as much as possible without blocking
 template<class iov>
 size_t
 ircd::net::socket::write_any(iov&& bufs)
+try
 {
 	static const auto completion
 	{
@@ -297,11 +328,16 @@ ircd::net::socket::write_any(iov&& bufs)
 	++out.calls;
 	return ret;
 }
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
 
 /// Non-blocking; Writes one "unit" of data or less; never more.
 template<class iov>
 size_t
 ircd::net::socket::write_one(iov&& bufs)
+try
 {
 	assert(!blocking(*this));
 	const size_t ret
@@ -312,4 +348,8 @@ ircd::net::socket::write_one(iov&& bufs)
 	out.bytes += ret;
 	++out.calls;
 	return ret;
+}
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
 }

@@ -741,19 +741,21 @@ bool
 ircd::net::dns::resolver::handle_error(const error_code &ec)
 const
 {
-	using namespace boost::system::errc;
+	using std::errc;
 
-	switch(ec.value())
+	if(system_category(ec)) switch(ec.value())
 	{
-		case operation_canceled:
-			return false;
-
-		case success:
+		case 0:
 			return true;
 
+		case int(errc::operation_canceled):
+			return false;
+
 		default:
-			throw boost::system::system_error(ec);
+			break;
 	}
+
+	throw std::system_error{ec};
 }
 
 void

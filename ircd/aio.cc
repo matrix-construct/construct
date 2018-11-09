@@ -304,20 +304,22 @@ ircd::fs::aio::handle(const boost::system::error_code &ec,
                       const size_t bytes)
 noexcept try
 {
+	namespace errc = boost::system::errc;
+
 	assert((bytes == 8 && !ec && semval >= 1) || (bytes == 0 && ec));
 	assert(!ec || ec.category() == asio::error::get_system_category());
 
 	switch(ec.value())
 	{
-		case boost::system::errc::success:
+		case errc::success:
 			handle_events();
 			break;
 
-		case boost::system::errc::operation_canceled:
+		case errc::operation_canceled:
 			throw ctx::interrupted();
 
 		default:
-			throw boost::system::system_error(ec);
+			throw_system_error(ec);
 	}
 
 	set_handle();

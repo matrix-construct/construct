@@ -882,8 +882,8 @@ try
 }
 catch(const std::system_error &e)
 {
-	const auto &code(e.code());
-	if(code.category() == std::system_category()) switch(code.value())
+	const auto &ec(e.code());
+	if(system_category(ec)) switch(ec.value())
 	{
 		case int(std::errc::invalid_argument):
 			return false;

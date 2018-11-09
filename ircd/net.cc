@@ -319,9 +319,9 @@ ircd::net::discard_any(socket &socket,
 		__builtin_prefetch(data(mb), 1, 0);    // 1 = write, 0 = no cache
 		remain -= read_one(socket, mb);
 	}
-	catch(const boost::system::system_error &e)
+	catch(const std::system_error &e)
 	{
-		if(e.code() == boost::system::errc::resource_unavailable_try_again)
+		if(e.code() == std::errc::resource_unavailable_try_again)
 			if(remain <= len)
 				break;
 
@@ -424,7 +424,7 @@ ircd::net::wait(use_future_t,
 }
 
 /// Wait for socket to become "ready"; yields ircd::ctx returning code.
-ircd::net::error_code
+std::error_code
 ircd::net::wait(nothrow_t,
                 socket &socket,
                 const wait_opts &wait_opts)
@@ -433,7 +433,7 @@ try
 	wait(socket, wait_opts);
 	return {};
 }
-catch(const boost::system::system_error &e)
+catch(const std::system_error &e)
 {
 	return e.code();
 }
@@ -1140,10 +1140,7 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	throw error
-	{
-		"listener: %s", e.what()
-	};
+	throw_system_error(e);
 }
 
 ircd::net::listener::acceptor::~acceptor()
@@ -1323,28 +1320,27 @@ bool
 ircd::net::listener::acceptor::check_accept_error(const error_code &ec,
                                                   socket &sock)
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	using std::errc;
 
 	if(unlikely(interrupting))
 		throw ctx::interrupted();
 
-	if(likely(ec == success))
+	if(likely(!ec))
 	{
 		this->next();
 		return true;
 	}
 
-	if(ec.category() == system_category()) switch(ec.value())
+	if(system_category(ec)) switch(ec.value())
 	{
-		case operation_canceled:
+		case int(errc::operation_canceled):
 			return false;
 
 		default:
 			break;
 	}
 
-	throw boost::system::system_error(ec);
+	throw_system_error(ec);
 }
 
 void
@@ -1420,21 +1416,19 @@ void
 ircd::net::listener::acceptor::check_handshake_error(const error_code &ec,
                                                      socket &sock)
 {
-	using boost::system::system_error;
-	using boost::system::system_category;
-	using namespace boost::system::errc;
+	using std::errc;
 
 	if(unlikely(interrupting))
 		throw ctx::interrupted();
 
-	if(likely(ec.category() == system_category())) switch(ec.value())
+	if(likely(system_category(ec))) switch(ec.value())
 	{
-		case success:
+		case 0:
 			return;
 
-		case operation_canceled:
+		case int(errc::operation_canceled):
 			if(sock.timedout)
-				throw system_error(timed_out, system_category());
+				throw_system_error(errc::timed_out);
 			else
 				break;
 
@@ -1442,7 +1436,7 @@ ircd::net::listener::acceptor::check_handshake_error(const error_code &ec,
 			break;
 	}
 
-	throw system_error(ec);
+	throw_system_error(ec);
 }
 
 void
@@ -1664,10 +1658,7 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	throw error
-	{
-		"listener_udp: %s", e.what()
-	};
+	throw_system_error(e);
 }
 
 ircd::net::listener_udp::acceptor::~acceptor()
@@ -2048,7 +2039,7 @@ catch(const boost::system::system_error &e)
 		e.what()
 	};
 
-	call_user(callback, e.code());
+	call_user(callback, make_error_code(e));
 }
 catch(const std::exception &e)
 {
@@ -2069,7 +2060,7 @@ noexcept
 
 	boost::system::error_code ec;
 	sd.cancel(ec);
-	if(likely(ec == boost::system::errc::success))
+	if(likely(!ec))
 		return;
 
 	log::dwarning
@@ -2090,8 +2081,7 @@ ircd::net::socket::wait(const wait_opts &opts,
 		if(likely(!ec))
 			return callback(std::exception_ptr{});
 
-		using boost::system::system_error;
-		callback(std::make_exception_ptr(system_error{ec}));
+		callback(make_system_eptr(ec));
 	});
 }
 
@@ -2134,16 +2124,10 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	if(e.code() == boost::system::errc::operation_canceled && timedout)
+		throw_system_error(std::errc::timed_out);
 
-	if(e.code() == operation_canceled && timedout)
-		throw boost::system::system_error
-		{
-			timed_out, system_category()
-		};
-
-	throw;
+	throw_system_error(e);
 }
 
 /// Asynchronous callback when the socket is ready
@@ -2154,6 +2138,7 @@ catch(const boost::system::system_error &e)
 void
 ircd::net::socket::wait(const wait_opts &opts,
                         wait_callback_ec callback)
+try
 {
 	set_timeout(opts.timeout);
 	const unwind::exceptional unset{[this]
@@ -2225,6 +2210,10 @@ ircd::net::socket::wait(const wait_opts &opts,
 			throw ircd::not_implemented{};
 	}
 }
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
 
 void
 ircd::net::socket::handle_ready(const std::weak_ptr<socket> wp,
@@ -2234,23 +2223,22 @@ ircd::net::socket::handle_ready(const std::weak_ptr<socket> wp,
                                 const size_t bytes)
 noexcept try
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	using std::errc;
 
 	// After life_guard is constructed it is safe to use *this in this frame.
 	const life_guard<socket> s{wp};
 
-	if(!timedout && ec != operation_canceled && !fini)
+	if(!timedout && ec != errc::operation_canceled && !fini)
 		cancel_timeout();
 
-	if(timedout && ec == operation_canceled && ec.category() == system_category())
-		ec = { timed_out, system_category() };
+	if(timedout && system_category(ec) && ec == errc::operation_canceled)
+		ec = make_error_code(errc::timed_out);
 
 	if(unlikely(!ec && !sd.is_open()))
-		ec = { bad_file_descriptor, system_category() };
+		ec = make_error_code(errc::bad_file_descriptor);
 
 	if(type == ready::READ && !ec && bytes == 0)
-		ec = { asio::error::eof, asio::error::get_misc_category() };
+		ec = error_code{asio::error::eof, asio::error::get_misc_category()};
 
 	log::debug
 	{
@@ -2266,18 +2254,6 @@ noexcept try
 	};
 
 	call_user(callback, ec);
-}
-catch(const boost::system::system_error &e)
-{
-	log::error
-	{
-		log, "socket(%p) handle: %s",
-		this,
-		e.what()
-	};
-
-	assert(0);
-	call_user(callback, e.code());
 }
 catch(const std::bad_weak_ptr &e)
 {
@@ -2312,9 +2288,6 @@ ircd::net::socket::handle_timeout(const std::weak_ptr<socket> wp,
                                   error_code ec)
 noexcept try
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
-
 	if(unlikely(wp.expired()))
 		return;
 
@@ -2327,7 +2300,7 @@ noexcept try
 	if(++timer_sem[0] == timer_sem[1] && timer_set) switch(ec.value())
 	{
 		// A 'success' for this handler means there was a timeout on the socket
-		case success:
+		case 0:
 		{
 			assert(timedout == false);
 			timedout = true;
@@ -2336,9 +2309,9 @@ noexcept try
 		}
 
 		// A cancelation means there was no timeout.
-		case operation_canceled:
+		case int(std::errc::operation_canceled):
 		{
-			assert(ec.category() == system_category());
+			assert(ec.category() == std::system_category());
 			assert(timedout == false);
 			break;
 		}
@@ -2349,25 +2322,28 @@ noexcept try
 			"socket(%p): unexpected: %s\n", (const void *)this, string(ec)
 		};
 	}
-	else ec = { operation_canceled, system_category() };
+	else ec = make_error_code(std::errc::operation_canceled);
 
 	if(callback)
 		call_user(callback, ec);
 }
 catch(const boost::system::system_error &e)
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	using std::errc;
 
-	const error_code &_ec{e.code()};
-	switch(_ec.value())
+	const auto &ec_(e.code());
+	if(system_category(ec_)) switch(ec_.value())
 	{
-		case bad_file_descriptor:
-			assert(ec.category() == system_category());
+		case int(errc::bad_file_descriptor):
+		{
 			if(fini)
 				break;
 
+			//[[fallthrough]];
+		}
+
 		default:
+		{
 			assert(0);
 			log::critical
 			{
@@ -2375,11 +2351,13 @@ catch(const boost::system::system_error &e)
 				(const void *)this,
 				string(e)
 			};
+
 			break;
+		}
 	}
 
 	if(callback)
-		call_user(callback, _ec);
+		call_user(callback, ec_);
 }
 catch(const std::exception &e)
 {
@@ -2402,8 +2380,7 @@ ircd::net::socket::handle_connect(std::weak_ptr<socket> wp,
                                   error_code ec)
 noexcept try
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	using std::errc;
 
 	const life_guard<socket> s{wp};
 	log::debug
@@ -2416,11 +2393,11 @@ noexcept try
 	};
 
 	// The timer was set by socket::connect() and may need to be canceled.
-	if(!timedout && ec != operation_canceled && !fini)
+	if(!timedout && ec != errc::operation_canceled && !fini)
 		cancel_timeout();
 
-	if(timedout && ec == operation_canceled && ec.category() == system_category())
-		ec = { timed_out, system_category() };
+	if(timedout && ec == errc::operation_canceled && system_category(ec))
+		ec = make_error_code(errc::timed_out);
 
 	// A connect error; abort here by calling the user back with error.
 	if(ec)
@@ -2439,18 +2416,6 @@ noexcept try
 		return call_user(callback, ec);
 
 	handshake(opts, std::move(callback));
-}
-catch(const boost::system::system_error &e)
-{
-	log::error
-	{
-		log, "socket(%p) after connect: %s",
-		this,
-		e.what()
-	};
-
-	assert(0);
-	call_user(callback, e.code());
 }
 catch(const std::bad_weak_ptr &e)
 {
@@ -2482,15 +2447,14 @@ ircd::net::socket::handle_disconnect(std::shared_ptr<socket> s,
                                      error_code ec)
 noexcept try
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	using std::errc;
 
 	assert(fini);
-	if(!timedout && ec != operation_canceled)
+	if(!timedout && ec != errc::operation_canceled)
 		cancel_timeout();
 
-	if(timedout && ec == operation_canceled && ec.category() == system_category())
-		ec = { timed_out, system_category() };
+	if(timedout && ec == errc::operation_canceled)
+		ec = make_error_code(errc::timed_out);
 
 	log::debug
 	{
@@ -2540,16 +2504,15 @@ ircd::net::socket::handle_handshake(std::weak_ptr<socket> wp,
                                     error_code ec)
 noexcept try
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	using std::errc;
 
 	const life_guard<socket> s{wp};
 
-	if(!timedout && ec != operation_canceled && !fini)
+	if(!timedout && ec != errc::operation_canceled && !fini)
 		cancel_timeout();
 
-	if(timedout && ec == operation_canceled && ec.category() == system_category())
-		ec = { timed_out, system_category() };
+	if(timedout && ec == errc::operation_canceled)
+		ec = make_error_code(errc::timed_out);
 
 	log::debug
 	{
@@ -2782,8 +2745,7 @@ noexcept try
 	if(likely(!ec))
 		return callback(std::exception_ptr{});
 
-	using boost::system::system_error;
-	callback(std::make_exception_ptr(system_error{ec}));
+	callback(make_system_eptr(ec));
 }
 catch(const std::exception &e)
 {

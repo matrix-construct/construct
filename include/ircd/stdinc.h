@@ -185,4 +185,6 @@ namespace ircd
 	namespace ph = std::placeholders;
 
 	template<class... T> using ilist = std::initializer_list<T...>;
+
+	using std::error_code;
 }

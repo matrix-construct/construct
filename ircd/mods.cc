@@ -147,9 +147,12 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	switch(e.code().value())
+	using std::errc;
+
+	const auto &ec(e.code());
+	if(system_category(ec)) switch(ec.value())
 	{
-		case boost::system::errc::bad_file_descriptor:
+		case int(errc::bad_file_descriptor):
 		{
 			const string_view what(e.what());
 			const auto pos(what.find("undefined symbol: "));
@@ -169,10 +172,7 @@ catch(const boost::system::system_error &e)
 			break;
 	}
 
-	throw error
-	{
-		"%s", string(e)
-	};
+	throw_system_error(e);
 }
 
 ircd::mods::mod::~mod()

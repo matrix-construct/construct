@@ -312,8 +312,6 @@ ircd::remote(const client &client)
 
 namespace ircd
 {
-	using error_code = boost::system::error_code;
-
 	static bool handle_ec_default(client &, const error_code &);
 	static bool handle_ec_timeout(client &);
 	static bool handle_ec_short_read(client &);
@@ -438,12 +436,11 @@ bool
 ircd::handle_ec(client &client,
                 const error_code &ec)
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	using std::errc;
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
-	if(unlikely(runlevel != runlevel::RUN && ec == success))
+	if(unlikely(runlevel != runlevel::RUN && !ec))
 	{
 		log::dwarning
 		{
@@ -456,22 +453,22 @@ ircd::handle_ec(client &client,
 		return false;
 	}
 
-	if(ec.category() == system_category()) switch(ec.value())
+	if(system_category(ec)) switch(ec.value())
 	{
-		case success:                return true;
-		case operation_canceled:     return false;
-		case timed_out:              return handle_ec_timeout(client);
-		default:                     return handle_ec_default(client, ec);
+		case 0:                              return true;
+		case int(errc::operation_canceled):  return false;
+		case int(errc::timed_out):           return handle_ec_timeout(client);
+		default:                             return handle_ec_default(client, ec);
 	}
 	else if(ec.category() == get_misc_category()) switch(ec.value())
 	{
-		case asio::error::eof:       return handle_ec_eof(client);
-		default:                     return handle_ec_default(client, ec);
+		case asio::error::eof:               return handle_ec_eof(client);
+		default:                             return handle_ec_default(client, ec);
 	}
 	else if(ec.category() == get_ssl_category()) switch(uint8_t(ec.value()))
 	{
-		case SSL_R_SHORT_READ:       return handle_ec_short_read(client);
-		default:                     return handle_ec_default(client, ec);
+		case SSL_R_SHORT_READ:               return handle_ec_short_read(client);
+		default:                             return handle_ec_default(client, ec);
 	}
 	else return handle_ec_default(client, ec);
 }
@@ -668,10 +665,9 @@ try
 
 	return true;
 }
-catch(const boost::system::system_error &e)
+catch(const std::system_error &e)
 {
-	const error_code &ec{e.code()};
-	return handle_ec(*this, ec);
+	return handle_ec(*this, e.code());
 }
 catch(const ctx::interrupted &e)
 {
@@ -759,9 +755,14 @@ try
 
 	return ret;
 }
-catch(const boost::system::system_error &e)
+catch(const std::system_error &e)
 {
-	if(e.code().value() != boost::system::errc::operation_canceled)
+	static const auto operation_canceled
+	{
+		make_error_code(std::errc::operation_canceled)
+	};
+
+	if(e.code() != operation_canceled)
 		throw;
 
 	if(!sock || sock->fini)

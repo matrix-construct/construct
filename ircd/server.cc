@@ -705,16 +705,15 @@ ircd::server::peer::handle_error(link &link,
 
 void
 ircd::server::peer::handle_error(link &link,
-                                 const boost::system::system_error &e)
+                                 const std::system_error &e)
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	using std::errc;
 	using boost::asio::error::get_misc_category;
 
 	const auto &ec{e.code()};
-	if(ec.category() == system_category()) switch(ec.value())
+	if(system_category(ec)) switch(ec.value())
 	{
-		case success:
+		case 0:
 			assert(0);
 			break;
 
@@ -1390,8 +1389,7 @@ void
 ircd::server::link::handle_writable(const error_code &ec)
 try
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	using std::errc;
 
 	op_write = false;
 
@@ -1401,22 +1399,22 @@ try
 		return peer->handle_finished(*this);
 	}
 
-	if(ec.category() == system_category()) switch(ec.value())
+	if(system_category(ec)) switch(ec.value())
 	{
-		case success:
+		case 0:
 			handle_writable_success();
 			return;
 
-		case operation_canceled:
+		case int(errc::operation_canceled):
 			return;
 
 		default:
 			break;
 	}
 
-	throw boost::system::system_error{ec};
+	throw std::system_error{ec};
 }
-catch(const boost::system::system_error &e)
+catch(const std::system_error &e)
 {
 	assert(peer);
 	peer->handle_error(*this, e);
@@ -1561,8 +1559,7 @@ void
 ircd::server::link::handle_readable(const error_code &ec)
 try
 {
-	using namespace boost::system::errc;
-	using boost::system::system_category;
+	using std::errc;
 
 	op_read = false;
 
@@ -1572,22 +1569,22 @@ try
 		return peer->handle_finished(*this);
 	}
 
-	if(ec.category() == system_category()) switch(ec.value())
+	if(system_category(ec)) switch(ec.value())
 	{
-		case success:
+		case 0:
 			handle_readable_success();
 			return;
 
-		case operation_canceled:
+		case int(errc::operation_canceled):
 			return;
 
 		default:
 			break;
 	}
 
-	throw boost::system::system_error{ec};
+	throw std::system_error{ec};
 }
-catch(const boost::system::system_error &e)
+catch(const std::system_error &e)
 {
 	assert(peer);
 	peer->handle_error(*this, e);
@@ -1674,22 +1671,24 @@ catch(const buffer_overrun &e)
 	queue.pop_front();
 	throw;
 }
-catch(const boost::system::system_error &e)
+catch(const std::system_error &e)
 {
-	using namespace boost::system::errc;
+	using std::errc;
 
-	switch(e.code().value())
+	if(system_category(e.code())) switch(e.code().value())
 	{
-		case resource_unavailable_try_again:
-			return false;
-
-		case success:
+		case 0:
 			assert(0);
 			return true;
 
+		case int(errc::resource_unavailable_try_again):
+			return false;
+
 		default:
-			throw;
+			break;
 	}
+
+	throw;
 }
 
 /// Process one read operation for one tag

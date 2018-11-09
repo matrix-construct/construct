@@ -8,8 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/asio.h>
-
 decltype(ircd::resource::log)
 ircd::resource::log
 {
@@ -415,7 +413,7 @@ catch(const http::error &e)
 
 	throw;
 }
-catch(const boost::system::system_error &)
+catch(const std::system_error &)
 {
 	throw;
 }
