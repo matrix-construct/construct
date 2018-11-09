@@ -32,6 +32,8 @@ namespace ircd
 	std::error_code make_error_code(const boost::system::error_code &);
 	std::error_code make_error_code(const boost::system::system_error &);
 	std::system_error make_system_error(const int &code = errno);
+	std::system_error make_system_error(const std::errc &);
+	std::system_error make_system_error(const std::error_code &);
 	std::system_error make_system_error(const boost::system::error_code &);
 	std::system_error make_system_error(const boost::system::system_error &);
 	template<class... args> std::exception_ptr make_system_eptr(args&&...);
