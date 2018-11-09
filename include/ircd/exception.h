@@ -15,6 +15,7 @@
 namespace boost::system
 {
 	struct error_code;
+	struct error_category;
 	struct system_error;
 	namespace errc {}
 }
@@ -38,6 +39,11 @@ namespace ircd
 	std::system_error make_system_error(const boost::system::system_error &);
 	template<class... args> std::exception_ptr make_system_eptr(args&&...);
 	template<class... args> [[noreturn]] void throw_system_error(args&&...);
+
+	bool system_category(const std::error_category &);
+	bool system_category(const std::error_code &);
+	bool system_category(const boost::system::error_category &);
+	bool system_category(const boost::system::error_code &);
 
 	string_view string(const mutable_buffer &, const std::error_code &);
 	string_view string(const mutable_buffer &, const std::system_error &);

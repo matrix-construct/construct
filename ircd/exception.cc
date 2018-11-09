@@ -87,6 +87,32 @@ ircd::string(const mutable_buffer &buf,
 	};
 }
 
+bool
+ircd::system_category(const boost::system::error_code &ec)
+{
+	return system_category(ec.category());
+}
+
+bool
+ircd::system_category(const boost::system::error_category &ec)
+{
+	return ec == boost::system::system_category();
+}
+
+bool
+ircd::system_category(const std::error_code &ec)
+{
+	return system_category(ec.category());
+}
+
+bool
+ircd::system_category(const std::error_category &ec)
+{
+	return ec == std::system_category() ||
+	       ec == std::generic_category() ||
+	       ec == boost::system::system_category();
+}
+
 std::system_error
 ircd::make_system_error(const boost::system::system_error &e)
 {
