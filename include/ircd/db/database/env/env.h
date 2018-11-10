@@ -21,6 +21,7 @@ struct ircd::db::database::env final
 :rocksdb::Env
 {
 	struct writable_file;
+	struct writable_file_direct;
 	struct sequential_file;
 	struct random_access_file;
 	struct random_rw_file;

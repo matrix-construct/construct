@@ -15,7 +15,7 @@
 // RocksDB symbols which we cannot forward declare. It is used internally
 // and does not need to be included by general users of IRCd.
 
-struct ircd::db::database::env::writable_file final
+struct ircd::db::database::env::writable_file
 :rocksdb::WritableFile
 {
 	using Status = rocksdb::Status;
@@ -30,9 +30,7 @@ struct ircd::db::database::env::writable_file final
 	IOPriority prio {IO_LOW};
 	WriteLifeTimeHint hint {WriteLifeTimeHint::WLTH_NOT_SET};
 	fs::fd fd;
-	size_t _buffer_align;
-	size_t logical_offset;
-	size_t preallocation_block_size;
+	size_t preallocation_block_size {0};
 	ssize_t preallocation_last_block {-1};
 
 	bool IsSyncThreadSafe() const noexcept override;
@@ -44,7 +42,6 @@ struct ircd::db::database::env::writable_file final
 	uint64_t GetFileSize() noexcept override;
 	void SetPreallocationBlockSize(size_t size) noexcept override;
 	void GetPreallocationStatus(size_t* block_size, size_t* last_allocated_block) noexcept override;
-	void _truncate(const size_t &size);
 	void _allocate(const size_t &offset, const size_t &length);
 	void PrepareWrite(size_t offset, size_t len) noexcept override;
 	Status Allocate(uint64_t offset, uint64_t len) noexcept override;
@@ -62,4 +59,28 @@ struct ircd::db::database::env::writable_file final
 	writable_file(const writable_file &) = delete;
 	writable_file(writable_file &&) = delete;
 	~writable_file() noexcept;
+};
+
+struct ircd::db::database::env::writable_file_direct final
+:writable_file
+{
+	size_t alignment {0};
+	size_t logical_offset {0};
+	unique_buffer<mutable_buffer> buffer;
+
+	bool aligned(const size_t &) const;
+	bool aligned(const void *const &) const;
+	bool aligned(const const_buffer &) const;
+	size_t align(const size_t &) const;
+	size_t remain(const size_t &) const;
+
+	void write(const const_buffer &, const uint64_t &offset);
+
+	uint64_t GetFileSize() noexcept override;
+	Status PositionedAppend(const Slice& data, uint64_t offset) noexcept override;
+	Status Append(const Slice& data) noexcept override;
+	Status Truncate(uint64_t size) noexcept override;
+	Status Close() noexcept override;
+
+	writable_file_direct(database *const &d, const std::string &name, const EnvOptions &, const bool &trunc);
 };
