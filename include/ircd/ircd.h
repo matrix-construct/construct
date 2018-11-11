@@ -36,6 +36,7 @@ namespace ircd
 #include "allocator.h"
 #include "util/util.h"
 #include "exception.h"
+#include "fpe.h"
 #include "demangle.h"
 #include "localee.h"
 #include "date.h"

@@ -91,6 +91,7 @@ libircd_la_SOURCES =   \
 	allocator.cc       \
 	exception.cc       \
 	util.cc            \
+	fpe.cc             \
 	ios.cc             \
 	lexical.cc         \
 	tokens.cc          \
