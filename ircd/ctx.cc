@@ -423,6 +423,7 @@ ircd::ctx::finished(const ctx &ctx)
 /// Indicates if `ctx` was terminated; does not clear the flag
 bool
 ircd::ctx::termination(const ctx &c)
+noexcept
 {
 	return c.flags & context::TERMINATED;
 }
@@ -430,6 +431,7 @@ ircd::ctx::termination(const ctx &c)
 /// Indicates if `ctx` was interrupted; does not clear the flag
 bool
 ircd::ctx::interruption(const ctx &c)
+noexcept
 {
 	return c.flags & context::INTERRUPTED;
 }
@@ -437,6 +439,7 @@ ircd::ctx::interruption(const ctx &c)
 /// Indicates if `ctx` will suppress any interrupts.
 bool
 ircd::ctx::interruptible(const ctx &c)
+noexcept
 {
 	return c.flags & ~context::NOINTERRUPT;
 }
@@ -607,14 +610,19 @@ ircd::ctx::this_ctx::interruptible(const bool &b)
 		interruption_point();
 }
 
-/// Throws interrupted if the currently running context was interrupted
-/// and clears the interrupt flag.
 void
 ircd::ctx::this_ctx::interruptible(const bool &b,
                                    std::nothrow_t)
 noexcept
 {
 	interruptible(cur(), b);
+}
+
+bool
+ircd::ctx::this_ctx::interruptible()
+noexcept
+{
+	return interruptible(cur());
 }
 
 /// Throws interrupted if the currently running context was interrupted

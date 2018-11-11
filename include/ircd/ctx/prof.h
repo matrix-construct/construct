@@ -39,6 +39,9 @@ namespace ircd::ctx::prof
 	void mark(const event &);
 }
 
+/// Profiling events for marking. These are currently used internally at the
+/// appropriate point to mark(): the user of ircd::ctx has no reason to mark()
+/// these events; this interface is not quite developed for general use yet.
 enum class ircd::ctx::prof::event
 {
 	SPAWN,             // Context spawn requested

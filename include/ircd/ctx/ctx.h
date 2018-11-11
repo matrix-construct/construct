@@ -55,9 +55,9 @@ namespace ircd::ctx
 	const int64_t &notes(const ctx &);           // Peeks at internal semaphore count
 	const uint64_t &yields(const ctx &);         // Context switching counter
 	const ulong &cycles(const ctx &);            // Accumulated tsc (not counting cur slice)
-	bool interruptible(const ctx &);             // Context can throw at interruption point
-	bool interruption(const ctx &);              // Context was marked for interruption
-	bool termination(const ctx &);               // Context was marked for termination
+	bool interruptible(const ctx &) noexcept;    // Context can throw at interruption point
+	bool interruption(const ctx &) noexcept;     // Context was marked for interruption
+	bool termination(const ctx &) noexcept;      // Context was marked for termination
 	bool finished(const ctx &);                  // Context function returned (or exception).
 	bool started(const ctx &);                   // Context was ever entered.
 	bool running(const ctx &);                   // Context is the currently running ctx.
@@ -73,6 +73,11 @@ namespace ircd::ctx
 }
 
 #include "this_ctx.h"
+#include "stack_usage_assertion.h"
+#include "critical_assertion.h"
+#include "critical_indicator.h"
+#include "exception_handler.h"
+#include "uninterruptible.h"
 #include "prof.h"
 #include "list.h"
 #include "dock.h"
