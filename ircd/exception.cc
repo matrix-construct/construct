@@ -125,7 +125,7 @@ ircd::make_system_error(const boost::system::error_code &ec)
 {
 	return std::system_error
 	{
-		make_error_code(ec)
+		make_error_code(ec), ec.message()
 	};
 }
 
