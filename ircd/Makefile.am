@@ -6,7 +6,6 @@ AM_CXXFLAGS = \
 	###
 
 AM_CPPFLAGS = \
-	-ffriend-injection \
 	-I$(top_srcdir)/include \
 	@ROCKSDB_CPPFLAGS@ \
 	@JS_CPPFLAGS@ \
