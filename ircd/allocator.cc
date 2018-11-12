@@ -290,7 +290,6 @@ ircd::allocator::install_malloc_hook()
 void
 ircd::allocator::uninstall_malloc_hook()
 {
-	assert(their_malloc_hook);
 	__malloc_hook = their_malloc_hook;
 }
 #pragma GCC diagnostic pop
@@ -325,7 +324,6 @@ ircd::allocator::install_realloc_hook()
 void
 ircd::allocator::uninstall_realloc_hook()
 {
-	assert(their_realloc_hook);
 	__realloc_hook = their_realloc_hook;
 }
 #else
@@ -359,7 +357,6 @@ ircd::allocator::install_free_hook()
 void
 ircd::allocator::uninstall_free_hook()
 {
-	assert(their_free_hook);
 	__free_hook = their_free_hook;
 }
 #pragma GCC diagnostic pop
