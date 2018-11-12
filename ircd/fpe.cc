@@ -8,9 +8,87 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <signal.h>
+
 #ifndef __GNUC__
 #pragma STDC FENV_ACCESS on
 #endif
+
+//
+// errors_throw
+//
+
+namespace ircd::fpe
+{
+	constexpr const size_t &SA_HEAP_MAX {64};
+	thread_local allocator::fixed<struct sigaction, SA_HEAP_MAX> sa_heap;
+
+	extern const std::exception_ptr sigfpe_eptr;
+	extern "C" void ircd_fpe_handle_sigfpe(int signum, siginfo_t *const si, void *const uctx);
+}
+
+
+decltype(ircd::fpe::sigfpe_eptr)
+ircd::fpe::sigfpe_eptr
+{
+	std::make_exception_ptr(std::domain_error
+	{
+		"Floating Point Exception"
+	})
+};
+
+__attribute__((noreturn))
+void
+ircd::fpe::ircd_fpe_handle_sigfpe(int signum,
+                                  siginfo_t *const si,
+                                  void *const uctx)
+{
+	assert(si);
+	assert(signum == SIGFPE);
+	std::rethrow_exception(sigfpe_eptr); //TODO: still malloc()'s :/
+}
+
+//
+// errors_throw::errors_throw
+//
+
+ircd::fpe::errors_throw::errors_throw()
+:their_sa
+{
+	new (sa_heap().allocate(1)) struct sigaction,
+	[](auto *const ptr)
+	{
+		sa_heap().deallocate(ptr, 1);
+	}
+}
+,their_fenabled
+{
+	syscall(::fegetexcept)
+}
+{
+	struct sigaction ours {0};
+	ours.sa_sigaction = ircd_fpe_handle_sigfpe;
+	ours.sa_flags |= SA_SIGINFO;
+	ours.sa_flags |= SA_NODEFER; // Required to throw out of the handler
+
+	syscall(std::fegetexceptflag, &their_fe, FE_ALL_EXCEPT);
+	syscall(std::feclearexcept, FE_ALL_EXCEPT);
+	syscall(::sigaction, SIGFPE, &ours, their_sa.get());
+	syscall(::feenableexcept, FE_ALL_EXCEPT);
+}
+
+ircd::fpe::errors_throw::~errors_throw()
+noexcept
+{
+	syscall(::fedisableexcept, FE_ALL_EXCEPT);
+	syscall(::sigaction, SIGFPE, their_sa.get(), nullptr);
+	syscall(::feenableexcept, their_fenabled);
+	syscall(std::fesetexceptflag, &their_fe, FE_ALL_EXCEPT);
+}
+
+//
+// errors_handle
+//
 
 ircd::fpe::errors_handle::errors_handle()
 {
@@ -94,6 +172,24 @@ ircd::fpe::reflect(const ushort &flag)
 		case FE_UNDERFLOW:  return "UNDERFLOW";
 		case FE_OVERFLOW:   return "OVERFLOW";
 		case FE_INEXACT:    return "INEXACT";
+	}
+
+	return "?????";
+}
+
+ircd::string_view
+ircd::fpe::reflect_sicode(const int &code)
+{
+	switch(code)
+	{
+		case FPE_INTDIV:    return "INTDIV";
+		case FPE_INTOVF:    return "INTOVF";
+		case FPE_FLTDIV:    return "FLTDIV";
+		case FPE_FLTOVF:    return "FLTOVF";
+		case FPE_FLTUND:    return "FLTUND";
+		case FPE_FLTRES:    return "FLTRES";
+		case FPE_FLTINV:    return "FLTINV";
+		case FPE_FLTSUB:    return "FLTSUB";
 	}
 
 	return "?????";

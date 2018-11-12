@@ -411,6 +411,14 @@ dnl CXXFLAGS+=" -fcheck-pointer-bounds"
 CXXFLAGS+=" -fchkp-instrument-marked-only"
 CXXFLAGS+=" -fstack-protector-explicit"
 
+dnl  !!! Experimental !!!
+dnl  Allows a signal handler to throw a C++ exception if the signal is from
+dnl  a CPU trap on an instruction (ex. SIGFPE from a floating point divide
+dnl  by zero). This allows the signal handler to transfer control to the
+dnl  catch block wrapping the area which errored, thereby aborting any further
+dnl  execution after the SIGFPE was received which would have to manually check
+dnl  for such an error after each floating point operation and throw.
+CXXFLAGS+=" -fnon-call-exceptions"
 
 dnl  -ffriend-injection allows us to deduplicate declarations of friend
 dnl  functions in both the friend class and the enclosing namespace
