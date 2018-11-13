@@ -366,6 +366,33 @@ AM_COND_IF([GENERIC],
 	CXXFLAGS+=" -march=native"
 ])
 
+dnl  !!! Experimental !!!
+dnl
+dnl  Allows a signal handler to throw a C++ exception if the signal is from
+dnl  a CPU trap on an instruction (ex. SIGFPE from a floating point divide
+dnl  by zero). This allows the signal handler to transfer control to the
+dnl  catch block wrapping the area which errored, thereby aborting any further
+dnl  execution after the signal was received which would have to manually check
+dnl  for such an error after each floating point operation and throw.
+
+AC_ARG_ENABLE(asyncexcept, AC_HELP_STRING([--enable-asyncexcept], [Enable experimental asynchronous exceptions]),
+[
+	asyncexcept="yes"
+], [
+	asyncexcept="no"
+])
+
+dnl CHARYBDIS_C_GCC_TRY_FLAGS([-fnon-call-exceptions], charybdis_cv_c_gcc_f_non_call_exceptions)
+
+if test "$asyncexcept" = "yes"; then
+	IRCD_DEFINE(USE_ASYNC_EXCEPTIONS, [1], [Experimental asynchronous exceptions are supported])
+	CXXFLAGS+=" -fasynchronous-unwind-tables"
+	CXXFLAGS+=" -fnon-call-exceptions"
+fi
+
+AM_CONDITIONAL([ASYNCEXCEPT], [[[[ $asyncexcept = "yes" ]]]])
+
+
 dnl
 dnl Optimization
 dnl
@@ -414,15 +441,6 @@ dnl CXXFLAGS+=" -mmpx"
 dnl CXXFLAGS+=" -fcheck-pointer-bounds"
 CXXFLAGS+=" -fchkp-instrument-marked-only"
 CXXFLAGS+=" -fstack-protector-explicit"
-
-dnl  !!! Experimental !!!
-dnl  Allows a signal handler to throw a C++ exception if the signal is from
-dnl  a CPU trap on an instruction (ex. SIGFPE from a floating point divide
-dnl  by zero). This allows the signal handler to transfer control to the
-dnl  catch block wrapping the area which errored, thereby aborting any further
-dnl  execution after the SIGFPE was received which would have to manually check
-dnl  for such an error after each floating point operation and throw.
-CXXFLAGS+=" -fnon-call-exceptions"
 
 dnl  -ffriend-injection allows us to deduplicate declarations of friend
 dnl  functions in both the friend class and the enclosing namespace
@@ -636,6 +654,7 @@ RB_CHK_SYSHEADER(regex, [REGEX])
 
 dnl unix platform
 RB_CHK_SYSHEADER(unistd.h, [UNISTD_H])
+RB_CHK_SYSHEADER(signal.h, [SIGNAL_H])
 RB_CHK_SYSHEADER(sys/time.h, [SYS_TIME_H])
 RB_CHK_SYSHEADER(sys/stat.h, [SYS_STAT_H])
 RB_CHK_SYSHEADER(sys/statvfs.h, [SYS_STATVFS_H])

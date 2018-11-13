@@ -8,7 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <signal.h>
+#include <RB_INC_SIGNAL_H
 
 #ifndef __GNUC__
 #pragma STDC FENV_ACCESS on
@@ -18,34 +18,38 @@
 // errors_throw
 //
 
+#if defined(IRCD_USE_ASYNC_EXCEPTIONS) \
+ && defined(HAVE_SIGNAL_H) \
+ && defined(__GNUC__) \
+
 namespace ircd::fpe
 {
-	constexpr const size_t &SA_HEAP_MAX {64};
+	/// The maximum number of sigactions we can maintain in our internal space.
+	constexpr const size_t &SA_HEAP_MAX {48};
+
+	/// This internal buffer is used for holding instances of struct sigaction
+	/// as our external interface only has a forward-declaration and our class
+	/// only maintains a pointer member for it.
 	thread_local allocator::fixed<struct sigaction, SA_HEAP_MAX> sa_heap;
 
-	extern const std::exception_ptr sigfpe_eptr;
 	extern "C" void ircd_fpe_handle_sigfpe(int signum, siginfo_t *const si, void *const uctx);
 }
 
 
-decltype(ircd::fpe::sigfpe_eptr)
-ircd::fpe::sigfpe_eptr
-{
-	std::make_exception_ptr(std::domain_error
-	{
-		"Floating Point Exception"
-	})
-};
-
-__attribute__((noreturn))
-void
+[[noreturn]] void
 ircd::fpe::ircd_fpe_handle_sigfpe(int signum,
                                   siginfo_t *const si,
                                   void *const uctx)
 {
 	assert(si);
 	assert(signum == SIGFPE);
-	std::rethrow_exception(sigfpe_eptr); //TODO: still malloc()'s :/
+	//TODO: due to __cxa_allocate_exception() this still malloc()'s :/
+	// We can't have a floating point error within malloc() and family
+	// or this signal will cleave it at an intermediate state and reenter.
+	throw std::domain_error
+	{
+		reflect_sicode(si->si_code)
+	};
 }
 
 //
@@ -85,6 +89,29 @@ noexcept
 	syscall(::feenableexcept, their_fenabled);
 	syscall(std::fesetexceptflag, &their_fe, FE_ALL_EXCEPT);
 }
+
+#else // IRCD_USE_ASYNC_EXCEPTIONS
+
+//
+// errors_throw::errors_throw
+//
+
+__attribute__((noreturn))
+ircd::fpe::errors_throw::errors_throw()
+{
+	throw assertive
+	{
+		"Not implemented in this environment."
+	};
+}
+
+ircd::fpe::errors_throw::~errors_throw()
+noexcept
+{
+	assert(0);
+}
+
+#endif // IRCD_USE_ASYNC_EXCEPTIONS
 
 //
 // errors_handle
@@ -182,14 +209,16 @@ ircd::fpe::reflect_sicode(const int &code)
 {
 	switch(code)
 	{
-		case FPE_INTDIV:    return "INTDIV";
-		case FPE_INTOVF:    return "INTOVF";
-		case FPE_FLTDIV:    return "FLTDIV";
-		case FPE_FLTOVF:    return "FLTOVF";
-		case FPE_FLTUND:    return "FLTUND";
-		case FPE_FLTRES:    return "FLTRES";
-		case FPE_FLTINV:    return "FLTINV";
-		case FPE_FLTSUB:    return "FLTSUB";
+		#ifdef HAVE_SIGNAL_H
+		case FPE_INTDIV:  return "INTDIV";
+		case FPE_INTOVF:  return "INTOVF";
+		case FPE_FLTDIV:  return "FLTDIV";
+		case FPE_FLTOVF:  return "FLTOVF";
+		case FPE_FLTUND:  return "FLTUND";
+		case FPE_FLTRES:  return "FLTRES";
+		case FPE_FLTINV:  return "FLTINV";
+		case FPE_FLTSUB:  return "FLTSUB";
+		#endif // HAVE_SIGNAL_H
 	}
 
 	return "?????";
