@@ -36,6 +36,20 @@ stack_sz
 	{ "default",  long(2_MiB)                    },
 };
 
+conf::item<milliseconds>
+ratelimit_sleep
+{
+	{ "name",     "construct.console.ratelimit.sleep" },
+	{ "default",  75L                                 },
+};
+
+conf::item<size_t>
+ratelimit_bytes
+{
+	{ "name",     "construct.console.ratelimit.bytes" },
+	{ "default",  long(2_KiB)                         },
+};
+
 static void check_console_active();
 static void console_fini();
 static void console_init();
@@ -298,16 +312,20 @@ handle_line_bymodule(const string_view &line)
 				out.str()
 			};
 
-			static const size_t mlen(2048);
-			for(size_t off(0); off < str.size(); off += mlen)
+			// The string is iterated for rate-limiting. After a configured
+			// number of bytes sent to stdout we sleep the ircd::ctx for a
+			// configured number of milliseconds. If these settings are too
+			// aggressive then the output heading to stdout won't appear in
+			// the terminal after the buffers are filled.
+			for(size_t off(0); off < str.size(); off += size_t(ratelimit_bytes))
 			{
 				const string_view substr
 				{
-					str.data() + off, std::min(str.size() - off, mlen)
+					str.data() + off, std::min(str.size() - off, size_t(ratelimit_bytes))
 				};
 
 				std::cout << substr << std::flush;
-				ctx::sleep(milliseconds(50));
+				ctx::sleep(milliseconds(ratelimit_sleep));
 			}
 
 			if(!endswith(str, '\n'))
