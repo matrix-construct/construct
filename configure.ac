@@ -406,6 +406,10 @@ dnl
 dnl Compiler intrumentation
 dnl
 
+dnl  Creates an ELF section in the output which contains a list of
+dnl  the command line arguments used for compilation.
+CXXFLAGS+=" -frecord-gcc-switches"
+
 dnl CXXFLAGS+=" -mmpx"
 dnl CXXFLAGS+=" -fcheck-pointer-bounds"
 CXXFLAGS+=" -fchkp-instrument-marked-only"
