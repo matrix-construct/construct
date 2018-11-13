@@ -119,14 +119,21 @@ ircd::buffer::aligned_alloc(const size_t &align,
 
 	int errc;
 	void *ret;
-	if(unlikely((errc = ::posix_memalign(&ret, alignment, size)) != 0))
-		throw std::system_error
-		{
-			errc, std::system_category()
-		};
+	switch((errc = ::posix_memalign(&ret, alignment, size)))
+	{
+		case 0:
+			break;
 
-	assert(errc == 0);
-	assert(ret != nullptr);
+		case int(std::errc::not_enough_memory):
+			throw std::bad_alloc{};
+
+		default:
+			throw std::system_error
+			{
+				errc, std::system_category()
+			};
+	}
+
 	return std::unique_ptr<char, decltype(&std::free)>
 	{
 		reinterpret_cast<char *>(ret), std::free
