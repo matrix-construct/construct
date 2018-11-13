@@ -14,8 +14,10 @@ the libircd log to stdout and stderr by default.
 ### Signals
 
 Construct handles certain POSIX signals and their behavior is documented
-below. Signals are only handled here in the Construct executable; libircd
-itself does not use any signal logic (that we know about).
+below. Prolonged ownership of any specific signal handler is not taken by
+libircd; only out here in the construct executable. libircd only makes
+cooperative use of signals: registering and deregistering any handlers
+stackfully in such a way that it is no concern to users of the library.
 
 * Signal handling is accomplished through `boost::asio`'s mechanism which
 installs a handler to intercept the signal's delivery and posts it to the
