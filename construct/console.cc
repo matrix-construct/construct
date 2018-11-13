@@ -118,6 +118,7 @@ try
 	ircd::runlevel_changed::dock.wait([]
 	{
 		return ircd::runlevel == ircd::runlevel::RUN ||
+		       ircd::runlevel == ircd::runlevel::QUIT ||
 		       ircd::runlevel == ircd::runlevel::HALT;
 	});
 
