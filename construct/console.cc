@@ -15,7 +15,13 @@ using namespace ircd;
 
 IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
 
-const char *const generic_message
+bool console_active;
+bool console_inwork;
+ircd::ctx::ctx *console_ctx;
+ircd::module *console_module;
+
+const char *const
+generic_message
 {R"(
 *** - To end the console session: type exit, or ctrl-d    -> EOF
 *** - To shutdown cleanly: type die, or ctrl-\            -> SIGQUIT
@@ -23,15 +29,12 @@ const char *const generic_message
 ***
 )"};
 
-const size_t stack_sz
+conf::item<size_t>
+stack_sz
 {
-	8_MiB
+	{ "name",     "construct.console.stack.size" },
+	{ "default",  long(2_MiB)                    },
 };
-
-bool console_active;
-bool console_inwork;
-ircd::ctx::ctx *console_ctx;
-ircd::module *console_module;
 
 static void check_console_active();
 static void console_fini();
