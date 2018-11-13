@@ -692,8 +692,6 @@ dnl TODO: IPV6 CHECKS
 
 if test x$ipv6 = "Xyes"; then
 	AC_DEFINE([HAVE_IPV6], [1], [IPv6 is supported])
-else
-	AC_DEFINE([HAVE_IPV6], [0], [IPv6 not supported])
 fi
 
 
