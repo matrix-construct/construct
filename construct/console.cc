@@ -232,15 +232,6 @@ try
 	if(line == "EXIT")
 		exit(0);
 
-	if(line == "exit")
-		return false;
-
-	if(line == "die")
-	{
-		ircd::quit();
-		return false;
-	}
-
 	int ret{-1};
 	if(console_module) switch((ret = handle_line_bymodule(line)))
 	{

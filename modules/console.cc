@@ -406,6 +406,12 @@ console_json(const json::object &object)
 //
 
 bool
+console_cmd__exit(opt &out, const string_view &line)
+{
+	return false;
+}
+
+bool
 console_cmd__debug(opt &out, const string_view &line)
 {
 	if(!RB_DEBUG_LEVEL)
@@ -424,6 +430,24 @@ console_cmd__debug(opt &out, const string_view &line)
 		log::console_enable(log::DEBUG);
 		return true;
 	}
+}
+
+//
+// main
+//
+
+bool
+console_cmd__die(opt &out, const string_view &line)
+{
+	ircd::quit();
+	return false;
+}
+
+[[noreturn]] bool
+console_cmd__die__hard(opt &out, const string_view &line)
+{
+	ircd::terminate();
+	__builtin_unreachable();
 }
 
 //
