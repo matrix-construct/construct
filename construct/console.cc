@@ -19,6 +19,7 @@ bool console_active;
 bool console_inwork;
 ircd::ctx::ctx *console_ctx;
 ircd::module *console_module;
+std::string record_path;
 
 const char *const
 generic_message
@@ -53,6 +54,7 @@ ratelimit_bytes
 static void check_console_active();
 static void console_fini();
 static void console_init();
+static bool console_cmd__record(const string_view &line);
 static int handle_line_bymodule(const string_view &line);
 static bool handle_line(const string_view &line);
 static void execute(const std::vector<std::string> lines);
@@ -232,6 +234,9 @@ try
 	if(line == "EXIT")
 		exit(0);
 
+	if(startswith(line, "record"))
+		return console_cmd__record(tokens_after(line, ' ', 0));
+
 	int ret{-1};
 	if(console_module) switch((ret = handle_line_bymodule(line)))
 	{
@@ -303,6 +308,26 @@ handle_line_bymodule(const string_view &line)
 				out.str()
 			};
 
+			// If this string is set, the user wants to log a copy of the output
+			// to the file at this path.
+			if(!empty(record_path))
+			{
+				const fs::fd fd
+				{
+					record_path, std::ios::out | std::ios::app
+				};
+
+				// Generate a copy of the command line to give some context
+				// to the output following it.
+				const std::string cmdline
+				{
+					"\n> "s + std::string{line} + "\n\n"
+				};
+
+				append(fd, string_view(cmdline));
+				append(fd, string_view(str));
+			}
+
 			// The string is iterated for rate-limiting. After a configured
 			// number of bytes sent to stdout we sleep the ircd::ctx for a
 			// configured number of milliseconds. If these settings are too
@@ -340,6 +365,32 @@ handle_line_bymodule(const string_view &line)
 	}
 
 	return ret;
+}
+
+bool
+console_cmd__record(const string_view &line)
+{
+	if(empty(line) && empty(record_path))
+	{
+		std::cout << "Console not currently recorded to any file." << std::endl;
+		return true;
+	}
+
+	if(empty(line) && !empty(record_path))
+	{
+		std::cout << "Stopped recording to file `" << record_path << "'" << std::endl;
+		record_path = {};
+		return true;
+	}
+
+	const auto path
+	{
+		token(line, ' ', 0)
+	};
+
+	std::cout << "Recording console to file `" << path << "'" << std::endl;
+	record_path = path;
+	return true;
 }
 
 void
