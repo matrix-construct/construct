@@ -48,7 +48,7 @@ template<class T,
 auto
 ircd::mods::sym_ptr::operator()(args&&... a)
 {
-	return (*get<T>())(std::forward<args>(a)...);
+	return (operator*<T>())(std::forward<args>(a)...);
 }
 
 template<class T>
@@ -61,7 +61,7 @@ ircd::mods::sym_ptr::operator*()
 			"The reference to a symbol in another module is no longer valid"
 		};
 
-	return *get<T>();
+	return *operator-><T>();
 }
 
 template<class T>
@@ -84,7 +84,7 @@ auto
 ircd::mods::sym_ptr::operator()(args&&... a)
 const
 {
-	return (*get<T>())(std::forward<args>(a)...);
+	return (operator*<T>())(std::forward<args>(a)...);
 }
 
 template<class T>
@@ -98,7 +98,7 @@ const
 			"The const reference to a symbol in another module is no longer valid"
 		};
 
-	return *get<T>();
+	return *operator-><T>();
 }
 
 template<class T>
