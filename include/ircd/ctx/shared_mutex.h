@@ -298,18 +298,38 @@ ircd::ctx::shared_mutex::try_lock_for(duration&& d)
 
 template<class time_point>
 bool
-ircd::ctx::shared_mutex::try_lock_upgrade_until(time_point&& d)
+ircd::ctx::shared_mutex::try_lock_upgrade_until(time_point&& tp)
 {
-	assert(0);
-	return false;
+	const bool can_lock_upgrade
+	{
+		q.wait_until(tp, [this]
+		{
+			return this->can_lock_upgrade();
+		})
+	};
+
+	if(can_lock_upgrade)
+		u = true;
+
+	return can_lock_upgrade;
 }
 
 template<class time_point>
 bool
-ircd::ctx::shared_mutex::try_lock_shared_until(time_point&& d)
+ircd::ctx::shared_mutex::try_lock_shared_until(time_point&& tp)
 {
-	assert(0);
-	return false;
+	const bool can_lock_shared
+	{
+		q.wait_until(tp, [this]
+		{
+			return this->can_lock_shared();
+		})
+	};
+
+	if(can_lock_shared)
+		++s;
+
+	return can_lock_shared;
 }
 
 template<class time_point>
