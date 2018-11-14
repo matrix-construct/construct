@@ -13,7 +13,7 @@ using namespace ircd;
 mapi::header
 IRCD_MODULE
 {
-	"Matrix state library; modular components."
+	"Matrix room library; modular components."
 };
 
 extern "C" size_t
