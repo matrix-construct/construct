@@ -777,6 +777,7 @@ catch(const db::not_found &e)
 
 ircd::m::event::id::buf
 ircd::m::room::messages::event_id()
+const
 {
 	event::id::buf ret;
 	event::fetch::event_id(this->event_idx(), [&ret]
@@ -796,14 +797,30 @@ const
 	return it->second;
 }
 
-const ircd::m::event::idx &
-ircd::m::room::messages::event_idx()
+uint64_t
+ircd::m::room::messages::depth()
+const
 {
 	assert(bool(*this));
-	const auto &key{it->first};
-	const auto part{dbs::room_events_key(key)};
-	_event_idx = std::get<1>(part);
-	return _event_idx;
+	const auto part
+	{
+		dbs::room_events_key(it->first)
+	};
+
+	return std::get<0>(part);
+}
+
+ircd::m::event::idx
+ircd::m::room::messages::event_idx()
+const
+{
+	assert(bool(*this));
+	const auto part
+	{
+		dbs::room_events_key(it->first)
+	};
+
+	return std::get<1>(part);
 }
 
 const ircd::m::event &

@@ -194,16 +194,16 @@ struct ircd::m::room::messages
 {
 	m::room room;
 	db::index::const_iterator it;
-	event::idx _event_idx;
 	event::fetch _event;
 
   public:
 	operator bool() const              { return bool(it);                      }
 	bool operator!() const             { return !it;                           }
 
-	event::id::buf event_id();         // deprecated; will remove
-	const event::idx &event_idx();
-	string_view state_root() const;
+	event::id::buf event_id() const;   // deprecated; will remove
+	event::idx event_idx() const;      // Available from the iterator key.
+	uint64_t depth() const;            // Available from the iterator key.
+	string_view state_root() const;    // Available from the iterator value.
 
 	const m::event &fetch(std::nothrow_t);
 	const m::event &fetch();
