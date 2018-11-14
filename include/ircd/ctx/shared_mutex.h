@@ -20,15 +20,17 @@ class ircd::ctx::shared_mutex
 {
 	bool u;
 	ssize_t s;
-	list q;
-
-	void release();
+	dock q;
 
   public:
 	bool unique() const;
 	bool upgrade() const;
 	size_t shares() const;
 	size_t waiting() const;
+
+	bool can_lock() const;
+	bool can_lock_shared() const;
+	bool can_lock_upgrade() const;
 
 	bool try_lock();
 	bool try_lock_shared();
@@ -86,6 +88,7 @@ ircd::ctx::shared_mutex::shared_mutex(shared_mutex &&o)
 noexcept
 :u{std::move(o.u)}
 ,s{std::move(o.s)}
+,q{std::move(o.q)}
 {
 	o.u = false;
 	o.s = 0;
@@ -99,6 +102,7 @@ noexcept
 	this->~shared_mutex();
 	u = std::move(o.u);
 	s = std::move(o.s);
+	q = std::move(o.q);
 	o.u = false;
 	o.s = 0;
 	return *this;
@@ -118,7 +122,7 @@ ircd::ctx::shared_mutex::unlock_upgrade_and_lock_shared()
 {
 	++s;
 	u = false;
-	release();
+	q.notify_one();
 }
 
 inline void
@@ -139,28 +143,28 @@ inline void
 ircd::ctx::shared_mutex::unlock_and_lock_shared()
 {
 	s = 1;
-	release();
+	q.notify_one();
 }
 
 inline void
 ircd::ctx::shared_mutex::unlock_upgrade()
 {
 	u = false;
-	release();
+	q.notify_one();
 }
 
 inline void
 ircd::ctx::shared_mutex::unlock_shared()
 {
 	--s;
-	release();
+	q.notify_one();
 }
 
 inline void
 ircd::ctx::shared_mutex::unlock()
 {
 	s = 0;
-	release();
+	q.notify_all();
 }
 
 template<class duration>
@@ -241,37 +245,34 @@ ircd::ctx::shared_mutex::try_unlock_shared_and_lock()
 inline void
 ircd::ctx::shared_mutex::lock_upgrade()
 {
-	if(likely(try_lock_upgrade()))
-		return;
+	q.wait([this]
+	{
+		return can_lock_upgrade();
+	});
 
-	assert(current);
-	q.push_back(current);
-	while(!try_lock_upgrade())
-		wait();
+	u = true;
 }
 
 inline void
 ircd::ctx::shared_mutex::lock_shared()
 {
-	if(likely(try_lock_shared()))
-		return;
+	q.wait([this]
+	{
+		return can_lock_shared();
+	});
 
-	assert(current);
-	q.push_back(current);
-	while(!try_lock_shared())
-		wait();
+	++s;
 }
 
 inline void
 ircd::ctx::shared_mutex::lock()
 {
-	if(likely(try_lock()))
-		return;
+	q.wait([this]
+	{
+		return can_lock();
+	});
 
-	assert(current);
-	q.push_back(current);
-	while(!try_lock())
-		wait();
+	s = std::numeric_limits<decltype(s)>::min();
 }
 
 template<class duration>
@@ -315,34 +316,29 @@ template<class time_point>
 bool
 ircd::ctx::shared_mutex::try_lock_until(time_point&& tp)
 {
-	if(likely(try_lock()))
-		return true;
-
-	assert(current);
-	q.push_back(current);
-	while(!try_lock())
+	const bool can_lock
 	{
-		if(unlikely(wait_until<std::nothrow_t>(tp)))
+		q.wait_until(tp, [this]
 		{
-			q.remove(current);
-			return false;
-		}
-	}
+			return this->can_lock();
+		})
+	};
 
-	return true;
+	if(can_lock)
+		s = std::numeric_limits<decltype(s)>::min();
+
+	return can_lock;
 }
 
 inline bool
 ircd::ctx::shared_mutex::try_lock_upgrade()
 {
-	if(s < 0)
-		return false;
-
-	if(u)
-		return false;
-
-	u = true;
-	return true;
+	if(can_lock_upgrade())
+	{
+		u = true;
+		return true;
+	}
+	else return false;
 }
 
 inline bool
@@ -355,11 +351,39 @@ ircd::ctx::shared_mutex::try_lock_shared()
 inline bool
 ircd::ctx::shared_mutex::try_lock()
 {
-	if(s)
+	if(can_lock())
+	{
+		s = std::numeric_limits<decltype(s)>::min();
+		return true;
+	}
+	else return false;
+}
+
+inline bool
+ircd::ctx::shared_mutex::can_lock_upgrade()
+const
+{
+	if(s < 0)
 		return false;
 
-	s = std::numeric_limits<decltype(s)>::min();
+	if(u)
+		return false;
+
 	return true;
+}
+
+inline bool
+ircd::ctx::shared_mutex::can_lock_shared()
+const
+{
+	return s >= 0;
+}
+
+inline bool
+ircd::ctx::shared_mutex::can_lock()
+const
+{
+	return s == 0;
 }
 
 inline size_t
@@ -388,10 +412,4 @@ ircd::ctx::shared_mutex::unique()
 const
 {
 	return s == std::numeric_limits<decltype(s)>::min();
-}
-
-inline void
-ircd::ctx::shared_mutex::release()
-{
-	release_sequence(q);
 }

@@ -14,8 +14,6 @@
 namespace ircd::ctx
 {
 	class mutex;
-
-	template<class queue> void release_sequence(queue &);
 }
 
 //
@@ -26,7 +24,7 @@ namespace ircd::ctx
 class ircd::ctx::mutex
 {
 	bool m;
-	list q;
+	dock q;
 
   public:
 	bool locked() const;
@@ -57,6 +55,7 @@ inline
 ircd::ctx::mutex::mutex(mutex &&o)
 noexcept
 :m{std::move(o.m)}
+,q{std::move(o.q)}
 {
 	o.m = false;
 }
@@ -68,6 +67,7 @@ noexcept
 {
 	this->~mutex();
 	m = std::move(o.m);
+	q = std::move(o.q);
 	o.m = false;
 	return *this;
 }
@@ -84,19 +84,18 @@ ircd::ctx::mutex::unlock()
 {
 	assert(m);
 	m = false;
-	release_sequence(q);
+	q.notify_one();
 }
 
 inline void
 ircd::ctx::mutex::lock()
 {
-	if(likely(try_lock()))
-		return;
+	q.wait([this]
+	{
+		return !locked();
+	});
 
-	assert(current);
-	q.push_back(current);
-	while(!try_lock())
-		wait();
+	m = true;
 }
 
 template<class duration>
@@ -110,27 +109,24 @@ template<class time_point>
 bool
 ircd::ctx::mutex::try_lock_until(const time_point &tp)
 {
-	if(likely(try_lock()))
-		return true;
-
-	assert(current);
-	q.push_back(current);
-	while(!try_lock())
+	const bool success
 	{
-		if(unlikely(wait_until<std::nothrow_t>(tp)))
+		q.wait_until(tp, [this]
 		{
-			q.remove(current);
-			return false;
-		}
-	}
+			return !locked();
+		})
+	};
 
-	return true;
+	if(likely(success))
+		m = true;
+
+	return success;
 }
 
 inline bool
 ircd::ctx::mutex::try_lock()
 {
-	if(m)
+	if(locked())
 		return false;
 
 	m = true;
@@ -149,25 +145,4 @@ ircd::ctx::mutex::locked()
 const
 {
 	return m;
-}
-
-template<class queue>
-void
-ircd::ctx::release_sequence(queue &q)
-{
-	assert(current);
-
-	ctx *next; do
-	{
-		if(!q.empty())
-		{
-			next = q.front();
-			q.pop_front();
-		}
-		else next = nullptr;
-	}
-	while(next == current);
-
-	if(next)
-		yield(*next);
 }
