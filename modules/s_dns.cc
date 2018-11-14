@@ -119,6 +119,10 @@ ircd::net::dns::handle__SRV(callback_SRV_one callback,
                             const records &rrs)
 {
 	static const rfc1035::record::SRV empty;
+	static const auto &qtype
+	{
+		rfc1035::qtype.at("SRV")
+	};
 
 	if(eptr)
 		return callback(std::move(eptr), hp, empty);
@@ -126,8 +130,8 @@ ircd::net::dns::handle__SRV(callback_SRV_one callback,
 	//TODO: prng on weight / prio plz
 	for(size_t i(0); i < rrs.size(); ++i)
 	{
-		const auto &rr{*rrs.at(i)};
-		if(rr.type != 33)
+		const auto &rr(*rrs.at(i));
+		if(rr.type != qtype)
 			continue;
 
 		const auto &record(rr.as<const rfc1035::record::SRV>());
@@ -175,6 +179,10 @@ ircd::net::dns::handle__A(callback_A_one callback,
                           const records &rrs)
 {
 	static const rfc1035::record::A empty;
+	static const auto &qtype
+	{
+		rfc1035::qtype.at("A")
+	};
 
 	if(eptr)
 		return callback(std::move(eptr), hp, empty);
@@ -182,8 +190,8 @@ ircd::net::dns::handle__A(callback_A_one callback,
 	//TODO: prng plz
 	for(size_t i(0); i < rrs.size(); ++i)
 	{
-		const auto &rr{*rrs.at(i)};
-		if(rr.type != 1)
+		const auto &rr(*rrs.at(i));
+		if(rr.type != qtype)
 			continue;
 
 		const auto &record(rr.as<const rfc1035::record::A>());
