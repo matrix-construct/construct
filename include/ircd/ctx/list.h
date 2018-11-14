@@ -103,9 +103,10 @@ ircd::ctx::list::operator=(list &&o)
 noexcept
 {
 	this->~list();
-	std::swap(head, o.head);
-	std::swap(tail, o.tail);
-	assert(!o.head && !o.tail);
+	head = std::move(o.head);
+	tail = std::move(o.tail);
+	o.head = nullptr;
+	o.tail = nullptr;
 	return *this;
 }
 

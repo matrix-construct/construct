@@ -67,7 +67,8 @@ ircd::ctx::mutex::operator=(mutex &&o)
 noexcept
 {
 	this->~mutex();
-	std::swap(m, o.m);
+	m = std::move(o.m);
+	o.m = false;
 	return *this;
 }
 

@@ -97,8 +97,10 @@ ircd::ctx::shared_mutex::operator=(shared_mutex &&o)
 noexcept
 {
 	this->~shared_mutex();
-	std::swap(u, o.u);
-	std::swap(s, o.s);
+	u = std::move(o.u);
+	s = std::move(o.s);
+	o.u = false;
+	o.s = 0;
 	return *this;
 }
 
