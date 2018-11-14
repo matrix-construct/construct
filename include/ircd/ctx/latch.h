@@ -18,7 +18,7 @@ namespace ircd::ctx
 
 class ircd::ctx::latch
 {
-	mutable struct dock dock;
+	mutable dock d;
 	size_t count {0};
 
   public:
@@ -29,7 +29,7 @@ class ircd::ctx::latch
 
 	latch(const size_t &count);
 	latch() = default;
-	latch(latch &&) = default;
+	latch(latch &&);
 	latch(const latch &) = delete;
 	~latch() noexcept;
 };
@@ -38,6 +38,14 @@ inline
 ircd::ctx::latch::latch(const size_t &count)
 :count{count}
 {}
+
+inline
+ircd::ctx::latch::latch(latch &&o)
+:d{std::move(o.d)}
+,count{std::move(o.count)}
+{
+	o.count = 0;
+}
 
 inline
 ircd::ctx::latch::~latch()
@@ -50,7 +58,7 @@ inline void
 ircd::ctx::latch::wait()
 const
 {
-	dock.wait([this]
+	d.wait([this]
 	{
 		return is_ready();
 	});
@@ -60,7 +68,7 @@ inline void
 ircd::ctx::latch::count_down_and_wait()
 {
 	if(--count == 0)
-		dock.notify_all();
+		d.notify_all();
 	else
 		wait();
 }
@@ -70,7 +78,7 @@ ircd::ctx::latch::count_down(const size_t &n)
 {
 	count -= n;
 	if(is_ready())
-		dock.notify_all();
+		d.notify_all();
 }
 
 
