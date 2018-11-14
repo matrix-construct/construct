@@ -213,138 +213,15 @@ tuple<T...>::size()
 	return std::tuple_size<tuple_type>();
 }
 
-template<class tuple,
-         class it_a,
-         class it_b,
-         size_t i,
-         class closure>
-constexpr typename std::enable_if<i == tuple::size(), it_a>::type
-_key_transform(it_a it,
-               const it_b &end,
-               closure&& lambda)
-{
-	return it;
-}
-
-template<class tuple,
-         class it_a,
-         class it_b,
-         size_t i = 0,
-         class closure>
-constexpr typename std::enable_if<i < tuple::size(), it_a>::type
-_key_transform(it_a it,
-               const it_b &end,
-               closure&& lambda)
-{
-	if(it != end)
-	{
-		*it = lambda(key<tuple, i>());
-		++it;
-	}
-
-	return _key_transform<tuple, it_a, it_b, i + 1>(it, end, std::move(lambda));
-}
-
-template<class tuple,
-         class it_a,
-         class it_b>
-constexpr auto
-_key_transform(it_a it,
-               const it_b &end)
-{
-	return _key_transform<tuple>(it, end, []
-	(auto&& key)
-	{
-		return key;
-	});
-}
-
-template<class it_a,
-         class it_b,
-         class... T>
-auto
-_key_transform(const tuple<T...> &tuple,
-               it_a it,
-               const it_b &end)
-{
-	for_each(tuple, [&it, &end]
-	(const auto &key, const auto &val)
-	{
-		if(it != end)
-		{
-			*it = key;
-			++it;
-		}
-	});
-
-	return it;
-}
-
 } // namespace json
 } // namespace ircd
 
+#include "_key_transform.h"
 #include "keys.h"
+#include "_member_transform.h"
 
 namespace ircd {
 namespace json {
-
-template<class it_a,
-         class it_b,
-         class closure,
-         class... T>
-auto
-_member_transform_if(const tuple<T...> &tuple,
-                     it_a it,
-                     const it_b end,
-                     closure&& lambda)
-{
-	until(tuple, [&it, &end, &lambda]
-	(const auto &key, auto&& val)
-	{
-		if(it == end)
-			return false;
-
-		if(lambda(*it, key, val))
-			++it;
-
-		return true;
-	});
-
-	return it;
-}
-
-template<class it_a,
-         class it_b,
-         class closure,
-         class... T>
-auto
-_member_transform(const tuple<T...> &tuple,
-                  it_a it,
-                  const it_b end,
-                  closure&& lambda)
-{
-	return _member_transform_if(tuple, it, end, [&lambda]
-	(auto&& ret, const auto &key, auto&& val)
-	{
-		ret = lambda(key, val);
-		return true;
-	});
-}
-
-template<class it_a,
-         class it_b,
-         class... T>
-auto
-_member_transform(const tuple<T...> &tuple,
-                  it_a it,
-                  const it_b end)
-{
-	return _member_transform(tuple, it, end, []
-	(auto&& ret, const auto &key, auto&& val) -> member
-	{
-		return { key, val };
-	});
-}
 
 template<class... T>
 size_t
@@ -471,8 +348,8 @@ const
 	{
 		stringify(buffer, *this);
 	});
-	return ret;
 
+	return ret;
 }
 
 } // namespace json

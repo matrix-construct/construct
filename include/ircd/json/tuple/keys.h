@@ -11,13 +11,10 @@
 #pragma once
 #define HAVE_IRCD_JSON_TUPLE_KEYS_H
 
-namespace ircd {
-namespace json {
-
-template<class tuple> struct keys;
-
-} // namespace json
-} // namespace ircd
+namespace ircd::json
+{
+	template<class tuple> struct keys;
+}
 
 /// Array of string literals (in string_views) representing just the keys of a
 /// tuple. By default construction all keys are included in the array. A
