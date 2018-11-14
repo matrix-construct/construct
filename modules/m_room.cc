@@ -467,6 +467,55 @@ state__rebuild_history(const m::room &room)
 	return ret;
 }
 
+//TODO: state btree.
+extern "C" size_t
+state__clear_history(const m::room &room)
+{
+	static const db::gopts gopts
+	{
+		db::get::NO_CACHE
+	};
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	auto it
+	{
+		m::dbs::room_events.begin(room.room_id, gopts)
+	};
+
+	size_t ret{0};
+	for(; it; ++it, ret++)
+	{
+		const auto pair
+		{
+			m::dbs::room_events_key(it->first)
+		};
+
+		const auto &depth{std::get<0>(pair)};
+		const auto &event_idx{std::get<1>(pair)};
+		thread_local char buf[m::dbs::ROOM_EVENTS_KEY_MAX_SIZE];
+		const string_view key
+		{
+			m::dbs::room_events_key(buf, room.room_id, depth, event_idx)
+		};
+
+		db::txn::append
+		{
+			txn, m::dbs::room_events,
+			{
+				db::op::SET,
+				key
+			}
+		};
+	}
+
+	txn();
+	return ret;
+}
+
 conf::item<ulong>
 state__prefetch__yield_modulus
 {
