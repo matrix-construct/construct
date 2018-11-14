@@ -422,24 +422,3 @@ ircd::buffer::begin(const buffer<it> &buffer)
 {
 	return get<0>(buffer);
 }
-
-template<class it>
-ircd::buffer::buffer<it>::operator std::string()
-const
-{
-	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
-}
-
-template<class it>
-ircd::buffer::buffer<it>::operator std::string_view()
-const
-{
-	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
-}
-
-template<class it>
-ircd::buffer::buffer<it>::operator string_view()
-const
-{
-	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
-}
