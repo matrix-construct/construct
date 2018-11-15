@@ -129,7 +129,7 @@ struct ircd::conf::lex_castable
 	}
 	,conf::value<T>
 	(
-		feature.get("default", long(0))
+		feature.get("default", T(0))
 	)
 	{
 		call_init();
