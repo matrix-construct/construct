@@ -31,6 +31,8 @@ namespace ircd::conf
 	template<> struct item<bool>;
 	template<> struct item<uint64_t>;
 	template<> struct item<int64_t>;
+	template<> struct item<float>;
+	template<> struct item<double>;
 	template<> struct item<hours>;
 	template<> struct item<seconds>;
 	template<> struct item<milliseconds>;
@@ -178,6 +180,20 @@ struct ircd::conf::item<uint64_t>
 template<>
 struct ircd::conf::item<int64_t>
 :lex_castable<int64_t>
+{
+	using lex_castable::lex_castable;
+};
+
+template<>
+struct ircd::conf::item<double>
+:lex_castable<double>
+{
+	using lex_castable::lex_castable;
+};
+
+template<>
+struct ircd::conf::item<float>
+:lex_castable<float>
 {
 	using lex_castable::lex_castable;
 };
