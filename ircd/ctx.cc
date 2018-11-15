@@ -1231,7 +1231,7 @@ ircd::ctx::prof::mark(const event &e)
 ulong
 ircd::ctx::prof::cur_slice_cycles()
 {
-	return __rdtsc() - cur_slice_start();
+	return rdtsc() - cur_slice_start();
 }
 
 const ulong &
@@ -1274,7 +1274,7 @@ ircd::ctx::prof::handle_cur_continue()
 void
 ircd::ctx::prof::slice_start()
 {
-	_slice_start = __rdtsc();
+	_slice_start = rdtsc();
 }
 
 void
@@ -1333,6 +1333,12 @@ ircd::ctx::prof::check_stack()
 
 		assert(stack_at < c.stack.max * settings.stack_usage_assertion);
 	}
+}
+
+ulong
+ircd::ctx::prof::rdtsc()
+{
+	return __rdtsc();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

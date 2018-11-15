@@ -32,10 +32,15 @@ namespace ircd::ctx::prof
 	enum class event;
 	struct settings extern settings;
 
+	// lowlevel
+	ulong rdtsc();
+
+	// state accessors
 	const ulong &total_slice_cycles();
 	const ulong &cur_slice_start();
 	ulong cur_slice_cycles();
 
+	// called at the appropriate point to mark the event (internal use).
 	void mark(const event &);
 }
 
