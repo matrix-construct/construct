@@ -1291,7 +1291,7 @@ catch(const ctx::interrupted &e)
 
 	joining.notify_all();
 }
-catch(const boost::system::system_error &e)
+catch(const std::system_error &e)
 {
 	log::derror
 	{
@@ -1387,7 +1387,7 @@ catch(const ctx::interrupted &e)
 
 	joining.notify_all();
 }
-catch(const boost::system::system_error &e)
+catch(const std::system_error &e)
 {
 	log::derror
 	{
