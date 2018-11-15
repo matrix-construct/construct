@@ -13,9 +13,10 @@
 
 namespace ircd
 {
-	using microtime_t = std::pair<time_t, int32_t>;
+	using high_resolution_point = time_point<high_resolution_clock>;
 	using steady_point = time_point<steady_clock>;
 	using system_point = time_point<system_clock>;
+	using microtime_t = std::pair<time_t, int32_t>;
 
 	// Standard time_point samples
 	template<class unit = seconds> unit now();
@@ -218,17 +219,17 @@ ircd::time(time_t &ref)
 }
 
 template<> inline
-ircd::steady_point
-ircd::now()
-{
-	return steady_clock::now();
-}
-
-template<> inline
 ircd::system_point
 ircd::now()
 {
 	return system_clock::now();
+}
+
+template<> inline
+ircd::steady_point
+ircd::now()
+{
+	return steady_clock::now();
 }
 
 template<class unit>
