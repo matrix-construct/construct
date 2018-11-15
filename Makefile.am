@@ -22,7 +22,6 @@ mrproper-local:
 	rm -f install-sh
 	rm -f libtool
 	rm -f missing
-	rm -f ylwrap
 	rm -f */Makefile
 	rm -f */Makefile.in
 	rm -f include/*/Makefile
@@ -30,10 +29,10 @@ mrproper-local:
 	rm -rf */.deps
 	rm -f Makefile
 	rm -f Makefile.in
-	rm -f m4/argz.m4
-	rm -f m4/libtool.m4
-	rm -f m4/ltargz.m4
-	rm -f m4/ltoptions.m4
-	rm -f m4/ltsugar.m4
-	rm -f m4/ltversion.m4
-	rm -f m4/lt~obsolete.m4
+	rm -f tools/m4/argz.m4
+	rm -f tools/m4/libtool.m4
+	rm -f tools/m4/ltargz.m4
+	rm -f tools/m4/ltoptions.m4
+	rm -f tools/m4/ltsugar.m4
+	rm -f tools/m4/ltversion.m4
+	rm -f tools/m4/lt~obsolete.m4
