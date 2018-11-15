@@ -77,11 +77,12 @@ ircd::info::dump()
 	// This message flashes posix information about the resource limits
 	log::debug
 	{
-		"AS=%lu DATA=%lu RSS=%lu NOFILE=%zu; aio_reqprio_max=%d",
+		"AS=%lu DATA=%lu RSS=%lu NOFILE=%lu; RTTIME=%lu aio_reqprio_max=%d",
 		rlimit_as,
 		rlimit_data,
 		rlimit_rss,
 		rlimit_nofile,
+		rlimit_rttime,
 		aio_reqprio_max
 	};
 }
@@ -254,6 +255,12 @@ decltype(ircd::info::rlimit_nofile)
 ircd::info::rlimit_nofile
 {
 	_get_rlimit(RLIMIT_NOFILE)
+};
+
+decltype(ircd::info::rlimit_rttime)
+ircd::info::rlimit_rttime
+{
+	_get_rlimit(RLIMIT_RTTIME)
 };
 
 decltype(ircd::info::page_size)

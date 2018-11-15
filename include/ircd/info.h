@@ -48,6 +48,7 @@ namespace ircd::info
 	extern const size_t rlimit_data;
 	extern const size_t rlimit_rss;
 	extern const size_t rlimit_nofile;
+	extern const size_t rlimit_rttime;
 
 	extern const int glibc_version[3];
 	extern const string_view glibc_version_str;
