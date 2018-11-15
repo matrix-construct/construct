@@ -30,7 +30,6 @@
 namespace ircd::ctx::prof
 {
 	enum class event;
-	struct settings extern settings;
 
 	// lowlevel
 	ulong rdtsc();
@@ -60,12 +59,12 @@ enum class ircd::ctx::prof::event
 	CUR_TERMINATE,     // Current context detects termination
 };
 
-struct ircd::ctx::prof::settings
+namespace ircd::ctx::prof::settings
 {
-	double stack_usage_warning;       // percentage
-	double stack_usage_assertion;     // percentage
+	extern conf::item<double> stack_usage_warning;     // percentage
+	extern conf::item<double> stack_usage_assertion;   // percentage
 
-	ulong slice_warning;       // Warn when the yield-to-yield cycles exceeds
-	ulong slice_interrupt;     // Interrupt exception when exceeded (not a signal)
-	ulong slice_assertion;     // abort() when exceeded (not a signal, must yield)
-};
+	extern conf::item<ulong> slice_warning;     // Warn when the yield-to-yield cycles exceeds
+	extern conf::item<ulong> slice_interrupt;   // Interrupt exception when exceeded (not a signal)
+	extern conf::item<ulong> slice_assertion;   // abort() when exceeded (not a signal, must yield)
+}

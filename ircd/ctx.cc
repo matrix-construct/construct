@@ -747,14 +747,14 @@ noexcept
 ircd::ctx::this_ctx::stack_usage_assertion::stack_usage_assertion()
 {
 	const auto stack_usage(stack_at_here());
-	assert(stack_usage < cur().stack.max * prof::settings.stack_usage_assertion);
+	assert(stack_usage < cur().stack.max * double(prof::settings::stack_usage_assertion));
 }
 
 ircd::ctx::this_ctx::stack_usage_assertion::~stack_usage_assertion()
 noexcept
 {
 	const auto stack_usage(stack_at_here());
-	assert(stack_usage < cur().stack.max * prof::settings.stack_usage_assertion);
+	assert(stack_usage < cur().stack.max * double(prof::settings::stack_usage_assertion));
 }
 
 #endif // NDEBUG
@@ -1197,15 +1197,44 @@ namespace ircd::ctx::prof
 	void handle_cur_enter();
 }
 
-struct ircd::ctx::prof::settings
-ircd::ctx::prof::settings
+// stack_usage_warning at 1/3 engineering tolerance
+decltype(ircd::ctx::prof::settings::stack_usage_warning)
+ircd::ctx::prof::settings::stack_usage_warning
 {
-	0.33,        // stack_usage_warning at 1/3 engineering tolerance
-	0.50,        // stack_usage_assertion at 1/2 engineering tolerance
+	{ "name",     "ircd.ctx.prof.stack_usage_warning" },
+	{ "default",  0.33                                },
+};
 
-	280 * 1000000UL,   // slice_warning after this number of tsc ticks...
-	0UL,               // slice_interrupt unused until project more mature...
-	0UL,               // slice_assertion unused; warning sufficient for now...
+// stack_usage_assertion at 1/2 engineering tolerance
+decltype(ircd::ctx::prof::settings::stack_usage_assertion)
+ircd::ctx::prof::settings::stack_usage_assertion
+{
+	{ "name",     "ircd.ctx.prof.stack_usage_assertion" },
+	{ "default",  0.50                                  },
+};
+
+// slice_warning after this number of tsc ticks...
+decltype(ircd::ctx::prof::settings::slice_warning)
+ircd::ctx::prof::settings::slice_warning
+{
+	{ "name",     "ircd.ctx.prof.slice_warning" },
+	{ "default",  280 * 1000000L                },
+};
+
+// slice_interrupt after this number of tsc ticks...
+decltype(ircd::ctx::prof::settings::slice_interrupt)
+ircd::ctx::prof::settings::slice_interrupt
+{
+	{ "name",     "ircd.ctx.prof.slice_interrupt" },
+	{ "default",  0L                              },
+};
+
+// slice_assertion after this number of tsc ticks...
+decltype(ircd::ctx::prof::settings::slice_assertion)
+ircd::ctx::prof::settings::slice_assertion
+{
+	{ "name",     "ircd.ctx.prof.slice_assertion" },
+	{ "default",  0L                              },
 };
 
 #ifdef RB_DEBUG
@@ -1289,7 +1318,8 @@ ircd::ctx::prof::check_slice()
 	c.profile.cycles += last_cycles;
 	_slice_total += last_cycles;
 
-	if(unlikely(settings.slice_warning > 0 && last_cycles >= settings.slice_warning))
+	const ulong &slice_warning(settings::slice_warning);
+	if(unlikely(slice_warning > 0 && last_cycles >= slice_warning))
 		log::dwarning
 		{
 			"context timeslice exceeded '%s' #%lu total: %lu last: %lu",
@@ -1299,9 +1329,11 @@ ircd::ctx::prof::check_slice()
 			last_cycles
 		};
 
-	assert(settings.slice_assertion == 0 || last_cycles < settings.slice_assertion);
+	const ulong &slice_assertion(settings::slice_assertion);
+	assert(slice_assertion == 0 || last_cycles < slice_assertion);
 
-	if(unlikely(settings.slice_interrupt > 0 && last_cycles >= settings.slice_interrupt))
+	const ulong &slice_interrupt(settings::slice_interrupt);
+	if(unlikely(slice_interrupt > 0 && last_cycles >= slice_interrupt))
 		throw interrupted
 		{
 			"context '%s' #%lu watchdog interrupt (total: %lu last: %lu)",
@@ -1320,7 +1352,8 @@ ircd::ctx::prof::check_stack()
 	const auto &stack_at(stack_at_here());
 	c.stack.at = stack_at;
 
-	if(unlikely(stack_at > stack_max * settings.stack_usage_warning))
+	const double &stack_usage_assertion(settings::stack_usage_assertion);
+	if(unlikely(stack_at > stack_max * stack_usage_assertion))
 	{
 		log::dwarning
 		{
@@ -1331,7 +1364,8 @@ ircd::ctx::prof::check_stack()
 			c.stack.max
 		};
 
-		assert(stack_at < c.stack.max * settings.stack_usage_assertion);
+		const double &stack_usage_assertion(settings::stack_usage_assertion);
+		assert(stack_at < c.stack.max * double(settings::stack_usage_assertion));
 	}
 }
 
