@@ -8850,12 +8850,6 @@ const
 // column::const_iterator
 //
 
-namespace ircd {
-namespace db   {
-
-} // namespace db
-} // namespace ircd
-
 ircd::db::column::const_iterator
 ircd::db::column::end(gopts gopts)
 {
@@ -9016,7 +9010,7 @@ noexcept
 
 ircd::db::column::const_iterator_base::const_iterator_base(database::column *const &c,
                                                            std::unique_ptr<rocksdb::Iterator> &&it,
-                                                            gopts opts)
+                                                           gopts opts)
 :c{c}
 ,opts{std::move(opts)}
 ,it{std::move(it)}
@@ -9127,12 +9121,7 @@ ircd::db::seek(column::const_iterator_base &it,
                const pos &p)
 {
 	database::column &c(it);
-	const auto ropts
-	{
-		make_opts(it.opts)
-	};
-
-	return seek(c, p, ropts, it.it);
+	return seek(c, p, it.opts, it.it);
 }
 template bool ircd::db::seek<ircd::db::pos>(column::const_iterator_base &, const pos &);
 template bool ircd::db::seek<ircd::string_view>(column::const_iterator_base &, const string_view &);
@@ -9378,8 +9367,8 @@ namespace ircd::db
 	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const string_view &);
 	static rocksdb::Iterator &_seek_lower_(rocksdb::Iterator &, const string_view &);
 	static rocksdb::Iterator &_seek_upper_(rocksdb::Iterator &, const string_view &);
-	bool _seek(database::column &, const pos &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
-	bool _seek(database::column &, const string_view &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
+	static bool _seek(database::column &, const pos &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
+	static bool _seek(database::column &, const string_view &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
 }
 
 std::unique_ptr<rocksdb::Iterator>
@@ -9402,7 +9391,7 @@ ircd::db::seek(database::column &c,
                const gopts &gopts,
                std::unique_ptr<rocksdb::Iterator> &it)
 {
-	auto opts
+	const rocksdb::ReadOptions opts
 	{
 		make_opts(gopts)
 	};
@@ -9423,7 +9412,6 @@ ircd::db::seek(database::column &c,
 	{
 		database &d(*c.d);
 		rocksdb::ColumnFamilyHandle *const &cf(c);
-		const ctx::critical_assertion ca;
 		it.reset(d.d->NewIterator(opts, cf));
 	}
 
@@ -10033,6 +10021,7 @@ ircd::db::optstr_find_and_remove(std::string &optstr,
 	return true;
 }
 
+/// Convert our options structure into RocksDB's options structure.
 rocksdb::ReadOptions
 ircd::db::make_opts(const gopts &opts)
 {
@@ -10056,16 +10045,14 @@ read_checksum
 	{ "default",  false                   }
 };
 
+/// Update a RocksDB options structure with our options structure. We use
+/// operator+= for fun here; we can avoid reconstructing and returning a new
+/// options structure in some cases by breaking out this function from
+/// make_opts().
 rocksdb::ReadOptions &
 ircd::db::operator+=(rocksdb::ReadOptions &ret,
                      const gopts &opts)
 {
-	ret.iter_start_seqnum = opts.seqnum;
-	ret.readahead_size = opts.readahead;
-
-	if(opts.snapshot && !test(opts, get::NO_SNAPSHOT))
-		ret.snapshot = opts.snapshot;
-
 	ret.pin_data = test(opts, get::PIN);
 	ret.fill_cache |= test(opts, get::CACHE);
 	ret.fill_cache &= !test(opts, get::NO_CACHE);
@@ -10075,6 +10062,13 @@ ircd::db::operator+=(rocksdb::ReadOptions &ret,
 	ret.verify_checksums = bool(read_checksum);
 	ret.verify_checksums |= test(opts, get::CHECKSUM);
 	ret.verify_checksums &= !test(opts, get::NO_CHECKSUM);
+
+	ret.readahead_size = opts.readahead;
+	ret.iter_start_seqnum = opts.seqnum;
+
+	if(opts.snapshot && !test(opts, get::NO_SNAPSHOT))
+		ret.snapshot = opts.snapshot;
+
 	return ret;
 }
 

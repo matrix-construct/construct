@@ -43,7 +43,6 @@ namespace ircd::db
 
 	const auto BLOCKING = rocksdb::ReadTier::kReadAllTier;
 	const auto NON_BLOCKING = rocksdb::ReadTier::kBlockCacheTier;
-	const auto DEFAULT_READAHEAD = 4_MiB;
 
 	// state
 	extern log::log rog;
