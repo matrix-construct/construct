@@ -75,7 +75,7 @@ namespace ircd::buffer
 	size_t move(const mutable_buffer &dst, const const_buffer &src);
 	size_t reverse(const mutable_buffer &dst, const const_buffer &src);
 	void reverse(const mutable_buffer &buf);
-	void zero(const mutable_buffer &buf);
+	size_t zero(const mutable_buffer &buf);
 
 	// Convenience copy to std stream
 	template<class it> std::ostream &operator<<(std::ostream &s, const buffer<it> &buffer);
@@ -207,6 +207,17 @@ ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
 	s.write(data(buffer), size(buffer));
 	return s;
 }
+
+// We use the sodium_memzero() from libsodium in ircd/sodium.cc if available
+// to ensure cross-platform guarantees the zero'ing doesn't get optimized away.
+#ifndef HAVE_SODIUM_H
+inline size_t
+ircd::buffer::zero(const mutable_buffer &buf)
+{
+	std::memset(data(buf), 0x0, size(buf));
+	return size(buf);
+}
+#endif
 
 inline void
 ircd::buffer::reverse(const mutable_buffer &buf)

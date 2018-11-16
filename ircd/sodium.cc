@@ -51,10 +51,11 @@ noexcept
 // ircd/buffer.h
 //
 
-void
+size_t
 ircd::buffer::zero(const mutable_buffer &buf)
 {
 	sodium_memzero(data(buf), size(buf));
+	return size(buf);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
