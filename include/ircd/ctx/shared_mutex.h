@@ -18,9 +18,9 @@ namespace ircd::ctx
 
 class ircd::ctx::shared_mutex
 {
-	bool u;
-	ssize_t s;
 	dock q;
+	ssize_t s;
+	bool u;
 
   public:
 	bool unique() const;
@@ -78,20 +78,20 @@ class ircd::ctx::shared_mutex
 
 inline
 ircd::ctx::shared_mutex::shared_mutex()
-:u{false}
-,s{0}
+:s{0}
+,u{false}
 {
 }
 
 inline
 ircd::ctx::shared_mutex::shared_mutex(shared_mutex &&o)
 noexcept
-:u{std::move(o.u)}
+:q{std::move(o.q)}
 ,s{std::move(o.s)}
-,q{std::move(o.q)}
+,u{std::move(o.u)}
 {
-	o.u = false;
 	o.s = 0;
+	o.u = false;
 }
 
 inline
@@ -100,11 +100,11 @@ ircd::ctx::shared_mutex::operator=(shared_mutex &&o)
 noexcept
 {
 	this->~shared_mutex();
-	u = std::move(o.u);
-	s = std::move(o.s);
 	q = std::move(o.q);
-	o.u = false;
+	s = std::move(o.s);
+	u = std::move(o.u);
 	o.s = 0;
+	o.u = false;
 	return *this;
 }
 

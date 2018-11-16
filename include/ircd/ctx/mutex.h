@@ -23,8 +23,8 @@ namespace ircd::ctx
 //
 class ircd::ctx::mutex
 {
-	bool m;
 	dock q;
+	bool m;
 
   public:
 	bool locked() const;
@@ -54,8 +54,8 @@ ircd::ctx::mutex::mutex()
 inline
 ircd::ctx::mutex::mutex(mutex &&o)
 noexcept
-:m{std::move(o.m)}
-,q{std::move(o.q)}
+:q{std::move(o.q)}
+,m{std::move(o.m)}
 {
 	o.m = false;
 }
@@ -66,8 +66,8 @@ ircd::ctx::mutex::operator=(mutex &&o)
 noexcept
 {
 	this->~mutex();
-	m = std::move(o.m);
 	q = std::move(o.q);
+	m = std::move(o.m);
 	o.m = false;
 	return *this;
 }
