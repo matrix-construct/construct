@@ -158,7 +158,10 @@ ircd::m::sync::longpoll::handle_notify(const m::event &event,
 		return;
 
 	if(!polling)
+	{
+		queue.clear();
 		return;
+	}
 
 	queue.emplace_back(eval);
 	dock.notify_all();
@@ -177,14 +180,20 @@ try
 
 	while(1)
 	{
-		dock.wait_until(args.timesout);
+		if(!dock.wait_until(args.timesout))
+			throw m::error
+			{
+				http::REQUEST_TIMEOUT, "M_TIMEOUT", "Timed out"
+			};
+
 		if(queue.empty())
 			continue;
 
 		const auto &a(queue.front());
 		const unwind pop{[]
 		{
-			queue.pop_front();
+			if(polling <= 1)
+				queue.pop_front();
 		}};
 
 		if(handle(client, args, a))
