@@ -65,6 +65,7 @@ namespace ircd::buffer
 	template<class it> bool operator!(const buffer<it> &buffer);
 	template<class it> size_t size(const buffer<it> &buffer);
 	template<class it> const it &data(const buffer<it> &buffer);
+	template<class it> bool aligned(const buffer<it> &buffer, const size_t &alignment);
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
 	template<class it> buffer<it> operator+(const buffer<it> &buffer, const size_t &bytes);
 	template<class it> it copy(it &dest, const it &stop, const const_buffer &);
@@ -346,6 +347,16 @@ ircd::buffer::consume(buffer<it> &buffer,
 	get<0>(buffer) += bytes;
 	assert(get<0>(buffer) <= get<1>(buffer));
 	return size(buffer);
+}
+
+template<class it>
+bool
+ircd::buffer::aligned(const buffer<it> &buffer,
+                      const size_t &a)
+{
+	return likely(a)?
+		uintptr_t(data(buffer)) % a == 0 && size(buffer) % a == 0:
+		true;
 }
 
 template<class it>
