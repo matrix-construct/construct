@@ -16,6 +16,7 @@
 namespace ircd::fs::aio
 {
 	static int reqprio(int);
+	static size_t bytes(const vector_view<const struct ::iovec> &);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -190,6 +191,16 @@ ircd::fs::aio::prefetch(const fd &fd,
 //
 // internal util
 //
+
+size_t
+ircd::fs::aio::bytes(const vector_view<const struct ::iovec> &iov)
+{
+	return std::accumulate(begin(iov), end(iov), size_t(0), []
+	(auto ret, const auto &iov)
+	{
+		return ret += iov.iov_len;
+	});
+}
 
 int
 ircd::fs::aio::reqprio(int input)
