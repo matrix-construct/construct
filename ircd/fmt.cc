@@ -16,6 +16,7 @@ namespace ircd::fmt
 
 	struct spec;
 	struct specifier;
+	struct parser extern const parser;
 
 	constexpr char SPECIFIER
 	{
@@ -27,8 +28,15 @@ namespace ircd::fmt
 		'$'
 	};
 
-	struct parser extern const parser;
 	extern std::map<string_view, specifier *, std::less<>> specifiers;
+	struct bool_specifier extern const bool_specifier;
+	struct char_specifier extern const char_specifier;
+	struct signed_specifier extern const signed_specifier;
+	struct unsigned_specifier extern const unsigned_specifier;
+	struct float_specifier extern const float_specifier;
+	struct hex_lowercase_specifier extern const hex_lowercase_specifier;
+	struct pointer_specifier extern const pointer_specifier;
+	struct string_specifier extern const string_specifier;
 
 	bool is_specifier(const string_view &name);
 	void handle_specifier(mutable_buffer &out, const uint &idx, const spec &, const arg &);
@@ -124,10 +132,7 @@ struct ircd::fmt::parser
 }
 const ircd::fmt::parser;
 
-namespace ircd {
-namespace fmt  {
-
-struct string_specifier
+struct ircd::fmt::string_specifier
 :specifier
 {
 	static const std::tuple
@@ -145,16 +150,15 @@ struct string_specifier
 	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
 	using specifier::specifier;
 }
-const string_specifier
+const ircd::fmt::string_specifier
 {
 	"s"s
 };
 
-decltype(string_specifier::types)
-string_specifier::types
-{};
+decltype(ircd::fmt::string_specifier::types)
+ircd::fmt::string_specifier::types;
 
-struct bool_specifier
+struct ircd::fmt::bool_specifier
 :specifier
 {
 	static const std::tuple
@@ -171,16 +175,15 @@ struct bool_specifier
 	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
 	using specifier::specifier;
 }
-const bool_specifier
+const ircd::fmt::bool_specifier
 {
 	{ "b"s }
 };
 
-decltype(bool_specifier::types)
-bool_specifier::types
-{};
+decltype(ircd::fmt::bool_specifier::types)
+ircd::fmt::bool_specifier::types;
 
-struct signed_specifier
+struct ircd::fmt::signed_specifier
 :specifier
 {
 	static const std::tuple
@@ -197,16 +200,15 @@ struct signed_specifier
 	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
 	using specifier::specifier;
 }
-const signed_specifier
+const ircd::fmt::signed_specifier
 {
 	{ "d"s, "ld"s, "zd"s }
 };
 
-decltype(signed_specifier::types)
-signed_specifier::types
-{};
+decltype(ircd::fmt::signed_specifier::types)
+ircd::fmt::signed_specifier::types;
 
-struct unsigned_specifier
+struct ircd::fmt::unsigned_specifier
 :specifier
 {
 	static const std::tuple
@@ -223,12 +225,12 @@ struct unsigned_specifier
 	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
 	using specifier::specifier;
 }
-const unsigned_specifier
+const ircd::fmt::unsigned_specifier
 {
 	{ "u"s, "lu"s, "zu"s }
 };
 
-struct hex_lowercase_specifier
+struct ircd::fmt::hex_lowercase_specifier
 :specifier
 {
 	static const std::tuple
@@ -245,20 +247,18 @@ struct hex_lowercase_specifier
 	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
 	using specifier::specifier;
 }
-const hex_lowercase_specifier
+const ircd::fmt::hex_lowercase_specifier
 {
 	{ "x"s, "lx"s }
 };
 
-decltype(hex_lowercase_specifier::types)
-hex_lowercase_specifier::types
-{};
+decltype(ircd::fmt::hex_lowercase_specifier::types)
+ircd::fmt::hex_lowercase_specifier::types;
 
-decltype(unsigned_specifier::types)
-unsigned_specifier::types
-{};
+decltype(ircd::fmt::unsigned_specifier::types)
+ircd::fmt::unsigned_specifier::types;
 
-struct float_specifier
+struct ircd::fmt::float_specifier
 :specifier
 {
 	static const std::tuple
@@ -275,46 +275,40 @@ struct float_specifier
 	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
 	using specifier::specifier;
 }
-const float_specifier
+const ircd::fmt::float_specifier
 {
 	{ "f"s, "lf"s }
 };
 
-decltype(float_specifier::types)
-float_specifier::types
-{};
+decltype(ircd::fmt::float_specifier::types)
+ircd::fmt::float_specifier::types;
 
-struct char_specifier
+struct ircd::fmt::char_specifier
 :specifier
 {
 	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
 	using specifier::specifier;
 }
-const char_specifier
+const ircd::fmt::char_specifier
 {
 	"c"s
 };
 
-struct pointer_specifier
+struct ircd::fmt::pointer_specifier
 :specifier
 {
 	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
 	using specifier::specifier;
 }
-const pointer_specifier
+const ircd::fmt::pointer_specifier
 {
 	"p"s
 };
 
-} // namespace fmt
-} // namespace ircd
-
-using namespace ircd;
-
-fmt::snprintf::snprintf(internal_t,
-                        const mutable_buffer &out,
-                        const string_view &fmt,
-                        const va_rtti &v)
+ircd::fmt::snprintf::snprintf(internal_t,
+                              const mutable_buffer &out,
+                              const string_view &fmt,
+                              const va_rtti &v)
 try
 :out{out}
 ,fmt{[&fmt]
@@ -361,7 +355,7 @@ catch(const std::out_of_range &e)
 }
 
 void
-fmt::snprintf::argument(const arg &val)
+ircd::fmt::snprintf::argument(const arg &val)
 {
 	// The format string's front pointer is sitting on the specifier '%'
 	// waiting to be parsed now.
@@ -386,13 +380,13 @@ fmt::snprintf::argument(const arg &val)
 }
 
 void
-fmt::snprintf::append(const const_buffer &src)
+ircd::fmt::snprintf::append(const const_buffer &src)
 {
 	consume(out, strlcpy(out, src));
 }
 
 size_t
-fmt::snprintf::remaining()
+ircd::fmt::snprintf::remaining()
 const
 {
 	return out.remaining()?
@@ -401,18 +395,18 @@ const
 }
 
 bool
-fmt::snprintf::finished()
+ircd::fmt::snprintf::finished()
 const
 {
 	return empty(fmt) || !remaining();
 }
 
-fmt::specifier::specifier(const std::string &name)
+ircd::fmt::specifier::specifier(const std::string &name)
 :specifier{{name}}
 {
 }
 
-fmt::specifier::specifier(const std::initializer_list<std::string> &names)
+ircd::fmt::specifier::specifier(const std::initializer_list<std::string> &names)
 :names{names}
 {
 	for(const auto &name : this->names)
@@ -426,7 +420,7 @@ fmt::specifier::specifier(const std::initializer_list<std::string> &names)
 		specifiers.emplace(name, this);
 }
 
-fmt::specifier::~specifier()
+ircd::fmt::specifier::~specifier()
 noexcept
 {
 	for(const auto &name : names)
@@ -434,16 +428,16 @@ noexcept
 }
 
 bool
-fmt::is_specifier(const string_view &name)
+ircd::fmt::is_specifier(const string_view &name)
 {
 	return specifiers.count(name);
 }
 
 void
-fmt::handle_specifier(mutable_buffer &out,
-                      const uint &idx,
-                      const spec &spec,
-                      const arg &val)
+ircd::fmt::handle_specifier(mutable_buffer &out,
+                            const uint &idx,
+                            const spec &spec,
+                            const arg &val)
 try
 {
 	const auto &type(get<1>(val));
@@ -484,7 +478,7 @@ catch(const illegal &e)
 template<class T,
          class lambda>
 bool
-fmt::visit_type(const arg &val,
+ircd::fmt::visit_type(const arg &val,
                 lambda&& closure)
 {
 	const auto &ptr(get<0>(val));
@@ -493,10 +487,10 @@ fmt::visit_type(const arg &val,
 }
 
 bool
-fmt::pointer_specifier::operator()(char *&out,
-                                   const size_t &max,
-                                   const spec &,
-                                   const arg &val)
+ircd::fmt::pointer_specifier::operator()(char *&out,
+                                         const size_t &max,
+                                         const spec &,
+                                         const arg &val)
 const
 {
 	using karma::ulong_;
@@ -527,10 +521,10 @@ const
 }
 
 bool
-fmt::char_specifier::operator()(char *&out,
-                                const size_t &max,
-                                const spec &,
-                                const arg &val)
+ircd::fmt::char_specifier::operator()(char *&out,
+                                      const size_t &max,
+                                      const spec &,
+                                      const arg &val)
 const
 {
 	using karma::eps;
@@ -566,10 +560,10 @@ const
 }
 
 bool
-fmt::bool_specifier::operator()(char *&out,
-                                const size_t &max,
-                                const spec &,
-                                const arg &val)
+ircd::fmt::bool_specifier::operator()(char *&out,
+                                      const size_t &max,
+                                      const spec &,
+                                      const arg &val)
 const
 {
 	using karma::eps;
@@ -607,10 +601,10 @@ const
 }
 
 bool
-fmt::signed_specifier::operator()(char *&out,
-                                  const size_t &max,
-                                  const spec &spec,
-                                  const arg &val)
+ircd::fmt::signed_specifier::operator()(char *&out,
+                                        const size_t &max,
+                                        const spec &spec,
+                                        const arg &val)
 const
 {
 	static const auto throw_illegal([]
@@ -678,10 +672,10 @@ const
 }
 
 bool
-fmt::unsigned_specifier::operator()(char *&out,
-                                    const size_t &max,
-                                    const spec &spec,
-                                    const arg &val)
+ircd::fmt::unsigned_specifier::operator()(char *&out,
+                                          const size_t &max,
+                                          const spec &spec,
+                                          const arg &val)
 const
 {
 	static const auto throw_illegal([]
@@ -749,10 +743,10 @@ const
 }
 
 bool
-fmt::hex_lowercase_specifier::operator()(char *&out,
-                                         const size_t &max,
-                                         const spec &s,
-                                         const arg &val)
+ircd::fmt::hex_lowercase_specifier::operator()(char *&out,
+                                               const size_t &max,
+                                               const spec &s,
+                                               const arg &val)
 const
 {
 	static const auto throw_illegal([]
@@ -787,10 +781,10 @@ const
 }
 
 bool
-fmt::float_specifier::operator()(char *&out,
-                                 const size_t &max,
-                                 const spec &s,
-                                 const arg &val)
+ircd::fmt::float_specifier::operator()(char *&out,
+                                       const size_t &max,
+                                       const spec &s,
+                                       const arg &val)
 const
 {
 	static const auto throw_illegal([]
@@ -843,10 +837,10 @@ const
 }
 
 bool
-fmt::string_specifier::operator()(char *&out,
-                                  const size_t &max,
-                                  const spec &spec,
-                                  const arg &val)
+ircd::fmt::string_specifier::operator()(char *&out,
+                                        const size_t &max,
+                                        const spec &spec,
+                                        const arg &val)
 const
 {
 	using karma::char_;
@@ -909,9 +903,9 @@ const
 
 template<class generator>
 bool
-fmt::generate_string(char *&out,
-                     const generator &gen,
-                     const arg &val)
+ircd::fmt::generate_string(char *&out,
+                           const generator &gen,
+                           const arg &val)
 {
 	using karma::eps;
 
