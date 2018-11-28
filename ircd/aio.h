@@ -12,21 +12,21 @@
 #define HAVE_AIO_H
 #include <linux/aio_abi.h>
 
-namespace ircd::fs
-{
-	void prefetch__aio(const fd &, const size_t &, const read_opts &);
-	const_buffer write__aio(const fd &, const const_buffer &, const write_opts &);
-	const_buffer read__aio(const fd &, const mutable_buffer &, const read_opts &);
-	void fdsync__aio(const fd &, const fsync_opts &);
-	void fsync__aio(const fd &, const fsync_opts &);
-}
-
-/// AIO context instance. Right now this is a singleton with an extern
-/// instance at fs::aioctx.
-struct ircd::fs::aio
+namespace ircd::fs::aio
 {
 	struct request;
 
+	void prefetch(const fd &, const size_t &, const read_opts &);
+	const_buffer write(const fd &, const const_buffer &, const write_opts &);
+	const_buffer read(const fd &, const mutable_buffer &, const read_opts &);
+	void fdsync(const fd &, const fsync_opts &);
+	void fsync(const fd &, const fsync_opts &);
+}
+
+/// AIO context instance from the kernel. Right now this is a singleton with
+/// an extern instance pointer at fs::aio::context maintained by fs::aio::init.
+struct ircd::fs::aio::kernel
+{
 	/// Maximum number of events we can submit to kernel
 	static const size_t MAX_EVENTS;
 
@@ -56,8 +56,8 @@ struct ircd::fs::aio
 	bool wait();
 	bool interrupt();
 
-	aio();
-	~aio() noexcept;
+	kernel();
+	~kernel() noexcept;
 };
 
 /// Generic request control block.
@@ -69,9 +69,9 @@ struct ircd::fs::aio::request
 	struct fdsync;
 	struct fsync;
 
+	ctx::ctx *waiter {ctx::current};
 	ssize_t retval {std::numeric_limits<ssize_t>::min()};
 	ssize_t errcode {0};
-	ctx::ctx *waiter {ctx::current};
 
   public:
 	size_t operator()();

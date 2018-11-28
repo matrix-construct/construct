@@ -13,10 +13,15 @@
 #include <ircd/asio.h>
 #include "aio.h"
 
-namespace ircd::fs
+namespace ircd::fs::aio
 {
 	static int reqprio(int);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/aio.h (internal)
+//
 
 //
 // request::fsync
@@ -35,7 +40,7 @@ ircd::fs::aio::request::fsync::fsync(const int &fd,
 }
 
 void
-ircd::fs::fsync__aio(const fd &fd,
+ircd::fs::aio::fsync(const fd &fd,
                      const fsync_opts &opts)
 {
 	aio::request::fsync request
@@ -63,7 +68,7 @@ ircd::fs::aio::request::fdsync::fdsync(const int &fd,
 }
 
 void
-ircd::fs::fdsync__aio(const fd &fd,
+ircd::fs::aio::fdsync(const fd &fd,
                       const fsync_opts &opts)
 {
 	aio::request::fdsync request
@@ -100,7 +105,7 @@ ircd::fs::aio::request::read::read(const int &fd,
 }
 
 ircd::const_buffer
-ircd::fs::read__aio(const fd &fd,
+ircd::fs::aio::read(const fd &fd,
                     const mutable_buffer &buf,
                     const read_opts &opts)
 {
@@ -148,7 +153,7 @@ ircd::fs::aio::request::write::write(const int &fd,
 }
 
 ircd::const_buffer
-ircd::fs::write__aio(const fd &fd,
+ircd::fs::aio::write(const fd &fd,
                      const const_buffer &buf,
                      const write_opts &opts)
 {
@@ -175,7 +180,7 @@ ircd::fs::write__aio(const fd &fd,
 //
 
 void
-ircd::fs::prefetch__aio(const fd &fd,
+ircd::fs::aio::prefetch(const fd &fd,
                         const size_t &size,
                         const read_opts &opts)
 {
@@ -187,7 +192,7 @@ ircd::fs::prefetch__aio(const fd &fd,
 //
 
 int
-ircd::fs::reqprio(int input)
+ircd::fs::aio::reqprio(int input)
 {
 	// no use for negative values yet; make them zero.
 	input = std::max(input, 0);
@@ -199,20 +204,20 @@ ircd::fs::reqprio(int input)
 }
 
 //
-// aio
+// kernel
 //
 
-decltype(ircd::fs::aio::MAX_EVENTS)
-ircd::fs::aio::MAX_EVENTS
+decltype(ircd::fs::aio::kernel::MAX_EVENTS)
+ircd::fs::aio::kernel::MAX_EVENTS
 {
 	512
 };
 
 //
-// aio::aio
+// kernel::kernel
 //
 
-ircd::fs::aio::aio()
+ircd::fs::aio::kernel::kernel()
 try
 :resfd
 {
@@ -237,7 +242,7 @@ catch(const std::exception &e)
 	};
 }
 
-ircd::fs::aio::~aio()
+ircd::fs::aio::kernel::~kernel()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
@@ -261,7 +266,7 @@ catch(const std::exception &e)
 }
 
 bool
-ircd::fs::aio::interrupt()
+ircd::fs::aio::kernel::interrupt()
 {
 	if(!resfd.is_open())
 		return false;
@@ -271,7 +276,7 @@ ircd::fs::aio::interrupt()
 }
 
 bool
-ircd::fs::aio::wait()
+ircd::fs::aio::kernel::wait()
 {
 	if(!resfd.is_open())
 		return false;
@@ -290,18 +295,27 @@ ircd::fs::aio::wait()
 }
 
 void
-ircd::fs::aio::set_handle()
+ircd::fs::aio::kernel::set_handle()
 {
 	semval = 0;
-	const asio::mutable_buffers_1 bufs(&semval, sizeof(semval));
-	auto handler{std::bind(&aio::handle, this, ph::_1, ph::_2)};
+
+	const asio::mutable_buffers_1 bufs
+	{
+		&semval, sizeof(semval)
+	};
+
+	auto handler
+	{
+		std::bind(&kernel::handle, this, ph::_1, ph::_2)
+	};
+
 	asio::async_read(resfd, bufs, std::move(handler));
 }
 
 /// Handle notifications that requests are complete.
 void
-ircd::fs::aio::handle(const boost::system::error_code &ec,
-                      const size_t bytes)
+ircd::fs::aio::kernel::handle(const boost::system::error_code &ec,
+                              const size_t bytes)
 noexcept try
 {
 	namespace errc = boost::system::errc;
@@ -336,7 +350,7 @@ catch(const ctx::interrupted &)
 }
 
 void
-ircd::fs::aio::handle_events()
+ircd::fs::aio::kernel::handle_events()
 noexcept try
 {
 	assert(!ctx::current);
@@ -368,7 +382,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::fs::aio::handle_event(const io_event &event)
+ircd::fs::aio::kernel::handle_event(const io_event &event)
 noexcept try
 {
 	// Our extended control block is passed in event.data
@@ -426,11 +440,11 @@ catch(const std::exception &e)
 ircd::fs::aio::request::request(const int &fd)
 :iocb{0}
 {
-	assert(aioctx);
+	assert(context);
 	assert(ctx::current);
 
 	aio_flags = IOCB_FLAG_RESFD;
-	aio_resfd = aioctx->resfd.native_handle();
+	aio_resfd = context->resfd.native_handle();
 	aio_fildes = fd;
 	aio_data = uintptr_t(this);
 }
@@ -449,9 +463,9 @@ ircd::fs::aio::request::cancel()
 	io_event result {0};
 	const auto &cb{static_cast<iocb *>(this)};
 
-	assert(aioctx);
-	syscall_nointr<SYS_io_cancel>(aioctx->idp, cb, &result);
-	aioctx->handle_event(result);
+	assert(context);
+	syscall_nointr<SYS_io_cancel>(context->idp, cb, &result);
+	context->handle_event(result);
 }
 
 /// Submit a request and properly yield the ircd::ctx. When this returns the
@@ -460,7 +474,7 @@ size_t
 ircd::fs::aio::request::operator()()
 try
 {
-	assert(aioctx);
+	assert(context);
 	assert(ctx::current);
 	assert(waiter == ctx::current);
 
@@ -469,7 +483,7 @@ try
 		static_cast<iocb *>(this)
 	};
 
-	syscall<SYS_io_submit>(aioctx->idp, 1, &cbs); do
+	syscall<SYS_io_submit>(context->idp, 1, &cbs); do
 	{
 		ctx::wait();
 	}

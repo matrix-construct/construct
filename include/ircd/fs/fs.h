@@ -34,14 +34,11 @@
 /// during IOs.
 namespace ircd::fs
 {
-	struct aio;
 	struct init;
 	enum index :int;
 	struct error; // custom exception; still inherits from ircd::error
 
 	constexpr size_t PATH_MAX { 2048 };
-
-	extern aio *aioctx;
 
 	string_view get(index) noexcept;
 	string_view name(index) noexcept;
@@ -85,6 +82,7 @@ enum ircd::fs::index
 
 #include "error.h"
 #include "fd.h"
+#include "aio.h"
 #include "read.h"
 #include "write.h"
 #include "fsync.h"
@@ -92,6 +90,8 @@ enum ircd::fs::index
 
 struct ircd::fs::init
 {
+	aio::init _aio_;
+
 	init();
 	~init() noexcept;
 };
