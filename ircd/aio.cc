@@ -383,6 +383,8 @@ noexcept try
 	//assert(count > 0);
 	assert(count >= 0);
 
+	aio::stats.handles++;
+	aio::stats.events += count;
 
 	for(ssize_t i(0); i < count; ++i)
 		handle_event(event[i]);
@@ -481,6 +483,10 @@ ircd::fs::aio::request::cancel()
 
 	assert(context);
 	syscall_nointr<SYS_io_cancel>(context->idp, cb, &result);
+
+	aio::stats.cancel_bytes += bytes(iovec());
+	aio::stats.cancel++;
+
 	context->handle_event(result);
 }
 
@@ -499,17 +505,35 @@ try
 		static_cast<iocb *>(this)
 	};
 
-	syscall<SYS_io_submit>(context->idp, 1, &cbs); do
+	syscall<SYS_io_submit>(context->idp, 1, &cbs);
+
+	const size_t submitted_bytes
 	{
+		bytes(iovec())
+	};
+
+	// Update stats for submission phase
+	aio::stats.requests_bytes += submitted_bytes;
+	aio::stats.requests++;
+
+	// Block for completion
+	while(retval == std::numeric_limits<ssize_t>::min())
 		ctx::wait();
-	}
-	while(retval == std::numeric_limits<ssize_t>::min());
+
+	// Update stats for completion phase.
+	aio::stats.complete_bytes += submitted_bytes;
+	aio::stats.complete++;
 
 	if(retval == -1)
+	{
+		aio::stats.errors++;
+		aio::stats.errors_bytes += submitted_bytes;
+
 		throw fs::error
 		{
 			make_error_code(errcode)
 		};
+	}
 
 	return size_t(retval);
 }
@@ -525,4 +549,14 @@ catch(const ctx::terminated &)
 {
 	cancel();
 	throw;
+}
+
+ircd::vector_view<const struct ::iovec>
+ircd::fs::aio::request::iovec()
+const
+{
+	return
+	{
+		reinterpret_cast<const ::iovec *>(aio_buf), aio_nbytes
+	};
 }

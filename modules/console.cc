@@ -728,6 +728,60 @@ console_cmd__env(opt &out, const string_view &line)
 }
 
 //
+// aio
+//
+
+bool
+console_cmd__aio(opt &out, const string_view &line)
+{
+	if(!fs::aio::context)
+		throw error
+		{
+			"AIO is not available."
+		};
+
+	const auto &s
+	{
+		fs::aio::stats
+	};
+
+	out << std::setw(12) << std::left << "pending"
+	    << std::setw(9) << std::right << (s.requests - s.complete)
+	    << "   " << pretty(iec(s.requests_bytes - s.complete_bytes))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "requests"
+	    << std::setw(9) << std::right << s.requests
+	    << "   " << pretty(iec(s.requests_bytes))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "success"
+	    << std::setw(9) << std::right << (s.complete - s.errors)
+	    << "   " << pretty(iec(s.complete_bytes - s.errors_bytes))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "errors"
+	    << std::setw(9) << std::right << s.errors
+	    << "   " << pretty(iec(s.errors_bytes))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "cancel"
+	    << std::setw(9) << std::right << s.cancel
+	    << "   " << pretty(iec(s.cancel_bytes))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "handles"
+	    << std::setw(9) << std::right << s.handles
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "events"
+	    << std::setw(9) << std::right << s.events
+	    << std::endl;
+
+	return true;
+}
+
+//
 // conf
 //
 

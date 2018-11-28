@@ -74,6 +74,8 @@ struct ircd::fs::aio::request
 	ssize_t errcode {0};
 
   public:
+	vector_view<const struct ::iovec> iovec() const;
+
 	size_t operator()();
 	void cancel();
 

@@ -781,6 +781,11 @@ decltype(ircd::fs::aio::context)
 ircd::fs::aio::context
 {};
 
+/// Global stats structure
+decltype(ircd::fs::aio::stats)
+ircd::fs::aio::stats
+{};
+
 //
 // init
 //
