@@ -26,7 +26,8 @@ namespace ircd::fmt
 	struct snstringf;
 	struct vsnstringf;
 	template<size_t MAX> struct bsprintf;
-	using arg = std::tuple<const void *, std::type_index>;
+
+	using arg = std::tuple<const void *, const std::type_index &>;
 }
 
 /// Typesafe snprintf() from formal grammar and RTTI.
@@ -41,38 +42,34 @@ namespace ircd::fmt
 ///
 class ircd::fmt::snprintf
 {
-	const char *fstart;                          // Current running position in the fmtstr
-	const char *fstop;                           // Saved state from the last position
-	const char *fend;                            // past-the-end iterator of the fmtstr
-	const char *obeg;                            // Saved beginning of the output buffer
-	const char *oend;                            // past-the-end iterator of the output buffer
-	char *out;                                   // Current running position of the output buffer
+	window_buffer out;                           // Window on the output buffer.
+	const_buffer fmt;                            // Current running position in the fmtstr.
 	short idx;                                   // Keeps count of the args for better err msgs
 
   protected:
 	bool finished() const;
 	size_t remaining() const;
-	size_t consumed() const                      { return out - obeg;                              }
-	auto &buffer() const                         { return obeg;                                    }
+	size_t consumed() const                      { return out.consumed();                          }
+	string_view completed() const                { return out.completed();                         }
 
-	void append(const char *const &begin, const char *const &end);
+	void append(const const_buffer &);
 	void argument(const arg &);
 
 	IRCD_OVERLOAD(internal)
-	snprintf(internal_t, char *const &, const size_t &, const char *const &, const va_rtti &);
+	snprintf(internal_t, const mutable_buffer &, const string_view &, const va_rtti &);
 
   public:
 	operator ssize_t() const                     { return consumed();                              }
-	operator string_view() const                 { return { obeg, consumed() };                    }
+	operator string_view() const                 { return completed();                             }
 
 	template<class... Args>
 	snprintf(char *const &buf,
 	         const size_t &max,
-	         const char *const &fmt,
+	         const string_view &fmt,
 	         Args&&... args)
 	:snprintf
 	{
-		internal, buf, max, fmt, va_rtti{std::forward<Args>(args)...}
+		internal, mutable_buffer{buf, max}, fmt, va_rtti{std::forward<Args>(args)...}
 	}{}
 };
 
@@ -81,11 +78,11 @@ struct ircd::fmt::sprintf
 {
 	template<class... Args>
 	sprintf(const mutable_buffer &buf,
-	        const char *const &fmt,
+	        const string_view &fmt,
 	        Args&&... args)
 	:snprintf
 	{
-		internal, data(buf), size(buf), fmt, va_rtti{std::forward<Args>(args)...}
+		internal, buf, fmt, va_rtti{std::forward<Args>(args)...}
 	}{}
 };
 
@@ -105,11 +102,11 @@ struct ircd::fmt::vsnprintf
 {
 	vsnprintf(char *const &buf,
 	          const size_t &max,
-	          const char *const &fmt,
+	          const string_view &fmt,
 	          const va_rtti &ap)
 	:snprintf
 	{
-		internal, buf, max, fmt, ap
+		internal, mutable_buffer{buf, max}, fmt, ap
 	}{}
 };
 
@@ -117,11 +114,11 @@ struct ircd::fmt::vsprintf
 :snprintf
 {
 	vsprintf(const mutable_buffer &buf,
-	         const char *const &fmt,
+	         const string_view &fmt,
 	         const va_rtti &ap)
 	:snprintf
 	{
-		internal, data(buf), size(buf), fmt, ap
+		internal, buf, fmt, ap
 	}{}
 };
 
@@ -129,16 +126,17 @@ struct ircd::fmt::vsnstringf
 :std::string
 {
 	vsnstringf(const size_t &max,
-	           const char *const &fmt,
+	           const string_view &fmt,
 	           const va_rtti &ap)
 	:std::string
 	{
 		ircd::string(max, [&fmt, &ap]
 		(const mutable_buffer &buf) -> string_view
 		{
-			using buffer::data;
-			using buffer::size;
-			return vsnprintf(data(buf), size(buf), fmt, ap);
+			return vsprintf
+			{
+				buf, fmt, ap
+			};
 		})
 	}{}
 };
@@ -148,7 +146,7 @@ struct ircd::fmt::snstringf
 {
 	template<class... args>
 	snstringf(const size_t &max,
-	          const char *const &fmt,
+	          const string_view &fmt,
 	          args&&... a)
 	:vsnstringf
 	{
@@ -164,11 +162,11 @@ struct ircd::fmt::bsprintf
 	std::array<char, MAX> buf;
 
 	template<class... args>
-	bsprintf(const char *const &fmt,
+	bsprintf(const string_view &fmt,
 	         args&&... a)
 	:snprintf
 	{
-		internal, buf.data(), buf.size(), fmt, va_rtti{std::forward<args>(a)...}
+		internal, buf, fmt, va_rtti{std::forward<args>(a)...}
 	}
 	,string_view
 	{

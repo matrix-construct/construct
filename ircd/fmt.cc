@@ -31,12 +31,13 @@ namespace ircd::fmt
 	extern std::map<string_view, specifier *, std::less<>> specifiers;
 
 	bool is_specifier(const string_view &name);
-	void handle_specifier(char *&out, const size_t &max, const uint &idx, const spec &, const arg &);
+	void handle_specifier(mutable_buffer &out, const uint &idx, const spec &, const arg &);
 	template<class generator> bool generate_string(char *&out, const generator &gen, const arg &val);
 	template<class T, class lambda> bool visit_type(const arg &val, lambda&& closure);
 }
 
-// Structural representation of a format specifier
+/// Structural representation of a format specifier. The parse of each
+/// specifier in the format string creates one of these.
 struct ircd::fmt::spec
 {
 	char sign {'+'};
@@ -47,17 +48,21 @@ struct ircd::fmt::spec
 	spec() = default;
 };
 
+/// Reflects the fmt::spec struct to allow the spirit::qi grammar to directly
+/// fill in the spec struct.
 BOOST_FUSION_ADAPT_STRUCT
 (
 	ircd::fmt::spec,
-	( decltype(ircd::fmt::spec::sign),       sign   )
-	( decltype(ircd::fmt::spec::width),      width  )
+	( decltype(ircd::fmt::spec::sign),       sign       )
+	( decltype(ircd::fmt::spec::width),      width      )
 	( decltype(ircd::fmt::spec::precision),  precision  )
-	( decltype(ircd::fmt::spec::name),       name   )
+	( decltype(ircd::fmt::spec::name),       name       )
 )
 
-// A format specifier handler module.
-// This allows a new "%foo" to be defined with custom handling.
+/// A format specifier handler module. This allows a new "%foo" to be defined
+/// with custom handling by overriding. This abstraction is inserted into a
+/// mapping key'ed by the supplied names leading to an instance of this.
+///
 class ircd::fmt::specifier
 {
 	std::set<std::string> names;
@@ -70,9 +75,11 @@ class ircd::fmt::specifier
 	virtual ~specifier() noexcept;
 };
 
+/// Linkage for the lookup mapping of registered format specifiers.
 decltype(ircd::fmt::specifiers)
 ircd::fmt::specifiers;
 
+/// The format string parser grammar.
 struct ircd::fmt::parser
 :qi::grammar<const char *, fmt::spec>
 {
@@ -305,45 +312,45 @@ const pointer_specifier
 using namespace ircd;
 
 fmt::snprintf::snprintf(internal_t,
-                        char *const &out,
-                        const size_t &max,
-                        const char *const &fstr,
+                        const mutable_buffer &out,
+                        const string_view &fmt,
                         const va_rtti &v)
 try
-:fstart{strchr(fstr, SPECIFIER)}
-,fstop{fstr}
-,fend{fstr + strnlen(fstr, max)}
-,obeg{out}
-,oend{out + max}
-,out{out}
+:out{out}
+,fmt{[&fmt]
+{
+	// start the member fmt variable at the first specifier (or end)
+	const auto pos(fmt.find(SPECIFIER));
+	return pos != fmt.npos?
+		fmt.substr(pos):
+		string_view{};
+}()}
 ,idx{0}
 {
-	if(unlikely(!max))
+	// If out has no size we have nothing to do, not even null terminate it.
+	if(unlikely(empty(out)))
+		return;
+
+	// If fmt has no specifiers then we can just copy the fmt as best as
+	// possible to the out buffer.
+	if(empty(this->fmt))
 	{
-		fstart = nullptr;
+		consume(this->out, strlcpy(this->out, fmt));
 		return;
 	}
 
-	if(!fstart)
-	{
-		const mutable_buffer dst{out, max};
-		const const_buffer src{fstr, fend};
-		this->out += size_t(strlcpy(dst, src));
-		return;
-	}
+	// Copy everything from fmt up to the first specifier.
+	assert(data(this->fmt) >= data(fmt));
+	append(const_buffer(data(fmt), data(this->fmt)));
 
-	append(fstr, fstart);
+	// Iterate
 	auto it(begin(v));
 	for(size_t i(0); i < v.size() && !finished(); ++it, i++)
 	{
-		const auto &ptr(get<0>(*it));
-		const auto &type(get<1>(*it));
-		argument(std::make_tuple(ptr, std::type_index(*type)));
+		const void *const &ptr(get<0>(*it));
+		const std::type_index type(*get<1>(*it));
+		argument(std::make_tuple(ptr, type));
 	}
-
-	assert(this->out >= obeg);
-	assert(this->out < oend);
-	*this->out = '\0';
 }
 catch(const std::out_of_range &e)
 {
@@ -356,50 +363,48 @@ catch(const std::out_of_range &e)
 void
 fmt::snprintf::argument(const arg &val)
 {
+	// The format string's front pointer is sitting on the specifier '%'
+	// waiting to be parsed now.
 	fmt::spec spec;
-	if(qi::parse(fstart, fend, parser, spec))
-		handle_specifier(out, remaining(), idx++, spec, val);
+	auto &start(std::get<0>(this->fmt));
+	const auto &stop(std::get<1>(this->fmt));
+	if(qi::parse(start, stop, parser, spec))
+		handle_specifier(this->out, idx++, spec, val);
 
-	fstop = fstart;
-	if(fstart >= fend)
-		return;
-
-	fstart = strchr(fstart, SPECIFIER);
-	append(fstop, fstart?: fend);
+	// The parse advanced the front pointer of this->fmt to after the
+	// specifier. Now we copy characters from here up until the
+	// next specifier.
+	const string_view fmt(start, stop);
+	const auto nextpos(fmt.find(SPECIFIER));
+	append(const_buffer(fmt.substr(0, nextpos)));
+	this->fmt = const_buffer
+	{
+		nextpos != fmt.npos?
+			fmt.substr(nextpos):
+			string_view{}
+	};
 }
 
 void
-fmt::snprintf::append(const char *const &begin,
-                      const char *const &end)
+fmt::snprintf::append(const const_buffer &src)
 {
-	assert(begin <= end);
-	const size_t rem(remaining());
-	const size_t len(end - begin);
-	const size_t &cpsz
-	{
-		std::min(len, rem)
-	};
-
-	memcpy(out, begin, cpsz);
-	out += cpsz;
-	assert(out < oend);
+	consume(out, strlcpy(out, src));
 }
 
 size_t
 fmt::snprintf::remaining()
 const
 {
-	assert(out < oend);
-	assert(obeg <= oend);
-	const ssize_t r(oend - out);
-	return std::max(r - 1, ssize_t(0));
+	return out.remaining()?
+		out.remaining() - 1:
+		0;
 }
 
 bool
 fmt::snprintf::finished()
 const
 {
-	return !fstart || fstop >= fend || remaining() == 0;
+	return empty(fmt) || !remaining();
 }
 
 fmt::specifier::specifier(const std::string &name)
@@ -435,8 +440,7 @@ fmt::is_specifier(const string_view &name)
 }
 
 void
-fmt::handle_specifier(char *&out,
-                      const size_t &max,
+fmt::handle_specifier(mutable_buffer &out,
                       const uint &idx,
                       const spec &spec,
                       const arg &val)
@@ -444,7 +448,10 @@ try
 {
 	const auto &type(get<1>(val));
 	const auto &handler(*specifiers.at(spec.name));
-	if(unlikely(!handler(out, max, spec, val)))
+
+	auto &outp(std::get<0>(out));
+	const size_t max(size(out));
+	if(unlikely(!handler(outp, max, spec, val)))
 		throw invalid_type
 		{
 			"`%s' (%s) for format specifier '%s' for argument #%u",
