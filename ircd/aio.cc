@@ -173,6 +173,9 @@ ircd::fs::aio::write(const fd &fd,
 		data(buf), bytes
 	};
 
+	// Does linux ever not complete all bytes for an AIO?
+	assert(size(view) == size(buf));
+
 	return view;
 }
 
@@ -378,6 +381,8 @@ noexcept try
 	// The count should be at least 1 event. The only reason to return 0 might
 	// be related to an INTR; this assert will find out and may be commented.
 	//assert(count > 0);
+	assert(count >= 0);
+
 
 	for(ssize_t i(0); i < count; ++i)
 		handle_event(event[i]);
