@@ -32,7 +32,7 @@ namespace ircd::util
 // welcome.
 //
 struct ircd::util::va_rtti
-:std::array<std::pair<const void *, const std::type_info *>, ircd::util::VA_RTTI_MAX_SIZE>
+:std::array<std::tuple<const void *, const std::type_info *>, ircd::util::VA_RTTI_MAX_SIZE>
 {
 	using base_type = std::array<value_type, ircd::util::VA_RTTI_MAX_SIZE>;
 
@@ -51,7 +51,7 @@ struct ircd::util::va_rtti
 	va_rtti(Args&&... args)
 	:base_type
 	{{
-		std::make_pair(std::addressof(args), std::addressof(typeid(Args)))...
+		std::make_tuple(std::addressof(args), std::addressof(typeid(Args)))...
 	}}
 	,argc
 	{
