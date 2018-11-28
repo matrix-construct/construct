@@ -125,6 +125,8 @@ ircd::fs::aio::read(const fd &fd,
 		const_cast<const char *>(data(buf)), bytes
 	};
 
+	aio::stats.read_bytes += bytes;
+	aio::stats.reads++;
 	return view;
 }
 
@@ -175,7 +177,8 @@ ircd::fs::aio::write(const fd &fd,
 
 	// Does linux ever not complete all bytes for an AIO?
 	assert(size(view) == size(buf));
-
+	aio::stats.write_bytes += bytes;
+	aio::stats.writes++;
 	return view;
 }
 

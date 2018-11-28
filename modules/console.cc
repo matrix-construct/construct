@@ -755,9 +755,19 @@ console_cmd__aio(opt &out, const string_view &line)
 	    << "   " << pretty(iec(s.requests_bytes))
 	    << std::endl;
 
-	out << std::setw(12) << std::left << "success"
-	    << std::setw(9) << std::right << (s.complete - s.errors)
-	    << "   " << pretty(iec(s.complete_bytes - s.errors_bytes))
+	out << std::setw(12) << std::left << "requests avg"
+	    << std::setw(9) << std::right << " "
+	    << "   " << pretty(iec(s.requests_bytes / s.requests))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "reads"
+	    << std::setw(9) << std::right << s.reads
+	    << "   " << pretty(iec(s.read_bytes))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "writes"
+	    << std::setw(9) << std::right << s.writes
+	    << "   " << pretty(iec(s.write_bytes))
 	    << std::endl;
 
 	out << std::setw(12) << std::left << "errors"

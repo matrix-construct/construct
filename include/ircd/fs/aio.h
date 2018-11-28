@@ -49,11 +49,16 @@ struct ircd::fs::aio::stats
 	uint64_t events {0};               ///< count of events from io_getevents
 	uint64_t cancel {0};               ///< count of requests canceled
 	uint64_t errors {0};               ///< count of response errcodes
+	uint64_t reads {0};                ///< count of read complete
+	uint64_t writes {0};               ///< count of write complete
 
 	uint64_t requests_bytes {0};       ///< total bytes for requests created
 	uint64_t complete_bytes {0};       ///< total bytes for requests completed
 	uint64_t errors_bytes {0};         ///< total bytes for completed w/ errc
 	uint64_t cancel_bytes {0};         ///< total bytes for cancels
+	uint64_t read_bytes {0};           ///< total bytes for read completed
+	uint64_t write_bytes {0};          ///< total bytes for write completed
+
 };
 
 struct ircd::fs::aio::init
