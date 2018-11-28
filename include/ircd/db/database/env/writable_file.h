@@ -71,10 +71,20 @@ struct ircd::db::database::env::writable_file_direct final
 	bool aligned(const size_t &) const;
 	bool aligned(const void *const &) const;
 	bool aligned(const const_buffer &) const;
+
 	size_t align(const size_t &) const;
 	size_t remain(const size_t &) const;
+	size_t blocks(const size_t &) const;
 
-	void write(const const_buffer &, const uint64_t &offset);
+	size_t buffer_remain() const;
+	size_t buffer_consumed() const;
+
+	const_buffer _write__aligned(const const_buffer &, const uint64_t &offset);
+	const_buffer _write_aligned(const const_buffer &, const uint64_t &offset);
+	const_buffer write_aligned(const const_buffer &);
+	const_buffer write_unaligned_off(const const_buffer &);
+	const_buffer write_unaligned_buf(const const_buffer &);
+	const_buffer write(const const_buffer &);
 
 	uint64_t GetFileSize() noexcept override;
 	Status PositionedAppend(const Slice& data, uint64_t offset) noexcept override;
