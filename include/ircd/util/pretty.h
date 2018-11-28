@@ -15,10 +15,24 @@ namespace ircd::util
 {
 	// Human readable space suite
 	using human_readable_size = std::tuple<uint64_t, long double, const string_view &>;
+
+	// Default format strings used for pretty(size).
+	extern const string_view pretty_size_fmt;
+	extern const string_view pretty_only_size_fmt;
+
+	// Process the value to be made pretty first with one of the following:
 	human_readable_size iec(const uint64_t &value);
 	human_readable_size si(const uint64_t &value);
+
+	// Generate a pretty string with a custom fmt string (low-level)
+	string_view pretty(const mutable_buffer &out, const string_view &fmt, const human_readable_size &);
+	std::string pretty(const human_readable_size &, const string_view &fmt);
+
+	// Generate a pretty string with the pretty_fmt_default implied.
 	string_view pretty(const mutable_buffer &out, const human_readable_size &);
 	std::string pretty(const human_readable_size &);
+
+	// Generate a pretty string with another (simpler) default fmt string.
 	string_view pretty_only(const mutable_buffer &out, const human_readable_size &);
 	std::string pretty_only(const human_readable_size &);
 
