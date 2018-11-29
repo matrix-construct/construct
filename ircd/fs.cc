@@ -1028,7 +1028,7 @@ namespace ircd::fs
 }
 
 ircd::vector_view<const struct ::iovec>
-ircd::fs::make_iov(const vector_view<const mutable_buffer> &bufs)
+ircd::fs::make_iov(const mutable_buffers &bufs)
 {
 	size_t i(0);
 	for(; i < bufs.size(); ++i)
@@ -1044,7 +1044,7 @@ ircd::fs::make_iov(const vector_view<const mutable_buffer> &bufs)
 }
 
 ircd::vector_view<const struct ::iovec>
-ircd::fs::make_iov(const vector_view<const const_buffer> &bufs)
+ircd::fs::make_iov(const const_buffers &bufs)
 {
 	size_t i(0);
 	for(; i < bufs.size(); ++i)

@@ -18,6 +18,9 @@ extern "C"
 
 namespace ircd::fs
 {
+	using const_buffers = vector_view<const const_buffer>;
+	using mutable_buffers = vector_view<const mutable_buffer>;
+
 	// utility; count the total bytes of an iov.
 	size_t bytes(const vector_view<const struct ::iovec> &);
 
@@ -26,6 +29,6 @@ namespace ircd::fs
 	// array. We get away with using a single buffer because the synchronous
 	// readv()/writev() calls block the thread and for AIO the iov is copied out
 	// of userspace on io_submit().
-	vector_view<const struct ::iovec> make_iov(const vector_view<const const_buffer> &);
-	vector_view<const struct ::iovec> make_iov(const vector_view<const mutable_buffer> &);
+	vector_view<const struct ::iovec> make_iov(const const_buffers &);
+	vector_view<const struct ::iovec> make_iov(const mutable_buffers &);
 }

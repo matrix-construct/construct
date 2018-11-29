@@ -98,7 +98,7 @@ ircd::fs::aio::request::read::read(const int &fd,
 
 size_t
 ircd::fs::aio::read(const fd &fd,
-                    const vector_view<const mutable_buffer> &bufs,
+                    const mutable_buffers &bufs,
                     const read_opts &opts)
 {
 	aio::request::read request
@@ -135,7 +135,7 @@ ircd::fs::aio::request::write::write(const int &fd,
 
 size_t
 ircd::fs::aio::write(const fd &fd,
-                     const vector_view<const const_buffer> &bufs,
+                     const const_buffers &bufs,
                      const write_opts &opts)
 {
 	aio::request::write request
