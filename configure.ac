@@ -1303,6 +1303,20 @@ AM_CONDITIONAL([JS], [[[[ $with_included_js = yes ]]]])
 
 dnl
 dnl
+dnl jemalloc
+dnl
+dnl
+
+RB_CHK_SYSHEADER(jemalloc/jemalloc.h, [JEMALLOC_H])
+AC_CHECK_LIB(jemalloc, malloc,
+[
+	jemalloc="yes"
+], [
+	jemalloc="no"
+])
+
+dnl
+dnl
 dnl Additional linkages
 dnl
 dnl
