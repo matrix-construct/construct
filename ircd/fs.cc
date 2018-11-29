@@ -655,12 +655,15 @@ ircd::fs::overwrite(const string_view &path,
                     const const_buffer &buf,
                     const write_opts &opts)
 {
-	const fd fd
+	const const_buffers bufs
 	{
-		path, std::ios::out | std::ios::trunc
+		&buf, 1
 	};
 
-	return overwrite(fd, buf, opts);
+	return const_buffer
+	{
+		data(buf), overwrite(path, bufs, opts)
+	};
 }
 
 ircd::const_buffer
@@ -668,7 +671,36 @@ ircd::fs::overwrite(const fd &fd,
                     const const_buffer &buf,
                     const write_opts &opts)
 {
-	return write(fd, buf, opts);
+	const const_buffers bufs
+	{
+		&buf, 1
+	};
+
+	return const_buffer
+	{
+		data(buf), overwrite(fd, bufs, opts)
+	};
+}
+
+size_t
+ircd::fs::overwrite(const string_view &path,
+                    const const_buffers &bufs,
+                    const write_opts &opts)
+{
+	const fd fd
+	{
+		path, std::ios::out | std::ios::trunc
+	};
+
+	return overwrite(fd, bufs, opts);
+}
+
+size_t
+ircd::fs::overwrite(const fd &fd,
+                    const const_buffers &bufs,
+                    const write_opts &opts)
+{
+	return write(fd, bufs, opts);
 }
 
 ircd::const_buffer

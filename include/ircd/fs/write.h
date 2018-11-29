@@ -31,6 +31,10 @@ namespace ircd::fs
 	const_buffer append(const fd &, const const_buffer &, const write_opts & = write_opts_default);
 	const_buffer append(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
 
+	// Yields ircd::ctx to overwrite (trunc) file from buffers; returns bytes written
+	size_t overwrite(const fd &, const const_buffers &, const write_opts & = write_opts_default);
+	size_t overwrite(const string_view &path, const const_buffers &, const write_opts & = write_opts_default);
+
 	// Yields ircd::ctx to overwrite (trunc) file from buffer; returns view of written portion
 	const_buffer overwrite(const fd &, const const_buffer & = {}, const write_opts & = write_opts_default);
 	const_buffer overwrite(const string_view &path, const const_buffer & = {}, const write_opts & = write_opts_default);
