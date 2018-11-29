@@ -17,8 +17,8 @@ namespace ircd::fs::aio
 	struct request;
 
 	void prefetch(const fd &, const size_t &, const read_opts &);
-	const_buffer write(const fd &, const const_buffer &, const write_opts &);
-	const_buffer read(const fd &, const mutable_buffer &, const read_opts &);
+	size_t write(const fd &, const vector_view<const const_buffer> &, const write_opts &);
+	size_t read(const fd &, const vector_view<const mutable_buffer> &, const read_opts &);
 	void fdsync(const fd &, const fsync_opts &);
 	void fsync(const fd &, const fsync_opts &);
 }
@@ -87,18 +87,14 @@ struct ircd::fs::aio::request
 struct ircd::fs::aio::request::read
 :request
 {
-	std::array<struct ::iovec, 1> iov;
-
-	read(const int &fd, const mutable_buffer &, const read_opts &);
+	read(const int &fd, const vector_view<const struct ::iovec> &, const read_opts &);
 };
 
 /// Write request control block
 struct ircd::fs::aio::request::write
 :request
 {
-	std::array<struct ::iovec, 1> iov;
-
-	write(const int &fd, const const_buffer &, const write_opts &);
+	write(const int &fd, const vector_view<const struct ::iovec> &, const write_opts &);
 };
 
 /// fdsync request control block

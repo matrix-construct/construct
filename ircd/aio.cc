@@ -16,7 +16,6 @@
 namespace ircd::fs::aio
 {
 	static int reqprio(int);
-	static size_t bytes(const vector_view<const struct ::iovec> &);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,17 +84,9 @@ ircd::fs::aio::fdsync(const fd &fd,
 //
 
 ircd::fs::aio::request::read::read(const int &fd,
-                                   const mutable_buffer &buf,
+                                   const vector_view<const struct ::iovec> &iov,
                                    const read_opts &opts)
 :request{fd}
-,iov
-{
-	// struct iovec
-	{
-		buffer::data(buf),
-		buffer::size(buf)
-	},
-}
 {
 	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_PREADV;
@@ -105,14 +96,14 @@ ircd::fs::aio::request::read::read(const int &fd,
 	aio_offset = opts.offset;
 }
 
-ircd::const_buffer
+size_t
 ircd::fs::aio::read(const fd &fd,
-                    const mutable_buffer &buf,
+                    const vector_view<const mutable_buffer> &bufs,
                     const read_opts &opts)
 {
 	aio::request::read request
 	{
-		fd, buf, opts
+		fd, make_iov(bufs), opts
 	};
 
 	const size_t bytes
@@ -120,14 +111,9 @@ ircd::fs::aio::read(const fd &fd,
 		request()
 	};
 
-	const const_buffer view
-	{
-		const_cast<const char *>(data(buf)), bytes
-	};
-
 	aio::stats.read_bytes += bytes;
 	aio::stats.reads++;
-	return view;
+	return bytes;
 }
 
 //
@@ -135,17 +121,9 @@ ircd::fs::aio::read(const fd &fd,
 //
 
 ircd::fs::aio::request::write::write(const int &fd,
-                                     const const_buffer &buf,
+                                     const vector_view<const struct ::iovec> &iov,
                                      const write_opts &opts)
 :request{fd}
-,iov
-{{
-	// struct iovec
-	{
-		const_cast<char *>(buffer::data(buf)),
-		buffer::size(buf)
-	},
-}}
 {
 	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_PWRITEV;
@@ -155,31 +133,34 @@ ircd::fs::aio::request::write::write(const int &fd,
 	aio_offset = opts.offset;
 }
 
-ircd::const_buffer
+size_t
 ircd::fs::aio::write(const fd &fd,
-                     const const_buffer &buf,
+                     const vector_view<const const_buffer> &bufs,
                      const write_opts &opts)
 {
 	aio::request::write request
 	{
-		fd, buf, opts
+		fd, make_iov(bufs), opts
 	};
+
+	#ifndef _NDEBUG
+	const size_t req_bytes
+	{
+		fs::bytes(request.iovec())
+	};
+	#endif
 
 	const size_t bytes
 	{
 		request()
 	};
 
-	const const_buffer view
-	{
-		data(buf), bytes
-	};
-
 	// Does linux ever not complete all bytes for an AIO?
-	assert(size(view) == size(buf));
+	assert(bytes == req_bytes);
+
 	aio::stats.write_bytes += bytes;
 	aio::stats.writes++;
-	return view;
+	return bytes;
 }
 
 //
@@ -197,16 +178,6 @@ ircd::fs::aio::prefetch(const fd &fd,
 //
 // internal util
 //
-
-size_t
-ircd::fs::aio::bytes(const vector_view<const struct ::iovec> &iov)
-{
-	return std::accumulate(begin(iov), end(iov), size_t(0), []
-	(auto ret, const auto &iov)
-	{
-		return ret += iov.iov_len;
-	});
-}
 
 int
 ircd::fs::aio::reqprio(int input)
@@ -508,12 +479,12 @@ try
 		static_cast<iocb *>(this)
 	};
 
-	syscall<SYS_io_submit>(context->idp, 1, &cbs);
-
 	const size_t submitted_bytes
 	{
 		bytes(iovec())
 	};
+
+	syscall<SYS_io_submit>(context->idp, 1, &cbs);
 
 	// Update stats for submission phase
 	aio::stats.requests_bytes += submitted_bytes;

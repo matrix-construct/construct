@@ -582,7 +582,10 @@ try
 {
 	#ifdef IRCD_USE_AIO
 	if(likely(aio::context))
-		return aio::read(fd, buf, opts);
+		return
+		{
+			data(buf), aio::read(fd, {&buf, 1}, opts)
+		};
 	#endif
 
 	return
@@ -746,7 +749,10 @@ try
 {
 	#ifdef IRCD_USE_AIO
 	if(likely(aio::context))
-		return aio::write(fd, buf, opts);
+		return
+		{
+			data(buf), aio::write(fd, {&buf, 1}, opts)
+		};
 	#endif
 
 	return
@@ -1009,6 +1015,58 @@ noexcept(false)
 		return;
 
 	syscall(::close, fdno);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// fs/iov.h
+//
+
+namespace ircd::fs
+{
+	thread_local std::array<struct ::iovec, IOV_MAX> _iov_;
+}
+
+ircd::vector_view<const struct ::iovec>
+ircd::fs::make_iov(const vector_view<const mutable_buffer> &bufs)
+{
+	size_t i(0);
+	for(; i < bufs.size(); ++i)
+		_iov_.at(i) =
+		{
+			buffer::data(bufs[i]), buffer::size(bufs[i])
+		};
+
+	return
+	{
+		_iov_.data(), i
+	};
+}
+
+ircd::vector_view<const struct ::iovec>
+ircd::fs::make_iov(const vector_view<const const_buffer> &bufs)
+{
+	size_t i(0);
+	for(; i < bufs.size(); ++i)
+		_iov_.at(i) =
+		{
+			const_cast<char *>(buffer::data(bufs[i])), buffer::size(bufs[i])
+		};
+
+	return
+	{
+		_iov_.data(), i
+	};
+}
+
+size_t
+ircd::fs::bytes(const vector_view<const struct ::iovec> &iov)
+{
+	return std::accumulate(begin(iov), end(iov), size_t(0), []
+	(auto ret, const auto &iov)
+	{
+		return ret += iov.iov_len;
+	});
 }
 
 ///////////////////////////////////////////////////////////////////////////////

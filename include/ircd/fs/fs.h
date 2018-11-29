@@ -81,6 +81,7 @@ enum ircd::fs::index
 };
 
 #include "error.h"
+#include "iov.h"
 #include "fd.h"
 #include "aio.h"
 #include "read.h"
