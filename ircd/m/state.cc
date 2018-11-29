@@ -214,7 +214,7 @@ ircd::m::state::_count(const string_view &root,
                        const json::array &key)
 {
 	size_t ret{0};
-	get_node(root, [&key, &ret]
+	get_node(std::nothrow, root, [&key, &ret]
 	(const auto &node)
 	{
 		ret += _count_recurse(node, key, json::array{});
@@ -243,7 +243,7 @@ ircd::m::state::_count_recurse(const node &node,
 	for(uint pos(kpos); pos < rep.kn || pos < rep.cn; ++pos)
 	{
 		if(!empty(rep.chld[pos]))
-			get_node(rep.chld[pos], [&key, &ret, &rep, &pos]
+			get_node(std::nothrow, rep.chld[pos], [&key, &ret, &rep, &pos]
 			(const auto &node)
 			{
 				ret += _count_recurse(node, key, rep.keys[pos]);
@@ -308,7 +308,7 @@ ircd::m::state::_dfs_recurse(const search_closure &closure,
 		if(!empty(rep.chld[pos]))
 		{
 			bool ret{false};
-			get_node(rep.chld[pos], [&closure, &key, &depth, &ret]
+			get_node(std::nothrow, rep.chld[pos], [&closure, &key, &depth, &ret]
 			(const auto &node)
 			{
 				ret = _dfs_recurse(closure, node, key, depth);
