@@ -90,6 +90,12 @@ media_blocks_descriptor
 
 	// block_size
 	32_KiB,
+
+	// meta block size
+	512,
+
+	// compression
+	""s // no compression
 };
 
 decltype(media_description)
