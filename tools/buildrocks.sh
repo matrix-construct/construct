@@ -50,5 +50,7 @@ run cd deps/rocksdb
 run git fetch --tags
 run git checkout $BRANCH
 NJOBS=`nproc`
-CFLAGS="-fPIC -frtti -DROCKSDB_USE_RTTI" run make -j$NJOBS $LINKAGE
+export CFLAGS="-fPIC -frtti -DROCKSDB_USE_RTTI"
+export DISABLE_JEMALLOC=1
+run make -j$NJOBS $LINKAGE
 run cd $USERDIR         # Return to user's original directory
