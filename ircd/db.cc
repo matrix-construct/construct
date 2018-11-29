@@ -4432,7 +4432,10 @@ noexcept try
 	};
 	#endif
 
-	fs::fdsync(fd);
+	//TODO: AIO fdsync() throwing -EINVAL.
+	fs::fsync_opts opts;
+	opts.use_aio = false;
+	fs::fdsync(fd, opts);
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -4478,7 +4481,10 @@ noexcept try
 	};
 	#endif
 
-	fs::fdsync(fd);
+	//TODO: AIO fdsync() throwing -EINVAL.
+	fs::fsync_opts opts;
+	opts.use_aio = false;
+	fs::fdsync(fd, opts);
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -4522,7 +4528,10 @@ noexcept try
 	};
 	#endif
 
-	fs::fsync(fd);
+	//TODO: AIO fdsync() throwing -EINVAL.
+	fs::fsync_opts opts;
+	opts.use_aio = false;
+	fs::fsync(fd, opts);
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -6595,7 +6604,10 @@ noexcept try
 	};
 	#endif
 
-	fs::fsync(fd);
+	//TODO: AIO fdsync() throwing -EINVAL.
+	fs::fsync_opts opts;
+	opts.use_aio = false;
+	fs::fsync(fd, opts);
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -6641,7 +6653,10 @@ noexcept try
 	};
 	#endif
 
-	fs::fdsync(fd);
+	//TODO: AIO fdsync() throwing -EINVAL.
+	fs::fsync_opts opts;
+	opts.use_aio = false;
+	fs::fdsync(fd, opts);
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -6687,7 +6702,10 @@ noexcept try
 	};
 	#endif
 
-	fs::fdsync(fd);
+	//TODO: AIO fdsync() throwing -EINVAL.
+	fs::fsync_opts opts;
+	opts.use_aio = false;
+	fs::fdsync(fd, opts);
 	return Status::OK();
 }
 catch(const fs::error &e)
