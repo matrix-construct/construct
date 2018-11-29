@@ -128,7 +128,10 @@ const try
 }
 catch(const bad_lex_cast &e)
 {
-	throw type_error("indice %zu must cast to type %s", i, typeid(T).name());
+	throw type_error
+	{
+		"indice %zu must cast to type %s", i, typeid(T).name()
+	};
 }
 
 inline ircd::string_view
@@ -136,7 +139,13 @@ ircd::json::array::at(const size_t &i)
 const
 {
 	const auto it(find(i));
-	return likely(it != end())? *it : throw not_found("indice %zu", i);
+	if(it == end())
+		throw not_found
+		{
+			"indice %zu", i
+		};
+
+	return *it;
 }
 
 inline ircd::json::array::const_iterator

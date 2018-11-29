@@ -204,7 +204,10 @@ const try
 	{
 		const auto it(object.find(key));
 		if(it == std::end(object))
-			throw not_found("'%s'", key);
+			throw not_found
+			{
+				"'%s'", key
+			};
 
 		object = it->second;
 		return false;
@@ -214,9 +217,12 @@ const try
 }
 catch(const bad_lex_cast &e)
 {
-	throw type_error("'%s' must cast to type %s",
-	                 ircd::string(path),
-	                 typeid(T).name());
+	throw type_error
+	{
+		"'%s' must cast to type %s",
+		ircd::string(path),
+		typeid(T).name()
+	};
 }
 
 template<ircd::json::name_hash_t key,
@@ -227,15 +233,21 @@ try
 {
 	const auto it(object.find(key));
 	if(it == end(object))
-		throw not_found("[key hash] '%zu'", key);
+		throw not_found
+		{
+			"[key hash] '%zu'", key
+		};
 
 	return lex_cast<T>(it->second);
 }
 catch(const bad_lex_cast &e)
 {
-	throw type_error("[key hash] '%zu' must cast to type %s",
-	                 key,
-	                 typeid(T).name());
+	throw type_error
+	{
+		"[key hash] '%zu' must cast to type %s",
+		key,
+		typeid(T).name()
+	};
 }
 
 template<class T>
@@ -245,15 +257,21 @@ const try
 {
 	const auto it(find(key));
 	if(it == end())
-		throw not_found("'%s'", key);
+		throw not_found
+		{
+			"'%s'", key
+		};
 
 	return lex_cast<T>(it->second);
 }
 catch(const bad_lex_cast &e)
 {
-	throw type_error("'%s' must cast to type %s",
-	                 key,
-	                 typeid(T).name());
+	throw type_error
+	{
+		"'%s' must cast to type %s",
+		key,
+		typeid(T).name()
+	};
 }
 
 inline ircd::string_view

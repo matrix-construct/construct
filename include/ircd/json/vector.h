@@ -103,7 +103,13 @@ ircd::json::vector::at(const size_t &i)
 const
 {
 	const auto it(find(i));
-	return likely(it != end())? *it : throw not_found("indice %zu", i);
+	if(it == end())
+		throw not_found
+		{
+			"indice %zu", i
+		};
+
+	return *it;
 }
 
 inline ircd::json::vector::const_iterator
