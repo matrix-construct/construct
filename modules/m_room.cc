@@ -261,10 +261,26 @@ make_prev__buf(const m::room &room,
 	};
 }
 
-extern "C" std::pair<bool, int64_t>
-is_complete(const m::room &room)
+
+namespace ircd::m
 {
-	const m::room::state state
+	extern "C" std::pair<bool, int64_t> ircd__m__is_complete___room(const room &);
+}
+
+std::pair<bool, int64_t>
+ircd::m::ircd__m__is_complete___room(const room &room)
+{
+	static const event::keys::include fkeys
+	{
+		"depth"
+	};
+
+	static const event::fetch::opts fopts
+	{
+		fkeys, { db::get::NO_CACHE }
+	};
+
+	const room::state state
 	{
 		room
 	};
@@ -274,32 +290,26 @@ is_complete(const m::room &room)
 		state.get("m.room.create")
 	};
 
-	static const m::event::fetch::opts fopts
-	{
-		m::event::keys::include{"depth"},
-		{ db::get::NO_CACHE }
-	};
-
-	m::room::messages it
+	room::messages it
 	{
 		room, create_id, &fopts
 	};
 
-	int64_t depth{0};
+	int64_t depth(-1);
 	if(!it)
-		return {false, depth};
+		return { false, depth };
 
 	for(; it; ++it)
 	{
-		const m::event &event{*it};
+		const event &event{*it};
 		if(at<"depth"_>(event) == depth + 1)
 			++depth;
 
 		if(at<"depth"_>(event) != depth)
-			return {false, depth};
+			return { false, depth };
 	}
 
-	return {true, depth};
+	return { true, depth };
 }
 
 extern "C" bool
