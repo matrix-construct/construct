@@ -549,6 +549,38 @@ ircd::const_buffer
 ircd::fs::read(const string_view &path,
                const mutable_buffer &buf,
                const read_opts &opts)
+{
+	const mutable_buffers bufs
+	{
+		&buf, 1
+	};
+
+	return mutable_buffer
+	{
+		data(buf), read(path, bufs, opts)
+	};
+}
+
+ircd::const_buffer
+ircd::fs::read(const fd &fd,
+               const mutable_buffer &buf,
+               const read_opts &opts)
+{
+	const mutable_buffers bufs
+	{
+		&buf, 1
+	};
+
+	return mutable_buffer
+	{
+		data(buf), read(fd, bufs, opts)
+	};
+}
+
+size_t
+ircd::fs::read(const string_view &path,
+               const mutable_buffers &bufs,
+               const read_opts &opts)
 try
 {
 	const fd fd
@@ -556,7 +588,7 @@ try
 		path
 	};
 
-	return read(fd, buf, opts);
+	return read(fd, bufs, opts);
 }
 catch(const error &e)
 {
@@ -574,25 +606,19 @@ catch(const std::exception &e)
 	};
 }
 
-ircd::const_buffer
+size_t
 ircd::fs::read(const fd &fd,
-               const mutable_buffer &buf,
+               const mutable_buffers &bufs,
                const read_opts &opts)
 try
 {
 	#ifdef IRCD_USE_AIO
 	if(likely(aio::context))
-		return
-		{
-			data(buf), aio::read(fd, {&buf, 1}, opts)
-		};
+		return aio::read(fd, bufs, opts);
 	#endif
 
-	return
-	{
-		data(buf),
-		size_t(syscall(::pread, fd, data(buf), size(buf), opts.offset))
-	};
+	const auto iov(make_iov(bufs));
+	return size_t(syscall(::preadv, fd, iov.data(), iov.size(), opts.offset));
 }
 catch(const error &e)
 {

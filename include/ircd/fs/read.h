@@ -15,6 +15,10 @@ namespace ircd::fs
 {
 	struct read_opts extern const read_opts_default;
 
+	// Yields ircd::ctx for read into buffers; returns bytes read
+	size_t read(const fd &, const mutable_buffers &, const read_opts & = read_opts_default);
+	size_t read(const string_view &path, const mutable_buffers &, const read_opts & = read_opts_default);
+
 	// Yields ircd::ctx for read into buffer; returns view of read portion.
 	const_buffer read(const fd &, const mutable_buffer &, const read_opts & = read_opts_default);
 	const_buffer read(const string_view &path, const mutable_buffer &, const read_opts & = read_opts_default);
