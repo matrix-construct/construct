@@ -106,13 +106,21 @@ ircd::fs::aio::read(const fd &fd,
 		fd, make_iov(bufs), opts
 	};
 
+	stats.cur_reads++;
+	stats.max_reads = std::max(stats.max_reads, stats.cur_reads);
+	const unwind dec{[]
+	{
+		stats.cur_reads--;
+	}};
+
+	// Make request; blocks ircd::ctx until completed or throw.
 	const size_t bytes
 	{
 		request()
 	};
 
-	aio::stats.read_bytes += bytes;
-	aio::stats.reads++;
+	stats.bytes_read += bytes;
+	stats.reads++;
 	return bytes;
 }
 
@@ -150,6 +158,16 @@ ircd::fs::aio::write(const fd &fd,
 	};
 	#endif
 
+	stats.cur_bytes_write += req_bytes;
+	stats.cur_writes++;
+	stats.max_writes = std::max(stats.max_writes, stats.cur_writes);
+	const unwind dec{[&req_bytes]
+	{
+		stats.cur_bytes_write -= req_bytes;
+		stats.cur_writes--;
+	}};
+
+	// Make the request; ircd::ctx blocks here. Throws on error
 	const size_t bytes
 	{
 		request()
@@ -158,8 +176,8 @@ ircd::fs::aio::write(const fd &fd,
 	// Does linux ever not complete all bytes for an AIO?
 	assert(bytes == req_bytes);
 
-	aio::stats.write_bytes += bytes;
-	aio::stats.writes++;
+	stats.bytes_write += bytes;
+	stats.writes++;
 	return bytes;
 }
 
@@ -357,8 +375,9 @@ noexcept try
 	//assert(count > 0);
 	assert(count >= 0);
 
-	aio::stats.handles++;
-	aio::stats.events += count;
+	// Update any stats.
+	stats.events += count;
+	stats.handles++;
 
 	for(ssize_t i(0); i < count; ++i)
 		handle_event(event[i]);
@@ -458,8 +477,8 @@ ircd::fs::aio::request::cancel()
 	assert(context);
 	syscall_nointr<SYS_io_cancel>(context->idp, cb, &result);
 
-	aio::stats.cancel_bytes += bytes(iovec());
-	aio::stats.cancel++;
+	stats.bytes_cancel += bytes(iovec());
+	stats.cancel++;
 
 	context->handle_event(result);
 }
@@ -484,24 +503,28 @@ try
 		bytes(iovec())
 	};
 
+	// Submit to kernel
 	syscall<SYS_io_submit>(context->idp, 1, &cbs);
 
 	// Update stats for submission phase
-	aio::stats.requests_bytes += submitted_bytes;
-	aio::stats.requests++;
+	stats.bytes_requests += submitted_bytes;
+	stats.requests++;
+
+	const auto &curcnt(stats.requests - stats.complete);
+	stats.max_requests = std::max(stats.max_requests, curcnt);
 
 	// Block for completion
 	while(retval == std::numeric_limits<ssize_t>::min())
 		ctx::wait();
 
 	// Update stats for completion phase.
-	aio::stats.complete_bytes += submitted_bytes;
-	aio::stats.complete++;
+	stats.bytes_complete += submitted_bytes;
+	stats.complete++;
 
 	if(retval == -1)
 	{
-		aio::stats.errors++;
-		aio::stats.errors_bytes += submitted_bytes;
+		stats.bytes_errors += submitted_bytes;
+		stats.errors++;
 
 		throw fs::error
 		{

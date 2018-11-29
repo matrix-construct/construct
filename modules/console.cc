@@ -745,39 +745,70 @@ console_cmd__aio(opt &out, const string_view &line)
 		fs::aio::stats
 	};
 
-	out << std::setw(12) << std::left << "pending"
-	    << std::setw(9) << std::right << (s.requests - s.complete)
-	    << "   " << pretty(iec(s.requests_bytes - s.complete_bytes))
-	    << std::endl;
-
 	out << std::setw(12) << std::left << "requests"
 	    << std::setw(9) << std::right << s.requests
-	    << "   " << pretty(iec(s.requests_bytes))
+	    << "   " << pretty(iec(s.bytes_requests))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "requests cur"
+	    << std::setw(9) << std::right << (s.requests - s.complete)
+	    << "   " << pretty(iec(s.bytes_requests - s.bytes_complete))
 	    << std::endl;
 
 	out << std::setw(12) << std::left << "requests avg"
 	    << std::setw(9) << std::right << " "
-	    << "   " << pretty(iec(s.requests_bytes / s.requests))
+	    << "   " << pretty(iec(s.bytes_requests / s.requests))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "requests max"
+	    << std::setw(9) << std::right << s.max_requests
 	    << std::endl;
 
 	out << std::setw(12) << std::left << "reads"
 	    << std::setw(9) << std::right << s.reads
-	    << "   " << pretty(iec(s.read_bytes))
+	    << "   " << pretty(iec(s.bytes_read))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "reads cur"
+	    << std::setw(9) << std::right << s.cur_reads
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "reads avg"
+	    << std::setw(9) << std::right << " "
+	    << "   " << pretty(iec(s.bytes_read / s.reads))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "reads max"
+	    << std::setw(9) << std::right << s.max_reads
 	    << std::endl;
 
 	out << std::setw(12) << std::left << "writes"
 	    << std::setw(9) << std::right << s.writes
-	    << "   " << pretty(iec(s.write_bytes))
+	    << "   " << pretty(iec(s.bytes_write))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "writes cur"
+	    << std::setw(9) << std::right << s.cur_writes
+	    << "   " << pretty(iec(s.cur_bytes_write))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "writes avg"
+	    << std::setw(9) << std::right << " "
+	    << "   " << pretty(iec(s.bytes_write / s.writes))
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "writes max"
+	    << std::setw(9) << std::right << s.max_writes
 	    << std::endl;
 
 	out << std::setw(12) << std::left << "errors"
 	    << std::setw(9) << std::right << s.errors
-	    << "   " << pretty(iec(s.errors_bytes))
+	    << "   " << pretty(iec(s.bytes_errors))
 	    << std::endl;
 
 	out << std::setw(12) << std::left << "cancel"
 	    << std::setw(9) << std::right << s.cancel
-	    << "   " << pretty(iec(s.cancel_bytes))
+	    << "   " << pretty(iec(s.bytes_cancel))
 	    << std::endl;
 
 	out << std::setw(12) << std::left << "handles"

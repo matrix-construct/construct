@@ -43,22 +43,29 @@ namespace ircd::fs::aio
 ///
 struct ircd::fs::aio::stats
 {
-	uint64_t requests {0};             ///< count of requests created
-	uint64_t complete {0};             ///< count of requests completed
-	uint64_t handles {0};              ///< count of event_fd callbacks
-	uint64_t events {0};               ///< count of events from io_getevents
-	uint64_t cancel {0};               ///< count of requests canceled
-	uint64_t errors {0};               ///< count of response errcodes
-	uint64_t reads {0};                ///< count of read complete
-	uint64_t writes {0};               ///< count of write complete
+	uint32_t requests {0};             ///< count of requests created
+	uint32_t complete {0};             ///< count of requests completed
+	uint32_t handles {0};              ///< count of event_fd callbacks
+	uint32_t events {0};               ///< count of events from io_getevents
+	uint32_t cancel {0};               ///< count of requests canceled
+	uint32_t errors {0};               ///< count of response errcodes
+	uint32_t reads {0};                ///< count of read complete
+	uint32_t writes {0};               ///< count of write complete
 
-	uint64_t requests_bytes {0};       ///< total bytes for requests created
-	uint64_t complete_bytes {0};       ///< total bytes for requests completed
-	uint64_t errors_bytes {0};         ///< total bytes for completed w/ errc
-	uint64_t cancel_bytes {0};         ///< total bytes for cancels
-	uint64_t read_bytes {0};           ///< total bytes for read completed
-	uint64_t write_bytes {0};          ///< total bytes for write completed
+	uint64_t bytes_requests {0};       ///< total bytes for requests created
+	uint64_t bytes_complete {0};       ///< total bytes for requests completed
+	uint64_t bytes_errors {0};         ///< total bytes for completed w/ errc
+	uint64_t bytes_cancel {0};         ///< total bytes for cancels
+	uint64_t bytes_read {0};           ///< total bytes for read completed
+	uint64_t bytes_write {0};          ///< total bytes for write completed
 
+	uint32_t cur_reads {0};            ///< pending reads
+	uint32_t cur_writes {0};           ///< pending write
+	uint32_t cur_bytes_write {0};      ///< pending write bytes
+
+	uint32_t max_requests {0};         ///< maximum observed pending requests
+	uint32_t max_reads {0};            ///< maximum observed pending reads
+	uint32_t max_writes {0};           ///< maximum observed pending write
 };
 
 struct ircd::fs::aio::init
