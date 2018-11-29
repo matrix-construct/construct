@@ -676,17 +676,49 @@ ircd::fs::append(const string_view &path,
                  const const_buffer &buf,
                  const write_opts &opts)
 {
-	const fd fd
+	const const_buffers bufs
 	{
-		path, std::ios::out | std::ios::app
+		&buf, 1
 	};
 
-	return write(fd, buf, opts);
+	return const_buffer
+	{
+		data(buf), append(path, bufs, opts)
+	};
 }
 
 ircd::const_buffer
 ircd::fs::append(const fd &fd,
                  const const_buffer &buf,
+                 const write_opts &opts)
+{
+	const const_buffers bufs
+	{
+		&buf, 1
+	};
+
+	return const_buffer
+	{
+		data(buf), append(fd, bufs, opts)
+	};
+}
+
+size_t
+ircd::fs::append(const string_view &path,
+                 const const_buffers &bufs,
+                 const write_opts &opts)
+{
+	const fd fd
+	{
+		path, std::ios::out | std::ios::app
+	};
+
+	return append(fd, bufs, opts);
+}
+
+size_t
+ircd::fs::append(const fd &fd,
+                 const const_buffers &bufs,
                  const write_opts &opts_)
 try
 {
@@ -694,7 +726,7 @@ try
 	if(!opts.offset)
 		opts.offset = syscall(::lseek, fd, 0, SEEK_END);
 
-	return write(fd, buf, opts);
+	return write(fd, bufs, opts);
 }
 catch(const error &e)
 {

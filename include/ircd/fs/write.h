@@ -23,6 +23,10 @@ namespace ircd::fs
 	const_buffer write(const fd &, const const_buffer &, const write_opts & = write_opts_default);
 	const_buffer write(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
 
+	// Yields ircd::ctx to append to file from buffers; returns bytes appended
+	size_t append(const fd &, const const_buffers &, const write_opts & = write_opts_default);
+	size_t append(const string_view &path, const const_buffers &, const write_opts & = write_opts_default);
+
 	// Yields ircd::ctx to append to file from buffer; returns view of written portion
 	const_buffer append(const fd &, const const_buffer &, const write_opts & = write_opts_default);
 	const_buffer append(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
