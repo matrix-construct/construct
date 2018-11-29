@@ -1162,11 +1162,11 @@ ircd::m::room::state::for_each(const event::id::closure_bool &closure)
 const
 {
 	if(!present())
-		return !m::state::test(root_id, [&closure]
+		return m::state::for_each(root_id, m::state::iter_bool_closure{[&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			return !closure(unquote(event_id));
-		});
+			return closure(unquote(event_id));
+		}});
 
 	return for_each(event::closure_idx_bool{[&closure]
 	(const event::idx &idx)
@@ -1199,11 +1199,11 @@ ircd::m::room::state::for_each(const event::closure_idx_bool &closure)
 const
 {
 	if(!present())
-		return !m::state::test(root_id, [&closure]
+		return m::state::for_each(root_id, m::state::iter_bool_closure{[&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			return !closure(index(unquote(event_id), std::nothrow));
-		});
+			return closure(index(unquote(event_id), std::nothrow));
+		}});
 
 	db::gopts opts
 	{
@@ -1319,10 +1319,10 @@ ircd::m::room::state::for_each(const string_view &type,
 const
 {
 	if(!present())
-		return !m::state::test(root_id, type, state_key_lb, [&closure]
+		return m::state::for_each(root_id, type, state_key_lb, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			return !closure(unquote(event_id));
+			return closure(unquote(event_id));
 		});
 
 	return for_each(type, state_key_lb, event::closure_idx_bool{[&closure]
@@ -1346,10 +1346,10 @@ ircd::m::room::state::for_each(const string_view &type,
 const
 {
 	if(!present())
-		return !m::state::test(root_id, type, state_key_lb, [&closure]
+		return m::state::for_each(root_id, type, state_key_lb, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			return !closure(index(unquote(event_id), std::nothrow));
+			return closure(index(unquote(event_id), std::nothrow));
 		});
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -1406,11 +1406,11 @@ ircd::m::room::state::for_each(const string_view &type,
 const
 {
 	if(!present())
-		return !m::state::test(root_id, type, state_key_lb, [&closure]
+		return m::state::for_each(root_id, type, state_key_lb, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
 			assert(size(key) >= 2);
-			return !closure(unquote(key.at(1)));
+			return closure(unquote(key.at(1)));
 		});
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -1466,7 +1466,7 @@ const
 	char lastbuf[256]; //TODO: type maxlen
 	if(!present())
 	{
-		m::state::for_each(root_id, [&closure, &last, &lastbuf]
+		m::state::for_each(root_id, m::state::iter_bool_closure{[&closure, &last, &lastbuf]
 		(const json::array &key, const string_view &)
 		{
 			assert(size(key) >= 2);
@@ -1480,7 +1480,7 @@ const
 
 			last = strlcpy(lastbuf, type);
 			return closure(type);
-		});
+		}});
 
 		return true;
 	}

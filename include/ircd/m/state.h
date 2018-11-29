@@ -73,12 +73,11 @@ namespace ircd::m::state
 	size_t count(const id &root, const string_view &type);
 	size_t count(const id &root);
 
-	bool test(const id &root, const iter_bool_closure &);
-	bool test(const id &root, const string_view &type, const iter_bool_closure &);
-	bool test(const id &root, const string_view &type, const string_view &state_key_lb, const iter_bool_closure &);
-
+	bool for_each(const id &root, const iter_bool_closure &);
 	void for_each(const id &root, const iter_closure &);
+	bool for_each(const id &root, const string_view &type, const iter_bool_closure &);
 	void for_each(const id &root, const string_view &type, const iter_closure &);
+	bool for_each(const id &root, const string_view &type, const string_view &state_key_lb, const iter_bool_closure &);
 
 	size_t accumulate(const id &root, const iter_bool_closure &);
 

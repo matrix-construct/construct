@@ -5259,10 +5259,10 @@ console_cmd__state__find(opt &out, const string_view &line)
 	(const auto &key, const string_view &val)
 	{
 		out << key << " => " << val << std::endl;
-		return false;
+		return true;
 	}};
 
-	m::state::test(root, type, state_key, closure);
+	m::state::for_each(root, type, state_key, closure);
 	return true;
 }
 

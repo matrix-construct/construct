@@ -112,11 +112,22 @@ void
 ircd::m::state::for_each(const string_view &root,
                          const iter_closure &closure)
 {
-	test(root, [&closure]
+	for_each(root, iter_bool_closure{[&closure]
 	(const json::array &key, const string_view &val)
 	{
 		closure(key, val);
-		return false;
+		return true;
+	}});
+}
+
+bool
+ircd::m::state::for_each(const string_view &root,
+                         const iter_bool_closure &closure)
+{
+	return !dfs(root, [&closure]
+	(const json::array &key, const string_view &val, const uint &, const uint &)
+	{
+		return !closure(key, val);
 	});
 }
 
@@ -125,29 +136,18 @@ ircd::m::state::for_each(const string_view &root,
                          const string_view &type,
                          const iter_closure &closure)
 {
-	test(root, type, [&closure]
+	for_each(root, type, iter_bool_closure{[&closure]
 	(const json::array &key, const string_view &val)
 	{
 		closure(key, val);
-		return false;
-	});
+		return true;
+	}});
 }
 
 bool
-ircd::m::state::test(const string_view &root,
-                     const iter_bool_closure &closure)
-{
-	return dfs(root, [&closure]
-	(const json::array &key, const string_view &val, const uint &, const uint &)
-	{
-		return closure(key, val);
-	});
-}
-
-bool
-ircd::m::state::test(const string_view &root,
-                     const string_view &type,
-                     const iter_bool_closure &closure)
+ircd::m::state::for_each(const string_view &root,
+                         const string_view &type,
+                         const iter_bool_closure &closure)
 {
 	char buf[KEY_MAX_SZ];
 	const json::array key
@@ -155,18 +155,18 @@ ircd::m::state::test(const string_view &root,
 		make_key(buf, type)
 	};
 
-	return dfs(root, key, [&closure]
+	return !dfs(root, key, [&closure]
 	(const json::array &key, const string_view &val, const uint &, const uint &)
 	{
-		return closure(key, val);
+		return !closure(key, val);
 	});
 }
 
 bool
-ircd::m::state::test(const string_view &root,
-                     const string_view &type,
-                     const string_view &state_key_lb,
-                     const iter_bool_closure &closure)
+ircd::m::state::for_each(const string_view &root,
+                         const string_view &type,
+                         const string_view &state_key_lb,
+                         const iter_bool_closure &closure)
 {
 	char buf[KEY_MAX_SZ];
 	const json::array key
@@ -174,10 +174,10 @@ ircd::m::state::test(const string_view &root,
 		make_key(buf, type, state_key_lb)
 	};
 
-	return dfs(root, key, [&closure]
+	return !dfs(root, key, [&closure]
 	(const json::array &key, const string_view &val, const uint &, const uint &)
 	{
-		return closure(key, val);
+		return !closure(key, val);
 	});
 }
 
@@ -278,8 +278,8 @@ ircd::m::state::dfs(const string_view &root,
                     const json::array &key,
                     const search_closure &closure)
 {
-	bool ret{true};
-	get_node(root, [&closure, &key, &ret]
+	bool ret{false};
+	get_node(std::nothrow, root, [&closure, &key, &ret]
 	(const auto &node)
 	{
 		int depth(-1);
