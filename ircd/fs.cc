@@ -398,21 +398,18 @@ ircd::fs::stdin::tty::write(const string_view &buf)
 //
 
 ircd::fs::fsync_opts
-const ircd::fs::fsync_opts_default
-{};
+const ircd::fs::fsync_opts_default;
 
 void
 ircd::fs::fsync(const fd &fd,
                 const fsync_opts &opts)
 try
 {
-	//TODO: AIO fsync is throwing -EINVAL
-/*
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::context))
+	if(likely(aio::context) && opts.use_aio)
 		return aio::fsync(fd, opts);
 	#endif
-*/
+
 	syscall(::fsync, fd);
 }
 catch(const error &e)
@@ -436,13 +433,11 @@ ircd::fs::fdsync(const fd &fd,
                  const fsync_opts &opts)
 try
 {
-	//TODO: AIO fdsync is throwing -EINVAL
-/*
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::context))
+	if(likely(aio::context) && opts.use_aio)
 		return aio::fdsync(fd, opts);
 	#endif
-*/
+
 	syscall(::fdatasync, fd);
 }
 catch(const error &e)
