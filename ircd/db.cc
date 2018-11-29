@@ -877,8 +877,8 @@ try
 	opts.use_direct_reads = ircd::nodirect? false:
 	                        fs::exists(direct_io_test_file_path());
 
-	opts.use_direct_io_for_flush_and_compaction = false;
-	//opts.use_direct_io_for_flush_and_compaction = opts.use_direct_reads;
+	//opts.use_direct_io_for_flush_and_compaction = false;
+	opts.use_direct_io_for_flush_and_compaction = opts.use_direct_reads;
 
 	#ifdef RB_DEBUG
 	opts.dump_malloc_stats = true;
@@ -1556,58 +1556,6 @@ ircd::db::database::column::column(database &d,
 	// Set the compaction filter
 	this->options.compaction_filter = &this->cfilter;
 
-	//
-	// Table options
-	//
-
-	// Block based table index type.
-	table_opts.format_version = 3; // RocksDB >= 5.15 compat only; otherwise use 2.
-	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
-	table_opts.partition_filters = true;
-	table_opts.use_delta_encoding = true;
-	table_opts.enable_index_compression = false;
-	table_opts.read_amp_bytes_per_bit = 8;
-
-	// Specify that index blocks should use the cache. If not, they will be
-	// pre-read into RAM by rocksdb internally. Because of the above
-	// TwoLevelIndex + partition_filters configuration on RocksDB v5.15 it's
-	// better to use pre-read except in the case of a massive database.
-	table_opts.cache_index_and_filter_blocks = true;
-	table_opts.cache_index_and_filter_blocks_with_high_priority = false;
-	table_opts.pin_top_level_index_and_filter = false;
-	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
-
-	// Setup the block size
-	table_opts.block_size = this->descriptor->block_size;
-	table_opts.metadata_block_size = this->descriptor->meta_block_size;
-	table_opts.block_size_deviation = 50;
-	table_opts.block_align = false; // Doesn't work w/ compression.
-
-	// Setup the cache for assets.
-	const auto &cache_size(this->descriptor->cache_size);
-	if(cache_size != 0)
-		table_opts.block_cache = std::make_shared<database::cache>(this->d, this->stats, cache_size);
-
-	// Setup the cache for compressed assets.
-	const auto &cache_size_comp(this->descriptor->cache_size_comp);
-	if(cache_size_comp != 0)
-		table_opts.block_cache_compressed = std::make_shared<database::cache>(this->d, this->stats, cache_size_comp);
-
-	// Setup the bloom filter.
-	const auto &bloom_bits(this->descriptor->bloom_bits);
-	if(bloom_bits)
-		table_opts.filter_policy.reset(rocksdb::NewBloomFilterPolicy(bloom_bits, false));
-
-	// Tickers::READ_AMP_TOTAL_READ_BYTES / Tickers::READ_AMP_ESTIMATE_USEFUL_BYTES
-	//table_opts.read_amp_bytes_per_bit = 8;
-
-	// Finally set the table options in the column options.
-	this->options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_opts));
-
-	//
-	// Misc options
-	//
-
 	//this->options.paranoid_file_checks = true;
 
 	// More stats reported by the rocksdb.stats property.
@@ -1638,6 +1586,57 @@ ircd::db::database::column::column(database &d,
 	//this->options.write_buffer_size = 2_MiB;
 	//this->options.disable_auto_compactions = true;
 	//this->options.level_compaction_dynamic_level_bytes = true;
+
+	//
+	// Table options
+	//
+
+	// Block based table index type.
+	table_opts.format_version = 3; // RocksDB >= 5.15 compat only; otherwise use 2.
+	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
+	table_opts.partition_filters = true;
+	table_opts.use_delta_encoding = true;
+	table_opts.enable_index_compression = false;
+	table_opts.read_amp_bytes_per_bit = 8;
+
+	// Specify that index blocks should use the cache. If not, they will be
+	// pre-read into RAM by rocksdb internally. Because of the above
+	// TwoLevelIndex + partition_filters configuration on RocksDB v5.15 it's
+	// better to use pre-read except in the case of a massive database.
+	table_opts.cache_index_and_filter_blocks = true;
+	table_opts.cache_index_and_filter_blocks_with_high_priority = false;
+	table_opts.pin_top_level_index_and_filter = false;
+	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
+
+	// Setup the block size
+	table_opts.block_size = this->descriptor->block_size;
+	table_opts.metadata_block_size = this->descriptor->meta_block_size;
+	table_opts.block_size_deviation = 50;
+
+	// Block alignment doesn't work if compression is enabled for this
+	// column. If not, we want block alignment for direct IO.
+	table_opts.block_align = this->options.compression == rocksdb::kNoCompression;
+
+	// Setup the cache for assets.
+	const auto &cache_size(this->descriptor->cache_size);
+	if(cache_size != 0)
+		table_opts.block_cache = std::make_shared<database::cache>(this->d, this->stats, cache_size);
+
+	// Setup the cache for compressed assets.
+	const auto &cache_size_comp(this->descriptor->cache_size_comp);
+	if(cache_size_comp != 0)
+		table_opts.block_cache_compressed = std::make_shared<database::cache>(this->d, this->stats, cache_size_comp);
+
+	// Setup the bloom filter.
+	const auto &bloom_bits(this->descriptor->bloom_bits);
+	if(bloom_bits)
+		table_opts.filter_policy.reset(rocksdb::NewBloomFilterPolicy(bloom_bits, false));
+
+	// Tickers::READ_AMP_TOTAL_READ_BYTES / Tickers::READ_AMP_ESTIMATE_USEFUL_BYTES
+	//table_opts.read_amp_bytes_per_bit = 8;
+
+	// Finally set the table options in the column options.
+	this->options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_opts));
 
 	log::debug
 	{
