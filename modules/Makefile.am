@@ -4,23 +4,27 @@
 #
 
 AM_CXXFLAGS = \
+	@EXTRA_CXXFLAGS@ \
 	###
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
+	@ROCKSDB_CPPFLAGS@ \
 	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
+	@SSL_CPPFLAGS@ \
+	@CRYPTO_CPPFLAGS@ \
+	@SODIUM_CPPFLAGS@ \
+	@MAGIC_CPPFLAGS@ \
+	@SNAPPY_CPPFLAGS@ \
+	@LZ4_CPPFLAGS@ \
+	@Z_CPPFLAGS@ \
 	-include $(top_srcdir)/include/ircd/ircd.pic.h \
 	-include $(top_srcdir)/include/ircd/mods/mapi.h \
+	@EXTRA_CPPFLAGS@ \
 	###
 
 AM_LDFLAGS = \
-	-L$(top_srcdir)/ircd \
-	@JS_LDFLAGS@ \
-	@BOOST_LDFLAGS@ \
-	###
-
-AM_LDFLAGS += \
 	-avoid-version \
 	-module \
 	-Wl,-fuse-ld=gold \
@@ -31,7 +35,9 @@ AM_LDFLAGS += \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
+	-L$(top_srcdir)/ircd \
 	$(PLATFORM_LDFLAGS) \
+	@EXTRA_LDFLAGS@ \
 	# -Wl,--no-undefined \
 	# -export-symbols-regex IRCD_MODULE* \
 	# -export-symbols-regex * \

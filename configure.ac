@@ -1307,12 +1307,17 @@ dnl Additional linkages
 dnl
 dnl
 
+AC_SUBST(EXTRA_CPPFLAGS)
+AC_SUBST(EXTRA_CXXFLAGS)
+AC_SUBST(EXTRA_LDFLAGS)
+AC_SUBST(EXTRA_LIBS)
+
 AM_COND_IF([MINGW],
 [
 
 ], [
-	CXXFLAGS+=" -pthread"
-	LIBS+="-lpthread -latomic"
+	EXTRA_CXXFLAGS+=" -pthread"
+	EXTRA_LIBS+="-lpthread -latomic"
 ])
 
 dnl ***************************************************************************

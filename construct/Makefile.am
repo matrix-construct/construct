@@ -1,6 +1,7 @@
 prefix = @prefix@
 
 AM_CXXFLAGS = \
+	@EXTRA_CXXFLAGS@ \
 	###
 
 AM_CPPFLAGS = \
@@ -11,8 +12,11 @@ AM_CPPFLAGS = \
 	@SSL_CPPFLAGS@ \
 	@CRYPTO_CPPFLAGS@ \
 	@SODIUM_CPPFLAGS@ \
+	@MAGIC_CPPFLAGS@ \
+	@SNAPPY_CPPFLAGS@ \
 	@LZ4_CPPFLAGS@ \
 	@Z_CPPFLAGS@ \
+	@EXTRA_CPPFLAGS@ \
 	###
 
 AM_LDFLAGS = \
@@ -35,6 +39,7 @@ AM_LDFLAGS = \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
 	$(PLATFORM_LDFLAGS) \
+	@EXTRA_LDFLAGS@ \
 	###
 
 bin_PROGRAMS = construct
@@ -65,6 +70,7 @@ construct_LDADD = \
 	@SNAPPY_LIBS@ \
 	@LZ4_LIBS@ \
 	@Z_LIBS@ \
+	@EXTRA_LIBS@ \
 	###
 
 construct_SOURCES = \

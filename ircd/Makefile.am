@@ -3,6 +3,7 @@ AUTOMAKE_OPTIONS = foreign
 libircddir	= @libdir@
 
 AM_CXXFLAGS = \
+	@EXTRA_CXXFLAGS@ \
 	###
 
 AM_CPPFLAGS = \
@@ -18,6 +19,7 @@ AM_CPPFLAGS = \
 	@LZ4_CPPFLAGS@ \
 	@Z_CPPFLAGS@ \
 	-include ircd/ircd.pic.h \
+	@EXTRA_CPPFLAGS@ \
 	###
 
 if MINGW
@@ -45,6 +47,7 @@ AM_LDFLAGS = \
 	-Wl,-z -Wl,nodlopen \
 	-Wl,-z -Wl,now \
 	$(PLATFORM_LDFLAGS) \
+	@EXTRA_LDFLAGS@ \
 	###
 
 libircd_LTLIBRARIES = libircd.la
@@ -74,6 +77,7 @@ libircd_la_LIBADD = \
 	@SNAPPY_LIBS@ \
 	@LZ4_LIBS@ \
 	@Z_LIBS@ \
+	@EXTRA_LIBS@ \
 	###
 
 # Since this is a GNU C++ project we assume the non-standard respect for
