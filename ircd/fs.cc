@@ -716,6 +716,38 @@ ircd::const_buffer
 ircd::fs::write(const string_view &path,
                 const const_buffer &buf,
                 const write_opts &opts)
+{
+	const const_buffers bufs
+	{
+		&buf, 1
+	};
+
+	return const_buffer
+	{
+		data(buf), write(path, bufs, opts)
+	};
+}
+
+ircd::const_buffer
+ircd::fs::write(const fd &fd,
+                const const_buffer &buf,
+                const write_opts &opts)
+{
+	const const_buffers bufs
+	{
+		&buf, 1
+	};
+
+	return const_buffer
+	{
+		data(buf), write(fd, bufs, opts)
+	};
+}
+
+size_t
+ircd::fs::write(const string_view &path,
+                const const_buffers &bufs,
+                const write_opts &opts)
 try
 {
 	const fd fd
@@ -723,7 +755,7 @@ try
 		path, std::ios::out
 	};
 
-	return write(fd, buf, opts);
+	return write(fd, bufs, opts);
 }
 catch(const error &e)
 {
@@ -741,25 +773,19 @@ catch(const std::exception &e)
 	};
 }
 
-ircd::const_buffer
+size_t
 ircd::fs::write(const fd &fd,
-                const const_buffer &buf,
+                const const_buffers &bufs,
                 const write_opts &opts)
 try
 {
 	#ifdef IRCD_USE_AIO
 	if(likely(aio::context))
-		return
-		{
-			data(buf), aio::write(fd, {&buf, 1}, opts)
-		};
+		return aio::write(fd, bufs, opts);
 	#endif
 
-	return
-	{
-		data(buf),
-		size_t(syscall(::pwrite, fd, data(buf), size(buf), opts.offset))
-	};
+	const auto iov(make_iov(bufs));
+	return size_t(syscall(::pwritev, fd, iov.data(), iov.size(), opts.offset));
 }
 catch(const error &e)
 {

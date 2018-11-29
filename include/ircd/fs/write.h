@@ -15,6 +15,10 @@ namespace ircd::fs
 {
 	struct write_opts extern const write_opts_default;
 
+	// Yields ircd::ctx for write from buffers; returns bytes written
+	size_t write(const fd &, const const_buffers &, const write_opts & = write_opts_default);
+	size_t write(const string_view &path, const const_buffers &, const write_opts & = write_opts_default);
+
 	// Yields ircd::ctx for write from buffer; returns view of written portion
 	const_buffer write(const fd &, const const_buffer &, const write_opts & = write_opts_default);
 	const_buffer write(const string_view &path, const const_buffer &, const write_opts & = write_opts_default);
