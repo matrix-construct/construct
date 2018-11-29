@@ -207,6 +207,14 @@ ircd::info::aio_reqprio_max
 	#endif
 };
 
+decltype(ircd::info::iov_max)
+ircd::info::iov_max
+{
+	#ifdef _SC_IOV_MAX
+	size_t(syscall(::sysconf, _SC_IOV_MAX))
+	#endif
+};
+
 #ifdef HAVE_SYS_UTSNAME_H
 decltype(ircd::info::utsname)
 ircd::info::utsname{[]
