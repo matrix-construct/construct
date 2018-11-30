@@ -91,31 +91,51 @@ put__invite(client &client,
 		signatures(sigs, event)
 	};
 
-	const json::strung revent{signed_event};
-	const json::value response[2]
+	const json::strung revent
 	{
-		json::value { 200L },
+		signed_event
+	};
+
+	const json::value array[2]
+	{
+		json::value
+		{
+			200L
+		},
 		json::members
 		{
 			{ "event", revent }
 		}
 	};
 
-	resource::response
+	// Send back the signed event first before eval. If we eval the signed
+	// event first: the effects will occur before the inviting server has
+	// the signed event returned from us; they might not consider the user
+	// invited yet, causing trouble for the eval effects. That may actually
+	// still happen due to the two separate TCP connections being uncoordinated
+	// (one for this request, and another when m::eval effects connect to them
+	// and make any requests). But either way if this call fails then we will
+	// lose the invite but that may not be such a bad thing.
+	resource::response response
 	{
 		client, json::value
 		{
-			response, 2
+			array, 2
 		}
 	};
 
+	// Eval the dual-signed invite event. This will write it locally. This will
+	// also try to sync the room as best as possible. The invitee will then be
+	// presented with this invite request in their rooms list.
 	m::vm::opts vmopts;
 	m::vm::eval
 	{
 		signed_event, vmopts
 	};
 
-	return {};
+	// note: returning a resource response is a symbolic/indicator action to
+	// the caller and has no real effect at the point of return.
+	return response;
 }
 
 resource::method
