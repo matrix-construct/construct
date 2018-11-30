@@ -23,35 +23,13 @@ IRCD_MODULE
 void
 ircd::m::fetch::init()
 {
-	context = ctx::context
-	{
-		"fetcher",
-		128_KiB,
-		std::bind(&ircd::m::fetch::worker),
-		ctx::context::POST
-	};
 
-	log::debug
-	{
-		vm::log, "Fetch unit ready."
-	};
 }
 
 void
 ircd::m::fetch::fini()
 {
-	log::debug
-	{
-		vm::log, "Shutting down fetch unit..."
-	};
 
-	context.terminate();
-	context.join();
-
-	log::debug
-	{
-		vm::log, "Fetch unit complete."
-	};
 }
 
 //
@@ -61,233 +39,154 @@ ircd::m::fetch::fini()
 decltype(ircd::m::fetch::hook)
 ircd::m::fetch::hook
 {
-	enter,
+	hook_handler,
 	{
 		{ "_site",  "vm.fetch" }
 	}
 };
 
 void
-ircd::m::fetch::enter(const event &event,
-                      vm::eval &eval)
+ircd::m::fetch::hook_handler(const event &event,
+                             vm::eval &eval)
 {
 	assert(eval.opts);
 	const auto &opts{*eval.opts};
-	const m::room::id &room_id{at<"room_id"_>(event)};
-
-	int64_t top;
-	id::event::buf head;
-	std::tie(head, top, std::ignore) = m::top(std::nothrow, room_id);
-	if(top < 0 && (opts.head_must_exist || opts.history))
+	const auto &type
 	{
-		const auto &type{at<"type"_>(event)};
-		if(type == "m.room.member" && membership(event) == "invite")
-		{
-			const auto &user_id{at<"state_key"_>(event)};
-			//m::join(m::room{room_id}, user_id);
-		}
-		else if(type != "m.room.create")
+		at<"type"_>(event)
+	};
+
+	if(type == "m.room.create")
+		return;
+
+	const m::room::id &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
+	if(opts.head_must_exist || opts.history)
+		if(!exists(room_id))
 			throw vm::error
 			{
-				vm::fault::STATE, "Found nothing for room %s",
+				vm::fault::STATE, "Missing state for room %s",
 				string_view{room_id}
 			};
-	}
 
 	const event::prev prev
 	{
 		*eval.event_
 	};
 
-	const auto &prev_events
+	const size_t prev_count
 	{
-		json::get<"prev_events"_>(prev)
-	};
-
-	const size_t &prev_count
-	{
-		size(prev_events)
+		size(json::get<"prev_events"_>(prev))
 	};
 
 	for(size_t i(0); i < prev_count; ++i)
 	{
-		const auto &prev_id(prev.prev_event(i));
-		if(!exists(prev_id))
-			log::warning
-			{
-				log, "Missing prev %s in %s in %s",
-				string_view{prev_id},
-				json::get<"event_id"_>(*eval.event_),
-				json::get<"room_id"_>(*eval.event_)
-			};
-
-		if(!eval.opts->prev_check_exists || exists(prev_id))
-			continue;
-
-		auto &request
+		const auto &prev_id
 		{
-			fetch(json::get<"room_id"_>(*eval.event_), prev_id)
+			prev.prev_event(i)
 		};
 
-		++request.refcnt;
-		request.dock.wait([&request]
-		{
-			return request.eval;
-		});
-
-		const unwind uw{[&request]
-		{
-			if(!--request.refcnt)
-				fetching.erase(request);
-		}};
-
-		if(request.eptr)
-			throw vm::error
-			{
-				vm::fault::EVENT, "Missing prev event %s (%s)",
-				prev_id,
-				what(request.eptr)
-			};
-	}
-}
-
-//
-// API interface
-//
-
-ircd::m::fetch::request &
-ircd::m::fetch::fetch(const m::room::id &room_id,
-                      const m::event::id &event_id)
-{
-	auto it
-	{
-		fetching.lower_bound(event_id)
-	};
-
-	if(it == end(fetching) || it->event_id != event_id)
-		it = fetching.emplace_hint(it, room_id, event_id);
-	else
-		return const_cast<struct request &>(*it);
-
-	auto &request
-	{
-		const_cast<struct request &>(*it)
-	};
-
-	request.start();
-	dock.notify_all();
-	return request;
-}
-
-//
-// fetcher
-//
-
-decltype(ircd::m::fetch::dock)
-ircd::m::fetch::dock;
-
-decltype(ircd::m::fetch::fetching)
-ircd::m::fetch::fetching;
-
-decltype(ircd::m::fetch::completed)
-ircd::m::fetch::completed;
-
-/// The fetch context is an internal worker which drives the fetch process
-/// and then indicates completion to anybody waiting on a fetch. This involves
-/// handling errors/timeouts from a fetch attempt and retrying with another
-/// server etc.
-///
-decltype(ircd::m::fetch::context)
-ircd::m::fetch::context;
-
-void
-ircd::m::fetch::worker()
-try
-{
-	while(1)
-	{
-		dock.wait(requesting);
-		if(!handle())
+		if(!eval.opts->prev_check_exists)
 			continue;
 
-		while(!completed.empty())
+		if(exists(prev_id))
+			continue;
+
+		throw vm::error
 		{
-			auto *const &request
-			{
-				completed.front()
-			};
-
-			completed.pop_front();
-			request->eval = true;
-			std::cout << "evals " << request->event_id << " ref " << request->refcnt << std::endl;
-			request->dock.notify_all();
-		}
+			vm::fault::EVENT, "Missing prev %s in %s in %s",
+			string_view{prev_id},
+			json::get<"event_id"_>(*eval.event_),
+			json::get<"room_id"_>(*eval.event_)
+		};
 	}
 }
-catch(const std::exception &e)
+
+//
+// util
+//
+
+namespace ircd::m::fetch
 {
-	log::critical
-	{
-		"Fetch worker :%s", e.what()
-	};
+	extern "C" void
+	auth_chain_fetch(const m::room::id &room_id,
+	                 const m::event::id &event_id,
+	                 const net::hostport &remote,
+	                 const milliseconds &timeout,
+	                 const std::function<bool (const m::event &)> &);
+
+	extern "C" void
+	auth_chain_eval(const m::room::id &room_id,
+	                const m::event::id &event_id,
+	                const net::hostport &remote);
 }
 
-bool
-ircd::m::fetch::handle()
-try
+extern "C" void
+ircd::m::fetch::auth_chain_fetch(const m::room::id &room_id,
+                                 const m::event::id &event_id,
+                                 const net::hostport &remote,
+                                 const milliseconds &timeout,
+                                 const std::function<bool (const m::event &)> &closure)
 {
-	auto next
+	m::v1::event_auth::opts opts;
+	opts.remote = remote;
+	opts.dynamic = true;
+	const unique_buffer<mutable_buffer> buf
 	{
-		ctx::when_any(begin(fetching), end(fetching))
+		16_KiB
 	};
 
-	if(!next.wait(seconds(2), std::nothrow))
-		return false;
-
-	const auto it
+	m::v1::event_auth request
 	{
-		next.get()
+		room_id, event_id, buf, std::move(opts)
 	};
 
-	if(it == end(fetching))
-		return false;
+	request.wait(timeout);
+	request.get();
 
-	auto &request
+    const json::array &auth_chain
+    {
+        request
+    };
+
+	std::vector<m::event> events{auth_chain.count()};
+	std::transform(begin(auth_chain), end(auth_chain), begin(events), []
+	(const json::object &pdu)
 	{
-		const_cast<struct request &>(*it)
-	};
+		return m::event{pdu};
+	});
 
-	if(!request.finished && !request.eptr)
-		if(!request.handle())
-			return false;
+	std::sort(begin(events), end(events));
+	for(const auto &event : events)
+		if(!closure(event))
+			return;
+}
 
-	assert(request.finished || request.eptr);
-	if(!request.completed)
+extern "C" void
+ircd::m::fetch::auth_chain_eval(const m::room::id &room_id,
+                                const m::event::id &event_id,
+                                const net::hostport &remote)
+{
+	m::vm::opts opts;
+	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
+	opts.infolog_accept = true;
+	opts.warnlog |= m::vm::fault::STATE;
+	opts.warnlog &= ~m::vm::fault::EXISTS;
+	opts.errorlog &= ~m::vm::fault::STATE;
+
+	auth_chain_fetch(room_id, event_id, remote, seconds(30), [&opts]
+	(const auto &event)
 	{
-		completed.emplace_back(&request);
-		request.completed = true;
+		m::vm::eval
+		{
+			event, opts
+		};
+
 		return true;
-	}
-
-	return false;
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		"Fetch worker :%s", e.what()
-	};
-
-	return false;
-}
-
-bool
-ircd::m::fetch::requesting()
-{
-	return std::any_of(begin(fetching), end(fetching), []
-	(const request &request)
-	{
-		return !request.finished;
 	});
 }
 
@@ -462,83 +361,4 @@ ircd::m::fetch::request::operator()(const string_view &a,
 const
 {
 	return a < b.event_id;
-}
-
-namespace ircd::m::fetch
-{
-	extern "C" void auth_chain_fetch(const m::room::id &room_id,
-	                                 const m::event::id &event_id,
-	                                 const net::hostport &remote,
-	                                 const milliseconds &timeout,
-	                                 const std::function<bool (const m::event &)> &closure);
-
-	extern "C" void auth_chain_eval(const m::room::id &room_id,
-	                                const m::event::id &event_id,
-	                                const net::hostport &remote);
-}
-
-extern "C" void
-ircd::m::fetch::auth_chain_fetch(const m::room::id &room_id,
-                                 const m::event::id &event_id,
-                                 const net::hostport &remote,
-                                 const milliseconds &timeout,
-                                 const std::function<bool (const m::event &)> &closure)
-{
-	m::v1::event_auth::opts opts;
-	opts.remote = remote;
-	opts.dynamic = true;
-	const unique_buffer<mutable_buffer> buf
-	{
-		16_KiB
-	};
-
-	m::v1::event_auth request
-	{
-		room_id, event_id, buf, std::move(opts)
-	};
-
-	request.wait(timeout);
-	request.get();
-
-    const json::array &auth_chain
-    {
-        request
-    };
-
-	std::vector<m::event> events{auth_chain.count()};
-	std::transform(begin(auth_chain), end(auth_chain), begin(events), []
-	(const json::object &pdu)
-	{
-		return m::event{pdu};
-	});
-
-	std::sort(begin(events), end(events));
-	for(const auto &event : events)
-		if(!closure(event))
-			return;
-}
-
-extern "C" void
-ircd::m::fetch::auth_chain_eval(const m::room::id &room_id,
-                                const m::event::id &event_id,
-                                const net::hostport &remote)
-{
-	m::vm::opts opts;
-	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
-	opts.infolog_accept = true;
-	opts.warnlog |= m::vm::fault::STATE;
-	opts.warnlog &= ~m::vm::fault::EXISTS;
-	opts.errorlog &= ~m::vm::fault::STATE;
-
-	auth_chain_fetch(room_id, event_id, remote, seconds(30), [&opts]
-	(const auto &event)
-	{
-		m::vm::eval
-		{
-			event, opts
-		};
-
-		return true;
-	});
 }

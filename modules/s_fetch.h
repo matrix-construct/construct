@@ -13,19 +13,8 @@ namespace ircd::m::fetch
 {
 	struct request;
 
-	extern ctx::dock dock;
-	extern std::set<request, request> fetching;
-	extern std::deque<request *> completed;
+	static void hook_handler(const event &, vm::eval &);
 	extern hookfn<vm::eval &> hook;
-	extern ctx::context context;
-
-	// worker stack
-	static bool requesting();
-	static bool handle();
-	static void worker();
-
-	static request &fetch(const m::room::id &, const m::event::id &);
-	static void enter(const event &, vm::eval &);
 
 	static void init();
 	static void fini();
@@ -47,10 +36,6 @@ struct ircd::m::fetch::request
 	time_t last {0};
 	time_t finished {0};
 	std::exception_ptr eptr;
-	ctx::dock dock;
-	bool eval {false};
-	bool completed {false};
-	size_t refcnt {0};
 
 	bool operator()(const request &a, const request &b) const;
 	bool operator()(const request &a, const string_view &b) const;
