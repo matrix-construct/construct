@@ -855,7 +855,7 @@ try
 	opts.create_missing_column_families = true;
 	opts.max_file_opening_threads = 0;
 	opts.stats_dump_period_sec = 0;
-	opts.enable_thread_tracking = true;
+	opts.enable_thread_tracking = false;
 	opts.avoid_flush_during_recovery = true;
 	opts.delete_obsolete_files_period_micros = 0;
 	opts.max_background_jobs = 2;
@@ -1640,7 +1640,7 @@ ircd::db::database::column::column(database &d,
 
 	log::debug
 	{
-		log, "schema '%s' column [%s => %s] cmp[%s] pfx[%s] lru:%s:%s bloom:%zu %s",
+		log, "schema '%s' column [%s => %s] cmp[%s] pfx[%s] lru:%s:%s bloom:%zu compression:%d %s",
 		db::name(d),
 		demangle(key_type.name()),
 		demangle(mapped_type.name()),
@@ -1649,6 +1649,7 @@ ircd::db::database::column::column(database &d,
 		cache_size? "YES": "NO",
 		cache_size_comp? "YES": "NO",
 		bloom_bits,
+		int(this->options.compression),
 		this->descriptor->name
 	};
 }
