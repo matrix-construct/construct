@@ -355,7 +355,7 @@ ircd::const_buffer
 ircd::net::dns::resolver::make_query(const mutable_buffer &buf,
                                      const tag &tag)
 {
-	thread_local char hostbuf[512];
+	thread_local char hostbuf[rfc1035::NAME_BUF_SIZE * 2];
 	string_view hoststr;
 	switch(tag.opts.qtype)
 	{

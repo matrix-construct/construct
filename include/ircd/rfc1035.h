@@ -22,6 +22,8 @@ namespace ircd::rfc1035
 	struct answer;
 	struct record;
 	enum class op :uint8_t;
+
+	constexpr size_t NAME_BUF_SIZE {256};
 	extern const std::array<string_view, 25> rcode;
 	extern const std::unordered_map<string_view, uint16_t> qtype;
 	extern const std::map<uint16_t, string_view> rqtype;
@@ -93,7 +95,7 @@ struct ircd::rfc1035::question
 	uint16_t qtype {0};
 	uint16_t qclass {0x01};
 	string_view name;
-	char namebuf[256];
+	char namebuf[NAME_BUF_SIZE];
 
 	/// Composes the question into buffer, returns used portion
 	mutable_buffer print(const mutable_buffer &) const;
@@ -125,7 +127,7 @@ struct ircd::rfc1035::answer
 	uint16_t rdlength {0};
 	const_buffer rdata;
 	string_view name;
-	char namebuf[256];
+	char namebuf[NAME_BUF_SIZE];
 
 	const_buffer parse(const const_buffer &);
 
@@ -209,7 +211,7 @@ struct ircd::rfc1035::record::CNAME
 :record
 {
 	string_view name;
-	char namebuf[256];
+	char namebuf[NAME_BUF_SIZE];
 
 	CNAME(const answer &);
 	CNAME();
@@ -227,7 +229,7 @@ struct ircd::rfc1035::record::SRV
 	uint16_t weight {0};
 	uint16_t port {0};
 	string_view tgt;
-	char tgtbuf[256];
+	char tgtbuf[NAME_BUF_SIZE];
 
 	SRV(const answer &);
 	SRV();
