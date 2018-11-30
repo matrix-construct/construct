@@ -1706,6 +1706,17 @@ ircd::net::listener_udp::acceptor::operator()(datagram &datagram)
 {
 	assert(ctx::current);
 
+	const auto flags
+	{
+		this->flags(datagram.flag)
+	};
+
+	const auto interruption{[this]
+	(ctx::ctx *const &) noexcept
+	{
+		this->interrupt();
+	}};
+
 	this->waiting++;
 	const unwind dec{[this]
 	{
@@ -1715,7 +1726,7 @@ ircd::net::listener_udp::acceptor::operator()(datagram &datagram)
 	ip::udp::endpoint ep;
 	const size_t rlen
 	{
-		a.async_receive_from(datagram.mbufs, ep, flags(datagram.flag), yield_context{to_asio{}})
+		a.async_receive_from(datagram.mbufs, ep, flags, yield_context{to_asio{interruption}})
 	};
 
 	datagram.remote = make_ipport(ep);
