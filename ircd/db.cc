@@ -10320,6 +10320,9 @@ ircd::db::find_supported_compression(const std::string &list)
 	tokens(list, ';', [&ret]
 	(const string_view &name)
 	{
+		if(ret != rocksdb::kNoCompression)
+			return;
+
 		for(size_t i(0); i < db::compressions.size(); ++i)
 			if(!db::compressions.at(i).empty())
 				if(name == db::compressions.at(i))
