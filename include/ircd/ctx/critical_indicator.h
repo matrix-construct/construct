@@ -13,7 +13,7 @@
 
 namespace ircd::ctx::this_ctx
 {
-	struct critical_indicator;                   // Indicates if yielding happened for a section
+	struct critical_indicator;         // Indicates if yielding happened for a section
 }
 
 /// An instance of critical_indicator reports if context switching happened.

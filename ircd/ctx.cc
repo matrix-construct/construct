@@ -717,47 +717,69 @@ noexcept
 //
 // critical_assertion
 //
-#ifndef NDEBUG
 
 namespace ircd::ctx
 {
 	bool critical_asserted;
+
+	void assert_critical();
 }
 
+#ifndef NDEBUG
 ircd::ctx::this_ctx::critical_assertion::critical_assertion()
 :theirs{critical_asserted}
 {
 	critical_asserted = true;
 }
+#endif
 
+#ifndef NDEBUG
 ircd::ctx::this_ctx::critical_assertion::~critical_assertion()
 noexcept
 {
 	assert(critical_asserted);
 	critical_asserted = theirs;
 }
+#endif
 
-#endif // NDEBUG
+#ifndef NDEBUG
+void
+ircd::ctx::assert_critical()
+{
+	if(unlikely(critical_asserted))
+		throw ircd::assertive
+		{
+			"%lu '%s' :Illegal context switch", id(), name()
+		};
+}
+#else
+void
+ircd::ctx::assert_critical()
+{
+
+}
+#endif
 
 //
 // stack_usage_assertion
 //
-#ifndef NDEBUG
 
+#ifndef NDEBUG
 ircd::ctx::this_ctx::stack_usage_assertion::stack_usage_assertion()
 {
 	const auto stack_usage(stack_at_here());
 	assert(stack_usage < cur().stack.max * double(prof::settings::stack_usage_assertion));
 }
+#endif
 
+#ifndef NDEBUG
 ircd::ctx::this_ctx::stack_usage_assertion::~stack_usage_assertion()
 noexcept
 {
 	const auto stack_usage(stack_at_here());
 	assert(stack_usage < cur().stack.max * double(prof::settings::stack_usage_assertion));
 }
-
-#endif // NDEBUG
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -775,6 +797,8 @@ ircd::ctx::continuation::continuation()
 }
 {
 	mark(prof::event::CUR_YIELD);
+
+	assert_critical();
 	assert(!critical_asserted);
 	assert(self != nullptr);
 	assert(self->notes <= 1);

@@ -13,7 +13,7 @@
 
 namespace ircd::ctx::this_ctx
 {
-	struct critical_assertion;                   // Assert no yielding for a section
+	struct critical_assertion;         // Assert no yielding for a section
 }
 
 /// An instance of critical_assertion detects an attempt to context switch.
