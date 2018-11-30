@@ -8419,7 +8419,6 @@ ircd::db::row::row(database &d,
 		// and reserve() it with one worst-case size of all possible columns.
 		// Then we resize it to this specific call's requirements and copy the
 		// column pointers. On sane platforms only one allocation ever occurs.
-		const ctx::critical_assertion ca;
 		thread_local std::vector<ColumnFamilyHandle *> handles;
 		assert(column_count <= d.columns.size());
 		handles.reserve(d.columns.size());
@@ -8430,6 +8429,9 @@ ircd::db::row::row(database &d,
 			return ptr->handle.get();
 		});
 
+		// This has been seen to lead to IO and block the ircd::ctx;
+		// specifically when background options are aggressive and shortly
+		// after db opens.
 		throw_on_error
 		{
 			d.d->NewIterators(options, handles, &iterators)
