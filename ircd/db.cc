@@ -8827,6 +8827,11 @@ ircd::db::compact(column &column,
 			continue;
 
 		rocksdb::CompactionOptions opts;
+		{
+			const rocksdb::ColumnFamilyOptions &copts(c);
+			opts.compression = copts.compression;
+		}
+
 		std::vector<std::string> files(level.files.size());
 		std::transform(level.files.begin(), level.files.end(), files.begin(), []
 		(auto &metadata)
