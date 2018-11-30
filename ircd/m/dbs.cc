@@ -662,6 +662,9 @@ ircd::m::dbs::desc::events__event_idx
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0, //uses conf item
 
@@ -794,6 +797,9 @@ ircd::m::dbs::desc::events__room_head
 
 	// prefix transform
 	events__room_head__pfx,
+
+	// drop column
+	false,
 
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
@@ -1070,6 +1076,9 @@ ircd::m::dbs::desc::events__room_events
 	// prefix transform
 	events__room_events__pfx,
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -1232,6 +1241,9 @@ ircd::m::dbs::desc::events__room_joined
 
 	// prefix transform
 	events__room_joined__pfx,
+
+	// drop column
+	false,
 
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
@@ -1407,6 +1419,9 @@ ircd::m::dbs::desc::events__room_state
 	// prefix transform
 	events__room_state__pfx,
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -1508,6 +1523,9 @@ ircd::m::dbs::desc::events__state_node
 
 	// prefix transform
 	{},
+
+	// drop column
+	false,
 
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
@@ -1619,6 +1637,9 @@ ircd::m::dbs::desc::events_event_id
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -1710,6 +1731,9 @@ ircd::m::dbs::desc::events_type
 
 	// prefix transform
 	{},
+
+	// drop column
+	false,
 
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
@@ -1803,6 +1827,9 @@ ircd::m::dbs::desc::events_content
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -1888,6 +1915,9 @@ ircd::m::dbs::desc::events_redacts
 
 	// prefix transform
 	{},
+
+	// drop column
+	false,
 
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
@@ -1980,6 +2010,9 @@ ircd::m::dbs::desc::events_room_id
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -2070,6 +2103,9 @@ ircd::m::dbs::desc::events_sender
 
 	// prefix transform
 	{},
+
+	// drop column
+	false,
 
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
@@ -2164,6 +2200,9 @@ ircd::m::dbs::desc::events_state_key
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -2251,6 +2290,9 @@ ircd::m::dbs::desc::events_origin
 
 	// prefix transform
 	{},
+
+	// drop column
+	false,
 
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
@@ -2351,6 +2393,9 @@ ircd::m::dbs::desc::events_origin_server_ts
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -2437,6 +2482,9 @@ ircd::m::dbs::desc::events_signatures
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -2521,6 +2569,9 @@ ircd::m::dbs::desc::events_auth_events
 
 	// prefix transform
 	{},
+
+	// drop column
+	false,
 
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
@@ -2614,6 +2665,9 @@ ircd::m::dbs::desc::events_depth
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -2698,6 +2752,9 @@ ircd::m::dbs::desc::events_hashes
 
 	// prefix transform
 	{},
+
+	// drop column
+	false,
 
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
@@ -2784,6 +2841,9 @@ ircd::m::dbs::desc::events_membership
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -2868,6 +2928,9 @@ ircd::m::dbs::desc::events_prev_events
 
 	// prefix transform
 	{},
+
+	// drop column
+	false,
 
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
@@ -2954,6 +3017,9 @@ ircd::m::dbs::desc::events_prev_state
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	bool(events_cache_enable)? -1 : 0,
 
@@ -3003,6 +3069,9 @@ ircd::m::dbs::desc::events__default
 	// prefix transform
 	{},
 
+	// drop column
+	false,
+
 	// cache size
 	0_MiB,
 
@@ -3015,6 +3084,10 @@ ircd::m::dbs::desc::events__default
 	// expect queries hit
 	false,
 };
+
+//
+// Description vector
+//
 
 const ircd::db::description
 ircd::m::dbs::desc::events

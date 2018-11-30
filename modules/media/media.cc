@@ -77,6 +77,7 @@ media_blocks_descriptor
 	{},      // options
 	{},      // comparaor
 	{},      // prefix transform
+	false,   // drop column
 
 	bool(media_blocks_cache_enable)? -1 : 0,
 

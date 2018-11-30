@@ -44,6 +44,13 @@ struct ircd::db::descriptor
 	/// User given prefix extractor.
 	db::prefix_transform prefix {};
 
+	/// Indicates if this column should be marked for deletion. Users who
+	/// upgrade to the new schema will still require a legacy descriptor
+	/// with most of the essential fields preceding this value to open db.
+	///
+	/// !!! Setting this to true deletes all data for this column !!!
+	bool drop { false };
+
 	/// Size of the LRU cache for uncompressed blocks
 	ssize_t cache_size { -1 };
 

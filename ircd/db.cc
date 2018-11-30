@@ -806,18 +806,21 @@ try
 }
 ,column_names{[this]
 {
-	// Existing columns at path. If any are left the descriptor set did not
-	// describe all of the columns found in the database at path.
 	const auto opts
 	{
 		make_dbopts(this->optstr)
 	};
 
+	// Existing columns at path. If any are left the descriptor set did not
+	// describe all of the columns found in the database at path.
 	const auto required
 	{
 		db::column_names(path, opts)
 	};
 
+	// As we find descriptors for all of the columns on the disk we'll
+	// remove their names from this set. Anything remaining is undescribed
+	// and that's a fatal error.
 	std::set<string_view> existing
 	{
 		begin(required), end(required)
@@ -827,6 +830,13 @@ try
 	decltype(this->column_names) ret;
 	for(auto &descriptor : descriptors)
 	{
+		// Deprecated columns which have already been dropped won't appear
+		// in the existing (required) list. We don't need to construct those.
+		if(!existing.count(descriptor.name) && descriptor.drop)
+			continue;
+
+		// Construct the column instance and indicate that we have a description
+		// for it by removing it from existing.
 		ret.emplace(descriptor.name, std::make_shared<column>(*this, descriptor));
 		existing.erase(descriptor.name);
 	}
@@ -1064,6 +1074,15 @@ try
 	return checkpointer;
 }()}
 {
+	// Conduct drops from schema changes. The database must be fully opened
+	// as if they were not dropped first, then we conduct the drop operation
+	// here. The drop operation has no effects until the database is next
+	// closed; the dropped columns will still work during this instance.
+	for(const auto &colptr : columns)
+		if(describe(*colptr).drop)
+			db::drop(*colptr);
+
+	// Database integrity check branch.
 	if(ircd::checkdb)
 	{
 		log::notice
