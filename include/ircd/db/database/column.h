@@ -43,11 +43,10 @@ struct ircd::db::database::column final
 	custom_ptr<rocksdb::ColumnFamilyHandle> handle;
 
   public:
-	operator const rocksdb::ColumnFamilyOptions &();
+	operator const rocksdb::ColumnFamilyOptions &() const;
 	operator const rocksdb::ColumnFamilyHandle *() const;
 	operator const database &() const;
 
-	operator rocksdb::ColumnFamilyOptions &();
 	operator rocksdb::ColumnFamilyHandle *();
 	operator database &();
 

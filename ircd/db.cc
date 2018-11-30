@@ -1704,6 +1704,13 @@ const
 	return handle.get();
 }
 
+ircd::db::database::column::operator
+const rocksdb::ColumnFamilyOptions &()
+const
+{
+	return options;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // database::snapshot
