@@ -3039,9 +3039,59 @@ ircd::m::dbs::desc::events_prev_state
 	size_t(events___event__meta_block__size),
 };
 
+//
+// Other column descriptions
+//
+
 namespace ircd::m::dbs::desc
 {
+	// Deprecated / dropped columns.
+	//
+	// These have to be retained for users that have yet to open their
+	// database with a newly released schema which has dropped a column
+	// from the schema. If the legacy descriptor is not provided here then
+	// the database will not know how to open the descriptor in order to
+	// conduct the drop.
+
+	extern const ircd::db::descriptor events__event_bad;
+
+	//
+	// Required by RocksDB
+	//
+
 	extern const ircd::db::descriptor events__default;
+};
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events__event_bad
+{
+	// name
+	"_event_bad",
+
+	// explanation
+	R"(
+
+	This column is deprecated and has been dropped from the schema. This
+	descriptor will erase its presence in the database upon next open.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(uint64_t)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	true,
 };
 
 const ircd::db::descriptor
@@ -3145,4 +3195,10 @@ ircd::m::dbs::desc::events
 	// (room_id, event_id) => (event_idx)
 	// Mapping of all current head events for a room.
 	events__room_head,
+
+	//
+	// These columns are legacy; they have been dropped from the schema.
+	//
+
+	events__event_bad,
 };
