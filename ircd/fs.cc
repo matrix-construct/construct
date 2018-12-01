@@ -1141,6 +1141,15 @@ namespace ircd::fs
 ircd::vector_view<const struct ::iovec>
 ircd::fs::make_iov(const mutable_buffers &bufs)
 {
+	if(unlikely(bufs.size() > IOV_MAX))
+		throw error
+		{
+			make_error_code(std::errc::invalid_argument),
+			"Buffer count of %zu excheeds IOV_MAX of %zu",
+			bufs.size(),
+			IOV_MAX
+		};
+
 	size_t i(0);
 	for(; i < bufs.size(); ++i)
 		_iov_.at(i) =
@@ -1157,6 +1166,15 @@ ircd::fs::make_iov(const mutable_buffers &bufs)
 ircd::vector_view<const struct ::iovec>
 ircd::fs::make_iov(const const_buffers &bufs)
 {
+	if(unlikely(bufs.size() > IOV_MAX))
+		throw error
+		{
+			make_error_code(std::errc::invalid_argument),
+			"Buffer count of %zu excheeds IOV_MAX of %zu",
+			bufs.size(),
+			IOV_MAX
+		};
+
 	size_t i(0);
 	for(; i < bufs.size(); ++i)
 		_iov_.at(i) =
