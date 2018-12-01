@@ -89,25 +89,40 @@ try
 	if(printversion)
 		return print_version();
 
-	// The matrix origin (i.e hostname) is the first positional argument after any
-	// switched arguments. All other information about configuration and database
-	// location is found using this string.
+	// The matrix origin is the first positional argument after any switched
+	// arguments. The matrix origin is the hostpart of MXID's for the server.
+	const ircd::string_view origin
+	{
+		argc > 0?
+			argv[0]:
+			nullptr
+	};
+
+	// The hostname is the unique name for this specific server. This is
+	// generally the same as origin; but if origin is example.org with an
+	// SRV record redirecting to matrix.example.org then hostname is
+	// matrix.example.org. In clusters serving a single origin, all
+	// hostnames must be different.
 	const ircd::string_view hostname
 	{
-		argc? *argv : nullptr // where parseargs() left off
+		argc > 1?     // hostname given on command line
+			argv[1]:
+		argc > 0?     // hostname matches origin
+			argv[0]:
+			nullptr
 	};
 
 	// at least one hostname argument is required for now.
 	if(!hostname)
 		throw ircd::user_error
 		{
-			"Must specify the origin (i.e hostname) after any switched parameters."
+			"Must specify the origin after any switched parameters."
 		};
 
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
 	// note: only supports service for one hostname at this time.
-	ircd::init(*ios, hostname);
+	ircd::init(*ios, origin, hostname);
 
 	// libircd does no signal handling (or at least none that you ever have to
 	// care about); reaction to all signals happens out here instead. Handling

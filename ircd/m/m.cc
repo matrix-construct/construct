@@ -36,7 +36,8 @@ me_offline_status_msg
 // init::init
 //
 
-ircd::m::init::init(const string_view &origin)
+ircd::m::init::init(const string_view &origin,
+                    const string_view &hostname)
 try
 :_self
 {

@@ -78,7 +78,7 @@ struct ircd::m::init
 	void close();
 
   public:
-	init(const string_view &origin);
+	init(const string_view &origin, const string_view &hostname);
 	~init() noexcept;
 };
 

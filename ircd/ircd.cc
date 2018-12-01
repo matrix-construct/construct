@@ -21,6 +21,7 @@ namespace ircd
 	bool nojs;                                   // no ircd::js system init.
 	bool nodirect;                               // no use of O_DIRECT.
 
+	std::string _origin;                         // user's supplied param
 	std::string _hostname;                       // user's supplied param
 	ctx::ctx *main_context;                      // Main program loop
 
@@ -39,6 +40,7 @@ namespace ircd
 /// init() can only be called from a runlevel::HALT state
 void
 ircd::init(boost::asio::io_context &user_ios,
+           const string_view &origin,
            const string_view &hostname)
 try
 {
@@ -50,7 +52,8 @@ try
 
 	ios::init(user_ios);
 
-	// Save the hostname param used for m::init later.
+	// Save the params used for m::init later.
+	_origin = std::string{origin};
 	_hostname = std::string{hostname};
 
 	// The log is available. but it is console-only until conf opens files.
@@ -201,7 +204,8 @@ noexcept try
 	js::init _js_;           // SpiderMonkey
 	m::init _matrix_         // Matrix
 	{
-		_hostname // the hostname string saved here by ircd::init().
+		string_view{_origin},
+		string_view{_hostname}
 	};
 
 	// Any deinits which have to be done with all subsystems intact
