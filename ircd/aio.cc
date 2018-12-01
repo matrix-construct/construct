@@ -84,7 +84,7 @@ ircd::fs::aio::fdsync(const fd &fd,
 //
 
 ircd::fs::aio::request::read::read(const int &fd,
-                                   const vector_view<const struct ::iovec> &iov,
+                                   const const_iovec_view &iov,
                                    const read_opts &opts)
 :request{fd}
 {
@@ -129,7 +129,7 @@ ircd::fs::aio::read(const fd &fd,
 //
 
 ircd::fs::aio::request::write::write(const int &fd,
-                                     const vector_view<const struct ::iovec> &iov,
+                                     const const_iovec_view &iov,
                                      const write_opts &opts)
 :request{fd}
 {
@@ -548,7 +548,7 @@ catch(const ctx::terminated &)
 	throw;
 }
 
-ircd::vector_view<const struct ::iovec>
+ircd::fs::const_iovec_view
 ircd::fs::aio::request::iovec()
 const
 {

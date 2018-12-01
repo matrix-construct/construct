@@ -1138,58 +1138,72 @@ namespace ircd::fs
 	thread_local std::array<struct ::iovec, IOV_MAX> _iov_;
 }
 
-ircd::vector_view<const struct ::iovec>
+ircd::fs::const_iovec_view
 ircd::fs::make_iov(const mutable_buffers &bufs)
 {
-	if(unlikely(bufs.size() > IOV_MAX))
+	if(unlikely(bufs.size() > _iov_.size()))
 		throw error
 		{
 			make_error_code(std::errc::invalid_argument),
-			"Buffer count of %zu excheeds IOV_MAX of %zu",
+			"Buffer count of %zu exceeds IOV_MAX of %zu",
 			bufs.size(),
-			IOV_MAX
+			_iov_.size()
 		};
 
+	return make_iov(iovec_view(_iov_.data(), _iov_.size()), bufs);
+}
+
+ircd::fs::const_iovec_view
+ircd::fs::make_iov(const const_buffers &bufs)
+{
+	if(unlikely(bufs.size() > _iov_.size()))
+		throw error
+		{
+			make_error_code(std::errc::invalid_argument),
+			"Buffer count of %zu exceeds IOV_MAX of %zu",
+			bufs.size(),
+			_iov_.size()
+		};
+
+	return make_iov(iovec_view(_iov_.data(), _iov_.size()), bufs);
+}
+
+ircd::fs::const_iovec_view
+ircd::fs::make_iov(const iovec_view &iov,
+                   const mutable_buffers &bufs)
+{
 	size_t i(0);
-	for(; i < bufs.size(); ++i)
+	for(; i < bufs.size() && i < iov.size(); ++i)
 		_iov_.at(i) =
 		{
 			buffer::data(bufs[i]), buffer::size(bufs[i])
 		};
 
-	return
+	return const_iovec_view
 	{
-		_iov_.data(), i
+		iov.data(), i
 	};
 }
 
-ircd::vector_view<const struct ::iovec>
-ircd::fs::make_iov(const const_buffers &bufs)
+ircd::fs::const_iovec_view
+ircd::fs::make_iov(const iovec_view &iov,
+                   const const_buffers &bufs)
 {
-	if(unlikely(bufs.size() > IOV_MAX))
-		throw error
-		{
-			make_error_code(std::errc::invalid_argument),
-			"Buffer count of %zu excheeds IOV_MAX of %zu",
-			bufs.size(),
-			IOV_MAX
-		};
-
 	size_t i(0);
-	for(; i < bufs.size(); ++i)
-		_iov_.at(i) =
+	for(; i < bufs.size() && i < iov.size(); ++i)
+		iov.at(i) =
 		{
 			const_cast<char *>(buffer::data(bufs[i])), buffer::size(bufs[i])
 		};
 
-	return
+	return const_iovec_view
 	{
-		_iov_.data(), i
+		iov.data(), i
 	};
 }
 
 size_t
-ircd::fs::bytes(const vector_view<const struct ::iovec> &iov)
+ircd::fs::bytes(const const_iovec_view &iov)
 {
 	return std::accumulate(begin(iov), end(iov), size_t(0), []
 	(auto ret, const auto &iov)

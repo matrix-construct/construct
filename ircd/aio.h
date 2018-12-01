@@ -17,8 +17,8 @@ namespace ircd::fs::aio
 	struct request;
 
 	void prefetch(const fd &, const size_t &, const read_opts &);
-	size_t write(const fd &, const vector_view<const const_buffer> &, const write_opts &);
-	size_t read(const fd &, const vector_view<const mutable_buffer> &, const read_opts &);
+	size_t write(const fd &, const const_buffers &, const write_opts &);
+	size_t read(const fd &, const mutable_buffers &, const read_opts &);
 	void fdsync(const fd &, const fsync_opts &);
 	void fsync(const fd &, const fsync_opts &);
 }
@@ -74,7 +74,7 @@ struct ircd::fs::aio::request
 	ssize_t errcode {0};
 
   public:
-	vector_view<const struct ::iovec> iovec() const;
+	const_iovec_view iovec() const;
 
 	size_t operator()();
 	void cancel();
@@ -87,14 +87,14 @@ struct ircd::fs::aio::request
 struct ircd::fs::aio::request::read
 :request
 {
-	read(const int &fd, const vector_view<const struct ::iovec> &, const read_opts &);
+	read(const int &fd, const const_iovec_view &, const read_opts &);
 };
 
 /// Write request control block
 struct ircd::fs::aio::request::write
 :request
 {
-	write(const int &fd, const vector_view<const struct ::iovec> &, const write_opts &);
+	write(const int &fd, const const_iovec_view &, const write_opts &);
 };
 
 /// fdsync request control block
