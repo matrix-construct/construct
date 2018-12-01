@@ -66,3 +66,11 @@ namespace ircd::m
 	room create(const id::room &, const id::user &creator, const id::room &parent, const string_view &type);
 	room create(const id::room &, const id::user &creator, const string_view &type = {});
 }
+
+#include "room/room.h"
+#include "room/messages.h"
+#include "room/state.h"
+#include "room/members.h"
+#include "room/origins.h"
+#include "room/head.h"
+#include "room/power.h"
