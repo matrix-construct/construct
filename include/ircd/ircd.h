@@ -27,6 +27,7 @@ namespace ircd
 	extern bool pitrecdb;              ///< Allow Point-In-Time Recovery if DB corrupt.
 	extern bool nojs;                  ///< Option to not init js subsystem.
 	extern bool nodirect;              ///< Option to not use direct IO (O_DIRECT).
+	extern bool noaio;                 ///< Option to not use AIO even if available.
 }
 
 #include "string_view.h"

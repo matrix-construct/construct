@@ -56,6 +56,7 @@ lgetopt opts[] =
 	{ "pitrecdb",   &ircd::pitrecdb,  lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
 	{ "nojs",       &ircd::nojs,      lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
 	{ "nodirect",   &ircd::nodirect,  lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
+	{ "noaio",      &ircd::noaio,     lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 

@@ -20,6 +20,7 @@ namespace ircd
 	bool pitrecdb;                               // point-in-time recovery for db
 	bool nojs;                                   // no ircd::js system init.
 	bool nodirect;                               // no use of O_DIRECT.
+	bool noaio;                                  // no use of fs::aio.
 
 	std::string _origin;                         // user's supplied param
 	std::string _hostname;                       // user's supplied param

@@ -911,6 +911,9 @@ ircd::fs::aio::stats
 ircd::fs::aio::init::init()
 {
 	assert(!context);
+	if(ircd::noaio)
+		return;
+
 	context = new kernel{};
 }
 #else
