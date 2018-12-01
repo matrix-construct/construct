@@ -442,8 +442,8 @@ ircd::db::checkpoint(database &d)
 			name(d)
 		};
 
-	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const ctx::uninterruptible::nothrow ui;
 	const auto seqnum
 	{
 		sequence(d)
@@ -9773,7 +9773,7 @@ ircd::db::seek(database::column &c,
                const rocksdb::ReadOptions &opts,
                std::unique_ptr<rocksdb::Iterator> &it)
 {
-	const ctx::uninterruptible ui;
+	const ctx::uninterruptible::nothrow ui;
 
 	if(!it)
 	{
@@ -9966,7 +9966,6 @@ ircd::db::insert(rocksdb::Cache &cache,
                  const string_view &key,
                  unique_buffer<const_buffer> value)
 {
-	const ctx::uninterruptible ui;
 	const size_t value_size
 	{
 		size(value)
@@ -10153,7 +10152,8 @@ ircd::db::column_names(const std::string &path,
                        const rocksdb::DBOptions &opts)
 try
 {
-	const ctx::uninterruptible ui;
+	const ctx::uninterruptible::nothrow ui;
+
 	std::vector<std::string> ret;
 	throw_on_error
 	{
