@@ -57,7 +57,8 @@ struct ircd::db::row
 	    const string_view &key = {},
 	    const vector_view<const string_view> &columns = {},
 	    const vector_view<cell> &buf = {},
-	    gopts opts = {});
+	    gopts opts = {})
+	__attribute__((stack_protect));
 
 	friend size_t seek(row &, const string_view &);
 };

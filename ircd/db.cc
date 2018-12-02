@@ -8388,7 +8388,8 @@ ircd::db::seek(row &r,
 //
 // row
 //
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstack-usage"
 ircd::db::row::row(database &d,
                    const string_view &key,
                    const vector_view<const string_view> &colnames,
@@ -8470,6 +8471,7 @@ ircd::db::row::row(database &d,
 	if(key)
 		seek(*this, key);
 }
+#pragma GCC diagnostic pop
 
 void
 ircd::db::row::operator()(const op &op,
