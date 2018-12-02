@@ -28,7 +28,7 @@ struct ircd::fs::fsync_opts
 	/// direct syscall is made. Using AIO will only block one ircd::ctx while
 	/// a direct syscall will block the thread (all contexts). If AIO is not
 	/// available or enabled setting this has no effect.
-	bool use_aio {true};
+	bool async {true};
 
 	/// Request priority. This value is ignored by the kernel for the
 	/// operations provided by this interface. It is still provided for

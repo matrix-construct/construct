@@ -406,7 +406,7 @@ ircd::fs::fsync(const fd &fd,
 try
 {
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::context) && opts.use_aio)
+	if(aio::context && opts.async && aio::available_fsync)
 		return aio::fsync(fd, opts);
 	#endif
 
@@ -434,7 +434,7 @@ ircd::fs::fdsync(const fd &fd,
 try
 {
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::context) && opts.use_aio)
+	if(aio::context && opts.async && aio::available_fdsync)
 		return aio::fdsync(fd, opts);
 	#endif
 
@@ -893,15 +893,29 @@ catch(const std::exception &e)
 // fs/aio.h
 //
 
-/// Non-null when aio is available for use
-decltype(ircd::fs::aio::context)
-ircd::fs::aio::context
-{};
-
 /// Global stats structure
 decltype(ircd::fs::aio::stats)
-ircd::fs::aio::stats
-{};
+ircd::fs::aio::stats;
+
+/// Non-null when aio is available for use
+decltype(ircd::fs::aio::context)
+ircd::fs::aio::context;
+
+/// True if IOCB_CMD_FSYNC is supported by AIO. If this is false then
+/// fs::fsync_opts::async=true flag is ignored.
+decltype(ircd::fs::aio::available_fsync)
+ircd::fs::aio::available_fsync
+{
+	false //TODO: Detect kernel support
+};
+
+/// True if IOCB_CMD_FDSYNC is supported by AIO. If this is false then
+/// fs::fsync_opts::async=true flag is ignored.
+decltype(ircd::fs::aio::available_fdsync)
+ircd::fs::aio::available_fdsync
+{
+	false //TODO: Detect kernel support
+};
 
 //
 // init
