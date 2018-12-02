@@ -1591,9 +1591,17 @@ ircd::db::database::column::column(database &d,
 	// Set filter reductions for this column. This means we expect a key to exist.
 	this->options.optimize_filters_for_hits = this->descriptor->expect_queries_hit;
 
-	// Compression
+	// Compression type
 	this->options.compression = find_supported_compression(this->descriptor->compression);
 	//this->options.compression = rocksdb::kNoCompression;
+
+	// Compression options
+	this->options.compression_opts.enabled = true;
+	this->options.compression_opts.max_dict_bytes = 0;//8_MiB;
+
+	// Mimic the above for bottommost compression.
+	//this->options.bottommost_compression = this->options.compression;
+	//this->options.bottommost_compression_opts = this->options.compression_opts;
 
 	//TODO: descriptor / conf
 	this->options.num_levels = 7;
