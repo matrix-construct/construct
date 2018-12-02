@@ -60,7 +60,7 @@ namespace ircd::m::sync::longpoll
 	static std::string sync_rooms(client &, const m::user::id &, const m::room &, const args &, const accepted &);
 	static bool handle(client &, const args &, const accepted &, const m::room &);
 	static bool handle(client &, const args &, const accepted &);
-	static void poll(client &, const args &);
+	static bool poll(client &, const args &);
 
 	static void handle_notify(const m::event &, m::vm::eval &);
 	extern m::hookfn<m::vm::eval &> notified;

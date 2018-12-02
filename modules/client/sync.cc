@@ -123,10 +123,30 @@ try
 			linear::handle(client, sp, top)
 	};
 
-	if(!shortpolled)
-		longpoll::poll(client, args);
+	// When shortpoll was successful, do nothing else.
+	if(shortpolled)
+		return {};
 
-	return {};
+	// When longpoll was successful, do nothing else.
+	if(longpoll::poll(client, args))
+		return {};
+
+	// A user-timeout occurred. According to the spec we return a
+	// 200 with empty fields rather than a 408.
+	const json::value next_batch
+	{
+		lex_cast(m::vm::current_sequence), json::STRING
+	};
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "next_batch",  next_batch      },
+			{ "rooms",       json::object{}  },
+			{ "presence",    json::object{}  },
+		}
+	};
 }
 catch(const bad_lex_cast &e)
 {
@@ -167,10 +187,9 @@ ircd::m::sync::longpoll::handle_notify(const m::event &event,
 	dock.notify_all();
 }
 
-void
+bool
 ircd::m::sync::longpoll::poll(client &client,
                               const args &args)
-try
 {
 	++polling;
 	const unwind unpoll{[]
@@ -181,10 +200,7 @@ try
 	while(1)
 	{
 		if(!dock.wait_until(args.timesout))
-			throw m::error
-			{
-				http::REQUEST_TIMEOUT, "M_TIMEOUT", "Timed out"
-			};
+			return false;
 
 		if(queue.empty())
 			continue;
@@ -197,27 +213,8 @@ try
 		}};
 
 		if(handle(client, args, a))
-			break;
+			return true;
 	}
-}
-catch(const ctx::timeout &e)
-{
-	const ctx::exception_handler eh;
-
-	const int64_t &since
-	{
-		int64_t(m::vm::current_sequence)
-	};
-
-	resource::response
-	{
-		client, json::members
-		{
-			{ "next_batch",  json::value { lex_cast(int64_t(since)), json::STRING }  },
-			{ "rooms",       json::object{}  },
-			{ "presence",    json::object{}  },
-		}
-	};
 }
 
 bool
