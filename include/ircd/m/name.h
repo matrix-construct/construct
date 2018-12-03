@@ -129,4 +129,19 @@ namespace ircd::m::name
 	constexpr const char *const guest_can_join {"guest_can_join"};
 
 	constexpr const char *const id_server {"id_server"};
+
+	constexpr const char *const id {"id"};
+	constexpr const char *const url {"url"};
+	constexpr const char *const as_token {"as_token"};
+	constexpr const char *const hs_token {"hs_token"};
+	constexpr const char *const sender_localpart {"sender_localpart"};
+	constexpr const char *const namespaces {"namespaces"};
+	constexpr const char *const rate_limited {"rate_limited"};
+	constexpr const char *const protocols {"protocols"};
+
+	constexpr const char *const users {"users"};
+	constexpr const char *const aliases {"aliases"};
+
+	constexpr const char *const exclusive {"exclusive"};
+	constexpr const char *const regex {"regex"};
 }

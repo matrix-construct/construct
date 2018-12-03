@@ -339,6 +339,21 @@ media_module_LTLIBRARIES = \
 
 ###############################################################################
 #
+# /_matrix/app/
+#
+
+app_moduledir = @moduledir@
+
+app_app_register_la_SOURCES = \
+	app/register.cc \
+	###
+
+app_module_LTLIBRARIES = \
+	app/app_register.la \
+	###
+
+###############################################################################
+#
 # JavaScript
 #
 

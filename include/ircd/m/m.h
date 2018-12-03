@@ -58,6 +58,7 @@ namespace ircd::m::vm
 #include "hook.h"
 #include "visible.h"
 #include "feds.h"
+#include "app.h"
 
 struct ircd::m::init
 {
