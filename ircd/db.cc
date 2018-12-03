@@ -888,9 +888,10 @@ try
 	// Use the determined direct io value for writes as well.
 	opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
 
-	// This is true by default, but we list it here for developer hacking;
-	// also, doesn't appear to be in effect when direct io is used.
-	opts->allow_fallocate = true;
+	// Doesn't appear to be in effect when direct io is used. Not supported by
+	// all filesystems so disabled for now.
+	// TODO: use fs::support::fallocate() test similar to direct_io_test_file.
+	opts->allow_fallocate = false;
 
 	#ifdef RB_DEBUG
 	opts->dump_malloc_stats = true;
