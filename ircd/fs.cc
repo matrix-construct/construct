@@ -314,6 +314,40 @@ ircd::fs::path(std::string s)
 //
 
 bool
+ircd::fs::support::fallocate(const string_view &path,
+                             const write_opts &wopts)
+try
+{
+	const fd::opts opts
+	{
+		std::ios::out
+	};
+
+	fs::fd fd
+	{
+		path, opts
+	};
+
+	fs::allocate(fd, info::page_size, wopts);
+	return true;
+}
+catch(const std::system_error &e)
+{
+	const auto &ec(e.code());
+	if(system_category(ec)) switch(ec.value())
+	{
+		case int(std::errc::invalid_argument):
+		case int(std::errc::operation_not_supported):
+			return false;
+
+		default:
+			break;
+	}
+
+	throw;
+}
+
+bool
 ircd::fs::support::direct_io(const string_view &path)
 try
 {
