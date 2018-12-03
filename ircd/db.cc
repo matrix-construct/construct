@@ -255,7 +255,7 @@ try
 		direct_io_test_file_path()
 	};
 
-	if(fs::direct_io_support(test_file_path))
+	if(fs::support::direct_io(test_file_path))
 		log::debug
 		{
 			log, "Detected Direct-IO works by opening test file at `%s'",

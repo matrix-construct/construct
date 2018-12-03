@@ -88,6 +88,7 @@ enum ircd::fs::index
 #include "write.h"
 #include "fsync.h"
 #include "stdin.h"
+#include "support.h"
 
 struct ircd::fs::init
 {
