@@ -8389,7 +8389,7 @@ ircd::db::seek(row &r,
 // row
 //
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstack-usage"
+#pragma GCC diagnostic ignored "-Wstack-usage="
 ircd::db::row::row(database &d,
                    const string_view &key,
                    const vector_view<const string_view> &colnames,
