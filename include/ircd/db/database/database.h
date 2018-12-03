@@ -85,8 +85,9 @@ struct ircd::db::database
 
 	std::string name;
 	uint64_t checkpoint;
-	std::string optstr;
 	std::string path;
+	std::string optstr;
+	bool fsck, read_only;
 	std::shared_ptr<struct env> env;
 	std::shared_ptr<struct logs> logs;
 	std::shared_ptr<struct stats> stats;
@@ -95,6 +96,7 @@ struct ircd::db::database
 	std::shared_ptr<rocksdb::SstFileManager> ssts;
 	std::shared_ptr<rocksdb::Cache> row_cache;
 	std::vector<descriptor> descriptors;
+	std::unique_ptr<rocksdb::DBOptions> opts;
 	std::unordered_map<string_view, std::shared_ptr<column>> column_names;
 	std::unique_ptr<rocksdb::DB> d;
 	std::vector<std::shared_ptr<column>> column_index; // indexed by cfid

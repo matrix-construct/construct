@@ -760,13 +760,21 @@ try
 	// opening/creation -1 just defaults to 0.
 	checkpoint == uint64_t(-1)? 0 : checkpoint
 }
+,path
+{
+	db::path(this->name, this->checkpoint)
+}
 ,optstr
 {
 	std::move(optstr)
 }
-,path
+,fsck
 {
-	db::path(this->name, this->checkpoint)
+	false
+}
+,read_only
+{
+	false
 }
 ,env
 {
@@ -804,18 +812,101 @@ try
 {
 	std::move(description)
 }
-,column_names{[this]
+,opts{[this]
 {
-	const auto opts
+	auto opts
 	{
-		make_dbopts(this->optstr)
+		std::make_unique<rocksdb::DBOptions>(make_dbopts(this->optstr, &this->optstr, &read_only, &fsck))
 	};
 
+	// Setup sundry
+	opts->create_if_missing = true;
+	opts->create_missing_column_families = true;
+	opts->max_file_opening_threads = 0;
+	opts->stats_dump_period_sec = 0;
+	opts->enable_thread_tracking = false;
+	opts->avoid_flush_during_recovery = true;
+	opts->delete_obsolete_files_period_micros = 0;
+	opts->max_background_jobs = 2;
+	opts->max_background_flushes = 1;
+	opts->max_background_compactions = 1;
+	opts->max_subcompactions = 1;
+	opts->max_open_files = -1; //ircd::info::rlimit_nofile / 4;
+	opts->allow_concurrent_memtable_write = false;
+	opts->enable_write_thread_adaptive_yield = false;
+	opts->enable_pipelined_write = false;
+	opts->write_thread_max_yield_usec = 0;
+	opts->write_thread_slow_yield_usec = 0;
+	//opts->max_total_wal_size = 8_MiB;
+	opts->allow_fallocate = true;
+
+	// Detect if O_DIRECT is possible if db::init left a file in the
+	// database directory claiming such. User can force no direct io
+	// with program option at startup (i.e -nodirect).
+	opts->use_direct_reads = ircd::nodirect? false:
+	                         fs::exists(direct_io_test_file_path());
+
+	//opts->use_direct_io_for_flush_and_compaction = false;
+	opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
+
+	#ifdef RB_DEBUG
+	opts->dump_malloc_stats = true;
+	#endif
+
+	// Setup env
+	opts->env = env.get();
+
+	// Setup SST file mgmt
+	opts->sst_file_manager = this->ssts;
+
+	// Setup logging
+	logs->SetInfoLogLevel(ircd::debugmode? rocksdb::DEBUG_LEVEL : rocksdb::WARN_LEVEL);
+	opts->info_log_level = logs->GetInfoLogLevel();
+	opts->info_log = logs;
+
+	// Setup event and statistics callbacks
+	opts->listeners.emplace_back(this->events);
+
+	// Setup histogram collecting
+	//this->stats->stats_level_ = rocksdb::kAll;
+	this->stats->stats_level_ = rocksdb::kExceptTimeForMutex;
+	opts->statistics = this->stats;
+
+	// Setup performance metric options
+	//rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
+
+	// Default corruption tolerance is zero-tolerance; db fails to open with
+	// error by default to inform the user. The rest of the options are
+	// various relaxations for how to proceed.
+	opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kAbsoluteConsistency;
+
+	// When corrupted after crash, the DB is rolled back before the first
+	// corruption and erases everything after it, giving a consistent
+	// state up at that point, though losing some recent data.
+	if(ircd::pitrecdb) //TODO: no global?
+		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
+
+	// Skipping corrupted records will create gaps in the DB timeline where the
+	// application (like a matrix timeline) cannot tolerate the unexpected gap.
+	//opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kSkipAnyCorruptedRecords;
+
+	// Tolerating corrupted records is very last-ditch for getting the database to
+	// open in a catastrophe. We have no use for this option but should use it for
+	//TODO: emergency salvage-mode.
+	//opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
+
+	// Setup cache
+	opts->row_cache = this->row_cache;
+
+	return opts;
+}()}
+,column_names{[this]
+{
 	// Existing columns at path. If any are left the descriptor set did not
 	// describe all of the columns found in the database at path.
 	const auto required
 	{
-		db::column_names(path, opts)
+		db::column_names(path, *opts)
 	};
 
 	// As we find descriptors for all of the columns on the disk we'll
@@ -853,92 +944,6 @@ try
 }()}
 ,d{[this]
 {
-	bool fsck{false};
-	bool read_only{false};
-	auto opts
-	{
-		make_dbopts(this->optstr, &this->optstr, &read_only, &fsck)
-	};
-
-	// Setup sundry
-	opts.create_if_missing = true;
-	opts.create_missing_column_families = true;
-	opts.max_file_opening_threads = 0;
-	opts.stats_dump_period_sec = 0;
-	opts.enable_thread_tracking = false;
-	opts.avoid_flush_during_recovery = true;
-	opts.delete_obsolete_files_period_micros = 0;
-	opts.max_background_jobs = 2;
-	opts.max_background_flushes = 1;
-	opts.max_background_compactions = 1;
-	opts.max_subcompactions = 1;
-	opts.max_open_files = -1; //ircd::info::rlimit_nofile / 4;
-	opts.allow_concurrent_memtable_write = false;
-	opts.enable_write_thread_adaptive_yield = false;
-	opts.enable_pipelined_write = false;
-	opts.write_thread_max_yield_usec = 0;
-	opts.write_thread_slow_yield_usec = 0;
-	//opts.max_total_wal_size = 8_MiB;
-	opts.allow_fallocate = true;
-
-	// Detect if O_DIRECT is possible if db::init left a file in the
-	// database directory claiming such. User can force no direct io
-	// with program option at startup (i.e -nodirect).
-	opts.use_direct_reads = ircd::nodirect? false:
-	                        fs::exists(direct_io_test_file_path());
-
-	//opts.use_direct_io_for_flush_and_compaction = false;
-	opts.use_direct_io_for_flush_and_compaction = opts.use_direct_reads;
-
-	#ifdef RB_DEBUG
-	opts.dump_malloc_stats = true;
-	#endif
-
-	// Setup env
-	opts.env = env.get();
-
-	// Setup SST file mgmt
-	opts.sst_file_manager = this->ssts;
-
-	// Setup logging
-	logs->SetInfoLogLevel(ircd::debugmode? rocksdb::DEBUG_LEVEL : rocksdb::WARN_LEVEL);
-	opts.info_log_level = logs->GetInfoLogLevel();
-	opts.info_log = logs;
-
-	// Setup event and statistics callbacks
-	opts.listeners.emplace_back(this->events);
-
-	// Setup histogram collecting
-	//this->stats->stats_level_ = rocksdb::kAll;
-	this->stats->stats_level_ = rocksdb::kExceptTimeForMutex;
-	opts.statistics = this->stats;
-
-	// Setup performance metric options
-	//rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
-
-	// Default corruption tolerance is zero-tolerance; db fails to open with
-	// error by default to inform the user. The rest of the options are
-	// various relaxations for how to proceed.
-	opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kAbsoluteConsistency;
-
-	// When corrupted after crash, the DB is rolled back before the first
-	// corruption and erases everything after it, giving a consistent
-	// state up at that point, though losing some recent data.
-	if(ircd::pitrecdb) //TODO: no global?
-		opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
-
-	// Skipping corrupted records will create gaps in the DB timeline where the
-	// application (like a matrix timeline) cannot tolerate the unexpected gap.
-	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kSkipAnyCorruptedRecords;
-
-	// Tolerating corrupted records is very last-ditch for getting the database to
-	// open in a catastrophe. We have no use for this option but should use it for
-	//TODO: emergency salvage-mode.
-	//opts.wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
-
-	// Setup cache
-	opts.row_cache = this->row_cache;
-
 	std::vector<rocksdb::ColumnFamilyHandle *> handles; // filled by DB::Open()
 	std::vector<rocksdb::ColumnFamilyDescriptor> columns(this->column_names.size());
 	std::transform(begin(this->column_names), end(this->column_names), begin(columns), []
@@ -960,7 +965,7 @@ try
 
 		throw_on_error
 		{
-			rocksdb::RepairDB(path, opts, columns)
+			rocksdb::RepairDB(path, *opts, columns)
 		};
 
 		log::info
@@ -971,7 +976,7 @@ try
 
 	// If the directory does not exist, though rocksdb will create it, we can
 	// avoid scaring the user with an error log message if we just do that..
-	if(opts.create_if_missing && !fs::is_dir(path))
+	if(opts->create_if_missing && !fs::is_dir(path))
 		fs::mkdir(path);
 
 	// Announce attempt before usual point where exceptions are thrown
@@ -989,12 +994,12 @@ try
 	if(read_only)
 		throw_on_error
 		{
-			rocksdb::DB::OpenForReadOnly(opts, path, columns, &handles, &ptr)
+			rocksdb::DB::OpenForReadOnly(*opts, path, columns, &handles, &ptr)
 		};
 	else
 		throw_on_error
 		{
-			rocksdb::DB::Open(opts, path, columns, &handles, &ptr)
+			rocksdb::DB::Open(*opts, path, columns, &handles, &ptr)
 		};
 
 	std::unique_ptr<rocksdb::DB> ret
