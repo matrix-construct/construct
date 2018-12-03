@@ -4426,6 +4426,15 @@ try
 		name
 	};
 	#endif
+
+	// Workaround a RocksDB bug which doesn't propagate EnvOptions properly
+	// on some constructions of WritableFile early on during db open. We'll
+	// get an env_opts.allow_fallocate==true here while it should be false
+	// from the DBOptions at d->opts. We use &= so it's not set to true when
+	// the caller specifically wants it false just for them.
+	assert(d && d->opts);
+	this->env_opts.allow_fallocate &= d->opts->allow_fallocate;
+	//assert(env_opts.allow_fallocate == d->opts->allow_fallocate);
 }
 catch(const std::exception &e)
 {
@@ -4954,6 +4963,9 @@ noexcept try
 	};
 	#endif
 
+	if(!env_opts.allow_fallocate)
+		return Status::NotSupported();
+
 	_allocate(offset, length);
 	return Status::OK();
 }
@@ -5072,6 +5084,10 @@ ircd::db::database::env::writable_file::_allocate(const size_t &offset,
 		wopts.keep_size? " KEEP_SIZE" : ""
 	};
 	#endif
+
+	assert(env_opts.allow_fallocate);
+	assert(bool(d.opts));
+	assert(d.opts->allow_fallocate);
 
 	fs::allocate(fd, allocate_length, wopts);
 	this->preallocation_last_block = last_block;
