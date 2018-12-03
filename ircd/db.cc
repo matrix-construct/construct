@@ -822,23 +822,41 @@ try
 	// Setup sundry
 	opts->create_if_missing = true;
 	opts->create_missing_column_families = true;
-	opts->max_file_opening_threads = 0;
-	opts->stats_dump_period_sec = 0;
+
+	// Uses thread_local counters in rocksdb and probably useless for ircd::ctx.
 	opts->enable_thread_tracking = false;
-	opts->avoid_flush_during_recovery = true;
-	opts->delete_obsolete_files_period_micros = 0;
-	opts->max_background_jobs = 2;
-	opts->max_background_flushes = 1;
-	opts->max_background_compactions = 1;
-	opts->max_subcompactions = 1;
+
+	// MUST be 0 or std::threads are spawned in rocksdb.
+	opts->max_file_opening_threads = 0;
+
+	// TODO: We should hint rocksdb with a harder value so it doesn't
+	// potentially eat up all our fd's.
 	opts->max_open_files = -1; //ircd::info::rlimit_nofile / 4;
+
+	// These values are known to not cause any internal rocksdb issues for us,
+	// but perhaps making them more aggressive can be looked into.
+	opts->max_background_compactions = 1;
+	opts->max_background_flushes = 1;
+	opts->max_background_jobs = 2;
+
+	// MUST be 1 (no subcompactions) or rocksdb spawns internal std::thread.
+	opts->max_subcompactions = 1;
+
+	// Disable noise
+	opts->stats_dump_period_sec = 0;
+
+	// Disables the timer to delete unused files; this operation occurs
+	// instead with our compaction operations so we don't need to complicate.
+	opts->delete_obsolete_files_period_micros = 0;
+
+	// These values prevent codepaths from being taken in rocksdb which may
+	// introduce issues for ircd::ctx. We should still fully investigate
+	// if any of these features can safely be used.
 	opts->allow_concurrent_memtable_write = false;
 	opts->enable_write_thread_adaptive_yield = false;
 	opts->enable_pipelined_write = false;
 	opts->write_thread_max_yield_usec = 0;
 	opts->write_thread_slow_yield_usec = 0;
-	//opts->max_total_wal_size = 8_MiB;
-	opts->allow_fallocate = true;
 
 	// Detect if O_DIRECT is possible if db::init left a file in the
 	// database directory claiming such. User can force no direct io
@@ -846,12 +864,41 @@ try
 	opts->use_direct_reads = ircd::nodirect? false:
 	                         fs::exists(direct_io_test_file_path());
 
-	//opts->use_direct_io_for_flush_and_compaction = false;
+	// Use the determined direct io value for writes as well.
 	opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
+
+	// This is true by default, but we list it here for developer hacking;
+	// also, doesn't appear to be in effect when direct io is used.
+	opts->allow_fallocate = true;
 
 	#ifdef RB_DEBUG
 	opts->dump_malloc_stats = true;
 	#endif
+
+	// Default corruption tolerance is zero-tolerance; db fails to open with
+	// error by default to inform the user. The rest of the options are
+	// various relaxations for how to proceed.
+	opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kAbsoluteConsistency;
+
+	// When corrupted after crash, the DB is rolled back before the first
+	// corruption and erases everything after it, giving a consistent
+	// state up at that point, though losing some recent data.
+	if(ircd::pitrecdb) //TODO: no global?
+		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
+
+	// Skipping corrupted records will create gaps in the DB timeline where the
+	// application (like a matrix timeline) cannot tolerate the unexpected gap.
+	//opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kSkipAnyCorruptedRecords;
+
+	// Tolerating corrupted records is very last-ditch for getting the database to
+	// open in a catastrophe. We have no use for this option but should use it for
+	//TODO: emergency salvage-mode.
+	//opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
+
+	// This prevents the creation of additional files when the DB first opens.
+	// It should be set to false once a comprehensive compaction system is
+	// implemented which can reap those files. Otherwise we'll run out of fd's.
+	opts->avoid_flush_during_recovery = true;
 
 	// Setup env
 	opts->env = env.get();
@@ -875,27 +922,7 @@ try
 	// Setup performance metric options
 	//rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
 
-	// Default corruption tolerance is zero-tolerance; db fails to open with
-	// error by default to inform the user. The rest of the options are
-	// various relaxations for how to proceed.
-	opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kAbsoluteConsistency;
-
-	// When corrupted after crash, the DB is rolled back before the first
-	// corruption and erases everything after it, giving a consistent
-	// state up at that point, though losing some recent data.
-	if(ircd::pitrecdb) //TODO: no global?
-		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
-
-	// Skipping corrupted records will create gaps in the DB timeline where the
-	// application (like a matrix timeline) cannot tolerate the unexpected gap.
-	//opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kSkipAnyCorruptedRecords;
-
-	// Tolerating corrupted records is very last-ditch for getting the database to
-	// open in a catastrophe. We have no use for this option but should use it for
-	//TODO: emergency salvage-mode.
-	//opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
-
-	// Setup cache
+	// Setup row cache.
 	opts->row_cache = this->row_cache;
 
 	return opts;
