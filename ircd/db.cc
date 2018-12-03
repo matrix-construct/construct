@@ -152,6 +152,27 @@ ircd::db::version_str
 	           version[2])
 );
 
+decltype(ircd::db::abi_version)
+ircd::db::abi_version
+{
+	//TODO: Get lib version.
+	0,
+	0,
+	0,
+};
+
+char ircd_db_abi_version_str_buf[64];
+decltype(ircd::db::abi_version_str)
+ircd::db::abi_version_str
+(
+	ircd_db_abi_version_str_buf,
+	::snprintf(ircd_db_abi_version_str_buf, sizeof(ircd_db_abi_version_str_buf),
+	           "%u.%u.%u",
+	           abi_version[0],
+	           abi_version[1],
+	           abi_version[2])
+);
+
 //
 // init::init
 //

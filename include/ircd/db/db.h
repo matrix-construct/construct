@@ -74,8 +74,15 @@ namespace ircd::db
 //
 namespace ircd::db
 {
+	// Version information from rocksdb headers (when building ircd).
 	extern const uint version[3];
 	extern const string_view version_str;
+
+	// Version of the RocksDB shared library (when running ircd).
+	extern const uint abi_version[3];
+	extern const string_view abi_version_str;
+
+	// Supported compressions (detected when running ircd)
 	extern std::array<std::string, 16> compressions;
 
 	// Utils for "name:checkpoint" string amalgam
@@ -86,6 +93,7 @@ namespace ircd::db
 	std::string path(const string_view &name, const uint64_t &checkpoint);
 	std::string path(const string_view &name);
 
+	// Paths of available databases.
 	std::vector<std::string> available();
 }
 
