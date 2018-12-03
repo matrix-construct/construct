@@ -22,7 +22,6 @@ namespace ircd::db
 	struct column;
 	struct index;
 	struct database;
-	enum class pos :int8_t;
 
 	// Errors for the database subsystem. The exceptions that use _HIDENAME
 	// are built from RocksDB errors which already have an info string with
@@ -48,17 +47,7 @@ namespace ircd::db
 	extern struct log::log log;
 }
 
-/// Types of iterator operations
-enum class ircd::db::pos
-:int8_t
-{
-	FRONT   = -2,    // .front()    | first element
-	PREV    = -1,    // std::prev() | previous element
-	END     = 0,     // break;      | exit iteration (or past the end)
-	NEXT    = 1,     // continue;   | next element
-	BACK    = 2,     // .back()     | last element
-};
-
+#include "pos.h"
 #include "delta.h"
 #include "comparator.h"
 #include "compactor.h"
@@ -98,8 +87,6 @@ namespace ircd::db
 	std::string path(const string_view &name);
 
 	std::vector<std::string> available();
-
-	string_view reflect(const pos &);
 }
 
 namespace ircd
