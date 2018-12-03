@@ -24,6 +24,7 @@ struct ircd::db::database::env::sequential_file final
 	static const fs::fd::opts default_opts;
 
 	database &d;
+	ctx::mutex mutex;
 	fs::fd::opts opts;
 	fs::fd fd;
 	size_t _buffer_align;

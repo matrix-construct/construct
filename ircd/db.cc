@@ -5980,6 +5980,20 @@ ircd::db::database::env::sequential_file::Read(size_t length,
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
+	const std::unique_lock<decltype(mutex)> lock
+	{
+		mutex, std::try_to_lock
+	};
+
+	// RocksDB sez that this call requires "External synchronization" i.e the
+	// caller, not this class is responsible for exclusion. We assert anyway.
+	if(unlikely(!bool(lock)))
+		throw assertive
+		{
+			"'%s': Unexpected concurrent access to seqfile %p",
+			d.name,
+			this
+		};
 
 	assert(result);
 	assert(scratch);
@@ -6001,13 +6015,13 @@ noexcept try
 		scratch, length
 	};
 
-	const auto read
+	const const_buffer read
 	{
 		fs::read(fd, buf, offset)
 	};
 
 	*result = slice(read);
-	offset += length;
+	this->offset += size(read);
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -6051,15 +6065,28 @@ ircd::db::database::env::sequential_file::PositionedRead(uint64_t offset,
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
+	const std::unique_lock<decltype(mutex)> lock
+	{
+		mutex, std::try_to_lock
+	};
+
+	if(unlikely(!bool(lock)))
+		throw assertive
+		{
+			"'%s': Unexpected concurrent access to seqfile %p",
+			d.name,
+			this
+		};
 
 	assert(result);
 	assert(scratch);
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': seqfile:%p positioned read:%p offset:%zu length:%zu scratch:%p",
+		log, "'%s': seqfile:%p offset:%zu positioned read:%p offset:%zu length:%zu scratch:%p",
 		d.name,
 		this,
+		this->offset,
 		result,
 		offset,
 		length,
@@ -6072,12 +6099,13 @@ noexcept try
 		scratch, length
 	};
 
-	const auto read
+	const const_buffer read
 	{
 		fs::read(fd, buf, offset)
 	};
 
 	*result = slice(read);
+	this->offset = std::max(this->offset, off_t(offset + size(read)));
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -6118,6 +6146,20 @@ ircd::db::database::env::sequential_file::Skip(uint64_t size)
 noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
+	const std::unique_lock<decltype(mutex)> lock
+	{
+		mutex, std::try_to_lock
+	};
+
+	// RocksDB sez that this call requires "External synchronization" i.e the
+	// caller, not this class is responsible for exclusion. We assert anyway.
+	if(unlikely(!bool(lock)))
+		throw assertive
+		{
+			"'%s': Unexpected concurrent access to seqfile %p",
+			d.name,
+			this
+		};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
