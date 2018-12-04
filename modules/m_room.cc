@@ -25,7 +25,7 @@ count_since(const m::room &room,
 	m::room::messages it{room};
 	it.seek_idx(a);
 
-	if(!it && !m::exists(room))
+	if(!it && !exists(room))
 		throw m::NOT_FOUND
 		{
 			"Cannot find room '%s' to count events in",
@@ -261,15 +261,11 @@ make_prev__buf(const m::room &room,
 	};
 }
 
-
-namespace ircd::m
+extern "C" std::pair<bool, int64_t>
+is_complete(const m::room &room)
 {
-	extern "C" std::pair<bool, int64_t> ircd__m__is_complete___room(const room &);
-}
+	using namespace ircd::m;
 
-std::pair<bool, int64_t>
-ircd::m::ircd__m__is_complete___room(const room &room)
-{
 	static const event::keys::include fkeys
 	{
 		"depth"
