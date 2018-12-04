@@ -51,7 +51,7 @@ inline
 ircd::ctx::latch::~latch()
 noexcept
 {
-	assert(is_ready());
+	assert(d.empty());
 }
 
 inline void
