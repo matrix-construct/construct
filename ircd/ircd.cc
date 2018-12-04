@@ -288,10 +288,18 @@ try
 	ircd::_runlevel = new_runlevel;
 	ircd::runlevel_changed::dock.notify_all();
 
+	// This latch is used to block this call when setting the runlevel
+	// from an ircd::ctx. If the runlevel is set from the main stack then
+	// the caller will have to do synchronization themselves.
+	ctx::latch latch
+	{
+		bool(ctx::current) // latch has count of 1 if we're on an ircd::ctx
+	};
+
 	// This function will notify the user of the change to IRCd. When there
 	// are listeners, function is posted to the io_context ensuring THERE IS
 	// NO CONTINUATION ON THIS STACK by the user.
-	const auto call_users{[new_runlevel]
+	const auto call_users{[new_runlevel, &latch, latching(!latch.is_ready())]
 	{
 		assert(new_runlevel == ircd::_runlevel);
 
@@ -307,12 +315,18 @@ try
 
 		for(const auto &handler : ircd::runlevel_changed::list)
 			(*handler)(new_runlevel);
+
+		if(latching)
+			latch.count_down();
 	}};
 
-	if(!ircd::runlevel_changed::list.empty())
+	if(ircd::runlevel_changed::list.size())
 		ircd::post(call_users);
 	else
 		call_users();
+
+	if(ctx::current)
+		latch.wait();
 
 	return true;
 }
