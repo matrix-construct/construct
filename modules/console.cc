@@ -6622,6 +6622,81 @@ console_cmd__room__state__prefetch(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__state__cache(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "[event_id_or_type]", "[type]"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto &event_id_or_type
+	{
+		param.at("[event_id_or_type]", string_view{})
+	};
+
+	const auto is_event_id
+	{
+		m::has_sigil(event_id_or_type) && valid(m::id::EVENT, event_id_or_type)
+	};
+
+	const string_view &event_id
+	{
+		is_event_id?
+			event_id_or_type:
+			string_view{}
+	};
+
+	const auto &type
+	{
+		is_event_id?
+			param.at("[type]", string_view{}):
+			event_id_or_type
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	size_t total(0);
+	std::array<size_t, m::dbs::event_columns> res {{0}};
+	state.for_each(type, m::event::closure_idx{[&total, &res]
+	(const m::event::idx &event_idx)
+	{
+		const byte_view<string_view> &key(event_idx);
+		for(size_t i(0); i < m::dbs::event_column.size(); ++i)
+		{
+			const auto &column(m::dbs::event_column[i]);
+			res[i] += db::exists(db::cache(column), key);
+		}
+
+		++total;
+	}});
+
+	std::array<string_view, m::event::size()> keys;
+	_key_transform(m::event{}, begin(keys), end(keys));
+	assert(res.size() == keys.size());
+
+	for(size_t i(0); i < keys.size(); ++i)
+		out << std::left << std::setw(16) << keys[i]
+		    << " " << std::right << std::setw(6) << res[i]
+		    << " of " << std::left << std::setw(6) << total
+		    << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__room__count(opt &out, const string_view &line)
 {
 	const params param{line, " ",
