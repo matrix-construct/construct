@@ -763,12 +763,22 @@ ircd::http::error::error(const http::code &code,
 ircd::http::error::error(const http::code &code,
                          std::string content,
                          std::string headers)
-:ircd::error{generate_skip}
-,content{std::move(content)}
-,headers{std::move(headers)}
+:ircd::error
+{
+	generate_skip
+}
+,content
+{
+	std::move(content)
+}
+,headers
+{
+	std::move(headers)
+}
 ,code{code}
 {
-	snprintf(buf, sizeof(buf), "%u %s", uint(code), status(code).c_str());
+	auto &buf(ircd::error::buf);
+	::snprintf(buf, sizeof(buf), "%u %s", uint(code), status(code).c_str());
 }
 
 //
