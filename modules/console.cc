@@ -5279,6 +5279,24 @@ console_cmd__state__root(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__state__gc(opt &out, const string_view &line)
+{
+	using prototype = size_t ();
+	static mods::import<prototype> gc
+	{
+		"m_state", "ircd__m__state__gc"
+	};
+
+	const size_t count
+	{
+		gc()
+	};
+
+	out << "done: " << count << std::endl;
+	return true;
+}
+
 //
 // commit
 //
