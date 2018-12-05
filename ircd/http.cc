@@ -416,12 +416,16 @@ try
 {
 	static const parser::rule<size_t> grammar
 	{
-		parser.chunk_size >> -parser.chunk_extensions
+		eoi | (eps > (parser.chunk_size >> -parser.chunk_extensions))
 		,"chunk head"
 	};
 
 	const char *start(line::begin());
-	const auto res(qi::parse(start, line::end(), eps > grammar, this->size));
+	const auto res
+	{
+		qi::parse(start, line::end(), grammar, this->size)
+	};
+
 	assert(res == true);
 }
 catch(const qi::expectation_failure<const char *> &e)
