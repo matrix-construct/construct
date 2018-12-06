@@ -28,7 +28,8 @@ struct ircd::server::peer
 	static conf::item<seconds> error_clear_default;
 
 	net::ipport remote;
-	std::string hostname;
+	std::string hostcanon;
+	std::string service;
 	net::open_opts open_opts;
 	std::list<link> links;
 	std::unique_ptr<err> e;
@@ -109,7 +110,8 @@ struct ircd::server::peer
 	void cancel();
 	void close(const net::close_opts & = net::close_opts_default);
 
-	peer(std::string hostname);
+	peer(const net::hostport &hostport,
+	     const net::open_opts &open_opts = {});
 	peer(peer &&) = delete;
 	peer(const peer &) = delete;
 	~peer() noexcept;

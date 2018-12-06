@@ -136,9 +136,9 @@ ircd::server::get(const net::hostport &hostport)
 			canonized
 		};
 
-		const string_view key{peer->hostname};
+		const string_view key{peer->hostcanon};
 		it = peers.emplace_hint(it, key, std::move(peer));
-		assert(it->second->hostname.data() == it->first.data());
+		assert(it->second->hostcanon.data() == it->first.data());
 		assert(key == canonized);
 	}
 
@@ -150,15 +150,7 @@ ircd::server::create(const net::hostport &hostport)
 {
 	auto peer
 	{
-		std::make_unique<server::peer>(net::canonize(hostport))
-	};
-
-	peer->open_opts = net::open_opts
-	{
-		peer->remote, net::hostport
-		{
-			peer->hostname, net::canon_service, port(hostport)
-		}
+		std::make_unique<server::peer>(hostport)
 	};
 
 	// Async DNS resolve. The links for the new peer will be connected
@@ -377,9 +369,26 @@ ircd::server::peer::link_max_default
 // peer::peer
 //
 
-ircd::server::peer::peer(std::string hostname)
-:hostname{std::move(hostname)}
+ircd::server::peer::peer(const net::hostport &hostport,
+                         const net::open_opts &open_opts)
+:hostcanon
 {
+	net::canonize(hostport)
+}
+,service
+{
+	net::service(hostport)
+}
+,open_opts
+{
+	std::move(open_opts)
+}
+{
+	const net::hostport canon{this->hostcanon};
+	this->open_opts.hostport.host = net::host(canon);
+	this->open_opts.hostport.port = net::port(canon);
+	this->open_opts.hostport.service = this->service;
+	this->open_opts.ipport = this->remote;
 }
 
 ircd::server::peer::~peer()
@@ -491,12 +500,12 @@ try
 	if(!request.tag)
 		throw unavailable
 		{
-			"No link to peer %s available", hostname
+			"No link to peer %s available", hostcanon
 		};
 	else
 		request.tag->set_exception(unavailable
 		{
-			"No link to peer %s available", hostname
+			"No link to peer %s available", hostcanon
 		});
 }
 catch(const std::exception &e)
@@ -951,7 +960,7 @@ try
 	port(open_opts.hostport) = port(ipport);
 
 	// The hostname in open_opts should still reference this object's string.
-	assert(host(open_opts.hostport).data() == this->hostname.data());
+	assert(host(open_opts.hostport).data() == this->hostcanon.data());
 
 	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
 		op_fini = true;
