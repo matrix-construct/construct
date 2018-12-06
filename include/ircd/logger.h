@@ -56,6 +56,8 @@ namespace ircd::log
 	bool console_enabled(const facility &);
 	void console_disable(const facility &);
 	void console_enable(const facility &);
+	void console_disable();
+	void console_enable();
 
 	void flush();
 	void close();

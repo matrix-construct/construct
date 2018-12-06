@@ -165,6 +165,24 @@ catch(const std::exception &e)
 }
 
 void
+ircd::log::console_enable()
+{
+	for_each<facility>([](const facility &fac)
+	{
+		console_enable(fac);
+	});
+}
+
+void
+ircd::log::console_disable()
+{
+	for_each<facility>([](const facility &fac)
+	{
+		console_disable(fac);
+	});
+}
+
+void
 ircd::log::console_enable(const facility &fac)
 {
 	console_out[fac] = true;
