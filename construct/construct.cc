@@ -40,6 +40,7 @@ const char *const usererrstr
 
 bool printversion;
 bool cmdline;
+bool quietmode;
 const char *configfile;
 const char *execute;
 lgetopt opts[] =
@@ -48,6 +49,7 @@ lgetopt opts[] =
 	{ "version",    &printversion,    lgetopt::BOOL,    "Print version and exit" },
 	{ "configfile", &configfile,      lgetopt::STRING,  "File to use for ircd.conf" },
 	{ "debug",      &ircd::debugmode, lgetopt::BOOL,    "Enable options for debugging" },
+	{ "quiet",      &quietmode,       lgetopt::BOOL,    "Suppress log messages at the terminal." },
 	{ "console",    &cmdline,         lgetopt::BOOL,    "Drop to a command line immediately after startup" },
 	{ "execute",    &execute,         lgetopt::STRING,  "Execute command lines immediately after startup" },
 	{ "nolisten",   &ircd::nolisten,  lgetopt::BOOL,    "Normal execution but without listening sockets" },
@@ -89,6 +91,9 @@ try
 
 	if(printversion)
 		return print_version();
+
+	if(quietmode)
+		ircd::log::console_disable();
 
 	// The matrix origin is the first positional argument after any switched
 	// arguments. The matrix origin is the hostpart of MXID's for the server.

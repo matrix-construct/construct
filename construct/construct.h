@@ -12,7 +12,9 @@
 // console.cc
 //
 
+extern bool quietmode;
 extern bool console_active;
+
 void console_spawn();
 void console_execute(const std::vector<std::string> &lines);
 void console_cancel();
