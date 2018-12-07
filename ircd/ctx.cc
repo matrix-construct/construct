@@ -630,6 +630,7 @@ noexcept
 void
 ircd::ctx::this_ctx::interruption_point()
 {
+	assert(interruptible());
 	return cur().interruption_point();
 }
 
