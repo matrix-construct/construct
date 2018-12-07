@@ -192,10 +192,10 @@ ircd::m::rooms::local_summary_chunk(const m::room &room,
 		}
 	};
 
-    const m::event::fetch::opts fopts
-    {
-        keys, room.fopts? room.fopts->gopts : db::gopts{}
-    };
+	const m::event::fetch::opts fopts
+	{
+		keys, room.fopts? room.fopts->gopts : db::gopts{}
+	};
 
 	const m::room::state state
 	{
