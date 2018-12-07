@@ -262,6 +262,7 @@ ircd::ctx::ctx::termination_point(std::nothrow_t)
 			return false;
 
 		mark(prof::event::CUR_TERMINATE);
+		assert(flags & ~context::NOINTERRUPT);
 		return true;
 	}
 	else return false;
@@ -282,8 +283,9 @@ ircd::ctx::ctx::interruption_point(std::nothrow_t)
 		if(flags & context::NOINTERRUPT)
 			return false;
 
-		mark(prof::event::CUR_INTERRUPT);
 		flags &= ~context::INTERRUPTED;
+		mark(prof::event::CUR_INTERRUPT);
+		assert(~flags & context::NOINTERRUPT);
 		return true;
 	}
 	else return false;
@@ -465,7 +467,7 @@ bool
 ircd::ctx::interruptible(const ctx &c)
 noexcept
 {
-	return c.flags & ~context::NOINTERRUPT;
+	return ~c.flags & context::NOINTERRUPT;
 }
 
 /// Returns the cycle count for `ctx`

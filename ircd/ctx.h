@@ -40,13 +40,11 @@ struct ircd::ctx::profile
 struct ircd::ctx::ctx
 :instance_list<ctx>
 {
-	using flags_t = std::underlying_type<context::flags>::type;
-
 	static uint64_t id_ctr;                      // monotonic
 
 	uint64_t id {++id_ctr};                      // Unique runtime ID
 	const char *name {nullptr};                  // User given name (optional)
-	flags_t flags {0};                           // User given flags
+	context::flags flags;                        // User given flags
 	int32_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
 	boost::asio::io_service::strand strand;      // mutex/serializer
 	boost::asio::steady_timer alarm;             // acting semaphore (64B)
@@ -73,7 +71,7 @@ struct ircd::ctx::ctx
 
 	ctx(const char *const &name                  = "<noname>",
 	    const size_t &stack_max                  = DEFAULT_STACK_SIZE,
-	    const context::flags &flags              = (context::flags)0,
+	    const context::flags &flags              = (context::flags)0U,
 	    boost::asio::io_service &ios             = ircd::ios::get())
 	:name{name}
 	,flags{flags}
