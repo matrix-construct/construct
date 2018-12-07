@@ -8955,8 +8955,7 @@ ircd::db::compact(column &column,
 		// rocksdb::port wrapper and deadlock the process. (It is an error
 		// on the part of rocksdb to directly use std::mutex rather than their
 		// port wrapper).
-		ctx::interruption_point();
-		const ctx::uninterruptible::nothrow ui;
+		const ctx::uninterruptible ui;
 		const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 
 		// Save and restore the existing filter callback so we can allow our
@@ -9014,7 +9013,7 @@ ircd::db::compact(column &column,
 	opts.target_level = std::max(to_level, -1);
 	opts.allow_write_stall = true;
 
-	const ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible ui;
 	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 
 	// Save and restore the existing filter callback so we can allow our
