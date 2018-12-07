@@ -64,10 +64,10 @@ struct ircd::ctx::ctx
 	bool termination_point(std::nothrow_t);      // Check for terminate
 	void interruption_point();                   // throws interrupted or terminated
 
-	void wake();                                 // jump to context by queueing with ios (use note())
+	bool wake();                                 // jump to context by queueing with ios (use note())
 	bool note();                                 // properly request wake()
-	void jump();                                 // jump to context directly (returns on your resume)
 	bool wait();                                 // yield context to ios queue (returns on this resume)
+	void jump();                                 // jump to context directly (returns on your resume)
 
 	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
 

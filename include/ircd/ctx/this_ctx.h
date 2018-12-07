@@ -99,7 +99,11 @@ template<class E,
 ircd::throw_overload<E, duration>
 ircd::ctx::this_ctx::wait(const duration &d)
 {
-	const auto ret(wait<std::nothrow_t>(d));
+	const auto ret
+	{
+		wait<std::nothrow_t>(d)
+	};
+
 	return ret <= duration(0)?
 		throw E{}:
 		ret;
@@ -114,9 +118,11 @@ template<class E,
 ircd::nothrow_overload<E, duration>
 ircd::ctx::this_ctx::wait(const duration &d)
 {
-	using std::chrono::duration_cast;
+	const auto ret
+	{
+		wait(duration_cast<microseconds>(d), std::nothrow)
+	};
 
-	const auto ret(wait(duration_cast<microseconds>(d), std::nothrow));
 	return duration_cast<duration>(ret);
 }
 

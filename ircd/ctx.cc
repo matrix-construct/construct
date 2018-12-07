@@ -118,6 +118,33 @@ catch(const std::exception &e)
 	return;
 }
 
+/// Direct context switch to this context.
+///
+/// This currently doesn't work yet because the suspension state of this
+/// context has to be ready to be jumped to and that isn't implemented yet.
+void
+ircd::ctx::ctx::jump()
+{
+	assert(this->yc);
+	assert(current != this);                  // can't jump to self
+
+	auto &yc(*this->yc);
+	auto &target(*yc.coro_.lock());
+
+	// Jump from the currently running context (source) to *this (target)
+	// with continuation of source after target
+	{
+		current->notes = 0; // Unconditionally cleared here
+		const continuation continuation;
+		target();
+	}
+
+	assert(current != this);
+	assert(current->notes == 1); // notes = 1; set by continuation dtor on wakeup
+
+	interruption_point();
+}
+
 /// Yield (suspend) this context until notified.
 ///
 /// This context must be currently running otherwise bad things. Returns false
@@ -153,33 +180,6 @@ ircd::ctx::ctx::wait()
 	return true;
 }
 
-/// Direct context switch to this context.
-///
-/// This currently doesn't work yet because the suspension state of this
-/// context has to be ready to be jumped to and that isn't implemented yet.
-void
-ircd::ctx::ctx::jump()
-{
-	assert(this->yc);
-	assert(current != this);                  // can't jump to self
-
-	auto &yc(*this->yc);
-	auto &target(*yc.coro_.lock());
-
-	// Jump from the currently running context (source) to *this (target)
-	// with continuation of source after target
-	{
-		current->notes = 0; // Unconditionally cleared here
-		const continuation continuation;
-		target();
-	}
-
-	assert(current != this);
-	assert(current->notes == 1); // notes = 1; set by continuation dtor on wakeup
-
-	interruption_point();
-}
-
 /// Notifies this context to resume (wake up from waiting).
 ///
 /// Returns true if this note was the first note received by this context
@@ -190,16 +190,19 @@ ircd::ctx::ctx::note()
 	if(notes++ > 0)
 		return false;
 
-	wake();
-	return true;
+	if(this == current)
+		return true;
+
+	return wake();
 }
 
 /// Wakes a context without a note (internal)
-void
+bool
 ircd::ctx::ctx::wake()
 try
 {
 	alarm.cancel();
+	return true;
 }
 catch(const boost::system::system_error &e)
 {
@@ -207,6 +210,8 @@ catch(const boost::system::system_error &e)
 	{
 		"ctx::wake(%p): %s", this, e.what()
 	};
+
+	return false;
 }
 
 /// Throws if this context has been flagged for interruption and clears
