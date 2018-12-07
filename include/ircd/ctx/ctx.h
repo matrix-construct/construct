@@ -34,9 +34,6 @@
 ///
 namespace ircd::ctx
 {
-	using std::chrono::steady_clock;
-	using time_point = steady_clock::time_point;
-
 	struct ctx;
 
 	IRCD_EXCEPTION(ircd::error, error)
