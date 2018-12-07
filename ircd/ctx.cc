@@ -163,14 +163,27 @@ ircd::ctx::ctx::wait()
 	if(--notes > 0)
 		return false;
 
-	const auto interruption{[this]
+	// An interrupt invokes this closure to force the alarm to return.
+	const interruptor interruptor{[this]
 	(ctx *const &interruptor) noexcept
 	{
 		wake();
 	}};
 
+	// This is currently a dummy predicate; this is where we can take the
+	// user's real wakeup condition (i.e from a ctx::dock) and use it with
+	// an internal scheduler.
+	const predicate &predicate{[this]
+	{
+		return notes > 0;
+	}};
+
+	// The register switch itself occurs inside the alarm.async_wait() call.
+	// The construction of the arguments to the call on this stack comprise
+	// our final control before the context switch. The destruction of the
+	// arguments comprise the initial control after the context switch.
 	boost::system::error_code ec;
-	alarm.async_wait(boost::asio::yield_context{to_asio{interruption}}[ec]);
+	alarm.async_wait(yield_context{continuation{predicate, interruptor}}[ec]);
 
 	assert(ec == errc::operation_canceled || ec == errc::success);
 	assert(current == this);
@@ -363,7 +376,7 @@ ircd::ctx::terminate(ctx &ctx)
 		return;
 
 	if(likely(&ctx != current && ctx.cont != nullptr))
-		ctx.cont->interrupted(current);
+		ctx.cont->intr(current);
 }
 
 /// Marks `ctx` for interruption and enqueues it for resumption to receive the
@@ -386,7 +399,7 @@ ircd::ctx::interrupt(ctx &ctx)
 		return;
 
 	if(likely(&ctx != current && ctx.cont != nullptr))
-		ctx.cont->interrupted(current);
+		ctx.cont->intr(current);
 }
 
 /// Marks `ctx` for whether to allow or suppress interruption. Suppression
@@ -800,14 +813,44 @@ noexcept
 // ctx/continuation.h
 //
 
+decltype(ircd::ctx::continuation::true_predicate)
+ircd::ctx::continuation::true_predicate{[]
+() -> bool
+{
+	return true;
+}};
+
+decltype(ircd::ctx::continuation::false_predicate)
+ircd::ctx::continuation::false_predicate{[]
+() -> bool
+{
+	return false;
+}};
+
+decltype(ircd::ctx::continuation::noop_interruptor)
+ircd::ctx::continuation::noop_interruptor{[]
+(ctx *const &interruptor) -> void
+{
+	return;
+}};
+
 //
 // continuation
 //
 
-ircd::ctx::continuation::continuation()
+ircd::ctx::continuation::continuation(const predicate &pred,
+                                      const interruptor &intr)
 :self
 {
 	ircd::ctx::current
+}
+,pred
+{
+	pred
+}
+,intr
+{
+	intr
 }
 {
 	mark(prof::event::CUR_YIELD);
@@ -843,12 +886,6 @@ noexcept
 	// pointer while the context is awake.
 }
 
-void
-ircd::ctx::continuation::interrupted(ctx *const &interruptor)
-noexcept
-{
-}
-
 ircd::ctx::continuation::operator boost::asio::yield_context &()
 {
 	return *self->yc;
@@ -864,16 +901,12 @@ const
 // to_asio
 //
 
-ircd::ctx::to_asio::to_asio(function handler)
-:handler{std::move(handler)}
-{}
-
-void
-ircd::ctx::to_asio::interrupted(ctx *const &interruptor)
-noexcept
+ircd::ctx::to_asio::to_asio(const interruptor &intr)
+:continuation
 {
-	if(handler)
-		handler(interruptor);
+	false_predicate, intr
+}
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////

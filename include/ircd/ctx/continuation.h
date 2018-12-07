@@ -18,10 +18,12 @@
 
 namespace ircd::ctx
 {
-	using yield_context = boost::asio::yield_context;
-
 	struct continuation;
 	struct to_asio;
+
+	using yield_context = boost::asio::yield_context;
+	using interruptor = std::function<void (ctx *const &) noexcept>;
+	using predicate = std::function<bool ()>;
 }
 
 namespace ircd
@@ -43,17 +45,37 @@ namespace ircd
 /// executes before control continues beyond the yield_context call itself and
 /// ties this sequence together neatly.
 ///
+/// The instance contains references to some callables which must remain valid.
+///
+/// - predicate (NOT YET USED)
+/// A wakeup condition. This should be a simple boolean function which
+/// tests whether the context should be woken up. The continuation references
+/// this to convey the condition to a scheduler which may test many predicates
+/// while contexts are asleep and then determine a schedule. This is an
+/// alternative to waking up contexts first to test their predicates.
+///
+/// - interruptor
+/// An interruption action. This is called when a context cannot wakeup on its
+/// own after receiving an interruption without help from this action. Common
+/// use for this is with yields to asio.
+///
 struct ircd::ctx::continuation
 {
+	static const predicate true_predicate;
+	static const predicate false_predicate;
+	static const interruptor noop_interruptor;
+
 	ctx *self;
+	const predicate &pred;
+	const interruptor &intr;
 
 	operator const boost::asio::yield_context &() const;
 	operator boost::asio::yield_context &();
 
-	virtual void interrupted(ctx *const &) noexcept;
+	continuation(const predicate & = true_predicate,
+	             const interruptor & = noop_interruptor);
 
-	continuation();
-	virtual ~continuation() noexcept;
+	~continuation() noexcept;
 };
 
 /// This type of continuation should be used when yielding a context to a
@@ -68,12 +90,6 @@ struct ircd::ctx::continuation
 struct ircd::ctx::to_asio
 :ircd::ctx::continuation
 {
-	using function = std::function<void (ctx *const &)>;
-
-	function handler;
-
-	void interrupted(ctx *const &) noexcept final override;
-
-	to_asio(function handler);
+	to_asio(const interruptor &);
 	to_asio() = default;
 };
