@@ -34,6 +34,8 @@ namespace ircd::rfc3986
 
 	string_view encode(const string_view &url, const mutable_buffer &);
 	string_view decode(const string_view &url, const mutable_buffer &);
+
+	string_view form_encode(const mutable_buffer &out, const json::members &);
 }
 
 namespace ircd

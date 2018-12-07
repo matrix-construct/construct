@@ -158,6 +158,32 @@ catch(const qi::expectation_failure<const char *> &e)
 	};
 }
 
+ircd::string_view
+ircd::rfc3986::form_encode(const mutable_buffer &out,
+                           const json::members &members)
+{
+	window_buffer buf{out};
+	const auto append{[&buf](const json::member &member)
+	{
+		consume(buf, size(encode(member.first, buf)));
+		consume(buf, copy(buf, "="_sv));
+		consume(buf, size(encode(member.second, buf)));
+	}};
+
+	auto it(begin(members));
+	if(it != end(members))
+	{
+		append(*it);
+		for(++it; it != end(members); ++it)
+		{
+			consume(buf, copy(buf, "&"_sv));
+			append(*it);
+		}
+	}
+
+	return buf.completed();
+}
+
 struct ircd::rfc3986::encoder
 :karma::grammar<char *, const string_view &>
 {
