@@ -354,6 +354,9 @@ ircd::ctx::terminate(ctx &ctx)
 		return;
 
 	ctx.flags |= context::TERMINATED;
+	if(!interruptible(ctx))
+		return;
+
 	if(likely(&ctx != current && ctx.cont != nullptr))
 		ctx.cont->interrupted(current);
 }
@@ -374,6 +377,9 @@ ircd::ctx::interrupt(ctx &ctx)
 		return;
 
 	ctx.flags |= context::INTERRUPTED;
+	if(!interruptible(ctx))
+		return;
+
 	if(likely(&ctx != current && ctx.cont != nullptr))
 		ctx.cont->interrupted(current);
 }
@@ -630,6 +636,8 @@ noexcept
 void
 ircd::ctx::this_ctx::interruption_point()
 {
+	// Asserting to know if this call is useless as it's being made in
+	// an uninterruptible scope anyway. It's okay to relax this assertion.
 	assert(interruptible());
 	return cur().interruption_point();
 }
