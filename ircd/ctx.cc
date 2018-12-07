@@ -510,7 +510,7 @@ ircd::ctx::current;
 
 /// Yield the currently running context until `time_point` ignoring notes
 void
-ircd::ctx::this_ctx::sleep_until(const std::chrono::steady_clock::time_point &tp)
+ircd::ctx::this_ctx::sleep_until(const steady_clock::time_point &tp)
 {
 	while(!wait_until(tp, std::nothrow));
 }
@@ -520,22 +520,22 @@ ircd::ctx::this_ctx::sleep_until(const std::chrono::steady_clock::time_point &tp
 /// Returns true if this function returned because `time_point` was hit or
 /// false because this context was notified.
 bool
-ircd::ctx::this_ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
+ircd::ctx::this_ctx::wait_until(const steady_clock::time_point &tp,
                                 const std::nothrow_t &)
 {
 	auto &c(cur());
 	c.alarm.expires_at(tp);
 	c.wait(); // now you're yielding with portals
 
-	return std::chrono::steady_clock::now() >= tp;
+	return steady_clock::now() >= tp;
 }
 
 /// Yield the currently running context for `duration` or until notified.
 ///
 /// Returns the duration remaining if notified, or <= 0 if suspended for
 /// the full duration, or unchanged if no suspend ever took place.
-std::chrono::microseconds
-ircd::ctx::this_ctx::wait(const std::chrono::microseconds &duration,
+ircd::microseconds
+ircd::ctx::this_ctx::wait(const microseconds &duration,
                           const std::nothrow_t &)
 {
 	auto &c(cur());
@@ -546,7 +546,7 @@ ircd::ctx::this_ctx::wait(const std::chrono::microseconds &duration,
 	// return remaining duration.
 	// this is > 0 if notified
 	// this is unchanged if a note prevented any wait at all
-	return std::chrono::duration_cast<std::chrono::microseconds>(ret);
+	return duration_cast<microseconds>(ret);
 }
 
 /// Yield the currently running context until notified.
@@ -554,7 +554,7 @@ void
 ircd::ctx::this_ctx::wait()
 {
 	auto &c(cur());
-	c.alarm.expires_at(std::chrono::steady_clock::time_point::max());
+	c.alarm.expires_at(steady_clock::time_point::max());
 	c.wait(); // now you're yielding with portals
 }
 
