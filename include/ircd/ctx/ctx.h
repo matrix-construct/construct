@@ -103,6 +103,8 @@ namespace ircd::ctx
 namespace ircd
 {
 	//using yield = boost::asio::yield_context;
+	namespace this_ctx = ctx::this_ctx;
+
 	using ctx::timeout;
 	using ctx::context;
 	using ctx::sleep;
