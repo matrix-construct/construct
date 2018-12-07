@@ -118,33 +118,6 @@ catch(const std::exception &e)
 	return;
 }
 
-/// Direct context switch to this context.
-///
-/// This currently doesn't work yet because the suspension state of this
-/// context has to be ready to be jumped to and that isn't implemented yet.
-void
-ircd::ctx::ctx::jump()
-{
-	assert(this->yc);
-	assert(current != this);                  // can't jump to self
-
-	auto &yc(*this->yc);
-	auto &target(*yc.coro_.lock());
-
-	// Jump from the currently running context (source) to *this (target)
-	// with continuation of source after target
-	{
-		current->notes = 0; // Unconditionally cleared here
-		const continuation continuation;
-		target();
-	}
-
-	assert(current != this);
-	assert(current->notes == 1); // notes = 1; set by continuation dtor on wakeup
-
-	interruption_point();
-}
-
 /// Yield (suspend) this context until notified.
 ///
 /// This context must be currently running otherwise bad things. Returns false
@@ -178,6 +151,33 @@ ircd::ctx::ctx::wait()
 
 	interruption_point();
 	return true;
+}
+
+/// Direct context switch to this context.
+///
+/// This currently doesn't work yet because the suspension state of this
+/// context has to be ready to be jumped to and that isn't implemented yet.
+void
+ircd::ctx::ctx::jump()
+{
+	assert(this->yc);
+	assert(current != this);                  // can't jump to self
+
+	auto &yc(*this->yc);
+	auto &target(*yc.coro_.lock());
+
+	// Jump from the currently running context (source) to *this (target)
+	// with continuation of source after target
+	{
+		current->notes = 0; // Unconditionally cleared here
+		const continuation continuation;
+		target();
+	}
+
+	assert(current != this);
+	assert(current->notes == 1); // notes = 1; set by continuation dtor on wakeup
+
+	interruption_point();
 }
 
 /// Notifies this context to resume (wake up from waiting).
@@ -465,7 +465,7 @@ ircd::ctx::yields(const ctx &ctx)
 }
 
 /// Returns the notification count for `ctx`
-const int64_t &
+const int32_t &
 ircd::ctx::notes(const ctx &ctx)
 {
 	return ctx.notes;

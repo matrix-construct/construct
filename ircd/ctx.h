@@ -40,16 +40,18 @@ struct ircd::ctx::profile
 struct ircd::ctx::ctx
 :instance_list<ctx>
 {
+	using flags_t = std::underlying_type<context::flags>::type;
+
 	static uint64_t id_ctr;                      // monotonic
 
 	uint64_t id {++id_ctr};                      // Unique runtime ID
 	const char *name {nullptr};                  // User given name (optional)
-	context::flags flags {(context::flags)0};    // User given flags
+	flags_t flags {0};                           // User given flags
+	int32_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
 	boost::asio::io_service::strand strand;      // mutex/serializer
 	boost::asio::steady_timer alarm;             // acting semaphore (64B)
 	boost::asio::yield_context *yc {nullptr};    // boost interface
 	continuation *cont {nullptr};                // valid when asleep; invalid when awake
-	int64_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
 	ircd::ctx::stack stack;                      // stack related structure
 	ircd::ctx::profile profile;                  // prof related structure
 	list::node node;                             // node for ctx::list
@@ -62,10 +64,10 @@ struct ircd::ctx::ctx
 	bool termination_point(std::nothrow_t);      // Check for terminate
 	void interruption_point();                   // throws interrupted or terminated
 
-	bool wait();                                 // yield context to ios queue (returns on this resume)
-	void jump();                                 // jump to context directly (returns on your resume)
 	void wake();                                 // jump to context by queueing with ios (use note())
 	bool note();                                 // properly request wake()
+	void jump();                                 // jump to context directly (returns on your resume)
+	bool wait();                                 // yield context to ios queue (returns on this resume)
 
 	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
 
