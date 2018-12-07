@@ -87,7 +87,7 @@ request_url(const string_view &urle)
 
 	const auto url
 	{
-		url::decode(urle, buf)
+		url::decode(buf, urle)
 	};
 
 	const auto &host

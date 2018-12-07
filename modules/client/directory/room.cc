@@ -46,7 +46,7 @@ get__directory_room(client &client,
 {
 	m::room::alias::buf room_alias
 	{
-		url::decode(request.parv[0], room_alias)
+		url::decode(room_alias, request.parv[0])
 	};
 
 	char buf[256];
@@ -76,7 +76,7 @@ put__directory_room(client &client,
 {
 	m::room::alias::buf room_alias
 	{
-		url::decode(request.parv[0], room_alias)
+		url::decode(room_alias, request.parv[0])
 	};
 
 	const m::room::id &room_id

@@ -35,7 +35,7 @@ handle_get(client &client,
 {
 	m::event::id::buf event_id
 	{
-		url::decode(request.parv[0], event_id)
+		url::decode(event_id, request.parv[0])
 	};
 
 	if(!visible(event_id, request.node_id))

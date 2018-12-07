@@ -41,7 +41,7 @@ get_rooms(client &client,
 
 	room::id::buf room_id
 	{
-		url::decode(request.parv[0], room_id)
+		url::decode(room_id, request.parv[0])
 	};
 
 	const string_view &cmd
@@ -91,7 +91,7 @@ put_rooms(client &client,
 
 	room::id::buf room_id
 	{
-		url::decode(request.parv[0], room_id)
+		url::decode(room_id, request.parv[0])
 	};
 
 	const string_view &cmd
@@ -138,7 +138,7 @@ post_rooms(client &client,
 
 	room::id::buf room_id
 	{
-		url::decode(request.parv[0], room_id)
+		url::decode(room_id, request.parv[0])
 	};
 
 	const string_view &cmd

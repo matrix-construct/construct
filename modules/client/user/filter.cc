@@ -20,7 +20,7 @@ get__filter(client &client,
 	char filter_id_buf[64];
 	const auto filter_id
 	{
-		url::decode(request.parv[2], filter_id_buf)
+		url::decode(filter_id_buf, request.parv[2])
 	};
 
 	const m::user user

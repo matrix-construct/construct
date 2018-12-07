@@ -52,7 +52,7 @@ post__receipt(client &client,
 
 	m::event::id::buf event_id
 	{
-		url::decode(request.parv[3], event_id)
+		url::decode(event_id, request.parv[3])
 	};
 
 	const auto eid

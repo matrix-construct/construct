@@ -128,62 +128,6 @@ struct ircd::rfc3986::grammar
 	{}
 };
 
-struct ircd::rfc3986::parser
-:grammar<const char *>
-{
-	string_view operator()(const string_view &url) const;
-}
-const ircd::rfc3986::parser;
-
-ircd::string_view
-ircd::rfc3986::parser::operator()(const string_view &url)
-const try
-{
-	string_view out;
-	const char *start{url.data()};
-	const char *const stop{url.data() + url.size()};
-	//qi::parse(start, stop, , out);
-	return out;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	auto rule
-	{
-		ircd::string(e.what_)
-	};
-
-	throw error
-	{
-		"Not a valid url because of an invalid %s.", between(rule, '<', '>')
-	};
-}
-
-ircd::string_view
-ircd::rfc3986::form_encode(const mutable_buffer &out,
-                           const json::members &members)
-{
-	window_buffer buf{out};
-	const auto append{[&buf](const json::member &member)
-	{
-		consume(buf, size(encode(member.first, buf)));
-		consume(buf, copy(buf, "="_sv));
-		consume(buf, size(encode(member.second, buf)));
-	}};
-
-	auto it(begin(members));
-	if(it != end(members))
-	{
-		append(*it);
-		for(++it; it != end(members); ++it)
-		{
-			consume(buf, copy(buf, "&"_sv));
-			append(*it);
-		}
-	}
-
-	return buf.completed();
-}
-
 struct ircd::rfc3986::encoder
 :karma::grammar<char *, const string_view &>
 {
@@ -201,15 +145,6 @@ struct ircd::rfc3986::encoder
 	encoder(): encoder::base_type{url_encoding} {}
 }
 const ircd::rfc3986::encoder;
-
-ircd::string_view
-ircd::rfc3986::encode(const string_view &url,
-                      const mutable_buffer &buf)
-{
-	char *out{data(buf)};
-	karma::generate(out, maxwidth(size(buf))[encoder], url);
-	return string_view{data(buf), size_t(std::distance(data(buf), out))};
-}
 
 struct ircd::rfc3986::decoder
 :qi::grammar<const char *, mutable_buffer>
@@ -244,19 +179,94 @@ struct ircd::rfc3986::decoder
 }
 const ircd::rfc3986::decoder;
 
+struct ircd::rfc3986::parser
+:grammar<const char *>
+{
+	string_view operator()(const string_view &url) const;
+}
+const ircd::rfc3986::parser;
+
 ircd::string_view
-ircd::rfc3986::decode(const string_view &url,
-                      const mutable_buffer &buf)
+ircd::rfc3986::parser::operator()(const string_view &url)
+const try
+{
+	string_view out;
+	const char *start{url.data()};
+	const char *const stop{url.data() + url.size()};
+	//qi::parse(start, stop, , out);
+	return out;
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	auto rule
+	{
+		ircd::string(e.what_)
+	};
+
+	throw error
+	{
+		"Not a valid url because of an invalid %s.", between(rule, '<', '>')
+	};
+}
+
+ircd::string_view
+ircd::rfc3986::encode(const mutable_buffer &out,
+                      const json::members &members)
+{
+	window_buffer buf{out};
+	const auto append{[&buf](const json::member &member)
+	{
+		consume(buf, size(encode(buf, member.first)));
+		consume(buf, copy(buf, "="_sv));
+		consume(buf, size(encode(buf, member.second)));
+	}};
+
+	auto it(begin(members));
+	if(it != end(members))
+	{
+		append(*it);
+		for(++it; it != end(members); ++it)
+		{
+			consume(buf, copy(buf, "&"_sv));
+			append(*it);
+		}
+	}
+
+	return buf.completed();
+}
+
+ircd::string_view
+ircd::rfc3986::encode(const mutable_buffer &buf,
+                      const string_view &url)
+{
+	char *out(data(buf));
+	karma::generate(out, maxwidth(size(buf))[encoder], url);
+	return string_view
+	{
+		data(buf), size_t(std::distance(data(buf), out))
+	};
+}
+
+ircd::string_view
+ircd::rfc3986::decode(const mutable_buffer &buf,
+                      const string_view &url)
 try
 {
-	const char *start{url.data()}, *const stop
+	const char *start(url.data()), *const stop
 	{
 		start + std::min(size(url), size(buf))
 	};
 
-	mutable_buffer mb{data(buf), size_t(0)};
+	mutable_buffer mb
+	{
+		data(buf), size_t(0)
+	};
+
 	qi::parse(start, stop, eps > decoder, mb);
-	return string_view{data(mb), size(mb)};
+	return string_view
+	{
+		data(mb), size(mb)
+	};
 }
 catch(const qi::expectation_failure<const char *> &e)
 {

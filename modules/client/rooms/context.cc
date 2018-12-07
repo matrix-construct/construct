@@ -58,7 +58,7 @@ get__context(client &client,
 {
 	m::event::id::buf event_id
 	{
-		url::decode(request.parv[2], event_id)
+		url::decode(event_id, request.parv[2])
 	};
 
 	const auto limit{[&request]

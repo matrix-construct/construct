@@ -32,7 +32,7 @@ put__typing(client &client,
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[2], user_id)
+		url::decode(user_id, request.parv[2])
 	};
 
 	if(request.user_id != user_id)

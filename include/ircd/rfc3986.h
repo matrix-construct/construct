@@ -32,10 +32,10 @@ namespace ircd::rfc3986
 	void valid_remote(const string_view &); // host + optional :port
 	bool valid_remote(std::nothrow_t, const string_view &);
 
-	string_view encode(const string_view &url, const mutable_buffer &);
-	string_view decode(const string_view &url, const mutable_buffer &);
+	string_view encode(const mutable_buffer &, const string_view &url);
+	string_view encode(const mutable_buffer &, const json::members &);
 
-	string_view form_encode(const mutable_buffer &out, const json::members &);
+	string_view decode(const mutable_buffer &, const string_view &url);
 }
 
 namespace ircd

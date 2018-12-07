@@ -49,7 +49,7 @@ post__join(client &client,
 	char idbuf[256];
 	const auto &id
 	{
-		url::decode(request.parv[0], idbuf)
+		url::decode(idbuf, request.parv[0])
 	};
 
 	switch(m::sigil(id))

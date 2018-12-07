@@ -64,7 +64,7 @@ get__presence(client &client,
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[0], user_id)
+		url::decode(user_id, request.parv[0])
 	};
 
 	if(request.parv.size() < 2)
@@ -121,7 +121,7 @@ get__presence_list(client &client,
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[1], user_id)
+		url::decode(user_id, request.parv[1])
 	};
 
 	const m::user::room user_room
@@ -192,7 +192,7 @@ post__presence_list(client &client,
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[1], user_id)
+		url::decode(user_id, request.parv[1])
 	};
 
 	const m::user::room user_room
@@ -240,7 +240,7 @@ put__presence(client &client,
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[0], user_id)
+		url::decode(user_id, request.parv[0])
 	};
 
 	if(user_id != request.user_id)

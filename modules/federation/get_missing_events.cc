@@ -72,7 +72,7 @@ get__missing_events(client &client,
 
 	m::room::id::buf room_id
 	{
-		url::decode(request.parv[0], room_id)
+		url::decode(room_id, request.parv[0])
 	};
 
 	ssize_t limit

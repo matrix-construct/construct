@@ -37,7 +37,7 @@ put__account_data(client &client,
 	char typebuf[256];
 	const string_view type
 	{
-		url::decode(request.parv[2], typebuf)
+		url::decode(typebuf, request.parv[2])
 	};
 
 	const json::object value
@@ -70,7 +70,7 @@ get__account_data(client &client,
 	char typebuf[256];
 	const string_view type
 	{
-		url::decode(request.parv[2], typebuf)
+		url::decode(typebuf, request.parv[2])
 	};
 
 	account_data_get(user, type, [&client]

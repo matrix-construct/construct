@@ -45,7 +45,7 @@ get__event_auth(client &client,
 
 	m::room::id::buf room_id
 	{
-		url::decode(request.parv[0], room_id)
+		url::decode(room_id, request.parv[0])
 	};
 
 	if(request.parv.size() < 2)
@@ -56,7 +56,7 @@ get__event_auth(client &client,
 
 	m::event::id::buf event_id
 	{
-		url::decode(request.parv[1], event_id)
+		url::decode(event_id, request.parv[1])
 	};
 
 	const m::event::fetch event

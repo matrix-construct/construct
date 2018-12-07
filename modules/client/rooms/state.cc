@@ -49,13 +49,13 @@ get__state(client &client,
 	char type_buf[uint(256 * 1.34 + 1)];
 	const string_view &type
 	{
-		url::decode(request.parv[2], type_buf)
+		url::decode(type_buf, request.parv[2])
 	};
 
 	char skey_buf[uint(256 * 1.34 + 1)];
 	const string_view &state_key
 	{
-		url::decode(request.parv[3], skey_buf)
+		url::decode(skey_buf, request.parv[3])
 	};
 
 	// (non-standard) Allow an event_id to be passed in the query string
@@ -63,7 +63,7 @@ get__state(client &client,
 	char evid_buf[uint(256 * 1.34 + 1)];
 	const string_view &event_id
 	{
-		url::decode(request.query["event_id"], evid_buf)
+		url::decode(evid_buf, request.query["event_id"])
 	};
 
 	if(type && state_key)
@@ -83,13 +83,13 @@ put__state(client &client,
 	char type_buf[uint(256 * 1.34 + 1)];
 	const string_view &type
 	{
-		url::decode(request.parv[2], type_buf)
+		url::decode(type_buf, request.parv[2])
 	};
 
 	char skey_buf[uint(256 * 1.34 + 1)];
 	const string_view &state_key
 	{
-		url::decode(request.parv[3], skey_buf)
+		url::decode(skey_buf, request.parv[3])
 	};
 
 	const json::object &content

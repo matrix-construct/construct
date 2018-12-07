@@ -50,7 +50,7 @@ put__rooms(client &client,
 
 	m::room::id::buf room_id
 	{
-		url::decode(request.parv[2], room_id)
+		url::decode(room_id, request.parv[2])
 	};
 
 	if(request.parv.size() < 4)
@@ -86,7 +86,7 @@ get__rooms(client &client,
 
 	m::room::id::buf room_id
 	{
-		url::decode(request.parv[2], room_id)
+		url::decode(room_id, request.parv[2])
 	};
 
 	if(request.parv.size() < 4)
@@ -124,7 +124,7 @@ put__account_data(client &client,
 	char typebuf[256];
 	const auto &type
 	{
-		url::decode(request.parv[4], typebuf)
+		url::decode(typebuf, request.parv[4])
 	};
 
 	const json::object &value
@@ -159,7 +159,7 @@ get__account_data(client &client,
 	char typebuf[256];
 	const auto &type
 	{
-		url::decode(request.parv[4], typebuf)
+		url::decode(typebuf, request.parv[4])
 	};
 
 	room_account_data_get(user, room, type, [&client]

@@ -65,13 +65,13 @@ get__backfill_ids(client &client,
 {
 	m::room::id::buf room_id
 	{
-		url::decode(request.parv[0], room_id)
+		url::decode(room_id, request.parv[0])
 	};
 
 	m::event::id::buf event_id
 	{
 		request.query["v"]?
-			url::decode(request.query.at("v"), event_id):
+			url::decode(event_id, request.query.at("v")):
 			m::head(room_id)
 	};
 

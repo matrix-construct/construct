@@ -76,7 +76,7 @@ get__devices(client &client,
 
 	m::id::device::buf device_id
 	{
-		url::decode(request.parv[1], device_id)
+		url::decode(device_id, request.parv[1])
 	};
 
 	user_room.get("ircd.device", device_id, [&]
@@ -117,7 +117,7 @@ put__devices(client &client,
 
 	m::id::device::buf device_id
 	{
-		url::decode(request.parv[1], device_id)
+		url::decode(device_id, request.parv[1])
 	};
 
 	user_room.get("ircd.device", device_id, [&]
@@ -166,7 +166,7 @@ delete__devices(client &client,
 
 	m::id::device::buf device_id
 	{
-		url::decode(request.parv[1], device_id)
+		url::decode(device_id, request.parv[1])
 	};
 
 	if(!user_room.has("ircd.device", device_id))

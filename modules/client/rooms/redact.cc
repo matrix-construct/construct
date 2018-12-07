@@ -32,7 +32,7 @@ put__redact(client &client,
 
 	event::id::buf redacts
 	{
-		url::decode(request.parv[2], redacts)
+		url::decode(redacts, request.parv[2])
 	};
 
 	if(request.parv.size() < 4)
@@ -83,7 +83,7 @@ post__redact(client &client,
 
 	event::id::buf redacts
 	{
-		url::decode(request.parv[2], redacts)
+		url::decode(redacts, request.parv[2])
 	};
 
 	const room room

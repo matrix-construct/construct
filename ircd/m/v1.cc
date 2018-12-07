@@ -114,7 +114,7 @@ ircd::m::v1::send::send(const string_view &txnid,
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
 			urlbuf, "/_matrix/federation/v1/send/%s/",
-			url::encode(txnid, txnidbuf),
+			url::encode(txnidbuf, txnid),
 		};
 	}
 
@@ -179,11 +179,11 @@ ircd::m::v1::public_rooms::public_rooms(const net::hostport &remote,
 
 		if(opts.since)
 			qss << "&since="
-			    << url::encode(opts.since, since);
+			    << url::encode(since, opts.since);
 
 		if(opts.third_party_instance_id)
 			qss << "&third_party_instance_id="
-			    << url::encode(opts.third_party_instance_id, tpid);
+			    << url::encode(tpid, opts.third_party_instance_id);
 
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
@@ -255,7 +255,7 @@ ircd::m::v1::frontfill::frontfill(const room::id &room_id,
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
 			urlbuf, "/_matrix/federation/v1/get_missing_events/%s/",
-			url::encode(room_id, ridbuf)
+			url::encode(ridbuf, room_id)
 		};
 	}
 
@@ -365,9 +365,9 @@ ircd::m::v1::backfill::backfill(const room::id &room_id,
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
 			urlbuf, "/_matrix/federation/v1/backfill/%s/?limit=%zu&v=%s",
-			url::encode(room_id, ridbuf),
+			url::encode(ridbuf, room_id),
 			opts.limit,
-			url::encode(opts.event_id, eidbuf),
+			url::encode(eidbuf, opts.event_id),
 		};
 	}
 
@@ -438,8 +438,8 @@ ircd::m::v1::state::state(const room::id &room_id,
 		{
 			urlbuf, "/_matrix/federation/v1/%s/%s/?event_id=%s",
 			opts.ids_only? "state_ids" : "state",
-			url::encode(room_id, ridbuf),
-			url::encode(opts.event_id, eidbuf),
+			url::encode(ridbuf, room_id),
+			url::encode(eidbuf, opts.event_id),
 		};
 	}
 
@@ -504,8 +504,8 @@ ircd::m::v1::event_auth::event_auth(const m::room::id &room_id,
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
 			urlbuf, "/_matrix/federation/v1/event_auth/%s/%s",
-			url::encode(room_id, ridbuf),
-			url::encode(event_id, eidbuf),
+			url::encode(ridbuf, room_id),
+			url::encode(eidbuf, event_id),
 		};
 	}
 
@@ -568,7 +568,7 @@ ircd::m::v1::event::event(const m::event::id &event_id,
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
 			urlbuf, "/_matrix/federation/v1/event/%s/",
-			url::encode(event_id, eidbuf),
+			url::encode(eidbuf, event_id),
 		};
 	}
 
@@ -623,8 +623,8 @@ ircd::m::v1::invite::invite(const room::id &room_id,
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
 			urlbuf, "/_matrix/federation/v1/invite/%s/%s",
-			url::encode(room_id, ridbuf),
-			url::encode(event_id, eidbuf)
+			url::encode(ridbuf, room_id),
+			url::encode(eidbuf, event_id)
 		};
 	}
 
@@ -679,8 +679,8 @@ ircd::m::v1::send_join::send_join(const room::id &room_id,
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
 			urlbuf, "/_matrix/federation/v1/send_join/%s/%s",
-			url::encode(room_id, ridbuf),
-			url::encode(event_id, uidbuf)
+			url::encode(ridbuf, room_id),
+			url::encode(uidbuf, event_id)
 		};
 	}
 
@@ -745,8 +745,8 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
 			urlbuf, "/_matrix/federation/v1/make_join/%s/%s",
-			url::encode(room_id, ridbuf),
-			url::encode(user_id, uidbuf)
+			url::encode(ridbuf, room_id),
+			url::encode(uidbuf, user_id)
 		};
 	}
 
@@ -794,7 +794,7 @@ ircd::m::v1::user::devices::devices(const id::user &user_id,
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
 			urlbuf, "/_matrix/federation/v1/user/devices/%s",
-			url::encode(user_id, uidbuf)
+			url::encode(uidbuf, user_id)
 		};
 	}
 
@@ -894,7 +894,7 @@ ircd::m::v1::query::user_devices::user_devices(const id::user &user_id,
 	"user_devices",
 	fmt::sprintf
 	{
-		query_arg_buf, "user_id=%s", url::encode(user_id, query_url_buf)
+		query_arg_buf, "user_id=%s", url::encode(query_url_buf, user_id)
 	},
 	buf,
 	std::move(opts)
@@ -919,7 +919,7 @@ ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
 	"directory",
 	fmt::sprintf
 	{
-		query_arg_buf, "room_alias=%s", url::encode(room_alias, query_url_buf)
+		query_arg_buf, "room_alias=%s", url::encode(query_url_buf, room_alias)
 	},
 	buf,
 	std::move(opts)
@@ -944,7 +944,7 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 	"profile",
 	fmt::sprintf
 	{
-		query_arg_buf, "user_id=%s", url::encode(user_id, query_url_buf)
+		query_arg_buf, "user_id=%s", url::encode(query_url_buf, user_id)
 	},
 	buf,
 	std::move(opts)
@@ -972,7 +972,7 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 	fmt::sprintf
 	{
 		query_arg_buf, "user_id=%s%s%s",
-		url::encode(string_view{user_id}, query_url_buf),
+		url::encode(query_url_buf, string_view{user_id}),
 		!empty(field)? "&field=" : "",
 		field
 	},

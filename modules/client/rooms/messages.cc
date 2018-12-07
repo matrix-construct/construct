@@ -70,7 +70,7 @@ get__messages(client &client,
 
 	const json::object &filter_json
 	{
-		url::decode(filter_query, filter_buf)
+		url::decode(filter_buf, filter_query)
 	};
 
 	const m::room_event_filter filter
@@ -190,14 +190,14 @@ try
 	// obtained from a prev_batch token returned for each room by the sync
 	// API, or from a start or end token returned by a previous request to
 	// this endpoint.
-	url::decode(request.query.at("from"), from)
+	url::decode(from, request.query.at("from"))
 }
 {
 	// The token to stop returning events at. This token can be obtained from
 	// a prev_batch token returned for each room by the sync endpoint, or from
 	// a start or end token returned by a previous request to this endpoint.
 	if(!empty(request.query["to"]))
-		url::decode(request.query.at("to"), to);
+		url::decode(to, request.query.at("to"));
 
 	if(dir != 'b' && dir != 'f')
 		throw m::BAD_PAGINATION

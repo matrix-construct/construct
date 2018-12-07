@@ -59,7 +59,7 @@ get__profile(client &client,
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[0], user_id)
+		url::decode(user_id, request.parv[0])
 	};
 
 	const m::user user
@@ -76,7 +76,7 @@ get__profile(client &client,
 	char parambuf[128];
 	const string_view &param
 	{
-		url::decode(request.parv[1], parambuf)
+		url::decode(parambuf, request.parv[1])
 	};
 
 	profile_get(user, param, [&param, &client]
@@ -149,7 +149,7 @@ get__profile_remote(client &client,
 	char parambuf[128];
 	const string_view &param
 	{
-		url::decode(request.parv[1], parambuf)
+		url::decode(parambuf, request.parv[1])
 	};
 
 	const unique_buffer<mutable_buffer> buf
@@ -205,7 +205,7 @@ put__profile(client &client,
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[0], user_id)
+		url::decode(user_id, request.parv[0])
 	};
 
 	if(user_id != request.user_id)
@@ -224,7 +224,7 @@ put__profile(client &client,
 	char parambuf[128];
 	const string_view &param
 	{
-		url::decode(request.parv[1], parambuf)
+		url::decode(parambuf, request.parv[1])
 	};
 
 	const string_view &value

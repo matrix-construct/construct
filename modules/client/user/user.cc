@@ -39,7 +39,7 @@ get_user(client &client, const resource::request &request)
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[0], user_id)
+		url::decode(user_id, request.parv[0])
 	};
 
 	if(request.user_id != user_id)
@@ -88,7 +88,7 @@ post_user(client &client, resource::request &request)
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[0], user_id)
+		url::decode(user_id, request.parv[0])
 	};
 
 	if(request.user_id != user_id)
@@ -134,7 +134,7 @@ put_user(client &client, const resource::request &request)
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[0], user_id)
+		url::decode(user_id, request.parv[0])
 	};
 
 	if(request.user_id != user_id)

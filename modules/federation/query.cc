@@ -80,7 +80,7 @@ get__query_profile(client &client,
 {
 	m::user::id::buf user_id
 	{
-		url::decode(request.query.at("user_id"), user_id)
+		url::decode(user_id, request.query.at("user_id"))
 	};
 
 	const string_view field
@@ -115,7 +115,7 @@ get__query_directory(client &client,
 {
 	m::room::alias::buf room_alias
 	{
-		url::decode(request.query.at("room_alias"), room_alias)
+		url::decode(room_alias, request.query.at("room_alias"))
 	};
 
 	const auto room_id

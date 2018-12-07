@@ -37,7 +37,7 @@ get__events(client &client,
 
 	m::room::id::buf room_id
 	{
-		url::decode(request.query["room_id"], room_id)
+		url::decode(room_id, request.query["room_id"])
 	};
 
 	const auto &from

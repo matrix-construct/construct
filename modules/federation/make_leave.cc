@@ -47,7 +47,7 @@ get__make_leave(client &client,
 
 	m::room::id::buf room_id
 	{
-		url::decode(request.parv[0], room_id)
+		url::decode(room_id, request.parv[0])
 	};
 
 	if(request.parv.size() < 2)
@@ -58,7 +58,7 @@ get__make_leave(client &client,
 
 	m::user::id::buf user_id
 	{
-		url::decode(request.parv[1], user_id)
+		url::decode(user_id, request.parv[1])
 	};
 
 	int64_t depth;
