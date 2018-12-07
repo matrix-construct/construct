@@ -216,6 +216,14 @@ ircd::rfc3986::encode(const mutable_buffer &out,
 	window_buffer buf{out};
 	const auto append{[&buf](const json::member &member)
 	{
+		assert(type(member.first) == json::STRING);
+		if(unlikely(!member.second.serial && type(member.second) != json::STRING))
+			throw assertive
+			{
+				"Cannot encode non-serial json::member type '%s'",
+				reflect(type(member.second))
+			};
+
 		consume(buf, size(encode(buf, member.first)));
 		consume(buf, copy(buf, "="_sv));
 		consume(buf, size(encode(buf, member.second)));
