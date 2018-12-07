@@ -3289,7 +3289,7 @@ console_cmd__peer(opt &out, const string_view &line)
 			server::find(hostport)
 		};
 
-		print(peer.hostname, peer);
+		print(peer.hostcanon, peer);
 		return true;
 	}
 
@@ -3561,20 +3561,14 @@ catch(const std::out_of_range &e)
 bool
 console_cmd__net__host(opt &out, const string_view &line)
 {
-	const params token
+	const params param{line, " ",
 	{
-		line, " ", {"host", "service"}
-	};
-
-	const auto &host{token.at(0)};
-	const auto &service
-	{
-		token.count() > 1? token.at(1) : string_view{}
-	};
+		"hostport"
+	}};
 
 	const net::hostport hostport
 	{
-		host, service
+		param["hostport"]
 	};
 
 	ctx::dock dock;
