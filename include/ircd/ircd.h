@@ -16,10 +16,6 @@
 
 namespace ircd
 {
-	enum class runlevel :int;
-
-	extern const enum runlevel &runlevel;
-
 	extern bool debugmode;             ///< Toggle; available only ifdef RB_DEBUG
 	extern bool nolisten;              ///< Init option to not bind listener socks.
 	extern bool noautomod;             ///< Option to not load modules on init.
@@ -37,6 +33,7 @@ namespace ircd
 #include "allocator.h"
 #include "util/util.h"
 #include "exception.h"
+#include "runlevel.h"
 #include "fpe.h"
 #include "demangle.h"
 #include "localee.h"
@@ -82,61 +79,9 @@ namespace ircd
 namespace ircd
 {
 	struct init;
-	struct runlevel_changed;
 
-	string_view reflect(const enum runlevel &);
 
 	seconds uptime();
-
 	void init(boost::asio::io_context &ios, const string_view &origin, const string_view &hostname);
 	bool quit() noexcept;
 }
-
-/// An instance of this class registers itself to be called back when
-/// the ircd::runlevel has changed.
-///
-/// Note: Its destructor will access a list in libircd; after a callback
-/// for a HALT do not unload libircd.so until destructing this object.
-///
-/// A static ctx::dock is also available for contexts to wait for a runlevel
-/// change notification.
-///
-struct ircd::runlevel_changed
-:instance_list<ircd::runlevel_changed>
-,std::function<void (const enum runlevel &)>
-{
-	using handler = std::function<void (const enum runlevel &)>;
-
-	static ctx::dock dock;
-
-	runlevel_changed(handler function);
-	~runlevel_changed() noexcept;
-};
-
-/// The runlevel allows all observers to know the coarse state of IRCd and to
-/// react accordingly. This can be used by the embedder of libircd to know
-/// when it's safe to use or delete libircd resources. It is also used
-/// similarly by the library and its modules.
-///
-/// Primary modes:
-///
-/// * HALT is the off mode. Nothing is/will be running in libircd until
-/// an invocation of ircd::init();
-///
-/// * RUN is the service mode. Full client and application functionality
-/// exists in this mode. Leaving the RUN mode is done with ircd::quit();
-///
-/// - Transitional modes: Modes which are working towards the next mode.
-/// - Interventional modes:  Modes which are *not* working towards the next
-/// mode and may require some user action to continue.
-///
-enum class ircd::runlevel
-:int
-{
-	HALT     = 0,    ///< [inter] IRCd Powered off.
-	READY    = 1,    ///< [inter] Ready for user to run ios event loop.
-	START    = 2,    ///< [trans] Starting up subsystems for service.
-	RUN      = 3,    ///< [inter] IRCd in service.
-	QUIT     = 4,    ///< [trans] Clean shutdown in progress
-	FAULT    = -1,   ///< [trans] QUIT with exception (dirty shutdown)
-};
