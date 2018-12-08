@@ -200,7 +200,15 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw error{e};
+	const auto &ec
+	{
+		make_error_code(e.code())
+	};
+
+	throw error
+	{
+		e, "`%s': %s", path, ec.message()
+	};
 }
 
 std::vector<std::string>
@@ -224,7 +232,15 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw error{e};
+	const auto &ec
+	{
+		make_error_code(e.code())
+	};
+
+	throw error
+	{
+		e, "`%s': %s", path, ec.message()
+	};
 }
 
 size_t
