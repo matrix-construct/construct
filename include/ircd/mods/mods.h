@@ -23,6 +23,9 @@ namespace ircd::mods
 	IRCD_EXCEPTION(error, undefined_symbol)
 	IRCD_EXCEPTION(expired_symbol, unavailable)
 
+	extern conf::item<bool> enable;
+	extern conf::item<bool> autoload;
+
 	string_view name(const mod &);
 	string_view path(const mod &);
 	bool loaded(const mod &);

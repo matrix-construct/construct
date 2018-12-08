@@ -15,6 +15,10 @@ namespace ircd::db
 {
 	struct database;
 
+	// Broad conf items
+	extern conf::item<bool> open_check;
+	extern conf::item<std::string> open_recover;
+
 	// General information
 	const std::string &name(const database &);
 	const std::string &uuid(const database &);

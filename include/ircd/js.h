@@ -27,6 +27,7 @@ namespace ircd::js
 
 	// Specific logging facility for this subsystem with snomask
 	extern struct log::log log;
+	extern conf::item<bool> enable;
 
 	// Fetch version information
 	enum class ver

@@ -18,6 +18,24 @@ namespace load_mode = boost::dll::load_mode;
 #include <ircd/mods/mapi.h>  // Module's internal API
 #include "mods.h"
 
+decltype(ircd::mods::enable)
+ircd::mods::enable
+{
+	{ "name",     "ircd.mods.enable"  },
+	{ "default",  true                },
+};
+
+decltype(ircd::mods::autoload)
+ircd::mods::autoload
+{
+	{ "name",     "ircd.mods.autoload"  },
+	{ "default",  true                  },
+};
+
+//
+// mods.h
+//
+
 ircd::log::log
 ircd::mods::log
 {

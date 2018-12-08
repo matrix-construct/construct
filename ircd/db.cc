@@ -329,6 +329,44 @@ ircd::db::init_compressions()
 // database
 //
 
+/// Conf item toggles if full database checksum verification should occur
+/// when any database is opened.
+decltype(ircd::db::open_check)
+ircd::db::open_check
+{
+	{ "name",     "ircd.db.open.check"  },
+	{ "default",  false                 },
+};
+
+/// Conf item determines the recovery mode to use when opening any database.
+///
+/// "absolute" - The default and is the same for an empty value. This means
+/// any database corruptions are treated as an error on open and an exception
+/// is thrown with nothing else done.
+///
+/// "point" - The database is rolled back to before any corruption. This will
+/// lose some of the latest data last committed, but will open the database
+/// and continue normally thereafter.
+///
+/// "skip" - The corrupted areas are skipped over and the database continues
+/// normally with just those assets missing. This option is dangerous because
+/// the database continues in a logically incoherent state which is only ok
+/// for very specific applications.
+///
+/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+///
+/// IRCd's applications are NOT tolerant of a skip of recovery.
+/// NEVER USE "skip" RECOVERY MODE.
+///
+/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+///
+decltype(ircd::db::open_recover)
+ircd::db::open_recover
+{
+	{ "name",     "ircd.db.open.recover"  },
+	{ "default",  "absolute"              },
+};
+
 void
 ircd::db::sync(database &d)
 {
@@ -882,8 +920,9 @@ try
 	// Detect if O_DIRECT is possible if db::init left a file in the
 	// database directory claiming such. User can force no direct io
 	// with program option at startup (i.e -nodirect).
-	opts->use_direct_reads = ircd::nodirect? false:
-	                         fs::exists(direct_io_test_file_path());
+	opts->use_direct_reads = bool(fs::fd::opts::direct_io_enable)?
+		fs::exists(direct_io_test_file_path()):
+		false;
 
 	// Use the determined direct io value for writes as well.
 	opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
@@ -905,17 +944,19 @@ try
 	// When corrupted after crash, the DB is rolled back before the first
 	// corruption and erases everything after it, giving a consistent
 	// state up at that point, though losing some recent data.
-	if(ircd::pitrecdb) //TODO: no global?
+	if(string_view(open_recover) == "point")
 		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kPointInTimeRecovery;
 
 	// Skipping corrupted records will create gaps in the DB timeline where the
 	// application (like a matrix timeline) cannot tolerate the unexpected gap.
-	//opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kSkipAnyCorruptedRecords;
+	if(string_view(open_recover) == "skip")
+		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kSkipAnyCorruptedRecords;
 
 	// Tolerating corrupted records is very last-ditch for getting the database to
 	// open in a catastrophe. We have no use for this option but should use it for
 	//TODO: emergency salvage-mode.
-	//opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
+	if(string_view(open_recover) == "tolerate")
+		opts->wal_recovery_mode = rocksdb::WALRecoveryMode::kTolerateCorruptedTailRecords;
 
 	// This prevents the creation of additional files when the DB first opens.
 	// It should be set to false once a comprehensive compaction system is
@@ -1137,7 +1178,7 @@ try
 			db::drop(*colptr);
 
 	// Database integrity check branch.
-	if(ircd::checkdb)
+	if(bool(open_check))
 	{
 		log::notice
 		{

@@ -16,6 +16,7 @@
 
 static void sigfd_handler(const boost::system::error_code &, int) noexcept;
 static bool startup_checks();
+static void applyargs();
 static void enable_coredumps();
 static int print_version();
 
@@ -41,25 +42,33 @@ const char *const usererrstr
 bool printversion;
 bool cmdline;
 bool quietmode;
+bool debugmode;
+bool nolisten;
+bool noautomod;
+bool checkdb;
+bool pitrecdb;
+bool nojs;
+bool nodirect;
+bool noaio;
 const char *configfile;
 const char *execute;
 lgetopt opts[] =
 {
-	{ "help",       nullptr,          lgetopt::USAGE,   "Print this text" },
-	{ "version",    &printversion,    lgetopt::BOOL,    "Print version and exit" },
-	{ "configfile", &configfile,      lgetopt::STRING,  "File to use for ircd.conf" },
-	{ "debug",      &ircd::debugmode, lgetopt::BOOL,    "Enable options for debugging" },
-	{ "quiet",      &quietmode,       lgetopt::BOOL,    "Suppress log messages at the terminal." },
-	{ "console",    &cmdline,         lgetopt::BOOL,    "Drop to a command line immediately after startup" },
-	{ "execute",    &execute,         lgetopt::STRING,  "Execute command lines immediately after startup" },
-	{ "nolisten",   &ircd::nolisten,  lgetopt::BOOL,    "Normal execution but without listening sockets" },
-	{ "noautomod",  &ircd::noautomod, lgetopt::BOOL,    "Normal execution but without autoloading modules" },
-	{ "checkdb",    &ircd::checkdb,   lgetopt::BOOL,    "Perform complete checks of databases when opening" },
-	{ "pitrecdb",   &ircd::pitrecdb,  lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
-	{ "nojs",       &ircd::nojs,      lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
-	{ "nodirect",   &ircd::nodirect,  lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
-	{ "noaio",      &ircd::noaio,     lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
-	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
+	{ "help",       nullptr,        lgetopt::USAGE,   "Print this text" },
+	{ "version",    &printversion,  lgetopt::BOOL,    "Print version and exit" },
+	{ "configfile", &configfile,    lgetopt::STRING,  "File to use for ircd.conf" },
+	{ "debug",      &debugmode,     lgetopt::BOOL,    "Enable options for debugging" },
+	{ "quiet",      &quietmode,     lgetopt::BOOL,    "Suppress log messages at the terminal." },
+	{ "console",    &cmdline,       lgetopt::BOOL,    "Drop to a command line immediately after startup" },
+	{ "execute",    &execute,       lgetopt::STRING,  "Execute command lines immediately after startup" },
+	{ "nolisten",   &nolisten,      lgetopt::BOOL,    "Normal execution but without listening sockets" },
+	{ "noautomod",  &noautomod,     lgetopt::BOOL,    "Normal execution but without autoloading modules" },
+	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
+	{ "pitrecdb",   &pitrecdb,      lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
+	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
+	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
+	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
+	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
 std::unique_ptr<boost::asio::io_context> ios
@@ -80,6 +89,7 @@ try
 
 	// '-' switched arguments come first; this function incs argv and decs argc
 	parseargs(&argc, &argv, opts);
+	applyargs();
 
 	// cores are not dumped without consent of the user to maintain the privacy
 	// of cryptographic key material in memory at the time of the crash.
@@ -256,6 +266,49 @@ enable_coredumps()
 {
 }
 #endif
+
+void
+applyargs()
+{
+	if(debugmode)
+		ircd::debugmode.set("true");
+	else
+		ircd::debugmode.set("false");
+
+	if(nolisten)
+		ircd::net::listen.set("false");
+	else
+		ircd::net::listen.set("true");
+
+	if(noautomod)
+		ircd::mods::autoload.set("false");
+	else
+		ircd::mods::autoload.set("true");
+
+	if(checkdb)
+		ircd::db::open_check.set("true");
+	else
+		ircd::db::open_check.set("false");
+
+	if(pitrecdb)
+		ircd::db::open_recover.set("point");
+	else
+		ircd::db::open_recover.set("absolute");
+
+	if(nodirect)
+		ircd::fs::fd::opts::direct_io_enable.set("false");
+	else
+		ircd::fs::fd::opts::direct_io_enable.set("true");
+
+	if(noaio)
+		ircd::fs::aio::enable.set("false");
+	else
+		ircd::fs::aio::enable.set("true");
+}
+
+//
+// Signal handling
+//
 
 static void handle_quit();
 static void handle_interruption();

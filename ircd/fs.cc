@@ -959,6 +959,14 @@ catch(const std::exception &e)
 // fs/aio.h
 //
 
+/// Conf item to control whether AIO is enabled or bypassed.
+decltype(ircd::fs::aio::enable)
+ircd::fs::aio::enable
+{
+	{ "name",     "ircd.fs.aio.enable"  },
+	{ "default",  true                  },
+};
+
 /// Global stats structure
 decltype(ircd::fs::aio::stats)
 ircd::fs::aio::stats;
@@ -975,7 +983,7 @@ ircd::fs::aio::context;
 ircd::fs::aio::init::init()
 {
 	assert(!context);
-	if(ircd::noaio)
+	if(!bool(aio::enable))
 		return;
 
 	context = new kernel{};
@@ -1019,6 +1027,13 @@ namespace ircd::fs
 	static const char *path_str(const string_view &);
 	static uint posix_flags(const std::ios::openmode &mode);
 }
+
+decltype(ircd::fs::fd::opts::direct_io_enable)
+ircd::fs::fd::opts::direct_io_enable
+{
+	{ "name",     "ircd.fs.fd.direct_io_enable"  },
+	{ "default",  true                           },
+};
 
 #ifdef __linux__
 size_t

@@ -45,6 +45,8 @@ struct ircd::fs::fd
 
 struct ircd::fs::fd::opts
 {
+	static conf::item<bool> direct_io_enable;
+
 	/// std openmode passed from ctor.
 	std::ios::openmode mode {std::ios::openmode(0)};
 

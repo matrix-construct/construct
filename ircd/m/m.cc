@@ -150,7 +150,7 @@ ircd::m::init::modules::init_keys()
 void
 ircd::m::init::modules::init_imports()
 {
-	if(ircd::noautomod)
+	if(!bool(ircd::mods::autoload))
 	{
 		log::warning
 		{

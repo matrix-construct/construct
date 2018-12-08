@@ -15,6 +15,8 @@ namespace ircd::net
 {
 	struct listener;
 	struct listener_udp;
+
+	extern conf::item<bool> listen;
 }
 
 struct ircd::net::listener

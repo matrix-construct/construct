@@ -28,6 +28,7 @@ namespace ircd::fs::aio
 	extern struct stats stats;
 	extern kernel *context;
 
+	extern conf::item<bool> enable;
 	extern const bool available_fsync;
 	extern const bool available_fdsync;
 }

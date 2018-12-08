@@ -888,6 +888,16 @@ ircd::net::blocking(const socket &socket)
 // net/listener.h
 //
 
+/// Option to indicate if any listener sockets should be allowed to bind. If
+/// false then no listeners should bind. This is only effective on startup
+/// unless a conf item updated function is implemented here.
+decltype(ircd::net::listen)
+ircd::net::listen
+{
+	{ "name",     "ircd.net.listen" },
+	{ "default",  true              },
+};
+
 //
 // listener
 //

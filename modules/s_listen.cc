@@ -39,7 +39,7 @@ listeners;
 void
 on_load()
 {
-	if(ircd::nolisten)
+	if(!bool(ircd::net::listen))
 	{
 		log::warning
 		{

@@ -10,21 +10,19 @@
 
 namespace ircd
 {
-	bool debugmode;                              // meaningful ifdef RB_DEBUG
-	bool nolisten;                               // indicates no listener binding
-	bool noautomod;                              // no module loading on init
-	bool checkdb;                                // check databases when opening
-	bool pitrecdb;                               // point-in-time recovery for db
-	bool nojs;                                   // no ircd::js system init.
-	bool nodirect;                               // no use of O_DIRECT.
-	bool noaio;                                  // no use of fs::aio.
-
 	std::string _origin;                         // user's supplied param
 	std::string _hostname;                       // user's supplied param
 	ctx::ctx *main_context;                      // Main program loop
 
 	void main() noexcept;
 }
+
+decltype(ircd::debugmode)
+ircd::debugmode
+{
+	{ "name",     "ircd.debugmode"  },
+	{ "default",  false             },
+};
 
 /// Sets up the IRCd and its main context, then returns without blocking.
 //
