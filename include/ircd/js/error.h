@@ -14,7 +14,7 @@
 namespace ircd {
 namespace js   {
 
-void replace_message(JSErrorReport &report, const char *fmt, ...) AFP(2, 3);
+void replace_message(JSErrorReport &report, const char *fmt, ...) __attribute__((format(printf, 2, 3)))
 
 struct jserror
 :js::error
@@ -45,7 +45,8 @@ struct jserror
 struct name                                           \
 :jserror                                              \
 {                                                     \
-    name(const char *const fmt = " ", ...) AFP(2, 3)  \
+    name(const char *const fmt = " ", ...)            \
+    __attribute__((format(printf, 2, 3)))             \
     :jserror(generate_skip)                           \
     {                                                 \
         va_list ap;                                   \

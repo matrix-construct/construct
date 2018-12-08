@@ -110,10 +110,6 @@ extern "C"
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
 
-// Legacy attribute format printf macros
-#define AFP(a, b)       __attribute__((format(printf, a, b)))
-#define AFGP(a, b)      __attribute__((format(gnu_printf, a, b)))
-
 // Experimental std::string_view
 #if !defined(__cpp_lib_string_view) && defined(__cpp_lib_experimental_string_view)
 namespace std

@@ -32,7 +32,7 @@ struct trap
 	std::map<std::string, function *> memfunc;
 
   protected:
-	void debug(const void *const &that, const char *fmt, ...) const AFP(3, 4);
+	void debug(const void *const &that, const char *fmt, ...) const __attribute__((format(printf, 3, 4)));
 
 	// Override these to define JS objects in C
 	virtual value on_call(object::handle, value::handle, const args &);
@@ -47,7 +47,7 @@ struct trap
 	virtual void on_gc(JSObject *const &);
 
   private: protected:
-	void host_exception(const void *const &that, const char *fmt, ...) const AFP(3, 4);
+	void host_exception(const void *const &that, const char *fmt, ...) const __attribute__((format(printf, 3, 4)));
 
 	// Internal callback interface
 	static void handle_trace(JSTracer *, JSObject *) noexcept;
