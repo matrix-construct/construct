@@ -45,6 +45,17 @@ namespace ircd::db
 
 	// db subsystem has its own logging facility
 	extern struct log::log log;
+
+	// Version information from rocksdb headers (when building ircd).
+	extern const uint version[3];
+	extern const string_view version_str;
+
+	// Version of the RocksDB shared library (when running ircd).
+	extern const uint abi_version[3];
+	extern const string_view abi_version_str;
+
+	// Supported compressions (detected when running ircd)
+	extern std::array<std::string, 16> compressions;
 }
 
 #include "pos.h"
@@ -74,17 +85,6 @@ namespace ircd::db
 //
 namespace ircd::db
 {
-	// Version information from rocksdb headers (when building ircd).
-	extern const uint version[3];
-	extern const string_view version_str;
-
-	// Version of the RocksDB shared library (when running ircd).
-	extern const uint abi_version[3];
-	extern const string_view abi_version_str;
-
-	// Supported compressions (detected when running ircd)
-	extern std::array<std::string, 16> compressions;
-
 	// Utils for "name:checkpoint" string amalgam
 	std::string namepoint(const string_view &name, const uint64_t &checkpoint);
 	std::pair<string_view, uint64_t> namepoint(const string_view &name);
