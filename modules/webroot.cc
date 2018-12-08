@@ -54,9 +54,23 @@ webroot_path
 void
 init_files()
 {
-	const std::string &path{webroot_path};
+	const std::string &path
+	{
+		webroot_path
+	};
+
 	if(empty(path))
 		return;
+
+	if(!fs::exists(path))
+	{
+		log::error
+		{
+			"Configured ircd.webroot.path at `%s' does not exist.", path
+		};
+
+		return;
+	}
 
 	for(const auto &file : fs::ls_recursive(path))
 	{
