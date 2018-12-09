@@ -981,6 +981,7 @@ ircd::fs::aio::enable
 {
 	{ "name",     "ircd.fs.aio.enable"  },
 	{ "default",  true                  },
+	{ "persist",  false                 },
 };
 
 /// Global stats structure
@@ -1049,6 +1050,7 @@ ircd::fs::fd::opts::direct_io_enable
 {
 	{ "name",     "ircd.fs.fd.direct_io_enable"  },
 	{ "default",  true                           },
+	{ "persist",  false                          },
 };
 
 #ifdef __linux__

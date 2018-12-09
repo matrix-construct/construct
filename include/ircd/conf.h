@@ -51,6 +51,7 @@ namespace ircd::conf
 	extern callbacks<void (item<> &)> on_init;
 
 	bool exists(const string_view &key);
+	bool persists(const string_view &key);
 	string_view get(const string_view &key, const mutable_buffer &out);
 	bool set(const string_view &key, const string_view &value);
 	bool set(std::nothrow_t, const string_view &key, const string_view &value);

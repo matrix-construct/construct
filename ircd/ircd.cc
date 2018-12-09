@@ -22,6 +22,7 @@ ircd::debugmode
 {
 	{ "name",     "ircd.debugmode"  },
 	{ "default",  false             },
+	{ "persist",  false             },
 };
 
 /// Sets up the IRCd and its main context, then returns without blocking.

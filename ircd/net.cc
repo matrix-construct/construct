@@ -896,6 +896,7 @@ ircd::net::listen
 {
 	{ "name",     "ircd.net.listen" },
 	{ "default",  true              },
+	{ "persist",  false             },
 };
 
 //

@@ -336,6 +336,7 @@ ircd::db::open_check
 {
 	{ "name",     "ircd.db.open.check"  },
 	{ "default",  false                 },
+	{ "persist",  false                 },
 };
 
 /// Conf item determines the recovery mode to use when opening any database.
@@ -365,6 +366,7 @@ ircd::db::open_recover
 {
 	{ "name",     "ircd.db.open.recover"  },
 	{ "default",  "absolute"              },
+	{ "persist",  false                   },
 };
 
 void

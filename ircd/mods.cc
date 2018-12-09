@@ -23,6 +23,7 @@ ircd::mods::enable
 {
 	{ "name",     "ircd.mods.enable"  },
 	{ "default",  true                },
+	{ "persist",  false               },
 };
 
 decltype(ircd::mods::autoload)
@@ -30,6 +31,7 @@ ircd::mods::autoload
 {
 	{ "name",     "ircd.mods.autoload"  },
 	{ "default",  true                  },
+	{ "persist",  false                 },
 };
 
 //

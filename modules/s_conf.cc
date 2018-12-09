@@ -132,6 +132,11 @@ noexcept try
 	if(runlevel == runlevel::START && !conf::exists(key))
 		return;
 
+	// Conf items marked with a persist=false property are not read from
+	// the conf room into the item, even if the value exists in the room.
+	if(conf::exists(key) && !conf::persists(key))
+		return;
+
 	log::debug
 	{
 		"Updating conf [%s] => %s", key, value
@@ -247,13 +252,7 @@ create_conf_room(const m::event &,
                  m::vm::eval &)
 {
 	m::create(conf_room_id, m::me.user_id);
-
-	for(const auto &p : conf::items)
-	{
-		const auto &key{p.first};
-		const auto &item{p.second}; assert(item);
-		create_conf_item(key, *item);
-	}
+	rehash_conf({}, true);
 }
 
 const m::hookfn<m::vm::eval &>
@@ -283,6 +282,13 @@ rehash_conf(const string_view &prefix,
 			continue;
 
 		const auto &item{p.second}; assert(item);
+
+		// Conf items marked with a persist=false property are not written
+		// to the conf room.
+		if(!item->feature.get("persist", true))
+			continue;
+
+		// Use the `existing` argument to toggle a force-overwrite
 		if(!existing)
 			if(state.has("ircd.conf.item", key))
 				continue;

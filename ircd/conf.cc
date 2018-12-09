@@ -126,6 +126,21 @@ catch(const std::out_of_range &e)
 }
 
 bool
+ircd::conf::persists(const string_view &key)
+try
+{
+	const auto &item(*items.at(key));
+	return item.feature.get("persist", true);
+}
+catch(const std::out_of_range &e)
+{
+	throw not_found
+	{
+		"Conf item '%s' is not available", key
+	};
+}
+
+bool
 ircd::conf::exists(const string_view &key)
 {
 	return items.count(key);
