@@ -2411,7 +2411,7 @@ noexcept
 {
 	log::info
 	{
-		rog, "'%s' flush complete: column[%s] path[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		rog, "'%s': flush complete: column[%s] path[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
 		d->name,
 		info.cf_name,
 		info.file_path,
@@ -2432,7 +2432,7 @@ noexcept
 {
 	log::info
 	{
-		rog, "'%s' flush begin column[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		rog, "'%s': flush begin column[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
 		d->name,
 		info.cf_name,
 		info.thread_id,
@@ -2452,7 +2452,7 @@ noexcept
 {
 	log::info
 	{
-		rog, "'%s' compacted column[%s] ctx[%lu] job[%d] level[in:%d out:%d] files[in:%zu out:%zu] reason:%d :%s",
+		rog, "'%s': compacted column[%s] ctx[%lu] job[%d] level[in:%d out:%d] files[in:%zu out:%zu] reason:%d :%s",
 		d->name,
 		info.cf_name,
 		info.thread_id,
@@ -2545,7 +2545,7 @@ noexcept
 {
 	log::notice
 	{
-		rog, "'%s' external file ingested column[%s] external[%s] internal[%s] sequence:%lu",
+		rog, "'%s': external file ingested column[%s] external[%s] internal[%s] sequence:%lu",
 		this->d->name,
 		info.cf_name,
 		info.external_file_path,
