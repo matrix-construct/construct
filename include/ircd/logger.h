@@ -95,54 +95,54 @@ struct ircd::log::log
 	bool fmasked {true};               // currently in the file mask (enabled)
 
   public:
-	template<class... args> void operator()(const facility &, const char *const &fmt, args&&...);
+	template<class... args> void operator()(const facility &, const string_view &fmt, args&&...);
 
 	#if RB_LOG_LEVEL >= 0
-	template<class... args> void critical(const char *const &fmt, args&&...);
+	template<class... args> void critical(const string_view &fmt, args&&...);
 	#else // Required for DCE in gcc 6.3.0 20170519
-	void critical(const char *const &fmt, ...);
+	void critical(const string_view &fmt, ...);
 	#endif
 
 	#if RB_LOG_LEVEL >= 1
-	template<class... args> void error(const char *const &fmt, args&&...);
+	template<class... args> void error(const string_view &fmt, args&&...);
 	#else // Required for DCE in gcc 6.3.0 20170519
-	void error(const char *const &fmt, ...);
+	void error(const string_view &fmt, ...);
 	#endif
 
 	#if RB_LOG_LEVEL >= 2
-	template<class... args> void warning(const char *const &fmt, args&&...);
+	template<class... args> void warning(const string_view &fmt, args&&...);
 	#else // Required for DCE in gcc 6.3.0 20170519
-	void warning(const char *const &fmt, ...);
+	void warning(const string_view &fmt, ...);
 	#endif
 
 	#if RB_LOG_LEVEL >= 3
-	template<class... args> void notice(const char *const &fmt, args&&...);
+	template<class... args> void notice(const string_view &fmt, args&&...);
 	#else // Required for DCE in gcc 6.3.0 20170519
-	void notice(const char *const &fmt, ...);
+	void notice(const string_view &fmt, ...);
 	#endif
 
 	#if RB_LOG_LEVEL >= 4
-	template<class... args> void info(const char *const &fmt, args&&...);
+	template<class... args> void info(const string_view &fmt, args&&...);
 	#else // Required for DCE in gcc 6.3.0 20170519
-	void info(const char *const &fmt, ...);
+	void info(const string_view &fmt, ...);
 	#endif
 
 	#if RB_LOG_LEVEL >= 5
-	template<class... args> void derror(const char *const &fmt, args&&...);
+	template<class... args> void derror(const string_view &fmt, args&&...);
 	#else // Required for DCE in gcc 6.3.0 20170519
-	void derror(const char *const &fmt, ...);
+	void derror(const string_view &fmt, ...);
 	#endif
 
 	#if RB_LOG_LEVEL >= 6
-	template<class... args> void dwarning(const char *const &fmt, args&&...);
+	template<class... args> void dwarning(const string_view &fmt, args&&...);
 	#else // Required for DCE in gcc 6.3.0 20170519
-	void dwarning(const char *const &fmt, ...);
+	void dwarning(const string_view &fmt, ...);
 	#endif
 
 	#if RB_LOG_LEVEL >= 7
-	template<class... args> void debug(const char *const &fmt, args&&...);
+	template<class... args> void debug(const string_view &fmt, args&&...);
 	#else // Required for DCE in gcc 6.3.0 20170519
-	void debug(const char *const &fmt, ...);
+	void debug(const string_view &fmt, ...);
 	#endif
 
 	log(const string_view &name, const char &snote = '\0');
@@ -154,13 +154,13 @@ struct ircd::log::log
 
 struct ircd::log::vlog
 {
-	vlog(const log &log, const facility &, const char *const &fmt, const va_rtti &ap);
+	vlog(const log &log, const facility &, const string_view &fmt, const va_rtti &ap);
 };
 
 struct ircd::log::logf
 {
 	template<class... args>
-	logf(const log &log, const facility &facility, const char *const &fmt, args&&... a)
+	logf(const log &log, const facility &facility, const string_view &fmt, args&&... a)
 	{
 		vlog(log, facility, fmt, va_rtti{std::forward<args>(a)...});
 	}
@@ -182,13 +182,13 @@ struct ircd::log::console_quiet
 struct ircd::log::debug
 {
 	template<class... args>
-	debug(const log &log, const char *const &fmt, args&&... a)
+	debug(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	debug(const char *const &fmt, args&&... a)
+	debug(const string_view &fmt, args&&... a)
 	{
 		vlog(general, facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
 	}
@@ -196,12 +196,12 @@ struct ircd::log::debug
 #else
 struct ircd::log::debug
 {
-	debug(const log &, const char *const &, ...)
+	debug(const log &, const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	debug(const char *const &, ...)
+	debug(const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -212,13 +212,13 @@ struct ircd::log::debug
 struct ircd::log::dwarning
 {
 	template<class... args>
-	dwarning(const log &log, const char *const &fmt, args&&... a)
+	dwarning(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	dwarning(const char *const &fmt, args&&... a)
+	dwarning(const string_view &fmt, args&&... a)
 	{
 		vlog(general, facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
@@ -226,12 +226,12 @@ struct ircd::log::dwarning
 #else
 struct ircd::log::dwarning
 {
-	dwarning(const log &, const char *const &, ...)
+	dwarning(const log &, const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	dwarning(const char *const &, ...)
+	dwarning(const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -242,13 +242,13 @@ struct ircd::log::dwarning
 struct ircd::log::derror
 {
 	template<class... args>
-	derror(const log &log, const char *const &fmt, args&&... a)
+	derror(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	derror(const char *const &fmt, args&&... a)
+	derror(const string_view &fmt, args&&... a)
 	{
 		vlog(general, facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
@@ -256,12 +256,12 @@ struct ircd::log::derror
 #else
 struct ircd::log::derror
 {
-	derror(const log &, const char *const &, ...)
+	derror(const log &, const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	derror(const char *const &, ...)
+	derror(const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -272,13 +272,13 @@ struct ircd::log::derror
 struct ircd::log::info
 {
 	template<class... args>
-	info(const log &log, const char *const &fmt, args&&... a)
+	info(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	info(const char *const &fmt, args&&... a)
+	info(const string_view &fmt, args&&... a)
 	{
 		vlog(general, facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
 	}
@@ -286,12 +286,12 @@ struct ircd::log::info
 #else
 struct ircd::log::info
 {
-	info(const log &, const char *const &, ...)
+	info(const log &, const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	info(const char *const &, ...)
+	info(const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -302,13 +302,13 @@ struct ircd::log::info
 struct ircd::log::notice
 {
 	template<class... args>
-	notice(const log &log, const char *const &fmt, args&&... a)
+	notice(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	notice(const char *const &fmt, args&&... a)
+	notice(const string_view &fmt, args&&... a)
 	{
 		vlog(general, facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
 	}
@@ -316,12 +316,12 @@ struct ircd::log::notice
 #else
 struct ircd::log::notice
 {
-	notice(const log &, const char *const &, ...)
+	notice(const log &, const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	notice(const char *const &, ...)
+	notice(const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -332,13 +332,13 @@ struct ircd::log::notice
 struct ircd::log::warning
 {
 	template<class... args>
-	warning(const log &log, const char *const &fmt, args&&... a)
+	warning(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	warning(const char *const &fmt, args&&... a)
+	warning(const string_view &fmt, args&&... a)
 	{
 		vlog(general, facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
@@ -346,12 +346,12 @@ struct ircd::log::warning
 #else
 struct ircd::log::warning
 {
-	warning(const log &, const char *const &, ...)
+	warning(const log &, const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	warning(const char *const &, ...)
+	warning(const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -362,13 +362,13 @@ struct ircd::log::warning
 struct ircd::log::error
 {
 	template<class... args>
-	error(const log &log, const char *const &fmt, args&&... a)
+	error(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	error(const char *const &fmt, args&&... a)
+	error(const string_view &fmt, args&&... a)
 	{
 		vlog(general, facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
@@ -376,12 +376,12 @@ struct ircd::log::error
 #else
 struct ircd::log::error
 {
-	error(const log &, const char *const &, ...)
+	error(const log &, const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	error(const char *const &, ...)
+	error(const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -392,13 +392,13 @@ struct ircd::log::error
 struct ircd::log::critical
 {
 	template<class... args>
-	critical(const log &log, const char *const &fmt, args&&... a)
+	critical(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
-	critical(const char *const &fmt, args&&... a)
+	critical(const string_view &fmt, args&&... a)
 	{
 		vlog(general, facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 	}
@@ -406,12 +406,12 @@ struct ircd::log::critical
 #else
 struct ircd::log::critical
 {
-	critical(const log &, const char *const &, ...)
+	critical(const log &, const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
 
-	critical(const char *const &, ...)
+	critical(const string_view &, ...)
 	{
 		// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
 	}
@@ -421,14 +421,14 @@ struct ircd::log::critical
 #if RB_LOG_LEVEL >= 7
 template<class... args>
 void
-ircd::log::log::debug(const char *const &fmt,
+ircd::log::log::debug(const string_view &fmt,
                       args&&... a)
 {
 	operator()(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
-ircd::log::log::debug(const char *const &fmt,
+ircd::log::log::debug(const string_view &fmt,
                       ...)
 {
 	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
@@ -438,14 +438,14 @@ ircd::log::log::debug(const char *const &fmt,
 #if RB_LOG_LEVEL >= 6
 template<class... args>
 void
-ircd::log::log::dwarning(const char *const &fmt,
+ircd::log::log::dwarning(const string_view &fmt,
                          args&&... a)
 {
 	operator()(facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
-ircd::log::log::dwarning(const char *const &fmt,
+ircd::log::log::dwarning(const string_view &fmt,
                          ...)
 {
 	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
@@ -455,14 +455,14 @@ ircd::log::log::dwarning(const char *const &fmt,
 #if RB_LOG_LEVEL >= 5
 template<class... args>
 void
-ircd::log::log::derror(const char *const &fmt,
+ircd::log::log::derror(const string_view &fmt,
                        args&&... a)
 {
 	operator()(facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
-ircd::log::log::derror(const char *const &fmt,
+ircd::log::log::derror(const string_view &fmt,
                        ...)
 {
 	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
@@ -472,14 +472,14 @@ ircd::log::log::derror(const char *const &fmt,
 #if RB_LOG_LEVEL >= 4
 template<class... args>
 void
-ircd::log::log::info(const char *const &fmt,
+ircd::log::log::info(const string_view &fmt,
                      args&&... a)
 {
 	operator()(facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
-ircd::log::log::info(const char *const &fmt,
+ircd::log::log::info(const string_view &fmt,
                      ...)
 {
 	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
@@ -489,14 +489,14 @@ ircd::log::log::info(const char *const &fmt,
 #if RB_LOG_LEVEL >= 3
 template<class... args>
 void
-ircd::log::log::notice(const char *const &fmt,
+ircd::log::log::notice(const string_view &fmt,
                        args&&... a)
 {
 	operator()(facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
-ircd::log::log::notice(const char *const &fmt,
+ircd::log::log::notice(const string_view &fmt,
                        ...)
 {
 	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
@@ -506,14 +506,14 @@ ircd::log::log::notice(const char *const &fmt,
 #if RB_LOG_LEVEL >= 2
 template<class... args>
 void
-ircd::log::log::warning(const char *const &fmt,
+ircd::log::log::warning(const string_view &fmt,
                         args&&... a)
 {
 	operator()(facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
-ircd::log::log::warning(const char *const &fmt,
+ircd::log::log::warning(const string_view &fmt,
                         ...)
 {
 	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
@@ -523,14 +523,14 @@ ircd::log::log::warning(const char *const &fmt,
 #if RB_LOG_LEVEL >= 1
 template<class... args>
 void
-ircd::log::log::error(const char *const &fmt,
+ircd::log::log::error(const string_view &fmt,
                       args&&... a)
 {
 	operator()(facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
-ircd::log::log::error(const char *const &fmt,
+ircd::log::log::error(const string_view &fmt,
                       ...)
 {
 	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
@@ -540,14 +540,14 @@ ircd::log::log::error(const char *const &fmt,
 #if RB_LOG_LEVEL >= 0
 template<class... args>
 void
-ircd::log::log::critical(const char *const &fmt,
+ircd::log::log::critical(const string_view &fmt,
                          args&&... a)
 {
 	operator()(facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
-ircd::log::log::critical(const char *const &fmt,
+ircd::log::log::critical(const string_view &fmt,
                          ...)
 {
 	// Required in gcc 6.3.0 20170519, template param packs are not DCE'ed
@@ -557,7 +557,7 @@ ircd::log::log::critical(const char *const &fmt,
 template<class... args>
 void
 ircd::log::log::operator()(const facility &f,
-                           const char *const &fmt,
+                           const string_view &fmt,
                            args&&... a)
 {
 	vlog(*this, f, fmt, va_rtti{std::forward<args>(a)...});

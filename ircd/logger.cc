@@ -359,7 +359,7 @@ namespace ircd::log
 {
 	static void check(std::ostream &) noexcept;
 	static void slog(const log &, const facility &, const window_buffer::closure &) noexcept;
-	static void vlog_threadsafe(const log &, const facility &, const char *const &fmt, const va_rtti &ap);
+	static void vlog_threadsafe(const log &, const facility &, const string_view &fmt, const va_rtti &ap);
 }
 
 decltype(ircd::log::star)
@@ -381,7 +381,7 @@ ircd::log::general
 void
 ircd::log::vlog_threadsafe(const log &log,
                            const facility &fac,
-                           const char *const &fmt,
+                           const string_view &fmt,
                            const va_rtti &ap)
 {
 	// Generate the formatted message on this thread first
@@ -408,7 +408,7 @@ ircd::log::vlog_threadsafe(const log &log,
 
 ircd::log::vlog::vlog(const log &log,
                       const facility &fac,
-                      const char *const &fmt,
+                      const string_view &fmt,
                       const va_rtti &ap)
 {
 	if(!is_main_thread())
