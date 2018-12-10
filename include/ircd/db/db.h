@@ -70,6 +70,7 @@ namespace ircd::db
 #include "database/options.h"
 #include "database/snapshot.h"
 #include "database/sst.h"
+#include "database/wal.h"
 #include "cache.h"
 #include "opts.h"
 #include "column.h"

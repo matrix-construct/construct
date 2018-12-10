@@ -26,6 +26,7 @@ namespace ircd::db
 	const std::vector<std::string> &errors(const database &);
 	std::vector<std::string> files(const database &, uint64_t &msz);
 	std::vector<std::string> files(const database &);
+	std::vector<std::string> wals(const database &);
 	size_t file_count(const database &);
 	size_t bytes(const database &);
 
@@ -86,6 +87,7 @@ struct ircd::db::database
 	struct env;
 	struct cache;
 	struct sst;
+	struct wal;
 
 	std::string name;
 	uint64_t checkpoint;

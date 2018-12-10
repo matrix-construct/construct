@@ -594,6 +594,31 @@ ircd::db::file_count(const database &d)
 	});
 }
 
+/// Get the list of WAL (Write Ahead Log) files.
+std::vector<std::string>
+ircd::db::wals(const database &cd)
+{
+	auto &d
+	{
+		const_cast<database &>(cd)
+	};
+
+	std::vector<std::unique_ptr<rocksdb::LogFile>> vec;
+	throw_on_error
+	{
+		d.d->GetSortedWalFiles(vec)
+	};
+
+	std::vector<std::string> ret(vec.size());
+	std::transform(begin(vec), end(vec), begin(ret), []
+	(const auto &file)
+	{
+		return file->PathName();
+	});
+
+	return ret;
+}
+
 /// Get the live file list for db; see overlord documentation.
 std::vector<std::string>
 ircd::db::files(const database &d)
@@ -3201,6 +3226,70 @@ ircd::db::database::sst::info::operator=(rocksdb::TableProperties &&tp)
 	fixed_key_len = std::move(tp.fixed_key_len);
 	created = std::move(tp.creation_time);
 	oldest_key = std::move(tp.oldest_key_time);
+	return *this;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::wal
+//
+
+//
+// wal::info::vector
+//
+
+ircd::db::database::wal::info::vector::vector(const database &d_)
+{
+	auto &d{const_cast<database &>(d_)};
+	std::vector<std::unique_ptr<rocksdb::LogFile>> vec;
+	throw_on_error
+	{
+		d.d->GetSortedWalFiles(vec)
+	};
+
+	this->resize(vec.size());
+	for(size_t i(0); i < vec.size(); ++i)
+		this->at(i).operator=(*vec.at(i));
+}
+
+//
+// wal::info::info
+//
+
+ircd::db::database::wal::info::info(const database &d_,
+                                    const string_view &filename)
+{
+	auto &d{const_cast<database &>(d_)};
+	std::vector<std::unique_ptr<rocksdb::LogFile>> vec;
+	throw_on_error
+	{
+		d.d->GetSortedWalFiles(vec)
+	};
+
+	for(const auto &ptr : vec)
+		if(ptr->PathName() == filename)
+		{
+			this->operator=(*ptr);
+			return;
+		}
+
+	throw not_found
+	{
+		"No file named '%s' is live in database '%s'",
+		filename,
+		d.name
+	};
+}
+
+ircd::db::database::wal::info &
+ircd::db::database::wal::info::operator=(const rocksdb::LogFile &lf)
+{
+	name = lf.PathName();
+	number = lf.LogNumber();
+	seq = lf.StartSequence();
+	size = lf.SizeFileBytes();
+	alive = lf.Type() == rocksdb::WalFileType::kAliveLogFile;
+
 	return *this;
 }
 

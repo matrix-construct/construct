@@ -37,6 +37,7 @@ namespace rocksdb
 	struct SstFileMetaData;
 	struct SstFileWriter;
 	struct TableProperties;
+	struct LogFile;
 }
 
 //

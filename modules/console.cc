@@ -2582,6 +2582,55 @@ console_cmd__db__sst__dump(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__db__wal(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname",
+	}};
+
+	const auto dbname
+	{
+		param.at("dbname")
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	const db::database::wal::info::vector vec
+	{
+		database
+	};
+
+	out
+	<< std::setw(12) << std::left << "PATH" << "  "
+	<< std::setw(8) << std::left << "ID" << "  "
+	<< std::setw(12) << std::right << "START SEQ" << "  "
+	<< std::setw(20) << std::left << "SIZE" << "  "
+	<< std::setw(8) << std::left << "STATUS" << "  "
+	<< std::endl;
+
+	for(const auto &info : vec)
+		out
+		<< std::setw(12) << std::left << info.name << "  "
+		<< std::setw(8) << std::left << info.number << "  "
+		<< std::setw(12) << std::right << info.seq << "  "
+		<< std::setw(20) << std::left << pretty(iec(info.size)) << "  "
+		<< std::setw(8) << std::left << (info.alive? "LIVE"_sv : "ARCHIVE"_sv) << "  "
+		<< std::endl;
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__files(opt &out, const string_view &line)
 try
 {
