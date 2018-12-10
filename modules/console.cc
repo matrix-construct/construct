@@ -1467,11 +1467,6 @@ try
 		return true;
 	}
 
-	db::column column
-	{
-		database, colname
-	};
-
 	const bool integer
 	{
 		begin? try_lex_cast<uint64_t>(begin) : false
@@ -1489,10 +1484,25 @@ try
 		integer && end? byte_view<string_view>(integers[1]) : end,
 	};
 
-	compact(column, range, level);
+	const auto compact_column{[&out, &database, &level, &range]
+	(const string_view &colname)
+	{
+		db::column column
+		{
+			database, colname
+		};
 
-	if(level > -2)
-		compact(column, level);
+		compact(column, range, level);
+
+		if(level > -2)
+			compact(column, level);
+	}};
+
+	if(colname != "*")
+		compact_column(colname);
+	else
+		for(const auto &column : database.columns)
+			compact_column(name(*column));
 
 	out << "done" << std::endl;
 	return true;
