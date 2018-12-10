@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_DB_DATABASE_LOGS_H
+#define HAVE_IRCD_DB_DATABASE_LOGGER_H
 
 // This file is not part of the standard include stack because it requires
 // RocksDB symbols which we cannot forward declare. It is used internally
 // and does not need to be included by general users of IRCd.
 
-struct ircd::db::database::logs final
-:std::enable_shared_from_this<struct database::logs>
+struct ircd::db::database::logger final
+:std::enable_shared_from_this<struct database::logger>
 ,rocksdb::Logger
 {
 	database *d;
@@ -27,6 +27,6 @@ struct ircd::db::database::logs final
 
 	rocksdb::Status Close() noexcept override;
 
-	logs(database *const &d);
-	~logs() noexcept override;
+	logger(database *const &d);
+	~logger() noexcept override;
 };

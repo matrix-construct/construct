@@ -76,7 +76,7 @@ struct ircd::db::database
 	struct options;
 	struct events;
 	struct stats;
-	struct logs;
+	struct logger;
 	struct mergeop;
 	struct snapshot;
 	struct comparator;
@@ -93,8 +93,8 @@ struct ircd::db::database
 	std::string optstr;
 	bool fsck, read_only;
 	std::shared_ptr<struct env> env;
-	std::shared_ptr<struct logs> logs;
 	std::shared_ptr<struct stats> stats;
+	std::shared_ptr<struct logger> logger;
 	std::shared_ptr<struct events> events;
 	std::shared_ptr<struct mergeop> mergeop;
 	std::shared_ptr<rocksdb::SstFileManager> ssts;

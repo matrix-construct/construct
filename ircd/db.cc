@@ -36,7 +36,7 @@
 #include <ircd/db/database/mergeop.h>
 #include <ircd/db/database/events.h>
 #include <ircd/db/database/stats.h>
-#include <ircd/db/database/logs.h>
+#include <ircd/db/database/logger.h>
 #include <ircd/db/database/column.h>
 #include <ircd/db/database/txn.h>
 #include <ircd/db/database/cache.h>
@@ -841,13 +841,13 @@ try
 {
 	std::make_shared<struct env>(this)
 }
-,logs
-{
-	std::make_shared<struct logs>(this)
-}
 ,stats
 {
 	std::make_shared<struct stats>(this)
+}
+,logger
+{
+	std::make_shared<struct logger>(this)
 }
 ,events
 {
@@ -863,7 +863,7 @@ try
 	// note: a pthread internally in rocksdb which does not use our callbacks
 	// note: we gave in the supplied env. we really don't want that.
 
-	//rocksdb::NewSstFileManager(env.get(), logs, {}, 0, true, nullptr, 0.05)
+	//rocksdb::NewSstFileManager(env.get(), logger, {}, 0, true, nullptr, 0.05)
 }
 ,row_cache
 {
@@ -972,9 +972,9 @@ try
 	opts->sst_file_manager = this->ssts;
 
 	// Setup logging
-	logs->SetInfoLogLevel(ircd::debugmode? rocksdb::DEBUG_LEVEL : rocksdb::WARN_LEVEL);
-	opts->info_log_level = logs->GetInfoLogLevel();
-	opts->info_log = logs;
+	logger->SetInfoLogLevel(ircd::debugmode? rocksdb::DEBUG_LEVEL : rocksdb::WARN_LEVEL);
+	opts->info_log_level = logger->GetInfoLogLevel();
+	opts->info_log = logger;
 
 	// Setup event and statistics callbacks
 	opts->listeners.emplace_back(this->events);
@@ -1857,22 +1857,22 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// database::logs
+// database::logger
 //
 
-ircd::db::database::logs::logs(database *const &d)
+ircd::db::database::logger::logger(database *const &d)
 :rocksdb::Logger{}
 ,d{d}
 {
 }
 
-ircd::db::database::logs::~logs()
+ircd::db::database::logger::~logger()
 noexcept
 {
 }
 
 rocksdb::Status
-ircd::db::database::logs::Close()
+ircd::db::database::logger::Close()
 noexcept
 {
 	return rocksdb::Status::NotSupported();
@@ -1898,16 +1898,16 @@ translate(const rocksdb::InfoLogLevel &level)
 }
 
 void
-ircd::db::database::logs::Logv(const char *const fmt,
-                               va_list ap)
+ircd::db::database::logger::Logv(const char *const fmt,
+                                 va_list ap)
 noexcept
 {
 	Logv(rocksdb::InfoLogLevel::DEBUG_LEVEL, fmt, ap);
 }
 
 void
-ircd::db::database::logs::LogHeader(const char *const fmt,
-                                    va_list ap)
+ircd::db::database::logger::LogHeader(const char *const fmt,
+                                      va_list ap)
 noexcept
 {
 	Logv(rocksdb::InfoLogLevel::DEBUG_LEVEL, fmt, ap);
@@ -1916,9 +1916,9 @@ noexcept
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsuggest-attribute=format"
 void
-ircd::db::database::logs::Logv(const rocksdb::InfoLogLevel level,
-                               const char *const fmt,
-                               va_list ap)
+ircd::db::database::logger::Logv(const rocksdb::InfoLogLevel level,
+                                 const char *const fmt,
+                                 va_list ap)
 noexcept
 {
 	if(level < GetInfoLogLevel())
