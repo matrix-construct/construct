@@ -253,13 +253,13 @@ struct ircd::m::vm::error
 {
 	vm::fault code;
 
-	template<class... args> error(const fault &code, const char *const &fmt, args&&... a);
-	template<class... args> error(const char *const &fmt, args&&... a);
+	template<class... args> error(const fault &code, const string_view &fmt, args&&... a);
+	template<class... args> error(const string_view &fmt, args&&... a);
 };
 
 template<class... args>
 ircd::m::vm::error::error(const fault &code,
-                          const char *const &fmt,
+                          const string_view &fmt,
                           args&&... a)
 :m::error
 {
@@ -272,7 +272,7 @@ ircd::m::vm::error::error(const fault &code,
 {}
 
 template<class... args>
-ircd::m::vm::error::error(const char *const &fmt,
+ircd::m::vm::error::error(const string_view &fmt,
                           args&&... a)
 :m::error
 {

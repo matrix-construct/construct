@@ -34,8 +34,8 @@ class ircd::m::error
 	static thread_local char fmtbuf[768];
 
   public:
-	template<class... args> error(const http::code &, const string_view &errcode, const char *const &fmt, args&&...);
-	template<class... args> error(const string_view &errcode, const char *const &fmt, args&&...);
+	template<class... args> error(const http::code &, const string_view &errcode, const string_view &fmt, args&&...);
+	template<class... args> error(const string_view &errcode, const string_view &fmt, args&&...);
 	error(const http::code &, const json::object &object);
 	error(const http::code &, const json::members &);
 	error(const http::code &, const json::iov &);
@@ -76,7 +76,7 @@ struct _name_                                                           \
         child, _httpcode_, "M_"#_name_, "%s", http::status(_httpcode_)  \
     }{}                                                                 \
                                                                         \
-    template<class... args> _name_(const char *const &fmt, args&&... a) \
+    template<class... args> _name_(const string_view &fmt, args&&... a) \
     : _parent_                                                          \
     {                                                                   \
         child, _httpcode_, "M_"#_name_, fmt, std::forward<args>(a)...   \
@@ -110,7 +110,7 @@ namespace ircd::m
 template<class... args>
 ircd::m::error::error(const http::code &status,
                       const string_view &errcode,
-                      const char *const &fmt,
+                      const string_view &fmt,
                       args&&... a)
 :http::error
 {
@@ -131,7 +131,7 @@ ircd::m::error::error(const http::code &status,
 
 template<class... args>
 ircd::m::error::error(const string_view &errcode,
-                      const char *const &fmt,
+                      const string_view &fmt,
                       args&&... a)
 :error
 {

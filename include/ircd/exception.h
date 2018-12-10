@@ -91,8 +91,8 @@ struct ircd::exception
 
 	char buf[BUFSIZE];
 
-	ssize_t generate(const char *const &name, const char *const &fmt, const va_rtti &ap) noexcept;
-	ssize_t generate(const char *const &fmt, const va_rtti &ap) noexcept;
+	ssize_t generate(const char *const &name, const string_view &fmt, const va_rtti &ap) noexcept;
+	ssize_t generate(const string_view &fmt, const va_rtti &ap) noexcept;
 
   public:
 	const char *what() const noexcept final override
@@ -162,7 +162,7 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    name(const char *const &fmt = " ", args&&... ap) noexcept                 \
+    name(const string_view &fmt = " ", args&&... ap) noexcept                 \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(#name, fmt, ircd::va_rtti{std::forward<args>(ap)...});       \
@@ -180,7 +180,7 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    name(const char *const &fmt = " ", args&&... ap) noexcept                 \
+    name(const string_view &fmt = " ", args&&... ap) noexcept                 \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(fmt, ircd::va_rtti{std::forward<args>(ap)...});              \
@@ -204,7 +204,7 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    name(const char *const &fmt = " ", args&&... ap) noexcept(RB_DEBUG_LEVEL) \
+    name(const string_view &fmt = " ", args&&... ap) noexcept(RB_DEBUG_LEVEL) \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(#name, fmt, ircd::va_rtti{std::forward<args>(ap)...});       \

@@ -200,7 +200,7 @@ ircd::make_error_code(const std::error_code &ec)
 //
 
 ssize_t
-ircd::exception::generate(const char *const &fmt,
+ircd::exception::generate(const string_view &fmt,
                           const va_rtti &ap)
 noexcept
 {
@@ -209,7 +209,7 @@ noexcept
 
 ssize_t
 ircd::exception::generate(const char *const &name,
-                          const char *const &fmt,
+                          const string_view &fmt,
                           const va_rtti &ap)
 noexcept
 {

@@ -50,7 +50,7 @@ struct ircd::http::error
 	error() = default;
 	error(const http::code &, std::string content = {}, std::string headers = {});
 	error(const http::code &, std::string content, const vector_view<const header> &);
-	template<class... args> error(const http::code &, const char *const &fmt, args&&...);
+	template<class... args> error(const http::code &, const string_view &fmt, args&&...);
 };
 
 /// Represents a single \r\n delimited line used in HTTP.
@@ -335,7 +335,7 @@ const
 
 template<class... args>
 ircd::http::error::error(const http::code &code,
-                         const char *const &fmt,
+                         const string_view &fmt,
                          args&&... a)
 :http::error
 {
