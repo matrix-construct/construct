@@ -999,7 +999,7 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out_,
 std::pair<uint64_t, ircd::m::event::idx>
 ircd::m::dbs::room_events_key(const string_view &amalgam)
 {
-	assert(size(amalgam) == 1 + 8 + 8 || size(amalgam) == 1 + 8);
+	assert(size(amalgam) >= 1 + 8 + 8 || size(amalgam) == 1 + 8);
 	assert(amalgam.front() == '\0');
 
 	const uint64_t &depth
