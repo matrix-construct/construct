@@ -1494,7 +1494,7 @@ try
 
 		compact(column, range, level);
 
-		if(level > -2)
+		if(level >= -1 && range.first.empty() && range.second.empty())
 			compact(column, level);
 	}};
 
