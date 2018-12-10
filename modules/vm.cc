@@ -20,6 +20,9 @@ namespace ircd::m::vm
 	static fault _eval_edu(eval &, const event &);
 	static fault _eval_pdu(eval &, const event &);
 
+	template<class... args>
+	static fault handle_error(const opts &opts, const fault &code, const string_view &fmt, args&&... a);
+
 	extern "C" fault eval__event(eval &, const event &);
 	extern "C" fault eval__commit(eval &, json::iov &, const json::iov &);
 	extern "C" fault eval__commit_room(eval &, const room &, json::iov &, const json::iov &);
@@ -493,103 +496,76 @@ try
 
 	return ret;
 }
-catch(const ctx::interrupted &e) // INTERRUPTION
-{
-	if(eval.opts->errorlog & fault::INTERRUPT)
-		log::error
-		{
-			log, "eval %s: #NMI: %s",
-			json::get<"event_id"_>(event)?: json::string{"<edu>"},
-			e.what()
-		};
-
-	if(eval.opts->warnlog & fault::INTERRUPT)
-		log::warning
-		{
-			log, "eval %s: #NMI: %s",
-			json::get<"event_id"_>(event)?: json::string{"<edu>"},
-			e.what()
-		};
-
-	throw;
-}
 catch(const error &e) // VM FAULT CODE
 {
-	if(eval.opts->errorlog & e.code)
-		log::error
-		{
-			log, "eval %s: %s: %s %s",
-			json::get<"event_id"_>(event)?: json::string{"<edu>"},
-			reflect(e.code),
-			e.what(),
-			e.content
-		};
-
-	if(eval.opts->warnlog & e.code)
-		log::warning
-		{
-			log, "eval %s: %s: %s %s",
-			json::get<"event_id"_>(event)?: json::string{"<edu>"},
-			reflect(e.code),
-			e.what(),
-			e.content
-		};
-
-	if(eval.opts->nothrows & e.code)
-		return e.code;
-
-	throw;
+	return handle_error
+	(
+		*eval.opts, e.code,
+		"eval %s %s: %s %s",
+		json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		reflect(e.code),
+		e.what(),
+		e.content
+	);
 }
 catch(const m::error &e) // GENERAL MATRIX ERROR
 {
-	if(eval.opts->errorlog & fault::GENERAL)
-		log::error
-		{
-			log, "eval %s: #GP: %s :%s",
-			json::get<"event_id"_>(event)?: json::string{"<edu>"},
-			e.what(),
-			e.content
-		};
-
-	if(eval.opts->warnlog & fault::GENERAL)
-		log::warning
-		{
-			log, "eval %s: #GP: %s :%s",
-			json::get<"event_id"_>(event)?: json::string{"<edu>"},
-			e.what(),
-			e.content
-		};
-
-	if(eval.opts->nothrows & fault::GENERAL)
-		return fault::GENERAL;
-
-	throw;
+	return handle_error
+	(
+		*eval.opts, fault::GENERAL,
+		"eval %s #GP (General Protection): %s %s",
+		json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		e.what(),
+		e.content
+	);
+}
+catch(const ctx::interrupted &e) // INTERRUPTION
+{
+	return handle_error
+	(
+		*eval.opts, fault::INTERRUPT,
+		"eval %s #NMI (Interrupted): %s",
+		json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		e.what()
+	);
 }
 catch(const std::exception &e) // ALL OTHER ERRORS
 {
-	if(eval.opts->errorlog & fault::GENERAL)
+	return handle_error
+	(
+		*eval.opts, fault::GENERAL,
+		"eval %s #GP (General Protection): %s",
+		json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		e.what()
+	);
+}
+
+template<class... args>
+ircd::m::vm::fault
+ircd::m::vm::handle_error(const vm::opts &opts,
+                          const vm::fault &code,
+                          const string_view &fmt,
+                          args&&... a)
+{
+	if(opts.errorlog & code)
 		log::error
 		{
-			log, "eval %s: #GP: %s",
-			json::get<"event_id"_>(event)?: json::string{"<edu>"},
-			e.what()
+			log, fmt, std::forward<args>(a)...
 		};
 
-	if(eval.opts->warnlog & fault::GENERAL)
+	if(opts.warnlog & code)
 		log::warning
 		{
-			log, "eval %s: #GP: %s",
-			json::get<"event_id"_>(event)?: json::string{"<edu>"},
-			e.what()
+			log, fmt, std::forward<args>(a)...
 		};
 
-	if(eval.opts->nothrows & fault::GENERAL)
-		return fault::GENERAL;
+	if(~opts.nothrows & code)
+		throw error
+		{
+			code, fmt, std::forward<args>(a)...
+		};
 
-	throw error
-	{
-		fault::GENERAL, "%s", e.what()
-	};
+	return code;
 }
 
 enum ircd::m::vm::fault
