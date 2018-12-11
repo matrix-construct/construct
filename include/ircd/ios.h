@@ -19,6 +19,7 @@
 namespace boost::asio
 {
 	struct io_context;
+	struct signal_set;
 }
 
 namespace ircd
