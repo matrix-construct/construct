@@ -421,6 +421,7 @@ ircd::fs::support::aio_fdsync
 
 ircd::string_view
 ircd::fs::stdin::readline(const mutable_buffer &buf)
+try
 {
 	boost::asio::posix::stream_descriptor fd
 	{
@@ -449,6 +450,11 @@ ircd::fs::stdin::readline(const mutable_buffer &buf)
 	{
 		data(buf), size_t(is.gcount())
 	};
+}
+catch(boost::system::system_error &e)
+{
+	throw_system_error(e);
+	__builtin_unreachable();
 }
 
 //
