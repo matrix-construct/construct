@@ -2353,10 +2353,10 @@ _print_sst_info_header(opt &out)
 	    << "  " << std::setw(9) << "blocks"
 	    << "  " << std::setw(9) << "entries"
 	    << "  " << std::setw(25) << "file size"
+	    << "  " << std::setw(3) << "lev"
 	    << "  " << std::setw(23) << "key range"
 	    << "  " << std::setw(25) << "sequence number"
 	    << "  " << std::setw(32) << "creation"
-	    << "  " << std::setw(3) << "lev"
 	    << "  " << std::setw(2) << "ID"
 	    << std::left
 	    << "  " << std::setw(20) << "column"
@@ -2387,10 +2387,10 @@ _print_sst_info(opt &out,
 	    << "  " << std::setw(9) << std::right << f.data_blocks
 	    << "  " << std::setw(9) << std::right << f.entries
 	    << "  " << std::setw(25) << std::right << pretty(iec(f.size))
+	    << "  " << std::setw(3) << std::right << f.level
 	    << "  " << std::setw(10) << std::right << min_key << " : " << std::setw(10) << std::left << max_key
 	    << "  " << std::setw(11) << std::right << f.min_seq << " : " << std::setw(11) << std::left << f.max_seq
 	    << "  " << std::setw(32) << std::right << timestr(f.created, ircd::localtime)
-	    << "  " << std::setw(3) << std::right << f.level
 	    << "  " << std::setw(2) << std::right << f.cfid
 	    << "  " << std::setw(20) << std::left << f.column
 	    << std::endl;
