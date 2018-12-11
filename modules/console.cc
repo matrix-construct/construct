@@ -1493,9 +1493,61 @@ try
 		};
 
 		compact(column, range, level);
+	}};
 
-		if(level >= -1 && range.first.empty() && range.second.empty())
-			compact(column, level);
+	if(colname != "*")
+		compact_column(colname);
+	else
+		for(const auto &column : database.columns)
+			compact_column(name(*column));
+
+	out << "done" << std::endl;
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
+console_cmd__db__compact__files(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "[colname]", "[level]"
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	const auto colname
+	{
+		param.at(1, "*"_sv)
+	};
+
+	const auto level
+	{
+		param.at(2, -1)
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	const auto compact_column{[&out, &database, &level]
+	(const string_view &colname)
+	{
+		db::column column
+		{
+			database, colname
+		};
+
+		compact(column, level);
 	}};
 
 	if(colname != "*")
