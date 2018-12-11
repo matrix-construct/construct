@@ -524,7 +524,7 @@ catch(const ctx::interrupted &e) // INTERRUPTION
 	return handle_error
 	(
 		*eval.opts, fault::INTERRUPT,
-		"eval %s #NMI (Interrupted): %s",
+		"eval %s #NMI: %s",
 		json::get<"event_id"_>(event)?: json::string{"<edu>"},
 		e.what()
 	);
