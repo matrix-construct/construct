@@ -15,220 +15,176 @@ using namespace ircd;
 
 IRCD_EXCEPTION_HIDENAME(ircd::error, bad_command)
 
-bool console_active;
-bool console_inwork;
-ircd::ctx::ctx *console_ctx;
-ircd::module *console_module;
-std::string record_path;
+decltype(construct::console)
+construct::console;
 
-const char *const
-generic_message
-{R"(
-*** - To end the console session: type exit, or ctrl-d    -> EOF
-*** - To shutdown cleanly: type die, or ctrl-\            -> SIGQUIT
-*** - To generate a coredump for developers, type ABORT   -> abort()
-***
-)"};
-
-conf::item<size_t>
-stack_sz
+decltype(construct::console::stack_sz)
+construct::console::stack_sz
 {
 	{ "name",     "construct.console.stack.size" },
 	{ "default",  long(2_MiB)                    },
 };
 
-conf::item<milliseconds>
-ratelimit_sleep
+decltype(construct::console::input_max)
+construct::console::input_max
+{
+	{ "name",     "construct.console.input.max" },
+	{ "default",  long(64_KiB)                  },
+};
+
+decltype(construct::console::ratelimit_sleep)
+construct::console::ratelimit_sleep
 {
 	{ "name",     "construct.console.ratelimit.sleep" },
 	{ "default",  75L                                 },
 };
 
-conf::item<size_t>
-ratelimit_bytes
+decltype(construct::console::ratelimit_bytes)
+construct::console::ratelimit_bytes
 {
 	{ "name",     "construct.console.ratelimit.bytes" },
 	{ "default",  long(2_KiB)                         },
 };
 
-static void check_console_active();
-static void console_fini();
-static void console_init();
-static bool console_cmd__record(const string_view &line);
-static int handle_line_bymodule(const string_view &line);
-static bool handle_line(const string_view &line);
-static void execute(const std::vector<std::string> lines);
-static void console();
+decltype(construct::console::generic_message)
+construct::console::generic_message
+{R"(
+*** - To end the console session: type exit, or ctrl-d    -> EOF
+*** - To shutdown cleanly: type die, or ctrl-\            -> SIGQUIT
+*** - To generate a coredump for developers, type ABORT   -> abort()
+***)"_sv
+};
 
-void
-console_spawn()
-{
-	check_console_active();
-	ircd::context
-	{
-		"console",
-		stack_sz,
-		console,
-		ircd::context::DETACH | ircd::context::POST
-	};
-}
-
-void
-console_execute(const std::vector<std::string> &lines)
-{
-	check_console_active();
-	ircd::context
-	{
-		"execute",
-		stack_sz,
-		std::bind(&execute, lines),
-		ircd::context::DETACH | ircd::context::POST
-	};
-}
-
-void
-console_init()
-{
-	console_cancel();
-	console_active = true;
-	console_ctx = &ctx::cur();
-	console_module = new ircd::module{"console"};
-}
-
-void
-console_fini()
-{
-	console_active = false;
-	console_ctx = nullptr;
-	delete console_module; console_module = nullptr;
-	std::cin.clear();
-}
-
-const char *const console_message
+decltype(construct::console::console_message)
+construct::console::console_message
 {R"(
 ***
 *** The server is still running in the background. This is the
 *** terminal console also available in your !control room.
-***)"};
+***)"_sv
+};
+
+decltype(construct::console::seen_message)
+construct::console::seen_message;
+
+decltype(construct::console::queue)
+construct::console::queue;
+
+bool
+construct::console::spawn()
+{
+	if(active())
+		return false;
+
+	construct::console = new console;
+	return true;
+}
+
+bool
+construct::console::execute(std::string cmd)
+{
+	console::queue.emplace_back(std::move(cmd));
+	console::spawn();
+	return true;
+}
+
+bool
+construct::console::interrupt()
+{
+	if(active())
+	{
+		construct::console->context.interrupt();
+		return true;
+	}
+	return false;
+}
+
+bool
+construct::console::terminate()
+{
+	if(active())
+	{
+		construct::console->context.terminate();
+		return true;
+	}
+	return false;
+}
+
+bool
+construct::console::active()
+{
+	return construct::console != nullptr;
+}
+
+//
+// console::console
+//
+
+construct::console::console()
+:context
+{
+	"console",
+	stack_sz,
+	std::bind(&console::main, this),
+	ircd::context::POST
+}
+,runlevel_changed
+{
+	std::bind(&console::on_runlevel, this, std::placeholders::_1)
+}
+{
+}
 
 void
-console()
+construct::console::main()
 try
 {
-	ircd::runlevel_changed::dock.wait([]
+	const unwind destruct{[]
 	{
-		return ircd::runlevel == ircd::runlevel::RUN ||
-		       ircd::runlevel == ircd::runlevel::QUIT ||
-		       ircd::runlevel == ircd::runlevel::HALT;
-	});
+		construct::console->context.detach();
+		delete construct::console;
+		construct::console = nullptr;
+	}};
 
-	if(ircd::runlevel != ircd::runlevel::RUN)
+	if(!wait_running())
 		return;
 
-	const unwind atexit([]
+	ircd::module module{"console"};
+	this->module = &module;
+
+	if(next_command())
 	{
-		console_fini();
-	});
+		while(handle_line())
+			if(!next_command())
+				break;
 
-	console_init();
-	static std::once_flag seen_message;
-	std::call_once(seen_message, []
-	{
-		std::cout << console_message << generic_message;
-	});
-
-	while(1)
-	{
-		std::cout << "\n> " << std::flush;
-
-		thread_local char buf[64_KiB];
-		string_view line;
-		// Suppression scope ends after the command is entered
-		// so the output of the command (if log messages) can be seen.
-		{
-			const log::console_quiet quiet(false);
-			line = fs::stdin::readline(buf);
-		}
-
-		if(line.empty())
-			continue;
-
-		if(!handle_line(line))
-			break;
-
-		ctx::interruption_point();
+		return;
 	}
 
-	std::cout << std::endl;
+	show_message(); do
+	{
+		wait_input();
+	}
+	while(handle_line());
 }
 catch(const std::exception &e)
 {
-	std::cout << std::endl;
-	std::cout << "***" << std::endl;
-	std::cout << "*** The console session has ended: " << e.what() << std::endl;
-	std::cout << "***" << std::endl;
+	std::cout
+	<< "\n***"
+	<< "\n*** The console session has ended: " << e.what()
+	<< "\n***"
+	<< std::endl;
 
-	ircd::log::debug
+	log::debug
 	{
 		"The console session has ended: %s", e.what()
 	};
 }
 
-void
-execute(const std::vector<std::string> lines)
-try
-{
-	ircd::runlevel_changed::dock.wait([]
-	{
-		return ircd::runlevel == ircd::runlevel::RUN ||
-		       ircd::runlevel == ircd::runlevel::HALT;
-	});
-
-	if(ircd::runlevel == ircd::runlevel::HALT)
-		return;
-
-	const unwind atexit([]
-	{
-		console_fini();
-	});
-
-	console_init();
-	for(const auto &line : lines)
-	{
-		if(line.empty())
-			continue;
-
-		if(!handle_line(line))
-			break;
-	}
-}
-catch(const std::exception &e)
-{
-	std::cout << std::endl;
-	std::cout << "***\n";
-	std::cout << "*** The execution aborted: " << e.what() << "\n";
-	std::cout << "***" << std::endl;
-
-	std::cout << std::flush;
-	std::cout.clear();
-	ircd::log::debug
-	{
-		"The execution aborted: %s", e.what()
-	};
-}
-
 bool
-handle_line(const string_view &line)
+construct::console::handle_line()
 try
 {
-	// _theirs is copied for recursive reentrance
-	const unwind outwork{[console_inwork_theirs(console_inwork)]
-	{
-		console_inwork = console_inwork_theirs;
-	}};
-
-	console_inwork = true;
-
 	if(line == "ABORT")
 		abort();
 
@@ -236,10 +192,10 @@ try
 		exit(0);
 
 	if(startswith(line, "record"))
-		return console_cmd__record(tokens_after(line, ' ', 0));
+		return cmd__record();
 
 	int ret{-1};
-	if(console_module) switch((ret = handle_line_bymodule(line)))
+	if(module) switch((ret = handle_line_bymodule()))
 	{
 		default:  break;
 		case 0:   return false;
@@ -261,9 +217,9 @@ catch(const bad_command &e)
 	std::cerr << "Bad command or file name: " << e.what() << std::endl;
 	return true;
 }
-catch(const ircd::http::error &e)
+catch(const http::error &e)
 {
-	ircd::log::error
+	log::error
 	{
 		"%s %s", e.what(), e.content
 	};
@@ -272,7 +228,7 @@ catch(const ircd::http::error &e)
 }
 catch(const std::exception &e)
 {
-	ircd::log::error
+	log::error
 	{
 		"%s", e.what()
 	};
@@ -281,12 +237,13 @@ catch(const std::exception &e)
 }
 
 int
-handle_line_bymodule(const string_view &line)
+construct::console::handle_line_bymodule()
 {
 	using prototype = int (std::ostream &, const string_view &, const string_view &);
-	const ircd::mods::import<prototype> command
+
+	const mods::import<prototype> command
 	{
-		*console_module, "console_command"
+		*module, "console_command"
 	};
 
 	std::ostringstream out;
@@ -322,7 +279,7 @@ handle_line_bymodule(const string_view &line)
 				// to the output following it.
 				const std::string cmdline
 				{
-					"\n> "s + std::string{line} + "\n\n"
+					"\n> "s + line + "\n\n"
 				};
 
 				append(fd, string_view(cmdline));
@@ -369,15 +326,20 @@ handle_line_bymodule(const string_view &line)
 }
 
 bool
-console_cmd__record(const string_view &line)
+construct::console::cmd__record()
 {
-	if(empty(line) && empty(record_path))
+	const string_view &args
+	{
+		tokens_after(line, ' ', 0)
+	};
+
+	if(empty(args) && empty(record_path))
 	{
 		std::cout << "Console not currently recorded to any file." << std::endl;
 		return true;
 	}
 
-	if(empty(line) && !empty(record_path))
+	if(empty(args) && !empty(record_path))
 	{
 		std::cout << "Stopped recording to file `" << record_path << "'" << std::endl;
 		record_path = {};
@@ -386,7 +348,7 @@ console_cmd__record(const string_view &line)
 
 	const auto path
 	{
-		token(line, ' ', 0)
+		token(args, ' ', 0)
 	};
 
 	std::cout << "Recording console to file `" << path << "'" << std::endl;
@@ -395,57 +357,80 @@ console_cmd__record(const string_view &line)
 }
 
 void
-check_console_active()
+construct::console::wait_input()
 {
-	if(console_active)
-		throw ircd::error
+	line = {}; do
+	{
+		// Suppression scope ends after the command is entered
+		// so the output of the command (if log messages) can be seen.
+		const log::console_quiet quiet(false);
+		std::cout << "\n> " << std::flush;
+
+		line.resize(size_t(input_max));
+		const mutable_buffer buffer
 		{
-			"Console is already active and cannot be reentered"
+			const_cast<char *>(line.data()), line.size()
 		};
+
+		const string_view read
+		{
+			fs::stdin::readline(buffer)
+		};
+
+		line.resize(size(read));
+	}
+	while(line.empty());
 }
 
-void
-console_hangup()
-try
+bool
+construct::console::next_command()
 {
-	using log::console_quiet;
-
-	console_cancel();
-
-	static console_quiet *quieted;
-	if(!quieted)
+	line = {};
+	while(!queue.empty() && line.empty())
 	{
-		log::notice("Suppressing console log output after terminal hangup");
-		quieted = new console_quiet;
-		return;
+		line = std::move(queue.front());
+		queue.pop_front();
 	}
 
-	log::notice("Reactivating console logging after second hangup");
-	delete quieted;
-	quieted = nullptr;
-}
-catch(const std::exception &e)
-{
-	ircd::log::error
-	{
-		"console_hangup(): %s", e.what()
-	};
+	return !line.empty();
 }
 
 void
-console_cancel()
-try
+construct::console::on_runlevel(const enum ircd::runlevel &runlevel)
 {
-	if(!console_active)
-		return;
-
-	if(console_ctx)
-		interrupt(*console_ctx);
-}
-catch(const std::exception &e)
-{
-	ircd::log::error
+	switch(runlevel)
 	{
-		"Interrupting console: %s", e.what()
-	};
+		case ircd::runlevel::QUIT:
+		case ircd::runlevel::HALT:
+		case ircd::runlevel::FAULT:
+			console::terminate();
+			break;
+
+		default:
+			break;
+	}
+}
+
+bool
+construct::console::wait_running()
+const
+{
+	ircd::runlevel_changed::dock.wait([]
+	{
+		return ircd::runlevel == ircd::runlevel::RUN ||
+		       ircd::runlevel == ircd::runlevel::QUIT ||
+		       ircd::runlevel == ircd::runlevel::HALT;
+	});
+
+	return ircd::runlevel == ircd::runlevel::RUN;
+}
+
+void
+construct::console::show_message()
+const
+{
+	std::call_once(seen_message, []
+	{
+		std::cout << console_message << generic_message;
+	});
 }

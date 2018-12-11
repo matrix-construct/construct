@@ -14,7 +14,6 @@
 #include "lgetopt.h"
 #include "construct.h"
 
-static void sigfd_handler(const boost::system::error_code &, int) noexcept;
 static bool startup_checks();
 static void applyargs();
 static void enable_coredumps();
@@ -75,11 +74,6 @@ std::unique_ptr<boost::asio::io_context> ios
 {
 	// Having trouble with static dtor in clang so this has tp be dynamic
 	std::make_unique<boost::asio::io_context>()
-};
-
-boost::asio::signal_set sigs
-{
-	*ios
 };
 
 int main(int argc, char *const *argv)
@@ -147,39 +141,15 @@ try
 	// event loop. This means we lose the true instant hardware-interrupt gratitude
 	// of signals but with the benefit of unconditional safety and cross-
 	// platformness with windows etc.
-	sigs.add(SIGHUP);
-	sigs.add(SIGINT);
-	sigs.add(SIGQUIT);
-	sigs.add(SIGTERM);
-	sigs.add(SIGUSR1);
-	sigs.async_wait(sigfd_handler);
-
-	// Because we registered signal handlers with the io_context, ios->run()
-	// is now shared between those handlers and libircd. This means the run()
-	// won't return even if we call ircd::quit(). We use the callback to then
-	// cancel the handlers so run() can return and the program can exit.
-	const ircd::runlevel_changed handler{[]
-	(const auto &runlevel)
-	{
-		switch(runlevel)
-		{
-			case ircd::runlevel::HALT:
-			case ircd::runlevel::FAULT:
-				sigs.cancel();
-				break;
-
-			default:
-				break;
-		}
-	}};
+	const construct::signals signals{*ios};
 
 	// If the user wants to immediately drop to a command line without having to
 	// send a ctrl-c for it, that is provided here.
 	if(cmdline)
-		console_spawn();
+		construct::console::spawn();
 
 	if(execute)
-		console_execute({execute});
+		construct::console::execute({execute});
 
 	// Execution.
 	// Blocks until a clean exit from a quit() or an exception comes out of it.
@@ -304,146 +274,4 @@ applyargs()
 		ircd::fs::aio::enable.set("false");
 	else
 		ircd::fs::aio::enable.set("true");
-}
-
-//
-// Signal handling
-//
-
-static void handle_quit();
-static void handle_interruption();
-static void handle_hangup();
-static void handle_usr1();
-static void handle(const int &signum);
-
-void
-sigfd_handler(const boost::system::error_code &ec,
-              int signum)
-noexcept
-{
-	switch(ec.value())
-	{
-		using namespace boost::system::errc;
-
-		case success:
-			break;
-
-		case operation_canceled:
-			console_cancel();
-			return;
-
-		default:
-			console_cancel();
-			throw std::runtime_error(ec.message());
-	}
-
-	handle(signum);
-
-	switch(ircd::runlevel)
-	{
-		case ircd::runlevel::QUIT:
-		case ircd::runlevel::FAULT:
-			return;
-
-		default:
-			sigs.async_wait(sigfd_handler);
-	}
-}
-
-void
-handle(const int &signum)
-{
-	switch(signum)
-	{
-		case SIGINT:   return handle_interruption();
-		case SIGHUP:   return handle_hangup();
-		case SIGQUIT:  return handle_quit();
-		case SIGTERM:  return handle_quit();
-		case SIGUSR1:  return handle_usr1();
-	}
-}
-
-void
-handle_quit()
-try
-{
-	console_cancel();
-	ircd::quit();
-}
-catch(const std::exception &e)
-{
-	ircd::log::error
-	{
-		"SIGQUIT handler: %s", e.what()
-	};
-}
-
-void
-handle_hangup()
-try
-{
-	console_hangup();
-}
-catch(const std::exception &e)
-{
-	ircd::log::error
-	{
-		"SIGHUP handler: %s", e.what()
-	};
-}
-
-void
-handle_interruption()
-try
-{
-	if(console_active)
-		console_cancel();
-	else
-		console_spawn();
-}
-catch(const std::exception &e)
-{
-	ircd::log::error
-	{
-		"SIGINT handler: %s", e.what()
-	};
-}
-
-void
-handle_usr1()
-try
-{
-	// Spawning the context that follows this branch and doing a rehash
-	// when not in a stable state like runlevel::RUN will just make a mess
-	// so any signal received is just dropped and the user can try again.
-	if(ircd::runlevel != ircd::runlevel::RUN)
-	{
-		ircd::log::warning
-		{
-			"Not rehashing conf from SIGUSR1 in runlevel %s",
-			reflect(ircd::runlevel)
-		};
-
-		return;
-	}
-
-	// This signal handler (though not a *real* signal handler) is still
-	// running on the main async stack and not an ircd::ctx. The reload
-	// function does a lot of IO so it requires an ircd::ctx.
-	ircd::context{[]
-	{
-		ircd::mods::import<void ()> reload_conf
-		{
-			"s_conf", "reload_conf"
-		};
-
-		reload_conf();
-	}};
-}
-catch(const std::exception &e)
-{
-	ircd::log::error
-	{
-		"SIGUSR1 handler: %s", e.what()
-	};
 }
