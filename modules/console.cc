@@ -2750,6 +2750,9 @@ try
 	for(const auto &info : vector)
 		_print_sst_info(out, info);
 
+	out << "-- " << vector.size() << " files"
+	    << std::endl;
+
 	return true;
 }
 catch(const std::out_of_range &e)
