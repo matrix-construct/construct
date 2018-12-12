@@ -2493,17 +2493,17 @@ noexcept
 {
 	log::info
 	{
-		log, "'%s': flush complete column[%s] path[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		log, "'%s': %d flush '%s' ended ctx:%lu writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d `%s'",
 		d->name,
-		info.cf_name,
-		info.file_path,
-		info.thread_id,
 		info.job_id,
+		info.cf_name,
+		info.thread_id,
 		info.triggered_writes_slowdown,
 		info.triggered_writes_stop,
 		info.smallest_seqno,
 		info.largest_seqno,
-		int(info.flush_reason)
+		int(info.flush_reason),
+		info.file_path,
 	};
 }
 
@@ -2514,11 +2514,11 @@ noexcept
 {
 	log::info
 	{
-		log, "'%s': flush begin column[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		log, "'%s': %d flush '%s' start ctx:%lu writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
 		d->name,
+		info.job_id,
 		info.cf_name,
 		info.thread_id,
-		info.job_id,
 		info.triggered_writes_slowdown,
 		info.triggered_writes_stop,
 		info.smallest_seqno,
@@ -2534,17 +2534,18 @@ noexcept
 {
 	log::info
 	{
-		log, "'%s': compacted column[%s] ctx[%lu] job[%d] level[in:%d out:%d] files[in:%zu out:%zu] reason:%d :%s",
+		log, "'%s': %d compacted '%s' ctx:%lu level[in:%d out:%d] files[in:%zu out:%zu] reason:%d %d:%s",
 		d->name,
+		info.job_id,
 		info.cf_name,
 		info.thread_id,
-		info.job_id,
 		info.base_input_level,
 		info.output_level,
 		info.input_files.size(),
 		info.output_files.size(),
 		int(info.compaction_reason),
-		info.status.ToString()
+		int(info.status.code()),
+		info.status.getState()?: "OK",
 	};
 }
 
@@ -2554,12 +2555,13 @@ noexcept
 {
 	log::debug
 	{
-		log, "'%s': table file deleted: db[%s] file[%s] status[%d] job[%d]",
+		log, "'%s': %d table file delete [%s][%s] %d:%s",
 		d->name,
+		info.job_id,
 		info.db_name,
 		lstrip(info.file_path, info.db_name),
 		int(info.status.code()),
-		info.job_id
+		info.status.getState()?: "OK",
 	};
 }
 
@@ -2569,12 +2571,14 @@ noexcept
 {
 	log::debug
 	{
-		log, "'%s': table file created: db[%s] file[%s] status[%d] job[%d]",
+		log, "'%s': %d table file closed [%s][%s] '%s' %d:%s",
 		d->name,
+		info.job_id,
 		info.db_name,
 		lstrip(info.file_path, info.db_name),
+		info.cf_name,
 		int(info.status.code()),
-		info.job_id
+		info.status.getState()?: "OK",
 	};
 }
 
@@ -2584,12 +2588,12 @@ noexcept
 {
 	log::debug
 	{
-		log, "'%s': table file creating: db[%s] column[%s] file[%s] job[%d]",
+		log, "'%s': %d table file opened [%s][%s] '%s'",
 		d->name,
+		info.job_id,
 		info.db_name,
-		info.cf_name,
 		lstrip(info.file_path, info.db_name),
-		info.job_id
+		info.cf_name,
 	};
 }
 
@@ -2599,7 +2603,7 @@ noexcept
 {
 	log::debug
 	{
-		log, "'%s': memory table sealed: column[%s] entries[%lu] deletes[%lu]",
+		log, "'%s': memory table sealed '%s' entries:%lu deletes:%lu",
 		d->name,
 		info.cf_name,
 		info.num_entries,
