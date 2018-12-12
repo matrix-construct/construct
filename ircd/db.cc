@@ -2505,6 +2505,8 @@ noexcept
 		int(info.flush_reason),
 		info.file_path,
 	};
+
+	assert(info.thread_id == ctx::id(*ctx::current));
 }
 
 void
@@ -2525,6 +2527,8 @@ noexcept
 		info.largest_seqno,
 		int(info.flush_reason)
 	};
+
+	assert(info.thread_id == ctx::id(*ctx::current));
 }
 
 void
@@ -2547,6 +2551,8 @@ noexcept
 		int(info.status.code()),
 		info.status.getState()?: "OK",
 	};
+
+	assert(info.thread_id == ctx::id(*ctx::current));
 }
 
 void
