@@ -2449,18 +2449,20 @@ catch(const std::out_of_range &e)
 static void
 _print_sst_info_header(opt &out)
 {
-	out << std::left
+	out << std::left << std::setfill(' ')
 	    << std::setw(12) << "name"
+	    << "  " << std::setw(32) << "creation"
+	    << std::right
+	    << "  " << std::setw(23) << "key range"
+	    << "  " << std::setw(23) << "sequence number"
+	    << "  " << std::setw(3) << "lev"
+	    << std::left
+	    << "  " << std::setw(24) << "file size"
 	    << std::right
 	    << "  " << std::setw(6) << "idxs"
 	    << "  " << std::setw(9) << "blocks"
 	    << "  " << std::setw(9) << "entries"
-	    << "  " << std::setw(25) << "file size"
-	    << "  " << std::setw(3) << "lev"
-	    << "  " << std::setw(23) << "key range"
-	    << "  " << std::setw(25) << "sequence number"
-	    << "  " << std::setw(32) << "creation"
-	    << "  " << std::setw(2) << "ID"
+	    << "  " << std::setw(4) << "cfid"
 	    << std::left
 	    << "  " << std::setw(20) << "column"
 	    << std::endl;
@@ -2484,17 +2486,17 @@ _print_sst_info(opt &out,
 			0UL
 	};
 
-	out << std::left
+	out << std::left << std::setfill(' ')
 	    << std::setw(12) << f.name
+	    << "  " << std::setw(32) << std::left << timestr(f.created, ircd::localtime)
+	    << "  " << std::setw(10) << std::right << min_key << " : " << std::setw(10) << std::left << max_key
+	    << "  " << std::setw(10) << std::right << f.min_seq << " : " << std::setw(10) << std::left << f.max_seq
+	    << "  " << std::setw(3) << std::right << f.level
+	    << "  " << std::setw(24) << std::left << pretty(iec(f.size))
 	    << "  " << std::setw(6) << std::right << f.index_parts
 	    << "  " << std::setw(9) << std::right << f.data_blocks
 	    << "  " << std::setw(9) << std::right << f.entries
-	    << "  " << std::setw(25) << std::right << pretty(iec(f.size))
-	    << "  " << std::setw(3) << std::right << f.level
-	    << "  " << std::setw(10) << std::right << min_key << " : " << std::setw(10) << std::left << max_key
-	    << "  " << std::setw(11) << std::right << f.min_seq << " : " << std::setw(11) << std::left << f.max_seq
-	    << "  " << std::setw(32) << std::right << timestr(f.created, ircd::localtime)
-	    << "  " << std::setw(2) << std::right << f.cfid
+	    << "  " << std::setw(4) << std::right << f.cfid
 	    << "  " << std::setw(20) << std::left << f.column
 	    << std::endl;
 }
@@ -3251,8 +3253,8 @@ try
 		out << db::describe(c).explain
 		    << std::endl;
 
-		closeout("SIZE", [&] { out << pretty(iec(bytes(c))); });
-		closeout("FILES", [&] { out << file_count(c); });
+		closeout("size", [&] { out << pretty(iec(bytes(c))); });
+		closeout("files", [&] { out << file_count(c); });
 	} else {
 		closeout("uuid", [&] { out << uuid(d); });
 		closeout("size", [&] { out << pretty(iec(bytes(d))); });
@@ -3295,12 +3297,11 @@ try
 
 	if(c)
 	{
+		out << std::endl;
+		_print_sst_info_header(out);
 		const db::database::sst::info::vector v{c};
 		for(const auto &info : v)
-		{
-			out << std::endl;
-			_print_sst_info_full(out, info);
-		}
+			_print_sst_info(out, info);
 	}
 	else
 	{
