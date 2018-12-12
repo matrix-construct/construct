@@ -9080,10 +9080,11 @@ ircd::db::compact(column &column,
 			continue;
 
 		rocksdb::CompactionOptions opts;
-		{
-			const rocksdb::ColumnFamilyOptions &copts(c);
-			opts.compression = copts.compression;
-		}
+
+		// RocksDB sez that setting this to Disable means that the column's
+		// compression options are read instead. If we don't set this here,
+		// rocksdb defaults to "snappy" (which is strange).
+		opts.compression = rocksdb::kDisableCompressionOption;
 
 		std::vector<std::string> files(level.files.size());
 		std::transform(level.files.begin(), level.files.end(), files.begin(), []
