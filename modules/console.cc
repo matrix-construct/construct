@@ -2564,8 +2564,22 @@ _print_sst_info_full(opt &out,
 	close_auto("fixed key length", f.fixed_key_len);
 	close_auto("range deletes", f.range_deletes);
 	close_auto("compacting", f.compacting? "yes"_sv : "no"_sv);
+	close_auto("compression", f.compression);
 	close_auto("", "");
 
+	const auto blocks_size{f.keys_size + f.values_size};
+	const auto index_size{f.index_size + f.top_index_size};
+	const auto overhead_size{index_size + f.filter_size};
+	const auto file_size{overhead_size + blocks_size};
+
+	close_size("size", file_size);
+	close_size("head size", overhead_size);
+	close_size("data size", f.data_size);
+	close_size("data blocks average size", f.data_size / double(f.data_blocks));
+	close_auto("data compression percent", 100 - 100.0L * (f.data_size / double(blocks_size)));
+	close_auto("", "");
+
+	close_size("index size", index_size);
 	close_size("index root size", f.top_index_size);
 	close_auto("index data blocks", f.index_parts);
 	close_size("index data size", f.index_size);
@@ -2588,6 +2602,12 @@ _print_sst_info_full(opt &out,
 	close_auto("filter percent of values", 100.0 * (f.filter_size / double(f.values_size)));
 	close_auto("", "");
 
+	close_auto("blocks", f.data_blocks);
+	close_size("blocks size", blocks_size);
+	close_size("blocks average size", blocks_size / double(f.data_blocks));
+	close_auto("blocks percent of keys", 100.0 * (f.data_blocks / double(f.entries)));
+	close_auto("", "");
+
 	close_auto("keys", f.entries);
 	close_size("keys size", f.keys_size);
 	close_size("keys average size", f.keys_size / double(f.entries));
@@ -2600,19 +2620,6 @@ _print_sst_info_full(opt &out,
 	close_size("values size", f.values_size);
 	close_size("values average size", f.values_size / double(f.entries));
 	close_size("values average size per-block", f.values_size / double(f.data_blocks));
-	close_auto("", "");
-
-	const auto blocks_size{f.keys_size + f.values_size};
-	close_auto("blocks", f.data_blocks);
-	close_size("blocks size", blocks_size);
-	close_size("blocks average size", blocks_size / double(f.data_blocks));
-	close_auto("blocks percent of keys", 100.0 * (f.data_blocks / double(f.entries)));
-	close_auto("", "");
-
-	close_auto("data compression", f.compression);
-	close_size("data size", f.data_size);
-	close_size("data blocks average size", f.data_size / double(f.data_blocks));
-	close_auto("data compression percent", 100 - 100.0L * (f.data_size / double(blocks_size)));
 	close_auto("", "");
 }
 
