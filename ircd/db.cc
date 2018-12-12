@@ -1589,7 +1589,7 @@ ircd::db::database::column::column(database &d,
                                    db::descriptor &descriptor)
 :rocksdb::ColumnFamilyDescriptor
 (
-	descriptor.name, database::options{descriptor.options}
+	descriptor.name, db::options{descriptor.options}
 )
 ,d{&d}
 ,descriptor{&descriptor}
@@ -10210,6 +10210,165 @@ ircd::db::_seek_(rocksdb::Iterator &it,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// opts.h
+//
+
+//
+// options
+//
+
+ircd::db::options::options(const database &d)
+:options{d.d->GetDBOptions()}
+{
+}
+
+ircd::db::options::options(const database::column &c)
+:options
+{
+	rocksdb::ColumnFamilyOptions
+	{
+		c.d->d->GetOptions(c.handle.get())
+	}
+}{}
+
+ircd::db::options::options(const rocksdb::DBOptions &opts)
+{
+	throw_on_error
+	{
+		rocksdb::GetStringFromDBOptions(this, opts)
+	};
+}
+
+ircd::db::options::options(const rocksdb::ColumnFamilyOptions &opts)
+{
+	throw_on_error
+	{
+		rocksdb::GetStringFromColumnFamilyOptions(this, opts)
+	};
+}
+
+ircd::db::options::operator rocksdb::PlainTableOptions()
+const
+{
+	rocksdb::PlainTableOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetPlainTableOptionsFromString(ret, *this, &ret)
+	};
+
+	return ret;
+}
+
+ircd::db::options::operator rocksdb::BlockBasedTableOptions()
+const
+{
+	rocksdb::BlockBasedTableOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetBlockBasedTableOptionsFromString(ret, *this, &ret)
+	};
+
+	return ret;
+}
+
+ircd::db::options::operator rocksdb::ColumnFamilyOptions()
+const
+{
+	rocksdb::ColumnFamilyOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetColumnFamilyOptionsFromString(ret, *this, &ret)
+	};
+
+	return ret;
+}
+
+ircd::db::options::operator rocksdb::DBOptions()
+const
+{
+	rocksdb::DBOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetDBOptionsFromString(ret, *this, &ret)
+	};
+
+	return ret;
+}
+
+ircd::db::options::operator rocksdb::Options()
+const
+{
+	rocksdb::Options ret;
+	throw_on_error
+	{
+		rocksdb::GetOptionsFromString(ret, *this, &ret)
+	};
+
+	return ret;
+}
+
+//
+// options::map
+//
+
+ircd::db::options::map::map(const options &o)
+{
+	throw_on_error
+	{
+		rocksdb::StringToMap(o, this)
+	};
+}
+
+ircd::db::options::map::operator rocksdb::PlainTableOptions()
+const
+{
+	rocksdb::PlainTableOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetPlainTableOptionsFromMap(ret, *this, &ret)
+	};
+
+	return ret;
+}
+
+ircd::db::options::map::operator rocksdb::BlockBasedTableOptions()
+const
+{
+	rocksdb::BlockBasedTableOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetBlockBasedTableOptionsFromMap(ret, *this, &ret)
+	};
+
+	return ret;
+}
+
+ircd::db::options::map::operator rocksdb::ColumnFamilyOptions()
+const
+{
+	rocksdb::ColumnFamilyOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetColumnFamilyOptionsFromMap(ret, *this, &ret)
+	};
+
+	return ret;
+}
+
+ircd::db::options::map::operator rocksdb::DBOptions()
+const
+{
+	rocksdb::DBOptions ret;
+	throw_on_error
+	{
+		rocksdb::GetDBOptionsFromMap(ret, *this, &ret)
+	};
+
+	return ret;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // cache.h
 //
 
@@ -10453,7 +10612,7 @@ std::vector<std::string>
 ircd::db::column_names(const std::string &path,
                        const std::string &options)
 {
-	return column_names(path, database::options{options});
+	return column_names(path, db::options{options});
 }
 
 std::vector<std::string>
@@ -10477,152 +10636,6 @@ catch(const io_error &e)
 	{
 		{ rocksdb::kDefaultColumnFamilyName }
 	};
-}
-
-ircd::db::database::options::options(const database &d)
-:options{d.d->GetDBOptions()}
-{
-}
-
-ircd::db::database::options::options(const database::column &c)
-:options
-{
-	rocksdb::ColumnFamilyOptions
-	{
-		c.d->d->GetOptions(c.handle.get())
-	}
-}{}
-
-ircd::db::database::options::options(const rocksdb::DBOptions &opts)
-{
-	throw_on_error
-	{
-		rocksdb::GetStringFromDBOptions(this, opts)
-	};
-}
-
-ircd::db::database::options::options(const rocksdb::ColumnFamilyOptions &opts)
-{
-	throw_on_error
-	{
-		rocksdb::GetStringFromColumnFamilyOptions(this, opts)
-	};
-}
-
-ircd::db::database::options::operator rocksdb::PlainTableOptions()
-const
-{
-	rocksdb::PlainTableOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetPlainTableOptionsFromString(ret, *this, &ret)
-	};
-
-	return ret;
-}
-
-ircd::db::database::options::operator rocksdb::BlockBasedTableOptions()
-const
-{
-	rocksdb::BlockBasedTableOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetBlockBasedTableOptionsFromString(ret, *this, &ret)
-	};
-
-	return ret;
-}
-
-ircd::db::database::options::operator rocksdb::ColumnFamilyOptions()
-const
-{
-	rocksdb::ColumnFamilyOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetColumnFamilyOptionsFromString(ret, *this, &ret)
-	};
-
-	return ret;
-}
-
-ircd::db::database::options::operator rocksdb::DBOptions()
-const
-{
-	rocksdb::DBOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetDBOptionsFromString(ret, *this, &ret)
-	};
-
-	return ret;
-}
-
-ircd::db::database::options::operator rocksdb::Options()
-const
-{
-	rocksdb::Options ret;
-	throw_on_error
-	{
-		rocksdb::GetOptionsFromString(ret, *this, &ret)
-	};
-
-	return ret;
-}
-
-ircd::db::database::options::map::map(const options &o)
-{
-	throw_on_error
-	{
-		rocksdb::StringToMap(o, this)
-	};
-}
-
-ircd::db::database::options::map::operator rocksdb::PlainTableOptions()
-const
-{
-	rocksdb::PlainTableOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetPlainTableOptionsFromMap(ret, *this, &ret)
-	};
-
-	return ret;
-}
-
-ircd::db::database::options::map::operator rocksdb::BlockBasedTableOptions()
-const
-{
-	rocksdb::BlockBasedTableOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetBlockBasedTableOptionsFromMap(ret, *this, &ret)
-	};
-
-	return ret;
-}
-
-ircd::db::database::options::map::operator rocksdb::ColumnFamilyOptions()
-const
-{
-	rocksdb::ColumnFamilyOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetColumnFamilyOptionsFromMap(ret, *this, &ret)
-	};
-
-	return ret;
-}
-
-ircd::db::database::options::map::operator rocksdb::DBOptions()
-const
-{
-	rocksdb::DBOptions ret;
-	throw_on_error
-	{
-		rocksdb::GetDBOptionsFromMap(ret, *this, &ret)
-	};
-
-	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -10679,7 +10692,7 @@ ircd::db::make_dbopts(std::string optstr,
 	// Generate RocksDB options from string
 	rocksdb::DBOptions opts
 	{
-		database::options(optstr)
+		db::options(optstr)
 	};
 
 	if(out)

@@ -67,7 +67,6 @@ namespace ircd::db
 #include "descriptor.h"
 #include "database/rocksdb.h"
 #include "database/database.h"
-#include "database/options.h"
 #include "database/snapshot.h"
 #include "database/sst.h"
 #include "database/wal.h"

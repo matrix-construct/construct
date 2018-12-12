@@ -16,6 +16,7 @@ namespace ircd::db
 	enum class set :uint64_t;
 	enum class get :uint64_t;
 
+	struct options;
 	template<class> struct opts;
 	struct sopts;
 	struct gopts;
@@ -64,12 +65,14 @@ struct ircd::db::opts
 	{}
 };
 
+/// options for writing (set)
 struct ircd::db::sopts
 :opts<set>
 {
 	using opts<set>::opts;
 };
 
+/// options for reading (get)
 struct ircd::db::gopts
 :opts<get>
 {
@@ -80,6 +83,50 @@ struct ircd::db::gopts
 	uint64_t seqnum { 0 };
 
 	using opts<get>::opts;
+};
+
+/// options <-> string
+struct ircd::db::options
+:std::string
+{
+	struct map;
+
+	// Output of options structures from this string
+	explicit operator rocksdb::Options() const;
+	operator rocksdb::DBOptions() const;
+	operator rocksdb::ColumnFamilyOptions() const;
+	operator rocksdb::PlainTableOptions() const;
+	operator rocksdb::BlockBasedTableOptions() const;
+
+	// Input of options structures output to this string
+	explicit options(const rocksdb::ColumnFamilyOptions &);
+	explicit options(const rocksdb::DBOptions &);
+	explicit options(const database::column &);
+	explicit options(const database &);
+
+	// Input of options string from user
+	options(std::string string)
+	:std::string{std::move(string)}
+	{}
+};
+
+/// options <-> map
+struct ircd::db::options::map
+:std::unordered_map<std::string, std::string>
+{
+	// Output of options structures from map
+	operator rocksdb::DBOptions() const;
+	operator rocksdb::ColumnFamilyOptions() const;
+	operator rocksdb::PlainTableOptions() const;
+	operator rocksdb::BlockBasedTableOptions() const;
+
+	// Convert option string to map
+	map(const options &);
+
+	// Input of options map from user
+	map(std::unordered_map<std::string, std::string> m)
+	:std::unordered_map<std::string, std::string>{std::move(m)}
+	{}
 };
 
 template<class T>
