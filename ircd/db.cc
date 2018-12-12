@@ -4785,7 +4785,7 @@ noexcept try
 	#endif
 
 	fs::fsync_opts opts;
-	fs::fdsync(fd, opts);
+	fs::sync(fd, opts);
 	return Status::OK();
 }
 catch(const fs::error &e)
@@ -7000,7 +7000,7 @@ noexcept try
 	#endif
 
 	fs::fsync_opts opts;
-	fs::fdsync(fd, opts);
+	fs::sync(fd, opts);
 	return Status::OK();
 }
 catch(const fs::error &e)
