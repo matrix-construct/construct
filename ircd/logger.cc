@@ -562,7 +562,25 @@ catch(const std::exception &e)
 	ircd::terminate();
 }
 
-const char *
+ircd::log::facility
+ircd::log::reflect(const string_view &f)
+{
+	if(f == "CRITICAL")    return facility::CRITICAL;
+	if(f == "ERROR")       return facility::ERROR;
+	if(f == "DERROR")      return facility::DERROR;
+	if(f == "DWARNING")    return facility::DWARNING;
+	if(f == "WARNING")     return facility::WARNING;
+	if(f == "NOTICE")      return facility::NOTICE;
+	if(f == "INFO")        return facility::INFO;
+	if(f == "DEBUG")       return facility::DEBUG;
+
+	throw ircd::error
+	{
+		"'%s' is not a recognized log facility", f
+	};
+}
+
+ircd::string_view
 ircd::log::reflect(const facility &f)
 {
 	switch(f)
@@ -578,7 +596,10 @@ ircd::log::reflect(const facility &f)
 		case facility::_NUM_:      break; // Allows -Wswitch to remind developer to add reflection here
 	};
 
-	return "??????";
+	throw assertive
+	{
+		"'%d' is not a recognized log facility", int(f)
+	};
 }
 
 const char *

@@ -25,8 +25,6 @@ namespace ircd
 namespace ircd::log
 {
 	enum facility :int;
-	const char *reflect(const facility &);
-
 	struct log;
 	struct vlog;
 	struct logf;
@@ -44,6 +42,9 @@ namespace ircd::log
 
 	extern log star;     // "*", '*'
 	extern log general;  // "ircd", 'G'
+
+	string_view reflect(const facility &);
+	facility reflect(const string_view &);
 
 	// The mask is the list of named loggers to allow; an empty mask disallows
 	// all loggers. An empty unmask allows all loggers. An unmask of a logger
