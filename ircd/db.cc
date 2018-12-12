@@ -9268,9 +9268,11 @@ ircd::db::compact(column &column,
 	};
 
 	rocksdb::CompactRangeOptions opts;
-	opts.change_level = to_level >= -1;
-	opts.target_level = std::max(to_level, -1);
+	opts.exclusive_manual_compaction = true;
 	opts.allow_write_stall = true;
+	opts.change_level = true;
+	opts.target_level = std::max(to_level, -1);
+	opts.bottommost_level_compaction = rocksdb::BottommostLevelCompaction::kForce;
 
 	const ctx::uninterruptible ui;
 	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
