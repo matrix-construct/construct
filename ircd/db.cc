@@ -436,7 +436,18 @@ ircd::db::compact(database &d,
 	{
 		db::column column{*c};
 		compact(column, range, -1, cb);
-		compact(column, -1, cb);
+	}
+}
+
+void
+ircd::db::compact(database &d,
+                  const int &level,
+                  const compactor &cb)
+{
+	for(const auto &c : d.columns)
+	{
+		db::column column{*c};
+		compact(column, level, cb);
 	}
 }
 

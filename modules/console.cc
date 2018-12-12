@@ -1526,7 +1526,7 @@ try
 
 	const auto colname
 	{
-		param.at(1, "*"_sv)
+		param[1]
 	};
 
 	const auto level
@@ -1538,6 +1538,13 @@ try
 	{
 		db::database::get(dbname)
 	};
+
+	if(!colname)
+	{
+		compact(database, level);
+		out << "done" << std::endl;
+		return true;
+	}
 
 	const auto compact_column{[&out, &database, &level]
 	(const string_view &colname)
