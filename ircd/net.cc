@@ -138,7 +138,7 @@ ircd::net::loghead(const mutable_buffer &out,
 	return fmt::sprintf
 	{
 		out, "socket:%lu local[%s] remote[%s]",
-		id(*socket),
+		id(socket),
 		string(buf[0], local_ipport(socket)),
 		string(buf[1], remote_ipport(socket)),
 	};
@@ -1394,10 +1394,8 @@ noexcept try
 	assert(bool(sock));
 	log::debug
 	{
-		log, "socket(%p) local[%s] remote[%s] handshook(%zu) %s",
-		sock.get(),
-		string(local_ipport(*sock)),
-		string(remote_ipport(*sock)),
+		log, "%s handshook(%zu) %s",
+		loghead(*sock),
 		handshaking,
 		string(ec)
 	};
@@ -1987,10 +1985,8 @@ ircd::net::socket::handshake(const open_opts &opts,
 {
 	log::debug
 	{
-		log, "socket(%p) local[%s] remote[%s] handshaking for '%s' to:%ld$ms",
-		this,
-		string(local_ipport(*this)),
-		string(remote_ipport(*this)),
+		log, "%s handshaking for '%s' to:%ld$ms",
+		loghead(*this),
 		common_name(opts),
 		opts.handshake_timeout.count()
 	};
@@ -2023,10 +2019,8 @@ try
 
 	log::debug
 	{
-		log, "socket(%p) local[%s] remote[%s] disconnect type:%d user: in:%zu out:%zu",
-		(const void *)this,
-		string(local_ipport(*this)),
-		string(remote_ipport(*this)),
+		log, "%s disconnect type:%d user: in:%zu out:%zu",
+		loghead(*this),
 		uint(opts.type),
 		in.bytes,
 		out.bytes
@@ -2285,10 +2279,8 @@ noexcept try
 
 	log::debug
 	{
-		log, "socket(%p) local[%s] remote[%s] ready %s %s avail:%zu:%zu:%d",
-		this,
-		string(local_ipport(*this)),
-		string(remote_ipport(*this)),
+		log, "%s ready %s %s avail:%zu:%zu:%d",
+		loghead(*this),
 		reflect(type),
 		string(ec),
 		type == ready::READ? bytes : 0UL,
@@ -2428,10 +2420,8 @@ noexcept try
 	const life_guard<socket> s{wp};
 	log::debug
 	{
-		log, "socket(%p) local[%s] remote[%s] connect %s",
-		this,
-		string(local_ipport(*this)),
-		string(remote_ipport(*this)),
+		log, "%s connect %s",
+		loghead(*this),
 		string(ec)
 	};
 
@@ -2501,10 +2491,8 @@ noexcept try
 
 	log::debug
 	{
-		log, "socket(%p) local[%s] remote[%s] disconnect %s",
-		this,
-		string(local_ipport(*this)),
-		string(remote_ipport(*this)),
+		log, "%s disconnect %s",
+		loghead(*this),
 		string(ec)
 	};
 
@@ -2559,10 +2547,8 @@ noexcept try
 
 	log::debug
 	{
-		log, "socket(%p) local[%s] remote[%s] handshake %s",
-		this,
-		string(local_ipport(*this)),
-		string(remote_ipport(*this)),
+		log, "%s handshake %s",
+		loghead(*this),
 		string(ec)
 	};
 
