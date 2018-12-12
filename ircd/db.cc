@@ -639,6 +639,15 @@ ircd::db::loglevel(const database &d)
 	}
 }
 
+ircd::db::options
+ircd::db::getopt(const database &d)
+{
+	return options
+	{
+		d.d->GetDBOptions()
+	};
+}
+
 size_t
 ircd::db::bytes(const database &d)
 {
@@ -9016,6 +9025,17 @@ ircd::db::property(const column &column,
 		ret.emplace(std::string{name}, property<std::string>(column, name));
 
 	return ret;
+}
+
+ircd::db::options
+ircd::db::getopt(const column &column)
+{
+	database &d(const_cast<db::column &>(column));
+	database::column &c(const_cast<db::column &>(column));
+	return options
+	{
+		static_cast<rocksdb::ColumnFamilyOptions>(d.d->GetOptions(c))
+	};
 }
 
 size_t

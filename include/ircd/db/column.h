@@ -22,6 +22,7 @@ namespace ircd::db
 	std::vector<std::string> files(const column &);
 	size_t file_count(const column &);
 	size_t bytes(const column &);
+	options getopt(const column &);
 
 	// Get property data of a db column. R can optionally be uint64_t for some
 	// values; we typedef that as prop_int for templating purposes. R can also

@@ -22,6 +22,7 @@ namespace ircd::db
 	struct column;
 	struct index;
 	struct database;
+	struct options;
 
 	// Errors for the database subsystem. The exceptions that use _HIDENAME
 	// are built from RocksDB errors which already have an info string with

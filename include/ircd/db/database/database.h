@@ -29,6 +29,7 @@ namespace ircd::db
 	std::vector<std::string> wals(const database &);
 	size_t file_count(const database &);
 	size_t bytes(const database &);
+	options getopt(const database &);
 	log::facility loglevel(const database &);
 
 	// Property information interface
