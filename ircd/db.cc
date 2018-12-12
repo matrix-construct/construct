@@ -10923,25 +10923,30 @@ ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &s)
 {
 	using rocksdb::Status;
 
+	const string_view &message
+	{
+		s.getState()
+	};
+
 	switch(s.code())
 	{
 		case Status::kOk:                   return;
-		case Status::kNotFound:             throw not_found("%s", s.ToString());
-		case Status::kCorruption:           throw corruption("%s", s.ToString());
-		case Status::kNotSupported:         throw not_supported("%s", s.ToString());
-		case Status::kInvalidArgument:      throw invalid_argument("%s", s.ToString());
-		case Status::kIOError:              throw io_error("%s", s.ToString());
-		case Status::kMergeInProgress:      throw merge_in_progress("%s", s.ToString());
-		case Status::kIncomplete:           throw incomplete("%s", s.ToString());
-		case Status::kShutdownInProgress:   throw shutdown_in_progress("%s", s.ToString());
-		case Status::kTimedOut:             throw timed_out("%s", s.ToString());
-		case Status::kAborted:              throw aborted("%s", s.ToString());
-		case Status::kBusy:                 throw busy("%s", s.ToString());
-		case Status::kExpired:              throw expired("%s", s.ToString());
-		case Status::kTryAgain:             throw try_again("%s", s.ToString());
+		case Status::kNotFound:             throw not_found{"%s", message};
+		case Status::kCorruption:           throw corruption{"%s", message};
+		case Status::kNotSupported:         throw not_supported{"%s", message};
+		case Status::kInvalidArgument:      throw invalid_argument{"%s", message};
+		case Status::kIOError:              throw io_error{"%s", message};
+		case Status::kMergeInProgress:      throw merge_in_progress{"%s", message};
+		case Status::kIncomplete:           throw incomplete{"%s", message};
+		case Status::kShutdownInProgress:   throw shutdown_in_progress{"%s", message};
+		case Status::kTimedOut:             throw timed_out{"%s", message};
+		case Status::kAborted:              throw aborted{"%s", message};
+		case Status::kBusy:                 throw busy{"%s", message};
+		case Status::kExpired:              throw expired{"%s", message};
+		case Status::kTryAgain:             throw try_again{"%s", message};
 		default: throw error
 		{
-			"code[%d] %s", s.code(), s.ToString()
+			"code[%d] %s", s.code(), message
 		};
 	}
 }
