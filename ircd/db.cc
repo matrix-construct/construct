@@ -2487,7 +2487,7 @@ noexcept
 {
 	log::info
 	{
-		rog, "'%s': flush complete: column[%s] path[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		rog, "'%s': flush complete column[%s] path[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
 		d->name,
 		info.cf_name,
 		info.file_path,
@@ -2548,10 +2548,10 @@ noexcept
 {
 	log::debug
 	{
-		rog, "'%s': table file deleted: db[%s] path[%s] status[%d] job[%d]",
+		rog, "'%s': table file deleted: db[%s] file[%s] status[%d] job[%d]",
 		d->name,
 		info.db_name,
-		info.file_path,
+		lstrip(info.file_path, info.db_name),
 		int(info.status.code()),
 		info.job_id
 	};
@@ -2563,10 +2563,10 @@ noexcept
 {
 	log::debug
 	{
-		rog, "'%s': table file created: db[%s] path[%s] status[%d] job[%d]",
+		rog, "'%s': table file created: db[%s] file[%s] status[%d] job[%d]",
 		d->name,
 		info.db_name,
-		info.file_path,
+		lstrip(info.file_path, info.db_name),
 		int(info.status.code()),
 		info.job_id
 	};
@@ -2578,11 +2578,11 @@ noexcept
 {
 	log::debug
 	{
-		rog, "'%s': table file creating: db[%s] column[%s] path[%s] job[%d]",
+		rog, "'%s': table file creating: db[%s] column[%s] file[%s] job[%d]",
 		d->name,
 		info.db_name,
 		info.cf_name,
-		info.file_path,
+		lstrip(info.file_path, info.db_name),
 		info.job_id
 	};
 }
