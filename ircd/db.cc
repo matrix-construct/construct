@@ -993,13 +993,15 @@ try
 
 	// TODO: We should hint rocksdb with a harder value so it doesn't
 	// potentially eat up all our fd's.
-	opts->max_open_files = -1; //ircd::info::rlimit_nofile / 4;
+	opts->max_open_files = ircd::info::rlimit_nofile / 2;
 
-	// These values are known to not cause any internal rocksdb issues for us,
-	// but perhaps making them more aggressive can be looked into.
-	opts->max_background_compactions = 1;
+	// TODO: Check if these values can be increased; RocksDB may keep
+	// thread_local state preventing values > 1.
+	opts->max_background_jobs = 1;
 	opts->max_background_flushes = 1;
-	opts->max_background_jobs = 2;
+	opts->max_background_compactions = 1;
+
+	opts->compaction_readahead_size = 4_MiB; //TODO: conf
 
 	// MUST be 1 (no subcompactions) or rocksdb spawns internal std::thread.
 	opts->max_subcompactions = 1;
@@ -1664,7 +1666,7 @@ ircd::db::database::column::column(database &d,
 
 	// Set the compaction priority; this should probably be in the descriptor
 	// but this is currently selected for the general matrix workload.
-	this->options.compaction_pri = rocksdb::CompactionPri::kOldestLargestSeqFirst;
+	this->options.compaction_pri = rocksdb::CompactionPri::kOldestSmallestSeqFirst;
 
 	// Set filter reductions for this column. This means we expect a key to exist.
 	this->options.optimize_filters_for_hits = this->descriptor->expect_queries_hit;
@@ -1682,15 +1684,16 @@ ircd::db::database::column::column(database &d,
 	//this->options.bottommost_compression_opts = this->options.compression_opts;
 
 	//TODO: descriptor / conf
+	this->options.disable_auto_compactions = false;
+	this->options.level_compaction_dynamic_level_bytes = false;
+
 	this->options.num_levels = 7;
-	//this->options.level0_file_num_compaction_trigger = 1;
-	this->options.target_file_size_base = 32_MiB;
-	//this->options.max_bytes_for_level_base = 192_MiB;
-	this->options.target_file_size_multiplier = 2;        // size at level
-	//this->options.max_bytes_for_level_multiplier = 3;        // size at level
-	//this->options.write_buffer_size = 2_MiB;
-	//this->options.disable_auto_compactions = true;
-	//this->options.level_compaction_dynamic_level_bytes = true;
+	this->options.write_buffer_size = 512_KiB;
+	this->options.level0_file_num_compaction_trigger = 3;
+	this->options.target_file_size_base = 62_MiB;
+	this->options.target_file_size_multiplier = 1;
+	this->options.max_bytes_for_level_base = 64_MiB;
+	this->options.max_bytes_for_level_multiplier = 2;
 
 	//
 	// Table options
@@ -1717,6 +1720,9 @@ ircd::db::database::column::column(database &d,
 	table_opts.block_size = this->descriptor->block_size;
 	table_opts.metadata_block_size = this->descriptor->meta_block_size;
 	table_opts.block_size_deviation = 50;
+
+	//table_opts.data_block_index_type = rocksdb::BlockBasedTableOptions::kDataBlockBinaryAndHash;
+	//table_opts.data_block_hash_table_util_ratio = 0.75;
 
 	// Block alignment doesn't work if compression is enabled for this
 	// column. If not, we want block alignment for direct IO.
@@ -9156,6 +9162,7 @@ ircd::db::compact(column &column,
 			continue;
 
 		rocksdb::CompactionOptions opts;
+		opts.output_file_size_limit = 1_GiB; //TODO: conf
 
 		// RocksDB sez that setting this to Disable means that the column's
 		// compression options are read instead. If we don't set this here,
