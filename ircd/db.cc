@@ -5644,6 +5644,20 @@ noexcept try
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard<decltype(mutex)> lock{mutex};
 
+	if(!aligned(logical_offset) || !aligned(data(s)))
+		log::dwarning
+		{
+			log, "'%s': ALIGNMENT CHECK fd:%d append:%p%s bytes:%zu%s logical_offset:%zu%s",
+			d.name,
+			int(fd),
+			data(s),
+			aligned(data(s))? "" : "#AC",
+			size(s),
+			aligned(size(s))? "" : "#AC",
+			logical_offset,
+			aligned(logical_offset)? "" : "#AC"
+		};
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
