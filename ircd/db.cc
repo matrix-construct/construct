@@ -356,8 +356,8 @@ ircd::db::open_check
 ///
 /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ///
-/// IRCd's applications are NOT tolerant of a skip of recovery.
-/// NEVER USE "skip" RECOVERY MODE.
+/// IRCd's applications are NOT tolerant of skip recovery. You will create an
+/// incoherent database. NEVER USE "skip" RECOVERY MODE.
 ///
 /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ///
@@ -1469,126 +1469,6 @@ catch(const std::out_of_range &e)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// database::comparator
-//
-
-ircd::db::database::comparator::comparator(database *const &d,
-                                           db::comparator user)
-:d{d}
-,user
-{
-	std::move(user)
-}
-{
-}
-
-const char *
-ircd::db::database::comparator::Name()
-const noexcept
-{
-	assert(!user.name.empty());
-	return user.name.data();
-}
-
-bool
-ircd::db::database::comparator::Equal(const Slice &a,
-                                      const Slice &b)
-const noexcept
-{
-	return user.equal?
-		user.equal(slice(a), slice(b)):
-		Compare(a, b) == 0;
-}
-
-int
-ircd::db::database::comparator::Compare(const Slice &a,
-                                        const Slice &b)
-const noexcept
-{
-	assert(bool(user.less));
-	const auto sa{slice(a)};
-	const auto sb{slice(b)};
-	return user.less(sa, sb)?                -1:  // less[Y], equal[?], greater[?]
-	       user.equal && user.equal(sa, sb)?  0:  // less[N], equal[Y], greater[?]
-	       user.equal?                        1:  // less[N], equal[N], greater[Y]
-	       user.less(sb, sa)?                 1:  // less[N], equal[?], greater[Y]
-	                                          0;  // less[N], equal[Y], greater[N]
-}
-
-void
-ircd::db::database::comparator::FindShortestSeparator(std::string *const key,
-                                                      const Slice &limit)
-const noexcept
-{
-	assert(key != nullptr);
-	if(user.separator)
-		user.separator(*key, slice(limit));
-}
-
-void
-ircd::db::database::comparator::FindShortSuccessor(std::string *const key)
-const noexcept
-{
-	assert(key != nullptr);
-	if(user.successor)
-		user.successor(*key);
-}
-
-bool
-ircd::db::database::comparator::IsSameLengthImmediateSuccessor(const Slice &s,
-                                                               const Slice &t)
-const noexcept
-{
-	return rocksdb::Comparator::IsSameLengthImmediateSuccessor(s, t);
-}
-
-bool
-ircd::db::database::comparator::CanKeysWithDifferentByteContentsBeEqual()
-const noexcept
-{
-	// When keys with different byte contents can be equal the keys are
-	// not hashable.
-	return !user.hashable;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// database::prefix_transform
-//
-
-const char *
-ircd::db::database::prefix_transform::Name()
-const noexcept
-{
-	assert(!user.name.empty());
-	return user.name.c_str();
-}
-
-rocksdb::Slice
-ircd::db::database::prefix_transform::Transform(const Slice &key)
-const noexcept
-{
-	assert(bool(user.get));
-	return slice(user.get(slice(key)));
-}
-
-bool
-ircd::db::database::prefix_transform::InRange(const Slice &key)
-const noexcept
-{
-	return InDomain(key);
-}
-
-bool
-ircd::db::database::prefix_transform::InDomain(const Slice &key)
-const noexcept
-{
-	assert(bool(user.has));
-	return user.has(slice(key));
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // database::column
 //
 
@@ -1850,6 +1730,126 @@ const rocksdb::ColumnFamilyOptions &()
 const
 {
 	return options;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::comparator
+//
+
+ircd::db::database::comparator::comparator(database *const &d,
+                                           db::comparator user)
+:d{d}
+,user
+{
+	std::move(user)
+}
+{
+}
+
+const char *
+ircd::db::database::comparator::Name()
+const noexcept
+{
+	assert(!user.name.empty());
+	return user.name.data();
+}
+
+bool
+ircd::db::database::comparator::Equal(const Slice &a,
+                                      const Slice &b)
+const noexcept
+{
+	return user.equal?
+		user.equal(slice(a), slice(b)):
+		Compare(a, b) == 0;
+}
+
+int
+ircd::db::database::comparator::Compare(const Slice &a,
+                                        const Slice &b)
+const noexcept
+{
+	assert(bool(user.less));
+	const auto sa{slice(a)};
+	const auto sb{slice(b)};
+	return user.less(sa, sb)?                -1:  // less[Y], equal[?], greater[?]
+	       user.equal && user.equal(sa, sb)?  0:  // less[N], equal[Y], greater[?]
+	       user.equal?                        1:  // less[N], equal[N], greater[Y]
+	       user.less(sb, sa)?                 1:  // less[N], equal[?], greater[Y]
+	                                          0;  // less[N], equal[Y], greater[N]
+}
+
+void
+ircd::db::database::comparator::FindShortestSeparator(std::string *const key,
+                                                      const Slice &limit)
+const noexcept
+{
+	assert(key != nullptr);
+	if(user.separator)
+		user.separator(*key, slice(limit));
+}
+
+void
+ircd::db::database::comparator::FindShortSuccessor(std::string *const key)
+const noexcept
+{
+	assert(key != nullptr);
+	if(user.successor)
+		user.successor(*key);
+}
+
+bool
+ircd::db::database::comparator::IsSameLengthImmediateSuccessor(const Slice &s,
+                                                               const Slice &t)
+const noexcept
+{
+	return rocksdb::Comparator::IsSameLengthImmediateSuccessor(s, t);
+}
+
+bool
+ircd::db::database::comparator::CanKeysWithDifferentByteContentsBeEqual()
+const noexcept
+{
+	// When keys with different byte contents can be equal the keys are
+	// not hashable.
+	return !user.hashable;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::prefix_transform
+//
+
+const char *
+ircd::db::database::prefix_transform::Name()
+const noexcept
+{
+	assert(!user.name.empty());
+	return user.name.c_str();
+}
+
+rocksdb::Slice
+ircd::db::database::prefix_transform::Transform(const Slice &key)
+const noexcept
+{
+	assert(bool(user.get));
+	return slice(user.get(slice(key)));
+}
+
+bool
+ircd::db::database::prefix_transform::InRange(const Slice &key)
+const noexcept
+{
+	return InDomain(key);
+}
+
+bool
+ircd::db::database::prefix_transform::InDomain(const Slice &key)
+const noexcept
+{
+	assert(bool(user.has));
+	return user.has(slice(key));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
