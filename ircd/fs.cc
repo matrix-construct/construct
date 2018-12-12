@@ -245,8 +245,13 @@ catch(const filesystem::filesystem_error &e)
 
 size_t
 ircd::fs::size(const string_view &path)
+try
 {
 	return filesystem::file_size(fs::path(path));
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 bool
@@ -284,26 +289,37 @@ catch(const filesystem::filesystem_error &e)
 
 std::string
 ircd::fs::make_path(const vector_view<const std::string> &list)
+try
 {
 	filesystem::path ret;
 	for(const auto &s : list)
 		ret /= path(s);
 
 	return ret.string();
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 std::string
 ircd::fs::make_path(const vector_view<const string_view> &list)
+try
 {
 	filesystem::path ret;
 	for(const auto &s : list)
 		ret /= path(s);
 
 	return ret.string();
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 filesystem::path
 ircd::fs::path(const vector_view<const string_view> &list)
+try
 {
 	filesystem::path ret;
 	for(const auto &s : list)
@@ -311,17 +327,31 @@ ircd::fs::path(const vector_view<const string_view> &list)
 
 	return ret.string();
 }
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
 
 filesystem::path
 ircd::fs::path(const string_view &s)
+try
 {
 	return path(std::string{s});
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 filesystem::path
 ircd::fs::path(std::string s)
+try
 {
 	return filesystem::path(std::move(s));
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -491,7 +521,6 @@ const ircd::fs::fsync_opts_default;
 void
 ircd::fs::fsync(const fd &fd,
                 const fsync_opts &opts)
-try
 {
 	#ifdef IRCD_USE_AIO
 	if(aio::context && opts.async && support::aio_fsync)
@@ -500,26 +529,10 @@ try
 
 	syscall(::fsync, fd);
 }
-catch(const error &e)
-{
-	throw;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-catch(const std::exception &e)
-{
-	throw error
-	{
-		"%s", e.what()
-	};
-}
 
 void
 ircd::fs::fdsync(const fd &fd,
                  const fsync_opts &opts)
-try
 {
 	#ifdef IRCD_USE_AIO
 	if(aio::context && opts.async && support::aio_fdsync)
@@ -527,21 +540,6 @@ try
 	#endif
 
 	syscall(::fdatasync, fd);
-}
-catch(const error &e)
-{
-	throw;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-catch(const std::exception &e)
-{
-	throw error
-	{
-		"%s", e.what()
-	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -592,7 +590,6 @@ ircd::fs::prefetch(const fd &fd,
 std::string
 ircd::fs::read(const string_view &path,
                const read_opts &opts)
-try
 {
 	const fd fd
 	{
@@ -600,21 +597,6 @@ try
 	};
 
 	return read(fd, opts);
-}
-catch(const error &e)
-{
-	throw;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-catch(const std::exception &e)
-{
-	throw error
-	{
-		"%s", e.what()
-	};
 }
 
 std::string
@@ -664,7 +646,6 @@ size_t
 ircd::fs::read(const string_view &path,
                const mutable_buffers &bufs,
                const read_opts &opts)
-try
 {
 	const fd fd
 	{
@@ -673,27 +654,11 @@ try
 
 	return read(fd, bufs, opts);
 }
-catch(const error &e)
-{
-	throw;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-catch(const std::exception &e)
-{
-	throw error
-	{
-		"%s", e.what()
-	};
-}
 
 size_t
 ircd::fs::read(const fd &fd,
                const mutable_buffers &bufs,
                const read_opts &opts)
-try
 {
 	#ifdef IRCD_USE_AIO
 	if(likely(aio::context))
@@ -702,21 +667,6 @@ try
 
 	const auto iov(make_iov(bufs));
 	return size_t(syscall(::preadv, fd, iov.data(), iov.size(), opts.offset));
-}
-catch(const error &e)
-{
-	throw;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-catch(const std::exception &e)
-{
-	throw error
-	{
-		"%s", e.what()
-	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -861,28 +811,12 @@ size_t
 ircd::fs::append(const fd &fd,
                  const const_buffers &bufs,
                  const write_opts &opts_)
-try
 {
 	auto opts(opts_);
 	if(!opts.offset)
 		opts.offset = syscall(::lseek, fd, 0, SEEK_END);
 
 	return write(fd, bufs, opts);
-}
-catch(const error &e)
-{
-	throw;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-catch(const std::exception &e)
-{
-	throw error
-	{
-		"%s", e.what()
-	};
 }
 
 ircd::const_buffer
@@ -921,7 +855,6 @@ size_t
 ircd::fs::write(const string_view &path,
                 const const_buffers &bufs,
                 const write_opts &opts)
-try
 {
 	const fd fd
 	{
@@ -930,27 +863,11 @@ try
 
 	return write(fd, bufs, opts);
 }
-catch(const error &e)
-{
-	throw;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-catch(const std::exception &e)
-{
-	throw error
-	{
-		"%s", e.what()
-	};
-}
 
 size_t
 ircd::fs::write(const fd &fd,
                 const const_buffers &bufs,
                 const write_opts &opts)
-try
 {
 	#ifdef IRCD_USE_AIO
 	if(likely(aio::context))
@@ -959,21 +876,6 @@ try
 
 	const auto iov(make_iov(bufs));
 	return size_t(syscall(::pwritev, fd, iov.data(), iov.size(), opts.offset));
-}
-catch(const error &e)
-{
-	throw;
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-catch(const std::exception &e)
-{
-	throw error
-	{
-		"%s", e.what()
-	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
