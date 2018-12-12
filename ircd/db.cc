@@ -9152,7 +9152,7 @@ ircd::db::compact(column &column,
 	};
 
 	rocksdb::CompactRangeOptions opts;
-	opts.change_level = true;
+	opts.change_level = to_level >= -1;
 	opts.target_level = std::max(to_level, -1);
 	opts.allow_write_stall = true;
 
