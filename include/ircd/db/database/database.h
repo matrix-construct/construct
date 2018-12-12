@@ -50,7 +50,7 @@ namespace ircd::db
 	uint64_t checkpoint(database &);
 	void resume(database &);
 	void check(database &);
-	void compact(database &, const int &level, const compactor & = {});
+	void compact(database &, const std::pair<int, int> &level, const compactor & = {});
 	void compact(database &, const compactor & = {});
 	void sort(database &, const bool &blocking = true);
 	void flush(database &, const bool &sync = false);

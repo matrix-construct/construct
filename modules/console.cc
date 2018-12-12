@@ -1560,7 +1560,7 @@ try
 {
 	const params param{line, " ",
 	{
-		"dbname", "[colname]", "[level]"
+		"dbname", "[colname]", "[srclevel]", "[dstlevel]"
 	}};
 
 	const auto dbname
@@ -1573,9 +1573,10 @@ try
 		param[1]
 	};
 
-	const auto level
+	const std::pair<int, int> level
 	{
-		param.at(2, -1)
+		param.at(2, -1),
+		param.at(3, -1)
 	};
 
 	auto &database

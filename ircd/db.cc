@@ -441,7 +441,7 @@ ircd::db::compact(database &d,
 
 void
 ircd::db::compact(database &d,
-                  const int &level,
+                  const std::pair<int, int> &level,
                   const compactor &cb)
 {
 	for(const auto &c : d.columns)
@@ -9169,21 +9169,29 @@ ircd::db::sort(column &column,
 
 void
 ircd::db::compact(column &column,
-                  const int &level_,
+                  const std::pair<int, int> &level,
                   const compactor &cb)
 {
 	database::column &c(column);
 	database &d(*c.d);
 
+	const auto &dst_level{level.second};
+	const auto &src_level{level.first};
+
 	rocksdb::ColumnFamilyMetaData cfmd;
 	d.d->GetColumnFamilyMetaData(c, &cfmd);
 	for(const auto &level : cfmd.levels)
 	{
-		if(level_ != -1 && level.level != level_)
+		if(src_level != -1 && src_level != level.level)
 			continue;
 
 		if(level.files.empty())
 			continue;
+
+		const auto &to_level
+		{
+			dst_level > -1? dst_level : level.level
+		};
 
 		rocksdb::CompactionOptions opts;
 		opts.output_file_size_limit = 1_GiB; //TODO: conf
@@ -9233,7 +9241,7 @@ ircd::db::compact(column &column,
 
 		throw_on_error
 		{
-			d.d->CompactFiles(opts, c, files, level.level)
+			d.d->CompactFiles(opts, c, files, to_level)
 		};
 	}
 }
