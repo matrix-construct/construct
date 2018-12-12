@@ -2493,7 +2493,7 @@ noexcept
 {
 	log::info
 	{
-		rog, "'%s': flush complete column[%s] path[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		log, "'%s': flush complete column[%s] path[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
 		d->name,
 		info.cf_name,
 		info.file_path,
@@ -2514,7 +2514,7 @@ noexcept
 {
 	log::info
 	{
-		rog, "'%s': flush begin column[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		log, "'%s': flush begin column[%s] ctx[%lu] job[%d] writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
 		d->name,
 		info.cf_name,
 		info.thread_id,
@@ -2534,7 +2534,7 @@ noexcept
 {
 	log::info
 	{
-		rog, "'%s': compacted column[%s] ctx[%lu] job[%d] level[in:%d out:%d] files[in:%zu out:%zu] reason:%d :%s",
+		log, "'%s': compacted column[%s] ctx[%lu] job[%d] level[in:%d out:%d] files[in:%zu out:%zu] reason:%d :%s",
 		d->name,
 		info.cf_name,
 		info.thread_id,
@@ -2554,7 +2554,7 @@ noexcept
 {
 	log::debug
 	{
-		rog, "'%s': table file deleted: db[%s] file[%s] status[%d] job[%d]",
+		log, "'%s': table file deleted: db[%s] file[%s] status[%d] job[%d]",
 		d->name,
 		info.db_name,
 		lstrip(info.file_path, info.db_name),
@@ -2569,7 +2569,7 @@ noexcept
 {
 	log::debug
 	{
-		rog, "'%s': table file created: db[%s] file[%s] status[%d] job[%d]",
+		log, "'%s': table file created: db[%s] file[%s] status[%d] job[%d]",
 		d->name,
 		info.db_name,
 		lstrip(info.file_path, info.db_name),
@@ -2584,7 +2584,7 @@ noexcept
 {
 	log::debug
 	{
-		rog, "'%s': table file creating: db[%s] column[%s] file[%s] job[%d]",
+		log, "'%s': table file creating: db[%s] column[%s] file[%s] job[%d]",
 		d->name,
 		info.db_name,
 		info.cf_name,
@@ -2599,7 +2599,7 @@ noexcept
 {
 	log::debug
 	{
-		rog, "'%s': memory table sealed: column[%s] entries[%lu] deletes[%lu]",
+		log, "'%s': memory table sealed: column[%s] entries[%lu] deletes[%lu]",
 		d->name,
 		info.cf_name,
 		info.num_entries,
@@ -2613,7 +2613,7 @@ noexcept
 {
 	log::debug
 	{
-		rog, "'%s': column[%s] handle closing @ %p",
+		log, "'%s': column[%s] handle closing @ %p",
 		d->name,
 		h->GetName(),
 		h
@@ -2627,7 +2627,7 @@ noexcept
 {
 	log::notice
 	{
-		rog, "'%s': external file ingested column[%s] external[%s] internal[%s] sequence:%lu",
+		log, "'%s': external file ingested column[%s] external[%s] internal[%s] sequence:%lu",
 		this->d->name,
 		info.cf_name,
 		info.external_file_path,
@@ -2697,7 +2697,7 @@ noexcept
 {
 	log::warning
 	{
-		rog, "'%s' stall condition column[%s] %s -> %s",
+		log, "'%s' stall condition column[%s] %s -> %s",
 		d->name,
 		info.cf_name,
 		reflect(info.condition.prev),
