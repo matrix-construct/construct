@@ -1354,6 +1354,50 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__loglevel(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "level"
+	}};
+
+	const auto dbname
+	{
+		param.at("dbname")
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	if(param.count() == 1)
+	{
+		out << reflect(loglevel(database)) << std::endl;
+		return true;
+	}
+
+	const log::facility &fac
+	{
+		log::reflect(param.at("level"))
+	};
+
+	loglevel(database, fac);
+
+	out << "set logging level of '" << name(database) << "'"
+	    << " database to '" << reflect(fac) << "'"
+	    << std::endl;
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__flush(opt &out, const string_view &line)
 try
 {

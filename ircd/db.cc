@@ -583,6 +583,62 @@ ircd::db::setopt(database &d,
 	};
 }
 
+/// Set the rdb logging level by translating our ircd::log::facility to the
+/// RocksDB enum. This translation is a reasonable convenience, as both
+/// enums are similar enough.
+void
+ircd::db::loglevel(database &d,
+                   const ircd::log::facility &fac)
+{
+	using ircd::log::facility;
+
+	rocksdb::InfoLogLevel lev
+	{
+		rocksdb::WARN_LEVEL
+	};
+
+	switch(fac)
+	{
+		case facility::CRITICAL:  lev = rocksdb::FATAL_LEVEL;   break;
+		case facility::ERROR:     lev = rocksdb::ERROR_LEVEL;   break;
+		case facility::WARNING:
+		case facility::NOTICE:    lev = rocksdb::WARN_LEVEL;    break;
+		case facility::INFO:      lev = rocksdb::INFO_LEVEL;    break;
+		case facility::DERROR:
+		case facility::DWARNING:
+		case facility::DEBUG:     lev = rocksdb::DEBUG_LEVEL;   break;
+		case facility::_NUM_:     assert(0);                    break;
+	}
+
+	d.logger->SetInfoLogLevel(lev);
+}
+
+/// Set the rdb logging level by translating our ircd::log::facility to the
+/// RocksDB enum. This translation is a reasonable convenience, as both
+/// enums are similar enough.
+ircd::log::facility
+ircd::db::loglevel(const database &d)
+{
+	const auto &level
+	{
+		d.logger->GetInfoLogLevel()
+	};
+
+	switch(level)
+	{
+		default:
+		case rocksdb::NUM_INFO_LOG_LEVELS:
+			assert(0);
+
+		case rocksdb::HEADER_LEVEL:
+		case rocksdb::FATAL_LEVEL:     return log::facility::CRITICAL;
+		case rocksdb::ERROR_LEVEL:     return log::facility::ERROR;
+		case rocksdb::WARN_LEVEL:      return log::facility::WARNING;
+		case rocksdb::INFO_LEVEL:      return log::facility::INFO;
+		case rocksdb::DEBUG_LEVEL:     return log::facility::DEBUG;
+	}
+}
+
 size_t
 ircd::db::bytes(const database &d)
 {

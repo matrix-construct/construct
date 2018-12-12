@@ -29,6 +29,7 @@ namespace ircd::db
 	std::vector<std::string> wals(const database &);
 	size_t file_count(const database &);
 	size_t bytes(const database &);
+	log::facility loglevel(const database &);
 
 	// Property information interface
 	using prop_int = uint64_t;
@@ -42,6 +43,7 @@ namespace ircd::db
 	rocksdb::Cache *cache(database &);
 
 	// Control panel
+	void loglevel(database &, const log::facility &);
 	void setopt(database &, const string_view &key, const string_view &val);
 	void fdeletions(database &, const bool &enable, const bool &force = false);
 	uint64_t checkpoint(database &);
