@@ -519,6 +519,17 @@ ircd::fs::fsync_opts
 const ircd::fs::fsync_opts_default;
 
 void
+ircd::fs::sync(const fd &fd,
+               const fsync_opts &opts)
+{
+	#ifdef __linux__
+		syscall(::syncfs, fd);
+	#else
+		syscall(::sync);
+	#endif
+}
+
+void
 ircd::fs::fsync(const fd &fd,
                 const fsync_opts &opts)
 {

@@ -17,6 +17,7 @@ namespace ircd::fs
 
 	void fdsync(const fd &, const fsync_opts & = fsync_opts_default);
 	void fsync(const fd &, const fsync_opts & = fsync_opts_default);
+	void sync(const fd &, const fsync_opts & = fsync_opts_default);
 }
 
 /// Options for a write operation
