@@ -3155,6 +3155,54 @@ console_cmd__db__list(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__db__opts(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "[column]"
+	}};
+
+	auto &d
+	{
+		db::database::get(param.at("dbname"))
+	};
+
+	const db::column c
+	{
+		param.at("[column]", string_view{})?
+			db::column{d, param.at("[column]")}:
+			db::column{}
+	};
+
+	const db::options::map opts_
+	{
+		c?
+			db::getopt(c):
+			db::getopt(d)
+	};
+
+	// Remap from the std::unordered_map to a sorted map for better UX.
+	const std::map<std::string, std::string> opts
+	{
+		begin(opts_), end(opts_)
+	};
+
+	for(const auto &p : opts)
+		out << std::left
+		    << std::setw(45) << std::setfill('_') << p.first
+		    << " " << p.second
+		    << std::endl;
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__columns(opt &out, const string_view &line)
 try
 {
