@@ -55,6 +55,8 @@ namespace ircd::net
 	ipport remote_ipport(const socket &) noexcept;
 	std::pair<size_t, size_t> bytes(const socket &) noexcept; // <in, out>
 	std::pair<size_t, size_t> calls(const socket &) noexcept; // <in, out>
+	string_view loghead(const mutable_buffer &out, const socket &);
+	string_view loghead(const socket &);
 
 	const_buffer peer_cert_der(const mutable_buffer &, const socket &);
 	const_buffer peer_cert_der_sha256(const mutable_buffer &, const socket &);

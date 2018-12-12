@@ -123,6 +123,27 @@ noexcept
 	};
 }
 
+ircd::string_view
+ircd::net::loghead(const socket &socket)
+{
+	thread_local char buf[512];
+	return loghead(buf, socket);
+}
+
+ircd::string_view
+ircd::net::loghead(const mutable_buffer &out,
+                   const socket &socket)
+{
+	thread_local char buf[2][128];
+	return fmt::sprintf
+	{
+		out, "socket:%lu local[%s] remote[%s]",
+		id(*socket),
+		string(buf[0], local_ipport(socket)),
+		string(buf[1], remote_ipport(socket)),
+	};
+}
+
 ircd::net::ipport
 ircd::net::remote_ipport(const socket &socket)
 noexcept try
