@@ -3216,12 +3216,16 @@ try
 	(const string_view &prop)
 	{
 		const auto name(lstrip(prop, "rocksdb."));
-		closeout(name, [&out, &d, &c, &prop]
+		const auto val
 		{
-			if(c)
-				out << db::property(c, prop);
-			else
-				out << db::property(d, prop);
+			c?
+				db::property<db::prop_int>(c, prop):
+				db::property<db::prop_int>(d, prop)
+		};
+
+		if(!!val) closeout(name, [&out, &val]
+		{
+			out << val;
 		});
 	}};
 
@@ -3229,12 +3233,16 @@ try
 	(const string_view &prop)
 	{
 		const auto name(lstrip(prop, "rocksdb."));
-		closeout(name, [&out, &d, &c, &prop]
+		const auto val
 		{
-			if(c)
-				out << pretty(iec(db::property<db::prop_int>(c, prop)));
-			else
-				out << pretty(iec(db::property(d, prop)));
+			c?
+				db::property<db::prop_int>(c, prop):
+				db::property<db::prop_int>(d, prop)
+		};
+
+		if(!!val) closeout(name, [&out, &val]
+		{
+			out << pretty(iec(val));
 		});
 	}};
 
