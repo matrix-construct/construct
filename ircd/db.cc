@@ -9231,7 +9231,7 @@ ircd::db::compact(column &column,
 
 		log::debug
 		{
-			log, "'%s':'%s' COMPACT level:%d files:%zu size:%zu",
+			log, "'%s':'%s' COMPACT L%d -> L%d files:%zu size:%zu",
 			name(d),
 			name(c),
 			level.level,
@@ -9291,13 +9291,15 @@ ircd::db::compact(column &column,
 
 	log::debug
 	{
-		log, "'%s':'%s' @%lu COMPACT [%s, %s] to level %d",
+		log, "'%s':'%s' @%lu COMPACT [%s, %s] -> L:%d (Lmax:%d Lbase:%d)",
 		name(d),
 		name(c),
 		sequence(d),
 		range.first,
 		range.second,
-		opts.target_level
+		opts.target_level,
+		d.d->NumberLevels(c),
+		d.d->MaxMemCompactionLevel(c),
 	};
 
 	throw_on_error
