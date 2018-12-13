@@ -4196,14 +4196,22 @@ console_cmd__client(opt &out, const string_view &line)
 			out << " ASYNC";
 
 		if(client->request.user_id)
-			out << " USER " << client->request.user_id;
+			out << " | USER " << client->request.user_id;
 
 		if(client->request.origin)
-			out << " PEER " << client->request.origin;
+			out << " | PEER " << client->request.origin;
 
 		if(client->request.head.method)
 			out << " " << client->request.head.method << ""
 			    << " " << client->request.head.path;
+
+		if(client->reqctx)
+		{
+			thread_local char pbuf[64];
+			out << " | "
+			    << pretty(pbuf, client->timer.at<nanoseconds>())
+			    << "";
+		}
 
 		out << std::endl;
 	}
