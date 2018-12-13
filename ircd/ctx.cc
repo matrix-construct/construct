@@ -1395,10 +1395,10 @@ ircd::ctx::prof::check_slice()
 	if(unlikely(slice_warning > 0 && last_cycles >= slice_warning))
 		log::dwarning
 		{
-			"context timeslice exceeded '%s' #%lu total: %lu last: %lu",
+			"context '%s' #%lu watchdog: timeslice excessive; lim:%lu last:%lu",
 			name(c),
 			id(c),
-			cycles(c),
+			slice_warning,
 			last_cycles
 		};
 
@@ -1409,11 +1409,12 @@ ircd::ctx::prof::check_slice()
 	if(unlikely(slice_interrupt > 0 && last_cycles >= slice_interrupt))
 		throw interrupted
 		{
-			"context '%s' #%lu watchdog interrupt (total: %lu last: %lu)",
+			"context '%s' #%lu watchdog interrupt; lim:%lu last:%lu total:%lu",
 			name(c),
 			id(c),
+			slice_interrupt,
+			last_cycles,
 			cycles(c),
-			last_cycles
 		};
 }
 
@@ -1430,7 +1431,7 @@ ircd::ctx::prof::check_stack()
 	{
 		log::dwarning
 		{
-			"context stack usage ctx '%s' #%lu used %zu of %zu bytes",
+			"context '%s' #%lu watchdog: stack used %zu of %zu bytes",
 			name(c),
 			id(c),
 			stack_at,
