@@ -117,6 +117,6 @@ struct ircd::db::error_to_status
 :rocksdb::Status
 {
 	error_to_status(const std::error_code &);
-	error_to_status(const fs::error &);
+	error_to_status(const std::system_error &);
 	error_to_status(const std::exception &);
 };

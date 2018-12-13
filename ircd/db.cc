@@ -235,7 +235,7 @@ try
 			log, "Using database directory at `%s'", dbdir
 		};
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -3449,7 +3449,7 @@ noexcept try
 	*r = std::make_unique<sequential_file>(&d, name, options);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3479,7 +3479,7 @@ noexcept try
 	*r = std::make_unique<random_access_file>(&d, name, options);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3513,7 +3513,7 @@ noexcept try
 
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3547,7 +3547,7 @@ noexcept try
 
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3580,7 +3580,7 @@ noexcept try
 	return Status::OK();
 	//return defaults.ReuseWritableFile(name, old_name, r, options);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3610,7 +3610,7 @@ noexcept try
 	*result = std::make_unique<random_rw_file>(&d, name, options);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3644,7 +3644,7 @@ noexcept try
 	*result = std::make_unique<directory>(&d, name, std::move(defaults));
 	return ret;
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3670,7 +3670,7 @@ noexcept try
 
 	return defaults.FileExists(f);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3697,7 +3697,7 @@ noexcept try
 
 	return defaults.GetChildren(dir, r);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3724,7 +3724,7 @@ noexcept try
 
 	return defaults.GetChildrenFileAttributes(dir, result);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3750,7 +3750,7 @@ noexcept try
 
 	return defaults.DeleteFile(name);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3776,7 +3776,7 @@ noexcept try
 
 	return defaults.CreateDir(name);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3802,7 +3802,7 @@ noexcept try
 
 	return defaults.CreateDirIfMissing(name);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3828,7 +3828,7 @@ noexcept try
 
 	return defaults.DeleteDir(name);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3857,7 +3857,7 @@ noexcept try
 	*s = fs::size(name);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3884,7 +3884,7 @@ noexcept try
 
 	return defaults.GetFileModificationTime(name, file_mtime);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3912,7 +3912,7 @@ noexcept try
 
 	return defaults.RenameFile(s, t);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3940,7 +3940,7 @@ noexcept try
 
 	return defaults.LinkFile(s, t);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3967,7 +3967,7 @@ noexcept try
 
 	return defaults.LockFile(name, l);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -3993,7 +3993,7 @@ noexcept try
 
 	return defaults.UnlockFile(l);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -4010,7 +4010,7 @@ noexcept try
 
 	return defaults.GetTestDirectory(path);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -4038,7 +4038,7 @@ noexcept try
 
 	return defaults.GetAbsolutePath(db_path, output_path);
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -4711,7 +4711,7 @@ noexcept try
 	fd = fs::fd{};
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -4757,7 +4757,7 @@ noexcept try
 	fs::fdsync(fd, opts);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -4804,7 +4804,7 @@ noexcept try
 	fs::sync(fd, opts);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -4849,7 +4849,7 @@ noexcept try
 	fs::fsync(fd, opts);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -4897,7 +4897,7 @@ noexcept try
 	assert(0);
 	return Status::NotSupported();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -4951,7 +4951,7 @@ noexcept try
 	fs::truncate(fd, size, wopts);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -5009,7 +5009,7 @@ noexcept try
 
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -5068,7 +5068,7 @@ noexcept try
 	fs::append(fd, buf, wopts);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -5132,7 +5132,7 @@ noexcept try
 	fs::append(fd, buf, wopts);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -5193,7 +5193,7 @@ noexcept try
 	_allocate(offset, length);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -5559,7 +5559,7 @@ noexcept try
 	fd = fs::fd{};
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -5608,7 +5608,7 @@ noexcept try
 	logical_offset = size;
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -5690,7 +5690,7 @@ noexcept try
 	assert(logical_check + size(slice(s)) == logical_offset);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -6332,7 +6332,7 @@ noexcept try
 	this->offset += size(read);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -6416,7 +6416,7 @@ noexcept try
 	this->offset = std::max(this->offset, off_t(offset + size(read)));
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -6511,7 +6511,7 @@ noexcept try
 
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -6652,7 +6652,7 @@ noexcept try
 	fs::prefetch(fd, length, offset);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	return error_to_status{e};
 }
@@ -6708,7 +6708,7 @@ const noexcept try
 	*result = slice(read);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -6941,7 +6941,7 @@ noexcept try
 	this->fd = fs::fd{};
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -6986,7 +6986,7 @@ noexcept try
 	fs::fsync(fd, opts);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -7033,7 +7033,7 @@ noexcept try
 	fs::sync(fd, opts);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -7080,7 +7080,7 @@ noexcept try
 	fs::fdsync(fd, opts);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -7144,7 +7144,7 @@ const noexcept try
 	*result = slice(read);
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -7209,7 +7209,7 @@ noexcept try
 
 	return Status::OK();
 }
-catch(const fs::error &e)
+catch(const std::system_error &e)
 {
 	log::error
 	{
@@ -10934,16 +10934,16 @@ ircd::db::valid(const rocksdb::Iterator &it)
 // error_to_status
 //
 
-ircd::db::error_to_status::error_to_status(const fs::error &e)
-:error_to_status{e.code}
-{
-}
-
 ircd::db::error_to_status::error_to_status(const std::exception &e)
 :rocksdb::Status
 {
 	Status::Aborted(slice(string_view(e.what())))
 }
+{
+}
+
+ircd::db::error_to_status::error_to_status(const std::system_error &e)
+:error_to_status{e.code()}
 {
 }
 
