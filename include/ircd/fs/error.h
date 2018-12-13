@@ -25,9 +25,10 @@ namespace ircd
 }
 
 struct ircd::fs::error
-:ircd::error
+:std::system_error
+,ircd::error
 {
-	std::error_code code;
+	const char *what() const noexcept override;
 
 	template<class... args>
 	error(const char *const &fmt = " ",
@@ -60,14 +61,14 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &code)
 
 inline
 ircd::fs::error::error(const std::system_error &code)
-:code{make_error_code(code)}
+:std::system_error{code}
 {
 	string(this->buf, code);
 }
 
 inline
 ircd::fs::error::error(const std::error_code &code)
-:code{code}
+:std::system_error{code}
 {
 	string(this->buf, code);
 }
@@ -98,13 +99,13 @@ template<class... args>
 ircd::fs::error::error(const std::error_code &e,
                        const char *const &fmt,
                        args&&... a)
-:ircd::error
-{
-	fmt, std::forward<args>(a)...
-}
-,code
+:std::system_error
 {
 	make_error_code(e)
+}
+,ircd::error
+{
+	fmt, std::forward<args>(a)...
 }
 {
 }
@@ -112,9 +113,20 @@ ircd::fs::error::error(const std::error_code &e,
 template<class... args>
 ircd::fs::error::error(const char *const &fmt,
                        args&&... a)
-:ircd::error
+:std::system_error
+{
+	std::errc::invalid_argument
+}
+,ircd::error
 {
 	fmt, std::forward<args>(a)...
 }
 {
+}
+
+inline const char *
+ircd::fs::error::what()
+const noexcept
+{
+	return this->ircd::error::what();
 }

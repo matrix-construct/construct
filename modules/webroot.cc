@@ -167,7 +167,7 @@ catch(const fs::error &e)
 {
 	throw http::error
 	{
-		e.code == std::errc::no_such_file_or_directory?
+		e.code() == std::errc::no_such_file_or_directory?
 			http::NOT_FOUND:
 			http::INTERNAL_SERVER_ERROR,
 
