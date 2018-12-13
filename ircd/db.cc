@@ -3026,6 +3026,7 @@ const noexcept
 	};
 	#endif
 
+	static const compactor::callback empty;
 	const db::compactor::callback &callback
 	{
 		type == ValueType::kValue && user.value?
@@ -3034,7 +3035,7 @@ const noexcept
 		type == ValueType::kMergeOperand && user.merge?
 			user.merge:
 
-		compactor::callback{}
+		empty
 	};
 
 	if(!callback)

@@ -23,6 +23,23 @@ namespace ircd::db
 /// return db::op::SET from callback if replacement modified.
 /// return db::op::DELETE_RANGE from callback if skip_until modified.
 ///
+/// Please note the exact mechanism of the return value from the closure. This
+/// is an operation during a specific compaction, not a front-end operation on
+/// the database.
+///
+/// - op::GET the source record is moved to the target as per normal
+/// compaction.
+///
+/// - op::SET the new value is placed in the compaction target rather than
+/// the source value. Specify the new value at `replace` in the args struct.
+///
+/// - op::DELETE a delete record is placed in the compaction target and the
+/// source value will be forgotten.
+///
+/// - op::DELETE_RANGE skips moving the source record to the target. The
+/// source record is simply forgotten without a delete record. User can set
+/// `skip_until` in the args structure to apply this non-action to a range.
+///
 struct ircd::db::compactor
 {
 	struct args;
@@ -33,10 +50,16 @@ struct ircd::db::compactor
 	callback merge;
 };
 
+/// The arguments presented to the callback are aggregated in this structure.
+///
+/// For each record iterated in the compaction we present const information
+/// for examination by the user in the first part of this structure. It also
+/// contains an interface for the compactor to mutate records during the
+/// process.
+///
 struct ircd::db::compactor::args
 {
 	const int &level;
-
 	const string_view key;
 	const string_view val;
 
