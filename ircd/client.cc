@@ -201,7 +201,7 @@ ircd::client::close_all()
 		{
 			c->close(net::dc::RST, [c](const auto &e)
 			{
-				dock.notify_one();
+				dock.notify_all();
 			});
 		}
 		catch(const std::exception &e)
