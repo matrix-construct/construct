@@ -86,7 +86,7 @@ enum ircd::fs::index
 #include "aio.h"
 #include "read.h"
 #include "write.h"
-#include "fsync.h"
+#include "sync.h"
 #include "stdin.h"
 #include "support.h"
 

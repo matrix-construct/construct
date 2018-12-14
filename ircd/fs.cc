@@ -512,15 +512,15 @@ ircd::fs::stdin::tty::write(const string_view &buf)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// fs/fsync.h
+// fs/sync.h
 //
 
-ircd::fs::fsync_opts
-const ircd::fs::fsync_opts_default;
+ircd::fs::sync_opts
+const ircd::fs::sync_opts_default;
 
 void
 ircd::fs::sync(const fd &fd,
-               const fsync_opts &opts)
+               const sync_opts &opts)
 {
 	#ifdef __linux__
 		syscall(::syncfs, fd);
@@ -531,10 +531,10 @@ ircd::fs::sync(const fd &fd,
 
 void
 ircd::fs::fsync(const fd &fd,
-                const fsync_opts &opts)
+                const sync_opts &opts)
 {
 	#ifdef IRCD_USE_AIO
-	if(aio::context && opts.async && support::aio_fsync)
+	if(aio::context && !opts.synchronous && support::aio_fsync)
 		return aio::fsync(fd, opts);
 	#endif
 
@@ -543,10 +543,10 @@ ircd::fs::fsync(const fd &fd,
 
 void
 ircd::fs::fdsync(const fd &fd,
-                 const fsync_opts &opts)
+                 const sync_opts &opts)
 {
 	#ifdef IRCD_USE_AIO
-	if(aio::context && opts.async && support::aio_fdsync)
+	if(aio::context && !opts.synchronous && support::aio_fdsync)
 		return aio::fdsync(fd, opts);
 	#endif
 

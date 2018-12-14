@@ -19,8 +19,8 @@ namespace ircd::fs::aio
 	void prefetch(const fd &, const size_t &, const read_opts &);
 	size_t write(const fd &, const const_buffers &, const write_opts &);
 	size_t read(const fd &, const mutable_buffers &, const read_opts &);
-	void fdsync(const fd &, const fsync_opts &);
-	void fsync(const fd &, const fsync_opts &);
+	void fdsync(const fd &, const sync_opts &);
+	void fsync(const fd &, const sync_opts &);
 }
 
 /// AIO context instance from the kernel. Right now this is a singleton with
@@ -101,12 +101,12 @@ struct ircd::fs::aio::request::write
 struct ircd::fs::aio::request::fdsync
 :request
 {
-	fdsync(const int &fd, const fsync_opts &);
+	fdsync(const int &fd, const sync_opts &);
 };
 
 /// fsync request control block
 struct ircd::fs::aio::request::fsync
 :request
 {
-	fsync(const int &fd, const fsync_opts &);
+	fsync(const int &fd, const sync_opts &);
 };

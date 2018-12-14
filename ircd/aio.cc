@@ -28,7 +28,7 @@ namespace ircd::fs::aio
 //
 
 ircd::fs::aio::request::fsync::fsync(const int &fd,
-                                     const fsync_opts &opts)
+                                     const sync_opts &opts)
 :request{fd}
 {
 	aio_reqprio = reqprio(opts.priority);
@@ -41,7 +41,7 @@ ircd::fs::aio::request::fsync::fsync(const int &fd,
 
 void
 ircd::fs::aio::fsync(const fd &fd,
-                     const fsync_opts &opts)
+                     const sync_opts &opts)
 {
 	aio::request::fsync request
 	{
@@ -56,7 +56,7 @@ ircd::fs::aio::fsync(const fd &fd,
 //
 
 ircd::fs::aio::request::fdsync::fdsync(const int &fd,
-                                       const fsync_opts &opts)
+                                       const sync_opts &opts)
 :request{fd}
 {
 	aio_reqprio = reqprio(opts.priority);
@@ -69,7 +69,7 @@ ircd::fs::aio::request::fdsync::fdsync(const int &fd,
 
 void
 ircd::fs::aio::fdsync(const fd &fd,
-                      const fsync_opts &opts)
+                      const sync_opts &opts)
 {
 	aio::request::fdsync request
 	{

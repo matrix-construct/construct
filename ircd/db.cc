@@ -4754,7 +4754,7 @@ noexcept try
 	};
 	#endif
 
-	fs::fsync_opts opts;
+	fs::sync_opts opts;
 	fs::fdsync(fd, opts);
 	return Status::OK();
 }
@@ -4801,7 +4801,7 @@ noexcept try
 	};
 	#endif
 
-	fs::fsync_opts opts;
+	fs::sync_opts opts;
 	fs::sync(fd, opts);
 	return Status::OK();
 }
@@ -4846,7 +4846,7 @@ noexcept try
 	};
 	#endif
 
-	fs::fsync_opts opts;
+	fs::sync_opts opts;
 	fs::fsync(fd, opts);
 	return Status::OK();
 }
@@ -6983,7 +6983,7 @@ noexcept try
 	};
 	#endif
 
-	fs::fsync_opts opts;
+	fs::sync_opts opts;
 	fs::fsync(fd, opts);
 	return Status::OK();
 }
@@ -7030,7 +7030,7 @@ noexcept try
 	};
 	#endif
 
-	fs::fsync_opts opts;
+	fs::sync_opts opts;
 	fs::sync(fd, opts);
 	return Status::OK();
 }
@@ -7077,7 +7077,7 @@ noexcept try
 	};
 	#endif
 
-	fs::fsync_opts opts;
+	fs::sync_opts opts;
 	fs::fdsync(fd, opts);
 	return Status::OK();
 }
