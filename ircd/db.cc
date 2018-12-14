@@ -4755,7 +4755,8 @@ noexcept try
 	#endif
 
 	fs::sync_opts opts;
-	fs::fdsync(fd, opts);
+	opts.metadata = false;
+	fs::flush(fd, opts);
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -4847,7 +4848,7 @@ noexcept try
 	#endif
 
 	fs::sync_opts opts;
-	fs::fsync(fd, opts);
+	fs::flush(fd, opts);
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -6984,7 +6985,7 @@ noexcept try
 	#endif
 
 	fs::sync_opts opts;
-	fs::fsync(fd, opts);
+	fs::flush(fd, opts);
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -7078,7 +7079,8 @@ noexcept try
 	#endif
 
 	fs::sync_opts opts;
-	fs::fdsync(fd, opts);
+	opts.metadata = false;
+	fs::flush(fd, opts);
 	return Status::OK();
 }
 catch(const std::system_error &e)

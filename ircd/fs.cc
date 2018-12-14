@@ -530,27 +530,25 @@ ircd::fs::sync(const fd &fd,
 }
 
 void
-ircd::fs::fsync(const fd &fd,
+ircd::fs::flush(const fd &fd,
                 const sync_opts &opts)
 {
 	#ifdef IRCD_USE_AIO
-	if(aio::context && !opts.synchronous && support::aio_fsync)
-		return aio::fsync(fd, opts);
+	if(aio::context && opts.yielding)
+	{
+		if(!opts.metadata && support::aio_fdsync)
+			return aio::fdsync(fd, opts);
+
+		if(opts.metadata && support::aio_fsync)
+			return aio::fsync(fd, opts);
+	}
 	#endif
 
-	syscall(::fsync, fd);
-}
+	if(!opts.metadata)
+		return void(syscall(::fdatasync, fd));
 
-void
-ircd::fs::fdsync(const fd &fd,
-                 const sync_opts &opts)
-{
-	#ifdef IRCD_USE_AIO
-	if(aio::context && !opts.synchronous && support::aio_fdsync)
-		return aio::fdsync(fd, opts);
-	#endif
-
-	syscall(::fdatasync, fd);
+	if(opts.metadata)
+		return void(syscall(::fsync, fd));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
