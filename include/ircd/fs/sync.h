@@ -15,7 +15,10 @@ namespace ircd::fs
 {
 	struct sync_opts extern const sync_opts_default;
 
+	void flush(const fd &, const off_t &, const size_t &, const sync_opts & = sync_opts_default);
 	void flush(const fd &, const sync_opts & = sync_opts_default);
+
+	void sync(const fd &, const off_t &, const size_t &, const sync_opts & = sync_opts_default);
 	void sync(const fd &, const sync_opts & = sync_opts_default);
 }
 

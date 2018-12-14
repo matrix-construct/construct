@@ -520,6 +520,15 @@ const ircd::fs::sync_opts_default;
 
 void
 ircd::fs::sync(const fd &fd,
+               const off_t &offset,
+               const size_t &length,
+               const sync_opts &opts)
+{
+	return sync(fd, opts);
+}
+
+void
+ircd::fs::sync(const fd &fd,
                const sync_opts &opts)
 {
 	#ifdef __linux__
@@ -527,6 +536,15 @@ ircd::fs::sync(const fd &fd,
 	#else
 		syscall(::sync);
 	#endif
+}
+
+void
+ircd::fs::flush(const fd &fd,
+                const off_t &offset,
+                const size_t &length,
+                const sync_opts &opts)
+{
+	return flush(fd, opts);
 }
 
 void

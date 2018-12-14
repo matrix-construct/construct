@@ -4896,8 +4896,19 @@ noexcept try
 	};
 	#endif
 
-	assert(0);
-	return Status::NotSupported();
+	// RocksDB sez they want us to initiate flushing of dirty pages
+	// asynchronously without waiting for completion. RocksDB allows
+	// this callback to be a no-op and do nothing at all.
+	//
+	// We plug this into a "range flush" gimmick in ircd::fs which almost
+	// certainly calls fdatasync() and ignores the range; it may one day
+	// on supporting platforms and in certain circumstances call
+	// sync_file_range() without any of the wait flags and respect the range.
+
+	fs::sync_opts opts;
+	opts.metadata = false;
+	fs::flush(fd, offset, length, opts);
+	return Status::OK();
 }
 catch(const std::system_error &e)
 {
