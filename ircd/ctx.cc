@@ -855,8 +855,6 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	intr
 }
 {
-	mark(prof::event::CUR_YIELD);
-
 	assert_critical();
 	assert(!critical_asserted);
 	assert(self != nullptr);
@@ -872,6 +870,7 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	assert(!std::current_exception());
 	//assert(!std::uncaught_exceptions());
 
+	mark(prof::event::CUR_YIELD);
 	self->profile.yields++;
 	self->cont = this;
 	ircd::ctx::current = nullptr;
@@ -1382,17 +1381,22 @@ ircd::ctx::prof::slice_start()
 void
 ircd::ctx::prof::check_slice()
 {
+	auto &c(cur());
+	const bool slice_exempt
+	{
+		c.flags & context::SLICE_EXEMPT
+	};
+
 	const auto &last_cycles
 	{
 		cur_slice_cycles()
 	};
 
-	auto &c(cur());
 	c.profile.cycles += last_cycles;
 	_slice_total += last_cycles;
 
 	const ulong &slice_warning(settings::slice_warning);
-	if(unlikely(slice_warning > 0 && last_cycles >= slice_warning))
+	if(unlikely(slice_warning > 0 && last_cycles >= slice_warning && !slice_exempt))
 		log::dwarning
 		{
 			"context '%s' #%lu watchdog: timeslice excessive; lim:%lu last:%lu",
@@ -1403,10 +1407,10 @@ ircd::ctx::prof::check_slice()
 		};
 
 	const ulong &slice_assertion(settings::slice_assertion);
-	assert(slice_assertion == 0 || last_cycles < slice_assertion);
+	assert(slice_assertion == 0 || last_cycles < slice_assertion || slice_exempt);
 
 	const ulong &slice_interrupt(settings::slice_interrupt);
-	if(unlikely(slice_interrupt > 0 && last_cycles >= slice_interrupt))
+	if(unlikely(slice_interrupt > 0 && last_cycles >= slice_interrupt && !slice_exempt))
 		throw interrupted
 		{
 			"context '%s' #%lu watchdog interrupt; lim:%lu last:%lu total:%lu",
@@ -1422,12 +1426,17 @@ void
 ircd::ctx::prof::check_stack()
 {
 	auto &c(cur());
+	const bool stack_exempt
+	{
+		c.flags & context::STACK_EXEMPT
+	};
+
 	const double &stack_max(c.stack.max);
 	const auto &stack_at(stack_at_here());
 	c.stack.at = stack_at;
 
 	const double &stack_usage_assertion(settings::stack_usage_assertion);
-	if(unlikely(stack_at > stack_max * stack_usage_assertion))
+	if(unlikely(!stack_exempt && stack_at > stack_max * stack_usage_assertion))
 	{
 		log::dwarning
 		{

@@ -96,13 +96,15 @@ struct ircd::ctx::context
 enum ircd::ctx::context::flags
 :uint
 {
-	POST            = 0x01,   ///< Defers spawn with an ios.post()
-	DISPATCH        = 0x02,   ///< Defers spawn with an ios.dispatch() (possibly)
-	DETACH          = 0x04,   ///< Context deletes itself; see struct context constructor notes
-	NOINTERRUPT     = 0x08,   ///< Interruption points won't throw while lit.
+	POST            = 0x0001,   ///< Defers spawn with an ios.post()
+	DISPATCH        = 0x0002,   ///< Defers spawn with an ios.dispatch() (possibly)
+	DETACH          = 0x0004,   ///< Context deletes itself; see struct context constructor notes
+	NOINTERRUPT     = 0x0008,   ///< Interruption points won't throw while lit.
+	SLICE_EXEMPT    = 0x0010,   ///< The watchdog will ignore excessive cpu usage.
+	STACK_EXEMPT    = 0x0020,   ///< The watchdog will ignore excessive stack usage.
 
-	INTERRUPTED     = 0x10,   ///< (INDICATOR) Marked
-	TERMINATED      = 0x20,   ///< (INDICATOR)
+	INTERRUPTED     = 0x4000,   ///< (INDICATOR) Marked
+	TERMINATED      = 0x8000,   ///< (INDICATOR)
 };
 
 inline void

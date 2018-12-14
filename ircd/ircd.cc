@@ -71,9 +71,13 @@ try
 	// not between contexts and the main stack. B. The user's io_context may or
 	// may not even be running yet anyway.
 	//
+	// (debug compilation) The context::SLICE_EXEMPT flag exempts the context
+	// from assertions that it's not blocking the process with excessive CPU
+	// usage or long syscall. Main context can't meet this requirement.
+	//
 	ircd::context main_context
 	{
-		"main", 256_KiB, &ircd::main, context::POST
+		"main", 256_KiB, &ircd::main, context::POST | context::SLICE_EXEMPT
 	};
 
 	// The default behavior for ircd::context is to join the ctx on dtor. We
