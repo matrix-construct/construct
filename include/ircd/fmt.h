@@ -52,7 +52,7 @@ class ircd::fmt::snprintf
 	size_t consumed() const                      { return out.consumed();                          }
 	string_view completed() const                { return out.completed();                         }
 
-	void append(const const_buffer &);
+	void append(const string_view &);
 	void argument(const arg &);
 
 	IRCD_OVERLOAD(internal)

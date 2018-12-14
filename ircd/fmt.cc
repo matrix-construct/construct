@@ -329,13 +329,13 @@ try
 	// possible to the out buffer.
 	if(empty(this->fmt))
 	{
-		consume(this->out, strlcpy(this->out, fmt));
+		append(fmt);
 		return;
 	}
 
 	// Copy everything from fmt up to the first specifier.
 	assert(data(this->fmt) >= data(fmt));
-	append(const_buffer(data(fmt), data(this->fmt)));
+	append(string_view(data(fmt), data(this->fmt)));
 
 	// Iterate
 	auto it(begin(v));
@@ -365,12 +365,9 @@ ircd::fmt::snprintf::argument(const arg &val)
 	if(qi::parse(start, stop, parser, spec))
 		handle_specifier(this->out, idx++, spec, val);
 
-	// The parse advanced the front pointer of this->fmt to after the
-	// specifier. Now we copy characters from here up until the
-	// next specifier.
 	const string_view fmt(start, stop);
 	const auto nextpos(fmt.find(SPECIFIER));
-	append(const_buffer(fmt.substr(0, nextpos)));
+	append(fmt.substr(0, nextpos));
 	this->fmt = const_buffer
 	{
 		nextpos != fmt.npos?
@@ -380,9 +377,12 @@ ircd::fmt::snprintf::argument(const arg &val)
 }
 
 void
-ircd::fmt::snprintf::append(const const_buffer &src)
+ircd::fmt::snprintf::append(const string_view &src)
 {
-	consume(out, strlcpy(out, src));
+	out([&src](const mutable_buffer &buf)
+	{
+		return strlcpy(buf, src);
+	});
 }
 
 size_t
@@ -479,7 +479,7 @@ template<class T,
          class lambda>
 bool
 ircd::fmt::visit_type(const arg &val,
-                lambda&& closure)
+                      lambda&& closure)
 {
 	const auto &ptr(get<0>(val));
 	const auto &type(get<1>(val));
