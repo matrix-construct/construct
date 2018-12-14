@@ -1299,6 +1299,7 @@ ircd::ctx::prof::settings::slice_interrupt
 {
 	{ "name",     "ircd.ctx.prof.slice_interrupt" },
 	{ "default",  0L                              },
+	{ "persist",  false                           },
 };
 
 // slice_assertion after this number of tsc ticks...
@@ -1307,6 +1308,7 @@ ircd::ctx::prof::settings::slice_assertion
 {
 	{ "name",     "ircd.ctx.prof.slice_assertion" },
 	{ "default",  0L                              },
+	{ "persist",  false                           },
 };
 
 #ifdef RB_DEBUG
