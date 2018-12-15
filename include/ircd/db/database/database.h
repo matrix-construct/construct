@@ -48,6 +48,8 @@ namespace ircd::db
 	void setopt(database &, const string_view &key, const string_view &val);
 	void fdeletions(database &, const bool &enable, const bool &force = false);
 	uint64_t checkpoint(database &);
+	void bgcontinue(database &);
+	void bgpause(database &);
 	void resume(database &);
 	void check(database &);
 	void compact(database &, const std::pair<int, int> &level, const compactor & = {});

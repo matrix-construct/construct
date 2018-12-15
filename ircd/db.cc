@@ -497,6 +497,42 @@ ircd::db::resume(database &d)
 	};
 }
 
+void
+ircd::db::bgpause(database &d)
+{
+	assert(d.d);
+	const ctx::uninterruptible::nothrow ui;
+
+	throw_on_error
+	{
+		d.d->PauseBackgroundWork()
+	};
+
+	log::debug
+	{
+		log, "'%s': Paused all background work",
+		name(d)
+	};
+}
+
+void
+ircd::db::bgcontinue(database &d)
+{
+	assert(d.d);
+	const ctx::uninterruptible::nothrow ui;
+
+	log::debug
+	{
+		log, "'%s': Continuing background work",
+		name(d)
+	};
+
+	throw_on_error
+	{
+		d.d->ContinueBackgroundWork()
+	};
+}
+
 /// Writes a snapshot of this database to the directory specified. The
 /// snapshot consists of hardlinks to the bulk data files of this db, but
 /// copies the other stuff that usually gets corrupted. The directory can
