@@ -10728,14 +10728,19 @@ ircd::db::column_names(const std::string &path,
 	return column_names(path, db::options{options});
 }
 
+/// Note that if there is no database found at path we still return a
+/// vector containing the column name "default". This function is not
+/// to be used as a test for whether the database exists. It returns
+/// the columns required to be described at `path`. That will always
+/// include the default column (RocksDB sez) even if database doesn't
+/// exist yet.
 std::vector<std::string>
 ircd::db::column_names(const std::string &path,
                        const rocksdb::DBOptions &opts)
 try
 {
-	const ctx::uninterruptible::nothrow ui;
-
 	std::vector<std::string> ret;
+
 	throw_on_error
 	{
 		rocksdb::DB::ListColumnFamilies(opts, path, &ret)
@@ -10743,9 +10748,9 @@ try
 
 	return ret;
 }
-catch(const io_error &e)
+catch(const not_found &)
 {
-	return // No database found at path. Assume fresh.
+	return // No database found at path.
 	{
 		{ rocksdb::kDefaultColumnFamilyName }
 	};
