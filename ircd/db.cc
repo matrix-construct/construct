@@ -9402,9 +9402,6 @@ ircd::db::compact(column &column,
 	opts.target_level = std::max(to_level, -1);
 	opts.bottommost_level_compaction = rocksdb::BottommostLevelCompaction::kForce;
 
-	const ctx::uninterruptible ui;
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
-
 	// Save and restore the existing filter callback so we can allow our
 	// caller to use theirs. Note that this manual compaction should be
 	// exclusive for this column (no background compaction should be
