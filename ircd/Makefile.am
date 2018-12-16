@@ -148,6 +148,3 @@ libircd_la_SOURCES +=  \
 	js.cc              \
 	###
 endif
-
-install-data-local:
-	test -d $(dbdir) || mkdir -p $(dbdir)
