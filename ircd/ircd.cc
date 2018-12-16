@@ -134,6 +134,7 @@ noexcept
 		{
 			ctx::terminate(*main_context);
 			main_context = nullptr;
+			ircd::runlevel_set(runlevel::QUIT);
 			return true;
 		}
 
