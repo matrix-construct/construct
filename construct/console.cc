@@ -126,7 +126,7 @@ construct::console::console()
 	"console",
 	stack_sz,
 	std::bind(&console::main, this),
-	ircd::context::POST | ircd::context::SLICE_EXEMPT
+	ircd::context::POST
 }
 ,runlevel_changed
 {
