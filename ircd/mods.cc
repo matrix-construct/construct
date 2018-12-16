@@ -90,6 +90,8 @@ try
 	// and destruction but not during its lifetime.
 	const ctx::uninterruptible ui;
 
+	// This will be the terminate handler installed during the dlopen() and
+	// uninstalled after it completes.
 	const auto ours([]
 	{
 		log::critical
@@ -99,20 +101,27 @@ try
 		};
 	});
 
+	// The existing terminate handler is saved here for restoration.
 	const auto theirs
 	{
 		std::get_terminate()
 	};
 
-	const unwind reset{[this, &theirs]
+	// Reference this instance at the top of the loading stack.
+	loading.emplace_front(this);
+	const unwind pop_loading{[this]
 	{
 		assert(loading.front() == this);
 		loading.pop_front();
+	}};
+
+	// Set the terminate handler for the duration of the dlopen().
+	std::set_terminate(ours);
+	const unwind pop_terminate{[&theirs]
+	{
 		std::set_terminate(theirs);
 	}};
 
-	loading.emplace_front(this);
-	std::set_terminate(ours);
 	return boost::dll::shared_library{path, mode};
 }()}
 ,_name
