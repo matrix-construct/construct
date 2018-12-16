@@ -6291,6 +6291,13 @@ try
 {
 	0
 }
+,aio
+{
+	// When this flag is false then AIO operations are never used for this
+	// file; if true, AIO may be used if available and/or other conditions.
+	// Currently the /proc filesystem doesn't like AIO.
+	!startswith(name, "/proc/")
+}
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -6388,6 +6395,9 @@ noexcept try
 	};
 	#endif
 
+	fs::read_opts opts;
+	opts.offset = offset;
+	opts.aio = this->aio;
 	const mutable_buffer buf
 	{
 		scratch, length
@@ -6395,7 +6405,7 @@ noexcept try
 
 	const const_buffer read
 	{
-		fs::read(fd, buf, offset)
+		fs::read(fd, buf, opts)
 	};
 
 	*result = slice(read);
@@ -6472,6 +6482,9 @@ noexcept try
 	};
 	#endif
 
+	fs::read_opts opts;
+	opts.offset = offset;
+	opts.aio = this->aio;
 	const mutable_buffer buf
 	{
 		scratch, length
@@ -6479,7 +6492,7 @@ noexcept try
 
 	const const_buffer read
 	{
-		fs::read(fd, buf, offset)
+		fs::read(fd, buf, opts)
 	};
 
 	*result = slice(read);
