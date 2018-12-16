@@ -645,16 +645,23 @@ console_cmd__proc(opt &out, const string_view &line)
 		param.at("filename", ""_sv)
 	};
 
+	static const auto prefix
+	{
+		"/proc/self/"_sv
+	};
+
 	char pathbuf[128];
 	const string_view path{fmt::sprintf
 	{
-		pathbuf, "/proc/self/%s", filename
+		pathbuf, "%s%s", prefix, filename
 	}};
 
 	if(fs::is_dir(path))
 	{
 		for(const auto &file : fs::ls(path))
-			out << file << std::endl;
+			out << lstrip(file, prefix)
+			    << (fs::is_dir(file)? "/" : "")
+			    << std::endl;
 
 		return true;
 	}
