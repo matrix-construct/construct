@@ -84,6 +84,12 @@ try
 //,mangles{mods::mangles(path)}
 ,handle{[this, &path, &mode]
 {
+	// Can't interrupt this ctx during the dlopen() as long as exceptions
+	// coming out of static inits are trouble (which they are at this time).
+	// Note this device will throw any pending interrupts during construction
+	// and destruction but not during its lifetime.
+	const ctx::uninterruptible ui;
+
 	const auto ours([]
 	{
 		log::critical
