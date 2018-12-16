@@ -3403,62 +3403,6 @@ ircd::db::database::wal::info::operator=(const rocksdb::LogFile &lf)
 //
 
 //
-// env::state
-//
-
-ircd::db::database::env::state::state(database *const &d)
-:d{*d}
-{
-}
-
-ircd::db::database::env::state::~state()
-noexcept
-{
-	for(size_t i(0); i < POOLS; ++i) try
-	{
-		auto &tasks(this->tasks.at(i));
-		auto &pool(this->pool.at(i));
-		if(tasks.size() || pool.pending())
-			log::warning
-			{
-				log, "'%s': Waiting for tasks:%zu queued:%zu active:%zu in pool '%s'",
-				d.name,
-				tasks.size(),
-				pool.queued(),
-				pool.active(),
-				pool.name
-			};
-
-		pool.q.dock.wait([&tasks, &pool]
-		{
-			return tasks.empty() && !pool.pending();
-		});
-
-		pool.terminate();
-		pool.join();
-
-		assert(tasks.empty());
-		assert(!pool.queued());
-		assert(!pool.pending());
-		log::debug
-		{
-			log, "'%s': Terminated pool '%s'.",
-			d.name,
-			pool.name
-		};
-	}
-	catch(const std::exception &e)
-	{
-		log::critical
-		{
-			log, "'%s': Environment state shutdown :%s",
-			d.name,
-			e.what()
-		};
-	}
-}
-
-//
 // env::env
 //
 
@@ -3509,7 +3453,7 @@ ircd::db::database::env::NewRandomAccessFile(const std::string &name,
                                              const EnvOptions &options)
 noexcept try
 {
-	ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible::nothrow ui;
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -4298,7 +4242,7 @@ ircd::db::database::env::UnSchedule(void *const tag,
                                     const Priority prio)
 noexcept try
 {
-	ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible::nothrow ui;
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -4425,7 +4369,7 @@ ircd::db::database::env::SetBackgroundThreads(int num,
                                               Priority prio)
 noexcept try
 {
-	ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible::nothrow ui;
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -4468,7 +4412,7 @@ ircd::db::database::env::IncBackgroundThreadsIfNeeded(int num,
                                                       Priority prio)
 noexcept try
 {
-	ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible::nothrow ui;
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -4593,6 +4537,8 @@ uint64_t
 ircd::db::database::env::GetThreadID()
 const noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -4617,6 +4563,8 @@ int
 ircd::db::database::env::GetBackgroundThreads(Priority prio)
 noexcept try
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
@@ -4738,7 +4686,7 @@ ircd::db::database::env::writable_file::Close()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	std::unique_lock<decltype(mutex)> lock{mutex};
+	const std::lock_guard<decltype(mutex)> lock{mutex};
 
 	if(!fd)
 		return Status::OK();
@@ -5591,7 +5539,7 @@ ircd::db::database::env::writable_file_direct::Close()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	std::unique_lock<decltype(mutex)> lock{mutex};
+	const std::lock_guard<decltype(mutex)> lock{mutex};
 
 	if(!fd)
 		return Status::OK();
@@ -6580,7 +6528,7 @@ ircd::db::database::env::sequential_file::InvalidateCache(size_t offset,
                                                           size_t length)
 noexcept try
 {
-	ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible::nothrow ui;
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -7017,7 +6965,7 @@ rocksdb::Status
 ircd::db::database::env::random_rw_file::Close()
 noexcept try
 {
-	ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible::nothrow ui;
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -7061,7 +7009,7 @@ rocksdb::Status
 ircd::db::database::env::random_rw_file::Fsync()
 noexcept try
 {
-	ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible::nothrow ui;
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -7108,7 +7056,7 @@ rocksdb::Status
 ircd::db::database::env::random_rw_file::Sync()
 noexcept try
 {
-	ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible::nothrow ui;
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -7155,7 +7103,7 @@ rocksdb::Status
 ircd::db::database::env::random_rw_file::Flush()
 noexcept try
 {
-	ctx::uninterruptible::nothrow ui;
+	const ctx::uninterruptible::nothrow ui;
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -7372,10 +7320,15 @@ rocksdb::Status
 ircd::db::database::env::directory::Fsync()
 noexcept
 {
+	const ctx::uninterruptible::nothrow ui;
+
 	#ifdef RB_DEBUG_DB_ENV
-	log.debug("'%s': directory:%p fsync",
-	          d.name,
-	          this);
+	log::debug
+	{
+		log, "'%s': directory:%p fsync",
+		d.name,
+		this
+	};
 	#endif
 
 	return defaults->Fsync();
@@ -7395,6 +7348,68 @@ noexcept
 {
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// db/database/env/state.h
+//
+
+//
+// env::state
+//
+
+ircd::db::database::env::state::state(database *const &d)
+:d{*d}
+{
+}
+
+ircd::db::database::env::state::~state()
+noexcept
+{
+	for(size_t i(0); i < POOLS; ++i) try
+	{
+		auto &tasks(this->tasks.at(i));
+		auto &pool(this->pool.at(i));
+		if(tasks.size() || pool.pending())
+			log::warning
+			{
+				log, "'%s': Waiting for tasks:%zu queued:%zu active:%zu in pool '%s'",
+				d.name,
+				tasks.size(),
+				pool.queued(),
+				pool.active(),
+				pool.name
+			};
+
+		pool.q.dock.wait([&tasks, &pool]
+		{
+			return tasks.empty() && !pool.pending();
+		});
+
+		pool.terminate();
+		pool.join();
+
+		assert(tasks.empty());
+		assert(!pool.queued());
+		assert(!pool.pending());
+		log::debug
+		{
+			log, "'%s': Terminated pool '%s'.",
+			d.name,
+			pool.name
+		};
+	}
+	catch(const std::exception &e)
+	{
+		log::critical
+		{
+			log, "'%s': Environment state shutdown :%s",
+			d.name,
+			e.what()
+		};
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
 //
 // rocksdb::port (EXPERIMENTAL)
 //
@@ -7715,11 +7730,6 @@ rocksdb::port::CondVar::SignalAll()
 }
 
 #endif // IRCD_DB_PORT
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// db/database/env/state.h
-//
 
 ///////////////////////////////////////////////////////////////////////////////
 //
