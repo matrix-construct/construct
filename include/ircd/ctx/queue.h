@@ -17,13 +17,16 @@ namespace ircd::ctx
 }
 
 template<class T>
-struct ircd::ctx::queue
+class ircd::ctx::queue
 {
 	struct dock dock;
 	std::queue<T> q;
 	size_t w {0};
 
   public:
+	explicit operator const struct dock &() const;
+	explicit operator struct dock &();
+
 	size_t empty() const;
 	size_t size() const;
 	size_t waiting() const;
@@ -174,4 +177,19 @@ ircd::ctx::queue<T>::empty()
 const
 {
 	return q.empty();
+}
+
+template<class T>
+ircd::ctx::queue<T>::operator
+struct dock &()
+{
+	return dock;
+}
+
+template<class T>
+ircd::ctx::queue<T>::operator
+const struct dock &()
+const
+{
+	return dock;
 }

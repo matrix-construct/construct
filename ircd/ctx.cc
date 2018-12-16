@@ -1091,7 +1091,17 @@ ircd::ctx::context::detach()
 // ctx_pool.h
 //
 
-ircd::ctx::pool::pool(const char *const &name,
+const ircd::string_view &
+ircd::ctx::name(const pool &pool)
+{
+	return pool.name;
+}
+
+//
+// pool::pool
+//
+
+ircd::ctx::pool::pool(const string_view &name,
                       const size_t &stack_size,
                       const size_t &size)
 :name{name}
@@ -1113,9 +1123,23 @@ noexcept
 }
 
 void
-ircd::ctx::pool::operator()(closure closure)
+ircd::ctx::pool::join()
 {
-	q.push(std::move(closure));
+	set(0);
+}
+
+void
+ircd::ctx::pool::interrupt()
+{
+	for(auto &context : ctxs)
+		context.interrupt();
+}
+
+void
+ircd::ctx::pool::terminate()
+{
+	for(auto &context : ctxs)
+		context.terminate();
 }
 
 void
@@ -1148,27 +1172,13 @@ void
 ircd::ctx::pool::add(const size_t &num)
 {
 	for(size_t i(0); i < num; ++i)
-		ctxs.emplace_back(name, stack_size, context::POST, std::bind(&pool::main, this));
+		ctxs.emplace_back(this->name, stack_size, context::POST, std::bind(&pool::main, this));
 }
 
 void
-ircd::ctx::pool::join()
+ircd::ctx::pool::operator()(closure closure)
 {
-	set(0);
-}
-
-void
-ircd::ctx::pool::interrupt()
-{
-	for(auto &context : ctxs)
-		context.interrupt();
-}
-
-void
-ircd::ctx::pool::terminate()
-{
-	for(auto &context : ctxs)
-		context.terminate();
+	q.push(std::move(closure));
 }
 
 void

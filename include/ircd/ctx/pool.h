@@ -14,13 +14,15 @@
 namespace ircd::ctx
 {
 	struct pool;
+
+	const string_view &name(const pool &);
 }
 
-struct ircd::ctx::pool
+class ircd::ctx::pool
 {
 	using closure = std::function<void ()>;
 
-	const char *name;
+	string_view name;
 	size_t stack_size;
 	size_t running;
 	size_t working;
@@ -31,12 +33,22 @@ struct ircd::ctx::pool
 	void main() noexcept;
 
   public:
+	explicit operator const queue<closure> &() const;
+	explicit operator const dock &() const;
+	explicit operator queue<closure> &();
+	explicit operator dock &();
+
 	// indicators
-	auto size() const                            { return ctxs.size();                             }
-	auto queued() const                          { return q.size();                                }
-	auto active() const                          { return working;                                 }
-	auto avail() const                           { return running - working;                       }
-	auto pending() const                         { return active() + queued();                     }
+	auto size() const                  { return ctxs.size();                   }
+	auto queued() const                { return q.size();                      }
+	auto active() const                { return working;                       }
+	auto avail() const                 { return running - working;             }
+	auto pending() const               { return active() + queued();           }
+
+	// dispatch to pool
+	template<class F, class... A> future_void<F, A...> async(F&&, A&&...);
+	template<class F, class... A> future_value<F, A...> async(F&&, A&&...);
+	void operator()(closure);
 
 	// control panel
 	void add(const size_t & = 1);
@@ -46,16 +58,9 @@ struct ircd::ctx::pool
 	void interrupt();
 	void join();
 
-	// dispatch function to pool
-	void operator()(closure);
-
-	// dispatch function std async style
-	template<class F, class... A> future_void<F, A...> async(F&&, A&&...);
-	template<class F, class... A> future_value<F, A...> async(F&&, A&&...);
-
-	pool(const char *const &name    = "<unnamed pool>",
-	     const size_t &stack_size   = DEFAULT_STACK_SIZE,
-	     const size_t &             = 0);
+	pool(const string_view &name     = "<unnamed pool>"_sv,
+	     const size_t &stack_size    = DEFAULT_STACK_SIZE,
+	     const size_t &initial_ctxs  = 0);
 
 	pool(pool &&) = delete;
 	pool(const pool &) = delete;
@@ -63,6 +68,7 @@ struct ircd::ctx::pool
 	pool &operator=(const pool &) = delete;
 	~pool() noexcept;
 
+	friend const string_view &name(const pool &);
 	friend void debug_stats(const pool &);
 };
 
@@ -113,4 +119,32 @@ ircd::ctx::pool::async(F&& f,
 	});
 
 	return ret;
+}
+
+inline ircd::ctx::pool::operator
+dock &()
+{
+	dock &d(q);
+	return d;
+}
+
+inline ircd::ctx::pool::operator
+queue<closure> &()
+{
+	return q;
+}
+
+inline ircd::ctx::pool::operator
+const dock &()
+const
+{
+	const dock &d(q);
+	return d;
+}
+
+inline ircd::ctx::pool::operator
+const queue<closure> &()
+const
+{
+	return q;
 }
