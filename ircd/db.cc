@@ -7353,12 +7353,26 @@ noexcept
 // db/database/env/state.h
 //
 
+decltype(ircd::db::database::env::state::pool_stack_size)
+ircd::db::database::env::state::pool_stack_size
+{
+	{ "name",     "ircd.db.env.pool.stack_size" },
+	{ "default",  long(128_KiB)                 },
+};
+
 //
-// env::state
+// env::state::state
 //
 
 ircd::db::database::env::state::state(database *const &d)
 :d{*d}
+,pool
+{{
+	// name of pool   stack size                   initial workers
+	{ "rdb bott",     size_t(pool_stack_size),     0                 },
+	{ "rdb low",      size_t(pool_stack_size),     0                 },
+	{ "rdb high",     size_t(pool_stack_size),     0                 },
+}}
 {
 }
 

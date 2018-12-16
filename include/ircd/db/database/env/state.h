@@ -24,17 +24,10 @@ struct ircd::db::database::env::state
 		rocksdb::Env::Priority::TOTAL
 	};
 
-	/// Track of background tasks.
-	std::array<std::deque<task>, POOLS> tasks;
+	static conf::item<size_t> pool_stack_size;
 
-	/// The background task pools.
-	std::array<ctx::pool, POOLS> pool
-	{{
-		// name of pool    stack size    initial workers
-		{ "rdb bott",      128_KiB,      0                 },
-		{ "rdb low",       128_KiB,      0                 },
-		{ "rdb high",      128_KiB,      0                 },
-	}};
+	std::array<std::deque<task>, POOLS> tasks;
+	std::array<ctx::pool, POOLS> pool;
 
 	state(database *const &d);
 	~state() noexcept;
