@@ -345,6 +345,11 @@ try
 		const std::type_index type(*get<1>(*it));
 		argument(std::make_tuple(ptr, type));
 	}
+
+	// Ensure null termination if out buffer is non-empty.
+	assert(size(this->out) > 0);
+	assert(this->out.remaining());
+	copy(this->out, "\0"_sv);
 }
 catch(const std::out_of_range &e)
 {
@@ -444,7 +449,12 @@ try
 	const auto &handler(*specifiers.at(spec.name));
 
 	auto &outp(std::get<0>(out));
-	const size_t max(size(out));
+	assert(size(out));
+	const size_t max
+	{
+		size(out) - 1 // Leave room for null byte for later.
+	};
+
 	if(unlikely(!handler(outp, max, spec, val)))
 		throw invalid_type
 		{
