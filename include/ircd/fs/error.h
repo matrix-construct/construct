@@ -54,25 +54,6 @@ struct ircd::fs::error
 	error(const boost::filesystem::filesystem_error &);
 };
 
-inline
-ircd::fs::error::error(const boost::filesystem::filesystem_error &code)
-:error{make_error_code(code)}
-{}
-
-inline
-ircd::fs::error::error(const std::system_error &code)
-:std::system_error{code}
-{
-	string(this->buf, code);
-}
-
-inline
-ircd::fs::error::error(const std::error_code &code)
-:std::system_error{code}
-{
-	string(this->buf, code);
-}
-
 template<class... args>
 ircd::fs::error::error(const boost::filesystem::filesystem_error &e,
                        const char *const &fmt,
@@ -81,8 +62,7 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &e,
 {
 	make_error_code(e), fmt, std::forward<args>(a)...
 }
-{
-}
+{}
 
 template<class... args>
 ircd::fs::error::error(const std::system_error &e,
@@ -92,8 +72,7 @@ ircd::fs::error::error(const std::system_error &e,
 {
 	make_error_code(e), fmt, std::forward<args>(a)...
 }
-{
-}
+{}
 
 template<class... args>
 ircd::fs::error::error(const std::error_code &e,
@@ -107,8 +86,7 @@ ircd::fs::error::error(const std::error_code &e,
 {
 	fmt, std::forward<args>(a)...
 }
-{
-}
+{}
 
 template<class... args>
 ircd::fs::error::error(const char *const &fmt,
@@ -121,12 +99,4 @@ ircd::fs::error::error(const char *const &fmt,
 {
 	fmt, std::forward<args>(a)...
 }
-{
-}
-
-inline const char *
-ircd::fs::error::what()
-const noexcept
-{
-	return this->ircd::error::what();
-}
+{}

@@ -112,10 +112,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw error
-	{
-		e, "`%s' :%s", path, e.what()
-	};
+	throw error{e};
 }
 
 bool
@@ -126,10 +123,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw error
-	{
-		e, "`%s' :%s", path, e.what()
-	};
+	throw error{e};
 }
 
 bool
@@ -140,10 +134,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw error
-	{
-		e, "`%s' :%s", path, e.what()
-	};
+	throw error{e};
 }
 
 bool
@@ -163,10 +154,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	throw error
-	{
-		e, "`%s' -> `%s' :%s", old, new_, e.what()
-	};
+	throw error{e};
 }
 
 bool
@@ -200,15 +188,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	const auto &ec
-	{
-		make_error_code(e.code())
-	};
-
-	throw error
-	{
-		e, "`%s': %s", path, ec.message()
-	};
+	throw error{e};
 }
 
 std::vector<std::string>
@@ -232,15 +212,7 @@ try
 }
 catch(const filesystem::filesystem_error &e)
 {
-	const auto &ec
-	{
-		make_error_code(e.code())
-	};
-
-	throw error
-	{
-		e, "`%s': %s", path, ec.message()
-	};
+	throw error{e};
 }
 
 size_t
@@ -1261,4 +1233,42 @@ ircd::make_error_code(const boost::filesystem::filesystem_error &e)
 	};
 
 	return make_error_code(ec);
+}
+
+//
+// error::error
+//
+
+ircd::fs::error::error(const boost::filesystem::filesystem_error &code)
+:std::system_error
+{
+    make_error_code(code)
+}
+{
+	const string_view &msg
+	{
+		// Strip this prefix off the message to simplify it for our user.
+		lstrip(code.what(), "boost::filesystem::")
+	};
+
+	copy(this->buf, msg);
+}
+
+ircd::fs::error::error(const std::system_error &code)
+:std::system_error{code}
+{
+	string(this->buf, code);
+}
+
+ircd::fs::error::error(const std::error_code &code)
+:std::system_error{code}
+{
+	string(this->buf, code);
+}
+
+const char *
+ircd::fs::error::what()
+const noexcept
+{
+	return this->ircd::error::what();
 }
