@@ -6304,6 +6304,27 @@ try
 	};
 	#endif
 }
+catch(const std::system_error &e)
+{
+	// Set the facility to downplay some errors which the user shouldn't
+	// be alerted to with a log message under normal operations.
+	const log::facility facility
+	{
+		is(e.code(), std::errc::no_such_file_or_directory)?
+			log::facility::DERROR:
+			log::facility::ERROR
+	};
+
+	log::logf
+	{
+		log, facility, "'%s': opening seqfile:%p `%s' (%d) :%s",
+		d->name,
+		this,
+		name,
+		e.code().value(),
+		e.what()
+	};
+}
 catch(const std::exception &e)
 {
 	log::error
