@@ -552,7 +552,7 @@ ircd::fs::flush(const fd &fd,
                 const sync_opts &opts)
 {
 	#ifdef IRCD_USE_AIO
-	if(aio::context && opts.yielding)
+	if(aio::context && opts.aio)
 	{
 		if(!opts.metadata && support::aio_fdsync)
 			return aio::fdsync(fd, opts);
@@ -601,7 +601,7 @@ ircd::fs::prefetch(const fd &fd,
 	}
 
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::context))
+	if(likely(aio::context) && opts.aio)
 		aio::prefetch(fd, count, opts);
 	#endif
 }
@@ -688,7 +688,7 @@ ircd::fs::read(const fd &fd,
                const read_opts &opts)
 {
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::context))
+	if(likely(aio::context) && opts.aio)
 		return aio::read(fd, bufs, opts);
 	#endif
 
@@ -897,7 +897,7 @@ ircd::fs::write(const fd &fd,
                 const write_opts &opts)
 {
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::context))
+	if(likely(aio::context) && opts.aio)
 		return aio::write(fd, bufs, opts);
 	#endif
 

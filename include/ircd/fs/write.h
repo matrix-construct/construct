@@ -66,6 +66,13 @@ struct ircd::fs::write_opts
 
 	/// for allocate()
 	bool keep_size {false};
+
+	/// Determines whether this operation is conducted via AIO. If not, a
+	/// direct syscall is made. Using AIO will only block one ircd::ctx while
+	/// a direct syscall will block the thread (all contexts). If AIO is not
+	/// available or not enabled, or doesn't support this operation, setting
+	/// this has no effect.
+	bool aio {true};
 };
 
 inline

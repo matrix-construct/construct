@@ -37,7 +37,7 @@ struct ircd::fs::sync_opts
 	/// a direct syscall will block the thread (all contexts). If AIO is not
 	/// available or not enabled, or doesn't support this operation, setting
 	/// this has no effect.
-	bool yielding {true};
+	bool aio {true};
 
 	/// Request priority. This value is ignored by the kernel for the
 	/// operations provided by this interface. It is still provided for

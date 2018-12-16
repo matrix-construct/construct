@@ -44,6 +44,13 @@ struct ircd::fs::read_opts
 	/// value. Lowest value is zero. Negative value will receive a contextual
 	/// value internally (generally just zero). Default is -1.
 	int8_t priority {-1};
+
+	/// Determines whether this operation is conducted via AIO. If not, a
+	/// direct syscall is made. Using AIO will only block one ircd::ctx while
+	/// a direct syscall will block the thread (all contexts). If AIO is not
+	/// available or not enabled, or doesn't support this operation, setting
+	/// this has no effect.
+	bool aio {true};
 };
 
 inline
