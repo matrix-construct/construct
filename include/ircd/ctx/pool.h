@@ -20,7 +20,6 @@ struct ircd::ctx::pool
 {
 	using closure = std::function<void ()>;
 
-  private:
 	const char *name;
 	size_t stack_size;
 	size_t running;

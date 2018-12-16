@@ -17,7 +17,7 @@ namespace ircd::ctx
 }
 
 template<class T>
-class ircd::ctx::queue
+struct ircd::ctx::queue
 {
 	struct dock dock;
 	std::queue<T> q;
