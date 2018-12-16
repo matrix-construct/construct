@@ -371,8 +371,6 @@ ircd::db::open_recover
 void
 ircd::db::sync(database &d)
 {
-	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 	log::debug
 	{
 		log, "'%s': @%lu SYNC WAL",
@@ -392,8 +390,6 @@ void
 ircd::db::flush(database &d,
                 const bool &sync)
 {
-	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 	log::debug
 	{
 		log, "'%s': @%lu FLUSH WAL",
@@ -454,7 +450,6 @@ void
 ircd::db::check(database &d)
 {
 	assert(d.d);
-	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->VerifyChecksum()
@@ -500,7 +495,6 @@ void
 ircd::db::bgpause(database &d)
 {
 	assert(d.d);
-	const ctx::uninterruptible::nothrow ui;
 
 	throw_on_error
 	{
@@ -518,7 +512,6 @@ void
 ircd::db::bgcontinue(database &d)
 {
 	assert(d.d);
-	const ctx::uninterruptible::nothrow ui;
 
 	log::debug
 	{
@@ -587,9 +580,6 @@ ircd::db::fdeletions(database &d,
                      const bool &enable,
                      const bool &force)
 {
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
-	const ctx::uninterruptible::nothrow ui;
-
 	if(enable) throw_on_error
 	{
 		d.d->EnableFileDeletions(force)
@@ -610,8 +600,6 @@ ircd::db::setopt(database &d,
 		{ std::string{key}, std::string{val} }
 	};
 
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
-	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->SetDBOptions(options)
@@ -751,7 +739,6 @@ ircd::db::files(const database &cd,
 {
 	std::vector<std::string> ret;
 	auto &d(const_cast<database &>(cd));
-	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->GetLiveFiles(ret, &msz, false)
@@ -792,7 +779,6 @@ ircd::db::property(const database &cd,
 {
 	uint64_t ret(0);
 	database &d(const_cast<database &>(cd));
-	const ctx::uninterruptible::nothrow ui;
 	if(!d.d->GetAggregatedIntProperty(slice(name), &ret))
 		throw not_found
 		{
@@ -1186,8 +1172,6 @@ try
 	// NOTE: rocksdb sez RepairDB is broken; can't use now
 	if(fsck && fs::is_dir(path))
 	{
-		const ctx::uninterruptible ui;
-
 		log::notice
 		{
 			log, "Checking database @ `%s' columns[%zu]", path, columns.size()
@@ -1210,7 +1194,6 @@ try
 		fs::mkdir(path);
 
 	// Announce attempt before usual point where exceptions are thrown
-	const ctx::uninterruptible ui;
 	log::info
 	{
 		log, "Opening database \"%s\" @ `%s' with %zu columns...",
@@ -1288,7 +1271,6 @@ try
 }()}
 ,uuid{[this]
 {
-	const ctx::uninterruptible ui;
 	std::string ret;
 	throw_on_error
 	{
@@ -1299,7 +1281,6 @@ try
 }()}
 ,checkpointer{[this]
 {
-	const ctx::uninterruptible ui;
 	rocksdb::Checkpoint *checkpointer{nullptr};
 	throw_on_error
 	{
@@ -1326,7 +1307,6 @@ try
 			this->name
 		};
 
-		const ctx::uninterruptible ui;
 		check(*this);
 	}
 
@@ -1581,8 +1561,6 @@ ircd::db::drop(database::column &c)
 		return;
 
 	database &d(c);
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
-	const ctx::uninterruptible::nothrow ui;
 	log::debug
 	{
 		log, "'%s':'%s' @%lu DROPPING COLUMN",
@@ -3154,7 +3132,6 @@ ircd::db::database::sst::dump::dump(db::column column,
                                     const key_range &range,
                                     const string_view &path_)
 {
-	const ctx::uninterruptible::nothrow ui;
 	database::column &c(column);
 	const database &d(column);
 
@@ -3223,7 +3200,6 @@ ircd::db::database::sst::info::vector::vector(const database &d)
 
 ircd::db::database::sst::info::vector::vector(const db::column &column)
 {
-	const ctx::uninterruptible::nothrow ui;
 	database::column &c(const_cast<db::column &>(column));
 	database &d(*c.d);
 
@@ -9445,8 +9421,6 @@ ircd::db::setopt(column &column,
 		{ std::string{key}, std::string{val} }
 	};
 
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
-	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
 		d.d->SetOptions(c, options)
