@@ -3438,14 +3438,47 @@ ircd::db::database::env::state::state(database *const &d)
 ircd::db::database::env::state::~state()
 noexcept
 {
-	for(auto &p : pool) try
+	for(size_t i(0); i < POOLS; ++i) try
 	{
-		p.terminate();
-		p.join();
+		auto &tasks(this->tasks.at(i));
+		auto &pool(this->pool.at(i));
+		if(tasks.size() || pool.pending())
+			log::warning
+			{
+				log, "'%s': Waiting for tasks:%zu queued:%zu active:%zu in pool '%s'",
+				d.name,
+				tasks.size(),
+				pool.queued(),
+				pool.active(),
+				pool.name
+			};
+
+		pool.q.dock.wait([&tasks, &pool]
+		{
+			return tasks.empty() && !pool.pending();
+		});
+
+		pool.terminate();
+		pool.join();
+
+		assert(tasks.empty());
+		assert(!pool.queued());
+		assert(!pool.pending());
+		log::debug
+		{
+			log, "'%s': Terminated pool '%s'.",
+			d.name,
+			pool.name
+		};
 	}
-	catch(...)
+	catch(const std::exception &e)
 	{
-		continue;
+		log::critical
+		{
+			log, "'%s': Environment state shutdown :%s",
+			d.name,
+			e.what()
+		};
 	}
 }
 
@@ -4243,7 +4276,7 @@ noexcept try
 
 	pool([this, &tasks]
 	{
-		ctx::uninterruptible::nothrow ui;
+		const ctx::uninterruptible::nothrow ui;
 
 		assert(this->st);
 		if(tasks.empty())
