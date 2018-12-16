@@ -7428,6 +7428,7 @@ static_assert
 );
 
 rocksdb::port::Mutex::Mutex()
+noexcept
 {
 	#ifdef RB_DEBUG_DB_PORT_
 	if(unlikely(!ctx::current))
@@ -7441,11 +7442,13 @@ rocksdb::port::Mutex::Mutex()
 }
 
 rocksdb::port::Mutex::Mutex(bool adaptive)
+noexcept
 :Mutex{}
 {
 }
 
 rocksdb::port::Mutex::~Mutex()
+noexcept
 {
 	#ifdef RB_DEBUG_DB_PORT_
 	if(unlikely(!ctx::current))
@@ -7460,6 +7463,7 @@ rocksdb::port::Mutex::~Mutex()
 
 void
 rocksdb::port::Mutex::Lock()
+noexcept
 {
 	if(unlikely(!ctx::current))
 		return;
@@ -7478,6 +7482,7 @@ rocksdb::port::Mutex::Lock()
 
 void
 rocksdb::port::Mutex::Unlock()
+noexcept
 {
 	if(unlikely(!ctx::current))
 		return;
@@ -7497,6 +7502,7 @@ rocksdb::port::Mutex::Unlock()
 
 void
 rocksdb::port::Mutex::AssertHeld()
+noexcept
 {
 	if(unlikely(!ctx::current))
 		return;
@@ -7516,6 +7522,7 @@ static_assert
 );
 
 rocksdb::port::RWMutex::RWMutex()
+noexcept
 {
 	#ifdef RB_DEBUG_DB_PORT_
 	if(unlikely(!ctx::current))
@@ -7529,6 +7536,7 @@ rocksdb::port::RWMutex::RWMutex()
 }
 
 rocksdb::port::RWMutex::~RWMutex()
+noexcept
 {
 	#ifdef RB_DEBUG_DB_PORT_
 	if(unlikely(!ctx::current))
@@ -7543,6 +7551,7 @@ rocksdb::port::RWMutex::~RWMutex()
 
 void
 rocksdb::port::RWMutex::ReadLock()
+noexcept
 {
 	if(unlikely(!ctx::current))
 		return;
@@ -7561,6 +7570,7 @@ rocksdb::port::RWMutex::ReadLock()
 
 void
 rocksdb::port::RWMutex::WriteLock()
+noexcept
 {
 	if(unlikely(!ctx::current))
 		return;
@@ -7579,6 +7589,7 @@ rocksdb::port::RWMutex::WriteLock()
 
 void
 rocksdb::port::RWMutex::ReadUnlock()
+noexcept
 {
 	if(unlikely(!ctx::current))
 		return;
@@ -7597,6 +7608,7 @@ rocksdb::port::RWMutex::ReadUnlock()
 
 void
 rocksdb::port::RWMutex::WriteUnlock()
+noexcept
 {
 	if(unlikely(!ctx::current))
 		return;
@@ -7625,6 +7637,7 @@ static_assert
 );
 
 rocksdb::port::CondVar::CondVar(Mutex *mu)
+noexcept
 :mu{mu}
 {
 	#ifdef RB_DEBUG_DB_PORT_
@@ -7639,6 +7652,7 @@ rocksdb::port::CondVar::CondVar(Mutex *mu)
 }
 
 rocksdb::port::CondVar::~CondVar()
+noexcept
 {
 	#ifdef RB_DEBUG_DB_PORT_
 	if(unlikely(!ctx::current))
@@ -7653,6 +7667,7 @@ rocksdb::port::CondVar::~CondVar()
 
 void
 rocksdb::port::CondVar::Wait()
+noexcept
 {
 	if(unlikely(!ctx::current))
 		return;
@@ -7674,6 +7689,7 @@ rocksdb::port::CondVar::Wait()
 // Returns true if timeout occurred
 bool
 rocksdb::port::CondVar::TimedWait(uint64_t abs_time_us)
+noexcept
 {
 	assert(ctx::current);
 
@@ -7695,6 +7711,7 @@ rocksdb::port::CondVar::TimedWait(uint64_t abs_time_us)
 
 void
 rocksdb::port::CondVar::Signal()
+noexcept
 {
 	if(unlikely(!ctx::current))
 		return;
@@ -7713,6 +7730,7 @@ rocksdb::port::CondVar::Signal()
 
 void
 rocksdb::port::CondVar::SignalAll()
+noexcept
 {
 	if(unlikely(!ctx::current))
 		return;

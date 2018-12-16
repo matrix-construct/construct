@@ -48,15 +48,15 @@ class rocksdb::port::Mutex
 	ctx::mutex mu;
 
   public:
-	void Lock();
-	void Unlock();
-	void AssertHeld();
+	void Lock() noexcept;
+	void Unlock() noexcept;
+	void AssertHeld() noexcept;
 
-	Mutex();
-	Mutex(bool adaptive);
+	Mutex() noexcept;
+	Mutex(bool adaptive) noexcept;
 	Mutex(const Mutex &) = delete;
 	Mutex &operator=(const Mutex &) = delete;
-	~Mutex();
+	~Mutex() noexcept;
 };
 
 class rocksdb::port::CondVar
@@ -65,13 +65,13 @@ class rocksdb::port::CondVar
 	ctx::condition_variable cv;
 
   public:
-	void Wait();
-	bool TimedWait(uint64_t abs_time_us); // Returns true if timeout occurred
-	void Signal();
-	void SignalAll();
+	void Wait() noexcept;
+	bool TimedWait(uint64_t abs_time_us) noexcept; // Returns true if timeout occurred
+	void Signal() noexcept;
+	void SignalAll() noexcept;
 
-	CondVar(Mutex *mu);
-	~CondVar();
+	CondVar(Mutex *mu) noexcept;
+	~CondVar() noexcept;
 };
 
 class rocksdb::port::RWMutex
@@ -79,13 +79,13 @@ class rocksdb::port::RWMutex
 	ctx::shared_mutex mu;
 
   public:
-	void ReadLock();
-	void WriteLock();
-	void ReadUnlock();
-	void WriteUnlock();
+	void ReadLock() noexcept;
+	void WriteLock() noexcept;
+	void ReadUnlock() noexcept;
+	void WriteUnlock() noexcept;
 
-	RWMutex();
+	RWMutex() noexcept;
 	RWMutex(const RWMutex &) = delete;
 	RWMutex &operator=(const RWMutex &) = delete;
-	~RWMutex();
+	~RWMutex() noexcept;
 };
