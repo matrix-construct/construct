@@ -629,6 +629,58 @@ console_cmd__date(opt &out, const string_view &line)
 }
 
 //
+// proc
+//
+
+bool
+console_cmd__proc(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"filename"
+	}};
+
+	const auto filename
+	{
+		param.at("filename", ""_sv)
+	};
+
+	char pathbuf[128];
+	const string_view path{fmt::sprintf
+	{
+		pathbuf, "/proc/self/%s", filename
+	}};
+
+	if(fs::is_dir(path))
+	{
+		for(const auto &file : fs::ls(path))
+			out << file << std::endl;
+
+		return true;
+	}
+
+	fs::fd fd
+	{
+		path, std::ios::in
+	};
+
+	fs::read_opts opts;
+	opts.aio = false;
+	const unique_buffer<mutable_buffer> buf
+	{
+		64_KiB
+	};
+
+	const string_view read
+	{
+		fs::read(fd, buf, opts)
+	};
+
+	out << read << std::endl;
+	return true;
+}
+
+//
 // mem
 //
 
