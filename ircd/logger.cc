@@ -28,8 +28,7 @@ namespace ircd::log
 	std::array<bool, num_of<facility>()> quieted_out;
 	std::array<bool, num_of<facility>()> quieted_err;
 
-	// Logfile name and device
-	std::array<const char *, num_of<facility>()> fname;
+	// Logfile stream
 	std::array<std::ofstream, num_of<facility>()> file;
 
 	std::ostream &out_console
@@ -42,7 +41,11 @@ namespace ircd::log
 		std::cerr
 	};
 
-	static void open(const facility &fac);
+	static std::string dir_path();
+	static std::string file_path(const facility &);
+
+	static void mkdir();
+	static void open(const facility &);
 }
 
 void
@@ -98,6 +101,8 @@ ircd::log::init()
 	console_ansi[NOTICE]    = "\033[1;37;46m";
 	console_ansi[INFO]      = "\033[1;37;42m";
 	console_ansi[DEBUG]     = "\033[1;30;47m";
+
+	mkdir();
 }
 
 void
@@ -108,13 +113,24 @@ ircd::log::fini()
 }
 
 void
+ircd::log::mkdir()
+{
+	const std::string dir
+	{
+		dir_path()
+	};
+
+	if(fs::exists(dir))
+		return;
+
+	fs::mkdir(dir);
+}
+
+void
 ircd::log::open()
 {
 	for_each<facility>([](const facility &fac)
 	{
-		if(!fname[fac])
-			return;
-
 		if(!file_out[fac])
 			return;
 
@@ -154,14 +170,42 @@ ircd::log::open(const facility &fac)
 try
 {
 	const auto &mode(std::ios::app);
-	file[fac].open(fname[fac], mode);
+	const auto &path(file_path(fac));
+	file[fac].open(path.c_str(), mode);
 }
 catch(const std::exception &e)
 {
 	fprintf(stderr, "!!! Opening log file [%s] failed: %s",
-	        fname[fac],
+	        file_path(fac).c_str(),
 	        e.what());
 	throw;
+}
+
+std::string
+ircd::log::file_path(const facility &fac)
+{
+	const std::string base
+	{
+		dir_path()
+	};
+
+	const string_view parts[]
+	{
+		base, reflect(fac)
+	};
+
+	return fs::make_path(parts);
+}
+
+std::string
+ircd::log::dir_path()
+{
+	const string_view parts[]
+	{
+		fs::get(fs::LOG)
+	};
+
+	return fs::make_path(parts);
 }
 
 void
