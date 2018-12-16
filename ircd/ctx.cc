@@ -921,7 +921,7 @@ ircd::ctx::context::context()
 {
 }
 
-ircd::ctx::context::context(const char *const &name,
+ircd::ctx::context::context(const string_view &name,
                             const size_t &stack_sz,
                             const flags &flags,
                             function func)
@@ -973,7 +973,7 @@ ircd::ctx::context::context(const char *const &name,
 		spawn();
 }
 
-ircd::ctx::context::context(const char *const &name,
+ircd::ctx::context::context(const string_view &name,
                             const size_t &stack_size,
                             function func,
                             const flags &flags)
@@ -984,7 +984,7 @@ ircd::ctx::context::context(const char *const &name,
 {
 }
 
-ircd::ctx::context::context(const char *const &name,
+ircd::ctx::context::context(const string_view &name,
                             const flags &flags,
                             function func)
 :context
@@ -994,7 +994,7 @@ ircd::ctx::context::context(const char *const &name,
 {
 }
 
-ircd::ctx::context::context(const char *const &name,
+ircd::ctx::context::context(const string_view &name,
                             function func,
                             const flags &flags)
 :context

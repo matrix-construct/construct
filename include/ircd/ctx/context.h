@@ -62,21 +62,21 @@ struct ircd::ctx::context
 	ctx *detach();                               // other calls undefined after this call
 
 	// Note: Constructing with DETACH flag makes any further use of this object undefined.
-	context(const char *const &name,
+	context(const string_view &name,
 	        const size_t &stack_size,
 	        const flags &,
 	        function);
 
-	context(const char *const &name,
+	context(const string_view &name,
 	        const size_t &stack_size,
 	        function,
 	        const flags & = (flags)0);
 
-	context(const char *const &name,
+	context(const string_view &name,
 	        const flags &,
 	        function);
 
-	context(const char *const &name,
+	context(const string_view &name,
 	        function,
 	        const flags & = (flags)0);
 

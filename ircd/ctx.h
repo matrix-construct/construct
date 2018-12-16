@@ -43,7 +43,7 @@ struct ircd::ctx::ctx
 	static uint64_t id_ctr;                      // monotonic
 
 	uint64_t id {++id_ctr};                      // Unique runtime ID
-	const char *name {nullptr};                  // User given name (optional)
+	string_view name;                            // User given name (optional)
 	context::flags flags;                        // User given flags
 	int32_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
 	boost::asio::io_service::strand strand;      // mutex/serializer
@@ -69,7 +69,7 @@ struct ircd::ctx::ctx
 
 	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
 
-	ctx(const char *const &name                  = "<noname>",
+	ctx(const string_view &name                  = "<noname>"_sv,
 	    const size_t &stack_max                  = DEFAULT_STACK_SIZE,
 	    const context::flags &flags              = (context::flags)0U,
 	    boost::asio::io_service &ios             = ircd::ios::get())
