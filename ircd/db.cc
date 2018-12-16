@@ -235,15 +235,14 @@ try
 			log, "Using database directory at `%s'", dbdir
 		};
 }
-catch(const std::system_error &e)
+catch(const fs::error &e)
 {
-	log::error
+	log::critical
 	{
 		log, "Cannot start database system: %s", e.what()
 	};
 
-	if(ircd::debugmode)
-		throw;
+	throw;
 }
 
 void
