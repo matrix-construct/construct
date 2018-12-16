@@ -237,18 +237,29 @@ noexcept try
 	// executes backwards from this point and shuts down IRCd.
 	ctx::wait();
 }
-catch(const m::error &e)
+catch(const http::error &e) // <-- m::error
 {
 	log::critical
 	{
-		"IRCd main exited :%s %s", e.what(), e.content
+		"IRCd main :%s %s", e.what(), e.content
 	};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"IRCd main :%s", e.what()
+	};
+}
+catch(const ctx::terminated &)
+{
+	return;
 }
 catch(...)
 {
 	log::critical
 	{
-		"IRCd main exited :%s", what(std::current_exception())
+		"IRCd main error."
 	};
 }
 
