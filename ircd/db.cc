@@ -7480,6 +7480,8 @@ rocksdb::port::Mutex::Lock()
 	};
 	#endif
 
+	assert_main_thread();
+	const ctx::uninterruptible::nothrow ui;
 	mu.lock();
 }
 
@@ -7496,7 +7498,9 @@ rocksdb::port::Mutex::Unlock()
 	};
 	#endif
 
+	assert_main_thread();
 	assert(mu.locked());
+	const ctx::uninterruptible::nothrow ui;
 	mu.unlock();
 }
 
@@ -7560,6 +7564,7 @@ rocksdb::port::RWMutex::ReadLock()
 	#endif
 
 	assert_main_thread();
+	const ctx::uninterruptible::nothrow ui;
 	mu.lock_shared();
 }
 
@@ -7577,6 +7582,7 @@ rocksdb::port::RWMutex::WriteLock()
 	#endif
 
 	assert_main_thread();
+	const ctx::uninterruptible::nothrow ui;
 	mu.lock();
 }
 
@@ -7594,6 +7600,7 @@ rocksdb::port::RWMutex::ReadUnlock()
 	#endif
 
 	assert_main_thread();
+	const ctx::uninterruptible::nothrow ui;
 	mu.unlock_shared();
 }
 
@@ -7611,6 +7618,7 @@ rocksdb::port::RWMutex::WriteUnlock()
 	#endif
 
 	assert_main_thread();
+	const ctx::uninterruptible::nothrow ui;
 	mu.unlock();
 }
 
@@ -7668,6 +7676,7 @@ rocksdb::port::CondVar::Wait()
 	assert(mu);
 	assert_main_thread();
 	mu->AssertHeld();
+	const ctx::uninterruptible::nothrow ui;
 	cv.wait(mu->mu);
 }
 
@@ -7689,6 +7698,7 @@ rocksdb::port::CondVar::TimedWait(uint64_t abs_time_us)
 	mu->AssertHeld();
 	const std::chrono::microseconds us(abs_time_us);
 	const std::chrono::steady_clock::time_point tp(us);
+	const ctx::uninterruptible::nothrow ui;
 	return cv.wait_until(mu->mu, tp) == std::cv_status::timeout;
 }
 
@@ -7706,6 +7716,7 @@ rocksdb::port::CondVar::Signal()
 	#endif
 
 	assert_main_thread();
+	const ctx::uninterruptible::nothrow ui;
 	cv.notify_one();
 }
 
@@ -7723,6 +7734,7 @@ rocksdb::port::CondVar::SignalAll()
 	#endif
 
 	assert_main_thread();
+	const ctx::uninterruptible::nothrow ui;
 	cv.notify_all();
 }
 
