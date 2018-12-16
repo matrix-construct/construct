@@ -104,7 +104,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"ctx('%s' #%u): unhandled: %s",
+		"ctx('%s' id:%u): unhandled: %s",
 		name,
 		id,
 		e.what()
@@ -1224,7 +1224,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"pool(%p) ctx(%p '%s' #%u): unhandled: %s",
+		"pool(%p) ctx(%p '%s' id:%u): unhandled: %s",
 		this,
 		current,
 		ircd::ctx::name(cur()),
@@ -1401,11 +1401,12 @@ ircd::ctx::prof::check_slice()
 	if(unlikely(slice_warning > 0 && last_cycles >= slice_warning && !slice_exempt))
 		log::dwarning
 		{
-			"context '%s' #%lu watchdog: timeslice excessive; lim:%lu last:%lu",
+			"context '%s' id:%lu watchdog: timeslice excessive; lim:%lu last:%lu pct:%.2lf",
 			name(c),
 			id(c),
 			slice_warning,
-			last_cycles
+			last_cycles,
+			((double(last_cycles) / double(slice_warning)) * 100.0)
 		};
 
 	const ulong &slice_assertion(settings::slice_assertion);
@@ -1415,7 +1416,7 @@ ircd::ctx::prof::check_slice()
 	if(unlikely(slice_interrupt > 0 && last_cycles >= slice_interrupt && !slice_exempt))
 		throw interrupted
 		{
-			"context '%s' #%lu watchdog interrupt; lim:%lu last:%lu total:%lu",
+			"context '%s' id:%lu watchdog interrupt; lim:%lu last:%lu total:%lu",
 			name(c),
 			id(c),
 			slice_interrupt,
@@ -1442,7 +1443,7 @@ ircd::ctx::prof::check_stack()
 	{
 		log::dwarning
 		{
-			"context '%s' #%lu watchdog: stack used %zu of %zu bytes",
+			"context '%s' id:%lu watchdog: stack used %zu of %zu bytes",
 			name(c),
 			id(c),
 			stack_at,
