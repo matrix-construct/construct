@@ -261,6 +261,7 @@ ircd::ctx::ctx::termination_point(std::nothrow_t)
 		if(flags & context::NOINTERRUPT)
 			return false;
 
+		flags |= context::NOINTERRUPT;
 		mark(prof::event::CUR_TERMINATE);
 		assert(flags & ~context::NOINTERRUPT);
 		return true;
