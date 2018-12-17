@@ -1383,7 +1383,7 @@ ircd::db::database::~database()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-
+	const std::unique_lock<decltype(write_mutex)> lock{write_mutex};
 	log::info
 	{
 		log, "'%s': closing database @ `%s'...",
@@ -1391,13 +1391,7 @@ noexcept try
 		path
 	};
 
-	rocksdb::CancelAllBackgroundWork(d.get(), true); // true = blocking
-	log::debug
-	{
-		log, "'%s': background_errors: %lu; flushing...",
-		name,
-		property<uint64_t>(*this, rocksdb::DB::Properties::kBackgroundErrors)
-	};
+	bgcancel(*this, true);
 
 	flush(*this);
 	log::debug
@@ -1432,6 +1426,8 @@ noexcept try
 	{
 		d->Close()
 	};
+
+	env->st.reset(nullptr);
 
 	log::info
 	{
@@ -3480,11 +3476,6 @@ st{std::make_unique<state>(d)}
 ircd::db::database::env::~env()
 noexcept
 {
-	log::debug
-	{
-		log, "'%s': Shutting down environment...",
-		d.name
-	};
 }
 
 rocksdb::Status
@@ -7394,6 +7385,11 @@ ircd::db::database::env::state::state(database *const &d)
 ircd::db::database::env::state::~state()
 noexcept
 {
+	log::debug
+	{
+		log, "'%s': Shutting down environment...",
+		d.name
+	};
 }
 
 //
