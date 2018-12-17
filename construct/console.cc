@@ -163,6 +163,7 @@ try
 
 	show_message(); do
 	{
+		ctx::interruption_point();
 		wait_input();
 	}
 	while(handle_line());
