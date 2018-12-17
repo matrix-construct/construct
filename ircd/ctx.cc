@@ -141,8 +141,6 @@ ircd::ctx::ctx::jump()
 
 	assert(current != this);
 	assert(current->notes == 1); // notes = 1; set by continuation dtor on wakeup
-
-	interruption_point();
 }
 
 /// Yield (suspend) this context until notified.
@@ -189,7 +187,6 @@ ircd::ctx::ctx::wait()
 	assert(current == this);
 	assert(notes == 1);  // notes = 1; set by continuation dtor on wakeup
 
-	interruption_point();
 	return true;
 }
 
@@ -878,7 +875,7 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 }
 
 ircd::ctx::continuation::~continuation()
-noexcept
+noexcept(false)
 {
 	ircd::ctx::current = self;
 	self->notes = 1;
@@ -886,6 +883,8 @@ noexcept
 
 	// self->continuation is not null'ed here; it remains an invalid
 	// pointer while the context is awake.
+
+	self->interruption_point();
 }
 
 ircd::ctx::continuation::operator boost::asio::yield_context &()
@@ -909,6 +908,7 @@ ircd::ctx::to_asio::to_asio(const interruptor &intr)
 	false_predicate, intr
 }
 {
+	self->interruption_point();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

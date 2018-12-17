@@ -75,7 +75,7 @@ struct ircd::ctx::continuation
 	continuation(const predicate & = true_predicate,
 	             const interruptor & = noop_interruptor);
 
-	~continuation() noexcept;
+	~continuation() noexcept(false);
 };
 
 /// This type of continuation should be used when yielding a context to a
@@ -90,6 +90,7 @@ struct ircd::ctx::continuation
 struct ircd::ctx::to_asio
 :ircd::ctx::continuation
 {
-	to_asio(const interruptor &);
 	to_asio() = default;
+	to_asio(const interruptor &);
+	~to_asio() noexcept(false) = default;
 };
