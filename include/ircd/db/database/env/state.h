@@ -14,23 +14,39 @@
 struct ircd::db::database::env::state
 {
 	struct task;
+	struct pool;
 
-	/// Backreference to database
-	database &d;
-
-	/// Convenience alias of the number of pools
 	static constexpr const size_t POOLS
 	{
 		rocksdb::Env::Priority::TOTAL
 	};
 
-	static conf::item<size_t> pool_stack_size;
+	database &d;
+	std::array<std::unique_ptr<pool>, POOLS> pool;
 
-	std::array<std::deque<task>, POOLS> tasks;
-	std::array<ctx::pool, POOLS> pool;
-
-	state(database *const &d);
+	state(database *const &);
 	~state() noexcept;
+};
+
+struct ircd::db::database::env::state::pool
+{
+	using Priority = rocksdb::Env::Priority;
+
+	static conf::item<size_t> stack_size;
+
+	database &d;
+	Priority pri;
+	std::deque<task> tasks;
+	ctx::pool p;
+
+	size_t cancel(void *const &tag);
+	void operator()(task &&);
+
+	void wait();
+	void join();
+
+	pool(database &, const Priority &);
+	~pool() noexcept;
 };
 
 struct ircd::db::database::env::state::task
