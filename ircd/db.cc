@@ -3489,10 +3489,14 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': new sequential file '%s' options:%p",
+		log, "'%s': new sequential file '%s' options:%p [mm:%b direct:%b bufsz:%zu readahead:%zu]",
 		d.name,
 		name,
-		&options
+		&options,
+		options.use_mmap_reads,
+		options.use_direct_reads,
+		options.random_access_max_buffer_size,
+		options.compaction_readahead_size,
 	};
 	#endif
 
@@ -3519,10 +3523,14 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': new random access file '%s' options:%p",
+		log, "'%s': new random access file '%s' options:%p [mm:%b direct:%b bufsz:%zu readahead:%zu]",
 		d.name,
 		name,
-		&options
+		&options,
+		options.use_mmap_reads,
+		options.use_direct_reads,
+		options.random_access_max_buffer_size,
+		options.compaction_readahead_size,
 	};
 	#endif
 
@@ -3549,10 +3557,15 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': new writable file '%s' options:%p",
+		log, "'%s': new writable file '%s' options:%p [mm:%b direct:%b rl:%p bufsz:%zu syncsz:%zu]",
 		d.name,
 		name,
-		&options
+		&options,
+		options.use_mmap_writes,
+		options.use_direct_writes,
+		options.rate_limiter,
+		options.writable_file_max_buffer_size,
+		options.bytes_per_sync,
 	};
 	#endif
 
