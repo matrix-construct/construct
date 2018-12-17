@@ -1292,12 +1292,15 @@ ircd::ctx::debug_stats(const pool &pool)
 
 namespace ircd::ctx::prof
 {
-	ulong _slice_start;      // Time slice state
+	ulong _slice_start;      // Current/last time slice started
+	ulong _slice_stop;       // Last time slice ended
 	ulong _slice_total;      // Monotonic accumulator
 
 	void check_stack();
 	void check_slice();
-	void slice_start();
+
+	void slice_enter();
+	void slice_leave();
 
 	void handle_cur_continue();
 	void handle_cur_yield();
@@ -1388,21 +1391,20 @@ ircd::ctx::prof::total_slice_cycles()
 void
 ircd::ctx::prof::handle_cur_enter()
 {
-	slice_start();
+	slice_enter();
 }
 
 void
 ircd::ctx::prof::handle_cur_leave()
 {
+	slice_leave();
 	check_slice();
 }
 
 void
 ircd::ctx::prof::handle_cur_yield()
 {
-	auto &c(cur());
-	c.profile.yields++;
-
+	slice_leave();
 	check_slice();
 	check_stack();
 }
@@ -1410,13 +1412,27 @@ ircd::ctx::prof::handle_cur_yield()
 void
 ircd::ctx::prof::handle_cur_continue()
 {
-	slice_start();
+	slice_enter();
 }
 
 void
-ircd::ctx::prof::slice_start()
+ircd::ctx::prof::slice_enter()
 {
 	_slice_start = rdtsc();
+}
+
+void
+ircd::ctx::prof::slice_leave()
+{
+	_slice_stop = rdtsc();
+
+	auto &c(cur());
+	assert(_slice_stop >= _slice_start);
+	const auto last_slice(_slice_stop - _slice_start);
+	c.stack.at = stack_at_here();
+	c.profile.cycles += last_slice;
+	_slice_total += last_slice;
+	c.profile.yields++;
 }
 
 void
@@ -1428,38 +1444,36 @@ ircd::ctx::prof::check_slice()
 		c.flags & context::SLICE_EXEMPT
 	};
 
-	const auto &last_cycles
+	assert(_slice_stop >= _slice_start);
+	const auto last_slice
 	{
-		cur_slice_cycles()
+		_slice_stop - _slice_start
 	};
 
-	c.profile.cycles += last_cycles;
-	_slice_total += last_cycles;
-
-	const ulong &slice_warning(settings::slice_warning);
-	if(unlikely(slice_warning > 0 && last_cycles >= slice_warning && !slice_exempt))
+	// Slice warning
+	if(unlikely(slice_exceeded_warning(last_slice) && !slice_exempt))
 		log::dwarning
 		{
 			"context '%s' id:%lu watchdog: timeslice excessive; lim:%lu last:%lu pct:%.2lf",
 			name(c),
 			id(c),
-			slice_warning,
-			last_cycles,
-			((double(last_cycles) / double(slice_warning)) * 100.0)
+			ulong(settings::slice_warning),
+			last_slice,
+			((double(last_slice) / double(ulong(settings::slice_warning))) * 100.0)
 		};
 
-	const ulong &slice_assertion(settings::slice_assertion);
-	assert(slice_assertion == 0 || last_cycles < slice_assertion || slice_exempt);
+	// Slice assertion
+	assert(!slice_exceeded_assertion(last_slice) || slice_exempt);
 
-	const ulong &slice_interrupt(settings::slice_interrupt);
-	if(unlikely(slice_interrupt > 0 && last_cycles >= slice_interrupt && !slice_exempt))
+	// Slice interrupt
+	if(unlikely(slice_exceeded_interrupt(last_slice) && !slice_exempt))
 		throw interrupted
 		{
 			"context '%s' id:%lu watchdog interrupt; lim:%lu last:%lu total:%lu",
 			name(c),
 			id(c),
-			slice_interrupt,
-			last_cycles,
+			ulong(settings::slice_interrupt),
+			last_slice,
 			cycles(c),
 		};
 }
@@ -1473,13 +1487,13 @@ ircd::ctx::prof::check_stack()
 		c.flags & context::STACK_EXEMPT
 	};
 
-	const double &stack_max(c.stack.max);
-	const auto &stack_at(stack_at_here());
-	c.stack.at = stack_at;
-
-	const double &stack_usage_assertion(settings::stack_usage_assertion);
-	if(unlikely(!stack_exempt && stack_at > stack_max * stack_usage_assertion))
+	const auto &stack_at
 	{
+		c.stack.at
+	};
+
+	// Stack warning
+	if(unlikely(!stack_exempt && stack_exceeded_warning(stack_at)))
 		log::dwarning
 		{
 			"context '%s' id:%lu watchdog: stack used %zu of %zu bytes",
@@ -1489,9 +1503,51 @@ ircd::ctx::prof::check_stack()
 			c.stack.max
 		};
 
-		const double &stack_usage_assertion(settings::stack_usage_assertion);
-		assert(stack_at < c.stack.max * double(settings::stack_usage_assertion));
-	}
+	// Stack assertion
+	assert(stack_exempt || !stack_exceeded_assertion(stack_at));
+}
+
+bool
+ircd::ctx::prof::stack_exceeded_assertion(const size_t &stack_at)
+{
+	const auto &c(cur());
+	const auto &stack_max(c.stack.max);
+	const double &stack_usage_assertion(settings::stack_usage_assertion);
+	return stack_usage_assertion > 0.0?
+		stack_at >= c.stack.max * settings::stack_usage_assertion:
+		false;
+}
+
+bool
+ircd::ctx::prof::stack_exceeded_warning(const size_t &stack_at)
+{
+	const auto &c(cur());
+	const auto &stack_max(c.stack.max);
+	const double &stack_usage_warning(settings::stack_usage_warning);
+	return stack_usage_warning > 0.0?
+		stack_at >= c.stack.max * stack_usage_warning:
+		false;
+}
+
+bool
+ircd::ctx::prof::slice_exceeded_interrupt(const ulong &cycles)
+{
+	const ulong &threshold(settings::slice_interrupt);
+	return threshold > 0 && cycles >= threshold;
+}
+
+bool
+ircd::ctx::prof::slice_exceeded_assertion(const ulong &cycles)
+{
+	const ulong &threshold(settings::slice_assertion);
+	return threshold > 0 && cycles >= threshold;
+}
+
+bool
+ircd::ctx::prof::slice_exceeded_warning(const ulong &cycles)
+{
+	const ulong &threshold(settings::slice_warning);
+	return threshold > 0 && cycles >= threshold;
 }
 
 #ifdef HAVE_X86INTRIN_H

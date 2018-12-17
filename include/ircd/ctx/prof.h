@@ -39,6 +39,13 @@ namespace ircd::ctx::prof
 	const ulong &cur_slice_start();
 	ulong cur_slice_cycles();
 
+	// test accessors
+	bool slice_exceeded_warning(const ulong &cycles);
+	bool slice_exceeded_assertion(const ulong &cycles);
+	bool slice_exceeded_interrupt(const ulong &cycles);
+	bool stack_exceeded_warning(const size_t &size);
+	bool stack_exceeded_assertion(const size_t &size);
+
 	// called at the appropriate point to mark the event (internal use).
 	void mark(const event &);
 }
