@@ -2590,9 +2590,17 @@ ircd::db::database::events::OnCompactionCompleted(rocksdb::DB *const db,
                                                   const rocksdb::CompactionJobInfo &info)
 noexcept
 {
-	log::info
+	const log::facility facility
 	{
-		log, "'%s': %d compacted '%s' ctx:%lu level[in:%d out:%d] files[in:%zu out:%zu] reason:%d %d:%s",
+		info.status == rocksdb::Status::OK()?
+			log::facility::INFO:
+			log::facility::ERROR
+	};
+
+	log::logf
+	{
+		log, facility,
+		"'%s': %d compacted '%s' ctx:%lu level[in:%d out:%d] files[in:%zu out:%zu] reason:%d #%d: %s",
 		d->name,
 		info.job_id,
 		info.cf_name,
@@ -2613,9 +2621,17 @@ void
 ircd::db::database::events::OnTableFileDeleted(const rocksdb::TableFileDeletionInfo &info)
 noexcept
 {
-	log::debug
+	const log::facility facility
 	{
-		log, "'%s': %d table file delete [%s][%s] %d:%s",
+		info.status == rocksdb::Status::OK()?
+			log::facility::DEBUG:
+			log::facility::ERROR
+	};
+
+	log::logf
+	{
+		log, facility,
+		"'%s': %d table file delete [%s][%s] #%d: %s",
 		d->name,
 		info.job_id,
 		info.db_name,
@@ -2629,9 +2645,17 @@ void
 ircd::db::database::events::OnTableFileCreated(const rocksdb::TableFileCreationInfo &info)
 noexcept
 {
-	log::debug
+	const log::facility facility
 	{
-		log, "'%s': %d table file closed [%s][%s] '%s' %d:%s",
+		info.status == rocksdb::Status::OK()?
+			log::facility::DEBUG:
+			log::facility::ERROR
+	};
+
+	log::logf
+	{
+		log, facility,
+		"'%s': %d table file closed [%s][%s] '%s' #%d: %s",
 		d->name,
 		info.job_id,
 		info.db_name,
