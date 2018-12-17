@@ -48,6 +48,7 @@ namespace ircd::db
 	void setopt(database &, const string_view &key, const string_view &val);
 	void fdeletions(database &, const bool &enable, const bool &force = false);
 	uint64_t checkpoint(database &);
+	void bgcancel(database &, const bool &blocking = true);
 	void bgcontinue(database &);
 	void bgpause(database &);
 	void resume(database &);

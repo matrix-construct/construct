@@ -525,6 +525,47 @@ ircd::db::bgcontinue(database &d)
 	};
 }
 
+void
+ircd::db::bgcancel(database &d,
+                   const bool &blocking)
+{
+	assert(d.d);
+	log::debug
+	{
+		log, "'%s': Canceling all background work...",
+		name(d)
+	};
+
+	rocksdb::CancelAllBackgroundWork(d.d.get(), blocking);
+	if(!blocking)
+		return;
+
+	assert(d.env);
+	assert(d.env->st);
+	const ctx::uninterruptible::nothrow ui;
+	for(auto &pool : d.env->st->pool)
+		if(pool)
+			pool->wait();
+
+	const auto errors
+	{
+		property<uint64_t>(d, rocksdb::DB::Properties::kBackgroundErrors)
+	};
+
+	const auto facility
+	{
+		errors? log::facility::ERROR : log::facility::DEBUG
+	};
+
+	log::logf
+	{
+		log, facility,
+		"'%s': Canceled all background work; errors:%lu",
+		name(d),
+		errors
+	};
+}
+
 /// Writes a snapshot of this database to the directory specified. The
 /// snapshot consists of hardlinks to the bulk data files of this db, but
 /// copies the other stuff that usually gets corrupted. The directory can

@@ -1442,6 +1442,35 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__cancel(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname",
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	bgcancel(database);
+	out << "canceld background jobs for '" << dbname << "'" << std::endl;
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__sync(opt &out, const string_view &line)
 try
 {
