@@ -853,10 +853,13 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	intr
 }
 {
-	assert_critical();
-	assert(!critical_asserted);
 	assert(self != nullptr);
 	assert(self->notes <= 1);
+
+	// Check here if the developer has placed a critical assertion on the stack
+	// but this yield is still occuring under its scope. That's bad.
+	assert_critical();
+	assert(!critical_asserted);
 
 	// Note: Construct an instance of ctx::exception_handler to enable yielding
 	// in your catch block.
@@ -868,23 +871,46 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	assert(!std::current_exception());
 	//assert(!std::uncaught_exceptions());
 
+	// Tell the profiler this is the point where the context has concluded
+	// its execution run and is now yielding.
 	mark(prof::event::CUR_YIELD);
-	self->profile.yields++;
+
+	// Point to this continuation instance (which is on the context's stack)
+	// from the context's instance. This allows its features to be accessed
+	// while the context is asleep (i.e interruptor and predicate functions).
+	// NOTE that this pointer is not ever null'ed after being set here. It
+	// will remain invalid once the context resumes. You know if this is a
+	// valid pointer because the context is asleep. Otherwise it's invalid.
 	self->cont = this;
+
+	// Null the fundamental current context register as the last operation
+	// during execution before yielding. When a context resumes it will
+	// restore this register; otherwise it remains null for executions on
+	// the program's main stack.
 	ircd::ctx::current = nullptr;
 }
 
 ircd::ctx::continuation::~continuation()
 noexcept(false)
 {
+	// Set the fundamental current context register as the first operation
+	// upon resuming execution.
 	ircd::ctx::current = self;
-	self->notes = 1;
+
+	// Tell the profiler this is the point where the context is now resuming.
+	// On some optimized builds this might lead nowhere.
 	mark(prof::event::CUR_CONTINUE);
+
+	// Unconditionally reset the notes counter to 1 because we're awake now.
+	self->notes = 1;
+
+	// Check here if this context's interrupt flag is set. If so, this call
+	// will clear the flag and then throw an exception. Note that this is
+	// a destructor with exceptions permitted to come out of it.
+	self->interruption_point();
 
 	// self->continuation is not null'ed here; it remains an invalid
 	// pointer while the context is awake.
-
-	self->interruption_point();
 }
 
 ircd::ctx::continuation::operator boost::asio::yield_context &()
@@ -908,7 +934,6 @@ ircd::ctx::to_asio::to_asio(const interruptor &intr)
 	false_predicate, intr
 }
 {
-	self->interruption_point();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1375,6 +1400,9 @@ ircd::ctx::prof::handle_cur_leave()
 void
 ircd::ctx::prof::handle_cur_yield()
 {
+	auto &c(cur());
+	c.profile.yields++;
+
 	check_slice();
 	check_stack();
 }
