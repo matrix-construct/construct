@@ -71,6 +71,36 @@ ircd::m::dbs::events_cache_comp_enable
 	{ "default",  false                                   },
 };
 
+/// Value determines the size of writes when creating SST files (i.e during
+/// compaction). Consider that write calls are yield-points for IRCd and the
+/// time spent filling the write buffer between calls may hog the CPU doing
+/// compression during that time etc. (writable_file_max_buffer_size)
+decltype(ircd::m::dbs::events_sst_write_buffer_size)
+ircd::m::dbs::events_sst_write_buffer_size
+{
+	{
+		{ "name",     "ircd.m.dbs.events.sst.write_buffer_size" },
+		{ "default",  long(1_MiB)                               },
+	}, []
+	{
+		static const auto key{"writable_file_max_buffer_size"_sv};
+		const size_t &value{events_sst_write_buffer_size};
+		if(events)
+			db::setopt(*events, key, lex_cast(value));
+	}
+};
+
+/// The size of the memory buffer for new writes to the DB (backed by the WAL
+/// on disk). When this buffer is full it is flushed to sorted SST files on
+/// disk. If this is 0, a per-column value can be used; otherwise this value
+/// takes precedence as a total value for all columns. (db_write_buffer_size)
+decltype(ircd::m::dbs::events_mem_write_buffer_size)
+ircd::m::dbs::events_mem_write_buffer_size
+{
+	{ "name",     "ircd.m.dbs.events.mem.write_buffer_size" },
+	{ "default",  0L                                        },
+};
+
 //
 // init
 //

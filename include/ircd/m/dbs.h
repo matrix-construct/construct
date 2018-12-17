@@ -21,6 +21,8 @@ namespace ircd::m::dbs
 	// General confs
 	extern conf::item<bool> events_cache_enable;
 	extern conf::item<bool> events_cache_comp_enable;
+	extern conf::item<size_t> events_mem_write_buffer_size;
+	extern conf::item<size_t> events_sst_write_buffer_size;
 
 	// Database instance
 	extern std::shared_ptr<db::database> events;
