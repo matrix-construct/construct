@@ -73,6 +73,12 @@ struct ircd::fs::write_opts
 	/// available or not enabled, or doesn't support this operation, setting
 	/// this has no effect.
 	bool aio {true};
+
+	/// Yields the ircd::ctx until the buffers are written. This performs
+	/// the unix incremental write loop internally. When this option is true,
+	/// any return value from a function in the write() suite will not be a
+	/// partial value requiring another invocation of write().
+	bool all {true};
 };
 
 inline

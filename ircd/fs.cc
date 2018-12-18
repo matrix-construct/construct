@@ -718,6 +718,11 @@ ircd::fs::read(const fd &fd,
 // fs/write.h
 //
 
+namespace ircd::fs
+{
+	static size_t write(const fd &, const const_iovec_view &, const write_opts &);
+}
+
 ircd::fs::write_opts
 const ircd::fs::write_opts_default
 {};
@@ -911,10 +916,29 @@ ircd::fs::write(const string_view &path,
 size_t
 ircd::fs::write(const fd &fd,
                 const const_buffers &bufs,
+                const write_opts &opts_)
+{
+	write_opts opts(opts_);
+	size_t off(opts.offset - opts_.offset); do
+	{
+		const auto iov(make_iov(bufs, off));
+		opts.offset += write(fd, iov, opts);
+		assert(opts.offset >= opts_.offset);
+		off = opts.offset - opts_.offset;
+		assert(off <= buffers::size(bufs));
+	}
+	while(opts.all && off < buffers::size(bufs));
+	assert(opts.offset >= opts_.offset);
+	assert(ssize_t(off) == opts.offset - opts_.offset);
+	assert(!opts.all || off == buffers::size(bufs));
+	return off;
+}
+
+size_t
+ircd::fs::write(const fd &fd,
+                const const_iovec_view &iov,
                 const write_opts &opts)
 {
-	const auto iov(make_iov(bufs));
-
 	#ifdef IRCD_USE_AIO
 	if(likely(aio::context) && opts.aio)
 		return aio::write(fd, iov, opts);
