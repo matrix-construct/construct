@@ -503,6 +503,11 @@ void
 ircd::fs::sync(const fd &fd,
                const sync_opts &opts)
 {
+	const ctx::slice_usage_warning message
+	{
+		"fs::sync(fd:%d)", int(fd)
+	};
+
 	#ifdef __linux__
 		syscall(::syncfs, fd);
 	#else
@@ -523,13 +528,22 @@ void
 ircd::fs::flush(const fd &fd,
                 const sync_opts &opts)
 {
+	const ctx::slice_usage_warning message
+	{
+		"fs::flush(fd:%d, {metadata:%b aio:%b:%b})",
+		int(fd),
+		opts.metadata,
+		opts.aio,
+		opts.metadata? support::aio_fdsync : support::aio_fsync
+	};
+
 	#ifdef IRCD_USE_AIO
 	if(aio::context && opts.aio)
 	{
 		if(!opts.metadata && support::aio_fdsync)
 			return aio::fdsync(fd, opts);
 
-		if(opts.metadata && support::aio_fsync)
+		if(support::aio_fsync)
 			return aio::fsync(fd, opts);
 	}
 	#endif
@@ -537,8 +551,7 @@ ircd::fs::flush(const fd &fd,
 	if(!opts.metadata)
 		return void(syscall(::fdatasync, fd));
 
-	if(opts.metadata)
-		return void(syscall(::fsync, fd));
+	return void(syscall(::fsync, fd));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
