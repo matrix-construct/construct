@@ -98,12 +98,12 @@ ircd::fs::aio::request::read::read(const int &fd,
 
 size_t
 ircd::fs::aio::read(const fd &fd,
-                    const mutable_buffers &bufs,
+                    const const_iovec_view &bufs,
                     const read_opts &opts)
 {
 	aio::request::read request
 	{
-		fd, make_iov(bufs), opts
+		fd, bufs, opts
 	};
 
 	stats.cur_reads++;
@@ -143,12 +143,12 @@ ircd::fs::aio::request::write::write(const int &fd,
 
 size_t
 ircd::fs::aio::write(const fd &fd,
-                     const const_buffers &bufs,
+                     const const_iovec_view &bufs,
                      const write_opts &opts)
 {
 	aio::request::write request
 	{
-		fd, make_iov(bufs), opts
+		fd, bufs, opts
 	};
 
 	#ifndef _NDEBUG

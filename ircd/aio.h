@@ -17,8 +17,8 @@ namespace ircd::fs::aio
 	struct request;
 
 	void prefetch(const fd &, const size_t &, const read_opts &);
-	size_t write(const fd &, const const_buffers &, const write_opts &);
-	size_t read(const fd &, const mutable_buffers &, const read_opts &);
+	size_t write(const fd &, const const_iovec_view &, const write_opts &);
+	size_t read(const fd &, const const_iovec_view &, const read_opts &);
 	void fdsync(const fd &, const sync_opts &);
 	void fsync(const fd &, const sync_opts &);
 }

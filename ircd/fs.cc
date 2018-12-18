@@ -881,12 +881,13 @@ ircd::fs::write(const fd &fd,
                 const const_buffers &bufs,
                 const write_opts &opts)
 {
+	const auto iov(make_iov(bufs));
+
 	#ifdef IRCD_USE_AIO
 	if(likely(aio::context) && opts.aio)
-		return aio::write(fd, bufs, opts);
+		return aio::write(fd, iov, opts);
 	#endif
 
-	const auto iov(make_iov(bufs));
 	return size_t(syscall(::pwritev, fd, iov.data(), iov.size(), opts.offset));
 }
 
