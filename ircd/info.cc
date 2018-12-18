@@ -77,13 +77,14 @@ ircd::info::dump()
 	// This message flashes posix information about the resource limits
 	log::debug
 	{
-		"AS=%lu DATA=%lu RSS=%lu NOFILE=%lu; RTTIME=%lu aio_reqprio_max=%d",
+		"AS=%lu DATA=%lu RSS=%lu NOFILE=%lu; RTTIME=%lu aio_max_ops=%d aio_reqprio_max=%d",
 		rlimit_as,
 		rlimit_data,
 		rlimit_rss,
 		rlimit_nofile,
 		rlimit_rttime,
-		aio_reqprio_max
+		aio_max_ops,
+		aio_reqprio_max,
 	};
 }
 
@@ -198,6 +199,14 @@ ircd::info::glibc_version_str
                glibc_version[1],
                glibc_version[2])
 );
+
+decltype(ircd::info::aio_max_ops)
+ircd::info::aio_max_ops
+{
+	#ifdef _SC_AIO_MAX
+	int(syscall(::sysconf, _SC_AIO_MAX))
+	#endif
+};
 
 decltype(ircd::info::aio_reqprio_max)
 ircd::info::aio_reqprio_max

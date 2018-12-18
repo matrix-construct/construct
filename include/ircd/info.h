@@ -52,6 +52,7 @@ namespace ircd::info
 
 	extern const int glibc_version[3];
 	extern const string_view glibc_version_str;
+	extern const int aio_max_ops;
 	extern const int aio_reqprio_max;
 	extern const size_t iov_max;
 	#ifdef HAVE_SYS_UTSNAME_H
