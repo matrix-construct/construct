@@ -216,7 +216,7 @@ ircd::fs::aio::reqprio(int input)
 decltype(ircd::fs::aio::kernel::MAX_EVENTS)
 ircd::fs::aio::kernel::MAX_EVENTS
 {
-	512
+	256
 };
 
 //
