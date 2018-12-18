@@ -77,14 +77,16 @@ ircd::info::dump()
 	// This message flashes posix information about the resource limits
 	log::debug
 	{
-		"AS=%lu DATA=%lu RSS=%lu NOFILE=%lu; RTTIME=%lu aio_max_ops=%d aio_reqprio_max=%d",
+		"AS=%lu DATA=%lu RSS=%lu NOFILE=%lu; RTTIME=%lu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu clk_tck=%zu",
 		rlimit_as,
 		rlimit_data,
 		rlimit_rss,
 		rlimit_nofile,
 		rlimit_rttime,
-		aio_max_ops,
+		iov_max,
+		aio_max,
 		aio_reqprio_max,
+		clk_tck
 	};
 }
 
@@ -200,20 +202,10 @@ ircd::info::glibc_version_str
                glibc_version[2])
 );
 
-decltype(ircd::info::aio_max_ops)
-ircd::info::aio_max_ops
+decltype(ircd::info::page_size)
+ircd::info::page_size
 {
-	#ifdef _SC_AIO_MAX
-	int(syscall(::sysconf, _SC_AIO_MAX))
-	#endif
-};
-
-decltype(ircd::info::aio_reqprio_max)
-ircd::info::aio_reqprio_max
-{
-	#ifdef _SC_AIO_PRIO_DELTA_MAX
-	int(syscall(::sysconf, _SC_AIO_PRIO_DELTA_MAX))
-	#endif
+	size_t(syscall(::sysconf, _SC_PAGESIZE))
 };
 
 decltype(ircd::info::iov_max)
@@ -221,6 +213,30 @@ ircd::info::iov_max
 {
 	#ifdef _SC_IOV_MAX
 	size_t(syscall(::sysconf, _SC_IOV_MAX))
+	#endif
+};
+
+decltype(ircd::info::aio_max)
+ircd::info::aio_max
+{
+	#ifdef _SC_AIO_MAX
+	0 //size_t(syscall(::sysconf, _SC_AIO_MAX))
+	#endif
+};
+
+decltype(ircd::info::aio_reqprio_max)
+ircd::info::aio_reqprio_max
+{
+	#ifdef _SC_AIO_PRIO_DELTA_MAX
+	size_t(syscall(::sysconf, _SC_AIO_PRIO_DELTA_MAX))
+	#endif
+};
+
+decltype(ircd::info::clk_tck)
+ircd::info::clk_tck
+{
+	#ifdef _SC_CLK_TCK
+	size_t(syscall(::sysconf, _SC_CLK_TCK))
 	#endif
 };
 
@@ -278,12 +294,6 @@ decltype(ircd::info::rlimit_rttime)
 ircd::info::rlimit_rttime
 {
 	_get_rlimit(RLIMIT_RTTIME)
-};
-
-decltype(ircd::info::page_size)
-ircd::info::page_size
-{
-	size_t(syscall(::sysconf, _SC_PAGESIZE))
 };
 
 decltype(ircd::info::max_align)

@@ -204,7 +204,7 @@ ircd::fs::aio::reqprio(int input)
 	input = std::max(input, 0);
 
 	// value is reduced to system maximum.
-	input = std::min(input, ircd::info::aio_reqprio_max);
+	input = std::min(input, int(ircd::info::aio_reqprio_max));
 
 	return input;
 }

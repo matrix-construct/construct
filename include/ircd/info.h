@@ -39,7 +39,6 @@ namespace ircd::info
 	extern const string_view startup;
 
 	// System / platform information
-	extern const size_t page_size;
 	extern const size_t max_align;
 	extern const size_t hardware_concurrency;
 	extern const size_t destructive_interference;
@@ -52,9 +51,11 @@ namespace ircd::info
 
 	extern const int glibc_version[3];
 	extern const string_view glibc_version_str;
-	extern const int aio_max_ops;
-	extern const int aio_reqprio_max;
+	extern const size_t page_size;
 	extern const size_t iov_max;
+	extern const size_t aio_max;
+	extern const size_t aio_reqprio_max;
+	extern const size_t clk_tck;
 	#ifdef HAVE_SYS_UTSNAME_H
 	extern const ::utsname utsname;
 	#endif
