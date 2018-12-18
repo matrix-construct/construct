@@ -102,6 +102,8 @@ namespace ircd::buffer::buffers
 // Export these important aliases down to main ircd namespace
 namespace ircd
 {
+	namespace buffers = buffer::buffers;
+
 	using buffer::const_buffer;
 	using buffer::mutable_buffer;
 	using buffer::fixed_buffer;
