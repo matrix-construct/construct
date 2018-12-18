@@ -79,6 +79,12 @@ struct ircd::fs::write_opts
 	/// any return value from a function in the write() suite will not be a
 	/// partial value requiring another invocation of write().
 	bool all {true};
+
+	/// Whether to propagate an EINTR; otherwise we reinvoke the syscall. For a
+	/// write(2) family call this can only happen before any data was written;
+	/// an exception will be thrown. We default to true because we have faith
+	/// in the useful propagation of an exception for this event.
+	bool interruptible {true};
 };
 
 inline

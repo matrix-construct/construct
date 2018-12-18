@@ -57,6 +57,12 @@ struct ircd::fs::read_opts
 	/// any return value from a function in the read suite will not be a
 	/// partial value requiring another invocation of read.
 	bool all {true};
+
+	/// Whether to propagate an EINTR; otherwise we reinvoke the syscall. For a
+	/// read(2) family call this can only happen before any data was read;
+	/// an exception will be thrown. We default to true because we have faith
+	/// in the useful propagation of an exception for this event.
+	bool interruptible {true};
 };
 
 inline

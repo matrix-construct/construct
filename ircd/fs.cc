@@ -710,7 +710,14 @@ ircd::fs::read(const fd &fd,
 		return aio::read(fd, iov, opts);
 	#endif
 
-	return syscall(::preadv, fd, iov.data(), iov.size(), opts.offset);
+	const auto ret
+	{
+		opts.interruptible?
+			syscall(::preadv, fd, iov.data(), iov.size(), opts.offset):
+			syscall_nointr(::preadv, fd, iov.data(), iov.size(), opts.offset)
+	};
+
+	return size_t(ret);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -944,7 +951,14 @@ ircd::fs::write(const fd &fd,
 		return aio::write(fd, iov, opts);
 	#endif
 
-	return size_t(syscall(::pwritev, fd, iov.data(), iov.size(), opts.offset));
+	const auto ret
+	{
+		opts.interruptible?
+			syscall(::pwritev, fd, iov.data(), iov.size(), opts.offset):
+			syscall_nointr(::pwritev, fd, iov.data(), iov.size(), opts.offset)
+	};
+
+	return size_t(ret);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
