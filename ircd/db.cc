@@ -6385,6 +6385,7 @@ noexcept try
 	fs::read_opts opts;
 	opts.offset = offset;
 	opts.aio = this->aio;
+	opts.all = !this->opts.direct;
 	const mutable_buffer buf
 	{
 		scratch, length
@@ -6472,6 +6473,7 @@ noexcept try
 	fs::read_opts opts;
 	opts.offset = offset;
 	opts.aio = this->aio;
+	opts.all = !this->opts.direct;
 	const mutable_buffer buf
 	{
 		scratch, length
@@ -6662,6 +6664,13 @@ try
 {
 	fs::block_size(fd)
 }
+,aio
+{
+	// When this flag is false then AIO operations are never used for this
+	// file; if true, AIO may be used if available and/or other conditions.
+	// Currently the /proc filesystem doesn't like AIO.
+	!startswith(name, "/proc/")
+}
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -6765,6 +6774,10 @@ const noexcept try
 	};
 	#endif
 
+	fs::read_opts opts;
+	opts.offset = offset;
+	opts.aio = this->aio;
+	opts.all = !this->opts.direct;
 	const mutable_buffer buf
 	{
 		scratch, length
@@ -6772,7 +6785,7 @@ const noexcept try
 
 	const auto read
 	{
-		fs::read(fd, buf, offset)
+		fs::read(fd, buf, opts)
 	};
 
 	*result = slice(read);
@@ -6952,6 +6965,10 @@ try
 ,_buffer_align
 {
 	fs::block_size(fd)
+}
+,aio
+{
+	true
 }
 {
 	#ifdef RB_DEBUG_DB_ENV
@@ -7202,6 +7219,10 @@ const noexcept try
 	};
 	#endif
 
+	fs::read_opts opts;
+	opts.offset = offset;
+	opts.aio = this->aio;
+	opts.all = !this->opts.direct;
 	const mutable_buffer buf
 	{
 		scratch, length
@@ -7209,7 +7230,7 @@ const noexcept try
 
 	const auto read
 	{
-		fs::read(fd, buf, offset)
+		fs::read(fd, buf, opts)
 	};
 
 	*result = slice(read);

@@ -27,6 +27,7 @@ struct ircd::db::database::env::random_access_file final
 	fs::fd::opts opts;
 	fs::fd fd;
 	size_t _buffer_align;
+	bool aio;
 
 	bool use_direct_io() const noexcept override;
 	size_t GetRequiredBufferAlignment() const noexcept override;
