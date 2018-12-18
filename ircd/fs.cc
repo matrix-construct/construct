@@ -1159,7 +1159,8 @@ namespace ircd::fs
 }
 
 ircd::fs::const_iovec_view
-ircd::fs::make_iov(const mutable_buffers &bufs)
+ircd::fs::make_iov(const mutable_buffers &bufs,
+                   const size_t &offset)
 {
 	if(unlikely(bufs.size() > _iov_.size()))
 		throw error
@@ -1170,11 +1171,12 @@ ircd::fs::make_iov(const mutable_buffers &bufs)
 			_iov_.size()
 		};
 
-	return make_iov(iovec_view(_iov_.data(), _iov_.size()), bufs);
+	return make_iov(iovec_view(_iov_.data(), _iov_.size()), bufs, offset);
 }
 
 ircd::fs::const_iovec_view
-ircd::fs::make_iov(const const_buffers &bufs)
+ircd::fs::make_iov(const const_buffers &bufs,
+                   const size_t &offset)
 {
 	if(unlikely(bufs.size() > _iov_.size()))
 		throw error
@@ -1185,41 +1187,83 @@ ircd::fs::make_iov(const const_buffers &bufs)
 			_iov_.size()
 		};
 
-	return make_iov(iovec_view(_iov_.data(), _iov_.size()), bufs);
+	return make_iov(iovec_view(_iov_.data(), _iov_.size()), bufs, offset);
 }
 
 ircd::fs::const_iovec_view
 ircd::fs::make_iov(const iovec_view &iov,
-                   const mutable_buffers &bufs)
+                   const mutable_buffers &bufs,
+                   const size_t &offset)
 {
-	size_t i(0);
-	for(; i < bufs.size() && i < iov.size(); ++i)
-		_iov_.at(i) =
-		{
-			buffer::data(bufs[i]), buffer::size(bufs[i])
-		};
-
-	return const_iovec_view
+	const size_t max
 	{
-		iov.data(), i
+		std::min(iov.size(), bufs.size())
 	};
-}
 
-ircd::fs::const_iovec_view
-ircd::fs::make_iov(const iovec_view &iov,
-                   const const_buffers &bufs)
-{
-	size_t i(0);
-	for(; i < bufs.size() && i < iov.size(); ++i)
+	size_t i(0), off(0);
+	for(; i < max; off += size(bufs[i++]))
+		if(size(bufs[i]) > offset - off)
+		{
+			off = offset - off;
+			break;
+		}
+
+	if(i < max)
+	{
+		assert(off <= size(bufs[i]));
 		iov.at(i) =
 		{
-			const_cast<char *>(buffer::data(bufs[i])), buffer::size(bufs[i])
+			data(bufs[i]) + off, size(bufs[i]) - off
 		};
 
-	return const_iovec_view
+		for(++i; i < max; ++i)
+			iov.at(i) =
+			{
+				data(bufs[i]), size(bufs[i])
+			};
+	}
+
+	const const_iovec_view ret{iov.data(), i};
+	assert(bytes(ret) <= buffer::buffers::size(bufs));
+	return ret;
+}
+
+ircd::fs::const_iovec_view
+ircd::fs::make_iov(const iovec_view &iov,
+                   const const_buffers &bufs,
+                   const size_t &offset)
+{
+	const size_t max
 	{
-		iov.data(), i
+		std::min(iov.size(), bufs.size())
 	};
+
+	size_t i(0), off(0);
+	for(; i < max; off += size(bufs[i++]))
+		if(size(bufs[i]) > offset - off)
+		{
+			off = offset - off;
+			break;
+		}
+
+	if(i < max)
+	{
+		assert(off <= size(bufs[i]));
+		iov.at(i) =
+		{
+			const_cast<char *>(data(bufs[i])) + off, size(bufs[i]) - off
+		};
+
+		for(++i; i < max; ++i)
+			iov.at(i) =
+			{
+				const_cast<char *>(data(bufs[i])), size(bufs[i])
+			};
+	}
+
+	const const_iovec_view ret{iov.data(), i};
+	assert(bytes(ret) <= buffer::buffers::size(bufs));
+	return ret;
 }
 
 size_t

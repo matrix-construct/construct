@@ -26,15 +26,17 @@ namespace ircd::fs
 	// utility; count the total bytes of an iov.
 	size_t bytes(const const_iovec_view &);
 
-	// Transforms our buffers to struct iovec ones.
-	const_iovec_view make_iov(const iovec_view &, const const_buffers &);
-	const_iovec_view make_iov(const iovec_view &, const mutable_buffers &);
+	// Transforms our buffers to struct iovec ones. The offset value allows
+	// a front-truncation of the input buffers when transforming. This is
+	// useful for progressive readv()'s filling the buffers.
+	const_iovec_view make_iov(const iovec_view &, const const_buffers &, const size_t &off = 0);
+	const_iovec_view make_iov(const iovec_view &, const mutable_buffers &, const size_t &off = 0);
 
 	// Transforms our buffers to struct iovec ones. This is done using an
 	// internal thread_local array of IOV_MAX. The returned view is of that
 	// array. We get away with using a single buffer because the synchronous
 	// readv()/writev() calls block the thread and for AIO the iov is copied out
 	// of userspace on io_submit().
-	const_iovec_view make_iov(const const_buffers &);
-	const_iovec_view make_iov(const mutable_buffers &);
+	const_iovec_view make_iov(const const_buffers &, const size_t &off = 0);
+	const_iovec_view make_iov(const mutable_buffers &, const size_t &off = 0);
 }
