@@ -810,6 +810,72 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ctx/slice_usage_warning.h
+//
+
+#ifndef NDEBUG
+ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view &fmt,
+                                                              va_rtti &&ap)
+:fmt
+{
+	fmt
+}
+,ap
+{
+	std::move(ap)
+}
+,start
+{
+	// Set the start value to the total number of cycles accrued by this
+	// context including the current time slice.
+	cur().profile.cycles + prof::cur_slice_cycles()
+}
+{
+}
+#endif
+
+#ifndef NDEBUG
+ircd::ctx::this_ctx::slice_usage_warning::~slice_usage_warning()
+noexcept
+{
+	// Set the final value by first adding the total number of cycles ever
+	// for this context to the current time slice. Then subtract the start
+	// sample. This way we're only counting the execution time of this context
+	// and not counting any time while it's yielding. A simple difference of
+	// two rdtsc() samples would be insufficient.
+
+	const auto stop
+	{
+		cur().profile.cycles + prof::cur_slice_cycles()
+	};
+
+	assert(stop >= start);
+	const auto total(stop - start);
+	if(!prof::slice_exceeded_warning(total))
+		return;
+
+	thread_local char buf[256];
+	const string_view reason{fmt::vsprintf
+	{
+		buf, fmt, ap
+	}};
+
+	const ulong &threshold{prof::settings::slice_warning};
+	log::dwarning
+	{
+		"context '%s' id:%lu watchdog: timeslice excessive; lim:%lu this:%lu pct:%.2lf :%s",
+		name(cur()),
+		id(cur()),
+		threshold,
+		total,
+		(double(total) / double(threshold)) * 100.0,
+		reason
+	};
+}
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ctx/continuation.h
 //
 
