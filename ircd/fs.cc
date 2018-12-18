@@ -564,6 +564,11 @@ ircd::fs::flush(const fd &fd,
 // fs/read.h
 //
 
+namespace ircd::fs
+{
+	static size_t read(const fd &, const const_iovec_view &, const read_opts &);
+}
+
 ircd::fs::read_opts
 const ircd::fs::read_opts_default
 {};
@@ -670,15 +675,42 @@ ircd::fs::read(const string_view &path,
 size_t
 ircd::fs::read(const fd &fd,
                const mutable_buffers &bufs,
+               const read_opts &opts_)
+{
+	size_t ret(0);
+	read_opts opts(opts_); do
+	{
+		assert(opts.offset >= opts_.offset);
+		const size_t off(opts.offset - opts_.offset);
+		assert(off <= buffers::size(bufs));
+		assert(ret <= buffers::size(bufs));
+		const auto iov(make_iov(bufs, ret));
+		ret += read(fd, iov, opts);
+		if(!opts_.all)
+			break;
+
+		if(off >= ret)
+			break;
+
+		opts.offset = opts_.offset + ret;
+	}
+	while(ret < buffers::size(bufs));
+	assert(opts.offset >= opts_.offset);
+	assert(ret <= buffers::size(bufs));
+	return ret;
+}
+
+size_t
+ircd::fs::read(const fd &fd,
+               const const_iovec_view &iov,
                const read_opts &opts)
 {
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::context) && opts.aio)
-		return aio::read(fd, bufs, opts);
+	if(aio::context && opts.aio)
+		return aio::read(fd, iov, opts);
 	#endif
 
-	const auto iov(make_iov(bufs));
-	return size_t(syscall(::preadv, fd, iov.data(), iov.size(), opts.offset));
+	return syscall(::preadv, fd, iov.data(), iov.size(), opts.offset);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
