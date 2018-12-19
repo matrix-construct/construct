@@ -409,12 +409,13 @@ ircd::db::flush(database &d,
 /// Note that if blocking=true, blocking may occur for each column individually.
 void
 ircd::db::sort(database &d,
-               const bool &blocking)
+               const bool &blocking,
+               const bool &now)
 {
 	for(const auto &c : d.columns)
 	{
 		db::column column{*c};
-		db::sort(column, blocking);
+		db::sort(column, blocking, now);
 	}
 }
 
@@ -9455,23 +9456,26 @@ ircd::db::drop(column &column)
 
 void
 ircd::db::sort(column &column,
-               const bool &blocking)
+               const bool &blocking,
+               const bool &now)
 {
 	database::column &c(column);
 	database &d(*c.d);
 
 	rocksdb::FlushOptions opts;
 	opts.wait = blocking;
+	opts.allow_write_stall = now;
 
 	const ctx::uninterruptible::nothrow ui;
 	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 	log::debug
 	{
-		log, "'%s':'%s' @%lu FLUSH (sort) %s",
+		log, "'%s':'%s' @%lu FLUSH (sort) %s %s",
 		name(d),
 		name(c),
 		sequence(d),
-		blocking? "blocking"_sv: "non-blocking"_sv
+		blocking? "blocking"_sv: "non-blocking"_sv,
+		now? "now"_sv: "later"_sv
 	};
 
 	throw_on_error

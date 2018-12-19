@@ -1600,7 +1600,7 @@ try
 {
 	const params param{line, " ",
 	{
-		"dbname", "[blocking]"
+		"dbname", "column", "[blocking]", "[now]"
 	}};
 
 	const auto dbname
@@ -1608,9 +1608,19 @@ try
 		param.at(0)
 	};
 
+	const auto colname
+	{
+		param.at("column", "*"_sv)
+	};
+
 	const auto blocking
 	{
-		param.at(1, false)
+		param.at("[blocking]", true)
+	};
+
+	const auto now
+	{
+		param.at("[now]", true)
 	};
 
 	auto &database
@@ -1618,7 +1628,19 @@ try
 		db::database::get(dbname)
 	};
 
-	sort(database, blocking);
+	if(colname == "*")
+	{
+		db::sort(database, blocking, now);
+		out << "done" << std::endl;
+		return true;
+	}
+
+	db::column column
+	{
+		database, colname
+	};
+
+	db::sort(column, blocking, now);
 	out << "done" << std::endl;
 	return true;
 }

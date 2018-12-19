@@ -64,7 +64,7 @@ namespace ircd::db
 	void setopt(column &, const string_view &key, const string_view &val);
 	void compact(column &, const std::pair<string_view, string_view> &, const int &to_level = -1, const compactor & = {});
 	void compact(column &, const std::pair<int, int> &level = {-1, -1}, const compactor & = {});
-	void sort(column &, const bool &blocking = false);
+	void sort(column &, const bool &blocking = false, const bool &now = false);
 	void drop(column &); // danger
 }
 
