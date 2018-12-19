@@ -7547,6 +7547,14 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 			task.arg,
 		};
 
+		const ctx::slice_usage_warning message
+		{
+			"'%s': pool:%s task:%p",
+			this->d.name,
+			ctx::name(p),
+			task.func
+		};
+
 		// Execute the task
 		task.func(task.arg);
 
