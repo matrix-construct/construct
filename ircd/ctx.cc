@@ -828,7 +828,9 @@ ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view 
 {
 	// Set the start value to the total number of cycles accrued by this
 	// context including the current time slice.
-	cur().profile.cycles + prof::cur_slice_cycles()
+	~cur().flags & context::SLICE_EXEMPT?
+		cur().profile.cycles + prof::cur_slice_cycles():
+		0
 }
 {
 }
@@ -838,6 +840,9 @@ ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view 
 ircd::ctx::this_ctx::slice_usage_warning::~slice_usage_warning()
 noexcept
 {
+	if(cur().flags & context::SLICE_EXEMPT)
+		return;
+
 	// Set the final value by first adding the total number of cycles ever
 	// for this context to the current time slice. Then subtract the start
 	// sample. This way we're only counting the execution time of this context
