@@ -17,7 +17,7 @@
 #define IRCD_JS_FIX
 
 // This was only ever defined for the SpiderMonkey headers and some of our hacks,
-// but we need to undef it to not step on the log facility log::DEBUG.
+// but we need to undef it to not step on the log level log::DEBUG.
 // Use JS_DEBUG as an analog instead.
 #undef DEBUG
 
@@ -3426,13 +3426,13 @@ ircd::js::context::handle_error(JSContext *const cx,
 noexcept try
 {
 	assert(report);
-	const log::facility facility
+	const log::level level
 	{
 		JSREPORT_IS_WARNING(report->flags)? log::WARNING:
 		                                    log::DEBUG
 	};
 
-	log(facility, "context(%p): %s",
+	log(level, "context(%p): %s",
 		(const void *)cx,
 		debug(*report).c_str());
 

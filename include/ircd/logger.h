@@ -11,7 +11,7 @@
 #pragma once
 #define HAVE_IRCD_LOGGER_H
 
-// windows.h #define conflicts with our facility
+// windows.h #define conflicts with our level
 #ifdef HAVE_WINDOWS_H
 #undef ERROR
 #endif
@@ -24,7 +24,7 @@ namespace ircd
 /// Logging system
 namespace ircd::log
 {
-	enum facility :int;
+	enum level :int;
 	struct log;
 	struct vlog;
 	struct logf;
@@ -43,8 +43,8 @@ namespace ircd::log
 	extern log star;     // "*", '*'
 	extern log general;  // "ircd", 'G'
 
-	string_view reflect(const facility &);
-	facility reflect(const string_view &);
+	string_view reflect(const level &);
+	level reflect(const string_view &);
 
 	// The mask is the list of named loggers to allow; an empty mask disallows
 	// all loggers. An empty unmask allows all loggers. An unmask of a logger
@@ -54,9 +54,9 @@ namespace ircd::log
 	void console_mask(const vector_view<string_view> & = {});
 
 	// This suite adjusts the output for an entire level.
-	bool console_enabled(const facility &);
-	void console_disable(const facility &);
-	void console_enable(const facility &);
+	bool console_enabled(const level &);
+	void console_disable(const level &);
+	void console_enable(const level &);
 	void console_disable();
 	void console_enable();
 
@@ -68,7 +68,7 @@ namespace ircd::log
 	void fini();
 }
 
-enum ircd::log::facility
+enum ircd::log::level
 :int
 {
 	CRITICAL  = 0,  ///< Catastrophic/unrecoverable; program is in a compromised state.
@@ -96,7 +96,7 @@ struct ircd::log::log
 	bool fmasked {true};               // currently in the file mask (enabled)
 
   public:
-	template<class... args> void operator()(const facility &, const string_view &fmt, args&&...);
+	template<class... args> void operator()(const level &, const string_view &fmt, args&&...);
 
 	#if RB_LOG_LEVEL >= 0
 	template<class... args> void critical(const string_view &fmt, args&&...);
@@ -155,21 +155,21 @@ struct ircd::log::log
 
 struct ircd::log::vlog
 {
-	vlog(const log &log, const facility &, const string_view &fmt, const va_rtti &ap);
+	vlog(const log &log, const level &, const string_view &fmt, const va_rtti &ap);
 };
 
 struct ircd::log::logf
 {
 	template<class... args>
-	logf(const log &log, const facility &facility, const string_view &fmt, args&&... a)
+	logf(const log &log, const level &level, const string_view &fmt, args&&... a)
 	{
-		vlog(log, facility, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, level, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 
 struct ircd::log::mark
 {
-	mark(const facility &, const string_view &msg = {});
+	mark(const level &, const string_view &msg = {});
 	mark(const string_view &msg = {});
 };
 
@@ -185,13 +185,13 @@ struct ircd::log::debug
 	template<class... args>
 	debug(const log &log, const string_view &fmt, args&&... a)
 	{
-		vlog(log, facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, level::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
 	debug(const string_view &fmt, args&&... a)
 	{
-		vlog(general, facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, level::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
@@ -215,13 +215,13 @@ struct ircd::log::dwarning
 	template<class... args>
 	dwarning(const log &log, const string_view &fmt, args&&... a)
 	{
-		vlog(log, facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, level::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
 	dwarning(const string_view &fmt, args&&... a)
 	{
-		vlog(general, facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, level::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
@@ -245,13 +245,13 @@ struct ircd::log::derror
 	template<class... args>
 	derror(const log &log, const string_view &fmt, args&&... a)
 	{
-		vlog(log, facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, level::DERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
 	derror(const string_view &fmt, args&&... a)
 	{
-		vlog(general, facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, level::DERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
@@ -275,13 +275,13 @@ struct ircd::log::info
 	template<class... args>
 	info(const log &log, const string_view &fmt, args&&... a)
 	{
-		vlog(log, facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, level::INFO, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
 	info(const string_view &fmt, args&&... a)
 	{
-		vlog(general, facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, level::INFO, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
@@ -305,13 +305,13 @@ struct ircd::log::notice
 	template<class... args>
 	notice(const log &log, const string_view &fmt, args&&... a)
 	{
-		vlog(log, facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, level::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
 	notice(const string_view &fmt, args&&... a)
 	{
-		vlog(general, facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, level::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
@@ -335,13 +335,13 @@ struct ircd::log::warning
 	template<class... args>
 	warning(const log &log, const string_view &fmt, args&&... a)
 	{
-		vlog(log, facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, level::WARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
 	warning(const string_view &fmt, args&&... a)
 	{
-		vlog(general, facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, level::WARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
@@ -365,13 +365,13 @@ struct ircd::log::error
 	template<class... args>
 	error(const log &log, const string_view &fmt, args&&... a)
 	{
-		vlog(log, facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, level::ERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
 	error(const string_view &fmt, args&&... a)
 	{
-		vlog(general, facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, level::ERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
@@ -395,13 +395,13 @@ struct ircd::log::critical
 	template<class... args>
 	critical(const log &log, const string_view &fmt, args&&... a)
 	{
-		vlog(log, facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(log, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 	}
 
 	template<class... args>
 	critical(const string_view &fmt, args&&... a)
 	{
-		vlog(general, facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+		vlog(general, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
 #else
@@ -425,7 +425,7 @@ void
 ircd::log::log::debug(const string_view &fmt,
                       args&&... a)
 {
-	operator()(facility::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
+	operator()(level::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
@@ -442,7 +442,7 @@ void
 ircd::log::log::dwarning(const string_view &fmt,
                          args&&... a)
 {
-	operator()(facility::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
+	operator()(level::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
@@ -459,7 +459,7 @@ void
 ircd::log::log::derror(const string_view &fmt,
                        args&&... a)
 {
-	operator()(facility::DERROR, fmt, va_rtti{std::forward<args>(a)...});
+	operator()(level::DERROR, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
@@ -476,7 +476,7 @@ void
 ircd::log::log::info(const string_view &fmt,
                      args&&... a)
 {
-	operator()(facility::INFO, fmt, va_rtti{std::forward<args>(a)...});
+	operator()(level::INFO, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
@@ -493,7 +493,7 @@ void
 ircd::log::log::notice(const string_view &fmt,
                        args&&... a)
 {
-	operator()(facility::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
+	operator()(level::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
@@ -510,7 +510,7 @@ void
 ircd::log::log::warning(const string_view &fmt,
                         args&&... a)
 {
-	operator()(facility::WARNING, fmt, va_rtti{std::forward<args>(a)...});
+	operator()(level::WARNING, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
@@ -527,7 +527,7 @@ void
 ircd::log::log::error(const string_view &fmt,
                       args&&... a)
 {
-	operator()(facility::ERROR, fmt, va_rtti{std::forward<args>(a)...});
+	operator()(level::ERROR, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
@@ -544,7 +544,7 @@ void
 ircd::log::log::critical(const string_view &fmt,
                          args&&... a)
 {
-	operator()(facility::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+	operator()(level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 }
 #else
 inline void
@@ -557,7 +557,7 @@ ircd::log::log::critical(const string_view &fmt,
 
 template<class... args>
 void
-ircd::log::log::operator()(const facility &f,
+ircd::log::log::operator()(const level &f,
                            const string_view &fmt,
                            args&&... a)
 {

@@ -1100,20 +1100,20 @@ ircd::resource::response::response(client &client,
 	};
 
 	#ifdef RB_DEBUG
-	const log::facility facility
+	const log::level level
 	{
 		ushort(code) >= 200 && ushort(code) < 300?
-			log::facility::DEBUG:
+			log::level::DEBUG:
 		ushort(code) >= 300 && ushort(code) < 400?
-			log::facility::DWARNING:
+			log::level::DWARNING:
 		ushort(code) >= 400 && ushort(code) < 500?
-			log::facility::DERROR:
-			log::facility::ERROR
+			log::level::DERROR:
+			log::level::ERROR
 	};
 
 	log::logf
 	{
-		log, facility,
+		log, level,
 		"%s HTTP %d `%s' %s in %ld$us; %s content-length:%s",
 		client.loghead(),
 		uint(code),

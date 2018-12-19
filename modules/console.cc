@@ -491,13 +491,13 @@ console_cmd__log__level(opt &out, const string_view &line)
 
 	if(!param.count())
 	{
-		for(int i(0); i < num_of<log::facility>(); ++i)
+		for(int i(0); i < num_of<log::level>(); ++i)
 			if(i > RB_LOG_LEVEL)
-				out << "[\033[1;40m-\033[0m]: " << reflect(log::facility(i)) << std::endl;
-			else if(console_enabled(log::facility(i)))
-				out << "[\033[1;42m+\033[0m]: " << reflect(log::facility(i)) << std::endl;
+				out << "[\033[1;40m-\033[0m]: " << reflect(log::level(i)) << std::endl;
+			else if(console_enabled(log::level(i)))
+				out << "[\033[1;42m+\033[0m]: " << reflect(log::level(i)) << std::endl;
 			else
-				out << "[\033[1;41m-\033[0m]: " << reflect(log::facility(i)) << std::endl;
+				out << "[\033[1;41m-\033[0m]: " << reflect(log::level(i)) << std::endl;
 
 		return true;
 	}
@@ -507,18 +507,18 @@ console_cmd__log__level(opt &out, const string_view &line)
 		param.at<int>(0)
 	};
 
-	for(int i(0); i < num_of<log::facility>(); ++i)
+	for(int i(0); i < num_of<log::level>(); ++i)
 		if(i > RB_LOG_LEVEL)
 		{
-			out << "[\033[1;40m-\033[0m]: " << reflect(log::facility(i)) << std::endl;
+			out << "[\033[1;40m-\033[0m]: " << reflect(log::level(i)) << std::endl;
 		}
 		else if(i <= level)
 		{
-			console_enable(log::facility(i));
-			out << "[\033[1;42m+\033[0m]: " << reflect(log::facility(i)) << std::endl;
+			console_enable(log::level(i));
+			out << "[\033[1;42m+\033[0m]: " << reflect(log::level(i)) << std::endl;
 		} else {
-			console_disable(log::facility(i));
-			out << "[\033[1;41m-\033[0m]: " << reflect(log::facility(i)) << std::endl;
+			console_disable(log::level(i));
+			out << "[\033[1;41m-\033[0m]: " << reflect(log::level(i)) << std::endl;
 		}
 
 	return true;
@@ -1541,15 +1541,15 @@ try
 		return true;
 	}
 
-	const log::facility &fac
+	const log::level &lev
 	{
 		log::reflect(param.at("level"))
 	};
 
-	loglevel(database, fac);
+	loglevel(database, lev);
 
 	out << "set logging level of '" << name(database) << "'"
-	    << " database to '" << reflect(fac) << "'"
+	    << " database to '" << reflect(lev) << "'"
 	    << std::endl;
 
 	return true;

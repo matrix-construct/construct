@@ -16,21 +16,21 @@ namespace ircd::log
 {
 	struct confs;
 
-	extern const std::array<string_view, num_of<facility>()> default_ansi;
-	extern std::array<confs, num_of<facility>()> confs;
+	extern const std::array<string_view, num_of<level>()> default_ansi;
+	extern std::array<confs, num_of<level>()> confs;
 
-	std::array<std::ofstream, num_of<facility>()> file;
-	std::array<ulong, num_of<facility>()> console_quiet_stdout;
-	std::array<ulong, num_of<facility>()> console_quiet_stderr;
+	std::array<std::ofstream, num_of<level>()> file;
+	std::array<ulong, num_of<level>()> console_quiet_stdout;
+	std::array<ulong, num_of<level>()> console_quiet_stderr;
 
 	std::ostream &out_console{std::cout};
 	std::ostream &err_console{std::cerr};
 
 	static std::string dir_path();
-	static std::string file_path(const facility &);
+	static std::string file_path(const level &);
 
 	static void mkdir();
-	static void open(const facility &);
+	static void open(const level &);
 }
 
 struct ircd::log::confs
@@ -47,7 +47,7 @@ void
 ircd::log::init()
 {
 	if(!ircd::debugmode)
-		console_disable(facility::DEBUG);
+		console_disable(level::DEBUG);
 
 	mkdir();
 }
@@ -76,37 +76,37 @@ ircd::log::mkdir()
 void
 ircd::log::open()
 {
-	for_each<facility>([](const facility &fac)
+	for_each<level>([](const level &lev)
 	{
-		const auto &conf(confs.at(fac));
+		const auto &conf(confs.at(lev));
 		if(!bool(conf.file_enable))
 			return;
 
-		if(file[fac].is_open())
-			file[fac].close();
+		if(file[lev].is_open())
+			file[lev].close();
 
-		file[fac].clear();
-		file[fac].exceptions(std::ios::badbit | std::ios::failbit);
-		open(fac);
+		file[lev].clear();
+		file[lev].exceptions(std::ios::badbit | std::ios::failbit);
+		open(lev);
 	});
 }
 
 void
 ircd::log::close()
 {
-	for_each<facility>([](const facility &fac)
+	for_each<level>([](const level &lev)
 	{
-		if(file[fac].is_open())
-			file[fac].close();
+		if(file[lev].is_open())
+			file[lev].close();
 	});
 }
 
 void
 ircd::log::flush()
 {
-	for_each<facility>([](const facility &fac)
+	for_each<level>([](const level &lev)
 	{
-		file[fac].flush();
+		file[lev].flush();
 	});
 
 	std::flush(out_console);
@@ -114,23 +114,23 @@ ircd::log::flush()
 }
 
 void
-ircd::log::open(const facility &fac)
+ircd::log::open(const level &lev)
 try
 {
 	const auto &mode(std::ios::app);
-	const auto &path(file_path(fac));
-	file[fac].open(path.c_str(), mode);
+	const auto &path(file_path(lev));
+	file[lev].open(path.c_str(), mode);
 }
 catch(const std::exception &e)
 {
 	fprintf(stderr, "!!! Opening log file [%s] failed: %s",
-	        file_path(fac).c_str(),
+	        file_path(lev).c_str(),
 	        e.what());
 	throw;
 }
 
 std::string
-ircd::log::file_path(const facility &fac)
+ircd::log::file_path(const level &lev)
 {
 	const std::string base
 	{
@@ -139,7 +139,7 @@ ircd::log::file_path(const facility &fac)
 
 	const string_view parts[]
 	{
-		base, reflect(fac)
+		base, reflect(lev)
 	};
 
 	return fs::make_path(parts);
@@ -159,43 +159,43 @@ ircd::log::dir_path()
 void
 ircd::log::console_enable()
 {
-	for_each<facility>([](const facility &fac)
+	for_each<level>([](const level &lev)
 	{
-		console_enable(fac);
+		console_enable(lev);
 	});
 }
 
 void
 ircd::log::console_disable()
 {
-	for_each<facility>([](const facility &fac)
+	for_each<level>([](const level &lev)
 	{
-		console_disable(fac);
+		console_disable(lev);
 	});
 }
 
 void
-ircd::log::console_enable(const facility &fac)
+ircd::log::console_enable(const level &lev)
 {
-	if(console_quiet_stdout[fac])
-		console_quiet_stdout[fac]--;
+	if(console_quiet_stdout[lev])
+		console_quiet_stdout[lev]--;
 
-	if(console_quiet_stderr[fac])
-		console_quiet_stderr[fac]--;
+	if(console_quiet_stderr[lev])
+		console_quiet_stderr[lev]--;
 }
 
 void
-ircd::log::console_disable(const facility &fac)
+ircd::log::console_disable(const level &lev)
 {
-	console_quiet_stdout[fac]++;
-	console_quiet_stderr[fac]++;
+	console_quiet_stdout[lev]++;
+	console_quiet_stderr[lev]++;
 }
 
 bool
-ircd::log::console_enabled(const facility &fac)
+ircd::log::console_enabled(const level &lev)
 {
-	return !console_quiet_stdout[fac] ||
-	       !console_quiet_stderr[fac];
+	return !console_quiet_stdout[lev] ||
+	       !console_quiet_stderr[lev];
 }
 
 void
@@ -235,17 +235,17 @@ ircd::log::console_quiet::~console_quiet()
 
 ircd::log::mark::mark(const string_view &msg)
 {
-	for_each<facility>([&msg]
-	(const auto &fac)
+	for_each<level>([&msg]
+	(const auto &lev)
 	{
-		mark(fac, msg);
+		mark(lev, msg);
 	});
 }
 
-ircd::log::mark::mark(const facility &fac,
+ircd::log::mark::mark(const level &lev,
                       const string_view &msg)
 {
-	vlog(star, fac, "%s", msg);
+	vlog(star, lev, "%s", msg);
 }
 
 //
@@ -346,8 +346,8 @@ ircd::log::log::log(const string_view &name,
 namespace ircd::log
 {
 	static void check(std::ostream &) noexcept;
-	static void slog(const log &, const facility &, const window_buffer::closure &) noexcept;
-	static void vlog_threadsafe(const log &, const facility &, const string_view &fmt, const va_rtti &ap);
+	static void slog(const log &, const level &, const window_buffer::closure &) noexcept;
+	static void vlog_threadsafe(const log &, const level &, const string_view &fmt, const va_rtti &ap);
 }
 
 decltype(ircd::log::star)
@@ -368,7 +368,7 @@ ircd::log::general
 /// main IRCd event loop which is running on the main thread.
 void
 ircd::log::vlog_threadsafe(const log &log,
-                           const facility &fac,
+                           const level &lev,
                            const string_view &fmt,
                            const va_rtti &ap)
 {
@@ -380,14 +380,14 @@ ircd::log::vlog_threadsafe(const log &log,
 
 	// The pointer to the logger is copied to the main thread.
 	auto *const logp{&log};
-	ircd::post([fac, str(std::move(str)), logp]
+	ircd::post([lev, str(std::move(str)), logp]
 	{
 		// If that named logger was destroyed while this closure was
 		// travelling to the main thread then we just discard this message.
 		if(!log::exists(logp))
 			return;
 
-		slog(*logp, fac, [&str](const mutable_buffer &out) -> size_t
+		slog(*logp, lev, [&str](const mutable_buffer &out) -> size_t
 		{
 			return copy(out, string_view{str});
 		});
@@ -395,17 +395,17 @@ ircd::log::vlog_threadsafe(const log &log,
 }
 
 ircd::log::vlog::vlog(const log &log,
-                      const facility &fac,
+                      const level &lev,
                       const string_view &fmt,
                       const va_rtti &ap)
 {
 	if(!is_main_thread())
 	{
-		vlog_threadsafe(log, fac, fmt, ap);
+		vlog_threadsafe(log, lev, fmt, ap);
 		return;
 	}
 
-	slog(log, fac, [&fmt, &ap](const mutable_buffer &out) -> size_t
+	slog(log, lev, [&fmt, &ap](const mutable_buffer &out) -> size_t
 	{
 		return fmt::vsprintf(out, fmt, ap);
 	});
@@ -416,17 +416,17 @@ namespace ircd::log
 	// linkage for slog() reentrance assertion
 	bool entered;
 
-	static bool can_skip(const log &, const facility &);
+	static bool can_skip(const log &, const level &);
 }
 
 void
 ircd::log::slog(const log &log,
-                const facility &fac,
+                const level &lev,
                 const window_buffer::closure &closure)
 noexcept
 {
-	const auto &conf(confs.at(fac));
-	if(can_skip(log, fac))
+	const auto &conf(confs.at(lev));
+	if(can_skip(log, lev))
 		return;
 
 	// Have to be on the main thread to call slog().
@@ -455,7 +455,7 @@ noexcept
 	  << string_view{conf.console_ansi}
 	  << std::setw(8)
 	  << std::right
-	  << reflect(fac)
+	  << reflect(lev)
 	  << (string_view{conf.console_ansi}? "\033[0m " : " ")
 //	  << (log.snote? log.snote : '-')
 	  << std::setw(9)
@@ -492,14 +492,14 @@ noexcept
 	}};
 
 	// copy to std::cerr
-	if(log.cmasked && bool(conf.console_stderr) && !console_quiet_stderr[fac])
+	if(log.cmasked && bool(conf.console_stderr) && !console_quiet_stderr[lev])
 	{
 		err_console.clear();
 		write(err_console);
 	}
 
 	// copy to std::cout
-	if(log.cmasked && bool(conf.console_stdout) && !console_quiet_stdout[fac])
+	if(log.cmasked && bool(conf.console_stdout) && !console_quiet_stdout[lev])
 	{
 		out_console.clear();
 		write(out_console);
@@ -508,28 +508,28 @@ noexcept
 	}
 
 	// copy to file
-	if(log.fmasked && file[fac].is_open())
+	if(log.fmasked && file[lev].is_open())
 	{
-		file[fac].clear();
-		write(file[fac]);
+		file[lev].clear();
+		write(file[lev]);
 		if(conf.file_flush)
-			std::flush(file[fac]);
+			std::flush(file[lev]);
 	}
 }
 
 bool
 ircd::log::can_skip(const log &log,
-                    const facility &fac)
+                    const level &lev)
 {
-	const auto &conf(confs.at(fac));
+	const auto &conf(confs.at(lev));
 
 	// When all of these conditions are true there is no possible log output
 	// so we can bail real quick.
-	if(!file[fac].is_open() && !bool(conf.console_stdout) && !bool(conf.console_stderr))
+	if(!file[lev].is_open() && !bool(conf.console_stdout) && !bool(conf.console_stderr))
 		return true;
 
 	// Same for this set of conditions...
-	if((!file[fac].is_open() || !log.fmasked) && (!log.cmasked || !console_enabled(fac)))
+	if((!file[lev].is_open() || !log.fmasked) && (!log.cmasked || !console_enabled(lev)))
 		return true;
 
 	return false;
@@ -565,43 +565,43 @@ catch(const std::exception &e)
 	ircd::terminate();
 }
 
-ircd::log::facility
+ircd::log::level
 ircd::log::reflect(const string_view &f)
 {
-	if(f == "CRITICAL")    return facility::CRITICAL;
-	if(f == "ERROR")       return facility::ERROR;
-	if(f == "DERROR")      return facility::DERROR;
-	if(f == "DWARNING")    return facility::DWARNING;
-	if(f == "WARNING")     return facility::WARNING;
-	if(f == "NOTICE")      return facility::NOTICE;
-	if(f == "INFO")        return facility::INFO;
-	if(f == "DEBUG")       return facility::DEBUG;
+	if(f == "CRITICAL")    return level::CRITICAL;
+	if(f == "ERROR")       return level::ERROR;
+	if(f == "DERROR")      return level::DERROR;
+	if(f == "DWARNING")    return level::DWARNING;
+	if(f == "WARNING")     return level::WARNING;
+	if(f == "NOTICE")      return level::NOTICE;
+	if(f == "INFO")        return level::INFO;
+	if(f == "DEBUG")       return level::DEBUG;
 
 	throw ircd::error
 	{
-		"'%s' is not a recognized log facility", f
+		"'%s' is not a recognized log level", f
 	};
 }
 
 ircd::string_view
-ircd::log::reflect(const facility &f)
+ircd::log::reflect(const level &f)
 {
 	switch(f)
 	{
-		case facility::CRITICAL:   return "CRITICAL";
-		case facility::ERROR:      return "ERROR";
-		case facility::DERROR:     return "ERROR";
-		case facility::WARNING:    return "WARNING";
-		case facility::DWARNING:   return "WARNING";
-		case facility::INFO:       return "INFO";
-		case facility::NOTICE:     return "NOTICE";
-		case facility::DEBUG:      return "DEBUG";
-		case facility::_NUM_:      break; // Allows -Wswitch to remind developer to add reflection here
+		case level::CRITICAL:   return "CRITICAL";
+		case level::ERROR:      return "ERROR";
+		case level::DERROR:     return "ERROR";
+		case level::WARNING:    return "WARNING";
+		case level::DWARNING:   return "WARNING";
+		case level::INFO:       return "INFO";
+		case level::NOTICE:     return "NOTICE";
+		case level::DEBUG:      return "DEBUG";
+		case level::_NUM_:      break; // Allows -Wswitch to remind developer to add reflection here
 	};
 
 	throw assertive
 	{
-		"'%d' is not a recognized log facility", int(f)
+		"'%d' is not a recognized log level", int(f)
 	};
 }
 
@@ -676,8 +676,8 @@ ircd::log::confs
 
 		// console ansi
 		{
-			{ "name",     "ircd.log.critical.console.ansi"    },
-			{ "default",  default_ansi.at(facility::CRITICAL) },
+			{ "name",     "ircd.log.critical.console.ansi" },
+			{ "default",  default_ansi.at(level::CRITICAL) },
 		}
 	},
 
@@ -715,8 +715,8 @@ ircd::log::confs
 
 		// console ansi
 		{
-			{ "name",     "ircd.log.error.console.ansi"    },
-			{ "default",  default_ansi.at(facility::ERROR) },
+			{ "name",     "ircd.log.error.console.ansi" },
+			{ "default",  default_ansi.at(level::ERROR) },
 		}
 	},
 
@@ -754,8 +754,8 @@ ircd::log::confs
 
 		// console ansi
 		{
-			{ "name",     "ircd.log.warning.console.ansi"    },
-			{ "default",  default_ansi.at(facility::WARNING) },
+			{ "name",     "ircd.log.warning.console.ansi" },
+			{ "default",  default_ansi.at(level::WARNING) },
 		}
 	},
 
@@ -793,8 +793,8 @@ ircd::log::confs
 
 		// console ansi
 		{
-			{ "name",     "ircd.log.notice.console.ansi"     },
-			{ "default",  default_ansi.at(facility::NOTICE)  },
+			{ "name",     "ircd.log.notice.console.ansi" },
+			{ "default",  default_ansi.at(level::NOTICE) },
 		}
 	},
 
@@ -832,8 +832,8 @@ ircd::log::confs
 
 		// console ansi
 		{
-			{ "name",     "ircd.log.info.console.ansi"     },
-			{ "default",  default_ansi.at(facility::INFO)  },
+			{ "name",     "ircd.log.info.console.ansi" },
+			{ "default",  default_ansi.at(level::INFO) },
 		}
 	},
 
@@ -871,8 +871,8 @@ ircd::log::confs
 
 		// console ansi
 		{
-			{ "name",     "ircd.log.derror.console.ansi"     },
-			{ "default",  default_ansi.at(facility::DERROR)  },
+			{ "name",     "ircd.log.derror.console.ansi" },
+			{ "default",  default_ansi.at(level::DERROR) },
 		}
 	},
 
@@ -910,8 +910,8 @@ ircd::log::confs
 
 		// console ansi
 		{
-			{ "name",     "ircd.log.dwarning.console.ansi"     },
-			{ "default",  default_ansi.at(facility::DWARNING)  },
+			{ "name",     "ircd.log.dwarning.console.ansi" },
+			{ "default",  default_ansi.at(level::DWARNING) },
 		}
 	},
 
@@ -949,8 +949,8 @@ ircd::log::confs
 
 		// console ansi
 		{
-			{ "name",     "ircd.log.debug.console.ansi"    },
-			{ "default",  default_ansi.at(facility::DEBUG) },
+			{ "name",     "ircd.log.debug.console.ansi" },
+			{ "default",  default_ansi.at(level::DEBUG) },
 		}
 	}
 }};

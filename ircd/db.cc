@@ -552,14 +552,14 @@ ircd::db::bgcancel(database &d,
 		property<uint64_t>(d, rocksdb::DB::Properties::kBackgroundErrors)
 	};
 
-	const auto facility
+	const auto level
 	{
-		errors? log::facility::ERROR : log::facility::DEBUG
+		errors? log::level::ERROR : log::level::DEBUG
 	};
 
 	log::logf
 	{
-		log, facility,
+		log, level,
 		"'%s': Canceled all background work; errors:%lu",
 		name(d),
 		errors
@@ -647,14 +647,14 @@ ircd::db::setopt(database &d,
 	};
 }
 
-/// Set the rdb logging level by translating our ircd::log::facility to the
+/// Set the rdb logging level by translating our ircd::log::level to the
 /// RocksDB enum. This translation is a reasonable convenience, as both
 /// enums are similar enough.
 void
 ircd::db::loglevel(database &d,
-                   const ircd::log::facility &fac)
+                   const ircd::log::level &fac)
 {
-	using ircd::log::facility;
+	using ircd::log::level;
 
 	rocksdb::InfoLogLevel lev
 	{
@@ -663,24 +663,24 @@ ircd::db::loglevel(database &d,
 
 	switch(fac)
 	{
-		case facility::CRITICAL:  lev = rocksdb::FATAL_LEVEL;   break;
-		case facility::ERROR:     lev = rocksdb::ERROR_LEVEL;   break;
-		case facility::WARNING:
-		case facility::NOTICE:    lev = rocksdb::WARN_LEVEL;    break;
-		case facility::INFO:      lev = rocksdb::INFO_LEVEL;    break;
-		case facility::DERROR:
-		case facility::DWARNING:
-		case facility::DEBUG:     lev = rocksdb::DEBUG_LEVEL;   break;
-		case facility::_NUM_:     assert(0);                    break;
+		case level::CRITICAL:  lev = rocksdb::FATAL_LEVEL;   break;
+		case level::ERROR:     lev = rocksdb::ERROR_LEVEL;   break;
+		case level::WARNING:
+		case level::NOTICE:    lev = rocksdb::WARN_LEVEL;    break;
+		case level::INFO:      lev = rocksdb::INFO_LEVEL;    break;
+		case level::DERROR:
+		case level::DWARNING:
+		case level::DEBUG:     lev = rocksdb::DEBUG_LEVEL;   break;
+		case level::_NUM_:     assert(0);                    break;
 	}
 
 	d.logger->SetInfoLogLevel(lev);
 }
 
-/// Set the rdb logging level by translating our ircd::log::facility to the
+/// Set the rdb logging level by translating our ircd::log::level to the
 /// RocksDB enum. This translation is a reasonable convenience, as both
 /// enums are similar enough.
-ircd::log::facility
+ircd::log::level
 ircd::db::loglevel(const database &d)
 {
 	const auto &level
@@ -695,11 +695,11 @@ ircd::db::loglevel(const database &d)
 			assert(0);
 
 		case rocksdb::HEADER_LEVEL:
-		case rocksdb::FATAL_LEVEL:     return log::facility::CRITICAL;
-		case rocksdb::ERROR_LEVEL:     return log::facility::ERROR;
-		case rocksdb::WARN_LEVEL:      return log::facility::WARNING;
-		case rocksdb::INFO_LEVEL:      return log::facility::INFO;
-		case rocksdb::DEBUG_LEVEL:     return log::facility::DEBUG;
+		case rocksdb::FATAL_LEVEL:     return log::level::CRITICAL;
+		case rocksdb::ERROR_LEVEL:     return log::level::ERROR;
+		case rocksdb::WARN_LEVEL:      return log::level::WARNING;
+		case rocksdb::INFO_LEVEL:      return log::level::INFO;
+		case rocksdb::DEBUG_LEVEL:     return log::level::DEBUG;
 	}
 }
 
@@ -2049,7 +2049,7 @@ noexcept
 }
 
 static
-ircd::log::facility
+ircd::log::level
 translate(const rocksdb::InfoLogLevel &level)
 {
 	switch(level)
@@ -2057,13 +2057,13 @@ translate(const rocksdb::InfoLogLevel &level)
 		// Treat all infomational messages from rocksdb as debug here for now.
 		// We can clean them up and make better reports for our users eventually.
 		default:
-		case rocksdb::InfoLogLevel::DEBUG_LEVEL:     return ircd::log::facility::DEBUG;
-		case rocksdb::InfoLogLevel::INFO_LEVEL:      return ircd::log::facility::DEBUG;
+		case rocksdb::InfoLogLevel::DEBUG_LEVEL:     return ircd::log::level::DEBUG;
+		case rocksdb::InfoLogLevel::INFO_LEVEL:      return ircd::log::level::DEBUG;
 
-		case rocksdb::InfoLogLevel::WARN_LEVEL:      return ircd::log::facility::WARNING;
-		case rocksdb::InfoLogLevel::ERROR_LEVEL:     return ircd::log::facility::ERROR;
-		case rocksdb::InfoLogLevel::FATAL_LEVEL:     return ircd::log::facility::CRITICAL;
-		case rocksdb::InfoLogLevel::HEADER_LEVEL:    return ircd::log::facility::NOTICE;
+		case rocksdb::InfoLogLevel::WARN_LEVEL:      return ircd::log::level::WARNING;
+		case rocksdb::InfoLogLevel::ERROR_LEVEL:     return ircd::log::level::ERROR;
+		case rocksdb::InfoLogLevel::FATAL_LEVEL:     return ircd::log::level::CRITICAL;
+		case rocksdb::InfoLogLevel::HEADER_LEVEL:    return ircd::log::level::NOTICE;
 	}
 }
 
@@ -2599,16 +2599,16 @@ ircd::db::database::events::OnCompactionCompleted(rocksdb::DB *const db,
                                                   const rocksdb::CompactionJobInfo &info)
 noexcept
 {
-	const log::facility facility
+	const log::level level
 	{
 		info.status == rocksdb::Status::OK()?
-			log::facility::INFO:
-			log::facility::ERROR
+			log::level::INFO:
+			log::level::ERROR
 	};
 
 	log::logf
 	{
-		log, facility,
+		log, level,
 		"'%s': %d compacted '%s' ctx:%lu level[in:%d out:%d] files[in:%zu out:%zu] reason:%d #%d: %s",
 		d->name,
 		info.job_id,
@@ -2630,16 +2630,16 @@ void
 ircd::db::database::events::OnTableFileDeleted(const rocksdb::TableFileDeletionInfo &info)
 noexcept
 {
-	const log::facility facility
+	const log::level level
 	{
 		info.status == rocksdb::Status::OK()?
-			log::facility::DEBUG:
-			log::facility::ERROR
+			log::level::DEBUG:
+			log::level::ERROR
 	};
 
 	log::logf
 	{
-		log, facility,
+		log, level,
 		"'%s': %d table file delete [%s][%s] #%d: %s",
 		d->name,
 		info.job_id,
@@ -2654,16 +2654,16 @@ void
 ircd::db::database::events::OnTableFileCreated(const rocksdb::TableFileCreationInfo &info)
 noexcept
 {
-	const log::facility facility
+	const log::level level
 	{
 		info.status == rocksdb::Status::OK()?
-			log::facility::DEBUG:
-			log::facility::ERROR
+			log::level::DEBUG:
+			log::level::ERROR
 	};
 
 	log::logf
 	{
-		log, facility,
+		log, level,
 		"'%s': %d table file closed [%s][%s] '%s' #%d: %s",
 		d->name,
 		info.job_id,
@@ -2758,11 +2758,11 @@ noexcept
 		false
 	};
 
-	const log::facility fac
+	const log::level fac
 	{
 		ignore?
-			log::facility::DERROR:
-			log::facility::ERROR
+			log::level::DERROR:
+			log::level::ERROR
 	};
 
 	log::logf
@@ -6313,18 +6313,18 @@ try
 }
 catch(const std::system_error &e)
 {
-	// Set the facility to downplay some errors which the user shouldn't
+	// Set the level to downplay some errors which the user shouldn't
 	// be alerted to with a log message under normal operations.
-	const log::facility facility
+	const log::level level
 	{
 		is(e.code(), std::errc::no_such_file_or_directory)?
-			log::facility::DERROR:
-			log::facility::ERROR
+			log::level::DERROR:
+			log::level::ERROR
 	};
 
 	log::logf
 	{
-		log, facility, "'%s': opening seqfile:%p `%s' (%d) :%s",
+		log, level, "'%s': opening seqfile:%p `%s' (%d) :%s",
 		d->name,
 		this,
 		name,
