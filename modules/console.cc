@@ -232,6 +232,10 @@ catch(const bad_command &e)
 bool
 console_cmd__help(opt &out, const string_view &line)
 {
+	if(empty(line))
+		for(size_t i(0); !empty(info::credits[i]); ++i)
+			out << info::credits[i] << std::endl;
+
 	const auto cmd
 	{
 		find_cmd(line)
@@ -409,6 +413,15 @@ bool
 console_cmd__exit(opt &out, const string_view &line)
 {
 	return false;
+}
+
+bool
+console_cmd__credits(opt &out, const string_view &line)
+{
+	for(size_t i(0); !empty(info::credits[i]); ++i)
+		out << info::credits[i] << std::endl;
+
+	return true;
 }
 
 bool
