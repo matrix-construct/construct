@@ -58,6 +58,8 @@ namespace ircd::db
 	string_view reflect(const rocksdb::Env::WriteLifeTimeHint &);
 	string_view reflect(const rocksdb::WriteStallCondition &);
 	string_view reflect(const rocksdb::BackgroundErrorReason &);
+	string_view reflect(const rocksdb::CompactionReason &);
+	string_view reflect(const rocksdb::FlushReason &);
 	string_view reflect(const rocksdb::RandomAccessFile::AccessPattern &p);
 	const std::string &reflect(const rocksdb::Tickers &);
 	const std::string &reflect(const rocksdb::Histograms &);

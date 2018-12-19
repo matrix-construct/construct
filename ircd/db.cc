@@ -2556,7 +2556,7 @@ noexcept
 {
 	log::info
 	{
-		log, "'%s': job:%d ctx:%lu flush ended writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d '%s' `%s'",
+		log, "'%s': job:%d ctx:%lu flush ended writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s' `%s'",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -2564,7 +2564,7 @@ noexcept
 		info.triggered_writes_stop,
 		info.smallest_seqno,
 		info.largest_seqno,
-		int(info.flush_reason),
+		reflect(info.flush_reason),
 		info.cf_name,
 		info.file_path,
 	};
@@ -2579,7 +2579,7 @@ noexcept
 {
 	log::info
 	{
-		log, "'%s': job:%d ctx:%lu flush start writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d '%s'",
+		log, "'%s': job:%d ctx:%lu flush start writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s'",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -2587,7 +2587,7 @@ noexcept
 		info.triggered_writes_stop,
 		info.smallest_seqno,
 		info.largest_seqno,
-		int(info.flush_reason),
+		reflect(info.flush_reason),
 		info.cf_name,
 	};
 
@@ -2609,7 +2609,7 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s': job:%d ctx:%lu compacted level[%d -> %d] files[%zu -> %zu] reason:%d '%s' #%d: %s",
+		"'%s': job:%d ctx:%lu compacted level[%d -> %d] files[%zu -> %zu] %s '%s' (%d): %s",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -2617,7 +2617,7 @@ noexcept
 		info.output_level,
 		info.input_files.size(),
 		info.output_files.size(),
-		int(info.compaction_reason),
+		reflect(info.compaction_reason),
 		info.cf_name,
 		int(info.status.code()),
 		info.status.getState()?: "OK",
@@ -2640,7 +2640,7 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s': job:%d table file delete [%s][%s] #%d: %s",
+		"'%s': job:%d table file delete [%s][%s] (%d): %s",
 		d->name,
 		info.job_id,
 		info.db_name,
@@ -2664,7 +2664,7 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s': job:%d table file closed [%s][%s] '%s' #%d: %s",
+		"'%s': job:%d table file closed [%s][%s] '%s' (%d): %s",
 		d->name,
 		info.job_id,
 		info.db_name,
@@ -11548,15 +11548,52 @@ ircd::db::reflect(const op &op)
 }
 
 ircd::string_view
-ircd::db::reflect(const rocksdb::WriteStallCondition &c)
+ircd::db::reflect(const rocksdb::FlushReason &r)
 {
-	using rocksdb::WriteStallCondition;
+	using FlushReason = rocksdb::FlushReason;
 
-	switch(c)
+	switch(r)
 	{
-		case WriteStallCondition::kNormal:   return "NORMAL";
-		case WriteStallCondition::kDelayed:  return "DELAYED";
-		case WriteStallCondition::kStopped:  return "STOPPED";
+		case FlushReason::kOthers:                 return "Others";
+		case FlushReason::kGetLiveFiles:           return "GetLiveFiles";
+		case FlushReason::kShutDown:               return "ShutDown";
+		case FlushReason::kExternalFileIngestion:  return "ExternalFileIngestion";
+		case FlushReason::kManualCompaction:       return "ManualCompaction";
+		case FlushReason::kWriteBufferManager:     return "WriteBufferManager";
+		case FlushReason::kWriteBufferFull:        return "WriteBufferFull";
+		case FlushReason::kTest:                   return "Test";
+		case FlushReason::kDeleteFiles:            return "DeleteFiles";
+		case FlushReason::kAutoCompaction:         return "AutoCompaction";
+		case FlushReason::kManualFlush:            return "ManualFlush";
+	}
+
+	return "??????";
+}
+
+ircd::string_view
+ircd::db::reflect(const rocksdb::CompactionReason &r)
+{
+	using CompactionReason = rocksdb::CompactionReason;
+
+	switch(r)
+	{
+		case CompactionReason::kUnknown:                      return "Unknown";
+		case CompactionReason::kLevelL0FilesNum:              return "LevelL0FilesNum";
+		case CompactionReason::kLevelMaxLevelSize:            return "LevelMaxLevelSize";
+		case CompactionReason::kUniversalSizeAmplification:   return "UniversalSizeAmplification";
+		case CompactionReason::kUniversalSizeRatio:           return "UniversalSizeRatio";
+		case CompactionReason::kUniversalSortedRunNum:        return "UniversalSortedRunNum";
+		case CompactionReason::kFIFOMaxSize:                  return "FIFOMaxSize";
+		case CompactionReason::kFIFOReduceNumFiles:           return "FIFOReduceNumFiles";
+		case CompactionReason::kFIFOTtl:                      return "FIFOTtl";
+		case CompactionReason::kManualCompaction:             return "ManualCompaction";
+		case CompactionReason::kFilesMarkedForCompaction:     return "FilesMarkedForCompaction";
+		case CompactionReason::kBottommostFiles:              return "BottommostFiles";
+		case CompactionReason::kTtl:                          return "Ttl";
+		case CompactionReason::kFlush:                        return "Flush";
+		case CompactionReason::kExternalSstIngestion:         return "ExternalSstIngestion";
+		case CompactionReason::kNumOfReasons:
+			break;
 	}
 
 	return "??????";
@@ -11573,6 +11610,21 @@ ircd::db::reflect(const rocksdb::BackgroundErrorReason &r)
 		case BackgroundErrorReason::kCompaction:     return "COMPACTION";
 		case BackgroundErrorReason::kWriteCallback:  return "WRITE";
 		case BackgroundErrorReason::kMemTable:       return "MEMTABLE";
+	}
+
+	return "??????";
+}
+
+ircd::string_view
+ircd::db::reflect(const rocksdb::WriteStallCondition &c)
+{
+	using rocksdb::WriteStallCondition;
+
+	switch(c)
+	{
+		case WriteStallCondition::kNormal:   return "NORMAL";
+		case WriteStallCondition::kDelayed:  return "DELAYED";
+		case WriteStallCondition::kStopped:  return "STOPPED";
 	}
 
 	return "??????";
