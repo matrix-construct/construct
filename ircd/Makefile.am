@@ -113,7 +113,6 @@ libircd_la_SOURCES =   \
 	magic.cc           \
 	fs.cc              \
 	ctx.cc             \
-	runlevel.cc        \
 	rfc3986.cc         \
 	rfc1035.cc         \
 	demangle.cc        \
