@@ -1004,24 +1004,24 @@ ircd::m::sync::polylog::room_state(shortpoll &sp,
 
 	m::room::state state
 	{
-		room, &fopts
+		room
 	};
 
 	if(bool(prefetch_state))
 		state.prefetch(sp.since, sp.current);
 
-	state.for_each([&]
-	(const m::event &event)
+	state.for_each([&sp, &array]
+	(const m::event::idx &event_idx)
 	{
-		if(at<"depth"_>(event) >= int64_t(sp.state_at))
+		if(event_idx < sp.since || event_idx >= sp.current)
 			return;
 
-		const auto &event_idx
+		const event::fetch event
 		{
-			index(event, std::nothrow)
+			event_idx, std::nothrow, &fopts
 		};
 
-		if(event_idx < sp.since || event_idx >= sp.current)
+		if(!event.valid || at<"depth"_>(event) >= int64_t(sp.state_at))
 			return;
 
 		array.append(event);
