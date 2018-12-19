@@ -1059,10 +1059,20 @@ try
 
 	// TODO: Check if these values can be increased; RocksDB may keep
 	// thread_local state preventing values > 1.
-	opts->max_background_jobs = 1;
+	opts->max_background_jobs = 16;
 	opts->max_background_flushes = 1;
 	opts->max_background_compactions = 1;
 
+	opts->max_total_wal_size = 16_MiB; //TODO: conf
+	opts->db_write_buffer_size = 16_MiB; //TODO: conf
+
+	// For the write-side of a compaction process: writes will be of approx
+	// this size. The compaction process is composing a buffer of this size
+	// between those writes. Too large a buffer will hog the CPU and starve
+	// other ircd::ctx's. Too small a buffer will be inefficient.
+	opts->writable_file_max_buffer_size = 2_MiB; //TODO: conf
+
+	// For the read-side of the compaction process.
 	opts->compaction_readahead_size = 4_MiB; //TODO: conf
 
 	// MUST be 1 (no subcompactions) or rocksdb spawns internal std::thread.
@@ -1092,7 +1102,7 @@ try
 		false;
 
 	// Use the determined direct io value for writes as well.
-	opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
+	//opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
 
 	// Doesn't appear to be in effect when direct io is used. Not supported by
 	// all filesystems so disabled for now.
@@ -1739,9 +1749,12 @@ ircd::db::database::column::column(database &d,
 
 	this->options.num_levels = 7;
 	this->options.write_buffer_size = 512_KiB;
+	this->options.max_write_buffer_number = 2;
+	this->options.min_write_buffer_number_to_merge = 1;
+	this->options.max_write_buffer_number_to_maintain = 0;
 	this->options.level0_file_num_compaction_trigger = 3;
-	this->options.target_file_size_base = 62_MiB;
-	this->options.target_file_size_multiplier = 1;
+	this->options.target_file_size_base = 30_MiB;
+	this->options.target_file_size_multiplier = 2;
 	this->options.max_bytes_for_level_base = 64_MiB;
 	this->options.max_bytes_for_level_multiplier = 2;
 
@@ -1754,7 +1767,6 @@ ircd::db::database::column::column(database &d,
 	table_opts.index_type = rocksdb::BlockBasedTableOptions::kTwoLevelIndexSearch;
 	table_opts.partition_filters = true;
 	table_opts.use_delta_encoding = true;
-	table_opts.enable_index_compression = false;
 	table_opts.read_amp_bytes_per_bit = 8;
 
 	// Specify that index blocks should use the cache. If not, they will be
@@ -1765,6 +1777,7 @@ ircd::db::database::column::column(database &d,
 	table_opts.cache_index_and_filter_blocks_with_high_priority = false;
 	table_opts.pin_top_level_index_and_filter = false;
 	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
+	table_opts.enable_index_compression = false;
 
 	// Setup the block size
 	table_opts.block_size = this->descriptor->block_size;
@@ -9494,7 +9507,7 @@ ircd::db::compact(column &column,
 		};
 
 		rocksdb::CompactionOptions opts;
-		opts.output_file_size_limit = 1_GiB; //TODO: conf
+		opts.output_file_size_limit = 2_GiB; //TODO: conf
 
 		// RocksDB sez that setting this to Disable means that the column's
 		// compression options are read instead. If we don't set this here,
