@@ -2556,16 +2556,16 @@ noexcept
 {
 	log::info
 	{
-		log, "'%s': %d flush '%s' ended ctx:%lu writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d `%s'",
+		log, "'%s': job:%d ctx:%lu flush ended writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d '%s' `%s'",
 		d->name,
 		info.job_id,
-		info.cf_name,
 		info.thread_id,
 		info.triggered_writes_slowdown,
 		info.triggered_writes_stop,
 		info.smallest_seqno,
 		info.largest_seqno,
 		int(info.flush_reason),
+		info.cf_name,
 		info.file_path,
 	};
 
@@ -2579,16 +2579,16 @@ noexcept
 {
 	log::info
 	{
-		log, "'%s': %d flush '%s' start ctx:%lu writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d",
+		log, "'%s': job:%d ctx:%lu flush start writes[slow:%d stop:%d] seq[%zu -> %zu] reason:%d '%s'",
 		d->name,
 		info.job_id,
-		info.cf_name,
 		info.thread_id,
 		info.triggered_writes_slowdown,
 		info.triggered_writes_stop,
 		info.smallest_seqno,
 		info.largest_seqno,
-		int(info.flush_reason)
+		int(info.flush_reason),
+		info.cf_name,
 	};
 
 	assert(info.thread_id == ctx::id(*ctx::current));
@@ -2609,16 +2609,16 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s': %d compacted '%s' ctx:%lu level[in:%d out:%d] files[in:%zu out:%zu] reason:%d #%d: %s",
+		"'%s': job:%d ctx:%lu compacted level[%d -> %d] files[%zu -> %zu] reason:%d '%s' #%d: %s",
 		d->name,
 		info.job_id,
-		info.cf_name,
 		info.thread_id,
 		info.base_input_level,
 		info.output_level,
 		info.input_files.size(),
 		info.output_files.size(),
 		int(info.compaction_reason),
+		info.cf_name,
 		int(info.status.code()),
 		info.status.getState()?: "OK",
 	};
@@ -2640,7 +2640,7 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s': %d table file delete [%s][%s] #%d: %s",
+		"'%s': job:%d table file delete [%s][%s] #%d: %s",
 		d->name,
 		info.job_id,
 		info.db_name,
@@ -2664,7 +2664,7 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s': %d table file closed [%s][%s] '%s' #%d: %s",
+		"'%s': job:%d table file closed [%s][%s] '%s' #%d: %s",
 		d->name,
 		info.job_id,
 		info.db_name,
@@ -2681,7 +2681,7 @@ noexcept
 {
 	log::debug
 	{
-		log, "'%s': %d table file opened [%s][%s] '%s'",
+		log, "'%s': job:%d table file opened [%s][%s] '%s'",
 		d->name,
 		info.job_id,
 		info.db_name,
