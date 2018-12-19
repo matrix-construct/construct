@@ -31,7 +31,7 @@ namespace ircd::m
 class ircd::m::error
 :public http::error
 {
-	static thread_local char fmtbuf[768];
+	static thread_local char fmtbuf[4_KiB];
 
   public:
 	template<class... args> error(const http::code &, const string_view &errcode, const string_view &fmt, args&&...);

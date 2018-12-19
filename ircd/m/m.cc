@@ -3723,8 +3723,9 @@ ircd::m::_hook_match(const m::event &matching,
 // m/error.h
 //
 
-thread_local char
-ircd::m::error::fmtbuf[768]
+thread_local
+decltype(ircd::m::error::fmtbuf)
+ircd::m::error::fmtbuf
 {};
 
 ircd::m::error::error()
