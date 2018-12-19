@@ -686,17 +686,21 @@ console_cmd__proc(opt &out, const string_view &line)
 
 	fs::read_opts opts;
 	opts.aio = false;
+	opts.offset = 0;
 	const unique_buffer<mutable_buffer> buf
 	{
-		64_KiB
+		info::page_size
 	};
 
-	const string_view read
+	string_view read; do
 	{
-		fs::read(fd, buf, opts)
-	};
+		read = fs::read(fd, buf, opts);
+		opts.offset += size(read);
+		out << read;
+	}
+	while(!empty(read));
 
-	out << read << std::endl;
+	out << std::endl;
 	return true;
 }
 
