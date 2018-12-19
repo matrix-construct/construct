@@ -22,12 +22,6 @@ namespace ircd::info
 	struct line;
 	struct tc_version;
 
-	// Primary information
-	extern const string_view name;
-	extern const string_view version;
-	extern const string_view user_agent;
-	extern const string_view server_agent;
-
 	// Build information
 	extern const string_view tag;
 	extern const string_view branch;
@@ -38,40 +32,40 @@ namespace ircd::info
 	extern const string_view compiled;
 	extern const string_view startup;
 
-	// System / platform information
+	// System information
 	extern const size_t max_align;
 	extern const size_t hardware_concurrency;
 	extern const size_t destructive_interference;
 	extern const size_t constructive_interference;
+	extern const size_t page_size;
+	extern const size_t iov_max;
+	extern const size_t aio_max;
+	extern const size_t aio_reqprio_max;
 	extern const size_t rlimit_as;
 	extern const size_t rlimit_data;
 	extern const size_t rlimit_rss;
 	extern const size_t rlimit_nofile;
 	extern const size_t rlimit_rttime;
 
-	extern const int glibc_version[3];
-	extern const string_view glibc_version_str;
-	extern const size_t page_size;
-	extern const size_t iov_max;
-	extern const size_t aio_max;
-	extern const size_t aio_reqprio_max;
-	extern const size_t clk_tck;
+	// Host information
 	#ifdef HAVE_SYS_UTSNAME_H
 	extern const ::utsname utsname;
 	#endif
 
-	// Extended information
-	extern const std::vector<info::line> myinfo;
-	extern const std::vector<string_view> credits;
+	// Third-party information
+	extern const int glibc_version[3];
+	extern const string_view glibc_version_str;
 
+	// Primary information
+	extern const string_view name;
+	extern const string_view version;
+	extern const string_view user_agent;
+	extern const string_view server_agent;
+
+	// Extended information
+	extern const string_view credits[];
+
+	// Util
 	void dump();
 	void init();
 }
-
-struct ircd::info::line
-{
-	std::string key;
-	std::string valstr;
-	uint64_t valnum;
-	std::string desc;
-};
