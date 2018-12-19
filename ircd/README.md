@@ -5,31 +5,36 @@ This directory contains definitions and linkage for `libircd`
 The purpose of `libircd` is to facilitate the execution of a server which
 handles requests from end-users. The library hosts a set of pluggable modules
 which may introduce the actual application features (or the "business logic")
-of the server. These additional modules are found in the `modules/` directory;
+of the server.
 
-##### libircd can be embedded in your application with very minimal overhead.
-
-Linking to libircd from your executable allows you to customize and extend the
-functionality of the server and have control over its execution, or, simply use
-library routines provided by the library without any daemonization.
-
-##### libircd runs only one server at a time.
-
-Keeping with the spirit of simplicity of the original architecture, `libircd`
-continues to be a "singleton" object which uses globals and keeps actual server
-state in the library itself. In other words, **only one IRC daemon can exist
-within a process's address space at a time.** Whether or not this was a pitfall
-of the original design, it has emerged over the decades as a very profitable
-decision for making IRCd an accessible open source internet project.
+> The executable linking and invoking `libircd` may be referred to as the
+"embedding" or just the "executable" interchangably in this documentation.
 
 ##### libircd is single-threaded✝
 
-This methodology ensures there is an _uninterrupted_, _uncontended_,
-_predictable_ execution. If there are periods of execution which are
-computationally intense like parsing, hashing, cryptography, etc: this is
-absorbed in lieu of thread synchronization and bus contention. Scaling this
-system is done through running multiple independent instances which
-synchronize with application logic.
+The design of `libircd` is fully-asynchronous, single-thread-oriented. No code
+in the library _blocks_ the process. All operations are conducted on top of
+a single `boost::asio::io_service` which must be supplied by the executable
+linking to `libircd`. That `io_service` must be orchestrated by the executable
+at its discretion; typically the embedder's call to `ios.run()` is the only
+place the process will _block_.
+
+> Applications are limited by one or more of the following bounds:
+- Computing: program is limited by the efficiency of the CPU over time.
+- Space: program is limited by the space available for its dataset.
+- I/O: program is limited by external events, disks, and networks.
+
+`libircd` is dominated by the **I/O bound**. Its design is heavily optimized
+for this assumption with its single-thread orientation. This methodology
+ensures there is an _uninterrupted_, _uncontended_, _predictable_ execution
+which is easy for developers to reason about intuitively with
+sequential-consistency in a cooperative coroutine model.
+
+If there are periods of execution which are computationally intense like
+parsing, hashing, cryptography, etc: this is absorbed in lieu of thread
+synchronization and bus contention. This system achieves scale through running
+multiple independent instances which synchronize at the application-logic
+level.
 
 ✝ However, don't start assuming a truly threadless execution for the entire
 address space. If there is ever a long-running background computation or a call
@@ -47,6 +52,21 @@ easy to follow.
 
 ✝ If there are certain cases where we don't want a stack to linger which may
 jeopardize the c10k'ness of the daemon the asynchronous pattern is still used.
+
+##### libircd can be embedded in your application with very minimal overhead.
+
+Linking to libircd from your executable allows you to customize and extend the
+functionality of the server and have control over its execution, or, simply use
+library routines provided by the library without any daemonization.
+
+##### libircd runs only one server at a time.
+
+Keeping with the spirit of simplicity of the original architecture, `libircd`
+continues to be a "singleton" object which uses globals and keeps actual server
+state in the library itself. In other words, **only one IRC daemon can exist
+within a process's address space at a time.** Whether or not this was a pitfall
+of the original design, it has emerged over the decades as a very profitable
+decision for making IRCd an accessible open source internet project.
 
 ##### libircd leverages formal grammars
 

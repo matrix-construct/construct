@@ -672,6 +672,13 @@ ircd::fs::read(const string_view &path,
 	return read(fd, bufs, opts);
 }
 
+/// Read from file descriptor fd into buffers. The number of bytes read into
+/// the buffers is returned. By default (via read_opts.all) this call will
+/// loop internally until the buffers are full or EOF. To allow for a partial
+/// read(), disable read_opts.all. Note that to maintain alignments (i.e when
+/// direct-io or for special files read_opts.all must be false). By default
+/// (via read_opts.interruptible) this call can throw if the syscall was
+/// interrupted before reading any bytes.
 size_t
 ircd::fs::read(const fd &fd,
                const mutable_buffers &bufs,
@@ -700,6 +707,12 @@ ircd::fs::read(const fd &fd,
 	return ret;
 }
 
+/// Lowest-level read() call. This call only conducts a single operation
+/// (no looping) and can return a partial read(). It does have branches
+/// for various read_opts. The arguments involve `struct ::iovec` which
+/// we do not expose to the ircd.h API; thus this function is internal to
+/// ircd::fs. There is no reason to use this function in lieu of the public
+/// fs::read() suite.
 size_t
 ircd::fs::read(const fd &fd,
                const const_iovec_view &iov,
@@ -941,6 +954,12 @@ ircd::fs::write(const fd &fd,
 	return off;
 }
 
+/// Lowest-level write() call. This call only conducts a single operation
+/// (no looping) and can return early with a partial write(). It does have
+/// branches for various write_opts. The arguments involve `struct ::iovec`
+/// which we do not expose to the ircd.h API; thus this function is internal to
+/// ircd::fs. There is no reason to use this function in lieu of the public
+/// fs::read() suite.
 size_t
 ircd::fs::write(const fd &fd,
                 const const_iovec_view &iov,

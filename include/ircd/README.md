@@ -48,3 +48,10 @@ standard include group which includes any wrapping to hide SpiderMonkey.
 - MAPI include group `<ircd/mapi.h>` is the standard header group for modules.
 This group is an extension to the standard include group but has specific
 tools for pluggable modules which are not part of the libircd core.
+
+#### Invocation
+
+> `libircd` is **not thread-safe**. It does not protect exposed interfaces with
+locks. Embedders must access `libircd` from a single thread.
+
+Initialize the library with a call to `ircd::init()`.
