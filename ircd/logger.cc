@@ -665,7 +665,7 @@ ircd::log::confs
 		// console enable on stderr
 		{
 			{ "name",     "ircd.log.critical.console.stderr" },
-			{ "default",  true                               },
+			{ "default",  false                              },
 		},
 
 		// console flush
@@ -704,7 +704,7 @@ ircd::log::confs
 		// console enable on stderr
 		{
 			{ "name",     "ircd.log.error.console.stderr" },
-			{ "default",  true                            },
+			{ "default",  false                           },
 		},
 
 		// console flush
