@@ -14,32 +14,17 @@
 
 namespace ircd::log
 {
-	// Option toggles
-	std::array<bool, num_of<facility>()> file_flush;
-	std::array<bool, num_of<facility>()> console_flush;
-	std::array<const char *, num_of<facility>()> console_ansi;
+	struct confs;
 
-	// Runtime master switches
-	std::array<bool, num_of<facility>()> file_out;
-	std::array<bool, num_of<facility>()> console_out;
-	std::array<bool, num_of<facility>()> console_err;
+	extern const std::array<string_view, num_of<facility>()> default_ansi;
+	extern std::array<confs, num_of<facility>()> confs;
 
-	// Suppression state (for struct console_quiet)
-	std::array<bool, num_of<facility>()> quieted_out;
-	std::array<bool, num_of<facility>()> quieted_err;
-
-	// Logfile stream
 	std::array<std::ofstream, num_of<facility>()> file;
+	std::array<ulong, num_of<facility>()> console_quiet_stdout;
+	std::array<ulong, num_of<facility>()> console_quiet_stderr;
 
-	std::ostream &out_console
-	{
-		std::cout
-	};
-
-	std::ostream &err_console
-	{
-		std::cerr
-	};
+	std::ostream &out_console{std::cout};
+	std::ostream &err_console{std::cerr};
 
 	static std::string dir_path();
 	static std::string file_path(const facility &);
@@ -48,59 +33,21 @@ namespace ircd::log
 	static void open(const facility &);
 }
 
+struct ircd::log::confs
+{
+	conf::item<bool> file_enable;
+	conf::item<bool> file_flush;
+	conf::item<bool> console_stdout;
+	conf::item<bool> console_stderr;
+	conf::item<bool> console_flush;
+	conf::item<std::string> console_ansi;
+};
+
 void
 ircd::log::init()
 {
-	//TODO: XXX: config + cmd control + other fancy stuff
-
-	console_out[CRITICAL]    = true;
-	console_out[ERROR]       = true;
-	console_out[DERROR]      = true;
-	console_out[WARNING]     = true;
-	console_out[DWARNING]    = true;
-	console_out[NOTICE]      = true;
-	console_out[INFO]        = true;
-	console_out[DEBUG]       = ircd::debugmode;
-
-	//console_err[CRITICAL]    = true;
-	//console_err[ERROR]       = true;
-	//console_err[WARNING]     = true;
-
-	file_out[CRITICAL]       = true;
-	file_out[ERROR]          = true;
-	file_out[DERROR]         = true;
-	file_out[WARNING]        = true;
-	file_out[DWARNING]       = true;
-	file_out[NOTICE]         = true;
-	file_out[INFO]           = true;
-	file_out[DEBUG]          = ircd::debugmode;
-
-	file_flush[CRITICAL]     = true;
-	file_flush[ERROR]        = true;
-	file_flush[DERROR]       = true;
-	file_flush[WARNING]      = true;
-	file_flush[DWARNING]     = true;
-	file_flush[NOTICE]       = false;
-	file_flush[INFO]         = false;
-	file_flush[DEBUG]        = false;
-
-	console_flush[CRITICAL]  = true;
-	console_flush[ERROR]     = true;
-	console_flush[DERROR]    = true;
-	console_flush[WARNING]   = true;
-	console_flush[DWARNING]  = true;
-	console_flush[NOTICE]    = true;
-	console_flush[INFO]      = true;
-	console_flush[DEBUG]     = true;
-
-	console_ansi[CRITICAL]  = "\033[1;5;37;45m";
-	console_ansi[ERROR]     = "\033[1;37;41m";
-	console_ansi[DERROR]    = "\033[0;31;47m";
-	console_ansi[WARNING]   = "\033[0;30;43m";
-	console_ansi[DWARNING]  = "\033[0;30;47m";
-	console_ansi[NOTICE]    = "\033[1;37;46m";
-	console_ansi[INFO]      = "\033[1;37;42m";
-	console_ansi[DEBUG]     = "\033[1;30;47m";
+	if(!ircd::debugmode)
+		console_disable(facility::DEBUG);
 
 	mkdir();
 }
@@ -131,7 +78,8 @@ ircd::log::open()
 {
 	for_each<facility>([](const facility &fac)
 	{
-		if(!file_out[fac])
+		const auto &conf(confs.at(fac));
+		if(!bool(conf.file_enable))
 			return;
 
 		if(file[fac].is_open())
@@ -229,19 +177,25 @@ ircd::log::console_disable()
 void
 ircd::log::console_enable(const facility &fac)
 {
-	console_out[fac] = true;
+	if(console_quiet_stdout[fac])
+		console_quiet_stdout[fac]--;
+
+	if(console_quiet_stderr[fac])
+		console_quiet_stderr[fac]--;
 }
 
 void
 ircd::log::console_disable(const facility &fac)
 {
-	console_out[fac] = false;
+	console_quiet_stdout[fac]++;
+	console_quiet_stderr[fac]++;
 }
 
 bool
 ircd::log::console_enabled(const facility &fac)
 {
-	return console_out[fac];
+	return !console_quiet_stdout[fac] ||
+	       !console_quiet_stderr[fac];
 }
 
 void
@@ -267,22 +221,12 @@ ircd::log::console_quiet::console_quiet(const bool &showmsg)
 	if(showmsg)
 		notice("Log messages are now quieted at the console");
 
-	std::copy(begin(console_out), end(console_out), begin(quieted_out));
-	std::copy(begin(console_err), end(console_err), begin(quieted_err));
-	std::fill(begin(console_out), end(console_out), false);
-	std::fill(begin(console_err), end(console_err), false);
-
-	// Make a special amend to never suppress CRITICAL messages because
-	// these are usually for a crash or major b0rk where the console
-	// user probably won't be continuing normally anyway...
-	if(quieted_out[CRITICAL]) console_out[CRITICAL] = true;
-	if(quieted_err[CRITICAL]) console_err[CRITICAL] = true;
+	console_disable();
 }
 
 ircd::log::console_quiet::~console_quiet()
 {
-	std::copy(begin(quieted_out), end(quieted_out), begin(console_out));
-	std::copy(begin(quieted_err), end(quieted_err), begin(console_err));
+	console_enable();
 }
 
 //
@@ -471,6 +415,8 @@ namespace ircd::log
 {
 	// linkage for slog() reentrance assertion
 	bool entered;
+
+	static bool can_skip(const log &, const facility &);
 }
 
 void
@@ -479,13 +425,8 @@ ircd::log::slog(const log &log,
                 const window_buffer::closure &closure)
 noexcept
 {
-	// When all of these conditions are true there is no possible log output
-	// so we can bail real quick.
-	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
-		return;
-
-	// Same for this set of conditions...
-	if((!file[fac].is_open() || !log.fmasked) && !log.cmasked)
+	const auto &conf(confs.at(fac));
+	if(can_skip(log, fac))
 		return;
 
 	// Have to be on the main thread to call slog().
@@ -511,11 +452,11 @@ noexcept
 	pubsetbuf(s, buf);
 	s << microtime(date)
 	  << ' '
-	  << (console_ansi[fac]? console_ansi[fac] : "")
+	  << string_view{conf.console_ansi}
 	  << std::setw(8)
 	  << std::right
 	  << reflect(fac)
-	  << (console_ansi[fac]? "\033[0m " : " ")
+	  << (string_view{conf.console_ansi}? "\033[0m " : " ")
 //	  << (log.snote? log.snote : '-')
 	  << std::setw(9)
 	  << std::right
@@ -551,18 +492,18 @@ noexcept
 	}};
 
 	// copy to std::cerr
-	if(log.cmasked && console_err[fac])
+	if(log.cmasked && bool(conf.console_stderr) && !console_quiet_stderr[fac])
 	{
 		err_console.clear();
 		write(err_console);
 	}
 
 	// copy to std::cout
-	if(log.cmasked && console_out[fac])
+	if(log.cmasked && bool(conf.console_stdout) && !console_quiet_stdout[fac])
 	{
 		out_console.clear();
 		write(out_console);
-		if(console_flush[fac])
+		if(conf.console_flush)
 			std::flush(out_console);
 	}
 
@@ -571,9 +512,27 @@ noexcept
 	{
 		file[fac].clear();
 		write(file[fac]);
-		if(file_flush[fac])
+		if(conf.file_flush)
 			std::flush(file[fac]);
 	}
+}
+
+bool
+ircd::log::can_skip(const log &log,
+                    const facility &fac)
+{
+	const auto &conf(confs.at(fac));
+
+	// When all of these conditions are true there is no possible log output
+	// so we can bail real quick.
+	if(!file[fac].is_open() && !bool(conf.console_stdout) && !bool(conf.console_stderr))
+		return true;
+
+	// Same for this set of conditions...
+	if((!file[fac].is_open() || !log.fmasked) && (!log.cmasked || !console_enabled(fac)))
+		return true;
+
+	return false;
 }
 
 void
@@ -646,6 +605,19 @@ ircd::log::reflect(const facility &f)
 	};
 }
 
+decltype(ircd::log::default_ansi)
+ircd::log::default_ansi
+{{
+	"\033[1;5;37;45m"_sv,     // CRITICAL
+	"\033[1;37;41m"_sv,       // ERROR
+	"\033[0;30;43m"_sv,       // WARNING
+	"\033[1;37;46m"_sv,       // NOTICE
+	"\033[1;37;42m"_sv,       // INFO
+	"\033[0;31;47m"_sv,       // DERROR
+	"\033[0;30;47m"_sv,       // DWARNING
+	"\033[1;30;47m"_sv,       // DEBUG
+}};
+
 const char *
 ircd::smalldate(const time_t &ltime)
 {
@@ -666,3 +638,319 @@ ircd::smalldate(const time_t &ltime)
 
 	return buf;
 }
+
+decltype(ircd::log::confs)
+ircd::log::confs
+{{
+	// CRITICAL
+	{
+		// file enable
+		{
+			{ "name",     "ircd.log.critical.file.enable" },
+			{ "default",  false                           },
+		},
+
+		// file flush
+		{
+			{ "name",     "ircd.log.critical.file.flush" },
+			{ "default",  false                          },
+		},
+
+		// console enable on stdout
+		{
+			{ "name",     "ircd.log.critical.console.stdout" },
+			{ "default",  true                               },
+		},
+
+		// console enable on stderr
+		{
+			{ "name",     "ircd.log.critical.console.stderr" },
+			{ "default",  true                               },
+		},
+
+		// console flush
+		{
+			{ "name",     "ircd.log.critical.console.flush" },
+			{ "default",  true                              },
+		},
+
+		// console ansi
+		{
+			{ "name",     "ircd.log.critical.console.ansi"    },
+			{ "default",  default_ansi.at(facility::CRITICAL) },
+		}
+	},
+
+	// ERROR
+	{
+		// file enable
+		{
+			{ "name",     "ircd.log.error.file.enable" },
+			{ "default",  false                        },
+		},
+
+		// file flush
+		{
+			{ "name",     "ircd.log.error.file.flush" },
+			{ "default",  false                       },
+		},
+
+		// console enable on stdout
+		{
+			{ "name",     "ircd.log.error.console.stdout" },
+			{ "default",  true                            },
+		},
+
+		// console enable on stderr
+		{
+			{ "name",     "ircd.log.error.console.stderr" },
+			{ "default",  true                            },
+		},
+
+		// console flush
+		{
+			{ "name",     "ircd.log.error.console.flush" },
+			{ "default",  true                           },
+		},
+
+		// console ansi
+		{
+			{ "name",     "ircd.log.error.console.ansi"    },
+			{ "default",  default_ansi.at(facility::ERROR) },
+		}
+	},
+
+	// WARNING
+	{
+		// file enable
+		{
+			{ "name",     "ircd.log.warning.file.enable" },
+			{ "default",  false                          },
+		},
+
+		// file flush
+		{
+			{ "name",     "ircd.log.warning.file.flush" },
+			{ "default",  false                         },
+		},
+
+		// console enable on stdout
+		{
+			{ "name",     "ircd.log.warning.console.stdout" },
+			{ "default",  true                              },
+		},
+
+		// console enable on stderr
+		{
+			{ "name",     "ircd.log.warning.console.stderr" },
+			{ "default",  false                             },
+		},
+
+		// console flush
+		{
+			{ "name",     "ircd.log.warning.console.flush" },
+			{ "default",  true                             },
+		},
+
+		// console ansi
+		{
+			{ "name",     "ircd.log.warning.console.ansi"    },
+			{ "default",  default_ansi.at(facility::WARNING) },
+		}
+	},
+
+	// NOTICE
+	{
+		// file enable
+		{
+			{ "name",     "ircd.log.notice.file.enable" },
+			{ "default",  false                         },
+		},
+
+		// file flush
+		{
+			{ "name",     "ircd.log.notice.file.flush" },
+			{ "default",  false                        },
+		},
+
+		// console enable on stdout
+		{
+			{ "name",     "ircd.log.notice.console.stdout" },
+			{ "default",  true                             },
+		},
+
+		// console enable on stderr
+		{
+			{ "name",     "ircd.log.notice.console.stderr" },
+			{ "default",  false                            },
+		},
+
+		// console flush
+		{
+			{ "name",     "ircd.log.notice.console.flush" },
+			{ "default",  true                            },
+		},
+
+		// console ansi
+		{
+			{ "name",     "ircd.log.notice.console.ansi"     },
+			{ "default",  default_ansi.at(facility::NOTICE)  },
+		}
+	},
+
+	// INFO
+	{
+		// file enable
+		{
+			{ "name",     "ircd.log.info.file.enable" },
+			{ "default",  false                       },
+		},
+
+		// file flush
+		{
+			{ "name",     "ircd.log.info.file.flush" },
+			{ "default",  false                      },
+		},
+
+		// console enable on stdout
+		{
+			{ "name",     "ircd.log.info.console.stdout" },
+			{ "default",  true                           },
+		},
+
+		// console enable on stderr
+		{
+			{ "name",     "ircd.log.info.console.stderr" },
+			{ "default",  false                          },
+		},
+
+		// console flush
+		{
+			{ "name",     "ircd.log.info.console.flush" },
+			{ "default",  true                          },
+		},
+
+		// console ansi
+		{
+			{ "name",     "ircd.log.info.console.ansi"     },
+			{ "default",  default_ansi.at(facility::INFO)  },
+		}
+	},
+
+	// DERROR
+	{
+		// file enable
+		{
+			{ "name",     "ircd.log.derror.file.enable" },
+			{ "default",  false                         },
+		},
+
+		// file flush
+		{
+			{ "name",     "ircd.log.derror.file.flush" },
+			{ "default",  false                        },
+		},
+
+		// console enable on stdout
+		{
+			{ "name",     "ircd.log.derror.console.stdout" },
+			{ "default",  true                             },
+		},
+
+		// console enable on stderr
+		{
+			{ "name",     "ircd.log.derror.console.stderr" },
+			{ "default",  false                            },
+		},
+
+		// console flush
+		{
+			{ "name",     "ircd.log.derror.console.flush" },
+			{ "default",  true                            },
+		},
+
+		// console ansi
+		{
+			{ "name",     "ircd.log.derror.console.ansi"     },
+			{ "default",  default_ansi.at(facility::DERROR)  },
+		}
+	},
+
+	// DWARNING
+	{
+		// file enable
+		{
+			{ "name",     "ircd.log.dwarning.file.enable" },
+			{ "default",  false                           },
+		},
+
+		// file flush
+		{
+			{ "name",     "ircd.log.dwarning.file.flush" },
+			{ "default",  false                          },
+		},
+
+		// console enable on stdout
+		{
+			{ "name",     "ircd.log.dwarning.console.stdout" },
+			{ "default",  true                               },
+		},
+
+		// console enable on stderr
+		{
+			{ "name",     "ircd.log.dwarning.console.stderr" },
+			{ "default",  false                              },
+		},
+
+		// console flush
+		{
+			{ "name",     "ircd.log.dwarning.console.flush" },
+			{ "default",  false                             },
+		},
+
+		// console ansi
+		{
+			{ "name",     "ircd.log.dwarning.console.ansi"     },
+			{ "default",  default_ansi.at(facility::DWARNING)  },
+		}
+	},
+
+	// DEBUG
+	{
+		// file enable
+		{
+			{ "name",     "ircd.log.debug.file.enable" },
+			{ "default",  false                        },
+		},
+
+		// file flush
+		{
+			{ "name",     "ircd.log.debug.file.flush" },
+			{ "default",  false                       },
+		},
+
+		// console enable on stdout
+		{
+			{ "name",     "ircd.log.debug.console.stdout" },
+			{ "default",  true                            },
+		},
+
+		// console enable on stderr
+		{
+			{ "name",     "ircd.log.debug.console.stderr" },
+			{ "default",  false                           },
+		},
+
+		// console flush
+		{
+			{ "name",     "ircd.log.debug.console.flush" },
+			{ "default",  false                          },
+		},
+
+		// console ansi
+		{
+			{ "name",     "ircd.log.debug.console.ansi"    },
+			{ "default",  default_ansi.at(facility::DEBUG) },
+		}
+	}
+}};
