@@ -892,7 +892,7 @@ console_cmd__conf__list(opt &out, const string_view &line)
 	for(const auto &item : conf::items)
 		out
 		<< std::setw(48) << std::left << std::setfill('_') << item.first
-		<< " " << item.second->get(val)
+		<< " " << item.second->get(val) << "\033[0m"
 		<< std::endl;
 
 	return true;
