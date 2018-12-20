@@ -416,22 +416,6 @@ noexcept try
 	assert(ctx::current == nullptr);
 	if(likely(request.waiter))
 		ctx::notify(*request.waiter);
-
-/*
-	log::debug
-	{
-		"AIO request(%p) fd:%d op:%d bytes:%lu off:%ld prio:%d ctx:%p result: bytes:%ld errno:%ld",
-		request,
-		request->aio_fildes,
-		request->aio_lio_opcode,
-		request->aio_nbytes,
-		request->aio_offset,
-		request->aio_reqprio,
-		request->waiter,
-		request->retval,
-		request->errcode
-	};
-*/
 }
 catch(const std::exception &e)
 {
