@@ -425,9 +425,8 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		client::log, "socket(%p) client(%p) (below main) :%s",
-		client->sock.get(),
-		client.get(),
+		client::log, "%s (below main) :%s",
+		client->loghead(),
 		e.what()
 	};
 }
