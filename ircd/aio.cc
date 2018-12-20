@@ -18,11 +18,6 @@ namespace ircd::fs::aio
 	static int reqprio(int);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// ircd/aio.h (internal)
-//
-
 //
 // request::fsync
 //
@@ -194,19 +189,117 @@ ircd::fs::aio::prefetch(const fd &fd,
 }
 
 //
-// internal util
+// request
 //
 
-int
-ircd::fs::aio::reqprio(int input)
+ircd::fs::aio::request::request(const int &fd)
+:iocb{0}
 {
-	// no use for negative values yet; make them zero.
-	input = std::max(input, 0);
+	assert(context);
+	assert(ctx::current);
 
-	// value is reduced to system maximum.
-	input = std::min(input, int(ircd::info::aio_reqprio_max));
+	aio_flags = IOCB_FLAG_RESFD;
+	aio_resfd = context->resfd.native_handle();
+	aio_fildes = fd;
+	aio_data = uintptr_t(this);
+}
 
-	return input;
+ircd::fs::aio::request::~request()
+noexcept
+{
+}
+
+/// Cancel a request. The handler callstack is invoked directly from here
+/// which means any callback will be invoked or ctx will be notified if
+/// appropriate.
+void
+ircd::fs::aio::request::cancel()
+{
+	io_event result {0};
+	const auto &cb{static_cast<iocb *>(this)};
+
+	assert(context);
+	syscall_nointr<SYS_io_cancel>(context->idp, cb, &result);
+
+	stats.bytes_cancel += bytes(iovec());
+	stats.cancel++;
+
+	context->handle_event(result);
+}
+
+/// Submit a request and properly yield the ircd::ctx. When this returns the
+/// result will be available or an exception will be thrown.
+size_t
+ircd::fs::aio::request::operator()()
+try
+{
+	assert(context);
+	assert(ctx::current);
+	assert(waiter == ctx::current);
+
+	struct iocb *const cbs[]
+	{
+		static_cast<iocb *>(this)
+	};
+
+	const size_t submitted_bytes
+	{
+		bytes(iovec())
+	};
+
+	// Submit to kernel
+	syscall<SYS_io_submit>(context->idp, 1, &cbs);
+
+	// Update stats for submission phase
+	stats.bytes_requests += submitted_bytes;
+	stats.requests++;
+
+	const auto &curcnt(stats.requests - stats.complete);
+	stats.max_requests = std::max(stats.max_requests, curcnt);
+
+	// Block for completion
+	while(retval == std::numeric_limits<ssize_t>::min())
+		ctx::wait();
+
+	// Update stats for completion phase.
+	stats.bytes_complete += submitted_bytes;
+	stats.complete++;
+
+	if(retval == -1)
+	{
+		stats.bytes_errors += submitted_bytes;
+		stats.errors++;
+
+		throw fs::error
+		{
+			make_error_code(errcode)
+		};
+	}
+
+	return size_t(retval);
+}
+catch(const ctx::interrupted &e)
+{
+	// When the ctx is interrupted we're obligated to cancel the request.
+	// The handler callstack is invoked directly from here by cancel() for
+	// what it's worth but we rethrow the interrupt anyway.
+	cancel();
+	throw;
+}
+catch(const ctx::terminated &)
+{
+	cancel();
+	throw;
+}
+
+ircd::fs::const_iovec_view
+ircd::fs::aio::request::iovec()
+const
+{
+	return
+	{
+		reinterpret_cast<const ::iovec *>(aio_buf), aio_nbytes
+	};
 }
 
 //
@@ -429,115 +522,17 @@ catch(const std::exception &e)
 }
 
 //
-// request
+// internal util
 //
 
-ircd::fs::aio::request::request(const int &fd)
-:iocb{0}
+int
+ircd::fs::aio::reqprio(int input)
 {
-	assert(context);
-	assert(ctx::current);
+	// no use for negative values yet; make them zero.
+	input = std::max(input, 0);
 
-	aio_flags = IOCB_FLAG_RESFD;
-	aio_resfd = context->resfd.native_handle();
-	aio_fildes = fd;
-	aio_data = uintptr_t(this);
-}
+	// value is reduced to system maximum.
+	input = std::min(input, int(ircd::info::aio_reqprio_max));
 
-ircd::fs::aio::request::~request()
-noexcept
-{
-}
-
-/// Cancel a request. The handler callstack is invoked directly from here
-/// which means any callback will be invoked or ctx will be notified if
-/// appropriate.
-void
-ircd::fs::aio::request::cancel()
-{
-	io_event result {0};
-	const auto &cb{static_cast<iocb *>(this)};
-
-	assert(context);
-	syscall_nointr<SYS_io_cancel>(context->idp, cb, &result);
-
-	stats.bytes_cancel += bytes(iovec());
-	stats.cancel++;
-
-	context->handle_event(result);
-}
-
-/// Submit a request and properly yield the ircd::ctx. When this returns the
-/// result will be available or an exception will be thrown.
-size_t
-ircd::fs::aio::request::operator()()
-try
-{
-	assert(context);
-	assert(ctx::current);
-	assert(waiter == ctx::current);
-
-	struct iocb *const cbs[]
-	{
-		static_cast<iocb *>(this)
-	};
-
-	const size_t submitted_bytes
-	{
-		bytes(iovec())
-	};
-
-	// Submit to kernel
-	syscall<SYS_io_submit>(context->idp, 1, &cbs);
-
-	// Update stats for submission phase
-	stats.bytes_requests += submitted_bytes;
-	stats.requests++;
-
-	const auto &curcnt(stats.requests - stats.complete);
-	stats.max_requests = std::max(stats.max_requests, curcnt);
-
-	// Block for completion
-	while(retval == std::numeric_limits<ssize_t>::min())
-		ctx::wait();
-
-	// Update stats for completion phase.
-	stats.bytes_complete += submitted_bytes;
-	stats.complete++;
-
-	if(retval == -1)
-	{
-		stats.bytes_errors += submitted_bytes;
-		stats.errors++;
-
-		throw fs::error
-		{
-			make_error_code(errcode)
-		};
-	}
-
-	return size_t(retval);
-}
-catch(const ctx::interrupted &e)
-{
-	// When the ctx is interrupted we're obligated to cancel the request.
-	// The handler callstack is invoked directly from here by cancel() for
-	// what it's worth but we rethrow the interrupt anyway.
-	cancel();
-	throw;
-}
-catch(const ctx::terminated &)
-{
-	cancel();
-	throw;
-}
-
-ircd::fs::const_iovec_view
-ircd::fs::aio::request::iovec()
-const
-{
-	return
-	{
-		reinterpret_cast<const ::iovec *>(aio_buf), aio_nbytes
-	};
+	return input;
 }
