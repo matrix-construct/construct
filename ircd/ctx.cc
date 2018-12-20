@@ -1002,6 +1002,7 @@ ircd::ctx::to_asio::to_asio(const interruptor &intr)
 	false_predicate, intr
 }
 {
+	self->interruption_point();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
