@@ -544,7 +544,7 @@ ircd::ctx::this_ctx::wait_until(const steady_clock::time_point &tp,
 	auto &c(cur());
 	c.alarm.expires_at(tp);
 	c.wait(); // now you're yielding with portals
-
+	c.interruption_point();
 	return steady_clock::now() >= tp;
 }
 
@@ -559,6 +559,7 @@ ircd::ctx::this_ctx::wait(const microseconds &duration,
 	auto &c(cur());
 	c.alarm.expires_from_now(duration);
 	c.wait(); // now you're yielding with portals
+	c.interruption_point();
 	const auto ret(c.alarm.expires_from_now());
 
 	// return remaining duration.
@@ -574,6 +575,7 @@ ircd::ctx::this_ctx::wait()
 	auto &c(cur());
 	c.alarm.expires_at(steady_clock::time_point::max());
 	c.wait(); // now you're yielding with portals
+	c.interruption_point();
 }
 
 /// Post the currently running context to the event queue and then suspend to
@@ -962,7 +964,7 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 }
 
 ircd::ctx::continuation::~continuation()
-noexcept(false)
+noexcept
 {
 	// Set the fundamental current context register as the first operation
 	// upon resuming execution.
@@ -974,11 +976,6 @@ noexcept(false)
 
 	// Unconditionally reset the notes counter to 1 because we're awake now.
 	self->notes = 1;
-
-	// Check here if this context's interrupt flag is set. If so, this call
-	// will clear the flag and then throw an exception. Note that this is
-	// a destructor with exceptions permitted to come out of it.
-	self->interruption_point();
 
 	// self->continuation is not null'ed here; it remains an invalid
 	// pointer while the context is awake.
