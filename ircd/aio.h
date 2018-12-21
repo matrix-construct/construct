@@ -53,6 +53,9 @@ struct ircd::fs::aio::kernel
 	void handle(const boost::system::error_code &, const size_t) noexcept;
 	void set_handle();
 
+	void submit(request &) noexcept;
+
+	// Control panel
 	bool wait();
 	bool interrupt();
 

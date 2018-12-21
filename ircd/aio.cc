@@ -237,18 +237,13 @@ try
 	assert(ctx::current);
 	assert(waiter == ctx::current);
 
-	struct iocb *const cbs[]
-	{
-		static_cast<iocb *>(this)
-	};
-
 	const size_t submitted_bytes
 	{
 		bytes(iovec())
 	};
 
 	// Submit to kernel
-	syscall<SYS_io_submit>(context->idp, 1, &cbs);
+	context->submit(*this);
 
 	// Update stats for submission phase
 	stats.bytes_requests += submitted_bytes;
@@ -260,6 +255,8 @@ try
 	// Block for completion
 	while(retval == std::numeric_limits<ssize_t>::min())
 		ctx::wait();
+
+	assert(retval <= ssize_t(submitted_bytes));
 
 	// Update stats for completion phase.
 	stats.bytes_complete += submitted_bytes;
@@ -394,6 +391,54 @@ ircd::fs::aio::kernel::wait()
 }
 
 void
+ircd::fs::aio::kernel::submit(request &request)
+noexcept try
+{
+	static const size_t threshold(16);
+	thread_local std::array<iocb *, MAX_EVENTS> queue;
+	thread_local size_t count;
+	thread_local size_t sem[2];
+
+	assert(request.aio_data == uintptr_t(&request));
+	queue.at(count++) = static_cast<iocb *>(&request);
+
+	if(count >= threshold)
+	{
+		syscall<SYS_io_submit>(context->idp, count, queue.data());
+		++stats.maxed_submits;
+		++stats.submits;
+		count = 0;
+		return;
+	}
+
+	++sem[0];
+	ircd::post([]
+	{
+		if(sem[0] > ++sem[1])
+			return;
+
+		if(!count)
+			return;
+
+		syscall<SYS_io_submit>(context->idp, count, queue.data());
+		stats.maxed_submits += count >= threshold;
+		++stats.submits;
+		count = 0;
+	});
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"AIO(%p) submit: %s",
+		this,
+		e.what()
+	};
+
+	throw;
+}
+
+void
 ircd::fs::aio::kernel::set_handle()
 {
 	semval = 0;
@@ -495,7 +540,9 @@ noexcept try
 		*reinterpret_cast<aio::request *>(event.data)
 	};
 
-	assert(reinterpret_cast<iocb *>(event.obj) == static_cast<iocb *>(&request));
+	auto *const iocb(reinterpret_cast<struct ::iocb *>(event.obj));
+	assert(iocb == static_cast<struct ::iocb *>(&request));
+	assert(reinterpret_cast<aio::request *>(iocb->aio_data) == &request);
 	assert(event.res2 >= 0);
 	assert(event.res == -1 || event.res2 == 0);
 

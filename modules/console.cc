@@ -895,6 +895,14 @@ console_cmd__aio(opt &out, const string_view &line)
 	    << std::setw(9) << std::right << s.events
 	    << std::endl;
 
+	out << std::setw(12) << std::left << "submits"
+	    << std::setw(9) << std::right << s.submits
+	    << std::endl;
+
+	out << std::setw(12) << std::left << "submits max"
+	    << std::setw(9) << std::right << s.maxed_submits
+	    << std::endl;
+
 	return true;
 }
 
