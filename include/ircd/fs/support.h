@@ -13,11 +13,6 @@
 
 namespace ircd::fs::support
 {
-	// Indicator lights for AIO
-	extern const bool aio;             // Any AIO support.
-	extern const bool aio_fsync;       // Kernel supports CMD_FSYNC
-	extern const bool aio_fdsync;      // Kernel supports CMD_FDSYNC
-
 	// Test if O_DIRECT supported at target path
 	bool direct_io(const string_view &path);
 

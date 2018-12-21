@@ -389,33 +389,6 @@ catch(const std::system_error &e)
 	throw;
 }
 
-/// True if AIO is supported by this build and runtime.
-decltype(ircd::fs::support::aio)
-ircd::fs::support::aio
-{
-	#ifdef IRCD_USE_AIO
-		true
-	#else
-		false
-	#endif
-};
-
-/// True if IOCB_CMD_FSYNC is supported by AIO. If this is false then
-/// fs::fsync_opts::async=true flag is ignored.
-decltype(ircd::fs::support::aio_fsync)
-ircd::fs::support::aio_fsync
-{
-	false //TODO: Detect kernel support
-};
-
-/// True if IOCB_CMD_FDSYNC is supported by AIO. If this is false then
-/// fs::fsync_opts::async=true flag is ignored.
-decltype(ircd::fs::support::aio_fdsync)
-ircd::fs::support::aio_fdsync
-{
-	false //TODO: Detect kernel support
-};
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // fs/stdin.h
@@ -534,16 +507,16 @@ ircd::fs::flush(const fd &fd,
 		int(fd),
 		opts.metadata,
 		opts.aio,
-		opts.metadata? support::aio_fdsync : support::aio_fsync
+		opts.metadata? aio::support_fdsync : aio::support_fsync
 	};
 
 	#ifdef IRCD_USE_AIO
 	if(aio::context && opts.aio)
 	{
-		if(!opts.metadata && support::aio_fdsync)
+		if(!opts.metadata && aio::support_fdsync)
 			return aio::fdsync(fd, opts);
 
-		if(support::aio_fsync)
+		if(aio::support_fsync)
 			return aio::fsync(fd, opts);
 	}
 	#endif
@@ -986,6 +959,33 @@ ircd::fs::write(const fd &fd,
 //
 // fs/aio.h
 //
+
+/// True if AIO is supported by this build and runtime.
+decltype(ircd::fs::aio::support)
+ircd::fs::aio::support
+{
+	#ifdef IRCD_USE_AIO
+		true
+	#else
+		false
+	#endif
+};
+
+/// True if IOCB_CMD_FSYNC is supported by AIO. If this is false then
+/// fs::fsync_opts::async=true flag is ignored.
+decltype(ircd::fs::aio::support_fsync)
+ircd::fs::aio::support_fsync
+{
+	false //TODO: get this info from system
+};
+
+/// True if IOCB_CMD_FDSYNC is supported by AIO. If this is false then
+/// fs::fsync_opts::async=true flag is ignored.
+decltype(ircd::fs::aio::support_fdsync)
+ircd::fs::aio::support_fdsync
+{
+	false //TODO: get this info from system
+};
 
 /// Conf item to control whether AIO is enabled or bypassed.
 decltype(ircd::fs::aio::enable)

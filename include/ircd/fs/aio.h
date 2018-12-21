@@ -25,12 +25,14 @@ namespace ircd::fs::aio
 	struct kernel;
 	struct request;
 
-	extern struct stats stats;
-	extern kernel *context;
+	extern const bool support;
+	extern const bool support_fsync;
+	extern const bool support_fdsync;
 
 	extern conf::item<bool> enable;
-	extern const bool available_fsync;
-	extern const bool available_fdsync;
+
+	extern struct stats stats;
+	extern kernel *context;
 }
 
 /// Statistics structure.
