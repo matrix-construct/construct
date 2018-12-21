@@ -456,14 +456,13 @@ void
 ircd::fs::aio::kernel::submit(request &request)
 noexcept try
 {
+	thread_local size_t sem[2], count;
 	thread_local std::array<iocb *, MAX_EVENTS> queue;
-	thread_local size_t count;
-	thread_local size_t sem[2];
 
+	assert(count < queue.size());
 	assert(request.aio_data == uintptr_t(&request));
 	queue.at(count++) = static_cast<iocb *>(&request);
-
-	if(count >= size_t(max_submit))
+	if(count >= size_t(max_submit) || unlikely(count >= queue.size()))
 	{
 		syscall<SYS_io_submit>(context->idp, count, queue.data());
 		++stats.maxed_submits;
