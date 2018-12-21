@@ -652,20 +652,37 @@ ircd::fs::read(const string_view &path,
 /// direct-io or for special files read_opts.all must be false). By default
 /// (via read_opts.interruptible) this call can throw if the syscall was
 /// interrupted before reading any bytes.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstack-usage="
 size_t
+__attribute__((stack_protect))
 ircd::fs::read(const fd &fd,
                const mutable_buffers &bufs,
                const read_opts &opts_)
 {
+	if(unlikely(bufs.size() > info::iov_max))
+		throw error
+		{
+			make_error_code(std::errc::invalid_argument),
+			"Buffer count of %zu exceeds IOV_MAX of %zu",
+			bufs.size(),
+			info::iov_max
+		};
+
 	size_t ret(0);
 	read_opts opts(opts_);
+	assert(bufs.size() <= info::iov_max);
 	struct ::iovec iovbuf[bufs.size()]; do
 	{
 		assert(opts.offset >= opts_.offset);
 		const size_t off(opts.offset - opts_.offset);
 		assert(off <= buffers::size(bufs));
 		assert(ret <= buffers::size(bufs));
-		const auto iov(make_iov({iovbuf, bufs.size()}, bufs, ret));
+		const auto iov
+		{
+			make_iov({iovbuf, bufs.size()}, bufs, ret)
+		};
+
 		ret += read(fd, iov, opts);
 		if(!opts_.all)
 			break;
@@ -680,6 +697,7 @@ ircd::fs::read(const fd &fd,
 	assert(ret <= buffers::size(bufs));
 	return ret;
 }
+#pragma GCC diagnostic pop
 
 /// Lowest-level read() call. This call only conducts a single operation
 /// (no looping) and can return a partial read(). It does have branches
@@ -907,16 +925,33 @@ ircd::fs::write(const string_view &path,
 	return write(fd, bufs, opts);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstack-usage="
 size_t
+__attribute__((stack_protect))
 ircd::fs::write(const fd &fd,
                 const const_buffers &bufs,
                 const write_opts &opts_)
 {
+	if(unlikely(bufs.size() > info::iov_max))
+		throw error
+		{
+			make_error_code(std::errc::invalid_argument),
+			"Buffer count of %zu exceeds IOV_MAX of %zu",
+			bufs.size(),
+			info::iov_max
+		};
+
 	write_opts opts(opts_);
 	size_t off(opts.offset - opts_.offset);
+	assert(bufs.size() <= info::iov_max);
 	struct ::iovec iovbuf[bufs.size()]; do
 	{
-		const auto iov(make_iov({iovbuf, bufs.size()}, bufs, off));
+		const auto iov
+		{
+			make_iov({iovbuf, bufs.size()}, bufs, off)
+		};
+
 		opts.offset += write(fd, iov, opts);
 		assert(opts.offset >= opts_.offset);
 		off = opts.offset - opts_.offset;
@@ -928,6 +963,7 @@ ircd::fs::write(const fd &fd,
 	assert(!opts.all || off == buffers::size(bufs));
 	return off;
 }
+#pragma GCC diagnostic pop
 
 /// Lowest-level write() call. This call only conducts a single operation
 /// (no looping) and can return early with a partial write(). It does have
