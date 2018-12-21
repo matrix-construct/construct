@@ -35,6 +35,8 @@ endif
 AM_LDFLAGS = \
 	-version-info 3:1:0 \
 	-Wl,-fuse-ld=gold \
+	-Wl,--warn-common \
+	-Wl,--warn-execstack \
 	-Wl,--detect-odr-violations \
 	-Wl,--export-dynamic \
 	-Wl,--no-undefined \

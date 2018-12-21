@@ -29,6 +29,9 @@ AM_LDFLAGS = \
 	-module \
 	-Wl,-fuse-ld=gold \
 	-Wl,--shared \
+	-Wl,--warn-common \
+	-Wl,--warn-execstack \
+	-Wl,--detect-odr-violations \
 	-Wl,--export-dynamic \
 	-Wl,--no-gnu-unique \
 	-Wl,--no-allow-shlib-undefined \
