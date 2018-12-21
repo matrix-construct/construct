@@ -15,7 +15,7 @@ namespace ircd::json
 {
 	using namespace ircd::spirit;
 
-	template<class it> struct input;
+	struct input;
 	template<class it> struct output;
 
 	// Instantiations of the grammars
@@ -38,10 +38,10 @@ BOOST_FUSION_ADAPT_STRUCT
     ( decltype(ircd::json::object::member::second),  second )
 )
 
-template<class it>
 struct ircd::json::input
-:qi::grammar<it, unused_type>
+:qi::grammar<const char *, unused_type>
 {
+	using it = const char *;
 	template<class T = unused_type> using rule = qi::rule<it, T>;
 
 	rule<> NUL                         { lit('\0')                                          ,"nul" };
@@ -284,7 +284,7 @@ struct ircd::json::expectation_failure
 };
 
 struct ircd::json::parser
-:input<const char *>
+:input
 {
 	using input::input;
 }
@@ -394,9 +394,8 @@ ircd::json::printer::list_protocol(mutable_buffer &buffer,
 	}
 }
 
-template<class it>
 void
-ircd::json::input<it>::throws_exceeded()
+ircd::json::input::throws_exceeded()
 {
 	throw recursion_limit
 	{
