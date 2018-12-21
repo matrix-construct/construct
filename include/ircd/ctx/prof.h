@@ -36,6 +36,7 @@ namespace ircd::ctx::prof
 
 	// state accessors
 	const ulong &total_slice_cycles();
+	const ulong &total_slices();
 	const ulong &cur_slice_start();
 	ulong cur_slice_cycles();
 

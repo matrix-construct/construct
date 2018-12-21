@@ -1363,7 +1363,7 @@ namespace ircd::ctx::prof
 {
 	ulong _slice_start;      // Current/last time slice started
 	ulong _slice_stop;       // Last time slice ended
-	ulong _slice_total;      // Monotonic accumulator
+	profile _total;          // Totals counter for all contexts.
 
 	void check_stack();
 	void check_slice();
@@ -1454,7 +1454,13 @@ ircd::ctx::prof::cur_slice_start()
 const ulong &
 ircd::ctx::prof::total_slice_cycles()
 {
-	return _slice_total;
+	return _total.cycles;
+}
+
+const ulong &
+ircd::ctx::prof::total_slices()
+{
+	return _total.yields;
 }
 
 void
@@ -1500,8 +1506,9 @@ ircd::ctx::prof::slice_leave()
 	const auto last_slice(_slice_stop - _slice_start);
 	c.stack.at = stack_at_here();
 	c.profile.cycles += last_slice;
-	_slice_total += last_slice;
 	c.profile.yields++;
+	_total.cycles += last_slice;
+	_total.yields++;
 }
 
 void
