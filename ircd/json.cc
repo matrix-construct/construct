@@ -16,12 +16,11 @@ namespace ircd::json
 	using namespace ircd::spirit;
 
 	struct input;
-	template<class it> struct output;
+	struct output;
 
 	// Instantiations of the grammars
 	struct parser extern const parser;
 	struct printer extern const printer;
-	struct ostreamer extern const ostreamer;
 }
 
 BOOST_FUSION_ADAPT_STRUCT
@@ -171,10 +170,10 @@ struct ircd::json::input
 	{}
 };
 
-template<class it>
 struct ircd::json::output
-:karma::grammar<it, unused_type>
+:karma::grammar<char *, unused_type>
 {
+	using it = char *;
 	template<class T = unused_type> using rule = karma::rule<it, T>;
 
 	rule<> NUL                         { lit('\0')                                          ,"nul" };
@@ -291,7 +290,7 @@ struct ircd::json::parser
 const ircd::json::parser;
 
 struct ircd::json::printer
-:output<char *>
+:output
 {
 	template<class gen,
 	         class... attr>
@@ -306,12 +305,6 @@ struct ircd::json::printer
 	static void list_protocol(mutable_buffer &, it_a begin, const it_b &end, closure&&);
 }
 const ircd::json::printer;
-
-struct ircd::json::ostreamer
-:output<karma::ostream_iterator<char>>
-{
-}
-const ircd::json::ostreamer;
 
 template<class gen,
          class... attr>
