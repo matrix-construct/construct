@@ -14,7 +14,7 @@ namespace ircd::http
 {
 	using namespace ircd::spirit;
 
-	template<class it, class top = unused_type> struct grammar;
+	struct grammar;
 	struct parser extern const parser;
 
 	extern const std::unordered_map<ircd::http::code, ircd::string_view> reason;
@@ -103,11 +103,10 @@ ircd::http::reason
 	{ code::A_TIMEOUT_OCCURRED,                  "A Timeout Occurred"                              },
 };
 
-template<class it,
-         class top>
 struct ircd::http::grammar
-:qi::grammar<it, top>
+:qi::grammar<const char *, unused_type>
 {
+	using it = const char *;
 	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
 	rule<> NUL                         { lit('\0')                                          ,"nul" };
@@ -200,21 +199,15 @@ struct ircd::http::grammar
 		,"response"
 	};
 
-	grammar(const rule<top> &top_rule)
-	:grammar<it, top>::base_type
-	{
-		top_rule
-	}
+	grammar()
+	:qi::grammar<const char *, unused_type>{rule<>{}}
 	{}
 };
 
 struct ircd::http::parser
-:grammar<const char *, unused_type>
+:grammar
 {
 	static size_t content_length(const string_view &val);
-
-	using http::grammar<const char *, unused_type>::grammar;
-	parser(): grammar { grammar::ws } {}
 }
 const ircd::http::parser;
 
