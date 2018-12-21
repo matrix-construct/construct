@@ -9,6 +9,7 @@ Makefile
 *.log
 *.sw?
 *.gch
+*.cache
 .deps
 .dirstamp
 .libs
