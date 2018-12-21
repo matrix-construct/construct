@@ -17,11 +17,11 @@ namespace ircd::m
 	[[noreturn]] void failure(const qi::expectation_failure<const char *> &, const string_view &);
 }
 
-template<class it>
 struct ircd::m::id::input
-:qi::grammar<it, unused_type>
+:qi::grammar<const char *, unused_type>
 {
 	using id = m::id;
+	using it = const char *;
 	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
 	// Sigils
@@ -145,7 +145,7 @@ struct ircd::m::id::input
 	};
 
 	/// https://tools.ietf.org/html/rfc3986 Appendix A
-	const rule<> ip6_addr[10]
+	const rule<> ip6_addr[9]
 	{
 		{                                                     repeat(6)[ip6_piece] >> ip6_ls32     },
 		{                                        lit("::") >> repeat(5)[ip6_piece] >> ip6_ls32     },
@@ -223,10 +223,10 @@ struct ircd::m::id::input
 	{}
 };
 
-template<class it>
 struct ircd::m::id::output
-:karma::grammar<it, unused_type>
+:karma::grammar<char *, unused_type>
 {
+	using it = char *;
 	template<class T = unused_type> using rule = karma::rule<it, T>;
 
 	output()
@@ -235,7 +235,7 @@ struct ircd::m::id::output
 };
 
 struct ircd::m::id::parser
-:input<const char *>
+:input
 {
 	string_view operator()(const id::sigil &, const string_view &id) const;
 	string_view operator()(const string_view &id) const;
@@ -300,7 +300,7 @@ catch(const qi::expectation_failure<const char *> &e)
 }
 
 struct ircd::m::id::validator
-:input<const char *>
+:input
 {
 	void operator()(const id::sigil &sigil, const string_view &id) const;
 	void operator()(const string_view &id) const;
@@ -357,7 +357,7 @@ catch(const qi::expectation_failure<const char *> &e)
 
 //TODO: abstract this pattern with ircd::json::printer in ircd/spirit.h
 struct ircd::m::id::printer
-:output<const char *>
+:output
 {
 	template<class generator,
 	         class attribute>
