@@ -25,11 +25,15 @@ namespace ircd::fs::aio
 	struct kernel;
 	struct request;
 
-	extern const bool support;
-	extern const bool support_fsync;
-	extern const bool support_fdsync;
+	extern const bool SUPPORT;
+	extern const bool SUPPORT_FSYNC;
+	extern const bool SUPPORT_FDSYNC;
+	extern const size_t MAX_EVENTS;
+	extern const size_t MAX_REQPRIO;
 
 	extern conf::item<bool> enable;
+	extern conf::item<size_t> max_events;
+	extern conf::item<size_t> max_submit;
 
 	extern struct stats stats;
 	extern kernel *context;

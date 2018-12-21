@@ -92,6 +92,7 @@ libircd_la_LIBADD = \
 # systems.
 libircd_la_SOURCES =   \
 	allocator.cc       \
+	info.cc            \
 	exception.cc       \
 	util.cc            \
 	fpe.cc             \
@@ -102,7 +103,6 @@ libircd_la_SOURCES =   \
 	locale.cc          \
 	conf.cc            \
 	logger.cc          \
-	info.cc            \
 	sodium.cc          \
 	rfc1459.cc         \
 	rand.cc            \

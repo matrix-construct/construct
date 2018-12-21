@@ -18,6 +18,74 @@ namespace ircd::fs::aio
 	static int reqprio(int);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// fs/aio.h
+//
+// The contents of this section override weak symbols in ircd/fs.cc when this
+// unit is conditionally compiled and linked on AIO-supporting platforms. On
+// non-supporting platforms, or for items not listed here, the definitions in
+// ircd/fs.cc are the default.
+
+decltype(ircd::fs::aio::SUPPORT)
+ircd::fs::aio::SUPPORT
+{
+	true
+};
+
+/// True if IOCB_CMD_FSYNC is supported by AIO. If this is false then
+/// fs::fsync_opts::async=true flag is ignored.
+decltype(ircd::fs::aio::SUPPORT_FSYNC)
+ircd::fs::aio::SUPPORT_FSYNC
+{
+	false //TODO: get this info
+};
+
+/// True if IOCB_CMD_FDSYNC is supported by AIO. If this is false then
+/// fs::fsync_opts::async=true flag is ignored.
+decltype(ircd::fs::aio::SUPPORT_FDSYNC)
+ircd::fs::aio::SUPPORT_FDSYNC
+{
+	false //TODO: get this info
+};
+
+decltype(ircd::fs::aio::MAX_EVENTS)
+ircd::fs::aio::MAX_EVENTS
+{
+	128L
+};
+
+decltype(ircd::fs::aio::MAX_REQPRIO)
+ircd::fs::aio::MAX_REQPRIO
+{
+	info::aio_reqprio_max
+};
+
+//
+// init
+//
+
+ircd::fs::aio::init::init()
+{
+	assert(!context);
+	if(!bool(aio::enable))
+		return;
+
+	context = new kernel{};
+}
+
+ircd::fs::aio::init::~init()
+noexcept
+{
+	delete context;
+	context = nullptr;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/aio.h
+//
+
 //
 // request::fsync
 //
@@ -303,12 +371,6 @@ const
 // kernel
 //
 
-decltype(ircd::fs::aio::kernel::MAX_EVENTS)
-ircd::fs::aio::kernel::MAX_EVENTS
-{
-	128
-};
-
 //
 // kernel::kernel
 //
@@ -394,7 +456,6 @@ void
 ircd::fs::aio::kernel::submit(request &request)
 noexcept try
 {
-	static const size_t threshold(16);
 	thread_local std::array<iocb *, MAX_EVENTS> queue;
 	thread_local size_t count;
 	thread_local size_t sem[2];
@@ -402,7 +463,7 @@ noexcept try
 	assert(request.aio_data == uintptr_t(&request));
 	queue.at(count++) = static_cast<iocb *>(&request);
 
-	if(count >= threshold)
+	if(count >= size_t(max_submit))
 	{
 		syscall<SYS_io_submit>(context->idp, count, queue.data());
 		++stats.maxed_submits;
@@ -421,7 +482,7 @@ noexcept try
 			return;
 
 		syscall<SYS_io_submit>(context->idp, count, queue.data());
-		stats.maxed_submits += count >= threshold;
+		stats.maxed_submits += count >= size_t(max_submit);
 		++stats.submits;
 		count = 0;
 	});

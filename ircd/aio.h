@@ -27,9 +27,6 @@ namespace ircd::fs::aio
 /// an extern instance pointer at fs::aio::context maintained by fs::aio::init.
 struct ircd::fs::aio::kernel
 {
-	/// Maximum number of events we can submit to kernel
-	static const size_t MAX_EVENTS;
-
 	/// Internal semaphore for synchronization of this object
 	ctx::dock dock;
 

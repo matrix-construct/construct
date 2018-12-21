@@ -507,16 +507,16 @@ ircd::fs::flush(const fd &fd,
 		int(fd),
 		opts.metadata,
 		opts.aio,
-		opts.metadata? aio::support_fdsync : aio::support_fsync
+		opts.metadata? aio::SUPPORT_FDSYNC : aio::SUPPORT_FSYNC
 	};
 
 	#ifdef IRCD_USE_AIO
 	if(aio::context && opts.aio)
 	{
-		if(!opts.metadata && aio::support_fdsync)
+		if(!opts.metadata && aio::SUPPORT_FDSYNC)
 			return aio::fdsync(fd, opts);
 
-		if(aio::support_fsync)
+		if(aio::SUPPORT_FSYNC)
 			return aio::fsync(fd, opts);
 	}
 	#endif
@@ -960,32 +960,30 @@ ircd::fs::write(const fd &fd,
 // fs/aio.h
 //
 
-/// True if AIO is supported by this build and runtime.
-decltype(ircd::fs::aio::support)
-ircd::fs::aio::support
-{
-	#ifdef IRCD_USE_AIO
-		true
-	#else
-		false
-	#endif
-};
+//
+// These symbols can be overriden by ircd/aio.cc if it is compiled and linked;
+// otherwise on non-supporting platforms these will be the defaults here.
+//
 
-/// True if IOCB_CMD_FSYNC is supported by AIO. If this is false then
-/// fs::fsync_opts::async=true flag is ignored.
-decltype(ircd::fs::aio::support_fsync)
-ircd::fs::aio::support_fsync
-{
-	false //TODO: get this info from system
-};
+decltype(ircd::fs::aio::SUPPORT)
+extern __attribute__((weak))
+ircd::fs::aio::SUPPORT;
 
-/// True if IOCB_CMD_FDSYNC is supported by AIO. If this is false then
-/// fs::fsync_opts::async=true flag is ignored.
-decltype(ircd::fs::aio::support_fdsync)
-ircd::fs::aio::support_fdsync
-{
-	false //TODO: get this info from system
-};
+decltype(ircd::fs::aio::SUPPORT_FSYNC)
+extern __attribute__((weak))
+ircd::fs::aio::SUPPORT_FSYNC;
+
+decltype(ircd::fs::aio::SUPPORT_FDSYNC)
+extern __attribute__((weak))
+ircd::fs::aio::SUPPORT_FDSYNC;
+
+decltype(ircd::fs::aio::MAX_REQPRIO)
+extern __attribute__((weak))
+ircd::fs::aio::MAX_REQPRIO;
+
+decltype(ircd::fs::aio::MAX_EVENTS)
+extern __attribute__((weak))
+ircd::fs::aio::MAX_EVENTS;
 
 /// Conf item to control whether AIO is enabled or bypassed.
 decltype(ircd::fs::aio::enable)
@@ -994,6 +992,22 @@ ircd::fs::aio::enable
 	{ "name",     "ircd.fs.aio.enable"  },
 	{ "default",  true                  },
 	{ "persist",  false                 },
+};
+
+decltype(ircd::fs::aio::max_events)
+ircd::fs::aio::max_events
+{
+	{ "name",     "ircd.fs.aio.max_events"  },
+	{ "default",  long(aio::MAX_EVENTS)     },
+	{ "persist",  false                     },
+};
+
+decltype(ircd::fs::aio::max_submit)
+ircd::fs::aio::max_submit
+{
+	{ "name",     "ircd.fs.aio.max_submit"  },
+	{ "default",  16L                       },
+	{ "persist",  false                     },
 };
 
 /// Global stats structure
@@ -1008,16 +1022,7 @@ ircd::fs::aio::context;
 // init
 //
 
-#ifdef IRCD_USE_AIO
-ircd::fs::aio::init::init()
-{
-	assert(!context);
-	if(!bool(aio::enable))
-		return;
-
-	context = new kernel{};
-}
-#else
+__attribute__((weak))
 ircd::fs::aio::init::init()
 {
 	assert(!context);
@@ -1026,22 +1031,13 @@ ircd::fs::aio::init::init()
 		"No support for asynchronous local filesystem IO..."
 	};
 }
-#endif
 
-#ifdef IRCD_USE_AIO
-ircd::fs::aio::init::~init()
-noexcept
-{
-	delete context;
-	context = nullptr;
-}
-#else
+__attribute__((weak))
 ircd::fs::aio::init::~init()
 noexcept
 {
 	assert(!context);
 }
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
