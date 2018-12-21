@@ -863,15 +863,18 @@ ircd::mods::info(const filesystem::path &path,
                  F&& closure)
 {
 	if(!exists(path))
-		throw filesystem_error
+		throw fs::error
 		{
-			"`%s' does not exist", path.string()
+			make_error_code(std::errc::no_such_file_or_directory),
+			"`%s' does not exist",
+			path.string()
 		};
 
 	if(!is_regular_file(path))
-		throw filesystem_error
+		throw fs::error
 		{
-			"`%s' is not a file", path.string()
+			"`%s' is not a file",
+			path.string()
 		};
 
 	boost::dll::library_info info(path);
@@ -970,15 +973,20 @@ ircd::mods::paths::add(const string_view &dir)
 	};
 
 	if(!exists(path))
-		throw filesystem_error
+		throw fs::error
 		{
-			"path `%s' (%s) does not exist", dir, path.string()
+			make_error_code(std::errc::no_such_file_or_directory),
+			"path `%s' (%s) does not exist",
+			dir,
+			path.string()
 		};
 
 	if(!is_directory(path))
-		throw filesystem_error
+		throw fs::error
 		{
-			"path `%s' (%s) is not a directory", dir, path.string()
+			"path `%s' (%s) is not a directory",
+			dir,
+			path.string()
 		};
 
 	if(added(dir))
