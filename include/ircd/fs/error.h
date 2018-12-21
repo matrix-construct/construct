@@ -93,7 +93,7 @@ ircd::fs::error::error(const char *const &fmt,
                        args&&... a)
 :std::system_error
 {
-	std::errc::invalid_argument
+	make_error_code(std::errc::invalid_argument)
 }
 ,ircd::error
 {
