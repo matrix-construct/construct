@@ -31,12 +31,4 @@ namespace ircd::fs
 	// useful for progressive readv()'s filling the buffers.
 	const_iovec_view make_iov(const iovec_view &, const const_buffers &, const size_t &off = 0);
 	const_iovec_view make_iov(const iovec_view &, const mutable_buffers &, const size_t &off = 0);
-
-	// Transforms our buffers to struct iovec ones. This is done using an
-	// internal thread_local array of IOV_MAX. The returned view is of that
-	// array. We get away with using a single buffer because the synchronous
-	// readv()/writev() calls block the thread and for AIO the iov is copied out
-	// of userspace on io_submit().
-	const_iovec_view make_iov(const const_buffers &, const size_t &off = 0);
-	const_iovec_view make_iov(const mutable_buffers &, const size_t &off = 0);
 }

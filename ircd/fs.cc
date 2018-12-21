@@ -1245,43 +1245,6 @@ noexcept(false)
 // fs/iov.h
 //
 
-namespace ircd::fs
-{
-	thread_local std::array<struct ::iovec, IOV_MAX> _iov_;
-}
-
-ircd::fs::const_iovec_view
-ircd::fs::make_iov(const mutable_buffers &bufs,
-                   const size_t &offset)
-{
-	if(unlikely(bufs.size() > _iov_.size()))
-		throw error
-		{
-			make_error_code(std::errc::invalid_argument),
-			"Buffer count of %zu exceeds IOV_MAX of %zu",
-			bufs.size(),
-			_iov_.size()
-		};
-
-	return make_iov(iovec_view(_iov_.data(), _iov_.size()), bufs, offset);
-}
-
-ircd::fs::const_iovec_view
-ircd::fs::make_iov(const const_buffers &bufs,
-                   const size_t &offset)
-{
-	if(unlikely(bufs.size() > _iov_.size()))
-		throw error
-		{
-			make_error_code(std::errc::invalid_argument),
-			"Buffer count of %zu exceeds IOV_MAX of %zu",
-			bufs.size(),
-			_iov_.size()
-		};
-
-	return make_iov(iovec_view(_iov_.data(), _iov_.size()), bufs, offset);
-}
-
 ircd::fs::const_iovec_view
 ircd::fs::make_iov(const iovec_view &iov,
                    const mutable_buffers &bufs,
