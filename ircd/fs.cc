@@ -685,13 +685,14 @@ ircd::fs::read(const fd &fd,
                const read_opts &opts_)
 {
 	size_t ret(0);
-	read_opts opts(opts_); do
+	read_opts opts(opts_);
+	struct ::iovec iovbuf[bufs.size()]; do
 	{
 		assert(opts.offset >= opts_.offset);
 		const size_t off(opts.offset - opts_.offset);
 		assert(off <= buffers::size(bufs));
 		assert(ret <= buffers::size(bufs));
-		const auto iov(make_iov(bufs, ret));
+		const auto iov(make_iov({iovbuf, bufs.size()}, bufs, ret));
 		ret += read(fd, iov, opts);
 		if(!opts_.all)
 			break;
@@ -939,9 +940,10 @@ ircd::fs::write(const fd &fd,
                 const write_opts &opts_)
 {
 	write_opts opts(opts_);
-	size_t off(opts.offset - opts_.offset); do
+	size_t off(opts.offset - opts_.offset);
+	struct ::iovec iovbuf[bufs.size()]; do
 	{
-		const auto iov(make_iov(bufs, off));
+		const auto iov(make_iov({iovbuf, bufs.size()}, bufs, off));
 		opts.offset += write(fd, iov, opts);
 		assert(opts.offset >= opts_.offset);
 		off = opts.offset - opts_.offset;
