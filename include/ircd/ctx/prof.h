@@ -29,15 +29,22 @@
 ///
 namespace ircd::ctx::prof
 {
-	struct profile;
-	enum class event;
+	enum class event :uint8_t;
+	struct ticker;
 
-	// lowlevel
+	// util
 	ulong rdtsc();
+	string_view reflect(const event &);
 
-	// state accessors
-	const ulong &total_slice_cycles();
-	const ulong &total_slices();
+	// totals
+	const ticker &get();
+	const uint64_t &get(const event &);
+
+	// specific context
+	const ticker &get(const ctx &c);
+	const uint64_t &get(const ctx &c, const event &);
+
+	// current slice state
 	const ulong &cur_slice_start();
 	ulong cur_slice_cycles();
 
@@ -52,22 +59,6 @@ namespace ircd::ctx::prof
 	void mark(const event &);
 }
 
-/// Profiling events for marking. These are currently used internally at the
-/// appropriate point to mark(): the user of ircd::ctx has no reason to mark()
-/// these events; this interface is not quite developed for general use yet.
-enum class ircd::ctx::prof::event
-{
-	SPAWN,             // Context spawn requested
-	JOIN,              // Context join requested
-	JOINED,            // Context join completed
-	CUR_ENTER,         // Current context entered
-	CUR_LEAVE,         // Current context leaving
-	CUR_YIELD,         // Current context yielding
-	CUR_CONTINUE,      // Current context continuing
-	CUR_INTERRUPT,     // Current context detects interruption
-	CUR_TERMINATE,     // Current context detects termination
-};
-
 namespace ircd::ctx::prof::settings
 {
 	extern conf::item<double> stack_usage_warning;     // percentage
@@ -78,9 +69,31 @@ namespace ircd::ctx::prof::settings
 	extern conf::item<ulong> slice_assertion;   // abort() when exceeded (not a signal, must yield)
 }
 
-/// structure aggregating any profiling related state for a ctx
-struct ircd::ctx::prof::profile
+/// Profiling events for marking. These are currently used internally at the
+/// appropriate point to mark(): the user of ircd::ctx has no reason to mark()
+/// these events; this interface is not quite developed for general use yet.
+enum class ircd::ctx::prof::event
+:uint8_t
 {
-	ulong cycles {0};                  // monotonic counter (rdtsc)
-	uint64_t yields {0};               // monotonic counter
+	SPAWN,         // Context spawn requested
+	JOIN,          // Context join requested
+	JOINED,        // Context join completed
+	ENTER,         // Current context entered
+	LEAVE,         // Current context leaving
+	YIELD,         // Current context yielding
+	CONTINUE,      // Current context continuing
+	INTERRUPT,     // Current context detects interruption
+	TERMINATE,     // Current context detects termination
+
+	_NUM_
+};
+
+/// structure aggregating any profiling related state for a ctx
+struct ircd::ctx::prof::ticker
+{
+	// monotonic counter (rdtsc)
+	ulong cycles {0};
+
+	// monotonic counters for events
+	std::array<uint64_t, num_of<prof::event>()> event {{0}};
 };

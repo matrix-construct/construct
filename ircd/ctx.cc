@@ -85,10 +85,10 @@ noexcept try
 	this->yc = &yc;
 	notes = 1;
 	stack.base = uintptr_t(__builtin_frame_address(0));
-	mark(prof::event::CUR_ENTER);
+	mark(prof::event::ENTER);
 	const unwind atexit([this]
 	{
-		mark(prof::event::CUR_LEAVE);
+		mark(prof::event::LEAVE);
 		adjoindre.notify_all();
 		this->yc = nullptr;
 		ircd::ctx::current = nullptr;
@@ -279,7 +279,7 @@ ircd::ctx::ctx::termination_point(std::nothrow_t)
 	{
 		assert(~flags & context::NOINTERRUPT);
 		flags |= context::NOINTERRUPT;
-		mark(prof::event::CUR_TERMINATE);
+		mark(prof::event::TERMINATE);
 		return true;
 	}
 	else return false;
@@ -294,7 +294,7 @@ ircd::ctx::ctx::interruption_point(std::nothrow_t)
 	{
 		assert(~flags & context::NOINTERRUPT);
 		flags &= ~context::INTERRUPTED;
-		mark(prof::event::CUR_INTERRUPT);
+		mark(prof::event::INTERRUPT);
 		return true;
 	}
 	else return false;
@@ -490,7 +490,7 @@ ircd::ctx::cycles(const ctx &ctx)
 const uint64_t &
 ircd::ctx::yields(const ctx &ctx)
 {
-	return ctx.profile.yields;
+	return prof::get(ctx, prof::event::YIELD);
 }
 
 /// Returns the notification count for `ctx`
@@ -962,7 +962,7 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 
 	// Tell the profiler this is the point where the context has concluded
 	// its execution run and is now yielding.
-	mark(prof::event::CUR_YIELD);
+	mark(prof::event::YIELD);
 
 	// Null the fundamental current context register as the last operation
 	// during execution before yielding. When a context resumes it will
@@ -980,7 +980,7 @@ noexcept(false)
 
 	// Tell the profiler this is the point where the context is now resuming.
 	// On some optimized builds this might lead nowhere.
-	mark(prof::event::CUR_CONTINUE);
+	mark(prof::event::CONTINUE);
 
 	// Unconditionally reset the notes counter to 1 because we're awake now.
 	self->notes = 1;
@@ -1377,20 +1377,21 @@ ircd::ctx::debug_stats(const pool &pool)
 
 namespace ircd::ctx::prof
 {
-	ulong _slice_start;      // Current/last time slice started
-	ulong _slice_stop;       // Last time slice ended
-	profile _total;          // Totals counter for all contexts.
+	ulong _slice_start;     // Current/last time slice started
+	ulong _slice_stop;      // Last time slice ended
+	ticker _total;          // Totals kept for all contexts.
 
-	void check_stack();
-	void check_slice();
+	static void check_stack();
+	static void check_slice();
+	static void slice_enter();
+	static void slice_leave();
 
-	void slice_enter();
-	void slice_leave();
+	static void handle_cur_continue();
+	static void handle_cur_yield();
+	static void handle_cur_leave();
+	static void handle_cur_enter();
 
-	void handle_cur_continue();
-	void handle_cur_yield();
-	void handle_cur_leave();
-	void handle_cur_enter();
+	static void inc_ticker(const event &e);
 }
 
 // stack_usage_warning at 1/3 engineering tolerance
@@ -1439,44 +1440,35 @@ ircd::ctx::prof::settings::slice_assertion
 void
 ircd::ctx::prof::mark(const event &e)
 {
+	inc_ticker(e);
+
 	switch(e)
 	{
-		case event::CUR_ENTER:       handle_cur_enter();     break;
-		case event::CUR_LEAVE:       handle_cur_leave();     break;
-		case event::CUR_YIELD:       handle_cur_yield();     break;
-		case event::CUR_CONTINUE:    handle_cur_continue();  break;
-		default:                                             break;
+		case event::ENTER:       handle_cur_enter();     break;
+		case event::LEAVE:       handle_cur_leave();     break;
+		case event::YIELD:       handle_cur_yield();     break;
+		case event::CONTINUE:    handle_cur_continue();  break;
+		default:                                         break;
 	}
 }
 #else
 void
-ircd::ctx::prof::mark(const event &e)
+ircd::ctx::prof::mark(const event &)
 {
 }
 #endif
 
-ulong
-ircd::ctx::prof::cur_slice_cycles()
+void
+ircd::ctx::prof::inc_ticker(const event &e)
 {
-	return rdtsc() - cur_slice_start();
-}
+	assert(uint8_t(e) < num_of<event>());
 
-const ulong &
-ircd::ctx::prof::cur_slice_start()
-{
-	return _slice_start;
-}
+	// Increment the ticker for all contexts.
+	_total.event[uint8_t(e)]++;
 
-const ulong &
-ircd::ctx::prof::total_slice_cycles()
-{
-	return _total.cycles;
-}
-
-const ulong &
-ircd::ctx::prof::total_slices()
-{
-	return _total.yields;
+	// Increment the ticker for the context's instance
+	if(likely(current))
+		current->profile.event[uint8_t(e)]++;
 }
 
 void
@@ -1522,9 +1514,7 @@ ircd::ctx::prof::slice_leave()
 	const auto last_slice(_slice_stop - _slice_start);
 	c.stack.at = stack_at_here();
 	c.profile.cycles += last_slice;
-	c.profile.yields++;
 	_total.cycles += last_slice;
-	_total.yields++;
 }
 
 void
@@ -1640,6 +1630,63 @@ ircd::ctx::prof::slice_exceeded_warning(const ulong &cycles)
 {
 	const ulong &threshold(settings::slice_warning);
 	return threshold > 0 && cycles >= threshold;
+}
+
+ulong
+ircd::ctx::prof::cur_slice_cycles()
+{
+	return rdtsc() - cur_slice_start();
+}
+
+const ulong &
+ircd::ctx::prof::cur_slice_start()
+{
+	return _slice_start;
+}
+
+const uint64_t &
+ircd::ctx::prof::get(const ctx &c,
+                     const event &e)
+{
+	return get(c).event.at(uint8_t(e));
+}
+
+const ircd::ctx::prof::ticker &
+ircd::ctx::prof::get(const ctx &c)
+{
+	return c.profile;
+}
+
+const uint64_t &
+ircd::ctx::prof::get(const event &e)
+{
+	return get().event.at(uint8_t(e));
+}
+
+const ircd::ctx::prof::ticker &
+ircd::ctx::prof::get()
+{
+	return _total;
+}
+
+ircd::string_view
+ircd::ctx::prof::reflect(const event &e)
+{
+	switch(e)
+	{
+		case event::SPAWN:       return "SPAWN";
+		case event::JOIN:        return "JOIN";
+		case event::JOINED:      return "JOINED";
+		case event::ENTER:       return "ENTER";
+		case event::LEAVE:       return "LEAVE";
+		case event::YIELD:       return "YIELD";
+		case event::CONTINUE:    return "CONTINUE";
+		case event::INTERRUPT:   return "INTERRUPT";
+		case event::TERMINATE:   return "TERMINATE";
+		case event::_NUM_:       break;
+	}
+
+	return "?????";
 }
 
 #ifdef HAVE_X86INTRIN_H

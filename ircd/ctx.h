@@ -43,9 +43,9 @@ struct ircd::ctx::ctx
 	boost::asio::steady_timer alarm;             // acting semaphore (64B)
 	boost::asio::yield_context *yc {nullptr};    // boost interface
 	continuation *cont {nullptr};                // valid when asleep; invalid when awake
-	ircd::ctx::stack stack;                      // stack related structure
-	prof::profile profile;                       // prof related structure
 	list::node node;                             // node for ctx::list
+	ircd::ctx::stack stack;                      // stack related structure
+	prof::ticker profile;                        // prof related structure
 	dock adjoindre;                              // contexts waiting for this to join()
 
 	bool started() const;                        // context was ever entered

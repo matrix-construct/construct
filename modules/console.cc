@@ -1345,7 +1345,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << std::setw(15) << std::right << cycles(ctx)
 		    << " ";
 
-		const long double total_cyc(ctx::prof::total_slice_cycles());
+		const long double total_cyc(ctx::prof::get().cycles);
 		const auto tsc_pct
 		{
 			total_cyc > 0.0? (cycles(ctx) / total_cyc) : 0.0L
