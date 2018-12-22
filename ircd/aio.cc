@@ -471,6 +471,9 @@ noexcept try
 		return;
 	}
 
+	if(count > 1)
+		return;
+
 	++sem[0];
 	ircd::post([]
 	{
