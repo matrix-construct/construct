@@ -555,7 +555,6 @@ ircd::ctx::this_ctx::wait_until(const steady_clock::time_point &tp,
 	auto &c(cur());
 	c.alarm.expires_at(tp);
 	c.wait(); // now you're yielding with portals
-	c.interruption_point();
 	return steady_clock::now() >= tp;
 }
 
@@ -570,7 +569,6 @@ ircd::ctx::this_ctx::wait(const microseconds &duration,
 	auto &c(cur());
 	c.alarm.expires_from_now(duration);
 	c.wait(); // now you're yielding with portals
-	c.interruption_point();
 	const auto ret(c.alarm.expires_from_now());
 
 	// return remaining duration.
@@ -586,7 +584,6 @@ ircd::ctx::this_ctx::wait()
 	auto &c(cur());
 	c.alarm.expires_at(steady_clock::time_point::max());
 	c.wait(); // now you're yielding with portals
-	c.interruption_point();
 }
 
 /// Post the currently running context to the event queue and then suspend to
@@ -955,17 +952,17 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	assert(!std::current_exception());
 	//assert(!std::uncaught_exceptions());
 
-	// Tell the profiler this is the point where the context has concluded
-	// its execution run and is now yielding.
-	mark(prof::event::CUR_YIELD);
-
 	// Point to this continuation instance (which is on the context's stack)
 	// from the context's instance. This allows its features to be accessed
 	// while the context is asleep (i.e interruptor and predicate functions).
-	// NOTE that this pointer is not ever null'ed after being set here. It
-	// will remain invalid once the context resumes. You know if this is a
-	// valid pointer because the context is asleep. Otherwise it's invalid.
+	// NOTE that this pointer is not ever null'ed after being set here. It will
+	// remain invalid once the context resumes. You know if this is a valid
+	// pointer because the context is asleep; otherwise it's a trash value.
 	self->cont = this;
+
+	// Tell the profiler this is the point where the context has concluded
+	// its execution run and is now yielding.
+	mark(prof::event::CUR_YIELD);
 
 	// Null the fundamental current context register as the last operation
 	// during execution before yielding. When a context resumes it will
@@ -975,7 +972,7 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 }
 
 ircd::ctx::continuation::~continuation()
-noexcept
+noexcept(false)
 {
 	// Set the fundamental current context register as the first operation
 	// upon resuming execution.
@@ -990,6 +987,10 @@ noexcept
 
 	// self->continuation is not null'ed here; it remains an invalid
 	// pointer while the context is awake.
+
+	// Check here if the context was interrupted while it was sleeping. This
+	// will throw out of this destructor if that is the case. Cuidado.
+	self->interruption_point();
 }
 
 ircd::ctx::continuation::operator boost::asio::yield_context &()
@@ -1013,7 +1014,11 @@ ircd::ctx::to_asio::to_asio(const interruptor &intr)
 	false_predicate, intr
 }
 {
-	self->interruption_point();
+}
+
+ircd::ctx::to_asio::~to_asio()
+noexcept(false)
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
