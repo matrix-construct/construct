@@ -80,24 +80,21 @@ noexcept try
 	stack.base = uintptr_t(__builtin_frame_address(0));
 	ircd::ctx::current = this;
 	mark(prof::event::CUR_ENTER);
-
 	const unwind atexit([this]
 	{
 		mark(prof::event::CUR_LEAVE);
 		adjoindre.notify_all();
 		ircd::ctx::current = nullptr;
 		this->yc = nullptr;
-
 		if(flags & context::DETACH)
 			delete this;
 	});
 
 	// Check for a precocious interrupt
-	if(unlikely(flags & (context::INTERRUPTED | context::TERMINATED)))
-		return;
+	interruption_point();
 
-	if(likely(bool(func)))
-		func();
+	// Call the user's function.
+	func();
 }
 catch(const ircd::ctx::interrupted &)
 {
@@ -122,6 +119,7 @@ catch(const std::exception &e)
 	// where this exception came from and where it is going. Bottom line
 	// is that #ifdef'ing away this handler or rethrowing isn't as useful as
 	// handling the exception here with a log message and calling it a day.
+	assert(0);
 	return;
 }
 
