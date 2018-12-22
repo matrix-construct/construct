@@ -251,7 +251,7 @@ AC_ARG_WITH(optimize-level, AC_HELP_STRING([--with-optimize-level[[[=3]]]], [Exp
 			optimize_level="g"
 			AC_MSG_RESULT([no, but --enable-debug has implied level -O$optimize_level])
 			AC_SUBST(OPTIMIZE_LEVEL, $optimize_level)
-			RB_DEFINE_UNQUOTED([OPTIMIZE_LEVEL], [$optimize_level], [Debug mode optimization level])
+			RB_DEFINE_UNQUOTED([OPTIMIZE_LEVEL], ['$optimize_level'], [Debug mode optimization level])
 		], [
 			optimize_level="3"
 			AC_MSG_RESULT([no, but release mode has implied level -O$optimize_level])
