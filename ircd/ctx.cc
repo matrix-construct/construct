@@ -68,6 +68,7 @@ ircd::ctx::spawn(ctx *const c,
 ircd::ctx::ctx::~ctx()
 noexcept
 {
+	assert(yc == nullptr); // Check that the context isn't active.
 }
 
 /// Base frame for a context.
@@ -80,17 +81,17 @@ ircd::ctx::ctx::operator()(boost::asio::yield_context yc,
                            const std::function<void ()> func)
 noexcept try
 {
+	ircd::ctx::current = this;
 	this->yc = &yc;
 	notes = 1;
 	stack.base = uintptr_t(__builtin_frame_address(0));
-	ircd::ctx::current = this;
 	mark(prof::event::CUR_ENTER);
 	const unwind atexit([this]
 	{
 		mark(prof::event::CUR_LEAVE);
 		adjoindre.notify_all();
-		ircd::ctx::current = nullptr;
 		this->yc = nullptr;
+		ircd::ctx::current = nullptr;
 		if(flags & context::DETACH)
 			delete this;
 	});
