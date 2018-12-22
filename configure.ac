@@ -1127,7 +1127,8 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 
 	boost_linkage="$withval"
 	boost_version="boost-${BOOST_VERSION_MIN}.${BOOST_VERSION_MIN_PATCH}"
-	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS $boost_variant $withval multi $boost_version
+	boost_cxxflags="-std=gnu++17"
+	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS $boost_variant $withval multi $boost_version $boost_cxxflags
 	AS_IF([ test $? != 0 ],
 	[
 		AC_MSG_ERROR([Failed to build included boost.])

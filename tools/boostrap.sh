@@ -6,7 +6,8 @@ BVARIANT=$3              # release optimization or debug symbols etc
 BLINK=$4                 # whether to build with shared or static linkage (we like shared)
 BTHREADING=$5            # whether to build with thread-safety (we benefit from SINGLE THREADED)
 BVER=$6                  # boost version
-TOPDIR=$7                # This should be an absolute path to the repo root
+BCXXFLAGS=$7
+TOPDIR=$8                # This should be an absolute path to the repo root
 
 
 if [ -z $TOPDIR ]; then
@@ -46,6 +47,11 @@ fi
 
 if [ -z $BTHREADING ]; then
 	BTHREADING="single"
+fi
+
+
+if [ -z $BCXXFLAGS ]; then
+	BCXXFLAGS="-std=gnu++17"
 fi
 
 
@@ -172,7 +178,7 @@ run git submodule update --init --recursive --checkout libs/gil
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
 run ./bjam --clean
 run ./b2 -d0 headers
-run ./b2 -d0 install threading=$BTHREADING variant=$BVARIANT link=$BLINK address-model=64 warnings=all
+run ./b2 -d0 install threading=$BTHREADING variant=$BVARIANT link=$BLINK address-model=64 warnings=all cxxflags=$BCXXFLAGS
 
 ### TODO: this shouldn't be necessary.
 ### XXX: required when boost submodules are fetched and built la carte, but not required
