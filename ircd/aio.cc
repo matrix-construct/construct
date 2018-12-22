@@ -456,38 +456,37 @@ void
 ircd::fs::aio::kernel::submit(request &request)
 noexcept try
 {
-	thread_local size_t sem[2], count;
+	thread_local size_t count;
 	thread_local std::array<iocb *, MAX_EVENTS> queue;
 
-	assert(count < queue.size());
-	assert(request.aio_data == uintptr_t(&request));
-	queue.at(count++) = static_cast<iocb *>(&request);
-	if(count >= size_t(max_submit) || unlikely(count >= queue.size()))
+	// The flusher submits all queued requests and resets the count.
+	static const auto flush{[]
 	{
-		syscall<SYS_io_submit>(context->idp, count, queue.data());
-		++stats.maxed_submits;
-		++stats.submits;
-		count = 0;
-		return;
-	}
-
-	if(count > 1)
-		return;
-
-	++sem[0];
-	ircd::post([]
-	{
-		if(sem[0] > ++sem[1])
-			return;
-
-		if(!count)
-			return;
-
+		assert(context);
 		syscall<SYS_io_submit>(context->idp, count, queue.data());
 		stats.maxed_submits += count >= size_t(max_submit);
 		++stats.submits;
 		count = 0;
-	});
+	}};
+
+	// The chaser is posted to the IRCd event loop after the first
+	// request is queued. Ideally more requests will queue up before
+	// the chaser is executed.
+	static const auto chase{[]
+	{
+		if(count)
+			flush();
+	}};
+
+	assert(count < queue.size());
+	assert(request.aio_data == uintptr_t(&request));
+	const ctx::critical_assertion ca;
+	queue.at(count++) = static_cast<iocb *>(&request);
+	if(count >= size_t(max_submit) || count >= queue.size())
+		return flush();
+
+	if(count == 1)
+		ircd::post(chase);
 }
 catch(const std::exception &e)
 {
