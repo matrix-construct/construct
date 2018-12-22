@@ -1282,6 +1282,53 @@ console_cmd__ctx__interrupt(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__ctx__prof(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"id",
+	}};
+
+	const auto display{[&out]
+	(const ctx::prof::ticker &t)
+	{
+		for_each<ctx::prof::event>([&out, &t]
+		(const auto &event)
+		{
+			out << std::left << std::setw(15) << std::setfill('_') << reflect(event)
+			    << " " << t.event.at(uint8_t(event))
+			    << std::endl;
+		});
+
+		out << std::left << std::setw(15) << std::setfill('_') << "cycles"
+		    << " " << t.cycles
+		    << std::endl;
+	}};
+
+	if(!param["id"])
+	{
+		out << "Profile totals for all contexts:\n"
+		    << std::endl;
+
+		display(ctx::prof::get());
+		return true;
+	}
+
+	for(size_t i(0); i < param.count(); ++i)
+		for(auto *const &ctx : ctx::ctxs)
+			if(id(*ctx) == param.at<uint64_t>(i))
+			{
+				out << "Profile for ctx:" << id(*ctx) << " '" << name(*ctx) << "':\n"
+				    << std::endl;
+
+				display(ctx::prof::get(*ctx));
+				break;
+			}
+
+	return true;
+}
+
+bool
 console_cmd__ctx__term(opt &out, const string_view &line)
 {
 	const params param{line, " ",
