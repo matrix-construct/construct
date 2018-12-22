@@ -8,6 +8,11 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#if RB_OPTIMIZE_LEVEL != 3
+	#define IRCD_CTX_STACK_PROTECT
+	#define IRCD_CTX_STACK_PROTECT_SWITCH
+#endif
+
 namespace ircd::ctx
 {
 	struct stack;

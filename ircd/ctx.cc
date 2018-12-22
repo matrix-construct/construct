@@ -36,6 +36,9 @@ ircd::ctx::ctx::id_ctr
 
 /// Spawn (internal)
 void
+#ifdef IRCD_CTX_STACK_PROTECT
+__attribute__((stack_protect))
+#endif
 ircd::ctx::spawn(ctx *const c,
                  context::function func)
 {
@@ -64,6 +67,10 @@ noexcept
 /// This function is the first thing executed on the new context's stack
 /// and calls the user's function.
 void
+#ifdef IRCD_CTX_STACK_PROTECT
+__attribute__((stack_protect))
+#endif
+__attribute__((noinline))
 ircd::ctx::ctx::operator()(boost::asio::yield_context yc,
                            const std::function<void ()> func)
 noexcept try
@@ -123,6 +130,9 @@ catch(const std::exception &e)
 /// This currently doesn't work yet because the suspension state of this
 /// context has to be ready to be jumped to and that isn't implemented yet.
 void
+#ifdef IRCD_CTX_STACK_PROTECT_SWITCH
+__attribute__((stack_protect))
+#endif
 ircd::ctx::ctx::jump()
 {
 	assert(this->yc);
@@ -151,6 +161,9 @@ ircd::ctx::ctx::jump()
 /// if the context suspended and was notified. When a context wakes up the
 /// note counter is reset.
 bool
+#ifdef IRCD_CTX_STACK_PROTECT_SWITCH
+__attribute__((stack_protect))
+#endif
 ircd::ctx::ctx::wait()
 {
 	namespace errc = boost::system::errc;
