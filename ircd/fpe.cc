@@ -35,7 +35,6 @@ namespace ircd::fpe
 	extern "C" void ircd_fpe_handle_sigfpe(int signum, siginfo_t *const si, void *const uctx);
 }
 
-
 [[noreturn]] void
 ircd::fpe::ircd_fpe_handle_sigfpe(int signum,
                                   siginfo_t *const si,
@@ -96,7 +95,7 @@ noexcept
 // errors_throw::errors_throw
 //
 
-__attribute__((noreturn))
+[[noreturn]]
 ircd::fpe::errors_throw::errors_throw()
 {
 	throw assertive
@@ -105,6 +104,7 @@ ircd::fpe::errors_throw::errors_throw()
 	};
 }
 
+[[noreturn]]
 ircd::fpe::errors_throw::~errors_throw()
 noexcept
 {
