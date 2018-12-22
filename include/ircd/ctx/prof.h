@@ -29,6 +29,7 @@
 ///
 namespace ircd::ctx::prof
 {
+	struct profile;
 	enum class event;
 
 	// lowlevel
@@ -76,3 +77,10 @@ namespace ircd::ctx::prof::settings
 	extern conf::item<ulong> slice_interrupt;   // Interrupt exception when exceeded (not a signal)
 	extern conf::item<ulong> slice_assertion;   // abort() when exceeded (not a signal, must yield)
 }
+
+/// structure aggregating any profiling related state for a ctx
+struct ircd::ctx::prof::profile
+{
+	ulong cycles {0};                  // monotonic counter (rdtsc)
+	uint64_t yields {0};               // monotonic counter
+};

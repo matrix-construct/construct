@@ -28,13 +28,6 @@ struct ircd::ctx::stack
 	{}
 };
 
-/// Internal structure aggregating any profiling related state for the ctx
-struct ircd::ctx::profile
-{
-	ulong cycles {0};                            // monotonic counter (rdtsc)
-	uint64_t yields {0};                         // monotonic counter
-};
-
 /// Internal context implementation
 ///
 struct ircd::ctx::ctx
@@ -51,7 +44,7 @@ struct ircd::ctx::ctx
 	boost::asio::yield_context *yc {nullptr};    // boost interface
 	continuation *cont {nullptr};                // valid when asleep; invalid when awake
 	ircd::ctx::stack stack;                      // stack related structure
-	ircd::ctx::profile profile;                  // prof related structure
+	prof::profile profile;                       // prof related structure
 	list::node node;                             // node for ctx::list
 	dock adjoindre;                              // contexts waiting for this to join()
 
