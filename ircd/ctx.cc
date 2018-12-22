@@ -247,33 +247,39 @@ ircd::ctx::ctx::interruption_point()
 		context::TERMINATED | context::INTERRUPTED
 	};
 
+	// Fast test-and-bail for the very likely case there is no interrupt.
 	if(likely((this->flags & flags) == 0))
 		return;
 
+	// The NOINTERRUPT flag works by pretending there is no interrupt flag
+	// set and also does not clear the flag. This allows the interrupt
+	// to remain pending until the uninterruptible section is complete.
+	if(this->flags & context::NOINTERRUPT)
+		return;
+
+	// Termination shouldn't be used for normal operation so please eat this
+	// branch misprediction.
 	if(unlikely(termination_point(std::nothrow)))
 		throw terminated{};
 
-	if(unlikely(interruption_point(std::nothrow)))
+	if(interruption_point(std::nothrow))
 		throw interrupted
 		{
-			"ctx(%p) '%s'", (const void *)this, name
+			"ctx:%lu '%s'", id, name
 		};
 }
 
-/// Returns true if this context has been flagged for termination.
-/// Does not clear the flag.
+/// Returns true if this context has been flagged for termination. Does not
+/// clear the flag. Sets the NOINTERRUPT flag so the context cannot be further
+// interrupted which simplifies the termination process.
 bool
 ircd::ctx::ctx::termination_point(std::nothrow_t)
 {
-	if(unlikely(flags & context::TERMINATED))
+	if(flags & context::TERMINATED)
 	{
-		// see: interruption_point().
-		if(flags & context::NOINTERRUPT)
-			return false;
-
+		assert(~flags & context::NOINTERRUPT);
 		flags |= context::NOINTERRUPT;
 		mark(prof::event::CUR_TERMINATE);
-		assert(flags & ~context::NOINTERRUPT);
 		return true;
 	}
 	else return false;
@@ -284,19 +290,11 @@ ircd::ctx::ctx::termination_point(std::nothrow_t)
 bool
 ircd::ctx::ctx::interruption_point(std::nothrow_t)
 {
-	// Interruption shouldn't be used for normal operation,
-	// so please eat this branch misprediction.
-	if(unlikely(flags & context::INTERRUPTED))
+	if(flags & context::INTERRUPTED)
 	{
-		// The NOINTERRUPT flag works by pretending there is no INTERRUPTED
-		// flag set and also does not clear the flag. This allows the interrupt
-		// to remaing pending until the uninterruptible section is complete.
-		if(flags & context::NOINTERRUPT)
-			return false;
-
+		assert(~flags & context::NOINTERRUPT);
 		flags &= ~context::INTERRUPTED;
 		mark(prof::event::CUR_INTERRUPT);
-		assert(~flags & context::NOINTERRUPT);
 		return true;
 	}
 	else return false;
