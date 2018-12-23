@@ -422,11 +422,13 @@ AM_COND_IF([OPTIMIZE],
 	dnl remember to axe this when lto is enabled
 	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
+	CXXFLAGS+=" -ggnu-pubnames"
 ], [
 	CXXFLAGS+=" -march=native"
 	CXXFLAGS+=" -O$optimize_level"
 	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
+	CXXFLAGS+=" -ggnu-pubnames"
 ])
 
 dnl
