@@ -147,7 +147,11 @@ ircd::ctx::ctx::jump()
 	// with continuation of source after target
 	{
 		current->notes = 0; // Unconditionally cleared here
-		const continuation continuation;
+		const continuation continuation
+		{
+			continuation::false_predicate
+		};
+
 		target();
 	}
 
@@ -175,7 +179,7 @@ ircd::ctx::ctx::wait()
 		return false;
 
 	// An interrupt invokes this closure to force the alarm to return.
-	const interruptor interruptor{[this]
+	const interruptor &interruptor{[this]
 	(ctx *const &interruptor) noexcept
 	{
 		wake();
@@ -189,12 +193,18 @@ ircd::ctx::ctx::wait()
 		return notes > 0;
 	}};
 
-	// The register switch itself occurs inside the alarm.async_wait() call.
 	// The construction of the arguments to the call on this stack comprise
 	// our final control before the context switch. The destruction of the
 	// arguments comprise the initial control after the context switch.
 	boost::system::error_code ec;
-	alarm.async_wait(yield_context{continuation{predicate, interruptor}}[ec]);
+	alarm.async_wait(yield_context
+	{
+		continuation
+		{
+			predicate, interruptor
+		}
+	}
+	[ec]);
 
 	assert(ec == errc::operation_canceled || ec == errc::success);
 	assert(current == this);
@@ -895,6 +905,13 @@ noexcept
 //
 
 decltype(ircd::ctx::continuation::true_predicate)
+ircd::ctx::continuation::asio_predicate{[]
+() -> bool
+{
+	return false;
+}};
+
+decltype(ircd::ctx::continuation::true_predicate)
 ircd::ctx::continuation::true_predicate{[]
 () -> bool
 {
@@ -1010,38 +1027,6 @@ const noexcept
 	assert(self);
 	assert(self->yc);
 	return *self->yc;
-}
-
-//
-// to_asio
-//
-
-ircd::ctx::to_asio::to_asio(const interruptor &intr)
-noexcept
-:continuation
-{
-	continuation::false_predicate, intr
-}
-{
-}
-
-ircd::ctx::to_asio::~to_asio()
-noexcept(false)
-{
-}
-
-ircd::ctx::to_asio::operator
-boost::asio::yield_context &()
-noexcept
-{
-	return static_cast<boost::asio::yield_context &>(continuation);
-}
-
-ircd::ctx::to_asio::operator
-const boost::asio::yield_context &()
-const noexcept
-{
-	return static_cast<const boost::asio::yield_context &>(continuation);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

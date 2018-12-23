@@ -1756,7 +1756,10 @@ ircd::net::listener_udp::acceptor::operator()(datagram &datagram)
 	ip::udp::endpoint ep;
 	const size_t rlen
 	{
-		a.async_receive_from(datagram.mbufs, ep, flags, yield_context{to_asio{interruption}})
+		a.async_receive_from(datagram.mbufs, ep, flags, yield_context{continuation
+		{
+			continuation::asio_predicate, interruption
+		}})
 	};
 
 	datagram.remote = make_ipport(ep);
@@ -2144,15 +2147,24 @@ try
 	switch(opts.type)
 	{
 		case ready::ERROR:
-			sd.async_wait(wait_type::wait_error, yield_context{to_asio{interruption}});
+			sd.async_wait(wait_type::wait_error, yield_context{continuation
+			{
+				continuation::asio_predicate, interruption
+			}});
 			break;
 
 		case ready::WRITE:
-			sd.async_wait(wait_type::wait_write, yield_context{to_asio{interruption}});
+			sd.async_wait(wait_type::wait_write, yield_context{continuation
+			{
+				continuation::asio_predicate, interruption
+			}});
 			break;
 
 		case ready::READ:
-			sd.async_wait(wait_type::wait_read, yield_context{to_asio{interruption}});
+			sd.async_wait(wait_type::wait_read, yield_context{continuation
+			{
+				continuation::asio_predicate, interruption
+			}});
 			break;
 
 		default:

@@ -19,7 +19,6 @@
 namespace ircd::ctx
 {
 	struct continuation;
-	struct to_asio;
 
 	using yield_context = boost::asio::yield_context;
 	using interruptor = std::function<void (ctx *const &)>;
@@ -30,7 +29,6 @@ namespace ircd
 {
 	using ctx::yield_context;
 	using ctx::continuation;
-	using ctx::to_asio;
 }
 
 /// This object must be placed on the stack when the context is yielding (INTERNAL)
@@ -61,6 +59,7 @@ namespace ircd
 ///
 struct ircd::ctx::continuation
 {
+	static const predicate asio_predicate;
 	static const predicate true_predicate;
 	static const predicate false_predicate;
 	static const interruptor noop_interruptor;
@@ -72,7 +71,7 @@ struct ircd::ctx::continuation
 	operator const boost::asio::yield_context &() const noexcept;
 	operator boost::asio::yield_context &() noexcept;
 
-	continuation(const predicate & = true_predicate,
+	continuation(const predicate &,
 	             const interruptor & = noop_interruptor) noexcept;
 
 	continuation(continuation &&) = delete;
@@ -80,24 +79,4 @@ struct ircd::ctx::continuation
 	continuation &operator=(continuation &&) = delete;
 	continuation &operator=(const continuation &) = delete;
 	~continuation() noexcept(false);
-};
-
-/// This type of continuation should be used when yielding a context to a
-/// boost::asio handler so we can have specific control over that type of
-/// context switch in possible contrast or extension of the regular
-/// continuation behavior.
-///
-/// The statement `yield_context{to_asio{}}` can be passed to any boost::asio
-/// callback handler. Those handlers have overloads to accept this, many of
-/// which are not documented.
-///
-struct ircd::ctx::to_asio
-{
-	ircd::ctx::continuation continuation;
-
-	operator const boost::asio::yield_context &() const noexcept;
-	operator boost::asio::yield_context &() noexcept;
-
-	to_asio(const interruptor & = continuation::noop_interruptor) noexcept;
-	~to_asio() noexcept(false);
 };

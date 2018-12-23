@@ -416,7 +416,10 @@ try
 
 	const size_t len
 	{
-		boost::asio::async_read_until(fd, sb, '\n', yield_context{to_asio{interruption}})
+		boost::asio::async_read_until(fd, sb, '\n', yield_context{continuation
+		{
+			continuation::asio_predicate, interruption
+		}})
 	};
 
 	std::istream is{&sb};
