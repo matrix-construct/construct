@@ -174,7 +174,7 @@ _handle_edu_m_typing(const m::event &event,
 	{
 		log::dwarning
 		{
-			"Ignoring %s from %s for user %s",
+			m::log, "Ignoring %s from %s for user %s",
 			at<"type"_>(event),
 			at<"origin"_>(event),
 			string_view{user_id}
@@ -196,7 +196,7 @@ _handle_edu_m_typing(const m::event &event,
 		{
 			log::dwarning
 			{
-				"Ignoring %s from %s for user %s because not in room '%s'",
+				m::log, "Ignoring %s from %s for user %s because not in room '%s'",
 				at<"type"_>(event),
 				at<"origin"_>(event),
 				string_view{user_id},
@@ -217,7 +217,7 @@ _handle_edu_m_typing(const m::event &event,
 
 	log::info
 	{
-		"%s %s %s typing in %s",
+		m::log, "%s %s %s typing in %s",
 		at<"origin"_>(event),
 		string_view{user_id},
 		json::get<"typing"_>(edu)? "started"_sv : "stopped"_sv,
@@ -311,7 +311,7 @@ timeout_timeout(const typist &t)
 
 	log::debug
 	{
-		"Typing timeout for %s in %s",
+		m::log, "Typing timeout for %s in %s",
 		string_view{t.user_id},
 		string_view{t.room_id}
 	};
@@ -417,7 +417,7 @@ update_state(const m::typing &object)
 
 	log::debug
 	{
-		"Typing %s in %s now[%b] was[%b] xmit[%b]",
+		m::log, "Typing %s in %s now[%b] was[%b] xmit[%b]",
 		string_view{at<"user_id"_>(object)},
 		string_view{at<"room_id"_>(object)},
 		json::get<"typing"_>(object),

@@ -645,7 +645,7 @@ head__reset(const m::room &room)
 		{
 			log::derror
 			{
-				"Invalid event '%s' idx %lu in head for %s",
+				m::log, "Invalid event '%s' idx %lu in head for %s",
 				string_view{event_id},
 				event_idx,
 				string_view{room.room_id}
@@ -724,7 +724,7 @@ dagree_histogram(const m::room &room,
 		{
 			log::warning
 			{
-				"Event '%s' had %zu prev events (ignored)",
+				m::log, "Event '%s' had %zu prev events (ignored)",
 				string_view(at<"event_id"_>(event))
 			};
 

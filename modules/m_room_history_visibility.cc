@@ -142,7 +142,7 @@ _changed_visibility(const m::event &event,
 {
 	log::info
 	{
-		"Changed visibility of %s to %s by %s => %s",
+		m::log, "Changed visibility of %s to %s by %s => %s",
 		json::get<"room_id"_>(event),
 		json::get<"content"_>(event).get("history_visibility"),
 		json::get<"sender"_>(event),

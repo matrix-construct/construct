@@ -108,7 +108,7 @@ _created_room(const m::event &event,
 
 	log::debug
 	{
-		"Creation of room %s by %s (%s)",
+		m::log, "Creation of room %s by %s (%s)",
 		string_view{room_id},
 		at<"sender"_>(event),
 		at<"event_id"_>(event)

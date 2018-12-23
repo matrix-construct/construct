@@ -75,7 +75,7 @@ handle_m_receipt(const m::room::id &room_id,
 
 		log::dwarning
 		{
-			"Unhandled m.receipt type '%s' to room '%s'",
+			m::log, "Unhandled m.receipt type '%s' to room '%s'",
 			type,
 			string_view{room_id}
 		};
@@ -142,7 +142,7 @@ try
 	{
 		log::dwarning
 		{
-			"ignoring m.receipt m.read for unknown %s in %s for %s",
+			m::log, "ignoring m.receipt m.read for unknown %s in %s for %s",
 			string_view{user_id},
 			string_view{room_id},
 			string_view{event_id}
@@ -196,7 +196,7 @@ try
 
 	log::info
 	{
-		"%s read by %s in %s @ %zd",
+		m::log, "%s read by %s in %s @ %zd",
 		string_view{event_id},
 		string_view{user_id},
 		string_view{room_id},
@@ -207,7 +207,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		"failed to save m.receipt m.read for %s in %s for %s :%s",
+		m::log, "failed to save m.receipt m.read for %s in %s for %s :%s",
 		string_view{user_id},
 		string_view{room_id},
 		string_view{event_id},

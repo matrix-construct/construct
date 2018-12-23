@@ -52,7 +52,7 @@ _changed_aliases(const m::event &event,
 
 		log::info
 		{
-			"Updated aliases of %s by %s in %s [%s] => %s",
+			m::log, "Updated aliases of %s by %s in %s [%s] => %s",
 			string_view{room_id},
 			json::get<"sender"_>(event),
 			json::get<"event_id"_>(event),

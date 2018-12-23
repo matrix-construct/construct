@@ -64,7 +64,7 @@ _can_join_room(const m::event &event,
 	if(join_rule != "invite")
 		log::dwarning
 		{
-			"Unsupported join_rule '%s' for room %s. Defaulting to 'invite'.",
+			m::log, "Unsupported join_rule '%s' for room %s. Defaulting to 'invite'.",
 			join_rule,
 			string_view{room.room_id}
 		};
@@ -78,7 +78,7 @@ _can_join_room(const m::event &event,
 	if(membership && membership != "leave")
 		log::dwarning
 		{
-			"Unsupported membership state '%s' for %s in room %s.",
+			m::log, "Unsupported membership state '%s' for %s in room %s.",
 			membership,
 			string_view{sender},
 			string_view{room.room_id}

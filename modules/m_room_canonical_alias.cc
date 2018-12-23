@@ -49,7 +49,7 @@ _changed_canonical_alias(const m::event &event,
 
 	log::info
 	{
-		"Changed canonical alias of %s to %s by %s with %s => %s",
+		m::log, "Changed canonical alias of %s to %s by %s with %s => %s",
 		string_view{room_id},
 		string_view{alias},
 		json::get<"sender"_>(event),

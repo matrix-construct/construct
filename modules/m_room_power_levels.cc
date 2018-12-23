@@ -68,7 +68,7 @@ _has_power(const m::event &event,
 	if(!power(sender, "events", type, state_key))
 		log::warning //TODO: throw
 		{
-			"Power violation %s in %s for %s %s,%s",
+			m::log, "Power violation %s in %s for %s %s,%s",
 			string_view{sender},
 			string_view{room_id},
 			string_view{event_id},
@@ -110,7 +110,7 @@ _changed_levels(const m::event &event,
 {
 	log::info
 	{
-		"%s changed power_levels in %s [%s]",
+		m::log, "%s changed power_levels in %s [%s]",
 		json::get<"sender"_>(event),
 		json::get<"room_id"_>(event),
 		json::get<"event_id"_>(event)

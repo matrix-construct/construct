@@ -61,7 +61,7 @@ _changed_rules_notify(const m::event &event,
 {
 	log::info
 	{
-		"%s changed join_rules in %s [%s] to %s",
+		m::log, "%s changed join_rules in %s [%s] to %s",
 		json::get<"sender"_>(event),
 		json::get<"room_id"_>(event),
 		json::get<"event_id"_>(event),
