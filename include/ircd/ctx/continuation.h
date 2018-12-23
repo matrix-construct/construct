@@ -28,7 +28,6 @@ namespace ircd::ctx
 
 namespace ircd
 {
-	using ctx::yield_context;
 	using ctx::continuation;
 }
 
