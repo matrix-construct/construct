@@ -2087,12 +2087,20 @@ noexcept
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsuggest-attribute=format"
 void
-ircd::db::database::logger::Logv(const rocksdb::InfoLogLevel level,
+ircd::db::database::logger::Logv(const rocksdb::InfoLogLevel level_,
                                  const char *const fmt,
                                  va_list ap)
 noexcept
 {
-	if(level < GetInfoLogLevel())
+	if(level_ < GetInfoLogLevel())
+		return;
+
+	const log::level level
+	{
+		translate(level_)
+	};
+
+	if(level > RB_LOG_LEVEL)
 		return;
 
 	thread_local char buf[1024]; const auto len
@@ -2110,7 +2118,7 @@ noexcept
 	if(startswith(str, "Options"))
 		return;
 
-	rog(translate(level), "'%s': %s", d->name, str);
+	rog(level, "'%s': %s", d->name, str);
 }
 #pragma GCC diagnostic pop
 
