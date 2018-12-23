@@ -78,6 +78,9 @@ ircd::log::open()
 {
 	for_each<level>([](const level &lev)
 	{
+		if(lev > RB_LOG_LEVEL)
+			return;
+
 		const auto &conf(confs.at(lev));
 		if(!bool(conf.file_enable))
 			return;
@@ -96,6 +99,9 @@ ircd::log::close()
 {
 	for_each<level>([](const level &lev)
 	{
+		if(lev > RB_LOG_LEVEL)
+			return;
+
 		if(file[lev].is_open())
 			file[lev].close();
 	});
@@ -106,6 +112,9 @@ ircd::log::flush()
 {
 	for_each<level>([](const level &lev)
 	{
+		if(lev > RB_LOG_LEVEL)
+			return;
+
 		file[lev].flush();
 	});
 
@@ -238,6 +247,9 @@ ircd::log::mark::mark(const string_view &msg)
 	for_each<level>([&msg]
 	(const auto &lev)
 	{
+		if(lev > RB_LOG_LEVEL)
+			return;
+
 		mark(lev, msg);
 	});
 }
