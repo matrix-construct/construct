@@ -22,7 +22,7 @@ namespace ircd::ctx
 	struct to_asio;
 
 	using yield_context = boost::asio::yield_context;
-	using interruptor = std::function<void (ctx *const &) noexcept>;
+	using interruptor = std::function<void (ctx *const &)>;
 	using predicate = std::function<bool ()>;
 }
 
@@ -65,16 +65,20 @@ struct ircd::ctx::continuation
 	static const predicate false_predicate;
 	static const interruptor noop_interruptor;
 
-	ctx *self;
-	const predicate &pred;
-	const interruptor &intr;
+	ctx *const self;
+	const predicate *const pred;
+	const interruptor *const intr;
 
-	operator const boost::asio::yield_context &() const;
-	operator boost::asio::yield_context &();
+	operator const boost::asio::yield_context &() const noexcept;
+	operator boost::asio::yield_context &() noexcept;
 
 	continuation(const predicate & = true_predicate,
-	             const interruptor & = noop_interruptor);
+	             const interruptor & = noop_interruptor) noexcept;
 
+	continuation(continuation &&) = delete;
+	continuation(const continuation &) = delete;
+	continuation &operator=(continuation &&) = delete;
+	continuation &operator=(const continuation &) = delete;
 	~continuation() noexcept(false);
 };
 
@@ -88,9 +92,12 @@ struct ircd::ctx::continuation
 /// which are not documented.
 ///
 struct ircd::ctx::to_asio
-:ircd::ctx::continuation
 {
-	to_asio() = default;
-	to_asio(const interruptor &);
+	ircd::ctx::continuation continuation;
+
+	operator const boost::asio::yield_context &() const noexcept;
+	operator boost::asio::yield_context &() noexcept;
+
+	to_asio(const interruptor & = continuation::noop_interruptor) noexcept;
 	~to_asio() noexcept(false);
 };

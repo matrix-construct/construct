@@ -387,7 +387,7 @@ ircd::ctx::terminate(ctx &ctx)
 		return;
 
 	if(likely(&ctx != current && ctx.cont != nullptr))
-		ctx.cont->intr(current);
+		(*ctx.cont->intr)(current);
 }
 
 /// Marks `ctx` for interruption and enqueues it for resumption to receive the
@@ -410,7 +410,7 @@ ircd::ctx::interrupt(ctx &ctx)
 		return;
 
 	if(likely(&ctx != current && ctx.cont != nullptr))
-		ctx.cont->intr(current);
+		(*ctx.cont->intr)(current);
 }
 
 /// Marks `ctx` for whether to allow or suppress interruption. Suppression
@@ -921,17 +921,18 @@ ircd::ctx::continuation::noop_interruptor{[]
 
 ircd::ctx::continuation::continuation(const predicate &pred,
                                       const interruptor &intr)
+noexcept
 :self
 {
 	ircd::ctx::current
 }
 ,pred
 {
-	pred
+	&pred
 }
 ,intr
 {
-	intr
+	&intr
 }
 {
 	assert(self != nullptr);
@@ -993,14 +994,21 @@ noexcept(false)
 	self->interruption_point();
 }
 
-ircd::ctx::continuation::operator boost::asio::yield_context &()
+ircd::ctx::continuation::operator
+boost::asio::yield_context &()
+noexcept
 {
+	assert(self);
+	assert(self->yc);
 	return *self->yc;
 }
 
-ircd::ctx::continuation::operator const boost::asio::yield_context &()
-const
+ircd::ctx::continuation::operator
+const boost::asio::yield_context &()
+const noexcept
 {
+	assert(self);
+	assert(self->yc);
 	return *self->yc;
 }
 
@@ -1009,9 +1017,10 @@ const
 //
 
 ircd::ctx::to_asio::to_asio(const interruptor &intr)
+noexcept
 :continuation
 {
-	false_predicate, intr
+	continuation::false_predicate, intr
 }
 {
 }
@@ -1019,6 +1028,20 @@ ircd::ctx::to_asio::to_asio(const interruptor &intr)
 ircd::ctx::to_asio::~to_asio()
 noexcept(false)
 {
+}
+
+ircd::ctx::to_asio::operator
+boost::asio::yield_context &()
+noexcept
+{
+	return static_cast<boost::asio::yield_context &>(continuation);
+}
+
+ircd::ctx::to_asio::operator
+const boost::asio::yield_context &()
+const noexcept
+{
+	return static_cast<const boost::asio::yield_context &>(continuation);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
