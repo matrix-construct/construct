@@ -1742,7 +1742,7 @@ ircd::net::listener_udp::acceptor::operator()(datagram &datagram)
 	};
 
 	const auto interruption{[this]
-	(ctx::ctx *const &) noexcept
+	(ctx::ctx *const &)
 	{
 		this->interrupt();
 	}};
@@ -2131,7 +2131,7 @@ ircd::net::socket::wait(const wait_opts &opts)
 try
 {
 	const auto interruption{[this]
-	(ctx::ctx *const &) noexcept
+	(ctx::ctx *const &)
 	{
 		this->cancel();
 	}};

@@ -134,7 +134,7 @@ try
 	};
 
 	const auto interruption{[this]
-	(ctx::ctx *const &) noexcept
+	(ctx::ctx *const &)
 	{
 		this->cancel();
 	}};
@@ -169,7 +169,7 @@ ircd::net::socket::read_few(iov&& bufs)
 try
 {
 	const auto interruption{[this]
-	(ctx::ctx *const &) noexcept
+	(ctx::ctx *const &)
 	{
 		this->cancel();
 	}};
@@ -256,7 +256,7 @@ try
 	};
 
 	const auto interruption{[this]
-	(ctx::ctx *const &) noexcept
+	(ctx::ctx *const &)
 	{
 		this->cancel();
 	}};
@@ -285,7 +285,7 @@ ircd::net::socket::write_few(iov&& bufs)
 try
 {
 	const auto interruption{[this]
-	(ctx::ctx *const &) noexcept
+	(ctx::ctx *const &)
 	{
 		this->cancel();
 	}};

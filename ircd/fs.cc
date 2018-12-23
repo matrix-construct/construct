@@ -409,7 +409,7 @@ try
 	};
 
 	const auto interruption{[&fd]
-	(ctx::ctx *const &interruptor) noexcept
+	(ctx::ctx *const &interruptor)
 	{
 		fd.cancel();
 	}};
