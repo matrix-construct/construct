@@ -1536,6 +1536,7 @@ ircd::ctx::prof::slice_leave()
 	_total.cycles += last_slice;
 }
 
+#ifndef NDEBUG
 void
 ircd::ctx::prof::check_slice()
 {
@@ -1578,7 +1579,14 @@ ircd::ctx::prof::check_slice()
 			cycles(c),
 		};
 }
+#else
+void
+ircd::ctx::prof::check_slice()
+{
+}
+#endif // NDEBUG
 
+#ifndef NDEBUG
 void
 ircd::ctx::prof::check_stack()
 {
@@ -1607,6 +1615,12 @@ ircd::ctx::prof::check_stack()
 	// Stack assertion
 	assert(stack_exempt || !stack_exceeded_assertion(stack_at));
 }
+#else
+void
+ircd::ctx::prof::check_stack()
+{
+}
+#endif // NDEBUG
 
 bool
 ircd::ctx::prof::stack_exceeded_assertion(const size_t &stack_at)
