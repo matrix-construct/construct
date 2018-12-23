@@ -414,12 +414,13 @@ try
 		fd.cancel();
 	}};
 
-	const size_t len
+	size_t len; continuation
 	{
-		boost::asio::async_read_until(fd, sb, '\n', yield_context{continuation
+		continuation::asio_predicate, interruption, [&len, &fd, &sb]
+		(auto &yield)
 		{
-			continuation::asio_predicate, interruption
-		}})
+			len = boost::asio::async_read_until(fd, sb, '\n', yield);
+		}
 	};
 
 	std::istream is{&sb};

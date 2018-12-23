@@ -145,15 +145,15 @@ ircd::ctx::ctx::jump()
 
 	// Jump from the currently running context (source) to *this (target)
 	// with continuation of source after target
+	current->notes = 0; // Unconditionally cleared here
+	continuation
 	{
-		current->notes = 0; // Unconditionally cleared here
-		const continuation continuation
+		continuation::false_predicate, continuation::noop_interruptor, [&target]
+		(auto &yield)
 		{
-			continuation::false_predicate
-		};
-
-		target();
-	}
+			target();
+		}
+	};
 
 	assert(current != this);
 	assert(current->notes == 1); // notes = 1; set by continuation dtor on wakeup
@@ -196,15 +196,14 @@ ircd::ctx::ctx::wait()
 	// The construction of the arguments to the call on this stack comprise
 	// our final control before the context switch. The destruction of the
 	// arguments comprise the initial control after the context switch.
-	boost::system::error_code ec;
-	alarm.async_wait(yield_context
+	boost::system::error_code ec; continuation
 	{
-		continuation
+		predicate, interruptor, [this, &ec]
+		(auto &yield)
 		{
-			predicate, interruptor
+			alarm.async_wait(yield[ec]);
 		}
-	}
-	[ec]);
+	};
 
 	assert(ec == errc::operation_canceled || ec == errc::success);
 	assert(current == this);
@@ -937,8 +936,9 @@ ircd::ctx::continuation::noop_interruptor{[]
 //
 
 ircd::ctx::continuation::continuation(const predicate &pred,
-                                      const interruptor &intr)
-noexcept
+                                      const interruptor &intr,
+                                      const yield_closure &closure)
+try
 :self
 {
 	ircd::ctx::current
@@ -987,10 +987,20 @@ noexcept
 	// restore this register; otherwise it remains null for executions on
 	// the program's main stack.
 	ircd::ctx::current = nullptr;
+
+	assert(self->yc);
+	closure(*self->yc);
+
+	// Check here if the context was interrupted while it was sleeping.
+	self->interruption_point();
+}
+catch(...)
+{
+	this->~continuation();
 }
 
 ircd::ctx::continuation::~continuation()
-noexcept(false)
+noexcept
 {
 	// Set the fundamental current context register as the first operation
 	// upon resuming execution.
@@ -1005,10 +1015,6 @@ noexcept(false)
 
 	// self->continuation is not null'ed here; it remains an invalid
 	// pointer while the context is awake.
-
-	// Check here if the context was interrupted while it was sleeping. This
-	// will throw out of this destructor if that is the case. Cuidado.
-	self->interruption_point();
 }
 
 ircd::ctx::continuation::operator

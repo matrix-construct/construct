@@ -139,12 +139,13 @@ try
 		this->cancel();
 	}};
 
-	const size_t ret
+	size_t ret; continuation
 	{
-		asio::async_read(ssl, std::forward<iov>(bufs), completion, yield_context{continuation
+		continuation::asio_predicate, interruption, [this, &ret, &bufs]
+		(auto &yield)
 		{
-			continuation::asio_predicate, interruption
-		}})
+			ret = asio::async_read(ssl, std::forward<iov>(bufs), completion, yield);
+		}
 	};
 
 	if(!ret)
@@ -174,12 +175,13 @@ try
 		this->cancel();
 	}};
 
-	const size_t ret
+	size_t ret; continuation
 	{
-		ssl.async_read_some(std::forward<iov>(bufs), yield_context{continuation
+		continuation::asio_predicate, interruption, [this, &ret, &bufs]
+		(auto &yield)
 		{
-			continuation::asio_predicate, interruption
-		}})
+			ret = ssl.async_read_some(std::forward<iov>(bufs), yield);
+		}
 	};
 
 	if(!ret)
@@ -261,12 +263,13 @@ try
 		this->cancel();
 	}};
 
-	const size_t ret
+	size_t ret; continuation
 	{
-		asio::async_write(ssl, std::forward<iov>(bufs), completion, yield_context{continuation
+		continuation::asio_predicate, interruption, [this, &ret, &bufs]
+		(auto &yield)
 		{
-			continuation::asio_predicate, interruption
-		}})
+			ret = asio::async_write(ssl, std::forward<iov>(bufs), completion, yield);
+		}
 	};
 
 	out.bytes += ret;
@@ -290,12 +293,13 @@ try
 		this->cancel();
 	}};
 
-	const size_t ret
+	size_t ret; continuation
 	{
-		ssl.async_write_some(std::forward<iov>(bufs), yield_context{continuation
+		continuation::asio_predicate, interruption, [this, &ret, &bufs]
+		(auto &yield)
 		{
-			continuation::asio_predicate, interruption
-		}})
+			ret = ssl.async_write_some(std::forward<iov>(bufs), yield);
+		}
 	};
 
 	out.bytes += ret;

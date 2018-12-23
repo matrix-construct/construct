@@ -21,6 +21,7 @@ namespace ircd::ctx
 	struct continuation;
 
 	using yield_context = boost::asio::yield_context;
+	using yield_closure = std::function<void (yield_context &)>;
 	using interruptor = std::function<void (ctx *const &)>;
 	using predicate = std::function<bool ()>;
 }
@@ -32,16 +33,6 @@ namespace ircd
 }
 
 /// This object must be placed on the stack when the context is yielding (INTERNAL)
-///
-/// The continuation constructor is the last thing executed before a context
-/// yields. The continuation destructor is the first thing executed when a
-/// context continues. This is not placed by a normal user wishing to context
-/// switch, only a low-level library creator actually implementing the context
-/// switch itself. The placement of this object must be correct. Generally,
-/// we construct the `continuation` as an argument to `yield_context` as such
-/// `yield_context{continuation{}}`. This ensures the continuation destructor
-/// executes before control continues beyond the yield_context call itself and
-/// ties this sequence together neatly.
 ///
 /// The instance contains references to some callables which must remain valid.
 ///
@@ -72,11 +63,12 @@ struct ircd::ctx::continuation
 	operator boost::asio::yield_context &() noexcept;
 
 	continuation(const predicate &,
-	             const interruptor & = noop_interruptor) noexcept;
+	             const interruptor &,
+	             const yield_closure &);
 
 	continuation(continuation &&) = delete;
 	continuation(const continuation &) = delete;
 	continuation &operator=(continuation &&) = delete;
 	continuation &operator=(const continuation &) = delete;
-	~continuation() noexcept(false);
+	~continuation() noexcept;
 };
