@@ -29,7 +29,7 @@ class ircd::ctx::pool
 	queue<closure> q;
 	std::vector<context> ctxs;
 
-	void next();
+	void work();
 	void main() noexcept;
 
   public:

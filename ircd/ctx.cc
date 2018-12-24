@@ -1310,6 +1310,7 @@ ircd::ctx::pool::operator()(closure closure)
 	q.push(std::move(closure));
 }
 
+/// Main execution loop for a pool.
 void
 ircd::ctx::pool::main()
 noexcept try
@@ -1321,7 +1322,7 @@ noexcept try
 	});
 
 	while(1)
-		next();
+		work();
 }
 catch(const interrupted &e)
 {
@@ -1334,12 +1335,12 @@ catch(const terminated &e)
 {
 //	log::debug
 //	{
-//		"pool(%p) ctx(%p): %s", this, &cur(), e.what()
+//		"pool(%p) ctx(%p): terminated", this, &cur()
 //	};
 }
 
 void
-ircd::ctx::pool::next()
+ircd::ctx::pool::work()
 try
 {
 	const auto func
@@ -1353,7 +1354,12 @@ try
 		--working;
 	});
 
+	// Execute the user's function
 	func();
+
+	// Check for latent interruption to this ctx. If there's anything pending
+	// it's best to get rid of it sooner rather than later.
+	interruption_point();
 }
 catch(const interrupted &e)
 {
@@ -1364,8 +1370,9 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"pool(%p) ctx(%p '%s' id:%u): unhandled: %s",
+		"pool(%p '%s') ctx(%p '%s' id:%u): unhandled: %s",
 		this,
+		name,
 		current,
 		ircd::ctx::name(cur()),
 		ircd::ctx::id(cur()),
