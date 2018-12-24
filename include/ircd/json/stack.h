@@ -57,8 +57,8 @@ struct ircd::json::stack
 	array *ca {nullptr};               ///< Could be union with top_object but
 
 	void rethrow_exception();
-	void append(const size_t &expect, const window_buffer::closure &);
-	void append(const string_view &);
+	void append(const size_t &expect, const window_buffer::closure &) noexcept;
+	void append(const string_view &) noexcept;
 
   public:
 	bool opened() const;               ///< Current stacking in progress.
@@ -68,7 +68,7 @@ struct ircd::json::stack
 	size_t remaining() const;
 	const_buffer completed() const;
 
-	bool flush(const bool &force = false);
+	bool flush(const bool &force = false) noexcept;
 	void clear();
 
 	stack(const mutable_buffer &,

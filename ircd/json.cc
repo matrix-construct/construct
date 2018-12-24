@@ -434,6 +434,7 @@ noexcept
 
 void
 ircd::json::stack::append(const string_view &s)
+noexcept
 {
 	append(size(s), [&s](const mutable_buffer &buf)
 	{
@@ -444,7 +445,7 @@ ircd::json::stack::append(const string_view &s)
 void
 ircd::json::stack::append(const size_t &expect,
                           const window_buffer::closure &closure)
-try
+noexcept try
 {
 	if(unlikely(eptr))
 		return;
@@ -494,7 +495,7 @@ ircd::json::stack::rethrow_exception()
 
 bool
 ircd::json::stack::flush(const bool &force)
-try
+noexcept try
 {
 	if(!flusher)
 		return false;
