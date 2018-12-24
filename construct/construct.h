@@ -54,6 +54,7 @@ struct construct::console
 	void wait_input();
 
 	bool cmd__record();
+	bool cmd__watch();
 	int handle_line_bymodule();
 	bool handle_line();
 	void main();

@@ -195,6 +195,9 @@ try
 	if(startswith(line, "record"))
 		return cmd__record();
 
+	if(startswith(line, "watch"))
+		return cmd__watch();
+
 	int ret{-1};
 	if(module) switch((ret = handle_line_bymodule()))
 	{
@@ -354,6 +357,37 @@ construct::console::cmd__record()
 
 	std::cout << "Recording console to file `" << path << "'" << std::endl;
 	record_path = path;
+	return true;
+}
+
+bool
+construct::console::cmd__watch()
+{
+	const auto delay
+	{
+		lex_cast<seconds>(token(this->line, ' ', 1))
+	};
+
+	const string_view &line
+	{
+		tokens_after(this->line, ' ', 1)
+	};
+
+	this->line = line;
+	const log::console_quiet quiet(false); do
+	{
+		std::cout << '\n';
+		handle_line(); try
+		{
+			ctx::sleep(delay);
+		}
+		catch(const ctx::interrupted &)
+		{
+			break;
+		}
+	}
+	while(1);
+
 	return true;
 }
 
