@@ -639,14 +639,14 @@ ircd::conf::item<bool>
 ircd::m::sync::polylog::prefetch_state
 {
 	{ "name",     "ircd.client.sync.polylog.prefetch.state"  },
-	{ "default",  true                                       },
+	{ "default",  false                                      },
 };
 
 ircd::conf::item<bool>
 ircd::m::sync::polylog::prefetch_timeline
 {
 	{ "name",     "ircd.client.sync.polylog.prefetch.timeline"  },
-	{ "default",  true                                          },
+	{ "default",  false                                         },
 };
 
 bool
