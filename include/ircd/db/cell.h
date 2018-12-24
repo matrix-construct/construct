@@ -79,11 +79,11 @@ struct ircd::db::cell
 	// [GET] load cell only (returns valid)
 	bool load(const string_view &index = {}, gopts = {});
 
-	cell(column, std::unique_ptr<rocksdb::Iterator>, gopts = {});
-	cell(column, const string_view &index, std::unique_ptr<rocksdb::Iterator>, gopts = {});
-	cell(column, const string_view &index, gopts = {});
-	cell(database &, const string_view &column, const string_view &index, gopts = {});
-	cell(database &, const string_view &column, gopts = {});
+	cell(column, std::unique_ptr<rocksdb::Iterator>, const gopts & = {});
+	cell(column, const string_view &index, std::unique_ptr<rocksdb::Iterator>, const gopts & = {});
+	cell(column, const string_view &index, const gopts & = {});
+	cell(database &, const string_view &column, const string_view &index, const gopts & = {});
+	cell(database &, const string_view &column, const gopts & = {});
 	cell();
 	cell(cell &&) noexcept;
 	cell(const cell &) = delete;

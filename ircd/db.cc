@@ -8732,10 +8732,10 @@ ircd::db::cell::cell()
 
 ircd::db::cell::cell(database &d,
                      const string_view &colname,
-                     gopts opts)
+                     const gopts &opts)
 :cell
 {
-	column(d[colname]), std::unique_ptr<rocksdb::Iterator>{}, std::move(opts)
+	column(d[colname]), std::unique_ptr<rocksdb::Iterator>{}, opts
 }
 {
 }
@@ -8743,17 +8743,17 @@ ircd::db::cell::cell(database &d,
 ircd::db::cell::cell(database &d,
                      const string_view &colname,
                      const string_view &index,
-                     gopts opts)
+                     const gopts &opts)
 :cell
 {
-	column(d[colname]), index, std::move(opts)
+	column(d[colname]), index, opts
 }
 {
 }
 
 ircd::db::cell::cell(column column,
                      const string_view &index,
-                     gopts opts)
+                     const gopts &opts)
 :c{std::move(column)}
 ,ss{opts.snapshot}
 ,it
@@ -8771,7 +8771,7 @@ ircd::db::cell::cell(column column,
 ircd::db::cell::cell(column column,
                      const string_view &index,
                      std::unique_ptr<rocksdb::Iterator> it,
-                     gopts opts)
+                     const gopts &opts)
 :c{std::move(column)}
 ,ss{opts.snapshot}
 ,it{std::move(it)}
@@ -8786,9 +8786,9 @@ ircd::db::cell::cell(column column,
 
 ircd::db::cell::cell(column column,
                      std::unique_ptr<rocksdb::Iterator> it,
-                     gopts opts)
+                     const gopts &opts)
 :c{std::move(column)}
-,ss{std::move(opts.snapshot)}
+,ss{opts.snapshot}
 ,it{std::move(it)}
 {
 }
