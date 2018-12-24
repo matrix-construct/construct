@@ -771,9 +771,9 @@ noexcept
 
 namespace ircd::ctx
 {
-	bool critical_asserted;
+	thread_local bool critical_asserted;
 
-	void assert_critical();
+	static void assert_critical();
 }
 
 #ifndef NDEBUG
@@ -1396,9 +1396,9 @@ ircd::ctx::debug_stats(const pool &pool)
 
 namespace ircd::ctx::prof
 {
-	ulong _slice_start;     // Current/last time slice started
-	ulong _slice_stop;      // Last time slice ended
-	ticker _total;          // Totals kept for all contexts.
+	thread_local ulong _slice_start;     // Current/last time slice started
+	thread_local ulong _slice_stop;      // Last time slice ended
+	thread_local ticker _total;          // Totals kept for all contexts.
 
 	static void check_stack();
 	static void check_slice();
