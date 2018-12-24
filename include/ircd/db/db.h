@@ -15,6 +15,7 @@
 namespace ircd::db
 {
 	struct init;
+	struct error;
 	struct gopts;
 	struct sopts;
 	struct cell;
@@ -23,26 +24,6 @@ namespace ircd::db
 	struct index;
 	struct database;
 	struct options;
-
-	// Errors for the database subsystem. The exceptions that use _HIDENAME
-	// are built from RocksDB errors which already have an info string with
-	// an included name.
-	//
-	IRCD_EXCEPTION(ircd::error, error)
-	IRCD_EXCEPTION(error, not_found)
-	IRCD_EXCEPTION(error, schema_error)
-	IRCD_EXCEPTION_HIDENAME(error, corruption)
-	IRCD_EXCEPTION_HIDENAME(error, not_supported)
-	IRCD_EXCEPTION_HIDENAME(error, invalid_argument)
-	IRCD_EXCEPTION_HIDENAME(error, io_error)
-	IRCD_EXCEPTION_HIDENAME(error, merge_in_progress)
-	IRCD_EXCEPTION_HIDENAME(error, incomplete)
-	IRCD_EXCEPTION_HIDENAME(error, shutdown_in_progress)
-	IRCD_EXCEPTION_HIDENAME(error, timed_out)
-	IRCD_EXCEPTION_HIDENAME(error, aborted)
-	IRCD_EXCEPTION_HIDENAME(error, busy)
-	IRCD_EXCEPTION_HIDENAME(error, expired)
-	IRCD_EXCEPTION_HIDENAME(error, try_again)
 
 	// db subsystem has its own logging facility
 	extern struct log::log log;
@@ -71,6 +52,7 @@ namespace ircd::db
 #include "database/snapshot.h"
 #include "database/sst.h"
 #include "database/wal.h"
+#include "error.h"
 #include "cache.h"
 #include "opts.h"
 #include "column.h"

@@ -1371,14 +1371,9 @@ try
 		d->GetLatestSequenceNumber()
 	};
 }
-catch(const corruption &e)
+catch(const error &e)
 {
-	throw corruption
-	{
-		"Corruption for '%s' (%s). Try restarting with the -pitrecdb command line option",
-		this->name,
-		e.what()
-	};
+	throw;
 }
 catch(const std::exception &e)
 {
@@ -1535,7 +1530,7 @@ ircd::db::database::operator[](const string_view &name)
 {
 	const auto it{column_names.find(name)};
 	if(unlikely(it == std::end(column_names)))
-		throw schema_error
+		throw not_found
 		{
 			"'%s': column '%s' is not available or specified in schema",
 			this->name,
@@ -1555,7 +1550,7 @@ try
 }
 catch(const std::out_of_range &e)
 {
-	throw schema_error
+	throw not_found
 	{
 		"'%s': column id[%u] is not available or specified in schema",
 		this->name,
@@ -1569,7 +1564,7 @@ const
 {
 	const auto it{column_names.find(name)};
 	if(unlikely(it == std::end(column_names)))
-		throw schema_error
+		throw not_found
 		{
 			"'%s': column '%s' is not available or specified in schema",
 			this->name,
@@ -1589,7 +1584,7 @@ const try
 }
 catch(const std::out_of_range &e)
 {
-	throw schema_error
+	throw not_found
 	{
 		"'%s': column id[%u] is not available or specified in schema",
 		this->name,
@@ -9167,7 +9162,7 @@ ircd::db::row::operator[](const string_view &column)
 {
 	const auto it(find(column));
 	if(unlikely(it == end()))
-		throw schema_error
+		throw not_found
 		{
 			"column '%s' not specified in the descriptor schema", column
 		};
@@ -9181,7 +9176,7 @@ const
 {
 	const auto it(find(column));
 	if(unlikely(it == end()))
-		throw schema_error
+		throw not_found
 		{
 			"column '%s' not specified in the descriptor schema", column
 		};
@@ -10996,8 +10991,130 @@ ircd::db::ticker(const rocksdb::Cache &cache,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// error.h
+//
+
+//
+// error::not_found
+//
+
+decltype(ircd::db::error::not_found::_not_found_)
+ircd::db::error::not_found::_not_found_
+{
+	rocksdb::Status::NotFound()
+};
+
+//
+// error::not_found::not_found
+//
+
+ircd::db::error::not_found::not_found()
+:error
+{
+	generate_skip, _not_found_
+}
+{
+	strlcpy(buf, "NotFound");
+}
+
+//
+// error
+//
+
+decltype(ircd::db::error::_no_code_)
+ircd::db::error::_no_code_
+{
+	rocksdb::Status::OK()
+};
+
+//
+// error::error
+//
+
+ircd::db::error::error(internal_t,
+                       const rocksdb::Status &s,
+                       const string_view &fmt,
+                       const va_rtti &ap)
+:error
+{
+	s
+}
+{
+	const string_view &msg{buf};
+	const mutable_buffer remain
+	{
+		buf + size(msg), sizeof(buf) - size(msg)
+	};
+
+	fmt::vsprintf
+	{
+		remain, fmt, ap
+	};
+}
+
+ircd::db::error::error(const rocksdb::Status &s)
+:error
+{
+	generate_skip, s
+}
+{
+	fmt::sprintf
+	{
+		buf, "%s (%u:%u): %s (%u)",
+		s.getState(),
+		this->code,
+		this->subcode,
+		reflect(s.severity()),
+		this->severity,
+	};
+}
+
+ircd::db::error::error(generate_skip_t,
+                       const rocksdb::Status &s)
+:ircd::error
+{
+	generate_skip
+}
+,code
+{
+	s.code()
+}
+,subcode
+{
+	s.subcode()
+}
+,severity
+{
+	 s.severity()
+}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // Misc
 //
+
+//
+// throw_on_error
+//
+
+ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &status)
+{
+	using rocksdb::Status;
+
+	switch(status.code())
+	{
+		case Status::kOk:
+			return;
+
+		case Status::kNotFound:
+			throw not_found{};
+
+		default:
+			throw error{status};
+	}
+}
 
 std::vector<std::string>
 ircd::db::column_names(const std::string &path,
@@ -11322,42 +11439,6 @@ ircd::db::error_to_status::error_to_status(const std::error_code &e)
 	}
 }()}
 {
-}
-
-//
-// throw_on_error
-//
-
-ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &s)
-{
-	using rocksdb::Status;
-
-	const string_view &message
-	{
-		s.getState()
-	};
-
-	switch(s.code())
-	{
-		case Status::kOk:                   return;
-		case Status::kNotFound:             throw not_found{"%s", message};
-		case Status::kCorruption:           throw corruption{"%s", message};
-		case Status::kNotSupported:         throw not_supported{"%s", message};
-		case Status::kInvalidArgument:      throw invalid_argument{"%s", message};
-		case Status::kIOError:              throw io_error{"%s", message};
-		case Status::kMergeInProgress:      throw merge_in_progress{"%s", message};
-		case Status::kIncomplete:           throw incomplete{"%s", message};
-		case Status::kShutdownInProgress:   throw shutdown_in_progress{"%s", message};
-		case Status::kTimedOut:             throw timed_out{"%s", message};
-		case Status::kAborted:              throw aborted{"%s", message};
-		case Status::kBusy:                 throw busy{"%s", message};
-		case Status::kExpired:              throw expired{"%s", message};
-		case Status::kTryAgain:             throw try_again{"%s", message};
-		default: throw error
-		{
-			"code[%d] %s", s.code(), message
-		};
-	}
 }
 
 //
