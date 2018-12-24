@@ -31,22 +31,22 @@ struct ircd::fs::error
 	const char *what() const noexcept override;
 
 	template<class... args>
-	error(const char *const &fmt = " ",
+	error(const string_view &fmt = " ",
 	      args&&...);
 
 	template<class... args>
 	error(const std::error_code &,
-	      const char *const &fmt,
+	      const string_view &fmt,
 	      args&&...);
 
 	template<class... args>
 	error(const std::system_error &,
-	      const char *const &fmt,
+	      const string_view &fmt,
 	      args&&...);
 
 	template<class... args>
 	error(const boost::filesystem::filesystem_error &,
-	      const char *const &fmt,
+	      const string_view &fmt,
 	      args&&...);
 
 	error(const std::error_code &e);
@@ -56,7 +56,7 @@ struct ircd::fs::error
 
 template<class... args>
 ircd::fs::error::error(const boost::filesystem::filesystem_error &e,
-                       const char *const &fmt,
+                       const string_view &fmt,
                        args&&... a)
 :error
 {
@@ -66,7 +66,7 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &e,
 
 template<class... args>
 ircd::fs::error::error(const std::system_error &e,
-                       const char *const &fmt,
+                       const string_view &fmt,
                        args&&... a)
 :error
 {
@@ -76,7 +76,7 @@ ircd::fs::error::error(const std::system_error &e,
 
 template<class... args>
 ircd::fs::error::error(const std::error_code &e,
-                       const char *const &fmt,
+                       const string_view &fmt,
                        args&&... a)
 :std::system_error
 {
@@ -89,7 +89,7 @@ ircd::fs::error::error(const std::error_code &e,
 {}
 
 template<class... args>
-ircd::fs::error::error(const char *const &fmt,
+ircd::fs::error::error(const string_view &fmt,
                        args&&... a)
 :std::system_error
 {
