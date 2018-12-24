@@ -60,7 +60,7 @@ struct ircd::db::row
 	    gopts opts = {})
 	__attribute__((stack_protect));
 
-	friend size_t seek(row &, const string_view &);
+	friend size_t seek(row &, const string_view &, const gopts &opts = {});
 };
 
 namespace ircd::db

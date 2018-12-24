@@ -50,6 +50,9 @@ enum class ircd::db::get
 	NO_CHECKSUM      = 0x0020, // Integrity of data will not be checked (overrides conf).
 	PREFIX           = 0x0040, // (prefix_same_as_start); automatic for index columns with pfx
 	ORDERED          = 0x0080, // (total_order_seek); relevant to index columns
+	NO_PARALLEL      = 0x0100, // Don't submit requests in parallel (relevant to db::row)
+	NO_THROW         = 0x0200, // Suppress exceptions if possible.
+	THROW            = 0x0400, // Throw exceptions more than usual.
 };
 
 template<class T>
