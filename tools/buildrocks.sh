@@ -53,6 +53,7 @@ NJOBS=`nproc`
 export CFLAGS="$CFLAGS -DROCKSDB_USE_RTTI"
 export CFLAGS="$CFLAGS -frtti"
 export CFLAGS="$CFLAGS -fPIC"
+export CFLAGS="$CFLAGS -ftls-model=initial-exec"
 export DISABLE_JEMALLOC=1
 run make -j$NJOBS $LINKAGE
 run cd $USERDIR         # Return to user's original directory
