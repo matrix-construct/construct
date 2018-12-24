@@ -3,6 +3,7 @@ AUTOMAKE_OPTIONS = foreign
 libircddir	= @libdir@
 
 AM_CXXFLAGS = \
+	-ftls-model=initial-exec \
 	@EXTRA_CXXFLAGS@ \
 	###
 
