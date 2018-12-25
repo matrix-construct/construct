@@ -373,12 +373,12 @@ construct::console::cmd__watch()
 		tokens_after(this->line, ' ', 1)
 	};
 
-	this->line = line;
-	const log::console_quiet quiet(false); do
+	this->line = line; do
 	{
 		std::cout << '\n';
 		handle_line(); try
 		{
+			const log::console_quiet quiet(false);
 			ctx::sleep(delay);
 		}
 		catch(const ctx::interrupted &)
