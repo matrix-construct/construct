@@ -1272,6 +1272,13 @@ ircd::ctx::pool::terminate()
 }
 
 void
+ircd::ctx::pool::min(const size_t &num)
+{
+	if(size() < num)
+		set(num);
+}
+
+void
 ircd::ctx::pool::set(const size_t &num)
 {
 	if(size() > num)
