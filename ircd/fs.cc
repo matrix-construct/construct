@@ -1062,7 +1062,7 @@ ircd::fs::aio::context;
 // init
 //
 
-__attribute__((weak))
+#ifndef IRCD_USE_AIO
 ircd::fs::aio::init::init()
 {
 	assert(!context);
@@ -1071,13 +1071,15 @@ ircd::fs::aio::init::init()
 		"No support for asynchronous local filesystem IO..."
 	};
 }
+#endif
 
-__attribute__((weak))
+#ifndef IRCD_USE_AIO
 ircd::fs::aio::init::~init()
 noexcept
 {
 	assert(!context);
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
