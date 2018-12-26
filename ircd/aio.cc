@@ -482,7 +482,22 @@ noexcept try
 	assert(request.aio_data == uintptr_t(&request));
 	const ctx::critical_assertion ca;
 	queue.at(count++) = static_cast<iocb *>(&request);
-	if(count >= size_t(max_submit) || count >= queue.size())
+
+	const bool flush_now
+	{
+		// The queue has reached the configured size
+		count >= size_t(max_submit)
+
+		// The queue has reached its maximum size
+		|| count >= queue.size()
+
+		// The request causes serialization. This is considered true for all
+		// non-reading events, even for different files and locations. It may
+		// be possible to optimize this condition.
+		|| request.aio_lio_opcode != IOCB_CMD_PREADV
+	};
+
+	if(flush_now)
 		return flush();
 
 	if(count == 1)
