@@ -71,7 +71,12 @@ struct ircd::fs::aio::request
 
 	ctx::ctx *waiter {ctx::current};
 	ssize_t retval {std::numeric_limits<ssize_t>::min()};
-	ssize_t errcode {0};
+	ssize_t errcode {0}; union
+	{
+		const read_opts *ropts {nullptr};
+		const write_opts *wopts;
+		const sync_opts *sopts;
+	};
 
   public:
 	const_iovec_view iovec() const;

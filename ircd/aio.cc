@@ -94,6 +94,8 @@ ircd::fs::aio::request::fsync::fsync(const int &fd,
                                      const sync_opts &opts)
 :request{fd}
 {
+	sopts = &opts;
+
 	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_FSYNC;
 
@@ -122,6 +124,8 @@ ircd::fs::aio::request::fdsync::fdsync(const int &fd,
                                        const sync_opts &opts)
 :request{fd}
 {
+	sopts = &opts;
+
 	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_FDSYNC;
 
@@ -151,6 +155,8 @@ ircd::fs::aio::request::read::read(const int &fd,
                                    const read_opts &opts)
 :request{fd}
 {
+	ropts = &opts;
+
 	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_PREADV;
 
@@ -196,6 +202,8 @@ ircd::fs::aio::request::write::write(const int &fd,
                                      const write_opts &opts)
 :request{fd}
 {
+	wopts = &opts;
+
 	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_PWRITEV;
 
