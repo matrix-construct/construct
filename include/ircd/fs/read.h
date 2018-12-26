@@ -63,6 +63,11 @@ struct ircd::fs::read_opts
 	/// an exception will be thrown. We default to true because we have faith
 	/// in the useful propagation of an exception for this event.
 	bool interruptible {true};
+
+	/// Submits the I/O request immediately rather than allowing IRCd to
+	/// queue requests for a few iterations of the ircd::ios event loop.
+	/// (only relevant to aio).
+	bool nodelay {false};
 };
 
 inline

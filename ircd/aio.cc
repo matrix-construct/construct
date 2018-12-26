@@ -503,6 +503,7 @@ noexcept try
 		// non-reading events, even for different files and locations. It may
 		// be possible to optimize this condition.
 		|| request.aio_lio_opcode != IOCB_CMD_PREADV
+		|| request.ropts->nodelay
 	};
 
 	if(flush_now)
