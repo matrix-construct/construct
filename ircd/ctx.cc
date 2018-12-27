@@ -1371,7 +1371,7 @@ noexcept try
 		--running;
 	});
 
-	while(1)
+	while(!termination(cur()))
 		work();
 }
 catch(const interrupted &e)
