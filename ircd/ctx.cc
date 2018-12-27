@@ -1232,9 +1232,13 @@ ircd::ctx::name(const pool &pool)
 
 ircd::ctx::pool::pool(const string_view &name,
                       const size_t &stack_size,
-                      const size_t &size)
+                      const size_t &size,
+                      const size_t &q_max_soft,
+                      const size_t &q_max_hard)
 :name{name}
 ,stack_size{stack_size}
+,q_max_soft{q_max_soft}
+,q_max_hard{q_max_hard}
 ,running{0}
 ,working{0}
 {
@@ -1314,6 +1318,44 @@ ircd::ctx::pool::add(const size_t &num)
 void
 ircd::ctx::pool::operator()(closure closure)
 {
+	if(!avail() && q.size() > q_max_soft)
+		log::dwarning
+		{
+			"pool(%p '%s') ctx(%p): size:%zu active:%zu queue:%zu exceeded soft max:%zu",
+			this,
+			name,
+			current,
+			size(),
+			active(),
+			q.size(),
+			q_max_soft
+		};
+
+	if(current)
+		q_max.wait([this]
+		{
+			if(q.size() < q_max_soft)
+				return true;
+
+			if(!q_max_soft && q.size() < avail())
+				return true;
+
+			return false;
+		});
+
+	if(unlikely(q.size() >= q_max_hard))
+		throw error
+		{
+			"pool(%p '%s') ctx(%p): size:%zu avail:%zu queue:%zu exceeded hard max:%zu",
+			this,
+			name,
+			current,
+			size(),
+			avail(),
+			q.size(),
+			q_max_hard
+		};
+
 	q.push(std::move(closure));
 }
 
@@ -1323,6 +1365,7 @@ ircd::ctx::pool::main()
 noexcept try
 {
 	++running;
+	q_max.notify();
 	const unwind avail([this]
 	{
 		--running;
@@ -1359,6 +1402,7 @@ try
 	const unwind avail([this]
 	{
 		--working;
+		q_max.notify();
 	});
 
 	// Execute the user's function

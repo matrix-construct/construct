@@ -24,8 +24,11 @@ class ircd::ctx::pool
 
 	string_view name;
 	size_t stack_size;
+	size_t q_max_soft;
+	size_t q_max_hard;
 	size_t running;
 	size_t working;
+	dock q_max;
 	queue<closure> q;
 	std::vector<context> ctxs;
 
@@ -61,7 +64,9 @@ class ircd::ctx::pool
 
 	pool(const string_view &name     = "<unnamed pool>"_sv,
 	     const size_t &stack_size    = DEFAULT_STACK_SIZE,
-	     const size_t &initial_ctxs  = 0);
+	     const size_t &initial_ctxs  = 0,
+	     const size_t &q_max_soft    = -1,
+	     const size_t &q_max_hard    = -1);
 
 	pool(pool &&) = delete;
 	pool(const pool &) = delete;
