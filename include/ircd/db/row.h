@@ -38,6 +38,9 @@ struct ircd::db::row
 	bool valid() const;                          // true on any cell valid; false on empty
 	bool valid(const string_view &) const;       // true on any cell valid equal; false on empty
 
+	bool cached() const;                         // true on all cell cached
+	bool cached(const string_view &) const;      // true on all columns cached key
+
 	// [GET] Find cell by name
 	const_iterator find(const string_view &column) const;
 	iterator find(const string_view &column);

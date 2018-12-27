@@ -9252,6 +9252,30 @@ const
 }
 
 bool
+ircd::db::row::cached()
+const
+{
+	return std::all_of(std::begin(*this), std::end(*this), []
+	(const auto &cell)
+	{
+		db::column &column(const_cast<db::cell &>(cell));
+		return cell.valid() && db::cached(column, cell.key());
+	});
+}
+
+bool
+ircd::db::row::cached(const string_view &key)
+const
+{
+	return std::all_of(std::begin(*this), std::end(*this), [&key]
+	(const auto &cell)
+	{
+		db::column &column(const_cast<db::cell &>(cell));
+		return db::cached(column, key);
+	});
+}
+
+bool
 ircd::db::row::valid()
 const
 {
