@@ -9786,7 +9786,7 @@ ircd::db::prefetch(column &column,
                    const string_view &key,
                    const gopts &gopts)
 {
-	if(exists(cache(column), key))
+	if(cached(column, key, gopts))
 		return;
 
 	request([column(column), key(std::string(key)), gopts]
@@ -9801,9 +9801,15 @@ ircd::db::cached(column &column,
                  const string_view &key,
                  const gopts &gopts)
 {
-	database &d(column);
-	database::column &c(column);
+	return exists(cache(column), key);
+}
 
+#if 0
+bool
+ircd::db::cached(column &column,
+                 const string_view &key,
+                 const gopts &gopts)
+{
 	auto opts(make_opts(gopts));
 	opts.read_tier = NON_BLOCKING;
 	opts.fill_cache = false;
@@ -9815,6 +9821,7 @@ ircd::db::cached(column &column,
 	assert(bool(it));
 	return valid_eq(*it, key);
 }
+#endif
 
 bool
 ircd::db::has(column &column,
