@@ -69,13 +69,12 @@ ircd::ctx::parallel<arg>::operator()(const arg &a)
 	if(this->eptr)
 		std::rethrow_exception(this->eptr);
 
-	this->a.at(snd++) = a;
-	snd %= this->a.size();
-
 	auto &p(*this->p);
 	p(std::bind(&parallel::receiver, this));
-
+	this->a.at(snd++) = a;
+	snd %= this->a.size();
 	out++;
+
 	wait_avail();
 }
 
@@ -86,13 +85,12 @@ ircd::ctx::parallel<arg>::operator()()
 	if(this->eptr)
 		std::rethrow_exception(this->eptr);
 
-	snd++;
-	snd %= this->a.size();
-
 	auto &p(*this->p);
 	p(std::bind(&parallel::receiver, this));
-
+	snd++;
+	snd %= this->a.size();
 	out++;
+
 	wait_avail();
 }
 
