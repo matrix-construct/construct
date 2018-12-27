@@ -14,6 +14,7 @@
 
 namespace ircd::fs::aio
 {
+	struct kernel;
 	struct request;
 
 	void prefetch(const fd &, const size_t &, const read_opts &);
@@ -29,6 +30,13 @@ struct ircd::fs::aio::kernel
 {
 	/// Internal semaphore for synchronization of this object
 	ctx::dock dock;
+
+	/// io_submit queue (out)
+	std::vector<iocb *> queue;
+	size_t qcount {0};
+
+	/// io_getevents vector (in)
+	std::vector<io_event> event;
 
 	/// The semaphore value for the eventfd which we keep here.
 	uint64_t semval {0};
@@ -50,7 +58,11 @@ struct ircd::fs::aio::kernel
 	void handle(const boost::system::error_code &, const size_t) noexcept;
 	void set_handle();
 
-	void submit(request &) noexcept;
+	void flush() noexcept;
+	void chase() noexcept;
+
+	void submit(request &);
+	void cancel(request &);
 
 	// Control panel
 	bool wait();

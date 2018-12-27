@@ -73,12 +73,15 @@ struct ircd::fs::aio::stats
 	uint32_t cur_reads {0};            ///< pending reads
 	uint32_t cur_writes {0};           ///< pending write
 	uint32_t cur_bytes_write {0};      ///< pending write bytes
+	uint32_t cur_queued {0};           ///< size of submit queues.
 
 	uint32_t max_requests {0};         ///< maximum observed pending requests
 	uint32_t max_reads {0};            ///< maximum observed pending reads
 	uint32_t max_writes {0};           ///< maximum observed pending write
 
 	uint32_t maxed_submits {0};        ///< number of submits at threshold
+	uint32_t single_submits {0};       ///< number of submits of just one
+	uint32_t chased_submits {0};       ///< number of submits via chase
 };
 
 struct ircd::fs::aio::init
