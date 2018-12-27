@@ -6289,7 +6289,9 @@ try
 }
 ,_buffer_align
 {
-	fs::block_size(fd)
+	opts.direct?
+		fs::block_size(fd):
+		0
 }
 ,offset
 {
@@ -6679,7 +6681,9 @@ try
 }
 ,_buffer_align
 {
-	fs::block_size(fd)
+	opts.direct?
+		fs::block_size(fd):
+		0
 }
 ,aio
 {
@@ -6963,16 +6967,16 @@ ircd::db::database::env::random_rw_file::default_opts{[]
 
 ircd::db::database::env::random_rw_file::random_rw_file(database *const &d,
                                                         const std::string &name,
-                                                        const EnvOptions &opts)
+                                                        const EnvOptions &env_opts)
 try
 :d
 {
 	*d
 }
-,opts{[&opts]
+,opts{[&env_opts]
 {
 	fs::fd::opts ret{default_opts};
-	ret.direct = opts.use_direct_reads && opts.use_direct_writes;
+	ret.direct = env_opts.use_direct_reads && env_opts.use_direct_writes;
 	return ret;
 }()}
 ,fd
@@ -6981,7 +6985,9 @@ try
 }
 ,_buffer_align
 {
-	fs::block_size(fd)
+	opts.direct?
+		fs::block_size(fd):
+		0
 }
 ,aio
 {
