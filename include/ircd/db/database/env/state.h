@@ -31,11 +31,13 @@ struct ircd::db::database::env::state
 struct ircd::db::database::env::state::pool
 {
 	using Priority = rocksdb::Env::Priority;
+	using IOPriority = rocksdb::Env::IOPriority;
 
 	static conf::item<size_t> stack_size;
 
 	database &d;
 	Priority pri;
+	IOPriority iopri;
 	std::deque<task> tasks;
 	ctx::pool p;
 

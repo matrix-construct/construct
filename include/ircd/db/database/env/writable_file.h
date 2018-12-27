@@ -28,6 +28,8 @@ struct ircd::db::database::env::writable_file
 	rocksdb::EnvOptions env_opts;
 	fs::fd::opts opts;
 	IOPriority prio {IO_LOW};
+	int8_t prio_val {0};
+	bool nodelay {false};
 	WriteLifeTimeHint hint {WriteLifeTimeHint::WLTH_NOT_SET};
 	fs::fd fd;
 	size_t preallocation_block_size {0};

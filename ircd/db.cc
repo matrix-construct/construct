@@ -4493,7 +4493,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::db::database::env::LowerThreadPoolIOPriority(Priority pool)
+ircd::db::database::env::LowerThreadPoolIOPriority(Priority prio)
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
@@ -4503,11 +4503,25 @@ noexcept try
 	{
 		log, "'%s': lower thread pool priority prio:%s",
 		d.name,
-		reflect(pool)
+		reflect(prio)
 	};
 	#endif
 
-	defaults.LowerThreadPoolIOPriority(pool);
+	assert(st);
+	auto &pool
+	{
+		*st->pool.at(prio)
+	};
+
+	switch(pool.iopri)
+	{
+		case IOPriority::IO_HIGH:
+			pool.iopri = IOPriority::IO_LOW;
+			break;
+
+		default:
+			break;
+	}
 }
 catch(const std::exception &e)
 {
@@ -4515,7 +4529,7 @@ catch(const std::exception &e)
 	{
 		log, "'%s': lower thread pool IO priority pool:%s :%s",
 		d.name,
-		reflect(pool),
+		reflect(prio),
 		e.what()
 	};
 }
@@ -5000,7 +5014,8 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->prio;
+	wopts.priority = this->prio_val;
+	wopts.nodelay = this->nodelay;
 	fs::truncate(fd, size, wopts);
 	return Status::OK();
 }
@@ -5112,7 +5127,8 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->prio;
+	wopts.priority = this->prio_val;
+	wopts.nodelay = this->nodelay;
 	const const_buffer buf
 	{
 		data(s), size(s)
@@ -5175,7 +5191,8 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->prio;
+	wopts.priority = this->prio_val;
+	wopts.nodelay = this->nodelay;
 	wopts.offset = offset;
 	const const_buffer buf
 	{
@@ -5344,7 +5361,8 @@ ircd::db::database::env::writable_file::_allocate(const size_t &offset,
 
 	fs::write_opts wopts;
 	wopts.offset = allocate_offset;
-	wopts.priority = this->prio;
+	wopts.priority = this->prio_val;
+	wopts.nodelay = this->nodelay;
 	wopts.keep_size = env_opts.fallocate_with_keep_size;
 
 	#ifdef RB_DEBUG_DB_ENV
@@ -5463,6 +5481,19 @@ noexcept
 	#endif
 
 	this->prio = prio;
+	switch(this->prio)
+	{
+		case IOPriority::IO_HIGH:
+			prio_val = -5; //TODO: magic
+			nodelay = true;
+			break;
+
+		default:
+		case IOPriority::IO_LOW:
+			prio_val = 0;
+			nodelay = false;
+			break;
+	}
 }
 
 rocksdb::Env::IOPriority
@@ -5605,7 +5636,8 @@ noexcept try
 	if(logical_offset > 0 && fs::size(fd) != logical_offset)
 	{
 		fs::write_opts wopts;
-		wopts.priority = this->prio;
+		wopts.priority = this->prio_val;
+		wopts.nodelay = true;
 		fs::truncate(fd, logical_offset, wopts);
 	}
 
@@ -5656,7 +5688,8 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->prio;
+	wopts.priority = this->prio_val;
+	wopts.nodelay = true;
 	fs::truncate(fd, size, wopts);
 	logical_offset = size;
 	return Status::OK();
@@ -6185,7 +6218,8 @@ ircd::db::database::env::writable_file_direct::_write__aligned(const const_buffe
 	assert(aligned(offset));
 
 	fs::write_opts wopts;
-	wopts.priority = this->prio;
+	wopts.priority = this->prio_val;
+	wopts.nodelay = this->nodelay;
 	wopts.offset = offset;
 	fs::write(fd, buf, wopts);
 
@@ -7468,6 +7502,12 @@ ircd::db::database::env::state::pool::pool(database &d,
                                            const Priority &pri)
 :d{d}
 ,pri{pri}
+,iopri
+{
+	pri == Priority::HIGH?
+		IOPriority::IO_HIGH:
+		IOPriority::IO_LOW
+}
 ,p
 {
 	reflect(pri),          // name of pool
