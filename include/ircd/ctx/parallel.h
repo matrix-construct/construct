@@ -66,32 +66,34 @@ template<class arg>
 void
 ircd::ctx::parallel<arg>::operator()(const arg &a)
 {
-	wait_avail();
 	if(this->eptr)
 		std::rethrow_exception(this->eptr);
 
 	this->a.at(snd++) = a;
 	snd %= this->a.size();
-	out++;
 
 	auto &p(*this->p);
 	p(std::bind(&parallel::receiver, this));
+
+	out++;
+	wait_avail();
 }
 
 template<class arg>
 void
 ircd::ctx::parallel<arg>::operator()()
 {
-	wait_avail();
 	if(this->eptr)
 		std::rethrow_exception(this->eptr);
 
 	snd++;
 	snd %= this->a.size();
-	out++;
 
 	auto &p(*this->p);
 	p(std::bind(&parallel::receiver, this));
+
+	out++;
+	wait_avail();
 }
 
 template<class arg>
