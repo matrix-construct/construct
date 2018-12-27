@@ -92,7 +92,7 @@ struct ircd::vector_view
 	template<class U,
 	         size_t SIZE>
 	vector_view(const std::array<U, SIZE> &array)
-	:vector_view(array.data(), array.size())
+	:vector_view(const_cast<pointer>(array.data()), array.size())
 	{}
 
 	template<size_t SIZE>
