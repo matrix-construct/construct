@@ -1046,7 +1046,7 @@ decltype(ircd::fs::aio::max_submit)
 ircd::fs::aio::max_submit
 {
 	{ "name",     "ircd.fs.aio.max_submit"  },
-	{ "default",  16L                       },
+	{ "default",  32L                       },
 	{ "persist",  false                     },
 };
 
