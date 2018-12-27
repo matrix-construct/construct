@@ -28,25 +28,22 @@ namespace ircd::fs::aio
 /// an extern instance pointer at fs::aio::context maintained by fs::aio::init.
 struct ircd::fs::aio::kernel
 {
-	/// Internal semaphore for synchronization of this object
-	ctx::dock dock;
+	/// io_getevents vector (in)
+	std::vector<io_event> event;
+	uint64_t ecount {0};
 
 	/// io_submit queue (out)
 	std::vector<iocb *> queue;
 	size_t qcount {0};
 
-	/// io_getevents vector (in)
-	std::vector<io_event> event;
-
-	/// The semaphore value for the eventfd which we keep here.
-	uint64_t semval {0};
+	/// other state
+	ctx::dock dock;
+	size_t in_flight {0};
 
 	/// An eventfd which will be notified by the kernel; we integrate this with
 	/// the ircd io_service core epoll() event loop. The EFD_SEMAPHORE flag is
-	/// not used to reduce the number of triggers. We can collect multiple AIO
-	/// completions after a single trigger to this fd. Because EFD_SEMAPHORE is
-	/// not set, the semval which is kept above will reflect a hint for how
-	/// many AIO's are done.
+	/// not used to reduce the number of triggers. The semaphore value is the
+	/// ecount (above) which will reflect a hint for how many AIO's are done.
 	asio::posix::stream_descriptor resfd;
 
 	/// Handler to the io context we submit requests to the kernel with
@@ -63,6 +60,7 @@ struct ircd::fs::aio::kernel
 
 	void submit(request &);
 	void cancel(request &);
+	void wait(request &);
 
 	// Control panel
 	bool wait();
