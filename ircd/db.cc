@@ -6404,7 +6404,7 @@ noexcept try
 	fs::read_opts opts;
 	opts.offset = offset;
 	opts.aio = this->aio;
-	opts.all = !this->opts.direct;
+	opts.all = false;
 	const mutable_buffer buf
 	{
 		scratch, length
@@ -6492,7 +6492,7 @@ noexcept try
 	fs::read_opts opts;
 	opts.offset = offset;
 	opts.aio = this->aio;
-	opts.all = !this->opts.direct;
+	opts.all = false;
 	const mutable_buffer buf
 	{
 		scratch, length
