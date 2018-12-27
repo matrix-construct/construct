@@ -544,19 +544,32 @@ ircd::fs::aio::kernel::submit(request &request)
 	queue.at(qcount++) = static_cast<iocb *>(&request);
 	stats.cur_queued++;
 
+	// Determine whether the user wants (or needs) to submit without delay.
+	bool nodelay; switch(request.aio_lio_opcode)
+	{
+		case IOCB_CMD_PREADV:
+			nodelay = request.ropts->nodelay;
+			break;
+
+		case IOCB_CMD_PWRITEV:
+			nodelay = request.wopts->nodelay;
+			break;
+
+		default:
+			nodelay = true;
+			break;
+	}
+
 	const bool flush_now
 	{
+		// The nodelay flag is set
+		nodelay
+
 		// The queue has reached the configured size
-		qcount >= size_t(max_submit)
+		|| qcount >= size_t(max_submit)
 
 		// The queue has reached its maximum size
 		|| qcount >= queue.size()
-
-		// The request causes serialization. This is considered true for all
-		// non-reading events, even for different files and locations. It may
-		// be possible to optimize this condition.
-		|| request.aio_lio_opcode != IOCB_CMD_PREADV
-		|| request.ropts->nodelay
 	};
 
 	if(flush_now)
