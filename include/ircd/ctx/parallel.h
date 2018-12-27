@@ -26,26 +26,29 @@ struct ircd::ctx::parallel
 	closure c;
 	dock d;
 	std::exception_ptr eptr;
-	size_t snd {0};
-	size_t rcv {0};
-	size_t out {0};
+	ushort snd {0};
+	ushort rcv {0};
+	ushort out {0};
+
+	void receiver() noexcept;
 
   public:
 	void wait_avail();
 	void wait_done();
 
+	void operator()();
 	void operator()(const arg &a);
 
-	parallel(pool &, vector_view<arg>, closure);
+	parallel(pool &, const vector_view<arg> &, closure);
 	~parallel() noexcept;
 };
 
 template<class arg>
 ircd::ctx::parallel<arg>::parallel(pool &p,
-                                   vector_view<arg> a,
+                                   const vector_view<arg> &a,
                                    closure c)
 :p{&p}
-,a{std::move(a)}
+,a{a}
 ,c{std::move(c)}
 {
 	p.min(this->a.size());
@@ -67,29 +70,51 @@ ircd::ctx::parallel<arg>::operator()(const arg &a)
 	if(this->eptr)
 		std::rethrow_exception(this->eptr);
 
-	auto &p(*this->p);
-	this->a.at(snd++ % this->a.size()) = a;
+	this->a.at(snd++) = a;
+	snd %= this->a.size();
 	out++;
-	p([this]()
-	mutable
+
+	auto &p(*this->p);
+	p(std::bind(&parallel::receiver, this));
+}
+
+template<class arg>
+void
+ircd::ctx::parallel<arg>::operator()()
+{
+	wait_avail();
+	if(this->eptr)
+		std::rethrow_exception(this->eptr);
+
+	snd++;
+	snd %= this->a.size();
+	out++;
+
+	auto &p(*this->p);
+	p(std::bind(&parallel::receiver, this));
+}
+
+template<class arg>
+void
+ircd::ctx::parallel<arg>::receiver()
+noexcept
+{
+	auto &a
 	{
-		auto &a
-		{
-			this->a.at(rcv++ % this->a.size())
-		};
+		this->a.at(rcv++ % this->a.size())
+	};
 
-		if(!this->eptr) try
-		{
-			c(a);
-		}
-		catch(...)
-		{
-			this->eptr = std::current_exception();
-		}
+	if(!this->eptr) try
+	{
+		c(a);
+	}
+	catch(...)
+	{
+		this->eptr = std::current_exception();
+	}
 
-		out--;
-		d.notify_one();
-	});
+	out--;
+	d.notify_one();
 }
 
 template<class arg>
@@ -98,7 +123,6 @@ ircd::ctx::parallel<arg>::wait_avail()
 {
 	d.wait([this]
 	{
-		assert(snd >= rcv);
 		return out < a.size();
 	});
 }
