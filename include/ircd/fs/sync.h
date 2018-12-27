@@ -39,8 +39,6 @@ struct ircd::fs::sync_opts
 	/// this has no effect.
 	bool aio {true};
 
-	/// Request priority. This value is ignored by the kernel for the
-	/// operations provided by this interface. It is still provided for
-	/// consistency and may be used internally by IRCd in the future.
-	int8_t priority {-1};
+	/// Request priority. This value is ignored for sync operations.
+	int8_t priority {0};
 };

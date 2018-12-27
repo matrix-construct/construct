@@ -59,10 +59,8 @@ struct ircd::fs::write_opts
 	/// the host system later ignores the offset due to the file's openmode.
 	off_t offset {0};
 
-	/// Request priority. Higher value request will take priority over lower
-	/// value. Lowest value is zero. Negative value will receive a contextual
-	/// value internally (generally just zero). Default is -1.
-	int8_t priority {-1};
+	/// Request priority. Lower value request will take priority over higher.
+	int8_t priority {0};
 
 	/// for allocate()
 	bool keep_size {false};

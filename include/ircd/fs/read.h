@@ -40,10 +40,8 @@ struct ircd::fs::read_opts
 	/// Offset in the file to start the read from.
 	off_t offset {0};
 
-	/// Request priority. Higher value request will take priority over lower
-	/// value. Lowest value is zero. Negative value will receive a contextual
-	/// value internally (generally just zero). Default is -1.
-	int8_t priority {-1};
+	/// Request priority. Lower value request will take priority over higher
+	int8_t priority {0};
 
 	/// Determines whether this operation is conducted via AIO. If not, a
 	/// direct syscall is made. Using AIO will only block one ircd::ctx while

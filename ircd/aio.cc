@@ -658,14 +658,21 @@ catch(const std::exception &e)
 // internal util
 //
 
+/// Translate an ircd::fs opts priority integer to an AIO priority integer.
+/// The ircd::fs priority integer is like a nice value. The AIO value is
+/// positive [0, MAX_REQPRIO]. This function takes an ircd::fs value and
+/// shifts it to the AIO value.
 int
 ircd::fs::aio::reqprio(int input)
 {
-	// no use for negative values yet; make them zero.
-	input = std::max(input, 0);
+	static const auto median
+	{
+		int(MAX_REQPRIO / 2)
+	};
 
-	// value is reduced to system maximum.
-	input = std::min(input, int(ircd::info::aio_reqprio_max));
-
+	input = std::max(input, 0 - median);
+	input = std::min(input, median);
+	input = MAX_REQPRIO - (input + median);
+	assert(input >= 0 && input <= int(MAX_REQPRIO));
 	return input;
 }
