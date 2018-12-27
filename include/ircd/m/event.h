@@ -26,6 +26,7 @@ namespace ircd::m
 	// [GET]
 	bool exists(const id::event &);
 	bool exists(const id::event &, const bool &good);
+	bool cached(const id::event &);
 	bool good(const id::event &);
 	bool bad(const id::event &);
 

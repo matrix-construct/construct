@@ -55,6 +55,10 @@ struct ircd::m::event::fetch
 	friend const_buffer get(const idx &, const string_view &key, const mutable_buffer &out);
 	friend const_buffer get(const id &, const string_view &key, const mutable_buffer &out);
 
+	friend bool cached(const idx &, const opts & = default_opts);
+	friend bool cached(const id &, const opts &);
+	friend bool cached(const id &);
+
 	friend void prefetch(const idx &, const string_view &key);
 	friend void prefetch(const idx &, const opts & = default_opts);
 	friend void prefetch(const id &, const string_view &key);

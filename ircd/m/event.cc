@@ -221,6 +221,57 @@ ircd::m::good(const id::event &event_id)
 }
 
 bool
+ircd::m::cached(const id::event &event_id)
+{
+	return cached(event_id, event::fetch::default_opts);
+}
+
+bool
+ircd::m::cached(const id::event &event_id,
+                const event::fetch::opts &opts)
+{
+	if(!db::cached(dbs::event_idx, event_id, opts.gopts))
+		return false;
+
+	const event::idx event_idx
+	{
+		index(event_id, std::nothrow)
+	};
+
+	return event_idx?
+		cached(event_idx, opts.gopts):
+		false;
+}
+
+bool
+ircd::m::cached(const event::idx &event_idx,
+                const event::fetch::opts &opts)
+{
+	const byte_view<string_view> key
+	{
+		event_idx
+	};
+
+	const auto &select(opts.keys);
+	auto &columns(dbs::event_column);
+	return std::all_of(begin(select), end(select), [&opts, &key, &columns]
+	(const string_view &colname)
+	{
+		const auto &idx
+		{
+			json::indexof<event>(colname)
+		};
+
+		auto &column
+		{
+			columns.at(idx)
+		};
+
+		return db::cached(column, key, opts.gopts);
+	});
+}
+
+bool
 ircd::m::exists(const id::event &event_id,
                 const bool &good)
 {
