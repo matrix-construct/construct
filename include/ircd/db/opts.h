@@ -34,25 +34,29 @@ namespace ircd::db
 enum class ircd::db::set
 :uint64_t
 {
-	FSYNC            = 0x0001, // Uses kernel filesystem synchronization after write (slow)
-	NO_JOURNAL       = 0x0002, // Write Ahead Log (WAL) for some crash recovery
-	MISSING_COLUMNS  = 0x0004, // No exception thrown when writing to a deleted column family
+	FSYNC            = 0x0001, ///< Uses kernel filesystem synchronization after write (slow).
+	NO_JOURNAL       = 0x0002, ///< Write Ahead Log (WAL) for some crash recovery (danger).
+	NO_BLOCKING      = 0x0004, ///< Fail if write would block.
+	NO_COLUMN_ERR    = 0x0008, ///< No exception thrown when writing to a deleted column.
+	PRIO_LOW         = 0x0010, ///< Mark for low priority behavior.
+	PRIO_HIGH        = 0x0020, ///< Mark for high priority behavior.
 };
 
 enum class ircd::db::get
 :uint64_t
 {
-	PIN              = 0x0001, // Keep iter data in memory for iter lifetime (good for lots of ++/--)
-	CACHE            = 0x0002, // Update the cache (CACHE is default for non-iterator operations)
-	NO_CACHE         = 0x0004, // Do not update the cache (NO_CACHE is default for iterators)
-	NO_SNAPSHOT      = 0x0008, // This iterator will have the latest data (tailing)
-	CHECKSUM         = 0x0010, // Integrity of data will be checked (overrides conf).
-	NO_CHECKSUM      = 0x0020, // Integrity of data will not be checked (overrides conf).
-	PREFIX           = 0x0040, // (prefix_same_as_start); automatic for index columns with pfx
-	ORDERED          = 0x0080, // (total_order_seek); relevant to index columns
-	NO_PARALLEL      = 0x0100, // Don't submit requests in parallel (relevant to db::row)
-	NO_THROW         = 0x0200, // Suppress exceptions if possible.
-	THROW            = 0x0400, // Throw exceptions more than usual.
+	PIN              = 0x0001, ///< Keep iter data in memory for iter lifetime (good for lots ++/--).
+	PREFIX           = 0x0002, ///< (prefix_same_as_start); automatic for index columns with pfx.
+	ORDERED          = 0x0004, ///< (total_order_seek); relevant to index columns.
+	CACHE            = 0x0008, ///< Update the cache.
+	NO_CACHE         = 0x0010, ///< Do not update the cache.
+	CHECKSUM         = 0x0020, ///< Integrity of data will be checked (overrides conf).
+	NO_CHECKSUM      = 0x0040, ///< Integrity of data will not be checked (overrides conf).
+	NO_BLOCKING      = 0x0080, ///< Fail if read would block from not being cached.
+	NO_SNAPSHOT      = 0x0100, ///< This iterator will have the latest data (tailing).
+	NO_PARALLEL      = 0x0200, ///< Don't submit requests in parallel (relevant to db::row).
+	THROW            = 0x0400, ///< Throw exceptions more than usual.
+	NO_THROW         = 0x0800, ///< Suppress exceptions if possible.
 };
 
 template<class T>

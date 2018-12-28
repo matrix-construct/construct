@@ -11359,7 +11359,7 @@ ircd::db::make_opts(const gopts &opts)
 {
 	rocksdb::ReadOptions ret;
 	assert(ret.fill_cache);
-	ret.read_tier = BLOCKING;
+	assert(ret.read_tier == BLOCKING);
 
 	// slice* for exclusive upper bound. when prefixes are used this value must
 	// have the same prefix because ordering is not guaranteed between prefixes
@@ -11398,6 +11398,10 @@ ircd::db::operator+=(rocksdb::ReadOptions &ret,
 	ret.readahead_size = opts.readahead;
 	ret.iter_start_seqnum = opts.seqnum;
 
+	ret.read_tier = test(opts, get::NO_BLOCKING)?
+		rocksdb::ReadTier::kBlockCacheTier:
+		rocksdb::ReadTier::kReadAllTier;
+
 	if(opts.snapshot && !test(opts, get::NO_SNAPSHOT))
 		ret.snapshot = opts.snapshot;
 
@@ -11419,7 +11423,9 @@ ircd::db::operator+=(rocksdb::WriteOptions &ret,
 {
 	ret.sync = test(opts, set::FSYNC);
 	ret.disableWAL = test(opts, set::NO_JOURNAL);
-	ret.ignore_missing_column_families = test(opts, set::MISSING_COLUMNS);
+	ret.ignore_missing_column_families = test(opts, set::NO_COLUMN_ERR);
+	ret.no_slowdown = test(opts, set::NO_BLOCKING);
+	ret.low_pri = test(opts, set::PRIO_LOW);
 	return ret;
 }
 
