@@ -1045,6 +1045,12 @@ const noexcept
 // ctx/context.h
 //
 
+decltype(ircd::ctx::DEFAULT_STACK_SIZE)
+ircd::ctx::DEFAULT_STACK_SIZE
+{
+	128_KiB
+};
+
 // Linkage here for default construction because ctx is internal.
 ircd::ctx::context::context()
 {
