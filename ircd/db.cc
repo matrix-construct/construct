@@ -109,6 +109,7 @@ ircd::db::request
 	"db req",
 	size_t(request_pool_stack_size),
 	0, // don't prespawn because this is static
+	0, // zero-size queue will yield submitter
 };
 
 /// This mutex is necessary to serialize entry into rocksdb's write impl
@@ -9857,6 +9858,9 @@ ircd::db::prefetch(column &column,
                    const gopts &gopts)
 {
 	if(cached(column, key, gopts))
+		return;
+
+	if(!request.avail())
 		return;
 
 	request([column(column), key(std::string(key)), gopts]
