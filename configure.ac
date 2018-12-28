@@ -1099,7 +1099,8 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 
 	AM_COND_IF([DEBUG],
 	[
-		boost_variant="debug"
+		dnl boost_variant="debug"
+		boost_variant="release"
 	], [
 		boost_variant="release"
 	])
