@@ -39,7 +39,9 @@ namespace ircd::ios
 	bool is_main_thread();
 	void assert_main_thread();
 
+	bool available();
 	asio::io_context &get();
+
 	void dispatch(std::function<void ()>);
 	void post(std::function<void ()>);
 

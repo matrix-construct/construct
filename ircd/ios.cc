@@ -78,3 +78,9 @@ ircd::ios::get()
 	assert(user);
 	return *user;
 }
+
+bool
+ircd::ios::available()
+{
+	return bool(user);
+}
