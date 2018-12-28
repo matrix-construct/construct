@@ -1245,7 +1245,10 @@ ircd::ctx::pool::pool(const string_view &name,
 :name{name}
 ,opt{&opt}
 {
-	add(this->opt->initial_ctxs);
+	// Can't spawn contexts when the ios isn't available. This may be the
+	// case for some static instances of pool: initial_ctxs value is ignored.
+	if(ircd::ios::available())
+		add(this->opt->initial_ctxs);
 }
 
 ircd::ctx::pool::~pool()
