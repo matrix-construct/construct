@@ -37,6 +37,7 @@ namespace ircd::ios
 	extern asio::io_context *user;
 
 	bool is_main_thread();
+	bool is_static_thread();
 	void assert_main_thread();
 
 	bool available();
@@ -67,4 +68,10 @@ inline bool
 ircd::ios::is_main_thread()
 {
 	return std::this_thread::get_id() == main_thread_id;
+}
+
+inline bool
+ircd::ios::is_static_thread()
+{
+	return std::this_thread::get_id() == static_thread_id;
 }
