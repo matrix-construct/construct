@@ -511,16 +511,16 @@ ircd::fs::flush(const fd &fd,
 		int(fd),
 		opts.metadata,
 		opts.aio,
-		opts.metadata? aio::SUPPORT_FDSYNC : aio::SUPPORT_FSYNC
+		opts.metadata? aio::support_fdsync : aio::support_fsync
 	};
 
 	#ifdef IRCD_USE_AIO
-	if(aio::context && opts.aio)
+	if(aio::system && opts.aio)
 	{
-		if(!opts.metadata && aio::SUPPORT_FDSYNC)
+		if(!opts.metadata && aio::support_fdsync)
 			return aio::fdsync(fd, opts);
 
-		if(aio::SUPPORT_FSYNC)
+		if(aio::support_fsync)
 			return aio::fsync(fd, opts);
 	}
 	#endif
@@ -568,7 +568,7 @@ ircd::fs::prefetch(const fd &fd,
 	}
 
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::context) && opts.aio)
+	if(likely(aio::system) && opts.aio)
 		aio::prefetch(fd, count, opts);
 	#endif
 }
@@ -715,7 +715,7 @@ ircd::fs::read(const fd &fd,
                const read_opts &opts)
 {
 	#ifdef IRCD_USE_AIO
-	if(aio::context && opts.aio)
+	if(aio::system && opts.aio)
 		return aio::read(fd, iov, opts);
 	#endif
 
@@ -981,7 +981,7 @@ ircd::fs::write(const fd &fd,
                 const write_opts &opts)
 {
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::context) && opts.aio)
+	if(likely(aio::system) && opts.aio)
 		return aio::write(fd, iov, opts);
 	#endif
 
@@ -1005,17 +1005,17 @@ ircd::fs::write(const fd &fd,
 // otherwise on non-supporting platforms these will be the defaults here.
 //
 
-decltype(ircd::fs::aio::SUPPORT)
+decltype(ircd::fs::aio::support)
 extern __attribute__((weak))
-ircd::fs::aio::SUPPORT;
+ircd::fs::aio::support;
 
-decltype(ircd::fs::aio::SUPPORT_FSYNC)
+decltype(ircd::fs::aio::support_fsync)
 extern __attribute__((weak))
-ircd::fs::aio::SUPPORT_FSYNC;
+ircd::fs::aio::support_fsync;
 
-decltype(ircd::fs::aio::SUPPORT_FDSYNC)
+decltype(ircd::fs::aio::support_fdsync)
 extern __attribute__((weak))
-ircd::fs::aio::SUPPORT_FDSYNC;
+ircd::fs::aio::support_fdsync;
 
 decltype(ircd::fs::aio::MAX_REQPRIO)
 extern __attribute__((weak))
@@ -1055,8 +1055,8 @@ decltype(ircd::fs::aio::stats)
 ircd::fs::aio::stats;
 
 /// Non-null when aio is available for use
-decltype(ircd::fs::aio::context)
-ircd::fs::aio::context;
+decltype(ircd::fs::aio::system)
+ircd::fs::aio::system;
 
 //
 // init

@@ -27,24 +27,24 @@ namespace ircd::fs::aio
 // non-supporting platforms, or for items not listed here, the definitions in
 // ircd/fs.cc are the default.
 
-decltype(ircd::fs::aio::SUPPORT)
-ircd::fs::aio::SUPPORT
+decltype(ircd::fs::aio::support)
+ircd::fs::aio::support
 {
 	true
 };
 
 /// True if IOCB_CMD_FSYNC is supported by AIO. If this is false then
 /// fs::fsync_opts::async=true flag is ignored.
-decltype(ircd::fs::aio::SUPPORT_FSYNC)
-ircd::fs::aio::SUPPORT_FSYNC
+decltype(ircd::fs::aio::support_fsync)
+ircd::fs::aio::support_fsync
 {
 	false //TODO: get this info
 };
 
 /// True if IOCB_CMD_FDSYNC is supported by AIO. If this is false then
 /// fs::fsync_opts::async=true flag is ignored.
-decltype(ircd::fs::aio::SUPPORT_FDSYNC)
-ircd::fs::aio::SUPPORT_FDSYNC
+decltype(ircd::fs::aio::support_fdsync)
+ircd::fs::aio::support_fdsync
 {
 	false //TODO: get this info
 };
@@ -52,7 +52,7 @@ ircd::fs::aio::SUPPORT_FDSYNC
 decltype(ircd::fs::aio::MAX_EVENTS)
 ircd::fs::aio::MAX_EVENTS
 {
-	128L
+	128L //TODO: get this info
 };
 
 decltype(ircd::fs::aio::MAX_REQPRIO)
@@ -67,18 +67,18 @@ ircd::fs::aio::MAX_REQPRIO
 
 ircd::fs::aio::init::init()
 {
-	assert(!context);
+	assert(!system);
 	if(!bool(aio::enable))
 		return;
 
-	context = new kernel{};
+	system = new struct system;
 }
 
 ircd::fs::aio::init::~init()
 noexcept
 {
-	delete context;
-	context = nullptr;
+	delete system;
+	system = nullptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -271,11 +271,11 @@ ircd::fs::aio::prefetch(const fd &fd,
 ircd::fs::aio::request::request(const int &fd)
 :iocb{0}
 {
-	assert(context);
+	assert(system);
 	assert(ctx::current);
 
 	aio_flags = IOCB_FLAG_RESFD;
-	aio_resfd = context->resfd.native_handle();
+	aio_resfd = system->resfd.native_handle();
 	aio_fildes = fd;
 	aio_data = uintptr_t(this);
 }
@@ -291,8 +291,8 @@ noexcept
 void
 ircd::fs::aio::request::cancel()
 {
-	assert(context);
-	context->cancel(*this);
+	assert(system);
+	system->cancel(*this);
 	stats.bytes_cancel += bytes(iovec());
 	stats.cancel++;
 }
@@ -302,7 +302,7 @@ ircd::fs::aio::request::cancel()
 size_t
 ircd::fs::aio::request::operator()()
 {
-	assert(context);
+	assert(system);
 	assert(ctx::current);
 	assert(waiter == ctx::current);
 
@@ -312,14 +312,14 @@ ircd::fs::aio::request::operator()()
 	};
 
 	// Wait here until there's room to submit a request
-	context->dock.wait([]
+	system->dock.wait([]
 	{
-		const size_t count(context->qcount + context->in_flight);
+		const size_t count(system->qcount + system->in_flight);
 		return count < size_t(max_events);
 	});
 
-	// Submit to kernel
-	context->submit(*this);
+	// Submit to system
+	system->submit(*this);
 
 	// Update stats for submission phase
 	stats.bytes_requests += submitted_bytes;
@@ -328,7 +328,8 @@ ircd::fs::aio::request::operator()()
 	const auto &curcnt(stats.requests - stats.complete);
 	stats.max_requests = std::max(stats.max_requests, curcnt);
 
-	context->wait(*this);
+	// Wait for completion
+	system->wait(*this);
 	assert(retval <= ssize_t(submitted_bytes));
 
 	// Update stats for completion phase.
@@ -360,14 +361,14 @@ const
 }
 
 //
-// kernel
+// system
 //
 
 //
-// kernel::kernel
+// system::system
 //
 
-ircd::fs::aio::kernel::kernel()
+ircd::fs::aio::system::system()
 try
 :event
 {
@@ -403,7 +404,7 @@ catch(const std::exception &e)
 	};
 }
 
-ircd::fs::aio::kernel::~kernel()
+ircd::fs::aio::system::~system()
 noexcept try
 {
 	assert(qcount == 0);
@@ -428,7 +429,7 @@ catch(const std::exception &e)
 }
 
 bool
-ircd::fs::aio::kernel::interrupt()
+ircd::fs::aio::system::interrupt()
 {
 	if(!resfd.is_open())
 		return false;
@@ -438,7 +439,7 @@ ircd::fs::aio::kernel::interrupt()
 }
 
 bool
-ircd::fs::aio::kernel::wait()
+ircd::fs::aio::system::wait()
 {
 	if(!resfd.is_open())
 		return false;
@@ -457,7 +458,7 @@ ircd::fs::aio::kernel::wait()
 }
 
 void
-ircd::fs::aio::kernel::wait(request &request)
+ircd::fs::aio::system::wait(request &request)
 try
 {
 	assert(ctx::current == request.waiter);
@@ -479,7 +480,7 @@ catch(const ctx::terminated &)
 }
 
 void
-ircd::fs::aio::kernel::cancel(request &request)
+ircd::fs::aio::system::cancel(request &request)
 {
 	const auto &cb
 	{
@@ -514,7 +515,7 @@ ircd::fs::aio::kernel::cancel(request &request)
 
 	// Setup an io_event result which we will handle as a normal event
 	// immediately on this stack. We create our own cancel result if
-	// the request was not yet submitted to the kernel so the handler
+	// the request was not yet submitted to the system so the handler
 	// remains agnostic to our userspace queues.
 	io_event result {0};
 	if(erased_from_queue)
@@ -534,7 +535,7 @@ ircd::fs::aio::kernel::cancel(request &request)
 }
 
 void
-ircd::fs::aio::kernel::submit(request &request)
+ircd::fs::aio::system::submit(request &request)
 {
 	assert(qcount < queue.size());
 	assert(qcount + in_flight < max_events);
@@ -576,14 +577,14 @@ ircd::fs::aio::kernel::submit(request &request)
 		return flush();
 
 	if(qcount == 1)
-		ircd::post(std::bind(&kernel::chase, this));
+		ircd::post(std::bind(&system::chase, this));
 }
 
 /// The chaser is posted to the IRCd event loop after the first
 /// request is queued. Ideally more requests will queue up before
 /// the chaser is executed.
 void
-ircd::fs::aio::kernel::chase()
+ircd::fs::aio::system::chase()
 noexcept
 {
 	if(qcount)
@@ -595,7 +596,7 @@ noexcept
 
 /// The flusher submits all queued requests and resets the count.
 void
-ircd::fs::aio::kernel::flush()
+ircd::fs::aio::system::flush()
 noexcept try
 {
 	assert(qcount > 0);
@@ -622,7 +623,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::fs::aio::kernel::set_handle()
+ircd::fs::aio::system::set_handle()
 {
 	ecount = 0;
 
@@ -633,7 +634,7 @@ ircd::fs::aio::kernel::set_handle()
 
 	auto handler
 	{
-		std::bind(&kernel::handle, this, ph::_1, ph::_2)
+		std::bind(&system::handle, this, ph::_1, ph::_2)
 	};
 
 	asio::async_read(resfd, bufs, std::move(handler));
@@ -641,7 +642,7 @@ ircd::fs::aio::kernel::set_handle()
 
 /// Handle notifications that requests are complete.
 void
-ircd::fs::aio::kernel::handle(const boost::system::error_code &ec,
+ircd::fs::aio::system::handle(const boost::system::error_code &ec,
                               const size_t bytes)
 noexcept try
 {
@@ -677,7 +678,7 @@ catch(const ctx::interrupted &)
 }
 
 void
-ircd::fs::aio::kernel::handle_events()
+ircd::fs::aio::system::handle_events()
 noexcept try
 {
 	assert(!ctx::current);
@@ -715,7 +716,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::fs::aio::kernel::handle_event(const io_event &event)
+ircd::fs::aio::system::handle_event(const io_event &event)
 noexcept try
 {
 	// Our extended control block is passed in event.data

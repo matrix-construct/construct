@@ -22,12 +22,13 @@ namespace ircd::fs::aio
 {
 	struct init;
 	struct stats;
-	struct kernel;
+	struct system;
 	struct request;
 
-	extern const bool SUPPORT;
-	extern const bool SUPPORT_FSYNC;
-	extern const bool SUPPORT_FDSYNC;
+	extern const bool support;
+	extern const bool support_fsync;
+	extern const bool support_fdsync;
+
 	extern const size_t MAX_EVENTS;
 	extern const size_t MAX_REQPRIO;
 
@@ -36,7 +37,7 @@ namespace ircd::fs::aio
 	extern conf::item<size_t> max_submit;
 
 	extern struct stats stats;
-	extern kernel *context;
+	extern struct system *system;
 }
 
 /// Statistics structure.

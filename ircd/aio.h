@@ -14,7 +14,7 @@
 
 namespace ircd::fs::aio
 {
-	struct kernel;
+	struct system;
 	struct request;
 
 	void prefetch(const fd &, const size_t &, const read_opts &);
@@ -24,9 +24,9 @@ namespace ircd::fs::aio
 	void fsync(const fd &, const sync_opts &);
 }
 
-/// AIO context instance from the kernel. Right now this is a singleton with
+/// AIO context instance from the system. Right now this is a singleton with
 /// an extern instance pointer at fs::aio::context maintained by fs::aio::init.
-struct ircd::fs::aio::kernel
+struct ircd::fs::aio::system
 {
 	/// io_getevents vector (in)
 	std::vector<io_event> event;
@@ -40,13 +40,13 @@ struct ircd::fs::aio::kernel
 	ctx::dock dock;
 	size_t in_flight {0};
 
-	/// An eventfd which will be notified by the kernel; we integrate this with
+	/// An eventfd which will be notified by the system; we integrate this with
 	/// the ircd io_service core epoll() event loop. The EFD_SEMAPHORE flag is
 	/// not used to reduce the number of triggers. The semaphore value is the
 	/// ecount (above) which will reflect a hint for how many AIO's are done.
 	asio::posix::stream_descriptor resfd;
 
-	/// Handler to the io context we submit requests to the kernel with
+	/// Handler to the io context we submit requests to the system with
 	aio_context_t idp {0};
 
 	// Callback stack invoked when the sigfd is notified of completed events.
@@ -66,8 +66,8 @@ struct ircd::fs::aio::kernel
 	bool wait();
 	bool interrupt();
 
-	kernel();
-	~kernel() noexcept;
+	system();
+	~system() noexcept;
 };
 
 /// Generic request control block.

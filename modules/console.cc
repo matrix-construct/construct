@@ -810,7 +810,7 @@ console_cmd__env(opt &out, const string_view &line)
 bool
 console_cmd__aio(opt &out, const string_view &line)
 {
-	if(!fs::aio::context)
+	if(!fs::aio::system)
 		throw error
 		{
 			"AIO is not available."
