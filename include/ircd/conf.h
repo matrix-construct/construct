@@ -23,6 +23,12 @@
 /// O(1) access to the value contained in their item instance. Administrators
 /// have logarithmic access through this interface using the items map by name.
 ///
+/// All conf::items can be controlled by environmental variables at program
+/// startup. The name of the conf::item in the environment uses underscore
+/// '_' rather than '.' and the environment takes precedence over both defaults
+/// and databased values. This means you can set a conf through an env var
+/// to override a broken value.
+///
 namespace ircd::conf
 {
 	template<class T = void> struct item;  // doesn't exist
