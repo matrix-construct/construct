@@ -96,6 +96,16 @@ ircd::db::request_pool_size
 	}
 };
 
+decltype(ircd::db::request_pool_opts)
+ircd::db::request_pool_opts
+{
+	size_t(request_pool_stack_size),
+	size_t(request_pool_size),
+	-1,   // No hard limit
+	0,    // Soft limit at any queued
+	true, // Yield before hitting soft limit
+};
+
 /// Concurrent request pool. Requests to seek may be executed on this
 /// pool in cases where a single context would find it advantageous.
 /// Some examples are a db::row seek, or asynchronous prefetching.
@@ -106,10 +116,7 @@ ircd::db::request_pool_size
 decltype(ircd::db::request)
 ircd::db::request
 {
-	"db req",
-	size_t(request_pool_stack_size),
-	0, // don't prespawn because this is static
-	0, // zero-size queue will yield submitter
+	"db req", request_pool_opts
 };
 
 /// This mutex is necessary to serialize entry into rocksdb's write impl
@@ -7509,11 +7516,17 @@ ircd::db::database::env::state::pool::pool(database &d,
 		IOPriority::IO_HIGH:
 		IOPriority::IO_LOW
 }
-,p
+,popts
 {
-	reflect(pri),          // name of pool
 	size_t(stack_size),    // stack size of worker
 	0,                     // initial workers
+	-1,                    // queue hard limit
+	-1,                    // queue soft limit
+}
+,p
+{
+	reflect(pri),  // name of pool
+	this->popts    // pool options
 }
 {
 }
@@ -7567,7 +7580,6 @@ catch(const std::exception &e)
 void
 ircd::db::database::env::state::pool::wait()
 {
-	ctx::dock &dock(p);
 	dock.wait([this]
 	{
 		return tasks.empty() && !p.pending();
@@ -7617,6 +7629,8 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 			task.func,
 			task.arg,
 		};
+
+		dock.notify_all();
 	});
 }
 
@@ -7646,6 +7660,7 @@ ircd::db::database::env::state::pool::cancel(void *const &tag)
 		++i;
 	}
 
+	dock.notify_all();
 	return i;
 }
 

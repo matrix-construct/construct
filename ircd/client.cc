@@ -93,19 +93,26 @@ ircd::client::log
 	"client", 'C'
 };
 
-/// A general semaphore for the client system; used for coarse operations
-/// like waiting for all clients to disconnect / system shutdown et al.
-decltype(ircd::client::dock)
-ircd::client::dock;
+decltype(ircd::client::pool_opts)
+ircd::client::pool_opts
+{
+	size_t(settings.stack_size),
+	size_t(settings.pool_size),
+};
 
 /// The pool of request contexts. When a client makes a request it does so by acquiring
 /// a stack from this pool. The request handling and response logic can then be written
 /// in a synchronous manner as if each connection had its own thread.
-ircd::ctx::pool
+decltype(ircd::client::pool)
 ircd::client::pool
 {
-	"client", size_t(settings.stack_size)
+	"client", pool_opts
 };
+
+/// A general semaphore for the client system; used for coarse operations
+/// like waiting for all clients to disconnect / system shutdown et al.
+decltype(ircd::client::dock)
+ircd::client::dock;
 
 decltype(ircd::client::ctr)
 ircd::client::ctr

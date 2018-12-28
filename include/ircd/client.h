@@ -33,8 +33,9 @@ struct ircd::client
 	static log::log log;
 	static struct settings settings;
 	static struct conf default_conf;
-	static ctx::dock dock;
+	static ctx::pool::opts pool_opts;
 	static ctx::pool pool;
+	static ctx::dock dock;
 	static uint64_t ctr;              // monotonic
 
 	static void create(const std::shared_ptr<socket> &);

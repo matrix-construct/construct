@@ -38,7 +38,9 @@ struct ircd::db::database::env::state::pool
 	database &d;
 	Priority pri;
 	IOPriority iopri;
+	ctx::dock dock;
 	std::deque<task> tasks;
+	ctx::pool::opts popts;
 	ctx::pool p;
 
 	size_t cancel(void *const &tag);

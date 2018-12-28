@@ -1226,23 +1226,26 @@ ircd::ctx::name(const pool &pool)
 	return pool.name;
 }
 
+decltype(ircd::ctx::pool::default_name)
+ircd::ctx::pool::default_name
+{
+	"<unnamed pool>"
+};
+
+decltype(ircd::ctx::pool::default_opts)
+ircd::ctx::pool::default_opts
+{};
+
 //
 // pool::pool
 //
 
 ircd::ctx::pool::pool(const string_view &name,
-                      const size_t &stack_size,
-                      const size_t &size,
-                      const size_t &q_max_soft,
-                      const size_t &q_max_hard)
+                      const opts &opt)
 :name{name}
-,stack_size{stack_size}
-,q_max_soft{q_max_soft}
-,q_max_hard{q_max_hard}
-,running{0}
-,working{0}
+,opt{&opt}
 {
-	add(size);
+	add(this->opt->initial_ctxs);
 }
 
 ircd::ctx::pool::~pool()
@@ -1311,14 +1314,16 @@ ircd::ctx::pool::del(const size_t &num)
 void
 ircd::ctx::pool::add(const size_t &num)
 {
+	assert(opt);
 	for(size_t i(0); i < num; ++i)
-		ctxs.emplace_back(this->name, stack_size, context::POST, std::bind(&pool::main, this));
+		ctxs.emplace_back(name, opt->stack_size, context::POST, std::bind(&pool::main, this));
 }
 
 void
 ircd::ctx::pool::operator()(closure closure)
 {
-	if(!avail() && q.size() > q_max_soft)
+	assert(opt);
+	if(!avail() && q.size() > size_t(opt->queue_max_soft) && opt->queue_max_dwarning)
 		log::dwarning
 		{
 			"pool(%p '%s') ctx(%p): size:%zu active:%zu queue:%zu exceeded soft max:%zu",
@@ -1328,22 +1333,22 @@ ircd::ctx::pool::operator()(closure closure)
 			size(),
 			active(),
 			q.size(),
-			q_max_soft
+			opt->queue_max_soft
 		};
 
-	if(current)
+	if(current && opt->queue_max_soft >= 0 && opt->queue_max_blocking)
 		q_max.wait([this]
 		{
-			if(q.size() < q_max_soft)
+			if(q.size() < size_t(opt->queue_max_soft))
 				return true;
 
-			if(!q_max_soft && q.size() < avail())
+			if(!opt->queue_max_soft && q.size() < avail())
 				return true;
 
 			return false;
 		});
 
-	if(unlikely(q.size() >= q_max_hard))
+	if(unlikely(q.size() >= size_t(opt->queue_max_hard)))
 		throw error
 		{
 			"pool(%p '%s') ctx(%p): size:%zu avail:%zu queue:%zu exceeded hard max:%zu",
@@ -1353,7 +1358,7 @@ ircd::ctx::pool::operator()(closure closure)
 			size(),
 			avail(),
 			q.size(),
-			q_max_hard
+			opt->queue_max_hard
 		};
 
 	q.push(std::move(closure));
@@ -1436,9 +1441,8 @@ ircd::ctx::debug_stats(const pool &pool)
 {
 	log::debug
 	{
-		"pool '%s' (stack size: %zu) total: %zu avail: %zu queued: %zu active: %zu pending: %zu",
+		"pool '%s' total: %zu avail: %zu queued: %zu active: %zu pending: %zu",
 		pool.name,
-		pool.stack_size,
 		pool.size(),
 		pool.avail(),
 		pool.queued(),

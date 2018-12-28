@@ -16,18 +16,21 @@ namespace ircd::ctx
 	struct pool;
 
 	const string_view &name(const pool &);
+	void debug_stats(const pool &);
 }
 
-class ircd::ctx::pool
+struct ircd::ctx::pool
 {
+	struct opts;
 	using closure = std::function<void ()>;
 
-	string_view name;
-	size_t stack_size;
-	size_t q_max_soft;
-	size_t q_max_hard;
-	size_t running;
-	size_t working;
+	static const string_view default_name;
+	static const opts default_opts;
+
+	string_view name {default_name};
+	const opts *opt {&default_opts};
+	size_t running {0};
+	size_t working {0};
 	dock q_max;
 	queue<closure> q;
 	std::vector<context> ctxs;
@@ -36,16 +39,13 @@ class ircd::ctx::pool
 	void main() noexcept;
 
   public:
-	explicit operator const queue<closure> &() const;
-	explicit operator const dock &() const;
-	explicit operator queue<closure> &();
-	explicit operator dock &();
+	explicit operator const opts &() const;
 
 	// indicators
 	auto size() const                  { return ctxs.size();                   }
 	auto queued() const                { return q.size();                      }
 	auto active() const                { return working;                       }
-	auto avail() const                 { return running - working;             }
+	auto avail() const                 { return running - active();            }
 	auto pending() const               { return active() + queued();           }
 
 	// dispatch to pool
@@ -62,11 +62,8 @@ class ircd::ctx::pool
 	void interrupt();
 	void join();
 
-	pool(const string_view &name     = "<unnamed pool>"_sv,
-	     const size_t &stack_size    = DEFAULT_STACK_SIZE,
-	     const size_t &initial_ctxs  = 0,
-	     const size_t &q_max_soft    = -1,
-	     const size_t &q_max_hard    = -1);
+	pool(const string_view &name = default_name,
+	     const opts & = default_opts);
 
 	pool(pool &&) = delete;
 	pool(const pool &) = delete;
@@ -76,6 +73,40 @@ class ircd::ctx::pool
 
 	friend const string_view &name(const pool &);
 	friend void debug_stats(const pool &);
+};
+
+struct ircd::ctx::pool::opts
+{
+	/// When the pool spawns a new context this will be the stack size it has.
+	size_t stack_size { DEFAULT_STACK_SIZE };
+
+	/// When the pool is constructed this will be how many contexts it spawns
+	/// This value may be ignored for static duration instances.
+	size_t initial_ctxs {0};
+
+	/// Hard-limit for jobs queued. A submit to the pool over this limit throws
+	/// an exception. Default is -1, effectively unlimited.
+	ssize_t queue_max_hard {-1};
+
+	/// Soft-limit for jobs queued. The behavior of the limit is configurable.
+	/// The default is 0, meaning if there is no context available to service
+	/// the request being submitted then the soft limit is immediately reached.
+	/// See the specific behavior options following this.
+	ssize_t queue_max_soft {0};
+
+	/// Yield a context submitting to the pool if it will violate the soft
+	/// limit. This is true by default. Note the default of 0 for the
+	/// soft-limit itself combined with this: by default there is no queueing
+	/// of jobs at all! This behavior purposely propagates flow control by
+	/// slowing down the submitting context and prevents flooding the queue.
+	/// This option has no effect if the submitter is not on any ircd::ctx.
+	bool queue_max_blocking {true};
+
+	/// Log a DWARNING (developer-warning level) when the soft limit is
+	/// exceeded. The soft-limit is never actually exceeded when contexts
+	/// are blocked from submitting (see: queue_max_blocking). This warning
+	/// will still be seen for submissions outside any ircd::ctx.
+	bool queue_max_dwarning {true};
 };
 
 template<class F,
@@ -93,8 +124,7 @@ ircd::ctx::pool::async(F&& f,
 
 	promise<R> p;
 	future<R> ret{p};
-	(*this)([p(std::move(p)), func(std::move(func))]
-	() -> void
+	operator()([p(std::move(p)), func(std::move(func))]
 	{
 		p.set_value(func());
 	});
@@ -117,8 +147,7 @@ ircd::ctx::pool::async(F&& f,
 
 	promise<R> p;
 	future<R> ret{p};
-	(*this)([p(std::move(p)), func(std::move(func))]
-	() -> void
+	operator()([p(std::move(p)), func(std::move(func))]
 	{
 		func();
 		p.set_value();
@@ -128,29 +157,9 @@ ircd::ctx::pool::async(F&& f,
 }
 
 inline ircd::ctx::pool::operator
-dock &()
-{
-	dock &d(q);
-	return d;
-}
-
-inline ircd::ctx::pool::operator
-queue<closure> &()
-{
-	return q;
-}
-
-inline ircd::ctx::pool::operator
-const dock &()
+const opts &()
 const
 {
-	const dock &d(q);
-	return d;
-}
-
-inline ircd::ctx::pool::operator
-const queue<closure> &()
-const
-{
-	return q;
+	assert(opt);
+	return *opt;
 }
