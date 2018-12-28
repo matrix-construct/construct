@@ -19,14 +19,11 @@ namespace ircd::ctx
 template<class T>
 class ircd::ctx::queue
 {
-	struct dock dock;
+	dock d;
 	std::queue<T> q;
 	size_t w {0};
 
   public:
-	explicit operator const struct dock &() const;
-	explicit operator struct dock &();
-
 	size_t empty() const;
 	size_t size() const;
 	size_t waiting() const;
@@ -58,7 +55,7 @@ ircd::ctx::queue<T>::push(T&& t)
 noexcept
 {
 	q.push(std::forward<T>(t));
-	dock.notify();
+	d.notify();
 }
 
 template<class T>
@@ -66,7 +63,7 @@ void
 ircd::ctx::queue<T>::push(const T &t)
 {
 	q.push(t);
-	dock.notify();
+	d.notify();
 }
 
 template<class T>
@@ -75,7 +72,7 @@ void
 ircd::ctx::queue<T>::emplace(args&&... a)
 {
 	q.emplace(std::forward<args>(a)...);
-	dock.notify();
+	d.notify();
 }
 
 template<class T>
@@ -88,7 +85,7 @@ ircd::ctx::queue<T>::pop()
 		--w;
 	}};
 
-	dock.wait([this]
+	d.wait([this]
 	{
 		return !q.empty();
 	});
@@ -112,7 +109,7 @@ ircd::ctx::queue<T>::pop_for(const duration &dur)
 
 	const bool ready
 	{
-		dock.wait_for(dur, [this]
+		d.wait_for(dur, [this]
 		{
 			return !q.empty();
 		})
@@ -140,7 +137,7 @@ ircd::ctx::queue<T>::pop_until(time_point&& tp)
 
 	const bool ready
 	{
-		dock.wait_until(tp, [this]
+		d.wait_until(tp, [this]
 		{
 			return !q.empty();
 		})
@@ -177,19 +174,4 @@ ircd::ctx::queue<T>::empty()
 const
 {
 	return q.empty();
-}
-
-template<class T>
-ircd::ctx::queue<T>::operator
-struct dock &()
-{
-	return dock;
-}
-
-template<class T>
-ircd::ctx::queue<T>::operator
-const struct dock &()
-const
-{
-	return dock;
 }
