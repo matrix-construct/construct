@@ -51,7 +51,10 @@ fi
 
 
 if [ -z $BCXXFLAGS ]; then
-	BCXXFLAGS="-std=gnu++17"
+	BCXXFLAGS=""
+	_BCXXFLAGS=""
+else
+	_BCXXFLAGS="cxxflags=$BCXXFLAGS"
 fi
 
 
@@ -178,7 +181,7 @@ run git submodule update --init --recursive --checkout libs/gil
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
 run ./bjam --clean
 run ./b2 -d0 headers
-run ./b2 -d0 install threading=$BTHREADING variant=$BVARIANT link=$BLINK runtime-link=shared address-model=64 warnings=all cxxflags=$BCXXFLAGS
+run ./b2 -d0 install threading=$BTHREADING variant=$BVARIANT link=$BLINK runtime-link=shared address-model=64 warnings=all $_BCXXFLAGS
 
 ### TODO: this shouldn't be necessary.
 ### XXX: required when boost submodules are fetched and built la carte, but not required
