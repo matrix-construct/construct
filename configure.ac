@@ -1170,8 +1170,6 @@ else
 	])
 fi
 
-BOOST_CPPFLAGS+=" -DBOOST_COROUTINES_NO_DEPRECATION_WARNING=1"
-
 dnl
 dnl
 dnl RocksDB support

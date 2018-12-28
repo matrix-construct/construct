@@ -24,6 +24,8 @@
 /// boost headers for the time being...
 ///
 
+#define BOOST_COROUTINES_NO_DEPRECATION_WARNING
+
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/steady_timer.hpp>
