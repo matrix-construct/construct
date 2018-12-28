@@ -411,7 +411,7 @@ ircd::log::vlog::vlog(const log &log,
                       const string_view &fmt,
                       const va_rtti &ap)
 {
-	if(!is_main_thread())
+	if(!is_main_thread() && likely(ios::available()))
 	{
 		vlog_threadsafe(log, lev, fmt, ap);
 		return;
