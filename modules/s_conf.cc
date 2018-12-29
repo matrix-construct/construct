@@ -77,7 +77,7 @@ conf_room_id
 	"conf", ircd::my_host()
 };
 
-m::room
+const m::room
 conf_room
 {
 	conf_room_id
@@ -98,7 +98,20 @@ extern "C" void
 get_conf_item(const string_view &key,
               const std::function<void (const string_view &)> &closure)
 {
-	conf_room.get("ircd.conf.item", key, [&closure]
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"content"
+		}
+	};
+
+	const m::room::state state
+	{
+		conf_room, &fopts
+	};
+
+	state.get("ircd.conf.item", key, [&closure]
 	(const m::event &event)
 	{
 		const auto &value
@@ -175,9 +188,17 @@ conf_updated_hook
 static void
 init_conf_items()
 {
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"content", "state_key"
+		}
+	};
+
 	const m::room::state state
 	{
-		conf_room
+		conf_room, &fopts
 	};
 
 	state.for_each("ircd.conf.item", []
@@ -190,9 +211,17 @@ init_conf_items()
 static void
 init_conf_item(conf::item<> &item)
 {
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"content", "state_key"
+		}
+	};
+
 	const m::room::state state
 	{
-		conf_room
+		conf_room, &fopts
 	};
 
 	state.get(std::nothrow, "ircd.conf.item", item.name, []
