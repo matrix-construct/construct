@@ -3108,21 +3108,6 @@ const noexcept
 			"MERGE"_sv:
 			"BLOB"_sv
 	};
-
-	log::debug
-	{
-		log, "'%s':'%s': compaction level:%d key:%zu@%p type:%s old:%zu@%p new:%p skip:%p",
-		d->name,
-		c->name,
-		level,
-		size(key),
-		data(key),
-		typestr,
-		size(oldval),
-		data(oldval),
-		(const void *)newval,
-		(const void *)skip
-	};
 	#endif
 
 	static const compactor::callback empty;
@@ -3139,6 +3124,23 @@ const noexcept
 
 	if(!callback)
 		return Decision::kKeep;
+
+	#ifdef RB_DEBUG_DB_ENV
+	log::debug
+	{
+		log, "'%s':'%s': compaction level:%d key:%zu@%p type:%s old:%zu@%p new:%p skip:%p",
+		d->name,
+		c->name,
+		level,
+		size(key),
+		data(key),
+		typestr,
+		size(oldval),
+		data(oldval),
+		(const void *)newval,
+		(const void *)skip
+	};
+	#endif
 
 	const compactor::args args
 	{
