@@ -9648,6 +9648,12 @@ ircd::db::compact(column &column,
 		if(level.files.empty())
 			continue;
 
+		const ctx::uninterruptible ui;
+		const std::lock_guard<decltype(write_mutex)> lock
+		{
+			write_mutex
+		};
+
 		const auto &to_level
 		{
 			dst_level > -1? dst_level : level.level
@@ -9667,15 +9673,6 @@ ircd::db::compact(column &column,
 		{
 			return std::move(metadata.name);
 		});
-
-		// Locking the write_mutex here prevents writes during a column's
-		// compaction. This is needed because if contention occurs inside
-		// rocksdb we will hit some std::mutex's which do not use the
-		// rocksdb::port wrapper and deadlock the process. (It is an error
-		// on the part of rocksdb to directly use std::mutex rather than their
-		// port wrapper).
-		const ctx::uninterruptible ui;
-		const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
 
 		// Save and restore the existing filter callback so we can allow our
 		// caller to use theirs. Note that this manual compaction should be
@@ -9714,6 +9711,7 @@ ircd::db::compact(column &column,
 {
 	database &d(column);
 	database::column &c(column);
+	const ctx::uninterruptible ui;
 
 	const auto begin(slice(range.first));
 	const rocksdb::Slice *const b
