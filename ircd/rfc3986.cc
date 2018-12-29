@@ -14,13 +14,13 @@ namespace ircd::rfc3986
 {
 	using namespace ircd::spirit;
 
-	template<class it> struct grammar;
+	struct grammar;
 }
 
-template<class it>
 struct ircd::rfc3986::grammar
-:qi::grammar<it, unused_type>
+:qi::grammar<const char *, unused_type>
 {
+	using it = const char *;
 	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
 
 	const rule<> port
@@ -73,7 +73,7 @@ struct ircd::rfc3986::grammar
 	};
 
 	/// https://tools.ietf.org/html/rfc3986 Appendix A
-	const rule<> ip6_addr[10]
+	const rule<> ip6_addr[9]
 	{
 		{                                                     repeat(6)[ip6_piece] >> ip6_ls32     },
 		{                                        lit("::") >> repeat(5)[ip6_piece] >> ip6_ls32     },
@@ -180,7 +180,7 @@ struct ircd::rfc3986::decoder
 const ircd::rfc3986::decoder;
 
 struct ircd::rfc3986::parser
-:grammar<const char *>
+:grammar
 {
 	string_view operator()(const string_view &url) const;
 }
