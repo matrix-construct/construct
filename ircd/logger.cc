@@ -26,7 +26,6 @@ namespace ircd::log
 	std::ostream &out_console{std::cout};
 	std::ostream &err_console{std::cerr};
 
-	static std::string dir_path();
 	static std::string file_path(const level &);
 
 	static void mkdir();
@@ -62,9 +61,9 @@ ircd::log::fini()
 void
 ircd::log::mkdir()
 {
-	const std::string dir
+	const auto &dir
 	{
-		dir_path()
+		fs::make_path(fs::LOG)
 	};
 
 	if(fs::exists(dir))
@@ -141,28 +140,7 @@ catch(const std::exception &e)
 std::string
 ircd::log::file_path(const level &lev)
 {
-	const std::string base
-	{
-		dir_path()
-	};
-
-	const string_view parts[]
-	{
-		base, reflect(lev)
-	};
-
-	return fs::make_path(parts);
-}
-
-std::string
-ircd::log::dir_path()
-{
-	const string_view parts[]
-	{
-		fs::get(fs::LOG)
-	};
-
-	return fs::make_path(parts);
+	return fs::make_path(fs::LOG, reflect(lev));
 }
 
 void

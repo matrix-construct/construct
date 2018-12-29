@@ -20,17 +20,39 @@ namespace filesystem = boost::filesystem;
 
 namespace ircd::fs
 {
-	filesystem::path path(std::string);
-	filesystem::path path(const string_view &);
-	filesystem::path path(const vector_view<const string_view> &);
+	static filesystem::path path(std::string);
+	static filesystem::path path(const string_view &);
+	static filesystem::path path(const vector_view<const string_view> &);
+	static uint posix_flags(const std::ios::openmode &mode);
+	static const char *path_str(const string_view &);
+	static void debug_paths();
 }
+
+/// Default maximum path string length (for all filesystems & platforms).
+decltype(ircd::fs::MAX_PATH_LEN)
+ircd::fs::MAX_PATH_LEN
+{
+	#ifdef PATH_MAX
+		PATH_MAX
+	#else
+		255
+	#endif
+};
+
+decltype(ircd::fs::MAX_PATH_DEPTH)
+ircd::fs::MAX_PATH_DEPTH
+{
+	32
+};
 
 //
 // init
 //
 
 ircd::fs::init::init()
+:_aio_{}
 {
+	debug_paths();
 }
 
 ircd::fs::init::~init()
@@ -38,82 +60,10 @@ noexcept
 {
 }
 
-//
-// Compile-time path index
-//
-
-namespace ircd::fs
-{
-	struct sysent;
-	extern const std::array<struct sysent, num_of<index>()> syspaths;
-}
-
-struct ircd::fs::sysent
-{
-	string_view name;
-	string_view path;
-};
-
-decltype(ircd::fs::syspaths)
-ircd::fs::syspaths
-{{
-	{ "installation prefix",      RB_PREFIX      },
-	{ "binary directory",         RB_BIN_DIR     },
-	{ "configuration directory",  RB_CONF_DIR    },
-	{ "data directory",           RB_DATA_DIR    },
-	{ "database directory",       RB_DB_DIR      },
-	{ "log directory",            RB_LOG_DIR     },
-	{ "module directory",         RB_MODULE_DIR  },
-}};
-
-ircd::string_view
-ircd::fs::get(index index)
-noexcept try
-{
-	return syspaths.at(index).path;
-}
-catch(const std::out_of_range &e)
-{
-	return {};
-}
-
-ircd::string_view
-ircd::fs::name(index index)
-noexcept try
-{
-	return syspaths.at(index).name;
-}
-catch(const std::out_of_range &e)
-{
-	return {};
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // fs.h / misc
 //
-
-std::string
-ircd::fs::cwd()
-try
-{
-	return filesystem::current_path().string();
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-
-void
-ircd::fs::chdir(const string_view &path)
-try
-{
-	filesystem::current_path(fs::path(path));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
 
 bool
 ircd::fs::mkdir(const string_view &path)
@@ -145,12 +95,13 @@ ircd::fs::remove(std::nothrow_t,
 	return filesystem::remove(fs::path(path), ec);
 }
 
-void
+bool
 ircd::fs::rename(const string_view &old,
                  const string_view &new_)
 try
 {
 	filesystem::rename(path(old), path(new_));
+	return true;
 }
 catch(const filesystem::filesystem_error &e)
 {
@@ -168,7 +119,7 @@ ircd::fs::rename(std::nothrow_t,
 }
 
 std::vector<std::string>
-ircd::fs::ls_recursive(const string_view &path)
+ircd::fs::ls_r(const string_view &path)
 try
 {
 	const filesystem::recursive_directory_iterator end;
@@ -253,73 +204,6 @@ ircd::fs::exists(const string_view &path)
 try
 {
 	return filesystem::exists(fs::path(path));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-
-std::string
-ircd::fs::make_path(const vector_view<const std::string> &list)
-try
-{
-	filesystem::path ret;
-	for(const auto &s : list)
-		ret /= path(s);
-
-	return ret.string();
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-
-std::string
-ircd::fs::make_path(const vector_view<const string_view> &list)
-try
-{
-	filesystem::path ret;
-	for(const auto &s : list)
-		ret /= path(s);
-
-	return ret.string();
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-
-filesystem::path
-ircd::fs::path(const vector_view<const string_view> &list)
-try
-{
-	filesystem::path ret;
-	for(const auto &s : list)
-		ret /= path(s);
-
-	return ret.string();
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-
-filesystem::path
-ircd::fs::path(const string_view &s)
-try
-{
-	return path(std::string{s});
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-
-filesystem::path
-ircd::fs::path(std::string s)
-try
-{
-	return filesystem::path(std::move(s));
 }
 catch(const filesystem::filesystem_error &e)
 {
@@ -1085,15 +969,6 @@ noexcept
 //
 // fs/fd.h
 //
-// TODO: x-platform
-//
-
-namespace ircd::fs
-{
-	thread_local char path_buf[PATH_MAX];
-	static const char *path_str(const string_view &);
-	static uint posix_flags(const std::ios::openmode &mode);
-}
 
 decltype(ircd::fs::fd::opts::direct_io_enable)
 ircd::fs::fd::opts::direct_io_enable
@@ -1162,35 +1037,6 @@ ircd::fs::size(const fd &fd)
 
 	syscall(::lseek, fd, cur, SEEK_SET);
 	return end;
-}
-
-uint
-ircd::fs::posix_flags(const std::ios::openmode &mode)
-{
-	static const auto rdwr
-	{
-		std::ios::in | std::ios::out
-	};
-
-	uint ret{0};
-	if((mode & rdwr) == rdwr)
-		ret |= O_RDWR;
-	else if(mode & std::ios::out)
-		ret |= O_WRONLY;
-	else
-		ret |= O_RDONLY;
-
-	ret |= mode & std::ios::trunc? O_TRUNC : 0;
-	ret |= mode & std::ios::app? O_APPEND : 0;
-	ret |= ret & O_WRONLY? O_CREAT : 0;
-	ret |= ret & O_RDWR && ret & (O_TRUNC | O_APPEND)? O_CREAT : 0;
-	return ret;
-}
-
-const char *
-ircd::fs::path_str(const string_view &s)
-{
-	return data(strlcpy(path_buf, s));
 }
 
 //
@@ -1371,6 +1217,119 @@ ircd::fs::bytes(const const_iovec_view &iov)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// fs/path.h
+//
+
+namespace ircd::fs
+{
+	extern const std::array<basepath, num_of<base>()> basepaths;
+}
+
+decltype(ircd::fs::basepaths)
+ircd::fs::basepaths
+{{
+	{ "installation prefix",      RB_PREFIX      },
+	{ "binary directory",         RB_BIN_DIR     },
+	{ "configuration directory",  RB_CONF_DIR    },
+	{ "data directory",           RB_DATA_DIR    },
+	{ "database directory",       RB_DB_DIR      },
+	{ "log directory",            RB_LOG_DIR     },
+	{ "module directory",         RB_MODULE_DIR  },
+}};
+
+std::string
+ircd::fs::cwd()
+try
+{
+	const auto &cur
+	{
+		filesystem::current_path()
+	};
+
+	return cur.string();
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+ircd::string_view
+ircd::fs::cwd(const mutable_buffer &buf)
+try
+{
+	const auto &cur
+	{
+		filesystem::current_path()
+	};
+
+	return strlcpy(buf, cur.native());
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+std::string
+ircd::fs::make_path(const vector_view<const std::string> &list)
+try
+{
+	filesystem::path ret;
+	for(const auto &s : list)
+		ret /= path(s);
+
+	return ret.string();
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+std::string
+ircd::fs::make_path(const vector_view<const string_view> &list)
+try
+{
+	filesystem::path ret;
+	for(const auto &s : list)
+		ret /= path(s);
+
+	return ret.string();
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+std::string
+ircd::fs::make_path(const base &base,
+                    const string_view &rest)
+try
+{
+	filesystem::path ret;
+	ret /= make_path(base);
+	ret /= path(rest);
+	return ret.string();
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+ircd::string_view
+ircd::fs::make_path(const base &base)
+noexcept
+{
+	return get(base).path;
+}
+
+const ircd::fs::basepath &
+ircd::fs::get(const base &base)
+noexcept
+{
+	return basepaths.at(base);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fs/error.h
 //
 
@@ -1421,4 +1380,96 @@ ircd::fs::error::what()
 const noexcept
 {
 	return this->ircd::error::what();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Internal utils
+//
+
+void
+ircd::fs::debug_paths()
+{
+	thread_local char buf[MAX_PATH_LEN + 1];
+	log::debug
+	{
+		"Current working directory: `%s'", cwd(buf)
+	};
+
+	for_each<base>([](const base &base)
+	{
+		log::debug
+		{
+			"Working %s is `%s'",
+			get(base).name,
+			get(base).path,
+		};
+	});
+}
+
+const char *
+ircd::fs::path_str(const string_view &s)
+{
+	thread_local char buf[MAX_PATH_LEN + 1];
+	return data(strlcpy(buf, s));
+}
+
+uint
+ircd::fs::posix_flags(const std::ios::openmode &mode)
+{
+	static const auto rdwr
+	{
+		std::ios::in | std::ios::out
+	};
+
+	uint ret{0};
+	if((mode & rdwr) == rdwr)
+		ret |= O_RDWR;
+	else if(mode & std::ios::out)
+		ret |= O_WRONLY;
+	else
+		ret |= O_RDONLY;
+
+	ret |= mode & std::ios::trunc? O_TRUNC : 0;
+	ret |= mode & std::ios::app? O_APPEND : 0;
+	ret |= ret & O_WRONLY? O_CREAT : 0;
+	ret |= ret & O_RDWR && ret & (O_TRUNC | O_APPEND)? O_CREAT : 0;
+	return ret;
+}
+
+filesystem::path
+ircd::fs::path(const vector_view<const string_view> &list)
+try
+{
+	filesystem::path ret;
+	for(const auto &s : list)
+		ret /= path(s);
+
+	return ret.string();
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+filesystem::path
+ircd::fs::path(const string_view &s)
+try
+{
+	return path(std::string{s});
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+filesystem::path
+ircd::fs::path(std::string s)
+try
+{
+	return filesystem::path(std::move(s));
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
 }

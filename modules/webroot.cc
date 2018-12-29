@@ -72,7 +72,7 @@ init_files()
 		return;
 	}
 
-	for(const auto &file : fs::ls_recursive(path))
+	for(const auto &file : fs::ls_r(path))
 	{
 		const auto name(lstrip(file, path));
 		files.emplace(std::string(name), file);

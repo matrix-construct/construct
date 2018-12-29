@@ -229,7 +229,7 @@ try
 {
 	const auto dbdir
 	{
-		fs::get(fs::DB)
+		fs::make_path(fs::DB)
 	};
 
 	if(fs::mkdir(dbdir))
@@ -290,17 +290,12 @@ catch(const std::exception &e)
 std::string
 ircd::db::direct_io_test_file_path()
 {
-	const auto dbdir
+	static const auto &test_file_name
 	{
-		fs::get(fs::DB)
+		"SUPPORTS_DIRECT_IO"_sv
 	};
 
-	const std::string parts[]
-	{
-		dbdir, "SUPPORTS_DIRECT_IO"s
-	};
-
-	return fs::make_path(parts);
+	return fs::make_path(fs::DB, test_file_name);
 }
 
 decltype(ircd::db::compressions)
@@ -3222,13 +3217,16 @@ ircd::db::database::sst::dump::dump(db::column column,
 {
 	database::column &c(column);
 	const database &d(column);
+	std::string path
+	{
+		path_
+	};
 
-	std::string path{path_};
 	if(path.empty())
 	{
 		const string_view path_parts[]
 		{
-			fs::get(fs::DB), db::name(d), db::name(c)
+			fs::make_path(fs::DB), db::name(d), db::name(c)
 		};
 
 		path = fs::make_path(path_parts);
@@ -11602,9 +11600,9 @@ ircd::db::error_to_status::error_to_status(const std::error_code &e)
 std::vector<std::string>
 ircd::db::available()
 {
-	const auto prefix
+	const auto &prefix
 	{
-		fs::get(fs::DB)
+		fs::make_path(fs::DB)
 	};
 
 	const auto dirs
@@ -11666,9 +11664,9 @@ std::string
 ircd::db::path(const string_view &name,
                const uint64_t &checkpoint)
 {
-	const auto prefix
+	const auto &prefix
 	{
-		fs::get(fs::DB)
+		fs::make_path(fs::DB)
 	};
 
 	const string_view parts[]

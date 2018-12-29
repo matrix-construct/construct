@@ -200,9 +200,6 @@ bool
 startup_checks()
 try
 {
-	namespace fs = ircd::fs;
-
-	fs::chdir(fs::get(fs::PREFIX));
 	return true;
 }
 catch(const std::exception &e)
