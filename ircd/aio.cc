@@ -588,10 +588,7 @@ ircd::fs::aio::system::chase()
 noexcept
 {
 	if(qcount)
-	{
 		flush();
-		stats.chased_submits++;
-	}
 }
 
 /// The flusher submits all queued requests and resets the count.
@@ -605,8 +602,6 @@ noexcept try
 
 	syscall<SYS_io_submit>(idp, qcount, queue.data());
 
-	stats.maxed_submits += qcount >= size_t(max_submit);
-	stats.single_submits += qcount == 1;
 	stats.cur_submits += qcount;
 	stats.cur_queued -= qcount;
 	stats.submits++;

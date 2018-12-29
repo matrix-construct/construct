@@ -42,16 +42,6 @@ namespace ircd::fs::aio
 
 /// Statistics structure.
 ///
-/// Subtract complete from requests to get the count of requests pending
-/// "in flight." Subtract errors from complete to only get the count of
-/// fully successful operations. complete will always eventually match
-/// up with requests.
-///
-/// Subtract complete_bytes from requests_bytes to get the total bytes
-/// currently pending "in flight." Subtract errors_bytes from response_bytes
-/// to only get bytes successfully read or written. complete_bytes will
-/// always eventually match up with requests_bytes.
-///
 struct ircd::fs::aio::stats
 {
 	uint32_t requests {0};             ///< count of requests created
@@ -80,10 +70,6 @@ struct ircd::fs::aio::stats
 	uint32_t max_requests {0};         ///< maximum observed pending requests
 	uint32_t max_reads {0};            ///< maximum observed pending reads
 	uint32_t max_writes {0};           ///< maximum observed pending write
-
-	uint32_t maxed_submits {0};        ///< number of submits at threshold
-	uint32_t single_submits {0};       ///< number of submits of just one
-	uint32_t chased_submits {0};       ///< number of submits via chase
 };
 
 struct ircd::fs::aio::init
