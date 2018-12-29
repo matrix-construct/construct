@@ -7595,6 +7595,12 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 		if(tasks.empty())
 			return;
 
+		// Don't start a background task before RUN.
+		runlevel_changed::dock.wait([]
+		{
+			return runlevel == runlevel::RUN;
+		});
+
 		const ctx::uninterruptible::nothrow ui;
 		const auto task{std::move(tasks.front())};
 		tasks.pop_front();
