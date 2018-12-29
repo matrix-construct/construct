@@ -177,11 +177,19 @@ run git submodule update --init --recursive --checkout libs/locale
 
 run git submodule update --init --recursive --checkout libs/gil
 
+B2FLAGS="threading=$BTHREADING"
+B2FLAGS+=" variant=$BVARIANT"
+B2FLAGS+=" link=$BLINK"
+B2FLAGS+=" runtime-link=shared"
+B2FLAGS+=" address-model=64"
+B2FLAGS+=" warnings=all"
+B2FLAGS+=" $_BCXXFLAGS"
+
 ### Install should go right into this local submodule repository
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
-run ./bjam --clean
-run ./b2 -d0 headers
-run ./b2 -d0 install threading=$BTHREADING variant=$BVARIANT link=$BLINK runtime-link=shared address-model=64 warnings=all $_BCXXFLAGS
+run ./bjam --clean $B2FLAGS
+run ./b2 -d0 headers $B2FLAGS
+run ./b2 -d0 install $B2FLAGS
 
 ### TODO: this shouldn't be necessary.
 ### XXX: required when boost submodules are fetched and built la carte, but not required
