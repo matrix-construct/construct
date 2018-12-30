@@ -613,6 +613,7 @@ try
 
 	in_flight += submitted;
 	qcount -= submitted;
+	assert(!qcount);
 	return submitted;
 }
 catch(const std::system_error &e)
