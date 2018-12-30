@@ -579,8 +579,10 @@ ircd::fs::aio::system::submit(request &request)
 		|| qcount >= queue.size()
 	};
 
-	if(flush_now)
-		return flush();
+	const size_t flushed
+	{
+		flush_now? flush() : 0
+	};
 
 	if(qcount == 1)
 		ircd::post(std::bind(&system::chase, this));
@@ -591,36 +593,68 @@ ircd::fs::aio::system::submit(request &request)
 /// the chaser is executed.
 void
 ircd::fs::aio::system::chase()
-noexcept
-{
-	if(qcount)
-		flush();
-}
-
-/// The flusher submits all queued requests and resets the count.
-void
-ircd::fs::aio::system::flush()
 noexcept try
 {
-	assert(qcount > 0);
-	assert(in_flight + qcount < MAX_EVENTS);
-	assert(in_flight + qcount <= size_t(max_events));
+	if(!qcount)
+		return;
 
-	syscall<SYS_io_submit>(idp, qcount, queue.data());
+	const auto submitted
+	{
+		flush()
+	};
 
-	stats.cur_submits += qcount;
-	stats.cur_queued -= qcount;
-	stats.submits++;
-
-	in_flight += qcount;
-	qcount = 0;
+	assert(!qcount);
 }
 catch(const std::exception &e)
 {
 	throw assertive
 	{
-		"AIO(%p) flush(%zu): %s", this, qcount, e.what()
+		"AIO(%p) system::chase() qcount:%zu :%s", this, qcount, e.what()
 	};
+}
+
+/// The flusher submits all queued requests and resets the count.
+size_t
+ircd::fs::aio::system::flush()
+try
+{
+	assert(qcount > 0);
+	assert(in_flight + qcount < MAX_EVENTS);
+	assert(in_flight + qcount <= size_t(max_events));
+
+	const auto submitted
+	{
+		syscall<SYS_io_submit>(idp, qcount, queue.data())
+	};
+
+	stats.cur_submits += submitted;
+	stats.cur_queued -= submitted;
+	stats.submits++;
+
+	in_flight += submitted;
+	qcount -= submitted;
+	return submitted;
+}
+catch(const std::system_error &e)
+{
+	using std::errc;
+	switch(e.code().value())
+	{
+		// EAGAIN may be thrown to prevent blocking. TODO: handle
+		case int(errc::resource_unavailable_try_again):
+			//throw;
+
+		// Manpages sez that EBADF is thrown if the fd in the FIRST iocb has
+		// an issue. TODO: handle this by tossing the first iocb and continue.
+		case int(errc::bad_file_descriptor):
+			//throw;
+
+		// All other errors unexpected.
+		default: ircd::terminate{ircd::error
+		{
+			"AIO(%p) system::flush() qcount:%zu :%s", this, qcount, e.what()
+		}};
+	}
 }
 
 void
