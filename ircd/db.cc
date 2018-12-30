@@ -6846,6 +6846,7 @@ const noexcept try
 		scratch, length
 	};
 
+	assert(!this->opts.direct || buffer::aligned(buf, _buffer_align));
 	const auto read
 	{
 		fs::read(fd, buf, opts)
