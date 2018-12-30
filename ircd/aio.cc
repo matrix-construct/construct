@@ -92,10 +92,8 @@ noexcept
 
 ircd::fs::aio::request::fsync::fsync(const int &fd,
                                      const sync_opts &opts)
-:request{fd}
+:request{fd, &opts}
 {
-	sopts = &opts;
-
 	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_FSYNC;
 
@@ -122,10 +120,8 @@ ircd::fs::aio::fsync(const fd &fd,
 
 ircd::fs::aio::request::fdsync::fdsync(const int &fd,
                                        const sync_opts &opts)
-:request{fd}
+:request{fd, &opts}
 {
-	sopts = &opts;
-
 	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_FDSYNC;
 
@@ -153,10 +149,8 @@ ircd::fs::aio::fdsync(const fd &fd,
 ircd::fs::aio::request::read::read(const int &fd,
                                    const const_iovec_view &iov,
                                    const read_opts &opts)
-:request{fd}
+:request{fd, &opts}
 {
-	ropts = &opts;
-
 	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_PREADV;
 
@@ -200,10 +194,8 @@ ircd::fs::aio::read(const fd &fd,
 ircd::fs::aio::request::write::write(const int &fd,
                                      const const_iovec_view &iov,
                                      const write_opts &opts)
-:request{fd}
+:request{fd, &opts}
 {
-	wopts = &opts;
-
 	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_PWRITEV;
 
@@ -268,8 +260,10 @@ ircd::fs::aio::prefetch(const fd &fd,
 // request
 //
 
-ircd::fs::aio::request::request(const int &fd)
+ircd::fs::aio::request::request(const int &fd,
+                                const struct opts *const &opts)
 :iocb{0}
+,opts{opts}
 {
 	assert(system);
 	assert(ctx::current);
@@ -543,6 +537,7 @@ ircd::fs::aio::system::cancel(request &request)
 void
 ircd::fs::aio::system::submit(request &request)
 {
+	assert(request.opts);
 	assert(qcount < queue.size());
 	assert(qcount + in_flight < max_events);
 	assert(request.aio_data == uintptr_t(&request));
@@ -552,25 +547,10 @@ ircd::fs::aio::system::submit(request &request)
 	stats.cur_queued++;
 
 	// Determine whether the user wants (or needs) to submit without delay.
-	bool nodelay; switch(request.aio_lio_opcode)
-	{
-		case IOCB_CMD_PREADV:
-			nodelay = request.ropts->nodelay;
-			break;
-
-		case IOCB_CMD_PWRITEV:
-			nodelay = request.wopts->nodelay;
-			break;
-
-		default:
-			nodelay = true;
-			break;
-	}
-
 	const bool submit_now
 	{
 		// The nodelay flag is set
-		nodelay
+		request.opts->nodelay
 
 		// The queue has reached the configured size
 		|| qcount >= size_t(max_submit)

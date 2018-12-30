@@ -33,23 +33,8 @@ namespace ircd::fs
 
 /// Options for a read operation
 struct ircd::fs::read_opts
+:opts
 {
-	read_opts() = default;
-	read_opts(const off_t &);
-
-	/// Offset in the file to start the read from.
-	off_t offset {0};
-
-	/// Request priority. Lower value request will take priority over higher
-	int8_t priority {0};
-
-	/// Determines whether this operation is conducted via AIO. If not, a
-	/// direct syscall is made. Using AIO will only block one ircd::ctx while
-	/// a direct syscall will block the thread (all contexts). If AIO is not
-	/// available or not enabled, or doesn't support this operation, setting
-	/// this has no effect.
-	bool aio {true};
-
 	/// Yields the ircd::ctx until the buffers are full or EOF. This performs
 	/// the unix incremental read loop internally. When this option is true,
 	/// any return value from a function in the read suite will not be a
@@ -62,13 +47,11 @@ struct ircd::fs::read_opts
 	/// in the useful propagation of an exception for this event.
 	bool interruptible {true};
 
-	/// Submits the I/O request immediately rather than allowing IRCd to
-	/// queue requests for a few iterations of the ircd::ios event loop.
-	/// (only relevant to aio).
-	bool nodelay {false};
+	read_opts(const off_t &);
+	read_opts() = default;
 };
 
 inline
 ircd::fs::read_opts::read_opts(const off_t &offset)
-:offset{offset}
+:opts{offset}
 {}

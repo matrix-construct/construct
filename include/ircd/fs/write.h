@@ -49,28 +49,10 @@ namespace ircd::fs
 
 /// Options for a write operation
 struct ircd::fs::write_opts
+:opts
 {
-	write_opts() = default;
-	write_opts(const off_t &);
-
-	/// Offset in the file to start the write from. For append() if this zero
-	/// then it will be internally set to the end of the file; otherwise if
-	/// this is set it will write to that offset, even for append(), unless
-	/// the host system later ignores the offset due to the file's openmode.
-	off_t offset {0};
-
-	/// Request priority. Lower value request will take priority over higher.
-	int8_t priority {0};
-
 	/// for allocate()
 	bool keep_size {false};
-
-	/// Determines whether this operation is conducted via AIO. If not, a
-	/// direct syscall is made. Using AIO will only block one ircd::ctx while
-	/// a direct syscall will block the thread (all contexts). If AIO is not
-	/// available or not enabled, or doesn't support this operation, setting
-	/// this has no effect.
-	bool aio {true};
 
 	/// Yields the ircd::ctx until the buffers are written. This performs
 	/// the unix incremental write loop internally. When this option is true,
@@ -84,13 +66,11 @@ struct ircd::fs::write_opts
 	/// in the useful propagation of an exception for this event.
 	bool interruptible {true};
 
-	/// Submits the I/O request immediately rather than allowing IRCd to
-	/// queue requests for a few iterations of the ircd::ios event loop.
-	/// (only relevant to aio).
-	bool nodelay {false};
+	write_opts(const off_t &);
+	write_opts() = default;
 };
 
 inline
 ircd::fs::write_opts::write_opts(const off_t &offset)
-:offset{offset}
+:opts{offset}
 {}

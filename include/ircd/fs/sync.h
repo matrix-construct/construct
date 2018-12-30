@@ -24,21 +24,18 @@ namespace ircd::fs
 
 /// Options for a write operation
 struct ircd::fs::sync_opts
+:opts
 {
-	sync_opts() = default;
-
 	/// Set to true to flush metadata; otherwise only data is flushed.
 	/// This ends up forcing the use of fsync() rather than fdatasync() or
 	/// sync_file_range() et al.
 	bool metadata {true};
 
-	/// Determines whether this operation is conducted via AIO. If not, a
-	/// direct syscall is made. Using AIO will only block one ircd::ctx while
-	/// a direct syscall will block the thread (all contexts). If AIO is not
-	/// available or not enabled, or doesn't support this operation, setting
-	/// this has no effect.
-	bool aio {true};
-
-	/// Request priority. This value is ignored for sync operations.
-	int8_t priority {0};
+	sync_opts(const off_t &offset);
+	sync_opts() = default;
 };
+
+inline
+ircd::fs::sync_opts::sync_opts(const off_t &offset)
+:opts{offset}
+{}
