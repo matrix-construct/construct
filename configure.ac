@@ -397,9 +397,11 @@ dnl
 dnl Optimization
 dnl
 
+CXXFLAGS+=" -O$optimize_level"
+
 AM_COND_IF([OPTIMIZE],
 [
-	CXXFLAGS+=" -O$optimize_level"
+	CXXFLAGS+=" -march=native"
 	CXXFLAGS+=" -fweb"
 	CXXFLAGS+=" -fdata-sections"
 	CXXFLAGS+=" -ffunction-sections"
@@ -422,13 +424,10 @@ AM_COND_IF([OPTIMIZE],
 	dnl remember to axe this when lto is enabled
 	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
-	CXXFLAGS+=" -ggnu-pubnames"
 ], [
-	CXXFLAGS+=" -march=native"
-	CXXFLAGS+=" -O$optimize_level"
 	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
-	CXXFLAGS+=" -ggnu-pubnames"
+	CXXFLAGS+=" -fvar-tracking"
 ])
 
 dnl
