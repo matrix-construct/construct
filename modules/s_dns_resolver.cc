@@ -600,7 +600,7 @@ try
 	// Answers are parsed into this buffer
 	thread_local std::array<rfc1035::answer, MAX_COUNT> an;
 	for(size_t i(0); i < header.ancount; ++i)
-		consume(buffer, size(an[i].parse(buffer)));
+		consume(buffer, size(an.at(i).parse(buffer)));
 
 	if(tag.opts.cache_result)
 	{
@@ -610,61 +610,78 @@ try
 		for(size_t i(0); i < header.ancount; ++i)
 		{
 			const uint &min_ttl(seconds(cache::min_ttl).count());
-			an[i].ttl = now + std::max(an[i].ttl, min_ttl);
+			an.at(i).ttl = now + std::max(an.at(i).ttl, min_ttl);
 		}
 	}
 
 	// The callback to the user will be passed a vector_view of pointers
 	// to this array. The actual record instances will either be located
 	// in the cache map or placement-newed to the buffer below.
-	thread_local const rfc1035::record *record[MAX_COUNT];
+	thread_local std::array<const rfc1035::record *, MAX_COUNT> record;
 
 	// This will be where we place the record instances which are dynamically
 	// laid out and sized types. 512 bytes is assumed as a soft maximum for
 	// each RR instance.
-	thread_local uint8_t recbuf[MAX_COUNT * 512];
+	static const size_t recsz(512);
+	thread_local uint8_t recbuf[recsz * MAX_COUNT];
 
 	size_t i(0);
 	uint8_t *pos{recbuf};
-	for(; i < header.ancount; ++i) switch(an[i].qtype)
+	for(; i < header.ancount; ++i) switch(an.at(i).qtype)
 	{
 		case 1: // A records are inserted into cache
 		{
+			using type = rfc1035::record::A;
 			if(!tag.opts.cache_result)
 			{
-				record[i] = new (pos) rfc1035::record::A(an[i]);
-				pos += sizeof(rfc1035::record::A);
+				if(unlikely(pos + sizeof(type) > recbuf + sizeof(recbuf)))
+					break;
+
+				record.at(i) = new (pos) type(an.at(i));
+				pos += sizeof(type);
 				continue;
 			}
 
-			record[i] = cache::put(qd.at(0), an[i]);
+			record.at(i) = cache::put(qd.at(0), an.at(i));
 			continue;
 		}
 
 		case 5:
 		{
-			record[i] = new (pos) rfc1035::record::CNAME(an[i]);
-			pos += sizeof(rfc1035::record::CNAME);
+			using type = rfc1035::record::CNAME;
+			if(unlikely(pos + sizeof(type) > recbuf + sizeof(recbuf)))
+				break;
+
+			record.at(i) = new (pos) type(an.at(i));
+			pos += sizeof(type);
 			continue;
 		}
 
 		case 33:
 		{
+			using type = rfc1035::record::SRV;
 			if(!tag.opts.cache_result)
 			{
-				record[i] = new (pos) rfc1035::record::SRV(an[i]);
-				pos += sizeof(rfc1035::record::SRV);
+				if(unlikely(pos + sizeof(type) > recbuf + sizeof(recbuf)))
+					break;
+
+				record.at(i) = new (pos) type(an.at(i));
+				pos += sizeof(type);
 				continue;
 			}
 
-			record[i] = cache::put(qd.at(0), an[i]);
+			record.at(i) = cache::put(qd.at(0), an.at(i));
 			continue;
 		}
 
 		default:
 		{
-			record[i] = new (pos) rfc1035::record(an[i]);
-			pos += sizeof(rfc1035::record);
+			using type = rfc1035::record;
+			if(unlikely(pos + sizeof(type) > recbuf + sizeof(recbuf)))
+				break;
+
+			record.at(i) = new (pos) type(an.at(i));
+			pos += sizeof(type);
 			continue;
 		}
 	}
@@ -675,8 +692,13 @@ try
 
 	if(tag.cb)
 	{
-		const vector_view<const rfc1035::record *> records(record, i);
-		tag.cb(std::exception_ptr{}, tag.hp, records);
+		static const std::exception_ptr no_exception{};
+		const vector_view<const rfc1035::record *> records
+		{
+			record.data(), i
+		};
+
+		tag.cb(no_exception, tag.hp, records);
 	}
 }
 catch(const std::exception &e)
