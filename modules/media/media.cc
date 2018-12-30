@@ -371,14 +371,26 @@ size_t
 read_each_block(const m::room &room,
                 const std::function<void (const const_buffer &)> &closure)
 {
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"content", "type"
+		}
+	};
+
+	size_t ret{0};
+	m::room::messages it
+	{
+		room, 1, &fopts
+	};
+
 	// Block buffer
 	const unique_buffer<mutable_buffer> buf
 	{
 		64_KiB
 	};
 
-	size_t ret{0};
-	m::room::messages it{room, 1};
 	for(; bool(it); ++it)
 	{
 		const m::event &event{*it};
@@ -404,7 +416,7 @@ read_each_block(const m::room &room,
 		{
 			"File [%s] block [%s] (%s) blksz %zu != %zu",
 			string_view{room.room_id},
-			string_view{at<"event_id"_>(event)},
+			string_view{m::get(std::nothrow, it.event_idx(), "event_id", buf)},
 			hash,
 			blksz,
 			size(block)

@@ -105,9 +105,19 @@ get__thumbnail_local(client &client,
                      const string_view &mediaid,
                      const m::room &room)
 {
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include {"content"}
+	};
+
+	const m::room::state state
+	{
+		room, &fopts
+	};
+
 	// Get the file's total size
 	size_t file_size{0};
-	room.get("ircd.file.stat", "size", [&file_size]
+	state.get("ircd.file.stat", "size", [&file_size]
 	(const m::event &event)
 	{
 		file_size = at<"content"_>(event).get<size_t>("value");
@@ -120,7 +130,7 @@ get__thumbnail_local(client &client,
 		"application/octet-stream"
 	};
 
-	room.get("ircd.file.stat", "type", [&type_buf, &content_type]
+	state.get("ircd.file.stat", "type", [&type_buf, &content_type]
 	(const m::event &event)
 	{
 		const auto &value

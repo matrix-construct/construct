@@ -81,9 +81,19 @@ get__download_local(client &client,
                     const string_view &file,
                     const m::room &room)
 {
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include {"content"}
+	};
+
+	const m::room::state state
+	{
+		room, &fopts
+	};
+
 	// Get the file's total size
 	size_t file_size{0};
-	room.get("ircd.file.stat", "size", [&file_size]
+	state.get("ircd.file.stat", "size", [&file_size]
 	(const m::event &event)
 	{
 		file_size = at<"content"_>(event).get<size_t>("value");
@@ -96,7 +106,7 @@ get__download_local(client &client,
 		"application/octet-stream"
 	};
 
-	room.get("ircd.file.stat", "type", [&type_buf, &content_type]
+	state.get("ircd.file.stat", "type", [&type_buf, &content_type]
 	(const m::event &event)
 	{
 		const auto &value
@@ -116,12 +126,14 @@ get__download_local(client &client,
 		client, http::OK, content_type, file_size
 	};
 
-	size_t sent{0}, read;
-	read = read_each_block(room, [&client, &sent]
-	(const string_view &block)
+	size_t sent{0}, read
 	{
-		sent += write_all(*client.sock, block);
-	});
+		read_each_block(room, [&client, &sent]
+		(const string_view &block)
+		{
+			sent += write_all(*client.sock, block);
+		})
+	};
 
 	if(unlikely(read != file_size)) log::error
 	{
