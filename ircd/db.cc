@@ -11206,12 +11206,12 @@ ircd::db::error::error(const rocksdb::Status &s)
 {
 	fmt::sprintf
 	{
-		buf, "%s (%u:%u): %s (%u)",
-		s.getState(),
+		buf, "(%u:%u:%u %s): %s",
 		this->code,
 		this->subcode,
-		reflect(s.severity()),
 		this->severity,
+		reflect(s.severity()),
+		s.getState(),
 	};
 }
 
