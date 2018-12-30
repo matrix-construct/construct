@@ -263,7 +263,7 @@ ircd::m::vm::error::error(const fault &code,
                           args&&... a)
 :m::error
 {
-	http::NOT_MODIFIED, "M_VM_FAULT", fmt, std::forward<args>(a)...
+	child, http::NOT_MODIFIED, "M_VM_FAULT", fmt, std::forward<args>(a)...
 }
 ,code
 {
@@ -276,7 +276,7 @@ ircd::m::vm::error::error(const string_view &fmt,
                           args&&... a)
 :m::error
 {
-	http::INTERNAL_SERVER_ERROR, "M_VM_FAULT", fmt, std::forward<args>(a)...
+	child, http::INTERNAL_SERVER_ERROR, "M_VM_FAULT", fmt, std::forward<args>(a)...
 }
 ,code
 {
