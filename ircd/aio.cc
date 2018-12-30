@@ -567,7 +567,7 @@ ircd::fs::aio::system::submit(request &request)
 			break;
 	}
 
-	const bool flush_now
+	const bool submit_now
 	{
 		// The nodelay flag is set
 		nodelay
@@ -579,9 +579,9 @@ ircd::fs::aio::system::submit(request &request)
 		|| qcount >= queue.size()
 	};
 
-	const size_t flushed
+	const size_t submitted
 	{
-		flush_now? flush() : 0
+		submit_now? submit() : 0
 	};
 
 	if(qcount == 1)
@@ -600,7 +600,7 @@ noexcept try
 
 	const auto submitted
 	{
-		flush()
+		submit()
 	};
 
 	assert(!qcount);
@@ -613,9 +613,9 @@ catch(const std::exception &e)
 	};
 }
 
-/// The flusher submits all queued requests and resets the count.
+/// The submitter submits all queued requests and resets the count.
 size_t
-ircd::fs::aio::system::flush()
+ircd::fs::aio::system::submit()
 try
 {
 	assert(qcount > 0);
@@ -652,7 +652,7 @@ catch(const std::system_error &e)
 		// All other errors unexpected.
 		default: ircd::terminate{ircd::error
 		{
-			"AIO(%p) system::flush() qcount:%zu :%s", this, qcount, e.what()
+			"AIO(%p) system::submit() qcount:%zu :%s", this, qcount, e.what()
 		}};
 	}
 }

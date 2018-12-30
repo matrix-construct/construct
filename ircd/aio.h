@@ -57,7 +57,7 @@ struct ircd::fs::aio::system
 	void handle(const boost::system::error_code &, const size_t) noexcept;
 	void set_handle();
 
-	size_t flush();
+	size_t submit();
 	void chase() noexcept;
 
 	void submit(request &);
