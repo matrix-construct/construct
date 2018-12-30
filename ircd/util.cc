@@ -63,18 +63,20 @@ ircd::util::getenv(const string_view &key)
 
 ircd::string_view
 ircd::util::pretty_nanoseconds(const mutable_buffer &out,
-                               const long double &ns)
+                               const long double &ns,
+                               const uint &fmt)
 {
-	static const std::array<string_view, 7> unit
-	{
-		"nanoseconds",
-		"microseconds",
-		"milliseconds",
-		"seconds",
-		"minutes",
-		"hours",
-		"days",
-	};
+	static const std::array<std::array<string_view, 2>, 7> unit
+	{{
+		// fmt=0             fmt=1
+		{ "nanoseconds",     "ns"   },
+		{ "microseconds",    "us"   },
+		{ "milliseconds",    "ms"   },
+		{ "seconds",         "s"    },
+		{ "minutes",         "m"    },
+		{ "hours",           "h"    },
+		{ "days",            "d"    },
+	}};
 
 	auto pos(0);
 	long double val(ns);
@@ -132,7 +134,7 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
 	{
 		out, "%.2lf %s",
 		val,
-		unit.at(pos)
+		unit.at(pos).at(fmt)
 	};
 }
 
