@@ -4,7 +4,7 @@
 #
 
 AM_CXXFLAGS = \
-	-ftls-model=local-dynamic \
+	-ftls-model=global-dynamic \
 	@EXTRA_CXXFLAGS@ \
 	###
 
