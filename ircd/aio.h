@@ -28,6 +28,8 @@ namespace ircd::fs::aio
 /// an extern instance pointer at fs::aio::context maintained by fs::aio::init.
 struct ircd::fs::aio::system
 {
+	static const int eventfd_flags;
+
 	/// io_getevents vector (in)
 	std::vector<io_event> event;
 	uint64_t ecount {0};

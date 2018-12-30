@@ -364,6 +364,12 @@ const
 // system
 //
 
+decltype(ircd::fs::aio::system::eventfd_flags)
+ircd::fs::aio::system::eventfd_flags
+{
+	EFD_CLOEXEC | EFD_NONBLOCK
+};
+
 //
 // system::system
 //
@@ -380,7 +386,7 @@ try
 }
 ,resfd
 {
-	ios::get(), int(syscall(::eventfd, ecount, EFD_NONBLOCK))
+	ios::get(), int(syscall(::eventfd, ecount, eventfd_flags))
 }
 {
 	syscall<SYS_io_setup>(size_t(max_events), &idp);
