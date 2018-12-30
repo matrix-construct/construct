@@ -363,6 +363,9 @@ ircd::client::async()
 		std::bind(ircd::handle_client_ready, shared_from(*this), ph::_1)
 	};
 
+	// Re-purpose the request time counter into an async timer by marking it.
+	timer = ircd::timer{};
+
 	sock(opts, std::move(handler));
 	return true;
 }
