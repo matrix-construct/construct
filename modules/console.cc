@@ -4404,8 +4404,38 @@ console_cmd__client(opt &out, const string_view &line)
 		return a->id < b->id;
 	});
 
+	out << left
+	    << setw(8) << "ID"
+	    << " "
+	    << setw(8) << "SOCKID"
+	    << " "
+	    << left
+	    << setw(22) << "LOCAL"
+	    << " "
+	    << setw(22) << "REMOTE"
+	    << " "
+	    << right
+	    << setw(25) << "BYTES FROM"
+	    << " "
+	    << setw(25) << "BYTES TO"
+	    << " "
+	    << setw(4) << "RDY"
+	    << " "
+	    << setw(4) << "REQ"
+	    << " "
+	    << setw(6) << "MODE"
+	    << " "
+	    << setw(4) << "CTX"
+	    << " "
+	    << setw(11) << "TIME"
+	    << " "
+	    << left
+	    << std::endl;
+
 	for(const auto &client : clients)
 	{
+		thread_local char pbuf[2][64];
+
 		if(idnum && client->id < idnum)
 			continue;
 		else if(idnum && client->id > idnum)
@@ -4413,49 +4443,62 @@ console_cmd__client(opt &out, const string_view &line)
 		else if(reqs && !client->reqctx)
 			continue;
 
-		out << setw(8) << left << client->id
-		    << "  " << right << setw(22) << local(*client)
-		    << "  " << left << setw(22) << remote(*client)
+		out << left << setw(8) << client->id;
+
+		out << " "
+		    << left << setw(8) << (client->sock? net::id(*client->sock) : 0UL)
 		    ;
 
-		out << " | RDY " << right << setw(4) << client->ready_count
-		    << " | REQ " << right << setw(4) << client->request_count
+		out << " "
+		    << left << setw(22) << local(*client)
+		    << " "
+		    << left << setw(22) << remote(*client)
 		    ;
 
-		if(bool(client->sock))
+		const std::pair<size_t, size_t> stat
 		{
-			const auto stat
-			{
-				net::bytes(*client->sock)
-			};
+			bool(client->sock)?
+				net::bytes(*client->sock):
+				std::pair<size_t, size_t>{0, 0}
+		};
 
-			out << " | UP " << setw(8) << right << stat.second
-			    << " | DN " << setw(8) << right << stat.first
-			    << " |";
-		}
+		out << " "
+		    << right << setw(25) << pretty(pbuf[0], iec(stat.first))
+		    << " "
+		    << right << setw(25) << pretty(pbuf[1], iec(stat.second))
+		    ;
 
-		if(client->reqctx)
-			out << " CTX " << setw(4) << id(*client->reqctx);
-		else
-			out << " ASYNC";
+		out << " "
+		    << right << setw(4) << client->ready_count
+		    << " "
+		    << right << setw(4) << client->request_count
+		    ;
+
+		out << " " << right << setw(6)
+		    << (client->reqctx? "CTX"_sv : "ASYNC"_sv)
+		    ;
+
+		out << " " << right << setw(4)
+		    << (client->reqctx? id(*client->reqctx) : 0UL)
+		    ;
+
+		out << " "
+		    << right << setw(11) << pretty(pbuf[0], client->timer.at<nanoseconds>(), true)
+		    ;
+
+		out << " "
+		    << left;
 
 		if(client->request.user_id)
-			out << " | USER " << client->request.user_id;
-
-		if(client->request.origin)
-			out << " | PEER " << client->request.origin;
+			out << " USER " << client->request.user_id;
+		else if(client->request.origin)
+			out << " PEER " << client->request.origin;
 
 		if(client->request.head.method)
-			out << " " << client->request.head.method << ""
-			    << " " << client->request.head.path;
+			out << " " << client->request.head.method;
 
-		if(client->reqctx)
-		{
-			thread_local char pbuf[64];
-			out << " | "
-			    << pretty(pbuf, client->timer.at<nanoseconds>())
-			    << "";
-		}
+		if(client->request.head.path)
+			out << " " << client->request.head.path;
 
 		out << std::endl;
 	}
