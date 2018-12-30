@@ -5498,7 +5498,7 @@ noexcept
 
 		default:
 		case IOPriority::IO_LOW:
-			prio_val = 0;
+			prio_val = 5; //TODO: magic
 			nodelay = false;
 			break;
 	}
