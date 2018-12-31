@@ -311,10 +311,16 @@ ircd::http::response::response(window_buffer &out,
                                const code &code,
                                const size_t &content_length,
                                const string_view &content_type,
-                               const string_view &headers_string,
-                               const vector_view<const header> &headers,
+                               const http::headers &headers_s,
+                               const vector_view<const header> &headers_v,
                                const bool &termination)
 {
+	const auto has_header{[&headers_s, &headers_v]
+	(const string_view &key) -> bool
+	{
+		return has(headers_v, key) || has(headers_s, key);
+	}};
+
 	writeline(out, [&code](const mutable_buffer &out) -> size_t
 	{
 		return fmt::sprintf
@@ -323,7 +329,13 @@ ircd::http::response::response(window_buffer &out,
 		};
 	});
 
-	if(code >= 200 && code < 300 && !has(headers, "server"))
+	const bool write_server_header
+	{
+		code >= 200 && code < 300
+		&& !has_header("server")
+	};
+
+	if(write_server_header)
 		writeline(out, [&code](const mutable_buffer &out) -> size_t
 		{
 			size_t ret{0};
@@ -332,7 +344,13 @@ ircd::http::response::response(window_buffer &out,
 			return ret;
 		});
 
-	if(code < 400 && !has(headers, "date"))
+	const bool write_date_header
+	{
+		code < 400
+		&& !has_header("date")
+	};
+
+	if(write_date_header)
 		writeline(out, [](const mutable_buffer &out) -> size_t
 		{
 			thread_local char date_buf[96];
@@ -342,7 +360,14 @@ ircd::http::response::response(window_buffer &out,
 			};
 		});
 
-	if(code != NO_CONTENT && content_type && content_length && !has(headers, "content-type"))
+	const bool write_content_type_header
+	{
+		code != NO_CONTENT
+		&& content_type && content_length
+		&& !has_header("content-type")
+	};
+
+	if(write_content_type_header)
 		writeline(out, [&content_type](const mutable_buffer &out) -> size_t
 		{
 			return fmt::sprintf
@@ -351,7 +376,14 @@ ircd::http::response::response(window_buffer &out,
 			};
 		});
 
-	if(code != NO_CONTENT && content_length != size_t(-1) && !has(headers, "content-length"))
+	const bool write_content_length_header
+	{
+		code != NO_CONTENT
+		&& content_length != size_t(-1) // chunked encoding indication
+		&& !has_header("content-length")
+	};
+
+	if(write_content_length_header)
 		writeline(out, [&content_length](const mutable_buffer &out) -> size_t
 		{
 			return fmt::sprintf
@@ -360,20 +392,26 @@ ircd::http::response::response(window_buffer &out,
 			};
 		});
 
-	if(content_length == size_t(-1) && !has(headers, "transfer-encoding"))
+	const bool write_transfer_encoding_chunked
+	{
+		content_length == size_t(-1)
+		&& !has_header("transfer-encoding")
+	};
+
+	if(write_transfer_encoding_chunked)
 		writeline(out, [&content_length](const mutable_buffer &out) -> size_t
 		{
 			return copy(out, "Transfer-Encoding: chunked"_sv);
 		});
 
-	if(!headers_string.empty())
-		out([&headers_string](const mutable_buffer &out)
+	if(!headers_s.empty())
+		out([&headers_s](const mutable_buffer &out)
 		{
-			return copy(out, headers_string);
+			return copy(out, headers_s);
 		});
 
-	if(!headers.empty())
-		write(out, headers);
+	if(!headers_v.empty())
+		write(out, headers_v);
 
 	if(termination)
 		writeline(out);

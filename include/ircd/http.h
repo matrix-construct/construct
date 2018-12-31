@@ -242,7 +242,7 @@ struct ircd::http::response
 	         const code &,
 	         const size_t &content_length       = 0,
 	         const string_view &content_type    = {},
-	         const string_view &headers         = {},
+	         const http::headers &headers       = {},
 	         const vector_view<const header> &  = {},
 	         const bool &termination            = true);
 
