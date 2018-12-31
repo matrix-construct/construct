@@ -54,7 +54,7 @@ struct ircd::parse::buffer
 	:base{data(mb)}
 	,parsed{data(mb)}
 	,read{data(mb) + old.unparsed()}
-	,stop{stop}
+	,stop{data(mb) + ircd::size(mb)}
 	{
 		memmove(base, old.base, old.unparsed());
 	}
@@ -113,7 +113,7 @@ inline void
 ircd::parse::capstan::operator()(const parse_closure &pc)
 try
 {
-	while(!pc(parsed, const_cast<const char *>(read)))
+	while(!pc(parsed, const_cast<const char *>(read)) && read != stop)
 		reader(read, stop);
 }
 catch(const std::bad_function_call &e)
