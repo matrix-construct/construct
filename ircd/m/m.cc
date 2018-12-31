@@ -484,6 +484,10 @@ decltype(ircd::m::vm::current_sequence)
 ircd::m::vm::current_sequence
 {};
 
+decltype(ircd::m::vm::uncommitted_sequence)
+ircd::m::vm::uncommitted_sequence
+{};
+
 decltype(ircd::m::vm::default_opts)
 ircd::m::vm::default_opts
 {};

@@ -16,7 +16,8 @@ namespace ircd::m::vm
 	extern hook::site<eval &> notify_hook;  ///< Called to broadcast successful eval
 	extern hook::site<eval &> effect_hook;  ///< Called to apply effects of eval
 
-	static void write_commit(eval &);
+	static void _commit(eval &);
+	static void _write(eval &, const event &);
 	static fault _eval_edu(eval &, const event &);
 	static fault _eval_pdu(eval &, const event &);
 
@@ -77,6 +78,7 @@ ircd::m::vm::init()
 {
 	id::event::buf event_id;
 	current_sequence = retired_sequence(event_id);
+	uncommitted_sequence = current_sequence;
 
 	log::info
 	{
@@ -100,10 +102,12 @@ ircd::m::vm::fini()
 
 	log::info
 	{
-		log, "HLT '%s' @%lu [%s]",
+		log, "HLT '%s' @%lu [%s] %lu:%lu",
 		string_view{m::my_node.node_id},
 		current_sequence,
-		current_sequence? string_view{event_id} : "NO EVENTS"_sv
+		current_sequence? string_view{event_id} : "NO EVENTS"_sv,
+		vm::uncommitted_sequence,
+		vm::current_sequence,
 	};
 }
 
@@ -443,9 +447,7 @@ try
 		if(eval.copts->debuglog_precommit)
 			log::debug
 			{
-				log, "injecting event(mark +%ld) %s",
-				vm::current_sequence,
-				pretty_oneline(event)
+				log, "Injecting event %s", pretty_oneline(event)
 			};
 
 		check_size(event);
@@ -630,14 +632,28 @@ ircd::m::vm::_eval_pdu(eval &eval,
 
 	// Obtain sequence number here
 	if(opts.write)
-		eval.sequence = ++vm::current_sequence;
+		eval.sequence = ++vm::uncommitted_sequence;
 
 	// Evaluation by module hooks
 	if(opts.eval)
 		eval_hook(event, eval);
 
-	if(!opts.write)
-		return fault::ACCEPT;
+	if(opts.write)
+		_write(eval, event);
+
+	return fault::ACCEPT;
+}
+
+void
+ircd::m::vm::_write(eval &eval,
+                    const event &event)
+
+{
+	assert(eval.opts);
+	const auto &opts
+	{
+		*eval.opts
+	};
 
 	const size_t reserve_bytes
 	{
@@ -672,11 +688,11 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	wopts.refs = opts.refs;
 	wopts.event_idx = eval.sequence;
 
-	if(type == "m.room.create")
+	if(at<"type"_>(event) == "m.room.create")
 	{
 		dbs::write(txn, event, wopts);
-		write_commit(eval);
-		return fault::ACCEPT;
+		_commit(eval);
+		return;
 	}
 
 	const bool require_head
@@ -687,7 +703,7 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	const id::event::buf head
 	{
 		require_head?
-			m::head(std::nothrow, room_id):
+			m::head(std::nothrow, at<"room_id"_>(event)):
 			id::event::buf{}
 	};
 
@@ -695,12 +711,12 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		throw error
 		{
 			fault::STATE, "Required head for room %s not found.",
-			string_view{room_id}
+			string_view{at<"room_id"_>(event)}
 		};
 
 	const m::room room
 	{
-		room_id, head
+		at<"room_id"_>(event), head
 	};
 
 	const m::room::state state
@@ -710,24 +726,26 @@ ircd::m::vm::_eval_pdu(eval &eval,
 
 	wopts.root_in = state.root_id;
 	dbs::write(txn, event, wopts);
-	write_commit(eval);
-	return fault::ACCEPT;
+	_commit(eval);
 }
 
 void
-ircd::m::vm::write_commit(eval &eval)
+ircd::m::vm::_commit(eval &eval)
 {
 	assert(eval.txn);
 	auto &txn(*eval.txn);
+
+	txn();
+	++vm::current_sequence;
 	if(eval.opts->debuglog_accept)
 		log::debug
 		{
-			log, "Committing %zu cells in %zu bytes to events database...",
+			log, "sequence[%lu:%lu] :Committed %zu cells in %zu bytes to events database ...",
+			vm::current_sequence,
+			vm::uncommitted_sequence,
 			txn.size(),
 			txn.bytes()
 		};
-
-	txn();
 }
 
 uint64_t

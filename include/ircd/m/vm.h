@@ -24,6 +24,7 @@ namespace ircd::m::vm
 
 	extern log::log log;
 	extern uint64_t current_sequence;
+	extern uint64_t uncommitted_sequence;
 	extern const opts default_opts;
 	extern const copts default_copts;
 
