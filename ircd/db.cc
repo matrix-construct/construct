@@ -2630,6 +2630,37 @@ noexcept
 		info.status.getState()?: "OK",
 	};
 
+	const bool bytes_same
+	{
+		info.stats.total_input_bytes == info.stats.total_output_bytes
+	};
+
+	log::debug
+	{
+		log, "'%s': job:%d keys[in:%zu out:%zu upd:%zu] bytes[%s -> %s] falloc:%s write:%s rsync:%s fsync:%s total:%s",
+		d->name,
+		info.job_id,
+		info.stats.num_input_records,
+		info.stats.num_output_records,
+		info.stats.num_records_replaced,
+		pretty(iec(info.stats.total_input_bytes)),
+		bytes_same? "same": pretty(iec(info.stats.total_output_bytes)),
+		pretty(nanoseconds(info.stats.file_prepare_write_nanos), true),
+		pretty(nanoseconds(info.stats.file_write_nanos), true),
+		pretty(nanoseconds(info.stats.file_range_sync_nanos), true),
+		pretty(nanoseconds(info.stats.file_fsync_nanos), true),
+		pretty(microseconds(info.stats.elapsed_micros), true),
+	};
+
+	if(info.stats.num_corrupt_keys > 0)
+		log::error
+		{
+			log, "'%s': job:%d reported %lu corrupt keys.",
+			d->name,
+			info.job_id,
+			info.stats.num_corrupt_keys
+		};
+
 	assert(info.thread_id == ctx::id(*ctx::current));
 }
 
