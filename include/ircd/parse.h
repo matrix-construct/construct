@@ -66,6 +66,13 @@ struct ircd::parse::buffer
 	,stop{data(mb) + ircd::size(mb)}
 	{}
 
+	buffer(const const_buffer &cb)
+	:base{const_cast<char *>(data(cb))}
+	,parsed{data(cb)}
+	,read{base + ircd::size(cb)}
+	,stop{read}
+	{}
+
 	template<size_t N> buffer(const buffer &old, char (&buf)[N])
 	:buffer{old, buf}
 	{}
