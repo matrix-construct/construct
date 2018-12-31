@@ -119,8 +119,15 @@ struct ircd::strlcpy
 	mutable_buffer ret;
 
   public:
-	operator string_view() const       { return ret;                           }
-	operator size_t() const            { return size(ret);                     }
+	operator string_view() const
+	{
+		return ret;
+	}
+
+	operator size_t() const
+	{
+		return size(ret);
+	}
 
 	strlcpy(char *const &dst, const string_view &src, const size_t &max)
 	:ret{[&]() -> mutable_buffer
@@ -153,8 +160,15 @@ struct ircd::strlcat
 	mutable_buffer ret;
 
   public:
-	operator string_view() const       { return ret;                           }
-	operator size_t() const            { return size(ret);                     }
+	operator string_view() const
+	{
+		return ret;
+	}
+
+	operator size_t() const
+	{
+		return size(ret);
+	}
 
 	strlcat(char *const &dst, const string_view &src, const size_t &max)
 	:ret{[&]() -> mutable_buffer
@@ -174,6 +188,113 @@ struct ircd::strlcat
 	:strlcat(data(dst), src, size(dst))
 	{}
 };
+
+/// Case insensitive string comparison deciding if two strings are equal
+struct ircd::iequals
+{
+	using is_transparent = std::true_type;
+
+	bool s;
+
+	operator const bool &() const
+	{
+		return s;
+	}
+
+	bool operator()(const string_view &a, const string_view &b) const;
+
+	template<class A,
+	         class B>
+	iequals(A&& a, B&& b)
+	:s{operator()(std::forward<A>(a), std::forward<B>(b))}
+	{}
+
+	iequals() = default;
+};
+
+inline bool
+ircd::iequals::operator()(const string_view &a,
+                          const string_view &b)
+const
+{
+	return std::equal(begin(a), end(a), begin(b), end(b), []
+	(const char &a, const char &b)
+	{
+		return tolower(a) == tolower(b);
+	});
+}
+
+/// Case insensitive string comparison deciding which string compares 'less'
+/// than the other.
+struct ircd::iless
+{
+	using is_transparent = std::true_type;
+
+	bool s;
+
+	operator const bool &() const
+	{
+		return s;
+	}
+
+	bool operator()(const string_view &a, const string_view &b) const;
+
+	template<class A,
+	         class B>
+	iless(A&& a, B&& b)
+	:s{operator()(std::forward<A>(a), std::forward<B>(b))}
+	{}
+
+	iless() = default;
+};
+
+inline bool
+ircd::iless::operator()(const string_view &a,
+                        const string_view &b)
+const
+{
+	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
+	(const char &a, const char &b)
+	{
+		return tolower(a) < tolower(b);
+	});
+}
+
+/// Case insensitive string comparison deciding which string compares 'greater'
+/// than the other.
+struct ircd::igreater
+{
+	using is_transparent = std::true_type;
+
+	bool s;
+
+	operator const bool &() const
+	{
+		return s;
+	}
+
+	bool operator()(const string_view &a, const string_view &b) const;
+
+	template<class A,
+	         class B>
+	igreater(A&& a, B&& b)
+	:s{operator()(std::forward<A>(a), std::forward<B>(b))}
+	{}
+
+	igreater() = default;
+};
+
+inline bool
+ircd::igreater::operator()(const string_view &a,
+                           const string_view &b)
+const
+{
+	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
+	(const char &a, const char &b)
+	{
+		return tolower(a) > tolower(b);
+	});
+}
 
 inline ircd::string_view
 ircd::trunc(const string_view &s,
@@ -590,183 +711,4 @@ ircd::has(const string_view &s,
           const T &t)
 {
 	return s.find(t) != s.npos;
-}
-
-/// Case insensitive string comparison deciding which string compares 'less'
-/// than the other.
-struct ircd::iless
-{
-	using is_transparent = std::true_type;
-
-	bool s;
-
-	operator const bool &() const                { return s;                                       }
-
-	bool operator()(const string_view &a, const string_view &b) const;
-	bool operator()(const string_view &a, const std::string &b) const;
-	bool operator()(const std::string &a, const string_view &b) const;
-	bool operator()(const std::string &a, const std::string &b) const;
-
-	template<class A,
-	         class B>
-	iless(A&& a, B&& b)
-	:s{operator()(std::forward<A>(a), std::forward<B>(b))}
-	{}
-
-	iless() = default;
-};
-
-inline bool
-ircd::iless::operator()(const std::string &a,
-                        const std::string &b)
-const
-{
-	return operator()(string_view{a}, string_view{b});
-}
-
-inline bool
-ircd::iless::operator()(const string_view &a,
-                        const std::string &b)
-const
-{
-	return operator()(a, string_view{b});
-}
-
-inline bool
-ircd::iless::operator()(const std::string &a,
-                        const string_view &b)
-const
-{
-	return operator()(string_view{a}, b);
-}
-
-inline bool
-ircd::iless::operator()(const string_view &a,
-                        const string_view &b)
-const
-{
-	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
-	(const char &a, const char &b)
-	{
-		return tolower(a) < tolower(b);
-	});
-}
-
-/// Case insensitive string comparison deciding if two strings are equal
-struct ircd::iequals
-{
-	using is_transparent = std::true_type;
-
-	bool s;
-
-	operator const bool &() const                { return s;                                       }
-
-	bool operator()(const string_view &a, const string_view &b) const;
-	bool operator()(const string_view &a, const std::string &b) const;
-	bool operator()(const std::string &a, const string_view &b) const;
-	bool operator()(const std::string &a, const std::string &b) const;
-
-	template<class A,
-	         class B>
-	iequals(A&& a, B&& b)
-	:s{operator()(std::forward<A>(a), std::forward<B>(b))}
-	{}
-
-	iequals() = default;
-};
-
-inline bool
-ircd::iequals::operator()(const std::string &a,
-                          const std::string &b)
-const
-{
-	return operator()(string_view{a}, string_view{b});
-}
-
-inline bool
-ircd::iequals::operator()(const string_view &a,
-                          const std::string &b)
-const
-{
-	return operator()(a, string_view{b});
-}
-
-inline bool
-ircd::iequals::operator()(const std::string &a,
-                          const string_view &b)
-const
-{
-	return operator()(string_view{a}, b);
-}
-
-inline bool
-ircd::iequals::operator()(const string_view &a,
-                          const string_view &b)
-const
-{
-	return std::equal(begin(a), end(a), begin(b), end(b), []
-	(const char &a, const char &b)
-	{
-		return tolower(a) == tolower(b);
-	});
-}
-
-/// Case insensitive string comparison deciding which string compares 'greater'
-/// than the other.
-struct ircd::igreater
-{
-	using is_transparent = std::true_type;
-
-	bool s;
-
-	operator const bool &() const                { return s;                                       }
-
-	bool operator()(const string_view &a, const string_view &b) const;
-	bool operator()(const string_view &a, const std::string &b) const;
-	bool operator()(const std::string &a, const string_view &b) const;
-	bool operator()(const std::string &a, const std::string &b) const;
-
-	template<class A,
-	         class B>
-	igreater(A&& a, B&& b)
-	:s{operator()(std::forward<A>(a), std::forward<B>(b))}
-	{}
-
-	igreater() = default;
-};
-
-inline bool
-ircd::igreater::operator()(const std::string &a,
-                           const std::string &b)
-const
-{
-	return operator()(string_view{a}, string_view{b});
-}
-
-inline bool
-ircd::igreater::operator()(const string_view &a,
-                           const std::string &b)
-const
-{
-	return operator()(a, string_view{b});
-}
-
-inline bool
-ircd::igreater::operator()(const std::string &a,
-                           const string_view &b)
-const
-{
-	return operator()(string_view{a}, b);
-}
-
-inline bool
-ircd::igreater::operator()(const string_view &a,
-                           const string_view &b)
-const
-{
-	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
-	(const char &a, const char &b)
-	{
-		return tolower(a) > tolower(b);
-	});
 }
