@@ -1275,11 +1275,10 @@ noexcept try
 	assert(bool(sock));
 	log::debug
 	{
-		log, "%s: socket(%p) accepted(%zu) %s %s",
+		log, "%s: accepted(%zu) %s %s",
 		string(logheadbuf, *this),
-		sock.get(),
 		accepting,
-		string(remote_ipport(*sock)),
+		loghead(*sock),
 		string(ec)
 	};
 
@@ -1315,9 +1314,9 @@ catch(const ctx::interrupted &e)
 {
 	log::debug
 	{
-		log, "%s: acceptor interrupted socket(%p) %s",
+		log, "%s: acceptor interrupted %s %s",
 		string(logheadbuf, *this),
-		sock.get(),
+		loghead(*sock),
 		string(ec)
 	};
 
@@ -1327,9 +1326,9 @@ catch(const std::system_error &e)
 {
 	log::derror
 	{
-		log, "%s: socket(%p) in accept(): %s",
+		log, "%s: %s in accept(): %s",
 		string(logheadbuf, *this),
-		sock.get(),
+		loghead(*sock),
 		string(e)
 	};
 }
@@ -1337,9 +1336,9 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "%s: socket(%p) in accept(): %s",
+		log, "%s: %s in accept(): %s",
 		string(logheadbuf, *this),
-		sock.get(),
+		loghead(*sock),
 		e.what()
 	};
 }
@@ -1409,9 +1408,9 @@ catch(const ctx::interrupted &e)
 {
 	log::debug
 	{
-		log, "%s: SSL handshake interrupted socket(%p) %s",
+		log, "%s: SSL handshake interrupted %s %s",
 		string(logheadbuf, *this),
-		sock.get(),
+		loghead(*sock),
 		string(ec)
 	};
 
@@ -1421,9 +1420,9 @@ catch(const std::system_error &e)
 {
 	log::derror
 	{
-		log, "%s: socket(%p) in handshake(): %s",
+		log, "%s: %s in handshake(): %s",
 		string(logheadbuf, *this),
-		sock.get(),
+		loghead(*sock),
 		string(e)
 	};
 }
@@ -1431,9 +1430,9 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "%s: socket(%p) in handshake(): %s",
+		log, "%s: %s in handshake(): %s",
 		string(logheadbuf, *this),
-		sock.get(),
+		loghead(*sock),
 		e.what()
 	};
 }
@@ -1968,8 +1967,8 @@ ircd::net::socket::connect(const endpoint &ep,
 {
 	log::debug
 	{
-		log, "socket(%p) attempting connect remote[%s] to:%ld$ms",
-		this,
+		log, "socket:%lu attempting connect remote[%s] to:%ld$ms",
+		this->id,
 		string(ep),
 		opts.connect_timeout.count()
 	};
@@ -2074,8 +2073,8 @@ catch(const boost::system::system_error &e)
 {
 	log::derror
 	{
-		log, "socket(%p) disconnect type:%d :%s",
-		(const void *)this,
+		log, "socket:%lu disconnect type:%d :%s",
+		this->id,
 		uint(opts.type),
 		e.what()
 	};
@@ -2086,8 +2085,8 @@ catch(const std::exception &e)
 {
 	throw assertive
 	{
-		"socket(%p) disconnect: type: %d: %s",
-		(const void *)this,
+		"socket:%lu disconnect: type: %d: %s",
+		this->id,
 		uint(opts.type),
 		e.what()
 	};
@@ -2106,8 +2105,8 @@ noexcept
 
 	log::dwarning
 	{
-		log, "socket(%p) cancel :%s",
-		(const void *)this,
+		log, "socket:%lu cancel :%s",
+		this->id,
 		string(ec)
 	};
 }
