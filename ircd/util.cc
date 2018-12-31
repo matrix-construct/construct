@@ -78,6 +78,13 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
 		{ "days",            "d"    },
 	}};
 
+	const string_view &fmtstr
+	{
+		fmt == 1?
+			"%.2lf%s"_sv:
+			"%.2lf %s"_sv
+	};
+
 	auto pos(0);
 	long double val(ns);
 
@@ -132,9 +139,7 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
 	done:
 	return fmt::sprintf
 	{
-		out, "%.2lf %s",
-		val,
-		unit.at(pos).at(fmt)
+		out, fmtstr, val, unit.at(pos).at(fmt)
 	};
 }
 
