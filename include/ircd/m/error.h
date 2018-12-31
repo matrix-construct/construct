@@ -33,6 +33,15 @@ class ircd::m::error
 {
 	static thread_local char fmtbuf[4_KiB];
 
+	IRCD_OVERLOAD(internal)
+	error(internal_t, const http::code &, const json::strung &object);
+
+  protected:
+	IRCD_OVERLOAD(child)
+	template<class... args> error(child_t, args&&... a)
+	:error{std::forward<args>(a)...}
+	{}
+
   public:
 	template<class... args> error(const http::code &, const string_view &errcode, const string_view &fmt, args&&...);
 	template<class... args> error(const string_view &errcode, const string_view &fmt, args&&...);
@@ -42,11 +51,6 @@ class ircd::m::error
 	error(const http::code &);
 	error(std::string);
 	error();
-
-	IRCD_OVERLOAD(child)
-	template<class... args> error(child_t, args&&... a)
-	:error{std::forward<args>(a)...}
-	{}
 };
 
 /// Macro for all matrix exceptions; all errors rooted from m::error
@@ -112,9 +116,9 @@ ircd::m::error::error(const http::code &status,
                       const string_view &errcode,
                       const string_view &fmt,
                       args&&... a)
-:http::error
+:error
 {
-	status, [&errcode, &fmt, &a...]() -> json::strung
+	internal, status, [&errcode, &fmt, &a...]() -> json::strung
 	{
 		const string_view str
 		{

@@ -3727,34 +3727,69 @@ ircd::m::_hook_match(const m::event &matching,
 // m/error.h
 //
 
+namespace ircd::m
+{
+	const std::array<http::header, 1> _error_headers
+	{{
+		{ "Content-Type", "application/json; charset=utf-8" },
+	}};
+}
+
 thread_local
 decltype(ircd::m::error::fmtbuf)
 ircd::m::error::fmtbuf
 {};
 
 ircd::m::error::error()
-:http::error{http::INTERNAL_SERVER_ERROR}
+:http::error
+{
+	http::INTERNAL_SERVER_ERROR
+}
 {}
 
 ircd::m::error::error(std::string c)
-:http::error{http::INTERNAL_SERVER_ERROR, std::move(c)}
+:http::error
+{
+	http::INTERNAL_SERVER_ERROR, std::move(c)
+}
 {}
 
 ircd::m::error::error(const http::code &c)
-:http::error{c, std::string{}}
+:http::error
+{
+	c, std::string{}
+}
 {}
 
 ircd::m::error::error(const http::code &c,
                       const json::members &members)
-:http::error{c, json::strung{members}}
+:error
+{
+	internal, c, json::strung{members}
+}
 {}
 
 ircd::m::error::error(const http::code &c,
                       const json::iov &iov)
-:http::error{c, json::strung{iov}}
+:error
+{
+	internal, c, json::strung{iov}
+}
 {}
 
 ircd::m::error::error(const http::code &c,
                       const json::object &object)
-:http::error{c, std::string{object}}
+:http::error
+{
+	c, std::string{object}, vector_view<const http::header>{_error_headers}
+}
+{}
+
+ircd::m::error::error(internal_t,
+                      const http::code &c,
+                      const json::strung &object)
+:http::error
+{
+	c, object, vector_view<const http::header>{_error_headers}
+}
 {}
