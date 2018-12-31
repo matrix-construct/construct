@@ -30,6 +30,7 @@ namespace ircd::http
 	void writeline(window_buffer &, const window_buffer::closure &);
 	void write(window_buffer &, const header &);
 	void write(window_buffer &, const vector_view<const header> &);
+	bool has(const vector_view<const header> &, const string_view &key);
 	size_t serialized(const vector_view<const header> &);
 	std::string strung(const vector_view<const header> &);
 	void writechunk(window_buffer &, const uint32_t &size);

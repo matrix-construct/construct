@@ -236,16 +236,17 @@ ircd::http::request::request(window_buffer &out,
 		};
 	});
 
-	writeline(out, [&host](const mutable_buffer &out) -> size_t
-	{
-		assert(!host.empty());
-		return fmt::sprintf
+	if(!has(headers, "host"))
+		writeline(out, [&host](const mutable_buffer &out) -> size_t
 		{
-			out, "Host: %s", host
-		};
-	});
+			assert(!host.empty());
+			return fmt::sprintf
+			{
+				out, "Host: %s", host
+			};
+		});
 
-	if(content_length)
+	if(content_length && !has(headers, "content-type"))
 		writeline(out, [&content_type](const mutable_buffer &out) -> size_t
 		{
 			return fmt::sprintf
@@ -254,13 +255,14 @@ ircd::http::request::request(window_buffer &out,
 			};
 		});
 
-	writeline(out, [&content_length](const mutable_buffer &out) -> size_t
-	{
-		return fmt::sprintf
+	if(!has(headers, "content-length"))
+		writeline(out, [&content_length](const mutable_buffer &out) -> size_t
 		{
-			out, "Content-Length: %zu", content_length
-		};
-	});
+			return fmt::sprintf
+			{
+				out, "Content-Length: %zu", content_length
+			};
+		});
 
 	write(out, headers);
 
@@ -310,7 +312,7 @@ ircd::http::response::response(window_buffer &out,
                                const size_t &content_length,
                                const string_view &content_type,
                                const string_view &headers_string,
-                               const vector_view<const header> &headers_vector,
+                               const vector_view<const header> &headers,
                                const bool &termination)
 {
 	writeline(out, [&code](const mutable_buffer &out) -> size_t
@@ -321,7 +323,7 @@ ircd::http::response::response(window_buffer &out,
 		};
 	});
 
-	if(code >= 200 && code < 300)
+	if(code >= 200 && code < 300 && !has(headers, "server"))
 		writeline(out, [&code](const mutable_buffer &out) -> size_t
 		{
 			size_t ret{0};
@@ -330,7 +332,7 @@ ircd::http::response::response(window_buffer &out,
 			return ret;
 		});
 
-	if(code < 400)
+	if(code < 400 && !has(headers, "date"))
 		writeline(out, [](const mutable_buffer &out) -> size_t
 		{
 			thread_local char date_buf[96];
@@ -340,7 +342,7 @@ ircd::http::response::response(window_buffer &out,
 			};
 		});
 
-	if(code != NO_CONTENT && content_type && content_length)
+	if(code != NO_CONTENT && content_type && content_length && !has(headers, "content-type"))
 		writeline(out, [&content_type](const mutable_buffer &out) -> size_t
 		{
 			return fmt::sprintf
@@ -349,7 +351,7 @@ ircd::http::response::response(window_buffer &out,
 			};
 		});
 
-	if(code != NO_CONTENT && content_length != size_t(-1))
+	if(code != NO_CONTENT && content_length != size_t(-1) && !has(headers, "content-length"))
 		writeline(out, [&content_length](const mutable_buffer &out) -> size_t
 		{
 			return fmt::sprintf
@@ -358,7 +360,7 @@ ircd::http::response::response(window_buffer &out,
 			};
 		});
 
-	if(content_length == size_t(-1))
+	if(content_length == size_t(-1) && !has(headers, "transfer-encoding"))
 		writeline(out, [&content_length](const mutable_buffer &out) -> size_t
 		{
 			return copy(out, "Transfer-Encoding: chunked"_sv);
@@ -370,8 +372,8 @@ ircd::http::response::response(window_buffer &out,
 			return copy(out, headers_string);
 		});
 
-	if(!headers_vector.empty())
-		write(out, headers_vector);
+	if(!headers.empty())
+		write(out, headers);
 
 	if(termination)
 		writeline(out);
@@ -612,6 +614,17 @@ ircd::http::writechunk(window_buffer &buf,
 	writeline(buf, [&chunk_size](const mutable_buffer &out) -> size_t
 	{
 		return ::snprintf(data(out), size(out), "%08x", chunk_size);
+	});
+}
+
+bool
+ircd::http::has(const vector_view<const header> &headers,
+                const string_view &key)
+{
+	return end(headers) != std::find_if(begin(headers), end(headers), [&key]
+	(const header &header)
+	{
+		return iequals(header.first, key);
 	});
 }
 
