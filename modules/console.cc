@@ -3055,7 +3055,17 @@ try
 	for(const auto &info : vector)
 		_print_sst_info(out, info);
 
-	out << "-- " << vector.size() << " files"
+	const size_t total_bytes
+	{
+		std::accumulate(begin(vector), end(vector), size_t(0), []
+		(auto ret, const auto &info)
+		{
+			return ret += info.size;
+		})
+	};
+
+	out << "-- " << pretty(iec(total_bytes))
+	    << " in " << vector.size() << " files"
 	    << std::endl;
 
 	return true;
