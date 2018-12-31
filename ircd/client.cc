@@ -941,10 +941,10 @@ const
 	thread_local char locbuf[128];
 	return fmt::sprintf
 	{
-		buf, "socket:%lu client:%lu local[%s] remote[%s]",
+		buf, "socket:%lu local[%s] remote[%s] client:%lu",
 		sock? net::id(*sock) : -1UL,
-		id,
 		string(locbuf, ircd::local(*this)),
-		string(rembuf, ircd::remote(*this))
+		string(rembuf, ircd::remote(*this)),
+		id,
 	};
 }
