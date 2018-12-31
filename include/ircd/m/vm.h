@@ -253,33 +253,41 @@ struct ircd::m::vm::error
 {
 	vm::fault code;
 
-	template<class... args> error(const fault &code, const string_view &fmt, args&&... a);
+	template<class... args> error(const http::code &, const fault &, const string_view &fmt, args&&... a);
+	template<class... args> error(const fault &, const string_view &fmt, args&&... a);
 	template<class... args> error(const string_view &fmt, args&&... a);
 };
+
+template<class... args>
+ircd::m::vm::error::error(const string_view &fmt,
+                          args&&... a)
+:error
+{
+	http::INTERNAL_SERVER_ERROR, fault::GENERAL, fmt, std::forward<args>(a)...
+}
+{}
 
 template<class... args>
 ircd::m::vm::error::error(const fault &code,
                           const string_view &fmt,
                           args&&... a)
-:m::error
+:error
 {
-	child, http::NOT_MODIFIED, "M_VM_FAULT", fmt, std::forward<args>(a)...
-}
-,code
-{
-	code
+	http::NOT_MODIFIED, code, fmt, std::forward<args>(a)...
 }
 {}
 
 template<class... args>
-ircd::m::vm::error::error(const string_view &fmt,
+ircd::m::vm::error::error(const http::code &httpcode,
+                          const fault &code,
+                          const string_view &fmt,
                           args&&... a)
 :m::error
 {
-	child, http::INTERNAL_SERVER_ERROR, "M_VM_FAULT", fmt, std::forward<args>(a)...
+	child, httpcode, "M_VM_FAULT", fmt, std::forward<args>(a)...
 }
 ,code
 {
-	fault::GENERAL
+	code
 }
 {}
