@@ -2711,6 +2711,22 @@ noexcept
 		int(info.status.code()),
 		info.status.getState()?: "OK",
 	};
+
+	log::debug
+	{
+		log, "'%s': job:%d head[%s] index[%s] filter[%s] data[%lu %s] keys[%lu %s] vals[%s] %s",
+		d->name,
+		info.job_id,
+		pretty(iec(info.table_properties.top_level_index_size)),
+		pretty(iec(info.table_properties.index_size)),
+		pretty(iec(info.table_properties.filter_size)),
+		info.table_properties.num_data_blocks,
+		pretty(iec(info.table_properties.data_size)),
+		info.table_properties.num_entries,
+		pretty(iec(info.table_properties.raw_key_size)),
+		pretty(iec(info.table_properties.raw_value_size)),
+		info.table_properties.compression_name
+	};
 }
 
 void
