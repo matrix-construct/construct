@@ -428,21 +428,129 @@ catch(const qi::expectation_failure<const char *> &e)
 	throw_error(e, true);
 }
 
+//
+// headers
+//
+
+bool
+ircd::http::has(const vector_view<const header> &headers,
+                const string_view &key)
+{
+	return end(headers) != std::find_if(begin(headers), end(headers), [&key]
+	(const header &header)
+	{
+		return header == key;
+	});
+}
+
+bool
+ircd::http::has(const headers &headers,
+                const string_view &key)
+{
+	return headers.has(key);
+}
+
+//
+// headers::headers
+//
+
 ircd::http::headers::headers(parse::capstan &pc,
                              const closure &c)
+:headers
+{
+	pc, closure_bool{[&c](const auto &header)
+	{
+		if(c)
+			c(header);
+
+		return true;
+	}}
+}
+{
+}
+
+ircd::http::headers::headers(parse::capstan &pc,
+                             closure_bool c)
 :string_view{[&pc, &c]
 () -> string_view
 {
 	header h{pc};
 	const char *const &started{h.first.data()}, *stopped{started};
 	for(; !h.first.empty(); stopped = h.second.data() + h.second.size(), h = header{pc})
-		if(c)
-			c(h);
+		if(c && !c(h))
+			c = {};
 
 	return { started, stopped };
 }()}
 {
 }
+
+bool
+ircd::http::headers::has(const string_view &key)
+const
+{
+	// has header if break early from for_each
+	return !for_each([&key]
+	(const header &header)
+	{
+		// true to continue; false to break (for_each protocol)
+		return header != key;
+	});
+}
+
+ircd::string_view
+ircd::http::headers::at(const string_view &key)
+const
+{
+	const string_view ret
+	{
+		this->operator[](key)
+	};
+
+	if(unlikely(!ret))
+		throw std::out_of_range{key};
+
+	return ret;
+}
+
+ircd::string_view
+ircd::http::headers::operator[](const string_view &key)
+const
+{
+	string_view ret;
+	for_each([&key, &ret](const auto &header)
+	{
+		if(header == key)
+		{
+			ret = header.second;
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::http::headers::for_each(const closure_bool &closure)
+const
+{
+	if(empty())
+		return true;
+
+	parse::buffer pb{const_buffer{*this}};
+	parse::capstan pc{pb};
+	header h{pc};
+	for(; !h.first.empty(); h = header{pc})
+		if(!closure(h))
+			return false;
+
+	return true;
+}
+
+//
+// header
+//
 
 ircd::http::header::header(const line &line)
 try
@@ -614,17 +722,6 @@ ircd::http::writechunk(window_buffer &buf,
 	writeline(buf, [&chunk_size](const mutable_buffer &out) -> size_t
 	{
 		return ::snprintf(data(out), size(out), "%08x", chunk_size);
-	});
-}
-
-bool
-ircd::http::has(const vector_view<const header> &headers,
-                const string_view &key)
-{
-	return end(headers) != std::find_if(begin(headers), end(headers), [&key]
-	(const header &header)
-	{
-		return iequals(header.first, key);
 	});
 }
 

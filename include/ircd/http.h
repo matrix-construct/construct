@@ -30,11 +30,12 @@ namespace ircd::http
 	void writeline(window_buffer &, const window_buffer::closure &);
 	void write(window_buffer &, const header &);
 	void write(window_buffer &, const vector_view<const header> &);
-	bool has(const vector_view<const header> &, const string_view &key);
 	size_t serialized(const vector_view<const header> &);
 	std::string strung(const vector_view<const header> &);
 	void writechunk(window_buffer &, const uint32_t &size);
 	const_buffer writechunk(const mutable_buffer &, const uint32_t &size);
+	bool has(const headers &, const string_view &key);
+	bool has(const vector_view<const header> &, const string_view &key);
 }
 
 /// Root exception for HTTP.
@@ -158,6 +159,7 @@ struct ircd::http::header
 {
 	bool operator<(const string_view &s) const   { return iless(first, s);                         }
 	bool operator==(const string_view &s) const  { return iequals(first, s);                       }
+	bool operator!=(const string_view &s) const  { return !operator==(s);                          }
 
 	using std::pair<string_view, string_view>::pair;
 	header(const line &);
@@ -174,8 +176,20 @@ struct ircd::http::headers
 :string_view
 {
 	using closure = std::function<void (const header &)>;
+	using closure_bool = std::function<bool (const header &)>;
 
+	bool for_each(const closure_bool &) const;
+	string_view operator[](const string_view &key) const;
+	string_view at(const string_view &key) const;
+	bool has(const string_view &key) const;
+
+	using string_view::string_view;
+	headers(parse::capstan &, closure_bool);
 	headers(parse::capstan &, const closure & = {});
+	headers() = default;
+
+	friend bool has(const headers &, const string_view &key);
+	friend bool has(const vector_view<const header> &, const string_view &key);
 };
 
 /// HTTP request suite. Functionality to send and receive requests.
