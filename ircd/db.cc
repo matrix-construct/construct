@@ -9699,6 +9699,7 @@ ircd::db::compact(column &column,
 			name(d),
 			name(c),
 			level.level,
+			to_level,
 			level.files.size(),
 			level.size
 		};
