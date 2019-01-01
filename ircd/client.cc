@@ -800,7 +800,7 @@ catch(const std::exception &e)
 	const ctx::exception_handler eh;
 	resource::response
 	{
-		*this, e.what(), "text/html; charset=utf8", http::INTERNAL_SERVER_ERROR
+		*this, e.what(), "text/html; charset=utf-8", http::INTERNAL_SERVER_ERROR
 	};
 
 	return false;
@@ -847,7 +847,7 @@ catch(const http::error &e)
 
 	resource::response
 	{
-		*this, e.content, "text/html; charset=utf8", e.code, e.headers
+		*this, e.content, "text/html; charset=utf-8", e.code, e.headers
 	};
 
 	switch(e.code)
