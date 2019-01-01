@@ -2702,11 +2702,12 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s': job:%d table file closed [%s][%s] '%s' (%d): %s",
+		"'%s': job:%d table file closed [%s][%s] size:%s '%s' (%d): %s",
 		d->name,
 		info.job_id,
 		info.db_name,
 		lstrip(info.file_path, info.db_name),
+		pretty(iec(info.file_size)),
 		info.cf_name,
 		int(info.status.code()),
 		info.status.getState()?: "OK",
