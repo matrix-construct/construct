@@ -1063,12 +1063,13 @@ ircd::resource::response::response(client &client,
 
 	const auto request_time
 	{
-		client.timer.at<microseconds>().count()
+		client.timer.at<microseconds>()
 	};
 
-	const fmt::bsprintf<64> rtime
+	thread_local char rtime_buf[32];
+	const string_view rtime
 	{
-		"%zd$us", request_time
+		pretty(rtime_buf, request_time, true)
 	};
 
 	char head_buf[HEAD_BUF_SZ];
@@ -1114,12 +1115,12 @@ ircd::resource::response::response(client &client,
 	log::logf
 	{
 		log, level,
-		"%s HTTP %d `%s' %s in %ld$us; %s content-length:%s",
+		"%s HTTP %d `%s' %s in %s; %s content-length:%s",
 		client.loghead(),
 		uint(code),
 		client.request.head.path,
 		http::status(code),
-		request_time,
+		rtime,
 		content_type,
 		ssize_t(content_length) >= 0?
 			lex_cast(content_length):
