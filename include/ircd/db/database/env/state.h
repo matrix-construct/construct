@@ -39,6 +39,7 @@ struct ircd::db::database::env::state::pool
 	Priority pri;
 	IOPriority iopri;
 	ctx::dock dock;
+	uint64_t taskctr {0};
 	std::deque<task> tasks;
 	ctx::pool::opts popts;
 	ctx::pool p;
@@ -58,4 +59,5 @@ struct ircd::db::database::env::state::task
 	void (*func)(void *arg);
 	void (*cancel)(void *arg);
 	void *arg;
+	uint64_t _id {0};
 };

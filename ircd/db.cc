@@ -7637,6 +7637,8 @@ ircd::db::database::env::state::pool::wait()
 void
 ircd::db::database::env::state::pool::operator()(task &&task)
 {
+	assert(task._id == 0);
+	task._id = ++taskctr;
 	tasks.emplace_back(std::move(task));
 	p([this]
 	{
@@ -7655,10 +7657,11 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 
 		log::debug
 		{
-			log, "'%s': pool:%s tasks:%zu starting func:%p arg:%p",
+			log, "'%s': pool:%s queue:%zu starting task:%lu func:%p arg:%p",
 			this->d.name,
 			ctx::name(p),
 			tasks.size(),
+			task._id,
 			task.func,
 			task.arg,
 		};
@@ -7676,10 +7679,11 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 
 		log::debug
 		{
-			log, "'%s': pool:%s tasks:%zu task finished func:%p arg:%p",
+			log, "'%s': pool:%s queue:%zu finished task:%zu func:%p arg:%p",
 			this->d.name,
 			ctx::name(p),
 			tasks.size(),
+			task._id,
 			task.func,
 			task.arg,
 		};
@@ -7698,11 +7702,12 @@ ircd::db::database::env::state::pool::cancel(void *const &tag)
 		auto &task(*it);
 		log::debug
 		{
-			log, "'%s': pool:%s tasks:%zu cancel %zu func:%p cancel:%p arg:%p tag:%p",
+			log, "'%s': pool:%s tasks:%zu cancel#%zu task:%lu func:%p cancel:%p arg:%p tag:%p",
 			d.name,
 			ctx::name(p),
 			tasks.size(),
 			i,
+			task._id,
 			task.func,
 			task.cancel,
 			task.arg,
