@@ -82,6 +82,8 @@ struct ircd::json::string
 	string() = default;
 };
 
+/// Alternative to `json::strung` which uses a fixed array rather than an
+/// allocated string as the target.
 template<size_t SIZE>
 struct ircd::json::buffer
 :string_view
