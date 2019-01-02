@@ -1168,6 +1168,38 @@ noexcept(false)
 // fs/device.h
 //
 
+#ifdef __linux__
+ircd::string_view
+ircd::fs::dev::sysfs(const mutable_buffer &out,
+                     const ulong &id,
+                     const string_view &relpath)
+{
+	thread_local char pathbuf[PATH_MAX_LEN];
+	thread_local char idbuf[NAME_MAX_LEN];
+	const string_view path{fmt::sprintf
+	{
+		pathbuf, "/sys/dev/block/%s/%s",
+		sysfs_id(idbuf, id),
+		relpath
+	}};
+
+	fs::read_opts opts;
+	opts.aio = false;
+	return fs::read(path, out, opts);
+}
+#else
+ircd::string_view
+ircd::fs::dev::sysfs(const mutable_buffer &out,
+                     const ulong &id,
+                     const string_view &relpath)
+{
+	throw assertive
+	{
+		"sysfs(5) is not available."
+	};
+}
+#endif
+
 ircd::string_view
 ircd::fs::dev::sysfs_id(const mutable_buffer &out,
                         const ulong &id)
