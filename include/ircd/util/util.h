@@ -45,6 +45,7 @@ namespace ircd
 #include "bswap.h"
 #include "tuple.h"
 #include "timer.h"
+#include "scope_light.h"
 #include "life_guard.h"
 #include "pubsetbuf.h"
 #include "string.h"
