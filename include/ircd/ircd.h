@@ -40,7 +40,6 @@
 #include "parse.h"
 #include "rfc1459.h"
 #include "json/json.h"
-//#include "cbor/cbor.h"
 #include "openssl.h"
 #include "fmt.h"
 #include "http.h"
@@ -59,7 +58,6 @@
 #include "m/m.h"
 #include "resource.h"
 #include "client.h"
-#include "ap/ap.h"
 
 /// \brief Internet Relay Chat daemon. This is the principal namespace for IRCd.
 ///

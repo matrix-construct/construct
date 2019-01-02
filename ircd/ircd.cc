@@ -203,7 +203,6 @@ noexcept try
 	server::init _server_;   // Server related
 	client::init _client_;   // Client related
 	js::init _js_;           // SpiderMonkey
-	ap::init _ap_;           // ActivityPub
 	m::init _matrix_         // Matrix
 	{
 		string_view{_origin},
