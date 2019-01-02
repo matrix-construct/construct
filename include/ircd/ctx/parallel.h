@@ -30,6 +30,7 @@ struct ircd::ctx::parallel
 	ushort rcv {0};
 	ushort out {0};
 
+	void rethrow_any_exception();
 	void receiver() noexcept;
 
   public:
@@ -66,15 +67,12 @@ template<class arg>
 void
 ircd::ctx::parallel<arg>::operator()(const arg &a)
 {
-	if(this->eptr)
-		std::rethrow_exception(this->eptr);
-
 	auto &p(*this->p);
+	rethrow_any_exception();
 	p(std::bind(&parallel::receiver, this));
 	this->a.at(snd++) = a;
 	snd %= this->a.size();
 	out++;
-
 	wait_avail();
 }
 
@@ -82,15 +80,12 @@ template<class arg>
 void
 ircd::ctx::parallel<arg>::operator()()
 {
-	if(this->eptr)
-		std::rethrow_exception(this->eptr);
-
+	rethrow_any_exception();
 	auto &p(*this->p);
 	p(std::bind(&parallel::receiver, this));
 	snd++;
 	snd %= this->a.size();
 	out++;
-
 	wait_avail();
 }
 
@@ -115,6 +110,19 @@ noexcept
 
 	out--;
 	d.notify_one();
+}
+
+template<class arg>
+void
+ircd::ctx::parallel<arg>::rethrow_any_exception()
+{
+	if(likely(!this->eptr))
+		return;
+
+	wait_done();
+	const auto eptr(this->eptr);
+	this->eptr = {};
+	std::rethrow_exception(eptr);
 }
 
 template<class arg>
