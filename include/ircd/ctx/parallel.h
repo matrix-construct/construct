@@ -32,6 +32,8 @@ struct ircd::ctx::parallel
 
 	void rethrow_any_exception();
 	void receiver() noexcept;
+	void sender() noexcept;
+	void sender(const arg &a) noexcept;
 
   public:
 	void wait_avail();
@@ -68,7 +70,24 @@ void
 ircd::ctx::parallel<arg>::operator()(const arg &a)
 {
 	rethrow_any_exception();
+	sender(a);
+	wait_avail();
+}
 
+template<class arg>
+void
+ircd::ctx::parallel<arg>::operator()()
+{
+	rethrow_any_exception();
+	sender();
+	wait_avail();
+}
+
+template<class arg>
+void
+ircd::ctx::parallel<arg>::sender(const arg &a)
+noexcept
+{
 	this->a.at(snd++) = a;
 	snd %= this->a.size();
 	out++;
@@ -79,16 +98,13 @@ ircd::ctx::parallel<arg>::operator()(const arg &a)
 		p(std::move(func));
 	else
 		func();
-
-	wait_avail();
 }
 
 template<class arg>
 void
-ircd::ctx::parallel<arg>::operator()()
+ircd::ctx::parallel<arg>::sender()
+noexcept
 {
-	rethrow_any_exception();
-
 	snd++;
 	snd %= this->a.size();
 	out++;
@@ -99,8 +115,6 @@ ircd::ctx::parallel<arg>::operator()()
 		p(std::move(func));
 	else
 		func();
-
-	wait_avail();
 }
 
 template<class arg>
