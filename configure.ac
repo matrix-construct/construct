@@ -658,6 +658,7 @@ RB_CHK_SYSHEADER(unistd.h, [UNISTD_H])
 RB_CHK_SYSHEADER(signal.h, [SIGNAL_H])
 RB_CHK_SYSHEADER(sys/time.h, [SYS_TIME_H])
 RB_CHK_SYSHEADER(sys/stat.h, [SYS_STAT_H])
+RB_CHK_SYSHEADER(sys/statfs.h, [SYS_STATFS_H])
 RB_CHK_SYSHEADER(sys/statvfs.h, [SYS_STATVFS_H])
 RB_CHK_SYSHEADER(sys/resource.h, [SYS_RESOURCE_H])
 RB_CHK_SYSHEADER(sys/syscall.h, [SYS_SYSCALL_H])
@@ -667,6 +668,7 @@ dnl linux platform
 RB_CHK_SYSHEADER(malloc.h, [MALLOC_H])
 RB_CHK_SYSHEADER(sys/eventfd.h, [SYS_EVENTFD_H])
 RB_CHK_SYSHEADER(linux/aio_abi.h, [LINUX_AIO_ABI_H])
+RB_CHK_SYSHEADER(linux/magic.h, [LINUX_MAGIC_H])
 
 dnl windows platform
 RB_CHK_SYSHEADER(windows.h, [WINDOWS_H])
