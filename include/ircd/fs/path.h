@@ -16,15 +16,17 @@ namespace ircd::fs
 	enum base :uint;
 	struct basepath;
 
-	extern const size_t MAX_PATH_LEN;
-	extern const size_t MAX_PATH_DEPTH;
+	extern const size_t NAME_MAX_LEN;
+	extern const size_t PATH_MAX_LEN;
 
 	const basepath &get(const base &) noexcept;
-
 	string_view make_path(const base &) noexcept;
 	std::string make_path(const base &, const string_view &);
 	std::string make_path(const vector_view<const string_view> &);
 	std::string make_path(const vector_view<const std::string> &);
+
+	size_t name_max_len(const string_view &path);
+	size_t path_max_len(const string_view &path);
 
 	string_view cwd(const mutable_buffer &buf);
 	std::string cwd();

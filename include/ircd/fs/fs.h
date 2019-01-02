@@ -34,6 +34,7 @@ namespace ircd::fs
 #include "path.h"
 #include "iov.h"
 #include "opts.h"
+#include "dev.h"
 #include "fd.h"
 #include "aio.h"
 #include "read.h"

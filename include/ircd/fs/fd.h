@@ -17,7 +17,8 @@ namespace ircd::fs
 
 	size_t size(const fd &);
 	size_t block_size(const fd &);
-	string_view uuid(const fd &, const mutable_buffer &);
+	ulong filesystem(const fd &);
+	ulong device(const fd &);
 }
 
 /// Object for maintaining state to an open file or directory. Instances can

@@ -9,6 +9,8 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_SYS_STAT_H
+#include <RB_INC_SYS_STATFS_H
+#include <RB_INC_SYS_STATVFS_H
 #include <boost/filesystem.hpp>
 #include <ircd/asio.h>
 
@@ -29,20 +31,29 @@ namespace ircd::fs
 }
 
 /// Default maximum path string length (for all filesystems & platforms).
-decltype(ircd::fs::MAX_PATH_LEN)
-ircd::fs::MAX_PATH_LEN
+decltype(ircd::fs::NAME_MAX_LEN)
+ircd::fs::NAME_MAX_LEN
 {
-	#ifdef PATH_MAX
-		PATH_MAX
+	#ifdef NAME_MAX
+		NAME_MAX
+	#elif defined(_POSIX_NAME_MAX)
+		_POSIX_NAME_MAX
 	#else
 		255
 	#endif
 };
 
-decltype(ircd::fs::MAX_PATH_DEPTH)
-ircd::fs::MAX_PATH_DEPTH
+/// Default maximum path string length (for all filesystems & platforms).
+decltype(ircd::fs::PATH_MAX_LEN)
+ircd::fs::PATH_MAX_LEN
 {
-	32
+	#ifdef PATH_MAX
+		PATH_MAX
+	#elif defined(_POSIX_PATH_MAX)
+		_POSIX_PATH_MAX
+	#else
+		4096
+	#endif
 };
 
 //
@@ -970,6 +981,11 @@ noexcept
 // fs/fd.h
 //
 
+namespace ircd::fs
+{
+	static long pathconf(const fd &, const int &arg);
+}
+
 decltype(ircd::fs::fd::opts::direct_io_enable)
 ircd::fs::fd::opts::direct_io_enable
 {
@@ -977,6 +993,44 @@ ircd::fs::fd::opts::direct_io_enable
 	{ "default",  true                           },
 	{ "persist",  false                          },
 };
+
+#ifdef HAVE_SYS_STAT_H
+ulong
+ircd::fs::device(const fd &fd)
+{
+	struct stat st{0};
+	syscall(::fstat, fd, &st);
+	return st.st_dev;
+}
+#else
+ulong
+ircd::fs::device(const fd &fd)
+{
+	static_assert
+	(
+		0, "Please implement this definition"
+	)
+}
+#endif
+
+#ifdef HAVE_SYS_STATFS_H
+ulong
+ircd::fs::filesystem(const fd &fd)
+{
+	struct statfs f{0};
+	syscall(::fstatfs, fd, &f);
+	return f.f_type;
+}
+#else
+ulong
+ircd::fs::filesystem(const fd &fd)
+{
+	static_assert
+	(
+		0, "Please implement this definition"
+	)
+}
+#endif
 
 #ifdef __linux__
 size_t
@@ -1000,26 +1054,11 @@ ircd::fs::block_size(const fd &fd)
 }
 #endif
 
-/// This is not a standard UUID of any sort; this is custom, and intended for
-/// rocksdb (though rocksdb has no requirement for its format specifically).
-/// The format is plain-text, fs major and minor number, inode number, and
-/// a three letter file type; all obtained from fstat(2).
-ircd::string_view
-ircd::fs::uuid(const fd &fd,
-               const mutable_buffer &buf)
+long
+ircd::fs::pathconf(const fd &fd,
+                   const int &arg)
 {
-	struct stat stat;
-	syscall(::fstat, fd, &stat);
-	return fmt::sprintf
-	{
-		buf, "%u-%u-%lu-%s",
-		gnu_dev_major(stat.st_dev),
-		gnu_dev_minor(stat.st_dev),
-		stat.st_ino,
-		S_ISREG(stat.st_mode)? "reg":
-		S_ISDIR(stat.st_mode)? "dir":
-		                       "???"
-	};
+	return syscall(::fpathconf, fd, arg);
 }
 
 size_t
@@ -1122,6 +1161,43 @@ noexcept(false)
 		return;
 
 	syscall(::close, fdno);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// fs/device.h
+//
+
+ircd::string_view
+ircd::fs::dev::sysfs_id(const mutable_buffer &out,
+                        const ulong &id)
+{
+	return sysfs_id(out, dev::id(id));
+}
+
+ircd::string_view
+ircd::fs::dev::sysfs_id(const mutable_buffer &out,
+                        const major_minor &id)
+{
+	return fmt::sprintf
+	{
+		out, "%lu:%lu", id.first, id.second
+	};
+}
+
+ulong
+ircd::fs::dev::id(const major_minor &id)
+{
+	return gnu_dev_makedev(id.first, id.second);
+}
+
+ircd::fs::dev::major_minor
+ircd::fs::dev::id(const ulong &id)
+{
+	return
+	{
+		gnu_dev_major(id), gnu_dev_minor(id)
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1232,6 +1308,8 @@ ircd::fs::bytes(const const_iovec_view &iov)
 namespace ircd::fs
 {
 	extern const std::array<basepath, num_of<base>()> basepaths;
+
+	static long pathconf(const string_view &path, const int &arg);
 }
 
 decltype(ircd::fs::basepaths)
@@ -1276,6 +1354,49 @@ try
 catch(const filesystem::filesystem_error &e)
 {
 	throw error{e};
+}
+
+#ifdef _PC_PATH_MAX
+size_t
+ircd::fs::path_max_len(const string_view &path)
+{
+	return pathconf(path, _PC_PATH_MAX);
+}
+#else
+size_t
+ircd::fs::path_max_len(const string_view &path)
+{
+	return PATH_MAX_LEN;
+}
+#endif
+
+#ifdef _PC_NAME_MAX
+size_t
+ircd::fs::name_max_len(const string_view &path)
+{
+	return pathconf(path, _PC_NAME_MAX);
+}
+#elif defined(HAVE_SYS_STATFS_H)
+size_t
+ircd::fs::name_max_len(const string_view &path)
+{
+	struct statfs f{0};
+	syscall(::statfs, path_str(path), &f);
+	return f.f_namelen;
+}
+#else
+size_t
+ircd::fs::name_max_len(const string_view &path)
+{
+	return NAME_MAX_LEN;
+}
+#endif
+
+long
+ircd::fs::pathconf(const string_view &path,
+                   const int &arg)
+{
+	return syscall(::pathconf, path_str(path), arg);
 }
 
 std::string
@@ -1399,7 +1520,7 @@ const noexcept
 void
 ircd::fs::debug_paths()
 {
-	thread_local char buf[MAX_PATH_LEN + 1];
+	thread_local char buf[PATH_MAX_LEN + 1];
 	log::debug
 	{
 		"Current working directory: `%s'", cwd(buf)
@@ -1419,7 +1540,7 @@ ircd::fs::debug_paths()
 const char *
 ircd::fs::path_str(const string_view &s)
 {
-	thread_local char buf[MAX_PATH_LEN + 1];
+	thread_local char buf[PATH_MAX_LEN + 1];
 	return data(strlcpy(buf, s));
 }
 
