@@ -481,15 +481,31 @@ noexcept
 		s.write(data(msg), size(msg));
 	}};
 
-	// copy to std::cerr
-	if(log.cmasked && bool(conf.console_stderr) && !console_quiet_stderr[lev])
+	const bool copy_to_stderr
+	{
+		bool(conf.console_stderr)
+		&& ((!console_quiet_stderr[lev] && log.cmasked) || lev == level::CRITICAL)
+	};
+
+	const bool copy_to_stdout
+	{
+		bool(conf.console_stdout)
+		&& ((!console_quiet_stdout[lev] && log.cmasked) || lev == level::CRITICAL)
+	};
+
+	const bool copy_to_file
+	{
+		file[lev].is_open()
+		&& (log.fmasked || lev == level::CRITICAL)
+	};
+
+	if(copy_to_stderr)
 	{
 		err_console.clear();
 		write(err_console);
 	}
 
-	// copy to std::cout
-	if(log.cmasked && bool(conf.console_stdout) && !console_quiet_stdout[lev])
+	if(copy_to_stdout)
 	{
 		out_console.clear();
 		write(out_console);
@@ -497,8 +513,7 @@ noexcept
 			std::flush(out_console);
 	}
 
-	// copy to file
-	if(log.fmasked && file[lev].is_open())
+	if(copy_to_file)
 	{
 		file[lev].clear();
 		write(file[lev]);
@@ -511,6 +526,9 @@ bool
 ircd::log::can_skip(const log &log,
                     const level &lev)
 {
+	if(unlikely(lev == level::CRITICAL))
+		return false;
+
 	const auto &conf(confs.at(lev));
 
 	// When all of these conditions are true there is no possible log output
