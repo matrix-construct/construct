@@ -790,6 +790,8 @@ ircd::json::stack::array::_pre_append()
 {
 	if(vc)
 		s->append(","_sv);
+
+	s->rethrow_exception();
 }
 
 void
