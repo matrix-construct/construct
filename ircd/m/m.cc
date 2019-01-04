@@ -391,6 +391,333 @@ ircd::m::self::init::init(const string_view &origin)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/sync.h
+//
+
+decltype(ircd::m::sync::log)
+ircd::m::sync::log
+{
+	"sync", 's'
+};
+
+//
+// response
+//
+
+struct ircd::m::sync::response
+{
+	static conf::item<size_t> flush_hiwat;
+
+	sync::stats &stats;
+	ircd::client &client;
+	unique_buffer<mutable_buffer> buf;
+	std::unique_ptr<resource::response::chunked> resp;
+	bool committed;
+
+	const_buffer flush(const const_buffer &buf);
+	void commit();
+
+	response(sync::stats &stats, ircd::client &client);
+	~response() noexcept;
+};
+
+decltype(ircd::m::sync::response::flush_hiwat)
+ircd::m::sync::response::flush_hiwat
+{
+    { "name",     "ircd.m.sync.flush.hiwat"  },
+    { "default",  long(32_KiB)               },
+};
+
+//
+// response::response
+//
+
+ircd::m::sync::response::response(sync::stats &stats,
+                                  ircd::client &client)
+:stats
+{
+	stats
+}
+,client
+{
+	client
+}
+,buf
+{
+	std::max(size_t(96_KiB), size_t(flush_hiwat))
+}
+,committed
+{
+	false
+}
+{
+}
+
+ircd::m::sync::response::~response()
+noexcept
+{
+}
+
+ircd::const_buffer
+ircd::m::sync::response::flush(const const_buffer &buf)
+{
+	if(!committed)
+		return buf;
+
+	if(!resp)
+		commit();
+
+	stats.flush_bytes += resp->write(buf);
+	stats.flush_count++;
+	return buf;
+}
+
+void
+ircd::m::sync::response::commit()
+{
+	static const string_view content_type
+	{
+		"application/json; charset=utf-8"
+	};
+
+	assert(!resp);
+	resp = std::make_unique<resource::response::chunked>
+	(
+		client, http::OK, content_type
+	);
+}
+
+//
+// data
+//
+
+ircd::m::sync::data::data(sync::stats &stats,
+                          ircd::client &client,
+                          const m::user &user,
+                          const std::pair<event::idx, event::idx> &range,
+                          const string_view &filter_id)
+:stats{stats}
+,client{client}
+,since
+{
+	range.first
+}
+,current
+{
+	range.second
+}
+,delta
+{
+	current - since
+}
+,user
+{
+	user
+}
+,user_room
+{
+	user
+}
+,user_rooms
+{
+	user
+}
+,filter_buf
+{
+	filter_id?
+		user.filter(std::nothrow, filter_id):
+		std::string{}
+}
+,filter
+{
+	json::object{filter_buf}
+}
+,resp
+{
+	std::make_unique<response>(stats, client)
+}
+,out
+{
+	resp->buf, std::bind(&response::flush, resp.get(), ph::_1), size_t(resp->flush_hiwat)
+}
+{
+}
+
+ircd::m::sync::data::~data()
+noexcept
+{
+}
+
+bool
+ircd::m::sync::data::commit()
+{
+	assert(resp);
+	const auto ret{resp->committed};
+	resp->committed = true;
+	return ret;
+}
+
+bool
+ircd::m::sync::data::committed()
+const
+{
+	assert(resp);
+	return resp->committed;
+}
+
+//
+// item
+//
+
+template<>
+decltype(ircd::m::sync::item::instance_multimap::map)
+ircd::m::sync::item::instance_multimap::map
+{};
+
+//
+// item::item
+//
+
+ircd::m::sync::item::item(std::string name,
+                          handle polylog,
+                          handle linear,
+                          handle longpoll)
+:instance_multimap
+{
+	std::move(name)
+}
+,_polylog
+{
+	std::move(polylog)
+}
+,_linear
+{
+	std::move(linear)
+}
+,_longpoll
+{
+	std::move(longpoll)
+}
+{
+	log::debug
+	{
+		log, "Registered sync item(%p) '%s'",
+		this,
+		this->name()
+	};
+}
+
+ircd::m::sync::item::~item()
+noexcept
+{
+	log::debug
+	{
+		log, "Unregistered sync item(%p) '%s'",
+		this,
+		this->name()
+	};
+}
+
+bool
+ircd::m::sync::item::longpoll(data &data,
+                              const m::event &event)
+try
+{
+	const auto ret
+	{
+		_longpoll(data)
+	};
+
+	return ret;
+}
+catch(const std::bad_function_call &)
+{
+	return false;
+}
+
+bool
+ircd::m::sync::item::linear(data &data,
+                            const m::event &event)
+try
+{
+	const scope_restore<decltype(data.event)> theirs
+	{
+		data.event, &event
+	};
+
+	const auto ret
+	{
+		_linear(data)
+	};
+
+	return ret;
+}
+catch(const std::bad_function_call &)
+{
+	return false;
+}
+
+bool
+ircd::m::sync::item::polylog(data &data)
+try
+{
+	#ifdef RB_DEBUG
+	sync::stats stats{data.stats};
+	stats.timer = {};
+	#endif
+
+	const auto ret
+	{
+		_polylog(data)
+	};
+
+	#ifdef RB_DEBUG
+	thread_local char rembuf[128], iecbuf[64], tmbuf[32];
+	log::debug
+	{
+		log, "polylog %s %s '%s' %s wc:%zu in %s",
+		string(rembuf, ircd::remote(data.client)),
+		string_view{data.user.user_id},
+		name(),
+		ircd::pretty(iecbuf, iec(data.stats.flush_bytes - stats.flush_bytes)),
+		data.stats.flush_count - stats.flush_count,
+		ircd::pretty(tmbuf, stats.timer.at<microseconds>(), true)
+	};
+	#endif
+
+	return ret;
+}
+catch(const std::bad_function_call &)
+{
+	return false;
+}
+catch(const std::exception &e)
+{
+	thread_local char rembuf[128], iecbuf[64], tmbuf[32];
+	log::derror
+	{
+		log, "polylog %s %s '%s' %s wc:%zu in %s :%s",
+		string(rembuf, ircd::remote(data.client)),
+		string_view{data.user.user_id},
+		name(),
+		ircd::pretty(iecbuf, iec(data.stats.flush_bytes)),
+		data.stats.flush_count,
+		ircd::pretty(tmbuf, data.stats.timer.at<milliseconds>(), true),
+		e.what()
+	};
+
+	throw;
+}
+
+ircd::string_view
+ircd::m::sync::item::name()
+const
+{
+	return this->instance_multimap::it->first;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/feds.h
 //
 

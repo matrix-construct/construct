@@ -12,9 +12,9 @@ namespace ircd::m::sync
 {
 	struct args;
 	struct stats;
-	struct shortpoll;
+	struct data;
+	struct response;
 
-	extern log::log log;
 	extern const string_view description;
 	extern resource resource;
 	extern resource::method method_get;
@@ -70,27 +70,14 @@ namespace ircd::m::sync::linear
 {
 	extern conf::item<size_t> delta_max;
 
-	static bool handle(client &, shortpoll &, json::stack::object &);
+	static bool handle(client &, data &, json::stack::object &);
 }
 
 namespace ircd::m::sync::polylog
 {
-	extern conf::item<bool> prefetch_state;
-	extern conf::item<bool> prefetch_timeline;
-
-	static void room_state(shortpoll &, json::stack::object &, const m::room &);
-	static m::event::id::buf room_timeline_events(shortpoll &, json::stack::array &, const m::room &, bool &limited);
-	static void room_timeline(shortpoll &, json::stack::object &, const m::room &);
-	static void room_ephemeral_events(shortpoll &, json::stack::array &, const m::room &);
-	static void room_ephemeral(shortpoll &, json::stack::object &, const m::room &);
-	static void room_account_data(shortpoll &, json::stack::object &, const m::room &);
-	static void room_unread_notifications(shortpoll &, json::stack::object &, const m::room &);
-	static void sync_room(shortpoll &, json::stack::object &, const m::room &, const string_view &membership);
-	static void sync_rooms(shortpoll &, json::stack::object &, const string_view &membership);
-	static void rooms(shortpoll &, json::stack::object &);
-	static void presence(shortpoll &, json::stack::object &);
-	static void account_data(shortpoll &, json::stack::object &);
-	static bool handle(client &, shortpoll &, json::stack::object &);
+	static void sync_room(data &, json::stack::object &, const m::room &);
+	static void sync_rooms(data &, json::stack::object &, const string_view &membership);
+	static bool handle(client &, data &, json::stack::object &);
 }
 
 /// Argument parser for the client's /sync request
@@ -150,114 +137,4 @@ struct ircd::m::sync::args
 		// marked as being online when it uses this API. One of: ["offline"]
 		request.query.get("set_presence", true)
 	};
-};
-
-struct ircd::m::sync::stats
-{
-	ircd::timer timer;
-	size_t flush_bytes {0};
-	size_t flush_count {0};
-};
-
-struct ircd::m::sync::shortpoll
-{
-	static conf::item<size_t> flush_hiwat;
-
-	shortpoll(ircd::client &client,
-	          const sync::args &args)
-	:client{client}
-	,args{args}
-	{}
-
-	sync::stats stats;
-	ircd::client &client;
-	const sync::args &args;
-	const resource::request &request
-	{
-		args.request
-	};
-
-	const uint64_t &since
-	{
-		args.since
-	};
-
-	const uint64_t current
-	{
-		m::vm::current_sequence
-	};
-
-	const uint64_t delta
-	{
-		current - since
-	};
-
-	const m::user user
-	{
-		request.user_id
-	};
-
-	const std::string filter_buf
-	{
-		args.filter_id?
-			user.filter(std::nothrow, args.filter_id):
-			std::string{}
-	};
-
-	const m::filter filter
-	{
-		json::object{filter_buf}
-	};
-
-	const m::user::room user_room
-	{
-		user
-	};
-
-	const m::user::rooms rooms
-	{
-		user
-	};
-
-	uint64_t state_at
-	{
-		0
-	};
-
-	bool committed
-	{
-		false
-	};
-
-	unique_buffer<mutable_buffer> buf
-	{
-		std::max(size_t(96_KiB), size_t(flush_hiwat))
-	};
-
-	std::unique_ptr<resource::response::chunked> response;
-	json::stack out
-	{
-		buf, std::bind(&shortpoll::flush, this, ph::_1), size_t(flush_hiwat)
-	};
-
-	void commit()
-	{
-		response = std::make_unique<resource::response::chunked>
-		(
-			client, http::OK, "application/json; charset=utf-8"
-		);
-	}
-
-	const_buffer flush(const const_buffer &buf)
-	{
-		if(!committed)
-			return buf;
-
-		if(!response)
-			commit();
-
-		stats.flush_bytes += response->write(buf);
-		stats.flush_count++;
-		return buf;
-	}
 };

@@ -59,6 +59,7 @@ namespace ircd::m::vm
 #include "visible.h"
 #include "feds.h"
 #include "app.h"
+#include "sync.h"
 
 struct ircd::m::init
 {
