@@ -24,7 +24,7 @@ namespace ircd::m::sync
 decltype(ircd::m::sync::room_timeline)
 ircd::m::sync::room_timeline
 {
-	"rooms...timeline",
+	"rooms.$membership.$room_id.timeline",
 	room_timeline_polylog
 };
 

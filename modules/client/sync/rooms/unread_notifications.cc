@@ -19,6 +19,7 @@ namespace ircd::m::sync
 	static long _notification_count(const room &, const event::idx &a, const event::idx &b);
 	static long _highlight_count(const room &, const user &u, const event::idx &a, const event::idx &b);
 	static bool room_unread_notifications_polylog(data &);
+	static bool room_unread_notifications_linear(data &);
 	extern item room_unread_notifications;
 }
 
@@ -26,8 +27,15 @@ decltype(ircd::m::sync::room_unread_notifications)
 ircd::m::sync::room_unread_notifications
 {
 	"rooms...unread_notifications",
-	room_unread_notifications_polylog
+	room_unread_notifications_polylog,
+	room_unread_notifications_linear
 };
+
+bool
+ircd::m::sync::room_unread_notifications_linear(data &data)
+{
+	return true;
+}
 
 bool
 ircd::m::sync::room_unread_notifications_polylog(data &data)

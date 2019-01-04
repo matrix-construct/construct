@@ -70,14 +70,12 @@ namespace ircd::m::sync::linear
 {
 	extern conf::item<size_t> delta_max;
 
-	static bool handle(client &, data &, json::stack::object &);
+	static bool handle(data &);
 }
 
 namespace ircd::m::sync::polylog
 {
-	static void sync_room(data &, json::stack::object &, const m::room &);
-	static void sync_rooms(data &, json::stack::object &, const string_view &membership);
-	static bool handle(client &, data &, json::stack::object &);
+	static bool handle(data &);
 }
 
 /// Argument parser for the client's /sync request

@@ -580,8 +580,7 @@ ircd::m::sync::item::instance_multimap::map
 
 ircd::m::sync::item::item(std::string name,
                           handle polylog,
-                          handle linear,
-                          handle longpoll)
+                          handle linear)
 :instance_multimap
 {
 	std::move(name)
@@ -593,10 +592,6 @@ ircd::m::sync::item::item(std::string name,
 ,_linear
 {
 	std::move(linear)
-}
-,_longpoll
-{
-	std::move(longpoll)
 }
 {
 	log::debug
@@ -619,23 +614,6 @@ noexcept
 }
 
 bool
-ircd::m::sync::item::longpoll(data &data,
-                              const m::event &event)
-try
-{
-	const auto ret
-	{
-		_longpoll(data)
-	};
-
-	return ret;
-}
-catch(const std::bad_function_call &)
-{
-	return false;
-}
-
-bool
 ircd::m::sync::item::linear(data &data,
                             const m::event &event)
 try
@@ -652,8 +630,18 @@ try
 
 	return ret;
 }
-catch(const std::bad_function_call &)
+catch(const std::bad_function_call &e)
 {
+	thread_local char rembuf[128];
+	log::dwarning
+	{
+		log, "linear %s %s '%s' missing handler :%s",
+		string(rembuf, ircd::remote(data.client)),
+		string_view{data.user.user_id},
+		name(),
+		e.what()
+	};
+
 	return false;
 }
 
@@ -687,8 +675,18 @@ try
 
 	return ret;
 }
-catch(const std::bad_function_call &)
+catch(const std::bad_function_call &e)
 {
+	thread_local char rembuf[128];
+	log::dwarning
+	{
+		log, "polylog %s %s '%s' missing handler :%s",
+		string(rembuf, ircd::remote(data.client)),
+		string_view{data.user.user_id},
+		name(),
+		e.what()
+	};
+
 	return false;
 }
 catch(const std::exception &e)

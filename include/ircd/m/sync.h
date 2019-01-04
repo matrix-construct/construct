@@ -34,19 +34,16 @@ struct ircd::m::sync::item
 
 	handle _polylog;
 	handle _linear;
-	handle _longpoll;
 
   public:
 	string_view name() const;
 
-	bool polylog(data &);
 	bool linear(data &, const m::event &);
-	bool longpoll(data &, const m::event &);
+	bool polylog(data &);
 
 	item(std::string name,
 	     handle polylog    = {},
-	     handle linear     = {},
-	     handle longpoll   = {});
+	     handle linear     = {});
 
 	item(item &&) = delete;
 	item(const item &) = delete;
@@ -86,6 +83,8 @@ struct ircd::m::sync::data
 	const m::event *event {nullptr};
 	const m::room *room {nullptr};
 	string_view membership;
+	window_buffer ret;
+	std::array<string_view, 16> path;
 
 	// unsorted / misc
 	uint64_t state_at {0};

@@ -17,6 +17,7 @@ IRCD_MODULE
 namespace ircd::m::sync
 {
 	static bool presence_polylog(data &);
+	static bool presence_linear(data &);
 	extern item presence;
 }
 
@@ -24,21 +25,44 @@ decltype(ircd::m::sync::presence)
 ircd::m::sync::presence
 {
 	"presence",
-	presence_polylog
+	presence_polylog,
+	presence_linear,
 };
 
-namespace ircd
+bool
+ircd::m::sync::presence_linear(data &data)
 {
-    ctx::pool::opts meepool_opts
-    {
-        256_KiB
-    };
+	if(!data.event)
+		return false;
 
-    ctx::pool meepool
-    {
-        "meepool", meepool_opts
-    };
-};
+	if(json::get<"type"_>(*data.event) != "ircd.presence")
+		return false;
+
+	json::stack::object object
+	{
+		*data.array
+	};
+
+	// sender
+	json::stack::member
+	{
+		object, "sender", unquote(at<"content"_>(*data.event).get("user_id"))
+	};
+
+	// type
+	json::stack::member
+	{
+		object, "type", json::value{"m.presence"}
+	};
+
+	// content
+	json::stack::member
+	{
+		object, "content", at<"content"_>(*data.event)
+	};
+
+	return true;
+}
 
 bool
 ircd::m::sync::presence_polylog(data &data)
@@ -90,6 +114,8 @@ ircd::m::sync::presence_polylog(data &data)
 			m::presence::get(std::nothrow, user, closure);
 	}};
 
+	mitsein.for_each("join", each_user);
+/*
 	//TODO: conf
 	static const size_t fibers(24);
 	string_view q[fibers];
@@ -107,8 +133,7 @@ ircd::m::sync::presence_polylog(data &data)
 		q[parallel.snd] = buf[parallel.snd];
 		parallel();
 	}};
-
-	mitsein.for_each("join", paraclosure);
-//	mitsein.for_each("join", each_user);
+*/
+//	mitsein.for_each("join", paraclosure);
 	return true;
 }

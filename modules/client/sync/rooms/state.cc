@@ -17,15 +17,34 @@ IRCD_MODULE
 namespace ircd::m::sync
 {
 	static bool room_state_polylog(data &);
+	static bool room_state_linear(data &);
 	extern item room_state;
 }
 
 decltype(ircd::m::sync::room_state)
 ircd::m::sync::room_state
 {
-	"rooms...state",
-	room_state_polylog
+	"rooms.$membership.$room_id.state",
+	room_state_polylog,
+	room_state_linear
 };
+
+bool
+ircd::m::sync::room_state_linear(data &data)
+{
+	assert(data.event);
+	assert(data.room);
+	assert(json::get<"room_id"_>(*data.event));
+
+	if(!json::get<"state_key"_>(*data.event))
+		return false;
+
+	if(!data.room->membership(data.user, data.membership))
+		return false;
+
+	data.array->append(*data.event);
+	return true;
+}
 
 bool
 ircd::m::sync::room_state_polylog(data &data)
