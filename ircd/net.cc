@@ -1263,15 +1263,6 @@ noexcept try
 		return;
 
 	--accepting;
-	const unwind::exceptional drop{[&sock]
-	{
-		if(!bool(sock))
-			return;
-
-		error_code ec;
-		sock->sd.close(ec);
-	}};
-
 	assert(bool(sock));
 	log::debug
 	{
@@ -1312,6 +1303,7 @@ noexcept try
 }
 catch(const ctx::interrupted &e)
 {
+	assert(bool(sock));
 	log::debug
 	{
 		log, "%s: acceptor interrupted %s %s",
@@ -1320,20 +1312,29 @@ catch(const ctx::interrupted &e)
 		string(ec)
 	};
 
+	error_code ec_;
+	sock->sd.close(ec_);
+	assert(!ec_);
 	joining.notify_all();
 }
 catch(const std::system_error &e)
 {
+	assert(bool(sock));
 	log::derror
 	{
 		log, "%s: %s in accept(): %s",
 		string(logheadbuf, *this),
 		loghead(*sock),
-		string(e)
+		e.what()
 	};
+
+	error_code ec_;
+	sock->sd.close(ec_);
+	assert(!ec_);
 }
 catch(const std::exception &e)
 {
+	assert(bool(sock));
 	log::error
 	{
 		log, "%s: %s in accept(): %s",
@@ -1341,6 +1342,10 @@ catch(const std::exception &e)
 		loghead(*sock),
 		e.what()
 	};
+
+	error_code ec_;
+	sock->sd.close(ec_);
+	assert(!ec_);
 }
 
 /// Error handler for the accept socket callback. This handler determines
@@ -1384,12 +1389,6 @@ noexcept try
 		return;
 
 	--handshaking;
-	const unwind::exceptional drop{[&sock]
-	{
-		if(bool(sock))
-			close(*sock, dc::RST, close_ignore);
-	}};
-
 	assert(bool(sock));
 	log::debug
 	{
@@ -1406,6 +1405,7 @@ noexcept try
 }
 catch(const ctx::interrupted &e)
 {
+	assert(bool(sock));
 	log::debug
 	{
 		log, "%s: SSL handshake interrupted %s %s",
@@ -1414,20 +1414,25 @@ catch(const ctx::interrupted &e)
 		string(ec)
 	};
 
+	close(*sock, dc::RST, close_ignore);
 	joining.notify_all();
 }
 catch(const std::system_error &e)
 {
+	assert(bool(sock));
 	log::derror
 	{
 		log, "%s: %s in handshake(): %s",
 		string(logheadbuf, *this),
 		loghead(*sock),
-		string(e)
+		e.what()
 	};
+
+	close(*sock, dc::RST, close_ignore);
 }
 catch(const std::exception &e)
 {
+	assert(bool(sock));
 	log::error
 	{
 		log, "%s: %s in handshake(): %s",
@@ -1435,6 +1440,8 @@ catch(const std::exception &e)
 		loghead(*sock),
 		e.what()
 	};
+
+	close(*sock, dc::RST, close_ignore);
 }
 
 /// Error handler for the SSL handshake callback. This handler determines
