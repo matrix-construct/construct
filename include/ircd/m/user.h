@@ -160,8 +160,12 @@ struct ircd::m::user::mitsein
 	bool for_each(const closure_bool &) const;
 	void for_each(const closure &) const;
 
+	// Counting convenience
 	size_t count(const m::user &, const string_view &membership = {}) const;
 	size_t count(const string_view &membership = {}) const;
+
+	// Existential convenience (does `user` and `other` share any common room).
+	bool has(const m::user &other, const string_view &membership = {}) const;
 
 	mitsein(const m::user &user);
 };

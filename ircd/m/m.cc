@@ -2711,6 +2711,20 @@ ircd::m::user::mitsein::mitsein(const m::user &user)
 {
 }
 
+bool
+ircd::m::user::mitsein::has(const m::user &other,
+                            const string_view &membership)
+const
+{
+	// Return true if broken out of loop.
+	return !for_each(other, membership, rooms::closure_bool{[]
+	(const m::room &, const string_view &)
+	{
+		// Break out of loop at first shared room
+		return false;
+	}});
+}
+
 size_t
 ircd::m::user::mitsein::count(const string_view &membership)
 const

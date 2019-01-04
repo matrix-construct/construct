@@ -8312,6 +8312,45 @@ console_cmd__user__events__count(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__sees(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id_a", "user_id_b", "membership"
+	}};
+
+	const m::user user_a
+	{
+		m::user(param.at("user_id_a"))
+	};
+
+	const m::user user_b
+	{
+		m::user(param.at("user_id_b"))
+	};
+
+	const string_view membership
+	{
+		param.at("membership", "join"_sv)
+	};
+
+	const m::user::mitsein mitsein
+	{
+		user_a
+	};
+
+	const bool result
+	{
+		mitsein.has(user_b, membership)
+	};
+
+	out << std::boolalpha << result
+	    << std::endl;
+
+	return true;
+}
+
 //
 // users
 //
