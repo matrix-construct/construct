@@ -17,12 +17,12 @@ namespace ircd::mods
 	struct mod;
 
 	IRCD_EXCEPTION(ircd::error, error)
-	IRCD_EXCEPTION(error, filesystem_error)
 	IRCD_EXCEPTION(error, invalid_export)
 	IRCD_EXCEPTION(error, expired_symbol)
 	IRCD_EXCEPTION(error, undefined_symbol)
 	IRCD_EXCEPTION(expired_symbol, unavailable)
 
+	extern log::log log;
 	extern conf::item<bool> enable;
 	extern conf::item<bool> autoload;
 

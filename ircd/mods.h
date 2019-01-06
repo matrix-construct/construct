@@ -10,9 +10,6 @@
 
 namespace ircd::mods
 {
-	struct mod;
-
-	struct log::log extern log;
 	extern const filesystem::path suffix;
 
 	filesystem::path prefix_if_relative(const filesystem::path &path);
@@ -47,7 +44,6 @@ struct ircd::mods::mod
 	filesystem::path path;
 	load_mode::type mode;
 	std::deque<mod *> children;
-	std::unordered_map<std::string, std::string> mangles;
 	boost::dll::shared_library handle;
 	const std::string _name;
 	const std::string _location;

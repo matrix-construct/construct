@@ -18,6 +18,18 @@ namespace load_mode = boost::dll::load_mode;
 #include <ircd/mods/mapi.h>  // Module's internal API
 #include "mods.h"
 
+const filesystem::path
+ircd::mods::suffix
+{
+	boost::dll::shared_library::suffix()
+};
+
+ircd::log::log
+ircd::mods::log
+{
+	"modules", 'M'
+};
+
 decltype(ircd::mods::enable)
 ircd::mods::enable
 {
@@ -32,22 +44,6 @@ ircd::mods::autoload
 	{ "name",     "ircd.mods.autoload"  },
 	{ "default",  true                  },
 	{ "persist",  false                 },
-};
-
-//
-// mods.h
-//
-
-ircd::log::log
-ircd::mods::log
-{
-	"modules", 'M'
-};
-
-const filesystem::path
-ircd::mods::suffix
-{
-	boost::dll::shared_library::suffix()
 };
 
 //
@@ -81,7 +77,6 @@ ircd::mods::mod::mod(const filesystem::path &path,
 try
 :path{path}
 ,mode{mode}
-//,mangles{mods::mangles(path)}
 ,handle{[this, &path, &mode]
 {
 	// Can't interrupt this ctx during the dlopen() as long as exceptions
@@ -139,10 +134,9 @@ try
 {
 	log::debug
 	{
-		log, "Loaded static segment of '%s' @ `%s' with %zu symbols",
+		log, "Loaded static segment of '%s' @ `%s'",
 		name(),
 		location(),
-		mangles.size()
 	};
 
 	if(unlikely(!header))
@@ -197,7 +191,7 @@ catch(const boost::system::system_error &e)
 			const string_view msg(what.substr(pos));
 			const std::string mangled(between(msg, ": ", ")"));
 			const std::string demangled(demangle(mangled));
-			throw error
+			throw undefined_symbol
 			{
 				"undefined symbol: '%s' (%s)", demangled, mangled
 			};
