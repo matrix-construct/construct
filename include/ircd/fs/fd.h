@@ -21,8 +21,8 @@ namespace ircd::fs
 	ulong device(const fd &);
 }
 
-/// Object for maintaining state to an open file or directory. Instances can
-/// be used with various functions around ircd::fs.
+/// File Desc++ptor. This is simply a native fd (i.e. integer) with c++ object
+/// semantics.
 struct ircd::fs::fd
 {
 	struct opts;
