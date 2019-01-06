@@ -158,9 +158,6 @@ client_client_publicrooms_la_SOURCES = client/publicrooms.cc
 client_client_createroom_la_SOURCES = client/createroom.cc
 client_client_pushrules_la_SOURCES = client/pushrules.cc
 client_client_join_la_SOURCES = client/join.cc
-client_client_voip_turnserver_la_SOURCES = client/voip/turnserver.cc
-client_client_directory_room_la_SOURCES = client/directory/room.cc
-client_client_directory_user_la_SOURCES = client/directory/user.cc
 client_client_publicised_groups_la_SOURCES = client/publicised_groups.cc
 client_client_initialsync_la_SOURCES = client/initialsync.cc
 client_client_search_la_SOURCES = client/search.cc
@@ -182,9 +179,6 @@ client_module_LTLIBRARIES = \
 	client/client_createroom.la \
 	client/client_pushrules.la \
 	client/client_join.la \
-	client/client_voip_turnserver.la \
-	client/client_directory_room.la \
-	client/client_directory_user.la \
 	client/client_publicised_groups.la \
 	client/client_initialsync.la \
 	client/client_search.la \
@@ -216,7 +210,9 @@ client_client_rooms_la_SOURCES = \
 	client/rooms/rooms.cc \
 	###
 
-client_module_LTLIBRARIES += client/client_rooms.la
+client_module_LTLIBRARIES += \
+	client/client_rooms.la \
+	###
 
 #
 # client/user/
@@ -230,7 +226,9 @@ client_client_user_la_SOURCES = \
 	client/user/user.cc \
 	###
 
-client_module_LTLIBRARIES += client/client_user.la
+client_module_LTLIBRARIES += \
+	client/client_user.la \
+	###
 
 #
 # client/account/
@@ -244,15 +242,37 @@ client_client_account_la_SOURCES = \
 	client/account/account.cc \
 	###
 
-client_module_LTLIBRARIES += client/client_account.la
+client_module_LTLIBRARIES += \
+	client/client_account.la \
+	###
+
+#
+# client/directory/
+#
+
+client_client_directory_room_la_SOURCES = client/directory/room.cc
+client_client_directory_user_la_SOURCES = client/directory/user.cc
+
+client_module_LTLIBRARIES += \
+	client/client_directory_room.la \
+	client/client_directory_user.la \
+	###
+
+#
+# client/voip/
+#
+
+client_client_voip_turnserver_la_SOURCES = client/voip/turnserver.cc
+
+client_module_LTLIBRARIES += \
+	client/client_voip_turnserver.la \
+	###
 
 #
 # client/thirdparty/
 #
 
-client_client_thirdparty_protocols_la_SOURCES = \
-	client/thirdparty/protocols.cc \
-	###
+client_client_thirdparty_protocols_la_SOURCES = client/thirdparty/protocols.cc
 
 client_module_LTLIBRARIES += \
 	client/client_thirdparty_protocols.la \
