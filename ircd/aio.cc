@@ -673,6 +673,9 @@ noexcept try
 			handle_events();
 			break;
 
+		case errc::interrupted:
+			break;
+
 		case errc::operation_canceled:
 			throw ctx::interrupted();
 
@@ -700,7 +703,7 @@ noexcept try
 	assert(!ctx::current);
 
 	// The number of completed requests available in events[]. This syscall
-	// is restarted on EINTR. After restart, it may or may not find any ready
+	// is restarted by us on EINTR. After restart, it may or may not find any ready
 	// events but it never blocks to do so.
 	const auto count
 	{
