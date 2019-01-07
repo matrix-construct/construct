@@ -66,7 +66,7 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
                                const long double &ns,
                                const uint &fmt)
 {
-	static const std::array<std::array<string_view, 2>, 7> unit
+	static const std::array<std::array<string_view, 2>, 9> unit
 	{{
 		// fmt=0             fmt=1
 		{ "nanoseconds",     "ns"   },
@@ -76,6 +76,8 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
 		{ "minutes",         "m"    },
 		{ "hours",           "h"    },
 		{ "days",            "d"    },
+		{ "weeks",           "w"    },
+		{ "months",          "M"    },
 	}};
 
 	const string_view &fmtstr
@@ -129,9 +131,25 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
 	else goto done;
 
 	// hours -> days
-	if(val > 12.0)
+	if(val > 24.0)
 	{
-		val /= 12;
+		val /= 24;
+		++pos;
+	}
+	else goto done;
+
+	// days -> weeks
+	if(val > 7.0)
+	{
+		val /= 7;
+		++pos;
+	}
+	else goto done;
+
+	// weeks -> months
+	if(val > 30.0)
+	{
+		val /= 30;
 		++pos;
 	}
 	else goto done;
