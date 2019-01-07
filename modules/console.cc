@@ -8351,6 +8351,68 @@ console_cmd__user__sees(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__tokens(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id",
+	}};
+
+	const m::user user
+	{
+		param.at(0)
+	};
+
+	const m::room::state &tokens
+	{
+		m::user::tokens
+	};
+
+	tokens.for_each("ircd.access_token", m::event::closure_idx{[&out, &user]
+	(const m::event::idx &event_idx)
+	{
+		bool match(false);
+		m::get(std::nothrow, event_idx, "sender", [&match, &user]
+		(const string_view &sender)
+		{
+			match = sender == user.user_id;
+		});
+
+		if(!match)
+			return;
+
+		const m::event::fetch event
+		{
+			event_idx
+		};
+
+		const string_view &token
+		{
+			at<"state_key"_>(event)
+		};
+
+		const milliseconds &ost
+		{
+			at<"origin_server_ts"_>(event)
+		};
+
+		const milliseconds now
+		{
+			time<milliseconds>()
+		};
+
+		out << token
+		    << " "
+		    << ost
+		    << " "
+		    << pretty(now - ost) << " ago"
+		    << std::endl;
+	}});
+
+	return true;
+}
+
 //
 // users
 //
