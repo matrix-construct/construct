@@ -608,6 +608,7 @@ ircd::json::stack::object::object(member &pm)
 	assert(pm.ca == nullptr);
 	pm.co = this;
 	s->append("{"_sv);
+	pm.vc |= true;
 }
 
 ircd::json::stack::object::object(array &pa)
@@ -705,6 +706,7 @@ ircd::json::stack::array::array(member &pm)
 	assert(pm.ca == nullptr);
 	pm.ca = this;
 	s->append("["_sv);
+	pm.vc |= true;
 }
 
 ircd::json::stack::array::array(array &pa)
@@ -862,6 +864,9 @@ noexcept
 		s = nullptr;
 	}};
 
+	if(!vc)
+		s->append("null");
+
 	assert(co == nullptr);
 	assert(ca == nullptr);
 	assert(po);
@@ -890,11 +895,13 @@ ircd::json::stack::member::append(const json::value &value)
 void
 ircd::json::stack::member::_pre_append()
 {
+	assert(!vc);
 }
 
 void
 ircd::json::stack::member::_post_append()
 {
+	vc |= true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

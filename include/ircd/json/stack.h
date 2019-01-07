@@ -161,6 +161,7 @@ struct ircd::json::stack::member
 	string_view name;                 ///< member name state
 	object *co {nullptr};             ///< current child object
 	array *ca {nullptr};              ///< current child array
+	bool vc {false};                  ///< value witnessed
 
 	void _pre_append();
 	void _post_append();
