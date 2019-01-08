@@ -87,6 +87,7 @@ struct ircd::m::user::room
 	m::user user;
 	id::room::buf room_id;
 
+	explicit
 	room(const m::user &user,
 	     const vm::copts *const & = nullptr,
 	     const event::fetch::opts *const & = nullptr);
