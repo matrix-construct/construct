@@ -45,6 +45,8 @@ struct ircd::json::stack
 	struct array;
 	struct object;
 	struct member;
+	struct chase;
+	struct const_chase;
 	using flush_callback = std::function<const_buffer (const const_buffer &)>;
 
 	window_buffer buf;
@@ -113,6 +115,9 @@ struct ircd::json::stack::object
 	object(object &&) noexcept;
 	object(const object &) = delete;
 	~object() noexcept;
+
+	static const object &top(const stack &);
+	static object &top(stack &);
 };
 
 /// stack::array is constructed under the scope of either a stack::member,
@@ -144,6 +149,9 @@ struct ircd::json::stack::array
 	array(const array &) = delete;
 	array(array &&) noexcept;
 	~array() noexcept;
+
+	static const array &top(const stack &);
+	static array &top(stack &);
 };
 
 /// stack::member is an intermediary that is constructed under the scope of
@@ -171,12 +179,55 @@ struct ircd::json::stack::member
 	void append(const json::value &);
 
 	member(object &po, const string_view &name);
+	member(stack &s, const string_view &name);
 	member(object &po, const string_view &name, const json::value &v);
+	member(stack &s, const string_view &name, const json::value &);
 	template<class... T> member(object &po, const string_view &name, const json::tuple<T...> &t);
+	template<class... T> member(stack &s, const string_view &name, const json::tuple<T...> &t);
 	member(const member &) = delete;
 	member(member &&) noexcept;
 	~member() noexcept;
+
+	static const member &top(const stack &);
+	static member &top(stack &);
 };
+
+/// This device chases the current active path by updating its member pointers.
+struct ircd::json::stack::chase
+{
+	array *a {nullptr};
+	object *o {nullptr};
+	member *m {nullptr};
+
+	bool next();
+	bool prev();
+
+	chase(stack &s, const bool &prechase = false);
+	chase() = default;
+};
+
+struct ircd::json::stack::const_chase
+{
+	const array *a {nullptr};
+	const object *o {nullptr};
+	const member *m {nullptr};
+
+	bool next();
+	bool prev();
+
+	const_chase(const stack &s, const bool &prechase = false);
+	const_chase() = default;
+};
+
+template<class... T>
+ircd::json::stack::member::member(stack &s,
+                                  const string_view &name,
+                                  const json::tuple<T...> &t)
+:member
+{
+	object::top(s), name, t
+}
+{}
 
 template<class... T>
 ircd::json::stack::member::member(object &po,

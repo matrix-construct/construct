@@ -578,6 +578,38 @@ const
 // object
 //
 
+ircd::json::stack::object &
+ircd::json::stack::object::top(stack &s)
+{
+	const chase t{s, true};
+	if(unlikely(!t.o))
+		throw type_error
+		{
+			"Top of stack is not of type object. (o:%b a:%b m:%b)",
+			bool(t.o),
+			bool(t.a),
+			bool(t.m),
+		};
+
+	return *t.o;
+}
+
+const ircd::json::stack::object &
+ircd::json::stack::object::top(const stack &s)
+{
+	const const_chase t{s, true};
+	if(unlikely(!t.o))
+		throw type_error
+		{
+			"Top of stack is not of type object. (o:%b a:%b m:%b)",
+			bool(t.o),
+			bool(t.a),
+			bool(t.m),
+		};
+
+	return *t.o;
+}
+
 ircd::json::stack::object::object(object &&other)
 noexcept
 :s{std::move(other.s)}
@@ -592,6 +624,23 @@ noexcept
 ircd::json::stack::object::object(stack &s)
 :s{&s}
 {
+	const chase t{s, true};
+	if(t.a)
+	{
+		new (this) object{*t.a};
+		return;
+	}
+	else if(t.m)
+	{
+		new (this) object{*t.m};
+		return;
+	}
+	else if(t.o)
+	{
+		assert(0);
+		return;
+	}
+
 	assert(s.clean());
 	s.co = this;
 	s.append("{"_sv);
@@ -675,6 +724,40 @@ noexcept
 // array
 //
 
+ircd::json::stack::array &
+ircd::json::stack::array::top(stack &s)
+{
+	const chase t{s, true};
+
+	if(unlikely(!t.a))
+		throw type_error
+		{
+			"Top of stack is not of type array. (o:%b a:%b m:%b)",
+			bool(t.o),
+			bool(t.a),
+			bool(t.m),
+		};
+
+	return *t.a;
+}
+
+const ircd::json::stack::array &
+ircd::json::stack::array::top(const stack &s)
+{
+	const const_chase t{s, true};
+
+	if(unlikely(!t.a))
+		throw type_error
+		{
+			"Top of stack is not of type array. (o:%b a:%b m:%b)",
+			bool(t.o),
+			bool(t.a),
+			bool(t.m),
+		};
+
+	return *t.a;
+}
+
 ircd::json::stack::array::array(array &&other)
 noexcept
 :s{std::move(other.s)}
@@ -690,6 +773,24 @@ noexcept
 ircd::json::stack::array::array(stack &s)
 :s{&s}
 {
+	const chase t{s, true};
+
+	if(t.a)
+	{
+		new (this) array{*t.a};
+		return;
+	}
+	else if(t.m)
+	{
+		new (this) array{*t.m};
+		return;
+	}
+	else if(t.o)
+	{
+		assert(0);
+		return;
+	}
+
 	assert(s.clean());
 	s.ca = this;
 	s.append("["_sv);
@@ -806,6 +907,40 @@ ircd::json::stack::array::_post_append()
 // member
 //
 
+ircd::json::stack::member &
+ircd::json::stack::member::top(stack &s)
+{
+	const chase t{s, true};
+
+	if(unlikely(!t.m))
+		throw type_error
+		{
+			"Top of stack is not of type member. (o:%b a:%b m:%b)",
+			bool(t.o),
+			bool(t.a),
+			bool(t.m),
+		};
+
+	return *t.m;
+}
+
+const ircd::json::stack::member &
+ircd::json::stack::member::top(const stack &s)
+{
+	const const_chase t{s, true};
+
+	if(unlikely(!t.m))
+		throw type_error
+		{
+			"Top of stack is not of type member. (o:%b a:%b m:%b)",
+			bool(t.o),
+			bool(t.a),
+			bool(t.m),
+		};
+
+	return *t.m;
+}
+
 ircd::json::stack::member::member(member &&other)
 noexcept
 :s{std::move(other.s)}
@@ -815,6 +950,15 @@ noexcept
 ,ca{std::move(other.ca)}
 {
 	other.s = nullptr;
+}
+
+ircd::json::stack::member::member(stack &s,
+                                  const string_view &name)
+:member
+{
+	object::top(s), name
+}
+{
 }
 
 ircd::json::stack::member::member(object &po,
@@ -842,6 +986,16 @@ ircd::json::stack::member::member(object &po,
 
 	assert(data(buf) >= tmp);
 	s->append(string_view{tmp, size_t(data(buf) - tmp)});
+}
+
+ircd::json::stack::member::member(stack &s,
+                                  const string_view &name,
+                                  const json::value &value)
+:member
+{
+	object::top(s), name, value
+}
+{
 }
 
 ircd::json::stack::member::member(object &po,
@@ -902,6 +1056,140 @@ void
 ircd::json::stack::member::_post_append()
 {
 	vc |= true;
+}
+
+//
+// chase
+//
+
+namespace ircd::json
+{
+	template<class chase> static bool _next(chase &);
+	template<class chase> static bool _prev(chase &);
+}
+
+ircd::json::stack::chase::chase(stack &s,
+                                const bool &prechase)
+:a{s.ca}
+,o{s.co}
+,m{nullptr}
+{
+	if(prechase)
+		while(next());
+}
+
+bool
+ircd::json::stack::chase::next()
+{
+	return _next(*this);
+}
+
+bool
+ircd::json::stack::chase::prev()
+{
+	return _prev(*this);
+}
+
+//
+// const_chase
+//
+
+ircd::json::stack::const_chase::const_chase(const stack &s,
+                                            const bool &prechase)
+:a{s.ca}
+,o{s.co}
+,m{nullptr}
+{
+	if(prechase)
+		while(next());
+}
+
+bool
+ircd::json::stack::const_chase::next()
+{
+	return _next(*this);
+}
+
+bool
+ircd::json::stack::const_chase::prev()
+{
+	return _prev(*this);
+}
+
+//
+// chase internal
+//
+
+template<class chase>
+bool
+ircd::json::_next(chase &c)
+{
+	if(c.o)
+	{
+		if(!c.o->cm)
+			return false;
+
+		c.m = c.o->cm;
+		c.a = nullptr;
+		c.o = nullptr;
+		return true;
+	}
+	else if(c.a)
+	{
+		if(!c.a->co && !c.a->ca)
+			return false;
+
+		c.m = nullptr;
+		c.o = c.a->co;
+		c.a = c.a->ca;
+		return true;
+	}
+	else if(c.m)
+	{
+		if(!c.m->co && !c.m->ca)
+			return false;
+
+		c.o = c.m->co;
+		c.a = c.m->ca;
+		c.m = nullptr;
+		return true;
+	}
+	else return false;
+}
+
+template<class chase>
+bool
+ircd::json::_prev(chase &c)
+{
+	if(c.o)
+	{
+		if(!c.o->pa && !c.o->pm)
+			return false;
+
+		c.a = c.o->pa;
+		c.m = c.o->pm;
+		c.o = nullptr;
+		return true;
+	}
+	else if(c.a)
+	{
+		if(!c.a->pa && !c.a->pm)
+			return false;
+
+		c.m = c.a->pm;
+		c.a = c.a->pa;
+		c.o = nullptr;
+		return true;
+	}
+	else if(c.m)
+	{
+		assert(c.m->po);
+		c.o = c.m->po;
+		c.a = nullptr;
+		c.m = nullptr;
+		return true;
+	}
+	else return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
