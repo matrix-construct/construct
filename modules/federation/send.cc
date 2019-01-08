@@ -82,7 +82,7 @@ handle_pdu_failure(client &client,
 {
 	log::error
 	{
-		"%s :%s | (pdu_failure) %s",
+		m::log, "%s :%s | (pdu_failure) %s",
 		txn_id,
 		at<"origin"_>(request),
 		pdu_failure.get("sender", string_view{"*"}),
@@ -121,7 +121,7 @@ handle_put(client &client,
 
 	log::debug
 	{
-		"%s :%s | %s --> edus:%zu pdus:%zu errors:%zu",
+		m::log, "%s :%s | %s --> edus:%zu pdus:%zu errors:%zu",
 		txn_id,
 		origin,
 		string(remote(client)),
