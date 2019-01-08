@@ -2893,8 +2893,14 @@ const
 	///TODO: minimally: custom alloc?
 	std::set<std::string, std::less<>> seen;
 	return rooms.for_each(membership, rooms::closure_bool{[&membership, &closure, &seen]
-	(const m::room &room, const string_view &)
+	(m::room room, const string_view &)
 	{
+		static const event::fetch::opts fopts
+		{
+			event::keys::include {"state_key"}
+		};
+
+		room.fopts = &fopts;
 		const m::room::members members{room};
 		return members.for_each(membership, event::closure_bool{[&seen, &closure]
 		(const m::event &event)
