@@ -612,7 +612,8 @@ ircd::json::stack::object::top(const stack &s)
 
 ircd::json::stack::object::object(object &&other)
 noexcept
-:s{std::move(other.s)}
+:m{std::move(other.m)}
+,s{std::move(other.s)}
 ,pm{std::move(other.pm)}
 ,pa{std::move(other.pa)}
 ,cm{std::move(other.cm)}
@@ -644,6 +645,28 @@ ircd::json::stack::object::object(stack &s)
 	assert(s.clean());
 	s.co = this;
 	s.append("{"_sv);
+}
+
+ircd::json::stack::object::object(stack &s,
+                                const string_view &name)
+:object{object::top(s), name}
+{
+}
+
+ircd::json::stack::object::object(object &po,
+                                  const string_view &name)
+:m{po, name}
+,s{po.s}
+,pm{&m}
+{
+	assert(s->opened());
+	s->rethrow_exception();
+
+	assert(pm->co == nullptr);
+	assert(pm->ca == nullptr);
+	pm->co = this;
+	s->append("{"_sv);
+	pm->vc |= true;
 }
 
 ircd::json::stack::object::object(member &pm)
@@ -760,7 +783,8 @@ ircd::json::stack::array::top(const stack &s)
 
 ircd::json::stack::array::array(array &&other)
 noexcept
-:s{std::move(other.s)}
+:m{std::move(other.m)}
+,s{std::move(other.s)}
 ,pm{std::move(other.pm)}
 ,pa{std::move(other.pa)}
 ,co{std::move(other.co)}
@@ -796,18 +820,26 @@ ircd::json::stack::array::array(stack &s)
 	s.append("["_sv);
 }
 
-ircd::json::stack::array::array(member &pm)
-:s{pm.s}
-,pm{&pm}
+ircd::json::stack::array::array(stack &s,
+                                const string_view &name)
+:array{object::top(s), name}
+{
+}
+
+ircd::json::stack::array::array(object &po,
+                                const string_view &name)
+:m{po, name}
+,s{po.s}
+,pm{&m}
 {
 	assert(s->opened());
 	s->rethrow_exception();
 
-	assert(pm.co == nullptr);
-	assert(pm.ca == nullptr);
-	pm.ca = this;
+	assert(pm->co == nullptr);
+	assert(pm->ca == nullptr);
+	pm->ca = this;
 	s->append("["_sv);
-	pm.vc |= true;
+	pm->vc |= true;
 }
 
 ircd::json::stack::array::array(array &pa)
@@ -825,6 +857,20 @@ ircd::json::stack::array::array(array &pa)
 		s->append(","_sv);
 
 	s->append("["_sv);
+}
+
+ircd::json::stack::array::array(member &pm)
+:s{pm.s}
+,pm{&pm}
+{
+	assert(s->opened());
+	s->rethrow_exception();
+
+	assert(pm.co == nullptr);
+	assert(pm.ca == nullptr);
+	pm.ca = this;
+	s->append("["_sv);
+	pm.vc |= true;
 }
 
 ircd::json::stack::array::~array()

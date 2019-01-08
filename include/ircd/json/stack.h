@@ -83,77 +83,6 @@ struct ircd::json::stack
 	~stack() noexcept;
 };
 
-/// stack::object is constructed under the scope of either a stack::member,
-/// or a stack::array, or a stack itself. Only stack::member can be
-/// constructed directly under its scope.
-///
-/// For a stack::member parent, the named member is waiting for this value
-/// after leaving the stack at ':' after the name, this object will then
-/// print '{' and dtor with '}' and then return to the stack::member which
-/// will then return to its parent object.
-///
-/// For a stack::array parent, the stack may have been left at '[' or ','
-/// but either way this object will then print '{' and dtor with '}' and
-/// then return to the stack::array.
-///
-/// For a stack itself, this object is considered the "top object" and will
-/// open the stack with '{' and accept member instances under its scope
-/// until closing the stack with '}' after which the stack is done()
-///
-struct ircd::json::stack::object
-{
-	stack *s {nullptr};                ///< root stack ref
-	member *pm {nullptr};              ///< parent member (if value of one)
-	array *pa {nullptr};               ///< parent array (if value in one)
-	member *cm {nullptr};              ///< current child member
-	size_t mc {0};                     ///< members witnessed (monotonic)
-
-  public:
-	object(stack &s);                  ///< Object is top
-	object(array &pa);                 ///< Object is value in the array
-	object(member &pm);                ///< Object is value of named member
-	object(object &&) noexcept;
-	object(const object &) = delete;
-	~object() noexcept;
-
-	static const object &top(const stack &);
-	static object &top(stack &);
-};
-
-/// stack::array is constructed under the scope of either a stack::member,
-/// or a stack::array, or a stack itself. stack::object and stack::array
-/// can be constructed directly under its scope, but not stack::member.
-///
-/// The same behavior as described by stack::object documentation applies
-/// here translated to arrays.
-///
-struct ircd::json::stack::array
-{
-	stack *s {nullptr};                ///< root stack ref
-	member *pm {nullptr};              ///< parent member (if value of one)
-	array *pa {nullptr};               ///< parent array (if value in one)
-	object *co {nullptr};              ///< current child object
-	array *ca {nullptr};               ///< current child array
-	size_t vc {0};                     ///< values witnessed (monotonic)
-
-	void _pre_append();
-	void _post_append();
-
-  public:
-	template<class... T> void append(const json::tuple<T...> &);
-	void append(const json::value &);
-
-	array(stack &s);                   ///< Array is top
-	array(array &pa);                  ///< Array is value in the array
-	array(member &pm);                 ///< Array is value of the named member
-	array(const array &) = delete;
-	array(array &&) noexcept;
-	~array() noexcept;
-
-	static const array &top(const stack &);
-	static array &top(stack &);
-};
-
 /// stack::member is an intermediary that is constructed under the scope of
 /// a parent stack::object. It takes a name argument. It then requires one
 /// object or array be constructed under its scope as its value, or a
@@ -184,12 +113,90 @@ struct ircd::json::stack::member
 	member(stack &s, const string_view &name, const json::value &);
 	template<class... T> member(object &po, const string_view &name, const json::tuple<T...> &t);
 	template<class... T> member(stack &s, const string_view &name, const json::tuple<T...> &t);
+	member() = default;
 	member(const member &) = delete;
 	member(member &&) noexcept;
 	~member() noexcept;
 
 	static const member &top(const stack &);
 	static member &top(stack &);
+};
+
+/// stack::object is constructed under the scope of either a stack::member,
+/// or a stack::array, or a stack itself. Only stack::member can be
+/// constructed directly under its scope.
+///
+/// For a stack::member parent, the named member is waiting for this value
+/// after leaving the stack at ':' after the name, this object will then
+/// print '{' and dtor with '}' and then return to the stack::member which
+/// will then return to its parent object.
+///
+/// For a stack::array parent, the stack may have been left at '[' or ','
+/// but either way this object will then print '{' and dtor with '}' and
+/// then return to the stack::array.
+///
+/// For a stack itself, this object is considered the "top object" and will
+/// open the stack with '{' and accept member instances under its scope
+/// until closing the stack with '}' after which the stack is done()
+///
+struct ircd::json::stack::object
+{
+	member m;                          ///< optional internal member
+	stack *s {nullptr};                ///< root stack ref
+	member *pm {nullptr};              ///< parent member (if value of one)
+	array *pa {nullptr};               ///< parent array (if value in one)
+	member *cm {nullptr};              ///< current child member
+	size_t mc {0};                     ///< members witnessed (monotonic)
+
+  public:
+	object(stack &s);                  ///< Object is top
+	object(array &pa);                 ///< Object is value in the array
+	object(member &pm);                ///< Object is value of named member
+	object(object &po, const string_view &name);
+	object(stack &s, const string_view &name);
+	object(object &&) noexcept;
+	object(const object &) = delete;
+	~object() noexcept;
+
+	static const object &top(const stack &);
+	static object &top(stack &);
+};
+
+/// stack::array is constructed under the scope of either a stack::member,
+/// or a stack::array, or a stack itself. stack::object and stack::array
+/// can be constructed directly under its scope, but not stack::member.
+///
+/// The same behavior as described by stack::object documentation applies
+/// here translated to arrays.
+///
+struct ircd::json::stack::array
+{
+	member m;                          ///< optional internal member
+	stack *s {nullptr};                ///< root stack ref
+	member *pm {nullptr};              ///< parent member (if value of one)
+	array *pa {nullptr};               ///< parent array (if value in one)
+	object *co {nullptr};              ///< current child object
+	array *ca {nullptr};               ///< current child array
+	size_t vc {0};                     ///< values witnessed (monotonic)
+
+	void _pre_append();
+	void _post_append();
+
+  public:
+	template<class... T> void append(const json::tuple<T...> &);
+	void append(const json::value &);
+
+	array(member &pm);                 ///< Array is value of the named member
+	array(array &pa);                  ///< Array is value in the array
+	array(object &po, const string_view &name);
+	array(stack &s, const string_view &name);
+	array(stack &s);
+	array(const array &) = delete;
+	array(array &&) noexcept;
+	~array() noexcept;
+
+	static const array &top(const stack &);
+	static array &top(stack &);
 };
 
 /// This device chases the current active path by updating its member pointers.
