@@ -16,6 +16,7 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
+	static bool room_account_data_events_polylog(data &);
 	static bool room_account_data_polylog(data &);
 	extern item room_account_data;
 }
@@ -23,16 +24,30 @@ namespace ircd::m::sync
 decltype(ircd::m::sync::room_account_data)
 ircd::m::sync::room_account_data
 {
-	"rooms...account_data",
+	"rooms.account_data",
 	room_account_data_polylog
 };
 
 bool
 ircd::m::sync::room_account_data_polylog(data &data)
 {
-	json::stack::object out{*data.member};
-	json::stack::member member{out, "events"};
-	json::stack::array array{member};
+	json::stack::object object
+	{
+		data.out
+	};
+
+	room_account_data_events_polylog(data);
+	return true;
+}
+
+bool
+ircd::m::sync::room_account_data_events_polylog(data &data)
+{
+	json::stack::array array
+	{
+		data.out, "events"
+	};
+
 	const m::room::state state
 	{
 		data.user_room
@@ -47,11 +62,13 @@ ircd::m::sync::room_account_data_polylog(data &data)
 	state.for_each(type, [&data, &array]
 	(const m::event &event)
 	{
-		const auto &event_idx(index(event, std::nothrow));
-		if(event_idx < data.since || event_idx >= data.current)
+		if(!apropos(data, event))
 			return;
 
-		json::stack::object object{array};
+		json::stack::object object
+		{
+			data.out
+		};
 
 		json::stack::member
 		{

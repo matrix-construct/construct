@@ -16,6 +16,9 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
+	static void _reformat_receipt(json::stack::object &, const m::event &);
+	static void _handle_receipt(data &, const m::event &);
+	static void _handle_user(data &, const m::user &);
 	static bool room_ephemeral_m_receipt_m_read_polylog(data &);
 	extern item room_ephemeral_m_receipt_m_read;
 }
@@ -23,7 +26,7 @@ namespace ircd::m::sync
 decltype(ircd::m::sync::room_ephemeral_m_receipt_m_read)
 ircd::m::sync::room_ephemeral_m_receipt_m_read
 {
-	"rooms...ephemeral",
+	"rooms.ephemeral.m_receipt",
 	room_ephemeral_m_receipt_m_read_polylog
 };
 
@@ -31,69 +34,89 @@ bool
 ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 {
 	const m::room &room{*data.room};
-	const m::room::members members{room};
-	const m::room::members::closure closure{[&]
+	const m::room::members members
+	{
+		room
+	};
+
+	members.for_each(data.membership, m::room::members::closure{[&data]
 	(const m::user::id &user_id)
 	{
-		static const m::event::fetch::opts fopts
-		{
-			m::event::keys::include
-			{
-				"event_id",
-				"content",
-				"sender",
-			},
-		};
-
-		const m::user user{user_id};
-		m::user::room user_room{user};
-		user_room.fopts = &fopts;
-		if(head_idx(std::nothrow, user_room) <= data.since)
-			return;
-
-		user_room.get(std::nothrow, "ircd.read", room.room_id, [&]
-		(const m::event &event)
-		{
-			const auto &event_idx(index(event, std::nothrow));
-			if(event_idx < data.since || event_idx >= data.current)
-				return;
-
-			data.commit();
-			json::stack::object object{*data.array};
-
-			// type
-			json::stack::member
-			{
-				object, "type", "m.receipt"
-			};
-
-			// content
-			const json::object data
-			{
-				at<"content"_>(event)
-			};
-
-			thread_local char buf[1024];
-			const json::members reformat
-			{
-				{ unquote(data.at("event_id")),
-				{
-					{ "m.read",
-					{
-						{ at<"sender"_>(event),
-						{
-							{ "ts", data.at("ts") }
-						}}
-					}}
-				}}
-			};
-
-			json::stack::member
-			{
-				object, "content", json::stringify(mutable_buffer{buf}, reformat)
-			};
-		});
-	}};
+		_handle_user(data, user_id);
+	}});
 
 	return true;
+}
+
+void
+ircd::m::sync::_handle_user(data &data,
+                            const m::user &user)
+{
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include
+		{
+			"event_id", "content", "sender",
+		},
+	};
+
+	m::user::room user_room{user};
+	user_room.fopts = &fopts;
+	if(head_idx(std::nothrow, user_room) < data.since)
+		return;
+
+	const m::room::id &room_id{*data.room};
+	user_room.get(std::nothrow, "ircd.read", room_id, [&data]
+	(const m::event &event)
+	{
+		if(apropos(data, event))
+			_handle_receipt(data, event);
+	});
+}
+
+void
+ircd::m::sync::_handle_receipt(data &data,
+                               const m::event &event)
+{
+	const json::object content
+	{
+		at<"content"_>(event)
+	};
+
+	json::stack::object object
+	{
+		data.out
+	};
+
+	// type
+	json::stack::member
+	{
+		object, "type", "m.receipt"
+	};
+
+	// content
+	json::stack::object content_
+	{
+		object, "content"
+	};
+
+	json::stack::object event_id_
+	{
+		content_, unquote(content.at("event_id"))
+	};
+
+	json::stack::object m_read_
+	{
+		event_id_, "m.read"
+	};
+
+	json::stack::object sender_
+	{
+		m_read_, at<"sender"_>(event)
+	};
+
+	json::stack::member
+	{
+		sender_, "ts", json::value(content.at("ts"))
+	};
 }

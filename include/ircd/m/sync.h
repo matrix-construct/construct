@@ -23,8 +23,20 @@ namespace ircd::m::sync
 	struct data;
 	struct item;
 	struct response;
+	using item_closure = std::function<void (item &)>;
+	using item_closure_bool = std::function<bool (item &)>;
+
+	string_view loghead(const data &);
+
+	bool apropos(const data &, const event::idx &);
+	bool apropos(const data &, const event::id &);
+	bool apropos(const data &, const event &);
+
+	bool for_each(const string_view &prefix, const item_closure_bool &);
+	bool for_each(const item_closure_bool &);
 
 	extern log::log log;
+	extern ctx::pool pool;
 }
 
 struct ircd::m::sync::item
@@ -37,6 +49,7 @@ struct ircd::m::sync::item
 
   public:
 	string_view name() const;
+	string_view member_name() const;
 
 	bool linear(data &, const m::event &);
 	bool polylog(data &);
@@ -58,11 +71,11 @@ struct ircd::m::sync::data
 	// Range related
 	const uint64_t &since;
 	const uint64_t current;
-	const uint64_t delta;
 
 	// User related
 	const m::user user;
 	const m::user::room user_room;
+	const m::room::state user_state;
 	const m::user::rooms user_rooms;
 
 	// Filter to use
@@ -76,18 +89,9 @@ struct ircd::m::sync::data
 	bool commit();
 
 	// apropos contextual
-	ctx::mutex write_mutex;
-	json::stack::member *member {nullptr};
-	json::stack::object *object {nullptr};
-	json::stack::array *array {nullptr};
 	const m::event *event {nullptr};
 	const m::room *room {nullptr};
 	string_view membership;
-	window_buffer ret;
-	std::array<string_view, 16> path;
-
-	// unsorted / misc
-	uint64_t state_at {0};
 
 	data(sync::stats &stats,
 	     ircd::client &client,

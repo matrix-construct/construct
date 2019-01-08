@@ -16,6 +16,7 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
+	static void presence_events_polylog(data &);
 	static bool presence_polylog(data &);
 	static bool presence_linear(data &);
 	extern item presence;
@@ -40,7 +41,7 @@ ircd::m::sync::presence_linear(data &data)
 
 	json::stack::object object
 	{
-		*data.array
+		data.out
 	};
 
 	// sender
@@ -67,12 +68,21 @@ ircd::m::sync::presence_linear(data &data)
 bool
 ircd::m::sync::presence_polylog(data &data)
 {
-	json::stack::object out{*data.member};
-	json::stack::member member{out, "events"};
-	json::stack::array array{member};
-	const m::user::mitsein mitsein
+	json::stack::object object
 	{
-		data.user
+		data.out
+	};
+
+	presence_events_polylog(data);
+	return true;
+}
+
+void
+ircd::m::sync::presence_events_polylog(data &data)
+{
+	json::stack::array array
+	{
+		data.out, "events"
 	};
 
 	ctx::mutex mutex;
@@ -83,7 +93,10 @@ ircd::m::sync::presence_polylog(data &data)
 		// contended during a json::stack flush to the client; not during database
 		// queries leading to this.
 		const std::lock_guard<decltype(mutex)> l{mutex};
-		json::stack::object object{array};
+		json::stack::object object
+		{
+			array
+		};
 
 		// sender
 		json::stack::member
@@ -104,36 +117,27 @@ ircd::m::sync::presence_polylog(data &data)
 		};
 	}};
 
-	const auto each_user{[&data, &closure]
-	(const m::user::id &user_id)
-	{
-		const m::user user{user_id};
-		const m::user::room user_room{user};
-		//TODO: can't check event_idx cuz only closed presence content
-		if(head_idx(std::nothrow, user_room) > data.since)
-			m::presence::get(std::nothrow, user, closure);
-	}};
-
-	mitsein.for_each("join", each_user);
-/*
 	//TODO: conf
-	static const size_t fibers(24);
-	string_view q[fibers];
-	char buf[fibers][256];
+	static const size_t fibers(16);
+	std::array<string_view, fibers> q;
+	std::array<char[256], fibers> buf;
 	ctx::parallel<string_view> parallel
 	{
-		meepool, q, each_user
+		m::sync::pool, q, [&data, &closure](const auto &user_id)
+		{
+			const m::user user{user_id};
+			const m::user::room user_room{user};
+			//TODO: can't check event_idx cuz only closed presence content
+			if(head_idx(std::nothrow, user_room) > data.since)
+				m::presence::get(std::nothrow, user, closure);
+		}
 	};
 
-	const auto paraclosure{[&parallel, &q, &buf]
-	(const m::user &u)
+	const m::user::mitsein mitsein{data.user};
+	mitsein.for_each("join", [&parallel, &q, &buf]
+	(const m::user &user)
 	{
-		assert(parallel.snd < fibers);
-		strlcpy(buf[parallel.snd], string_view{u.user_id});
-		q[parallel.snd] = buf[parallel.snd];
+		q[parallel.snd] = strlcpy(buf[parallel.snd], user.user_id);
 		parallel();
-	}};
-*/
-//	mitsein.for_each("join", paraclosure);
-	return true;
+	});
 }

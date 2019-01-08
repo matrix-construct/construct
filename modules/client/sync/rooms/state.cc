@@ -16,17 +16,34 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
+	static bool _room_state_polylog_events(data &);
 	static bool room_state_polylog(data &);
 	static bool room_state_linear(data &);
+
+	extern const event::keys::include _default_keys;
 	extern item room_state;
 }
 
 decltype(ircd::m::sync::room_state)
 ircd::m::sync::room_state
 {
-	"rooms.$membership.$room_id.state",
+	"rooms.state",
 	room_state_polylog,
 	room_state_linear
+};
+
+decltype(ircd::m::sync::_default_keys)
+ircd::m::sync::_default_keys
+{
+	"content",
+	"depth",
+	"event_id",
+	"origin_server_ts",
+	"redacts",
+	"room_id",
+	"sender",
+	"state_key",
+	"type",
 };
 
 bool
@@ -42,70 +59,65 @@ ircd::m::sync::room_state_linear(data &data)
 	if(!data.room->membership(data.user, data.membership))
 		return false;
 
-	data.array->append(*data.event);
+	//data.array->append(*data.event);
 	return true;
 }
 
 bool
 ircd::m::sync::room_state_polylog(data &data)
 {
-	static const m::event::keys::include default_keys
+	json::stack::object object
 	{
-		"content",
-		"depth",
-		"event_id",
-		"origin_server_ts",
-		"redacts",
-		"room_id",
-		"sender",
-		"state_key",
-		"type",
+		data.out
 	};
 
-	static const m::event::fetch::opts fopts
-	{
-		default_keys
-	};
+	return _room_state_polylog_events(data);
+}
 
-	json::stack::object out{*data.member};
-	json::stack::member member
-	{
-		out, "events"
-	};
-
+bool
+ircd::m::sync::_room_state_polylog_events(data &data)
+{
 	json::stack::array array
 	{
-		member
+		data.out, "events"
 	};
 
 	ctx::mutex mutex;
 	const event::closure_idx each_idx{[&data, &array, &mutex]
 	(const m::event::idx &event_idx)
 	{
-		assert(event_idx);
+		static const m::event::fetch::opts fopts
+		{
+			_default_keys
+		};
+
 		const event::fetch event
 		{
 			event_idx, std::nothrow, &fopts
 		};
 
-		if(!event.valid || at<"depth"_>(event) >= int64_t(data.state_at))
+		if(!event.valid)
 			return;
 
 		const std::lock_guard<decltype(mutex)> lock{mutex};
 		array.append(event);
-		data.commit();
 	}};
 
-	const event::closure_idx _each_idx{[&data, &each_idx]
-	(const m::event::idx &event_idx)
+	//TODO: conf
+	std::array<event::idx, 8> md;
+	ctx::parallel<event::idx> parallel
 	{
-		assert(event_idx);
-		if(event_idx >= data.since && event_idx <= data.current)
-			each_idx(event_idx);
-	}};
+		m::sync::pool, md, each_idx
+	};
 
 	const m::room &room{*data.room};
 	const m::room::state state{room};
-	state.for_each(_each_idx);
+	state.for_each([&data, &parallel]
+	(const m::event::idx &event_idx)
+	{
+		if(apropos(data, event_idx))
+			parallel(event_idx);
+	});
+
 	return true;
 }

@@ -92,6 +92,11 @@ try
 		stats, client, request.user_id, range, args.filter_id
 	};
 
+	log::debug
+	{
+		log, "request %s", loghead(data)
+	};
+
 	if(data.since > data.current + 1)
 		throw m::NOT_FOUND
 		{
@@ -105,11 +110,11 @@ try
 
 	const bool shortpolled
 	{
-		data.delta == 0?
+		range.first > range.second?
 			false:
-		data.delta > linear_delta_max?
-			polylog::handle(data):
-			linear::handle(data)
+		range.second - range.first <= linear_delta_max?
+			linear::handle(data):
+			polylog::handle(data)
 	};
 
 	// When shortpoll was successful, do nothing else.
@@ -117,7 +122,7 @@ try
 		return {};
 
 	// When longpoll was successful, do nothing else.
-	if(longpoll::poll(client, args))
+	if(longpoll::poll(client, data, args))
 		return {};
 
 	// A user-timeout occurred. According to the spec we return a
@@ -143,6 +148,65 @@ catch(const bad_lex_cast &e)
 	{
 		"Since parameter invalid :%s", e.what()
 	};
+}
+
+//
+// polylog
+//
+
+bool
+ircd::m::sync::polylog::handle(data &data)
+try
+{
+	data.commit();
+
+	// Top level sync object.
+	json::stack::object object
+	{
+		data.out
+	};
+
+	m::sync::for_each([&data]
+	(item &item)
+	{
+		json::stack::member member
+		{
+			data.out, item.member_name()
+		};
+
+		item.polylog(data);
+		return true;
+	});
+
+	const json::value next_batch
+	{
+		lex_cast(data.current + 1), json::STRING
+	};
+
+	json::stack::member
+	{
+		object, "next_batch", next_batch
+	};
+
+	log::info
+	{
+		log, "polylog %s (next_batch:%s)",
+		loghead(data),
+		string_view{next_batch}
+	};
+
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "polylog %s FAILED :%s",
+		loghead(data),
+		e.what()
+	};
+
+	throw;
 }
 
 //
@@ -178,6 +242,7 @@ ircd::m::sync::longpoll::handle_notify(const m::event &event,
 
 bool
 ircd::m::sync::longpoll::poll(client &client,
+                              data &data,
                               const args &args)
 {
 	++polling;
@@ -201,13 +266,14 @@ ircd::m::sync::longpoll::poll(client &client,
 				queue.pop_front();
 		}};
 
-		if(handle(client, args, a))
+		if(handle(client, data, args, a))
 			return true;
 	}
 }
 
 bool
 ircd::m::sync::longpoll::handle(client &client,
+                                data &data,
                                 const args &args,
                                 const accepted &event)
 {
@@ -219,7 +285,7 @@ ircd::m::sync::longpoll::handle(client &client,
 	if(room_id)
 	{
 		const m::room room{room_id};
-		return handle(client, args, event, room);
+		return handle(client, data, args, event, room);
 	}
 
 	return false;
@@ -227,6 +293,7 @@ ircd::m::sync::longpoll::handle(client &client,
 
 bool
 ircd::m::sync::longpoll::handle(client &client,
+                                data &data,
                                 const args &args,
                                 const accepted &event,
                                 const m::room &room)
@@ -271,7 +338,7 @@ ircd::m::sync::longpoll::handle(client &client,
 
 	const auto &next_batch
 	{
-		int64_t(m::vm::current_sequence + 1)
+		int64_t(data.current + 1)
 	};
 
 	resource::response
@@ -615,7 +682,7 @@ ircd::m::sync::linear::handle(data &data)
 	{
 		client, json::members
 		{
-			{ "next_batch",  json::value { lex_cast(int64_t(since + 1)), json::STRING } },
+			{ "next_batch",  json::value { lex_cast(int64_t(data.current + 1)), json::STRING } },
 			{ "rooms",       rooms   },
 			{ "presence",    json::object{} },
 		}
@@ -647,97 +714,4 @@ ircd::m::sync::highlight_count(const m::room &r,
     };
 
     return count(u, r, a, a < b? b : a);
-}
-
-//
-// polylog
-//
-
-bool
-ircd::m::sync::polylog::handle(data &data)
-try
-{
-	json::stack::object object
-	{
-		data.out
-	};
-
-	// Generate individual stats for sections
-	thread_local char iecbuf[64], rembuf[128], tmbuf[32];
-	sync::stats stats{data.stats};
-	stats.timer = timer{};
-
-	{
-		json::stack::member member{object, "account_data"};
-		const scope_restore<decltype(data.member)> theirs
-		{
-			data.member, &member
-		};
-
-		auto it(m::sync::item::map.find("account_data"));
-		assert(it != m::sync::item::map.end());
-		const auto &item(it->second);
-		assert(item);
-		item->polylog(data);
-	}
-
-	{
-		json::stack::member member{object, "rooms"};
-		const scope_restore<decltype(data.member)> theirs
-		{
-			data.member, &member
-		};
-
-		auto it(m::sync::item::map.find("rooms"));
-		assert(it != m::sync::item::map.end());
-		const auto &item(it->second);
-		assert(item);
-		item->polylog(data);
-	}
-
-	{
-		json::stack::member member{object, "presence"};
-		const scope_restore<decltype(data.member)> theirs
-		{
-			data.member, &member
-		};
-
-		auto it(m::sync::item::map.find("presence"));
-		assert(it != m::sync::item::map.end());
-		const auto &item(it->second);
-		assert(item);
-		item->polylog(data);
-	}
-
-	{
-		json::stack::member member
-		{
-			object, "next_batch", json::value(lex_cast(int64_t(data.current + 1)), json::STRING)
-		};
-	}
-
-	log::info
-	{
-		log, "polylog %s %s %s wc:%zu in %s",
-		string(rembuf, ircd::remote(data.client)),
-		string_view{data.user.user_id},
-		pretty(iecbuf, iec(data.stats.flush_bytes)),
-		data.stats.flush_count,
-		ircd::pretty(tmbuf, data.stats.timer.at<milliseconds>(), true)
-	};
-
-	return data.committed();
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "polylog sync FAILED %lu to %lu (vm @ %zu) :%s"
-		,data.since
-		,data.current
-		,m::vm::current_sequence
-		,e.what()
-	};
-
-	throw;
 }

@@ -16,7 +16,7 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static event::id::buf _room_timeline_events(data &, json::stack::array &, const m::room &, bool &);
+	static event::id::buf _room_timeline_events(data &, const m::room &, bool &);
 	static bool room_timeline_polylog(data &);
 	extern item room_timeline;
 }
@@ -24,34 +24,35 @@ namespace ircd::m::sync
 decltype(ircd::m::sync::room_timeline)
 ircd::m::sync::room_timeline
 {
-	"rooms.$membership.$room_id.timeline",
+	"rooms.timeline",
 	room_timeline_polylog
 };
 
 bool
 ircd::m::sync::room_timeline_polylog(data &data)
 {
-	json::stack::object out{*data.member};
+	json::stack::object object
+	{
+		data.out
+	};
 
 	// events
 	bool limited{false};
-	m::event::id::buf prev;
+	m::event::id::buf prev
 	{
-		json::stack::member member{out, "events"};
-		json::stack::array array{member};
-		prev = _room_timeline_events(data, array, *data.room, limited);
-	}
+		_room_timeline_events(data, *data.room, limited)
+	};
 
 	// prev_batch
 	json::stack::member
 	{
-		out, "prev_batch", string_view{prev}
+		object, "prev_batch", string_view{prev}
 	};
 
 	// limited
 	json::stack::member
 	{
-		out, "limited", json::value{limited}
+		object, "limited", json::value{limited}
 	};
 
 	return true;
@@ -59,10 +60,14 @@ ircd::m::sync::room_timeline_polylog(data &data)
 
 ircd::m::event::id::buf
 ircd::m::sync::_room_timeline_events(data &data,
-                                     json::stack::array &out,
                                      const m::room &room,
                                      bool &limited)
 {
+	json::stack::array array
+	{
+		data.out, "events"
+	};
+
 	static const m::event::fetch::opts fopts
 	{
 		m::event::keys::include
@@ -112,13 +117,13 @@ ircd::m::sync::_room_timeline_events(data &data,
 
 	if(i > 0 && it)
 	{
-		const m::event &event{*it};
-		data.state_at = at<"depth"_>(event);
+		//const m::event &event{*it};
+		//data.state_at = at<"depth"_>(event);
 	}
 
 	if(i > 0)
 		for(; it && i > -1; ++it, --i)
-			out.append(*it);
+			array.append(*it);
 
 	return event_id;
 }

@@ -72,6 +72,8 @@ catch(const std::exception &e)
 ircd::m::init::~init()
 noexcept try
 {
+	m::sync::pool.join();
+
 	if(!std::current_exception())
 		presence::set(me, "offline", me_offline_status_msg);
 }
@@ -400,6 +402,105 @@ ircd::m::sync::log
 	"sync", 's'
 };
 
+namespace ircd::m::sync
+{
+	const ctx::pool::opts pool_opts
+	{
+		ctx::DEFAULT_STACK_SIZE,
+		0,
+		-1,
+		0
+	};
+}
+
+decltype(ircd::m::sync::pool)
+ircd::m::sync::pool
+{
+	"sync", pool_opts
+};
+
+bool
+ircd::m::sync::for_each(const item_closure_bool &closure)
+{
+	return for_each(string_view{}, closure);
+}
+
+bool
+ircd::m::sync::for_each(const string_view &prefix,
+                        const item_closure_bool &closure)
+{
+	const auto depth
+	{
+		token_count(prefix, '.')
+	};
+
+	auto it
+	{
+		item::map.lower_bound(prefix)
+	};
+
+	for(; it != end(item::map); ++it)
+	{
+		const auto item_depth
+		{
+			token_count(it->first, '.')
+		};
+
+		if(item_depth > depth + 1)
+			continue;
+
+		if(it->first == prefix)
+			continue;
+
+		if(item_depth < depth + 1)
+			break;
+
+		if(!closure(*it->second))
+			return false;
+	}
+
+	return true;
+}
+
+bool
+ircd::m::sync::apropos(const data &d,
+                       const event &event)
+{
+	return apropos(d, index(event, std::nothrow));
+}
+
+bool
+ircd::m::sync::apropos(const data &d,
+                       const event::id &event_id)
+{
+	return apropos(d, index(event_id, std::nothrow));
+}
+
+bool
+ircd::m::sync::apropos(const data &d,
+                       const event::idx &event_idx)
+{
+	return d.since <= event_idx && d.current >= event_idx;
+}
+
+ircd::string_view
+ircd::m::sync::loghead(const data &data)
+{
+	thread_local char headbuf[256], rembuf[128], iecbuf[2][64], tmbuf[32];
+	return fmt::sprintf
+	{
+		headbuf, "%s %s [%lu -> %lu] %s chunk:%zu %s in %s",
+		string(rembuf, ircd::remote(data.client)),
+		string_view{data.user.user_id},
+		data.since,
+		data.current,
+		ircd::pretty(iecbuf[0], iec(data.stats.flush_bytes + size(data.out.completed()))),
+		data.stats.flush_count,
+		ircd::pretty(iecbuf[1], iec(data.stats.flush_bytes)),
+		ircd::pretty(tmbuf, data.stats.timer.at<milliseconds>(), true),
+	};
+}
+
 //
 // response
 //
@@ -506,10 +607,6 @@ ircd::m::sync::data::data(sync::stats &stats,
 {
 	range.second
 }
-,delta
-{
-	current - since
-}
 ,user
 {
 	user
@@ -517,6 +614,10 @@ ircd::m::sync::data::data(sync::stats &stats,
 ,user_room
 {
 	user
+}
+,user_state
+{
+	user_room
 }
 ,user_rooms
 {
@@ -654,21 +755,19 @@ try
 	stats.timer = {};
 	#endif
 
-	const auto ret
+	const bool ret
 	{
 		_polylog(data)
 	};
 
 	#ifdef RB_DEBUG
-	thread_local char rembuf[128], iecbuf[64], tmbuf[32];
+	//data.out.flush();
+	thread_local char tmbuf[32];
 	log::debug
 	{
-		log, "polylog %s %s '%s' %s wc:%zu in %s",
-		string(rembuf, ircd::remote(data.client)),
-		string_view{data.user.user_id},
+		log, "polylog %s '%s' %s",
+		loghead(data),
 		name(),
-		ircd::pretty(iecbuf, iec(data.stats.flush_bytes - stats.flush_bytes)),
-		data.stats.flush_count - stats.flush_count,
 		ircd::pretty(tmbuf, stats.timer.at<microseconds>(), true)
 	};
 	#endif
@@ -677,12 +776,10 @@ try
 }
 catch(const std::bad_function_call &e)
 {
-	thread_local char rembuf[128];
 	log::dwarning
 	{
-		log, "polylog %s %s '%s' missing handler :%s",
-		string(rembuf, ircd::remote(data.client)),
-		string_view{data.user.user_id},
+		log, "polylog %s '%s' missing handler :%s",
+		loghead(data),
 		name(),
 		e.what()
 	};
@@ -691,20 +788,22 @@ catch(const std::bad_function_call &e)
 }
 catch(const std::exception &e)
 {
-	thread_local char rembuf[128], iecbuf[64], tmbuf[32];
 	log::derror
 	{
-		log, "polylog %s %s '%s' %s wc:%zu in %s :%s",
-		string(rembuf, ircd::remote(data.client)),
-		string_view{data.user.user_id},
+		log, "polylog %s '%s' :%s",
+		loghead(data),
 		name(),
-		ircd::pretty(iecbuf, iec(data.stats.flush_bytes)),
-		data.stats.flush_count,
-		ircd::pretty(tmbuf, data.stats.timer.at<milliseconds>(), true),
 		e.what()
 	};
 
 	throw;
+}
+
+ircd::string_view
+ircd::m::sync::item::member_name()
+const
+{
+	return token_last(name(), '.');
 }
 
 ircd::string_view

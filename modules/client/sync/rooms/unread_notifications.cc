@@ -26,7 +26,7 @@ namespace ircd::m::sync
 decltype(ircd::m::sync::room_unread_notifications)
 ircd::m::sync::room_unread_notifications
 {
-	"rooms...unread_notifications",
+	"rooms.unread_notifications",
 	room_unread_notifications_polylog,
 	room_unread_notifications_linear
 };
@@ -45,7 +45,11 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	if(!m::receipt::read(last_read, room.room_id, data.user))
 		return false;
 
-	json::stack::object out{*data.member};
+	json::stack::object out
+	{
+		data.out
+	};
+
 	const auto last_read_idx
 	{
 		index(last_read)
