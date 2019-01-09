@@ -443,6 +443,19 @@ try
 	};
 
 	send_query(ep, tag);
+
+	#ifdef RB_DEBUG
+	thread_local char buf[128];
+	log::debug
+	{
+		net::log, "dns %s send tag:%u t:%u qtype:%u `%s'",
+		string(buf, make_ipport(ep)),
+		tag.id,
+		tag.tries,
+		tag.opts.qtype,
+		host(tag.hp),
+	};
+	#endif
 }
 catch(const std::out_of_range &)
 {
@@ -459,9 +472,14 @@ ircd::net::dns::resolver::send_query(const ip::udp::endpoint &ep,
 	assert(ns.non_blocking());
 	assert(!empty(tag.question));
 	const const_buffer &buf{tag.question};
-	ns.send_to(asio::const_buffers_1(buf), ep);
+	const auto sent
+	{
+		ns.send_to(asio::const_buffers_1(buf), ep)
+	};
+
 	send_last = now<steady_point>();
 	tag.last = send_last;
+	tag.server = make_ipport(ep);
 	tag.tries++;
 }
 
@@ -533,21 +551,44 @@ ircd::net::dns::resolver::handle_reply(const header &header,
                                        const const_buffer &body)
 try
 {
-	const auto &id{header.id};
-	const auto it{tags.find(id)};
+	thread_local char addr_strbuf[2][128];
+
+	const auto it{tags.find(header.id)};
 	if(it == end(tags))
 		throw error
 		{
 			"DNS reply from %s for unrecognized tag id:%u",
-			string(reply_from),
-			id
+			string(addr_strbuf[0], reply_from),
+			header.id
 		};
 
 	auto &tag{it->second};
+	if(make_ipport(reply_from) != tag.server)
+		throw error
+		{
+			"DNS reply from %s for tag:%u which we sent to %s",
+			string(addr_strbuf[0], reply_from),
+			header.id,
+			string(addr_strbuf[1], tag.server)
+		};
+
 	const unwind untag{[this, &it]
 	{
 		tags.erase(it);
 	}};
+
+	log::debug
+	{
+		net::log, "dns %s recv tag:%u t:%u qtype:%u qd:%u an:%u ns:%u ar:%u",
+		string(addr_strbuf[0], make_ipport(reply_from)),
+		tag.id,
+		tag.tries,
+		tag.opts.qtype,
+		header.qdcount,
+		header.ancount,
+		header.nscount,
+		header.arcount,
+	};
 
 	assert(tag.tries > 0);
 	tag.last = steady_point::min();

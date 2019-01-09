@@ -76,6 +76,7 @@ struct ircd::net::dns::resolver::tag
 	callback cb;
 	steady_point last {steady_point::min()};
 	uint8_t tries {0};
+	ipport server;
 	char hostbuf[rfc1035::NAME_BUF_SIZE];
 	char qbuf[384];
 
