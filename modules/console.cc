@@ -5249,36 +5249,39 @@ console_cmd__events(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"start", "[dir]", "[limit]"
+		"start", "stop"
 	}};
 
-	const uint64_t start
+	const int64_t start
 	{
-		param.at<uint64_t>(0, uint64_t(-1))
+		param.at<int64_t>("start", -1)
 	};
 
-	const char &dir
+	const int64_t stop
 	{
-		param.at(1, "b"_sv).at(0)
+		param.at<int64_t>("stop", start == -1? 0 : -1)
 	};
 
 	size_t limit
 	{
-		param.at<size_t>(2, 32)
+		stop == 0 || stop == -1?
+			32:
+			std::numeric_limits<size_t>::max()
 	};
 
 	const auto closure{[&out, &limit]
 	(const m::event::idx &seq, const m::event &event)
 	{
-		out << seq << " " << pretty_oneline(event) << std::endl;;
-		return --limit;
+		out << seq << " " << pretty_oneline(event) << std::endl;
+		return --limit > 0;
 	}};
 
-	if(dir == 'f')
-		m::events::for_each(start, closure);
-	else
-		m::events::rfor_each(start, closure);
+	const m::events::range range
+	{
+		uint64_t(start), uint64_t(stop)
+	};
 
+	m::events::for_each(range, closure);
 	return true;
 }
 
@@ -5300,7 +5303,7 @@ console_cmd__events__filter(opt &out, const string_view &line)
 		param.at(1)
 	};
 
-	m::events::rfor_each(start, filter, [&out]
+	m::events::for_each({start, 0}, filter, [&out]
 	(const m::event::idx &seq, const m::event &event)
 	{
 		out << seq << " " << pretty_oneline(event) << std::endl;;

@@ -1611,86 +1611,7 @@ ircd::m::node::room::room(const m::node &node)
 //
 
 bool
-ircd::m::events::rfor_each(const event::idx &start,
-                           const event_filter &filter,
-                           const closure_bool &closure)
-{
-	auto limit
-	{
-		json::get<"limit"_>(filter)?: 32L
-	};
-
-	return rfor_each(start, [&filter, &closure, &limit]
-	(const event::idx &event_idx, const m::event &event)
-	-> bool
-	{
-		if(!match(filter, event))
-			return true;
-
-		if(!closure(event_idx, event))
-			return false;
-
-		return --limit;
-	});
-}
-
-bool
-ircd::m::events::rfor_each(const event::idx &start,
-                           const closure_bool &closure)
-{
-	event::fetch event;
-	return rfor_each(start, id_closure_bool{[&event, &closure]
-	(const event::idx &event_idx, const event::id &event_id)
-	{
-		if(!seek(event, event_idx, std::nothrow))
-			return true;
-
-		return closure(event_idx, event);
-	}});
-}
-
-bool
-ircd::m::events::rfor_each(const event::idx &start,
-                           const id_closure_bool &closure)
-{
-	static const db::gopts opts
-	{
-		db::get::NO_CACHE
-	};
-
-	static constexpr auto column_idx
-	{
-		json::indexof<event, "event_id"_>()
-	};
-
-	auto &column
-	{
-		dbs::event_column.at(column_idx)
-	};
-
-	if(start == uint64_t(-1))
-	{
-		for(auto it(column.rbegin(opts)); it; ++it)
-			if(!closure(byte_view<event::idx>(it->first), it->second))
-				return false;
-
-		return true;
-	}
-
-	auto it
-	{
-		column.lower_bound(byte_view<string_view>(start), opts)
-	};
-
-	for(; it; --it)
-		if(!closure(byte_view<event::idx>(it->first), it->second))
-			return false;
-
-	return true;
-}
-
-bool
-ircd::m::events::for_each(const event::idx &start,
+ircd::m::events::for_each(const range &range,
                           const event_filter &filter,
                           const closure_bool &closure)
 {
@@ -1699,7 +1620,7 @@ ircd::m::events::for_each(const event::idx &start,
 		json::get<"limit"_>(filter)?: 32L
 	};
 
-	return for_each(start, [&filter, &closure, &limit]
+	return for_each(range, [&filter, &closure, &limit]
 	(const event::idx &event_idx, const m::event &event)
 	-> bool
 	{
@@ -1714,11 +1635,11 @@ ircd::m::events::for_each(const event::idx &start,
 }
 
 bool
-ircd::m::events::for_each(const event::idx &start,
+ircd::m::events::for_each(const range &range,
                           const closure_bool &closure)
 {
 	event::fetch event;
-	return for_each(start, id_closure_bool{[&event, &closure]
+	return for_each(range, id_closure_bool{[&event, &closure]
 	(const event::idx &event_idx, const event::id &event_id)
 	{
 		if(!seek(event, event_idx, std::nothrow))
@@ -1729,7 +1650,7 @@ ircd::m::events::for_each(const event::idx &start,
 }
 
 bool
-ircd::m::events::for_each(const event::idx &start,
+ircd::m::events::for_each(const range &range,
                           const id_closure_bool &closure)
 {
 	static const db::gopts opts
@@ -1747,16 +1668,51 @@ ircd::m::events::for_each(const event::idx &start,
 		dbs::event_column.at(column_idx)
 	};
 
-	auto it
+	const auto &start{range.first};
+	const auto &stop{range.second};
+	const bool ascending
 	{
-		start > 0?
-			column.lower_bound(byte_view<string_view>(start), opts):
-			column.begin(opts)
+		start < stop
 	};
 
-	for(; it; ++it)
-		if(!closure(byte_view<event::idx>(it->first), it->second))
+	auto it
+	{
+		column.lower_bound(byte_view<string_view>(start), opts)
+	};
+
+	// Branch to use a reverse iterator from the end
+	if(!ascending && !it)
+	{
+		for(auto it(column.rbegin(opts)); it; ++it)
+		{
+			const event::idx &event_idx
+			{
+				byte_view<event::idx>(it->first)
+			};
+
+			if(event_idx <= stop)
+				break;
+
+			if(!closure(event_idx, it->second))
+				return false;
+		}
+	}
+	else for(; it; ascending? ++it : --it)
+	{
+		const event::idx &event_idx
+		{
+			byte_view<event::idx>(it->first)
+		};
+
+		if(ascending && event_idx >= stop)
+			break;
+
+		if(!ascending && event_idx <= stop)
+			break;
+
+		if(!closure(event_idx, it->second))
 			return false;
+	}
 
 	return true;
 }

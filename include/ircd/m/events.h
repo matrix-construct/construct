@@ -13,16 +13,23 @@
 
 namespace ircd::m::events
 {
+	struct range;
 	using id_closure_bool = std::function<bool (const event::idx &, const event::id &)>;
 	using closure_bool = std::function<bool (const event::idx &, const event &)>;
 
-	// counts up from start
-	bool for_each(const event::idx &start, const id_closure_bool &);
-	bool for_each(const event::idx &start, const closure_bool &);
-	bool for_each(const event::idx &start, const event_filter &, const closure_bool &);
-
-	// -1 starts at newest event; counts down
-	bool rfor_each(const event::idx &start, const id_closure_bool &);
-	bool rfor_each(const event::idx &start, const closure_bool &);
-	bool rfor_each(const event::idx &start, const event_filter &, const closure_bool &);
+	bool for_each(const range &, const id_closure_bool &);
+	bool for_each(const range &, const closure_bool &);
+	bool for_each(const range &, const event_filter &, const closure_bool &);
 }
+
+/// Range to start (inclusive) and stop (exclusive). If start is greater than
+/// stop a reverse iteration will occur. -1 (or unsigned max value) can be used
+/// to start or stop at the end. 0 can be used to start or stop at the beginning.
+///
+struct ircd::m::events::range
+:std::pair<event::idx, event::idx>
+{
+	range(const event::idx &start, const event::idx &stop = -1)
+	:std::pair<event::idx, event::idx>{start, stop}
+	{}
+};
