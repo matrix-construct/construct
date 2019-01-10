@@ -16,7 +16,9 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
+	static bool account_data_(data &, const m::event &, const m::event::idx &);
 	static bool account_data_polylog(data &);
+	static bool account_data_linear(data &);
 
 	extern item account_data;
 }
@@ -25,13 +27,19 @@ decltype(ircd::m::sync::account_data)
 ircd::m::sync::account_data
 {
 	"account_data",
-	account_data_polylog
+	account_data_polylog,
+	account_data_linear
 };
+
+bool
+ircd::m::sync::account_data_linear(data &data)
+{
+	return true;
+}
 
 bool
 ircd::m::sync::account_data_polylog(data &data)
 {
-	// Open an object
 	json::stack::object object
 	{
 		data.out
@@ -42,32 +50,54 @@ ircd::m::sync::account_data_polylog(data &data)
 		data.out, "events"
 	};
 
-	const m::room::state &state{data.user_state};
+	const m::room::state &state
+	{
+		data.user_state
+	};
+
 	state.for_each("ircd.account_data", [&data, &array]
 	(const m::event &event)
 	{
-		// Ignore events outside this sync window
-		if(!apropos(data, event))
-			return;
-
-		// Each account_data event is an object in the events array
-		json::stack::object object
-		{
-			array
-		};
-
-		// type
-		json::stack::member
-		{
-			object, "type", at<"state_key"_>(event)
-		};
-
-		// content
-		json::stack::member
-		{
-			object, "content", at<"content"_>(event)
-		};
+		if(account_data_(data, event, index(event)))
+			data.commit();
 	});
+
+	return true;
+}
+
+bool
+ircd::m::sync::account_data_(data &data,
+                             const m::event &event,
+                             const m::event::idx &event_idx)
+{
+	if(!apropos(data, event_idx))
+		return false;
+
+	if(json::get<"type"_>(event) != "ircd.account_data")
+		return false;
+
+	if(json::get<"room_id"_>(event) != data.user_room.room_id)
+		return false;
+
+	data.commit();
+
+	// Each account_data event is an object in the events array
+	json::stack::object object
+	{
+		data.out
+	};
+
+	// type
+	json::stack::member
+	{
+		data.out, "type", at<"state_key"_>(event)
+	};
+
+	// content
+	json::stack::member
+	{
+		data.out, "content", at<"content"_>(event)
+	};
 
 	return true;
 }

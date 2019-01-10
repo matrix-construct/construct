@@ -16,8 +16,10 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static bool room_account_data_events_polylog(data &);
+	static void room_account_data_polylog_events_event(data &, const m::event &);
+	static void room_account_data_polylog_events(data &);
 	static bool room_account_data_polylog(data &);
+
 	extern item room_account_data;
 }
 
@@ -36,12 +38,12 @@ ircd::m::sync::room_account_data_polylog(data &data)
 		data.out
 	};
 
-	room_account_data_events_polylog(data);
+	room_account_data_polylog_events(data);
 	return true;
 }
 
-bool
-ircd::m::sync::room_account_data_events_polylog(data &data)
+void
+ircd::m::sync::room_account_data_polylog_events(data &data)
 {
 	json::stack::array array
 	{
@@ -53,33 +55,38 @@ ircd::m::sync::room_account_data_events_polylog(data &data)
 		data.user_room
 	};
 
+	assert(data.room);
 	char typebuf[288]; //TODO: room_account_data_typebuf_size
 	const auto type
 	{
 		m::user::_account_data_type(typebuf, data.room->room_id)
 	};
 
-	state.for_each(type, [&data, &array]
+	state.for_each(type, [&data]
 	(const m::event &event)
 	{
-		if(!apropos(data, event))
-			return;
-
-		json::stack::object object
-		{
-			data.out
-		};
-
-		json::stack::member
-		{
-			object, "type", at<"state_key"_>(event)
-		};
-
-		json::stack::member
-		{
-			object, "content", at<"content"_>(event)
-		};
+		if(apropos(data, event))
+			room_account_data_polylog_events_event(data, event);
 	});
+}
 
-	return true;
+void
+ircd::m::sync::room_account_data_polylog_events_event(data &data,
+                                                      const m::event &event)
+{
+	data.commit();
+	json::stack::object object
+	{
+		data.out
+	};
+
+	json::stack::member
+	{
+		object, "type", at<"state_key"_>(event)
+	};
+
+	json::stack::member
+	{
+		object, "content", at<"content"_>(event)
+	};
 }

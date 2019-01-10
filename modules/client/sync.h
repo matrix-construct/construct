@@ -56,12 +56,8 @@ namespace ircd::m::sync::longpoll
 	std::deque<accepted> queue;
 	ctx::dock dock;
 
-	static std::string sync_room(client &, const m::room &, const args &, const accepted &);
-	static std::string sync_rooms(client &, const m::user::id &, const m::room &, const args &, const accepted &);
-	static bool handle(client &, data &, const args &, const accepted &, const m::room &);
-	static bool handle(client &, data &, const args &, const accepted &);
-	static bool poll(client &, data &, const args &);
-
+	static bool handle(data &, const args &, const accepted &);
+	static bool poll(data &, const args &);
 	static void handle_notify(const m::event &, m::vm::eval &);
 	extern m::hookfn<m::vm::eval &> notified;
 }

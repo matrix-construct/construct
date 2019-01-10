@@ -16,8 +16,15 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static event::id::buf _room_timeline_events(data &, const m::room &, bool &);
+	struct room_timeline;
+
+	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &);
 	static bool room_timeline_polylog(data &);
+
+	static event::id::buf _room_timeline_linear_events(data &, const m::room &, bool &);
+	static bool room_timeline_linear(data &);
+
+	extern const event::keys::include default_keys;
 	extern item room_timeline;
 }
 
@@ -25,22 +32,42 @@ decltype(ircd::m::sync::room_timeline)
 ircd::m::sync::room_timeline
 {
 	"rooms.timeline",
-	room_timeline_polylog
+	room_timeline_polylog,
+	room_timeline_linear,
+};
+
+decltype(ircd::m::sync::default_keys)
+ircd::m::sync::default_keys
+{
+	"content",
+	"depth",
+	"event_id",
+	"origin_server_ts",
+	"prev_events",
+	"redacts",
+	"room_id",
+	"sender",
+	"state_key",
+	"type",
 };
 
 bool
-ircd::m::sync::room_timeline_polylog(data &data)
+ircd::m::sync::room_timeline_linear(data &data)
 {
+	return true;
+
 	json::stack::object object
 	{
 		data.out
 	};
 
+	m::room room;
+
 	// events
 	bool limited{false};
 	m::event::id::buf prev
 	{
-		_room_timeline_events(data, *data.room, limited)
+		_room_timeline_linear_events(data, room, limited)
 	};
 
 	// prev_batch
@@ -59,30 +86,61 @@ ircd::m::sync::room_timeline_polylog(data &data)
 }
 
 ircd::m::event::id::buf
-ircd::m::sync::_room_timeline_events(data &data,
-                                     const m::room &room,
-                                     bool &limited)
+ircd::m::sync::_room_timeline_linear_events(data &data,
+                                            const m::room &room,
+                                            bool &limited)
 {
 	json::stack::array array
 	{
 		data.out, "events"
 	};
 
-	static const m::event::fetch::opts fopts
+	return {};
+}
+
+bool
+ircd::m::sync::room_timeline_polylog(data &data)
+{
+	json::stack::object object
 	{
-		m::event::keys::include
-		{
-			"content",
-			"depth",
-			"event_id",
-			"origin_server_ts",
-			"prev_events",
-			"redacts",
-			"room_id",
-			"sender",
-			"state_key",
-			"type",
-		},
+		data.out
+	};
+
+	// events
+	bool limited{false};
+	m::event::id::buf prev
+	{
+		_room_timeline_polylog_events(data, *data.room, limited)
+	};
+
+	// prev_batch
+	json::stack::member
+	{
+		object, "prev_batch", string_view{prev}
+	};
+
+	// limited
+	json::stack::member
+	{
+		object, "limited", json::value{limited}
+	};
+
+	return true;
+}
+
+ircd::m::event::id::buf
+ircd::m::sync::_room_timeline_polylog_events(data &data,
+                                             const m::room &room,
+                                             bool &limited)
+{
+	static const event::fetch::opts fopts
+	{
+		default_keys
+	};
+
+	json::stack::array array
+	{
+		data.out, "events"
 	};
 
 	// messages seeks to the newest event, but the client wants the oldest
@@ -117,6 +175,7 @@ ircd::m::sync::_room_timeline_events(data &data,
 
 	if(i > 0 && it)
 	{
+		data.commit();
 		//const m::event &event{*it};
 		//data.state_at = at<"depth"_>(event);
 	}

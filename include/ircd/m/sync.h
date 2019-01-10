@@ -51,7 +51,8 @@ struct ircd::m::sync::item
 	string_view name() const;
 	string_view member_name() const;
 
-	bool linear(data &, const m::event &);
+	bool poll(data &, const m::event &);
+	bool linear(data &);
 	bool polylog(data &);
 
 	item(std::string name,

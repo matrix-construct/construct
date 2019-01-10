@@ -83,6 +83,7 @@ ircd::m::sync::_handle_receipt(data &data,
 		at<"content"_>(event)
 	};
 
+	data.commit();
 	json::stack::object object
 	{
 		data.out

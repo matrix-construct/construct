@@ -113,7 +113,7 @@ try
 		range.first > range.second?
 			false:
 		range.second - range.first <= linear_delta_max?
-			linear::handle(data):
+			polylog::handle(data):
 			polylog::handle(data)
 	};
 
@@ -122,14 +122,14 @@ try
 		return {};
 
 	// When longpoll was successful, do nothing else.
-	if(longpoll::poll(client, data, args))
+	if(longpoll::poll(data, args))
 		return {};
 
 	// A user-timeout occurred. According to the spec we return a
 	// 200 with empty fields rather than a 408.
 	const json::value next_batch
 	{
-		lex_cast(m::vm::current_sequence + 1), json::STRING
+		lex_cast(m::vm::current_sequence + 0), json::STRING
 	};
 
 	return resource::response
@@ -158,15 +158,12 @@ bool
 ircd::m::sync::polylog::handle(data &data)
 try
 {
-	data.commit();
-
-	// Top level sync object.
 	json::stack::object object
 	{
 		data.out
 	};
 
-	m::sync::for_each([&data]
+	m::sync::for_each(string_view{}, [&data]
 	(item &item)
 	{
 		json::stack::member member
@@ -195,13 +192,92 @@ try
 		string_view{next_batch}
 	};
 
-	return true;
+	return data.committed();
 }
 catch(const std::exception &e)
 {
 	log::error
 	{
 		log, "polylog %s FAILED :%s",
+		loghead(data),
+		e.what()
+	};
+
+	throw;
+}
+
+//
+// linear
+//
+
+decltype(ircd::m::sync::linear::delta_max)
+ircd::m::sync::linear::delta_max
+{
+	{ "name",     "ircd.client.sync.linear.delta.max" },
+	{ "default",  1024                                },
+};
+
+bool
+ircd::m::sync::linear::handle(data &data)
+try
+{
+	json::stack::object object
+	{
+		data.out
+	};
+
+	const m::events::range range
+	{
+		data.since, data.current + 1
+	};
+
+	m::events::for_each(range, [&data]
+	(const m::event::idx &event_idx, const m::event &event)
+	{
+		const scope_restore<decltype(data.event)> theirs
+		{
+			data.event, &event
+		};
+
+		m::sync::for_each(string_view{}, [&data]
+		(item &item)
+		{
+			json::stack::member member
+			{
+				data.out, item.member_name()
+			};
+
+			item.linear(data);
+			return true;
+		});
+
+		return true;
+	});
+
+	const json::value next_batch
+	{
+		lex_cast(data.current + 1), json::STRING
+	};
+
+	json::stack::member
+	{
+		object, "next_batch", next_batch
+	};
+
+	log::debug
+	{
+		log, "linear %s (next_batch:%s)",
+		loghead(data),
+		string_view{next_batch}
+	};
+
+	return data.committed();
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "linear %s FAILED :%s",
 		loghead(data),
 		e.what()
 	};
@@ -241,8 +317,7 @@ ircd::m::sync::longpoll::handle_notify(const m::event &event,
 }
 
 bool
-ircd::m::sync::longpoll::poll(client &client,
-                              data &data,
+ircd::m::sync::longpoll::poll(data &data,
                               const args &args)
 {
 	++polling;
@@ -259,459 +334,26 @@ ircd::m::sync::longpoll::poll(client &client,
 		if(queue.empty())
 			continue;
 
-		const auto &a(queue.front());
+		const auto &accepted
+		{
+			queue.front()
+		};
+
 		const unwind pop{[]
 		{
 			if(polling <= 1)
 				queue.pop_front();
 		}};
 
-		if(handle(client, data, args, a))
+		if(handle(data, args, accepted))
 			return true;
 	}
 }
 
 bool
-ircd::m::sync::longpoll::handle(client &client,
-                                data &data,
+ircd::m::sync::longpoll::handle(data &data,
                                 const args &args,
                                 const accepted &event)
 {
-	const auto &room_id
-	{
-		json::get<"room_id"_>(event)
-	};
-
-	if(room_id)
-	{
-		const m::room room{room_id};
-		return handle(client, data, args, event, room);
-	}
-
 	return false;
-}
-
-bool
-ircd::m::sync::longpoll::handle(client &client,
-                                data &data,
-                                const args &args,
-                                const accepted &event,
-                                const m::room &room)
-{
-	const m::user::id &user_id
-	{
-		args.request.user_id
-	};
-
-	if(!room.membership(user_id, "join"))
-		return false;
-
-	const auto rooms
-	{
-		sync_rooms(client, user_id, room, args, event)
-	};
-
-	const m::user::room ur
-	{
-		m::user::id
-		{
-			args.request.user_id
-		}
-	};
-
-	std::vector<json::value> presents;
-	ur.get(std::nothrow, "ircd.presence", [&]
-	(const m::event &event)
-	{
-		const auto &content
-		{
-			at<"content"_>(event)
-		};
-
-		presents.emplace_back(event);
-	});
-
-	const json::members presence
-	{
-		{ "events", json::value { presents.data(), presents.size() } },
-	};
-
-	const auto &next_batch
-	{
-		int64_t(data.current + 1)
-	};
-
-	resource::response
-	{
-		client, json::members
-		{
-			{ "next_batch",  json::value { lex_cast(next_batch), json::STRING } },
-			{ "rooms",       rooms       },
-			{ "presence",    presence    },
-		}
-	};
-
-	return true;
-}
-
-std::string
-ircd::m::sync::longpoll::sync_rooms(client &client,
-                                    const m::user::id &user_id,
-                                    const m::room &room,
-                                    const args &args,
-                                    const accepted &event)
-{
-	std::vector<std::string> r;
-	std::vector<json::member> m;
-
-	thread_local char membership_buf[64];
-	const auto membership
-	{
-		room.membership(membership_buf, user_id)
-	};
-
-	r.emplace_back(sync_room(client, room, args, event));
-	m.emplace_back(room.room_id, r.back());
-
-	const json::strung body
-	{
-		m.data(), m.data() + m.size()
-	};
-
-	return json::strung{json::members
-	{
-		{ membership, body }
-	}};
-}
-
-std::string
-ircd::m::sync::longpoll::sync_room(client &client,
-                                   const m::room &room,
-                                   const args &args,
-                                   const accepted &accepted)
-{
-	const auto &since
-	{
-		args.since
-	};
-
-	const m::event &event{accepted};
-	std::vector<std::string> timeline;
-	if(defined(json::get<"event_id"_>(event)))
-	{
-		json::strung strung(event);
-		if(!!accepted.client_txnid)
-			strung = json::insert(strung, json::member
-			{
-				"unsigned", json::members
-				{
-					{ "transaction_id", accepted.client_txnid }
-				}
-			});
-
-		timeline.emplace_back(std::move(strung));
-	}
-
-	const json::strung timeline_serial
-	{
-		timeline.data(), timeline.data() + timeline.size()
-	};
-
-	std::vector<std::string> ephemeral;
-	if(json::get<"type"_>(event) == "m.typing") //TODO: X
-		ephemeral.emplace_back(json::strung{event});
-
-	if(json::get<"type"_>(event) == "m.receipt") //TODO: X
-		ephemeral.emplace_back(json::strung(event));
-
-	const json::strung ephemeral_serial
-	{
-		ephemeral.data(), ephemeral.data() + ephemeral.size()
-	};
-
-	const auto &prev_batch
-	{
-		!timeline.empty()?
-			unquote(json::object{timeline.front()}.get("event_id")):
-			string_view{}
-	};
-
-	//TODO: XXX
-	const bool limited
-	{
-		false
-	};
-
-	m::event::id::buf last_read_buf;
-	const auto &last_read
-	{
-		m::receipt::read(last_read_buf, room.room_id, args.request.user_id)
-	};
-
-	const auto last_read_idx
-	{
-		last_read && json::get<"event_id"_>(event)?
-			index(last_read):
-			0UL
-	};
-
-	const auto current_idx
-	{
-		last_read_idx?
-			index(at<"event_id"_>(event)):
-			0UL
-	};
-
-	const auto notes
-	{
-		last_read_idx?
-			notification_count(room, last_read_idx, current_idx):
-			json::undefined_number
-	};
-
-	const auto highlights
-	{
-		last_read_idx?
-			highlight_count(room, args.request.user_id, last_read_idx, current_idx):
-			json::undefined_number
-	};
-
-	const json::members body
-	{
-		{ "account_data", json::members{} },
-		{ "unread_notifications",
-		{
-			{ "highlight_count",     highlights  },
-			{ "notification_count",  notes       },
-		}},
-		{ "ephemeral",
-		{
-			{ "events", ephemeral_serial },
-		}},
-		{ "timeline",
-		{
-			{ "events",      timeline_serial  },
-			{ "prev_batch",  prev_batch       },
-			{ "limited",     limited          },
-		}},
-	};
-
-	return json::strung(body);
-}
-
-//
-// linear
-//
-
-decltype(ircd::m::sync::linear::delta_max)
-ircd::m::sync::linear::delta_max
-{
-	{ "name",     "ircd.client.sync.linear.delta.max" },
-	{ "default",  1024                                },
-};
-
-bool
-ircd::m::sync::linear::handle(data &data)
-{
-	auto &client{data.client};
-	json::stack::object object
-	{
-		data.out
-	};
-
-	uint64_t since
-	{
-		data.since
-	};
-
-	std::map<std::string, std::vector<std::string>, std::less<>> r;
-
-	bool limited{false};
-	m::events::for_each(since, [&]
-	(const uint64_t &sequence, const m::event &event)
-	{
-		if(!r.empty() && (since - data.since > 128))
-		{
-			limited = true;
-			return false;
-		}
-
-		since = sequence;
-		if(!json::get<"room_id"_>(event))
-			return true;
-
-		const m::room room
-		{
-			json::get<"room_id"_>(event)
-		};
-
-		if(!room.membership(data.user.user_id))
-			return true;
-
-		auto it
-		{
-			r.lower_bound(room.room_id)
-		};
-
-		if(it == end(r) || it->first != room.room_id)
-			it = r.emplace_hint(it, std::string{room.room_id}, std::vector<std::string>{});
-
-		it->second.emplace_back(json::strung{event});
-		return true;
-	});
-
-	if(r.empty())
-		return false;
-
-	std::vector<json::member> events[3];
-
-	for(auto &p : r)
-	{
-		const m::room::id &room_id{p.first};
-		auto &vec{p.second};
-
-		std::vector<std::string> timeline;
-		std::vector<std::string> state;
-		std::vector<std::string> ephemeral;
-
-		for(std::string &event : vec)
-			if(json::object{event}.has("state_key"))
-				state.emplace_back(std::move(event));
-			else if(!json::object{event}.has("prev_events"))
-				ephemeral.emplace_back(std::move(event));
-			else
-				timeline.emplace_back(std::move(event));
-
-		const json::strung timeline_serial{timeline.data(), timeline.data() + timeline.size()};
-		const json::strung state_serial{state.data(), state.data() + state.size()};
-		const json::strung ephemeral_serial{ephemeral.data(), ephemeral.data() + ephemeral.size()};
-
-		m::event::id::buf last_read_buf;
-		const auto &last_read
-		{
-			m::receipt::read(last_read_buf, room_id, data.user)
-		};
-
-		const auto last_read_idx
-		{
-			last_read?
-				index(last_read):
-				0UL
-		};
-
-		const auto notes
-		{
-			last_read_idx?
-				notification_count(room_id, last_read_idx, data.current):
-				json::undefined_number
-		};
-
-		const auto highlights
-		{
-			last_read_idx?
-				highlight_count(room_id, data.user, last_read_idx, data.current):
-				json::undefined_number
-		};
-
-		const string_view prev_batch
-		{
-			!timeline.empty()?
-				unquote(json::object{timeline.front()}.at("event_id")):
-				string_view{}
-		};
-
-		const json::members body
-		{
-			{ "ephemeral",
-			{
-				{ "events", ephemeral_serial },
-			}},
-			{ "state",
-			{
-				{ "events", state_serial }
-			}},
-			{ "timeline",
-			{
-				{ "events",      timeline_serial  },
-				{ "prev_batch",  prev_batch       },
-				{ "limited",     limited          },
-			}},
-			{ "unread_notifications",
-			{
-				{ "highlight_count",     highlights  },
-				{ "notification_count",  notes       },
-			}},
-		};
-
-		thread_local char membership_buf[64];
-		const auto membership{m::room{room_id}.membership(membership_buf, data.user)};
-		const int ep
-		{
-			membership == "join"? 0:
-			membership == "leave"? 1:
-			membership == "invite"? 2:
-			1 // default to leave (catches "ban" for now)
-		};
-
-		events[ep].emplace_back(room_id, body);
-	};
-
-	const json::value joinsv
-	{
-		events[0].data(), events[0].size()
-	};
-
-	const json::value leavesv
-	{
-		events[1].data(), events[1].size()
-	};
-
-	const json::value invitesv
-	{
-		events[2].data(), events[2].size()
-	};
-
-	const json::members rooms
-	{
-		{ "join",   joinsv     },
-		{ "leave",  leavesv    },
-		{ "invite", invitesv   },
-	};
-
-	resource::response
-	{
-		client, json::members
-		{
-			{ "next_batch",  json::value { lex_cast(int64_t(data.current + 1)), json::STRING } },
-			{ "rooms",       rooms   },
-			{ "presence",    json::object{} },
-		}
-	};
-
-	return true;
-}
-
-static long
-ircd::m::sync::notification_count(const m::room &room,
-                    const m::event::idx &a,
-                    const m::event::idx &b)
-{
-    return m::count_since(room, a, a < b? b : a);
-}
-
-static long
-ircd::m::sync::highlight_count(const m::room &r,
-                 const m::user &u,
-                 const m::event::idx &a,
-                 const m::event::idx &b)
-{
-    using namespace ircd::m;
-    using proto = size_t (const user &, const room &, const event::idx &, const event::idx &);
-
-    static mods::import<proto> count
-    {
-        "m_user", "highlighted_count__between"
-    };
-
-    return count(u, r, a, a < b? b : a);
 }

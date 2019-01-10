@@ -45,6 +45,7 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	if(!m::receipt::read(last_read, room.room_id, data.user))
 		return false;
 
+	data.commit();
 	json::stack::object out
 	{
 		data.out

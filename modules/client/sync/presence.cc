@@ -16,9 +16,12 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static void presence_events_polylog(data &);
+	static void presence_polylog_events(data &);
 	static bool presence_polylog(data &);
+
+	static void presence_linear_events(data &);
 	static bool presence_linear(data &);
+
 	extern item presence;
 }
 
@@ -33,33 +36,36 @@ ircd::m::sync::presence
 bool
 ircd::m::sync::presence_linear(data &data)
 {
-	if(!data.event)
-		return false;
+	return true;
 
-	if(json::get<"type"_>(*data.event) != "ircd.presence")
-		return false;
-
-	json::stack::object object
+	assert(data.event);
+	const m::event &event
 	{
-		data.out
+		*data.event
 	};
+
+	if(json::get<"type"_>(event) != "ircd.presence")
+		return true;
+
+	if(json::get<"sender"_>(event) != m::me.user_id)
+		return true;
 
 	// sender
 	json::stack::member
 	{
-		object, "sender", unquote(at<"content"_>(*data.event).get("user_id"))
+		data.out, "sender", unquote(at<"content"_>(event).get("user_id"))
 	};
 
 	// type
 	json::stack::member
 	{
-		object, "type", json::value{"m.presence"}
+		data.out, "type", json::value{"m.presence"}
 	};
 
 	// content
 	json::stack::member
 	{
-		object, "content", at<"content"_>(*data.event)
+		data.out, "content", at<"content"_>(event)
 	};
 
 	return true;
@@ -73,12 +79,12 @@ ircd::m::sync::presence_polylog(data &data)
 		data.out
 	};
 
-	presence_events_polylog(data);
+	presence_polylog_events(data);
 	return true;
 }
 
 void
-ircd::m::sync::presence_events_polylog(data &data)
+ircd::m::sync::presence_polylog_events(data &data)
 {
 	json::stack::array array
 	{
@@ -93,6 +99,8 @@ ircd::m::sync::presence_events_polylog(data &data)
 		// contended during a json::stack flush to the client; not during database
 		// queries leading to this.
 		const std::lock_guard<decltype(mutex)> l{mutex};
+
+		data.commit();
 		json::stack::object object
 		{
 			array

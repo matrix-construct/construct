@@ -16,8 +16,10 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static bool _room_state_polylog_events(data &);
+	static bool room_state_polylog_events(data &);
 	static bool room_state_polylog(data &);
+
+	static bool room_state_linear_events(data &);
 	static bool room_state_linear(data &);
 
 	extern const event::keys::include _default_keys;
@@ -71,11 +73,11 @@ ircd::m::sync::room_state_polylog(data &data)
 		data.out
 	};
 
-	return _room_state_polylog_events(data);
+	return room_state_polylog_events(data);
 }
 
 bool
-ircd::m::sync::_room_state_polylog_events(data &data)
+ircd::m::sync::room_state_polylog_events(data &data)
 {
 	json::stack::array array
 	{
@@ -100,6 +102,7 @@ ircd::m::sync::_room_state_polylog_events(data &data)
 			return;
 
 		const std::lock_guard<decltype(mutex)> lock{mutex};
+		data.commit();
 		array.append(event);
 	}};
 

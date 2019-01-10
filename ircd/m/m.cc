@@ -422,7 +422,12 @@ ircd::m::sync::pool
 bool
 ircd::m::sync::for_each(const item_closure_bool &closure)
 {
-	return for_each(string_view{}, closure);
+	auto it(begin(item::map));
+	for(; it != end(item::map); ++it)
+		if(!closure(*it->second))
+			return false;
+
+	return true;
 }
 
 bool
@@ -489,7 +494,7 @@ ircd::m::sync::loghead(const data &data)
 	thread_local char headbuf[256], rembuf[128], iecbuf[2][64], tmbuf[32];
 	return fmt::sprintf
 	{
-		headbuf, "%s %s [%lu -> %lu] %s chunk:%zu %s in %s",
+		headbuf, "%s %s %lu:%lu %s chunk:%zu %s in %s",
 		string(rembuf, ircd::remote(data.client)),
 		string_view{data.user.user_id},
 		data.since,
@@ -715,38 +720,6 @@ noexcept
 }
 
 bool
-ircd::m::sync::item::linear(data &data,
-                            const m::event &event)
-try
-{
-	const scope_restore<decltype(data.event)> theirs
-	{
-		data.event, &event
-	};
-
-	const auto ret
-	{
-		_linear(data)
-	};
-
-	return ret;
-}
-catch(const std::bad_function_call &e)
-{
-	thread_local char rembuf[128];
-	log::dwarning
-	{
-		log, "linear %s %s '%s' missing handler :%s",
-		string(rembuf, ircd::remote(data.client)),
-		string_view{data.user.user_id},
-		name(),
-		e.what()
-	};
-
-	return false;
-}
-
-bool
 ircd::m::sync::item::polylog(data &data)
 try
 {
@@ -797,6 +770,64 @@ catch(const std::exception &e)
 	};
 
 	throw;
+}
+
+bool
+ircd::m::sync::item::linear(data &data)
+try
+{
+	const auto ret
+	{
+		_linear(data)
+	};
+
+	return ret;
+}
+catch(const std::bad_function_call &e)
+{
+	thread_local char rembuf[128];
+	log::dwarning
+	{
+		log, "linear %s %s '%s' missing handler :%s",
+		string(rembuf, ircd::remote(data.client)),
+		string_view{data.user.user_id},
+		name(),
+		e.what()
+	};
+
+	return false;
+}
+
+bool
+ircd::m::sync::item::poll(data &data,
+                          const m::event &event)
+try
+{
+	const scope_restore<decltype(data.event)> theirs
+	{
+		data.event, &event
+	};
+
+	const auto ret
+	{
+		_linear(data)
+	};
+
+	return ret;
+}
+catch(const std::bad_function_call &e)
+{
+	thread_local char rembuf[128];
+	log::dwarning
+	{
+		log, "poll %s %s '%s' missing handler :%s",
+		string(rembuf, ircd::remote(data.client)),
+		string_view{data.user.user_id},
+		name(),
+		e.what()
+	};
+
+	return false;
 }
 
 ircd::string_view
