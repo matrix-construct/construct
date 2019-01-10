@@ -150,8 +150,16 @@ pretty_oneline__event(std::ostream &s,
 		"sender",
 	};
 
-	s << json::get<"room_id"_>(event) << " ";
-	s << json::get<"depth"_>(event) << " :";
+	if(defined(json::get<"room_id"_>(event)))
+		s << json::get<"room_id"_>(event) << " ";
+	else
+		s << "* ";
+
+	if(json::get<"depth"_>(event) != json::undefined_number)
+		s << json::get<"depth"_>(event) << " :";
+	else
+		s << "* :";
+
 	json::for_each(event, top_keys, out);
 
 	const auto &auth_events{json::get<"auth_events"_>(event)};
