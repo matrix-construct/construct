@@ -700,6 +700,16 @@ ircd::json::stack::object::object(array &pa)
 	s->append("{"_sv);
 }
 
+void
+ircd::json::stack::object::append(const json::object &object)
+{
+	for(const auto &kv : object)
+		json::stack::member
+		{
+			*this, kv.first, kv.second
+		};
+}
+
 ircd::json::stack::object::~object()
 noexcept
 {

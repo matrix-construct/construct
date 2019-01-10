@@ -149,6 +149,9 @@ struct ircd::json::stack::object
 	size_t mc {0};                     ///< members witnessed (monotonic)
 
   public:
+	template<class... T> void append(const json::tuple<T...> &);
+	void append(const json::object &);
+
 	object(stack &s);                  ///< Object is top
 	object(array &pa);                 ///< Object is value in the array
 	object(member &pm);                ///< Object is value of named member
@@ -274,5 +277,19 @@ ircd::json::stack::array::append(const json::tuple<T...> &t)
 	s->append(serialized(t), [&t](mutable_buffer buf)
 	{
 		return size(stringify(buf, t));
+	});
+}
+
+template<class... T>
+void
+ircd::json::stack::object::append(const json::tuple<T...> &t)
+{
+	for_each(t, [this](const auto &name, const auto &_value)
+	{
+		const json::value value(_value);
+		if(defined(value)) json::stack::member
+		{
+			*this, name, value
+		};
 	});
 }
