@@ -16,11 +16,11 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static bool room_state_polylog_events(data &);
-	static bool room_state_polylog(data &);
+	static void room_state_polylog_events(data &);
+	static void room_state_polylog(data &);
 
-	static bool room_state_linear_events(data &);
-	static bool room_state_linear(data &);
+	static void room_state_linear_events(data &);
+	static void room_state_linear(data &);
 
 	extern const event::keys::include _default_keys;
 	extern item room_state;
@@ -48,7 +48,7 @@ ircd::m::sync::_default_keys
 	"type",
 };
 
-bool
+void
 ircd::m::sync::room_state_linear(data &data)
 {
 	assert(data.event);
@@ -56,16 +56,15 @@ ircd::m::sync::room_state_linear(data &data)
 	assert(json::get<"room_id"_>(*data.event));
 
 	if(!json::get<"state_key"_>(*data.event))
-		return false;
+		return;
 
 	if(!data.room->membership(data.user, data.membership))
-		return false;
+		return;
 
 	//data.array->append(*data.event);
-	return true;
 }
 
-bool
+void
 ircd::m::sync::room_state_polylog(data &data)
 {
 	json::stack::object object
@@ -73,10 +72,10 @@ ircd::m::sync::room_state_polylog(data &data)
 		data.out
 	};
 
-	return room_state_polylog_events(data);
+	room_state_polylog_events(data);
 }
 
-bool
+void
 ircd::m::sync::room_state_polylog_events(data &data)
 {
 	json::stack::array array
@@ -107,7 +106,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	}};
 
 	//TODO: conf
-	std::array<event::idx, 8> md;
+	std::array<event::idx, 16> md;
 	ctx::parallel<event::idx> parallel
 	{
 		m::sync::pool, md, each_idx
@@ -121,6 +120,4 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		if(apropos(data, event_idx))
 			parallel(event_idx);
 	});
-
-	return true;
 }

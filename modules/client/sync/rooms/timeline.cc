@@ -16,13 +16,11 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	struct room_timeline;
-
 	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &);
-	static bool room_timeline_polylog(data &);
+	static void room_timeline_polylog(data &);
 
 	static event::id::buf _room_timeline_linear_events(data &, const m::room &, bool &);
-	static bool room_timeline_linear(data &);
+	static void room_timeline_linear(data &);
 
 	extern const event::keys::include default_keys;
 	extern item room_timeline;
@@ -51,10 +49,10 @@ ircd::m::sync::default_keys
 	"type",
 };
 
-bool
+void
 ircd::m::sync::room_timeline_linear(data &data)
 {
-	return true;
+	return;
 
 	json::stack::object object
 	{
@@ -82,7 +80,7 @@ ircd::m::sync::room_timeline_linear(data &data)
 		object, "limited", json::value{limited}
 	};
 
-	return true;
+	return;
 }
 
 ircd::m::event::id::buf
@@ -98,7 +96,7 @@ ircd::m::sync::_room_timeline_linear_events(data &data,
 	return {};
 }
 
-bool
+void
 ircd::m::sync::room_timeline_polylog(data &data)
 {
 	json::stack::object object
@@ -124,8 +122,6 @@ ircd::m::sync::room_timeline_polylog(data &data)
 	{
 		object, "limited", json::value{limited}
 	};
-
-	return true;
 }
 
 ircd::m::event::id::buf
@@ -159,10 +155,10 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	for(; it && i < 10; --it, ++i)
 	{
 		event_id = it.event_id();
-		if(it.event_idx() < data.since)
+		if(it.event_idx() < data.range.first)
 			break;
 
-		if(it.event_idx() > data.current)
+		if(it.event_idx() >= data.range.second)
 			break;
 	}
 

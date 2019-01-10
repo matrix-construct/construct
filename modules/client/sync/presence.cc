@@ -17,10 +17,10 @@ IRCD_MODULE
 namespace ircd::m::sync
 {
 	static void presence_polylog_events(data &);
-	static bool presence_polylog(data &);
+	static void presence_polylog(data &);
 
 	static void presence_linear_events(data &);
-	static bool presence_linear(data &);
+	static void presence_linear(data &);
 
 	extern item presence;
 }
@@ -33,10 +33,10 @@ ircd::m::sync::presence
 	presence_linear,
 };
 
-bool
+void
 ircd::m::sync::presence_linear(data &data)
 {
-	return true;
+	return;
 
 	assert(data.event);
 	const m::event &event
@@ -45,10 +45,10 @@ ircd::m::sync::presence_linear(data &data)
 	};
 
 	if(json::get<"type"_>(event) != "ircd.presence")
-		return true;
+		return;
 
 	if(json::get<"sender"_>(event) != m::me.user_id)
-		return true;
+		return;
 
 	// sender
 	json::stack::member
@@ -68,10 +68,10 @@ ircd::m::sync::presence_linear(data &data)
 		data.out, "content", at<"content"_>(event)
 	};
 
-	return true;
+	return;
 }
 
-bool
+void
 ircd::m::sync::presence_polylog(data &data)
 {
 	json::stack::object object
@@ -80,7 +80,6 @@ ircd::m::sync::presence_polylog(data &data)
 	};
 
 	presence_polylog_events(data);
-	return true;
 }
 
 void
@@ -126,9 +125,9 @@ ircd::m::sync::presence_polylog_events(data &data)
 	}};
 
 	//TODO: conf
-	static const size_t fibers(16);
+	static const size_t fibers(32);
 	std::array<string_view, fibers> q;
-	std::array<char[256], fibers> buf;
+	std::array<char[128], fibers> buf; //TODO: X
 	ctx::parallel<string_view> parallel
 	{
 		m::sync::pool, q, [&data, &closure](const auto &user_id)
@@ -136,7 +135,7 @@ ircd::m::sync::presence_polylog_events(data &data)
 			const m::user user{user_id};
 			const m::user::room user_room{user};
 			//TODO: can't check event_idx cuz only closed presence content
-			if(head_idx(std::nothrow, user_room) > data.since)
+			if(head_idx(std::nothrow, user_room) >= data.range.first)
 				m::presence::get(std::nothrow, user, closure);
 		}
 	};

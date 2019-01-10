@@ -56,6 +56,27 @@ ircd::m::sync::args::timeout_default
 	{ "default",  10 * 1000L                          },
 };
 
+decltype(ircd::m::sync::flush_hiwat)
+ircd::m::sync::flush_hiwat
+{
+	{ "name",     "ircd.client.sync.flush.hiwat" },
+	{ "default",  long(48_KiB)                   },
+};
+
+decltype(ircd::m::sync::buffer_size)
+ircd::m::sync::buffer_size
+{
+	{ "name",     "ircd.client.sync.buffer_size" },
+	{ "default",  long(128_KiB)                  },
+};
+
+decltype(ircd::m::sync::linear::delta_max)
+ircd::m::sync::linear::delta_max
+{
+	{ "name",     "ircd.client.sync.linear.delta.max" },
+	{ "default",  1024                                },
+};
+
 //
 // GET sync
 //
@@ -73,23 +94,57 @@ ircd::m::sync::method_get
 ircd::resource::response
 ircd::m::sync::handle_get(client &client,
                           const resource::request &request)
-try
 {
+	// Parse the request options
 	const args args
 	{
 		request
 	};
 
-	const std::pair<event::idx, event::idx> range
+	// The range to `/sync`. We involve events starting at the range.first
+	// index in this sync. We will not involve events with an index equal
+	// or greater than the range.second. In this case the range.second does not
+	// exist yet because it is one past the server's current_sequence counter.
+	const m::events::range range
 	{
 		args.since,                  // start at since token
-		m::vm::current_sequence      // stop at present
+		m::vm::current_sequence + 1  // stop before future
 	};
 
+	// When the range indexes are the same, the client is polling for the next
+	// event which doesn't exist yet. There is no reason for the since parameter
+	// to be greater than that.
+	if(range.first > range.second)
+		throw m::NOT_FOUND
+		{
+			"Since parameter is too far in the future..."
+		};
+
+	// Setup an output buffer to compose the response. This has to be at least
+	// the worst-case size of a matrix event (64_KiB) or bad things happen.
+	const unique_buffer<mutable_buffer> buffer
+	{
+		size_t(buffer_size)
+	};
+
+	// Setup a chunked encoded response.
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	// Keep state for statistics of this sync here on the stack.
 	stats stats;
 	data data
 	{
-		stats, client, request.user_id, range, args.filter_id
+		request.user_id,
+		range,
+		buffer,
+		std::bind(&sync::flush, std::ref(data), std::ref(response), ph::_1),
+		size_t(flush_hiwat),
+		&client,
+		&stats,
+		args.filter_id
 	};
 
 	log::debug
@@ -97,56 +152,76 @@ try
 		log, "request %s", loghead(data)
 	};
 
-	if(data.since > data.current + 1)
-		throw m::NOT_FOUND
-		{
-			"Since parameter is too far in the future..."
-		};
-
-	const size_t linear_delta_max
+	json::stack::object object
 	{
-		linear::delta_max
+		data.out
 	};
 
 	const bool shortpolled
 	{
 		range.first > range.second?
 			false:
-		range.second - range.first <= linear_delta_max?
+		range.second - range.first <= size_t(linear::delta_max)?
 			polylog::handle(data):
 			polylog::handle(data)
 	};
 
 	// When shortpoll was successful, do nothing else.
 	if(shortpolled)
-		return {};
+		return response;
 
 	// When longpoll was successful, do nothing else.
 	if(longpoll::poll(data, args))
-		return {};
+		return response;
 
 	// A user-timeout occurred. According to the spec we return a
 	// 200 with empty fields rather than a 408.
-	const json::value next_batch
-	{
-		lex_cast(m::vm::current_sequence + 0), json::STRING
-	};
+	empty_response(data);
+	return response;
+}
 
-	return resource::response
+void
+ircd::m::sync::empty_response(data &data)
+{
+	data.commit();
+	json::stack::member
 	{
-		client, json::members
+		data.out, "next_batch", json::value
 		{
-			{ "next_batch",  next_batch      },
-			{ "rooms",       json::object{}  },
-			{ "presence",    json::object{}  },
+			lex_cast(data.range.second), json::STRING
 		}
 	};
+
+	// Empty objects added to output otherwise Riot b0rks.
+	json::stack::object{data.out, "rooms"};
+	json::stack::object{data.out, "presence"};
 }
-catch(const bad_lex_cast &e)
+
+ircd::const_buffer
+ircd::m::sync::flush(data &data,
+                     resource::response::chunked &response,
+                     const const_buffer &buffer)
 {
-	throw m::BAD_REQUEST
+	if(!data.committed)
+		return const_buffer
+		{
+			buffer::data(buffer), 0UL
+		};
+
+	const size_t wrote
 	{
-		"Since parameter invalid :%s", e.what()
+		response.write(buffer)
+	};
+
+	if(data.stats)
+	{
+		data.stats->flush_bytes += wrote;
+		data.stats->flush_count++;
+	}
+
+	return const_buffer
+	{
+		buffer::data(buffer), wrote
 	};
 }
 
@@ -158,11 +233,6 @@ bool
 ircd::m::sync::polylog::handle(data &data)
 try
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
 	m::sync::for_each(string_view{}, [&data]
 	(item &item)
 	{
@@ -175,24 +245,20 @@ try
 		return true;
 	});
 
-	const json::value next_batch
-	{
-		lex_cast(data.current + 1), json::STRING
-	};
-
 	json::stack::member
 	{
-		object, "next_batch", next_batch
+		data.out, "next_batch", json::value
+		{
+			lex_cast(data.range.second), json::STRING
+		}
 	};
 
 	log::info
 	{
-		log, "polylog %s (next_batch:%s)",
-		loghead(data),
-		string_view{next_batch}
+		log, "polylog %s complete", loghead(data)
 	};
 
-	return data.committed();
+	return data.committed;
 }
 catch(const std::exception &e)
 {
@@ -210,28 +276,11 @@ catch(const std::exception &e)
 // linear
 //
 
-decltype(ircd::m::sync::linear::delta_max)
-ircd::m::sync::linear::delta_max
-{
-	{ "name",     "ircd.client.sync.linear.delta.max" },
-	{ "default",  1024                                },
-};
-
 bool
 ircd::m::sync::linear::handle(data &data)
 try
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
-	const m::events::range range
-	{
-		data.since, data.current + 1
-	};
-
-	m::events::for_each(range, [&data]
+	m::events::for_each(data.range, [&data]
 	(const m::event::idx &event_idx, const m::event &event)
 	{
 		const scope_restore<decltype(data.event)> theirs
@@ -254,24 +303,20 @@ try
 		return true;
 	});
 
-	const json::value next_batch
-	{
-		lex_cast(data.current + 1), json::STRING
-	};
-
 	json::stack::member
 	{
-		object, "next_batch", next_batch
+		data.out, "next_batch", json::value
+		{
+			lex_cast(data.range.second), json::STRING
+		}
 	};
 
 	log::debug
 	{
-		log, "linear %s (next_batch:%s)",
-		loghead(data),
-		string_view{next_batch}
+		log, "linear %s complete", loghead(data)
 	};
 
-	return data.committed();
+	return data.committed;
 }
 catch(const std::exception &e)
 {

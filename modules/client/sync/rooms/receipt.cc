@@ -19,7 +19,7 @@ namespace ircd::m::sync
 	static void _reformat_receipt(json::stack::object &, const m::event &);
 	static void _handle_receipt(data &, const m::event &);
 	static void _handle_user(data &, const m::user &);
-	static bool room_ephemeral_m_receipt_m_read_polylog(data &);
+	static void room_ephemeral_m_receipt_m_read_polylog(data &);
 	extern item room_ephemeral_m_receipt_m_read;
 }
 
@@ -30,7 +30,7 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read
 	room_ephemeral_m_receipt_m_read_polylog
 };
 
-bool
+void
 ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 {
 	const m::room &room{*data.room};
@@ -44,8 +44,6 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 	{
 		_handle_user(data, user_id);
 	}});
-
-	return true;
 }
 
 void
@@ -62,7 +60,7 @@ ircd::m::sync::_handle_user(data &data,
 
 	m::user::room user_room{user};
 	user_room.fopts = &fopts;
-	if(head_idx(std::nothrow, user_room) < data.since)
+	if(head_idx(std::nothrow, user_room) < data.range.first)
 		return;
 
 	const m::room::id &room_id{*data.room};

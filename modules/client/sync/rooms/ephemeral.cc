@@ -16,9 +16,9 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static bool rooms_ephemeral_events_polylog(data &);
-	static bool rooms_ephemeral_polylog(data &);
-	static bool rooms_ephemeral_linear(data &);
+	static void rooms_ephemeral_events_polylog(data &);
+	static void rooms_ephemeral_polylog(data &);
+	static void rooms_ephemeral_linear(data &);
 	extern item rooms_ephemeral;
 }
 
@@ -30,13 +30,13 @@ ircd::m::sync::rooms_ephemeral
 	rooms_ephemeral_linear
 };
 
-bool
+void
 ircd::m::sync::rooms_ephemeral_linear(data &data)
 {
-	return true;
+
 }
 
-bool
+void
 ircd::m::sync::rooms_ephemeral_polylog(data &data)
 {
 	json::stack::object object
@@ -45,10 +45,9 @@ ircd::m::sync::rooms_ephemeral_polylog(data &data)
 	};
 
 	rooms_ephemeral_events(data);
-	return true;
 }
 
-bool
+void
 ircd::m::sync::rooms_ephemeral_events_polylog(data &data)
 {
 	json::stack::array array
@@ -62,6 +61,4 @@ ircd::m::sync::rooms_ephemeral_events_polylog(data &data)
 		item.polylog(data);
 		return true;
 	});
-
-	return true;
 }

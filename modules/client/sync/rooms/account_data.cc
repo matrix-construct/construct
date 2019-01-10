@@ -18,7 +18,7 @@ namespace ircd::m::sync
 {
 	static void room_account_data_polylog_events_event(data &, const m::event &);
 	static void room_account_data_polylog_events(data &);
-	static bool room_account_data_polylog(data &);
+	static void room_account_data_polylog(data &);
 
 	extern item room_account_data;
 }
@@ -30,7 +30,7 @@ ircd::m::sync::room_account_data
 	room_account_data_polylog
 };
 
-bool
+void
 ircd::m::sync::room_account_data_polylog(data &data)
 {
 	json::stack::object object
@@ -39,7 +39,6 @@ ircd::m::sync::room_account_data_polylog(data &data)
 	};
 
 	room_account_data_polylog_events(data);
-	return true;
 }
 
 void

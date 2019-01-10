@@ -18,8 +18,8 @@ namespace ircd::m::sync
 {
 	static long _notification_count(const room &, const event::idx &a, const event::idx &b);
 	static long _highlight_count(const room &, const user &u, const event::idx &a, const event::idx &b);
-	static bool room_unread_notifications_polylog(data &);
-	static bool room_unread_notifications_linear(data &);
+	static void room_unread_notifications_polylog(data &);
+	static void room_unread_notifications_linear(data &);
 	extern item room_unread_notifications;
 }
 
@@ -31,19 +31,19 @@ ircd::m::sync::room_unread_notifications
 	room_unread_notifications_linear
 };
 
-bool
+void
 ircd::m::sync::room_unread_notifications_linear(data &data)
 {
-	return true;
+
 }
 
-bool
+void
 ircd::m::sync::room_unread_notifications_polylog(data &data)
 {
 	auto &room{*data.room};
 	m::event::id::buf last_read;
 	if(!m::receipt::read(last_read, room.room_id, data.user))
-		return false;
+		return;
 
 	data.commit();
 	json::stack::object out
@@ -51,7 +51,7 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 		data.out
 	};
 
-	const auto last_read_idx
+	const auto start_idx
 	{
 		index(last_read)
 	};
@@ -61,7 +61,7 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	{
 		out, "highlight_count", json::value
 		{
-			_highlight_count(room, data.user, last_read_idx, data.current)
+			_highlight_count(room, data.user, start_idx, data.range.second)
 		}
 	};
 
@@ -70,11 +70,9 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	{
 		out, "notification_count", json::value
 		{
-			_notification_count(room, last_read_idx, data.current)
+			_notification_count(room, start_idx, data.range.second)
 		}
 	};
-
-	return true;
 }
 
 long

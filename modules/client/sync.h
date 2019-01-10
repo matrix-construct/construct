@@ -19,8 +19,11 @@ namespace ircd::m::sync
 	extern resource resource;
 	extern resource::method method_get;
 
-	static long notification_count(const room &, const event::idx &a, const event::idx &b);
-	static long highlight_count(const room &, const user &, const event::idx &a, const event::idx &b);
+	extern conf::item<size_t> flush_hiwat;
+	extern conf::item<size_t> buffer_size;
+
+	static const_buffer flush(data &, resource::response::chunked &, const const_buffer &);
+	static void empty_response(data &);
 	static resource::response handle_get(client &, const resource::request &);
 }
 
@@ -77,13 +80,11 @@ namespace ircd::m::sync::polylog
 /// Argument parser for the client's /sync request
 struct ircd::m::sync::args
 {
+	args(const resource::request &request);
+
 	static conf::item<milliseconds> timeout_max;
 	static conf::item<milliseconds> timeout_min;
 	static conf::item<milliseconds> timeout_default;
-
-	args(const resource::request &request)
-	:request{request}
-	{}
 
 	const resource::request &request;
 
@@ -132,3 +133,20 @@ struct ircd::m::sync::args
 		request.query.get("set_presence", true)
 	};
 };
+
+inline
+ircd::m::sync::args::args(const resource::request &request)
+try
+:request
+{
+	request
+}
+{
+}
+catch(const bad_lex_cast &e)
+{
+	throw m::BAD_REQUEST
+	{
+		"Since parameter invalid :%s", e.what()
+	};
+}

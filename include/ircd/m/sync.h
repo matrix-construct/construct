@@ -22,7 +22,6 @@ namespace ircd::m::sync
 	struct stats;
 	struct data;
 	struct item;
-	struct response;
 	using item_closure = std::function<void (item &)>;
 	using item_closure_bool = std::function<bool (item &)>;
 
@@ -42,7 +41,7 @@ namespace ircd::m::sync
 struct ircd::m::sync::item
 :instance_multimap<std::string, item, std::less<>>
 {
-	using handle = std::function<bool (data &)>;
+	using handle = std::function<void (data &)>;
 
 	handle _polylog;
 	handle _linear;
@@ -51,9 +50,9 @@ struct ircd::m::sync::item
 	string_view name() const;
 	string_view member_name() const;
 
-	bool poll(data &, const m::event &);
-	bool linear(data &);
-	bool polylog(data &);
+	void poll(data &, const m::event &);
+	void linear(data &);
+	void polylog(data &);
 
 	item(std::string name,
 	     handle polylog    = {},
@@ -66,27 +65,28 @@ struct ircd::m::sync::item
 
 struct ircd::m::sync::data
 {
-	sync::stats &stats;
-	ircd::client &client;
+	/// Range to synchronize. Starting index is inclusive, ending index is
+	/// exclusive. Generally the starting index is a since token, and ending
+	/// index is one beyond the vm::current_sequence and used for next_batch.
+	m::events::range range;
 
-	// Range related
-	const uint64_t &since;
-	const uint64_t current;
+	/// Statistics tracking. If null, stats won't be accumulated for the sync.
+	sync::stats *stats {nullptr};
+
+	/// The client. This may be null if sync is being called internally.
+	ircd::client *client {nullptr};
 
 	// User related
 	const m::user user;
 	const m::user::room user_room;
 	const m::room::state user_state;
 	const m::user::rooms user_rooms;
-
-	// Filter to use
 	const std::string filter_buf;
 	const m::filter filter;
 
-	// response state
-	const std::unique_ptr<response> resp;
+	/// The json::stack master object
 	json::stack out;
-	bool committed() const;
+	bool committed {false};
 	bool commit();
 
 	// apropos contextual
@@ -94,11 +94,14 @@ struct ircd::m::sync::data
 	const m::room *room {nullptr};
 	string_view membership;
 
-	data(sync::stats &stats,
-	     ircd::client &client,
-	     const m::user &user,
-	     const std::pair<event::idx, event::idx> &range,
-	     const string_view &filter_id);
+	data(const m::user &user,
+	     const m::events::range &range,
+	     const mutable_buffer &,
+	     json::stack::flush_callback,
+	     const size_t &flush_hiwat = 64_KiB,
+	     ircd::client *const &client = nullptr,
+	     sync::stats *const &stats = nullptr,
+	     const string_view &filter_id = {});
 
 	data(data &&) = delete;
 	data(const data &) = delete;

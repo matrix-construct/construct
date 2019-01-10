@@ -485,132 +485,83 @@ bool
 ircd::m::sync::apropos(const data &d,
                        const event::idx &event_idx)
 {
-	return d.since <= event_idx && d.current >= event_idx;
+	return event_idx >= d.range.first &&
+	       event_idx < d.range.second;
 }
 
 ircd::string_view
 ircd::m::sync::loghead(const data &data)
 {
 	thread_local char headbuf[256], rembuf[128], iecbuf[2][64], tmbuf[32];
+
+	const auto remstr
+	{
+		data.client?
+			string(rembuf, ircd::remote(*data.client)):
+			string_view{}
+	};
+
+	const auto flush_bytes
+	{
+		data.stats?
+			data.stats->flush_bytes:
+			0U
+	};
+
+	const auto flush_count
+	{
+		data.stats?
+			data.stats->flush_count:
+			0U
+	};
+
+	const auto tmstr
+	{
+		data.stats?
+			ircd::pretty(tmbuf, data.stats->timer.at<milliseconds>(), true):
+			string_view{}
+	};
+
 	return fmt::sprintf
 	{
 		headbuf, "%s %s %lu:%lu %s chunk:%zu %s in %s",
-		string(rembuf, ircd::remote(data.client)),
+		remstr,
 		string_view{data.user.user_id},
-		data.since,
-		data.current,
-		ircd::pretty(iecbuf[0], iec(data.stats.flush_bytes + size(data.out.completed()))),
-		data.stats.flush_count,
-		ircd::pretty(iecbuf[1], iec(data.stats.flush_bytes)),
-		ircd::pretty(tmbuf, data.stats.timer.at<milliseconds>(), true),
+		data.range.first,
+		data.range.second,
+		ircd::pretty(iecbuf[0], iec(flush_bytes + size(data.out.completed()))),
+		flush_count,
+		ircd::pretty(iecbuf[1], iec(flush_bytes)),
+		tmstr
 	};
-}
-
-//
-// response
-//
-
-struct ircd::m::sync::response
-{
-	static conf::item<size_t> flush_hiwat;
-
-	sync::stats &stats;
-	ircd::client &client;
-	unique_buffer<mutable_buffer> buf;
-	std::unique_ptr<resource::response::chunked> resp;
-	bool committed;
-
-	const_buffer flush(const const_buffer &buf);
-	void commit();
-
-	response(sync::stats &stats, ircd::client &client);
-	~response() noexcept;
-};
-
-decltype(ircd::m::sync::response::flush_hiwat)
-ircd::m::sync::response::flush_hiwat
-{
-    { "name",     "ircd.m.sync.flush.hiwat"  },
-    { "default",  long(32_KiB)               },
-};
-
-//
-// response::response
-//
-
-ircd::m::sync::response::response(sync::stats &stats,
-                                  ircd::client &client)
-:stats
-{
-	stats
-}
-,client
-{
-	client
-}
-,buf
-{
-	std::max(size_t(96_KiB), size_t(flush_hiwat))
-}
-,committed
-{
-	false
-}
-{
-}
-
-ircd::m::sync::response::~response()
-noexcept
-{
-}
-
-ircd::const_buffer
-ircd::m::sync::response::flush(const const_buffer &buf)
-{
-	if(!committed)
-		return buf;
-
-	if(!resp)
-		commit();
-
-	stats.flush_bytes += resp->write(buf);
-	stats.flush_count++;
-	return buf;
-}
-
-void
-ircd::m::sync::response::commit()
-{
-	static const string_view content_type
-	{
-		"application/json; charset=utf-8"
-	};
-
-	assert(!resp);
-	resp = std::make_unique<resource::response::chunked>
-	(
-		client, http::OK, content_type
-	);
 }
 
 //
 // data
 //
 
-ircd::m::sync::data::data(sync::stats &stats,
-                          ircd::client &client,
-                          const m::user &user,
-                          const std::pair<event::idx, event::idx> &range,
-                          const string_view &filter_id)
-:stats{stats}
-,client{client}
-,since
+ircd::m::sync::data::data
+(
+	const m::user &user,
+	const m::events::range &range,
+	const mutable_buffer &buf,
+	json::stack::flush_callback flusher,
+	const size_t &flush_hiwat,
+	ircd::client *const &client,
+	sync::stats *const &stats,
+	const string_view &filter_id
+)
+:range
 {
-	range.first
+	range
 }
-,current
+,stats
 {
-	range.second
+	stats
+}
+,client
+{
+	client
 }
 ,user
 {
@@ -638,13 +589,9 @@ ircd::m::sync::data::data(sync::stats &stats,
 {
 	json::object{filter_buf}
 }
-,resp
-{
-	std::make_unique<response>(stats, client)
-}
 ,out
 {
-	resp->buf, std::bind(&response::flush, resp.get(), ph::_1), size_t(resp->flush_hiwat)
+	buf, std::move(flusher), flush_hiwat
 }
 {
 }
@@ -657,18 +604,9 @@ noexcept
 bool
 ircd::m::sync::data::commit()
 {
-	assert(resp);
-	const auto ret{resp->committed};
-	resp->committed = true;
+	const auto ret{committed};
+	committed = true;
 	return ret;
-}
-
-bool
-ircd::m::sync::data::committed()
-const
-{
-	assert(resp);
-	return resp->committed;
 }
 
 //
@@ -719,33 +657,38 @@ noexcept
 	};
 }
 
-bool
+void
 ircd::m::sync::item::polylog(data &data)
 try
 {
 	#ifdef RB_DEBUG
-	sync::stats stats{data.stats};
-	stats.timer = {};
+	sync::stats stats
+	{
+		data.stats?
+			*data.stats:
+			sync::stats{}
+	};
+
+	if(data.stats)
+		stats.timer = {};
 	#endif
 
-	const bool ret
-	{
-		_polylog(data)
-	};
+	_polylog(data);
 
 	#ifdef RB_DEBUG
-	//data.out.flush();
-	thread_local char tmbuf[32];
-	log::debug
+	if(data.stats)
 	{
-		log, "polylog %s '%s' %s",
-		loghead(data),
-		name(),
-		ircd::pretty(tmbuf, stats.timer.at<microseconds>(), true)
-	};
+		//data.out.flush();
+		thread_local char tmbuf[32];
+		log::debug
+		{
+			log, "polylog %s '%s' %s",
+			loghead(data),
+			name(),
+			ircd::pretty(tmbuf, stats.timer.at<microseconds>(), true)
+		};
+	}
 	#endif
-
-	return ret;
 }
 catch(const std::bad_function_call &e)
 {
@@ -756,8 +699,6 @@ catch(const std::bad_function_call &e)
 		name(),
 		e.what()
 	};
-
-	return false;
 }
 catch(const std::exception &e)
 {
@@ -772,33 +713,25 @@ catch(const std::exception &e)
 	throw;
 }
 
-bool
+void
 ircd::m::sync::item::linear(data &data)
 try
 {
-	const auto ret
-	{
-		_linear(data)
-	};
-
-	return ret;
+	_linear(data);
 }
 catch(const std::bad_function_call &e)
 {
 	thread_local char rembuf[128];
 	log::dwarning
 	{
-		log, "linear %s %s '%s' missing handler :%s",
-		string(rembuf, ircd::remote(data.client)),
-		string_view{data.user.user_id},
+		log, "linear %s '%s' missing handler :%s",
+		loghead(data),
 		name(),
 		e.what()
 	};
-
-	return false;
 }
 
-bool
+void
 ircd::m::sync::item::poll(data &data,
                           const m::event &event)
 try
@@ -808,26 +741,18 @@ try
 		data.event, &event
 	};
 
-	const auto ret
-	{
-		_linear(data)
-	};
-
-	return ret;
+	_linear(data);
 }
 catch(const std::bad_function_call &e)
 {
 	thread_local char rembuf[128];
 	log::dwarning
 	{
-		log, "poll %s %s '%s' missing handler :%s",
-		string(rembuf, ircd::remote(data.client)),
-		string_view{data.user.user_id},
+		log, "poll %s '%s' missing handler :%s",
+		loghead(data),
 		name(),
 		e.what()
 	};
-
-	return false;
 }
 
 ircd::string_view

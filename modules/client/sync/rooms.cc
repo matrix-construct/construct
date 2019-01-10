@@ -18,10 +18,10 @@ namespace ircd::m::sync
 {
 	static void _rooms_polylog_room(data &, const m::room &);
 	static void _rooms_polylog(data &, const string_view &membership);
-	static bool rooms_polylog(data &);
+	static void rooms_polylog(data &);
 
 	static void _rooms_linear(data &, const string_view &membership);
-	static bool rooms_linear(data &);
+	static void rooms_linear(data &);
 
 	extern item rooms;
 }
@@ -34,7 +34,7 @@ ircd::m::sync::rooms
 	rooms_linear
 };
 
-bool
+void
 ircd::m::sync::rooms_linear(data &data)
 {
 	json::stack::object object{data.out};
@@ -42,7 +42,6 @@ ircd::m::sync::rooms_linear(data &data)
 	_rooms_linear(data, "join");
 	_rooms_linear(data, "leave");
 	_rooms_linear(data, "ban");
-	return true;
 }
 
 void
@@ -66,7 +65,7 @@ ircd::m::sync::_rooms_linear(data &data,
 	});
 }
 
-bool
+void
 ircd::m::sync::rooms_polylog(data &data)
 {
 	json::stack::object object{data.out};
@@ -74,7 +73,7 @@ ircd::m::sync::rooms_polylog(data &data)
 	_rooms_polylog(data, "join");
 	_rooms_polylog(data, "leave");
 	_rooms_polylog(data, "ban");
-	return true;
+	return;
 }
 
 void
@@ -100,13 +99,20 @@ ircd::m::sync::_rooms_polylog(data &data,
 		};
 
 		assert(head_idx); // room should exist
-		if(!head_idx || head_idx < data.since)
+		if(!head_idx || head_idx < data.range.first)
 			return;
 
 		// Generate individual stats for this room's sync
 		#ifdef RB_DEBUG
-		sync::stats stats{data.stats};
-		stats.timer = timer{};
+		sync::stats stats
+		{
+			data.stats?
+				*data.stats:
+				sync::stats{}
+		};
+
+		if(data.stats)
+			stats.timer = timer{};
 		#endif
 
 		_rooms_polylog_room(data, room);
@@ -118,7 +124,9 @@ ircd::m::sync::_rooms_polylog(data &data,
 			log, "polylog %s %s in %s",
 			loghead(data),
 			string_view{room.room_id},
-			ircd::pretty(tmbuf, stats.timer.at<milliseconds>(), true)
+			data.stats?
+				ircd::pretty(tmbuf, stats.timer.at<milliseconds>(), true):
+				string_view{"<no stats>"}
 		};
 		#endif
 	});

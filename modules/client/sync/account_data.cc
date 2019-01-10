@@ -17,8 +17,8 @@ IRCD_MODULE
 namespace ircd::m::sync
 {
 	static bool account_data_(data &, const m::event &, const m::event::idx &);
-	static bool account_data_polylog(data &);
-	static bool account_data_linear(data &);
+	static void account_data_polylog(data &);
+	static void account_data_linear(data &);
 
 	extern item account_data;
 }
@@ -31,13 +31,13 @@ ircd::m::sync::account_data
 	account_data_linear
 };
 
-bool
+void
 ircd::m::sync::account_data_linear(data &data)
 {
-	return true;
+
 }
 
-bool
+void
 ircd::m::sync::account_data_polylog(data &data)
 {
 	json::stack::object object
@@ -61,8 +61,6 @@ ircd::m::sync::account_data_polylog(data &data)
 		if(account_data_(data, event, index(event)))
 			data.commit();
 	});
-
-	return true;
 }
 
 bool
