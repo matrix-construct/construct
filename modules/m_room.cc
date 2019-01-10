@@ -21,8 +21,12 @@ count_since(const m::room &room,
             const m::event::idx &a,
             const m::event::idx &b)
 {
+	m::room::messages it
+	{
+		room
+	};
+
 	assert(a <= b);
-	m::room::messages it{room};
 	it.seek_idx(a);
 
 	if(!it && !exists(room))

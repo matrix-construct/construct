@@ -14,6 +14,8 @@
 namespace ircd::m
 {
 	// [GET] Count the events in the room between two indexes.
+	// Note the range here is unusual: The start index is exclusive, the ending
+	// index is inclusive. The start index must be valid and in the room.
 	size_t count_since(const room &, const m::event::idx &, const m::event::idx &);
 	size_t count_since(const room &, const m::event::id &, const m::event::id &);
 	size_t count_since(const m::event::idx &, const m::event::idx &);
