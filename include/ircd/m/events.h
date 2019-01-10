@@ -14,10 +14,8 @@
 namespace ircd::m::events
 {
 	struct range;
-	using id_closure_bool = std::function<bool (const event::idx &, const event::id &)>;
 	using closure_bool = std::function<bool (const event::idx &, const event &)>;
 
-	bool for_each(const range &, const id_closure_bool &);
 	bool for_each(const range &, const closure_bool &);
 	bool for_each(const range &, const event_filter &, const closure_bool &);
 }
@@ -29,7 +27,12 @@ namespace ircd::m::events
 struct ircd::m::events::range
 :std::pair<event::idx, event::idx>
 {
-	range(const event::idx &start, const event::idx &stop = -1)
+	const event::fetch::opts *fopts {nullptr};
+
+	range(const event::idx &start,
+	      const event::idx &stop = -1,
+	      const event::fetch::opts *const &fopts = nullptr)
 	:std::pair<event::idx, event::idx>{start, stop}
+	,fopts{fopts}
 	{}
 };

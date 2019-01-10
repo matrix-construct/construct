@@ -1638,81 +1638,38 @@ bool
 ircd::m::events::for_each(const range &range,
                           const closure_bool &closure)
 {
-	event::fetch event;
-	return for_each(range, id_closure_bool{[&event, &closure]
-	(const event::idx &event_idx, const event::id &event_id)
+	event::fetch event
 	{
-		if(!seek(event, event_idx, std::nothrow))
-			return true;
-
-		return closure(event_idx, event);
-	}});
-}
-
-bool
-ircd::m::events::for_each(const range &range,
-                          const id_closure_bool &closure)
-{
-	static const db::gopts opts
-	{
-		db::get::NO_CACHE
+		range.fopts
 	};
 
-	static constexpr auto column_idx
-	{
-		json::indexof<event, "event_id"_>()
-	};
+	// When the fopts dictate no columns to fetch there is nothing more to do.
+	if(event.row.empty())
+		return true;
 
-	auto &column
-	{
-		dbs::event_column.at(column_idx)
-	};
-
-	const auto &start{range.first};
-	const auto &stop{range.second};
 	const bool ascending
 	{
-		start < stop
+		range.first < range.second
 	};
 
-	auto it
+	auto start
 	{
-		column.lower_bound(byte_view<string_view>(start), opts)
+		ascending?
+			range.first:
+			std::min(range.first, vm::current_sequence)
 	};
 
-	// Branch to use a reverse iterator from the end
-	if(!ascending && !it)
+	const auto stop
 	{
-		for(auto it(column.rbegin(opts)); it; ++it)
-		{
-			const event::idx &event_idx
-			{
-				byte_view<event::idx>(it->first)
-			};
+		ascending?
+			std::min(range.second, vm::current_sequence + 1):
+			range.second
+	};
 
-			if(event_idx <= stop)
-				break;
-
-			if(!closure(event_idx, it->second))
+	for(; start != stop; ascending? ++start : --start)
+		if(seek(event, start, std::nothrow))
+			if(!closure(start, event))
 				return false;
-		}
-	}
-	else for(; it; ascending? ++it : --it)
-	{
-		const event::idx &event_idx
-		{
-			byte_view<event::idx>(it->first)
-		};
-
-		if(ascending && event_idx >= stop)
-			break;
-
-		if(!ascending && event_idx <= stop)
-			break;
-
-		if(!closure(event_idx, it->second))
-			return false;
-	}
 
 	return true;
 }
