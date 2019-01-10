@@ -748,11 +748,12 @@ bool
 ircd::m::room::messages::seek_idx(const event::idx &event_idx)
 try
 {
-	uint64_t depth;
-	m::get(event_idx, "depth", mutable_buffer
-	{
-		reinterpret_cast<char *>(&depth), sizeof(depth)
-	});
+	uint64_t depth(0);
+	if(event_idx)
+		m::get(event_idx, "depth", mutable_buffer
+		{
+			reinterpret_cast<char *>(&depth), sizeof(depth)
+		});
 
 	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
 	const auto &seek_key
@@ -765,7 +766,7 @@ try
 		return false;
 
 	// Check if this event_idx is actually in this room
-	if(event_idx != this->event_idx())
+	if(event_idx && event_idx != this->event_idx())
 		return false;
 
 	return true;
