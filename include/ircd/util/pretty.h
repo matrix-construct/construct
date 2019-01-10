@@ -62,6 +62,8 @@ ircd::util::pretty(const mutable_buffer &out,
                    const duration<rep, period> &d,
                    const uint &fmt)
 {
-	const auto &ns(duration_cast<nanoseconds>(d));
+	using nanoseconds_ld = duration<long double, nanoseconds::period>;
+
+	const auto &ns(duration_cast<nanoseconds_ld>(d));
 	return pretty_nanoseconds(out, ns.count(), fmt);
 }
