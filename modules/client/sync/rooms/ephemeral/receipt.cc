@@ -11,14 +11,14 @@
 ircd::mapi::header
 IRCD_MODULE
 {
-    "Client Sync :Room Receipts"
+    "Client Sync :Room Ephemeral :Receipts"
 };
 
 namespace ircd::m::sync
 {
 	static void _reformat_receipt(json::stack::object &, const m::event &);
 	static void _handle_receipt(data &, const m::event &);
-	static void _handle_user(data &, const m::user &);
+	static void _handle_user(data &, const m::user &, ctx::mutex &);
 	static void room_ephemeral_m_receipt_m_read_polylog(data &);
 	extern item room_ephemeral_m_receipt_m_read;
 }
@@ -39,16 +39,31 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 		room
 	};
 
-	members.for_each(data.membership, m::room::members::closure{[&data]
+	ctx::mutex mutex;
+	static const size_t fibers(32); //TODO: conf
+	std::array<string_view, fibers> q;
+	std::array<char[128], fibers> buf; //TODO: X
+	ctx::parallel<string_view> parallel
+	{
+		m::sync::pool, q, [&data, &mutex](const auto &user_id)
+		{
+			const m::user user{user_id};
+			_handle_user(data, user, mutex);
+		}
+	};
+
+	members.for_each(data.membership, m::room::members::closure{[&parallel, &q, &buf]
 	(const m::user::id &user_id)
 	{
-		_handle_user(data, user_id);
+		q[parallel.snd] = strlcpy(buf[parallel.snd], user_id);
+		parallel();
 	}});
 }
 
 void
 ircd::m::sync::_handle_user(data &data,
-                            const m::user &user)
+                            const m::user &user,
+                            ctx::mutex &mutex)
 {
 	static const m::event::fetch::opts fopts
 	{
@@ -64,11 +79,15 @@ ircd::m::sync::_handle_user(data &data,
 		return;
 
 	const m::room::id &room_id{*data.room};
-	user_room.get(std::nothrow, "ircd.read", room_id, [&data]
+	user_room.get(std::nothrow, "ircd.read", room_id, [&data, &mutex]
 	(const m::event &event)
 	{
 		if(apropos(data, event))
+		{
+			data.commit();
+			const std::lock_guard<decltype(mutex)> lock(mutex);
 			_handle_receipt(data, event);
+		}
 	});
 }
 
@@ -81,7 +100,6 @@ ircd::m::sync::_handle_receipt(data &data,
 		at<"content"_>(event)
 	};
 
-	data.commit();
 	json::stack::object object
 	{
 		data.out
