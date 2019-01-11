@@ -9213,7 +9213,9 @@ ircd::db::seek(row &r,
 		//TODO: because right now double-querying the cache is gross.
 		const bool submit
 		{
-			!test(opts, get::NO_PARALLEL) && !exists(cache(column), key)
+			r.size() > 1 &&
+			!test(opts, get::NO_PARALLEL) &&
+			!exists(cache(column), key)
 		};
 
 		#ifdef RB_DEBUG_DB_SEEK_ROW
