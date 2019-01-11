@@ -44,7 +44,7 @@ ircd::m::sync::rooms_ephemeral_polylog(data &data)
 		data.out
 	};
 
-	rooms_ephemeral_events(data);
+	rooms_ephemeral_events_polylog(data);
 }
 
 void
