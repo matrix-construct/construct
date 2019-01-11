@@ -9125,22 +9125,28 @@ ircd::db::write(const row::delta *const &begin,
 	write(&deltas.front(), &deltas.front() + deltas.size(), sopts);
 }
 
+// Developer can specifically use RB_DEBUG_DB_SEEK_ROW without RB_DEBUG_DB_SEEK
+// to only see a report of the row seek as a whole. If RB_DEBUG_DB_SEEK is
+// enabled that implies RB_DEBUG_DB_SEEK_ROW as well.
+//
+#if !defined(RB_DEBUG_DB_SEEK_ROW) && defined(RB_DEBUG_DB_SEEK_ROW)
+	#define RB_DEBUG_DB_SEEK_ROW
+#endif
+
 size_t
 ircd::db::seek(row &r,
                const string_view &key,
                const gopts &opts)
 {
-	#ifdef RB_DEBUG_DB_SEEK
-	const ircd::timer timer;
-	#endif
-
-	// This frame can't be interrupted because it may have requests
-	// pending in the request pool which must synchronize back here.
-	const ctx::uninterruptible ui;
-
+	// The following closure performs the seek() for a single cell in the row.
+	// It may be executed on another ircd::ctx if the data isn't cached and
+	// blocking IO is required. This frame can't be interrupted because it may
+	// have requests pending in the request pool which must synchronize back
+	// here.
 	size_t ret{0};
 	std::exception_ptr eptr;
 	ctx::latch latch{r.size()};
+	const ctx::uninterruptible ui;
 	const auto closure{[&opts, &latch, &ret, &key, &eptr]
 	(auto &cell) noexcept
 	{
@@ -9184,18 +9190,37 @@ ircd::db::seek(row &r,
 		latch.count_down();
 	}};
 
+	#ifdef RB_DEBUG_DB_SEEK_ROW
+	const ircd::timer timer;
+	size_t submits{0};
+	#endif
+
 	// Submit all the requests
 	for(auto &cell : r)
 	{
 		db::column &column(cell);
 		const auto reclosure{[&closure, &cell]
+		() noexcept
 		{
 			closure(cell);
 		}};
 
+		// Whether to submit the request to another ctx or execute it here.
+		// Explicit option to prevent submitting must not be set. If there
+		// is a chance the data is already in the cache, we can avoid the
+		// context switching and occupation of the request pool.
 		//TODO: should check a bloom filter on the cache for this branch
 		//TODO: because right now double-querying the cache is gross.
-		if(!test(opts, get::NO_PARALLEL) && !exists(cache(column), key))
+		const bool submit
+		{
+			!test(opts, get::NO_PARALLEL) && !exists(cache(column), key)
+		};
+
+		#ifdef RB_DEBUG_DB_SEEK_ROW
+		submits += submit;
+		#endif
+
+		if(submit)
 			request(reclosure);
 		else
 			reclosure();
@@ -9205,21 +9230,25 @@ ircd::db::seek(row &r,
 	latch.wait();
 	assert(ret <= r.size());
 
-	#ifdef RB_DEBUG_DB_SEEK
-	const column &c(r[0]);
-	const database &d(c);
-	log::debug
+	#ifdef RB_DEBUG_DB_SEEK_ROW
+	if(likely(!r.empty()))
 	{
-		log, "'%s' %lu:%lu '%s' row SEEK KEY %zu of %zu in %ld$us %s",
-		name(d),
-		sequence(d),
-		sequence(r[0]),
-		name(c),
-		ret,
-		r.size(),
-		timer.at<microseconds>().count(),
-		what(eptr)
-	};
+		const column &c(r[0]);
+		const database &d(c);
+		thread_local char tmbuf[32];
+		log::debug
+		{
+			log, "'%s' SEEK ROW seq:%lu:%-10lu cnt:%-2zu req:%-2zu ret:%-2zu in %s %s",
+			name(d),
+			sequence(d),
+			sequence(opts.snapshot),
+			r.size(),
+			submits,
+			ret,
+			pretty(tmbuf, timer.at<microseconds>(), true),
+			what(eptr)
+		};
+	}
 	#endif
 
 	if(eptr && !test(opts, get::NO_THROW))
