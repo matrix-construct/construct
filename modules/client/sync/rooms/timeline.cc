@@ -178,7 +178,28 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 
 	if(i > 0)
 		for(; it && i > -1; ++it, --i)
-			array.append(*it);
+		{
+			json::stack::object object
+			{
+				array
+			};
+
+			const m::event &event(*it);
+			object.append(event);
+
+			json::stack::object unsigned_
+			{
+				object, "unsigned"
+			};
+
+			json::stack::member
+			{
+				unsigned_, "age", json::value
+				{
+					long(vm::current_sequence - it.event_idx())
+				}
+			};
+		}
 
 	return event_id;
 }

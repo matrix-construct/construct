@@ -22,6 +22,11 @@ struct pagination_tokens
 	pagination_tokens(const resource::request &);
 };
 
+static void
+_append(json::stack::array &chunk,
+        const m::event &,
+        const m::event::idx &);
+
 conf::item<size_t>
 max_filter_miss
 {
@@ -117,11 +122,11 @@ get__messages(client &client,
 	else if(it)
 		++it;
 
-	size_t hit{0}, miss{0};
 	m::event::id::buf start, end;
 	{
-		json::stack::member chunk{ret, "chunk"};
-		json::stack::array messages{chunk};
+		json::stack::member member{ret, "chunk"};
+		json::stack::array chunk{member};
+		size_t hit{0}, miss{0};
 		for(; it; page.dir == 'b'? --it : ++it)
 		{
 			const m::event &event{*it};
@@ -138,7 +143,7 @@ get__messages(client &client,
 
 			if(empty(filter_json) || match(filter, event))
 			{
-				messages.append(event);
+				_append(chunk, event, it.event_idx());
 				++hit;
 			}
 			else ++miss;
@@ -166,6 +171,32 @@ get__messages(client &client,
 	};
 
 	return {};
+}
+
+void
+_append(json::stack::array &chunk,
+        const m::event &event,
+        const m::event::idx &event_idx)
+{
+	json::stack::object object
+	{
+		chunk
+	};
+
+	object.append(event);
+
+	json::stack::object unsigned_
+	{
+		object, "unsigned"
+	};
+
+	json::stack::member
+	{
+		unsigned_, "age", json::value
+		{
+			long(m::vm::current_sequence - event_idx)
+		}
+	};
 }
 
 // Client-Server 6.3.6 query parameters
