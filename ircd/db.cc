@@ -9226,7 +9226,7 @@ ircd::db::seek(row &r,
 		{
 			r.size() > 1 &&
 			!test(opts, get::NO_PARALLEL) &&
-			!exists(cache(column), key)
+			!db::cached(column, key, opts)
 		};
 
 		#ifdef RB_DEBUG_DB_SEEK_ROW
@@ -9986,6 +9986,7 @@ ircd::db::prefetch(column &column,
 	});
 }
 
+#if 0
 bool
 ircd::db::cached(column &column,
                  const string_view &key,
@@ -9993,8 +9994,8 @@ ircd::db::cached(column &column,
 {
 	return exists(cache(column), key);
 }
+#endif
 
-#if 0
 bool
 ircd::db::cached(column &column,
                  const string_view &key,
@@ -10004,6 +10005,14 @@ ircd::db::cached(column &column,
 	opts.read_tier = NON_BLOCKING;
 	opts.fill_cache = false;
 
+	database &d(column);
+	database::column &c(column);
+
+	// Theoretically this can be faster than a seek(), but it's not.
+	//thread_local std::string discard;
+	//if(!d.d->KeyMayExist(opts, c, slice(key), &discard, nullptr))
+	//	return false;
+
 	std::unique_ptr<rocksdb::Iterator> it;
 	if(!seek(c, key, opts, it))
 		return false;
@@ -10011,7 +10020,6 @@ ircd::db::cached(column &column,
 	assert(bool(it));
 	return valid_eq(*it, key);
 }
-#endif
 
 bool
 ircd::db::has(column &column,
@@ -11140,7 +11148,11 @@ bool
 ircd::db::exists(const rocksdb::Cache &cache_,
                  const string_view &key)
 {
-	auto &cache(const_cast<rocksdb::Cache &>(cache_));
+	auto &cache
+	{
+		const_cast<rocksdb::Cache &>(cache_)
+	};
+
 	const custom_ptr<rocksdb::Cache::Handle> handle
 	{
 		cache.Lookup(slice(key)), [&cache](auto *const &handle)
