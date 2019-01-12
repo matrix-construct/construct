@@ -91,7 +91,7 @@ ircd::m::sync::presence_polylog_events(data &data)
 	};
 
 	ctx::mutex mutex;
-	const auto closure{[&data, &array, &mutex]
+	const auto append_event{[&data, &array, &mutex]
 	(const json::object &event)
 	{
 		// Lock the json::stack for the append operations. This mutex will only be
@@ -124,27 +124,33 @@ ircd::m::sync::presence_polylog_events(data &data)
 		};
 	}};
 
-	//TODO: conf
-	static const size_t fibers(32);
+	// Setup for parallelization.
+	static const size_t fibers(64); //TODO: conf
+	using buffer = std::array<char[m::id::MAX_SIZE+1], fibers>;
+	const auto buf(std::make_unique<buffer>());
 	std::array<string_view, fibers> q;
-	std::array<char[128], fibers> buf; //TODO: X
 	ctx::parallel<string_view> parallel
 	{
-		m::sync::pool, q, [&data, &closure](const auto &user_id)
+		m::sync::pool, q, [&data, &append_event]
+		(const m::user::id &user_id)
 		{
-			const m::user user{user_id};
-			const m::user::room user_room{user};
-			//TODO: can't check event_idx cuz only closed presence content
-			if(head_idx(std::nothrow, user_room) >= data.range.first)
-				m::presence::get(std::nothrow, user, closure);
+			//TODO: check something better than user_room head?
+			if(head_idx(std::nothrow, user::room(user_id)) >= data.range.first)
+				m::presence::get(std::nothrow, user_id, append_event);
 		}
 	};
 
+	// Iterate all of the users visible to our user in joined rooms.
 	const m::user::mitsein mitsein{data.user};
 	mitsein.for_each("join", [&parallel, &q, &buf]
 	(const m::user &user)
 	{
-		q[parallel.snd] = strlcpy(buf[parallel.snd], user.user_id);
+		// Manual copy of the user_id string to the buffer and assignment
+		// of q at the next position. parallel.snd is the position in q
+		// which ctx::parallel wants us to store the next data at. The
+		// parallel() call doesn't return (blocks this context) until there's
+		// a next position available; propagating flow-control for the iter.
+		q[parallel.snd] = strlcpy(buf->at(parallel.snd), user.user_id);
 		parallel();
 	});
 }

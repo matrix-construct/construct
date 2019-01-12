@@ -39,10 +39,17 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 		room
 	};
 
-	ctx::mutex mutex;
 	static const size_t fibers(32); //TODO: conf
-	std::array<string_view, fibers> q;
-	std::array<char[128], fibers> buf; //TODO: X
+	using queue = std::array<string_view, fibers>;
+	using buffer = std::array<char[m::id::MAX_SIZE+1], fibers>;
+
+	queue q;
+	const auto buf
+	{
+		std::make_unique<buffer>()
+	};
+
+	ctx::mutex mutex;
 	ctx::parallel<string_view> parallel
 	{
 		m::sync::pool, q, [&data, &mutex](const auto &user_id)
@@ -55,7 +62,7 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 	members.for_each(data.membership, m::room::members::closure{[&parallel, &q, &buf]
 	(const m::user::id &user_id)
 	{
-		q[parallel.snd] = strlcpy(buf[parallel.snd], user_id);
+		q[parallel.snd] = strlcpy(buf->at(parallel.snd), user_id);
 		parallel();
 	}});
 }
