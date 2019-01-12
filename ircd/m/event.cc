@@ -247,13 +247,13 @@ bool
 ircd::m::cached(const event::idx &event_idx,
                 const event::fetch::opts &opts)
 {
-	const byte_view<string_view> key
+	const auto &select(opts.keys);
+	auto &columns(dbs::event_column);
+	const byte_view<string_view> &key
 	{
 		event_idx
 	};
 
-	const auto &select(opts.keys);
-	auto &columns(dbs::event_column);
 	return std::all_of(begin(select), end(select), [&opts, &key, &columns]
 	(const string_view &colname)
 	{
@@ -267,7 +267,13 @@ ircd::m::cached(const event::idx &event_idx,
 			columns.at(idx)
 		};
 
-		return db::cached(column, key, opts.gopts);
+		if(db::cached(column, key, opts.gopts))
+			return true;
+
+		if(!db::has(column, key, opts.gopts))
+			return true;
+
+		return false;
 	});
 }
 
