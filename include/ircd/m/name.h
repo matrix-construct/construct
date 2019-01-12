@@ -115,6 +115,7 @@ namespace ircd::m::name
 	constexpr const char *const username {"username"};
 	constexpr const char *const bind_email {"bind_email"};
 	constexpr const char *const auth {"auth"};
+	constexpr const char *const inhibit_login {"inhibit_login"};
 
 	constexpr const char *const visibility {"visibility"};
 	constexpr const char *const room_alias_name {"room_alias_name"};

@@ -121,9 +121,14 @@ try
 			"User registration for this server is disabled."
 		};
 
+	const bool &inhibit_login
+	{
+		json::get<"inhibit_login"_>(request)
+	};
+
 	const std::string response
 	{
-		register_user(request, &client, true)
+		register_user(request, &client, !inhibit_login)
 	};
 
 	// Send response to user
@@ -237,11 +242,13 @@ register_user(const m::registar &request,
 		unquote(json::get<"device_id"_>(request))
 	};
 
-	const auto device_id
+	const m::id::device::buf device_id
 	{
 		requested_device_id?
 			m::id::device::buf{requested_device_id, my_host()}:
-			m::id::device::buf{m::id::generate, my_host()}
+		gen_token?
+			m::id::device::buf{m::id::generate, my_host()}:
+			m::id::device::buf{}
 	};
 
 	// 3.3.1 If true, the server binds the email used for authentication to the
