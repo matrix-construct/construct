@@ -50,6 +50,7 @@ namespace ircd::json
 }
 
 #include "util.h"
+#include "path.h"
 #include "array.h"
 #include "object.h"
 #include "vector.h"

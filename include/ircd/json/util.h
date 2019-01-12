@@ -17,10 +17,6 @@ namespace ircd::json
 	constexpr name_hash_t name_hash(const string_view name);
 	constexpr name_hash_t operator ""_(const char *const name, const size_t len);
 
-	/// Higher order type beyond a string to cleanly delimit multiple keys.
-	using path = std::initializer_list<string_view>;
-	std::ostream &operator<<(std::ostream &, const path &);
-
 	extern const string_view literal_null;
 	extern const string_view literal_true;
 	extern const string_view literal_false;
@@ -41,27 +37,6 @@ namespace ircd::json
 
 	// (Internal) validates output
 	void valid_output(const string_view &, const size_t &expected);
-}
-
-namespace ircd
-{
-	using json::operator<<;
-}
-
-inline std::ostream &
-ircd::json::operator<<(std::ostream &s, const path &p)
-{
-	auto it(std::begin(p));
-	if(it != std::end(p))
-	{
-		s << *it;
-		++it;
-	}
-
-	for(; it != std::end(p); ++it)
-		s << '.' << *it;
-
-	return s;
 }
 
 constexpr ircd::json::name_hash_t
