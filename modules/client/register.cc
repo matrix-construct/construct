@@ -16,8 +16,8 @@ IRCD_MODULE
 	"Client 3.4.1 :Register"
 };
 
-static void validate_user_id(const m::id::user &user_id);
 static void validate_password(const string_view &password);
+extern "C" void validate_user_id(const m::id::user &user_id);
 
 extern "C" std::string
 register_user(const m::registar &,
