@@ -3528,12 +3528,16 @@ try
 	(const string_view &prop)
 	{
 		const auto name(lstrip(prop, "rocksdb."));
-		const auto val
+		size_t val(0); try
 		{
-			c?
+			val = c?
 				db::property<db::prop_int>(c, prop):
-				db::property<db::prop_int>(d, prop)
-		};
+				db::property<db::prop_int>(d, prop);
+		}
+		catch(const std::exception &e)
+		{
+			log::derror{"%s", e.what()};
+		}
 
 		if(!!val) closeout(name, [&out, &val]
 		{
@@ -3545,12 +3549,16 @@ try
 	(const string_view &prop)
 	{
 		const auto name(lstrip(prop, "rocksdb."));
-		const auto val
+		size_t val(0); try
 		{
-			c?
+			val = c?
 				db::property<db::prop_int>(c, prop):
-				db::property<db::prop_int>(d, prop)
-		};
+				db::property<db::prop_int>(d, prop);
+		}
+		catch(const std::exception &e)
+		{
+			log::derror{"%s", e.what()};
+		}
 
 		if(!!val) closeout(name, [&out, &val]
 		{
