@@ -1795,6 +1795,14 @@ ircd::db::database::column::column(database &d,
 	if(cache_size != 0)
 		table_opts.block_cache = std::make_shared<database::cache>(this->d, this->stats, this->name, cache_size);
 
+	// RocksDB will create an 8_MiB block_cache if we don't create our own.
+	// To honor the user's desire for a zero-size cache, this must be set.
+	if(!table_opts.block_cache)
+	{
+		table_opts.no_block_cache = true;
+		table_opts.cache_index_and_filter_blocks = false; // MBZ or error w/o block_cache
+	}
+
 	// Setup the cache for compressed assets.
 	const auto &cache_size_comp(this->descriptor->cache_size_comp);
 	if(cache_size_comp != 0)
