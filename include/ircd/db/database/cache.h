@@ -34,6 +34,7 @@ final
 	static const bool DEFAULT_STRICT;
 
 	database *d;
+	std::string name;
 	std::shared_ptr<struct database::stats> stats;
 	std::shared_ptr<rocksdb::Cache> c;
 
@@ -60,6 +61,7 @@ final
 
 	cache(database *const &,
 	      std::shared_ptr<struct database::stats>,
+	      std::string name,
 	      const ssize_t &initial_capacity = -1);
 
 	~cache() noexcept override;

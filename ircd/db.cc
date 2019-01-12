@@ -1034,7 +1034,7 @@ try
 }
 ,row_cache
 {
-	std::make_shared<database::cache>(this, this->stats, 16_MiB)
+	std::make_shared<database::cache>(this, this->stats, this->name, 16_MiB)
 }
 ,descriptors
 {
@@ -1793,12 +1793,12 @@ ircd::db::database::column::column(database &d,
 	// Setup the cache for assets.
 	const auto &cache_size(this->descriptor->cache_size);
 	if(cache_size != 0)
-		table_opts.block_cache = std::make_shared<database::cache>(this->d, this->stats, cache_size);
+		table_opts.block_cache = std::make_shared<database::cache>(this->d, this->stats, this->name, cache_size);
 
 	// Setup the cache for compressed assets.
 	const auto &cache_size_comp(this->descriptor->cache_size_comp);
 	if(cache_size_comp != 0)
-		table_opts.block_cache_compressed = std::make_shared<database::cache>(this->d, this->stats, cache_size_comp);
+		table_opts.block_cache_compressed = std::make_shared<database::cache>(this->d, this->stats, this->name, cache_size_comp);
 
 	// Setup the bloom filter.
 	const auto &bloom_bits(this->descriptor->bloom_bits);
@@ -2886,8 +2886,10 @@ ircd::db::database::cache::DEFAULT_HI_PRIO
 
 ircd::db::database::cache::cache(database *const &d,
                                  std::shared_ptr<struct database::stats> stats,
+                                 std::string name,
                                  const ssize_t &initial_capacity)
 :d{d}
+,name{std::move(name)}
 ,stats{std::move(stats)}
 ,c
 {
@@ -2912,8 +2914,9 @@ const char *
 ircd::db::database::cache::Name()
 const noexcept
 {
-	assert(bool(c));
-	return c->Name();
+	return !empty(name)?
+		name.c_str():
+		c->Name();
 }
 
 rocksdb::Status
