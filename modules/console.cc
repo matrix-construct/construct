@@ -7272,8 +7272,8 @@ console_cmd__room__state__cache(opt &out, const string_view &line)
 		const byte_view<string_view> &key(event_idx);
 		for(size_t i(0); i < m::dbs::event_column.size(); ++i)
 		{
-			const auto &column(m::dbs::event_column[i]);
-			res[i] += db::exists(db::cache(column), key);
+			auto &column(m::dbs::event_column[i]);
+			res[i] += db::cached(column, key);
 		}
 
 		++total;
