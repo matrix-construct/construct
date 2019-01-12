@@ -307,6 +307,24 @@ ircd::http::request::head::head(parse::capstan &pc,
 {
 }
 
+ircd::http::request::head::operator
+string_view()
+const
+{
+	const string_view request_line
+	{
+		static_cast<const line::request &>(*this)
+	};
+
+	if(request_line.empty() || headers.empty())
+		return request_line;
+
+	return string_view
+	{
+		request_line.begin(), headers.end()
+	};
+}
+
 ircd::http::response::response(window_buffer &out,
                                const code &code,
                                const size_t &content_length,
@@ -637,6 +655,21 @@ try
 catch(const qi::expectation_failure<const char *> &e)
 {
 	throw_error(e);
+}
+
+ircd::http::line::request::operator
+string_view()
+const
+{
+	if(method.empty())
+		return string_view{};
+
+	assert(!version.empty());
+	assert(method.begin() < version.end());
+	return string_view
+	{
+		method.begin(), version.end()
+	};
 }
 
 ircd::http::line::line(parse::capstan &pc)

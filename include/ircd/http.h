@@ -88,6 +88,8 @@ struct ircd::http::line::request
 	string_view fragment;
 	string_view version;
 
+	operator string_view() const;      // full view of line
+
 	request(const line &);
 	request() = default;
 };
@@ -225,6 +227,9 @@ struct ircd::http::request::head
 
 	string_view uri;       // full view of (path, query, fragmet)
 	string_view headers;   // full view of all headers
+
+	// full view of all head (request line and headers)
+	operator string_view() const;
 
 	head(parse::capstan &pc, const headers::closure &c = {});
 	head() = default;
