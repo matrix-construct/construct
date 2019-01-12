@@ -16,8 +16,14 @@ IRCD_MODULE
 	"Client 3.4.1 :Register"
 };
 
-static void validate_password(const string_view &password);
-extern "C" void validate_user_id(const m::id::user &user_id);
+extern const std::string
+flows;
+
+static void
+validate_password(const string_view &password);
+
+extern "C" void
+validate_user_id(const m::id::user &user_id);
 
 extern "C" std::string
 register_user(const m::registar &,
@@ -66,6 +72,17 @@ post__register(client &client,
 		{
 			http::UNAUTHORIZED, "M_REGISTRATION_DISABLED",
 			"Registration for this server is disabled."
+		};
+
+	const json::object &auth
+	{
+		json::get<"auth"_>(request)
+	};
+
+	if(empty(auth))
+		return resource::response
+		{
+			client, http::UNAUTHORIZED, json::object{flows}
 		};
 
 	const auto kind
@@ -328,3 +345,17 @@ validate_password(const string_view &password)
 			"The desired password is too long"
 		};
 }
+
+const std::string
+flows
+{R"({
+	"flows":
+	[
+		{
+			"stages":
+			[
+				"m.login.dummy", "m.login.password"
+			]
+		}
+	]
+})"};
