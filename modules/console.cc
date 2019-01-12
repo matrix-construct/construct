@@ -5592,6 +5592,70 @@ console_cmd__event__bad(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__event__cached(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id|event_idx",
+	}};
+
+	const string_view id
+	{
+		param.at(0)
+	};
+
+	static const m::event::fetch::opts opts
+	{
+		m::event::keys::exclude {}
+	};
+
+	if(valid(m::id::EVENT, id))
+	{
+		const m::event::id event_id
+		{
+			id
+		};
+
+		const bool cached
+		{
+			m::cached(event_id, opts)
+		};
+
+		out << event_id << " is"
+		    << (cached? " " : " not ")
+		    << "cached"
+		    << std::endl;
+
+		return true;
+	}
+	else if(try_lex_cast<ulong>(id))
+	{
+		const m::event::idx event_idx
+		{
+			lex_cast<ulong>(id)
+		};
+
+		const bool cached
+		{
+			m::cached(event_idx, opts)
+		};
+
+		out << "idx[" << event_idx << "] is"
+		    << (cached? " " : " not ")
+		    << "cached"
+		    << std::endl;
+
+		return true;
+	}
+	else throw m::BAD_REQUEST
+	{
+		"Not a valid event_id or `event_idx"
+	};
+
+	return true;
+}
+
+bool
 console_cmd__event__erase(opt &out, const string_view &line)
 {
 	const m::event::id event_id
