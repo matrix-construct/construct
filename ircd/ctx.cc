@@ -2351,6 +2351,116 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// dock.h
+//
+
+/// Wake up the next context waiting on the dock
+///
+/// Unlike notify_one(), the next context in the queue is repositioned in the
+/// back before being woken up for fairness.
+void
+ircd::ctx::dock::notify()
+noexcept
+{
+	ctx *c;
+	if(!(c = q.pop_front()))
+		return;
+
+	q.push_back(c);
+	notify(*c);
+}
+
+/// Wake up the next context waiting on the dock
+void
+ircd::ctx::dock::notify_one()
+noexcept
+{
+	if(!q.empty())
+		notify(*q.front());
+}
+
+/// Wake up all contexts waiting on the dock.
+///
+/// We post all notifications without requesting direct context
+/// switches. This ensures everyone gets notified in a single
+/// transaction without any interleaving during this process.
+void
+ircd::ctx::dock::notify_all()
+noexcept
+{
+	q.for_each([this](ctx &c)
+	{
+		notify(c);
+	});
+}
+
+void
+ircd::ctx::dock::wait()
+{
+	assert(current);
+	const unwind::exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
+	const unwind remove{[this]
+	{
+		q.remove(current);
+	}};
+
+	q.push_back(current);
+	ircd::ctx::wait();
+}
+
+void
+ircd::ctx::dock::wait(const predicate &pred)
+{
+	if(pred())
+		return;
+
+	assert(current);
+	const unwind::exceptional renotify{[this]
+	{
+		notify_one();
+	}};
+
+	const unwind remove{[this]
+	{
+		q.remove(current);
+	}};
+
+	q.push_back(current); do
+	{
+		ircd::ctx::wait();
+	}
+	while(!pred());
+}
+
+void
+ircd::ctx::dock::notify(ctx &ctx)
+noexcept
+{
+	ircd::ctx::notify(ctx);
+}
+
+/// The number of contexts waiting in the queue.
+size_t
+ircd::ctx::dock::size()
+const
+{
+	return q.size();
+}
+
+/// The number of contexts waiting in the queue.
+bool
+ircd::ctx::dock::empty()
+const
+{
+	return q.empty();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ctx_list.h
 //
 

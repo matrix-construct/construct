@@ -21,6 +21,8 @@ namespace ircd::ctx
 ///
 class ircd::ctx::dock
 {
+	using predicate = std::function<bool ()>;
+
 	list q;
 
 	void notify(ctx &) noexcept;
@@ -29,102 +31,19 @@ class ircd::ctx::dock
 	bool empty() const;
 	size_t size() const;
 
-	template<class time_point, class predicate> bool wait_until(time_point&& tp, predicate&& pred);
-	template<class time_point> bool wait_until(time_point&& tp);
+	template<class time_point> bool wait_until(time_point&&, const predicate &);
+	template<class time_point> bool wait_until(time_point&&);
 
-	template<class duration, class predicate> bool wait_for(const duration &dur, predicate&& pred);
-	template<class duration> bool wait_for(const duration &dur);
+	template<class duration> bool wait_for(const duration &, const predicate &);
+	template<class duration> bool wait_for(const duration &);
 
-	template<class predicate> void wait(predicate&& pred);
+	void wait(const predicate &);
 	void wait();
 
 	void notify_all() noexcept;
 	void notify_one() noexcept;
 	void notify() noexcept;
 };
-
-/// Wake up the next context waiting on the dock
-///
-/// Unlike notify_one(), the next context in the queue is repositioned in the
-/// back before being woken up for fairness.
-inline void
-ircd::ctx::dock::notify()
-noexcept
-{
-	ctx *c;
-	if(!(c = q.pop_front()))
-		return;
-
-	q.push_back(c);
-	notify(*c);
-}
-
-/// Wake up the next context waiting on the dock
-inline void
-ircd::ctx::dock::notify_one()
-noexcept
-{
-	if(!q.empty())
-		notify(*q.front());
-}
-
-/// Wake up all contexts waiting on the dock.
-///
-/// We post all notifications without requesting direct context
-/// switches. This ensures everyone gets notified in a single
-/// transaction without any interleaving during this process.
-inline void
-ircd::ctx::dock::notify_all()
-noexcept
-{
-	q.for_each([this](ctx &c)
-	{
-		notify(c);
-	});
-}
-
-inline void
-ircd::ctx::dock::wait()
-{
-	assert(current);
-	const unwind::exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current);
-	ircd::ctx::wait();
-}
-
-template<class predicate>
-void
-ircd::ctx::dock::wait(predicate&& pred)
-{
-	if(pred())
-		return;
-
-	assert(current);
-	const unwind::exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
-	const unwind remove{[this]
-	{
-		q.remove(current);
-	}};
-
-	q.push_back(current); do
-	{
-		ircd::ctx::wait();
-	}
-	while(!pred());
-}
 
 /// Returns true if notified; false if timed out
 template<class duration>
@@ -149,11 +68,10 @@ ircd::ctx::dock::wait_for(const duration &dur)
 }
 
 /// Returns true if predicate passed; false if timed out
-template<class duration,
-         class predicate>
+template<class duration>
 bool
 ircd::ctx::dock::wait_for(const duration &dur,
-                          predicate&& pred)
+                          const predicate &pred)
 {
 	static const duration zero(0);
 
@@ -208,11 +126,10 @@ ircd::ctx::dock::wait_until(time_point&& tp)
 }
 
 /// Returns true if predicate passed; false if timed out
-template<class time_point,
-         class predicate>
+template<class time_point>
 bool
 ircd::ctx::dock::wait_until(time_point&& tp,
-                            predicate&& pred)
+                            const predicate &pred)
 {
 	if(pred())
 		return true;
@@ -242,27 +159,4 @@ ircd::ctx::dock::wait_until(time_point&& tp,
 			return false;
 	}
 	while(1);
-}
-
-inline void
-ircd::ctx::dock::notify(ctx &ctx)
-noexcept
-{
-	ircd::ctx::notify(ctx);
-}
-
-/// The number of contexts waiting in the queue.
-inline size_t
-ircd::ctx::dock::size()
-const
-{
-	return q.size();
-}
-
-/// The number of contexts waiting in the queue.
-inline bool
-ircd::ctx::dock::empty()
-const
-{
-	return q.empty();
 }
