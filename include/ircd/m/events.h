@@ -23,6 +23,7 @@ namespace ircd::m::events
 /// Range to start (inclusive) and stop (exclusive). If start is greater than
 /// stop a reverse iteration will occur. -1 (or unsigned max value) can be used
 /// to start or stop at the end. 0 can be used to start or stop at the beginning.
+/// (event::idx of 0 is a sentinel)
 ///
 struct ircd::m::events::range
 :std::pair<event::idx, event::idx>
