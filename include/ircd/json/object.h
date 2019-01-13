@@ -52,9 +52,7 @@ namespace ircd::json
 /// Recursive traversal cannot be achieved via a single key string value; so
 /// any string_view argument for a key will not be recursive. In other words,
 /// due to the fact that a JS identifier can have almost any character we have
-/// to use a different *type* like a vector of strings; in our common case we
-/// use an initializer_list typedef'ed as `path` and those overloads will be
-/// recursive.
+/// to use a different *type* like a vector of strings.
 ///
 struct ircd::json::object
 :string_view
@@ -85,21 +83,16 @@ struct ircd::json::object
 	size_t count() const;
 	size_t size() const; // warns if used; use count()
 	bool has(const string_view &key) const;
-	bool has(const path &) const;
 
 	// returns value or default
 	template<class T> T get(const string_view &key, const T &def = T{}) const;
-	template<class T> T get(const path &, const T &def = T{}) const;
 	string_view get(const string_view &key, const string_view &def = {}) const;
-	string_view get(const path &, const string_view &def = {}) const;
 
 	// returns value or throws not_found
 	template<class T = string_view> T at(const string_view &key) const;
-	template<class T = string_view> T at(const path &) const;
 
 	// returns value or empty
 	string_view operator[](const string_view &key) const;
-	string_view operator[](const path &) const;
 
 	// constructor. Note that you are able to construct from invalid JSON. The
 	// parser is not invoked until other operations and that's when it errors.
@@ -179,50 +172,11 @@ struct ircd::json::object::const_iterator
 };
 
 inline ircd::string_view
-ircd::json::object::operator[](const path &path)
-const
-{
-	return get(path);
-}
-
-inline ircd::string_view
 ircd::json::object::operator[](const string_view &key)
 const
 {
 	const auto it(find(key));
 	return it != end()? it->second : string_view{};
-}
-
-template<class T>
-T
-ircd::json::object::at(const path &path)
-const try
-{
-	object object(*this);
-	const auto it(std::find_if(std::begin(path), std::end(path), [&object]
-	(const string_view &key)
-	{
-		const auto it(object.find(key));
-		if(it == std::end(object))
-			throw not_found
-			{
-				"'%s'", key
-			};
-
-		object = it->second;
-		return false;
-	}));
-
-	return lex_cast<T>(object);
-}
-catch(const bad_lex_cast &e)
-{
-	throw type_error
-	{
-		"'%s' must cast to type %s",
-		ircd::string(path),
-		typeid(T).name()
-	};
 }
 
 template<ircd::json::name_hash_t key,
@@ -275,44 +229,11 @@ catch(const bad_lex_cast &e)
 }
 
 inline ircd::string_view
-ircd::json::object::get(const path &path,
-                        const string_view &def)
-const
-{
-	return get<string_view>(path, def);
-}
-
-inline ircd::string_view
 ircd::json::object::get(const string_view &key,
                         const string_view &def)
 const
 {
 	return get<string_view>(key, def);
-}
-
-template<class T>
-T
-ircd::json::object::get(const path &path,
-                        const T &def)
-const try
-{
-	object object(*this);
-	const auto it(std::find_if(std::begin(path), std::end(path), [&object]
-	(const string_view &key)
-	{
-		const auto it(object.find(key));
-		if(it == std::end(object))
-			return true;
-
-		object = it->second;
-		return false;
-	}));
-
-	return it == std::end(path)? lex_cast<T>(object) : def;
-}
-catch(const bad_lex_cast &e)
-{
-	return def;
 }
 
 template<ircd::json::name_hash_t key,
@@ -387,26 +308,6 @@ const
 	const string_view &sv{*this};
 	assert(sv.size() > 2 || (sv.empty() || sv == empty_object));
 	return sv.size() <= 2;
-}
-
-inline bool
-ircd::json::object::has(const path &path)
-const
-{
-	object object(*this);
-	const auto it(std::find_if(std::begin(path), std::end(path), [&object]
-	(const string_view &key)
-	{
-		const auto val(object[key]);
-		if(val.empty())
-			return true;
-
-		object = val;
-		return false;
-	}));
-
-	// && path.size() ensures false for empty path.
-	return it == std::end(path) && path.size();
 }
 
 inline bool

@@ -1272,9 +1272,14 @@ ircd::m::v1::fetch_head(const id::room &room_id,
 		request.in.content
 	};
 
+	const json::object event
+	{
+		proto.at("event")
+	};
+
 	const json::array prev_events
 	{
-		proto.at({"event", "prev_events"})
+		event.at("prev_events")
 	};
 
 	const json::array prev_event

@@ -123,9 +123,19 @@ init_my_tls_crt()
 	const json::object config{};
 	if(!fs::exists(cert_file))
 	{
+		const json::object &certificate
+		{
+			config.get("certificate")
+		};
+
+		const json::object &self_
+		{
+			certificate.get(m::self::origin)
+		};
+
 		std::string subject
 		{
-			config.get({"certificate", m::self::origin, "subject"})
+			self_.get("subject")
 		};
 
 		if(!subject)
