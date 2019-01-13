@@ -51,6 +51,11 @@ struct ircd::fs::aio::system
 	/// Handler to the io context we submit requests to the system with
 	aio_context_t idp {0};
 
+	size_t max_events() const;
+	size_t max_submit() const;
+	size_t request_count() const; // qcount + in_flight
+	size_t request_avail() const; // max_events - request_count()
+
 	// Callback stack invoked when the sigfd is notified of completed events.
 	void handle_event(const io_event &) noexcept;
 	void handle_events() noexcept;
@@ -68,7 +73,9 @@ struct ircd::fs::aio::system
 	bool wait();
 	bool interrupt();
 
-	system();
+	system(const size_t &max_events,
+	       const size_t &max_submit);
+
 	~system() noexcept;
 };
 
