@@ -98,7 +98,7 @@ noexcept
 [[noreturn]]
 ircd::fpe::errors_throw::errors_throw()
 {
-	throw assertive
+	throw panic
 	{
 		"Not implemented in this environment."
 	};

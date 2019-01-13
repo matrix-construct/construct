@@ -112,7 +112,7 @@ noexcept
 	};
 
 	if(!std::all_of(begin(tests), end(tests), [](const bool &b) { return b; }))
-		throw ircd::assertive
+		throw ircd::panic
 		{
 			"Seeded ed25519 test failed"
 		};

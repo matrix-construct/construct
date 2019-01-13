@@ -444,7 +444,7 @@ ircd::m::state::_insert(int8_t &height,
 	// Recursion metrics
 	const unwind down{[&height]{ --height; }};
 	if(unlikely(++height >= MAX_HEIGHT))
-		throw assertive{"recursion limit exceeded"};
+		throw panic{"recursion limit exceeded"};
 
 	// This function assumes that any node argument is a previously "existing"
 	// node which means it contains at least one key/value.
@@ -734,7 +734,7 @@ ircd::m::state::_remove(int8_t &height,
 {
 	const unwind down{[&height]{ --height; }};
 	if(unlikely(++height >= MAX_HEIGHT))
-		throw assertive{"recursion limit exceeded"};
+		throw panic{"recursion limit exceeded"};
 
 	node::rep rep{node};
 	const auto pos{node.find(key)};

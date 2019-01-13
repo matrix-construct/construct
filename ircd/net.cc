@@ -1244,7 +1244,7 @@ try
 }
 catch(const std::exception &e)
 {
-	throw assertive
+	throw panic
 	{
 		"%s: %s", string(logheadbuf, *this), e.what()
 	};
@@ -1948,7 +1948,7 @@ noexcept try
 		net::dock.notify_all();
 
 	if(unlikely(RB_DEBUG_LEVEL && opened(*this)))
-		throw assertive
+		throw panic
 		{
 			"Failed to ensure socket(%p) is disconnected from %s before dtor.",
 			this,
@@ -2090,7 +2090,7 @@ catch(const boost::system::system_error &e)
 }
 catch(const std::exception &e)
 {
-	throw assertive
+	throw panic
 	{
 		"socket:%lu disconnect: type: %d: %s",
 		this->id,
@@ -2380,7 +2380,7 @@ noexcept try
 		}
 
 		// All other errors are unexpected, logged and ignored here.
-		default: throw assertive
+		default: throw panic
 		{
 			"socket(%p): unexpected: %s\n", (const void *)this, string(ec)
 		};

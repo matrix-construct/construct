@@ -218,7 +218,7 @@ ircd::rfc3986::encode(const mutable_buffer &out,
 	{
 		assert(type(member.first) == json::STRING);
 		if(unlikely(!member.second.serial && type(member.second) != json::STRING))
-			throw assertive
+			throw panic
 			{
 				"Cannot encode non-serial json::member type '%s'",
 				reflect(type(member.second))

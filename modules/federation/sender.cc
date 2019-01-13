@@ -306,7 +306,7 @@ try
 }
 catch(const std::exception &e)
 {
-	ircd::assertion{e};
+	ircd::panicking(e);
 }
 
 bool

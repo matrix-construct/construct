@@ -23,7 +23,6 @@ namespace boost::system
 namespace ircd
 {
 	struct terminate;
-	struct assertion;
 	struct exception; // Root exception
 
 	// util
@@ -52,8 +51,9 @@ namespace ircd
 	std::string string(const boost::system::error_code &);
 	std::string string(const boost::system::system_error &);
 
-	// Can be used to clobber the std::terminate_handler
-	void aborting() noexcept;
+	void panicking(const std::exception &) noexcept;
+	void panicking(const std::exception_ptr &) noexcept;
+	void _aborting_() noexcept;
 }
 
 /// The root exception type.
@@ -104,18 +104,6 @@ struct ircd::exception
 	{
 		buf[0] = '\0';
 	}
-};
-
-/// Terminates in debug mode; throws in release mode; always logs critical.
-/// Not a replacement for a standard assert() macro. Used specifically when
-/// the assert should also be hit in release-mode when NDEBUG is set. This
-/// is basically the project's soft assert for now.
-struct ircd::assertion
-{
-	[[noreturn]] assertion(const std::exception &) noexcept(RB_DEBUG_LEVEL);
-	[[noreturn]] assertion(std::exception_ptr) noexcept(RB_DEBUG_LEVEL);
-	[[noreturn]] assertion(const string_view &) noexcept(RB_DEBUG_LEVEL);
-	[[noreturn]] assertion() noexcept(RB_DEBUG_LEVEL);
 };
 
 /// Always prefer ircd::terminate() to std::terminate() for all project code.
@@ -192,26 +180,26 @@ struct name                                                                   \
     }                                                                         \
 };
 
-/// Creates an assertion-type exception.
+/// Creates a panic-type exception.
 ///
-/// Throwable exception which will terminate on construction in debug mode
-/// but throw normally in release mode. Ideally this should never be thrown
-/// in release mode because the termination in debug means a test can never
-/// pass and the triggering callsite should be eliminated. Nevertheless it
-/// throws normally in release mode.
-#define IRCD_ASSERTION(parent, name)                                          \
+/// Throwable which will terminate on construction in debug mode but throw
+/// normally in release mode. Ideally this should never be thrown in release
+/// mode because the termination in debug means a test can never pass and
+/// the triggering callsite should be eliminated. Nevertheless it throws
+/// normally in release mode for recovering at an exception handler.
+#define IRCD_PANICKING(parent, name)                                          \
 struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    name(const string_view &fmt = " ", args&&... ap) noexcept(RB_DEBUG_LEVEL) \
+    name(const string_view &fmt = " ", args&&... ap) noexcept                 \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(#name, fmt, ircd::va_rtti{std::forward<args>(ap)...});       \
-        ircd::assertion(*this);                                               \
+        ircd::panicking(*this);                                               \
     }                                                                         \
                                                                               \
-    name(generate_skip_t) noexcept(RB_DEBUG_LEVEL)                            \
+    name(generate_skip_t)                                                     \
     :parent{generate_skip}                                                    \
     {                                                                         \
     }                                                                         \
@@ -228,9 +216,9 @@ namespace ircd
 	IRCD_EXCEPTION(exception, error)             // throw ircd::error("something bad")
 	IRCD_EXCEPTION(error, user_error)            // throw ircd::user_error("something silly")
 
-	// Assertion errors; see IRCD_ASSERTION docs.
-	IRCD_ASSERTION(exception, assertive)
-	IRCD_ASSERTION(assertive, not_implemented)
+	// panic errors; see IRCD_PANICKING docs.
+	IRCD_PANICKING(exception, panic)
+	IRCD_PANICKING(panic, not_implemented)
 }
 
 template<class... args>

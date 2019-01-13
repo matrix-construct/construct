@@ -98,9 +98,11 @@ struct ircd::log::log
   public:
 	template<class... args> void operator()(const level &, const string_view &fmt, args&&...);
 
-	#if RB_LOG_LEVEL >= 0
+	#if RB_LOG_LEVEL >= 0 && !defined(NDEBUG)
+	template<class... args> [[noreturn]] void critical(const string_view &fmt, args&&...);
+	#elif RB_LOG_LEVEL >= 0
 	template<class... args> void critical(const string_view &fmt, args&&...);
-	#else // Required for DCE in gcc 6.3.0 20170519
+	#else
 	void critical(const string_view &fmt, ...);
 	#endif
 
@@ -389,7 +391,24 @@ struct ircd::log::error
 };
 #endif
 
-#if RB_LOG_LEVEL >= 0
+#if RB_LOG_LEVEL >= 0 && !defined(NDEBUG)
+struct ircd::log::critical
+{
+	template<class... args> [[noreturn]]
+	critical(const log &log, const string_view &fmt, args&&... a)
+	{
+		vlog(log, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+		ircd::terminate();
+	}
+
+	template<class... args> [[noreturn]]
+	critical(const string_view &fmt, args&&... a)
+	{
+		vlog(general, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+		ircd::terminate();
+	}
+};
+#elif RB_LOG_LEVEL >= 0
 struct ircd::log::critical
 {
 	template<class... args>
@@ -545,6 +564,10 @@ ircd::log::log::critical(const string_view &fmt,
                          args&&... a)
 {
 	operator()(level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+
+	#ifndef NDEBUG
+	ircd::terminate();;
+	#endif
 }
 #else
 inline void

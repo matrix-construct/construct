@@ -2501,7 +2501,7 @@ rocksdb::Status
 ircd::db::database::stats::passthru::Reset()
 noexcept
 {
-	throw assertive {"Unavailable for passthru"};
+	throw panic {"Unavailable for passthru"};
 }
 
 void
@@ -2538,7 +2538,7 @@ uint64_t
 ircd::db::database::stats::passthru::getTickerCount(const uint32_t tickerType)
 const noexcept
 {
-	throw assertive {"Unavailable for passthru"};
+	throw panic {"Unavailable for passthru"};
 }
 
 [[noreturn]]
@@ -2547,7 +2547,7 @@ ircd::db::database::stats::passthru::setTickerCount(const uint32_t tickerType,
                                                     const uint64_t count)
 noexcept
 {
-	throw assertive {"Unavailable for passthru"};
+	throw panic {"Unavailable for passthru"};
 }
 
 [[noreturn]]
@@ -2556,7 +2556,7 @@ ircd::db::database::stats::passthru::histogramData(const uint32_t type,
                                                    rocksdb::HistogramData *const data)
 const noexcept
 {
-	throw assertive {"Unavailable for passthru"};
+	throw panic {"Unavailable for passthru"};
 }
 
 [[noreturn]]
@@ -2564,7 +2564,7 @@ uint64_t
 ircd::db::database::stats::passthru::getAndResetTickerCount(const uint32_t tickerType)
 noexcept
 {
-	throw assertive {"Unavailable for passthru"};
+	throw panic {"Unavailable for passthru"};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4258,7 +4258,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	throw assertive
+	throw panic
 	{
 		"'%s': now micros :%s",
 		d.name,
@@ -4285,7 +4285,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	throw assertive
+	throw panic
 	{
 		"'%s': time to string :%s",
 		d.name,
@@ -4425,7 +4425,7 @@ noexcept
 	};
 	#endif
 
-	throw assertive
+	throw panic
 	{
 		"Independent (non-pool) context spawning not yet implemented"
 	};
@@ -4485,7 +4485,7 @@ const noexcept try
 }
 catch(const std::exception &e)
 {
-	throw assertive
+	throw panic
 	{
 		"'%s': set background threads :%s",
 		d.name,
@@ -4688,7 +4688,7 @@ const noexcept try
 }
 catch(const std::exception &e)
 {
-	throw assertive
+	throw panic
 	{
 		"'%s': get thread id :%s",
 		d.name,
@@ -5682,7 +5682,7 @@ ircd::db::database::env::writable_file_direct::writable_file_direct(database *co
 {
 	zero(buffer);
 	if(!aligned(logical_offset))
-		throw assertive
+		throw panic
 		{
 			"direct writable file requires read into buffer."
 		};
@@ -6488,7 +6488,7 @@ noexcept try
 	// RocksDB sez that this call requires "External synchronization" i.e the
 	// caller, not this class is responsible for exclusion. We assert anyway.
 	if(unlikely(!bool(lock)))
-		throw assertive
+		throw panic
 		{
 			"'%s': Unexpected concurrent access to seqfile %p",
 			d.name,
@@ -6575,7 +6575,7 @@ noexcept try
 	};
 
 	if(unlikely(!bool(lock)))
-		throw assertive
+		throw panic
 		{
 			"'%s': Unexpected concurrent access to seqfile %p",
 			d.name,
@@ -6662,7 +6662,7 @@ noexcept
 	// RocksDB sez that this call requires "External synchronization" i.e the
 	// caller, not this class is responsible for exclusion. We assert anyway.
 	if(unlikely(!bool(lock)))
-		throw assertive
+		throw panic
 		{
 			"'%s': Unexpected concurrent access to seqfile %p",
 			d.name,
@@ -8242,7 +8242,7 @@ rocksdb::Status
 ircd::db::txn::handler::MarkBeginPrepare(bool b)
 noexcept
 {
-	ircd::assertion("not implemented");
+	ircd::not_implemented{};
 	return Status::OK();
 }
 
@@ -8250,7 +8250,7 @@ rocksdb::Status
 ircd::db::txn::handler::MarkEndPrepare(const Slice &xid)
 noexcept
 {
-	ircd::assertion("not implemented");
+	ircd::not_implemented{};
 	return Status::OK();
 }
 
@@ -8258,7 +8258,7 @@ rocksdb::Status
 ircd::db::txn::handler::MarkCommit(const Slice &xid)
 noexcept
 {
-	ircd::assertion("not implemented");
+	ircd::not_implemented{};
 	return Status::OK();
 }
 
@@ -8266,7 +8266,7 @@ rocksdb::Status
 ircd::db::txn::handler::MarkRollback(const Slice &xid)
 noexcept
 {
-	ircd::assertion("not implemented");
+	ircd::not_implemented{};
 	return Status::OK();
 }
 

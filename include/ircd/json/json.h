@@ -16,7 +16,7 @@
 namespace ircd::json
 {
 	IRCD_EXCEPTION(ircd::error, error);
-	IRCD_ASSERTION(error, print_error);
+	IRCD_PANICKING(error, print_error);
 	IRCD_EXCEPTION(error, parse_error);
 	IRCD_EXCEPTION(error, type_error);
 	IRCD_EXCEPTION(error, not_found);

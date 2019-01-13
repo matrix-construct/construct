@@ -18,10 +18,39 @@ noexcept
 }
 
 void
-ircd::aborting()
+ircd::_aborting_()
 noexcept
 {
 	std::set_terminate(&ircd_terminate_handler);
+}
+
+void
+#ifndef NDEBUG
+__attribute__((noreturn))
+#endif
+ircd::panicking(const std::exception_ptr &eptr)
+noexcept
+{
+	log::critical
+	{
+		"IRCd panic %s", what(eptr)
+	};
+}
+
+/// Called by the constructor of a panic exception when thown. We immediately
+/// log a critical message, which is actually what triggers a termination when
+/// assertions are enabled (!NDEBUG) otherwise a no-op.
+void
+#ifndef NDEBUG
+__attribute__((noreturn))
+#endif
+ircd::panicking(const std::exception &e)
+noexcept
+{
+	log::critical
+	{
+		"IRCd panic %s", e.what()
+	};
 }
 
 std::string
@@ -224,75 +253,15 @@ noexcept
 }
 
 //
-// assertion
-//
-
-ircd::assertion::assertion()
-noexcept(RB_DEBUG_LEVEL)
-:assertion
-{
-	"without exception"_sv
-}
-{
-}
-
-ircd::assertion::assertion(const string_view &msg)
-noexcept(RB_DEBUG_LEVEL)
-{
-	log::critical
-	{
-		"IRCd Assertion :%s", msg
-	};
-
-	if(std::uncaught_exceptions())
-		assertion
-		{
-			std::current_exception()
-		};
-
-	assert(0);
-	throw assertive
-	{
-		"IRCd Assertion :%s", msg
-	};
-}
-
-ircd::assertion::assertion(std::exception_ptr eptr)
-noexcept(RB_DEBUG_LEVEL) try
-{
-	std::rethrow_exception(eptr);
-}
-catch(const std::exception &e)
-{
-	assertion{e};
-}
-
-ircd::assertion::assertion(const std::exception &e)
-noexcept(RB_DEBUG_LEVEL)
-{
-	#ifdef RB_DEBUG
-		terminate{e};
-	#else
-		log::critical
-		{
-			"IRCd Assertion %s", e.what()
-		};
-
-		throw e;
-	#endif
-}
-
-//
 // terminate
 //
 
 ircd::terminate::terminate()
 noexcept
-:terminate
 {
-	std::current_exception()
-}
-{
+	fputs("\nIRCd Terminated.\n", stderr);
+	::fflush(stderr);
+	std::terminate();
 }
 
 ircd::terminate::terminate(std::exception_ptr eptr)
@@ -307,14 +276,7 @@ noexcept
 		terminate{e};
 	}
 
-	log::critical
-	{
-		"IRCd Terminate without exception"
-	};
-
 	fputs("\nIRCd Terminate without exception\n", stderr);
-
-	::fflush(stdout);
 	::fflush(stderr);
 	std::terminate();
 }
@@ -322,13 +284,7 @@ noexcept
 ircd::terminate::terminate(const std::exception &e)
 noexcept
 {
-	log::critical
-	{
-		"IRCd Terminated: %s", e.what()
-	};
-
 	fprintf(stderr, "\nIRCd Terminated: %s\n", e.what());
 	::fflush(stderr);
-	::fflush(stdout);
 	std::terminate();
 }

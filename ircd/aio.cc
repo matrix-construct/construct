@@ -592,7 +592,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	throw assertive
+	throw panic
 	{
 		"AIO(%p) system::chase() qcount:%zu :%s", this, qcount, e.what()
 	};

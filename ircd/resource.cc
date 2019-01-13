@@ -1090,7 +1090,7 @@ ircd::resource::response::response(client &client,
 	// Maximum size is realistically ok but ideally a small
 	// maximum; this exception should hit the developer in testing.
 	if(unlikely(!head.remaining()))
-		throw assertive
+		throw panic
 		{
 			"HTTP headers too large for buffer of %zu", sizeof(head_buf)
 		};

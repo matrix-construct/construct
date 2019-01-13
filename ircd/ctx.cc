@@ -798,7 +798,7 @@ void
 ircd::ctx::assert_critical()
 {
 	if(unlikely(critical_asserted))
-		throw ircd::assertive
+		throw panic
 		{
 			"%lu '%s' :Illegal context switch", id(), name()
 		};

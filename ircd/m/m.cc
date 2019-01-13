@@ -3710,7 +3710,7 @@ const try
 }
 catch(const std::out_of_range &e)
 {
-	throw assertive
+	throw panic
 	{
 		"Hook %p must name a '_site' to register with.", this
 	};
@@ -3846,7 +3846,7 @@ const try
 }
 catch(const std::out_of_range &e)
 {
-	throw assertive
+	throw panic
 	{
 		"Hook site %p requires a name", this
 	};

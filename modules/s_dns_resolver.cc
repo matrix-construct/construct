@@ -405,7 +405,7 @@ ircd::net::dns::resolver::set_tag(A&&... args)
 		return it->second;
 	}
 
-	throw assertive
+	throw panic
 	{
 		"Too many DNS queries"
 	};
@@ -540,7 +540,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	throw assertive
+	throw panic
 	{
 		"resolver::handle_reply(): %s", e.what()
 	};

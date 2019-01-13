@@ -1193,7 +1193,7 @@ ircd::fs::dev::sysfs(const mutable_buffer &out,
                      const ulong &id,
                      const string_view &relpath)
 {
-	throw assertive
+	throw panic
 	{
 		"sysfs(5) is not available."
 	};

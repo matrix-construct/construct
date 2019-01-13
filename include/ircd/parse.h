@@ -125,7 +125,7 @@ try
 }
 catch(const std::bad_function_call &e)
 {
-	throw assertive
+	throw panic
 	{
 		"Invalid parse (parsed:%p read:%p stop:%p unparsed:%zu remaining: %zu)",
 		parsed,

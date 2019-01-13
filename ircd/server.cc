@@ -1798,7 +1798,7 @@ ircd::server::link::discard_read()
 	// just in case so this doesn't get loopy with discarding zero with
 	// an empty queue...
 	if(unlikely(!discard && !discarded))
-		throw assertive
+		throw panic
 		{
 			"peer(%p) link(%p) socket(%p) queue is empty and nothing to discard.",
 			peer,

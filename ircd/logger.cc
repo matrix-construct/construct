@@ -607,7 +607,7 @@ ircd::log::reflect(const level &f)
 		case level::_NUM_:      break; // Allows -Wswitch to remind developer to add reflection here
 	};
 
-	throw assertive
+	throw panic
 	{
 		"'%d' is not a recognized log level", int(f)
 	};
