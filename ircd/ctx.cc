@@ -109,11 +109,11 @@ noexcept try
 }
 catch(const ircd::ctx::interrupted &)
 {
-	return;
+
 }
 catch(const ircd::ctx::terminated &)
 {
-	return;
+
 }
 catch(const std::exception &e)
 {
@@ -124,14 +124,15 @@ catch(const std::exception &e)
 		id,
 		e.what()
 	};
-
-	// Preserving the stacktrace from the throw point here is hopeless.
-	// We can terminate for developer nuisance but we will never know
-	// where this exception came from and where it is going. Bottom line
-	// is that #ifdef'ing away this handler or rethrowing isn't as useful as
-	// handling the exception here with a log message and calling it a day.
-	assert(0);
-	return;
+}
+catch(...)
+{
+	log::critical
+	{
+		"ctx('%s' id:%u): unexpected",
+		name,
+		id
+	};
 }
 
 /// Direct context switch to this context.
