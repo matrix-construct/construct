@@ -855,24 +855,17 @@ template<class R,
 R
 ircd::mods::info(const filesystem::path &path,
                  F&& closure)
+try
 {
-	if(!exists(path))
-		throw fs::error
-		{
-			make_error_code(std::errc::no_such_file_or_directory),
-			"`%s' does not exist",
-			path.string()
-		};
-
-	if(!is_regular_file(path))
-		throw fs::error
-		{
-			"`%s' is not a file",
-			path.string()
-		};
-
 	boost::dll::library_info info(path);
 	return closure(info);
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw fs::error
+	{
+		e, "%s", path.string()
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
