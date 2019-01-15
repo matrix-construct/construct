@@ -157,6 +157,13 @@ struct ircd::m::vm::opts
 	/// true or false for all events in a room.
 	bool history {true};
 
+	/// Toggles whether full json is written to the database. It provides read
+	/// optimization when all columns of an event are sought. Luckily the
+	/// database is well- compressed. It must be used if there are possibly
+	/// unrecognized keys in an event otherwise they will be lost. Note cost
+	/// in space-amplification and redundant data; true unless you know better.
+	bool json {true};
+
 	/// Bypass check for event having already been evaluated so it can be
 	/// replayed through the system (not recommended).
 	bool replays {false};
