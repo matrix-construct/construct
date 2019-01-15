@@ -5435,6 +5435,21 @@ console_cmd__event(opt &out, const string_view &line)
 		tokens_after(line, ' ', 0)
 	};
 
+	const auto event_idx
+	{
+		index(event_id)
+	};
+
+	const bool cached
+	{
+		m::cached(event_idx)
+	};
+
+	const bool full_json
+	{
+		has(m::dbs::event_json, byte_view<string_view>(event_idx))
+	};
+
 	const m::event::fetch event
 	{
 		event_id
@@ -5443,11 +5458,13 @@ console_cmd__event(opt &out, const string_view &line)
 	if(!empty(args)) switch(hash(token(args, ' ', 0)))
 	{
 		case hash("raw"):
+		{
 			out << event << std::endl;
 			return true;
+		}
 
 		case hash("idx"):
-			out << index(event) << std::endl;
+			out << event_idx << std::endl;
 			return true;
 
 		case hash("content"):
@@ -5482,6 +5499,13 @@ console_cmd__event(opt &out, const string_view &line)
 	if(!verify_hash(event))
 		out << "- HASH MISMATCH: " << b64encode_unpadded(hash(event)) << std::endl;
 
+	if(!full_json)
+		out << "- JSON NOT FOUND" << std::endl;
+
+	if(cached)
+		out << "+ CACHED" << std::endl;
+
+	out << event_idx << std::endl;
 	return true;
 }
 
