@@ -11,15 +11,6 @@
 #pragma once
 #define HAVE_IRCD_M_EVENT_FETCH_H
 
-namespace ircd::m
-{
-	bool seek(event::fetch &, const event::idx &, std::nothrow_t);
-	void seek(event::fetch &, const event::idx &);
-
-	bool seek(event::fetch &, const event::id &, std::nothrow_t);
-	void seek(event::fetch &, const event::id &);
-}
-
 struct ircd::m::event::fetch
 :event
 {
@@ -31,6 +22,7 @@ struct ircd::m::event::fetch
 	static const opts default_opts;
 
 	std::array<db::cell, event::size()> cell;
+	db::cell _json;
 	db::row row;
 	bool valid;
 
@@ -45,10 +37,33 @@ struct ircd::m::event::fetch
 	static void event_id(const idx &, const id::closure &);
 };
 
+namespace ircd::m
+{
+	bool seek(event::fetch &, const event::idx &, std::nothrow_t, const event::fetch::opts *const & = nullptr);
+	void seek(event::fetch &, const event::idx &, const event::fetch::opts *const & = nullptr);
+
+	bool seek(event::fetch &, const event::id &, std::nothrow_t, const event::fetch::opts *const & = nullptr);
+	void seek(event::fetch &, const event::id &, const event::fetch::opts *const & = nullptr);
+}
+
 struct ircd::m::event::fetch::opts
 {
+	/// Event property selector
 	event::keys keys;
+
+	/// Database get options passthru
 	db::gopts gopts;
+
+	/// Whether to allowing querying the event_json to populate the event if
+	/// it would be more efficient based on the keys being sought. Ex. If all
+	/// keys are being sought then we can make a single query to event_json
+	/// rather than a concurrent row query. This is enabled by default.
+	bool query_json_maybe {true};
+
+	/// Whether to force only querying for event_json to populate the event,
+	/// regardless of what keys are sought in the property selector. This is
+	/// not enabled by default.
+	bool query_json_only {false};
 
 	opts(const event::keys &, const db::gopts & = {});
 	opts(const event::keys::selection &, const db::gopts & = {});

@@ -1384,6 +1384,11 @@ ircd::m::get(std::nothrow_t,
              const string_view &key,
              const event::fetch::view_closure &closure)
 {
+	const string_view &column_key
+	{
+		byte_view<string_view>{event_idx}
+	};
+
 	const auto &column_idx
 	{
 		json::indexof<event>(key)
@@ -1394,14 +1399,15 @@ ircd::m::get(std::nothrow_t,
 		dbs::event_column.at(column_idx)
 	};
 
-	return column(byte_view<string_view>{event_idx}, std::nothrow, closure);
+	return column(column_key, std::nothrow, closure);
 }
 
 void
 ircd::m::seek(event::fetch &fetch,
-              const event::id &event_id)
+              const event::id &event_id,
+              const event::fetch::opts *const &opts)
 {
-	if(!seek(fetch, event_id, std::nothrow))
+	if(!seek(fetch, event_id, std::nothrow, opts))
 		throw m::NOT_FOUND
 		{
 			"%s not found in database", event_id
@@ -1411,21 +1417,25 @@ ircd::m::seek(event::fetch &fetch,
 bool
 ircd::m::seek(event::fetch &fetch,
               const event::id &event_id,
-              std::nothrow_t)
+              std::nothrow_t,
+              const event::fetch::opts *const &opts)
 {
 	const auto &event_idx
 	{
 		index(event_id, std::nothrow)
 	};
 
-	return seek(fetch, event_idx, std::nothrow);
+	return event_idx?
+		seek(fetch, event_idx, std::nothrow, opts):
+		false;
 }
 
 void
 ircd::m::seek(event::fetch &fetch,
-              const event::idx &event_idx)
+              const event::idx &event_idx,
+              const event::fetch::opts *const &opts)
 {
-	if(!seek(fetch, event_idx, std::nothrow))
+	if(!seek(fetch, event_idx, std::nothrow, opts))
 		throw m::NOT_FOUND
 		{
 			"%lu not found in database", event_idx
@@ -1435,21 +1445,68 @@ ircd::m::seek(event::fetch &fetch,
 bool
 ircd::m::seek(event::fetch &fetch,
               const event::idx &event_idx,
-              std::nothrow_t)
+              std::nothrow_t,
+              const event::fetch::opts *const &opts)
 {
+	auto &event
+	{
+		static_cast<m::event &>(fetch)
+	};
+
 	const string_view &key
 	{
 		byte_view<string_view>(event_idx)
 	};
 
-	db::seek(fetch.row, key);
-	fetch.valid = fetch.row.valid(key);
-	if(!fetch.valid)
-		return false;
+	const db::gopts &gopts
+	{
+		opts?
+			opts->gopts:
+			db::gopts{}
+	};
 
-	auto &event{static_cast<m::event &>(fetch)};
-	assign(event, fetch.row, key);
-	return true;
+	const bool query_json
+	{
+		opts && opts->query_json_only?
+			true: // User only wants to make the event_json query
+
+		opts && !opts->query_json_maybe?
+			false: // User never wants to make the event_json query
+
+		fetch.row.size() < fetch.cell.size()?
+			false: // User is making specific column queries
+
+		fetch.row.size() == fetch.cell.size()?
+			true: // User is querying all columns
+
+		false
+	};
+
+	if(query_json)
+	{
+		if((fetch.valid = fetch._json.load(key, gopts)))
+			event = m::event
+			{
+				fetch._json.val()
+			};
+
+		if(fetch.valid)
+			return fetch.valid;
+
+		if(opts && opts->query_json_only)
+			return fetch.valid;
+
+		// graceful fallback to row query if json query failed.
+		assert(!fetch.valid);
+	}
+
+	if(!(fetch.valid = db::seek(fetch.row, key, gopts)))
+		return fetch.valid;
+
+	if((fetch.valid = fetch.row.valid(key)))
+		assign(event, fetch.row, key);
+
+	return fetch.valid;
 }
 
 ircd::m::event::idx
@@ -1554,7 +1611,13 @@ ircd::m::event::fetch::event_id(const idx &idx,
 
 /// Seekless constructor.
 ircd::m::event::fetch::fetch(const opts *const &opts)
-:row
+:_json
+{
+	m::dbs::event_json,
+	string_view{},
+	opts? opts->gopts : default_opts.gopts
+}
+,row
 {
 	*dbs::events,
 	string_view{},
@@ -1613,21 +1676,12 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
                              std::nothrow_t,
                              const opts *const &opts)
-:row
+:fetch
 {
-	*dbs::events,
-	byte_view<string_view>{event_idx},
-	opts? opts->keys : default_opts.keys,
-	cell,
-	opts? opts->gopts : default_opts.gopts
-}
-,valid
-{
-	row.valid(byte_view<string_view>{event_idx})
+	opts
 }
 {
-	if(valid)
-		assign(*this, row, byte_view<string_view>{event_idx});
+	seek(*this, event_idx, std::nothrow, opts);
 }
 
 //
