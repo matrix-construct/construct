@@ -29,36 +29,14 @@ namespace ircd::m
 	bool cached(const id::event &);
 	bool good(const id::event &);
 	bool bad(const id::event &);
-
-	// Equality tests the event_id only! know this.
-	bool operator==(const event &a, const event &b);
-
-	// Depth comparison; expect unstable sorting.
-	bool operator<(const event &, const event &);
-	bool operator>(const event &, const event &);
-	bool operator<=(const event &, const event &);
-	bool operator>=(const event &, const event &);
-
-	// Topological
-	bool before(const event &a, const event &b); // A directly referenced by B
-
-	id::event make_id(const event &, id::event::buf &buf, const const_buffer &hash);
-	id::event make_id(const event &, id::event::buf &buf);
-
-	// Informational pretty string condensed to single line.
-	std::ostream &pretty_oneline(std::ostream &, const event &, const bool &content_keys = true);
-	std::string pretty_oneline(const event &, const bool &content_keys = true);
-
-	// Informational pretty string on multiple lines.
-	std::ostream &pretty(std::ostream &, const event &);
-	std::string pretty(const event &);
-
-	// Informational content-oriented
-	std::ostream &pretty_msgline(std::ostream &, const event &);
-	std::string pretty_msgline(const event &);
 }
 
 #include "event/event.h"
 #include "event/prev.h"
 #include "event/fetch.h"
+#include "event/index.h"
+#include "event/get.h"
+#include "event/cached.h"
+#include "event/prefetch.h"
 #include "event/conforms.h"
+#include "event/pretty.h"

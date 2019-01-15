@@ -11,6 +11,41 @@
 #pragma once
 #define HAVE_IRCD_M_EVENT_EVENT_H
 
+namespace ircd::m
+{
+	// Equality tests the event_id only! know this.
+	bool operator==(const event &a, const event &b);
+
+	// Depth comparison; expect unstable sorting.
+	bool operator<(const event &, const event &);
+	bool operator>(const event &, const event &);
+	bool operator<=(const event &, const event &);
+	bool operator>=(const event &, const event &);
+
+	bool before(const event &a, const event &b); // A directly referenced by B
+
+	id::event make_id(const event &, id::event::buf &buf, const const_buffer &hash);
+	id::event make_id(const event &, id::event::buf &buf);
+
+	json::object hashes(const mutable_buffer &, const event &);
+	event signatures(const mutable_buffer &, const m::event &);
+	event essential(event, const mutable_buffer &content);
+
+	bool verify_sha256b64(const event &, const string_view &);
+	bool verify_hash(const event &, const sha256::buf &);
+	bool verify_hash(const event &);
+
+	bool verify(const event &, const ed25519::pk &, const ed25519::sig &sig);
+	bool verify(const event &, const ed25519::pk &, const string_view &origin, const string_view &pkid);
+	bool verify(const event &, const string_view &origin, const string_view &pkid); // io/yield
+	bool verify(const event &, const string_view &origin); // io/yield
+	bool verify(const event &); // io/yield
+
+	sha256::buf hash(const event &);
+	ed25519::sig sign(const event &, const ed25519::sk &);
+	ed25519::sig sign(const event &);
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsubobject-linkage"
 /// The Main Event
@@ -48,9 +83,8 @@ struct ircd::m::event
 	struct prev;
 	struct fetch;
 	struct conforms;
-	using keys = json::keys<event>;
 
-	// Common convenience aliases
+	using keys = json::keys<event>;
 	using id = m::id::event;
 	using idx = uint64_t;
 	using closure = std::function<void (const event &)>;
@@ -62,36 +96,18 @@ struct ircd::m::event
 	static constexpr size_t MAX_SIZE = 64_KiB;
 	static conf::item<size_t> max_size;
 
-	friend event essential(event, const mutable_buffer &content);
 	static void essential(json::iov &event, const json::iov &content, const closure_iov_mutable &);
-
 	static bool verify(const string_view &, const ed25519::pk &, const ed25519::sig &sig);
 	static bool verify(const json::object &, const ed25519::pk &, const ed25519::sig &sig);
-	friend bool verify(const event &, const ed25519::pk &, const ed25519::sig &sig);
-	friend bool verify(const event &, const ed25519::pk &, const string_view &origin, const string_view &pkid);
-	friend bool verify(const event &, const string_view &origin, const string_view &pkid); // io/yield
-	friend bool verify(const event &, const string_view &origin); // io/yield
-	friend bool verify(const event &); // io/yield
-
 	static ed25519::sig sign(const string_view &, const ed25519::sk &);
 	static ed25519::sig sign(const string_view &);
 	static ed25519::sig sign(const json::object &, const ed25519::sk &);
 	static ed25519::sig sign(const json::object &);
-	friend ed25519::sig sign(const event &, const ed25519::sk &);
-	friend ed25519::sig sign(const event &);
 	static ed25519::sig sign(json::iov &event, const json::iov &content, const ed25519::sk &);
 	static ed25519::sig sign(json::iov &event, const json::iov &content);
 	static json::object signatures(const mutable_buffer &, json::iov &event, const json::iov &content);
-	friend event signatures(const mutable_buffer &, const m::event &);
-
-	friend bool verify_sha256b64(const event &, const string_view &);
-	friend bool verify_hash(const event &, const sha256::buf &);
-	friend bool verify_hash(const event &);
-
-	friend sha256::buf hash(const event &);
 	static sha256::buf hash(json::iov &event, const string_view &content);
 	static json::object hashes(const mutable_buffer &, json::iov &event, const string_view &content);
-	friend json::object hashes(const mutable_buffer &, const event &);
 
 	using super_type::tuple;
 	using super_type::operator=;

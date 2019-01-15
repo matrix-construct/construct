@@ -11,11 +11,22 @@
 #pragma once
 #define HAVE_IRCD_M_EVENT_FETCH_H
 
+namespace ircd::m
+{
+	bool seek(event::fetch &, const event::idx &, std::nothrow_t);
+	void seek(event::fetch &, const event::idx &);
+
+	bool seek(event::fetch &, const event::id &, std::nothrow_t);
+	void seek(event::fetch &, const event::id &);
+}
+
 struct ircd::m::event::fetch
 :event
 {
 	struct opts;
+
 	using keys = event::keys;
+	using view_closure = std::function<void (const string_view &)>;
 
 	static const opts default_opts;
 
@@ -32,37 +43,6 @@ struct ircd::m::event::fetch
 
 	static bool event_id(const idx &, std::nothrow_t, const id::closure &);
 	static void event_id(const idx &, const id::closure &);
-
-	friend bool index(const id &, std::nothrow_t, const closure_idx &);
-	friend idx index(const id &, std::nothrow_t);
-	friend idx index(const id &);
-	friend idx index(const event &, std::nothrow_t);
-	friend idx index(const event &);
-
-	friend bool seek(fetch &, const idx &, std::nothrow_t);
-	friend void seek(fetch &, const idx &);
-	friend bool seek(fetch &, const id &, std::nothrow_t);
-	friend void seek(fetch &, const id &);
-
-	using view_closure = std::function<void (const string_view &)>;
-	friend bool get(std::nothrow_t, const idx &, const string_view &key, const view_closure &);
-	friend bool get(std::nothrow_t, const id &, const string_view &key, const view_closure &);
-	friend void get(const idx &, const string_view &key, const view_closure &);
-	friend void get(const id &, const string_view &key, const view_closure &);
-
-	friend const_buffer get(std::nothrow_t, const idx &, const string_view &key, const mutable_buffer &out);
-	friend const_buffer get(std::nothrow_t, const id &, const string_view &key, const mutable_buffer &out);
-	friend const_buffer get(const idx &, const string_view &key, const mutable_buffer &out);
-	friend const_buffer get(const id &, const string_view &key, const mutable_buffer &out);
-
-	friend bool cached(const idx &, const opts & = default_opts);
-	friend bool cached(const id &, const opts &);
-	friend bool cached(const id &);
-
-	friend void prefetch(const idx &, const string_view &key);
-	friend void prefetch(const idx &, const opts & = default_opts);
-	friend void prefetch(const id &, const string_view &key);
-	friend void prefetch(const id &, const opts & = default_opts);
 };
 
 struct ircd::m::event::fetch::opts

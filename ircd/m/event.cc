@@ -244,6 +244,12 @@ ircd::m::cached(const id::event &event_id,
 }
 
 bool
+ircd::m::cached(const event::idx &event_idx)
+{
+	return cached(event_idx, event::fetch::default_opts);
+}
+
+bool
 ircd::m::cached(const event::idx &event_idx,
                 const event::fetch::opts &opts)
 {
