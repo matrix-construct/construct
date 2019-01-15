@@ -26,6 +26,11 @@ decltype(ircd::m::dbs::event_idx)
 ircd::m::dbs::event_idx
 {};
 
+/// Linkage for a reference to the event_json column.
+decltype(ircd::m::dbs::event_json)
+ircd::m::dbs::event_json
+{};
+
 /// Linkage for a reference to the room_head column
 decltype(ircd::m::dbs::room_head)
 ircd::m::dbs::room_head
@@ -126,6 +131,7 @@ ircd::m::dbs::init::init(std::string dbopts)
 
 	// Cache the columns for the metadata
 	event_idx = db::column{*events, desc::events__event_idx.name};
+	event_json = db::column{*events, desc::events__event_json.name};
 	room_head = db::index{*events, desc::events__room_head.name};
 	room_events = db::index{*events, desc::events__room_events.name};
 	room_joined = db::index{*events, desc::events__room_joined.name};
@@ -195,6 +201,8 @@ ircd::m::dbs::write(db::txn &txn,
 		txn, byte_view<string_view>(opts.event_idx), event, event_column, opts.op
 	};
 
+	if(opts.json)
+		_index_json(txn, event, opts);
 
 	if(json::get<"room_id"_>(event))
 		return _index_room(txn, event, opts);
@@ -218,6 +226,37 @@ ircd::m::dbs::_index__event(db::txn &txn,
 			opts.op,
 			at<"event_id"_>(event),
 			byte_view<string_view>(opts.event_idx)
+		}
+	};
+}
+
+void
+ircd::m::dbs::_index_json(db::txn &txn,
+                          const event &event,
+                          const write_opts &opts)
+{
+	const ctx::critical_assertion ca;
+	thread_local char buf[m::event::MAX_SIZE];
+
+	const string_view &key
+	{
+		byte_view<string_view>(opts.event_idx)
+	};
+
+	const string_view &val
+	{
+		opts.op == db::op::SET?
+			json::stringify(buf, event):
+			string_view{}
+	};
+
+	db::txn::append
+	{
+		txn, event_json,
+		{
+			opts.op,   // db::op
+			key,       // key
+			val,       // val
 		}
 	};
 }
@@ -728,6 +767,106 @@ ircd::m::dbs::desc::events__event_idx
 
 	// meta_block size
 	size_t(events__event_idx__meta_block__size),
+};
+
+//
+// event_json
+//
+
+decltype(ircd::m::dbs::desc::events__event_json__block__size)
+ircd::m::dbs::desc::events__event_json__block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_json.block.size" },
+	{ "default",  3192L                                       },
+};
+
+decltype(ircd::m::dbs::desc::events__event_json__meta_block__size)
+ircd::m::dbs::desc::events__event_json__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_json.meta_block.size" },
+	{ "default",  512L                                            },
+};
+
+decltype(ircd::m::dbs::desc::events__event_json__cache__size)
+ircd::m::dbs::desc::events__event_json__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_json.cache.size" },
+		{ "default",  long(64_MiB)                                },
+	}, []
+	{
+		const size_t &value{events__event_json__cache__size};
+		db::capacity(db::cache(event_json), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_json__cache_comp__size)
+ircd::m::dbs::desc::events__event_json__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_json.cache_comp.size" },
+		{ "default",  long(0_MiB)                                      },
+	}, []
+	{
+		const size_t &value{events__event_json__cache_comp__size};
+		db::capacity(db::cache_compressed(event_json), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_json__bloom__bits)
+ircd::m::dbs::desc::events__event_json__bloom__bits
+{
+	{ "name",     "ircd.m.dbs.events._event_json.bloom.bits" },
+	{ "default",  9L                                          },
+};
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events__event_json
+{
+	// name
+	"_event_json",
+
+	// explanation
+	R"(Full JSON object for an event (if available).
+
+	event_idx => event_json
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	false,
+
+	// cache size
+	bool(events_cache_enable)? -1 : 0, //uses conf item
+
+	// cache size for compressed assets
+	bool(events_cache_comp_enable)? -1 : 0,
+
+	// bloom filter bits
+	size_t(events__event_json__bloom__bits),
+
+	// expect queries hit
+	false,
+
+	// block size
+	size_t(events__event_json__block__size),
+
+	// meta_block size
+	size_t(events__event_json__meta_block__size),
 };
 
 //
@@ -3221,6 +3360,10 @@ ircd::m::dbs::desc::events
 	// event_id => uint64_t
 	// Mapping of event_id to index number.
 	events__event_idx,
+
+	// event_idx => json
+	// Mapping of event_idx to full json
+	events__event_json,
 
 	// (room_id, (depth, event_idx)) => (state_root)
 	// Sequence of all events for a room, ever.

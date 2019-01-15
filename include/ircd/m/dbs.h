@@ -38,6 +38,7 @@ namespace ircd::m::dbs
 	extern db::index room_joined;      // room_id | origin, member => event_idx
 	extern db::index room_state;       // room_id | type, state_key => event_idx
 	extern db::column state_node;      // node_id => state::node
+	extern db::column event_json;      // event_idx => full json
 
 	// Lowlevel util
 	constexpr size_t ROOM_HEAD_KEY_MAX_SIZE {id::MAX_SIZE + 1 + id::MAX_SIZE};
@@ -84,6 +85,7 @@ struct ircd::m::dbs::write_opts
 	bool indexer {true};
 	bool head {true};
 	bool refs {true};
+	bool json {true};
 };
 
 /// Database Schema Descriptors
@@ -194,6 +196,14 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__event_idx__bloom__bits;
 	extern const db::descriptor events__event_idx;
 
+	// events cache
+	extern conf::item<size_t> events__event_json__block__size;
+	extern conf::item<size_t> events__event_json__meta_block__size;
+	extern conf::item<size_t> events__event_json__cache__size;
+	extern conf::item<size_t> events__event_json__cache_comp__size;
+	extern conf::item<size_t> events__event_json__bloom__bits;
+	extern const db::descriptor events__event_json;
+
 	// room head mapping sequence
 	extern conf::item<size_t> events__room_head__block__size;
 	extern conf::item<size_t> events__room_head__meta_block__size;
@@ -248,6 +258,7 @@ namespace ircd::m::dbs
 	string_view _index_redact(db::txn &, const event &, const write_opts &);
 	string_view _index_other(db::txn &, const event &, const write_opts &);
 	string_view _index_room(db::txn &, const event &, const write_opts &);
+	void _index_json(db::txn &, const event &, const write_opts &);
 	void _index__event(db::txn &, const event &, const write_opts &);
 }
 
