@@ -195,16 +195,11 @@ ircd::m::dbs::write(db::txn &txn,
 		txn, byte_view<string_view>(opts.event_idx), event, event_column, opts.op
 	};
 
-	if(opts.head || opts.refs)
-		_index__room_head(txn, event, opts);
 
-	if(defined(json::get<"state_key"_>(event)))
-		return _index_state(txn, event, opts);
+	if(json::get<"room_id"_>(event))
+		return _index_room(txn, event, opts);
 
-	if(at<"type"_>(event) == "m.room.redaction")
-		return _index_redact(txn, event, opts);
-
-	return _index_ephem(txn, event, opts);
+	return {};
 }
 
 //
@@ -228,7 +223,24 @@ ircd::m::dbs::_index__event(db::txn &txn,
 }
 
 ircd::string_view
-ircd::m::dbs::_index_ephem(db::txn &txn,
+ircd::m::dbs::_index_room(db::txn &txn,
+                          const event &event,
+                          const write_opts &opts)
+{
+	if(opts.head || opts.refs)
+		_index__room_head(txn, event, opts);
+
+	if(defined(json::get<"state_key"_>(event)))
+		return _index_state(txn, event, opts);
+
+	if(at<"type"_>(event) == "m.room.redaction")
+		return _index_redact(txn, event, opts);
+
+	return _index_other(txn, event, opts);
+}
+
+ircd::string_view
+ircd::m::dbs::_index_other(db::txn &txn,
                            const event &event,
                            const write_opts &opts)
 {
@@ -605,6 +617,10 @@ ircd::m::dbs::state_root(const mutable_buffer &out,
 
 //
 // Database descriptors
+//
+
+//
+// event_idx
 //
 
 decltype(ircd::m::dbs::desc::events__event_idx__block__size)

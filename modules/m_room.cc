@@ -468,7 +468,7 @@ state__rebuild_history(const m::room &room)
 			txn();
 			txn.clear();
 		}
-		else m::dbs::_index_ephem(txn, event, opts);
+		else m::dbs::_index_other(txn, event, opts);
 
 		++ret;
 	}

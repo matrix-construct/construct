@@ -34,7 +34,7 @@ namespace ircd::m::dbs
 	// Event metadata columns
 	extern db::column event_idx;       // event_id => event_idx
 	extern db::index room_head;        // room_id | event_id => event_idx
-	extern db::index room_events;      // room_id | depth, event_idx => state_root
+	extern db::index room_events;      // room_id | depth, event_idx => node_id
 	extern db::index room_joined;      // room_id | origin, member => event_idx
 	extern db::index room_state;       // room_id | type, state_key => event_idx
 	extern db::column state_node;      // node_id => state::node
@@ -246,7 +246,8 @@ namespace ircd::m::dbs
 	void _index__room_head(db::txn &, const event &, const write_opts &);
 	string_view _index_state(db::txn &, const event &, const write_opts &);
 	string_view _index_redact(db::txn &, const event &, const write_opts &);
-	string_view _index_ephem(db::txn &, const event &, const write_opts &);
+	string_view _index_other(db::txn &, const event &, const write_opts &);
+	string_view _index_room(db::txn &, const event &, const write_opts &);
 	void _index__event(db::txn &, const event &, const write_opts &);
 }
 
