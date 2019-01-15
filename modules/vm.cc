@@ -657,9 +657,13 @@ ircd::m::vm::_write(eval &eval,
 
 	const size_t reserve_bytes
 	{
+		opts.reserve_bytes == size_t(-1) && opts.json?
+			json::serialized(event) * 2:
+
 		opts.reserve_bytes == size_t(-1)?
 			json::serialized(event):
-			opts.reserve_bytes
+
+		opts.reserve_bytes
 	};
 
 	db::txn txn
