@@ -8619,7 +8619,11 @@ ircd::db::txn::append::append(txn &t,
                               database &d,
                               const delta &delta)
 {
-	db::column c{d[std::get<1>(delta)]};
+	db::column c
+	{
+		d[std::get<1>(delta)]
+	};
+
 	db::append(*t.wb, c, db::column::delta
 	{
 		std::get<op>(delta),
@@ -10609,7 +10613,11 @@ void
 ircd::db::append(rocksdb::WriteBatch &batch,
                  const cell::delta &delta)
 {
-	auto &column(std::get<cell *>(delta)->c);
+	auto &column
+	{
+		std::get<cell *>(delta)->c
+	};
+
 	append(batch, column, column::delta
 	{
 		std::get<op>(delta),
@@ -10623,8 +10631,21 @@ ircd::db::append(rocksdb::WriteBatch &batch,
                  column &column,
                  const column::delta &delta)
 {
-	database::column &c(column);
+	if(unlikely(!column))
+	{
+		// Note: Unknown at this time whether allowing attempts at writing
+		// to a null column should be erroneous or silently ignored. It's
+		// highly likely this log message will be removed soon to allow
+		// toggling database columns for optimization without touching calls.
+		log::critical
+		{
+			log, "Attempting to transact a delta for a null column"
+		};
 
+		return;
+	}
+
+	database::column &c(column);
 	const auto k(slice(std::get<1>(delta)));
 	const auto v(slice(std::get<2>(delta)));
 	switch(std::get<0>(delta))
