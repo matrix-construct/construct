@@ -447,12 +447,17 @@ ircd::m::event::event(const json::object &source)
 {
 }
 
-ircd::m::event &
-ircd::m::event::operator=(const json::object &source)
+ircd::m::event::event(const json::object &source,
+                      const keys &keys)
+:super_type
 {
-	this->super_type::operator=(source);
-	this->source = source;
-	return *this;
+	source, keys
+}
+,source
+{
+	source
+}
+{
 }
 
 namespace ircd::m

@@ -113,9 +113,7 @@ struct ircd::m::event
 
 	using super_type::tuple;
 	event(const json::object &);
+	event(const json::object &, const keys &);
 	event() = default;
-
-	using super_type::operator=;
-	event &operator=(const json::object &);
 };
 #pragma GCC diagnostic pop
