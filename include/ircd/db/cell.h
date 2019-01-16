@@ -81,7 +81,7 @@ struct ircd::db::cell
 
 	cell(column, std::unique_ptr<rocksdb::Iterator>, const gopts & = {});
 	cell(column, const string_view &index, std::unique_ptr<rocksdb::Iterator>, const gopts & = {});
-	cell(column, const string_view &index, const gopts & = {});
+	cell(column, const string_view &index = {}, const gopts & = {});
 	cell(database &, const string_view &column, const string_view &index, const gopts & = {});
 	cell(database &, const string_view &column, const gopts & = {});
 	cell();
