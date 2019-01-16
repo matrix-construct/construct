@@ -56,7 +56,6 @@ struct tuple
 {
 	using tuple_type = std::tuple<T...>;
 	using super_type = tuple<T...>;
-	using keys = json::keys<super_type>;
 
 	static constexpr size_t size();
 
@@ -64,6 +63,7 @@ struct tuple
 	operator crh::sha256::buf() const;
 
 	template<class... U> tuple(const tuple<U...> &);
+	template<class U> tuple(const json::object &, const json::keys<U> &);
 	tuple(const json::object &);
 	tuple(const json::iov &);
 	tuple(const std::initializer_list<member> &);
@@ -164,6 +164,19 @@ key_exists(const string_view &key)
 
 namespace ircd {
 namespace json {
+
+template<class... T>
+template<class U>
+tuple<T...>::tuple(const json::object &object,
+                   const json::keys<U> &keys)
+{
+	std::for_each(std::begin(object), std::end(object), [this, &keys]
+	(const auto &member)
+	{
+		if(keys.has(member.first))
+			set(*this, member.first, member.second);
+	});
+}
 
 template<class... T>
 tuple<T...>::tuple(const json::object &object)
