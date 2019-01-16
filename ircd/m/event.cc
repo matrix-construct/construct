@@ -435,40 +435,24 @@ ircd::m::event::max_size
 // event::event
 //
 
-ircd::m::event::event(const id &id,
-                      const mutable_buffer &buf)
-:event
+ircd::m::event::event(const json::object &source)
+:super_type
 {
-	index(id), buf
+	source
+}
+,source
+{
+	source
 }
 {
 }
 
-ircd::m::event::event(const idx &idx,
-                      const mutable_buffer &buf)
+ircd::m::event &
+ircd::m::event::operator=(const json::object &source)
 {
-	assert(bool(dbs::events));
-
-	db::gopts opts;
-	for(size_t i(0); i < dbs::event_column.size(); ++i)
-	{
-		const db::cell cell
-		{
-			dbs::event_column[i], byte_view<string_view>{idx}, opts
-		};
-
-		db::assign(*this, cell, byte_view<string_view>{idx});
-	}
-
-	const json::object obj
-	{
-		string_view
-		{
-			data(buf), json::print(buf, *this)
-		}
-	};
-
-	new (this) m::event(obj);
+	this->super_type::operator=(source);
+	this->source = source;
+	return *this;
 }
 
 namespace ircd::m
@@ -1559,7 +1543,7 @@ ircd::m::seek(event::fetch &fetch,
 	if(query_json)
 	{
 		if((fetch.valid = fetch._json.load(key, opts.gopts)))
-			event = m::event
+			event = json::object
 			{
 				fetch._json.val()
 			};

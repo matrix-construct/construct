@@ -260,14 +260,16 @@ bootstrap(const string_view &host,
 		64_KiB
 	};
 
-	const m::event mevent
+	const m::event::fetch mevent
 	{
-		event_id, ebuf
+		event_id
 	};
 
 	const string_view strung
 	{
-		data(ebuf), serialized(mevent)
+		mevent.source?
+			string_view{mevent.source}:
+			string_view{data(ebuf), serialized(mevent)}
 	};
 
 	const unique_buffer<mutable_buffer> buf2

@@ -5939,14 +5939,9 @@ console_cmd__eval(opt &out, const string_view &line)
 		param[1]
 	};
 
-	const unique_buffer<mutable_buffer> buf
+	const m::event::fetch event
 	{
-		64_KiB
-	};
-
-	const m::event event
-	{
-		event_id, buf
+		event_id
 	};
 
 	m::vm::opts opts;

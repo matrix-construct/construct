@@ -109,11 +109,13 @@ struct ircd::m::event
 	static sha256::buf hash(json::iov &event, const string_view &content);
 	static json::object hashes(const mutable_buffer &, json::iov &event, const string_view &content);
 
-	using super_type::tuple;
-	using super_type::operator=;
+	json::object source; // Contextual availability only.
 
-	event(const idx &, const mutable_buffer &buf);
-	event(const id &, const mutable_buffer &buf);
+	using super_type::tuple;
+	event(const json::object &);
 	event() = default;
+
+	using super_type::operator=;
+	event &operator=(const json::object &);
 };
 #pragma GCC diagnostic pop
