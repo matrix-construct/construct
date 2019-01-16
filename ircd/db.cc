@@ -8976,7 +8976,10 @@ ircd::db::cell::load(const string_view &index,
 	}
 
 	database::column &c(this->c);
-	return seek(c, index, opts, this->it);
+	if(!seek(c, index, opts, this->it))
+		return false;
+
+	return valid(index);
 }
 
 ircd::db::cell &
