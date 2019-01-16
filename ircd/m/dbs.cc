@@ -123,13 +123,15 @@ ircd::m::dbs::init::init(std::string dbopts)
 	assert(event_columns == event::size());
 	std::array<string_view, event::size()> keys;      //TODO: why did this happen?
 	_key_transform(event{}, begin(keys), end(keys));  //TODO: how did this happen?
+
+	// Construct global convenience references for the event property columns.
 	for(size_t i(0); i < keys.size(); ++i)
 		event_column[i] = db::column
 		{
-			*events, keys[i]
+			*events, keys[i], std::nothrow
 		};
 
-	// Cache the columns for the metadata
+	// Construct global convenience references for the metadata columns
 	event_idx = db::column{*events, desc::events__event_idx.name};
 	event_json = db::column{*events, desc::events__event_json.name};
 	room_head = db::index{*events, desc::events__room_head.name};
