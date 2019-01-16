@@ -149,6 +149,7 @@ struct ircd::db::column
 
 	column(database::column &c);
 	column(database &, const string_view &column);
+	column(database &, const string_view &column, const std::nothrow_t);
 	column() = default;
 };
 

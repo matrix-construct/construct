@@ -10079,15 +10079,36 @@ ircd::db::has(column &column,
 // column
 //
 
-ircd::db::column::column(database::column &c)
-:c{&c}
+ircd::db::column::column(database &d,
+                         const string_view &column_name,
+                         const std::nothrow_t)
+:c{[&d, &column_name]
+{
+	const int32_t cfid
+	{
+		d.cfid(std::nothrow, column_name)
+	};
+
+	return cfid >= 0?
+		&d[cfid]:
+		nullptr;
+}()}
 {
 }
 
 ircd::db::column::column(database &d,
                          const string_view &column_name)
-:c{&d[column_name]}
-{}
+:column
+{
+	d[column_name]
+}
+{
+}
+
+ircd::db::column::column(database::column &c)
+:c{&c}
+{
+}
 
 void
 ircd::db::column::operator()(const delta &delta,
