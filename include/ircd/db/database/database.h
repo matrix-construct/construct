@@ -122,6 +122,11 @@ struct ircd::db::database
 	operator const rocksdb::DB &() const         { return *d;                                      }
 	operator rocksdb::DB &()                     { return *d;                                      }
 
+	// Lookup a column ID by name; throws not_found or returns -1.
+	int32_t cfid(const std::nothrow_t, const string_view &name) const;
+	uint32_t cfid(const string_view &name) const;
+
+	// Obtain a reference to a column or throw
 	const column &operator[](const uint32_t &id) const;
 	const column &operator[](const string_view &name) const;
 	column &operator[](const uint32_t &id);

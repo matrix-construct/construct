@@ -1537,16 +1537,7 @@ ircd::db::database::operator()(const sopts &sopts,
 ircd::db::database::column &
 ircd::db::database::operator[](const string_view &name)
 {
-	const auto it{column_names.find(name)};
-	if(unlikely(it == std::end(column_names)))
-		throw not_found
-		{
-			"'%s': column '%s' is not available or specified in schema",
-			this->name,
-			name
-		};
-
-	return operator[](db::id(*it->second));
+	return operator[](cfid(name));
 }
 
 ircd::db::database::column &
@@ -1571,16 +1562,7 @@ const ircd::db::database::column &
 ircd::db::database::operator[](const string_view &name)
 const
 {
-	const auto it{column_names.find(name)};
-	if(unlikely(it == std::end(column_names)))
-		throw not_found
-		{
-			"'%s': column '%s' is not available or specified in schema",
-			this->name,
-			name
-		};
-
-	return operator[](db::id(*it->second));
+	return operator[](cfid(name));
 }
 
 const ircd::db::database::column &
@@ -1599,6 +1581,37 @@ catch(const std::out_of_range &e)
 		this->name,
 		id
 	};
+}
+
+uint32_t
+ircd::db::database::cfid(const string_view &name)
+const
+{
+	const int32_t id
+	{
+		cfid(std::nothrow, name)
+	};
+
+	if(id < 0)
+		throw not_found
+		{
+			"'%s': column '%s' is not available or specified in schema",
+			this->name,
+			name
+		};
+
+	return id;
+}
+
+int32_t
+ircd::db::database::cfid(const std::nothrow_t,
+                         const string_view &name)
+const
+{
+	const auto it{column_names.find(name)};
+	return it != std::end(column_names)?
+		db::id(*it->second):
+		-1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
