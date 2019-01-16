@@ -216,9 +216,12 @@ commit__m_presence(const m::presence &content)
 	if(!exists(user))
 		create(user.user_id);
 
+	m::vm::copts copts;
+	copts.json = false;
+	copts.history = false;
 	const m::user::room user_room
 	{
-		user
+		user, &copts
 	};
 
 	//TODO: ABA
