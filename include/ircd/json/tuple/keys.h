@@ -30,6 +30,7 @@ struct ircd::json::keys
 	struct exclude;
 
 	size_t count() const;
+	bool has(const string_view &) const;
 
 	operator vector_view<const string_view>() const;
 
@@ -169,6 +170,24 @@ vector_view<const string_view>()
 const
 {
 	return { this->data(), this->count() };
+}
+
+template<class tuple>
+bool
+ircd::json::keys<tuple>::has(const string_view &key)
+const
+{
+	const auto &start
+	{
+		begin(*this)
+	};
+
+	const auto &stop
+	{
+		start + this->count()
+	};
+
+	return std::find(start, stop, key) != stop;
 }
 
 template<class tuple>
