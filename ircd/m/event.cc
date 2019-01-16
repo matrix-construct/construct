@@ -1548,9 +1548,9 @@ ircd::m::seek(event::fetch &fetch,
 	if(query_json)
 	{
 		if((fetch.valid = fetch._json.load(key, opts.gopts)))
-			event = json::object
+			event = m::event
 			{
-				fetch._json.val()
+				json::object{fetch._json.val()}, opts.keys
 			};
 
 		if(fetch.valid)
