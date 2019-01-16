@@ -86,6 +86,8 @@ struct ircd::m::dbs::write_opts
 	bool head {true};
 	bool refs {true};
 	bool json {true};
+	bool json_always {true};
+	bool json_source {false};
 };
 
 /// Database Schema Descriptors

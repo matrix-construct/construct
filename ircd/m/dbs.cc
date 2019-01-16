@@ -247,9 +247,26 @@ ircd::m::dbs::_index_json(db::txn &txn,
 
 	const string_view &val
 	{
-		opts.op == db::op::SET?
-			json::stringify(buf, event):
-			string_view{}
+		// If an already-strung json::object is carried by the event and
+		// the opts allow us, we use it directly. This is not the default
+		// path unless the developer knows the source JSON is good enough
+		// to store directly.
+		opts.op == db::op::SET && event.source && opts.json_source?
+			string_view{event.source}:
+
+		// If an already-strung json::object is carried by the event we
+		// re-stringify it into a temporary buffer. This is the common case
+		// because the original source might be crap JSON w/ spaces etc.
+		opts.op == db::op::SET && event.source?
+			json::stringify(mutable_buffer{buf}, event.source):
+
+		// If no source was given with the event we can generate it. This
+		// is a default path unless the developer knows better.
+		opts.op == db::op::SET && opts.json_always?
+			json::stringify(mutable_buffer{buf}, event):
+
+		// Empty value; generally for a non-SET db::op
+		string_view{}
 	};
 
 	db::txn::append
