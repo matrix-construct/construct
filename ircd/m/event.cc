@@ -1402,113 +1402,6 @@ ircd::m::get(std::nothrow_t,
 	return column(column_key, std::nothrow, closure);
 }
 
-void
-ircd::m::seek(event::fetch &fetch,
-              const event::id &event_id,
-              const event::fetch::opts *const &opts)
-{
-	if(!seek(fetch, event_id, std::nothrow, opts))
-		throw m::NOT_FOUND
-		{
-			"%s not found in database", event_id
-		};
-}
-
-bool
-ircd::m::seek(event::fetch &fetch,
-              const event::id &event_id,
-              std::nothrow_t,
-              const event::fetch::opts *const &opts)
-{
-	const auto &event_idx
-	{
-		index(event_id, std::nothrow)
-	};
-
-	return event_idx?
-		seek(fetch, event_idx, std::nothrow, opts):
-		false;
-}
-
-void
-ircd::m::seek(event::fetch &fetch,
-              const event::idx &event_idx,
-              const event::fetch::opts *const &opts)
-{
-	if(!seek(fetch, event_idx, std::nothrow, opts))
-		throw m::NOT_FOUND
-		{
-			"%lu not found in database", event_idx
-		};
-}
-
-bool
-ircd::m::seek(event::fetch &fetch,
-              const event::idx &event_idx,
-              std::nothrow_t,
-              const event::fetch::opts *const &opts)
-{
-	auto &event
-	{
-		static_cast<m::event &>(fetch)
-	};
-
-	const string_view &key
-	{
-		byte_view<string_view>(event_idx)
-	};
-
-	const db::gopts &gopts
-	{
-		opts?
-			opts->gopts:
-			db::gopts{}
-	};
-
-	const bool query_json
-	{
-		opts && opts->query_json_only?
-			true: // User only wants to make the event_json query
-
-		opts && !opts->query_json_maybe?
-			false: // User never wants to make the event_json query
-
-		fetch.row.size() < fetch.cell.size()?
-			false: // User is making specific column queries
-
-		fetch.row.size() == fetch.cell.size()?
-			true: // User is querying all columns
-
-		false
-	};
-
-	if(query_json)
-	{
-		if((fetch.valid = fetch._json.load(key, gopts)))
-			event = m::event
-			{
-				fetch._json.val()
-			};
-
-		if(fetch.valid)
-			return fetch.valid;
-
-		if(opts && opts->query_json_only)
-			return fetch.valid;
-
-		// graceful fallback to row query if json query failed.
-		assert(!fetch.valid);
-	}
-
-	if(!(fetch.valid = db::seek(fetch.row, key, gopts)))
-		return fetch.valid;
-
-	if((fetch.valid = fetch.row.valid(key)))
-		assign(event, fetch.row, key);
-
-	return fetch.valid;
-}
-
 ircd::m::event::idx
 ircd::m::index(const event &event)
 try
@@ -1591,6 +1484,103 @@ ircd::m::index(const event::id &event_id,
 }
 
 void
+ircd::m::seek(event::fetch &fetch,
+              const event::id &event_id,
+              const event::fetch::opts &opts)
+{
+	if(!seek(fetch, event_id, std::nothrow, opts))
+		throw m::NOT_FOUND
+		{
+			"%s not found in database", event_id
+		};
+}
+
+bool
+ircd::m::seek(event::fetch &fetch,
+              const event::id &event_id,
+              std::nothrow_t,
+              const event::fetch::opts &opts)
+{
+	const auto &event_idx
+	{
+		index(event_id, std::nothrow)
+	};
+
+	return event_idx?
+		seek(fetch, event_idx, std::nothrow, opts):
+		false;
+}
+
+void
+ircd::m::seek(event::fetch &fetch,
+              const event::idx &event_idx,
+              const event::fetch::opts &opts)
+{
+	if(!seek(fetch, event_idx, std::nothrow, opts))
+		throw m::NOT_FOUND
+		{
+			"%lu not found in database", event_idx
+		};
+}
+
+bool
+ircd::m::seek(event::fetch &fetch,
+              const event::idx &event_idx,
+              std::nothrow_t,
+              const event::fetch::opts &opts)
+{
+	auto &event
+	{
+		static_cast<m::event &>(fetch)
+	};
+
+	const string_view &key
+	{
+		byte_view<string_view>(event_idx)
+	};
+
+	const bool query_json
+	{
+		!opts.query_json?
+			false: // User never wants to make the event_json query
+
+		opts.query_json_force?
+			true: // User always wants to make the event_json query
+
+		fetch.row.size() < fetch.cell.size()?
+			false: // User is making specific column queries
+
+		fetch.row.size() == fetch.cell.size()?
+			true: // User is querying all columns
+
+		false
+	};
+
+	if(query_json)
+	{
+		if((fetch.valid = fetch._json.load(key, opts.gopts)))
+			event = m::event
+			{
+				fetch._json.val()
+			};
+
+		if(fetch.valid)
+			return fetch.valid;
+
+		// graceful fallback to row query if json query failed.
+		assert(!fetch.valid);
+	}
+
+	if(!(fetch.valid = db::seek(fetch.row, key, opts.gopts)))
+		return fetch.valid;
+
+	if((fetch.valid = fetch.row.valid(key)))
+		assign(event, fetch.row, key);
+
+	return fetch.valid;
+}
+
+void
 ircd::m::event::fetch::event_id(const idx &idx,
                                 const id::closure &closure)
 {
@@ -1610,20 +1600,20 @@ ircd::m::event::fetch::event_id(const idx &idx,
 }
 
 /// Seekless constructor.
-ircd::m::event::fetch::fetch(const opts *const &opts)
+ircd::m::event::fetch::fetch(const opts &opts)
 :_json
 {
 	m::dbs::event_json,
 	string_view{},
-	opts? opts->gopts : default_opts.gopts
+	opts.gopts
 }
 ,row
 {
 	*dbs::events,
 	string_view{},
-	opts? opts->keys : default_opts.keys,
+	opts.keys,
 	cell,
-	opts? opts->gopts : default_opts.gopts
+	opts.gopts
 }
 ,valid
 {
@@ -1635,7 +1625,7 @@ ircd::m::event::fetch::fetch(const opts *const &opts)
 /// Seek to event_id and populate this event from database.
 /// Throws if event not in database.
 ircd::m::event::fetch::fetch(const event::id &event_id,
-                             const opts *const &opts)
+                             const opts &opts)
 :fetch
 {
 	index(event_id), opts
@@ -1647,7 +1637,7 @@ ircd::m::event::fetch::fetch(const event::id &event_id,
 /// Event is not populated if not found in database.
 ircd::m::event::fetch::fetch(const event::id &event_id,
                              std::nothrow_t,
-                             const opts *const &opts)
+                             const opts &opts)
 :fetch
 {
 	index(event_id, std::nothrow), std::nothrow, opts
@@ -1658,7 +1648,7 @@ ircd::m::event::fetch::fetch(const event::id &event_id,
 /// Seek to event_idx and populate this event from database.
 /// Throws if event not in database.
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
-                             const opts *const &opts)
+                             const opts &opts)
 :fetch
 {
 	event_idx, std::nothrow, opts
@@ -1675,7 +1665,7 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 /// Event is not populated if not found in database.
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
                              std::nothrow_t,
-                             const opts *const &opts)
+                             const opts &opts)
 :fetch
 {
 	opts

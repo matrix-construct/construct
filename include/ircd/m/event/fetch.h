@@ -11,6 +11,24 @@
 #pragma once
 #define HAVE_IRCD_M_EVENT_FETCH_H
 
+/// Event Fetcher (local).
+///
+/// Fetches event data from the local database and populates an m::event which
+/// is a parent of this class; an instance of this object can be used as an
+/// `m::event` via that upcast. The data backing this `m::event` is a zero-copy
+/// reference into the database and its lifetime is governed by the internals
+/// of this object.
+///
+/// This can be constructed from either an event::idx or an `event_id`; the
+/// latter will incur an extra m::index() lookup. The constructor will throw
+/// for a missing event; the nothrow overloads will set a boolean indicator
+/// instead. A default constructor can also be used; after construction the
+/// seek() ADL suite can be used to the above effect.
+///
+/// The data is populated by one of two query types to the database; this is
+/// determined automatically by default, but can be configured further with
+/// the options structure.
+///
 struct ircd::m::event::fetch
 :event
 {
@@ -27,11 +45,15 @@ struct ircd::m::event::fetch
 	bool valid;
 
   public:
-	fetch(const idx &, std::nothrow_t, const opts *const & = nullptr);
-	fetch(const idx &, const opts *const & = nullptr);
-	fetch(const id &, std::nothrow_t, const opts *const & = nullptr);
-	fetch(const id &, const opts *const & = nullptr);
-	fetch(const opts *const & = nullptr);
+	fetch(const idx &, std::nothrow_t, const opts & = default_opts);
+	fetch(const id &, std::nothrow_t, const opts & = default_opts);
+	fetch(const id &, const opts & = default_opts);
+	fetch(const idx &, const opts & = default_opts);
+	fetch(const opts & = default_opts);
+	fetch(fetch &&) = delete;
+	fetch(const fetch &) = delete;
+	fetch &operator=(fetch &&) = default;
+	fetch &operator=(const fetch &) = delete;
 
 	static bool event_id(const idx &, std::nothrow_t, const id::closure &);
 	static void event_id(const idx &, const id::closure &);
@@ -39,13 +61,35 @@ struct ircd::m::event::fetch
 
 namespace ircd::m
 {
-	bool seek(event::fetch &, const event::idx &, std::nothrow_t, const event::fetch::opts *const & = nullptr);
-	void seek(event::fetch &, const event::idx &, const event::fetch::opts *const & = nullptr);
+	bool seek(event::fetch &, const event::idx &, std::nothrow_t, const event::fetch::opts & = event::fetch::default_opts);
+	void seek(event::fetch &, const event::idx &, const event::fetch::opts & = event::fetch::default_opts);
 
-	bool seek(event::fetch &, const event::id &, std::nothrow_t, const event::fetch::opts *const & = nullptr);
-	void seek(event::fetch &, const event::id &, const event::fetch::opts *const & = nullptr);
+	bool seek(event::fetch &, const event::id &, std::nothrow_t, const event::fetch::opts & = event::fetch::default_opts);
+	void seek(event::fetch &, const event::id &, const event::fetch::opts & = event::fetch::default_opts);
 }
 
+/// Event Fetch Options.
+///
+/// Refer to the individual member documentations for details. Notes:
+///
+/// - The default keys selection is *all keys*. This is unnecessarily
+/// expensive I/O for most uses of event::fetch; consider narrowing the keys
+/// selection based on what properties of the `m::event` will be accessed.
+///
+/// - Row Query: The event is populated by conducting a set of point lookups
+/// for the selected keys. The point lookups are parallelized so the latency
+/// of a lookup is only limited to the slowest key. The benefit of this type
+/// is that very efficient I/O and caching can be conducted, but the cost is
+/// that each lookup in the row occupies a hardware I/O lane which is a limited
+/// resource shared by the whole system.
+///
+/// - JSON Query: The event is populated by conducting a single point lookup
+/// to a database value containing the full JSON string of the event. This
+/// query is made when all keys are selected. The benefit of this query is that
+/// it only occupies one hardware I/O lane in contrast with the row query. The
+/// cost is that the full event JSON is read from storage (up to 64_KiB) and
+/// maintained in cache.
+///
 struct ircd::m::event::fetch::opts
 {
 	/// Event property selector
@@ -54,16 +98,16 @@ struct ircd::m::event::fetch::opts
 	/// Database get options passthru
 	db::gopts gopts;
 
-	/// Whether to allowing querying the event_json to populate the event if
-	/// it would be more efficient based on the keys being sought. Ex. If all
-	/// keys are being sought then we can make a single query to event_json
-	/// rather than a concurrent row query. This is enabled by default.
-	bool query_json_maybe {true};
+	/// Whether to allow querying the event_json to populate the event. A value
+	/// of true only allows this type of query to be made; a value of false
+	/// prevents this query from ever being made.
+	bool query_json {true};
 
-	/// Whether to force only querying for event_json to populate the event,
-	/// regardless of what keys are sought in the property selector. This is
-	/// not enabled by default.
-	bool query_json_only {false};
+	/// Whether to force an attempt at populating the event from event_json
+	/// first, bypassing any decision-making. This is useful if a key selection
+	/// is used which would trigger a row query but the developer wants the
+	/// json query anyway.
+	bool query_json_force {false};
 
 	opts(const event::keys &, const db::gopts & = {});
 	opts(const event::keys::selection &, const db::gopts & = {});

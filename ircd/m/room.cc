@@ -555,7 +555,7 @@ const
 {
 	event::fetch event
 	{
-		fopts
+		fopts? *fopts : event::fetch::default_opts
 	};
 
 	return for_each(type, event::closure_idx_bool{[&closure, &event]
@@ -666,8 +666,10 @@ ircd::m::room::messages::messages(const m::room &room,
 ,_event
 {
 	fopts?
-		fopts:
-		room.fopts
+		*fopts:
+	room.fopts?
+		*room.fopts:
+		event::fetch::default_opts
 }
 {
 	if(room.event_id)
@@ -683,8 +685,10 @@ ircd::m::room::messages::messages(const m::room &room,
 ,_event
 {
 	fopts?
-		fopts:
-		room.fopts
+		*fopts:
+	room.fopts?
+		*room.fopts:
+		event::fetch::default_opts
 }
 {
 	seek(event_id);
@@ -696,7 +700,11 @@ ircd::m::room::messages::messages(const m::room &room,
 :room{room}
 ,_event
 {
-	fopts? fopts : room.fopts
+	fopts?
+		*fopts:
+	room.fopts?
+		*room.fopts:
+		event::fetch::default_opts
 }
 {
 	seek(depth);
@@ -834,8 +842,18 @@ ircd::m::room::messages::fetch()
 const ircd::m::event &
 ircd::m::room::messages::fetch(std::nothrow_t)
 {
+	const event::fetch::opts &fopts
+	{
+		room.fopts?
+			*room.fopts:
+			event::fetch::default_opts
+	};
+
 	if(!m::seek(_event, event_idx(), std::nothrow))
-		_event = m::event::fetch{room.fopts};
+		_event = m::event::fetch
+		{
+			fopts
+		};
 
 	return _event;
 }
@@ -931,7 +949,7 @@ const
 	{
 		const event::fetch event
 		{
-			event_idx, fopts
+			event_idx, fopts? *fopts : event::fetch::default_opts
 		};
 
 		closure(event);
@@ -1014,7 +1032,7 @@ const
 	{
 		const event::fetch event
 		{
-			event_idx, std::nothrow, fopts
+			event_idx, std::nothrow, fopts? *fopts : event::fetch::default_opts
 		};
 
 		closure(event);
@@ -1132,7 +1150,7 @@ const
 {
 	event::fetch event
 	{
-		fopts
+		fopts? *fopts : event::fetch::default_opts
 	};
 
 	return for_each(event::closure_idx_bool{[&event, &closure]
@@ -1299,7 +1317,7 @@ const
 {
 	event::fetch event
 	{
-		fopts
+		fopts? *fopts : event::fetch::default_opts
 	};
 
 	return for_each(type, state_key_lb, event::closure_idx_bool{[&event, &closure]

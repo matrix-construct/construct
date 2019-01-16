@@ -1596,7 +1596,7 @@ ircd::m::events::for_each(const range &range,
 {
 	event::fetch event
 	{
-		range.fopts
+		range.fopts? *range.fopts : event::fetch::default_opts
 	};
 
 	// When the fopts dictate no columns to fetch there is nothing more to do.

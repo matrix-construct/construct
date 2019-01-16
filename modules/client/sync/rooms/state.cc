@@ -94,7 +94,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 
 		const event::fetch event
 		{
-			event_idx, std::nothrow, &fopts
+			event_idx, std::nothrow, fopts
 		};
 
 		if(!event.valid)
