@@ -490,7 +490,7 @@ noexcept
 	const bool copy_to_stdout
 	{
 		bool(conf.console_stdout)
-		&& ((!console_quiet_stdout[lev] && log.cmasked) || lev == level::CRITICAL)
+		&& (!console_quiet_stdout[lev] && log.cmasked)
 	};
 
 	const bool copy_to_file
