@@ -45,7 +45,7 @@ ircd.h.gch:
 
 ircd.pic.h.gch:
 	cp ircd.h ircd.pic.h
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o ircd.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) ircd.pic.h
+	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o ircd.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC ircd.pic.h
 
 clean-local:
 	rm -f ircd.h.gch
