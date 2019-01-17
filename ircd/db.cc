@@ -9351,16 +9351,8 @@ ircd::db::row::row(database &d,
 	std::vector<Iterator *> iterators;
 	if(key)
 	{
-		// The goal here is to optimize away the heap allocation incurred by
-		// having to pass RocksDB the specific std::vector type which doesn't
-		// have room for an allocator. We use a single thread_local vector
-		// and reserve() it with one worst-case size of all possible columns.
-		// Then we resize it to this specific call's requirements and copy the
-		// column pointers. On sane platforms only one allocation ever occurs.
-		thread_local std::vector<ColumnFamilyHandle *> handles;
 		assert(column_count <= d.columns.size());
-		handles.reserve(d.columns.size());
-		handles.resize(column_count);
+		std::vector<ColumnFamilyHandle *> handles(column_count);
 		std::transform(colptr, colptr + column_count, begin(handles), []
 		(database::column *const &ptr)
 		{
@@ -9370,6 +9362,7 @@ ircd::db::row::row(database &d,
 		// This has been seen to lead to IO and block the ircd::ctx;
 		// specifically when background options are aggressive and shortly
 		// after db opens.
+		//const ctx::critical_assertion ca;
 		throw_on_error
 		{
 			d.d->NewIterators(options, handles, &iterators)
