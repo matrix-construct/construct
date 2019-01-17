@@ -88,12 +88,16 @@ void
 ircd::ctx::parallel<arg>::sender(const arg &a)
 noexcept
 {
+	auto &p(*this->p);
+	auto func
+	{
+		std::bind(&parallel::receiver, this)
+	};
+
 	this->a.at(snd++) = a;
 	snd %= this->a.size();
 	out++;
 
-	auto &p(*this->p);
-	auto func(std::bind(&parallel::receiver, this));
 	if(likely(p.size()))
 		p(std::move(func));
 	else
@@ -105,12 +109,16 @@ void
 ircd::ctx::parallel<arg>::sender()
 noexcept
 {
+	auto &p(*this->p);
+	auto func
+	{
+		std::bind(&parallel::receiver, this)
+	};
+
 	snd++;
 	snd %= this->a.size();
 	out++;
 
-	auto &p(*this->p);
-	auto func(std::bind(&parallel::receiver, this));
 	if(likely(p.size()))
 		p(std::move(func));
 	else
@@ -122,10 +130,8 @@ void
 ircd::ctx::parallel<arg>::receiver()
 noexcept
 {
-	auto &a
-	{
-		this->a.at(rcv++ % this->a.size())
-	};
+	auto &a(this->a.at(rcv % this->a.size()));
+	rcv++;
 
 	if(!this->eptr) try
 	{
