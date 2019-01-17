@@ -43,7 +43,7 @@ _key_transform(it_a it,
 		++it;
 	}
 
-	return _key_transform<tuple, it_a, it_b, i + 1>(it, end, std::move(lambda));
+	return _key_transform<tuple, it_a, it_b, i + 1>(it, end, std::forward<closure>(lambda));
 }
 
 template<class tuple,
