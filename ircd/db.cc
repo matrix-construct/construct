@@ -9349,6 +9349,7 @@ ircd::db::row::row(database &d,
 		});
 
 	std::vector<Iterator *> iterators;
+	if(key)
 	{
 		// The goal here is to optimize away the heap allocation incurred by
 		// having to pass RocksDB the specific std::vector type which doesn't
@@ -9377,8 +9378,15 @@ ircd::db::row::row(database &d,
 
 	for(size_t i(0); i < this->size() && i < column_count; ++i)
 	{
-		std::unique_ptr<Iterator> it(iterators.at(i));
-		(*this)[i] = cell { *colptr[i], std::move(it), opts };
+		std::unique_ptr<Iterator> it
+		{
+			!iterators.empty()? iterators.at(i) : nullptr
+		};
+
+		(*this)[i] = cell
+		{
+			*colptr[i], std::move(it), opts
+		};
 	}
 
 	if(key)
