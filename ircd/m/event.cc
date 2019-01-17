@@ -1664,7 +1664,8 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 	opts
 }
 {
-	seek(*this, event_idx, std::nothrow, opts);
+	if(likely(event_idx))
+		seek(*this, event_idx, std::nothrow, opts);
 }
 
 //
