@@ -51,12 +51,10 @@ ircd::m::sync::_default_keys
 };
 
 decltype(ircd::m::sync::_default_fopts)
-ircd::m::sync::_default_fopts{[]
+ircd::m::sync::_default_fopts
 {
-	event::fetch::opts ret{_default_keys};
-	ret.query_json_force = true;
-	return ret;
-}()};
+	_default_keys
+};
 
 void
 ircd::m::sync::room_state_linear(data &data)
@@ -97,13 +95,18 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	const event::closure_idx each_idx{[&data, &array, &mutex]
 	(const m::event::idx &event_idx)
 	{
-		const event::fetch event
+		const event::fetch fetch
 		{
 			event_idx, std::nothrow, _default_fopts
 		};
 
-		if(!event.valid)
+		if(!fetch.valid)
 			return;
+
+		const m::event event
+		{
+			fetch, event::keys{_default_keys}
+		};
 
 		const std::lock_guard<decltype(mutex)> lock{mutex};
 		data.commit();
@@ -111,7 +114,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	}};
 
 	//TODO: conf
-	std::array<event::idx, 16> md;
+	std::array<event::idx, 32> md;
 	ctx::parallel<event::idx> parallel
 	{
 		m::sync::pool, md, each_idx
