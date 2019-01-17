@@ -62,8 +62,8 @@ struct tuple
 	operator json::value() const;
 	operator crh::sha256::buf() const;
 
-	template<class... U> tuple(const tuple<U...> &);
-	template<class U> tuple(const json::object &, const json::keys<U> &);
+	template<class... U> explicit tuple(const tuple<U...> &);
+	template<class U> explicit tuple(const json::object &, const json::keys<U> &);
 	tuple(const json::object &);
 	tuple(const json::iov &);
 	tuple(const std::initializer_list<member> &);
