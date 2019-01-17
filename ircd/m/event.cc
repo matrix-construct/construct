@@ -424,7 +424,7 @@ ircd::m::my(const id::event &event_id)
 /// The maximum size of an event we will create. This may also be used in
 /// some contexts for what we will accept, but the protocol limit and hard
 /// worst-case buffer size is still event::MAX_SIZE.
-ircd::conf::item<size_t>
+decltype(ircd::m::event::max_size)
 ircd::m::event::max_size
 {
 	{ "name",     "m.event.max_size" },
@@ -519,7 +519,7 @@ ircd::m::event::hash(json::iov &event,
 ircd::sha256::buf
 ircd::m::hash(const event &event)
 {
-	thread_local char buf[64_KiB];
+	thread_local char buf[event::MAX_SIZE];
 	string_view preimage;
 
 	//TODO: tuple::keys::selection
@@ -621,13 +621,13 @@ ircd::m::event
 ircd::m::signatures(const mutable_buffer &out_,
                     const m::event &event_)
 {
-	thread_local char content[64_KiB];
+	thread_local char content[event::MAX_SIZE];
 	m::event event
 	{
 		essential(event_, content)
 	};
 
-	thread_local char buf[64_KiB];
+	thread_local char buf[event::MAX_SIZE];
 	const json::object &preimage
 	{
 		stringify(buf, event)
@@ -694,7 +694,7 @@ ircd::ed25519::sig
 ircd::m::sign(const event &event,
               const ed25519::sk &sk)
 {
-	thread_local char buf[64_KiB];
+	thread_local char buf[event::MAX_SIZE];
 	const string_view preimage
 	{
 		stringify(buf, event)
@@ -714,7 +714,7 @@ ircd::m::event::sign(const json::object &event,
                      const ed25519::sk &sk)
 {
 	//TODO: skip rewrite
-	thread_local char buf[64_KiB];
+	thread_local char buf[event::MAX_SIZE];
 	const string_view preimage
 	{
 		stringify(buf, event)
@@ -843,13 +843,13 @@ ircd::m::verify(const event &event_,
                 const ed25519::pk &pk,
                 const ed25519::sig &sig)
 {
-	thread_local char content[64_KiB];
+	thread_local char content[event::MAX_SIZE];
 	m::event event
 	{
 		essential(event_, content)
 	};
 
-	thread_local char buf[64_KiB];
+	thread_local char buf[event::MAX_SIZE];
 	const json::object &preimage
 	{
 		stringify(buf, event)
@@ -864,7 +864,7 @@ ircd::m::event::verify(const json::object &event,
                        const ed25519::sig &sig)
 {
 	//TODO: skip rewrite
-	thread_local char buf[64_KiB];
+	thread_local char buf[event::MAX_SIZE];
 	const string_view preimage
 	{
 		stringify(buf, event)
