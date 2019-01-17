@@ -41,6 +41,7 @@ struct ircd::fs::aio::system
 	/// other state
 	ctx::dock dock;
 	size_t in_flight {0};
+	bool handle_set {false};
 
 	/// An eventfd which will be notified by the system; we integrate this with
 	/// the ircd io_service core epoll() event loop. The EFD_SEMAPHORE flag is

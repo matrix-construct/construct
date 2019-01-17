@@ -388,7 +388,6 @@ try
 }
 {
 	syscall<SYS_io_setup>(this->max_events(), &idp);
-	set_handle();
 	log::debug
 	{
 		"Established AIO(%p) context (fd:%d max_events:%zu max_submit:%zu)",
@@ -438,7 +437,11 @@ ircd::fs::aio::system::interrupt()
 	if(!resfd.is_open())
 		return false;
 
-	resfd.cancel();
+	if(handle_set)
+		resfd.cancel();
+	else
+		ecount = -1;
+
 	return true;
 }
 
@@ -458,6 +461,7 @@ ircd::fs::aio::system::wait()
 		return ecount == uint64_t(-1);
 	});
 
+	assert(request_count() == 0);
 	return true;
 }
 
@@ -607,6 +611,11 @@ try
 	assert(in_flight + qcount <= MAX_EVENTS);
 	assert(in_flight + qcount <= max_events());
 
+	const bool idle
+	{
+		in_flight == 0
+	};
+
 	const auto submitted
 	{
 		syscall<SYS_io_submit>(idp, qcount, queue.data())
@@ -619,6 +628,10 @@ try
 	in_flight += submitted;
 	qcount -= submitted;
 	assert(!qcount);
+
+	if(idle && submitted > 0 && !handle_set)
+		set_handle();
+
 	return submitted;
 }
 catch(const std::system_error &e)
@@ -645,7 +658,10 @@ catch(const std::system_error &e)
 
 void
 ircd::fs::aio::system::set_handle()
+try
 {
+	assert(!handle_set);
+	handle_set = true;
 	ecount = 0;
 
 	const asio::mutable_buffers_1 bufs
@@ -658,7 +674,12 @@ ircd::fs::aio::system::set_handle()
 		std::bind(&system::handle, this, ph::_1, ph::_2)
 	};
 
-	asio::async_read(resfd, bufs, std::move(handler));
+	resfd.async_read_some(bufs, std::move(handler));
+}
+catch(...)
+{
+	handle_set = false;
+	throw;
 }
 
 /// Handle notifications that requests are complete.
@@ -671,6 +692,8 @@ noexcept try
 
 	assert((bytes == 8 && !ec && ecount >= 1) || (bytes == 0 && ec));
 	assert(!ec || ec.category() == asio::error::get_system_category());
+	assert(handle_set);
+	handle_set = false;
 
 	switch(ec.value())
 	{
@@ -688,7 +711,8 @@ noexcept try
 			throw_system_error(ec);
 	}
 
-	set_handle();
+	if(in_flight > 0 && !handle_set)
+		set_handle();
 }
 catch(const ctx::interrupted &)
 {
