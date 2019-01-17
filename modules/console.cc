@@ -5436,7 +5436,11 @@ console_cmd__event(opt &out, const string_view &line)
 	{
 		case hash("raw"):
 		{
-			out << event << std::endl;
+			if(event.source)
+				out << event.source << std::endl;
+			else
+				out << event << std::endl;
+
 			return true;
 		}
 
@@ -5478,6 +5482,12 @@ console_cmd__event(opt &out, const string_view &line)
 
 	if(!full_json)
 		out << "- JSON NOT FOUND" << std::endl;
+
+	if(event.source)
+		out << "+ JSON SOURCE" << std::endl;
+
+	if(event.source && !json::valid(event.source, std::nothrow))
+		out << "- JSON SOURCE INVALID" << std::endl;
 
 	if(cached)
 		out << "+ CACHED" << std::endl;
