@@ -1546,10 +1546,9 @@ ircd::m::seek(event::fetch &fetch,
 				fetch._json.val()
 			};
 
-			event =
-			{
-				source, opts.keys
-			};
+			event = opts.selected_only?
+				m::event{source, opts.keys}:
+				m::event{source};
 
 			assert(data(event.source) == data(source));
 			assert(fetch.valid);

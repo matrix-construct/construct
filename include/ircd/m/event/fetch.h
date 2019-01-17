@@ -109,6 +109,11 @@ struct ircd::m::event::fetch::opts
 	/// json query anyway.
 	bool query_json_force {false};
 
+	/// Whether to enforce the keys populated with values are tight to those
+	/// keys specified here. This is naturally true for row queries anyway,
+	/// but json queries may have more data than is being sought.
+	bool selected_only {false};
+
 	opts(const event::keys &, const db::gopts & = {});
 	opts(const event::keys::selection &, const db::gopts & = {});
 	opts(const db::gopts &, const event::keys::selection & = {});
