@@ -835,7 +835,14 @@ const
 const ircd::m::event &
 ircd::m::room::messages::fetch()
 {
-	m::seek(_event, event_idx());
+	const event::fetch::opts &fopts
+	{
+		room.fopts?
+			*room.fopts:
+			event::fetch::default_opts
+	};
+
+	m::seek(_event, event_idx(), fopts);
 	return _event;
 }
 
@@ -849,12 +856,7 @@ ircd::m::room::messages::fetch(std::nothrow_t)
 			event::fetch::default_opts
 	};
 
-	if(!m::seek(_event, event_idx(), std::nothrow))
-		_event = m::event::fetch
-		{
-			fopts
-		};
-
+	m::seek(_event, event_idx(), std::nothrow, fopts);
 	return _event;
 }
 
