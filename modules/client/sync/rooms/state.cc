@@ -23,6 +23,8 @@ namespace ircd::m::sync
 	static void room_state_linear(data &);
 
 	extern const event::keys::include _default_keys;
+	extern const event::fetch::opts _default_fopts;
+
 	extern item room_state;
 }
 
@@ -47,6 +49,14 @@ ircd::m::sync::_default_keys
 	"state_key",
 	"type",
 };
+
+decltype(ircd::m::sync::_default_fopts)
+ircd::m::sync::_default_fopts{[]
+{
+	event::fetch::opts ret{_default_keys};
+	ret.query_json_force = true;
+	return ret;
+}()};
 
 void
 ircd::m::sync::room_state_linear(data &data)
@@ -87,14 +97,9 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	const event::closure_idx each_idx{[&data, &array, &mutex]
 	(const m::event::idx &event_idx)
 	{
-		static const m::event::fetch::opts fopts
-		{
-			_default_keys
-		};
-
 		const event::fetch event
 		{
-			event_idx, std::nothrow, fopts
+			event_idx, std::nothrow, _default_fopts
 		};
 
 		if(!event.valid)
