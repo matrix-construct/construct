@@ -34,7 +34,7 @@ struct ircd::json::keys
 
 	operator vector_view<const string_view>() const;
 
-	constexpr keys(const selection & = {});
+	keys(const selection & = {});
 };
 
 /// Selection of keys in a tuple represented by a bitset. Users generally
@@ -45,15 +45,15 @@ struct ircd::json::keys<tuple>::selection
 :std::bitset<tuple::size()>
 {
 	template<class closure>
-	constexpr bool until(closure &&function) const;
+	constexpr bool until(closure&& function) const;
 
 	template<class closure>
-	constexpr void for_each(closure &&function) const;
+	constexpr void for_each(closure&& function) const;
 
-	template<class it_a,
-	         class it_b>
-	constexpr it_a transform(it_a it, const it_b end) const;
+	template<class it>
+	constexpr it transform(it, const it end) const;
 
+	// Note the default all-bits set.
 	constexpr selection(const uint64_t &val = -1)
 	:std::bitset<tuple::size()>{val}
 	{}
@@ -106,30 +106,29 @@ struct ircd::json::keys<tuple>::exclude
 //
 
 template<class tuple>
-template<class it_a,
-	     class it_b>
-constexpr it_a
-ircd::json::keys<tuple>::selection::transform(it_a it,
-                                              const it_b end)
+template<class it>
+constexpr it
+ircd::json::keys<tuple>::selection::transform(it i,
+                                              const it end)
 const
 {
-	this->until([&it, &end](auto&& key)
+	this->until([&i, &end](auto&& key)
 	{
-		if(it == end)
+		if(i == end)
 			return false;
 
-		*it = key;
-		++it;
+		*i = key;
+		++i;
 		return true;
 	});
 
-	return it;
+	return i;
 }
 
 template<class tuple>
 template<class closure>
 constexpr void
-ircd::json::keys<tuple>::selection::for_each(closure &&function)
+ircd::json::keys<tuple>::selection::for_each(closure&& function)
 const
 {
 	this->until([&function](auto&& key)
@@ -142,7 +141,7 @@ const
 template<class tuple>
 template<class closure>
 constexpr bool
-ircd::json::keys<tuple>::selection::until(closure &&function)
+ircd::json::keys<tuple>::selection::until(closure&& function)
 const
 {
 	for(size_t i(0); i < tuple::size(); ++i)
@@ -158,7 +157,6 @@ const
 //
 
 template<class tuple>
-constexpr
 ircd::json::keys<tuple>::keys(const selection &selection)
 {
 	selection.transform(this->begin(), this->end());
@@ -179,7 +177,7 @@ const
 {
 	const auto &start
 	{
-		begin(*this)
+		this->begin()
 	};
 
 	const auto &stop
@@ -187,7 +185,8 @@ const
 		start + this->count()
 	};
 
-	return std::find(start, stop, key) != stop;
+	assert(!empty(key));
+	return stop != std::find(start, stop, key);
 }
 
 template<class tuple>
