@@ -1568,7 +1568,10 @@ ircd::m::seek(event::fetch &fetch,
 		return fetch.valid;
 
 	if((fetch.valid = fetch.row.valid(key)))
+	{
 		assign(event, fetch.row, key);
+		event.source = {};
+	}
 
 	return fetch.valid;
 }
