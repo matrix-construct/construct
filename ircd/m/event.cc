@@ -1210,14 +1210,6 @@ const
 	};
 }
 
-//
-// event::fetch
-//
-
-decltype(ircd::m::event::fetch::default_opts)
-ircd::m::event::fetch::default_opts
-{};
-
 void
 ircd::m::prefetch(const event::id &event_id,
                   const event::fetch::opts &opts)
@@ -1554,9 +1546,13 @@ ircd::m::seek(event::fetch &fetch,
 				fetch._json.val()
 			};
 
+			event =
+			{
+				source, opts.keys
+			};
+
+			assert(data(event.source) == data(source));
 			assert(fetch.valid);
-			assert(!empty(source));
-			event = m::event{source, opts.keys};
 			return fetch.valid;
 		}
 
@@ -1575,6 +1571,14 @@ ircd::m::seek(event::fetch &fetch,
 
 	return fetch.valid;
 }
+
+//
+// event::fetch
+//
+
+decltype(ircd::m::event::fetch::default_opts)
+ircd::m::event::fetch::default_opts
+{};
 
 void
 ircd::m::event::fetch::event_id(const idx &idx,
@@ -1595,9 +1599,14 @@ ircd::m::event::fetch::event_id(const idx &idx,
 	return get(std::nothrow, idx, "event_id", closure);
 }
 
+//
+// event::fetch::fetch
+//
+
 /// Seekless constructor.
 ircd::m::event::fetch::fetch(const opts &opts)
-:_json
+:event{}
+,_json
 {
 	m::dbs::event_json,
 	string_view{},
@@ -1668,7 +1677,8 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 }
 {
 	if(likely(event_idx))
-		seek(*this, event_idx, std::nothrow, opts);
+		if(!seek(*this, event_idx, std::nothrow, opts))
+			assert(!valid);
 }
 
 //

@@ -52,7 +52,7 @@ struct ircd::m::event::fetch
 	fetch(const opts & = default_opts);
 	fetch(fetch &&) = delete;
 	fetch(const fetch &) = delete;
-	fetch &operator=(fetch &&) = default;
+	fetch &operator=(fetch &&) = delete;
 	fetch &operator=(const fetch &) = delete;
 
 	static bool event_id(const idx &, std::nothrow_t, const id::closure &);
