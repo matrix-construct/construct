@@ -1487,9 +1487,13 @@ ircd::m::seek(event::fetch &fetch,
 		index(event_id, std::nothrow)
 	};
 
-	return event_idx?
-		seek(fetch, event_idx, std::nothrow, opts):
-		false;
+	if(!event_idx)
+	{
+		fetch.valid = false;
+		return fetch.valid;
+	}
+
+	return seek(fetch, event_idx, std::nothrow, opts);
 }
 
 void
