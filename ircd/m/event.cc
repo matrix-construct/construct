@@ -1548,13 +1548,17 @@ ircd::m::seek(event::fetch &fetch,
 	if(query_json)
 	{
 		if((fetch.valid = fetch._json.load(key, opts.gopts)))
-			event = m::event
+		{
+			const json::object source
 			{
-				json::object{fetch._json.val()}, opts.keys
+				fetch._json.val()
 			};
 
-		if(fetch.valid)
+			assert(fetch.valid);
+			assert(!empty(source));
+			event = m::event{source, opts.keys};
 			return fetch.valid;
+		}
 
 		// graceful fallback to row query if json query failed.
 		assert(!fetch.valid);
