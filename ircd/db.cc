@@ -9060,31 +9060,31 @@ const
 }
 
 bool
-ircd::db::cell::valid()
-const
-{
-	return bool(it) && db::valid(*it);
-}
-
-bool
 ircd::db::cell::valid(const string_view &s)
 const
 {
-	return bool(it) && db::valid_eq(*it, s);
+	return valid() && db::valid_eq(*it, s);
 }
 
 bool
 ircd::db::cell::valid_gt(const string_view &s)
 const
 {
-	return bool(it) && db::valid_gt(*it, s);
+	return valid() && db::valid_gt(*it, s);
 }
 
 bool
 ircd::db::cell::valid_lte(const string_view &s)
 const
 {
-	return bool(it) && db::valid_lte(*it, s);
+	return valid() && db::valid_lte(*it, s);
+}
+
+bool
+ircd::db::cell::valid()
+const
+{
+	return bool(it) && db::valid(*it);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
