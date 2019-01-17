@@ -1689,19 +1689,10 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 //
 
 ircd::m::event::fetch::opts::opts(const db::gopts &gopts,
-                                  const event::keys::selection &selection)
+                                  const event::keys &keys)
 :opts
 {
-	selection, gopts
-}
-{
-}
-
-ircd::m::event::fetch::opts::opts(const event::keys::selection &selection,
-                                  const db::gopts &gopts)
-:opts
-{
-	event::keys{selection}, gopts
+	keys, gopts
 }
 {
 }
