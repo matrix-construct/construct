@@ -45,10 +45,13 @@ AM_LDFLAGS = \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
+	-Wl,--whole-archive \
 	-Wl,-z -Wl,initfirst \
 	-Wl,-z -Wl,nodelete \
 	-Wl,-z -Wl,nodlopen \
 	-Wl,-z -Wl,now \
+	-Wl,-z -Wl,combreloc \
+	-Wl,-z -Wl,nocopyreloc \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
 	###
@@ -94,8 +97,8 @@ libircd_la_LIBADD = \
 # the units that compile spirit grammars otherwise they thrash weaker
 # systems.
 libircd_la_SOURCES =   \
-	allocator.cc       \
 	info.cc            \
+	allocator.cc       \
 	exception.cc       \
 	util.cc            \
 	fpe.cc             \

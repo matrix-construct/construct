@@ -419,7 +419,7 @@ AM_COND_IF([OPTIMIZE],
 	dnl is resolved
 	dnl
 	dnl CXXFLAGS+=" -flto"
-	dnl CXXFLAGS+=" -fdevirtualize-at-ltrans"
+	CXXFLAGS+=" -fdevirtualize-at-ltrans"
 
 	dnl remember to axe this when lto is enabled
 	CXXFLAGS+=" -g"
