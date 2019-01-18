@@ -44,6 +44,11 @@ struct ircd::m::event::fetch
 	db::row row;
 	bool valid;
 
+	static string_view key(const event::idx *const &);
+	static bool should_seek_json(const opts &);
+	bool assign_from_json(const opts &);
+	bool assign_from_row(const opts &, const string_view &key);
+
   public:
 	fetch(const idx &, std::nothrow_t, const opts & = default_opts);
 	fetch(const id &, std::nothrow_t, const opts & = default_opts);

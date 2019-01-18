@@ -1524,53 +1524,12 @@ ircd::m::seek(event::fetch &fetch,
 		byte_view<string_view>(event_idx)
 	};
 
-	const bool query_json
-	{
-		!opts.query_json?
-			false: // User never wants to make the event_json query
-
-		opts.query_json_force?
-			true: // User always wants to make the event_json query
-
-		fetch.row.size() < fetch.cell.size()?
-			false: // User is making specific column queries
-
-		fetch.row.size() == fetch.cell.size()?
-			true: // User is querying all columns
-
-		false
-	};
-
-	if(query_json)
-	{
+	if(fetch.should_seek_json(opts))
 		if((fetch.valid = fetch._json.load(key, opts.gopts)))
-		{
-			const json::object source
-			{
-				fetch._json.val()
-			};
+			return fetch.assign_from_json(opts);
 
-			event = opts.selected_only?
-				m::event{source, opts.keys}:
-				m::event{source};
-
-			assert(data(event.source) == data(source));
-			assert(fetch.valid);
-			return fetch.valid;
-		}
-
-		// graceful fallback to row query if json query failed.
-		assert(!fetch.valid);
-	}
-
-	if(!(fetch.valid = db::seek(fetch.row, key, opts.gopts)))
-		return fetch.valid;
-
-	if((fetch.valid = fetch.row.valid(key)))
-	{
-		assign(event, fetch.row, key);
-		event.source = {};
-	}
+	if((fetch.valid = db::seek(fetch.row, key, opts.gopts)))
+		fetch.valid = fetch.assign_from_row(opts, key);
 
 	return fetch.valid;
 }
@@ -1605,30 +1564,6 @@ ircd::m::event::fetch::event_id(const idx &idx,
 //
 // event::fetch::fetch
 //
-
-/// Seekless constructor.
-ircd::m::event::fetch::fetch(const opts &opts)
-:event{}
-,_json
-{
-	m::dbs::event_json,
-	string_view{},
-	opts.gopts
-}
-,row
-{
-	*dbs::events,
-	string_view{},
-	opts.keys,
-	cell,
-	opts.gopts
-}
-,valid
-{
-	false
-}
-{
-}
 
 /// Seek to event_id and populate this event from database.
 /// Throws if event not in database.
@@ -1674,14 +1609,124 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
                              std::nothrow_t,
                              const opts &opts)
-:fetch
+:event{}
+,_json
 {
-	opts
+	m::dbs::event_json,
+	event_idx && should_seek_json(opts)?
+		key(&event_idx):
+		string_view{},
+	opts.gopts
+}
+,row
+{
+	*dbs::events,
+	event_idx && !_json.valid(key(&event_idx))?
+		key(&event_idx):
+		string_view{},
+	opts.keys,
+	cell,
+	opts.gopts
+}
+,valid
+{
+	event_idx && _json.valid(key(&event_idx))?
+		assign_from_json(opts):
+		assign_from_row(opts, key(&event_idx))
 }
 {
-	if(likely(event_idx))
-		if(!seek(*this, event_idx, std::nothrow, opts))
-			assert(!valid);
+}
+
+/// Seekless constructor.
+ircd::m::event::fetch::fetch(const opts &opts)
+:event{}
+,_json
+{
+	m::dbs::event_json,
+	string_view{},
+	opts.gopts
+}
+,row
+{
+	*dbs::events,
+	string_view{},
+	opts.keys,
+	cell,
+	opts.gopts
+}
+,valid
+{
+	false
+}
+{
+}
+
+bool
+ircd::m::event::fetch::assign_from_json(const opts &opts)
+{
+	auto &event
+	{
+		static_cast<m::event &>(*this)
+	};
+
+	const json::object source
+	{
+		_json.val()
+	};
+
+	assert(!empty(source));
+	event = opts.selected_only?
+		m::event{source, opts.keys}:
+		m::event{source};
+
+	assert(data(event.source) == data(source));
+	return true;
+}
+
+bool
+ircd::m::event::fetch::assign_from_row(const opts &opts,
+                                       const string_view &key)
+{
+	auto &event
+	{
+		static_cast<m::event &>(*this)
+	};
+
+	if(!row.valid(key))
+		return false;
+
+	assign(event, row, key);
+	event.source = {};
+	return true;
+}
+
+bool
+ircd::m::event::fetch::should_seek_json(const opts &opts)
+{
+	 // User never wants to make the event_json query
+	if(!opts.query_json)
+		return false;
+
+	// User always wants to make the event_json query
+	if(opts.query_json_force)
+		return true;
+
+	// User is making specific column queries
+	if(opts.keys.count() < event::size())
+		return false;
+
+	// User is querying all columns
+	if(opts.keys.count() == event::size())
+		return true;
+
+	return false;
+}
+
+ircd::string_view
+ircd::m::event::fetch::key(const event::idx *const &event_idx)
+{
+	assert(event_idx);
+	return byte_view<string_view>(*event_idx);
 }
 
 //
