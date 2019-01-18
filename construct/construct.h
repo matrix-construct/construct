@@ -19,11 +19,11 @@ namespace construct
 struct construct::signals
 {
 	std::unique_ptr<boost::asio::signal_set> signal_set;
-	ircd::runlevel_changed runlevel_changed;
+	ircd::run::changed runlevel_changed;
 
 	void set_handle();
 	void on_signal(const boost::system::error_code &, int) noexcept;
-	void on_runlevel(const enum ircd::runlevel &);
+	void on_runlevel(const enum ircd::run::level &);
 
   public:
 	signals(boost::asio::io_context &ios);
@@ -45,10 +45,10 @@ struct construct::console
 	std::string record_path;
 	ircd::module *module {nullptr};
 	ircd::context context;
-	ircd::runlevel_changed runlevel_changed;
+	ircd::run::changed runlevel_changed;
 
 	void show_message() const;
-	void on_runlevel(const enum ircd::runlevel &);
+	void on_runlevel(const enum ircd::run::level &);
 	bool wait_running() const;
 	bool next_command();
 	void wait_input();

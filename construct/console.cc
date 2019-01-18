@@ -431,13 +431,12 @@ construct::console::next_command()
 }
 
 void
-construct::console::on_runlevel(const enum ircd::runlevel &runlevel)
+construct::console::on_runlevel(const enum ircd::run::level &runlevel)
 {
 	switch(runlevel)
 	{
-		case ircd::runlevel::QUIT:
-		case ircd::runlevel::HALT:
-		case ircd::runlevel::FAULT:
+		case ircd::run::level::QUIT:
+		case ircd::run::level::HALT:
 			console::terminate();
 			break;
 
@@ -450,14 +449,14 @@ bool
 construct::console::wait_running()
 const
 {
-	ircd::runlevel_changed::dock.wait([]
+	ircd::run::changed::dock.wait([]
 	{
-		return ircd::runlevel == ircd::runlevel::RUN ||
-		       ircd::runlevel == ircd::runlevel::QUIT ||
-		       ircd::runlevel == ircd::runlevel::HALT;
+		return ircd::run::level == ircd::run::level::RUN ||
+		       ircd::run::level == ircd::run::level::QUIT ||
+		       ircd::run::level == ircd::run::level::HALT;
 	});
 
-	return ircd::runlevel == ircd::runlevel::RUN;
+	return ircd::run::level == ircd::run::level::RUN;
 }
 
 void

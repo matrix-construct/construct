@@ -331,7 +331,7 @@ void
 ircd::server::submit(const hostport &hostport,
                      request &request)
 {
-	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
+	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 		throw unavailable
 		{
 			"Unable to fulfill requests at this time."
@@ -480,7 +480,7 @@ void
 ircd::server::peer::submit(request &request)
 try
 {
-	if(!err_check() || unlikely(ircd::runlevel != ircd::runlevel::RUN))
+	if(!err_check() || unlikely(ircd::run::level != ircd::run::level::RUN))
 		throw unavailable
 		{
 			"Peer is unable to take any requests: %s", err_msg()
@@ -962,7 +962,7 @@ try
 	// The hostname in open_opts should still reference this object's string.
 	assert(host(open_opts.hostport).data() == this->hostcanon.data());
 
-	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
+	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 		op_fini = true;
 
 	if(unlikely(finished()))
@@ -1298,7 +1298,7 @@ ircd::server::link::cancel_uncommitted(std::exception_ptr eptr)
 bool
 ircd::server::link::open(const net::open_opts &open_opts)
 {
-	assert(ircd::runlevel == ircd::runlevel::RUN);
+	assert(ircd::run::level == ircd::run::level::RUN);
 
 	if(op_init)
 		return false;

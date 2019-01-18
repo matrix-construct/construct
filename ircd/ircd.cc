@@ -33,17 +33,17 @@ ircd::debugmode
 /// This function will setup the main program loop of libircd. The execution will
 /// occur when your io_context.run() or poll() is further invoked.
 ///
-/// init() can only be called from a runlevel::HALT state
+/// init() can only be called from a run::level::HALT state
 void
 ircd::init(boost::asio::io_context &user_ios,
            const string_view &origin,
            const string_view &hostname)
 try
 {
-	if(runlevel != runlevel::HALT)
+	if(run::level != run::level::HALT)
 		throw error
 		{
-			"Cannot init() IRCd from runlevel %s", reflect(runlevel)
+			"Cannot init() IRCd from runlevel %s", reflect(run::level)
 		};
 
 	ios::init(user_ios);
@@ -75,7 +75,7 @@ try
 	// from assertions that it's not blocking the process with excessive CPU
 	// usage or long syscall. Main context can't meet this requirement.
 	//
-	ircd::context main_context
+	context main_context
 	{
 		"main", 256_KiB, &ircd::main, context::POST | context::SLICE_EXEMPT
 	};
@@ -87,10 +87,10 @@ try
 	// this must be manually deleted with assurance that mc will never enter.
 	ircd::main_context = main_context.detach();
 
-	// Finally, without prior exception, the commitment to runlevel::READY
+	// Finally, without prior exception, the commitment to run::level::READY
 	// is made here. The user can now invoke their ios.run(), or, if they
 	// have already, IRCd will begin main execution shortly...
-	ircd::runlevel_set(runlevel::READY);
+	run::set(run::level::READY);
 }
 catch(const std::exception &e)
 {
@@ -115,39 +115,39 @@ noexcept
 	log::debug
 	{
 		"IRCd quit requested from runlevel:%s ctx:%p main_context:%p",
-		reflect(runlevel),
+		reflect(run::level),
 		(const void *)ctx::current,
 		(const void *)main_context
 	};
 
-	if(main_context) switch(runlevel)
+	if(main_context) switch(run::level)
 	{
-		case runlevel::READY:
+		case run::level::READY:
 		{
 			ctx::terminate(*main_context);
 			main_context = nullptr;
-			ircd::runlevel_set(runlevel::HALT);
+			ircd::run::set(run::level::HALT);
 			return true;
 		}
 
-		case runlevel::START:
+		case run::level::START:
 		{
 			ctx::terminate(*main_context);
 			main_context = nullptr;
-			ircd::runlevel_set(runlevel::QUIT);
+			ircd::run::set(run::level::QUIT);
 			return true;
 		}
 
-		case runlevel::RUN:
+		case run::level::RUN:
 		{
 			ctx::notify(*main_context);
 			main_context = nullptr;
 			return true;
 		}
 
-		case runlevel::HALT:
-		case runlevel::QUIT:
-		case runlevel::FAULT:
+		case run::level::HALT:
+		case run::level::QUIT:
+		case run::level::FAULT:
 			return false;
 	}
 
@@ -163,7 +163,7 @@ noexcept
 /// of the subsystem, so destruction will shut down that subsystem.
 ///
 /// The status of this function and IRCd overall can be observed through
-/// the ircd::runlevel. The ircd::runlevel_changed callback can be set
+/// the ircd::runlevel. The ircd::run::changed callback can be set
 /// to be notified on a runlevel change. The user should wait for a runlevel
 /// of HALT before destroying IRCd related resources and stopping their
 /// io_context from running more jobs.
@@ -177,16 +177,16 @@ noexcept try
 	// threads, but we consider this one thread a main thread for now...
 	ircd::ios::main_thread_id = std::this_thread::get_id();
 
-	// When this function completes, subsystems are done shutting down and IRCd
+	// When this function completes without exception, subsystems are done shutting down and IRCd
 	// transitions to HALT.
 	const unwind halted{[]
 	{
-		runlevel_set(runlevel::HALT);
+		run::set(run::level::HALT);
 	}};
 
 	// When this function is entered IRCd will transition to START indicating
 	// that subsystems are initializing.
-	ircd::runlevel_set(runlevel::START);
+	run::set(run::level::START);
 
 	// These objects are the init()'s and fini()'s for each subsystem.
 	// Appearing here ties their life to the main context. Initialization can
@@ -221,20 +221,17 @@ noexcept try
 		client::wait_all();
 	}};
 
-	// When the call to wait() below completes, IRCd exits from the RUN state.
-	const unwind nominal
-	{
-		std::bind(&ircd::runlevel_set, runlevel::QUIT)
-	};
-
 	// IRCd will now transition to the RUN state indicating full functionality.
-	ircd::runlevel_set(runlevel::RUN);
+	run::set(run::level::RUN);
 
 	// This call blocks until the main context is notified or interrupted etc.
 	// Waiting here will hold open this stack with all of the above objects
-	// living on it. Once this call completes this function effectively
-	// executes backwards from this point and shuts down IRCd.
+	// living on it.
 	ctx::wait();
+
+	// Once this call completes this main stack unwinds from this point and
+	// shuts down IRCd.
+	run::set(run::level::QUIT);
 }
 catch(const http::error &e) // <-- m::error
 {
@@ -271,37 +268,37 @@ ircd::uptime()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// ircd/runlevel.h
+// ircd/run.h
 //
 
-namespace ircd
+namespace ircd::run
 {
-	static enum runlevel _runlevel;
+	static enum level _level;
 }
 
-decltype(ircd::runlevel)
-ircd::runlevel
+decltype(ircd::run::level)
+ircd::run::level
 {
-	_runlevel
+	_level
 };
 
 //
-// runlevel_changed
+// run::changed
 //
 
 template<>
-decltype(ircd::runlevel_changed::list)
-ircd::util::instance_list<ircd::runlevel_changed>::list
+decltype(ircd::run::changed::list)
+ircd::util::instance_list<ircd::run::changed>::list
 {};
 
-decltype(ircd::runlevel_changed::dock)
-ircd::runlevel_changed::dock;
+decltype(ircd::run::changed::dock)
+ircd::run::changed::dock;
 
 //
-// runlevel_changed::runlevel_changed
+// run::changed::changed
 //
 
-ircd::runlevel_changed::runlevel_changed(handler function)
+ircd::run::changed::changed(handler function)
 :handler
 {
 	std::move(function)
@@ -309,39 +306,35 @@ ircd::runlevel_changed::runlevel_changed(handler function)
 {
 }
 
-ircd::runlevel_changed::~runlevel_changed()
+ircd::run::changed::~changed()
 noexcept
 {
 }
 
-/// Sets the runlevel of IRCd and notifies users. This should never be called
-/// manually/directly, as it doesn't trigger a runlevel change itself, it just
-/// notifies of one.
-///
 /// The notification will be posted to the io_context. This is important to
 /// prevent the callback from continuing execution on some ircd::ctx stack and
 /// instead invoke their function on the main stack in their own io_context
 /// event slice.
 bool
-ircd::runlevel_set(const enum runlevel &new_runlevel)
+ircd::run::set(const enum level &new_level)
 try
 {
-	if(runlevel == new_runlevel)
+	if(level == new_level)
 		return false;
 
 	log::debug
 	{
-		"IRCd runlevel transition from '%s' to '%s' (notifying %zu)",
-		reflect(runlevel),
-		reflect(new_runlevel),
-		runlevel_changed::list.size()
+		"IRCd level transition from '%s' to '%s' (notifying %zu)",
+		reflect(level),
+		reflect(new_level),
+		changed::list.size()
 	};
 
-	_runlevel = new_runlevel;
-	runlevel_changed::dock.notify_all();
+	_level = new_level;
+	changed::dock.notify_all();
 
-	// This latch is used to block this call when setting the runlevel
-	// from an ircd::ctx. If the runlevel is set from the main stack then
+	// This latch is used to block this call when setting the level
+	// from an ircd::ctx. If the level is set from the main stack then
 	// the caller will have to do synchronization themselves.
 	ctx::latch latch
 	{
@@ -351,28 +344,28 @@ try
 	// This function will notify the user of the change to IRCd. When there
 	// are listeners, function is posted to the io_context ensuring THERE IS
 	// NO CONTINUATION ON THIS STACK by the user.
-	const auto call_users{[new_runlevel, &latch, latching(!latch.is_ready())]
+	const auto call_users{[new_level, &latch, latching(!latch.is_ready())]
 	{
-		assert(new_runlevel == ircd::runlevel);
+		assert(new_level == run::level);
 
 		log::notice
 		{
-			"IRCd %s", reflect(new_runlevel)
+			"IRCd %s", reflect(new_level)
 		};
 
-		if(new_runlevel == runlevel::HALT)
+		if(new_level == level::HALT)
 			log::fini();
 		else
 			log::flush();
 
-		for(const auto &handler : runlevel_changed::list)
-			(*handler)(new_runlevel);
+		for(const auto &handler : changed::list)
+			(*handler)(new_level);
 
 		if(latching)
 			latch.count_down();
 	}};
 
-	if(runlevel_changed::list.size())
+	if(changed::list.size())
 		ircd::post(call_users);
 	else
 		call_users();
@@ -386,8 +379,8 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"IRCd runlevel change to '%s': %s",
-		reflect(new_runlevel),
+		"IRCd level change to '%s': %s",
+		reflect(new_level),
 		e.what()
 	};
 
@@ -396,16 +389,16 @@ catch(const std::exception &e)
 }
 
 ircd::string_view
-ircd::reflect(const enum runlevel &level)
+ircd::run::reflect(const enum run::level &level)
 {
 	switch(level)
 	{
-		case runlevel::HALT:      return "HALT";
-		case runlevel::READY:     return "READY";
-		case runlevel::START:     return "START";
-		case runlevel::RUN:       return "RUN";
-		case runlevel::QUIT:      return "QUIT";
-		case runlevel::FAULT:     return "FAULT";
+		case level::HALT:      return "HALT";
+		case level::READY:     return "READY";
+		case level::START:     return "START";
+		case level::RUN:       return "RUN";
+		case level::QUIT:      return "QUIT";
+		case level::FAULT:     return "FAULT";
 	}
 
 	return "??????";

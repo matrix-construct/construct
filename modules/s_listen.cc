@@ -161,13 +161,13 @@ load_listener(const m::event &event)
 static bool
 _listener_proffer(const net::ipport &ipport)
 {
-	if(unlikely(ircd::runlevel != ircd::runlevel::RUN))
+	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 	{
 		log::dwarning
 		{
 			"Refusing to add new client from %s in runlevel %s",
 			string(ipport),
-			reflect(ircd::runlevel)
+			reflect(ircd::run::level)
 		};
 
 		return false;

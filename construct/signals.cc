@@ -46,12 +46,11 @@ construct::signals::signals(boost::asio::io_context &ios)
 // won't return even if we call ircd::quit(). We use this callback to
 // cancel the signal handlers so run() can return and the program can exit.
 void
-construct::signals::on_runlevel(const enum ircd::runlevel &runlevel)
+construct::signals::on_runlevel(const enum ircd::run::level &level)
 {
-	switch(runlevel)
+	switch(level)
 	{
-		case ircd::runlevel::HALT:
-		case ircd::runlevel::FAULT:
+		case ircd::run::level::HALT:
 			signal_set->cancel();
 			break;
 
@@ -85,7 +84,7 @@ noexcept
 
 	handle_signal(signum);
 
-	switch(ircd::runlevel)
+	switch(ircd::run::level)
 	{
 		// Reinstall handler for next signal
 		default:
@@ -93,8 +92,7 @@ noexcept
 			break;
 
 		// No reinstall of handler.
-		case ircd::runlevel::QUIT:
-		case ircd::runlevel::FAULT:
+		case ircd::run::level::HALT:
 			break;
 	}
 }
@@ -186,14 +184,14 @@ construct::handle_usr1()
 try
 {
 	// Spawning the context that follows this branch and doing a rehash
-	// when not in a stable state like runlevel::RUN will just make a mess
+	// when not in a stable state like run::level::RUN will just make a mess
 	// so any signal received is just dropped and the user can try again.
-	if(ircd::runlevel != ircd::runlevel::RUN)
+	if(ircd::run::level != ircd::run::level::RUN)
 	{
 		ircd::log::warning
 		{
 			"Not rehashing conf from SIGUSR1 in runlevel %s",
-			reflect(ircd::runlevel)
+			reflect(ircd::run::level)
 		};
 
 		return;

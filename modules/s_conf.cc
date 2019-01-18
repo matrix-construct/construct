@@ -60,11 +60,11 @@ on_run()
 /// We can't do that on this module init for two reason:
 /// - More conf items will load in other modules after this module.
 /// - Events can't be safely sent to the !conf room until the RUN state.
-const ircd::runlevel_changed
+const ircd::run::changed
 rehash_on_run{[]
-(const auto &runlevel)
+(const auto &level)
 {
-	if(runlevel == ircd::runlevel::RUN)
+	if(level == ircd::run::level::RUN)
 		ctx::context
 		{
 			"confhash", 256_KiB, on_run, ctx::context::POST
@@ -142,7 +142,7 @@ noexcept try
 		unquote(content.at("value"))
 	};
 
-	if(runlevel == runlevel::START && !conf::exists(key))
+	if(run::level == run::level::START && !conf::exists(key))
 		return;
 
 	// Conf items marked with a persist=false property are not read from

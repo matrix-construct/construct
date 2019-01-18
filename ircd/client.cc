@@ -449,13 +449,13 @@ ircd::handle_ec(client &client,
 	using boost::asio::error::get_ssl_category;
 	using boost::asio::error::get_misc_category;
 
-	if(unlikely(runlevel != runlevel::RUN && !ec))
+	if(unlikely(run::level != run::level::RUN && !ec))
 	{
 		log::dwarning
 		{
 			client::log, "%s refusing client request in runlevel %s",
 			client.loghead(),
-			reflect(runlevel)
+			reflect(run::level)
 		};
 
 		client.close(net::dc::RST, net::close_ignore);

@@ -408,10 +408,12 @@ ircd::ctx::terminate(ctx &ctx)
 /// Marks `ctx` for interruption and enqueues it for resumption to receive the
 /// interrupt which will be an exception coming out of the point where the
 /// `ctx` was yielding.
+///
+/// NOTE: If the IRCd run::level is QUIT, an interrupt() becomes a terminate().
 void
 ircd::ctx::interrupt(ctx &ctx)
 {
-	if(unlikely(ircd::runlevel == runlevel::QUIT))
+	if(unlikely(run::level == run::level::QUIT))
 		return terminate(ctx);
 
 	if(finished(ctx))
