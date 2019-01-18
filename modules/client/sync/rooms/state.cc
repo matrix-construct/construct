@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :Room State"
-};
-
 namespace ircd::m::sync
 {
 	static void room_state_polylog_events(data &);
@@ -23,10 +17,19 @@ namespace ircd::m::sync
 	static void room_state_linear(data &);
 
 	extern const event::keys::include _default_keys;
-	extern const event::fetch::opts _default_fopts;
+	extern event::fetch::opts _default_fopts;
 
 	extern item room_state;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :Room State", []
+	{
+		ircd::m::sync::_default_fopts.query_json_force = true;
+	}
+};
 
 decltype(ircd::m::sync::room_state)
 ircd::m::sync::room_state
@@ -86,6 +89,8 @@ ircd::m::sync::room_state_polylog(data &data)
 void
 ircd::m::sync::room_state_polylog_events(data &data)
 {
+	const m::room &room{*data.room};
+	const m::room::state state{room};
 	json::stack::array array
 	{
 		data.out, "events"
@@ -95,18 +100,14 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	const event::closure_idx each_idx{[&data, &array, &mutex]
 	(const m::event::idx &event_idx)
 	{
-		const event::fetch fetch
+		const event::fetch event
 		{
 			event_idx, std::nothrow, _default_fopts
 		};
 
-		if(!fetch.valid)
+		assert(event.valid);
+		if(unlikely(!event.valid))
 			return;
-
-		const m::event event
-		{
-			fetch, event::keys{_default_keys}
-		};
 
 		const std::lock_guard<decltype(mutex)> lock{mutex};
 		data.commit();
@@ -120,8 +121,6 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		m::sync::pool, md, each_idx
 	};
 
-	const m::room &room{*data.room};
-	const m::room::state state{room};
 	state.for_each([&data, &parallel]
 	(const m::event::idx &event_idx)
 	{
