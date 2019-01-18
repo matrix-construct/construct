@@ -700,6 +700,19 @@ catch(const std::bad_function_call &e)
 		e.what()
 	};
 }
+catch(const m::error &e)
+{
+	log::derror
+	{
+		log, "polylog %s '%s' :%s %s",
+		loghead(data),
+		name(),
+		e.what(),
+		e.content
+	};
+
+	throw;
+}
 catch(const std::exception &e)
 {
 	log::derror
