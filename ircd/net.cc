@@ -952,12 +952,9 @@ ircd::net::listener::listener(const string_view &name,
                               proffer pcb)
 :acceptor
 {
-	std::make_shared<struct acceptor>(name, opts, std::move(cb), std::move(pcb))
+	std::make_shared<struct acceptor>(*this, name, opts, std::move(cb), std::move(pcb))
 }
 {
-	// Starts the first asynchronous accept. This has to be done out here after
-	// the acceptor's shared object is constructed.
-	acceptor->next();
 }
 
 /// Cancels all pending accepts and handshakes and waits (yields ircd::ctx)
@@ -968,6 +965,14 @@ noexcept
 {
 	if(acceptor)
 		acceptor->join();
+}
+
+bool
+ircd::net::listener::start()
+{
+	return acceptor && !acceptor->handle_set?
+		acceptor->set_handle():
+		false;
 }
 
 ircd::string_view
@@ -1088,12 +1093,17 @@ ircd::net::operator<<(std::ostream &s, const struct listener::acceptor &a)
 // listener::acceptor::acceptor
 //
 
-ircd::net::listener::acceptor::acceptor(const string_view &name,
+ircd::net::listener::acceptor::acceptor(net::listener &listener,
+                                        const string_view &name,
                                         const json::object &opts,
                                         listener::callback cb,
                                         listener::proffer pcb)
 try
-:name
+:listener
+{
+	&listener
+}
+,name
 {
 	name
 }
@@ -1223,24 +1233,27 @@ catch(const boost::system::system_error &e)
 /// Sets the next asynchronous handler to start the next accept sequence.
 /// Each call to next() sets one handler which handles the connect for one
 /// socket. After the connect, an asynchronous SSL handshake handler is set
-/// for the socket, and next() is called again to setup for the next socket
-/// too.
-void
-ircd::net::listener::acceptor::next()
+/// for the socket.
+bool
+ircd::net::listener::acceptor::set_handle()
 try
 {
-	auto sock(std::make_shared<ircd::socket>(ssl));
-/*
-	log::debug
+	assert(!handle_set);
+	handle_set = true;
+	const unwind::exceptional unset{[this]
 	{
-		log, "%s: socket(%p) is the next socket to accept",
-		string(logheadbuf, *this),
-		sock.get()
+		handle_set = false;
+	}};
+
+	auto sock
+	{
+		std::make_shared<ircd::socket>(ssl)
 	};
-*/
+
 	++accepting;
 	ip::tcp::socket &sd(*sock);
 	a.async_accept(sd, std::bind(&acceptor::accept, this, ph::_1, sock, weak_from(*this)));
+	return true;
 }
 catch(const std::exception &e)
 {
@@ -1262,8 +1275,12 @@ noexcept try
 	if(unlikely(a.expired()))
 		return;
 
-	--accepting;
 	assert(bool(sock));
+	assert(handle_set);
+	assert(accepting > 0);
+
+	handle_set = false;
+	--accepting;
 	log::debug
 	{
 		log, "%s: accepted(%zu) %s %s",
@@ -1278,7 +1295,7 @@ noexcept try
 
 	// Call the proffer-callback if available. This allows the application
 	// to check whether to allow or deny this remote before the handshake.
-	if(pcb && !pcb(remote_ipport(*sock)))
+	if(pcb && !pcb(*listener, remote_ipport(*sock)))
 	{
 		net::close(*sock, dc::RST, close_ignore);
 		return;
@@ -1362,10 +1379,7 @@ ircd::net::listener::acceptor::check_accept_error(const error_code &ec,
 		throw ctx::interrupted();
 
 	if(likely(!ec))
-	{
-		this->next();
 		return true;
-	}
 
 	if(system_category(ec)) switch(ec.value())
 	{
@@ -1401,7 +1415,7 @@ noexcept try
 	check_handshake_error(ec, *sock);
 	sock->cancel_timeout();
 	assert(bool(cb));
-	cb(sock);
+	cb(*listener, sock);
 }
 catch(const ctx::interrupted &e)
 {

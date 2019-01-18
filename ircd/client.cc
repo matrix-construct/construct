@@ -254,7 +254,8 @@ ircd::client::terminate_all()
 }
 
 void
-ircd::client::create(const std::shared_ptr<socket> &sock)
+ircd::client::create(net::listener &,
+                     const std::shared_ptr<socket> &sock)
 {
 	const auto client
 	{

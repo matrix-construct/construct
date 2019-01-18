@@ -38,7 +38,7 @@ struct ircd::client
 	static ctx::dock dock;
 	static uint64_t ctr;              // monotonic
 
-	static void create(const std::shared_ptr<socket> &);
+	static void create(net::listener &, const std::shared_ptr<socket> &);
 	static size_t count(const net::ipport &remote); // cmp is by IP only, not port
 	static void terminate_all();
 	static void interrupt_all();

@@ -159,7 +159,8 @@ load_listener(const m::event &event)
 }
 
 static bool
-_listener_proffer(const net::ipport &ipport)
+_listener_proffer(net::listener &,
+                  const net::ipport &ipport)
 {
 	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 	{

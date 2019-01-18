@@ -24,6 +24,7 @@ struct ircd::net::listener::acceptor
 	static log::log log;
 	static conf::item<milliseconds> timeout;
 
+	net::listener *listener;
 	std::string name;
 	std::string opts;
 	size_t backlog;
@@ -35,6 +36,7 @@ struct ircd::net::listener::acceptor
 	size_t accepting {0};
 	size_t handshaking {0};
 	bool interrupting {false};
+	bool handle_set {false};
 	ctx::dock joining;
 
 	void configure(const json::object &opts);
@@ -48,13 +50,14 @@ struct ircd::net::listener::acceptor
 	void accept(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
 
 	// Accept next
-	void next();
+	bool set_handle();
 
 	// Acceptor shutdown
 	bool interrupt() noexcept;
 	void join() noexcept;
 
-	acceptor(const string_view &name,
+	acceptor(net::listener &,
+	         const string_view &name,
 	         const json::object &opts,
 	         listener::callback,
 	         listener::proffer);
