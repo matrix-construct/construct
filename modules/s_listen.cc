@@ -18,6 +18,7 @@ static bool load_listener(const m::event &);
 extern "C" bool unload_listener(const string_view &name);
 extern "C" bool load_listener(const string_view &name);
 static void init_listeners();
+static void on_run();
 static void on_unload();
 static void on_load();
 
@@ -26,6 +27,13 @@ IRCD_MODULE
 {
 	"Server listeners", on_load, on_unload
 };
+
+const ircd::run::changed
+_on_run{[](const auto &level)
+{
+	if(level == run::level::RUN)
+		on_run();
+}};
 
 /// Active listener state
 decltype(listeners)
@@ -55,7 +63,26 @@ on_load()
 void
 on_unload()
 {
+	log::debug
+	{
+		"Clearing %zu listeners...",
+		listeners.size()
+	};
+
 	listeners.clear();
+}
+
+void
+on_run()
+{
+	log::debug
+	{
+		"Allowing %zu listeners to accept connections...",
+		listeners.size()
+	};
+
+	for(auto &listener : listeners)
+		listener.start();
 }
 
 void
@@ -159,7 +186,7 @@ load_listener(const m::event &event)
 }
 
 static bool
-_listener_proffer(net::listener &,
+_listener_proffer(net::listener &listener,
                   const net::ipport &ipport)
 {
 	if(unlikely(ircd::run::level != ircd::run::level::RUN))
@@ -173,6 +200,10 @@ _listener_proffer(net::listener &,
 
 		return false;
 	}
+
+	// Sets the asynchronous handler for the next accept. We can play with
+	// delaying this call under certain conditions to provide flow control.
+	listener.start();
 
 	if(unlikely(client::map.size() >= size_t(client::settings::max_client)))
 	{
