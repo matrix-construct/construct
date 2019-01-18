@@ -1674,11 +1674,12 @@ ircd::m::event::fetch::assign_from_json(const opts &opts)
 		_json.val()
 	};
 
-	assert(!empty(source));
-	event = opts.selected_only?
-		m::event{source, opts.keys}:
-		m::event{source};
+	event =
+	{
+		source, opts.keys
+	};
 
+	assert(!empty(source));
 	assert(data(event.source) == data(source));
 	return true;
 }
