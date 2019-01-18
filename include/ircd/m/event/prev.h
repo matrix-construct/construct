@@ -25,8 +25,6 @@ namespace ircd::m
 	std::string pretty_oneline(const event::prev &);
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::event::prev
 :json::tuple
 <
@@ -56,4 +54,3 @@ struct ircd::m::event::prev
 	using super_type::tuple;
 	using super_type::operator=;
 };
-#pragma GCC diagnostic pop

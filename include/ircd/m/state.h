@@ -29,6 +29,7 @@
 ///
 namespace ircd::m::state
 {
+	struct name;
 	struct node;
 
 	constexpr size_t ID_MAX_SZ { 64 };
@@ -89,16 +90,13 @@ namespace ircd::m::state
 }
 
 /// JSON property name strings specifically for use in m::state
-namespace ircd::m::state::name
+struct ircd::m::state::name
 {
-	constexpr const char *const key {"k"};
-	constexpr const char *const val {"v"};
-	constexpr const char *const child {"c"};
-	constexpr const char *const count {"n"};
-}
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
+	static constexpr const char *const key {"k"};
+	static constexpr const char *const val {"v"};
+	static constexpr const char *const child {"c"};
+	static constexpr const char *const count {"n"};
+};
 
 /// Format for node: Node is plaintext and not binary at this time. In fact,
 /// *evil chuckle*, node might as well be JSON and can easily become content
@@ -177,7 +175,6 @@ struct ircd::m::state::node
 	using super_type::tuple;
 	using super_type::operator=;
 };
-#pragma GCC diagnostic pop
 
 /// Internal representation of a node for manipulation purposes. This is
 /// because json::tuple's (like most of json::) are oriented around the

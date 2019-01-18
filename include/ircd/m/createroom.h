@@ -16,8 +16,6 @@ namespace ircd::m
 	struct createroom;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::createroom
 :json::tuple
 <
@@ -38,7 +36,7 @@ struct ircd::m::createroom
 	/// If this is included, an m.room.name event will be sent into the room
 	/// to indicate the name of the room. See Room Events for more information
 	/// on m.room.name.
-	json::property<name::name, json::string>,
+	json::property<name::name_, json::string>,
 
 	/// If this is included, an m.room.topic event will be sent into the room to
 	/// indicate the topic for the room. See Room Events for more information on
@@ -88,4 +86,3 @@ struct ircd::m::createroom
 {
 	using super_type::tuple;
 };
-#pragma GCC diagnostic pop

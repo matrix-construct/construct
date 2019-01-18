@@ -16,8 +16,6 @@ namespace ircd::m
 	struct login;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::login
 :json::tuple
 <
@@ -54,4 +52,3 @@ struct ircd::m::login
 {
 	using super_type::tuple;
 };
-#pragma GCC diagnostic pop

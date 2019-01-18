@@ -16,8 +16,6 @@ namespace ircd::m
 	struct edu;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::edu
 :json::tuple
 <
@@ -32,4 +30,3 @@ struct ircd::m::edu
 	using super_type::tuple;
 	using super_type::operator=;
 };
-#pragma GCC diagnostic pop

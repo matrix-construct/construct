@@ -18,8 +18,6 @@ namespace ircd::m
 	bool verify(const m::keys &);
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 /// Contains the public keys and proof of identity for a remote server.
 ///
 /// A user who wishes to verify a signature from a remote server must have
@@ -62,4 +60,3 @@ struct ircd::m::keys
 	using super_type::tuple;
 	using super_type::operator=;
 };
-#pragma GCC diagnostic pop

@@ -27,8 +27,6 @@ struct ircd::m::edu::m_receipt
 	struct m_read;
 };
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::edu::m_receipt::m_read
 :json::tuple
 <
@@ -39,4 +37,3 @@ struct ircd::m::edu::m_receipt::m_read
 	using super_type::tuple;
 	using super_type::operator=;
 };
-#pragma GCC diagnostic pop

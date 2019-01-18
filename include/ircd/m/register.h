@@ -16,8 +16,6 @@ namespace ircd::m
 	struct registar;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::registar
 :json::tuple
 <
@@ -31,4 +29,3 @@ struct ircd::m::registar
 {
 	using super_type::tuple;
 };
-#pragma GCC diagnostic pop

@@ -16,8 +16,6 @@ namespace ircd::m
 	struct presence;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::edu::m_presence
 :json::tuple
 <
@@ -31,7 +29,6 @@ struct ircd::m::edu::m_presence
 	using super_type::tuple;
 	using super_type::operator=;
 };
-#pragma GCC diagnostic pop
 
 struct ircd::m::presence
 :edu::m_presence

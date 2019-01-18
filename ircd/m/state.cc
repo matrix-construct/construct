@@ -8,6 +8,22 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+// Linkages for the state::node json::tuple property strings. This is similar
+// to m::name (name.h / name.cc) but since this is very specific to m::state
+// we keep it here.
+
+constexpr const char *const
+ircd::m::state::name::key;
+
+constexpr const char *const
+ircd::m::state::name::val;
+
+constexpr const char *const
+ircd::m::state::name::child;
+
+constexpr const char *const
+ircd::m::state::name::count;
+
 /// Convenience to make a key and then get a value
 void
 ircd::m::state::get(const string_view &root,

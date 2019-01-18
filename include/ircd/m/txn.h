@@ -10,8 +10,6 @@
 
 #pragma once
 #define HAVE_IRCD_M_TXN_H
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 
 namespace ircd::m
 {
@@ -41,5 +39,3 @@ struct ircd::m::txn
 	using super_type::tuple;
 	using super_type::operator=;
 };
-
-#pragma GCC diagnostic pop

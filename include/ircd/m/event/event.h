@@ -46,8 +46,6 @@ namespace ircd::m
 	ed25519::sig sign(const event &);
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 /// The Main Event
 ///
 /// This json::tuple provides at least all of the legal members of the matrix
@@ -116,4 +114,3 @@ struct ircd::m::event
 	event(const json::object &, const keys &);
 	event() = default;
 };
-#pragma GCC diagnostic pop

@@ -16,8 +16,6 @@ namespace ircd::m
 	struct invite_3pid;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::invite_3pid
 :json::tuple
 <
@@ -35,4 +33,3 @@ struct ircd::m::invite_3pid
 {
 	using super_type::tuple;
 };
-#pragma GCC diagnostic pop

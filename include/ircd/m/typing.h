@@ -16,8 +16,6 @@ namespace ircd::m
 	struct typing;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::edu::m_typing
 :json::tuple
 <
@@ -30,7 +28,6 @@ struct ircd::m::edu::m_typing
 	using super_type::tuple;
 	using super_type::operator=;
 };
-#pragma GCC diagnostic pop
 
 struct ircd::m::typing
 :m::edu::m_typing

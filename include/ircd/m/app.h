@@ -18,8 +18,6 @@ namespace ircd::m::app
 	struct registration;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::app::namespace_
 :json::tuple
 <
@@ -34,10 +32,7 @@ struct ircd::m::app::namespace_
 {
 	using super_type::tuple;
 };
-#pragma GCC diagnostic pop
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::app::namespaces
 :json::tuple
 <
@@ -53,10 +48,7 @@ struct ircd::m::app::namespaces
 {
 	using super_type::tuple;
 };
-#pragma GCC diagnostic pop
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
 struct ircd::m::app::registration
 :json::tuple
 <
@@ -93,4 +85,3 @@ struct ircd::m::app::registration
 {
 	using super_type::tuple;
 };
-#pragma GCC diagnostic pop
