@@ -20,6 +20,7 @@ namespace ircd::crh
 	IRCD_EXCEPTION(ircd::error, error)
 
 	struct hash;
+	struct hmac;
 	struct sha1;
 	struct sha256;
 	struct ripemd160;
@@ -28,6 +29,7 @@ namespace ircd::crh
 // Export aliases down to ircd::
 namespace ircd
 {
+	using crh::hmac;
 	using crh::sha1;
 	using crh::sha256;
 	using crh::ripemd160;
@@ -59,6 +61,29 @@ struct ircd::crh::hash
 	hash &operator+=(const const_buffer &);
 
 	virtual ~hash() noexcept;
+};
+
+struct ircd::crh::hmac
+{
+	struct ctx;
+
+  protected:
+	std::unique_ptr<ctx> ctx;
+
+  public:
+	/// Returns the byte length of the mutable_buffer for digests
+	size_t length() const;
+
+	/// Samples the digest and modifies the state (depending on impl)
+	const_buffer finalize(const mutable_buffer &b);
+
+	/// Appends to the message
+	void update(const const_buffer &);
+
+	hmac(const string_view &algorithm, const const_buffer &key);
+	hmac(hmac &&) = default;
+	hmac(const hmac &) = delete;
+	~hmac() noexcept;
 };
 
 /// SHA-1 hashing device.

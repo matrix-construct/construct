@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/sha.h>
+#include <openssl/hmac.h>
 #include <openssl/ssl.h>
 #include <openssl/ec.h>
 #include <openssl/rsa.h>
@@ -1429,6 +1430,131 @@ ircd::openssl::init::~init()
 //
 // crh.h
 //
+
+//
+// hmac
+//
+
+struct ircd::crh::hmac::ctx
+:HMAC_CTX
+{
+	static constexpr const size_t &MAX_CTXS {64};
+	static thread_local allocator::fixed<ctx, MAX_CTXS> ctxs;
+
+	static void *operator new(const size_t count);
+	static void operator delete(void *const ptr, const size_t count);
+
+	ctx(const string_view &algorithm, const const_buffer &key);
+	~ctx() noexcept;
+};
+
+decltype(ircd::crh::hmac::ctx::ctxs)
+thread_local ircd::crh::hmac::ctx::ctxs
+{};
+
+void *
+ircd::crh::hmac::ctx::operator new(const size_t bytes)
+{
+	assert(bytes > 0);
+	assert(bytes % sizeof(ctx) == 0);
+	return ctxs().allocate(bytes / sizeof(ctx));
+}
+
+void
+ircd::crh::hmac::ctx::operator delete(void *const ptr,
+                                      const size_t bytes)
+{
+	if(!ptr)
+		return;
+
+	assert(bytes % sizeof(ctx) == 0);
+	ctxs().deallocate(reinterpret_cast<ctx *>(ptr), bytes / sizeof(ctx));
+}
+
+//
+// hmac::ctx::ctx
+//
+
+ircd::crh::hmac::ctx::ctx(const string_view &algorithm,
+                          const const_buffer &key)
+:HMAC_CTX{0}
+{
+	const EVP_MD *const md
+	{
+		iequals(algorithm, "sha1")?
+			EVP_sha1():
+		iequals(algorithm, "sha256")?
+			EVP_sha256():
+			nullptr
+	};
+
+	if(unlikely(!md))
+		throw error
+		{
+			"Algorithm '%s' not supported for HMAC", algorithm
+		};
+
+	HMAC_CTX_init(this);
+	openssl::call(::HMAC_Init_ex, this, data(key), size(key), md, nullptr);
+}
+
+ircd::crh::hmac::ctx::~ctx()
+noexcept
+{
+	HMAC_CTX_cleanup(this);
+}
+
+//
+// hmac::hmac
+//
+
+ircd::crh::hmac::hmac(const string_view &algorithm,
+                      const const_buffer &key)
+:ctx
+{
+	std::make_unique<struct ctx>(algorithm, key)
+}
+{
+}
+
+ircd::crh::hmac::~hmac()
+noexcept
+{
+}
+
+void
+ircd::crh::hmac::update(const const_buffer &buf)
+{
+	assert(bool(ctx));
+	const auto ptr
+	{
+		reinterpret_cast<const uint8_t *>(data(buf))
+	};
+
+	openssl::call(::HMAC_Update, ctx.get(), ptr, size(buf));
+}
+
+ircd::const_buffer
+ircd::crh::hmac::finalize(const mutable_buffer &buf)
+{
+	assert(bool(ctx));
+	const auto ptr
+	{
+		reinterpret_cast<uint8_t *>(data(buf))
+	};
+
+	uint len;
+	openssl::call(::HMAC_Final, ctx.get(), ptr, &len);
+	return {data(buf), len};
+}
+
+size_t
+ircd::crh::hmac::length()
+const
+{
+	assert(bool(ctx));
+	return HMAC_size(ctx.get());
+}
 
 //
 // sha1
