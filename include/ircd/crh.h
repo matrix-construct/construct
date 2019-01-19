@@ -20,6 +20,7 @@ namespace ircd::crh
 	IRCD_EXCEPTION(ircd::error, error)
 
 	struct hash;
+	struct sha1;
 	struct sha256;
 	struct ripemd160;
 }
@@ -27,6 +28,7 @@ namespace ircd::crh
 // Export aliases down to ircd::
 namespace ircd
 {
+	using crh::sha1;
 	using crh::sha256;
 	using crh::ripemd160;
 }
@@ -57,6 +59,35 @@ struct ircd::crh::hash
 	hash &operator+=(const const_buffer &);
 
 	virtual ~hash() noexcept;
+};
+
+/// SHA-1 hashing device.
+struct ircd::crh::sha1
+final
+:hash
+{
+	struct ctx;
+
+	static constexpr const size_t &digest_size
+	{
+		160 / 8
+	};
+
+	using buf = fixed_const_buffer<digest_size>;
+
+  protected:
+	std::unique_ptr<ctx> ctx;
+
+  public:
+	size_t length() const override;
+	void digest(const mutable_buffer &) const override;
+	void finalize(const mutable_buffer &) override;
+	void update(const const_buffer &) override;
+
+	sha1(const mutable_buffer &, const const_buffer &); // note: finalizes
+	sha1(const const_buffer &); // note: finalizes
+	sha1();
+	~sha1() noexcept;
 };
 
 /// SHA-256 hashing device.

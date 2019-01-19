@@ -1427,8 +1427,140 @@ ircd::openssl::init::~init()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// hash.h
+// crh.h
 //
+
+//
+// sha1
+//
+
+namespace ircd::crh
+{
+	static void finalize(struct sha1::ctx *const &, const mutable_buffer &);
+}
+
+struct ircd::crh::sha1::ctx
+:SHA_CTX
+{
+	static constexpr const size_t &MAX_CTXS {64};
+	static thread_local allocator::fixed<ctx, MAX_CTXS> ctxs;
+
+	static void *operator new(const size_t count);
+	static void operator delete(void *const ptr, const size_t count);
+
+	ctx();
+	~ctx() noexcept;
+};
+
+decltype(ircd::crh::sha1::ctx::ctxs)
+thread_local ircd::crh::sha1::ctx::ctxs
+{};
+
+void *
+ircd::crh::sha1::ctx::operator new(const size_t bytes)
+{
+	assert(bytes > 0);
+	assert(bytes % sizeof(ctx) == 0);
+	return ctxs().allocate(bytes / sizeof(ctx));
+}
+
+void
+ircd::crh::sha1::ctx::operator delete(void *const ptr,
+                                      const size_t bytes)
+{
+	if(!ptr)
+		return;
+
+	assert(bytes % sizeof(ctx) == 0);
+	ctxs().deallocate(reinterpret_cast<ctx *>(ptr), bytes / sizeof(ctx));
+}
+
+//
+// sha1::ctx::ctx
+//
+
+ircd::crh::sha1::ctx::ctx()
+{
+	openssl::call(::SHA1_Init, this);
+}
+
+ircd::crh::sha1::ctx::~ctx()
+noexcept
+{
+}
+
+//
+// sha1::sha1
+//
+
+ircd::crh::sha1::sha1()
+:ctx{std::make_unique<struct ctx>()}
+{
+}
+
+/// One-shot functor. Immediately calls update(); no output
+ircd::crh::sha1::sha1(const const_buffer &in)
+:sha1{}
+{
+	update(in);
+}
+
+/// One-shot functor. Immediately calls operator(). NOTE: This hashing context
+/// cannot be used again after this ctor.
+ircd::crh::sha1::sha1(const mutable_buffer &out,
+                      const const_buffer &in)
+:sha1{}
+{
+	operator()(out, in);
+}
+
+ircd::crh::sha1::~sha1()
+noexcept
+{
+}
+
+void
+ircd::crh::sha1::update(const const_buffer &buf)
+{
+	assert(bool(ctx));
+	openssl::call(::SHA1_Update, ctx.get(), data(buf), size(buf));
+}
+
+void
+ircd::crh::sha1::digest(const mutable_buffer &buf)
+const
+{
+	assert(bool(ctx));
+	auto copy(*ctx);
+	crh::finalize(&copy, buf);
+}
+
+void
+ircd::crh::sha1::finalize(const mutable_buffer &buf)
+{
+	assert(bool(ctx));
+	crh::finalize(ctx.get(), buf);
+}
+
+size_t
+ircd::crh::sha1::length()
+const
+{
+	return digest_size;
+}
+
+void
+ircd::crh::finalize(struct sha1::ctx *const &ctx,
+                    const mutable_buffer &buf)
+{
+	assert(size(buf) >= sha1::digest_size);
+	uint8_t *const md
+	{
+		reinterpret_cast<uint8_t *>(data(buf))
+	};
+
+	openssl::call(::SHA1_Final, md, ctx);
+}
 
 //
 // sha256
