@@ -66,12 +66,16 @@ string_view
 view(stringstream &ss,
      const const_buffer &buf)
 {
-	assert(size_t(ss.tellp()) <= size(buf));
+	const auto tell
+	{
+		std::min(size_t(ss.tellp()), size(buf))
+	};
+
 	ss.flush();
 	ss.rdbuf()->pubsync();
 	const string_view ret
 	{
-		data(buf), size_t(ss.tellp())
+		data(buf), tell
 	};
 
 	assert(size(ret) <= size(buf));
