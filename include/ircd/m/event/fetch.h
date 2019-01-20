@@ -106,7 +106,7 @@ struct ircd::m::event::fetch::opts
 	/// Whether to allow querying the event_json to populate the event. A value
 	/// of true only allows this type of query to be made; a value of false
 	/// prevents this query from ever being made.
-	bool query_json {true};
+	bool query_json {false};
 
 	/// Whether to force an attempt at populating the event from event_json
 	/// first, bypassing any decision-making. This is useful if a key selection
