@@ -89,7 +89,7 @@ github_find_commit_hash(const json::object &content);
 static string_view
 github_find_issue_number(const json::object &content);
 
-static string_view
+static std::pair<string_view, string_view>
 github_find_party(const json::object &content);
 
 static std::ostream &
@@ -192,7 +192,7 @@ github_heading(std::ostream &out,
 	};
 
 	out << "<a href=\\\"" << unquote(repository["html_url"]) << "\\\">"
-	    << "<b>" << unquote(repository["full_name"]) << "</b>"
+	    << unquote(repository["full_name"])
 	    << "</a>";
 
 	const string_view commit_hash
@@ -203,7 +203,7 @@ github_heading(std::ostream &out,
 	if(commit_hash && type == "push")
 		out << " <b><font color=\\\"#FF5733\\\">";
 	else if(commit_hash && type == "pull_request")
-		out << " <b><font color=\\\"fuschia\\\">";
+		out << " <b><font color=\\\"#CC00CC\\\">";
 	else if(commit_hash)
 		out << " <b>";
 
@@ -221,13 +221,17 @@ github_heading(std::ostream &out,
 	else
 		out << " " << type;
 
-	const string_view party
+	const auto party
 	{
 		github_find_party(content)
 	};
 
-	if(party)
-		out << " by " << party;
+	out << " by "
+	    << "<a href=\\\""
+	    << party.second
+	    << "\\\">"
+	    << party.first
+	    << "</a>";
 
 	return out;
 }
@@ -249,7 +253,6 @@ github_handle__push(std::ostream &out,
 	if(!count)
 	{
 		out << " <font color=\\\"#FF0000\\\">";
-
 		if(content["ref"])
 			out << " " << unquote(content["ref"]);
 
@@ -258,7 +261,12 @@ github_handle__push(std::ostream &out,
 	}
 
 	if(content["ref"])
-		out << " " << unquote(content["ref"]);
+	{
+		const auto ref(unquote(content["ref"]));
+		out << " "
+		    << " "
+		    << token_last(ref, '/');
+	}
 
 	out << " <a href=\\\"" << unquote(content["compare"]) << "\\\">"
 	    << "<b>" << count << " commits</b>"
@@ -282,9 +290,14 @@ github_handle__push(std::ostream &out,
 
 		const json::object committer(commit["committer"]);
 		if(committer["email"] != author["email"])
-			out << " via " << committer["name"];
+			out << " via " << unquote(committer["name"]);
 
-		const auto summary(token(unquote(commit["message"]), '\n', 0));
+		const auto message(unquote(commit["message"]));
+		const auto summary
+		{
+			split(message, "\\n").first
+		};
+
 		out << " <u>"
 		    << summary
 		    << "</u>";
@@ -308,18 +321,36 @@ github_handle__ping(std::ostream &out,
 }
 
 /// Researched from yestifico bot
-static string_view
+static std::pair<string_view, string_view>
 github_find_party(const json::object &content)
 {
-	const json::object pusher(content["pusher"]);
-	if(!empty(pusher))
-		return unquote(pusher["name"]);
+	const json::object pull_request
+	{
+		content["pull_request"]
+	};
 
-	const json::object sender(content["sender"]);
-	if(!empty(sender))
-		return unquote(sender["login"]);
+	const json::object user
+	{
+		pull_request["user"]
+	};
 
-	return {};
+	if(!empty(user))
+		return
+		{
+			unquote(user["login"]),
+			unquote(user["html_url"])
+		};
+
+	const json::object sender
+	{
+		content["sender"]
+	};
+
+	return
+	{
+		unquote(sender["login"]),
+		unquote(sender["html_url"])
+	};
 }
 
 /// Researched from yestifico bot
