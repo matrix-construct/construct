@@ -97,6 +97,10 @@ github_handle__push(std::ostream &,
                     const json::object &content);
 
 static std::ostream &
+github_handle__pull_request(std::ostream &,
+                            const json::object &content);
+
+static std::ostream &
 github_handle__ping(std::ostream &,
                     const json::object &content);
 
@@ -149,6 +153,8 @@ github_handle(client &client,
 		github_handle__ping(out, request.content);
 	else if(type == "push")
 		github_handle__push(out, request.content);
+	else if(type == "pull_request")
+		github_handle__pull_request(out, request.content);
 
 	if(!string_view(webhook_room))
 		return;
@@ -306,6 +312,133 @@ github_handle__push(std::ostream &out,
 	}
 
 	out << "</pre>";
+	return out;
+}
+
+static std::ostream &
+github_handle__pull_request(std::ostream &out,
+                            const json::object &content)
+{
+	const json::object pr
+	{
+		content["pull_request"]
+	};
+
+	if(pr["merged"] != "true")
+		out << " "
+		    << "<b>"
+		    << unquote(content["action"])
+		    << "</b>"
+		    ;
+
+	if(pr["merged"] == "true")
+		out << ' '
+		    << "<b>"
+		    << "<font color=\\\"#CC00CC\\\">"
+		    << "merged"
+		    << "</font>"
+		    << "</b>"
+		    ;
+
+	if(pr.has("merged_by") && pr["merged_by"] != "null")
+	{
+		const json::object merged_by{pr["merged_by"]};
+		out << " "
+		    << "by "
+		    << "<a href=\\\""
+		    << unquote(merged_by["html_url"])
+		    << "\\\">"
+		    << unquote(merged_by["login"])
+		    << "</a>"
+		    ;
+	}
+
+	if(pr["merged"] == "false") switch(hash(pr["mergeable"]))
+	{
+		default:
+		case hash("null"):
+			out << " / "
+			    << "<b>"
+			    << "<font color=\\\"#FFCC00\\\">"
+			    << "CHECKING MERGE"
+			    << "</font>"
+			    << "</b>"
+			    ;
+			break;
+
+		case hash("true"):
+			out << " / "
+			    << "<b>"
+			    << "<font color=\\\"#33CC33\\\">"
+			    << "MERGEABLE"
+			    << "</font>"
+			    << "</b>"
+			    ;
+			break;
+
+		case hash("false"):
+			out << " / "
+			    << "<b>"
+			    << "<font color=\\\"#CC0000\\\">"
+			    << "MERGE CONFLICT"
+			    << "</font>"
+			    << "</b>"
+			    ;
+			break;
+	}
+
+	if(pr.has("additions"))
+		out << " / "
+		    << "<b>"
+		    << "<font color=\\\"#33CC33\\\">"
+		    << "++"
+		    << "</font>"
+		    << pr["additions"]
+		    << "</b>"
+		    ;
+
+	if(pr.has("deletions"))
+		out << " / "
+		    << "<b>"
+		    << "<font color=\\\"#CC0000\\\">"
+		    << "--"
+		    << "</font>"
+		    << pr["deletions"]
+		    << "</b>"
+		    ;
+
+	if(pr.has("changed_files"))
+		out << " / "
+		    << "<b>"
+		    << pr["changed_files"]
+		    << ' '
+		    << "<font color=\\\"#476b6b\\\">"
+		    << "files"
+		    << "</font>"
+		    << "</b>"
+		    ;
+
+	const json::object head
+	{
+		pr["head"]
+	};
+
+	out << " "
+	    << "<pre>"
+	    << "<a href=\\\""
+	    << unquote(pr["html_url"])
+	    << "\\\">"
+	    << "<b>"
+	    << unquote(head["sha"]).substr(0, 8)
+	    << "</b>"
+	    << "</a>"
+	    << " "
+	    << "<u>"
+	    << unquote(pr["title"])
+	    << "</u>"
+	    << "</pre>"
+	    ;
+
 	return out;
 }
 
