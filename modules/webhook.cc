@@ -97,6 +97,10 @@ github_handle__push(std::ostream &,
                     const json::object &content);
 
 static std::ostream &
+github_handle__ping(std::ostream &,
+                    const json::object &content);
+
+static std::ostream &
 github_heading(std::ostream &,
                const string_view &type,
                const json::object &content);
@@ -137,7 +141,9 @@ github_handle(client &client,
 
 	github_heading(out, type, request.content);
 
-	if(type == "push")
+	if(type == "ping")
+		github_handle__ping(out, request.content);
+	else if(type == "push")
 		github_handle__push(out, request.content);
 
 	if(!string_view(webhook_room))
@@ -283,6 +289,17 @@ github_handle__push(std::ostream &out,
 	}
 
 	out << "</pre>";
+	return out;
+}
+
+static std::ostream &
+github_handle__ping(std::ostream &out,
+                    const json::object &content)
+{
+	out << "<pre>"
+	    << unquote(content["zen"])
+	    << "</pre>";
+
 	return out;
 }
 
