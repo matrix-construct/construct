@@ -6,7 +6,7 @@
 datadir = @datadir@/$(PACKAGE_TARNAME)
 
 install-mkdirs:
-	-@if test ! -d $(datadir); then \
+	-@if test ! -d $(DESTDIR)$(datadir); then \
 		echo "mkdir -p $(DESTDIR)$(datadir)"; \
 		mkdir -p $(DESTDIR)$(datadir); \
 	fi
