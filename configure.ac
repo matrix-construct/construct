@@ -811,7 +811,6 @@ dnl
 dnl datadir
 dnl
 
-datadir="$prefix/share"
 AC_SUBST_DIR([datadir])
 RB_DEFINE_UNQUOTED([DATA_DIR], ["$datadir/${PACKAGE_TARNAME}"], [Directory where read-only assets go.])
 
