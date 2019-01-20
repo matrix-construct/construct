@@ -135,7 +135,11 @@ github_handle(client &client,
 		headers.at("X-GitHub-Delivery")
 	};
 
-	thread_local char buf[2048];
+	const unique_buffer<mutable_buffer> buf
+	{
+		48_KiB
+	};
+
 	std::stringstream out;
 	pubsetbuf(out, buf);
 
