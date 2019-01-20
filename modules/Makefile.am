@@ -55,11 +55,13 @@ AM_LDFLAGS = \
 moduledir = @moduledir@
 
 webroot_la_SOURCES = webroot.cc
+webhook_la_SOURCES = webhook.cc
 console_la_SOURCES = console.cc
 vm_la_SOURCES = vm.cc
 
 module_LTLIBRARIES = \
 	webroot.la \
+	webhook.la \
 	console.la \
 	vm.la \
 	###
