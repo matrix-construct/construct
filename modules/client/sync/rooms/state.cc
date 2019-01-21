@@ -98,7 +98,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 
 	ctx::mutex mutex;
 	const event::closure_idx each_idx{[&data, &array, &mutex]
-	(const m::event::idx &event_idx)
+	(const m::event::idx event_idx)
 	{
 		const event::fetch event
 		{
@@ -115,7 +115,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	}};
 
 	//TODO: conf
-	std::array<event::idx, 32> md;
+	std::array<event::idx, 64> md;
 	ctx::parallel<event::idx> parallel
 	{
 		m::sync::pool, md, each_idx

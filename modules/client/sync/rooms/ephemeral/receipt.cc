@@ -52,7 +52,8 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 	ctx::mutex mutex;
 	ctx::parallel<string_view> parallel
 	{
-		m::sync::pool, q, [&data, &mutex](const auto &user_id)
+		m::sync::pool, q, [&data, &mutex]
+		(const m::user::id user_id)
 		{
 			const m::user user{user_id};
 			_handle_user(data, user, mutex);
@@ -62,7 +63,8 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 	members.for_each(data.membership, m::room::members::closure{[&parallel, &q, &buf]
 	(const m::user::id &user_id)
 	{
-		q[parallel.snd] = strlcpy(buf->at(parallel.snd), user_id);
+		const auto pos(parallel.nextpos());
+		q[pos] = strlcpy(buf->at(pos), user_id);
 		parallel();
 	}});
 }

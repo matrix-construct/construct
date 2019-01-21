@@ -132,7 +132,7 @@ ircd::m::sync::presence_polylog_events(data &data)
 	ctx::parallel<string_view> parallel
 	{
 		m::sync::pool, q, [&data, &append_event]
-		(const m::user::id &user_id)
+		(const m::user::id user_id)
 		{
 			//TODO: check something better than user_room head?
 			if(head_idx(std::nothrow, user::room(user_id)) >= data.range.first)
@@ -150,7 +150,8 @@ ircd::m::sync::presence_polylog_events(data &data)
 		// which ctx::parallel wants us to store the next data at. The
 		// parallel() call doesn't return (blocks this context) until there's
 		// a next position available; propagating flow-control for the iter.
-		q[parallel.snd] = strlcpy(buf->at(parallel.snd), user.user_id);
+		const auto pos(parallel.nextpos());
+		q[pos] = strlcpy(buf->at(pos), user.user_id);
 		parallel();
 	});
 }
