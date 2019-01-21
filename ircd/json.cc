@@ -211,19 +211,31 @@ struct ircd::json::output
 		,"number"
 	};
 
-	rule<string_view> quoted
+	std::map<char, const char *> escapes
 	{
-		char_('"') << *char_ << char_('"')
+		{ '"',    "\\\""  },
+		{ '\\',   "\\\\"  },
+		{ '\b',   "\\b"   },
+		{ '\f',   "\\f"   },
+		{ '\n',   "\\n"   },
+		{ '\r',   "\\r"   },
+		{ '\t',   "\\t"   },
+		{ '\0',   "\\0"   },
 	};
 
-	rule<string_view> unquoted
+	karma::symbols<char, const char *> escaped
 	{
-		quote << *char_ << quote
+		"escaped"
+	};
+
+	rule<char()> character
+	{
+		escaped | char_
 	};
 
 	rule<string_view> string
 	{
-		quoted | unquoted
+		quote << *(character) << quote
 		,"string"
 	};
 
@@ -263,7 +275,10 @@ struct ircd::json::output
 
 	output()
 	:output::base_type{rule<>{}}
-	{}
+	{
+		for(const auto &p : escapes)
+			escaped.add(p.first, p.second);
+	}
 };
 
 struct ircd::json::expectation_failure
@@ -2354,11 +2369,7 @@ ircd::json::stringify(mutable_buffer &buf,
 				break;
 			}
 
-			if(surrounds(sv, '"'))
-				printer(buf, printer.quoted, sv);
-			else
-				printer(buf, printer.unquoted, sv);
-
+			printer(buf, printer.string, sv);
 			break;
 		}
 
@@ -2498,11 +2509,11 @@ ircd::json::serialized(const value &v)
 			if(v.serial)
 				return v.len;
 
-			size_t ret(v.len);
+			thread_local char test_buffer[value::max_string_size];
 			const string_view sv{v.string, v.len};
-			ret += !startswith(sv, '"');
-			ret += !endswith(sv, '"');
-			return ret;
+			mutable_buffer buf{test_buffer};
+			printer(buf, printer.string, sv);
+			return begin(buf) - test_buffer;
 		}
 	};
 
