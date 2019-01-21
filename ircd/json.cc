@@ -1253,8 +1253,8 @@ ircd::json::_prev(chase &c)
 // iov.h
 //
 
-decltype(ircd::json::iov::MAX_SIZE)
-ircd::json::iov::MAX_SIZE
+decltype(ircd::json::iov::max_size)
+ircd::json::iov::max_size
 {
 	1024
 };
@@ -1271,11 +1271,13 @@ ircd::json::stringify(mutable_buffer &buf,
                       const iov &iov)
 {
 	const ctx::critical_assertion ca;
-	thread_local const member *m[iov.MAX_SIZE];
-	if(unlikely(size_t(iov.size()) > iov.MAX_SIZE))
+	thread_local const member *m[iov.max_size];
+	if(unlikely(size_t(iov.size()) > iov.max_size))
 		throw iov::oversize
 		{
-			"IOV has %zd members but maximum is %zu", iov.size(), iov.MAX_SIZE
+			"IOV has %zd members but maximum is %zu",
+			iov.size(),
+			iov.max_size
 		};
 
 	std::transform(std::begin(iov), std::end(iov), m, []
@@ -1561,7 +1563,7 @@ ircd::json::insert(const strung &s,
 		};
 
 	size_t mctr {0};
-	thread_local std::array<member, iov::MAX_SIZE> mb;
+	thread_local std::array<member, iov::max_size> mb;
 	for(const object::member &m : object{s})
 		mb.at(mctr++) = member{m};
 
@@ -1588,7 +1590,7 @@ ircd::json::remove(const strung &s,
 		};
 
 	size_t mctr {0};
-	thread_local std::array<object::member, iov::MAX_SIZE> mb;
+	thread_local std::array<object::member, iov::max_size> mb;
 	for(const object::member &m : object{s})
 		if(m.first != key)
 			mb.at(mctr++) = m;
@@ -1615,7 +1617,7 @@ ircd::json::remove(const strung &s,
 		};
 
 	size_t mctr{0}, i{0};
-	thread_local std::array<string_view, iov::MAX_SIZE> mb;
+	thread_local std::array<string_view, iov::max_size> mb;
 	for(const string_view &m : array{s})
 		if(i++ != idx)
 			mb.at(mctr++) = m;
@@ -1707,9 +1709,15 @@ const
 //
 
 decltype(ircd::json::object::max_recursion_depth)
-const ircd::json::object::max_recursion_depth
+ircd::json::object::max_recursion_depth
 {
 	32
+};
+
+decltype(ircd::json::object::max_sorted_members)
+ircd::json::object::max_sorted_members
+{
+	iov::max_size
 };
 
 std::ostream &
@@ -1754,7 +1762,7 @@ ircd::json::stringify(mutable_buffer &buf,
                       const object &object)
 try
 {
-	using member_array = std::array<object::member, iov::MAX_SIZE>;
+	using member_array = std::array<object::member, object::max_sorted_members>;
 	using member_arrays = std::array<member_array, object::max_recursion_depth>;
 	static_assert(sizeof(member_arrays) == 1_MiB); // yay reentrance .. joy :/
 
@@ -2165,7 +2173,7 @@ ircd::json::stringify(mutable_buffer &buf,
                       const member *const &e)
 try
 {
-	using member_array = std::array<const member *, iov::MAX_SIZE>;
+	using member_array = std::array<const member *, object::max_sorted_members>;
 	using member_arrays = std::array<member_array, object::max_recursion_depth>;
 	static_assert(sizeof(member_arrays) == 256_KiB);
 
@@ -2276,6 +2284,12 @@ static_assert
 (
 	ircd::json::undefined_number != 0
 );
+
+decltype(ircd::json::value::max_string_size)
+ircd::json::value::max_string_size
+{
+	64_KiB
+};
 
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const value &v)
@@ -2492,7 +2506,10 @@ ircd::json::serialized(const value &v)
 		}
 	};
 
-	throw type_error("deciding the size of a type[%u] is undefined", int(v.type));
+	throw type_error
+	{
+		"deciding the size of a type[%u] is undefined", int(v.type)
+	};
 }
 
 size_t

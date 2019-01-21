@@ -71,6 +71,7 @@ struct ircd::json::object
 	using key_compare = std::less<member>;
 
 	static const uint max_recursion_depth;
+	static const size_t max_sorted_members;
 
 	// fundamental
 	const_iterator end() const;

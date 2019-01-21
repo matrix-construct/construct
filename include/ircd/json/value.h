@@ -56,6 +56,8 @@ namespace ircd::json
 ///
 struct ircd::json::value
 {
+	static const size_t max_string_size;
+
 	union
 	{
 		int64_t integer;
