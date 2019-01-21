@@ -197,7 +197,7 @@ github_heading(std::ostream &out,
 		content["repository"]
 	};
 
-	out << "<a href=\\\"" << unquote(repository["html_url"]) << "\\\">"
+	out << "<a href=\"" << unquote(repository["html_url"]) << "\">"
 	    << unquote(repository["full_name"])
 	    << "</a>";
 
@@ -207,9 +207,9 @@ github_heading(std::ostream &out,
 	};
 
 	if(commit_hash && type == "push")
-		out << " <b><font color=\\\"#FF5733\\\">";
+		out << " <b><font color=\"#FF5733\">";
 	else if(commit_hash && type == "pull_request")
-		out << " <b><font color=\\\"#CC00CC\\\">";
+		out << " <b><font color=\"#CC00CC\">";
 	else if(commit_hash)
 		out << " <b>";
 
@@ -233,9 +233,9 @@ github_heading(std::ostream &out,
 	};
 
 	out << " by "
-	    << "<a href=\\\""
+	    << "<a href=\""
 	    << party.second
-	    << "\\\">"
+	    << "\">"
 	    << party.first
 	    << "</a>";
 
@@ -258,7 +258,7 @@ github_handle__push(std::ostream &out,
 
 	if(!count)
 	{
-		out << " <font color=\\\"#FF0000\\\">";
+		out << " <font color=\"#FF0000\">";
 		if(content["ref"])
 			out << " " << unquote(content["ref"]);
 
@@ -274,7 +274,7 @@ github_handle__push(std::ostream &out,
 		    << token_last(ref, '/');
 	}
 
-	out << " <a href=\\\"" << unquote(content["compare"]) << "\\\">"
+	out << " <a href=\"" << unquote(content["compare"]) << "\">"
 	    << "<b>" << count << " commits</b>"
 	    << "</a>";
 
@@ -287,7 +287,7 @@ github_handle__push(std::ostream &out,
 		const auto url(unquote(commit["url"]));
 		const auto id(unquote(commit["id"]));
 		const auto sid(id.substr(0, 8));
-		out << " <a href=\\\"" << url << "\\\">"
+		out << " <a href=\"" << url << "\">"
 		    << "<b>" << sid << "</b>"
 		    << "</a>";
 
@@ -334,7 +334,7 @@ github_handle__pull_request(std::ostream &out,
 	if(pr["merged"] == "true")
 		out << ' '
 		    << "<b>"
-		    << "<font color=\\\"#CC00CC\\\">"
+		    << "<font color=\"#CC00CC\">"
 		    << "merged"
 		    << "</font>"
 		    << "</b>"
@@ -345,9 +345,9 @@ github_handle__pull_request(std::ostream &out,
 		const json::object merged_by{pr["merged_by"]};
 		out << " "
 		    << "by "
-		    << "<a href=\\\""
+		    << "<a href=\""
 		    << unquote(merged_by["html_url"])
-		    << "\\\">"
+		    << "\">"
 		    << unquote(merged_by["login"])
 		    << "</a>"
 		    ;
@@ -359,7 +359,7 @@ github_handle__pull_request(std::ostream &out,
 		case hash("null"):
 			out << " / "
 			    << "<b>"
-			    << "<font color=\\\"#FFCC00\\\">"
+			    << "<font color=\"#FFCC00\">"
 			    << "CHECKING MERGE"
 			    << "</font>"
 			    << "</b>"
@@ -369,7 +369,7 @@ github_handle__pull_request(std::ostream &out,
 		case hash("true"):
 			out << " / "
 			    << "<b>"
-			    << "<font color=\\\"#33CC33\\\">"
+			    << "<font color=\"#33CC33\">"
 			    << "MERGEABLE"
 			    << "</font>"
 			    << "</b>"
@@ -379,7 +379,7 @@ github_handle__pull_request(std::ostream &out,
 		case hash("false"):
 			out << " / "
 			    << "<b>"
-			    << "<font color=\\\"#CC0000\\\">"
+			    << "<font color=\"#CC0000\">"
 			    << "MERGE CONFLICT"
 			    << "</font>"
 			    << "</b>"
@@ -390,7 +390,7 @@ github_handle__pull_request(std::ostream &out,
 	if(pr.has("additions"))
 		out << " / "
 		    << "<b>"
-		    << "<font color=\\\"#33CC33\\\">"
+		    << "<font color=\"#33CC33\">"
 		    << "++"
 		    << "</font>"
 		    << pr["additions"]
@@ -400,7 +400,7 @@ github_handle__pull_request(std::ostream &out,
 	if(pr.has("deletions"))
 		out << " / "
 		    << "<b>"
-		    << "<font color=\\\"#CC0000\\\">"
+		    << "<font color=\"#CC0000\">"
 		    << "--"
 		    << "</font>"
 		    << pr["deletions"]
@@ -412,7 +412,7 @@ github_handle__pull_request(std::ostream &out,
 		    << "<b>"
 		    << pr["changed_files"]
 		    << ' '
-		    << "<font color=\\\"#476b6b\\\">"
+		    << "<font color=\"#476b6b\">"
 		    << "files"
 		    << "</font>"
 		    << "</b>"
@@ -425,9 +425,9 @@ github_handle__pull_request(std::ostream &out,
 
 	out << " "
 	    << "<pre>"
-	    << "<a href=\\\""
+	    << "<a href=\""
 	    << unquote(pr["html_url"])
-	    << "\\\">"
+	    << "\">"
 	    << "<b>"
 	    << unquote(head["sha"]).substr(0, 8)
 	    << "</b>"
