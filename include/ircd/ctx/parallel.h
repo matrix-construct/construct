@@ -19,15 +19,16 @@ namespace ircd::ctx
 template<class arg>
 struct ircd::ctx::parallel
 {
-	using closure = std::function<void (arg)>;
+	using closure = std::function<void (arg &)>;
 
 	pool *p {nullptr};
 	vector_view<arg> a;
 	closure c;
 	dock d;
 	std::exception_ptr eptr;
-	ushort snd {0};
-	ushort rcv {0};
+	uint64_t snd {0};           // sends to pool
+	uint64_t rcv {0};           // receives by worker
+	uint64_t fin {0};           // finished by worker
 
 	bool done() const;
 	bool avail() const;
@@ -124,7 +125,7 @@ noexcept
 	assert(snd > rcv);
 	const auto pos
 	{
-		rcv % this->a.size()
+		rcv++ % this->a.size()
 	};
 
 	if(!this->eptr) try
@@ -136,9 +137,9 @@ noexcept
 		this->eptr = std::current_exception();
 	}
 
-	++rcv;
+	assert(rcv > fin);
+	fin++;
 	d.notify_one();
-	assert(snd >= rcv);
 }
 
 template<class arg>
@@ -180,8 +181,10 @@ ircd::ctx::parallel<arg>::avail()
 const
 {
 	assert(snd >= rcv);
-	assert(snd - rcv <= ssize_t(a.size()));
-	return snd - rcv < ssize_t(a.size());
+	assert(rcv >= fin);
+	assert(snd - rcv <= a.size());
+	assert(snd - fin <= a.size());
+	return snd - fin < a.size();
 }
 
 template<class arg>
@@ -190,6 +193,7 @@ ircd::ctx::parallel<arg>::done()
 const
 {
 	assert(snd >= rcv);
-	assert(snd - rcv <= ssize_t(a.size()));
-	return snd - rcv == 0;
+	assert(rcv >= fin);
+	assert(snd - rcv <= a.size());
+	return snd - fin == 0;
 }
