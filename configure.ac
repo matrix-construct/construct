@@ -228,6 +228,26 @@ AC_ARG_ENABLE(optimize, AC_HELP_STRING([--enable-optimize], [Enable optimization
 AM_CONDITIONAL([OPTIMIZE], [[[[ "$OPTIMIZE" = "1" ]]]])
 
 dnl
+dnl Explicit link-time-optimization switch
+dnl
+
+AC_MSG_CHECKING(whether to enable link-time optimization)
+AC_ARG_ENABLE(lto, AC_HELP_STRING([--enable-lto], [Enable link-time optimization]),
+[
+	AC_MSG_RESULT([yes])
+	AC_SUBST(LTO, 1)
+], [
+	AM_COND_IF(DEBUG,
+	[
+		AC_MSG_RESULT([no])
+	], [
+		AC_MSG_RESULT([no, link-time optimization is explicit-only at this time])
+	])
+])
+
+AM_CONDITIONAL([LTO], [[[[ "$LTO" = "1" ]]]])
+
+dnl
 dnl Explicit optimization level switch
 dnl
 
@@ -399,6 +419,14 @@ dnl
 
 CXXFLAGS+=" -O$optimize_level"
 
+AM_COND_IF([LTO],
+[
+	lto="yes"
+	CXXFLAGS+=" -flto"
+], [
+	lto="no"
+])
+
 AM_COND_IF([OPTIMIZE],
 [
 	CXXFLAGS+=" -fweb"
@@ -413,14 +441,9 @@ AM_COND_IF([OPTIMIZE],
 	CXXFLAGS+=" -fira-hoist-pressure"
 	CXXFLAGS+=" -fbranch-target-load-optimize"
 	CXXFLAGS+=" -frerun-loop-opt"
-
-	dnl TODO: lto cannot be enabled until subobject linkage for json::tuple
-	dnl is resolved
-	dnl
-	dnl CXXFLAGS+=" -flto"
 	CXXFLAGS+=" -fdevirtualize-at-ltrans"
 
-	dnl remember to axe this when lto is enabled
+	dnl Note these flags are unreliable with LTO
 	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
 ], [
@@ -1488,6 +1511,7 @@ echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
 echo "Developer assert .................. $assert"
 echo "Optimized build ................... $optimize"
+echo "Link-time optimized ............... $lto"
 echo "Optimization level ................ $optimize_level"
 echo "Generic binary .................... $enable_generic"
 echo "Logging level ..................... $LOG_LEVEL"
