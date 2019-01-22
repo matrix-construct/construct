@@ -1739,36 +1739,6 @@ ircd::json::object::max_sorted_members
 };
 
 std::ostream &
-ircd::json::operator<<(std::ostream &s, const object::member &member)
-{
-	s << json::strung(member);
-	return s;
-}
-
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const object::member &member)
-{
-	char *const start(begin(buf));
-	printer(buf, printer.name << printer.name_sep, member.first);
-	stringify(buf, member.second);
-	const string_view ret
-	{
-		start, begin(buf)
-	};
-
-	assert(serialized(member) == size(ret));
-	return ret;
-}
-
-size_t
-ircd::json::serialized(const object::member &member)
-{
-	const json::value key{member.first, json::STRING};
-	return serialized(key) + 1 + serialized(member.second);
-}
-
-std::ostream &
 ircd::json::operator<<(std::ostream &s, const object &object)
 {
 	s << json::strung(object);
@@ -1816,32 +1786,6 @@ catch(const std::out_of_range &e)
 	};
 }
 
-ircd::string_view
-ircd::json::stringify(mutable_buffer &buf,
-                      const object::member *const &b,
-                      const object::member *const &e)
-{
-	char *const start(begin(buf));
-	static const auto stringify_member
-	{
-		[](mutable_buffer &buf, const object::member &member)
-		{
-			stringify(buf, member);
-		}
-	};
-
-	printer(buf, printer.object_begin);
-	printer::list_protocol(buf, b, e, stringify_member);
-	printer(buf, printer.object_end);
-	const string_view ret
-	{
-		start, begin(buf)
-	};
-
-	assert(serialized(b, e) == size(ret));
-	return ret;
-}
-
 size_t
 ircd::json::serialized(const object &object)
 {
@@ -1853,29 +1797,6 @@ ircd::json::serialized(const object &object)
 	(auto ret, const object::member &member)
 	{
 		return ret += serialized(member) + 1;
-	});
-}
-
-size_t
-ircd::json::serialized(const object::member *const &begin,
-                       const object::member *const &end)
-{
-	const size_t ret(1 + (begin == end));
-	return std::accumulate(begin, end, ret, []
-	(auto ret, const object::member &member)
-	{
-		return ret += serialized(member) + 1;
-	});
-}
-
-bool
-ircd::json::sorted(const object::member *const &begin,
-                   const object::member *const &end)
-{
-	return std::is_sorted(begin, end, []
-	(const object::member &a, const object::member &b)
-	{
-		return a.first < b.first;
 	});
 }
 
@@ -1894,41 +1815,100 @@ ircd::json::sorted(const object &object)
 	return true;
 }
 
-ircd::json::object::const_iterator &
-ircd::json::object::const_iterator::operator++()
-try
+size_t
+ircd::json::size(const object &object)
 {
-	static const auto &ws
-	{
-		parser.ws
-	};
-
-	static const parser::rule<json::object::member> member
-	{
-		parser.name >> -ws >> parser.name_sep >> -ws >> raw[parser.value(0)]
-		,"next object member"
-	};
-
-	static const parser::rule<json::object::member> parse_next
-	{
-		(parser.object_end | (parser.value_sep >> -ws >> member)) >> -ws
-		,"next object member or end"
-	};
-
-	state.first = string_view{};
-	state.second = string_view{};
-	qi::parse(start, stop, eps > parse_next, state);
-	return *this;
+	return object.size();
 }
-catch(const qi::expectation_failure<const char *> &e)
+
+bool
+ircd::json::operator!(const object &object)
 {
-	throw expectation_failure(start, e);
+	return empty(object);
+}
+
+bool
+ircd::json::empty(const object &object)
+{
+	return object.empty();
+}
+
+//
+// object
+//
+
+ircd::string_view
+ircd::json::object::operator[](const string_view &key)
+const
+{
+	const auto it(find(key));
+	return it != end()? it->second : string_view{};
+}
+
+ircd::string_view
+ircd::json::object::get(const string_view &key,
+                        const string_view &def)
+const
+{
+	return get<string_view>(key, def);
 }
 
 ircd::json::object::operator std::string()
 const
 {
 	return json::strung(*this);
+}
+
+bool
+ircd::json::object::has(const string_view &key)
+const
+{
+	return find(key) != end();
+}
+
+size_t
+ircd::json::object::size()
+const
+{
+	return count();
+}
+
+size_t
+ircd::json::object::count()
+const
+{
+	return std::distance(begin(), end());
+}
+
+bool
+ircd::json::object::empty()
+const
+{
+	const string_view &sv{*this};
+	assert(sv.size() > 2 || (sv.empty() || sv == empty_object));
+	return sv.size() <= 2;
+}
+
+ircd::json::object::const_iterator
+ircd::json::object::find(const name_hash_t &key)
+const
+{
+	return std::find_if(begin(), end(), [&key]
+	(const auto &member)
+	{
+		return name_hash(member.first) == key;
+	});
+}
+
+ircd::json::object::const_iterator
+ircd::json::object::find(const string_view &key)
+const
+{
+	return std::find_if(begin(), end(), [&key]
+	(const auto &member)
+	{
+		return member.first == key;
+	});
 }
 
 ircd::json::object::const_iterator
@@ -1972,6 +1952,196 @@ ircd::json::object::end()
 const
 {
 	return { string_view::end(), string_view::end() };
+}
+
+//
+// object::const_iterator
+//
+
+bool
+ircd::json::operator==(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start == b.start;
+}
+
+bool
+ircd::json::operator!=(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start != b.start;
+}
+
+bool
+ircd::json::operator<=(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start <= b.start;
+}
+
+bool
+ircd::json::operator>=(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start >= b.start;
+}
+
+bool
+ircd::json::operator<(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start < b.start;
+}
+
+bool
+ircd::json::operator>(const object::const_iterator &a, const object::const_iterator &b)
+{
+	return a.start > b.start;
+}
+
+ircd::json::object::const_iterator &
+ircd::json::object::const_iterator::operator++()
+try
+{
+	static const auto &ws
+	{
+		parser.ws
+	};
+
+	static const parser::rule<json::object::member> member
+	{
+		parser.name >> -ws >> parser.name_sep >> -ws >> raw[parser.value(0)]
+		,"next object member"
+	};
+
+	static const parser::rule<json::object::member> parse_next
+	{
+		(parser.object_end | (parser.value_sep >> -ws >> member)) >> -ws
+		,"next object member or end"
+	};
+
+	state.first = string_view{};
+	state.second = string_view{};
+	qi::parse(start, stop, eps > parse_next, state);
+	return *this;
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure(start, e);
+}
+
+//
+// object::member
+//
+
+std::ostream &
+ircd::json::operator<<(std::ostream &s, const object::member &member)
+{
+	s << json::strung(member);
+	return s;
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const object::member &member)
+{
+	char *const start(begin(buf));
+	printer(buf, printer.name << printer.name_sep, member.first);
+	stringify(buf, member.second);
+	const string_view ret
+	{
+		start, begin(buf)
+	};
+
+	assert(serialized(member) == size(ret));
+	return ret;
+}
+
+size_t
+ircd::json::serialized(const object::member &member)
+{
+	const json::value key{member.first, json::STRING};
+	return serialized(key) + 1 + serialized(member.second);
+}
+
+ircd::string_view
+ircd::json::stringify(mutable_buffer &buf,
+                      const object::member *const &b,
+                      const object::member *const &e)
+{
+	char *const start(begin(buf));
+	static const auto stringify_member
+	{
+		[](mutable_buffer &buf, const object::member &member)
+		{
+			stringify(buf, member);
+		}
+	};
+
+	printer(buf, printer.object_begin);
+	printer::list_protocol(buf, b, e, stringify_member);
+	printer(buf, printer.object_end);
+	const string_view ret
+	{
+		start, begin(buf)
+	};
+
+	assert(serialized(b, e) == size(ret));
+	return ret;
+}
+
+size_t
+ircd::json::serialized(const object::member *const &begin,
+                       const object::member *const &end)
+{
+	const size_t ret(1 + (begin == end));
+	return std::accumulate(begin, end, ret, []
+	(auto ret, const object::member &member)
+	{
+		return ret += serialized(member) + 1;
+	});
+}
+
+bool
+ircd::json::sorted(const object::member *const &begin,
+                   const object::member *const &end)
+{
+	return std::is_sorted(begin, end, []
+	(const object::member &a, const object::member &b)
+	{
+		return a.first < b.first;
+	});
+}
+
+bool
+ircd::json::operator==(const object::member &a, const object::member &b)
+{
+	return a.first == b.first;
+}
+
+bool
+ircd::json::operator!=(const object::member &a, const object::member &b)
+{
+	return a.first != b.first;
+}
+
+bool
+ircd::json::operator<=(const object::member &a, const object::member &b)
+{
+	return a.first <= b.first;
+}
+
+bool
+ircd::json::operator>=(const object::member &a, const object::member &b)
+{
+	return a.first >= b.first;
+}
+
+bool
+ircd::json::operator<(const object::member &a, const object::member &b)
+{
+	return a.first < b.first;
+}
+
+bool
+ircd::json::operator>(const object::member &a, const object::member &b)
+{
+	return a.first > b.first;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

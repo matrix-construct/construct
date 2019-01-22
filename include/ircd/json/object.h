@@ -20,6 +20,11 @@ namespace ircd::json
 	size_t size(const object &);
 	template<name_hash_t key, class T = string_view> T at(const object &);
 	template<name_hash_t key, class T = string_view> T get(const object &, const T &def = {});
+
+	bool sorted(const object &);
+	size_t serialized(const object &);
+	string_view stringify(mutable_buffer &, const object &);
+	std::ostream &operator<<(std::ostream &, const object &);
 }
 
 /// Lightweight interface to a JSON object string.
@@ -95,22 +100,30 @@ struct ircd::json::object
 	// returns value or empty
 	string_view operator[](const string_view &key) const;
 
-	// constructor. Note that you are able to construct from invalid JSON. The
-	// parser is not invoked until other operations and that's when it errors.
-	using string_view::string_view;
-
 	// rewrite into allocated string copy
 	explicit operator std::string() const;
 
-	// rewrite onto streams or buffers etc
-	friend bool sorted(const object &);
-	friend bool sorted(const member *const &, const member *const &);
-	friend size_t serialized(const object &);
-	friend size_t serialized(const member *const &, const member *const &);
-	friend string_view stringify(mutable_buffer &, const object &);
-	friend string_view stringify(mutable_buffer &, const member *const &, const member *const &);
-	friend std::ostream &operator<<(std::ostream &, const object &);
+	// constructor. Note that you are able to construct from invalid JSON. The
+	// parser is not invoked until other operations and that's when it errors.
+	using string_view::string_view;
 };
+
+namespace ircd::json
+{
+	bool operator==(const object::member &, const object::member &);
+	bool operator!=(const object::member &, const object::member &);
+	bool operator<=(const object::member &, const object::member &);
+	bool operator>=(const object::member &, const object::member &);
+	bool operator<(const object::member &, const object::member &);
+	bool operator>(const object::member &, const object::member &);
+
+	bool sorted(const object::member *const &, const object::member *const &);
+	size_t serialized(const object::member *const &, const object::member *const &);
+	size_t serialized(const object::member &);
+	string_view stringify(mutable_buffer &, const object::member *const &, const object::member *const &);
+	string_view stringify(mutable_buffer &, const object::member &);
+	std::ostream &operator<<(std::ostream &, const object::member &);
+}
 
 struct ircd::json::object::member
 :std::pair<string_view, string_view>
@@ -118,22 +131,22 @@ struct ircd::json::object::member
 	member(const string_view &first = {}, const string_view &second = {})
 	:std::pair<string_view, string_view>{first, second}
 	{}
-
-	friend bool operator==(const object::member &, const object::member &);
-	friend bool operator!=(const object::member &, const object::member &);
-	friend bool operator<=(const object::member &, const object::member &);
-	friend bool operator>=(const object::member &, const object::member &);
-	friend bool operator<(const object::member &, const object::member &);
-	friend bool operator>(const object::member &, const object::member &);
-
-	// writes a single member onto stream
-	friend size_t serialized(const object::member &);
-	friend string_view stringify(mutable_buffer &, const object::member &);
-	friend std::ostream &operator<<(std::ostream &, const object::member &);
 };
+
+namespace ircd::json
+{
+	bool operator==(const object::const_iterator &, const object::const_iterator &);
+	bool operator!=(const object::const_iterator &, const object::const_iterator &);
+	bool operator<=(const object::const_iterator &, const object::const_iterator &);
+	bool operator>=(const object::const_iterator &, const object::const_iterator &);
+	bool operator<(const object::const_iterator &, const object::const_iterator &);
+	bool operator>(const object::const_iterator &, const object::const_iterator &);
+}
 
 struct ircd::json::object::const_iterator
 {
+	friend class object;
+
 	using key_type = string_view;
 	using mapped_type = string_view;
 	using value_type = const member;
@@ -143,9 +156,6 @@ struct ircd::json::object::const_iterator
 	using difference_type = size_t;
 	using key_compare = std::less<value_type>;
 	using iterator_category = std::forward_iterator_tag;
-
-  protected:
-	friend class object;
 
 	const char *start {nullptr};
 	const char *stop {nullptr};
@@ -157,28 +167,20 @@ struct ircd::json::object::const_iterator
 	{}
 
   public:
-	value_type *operator->() const               { return &state;                                  }
-	value_type &operator*() const                { return *operator->();                           }
+	value_type *operator->() const
+	{
+		return &state;
+	}
+
+	value_type &operator*() const
+	{
+		return *operator->();
+	}
 
 	const_iterator &operator++();
 
 	const_iterator() = default;
-
-	friend bool operator==(const const_iterator &, const const_iterator &);
-	friend bool operator!=(const const_iterator &, const const_iterator &);
-	friend bool operator<=(const const_iterator &, const const_iterator &);
-	friend bool operator>=(const const_iterator &, const const_iterator &);
-	friend bool operator<(const const_iterator &, const const_iterator &);
-	friend bool operator>(const const_iterator &, const const_iterator &);
 };
-
-inline ircd::string_view
-ircd::json::object::operator[](const string_view &key)
-const
-{
-	const auto it(find(key));
-	return it != end()? it->second : string_view{};
-}
 
 template<ircd::json::name_hash_t key,
          class T>
@@ -229,14 +231,6 @@ catch(const bad_lex_cast &e)
 	};
 }
 
-inline ircd::string_view
-ircd::json::object::get(const string_view &key,
-                        const string_view &def)
-const
-{
-	return get<string_view>(key, def);
-}
-
 template<ircd::json::name_hash_t key,
          class T>
 ircd::string_view
@@ -268,146 +262,4 @@ const try
 catch(const bad_lex_cast &e)
 {
 	return def;
-}
-
-inline size_t
-ircd::json::size(const object &object)
-{
-	return object.size();
-}
-
-inline size_t
-ircd::json::object::size()
-const
-{
-	return count();
-}
-
-inline size_t
-ircd::json::object::count()
-const
-{
-	return std::distance(begin(), end());
-}
-
-inline bool
-ircd::json::operator!(const object &object)
-{
-	return empty(object);
-}
-
-inline bool
-ircd::json::empty(const object &object)
-{
-	return object.empty();
-}
-
-inline bool
-ircd::json::object::empty()
-const
-{
-	const string_view &sv{*this};
-	assert(sv.size() > 2 || (sv.empty() || sv == empty_object));
-	return sv.size() <= 2;
-}
-
-inline bool
-ircd::json::object::has(const string_view &key)
-const
-{
-	return find(key) != end();
-}
-
-inline ircd::json::object::const_iterator
-ircd::json::object::find(const name_hash_t &key)
-const
-{
-	return std::find_if(begin(), end(), [&key]
-	(const auto &member)
-	{
-		return name_hash(member.first) == key;
-	});
-}
-
-inline ircd::json::object::const_iterator
-ircd::json::object::find(const string_view &key)
-const
-{
-	return std::find_if(begin(), end(), [&key]
-	(const auto &member)
-	{
-		return member.first == key;
-	});
-}
-
-inline bool
-ircd::json::operator==(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start == b.start;
-}
-
-inline bool
-ircd::json::operator!=(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start != b.start;
-}
-
-inline bool
-ircd::json::operator<=(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start <= b.start;
-}
-
-inline bool
-ircd::json::operator>=(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start >= b.start;
-}
-
-inline bool
-ircd::json::operator<(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start < b.start;
-}
-
-inline bool
-ircd::json::operator>(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start > b.start;
-}
-
-inline bool
-ircd::json::operator==(const object::member &a, const object::member &b)
-{
-	return a.first == b.first;
-}
-
-inline bool
-ircd::json::operator!=(const object::member &a, const object::member &b)
-{
-	return a.first != b.first;
-}
-
-inline bool
-ircd::json::operator<=(const object::member &a, const object::member &b)
-{
-	return a.first <= b.first;
-}
-
-inline bool
-ircd::json::operator>=(const object::member &a, const object::member &b)
-{
-	return a.first >= b.first;
-}
-
-inline bool
-ircd::json::operator<(const object::member &a, const object::member &b)
-{
-	return a.first < b.first;
-}
-
-inline bool
-ircd::json::operator>(const object::member &a, const object::member &b)
-{
-	return a.first > b.first;
 }
