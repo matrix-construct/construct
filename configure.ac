@@ -401,7 +401,6 @@ CXXFLAGS+=" -O$optimize_level"
 
 AM_COND_IF([OPTIMIZE],
 [
-	CXXFLAGS+=" -march=native"
 	CXXFLAGS+=" -fweb"
 	CXXFLAGS+=" -fdata-sections"
 	CXXFLAGS+=" -ffunction-sections"
