@@ -202,7 +202,9 @@ AM_CONDITIONAL([ASSERT], [[[[ "$ASSERT" = "1" ]]]])
 
 AM_COND_IF(ASSERT,
 [
+	assert="yes"
 ], [
+	assert="no"
 	CPPDEFINE([NDEBUG])
 ])
 
@@ -429,6 +431,7 @@ AM_COND_IF([LTO],
 
 AM_COND_IF([OPTIMIZE],
 [
+	optimize="yes"
 	CXXFLAGS+=" -fweb"
 	CXXFLAGS+=" -fdata-sections"
 	CXXFLAGS+=" -ffunction-sections"
@@ -447,6 +450,7 @@ AM_COND_IF([OPTIMIZE],
 	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
 ], [
+	optimize="no"
 	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
 	CXXFLAGS+=" -fvar-tracking"
@@ -1471,18 +1475,6 @@ if [[ $DEBUG ]]; then
 	debug="yes"
 else
 	debug="no"
-fi
-
-if [[ $OPTIMIZE ]]; then
-	optimize="yes"
-else
-	optimize="no"
-fi
-
-if [[ $ASSERT ]]; then
-	assert="yes"
-else
-	assert="no"
 fi
 
 
