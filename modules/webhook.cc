@@ -101,6 +101,10 @@ github_handle__pull_request(std::ostream &,
                             const json::object &content);
 
 static std::ostream &
+github_handle__issues(std::ostream &,
+                      const json::object &content);
+
+static std::ostream &
 github_handle__ping(std::ostream &,
                     const json::object &content);
 
@@ -155,6 +159,8 @@ github_handle(client &client,
 		github_handle__push(out, request.content);
 	else if(type == "pull_request")
 		github_handle__pull_request(out, request.content);
+	else if(type == "issues")
+		github_handle__issues(out, request.content);
 
 	if(!string_view(webhook_room))
 		return;
@@ -438,6 +444,81 @@ github_handle__pull_request(std::ostream &out,
 	    << "</u>"
 	    << "</pre>"
 	    ;
+
+	return out;
+}
+
+static std::ostream &
+github_handle__issues(std::ostream &out,
+                      const json::object &content)
+{
+	out << " "
+	    << "<b>"
+	    << unquote(content["action"])
+	    << "</b>"
+	    ;
+
+	const json::object issue
+	{
+		content["issue"]
+	};
+
+	switch(hash(unquote(content["action"])))
+	{
+		case "assigned"_:
+		case "unassigned"_:
+		{
+			const json::object assignee
+			{
+				content["assignee"]
+			};
+
+			out << " "
+			    << "<a href=\""
+			    << unquote(assignee["html_url"])
+			    << "\">"
+			    << unquote(assignee["login"])
+			    << "</a>"
+			    ;
+
+			break;
+		}
+	}
+
+	out << " "
+	    << "<a href=\""
+	    << unquote(issue["html_url"])
+	    << "\">"
+	    << "<b><u>"
+	    << unquote(issue["title"])
+	    << "</u></b>"
+	    << "</a>"
+	    ;
+
+	if(unquote(content["action"]) == "opened")
+	{
+		out << " "
+		    << "<blockquote>"
+		    << "<pre>"
+		    ;
+
+		static const auto delim("\\r\\n");
+		const auto body(unquote(issue["body"]));
+		auto lines(split(body, delim)); do
+		{
+			out << lines.first
+			    << "<br />"
+			    ;
+
+			lines = split(lines.second, delim);
+		}
+		while(!empty(lines.second));
+
+		out << ""
+		    << "</pre>"
+		    << "</blockquote>"
+		    ;
+	}
 
 	return out;
 }
