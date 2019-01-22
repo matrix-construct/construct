@@ -13,9 +13,10 @@
 
 namespace ircd::json
 {
+	struct string;
+	template<size_t SIZE> struct buffer;
 	using name_hash_t = size_t;
-	constexpr name_hash_t name_hash(const string_view name);
-	constexpr name_hash_t operator ""_(const char *const name, const size_t len);
+	using members = std::initializer_list<member>;
 
 	extern const string_view literal_null;
 	extern const string_view literal_true;
@@ -25,10 +26,12 @@ namespace ircd::json
 	extern const string_view empty_array;
 	extern const int64_t undefined_number;
 
+	constexpr name_hash_t name_hash(const string_view name);
+	constexpr name_hash_t operator ""_(const char *const name, const size_t len);
+
 	size_t serialized(const string_view &);
 	string_view stringify(mutable_buffer &, const string_view &);
-
-	using members = std::initializer_list<member>;
+	template<class... T> size_t print(const mutable_buffer &buf, T&&... t);
 
 	// Validate JSON - checks if valid JSON (not canonical).
 	bool valid(const string_view &, std::nothrow_t) noexcept;
@@ -37,6 +40,58 @@ namespace ircd::json
 
 	// (Internal) validates output
 	void valid_output(const string_view &, const size_t &expected);
+}
+
+/// Strong type representing quoted strings in JSON (which may be unquoted
+/// automatically when this type is encountered in a tuple etc)
+struct ircd::json::string
+:string_view
+{
+	string(const string_view &s)
+	:string_view{unquote(s)}
+	{}
+
+	string() = default;
+};
+
+/// Alternative to `json::strung` which uses a fixed array rather than an
+/// allocated string as the target.
+template<size_t SIZE>
+struct ircd::json::buffer
+:string_view
+{
+	std::array<char, SIZE> b;
+
+	template<class... T>
+	buffer(T&&... t)
+	:string_view{stringify(b, std::forward<T>(t)...)}
+	{}
+};
+
+/// Convenience template using the syntax print(mutable_buffer, ...)
+/// which stringifies with null termination into buffer.
+///
+template<class... T>
+size_t
+ircd::json::print(const mutable_buffer &buf,
+                  T&&... t)
+{
+	if(unlikely(!size(buf)))
+		return 0;
+
+	mutable_buffer out
+	{
+		data(buf), size(buf) - 1
+	};
+
+	const auto sv
+	{
+		stringify(out, std::forward<T>(t)...)
+	};
+
+	buf[sv.size()] = '\0';
+	valid_output(sv, size(sv)); // no size expectation check
+	return sv.size();
 }
 
 constexpr ircd::json::name_hash_t

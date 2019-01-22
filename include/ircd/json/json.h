@@ -43,10 +43,7 @@ namespace ircd::json
 	enum type type(const string_view &, std::nothrow_t);
 	string_view reflect(const enum type &);
 
-	struct strung;
-	template<size_t SIZE> struct buffer;
 	template<class... T> string_view stringify(const mutable_buffer &&mb, T&&... t);
-	template<class... T> size_t print(const mutable_buffer &buf, T&&... t);
 }
 
 #include "util.h"
@@ -70,32 +67,6 @@ namespace ircd
 	using json::get;
 }
 
-/// Strong type representing quoted strings in JSON (which may be unquoted
-/// automatically when this type is encountered in a tuple etc)
-struct ircd::json::string
-:string_view
-{
-	string(const string_view &s)
-	:string_view{unquote(s)}
-	{}
-
-	string() = default;
-};
-
-/// Alternative to `json::strung` which uses a fixed array rather than an
-/// allocated string as the target.
-template<size_t SIZE>
-struct ircd::json::buffer
-:string_view
-{
-	std::array<char, SIZE> b;
-
-	template<class... T>
-	buffer(T&&... t)
-	:string_view{stringify(b, std::forward<T>(t)...)}
-	{}
-};
-
 /// Convenience template for const rvalue mutable_buffers or basically
 /// allowing a bracket initialization of a mutable_buffer in the argument
 /// to stringify(). The const rvalue reference is on purpose. The stringify()
@@ -110,30 +81,4 @@ ircd::json::stringify(const mutable_buffer &&mb,
 {
 	mutable_buffer mbc{mb};
 	return stringify(mbc, std::forward<T>(t)...);
-}
-
-/// Convenience template using the syntax print(mutable_buffer, ...)
-/// which stringifies with null termination into buffer.
-///
-template<class... T>
-size_t
-ircd::json::print(const mutable_buffer &buf,
-                  T&&... t)
-{
-	if(unlikely(!size(buf)))
-		return 0;
-
-	mutable_buffer out
-	{
-		data(buf), size(buf) - 1
-	};
-
-	const auto sv
-	{
-		stringify(out, std::forward<T>(t)...)
-	};
-
-	buf[sv.size()] = '\0';
-	valid_output(sv, size(sv)); // no size expectation check
-	return sv.size();
 }

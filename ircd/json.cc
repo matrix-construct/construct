@@ -199,18 +199,21 @@ struct ircd::json::output
 	rule<> quote                       { lit('"')                                         ,"quote" };
 	rule<> escape                      { lit('\\')                                       ,"escape" };
 
+	// literal
 	rule<string_view> lit_true         { karma::string("true")                     ,"literal true" };
 	rule<string_view> lit_false        { karma::string("false")                   ,"literal false" };
 	rule<string_view> lit_null         { karma::string("null")                     ,"literal null" };
 	rule<string_view> boolean          { lit_true | lit_false                           ,"boolean" };
 	rule<string_view> literal          { lit_true | lit_false | lit_null                ,"literal" };
 
+	// number
 	rule<string_view> number
 	{
 		double_
 		,"number"
 	};
 
+	// string
 	std::map<char, const char *> escapes
 	{
 		{ '"',    "\\\""  },
@@ -413,7 +416,7 @@ ircd::json::input::throws_exceeded()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// stack.h
+// json/stack.h
 //
 
 ircd::json::stack::stack(const mutable_buffer &buf,
@@ -1265,7 +1268,7 @@ ircd::json::_prev(chase &c)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// iov.h
+// json/iov.h
 //
 
 decltype(ircd::json::iov::max_size)
@@ -2282,24 +2285,6 @@ ircd::json::sorted(const member *const &begin,
 // json/value.h
 //
 
-const ircd::string_view ircd::json::literal_null   { "null"   };
-const ircd::string_view ircd::json::literal_true   { "true"   };
-const ircd::string_view ircd::json::literal_false  { "false"  };
-const ircd::string_view ircd::json::empty_string   { "\"\""   };
-const ircd::string_view ircd::json::empty_object   { "{}"     };
-const ircd::string_view ircd::json::empty_array    { "[]"     };
-
-decltype(ircd::json::undefined_number)
-ircd::json::undefined_number
-{
-	std::numeric_limits<decltype(ircd::json::undefined_number)>::min()
-};
-
-static_assert
-(
-	ircd::json::undefined_number != 0
-);
-
 decltype(ircd::json::value::max_string_size)
 ircd::json::value::max_string_size
 {
@@ -3173,8 +3158,26 @@ ircd::json::operator==(const value &a, const value &b)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// json.h
+// json/util.h
 //
+
+const ircd::string_view ircd::json::literal_null   { "null"   };
+const ircd::string_view ircd::json::literal_true   { "true"   };
+const ircd::string_view ircd::json::literal_false  { "false"  };
+const ircd::string_view ircd::json::empty_string   { "\"\""   };
+const ircd::string_view ircd::json::empty_object   { "{}"     };
+const ircd::string_view ircd::json::empty_array    { "[]"     };
+
+decltype(ircd::json::undefined_number)
+ircd::json::undefined_number
+{
+	std::numeric_limits<decltype(ircd::json::undefined_number)>::min()
+};
+
+static_assert
+(
+	ircd::json::undefined_number != 0
+);
 
 std::string
 ircd::json::why(const string_view &s)
@@ -3273,6 +3276,11 @@ ircd::json::serialized(const string_view &v)
 	return serialized(value);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// json/json.h
+//
+
 enum ircd::json::type
 ircd::json::type(const string_view &buf)
 {
@@ -3285,7 +3293,7 @@ ircd::json::type(const string_view &buf)
 	if(!qi::phrase_parse(begin(buf), end(buf), parser.type, parser.WS, flag, ret))
 		throw type_error
 		{
-			"Failed to get type from buffer"
+			"Failed to derive JSON value type from input buffer."
 		};
 
 	return ret;
@@ -3319,5 +3327,8 @@ ircd::json::reflect(const enum type &type)
 		case STRING:   return "STRING";
 	}
 
-	return {};
+	throw type_error
+	{
+		"Unknown type %x", uint(type)
+	};
 }
