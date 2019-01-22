@@ -14,10 +14,26 @@
 namespace ircd::json
 {
 	struct member;
+	using members = std::initializer_list<member>;
+
+	bool operator==(const member &a, const member &b);
+	bool operator==(const member &a, const string_view &b);
+	bool operator!=(const member &a, const member &b);
+	bool operator!=(const member &a, const string_view &b);
+	bool operator<(const member &a, const member &b);
+	bool operator<(const member &a, const string_view &b);
 
 	bool sorted(const member *const &begin, const member *const &end);
+
 	size_t serialized(const member *const &begin, const member *const &end);
+	size_t serialized(const members &);
+	size_t serialized(const member &);
+
 	string_view stringify(mutable_buffer &, const member *const &begin, const member *const &end);
+	string_view stringify(mutable_buffer &, const members &);
+	string_view stringify(mutable_buffer &, const member &);
+
+	std::ostream &operator<<(std::ostream &, const member &);
 }
 
 /// A pair of json::value representing state for a member of an object.
@@ -33,27 +49,7 @@ struct ircd::json::member
 	explicit member(const string_view &k);
 	explicit member(const object::member &m);
 	member() = default;
-
-	friend bool operator==(const member &a, const member &b);
-	friend bool operator!=(const member &a, const member &b);
-	friend bool operator<(const member &a, const member &b);
-
-	friend bool operator==(const member &a, const string_view &b);
-	friend bool operator!=(const member &a, const string_view &b);
-	friend bool operator<(const member &a, const string_view &b);
-
-	friend size_t serialized(const member &);
-	friend string_view stringify(mutable_buffer &, const member &);
-	friend std::ostream &operator<<(std::ostream &, const member &);
 };
-
-namespace ircd::json
-{
-	using members = std::initializer_list<member>;
-
-	size_t serialized(const members &);
-	string_view stringify(mutable_buffer &, const members &);
-}
 
 inline
 ircd::json::member::member(const string_view &key,
@@ -88,39 +84,3 @@ ircd::json::member::member(const string_view &k)
 	{ k, json::STRING }, string_view{}
 }
 {}
-
-inline bool
-ircd::json::operator<(const member &a, const member &b)
-{
-	return a.first < b.first;
-}
-
-inline bool
-ircd::json::operator!=(const member &a, const member &b)
-{
-	return a.first != b.first;
-}
-
-inline bool
-ircd::json::operator==(const member &a, const member &b)
-{
-	return a.first == b.first;
-}
-
-inline bool
-ircd::json::operator<(const member &a, const string_view &b)
-{
-	return string_view{a.first.string, a.first.len} < b;
-}
-
-inline bool
-ircd::json::operator!=(const member &a, const string_view &b)
-{
-	return string_view{a.first.string, a.first.len} != b;
-}
-
-inline bool
-ircd::json::operator==(const member &a, const string_view &b)
-{
-	return string_view{a.first.string, a.first.len} == b;
-}

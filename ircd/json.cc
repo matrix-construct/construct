@@ -2280,6 +2280,42 @@ ircd::json::sorted(const member *const &begin,
 	});
 }
 
+bool
+ircd::json::operator<(const member &a, const member &b)
+{
+	return a.first < b.first;
+}
+
+bool
+ircd::json::operator!=(const member &a, const member &b)
+{
+	return a.first != b.first;
+}
+
+bool
+ircd::json::operator==(const member &a, const member &b)
+{
+	return a.first == b.first;
+}
+
+bool
+ircd::json::operator<(const member &a, const string_view &b)
+{
+	return string_view{a.first.string, a.first.len} < b;
+}
+
+bool
+ircd::json::operator!=(const member &a, const string_view &b)
+{
+	return string_view{a.first.string, a.first.len} != b;
+}
+
+bool
+ircd::json::operator==(const member &a, const string_view &b)
+{
+	return string_view{a.first.string, a.first.len} == b;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // json/value.h
