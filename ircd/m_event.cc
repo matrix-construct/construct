@@ -253,13 +253,13 @@ bool
 ircd::m::cached(const event::idx &event_idx,
                 const event::fetch::opts &opts)
 {
-	const auto &select(opts.keys);
-	auto &columns(dbs::event_column);
 	const byte_view<string_view> &key
 	{
 		event_idx
 	};
 
+	auto &columns(dbs::event_column);
+	const event::keys &select(opts.keys);
 	return std::all_of(begin(select), end(select), [&opts, &key, &columns]
 	(const string_view &colname)
 	{
@@ -1228,11 +1228,8 @@ void
 ircd::m::prefetch(const event::idx &event_idx,
                   const event::fetch::opts &opts)
 {
-	const vector_view<const string_view> cols
-	{
-		opts.keys
-	};
-
+	const event::keys keys{opts.keys};
+	const vector_view<const string_view> cols{keys};
 	for(const auto &col : cols)
 		if(col)
 			prefetch(event_idx, col);
@@ -1624,7 +1621,7 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 	event_idx && !_json.valid(key(&event_idx))?
 		key(&event_idx):
 		string_view{},
-	opts.keys,
+	event::keys{opts.keys},
 	cell,
 	opts.gopts
 }
@@ -1650,7 +1647,7 @@ ircd::m::event::fetch::fetch(const opts &opts)
 {
 	*dbs::events,
 	string_view{},
-	opts.keys,
+	event::keys{opts.keys},
 	cell,
 	opts.gopts
 }
@@ -1704,21 +1701,18 @@ ircd::m::event::fetch::assign_from_row(const opts &opts,
 bool
 ircd::m::event::fetch::should_seek_json(const opts &opts)
 {
-	 // User never wants to make the event_json query
-	if(!opts.query_json)
-		return false;
-
-	// User always wants to make the event_json query
+	// User always wants to make the event_json query regardless
+	// of their keys selection.
 	if(opts.query_json_force)
 		return true;
 
-	// User is making specific column queries
-	if(opts.keys.count() < event::size())
-		return false;
-
-	// User is querying all columns
-	if(opts.keys.count() == event::size())
-		return true;
+	// If and only if selected keys have direct columns we can return
+	// false to seek direct columns. If any other keys are selected we
+	/// must perform the event_json query instead.
+	for(size_t i(0); i < opts.keys.size(); ++i)
+		if(opts.keys.test(i))
+			if(!dbs::event_column.at(i))
+				return true;
 
 	return false;
 }
@@ -1735,7 +1729,7 @@ ircd::m::event::fetch::key(const event::idx *const &event_idx)
 //
 
 ircd::m::event::fetch::opts::opts(const db::gopts &gopts,
-                                  const event::keys &keys)
+                                  const event::keys::selection &keys)
 :opts
 {
 	keys, gopts
@@ -1743,7 +1737,7 @@ ircd::m::event::fetch::opts::opts(const db::gopts &gopts,
 {
 }
 
-ircd::m::event::fetch::opts::opts(const event::keys &keys,
+ircd::m::event::fetch::opts::opts(const event::keys::selection &keys,
                                   const db::gopts &gopts)
 :keys{keys}
 ,gopts{gopts}

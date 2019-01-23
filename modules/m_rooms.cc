@@ -184,12 +184,9 @@ void
 ircd::m::rooms::local_summary_chunk(const m::room &room,
                                     json::stack::object &obj)
 {
-	static const event::keys keys
+	static const event::keys::include keys
 	{
-		event::keys::include
-		{
-			"content",
-		}
+		"content",
 	};
 
 	const m::event::fetch::opts fopts

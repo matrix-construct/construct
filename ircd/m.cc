@@ -2576,13 +2576,9 @@ ircd::m::user::rooms::for_each(const string_view &membership,
 const
 {
 	// Setup the list of event fields to fetch for the closure
-	static const event::keys keys
+	static const event::keys::include keys
 	{
-		event::keys::include
-		{
-			"state_key",
-			"content",
-		}
+		"state_key", "content",
     };
 
 	const m::event::fetch::opts fopts

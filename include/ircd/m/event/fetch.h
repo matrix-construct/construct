@@ -98,15 +98,10 @@ namespace ircd::m
 struct ircd::m::event::fetch::opts
 {
 	/// Event property selector
-	event::keys keys;
+	event::keys::selection keys;
 
 	/// Database get options passthru
 	db::gopts gopts;
-
-	/// Whether to allow querying the event_json to populate the event. A value
-	/// of true only allows this type of query to be made; a value of false
-	/// prevents this query from ever being made.
-	bool query_json {true};
 
 	/// Whether to force an attempt at populating the event from event_json
 	/// first, bypassing any decision-making. This is useful if a key selection
@@ -114,7 +109,7 @@ struct ircd::m::event::fetch::opts
 	/// json query anyway.
 	bool query_json_force {false};
 
-	opts(const event::keys &, const db::gopts & = {});
-	opts(const db::gopts &, const event::keys & = {});
+	opts(const event::keys::selection &, const db::gopts & = {});
+	opts(const db::gopts &, const event::keys::selection & = {});
 	opts() = default;
 };

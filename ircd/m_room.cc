@@ -371,7 +371,7 @@ ircd::m::room::membership(const mutable_buffer &out,
                           const m::id::user &user_id)
 const
 {
-	static const event::keys membership_keys
+	static const event::keys::selection membership_keys
 	{
 		event::keys::include{"membership"}
 	};
@@ -405,7 +405,7 @@ const
 	// is a rare case so both queries are optimized to only seek for their key.
 	if(exists && !ret)
 	{
-		static const event::keys content_membership_keys
+		static const event::keys::selection content_membership_keys
 		{
 			event::keys::include{"content"}
 		};
@@ -1640,14 +1640,11 @@ const
 	}
 
 	// The list of event fields to fetch for the closure
-	static const event::keys keys
+	static const event::keys::include keys
 	{
-		event::keys::include
-		{
-			"event_id",    // Added for any upstack usage (but may be unnecessary).
-			"membership",  // Required for membership test.
-			"content",     // Required because synapse events randomly have no event.membership
-		}
+		"event_id",    // Added for any upstack usage (but may be unnecessary).
+		"membership",  // Required for membership test.
+		"content",     // Required because synapse events randomly have no event.membership
 	};
 
 	const m::event::fetch::opts fopts
@@ -1726,15 +1723,12 @@ ircd::m::room::members::for_each(const string_view &membership,
 const
 {
 	// Setup the list of event fields to fetch for the closure
-	static const event::keys keys
+	static const event::keys::include keys
 	{
-		event::keys::include
-		{
-			"event_id",
-			"membership",
-			"state_key",
-			"content",    // Required because synapse events randomly have no event.membership
-		}
+		"event_id",
+		"membership",
+		"state_key",
+		"content",    // Required because synapse events randomly have no event.membership
 	};
 
 	// In this case the fetch opts isn't static so it can maintain the
@@ -2460,12 +2454,9 @@ bool
 ircd::m::room::power::view(const std::function<void (const json::object &)> &closure)
 const
 {
-	static const event::keys keys
+	static const event::keys::include keys
 	{
-		event::keys::include
-		{
-			"content",
-		}
+		"content",
 	};
 
 	const m::event::fetch::opts fopts
