@@ -136,7 +136,6 @@ libircd_la_SOURCES =   \
 	m_dbs.cc           \
 	m_state.cc         \
 	m_room.cc          \
-	m_request.cc       \
 	m_v1.cc            \
 	m.cc               \
 	ircd.cc            \
