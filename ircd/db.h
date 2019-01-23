@@ -30,11 +30,39 @@
 ///
 //#define RB_DEBUG_DB_PORT
 
-/// Defined to enable our rocksdb::port implementation which connects to our
-/// ircd::ctx threading implementation. This is experimental. Note: at this
-/// time this MUST be enabled or rocksdb's will be using posix threading and
-/// that will not work with our env.
-#define IRCD_DB_PORT
+#include <rocksdb/version.h>
+#include <rocksdb/status.h>
+#include <rocksdb/db.h>
+#include <rocksdb/cache.h>
+#include <rocksdb/comparator.h>
+#include <rocksdb/merge_operator.h>
+#include <rocksdb/perf_level.h>
+#include <rocksdb/perf_context.h>
+#include <rocksdb/iostats_context.h>
+#include <rocksdb/listener.h>
+#include <rocksdb/statistics.h>
+#include <rocksdb/convenience.h>
+#include <rocksdb/env.h>
+#include <rocksdb/slice_transform.h>
+#include <rocksdb/utilities/checkpoint.h>
+#include <rocksdb/filter_policy.h>
+#include <rocksdb/table.h>
+#include <rocksdb/sst_file_manager.h>
+#include <rocksdb/sst_dump_tool.h>
+#include <rocksdb/compaction_filter.h>
+
+#include <ircd/db/database/comparator.h>
+#include <ircd/db/database/prefix_transform.h>
+#include <ircd/db/database/compaction_filter.h>
+#include <ircd/db/database/mergeop.h>
+#include <ircd/db/database/events.h>
+#include <ircd/db/database/stats.h>
+#include <ircd/db/database/logger.h>
+#include <ircd/db/database/column.h>
+#include <ircd/db/database/txn.h>
+#include <ircd/db/database/cache.h>
+#include <ircd/db/database/env.h>
+#include <ircd/db/database/env/port.h>
 
 namespace ircd::db
 {

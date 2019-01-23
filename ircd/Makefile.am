@@ -124,6 +124,8 @@ libircd_la_SOURCES =   \
 	demangle.cc        \
 	mods.cc            \
 	fmt.cc             \
+	db_port.cc         \
+	db_env.cc          \
 	db.cc              \
 	net.cc             \
 	http.cc            \
