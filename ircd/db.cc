@@ -40,16 +40,7 @@
 #include <ircd/db/database/column.h>
 #include <ircd/db/database/txn.h>
 #include <ircd/db/database/cache.h>
-
-// RocksDB embedding environment callback interfaces (backside).
-#include <ircd/db/database/env/env.h>
-#include <ircd/db/database/env/writable_file.h>
-#include <ircd/db/database/env/sequential_file.h>
-#include <ircd/db/database/env/random_access_file.h>
-#include <ircd/db/database/env/random_rw_file.h>
-#include <ircd/db/database/env/directory.h>
-#include <ircd/db/database/env/file_lock.h>
-#include <ircd/db/database/env/state.h>
+#include <ircd/db/database/env.h>
 
 // Internal utility interface for this definition file.
 #include "db.h"

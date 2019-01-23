@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_DB_DATABASE_ENV_H
+#define HAVE_IRCD_DB_DATABASE_ENV_ENV_H
 
 // This file is not part of the standard include stack because it requires
 // RocksDB symbols which we cannot forward declare. It is used internally
