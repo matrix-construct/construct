@@ -3969,7 +3969,7 @@ const
 }
 
 //
-// Checkpoint
+// txn::checkpoint
 //
 
 ircd::db::txn::checkpoint::checkpoint(txn &t)
@@ -3988,6 +3988,10 @@ noexcept
 	else
 		throw_on_error { t.wb->RollbackToSavePoint() };
 }
+
+//
+// txn::append
+//
 
 ircd::db::txn::append::append(txn &t,
                               const string_view &key,

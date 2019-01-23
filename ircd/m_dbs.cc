@@ -218,14 +218,38 @@ ircd::m::dbs::_append_event(db::txn &txn,
                             const event &event,
                             const write_opts &opts)
 {
-	db::txn::append
+	const byte_view<string_view> key
 	{
-		txn,
-		byte_view<string_view>(opts.event_idx),
-		event,
-		event_column,
-		opts.op
+		opts.event_idx
 	};
+
+	size_t i{0};
+	for_each(event, [&txn, &opts, &key, &i]
+	(const auto &, auto&& val)
+	{
+		auto &column
+		{
+			event_column.at(i++)
+		};
+
+		if(!column)
+			return;
+
+		if(value_required(opts.op) && !defined(json::value(val)))
+			return;
+
+		db::txn::append
+		{
+			txn, column, db::column::delta
+			{
+				opts.op,
+				string_view{key},
+				value_required(opts.op)?
+					byte_view<string_view>{val}:
+					byte_view<string_view>{}
+			}
+		};
+	});
 }
 
 void
