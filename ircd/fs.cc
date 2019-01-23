@@ -15,7 +15,7 @@
 #include <ircd/asio.h>
 
 #ifdef IRCD_USE_AIO
-	#include "aio.h"
+	#include "fs_aio.h"
 #endif
 
 namespace filesystem = boost::filesystem;

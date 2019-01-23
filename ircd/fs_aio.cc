@@ -11,7 +11,7 @@
 #include <sys/syscall.h>
 #include <sys/eventfd.h>
 #include <ircd/asio.h>
-#include "aio.h"
+#include "fs_aio.h"
 
 namespace ircd::fs::aio
 {
@@ -20,7 +20,7 @@ namespace ircd::fs::aio
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// fs/aio.h
+// ircd/fs/aio.h
 //
 // The contents of this section override weak symbols in ircd/fs.cc when this
 // unit is conditionally compiled and linked on AIO-supporting platforms. On
@@ -87,7 +87,7 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// ircd/aio.h
+// fs_aio.h
 //
 
 //

@@ -144,7 +144,7 @@ libircd_la_SOURCES =   \
 
 if AIO
 libircd_la_SOURCES +=  \
-	aio.cc             \
+	fs_aio.cc          \
 	###
 endif
 

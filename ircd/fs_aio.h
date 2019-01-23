@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_AIO_H
+#define HAVE_FS_AIO_H
 #include <linux/aio_abi.h>
 
 namespace ircd::fs::aio
