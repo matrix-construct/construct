@@ -48,7 +48,7 @@ namespace ircd::db
 #include "merge.h"
 #include "descriptor.h"
 #include "database/rocksdb.h"
-#include "database/database.h"
+#include "database.h"
 #include "database/snapshot.h"
 #include "database/sst.h"
 #include "database/wal.h"
