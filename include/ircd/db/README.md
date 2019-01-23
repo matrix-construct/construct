@@ -15,8 +15,8 @@ key's prefix, allowing a seek and iteration isolated to just one domain.
 
 In practice we create a column to present a single property in a JSON object. There
 is no recursion and we also must know the name of the property in advance to specify
-a descriptor for it. In practice we create a column for each property in the Matrix
-event object and then optimize that column specifically for that property.
+a descriptor for it. Applied, we create a column for each property in the Matrix
+event object† and then optimize that column specifically for that property.
 
 ```
 {
@@ -32,12 +32,23 @@ object is stored in whole as JSON text in the content column. Recursion is not y
 supported but theoretically we can create more columns to hold nested properties
 if we want further optimizations.
 
+† Note that the application in the example has been further optimized; not
+every property in the Matrix event has a dedicated column, and an additional
+meta-column is used to store full JSON events (albeit compressed) which is
+may be selected to improve performance by making a single larger request
+rather than several smaller requests to compose the same data.
+
 #### Rows
 Since `columns` are technically independent key-value stores (they have their own
 index), when an index key is the same between columns we call this a `row`. In
 the Matrix event example, each property of the same event is sought together in a
 `row`. A row seek is optimized and the individual cells are queried concurrently and
 iterated in lock-step together.
+
+There is a caveat to rows even though the queries to individual cells are
+made concurrently: each cell still requires an individual request to the
+storage device. The device has a fixed number of total requests it can service
+concurrently.
 
 #### Cells
 A `cell` is a gratuitious interface representing of a single value in a `column` with
