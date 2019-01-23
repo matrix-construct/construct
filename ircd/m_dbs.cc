@@ -195,13 +195,10 @@ ircd::m::dbs::write(db::txn &txn,
 
 	// event_idx
 	if(opts.indexer)
-		_index__event(txn, event, opts);
+		_index_event(txn, event, opts);
 
-	// Direct columns
-	db::txn::append
-	{
-		txn, byte_view<string_view>(opts.event_idx), event, event_column, opts.op
-	};
+	// direct columns
+	_append_event(txn, event, opts);
 
 	if(opts.json)
 		_index_json(txn, event, opts);
@@ -217,9 +214,24 @@ ircd::m::dbs::write(db::txn &txn,
 //
 
 void
-ircd::m::dbs::_index__event(db::txn &txn,
+ircd::m::dbs::_append_event(db::txn &txn,
                             const event &event,
                             const write_opts &opts)
+{
+	db::txn::append
+	{
+		txn,
+		byte_view<string_view>(opts.event_idx),
+		event,
+		event_column,
+		opts.op
+	};
+}
+
+void
+ircd::m::dbs::_index_event(db::txn &txn,
+                           const event &event,
+                           const write_opts &opts)
 {
 	db::txn::append
 	{

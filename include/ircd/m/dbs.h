@@ -261,7 +261,8 @@ namespace ircd::m::dbs
 	string_view _index_other(db::txn &, const event &, const write_opts &);
 	string_view _index_room(db::txn &, const event &, const write_opts &);
 	void _index_json(db::txn &, const event &, const write_opts &);
-	void _index__event(db::txn &, const event &, const write_opts &);
+	void _index_event(db::txn &, const event &, const write_opts &);
+	void _append_event(db::txn &, const event &, const write_opts &);
 }
 
 struct ircd::m::dbs::init
