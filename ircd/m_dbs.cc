@@ -2838,94 +2838,6 @@ ircd::m::dbs::desc::events_depth
 };
 
 //
-// membership
-//
-
-decltype(ircd::m::dbs::desc::events__membership__block__size)
-ircd::m::dbs::desc::events__membership__block__size
-{
-	{ "name",     "ircd.m.dbs.events.membership.block.size"  },
-	{ "default",  256L                                       },
-};
-
-decltype(ircd::m::dbs::desc::events__membership__cache__size)
-ircd::m::dbs::desc::events__membership__cache__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.membership.cache.size"  },
-		{ "default",  long(8_MiB)                                },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "membership"_>()));
-		const size_t &value{events__membership__cache__size};
-		db::capacity(db::cache(column), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__membership__cache_comp__size)
-ircd::m::dbs::desc::events__membership__cache_comp__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.membership.cache_comp.size"  },
-		{ "default",  long(16_MiB)                                    },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "membership"_>()));
-		const size_t &value{events__membership__cache_comp__size};
-		db::capacity(db::cache_compressed(column), value);
-	}
-};
-
-const ircd::db::descriptor
-ircd::m::dbs::desc::events_membership
-{
-	// name
-	"membership",
-
-	// explanation
-	R"(Stores the membership property of an event.
-
-	### developer note:
-	key is event_idx number.
-	)",
-
-	// typing (key, value)
-	{
-		typeid(uint64_t), typeid(string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(events_cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(events_cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(events___event__bloom__bits),
-
-	// expect queries hit
-	false,
-
-	// block size
-	size_t(events__membership__block__size),
-
-	// meta_block size
-	size_t(events___event__meta_block__size),
-};
-
-//
 // prev_events
 //
 
@@ -3029,6 +2941,7 @@ namespace ircd::m::dbs::desc
 
 	extern const ircd::db::descriptor events__event_bad;
 	extern const ircd::db::descriptor events_hashes;
+	extern const ircd::db::descriptor events_membership;
 	extern const ircd::db::descriptor events_prev_state;
 	extern const ircd::db::descriptor events_signatures;
 
@@ -3071,9 +2984,68 @@ ircd::m::dbs::desc::events__event_bad
 	true,
 };
 
-//
-// prev_state
-//
+const ircd::db::descriptor
+ircd::m::dbs::desc::events_hashes
+{
+	// name
+	"hashes",
+
+	// explanation
+	R"(
+
+	This column is deprecated and has been dropped from the schema. This
+	descriptor will erase its presence in the database upon next open.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	true,
+};
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events_membership
+{
+	// name
+	"membership",
+
+	// explanation
+	R"(Stores the membership property of an event.
+
+	### developer note:
+	key is event_idx number.
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	true,
+};
 
 const ircd::db::descriptor
 ircd::m::dbs::desc::events_prev_state
@@ -3112,42 +3084,6 @@ ircd::m::dbs::desc::events_signatures
 {
 	// name
 	"signatures",
-
-	// explanation
-	R"(
-
-	This column is deprecated and has been dropped from the schema. This
-	descriptor will erase its presence in the database upon next open.
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(uint64_t), typeid(string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	true,
-};
-
-//
-// hashes
-//
-
-const ircd::db::descriptor
-ircd::m::dbs::desc::events_hashes
-{
-	// name
-	"hashes",
 
 	// explanation
 	R"(
@@ -3236,14 +3172,12 @@ ircd::m::dbs::desc::events
 	events_content,
 	events_depth,
 	events_event_id,
-	events_membership,
 	events_origin,
 	events_origin_server_ts,
 	events_prev_events,
 	events_redacts,
 	events_room_id,
 	events_sender,
-	events_signatures,
 	events_state_key,
 	events_type,
 
@@ -3285,6 +3219,7 @@ ircd::m::dbs::desc::events
 
 	events__event_bad,
 	events_hashes,
+	events_membership,
 	events_prev_state,
 	events_signatures,
 };

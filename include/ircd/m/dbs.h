@@ -123,11 +123,6 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__event_id__cache_comp__size;
 	extern const db::descriptor events_event_id;
 
-	extern conf::item<size_t> events__membership__block__size;
-	extern conf::item<size_t> events__membership__cache__size;
-	extern conf::item<size_t> events__membership__cache_comp__size;
-	extern const db::descriptor events_membership;
-
 	extern conf::item<size_t> events__origin__block__size;
 	extern conf::item<size_t> events__origin__cache__size;
 	extern conf::item<size_t> events__origin__cache_comp__size;
