@@ -99,10 +99,10 @@ namespace ircd::m::dbs::desc
 	// Direct columns
 	//
 
-	extern conf::item<size_t> events___event__meta_block__size;
 	extern conf::item<size_t> events___event__bloom__bits;
 
 	extern conf::item<size_t> events__content__block__size;
+	extern conf::item<size_t> events__content__meta_block__size;
 	extern conf::item<size_t> events__content__cache__size;
 	extern conf::item<size_t> events__content__cache_comp__size;
 	extern const db::descriptor events_content;
@@ -114,11 +114,13 @@ namespace ircd::m::dbs::desc
 	extern const db::descriptor events_depth;
 
 	extern conf::item<size_t> events__event_id__block__size;
+	extern conf::item<size_t> events__event_id__meta_block__size;
 	extern conf::item<size_t> events__event_id__cache__size;
 	extern conf::item<size_t> events__event_id__cache_comp__size;
 	extern const db::descriptor events_event_id;
 
 	extern conf::item<size_t> events__origin__block__size;
+	extern conf::item<size_t> events__origin__meta_block__size;
 	extern conf::item<size_t> events__origin__cache__size;
 	extern conf::item<size_t> events__origin__cache_comp__size;
 	extern const db::descriptor events_origin;
@@ -130,26 +132,31 @@ namespace ircd::m::dbs::desc
 	extern const db::descriptor events_origin_server_ts;
 
 	extern conf::item<size_t> events__prev_events__block__size;
+	extern conf::item<size_t> events__prev_events__meta_block__size;
 	extern conf::item<size_t> events__prev_events__cache__size;
 	extern conf::item<size_t> events__prev_events__cache_comp__size;
 	extern const db::descriptor events_prev_events;
 
 	extern conf::item<size_t> events__room_id__block__size;
+	extern conf::item<size_t> events__room_id__meta_block__size;
 	extern conf::item<size_t> events__room_id__cache__size;
 	extern conf::item<size_t> events__room_id__cache_comp__size;
 	extern const db::descriptor events_room_id;
 
 	extern conf::item<size_t> events__sender__block__size;
+	extern conf::item<size_t> events__sender__meta_block__size;
 	extern conf::item<size_t> events__sender__cache__size;
 	extern conf::item<size_t> events__sender__cache_comp__size;
 	extern const db::descriptor events_sender;
 
 	extern conf::item<size_t> events__state_key__block__size;
+	extern conf::item<size_t> events__state_key__meta_block__size;
 	extern conf::item<size_t> events__state_key__cache__size;
 	extern conf::item<size_t> events__state_key__cache_comp__size;
 	extern const db::descriptor events_state_key;
 
 	extern conf::item<size_t> events__type__block__size;
+	extern conf::item<size_t> events__type__meta_block__size;
 	extern conf::item<size_t> events__type__cache__size;
 	extern conf::item<size_t> events__type__cache_comp__size;
 	extern const db::descriptor events_type;

@@ -727,7 +727,7 @@ decltype(ircd::m::dbs::desc::events__event_idx__meta_block__size)
 ircd::m::dbs::desc::events__event_idx__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events._event_idx.meta_block.size" },
-	{ "default",  4096L                                          },
+	{ "default",  512L                                           },
 };
 
 decltype(ircd::m::dbs::desc::events__event_idx__cache__size)
@@ -831,7 +831,7 @@ decltype(ircd::m::dbs::desc::events__event_json__block__size)
 ircd::m::dbs::desc::events__event_json__block__size
 {
 	{ "name",     "ircd.m.dbs.events._event_json.block.size" },
-	{ "default",  3192L                                       },
+	{ "default",  2048L                                      },
 };
 
 decltype(ircd::m::dbs::desc::events__event_json__meta_block__size)
@@ -846,7 +846,7 @@ ircd::m::dbs::desc::events__event_json__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs.events._event_json.cache.size" },
-		{ "default",  long(64_MiB)                                },
+		{ "default",  long(64_MiB)                               },
 	}, []
 	{
 		const size_t &value{events__event_json__cache__size};
@@ -859,7 +859,7 @@ ircd::m::dbs::desc::events__event_json__cache_comp__size
 {
 	{
 		{ "name",     "ircd.m.dbs.events._event_json.cache_comp.size" },
-		{ "default",  long(0_MiB)                                      },
+		{ "default",  long(0_MiB)                                     },
 	}, []
 	{
 		const size_t &value{events__event_json__cache_comp__size};
@@ -871,7 +871,7 @@ decltype(ircd::m::dbs::desc::events__event_json__bloom__bits)
 ircd::m::dbs::desc::events__event_json__bloom__bits
 {
 	{ "name",     "ircd.m.dbs.events._event_json.bloom.bits" },
-	{ "default",  9L                                          },
+	{ "default",  9L                                         },
 };
 
 const ircd::db::descriptor
@@ -1789,13 +1789,6 @@ ircd::m::dbs::desc::events__state_node
 // Direct column descriptors
 //
 
-decltype(ircd::m::dbs::desc::events___event__meta_block__size)
-ircd::m::dbs::desc::events___event__meta_block__size
-{
-	{ "name",     "ircd.m.dbs.events.__event.meta_block.size" },
-	{ "default",  long(8_KiB)                                 },
-};
-
 decltype(ircd::m::dbs::desc::events___event__bloom__bits)
 ircd::m::dbs::desc::events___event__bloom__bits
 {
@@ -1812,6 +1805,13 @@ ircd::m::dbs::desc::events__event_id__block__size
 {
 	{ "name",     "ircd.m.dbs.events.event_id.block.size"  },
 	{ "default",  512L                                     },
+};
+
+decltype(ircd::m::dbs::desc::events__event_id__meta_block__size)
+ircd::m::dbs::desc::events__event_id__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.event_id.meta_block.size"  },
+	{ "default",  512L                                          },
 };
 
 decltype(ircd::m::dbs::desc::events__event_id__cache__size)
@@ -1895,7 +1895,7 @@ ircd::m::dbs::desc::events_event_id
 	size_t(events__event_id__block__size),
 
 	// meta_block size
-	size_t(events___event__meta_block__size),
+	size_t(events__event_id__meta_block__size),
 };
 
 //
@@ -1907,6 +1907,13 @@ ircd::m::dbs::desc::events__type__block__size
 {
 	{ "name",     "ircd.m.dbs.events.type.block.size"  },
 	{ "default",  512L                                 },
+};
+
+decltype(ircd::m::dbs::desc::events__type__meta_block__size)
+ircd::m::dbs::desc::events__type__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.type.meta_block.size"  },
+	{ "default",  512L                                      },
 };
 
 decltype(ircd::m::dbs::desc::events__type__cache__size)
@@ -1990,7 +1997,7 @@ ircd::m::dbs::desc::events_type
 	size_t(events__type__block__size),
 
 	// meta_block size
-	size_t(events___event__meta_block__size),
+	size_t(events__type__meta_block__size),
 };
 
 //
@@ -2002,6 +2009,13 @@ ircd::m::dbs::desc::events__content__block__size
 {
 	{ "name",     "ircd.m.dbs.events.content.block.size"  },
 	{ "default",  2048L                                   },
+};
+
+decltype(ircd::m::dbs::desc::events__content__meta_block__size)
+ircd::m::dbs::desc::events__content__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.content.meta_block.size"  },
+	{ "default",  512L                                         },
 };
 
 decltype(ircd::m::dbs::desc::events__content__cache__size)
@@ -2085,7 +2099,7 @@ ircd::m::dbs::desc::events_content
 	size_t(events__content__block__size),
 
 	// meta_block size
-	size_t(events___event__meta_block__size),
+	size_t(events__content__meta_block__size),
 };
 
 //
@@ -2097,6 +2111,13 @@ ircd::m::dbs::desc::events__room_id__block__size
 {
 	{ "name",     "ircd.m.dbs.events.room_id.block.size"  },
 	{ "default",  512L                                    },
+};
+
+decltype(ircd::m::dbs::desc::events__room_id__meta_block__size)
+ircd::m::dbs::desc::events__room_id__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.room_id.meta_block.size"  },
+	{ "default",  512L                                         },
 };
 
 decltype(ircd::m::dbs::desc::events__room_id__cache__size)
@@ -2179,7 +2200,7 @@ ircd::m::dbs::desc::events_room_id
 	size_t(events__room_id__block__size),
 
 	// meta_block size
-	size_t(events___event__meta_block__size),
+	size_t(events__room_id__meta_block__size),
 };
 
 //
@@ -2191,6 +2212,13 @@ ircd::m::dbs::desc::events__sender__block__size
 {
 	{ "name",     "ircd.m.dbs.events.sender.block.size"  },
 	{ "default",  512L                                   },
+};
+
+decltype(ircd::m::dbs::desc::events__sender__meta_block__size)
+ircd::m::dbs::desc::events__sender__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.sender.meta_block.size"  },
+	{ "default",  512L                                        },
 };
 
 decltype(ircd::m::dbs::desc::events__sender__cache__size)
@@ -2273,7 +2301,7 @@ ircd::m::dbs::desc::events_sender
 	size_t(events__sender__block__size),
 
 	// meta_block size
-	size_t(events___event__meta_block__size),
+	size_t(events__sender__meta_block__size),
 };
 
 //
@@ -2285,6 +2313,13 @@ ircd::m::dbs::desc::events__state_key__block__size
 {
 	{ "name",     "ircd.m.dbs.events.state_key.block.size"  },
 	{ "default",  512L                                      },
+};
+
+decltype(ircd::m::dbs::desc::events__state_key__meta_block__size)
+ircd::m::dbs::desc::events__state_key__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.state_key.meta_block.size"  },
+	{ "default",  512L                                           },
 };
 
 decltype(ircd::m::dbs::desc::events__state_key__cache__size)
@@ -2369,7 +2404,7 @@ ircd::m::dbs::desc::events_state_key
 	size_t(events__state_key__block__size),
 
 	// meta_block size
-	size_t(events___event__meta_block__size),
+	size_t(events__state_key__meta_block__size),
 };
 
 //
@@ -2381,6 +2416,13 @@ ircd::m::dbs::desc::events__origin__block__size
 {
 	{ "name",     "ircd.m.dbs.events.origin.block.size"  },
 	{ "default",  512L                                   },
+};
+
+decltype(ircd::m::dbs::desc::events__origin__meta_block__size)
+ircd::m::dbs::desc::events__origin__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.origin.meta_block.size"  },
+	{ "default",  512L                                        },
 };
 
 decltype(ircd::m::dbs::desc::events__origin__cache__size)
@@ -2460,7 +2502,7 @@ ircd::m::dbs::desc::events_origin
 	size_t(events__origin__block__size),
 
 	// meta_block size
-	size_t(events___event__meta_block__size),
+	size_t(events__origin__meta_block__size),
 };
 
 //
@@ -2562,7 +2604,7 @@ ircd::m::dbs::desc::events_origin_server_ts
 	size_t(events__origin_server_ts__block__size),
 
 	// meta_block size
-	size_t(events___event__meta_block__size),
+	size_t(events__origin_server_ts__meta_block__size),
 };
 
 //
@@ -2657,7 +2699,7 @@ ircd::m::dbs::desc::events_depth
 	size_t(events__depth__block__size),
 
 	// meta_block size
-	size_t(events___event__meta_block__size),
+	size_t(events__depth__meta_block__size),
 };
 
 //
@@ -2669,6 +2711,13 @@ ircd::m::dbs::desc::events__prev_events__block__size
 {
 	{ "name",     "ircd.m.dbs.events.prev_events.block.size"  },
 	{ "default",  1024L                                       },
+};
+
+decltype(ircd::m::dbs::desc::events__prev_events__meta_block__size)
+ircd::m::dbs::desc::events__prev_events__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events.prev_events.meta_block.size"  },
+	{ "default",  512L                                             },
 };
 
 decltype(ircd::m::dbs::desc::events__prev_events__cache__size)
@@ -2745,7 +2794,7 @@ ircd::m::dbs::desc::events_prev_events
 	size_t(events__prev_events__block__size),
 
 	// meta_block size
-	size_t(events___event__meta_block__size),
+	size_t(events__prev_events__meta_block__size),
 };
 
 //
