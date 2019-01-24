@@ -161,6 +161,13 @@ struct ircd::m::vm::opts
 	/// replayed through the system (not recommended).
 	bool replays {false};
 
+	/// If the input event has a reference to already-strung json we can use
+	/// that directly when writing to the DB. When this is false we will
+	/// re-stringify the event internally either from a referenced source or
+	/// the tuple if no source is referenced. This should only be set to true
+	/// if the evaluator already performed this and the json source is good.
+	bool json_source {false};
+
 	// Verify the origin signature
 	bool verify {true};
 

@@ -687,6 +687,7 @@ ircd::m::vm::_write(eval &eval,
 	wopts.history = opts.history;
 	wopts.head = opts.head;
 	wopts.refs = opts.refs;
+	wopts.json_source = opts.json_source;
 	wopts.event_idx = eval.sequence;
 
 	if(at<"type"_>(event) == "m.room.create")
