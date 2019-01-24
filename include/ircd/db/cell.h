@@ -15,9 +15,11 @@ namespace ircd::db
 {
 	struct cell;
 
-	// Util
 	const std::string &name(const cell &);
 	uint64_t sequence(const cell &);
+
+	template<class pos> bool seek(cell &c, const pos &p, gopts = {});
+	std::ostream &operator<<(std::ostream &s, const cell &c);
 }
 
 /// A cell is a single key-value element existing within a column. This structure
@@ -90,10 +92,6 @@ struct ircd::db::cell
 	cell &operator=(cell &&) noexcept;
 	cell &operator=(const cell &) = delete;
 	~cell() noexcept;
-
-	friend std::ostream &operator<<(std::ostream &s, const cell &c);
-
-	template<class pos> friend bool seek(cell &c, const pos &p, gopts = {});
 };
 
 namespace ircd::db

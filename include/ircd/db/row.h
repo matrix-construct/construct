@@ -15,6 +15,9 @@ namespace ircd::db
 {
 	struct row;
 
+	// [GET] Seek all cells to key
+	size_t seek(row &, const string_view &, const gopts &opts = {});
+
 	// [SET] Delete row from DB (convenience to an op::DELETE delta)
 	void del(row &, const sopts & = {});
 }
@@ -48,6 +51,7 @@ struct ircd::db::row
 	// [GET] Get cell (or throw)
 	const cell &operator[](const size_t &column) const;
 	const cell &operator[](const string_view &column) const;
+
 	cell &operator[](const size_t &column);
 	cell &operator[](const string_view &column);
 
@@ -62,8 +66,6 @@ struct ircd::db::row
 	    const vector_view<cell> &buf = {},
 	    gopts opts = {})
 	__attribute__((stack_protect));
-
-	friend size_t seek(row &, const string_view &, const gopts &opts = {});
 };
 
 namespace ircd::db
