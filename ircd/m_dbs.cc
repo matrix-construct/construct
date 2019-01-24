@@ -2089,95 +2089,6 @@ ircd::m::dbs::desc::events_content
 };
 
 //
-// redacts
-//
-
-decltype(ircd::m::dbs::desc::events__redacts__block__size)
-ircd::m::dbs::desc::events__redacts__block__size
-{
-	{ "name",     "ircd.m.dbs.events.redacts.block.size"  },
-	{ "default",  512L                                    },
-};
-
-decltype(ircd::m::dbs::desc::events__redacts__cache__size)
-ircd::m::dbs::desc::events__redacts__cache__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.redacts.cache.size"  },
-		{ "default",  long(8_MiB)                             },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "redacts"_>()));
-		const size_t &value{events__redacts__cache__size};
-		db::capacity(db::cache(column), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__redacts__cache_comp__size)
-ircd::m::dbs::desc::events__redacts__cache_comp__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.redacts.cache_comp.size"  },
-		{ "default",  long(4_MiB)                                  },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "redacts"_>()));
-		const size_t &value{events__redacts__cache_comp__size};
-		db::capacity(db::cache_compressed(column), value);
-	}
-};
-
-const ircd::db::descriptor
-ircd::m::dbs::desc::events_redacts
-{
-	// name
-	"redacts",
-
-	// explanation
-	R"(Stores the redacts property of an event.
-
-	### developer note:
-	key is event_idx number.
-	value is targeted event_id
-	)",
-
-	// typing (key, value)
-	{
-		typeid(uint64_t), typeid(string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(events_cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(events_cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(events___event__bloom__bits),
-
-	// expect queries hit
-	false,
-
-	// block size
-	size_t(events__redacts__block__size),
-
-	// meta_block size
-	size_t(events___event__meta_block__size),
-};
-
-//
 // room_id
 //
 
@@ -2943,6 +2854,7 @@ namespace ircd::m::dbs::desc
 	extern const ircd::db::descriptor events_hashes;
 	extern const ircd::db::descriptor events_membership;
 	extern const ircd::db::descriptor events_prev_state;
+	extern const ircd::db::descriptor events_redacts;
 	extern const ircd::db::descriptor events_signatures;
 
 	//
@@ -3080,6 +2992,38 @@ ircd::m::dbs::desc::events_prev_state
 };
 
 const ircd::db::descriptor
+ircd::m::dbs::desc::events_redacts
+{
+	// name
+	"redacts",
+
+	// explanation
+	R"(Stores the redacts property of an event.
+
+	### developer note:
+	key is event_idx number.
+	value is targeted event_id
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	true,
+};
+
+const ircd::db::descriptor
 ircd::m::dbs::desc::events_signatures
 {
 	// name
@@ -3175,7 +3119,6 @@ ircd::m::dbs::desc::events
 	events_origin,
 	events_origin_server_ts,
 	events_prev_events,
-	events_redacts,
 	events_room_id,
 	events_sender,
 	events_state_key,
@@ -3221,5 +3164,6 @@ ircd::m::dbs::desc::events
 	events_hashes,
 	events_membership,
 	events_prev_state,
+	events_redacts,
 	events_signatures,
 };
