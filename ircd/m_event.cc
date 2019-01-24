@@ -1451,7 +1451,9 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 	event_idx && !_json.valid(key(&event_idx))?
 		key(&event_idx):
 		string_view{},
-	event::keys{opts.keys},
+	event_idx && !_json.valid(key(&event_idx))?
+		event::keys{opts.keys}:
+		event::keys{event::keys::include{}},
 	cell,
 	opts.gopts
 }
@@ -1477,7 +1479,9 @@ ircd::m::event::fetch::fetch(const opts &opts)
 {
 	*dbs::events,
 	string_view{},
-	event::keys{opts.keys},
+	!should_seek_json(opts)?
+		event::keys{opts.keys}:
+		event::keys{event::keys::include{}},
 	cell,
 	opts.gopts
 }
