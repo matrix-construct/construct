@@ -889,204 +889,28 @@ ircd::m::event::essential(json::iov &event,
                           const json::iov &contents,
                           const closure_iov_mutable &closure)
 {
-	const auto &type
+	using prototype = void (json::iov &, const json::iov &, const closure_iov_mutable &);
+
+	static mods::import<prototype> _essential
 	{
-		event.at("type")
+		"m_event", "_essential__iov"
 	};
 
-	if(type == "m.room.aliases")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "aliases", contents.at("aliases") }
-			}
-		}};
-
-		closure(event);
-	}
-	else if(type == "m.room.create")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "creator", contents.at("creator") }
-			}
-		}};
-
-		closure(event);
-	}
-	else if(type == "m.room.history_visibility")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "history_visibility", contents.at("history_visibility") }
-			}
-		}};
-
-		closure(event);
-	}
-	else if(type == "m.room.join_rules")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "join_rule", contents.at("join_rule") }
-			}
-		}};
-
-		closure(event);
-	}
-	else if(type == "m.room.member")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "membership", contents.at("membership") }
-			}
-		}};
-
-		closure(event);
-	}
-	else if(type == "m.room.power_levels")
-	{
-		const json::iov::push _content{event,
-		{
-			"content", json::members
-			{
-				{ "ban", contents.at("ban")                        },
-				{ "events", contents.at("events")                  },
-				{ "events_default", contents.at("events_default")  },
-				{ "kick", contents.at("kick")                      },
-				{ "redact", contents.at("redact")                  },
-				{ "state_default", contents.at("state_default")    },
-				{ "users", contents.at("users")                    },
-				{ "users_default", contents.at("users_default")    },
-			}
-		}};
-
-		closure(event);
-	}
-	else if(type == "m.room.redaction")
-	{
-		// This simply finds the redacts key and swaps it with jsundefined for
-		// the scope's duration. The redacts key will still be present and
-		// visible in the json::iov which is incorrect if directly serialized.
-		// However, this iov is turned into a json::tuple (m::event) which ends
-		// up being serialized for signing. That serialization is where the
-		// jsundefined redacts value is ignored.
-		auto &redacts{event.at("redacts")};
-		json::value temp(std::move(redacts));
-		redacts = json::value{};
-		const unwind _{[&redacts, &temp]
-		{
-			redacts = std::move(temp);
-		}};
-
-		const json::iov::push _content
-		{
-			event, { "content", "{}" }
-		};
-
-		closure(event);
-	}
-	else
-	{
-		const json::iov::push _content
-		{
-			event, { "content", "{}" }
-		};
-
-		closure(event);
-	}
+	_essential(event, contents, closure);
 }
 
 ircd::m::event
 ircd::m::essential(m::event event,
                    const mutable_buffer &contentbuf)
 {
-	const auto &type
+	using prototype = m::event &(m::event &, const mutable_buffer &);
+
+	static mods::import<prototype> _essential
 	{
-		json::at<"type"_>(event)
+		"m_event", "_essential"
 	};
 
-	json::object &content
-	{
-		json::get<"content"_>(event)
-	};
-
-	mutable_buffer essential
-	{
-		contentbuf
-	};
-
-	if(type == "m.room.aliases")
-	{
-		content = json::stringify(essential, json::members
-		{
-			{ "aliases", unquote(content.at("aliases")) }
-		});
-	}
-	else if(type == "m.room.create")
-	{
-		content = json::stringify(essential, json::members
-		{
-			{ "creator", unquote(content.at("creator")) }
-		});
-	}
-	else if(type == "m.room.history_visibility")
-	{
-		content = json::stringify(essential, json::members
-		{
-			{ "history_visibility", unquote(content.at("history_visibility")) }
-		});
-	}
-	else if(type == "m.room.join_rules")
-	{
-		content = json::stringify(essential, json::members
-		{
-			{ "join_rule", unquote(content.at("join_rule")) }
-		});
-	}
-	else if(type == "m.room.member")
-	{
-		content = json::stringify(essential, json::members
-		{
-			{ "membership", unquote(content.at("membership")) }
-		});
-	}
-	else if(type == "m.room.power_levels")
-	{
-		content = json::stringify(essential, json::members
-		{
-			{ "ban", unquote(content.at("ban"))                       },
-			{ "events", unquote(content.at("events"))                 },
-			{ "events_default", unquote(content.at("events_default")) },
-			{ "kick", unquote(content.at("kick"))                     },
-			{ "redact", unquote(content.at("redact"))                 },
-			{ "state_default", unquote(content.at("state_default"))   },
-			{ "users", unquote(content.at("users"))                   },
-			{ "users_default", unquote(content.at("users_default"))   },
-		});
-	}
-	else if(type == "m.room.redaction")
-	{
-		json::get<"redacts"_>(event) = string_view{};
-		content = "{}"_sv;
-	}
-	else
-	{
-		content = "{}"_sv;
-	}
-
-	json::get<"signatures"_>(event) = {};
-	return event;
+	return _essential(event, contentbuf);
 }
 
 //
