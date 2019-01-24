@@ -921,12 +921,27 @@ console_cmd__aio(opt &out, const string_view &line)
 bool
 console_cmd__conf__list(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"prefix"
+	}};
+
+	const auto prefix
+	{
+		param.at("prefix", string_view{})
+	};
+
 	thread_local char val[4_KiB];
 	for(const auto &item : conf::items)
+	{
+		if(prefix && !startswith(item.first, prefix))
+			continue;
+
 		out
 		<< std::setw(64) << std::left << std::setfill('_') << item.first
 		<< " " << item.second->get(val) << "\033[0m"
 		<< std::endl;
+	}
 
 	return true;
 }
