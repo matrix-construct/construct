@@ -2566,94 +2566,6 @@ ircd::m::dbs::desc::events_origin_server_ts
 };
 
 //
-// auth_events
-//
-
-decltype(ircd::m::dbs::desc::events__auth_events__block__size)
-ircd::m::dbs::desc::events__auth_events__block__size
-{
-	{ "name",     "ircd.m.dbs.events.auth_events.block.size"  },
-	{ "default",  1024L                                       },
-};
-
-decltype(ircd::m::dbs::desc::events__auth_events__cache__size)
-ircd::m::dbs::desc::events__auth_events__cache__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.auth_events.cache.size"  },
-		{ "default",  long(16_MiB)                                },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "auth_events"_>()));
-		const size_t &value{events__auth_events__cache__size};
-		db::capacity(db::cache(column), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__auth_events__cache_comp__size)
-ircd::m::dbs::desc::events__auth_events__cache_comp__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.auth_events.cache_comp.size"  },
-		{ "default",  long(16_MiB)                                     },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "auth_events"_>()));
-		const size_t &value{events__auth_events__cache_comp__size};
-		db::capacity(db::cache_compressed(column), value);
-	}
-};
-
-const ircd::db::descriptor
-ircd::m::dbs::desc::events_auth_events
-{
-	// name
-	"auth_events",
-
-	// explanation
-	R"(Stores the auth_events property of an event.
-
-	### developer note:
-	key is event_idx number..
-	)",
-
-	// typing (key, value)
-	{
-		typeid(uint64_t), typeid(string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(events_cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(events_cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(events___event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(events__auth_events__block__size),
-
-	// meta_block size
-	size_t(events___event__meta_block__size),
-};
-
-//
 // depth
 //
 
@@ -2851,6 +2763,7 @@ namespace ircd::m::dbs::desc
 	// conduct the drop.
 
 	extern const ircd::db::descriptor events__event_bad;
+	extern const ircd::db::descriptor events_auth_events;
 	extern const ircd::db::descriptor events_hashes;
 	extern const ircd::db::descriptor events_membership;
 	extern const ircd::db::descriptor events_prev_state;
@@ -2881,6 +2794,38 @@ ircd::m::dbs::desc::events__event_bad
 	// typing (key, value)
 	{
 		typeid(string_view), typeid(uint64_t)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	true,
+};
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events_auth_events
+{
+	// name
+	"auth_events",
+
+	// explanation
+	R"(
+
+	This column is deprecated and has been dropped from the schema. This
+	descriptor will erase its presence in the database upon next open.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(string_view)
 	},
 
 	// options
@@ -3112,7 +3057,6 @@ ircd::m::dbs::desc::events
 	// JSON, like content.
 	//
 
-	events_auth_events,
 	events_content,
 	events_depth,
 	events_event_id,
@@ -3161,6 +3105,7 @@ ircd::m::dbs::desc::events
 	//
 
 	events__event_bad,
+	events_auth_events,
 	events_hashes,
 	events_membership,
 	events_prev_state,

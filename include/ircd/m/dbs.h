@@ -102,11 +102,6 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events___event__meta_block__size;
 	extern conf::item<size_t> events___event__bloom__bits;
 
-	extern conf::item<size_t> events__auth_events__block__size;
-	extern conf::item<size_t> events__auth_events__cache__size;
-	extern conf::item<size_t> events__auth_events__cache_comp__size;
-	extern const db::descriptor events_auth_events;
-
 	extern conf::item<size_t> events__content__block__size;
 	extern conf::item<size_t> events__content__cache__size;
 	extern conf::item<size_t> events__content__cache_comp__size;
