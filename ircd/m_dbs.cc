@@ -2656,95 +2656,6 @@ ircd::m::dbs::desc::events_origin_server_ts
 };
 
 //
-// signatures
-//
-
-decltype(ircd::m::dbs::desc::events__signatures__block__size)
-ircd::m::dbs::desc::events__signatures__block__size
-{
-	{ "name",     "ircd.m.dbs.events.signatures.block.size"  },
-	{ "default",  1024L                                      },
-};
-
-decltype(ircd::m::dbs::desc::events__signatures__cache__size)
-ircd::m::dbs::desc::events__signatures__cache__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.signatures.cache.size"  },
-		{ "default",  long(16_MiB)                               },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "signatures"_>()));
-		const size_t &value{events__signatures__cache__size};
-		db::capacity(db::cache(column), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__signatures__cache_comp__size)
-ircd::m::dbs::desc::events__signatures__cache_comp__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.signatures.cache_comp.size"  },
-		{ "default",  long(16_MiB)                                    },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "signatures"_>()));
-		const size_t &value{events__signatures__cache_comp__size};
-		db::capacity(db::cache_compressed(column), value);
-	}
-};
-
-const ircd::db::descriptor
-ircd::m::dbs::desc::events_signatures
-{
-	// name
-	"signatures",
-
-	// explanation
-	R"(Stores the signatures property of an event.
-
-	### developer note:
-	key is event_idx number.
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(uint64_t), typeid(string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(events_cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(events_cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(events___event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(events__signatures__block__size),
-
-	// meta_block size
-	size_t(events___event__meta_block__size),
-};
-
-//
 // auth_events
 //
 
@@ -3207,6 +3118,7 @@ namespace ircd::m::dbs::desc
 
 	extern const ircd::db::descriptor events__event_bad;
 	extern const ircd::db::descriptor events_prev_state;
+	extern const ircd::db::descriptor events_signatures;
 
 	//
 	// Required by RocksDB
@@ -3268,6 +3180,38 @@ ircd::m::dbs::desc::events_prev_state
 	// typing (key, value)
 	{
 		typeid(uint64_t), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	true,
+};
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events_signatures
+{
+	// name
+	"signatures",
+
+	// explanation
+	R"(
+
+	This column is deprecated and has been dropped from the schema. This
+	descriptor will erase its presence in the database upon next open.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(string_view)
 	},
 
 	// options
@@ -3394,4 +3338,5 @@ ircd::m::dbs::desc::events
 
 	events__event_bad,
 	events_prev_state,
+	events_signatures,
 };

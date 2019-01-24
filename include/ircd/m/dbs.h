@@ -166,11 +166,6 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__sender__cache_comp__size;
 	extern const db::descriptor events_sender;
 
-	extern conf::item<size_t> events__signatures__block__size;
-	extern conf::item<size_t> events__signatures__cache__size;
-	extern conf::item<size_t> events__signatures__cache_comp__size;
-	extern const db::descriptor events_signatures;
-
 	extern conf::item<size_t> events__state_key__block__size;
 	extern conf::item<size_t> events__state_key__cache__size;
 	extern conf::item<size_t> events__state_key__cache_comp__size;
