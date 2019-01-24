@@ -2762,13 +2762,13 @@ namespace ircd::m::dbs::desc
 	// the database will not know how to open the descriptor in order to
 	// conduct the drop.
 
-	extern const ircd::db::descriptor events__event_bad;
 	extern const ircd::db::descriptor events_auth_events;
 	extern const ircd::db::descriptor events_hashes;
 	extern const ircd::db::descriptor events_membership;
 	extern const ircd::db::descriptor events_prev_state;
 	extern const ircd::db::descriptor events_redacts;
 	extern const ircd::db::descriptor events_signatures;
+	extern const ircd::db::descriptor events__event_bad;
 
 	//
 	// Required by RocksDB
@@ -2880,10 +2880,11 @@ ircd::m::dbs::desc::events_membership
 	"membership",
 
 	// explanation
-	R"(Stores the membership property of an event.
+	R"(
 
-	### developer note:
-	key is event_idx number.
+	This column is deprecated and has been dropped from the schema. This
+	descriptor will erase its presence in the database upon next open.
+
 	)",
 
 	// typing (key, value)
@@ -2943,11 +2944,11 @@ ircd::m::dbs::desc::events_redacts
 	"redacts",
 
 	// explanation
-	R"(Stores the redacts property of an event.
+	R"(
 
-	### developer note:
-	key is event_idx number.
-	value is targeted event_id
+	This column is deprecated and has been dropped from the schema. This
+	descriptor will erase its presence in the database upon next open.
+
 	)",
 
 	// typing (key, value)
@@ -3104,11 +3105,11 @@ ircd::m::dbs::desc::events
 	// These columns are legacy; they have been dropped from the schema.
 	//
 
-	events__event_bad,
 	events_auth_events,
 	events_hashes,
 	events_membership,
 	events_prev_state,
 	events_redacts,
 	events_signatures,
+	events__event_bad,
 };
