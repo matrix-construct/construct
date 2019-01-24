@@ -235,7 +235,6 @@ try
 
 	m::vm::copts vmopts;
 	vmopts.history = false;
-	vmopts.json = false;
 	const m::room room
 	{
 		room_id, &vmopts

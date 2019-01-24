@@ -198,10 +198,10 @@ ircd::m::dbs::write(db::txn &txn,
 		_index_event(txn, event, opts);
 
 	// direct columns
-	_append_event(txn, event, opts);
+	_append_cols(txn, event, opts);
 
-	if(opts.json)
-		_index_json(txn, event, opts);
+	// full json
+	_append_json(txn, event, opts);
 
 	if(json::get<"room_id"_>(event))
 		return _index_room(txn, event, opts);
@@ -214,9 +214,9 @@ ircd::m::dbs::write(db::txn &txn,
 //
 
 void
-ircd::m::dbs::_append_event(db::txn &txn,
-                            const event &event,
-                            const write_opts &opts)
+ircd::m::dbs::_append_cols(db::txn &txn,
+                           const event &event,
+                           const write_opts &opts)
 {
 	const byte_view<string_view> key
 	{
@@ -253,25 +253,9 @@ ircd::m::dbs::_append_event(db::txn &txn,
 }
 
 void
-ircd::m::dbs::_index_event(db::txn &txn,
+ircd::m::dbs::_append_json(db::txn &txn,
                            const event &event,
                            const write_opts &opts)
-{
-	db::txn::append
-	{
-		txn, dbs::event_idx,
-		{
-			opts.op,
-			at<"event_id"_>(event),
-			byte_view<string_view>(opts.event_idx)
-		}
-	};
-}
-
-void
-ircd::m::dbs::_index_json(db::txn &txn,
-                          const event &event,
-                          const write_opts &opts)
 {
 	const ctx::critical_assertion ca;
 	thread_local char buf[m::event::MAX_SIZE];
@@ -296,9 +280,8 @@ ircd::m::dbs::_index_json(db::txn &txn,
 		opts.op == db::op::SET && event.source?
 			json::stringify(mutable_buffer{buf}, event.source):
 
-		// If no source was given with the event we can generate it. This
-		// is a default path unless the developer knows better.
-		opts.op == db::op::SET && opts.json_always?
+		// If no source was given with the event we can generate it.
+		opts.op == db::op::SET?
 			json::stringify(mutable_buffer{buf}, event):
 
 		// Empty value; generally for a non-SET db::op
@@ -312,6 +295,22 @@ ircd::m::dbs::_index_json(db::txn &txn,
 			opts.op,   // db::op
 			key,       // key
 			val,       // val
+		}
+	};
+}
+
+void
+ircd::m::dbs::_index_event(db::txn &txn,
+                           const event &event,
+                           const write_opts &opts)
+{
+	db::txn::append
+	{
+		txn, dbs::event_idx,
+		{
+			opts.op,
+			at<"event_id"_>(event),
+			byte_view<string_view>(opts.event_idx)
 		}
 	};
 }

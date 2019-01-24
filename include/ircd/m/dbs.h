@@ -85,8 +85,6 @@ struct ircd::m::dbs::write_opts
 	bool indexer {true};
 	bool head {true};
 	bool refs {true};
-	bool json {true};
-	bool json_always {true};
 	bool json_source {false};
 };
 
@@ -245,9 +243,9 @@ namespace ircd::m::dbs
 	string_view _index_redact(db::txn &, const event &, const write_opts &);
 	string_view _index_other(db::txn &, const event &, const write_opts &);
 	string_view _index_room(db::txn &, const event &, const write_opts &);
-	void _index_json(db::txn &, const event &, const write_opts &);
 	void _index_event(db::txn &, const event &, const write_opts &);
-	void _append_event(db::txn &, const event &, const write_opts &);
+	void _append_json(db::txn &, const event &, const write_opts &);
+	void _append_cols(db::txn &, const event &, const write_opts &);
 }
 
 struct ircd::m::dbs::init

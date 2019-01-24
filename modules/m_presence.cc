@@ -217,7 +217,6 @@ commit__m_presence(const m::presence &content)
 		create(user.user_id);
 
 	m::vm::copts copts;
-	copts.json = false;
 	copts.history = false;
 	const m::user::room user_room
 	{

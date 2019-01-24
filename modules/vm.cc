@@ -657,11 +657,8 @@ ircd::m::vm::_write(eval &eval,
 
 	const size_t reserve_bytes
 	{
-		opts.reserve_bytes == size_t(-1) && opts.json?
-			json::serialized(event) * 2:
-
 		opts.reserve_bytes == size_t(-1)?
-			json::serialized(event):
+			size_t(json::serialized(event) * 1.66):
 
 		opts.reserve_bytes
 	};
@@ -690,7 +687,6 @@ ircd::m::vm::_write(eval &eval,
 	wopts.history = opts.history;
 	wopts.head = opts.head;
 	wopts.refs = opts.refs;
-	wopts.json = opts.json;
 	wopts.event_idx = eval.sequence;
 
 	if(at<"type"_>(event) == "m.room.create")
