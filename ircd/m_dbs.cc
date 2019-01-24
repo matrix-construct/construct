@@ -2839,94 +2839,6 @@ ircd::m::dbs::desc::events_depth
 };
 
 //
-// hashes
-//
-
-decltype(ircd::m::dbs::desc::events__hashes__block__size)
-ircd::m::dbs::desc::events__hashes__block__size
-{
-	{ "name",     "ircd.m.dbs.events.hashes.block.size"  },
-	{ "default",  512L                                   },
-};
-
-decltype(ircd::m::dbs::desc::events__hashes__cache__size)
-ircd::m::dbs::desc::events__hashes__cache__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.hashes.cache.size"  },
-		{ "default",  long(16_MiB)                           },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "hashes"_>()));
-		const size_t &value{events__hashes__cache__size};
-		db::capacity(db::cache(column), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__hashes__cache_comp__size)
-ircd::m::dbs::desc::events__hashes__cache_comp__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.hashes.cache_comp.size"  },
-		{ "default",  long(16_MiB)                                },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "hashes"_>()));
-		const size_t &value{events__hashes__cache_comp__size};
-		db::capacity(db::cache_compressed(column), value);
-	}
-};
-
-const ircd::db::descriptor
-ircd::m::dbs::desc::events_hashes
-{
-	// name
-	"hashes",
-
-	// explanation
-	R"(Stores the hashes property of an event.
-
-	### developer note:
-	key is event_idx number..
-	)",
-
-	// typing (key, value)
-	{
-		typeid(uint64_t), typeid(string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(events_cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(events_cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(events___event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(events__hashes__block__size),
-
-	// meta_block size
-	size_t(events___event__meta_block__size),
-};
-
-//
 // membership
 //
 
@@ -3117,6 +3029,7 @@ namespace ircd::m::dbs::desc
 	// conduct the drop.
 
 	extern const ircd::db::descriptor events__event_bad;
+	extern const ircd::db::descriptor events_hashes;
 	extern const ircd::db::descriptor events_prev_state;
 	extern const ircd::db::descriptor events_signatures;
 
@@ -3227,6 +3140,42 @@ ircd::m::dbs::desc::events_signatures
 	true,
 };
 
+//
+// hashes
+//
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events_hashes
+{
+	// name
+	"hashes",
+
+	// explanation
+	R"(
+
+	This column is deprecated and has been dropped from the schema. This
+	descriptor will erase its presence in the database upon next open.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	true,
+};
+
 const ircd::db::descriptor
 ircd::m::dbs::desc::events__default
 {
@@ -3288,7 +3237,6 @@ ircd::m::dbs::desc::events
 	events_content,
 	events_depth,
 	events_event_id,
-	events_hashes,
 	events_membership,
 	events_origin,
 	events_origin_server_ts,
@@ -3337,6 +3285,7 @@ ircd::m::dbs::desc::events
 	//
 
 	events__event_bad,
+	events_hashes,
 	events_prev_state,
 	events_signatures,
 };
