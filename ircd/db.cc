@@ -4523,6 +4523,15 @@ const
 // db/row.h
 //
 
+namespace ircd::db
+{
+	static std::vector<rocksdb::Iterator *>
+	_make_iterators(database &d,
+	                database::column *const *const &columns,
+	                const size_t &columns_size,
+	                const rocksdb::ReadOptions &opts);
+}
+
 void
 ircd::db::del(row &row,
               const sopts &sopts)
@@ -4739,18 +4748,10 @@ ircd::db::row::row(database &d,
                    const vector_view<const string_view> &colnames,
                    const vector_view<cell> &buf,
                    gopts opts)
-:vector_view<cell>
-{
-	buf.data(),
-	colnames.empty()?
-		d.columns.size():
-		colnames.size()
-}
+:vector_view<cell>{[&d, &colnames, &buf, &opts]
 {
 	using std::end;
 	using std::begin;
-	using rocksdb::Iterator;
-	using rocksdb::ColumnFamilyHandle;
 
 	if(!opts.snapshot)
 		opts.snapshot = database::snapshot(d);
@@ -4760,63 +4761,89 @@ ircd::db::row::row(database &d,
 		make_opts(opts)
 	};
 
-	const size_t &column_count
+	assert(buf.size() >= colnames.size());
+	const size_t request_count
 	{
-		vector_view<cell>::size()
+		std::min(colnames.size(), buf.size())
 	};
 
-	database::column *colptr[column_count];
-	if(colnames.empty())
-		std::transform(begin(d.column_names), end(d.column_names), colptr, [&colnames]
-		(const auto &p)
-		{
-			return p.second.get();
-		});
-	else
-		std::transform(begin(colnames), end(colnames), colptr, [&d]
-		(const auto &name)
-		{
-			return &d[name];
-		});
-
-	std::vector<Iterator *> iterators;
-	if(key)
+	size_t count(0);
+	database::column *colptr[request_count];
+	for(size_t i(0); i < request_count; ++i)
 	{
-		assert(column_count <= d.columns.size());
-		std::vector<ColumnFamilyHandle *> handles(column_count);
-		std::transform(colptr, colptr + column_count, begin(handles), []
-		(database::column *const &ptr)
+		const auto cfid
 		{
-			return ptr->handle.get();
-		});
-
-		// This has been seen to lead to IO and block the ircd::ctx;
-		// specifically when background options are aggressive and shortly
-		// after db opens.
-		//const ctx::critical_assertion ca;
-		throw_on_error
-		{
-			d.d->NewIterators(options, handles, &iterators)
+			d.cfid(std::nothrow, colnames.at(i))
 		};
+
+		if(cfid >= 0)
+			colptr[count++] = &d[cfid];
 	}
 
-	for(size_t i(0); i < this->size() && i < column_count; ++i)
+	// All pointers returned by rocksdb in this vector must be free'd.
+	const auto iterators
 	{
-		std::unique_ptr<Iterator> it
+		_make_iterators(d, colptr, count, options)
+	};
+
+	assert(iterators.size() == count);
+	for(size_t i(0); i < iterators.size(); ++i)
+	{
+		std::unique_ptr<rocksdb::Iterator> it
 		{
-			!iterators.empty()? iterators.at(i) : nullptr
+			iterators.at(i)
 		};
 
-		(*this)[i] = cell
+		buf[i] = cell
 		{
 			*colptr[i], std::move(it), opts
 		};
 	}
 
+	return vector_view<cell>
+	{
+		buf.data(), iterators.size()
+	};
+}()}
+{
 	if(key)
 		seek(*this, key, opts);
 }
 #pragma GCC diagnostic pop
+
+static std::vector<rocksdb::Iterator *>
+ircd::db::_make_iterators(database &d,
+                          database::column *const *const &column,
+                          const size_t &column_count,
+                          const rocksdb::ReadOptions &opts)
+{
+	using rocksdb::Iterator;
+	using rocksdb::ColumnFamilyHandle;
+	assert(column_count <= d.columns.size());
+
+	//const ctx::critical_assertion ca;
+	// NewIterators() has been seen to lead to IO and block the ircd::ctx;
+	// specifically when background options are aggressive and shortly
+	// after db opens. It would be nice if we could maintain the
+	// critical_assertion for this function, as we could eliminate the
+	// vector allocation for ColumnFamilyHandle pointers.
+
+	std::vector<ColumnFamilyHandle *> handles(column_count);
+	std::transform(column, column + column_count, begin(handles), []
+	(database::column *const &ptr)
+	{
+		assert(ptr);
+		return ptr->handle.get();
+	});
+
+	std::vector<Iterator *> ret;
+	throw_on_error
+	{
+		d.d->NewIterators(opts, handles, &ret)
+	};
+
+	return ret;
+}
 
 void
 ircd::db::row::operator()(const op &op,
