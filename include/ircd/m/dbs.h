@@ -151,11 +151,6 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__prev_events__cache_comp__size;
 	extern const db::descriptor events_prev_events;
 
-	extern conf::item<size_t> events__prev_state__block__size;
-	extern conf::item<size_t> events__prev_state__cache__size;
-	extern conf::item<size_t> events__prev_state__cache_comp__size;
-	extern const db::descriptor events_prev_state;
-
 	extern conf::item<size_t> events__redacts__block__size;
 	extern conf::item<size_t> events__redacts__cache__size;
 	extern conf::item<size_t> events__redacts__cache_comp__size;

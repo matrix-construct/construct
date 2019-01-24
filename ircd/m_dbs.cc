@@ -882,7 +882,7 @@ ircd::m::dbs::desc::events__event_json
 	"_event_json",
 
 	// explanation
-	R"(Full JSON object for an event (if available).
+	R"(Full JSON object of an event.
 
 	event_idx => event_json
 
@@ -3192,94 +3192,6 @@ ircd::m::dbs::desc::events_prev_events
 };
 
 //
-// prev_state
-//
-
-decltype(ircd::m::dbs::desc::events__prev_state__block__size)
-ircd::m::dbs::desc::events__prev_state__block__size
-{
-	{ "name",     "ircd.m.dbs.events.prev_state.block.size"  },
-	{ "default",  256L                                       },
-};
-
-decltype(ircd::m::dbs::desc::events__prev_state__cache__size)
-ircd::m::dbs::desc::events__prev_state__cache__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.prev_state.cache.size"  },
-		{ "default",  long(16_MiB)                               },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "prev_state"_>()));
-		const size_t &value{events__prev_state__cache__size};
-		db::capacity(db::cache(column), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__prev_state__cache_comp__size)
-ircd::m::dbs::desc::events__prev_state__cache_comp__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.prev_state.cache_comp.size"  },
-		{ "default",  long(16_MiB)                                    },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "prev_state"_>()));
-		const size_t &value{events__prev_state__cache_comp__size};
-		db::capacity(db::cache_compressed(column), value);
-	}
-};
-
-const ircd::db::descriptor
-ircd::m::dbs::desc::events_prev_state
-{
-	// name
-	"prev_state",
-
-	// explanation
-	R"(Stores the prev_state property of an event.
-
-	### developer note:
-	key is event_idx number.
-	)",
-
-	// typing (key, value)
-	{
-		typeid(uint64_t), typeid(ircd::string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(events_cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(events_cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(events___event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(events__prev_state__block__size),
-
-	// meta_block size
-	size_t(events___event__meta_block__size),
-};
-
-//
 // Other column descriptions
 //
 
@@ -3294,6 +3206,7 @@ namespace ircd::m::dbs::desc
 	// conduct the drop.
 
 	extern const ircd::db::descriptor events__event_bad;
+	extern const ircd::db::descriptor events_prev_state;
 
 	//
 	// Required by RocksDB
@@ -3319,6 +3232,42 @@ ircd::m::dbs::desc::events__event_bad
 	// typing (key, value)
 	{
 		typeid(string_view), typeid(uint64_t)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	true,
+};
+
+//
+// prev_state
+//
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events_prev_state
+{
+	// name
+	"prev_state",
+
+	// explanation
+	R"(
+
+	This column is deprecated and has been dropped from the schema. This
+	descriptor will erase its presence in the database upon next open.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(ircd::string_view)
 	},
 
 	// options
@@ -3400,7 +3349,6 @@ ircd::m::dbs::desc::events
 	events_origin,
 	events_origin_server_ts,
 	events_prev_events,
-	events_prev_state,
 	events_redacts,
 	events_room_id,
 	events_sender,
@@ -3445,4 +3393,5 @@ ircd::m::dbs::desc::events
 	//
 
 	events__event_bad,
+	events_prev_state,
 };
