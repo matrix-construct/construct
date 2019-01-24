@@ -24,6 +24,7 @@ namespace ircd::db
 	const std::string &name(const database::column &);
 	uint32_t id(const database::column &);
 
+	bool dropped(const database::column &);
 	void drop(database::column &);                   // Request to erase column from db
 }
 

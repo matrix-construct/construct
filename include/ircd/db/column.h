@@ -116,8 +116,8 @@ struct ircd::db::column
 	explicit operator database &();
 	explicit operator database::column &();
 
-	explicit operator bool() const               { return bool(c);                                 }
-	bool operator!() const                       { return !c;                                      }
+	explicit operator bool() const;
+	bool operator!() const;
 
 	// [GET] Iterations
 	const_iterator begin(gopts = {});
@@ -292,6 +292,13 @@ const database::column &()
 const
 {
 	return *c;
+}
+
+inline bool
+ircd::db::column::operator!()
+const
+{
+	return !bool(*this);
 }
 
 inline ircd::db::column::operator

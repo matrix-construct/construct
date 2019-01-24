@@ -1599,6 +1599,14 @@ ircd::db::drop(database::column &c)
 	};
 }
 
+bool
+ircd::db::dropped(const database::column &c)
+{
+	return c.descriptor?
+		c.descriptor->drop:
+		true;
+}
+
 uint32_t
 ircd::db::id(const database::column &c)
 {
@@ -5622,6 +5630,15 @@ ircd::db::column::operator[](const string_view &key)
 const
 {
 	return { *this, key };
+}
+
+ircd::db::column::operator
+bool()
+const
+{
+	return c?
+		!dropped(*c):
+		false;
 }
 
 ircd::db::column::operator
