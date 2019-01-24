@@ -924,7 +924,7 @@ console_cmd__conf__list(opt &out, const string_view &line)
 	thread_local char val[4_KiB];
 	for(const auto &item : conf::items)
 		out
-		<< std::setw(48) << std::left << std::setfill('_') << item.first
+		<< std::setw(64) << std::left << std::setfill('_') << item.first
 		<< " " << item.second->get(val) << "\033[0m"
 		<< std::endl;
 
