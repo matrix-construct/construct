@@ -50,7 +50,7 @@ try
 {
 	presence::set(me, "online", me_online_status_msg);
 }
-catch(const m::error &e)
+catch(const http::error &e)
 {
 	log::critical
 	{
