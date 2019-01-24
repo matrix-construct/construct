@@ -727,7 +727,7 @@ decltype(ircd::m::dbs::desc::events__event_idx__meta_block__size)
 ircd::m::dbs::desc::events__event_idx__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events._event_idx.meta_block.size" },
-	{ "default",  512L                                           },
+	{ "default",  4096L                                          },
 };
 
 decltype(ircd::m::dbs::desc::events__event_idx__cache__size)
@@ -760,7 +760,7 @@ decltype(ircd::m::dbs::desc::events__event_idx__bloom__bits)
 ircd::m::dbs::desc::events__event_idx__bloom__bits
 {
 	{ "name",     "ircd.m.dbs.events._event_idx.bloom.bits" },
-	{ "default",  9L                                        },
+	{ "default",  10L                                       },
 };
 
 const ircd::db::descriptor
@@ -914,7 +914,7 @@ ircd::m::dbs::desc::events__event_json
 	size_t(events__event_json__bloom__bits),
 
 	// expect queries hit
-	false,
+	true,
 
 	// block size
 	size_t(events__event_json__block__size),
@@ -2398,7 +2398,7 @@ ircd::m::dbs::desc::events_state_key
 	size_t(events___event__bloom__bits),
 
 	// expect queries hit
-	false,
+	true,
 
 	// block size
 	size_t(events__state_key__block__size),
@@ -2520,7 +2520,7 @@ decltype(ircd::m::dbs::desc::events__origin_server_ts__meta_block__size)
 ircd::m::dbs::desc::events__origin_server_ts__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events.origin_server_ts.meta_block.size"  },
-	{ "default",  256L                                                  },
+	{ "default",  512L                                                  },
 };
 
 decltype(ircd::m::dbs::desc::events__origin_server_ts__cache__size)
@@ -2622,7 +2622,7 @@ decltype(ircd::m::dbs::desc::events__depth__meta_block__size)
 ircd::m::dbs::desc::events__depth__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events.depth.meta_block.size"  },
-	{ "default",  256L                                       },
+	{ "default",  512L                                       },
 };
 
 decltype(ircd::m::dbs::desc::events__depth__cache__size)
