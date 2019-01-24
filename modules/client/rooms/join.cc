@@ -69,7 +69,6 @@ join__room_user(const room &room,
 		{ event,    { "type",        "m.room.member"  }},
 		{ event,    { "sender",      user_id          }},
 		{ event,    { "state_key",   user_id          }},
-		{ event,    { "membership",  "join"           }},
 		{ content,  { "membership",  "join"           }},
 	};
 
@@ -192,7 +191,6 @@ bootstrap(const string_view &host,
 		{ event,    { "type",          "m.room.member"           }},
 		{ event,    { "sender",        user_id                   }},
 		{ event,    { "state_key",     user_id                   }},
-		{ event,    { "membership",    "join"                    }},
 		{ content,  { "membership",    "join"                    }},
 		{ event,    { "prev_events",   prev_events               }},
 		{ event,    { "auth_events",   auth_events               }},
@@ -241,7 +239,6 @@ bootstrap(const string_view &host,
 	};
 
 	m::vm::copts opts;
-	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	opts.prev_check_exists = false;
 	opts.head_must_exist = false;

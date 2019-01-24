@@ -338,9 +338,12 @@ ircd::m::check_size(std::nothrow_t,
 ircd::string_view
 ircd::m::membership(const event &event)
 {
-	return json::get<"membership"_>(event)?
-		string_view{json::get<"membership"_>(event)}:
-		unquote(json::get<"content"_>(event).get("membership"));
+	const json::object &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	return unquote(content.get("membership"));
 }
 
 size_t
@@ -1591,8 +1594,6 @@ ircd::m::event_conforms_reflects
 	"MISSING_ORIGIN",
 	"INVALID_ORIGIN",
 	"INVALID_OR_MISSING_REDACTS_ID",
-	"MISSING_MEMBERSHIP",
-	"INVALID_MEMBERSHIP",
 	"MISSING_CONTENT_MEMBERSHIP",
 	"INVALID_CONTENT_MEMBERSHIP",
 	"MISSING_PREV_EVENTS",
@@ -1696,14 +1697,6 @@ ircd::m::event::conforms::conforms(const event &e)
 	if(json::get<"redacts"_>(e))
 		if(json::get<"redacts"_>(e) == json::get<"event_id"_>(e))
 			set(SELF_REDACTS);
-
-	if(json::get<"type"_>(e) == "m.room.member")
-		if(empty(json::get<"membership"_>(e)))
-			set(MISSING_MEMBERSHIP);
-
-	if(json::get<"type"_>(e) == "m.room.member")
-		if(!all_of<std::islower>(json::get<"membership"_>(e)))
-			set(INVALID_MEMBERSHIP);
 
 	if(json::get<"type"_>(e) == "m.room.member")
 		if(empty(unquote(json::get<"content"_>(e).get("membership"))))

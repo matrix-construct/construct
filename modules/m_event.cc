@@ -254,7 +254,6 @@ pretty__event(std::ostream &s,
 		"type",
 		"depth",
 		"state_key",
-		"membership",
 		"redacts",
 	};
 
@@ -420,7 +419,6 @@ pretty_oneline__event(std::ostream &s,
 	else
 		s << "*" << " ";
 
-	out("membership", json::get<"membership"_>(event));
 	out("redacts", json::get<"redacts"_>(event));
 
 	const json::object &contents

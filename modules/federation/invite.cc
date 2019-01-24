@@ -158,13 +158,6 @@ check_event(const resource::request &request,
 			"event.type must be m.room.member"
 		};
 
-	if(at<"membership"_>(event) != "invite")
-		throw m::error
-		{
-			http::NOT_MODIFIED, "M_INVALID_MEMBERSHIP",
-			"event.membership must be invite."
-		};
-
 	if(unquote(at<"content"_>(event).at("membership")) != "invite")
 		throw m::error
 		{

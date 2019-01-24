@@ -76,7 +76,6 @@ kick(const m::room &room,
 	{
 		{ event,    { "type",        "m.room.member"  }},
 		{ event,    { "sender",       sender          }},
-		{ event,    { "membership",   "leave"         }},
 		{ content,  { "membership",   "leave"         }},
 	};
 

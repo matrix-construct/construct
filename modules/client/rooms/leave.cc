@@ -41,7 +41,6 @@ leave__room_user(const room &room,
 		{ event,    { "type",        "m.room.member"  }},
 		{ event,    { "sender",      user_id          }},
 		{ event,    { "state_key",   user_id          }},
-		{ event,    { "membership",  "leave"          }},
 		{ content,  { "membership",  "leave"          }},
 	};
 

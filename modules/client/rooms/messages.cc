@@ -42,7 +42,6 @@ default_fetch_opts
 		"content",
 		"depth",
 		"event_id",
-		"membership",
 		"origin_server_ts",
 		"prev_events",
 		"redacts",

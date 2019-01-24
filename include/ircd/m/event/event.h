@@ -65,7 +65,6 @@ struct ircd::m::event
 	json::property<name::depth, int64_t>,
 	json::property<name::event_id, json::string>,
 	json::property<name::hashes, json::object>,
-	json::property<name::membership, json::string>,
 	json::property<name::origin, json::string>,
 	json::property<name::origin_server_ts, time_t>,
 	json::property<name::prev_events, json::array>,

@@ -371,53 +371,20 @@ ircd::m::room::membership(const mutable_buffer &out,
                           const m::id::user &user_id)
 const
 {
-	static const event::keys::selection membership_keys
-	{
-		event::keys::include{"membership"}
-	};
-
-	// Since this is a member function of m::room there might be a supplied
-	// fopts. Whatever keys it has are irrelevant, but we can preserve gopts.
-	const m::event::fetch::opts fopts
-	{
-		membership_keys, this->fopts? this->fopts->gopts : db::gopts{}
-	};
-
 	string_view ret;
-	const auto result_closure{[&out, &ret]
-	(const m::event &event)
+	const room::state state{*this};
+	state.get(std::nothrow, "m.room.member", user_id, [&out, &ret]
+	(const event::idx &event_idx)
 	{
-		ret =
+		m::get(std::nothrow, event_idx, "content", [&out, &ret]
+		(const json::object &content)
 		{
-			data(out), copy(out, m::membership(event))
-		};
-	}};
-
-	const room::state state{*this, &fopts};
-	const bool exists
-	{
-		state.get(std::nothrow, "m.room.member"_sv, user_id, result_closure)
-	};
-
-	// This branch is taken when the event exists but the event.membership had
-	// no value. Due to wanton protocol violations event.membership may be
-	// jsundefined and only event.content.membership will exist in event. This
-	// is a rare case so both queries are optimized to only seek for their key.
-	if(exists && !ret)
-	{
-		static const event::keys::selection content_membership_keys
-		{
-			event::keys::include{"content"}
-		};
-
-		const m::event::fetch::opts fopts
-		{
-			content_membership_keys, this->fopts? this->fopts->gopts : db::gopts{}
-		};
-
-		const room::state state{*this, &fopts};
-		state.get(std::nothrow, "m.room.member"_sv, user_id, result_closure);
-	}
+			ret =
+			{
+				data(out), copy(out, unquote(content.get("membership")))
+			};
+		});
+	});
 
 	return ret;
 }
@@ -1643,7 +1610,6 @@ const
 	static const event::keys::include keys
 	{
 		"event_id",    // Added for any upstack usage (but may be unnecessary).
-		"membership",  // Required for membership test.
 		"content",     // Required because synapse events randomly have no event.membership
 	};
 
@@ -1726,9 +1692,8 @@ const
 	static const event::keys::include keys
 	{
 		"event_id",
-		"membership",
 		"state_key",
-		"content",    // Required because synapse events randomly have no event.membership
+		"content",
 	};
 
 	// In this case the fetch opts isn't static so it can maintain the

@@ -172,7 +172,6 @@ ircd::m::fetch::auth_chain_eval(const m::room::id &room_id,
 {
 	m::vm::opts opts;
 	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	opts.infolog_accept = true;
 	opts.warnlog |= m::vm::fault::STATE;
 	opts.warnlog &= ~m::vm::fault::EXISTS;

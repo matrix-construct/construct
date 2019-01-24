@@ -65,7 +65,6 @@ invite__room_user(const m::room &room,
 		{ event,    { "type",        "m.room.member"  }},
 		{ event,    { "sender",      sender           }},
 		{ event,    { "state_key",   target           }},
-		{ event,    { "membership",  "invite"         }},
 		{ content,  { "membership",  "invite"         }},
 	};
 

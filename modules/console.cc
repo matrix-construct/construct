@@ -6031,7 +6031,6 @@ console_cmd__eval__file(opt &out, const string_view &line)
 
 	m::vm::opts opts;
 	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	opts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	opts.prev_check_exists = false;
 	opts.notify = false;
 	opts.verify = false;
@@ -9426,7 +9425,6 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	vmopts.prev_check_exists = false;
 	vmopts.head_must_exist = false;
 	vmopts.history = false;
@@ -9520,7 +9518,6 @@ console_cmd__fed__state(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	vmopts.prev_check_exists = false;
 	vmopts.head_must_exist = false;
 	vmopts.verify = false;
@@ -9680,7 +9677,6 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	vmopts.prev_check_exists = false;
 	vmopts.head_must_exist = false;
 	vmopts.history = false;
@@ -9859,7 +9855,6 @@ console_cmd__fed__event(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.non_conform.set(m::event::conforms::MISSING_MEMBERSHIP);
 	vmopts.prev_check_exists = false;
 	vmopts.head_must_exist = false;
 	vmopts.history = false;

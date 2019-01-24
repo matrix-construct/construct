@@ -2596,7 +2596,7 @@ const
 	{
 		const string_view &membership_
 		{
-			unquote(at<"content"_>(event).at("membership"))
+			m::membership(event)
 		};
 
 		if(membership && membership_ != membership)

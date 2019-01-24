@@ -60,8 +60,6 @@ enum ircd::m::event::conforms::code
 	MISSING_ORIGIN,                    ///< origin empty
 	INVALID_ORIGIN,                    ///< origin not a proper domain
 	INVALID_OR_MISSING_REDACTS_ID,     ///< for m.room.redaction
-	MISSING_MEMBERSHIP,                ///< for m.room.member, membership empty
-	INVALID_MEMBERSHIP,                ///< for m.room.member (does not check actual states)
 	MISSING_CONTENT_MEMBERSHIP,        ///< for m.room.member, content.membership
 	INVALID_CONTENT_MEMBERSHIP,        ///< for m.room.member, content.membership
 	MISSING_PREV_EVENTS,               ///< for non-m.room.create, empty prev_events
