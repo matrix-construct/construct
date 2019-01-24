@@ -273,6 +273,9 @@ ircd::m::cached(const event::idx &event_idx,
 			columns.at(idx)
 		};
 
+		if(!column)
+			return true;
+
 		if(db::cached(column, key, opts.gopts))
 			return true;
 
