@@ -419,6 +419,14 @@ pretty_oneline__event(std::ostream &s,
 	else
 		s << "*" << " ";
 
+	const string_view &membership
+	{
+		json::get<"type"_>(event) == "m.room.member"?
+			m::membership(event):
+			string_view{}
+	};
+
+	out("content.membership", membership);
 	out("redacts", json::get<"redacts"_>(event));
 
 	const json::object &contents
