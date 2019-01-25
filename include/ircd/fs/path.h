@@ -31,15 +31,22 @@ namespace ircd::fs
 	filesystem::path _path(const vector_view<const std::string> &);
 
 	string_view path(const base &) noexcept;
-	std::string path(const base &, const string_view &);
-	std::string path(const vector_view<const string_view> &);
-	std::string path(const vector_view<const std::string> &);
-	std::string path(const filesystem::path &);
+	string_view path(const mutable_buffer &, const base &, const string_view &);
+	string_view path(const mutable_buffer &, const vector_view<const string_view> &);
+	string_view path(const mutable_buffer &, const vector_view<const std::string> &);
+	string_view path(const mutable_buffer &, const filesystem::path &);
 
-	size_t name_max_len(const string_view &path);
-	size_t path_max_len(const string_view &path);
+	bool is_relative(const string_view &path);
+	bool is_absolute(const string_view &path);
+
+	string_view extension(const mutable_buffer &, const string_view &path, const string_view &replace);
+	string_view extension(const mutable_buffer &, const string_view &path);
+	string_view filename(const mutable_buffer &, const string_view &path);
+	string_view parent(const mutable_buffer &, const string_view &path);
 
 	long pathconf(const string_view &path, const int &arg);
+	size_t name_max_len(const string_view &path);
+	size_t path_max_len(const string_view &path);
 
 	string_view cwd(const mutable_buffer &buf);
 	std::string cwd();

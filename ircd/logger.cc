@@ -140,7 +140,11 @@ catch(const std::exception &e)
 std::string
 ircd::log::file_path(const level &lev)
 {
-	return fs::path(fs::LOG, reflect(lev));
+	return string(fs::PATH_MAX_LEN, [&lev]
+	(const mutable_buffer &buf)
+	{
+		return fs::path(buf, fs::LOG, reflect(lev));
+	});
 }
 
 void

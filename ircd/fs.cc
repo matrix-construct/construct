@@ -1407,30 +1407,68 @@ ircd::fs::pathconf(const string_view &path,
 	return syscall(::pathconf, path_str(path), arg);
 }
 
+ircd::string_view
+ircd::fs::filename(const mutable_buffer &buf,
+                   const string_view &p)
+{
+	return path(buf, _path(p).filename());
+}
+
+ircd::string_view
+ircd::fs::extension(const mutable_buffer &buf,
+                    const string_view &p)
+{
+	return path(buf, _path(p).extension());
+}
+
+ircd::string_view
+ircd::fs::extension(const mutable_buffer &buf,
+                    const string_view &p,
+                    const string_view &replace)
+{
+	return path(buf, _path(p).replace_extension(_path(replace)));
+}
+
+bool
+ircd::fs::is_relative(const string_view &p)
+{
+	return _path(p).is_relative();
+}
+
+bool
+ircd::fs::is_absolute(const string_view &p)
+{
+	return _path(p).is_absolute();
+}
+
 //
 // fs::path()
 //
 
-std::string
-ircd::fs::path(const filesystem::path &path)
+ircd::string_view
+ircd::fs::path(const mutable_buffer &buf,
+               const filesystem::path &path)
 {
-	return path.string();
+	return strlcpy(buf, path.c_str());
 }
 
-std::string
-ircd::fs::path(const vector_view<const std::string> &list)
+ircd::string_view
+ircd::fs::path(const mutable_buffer &buf,
+               const vector_view<const std::string> &list)
 {
-	return _path(list).string();
+	return strlcpy(buf, _path(list).c_str());
 }
 
-std::string
-ircd::fs::path(const vector_view<const string_view> &list)
+ircd::string_view
+ircd::fs::path(const mutable_buffer &buf,
+               const vector_view<const string_view> &list)
 {
-	return _path(list).string();
+	return strlcpy(buf, _path(list).c_str());
 }
 
-std::string
-ircd::fs::path(const base &base,
+ircd::string_view
+ircd::fs::path(const mutable_buffer &buf,
+               const base &base,
                const string_view &rest)
 {
 	const auto p
@@ -1442,7 +1480,7 @@ ircd::fs::path(const base &base,
 		})
 	};
 
-	return p.string();
+	return strlcpy(buf, p.c_str());
 }
 
 ircd::string_view

@@ -246,7 +246,11 @@ ircd::db::direct_io_test_file_path()
 		"SUPPORTS_DIRECT_IO"_sv
 	};
 
-	return fs::path(fs::DB, test_file_name);
+	return ircd::string(fs::PATH_MAX_LEN, []
+	(const mutable_buffer &buf)
+	{
+		return fs::path(buf, fs::DB, test_file_name);
+	});
 }
 
 decltype(ircd::db::compressions)
@@ -3268,7 +3272,11 @@ ircd::db::database::sst::dump::dump(db::column column,
 			fs::path(fs::DB), db::name(d), db::name(c)
 		};
 
-		path = fs::path(path_parts);
+		path = ircd::string(fs::PATH_MAX_LEN, [&path_parts]
+		(const mutable_buffer &buf)
+		{
+			return fs::path(buf, path_parts);
+		});
 	}
 
 	rocksdb::Options opts(d.d->GetOptions(c));
@@ -7317,7 +7325,11 @@ ircd::db::path(const string_view &name,
 		prefix, name, lex_cast(checkpoint)
 	};
 
-	return fs::path(parts);
+	return ircd::string(fs::PATH_MAX_LEN, [&parts]
+	(const mutable_buffer &buf)
+	{
+		return fs::path(buf, parts);
+	});
 }
 
 std::pair<ircd::string_view, uint64_t>
