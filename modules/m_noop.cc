@@ -8,9 +8,12 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+//
+// This module is empty and does nothing on purpose.
+//
 
-mapi::header IRCD_MODULE
+ircd::mapi::header
+IRCD_MODULE
 {
-	"Matrix virtual Machine - No Operation"
+	"No Operation"
 };
