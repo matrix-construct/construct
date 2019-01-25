@@ -180,7 +180,7 @@ try
 {
 	const auto dbdir
 	{
-		fs::make_path(fs::DB)
+		fs::path(fs::DB)
 	};
 
 	if(fs::mkdir(dbdir))
@@ -224,7 +224,7 @@ try
 		{
 			log, "Direct-IO is not supported in the database directory `%s'"
 			"; Concurrent database queries will not be possible.",
-			fs::get(fs::DB)
+			fs::basepath::get(fs::DB)
 		};
 }
 catch(const std::exception &e)
@@ -246,7 +246,7 @@ ircd::db::direct_io_test_file_path()
 		"SUPPORTS_DIRECT_IO"_sv
 	};
 
-	return fs::make_path(fs::DB, test_file_name);
+	return fs::path(fs::DB, test_file_name);
 }
 
 decltype(ircd::db::compressions)
@@ -3265,10 +3265,10 @@ ircd::db::database::sst::dump::dump(db::column column,
 	{
 		const string_view path_parts[]
 		{
-			fs::make_path(fs::DB), db::name(d), db::name(c)
+			fs::path(fs::DB), db::name(d), db::name(c)
 		};
 
-		path = fs::make_path(path_parts);
+		path = fs::path(path_parts);
 	}
 
 	rocksdb::Options opts(d.d->GetOptions(c));
@@ -7245,7 +7245,7 @@ ircd::db::available()
 {
 	const auto &prefix
 	{
-		fs::make_path(fs::DB)
+		fs::path(fs::DB)
 	};
 
 	const auto dirs
@@ -7309,7 +7309,7 @@ ircd::db::path(const string_view &name,
 {
 	const auto &prefix
 	{
-		fs::make_path(fs::DB)
+		fs::path(fs::DB)
 	};
 
 	const string_view parts[]
@@ -7317,7 +7317,7 @@ ircd::db::path(const string_view &name,
 		prefix, name, lex_cast(checkpoint)
 	};
 
-	return fs::make_path(parts);
+	return fs::path(parts);
 }
 
 std::pair<ircd::string_view, uint64_t>

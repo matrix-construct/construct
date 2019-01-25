@@ -11,6 +11,12 @@
 #pragma once
 #define HAVE_IRCD_FS_PATH_H
 
+// Forward declarations for boost because it is not included here.
+namespace boost::filesystem
+{
+	struct path;
+}
+
 namespace ircd::fs
 {
 	enum base :uint;
@@ -19,14 +25,21 @@ namespace ircd::fs
 	extern const size_t NAME_MAX_LEN;
 	extern const size_t PATH_MAX_LEN;
 
-	const basepath &get(const base &) noexcept;
-	string_view make_path(const base &) noexcept;
-	std::string make_path(const base &, const string_view &);
-	std::string make_path(const vector_view<const string_view> &);
-	std::string make_path(const vector_view<const std::string> &);
+	filesystem::path _path(std::string);
+	filesystem::path _path(const string_view &);
+	filesystem::path _path(const vector_view<const string_view> &);
+	filesystem::path _path(const vector_view<const std::string> &);
+
+	string_view path(const base &) noexcept;
+	std::string path(const base &, const string_view &);
+	std::string path(const vector_view<const string_view> &);
+	std::string path(const vector_view<const std::string> &);
+	std::string path(const filesystem::path &);
 
 	size_t name_max_len(const string_view &path);
 	size_t path_max_len(const string_view &path);
+
+	long pathconf(const string_view &path, const int &arg);
 
 	string_view cwd(const mutable_buffer &buf);
 	std::string cwd();
@@ -38,6 +51,8 @@ struct ircd::fs::basepath
 {
 	string_view name;
 	string_view path;
+
+	static const basepath &get(const base &) noexcept;
 };
 
 /// Index of default paths. Must be aligned with the internal array in fs.cc.

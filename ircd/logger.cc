@@ -63,7 +63,7 @@ ircd::log::mkdir()
 {
 	const auto &dir
 	{
-		fs::make_path(fs::LOG)
+		fs::path(fs::LOG)
 	};
 
 	if(fs::exists(dir))
@@ -140,7 +140,7 @@ catch(const std::exception &e)
 std::string
 ircd::log::file_path(const level &lev)
 {
-	return fs::make_path(fs::LOG, reflect(lev));
+	return fs::path(fs::LOG, reflect(lev));
 }
 
 void

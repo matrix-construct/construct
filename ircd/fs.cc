@@ -18,13 +18,8 @@
 	#include "fs_aio.h"
 #endif
 
-namespace filesystem = boost::filesystem;
-
 namespace ircd::fs
 {
-	static filesystem::path path(std::string);
-	static filesystem::path path(const string_view &);
-	static filesystem::path path(const vector_view<const string_view> &);
 	static uint posix_flags(const std::ios::openmode &mode);
 	static const char *path_str(const string_view &);
 	static void debug_paths();
@@ -80,7 +75,7 @@ bool
 ircd::fs::mkdir(const string_view &path)
 try
 {
-	return filesystem::create_directories(fs::path(path));
+	return filesystem::create_directories(_path(path));
 }
 catch(const filesystem::filesystem_error &e)
 {
@@ -91,7 +86,7 @@ bool
 ircd::fs::remove(const string_view &path)
 try
 {
-	return filesystem::remove(fs::path(path));
+	return filesystem::remove(_path(path));
 }
 catch(const filesystem::filesystem_error &e)
 {
@@ -103,7 +98,7 @@ ircd::fs::remove(std::nothrow_t,
                  const string_view &path)
 {
 	boost::system::error_code ec;
-	return filesystem::remove(fs::path(path), ec);
+	return filesystem::remove(_path(path), ec);
 }
 
 bool
@@ -111,7 +106,7 @@ ircd::fs::rename(const string_view &old,
                  const string_view &new_)
 try
 {
-	filesystem::rename(path(old), path(new_));
+	filesystem::rename(_path(old), _path(new_));
 	return true;
 }
 catch(const filesystem::filesystem_error &e)
@@ -125,7 +120,7 @@ ircd::fs::rename(std::nothrow_t,
                  const string_view &new_)
 {
 	boost::system::error_code ec;
-	filesystem::rename(path(old), path(new_), ec);
+	filesystem::rename(_path(old), _path(new_), ec);
 	return !ec;
 }
 
@@ -136,7 +131,7 @@ try
 	const filesystem::recursive_directory_iterator end;
 	filesystem::recursive_directory_iterator it
 	{
-		fs::path(path)
+		_path(path)
 	};
 
 	std::vector<std::string> ret;
@@ -160,7 +155,7 @@ try
 	static const filesystem::directory_iterator end;
 	filesystem::directory_iterator it
 	{
-		fs::path(path)
+		_path(path)
 	};
 
 	std::vector<std::string> ret;
@@ -181,7 +176,7 @@ size_t
 ircd::fs::size(const string_view &path)
 try
 {
-	return filesystem::file_size(fs::path(path));
+	return filesystem::file_size(_path(path));
 }
 catch(const filesystem::filesystem_error &e)
 {
@@ -192,7 +187,7 @@ bool
 ircd::fs::is_reg(const string_view &path)
 try
 {
-	return filesystem::is_regular_file(fs::path(path));
+	return filesystem::is_regular_file(_path(path));
 }
 catch(const filesystem::filesystem_error &e)
 {
@@ -203,7 +198,7 @@ bool
 ircd::fs::is_dir(const string_view &path)
 try
 {
-	return filesystem::is_directory(fs::path(path));
+	return filesystem::is_directory(_path(path));
 }
 catch(const filesystem::filesystem_error &e)
 {
@@ -214,7 +209,7 @@ bool
 ircd::fs::exists(const string_view &path)
 try
 {
-	return filesystem::exists(fs::path(path));
+	return filesystem::exists(_path(path));
 }
 catch(const filesystem::filesystem_error &e)
 {
@@ -1015,7 +1010,7 @@ ircd::fs::device(const fd &fd)
 
 #ifdef HAVE_SYS_STATFS_H
 ulong
-ircd::fs::filesystem(const fd &fd)
+ircd::fs::fstype(const fd &fd)
 {
 	struct statfs f{0};
 	syscall(::fstatfs, fd, &f);
@@ -1023,7 +1018,7 @@ ircd::fs::filesystem(const fd &fd)
 }
 #else
 ulong
-ircd::fs::filesystem(const fd &fd)
+ircd::fs::fstype(const fd &fd)
 {
 	static_assert
 	(
@@ -1337,25 +1332,6 @@ ircd::fs::bytes(const const_iovec_view &iov)
 // fs/path.h
 //
 
-namespace ircd::fs
-{
-	extern const std::array<basepath, num_of<base>()> basepaths;
-
-	static long pathconf(const string_view &path, const int &arg);
-}
-
-decltype(ircd::fs::basepaths)
-ircd::fs::basepaths
-{{
-	{ "installation prefix",      RB_PREFIX      },
-	{ "binary directory",         RB_BIN_DIR     },
-	{ "configuration directory",  RB_CONF_DIR    },
-	{ "data directory",           RB_DATA_DIR    },
-	{ "database directory",       RB_DB_DIR      },
-	{ "log directory",            RB_LOG_DIR     },
-	{ "module directory",         RB_MODULE_DIR  },
-}};
-
 std::string
 ircd::fs::cwd()
 try
@@ -1431,60 +1407,130 @@ ircd::fs::pathconf(const string_view &path,
 	return syscall(::pathconf, path_str(path), arg);
 }
 
-std::string
-ircd::fs::make_path(const vector_view<const std::string> &list)
-try
-{
-	filesystem::path ret;
-	for(const auto &s : list)
-		ret /= path(s);
+//
+// fs::path()
+//
 
-	return ret.string();
-}
-catch(const filesystem::filesystem_error &e)
+std::string
+ircd::fs::path(const filesystem::path &path)
 {
-	throw error{e};
+	return path.string();
 }
 
 std::string
-ircd::fs::make_path(const vector_view<const string_view> &list)
-try
+ircd::fs::path(const vector_view<const std::string> &list)
 {
-	filesystem::path ret;
-	for(const auto &s : list)
-		ret /= path(s);
-
-	return ret.string();
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
+	return _path(list).string();
 }
 
 std::string
-ircd::fs::make_path(const base &base,
-                    const string_view &rest)
-try
+ircd::fs::path(const vector_view<const string_view> &list)
 {
-	filesystem::path ret;
-	ret /= make_path(base);
-	ret /= path(rest);
-	return ret.string();
+	return _path(list).string();
 }
-catch(const filesystem::filesystem_error &e)
+
+std::string
+ircd::fs::path(const base &base,
+               const string_view &rest)
 {
-	throw error{e};
+	const auto p
+	{
+		_path(std::initializer_list<const string_view>
+		{
+			path(base),
+			rest,
+		})
+	};
+
+	return p.string();
 }
 
 ircd::string_view
-ircd::fs::make_path(const base &base)
+ircd::fs::path(const base &base)
 noexcept
 {
-	return get(base).path;
+	return basepath::get(base).path;
 }
 
+//
+// fs::_path()
+//
+
+boost::filesystem::path
+ircd::fs::_path(const vector_view<const std::string> &list)
+try
+{
+	filesystem::path ret;
+	for(const auto &s : list)
+		ret /= s;
+
+	return ret.string();
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+boost::filesystem::path
+ircd::fs::_path(const vector_view<const string_view> &list)
+try
+{
+	filesystem::path ret;
+	for(const auto &s : list)
+		ret /= _path(s);
+
+	return ret.string();
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+boost::filesystem::path
+ircd::fs::_path(const string_view &s)
+try
+{
+	return _path(std::string{s});
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+boost::filesystem::path
+ircd::fs::_path(std::string s)
+try
+{
+	return filesystem::path{std::move(s)};
+}
+catch(const filesystem::filesystem_error &e)
+{
+	throw error{e};
+}
+
+//
+// fs::basepath
+//
+
+namespace ircd::fs
+{
+	extern const std::array<basepath, num_of<base>()> basepaths;
+}
+
+decltype(ircd::fs::basepaths)
+ircd::fs::basepaths
+{{
+	{ "installation prefix",      RB_PREFIX      },
+	{ "binary directory",         RB_BIN_DIR     },
+	{ "configuration directory",  RB_CONF_DIR    },
+	{ "data directory",           RB_DATA_DIR    },
+	{ "database directory",       RB_DB_DIR      },
+	{ "log directory",            RB_LOG_DIR     },
+	{ "module directory",         RB_MODULE_DIR  },
+}};
+
 const ircd::fs::basepath &
-ircd::fs::get(const base &base)
+ircd::fs::basepath::get(const base &base)
 noexcept
 {
 	return basepaths.at(base);
@@ -1563,8 +1609,8 @@ ircd::fs::debug_paths()
 		log::debug
 		{
 			"Working %s is `%s'",
-			get(base).name,
-			get(base).path,
+			basepath::get(base).name,
+			basepath::get(base).path,
 		};
 	});
 }
@@ -1597,41 +1643,4 @@ ircd::fs::posix_flags(const std::ios::openmode &mode)
 	ret |= ret & O_WRONLY? O_CREAT : 0;
 	ret |= ret & O_RDWR && ret & (O_TRUNC | O_APPEND)? O_CREAT : 0;
 	return ret;
-}
-
-filesystem::path
-ircd::fs::path(const vector_view<const string_view> &list)
-try
-{
-	filesystem::path ret;
-	for(const auto &s : list)
-		ret /= path(s);
-
-	return ret.string();
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-
-filesystem::path
-ircd::fs::path(const string_view &s)
-try
-{
-	return path(std::string{s});
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
-}
-
-filesystem::path
-ircd::fs::path(std::string s)
-try
-{
-	return filesystem::path(std::move(s));
-}
-catch(const filesystem::filesystem_error &e)
-{
-	throw error{e};
 }

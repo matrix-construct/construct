@@ -77,17 +77,17 @@ init_my_tls_crt()
 
 	const std::string private_key_file
 	{
-		fs::make_path(private_key_path_parts)
+		fs::path(private_key_path_parts)
 	};
 
 	const std::string public_key_file
 	{
-		fs::make_path(public_key_path_parts)
+		fs::path(public_key_path_parts)
 	};
 
 	const std::string cert_file
 	{
-		fs::make_path(certificate_path_parts)
+		fs::path(certificate_path_parts)
 	};
 
 	if(!fs::exists(private_key_file))
@@ -104,7 +104,7 @@ init_my_tls_crt()
 /*
 	const std::string dhparam_file
 	{
-		fs::make_path(dhparam_path_parts)
+		fs::path(dhparam_path_parts)
 	};
 
 	if(!fs::exists(dhparam_file))
@@ -242,7 +242,7 @@ init_my_ed25519()
 
 	const std::string sk_file
 	{
-		fs::make_path(path_parts)
+		fs::path(path_parts)
 	};
 
 	if(fs::exists(sk_file))

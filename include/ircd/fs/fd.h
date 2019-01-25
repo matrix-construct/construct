@@ -17,7 +17,7 @@ namespace ircd::fs
 
 	size_t size(const fd &);
 	size_t block_size(const fd &);
-	ulong filesystem(const fd &);
+	ulong fstype(const fd &);
 	ulong device(const fd &);
 }
 

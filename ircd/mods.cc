@@ -881,7 +881,7 @@ namespace ircd::mods
 decltype(ircd::mods::modroot)
 ircd::mods::modroot
 {
-	fs::make_path(fs::MODULES)
+	fs::path(fs::MODULES)
 };
 
 decltype(ircd::mods::paths)
