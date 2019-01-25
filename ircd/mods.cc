@@ -306,6 +306,28 @@ const
 // mods/mapi.h
 //
 
+ircd::mapi::header::header(const string_view &description,
+                           init_func init,
+                           fini_func fini)
+:meta
+{
+	new metablock
+	{
+		std::move(init), std::move(fini), meta_data
+		{
+			{ "description", description }
+		}
+	}
+}
+{
+}
+
+ircd::mapi::header::~header()
+noexcept
+{
+	static_destruction = true;
+}
+
 ircd::mapi::header::operator
 mods::mod &()
 {

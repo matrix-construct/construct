@@ -80,30 +80,6 @@ struct ircd::mapi::metablock
 	meta_data meta;                    // Various key-value metadata
 };
 
-inline
-ircd::mapi::header::header(const string_view &description,
-                           init_func init,
-                           fini_func fini)
-:meta
-{
-	new metablock
-	{
-		std::move(init), std::move(fini), meta_data
-		{
-			{ "description", description }
-		}
-	}
-}
-{
-}
-
-inline
-ircd::mapi::header::~header()
-noexcept
-{
-	static_destruction = true;
-}
-
 static_assert
 (
 	std::is_standard_layout<ircd::mapi::header>(),
