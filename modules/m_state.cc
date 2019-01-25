@@ -18,6 +18,7 @@ IRCD_MODULE
 
 namespace ircd::m::state
 {
+	extern "C" void ircd__m__state__clear(void);
 	extern "C" size_t ircd__m__state__gc(void);
 }
 
@@ -71,4 +72,62 @@ ircd::m::state::ircd__m__state__gc()
 */
 	size_t ret(active.size());
 	return ret;
+}
+
+void
+ircd::m::state::ircd__m__state__clear()
+{
+	auto &column
+	{
+		m::dbs::state_node
+	};
+
+	// Find the key range for the column. The key is copied here so we don't
+	// hold an iterator on it and prevent its demise.
+	std::pair<std::string, std::string> range;
+	{
+		const auto front
+		{
+			column.begin()
+		};
+
+		const auto back
+		{
+			column.rbegin()
+		};
+
+		// If these iterators are invalid there is nothing to delete
+		if(!front || !back)
+			return;
+
+		range =
+		{
+			front->first, back->first
+		};
+	};
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	db::txn::append
+	{
+		txn, column, db::column::delta
+		{
+			db::op::DELETE_RANGE, range.first, range.second
+		}
+	};
+
+	// DELETE_RANGE second key is exclusive and won't be included in the
+	// range so we have to add a single delete for it.
+	db::txn::append
+	{
+		txn, column, db::column::delta
+		{
+			db::op::DELETE, range.second
+		}
+	};
+
+	txn();
 }

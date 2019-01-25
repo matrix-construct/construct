@@ -5931,6 +5931,21 @@ console_cmd__state__gc(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__state__CLEAR__CLEAR__CLEAR(opt &out, const string_view &line)
+{
+	using prototype = void ();
+	static mods::import<prototype> clear
+	{
+		"m_state", "ircd__m__state__clear"
+	};
+
+	clear();
+
+	out << "done" << std::endl;
+	return true;
+}
+
 //
 // commit
 //
