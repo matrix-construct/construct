@@ -5411,6 +5411,31 @@ ircd::db::ingest(column &column,
 
 void
 ircd::db::del(column &column,
+              const std::pair<string_view, string_view> &range,
+              const sopts &sopts)
+{
+	database &d(column);
+	database::column &c(column);
+	auto opts(make_opts(sopts));
+
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const ctx::uninterruptible::nothrow ui;
+	log::debug
+	{
+		log, "'%s' %lu '%s' RANGE DELETE",
+		name(d),
+		sequence(d),
+		name(c),
+	};
+
+	throw_on_error
+	{
+		d.d->DeleteRange(opts, c, slice(range.first), slice(range.second))
+	};
+}
+
+void
+ircd::db::del(column &column,
               const string_view &key,
               const sopts &sopts)
 {

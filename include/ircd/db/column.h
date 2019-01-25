@@ -58,6 +58,7 @@ namespace ircd::db
 
 	// [SET] Remove data from the db. not_found is never thrown.
 	void del(column &, const string_view &key, const sopts & = {});
+	void del(column &, const std::pair<string_view, string_view> &range, const sopts & = {});
 
 	// [SET] Other operations
 	void ingest(column &, const string_view &path);
