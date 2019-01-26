@@ -1612,10 +1612,6 @@ ircd::m::events::for_each(const range &range,
 		range.fopts? *range.fopts : event::fetch::default_opts
 	};
 
-	// When the fopts dictate no columns to fetch there is nothing more to do.
-	if(event.row.empty())
-		return true;
-
 	const bool ascending
 	{
 		range.first < range.second
