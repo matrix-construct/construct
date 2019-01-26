@@ -2408,104 +2408,6 @@ ircd::m::dbs::desc::events_state_key
 };
 
 //
-// origin
-//
-
-decltype(ircd::m::dbs::desc::events__origin__block__size)
-ircd::m::dbs::desc::events__origin__block__size
-{
-	{ "name",     "ircd.m.dbs.events.origin.block.size"  },
-	{ "default",  512L                                   },
-};
-
-decltype(ircd::m::dbs::desc::events__origin__meta_block__size)
-ircd::m::dbs::desc::events__origin__meta_block__size
-{
-	{ "name",     "ircd.m.dbs.events.origin.meta_block.size"  },
-	{ "default",  512L                                        },
-};
-
-decltype(ircd::m::dbs::desc::events__origin__cache__size)
-ircd::m::dbs::desc::events__origin__cache__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.origin.cache.size"  },
-		{ "default",  long(16_MiB)                           },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "origin"_>()));
-		const size_t &value{events__origin__cache__size};
-		db::capacity(db::cache(column), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__origin__cache_comp__size)
-ircd::m::dbs::desc::events__origin__cache_comp__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events.origin.cache_comp.size"  },
-		{ "default",  long(16_MiB)                                },
-	}, []
-	{
-		auto &column(event_column.at(json::indexof<event, "origin"_>()));
-		const size_t &value{events__origin__cache_comp__size};
-		db::capacity(db::cache_compressed(column), value);
-	}
-};
-
-const ircd::db::descriptor
-ircd::m::dbs::desc::events_origin
-{
-	// name
-	"origin",
-
-	// explanation
-	R"(Stores the origin property of an event.
-
-	FEDERATION 4.1
-	DNS name of homeserver that created this PDU
-
-	### developer note:
-	key is event_idx number.
-	)",
-
-	// typing (key, value)
-	{
-		typeid(uint64_t), typeid(string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(events_cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(events_cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(events___event__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(events__origin__block__size),
-
-	// meta_block size
-	size_t(events__origin__meta_block__size),
-};
-
-//
 // origin_server_ts
 //
 
@@ -2814,6 +2716,7 @@ namespace ircd::m::dbs::desc
 	extern const ircd::db::descriptor events_auth_events;
 	extern const ircd::db::descriptor events_hashes;
 	extern const ircd::db::descriptor events_membership;
+	extern const ircd::db::descriptor events_origin;
 	extern const ircd::db::descriptor events_prev_state;
 	extern const ircd::db::descriptor events_redacts;
 	extern const ircd::db::descriptor events_signatures;
@@ -2927,6 +2830,38 @@ ircd::m::dbs::desc::events_membership
 {
 	// name
 	"membership",
+
+	// explanation
+	R"(
+
+	This column is deprecated and has been dropped from the schema. This
+	descriptor will erase its presence in the database upon next open.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	true,
+};
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events_origin
+{
+	// name
+	"origin",
 
 	// explanation
 	R"(
