@@ -39,7 +39,7 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 		room
 	};
 
-	static const size_t fibers(32); //TODO: conf
+	static const size_t fibers(64); //TODO: conf
 	using queue = std::array<string_view, fibers>;
 	using buffer = std::array<char[m::id::MAX_SIZE+1], fibers>;
 

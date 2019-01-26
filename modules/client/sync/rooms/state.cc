@@ -105,7 +105,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 			event_idx, std::nothrow, _default_fopts
 		};
 
-		assert(event.valid);
+		//assert(event.valid);
 		if(unlikely(!event.valid))
 			return;
 
