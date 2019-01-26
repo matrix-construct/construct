@@ -1349,12 +1349,13 @@ ircd::m::seek(event::fetch &fetch,
 
 	assert(fetch.fopts);
 	const auto &opts(*fetch.fopts);
-	if(fetch.should_seek_json(opts))
-		if((fetch.valid = fetch._json.load(key, opts.gopts)))
-			return fetch.assign_from_json();
+	if(!fetch.should_seek_json(opts))
+		if((fetch.valid = db::seek(fetch.row, key, opts.gopts)))
+			if((fetch.valid = fetch.assign_from_row(key)))
+				return fetch.valid;
 
-	if((fetch.valid = db::seek(fetch.row, key, opts.gopts)))
-		fetch.valid = fetch.assign_from_row(key);
+	if((fetch.valid = fetch._json.load(key, opts.gopts)))
+		fetch.valid = fetch.assign_from_json(key);
 
 	return fetch.valid;
 }
@@ -1434,8 +1435,7 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
                              std::nothrow_t,
                              const opts &opts)
-:event{}
-,fopts
+:fopts
 {
 	&opts
 }
@@ -1462,7 +1462,7 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 ,valid
 {
 	event_idx && _json.valid(key(&event_idx))?
-		assign_from_json():
+		assign_from_json(key(&event_idx)):
 		assign_from_row(key(&event_idx))
 }
 {
@@ -1470,8 +1470,7 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 
 /// Seekless constructor.
 ircd::m::event::fetch::fetch(const opts &opts)
-:event{}
-,fopts
+:fopts
 {
 	&opts
 }
@@ -1499,13 +1498,14 @@ ircd::m::event::fetch::fetch(const opts &opts)
 }
 
 bool
-ircd::m::event::fetch::assign_from_json()
+ircd::m::event::fetch::assign_from_json(const string_view &key)
 {
 	auto &event
 	{
 		static_cast<m::event &>(*this)
 	};
 
+	assert(_json.valid(key));
 	const json::object source
 	{
 		_json.val()
