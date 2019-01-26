@@ -1,4 +1,4 @@
-## IRCd Networking
+## Network Interface
 
 #### open()
 

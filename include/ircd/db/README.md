@@ -1,4 +1,4 @@
-## IRCd Database
+## Database
 
 The database here is a strictly schematized key-value grid built from the primitives of
 `column`, `cell` and `row`. We use the database as both a flat-object store (matrix

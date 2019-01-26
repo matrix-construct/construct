@@ -1,4 +1,4 @@
-# Userspace Context Switching
+## Userspace Context Switching
 
 The `ircd::ctx` subsystem is a userspace threading library meant to regress
 the asynchronous callback pattern back to synchronous suspensions. These are

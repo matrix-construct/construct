@@ -1,4 +1,4 @@
-# Utility toolchest
+## Utility Toolchest
 
 This namespace contains an accumulated collection of miscellaneous classes
 and functions which have demonstrated value some place in the project, but are
