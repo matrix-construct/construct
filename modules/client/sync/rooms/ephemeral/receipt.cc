@@ -60,7 +60,7 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 		}
 	};
 
-	members.for_each(data.membership, m::room::members::closure{[&parallel, &q, &buf]
+	members.for_each(m::room::members::closure{[&parallel, &q, &buf]
 	(const m::user::id &user_id)
 	{
 		const auto pos(parallel.nextpos());

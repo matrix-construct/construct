@@ -83,6 +83,14 @@ ircd::m::sync::room_state_polylog(data &data)
 		data.out
 	};
 
+	const auto head_idx
+	{
+		m::head_idx(std::nothrow, *data.room)
+	};
+
+	if(head_idx < data.range.first)
+		return;
+
 	room_state_polylog_events(data);
 }
 

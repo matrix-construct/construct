@@ -104,6 +104,14 @@ ircd::m::sync::room_timeline_polylog(data &data)
 		data.out
 	};
 
+	const auto head_idx
+	{
+		m::head_idx(std::nothrow, *data.room)
+	};
+
+	if(head_idx < data.range.first)
+		return;
+
 	// events
 	bool limited{false};
 	m::event::id::buf prev
