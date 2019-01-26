@@ -35,27 +35,6 @@ on the server, and then continue to call this API to get incremental deltas
 to the state, and to receive new messages.
 )"};
 
-ircd::conf::item<ircd::milliseconds>
-ircd::m::sync::args::timeout_max
-{
-	{ "name",     "ircd.client.sync.timeout.max"  },
-	{ "default",  15 * 1000L                      },
-};
-
-ircd::conf::item<ircd::milliseconds>
-ircd::m::sync::args::timeout_min
-{
-	{ "name",     "ircd.client.sync.timeout.min"  },
-	{ "default",  5 * 1000L                       },
-};
-
-ircd::conf::item<ircd::milliseconds>
-ircd::m::sync::args::timeout_default
-{
-	{ "name",     "ircd.client.sync.timeout.default"  },
-	{ "default",  10 * 1000L                          },
-};
-
 decltype(ircd::m::sync::flush_hiwat)
 ircd::m::sync::flush_hiwat
 {
@@ -401,4 +380,49 @@ ircd::m::sync::longpoll::handle(data &data,
                                 const accepted &event)
 {
 	return false;
+}
+
+//
+// sync/args.h
+//
+
+ircd::conf::item<ircd::milliseconds>
+ircd::m::sync::args::timeout_max
+{
+	{ "name",     "ircd.client.sync.timeout.max"  },
+	{ "default",  15 * 1000L                      },
+};
+
+ircd::conf::item<ircd::milliseconds>
+ircd::m::sync::args::timeout_min
+{
+	{ "name",     "ircd.client.sync.timeout.min"  },
+	{ "default",  5 * 1000L                       },
+};
+
+ircd::conf::item<ircd::milliseconds>
+ircd::m::sync::args::timeout_default
+{
+	{ "name",     "ircd.client.sync.timeout.default"  },
+	{ "default",  10 * 1000L                          },
+};
+
+//
+// args::args
+//
+
+ircd::m::sync::args::args(const resource::request &request)
+try
+:request
+{
+    request
+}
+{
+}
+catch(const bad_lex_cast &e)
+{
+    throw m::BAD_REQUEST
+    {
+        "Since parameter invalid :%s", e.what()
+    };
 }

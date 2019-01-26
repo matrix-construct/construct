@@ -77,11 +77,8 @@ namespace ircd::m::sync::polylog
 	static bool handle(data &);
 }
 
-/// Argument parser for the client's /sync request
 struct ircd::m::sync::args
 {
-	args(const resource::request &request);
-
 	static conf::item<milliseconds> timeout_max;
 	static conf::item<milliseconds> timeout_min;
 	static conf::item<milliseconds> timeout_default;
@@ -132,21 +129,6 @@ struct ircd::m::sync::args
 		// marked as being online when it uses this API. One of: ["offline"]
 		request.query.get("set_presence", true)
 	};
-};
 
-inline
-ircd::m::sync::args::args(const resource::request &request)
-try
-:request
-{
-	request
-}
-{
-}
-catch(const bad_lex_cast &e)
-{
-	throw m::BAD_REQUEST
-	{
-		"Since parameter invalid :%s", e.what()
-	};
-}
+	args(const resource::request &request);
+};
