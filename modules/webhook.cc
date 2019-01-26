@@ -298,11 +298,17 @@ github_handle__push(std::ostream &out,
 		    << "</a>";
 
 		const json::object author(commit["author"]);
-		out << " " << unquote(author["name"]);
+		out << " <b>"
+		    << unquote(author["name"])
+		    << "</b>"
+		    ;
 
 		const json::object committer(commit["committer"]);
 		if(committer["email"] != author["email"])
-			out << " via " << unquote(committer["name"]);
+			out << " via <b>"
+			    << unquote(committer["name"])
+			    << "</b>"
+			    ;
 
 		const auto message(unquote(commit["message"]));
 		const auto summary
@@ -310,9 +316,9 @@ github_handle__push(std::ostream &out,
 			split(message, "\\n").first
 		};
 
-		out << " <u>"
+		out << " "
 		    << summary
-		    << "</u>";
+		    ;
 
 		out << "<br />";
 	}
