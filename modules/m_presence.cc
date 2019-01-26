@@ -100,9 +100,14 @@ try
 	}
 
 	bool useful{true};
-	m::presence::get(std::nothrow, user_id, [&event, &object, &useful]
-	(const m::event &existing_event, const json::object &existing_object)
+	const auto closure{[&event, &object, &useful]
+	(const m::event &existing_event)
 	{
+		const json::object &existing_object
+		{
+			json::get<"content"_>(existing_event)
+		};
+
 		// This check shouldn't have to exist. I think this was a result of corrupting
 		// my DB during development and it fails on only one user. Nevertheless, it's
 		// a valid assertion so might as well keep it.
@@ -146,8 +151,14 @@ try
 			useful = true;
 		else
 			useful = false;
-	});
+	}};
 
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include {"content", "origin_server_ts"}
+	};
+
+	m::presence::get(std::nothrow, user_id, closure, &fopts);
 	if(!useful)
 		return;
 
@@ -177,31 +188,53 @@ catch(const m::error &e)
 	};
 }
 
+extern "C" m::event::idx
+get__m_presence__event_idx(const std::nothrow_t,
+                           const m::user &user)
+{
+	const m::user::room user_room
+	{
+		user
+	};
+
+	const m::room::state state
+	{
+		user_room
+	};
+
+	m::event::idx ret{0};
+	state.get(std::nothrow, "ircd.presence", "", [&ret]
+	(const m::event::idx &event_idx)
+	{
+		ret = event_idx;
+	});
+
+	return ret;
+}
+
 extern "C" bool
 get__m_presence(const std::nothrow_t,
                 const m::user &user,
-                const m::presence::event_closure &closure)
+                const m::presence::closure_event &closure,
+                const m::event::fetch::opts &fopts)
 {
-	static const m::event::fetch::opts fopts
+	const m::event::idx event_idx
 	{
-		m::event::keys::include
-		{
-			"event_id",
-			"content",
-			"origin_server_ts",
-		}
+		get__m_presence__event_idx(std::nothrow, user)
 	};
 
-	const m::user::room user_room
+	if(!event_idx)
+		return false;
+
+	const m::event::fetch event
 	{
-		user, nullptr, &fopts
+		event_idx, std::nothrow, fopts
 	};
 
-	return user_room.get(std::nothrow, "ircd.presence", "", [&closure]
-	(const m::event &event)
-	{
-		closure(event, json::get<"content"_>(event));
-	});
+	if(event.valid)
+		closure(event);
+
+	return event.valid;
 }
 
 extern "C" m::event::id::buf

@@ -1307,10 +1307,20 @@ ircd::m::typing::for_each(const closure_bool &closure)
 
 ircd::m::presence::presence(const user &user,
                             const mutable_buffer &buf)
-:presence
+:edu::m_presence{[&user, &buf]
 {
-	get(user, buf)
-}
+	json::object ret;
+	get(user, [&ret, &buf]
+	(const json::object &content)
+	{
+		ret =
+		{
+			data(buf), copy(buf, string_view{content})
+		};
+	});
+
+	return ret;
+}()}
 {
 }
 
@@ -1340,40 +1350,14 @@ ircd::m::presence::set(const presence &object)
 	return function(object);
 }
 
-ircd::json::object
-ircd::m::presence::get(const user &user,
-                       const mutable_buffer &buffer)
-{
-	json::object ret;
-	get(std::nothrow, user, [&ret, &buffer]
-	(const json::object &object)
-	{
-		ret = { data(buffer), copy(buffer, object) };
-	});
-
-	return ret;
-}
-
 void
 ircd::m::presence::get(const user &user,
                        const closure &closure)
 {
-	get(user, [&closure]
-	(const m::event &event, const json::object &content)
-	{
-		closure(content);
-	});
-}
-
-void
-ircd::m::presence::get(const user &user,
-                       const event_closure &closure)
-{
 	if(!get(std::nothrow, user, closure))
 		throw m::NOT_FOUND
 		{
-			"No presence found for %s",
-			string_view{user.user_id}
+			"No presence found for %s", string_view{user.user_id}
 		};
 }
 
@@ -1382,26 +1366,70 @@ ircd::m::presence::get(std::nothrow_t,
                        const user &user,
                        const closure &closure)
 {
-	return get(std::nothrow, user, [&closure]
-	(const m::event &event, const json::object &content)
+	static const m::event::fetch::opts fopts
 	{
-		closure(content);
-	});
+		m::event::keys::include {"content"}
+	};
+
+	const auto reclosure{[&closure]
+	(const m::event &event)
+	{
+		closure(json::get<"content"_>(event));
+	}};
+
+	return get(std::nothrow, user, reclosure, &fopts);
 }
 
 bool
 ircd::m::presence::get(std::nothrow_t,
                        const user &user,
-                       const event_closure &closure)
+                       const closure_event &closure,
+                       const event::fetch::opts *const &opts)
 {
-	using prototype = bool (std::nothrow_t, const m::user &, const event_closure &);
+	using prototype = bool (std::nothrow_t, const m::user &, const closure_event &, const event::fetch::opts &);
 
 	static mods::import<prototype> function
 	{
 		"m_presence", "get__m_presence"
 	};
 
-	return function(std::nothrow, user, closure);
+	const event::fetch::opts &fopts
+	{
+		opts? *opts : event::fetch::default_opts
+	};
+
+	return function(std::nothrow, user, closure, fopts);
+}
+
+ircd::m::event::idx
+ircd::m::presence::get(const user &user)
+{
+	const event::idx ret
+	{
+		get(std::nothrow, user)
+	};
+
+	if(!ret)
+		throw m::NOT_FOUND
+		{
+			"No presence found for %s", string_view{user.user_id}
+		};
+
+	return ret;
+}
+
+ircd::m::event::idx
+ircd::m::presence::get(std::nothrow_t,
+                       const user &user)
+{
+	using prototype = event::idx (std::nothrow_t, const m::user &);
+
+	static mods::import<prototype> function
+	{
+		"m_presence", "get__m_presence__event_idx"
+	};
+
+	return function(std::nothrow, user);
 }
 
 bool

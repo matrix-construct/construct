@@ -134,9 +134,13 @@ ircd::m::sync::presence_polylog_events(data &data)
 		m::sync::pool, q, [&data, &append_event]
 		(const m::user::id user_id)
 		{
-			//TODO: check something better than user_room head?
-			if(head_idx(std::nothrow, user::room(user_id)) >= data.range.first)
-				m::presence::get(std::nothrow, user_id, append_event);
+			const event::idx event_idx
+			{
+				m::presence::get(std::nothrow, user_id)
+			};
+
+			if(apropos(data, event_idx))
+				m::get(std::nothrow, event_idx, "content", append_event);
 		}
 	};
 
