@@ -802,28 +802,14 @@ const
 const ircd::m::event &
 ircd::m::room::messages::fetch()
 {
-	const event::fetch::opts &fopts
-	{
-		room.fopts?
-			*room.fopts:
-			event::fetch::default_opts
-	};
-
-	m::seek(_event, event_idx(), fopts);
+	m::seek(_event, event_idx());
 	return _event;
 }
 
 const ircd::m::event &
 ircd::m::room::messages::fetch(std::nothrow_t)
 {
-	const event::fetch::opts &fopts
-	{
-		room.fopts?
-			*room.fopts:
-			event::fetch::default_opts
-	};
-
-	m::seek(_event, event_idx(), std::nothrow, fopts);
+	m::seek(_event, event_idx(), std::nothrow);
 	return _event;
 }
 

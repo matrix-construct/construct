@@ -1293,10 +1293,9 @@ ircd::m::index(const event::id &event_id,
 
 void
 ircd::m::seek(event::fetch &fetch,
-              const event::id &event_id,
-              const event::fetch::opts &opts)
+              const event::id &event_id)
 {
-	if(!seek(fetch, event_id, std::nothrow, opts))
+	if(!seek(fetch, event_id, std::nothrow))
 		throw m::NOT_FOUND
 		{
 			"%s not found in database", event_id
@@ -1306,8 +1305,7 @@ ircd::m::seek(event::fetch &fetch,
 bool
 ircd::m::seek(event::fetch &fetch,
               const event::id &event_id,
-              std::nothrow_t,
-              const event::fetch::opts &opts)
+              std::nothrow_t)
 {
 	const auto &event_idx
 	{
@@ -1320,15 +1318,14 @@ ircd::m::seek(event::fetch &fetch,
 		return fetch.valid;
 	}
 
-	return seek(fetch, event_idx, std::nothrow, opts);
+	return seek(fetch, event_idx, std::nothrow);
 }
 
 void
 ircd::m::seek(event::fetch &fetch,
-              const event::idx &event_idx,
-              const event::fetch::opts &opts)
+              const event::idx &event_idx)
 {
-	if(!seek(fetch, event_idx, std::nothrow, opts))
+	if(!seek(fetch, event_idx, std::nothrow))
 		throw m::NOT_FOUND
 		{
 			"%lu not found in database", event_idx
@@ -1338,8 +1335,7 @@ ircd::m::seek(event::fetch &fetch,
 bool
 ircd::m::seek(event::fetch &fetch,
               const event::idx &event_idx,
-              std::nothrow_t,
-              const event::fetch::opts &opts)
+              std::nothrow_t)
 {
 	auto &event
 	{
@@ -1351,12 +1347,14 @@ ircd::m::seek(event::fetch &fetch,
 		byte_view<string_view>(event_idx)
 	};
 
+	assert(fetch.fopts);
+	const auto &opts(*fetch.fopts);
 	if(fetch.should_seek_json(opts))
 		if((fetch.valid = fetch._json.load(key, opts.gopts)))
-			return fetch.assign_from_json(opts);
+			return fetch.assign_from_json();
 
 	if((fetch.valid = db::seek(fetch.row, key, opts.gopts)))
-		fetch.valid = fetch.assign_from_row(opts, key);
+		fetch.valid = fetch.assign_from_row(key);
 
 	return fetch.valid;
 }
@@ -1437,9 +1435,13 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
                              std::nothrow_t,
                              const opts &opts)
 :event{}
+,fopts
+{
+	&opts
+}
 ,_json
 {
-	m::dbs::event_json,
+	dbs::event_json,
 	event_idx && should_seek_json(opts)?
 		key(&event_idx):
 		string_view{},
@@ -1460,8 +1462,8 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 ,valid
 {
 	event_idx && _json.valid(key(&event_idx))?
-		assign_from_json(opts):
-		assign_from_row(opts, key(&event_idx))
+		assign_from_json():
+		assign_from_row(key(&event_idx))
 }
 {
 }
@@ -1469,9 +1471,13 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 /// Seekless constructor.
 ircd::m::event::fetch::fetch(const opts &opts)
 :event{}
+,fopts
+{
+	&opts
+}
 ,_json
 {
-	m::dbs::event_json,
+	dbs::event_json,
 	string_view{},
 	opts.gopts
 }
@@ -1493,7 +1499,7 @@ ircd::m::event::fetch::fetch(const opts &opts)
 }
 
 bool
-ircd::m::event::fetch::assign_from_json(const opts &opts)
+ircd::m::event::fetch::assign_from_json()
 {
 	auto &event
 	{
@@ -1505,9 +1511,10 @@ ircd::m::event::fetch::assign_from_json(const opts &opts)
 		_json.val()
 	};
 
+	assert(fopts);
 	event =
 	{
-		source, opts.keys
+		source, fopts->keys
 	};
 
 	assert(!empty(source));
@@ -1516,8 +1523,7 @@ ircd::m::event::fetch::assign_from_json(const opts &opts)
 }
 
 bool
-ircd::m::event::fetch::assign_from_row(const opts &opts,
-                                       const string_view &key)
+ircd::m::event::fetch::assign_from_row(const string_view &key)
 {
 	auto &event
 	{

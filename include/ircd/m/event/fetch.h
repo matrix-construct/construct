@@ -39,6 +39,7 @@ struct ircd::m::event::fetch
 
 	static const opts default_opts;
 
+	const opts *fopts {&default_opts};
 	std::array<db::cell, event::size()> cell;
 	db::cell _json;
 	db::row row;
@@ -46,8 +47,8 @@ struct ircd::m::event::fetch
 
 	static string_view key(const event::idx *const &);
 	static bool should_seek_json(const opts &);
-	bool assign_from_json(const opts &);
-	bool assign_from_row(const opts &, const string_view &key);
+	bool assign_from_row(const string_view &key);
+	bool assign_from_json();
 
   public:
 	fetch(const idx &, std::nothrow_t, const opts & = default_opts);
@@ -66,11 +67,11 @@ struct ircd::m::event::fetch
 
 namespace ircd::m
 {
-	bool seek(event::fetch &, const event::idx &, std::nothrow_t, const event::fetch::opts & = event::fetch::default_opts);
-	void seek(event::fetch &, const event::idx &, const event::fetch::opts & = event::fetch::default_opts);
+	bool seek(event::fetch &, const event::idx &, std::nothrow_t);
+	void seek(event::fetch &, const event::idx &);
 
-	bool seek(event::fetch &, const event::id &, std::nothrow_t, const event::fetch::opts & = event::fetch::default_opts);
-	void seek(event::fetch &, const event::id &, const event::fetch::opts & = event::fetch::default_opts);
+	bool seek(event::fetch &, const event::id &, std::nothrow_t);
+	void seek(event::fetch &, const event::id &);
 }
 
 /// Event Fetch Options.
