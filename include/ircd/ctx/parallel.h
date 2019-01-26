@@ -73,6 +73,7 @@ template<class arg>
 void
 ircd::ctx::parallel<arg>::operator()(const arg &a)
 {
+	const uninterruptible ui;
 	rethrow_any_exception();
 	assert(avail());
 	this->a.at(nextpos()) = a;
@@ -84,6 +85,7 @@ template<class arg>
 void
 ircd::ctx::parallel<arg>::operator()()
 {
+	const uninterruptible ui;
 	rethrow_any_exception();
 	assert(avail());
 	sender();
