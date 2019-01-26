@@ -101,6 +101,18 @@ struct ircd::m::sync::args
 		request.query.get<uint64_t>("since", 0)
 	};
 
+	uint64_t next_batch
+	{
+		// [experimental] A upper bound to stop this sync at. This is used in
+		// conjunction with `since` to provide a stable window of results. If
+		// not specified the sync range is everything after `since`. NOTE that
+		// this DOES NOT guarantee true idempotency in all cases and for all
+		// time. But that would be nice. Many sync modules do not support this
+		// because the results of repeated calls for range may become empty
+		// after a while.
+		request.query.get<uint64_t>("next_batch", -1)
+	};
+
 	steady_point timesout{[this]
 	{
 		// 6.2.1 The maximum time to poll in milliseconds before returning this request.

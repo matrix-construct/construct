@@ -86,8 +86,7 @@ ircd::m::sync::handle_get(client &client,
 	// exist yet because it is one past the server's current_sequence counter.
 	const m::events::range range
 	{
-		args.since,                  // start at since token
-		m::vm::current_sequence + 1  // stop before future
+		args.since, std::min(args.next_batch, m::vm::current_sequence + 1)
 	};
 
 	// When the range indexes are the same, the client is polling for the next
