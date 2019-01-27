@@ -524,12 +524,13 @@ ircd::m::sync::loghead(const data &data)
 
 	return fmt::sprintf
 	{
-		headbuf, "%s %s %lu:%lu %s chunk:%zu %s in %s",
+		headbuf, "%s %s %lu:%lu %s commit:%b chunk:%zu %s in %s",
 		remstr,
 		string_view{data.user.user_id},
 		data.range.first,
 		data.range.second,
 		ircd::pretty(iecbuf[0], iec(flush_bytes + size(data.out.completed()))),
+		data.committed,
 		flush_count,
 		ircd::pretty(iecbuf[1], iec(flush_bytes)),
 		tmstr
