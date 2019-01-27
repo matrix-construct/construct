@@ -5463,6 +5463,14 @@ console_cmd__event(opt &out, const string_view &line)
 			return true;
 		}
 
+		case hash("source"):
+		{
+			if(event.source)
+				out << event.source << std::endl;
+
+			return true;
+		}
+
 		case hash("idx"):
 			out << event_idx << std::endl;
 			return true;
