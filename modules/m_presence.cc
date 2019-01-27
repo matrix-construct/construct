@@ -160,7 +160,20 @@ try
 
 	m::presence::get(std::nothrow, user_id, closure, &fopts);
 	if(!useful)
+	{
+		/*
+		log::dwarning
+		{
+			m::log, "presence spam from %s %s is %s and %s %zd seconds ago",
+			at<"origin"_>(event),
+			string_view{user_id},
+			json::get<"currently_active"_>(object)? "active"_sv : "inactive"_sv,
+			json::get<"presence"_>(object),
+			json::get<"last_active_ago"_>(object) / 1000L
+		};
+		*/
 		return;
+	}
 
 	const auto evid
 	{
