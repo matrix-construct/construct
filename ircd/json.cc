@@ -546,8 +546,19 @@ catch(...)
 void
 ircd::json::stack::clear()
 {
-	buf.rewind(buf.consumed());
+	rewind(buf.consumed());
 	this->eptr = std::exception_ptr{};
+}
+
+size_t
+ircd::json::stack::rewind(const size_t &bytes)
+{
+	const size_t before(buf.consumed());
+	const size_t &amount(std::min(bytes, before));
+	const size_t after(size(buf.rewind(amount)));
+	assert(before >= after);
+	assert(before - after == amount);
+	return amount;
 }
 
 ircd::const_buffer

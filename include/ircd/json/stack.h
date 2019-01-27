@@ -71,6 +71,7 @@ struct ircd::json::stack
 	const_buffer completed() const;
 
 	bool flush(const bool &force = false) noexcept;
+	size_t rewind(const size_t &bytes);
 	void clear();
 
 	stack(const mutable_buffer &,
