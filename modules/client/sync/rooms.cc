@@ -94,25 +94,6 @@ ircd::m::sync::_rooms_polylog(data &data,
 	(const m::room &room, const string_view &membership_)
 	{
 		#ifdef RB_DEBUG
-		const auto head_idx
-		{
-			m::head_idx(std::nothrow, room)
-		};
-
-		// Generate individual stats for this room's sync
-		assert(head_idx); // room should exist
-		sync::stats *const statsp
-		{
-			head_idx >= data.range.first?
-				data.stats:
-				nullptr
-		};
-
-		const scope_restore<decltype(data.stats)> statsp_
-		{
-			data.stats, statsp
-		};
-
 		sync::stats stats
 		{
 			data.stats?
@@ -133,9 +114,7 @@ ircd::m::sync::_rooms_polylog(data &data,
 			log, "polylog %s %s in %s",
 			loghead(data),
 			string_view{room.room_id},
-			data.stats?
-				ircd::pretty(tmbuf, stats.timer.at<milliseconds>(), true):
-				string_view{"<no stats>"}
+			ircd::pretty(tmbuf, stats.timer.at<milliseconds>(), true)
 		};
 		#endif
 	});

@@ -109,7 +109,7 @@ ircd::m::sync::room_timeline_polylog(data &data)
 		m::head_idx(std::nothrow, *data.room)
 	};
 
-	if(head_idx < data.range.first)
+	if(!apropos(data, head_idx))
 		return;
 
 	// events
@@ -163,10 +163,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	for(; it && i < 10; --it, ++i)
 	{
 		event_id = it.event_id();
-		if(it.event_idx() < data.range.first)
-			break;
-
-		if(it.event_idx() >= data.range.second)
+		if(!apropos(data, it.event_idx()))
 			break;
 	}
 
@@ -187,6 +184,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	if(i > 0)
 		for(; it && i > -1; ++it, --i)
 		{
+			data.commit();
 			json::stack::object object
 			{
 				array

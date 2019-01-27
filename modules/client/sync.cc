@@ -148,7 +148,6 @@ ircd::m::sync::handle_get(client &client,
 	if(shortpolled)
 		return response;
 
-	// When longpoll was successful, do nothing else.
 	if(longpoll::poll(data, args))
 		return response;
 
