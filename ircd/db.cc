@@ -1995,6 +1995,10 @@ ircd::db::sequence(const rocksdb::Snapshot *const &rs)
 	return likely(rs)? rs->GetSequenceNumber() : 0ULL;
 }
 
+//
+// snapshot::shapshot
+//
+
 ircd::db::database::snapshot::snapshot(database &d)
 :s
 {
@@ -4243,291 +4247,6 @@ const
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// db/cell.h
-//
-
-uint64_t
-ircd::db::sequence(const cell &c)
-{
-	const database::snapshot &ss(c);
-	return sequence(database::snapshot(c));
-}
-
-const std::string &
-ircd::db::name(const cell &c)
-{
-	return name(c.c);
-}
-
-void
-ircd::db::write(const cell::delta &delta,
-                const sopts &sopts)
-{
-	write(&delta, &delta + 1, sopts);
-}
-
-void
-ircd::db::write(const sopts &sopts,
-                const std::initializer_list<cell::delta> &deltas)
-{
-	write(deltas, sopts);
-}
-
-void
-ircd::db::write(const std::initializer_list<cell::delta> &deltas,
-                const sopts &sopts)
-{
-	write(std::begin(deltas), std::end(deltas), sopts);
-}
-
-void
-ircd::db::write(const cell::delta *const &begin,
-                const cell::delta *const &end,
-                const sopts &sopts)
-{
-	if(begin == end)
-		return;
-
-	// Find the database through one of the cell's columns. cell::deltas
-	// may come from different columns so we do nothing else with this.
-	auto &front(*begin);
-	column &c(std::get<cell *>(front)->c);
-	database &d(c);
-
-	rocksdb::WriteBatch batch;
-	std::for_each(begin, end, [&batch]
-	(const cell::delta &delta)
-	{
-		append(batch, delta);
-	});
-
-	commit(d, batch, sopts);
-}
-
-template<class pos>
-bool
-ircd::db::seek(cell &c,
-               const pos &p,
-               gopts opts)
-{
-	column &cc(c);
-	database::column &dc(cc);
-
-	if(!opts.snapshot)
-		opts.snapshot = c.ss;
-
-	const auto ropts(make_opts(opts));
-	return seek(dc, p, ropts, c.it);
-}
-template bool ircd::db::seek<ircd::db::pos>(cell &, const pos &, gopts);
-template bool ircd::db::seek<ircd::string_view>(cell &, const string_view &, gopts);
-
-// Linkage for incomplete rocksdb::Iterator
-ircd::db::cell::cell()
-{
-}
-
-ircd::db::cell::cell(database &d,
-                     const string_view &colname,
-                     const gopts &opts)
-:cell
-{
-	column(d[colname]), std::unique_ptr<rocksdb::Iterator>{}, opts
-}
-{
-}
-
-ircd::db::cell::cell(database &d,
-                     const string_view &colname,
-                     const string_view &index,
-                     const gopts &opts)
-:cell
-{
-	column(d[colname]), index, opts
-}
-{
-}
-
-ircd::db::cell::cell(column column,
-                     const string_view &index,
-                     const gopts &opts)
-:c{std::move(column)}
-,ss{opts.snapshot}
-,it
-{
-	!index.empty()?
-		seek(this->c, index, opts):
-		std::unique_ptr<rocksdb::Iterator>{}
-}
-{
-	if(bool(this->it))
-		if(!valid_eq(*this->it, index))
-			this->it.reset();
-}
-
-ircd::db::cell::cell(column column,
-                     const string_view &index,
-                     std::unique_ptr<rocksdb::Iterator> it,
-                     const gopts &opts)
-:c{std::move(column)}
-,ss{opts.snapshot}
-,it{std::move(it)}
-{
-	if(index.empty())
-		return;
-
-	seek(*this, index, opts);
-	if(!valid_eq(*this->it, index))
-		this->it.reset();
-}
-
-ircd::db::cell::cell(column column,
-                     std::unique_ptr<rocksdb::Iterator> it,
-                     const gopts &opts)
-:c{std::move(column)}
-,ss{opts.snapshot}
-,it{std::move(it)}
-{
-}
-
-// Linkage for incomplete rocksdb::Iterator
-ircd::db::cell::cell(cell &&o)
-noexcept
-:c{std::move(o.c)}
-,ss{std::move(o.ss)}
-,it{std::move(o.it)}
-{
-}
-
-// Linkage for incomplete rocksdb::Iterator
-ircd::db::cell &
-ircd::db::cell::operator=(cell &&o)
-noexcept
-{
-	c = std::move(o.c);
-	ss = std::move(o.ss);
-	it = std::move(o.it);
-
-	return *this;
-}
-
-// Linkage for incomplete rocksdb::Iterator
-ircd::db::cell::~cell()
-noexcept
-{
-}
-
-bool
-ircd::db::cell::load(const string_view &index,
-                     gopts opts)
-{
-	database &d(c);
-	if(valid(index) && !opts.snapshot && sequence(ss) == sequence(d))
-		return true;
-
-	if(bool(opts.snapshot))
-	{
-		this->it.reset();
-		this->ss = std::move(opts.snapshot);
-	}
-
-	database::column &c(this->c);
-	if(!seek(c, index, opts, this->it))
-		return false;
-
-	return valid(index);
-}
-
-ircd::db::cell &
-ircd::db::cell::operator=(const string_view &s)
-{
-	write(c, key(), s);
-	return *this;
-}
-
-void
-ircd::db::cell::operator()(const op &op,
-                           const string_view &val,
-                           const sopts &sopts)
-{
-	write(cell::delta{op, *this, val}, sopts);
-}
-
-ircd::db::cell::operator
-string_view()
-{
-	return val();
-}
-
-ircd::db::cell::operator
-string_view()
-const
-{
-	return val();
-}
-
-ircd::string_view
-ircd::db::cell::val()
-{
-	if(!valid())
-		load();
-
-	return likely(valid())? db::val(*it) : string_view{};
-}
-
-ircd::string_view
-ircd::db::cell::key()
-{
-	if(!valid())
-		load();
-
-	return likely(valid())? db::key(*it) : string_view{};
-}
-
-ircd::string_view
-ircd::db::cell::val()
-const
-{
-	return likely(valid())? db::val(*it) : string_view{};
-}
-
-ircd::string_view
-ircd::db::cell::key()
-const
-{
-	return likely(valid())? db::key(*it) : string_view{};
-}
-
-bool
-ircd::db::cell::valid(const string_view &s)
-const
-{
-	return valid() && db::valid_eq(*it, s);
-}
-
-bool
-ircd::db::cell::valid_gt(const string_view &s)
-const
-{
-	return valid() && db::valid_gt(*it, s);
-}
-
-bool
-ircd::db::cell::valid_lte(const string_view &s)
-const
-{
-	return valid() && db::valid_lte(*it, s);
-}
-
-bool
-ircd::db::cell::valid()
-const
-{
-	return bool(it) && db::valid(*it);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // db/row.h
 //
 
@@ -4954,6 +4673,291 @@ const
 	{
 		return cell.valid(s);
 	});
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// db/cell.h
+//
+
+uint64_t
+ircd::db::sequence(const cell &c)
+{
+	const database::snapshot &ss(c);
+	return sequence(database::snapshot(c));
+}
+
+const std::string &
+ircd::db::name(const cell &c)
+{
+	return name(c.c);
+}
+
+void
+ircd::db::write(const cell::delta &delta,
+                const sopts &sopts)
+{
+	write(&delta, &delta + 1, sopts);
+}
+
+void
+ircd::db::write(const sopts &sopts,
+                const std::initializer_list<cell::delta> &deltas)
+{
+	write(deltas, sopts);
+}
+
+void
+ircd::db::write(const std::initializer_list<cell::delta> &deltas,
+                const sopts &sopts)
+{
+	write(std::begin(deltas), std::end(deltas), sopts);
+}
+
+void
+ircd::db::write(const cell::delta *const &begin,
+                const cell::delta *const &end,
+                const sopts &sopts)
+{
+	if(begin == end)
+		return;
+
+	// Find the database through one of the cell's columns. cell::deltas
+	// may come from different columns so we do nothing else with this.
+	auto &front(*begin);
+	column &c(std::get<cell *>(front)->c);
+	database &d(c);
+
+	rocksdb::WriteBatch batch;
+	std::for_each(begin, end, [&batch]
+	(const cell::delta &delta)
+	{
+		append(batch, delta);
+	});
+
+	commit(d, batch, sopts);
+}
+
+template<class pos>
+bool
+ircd::db::seek(cell &c,
+               const pos &p,
+               gopts opts)
+{
+	column &cc(c);
+	database::column &dc(cc);
+
+	if(!opts.snapshot)
+		opts.snapshot = c.ss;
+
+	const auto ropts(make_opts(opts));
+	return seek(dc, p, ropts, c.it);
+}
+template bool ircd::db::seek<ircd::db::pos>(cell &, const pos &, gopts);
+template bool ircd::db::seek<ircd::string_view>(cell &, const string_view &, gopts);
+
+// Linkage for incomplete rocksdb::Iterator
+ircd::db::cell::cell()
+{
+}
+
+ircd::db::cell::cell(database &d,
+                     const string_view &colname,
+                     const gopts &opts)
+:cell
+{
+	column(d[colname]), std::unique_ptr<rocksdb::Iterator>{}, opts
+}
+{
+}
+
+ircd::db::cell::cell(database &d,
+                     const string_view &colname,
+                     const string_view &index,
+                     const gopts &opts)
+:cell
+{
+	column(d[colname]), index, opts
+}
+{
+}
+
+ircd::db::cell::cell(column column,
+                     const string_view &index,
+                     const gopts &opts)
+:c{std::move(column)}
+,ss{opts.snapshot}
+,it
+{
+	!index.empty()?
+		seek(this->c, index, opts):
+		std::unique_ptr<rocksdb::Iterator>{}
+}
+{
+	if(bool(this->it))
+		if(!valid_eq(*this->it, index))
+			this->it.reset();
+}
+
+ircd::db::cell::cell(column column,
+                     const string_view &index,
+                     std::unique_ptr<rocksdb::Iterator> it,
+                     const gopts &opts)
+:c{std::move(column)}
+,ss{opts.snapshot}
+,it{std::move(it)}
+{
+	if(index.empty())
+		return;
+
+	seek(*this, index, opts);
+	if(!valid_eq(*this->it, index))
+		this->it.reset();
+}
+
+ircd::db::cell::cell(column column,
+                     std::unique_ptr<rocksdb::Iterator> it,
+                     const gopts &opts)
+:c{std::move(column)}
+,ss{opts.snapshot}
+,it{std::move(it)}
+{
+}
+
+// Linkage for incomplete rocksdb::Iterator
+ircd::db::cell::cell(cell &&o)
+noexcept
+:c{std::move(o.c)}
+,ss{std::move(o.ss)}
+,it{std::move(o.it)}
+{
+}
+
+// Linkage for incomplete rocksdb::Iterator
+ircd::db::cell &
+ircd::db::cell::operator=(cell &&o)
+noexcept
+{
+	c = std::move(o.c);
+	ss = std::move(o.ss);
+	it = std::move(o.it);
+
+	return *this;
+}
+
+// Linkage for incomplete rocksdb::Iterator
+ircd::db::cell::~cell()
+noexcept
+{
+}
+
+bool
+ircd::db::cell::load(const string_view &index,
+                     gopts opts)
+{
+	database &d(c);
+	if(valid(index) && !opts.snapshot && sequence(ss) == sequence(d))
+		return true;
+
+	if(bool(opts.snapshot))
+	{
+		this->it.reset();
+		this->ss = std::move(opts.snapshot);
+	}
+
+	database::column &c(this->c);
+	if(!seek(c, index, opts, this->it))
+		return false;
+
+	return valid(index);
+}
+
+ircd::db::cell &
+ircd::db::cell::operator=(const string_view &s)
+{
+	write(c, key(), s);
+	return *this;
+}
+
+void
+ircd::db::cell::operator()(const op &op,
+                           const string_view &val,
+                           const sopts &sopts)
+{
+	write(cell::delta{op, *this, val}, sopts);
+}
+
+ircd::db::cell::operator
+string_view()
+{
+	return val();
+}
+
+ircd::db::cell::operator
+string_view()
+const
+{
+	return val();
+}
+
+ircd::string_view
+ircd::db::cell::val()
+{
+	if(!valid())
+		load();
+
+	return likely(valid())? db::val(*it) : string_view{};
+}
+
+ircd::string_view
+ircd::db::cell::key()
+{
+	if(!valid())
+		load();
+
+	return likely(valid())? db::key(*it) : string_view{};
+}
+
+ircd::string_view
+ircd::db::cell::val()
+const
+{
+	return likely(valid())? db::val(*it) : string_view{};
+}
+
+ircd::string_view
+ircd::db::cell::key()
+const
+{
+	return likely(valid())? db::key(*it) : string_view{};
+}
+
+bool
+ircd::db::cell::valid(const string_view &s)
+const
+{
+	return valid() && db::valid_eq(*it, s);
+}
+
+bool
+ircd::db::cell::valid_gt(const string_view &s)
+const
+{
+	return valid() && db::valid_gt(*it, s);
+}
+
+bool
+ircd::db::cell::valid_lte(const string_view &s)
+const
+{
+	return valid() && db::valid_lte(*it, s);
+}
+
+bool
+ircd::db::cell::valid()
+const
+{
+	return bool(it) && db::valid(*it);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5991,429 +5995,6 @@ template bool ircd::db::seek<ircd::string_view>(column::const_iterator_base &, c
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// comparator.h
-//
-
-//
-// linkage placements for integer comparators so they all have the same addr
-//
-
-ircd::db::cmp_int64_t::cmp_int64_t()
-{
-}
-
-ircd::db::cmp_int64_t::~cmp_int64_t()
-noexcept
-{
-}
-
-ircd::db::cmp_uint64_t::cmp_uint64_t()
-{
-}
-
-ircd::db::cmp_uint64_t::~cmp_uint64_t()
-noexcept
-{
-}
-
-ircd::db::reverse_cmp_int64_t::reverse_cmp_int64_t()
-{
-}
-
-ircd::db::reverse_cmp_int64_t::~reverse_cmp_int64_t()
-noexcept
-{
-}
-
-ircd::db::reverse_cmp_uint64_t::reverse_cmp_uint64_t()
-{
-}
-
-ircd::db::reverse_cmp_uint64_t::~reverse_cmp_uint64_t()
-noexcept
-{
-}
-
-//
-// cmp_string_view
-//
-
-ircd::db::cmp_string_view::cmp_string_view()
-:db::comparator{"string_view", &less, &equal}
-{
-}
-
-bool
-ircd::db::cmp_string_view::less(const string_view &a,
-                                const string_view &b)
-{
-	return a < b;
-}
-
-bool
-ircd::db::cmp_string_view::equal(const string_view &a,
-                                 const string_view &b)
-{
-	return a == b;
-}
-
-//
-// reverse_cmp_string_view
-//
-
-ircd::db::reverse_cmp_string_view::reverse_cmp_string_view()
-:db::comparator{"reverse_string_view", &less, &equal}
-{
-}
-
-bool
-ircd::db::reverse_cmp_string_view::less(const string_view &a,
-                                        const string_view &b)
-{
-	/// RocksDB sez things will not work correctly unless a shorter string
-	/// result returns less than a longer string even if one intends some
-	/// reverse ordering
-	if(a.size() < b.size())
-		return true;
-
-	/// Furthermore, b.size() < a.size() returning false from this function
-	/// appears to not be correct. The reversal also has to also come in
-	/// the form of a bytewise forward iteration.
-	return std::memcmp(a.data(), b.data(), std::min(a.size(), b.size())) > 0;
-}
-
-bool
-ircd::db::reverse_cmp_string_view::equal(const string_view &a,
-                                         const string_view &b)
-{
-	return a == b;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// merge.h
-//
-
-std::string
-ircd::db::merge_operator(const string_view &key,
-                         const std::pair<string_view, string_view> &delta)
-{
-	//ircd::json::index index{delta.first};
-	//index += delta.second;
-	//return index;
-	assert(0);
-	return {};
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// writebatch
-//
-
-void
-ircd::db::append(rocksdb::WriteBatch &batch,
-                 const cell::delta &delta)
-{
-	auto &column
-	{
-		std::get<cell *>(delta)->c
-	};
-
-	append(batch, column, column::delta
-	{
-		std::get<op>(delta),
-		std::get<cell *>(delta)->key(),
-		std::get<string_view>(delta)
-	});
-}
-
-void
-ircd::db::append(rocksdb::WriteBatch &batch,
-                 column &column,
-                 const column::delta &delta)
-{
-	if(unlikely(!column))
-	{
-		// Note: Unknown at this time whether allowing attempts at writing
-		// to a null column should be erroneous or silently ignored. It's
-		// highly likely this log message will be removed soon to allow
-		// toggling database columns for optimization without touching calls.
-		log::critical
-		{
-			log, "Attempting to transact a delta for a null column"
-		};
-
-		return;
-	}
-
-	database::column &c(column);
-	const auto k(slice(std::get<1>(delta)));
-	const auto v(slice(std::get<2>(delta)));
-	switch(std::get<0>(delta))
-	{
-		case op::GET:            assert(0);                    break;
-		case op::SET:            batch.Put(c, k, v);           break;
-		case op::MERGE:          batch.Merge(c, k, v);         break;
-		case op::DELETE:         batch.Delete(c, k);           break;
-		case op::DELETE_RANGE:   batch.DeleteRange(c, k, v);   break;
-		case op::SINGLE_DELETE:  batch.SingleDelete(c, k);     break;
-	}
-}
-
-void
-ircd::db::commit(database &d,
-                 rocksdb::WriteBatch &batch,
-                 const sopts &sopts)
-{
-	const auto opts(make_opts(sopts));
-	commit(d, batch, opts);
-}
-
-void
-ircd::db::commit(database &d,
-                 rocksdb::WriteBatch &batch,
-                 const rocksdb::WriteOptions &opts)
-{
-	#ifdef RB_DEBUG_DB_SEEK
-	ircd::timer timer;
-	#endif
-
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
-	const ctx::uninterruptible ui;
-	throw_on_error
-	{
-		d.d->Write(opts, &batch)
-	};
-
-	#ifdef RB_DEBUG_DB_SEEK
-	log::debug
-	{
-		log, "'%s' %lu COMMIT %s in %ld$us",
-		d.name,
-		sequence(d),
-		debug(batch),
-		timer.at<microseconds>().count()
-	};
-	#endif
-}
-
-std::string
-ircd::db::debug(const rocksdb::WriteBatch &batch)
-{
-	return ircd::string(512, [&batch]
-	(const mutable_buffer &ret)
-	{
-		return snprintf(data(ret), size(ret)+1,
-		                "%d deltas; size: %zuB :%s%s%s%s%s%s%s%s%s",
-		                batch.Count(),
-		                batch.GetDataSize(),
-		                batch.HasPut()? " PUT" : "",
-		                batch.HasDelete()? " DELETE" : "",
-		                batch.HasSingleDelete()? " SINGLE_DELETE" : "",
-		                batch.HasDeleteRange()? " DELETE_RANGE" : "",
-		                batch.HasMerge()? " MERGE" : "",
-		                batch.HasBeginPrepare()? " BEGIN_PREPARE" : "",
-		                batch.HasEndPrepare()? " END_PREPARE" : "",
-		                batch.HasCommit()? " COMMIT" : "",
-		                batch.HasRollback()? " ROLLBACK" : "");
-	});
-}
-
-bool
-ircd::db::has(const rocksdb::WriteBatch &wb,
-              const op &op)
-{
-	switch(op)
-	{
-		case op::GET:              assert(0); return false;
-		case op::SET:              return wb.HasPut();
-		case op::MERGE:            return wb.HasMerge();
-		case op::DELETE:           return wb.HasDelete();
-		case op::DELETE_RANGE:     return wb.HasDeleteRange();
-		case op::SINGLE_DELETE:    return wb.HasSingleDelete();
-	}
-
-	return false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// seek
-//
-
-namespace ircd::db
-{
-	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const pos &);
-	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const string_view &);
-	static rocksdb::Iterator &_seek_lower_(rocksdb::Iterator &, const string_view &);
-	static rocksdb::Iterator &_seek_upper_(rocksdb::Iterator &, const string_view &);
-	static bool _seek(database::column &, const pos &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
-	static bool _seek(database::column &, const string_view &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
-}
-
-std::unique_ptr<rocksdb::Iterator>
-ircd::db::seek(column &column,
-               const string_view &key,
-               const gopts &opts)
-{
-	database &d(column);
-	database::column &c(column);
-
-	std::unique_ptr<rocksdb::Iterator> ret;
-	seek(c, key, opts, ret);
-	return std::move(ret);
-}
-
-template<class pos>
-bool
-ircd::db::seek(database::column &c,
-               const pos &p,
-               const gopts &gopts,
-               std::unique_ptr<rocksdb::Iterator> &it)
-{
-	const rocksdb::ReadOptions opts
-	{
-		make_opts(gopts)
-	};
-
-	return seek(c, p, opts, it);
-}
-
-template<class pos>
-bool
-ircd::db::seek(database::column &c,
-               const pos &p,
-               const rocksdb::ReadOptions &opts,
-               std::unique_ptr<rocksdb::Iterator> &it)
-{
-	const ctx::uninterruptible::nothrow ui;
-
-	if(!it)
-	{
-		database &d(*c.d);
-		rocksdb::ColumnFamilyHandle *const &cf(c);
-		it.reset(d.d->NewIterator(opts, cf));
-	}
-
-	return _seek(c, p, opts, *it);
-}
-
-bool
-ircd::db::_seek(database::column &c,
-                const string_view &p,
-                const rocksdb::ReadOptions &opts,
-                rocksdb::Iterator &it)
-{
-	#ifdef RB_DEBUG_DB_SEEK
-	database &d(*c.d);
-	const ircd::timer timer;
-	#endif
-
-	_seek_(it, p);
-
-	#ifdef RB_DEBUG_DB_SEEK
-	log::debug
-	{
-		log, "'%s' %lu:%lu SEEK %s in %ld$us '%s'",
-		name(d),
-		sequence(d),
-		sequence(opts.snapshot),
-		it.status().ToString(),
-		timer.at<microseconds>().count(),
-		name(c)
-	};
-	#endif
-
-	return valid(it);
-}
-
-bool
-ircd::db::_seek(database::column &c,
-                const pos &p,
-                const rocksdb::ReadOptions &opts,
-                rocksdb::Iterator &it)
-{
-	#ifdef RB_DEBUG_DB_SEEK
-	database &d(*c.d);
-	const ircd::timer timer;
-	const bool valid_it
-	{
-		valid(it)
-	};
-	#endif
-
-	_seek_(it, p);
-
-	#ifdef RB_DEBUG_DB_SEEK
-	log::debug
-	{
-		log, "'%s' %lu:%lu SEEK[%s] %s -> %s in %ld$us '%s'",
-		name(d),
-		sequence(d),
-		sequence(opts.snapshot),
-		reflect(p),
-		valid_it? "VALID" : "INVALID",
-		it.status().ToString(),
-		timer.at<microseconds>().count(),
-		name(c)
-	};
-	#endif
-
-	return valid(it);
-}
-
-/// Seek to entry NOT GREATER THAN key. That is, equal to or less than key
-rocksdb::Iterator &
-ircd::db::_seek_lower_(rocksdb::Iterator &it,
-                       const string_view &sv)
-{
-	it.SeekForPrev(slice(sv));
-	return it;
-}
-
-/// Seek to entry NOT LESS THAN key. That is, equal to or greater than key
-rocksdb::Iterator &
-ircd::db::_seek_upper_(rocksdb::Iterator &it,
-                       const string_view &sv)
-{
-	it.Seek(slice(sv));
-	return it;
-}
-
-/// Defaults to _seek_upper_ because it has better support from RocksDB.
-rocksdb::Iterator &
-ircd::db::_seek_(rocksdb::Iterator &it,
-                 const string_view &sv)
-{
-	return _seek_upper_(it, sv);
-}
-
-rocksdb::Iterator &
-ircd::db::_seek_(rocksdb::Iterator &it,
-                 const pos &p)
-{
-	switch(p)
-	{
-		case pos::NEXT:     it.Next();           break;
-		case pos::PREV:     it.Prev();           break;
-		case pos::FRONT:    it.SeekToFirst();    break;
-		case pos::BACK:     it.SeekToLast();     break;
-		default:
-		case pos::END:
-		{
-			it.SeekToLast();
-			if(it.Valid())
-				it.Next();
-
-			break;
-		}
-	}
-
-	return it;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // opts.h
 //
 
@@ -6914,7 +6495,148 @@ ircd::db::error::error(generate_skip_t,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Misc
+// merge.h
+//
+
+std::string
+ircd::db::merge_operator(const string_view &key,
+                         const std::pair<string_view, string_view> &delta)
+{
+	//ircd::json::index index{delta.first};
+	//index += delta.second;
+	//return index;
+	assert(0);
+	return {};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// comparator.h
+//
+
+//
+// linkage placements for integer comparators so they all have the same addr
+//
+
+ircd::db::cmp_int64_t::cmp_int64_t()
+{
+}
+
+ircd::db::cmp_int64_t::~cmp_int64_t()
+noexcept
+{
+}
+
+ircd::db::cmp_uint64_t::cmp_uint64_t()
+{
+}
+
+ircd::db::cmp_uint64_t::~cmp_uint64_t()
+noexcept
+{
+}
+
+ircd::db::reverse_cmp_int64_t::reverse_cmp_int64_t()
+{
+}
+
+ircd::db::reverse_cmp_int64_t::~reverse_cmp_int64_t()
+noexcept
+{
+}
+
+ircd::db::reverse_cmp_uint64_t::reverse_cmp_uint64_t()
+{
+}
+
+ircd::db::reverse_cmp_uint64_t::~reverse_cmp_uint64_t()
+noexcept
+{
+}
+
+//
+// cmp_string_view
+//
+
+ircd::db::cmp_string_view::cmp_string_view()
+:db::comparator{"string_view", &less, &equal}
+{
+}
+
+bool
+ircd::db::cmp_string_view::less(const string_view &a,
+                                const string_view &b)
+{
+	return a < b;
+}
+
+bool
+ircd::db::cmp_string_view::equal(const string_view &a,
+                                 const string_view &b)
+{
+	return a == b;
+}
+
+//
+// reverse_cmp_string_view
+//
+
+ircd::db::reverse_cmp_string_view::reverse_cmp_string_view()
+:db::comparator{"reverse_string_view", &less, &equal}
+{
+}
+
+bool
+ircd::db::reverse_cmp_string_view::less(const string_view &a,
+                                        const string_view &b)
+{
+	/// RocksDB sez things will not work correctly unless a shorter string
+	/// result returns less than a longer string even if one intends some
+	/// reverse ordering
+	if(a.size() < b.size())
+		return true;
+
+	/// Furthermore, b.size() < a.size() returning false from this function
+	/// appears to not be correct. The reversal also has to also come in
+	/// the form of a bytewise forward iteration.
+	return std::memcmp(a.data(), b.data(), std::min(a.size(), b.size())) > 0;
+}
+
+bool
+ircd::db::reverse_cmp_string_view::equal(const string_view &a,
+                                         const string_view &b)
+{
+	return a == b;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// delta.h
+//
+
+bool
+ircd::db::value_required(const op &op)
+{
+	switch(op)
+	{
+		case op::SET:
+		case op::MERGE:
+		case op::DELETE_RANGE:
+			return true;
+
+		case op::GET:
+		case op::DELETE:
+		case op::SINGLE_DELETE:
+			return false;
+	}
+
+	assert(0);
+	return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// db.h (internal)
 //
 
 //
@@ -6937,6 +6659,464 @@ ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &status)
 			throw error{status};
 	}
 }
+
+//
+// error_to_status
+//
+
+ircd::db::error_to_status::error_to_status(const std::exception &e)
+:rocksdb::Status
+{
+	Status::Aborted(slice(string_view(e.what())))
+}
+{
+}
+
+ircd::db::error_to_status::error_to_status(const std::system_error &e)
+:error_to_status{e.code()}
+{
+}
+
+ircd::db::error_to_status::error_to_status(const std::error_code &e)
+:rocksdb::Status{[&e]
+{
+	using std::errc;
+
+	switch(e.value())
+	{
+		case 0:
+			return Status::OK();
+
+		case int(errc::no_such_file_or_directory):
+			return Status::NotFound();
+
+		case int(errc::not_supported):
+			return Status::NotSupported();
+
+		case int(errc::invalid_argument):
+			return Status::InvalidArgument();
+
+		case int(errc::io_error):
+			 return Status::IOError();
+
+		case int(errc::timed_out):
+			return Status::TimedOut();
+
+		case int(errc::device_or_resource_busy):
+			return Status::Busy();
+
+		case int(errc::resource_unavailable_try_again):
+			return Status::TryAgain();
+
+		case int(errc::no_space_on_device):
+			return Status::NoSpace();
+
+		case int(errc::not_enough_memory):
+			return Status::MemoryLimit();
+
+		default:
+			return Status::Aborted(slice(string_view(e.message())));
+	}
+}()}
+{
+}
+
+//
+// writebatch suite
+//
+
+void
+ircd::db::append(rocksdb::WriteBatch &batch,
+                 const cell::delta &delta)
+{
+	auto &column
+	{
+		std::get<cell *>(delta)->c
+	};
+
+	append(batch, column, column::delta
+	{
+		std::get<op>(delta),
+		std::get<cell *>(delta)->key(),
+		std::get<string_view>(delta)
+	});
+}
+
+void
+ircd::db::append(rocksdb::WriteBatch &batch,
+                 column &column,
+                 const column::delta &delta)
+{
+	if(unlikely(!column))
+	{
+		// Note: Unknown at this time whether allowing attempts at writing
+		// to a null column should be erroneous or silently ignored. It's
+		// highly likely this log message will be removed soon to allow
+		// toggling database columns for optimization without touching calls.
+		log::critical
+		{
+			log, "Attempting to transact a delta for a null column"
+		};
+
+		return;
+	}
+
+	database::column &c(column);
+	const auto k(slice(std::get<1>(delta)));
+	const auto v(slice(std::get<2>(delta)));
+	switch(std::get<0>(delta))
+	{
+		case op::GET:            assert(0);                    break;
+		case op::SET:            batch.Put(c, k, v);           break;
+		case op::MERGE:          batch.Merge(c, k, v);         break;
+		case op::DELETE:         batch.Delete(c, k);           break;
+		case op::DELETE_RANGE:   batch.DeleteRange(c, k, v);   break;
+		case op::SINGLE_DELETE:  batch.SingleDelete(c, k);     break;
+	}
+}
+
+void
+ircd::db::commit(database &d,
+                 rocksdb::WriteBatch &batch,
+                 const sopts &sopts)
+{
+	const auto opts(make_opts(sopts));
+	commit(d, batch, opts);
+}
+
+void
+ircd::db::commit(database &d,
+                 rocksdb::WriteBatch &batch,
+                 const rocksdb::WriteOptions &opts)
+{
+	#ifdef RB_DEBUG_DB_SEEK
+	ircd::timer timer;
+	#endif
+
+	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const ctx::uninterruptible ui;
+	throw_on_error
+	{
+		d.d->Write(opts, &batch)
+	};
+
+	#ifdef RB_DEBUG_DB_SEEK
+	log::debug
+	{
+		log, "'%s' %lu COMMIT %s in %ld$us",
+		d.name,
+		sequence(d),
+		debug(batch),
+		timer.at<microseconds>().count()
+	};
+	#endif
+}
+
+std::string
+ircd::db::debug(const rocksdb::WriteBatch &batch)
+{
+	return ircd::string(512, [&batch]
+	(const mutable_buffer &ret)
+	{
+		return snprintf(data(ret), size(ret)+1,
+		                "%d deltas; size: %zuB :%s%s%s%s%s%s%s%s%s",
+		                batch.Count(),
+		                batch.GetDataSize(),
+		                batch.HasPut()? " PUT" : "",
+		                batch.HasDelete()? " DELETE" : "",
+		                batch.HasSingleDelete()? " SINGLE_DELETE" : "",
+		                batch.HasDeleteRange()? " DELETE_RANGE" : "",
+		                batch.HasMerge()? " MERGE" : "",
+		                batch.HasBeginPrepare()? " BEGIN_PREPARE" : "",
+		                batch.HasEndPrepare()? " END_PREPARE" : "",
+		                batch.HasCommit()? " COMMIT" : "",
+		                batch.HasRollback()? " ROLLBACK" : "");
+	});
+}
+
+bool
+ircd::db::has(const rocksdb::WriteBatch &wb,
+              const op &op)
+{
+	switch(op)
+	{
+		case op::GET:              assert(0); return false;
+		case op::SET:              return wb.HasPut();
+		case op::MERGE:            return wb.HasMerge();
+		case op::DELETE:           return wb.HasDelete();
+		case op::DELETE_RANGE:     return wb.HasDeleteRange();
+		case op::SINGLE_DELETE:    return wb.HasSingleDelete();
+	}
+
+	return false;
+}
+
+//
+// seek suite
+//
+
+namespace ircd::db
+{
+	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const pos &);
+	static rocksdb::Iterator &_seek_(rocksdb::Iterator &, const string_view &);
+	static rocksdb::Iterator &_seek_lower_(rocksdb::Iterator &, const string_view &);
+	static rocksdb::Iterator &_seek_upper_(rocksdb::Iterator &, const string_view &);
+	static bool _seek(database::column &, const pos &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
+	static bool _seek(database::column &, const string_view &, const rocksdb::ReadOptions &, rocksdb::Iterator &it);
+}
+
+std::unique_ptr<rocksdb::Iterator>
+ircd::db::seek(column &column,
+               const string_view &key,
+               const gopts &opts)
+{
+	database &d(column);
+	database::column &c(column);
+
+	std::unique_ptr<rocksdb::Iterator> ret;
+	seek(c, key, opts, ret);
+	return std::move(ret);
+}
+
+template<class pos>
+bool
+ircd::db::seek(database::column &c,
+               const pos &p,
+               const gopts &gopts,
+               std::unique_ptr<rocksdb::Iterator> &it)
+{
+	const rocksdb::ReadOptions opts
+	{
+		make_opts(gopts)
+	};
+
+	return seek(c, p, opts, it);
+}
+
+template<class pos>
+bool
+ircd::db::seek(database::column &c,
+               const pos &p,
+               const rocksdb::ReadOptions &opts,
+               std::unique_ptr<rocksdb::Iterator> &it)
+{
+	const ctx::uninterruptible::nothrow ui;
+
+	if(!it)
+	{
+		database &d(*c.d);
+		rocksdb::ColumnFamilyHandle *const &cf(c);
+		it.reset(d.d->NewIterator(opts, cf));
+	}
+
+	return _seek(c, p, opts, *it);
+}
+
+bool
+ircd::db::_seek(database::column &c,
+                const string_view &p,
+                const rocksdb::ReadOptions &opts,
+                rocksdb::Iterator &it)
+{
+	#ifdef RB_DEBUG_DB_SEEK
+	database &d(*c.d);
+	const ircd::timer timer;
+	#endif
+
+	_seek_(it, p);
+
+	#ifdef RB_DEBUG_DB_SEEK
+	log::debug
+	{
+		log, "'%s' %lu:%lu SEEK %s in %ld$us '%s'",
+		name(d),
+		sequence(d),
+		sequence(opts.snapshot),
+		it.status().ToString(),
+		timer.at<microseconds>().count(),
+		name(c)
+	};
+	#endif
+
+	return valid(it);
+}
+
+bool
+ircd::db::_seek(database::column &c,
+                const pos &p,
+                const rocksdb::ReadOptions &opts,
+                rocksdb::Iterator &it)
+{
+	#ifdef RB_DEBUG_DB_SEEK
+	database &d(*c.d);
+	const ircd::timer timer;
+	const bool valid_it
+	{
+		valid(it)
+	};
+	#endif
+
+	_seek_(it, p);
+
+	#ifdef RB_DEBUG_DB_SEEK
+	log::debug
+	{
+		log, "'%s' %lu:%lu SEEK[%s] %s -> %s in %ld$us '%s'",
+		name(d),
+		sequence(d),
+		sequence(opts.snapshot),
+		reflect(p),
+		valid_it? "VALID" : "INVALID",
+		it.status().ToString(),
+		timer.at<microseconds>().count(),
+		name(c)
+	};
+	#endif
+
+	return valid(it);
+}
+
+/// Seek to entry NOT GREATER THAN key. That is, equal to or less than key
+rocksdb::Iterator &
+ircd::db::_seek_lower_(rocksdb::Iterator &it,
+                       const string_view &sv)
+{
+	it.SeekForPrev(slice(sv));
+	return it;
+}
+
+/// Seek to entry NOT LESS THAN key. That is, equal to or greater than key
+rocksdb::Iterator &
+ircd::db::_seek_upper_(rocksdb::Iterator &it,
+                       const string_view &sv)
+{
+	it.Seek(slice(sv));
+	return it;
+}
+
+/// Defaults to _seek_upper_ because it has better support from RocksDB.
+rocksdb::Iterator &
+ircd::db::_seek_(rocksdb::Iterator &it,
+                 const string_view &sv)
+{
+	return _seek_upper_(it, sv);
+}
+
+rocksdb::Iterator &
+ircd::db::_seek_(rocksdb::Iterator &it,
+                 const pos &p)
+{
+	switch(p)
+	{
+		case pos::NEXT:     it.Next();           break;
+		case pos::PREV:     it.Prev();           break;
+		case pos::FRONT:    it.SeekToFirst();    break;
+		case pos::BACK:     it.SeekToLast();     break;
+		default:
+		case pos::END:
+		{
+			it.SeekToLast();
+			if(it.Valid())
+				it.Next();
+
+			break;
+		}
+	}
+
+	return it;
+}
+
+//
+// validation suite
+//
+
+void
+ircd::db::valid_eq_or_throw(const rocksdb::Iterator &it,
+                            const string_view &sv)
+{
+	assert(!empty(sv));
+	if(!valid_eq(it, sv))
+	{
+		throw_on_error(it.status());
+		throw not_found{};
+	}
+}
+
+void
+ircd::db::valid_or_throw(const rocksdb::Iterator &it)
+{
+	if(!valid(it))
+	{
+		throw_on_error(it.status());
+		throw not_found{};
+		//assert(0); // status == ok + !Valid() == ???
+	}
+}
+
+bool
+ircd::db::valid_lte(const rocksdb::Iterator &it,
+                    const string_view &sv)
+{
+	return valid(it, [&sv](const auto &it)
+	{
+		return it.key().compare(slice(sv)) <= 0;
+	});
+}
+
+bool
+ircd::db::valid_gt(const rocksdb::Iterator &it,
+                   const string_view &sv)
+{
+	return valid(it, [&sv](const auto &it)
+	{
+		return it.key().compare(slice(sv)) > 0;
+	});
+}
+
+bool
+ircd::db::valid_eq(const rocksdb::Iterator &it,
+                   const string_view &sv)
+{
+	return valid(it, [&sv](const auto &it)
+	{
+		return it.key().compare(slice(sv)) == 0;
+	});
+}
+
+bool
+ircd::db::valid(const rocksdb::Iterator &it,
+                const valid_proffer &proffer)
+{
+	return valid(it)? proffer(it) : false;
+}
+
+bool
+ircd::db::operator!(const rocksdb::Iterator &it)
+{
+	return !valid(it);
+}
+
+bool
+ircd::db::valid(const rocksdb::Iterator &it)
+{
+	switch(it.status().code())
+	{
+		using rocksdb::Status;
+
+		case Status::kOk:          break;
+		case Status::kNotFound:    break;
+		case Status::kIncomplete:  break;
+		default:
+			throw_on_error(it.status());
+			__builtin_unreachable();
+	}
+
+	return it.Valid();
+}
+
+//
+// column_names
+//
 
 std::vector<std::string>
 ircd::db::column_names(const std::string &path,
@@ -6973,7 +7153,6 @@ catch(const not_found &)
 	};
 }
 
-///////////////////////////////////////////////////////////////////////////////
 //
 // Misc
 //
@@ -7124,151 +7303,6 @@ ircd::db::operator+=(rocksdb::WriteOptions &ret,
 	return ret;
 }
 
-void
-ircd::db::valid_eq_or_throw(const rocksdb::Iterator &it,
-                            const string_view &sv)
-{
-	assert(!empty(sv));
-	if(!valid_eq(it, sv))
-	{
-		throw_on_error(it.status());
-		throw not_found{};
-	}
-}
-
-void
-ircd::db::valid_or_throw(const rocksdb::Iterator &it)
-{
-	if(!valid(it))
-	{
-		throw_on_error(it.status());
-		throw not_found{};
-		//assert(0); // status == ok + !Valid() == ???
-	}
-}
-
-bool
-ircd::db::valid_lte(const rocksdb::Iterator &it,
-                    const string_view &sv)
-{
-	return valid(it, [&sv](const auto &it)
-	{
-		return it.key().compare(slice(sv)) <= 0;
-	});
-}
-
-bool
-ircd::db::valid_gt(const rocksdb::Iterator &it,
-                   const string_view &sv)
-{
-	return valid(it, [&sv](const auto &it)
-	{
-		return it.key().compare(slice(sv)) > 0;
-	});
-}
-
-bool
-ircd::db::valid_eq(const rocksdb::Iterator &it,
-                   const string_view &sv)
-{
-	return valid(it, [&sv](const auto &it)
-	{
-		return it.key().compare(slice(sv)) == 0;
-	});
-}
-
-bool
-ircd::db::valid(const rocksdb::Iterator &it,
-                const valid_proffer &proffer)
-{
-	return valid(it)? proffer(it) : false;
-}
-
-bool
-ircd::db::operator!(const rocksdb::Iterator &it)
-{
-	return !valid(it);
-}
-
-bool
-ircd::db::valid(const rocksdb::Iterator &it)
-{
-	switch(it.status().code())
-	{
-		using rocksdb::Status;
-
-		case Status::kOk:          break;
-		case Status::kNotFound:    break;
-		case Status::kIncomplete:  break;
-		default:
-			throw_on_error(it.status());
-			__builtin_unreachable();
-	}
-
-	return it.Valid();
-}
-
-//
-// error_to_status
-//
-
-ircd::db::error_to_status::error_to_status(const std::exception &e)
-:rocksdb::Status
-{
-	Status::Aborted(slice(string_view(e.what())))
-}
-{
-}
-
-ircd::db::error_to_status::error_to_status(const std::system_error &e)
-:error_to_status{e.code()}
-{
-}
-
-ircd::db::error_to_status::error_to_status(const std::error_code &e)
-:rocksdb::Status{[&e]
-{
-	using std::errc;
-
-	switch(e.value())
-	{
-		case 0:
-			return Status::OK();
-
-		case int(errc::no_such_file_or_directory):
-			return Status::NotFound();
-
-		case int(errc::not_supported):
-			return Status::NotSupported();
-
-		case int(errc::invalid_argument):
-			return Status::InvalidArgument();
-
-		case int(errc::io_error):
-			 return Status::IOError();
-
-		case int(errc::timed_out):
-			return Status::TimedOut();
-
-		case int(errc::device_or_resource_busy):
-			return Status::Busy();
-
-		case int(errc::resource_unavailable_try_again):
-			return Status::TryAgain();
-
-		case int(errc::no_space_on_device):
-			return Status::NoSpace();
-
-		case int(errc::not_enough_memory):
-			return Status::MemoryLimit();
-
-		default:
-			return Status::Aborted(slice(string_view(e.message())));
-	}
-}()}
-{
-}
-
 //
 //
 //
@@ -7397,6 +7431,10 @@ ircd::db::val(const rocksdb::Iterator &it)
 	return slice(it.value());
 }
 
+//
+// slice
+//
+
 const char *
 ircd::db::data(const rocksdb::Slice &slice)
 {
@@ -7420,6 +7458,10 @@ ircd::db::slice(const rocksdb::Slice &sk)
 {
 	return { sk.data(), sk.size() };
 }
+
+//
+// reflect
+//
 
 const std::string &
 ircd::db::reflect(const rocksdb::Tickers &type)
@@ -7639,24 +7681,4 @@ ircd::db::reflect(const rocksdb::RandomAccessFile::AccessPattern &p)
 	}
 
 	return "??????"_sv;
-}
-
-bool
-ircd::db::value_required(const op &op)
-{
-	switch(op)
-	{
-		case op::SET:
-		case op::MERGE:
-		case op::DELETE_RANGE:
-			return true;
-
-		case op::GET:
-		case op::DELETE:
-		case op::SINGLE_DELETE:
-			return false;
-	}
-
-	assert(0);
-	return false;
 }

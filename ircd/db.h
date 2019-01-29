@@ -108,6 +108,10 @@ namespace ircd::db
 	rocksdb::DBOptions make_dbopts(std::string optstr, std::string *const &out = nullptr, bool *read_only = nullptr, bool *fsck = nullptr);
 	rocksdb::CompressionType find_supported_compression(const std::string &);
 
+	// Read column names from filesystem
+	std::vector<std::string> column_names(const std::string &path, const rocksdb::DBOptions &);
+	std::vector<std::string> column_names(const std::string &path, const std::string &options);
+
 	// Validation functors
 	bool valid(const rocksdb::Iterator &);
 	bool operator!(const rocksdb::Iterator &);
@@ -134,9 +138,6 @@ namespace ircd::db
 	void commit(database &, rocksdb::WriteBatch &, const sopts &);
 	void append(rocksdb::WriteBatch &, column &, const column::delta &delta);
 	void append(rocksdb::WriteBatch &, const cell::delta &delta);
-
-	std::vector<std::string> column_names(const std::string &path, const rocksdb::DBOptions &);
-	std::vector<std::string> column_names(const std::string &path, const std::string &options);
 }
 
 struct ircd::db::throw_on_error
