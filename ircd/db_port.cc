@@ -21,6 +21,7 @@ static_assert
 	"than the one rocksdb has assumed space for."
 );
 
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::Mutex::Mutex()
 noexcept
 {
@@ -35,12 +36,14 @@ noexcept
 	#endif
 }
 
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::Mutex::Mutex(bool adaptive)
 noexcept
 :Mutex{}
 {
 }
 
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::Mutex::~Mutex()
 noexcept
 {
@@ -56,6 +59,7 @@ noexcept
 }
 
 void
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::Mutex::Lock()
 noexcept
 {
@@ -75,6 +79,7 @@ noexcept
 }
 
 void
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::Mutex::Unlock()
 noexcept
 {
@@ -95,6 +100,7 @@ noexcept
 }
 
 void
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::Mutex::AssertHeld()
 noexcept
 {
@@ -115,6 +121,7 @@ static_assert
 	"than the one rocksdb has assumed space for."
 );
 
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::RWMutex::RWMutex()
 noexcept
 {
@@ -129,6 +136,7 @@ noexcept
 	#endif
 }
 
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::RWMutex::~RWMutex()
 noexcept
 {
@@ -144,6 +152,7 @@ noexcept
 }
 
 void
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::RWMutex::ReadLock()
 noexcept
 {
@@ -163,6 +172,7 @@ noexcept
 }
 
 void
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::RWMutex::WriteLock()
 noexcept
 {
@@ -182,6 +192,7 @@ noexcept
 }
 
 void
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::RWMutex::ReadUnlock()
 noexcept
 {
@@ -201,6 +212,7 @@ noexcept
 }
 
 void
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::RWMutex::WriteUnlock()
 noexcept
 {
@@ -230,6 +242,7 @@ static_assert
 	"than the one rocksdb has assumed space for."
 );
 
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::CondVar::CondVar(Mutex *mu)
 noexcept
 :mu{mu}
@@ -245,6 +258,7 @@ noexcept
 	#endif
 }
 
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::CondVar::~CondVar()
 noexcept
 {
@@ -260,6 +274,7 @@ noexcept
 }
 
 void
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::CondVar::Wait()
 noexcept
 {
@@ -282,6 +297,7 @@ noexcept
 
 // Returns true if timeout occurred
 bool
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::CondVar::TimedWait(uint64_t abs_time_us)
 noexcept
 {
@@ -304,6 +320,7 @@ noexcept
 }
 
 void
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::CondVar::Signal()
 noexcept
 {
@@ -323,6 +340,7 @@ noexcept
 }
 
 void
+__attribute__((externally_visible, no_icf, noinline))
 rocksdb::port::CondVar::SignalAll()
 noexcept
 {
