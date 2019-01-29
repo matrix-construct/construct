@@ -1,5 +1,36 @@
 ## Database
 
+### Organization
+
+The database subsystem is split into three interfaces.
+
+- IRCd developer interface. These classes are for developers to simply use the
+database. An overview of them is given below. They do not require RocksDB headers
+and expose no RocksDB internals. These interfaces are included in the standard
+include stack. The headers are readily found listed in `<ircd/db.h>`. The
+definitions are in `ircd/db.cc`.
+
+- Database developer interface. These classes implement various RocksDB virtual
+interfaces. They are all declared as nested classes of`ircd::db::database` Most of
+these are not used directly by general users of the database; though they are
+technically frontend interfaces to RocksDB. They help us create the IRCd
+developer interface in `ircd/db.cc`. Headers are in `<ircd/db/database/*>`
+but most are not included in the standard include stack.
+
+- Database environment interface. These classes implement additional RocksDB
+virtual interfaces for backend callbacks operations. We connect RocksDB to `ircd::fs`
+and `ircd::ctx` et al on this surface. Headers are in `<ircd/db/database/env/*>`
+and are never included in the standard include stack. Definitions are in a
+separate unit `db_env.cc`.
+
+- Database port interface (bonus). This hack helps us trick RocksDB into using
+`ircd::ctx` rather than posix threads. We achieve this by conjuring magics using
+shared library PLT indirection while praying that the class layout and semantics
+RocksDB's compiler has assumed does not thwart our plans. These definitions are
+in `ircd/db_port.cc`.
+
+
+### Interface
 The database here is a strictly schematized key-value grid built from the primitives of
 `column`, `cell` and `row`. We use the database as both a flat-object store (matrix
 event db) using cells, columns and rows; as well as binary data block store (matrix
