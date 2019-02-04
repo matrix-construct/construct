@@ -13,13 +13,6 @@
 using namespace ircd::m;
 using namespace ircd;
 
-extern "C" event::id::buf
-state__iov(const room &room,
-           const id::user &sender,
-           const string_view &type,
-           const string_view &state_key,
-           const json::iov &content);
-
 static resource::response
 get__state(client &client,
            const resource::request &request,
@@ -196,22 +189,4 @@ get__state(client &client,
 			ret.data(), i
 		}
 	};
-}
-
-event::id::buf
-state__iov(const room &room,
-           const id::user &sender,
-           const string_view &type,
-           const string_view &state_key,
-           const json::iov &content)
-{
-	json::iov event;
-	const json::iov::push push[]
-	{
-		{ event,    { "sender",     sender     }},
-		{ event,    { "type",       type       }},
-		{ event,    { "state_key",  state_key  }},
-	};
-
-	return commit(room, event, content);
 }

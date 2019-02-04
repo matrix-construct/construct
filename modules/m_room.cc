@@ -16,6 +16,40 @@ IRCD_MODULE
 	"Matrix room library; modular components."
 };
 
+extern "C" m::event::id::buf
+send__iov(const m::room &room,
+          const m::id::user &sender,
+          const string_view &type,
+          const json::iov &content)
+{
+	json::iov event;
+	const json::iov::push push[]
+	{
+		{ event,    { "sender",  sender  }},
+		{ event,    { "type",    type    }},
+	};
+
+	return commit(room, event, content);
+}
+
+extern "C" m::event::id::buf
+state__iov(const m::room &room,
+           const m::id::user &sender,
+           const string_view &type,
+           const string_view &state_key,
+           const json::iov &content)
+{
+	json::iov event;
+	const json::iov::push push[]
+	{
+		{ event,    { "sender",     sender     }},
+		{ event,    { "type",       type       }},
+		{ event,    { "state_key",  state_key  }},
+	};
+
+	return commit(room, event, content);
+}
+
 extern "C" size_t
 count_since(const m::room &room,
             const m::event::idx &a,

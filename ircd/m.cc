@@ -3181,7 +3181,7 @@ ircd::m::send(const room &room,
 
 	static mods::import<prototype> function
 	{
-		"client_rooms", "state__iov"
+		"m_room", "state__iov"
 	};
 
 	return function(room, sender, type, state_key, content);
@@ -3219,7 +3219,7 @@ ircd::m::send(const room &room,
 
 	static mods::import<prototype> function
 	{
-		"client_rooms", "send__iov"
+		"m_room", "send__iov"
 	};
 
 	return function(room, sender, type, content);
