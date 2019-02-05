@@ -709,7 +709,11 @@ ircd::m::room::messages::messages(const m::room &room,
 		event::fetch::default_opts
 }
 {
-	seek(depth);
+	// As a special convenience for the ctor only, if the depth=0 and
+	// nothing is found another attempt is made for depth=1 for synapse
+	// rooms which start at depth=1.
+	if(!seek(depth) && depth == 0)
+		seek(1);
 }
 
 const ircd::m::event &
