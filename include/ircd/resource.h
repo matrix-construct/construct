@@ -85,6 +85,9 @@ struct ircd::resource::method
 	struct stats;
 	using handler = std::function<response (client &, request &)>;
 
+	static conf::item<bool> x_matrix_verify_origin;
+	static conf::item<bool> x_matrix_verify_destination;
+
 	struct resource *resource;
 	string_view name;
 	handler function;

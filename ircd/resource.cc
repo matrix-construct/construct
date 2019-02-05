@@ -579,6 +579,20 @@ const
 	return request.user_id;
 }
 
+decltype(ircd::resource::method::x_matrix_verify_origin)
+ircd::resource::method::x_matrix_verify_origin
+{
+	{ "name",     "ircd.resource.x_matrix.verify_origin" },
+	{ "default",  true                                   },
+};
+
+decltype(ircd::resource::method::x_matrix_verify_origin)
+ircd::resource::method::x_matrix_verify_destination
+{
+	{ "name",     "ircd.resource.x_matrix.verify_destination" },
+	{ "default",  true                                        },
+};
+
 ircd::string_view
 ircd::resource::method::verify_origin(client &client,
                                       request &request)
@@ -599,17 +613,17 @@ const try
 		iequals(authorization.first, "X-Matrix"_sv)
 	};
 
-	if(!supplied && !required)
+	if(!required && !supplied)
 		return {};
 
-	if(!supplied && required)
+	if(required && !supplied)
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_MISSING_AUTHORIZATION",
 			"Required X-Matrix Authorization was not supplied"
 		};
 
-	if(!m::my_host(request.head.host))
+	if(x_matrix_verify_destination && !m::my_host(request.head.host))
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_NOT_MY_HOST",
@@ -626,7 +640,7 @@ const try
 		x_matrix.origin, request.head.host, name, request.head.uri, request.content
 	};
 
-	if(!object.verify(x_matrix.key, x_matrix.sig))
+	if(x_matrix_verify_origin && !object.verify(x_matrix.key, x_matrix.sig))
 		throw m::error
 		{
 			http::FORBIDDEN, "M_INVALID_SIGNATURE",

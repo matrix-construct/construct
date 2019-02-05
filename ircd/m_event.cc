@@ -1381,7 +1381,7 @@ ircd::m::event::signatures(const mutable_buffer &out,
 
 	const json::members sigs
 	{
-		{ my_host(), sigb64 }
+		{ event.at("origin"), sigb64 }
     };
 
 	return json::stringify(mutable_buffer{out}, sigs);
@@ -1408,10 +1408,17 @@ ircd::m::signatures(const mutable_buffer &out_,
 		sign(preimage)
 	};
 
+	const auto sig_host
+	{
+		my_host(json::get<"origin"_>(event))?
+			json::get<"origin"_>(event):
+			my_host()
+	};
+
 	thread_local char sigb64buf[b64encode_size(sizeof(sig))];
 	const json::member my_sig
 	{
-		my_host(), json::members
+		sig_host, json::members
 		{
 			{ self::public_key_id, b64encode_unpadded(sigb64buf, sig) }
 		}
