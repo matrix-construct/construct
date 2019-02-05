@@ -89,6 +89,7 @@ invite__foreign(const m::event &event)
 		at<"state_key"_>(event)
 	};
 
+	assert(!my(target));
 	const unique_buffer<mutable_buffer> bufs
 	{
 		148_KiB

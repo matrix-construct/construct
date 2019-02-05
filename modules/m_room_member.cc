@@ -196,6 +196,9 @@ invite_foreign(const m::event &event,
 		target.host()
 	};
 
+	if(m::my_host(target_host))
+		return;
+
 	const m::room::origins origins
 	{
 		room_id
