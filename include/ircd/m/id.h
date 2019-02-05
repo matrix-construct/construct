@@ -83,6 +83,25 @@ struct ircd::m::id
 	id() = default;
 };
 
+// Utilities
+namespace ircd::m
+{
+	// Check if any sigil
+	bool is_sigil(const char &c) noexcept;
+	bool has_sigil(const string_view &) noexcept;
+
+	// Interpret sigil type (or throw)
+	id::sigil sigil(const char &c);
+	id::sigil sigil(const string_view &id);
+	string_view reflect(const id::sigil &);
+
+	// Full ID checks
+	bool valid(const id::sigil &, const string_view &) noexcept;
+	bool valid_local(const id::sigil &, const string_view &) noexcept;  // Local part is valid
+	bool valid_local_only(const id::sigil &, const string_view &) noexcept;  // No :host
+	void validate(const id::sigil &, const string_view &);    // valid() | throws
+}
+
 /// (4.2) The sigil characters
 enum ircd::m::id::sigil
 :char
@@ -243,25 +262,6 @@ struct ircd::m::id::node
 
 	node() = default;
 };
-
-// Utilities
-namespace ircd::m
-{
-	// Check if any sigil
-	bool is_sigil(const char &c) noexcept;
-	bool has_sigil(const string_view &) noexcept;
-
-	// Interpret sigil type (or throw)
-	id::sigil sigil(const char &c);
-	id::sigil sigil(const string_view &id);
-	string_view reflect(const id::sigil &);
-
-	// Full ID checks
-	bool valid(const id::sigil &, const string_view &) noexcept;
-	bool valid_local(const id::sigil &, const string_view &) noexcept;  // Local part is valid
-	bool valid_local_only(const id::sigil &, const string_view &) noexcept;  // No :host
-	void validate(const id::sigil &, const string_view &);    // valid() | throws
-}
 
 /// ID object backed by an internal buffer of default worst-case size.
 ///
