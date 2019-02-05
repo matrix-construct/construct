@@ -248,7 +248,7 @@ github_heading(std::ostream &out,
 	return out;
 }
 
-static std::ostream &
+std::ostream &
 github_handle__push(std::ostream &out,
                     const json::object &content)
 {
@@ -541,7 +541,7 @@ github_handle__ping(std::ostream &out,
 }
 
 /// Researched from yestifico bot
-static std::pair<string_view, string_view>
+std::pair<string_view, string_view>
 github_find_party(const json::object &content)
 {
 	const json::object pull_request
@@ -574,7 +574,7 @@ github_find_party(const json::object &content)
 }
 
 /// Researched from yestifico bot
-static string_view
+ircd::string_view
 github_find_issue_number(const json::object &content)
 {
 	const json::object issue(content["issue"]);
@@ -588,7 +588,7 @@ github_find_issue_number(const json::object &content)
 }
 
 /// Researched from yestifico bot
-static string_view
+ircd::string_view
 github_find_commit_hash(const json::object &content)
 {
 	if(content["sha"])
@@ -616,7 +616,7 @@ github_find_commit_hash(const json::object &content)
 	return {};
 }
 
-static bool
+bool
 github_validate(const string_view &sigheader,
                 const const_buffer &content,
                 const string_view &secret)
