@@ -40,6 +40,9 @@ namespace ircd::json
 
 	// (Internal) validates output
 	void valid_output(const string_view &, const size_t &expected);
+
+	// Transforms input into escaped output only
+	string_view escape(const mutable_buffer &out, const string_view &in);
 }
 
 /// Strong type representing quoted strings in JSON (which may be unquoted

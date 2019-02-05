@@ -3396,6 +3396,23 @@ static_assert
 	ircd::json::undefined_number != 0
 );
 
+ircd::string_view
+ircd::json::escape(const mutable_buffer &buf,
+                   const string_view &in)
+{
+	static const printer::rule<string_view> characters
+	{
+		*(printer.character)
+	};
+
+	mutable_buffer out{buf};
+	printer(out, characters, in);
+	return string_view
+	{
+		data(buf), data(out)
+	};
+}
+
 std::string
 ircd::json::why(const string_view &s)
 try
