@@ -49,9 +49,8 @@ struct ircd::m::room::messages
 	const m::event &fetch();
 
 	bool seek_idx(const event::idx &);
-	bool seek(const uint64_t &depth);
+	bool seek(const uint64_t &depth = -1);
 	bool seek(const event::id &);
-	bool seek();
 
 	// These are reversed on purpose
 	auto &operator++()                 { return --it;                          }

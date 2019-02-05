@@ -684,35 +684,27 @@ ircd::m::room::messages::operator*()
 };
 
 bool
-ircd::m::room::messages::seek()
-{
-	this->it = dbs::room_events.begin(room.room_id);
-	return bool(*this);
-}
-
-bool
 ircd::m::room::messages::seek(const event::id &event_id)
-try
 {
 	const event::idx &event_idx
 	{
-		index(event_id)
+		index(event_id, std::nothrow)
 	};
 
-	return seek_idx(event_idx);
-}
-catch(const db::not_found &e)
-{
-	return false;
+	return event_idx?
+		seek_idx(event_idx):
+		false;
 }
 
 bool
 ircd::m::room::messages::seek(const uint64_t &depth)
 {
 	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
-	const auto seek_key
+	const string_view seek_key
 	{
-		dbs::room_events_key(buf, room.room_id, depth)
+		depth != uint64_t(-1)?
+			dbs::room_events_key(buf, room.room_id, depth):
+			room.room_id
 	};
 
 	this->it = dbs::room_events.begin(seek_key);
