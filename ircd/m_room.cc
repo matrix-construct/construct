@@ -727,7 +727,7 @@ ircd::m::room::messages::seek(const event::id &event_id)
 {
 	const event::idx &event_idx
 	{
-		index(event_id, std::nothrow)
+		m::index(event_id, std::nothrow)
 	};
 
 	return event_idx?
@@ -983,7 +983,7 @@ const try
 		m::state::get(root_id, type, state_key, [&closure]
 		(const string_view &event_id)
 		{
-			closure(index(unquote(event_id)));
+			closure(index(m::event::id(unquote(event_id))));
 		});
 
 	auto &column{dbs::room_state};
@@ -1057,7 +1057,7 @@ const
 		return m::state::get(std::nothrow, root_id, type, state_key, [&closure]
 		(const string_view &event_id)
 		{
-			return closure(index(unquote(event_id), std::nothrow));
+			return closure(index(m::event::id(unquote(event_id)), std::nothrow));
 		});
 
 	auto &column{dbs::room_state};
@@ -1207,7 +1207,7 @@ const
 		return m::state::for_each(root_id, m::state::iter_bool_closure{[&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			return closure(index(unquote(event_id), std::nothrow));
+			return closure(index(m::event::id(unquote(event_id)), std::nothrow));
 		}});
 
 	db::gopts opts
@@ -1354,7 +1354,7 @@ const
 		return m::state::for_each(root_id, type, state_key_lb, [&closure]
 		(const json::array &key, const string_view &event_id)
 		{
-			return closure(index(unquote(event_id), std::nothrow));
+			return closure(index(m::event::id(unquote(event_id)), std::nothrow));
 		});
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
