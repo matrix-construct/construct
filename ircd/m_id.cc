@@ -458,14 +458,15 @@ ircd::m::id::id(const enum sigil &sigil,
 {
 	const string_view src
 	{
-		startswith(local, sigil)? fmt::sprintf
-		{
-			buf, "%s:%s", local, host
-		}
-		: fmt::sprintf
-		{
-			buf, "%c%s:%s", char(sigil), local, host
-		}
+		startswith(local, sigil)?
+			fmt::sprintf
+			{
+				buf, "%s:%s", local, host
+			}:
+			fmt::sprintf
+			{
+				buf, "%c%s:%s", char(sigil), local, host
+			}
 	};
 
 	return parser(sigil, src);
@@ -691,8 +692,7 @@ noexcept try
 		m::id::parser.prefix
 	};
 
-	const char *start{data(id)};
-	const char *const &stop
+	const char *start(data(id)), *const &stop
 	{
 		start + std::min(size(id), id::MAX_SIZE)
 	};
@@ -714,8 +714,7 @@ noexcept try
 		m::id::parser.prefix
 	};
 
-	const char *start{data(id)};
-	const char *const &stop
+	const char *start(data(id)), *const &stop
 	{
 		start + std::min(size(id), id::MAX_SIZE)
 	};
@@ -742,8 +741,7 @@ bool
 ircd::m::is_sigil(const char &c)
 noexcept
 {
-	const char *start{&c};
-	const char *const stop{start + 1};
+	const char *start(&c), *const stop(start + 1);
 	return qi::parse(start, stop, id::parser.sigil);
 }
 
@@ -755,17 +753,22 @@ try
 }
 catch(const std::out_of_range &e)
 {
-	throw BAD_SIGIL("no sigil provided");
+	throw BAD_SIGIL
+	{
+		"no sigil provided"
+	};
 }
 
 enum ircd::m::id::sigil
 ircd::m::sigil(const char &c)
 {
 	id::sigil ret;
-	const char *start{&c};
-	const char *const stop{&c + 1};
+	const char *start(&c), *const stop(&c + 1);
 	if(!qi::parse(start, stop, id::parser.sigil, ret))
-		throw BAD_SIGIL("'%c' is not a valid sigil", c);
+		throw BAD_SIGIL
+		{
+			"'%c' is not a valid sigil", c
+		};
 
 	assert(start == stop);
 	return ret;
@@ -799,6 +802,8 @@ ircd::m::failure(const qi::expectation_failure<const char *> &e,
 
 	throw INVALID_MXID
 	{
-		"Not a valid %s because of an invalid %s.", goal, between(rule, '<', '>')
+		"Not a valid %s because of an invalid %s.",
+		goal,
+		between(rule, '<', '>')
 	};
 }
