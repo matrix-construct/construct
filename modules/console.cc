@@ -493,11 +493,11 @@ console_cmd__log__level(opt &out, const string_view &line)
 	{
 		for(int i(0); i < num_of<log::level>(); ++i)
 			if(i > RB_LOG_LEVEL)
-				out << "[\033[1;40m-\033[0m]: " << reflect(log::level(i)) << std::endl;
+				out << "[\033[1;40m-\033[0m] " << reflect(log::level(i)) << std::endl;
 			else if(console_enabled(log::level(i)))
-				out << "[\033[1;42m+\033[0m]: " << reflect(log::level(i)) << std::endl;
+				out << "[\033[1;42m+\033[0m] " << reflect(log::level(i)) << std::endl;
 			else
-				out << "[\033[1;41m-\033[0m]: " << reflect(log::level(i)) << std::endl;
+				out << "[\033[1;41m-\033[0m] " << reflect(log::level(i)) << std::endl;
 
 		return true;
 	}
@@ -510,15 +510,15 @@ console_cmd__log__level(opt &out, const string_view &line)
 	for(int i(0); i < num_of<log::level>(); ++i)
 		if(i > RB_LOG_LEVEL)
 		{
-			out << "[\033[1;40m-\033[0m]: " << reflect(log::level(i)) << std::endl;
+			out << "[\033[1;40m-\033[0m] " << reflect(log::level(i)) << std::endl;
 		}
 		else if(i <= level)
 		{
 			console_enable(log::level(i));
-			out << "[\033[1;42m+\033[0m]: " << reflect(log::level(i)) << std::endl;
+			out << "[\033[1;42m+\033[0m] " << reflect(log::level(i)) << std::endl;
 		} else {
 			console_disable(log::level(i));
-			out << "[\033[1;41m-\033[0m]: " << reflect(log::level(i)) << std::endl;
+			out << "[\033[1;41m-\033[0m] " << reflect(log::level(i)) << std::endl;
 		}
 
 	return true;
@@ -1198,9 +1198,14 @@ console_cmd__mod__path(opt &out, const string_view &line)
 bool
 console_cmd__mod__syms(opt &out, const string_view &line)
 {
-	const std::string path
+	const params param{line, " ",
 	{
-		token(line, ' ', 0)
+		"path",
+	}};
+
+	const string_view path
+	{
+		param.at("path")
 	};
 
 	const std::vector<std::string> symbols
