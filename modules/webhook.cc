@@ -105,6 +105,10 @@ github_handle__issues(std::ostream &,
                       const json::object &content);
 
 static std::ostream &
+github_handle__watch(std::ostream &,
+                     const json::object &content);
+
+static std::ostream &
 github_handle__ping(std::ostream &,
                     const json::object &content);
 
@@ -161,6 +165,8 @@ github_handle(client &client,
 		github_handle__pull_request(out, request.content);
 	else if(type == "issues")
 		github_handle__issues(out, request.content);
+	else if(type == "watch")
+		github_handle__watch(out, request.content);
 
 	if(!string_view(webhook_room))
 		return;
@@ -529,7 +535,25 @@ github_handle__issues(std::ostream &out,
 	return out;
 }
 
-static std::ostream &
+std::ostream &
+github_handle__watch(std::ostream &out,
+                     const json::object &content)
+{
+	const string_view action
+	{
+		unquote(content["action"])
+	};
+
+	if(action == "started")
+	{
+		out << " with a star";
+		return out;
+	}
+
+	return out;
+}
+
+std::ostream &
 github_handle__ping(std::ostream &out,
                     const json::object &content)
 {
