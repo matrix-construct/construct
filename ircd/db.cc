@@ -5730,6 +5730,18 @@ ircd::db::column::end(gopts gopts)
 }
 
 ircd::db::column::const_iterator
+ircd::db::column::last(gopts gopts)
+{
+	const_iterator ret
+	{
+		c, {}, std::move(gopts)
+	};
+
+	seek(ret, pos::BACK);
+	return ret;
+}
+
+ircd::db::column::const_iterator
 ircd::db::column::begin(gopts gopts)
 {
 	const_iterator ret

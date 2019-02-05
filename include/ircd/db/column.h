@@ -122,6 +122,7 @@ struct ircd::db::column
 
 	// [GET] Iterations
 	const_iterator begin(gopts = {});
+	const_iterator last(gopts = {});
 	const_iterator end(gopts = {});
 
 	const_reverse_iterator rbegin(gopts = {});
