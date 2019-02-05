@@ -294,8 +294,9 @@ github_handle__push(std::ostream &out,
 		out << " (rebase)";
 
 	out << "<pre>";
-	for(const json::object &commit : commits)
+	for(ssize_t i(count - 1); i >= 0; --i)
 	{
+		const json::object &commit(commits.at(i));
 		const auto url(unquote(commit["url"]));
 		const auto id(unquote(commit["id"]));
 		const auto sid(id.substr(0, 8));
