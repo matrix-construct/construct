@@ -100,6 +100,10 @@ struct ircd::m::room
 	{}
 
 	room() = default;
+
+	// Index of create event
+	static event::idx index(const id &, std::nothrow_t);
+	static event::idx index(const id &);
 };
 
 inline ircd::m::room::operator

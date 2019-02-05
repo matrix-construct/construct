@@ -263,6 +263,41 @@ ircd::m::my(const room &room)
 // room
 //
 
+/// A room index is just the event::idx of its create event.
+ircd::m::event::idx
+ircd::m::room::index(const room::id &room_id)
+{
+	const auto ret
+	{
+		index(room_id, std::nothrow)
+	};
+
+	if(!ret)
+		throw m::NOT_FOUND
+		{
+			"No index for room %s", string_view{room_id}
+		};
+
+	return ret;
+}
+
+ircd::m::event::idx
+ircd::m::room::index(const room::id &room_id,
+                     std::nothrow_t)
+{
+	uint64_t depth{0};
+	room::messages it
+	{
+		room_id, depth
+	};
+
+	return it? it.event_idx() : 0;
+}
+
+//
+// room::room
+//
+
 /// Test of the join_rule of the room is the argument.
 bool
 ircd::m::room::join_rule(const string_view &rule)
