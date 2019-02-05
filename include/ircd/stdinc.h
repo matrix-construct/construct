@@ -8,6 +8,8 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#define HAVE_IRCD_STDINC_H
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Standard includes
@@ -17,18 +19,6 @@
 // by doing things this way and C++ std headers have very little namespace
 // pollution and risk of conflicts.
 //
-// * If any project header file requires standard library symbols we try to
-//   list it here, not in our header files.
-//
-// * Rare one-off's #includes isolated to a specific .cc file may not always be
-//   listed here but can be.
-//
-// * Third party / dependency / non-std includes, are NEVER listed here.
-//   Instead we include those in .cc files, and use forward declarations if
-//   we require a symbol in our API to them.
-//
-
-#define HAVE_IRCD_STDINC_H
 
 extern "C"
 {
