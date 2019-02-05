@@ -609,6 +609,13 @@ const try
 			"Required X-Matrix Authorization was not supplied"
 		};
 
+	if(!m::my_host(request.head.host))
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_NOT_MY_HOST",
+			"The X-Matrix Authorization destination host is not recognized here."
+		};
+
 	const m::request::x_matrix x_matrix
 	{
 		request.head.authorization
@@ -616,7 +623,7 @@ const try
 
 	const m::request object
 	{
-		x_matrix.origin, my_host(), name, request.head.uri, request.content
+		x_matrix.origin, request.head.host, name, request.head.uri, request.content
 	};
 
 	if(!object.verify(x_matrix.key, x_matrix.sig))
