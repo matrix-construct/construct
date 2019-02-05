@@ -104,12 +104,13 @@ ircd::m::sync::room_timeline_polylog(data &data)
 		data.out
 	};
 
+	assert(data.room);
 	const auto head_idx
 	{
 		m::head_idx(std::nothrow, *data.room)
 	};
 
-	if(!apropos(data, head_idx))
+	if(!head_idx || !apropos(data, head_idx))
 		return;
 
 	// events
