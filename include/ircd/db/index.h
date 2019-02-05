@@ -66,7 +66,8 @@ struct ircd::db::index::const_iterator_base
 
 	using column::const_iterator_base::const_iterator_base;
 
-	template<class pos> friend bool seek(index::const_iterator_base &, const pos &);
+	friend bool seek(index::const_iterator_base &, const string_view &);
+	friend bool seek(index::const_iterator_base &, const pos &);
 };
 
 struct ircd::db::index::const_iterator

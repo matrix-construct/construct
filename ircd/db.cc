@@ -4086,16 +4086,38 @@ ircd::db::index::applied_opts
 	{ get::PREFIX }
 };
 
-template<class pos>
 bool
 ircd::db::seek(index::const_iterator_base &it,
                const pos &p)
 {
+	switch(p)
+	{
+		case pos::BACK:
+		{
+			// This is inefficient as per RocksDB's prefix impl. unknown why
+			// a seek to NEXT is still needed after walking back one.
+			while(seek(it, pos::NEXT));
+			if(seek(it, pos::PREV))
+				seek(it, pos::NEXT);
+
+			return bool(it);
+		}
+
+		default:
+			break;
+	}
+
 	it.opts |= index::applied_opts;
 	return seek(static_cast<column::const_iterator_base &>(it), p);
 }
-template bool ircd::db::seek<ircd::db::pos>(index::const_iterator_base &, const pos &);
-template bool ircd::db::seek<ircd::string_view>(index::const_iterator_base &, const string_view &);
+
+bool
+ircd::db::seek(index::const_iterator_base &it,
+               const string_view &p)
+{
+	it.opts |= index::applied_opts;
+	return seek(static_cast<column::const_iterator_base &>(it), p);
+}
 
 ircd::db::index::const_iterator
 ircd::db::index::begin(const string_view &key,
@@ -4141,10 +4163,7 @@ ircd::db::index::rbegin(const string_view &key,
 	};
 
 	if(seek(ret, key))
-	{
-		while(seek(ret, pos::NEXT));
-		seek(ret, pos::PREV);
-	}
+		seek(ret, pos::BACK);
 
 	return ret;
 }
