@@ -137,13 +137,15 @@ ircd::m::vm::eval__commit_room(eval &eval,
 	// Set a member pointer to the json::iov currently being composed. This
 	// allows other parallel evals to have deep access to exactly what this
 	// eval is attempting to do.
-	eval.issue = &event;
-	eval.room_id = room.room_id;
-	const unwind deissue{[&eval]
+	const scope_restore<decltype(eval.issue)> eval_issue
 	{
-		eval.room_id = {};
-		eval.issue = nullptr;
-	}};
+		eval.issue, &event
+	};
+
+	const scope_restore<decltype(eval.room_id)> eval_room_id
+	{
+		eval.room_id, room.room_id
+	};
 
 	assert(eval.issue);
 	assert(eval.room_id);
@@ -419,12 +421,12 @@ try
 {
 	// Set a member pointer to the event currently being evaluated. This
 	// allows other parallel evals to have deep access to exactly what this
-	// eval is working on. The pointer must be nulled on the way out.
-    eval.event_ = &event;
-	const unwind null_event{[&eval]
+	// eval is working on.
+	assert(!eval.event_);
+	const scope_restore<decltype(eval.event_)> eval_event
 	{
-		eval.event_ = nullptr;
-	}};
+		eval.event_, &event
+	};
 
 	assert(eval.opts);
 	assert(eval.event_);
@@ -673,11 +675,10 @@ ircd::m::vm::_write(eval &eval,
 	};
 
 	// Expose to eval interface
-	eval.txn = &txn;
-	const unwind clear{[&eval]
+	const scope_restore<decltype(eval.txn)> eval_txn
 	{
-		eval.txn = nullptr;
-	}};
+		eval.txn, &txn
+	};
 
 	// Preliminary write_opts
 	m::dbs::write_opts wopts;
