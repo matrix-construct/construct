@@ -674,6 +674,9 @@ ircd::m::valid(const id::sigil &sigil,
                const string_view &id)
 noexcept try
 {
+	if(empty(id))
+		return false;
+
 	validate(sigil, id);
 	return true;
 }
@@ -697,7 +700,10 @@ noexcept try
 		start + std::min(size(id), id::MAX_SIZE)
 	};
 
-	return id.at(0) == sigil && qi::parse(start, stop, test) && start == stop;
+	return !empty(id) &&
+	       id.at(0) == sigil &&
+	       qi::parse(start, stop, test) &&
+	       start == stop;
 }
 catch(...)
 {
@@ -719,7 +725,9 @@ noexcept try
 		start + std::min(size(id), id::MAX_SIZE)
 	};
 
-	return id.at(0) == sigil && qi::parse(start, stop, test);
+	return !empty(id) &&
+	       id.at(0) == sigil &&
+	       qi::parse(start, stop, test);
 }
 catch(...)
 {
