@@ -711,8 +711,6 @@ catch(const m::error &e)
 		e.what(),
 		e.content
 	};
-
-	throw;
 }
 catch(const std::exception &e)
 {
