@@ -88,8 +88,9 @@ struct ircd::rfc3986::grammar
 
 	const rule<> ip6_address
 	{
-		ip6_addr[0] | ip6_addr[1] | ip6_addr[2] | ip6_addr[3] | ip6_addr[4] | ip6_addr[5] |
-		ip6_addr[6] | ip6_addr[7] | ip6_addr[8] | ip6_addr[9]
+		ip6_addr[0] | ip6_addr[1] | ip6_addr[2] |
+		ip6_addr[3] | ip6_addr[4] | ip6_addr[5] |
+		ip6_addr[6] | ip6_addr[7] | ip6_addr[8]
 		,"IPv6 address"
 	};
 
