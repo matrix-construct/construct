@@ -31,6 +31,11 @@ decltype(ircd::m::dbs::event_json)
 ircd::m::dbs::event_json
 {};
 
+/// Linkage for a reference to the event_refs column.
+decltype(ircd::m::dbs::event_refs)
+ircd::m::dbs::event_refs
+{};
+
 /// Linkage for a reference to the room_head column
 decltype(ircd::m::dbs::room_head)
 ircd::m::dbs::room_head
@@ -134,6 +139,7 @@ ircd::m::dbs::init::init(std::string dbopts)
 	// Construct global convenience references for the metadata columns
 	event_idx = db::column{*events, desc::events__event_idx.name};
 	event_json = db::column{*events, desc::events__event_json.name};
+	event_refs = db::index{*events, desc::events__event_refs.name};
 	room_head = db::index{*events, desc::events__room_head.name};
 	room_events = db::index{*events, desc::events__room_events.name};
 	room_joined = db::index{*events, desc::events__room_joined.name};
@@ -921,6 +927,171 @@ ircd::m::dbs::desc::events__event_json
 
 	// meta_block size
 	size_t(events__event_json__meta_block__size),
+};
+
+//
+// event_refs
+//
+
+decltype(ircd::m::dbs::desc::events__event_refs__block__size)
+ircd::m::dbs::desc::events__event_refs__block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_refs.block.size" },
+	{ "default",  512L                                       },
+};
+
+decltype(ircd::m::dbs::desc::events__event_refs__meta_block__size)
+ircd::m::dbs::desc::events__event_refs__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_refs.meta_block.size" },
+	{ "default",  512L                                            },
+};
+
+decltype(ircd::m::dbs::desc::events__event_refs__cache__size)
+ircd::m::dbs::desc::events__event_refs__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_refs.cache.size" },
+		{ "default",  long(16_MiB)                               },
+	}, []
+	{
+		const size_t &value{events__event_refs__cache__size};
+		db::capacity(db::cache(event_refs), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_refs__cache_comp__size)
+ircd::m::dbs::desc::events__event_refs__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_refs.cache_comp.size" },
+		{ "default",  long(0_MiB)                                     },
+	}, []
+	{
+		const size_t &value{events__event_refs__cache_comp__size};
+		db::capacity(db::cache_compressed(event_refs), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_refs__bloom__bits)
+ircd::m::dbs::desc::events__event_refs__bloom__bits
+{
+	{ "name",     "ircd.m.dbs.events._event_refs.bloom.bits" },
+	{ "default",  0L                                         },
+};
+
+const ircd::db::prefix_transform
+ircd::m::dbs::desc::events__event_refs__pfx
+{
+	"_event_refs",
+	[](const string_view &key)
+	{
+		return size(key) >= sizeof(event::idx) * 2;
+	},
+
+	[](const string_view &key)
+	{
+		assert(size(key) >= sizeof(event::idx));
+		return string_view
+		{
+			data(key), data(key) + sizeof(event::idx)
+		};
+	}
+};
+
+ircd::string_view
+ircd::m::dbs::event_refs_key(const mutable_buffer &out,
+                             const event::idx &tgt,
+                             const event::idx &src)
+{
+	assert(size(out) >= sizeof(event::idx) * 2);
+	event::idx *const &key
+	{
+		reinterpret_cast<event::idx *>(data(out))
+	};
+
+	key[0] = tgt;
+	key[1] = src;
+	return string_view
+	{
+		data(out), data(out) + sizeof(event::idx) * 2
+	};
+}
+
+std::pair<ircd::m::event::idx, ircd::m::event::idx>
+ircd::m::dbs::event_refs_key(const string_view &amalgam)
+{
+	assert(size(amalgam) >= sizeof(event::idx) * 2);
+	const event::idx *const &key
+	{
+		reinterpret_cast<const event::idx *>(data(amalgam))
+	};
+
+	return
+	{
+		key[0], key[1]
+	};
+}
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events__event_refs
+{
+	// name
+	"_event_refs",
+
+	// explanation
+	R"(Inverse reference graph of events.
+
+	event_idx | event_idx => --
+
+	The first part of the key is the event being referenced. The second part
+	of the key is the event which refers to the first event somewhere in its
+	prev_events references.
+
+	The prefix transform is in effect; an event may be referenced multiple
+	times. We can find all the events we have which reference a target. The
+	database must contain both events (hence they have event::idx numbers).
+
+	The value is currently unused/empty; we may eventually store metadata with
+	information about this reference (i.e. is depth adjacent? is the ref
+	redundant with another in the same event and should not be made? etc).
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	false,
+
+	// cache size
+	bool(events_cache_enable)? -1 : 0, //uses conf item
+
+	// cache size for compressed assets
+	bool(events_cache_comp_enable)? -1 : 0,
+
+	// bloom filter bits
+	size_t(events__event_refs__bloom__bits),
+
+	// expect queries hit
+	true,
+
+	// block size
+	size_t(events__event_refs__block__size),
+
+	// meta_block size
+	size_t(events__event_refs__meta_block__size),
 };
 
 //
@@ -3064,6 +3235,10 @@ ircd::m::dbs::desc::events
 	// event_idx => json
 	// Mapping of event_idx to full json
 	events__event_json,
+
+	// event_idx | event_idx
+	// Reverse mapping of the event reference graph.
+	events__event_refs,
 
 	// (room_id, (depth, event_idx)) => (state_root)
 	// Sequence of all events for a room, ever.

@@ -34,6 +34,7 @@ namespace ircd::m::dbs
 	// Event metadata columns
 	extern db::column event_idx;       // event_id => event_idx
 	extern db::column event_json;      // event_idx => full json
+	extern db::index event_refs;       // event_idx | event_idx
 	extern db::index room_head;        // room_id | event_id => event_idx
 	extern db::index room_events;      // room_id | depth, event_idx => node_id
 	extern db::index room_joined;      // room_id | origin, member => event_idx
@@ -41,6 +42,10 @@ namespace ircd::m::dbs
 	extern db::column state_node;      // node_id => state::node
 
 	// Lowlevel util
+	constexpr size_t EVENT_REFS_KEY_MAX_SIZE {sizeof(event::idx) + sizeof(event::idx)};
+	string_view event_refs_key(const mutable_buffer &out,  const event::idx &tgt, const event::idx &referer);
+	std::pair<event::idx, event::idx> event_refs_key(const string_view &amalgam);
+
 	constexpr size_t ROOM_HEAD_KEY_MAX_SIZE {id::MAX_SIZE + 1 + id::MAX_SIZE};
 	string_view room_head_key(const mutable_buffer &out, const id::room &, const id::event &);
 	string_view room_head_key(const string_view &amalgam);
@@ -174,6 +179,15 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__event_json__cache_comp__size;
 	extern conf::item<size_t> events__event_json__bloom__bits;
 	extern const db::descriptor events__event_json;
+
+	// events graph
+	extern conf::item<size_t> events__event_refs__block__size;
+	extern conf::item<size_t> events__event_refs__meta_block__size;
+	extern conf::item<size_t> events__event_refs__cache__size;
+	extern conf::item<size_t> events__event_refs__cache_comp__size;
+	extern conf::item<size_t> events__event_refs__bloom__bits;
+	extern const db::prefix_transform events__event_refs__pfx;
+	extern const db::descriptor events__event_refs;
 
 	// room head mapping sequence
 	extern conf::item<size_t> events__room_head__block__size;
