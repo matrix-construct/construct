@@ -3556,14 +3556,19 @@ ircd::m::request::request(const string_view &origin,
 	json::get<"content"_>(*this) = content;
 }
 
+decltype(ircd::m::request::headers_max)
+ircd::m::request::headers_max
+{
+	32UL
+};
+
 ircd::string_view
 ircd::m::request::operator()(const mutable_buffer &out,
                              const vector_view<const http::header> &addl_headers)
 const
 {
-	const ctx::critical_assertion ca;
-	static const size_t headers_max{32};
 	thread_local http::header header[headers_max];
+	const ctx::critical_assertion ca;
 	size_t headers{0};
 
 	header[headers++] =
@@ -3612,25 +3617,31 @@ const
 	return sb.completed();
 }
 
+decltype(ircd::m::request::generate_content_max)
+ircd::m::request::generate_content_max
+{
+	{ "name",    "ircd.m.request.generate.content_max" },
+	{ "default",  long(1_MiB)                          },
+};
+
 ircd::string_view
 ircd::m::request::generate(const mutable_buffer &out,
                            const ed25519::sk &sk,
                            const string_view &pkid)
 const
 {
-	static const size_t request_content_max
+	const ctx::critical_assertion ca;
+	thread_local unique_buffer<mutable_buffer> buf
 	{
-		1_MiB
+		size_t(generate_content_max)
 	};
 
-	const ctx::critical_assertion ca;
-	thread_local char buf[request_content_max];
-	if(unlikely(json::serialized(*this) > sizeof(buf)))
+	if(unlikely(json::serialized(*this) > buffer::size(buf)))
 		throw m::error
 		{
 			"M_REQUEST_TOO_LARGE", "This server generated a request of %zu bytes; limit is %zu",
 			json::serialized(*this),
-			sizeof(buf)
+			buffer::size(buf)
 		};
 
 	const json::object object
@@ -3691,16 +3702,18 @@ const
 	return verified;
 }
 
+decltype(ircd::m::request::verify_content_max)
+ircd::m::request::verify_content_max
+{
+	{ "name",    "ircd.m.request.verify.content_max" },
+	{ "default",  long(1_MiB)                        },
+};
+
 bool
 ircd::m::request::verify(const ed25519::pk &pk,
                          const ed25519::sig &sig)
 const
 {
-	static const size_t request_max
-	{
-		1_MiB
-	};
-
 	// Matrix spec sez that an empty content object {} is excluded entirely
 	// from the verification. Our JSON only excludes members if they evaluate
 	// to undefined i.e json::object{}/string_view{} but not json::object{"{}"}
@@ -3710,20 +3723,24 @@ const
 	if(empty(json::get<"content"_>(*this)))
 		json::get<"content"_>(_this) = json::object{};
 
+	const ctx::critical_assertion ca;
+	thread_local unique_buffer<mutable_buffer> buf
+	{
+		size_t(verify_content_max)
+	};
+
 	const size_t request_size
 	{
 		json::serialized(_this)
 	};
 
-	const ctx::critical_assertion ca;
-	thread_local char buf[request_max];
-	if(unlikely(request_size > sizeof(buf)))
+	if(unlikely(request_size > buffer::size(buf)))
 		throw m::error
 		{
 			http::PAYLOAD_TOO_LARGE, "M_REQUEST_TOO_LARGE",
 			"The request size %zu bytes exceeds maximum of %zu bytes",
 			request_size,
-			request_max
+			buffer::size(buf)
 		};
 
 	const json::object object

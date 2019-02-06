@@ -32,6 +32,10 @@ struct ircd::m::request
 {
 	struct x_matrix;
 
+	static const size_t headers_max;
+	static conf::item<size_t> generate_content_max;
+	static conf::item<size_t> verify_content_max;
+
 	static bool verify(const ed25519::pk &, const ed25519::sig &, const json::object &);
 	bool verify(const ed25519::pk &, const ed25519::sig &) const;
 	bool verify(const string_view &key, const string_view &sig) const;
