@@ -3151,9 +3151,14 @@ ircd::m::send(const room &room,
               const string_view &state_key,
               const json::members &contents)
 {
+	const size_t contents_count
+	{
+		std::min(contents.size(), json::object::max_sorted_members)
+	};
+
 	json::iov _content;
-	json::iov::push content[contents.size()];
-	return send(room, sender, type, state_key, make_iov(_content, content, contents.size(), contents));
+	json::iov::push content[contents_count];
+	return send(room, sender, type, state_key, make_iov(_content, content, contents_count, contents));
 }
 
 ircd::m::event::id::buf
@@ -3163,9 +3168,14 @@ ircd::m::send(const room &room,
               const string_view &state_key,
               const json::object &contents)
 {
+	const size_t contents_count
+	{
+		std::min(contents.size(), json::object::max_sorted_members)
+	};
+
 	json::iov _content;
-	json::iov::push content[contents.size()];
-	return send(room, sender, type, state_key, make_iov(_content, content, contents.size(), contents));
+	json::iov::push content[contents_count];
+	return send(room, sender, type, state_key, make_iov(_content, content, contents_count, contents));
 }
 
 ircd::m::event::id::buf
@@ -3191,9 +3201,14 @@ ircd::m::send(const room &room,
               const string_view &type,
               const json::members &contents)
 {
+	const size_t contents_count
+	{
+		std::min(contents.size(), json::object::max_sorted_members)
+	};
+
 	json::iov _content;
-	json::iov::push content[contents.size()];
-	return send(room, sender, type, make_iov(_content, content, contents.size(), contents));
+	json::iov::push content[contents_count];
+	return send(room, sender, type, make_iov(_content, content, contents_count, contents));
 }
 
 ircd::m::event::id::buf
@@ -3202,9 +3217,14 @@ ircd::m::send(const room &room,
               const string_view &type,
               const json::object &contents)
 {
+	const size_t contents_count
+	{
+		std::min(contents.size(), json::object::max_sorted_members)
+	};
+
 	json::iov _content;
-	json::iov::push content[contents.size()];
-	return send(room, sender, type, make_iov(_content, content, contents.size(), contents));
+	json::iov::push content[contents_count];
+	return send(room, sender, type, make_iov(_content, content, contents_count, contents));
 }
 
 ircd::m::event::id::buf
