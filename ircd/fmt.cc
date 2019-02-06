@@ -21,7 +21,7 @@ namespace ircd::fmt
 	constexpr char SPECIFIER
 	{
 		'%'
-    };
+	};
 
 	constexpr char SPECIFIER_TERMINATOR
 	{

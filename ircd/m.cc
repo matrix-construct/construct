@@ -4072,7 +4072,7 @@ ircd::m::hook::base::site::site(const json::members &members)
 	// Find and register all of the orphan hooks which were constructed before
 	// this site was constructed.
 	for(auto *const &hook : m::hook::base::list)
-	if(hook->site_name() == name())
+		if(hook->site_name() == name())
 			add(*hook);
 }
 
