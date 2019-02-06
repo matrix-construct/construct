@@ -659,14 +659,19 @@ try
 
 	hmac.update(content);
 
-	char ubuf[32];
-	assert(sizeof(ubuf) >= hmac.length());
+	char ubuf[64], abuf[sizeof(ubuf) * 2];
+	if(unlikely(sizeof(ubuf) < hmac.length()))
+		throw ircd::panic
+		{
+			"HMAC algorithm '%s' digest exceeds buffer size.",
+			sig.first
+		};
+
 	const const_buffer hmac_bin
 	{
 		hmac.finalize(ubuf)
 	};
 
-	char abuf[64];
 	static_assert(sizeof(abuf) >= sizeof(ubuf) * 2);
 	const string_view hmac_hex
 	{
@@ -679,6 +684,6 @@ catch(const crh::error &e)
 {
 	throw http::error
 	{
-		http::NOT_IMPLEMENTED, "The signature algorithm is not supported"
+		http::NOT_IMPLEMENTED, "The signature algorithm is not supported.",
 	};
 }
