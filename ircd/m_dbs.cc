@@ -320,7 +320,7 @@ ircd::m::dbs::_index_room(db::txn &txn,
                           const event &event,
                           const write_opts &opts)
 {
-	if(opts.head || opts.refs)
+	if(opts.room_head || opts.room_refs)
 		_index__room_head(txn, event, opts);
 
 	if(defined(json::get<"state_key"_>(event)))
@@ -436,7 +436,7 @@ ircd::m::dbs::_index__room_head(db::txn &txn,
 	thread_local char buf[ROOM_HEAD_KEY_MAX_SIZE];
 	const ctx::critical_assertion ca;
 
-	if(opts.head)
+	if(opts.room_head)
 	{
 		const string_view &key
 		{
@@ -458,7 +458,7 @@ ircd::m::dbs::_index__room_head(db::txn &txn,
 	//TODO: potentially creating a gap in the reference graph (just for us
 	//TODO: though) can we *re-add* the prev_events to the head?
 
-	if(opts.refs && opts.op == db::op::SET)
+	if(opts.room_refs && opts.op == db::op::SET)
 	{
 		const m::event::prev &prev{event};
 		for(const json::array &p : json::get<"prev_events"_>(prev))

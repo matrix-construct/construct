@@ -9725,8 +9725,8 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	vmopts.history = false;
 	vmopts.verify = false;
 	vmopts.notify = false;
-	vmopts.head = false;
-	vmopts.refs = true;
+	vmopts.room_head = false;
+	vmopts.room_refs = true;
 	m::vm::eval eval
 	{
 		vmopts

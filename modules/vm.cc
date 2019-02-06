@@ -686,8 +686,8 @@ ircd::m::vm::_write(eval &eval,
 	wopts.root_out = new_root_buf;
 	wopts.present = opts.present;
 	wopts.history = opts.history;
-	wopts.head = opts.head;
-	wopts.refs = opts.refs;
+	wopts.room_head = opts.room_head;
+	wopts.room_refs = opts.room_refs;
 	wopts.json_source = opts.json_source;
 	wopts.event_idx = eval.sequence;
 

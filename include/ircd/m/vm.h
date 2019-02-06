@@ -146,12 +146,12 @@ struct ircd::m::vm::opts
 	/// it is considered unreferenced by any other event at this time. It is
 	/// safe for this to always be true if events are evaluated in order. If
 	/// `present` is false this should be set to false but they are not tied.
-	bool head {true};
+	bool room_head {true};
 
 	/// Toggles whether the prev_events of this event are removed from the
 	/// room head table, now that this event has referenced them. It is safe
 	/// for this to always be true.
-	bool refs {true};
+	bool room_refs {true};
 
 	/// Toggles whether the state btree is updated; this should be consistently
 	/// true or false for all events in a room.

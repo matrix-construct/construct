@@ -365,8 +365,8 @@ state__force_present(const m::event &event)
 	opts.event_idx = index(event);
 	opts.present = true;
 	opts.history = false;
-	opts.head = false;
-	opts.refs = false;
+	opts.room_head = false;
+	opts.room_refs = false;
 
 	m::dbs::_index__room_state(txn, event, opts);
 	m::dbs::_index__room_joined(txn, event, opts);
@@ -417,8 +417,8 @@ state__rebuild_present(const m::room &room)
 		opts.event_idx = it.event_idx();
 		opts.present = true;
 		opts.history = false;
-		opts.head = false;
-		opts.refs = false;
+		opts.room_head = false;
+		opts.room_refs = false;
 
 		m::dbs::_index__room_state(txn, event, opts);
 		m::dbs::_index__room_joined(txn, event, opts);
@@ -468,8 +468,8 @@ state__rebuild_history(const m::room &room)
 	opts.root_out = root[++r % 2];
 	opts.present = false;
 	opts.history = true;
-	opts.head = false;
-	opts.refs = false;
+	opts.room_head = false;
+	opts.room_refs = false;
 
 	int64_t depth{0};
 	for(; it; ++it)
@@ -630,8 +630,8 @@ head__rebuild(const m::room &room)
 
 	m::dbs::write_opts opts;
 	opts.op = db::op::SET;
-	opts.head = true;
-	opts.refs = true;
+	opts.room_head = true;
+	opts.room_refs = true;
 	for(; it; ++it)
 	{
 		const m::event &event{*it};
@@ -670,7 +670,7 @@ head__reset(const m::room &room)
 	// Iterate all of the existing heads with a delete operation
 	m::dbs::write_opts opts;
 	opts.op = db::op::DELETE;
-	opts.head = true;
+	opts.room_head = true;
 	m::room::head{room}.for_each([&room, &opts, &txn, &ret]
 	(const m::event::idx &event_idx, const m::event::id &event_id)
 	{
@@ -725,8 +725,8 @@ head__modify(const m::event::id &event_id,
 	// Iterate all of the existing heads with a delete operation
 	m::dbs::write_opts opts;
 	opts.op = op;
-	opts.head = true;
-	opts.refs = refs;
+	opts.room_head = true;
+	opts.room_refs = refs;
 	opts.event_idx = index(event);
 	m::dbs::_index__room_head(txn, event, opts);
 

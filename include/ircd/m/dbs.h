@@ -33,12 +33,12 @@ namespace ircd::m::dbs
 
 	// Event metadata columns
 	extern db::column event_idx;       // event_id => event_idx
+	extern db::column event_json;      // event_idx => full json
 	extern db::index room_head;        // room_id | event_id => event_idx
 	extern db::index room_events;      // room_id | depth, event_idx => node_id
 	extern db::index room_joined;      // room_id | origin, member => event_idx
 	extern db::index room_state;       // room_id | type, state_key => event_idx
 	extern db::column state_node;      // node_id => state::node
-	extern db::column event_json;      // event_idx => full json
 
 	// Lowlevel util
 	constexpr size_t ROOM_HEAD_KEY_MAX_SIZE {id::MAX_SIZE + 1 + id::MAX_SIZE};
@@ -83,8 +83,8 @@ struct ircd::m::dbs::write_opts
 	bool present {true};
 	bool history {true};
 	bool indexer {true};
-	bool head {true};
-	bool refs {true};
+	bool room_head {true};
+	bool room_refs {true};
 	bool json_source {false};
 };
 
