@@ -776,7 +776,7 @@ ircd::m::sigil(const char &c)
 	if(!qi::parse(start, stop, id::parser.sigil, ret))
 		throw BAD_SIGIL
 		{
-			"'%c' is not a valid sigil", c
+			"not a valid sigil"
 		};
 
 	assert(start == stop);
