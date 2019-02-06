@@ -199,9 +199,7 @@ ircd::m::dbs::write(db::txn &txn,
 			"Cannot write to database: no index specified for event."
 		};
 
-	// event_idx
-	if(opts.indexer)
-		_index_event(txn, event, opts);
+	_index_event(txn, event, opts);
 
 	// direct columns
 	_append_cols(txn, event, opts);
@@ -310,6 +308,19 @@ ircd::m::dbs::_index_event(db::txn &txn,
                            const event &event,
                            const write_opts &opts)
 {
+	// event_id
+	if(opts.event_id)
+		_index_event_id(txn, event, opts);
+
+	if(opts.event_refs)
+		_index_event_refs(txn, event, opts);
+}
+
+void
+ircd::m::dbs::_index_event_id(db::txn &txn,
+                              const event &event,
+                              const write_opts &opts)
+{
 	db::txn::append
 	{
 		txn, dbs::event_idx,
@@ -319,6 +330,40 @@ ircd::m::dbs::_index_event(db::txn &txn,
 			byte_view<string_view>(opts.event_idx)
 		}
 	};
+}
+
+void
+ircd::m::dbs::_index_event_refs(db::txn &txn,
+                                const event &event,
+                                const write_opts &opts)
+{
+	const event::prev &prev{event};
+	for(size_t i(0); i < prev.prev_events_count(); ++i)
+	{
+		const event::id &prev_id{prev.prev_event(i)};
+		const event::idx &prev_idx
+		{
+			m::index(prev_id, std::nothrow)  // query
+		};
+
+		if(!prev_idx)
+			continue;
+
+		thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
+		assert(opts.event_idx != 0 && prev_idx != 0);
+		const string_view &key
+		{
+			event_refs_key(buf, prev_idx, opts.event_idx)
+		};
+
+		db::txn::append
+		{
+			txn, dbs::event_refs,
+			{
+				opts.op, key, string_view{}
+			}
+		};
+	}
 }
 
 ircd::string_view
