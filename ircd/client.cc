@@ -424,19 +424,38 @@ try
 		client->reqctx = nullptr;
 	}};
 
+	#ifdef RB_DEBUG
+	timer timer;
+	log::debug
+	{
+		client::log, "%s enter",
+		client->loghead()
+	};
+	#endif
+
 	if(!client->main())
 	{
 		client->close(net::dc::SSL_NOTIFY).wait();
 		return;
 	}
 
+	#ifdef RB_DEBUG
+	thread_local char buf[64];
+	log::debug
+	{
+		client::log, "%s leave %s",
+		client->loghead(),
+		pretty(buf, timer.at<microseconds>(), true)
+	};
+	#endif
+
 	client->async();
 }
 catch(const std::exception &e)
 {
-	log::derror
+	log::error
 	{
-		client::log, "%s (below main) :%s",
+		client::log, "%s fault :%s",
 		client->loghead(),
 		e.what()
 	};
@@ -683,7 +702,7 @@ catch(const ctx::interrupted &e)
 {
 	log::warning
 	{
-		log, "%s Request interrupted :%s",
+		log, "%s request interrupted :%s",
 		loghead(),
 		e.what()
 	};
