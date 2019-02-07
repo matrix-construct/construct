@@ -4077,195 +4077,6 @@ ircd::db::txn::append::append(txn &t,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// db/index.h
-//
-
-const ircd::db::gopts
-ircd::db::index::applied_opts
-{
-	{ get::PREFIX }
-};
-
-bool
-ircd::db::seek(index::const_iterator_base &it,
-               const pos &p)
-{
-	switch(p)
-	{
-		case pos::BACK:
-		{
-			// This is inefficient as per RocksDB's prefix impl. unknown why
-			// a seek to NEXT is still needed after walking back one.
-			while(seek(it, pos::NEXT));
-			if(seek(it, pos::PREV))
-				seek(it, pos::NEXT);
-
-			return bool(it);
-		}
-
-		default:
-			break;
-	}
-
-	it.opts |= index::applied_opts;
-	return seek(static_cast<column::const_iterator_base &>(it), p);
-}
-
-bool
-ircd::db::seek(index::const_iterator_base &it,
-               const string_view &p)
-{
-	it.opts |= index::applied_opts;
-	return seek(static_cast<column::const_iterator_base &>(it), p);
-}
-
-ircd::db::index::const_iterator
-ircd::db::index::begin(const string_view &key,
-                       gopts opts)
-{
-	const_iterator ret
-	{
-		c, {}, std::move(opts)
-	};
-
-	seek(ret, key);
-	return ret;
-}
-
-ircd::db::index::const_iterator
-ircd::db::index::end(const string_view &key,
-                     gopts opts)
-{
-	const_iterator ret
-	{
-		c, {}, std::move(opts)
-	};
-
-	if(seek(ret, key))
-		seek(ret, pos::END);
-
-	return ret;
-}
-
-/// NOTE: RocksDB says they don't support reverse iteration over a prefix range
-/// This means we have to forward scan to the end and then walk back! Reverse
-/// iterations of an index shoud only be used for debugging and statistics! The
-/// index should be ordered the way it will be primarily accessed using the
-/// comparator. If it will be accessed in different directions, make another
-/// index column.
-ircd::db::index::const_reverse_iterator
-ircd::db::index::rbegin(const string_view &key,
-                        gopts opts)
-{
-	const_reverse_iterator ret
-	{
-		c, {}, std::move(opts)
-	};
-
-	if(seek(ret, key))
-		seek(ret, pos::BACK);
-
-	return ret;
-}
-
-ircd::db::index::const_reverse_iterator
-ircd::db::index::rend(const string_view &key,
-                      gopts opts)
-{
-	const_reverse_iterator ret
-	{
-		c, {}, std::move(opts)
-	};
-
-	if(seek(ret, key))
-		seek(ret, pos::END);
-
-	return ret;
-}
-
-//
-// const_iterator
-//
-
-ircd::db::index::const_iterator &
-ircd::db::index::const_iterator::operator--()
-{
-	if(likely(bool(*this)))
-		seek(*this, pos::PREV);
-	else
-		seek(*this, pos::BACK);
-
-	return *this;
-}
-
-ircd::db::index::const_iterator &
-ircd::db::index::const_iterator::operator++()
-{
-	if(likely(bool(*this)))
-		seek(*this, pos::NEXT);
-	else
-		seek(*this, pos::FRONT);
-
-	return *this;
-}
-
-ircd::db::index::const_reverse_iterator &
-ircd::db::index::const_reverse_iterator::operator--()
-{
-	if(likely(bool(*this)))
-		seek(*this, pos::NEXT);
-	else
-		seek(*this, pos::FRONT);
-
-	return *this;
-}
-
-ircd::db::index::const_reverse_iterator &
-ircd::db::index::const_reverse_iterator::operator++()
-{
-	if(likely(bool(*this)))
-		seek(*this, pos::PREV);
-	else
-		seek(*this, pos::BACK);
-
-	return *this;
-}
-
-const ircd::db::index::const_iterator_base::value_type &
-ircd::db::index::const_iterator_base::operator*()
-const
-{
-	const auto &prefix
-	{
-		describe(*c).prefix
-	};
-
-	// Fetch the full value like a standard column first
-	column::const_iterator_base::operator*();
-	string_view &key{val.first};
-
-	// When there's no prefixing this index column is just
-	// like a normal column. Otherwise, we remove the prefix
-	// from the key the user will end up seeing.
-	if(prefix.has && prefix.has(key))
-	{
-		const auto &first(prefix.get(key));
-		const auto &second(key.substr(first.size()));
-		key = second;
-	}
-
-	return val;
-}
-
-const ircd::db::index::const_iterator_base::value_type *
-ircd::db::index::const_iterator_base::operator->()
-const
-{
-	return &this->operator*();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // db/row.h
 //
 
@@ -4977,6 +4788,195 @@ ircd::db::cell::valid()
 const
 {
 	return bool(it) && db::valid(*it);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// db/index.h
+//
+
+const ircd::db::gopts
+ircd::db::index::applied_opts
+{
+	{ get::PREFIX }
+};
+
+bool
+ircd::db::seek(index::const_iterator_base &it,
+               const pos &p)
+{
+	switch(p)
+	{
+		case pos::BACK:
+		{
+			// This is inefficient as per RocksDB's prefix impl. unknown why
+			// a seek to NEXT is still needed after walking back one.
+			while(seek(it, pos::NEXT));
+			if(seek(it, pos::PREV))
+				seek(it, pos::NEXT);
+
+			return bool(it);
+		}
+
+		default:
+			break;
+	}
+
+	it.opts |= index::applied_opts;
+	return seek(static_cast<column::const_iterator_base &>(it), p);
+}
+
+bool
+ircd::db::seek(index::const_iterator_base &it,
+               const string_view &p)
+{
+	it.opts |= index::applied_opts;
+	return seek(static_cast<column::const_iterator_base &>(it), p);
+}
+
+ircd::db::index::const_iterator
+ircd::db::index::begin(const string_view &key,
+                       gopts opts)
+{
+	const_iterator ret
+	{
+		c, {}, std::move(opts)
+	};
+
+	seek(ret, key);
+	return ret;
+}
+
+ircd::db::index::const_iterator
+ircd::db::index::end(const string_view &key,
+                     gopts opts)
+{
+	const_iterator ret
+	{
+		c, {}, std::move(opts)
+	};
+
+	if(seek(ret, key))
+		seek(ret, pos::END);
+
+	return ret;
+}
+
+/// NOTE: RocksDB says they don't support reverse iteration over a prefix range
+/// This means we have to forward scan to the end and then walk back! Reverse
+/// iterations of an index shoud only be used for debugging and statistics! The
+/// index should be ordered the way it will be primarily accessed using the
+/// comparator. If it will be accessed in different directions, make another
+/// index column.
+ircd::db::index::const_reverse_iterator
+ircd::db::index::rbegin(const string_view &key,
+                        gopts opts)
+{
+	const_reverse_iterator ret
+	{
+		c, {}, std::move(opts)
+	};
+
+	if(seek(ret, key))
+		seek(ret, pos::BACK);
+
+	return ret;
+}
+
+ircd::db::index::const_reverse_iterator
+ircd::db::index::rend(const string_view &key,
+                      gopts opts)
+{
+	const_reverse_iterator ret
+	{
+		c, {}, std::move(opts)
+	};
+
+	if(seek(ret, key))
+		seek(ret, pos::END);
+
+	return ret;
+}
+
+//
+// const_iterator
+//
+
+ircd::db::index::const_iterator &
+ircd::db::index::const_iterator::operator--()
+{
+	if(likely(bool(*this)))
+		seek(*this, pos::PREV);
+	else
+		seek(*this, pos::BACK);
+
+	return *this;
+}
+
+ircd::db::index::const_iterator &
+ircd::db::index::const_iterator::operator++()
+{
+	if(likely(bool(*this)))
+		seek(*this, pos::NEXT);
+	else
+		seek(*this, pos::FRONT);
+
+	return *this;
+}
+
+ircd::db::index::const_reverse_iterator &
+ircd::db::index::const_reverse_iterator::operator--()
+{
+	if(likely(bool(*this)))
+		seek(*this, pos::NEXT);
+	else
+		seek(*this, pos::FRONT);
+
+	return *this;
+}
+
+ircd::db::index::const_reverse_iterator &
+ircd::db::index::const_reverse_iterator::operator++()
+{
+	if(likely(bool(*this)))
+		seek(*this, pos::PREV);
+	else
+		seek(*this, pos::BACK);
+
+	return *this;
+}
+
+const ircd::db::index::const_iterator_base::value_type &
+ircd::db::index::const_iterator_base::operator*()
+const
+{
+	const auto &prefix
+	{
+		describe(*c).prefix
+	};
+
+	// Fetch the full value like a standard column first
+	column::const_iterator_base::operator*();
+	string_view &key{val.first};
+
+	// When there's no prefixing this index column is just
+	// like a normal column. Otherwise, we remove the prefix
+	// from the key the user will end up seeing.
+	if(prefix.has && prefix.has(key))
+	{
+		const auto &first(prefix.get(key));
+		const auto &second(key.substr(first.size()));
+		key = second;
+	}
+
+	return val;
+}
+
+const ircd::db::index::const_iterator_base::value_type *
+ircd::db::index::const_iterator_base::operator->()
+const
+{
+	return &this->operator*();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
