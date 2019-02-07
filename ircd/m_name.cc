@@ -128,3 +128,10 @@ constexpr const char *const ircd::m::name::aliases;
 
 constexpr const char *const ircd::m::name::exclusive;
 constexpr const char *const ircd::m::name::regex;
+
+constexpr const char *const ircd::m::name::display_name;
+constexpr const char *const ircd::m::name::last_seen_ip;
+constexpr const char *const ircd::m::name::last_seen_ts;
+constexpr const char *const ircd::m::name::keys;
+constexpr const char *const ircd::m::name::device_display_name;
+constexpr const char *const ircd::m::name::algorithms;

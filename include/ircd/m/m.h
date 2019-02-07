@@ -46,6 +46,7 @@ namespace ircd::m::vm
 #include "login.h"
 #include "register.h"
 #include "invite_3pid.h"
+#include "device.h"
 #include "createroom.h"
 #include "request.h"
 #include "v1/v1.h"

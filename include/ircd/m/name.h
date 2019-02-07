@@ -149,4 +149,11 @@ struct ircd::m::name
 
 	static constexpr const char *const exclusive {"exclusive"};
 	static constexpr const char *const regex {"regex"};
+
+	static constexpr const char *const display_name {"display_name"};
+	static constexpr const char *const last_seen_ip {"last_seen_ip"};
+	static constexpr const char *const last_seen_ts {"last_seen_ts"};
+	static constexpr const char *const keys {"keys"};
+	static constexpr const char *const device_display_name {"device_display_name"};
+	static constexpr const char *const algorithms {"algorithms"};
 };
