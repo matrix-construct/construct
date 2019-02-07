@@ -999,6 +999,15 @@ ircd::m::vm::eval::eval(const event &event,
 	operator()(event);
 }
 
+ircd::m::vm::eval::eval(const json::array &event,
+                        const vm::opts &opts)
+:opts{&opts}
+,pdus{event}
+{
+	for(const json::object &pdu : this->pdus)
+		operator()(pdu);
+}
+
 ircd::m::vm::eval::eval(const vm::copts &opts)
 :opts{&opts}
 ,copts{&opts}

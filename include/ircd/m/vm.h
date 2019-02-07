@@ -49,13 +49,18 @@ struct ircd::m::vm::eval
 
 	uint64_t id {++id_ctr};
 	ctx::ctx *ctx {ctx::current};
+
 	const vm::opts *opts {&default_opts};
 	const vm::copts *copts {nullptr};
+
+	uint64_t sequence {0};
+	db::txn *txn {nullptr};
+
 	string_view room_id;
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};
-	uint64_t sequence {0};
-	db::txn *txn {nullptr};
+	json::array pdus;
+
 	event::id::buf event_id;
 
   public:
@@ -68,6 +73,7 @@ struct ircd::m::vm::eval
 	eval(const vm::opts &);
 	eval(const vm::copts &);
 	eval(const event &, const vm::opts & = default_opts);
+	eval(const json::array &event, const vm::opts & = default_opts);
 	eval(json::iov &event, const json::iov &content, const vm::copts & = default_copts);
 	eval(const room &, json::iov &event, const json::iov &content);
 	eval() = default;
