@@ -80,6 +80,12 @@ struct ircd::m::vm::eval
 	eval(eval &&) = delete;
 	eval(const eval &) = delete;
 	~eval() noexcept;
+
+	static bool for_each(const std::function<bool (eval &)> &);
+	static eval *find(const event::id &);
+	static eval &get(const event::id &);
+
+	static bool for_each_pdu(const std::function<bool (const json::object &)> &);
 };
 
 /// Evaluation faults. These are reasons which evaluation has halted but may

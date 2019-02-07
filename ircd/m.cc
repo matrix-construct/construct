@@ -972,6 +972,72 @@ decltype(ircd::m::vm::eval::id_ctr)
 ircd::m::vm::eval::id_ctr
 {};
 
+bool
+ircd::m::vm::eval::for_each_pdu(const std::function<bool (const json::object &)> &closure)
+{
+	return for_each([&closure](eval &e)
+	{
+		for(const json::object &pdu : e.pdus)
+			if(!closure(pdu))
+				return false;
+
+		return true;
+	});
+}
+
+ircd::m::vm::eval &
+ircd::m::vm::eval::get(const event::id &event_id)
+{
+	auto *const ret
+	{
+		find(event_id)
+	};
+
+	if(unlikely(!ret))
+		throw std::out_of_range
+		{
+			"eval::get(): event_id not being evaluated."
+		};
+
+	return *ret;
+}
+
+ircd::m::vm::eval *
+ircd::m::vm::eval::find(const event::id &event_id)
+{
+	eval *ret{nullptr};
+	for_each([&event_id, &ret](eval &e)
+	{
+		if(e.event_)
+		{
+			if(json::get<"event_id"_>(*e.event_) == event_id)
+				ret = &e;
+		}
+		else if(e.issue)
+		{
+			if(e.issue->has("event_id"))
+				if(string_view{e.issue->at("event_id")} == event_id)
+					ret = &e;
+		}
+		else if(e.event_id == event_id)
+			ret = &e;
+
+		return ret == nullptr;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::vm::eval::for_each(const std::function<bool (eval &)> &closure)
+{
+	for(eval *const &eval : eval::list)
+		if(!closure(*eval))
+			return false;
+
+	return true;
+}
+
 //
 // eval::eval
 //
