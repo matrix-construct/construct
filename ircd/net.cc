@@ -2709,7 +2709,7 @@ noexcept try
 		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
 		case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
 		case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
-			if(opts.allow_self_chain)
+			if(opts.allow_self_signed || opts.allow_self_chain)
 				return true;
 
 			reject();
