@@ -161,8 +161,7 @@ try
 	m::presence::get(std::nothrow, user_id, closure, &fopts);
 	if(!useful)
 	{
-		/*
-		log::dwarning
+		log::debug
 		{
 			m::log, "presence spam from %s %s is %s and %s %zd seconds ago",
 			at<"origin"_>(event),
@@ -171,7 +170,7 @@ try
 			json::get<"presence"_>(object),
 			json::get<"last_active_ago"_>(object) / 1000L
 		};
-		*/
+
 		return;
 	}
 
