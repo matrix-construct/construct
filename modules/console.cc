@@ -5804,6 +5804,36 @@ console_cmd__event__visible(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__event__refs(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	const m::event::refs refs
+	{
+		index(event_id)
+	};
+
+	refs.for_each([&out](const m::event::idx &idx)
+	{
+		out << idx
+		    << " " << m::event_id(idx)
+		    << std::endl;
+
+		return true;
+	});
+
+	return true;
+}
+
 //
 // state
 //
