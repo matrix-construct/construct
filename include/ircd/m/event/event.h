@@ -78,6 +78,7 @@ struct ircd::m::event
 >
 {
 	struct prev;
+	struct refs;
 	struct fetch;
 	struct conforms;
 

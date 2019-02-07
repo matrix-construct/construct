@@ -1036,6 +1036,75 @@ ircd::m::index(const event::id &event_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// event/refs.h
+//
+
+size_t
+ircd::m::event::refs::count()
+const noexcept
+{
+	assert(idx);
+	size_t ret(0);
+	for_each([&ret](const auto &)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::event::refs::has(const event::idx &idx)
+const noexcept
+{
+	return !for_each([&idx](const event::idx &ref)
+	{
+		return ref != idx; // true to continue, false to break
+	});
+}
+
+bool
+ircd::m::event::refs::for_each(const closure_bool &closure)
+const
+{
+	auto &column
+	{
+		dbs::event_refs
+	};
+
+	const byte_view<string_view> &key
+	{
+		idx
+	};
+
+	auto it
+	{
+		column.begin(key)
+	};
+
+	for(; it; ++it)
+	{
+		const auto parts
+		{
+			dbs::event_refs_key(it->first)
+		};
+
+		const auto &ref
+		{
+			std::get<0>(parts)
+		};
+
+		assert(idx != ref);
+		if(!closure(ref))
+			return false;
+	}
+
+	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // event/prev.h
 //
 

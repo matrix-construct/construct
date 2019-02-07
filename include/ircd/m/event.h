@@ -33,6 +33,7 @@ namespace ircd::m
 
 #include "event/event.h"
 #include "event/prev.h"
+#include "event/refs.h"
 #include "event/index.h"
 #include "event/fetch.h"
 #include "event/get.h"
