@@ -105,6 +105,7 @@ struct ircd::m::event
 	static ed25519::sig sign(json::iov &event, const json::iov &content);
 	static json::object signatures(const mutable_buffer &, json::iov &event, const json::iov &content);
 	static sha256::buf hash(json::iov &event, const string_view &content);
+	static sha256::buf hash(const json::object &);
 	static json::object hashes(const mutable_buffer &, json::iov &event, const string_view &content);
 
 	json::object source; // Contextual availability only.

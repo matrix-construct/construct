@@ -1406,6 +1406,41 @@ ircd::m::make_hashes(const mutable_buffer &out,
 }
 
 ircd::sha256::buf
+ircd::m::event::hash(const json::object &event)
+try
+{
+	static const size_t iov_max{json::iov::max_size};
+	thread_local std::array<json::object::member, iov_max> member;
+
+	size_t i(0);
+	for(const auto &m : event)
+	{
+		if(m.first == "signatures" ||
+		   m.first == "unsigned" ||
+		   m.first == "hashes")
+			continue;
+
+		member.at(i++) = m;
+	}
+
+	thread_local char buf[event::MAX_SIZE];
+	const string_view reimage
+	{
+		json::stringify(buf, member.data(), member.data() + i)
+	};
+
+	return sha256{reimage};
+}
+catch(const std::out_of_range &e)
+{
+	throw m::BAD_JSON
+	{
+		"Object has more than %zu member properties.",
+		json::iov::max_size
+	};
+}
+
+ircd::sha256::buf
 ircd::m::event::hash(json::iov &event,
                      const string_view &content)
 {
@@ -1420,32 +1455,20 @@ ircd::m::event::hash(json::iov &event,
 ircd::sha256::buf
 ircd::m::hash(const event &event)
 {
+	if(event.source)
+		return event::hash(event.source);
+
+	m::event event_{event};
+	json::get<"signatures"_>(event_) = {};
+	json::get<"hashes"_>(event_) = {};
+
 	thread_local char buf[event::MAX_SIZE];
-	string_view preimage;
-
-	//TODO: tuple::keys::selection
-	if(defined(json::get<"signatures"_>(event)) ||
-	   defined(json::get<"hashes"_>(event)))
+	const string_view preimage
 	{
-		m::event event_{event};
-		json::get<"signatures"_>(event_) = {};
-		json::get<"hashes"_>(event_) = {};
-		preimage =
-		{
-			stringify(buf, event_)
-		};
-	}
-	else preimage =
-	{
-		stringify(buf, event)
+		stringify(buf, event_)
 	};
 
-	const sha256::buf hash
-	{
-		sha256{preimage}
-	};
-
-	return hash;
+	return sha256{preimage};
 }
 
 bool
