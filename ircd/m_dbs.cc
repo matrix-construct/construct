@@ -1025,25 +1025,6 @@ ircd::m::dbs::desc::events__event_refs__bloom__bits
 	{ "default",  0L                                         },
 };
 
-const ircd::db::prefix_transform
-ircd::m::dbs::desc::events__event_refs__pfx
-{
-	"_event_refs",
-	[](const string_view &key)
-	{
-		return size(key) >= sizeof(event::idx) * 2;
-	},
-
-	[](const string_view &key)
-	{
-		assert(size(key) >= sizeof(event::idx));
-		return string_view
-		{
-			data(key), data(key) + sizeof(event::idx)
-		};
-	}
-};
-
 ircd::string_view
 ircd::m::dbs::event_refs_key(const mutable_buffer &out,
                              const event::idx &tgt,
@@ -1076,6 +1057,61 @@ ircd::m::dbs::event_refs_key(const string_view &amalgam)
 		key
 	};
 }
+
+const ircd::db::prefix_transform
+ircd::m::dbs::desc::events__event_refs__pfx
+{
+	"_event_refs",
+	[](const string_view &key)
+	{
+		return size(key) >= sizeof(event::idx) * 2;
+	},
+
+	[](const string_view &key)
+	{
+		assert(size(key) >= sizeof(event::idx));
+		return string_view
+		{
+			data(key), data(key) + sizeof(event::idx)
+		};
+	}
+};
+
+const ircd::db::comparator
+ircd::m::dbs::desc::events__event_refs__cmp
+{
+	"_event_refs",
+
+	// less
+	[](const string_view &a, const string_view &b)
+	{
+		static const size_t half(sizeof(event::idx));
+		static const size_t full(half * 2);
+
+		assert(size(a) >= half);
+		assert(size(b) >= half);
+		const event::idx *const key[2]
+		{
+			reinterpret_cast<const event::idx *>(data(a)),
+			reinterpret_cast<const event::idx *>(data(b)),
+		};
+
+		return
+			key[0][0] < key[1][0]?   true:
+			key[0][0] > key[1][0]?   false:
+			size(a) < size(b)?       true:
+			size(a) > size(b)?       false:
+			size(a) == half?         false:
+			key[0][1] < key[1][1]?   true:
+			                         false;
+	},
+
+	// equal
+	[](const string_view &a, const string_view &b)
+	{
+		return size(a) == size(b) && memcmp(data(a), data(b), size(a)) == 0;
+	}
+};
 
 const ircd::db::descriptor
 ircd::m::dbs::desc::events__event_refs
@@ -1111,7 +1147,7 @@ ircd::m::dbs::desc::events__event_refs
 	{},
 
 	// comparator
-	{},
+	events__event_refs__cmp,
 
 	// prefix transform
 	events__event_refs__pfx,

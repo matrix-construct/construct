@@ -188,6 +188,7 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__event_refs__cache_comp__size;
 	extern conf::item<size_t> events__event_refs__bloom__bits;
 	extern const db::prefix_transform events__event_refs__pfx;
+	extern const db::comparator events__event_refs__cmp;
 	extern const db::descriptor events__event_refs;
 
 	// room head mapping sequence
