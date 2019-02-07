@@ -10186,14 +10186,19 @@ console_cmd__fed__query__directory(opt &out, const string_view &line)
 bool
 console_cmd__fed__user__devices(opt &out, const string_view &line)
 {
-	const m::id::user &user_id
+	const params param{line, " ",
 	{
-		token(line, ' ', 0)
+		"user_id", "remote"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
 	};
 
 	const net::hostport remote
 	{
-		token(line, ' ', 1, user_id.host())
+		param.at("remote", user_id.host())
 	};
 
 	m::v1::user::devices::opts opts;
@@ -10238,24 +10243,29 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__query__client_keys(opt &out, const string_view &line)
+console_cmd__fed__user__keys__query(opt &out, const string_view &line)
 {
-	const m::id::user &user_id
+	const params param{line, " ",
 	{
-		token(line, ' ', 0)
+		"user_id", "device_id", "remote"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
 	};
 
 	const string_view &device_id
 	{
-		token(line, ' ', 1)
+		param.at("device_id", string_view{})
 	};
 
 	const net::hostport remote
 	{
-		token(line, ' ', 2, user_id.host())
+		param.at("remote", user_id.host())
 	};
 
-	m::v1::query::opts opts;
+	m::v1::user::opts opts;
 	opts.remote = remote;
 
 	const unique_buffer<mutable_buffer> buf
@@ -10263,7 +10273,7 @@ console_cmd__fed__query__client_keys(opt &out, const string_view &line)
 		32_KiB
 	};
 
-	m::v1::query::client_keys request
+	m::v1::user::keys::query request
 	{
 		user_id, device_id, buf, std::move(opts)
 	};
@@ -10279,7 +10289,37 @@ console_cmd__fed__query__client_keys(opt &out, const string_view &line)
 		request
 	};
 
-	out << string_view{response} << std::endl;
+	const json::object &device_keys
+	{
+		response["device_keys"]
+	};
+
+	for(const auto &p : device_keys)
+	{
+		const m::user::id &user_id{p.first};
+		out << user_id << ": " << std::endl;
+
+		const json::object &devices{p.second};
+		for(const auto &p : devices)
+		{
+			const auto &device_id{p.first};
+			out << " " << device_id << ": " << std::endl;
+
+			const m::device_keys &device{p.second};
+			for_each(device, [&out]
+			(const auto &key, const auto &val)
+			{
+				out << "  " << key
+				    << ": " << val
+				    << std::endl;
+			});
+
+			out << std::endl;
+		}
+
+		out << std::endl;
+	}
+
 	return true;
 }
 
