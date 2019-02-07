@@ -5536,9 +5536,8 @@ console_cmd__event(opt &out, const string_view &line)
 		out << "+ REFERENCES " << refs.count() << std::endl;
 		refs.for_each([&out](const m::event::idx &idx)
 		{
-			out << "> " << idx << " " << m::event_id(idx)
-			    << std::endl;
-
+			const m::event::fetch event{idx};
+			out << "> " << idx << " " << pretty_oneline(event) << std::endl;
 			return true;
 		});
 	}
