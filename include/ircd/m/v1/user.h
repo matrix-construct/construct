@@ -43,13 +43,37 @@ struct ircd::m::v1::user::keys::query
 {
 	using opts = v1::user::opts;
 
+	using devices = vector_view<const string_view>;
+	using user_devices = std::pair<m::user::id, devices>;
+
 	explicit operator json::object() const
 	{
 		const json::object object{in.content};
 		return object;
 	}
 
-	explicit query(const json::object &content, const mutable_buffer &, opts);
+	explicit
+	query(const json::object &content,
+	      const mutable_buffer &,
+	      opts);
+
+	query(const vector_view<const user_devices> &,
+	      const mutable_buffer &,
+	      opts);
+
+	query(const user_devices &,
+	      const mutable_buffer &,
+	      opts);
+
+	query(const m::user::id &,
+	      const string_view &device_id,
+	      const mutable_buffer &,
+	      opts);
+
+	query(const m::user::id &,
+	      const mutable_buffer &,
+	      opts);
+
 	query() = default;
 };
 

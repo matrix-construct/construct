@@ -774,6 +774,84 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 // v1/user.h
 //
 
+ircd::m::v1::user::keys::query::query(const m::user::id &user_id,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+:query
+{
+	user_id,
+	string_view{},
+	buf,
+	std::move(opts)
+}
+{
+}
+
+ircd::m::v1::user::keys::query::query(const m::user::id &user_id,
+                                      const string_view &device_id,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+:query
+{
+	user_devices
+	{
+		user_id, vector_view<const string_view>
+		{
+			&device_id, !empty(device_id)
+		}
+	},
+	buf,
+	std::move(opts)
+}
+{
+}
+
+ircd::m::v1::user::keys::query::query(const user_devices &v,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+:query
+{
+	vector_view<const user_devices>
+	{
+		&v, 1
+	},
+	buf,
+	std::move(opts)
+}
+{
+}
+
+ircd::m::v1::user::keys::query::query(const vector_view<const user_devices> &v,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+{
+	json::stack out{buf};
+	{
+		json::stack::object top{out};
+		json::stack::object device_keys
+		{
+			top, "device_keys"
+		};
+
+		for(const user_devices &ud : v)
+		{
+			json::stack::member user
+			{
+				device_keys, ud.first
+			};
+
+			json::stack::array devices{user};
+			for(const string_view &device_id : ud.second)
+				devices.append(device_id);
+		}
+	}
+
+	new (this) query
+	{
+		json::object(out.completed()), buf + size(out.completed()), std::move(opts)
+	};
+}
+
 ircd::m::v1::user::keys::query::query(const json::object &content,
                                       const mutable_buffer &buf,
                                       opts opts)
@@ -790,14 +868,13 @@ ircd::m::v1::user::keys::query::query(const json::object &content,
 	if(!defined(json::get<"uri"_>(opts.request)))
 		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/user/keys/query";
 
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-	else
-		opts.out.content = content;
+	if(!defined(json::get<"content"_>(opts.request)))
+		json::get<"content"_>(opts.request) = content;
 
 	if(!defined(json::get<"method"_>(opts.request)))
 		json::get<"method"_>(opts.request) = "POST";
 
+	opts.out.content = json::get<"content"_>(opts.request);
 	opts.out.head = opts.request(buf);
 
 	if(!size(opts.in))
@@ -832,14 +909,13 @@ ircd::m::v1::user::keys::claim::claim(const json::object &content,
 	if(!defined(json::get<"uri"_>(opts.request)))
 		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/user/keys/claim";
 
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-	else
-		opts.out.content = content;
+	if(!defined(json::get<"content"_>(opts.request)))
+		json::get<"content"_>(opts.request) = content;
 
 	if(!defined(json::get<"method"_>(opts.request)))
 		json::get<"method"_>(opts.request) = "POST";
 
+	opts.out.content = json::get<"content"_>(opts.request);
 	opts.out.head = opts.request(buf);
 
 	if(!size(opts.in))
