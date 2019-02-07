@@ -5489,7 +5489,11 @@ console_cmd__event(opt &out, const string_view &line)
 		}
 	}
 
-	out << pretty(event) << std::endl;
+	out << pretty(event)
+	    << std::endl;
+
+	out << event_idx
+	    << std::endl;
 
 	const m::event::conforms conforms
 	{
@@ -5516,7 +5520,8 @@ console_cmd__event(opt &out, const string_view &line)
 		out << "- JSON NOT FOUND" << std::endl;
 
 	if(event.source)
-		out << "+ JSON SOURCE" << std::endl;
+		out << "+ JSON SOURCE " << size(string_view{event.source}) << " bytes."
+		    << std::endl;
 
 	if(event.source && !json::valid(event.source, std::nothrow))
 		out << "- JSON SOURCE INVALID" << std::endl;
@@ -5524,7 +5529,20 @@ console_cmd__event(opt &out, const string_view &line)
 	if(cached)
 		out << "+ CACHED" << std::endl;
 
-	out << event_idx << std::endl;
+	const m::event::refs &refs{event_idx};
+	const auto refcnt(refs.count());
+	if(refcnt)
+	{
+		out << "+ REFERENCES " << refs.count() << std::endl;
+		refs.for_each([&out](const m::event::idx &idx)
+		{
+			out << "> " << idx << " " << m::event_id(idx)
+			    << std::endl;
+
+			return true;
+		});
+	}
+
 	return true;
 }
 
