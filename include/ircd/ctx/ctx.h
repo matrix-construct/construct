@@ -43,6 +43,7 @@ namespace ircd::ctx
 
 	IRCD_OVERLOAD(threadsafe)
 
+	extern log::log log;
 	extern const std::list<ctx *> &ctxs;         // List of all ctx instances
 
 	const uint64_t &id(const ctx &);             // Unique ID for context

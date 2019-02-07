@@ -41,6 +41,12 @@ ircd::ctx::ctxs
 	ctx::ctx::list
 };
 
+decltype(ircd::ctx::log)
+ircd::ctx::log
+{
+	"ctx"
+};
+
 /// Monotonic ctx id counter state. This counter is incremented for each
 /// newly created context.
 decltype(ircd::ctx::ctx::id_ctr)
@@ -119,7 +125,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"ctx('%s' id:%u): unhandled: %s",
+		log, "ctx('%s' id:%u): unhandled: %s",
 		name,
 		id,
 		e.what()
@@ -129,7 +135,7 @@ catch(...)
 {
 	log::critical
 	{
-		"ctx('%s' id:%u): unexpected",
+		log, "ctx('%s' id:%u): unexpected",
 		name,
 		id
 	};
@@ -246,7 +252,7 @@ catch(const boost::system::system_error &e)
 {
 	log::error
 	{
-		"ctx::wake(%p): %s", this, e.what()
+		log, "ctx::wake(%p): %s", this, e.what()
 	};
 
 	return false;
@@ -895,7 +901,7 @@ noexcept
 	const ulong &threshold{prof::settings::slice_warning};
 	log::dwarning
 	{
-		"context '%s' id:%lu watchdog: timeslice excessive; lim:%lu this:%lu pct:%.2lf :%s",
+		log, "context '%s' id:%lu watchdog: timeslice excessive; lim:%lu this:%lu pct:%.2lf :%s",
 		name(cur()),
 		id(cur()),
 		threshold,
@@ -1338,7 +1344,7 @@ ircd::ctx::pool::operator()(closure closure)
 	if(!avail() && q.size() > size_t(opt->queue_max_soft) && opt->queue_max_dwarning)
 		log::dwarning
 		{
-			"pool(%p '%s') ctx(%p): size:%zu active:%zu queue:%zu exceeded soft max:%zu",
+			log, "pool(%p '%s') ctx(%p): size:%zu active:%zu queue:%zu exceeded soft max:%zu",
 			this,
 			name,
 			current,
@@ -1395,14 +1401,14 @@ catch(const interrupted &e)
 {
 //	log::debug
 //	{
-//		"pool(%p) ctx(%p): %s", this, &cur(), e.what()
+//		log, "pool(%p) ctx(%p): %s", this, &cur(), e.what()
 //	};
 }
 catch(const terminated &e)
 {
 //	log::debug
 //	{
-//		"pool(%p) ctx(%p): terminated", this, &cur()
+//		log, "pool(%p) ctx(%p): terminated", this, &cur()
 //	};
 }
 
@@ -1438,7 +1444,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"pool(%p '%s') ctx(%p '%s' id:%u): unhandled: %s",
+		log, "pool(%p '%s') ctx(%p '%s' id:%u): unhandled: %s",
 		this,
 		name,
 		current,
@@ -1453,7 +1459,7 @@ ircd::ctx::debug_stats(const pool &pool)
 {
 	log::debug
 	{
-		"pool '%s' total: %zu avail: %zu queued: %zu active: %zu pending: %zu",
+		log, "pool '%s' total: %zu avail: %zu queued: %zu active: %zu pending: %zu",
 		pool.name,
 		pool.size(),
 		pool.avail(),
@@ -1630,7 +1636,7 @@ ircd::ctx::prof::check_slice()
 	if(unlikely(slice_exceeded_warning(last_slice) && !slice_exempt))
 		log::dwarning
 		{
-			"context '%s' id:%lu watchdog: timeslice excessive; lim:%lu last:%lu pct:%.2lf",
+			log, "context '%s' id:%lu watchdog: timeslice excessive; lim:%lu last:%lu pct:%.2lf",
 			name(c),
 			id(c),
 			ulong(settings::slice_warning),
@@ -1679,7 +1685,7 @@ ircd::ctx::prof::check_stack()
 	if(unlikely(!stack_exempt && stack_exceeded_warning(stack_at)))
 		log::dwarning
 		{
-			"context '%s' id:%lu watchdog: stack used %zu of %zu bytes",
+			log, "context '%s' id:%lu watchdog: stack used %zu of %zu bytes",
 			name(c),
 			id(c),
 			stack_at,
