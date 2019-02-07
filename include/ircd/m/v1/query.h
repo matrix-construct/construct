@@ -66,17 +66,3 @@ struct ircd::m::v1::query::directory
 	directory(const id::room_alias &room_alias, const mutable_buffer &, opts);
 	directory(const id::room_alias &room_alias, const mutable_buffer &);
 };
-
-struct ircd::m::v1::query::user_devices
-:query
-{
-	user_devices(const id::user &, const mutable_buffer &, opts);
-	user_devices(const id::user &, const mutable_buffer &);
-};
-
-struct ircd::m::v1::query::client_keys
-:query
-{
-	client_keys(const id::user &, const string_view &device_id, const mutable_buffer &, opts);
-	client_keys(const id::user &, const string_view &device_id, const mutable_buffer &);
-};

@@ -774,6 +774,90 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 // v1/user.h
 //
 
+ircd::m::v1::user::keys::query::query(const json::object &content,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+:server::request{[&]
+{
+	assert(!!opts.remote);
+
+	if(!defined(json::get<"origin"_>(opts.request)))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	if(!defined(json::get<"destination"_>(opts.request)))
+		json::get<"destination"_>(opts.request) = host(opts.remote);
+
+	if(!defined(json::get<"uri"_>(opts.request)))
+		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/user/keys/query";
+
+	if(defined(json::get<"content"_>(opts.request)))
+		opts.out.content = json::get<"content"_>(opts.request);
+	else
+		opts.out.content = content;
+
+	if(!defined(json::get<"method"_>(opts.request)))
+		json::get<"method"_>(opts.request) = "POST";
+
+	opts.out.head = opts.request(buf);
+
+	if(!size(opts.in))
+	{
+		opts.in.head = buf + size(opts.out.head);
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
+	}
+
+	return server::request
+	{
+		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+	};
+}()}
+{
+}
+
+ircd::m::v1::user::keys::claim::claim(const json::object &content,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+:server::request{[&]
+{
+	assert(!!opts.remote);
+
+	if(!defined(json::get<"origin"_>(opts.request)))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	if(!defined(json::get<"destination"_>(opts.request)))
+		json::get<"destination"_>(opts.request) = host(opts.remote);
+
+	if(!defined(json::get<"uri"_>(opts.request)))
+		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/user/keys/claim";
+
+	if(defined(json::get<"content"_>(opts.request)))
+		opts.out.content = json::get<"content"_>(opts.request);
+	else
+		opts.out.content = content;
+
+	if(!defined(json::get<"method"_>(opts.request)))
+		json::get<"method"_>(opts.request) = "POST";
+
+	opts.out.head = opts.request(buf);
+
+	if(!size(opts.in))
+	{
+		opts.in.head = buf + size(opts.out.head);
+		opts.in.content = opts.dynamic?
+			mutable_buffer{}:  // server::request will allocate new mem
+			opts.in.head;      // server::request will auto partition
+	}
+
+	return server::request
+	{
+		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+	};
+}()}
+{
+}
+
 ircd::m::v1::user::devices::devices(const id::user &user_id,
                                     const mutable_buffer &buf,
                                     opts opts)
@@ -831,75 +915,6 @@ namespace ircd::m::v1
 {
 	thread_local char query_arg_buf[1024];
 	thread_local char query_url_buf[1024];
-}
-
-ircd::m::v1::query::client_keys::client_keys(const id::user &user_id,
-                                             const string_view &device_id,
-                                             const mutable_buffer &buf)
-:client_keys
-{
-	user_id, device_id, buf, opts{user_id.host()}
-}
-{
-}
-
-ircd::m::v1::query::client_keys::client_keys(const id::user &user_id,
-                                             const string_view &device_id,
-                                             const mutable_buffer &buf,
-                                             opts opts)
-:query{[&]() -> query
-{
-	const json::value device_ids[]
-	{
-		{ device_id }
-	};
-
-	const json::members body
-	{
-		{ "device_keys", json::members
-		{
-			{ string_view{user_id}, { device_ids, 1 } }
-		}}
-	};
-
-	mutable_buffer out{buf};
-	const string_view content
-	{
-		stringify(out, body)
-	};
-
-	json::get<"content"_>(opts.request) = content;
-	return
-	{
-		"client_keys", string_view{}, out, std::move(opts)
-	};
-}()}
-{
-}
-
-ircd::m::v1::query::user_devices::user_devices(const id::user &user_id,
-                                               const mutable_buffer &buf)
-:user_devices
-{
-	user_id, buf, opts{user_id.host()}
-}
-{
-}
-
-ircd::m::v1::query::user_devices::user_devices(const id::user &user_id,
-                                               const mutable_buffer &buf,
-                                               opts opts)
-:query
-{
-	"user_devices",
-	fmt::sprintf
-	{
-		query_arg_buf, "user_id=%s", url::encode(query_url_buf, user_id)
-	},
-	buf,
-	std::move(opts)
-}
-{
 }
 
 ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
