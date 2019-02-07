@@ -44,7 +44,7 @@ namespace ircd::m::dbs
 	// Lowlevel util
 	constexpr size_t EVENT_REFS_KEY_MAX_SIZE {sizeof(event::idx) + sizeof(event::idx)};
 	string_view event_refs_key(const mutable_buffer &out,  const event::idx &tgt, const event::idx &referer);
-	std::pair<event::idx, event::idx> event_refs_key(const string_view &amalgam);
+	std::tuple<event::idx> event_refs_key(const string_view &amalgam);
 
 	constexpr size_t ROOM_HEAD_KEY_MAX_SIZE {id::MAX_SIZE + 1 + id::MAX_SIZE};
 	string_view room_head_key(const mutable_buffer &out, const id::room &, const id::event &);

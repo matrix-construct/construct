@@ -1063,18 +1063,17 @@ ircd::m::dbs::event_refs_key(const mutable_buffer &out,
 	};
 }
 
-std::pair<ircd::m::event::idx, ircd::m::event::idx>
+std::tuple<ircd::m::event::idx>
 ircd::m::dbs::event_refs_key(const string_view &amalgam)
 {
-	assert(size(amalgam) >= sizeof(event::idx) * 2);
-	const event::idx *const &key
+	const byte_view<event::idx> key
 	{
-		reinterpret_cast<const event::idx *>(data(amalgam))
+		amalgam
 	};
 
 	return
 	{
-		key[0], key[1]
+		key
 	};
 }
 
@@ -1115,7 +1114,7 @@ ircd::m::dbs::desc::events__event_refs
 	{},
 
 	// prefix transform
-	{},
+	events__event_refs__pfx,
 
 	// drop column
 	false,
