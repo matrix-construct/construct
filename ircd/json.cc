@@ -1283,10 +1283,7 @@ ircd::json::_prev(chase &c)
 //
 
 decltype(ircd::json::iov::max_size)
-ircd::json::iov::max_size
-{
-	1024
-};
+ircd::json::iov::max_size;
 
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const iov &iov)

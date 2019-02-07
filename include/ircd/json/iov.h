@@ -51,7 +51,10 @@ struct ircd::json::iov
 	IRCD_EXCEPTION(error, exists);
 	IRCD_EXCEPTION(error, oversize);
 
-	static const size_t max_size;
+	static constexpr const size_t max_size
+	{
+		1024
+	};
 
   public:
 	bool has(const string_view &key) const;
