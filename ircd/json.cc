@@ -451,6 +451,17 @@ noexcept
 }
 
 void
+ircd::json::stack::append(const char &c)
+noexcept
+{
+	append(1, [&c](const mutable_buffer &buf)
+	{
+		buf[0] = c;
+		return 1;
+	});
+}
+
+void
 ircd::json::stack::append(const string_view &s)
 noexcept
 {

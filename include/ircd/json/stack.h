@@ -61,6 +61,7 @@ struct ircd::json::stack
 	void rethrow_exception();
 	void append(const size_t &expect, const window_buffer::closure &) noexcept;
 	void append(const string_view &) noexcept;
+	void append(const char &) noexcept;
 
   public:
 	bool opened() const;               ///< Current stacking in progress.
