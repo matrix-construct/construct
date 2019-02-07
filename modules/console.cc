@@ -5852,6 +5852,20 @@ console_cmd__event__refs(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__event__refs__rebuild(opt &out, const string_view &line)
+{
+	using prototype = void ();
+	static mods::import<prototype> rebuild
+	{
+		"m_event", "event_refs__rebuild"
+	};
+
+	rebuild();
+	out << "done" << std::endl;
+	return true;
+}
+
 //
 // state
 //
