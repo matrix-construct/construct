@@ -1098,6 +1098,35 @@ ircd::m::index(const event::id &event_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// event/auth.h
+//
+
+bool
+ircd::m::is_power_event(const m::event &event)
+{
+	if(json::get<"type"_>(event) == "m.room.create")
+		return true;
+
+	if(json::get<"type"_>(event) == "m.room.power_levels")
+		return true;
+
+	if(json::get<"type"_>(event) == "m.room.join_rules")
+		return true;
+
+	if(json::get<"type"_>(event) != "m.room.member")
+		return false;
+
+	if(at<"sender"_>(event) == at<"state_key"_>(event))
+		return false;
+
+	if(membership(event) == "leave" || membership(event) == "ban")
+		return true;
+
+	return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // event/refs.h
 //
 

@@ -34,6 +34,7 @@ namespace ircd::m
 #include "event/event.h"
 #include "event/prev.h"
 #include "event/refs.h"
+#include "event/auth.h"
 #include "event/index.h"
 #include "event/event_id.h"
 #include "event/fetch.h"
