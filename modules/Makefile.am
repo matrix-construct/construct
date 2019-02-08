@@ -359,6 +359,7 @@ federation_federation_send_leave_la_SOURCES = federation/send_leave.cc
 federation_federation_backfill_la_SOURCES = federation/backfill.cc
 federation_federation_backfill_ids_la_SOURCES = federation/backfill_ids.cc
 federation_federation_event_auth_la_SOURCES = federation/event_auth.cc
+federation_federation_query_auth_la_SOURCES = federation/query_auth.cc
 federation_federation_publicrooms_la_SOURCES = federation/publicrooms.cc
 federation_federation_federation_la_SOURCES = federation/federation.cc
 
@@ -380,6 +381,7 @@ federation_module_LTLIBRARIES = \
 	federation/federation_backfill.la \
 	federation/federation_backfill_ids.la \
 	federation/federation_event_auth.la \
+	federation/federation_query_auth.la \
 	federation/federation_publicrooms.la \
 	federation/federation_federation.la \
 	###
