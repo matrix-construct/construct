@@ -771,7 +771,7 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/user.h
+// v1/user_keys.h
 //
 
 ircd::m::v1::user::keys::query::query(const m::user::id &user_id,
@@ -933,6 +933,11 @@ ircd::m::v1::user::keys::claim::claim(const json::object &content,
 }()}
 {
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// v1/user.h
+//
 
 ircd::m::v1::user::devices::devices(const id::user &user_id,
                                     const mutable_buffer &buf,

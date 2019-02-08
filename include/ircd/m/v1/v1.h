@@ -21,6 +21,7 @@ namespace ircd::m::v1
 #include "key.h"
 #include "query.h"
 #include "user.h"
+#include "user_keys.h"
 #include "make_join.h"
 #include "send_join.h"
 #include "invite.h"
