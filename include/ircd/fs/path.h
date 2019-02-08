@@ -39,6 +39,7 @@ namespace ircd::fs
 	string_view path(const mutable_buffer &, const vector_view<const string_view> &);
 	string_view path(const mutable_buffer &, const vector_view<const std::string> &);
 	string_view path(const mutable_buffer &, const filesystem::path &);
+	template<class... A> std::string path_string(A&&...);
 
 	bool is_relative(const string_view &path);
 	bool is_absolute(const string_view &path);
@@ -83,3 +84,19 @@ enum ircd::fs::base
 
 	_NUM_
 };
+
+template<class... A>
+std::string
+ircd::fs::path_string(A&&... a)
+{
+	static const size_t size
+	{
+		PATH_MAX_LEN | SHRINK_TO_FIT
+	};
+
+	return util::string(size, [&a...]
+	(const mutable_buffer &buf)
+	{
+		return path(buf, std::forward<A>(a)...);
+	});
+}
