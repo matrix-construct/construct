@@ -9290,13 +9290,18 @@ console_cmd__fed__head(opt &out, const string_view &line)
 		request.in.content
 	};
 
+	const json::object event
+	{
+		proto["event"]
+	};
+
 	out << "DEPTH "
-	    << proto.get({"event", "depth"})
+	    << event["depth"]
 	    << std::endl;
 
 	const json::array &prev_events
 	{
-		proto.get({"event", "prev_events"})
+		event["prev_events"]
 	};
 
 	for(const json::array &prev_event : prev_events)
@@ -9314,7 +9319,7 @@ console_cmd__fed__head(opt &out, const string_view &line)
 
 	const json::array &auth_events
 	{
-		proto.get({"event", "auth_events"})
+		event["auth_events"]
 	};
 
 	for(const json::array &auth_event : auth_events)
