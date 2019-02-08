@@ -15,3 +15,25 @@ namespace ircd::m
 {
 	bool is_power_event(const event &);
 }
+
+struct ircd::m::event::auth
+{
+	using closure_bool = event::closure_idx_bool;
+
+	event::idx idx;
+
+  public:
+	bool for_each(const closure_bool &) const;
+	bool has(const event::idx &) const noexcept;
+	size_t count() const noexcept;
+
+	auth(const event::idx &idx) noexcept;
+};
+
+inline
+ircd::m::event::auth::auth(const event::idx &idx)
+noexcept
+:idx{idx}
+{
+	assert(idx);
+}

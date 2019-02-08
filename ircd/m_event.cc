@@ -1125,6 +1125,74 @@ ircd::m::is_power_event(const m::event &event)
 	return false;
 }
 
+//
+// event::auth
+//
+
+size_t
+ircd::m::event::auth::count()
+const noexcept
+{
+	assert(idx);
+	size_t ret(0);
+	for_each([&ret](const auto &)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::event::auth::has(const event::idx &idx)
+const noexcept
+{
+	return !for_each([&idx](const event::idx &ref)
+	{
+		return ref != idx; // true to continue, false to break
+	});
+}
+
+bool
+ircd::m::event::auth::for_each(const closure_bool &closure)
+const
+{
+	auto &column
+	{
+		dbs::event_auth
+	};
+
+	const byte_view<string_view> &key
+	{
+		idx
+	};
+
+	auto it
+	{
+		column.begin(key)
+	};
+
+	for(; it; ++it)
+	{
+		const auto parts
+		{
+			dbs::event_auth_key(it->first)
+		};
+
+		const auto &ref
+		{
+			std::get<0>(parts)
+		};
+
+		assert(idx != ref);
+		if(!closure(ref))
+			return false;
+	}
+
+	return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // event/refs.h
