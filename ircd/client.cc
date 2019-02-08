@@ -83,10 +83,6 @@ decltype(ircd::client::default_conf)
 ircd::client::default_conf
 {};
 
-//
-// linkages
-//
-
 decltype(ircd::client::log)
 ircd::client::log
 {

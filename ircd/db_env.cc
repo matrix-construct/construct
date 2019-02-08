@@ -2435,23 +2435,10 @@ ircd::db::database::env::writable_file_direct::write(const const_buffer &buf_)
 {
 	const_buffer buf
 	{
-		// If the file's offset is aligned and the buffer's data is aligned
-		// we take an easy branch which writes everything and copies any
-		// unaligned overflow to the temporary this->buffer. Nothing is
-		// returned into buf from this branch so there's nothing else done
-		// as this function will return when empty(buf) is checked below.
 		aligned(logical_offset) && aligned(data(buf_))?
 			write_aligned(buf_):
-
-		// If the file's offset isn't aligned we have to bring it up to
-		// alignment first by using data from the front of buf_. All the
-		// remaining data will be returned to here, which may make a mess
-		// of buf's alignment and size but this frame will deal with that.
 		!aligned(logical_offset)?
 			write_unaligned_off(buf_):
-
-		// The file's offset is aligned but buf is not aligned. We'll deal
-		// with that in this frame.
 			buf_
 	};
 
@@ -2467,23 +2454,9 @@ ircd::db::database::env::writable_file_direct::write(const const_buffer &buf_)
 	if(aligned(data(buf)))
 		return write_aligned(buf);
 
-	// Deal with an unaligned buffer by bringing it up to alignment. This
-	// will end up returning an aligned buffer, but may unalign the
-	// logical_offset by doing so. This write() call must be looped until
-	// it empties the buffer. It will be loopy if everything comes very
-	// unaligned out of rocksdb.
 	return write_unaligned_buf(buf);
 }
 
-/// Called when the logical_offset aligned but the supplied buffer's address
-/// is not aligned. The supplied buffer's size can be unaligned here. This
-/// function will fill up the temporary this->buffer with the front of buf
-/// until an aligned address is achieved.
-///
-/// The rest of the buffer which starts at an aligned address is returned and
-/// not written. It is not written since this function may leave the
-/// logical_offset at an unaligned address.
-///
 /// * aligned offset
 /// * unaligned data
 /// - any size
@@ -2513,11 +2486,6 @@ ircd::db::database::env::writable_file_direct::write_unaligned_buf(const const_b
 	assert(data(buf) + size(under_buf) == data(remaining_buf));
 	assert(aligned(data(remaining_buf)) || empty(remaining_buf));
 
-	// We have to use the temporary buffer to deal with the unaligned
-	// leading part of the buffer. Since logical_offset is aligned this
-	// buffer isn't being used right now. We copy as much as possible
-	// to fill out a complete block, both the unaligned and aligned inputs
-	// and zero padding if both are not sufficient.
 	mutable_buffer dst(this->buffer);
 	consume(dst, copy(dst, under_buf));
 	consume(dst, copy(dst, remaining_buf));
@@ -2526,29 +2494,10 @@ ircd::db::database::env::writable_file_direct::write_unaligned_buf(const const_b
 
 	// Flush the temporary buffer.
 	_write__aligned(this->buffer, logical_offset);
-
-	// The logical_offset is only advanced by the underflow amount, even if
-	// we padded the temporary buffer with some remaing_buf data. The caller
-	// is lead to believe they must deal with remaining_buf in its entirety
-	// starting at the logical_offset.
 	logical_offset += size(under_buf);
-
 	return remaining_buf;
 }
 
-/// Called when the logical_offset is not aligned, indicating that something
-/// was left in the temporary this->buffer which must be completed out to
-/// alignment by consuming the front of the argument buf. This function appends
-/// the front of buf to this->buffer and flushes this->buffer.
-///
-/// logical_offset is incremented, either to the next block alignment or less
-/// if size(buf) can't get it there.
-///
-/// The rest of buf which isn't used to fill out this->buffer is returned and
-/// not written. It is not written since the returned data(buf) might not
-/// be aligned. In fact, this function does not care about the alignment of buf
-/// at all.
-///
 /// * unaligned offset
 /// - any data
 /// - any size
@@ -2593,32 +2542,14 @@ ircd::db::database::env::writable_file_direct::write_unaligned_off(const const_b
 
 	// Write the whole temporary this->buffer at the aligned offset.
 	_write__aligned(this->buffer, aligned_offset);
-
-	// Only increment the logical_offset to indicate the appending of
-	// what this function added to the temporary this->buffer.
 	logical_offset += size(src);
-
-	// The logical_offset should either be aligned now after using buf's
-	// data to eliminate the temporary this->buffer, or buf's data wasn't
-	// enough and we'll have to call this function again later with more.
 	assert(aligned(logical_offset) || size(buf) < alignment);
-
-	// Return the rest of buf which we didn't use to fill out this->buf
-	// Caller will have to deal figuring out how to align the next write.
 	return const_buffer
 	{
 		buf + size(src)
 	};
 }
 
-/// Write function callable when the current logical_offset and the supplied
-/// buffer's pointer are both aligned, but the size of the buffer need not
-/// be aligned. This function thus assumes that the temporary this->buffer
-/// is empty; it will write as much of the input buffer as aligned. The
-/// unaligned overflow will be copied to the front of the temporary
-/// this->buffer which will be padded to alignment and flushed and the
-/// logical_offset will indicate an increment of the size of the input buffer.
-///
 /// * aligned offset
 /// * aligned data
 /// - any size
@@ -2645,10 +2576,6 @@ ircd::db::database::env::writable_file_direct::write_aligned(const const_buffer 
 
 	if(!empty(overflow))
 	{
-		// The overflow is copied to the temporary this->buffer, padded out with
-		// zero and then flushed. The logical offset will be incremented by the
-		// size of that overflow and will no longer be an aligned value,
-		// indicating there is something in the temporary this->buffer.
 		mutable_buffer dst(this->buffer);
 		consume(dst, copy(dst, overflow));
 		consume(dst, zero(dst));
@@ -2659,20 +2586,9 @@ ircd::db::database::env::writable_file_direct::write_aligned(const const_buffer 
 		assert(!aligned(logical_offset));
 	}
 
-	// Nothing is ever returned and required by the caller here because the
-	// input is aligned to its address and offset and any unaligned size was
-	// dealt with using the temporary this->buffer.
 	return {};
 }
 
-/// Lower level write to an aligned offset. The pointer of the buffer and the
-/// offset both have to be aligned to alignment. The size of the buffer does
-/// not have to be aligned to alignment. The unaligned portion of the input
-/// buffer (the last partial block), if any, will be returned to the caller.
-///
-/// No modifications to the logical_offset or the temporary this->buffer take
-/// place here so the caller must manipulate those accordingly.
-///
 /// * aligned data
 /// * aligned offset
 /// - any size
@@ -2698,8 +2614,6 @@ ircd::db::database::env::writable_file_direct::_write_aligned(const const_buffer
 	assert(!empty(aligned_buf) || size(buf) < alignment);
 	assert(size(aligned_buf) + size(ret) == size(buf));
 	assert(size(ret) < alignment);
-
-	// aligned_buf will be empty if buf itself is smaller than the alignment.
 	if(empty(aligned_buf))
 	{
 		assert(size(ret) == size(buf));
@@ -2710,16 +2624,6 @@ ircd::db::database::env::writable_file_direct::_write_aligned(const const_buffer
 	return ret;
 }
 
-/// Lowest level write of a fully aligned buffer to an aligned offset. The
-/// pointer of the buffer, the size of the buffer, and the offset ALL have
-/// to be aligned to alignment for this function. This function is the only
-/// in the stack which actually writes to the filesystem.
-///
-/// No modifications to the logical_offset take place here so the caller must
-/// increment that accordingly. The return value is a const_buffer to conform
-/// with the rest of the stack but it is unconditionally empty here because
-/// there is no possible overflowing.
-///
 /// * aligned offset
 /// * aligned data
 /// * aligned size
@@ -2752,9 +2656,6 @@ ircd::db::database::env::writable_file_direct::_write__aligned(const const_buffe
 	wopts.nodelay = this->nodelay;
 	wopts.offset = offset;
 	fs::write(fd, buf, wopts);
-
-	// Nothing is ever returned to the caller here because the input buffer
-	// and the offset must be fully aligned at this stage.
 	return {};
 }
 
