@@ -6923,10 +6923,10 @@ ircd::db::seek(database::column &c,
                const rocksdb::ReadOptions &opts,
                std::unique_ptr<rocksdb::Iterator> &it)
 {
-	const ctx::uninterruptible::nothrow ui;
-
 	if(!it)
 	{
+		const ctx::uninterruptible::nothrow ui;
+
 		database &d(*c.d);
 		rocksdb::ColumnFamilyHandle *const &cf(c);
 		it.reset(d.d->NewIterator(opts, cf));
@@ -6941,6 +6941,8 @@ ircd::db::_seek(database::column &c,
                 const rocksdb::ReadOptions &opts,
                 rocksdb::Iterator &it)
 {
+	const ctx::uninterruptible ui;
+
 	#ifdef RB_DEBUG_DB_SEEK
 	database &d(*c.d);
 	const ircd::timer timer;
