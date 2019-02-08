@@ -27,4 +27,47 @@ namespace ircd::m
 
 	const_buffer get(const event::idx &, const string_view &key, const mutable_buffer &out);
 	const_buffer get(const event::id &, const string_view &key, const mutable_buffer &out);
+
+	template<class T>
+	typename std::enable_if<std::is_integral<T>::value, bool>::type
+	get(const event::idx &, const string_view &key, T &ret);
+
+	template<class T>
+	typename std::enable_if<std::is_integral<T>::value, T>::type
+	get(const event::idx &, const string_view &key);
+}
+
+template<class T>
+typename std::enable_if<std::is_integral<T>::value, T>::type
+ircd::m::get(const event::idx &event_idx,
+             const string_view &key)
+{
+	T ret;
+	const mutable_buffer buf
+	{
+		reinterpret_cast<char *>(&ret), sizeof(ret)
+	};
+
+	get(event_idx, key, buf);
+	return ret;
+}
+
+template<class T>
+typename std::enable_if<std::is_integral<T>::value, bool>::type
+ircd::m::get(const event::idx &event_idx,
+             const string_view &key,
+             T &ret)
+{
+	const mutable_buffer buf
+	{
+		reinterpret_cast<char *>(&ret), sizeof(ret)
+	};
+
+	const auto rbuf
+	{
+		get(std::nothrow, event_idx, key, buf)
+	};
+
+	assert(size(rbuf) >= sizeof(T));
+	return !empty(rbuf);
 }
