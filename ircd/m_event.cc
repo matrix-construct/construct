@@ -1133,9 +1133,16 @@ size_t
 ircd::m::event::auth::count()
 const noexcept
 {
+	return count(string_view{});
+}
+
+size_t
+ircd::m::event::auth::count(const string_view &type)
+const noexcept
+{
 	assert(idx);
 	size_t ret(0);
-	for_each([&ret](const auto &)
+	for_each(type, [&ret](const auto &)
 	{
 		++ret;
 		return true;
@@ -1155,7 +1162,29 @@ const noexcept
 }
 
 bool
+ircd::m::event::auth::has(const string_view &type)
+const noexcept
+{
+	bool ret{false};
+	for_each(type, [&ret](const auto &)
+	{
+		ret = true;
+		return false;
+	});
+
+	return ret;
+}
+
+bool
 ircd::m::event::auth::for_each(const closure_bool &closure)
+const
+{
+	return for_each(string_view{}, closure);
+}
+
+bool
+ircd::m::event::auth::for_each(const string_view &type,
+                               const closure_bool &closure)
 const
 {
 	auto &column
@@ -1184,6 +1213,24 @@ const
 		{
 			std::get<0>(parts)
 		};
+
+		bool match;
+		const auto matcher
+		{
+			[&type, &match](const string_view &type_)
+			{
+				match = type == type_;
+			}
+		};
+
+		if(type)
+		{
+			if(!m::get(std::nothrow, ref, "type", matcher))
+				continue;
+
+			if(!match)
+				continue;
+		}
 
 		assert(idx != ref);
 		if(!closure(ref))

@@ -5878,7 +5878,7 @@ console_cmd__event__auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"event_id"
+		"event_id", "type"
 	}};
 
 	const m::event::id &event_id
@@ -5886,12 +5886,37 @@ console_cmd__event__auth(opt &out, const string_view &line)
 		param.at("event_id")
 	};
 
+	const string_view type
+	{
+		param.at("type", ""_sv)
+	};
+
 	const m::event::auth auth
 	{
 		index(event_id)
 	};
 
-	auth.for_each([&out](const m::event::idx &idx)
+	auth.for_each(type, [&out]
+	(const m::event::idx &idx)
+	{
+		const m::event::fetch event
+		{
+			idx, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
+
+		out << idx
+		    << " " << pretty_oneline(event)
+		    << std::endl;
+
+		return true;
+	});
+
+	return true;
+}
+
 	{
 		const m::event::fetch event
 		{

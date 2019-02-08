@@ -18,16 +18,26 @@ namespace ircd::m
 
 struct ircd::m::event::auth
 {
-	using closure_bool = event::closure_idx_bool;
 
 	event::idx idx;
 
   public:
+	using closure_bool = event::closure_idx_bool;
+
+	bool for_each(const string_view &type, const closure_bool &) const;
 	bool for_each(const closure_bool &) const;
+
+	bool has(const string_view &type) const noexcept;
 	bool has(const event::idx &) const noexcept;
+
+	size_t count(const string_view &type) const noexcept;
 	size_t count() const noexcept;
 
-	auth(const event::idx &idx) noexcept;
+	auth(const event::idx &idx)
+	:idx{idx}
+	{
+		assert(idx);
+	}
 };
 
 inline
