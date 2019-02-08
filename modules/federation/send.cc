@@ -55,10 +55,10 @@ handle_edu(client &client,
 }
 
 void
-handle_pdu(client &client,
-           const resource::request::object<m::txn> &request,
-           const string_view &txn_id,
-           const m::event &event)
+handle_pdus(client &client,
+            const resource::request::object<m::txn> &request,
+            const string_view &txn_id,
+            const json::array &pdus)
 {
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
@@ -69,7 +69,7 @@ handle_pdu(client &client,
 	vmopts.errorlog &= ~m::vm::fault::STATE;
 	m::vm::eval eval
 	{
-		event, vmopts
+		pdus, vmopts
 	};
 }
 
@@ -142,11 +142,10 @@ handle_put(client &client,
 	for(const auto &pdu_failure : pdu_failures)
 		handle_pdu_failure(client, request, txn_id, pdu_failure);
 
+	handle_pdus(client, request, txn_id, pdus);
+
 	for(const json::object &edu : edus)
 		handle_edu(client, request, txn_id, edu);
-
-	for(const json::object &pdu : pdus)
-		handle_pdu(client, request, txn_id, pdu);
 
 	return resource::response
 	{
