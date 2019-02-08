@@ -17,10 +17,27 @@
 
 namespace ircd::util
 {
+	using string_closure_size = std::function<size_t (const mutable_buffer &)>;
+	using string_closure_view = std::function<string_view (const mutable_buffer &)>;
+
+	// OR this with a string size to trigger a shrink_to_fit() after closure.
+	constexpr const size_t SHRINK_TO_FIT
+	{
+		1UL << (sizeof(size_t) * 8 - 1)
+	};
+
+	// Simple string generation by copy from existing buffer.
 	std::string string(const char *const &buf, const size_t &size);
 	std::string string(const uint8_t *const &buf, const size_t &size);
-	std::string string(const size_t &size, const std::function<size_t (const mutable_buffer &)> &closure);
-	std::string string(const size_t &size, const std::function<string_view (const mutable_buffer &)> &closure);
+	std::string string(const const_buffer &);
+
+	// String generation from closure. The closure is presented a buffer of
+	// size for writing into. Closure returns how much it wrote via size or
+	// view of written portion.
+	std::string string(const size_t &size, const string_closure_size &);
+	std::string string(const size_t &size, const string_closure_view &);
+
+	// toString()'ish template suite (see defs)
 	template<class T> std::string string(const mutable_buffer &buf, const T &s);
 	template<class T> std::string string(const T &s);
 }

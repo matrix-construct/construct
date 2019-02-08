@@ -299,7 +299,7 @@ ircd::util::si(const uint64_t &value)
 /// a view of the data actually written to the buffer.
 std::string
 ircd::util::string(const size_t &size,
-                   const std::function<string_view (const mutable_buffer &)> &closure)
+                   const string_closure_view &closure)
 {
 	return string(size, [&closure]
 	(const mutable_buffer &buffer)
@@ -313,9 +313,14 @@ ircd::util::string(const size_t &size,
 /// the final size of the data written into the buffer.
 std::string
 ircd::util::string(const size_t &size,
-                   const std::function<size_t (const mutable_buffer &)> &closure)
+                   const string_closure_size &closure)
 {
-	std::string ret(size, char{});
+	const size_t alloc_size
+	{
+		size & ~SHRINK_TO_FIT
+	};
+
+	std::string ret(alloc_size, char{});
 	const mutable_buffer buf
 	{
 		const_cast<char *>(ret.data()), ret.size()
@@ -329,7 +334,17 @@ ircd::util::string(const size_t &size,
 	assert(consumed <= buffer::size(buf));
 	data(buf)[consumed] = '\0';
 	ret.resize(consumed);
+
+	if(size & SHRINK_TO_FIT)
+		ret.shrink_to_fit();
+
 	return ret;
+}
+
+std::string
+ircd::util::string(const const_buffer &buf)
+{
+	return string(data(buf), size(buf));
 }
 
 std::string
