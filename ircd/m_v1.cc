@@ -774,6 +774,10 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 // v1/user_keys.h
 //
 
+//
+// query
+//
+
 ircd::m::v1::user::keys::query::query(const m::user::id &user_id,
                                       const mutable_buffer &buf,
                                       opts opts)
@@ -846,9 +850,14 @@ ircd::m::v1::user::keys::query::query(const vector_view<const user_devices> &v,
 		}
 	}
 
+	const json::object &content
+	{
+		out.completed()
+	};
+
 	new (this) query
 	{
-		json::object(out.completed()), buf + size(out.completed()), std::move(opts)
+		content, buf + size(string_view(content)), std::move(opts)
 	};
 }
 
@@ -891,6 +900,101 @@ ircd::m::v1::user::keys::query::query(const json::object &content,
 	};
 }()}
 {
+}
+
+//
+// claim
+//
+
+ircd::m::v1::user::keys::claim::claim(const m::user::id &user_id,
+                                      const string_view &device_id,
+                                      const string_view &algorithm,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+:claim
+{
+	user_id,
+	device
+	{
+		device_id, algorithm
+	},
+	buf,
+	std::move(opts)
+}
+{
+}
+
+ircd::m::v1::user::keys::claim::claim(const m::user::id &user_id,
+                                      const device &device,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+:claim
+{
+	user_devices
+	{
+		user_id, { &device, 1 }
+	},
+	buf,
+	std::move(opts)
+}
+{
+}
+
+ircd::m::v1::user::keys::claim::claim(const user_devices &ud,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+:claim
+{
+	vector_view<const user_devices>
+	{
+		&ud, 1
+	},
+	buf,
+	std::move(opts)
+}
+{
+}
+
+ircd::m::v1::user::keys::claim::claim(const vector_view<const user_devices> &v,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+{
+	json::stack out{buf};
+	{
+		json::stack::object top{out};
+		json::stack::object one_time_keys
+		{
+			top, "one_time_keys"
+		};
+
+		for(const auto &ud : v)
+		{
+			json::stack::object user
+			{
+				one_time_keys, ud.first
+			};
+
+			for(const auto &device : ud.second)
+			{
+				const auto &device_id(device.first);
+				const auto &algorithm_name(device.second);
+				json::stack::member
+				{
+					user, device_id, algorithm_name
+				};
+			}
+		}
+	}
+
+	const json::object &content
+	{
+		out.completed()
+	};
+
+	new (this) claim
+	{
+		content, buf + size(string_view(content)), std::move(opts)
+	};
 }
 
 ircd::m::v1::user::keys::claim::claim(const json::object &content,

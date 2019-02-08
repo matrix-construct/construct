@@ -59,6 +59,9 @@ struct ircd::m::v1::user::keys::claim
 :server::request
 {
 	using opts = v1::user::opts;
+	using device = std::pair<string_view, string_view>;
+	using devices = vector_view<const device>;
+	using user_devices = std::pair<m::user::id, devices>;
 
 	explicit operator json::object() const
 	{
@@ -68,6 +71,25 @@ struct ircd::m::v1::user::keys::claim
 
 	explicit
 	claim(const json::object &content,
+	      const mutable_buffer &,
+	      opts);
+
+	claim(const vector_view<const user_devices> &,
+	      const mutable_buffer &,
+	      opts);
+
+	claim(const user_devices &,
+	      const mutable_buffer &,
+	      opts);
+
+	claim(const m::user::id &,
+	      const device &device,
+	      const mutable_buffer &,
+	      opts);
+
+	claim(const m::user::id &,
+	      const string_view &device_id,
+	      const string_view &algorithm,
 	      const mutable_buffer &,
 	      opts);
 
