@@ -338,6 +338,8 @@ is_complete(const m::room &room)
 		const event &event{*it};
 		if(at<"depth"_>(event) == depth + 1)
 			++depth;
+		else if(depth < 0)
+			depth = at<"depth"_>(event);
 
 		if(at<"depth"_>(event) != depth)
 			return { false, depth };
