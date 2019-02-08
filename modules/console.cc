@@ -5873,6 +5873,58 @@ console_cmd__event__refs__rebuild(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__event__auth(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	const m::event::auth auth
+	{
+		index(event_id)
+	};
+
+	auth.for_each([&out](const m::event::idx &idx)
+	{
+		const m::event::fetch event
+		{
+			idx, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
+
+		out << idx
+		    << " " << pretty_oneline(event)
+		    << std::endl;
+
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__event__auth__rebuild(opt &out, const string_view &line)
+{
+	using prototype = void ();
+	static mods::import<prototype> rebuild
+	{
+		"m_event", "event_auth__rebuild"
+	};
+
+	rebuild();
+	out << "done" << std::endl;
+	return true;
+}
+
 //
 // state
 //
