@@ -5917,6 +5917,31 @@ console_cmd__event__auth(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__event__auth__chain(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id", "type"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	const string_view type
+	{
+		param.at("type", ""_sv)
+	};
+
+	const m::event::auth::chain auth
+	{
+		index(event_id)
+	};
+
+	auth.for_each(type, [&out]
+	(const m::event::idx &idx)
 	{
 		const m::event::fetch event
 		{

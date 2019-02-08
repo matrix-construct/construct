@@ -1126,6 +1126,32 @@ ircd::m::is_power_event(const m::event &event)
 }
 
 //
+// event::auth::chain
+//
+
+bool
+ircd::m::event::auth::chain::for_each(const closure &closure)
+const
+{
+	return for_each(string_view{}, closure);
+}
+
+bool
+ircd::m::event::auth::chain::for_each(const string_view &type,
+                                      const closure &c)
+const
+{
+	using prototype = bool (event::auth, const string_view &, const closure &);
+
+	static mods::import<prototype> auth_chain_for_each
+	{
+		"m_event", "auth_chain_for_each"
+	};
+
+	return auth_chain_for_each(auth, type, c);
+}
+
+//
 // event::auth
 //
 

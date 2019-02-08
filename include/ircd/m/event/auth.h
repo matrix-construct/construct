@@ -18,6 +18,7 @@ namespace ircd::m
 
 struct ircd::m::event::auth
 {
+	struct chain;
 
 	event::idx idx;
 
@@ -40,10 +41,17 @@ struct ircd::m::event::auth
 	}
 };
 
-inline
-ircd::m::event::auth::auth(const event::idx &idx)
-noexcept
-:idx{idx}
+struct ircd::m::event::auth::chain
 {
-	assert(idx);
-}
+	event::auth auth;
+
+  public:
+	using closure = std::function<event::idx (const event::idx &)>;
+
+	bool for_each(const string_view &type, const closure &) const;
+	bool for_each(const closure &) const;
+
+	chain(const event::idx &idx)
+	:auth{idx}
+	{}
+};
