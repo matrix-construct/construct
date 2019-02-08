@@ -5841,6 +5841,14 @@ console_cmd__event__refs(opt &out, const string_view &line)
 
 	refs.for_each([&out](const m::event::idx &idx)
 	{
+		const m::event::fetch event
+		{
+			idx, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
+
 		out << idx
 		    << " " << m::event_id(idx)
 		    << std::endl;
