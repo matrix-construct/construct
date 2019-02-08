@@ -36,6 +36,11 @@ decltype(ircd::m::dbs::event_refs)
 ircd::m::dbs::event_refs
 {};
 
+/// Linkage for a reference to the event_auth column.
+decltype(ircd::m::dbs::event_auth)
+ircd::m::dbs::event_auth
+{};
+
 /// Linkage for a reference to the room_head column
 decltype(ircd::m::dbs::room_head)
 ircd::m::dbs::room_head
@@ -140,6 +145,7 @@ ircd::m::dbs::init::init(std::string dbopts)
 	event_idx = db::column{*events, desc::events__event_idx.name};
 	event_json = db::column{*events, desc::events__event_json.name};
 	event_refs = db::index{*events, desc::events__event_refs.name};
+	event_auth = db::index{*events, desc::events__event_auth.name};
 	room_head = db::index{*events, desc::events__room_head.name};
 	room_events = db::index{*events, desc::events__room_events.name};
 	room_joined = db::index{*events, desc::events__room_joined.name};
@@ -312,6 +318,9 @@ ircd::m::dbs::_index_event(db::txn &txn,
 	if(opts.event_id)
 		_index_event_id(txn, event, opts);
 
+	if(opts.event_auth)
+		_index_event_auth(txn, event, opts);
+
 	if(opts.event_refs)
 		_index_event_refs(txn, event, opts);
 }
@@ -359,6 +368,43 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 		db::txn::append
 		{
 			txn, dbs::event_refs,
+			{
+				opts.op, key, string_view{}
+			}
+		};
+	}
+}
+
+void
+ircd::m::dbs::_index_event_auth(db::txn &txn,
+                                const event &event,
+                                const write_opts &opts)
+{
+	if(!is_power_event(event))
+		return;
+
+	const event::prev &prev{event};
+	for(size_t i(0); i < prev.auth_events_count(); ++i)
+	{
+		const event::id &auth_id{prev.auth_event(i)};
+		const event::idx &auth_idx
+		{
+			m::index(auth_id, std::nothrow)  // query
+		};
+
+		if(!auth_idx)
+			continue;
+
+		thread_local char buf[EVENT_AUTH_KEY_MAX_SIZE];
+		assert(opts.event_idx != 0 && auth_idx != 0);
+		const string_view &key
+		{
+			event_auth_key(buf, auth_idx, opts.event_idx)
+		};
+
+		db::txn::append
+		{
+			txn, dbs::event_auth,
 			{
 				opts.op, key, string_view{}
 			}
@@ -1172,6 +1218,204 @@ ircd::m::dbs::desc::events__event_refs
 
 	// meta_block size
 	size_t(events__event_refs__meta_block__size),
+};
+
+//
+// event_auth
+//
+
+decltype(ircd::m::dbs::desc::events__event_auth__block__size)
+ircd::m::dbs::desc::events__event_auth__block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_auth.block.size" },
+	{ "default",  512L                                       },
+};
+
+decltype(ircd::m::dbs::desc::events__event_auth__meta_block__size)
+ircd::m::dbs::desc::events__event_auth__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_auth.meta_block.size" },
+	{ "default",  512L                                            },
+};
+
+decltype(ircd::m::dbs::desc::events__event_auth__cache__size)
+ircd::m::dbs::desc::events__event_auth__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_auth.cache.size" },
+		{ "default",  long(16_MiB)                               },
+	}, []
+	{
+		const size_t &value{events__event_auth__cache__size};
+		db::capacity(db::cache(event_auth), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_auth__cache_comp__size)
+ircd::m::dbs::desc::events__event_auth__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_auth.cache_comp.size" },
+		{ "default",  long(0_MiB)                                     },
+	}, []
+	{
+		const size_t &value{events__event_auth__cache_comp__size};
+		db::capacity(db::cache_compressed(event_auth), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_auth__bloom__bits)
+ircd::m::dbs::desc::events__event_auth__bloom__bits
+{
+	{ "name",     "ircd.m.dbs.events._event_auth.bloom.bits" },
+	{ "default",  0L                                         },
+};
+
+ircd::string_view
+ircd::m::dbs::event_auth_key(const mutable_buffer &out,
+                             const event::idx &tgt,
+                             const event::idx &src)
+{
+	assert(size(out) >= sizeof(event::idx) * 2);
+	event::idx *const &key
+	{
+		reinterpret_cast<event::idx *>(data(out))
+	};
+
+	key[0] = tgt;
+	key[1] = src;
+	return string_view
+	{
+		data(out), data(out) + sizeof(event::idx) * 2
+	};
+}
+
+std::tuple<ircd::m::event::idx>
+ircd::m::dbs::event_auth_key(const string_view &amalgam)
+{
+	const byte_view<event::idx> key
+	{
+		amalgam
+	};
+
+	return
+	{
+		key
+	};
+}
+
+const ircd::db::prefix_transform
+ircd::m::dbs::desc::events__event_auth__pfx
+{
+	"_event_auth",
+	[](const string_view &key)
+	{
+		return size(key) >= sizeof(event::idx) * 2;
+	},
+
+	[](const string_view &key)
+	{
+		assert(size(key) >= sizeof(event::idx));
+		return string_view
+		{
+			data(key), data(key) + sizeof(event::idx)
+		};
+	}
+};
+
+const ircd::db::comparator
+ircd::m::dbs::desc::events__event_auth__cmp
+{
+	"_event_auth",
+
+	// less
+	[](const string_view &a, const string_view &b)
+	{
+		static const size_t half(sizeof(event::idx));
+		static const size_t full(half * 2);
+
+		assert(size(a) >= half);
+		assert(size(b) >= half);
+		const event::idx *const key[2]
+		{
+			reinterpret_cast<const event::idx *>(data(a)),
+			reinterpret_cast<const event::idx *>(data(b)),
+		};
+
+		return
+			key[0][0] < key[1][0]?   true:
+			key[0][0] > key[1][0]?   false:
+			size(a) < size(b)?       true:
+			size(a) > size(b)?       false:
+			size(a) == half?         false:
+			key[0][1] < key[1][1]?   true:
+			                         false;
+	},
+
+	// equal
+	[](const string_view &a, const string_view &b)
+	{
+		return size(a) == size(b) && memcmp(data(a), data(b), size(a)) == 0;
+	}
+};
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events__event_auth
+{
+	// name
+	"_event_auth",
+
+	// explanation
+	R"(Inverse reference graph of events.
+
+	event_idx | event_idx => --
+
+	The first part of the key is the event being referenced. The second part
+	of the key is the event which refers to the first event somewhere in its
+	auth_events references.
+
+	The prefix transform is in effect; an event may be referenced multiple
+	times. We can find all the events we have which reference a target. The
+	database must contain both events (hence they have event::idx numbers).
+
+	The value is currently unused/empty.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(uint64_t), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	events__event_auth__cmp,
+
+	// prefix transform
+	events__event_auth__pfx,
+
+	// drop column
+	false,
+
+	// cache size
+	bool(events_cache_enable)? -1 : 0, //uses conf item
+
+	// cache size for compressed assets
+	bool(events_cache_comp_enable)? -1 : 0,
+
+	// bloom filter bits
+	size_t(events__event_auth__bloom__bits),
+
+	// expect queries hit
+	true,
+
+	// block size
+	size_t(events__event_auth__block__size),
+
+	// meta_block size
+	size_t(events__event_auth__meta_block__size),
 };
 
 //
@@ -3319,6 +3563,10 @@ ircd::m::dbs::desc::events
 	// event_idx | event_idx
 	// Reverse mapping of the event reference graph.
 	events__event_refs,
+
+	// event_idx | event_idx
+	// Reverse mapping of the auth reference graph.
+	events__event_auth,
 
 	// (room_id, (depth, event_idx)) => (state_root)
 	// Sequence of all events for a room, ever.

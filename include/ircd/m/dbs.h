@@ -35,6 +35,7 @@ namespace ircd::m::dbs
 	extern db::column event_idx;       // event_id => event_idx
 	extern db::column event_json;      // event_idx => full json
 	extern db::index event_refs;       // event_idx | event_idx
+	extern db::index event_auth;       // event_idx | event_idx
 	extern db::index room_head;        // room_id | event_id => event_idx
 	extern db::index room_events;      // room_id | depth, event_idx => node_id
 	extern db::index room_joined;      // room_id | origin, member => event_idx
@@ -45,6 +46,10 @@ namespace ircd::m::dbs
 	constexpr size_t EVENT_REFS_KEY_MAX_SIZE {sizeof(event::idx) + sizeof(event::idx)};
 	string_view event_refs_key(const mutable_buffer &out,  const event::idx &tgt, const event::idx &referer);
 	std::tuple<event::idx> event_refs_key(const string_view &amalgam);
+
+	constexpr size_t EVENT_AUTH_KEY_MAX_SIZE {sizeof(event::idx) + sizeof(event::idx)};
+	string_view event_auth_key(const mutable_buffer &out,  const event::idx &tgt, const event::idx &referer);
+	std::tuple<event::idx> event_auth_key(const string_view &amalgam);
 
 	constexpr size_t ROOM_HEAD_KEY_MAX_SIZE {id::MAX_SIZE + 1 + id::MAX_SIZE};
 	string_view room_head_key(const mutable_buffer &out, const id::room &, const id::event &);
@@ -91,6 +96,7 @@ struct ircd::m::dbs::write_opts
 	bool room_refs {true};
 	bool event_id {true};
 	bool event_refs {true};
+	bool event_auth {true};
 	bool json_source {false};
 };
 
@@ -191,6 +197,16 @@ namespace ircd::m::dbs::desc
 	extern const db::comparator events__event_refs__cmp;
 	extern const db::descriptor events__event_refs;
 
+	// events auth
+	extern conf::item<size_t> events__event_auth__block__size;
+	extern conf::item<size_t> events__event_auth__meta_block__size;
+	extern conf::item<size_t> events__event_auth__cache__size;
+	extern conf::item<size_t> events__event_auth__cache_comp__size;
+	extern conf::item<size_t> events__event_auth__bloom__bits;
+	extern const db::prefix_transform events__event_auth__pfx;
+	extern const db::comparator events__event_auth__cmp;
+	extern const db::descriptor events__event_auth;
+
 	// room head mapping sequence
 	extern conf::item<size_t> events__room_head__block__size;
 	extern conf::item<size_t> events__room_head__meta_block__size;
@@ -246,6 +262,7 @@ namespace ircd::m::dbs
 	string_view _index_other(db::txn &, const event &, const write_opts &);
 	string_view _index_room(db::txn &, const event &, const write_opts &);
 	void _index_event_refs(db::txn &, const event &, const write_opts &);
+	void _index_event_auth(db::txn &, const event &, const write_opts &);
 	void _index_event_id(db::txn &, const event &, const write_opts &);
 	void _index_event(db::txn &, const event &, const write_opts &);
 	void _append_json(db::txn &, const event &, const write_opts &);
