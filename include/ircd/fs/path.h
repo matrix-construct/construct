@@ -25,6 +25,10 @@ namespace ircd::fs
 	extern const size_t NAME_MAX_LEN;
 	extern const size_t PATH_MAX_LEN;
 
+	// convenience tls buffers of appropriate size.
+	extern const mutable_buffer path_scratch;
+	extern const mutable_buffer name_scratch;
+
 	filesystem::path _path(std::string);
 	filesystem::path _path(const string_view &);
 	filesystem::path _path(const vector_view<const string_view> &);

@@ -25,32 +25,6 @@ namespace ircd::fs
 	static void debug_paths();
 }
 
-/// Default maximum path string length (for all filesystems & platforms).
-decltype(ircd::fs::NAME_MAX_LEN)
-ircd::fs::NAME_MAX_LEN
-{
-	#ifdef NAME_MAX
-		NAME_MAX
-	#elif defined(_POSIX_NAME_MAX)
-		_POSIX_NAME_MAX
-	#else
-		255
-	#endif
-};
-
-/// Default maximum path string length (for all filesystems & platforms).
-decltype(ircd::fs::PATH_MAX_LEN)
-ircd::fs::PATH_MAX_LEN
-{
-	#ifdef PATH_MAX
-		PATH_MAX
-	#elif defined(_POSIX_PATH_MAX)
-		_POSIX_PATH_MAX
-	#else
-		4096
-	#endif
-};
-
 //
 // init
 //
@@ -1169,12 +1143,10 @@ ircd::fs::dev::sysfs(const mutable_buffer &out,
                      const ulong &id,
                      const string_view &relpath)
 {
-	thread_local char pathbuf[PATH_MAX_LEN];
-	thread_local char idbuf[NAME_MAX_LEN];
 	const string_view path{fmt::sprintf
 	{
-		pathbuf, "/sys/dev/block/%s/%s",
-		sysfs_id(idbuf, id),
+		path_scratch, "/sys/dev/block/%s/%s",
+		sysfs_id(name_scratch, id),
 		relpath
 	}};
 
@@ -1331,6 +1303,50 @@ ircd::fs::bytes(const const_iovec_view &iov)
 //
 // fs/path.h
 //
+
+/// Default maximum path string length (for all filesystems & platforms).
+decltype(ircd::fs::NAME_MAX_LEN)
+ircd::fs::NAME_MAX_LEN
+{
+	#ifdef NAME_MAX
+		NAME_MAX
+	#elif defined(_POSIX_NAME_MAX)
+		_POSIX_NAME_MAX
+	#else
+		255
+	#endif
+};
+
+/// Default maximum path string length (for all filesystems & platforms).
+decltype(ircd::fs::PATH_MAX_LEN)
+ircd::fs::PATH_MAX_LEN
+{
+	#ifdef PATH_MAX
+		PATH_MAX
+	#elif defined(_POSIX_PATH_MAX)
+		_POSIX_PATH_MAX
+	#else
+		4096
+	#endif
+};
+
+namespace ircd::fs
+{
+	thread_local char _path_scratch[PATH_MAX_LEN];
+	thread_local char _name_scratch[NAME_MAX_LEN];
+}
+
+decltype(ircd::fs::path_scratch)
+ircd::fs::path_scratch
+{
+	_path_scratch
+};
+
+decltype(ircd::fs::name_scratch)
+ircd::fs::name_scratch
+{
+	_name_scratch
+};
 
 std::string
 ircd::fs::cwd()
