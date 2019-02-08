@@ -259,9 +259,7 @@ noexcept
 ircd::terminate::terminate()
 noexcept
 {
-	fputs("\nIRCd Terminated.\n", stderr);
-	::fflush(stderr);
-	std::terminate();
+	terminate(std::current_exception());
 }
 
 ircd::terminate::terminate(std::exception_ptr eptr)
@@ -276,7 +274,7 @@ noexcept
 		terminate{e};
 	}
 
-	fputs("\nIRCd Terminate without exception\n", stderr);
+	fputs("\nIRCd Terminated.\n", stderr);
 	::fflush(stderr);
 	std::terminate();
 }
