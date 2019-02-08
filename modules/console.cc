@@ -9578,6 +9578,16 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	if(!op && event_id == "eval")
 		std::swap(op, event_id);
 
+	const m::event::id::buf head_buf
+	{
+		event_id?
+			m::event::id::buf{}:
+			m::head(std::nothrow, room_id)
+	};
+
+	if(!event_id)
+		event_id = head_buf;
+
 	// Used for out.head, out.content, in.head, but in.content is dynamic
 	thread_local char buf[8_KiB];
 	m::v1::state::opts opts;
@@ -9609,13 +9619,19 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	if(op != "eval")
 	{
 		if(op != "auth")
+		{
+			out << "state at " << event_id << ":" << std::endl;
 			for(const json::object &event : pdus)
 				out << pretty_oneline(m::event{event}) << std::endl;
+		}
 
 		out << std::endl;
 		if(op != "state")
+		{
+			out << "auth chain at " << event_id << ":" << std::endl;
 			for(const json::object &event : auth_chain)
 				out << pretty_oneline(m::event{event}) << std::endl;
+		}
 
 		return true;
 	}
