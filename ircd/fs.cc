@@ -1445,6 +1445,14 @@ ircd::fs::extension(const mutable_buffer &buf,
 	return path(buf, _path(p).replace_extension(_path(replace)));
 }
 
+ircd::string_view
+ircd::fs::relative(const mutable_buffer &buf,
+                   const string_view &root,
+                   const string_view &p)
+{
+	return path(buf, relative(_path(p), _path(root)));
+}
+
 bool
 ircd::fs::is_relative(const string_view &p)
 {
