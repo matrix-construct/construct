@@ -10,27 +10,10 @@
 
 namespace ircd::mods
 {
-	extern const filesystem::path suffix;
+	extern const std::string prefix;
+	extern const std::string suffix;
 
-	filesystem::path prefix_if_relative(const filesystem::path &path);
-	filesystem::path postfixed(const filesystem::path &path);
-	filesystem::path unpostfixed(const filesystem::path &path);
-
-	template<class R, class F> R info(const filesystem::path &, F&& closure);
-	std::vector<std::string> sections(const filesystem::path &path);
-	std::vector<std::string> symbols(const filesystem::path &path);
-	std::vector<std::string> symbols(const filesystem::path &path, const string_view &section);
-	std::unordered_map<std::string, std::string> mangles(const std::vector<std::string> &);
-	std::unordered_map<std::string, std::string> mangles(const filesystem::path &path);
-	std::unordered_map<std::string, std::string> mangles(const filesystem::path &path, const string_view &section);
-
-	// Get the full path of a [valid] available module by name
-	filesystem::path fullpath(const string_view &name);
-
-	// Checks if loadable module containing a mapi header (does not verify the magic)
-	bool is_module(const filesystem::path &);
-	bool is_module(const filesystem::path &, std::string &why);
-	bool is_module(const filesystem::path &, std::nothrow_t);
+	template<class R, class F> R info(const string_view &, F&& closure);
 }
 
 /// Internal module representation
@@ -41,7 +24,7 @@ struct ircd::mods::mod
 	static std::forward_list<mod *> unloading; // dlclose() is not recursive but we have this
 	static std::map<string_view, mod *, std::less<>> loaded;
 
-	filesystem::path path;
+	std::string path;
 	load_mode::type mode;
 	std::deque<mod *> children;
 	boost::dll::shared_library handle;
@@ -61,8 +44,7 @@ struct ircd::mods::mod
 
 	bool unload();
 
-	mod(const filesystem::path &,
-	    const load_mode::type & = load_mode::rtld_local | load_mode::rtld_now);
+	explicit mod(std::string path, const load_mode::type &);
 
 	mod(mod &&) = delete;
 	mod(const mod &) = delete;

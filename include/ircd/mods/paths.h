@@ -16,10 +16,9 @@ namespace ircd::mods
 	struct paths extern paths;
 
 	// Platform (.so|.dll) postfixing
-	std::string postfixed(std::string name);
-	std::string postfixed(const string_view &);
-	std::string unpostfixed(std::string name);
-	std::string unpostfixed(const string_view &);
+	std::string postfixed(std::string);
+	std::string unpostfixed(std::string);
+	std::string prefix_if_relative(std::string);
 }
 
 struct ircd::mods::paths

@@ -43,16 +43,17 @@ namespace ircd::mods
 	bool unloading(const string_view &name);
 	bool available(const string_view &name);
 
-	// Utils by path
-	bool is_module(const string_view &fullpath);
-	bool is_module(const string_view &fullpath, std::nothrow_t);
-	bool is_module(const string_view &fullpath, std::string &why);
-
 	// returns dir/name of first dir containing 'name' (and this will be
 	// a loadable module). Unlike libltdl, the reason each individual
 	// candidate failed is presented in a vector.
 	std::string search(const string_view &name, std::vector<std::string> &why);
 	std::string search(const string_view &name);
+	std::string fullpath(const string_view &name);
+
+	// Utils by path
+	bool is_module(const string_view &fullpath);
+	bool is_module(const string_view &fullpath, std::nothrow_t);
+	bool is_module(const string_view &fullpath, std::string &why);
 
 	// Potential modules available to load
 	std::forward_list<std::string> available();

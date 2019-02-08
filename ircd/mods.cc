@@ -18,12 +18,6 @@ namespace load_mode = boost::dll::load_mode;
 #include <ircd/mods/mapi.h>  // Module's internal API
 #include "mods.h"
 
-const filesystem::path
-ircd::mods::suffix
-{
-	boost::dll::shared_library::suffix()
-};
-
 ircd::log::log
 ircd::mods::log
 {
@@ -72,12 +66,18 @@ ircd::mapi::static_destruction;
 // mods::mod::mod
 //
 
-ircd::mods::mod::mod(const filesystem::path &path,
+ircd::mods::mod::mod(std::string path,
                      const load_mode::type &mode)
 try
-:path{path}
-,mode{mode}
-,handle{[this, &path, &mode]
+:path
+{
+	std::move(path)
+}
+,mode
+{
+	mode
+}
+,handle{[this]
 {
 	// Can't interrupt this ctx during the dlopen() as long as exceptions
 	// coming out of static inits are trouble (which they are at this time).
@@ -117,7 +117,10 @@ try
 		std::set_terminate(theirs);
 	}};
 
-	return boost::dll::shared_library{path, mode};
+	return boost::dll::shared_library
+	{
+		this->path, this->mode
+	};
 }()}
 ,_name
 {
@@ -166,7 +169,7 @@ try
 		{
 			log, "Module '%s' recursively loaded by '%s'",
 			name(),
-			m->path.filename().string()
+			m->name()
 		};
 	}
 
@@ -196,9 +199,6 @@ catch(const boost::system::system_error &e)
 				"undefined symbol: '%s' (%s)", demangled, mangled
 			};
 		}
-
-		default:
-			break;
 	}
 
 	throw_system_error(e);
@@ -366,15 +366,21 @@ const
 std::forward_list<std::string>
 ircd::mods::available()
 {
-	using filesystem::path;
-	using filesystem::directory_iterator;
-
 	std::forward_list<std::string> ret;
 	for(const auto &dir : paths) try
 	{
-		for(directory_iterator it(dir); it != directory_iterator(); ++it)
-			if(is_module(it->path(), std::nothrow))
-				ret.emplace_front(unpostfixed(relative(it->path(), dir).string()));
+		for(const auto &filepath : fs::ls(dir))
+		{
+			if(!is_module(filepath, std::nothrow))
+				continue;
+
+			std::string relpath
+			{
+				fs::relative(fs::path_scratch, dir, filepath)
+			};
+
+			ret.emplace_front(unpostfixed(std::move(relpath)));
+		}
 	}
 	catch(const filesystem::filesystem_error &e)
 	{
@@ -391,29 +397,35 @@ ircd::mods::available()
 	return ret;
 }
 
-filesystem::path
+std::string
 ircd::mods::fullpath(const string_view &name)
 {
 	std::vector<std::string> why;
-	const filesystem::path path(search(name, why));
-	if(path.empty())
+	const auto path
 	{
-		for(const auto &str : why)
-			log::error
-			{
-				log, "candidate for module '%s' failed: %s",
-				name,
-				str
-			};
+		search(name, why)
+	};
 
-		throw error
+	if(likely(!path.empty()))
+		return path;
+
+	for(const auto &str : why)
+		log::error
 		{
-			"No valid module by name `%s'", name
+			log, "candidate for module '%s' failed: %s",
+			name,
+			str
 		};
-	}
 
-	return path;
+	throw error
+	{
+		"No valid module by name `%s'", name
+	};
 }
+
+//
+// search()
+//
 
 std::string
 ircd::mods::search(const string_view &name)
@@ -426,14 +438,12 @@ std::string
 ircd::mods::search(const string_view &name,
                    std::vector<std::string> &why)
 {
-	using filesystem::path;
-
-	const path path
+	const std::string path
 	{
 		postfixed(name)
 	};
 
-	if(!path.is_relative())
+	if(!fs::is_relative(path))
 	{
 		why.resize(why.size() + 1);
 		return is_module(path, why.back())?
@@ -442,36 +452,30 @@ ircd::mods::search(const string_view &name,
 	}
 	else for(const auto &dir : paths)
 	{
+		const string_view parts[2]
+		{
+			dir, path
+		};
+
+		const auto full
+		{
+			fs::path_string(parts)
+		};
+
 		why.resize(why.size() + 1);
-		if(is_module(dir/path, why.back()))
-			return (dir/path).string();
+		if(is_module(full, why.back()))
+			return full;
 	}
 
 	return {};
 }
 
-bool
-ircd::mods::is_module(const string_view &fullpath)
-{
-	return is_module(filesystem::path(std::string{fullpath}));
-}
+//
+// is_module
+//
 
 bool
-ircd::mods::is_module(const string_view &fullpath,
-                      std::nothrow_t)
-{
-	return is_module(filesystem::path(std::string{fullpath}), std::nothrow);
-}
-
-bool
-ircd::mods::is_module(const string_view &fullpath,
-                      std::string &why)
-{
-	return is_module(filesystem::path(std::string{fullpath}), why);
-}
-
-bool
-ircd::mods::is_module(const filesystem::path &path,
+ircd::mods::is_module(const string_view &path,
                       std::nothrow_t)
 try
 {
@@ -483,7 +487,7 @@ catch(const std::exception &e)
 }
 
 bool
-ircd::mods::is_module(const filesystem::path &path,
+ircd::mods::is_module(const string_view &path,
                       std::string &why)
 try
 {
@@ -496,19 +500,35 @@ catch(const std::exception &e)
 }
 
 bool
-ircd::mods::is_module(const filesystem::path &path)
+ircd::mods::is_module(const string_view &path)
 {
-	const auto syms(symbols(path));
-	const auto &header_name(mapi::header_symbol_name);
-	const auto it(std::find(begin(syms), end(syms), header_name));
+	static const auto &header_name
+	{
+		mapi::header_symbol_name
+	};
+
+	const auto syms
+	{
+		symbols(path)
+	};
+
+	const auto it
+	{
+		std::find(begin(syms), end(syms), header_name)
+	};
+
 	if(it == end(syms))
 		throw error
 		{
-			"`%s': has no MAPI header (%s)", path.string(), header_name
+			"`%s': has no MAPI header (%s)", path, header_name
 		};
 
 	return true;
 }
+
+//
+// utils by name
+//
 
 bool
 ircd::mods::available(const string_view &name)
@@ -548,6 +568,10 @@ ircd::mods::loaded(const string_view &name)
 {
 	return mod::loaded.count(name);
 }
+
+//
+// utils by mod reference
+//
 
 template<> uint8_t *
 ircd::mods::ptr<uint8_t>(mod &mod,
@@ -666,6 +690,12 @@ ircd::mods::module::module(const string_view &name)
 try
 :std::shared_ptr<mod>{[&name]
 {
+	static const load_mode::type flags
+	{
+		load_mode::rtld_local |
+		load_mode::rtld_now
+	};
+
 	// Search for loaded module and increment the reference counter for this handle if loaded.
 	auto it(mod::loaded.find(name));
 	if(it != end(mod::loaded))
@@ -674,23 +704,21 @@ try
 		return shared_from(mod);
 	}
 
-	static const load_mode::type flags
+	auto path
 	{
-		load_mode::rtld_local |
-		load_mode::rtld_now
+		fullpath(name)
 	};
 
-	const auto path(fullpath(name));
 	log::debug
 	{
 		log, "Attempting to load '%s' @ `%s'",
 		name,
-		path.string()
+		path
 	};
 
 	const auto ret
 	{
-		std::make_shared<mod>(path, flags)
+		std::make_shared<mod>(std::move(path), flags)
 	};
 
 	// Call the user-supplied init function well after fully loading and
@@ -757,8 +785,12 @@ const
 std::vector<std::string>
 ircd::mods::find_symbol(const string_view &symbol)
 {
+	const auto av
+	{
+		available()
+	};
+
 	std::vector<std::string> ret;
-	const auto av(available());
 	std::copy_if(begin(av), end(av), std::back_inserter(ret), [&symbol]
 	(const auto &name)
 	{
@@ -772,35 +804,30 @@ bool
 ircd::mods::has_symbol(const string_view &name,
                        const string_view &symbol)
 {
-	const auto path(fullpath(name));
+	const auto path
+	{
+		fullpath(name)
+	};
+
 	if(path.empty())
 		return false;
 
-	const auto syms(symbols(path));
+	const auto syms
+	{
+		symbols(path)
+	};
+
 	return std::find(begin(syms), end(syms), symbol) != end(syms);
 }
 
 std::unordered_map<std::string, std::string>
-ircd::mods::mangles(const string_view &fullpath)
-{
-	return mangles(filesystem::path(std::string{fullpath}));
-}
-
-std::unordered_map<std::string, std::string>
-ircd::mods::mangles(const string_view &fullpath,
-                    const string_view &section)
-{
-	return mangles(filesystem::path(std::string{fullpath}), section);
-}
-
-std::unordered_map<std::string, std::string>
-ircd::mods::mangles(const filesystem::path &path)
+ircd::mods::mangles(const string_view &path)
 {
 	return mangles(mods::symbols(path));
 }
 
 std::unordered_map<std::string, std::string>
-ircd::mods::mangles(const filesystem::path &path,
+ircd::mods::mangles(const string_view &path,
                     const string_view &section)
 {
 	return mangles(mods::symbols(path, section));
@@ -823,20 +850,7 @@ ircd::mods::mangles(const std::vector<std::string> &symbols)
 }
 
 std::vector<std::string>
-ircd::mods::symbols(const string_view &fullpath)
-{
-	return symbols(filesystem::path(std::string{fullpath}));
-}
-
-std::vector<std::string>
-ircd::mods::symbols(const string_view &fullpath,
-                    const string_view &section)
-{
-	return symbols(filesystem::path(std::string{fullpath}), std::string{section});
-}
-
-std::vector<std::string>
-ircd::mods::symbols(const filesystem::path &path)
+ircd::mods::symbols(const string_view &path)
 {
 	return info<std::vector<std::string>>(path, []
 	(boost::dll::library_info &info)
@@ -846,7 +860,7 @@ ircd::mods::symbols(const filesystem::path &path)
 }
 
 std::vector<std::string>
-ircd::mods::symbols(const filesystem::path &path,
+ircd::mods::symbols(const string_view &path,
                     const string_view &section)
 {
 	return info<std::vector<std::string>>(path, [&section]
@@ -857,13 +871,7 @@ ircd::mods::symbols(const filesystem::path &path,
 }
 
 std::vector<std::string>
-ircd::mods::sections(const string_view &fullpath)
-{
-	return sections(filesystem::path(std::string{fullpath}));
-}
-
-std::vector<std::string>
-ircd::mods::sections(const filesystem::path &path)
+ircd::mods::sections(const string_view &path)
 {
 	return info<std::vector<std::string>>(path, []
 	(boost::dll::library_info &info)
@@ -875,18 +883,22 @@ ircd::mods::sections(const filesystem::path &path)
 template<class R,
          class F>
 R
-ircd::mods::info(const filesystem::path &path,
+ircd::mods::info(const string_view &path,
                  F&& closure)
 try
 {
-	boost::dll::library_info info(path);
+	boost::dll::library_info info
+	{
+		fs::_path(path)
+	};
+
 	return closure(info);
 }
 catch(const filesystem::filesystem_error &e)
 {
 	throw fs::error
 	{
-		e, "%s", path.string()
+		e, "%s", path
 	};
 }
 
@@ -895,68 +907,55 @@ catch(const filesystem::filesystem_error &e)
 // mods/paths.h
 //
 
-namespace ircd::mods
-{
-	extern const filesystem::path modroot;
-}
-
-decltype(ircd::mods::modroot)
-ircd::mods::modroot
+decltype(ircd::mods::prefix)
+ircd::mods::prefix
 {
 	fs::path(fs::MODULES)
+};
+
+decltype(ircd::mods::suffix)
+ircd::mods::suffix
+{
+	boost::dll::shared_library::suffix().string()
 };
 
 decltype(ircd::mods::paths)
 ircd::mods::paths
 {};
 
-std::string
-ircd::mods::unpostfixed(const string_view &name)
-{
-	return unpostfixed(std::string{name});
-}
+//
+// util
+//
 
 std::string
-ircd::mods::unpostfixed(std::string name)
+ircd::mods::unpostfixed(std::string path)
 {
-	return unpostfixed(filesystem::path(std::move(name))).string();
-}
+	if(fs::extension(fs::path_scratch, path) == suffix)
+		return fs::extension(fs::path_scratch, path, string_view{});
 
-std::string
-ircd::mods::postfixed(const string_view &name)
-{
-	return postfixed(std::string{name});
+	return std::move(path);
 }
 
 std::string
-ircd::mods::postfixed(std::string name)
+ircd::mods::postfixed(std::string path)
 {
-	return postfixed(filesystem::path(std::move(name))).string();
+	return fs::extension(fs::path_scratch, path) != suffix?
+		path + suffix:
+		path;
 }
 
-filesystem::path
-ircd::mods::unpostfixed(const filesystem::path &path)
+std::string
+ircd::mods::prefix_if_relative(std::string path)
 {
-	if(extension(path) != suffix)
-		return path;
+	if(!fs::is_relative(path))
+		return std::move(path);
 
-	return filesystem::path(path).replace_extension();
-}
+	const string_view parts[2]
+	{
+		prefix, path
+	};
 
-filesystem::path
-ircd::mods::postfixed(const filesystem::path &path)
-{
-	if(extension(path) == suffix)
-		return path;
-
-	filesystem::path ret(path);
-	return ret += suffix;
-}
-
-filesystem::path
-ircd::mods::prefix_if_relative(const filesystem::path &path)
-{
-	return path.is_relative()? (modroot / path) : path;
+	return fs::path_string(parts);
 }
 
 //
@@ -966,7 +965,7 @@ ircd::mods::prefix_if_relative(const filesystem::path &path)
 ircd::mods::paths::paths()
 :std::vector<std::string>
 {{
-	modroot.string()
+	mods::prefix
 }}
 {
 }
@@ -974,28 +973,26 @@ ircd::mods::paths::paths()
 bool
 ircd::mods::paths::add(const string_view &dir)
 {
-	using filesystem::path;
-
-	const path path
+	const auto path
 	{
-		prefix_if_relative(std::string{dir})
+		prefix_if_relative(dir)
 	};
 
-	if(!exists(path))
+	if(!fs::exists(path))
 		throw fs::error
 		{
 			make_error_code(std::errc::no_such_file_or_directory),
 			"path `%s' (%s) does not exist",
 			dir,
-			path.string()
+			path
 		};
 
-	if(!is_directory(path))
+	if(!fs::is_dir(path))
 		throw fs::error
 		{
 			"path `%s' (%s) is not a directory",
 			dir,
-			path.string()
+			path
 		};
 
 	if(added(dir))
@@ -1025,7 +1022,7 @@ catch(const std::exception &e)
 bool
 ircd::mods::paths::del(const string_view &dir)
 {
-	std::remove(begin(), end(), prefix_if_relative(std::string{dir}).string());
+	std::remove(begin(), end(), prefix_if_relative(dir));
 	return true;
 }
 
