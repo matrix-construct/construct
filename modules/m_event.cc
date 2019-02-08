@@ -617,3 +617,68 @@ event_refs__rebuild()
 
 	txn();
 }
+
+extern "C" void
+event_auth__rebuild()
+{
+	static const size_t pool_size{96};
+	static const size_t log_interval{8192};
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	auto &column
+	{
+		dbs::event_json
+	};
+
+	auto it
+	{
+		column.begin()
+	};
+
+	ctx::dock dock;
+	ctx::pool pool;
+	pool.min(pool_size);
+	size_t i(0), j(0);
+	for(; it; ++it)
+	{
+		const m::event &e(json::object(it->second));
+		if(!is_power_event(e))
+			continue;
+
+		std::string event{it->second};
+		const m::event::idx event_idx
+		{
+			byte_view<m::event::idx>(it->first)
+		};
+
+		pool([&txn, &dock, &i, &j, event(std::move(event)), event_idx]
+		{
+			m::dbs::write_opts wopts;
+			wopts.event_idx = event_idx;
+			m::dbs::_index_event_auth(txn, json::object{event}, wopts);
+			if(++j % log_interval == 0) log::info
+			{
+				m::log, "Auth builder @%zu:%zu of %lu (@idx: %lu)",
+				i,
+				j,
+				m::vm::current_sequence,
+				event_idx
+			};
+
+			dock.notify_one();
+		});
+
+		++i;
+	}
+
+	dock.wait([&i, &j]
+	{
+		return i == j;
+	});
+
+	txn();
+}
