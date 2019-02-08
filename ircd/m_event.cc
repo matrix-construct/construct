@@ -1774,19 +1774,18 @@ ircd::m::verify(const event &event_,
                 const ed25519::pk &pk,
                 const ed25519::sig &sig)
 {
-	thread_local char content[event::MAX_SIZE];
+	thread_local char buf[2][event::MAX_SIZE];
 	m::event event
 	{
-		essential(event_, content)
+		essential(event_, buf[0])
 	};
 
-	thread_local char buf[event::MAX_SIZE];
 	const json::object &preimage
 	{
-		stringify(buf, event)
+		stringify(buf[1], event)
 	};
 
-	return event::verify(preimage, pk, sig);
+	return pk.verify(preimage, sig);
 }
 
 bool
@@ -1794,22 +1793,13 @@ ircd::m::event::verify(const json::object &event,
                        const ed25519::pk &pk,
                        const ed25519::sig &sig)
 {
-	//TODO: skip rewrite
 	thread_local char buf[event::MAX_SIZE];
 	const string_view preimage
 	{
 		stringify(buf, event)
 	};
 
-	return verify(preimage, pk, sig);
-}
-
-bool
-ircd::m::event::verify(const string_view &event,
-                       const ed25519::pk &pk,
-                       const ed25519::sig &sig)
-{
-	return pk.verify(event, sig);
+	return pk.verify(preimage, sig);
 }
 
 void
