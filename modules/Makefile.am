@@ -361,6 +361,8 @@ federation_federation_backfill_ids_la_SOURCES = federation/backfill_ids.cc
 federation_federation_event_auth_la_SOURCES = federation/event_auth.cc
 federation_federation_query_auth_la_SOURCES = federation/query_auth.cc
 federation_federation_publicrooms_la_SOURCES = federation/publicrooms.cc
+federation_federation_user_devices_la_SOURCES = federation/user_devices.cc
+federation_federation_user_keys_la_SOURCES = federation/user_keys.cc
 federation_federation_federation_la_SOURCES = federation/federation.cc
 
 federation_module_LTLIBRARIES = \
