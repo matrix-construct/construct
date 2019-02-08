@@ -40,6 +40,28 @@ namespace ircd::util
 	// toString()'ish template suite (see defs)
 	template<class T> std::string string(const mutable_buffer &buf, const T &s);
 	template<class T> std::string string(const T &s);
+
+	template<class F, class... A> std::string string_buffer(const size_t &, F&&, A&&...);
+}
+
+/// Convenience template for working with various functions throughout IRCd
+/// with the pattern `size_t func(mutable_buffer, ...)`. This function closes
+/// over your function to supply the leading mutable_buffer and use the return
+/// value of your function to satisfy util::string() as usual. The prototype
+/// pattern works with the closures declared in this suite, so string_view
+/// return types work too.
+template<class F,
+         class... A>
+std::string
+ircd::util::string_buffer(const size_t &size,
+                          F&& function,
+                          A&&... arguments)
+{
+	return string(size, [&function, &arguments...]
+	(const mutable_buffer &buf)
+	{
+		return function(buf, std::forward<A>(arguments)...);
+	});
 }
 
 /// This is the ubiquitous ircd::string() template serving as the "toString()"
