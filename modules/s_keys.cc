@@ -77,26 +77,17 @@ init_my_tls_crt()
 
 	const std::string private_key_file
 	{
-		ircd::string(fs::PATH_MAX_LEN, [&](const mutable_buffer &buf)
-		{
-			return fs::path(buf, private_key_path_parts);
-		})
+		fs::path_string(private_key_path_parts)
 	};
 
 	const std::string public_key_file
 	{
-		ircd::string(fs::PATH_MAX_LEN, [&](const mutable_buffer &buf)
-		{
-			return fs::path(buf, public_key_path_parts);
-		})
+		fs::path_string(public_key_path_parts)
 	};
 
 	const std::string cert_file
 	{
-		ircd::string(fs::PATH_MAX_LEN, [&](const mutable_buffer &buf)
-		{
-			return fs::path(buf, certificate_path_parts);
-		})
+		fs::path_string(certificate_path_parts)
 	};
 
 	if(!fs::exists(private_key_file))
