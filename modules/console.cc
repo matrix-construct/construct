@@ -5862,13 +5862,7 @@ console_cmd__event__refs(opt &out, const string_view &line)
 bool
 console_cmd__event__refs__rebuild(opt &out, const string_view &line)
 {
-	using prototype = void ();
-	static mods::import<prototype> rebuild
-	{
-		"m_event", "event_refs__rebuild"
-	};
-
-	rebuild();
+	m::event::refs::rebuild();
 	out << "done" << std::endl;
 	return true;
 }
@@ -5964,13 +5958,7 @@ console_cmd__event__auth__chain(opt &out, const string_view &line)
 bool
 console_cmd__event__auth__rebuild(opt &out, const string_view &line)
 {
-	using prototype = void ();
-	static mods::import<prototype> rebuild
-	{
-		"m_event", "event_auth__rebuild"
-	};
-
-	rebuild();
+	m::event::refs::rebuild();
 	out << "done" << std::endl;
 	return true;
 }

@@ -13,16 +13,18 @@
 
 struct ircd::m::event::refs
 {
-	using closure_bool = event::closure_idx_bool;
-
 	event::idx idx;
 
   public:
+	using closure_bool = event::closure_idx_bool;
+
 	bool for_each(const closure_bool &) const;
 	bool has(const event::idx &) const noexcept;
 	size_t count() const noexcept;
 
 	refs(const event::idx &idx) noexcept;
+
+	static void rebuild();
 };
 
 inline

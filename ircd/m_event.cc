@@ -28,14 +28,14 @@ std::ostream &
 ircd::m::pretty(std::ostream &s,
                 const event &e)
 {
-	using prototype = void (std::ostream &, const event &);
+	using prototype = std::ostream &(std::ostream &, const event &);
+
 	static mods::import<prototype> pretty
 	{
-		"m_event", "pretty__event"
+		"m_event", "ircd::m::pretty"
 	};
 
-	pretty(s, e);
-	return s;
+	return pretty(s, e);
 }
 
 std::string
@@ -55,14 +55,14 @@ ircd::m::pretty_oneline(std::ostream &s,
                         const event &e,
                         const bool &content_keys)
 {
-	using prototype = void (std::ostream &, const event &, const bool &);
+	using prototype = std::ostream &(std::ostream &, const event &, const bool &);
+
 	static mods::import<prototype> pretty_oneline
 	{
-		"m_event", "pretty_oneline__event"
+		"m_event", "ircd::m::pretty_oneline"
 	};
 
-	pretty_oneline(s, e, content_keys);
-	return s;
+	return pretty_oneline(s, e, content_keys);
 }
 
 std::string
@@ -80,10 +80,11 @@ std::ostream &
 ircd::m::pretty_msgline(std::ostream &s,
                         const event &e)
 {
-	using prototype = void (std::ostream &, const event &);
+	using prototype = std::ostream &(std::ostream &, const event &);
+
 	static mods::import<prototype> pretty_msgline
 	{
-		"m_event", "pretty_msgline__event"
+		"m_event", "ircd::m::pretty_msgline"
 	};
 
 	pretty_msgline(s, e);
@@ -105,10 +106,11 @@ std::ostream &
 ircd::m::pretty(std::ostream &s,
                 const event::prev &prev)
 {
-	using prototype = void (std::ostream &, const event::prev &);
+	using prototype = std::ostream &(std::ostream &, const event::prev &);
+
 	static mods::import<prototype> pretty
 	{
-		"m_event", "pretty__prev"
+		"m_event", "ircd::m::pretty"
 	};
 
 	pretty(s, prev);
@@ -130,10 +132,11 @@ std::ostream &
 ircd::m::pretty_oneline(std::ostream &s,
                         const event::prev &prev)
 {
-	using prototype = void (std::ostream &, const event::prev &);
+	using prototype = std::ostream &(std::ostream &, const event::prev &);
+
 	static mods::import<prototype> pretty_oneline
 	{
-		"m_event", "pretty_oneline__prev"
+		"m_event", "ircd::m::pretty_oneline"
 	};
 
 	pretty_oneline(s, prev);
@@ -1129,6 +1132,19 @@ ircd::m::is_power_event(const m::event &event)
 // event::auth::chain
 //
 
+void
+ircd::m::event::auth::rebuild()
+{
+	using prototype = void ();
+
+	static mods::import<prototype> rebuild
+	{
+		"m_event", "ircd::m::event::auth::rebuild"
+	};
+
+	rebuild();
+}
+
 bool
 ircd::m::event::auth::chain::for_each(const closure &closure)
 const
@@ -1141,14 +1157,14 @@ ircd::m::event::auth::chain::for_each(const string_view &type,
                                       const closure &c)
 const
 {
-	using prototype = bool (event::auth, const string_view &, const closure &);
+	using prototype = bool (chain::*)(const string_view &, const closure &) const;
 
-	static mods::import<prototype> auth_chain_for_each
+	static mods::import<prototype> call
 	{
-		"m_event", "auth_chain_for_each"
+		"m_event", "ircd::m::event::auth::chain::for_each"
 	};
 
-	return auth_chain_for_each(auth, type, c);
+	return (*this.**call)(type, c);
 }
 
 //
@@ -1270,6 +1286,19 @@ const
 //
 // event/refs.h
 //
+
+void
+ircd::m::event::refs::rebuild()
+{
+	using prototype = void ();
+
+	static mods::import<prototype> rebuild
+	{
+		"m_event", "ircd::m::event::refs::rebuild"
+	};
+
+	rebuild();
+}
 
 size_t
 ircd::m::event::refs::count()
@@ -1981,7 +2010,7 @@ ircd::m::event::essential(json::iov &event,
 
 	static mods::import<prototype> _essential
 	{
-		"m_event", "_essential__iov"
+		"m_event", "ircd::m::event::essential"
 	};
 
 	_essential(event, contents, closure);
@@ -1991,11 +2020,11 @@ ircd::m::event
 ircd::m::essential(m::event event,
                    const mutable_buffer &contentbuf)
 {
-	using prototype = m::event &(m::event &, const mutable_buffer &);
+	using prototype = m::event (m::event, const mutable_buffer &);
 
 	static mods::import<prototype> _essential
 	{
-		"m_event", "_essential"
+		"m_event", "ircd::m::essential"
 	};
 
 	return _essential(event, contentbuf);

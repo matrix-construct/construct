@@ -39,6 +39,8 @@ struct ircd::m::event::auth
 	{
 		assert(idx);
 	}
+
+	static void rebuild();
 };
 
 struct ircd::m::event::auth::chain

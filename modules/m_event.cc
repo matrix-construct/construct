@@ -11,18 +11,6 @@
 using namespace ircd::m;
 using namespace ircd;
 
-namespace ircd::m
-{
-	extern "C" void
-	_essential__iov(json::iov &event,
-	                const json::iov &contents,
-	                const event::closure_iov_mutable &closure);
-
-	extern "C" m::event &
-	_essential(m::event &event,
-               const mutable_buffer &contentbuf);
-}
-
 mapi::header
 IRCD_MODULE
 {
@@ -30,9 +18,10 @@ IRCD_MODULE
 };
 
 void
-ircd::m::_essential__iov(json::iov &event,
-                         const json::iov &contents,
-                         const event::closure_iov_mutable &closure)
+IRCD_MODULE_EXPORT
+ircd::m::event::essential(json::iov &event,
+                          const json::iov &contents,
+                          const event::closure_iov_mutable &closure)
 {
 	const auto &type
 	{
@@ -152,9 +141,10 @@ ircd::m::_essential__iov(json::iov &event,
 	}
 }
 
-ircd::m::event &
-ircd::m::_essential(m::event &event,
-                    const mutable_buffer &contentbuf)
+ircd::m::event
+IRCD_MODULE_EXPORT
+ircd::m::essential(m::event event,
+                   const mutable_buffer &contentbuf)
 {
 	const auto &type
 	{
@@ -234,9 +224,10 @@ ircd::m::_essential(m::event &event,
 	return event;
 }
 
-extern "C" void
-pretty__event(std::ostream &s,
-              const event &event)
+std::ostream &
+IRCD_MODULE_EXPORT
+ircd::m::pretty(std::ostream &s,
+                const event &event)
 {
 	const auto out{[&s]
 	(const string_view &key, auto&& val)
@@ -343,12 +334,15 @@ pretty__event(std::ostream &s,
 			  << std::setw(5) << std::right << size(string_view{content.second}) << " bytes "
 			  << ':' << content.first
 			  << std::endl;
+
+	return s;
 }
 
-extern "C" void
-pretty_oneline__event(std::ostream &s,
-                      const event &event,
-                      const bool &content_keys)
+std::ostream &
+IRCD_MODULE_EXPORT
+ircd::m::pretty_oneline(std::ostream &s,
+                        const event &event,
+                        const bool &content_keys)
 {
 	const auto out{[&s]
 	(const string_view &key, auto&& val)
@@ -442,11 +436,14 @@ pretty_oneline__event(std::ostream &s,
 		for(const auto &content : contents)
 			s << content.first << " ";
 	}
+
+	return s;
 }
 
-extern "C" void
-pretty_msgline__event(std::ostream &s,
-                      const event &event)
+std::ostream &
+IRCD_MODULE_EXPORT
+ircd::m::pretty_msgline(std::ostream &s,
+                        const event &event)
 {
 	s << json::get<"depth"_>(event) << " :";
 	s << json::get<"type"_>(event) << " ";
@@ -481,11 +478,14 @@ pretty_msgline__event(std::ostream &s,
 			s << string_view{content};
 			break;
 	}
+
+	return s;
 }
 
-extern "C" void
-pretty__prev(std::ostream &s,
-             const event::prev &prev)
+std::ostream &
+IRCD_MODULE_EXPORT
+ircd::m::pretty(std::ostream &s,
+                const event::prev &prev)
 {
 	const auto out{[&s]
 	(const string_view &key, auto&& val)
@@ -532,11 +532,14 @@ pretty__prev(std::ostream &s,
 
 		s << std::endl;
 	}
+
+	return s;
 }
 
-extern "C" void
-pretty_oneline__prev(std::ostream &s,
-                     const event::prev &prev)
+std::ostream &
+IRCD_MODULE_EXPORT
+ircd::m::pretty_oneline(std::ostream &s,
+                        const event::prev &prev)
 {
 	const auto &auth_events{json::get<"auth_events"_>(prev)};
 	s << "A[ ";
@@ -555,10 +558,13 @@ pretty_oneline__prev(std::ostream &s,
 	for(const json::array prev_event : prev_events)
 		s << unquote(prev_event[0]) << " ";
 	s << "] ";
+
+	return s;
 }
 
-extern "C" void
-event_refs__rebuild()
+void
+IRCD_MODULE_EXPORT
+ircd::m::event::refs::rebuild()
 {
 	static const size_t pool_size{64};
 	static const size_t log_interval{8192};
@@ -618,8 +624,43 @@ event_refs__rebuild()
 	txn();
 }
 
-extern "C" void
-event_auth__rebuild()
+bool
+IRCD_MODULE_EXPORT
+ircd::m::event::auth::chain::for_each(const string_view &type,
+                                      const event::auth::chain::closure &closure)
+const
+{
+	event::idx next(0);
+	event::auth auth(this->auth);
+	uint64_t depth[2] {uint64_t(-1), 0}; do
+	{
+		auth.for_each(type, [&depth, &next]
+		(const event::idx &event_idx)
+		{
+			if(!m::get(event_idx, "depth", depth[1]))
+				return true;
+
+			if(depth[1] >= depth[0])
+				return true;
+
+			depth[0] = depth[1];
+			next = event_idx;
+			return true;
+		});
+
+		if(!closure(next))
+			return false;
+
+		auth.idx = next;
+		next = 0;
+	}
+	while(auth.idx);
+	return true;
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::event::auth::rebuild()
 {
 	static const size_t pool_size{96};
 	static const size_t log_interval{8192};
@@ -681,36 +722,4 @@ event_auth__rebuild()
 	});
 
 	txn();
-}
-
-extern "C" bool
-auth_chain_for_each(event::auth auth,
-                    const string_view &type,
-                    const event::auth::chain::closure &closure)
-{
-	event::idx next(0);
-	uint64_t depth[2] {uint64_t(-1), 0}; do
-	{
-		auth.for_each(type, [&depth, &next]
-		(const event::idx &event_idx)
-		{
-			if(!m::get(event_idx, "depth", depth[1]))
-				return true;
-
-			if(depth[1] >= depth[0])
-				return true;
-
-			depth[0] = depth[1];
-			next = event_idx;
-			return true;
-		});
-
-		if(!closure(next))
-			return false;
-
-		auth.idx = next;
-		next = 0;
-	}
-	while(auth.idx);
-	return true;
 }
