@@ -30,12 +30,12 @@ class ircd::mods::sym_ptr
 	template<class T> const T *get() const;
 	template<class T> const T *operator->() const;
 	template<class T> const T &operator*() const;
-	template<class T, class... args> auto operator()(args&&... a) const;
+	template<class T, class R, class... args> R operator()(args&&... a) const;
 
 	template<class T> T *get();
 	template<class T> T *operator->();
 	template<class T> T &operator*();
-	template<class T, class... args> auto operator()(args&&... a);
+	template<class T, class R, class... args> R operator()(args&&... a);
 
 	explicit sym_ptr(mod &, const string_view &symname);
 	sym_ptr(module, const string_view &symname);
@@ -44,8 +44,9 @@ class ircd::mods::sym_ptr
 };
 
 template<class T,
+         class R,
          class... args>
-auto
+R
 ircd::mods::sym_ptr::operator()(args&&... a)
 {
 	return (operator*<T>())(std::forward<args>(a)...);
@@ -79,8 +80,9 @@ ircd::mods::sym_ptr::get()
 }
 
 template<class T,
+         class R,
          class... args>
-auto
+R
 ircd::mods::sym_ptr::operator()(args&&... a)
 const
 {

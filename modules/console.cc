@@ -193,7 +193,7 @@ _console_command(opt &out,
 
 	const auto &ptr{cmd->ptr};
 	using prototype = bool (struct opt &, const string_view &);
-	return ptr.operator()<prototype>(out, args);
+	return ptr.operator()<prototype, bool>(out, args);
 }
 
 /// This function may be linked and called by those wishing to execute a
