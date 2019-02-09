@@ -23,9 +23,11 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = \
 	-dlopen self \
 	-Wl,-fuse-ld=gold \
+	-Wl,--gdb-index \
 	-Wl,--warn-execstack \
 	-Wl,--warn-common \
 	-Wl,--detect-odr-violations \
+	-Wl,--unresolved-symbols=report-all \
 	-Wl,--no-allow-shlib-undefined \
 	-Wl,--no-gnu-unique \
 	-Wl,--no-undefined \
@@ -35,8 +37,9 @@ AM_LDFLAGS = \
 	-Wl,--dynamic-list-cpp-typeinfo \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
-	-Wl,-z -Wl,combreloc \
 	-Wl,-z -Wl,now \
+	-Wl,-z -Wl,combreloc \
+	-Wl,-z -Wl,noexecstack \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
 	$(PLATFORM_LDFLAGS) \

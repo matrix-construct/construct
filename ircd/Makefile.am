@@ -36,12 +36,15 @@ endif
 AM_LDFLAGS = \
 	-version-info 3:1:0 \
 	-Wl,-fuse-ld=gold \
+	-Wl,--gdb-index \
 	-Wl,--warn-common \
 	-Wl,--warn-execstack \
 	-Wl,--detect-odr-violations \
-	-Wl,--export-dynamic \
+	-Wl,--unresolved-symbols=report-all \
+	-Wl,--no-undefined-version \
 	-Wl,--no-undefined \
 	-Wl,--no-gnu-unique \
+	-Wl,--export-dynamic \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
@@ -49,6 +52,7 @@ AM_LDFLAGS = \
 	-Wl,-z -Wl,initfirst \
 	-Wl,-z -Wl,nodelete \
 	-Wl,-z -Wl,nodlopen \
+	-Wl,-z -Wl,noexecstack \
 	-Wl,-z -Wl,now \
 	-Wl,-z -Wl,combreloc \
 	-Wl,-z -Wl,nocopyreloc \

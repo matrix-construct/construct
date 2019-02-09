@@ -29,6 +29,7 @@ AM_LDFLAGS = \
 	-avoid-version \
 	-module \
 	-Wl,-fuse-ld=gold \
+	-Wl,--gdb-index \
 	-Wl,--shared \
 	-Wl,--warn-common \
 	-Wl,--warn-execstack \
