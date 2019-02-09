@@ -475,6 +475,13 @@ ircd::mods::search(const string_view &name,
 //
 
 bool
+ircd::mods::is_module(const string_view &path)
+{
+	std::string why;
+	return is_module(path, why);
+}
+
+bool
 ircd::mods::is_module(const string_view &path,
                       std::nothrow_t)
 try
@@ -489,18 +496,6 @@ catch(const std::exception &e)
 bool
 ircd::mods::is_module(const string_view &path,
                       std::string &why)
-try
-{
-	return is_module(path);
-}
-catch(const std::exception &e)
-{
-	why = e.what();
-	return false;
-}
-
-bool
-ircd::mods::is_module(const string_view &path)
 {
 	static const auto &header_name
 	{
@@ -517,13 +512,15 @@ ircd::mods::is_module(const string_view &path)
 		std::find(begin(syms), end(syms), header_name)
 	};
 
-	if(it == end(syms))
-		throw error
-		{
-			"`%s': has no MAPI header (%s)", path, header_name
-		};
+	if(it != end(syms))
+		return true;
 
-	return true;
+	why = fmt::snstringf
+	{
+		256, "`%s': has no MAPI header (%s)", path, header_name
+	};
+
+	return false;
 }
 
 //
