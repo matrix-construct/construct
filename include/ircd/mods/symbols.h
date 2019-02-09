@@ -24,6 +24,6 @@ namespace ircd::mods
 	std::unordered_map<std::string, std::string> mangles(const string_view &fullpath);
 
 	// Find module names where symbol resides
-	bool has_symbol(const string_view &name, const string_view &symbol);
-	std::vector<std::string> find_symbol(const string_view &symbol);
+	bool has_symbol(const string_view &name, const string_view &symbol, const string_view &section = {});
+	std::vector<std::string> find_symbol(const string_view &symbol, const string_view &section = {});
 }

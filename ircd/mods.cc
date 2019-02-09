@@ -783,7 +783,8 @@ const
 //
 
 std::vector<std::string>
-ircd::mods::find_symbol(const string_view &symbol)
+ircd::mods::find_symbol(const string_view &symbol,
+                        const string_view &section)
 {
 	const auto av
 	{
@@ -791,10 +792,10 @@ ircd::mods::find_symbol(const string_view &symbol)
 	};
 
 	std::vector<std::string> ret;
-	std::copy_if(begin(av), end(av), std::back_inserter(ret), [&symbol]
+	std::copy_if(begin(av), end(av), std::back_inserter(ret), [&symbol, &section]
 	(const auto &name)
 	{
-		return has_symbol(name, symbol);
+		return has_symbol(name, symbol, section);
 	});
 
 	return ret;
@@ -802,7 +803,8 @@ ircd::mods::find_symbol(const string_view &symbol)
 
 bool
 ircd::mods::has_symbol(const string_view &name,
-                       const string_view &symbol)
+                       const string_view &symbol,
+                       const string_view &section)
 {
 	const auto path
 	{
@@ -814,7 +816,7 @@ ircd::mods::has_symbol(const string_view &name,
 
 	const auto syms
 	{
-		symbols(path)
+		symbols(path, section)
 	};
 
 	return std::find(begin(syms), end(syms), symbol) != end(syms);
@@ -863,6 +865,9 @@ std::vector<std::string>
 ircd::mods::symbols(const string_view &path,
                     const string_view &section)
 {
+	if(!section)
+		return symbols(path);
+
 	return info<std::vector<std::string>>(path, [&section]
 	(boost::dll::library_info &info)
 	{
