@@ -5489,10 +5489,10 @@ console_cmd__event(opt &out, const string_view &line)
 		}
 	}
 
-	out << pretty(event)
+	out << event_idx
 	    << std::endl;
 
-	out << event_idx
+	out << pretty(event)
 	    << std::endl;
 
 	const m::event::conforms conforms
@@ -5529,15 +5529,35 @@ console_cmd__event(opt &out, const string_view &line)
 	if(cached)
 		out << "+ CACHED" << std::endl;
 
+	if(m::is_power_event(event))
+	{
+		out << "+ POWER EVENT" << std::endl;
+
+		const m::event::auth &refs{event_idx};
+		const auto refcnt(refs.count());
+		if(refcnt)
+		{
+			out << std::endl;
+			out << "+ AUTH REFERENCED " << refcnt << std::endl;
+			refs.for_each([&out](const m::event::idx &idx)
+			{
+				const m::event::fetch event{idx};
+				out << "  " << idx << " " << pretty_oneline(event) << std::endl;
+				return true;
+			});
+		}
+	}
+
 	const m::event::refs &refs{event_idx};
 	const auto refcnt(refs.count());
 	if(refcnt)
 	{
-		out << "+ REFERENCES " << refs.count() << std::endl;
+		out << std::endl;
+		out << "+ REFERENCED " << refs.count() << std::endl;
 		refs.for_each([&out](const m::event::idx &idx)
 		{
 			const m::event::fetch event{idx};
-			out << "> " << idx << " " << pretty_oneline(event) << std::endl;
+			out << "  " << idx << " " << pretty_oneline(event) << std::endl;
 			return true;
 		});
 	}
