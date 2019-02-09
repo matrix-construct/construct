@@ -32,6 +32,8 @@ namespace ircd::mods
 	bool loading(const mod &);
 	bool unloading(const mod &);
 	bool has(const mod &, const string_view &sym);
+	const std::map<std::string, std::string> &exports(const mod &);
+
 	template<class T = uint8_t> const T *ptr(const mod &, const string_view &sym) noexcept;
 	template<class T = uint8_t> T *ptr(mod &, const string_view &sym) noexcept;
 	template<class T> const T &get(const mod &, const string_view &sym);

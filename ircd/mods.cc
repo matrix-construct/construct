@@ -77,7 +77,7 @@ try
 {
 	mode
 }
-,mangles
+,exports
 {
 	mods::mangles(this->path, mapi::import_section_name)
 }
@@ -581,12 +581,12 @@ try
 {
 	const auto it
 	{
-		mod.mangles.find(sym)
+		mod.exports.find(sym)
 	};
 
 	std::string s
 	{
-		it == end(mod.mangles)?
+		it == end(mod.exports)?
 			std::string{sym}:
 			it->second
 	};
@@ -612,12 +612,12 @@ try
 {
 	const auto it
 	{
-		mod.mangles.find(sym)
+		mod.exports.find(sym)
 	};
 
 	std::string s
 	{
-		it == end(mod.mangles)?
+		it == end(mod.exports)?
 			std::string{sym}:
 			it->second
 	};
@@ -660,6 +660,19 @@ catch(...)
 	return nullptr;
 }
 
+const std::map<std::string, std::string> &
+ircd::mods::exports(const mod &mod)
+{
+	return mod.exports;
+}
+
+bool
+ircd::mods::has(const mod &mod,
+                const string_view &name)
+{
+	return mod.handle.has(std::string{name});
+}
+
 bool
 ircd::mods::unloading(const mod &mod)
 {
@@ -678,13 +691,6 @@ bool
 ircd::mods::loaded(const mod &mod)
 {
 	return mod.handle.is_loaded();
-}
-
-bool
-ircd::mods::has(const mod &mod,
-                const string_view &name)
-{
-	return mod.handle.has(std::string{name});
 }
 
 ircd::string_view

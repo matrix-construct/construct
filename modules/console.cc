@@ -1196,11 +1196,11 @@ console_cmd__mod__path(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__mod__syms(opt &out, const string_view &line)
+console_cmd__mod__symbols(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"path",
+		"path", "section"
 	}};
 
 	const string_view path
@@ -1208,15 +1208,91 @@ console_cmd__mod__syms(opt &out, const string_view &line)
 		param.at("path")
 	};
 
+	const string_view section
+	{
+		param.at("section", string_view{})
+	};
+
 	const std::vector<std::string> symbols
 	{
-		mods::symbols(path)
+		mods::symbols(path, section)
 	};
 
 	for(const auto &sym : symbols)
 		out << sym << std::endl;
 
-	out << " -- " << symbols.size() << " symbols in " << path << std::endl;
+	out << " -- " << symbols.size() << " symbols in " << path;
+
+	if(section)
+		out << " in " << section;
+
+	out << std::endl;
+	return true;
+}
+
+bool
+console_cmd__mod__mangles(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"path", "section"
+	}};
+
+	const string_view path
+	{
+		param.at("path")
+	};
+
+	const string_view section
+	{
+		param.at("path", string_view{})
+	};
+
+	const auto mangles
+	{
+		mods::mangles(path, section)
+	};
+
+	for(const auto &p : mangles)
+		out << p.first << "  " << p.second << std::endl;
+
+	out << std::endl;
+	return true;
+}
+
+bool
+console_cmd__mod__exports(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"name"
+	}};
+
+	const string_view name
+	{
+		param.at("name")
+	};
+
+	if(!mods::loaded(name))
+		throw error
+		{
+			"Module '%s' is not loaded", name
+		};
+
+	const module &module
+	{
+		name
+	};
+
+	auto &exports
+	{
+		mods::exports(module)
+	};
+
+	for(const auto &p : exports)
+		out << p.first << "  " << p.second << std::endl;
+
+	out << std::endl;
 	return true;
 }
 
