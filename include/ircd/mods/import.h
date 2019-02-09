@@ -27,6 +27,9 @@ template<class T>
 struct ircd::mods::import
 :sym_ptr
 {
+	string_view mangled_name;
+	std::string demangled_name;
+	std::string target_name;
 	std::string module_name;
 	std::string symbol_name;
 
@@ -57,6 +60,18 @@ ircd::mods::import<T>::import(std::string module_name,
 	// "lazy" and will be loaded via miss on first use. This is useful in
 	// the general use-case of static construction.
 }
+,mangled_name
+{
+	typeid(T).name()
+}
+,demangled_name
+{
+	demangle(mangled_name)
+}
+,target_name{fmt::snstringf
+{
+	1024, "%s(%s", symbol_name, split(demangled_name, "(").second
+}}
 ,module_name
 {
 	std::move(module_name)
@@ -73,6 +88,14 @@ ircd::mods::import<T>::import(const mods::module &module,
 :sym_ptr
 {
 	module, symbol_name
+}
+,mangled_name
+{
+	typeid(T).name()
+}
+,demangled_name
+{
+	demangle(mangled_name)
 }
 ,module_name
 {
@@ -167,7 +190,12 @@ try
 		static_cast<sym_ptr &>(*this)
 	};
 
-	sp = { module, symbol_name };
+	const auto &symname
+	{
+		ircd::has(symbol_name, ':')? target_name : symbol_name
+	};
+
+	sp = { module, symname };
 }
 catch(const std::out_of_range &e)
 {

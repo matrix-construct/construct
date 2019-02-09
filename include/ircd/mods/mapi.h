@@ -31,6 +31,11 @@ namespace ircd::mapi
 	{
 		"IRCD_MODULE"
 	};
+
+	const char *const import_section_name
+	{
+		"ircd"
+	};
 }
 
 /// The magic number at the front of the header

@@ -77,6 +77,10 @@ try
 {
 	mode
 }
+,mangles
+{
+	mods::mangles(this->path, mapi::import_section_name)
+}
 ,handle{[this]
 {
 	// Can't interrupt this ctx during the dlopen() as long as exceptions
@@ -575,7 +579,19 @@ ircd::mods::get<uint8_t>(mod &mod,
                          const string_view &sym)
 try
 {
-	return mod.handle.get<uint8_t>(std::string{sym});
+	const auto it
+	{
+		mod.mangles.find(sym)
+	};
+
+	std::string s
+	{
+		it == end(mod.mangles)?
+			std::string{sym}:
+			it->second
+	};
+
+	return mod.handle.get<uint8_t>(s);
 }
 catch(const std::exception &e)
 {
@@ -594,7 +610,19 @@ ircd::mods::get<const uint8_t>(const mod &mod,
                                const string_view &sym)
 try
 {
-	return mod.handle.get<const uint8_t>(std::string{sym});
+	const auto it
+	{
+		mod.mangles.find(sym)
+	};
+
+	std::string s
+	{
+		it == end(mod.mangles)?
+			std::string{sym}:
+			it->second
+	};
+
+	return mod.handle.get<const uint8_t>(s);
 }
 catch(const std::exception &e)
 {
