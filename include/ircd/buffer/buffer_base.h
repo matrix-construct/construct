@@ -20,6 +20,7 @@ struct ircd::buffer::buffer
 	using iterator = it;
 	using value_type = typename std::remove_pointer<iterator>::type;
 
+	explicit operator const it &() const;
 	operator string_view() const;
 	explicit operator std::string_view() const;
 	explicit operator std::string() const;
@@ -91,4 +92,12 @@ ircd::buffer::buffer<it>::operator string_view()
 const
 {
 	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
+}
+
+template<class it>
+ircd::buffer::buffer<it>::operator
+const it &()
+const
+{
+	return begin();
 }
