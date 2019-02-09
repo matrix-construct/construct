@@ -41,7 +41,7 @@ struct ircd::json::input
 :qi::grammar<const char *, unused_type>
 {
 	using it = const char *;
-	template<class T = unused_type> using rule = qi::rule<it, T>;
+	template<class T = unused_type, class... A> using rule = qi::rule<it, T, A...>;
 
 	rule<> NUL                         { lit('\0')                                          ,"nul" };
 
@@ -174,7 +174,7 @@ struct ircd::json::output
 :karma::grammar<char *, unused_type>
 {
 	using it = char *;
-	template<class T = unused_type> using rule = karma::rule<it, T>;
+	template<class T = unused_type, class... A> using rule = karma::rule<it, T, A...>;
 
 	rule<> NUL                         { lit('\0')                                          ,"nul" };
 
@@ -1073,8 +1073,13 @@ ircd::json::stack::member::member(object &po,
 		s->append(","_sv);
 
 	thread_local char tmp[2048];
+	static const json::printer::rule<string_view> rule
+	{
+		json::printer.name << json::printer.name_sep
+	};
+
 	mutable_buffer buf{tmp};
-	if(!printer(buf, json::printer.name << json::printer.name_sep, name))
+	if(!printer(buf, rule, name))
 		throw error
 		{
 			"member name overflow: max size is under %zu", sizeof(tmp)
