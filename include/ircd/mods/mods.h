@@ -32,8 +32,8 @@ namespace ircd::mods
 	bool loading(const mod &);
 	bool unloading(const mod &);
 	bool has(const mod &, const string_view &sym);
-	template<class T = uint8_t> const T *ptr(const mod &, const string_view &sym);
-	template<class T = uint8_t> T *ptr(mod &, const string_view &sym);
+	template<class T = uint8_t> const T *ptr(const mod &, const string_view &sym) noexcept;
+	template<class T = uint8_t> T *ptr(mod &, const string_view &sym) noexcept;
 	template<class T> const T &get(const mod &, const string_view &sym);
 	template<class T> T &get(mod &, const string_view &sym);
 
@@ -76,8 +76,11 @@ namespace ircd
 
 namespace ircd::mods
 {
-	template<> const uint8_t *ptr<const uint8_t>(const mod &, const string_view &sym);
-	template<> uint8_t *ptr<uint8_t>(mod &, const string_view &sym);
+	template<> const uint8_t *ptr<const uint8_t>(const mod &, const string_view &sym) noexcept;
+	template<> uint8_t *ptr<uint8_t>(mod &, const string_view &sym) noexcept;
+
+	template<> const uint8_t &get<const uint8_t>(const mod &, const string_view &sym);
+	template<> uint8_t &get<uint8_t>(mod &, const string_view &sym);
 }
 
 template<class T>
@@ -85,7 +88,7 @@ T &
 ircd::mods::get(mod &mod,
                 const string_view &sym)
 {
-	return *ptr<T>(mod, sym);
+	return reinterpret_cast<T &>(get<uint8_t>(mod, sym));
 }
 
 template<class T>
@@ -93,13 +96,14 @@ const T &
 ircd::mods::get(const mod &mod,
                 const string_view &sym)
 {
-	return *ptr<T>(mod, sym);
+	return reinterpret_cast<const T &>(get<const uint8_t>(mod, sym));
 }
 
 template<class T>
 T *
 ircd::mods::ptr(mod &mod,
                 const string_view &sym)
+noexcept
 {
 	return reinterpret_cast<T *>(ptr<uint8_t>(mod, sym));
 }
@@ -108,6 +112,7 @@ template<class T>
 const T *
 ircd::mods::ptr(const mod &mod,
                 const string_view &sym)
+noexcept
 {
 	return reinterpret_cast<const T *>(ptr<const uint8_t>(mod, sym));
 }

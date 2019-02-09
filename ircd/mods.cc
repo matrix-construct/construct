@@ -570,19 +570,66 @@ ircd::mods::loaded(const string_view &name)
 // utils by mod reference
 //
 
+template<> uint8_t &
+ircd::mods::get<uint8_t>(mod &mod,
+                         const string_view &sym)
+try
+{
+	return mod.handle.get<uint8_t>(std::string{sym});
+}
+catch(const std::exception &e)
+{
+	throw undefined_symbol
+	{
+		"Could not find symbol '%s' (%s) in module '%s'",
+		demangle(sym),
+		sym,
+		mod.name()
+	};
+}
+
+template<>
+const uint8_t &
+ircd::mods::get<const uint8_t>(const mod &mod,
+                               const string_view &sym)
+try
+{
+	return mod.handle.get<const uint8_t>(std::string{sym});
+}
+catch(const std::exception &e)
+{
+	throw undefined_symbol
+	{
+		"Could not find symbol '%s' (%s) in module '%s'",
+		demangle(sym),
+		sym,
+		mod.name()
+	};
+}
+
 template<> uint8_t *
 ircd::mods::ptr<uint8_t>(mod &mod,
                          const string_view &sym)
+noexcept try
 {
 	return &mod.handle.get<uint8_t>(std::string{sym});
+}
+catch(...)
+{
+	return nullptr;
 }
 
 template<>
 const uint8_t *
 ircd::mods::ptr<const uint8_t>(const mod &mod,
                                const string_view &sym)
+noexcept try
 {
 	return &mod.handle.get<const uint8_t>(std::string{sym});
+}
+catch(...)
+{
+	return nullptr;
 }
 
 bool
@@ -662,20 +709,12 @@ ircd::mods::sym_ptr::sym_ptr(module module,
 {
 	module
 }
-,ptr{[this, &module, &symname]
+,ptr
 {
-	if(unlikely(!module.has(symname)))
-		throw undefined_symbol
-		{
-			"Could not find symbol '%s' (%s) in module '%s'",
-			demangle(symname),
-			symname,
-			module.name()
-		};
-
-	return module.ptr(symname);
-}()}
+	&module.get<uint8_t>(symname)
+}
 {
+	assert(ptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

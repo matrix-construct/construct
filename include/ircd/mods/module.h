@@ -27,8 +27,8 @@ struct ircd::mods::module
 
 	bool has(const string_view &sym) const;
 
-	template<class T = uint8_t> const T *ptr(const string_view &sym) const;
-	template<class T = uint8_t> T *ptr(const string_view &sym);
+	template<class T = uint8_t> const T *ptr(const string_view &sym) const noexcept;
+	template<class T = uint8_t> T *ptr(const string_view &sym) noexcept;
 
 	template<class T> const T &get(const string_view &sym) const;
 	template<class T> T &get(const string_view &sym);
@@ -62,6 +62,7 @@ const
 template<class T>
 T *
 ircd::mods::module::ptr(const string_view &sym)
+noexcept
 {
 	mod &mod(*this);
 	return mods::ptr<T>(mod, sym);
@@ -70,7 +71,7 @@ ircd::mods::module::ptr(const string_view &sym)
 template<class T>
 const T *
 ircd::mods::module::ptr(const string_view &sym)
-const
+const noexcept
 {
 	const mod &mod(*this);
 	return mods::ptr<T>(mod, sym);
