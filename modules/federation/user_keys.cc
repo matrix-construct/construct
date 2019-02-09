@@ -45,7 +45,7 @@ post__user_keys_claim(client &client,
 resource::method
 user_keys_query__post
 {
-	user_keys_query_resource, "POST", post__user_keys_query
+	user_keys_query_resource, "POST", post__user_keys_query,
 	{
 		user_keys_query__post.VERIFY_ORIGIN
 	}
@@ -54,7 +54,7 @@ user_keys_query__post
 resource::method
 user_keys_claim__post
 {
-	user_keys_claim_resource, "POST", post__user_keys_claim
+	user_keys_claim_resource, "POST", post__user_keys_claim,
 	{
 		user_keys_claim__post.VERIFY_ORIGIN
 	}

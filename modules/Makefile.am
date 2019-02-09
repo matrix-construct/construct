@@ -391,6 +391,8 @@ federation_module_LTLIBRARIES = \
 	federation/federation_event_auth.la \
 	federation/federation_query_auth.la \
 	federation/federation_publicrooms.la \
+	federation/federation_user_devices.la \
+	federation/federation_user_keys.la \
 	federation/federation_federation.la \
 	###
 

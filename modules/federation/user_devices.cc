@@ -33,9 +33,9 @@ get__user_devices(client &client,
 resource::method
 method_get
 {
-	user_devices_resource, "GET", get__user_devices
+	user_devices_resource, "GET", get__user_devices,
 	{
-		method_post.VERIFY_ORIGIN
+		method_get.VERIFY_ORIGIN
 	}
 };
 
