@@ -19,9 +19,9 @@ namespace ircd::mods
 	std::vector<std::string> symbols(const string_view &fullpath, const string_view &section);
 	std::vector<std::string> symbols(const string_view &fullpath);
 
-	std::unordered_map<std::string, std::string> mangles(const std::vector<std::string> &);
-	std::unordered_map<std::string, std::string> mangles(const string_view &fullpath, const string_view &section);
-	std::unordered_map<std::string, std::string> mangles(const string_view &fullpath);
+	std::map<std::string, std::string> mangles(const std::vector<std::string> &);
+	std::map<std::string, std::string> mangles(const string_view &fullpath, const string_view &section);
+	std::map<std::string, std::string> mangles(const string_view &fullpath);
 
 	// Find module names where symbol resides
 	bool has_symbol(const string_view &name, const string_view &symbol, const string_view &section = {});

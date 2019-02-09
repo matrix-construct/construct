@@ -819,23 +819,23 @@ ircd::mods::has_symbol(const string_view &name,
 	return std::find(begin(syms), end(syms), symbol) != end(syms);
 }
 
-std::unordered_map<std::string, std::string>
+std::map<std::string, std::string>
 ircd::mods::mangles(const string_view &path)
 {
 	return mangles(mods::symbols(path));
 }
 
-std::unordered_map<std::string, std::string>
+std::map<std::string, std::string>
 ircd::mods::mangles(const string_view &path,
                     const string_view &section)
 {
 	return mangles(mods::symbols(path, section));
 }
 
-std::unordered_map<std::string, std::string>
+std::map<std::string, std::string>
 ircd::mods::mangles(const std::vector<std::string> &symbols)
 {
-	std::unordered_map<std::string, std::string> ret;
+	std::map<std::string, std::string> ret;
 	for(const auto &sym : symbols) try
 	{
 		ret.emplace(demangle(sym), sym);
