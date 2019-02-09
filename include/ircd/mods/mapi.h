@@ -11,6 +11,11 @@
 #pragma once
 #define HAVE_IRCD_MAPI_H
 
+#define IRCD_MODULE_EXPORT_SECTION "ircd"
+
+#define IRCD_MODULE_EXPORT \
+	__attribute__((section(IRCD_MODULE_EXPORT_SECTION)))
+
 /// Module API: Interface for module developers.
 namespace ircd::mapi
 {
@@ -34,7 +39,7 @@ namespace ircd::mapi
 
 	const char *const import_section_name
 	{
-		"ircd"
+		IRCD_MODULE_EXPORT_SECTION
 	};
 }
 
