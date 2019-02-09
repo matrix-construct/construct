@@ -11,19 +11,28 @@
 #pragma once
 #define HAVE_IRCD_MODS_SYMBOLS_H
 
+// Section & Symbol utilites
+//
+// All path parameters can be absolute paths to any module file, or relative
+// names which will be found using the mods::paths system.
+
 namespace ircd::mods
 {
-	// Section & Symbol utilites
-	std::vector<std::string> sections(const string_view &fullpath);
+	// Get all section names
+	std::vector<std::string> sections(const string_view &path);
 
-	std::vector<std::string> symbols(const string_view &fullpath, const string_view &section);
-	std::vector<std::string> symbols(const string_view &fullpath);
+	// Get all symbol names (mangled)
+	std::vector<std::string> symbols(const string_view &path, const string_view &section);
+	std::vector<std::string> symbols(const string_view &path);
 
+	// Generate demangled -> mangled map
 	std::map<std::string, std::string> mangles(const std::vector<std::string> &);
-	std::map<std::string, std::string> mangles(const string_view &fullpath, const string_view &section);
-	std::map<std::string, std::string> mangles(const string_view &fullpath);
+	std::map<std::string, std::string> mangles(const string_view &path, const string_view &section);
+	std::map<std::string, std::string> mangles(const string_view &path);
 
-	// Find module names where symbol resides
+	// Test if module has (mangled) symbol (optionally in section)
 	bool has_symbol(const string_view &name, const string_view &symbol, const string_view &section = {});
+
+	// Find module names where (mangled) symbol resides in the mods::paths
 	std::vector<std::string> find_symbol(const string_view &symbol, const string_view &section = {});
 }

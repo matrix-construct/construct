@@ -37,6 +37,7 @@ namespace ircd::mapi
 		"IRCD_MODULE"
 	};
 
+	/// Symbols in this section are automatically demangle-mapped on load.
 	const char *const import_section_name
 	{
 		IRCD_MODULE_EXPORT_SECTION
@@ -57,6 +58,13 @@ IRCD_MAPI_VERSION
 	4
 };
 
+/// Module Header
+///
+/// A static instance of this class must be included in an IRCd module with
+/// the unmangled name of IRCD_MODULE (thus there can be only one). It must
+/// be externally visible. If this is not present or not visible, ircd::mods
+/// will not consider the file to be an IRCd module and it will be ignored.
+///
 struct ircd::mapi::header
 {
 	const magic_t magic {IRCD_MAPI_MAGIC};       // The magic must match

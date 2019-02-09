@@ -21,6 +21,10 @@ namespace ircd::mods
 	std::string prefix_if_relative(std::string);
 }
 
+/// Search paths vector for modules. These directories will be searched
+/// when a relative path/name is given to various other places in the
+/// ircd::mods interface.
+///
 struct ircd::mods::paths
 :std::vector<std::string>
 {

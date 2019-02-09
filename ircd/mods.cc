@@ -907,17 +907,12 @@ ircd::mods::has_symbol(const string_view &name,
                        const string_view &symbol,
                        const string_view &section)
 {
-	const auto path
-	{
-		fullpath(name)
-	};
-
-	if(path.empty())
+	if(name.empty() || symbol.empty())
 		return false;
 
 	const auto syms
 	{
-		symbols(path, section)
+		symbols(name, section)
 	};
 
 	return std::find(begin(syms), end(syms), symbol) != end(syms);
@@ -989,13 +984,20 @@ ircd::mods::sections(const string_view &path)
 template<class R,
          class F>
 R
-ircd::mods::info(const string_view &path,
+ircd::mods::info(const string_view &p,
                  F&& closure)
 try
 {
+	const auto path
+	{
+		fs::is_relative(p)?
+			fs::_path(fullpath(p)):
+			fs::_path(p)
+	};
+
 	boost::dll::library_info info
 	{
-		fs::_path(path)
+		path
 	};
 
 	return closure(info);
@@ -1004,7 +1006,7 @@ catch(const filesystem::filesystem_error &e)
 {
 	throw fs::error
 	{
-		e, "%s", path
+		e, "%s", p
 	};
 }
 
