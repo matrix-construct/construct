@@ -19,8 +19,8 @@ namespace ircd::mods
 struct ircd::mods::module
 :std::shared_ptr<mod>
 {
-	explicit operator const mod &() const;
-	explicit operator mod &();
+	operator const mod &() const;
+	operator mod &();
 
 	string_view name() const;
 	string_view path() const;
