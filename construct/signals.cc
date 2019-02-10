@@ -11,6 +11,8 @@
 #include <ircd/ircd.h>
 #include <ircd/asio.h>
 #include "construct.h"
+#include "signals.h"
+#include "console.h"
 
 namespace construct
 {

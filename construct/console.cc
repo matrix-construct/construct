@@ -10,6 +10,7 @@
 
 #include <ircd/ircd.h>
 #include "construct.h"
+#include "console.h"
 
 using namespace ircd;
 

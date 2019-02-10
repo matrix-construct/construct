@@ -13,6 +13,8 @@
 #include <ircd/asio.h>
 #include "lgetopt.h"
 #include "construct.h"
+#include "signals.h"
+#include "console.h"
 
 static bool startup_checks();
 static void applyargs();
