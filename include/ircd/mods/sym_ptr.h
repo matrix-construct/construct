@@ -62,6 +62,7 @@ ircd::mods::sym_ptr::operator*()
 			"The reference to a symbol in another module is no longer valid"
 		};
 
+	assert(ptr);
 	return *operator-><T>();
 }
 
@@ -100,6 +101,7 @@ const
 			"The const reference to a symbol in another module is no longer valid"
 		};
 
+	assert(ptr);
 	return *operator-><T>();
 }
 

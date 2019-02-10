@@ -15,6 +15,8 @@ namespace ircd::mods
 {
 	template<class T> struct import;
 	struct imports extern imports;
+
+	std::string make_target_name(const string_view &name, const string_view &demangled);
 }
 
 struct ircd::mods::imports
@@ -27,11 +29,11 @@ template<class T>
 struct ircd::mods::import
 :sym_ptr
 {
-	string_view mangled_name;
-	std::string demangled_name;
-	std::string target_name;
+	string_view mangled_type;
+	std::string demangled_type;
 	std::string module_name;
 	std::string symbol_name;
+	std::string target_name;
 
 	void reload();
 
@@ -60,18 +62,14 @@ ircd::mods::import<T>::import(std::string module_name,
 	// "lazy" and will be loaded via miss on first use. This is useful in
 	// the general use-case of static construction.
 }
-,mangled_name
+,mangled_type
 {
 	typeid(T).name()
 }
-,demangled_name
+,demangled_type
 {
-	demangle(mangled_name)
+	demangle(mangled_type)
 }
-,target_name{fmt::snstringf
-{
-	1024, "%s(%s", symbol_name, split(demangled_name, "(").second
-}}
 ,module_name
 {
 	std::move(module_name)
@@ -80,6 +78,10 @@ ircd::mods::import<T>::import(std::string module_name,
 {
 	std::move(symbol_name)
 }
+,target_name
+{
+	make_target_name(this->symbol_name, demangled_type)
+}
 {}
 
 template<class T>
@@ -87,15 +89,15 @@ ircd::mods::import<T>::import(const mods::module &module,
                               std::string symbol_name)
 :sym_ptr
 {
-	module, symbol_name
+
 }
-,mangled_name
+,mangled_type
 {
 	typeid(T).name()
 }
-,demangled_name
+,demangled_type
 {
-	demangle(mangled_name)
+	demangle(mangled_type)
 }
 ,module_name
 {
@@ -105,7 +107,21 @@ ircd::mods::import<T>::import(const mods::module &module,
 {
 	std::move(symbol_name)
 }
-{}
+,target_name
+{
+	make_target_name(this->symbol_name, demangled_type)
+}
+{
+	auto &sp
+	{
+		static_cast<sym_ptr &>(*this)
+	};
+
+	sp =
+	{
+		module, !empty(target_name)? target_name : this->symbol_name
+	};
+}
 
 template<class T>
 ircd::mods::import<T>::operator
@@ -194,7 +210,7 @@ try
 
 	const auto &symname
 	{
-		ircd::has(symbol_name, ':')? target_name : symbol_name
+		!empty(target_name)? target_name : symbol_name
 	};
 
 	sp = { module, symname };

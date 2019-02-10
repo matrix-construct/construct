@@ -708,6 +708,43 @@ decltype(ircd::mods::imports)
 ircd::mods::imports
 {};
 
+std::string
+ircd::mods::make_target_name(const string_view &name,
+                             const string_view &demangled)
+{
+	if(!startswith(name, "ircd::"))
+		return std::string{};
+
+	const auto classname
+	{
+		rsplit(name, "::").first
+	};
+
+	thread_local char buf[1024];
+	const string_view mem_fun_ptr{fmt::sprintf
+	{
+		buf, "%s::*)(", classname
+	}};
+
+	const auto signature
+	{
+		split(demangled, "(")
+	};
+
+	const auto prototype
+	{
+		lstrip(signature.second, mem_fun_ptr)
+	};
+
+	auto ret{fmt::snstringf
+	{
+		4096, "%s(%s", name, prototype
+	}};
+
+	ret.shrink_to_fit();
+	return ret;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // mods/sym_ptr.h
