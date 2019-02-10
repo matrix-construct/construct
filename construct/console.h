@@ -25,11 +25,14 @@ struct construct::console
 	ircd::module *module {nullptr};
 	ircd::context context;
 	ircd::run::changed runlevel_changed;
+	std::deque<std::string> history;
 
 	void show_message() const;
 	void on_runlevel(const enum ircd::run::level &);
 	bool wait_running() const;
 	bool next_command();
+	bool esc_handle_bra();
+	bool esc_handle();
 	void wait_input();
 
 	bool cmd__record();

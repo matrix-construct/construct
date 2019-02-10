@@ -414,8 +414,46 @@ construct::console::wait_input()
 		};
 
 		line.resize(size(read));
+
+		if(startswith(line, "\x1B"_sv))
+			esc_handle();
 	}
 	while(line.empty());
+
+	history.emplace_back(line);
+}
+
+bool
+construct::console::esc_handle()
+{
+	if(startswith(line, "\x1B\x5B"_sv) && size(line) >= 3)
+		return esc_handle_bra();
+
+	line = {};
+	return true;
+}
+
+bool
+construct::console::esc_handle_bra()
+{
+	switch(line[2])
+	{
+		case 'A': // up-arrow
+		{
+			if(history.empty())
+			{
+				line = {};
+				return false;
+			}
+
+			line = history.front();
+			history.pop_front();
+			return true;
+		}
+	}
+
+	line = {};
+	return true;
 }
 
 bool
