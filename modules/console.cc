@@ -10805,6 +10805,96 @@ console_cmd__vm__eval(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__mc__register(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "password", "[remote]"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const string_view &password
+	{
+		param.at("password")
+	};
+
+	const net::hostport remote
+	{
+		param.at("[remote]", user_id.host())
+	};
+
+	static const string_view uri
+	{
+		"/_matrix/client/r0/register?kind=user"
+	};
+
+	server::request::opts sopts;
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	window_buffer wb{buf};
+	wb([&](mutable_buffer buf)
+	{
+		return json::stringify(buf, json::members
+		{
+			{ "username", user_id.localname() },
+			{ "password", password            },
+			{ "auth", json::members
+			{
+				{ "type", "m.login.dummy" }
+			}}
+		});
+	});
+
+	const string_view &content
+	{
+		wb.completed()
+	};
+
+	wb = mutable_buffer{wb};
+	http::request
+	{
+		wb, host(remote), "POST", uri, size(content), "application/json"
+	};
+
+	server::out sout
+	{
+		wb.completed(), content
+	};
+
+	server::in sin
+	{
+		mutable_buffer{wb}
+	};
+
+	server::request request
+	{
+		remote, std::move(sout), std::move(sin)
+	};
+
+	request.wait(out.timeout);
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object response
+	{
+		request.in.content
+	};
+
+	out << uint(code) << ": " << std::endl;
+	out << string_view{response} << std::endl;
+	return true;
+}
+
+bool
 console_cmd__mc__register__available(opt &out, const string_view &line)
 {
 	const params param{line, " ",
