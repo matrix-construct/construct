@@ -51,7 +51,6 @@ timeout_min
 
 static system_point calc_timesout(milliseconds relative);
 static bool update_state(const m::typing &);
-extern "C" bool for_each(const m::typing::closure_bool &);
 extern "C" m::event::id::buf commit(const m::typing &edu);
 
 //
@@ -330,7 +329,7 @@ timeout_timeout(const typist &t)
 //
 
 bool
-for_each(const m::typing::closure_bool &closure)
+ircd::m::typing::for_each(const m::typing::closure_bool &closure)
 {
 	// User cannot yield in their closure because the iteration
 	// may be invalidated by the timeout worker during their yield.

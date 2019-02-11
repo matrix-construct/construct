@@ -1426,7 +1426,7 @@ ircd::m::typing::for_each(const closure_bool &closure)
 
 	static mods::import<prototype> function
 	{
-		"m_typing", "for_each"
+		"m_typing", "ircd::m::typing::for_each"
 	};
 
 	return function(closure);
