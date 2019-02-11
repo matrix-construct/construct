@@ -10799,3 +10799,71 @@ console_cmd__vm__eval(opt &out, const string_view &line)
 
 	return true;
 }
+
+//
+// mc
+//
+
+bool
+console_cmd__mc__register__available(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "[remote]"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const net::hostport remote
+	{
+		param.at("[remote]", user_id.host())
+	};
+
+	server::request::opts sopts;
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	window_buffer wb{buf};
+	wb([&user_id](const mutable_buffer &buf)
+	{
+		char urlencbuf[256];
+		return fmt::sprintf
+		{
+			buf, "/_matrix/client/r0/register/available?username=%s",
+			url::encode(urlencbuf, user_id.localname())
+		};
+	});
+
+	const string_view uri{wb.completed()};
+	wb = mutable_buffer{wb};
+	http::request
+	{
+		wb, host(remote), "GET", uri
+	};
+
+	server::out sout{wb.completed()};
+	server::in sin{mutable_buffer{wb}};
+	server::request request
+	{
+		remote, std::move(sout), std::move(sin)
+	};
+
+	request.wait(out.timeout);
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object response
+	{
+		request.in.content
+	};
+
+	out << uint(code) << ": " << string_view{response} << std::endl;
+	return true;
+}
