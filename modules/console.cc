@@ -7687,9 +7687,10 @@ console_cmd__room__events(opt &out, const string_view &line)
 		room_id
 	};
 
-	m::room::messages it{room};
-	if(depth >= 0 && depth < std::numeric_limits<int64_t>::max())
-		it.seek(depth);
+	m::room::messages it
+	{
+		room, uint64_t(depth >= 0? depth : -1)
+	};
 
 	for(; it && limit >= 0; order == 'b'? --it : ++it, --limit)
 		if(roots)
