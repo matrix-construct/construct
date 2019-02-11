@@ -1418,7 +1418,7 @@ ircd::m::presence::set(const presence &object)
 
 	static mods::import<prototype> function
 	{
-		"m_presence", "commit__m_presence"
+		"m_presence", "ircd::m::presence::set"
 	};
 
 	return function(object);
@@ -1460,19 +1460,14 @@ ircd::m::presence::get(std::nothrow_t,
                        const closure_event &closure,
                        const event::fetch::opts *const &opts)
 {
-	using prototype = bool (std::nothrow_t, const m::user &, const closure_event &, const event::fetch::opts &);
+	using prototype = bool (std::nothrow_t, const m::user &, const closure_event &, const event::fetch::opts *const &);
 
 	static mods::import<prototype> function
 	{
-		"m_presence", "get__m_presence"
+		"m_presence", "ircd::m::presence::get"
 	};
 
-	const event::fetch::opts &fopts
-	{
-		opts? *opts : event::fetch::default_opts
-	};
-
-	return function(std::nothrow, user, closure, fopts);
+	return function(std::nothrow, user, closure, opts);
 }
 
 ircd::m::event::idx
@@ -1500,7 +1495,7 @@ ircd::m::presence::get(std::nothrow_t,
 
 	static mods::import<prototype> function
 	{
-		"m_presence", "get__m_presence__event_idx"
+		"m_presence", "ircd::m::presence::get"
 	};
 
 	return function(std::nothrow, user);
@@ -1513,7 +1508,7 @@ ircd::m::presence::valid_state(const string_view &state)
 
 	static mods::import<prototype> function
 	{
-		"m_presence", "presence_valid_state"
+		"m_presence", "ircd::m::presence::valid_state"
 	};
 
 	return function(state);

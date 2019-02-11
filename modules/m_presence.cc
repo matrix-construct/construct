@@ -10,30 +10,17 @@
 
 using namespace ircd;
 
+static void handle_edu_m_presence_object(const m::event &, const m::presence &edu);
+static void handle_edu_m_presence(const m::event &, m::vm::eval &);
+
 mapi::header
 IRCD_MODULE
 {
 	"Matrix Presence"
 };
 
-const string_view
-valid_states[]
-{
-	"online", "offline", "unavailable",
-};
-
-extern "C" bool
-presence_valid_state(const string_view &state)
-{
-	return std::any_of(begin(valid_states), end(valid_states), [&state]
-	(const string_view &valid)
-	{
-		return state == valid;
-	});
-}
-
-static void handle_edu_m_presence_(const m::event &, const m::presence &edu);
-static void handle_edu_m_presence(const m::event &, m::vm::eval &);
+extern const string_view
+valid_states[];
 
 const m::hookfn<m::vm::eval &>
 _m_presence_eval
@@ -64,7 +51,7 @@ try
 	};
 
 	for(const json::object &presence : push)
-		handle_edu_m_presence_(event, presence);
+		handle_edu_m_presence_object(event, presence);
 }
 catch(const std::exception &e)
 {
@@ -77,8 +64,8 @@ catch(const std::exception &e)
 }
 
 void
-handle_edu_m_presence_(const m::event &event,
-                       const m::presence &object)
+handle_edu_m_presence_object(const m::event &event,
+                             const m::presence &object)
 try
 {
 	const m::user::id &user_id
@@ -200,9 +187,41 @@ catch(const m::error &e)
 	};
 }
 
-extern "C" m::event::idx
-get__m_presence__event_idx(const std::nothrow_t,
-                           const m::user &user)
+bool
+IRCD_MODULE_EXPORT
+ircd::m::presence::get(const std::nothrow_t,
+                       const m::user &user,
+                       const m::presence::closure_event &closure,
+                       const m::event::fetch::opts *const &fopts_p)
+{
+	const m::event::idx event_idx
+	{
+		m::presence::get(std::nothrow, user)
+	};
+
+	if(!event_idx)
+		return false;
+
+	const auto &fopts
+	{
+		fopts_p? *fopts_p : event::fetch::default_opts
+	};
+
+	const m::event::fetch event
+	{
+		event_idx, std::nothrow, fopts
+	};
+
+	if(event.valid)
+		closure(event);
+
+	return event.valid;
+}
+
+m::event::idx
+IRCD_MODULE_EXPORT
+ircd::m::presence::get(const std::nothrow_t,
+                       const m::user &user)
 {
 	const m::user::room user_room
 	{
@@ -224,33 +243,9 @@ get__m_presence__event_idx(const std::nothrow_t,
 	return ret;
 }
 
-extern "C" bool
-get__m_presence(const std::nothrow_t,
-                const m::user &user,
-                const m::presence::closure_event &closure,
-                const m::event::fetch::opts &fopts)
-{
-	const m::event::idx event_idx
-	{
-		get__m_presence__event_idx(std::nothrow, user)
-	};
-
-	if(!event_idx)
-		return false;
-
-	const m::event::fetch event
-	{
-		event_idx, std::nothrow, fopts
-	};
-
-	if(event.valid)
-		closure(event);
-
-	return event.valid;
-}
-
-extern "C" m::event::id::buf
-commit__m_presence(const m::presence &content)
+m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::presence::set(const m::presence &content)
 {
 	const m::user user
 	{
@@ -270,4 +265,21 @@ commit__m_presence(const m::presence &content)
 
 	//TODO: ABA
 	return send(user_room, user.user_id, "ircd.presence", "", json::strung{content});
+}
+
+const string_view
+valid_states[]
+{
+	"online", "offline", "unavailable",
+};
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::presence::valid_state(const string_view &state)
+{
+	return std::any_of(begin(valid_states), end(valid_states), [&state]
+	(const string_view &valid)
+	{
+		return state == valid;
+	});
 }
