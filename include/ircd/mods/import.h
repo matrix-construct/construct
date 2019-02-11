@@ -38,8 +38,8 @@ struct ircd::mods::import
 	void reload();
 
   public:
-	template<class... args> decltype(auto) operator()(args&&... a) const;
-	template<class... args> decltype(auto) operator()(args&&... a);
+	template<class... args> decltype(auto) operator()(args&&...) const;
+	template<class... args> decltype(auto) operator()(args&&...);
 
 	const T *operator->() const;
 	const T &operator*() const;
@@ -148,6 +148,17 @@ ircd::mods::import<T>::operator->()
 }
 
 template<class T>
+template<class... args>
+decltype(auto)
+ircd::mods::import<T>::operator()(args&&... a)
+{
+	if(unlikely(!*this))
+		reload();
+
+	return sym_ptr::operator()<T>(std::forward<args>(a)...);
+}
+
+template<class T>
 ircd::mods::import<T>::operator
 const T &()
 const
@@ -175,22 +186,9 @@ template<class T>
 template<class... args>
 decltype(auto)
 ircd::mods::import<T>::operator()(args&&... a)
-{
-	if(unlikely(!*this))
-		reload();
-
-	using R = decltype(get<T>()(a...));
-	return sym_ptr::operator()<T, R>(std::forward<args>(a)...);
-}
-
-template<class T>
-template<class... args>
-decltype(auto)
-ircd::mods::import<T>::operator()(args&&... a)
 const
 {
-	using R = decltype(get<T>()(a...));
-	return sym_ptr::operator()<T, R>(std::forward<args>(a)...);
+	return sym_ptr::operator()<T>(std::forward<args>(a)...);
 }
 
 template<class T>

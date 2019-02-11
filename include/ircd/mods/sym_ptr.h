@@ -14,6 +14,17 @@
 namespace ircd::mods
 {
 	struct sym_ptr;
+
+	template<class F,
+	         class... args,
+	         typename std::enable_if<!std::is_member_pointer<F>::value>::type * = nullptr>
+	decltype(auto) invoke(F *const &f, args&&... a);
+
+	template<class F,
+	         class O,
+	         class... args,
+	         typename std::enable_if<std::is_member_pointer<F>::value>::type * = nullptr>
+	decltype(auto) invoke(F *const &f, O *const &o, args&&... a);
 }
 
 /// Representation of a symbol in a loaded library (non-template; low level).
@@ -30,27 +41,18 @@ class ircd::mods::sym_ptr
 	template<class T> const T *get() const;
 	template<class T> const T *operator->() const;
 	template<class T> const T &operator*() const;
-	template<class T, class R, class... args> R operator()(args&&... a) const;
+	template<class T, class... args> decltype(auto) operator()(args&&... a) const;
 
+	void *&get();
 	template<class T> T *get();
 	template<class T> T *operator->();
 	template<class T> T &operator*();
-	template<class T, class R, class... args> R operator()(args&&... a);
 
 	explicit sym_ptr(mod &, const string_view &symname);
 	sym_ptr(module, const string_view &symname);
 	sym_ptr(const string_view &modname, const string_view &symname);
 	sym_ptr() = default;
 };
-
-template<class T,
-         class R,
-         class... args>
-R
-ircd::mods::sym_ptr::operator()(args&&... a)
-{
-	return (operator*<T>())(std::forward<args>(a)...);
-}
 
 template<class T>
 T &
@@ -80,14 +82,19 @@ ircd::mods::sym_ptr::get()
 	return reinterpret_cast<T *>(ptr);
 }
 
+inline void *&
+ircd::mods::sym_ptr::get()
+{
+	return ptr;
+}
+
 template<class T,
-         class R,
          class... args>
-R
+decltype(auto)
 ircd::mods::sym_ptr::operator()(args&&... a)
 const
 {
-	return (operator*<T>())(std::forward<args>(a)...);
+	return invoke(get<T>(), std::forward<args>(a)...);
 }
 
 template<class T>
@@ -133,4 +140,29 @@ ircd::mods::sym_ptr::operator!()
 const
 {
 	return !ptr || expired();
+}
+
+template<class F,
+         class O,
+         class... args,
+         typename std::enable_if<std::is_member_pointer<F>::value>::type *>
+decltype(auto)
+ircd::mods::invoke(F *const &f,
+                   O *const &o,
+                   args&&... a)
+{
+	const void *const nv(f);
+	const F mfp(*reinterpret_cast<const F *>(&nv));
+	O *const volatile that(o);
+	return std::invoke(mfp, that, std::forward<args>(a)...);
+}
+
+template<class F,
+         class... args,
+         typename std::enable_if<!std::is_member_pointer<F>::value>::type *>
+decltype(auto)
+ircd::mods::invoke(F *const &f,
+                   args&&... a)
+{
+	return std::invoke(f, std::forward<args>(a)...);
 }
