@@ -14,7 +14,11 @@
 namespace ircd::m::receipt
 {
 	// [GET]
-	bool read(const id::room &, const id::user &, const event::id::closure &);
+	bool exists(const id::room &, const id::user &, const id::event &);
+	bool freshest(const id::room &, const id::user &, const id::event &);
+	bool ignoring(const m::user &, const id::event &);
+	bool ignoring(const m::user &, const id::room &);
+	bool read(const id::room &, const id::user &, const id::event::closure &);
 	id::event read(id::event::buf &out, const id::room &, const id::user &);
 
 	// [SET]

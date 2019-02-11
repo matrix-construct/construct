@@ -1276,25 +1276,25 @@ ircd::m::receipt::read(const id::room &room_id,
 }
 
 ircd::m::event::id::buf
-ircd::m::receipt::read(const id::room &room_id,
-                       const id::user &user_id,
-                       const id::event &event_id,
+ircd::m::receipt::read(const room::id &room_id,
+                       const user::id &user_id,
+                       const event::id &event_id,
                        const time_t &ms)
 {
-	using prototype = event::id::buf (const id::room &, const id::user &, const id::event &, const time_t &);
+	using prototype = event::id::buf (const room::id &, const user::id &, const event::id &, const time_t &);
 
 	static mods::import<prototype> function
 	{
-		"client_rooms", "commit__m_receipt_m_read"
+		"m_receipt", "ircd::m::receipt::read"
 	};
 
 	return function(room_id, user_id, event_id, ms);
 }
 
 ircd::m::event::id
-ircd::m::receipt::read(id::event::buf &out,
-                       const id::room &room_id,
-                       const id::user &user_id)
+ircd::m::receipt::read(event::id::buf &out,
+                       const room::id &room_id,
+                       const user::id &user_id)
 {
 	const event::id::closure copy{[&out]
 	(const event::id &event_id)
@@ -1308,18 +1308,76 @@ ircd::m::receipt::read(id::event::buf &out,
 }
 
 bool
-ircd::m::receipt::read(const id::room &room_id,
-                       const id::user &user_id,
+ircd::m::receipt::read(const room::id &room_id,
+                       const user::id &user_id,
                        const event::id::closure &closure)
 {
-	using prototype = bool (const id::room &, const id::user &, const id::event::closure &);
+	using prototype = bool (const room::id &, const user::id &, const event::id::closure &);
 
 	static mods::import<prototype> function
 	{
-		"m_receipt", "last_receipt__event_id"
+		"m_receipt", "ircd::m::receipt::read"
 	};
 
 	return function(room_id, user_id, closure);
+}
+
+bool
+ircd::m::receipt::ignoring(const user &user,
+                           const room::id &room_id)
+{
+	using prototype = bool (const m::user &, const m::room::id &);
+
+	static mods::import<prototype> function
+	{
+		"m_receipt", "ircd::m::receipt::ignoring"
+	};
+
+	return function(user, room_id);
+}
+
+bool
+ircd::m::receipt::ignoring(const user &user,
+                           const event::id &event_id)
+{
+	using prototype = bool (const m::user &, const m::event::id &);
+
+	static mods::import<prototype> function
+	{
+		"m_receipt", "ircd::m::receipt::ignoring"
+	};
+
+	return function(user, event_id);
+}
+
+bool
+ircd::m::receipt::freshest(const room::id &room_id,
+                           const user::id &user_id,
+                           const event::id &event_id)
+{
+	using prototype = bool (const m::room::id &, const m::user::id &, const m::event::id &);
+
+	static mods::import<prototype> function
+	{
+		"m_receipt", "ircd::m::receipt::freshest"
+	};
+
+	return function(room_id, user_id, event_id);
+}
+
+bool
+ircd::m::receipt::exists(const room::id &room_id,
+                         const user::id &user_id,
+                         const event::id &event_id)
+{
+	using prototype = bool (const m::room::id &, const m::user::id &, const m::event::id &);
+
+	static mods::import<prototype> function
+	{
+		"m_receipt", "ircd::m::receipt::exists"
+	};
+
+	return function(room_id, user_id, event_id);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
