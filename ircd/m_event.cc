@@ -1132,19 +1132,6 @@ ircd::m::is_power_event(const m::event &event)
 // event::auth::chain
 //
 
-void
-ircd::m::event::auth::rebuild()
-{
-	using prototype = void ();
-
-	static mods::import<prototype> rebuild
-	{
-		"m_event", "ircd::m::event::auth::rebuild"
-	};
-
-	rebuild();
-}
-
 bool
 ircd::m::event::auth::chain::for_each(const closure &closure)
 const
@@ -1164,12 +1151,32 @@ const
 		"m_event", "ircd::m::event::auth::chain::for_each"
 	};
 
-	return (*this.**call)(type, c);
+	//TODO: make this work (no pun intended)
+	//return call(this, type, c);
+
+	if(!call) call.reload();
+	const void *const v(call.get());
+	const prototype mfp(*reinterpret_cast<const prototype *>(&v));
+	const chain *const volatile that(this);
+	return std::invoke(mfp, that, type, c);
 }
 
 //
 // event::auth
 //
+
+void
+ircd::m::event::auth::rebuild()
+{
+	using prototype = void ();
+
+	static mods::import<prototype> rebuild
+	{
+		"m_event", "ircd::m::event::auth::rebuild"
+	};
+
+	rebuild();
+}
 
 size_t
 ircd::m::event::auth::count()
