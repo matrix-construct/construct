@@ -1087,6 +1087,11 @@ ircd::fs::fd::fd(const string_view &path,
 :fdno{[&path, &opts]
 () -> int
 {
+	const ctx::slice_usage_warning message
+	{
+		"fs::fs::fd(): open(2): %s", path
+	};
+
 	uint flags(opts.flags);
 	flags |= opts.direct? O_DIRECT : 0UL;
 	flags |= opts.cloexec? O_CLOEXEC : 0UL;

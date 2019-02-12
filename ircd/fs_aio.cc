@@ -614,6 +614,12 @@ try
 	assert(qcount > 0);
 	assert(in_flight + qcount <= MAX_EVENTS);
 	assert(in_flight + qcount <= max_events());
+	const ctx::slice_usage_warning message
+	{
+		"fs::aio::system::submit(in_flight:%zu qcount:%zu)",
+		in_flight,
+		qcount
+	};
 
 	const bool idle
 	{
