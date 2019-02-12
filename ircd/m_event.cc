@@ -175,6 +175,7 @@ ircd::m::event_conforms_reflects
 	"MISSING_ORIGIN_SIGNATURE",
 	"MISMATCH_ORIGIN_SENDER",
 	"MISMATCH_ORIGIN_EVENT_ID",
+	"MISMATCH_CREATE_SENDER",
 	"SELF_REDACTS",
 	"SELF_PREV_EVENT",
 	"SELF_PREV_STATE",
@@ -262,6 +263,10 @@ ircd::m::event::conforms::conforms(const event &e)
 	if(!has(INVALID_OR_MISSING_EVENT_ID))
 		if(json::get<"origin"_>(e) != m::id::event{json::get<"event_id"_>(e)}.host())
 			set(MISMATCH_ORIGIN_EVENT_ID);
+
+	if(json::get<"type"_>(e) == "m.room.create")
+		if(m::room::id(json::get<"room_id"_>(e)).host() != m::user::id(json::get<"sender"_>(e)).host())
+			set(MISMATCH_CREATE_SENDER);
 
 	if(json::get<"type"_>(e) == "m.room.redaction")
 		if(!valid(m::id::EVENT, json::get<"redacts"_>(e)))
