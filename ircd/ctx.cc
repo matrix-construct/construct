@@ -861,6 +861,8 @@ ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view 
 {
 	// Set the start value to the total number of cycles accrued by this
 	// context including the current time slice.
+	!current?
+		rdtsc():
 	~cur().flags & context::SLICE_EXEMPT?
 		cur().profile.cycles + prof::cur_slice_cycles():
 		0
@@ -873,7 +875,7 @@ ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view 
 ircd::ctx::this_ctx::slice_usage_warning::~slice_usage_warning()
 noexcept
 {
-	if(cur().flags & context::SLICE_EXEMPT)
+	if(current && cur().flags & context::SLICE_EXEMPT)
 		return;
 
 	// Set the final value by first adding the total number of cycles ever
@@ -884,12 +886,14 @@ noexcept
 
 	const auto stop
 	{
-		cur().profile.cycles + prof::cur_slice_cycles()
+		current?
+			cur().profile.cycles + prof::cur_slice_cycles():
+			rdtsc()
 	};
 
 	assert(stop >= start);
 	const auto total(stop - start);
-	if(!prof::slice_exceeded_warning(total))
+	if(likely(!prof::slice_exceeded_warning(total)))
 		return;
 
 	thread_local char buf[256];
@@ -902,8 +906,8 @@ noexcept
 	log::dwarning
 	{
 		log, "context '%s' id:%lu watchdog: timeslice excessive; lim:%lu this:%lu pct:%.2lf :%s",
-		name(cur()),
-		id(cur()),
+		current? name(cur()) : ""_sv,
+		current? id(cur()) : 0,
 		threshold,
 		total,
 		(double(total) / double(threshold)) * 100.0,
