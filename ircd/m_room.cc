@@ -2051,6 +2051,42 @@ const
 }
 
 //
+// room::auth
+//
+
+void
+ircd::m::room::auth::for_each(const closure &c)
+const
+{
+	for_each(closure_bool{[this, &c]
+	(const auto &a, const auto &b)
+	{
+		c(a, b);
+		return true;
+	}});
+}
+
+bool
+ircd::m::room::auth::for_each(const closure_bool &c)
+const
+{
+	return for_each(*this, c);
+}
+
+bool
+ircd::m::room::auth::for_each(const auth &a, const closure_bool &c)
+{
+	using prototype = bool (const auth &, const closure_bool &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::auth::for_each"
+	};
+
+	return call(a, c);
+}
+
+//
 // room::power
 //
 

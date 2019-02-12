@@ -8157,6 +8157,69 @@ console_cmd__room__dagree(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__room__auth(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id|room_id", "event_id"
+	}};
+
+	const string_view &p0
+	{
+		param.at("event_id|room_id")
+	};
+
+	const m::room::id::buf room_id{[&p0]
+	() -> m::room::id::buf
+	{
+		switch(m::sigil(p0))
+		{
+			case m::id::ROOM:
+				return p0;
+
+			case m::id::ROOM_ALIAS:
+				return m::room_id(p0);
+
+			case m::id::EVENT:
+				return m::get(m::event::id(p0), "room_id");
+
+			default: throw params::invalid
+			{
+				"%s is the wrong kind of MXID for this argument",
+				reflect(m::sigil(p0))
+			};
+		}
+	}()};
+
+	const m::event::id &event_id
+	{
+		m::sigil(p0) != m::id::EVENT?
+			param.at("event_id"):
+			p0
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const m::room::auth auth
+	{
+		room
+	};
+
+	auth.for_each([&out]
+	(const m::event::idx &idx, const m::event &event)
+	{
+		out << idx
+		    << " " << pretty_oneline(event)
+		    << std::endl;
+	});
+
+	return true;
+}
+
 //
 // user
 //

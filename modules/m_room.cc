@@ -845,3 +845,16 @@ room_herd(const m::room &room,
 		ctx::sleep(seconds(2));
 	}
 }
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::auth::for_each(const auth &a,
+                              const closure_bool &closure)
+{
+	const m::room &room{a.room};
+	const auto &event_id{room.event_id};
+	if(!event_id)
+		return false;
+
+	return true;
+}
