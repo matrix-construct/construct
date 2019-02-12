@@ -168,6 +168,7 @@ ircd::m::event_conforms_reflects
 	"INVALID_CONTENT_MEMBERSHIP",
 	"MISSING_PREV_EVENTS",
 	"MISSING_PREV_STATE",
+	"MISSING_AUTH_EVENTS",
 	"DEPTH_NEGATIVE",
 	"DEPTH_ZERO",
 	"MISSING_SIGNATURES",
@@ -177,8 +178,10 @@ ircd::m::event_conforms_reflects
 	"SELF_REDACTS",
 	"SELF_PREV_EVENT",
 	"SELF_PREV_STATE",
+	"SELF_AUTH_EVENT",
 	"DUP_PREV_EVENT",
 	"DUP_PREV_STATE",
+	"DUP_AUTH_EVENT",
 };
 
 std::ostream &
@@ -287,6 +290,10 @@ ircd::m::event::conforms::conforms(const event &e)
 				set(MISSING_PREV_STATE);
 	*/
 
+	if(json::get<"type"_>(e) != "m.room.create")
+		if(empty(json::get<"auth_events"_>(e)))
+			set(MISSING_AUTH_EVENTS);
+
 	if(json::get<"depth"_>(e) != json::undefined_number && json::get<"depth"_>(e) < 0)
 		set(DEPTH_NEGATIVE);
 
@@ -321,6 +328,21 @@ ircd::m::event::conforms::conforms(const event &e)
 			if(i != j++)
 				if(ps_.at(0) == ps.at(0))
 					set(DUP_PREV_STATE);
+
+		++i;
+	}
+
+	i = 0;
+	for(const json::array &ps : json::get<"auth_events"_>(p))
+	{
+		if(unquote(ps.at(0)) == json::get<"event_id"_>(e))
+			set(SELF_AUTH_EVENT);
+
+		j = 0;
+		for(const json::array &ps_ : json::get<"auth_events"_>(p))
+			if(i != j++)
+				if(ps_.at(0) == ps.at(0))
+					set(DUP_AUTH_EVENT);
 
 		++i;
 	}
