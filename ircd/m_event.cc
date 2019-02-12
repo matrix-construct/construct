@@ -646,7 +646,33 @@ ircd::m::get(std::nothrow_t,
 		dbs::event_column.at(column_idx)
 	};
 
-	return column(column_key, std::nothrow, closure);
+	if(column)
+		return column(column_key, std::nothrow, closure);
+
+	// If the event property being sought doesn't have its own column we
+	// fall back to fetching the full JSON and closing over the property.
+	bool ret{false};
+	dbs::event_json(column_key, std::nothrow, [&closure, &key, &ret]
+	(const json::object &event)
+	{
+		string_view value
+		{
+			event[key]
+		};
+
+		if(!value)
+			return;
+
+		// The user expects an unquoted string to their closure, the same as
+		// if this value was found in its own column.
+		if(json::type(value) == json::STRING)
+			value = unquote(value);
+
+		ret = true;
+		closure(value);
+	});
+
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
