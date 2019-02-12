@@ -13,20 +13,23 @@
 
 namespace ircd::m
 {
-	// Fetch the value for a single property of an event into the closure
+	// Fetch the value for a single property of an event into the closure.
 	bool get(std::nothrow_t, const event::idx &, const string_view &key, const event::fetch::view_closure &);
 	bool get(std::nothrow_t, const event::id &, const string_view &key, const event::fetch::view_closure &);
-
-	// Throws if event or property in that event not found
 	void get(const event::idx &, const string_view &key, const event::fetch::view_closure &);
 	void get(const event::id &, const string_view &key, const event::fetch::view_closure &);
 
-	// Copies value into buffer returning view (empty for not found)
+	// Copies value into buffer returning view.
 	const_buffer get(std::nothrow_t, const event::idx &, const string_view &key, const mutable_buffer &out);
 	const_buffer get(std::nothrow_t, const event::id &, const string_view &key, const mutable_buffer &out);
-
 	const_buffer get(const event::idx &, const string_view &key, const mutable_buffer &out);
 	const_buffer get(const event::id &, const string_view &key, const mutable_buffer &out);
+
+	// Allocates and copies into string.
+	std::string get(std::nothrow_t, const event::idx &, const string_view &key);
+	std::string get(std::nothrow_t, const event::id &, const string_view &key);
+	std::string get(const event::idx &, const string_view &key);
+	std::string get(const event::id &, const string_view &key);
 
 	template<class T>
 	typename std::enable_if<std::is_integral<T>::value, bool>::type

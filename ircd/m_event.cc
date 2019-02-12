@@ -521,6 +521,64 @@ ircd::m::cached(const event::idx &event_idx,
 // event/get.h
 //
 
+std::string
+ircd::m::get(const event::id &event_id,
+             const string_view &key)
+{
+	std::string ret;
+	get(event_id, key, [&ret]
+	(const string_view &value)
+	{
+		ret = value;
+	});
+
+	return ret;
+}
+
+std::string
+ircd::m::get(const event::idx &event_idx,
+             const string_view &key)
+{
+	std::string ret;
+	get(event_idx, key, [&ret]
+	(const string_view &value)
+	{
+		ret = value;
+	});
+
+	return ret;
+}
+
+std::string
+ircd::m::get(std::nothrow_t,
+             const event::id &event_id,
+             const string_view &key)
+{
+	std::string ret;
+	get(std::nothrow, event_id, key, [&ret]
+	(const string_view &value)
+	{
+		ret = value;
+	});
+
+	return ret;
+}
+
+std::string
+ircd::m::get(std::nothrow_t,
+             const event::idx &event_idx,
+             const string_view &key)
+{
+	std::string ret;
+	get(std::nothrow, event_idx, key, [&ret]
+	(const string_view &value)
+	{
+		ret = value;
+	});
+
+	return ret;
+}
+
 ircd::const_buffer
 ircd::m::get(const event::id &event_id,
              const string_view &key,
