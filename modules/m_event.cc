@@ -624,40 +624,6 @@ ircd::m::event::refs::rebuild()
 	txn();
 }
 
-bool
-IRCD_MODULE_EXPORT
-ircd::m::event::auth::chain::for_each(const string_view &type,
-                                      const event::auth::chain::closure &closure)
-const
-{
-	event::idx next(0);
-	event::auth auth(this->auth);
-	uint64_t depth[2] {uint64_t(-1), 0}; do
-	{
-		auth.for_each(type, [&depth, &next]
-		(const event::idx &event_idx)
-		{
-			if(!m::get(event_idx, "depth", depth[1]))
-				return true;
-
-			if(depth[1] >= depth[0])
-				return true;
-
-			depth[0] = depth[1];
-			next = event_idx;
-			return true;
-		});
-
-		if(!closure(next))
-			return false;
-
-		auth.idx = next;
-		next = 0;
-	}
-	while(auth.idx);
-	return true;
-}
-
 void
 IRCD_MODULE_EXPORT
 ircd::m::event::auth::rebuild()

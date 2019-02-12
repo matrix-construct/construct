@@ -1213,39 +1213,6 @@ ircd::m::is_power_event(const m::event &event)
 }
 
 //
-// event::auth::chain
-//
-
-bool
-ircd::m::event::auth::chain::for_each(const closure &closure)
-const
-{
-	return for_each(string_view{}, closure);
-}
-
-bool
-ircd::m::event::auth::chain::for_each(const string_view &type,
-                                      const closure &c)
-const
-{
-	using prototype = bool (chain::*)(const string_view &, const closure &) const;
-
-	static mods::import<prototype> call
-	{
-		"m_event", "ircd::m::event::auth::chain::for_each"
-	};
-
-	//TODO: make this work (no pun intended)
-	//return call(this, type, c);
-
-	if(!call) call.reload();
-	const void *const v(call.get());
-	const prototype mfp(*reinterpret_cast<const prototype *>(&v));
-	const chain *const volatile that(this);
-	return std::invoke(mfp, that, type, c);
-}
-
-//
 // event::auth
 //
 

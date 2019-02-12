@@ -16,6 +16,11 @@ namespace ircd::m
 	bool is_power_event(const event &);
 }
 
+/// Interface to the references made by other power events to this power
+/// event in the `auth_events`. This interface only deals with power events,
+/// it doesn't care if a non-power event referenced a power event. This does
+/// not contain the auth-chain or state resolution algorithm here, those are
+/// later constructed out of this data.
 struct ircd::m::event::auth
 {
 	struct chain;
@@ -41,19 +46,4 @@ struct ircd::m::event::auth
 	}
 
 	static void rebuild();
-};
-
-struct ircd::m::event::auth::chain
-{
-	event::auth auth;
-
-  public:
-	using closure = std::function<event::idx (const event::idx &)>;
-
-	bool for_each(const string_view &type, const closure &) const;
-	bool for_each(const closure &) const;
-
-	chain(const event::idx &idx)
-	:auth{idx}
-	{}
 };
