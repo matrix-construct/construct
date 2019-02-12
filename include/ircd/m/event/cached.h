@@ -13,6 +13,8 @@
 
 namespace ircd::m
 {
+	event::keys::selection cached_keys(const event::idx &, const event::fetch::opts &);
+
 	bool cached(const event::idx &, const event::fetch::opts &);
 	bool cached(const event::idx &);
 

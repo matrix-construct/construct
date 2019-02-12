@@ -488,32 +488,61 @@ ircd::m::cached(const event::idx &event_idx,
 		event_idx
 	};
 
-	auto &columns(dbs::event_column);
-	const event::keys &select(opts.keys);
-	return std::all_of(begin(select), end(select), [&opts, &key, &columns]
-	(const string_view &colname)
-	{
-		const auto &idx
-		{
-			json::indexof<event>(colname)
-		};
+	if(event::fetch::should_seek_json(opts))
+		return db::cached(dbs::event_json, key, opts.gopts);
 
+	const auto &selection
+	{
+		opts.keys
+	};
+
+	const auto result
+	{
+		cached_keys(event_idx, opts)
+	};
+
+	for(size_t i(0); i < selection.size(); ++i)
+	{
 		auto &column
 		{
-			columns.at(idx)
+			dbs::event_column.at(i)
 		};
 
-		if(!column)
-			return true;
+		if(column && selection.test(i) && !result.test(i))
+		{
+			if(!db::has(column, key, opts.gopts))
+				continue;
 
-		if(db::cached(column, key, opts.gopts))
-			return true;
+			return false;
+		}
+	}
 
-		if(!db::has(column, key, opts.gopts))
-			return true;
+	return true;
+}
 
-		return false;
-	});
+ircd::m::event::keys::selection
+ircd::m::cached_keys(const event::idx &event_idx,
+                     const event::fetch::opts &opts)
+{
+	const byte_view<string_view> &key
+	{
+		event_idx
+	};
+
+	event::keys::selection ret(0);
+	const event::keys::selection &selection(opts.keys);
+	for(size_t i(0); i < selection.size(); ++i)
+	{
+		auto &column
+		{
+			dbs::event_column.at(i)
+		};
+
+		if(column && db::cached(column, key, opts.gopts))
+			ret.set(i);
+	}
+
+	return ret;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
