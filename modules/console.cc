@@ -193,7 +193,7 @@ _console_command(opt &out,
 
 	const auto &ptr{cmd->ptr};
 	using prototype = bool (struct opt &, const string_view &);
-	return ptr.operator()<prototype, bool>(out, args);
+	return ptr.operator()<prototype>(out, args);
 }
 
 /// This function may be linked and called by those wishing to execute a
@@ -1279,7 +1279,7 @@ console_cmd__mod__exports(opt &out, const string_view &line)
 			"Module '%s' is not loaded", name
 		};
 
-	const module &module
+	const module module
 	{
 		name
 	};
@@ -2892,7 +2892,7 @@ _print_sst_info_full(opt &out,
 	const auto blocks_size{f.keys_size + f.values_size};
 	const auto index_size{f.index_size + f.top_index_size};
 	const auto overhead_size{index_size + f.filter_size};
-	const auto file_size{overhead_size + blocks_size};
+	const auto file_size{overhead_size + f.data_size};
 
 	close_size("size", file_size);
 	close_size("head size", overhead_size);
