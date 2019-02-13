@@ -62,6 +62,8 @@ enum ircd::m::event::conforms::code
 	INVALID_OR_MISSING_REDACTS_ID,     ///< for m.room.redaction
 	MISSING_CONTENT_MEMBERSHIP,        ///< for m.room.member, content.membership
 	INVALID_CONTENT_MEMBERSHIP,        ///< for m.room.member, content.membership
+	MISSING_MEMBER_STATE_KEY,          ///< for m.room.member, !empty(state_key)
+	INVALID_MEMBER_STATE_KEY,          ///< for m.room.member, !user::id(state_key)
 	MISSING_PREV_EVENTS,               ///< for non-m.room.create, empty prev_events
 	MISSING_PREV_STATE,                ///< for state_key'ed, empty prev_state
 	MISSING_AUTH_EVENTS,               ///< for non-m.room.create, empty auth_events

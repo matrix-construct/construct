@@ -166,6 +166,8 @@ ircd::m::event_conforms_reflects
 	"INVALID_OR_MISSING_REDACTS_ID",
 	"MISSING_CONTENT_MEMBERSHIP",
 	"INVALID_CONTENT_MEMBERSHIP",
+	"MISSING_MEMBER_STATE_KEY",
+	"INVALID_MEMBER_STATE_KEY",
 	"MISSING_PREV_EVENTS",
 	"MISSING_PREV_STATE",
 	"MISSING_AUTH_EVENTS",
@@ -288,6 +290,14 @@ ircd::m::event::conforms::conforms(const event &e)
 	if(json::get<"type"_>(e) == "m.room.member")
 		if(!all_of<std::islower>(unquote(json::get<"content"_>(e).get("membership"))))
 			set(INVALID_CONTENT_MEMBERSHIP);
+
+	if(json::get<"type"_>(e) == "m.room.member")
+		if(empty(json::get<"state_key"_>(e)))
+			set(MISSING_MEMBER_STATE_KEY);
+
+	if(json::get<"type"_>(e) == "m.room.member")
+		if(!valid(m::id::USER, json::get<"state_key"_>(e)))
+			set(INVALID_MEMBER_STATE_KEY);
 
 	if(json::get<"type"_>(e) != "m.room.create")
 		if(empty(json::get<"prev_events"_>(e)))
