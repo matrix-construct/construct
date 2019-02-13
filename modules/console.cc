@@ -6469,11 +6469,12 @@ console_cmd__room__top(opt &out, const string_view &line)
 		room_id
 	};
 
+	out << "index:         " << m::room::index(room_id) << std::endl;
 	out << "version:       " << m::version(room_id) << std::endl;
 	out << "federate:      " << std::boolalpha << m::federate(room_id) << std::endl;
-	out << "idx:           " << std::get<m::event::idx>(top) << std::endl;
-	out << "depth:         " << std::get<int64_t>(top) << std::endl;
-	out << "event:         " << std::get<m::event::id::buf>(top) << std::endl;
+	out << "top index:     " << std::get<m::event::idx>(top) << std::endl;
+	out << "top depth:     " << std::get<int64_t>(top) << std::endl;
+	out << "top event:     " << std::get<m::event::id::buf>(top) << std::endl;
 	out << std::endl;
 
 	state.for_each(m::room::state::types{[&out, &state]
