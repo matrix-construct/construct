@@ -17,7 +17,7 @@ struct ircd::m::event::auth
 	struct chain;
 
 	static bool is_power_event(const event &);
-	static string_view failed(const event &, const vector_view<const event> &auth_events);
+	static string_view failed(const event &, const vector_view<const event *> &auth_events);
 	static string_view failed(const event &);
 	static bool check(std::nothrow_t, const event &);
 	static void check(const event &);

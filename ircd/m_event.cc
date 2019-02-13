@@ -1305,9 +1305,9 @@ ircd::m::event::auth::failed(const event &event)
 
 ircd::string_view
 ircd::m::event::auth::failed(const event &event,
-                             const vector_view<const m::event> &auth_events)
+                             const vector_view<const m::event *> &auth_events)
 {
-	using prototype = string_view (const m::event &, const vector_view<const m::event> &);
+	using prototype = string_view (const m::event &, const vector_view<const m::event *> &);
 
 	static mods::import<prototype> call
 	{
