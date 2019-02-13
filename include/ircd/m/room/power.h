@@ -31,7 +31,9 @@ struct ircd::m::room::power
 	static const int64_t default_user_level;
 
 	m::room room;
-	m::room::state state;
+	event::idx power_event_idx {0};
+	json::object power_event_content;
+	m::id::user room_creator_id;
 
 	bool view(const std::function<void (const json::object &)> &) const;
 
@@ -68,8 +70,10 @@ struct ircd::m::room::power
 	// all who attain great power and riches make use of either force or fraud"
 	bool operator()(const m::id::user &, const string_view &prop, const string_view &type = {}, const string_view &state_key = {}) const;
 
-	power(const m::room &room)
-	:room{room}
-	,state{room}
-	{}
+	explicit power(const json::object &power_event_content, const m::id::user &room_creator_id);
+	explicit power(const m::event &power_event, const m::id::user &room_creator_id);
+	explicit power(const m::event &power_event, const m::event &create_event);
+	power(const m::room &, const event::idx &power_event_idx);
+	power(const m::room &);
+	power() = default;
 };

@@ -2131,6 +2131,58 @@ ircd::m::room::power::default_user_level
 	0
 };
 
+ircd::m::room::power::power(const m::room &room)
+:power
+{
+	room, room.get(std::nothrow, "m.room.power_levels", "")
+}
+{
+}
+
+ircd::m::room::power::power(const m::room &room,
+                            const event::idx &power_event_idx)
+:room
+{
+	room
+}
+,power_event_idx
+{
+	power_event_idx
+}
+{
+}
+
+ircd::m::room::power::power(const m::event &power_event,
+                            const m::event &create_event)
+:power
+{
+	power_event, m::user::id(unquote(json::get<"content"_>(create_event).get("creator")))
+}
+{
+}
+
+ircd::m::room::power::power(const m::event &power_event,
+                            const m::user::id &room_creator_id)
+:power
+{
+	json::get<"content"_>(power_event), room_creator_id
+}
+{
+}
+
+ircd::m::room::power::power(const json::object &power_event_content,
+                            const m::user::id &room_creator_id)
+:power_event_content
+{
+	power_event_content
+}
+,room_creator_id
+{
+	room_creator_id
+}
+{
+}
+
 bool
 ircd::m::room::power::operator()(const m::user::id &user_id,
                                  const string_view &prop,
@@ -2184,8 +2236,13 @@ const try
 	};
 
 	if(!has_power_levels_event)
-		if(creator(room, user_id))
+	{
+		if(room_creator_id && user_id == room_creator_id)
 			ret = default_creator_level;
+
+		if(room.room_id && creator(room, user_id))
+			ret = default_creator_level;
+	}
 
 	return ret;
 }
@@ -2489,19 +2546,10 @@ bool
 ircd::m::room::power::view(const std::function<void (const json::object &)> &closure)
 const
 {
-	static const event::keys::include keys
-	{
-		"content",
-	};
+	if(power_event_idx)
+		if(m::get(std::nothrow, power_event_idx, "content", closure))
+			return true;
 
-	const m::event::fetch::opts fopts
-	{
-		keys, state.fopts? state.fopts->gopts : db::gopts{}
-	};
-
-	return state.get(std::nothrow, "m.room.power_levels", "", [&closure]
-	(const m::event &event)
-	{
-		closure(json::get<"content"_>(event));
-	});
+	closure(power_event_content);
+	return !empty(power_event_content);
 }
