@@ -86,17 +86,22 @@ get__make_join(client &client,
 		room_id
 	};
 
-	auto auth_event_id
+	auto auth_event_idx
 	{
 		state.get(std::nothrow, "m.room.member", user_id)
 	};
 
-	if(!auth_event_id)
-		auth_event_id = state.get("m.room.create");
+	if(!auth_event_idx)
+		auth_event_idx = state.get("m.room.create");
+
+	const auto auth_event_id
+	{
+		m::event_id(auth_event_idx)
+	};
 
 	const m::event::fetch aevf
 	{
-		auth_event_id, std::nothrow
+		auth_event_idx, std::nothrow
 	};
 
 	const json::value auth[]

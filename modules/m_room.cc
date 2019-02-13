@@ -319,14 +319,14 @@ is_complete(const m::room &room)
 		room
 	};
 
-	const auto create_id
+	const auto create_idx
 	{
 		state.get("m.room.create")
 	};
 
 	room::messages it
 	{
-		room, create_id, &fopts
+		room, create_idx, &fopts
 	};
 
 	int64_t depth(-1);
@@ -386,7 +386,7 @@ state__rebuild_present(const m::room &room)
 		room
 	};
 
-	const auto create_id
+	const auto create_idx
 	{
 		state.get("m.room.create")
 	};
@@ -398,7 +398,7 @@ state__rebuild_present(const m::room &room)
 
 	m::room::messages it
 	{
-		room, create_id, &fopts
+		room, create_idx, &fopts
 	};
 
 	if(!it)
@@ -440,7 +440,7 @@ state__rebuild_history(const m::room &room)
 		room
 	};
 
-	const auto create_id
+	const auto create_idx
 	{
 		state.get("m.room.create")
 	};
@@ -452,7 +452,7 @@ state__rebuild_history(const m::room &room)
 
 	m::room::messages it
 	{
-		room, create_id, &fopts
+		room, create_idx, &fopts
 	};
 
 	if(!it)
@@ -607,7 +607,7 @@ head__rebuild(const m::room &room)
 {
 	size_t ret{0};
 	const m::room::state state{room};
-	const auto create_id
+	const auto create_idx
 	{
 		state.get("m.room.create")
 	};
@@ -619,7 +619,7 @@ head__rebuild(const m::room &room)
 
 	m::room::messages it
 	{
-		room, create_id, &fopts
+		room, create_idx, &fopts
 	};
 
 	if(!it)

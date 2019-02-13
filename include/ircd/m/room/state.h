@@ -39,8 +39,10 @@ struct ircd::m::room::state
 	const event::fetch::opts *fopts {nullptr};
 	mutable bool _not_present {false}; // cached result of !present()
 
+	// Check if this object is representing the present state or a past state.
 	bool present() const;
 
+	// Iterate the state
 	bool for_each(const types_bool &) const;
 	void for_each(const types &) const;
 	bool for_each(const string_view &type, const keys_bool &view) const;
@@ -77,10 +79,8 @@ struct ircd::m::room::state
 	void get(const string_view &type, const string_view &state_key, const event::closure_idx &) const;
 	void get(const string_view &type, const string_view &state_key, const event::id::closure &) const;
 	void get(const string_view &type, const string_view &state_key, const event::closure &) const;
-
-	// Fetch and return state event id
-	event::id::buf get(std::nothrow_t, const string_view &type, const string_view &state_key = "") const;
-	event::id::buf get(const string_view &type, const string_view &state_key = "") const;
+	event::idx get(std::nothrow_t, const string_view &type, const string_view &state_key = "") const;
+	event::idx get(const string_view &type, const string_view &state_key = "") const;
 
 	// Initiate a database prefetch on the state to cache for future access.
 	size_t prefetch(const string_view &type, const event::idx &start = 0, const event::idx &stop = 0) const;
