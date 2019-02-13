@@ -428,7 +428,7 @@ bool
 ircd::m::room::has(const string_view &type)
 const
 {
-	return get(std::nothrow, type, nullptr);
+	return get(std::nothrow, type, event::closure{});
 }
 
 void
@@ -463,6 +463,23 @@ const
 	}});
 
 	return ret;
+}
+
+ircd::m::event::idx
+ircd::m::room::get(const string_view &type,
+                   const string_view &state_key)
+const
+{
+	return state(*this).get(type, state_key);
+}
+
+ircd::m::event::idx
+ircd::m::room::get(std::nothrow_t,
+                   const string_view &type,
+                   const string_view &state_key)
+const
+{
+	return state(*this).get(std::nothrow, type, state_key);
 }
 
 void

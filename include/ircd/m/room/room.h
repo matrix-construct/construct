@@ -68,6 +68,8 @@ struct ircd::m::room
 	bool has(const string_view &type, const string_view &state_key) const;
 	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::closure &) const;
 	void get(const string_view &type, const string_view &state_key, const event::closure &) const;
+	event::idx get(std::nothrow_t, const string_view &type, const string_view &state_key) const;
+	event::idx get(const string_view &type, const string_view &state_key) const;
 
 	// Convenience passthru to room::messages (linear query)
 	bool has(const string_view &type) const;
