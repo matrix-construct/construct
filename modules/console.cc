@@ -5964,7 +5964,7 @@ console_cmd__event__refs__rebuild(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__event__auth(opt &out, const string_view &line)
+console_cmd__event__auth__refs(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -5981,7 +5981,7 @@ console_cmd__event__auth(opt &out, const string_view &line)
 		param.at("type", ""_sv)
 	};
 
-	const m::event::auth auth
+	const m::event::auth::refs auth
 	{
 		index(event_id)
 	};

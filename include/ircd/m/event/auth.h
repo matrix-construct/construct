@@ -11,20 +11,25 @@
 #pragma once
 #define HAVE_IRCD_M_EVENT_AUTH_H
 
-namespace ircd::m
+struct ircd::m::event::auth
 {
-	bool is_power_event(const event &);
-}
+	struct refs;
+	struct chain;
+
+	static bool is_power_event(const event &);
+	static string_view failed(const event &, const vector_view<const event> &auth_events);
+	static string_view failed(const event &);
+	static bool check(std::nothrow_t, const event &);
+	static void check(const event &);
+};
 
 /// Interface to the references made by other power events to this power
 /// event in the `auth_events`. This interface only deals with power events,
 /// it doesn't care if a non-power event referenced a power event. This does
 /// not contain the auth-chain or state resolution algorithm here, those are
 /// later constructed out of this data.
-struct ircd::m::event::auth
+struct ircd::m::event::auth::refs
 {
-	struct chain;
-
 	event::idx idx;
 
   public:
@@ -39,11 +44,29 @@ struct ircd::m::event::auth
 	size_t count(const string_view &type) const noexcept;
 	size_t count() const noexcept;
 
-	auth(const event::idx &idx)
+	refs(const event::idx &idx)
 	:idx{idx}
 	{
 		assert(idx);
 	}
 
 	static void rebuild();
+};
+
+struct ircd::m::event::auth::chain
+{
+	event::idx idx;
+
+  public:
+	using closure_bool = std::function<bool (const vector_view<const event::id> &)>;
+
+	bool for_each(const closure_bool &) const;
+	bool has(const string_view &type) const noexcept;
+	size_t depth() const noexcept;
+
+	chain(const event::idx &idx)
+	:idx{idx}
+	{
+		assert(idx);
+	}
 };

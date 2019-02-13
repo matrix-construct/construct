@@ -136,9 +136,9 @@ ircd::m::dbs::init::init(std::string dbopts)
 
 	// Construct global convenience references for the event property columns.
 	for(size_t i(0); i < keys.size(); ++i)
-		event_column[i] = db::column
+		event_column.at(i) = db::column
 		{
-			*events, keys[i], std::nothrow
+			*events, keys.at(i), std::nothrow
 		};
 
 	// Construct global convenience references for the metadata columns
@@ -318,7 +318,7 @@ ircd::m::dbs::_index_event(db::txn &txn,
 	if(opts.event_id)
 		_index_event_id(txn, event, opts);
 
-	if(opts.event_auth)
+	if(opts.event_auth && event::auth::is_power_event(event))
 		_index_event_auth(txn, event, opts);
 
 	if(opts.event_refs)
@@ -380,8 +380,7 @@ ircd::m::dbs::_index_event_auth(db::txn &txn,
                                 const event &event,
                                 const write_opts &opts)
 {
-	if(!is_power_event(event))
-		return;
+	assert(event::auth::is_power_event(event));
 
 	const event::prev &prev{event};
 	for(size_t i(0); i < prev.auth_events_count(); ++i)

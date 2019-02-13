@@ -626,7 +626,7 @@ ircd::m::event::refs::rebuild()
 
 void
 IRCD_MODULE_EXPORT
-ircd::m::event::auth::rebuild()
+ircd::m::event::auth::refs::rebuild()
 {
 	static const size_t pool_size{96};
 	static const size_t log_interval{8192};
@@ -688,4 +688,44 @@ ircd::m::event::auth::rebuild()
 	});
 
 	txn();
+}
+
+ircd::string_view
+IRCD_MODULE_EXPORT
+ircd::m::event::auth::failed(const m::event &event)
+{
+	return {};
+}
+
+ircd::string_view
+IRCD_MODULE_EXPORT
+ircd::m::event::auth::failed(const m::event &event,
+                             const vector_view<const m::event> &auth_events)
+{
+	return {};
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::event::auth::is_power_event(const m::event &event)
+{
+	if(json::get<"type"_>(event) == "m.room.create")
+		return true;
+
+	if(json::get<"type"_>(event) == "m.room.power_levels")
+		return true;
+
+	if(json::get<"type"_>(event) == "m.room.join_rules")
+		return true;
+
+	if(json::get<"type"_>(event) != "m.room.member")
+		return false;
+
+	if(at<"sender"_>(event) == at<"state_key"_>(event))
+		return false;
+
+	if(membership(event) == "leave" || membership(event) == "ban")
+		return true;
+
+	return false;
 }

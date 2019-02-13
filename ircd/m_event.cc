@@ -1259,59 +1259,100 @@ ircd::m::index(const event::id &event_id,
 // event/auth.h
 //
 
-bool
-ircd::m::is_power_event(const m::event &event)
-{
-	if(json::get<"type"_>(event) == "m.room.create")
-		return true;
-
-	if(json::get<"type"_>(event) == "m.room.power_levels")
-		return true;
-
-	if(json::get<"type"_>(event) == "m.room.join_rules")
-		return true;
-
-	if(json::get<"type"_>(event) != "m.room.member")
-		return false;
-
-	if(at<"sender"_>(event) == at<"state_key"_>(event))
-		return false;
-
-	if(membership(event) == "leave" || membership(event) == "ban")
-		return true;
-
-	return false;
-}
-
 //
 // event::auth
 //
 
 void
-ircd::m::event::auth::rebuild()
+ircd::m::event::auth::check(const event &event)
+{
+	const auto reason
+	{
+		failed(event)
+	};
+
+	if(reason)
+		throw m::ACCESS_DENIED
+		{
+			"Authorization of %s failed against its auth_events :%s",
+			json::get<"event_id"_>(event),
+			reason
+		};
+}
+
+bool
+ircd::m::event::auth::check(std::nothrow_t,
+                            const event &event)
+{
+	return !failed(event);
+}
+
+ircd::string_view
+ircd::m::event::auth::failed(const event &event)
+{
+	using prototype = string_view (const m::event &);
+
+	static mods::import<prototype> call
+	{
+		"m_event", "ircd::m::event::auth::failed"
+	};
+
+	return call(event);
+}
+
+ircd::string_view
+ircd::m::event::auth::failed(const event &event,
+                             const vector_view<const m::event> &auth_events)
+{
+	using prototype = string_view (const m::event &, const vector_view<const m::event> &);
+
+	static mods::import<prototype> call
+	{
+		"m_event", "ircd::m::event::auth::failed"
+	};
+
+	return call(event, auth_events);
+}
+
+bool
+ircd::m::event::auth::is_power_event(const m::event &event)
+{
+	static mods::import<decltype(auth::is_power_event)> call
+	{
+		"m_event", "ircd::m::event::auth::is_power_event"
+	};
+
+	return call(event);
+}
+
+//
+// event::auth::refs
+//
+
+void
+ircd::m::event::auth::refs::rebuild()
 {
 	using prototype = void ();
 
 	static mods::import<prototype> rebuild
 	{
-		"m_event", "ircd::m::event::auth::rebuild"
+		"m_event", "ircd::m::event::auth::refs::rebuild"
 	};
 
 	rebuild();
 }
 
 size_t
-ircd::m::event::auth::count()
+ircd::m::event::auth::refs::count()
 const noexcept
 {
 	return count(string_view{});
 }
 
 size_t
-ircd::m::event::auth::count(const string_view &type)
+ircd::m::event::auth::refs::count(const string_view &type)
 const noexcept
 {
-	assert(idx);
 	size_t ret(0);
 	for_each(type, [&ret](const auto &)
 	{
@@ -1323,7 +1364,7 @@ const noexcept
 }
 
 bool
-ircd::m::event::auth::has(const event::idx &idx)
+ircd::m::event::auth::refs::has(const event::idx &idx)
 const noexcept
 {
 	return !for_each([&idx](const event::idx &ref)
@@ -1333,7 +1374,7 @@ const noexcept
 }
 
 bool
-ircd::m::event::auth::has(const string_view &type)
+ircd::m::event::auth::refs::has(const string_view &type)
 const noexcept
 {
 	bool ret{false};
@@ -1347,17 +1388,18 @@ const noexcept
 }
 
 bool
-ircd::m::event::auth::for_each(const closure_bool &closure)
+ircd::m::event::auth::refs::for_each(const closure_bool &closure)
 const
 {
 	return for_each(string_view{}, closure);
 }
 
 bool
-ircd::m::event::auth::for_each(const string_view &type,
-                               const closure_bool &closure)
+ircd::m::event::auth::refs::for_each(const string_view &type,
+                                     const closure_bool &closure)
 const
 {
+	assert(idx);
 	auto &column
 	{
 		dbs::event_auth
@@ -1408,6 +1450,53 @@ const
 			return false;
 	}
 
+	return true;
+}
+
+//
+// event::auth::chain
+//
+
+size_t
+ircd::m::event::auth::chain::depth()
+const noexcept
+{
+	size_t ret(0);
+	for_each([&ret](const auto &)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::event::auth::chain::has(const string_view &type)
+const noexcept
+{
+	bool ret(false);
+	for_each([&type, &ret]
+	(const vector_view<const event::id> &v)
+	{
+		for(auto it(begin(v)); !ret && it != end(v); ++it)
+			m::get(std::nothrow, *it, "type", [&type, &ret]
+			(const string_view &value)
+			{
+				ret = type == value;
+			});
+
+		return !ret;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::event::auth::chain::for_each(const closure_bool &closure)
+const
+{
+	assert(idx);
 	return true;
 }
 
