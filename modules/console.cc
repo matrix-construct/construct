@@ -8210,8 +8210,9 @@ console_cmd__room__auth(opt &out, const string_view &line)
 	};
 
 	auth.for_each([&out]
-	(const m::event::idx &idx, const m::event &event)
+	(const m::event::idx &idx)
 	{
+		const m::event::fetch event{idx};
 		out << idx
 		    << " " << pretty_oneline(event)
 		    << std::endl;

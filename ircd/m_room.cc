@@ -2059,9 +2059,9 @@ ircd::m::room::auth::for_each(const closure &c)
 const
 {
 	for_each(closure_bool{[this, &c]
-	(const auto &a, const auto &b)
+	(const auto &event_idx)
 	{
-		c(a, b);
+		c(event_idx);
 		return true;
 	}});
 }

@@ -15,8 +15,8 @@
 ///
 struct ircd::m::room::auth
 {
-	using closure_bool = std::function<bool (const event::idx &, const event &)>;
-	using closure = std::function<void (const event::idx &, const event &)>;
+	using closure_bool = std::function<bool (const event::idx &)>;
+	using closure = std::function<void (const event::idx &)>;
 
 	m::room room;
 
