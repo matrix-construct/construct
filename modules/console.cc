@@ -5522,6 +5522,11 @@ console_cmd__event(opt &out, const string_view &line)
 		m::cached(event_idx)
 	};
 
+	const auto cached_keys
+	{
+		m::cached_keys(event_idx, m::event::keys::selection{})
+	};
+
 	const bool full_json
 	{
 		has(m::dbs::event_json, byte_view<string_view>(event_idx))
@@ -5571,6 +5576,29 @@ console_cmd__event(opt &out, const string_view &line)
 	out << pretty(event)
 	    << std::endl;
 
+	if(cached || cached_keys.count())
+	{
+		out << "+ CACHED";
+
+		if(cached)
+			out << " _json";
+
+		for(const auto &key : m::event::keys{cached_keys})
+			out << " " << key;
+
+		out << std::endl;
+	}
+
+	if(!full_json)
+		out << "- JSON NOT FOUND" << std::endl;
+
+	if(event.source)
+		out << "+ JSON SOURCE " << size(string_view{event.source}) << " bytes."
+		    << std::endl;
+
+	if(event.source && !json::valid(event.source, std::nothrow))
+		out << "- JSON SOURCE INVALID" << std::endl;
+
 	const m::event::conforms conforms
 	{
 		event
@@ -5592,24 +5620,15 @@ console_cmd__event(opt &out, const string_view &line)
 	if(!verify_hash(event))
 		out << "- HASH MISMATCH: " << b64encode_unpadded(hash(event)) << std::endl;
 
-	if(!full_json)
-		out << "- JSON NOT FOUND" << std::endl;
+	const auto failmsg(m::event::auth::failed(event));
+	if(failmsg)
+		out << "- UNAUTHORIZED: " << failmsg << std::endl;
 
-	if(event.source)
-		out << "+ JSON SOURCE " << size(string_view{event.source}) << " bytes."
-		    << std::endl;
-
-	if(event.source && !json::valid(event.source, std::nothrow))
-		out << "- JSON SOURCE INVALID" << std::endl;
-
-	if(cached)
-		out << "+ CACHED" << std::endl;
-
-	if(m::is_power_event(event))
+	if(m::event::auth::is_power_event(event))
 	{
 		out << "+ POWER EVENT" << std::endl;
 
-		const m::event::auth &refs{event_idx};
+		const m::event::auth::refs &refs{event_idx};
 		const auto refcnt(refs.count());
 		if(refcnt)
 		{
