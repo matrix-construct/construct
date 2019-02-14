@@ -2399,7 +2399,7 @@ const try
 
 		const string_view &level
 		{
-			events.at(type)
+			unquote(events.at(type))
 		};
 
 		ret = json::type(level) == json::NUMBER;
@@ -2427,7 +2427,7 @@ const try
 
 		const string_view &level
 		{
-			users.at(user_id)
+			unquote(users.at(user_id))
 		};
 
 		ret = json::type(level) == json::NUMBER;
@@ -2464,7 +2464,7 @@ const
 	view([&prop, &ret]
 	(const json::object &content)
 	{
-		const auto &value{content.get(prop)};
+		const auto &value(unquote(content.get(prop)));
 		if(value && json::type(value) == json::NUMBER)
 			ret = true;
 	});
@@ -2522,7 +2522,7 @@ const
 		for(auto it(begin(collection)); it != end(collection) && ret; ++it)
 		{
 			const auto &member(*it);
-			if(json::type(member.second) != json::NUMBER)
+			if(json::type(unquote(member.second)) != json::NUMBER)
 				continue;
 
 			const auto &key
