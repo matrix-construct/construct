@@ -1390,37 +1390,14 @@ ircd::m::event::auth::refs::for_each(const string_view &type,
 const
 {
 	assert(idx);
-	thread_local char buf[dbs::EVENT_REFS_KEY_MAX_SIZE];
-	const string_view key
+	const event::refs erefs
 	{
-		dbs::event_refs_key(buf, idx, dbs::ref::AUTH, 0)
+		idx
 	};
 
-	auto it
+	return erefs.for_each(dbs::ref::AUTH, [this, &type, &closure]
+	(const event::idx &ref, const dbs::ref &)
 	{
-		dbs::event_refs.begin(key)
-	};
-
-	for(; it; ++it)
-	{
-		const auto parts
-		{
-			dbs::event_refs_key(it->first)
-		};
-
-		const auto &ref_type
-		{
-			std::get<0>(parts)
-		};
-
-		const auto &ref
-		{
-			std::get<1>(parts)
-		};
-
-		if(ref_type != dbs::ref::AUTH)
-			break;
-
 		bool match;
 		const auto matcher
 		{
@@ -1433,18 +1410,18 @@ const
 		if(type)
 		{
 			if(!m::get(std::nothrow, ref, "type", matcher))
-				continue;
+				return true;
 
 			if(!match)
-				continue;
+				return true;
 		}
 
 		assert(idx != ref);
 		if(!closure(ref))
 			return false;
-	}
 
-	return true;
+		return true;
+	});
 }
 
 //
@@ -1516,9 +1493,17 @@ size_t
 ircd::m::event::refs::count()
 const noexcept
 {
+	return count(dbs::ref(-1));
+}
+
+size_t
+ircd::m::event::refs::count(const dbs::ref &type)
+const noexcept
+{
 	assert(idx);
 	size_t ret(0);
-	for_each([&ret](const auto &)
+	for_each(type, [&ret]
+	(const event::idx &ref, const dbs::ref &)
 	{
 		++ret;
 		return true;
@@ -1531,7 +1516,16 @@ bool
 ircd::m::event::refs::has(const event::idx &idx)
 const noexcept
 {
-	return !for_each([&idx](const event::idx &ref)
+	return has(dbs::ref(-1), idx);
+}
+
+bool
+ircd::m::event::refs::has(const dbs::ref &type,
+                          const event::idx &idx)
+const noexcept
+{
+	return !for_each(type, [&idx]
+	(const event::idx &ref, const dbs::ref &)
 	{
 		return ref != idx; // true to continue, false to break
 	});
@@ -1541,11 +1535,26 @@ bool
 ircd::m::event::refs::for_each(const closure_bool &closure)
 const
 {
+	return for_each(dbs::ref(-1), closure);
+}
+
+bool
+ircd::m::event::refs::for_each(const dbs::ref &type,
+                               const closure_bool &closure)
+const
+{
 	assert(idx);
 	thread_local char buf[dbs::EVENT_REFS_KEY_MAX_SIZE];
+
+	// Allow -1 to iterate through all types by starting
+	// the iteration at type value 0 and then ignoring the
+	// type as a loop continue condition.
+	const bool all_type(type == dbs::ref(uint8_t(-1)));
+	const auto &_type{all_type? dbs::ref::PREV : type};
+	assert(uint8_t(dbs::ref::PREV) == 0);
 	const string_view key
 	{
-		dbs::event_refs_key(buf, idx, dbs::ref::PREV, 0)
+		dbs::event_refs_key(buf, idx, _type, 0)
 	};
 
 	auto it
@@ -1565,7 +1574,7 @@ const
 			std::get<0>(parts)
 		};
 
-		if(type != dbs::ref::PREV)
+		if(!all_type && type != _type)
 			break;
 
 		const auto &ref
@@ -1574,7 +1583,7 @@ const
 		};
 
 		assert(idx != ref);
-		if(!closure(ref))
+		if(!closure(ref, type))
 			return false;
 	}
 

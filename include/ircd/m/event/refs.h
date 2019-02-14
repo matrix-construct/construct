@@ -11,15 +11,25 @@
 #pragma once
 #define HAVE_IRCD_M_EVENT_REFS_H
 
+namespace ircd::m::dbs
+{
+	enum class ref :uint8_t;
+}
+
 struct ircd::m::event::refs
 {
 	event::idx idx;
 
   public:
-	using closure_bool = event::closure_idx_bool;
+	using closure_bool = std::function<bool (const event::idx &, const dbs::ref &)>;
 
+	bool for_each(const dbs::ref &type, const closure_bool &) const;
 	bool for_each(const closure_bool &) const;
+
+	bool has(const dbs::ref &type, const event::idx &) const noexcept;
 	bool has(const event::idx &) const noexcept;
+
+	size_t count(const dbs::ref &type) const noexcept;
 	size_t count() const noexcept;
 
 	refs(const event::idx &idx) noexcept;

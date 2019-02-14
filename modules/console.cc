@@ -5625,23 +5625,7 @@ console_cmd__event(opt &out, const string_view &line)
 		out << "- UNAUTHORIZED: " << failmsg << std::endl;
 
 	if(m::event::auth::is_power_event(event))
-	{
 		out << "+ POWER EVENT" << std::endl;
-
-		const m::event::auth::refs &refs{event_idx};
-		const auto refcnt(refs.count());
-		if(refcnt)
-		{
-			out << std::endl;
-			out << "+ AUTH REFERENCED " << refcnt << std::endl;
-			refs.for_each([&out](const m::event::idx &idx)
-			{
-				const m::event::fetch event{idx};
-				out << "  " << idx << " " << pretty_oneline(event) << std::endl;
-				return true;
-			});
-		}
-	}
 
 	const m::event::refs &refs{event_idx};
 	const auto refcnt(refs.count());
@@ -5649,10 +5633,11 @@ console_cmd__event(opt &out, const string_view &line)
 	{
 		out << std::endl;
 		out << "+ REFERENCED " << refs.count() << std::endl;
-		refs.for_each([&out](const m::event::idx &idx)
+		refs.for_each([&out]
+		(const m::event::idx &idx, const auto &type)
 		{
 			const m::event::fetch event{idx};
-			out << "  " << idx << " " << pretty_oneline(event) << std::endl;
+			out << "  " << reflect(type) << " " << idx << " " << pretty_oneline(event) << std::endl;
 			return true;
 		});
 	}
@@ -5947,6 +5932,58 @@ console_cmd__event__refs__rebuild(opt &out, const string_view &line)
 bool
 console_cmd__event__refs(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"event_id", "type"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	const m::event::refs refs
+	{
+		index(event_id)
+	};
+
+	const string_view &typestr
+	{
+		param.at("type")
+	};
+
+	m::dbs::ref type
+	{
+		empty(typestr)?
+			m::dbs::ref(-1):
+			m::dbs::ref(0)
+
+	};
+
+	if(!empty(typestr))
+		for(; uint8_t(type) < sizeof(m::dbs::ref) * 8; type = m::dbs::ref(uint8_t(type) + 1))
+			if(reflect(type) == typestr)
+				break;
+
+	refs.for_each(type, [&out]
+	(const auto &idx, const auto &type)
+	{
+		const m::event::fetch event
+		{
+			idx, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
+
+		out << idx
+		    << " " << m::event_id(idx)
+		    << " " << reflect(type)
+		    << std::endl;
+
+		return true;
+	});
+
 	return true;
 }
 
@@ -5968,7 +6005,8 @@ console_cmd__event__refs__prev(opt &out, const string_view &line)
 		index(event_id)
 	};
 
-	refs.for_each([&out](const m::event::idx &idx)
+	refs.for_each(m::dbs::ref::PREV, [&out]
+	(const auto &idx, const auto &type)
 	{
 		const m::event::fetch event
 		{
@@ -5980,6 +6018,7 @@ console_cmd__event__refs__prev(opt &out, const string_view &line)
 
 		out << idx
 		    << " " << m::event_id(idx)
+		    << " " << reflect(type)
 		    << std::endl;
 
 		return true;
