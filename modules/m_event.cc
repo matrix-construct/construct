@@ -951,7 +951,7 @@ ircd::m::event::auth::failed(const m::event &event,
 
 	// 8. If the event type's required power level is greater than the
 	// sender's power level, reject.
-	if(!power(at<"sender"_>(event), {}, at<"type"_>(event)))
+	if(!power(at<"sender"_>(event), "events", at<"type"_>(event)))
 		return "sender has insufficient power for event type.";
 
 	// 9. If the event has a state_key that starts with an @ and does not
