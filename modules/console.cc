@@ -5937,7 +5937,21 @@ console_cmd__event__visible(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__event__refs__rebuild(opt &out, const string_view &line)
+{
+	m::event::refs::rebuild();
+	out << "done" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__event__refs(opt &out, const string_view &line)
+{
+	return true;
+}
+
+bool
+console_cmd__event__refs__prev(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -5975,15 +5989,7 @@ console_cmd__event__refs(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__event__refs__rebuild(opt &out, const string_view &line)
-{
-	m::event::refs::rebuild();
-	out << "done" << std::endl;
-	return true;
-}
-
-bool
-console_cmd__event__auth__refs(opt &out, const string_view &line)
+console_cmd__event__refs__auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -6023,14 +6029,6 @@ console_cmd__event__auth__refs(opt &out, const string_view &line)
 		return true;
 	});
 
-	return true;
-}
-
-bool
-console_cmd__event__auth__rebuild(opt &out, const string_view &line)
-{
-	m::event::refs::rebuild();
-	out << "done" << std::endl;
 	return true;
 }
 

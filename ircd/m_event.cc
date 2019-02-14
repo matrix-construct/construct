@@ -1332,19 +1332,6 @@ ircd::m::event::auth::is_power_event(const m::event &event)
 // event::auth::refs
 //
 
-void
-ircd::m::event::auth::refs::rebuild()
-{
-	using prototype = void ();
-
-	static mods::import<prototype> rebuild
-	{
-		"m_event", "ircd::m::event::auth::refs::rebuild"
-	};
-
-	rebuild();
-}
-
 size_t
 ircd::m::event::auth::refs::count()
 const noexcept
@@ -1403,32 +1390,36 @@ ircd::m::event::auth::refs::for_each(const string_view &type,
 const
 {
 	assert(idx);
-	auto &column
+	thread_local char buf[dbs::EVENT_REFS_KEY_MAX_SIZE];
+	const string_view key
 	{
-		dbs::event_auth
-	};
-
-	const byte_view<string_view> &key
-	{
-		idx
+		dbs::event_refs_key(buf, idx, dbs::ref::AUTH, 0)
 	};
 
 	auto it
 	{
-		column.begin(key)
+		dbs::event_refs.begin(key)
 	};
 
 	for(; it; ++it)
 	{
 		const auto parts
 		{
-			dbs::event_auth_key(it->first)
+			dbs::event_refs_key(it->first)
+		};
+
+		const auto &ref_type
+		{
+			std::get<0>(parts)
 		};
 
 		const auto &ref
 		{
-			std::get<0>(parts)
+			std::get<1>(parts)
 		};
+
+		if(ref_type != dbs::ref::AUTH)
+			break;
 
 		bool match;
 		const auto matcher
@@ -1550,19 +1541,16 @@ bool
 ircd::m::event::refs::for_each(const closure_bool &closure)
 const
 {
-	auto &column
+	assert(idx);
+	thread_local char buf[dbs::EVENT_REFS_KEY_MAX_SIZE];
+	const string_view key
 	{
-		dbs::event_refs
-	};
-
-	const byte_view<string_view> &key
-	{
-		idx
+		dbs::event_refs_key(buf, idx, dbs::ref::PREV, 0)
 	};
 
 	auto it
 	{
-		column.begin(key)
+		dbs::event_refs.begin(key)
 	};
 
 	for(; it; ++it)
@@ -1572,9 +1560,17 @@ const
 			dbs::event_refs_key(it->first)
 		};
 
-		const auto &ref
+		const auto &type
 		{
 			std::get<0>(parts)
+		};
+
+		if(type != dbs::ref::PREV)
+			break;
+
+		const auto &ref
+		{
+			std::get<1>(parts)
 		};
 
 		assert(idx != ref);
