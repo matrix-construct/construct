@@ -1242,6 +1242,9 @@ ircd::m::index(const event::id &event_id,
 		dbs::event_idx
 	};
 
+	if(!event_id)
+		return false;
+
 	return column(event_id, std::nothrow, [&closure]
 	(const string_view &value)
 	{
