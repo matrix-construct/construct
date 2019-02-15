@@ -1433,7 +1433,7 @@ ircd::m::event::auth::chain::depth()
 const noexcept
 {
 	size_t ret(0);
-	for_each([&ret](const auto &)
+	for_each([&ret](const auto &, const auto &)
 	{
 		++ret;
 		return true;
@@ -1448,15 +1448,9 @@ const noexcept
 {
 	bool ret(false);
 	for_each([&type, &ret]
-	(const vector_view<const event::id> &v)
+	(const auto &, const auto &event)
 	{
-		for(auto it(begin(v)); !ret && it != end(v); ++it)
-			m::get(std::nothrow, *it, "type", [&type, &ret]
-			(const string_view &value)
-			{
-				ret = type == value;
-			});
-
+		ret = type == json::get<"type"_>(event);
 		return !ret;
 	});
 
@@ -1467,8 +1461,21 @@ bool
 ircd::m::event::auth::chain::for_each(const closure_bool &closure)
 const
 {
-	assert(idx);
-	return true;
+	return chain::for_each(*this, closure);
+}
+
+bool
+ircd::m::event::auth::chain::for_each(const auth::chain &c,
+                                      const closure_bool &closure)
+{
+	using prototype = bool (const auth::chain &, const closure_bool &);
+
+	static mods::import<prototype> call
+	{
+		"m_event", "ircd::m::event::auth::chain::for_each"
+	};
+
+	return call(c, closure);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

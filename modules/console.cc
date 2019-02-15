@@ -5922,6 +5922,36 @@ console_cmd__event__visible(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__event__auth(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	const m::event::auth::chain ac
+	{
+		m::index(event_id)
+	};
+
+	ac.for_each([&out](const auto &idx, const auto &event)
+	{
+		out << idx
+		    << " " << pretty_oneline(event)
+		    << std::endl;
+
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__event__refs__rebuild(opt &out, const string_view &line)
 {
 	m::event::refs::rebuild();

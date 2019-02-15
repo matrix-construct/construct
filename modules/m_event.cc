@@ -562,6 +562,53 @@ ircd::m::pretty_oneline(std::ostream &s,
 	return s;
 }
 
+bool
+IRCD_MODULE_EXPORT
+ircd::m::event::auth::chain::for_each(const auth::chain &c,
+                                      const closure_bool &closure)
+{
+	m::event::fetch e, a;
+	std::set<event::idx> ae;
+	std::deque<event::idx> aq {c.idx}; do
+	{
+		const auto idx(aq.front());
+		aq.pop_front();
+		if(!seek(e, idx, std::nothrow))
+			continue;
+
+		const m::event::prev prev{e};
+		const auto count(prev.auth_events_count());
+		for(size_t i(0); i < count && i < 4; ++i)
+		{
+			const auto &auth_event_id(prev.auth_event(i));
+			const auto &auth_event_idx(index(auth_event_id, std::nothrow));
+			if(!auth_event_idx)
+				continue;
+
+			auto it(ae.lower_bound(auth_event_idx));
+			if(it == end(ae) || *it != auth_event_idx)
+			{
+				seek(a, auth_event_idx, std::nothrow);
+				ae.emplace_hint(it, auth_event_idx);
+				if(a.valid)
+					aq.emplace_back(auth_event_idx);
+			}
+		}
+	}
+	while(!aq.empty());
+
+	for(const auto &idx : ae)
+	{
+		if(!seek(e, idx, std::nothrow))
+			continue;
+
+		if(!closure(idx, e))
+			return false;
+	}
+
+	return true;
+}
+
 void
 IRCD_MODULE_EXPORT
 ircd::m::event::refs::rebuild()

@@ -46,25 +46,23 @@ struct ircd::m::event::auth::refs
 
 	refs(const event::idx &idx)
 	:idx{idx}
-	{
-		assert(idx);
-	}
+	{}
 };
 
 struct ircd::m::event::auth::chain
 {
+	using closure_bool = std::function<bool (const event::idx &, const event &)>;
+
 	event::idx idx;
 
-  public:
-	using closure_bool = std::function<bool (const vector_view<const event::id> &)>;
+	static bool for_each(const auth::chain &, const closure_bool &);
 
+  public:
 	bool for_each(const closure_bool &) const;
 	bool has(const string_view &type) const noexcept;
 	size_t depth() const noexcept;
 
 	chain(const event::idx &idx)
 	:idx{idx}
-	{
-		assert(idx);
-	}
+	{}
 };
