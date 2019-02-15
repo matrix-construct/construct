@@ -59,9 +59,9 @@ get__event_auth(client &client,
 		url::decode(event_id, request.parv[1])
 	};
 
-	const m::event::fetch event
+	const m::event::idx event_idx
 	{
-		event_id
+		m::index(event_id) // throws m::NOT_FOUND
 	};
 
 	const m::room room
@@ -74,11 +74,6 @@ get__event_auth(client &client,
 		{
 			"You are not permitted to view the room at this event"
 		};
-
-	const m::room::state state
-	{
-		room
-	};
 
 	resource::response::chunked response
 	{
@@ -101,25 +96,13 @@ get__event_auth(client &client,
 		auth_chain_m
 	};
 
-	const auto append{[&auth_chain]
-	(const m::event &event)
+	m::event::auth::chain(event_idx).for_each([&auth_chain]
+	(const m::event::idx &event_idx, const m::event &event)
 	{
-		if(json::get<"event_id"_>(event))
-			auth_chain.append(event);
-	}};
+		auth_chain.append(event);
+		return true;
+	});
 
-	const auto append_with_sender{[&append, &state, &event]
-	(const m::event &event_)
-	{
-		append(event_);
-		if(json::get<"sender"_>(event_) != json::get<"sender"_>(event))
-			state.get(std::nothrow, "m.room.member", json::get<"sender"_>(event_), append);
-	}};
-
-	state.get(std::nothrow, "m.room.create", "", append);
-	state.get(std::nothrow, "m.room.join_rules", "", append);
-	state.get(std::nothrow, "m.room.power_levels", "", append_with_sender);
-	state.get(std::nothrow, "m.room.member", json::get<"sender"_>(event), append);
 	return {};
 }
 
