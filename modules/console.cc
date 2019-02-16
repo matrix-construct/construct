@@ -10437,6 +10437,104 @@ console_cmd__fed__event_auth(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__query_auth(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id", "remote"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::event::id &event_id
+	{
+		param.at(1)
+	};
+
+	const net::hostport remote
+	{
+		param.at(2, event_id.host())
+	};
+
+	m::v1::query_auth::opts opts;
+	opts.remote = remote;
+	const unique_buffer<mutable_buffer> buf
+	{
+		128_KiB
+	};
+
+	json::stack ost{buf};
+	{
+	    json::stack::object top{ost};
+	    json::stack::array auth_chain
+		{
+			top, "auth_chain"
+		};
+
+		const m::event::auth::chain chain
+		{
+			m::index(event_id)
+		};
+
+		m::event::fetch event;
+		chain.for_each([&auth_chain, &event]
+		(const m::event::idx &event_idx)
+		{
+			if(seek(event, event_idx, std::nothrow))
+				auth_chain.append(event);
+		});
+	}
+
+	const json::object content
+	{
+		ost.completed()
+	};
+
+	m::v1::query_auth request
+	{
+		room_id, event_id, content, buf + size(ost.completed()), std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	request.get();
+
+	const json::object response{request};
+	const json::array &auth_chain
+	{
+		response["auth_chain"]
+	};
+
+	const json::array &missing
+	{
+		response["missing"]
+	};
+
+	const json::object &rejects
+	{
+		response["rejects"]
+	};
+
+	out << "auth_chain: " << std::endl;
+	for(const json::object &event : auth_chain)
+		out << pretty_oneline(m::event{event}) << std::endl;
+
+	out << std::endl;
+	out << "missing: " << std::endl;
+	for(const string_view &event_id : missing)
+		out << event_id << std::endl;
+
+	out << std::endl;
+	out << "rejects: " << std::endl;
+	for(const auto &member : rejects)
+		out << member.first << ": " << member.second << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__fed__query__profile(opt &out, const string_view &line)
 {
 	const m::user::id &user_id
