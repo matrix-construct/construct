@@ -598,13 +598,8 @@ ircd::m::event::auth::chain::for_each(const auth::chain &c,
 	while(!aq.empty());
 
 	for(const auto &idx : ae)
-	{
-		if(!seek(e, idx, std::nothrow))
-			continue;
-
-		if(!closure(idx, e))
+		if(!closure(idx))
 			return false;
-	}
 
 	return true;
 }

@@ -96,11 +96,12 @@ get__event_auth(client &client,
 		m::index(event_id)
 	};
 
-	chain.for_each([&auth_chain]
-	(const m::event::idx &event_idx, const m::event &event)
+	m::event::fetch event;
+	chain.for_each([&auth_chain, &event]
+	(const m::event::idx &event_idx)
 	{
-		auth_chain.append(event);
-		return true;
+		if(seek(event, event_idx, std::nothrow))
+			auth_chain.append(event);
 	});
 
 	return {};

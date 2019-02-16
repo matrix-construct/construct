@@ -1433,10 +1433,9 @@ ircd::m::event::auth::chain::depth()
 const noexcept
 {
 	size_t ret(0);
-	for_each([&ret](const auto &, const auto &)
+	for_each([&ret](const auto &)
 	{
 		++ret;
-		return true;
 	});
 
 	return ret;
@@ -1447,14 +1446,31 @@ ircd::m::event::auth::chain::has(const string_view &type)
 const noexcept
 {
 	bool ret(false);
-	for_each([&type, &ret]
-	(const auto &, const auto &event)
+	for_each(closure_bool{[&type, &ret]
+	(const auto &idx)
 	{
-		ret = type == json::get<"type"_>(event);
+		m::get(std::nothrow, idx, "type", [&type, &ret]
+		(const auto &value)
+		{
+			ret = value == type;
+		});
+
 		return !ret;
-	});
+	}});
 
 	return ret;
+}
+
+bool
+ircd::m::event::auth::chain::for_each(const closure &closure)
+const
+{
+	return for_each(closure_bool{[&closure]
+	(const auto &idx)
+	{
+		closure(idx);
+		return true;
+	}});
 }
 
 bool

@@ -5939,13 +5939,18 @@ console_cmd__event__auth(opt &out, const string_view &line)
 		m::index(event_id)
 	};
 
-	ac.for_each([&out](const auto &idx, const auto &event)
+	ac.for_each([&out](const auto &idx)
 	{
-		out << idx
-		    << " " << pretty_oneline(event)
-		    << std::endl;
+		const m::event::fetch event
+		{
+			idx, std::nothrow
+		};
 
-		return true;
+		out << idx;
+		if(event.valid)
+			out << " " << pretty_oneline(event);
+
+		out << std::endl;
 	});
 
 	return true;

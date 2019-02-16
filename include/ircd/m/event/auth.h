@@ -51,7 +51,8 @@ struct ircd::m::event::auth::refs
 
 struct ircd::m::event::auth::chain
 {
-	using closure_bool = std::function<bool (const event::idx &, const event &)>;
+	using closure_bool = event::closure_idx_bool;
+	using closure = event::closure_idx;
 
 	event::idx idx;
 
@@ -59,6 +60,8 @@ struct ircd::m::event::auth::chain
 
   public:
 	bool for_each(const closure_bool &) const;
+	bool for_each(const closure &) const;
+
 	bool has(const string_view &type) const noexcept;
 	size_t depth() const noexcept;
 
