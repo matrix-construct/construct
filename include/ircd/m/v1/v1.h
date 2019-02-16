@@ -27,6 +27,7 @@ namespace ircd::m::v1
 #include "invite.h"
 #include "event.h"
 #include "event_auth.h"
+#include "query_auth.h"
 #include "state.h"
 #include "backfill.h"
 #include "frontfill.h"
