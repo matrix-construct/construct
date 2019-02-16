@@ -66,21 +66,43 @@ get__state_ids(client &client,
 	};
 
 	json::stack::object top{out};
-	json::stack::member pdus_m
-	{
-		top, "pdu_ids"
-	};
 
-	json::stack::array pdus
+	// pdu_ids
 	{
-		pdus_m
-	};
+		json::stack::array pdu_ids
+		{
+			top, "pdu_ids"
+		};
 
-	state.for_each(m::event::id::closure{[&pdus]
-	(const m::event::id &event_id)
+		state.for_each(m::event::id::closure{[&pdu_ids]
+		(const m::event::id &event_id)
+		{
+			pdu_ids.append(event_id);
+		}});
+	}
+
+	// auth_chain
 	{
-		pdus.append(event_id);
-	}});
+		json::stack::array auth_chain
+		{
+			top, "auth_chain"
+		};
+
+		const m::event::auth::chain ac
+		{
+			m::index(event_id)
+		};
+
+		ac.for_each([&auth_chain]
+		(const m::event::idx &event_idx)
+		{
+			m::event_id(event_idx, std::nothrow, [&auth_chain]
+			(const auto &event_id)
+			{
+				auth_chain.append(event_id);
+			});
+		});
+	}
 
 	return {};
 }
