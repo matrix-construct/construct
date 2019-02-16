@@ -35,6 +35,7 @@ namespace ircd::net
 	string_view string(const mutable_buffer &out, const uint32_t &);
 	string_view string(const mutable_buffer &out, const uint128_t &);
 	string_view string(const mutable_buffer &out, const ipport &);
+	std::ostream &operator<<(std::ostream &, const ipport &);
 }
 
 namespace ircd
@@ -73,8 +74,6 @@ struct ircd::net::ipport
 	ipport(const string_view &ip, const uint16_t &port);
 	ipport(const string_view &ip, const string_view &port);
 	ipport();
-
-	friend std::ostream &operator<<(std::ostream &, const ipport &);
 };
 
 struct ircd::net::ipport::cmp_port

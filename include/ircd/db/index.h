@@ -56,6 +56,12 @@ struct ircd::db::index
 	using column::column;
 };
 
+namespace ircd::db
+{
+	bool seek(index::const_iterator_base &, const string_view &);
+	bool seek(index::const_iterator_base &, const pos &);
+}
+
 struct ircd::db::index::const_iterator_base
 :ircd::db::column::const_iterator_base
 {
