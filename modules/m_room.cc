@@ -16,11 +16,12 @@ IRCD_MODULE
 	"Matrix room library; modular components."
 };
 
-extern "C" m::event::id::buf
-send__iov(const m::room &room,
-          const m::id::user &sender,
-          const string_view &type,
-          const json::iov &content)
+ircd::m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::send(const m::room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const json::iov &content)
 {
 	json::iov event;
 	const json::iov::push push[]
@@ -32,12 +33,13 @@ send__iov(const m::room &room,
 	return commit(room, event, content);
 }
 
-extern "C" m::event::id::buf
-state__iov(const m::room &room,
-           const m::id::user &sender,
-           const string_view &type,
-           const string_view &state_key,
-           const json::iov &content)
+m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::send(const m::room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const string_view &state_key,
+              const json::iov &content)
 {
 	json::iov event;
 	const json::iov::push push[]

@@ -3285,7 +3285,7 @@ ircd::m::send(const room &room,
 	};
 
 	json::iov _content;
-	json::iov::push content[contents_count];
+	json::iov::push content[contents_count]; // 48B each
 	return send(room, sender, type, state_key, make_iov(_content, content, contents_count, contents));
 }
 
@@ -3302,7 +3302,7 @@ ircd::m::send(const room &room,
 	};
 
 	json::iov _content;
-	json::iov::push content[contents_count];
+	json::iov::push content[contents_count]; // 48B each
 	return send(room, sender, type, state_key, make_iov(_content, content, contents_count, contents));
 }
 
@@ -3317,7 +3317,7 @@ ircd::m::send(const room &room,
 
 	static mods::import<prototype> function
 	{
-		"m_room", "state__iov"
+		"m_room", "ircd::m::send"
 	};
 
 	return function(room, sender, type, state_key, content);
@@ -3335,7 +3335,7 @@ ircd::m::send(const room &room,
 	};
 
 	json::iov _content;
-	json::iov::push content[contents_count];
+	json::iov::push content[contents_count]; // 48B each
 	return send(room, sender, type, make_iov(_content, content, contents_count, contents));
 }
 
@@ -3351,13 +3351,13 @@ ircd::m::send(const room &room,
 	};
 
 	json::iov _content;
-	json::iov::push content[contents_count];
+	json::iov::push content[contents_count]; // 48B each
 	return send(room, sender, type, make_iov(_content, content, contents_count, contents));
 }
 
 ircd::m::event::id::buf
 ircd::m::send(const room &room,
-              const m::id::user &sender,
+              const id::user &sender,
               const string_view &type,
               const json::iov &content)
 {
@@ -3365,7 +3365,7 @@ ircd::m::send(const room &room,
 
 	static mods::import<prototype> function
 	{
-		"m_room", "send__iov"
+		"m_room", "ircd::m::send"
 	};
 
 	return function(room, sender, type, content);

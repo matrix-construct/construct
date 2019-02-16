@@ -59,11 +59,6 @@ get__event_auth(client &client,
 		url::decode(event_id, request.parv[1])
 	};
 
-	const m::event::idx event_idx
-	{
-		m::index(event_id) // throws m::NOT_FOUND
-	};
-
 	const m::room room
 	{
 		room_id, event_id
@@ -96,7 +91,12 @@ get__event_auth(client &client,
 		auth_chain_m
 	};
 
-	m::event::auth::chain(event_idx).for_each([&auth_chain]
+	const m::event::auth::chain chain
+	{
+		m::index(event_id)
+	};
+
+	chain.for_each([&auth_chain]
 	(const m::event::idx &event_idx, const m::event &event)
 	{
 		auth_chain.append(event);
