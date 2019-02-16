@@ -691,6 +691,7 @@ RB_CHK_SYSHEADER(malloc.h, [MALLOC_H])
 RB_CHK_SYSHEADER(sys/auxv.h, [SYS_AUXV_H])
 RB_CHK_SYSHEADER(sys/eventfd.h, [SYS_EVENTFD_H])
 RB_CHK_SYSHEADER(sys/inotify.h, [SYS_INOTIFY_H])
+RB_CHK_SYSHEADER(sys/sysmacros.h, [SYS_SYSMACROS_H])
 RB_CHK_SYSHEADER(linux/aio_abi.h, [LINUX_AIO_ABI_H])
 RB_CHK_SYSHEADER(linux/magic.h, [LINUX_MAGIC_H])
 

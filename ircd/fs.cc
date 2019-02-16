@@ -12,6 +12,7 @@
 #include <RB_INC_SYS_STATFS_H
 #include <RB_INC_SYS_STATVFS_H
 #include <boost/filesystem.hpp>
+#include <RB_INC_SYS_SYSMACROS_H
 #include <ircd/asio.h>
 
 #ifdef IRCD_USE_AIO
