@@ -1444,7 +1444,7 @@ console_cmd__ctx__term(opt &out, const string_view &line)
 		for(auto *const &ctx : ctx::ctxs)
 			if(id(*ctx) == param.at<uint64_t>(i))
 			{
-				terminate(*ctx);
+				ctx::terminate(*ctx);
 				break;
 			}
 
