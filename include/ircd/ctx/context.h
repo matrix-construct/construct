@@ -16,6 +16,8 @@ namespace ircd::ctx
 	struct context;
 
 	extern const size_t DEFAULT_STACK_SIZE;
+
+	void swap(context &a, context &b) noexcept;
 }
 
 /// Principal interface for a context.

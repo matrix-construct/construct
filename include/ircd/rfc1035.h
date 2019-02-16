@@ -165,6 +165,18 @@ struct ircd::rfc1035::record
 	virtual ~record() noexcept;
 };
 
+namespace ircd::rfc1035
+{
+	bool operator==(const record::A &, const record::A &);
+	bool operator!=(const record::A &, const record::A &);
+	bool operator==(const record::AAAA &, const record::AAAA &);
+	bool operator!=(const record::AAAA &, const record::AAAA &);
+	bool operator==(const record::CNAME &, const record::CNAME &);
+	bool operator!=(const record::CNAME &, const record::CNAME &);
+	bool operator==(const record::SRV &, const record::SRV &);
+	bool operator!=(const record::SRV &, const record::SRV &);
+}
+
 /// Downcast an abstract record reference to the specific record structure.
 template<class T>
 const T &
@@ -187,9 +199,6 @@ struct ircd::rfc1035::record::A
 
 	A(const answer &);
 	A();
-
-	friend bool operator==(const A &, const A &);
-	friend bool operator!=(const A &, const A &);
 };
 
 /// IPv6 address record.
@@ -201,9 +210,6 @@ struct ircd::rfc1035::record::AAAA
 
 	AAAA(const answer &);
 	AAAA();
-
-	friend bool operator==(const AAAA &, const AAAA &);
-	friend bool operator!=(const AAAA &, const AAAA &);
 };
 
 /// Canonical name aliasing record
@@ -215,9 +221,6 @@ struct ircd::rfc1035::record::CNAME
 
 	CNAME(const answer &);
 	CNAME();
-
-	friend bool operator==(const CNAME &, const CNAME &);
-	friend bool operator!=(const CNAME &, const CNAME &);
 };
 
 /// Service record.
@@ -233,7 +236,4 @@ struct ircd::rfc1035::record::SRV
 
 	SRV(const answer &);
 	SRV();
-
-	friend bool operator==(const SRV &, const SRV &);
-	friend bool operator!=(const SRV &, const SRV &);
 };

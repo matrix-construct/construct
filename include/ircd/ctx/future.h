@@ -20,6 +20,17 @@ namespace ircd::ctx
 
 	IRCD_EXCEPTION(future_error, future_already_retrieved)
 	IRCD_OVERLOAD(use_future)
+
+	template<class T> const shared_state<T> &state(const future<T> &);
+	template<class T> shared_state<T> &state(future<T> &);
+
+	template<class T,
+	         class time_point>
+	bool wait_until(const future<T> &, const time_point &, std::nothrow_t);
+
+	template<class T,
+	         class time_point>
+	void wait_until(const future<T> &, const time_point &);
 }
 
 template<class T>
@@ -92,12 +103,6 @@ struct ircd::ctx::future<void>
 
 namespace ircd::ctx
 {
-	template<class T> const shared_state<T> &state(const future<T> &);
-	template<class T> shared_state<T> &state(future<T> &);
-
-	template<class T,
-	         class time_point>
-	bool wait_until(const future<T> &, const time_point &, std::nothrow_t);
 }
 
 template<class... T>

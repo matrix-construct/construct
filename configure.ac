@@ -469,10 +469,6 @@ dnl CXXFLAGS+=" -fcheck-pointer-bounds"
 CXXFLAGS+=" -fchkp-instrument-marked-only"
 CXXFLAGS+=" -fstack-protector-explicit"
 
-dnl  -ffriend-injection allows us to deduplicate declarations of friend
-dnl  functions in both the friend class and the enclosing namespace
-CXXFLAGS+=" -ffriend-injection"
-
 dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
 dnl  functions won't be the same between translation units
 CXXFLAGS+=" -fvisibility-inlines-hidden"

@@ -52,6 +52,16 @@ struct ircd::json::vector
 	using string_view::string_view;
 };
 
+namespace ircd::json
+{
+	bool operator==(const vector::const_iterator &, const vector::const_iterator &);
+	bool operator!=(const vector::const_iterator &, const vector::const_iterator &);
+	bool operator<=(const vector::const_iterator &, const vector::const_iterator &);
+	bool operator>=(const vector::const_iterator &, const vector::const_iterator &);
+	bool operator<(const vector::const_iterator &, const vector::const_iterator &);
+	bool operator>(const vector::const_iterator &, const vector::const_iterator &);
+}
+
 struct ircd::json::vector::const_iterator
 {
 	using value_type = const object;
@@ -89,85 +99,3 @@ struct ircd::json::vector::const_iterator
 	friend bool operator<(const const_iterator &, const const_iterator &);
 	friend bool operator>(const const_iterator &, const const_iterator &);
 };
-
-inline ircd::json::vector::value_type
-ircd::json::vector::operator[](const size_t &i)
-const
-{
-	const auto it(find(i));
-	return it != end()? *it : object{};
-}
-
-inline ircd::json::vector::value_type
-ircd::json::vector::at(const size_t &i)
-const
-{
-	const auto it(find(i));
-	if(it == end())
-		throw not_found
-		{
-			"indice %zu", i
-		};
-
-	return *it;
-}
-
-inline ircd::json::vector::const_iterator
-ircd::json::vector::find(size_t i)
-const
-{
-	auto it(begin());
-	for(; it != end() && i; ++it, i--);
-	return it;
-}
-
-__attribute__((warning("Taking string_view::size() not the count() of vector elements")))
-inline size_t
-ircd::json::vector::size()
-const
-{
-	return count();
-}
-
-inline size_t
-ircd::json::vector::count()
-const
-{
-	return std::distance(begin(), end());
-}
-
-inline bool
-ircd::json::operator==(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.start == b.start;
-}
-
-inline bool
-ircd::json::operator!=(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.start != b.start;
-}
-
-inline bool
-ircd::json::operator<=(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.start <= b.start;
-}
-
-inline bool
-ircd::json::operator>=(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.start >= b.start;
-}
-
-inline bool
-ircd::json::operator<(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.start < b.start;
-}
-
-inline bool
-ircd::json::operator>(const vector::const_iterator &a, const vector::const_iterator &b)
-{
-	return a.start > b.start;
-}

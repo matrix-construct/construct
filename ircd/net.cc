@@ -2416,7 +2416,7 @@ catch(const boost::system::system_error &e)
 			if(fini)
 				break;
 
-			//[[fallthrough]];
+			[[fallthrough]];
 		}
 
 		default:

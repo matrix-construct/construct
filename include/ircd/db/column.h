@@ -184,6 +184,14 @@ struct ircd::db::column::delta
 	{}
 };
 
+namespace ircd::db
+{
+	bool operator==(const column::const_iterator_base &, const column::const_iterator_base &);
+	bool operator!=(const column::const_iterator_base &, const column::const_iterator_base &);
+	bool operator<(const column::const_iterator_base &, const column::const_iterator_base &);
+	bool operator>(const column::const_iterator_base &, const column::const_iterator_base &);
+}
+
 /// Iteration over all keys down a column. Default construction is an invalid
 /// iterator, which could be compared against in the style of STL algorithms.
 /// Otherwise, construct an iterator by having it returned from the appropriate

@@ -941,7 +941,7 @@ ircd::fmt::generate_string(char *&out,
 	}
 	else if(type == typeid(const char *))
 	{
-		const char *const &str{*static_cast<const char *const *const>(ptr)};
+		const char *const &str{*static_cast<const char *const *>(ptr)};
 		return karma::generate(out, gen, string_view{str});
 	}
 

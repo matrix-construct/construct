@@ -15,6 +15,10 @@ namespace ircd::json
 {
 	struct iov;
 
+	size_t serialized(const iov &);
+	string_view stringify(mutable_buffer &, const iov &);
+	std::ostream &operator<<(std::ostream &, const iov &);
+
 	template<class node, size_t SIZE, class T> iov make_iov(node (&)[SIZE], T&& t);
 	template<class node, class T> iov make_iov(node *const &, const size_t &, T&& t);
 }
@@ -62,10 +66,6 @@ struct ircd::json::iov
 	value &at(const string_view &key);
 
 	iov() = default;
-
-	friend string_view stringify(mutable_buffer &, const iov &);
-	friend std::ostream &operator<<(std::ostream &, const iov &);
-	friend size_t serialized(const iov &);
 };
 
 /// Unconditionally append a member to the object vector

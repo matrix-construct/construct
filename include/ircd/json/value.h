@@ -17,11 +17,24 @@ namespace ircd::json
 
 	using values = std::initializer_list<value>;
 
+	enum type type(const value &a);
+	bool defined(const value &);
+
 	size_t serialized(const bool &);
+	size_t serialized(const value &);
 	size_t serialized(const value *const &begin, const value *const &end);
 	size_t serialized(const values &);
 
+	string_view stringify(mutable_buffer &, const value &);
 	string_view stringify(mutable_buffer &, const value *const &begin, const value *const &end);
+	std::ostream &operator<<(std::ostream &, const value &);
+
+	bool operator==(const value &a, const value &b);
+	bool operator!=(const value &a, const value &b);
+	bool operator<=(const value &a, const value &b);
+	bool operator>=(const value &a, const value &b);
+	bool operator<(const value &a, const value &b);
+	bool operator>(const value &a, const value &b);
 }
 
 /// A primitive of the ircd::json system representing a value at runtime.
@@ -118,19 +131,6 @@ struct ircd::json::value
 	value &operator=(value &&) noexcept;
 	value &operator=(const value &);
 	~value() noexcept;
-
-	friend bool operator==(const value &a, const value &b);
-	friend bool operator!=(const value &a, const value &b);
-	friend bool operator<=(const value &a, const value &b);
-	friend bool operator>=(const value &a, const value &b);
-	friend bool operator<(const value &a, const value &b);
-	friend bool operator>(const value &a, const value &b);
-
-	friend enum type type(const value &a);
-	friend bool defined(const value &);
-	friend size_t serialized(const value &);
-	friend string_view stringify(mutable_buffer &, const value &);
-	friend std::ostream &operator<<(std::ostream &, const value &);
 };
 
 static_assert(sizeof(ircd::json::value) == 16, "");

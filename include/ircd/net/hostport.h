@@ -29,6 +29,8 @@ namespace ircd::net
 
 	string_view canonize(const mutable_buffer &out, const hostport &, const uint16_t &port = canon_port);
 	std::string canonize(const hostport &, const uint16_t &port = canon_port);
+
+	std::ostream &operator<<(std::ostream &, const hostport &);
 }
 
 namespace ircd
@@ -62,8 +64,6 @@ struct ircd::net::hostport
 	hostport(const string_view &host, const uint16_t &port);
 	hostport(const string_view &amalgam);
 	hostport() = default;
-
-	friend std::ostream &operator<<(std::ostream &, const hostport &);
 };
 
 /// Creates a host:service pair from a hostname and a service name string.

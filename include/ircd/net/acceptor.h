@@ -16,6 +16,12 @@
 // is part of the <ircd/asio.h> stack which can be included in your
 // definition file if you need low level access to this acceptor API.
 
+namespace ircd::net
+{
+	std::ostream &operator<<(std::ostream &s, const struct listener::acceptor &);
+	std::ostream &operator<<(std::ostream &s, const struct listener_udp::acceptor &);
+}
+
 struct ircd::net::listener::acceptor
 :std::enable_shared_from_this<struct ircd::net::listener::acceptor>
 {
@@ -63,8 +69,6 @@ struct ircd::net::listener::acceptor
 	         listener::proffer);
 
 	~acceptor() noexcept;
-
-	friend std::ostream &operator<<(std::ostream &s, const acceptor &);
 };
 
 struct ircd::net::listener_udp::acceptor
@@ -92,6 +96,4 @@ struct ircd::net::listener_udp::acceptor
 	         const json::object &opts);
 
 	~acceptor() noexcept;
-
-	friend std::ostream &operator<<(std::ostream &s, const acceptor &);
 };

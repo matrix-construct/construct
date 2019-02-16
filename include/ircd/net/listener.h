@@ -16,6 +16,9 @@ namespace ircd::net
 	struct listener;
 	struct listener_udp;
 
+	std::ostream &operator<<(std::ostream &s, const listener &);
+	std::ostream &operator<<(std::ostream &s, const listener_udp &);
+
 	extern conf::item<bool> listen;
 }
 

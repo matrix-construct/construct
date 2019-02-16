@@ -17,6 +17,12 @@ namespace rocksdb
 	struct Snapshot;
 }
 
+namespace ircd::db
+{
+	uint64_t sequence(const database::snapshot &);  // Sequence of a snapshot
+	uint64_t sequence(const rocksdb::Snapshot *const &);
+}
+
 /// Database snapshot object. Maintaining this object will maintain a
 /// consistent state of access to the database at the sequence number
 /// from when it's acquired.
@@ -33,7 +39,4 @@ struct ircd::db::database::snapshot
 	explicit snapshot(database &);
 	snapshot() = default;
 	~snapshot() noexcept;
-
-	friend uint64_t sequence(const snapshot &);  // Sequence of a snapshot
-	friend uint64_t sequence(const rocksdb::Snapshot *const &);
 };

@@ -15,6 +15,9 @@ namespace ircd
 {
 	struct client;
 
+	const ipport &remote(const client &);
+	const ipport &local(const client &);
+
 	//TODO: want to upgrade
 	char *read(client &, char *&start, char *const &stop);
 	parse::read_closure read_closure(client &);

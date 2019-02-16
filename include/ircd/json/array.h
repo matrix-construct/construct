@@ -26,6 +26,7 @@ namespace ircd::json
 	string_view stringify(mutable_buffer &buf, const string_view *const &begin, const string_view *const &end);
 	string_view stringify(mutable_buffer &buf, const std::string *const &begin, const std::string *const &end);
 	string_view stringify(mutable_buffer &, const array &);
+	std::ostream &operator<<(std::ostream &, const array &);
 }
 
 /// Lightweight interface to a JSON array string.
@@ -70,8 +71,17 @@ struct ircd::json::array
 
 	template<class it> static size_t serialized(const it &b, const it &e);
 	template<class it> static string_view stringify(mutable_buffer &, const it &b, const it &e);
-	friend std::ostream &operator<<(std::ostream &, const array &);
 };
+
+namespace ircd::json
+{
+	bool operator==(const array::const_iterator &, const array::const_iterator &);
+	bool operator!=(const array::const_iterator &, const array::const_iterator &);
+	bool operator<=(const array::const_iterator &, const array::const_iterator &);
+	bool operator>=(const array::const_iterator &, const array::const_iterator &);
+	bool operator<(const array::const_iterator &, const array::const_iterator &);
+	bool operator>(const array::const_iterator &, const array::const_iterator &);
+}
 
 struct ircd::json::array::const_iterator
 {

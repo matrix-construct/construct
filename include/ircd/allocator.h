@@ -26,6 +26,11 @@ namespace ircd::allocator
 	template<class T = char, size_t = 512> struct fixed;
 	template<class T> struct node;
 
+	profile &operator+=(profile &, const profile &);
+	profile &operator-=(profile &, const profile &);
+	profile operator+(const profile &, const profile &);
+	profile operator-(const profile &, const profile &);
+
 	bool trim(const size_t &pad = 0); // malloc_trim(3)
 	string_view info(const mutable_buffer &);
 };
@@ -50,11 +55,6 @@ struct ircd::allocator::profile
 	uint64_t free_count {0};
 	size_t alloc_bytes {0};
 	size_t free_bytes {0};
-
-	friend profile &operator+=(profile &, const profile &);
-	friend profile &operator-=(profile &, const profile &);
-	friend profile operator+(const profile &, const profile &);
-	friend profile operator-(const profile &, const profile &);
 
 	/// Explicitly enabled by define at compile time only. Note: replaces
 	/// global `new` and `delete` when enabled.

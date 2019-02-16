@@ -16,6 +16,8 @@ namespace ircd::net
 	struct open_opts;
 	using open_callback = std::function<void (std::exception_ptr)>;
 
+	string_view common_name(const open_opts &);
+
 	// Open existing socket with callback.
 	void open(socket &, const open_opts &, open_callback);
 

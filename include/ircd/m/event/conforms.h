@@ -42,9 +42,13 @@ struct ircd::m::event::conforms
 	conforms(const event &, const uint64_t &skip);
 
 	static code reflect(const string_view &);
-	friend string_view reflect(const code &);
-	friend std::ostream &operator<<(std::ostream &, const conforms &);
 };
+
+namespace ircd::m
+{
+	string_view reflect(const event::conforms::code &);
+	std::ostream &operator<<(std::ostream &, const event::conforms &);
+}
 
 /// Report codes corresponding to the checks conducted by event::conforms.
 /// Developers: If you add a code here you must also add a string reflection
