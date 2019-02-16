@@ -105,7 +105,7 @@ struct ircd::conf::value
 
 	T _value;
 
-	operator const T &() const
+	operator const T &() const noexcept
 	{
 		return _value;
 	}
