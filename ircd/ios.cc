@@ -8,7 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <boost/version.hpp>
 #include <ircd/asio.h>
 
 /// Boost version indicator for compiled header files.

@@ -4034,7 +4034,10 @@ ircd::db::txn::append::append(txn &t,
 ircd::db::txn::append::append(txn &t,
                               const row::delta &delta)
 {
-	assert(0);
+	throw ircd::not_implemented
+	{
+		"db::txn::append (row::delta)"
+	};
 }
 
 ircd::db::txn::append::append(txn &t,
@@ -6522,14 +6525,18 @@ ircd::db::error::error(generate_skip_t,
 //
 
 std::string
+__attribute__((noreturn))
 ircd::db::merge_operator(const string_view &key,
                          const std::pair<string_view, string_view> &delta)
 {
 	//ircd::json::index index{delta.first};
 	//index += delta.second;
 	//return index;
-	assert(0);
-	return {};
+
+	throw ircd::not_implemented
+	{
+		"db::merge_operator()"
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////

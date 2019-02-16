@@ -167,6 +167,7 @@ catch(const std::exception &e)
 }
 
 rocksdb::Status
+__attribute__((unused))
 ircd::db::database::env::ReuseWritableFile(const std::string &name,
                                            const std::string &old_name,
                                            std::unique_ptr<WritableFile> *const r,
@@ -186,7 +187,14 @@ noexcept try
 	};
 	#endif
 
-	assert(0);
+	throw ircd::not_implemented
+	{
+		"'%s': ReuseWritableFile(name:'%s' old:'%s')",
+		d.name,
+		name,
+		old_name
+	};
+
 	return Status::OK();
 	//return defaults.ReuseWritableFile(name, old_name, r, options);
 }
@@ -866,7 +874,7 @@ catch(const std::exception &e)
 void
 ircd::db::database::env::StartThread(void (*f)(void*),
                                      void *const a)
-noexcept
+noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
@@ -880,9 +888,18 @@ noexcept
 	};
 	#endif
 
-	throw panic
+	throw ircd::not_implemented
 	{
 		"Independent (non-pool) context spawning not yet implemented"
+	};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "'%s': start thread :%s",
+		d.name,
+		e.what()
 	};
 }
 
@@ -1080,7 +1097,11 @@ noexcept try
 	};
 	#endif
 
-	assert(0);
+	throw ircd::not_implemented
+	{
+		"'%s': GetThreadList()", d.name
+	};
+
 	return defaults.GetThreadList(list);
 }
 catch(const std::exception &e)
