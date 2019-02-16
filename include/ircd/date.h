@@ -158,6 +158,8 @@ ircd::timef(const mutable_buffer &out,
 	return timef(out, tm, fmt);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
 inline ircd::string_view
 ircd::timef(const mutable_buffer &out,
             const struct tm &tm,
@@ -165,11 +167,12 @@ ircd::timef(const mutable_buffer &out,
 {
 	const auto len
 	{
-		strftime(data(out), size(out), fmt, &tm)
+		::strftime(data(out), size(out), fmt, &tm)
 	};
 
 	return { data(out), len };
 }
+#pragma GCC diagnostic pop
 
 inline ircd::string_view
 ircd::microtime(const mutable_buffer &buf)
