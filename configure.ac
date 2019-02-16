@@ -524,6 +524,14 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wundef], charybdis_cv_c_gcc_w_undef)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wodr], charybdis_cv_c_gcc_w_odr)
 
 dnl
+dnl List of warnings treated as errors
+dnl
+
+dnl Uninitialized return values are not useful in this project; forgetting
+dnl to return from a function is always a developer mistake here.
+CHARYBDIS_C_GCC_TRY_FLAGS([-Werror=return-type], charybdis_cv_c_gcc_w_error_return_type)
+
+dnl
 dnl List of warnings we suppress:
 dnl
 
