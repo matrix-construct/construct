@@ -198,16 +198,9 @@ time, the DAG is linear.
               |
 ```
 
-This is because computers and the modern internet are actually quite fast. Even
-in the broadcast model for reasonably large room, a server will have conveyed
-an event to all other servers, or at least to the next server which will
-transmit, before there is any conflict. This is the overwhelming majority of
-cases.
-
-For example, consider this curve from data collected in
-#matrix-architecture:matrix.org. The number of references an event makes
-is the key, and the count of events which has made that number of references
-is the value.
+Based on data collected for the Matrix chatroom workload, conflicts
+occur about 3.5% of the time, and more than a simple conflict occurs
+about 0.1% of the time. We will refer to these as periods of "turbulence."
 
 ```
 1: 6848
@@ -218,10 +211,9 @@ is the value.
 6: 0
 7: 0
 ```
-
-Conflicts occurred about 3.5% of the time, and more than a simple conflict
-occurred about 0.1% of the time. We will refer to these as periods of
-"turbulence."
+Here is some data from #matrix-architecture:matrix.org. The number of
+references an event makes is the key, and the count of events which has
+made that number of references is the value.
 
 ```
 
@@ -274,8 +266,6 @@ having only received two out of the three transmissions in the previous round.
             [M05]
               |
 ```
-The above scenario is a very rare occurrence but it is certainly seen in
-practice by slow servers participating in large and busy rooms.
 
 
 ```

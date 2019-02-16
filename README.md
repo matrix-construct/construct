@@ -14,7 +14,7 @@
 	<img align="right" src="https://i.imgur.com/TIf8kEC.png" />
 </a>
 
-#### Internet Relay Chat daemon: *Matrix Construct*
+**Fast. Secure. Feature Rich. Community Lead.**
 
 IRCd was a free and open source server which facilitated real-time communication over the
 internet. It was started by Jarkko Oikarinen in 1988 at the University of Oulu and [its
@@ -34,8 +34,8 @@ real-time communication for free and open source software: a *federation of netw
 	<img align="right" src="https://i.imgur.com/DUuGSrH.png" />
 </a>
 
-**This is the Construct** — the first Matrix server written in C++. It is designed to be
-fast and highly scalable, and to be community developed by volunteer contributors over
+**This is the Construct** — the community's own Matrix server. It is designed to be
+fast and highly scalable, and to be developed by volunteer contributors over
 the internet. This mission strives to make the software easy to understand, modify, audit,
 and extend. It remains true to its roots with its modular design and having minimal
 requirements.
@@ -60,13 +60,12 @@ for its day to aid the virility of implementations. A vibrant and growing ecosys
 
 ### Dependencies
 
-- **Boost** (1.66 or later)
-Replacing libratbox.
-- **RocksDB** Embedded database.
-- **Sodium** Curve ed25519 for Federation.
-- **OpenSSL** HTTPS TLS / X.509.
-- **libmagic** (~Optional~) MIME type recognition.
-- **zlib** or **lz4** or **snappy** (Optional) Compression.
+- **Boost** library 1.66+
+- **RocksDB** library 5.16.6.
+- **Sodium** library for curve ed25519.
+- **OpenSSL** library for HTTPS TLS / X.509.
+- **magic** library for MIME type recognition.
+- **zlib** or **lz4** or **snappy** (Optional) Compressions.
 
 ##### Build tools
 
@@ -115,8 +114,18 @@ Additional documentation for building can be found in [doc/BUILD.md](doc/BUILD.m
 
 ### BUILD (standalone)
 
-*Intended to allow building with dependencies that have not made their way
-to mainstream systems.*
+This section is intended to allow building with dependencies that have not
+made their way to mainstream systems. Important notes:
+
+- GCC: Ubuntu Xenial (16.04) users must use a PPA to obtain GCC-7 or greater; don't
+forget to `export CXX=g++-7` before running `./configure` on that system.
+
+- Boost: The required version is available through `apt` as `boost-all-dev` on
+Ubuntu Cosmic (18.10). All earlier releases (including 18.04 LTS) can configure
+with `--with-included-boost` as instructed below (or obtain that package instead).
+
+- RocksDB: All users should configure with `--with-included-rocksdb` as
+instructed below.
 
 ```
 ./autogen.sh
