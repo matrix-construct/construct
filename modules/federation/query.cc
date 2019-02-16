@@ -124,14 +124,19 @@ get__query_directory(client &client,
 	};
 
 	//TODO: servers
-	const std::array<json::value, 1> server
+	const std::array<json::value, 2> server
 	{
-		{ room_alias.host() }
+		{ room_alias.host(), my_host() }
+	};
+
+	const size_t server_count
+	{
+		server.size() - bool(room_alias.host() == my_host())
 	};
 
 	const json::value servers
 	{
-		server.data(), server.size()
+		server.data(), server_count
 	};
 
 	return resource::response
