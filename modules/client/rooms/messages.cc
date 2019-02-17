@@ -214,20 +214,22 @@ try
 	// Required. The direction to return events from. One of: ["b", "f"]
 	request.query.at("dir").at(0)
 }
-,from
 {
 	// Required. The token to start returning events from. This token can be
 	// obtained from a prev_batch token returned for each room by the sync
 	// API, or from a start or end token returned by a previous request to
 	// this endpoint.
-	url::decode(from, request.query.at("from"))
-}
-{
+	//
+	// NOTE: Synapse doesn't require this and many clients have forgotten to
+	// NOTE: use it so we have to relax the requirement here.
+	if(!empty(request.query["from"]))
+		from = url::decode(from, request.query.at("from"));
+
 	// The token to stop returning events at. This token can be obtained from
 	// a prev_batch token returned for each room by the sync endpoint, or from
 	// a start or end token returned by a previous request to this endpoint.
 	if(!empty(request.query["to"]))
-		url::decode(to, request.query.at("to"));
+		to = url::decode(to, request.query.at("to"));
 
 	if(dir != 'b' && dir != 'f')
 		throw m::BAD_PAGINATION
