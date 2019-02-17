@@ -201,6 +201,7 @@ client_client_rooms_la_SOURCES = \
 	client/rooms/state.cc \
 	client/rooms/members.cc \
 	client/rooms/context.cc \
+	client/rooms/event.cc \
 	client/rooms/send.cc \
 	client/rooms/typing.cc \
 	client/rooms/redact.cc \

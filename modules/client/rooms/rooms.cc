@@ -49,6 +49,9 @@ get_rooms(client &client,
 		request.parv[1]
 	};
 
+	if(cmd == "event")
+		return get__event(client, request, room_id);
+
 	if(cmd == "messages")
 		return get__messages(client, request, room_id);
 

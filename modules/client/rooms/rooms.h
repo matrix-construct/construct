@@ -12,6 +12,16 @@ extern ircd::resource rooms_resource;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// event.cc
+//
+
+ircd::resource::response
+get__event(ircd::client &client,
+           const ircd::resource::request &request,
+           const ircd::m::room::id &room_id);
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // messages.cc
 //
 
