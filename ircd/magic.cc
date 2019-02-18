@@ -22,10 +22,14 @@ namespace ircd::magic
 	static void set_flags(const magic_t &, const int &flags);
 	static string_view call(const magic_t &, const int &flags, const mutable_buffer &, const std::function<const char *()> &);
 	static string_view call(const magic_t &, const int &flags, const mutable_buffer &, const const_buffer &);
+
+	static void version_check();
 }
 
 ircd::magic::init::init()
 {
+	version_check();
+
 	if(unlikely(!(cookie = ::magic_open(flags))))
 		throw error{"magic_open() failed"};
 
@@ -160,16 +164,16 @@ ircd::magic::version()
 	return ::magic_version();
 }
 
-__attribute__((constructor))
-static void
-ircd_magic_version_check()
+void
+ircd::magic::version_check()
 {
-	if(unlikely(MAGIC_VERSION != ircd::magic::version()))
-	{
-		fprintf(stderr, "FATAL: linked libmagic version %d != compiled magic.h version %d.\n",
-		        ircd::magic::version(),
-		        MAGIC_VERSION);
+	if(likely(MAGIC_VERSION == version()))
+		return;
 
-		std::terminate();
-	}
+	log::warning
+	{
+		"Linked libmagic version %d is not the compiled magic.h version %d.\n",
+		version(),
+		MAGIC_VERSION
+	};
 }
