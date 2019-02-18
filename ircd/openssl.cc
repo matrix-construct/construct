@@ -1070,10 +1070,13 @@ ircd::openssl::error_string(const mutable_buffer &buf,
 	return { data(buf), strnlen(data(buf), size(buf)) };
 }
 
-ircd::string_view
+std::pair<ircd::string_view, ircd::string_view>
 ircd::openssl::version()
 {
-	return SSLeay_version(SSLEAY_VERSION);
+	return
+	{
+		OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION)
+	};
 }
 
 //

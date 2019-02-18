@@ -51,8 +51,8 @@ namespace ircd::openssl
 	using EC_KEY = ::ec_key_st;
 	using DH = ::dh_st;
 
-	// Library general
-	string_view version();
+	// Header version; library version
+	std::pair<string_view, string_view> version();
 
 	// Observers
 	string_view error_string(const mutable_buffer &buf, const ulong &);

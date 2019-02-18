@@ -44,7 +44,7 @@ ircd::info::dump()
 		db::version_str,
 		js::version(js::ver::IMPLEMENTATION),
 		nacl::version(),
-		openssl::version(),
+		openssl::version().second,
 		magic::version()
 	};
 
