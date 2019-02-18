@@ -8925,6 +8925,48 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__device(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "device_id"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const string_view &device_id
+	{
+		param.at("device_id", string_view{})
+	};
+
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	const m::room::state state
+	{
+		user_room
+	};
+
+	if(!device_id)
+	{
+		state.for_each("ircd.device", [&out]
+		(const m::event &event)
+		{
+			out << at<"state_key"_>(event) << std::endl;
+		});
+
+		return true;
+	}
+
+	return true;
+}
+
 //
 // users
 //
