@@ -436,6 +436,21 @@ app_module_LTLIBRARIES = \
 
 ###############################################################################
 #
+# /_matrix/identity/
+#
+
+identity_moduledir = @moduledir@
+
+identity_identity_v1_la_SOURCES = identity/v1.cc
+identity_identity_pubkey_la_SOURCES = identity/pubkey.cc
+
+identity_module_LTLIBRARIES = \
+	identity/identity_v1.la \
+	identity/identity_pubkey.la \
+	###
+
+###############################################################################
+#
 # JavaScript
 #
 
