@@ -34,7 +34,7 @@ put__account_data(client &client,
 			"type path parameter required"
 		};
 
-	char typebuf[256];
+	char typebuf[m::event::TYPE_MAX_SIZE];
 	const string_view type
 	{
 		url::decode(typebuf, request.parv[2])
@@ -67,7 +67,7 @@ get__account_data(client &client,
 			"type path parameter required"
 		};
 
-	char typebuf[256];
+	char typebuf[m::event::TYPE_MAX_SIZE];
 	const string_view type
 	{
 		url::decode(typebuf, request.parv[2])

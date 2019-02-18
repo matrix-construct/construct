@@ -1485,7 +1485,7 @@ ircd::m::room::state::for_each(const types_bool &closure)
 const
 {
 	string_view last;
-	char lastbuf[256]; //TODO: type maxlen
+	char lastbuf[m::event::TYPE_MAX_SIZE];
 	if(!present())
 	{
 		m::state::for_each(root_id, m::state::iter_bool_closure{[&closure, &last, &lastbuf]

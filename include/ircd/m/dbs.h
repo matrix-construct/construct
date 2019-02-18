@@ -54,12 +54,12 @@ namespace ircd::m::dbs
 	string_view room_head_key(const mutable_buffer &out, const id::room &, const id::event &);
 	string_view room_head_key(const string_view &amalgam);
 
-	constexpr size_t ROOM_STATE_KEY_MAX_SIZE {id::MAX_SIZE + 256 + 256};
+	constexpr size_t ROOM_STATE_KEY_MAX_SIZE {id::MAX_SIZE + event::TYPE_MAX_SIZE + event::STATE_KEY_MAX_SIZE};
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type, const string_view &state_key);
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type);
 	std::pair<string_view, string_view> room_state_key(const string_view &amalgam);
 
-	constexpr size_t ROOM_JOINED_KEY_MAX_SIZE {id::MAX_SIZE + 256 + id::MAX_SIZE};
+	constexpr size_t ROOM_JOINED_KEY_MAX_SIZE {id::MAX_SIZE + event::ORIGIN_MAX_SIZE + id::MAX_SIZE};
 	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
 	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin);
 	std::pair<string_view, string_view> room_joined_key(const string_view &amalgam);

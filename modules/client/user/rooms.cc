@@ -121,7 +121,7 @@ put__account_data(client &client,
 			"type path parameter required"
 		};
 
-	char typebuf[256];
+	char typebuf[m::event::TYPE_MAX_SIZE];
 	const auto &type
 	{
 		url::decode(typebuf, request.parv[4])
@@ -156,7 +156,7 @@ get__account_data(client &client,
 			"type path parameter required"
 		};
 
-	char typebuf[256];
+	char typebuf[m::event::TYPE_MAX_SIZE];
 	const auto &type
 	{
 		url::decode(typebuf, request.parv[4])

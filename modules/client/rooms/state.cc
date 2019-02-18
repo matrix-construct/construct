@@ -39,13 +39,13 @@ get__state(client &client,
            const resource::request &request,
            const room::id &room_id)
 {
-	char type_buf[uint(256 * 1.34 + 1)];
+	char type_buf[m::event::TYPE_MAX_SIZE];
 	const string_view &type
 	{
 		url::decode(type_buf, request.parv[2])
 	};
 
-	char skey_buf[uint(256 * 1.34 + 1)];
+	char skey_buf[m::event::STATE_KEY_MAX_SIZE];
 	const string_view &state_key
 	{
 		url::decode(skey_buf, request.parv[3])
@@ -53,7 +53,7 @@ get__state(client &client,
 
 	// (non-standard) Allow an event_id to be passed in the query string
 	// for reference framing.
-	char evid_buf[uint(256 * 1.34 + 1)];
+	char evid_buf[m::id::MAX_SIZE];
 	const string_view &event_id
 	{
 		url::decode(evid_buf, request.query["event_id"])
@@ -73,13 +73,13 @@ put__state(client &client,
            const resource::request &request,
            const room::id &room_id)
 {
-	char type_buf[uint(256 * 1.34 + 1)];
+	char type_buf[m::event::TYPE_MAX_SIZE];
 	const string_view &type
 	{
 		url::decode(type_buf, request.parv[2])
 	};
 
-	char skey_buf[uint(256 * 1.34 + 1)];
+	char skey_buf[m::event::STATE_KEY_MAX_SIZE];
 	const string_view &state_key
 	{
 		url::decode(skey_buf, request.parv[3])
