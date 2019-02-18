@@ -1,7 +1,7 @@
 // Matrix Construct
 //
 // Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) 2016-2019 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -95,7 +95,7 @@ ircd::resource::find(const string_view &path_)
 }
 
 //
-// resource
+// resource::resource
 //
 
 ircd::resource::resource(const string_view &path)
@@ -198,8 +198,9 @@ const
 	return { data(buf), len };
 }
 
+///////////////////////////////////////////////////////////////////////////////
 //
-// method::method
+// resource/method.h
 //
 
 namespace ircd
@@ -207,6 +208,10 @@ namespace ircd
 	extern conf::item<seconds> cache_warmup_time;
 	static void cache_warm_origin(const string_view &origin);
 }
+
+//
+// method::method
+//
 
 ircd::resource::method::method(struct resource &resource,
                                const string_view &name,
@@ -707,6 +712,11 @@ catch(const std::exception &e)
 		e.what()
 	};
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// resource/response.h
+//
 
 //
 // resource::response::chunked
