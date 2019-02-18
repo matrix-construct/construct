@@ -34,6 +34,31 @@ post__logout(client &client, const resource::request &request)
 		request.access_token
 	};
 
+	const m::room::state tokens
+	{
+		m::user::tokens
+	};
+
+	const auto token_event_idx
+	{
+		tokens.get("ircd.access_token", access_token)
+	};
+
+	const auto token_event_id
+	{
+		m::event_id(token_event_idx)
+	};
+
+	static const string_view reason
+	{
+		"logout"
+	};
+
+	const auto redaction_event_id
+	{
+		m::redact(m::user::tokens, request.user_id, token_event_id, reason)
+	};
+
 	return resource::response
 	{
 		client, http::OK
