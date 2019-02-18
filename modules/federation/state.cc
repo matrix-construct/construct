@@ -37,6 +37,12 @@ resource::response
 get__state(client &client,
            const resource::request &request)
 {
+	if(request.parv.size() < 1)
+		throw m::NEED_MORE_PARAMS
+		{
+			"room_id path parameter required"
+		};
+
 	m::room::id::buf room_id
 	{
 		url::decode(room_id, request.parv[0])

@@ -93,6 +93,12 @@ resource::response
 handle_put(client &client,
            const resource::request::object<m::txn> &request)
 {
+	if(request.parv.size() < 1)
+		throw m::NEED_MORE_PARAMS
+		{
+			"txn_id path parameter required"
+		};
+
 	const auto txn_id
 	{
 		request.parv[0]

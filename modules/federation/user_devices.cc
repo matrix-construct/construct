@@ -51,7 +51,7 @@ get__user_devices(client &client,
 
 	m::user::id::buf user_id
 	{
-		url::decode(user_id, request.parv[1])
+		url::decode(user_id, request.parv[0])
 	};
 
 	return resource::response

@@ -33,6 +33,12 @@ resource::response
 handle_get(client &client,
            const resource::request &request)
 {
+	if(request.parv.size() < 1)
+		throw m::NEED_MORE_PARAMS
+		{
+			"event_id path parameter required."
+		};
+
 	m::event::id::buf event_id
 	{
 		url::decode(event_id, request.parv[0])
