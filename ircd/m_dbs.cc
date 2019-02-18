@@ -570,64 +570,6 @@ ircd::m::dbs::_index_room(db::txn &txn,
 }
 
 ircd::string_view
-ircd::m::dbs::_index_other(db::txn &txn,
-                           const event &event,
-                           const write_opts &opts)
-{
-	_index__room_events(txn, event, opts, opts.root_in);
-	return strlcpy(opts.root_out, opts.root_in);
-}
-
-ircd::string_view
-ircd::m::dbs::_index_redact(db::txn &txn,
-                            const event &event,
-                            const write_opts &opts)
-try
-{
-	const auto &target_id
-	{
-		at<"redacts"_>(event)
-	};
-
-	event::fetch target
-	{
-		target_id, std::nothrow
-	};
-
-	if(unlikely(!target.valid))
-		log::error
-		{
-			"Redaction from '%s' missing redaction target '%s'",
-			at<"event_id"_>(event),
-			target_id
-		};
-
-	if(!defined(json::get<"state_key"_>(target)))
-	{
-		_index__room_events(txn, event, opts, opts.root_in);
-		return strlcpy(opts.root_out, opts.root_in);
-	}
-
-	const string_view new_root
-	{
-		//state::remove(txn, state_root_out, state_root_in, target)
-		strlcpy(opts.root_out, opts.root_in)
-	};
-
-	_index__room_events(txn, event, opts, new_root);
-	return new_root;
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		"Failed to update state from redaction: %s", e.what()
-	};
-
-	throw;
-}
-
-ircd::string_view
 ircd::m::dbs::_index_state(db::txn &txn,
                            const event &event,
                            const write_opts &opts)
@@ -663,6 +605,72 @@ catch(const std::exception &e)
 	};
 
 	throw;
+}
+
+ircd::string_view
+ircd::m::dbs::_index_redact(db::txn &txn,
+                            const event &event,
+                            const write_opts &opts)
+try
+{
+	const auto &target_id
+	{
+		at<"redacts"_>(event)
+	};
+
+	const m::event::idx target_idx
+	{
+		m::index(target_id, std::nothrow)
+	};
+
+	if(unlikely(!target_idx))
+		log::error
+		{
+			"Redaction from '%s' missing redaction target '%s'",
+			at<"event_id"_>(event),
+			target_id
+		};
+
+	const m::event::fetch target
+	{
+		target_idx, std::nothrow
+	};
+
+	const string_view new_root
+	{
+		target.valid && defined(json::get<"state_key"_>(target))?
+			//state::remove(txn, state_root_out, state_root_in, target):
+			strlcpy(opts.root_out, opts.root_in):
+			strlcpy(opts.root_out, opts.root_in)
+	};
+
+	_index__room_events(txn, event, opts, opts.root_in);
+	if(target.valid && defined(json::get<"state_key"_>(target)))
+	{
+		auto _opts(opts);
+		_opts.op = db::op::DELETE;
+		_index__room_state(txn, target, _opts);
+	}
+
+	return new_root;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Failed to update state from redaction: %s", e.what()
+	};
+
+	throw;
+}
+
+ircd::string_view
+ircd::m::dbs::_index_other(db::txn &txn,
+                           const event &event,
+                           const write_opts &opts)
+{
+	_index__room_events(txn, event, opts, opts.root_in);
+	return strlcpy(opts.root_out, opts.root_in);
 }
 
 void
@@ -827,20 +835,13 @@ ircd::m::dbs::_index__room_state(db::txn &txn,
 		byte_view<string_view>(opts.event_idx)
 	};
 
-	const db::op op
-	{
-		opts.op == db::op::SET && at<"type"_>(event) != "m.room.redaction"?
-			db::op::SET:
-			db::op::DELETE
-	};
-
 	db::txn::append
 	{
 		txn, room_state,
 		{
-			op,
+			opts.op,
 			key,
-			value_required(op)? val : string_view{},
+			value_required(opts.op)? val : string_view{},
 		}
 	};
 }
