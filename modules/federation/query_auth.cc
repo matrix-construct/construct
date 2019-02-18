@@ -65,8 +65,27 @@ post__query_auth(client &client,
 		url::decode(event_id, request.parv[1])
 	};
 
+	const json::array &auth_chain
+	{
+		request.at("auth_chain")
+	};
+
+	const json::array &missing
+	{
+		request["missing"]
+	};
+
+	const json::object &rejects
+	{
+		request["rejects"]
+	};
+
+	//
+	// This method appears to be unused by synapse.
+	//
+
 	return resource::response
 	{
-		client, http::NOT_FOUND
+		client, http::NOT_IMPLEMENTED
 	};
 }
