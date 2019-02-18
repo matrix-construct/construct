@@ -33,12 +33,12 @@ post__login_password(client &client,
 	// Build a canonical MXID from a the user field
 	const m::id::user::buf user_id
 	{
-		unquote(at<"user"_>(request)), my_host()
+		at<"user"_>(request), my_host()
 	};
 
-	const auto &supplied_password
+	const string_view &supplied_password
 	{
-		unquote(at<"password"_>(request))
+		at<"password"_>(request)
 	};
 
 	m::user user
@@ -58,9 +58,14 @@ post__login_password(client &client,
 			"Access denied."
 		};
 
-	const auto requested_device_id
+	const string_view &requested_device_id
 	{
-		unquote(json::get<"device_id"_>(request))
+		json::get<"device_id"_>(request)
+	};
+
+	const string_view &initial_device_display_name
+	{
+		json::get<"initial_device_display_name"_>(request)
 	};
 
 	const auto device_id
@@ -104,7 +109,7 @@ post__login(client &client,
 {
 	const auto &type
 	{
-		unquote(at<"type"_>(request))
+		at<"type"_>(request)
 	};
 
 	if(type == "m.login.password")
@@ -112,7 +117,7 @@ post__login(client &client,
 
 	throw m::UNSUPPORTED
 	{
-		"Login type is not supported."
+		"Login type '%s' is not supported.", type
 	};
 }
 
