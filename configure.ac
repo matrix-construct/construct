@@ -948,16 +948,22 @@ dnl OpenSSL support
 dnl
 dnl
 
-RB_CHK_SYSHEADER(openssl/err.h,    [OPENSSL_ERR_H])
-RB_CHK_SYSHEADER(openssl/sha.h,    [OPENSSL_SHA_H])
-RB_CHK_SYSHEADER(openssl/hmac.h,   [OPENSSL_HMAC_H])
-RB_CHK_SYSHEADER(openssl/ssl.h,    [OPENSSL_SSL_H])
-RB_CHK_SYSHEADER(openssl/ec.h,     [OPENSSL_EC_H])
-RB_CHK_SYSHEADER(openssl/rsa.h,    [OPENSSL_RSA_H])
-RB_CHK_SYSHEADER(openssl/x509.h,   [OPENSSL_X509_H])
-RB_CHK_SYSHEADER(openssl/evp.h,    [OPENSSL_EVP_H])
-RB_CHK_SYSHEADER(openssl/ripemd.h, [OPENSSL_RIPEMD_H])
-RB_CHK_SYSHEADER(openssl/dh.h,     [OPENSSL_DH_H])
+AC_DEFUN([RB_CHK_OPENSSL_HEADER],
+[
+	RB_CHK_SYSHEADER([openssl-1.0/$1], [[OPENSSL_$2]])
+	RB_CHK_SYSHEADER([openssl/$1], [[OPENSSL_$2]])
+])
+
+RB_CHK_OPENSSL_HEADER(err.h, [ERR_H])
+RB_CHK_OPENSSL_HEADER(sha.h, [SHA_H])
+RB_CHK_OPENSSL_HEADER(hmac.h, [HMAC_H])
+RB_CHK_OPENSSL_HEADER(ssl.h, [SSL_H])
+RB_CHK_OPENSSL_HEADER(ec.h, [EC_H])
+RB_CHK_OPENSSL_HEADER(rsa.h, [RSA_H])
+RB_CHK_OPENSSL_HEADER(x509.h, [X509_H])
+RB_CHK_OPENSSL_HEADER(evp.h, [EVP_H])
+RB_CHK_OPENSSL_HEADER(ripemd.h, [RIPEMD_H])
+RB_CHK_OPENSSL_HEADER(dh.h, [DH_H])
 
 AC_CHECK_LIB(ssl, SSL_version,
 [
