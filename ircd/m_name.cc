@@ -135,3 +135,6 @@ constexpr const char *const ircd::m::name::last_seen_ts;
 constexpr const char *const ircd::m::name::keys;
 constexpr const char *const ircd::m::name::device_display_name;
 constexpr const char *const ircd::m::name::algorithms;
+
+constexpr const char *const ircd::m::name::message_id;
+constexpr const char *const ircd::m::name::messages;

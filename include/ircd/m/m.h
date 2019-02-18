@@ -55,6 +55,7 @@ namespace ircd::m::vm
 #include "presence.h"
 #include "typing.h"
 #include "receipt.h"
+#include "direct_to_device.h"
 #include "txn.h"
 #include "hook.h"
 #include "visible.h"

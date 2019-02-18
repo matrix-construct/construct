@@ -156,4 +156,7 @@ struct ircd::m::name
 	static constexpr const char *const keys {"keys"};
 	static constexpr const char *const device_display_name {"device_display_name"};
 	static constexpr const char *const algorithms {"algorithms"};
+
+	static constexpr const char *const message_id {"message_id"};
+	static constexpr const char *const messages {"messages"};
 };
