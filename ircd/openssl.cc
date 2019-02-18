@@ -1390,6 +1390,15 @@ const
 
 ircd::openssl::init::init()
 {
+	const auto v(version());
+	if(v.first != v.second)
+		log::warning
+		{
+			"Linked OpenSSL version '%s' is not the compiled OpenSSL version '%s'",
+			v.first,
+			v.second
+		};
+
 	OPENSSL_init();
 	ERR_load_crypto_strings();
 	ERR_load_ERR_strings();
