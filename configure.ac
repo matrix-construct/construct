@@ -969,7 +969,7 @@ AC_CHECK_LIB(ssl, SSL_version,
 
 AM_CONDITIONAL([SSL], [test "x$have_ssl" = "xyes"])
 
-AC_CHECK_LIB(crypto, SSLeay_version,
+AC_CHECK_LIB(crypto, OPENSSL_init,
 [
 	have_crypto="yes"
 	AC_SUBST(CRYPTO_CPPFLAGS, [])
