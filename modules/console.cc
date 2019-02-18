@@ -8851,12 +8851,17 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"user_id",
+		"user_id", "clear"
 	}};
 
 	const m::user user
 	{
-		param.at(0)
+		param.at("user_id")
+	};
+
+	const bool clear
+	{
+		param["clear"] == "clear"
 	};
 
 	const m::room::state &tokens
@@ -8864,7 +8869,7 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 		m::user::tokens
 	};
 
-	tokens.for_each("ircd.access_token", m::event::closure_idx{[&out, &user]
+	tokens.for_each("ircd.access_token", m::event::closure_idx{[&out, &user, &clear]
 	(const m::event::idx &event_idx)
 	{
 		bool match(false);
@@ -8901,8 +8906,20 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 		    << " "
 		    << ost
 		    << " "
-		    << pretty(now - ost) << " ago"
-		    << std::endl;
+		    << pretty(now - ost) << " ago";
+
+
+		if(clear)
+		{
+			const auto eid
+			{
+				m::redact(m::user::tokens, user.user_id, at<"event_id"_>(event), "cleared")
+			};
+
+			out << " - cleared by " << eid;
+		}
+
+		out << std::endl;
 	}});
 
 	return true;
