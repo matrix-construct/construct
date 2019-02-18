@@ -947,6 +947,7 @@ dnl
 
 RB_CHK_SYSHEADER(openssl/err.h,    [OPENSSL_ERR_H])
 RB_CHK_SYSHEADER(openssl/sha.h,    [OPENSSL_SHA_H])
+RB_CHK_SYSHEADER(openssl/hmac.h,   [OPENSSL_HMAC_H])
 RB_CHK_SYSHEADER(openssl/ssl.h,    [OPENSSL_SSL_H])
 RB_CHK_SYSHEADER(openssl/ec.h,     [OPENSSL_EC_H])
 RB_CHK_SYSHEADER(openssl/rsa.h,    [OPENSSL_RSA_H])

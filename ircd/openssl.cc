@@ -8,16 +8,16 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <openssl/err.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include <openssl/ssl.h>
-#include <openssl/ec.h>
-#include <openssl/rsa.h>
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-#include <openssl/ripemd.h>
-#include <openssl/dh.h>
+#include <RB_INC_OPENSSL_ERR_H
+#include <RB_INC_OPENSSL_SHA_H
+#include <RB_INC_OPENSSL_HMAC_H
+#include <RB_INC_OPENSSL_SSL_H
+#include <RB_INC_OPENSSL_EC_H
+#include <RB_INC_OPENSSL_RSA_H
+#include <RB_INC_OPENSSL_X509_H
+#include <RB_INC_OPENSSL_EVP_H
+#include <RB_INC_OPENSSL_RIPEMD_H
+#include <RB_INC_OPENSSL_DH_H
 
 #if defined(LIBRESSL_VERSION_NUMBER)
 static time_t ASN1_TIME_seconds(const ASN1_TIME *);
