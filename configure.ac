@@ -1258,6 +1258,8 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	AX_BOOST_ASIO
 	AX_BOOST_SYSTEM
 	AX_BOOST_FILESYSTEM
+	AX_BOOST_COROUTINE
+	AX_BOOST_CONTEXT
 	boost_linkage="shared"
 ])
 
