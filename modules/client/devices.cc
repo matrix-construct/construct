@@ -26,6 +26,16 @@ devices_resource
 	}
 };
 
+ircd::resource
+devices_resource__unstable
+{
+	"/_matrix/client/unstable/devices/",
+	{
+		"(11.9) Device Management",
+		resource::DIRECTORY,
+	}
+};
+
 static resource::response
 get__devices_all(client &client,
                  const resource::request &request,
@@ -100,6 +110,15 @@ method_get
 	}
 };
 
+resource::method
+method_get__unstable
+{
+	devices_resource__unstable, "GET", get__devices,
+	{
+		method_get__unstable.REQUIRES_AUTH
+	}
+};
+
 resource::response
 put__devices(client &client,
               const resource::request &request)
@@ -149,6 +168,15 @@ method_put
 	}
 };
 
+resource::method
+method_put__unstable
+{
+	devices_resource__unstable, "PUT", put__devices,
+	{
+		method_put__unstable.REQUIRES_AUTH
+	}
+};
+
 resource::response
 delete__devices(client &client,
                 const resource::request &request)
@@ -189,5 +217,14 @@ method_delete
 	devices_resource, "DELETE", delete__devices,
 	{
 		method_delete.REQUIRES_AUTH
+	}
+};
+
+resource::method
+method_delete__unstable
+{
+	devices_resource__unstable, "DELETE", delete__devices,
+	{
+		method_delete__unstable.REQUIRES_AUTH
 	}
 };
