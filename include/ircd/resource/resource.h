@@ -28,6 +28,7 @@ struct ircd::resource
 	struct method;
 	struct request;
 	struct response;
+	struct redirect;
 
 	static log::log log;
 	static std::map<string_view, resource *, iless> resources;
@@ -53,6 +54,7 @@ struct ircd::resource
 #include "method.h"
 #include "request.h"
 #include "response.h"
+#include "redirect.h"
 
 enum ircd::resource::flag
 :uint

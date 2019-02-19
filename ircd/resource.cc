@@ -8,6 +8,11 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// resource/resource.h
+//
+
 decltype(ircd::resource::log)
 ircd::resource::log
 {
@@ -1162,4 +1167,86 @@ ircd::resource::response::response(client &client,
 	#endif
 
 	assert(written == size(head.completed()));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// resource/redirect.h
+//
+
+//
+// redirect::permanent::permanent
+//
+
+ircd::resource::redirect::permanent::permanent(const string_view &old_path,
+                                               const string_view &new_path,
+                                               struct opts opts)
+:resource
+{
+	old_path, std::move(opts)
+}
+,new_path
+{
+	new_path
+}
+,_options
+{
+	*this, "OPTIONS", std::bind(&permanent::handler, this, ph::_1, ph::_2)
+}
+,_trace
+{
+	*this, "TRACE", std::bind(&permanent::handler, this, ph::_1, ph::_2)
+}
+,_head
+{
+	*this, "HEAD", std::bind(&permanent::handler, this, ph::_1, ph::_2)
+}
+,_get
+{
+	*this, "GET", std::bind(&permanent::handler, this, ph::_1, ph::_2)
+}
+,_put
+{
+	*this, "PUT", std::bind(&permanent::handler, this, ph::_1, ph::_2)
+}
+,_post
+{
+	*this, "POST", std::bind(&permanent::handler, this, ph::_1, ph::_2)
+}
+,_patch
+{
+	*this, "PATCH", std::bind(&permanent::handler, this, ph::_1, ph::_2)
+}
+,_delete
+{
+	*this, "DELETE", std::bind(&permanent::handler, this, ph::_1, ph::_2)
+}
+{
+}
+
+ircd::resource::response
+ircd::resource::redirect::permanent::handler(client &client,
+                                             const request &request)
+{
+	thread_local char buf[response::HEAD_BUF_SZ];
+
+	const string_view postfix
+	{
+		lstrip(request.head.uri, this->path)
+	};
+
+	const string_view location{fmt::sprintf
+	{
+		buf, "%s/%s",
+		rstrip(this->new_path, '/'),
+		lstrip(postfix, '/')
+	}};
+
+	return response
+	{
+		client, {}, {}, http::MOVED_PERMANENTLY,
+		{
+			http::header { "Location", location }
+		}
+	};
 }
