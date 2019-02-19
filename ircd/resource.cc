@@ -1244,7 +1244,7 @@ ircd::resource::redirect::permanent::handler(client &client,
 
 	return response
 	{
-		client, {}, {}, http::MOVED_PERMANENTLY,
+		client, {}, {}, http::PERMANENT_REDIRECT,
 		{
 			http::header { "Location", location }
 		}
