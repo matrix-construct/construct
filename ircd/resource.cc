@@ -1071,7 +1071,9 @@ ircd::resource::response::response(client &client,
 	// All content gets sent
 	const size_t written
 	{
-		client.write_all(content)
+		size(content)?
+			client.write_all(content):
+			0
 	};
 
 	assert(written == size(content));
