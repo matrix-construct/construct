@@ -31,7 +31,7 @@ get_versions(client &client,
 {
 	static const json::object object
 	{
-		R"({"versions":["r0.3.0"]})"
+		R"({"versions":["r0.4.0"]})"
 	};
 
 	return resource::response
