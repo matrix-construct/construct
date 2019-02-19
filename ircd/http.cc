@@ -72,6 +72,8 @@ ircd::http::reason
 	{ code::FOUND,                               "Found"                                           },
 	{ code::SEE_OTHER,                           "See Other"                                       },
 	{ code::NOT_MODIFIED,                        "Not Modified"                                    },
+	{ code::USE_PROXY,                           "Use Proxy"                                       },
+	{ code::SWITCH_PROXY,                        "Switch Proxy"                                    },
 	{ code::TEMPORARY_REDIRECT,                  "Temporary Redirect"                              },
 	{ code::PERMANENT_REDIRECT,                  "Permanent Redirect"                              },
 
