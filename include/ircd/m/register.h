@@ -24,7 +24,8 @@ struct ircd::m::registar
 	json::property<name::password, json::string>,
 	json::property<name::auth, json::object>,
 	json::property<name::device_id, json::string>,
-	json::property<name::inhibit_login, bool>
+	json::property<name::inhibit_login, bool>,
+	json::property<name::initial_device_display_name, json::string>
 >
 {
 	using super_type::tuple;

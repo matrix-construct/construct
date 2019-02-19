@@ -251,6 +251,11 @@ register_user(const m::registar &request,
 			m::id::device::buf{}
 	};
 
+	const auto &initial_device_display_name
+	{
+		json::get<"initial_device_display_name"_>(request)
+	};
+
 	// 3.3.1 If true, the server binds the email used for authentication to the
 	// Matrix ID with the ID Server. Defaults to false.
 	const auto &bind_email
@@ -303,17 +308,24 @@ register_user(const m::registar &request,
 			string_view{}
 	};
 
+	// Log the user in by issuing an event in the tokens room containing
+	// the generated token. When this call completes without throwing the
+	// access_token will be committed and the user will be logged in.
 	if(gen_token)
-	{
-		// Log the user in by issuing an event in the tokens room containing
-		// the generated token. When this call completes without throwing the
-		// access_token will be committed and the user will be logged in.
 		m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
 		{
 			{ "ip",      client? string(remote(*client)) : std::string{} },
 			{ "device",  device_id                                       },
 		});
-	}
+
+	if(gen_token && !user_room.has("ircd.device", device_id))
+		m::send(user_room, user_id, "ircd.device", device_id, json::members
+		{
+			{ "device_id",     device_id                    },
+			{ "display_name",  initial_device_display_name  },
+			{ "last_seen_ts",  ircd::time<milliseconds>()   },
+			{ "last_seen_ip",  string(remote(*client))      },
+		});
 
 	// Send response to user
 	return json::strung
