@@ -928,19 +928,33 @@ dnl libsodium (NaCl) crypto support
 dnl
 dnl
 
-dnl PKG_CHECK_MODULES(SODIUM, [sodium], [have_sodium="yes"], [have_sodium="no"])
-RB_CHK_SYSHEADER(sodium.h, [SODIUM_H])
-AC_CHECK_LIB([sodium], sodium_init, [have_sodium="yes"], [have_sodium="no"])
-AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
-
-AM_COND_IF([SODIUM], [],
-[
-	AC_MSG_ERROR([Failed to find libsodium (The NaCl cryptographic library)])
-])
-
 AC_SUBST(SODIUM_CPPFLAGS, [])
 AC_SUBST(SODIUM_LDFLAGS, [])
-AC_SUBST(SODIUM_LIBS, ["-lsodium"])
+AC_SUBST(SODIUM_LIBS, [])
+
+AC_ARG_WITH(sodium-includes,
+AC_HELP_STRING([--with-sodium-includes=[[[DIR]]]], [Path to sodium include directory]),
+[
+	SODIUM_CPPFLAGS="-I$withval"
+], [])
+
+AC_ARG_WITH(sodium-libs,
+AC_HELP_STRING([--with-sodium-libs=[[[DIR]]]], [Path to sodium library directory]),
+[
+	SODIUM_LDFLAGS="-L$withval"
+], [])
+
+RB_CHK_SYSHEADER(sodium.h, [SODIUM_H])
+AC_CHECK_LIB([sodium], sodium_init,
+[
+	have_sodium="yes"
+	SODIUM_LIBS="-lsodium"
+], [
+	have_sodium="no"
+	AC_MSG_ERROR([libsodium is required but not found. Try apt-get install libsodium-dev])
+])
+
+AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
 
 dnl
 dnl
@@ -971,12 +985,6 @@ AC_HELP_STRING([--with-ssl-libs=[[[DIR]]]], [Path to SSL library directory]),
 	SSL_LDFLAGS="-L$withval"
 ], [])
 
-AC_ARG_WITH(ssl-libs,
-AC_HELP_STRING([--with-ssl-lib=[[[file]]]], [Path to SSL library file]),
-[
-	SSL_LIBS="-l$withval"
-], [])
-
 RB_CHK_SYSHEADER(openssl/err.h, [OPENSSL_ERR_H])
 RB_CHK_SYSHEADER(openssl/sha.h, [OPENSSL_SHA_H])
 RB_CHK_SYSHEADER(openssl/hmac.h, [OPENSSL_HMAC_H])
@@ -987,11 +995,9 @@ RB_CHK_SYSHEADER(openssl/x509.h, [OPENSSL_X509_H])
 RB_CHK_SYSHEADER(openssl/evp.h, [OPENSSL_EVP_H])
 RB_CHK_SYSHEADER(openssl/ripemd.h, [OPENSSL_RIPEMD_H])
 RB_CHK_SYSHEADER(openssl/dh.h, [OPENSSL_DH_H])
-
 AC_CHECK_LIB(ssl, SSL_version,
 [
 	have_ssl="yes"
-	AC_DEFINE(HAVE_SSL, 1, [Define to 1 if libssl (-lssl) is available.])
 	SSL_LIBS="-lssl"
 ], [
 	have_ssl="no"
@@ -1018,31 +1024,31 @@ AM_CONDITIONAL([CRYPTO], [test "x$have_crypto" = "xyes"])
 
 dnl
 dnl
-dnl libgmp support
-dnl
-dnl
-
-PKG_CHECK_MODULES(GMP, [gmp], [have_gmp="yes"], [have_gmp="no"])
-AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes"])
-
-AC_SUBST(GMP_CPPFLAGS, [])
-AC_SUBST(GMP_LDFLAGS, [])
-AC_SUBST(GMP_LIBS, ["-lgmp"])
-
-dnl
-dnl
 dnl libmagic support
 dnl
 dnl
+
+AC_SUBST(MAGIC_CPPFLAGS, [])
+AC_SUBST(MAGIC_LDFLAGS, [])
+AC_SUBST(MAGIC_LIBS, [])
+
+AC_ARG_WITH(magic-includes,
+AC_HELP_STRING([--with-magic-includes=[[[DIR]]]], [Path to magic include directory]),
+[
+	MAGIC_CPPFLAGS="-I$withval"
+], [])
+
+AC_ARG_WITH(magic-libs,
+AC_HELP_STRING([--with-magic-libs=[[[DIR]]]], [Path to magic library directory]),
+[
+	MAGIC_LDFLAGS="-L$withval"
+], [])
 
 RB_CHK_SYSHEADER(magic.h, [MAGIC_H])
 AC_CHECK_LIB(magic, magic_version,
 [
 	have_magic="yes"
-	AC_SUBST(MAGIC_CPPFLAGS, [])
-	AC_SUBST(MAGIC_LDFLAGS, [])
-	AC_SUBST(MAGIC_LIBS, ["-lmagic"])
-	AC_DEFINE(HAVE_MAGIC, 1, [Define to 1 if libmagic (-lmagic) is available.])
+	MAGIC_LIBS="-lmagic"
 ], [
 	have_magic="no"
 	AC_MSG_ERROR([libmagic is required but not found. Try apt-get install libmagic-dev])
@@ -1060,27 +1066,28 @@ AC_SUBST(Z_CPPFLAGS)
 AC_SUBST(Z_LDFLAGS)
 AC_SUBST(Z_LIBS)
 
-AC_ARG_WITH(zlib,
-AC_HELP_STRING([--with-zlib=[[[DIR]]]], [Path to libz.so for ziplinks support.]),
+AC_ARG_WITH(z-includes,
+AC_HELP_STRING([--with-z-includes=[[[DIR]]]], [Path to zlib include directory]),
 [
-	AC_SUBST(Z_LDFLAGS, ["-L$withval"])
-], [
+	Z_CPPFLAGS="-I$withval"
+], [])
 
+AC_ARG_WITH(z-libs,
+AC_HELP_STRING([--with-z-libs=[[[DIR]]]], [Path to zlib library directory]),
+[
+	Z_LDFLAGS="-L$withval"
+], [])
+
+RB_CHK_SYSHEADER(zlib.h, [ZLIB_H])
+AC_CHECK_LIB(z, zlibVersion,
+[
+	have_zlib="yes"
+	Z_LIBS="-lz"
+], [
+	have_zlib="no"
 ])
 
-AC_CHECK_HEADER(zlib.h,
-[
-	AC_CHECK_LIB(z, zlibVersion,
-	[
-		zlib=yes
-		AC_SUBST(Z_LIBS, -lz)
-		AC_DEFINE(HAVE_LIBZ, 1, [Define to 1 if zlib (-lz) is available.])
-	], [
-		zlib=no
-	])
-], [
-	zlib=no
-])
+AM_CONDITIONAL([ZLIB], [test "x$have_zlib" = "xyes"])
 
 dnl
 dnl
@@ -1092,27 +1099,28 @@ AC_SUBST(LZ4_CPPFLAGS)
 AC_SUBST(LZ4_LDFLAGS)
 AC_SUBST(LZ4_LIBS)
 
-AC_ARG_WITH(lz4,
-AC_HELP_STRING([--with-lz4=[[[DIR]]]], [Path to liblz4.so for lz4 compression support.]),
+AC_ARG_WITH(lz4-includes,
+AC_HELP_STRING([--with-lz4-includes=[[[DIR]]]], [Path to LZ4 include directory]),
 [
-	AC_SUBST(LZ4_LDFLAGS, ["-L$withval"])
-], [
+	LZ4_CPPFLAGS="-I$withval"
+], [])
 
+AC_ARG_WITH(lz4-libs,
+AC_HELP_STRING([--with-lz4-libs=[[[DIR]]]], [Path to LZ4 library directory]),
+[
+	LZ4_LDFLAGS="-L$withval"
+], [])
+
+RB_CHK_SYSHEADER(lz4.h, [LZ4_H])
+AC_CHECK_LIB(lz4, LZ4_versionNumber,
+[
+	have_lz4="yes"
+	LZ4_LIBS="-llz4"
+], [
+	have_lz4="no"
 ])
 
-AC_CHECK_HEADER(lz4.h,
-[
-	AC_CHECK_LIB(lz4, LZ4_versionNumber,
-	[
-		lz4=yes
-		AC_SUBST(LZ4_LIBS, -llz4)
-		AC_DEFINE(HAVE_LIBLZ4, 1, [Define to 1 if liblz4 (-llz4) is available.])
-	], [
-		lz4=no
-	])
-], [
-	lz4=no
-])
+AM_CONDITIONAL([LZ4], [test "x$have_lz4" = "xyes"])
 
 dnl
 dnl
@@ -1124,27 +1132,41 @@ AC_SUBST(SNAPPY_CPPFLAGS)
 AC_SUBST(SNAPPY_LDFLAGS)
 AC_SUBST(SNAPPY_LIBS)
 
-AC_ARG_WITH(snappy,
-AC_HELP_STRING([--with-snappy=[[[DIR]]]], [Path to libsnappy.so for snappy compression support.]),
+AC_ARG_WITH(snappy-includes,
+AC_HELP_STRING([--with-snappy-includes=[[[DIR]]]], [Path to snappy include directory]),
 [
-	AC_SUBST(SNAPPY_LDFLAGS, ["-L$withval"])
-], [
+	SNAPPY_CPPFLAGS="-I$withval"
+], [])
 
+AC_ARG_WITH(snappy-libs,
+AC_HELP_STRING([--with-snappy-libs=[[[DIR]]]], [Path to snappy library directory]),
+[
+	SNAPPY_LDFLAGS="-L$withval"
+], [])
+
+RB_CHK_SYSHEADER(snappy.h, [SNAPPY_H])
+AC_CHECK_LIB(snappy, snappy_compress,
+[
+	have_snappy="yes"
+	SNAPPY_LIBS="-lsnappy"
+], [
+	have_snappy="no"
 ])
 
-AC_CHECK_HEADER(snappy.h,
-[
-	AC_CHECK_LIB(snappy, snappy_compress,
-	[
-		snappy=yes
-		AC_SUBST(SNAPPY_LIBS, -lsnappy)
-		AC_DEFINE(HAVE_LIBSNAPPY, 1, [Define to 1 if libsnappy (-lsnappy) is available.])
-	], [
-		snappy=no
-	])
-], [
-	snappy=no
-])
+AM_CONDITIONAL([SNAPPY], [test "x$have_snappy" = "xyes"])
+
+dnl
+dnl
+dnl libgmp support
+dnl
+dnl
+
+PKG_CHECK_MODULES(GMP, [gmp], [have_gmp="yes"], [have_gmp="no"])
+AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes"])
+
+AC_SUBST(GMP_CPPFLAGS, [])
+AC_SUBST(GMP_LDFLAGS, [])
+AC_SUBST(GMP_LIBS, ["-lgmp"])
 
 dnl
 dnl
@@ -1155,6 +1177,24 @@ dnl
 BOOST_VERSION_MIN="1.66"
 BOOST_VERSION_MIN_PATCH="0"
 BOOST_BUILT_LIBS="system,filesystem,context,coroutine"
+
+AC_SUBST(BOOST_CPPFLAGS, [])
+AC_SUBST(BOOST_LDFLAGS, [])
+AC_SUBST(BOOST_LIBS, [])
+
+AC_ARG_WITH(boost-includes,
+AC_HELP_STRING([--with-boost-includes=[[[DIR]]]], [Path to boost include directory]),
+[
+	boost_incdir="$withval"
+	BOOST_CPPFLAGS="-isystem $withval"
+], [])
+
+AC_ARG_WITH(boost-libs,
+AC_HELP_STRING([--with-boost-libs=[[[DIR]]]], [Path to boost library directory]),
+[
+	boost_libdir="$withval"
+	BOOST_LDFLAGS="-L$withval"
+], [])
 
 AC_MSG_CHECKING([whether you asked to use boost sources included here])
 AC_ARG_WITH(included-boost,
@@ -1181,8 +1221,8 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 		boost_libdir="$PWD/deps/boost/lib"
 	])
 
-	AC_SUBST(BOOST_LDFLAGS, ["-L$boost_libdir"])
-	AC_SUBST(BOOST_CPPFLAGS, ["-isystem $PWD/deps/boost/include"])
+	BOOST_LDFLAGS="-L$boost_libdir"
+	BOOST_CPPFLAGS="-isystem $PWD/deps/boost/include"
 
 	AC_MSG_CHECKING([whether to use shared boost])
 	if [[ $withval = "static" ]]; then
@@ -1243,6 +1283,24 @@ dnl RocksDB support
 dnl
 dnl
 
+ROCKSDB_VERSION_MIN="v5.16.6"
+
+AC_SUBST(ROCKSDB_CPPFLAGS, [])
+AC_SUBST(ROCKSDB_LDFLAGS, [])
+AC_SUBST(ROCKSDB_LIBS, [])
+
+AC_ARG_WITH(rocksdb-includes,
+AC_HELP_STRING([--with-rocksdb-includes=[[[DIR]]]], [Path to RocksDB include directory]),
+[
+	ROCKSDB_CPPFLAGS="-isystem $withval"
+], [])
+
+AC_ARG_WITH(rocksdb-libs,
+AC_HELP_STRING([--with-rocksdb-libs=[[[DIR]]]], [Path to RocksDB library directory]),
+[
+	ROCKSDB_LDFLAGS="-L$withval"
+], [])
+
 AC_MSG_CHECKING([whether you asked to use the RocksDB included here])
 AC_ARG_WITH(included-rocksdb,
 AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources from included submodule]),
@@ -1250,8 +1308,8 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 	AC_MSG_RESULT([yes])
 	with_included_rocksdb="yes"
 
-	AC_SUBST(ROCKSDB_CPPFLAGS, ["-isystem $PWD/deps/rocksdb/include"])
-	AC_SUBST(ROCKSDB_LDFLAGS, ["-L$PWD/deps/rocksdb/"])
+	ROCKSDB_CPPFLAGS="-isystem $PWD/deps/rocksdb/include"
+	ROCKSDB_LDFLAGS="-L$PWD/deps/rocksdb/"
 
 	AC_MSG_CHECKING([whether to use shared RocksDB])
 	if [[ $withval = "static" ]]; then
@@ -1259,18 +1317,18 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 		withval="static"
 		rocksdb_linkage="static_lib"
 		AC_MSG_NOTICE([static RocksDB linkage requires multiple dependencies])
-		AC_MSG_NOTICE([| You will need: bzip2, zlib, snappy])
-		AC_SUBST(ROCKSDB_LIBS, ["$PWD/deps/rocksdb/librocksdb.a"])
+		AC_MSG_NOTICE([| You may need at least: bzip2, zlib, snappy, lz4])
+		ROCKSDB_LIBS="$PWD/deps/rocksdb/librocksdb.a"
 	else
 		AC_MSG_RESULT([yes])
 		withval="shared"
 		rocksdb_linkage="shared_lib"
 		AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
 		ROCKSDB_LDFLAGS+=" -Wl,-rpath=$PWD/deps/rocksdb"
-		AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
+		ROCKSDB_LIBS="-lrocksdb"
 	fi
 
-	bash tools/buildrocks.sh $rocksdb_linkage "v5.16.6"
+	bash tools/buildrocks.sh $rocksdb_linkage "$ROCKSDB_VERSION_MIN"
 	AS_IF([ test $? != 0 ],
 	[
 		AC_MSG_ERROR([Failed to build RocksDB])
@@ -1279,13 +1337,12 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 	AC_MSG_RESULT([no])
 	with_included_rocksdb="no"
 
-	AC_CHECK_LIB(rocksdb, rocksdb_open, [], [
+	AC_CHECK_LIB(rocksdb, rocksdb_open, [],
+	[
 		AC_MSG_ERROR([Unable to find required RocksDB package. Try apt-get install librocksdb-dev])
 	])
 
-	AC_SUBST(ROCKSDB_CPPFLAGS, [])
-	AC_SUBST(ROCKSDB_LDFLAGS, [])
-	AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
+	ROCKSDB_LIBS="-lrocksdb"
 ])
 
 dnl
@@ -1527,9 +1584,9 @@ echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
 echo "Building boost .................... $with_included_boost"
 echo "Building RocksDB .................. $with_included_rocksdb"
 echo "Building JS (SpiderMonkey) ........ $with_included_js"
-echo "Ziplinks (libz) support ........... $zlib"
-echo "LZ4 support ....................... $lz4"
-echo "Snappy support .................... $snappy"
+echo "Ziplinks (libz) support ........... $have_zlib"
+echo "LZ4 support ....................... $have_lz4"
+echo "Snappy support .................... $have_snappy"
 echo "GNU MP support .................... $have_gmp"
 echo "Sodium support .................... $have_sodium"
 echo "SSL support ....................... $have_ssl"
