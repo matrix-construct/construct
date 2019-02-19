@@ -26,9 +26,30 @@ keys_upload_resource
 	}
 };
 
+ircd::resource::redirect::permanent
+keys_upload_resource__unstable
+{
+	"/_matrix/client/unstable/keys/upload/",
+	"/_matrix/client/r0/keys/upload/",
+	{
+		"(11.10.2.2) Keys Query",
+		resource::DIRECTORY,
+	}
+};
+
 ircd::resource
 keys_query_resource
 {
+	"/_matrix/client/r0/keys/query",
+	{
+		"(11.10.2.2) Keys Query",
+	}
+};
+
+ircd::resource::redirect::permanent
+keys_query_resource__unstable
+{
+	"/_matrix/client/unstable/keys/query",
 	"/_matrix/client/r0/keys/query",
 	{
 		"(11.10.2.2) Keys Query",
