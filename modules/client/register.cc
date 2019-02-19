@@ -214,7 +214,7 @@ register_user(const m::registar &request,
 	// generate a Matrix ID local part.
 	const auto &username
 	{
-		unquote(json::get<"username"_>(request))
+		json::get<"username"_>(request)
 	};
 
 	// Generate canonical mxid. The home_server is appended if one is not
@@ -231,7 +231,7 @@ register_user(const m::registar &request,
 	// 3.3.1 Required. The desired password for the account.
 	const auto &password
 	{
-		unquote(at<"password"_>(request))
+		at<"password"_>(request)
 	};
 
 	// (r0.3.0) 3.4.1 ID of the client device. If this does not correspond to a
@@ -239,7 +239,7 @@ register_user(const m::registar &request,
 	// generate a device_id if this is not specified.
 	const auto requested_device_id
 	{
-		unquote(json::get<"device_id"_>(request))
+		json::get<"device_id"_>(request)
 	};
 
 	const m::id::device::buf device_id
