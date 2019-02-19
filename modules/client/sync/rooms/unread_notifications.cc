@@ -40,7 +40,7 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 void
 ircd::m::sync::room_unread_notifications_polylog(data &data)
 {
-	auto &room{*data.room};
+	const auto &room{*data.room};
 	m::event::id::buf last_read;
 	if(!m::receipt::read(last_read, room.room_id, data.user))
 		return;
