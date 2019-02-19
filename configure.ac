@@ -948,30 +948,51 @@ dnl OpenSSL support
 dnl
 dnl
 
-AC_DEFUN([RB_CHK_OPENSSL_HEADER],
-[
-	RB_CHK_SYSHEADER([openssl-1.0/$1], [[OPENSSL_$2]])
-	RB_CHK_SYSHEADER([openssl/$1], [[OPENSSL_$2]])
-])
+AC_SUBST(SSL_CPPFLAGS, [])
+AC_SUBST(SSL_LDFLAGS, [])
+AC_SUBST(SSL_LIBS, [])
 
-RB_CHK_OPENSSL_HEADER(err.h, [ERR_H])
-RB_CHK_OPENSSL_HEADER(sha.h, [SHA_H])
-RB_CHK_OPENSSL_HEADER(hmac.h, [HMAC_H])
-RB_CHK_OPENSSL_HEADER(ssl.h, [SSL_H])
-RB_CHK_OPENSSL_HEADER(ec.h, [EC_H])
-RB_CHK_OPENSSL_HEADER(rsa.h, [RSA_H])
-RB_CHK_OPENSSL_HEADER(x509.h, [X509_H])
-RB_CHK_OPENSSL_HEADER(evp.h, [EVP_H])
-RB_CHK_OPENSSL_HEADER(ripemd.h, [RIPEMD_H])
-RB_CHK_OPENSSL_HEADER(dh.h, [DH_H])
+AC_ARG_WITH(ssl,
+AC_HELP_STRING([--with-ssl=[[[DIR]]]], [Path to SSL source directory]),
+[
+	SSL_CPPFLAGS="-I$withval/include"
+	SSL_LDFLAGS="-L$withval"
+], [])
+
+AC_ARG_WITH(ssl-includes,
+AC_HELP_STRING([--with-ssl-includes=[[[DIR]]]], [Path to SSL include directory]),
+[
+	SSL_CPPFLAGS="-I$withval"
+], [])
+
+AC_ARG_WITH(ssl-libs,
+AC_HELP_STRING([--with-ssl-libs=[[[DIR]]]], [Path to SSL library directory]),
+[
+	SSL_LDFLAGS="-L$withval"
+], [])
+
+AC_ARG_WITH(ssl-libs,
+AC_HELP_STRING([--with-ssl-lib=[[[file]]]], [Path to SSL library file]),
+[
+	SSL_LIBS="-l$withval"
+], [])
+
+RB_CHK_SYSHEADER(openssl/err.h, [OPENSSL_ERR_H])
+RB_CHK_SYSHEADER(openssl/sha.h, [OPENSSL_SHA_H])
+RB_CHK_SYSHEADER(openssl/hmac.h, [OPENSSL_HMAC_H])
+RB_CHK_SYSHEADER(openssl/ssl.h, [OPENSSL_SSL_H])
+RB_CHK_SYSHEADER(openssl/ec.h, [OPENSSL_EC_H])
+RB_CHK_SYSHEADER(openssl/rsa.h, [OPENSSL_RSA_H])
+RB_CHK_SYSHEADER(openssl/x509.h, [OPENSSL_X509_H])
+RB_CHK_SYSHEADER(openssl/evp.h, [OPENSSL_EVP_H])
+RB_CHK_SYSHEADER(openssl/ripemd.h, [OPENSSL_RIPEMD_H])
+RB_CHK_SYSHEADER(openssl/dh.h, [OPENSSL_DH_H])
 
 AC_CHECK_LIB(ssl, SSL_version,
 [
 	have_ssl="yes"
-	AC_SUBST(SSL_CPPFLAGS, [])
-	AC_SUBST(SSL_LDFLAGS, [])
-	AC_SUBST(SSL_LIBS, ["-lssl"])
 	AC_DEFINE(HAVE_SSL, 1, [Define to 1 if libssl (-lssl) is available.])
+	SSL_LIBS="-lssl"
 ], [
 	have_ssl="no"
 	AC_MSG_ERROR([libssl is required but not found. Try apt-get install libssl1.0-dev])
@@ -979,13 +1000,15 @@ AC_CHECK_LIB(ssl, SSL_version,
 
 AM_CONDITIONAL([SSL], [test "x$have_ssl" = "xyes"])
 
+AC_SUBST(CRYPTO_CPPFLAGS, [])
+AC_SUBST(CRYPTO_LDFLAGS, [])
+AC_SUBST(CRYPTO_LIBS, [])
+
 AC_CHECK_LIB(crypto, OPENSSL_init,
 [
 	have_crypto="yes"
-	AC_SUBST(CRYPTO_CPPFLAGS, [])
-	AC_SUBST(CRYPTO_LDFLAGS, [])
-	AC_SUBST(CRYPTO_LIBS, ["-lcrypto"])
 	AC_DEFINE(HAVE_CRYPTO, 1, [Define to 1 if libcrypto (-lcrypto) is available.])
+	CRYPTO_LIBS="-lcrypto"
 ], [
 	have_crypto="no"
 	AC_MSG_ERROR([libcrypto is required but not found.])
