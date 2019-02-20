@@ -48,6 +48,9 @@ method_post
 	}
 };
 
+extern const std::string
+flows;
+
 resource::response
 post__delete_devices(client &client,
                      const resource::request &request)
@@ -62,15 +65,20 @@ post__delete_devices(client &client,
 		request["auth"]
 	};
 
-	const string_view &type
-	{
-		auth.at("type")
-	};
+	// 14.10.2 Security considerations
+	const json::string &type{auth["type"]};
+	if(type != "m.login.password")
+		return resource::response
+		{
+			client, http::UNAUTHORIZED, json::object{flows}
+		};
 
-	const string_view &session
-	{
-		auth["session"]
-	};
+	const json::string &password{auth["password"]};
+	if(!m::user(request.user_id).is_password(password))
+		throw m::ACCESS_DENIED
+		{
+			"Incorrect password."
+		};
 
 	for(const json::string &device_id : devices)
 		m::device::del(request.user_id, device_id);
@@ -80,3 +88,21 @@ post__delete_devices(client &client,
 		client, http::OK
 	};
 }
+
+const std::string
+flows
+{
+	ircd::string(512 | SHRINK_TO_FIT, [](const mutable_buffer &buf)
+	{
+		json::stack out{buf};
+		{
+			json::stack::object top{out};
+			json::stack::array flows{top, "flows"};
+			json::stack::object flow{flows};
+			json::stack::array stages{flow, "stages"};
+			stages.append("m.login.password");
+		}
+
+		return out.completed();
+	})
+};
