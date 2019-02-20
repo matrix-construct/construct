@@ -1585,7 +1585,7 @@ ircd::m::device::set(const m::user &user,
 
 	static mods::import<prototype> function
 	{
-		"m_user", "ircd::m::device::set"
+		"m_device", "ircd::m::device::set"
 	};
 
 	return function(user, device_);
@@ -1599,7 +1599,7 @@ ircd::m::device::del(const m::user &user,
 
 	static mods::import<prototype> function
 	{
-		"m_user", "ircd::m::device::del"
+		"m_device", "ircd::m::device::del"
 	};
 
 	return function(user, id);
@@ -1636,7 +1636,7 @@ ircd::m::device::get(std::nothrow_t,
 
 	static mods::import<prototype> function
 	{
-		"m_user", "ircd::m::device::get"
+		"m_device", "ircd::m::device::get"
 	};
 
 	return function(std::nothrow, user, id, c);
@@ -1650,7 +1650,7 @@ ircd::m::device::for_each(const m::user &user,
 
 	static mods::import<prototype> function
 	{
-		"m_user", "ircd::m::device::for_each"
+		"m_device", "ircd::m::device::for_each"
 	};
 
 	return function(user, c);
@@ -1664,7 +1664,7 @@ ircd::m::device::for_each(const m::user &user,
 
 	static mods::import<prototype> function
 	{
-		"m_user", "ircd::m::device::for_each"
+		"m_device", "ircd::m::device::for_each"
 	};
 
 	return function(user, c);
