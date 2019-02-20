@@ -115,7 +115,7 @@ Additional documentation for building can be found in [doc/BUILD.md](doc/BUILD.m
 ### BUILD (standalone)
 
 This section is intended to allow building with dependencies that have not
-made their way to mainstream systems. Important notes:
+made their way to mainstream systems. Important notes that may affect you:
 
 - GCC: Ubuntu Xenial (16.04) users must use a PPA to obtain GCC-7 or greater; don't
 forget to `export CXX=g++-7` before running `./configure` on that system.
@@ -124,8 +124,14 @@ forget to `export CXX=g++-7` before running `./configure` on that system.
 Ubuntu Cosmic (18.10). All earlier releases (including 18.04 LTS) can configure
 with `--with-included-boost` as instructed below (or obtain that package instead).
 
+- OpenSSL: We use 1.0.x for now. Systems that default to 1.1.x will need to
+`./configure` with options that find 1.0.x files. Arch Linux users can use
+`./configure --with-ssl-includes=/usr/include/openssl-1.0`
+
 - RocksDB: All users should configure with `--with-included-rocksdb` as
 instructed below.
+
+#### STANDALONE BUILD PROCEDURE
 
 ```
 ./autogen.sh
