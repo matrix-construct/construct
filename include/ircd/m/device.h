@@ -118,7 +118,13 @@ struct ircd::m::device
 	json::property<name::keys, json::object>,
 
 	/// (s2s) Optional display name for the device.
-	json::property<name::device_display_name, json::string>
+	json::property<name::device_display_name, json::string>,
+
+	/// (internal) The event::id of the access_token in the !tokens room
+	/// issued for this device. This is not exposed to the client or
+	/// federation (with the exception of cluster); though its content
+	/// is not accessible anyway.
+	json::property<name::access_token_id, json::string>
 >
 {
 	using closure = std::function<void (const string_view &)>;

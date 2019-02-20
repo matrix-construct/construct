@@ -142,3 +142,4 @@ constexpr const char *const ircd::m::name::messages;
 constexpr const char *const ircd::m::name::stream_id;
 constexpr const char *const ircd::m::name::prev_id;
 constexpr const char *const ircd::m::name::deleted;
+constexpr const char *const ircd::m::name::access_token_id;
