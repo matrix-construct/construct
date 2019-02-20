@@ -8906,7 +8906,9 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 		    << " "
 		    << ost
 		    << " "
-		    << pretty(now - ost) << " ago";
+		    << pretty(now - ost) << " ago"
+		    << " "
+		    << json::get<"event_id"_>(event);
 
 
 		if(clear)
