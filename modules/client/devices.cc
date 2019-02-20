@@ -37,6 +37,44 @@ devices_resource__unstable
 	}
 };
 
+static void
+_get_device(json::stack::object &obj,
+            const m::user &user,
+            const string_view &device_id)
+{
+	json::stack::member
+	{
+		obj, "device_id", device_id
+	};
+
+	m::device::get(std::nothrow, user, device_id, "display_name", [&obj]
+	(const string_view &value)
+	{
+		json::stack::member
+		{
+			obj, "display_name", unquote(value)
+		};
+	});
+
+	m::device::get(std::nothrow, user, device_id, "last_seen_ip", [&obj]
+	(const string_view &value)
+	{
+		json::stack::member
+		{
+			obj, "last_seen_ip", unquote(value)
+		};
+	});
+
+	m::device::get(std::nothrow, user, device_id, "last_seen_ts", [&obj]
+	(const string_view &value)
+	{
+		json::stack::member
+		{
+			obj, "last_seen_ts", value
+		};
+	});
+}
+
 static resource::response
 get__devices_all(client &client,
                  const resource::request &request,
@@ -62,10 +100,11 @@ get__devices_all(client &client,
 		top, "devices"
 	};
 
-	m::device::for_each(request.user_id, [&devices]
-	(const m::device &device)
+	m::device::for_each(request.user_id, [&request, &devices]
+	(const string_view &device_id)
 	{
-		devices.append(device);
+		json::stack::object obj{devices};
+		_get_device(obj, request.user_id, device_id);
 		return true;
 	});
 
@@ -86,20 +125,32 @@ get__devices(client &client,
 
 	m::id::device::buf device_id
 	{
-		url::decode(device_id, request.parv[1])
+		url::decode(device_id, request.parv[0])
 	};
 
-	std::string buf;
-	m::device::get(request.user_id, device_id, [&buf]
-	(const m::device &device)
-	{
-		buf = json::strung{device};
-	});
+	if(!m::device::has(request.user_id, device_id))
+		throw m::NOT_FOUND
+		{
+			"Device ID '%s' not found", device_id
+		};
 
-	return resource::response
+	resource::response::chunked response
 	{
-		client, http::OK, json::object{buf}
+		client, http::OK
 	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	_get_device(top, request.user_id, device_id);
+	return {};
 }
 
 resource::method
@@ -113,7 +164,7 @@ method_get
 
 resource::response
 put__devices(client &client,
-              const resource::request &request)
+             const resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -121,29 +172,15 @@ put__devices(client &client,
 			"device_id required"
 		};
 
-	const m::user::room user_room
-	{
-		request.user_id
-	};
-
 	m::id::device::buf device_id
 	{
 		url::decode(device_id, request.parv[1])
 	};
 
-	user_room.get("ircd.device", device_id, [&]
-	(const m::event &event)
-	{
-		const json::object &content
-		{
-			at<"content"_>(event)
-		};
+	m::device data{request.content};
+	json::get<"device_id"_>(data) = device_id;
 
-		//TODO: where is your Object.update()??
-		throw m::UNSUPPORTED{};
-	});
-
-	send(user_room, request.user_id, "ircd.device", device_id, request.content);
+	m::device::set(request.user_id, data);
 
 	return resource::response
 	{

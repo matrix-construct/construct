@@ -52,6 +52,7 @@ struct ircd::m::device_keys
 >
 {
 	using super_type::tuple;
+	using super_type::operator=;
 };
 
 struct ircd::m::device
@@ -74,22 +75,23 @@ struct ircd::m::device
 	json::property<name::last_seen_ts, time_t>,
 
 	/// (s2s) Required. Identity keys for the device.
-	json::property<name::keys, device_keys>,
+	json::property<name::keys, json::object>,
 
 	/// (s2s) Optional display name for the device.
 	json::property<name::device_display_name, json::string>
 >
 {
-	using closure = std::function<void (const device &)>;
-	using closure_bool = std::function<bool (const device &)>;
-	using id_closure_bool = std::function<bool (const string_view &)>;
+	using closure = std::function<void (const string_view &)>;
+	using closure_bool = std::function<bool (const string_view &)>;
 
-	static bool for_each(const user &, const id_closure_bool &);
-	static bool for_each(const user &, const closure_bool &);
-	static bool get(std::nothrow_t, const user &, const string_view &id, const closure &);
-	static bool get(const user &, const string_view &id, const closure &);
+	static bool for_each(const user &, const closure_bool &); // each device_id
+	static bool for_each(const user &, const string_view &id, const closure_bool &); // each property
+	static bool get(std::nothrow_t, const user &, const string_view &id, const string_view &prop, const closure &);
+	static bool get(const user &, const string_view &id, const string_view &prop, const closure &);
+	static bool has(const user &, const string_view &id);
 	static bool del(const user &, const string_view &id);
 	static bool set(const user &, const device &);
 
 	using super_type::tuple;
+	using super_type::operator=;
 };

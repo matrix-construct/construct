@@ -8955,10 +8955,17 @@ console_cmd__user__device(opt &out, const string_view &line)
 		return true;
 	}
 
-	m::device::get(user_id, device_id, [&out]
-	(const m::device &device)
+	m::device::for_each(user_id, device_id, [&out, &user_id, &device_id]
+	(const string_view &prop)
 	{
-		out << device << std::endl;
+		m::device::get(std::nothrow, user_id, device_id, prop, [&out, &prop]
+		(const json::object &value)
+		{
+			out << prop << ": "
+			    << value
+			    << std::endl;
+		});
+
 		return true;
 	});
 

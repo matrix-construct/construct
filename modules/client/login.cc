@@ -90,15 +90,13 @@ post__login_password(client &client,
 		{ "device_id",  device_id              },
 	});
 
-	const m::user::room user_room{user};
-	if(!user_room.has("ircd.device", device_id))
-		m::send(user_room, user_id, "ircd.device", device_id, json::members
-		{
-			{ "device_id",     device_id                    },
-			{ "display_name",  initial_device_display_name  },
-			{ "last_seen_ts",  ircd::time<milliseconds>()   },
-			{ "last_seen_ip",  string(remote(client))       },
-		});
+	m::device::set(user_id,
+	{
+		{ "device_id",     device_id                    },
+		{ "display_name",  initial_device_display_name  },
+		{ "last_seen_ts",  ircd::time<milliseconds>()   },
+		{ "last_seen_ip",  string(remote(client))       },
+	});
 
 	// Send response to user
 	return resource::response

@@ -1606,20 +1606,36 @@ ircd::m::device::del(const m::user &user,
 }
 
 bool
+ircd::m::device::has(const m::user &user,
+                     const string_view &id)
+{
+	using prototype = bool (const m::user &, const string_view &id);
+
+	static mods::import<prototype> function
+	{
+		"m_device", "ircd::m::device::has"
+	};
+
+	return function(user, id);
+}
+
+bool
 ircd::m::device::get(const m::user &user,
                      const string_view &id,
+                     const string_view &prop,
                      const closure &c)
 {
 	const bool ret
 	{
-		get(std::nothrow, user, id, c)
+		get(std::nothrow, user, id, prop, c)
 	};
 
 	if(!ret)
 		throw m::NOT_FOUND
 		{
-			"Device '%s' for user %s not found",
+			"Property '%s' for device '%s' for user %s not found",
 			id,
+			prop,
 			string_view{user.user_id}
 		};
 
@@ -1630,30 +1646,36 @@ bool
 ircd::m::device::get(std::nothrow_t,
                      const m::user &user,
                      const string_view &id,
+                     const string_view &prop,
                      const closure &c)
 {
-	using prototype = bool (std::nothrow_t, const m::user &, const string_view &, const closure &);
+	using prototype = bool (std::nothrow_t,
+	                        const m::user &,
+	                        const string_view &,
+	                        const string_view &,
+	                        const closure &);
 
 	static mods::import<prototype> function
 	{
 		"m_device", "ircd::m::device::get"
 	};
 
-	return function(std::nothrow, user, id, c);
+	return function(std::nothrow, user, id, prop, c);
 }
 
 bool
 ircd::m::device::for_each(const m::user &user,
-                          const id_closure_bool &c)
+                          const string_view &id,
+                          const closure_bool &c)
 {
-	using prototype = bool (const m::user &, const id_closure_bool &);
+	using prototype = bool (const m::user &, const string_view &id, const closure_bool &);
 
 	static mods::import<prototype> function
 	{
 		"m_device", "ircd::m::device::for_each"
 	};
 
-	return function(user, c);
+	return function(user, id, c);
 }
 
 bool

@@ -84,10 +84,39 @@ get__user_devices(client &client,
 		top, "devices"
 	};
 
-	m::device::for_each(user_id, [&devices]
-	(const m::device &device)
+	m::device::for_each(user_id, [&devices, &user_id]
+	(const string_view &device_id)
 	{
-		devices.append(device);
+		json::stack::object device
+		{
+			devices
+		};
+
+		json::stack::member
+		{
+			device, "device_id", device_id
+		};
+
+		// The property name difference here is on purpose, probably one of
+		// those so-called spec "thinkos"
+		m::device::get(std::nothrow, user_id, device_id, "display_name", [&device]
+		(const string_view &value)
+		{
+			json::stack::member
+			{
+				device, "device_display_name", unquote(value)
+			};
+		});
+
+		m::device::get(std::nothrow, user_id, device_id, "keys", [&device]
+		(const json::object &value)
+		{
+			json::stack::member
+			{
+				device, "keys", value
+			};
+		});
+
 		return true;
 	});
 

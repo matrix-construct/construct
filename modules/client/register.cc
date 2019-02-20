@@ -318,8 +318,8 @@ register_user(const m::registar &request,
 			{ "device",  device_id                                       },
 		});
 
-	if(gen_token && !user_room.has("ircd.device", device_id))
-		m::send(user_room, user_id, "ircd.device", device_id, json::members
+	if(gen_token)
+		m::device::set(user_id,
 		{
 			{ "device_id",     device_id                    },
 			{ "display_name",  initial_device_display_name  },
