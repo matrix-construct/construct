@@ -13,6 +13,7 @@
 
 namespace ircd::m
 {
+	// event/event.h
 	struct event;
 
 	// General util
@@ -29,6 +30,39 @@ namespace ircd::m
 	bool cached(const id::event &);
 	bool good(const id::event &);
 	bool bad(const id::event &);
+
+	// Equality tests the event_id only! know this.
+	bool operator==(const event &a, const event &b);
+
+	// Depth comparison; expect unstable sorting.
+	bool operator<(const event &, const event &);
+	bool operator>(const event &, const event &);
+	bool operator<=(const event &, const event &);
+	bool operator>=(const event &, const event &);
+
+	// Topological comparison
+	bool before(const event &a, const event &b);
+
+	id::event make_id(const event &, id::event::buf &buf, const const_buffer &hash);
+	id::event make_id(const event &, id::event::buf &buf);
+
+	json::object hashes(const mutable_buffer &, const event &);
+	event signatures(const mutable_buffer &, const m::event &);
+	event essential(event, const mutable_buffer &content);
+
+	bool verify_sha256b64(const event &, const string_view &);
+	bool verify_hash(const event &, const sha256::buf &);
+	bool verify_hash(const event &);
+
+	bool verify(const event &, const ed25519::pk &, const ed25519::sig &sig);
+	bool verify(const event &, const ed25519::pk &, const string_view &origin, const string_view &pkid);
+	bool verify(const event &, const string_view &origin, const string_view &pkid); // io/yield
+	bool verify(const event &, const string_view &origin); // io/yield
+	bool verify(const event &); // io/yield
+
+	sha256::buf hash(const event &);
+	ed25519::sig sign(const event &, const ed25519::sk &);
+	ed25519::sig sign(const event &);
 }
 
 #include "event/event.h"
