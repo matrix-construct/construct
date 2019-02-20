@@ -54,8 +54,42 @@ get__user_devices(client &client,
 		url::decode(user_id, request.parv[0])
 	};
 
-	return resource::response
+	resource::response::chunked response
 	{
-		client, http::NOT_FOUND
+		client, http::OK
 	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::member
+	{
+		top, "user_id", user_id
+	};
+
+	json::stack::member
+	{
+		top, "stream_id", json::value(0L)
+	};
+
+	json::stack::array devices
+	{
+		top, "devices"
+	};
+
+	m::device::for_each(user_id, [&devices]
+	(const m::device &device)
+	{
+		devices.append(device);
+		return true;
+	});
+
+	return {};
 }
