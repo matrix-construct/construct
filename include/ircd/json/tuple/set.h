@@ -74,9 +74,12 @@ try
 }
 catch(const bad_lex_cast &e)
 {
-	throw parse_error("cannot convert '%s' to '%s'",
-	                  demangle<src>(),
-	                  demangle<dst>());
+	throw parse_error
+	{
+		"cannot convert '%s' to '%s'",
+		demangle<src>(),
+		demangle<dst>()
+	};
 }
 
 template<class dst,
@@ -136,10 +139,13 @@ try
 }
 catch(const std::exception &e)
 {
-	throw parse_error("failed to set member '%s' (from %s): %s",
-	                  key,
-	                  demangle<V>(),
-	                  e.what());
+	throw parse_error
+	{
+		"failed to set member '%s' (from %s): %s",
+		key,
+		demangle<V>(),
+		e.what()
+	};
 }
 
 template<class... T>
@@ -152,25 +158,34 @@ set(tuple<T...> &t,
 	{
 		case type::STRING:
 		case type::LITERAL:
+		{
 			set(t, key, string_view{value});
 			break;
+		}
 
 		case type::NUMBER:
+		{
 			if(value.floats)
 				set(t, key, value.floating);
 			else
 				set(t, key, value.integer);
 			break;
+		}
 
 		case type::OBJECT:
 		case type::ARRAY:
+		{
 			if(unlikely(!value.serial))
-				throw print_error("Type %s must be JSON to be used by tuple member '%s'",
-				                  reflect(type(value)),
-				                  key);
+				throw print_error
+				{
+					"Type %s must be JSON to be used by tuple member '%s'",
+					reflect(type(value)),
+					key
+				};
 
 			set(t, key, string_view{value});
 			break;
+		}
 	}
 
 	return t;
