@@ -159,4 +159,8 @@ struct ircd::m::name
 
 	static constexpr const char *const message_id {"message_id"};
 	static constexpr const char *const messages {"messages"};
+
+	static constexpr const char *const stream_id {"stream_id"};
+	static constexpr const char *const prev_id {"prev_id"};
+	static constexpr const char *const deleted {"deleted"};
 };

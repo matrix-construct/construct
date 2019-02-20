@@ -107,6 +107,7 @@ m_typing_la_SOURCES = m_typing.cc
 m_receipt_la_SOURCES = m_receipt.cc
 m_presence_la_SOURCES = m_presence.cc
 m_direct_to_device_la_SOURCES = m_direct_to_device.cc
+m_device_list_update_la_SOURCES = m_device_list_update.cc
 m_state_la_SOURCES = m_state.cc
 m_rooms_la_SOURCES = m_rooms.cc
 m_room_la_SOURCES = m_room.cc
@@ -128,6 +129,7 @@ m_module_LTLIBRARIES = \
 	m_receipt.la \
 	m_presence.la \
 	m_direct_to_device.la \
+	m_device_list_update.la \
 	m_state.la \
 	m_rooms.la \
 	m_room.la \

@@ -138,3 +138,7 @@ constexpr const char *const ircd::m::name::algorithms;
 
 constexpr const char *const ircd::m::name::message_id;
 constexpr const char *const ircd::m::name::messages;
+
+constexpr const char *const ircd::m::name::stream_id;
+constexpr const char *const ircd::m::name::prev_id;
+constexpr const char *const ircd::m::name::deleted;
