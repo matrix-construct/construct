@@ -28,6 +28,7 @@ struct ircd::m::room::state
 	using keys_bool = std::function<bool (const string_view &)>;
 	using types = std::function<void (const string_view &)>;
 	using types_bool = std::function<bool (const string_view &)>;
+	IRCD_STRONG_TYPEDEF(string_view, type_prefix)
 
 	static conf::item<bool> disable_history;
 	static conf::item<size_t> readahead_size;
@@ -45,6 +46,7 @@ struct ircd::m::room::state
 	// Iterate the state
 	bool for_each(const types_bool &) const;
 	void for_each(const types &) const;
+	bool for_each(const type_prefix &pref, const types_bool &) const;
 	bool for_each(const string_view &type, const keys_bool &view) const;
 	void for_each(const string_view &type, const keys &) const;
 	bool for_each(const string_view &type, const string_view &lower_bound, const keys_bool &view) const;

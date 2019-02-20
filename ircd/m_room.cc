@@ -1468,6 +1468,26 @@ const
 	return true;
 }
 
+bool
+ircd::m::room::state::for_each(const type_prefix &prefix,
+                               const types_bool &closure)
+const
+{
+	bool ret(true), cont(true);
+	for_each(types_bool([&prefix, &closure, &ret, &cont]
+	(const string_view &type)
+	{
+		if(!startswith(type, string_view(prefix)))
+			return cont;
+
+		cont = false;
+		ret = closure(type);
+		return ret;
+	}));
+
+	return ret;
+}
+
 void
 ircd::m::room::state::for_each(const types &closure)
 const
