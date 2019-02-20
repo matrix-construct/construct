@@ -50,11 +50,27 @@ namespace ircd::json
 struct ircd::json::string
 :string_view
 {
-	string(const string_view &s)
-	:string_view{unquote(s)}
-	{}
-
 	string() = default;
+	string(json::string &&) = default;
+	string(const json::string &) = default;
+	string(const string_view &s)
+	:string_view
+	{
+		surrounds(s, '"')?
+			unquote(s):
+			s
+	}{}
+
+	string &operator=(json::string &&) = default;
+	string &operator=(const json::string &) = default;
+	string &operator=(const string_view &s)
+	{
+		*static_cast<string_view *>(this) = surrounds(s, '"')?
+			unquote(s):
+			s;
+
+		return *this;
+	}
 };
 
 /// Alternative to `json::strung` which uses a fixed array rather than an
