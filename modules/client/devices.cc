@@ -42,35 +42,34 @@ get__devices_all(client &client,
                  const resource::request &request,
                  const m::room user_room)
 {
-	const m::room::state state
+	resource::response::chunked response
 	{
-		user_room
+		client, http::OK
 	};
 
-	std::vector<std::string> devices;
-	state.for_each("ircd.device", [&devices]
-	(const m::event &event)
+	json::stack out
 	{
-		const auto &device_id
-		{
-			at<"state_key"_>(event)
-		};
+		response.buf, response.flusher()
+	};
 
-		devices.emplace_back(at<"content"_>(event));
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::array devices
+	{
+		top, "devices"
+	};
+
+	m::device::for_each(request.user_id, [&devices]
+	(const m::device &device)
+	{
+		devices.append(device);
+		return true;
 	});
 
-	const json::strung list
-	{
-		devices.data(), devices.data() + devices.size()
-	};
-
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "devices", list }
-		}
-	};
+	return {};
 }
 
 resource::response
@@ -90,16 +89,17 @@ get__devices(client &client,
 		url::decode(device_id, request.parv[1])
 	};
 
-	user_room.get("ircd.device", device_id, [&]
-	(const m::event &event)
+	std::string buf;
+	m::device::get(request.user_id, device_id, [&buf]
+	(const m::device &device)
 	{
-		resource::response
-		{
-			client, at<"content"_>(event)
-		};
+		buf = json::strung{device};
 	});
 
-	return {}; // responded from closure
+	return resource::response
+	{
+		client, http::OK, json::object{buf}
+	};
 }
 
 resource::method
@@ -170,27 +170,16 @@ delete__devices(client &client,
 			"device_id required"
 		};
 
-	const m::user::room user_room
-	{
-		request.user_id
-	};
-
 	m::id::device::buf device_id
 	{
 		url::decode(device_id, request.parv[1])
 	};
 
-	if(!user_room.has("ircd.device", device_id))
-		throw m::NOT_FOUND
-		{
-			"User '%s' has no device with the ID '%s'",
-			request.user_id,
-			device_id
-		};
+	m::device::del(request.user_id, device_id);
 
 	return resource::response
 	{
-		client, http::NOT_IMPLEMENTED
+		client, http::OK
 	};
 }
 
