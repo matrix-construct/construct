@@ -244,6 +244,7 @@ bootstrap(const string_view &host,
 	opts.head_must_exist = false;
 	opts.history = false;
 	opts.infolog_accept = true;
+	opts.eval = false;
 	const m::event::id::buf event_id
 	{
 		m::vm::eval

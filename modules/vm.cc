@@ -456,12 +456,14 @@ try
 		commit_hook(event, eval);
 	}
 
-	const event::conforms &report
+	event::conforms report
 	{
 		opts.conforming && !opts.conformed?
 			event::conforms{event, opts.non_conform.report}:
 			opts.report
 	};
+
+	report.del(event::conforms::MISSING_AUTH_EVENTS);
 
 	if(opts.conforming && !report.clean())
 		throw error
