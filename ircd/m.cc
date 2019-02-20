@@ -1574,6 +1574,104 @@ ircd::m::presence::valid_state(const string_view &state)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/device.h
+//
+
+bool
+ircd::m::device::set(const m::user &user,
+                     const device &device_)
+{
+	using prototype = bool (const m::user &, const device &);
+
+	static mods::import<prototype> function
+	{
+		"m_user", "ircd::m::device::set"
+	};
+
+	return function(user, device_);
+}
+
+bool
+ircd::m::device::del(const m::user &user,
+                     const string_view &id)
+{
+	using prototype = bool (const m::user &, const string_view &);
+
+	static mods::import<prototype> function
+	{
+		"m_user", "ircd::m::device::del"
+	};
+
+	return function(user, id);
+}
+
+bool
+ircd::m::device::get(const m::user &user,
+                     const string_view &id,
+                     const closure &c)
+{
+	const bool ret
+	{
+		get(std::nothrow, user, id, c)
+	};
+
+	if(!ret)
+		throw m::NOT_FOUND
+		{
+			"Device '%s' for user %s not found",
+			id,
+			string_view{user.user_id}
+		};
+
+	return ret;
+}
+
+bool
+ircd::m::device::get(std::nothrow_t,
+                     const m::user &user,
+                     const string_view &id,
+                     const closure &c)
+{
+	using prototype = bool (std::nothrow_t, const m::user &, const string_view &, const closure &);
+
+	static mods::import<prototype> function
+	{
+		"m_user", "ircd::m::device::get"
+	};
+
+	return function(std::nothrow, user, id, c);
+}
+
+bool
+ircd::m::device::for_each(const m::user &user,
+                          const id_closure_bool &c)
+{
+	using prototype = bool (const m::user &, const id_closure_bool &);
+
+	static mods::import<prototype> function
+	{
+		"m_user", "ircd::m::device::for_each"
+	};
+
+	return function(user, c);
+}
+
+bool
+ircd::m::device::for_each(const m::user &user,
+                          const closure_bool &c)
+{
+	using prototype = bool (const m::user &, const closure_bool &);
+
+	static mods::import<prototype> function
+	{
+		"m_user", "ircd::m::device::for_each"
+	};
+
+	return function(user, c);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/node.h
 //
 

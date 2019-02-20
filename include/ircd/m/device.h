@@ -80,5 +80,16 @@ struct ircd::m::device
 	json::property<name::device_display_name, json::string>
 >
 {
+	using closure = std::function<void (const device &)>;
+	using closure_bool = std::function<bool (const device &)>;
+	using id_closure_bool = std::function<bool (const string_view &)>;
+
+	static bool for_each(const user &, const id_closure_bool &);
+	static bool for_each(const user &, const closure_bool &);
+	static bool get(std::nothrow_t, const user &, const string_view &id, const closure &);
+	static bool get(const user &, const string_view &id, const closure &);
+	static bool del(const user &, const string_view &id);
+	static bool set(const user &, const device &);
+
 	using super_type::tuple;
 };

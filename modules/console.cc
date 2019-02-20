@@ -8943,26 +8943,24 @@ console_cmd__user__device(opt &out, const string_view &line)
 		param.at("device_id", string_view{})
 	};
 
-	const m::user::room user_room
-	{
-		user_id
-	};
-
-	const m::room::state state
-	{
-		user_room
-	};
-
 	if(!device_id)
 	{
-		state.for_each("ircd.device", [&out]
-		(const m::event &event)
+		m::device::for_each(user_id, [&out]
+		(const string_view &device_id)
 		{
-			out << at<"state_key"_>(event) << std::endl;
+			out << device_id << std::endl;
+			return true;
 		});
 
 		return true;
 	}
+
+	m::device::get(user_id, device_id, [&out]
+	(const m::device &device)
+	{
+		out << device << std::endl;
+		return true;
+	});
 
 	return true;
 }
