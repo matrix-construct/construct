@@ -921,6 +921,36 @@ ircd::m::v1::user::keys::query::query(const vector_view<const user_devices> &v,
 	};
 }
 
+ircd::m::v1::user::keys::query::query(const user_devices_map &map,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+{
+	json::stack out{buf};
+	{
+		json::stack::object top{out};
+		json::stack::object device_keys
+		{
+			top, "device_keys"
+		};
+
+		for(const auto &p : map)
+			json::stack::member user
+			{
+				device_keys, p.first, p.second
+			};
+	}
+
+	const json::object &content
+	{
+		out.completed()
+	};
+
+	new (this) query
+	{
+		content, buf + size(string_view(content)), std::move(opts)
+	};
+}
+
 ircd::m::v1::user::keys::query::query(const json::object &content,
                                       const mutable_buffer &buf,
                                       opts opts)
