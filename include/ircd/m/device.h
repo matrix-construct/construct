@@ -127,6 +127,7 @@ struct ircd::m::device
 	json::property<name::access_token_id, json::string>
 >
 {
+	using id = m::id::device;
 	using closure = std::function<void (const string_view &)>;
 	using closure_bool = std::function<bool (const string_view &)>;
 

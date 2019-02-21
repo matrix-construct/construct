@@ -2388,6 +2388,24 @@ const
 	};
 }
 
+ircd::m::device::id::buf
+ircd::m::user::get_device_from_access_token(const string_view &token)
+{
+	const event::idx event_idx
+	{
+		user::tokens.get("ircd.access_token", token)
+	};
+
+	device::id::buf ret;
+	m::get(event_idx, "content", [&ret]
+	(const json::object &content)
+	{
+		ret = unquote(content.at("device_id"));
+	});
+
+	return ret;
+}
+
 ircd::string_view
 ircd::m::user::gen_access_token(const mutable_buffer &buf)
 {

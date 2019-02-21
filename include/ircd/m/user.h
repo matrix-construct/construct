@@ -39,6 +39,7 @@ struct ircd::m::user
 	operator const id &() const;
 
 	static string_view gen_access_token(const mutable_buffer &out);
+	static id::device::buf get_device_from_access_token(const string_view &token);
 
 	id::room room_id(const mutable_buffer &) const;
 	id::room::buf room_id() const;
