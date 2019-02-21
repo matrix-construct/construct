@@ -50,15 +50,11 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 		index(last_read)
 	};
 
+	data.commit();
 	json::stack::object out
 	{
 		data.out
 	};
-
-	if(!apropos(data, start_idx))
-		return;
-
-	data.commit();
 
 	// highlight_count
 	json::stack::member
