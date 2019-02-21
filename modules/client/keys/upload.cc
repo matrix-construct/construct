@@ -119,6 +119,11 @@ upload_device_keys(client &client,
 	{
 		at<"signatures"_>(device_keys)
 	};
+
+	m::device data;
+	json::get<"device_id"_>(data) = device_id;
+	json::get<"keys"_>(data) = request["device_keys"];
+	m::device::set(request.user_id, data);
 }
 
 resource::method
