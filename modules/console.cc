@@ -9098,7 +9098,7 @@ console_cmd__user__devices(opt &out, const string_view &line)
 	(const string_view &prop)
 	{
 		m::device::get(std::nothrow, user_id, device_id, prop, [&out, &prop]
-		(const json::object &value)
+		(const string_view &value)
 		{
 			out << prop << ": "
 			    << value

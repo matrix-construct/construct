@@ -42,11 +42,6 @@ struct ircd::m::device_keys
 	/// calculated using the process described at Signing JSON.
 	json::property<name::signatures, json::object>,
 
-	/// Required. Signatures for the device key object. A map from user ID, to
-	/// a map from <algorithm>:<device_id> to the signature. The signature is
-	/// calculated using the process described at Signing JSON.
-	json::property<name::signatures, json::object>,
-
 	/// Additional data added to the device key information by intermediate
 	/// servers, and not covered by the signatures.
 	json::property<name::unsigned_, json::object>
