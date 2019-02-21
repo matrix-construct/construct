@@ -293,7 +293,7 @@ github_handle__push(std::ostream &out,
 	if(content["forced"] == "true")
 		out << " (rebase)";
 
-	out << "<pre>";
+	out << "<pre><code>";
 	for(ssize_t i(count - 1); i >= 0; --i)
 	{
 		const json::object &commit(commits.at(i));
@@ -330,7 +330,7 @@ github_handle__push(std::ostream &out,
 		out << "<br />";
 	}
 
-	out << "</pre>";
+	out << "</code></pre>";
 	return out;
 }
 
@@ -443,7 +443,7 @@ github_handle__pull_request(std::ostream &out,
 	};
 
 	out << " "
-	    << "<pre>"
+	    << "<pre><code>"
 	    << "<a href=\""
 	    << unquote(pr["html_url"])
 	    << "\">"
@@ -455,7 +455,7 @@ github_handle__pull_request(std::ostream &out,
 	    << "<u>"
 	    << unquote(pr["title"])
 	    << "</u>"
-	    << "</pre>"
+	    << "</code></pre>"
 	    ;
 
 	return out;
@@ -512,7 +512,7 @@ github_handle__issues(std::ostream &out,
 	{
 		out << " "
 		    << "<blockquote>"
-		    << "<pre>"
+		    << "<pre><code>"
 		    ;
 
 		static const auto delim("\\r\\n");
@@ -528,7 +528,7 @@ github_handle__issues(std::ostream &out,
 		while(!empty(lines.second));
 
 		out << ""
-		    << "</pre>"
+		    << "</code></pre>"
 		    << "</blockquote>"
 		    ;
 	}
@@ -558,9 +558,9 @@ std::ostream &
 github_handle__ping(std::ostream &out,
                     const json::object &content)
 {
-	out << "<pre>"
+	out << "<pre><code>"
 	    << unquote(content["zen"])
-	    << "</pre>";
+	    << "</code></pre>";
 
 	return out;
 }
