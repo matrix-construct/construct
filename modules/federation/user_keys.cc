@@ -70,12 +70,75 @@ post__user_keys_claim(client &client,
 	};
 }
 
+static bool
+_query_user_device(client &client,
+                   const resource::request &request,
+                   const m::user::id &user_id,
+                   const string_view &device_id,
+                   json::stack::object &out);
+
 resource::response
 post__user_keys_query(client &client,
                       const resource::request &request)
 {
-	return resource::response
+	const json::object &request_keys
 	{
-		client, http::NOT_FOUND
+		request.at("device_keys")
 	};
+
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top{out};
+	json::stack::object response_keys
+	{
+		top, "device_keys"
+	};
+
+	for(const auto &m : request_keys)
+	{
+		const m::user::id &user_id{m.first};
+		const json::array &device_ids{m.second};
+		json::stack::object response_keys_user
+		{
+			response_keys, user_id
+		};
+
+		if(empty(device_ids))
+			m::device::for_each(user_id, [&client, &request, &user_id, &response_keys_user]
+			(const string_view &device_id)
+			{
+				_query_user_device(client, request, user_id, device_id, response_keys_user);
+				return true;
+			});
+		else
+			for(const json::string &device_id : device_ids)
+				_query_user_device(client, request, user_id, device_id, response_keys_user);
+	}
+
+	return response;
+}
+
+bool
+_query_user_device(client &client,
+                   const resource::request &request,
+                   const m::user::id &user_id,
+                   const string_view &device_id,
+                   json::stack::object &out)
+{
+	return m::device::get(std::nothrow, user_id, device_id, "keys", [&device_id, &out]
+	(const json::object &device_keys)
+	{
+		json::stack::member
+		{
+			out, device_id, device_keys
+		};
+	});
 }
