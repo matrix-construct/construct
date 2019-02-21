@@ -2668,65 +2668,6 @@ ircd::m::user::_account_data_type(const mutable_buffer &out,
 }
 
 ircd::m::event::id::buf
-ircd::m::user::profile(const m::user &sender,
-                       const string_view &key,
-                       const string_view &val)
-{
-	using prototype = event::id::buf (const m::user &, const m::user &, const string_view &, const string_view &);
-
-	static mods::import<prototype> function
-	{
-		"client_profile", "profile_set"
-	};
-
-	return function(*this, sender, key, val);
-}
-
-ircd::string_view
-ircd::m::user::profile(const mutable_buffer &out,
-                       const string_view &key)
-const
-{
-	string_view ret;
-	profile(std::nothrow, key, [&out, &ret]
-	(const string_view &val)
-	{
-		ret = { data(out), copy(out, val) };
-	});
-
-	return ret;
-}
-
-bool
-ircd::m::user::profile(std::nothrow_t,
-                       const string_view &key,
-                       const profile_closure &closure)
-const try
-{
-	profile(key, closure);
-	return true;
-}
-catch(const std::exception &e)
-{
-	return false;
-}
-
-void
-ircd::m::user::profile(const string_view &key,
-                       const profile_closure &closure)
-const
-{
-	using prototype = void (const m::user &, const string_view &, const profile_closure &);
-
-	static mods::import<prototype> function
-	{
-		"client_profile", "profile_get"
-	};
-
-	return function(*this, key, closure);
-}
-
-ircd::m::event::id::buf
 ircd::m::user::password(const string_view &password)
 {
 	using prototype = event::id::buf (const m::user::id &, const string_view &) noexcept;
@@ -3223,6 +3164,108 @@ const
 
 		return ret;
 	}});
+}
+
+//
+// user::profile
+//
+
+ircd::m::event::id::buf
+ircd::m::user::profile::set(const string_view &key,
+                            const string_view &val)
+const
+{
+	return set(user, key, val);
+}
+
+ircd::string_view
+ircd::m::user::profile::get(const mutable_buffer &out,
+                            const string_view &key)
+const
+{
+	string_view ret;
+	get(std::nothrow, key, [&out, &ret]
+	(const string_view &key, const string_view &val)
+	{
+		ret = { data(out), copy(out, val) };
+	});
+
+	return ret;
+}
+
+void
+ircd::m::user::profile::get(const string_view &key,
+                            const closure &closure)
+const
+{
+	if(!get(std::nothrow, key, closure))
+		throw m::NOT_FOUND
+		{
+			"Property %s in profile for %s not found",
+			key,
+			string_view{user.user_id}
+		};
+}
+
+bool
+ircd::m::user::profile::get(std::nothrow_t,
+                            const string_view &key,
+                            const closure &closure)
+const
+{
+	return get(std::nothrow, user, key, closure);
+}
+
+bool
+ircd::m::user::profile::for_each(const closure_bool &closure)
+const
+{
+	return for_each(user, closure);
+}
+
+ircd::m::event::id::buf
+ircd::m::user::profile::set(const m::user &u,
+                            const string_view &k,
+                            const string_view &v)
+{
+	using prototype = event::id::buf (const m::user &, const string_view &, const string_view &);
+
+	static mods::import<prototype> function
+	{
+		"client_profile", "ircd::m::user::profile::set"
+	};
+
+	return function(u, k, v);
+}
+
+bool
+ircd::m::user::profile::get(std::nothrow_t,
+                            const m::user &u,
+                            const string_view &k,
+                            const closure &c)
+{
+	using prototype = bool (std::nothrow_t, const m::user &, const string_view &, const closure &);
+
+	static mods::import<prototype> function
+	{
+		"client_profile", "ircd::m::user::profile::get"
+	};
+
+	return function(std::nothrow, u, k, c);
+}
+
+bool
+ircd::m::user::profile::for_each(const m::user &u,
+                                 const closure_bool &c)
+{
+	using prototype = bool (const m::user &, const closure_bool &);
+
+	static mods::import<prototype> function
+	{
+		"m_user", "ircd::m::user::profile::for_each"
+	};
+
+	return function(u, c);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

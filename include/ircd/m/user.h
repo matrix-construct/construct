@@ -27,6 +27,7 @@ struct ircd::m::user
 	struct rooms;
 	struct mitsein;
 	struct events;
+	struct profile;
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;
 	using closure_bool = std::function<bool (const user &)>;
@@ -46,12 +47,6 @@ struct ircd::m::user
 
 	bool is_password(const string_view &password) const noexcept;
 	event::id::buf password(const string_view &password);
-
-	using profile_closure = std::function<void (const string_view &)>;
-	void profile(const string_view &key, const profile_closure &) const;
-	bool profile(std::nothrow_t, const string_view &key, const profile_closure &) const;
-	string_view profile(const mutable_buffer &out, const string_view &key) const; //nothrow
-	event::id::buf profile(const m::user &sender, const string_view &key, const string_view &value);
 
 	using account_data_closure = std::function<void (const json::object &)>;
 	static string_view _account_data_type(const mutable_buffer &out, const m::room::id &);
@@ -186,6 +181,30 @@ struct ircd::m::user::events
 	size_t count() const;
 
 	events(const m::user &user);
+};
+
+/// Interface to the user profile
+struct ircd::m::user::profile
+{
+	using closure_bool = std::function<bool (const string_view &, const string_view &)>;
+	using closure = std::function<void (const string_view &, const string_view &)>;
+
+	m::user user;
+
+	static bool for_each(const m::user &, const closure_bool &);
+	static bool get(std::nothrow_t, const m::user &, const string_view &key, const closure &);
+	static event::id::buf set(const m::user &, const string_view &key, const string_view &value);
+
+  public:
+	bool for_each(const closure_bool &) const;
+	bool get(std::nothrow_t, const string_view &key, const closure &) const;
+	void get(const string_view &key, const closure &) const;
+	string_view get(const mutable_buffer &out, const string_view &key) const; // nothrow
+	event::id::buf set(const string_view &key, const string_view &val) const;
+
+	profile(const m::user &user)
+	:user{user}
+	{}
 };
 
 inline ircd::m::user::operator

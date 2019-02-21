@@ -72,21 +72,19 @@ join__room_user(const room &room,
 		{ content,  { "membership",  "join"           }},
 	};
 
-	const m::user user
-	{
-		user_id
-	};
+	const m::user user{user_id};
+	const m::user::profile profile{user};
 
 	char displayname_buf[256];
 	const string_view displayname
 	{
-		user.profile(displayname_buf, "displayname")
+		profile.get(displayname_buf, "displayname")
 	};
 
 	char avatar_url_buf[256];
 	const string_view avatar_url
 	{
-		user.profile(avatar_url_buf, "avatar_url")
+		profile.get(avatar_url_buf, "avatar_url")
 	};
 
 	const json::iov::add _displayname
@@ -199,21 +197,19 @@ bootstrap(const string_view &host,
 		{ event,    { "room_id",       room_id                   }},
 	};
 
-	const m::user user
-	{
-		user_id
-	};
+	const m::user user{user_id};
+	const m::user::profile profile{user};
 
 	char displayname_buf[256];
 	const string_view displayname
 	{
-		user.profile(displayname_buf, "displayname")
+		profile.get(displayname_buf, "displayname")
 	};
 
 	char avatar_url_buf[256];
 	const string_view avatar_url
 	{
-		user.profile(avatar_url_buf, "avatar_url")
+		profile.get(avatar_url_buf, "avatar_url")
 	};
 
 	const json::iov::add _displayname

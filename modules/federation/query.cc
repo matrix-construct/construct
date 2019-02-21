@@ -94,8 +94,13 @@ get__query_profile(client &client,
 		user_id
 	};
 
-	user.profile(field, [&client, &field]
-	(const string_view &value)
+	const m::user::profile profile
+	{
+		user
+	};
+
+	profile.get(field, [&client]
+	(const string_view &field, const string_view &value)
 	{
 		resource::response
 		{

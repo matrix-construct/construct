@@ -10,10 +10,36 @@
 
 using namespace ircd;
 
+static void _rejoin_room(const m::room &room, const m::user &user);
+static void _rejoin_rooms(const m::user::id &user_id);
+static void handle_my_profile_changed__displayname(const m::event &event);
+static void handle_my_profile_changed__avatar_url(const m::event &event);
+static void handle_my_profile_changed(const m::event &, m::vm::eval &);
+static resource::response get__profile_full(client &, const resource::request &, const m::user &);
+static resource::response get__profile_remote(client &, const resource::request &, const m::user &);
+static resource::response get__profile(client &, const resource::request &);
+static resource::response put__profile(client &, const resource::request &);
+
 mapi::header
 IRCD_MODULE
 {
 	"Client 8.2 :Profiles"
+};
+
+const size_t
+PARAM_MAX_SIZE
+{
+	128
+};
+
+const m::hookfn<m::vm::eval &>
+my_profile_changed
+{
+	handle_my_profile_changed,
+	{
+		{ "_site",  "vm.effect"     },
+		{ "type",   "ircd.profile"  },
+	}
 };
 
 ircd::resource
@@ -26,26 +52,94 @@ profile_resource
 	}
 };
 
-extern "C" void
-profile_get(const m::user &user,
-            const string_view &key,
-            const m::user::profile_closure &closure);
+resource::method
+method_get
+{
+	profile_resource, "GET", get__profile
+};
 
-extern "C" m::event::id::buf
-profile_set(const m::user &user,
-            const m::user &sender,
-            const string_view &key,
-            const string_view &value);
+resource::method
+method_put
+{
+	profile_resource, "PUT", put__profile,
+	{
+		method_put.REQUIRES_AUTH
+	}
+};
 
-static resource::response
-get__profile_full(client &,
-                  const resource::request &,
-                  const m::user &);
+resource::response
+put__profile(client &client,
+              const resource::request &request)
+{
+	if(request.parv.size() < 1)
+		throw m::NEED_MORE_PARAMS
+		{
+			"user_id path parameter required"
+		};
 
-static resource::response
-get__profile_remote(client &,
-                    const resource::request &,
-                    const m::user &);
+	if(request.parv.size() < 2)
+		throw m::NEED_MORE_PARAMS
+		{
+			"profile property path parameter required"
+		};
+
+	m::user::id::buf user_id
+	{
+		url::decode(user_id, request.parv[0])
+	};
+
+	if(user_id != request.user_id)
+		throw m::FORBIDDEN
+		{
+			"Trying to set profile for '%s' but you are '%s'",
+			user_id,
+			request.user_id
+		};
+
+	const m::user user
+	{
+		user_id
+	};
+
+	char parambuf[PARAM_MAX_SIZE];
+	const string_view &param
+	{
+		url::decode(parambuf, request.parv[1])
+	};
+
+	const string_view &value
+	{
+		unquote(request.at(param))
+	};
+
+	const m::user::profile profile
+	{
+		user
+	};
+
+	bool modified{true};
+	profile.get(std::nothrow, param, [&value, &modified]
+	(const string_view &param, const string_view &existing)
+	{
+		modified = existing != value;
+	});
+
+	if(!modified)
+		return resource::response
+		{
+			client, http::OK
+		};
+
+	const auto eid
+	{
+		profile.set(param, value)
+	};
+
+	return resource::response
+	{
+		client, http::OK
+	};
+}
 
 resource::response
 get__profile(client &client,
@@ -73,14 +167,19 @@ get__profile(client &client,
 	if(request.parv.size() < 2)
 		return get__profile_full(client, request, user);
 
-	char parambuf[128];
+	char parambuf[PARAM_MAX_SIZE];
 	const string_view &param
 	{
 		url::decode(parambuf, request.parv[1])
 	};
 
-	profile_get(user, param, [&param, &client]
-	(const string_view &value)
+	const m::user::profile profile
+	{
+		user
+	};
+
+	profile.get(param, [&client]
+	(const string_view &param, const string_view &value)
 	{
 		resource::response
 		{
@@ -94,49 +193,43 @@ get__profile(client &client,
 	return {}; // responded from closure
 }
 
-resource::method
-method_get
-{
-	profile_resource, "GET", get__profile
-};
-
 resource::response
 get__profile_full(client &client,
                   const resource::request &request,
                   const m::user &user)
 {
-	const m::user::room user_room{user};
-	const m::room::state state{user_room};
-
-	std::vector<json::member> members;
-	state.for_each("ircd.profile", [&members]
-	(const m::event &event)
+	resource::response::chunked response
 	{
-		const auto &key
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	const m::user::profile profile
+	{
+		user
+	};
+
+	profile.for_each([&top]
+	(const string_view &param, const string_view &value)
+	{
+		json::stack::member
 		{
-			at<"state_key"_>(event)
+			top, param, value
 		};
 
-		const auto &value
-		{
-			at<"content"_>(event).at("text")
-		};
-
-		members.emplace_back(key, value);
+		return true;
 	});
 
-	const json::strung response
-	{
-		data(members), data(members) + size(members)
-	};
-
-	return resource::response
-	{
-		client, json::object
-		{
-			response
-		}
-	};
+	return {};
 }
 
 resource::response
@@ -187,185 +280,83 @@ get__profile_remote(client &client,
 	};
 }
 
-resource::response
-put__profile(client &client,
-              const resource::request &request)
-{
-	if(request.parv.size() < 1)
-		throw m::NEED_MORE_PARAMS
-		{
-			"user_id path parameter required"
-		};
-
-	if(request.parv.size() < 2)
-		throw m::NEED_MORE_PARAMS
-		{
-			"profile property path parameter required"
-		};
-
-	m::user::id::buf user_id
-	{
-		url::decode(user_id, request.parv[0])
-	};
-
-	if(user_id != request.user_id)
-		throw m::FORBIDDEN
-		{
-			"Trying to set profile for '%s' but you are '%s'",
-			user_id,
-			request.user_id
-		};
-
-	const m::user user
-	{
-		user_id
-	};
-
-	char parambuf[128];
-	const string_view &param
-	{
-		url::decode(parambuf, request.parv[1])
-	};
-
-	const string_view &value
-	{
-		unquote(request.at(param))
-	};
-
-	const m::user::id &sender
-	{
-		request.user_id
-	};
-
-	bool modified{true};
-	user.profile(std::nothrow, param, [&value, &modified]
-	(const string_view &existing)
-	{
-		modified = existing != value;
-	});
-
-	if(!modified)
-		return resource::response
-		{
-			client, http::OK
-		};
-
-	const auto eid
-	{
-		profile_set(user, sender, param, value)
-	};
-
-	return resource::response
-	{
-		client, http::OK
-	};
-}
-
-resource::method
-method_put
-{
-	profile_resource, "PUT", put__profile,
-	{
-		method_put.REQUIRES_AUTH,
-		60s
-	}
-};
-
-void
-profile_get(const m::user &user,
-            const string_view &key,
-            const m::user::profile_closure &closure)
-try
+m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::user::profile::set(const m::user &user,
+                            const string_view &key,
+                            const string_view &val)
 {
 	const m::user::room user_room
 	{
 		user
 	};
 
-	user_room.get("ircd.profile", key, [&closure]
-	(const m::event &event)
+	return m::send(user_room, user, "ircd.profile", key,
+	{
+		{ "text", val }
+	});
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::profile::get(std::nothrow_t,
+                            const m::user &user,
+                            const string_view &key,
+                            const closure &closure)
+{
+	const user::room user_room{user};
+	const room::state state{user_room};
+	const event::idx event_idx
+	{
+		state.get(std::nothrow, "ircd.profile", key)
+	};
+
+	return event_idx && m::get(std::nothrow, event_idx, "content", [&closure, &key]
+	(const json::object &content)
 	{
 		const string_view &value
 		{
-			unquote(at<"content"_>(event).at("text"))
+			unquote(content.get("text"))
 		};
 
-		closure(value);
-	});
-}
-catch(const m::NOT_FOUND &e)
-{
-	throw m::NOT_FOUND
-	{
-		"Nothing about '%s' and/or profile for '%s'",
-		key,
-		string_view{user.user_id}
-	};
-}
-
-m::event::id::buf
-profile_set(const m::user &user,
-            const m::user &sender,
-            const string_view &key,
-            const string_view &value)
-{
-	const m::user::room user_room
-	{
-		user
-	};
-
-	return send(user_room, sender, "ircd.profile", key,
-	{
-		{ "text", value }
+		closure(key, value);
 	});
 }
 
-static void
-_rejoin_room(const m::room &room,
-             const m::user &user)
-try
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::profile::for_each(const m::user &user,
+                                 const closure_bool &closure)
 {
-	m::join(room, user);
-}
-catch(const std::exception &e)
-{
-	log::error
+	static const event::fetch::opts fopts
 	{
-		"Failed to rejoin '%s' to room '%s' to update profile",
-		string_view{user.user_id},
-		string_view{room.room_id}
-	};
-}
-
-static void
-_rejoin_rooms(const m::user::id &user_id)
-{
-	assert(my(user_id));
-	const m::user::rooms &rooms
-	{
-		user_id
+		event::keys::include {"content", "state_key"}
 	};
 
-	rooms.for_each("join", [&user_id]
-	(const m::room &room, const string_view &)
+	const user::room user_room{user};
+	const room::state state
 	{
-		_rejoin_room(room, user_id);
-	});
+		user_room, &fopts
+	};
+
+	return state.for_each("ircd.profile", event::closure_bool{[&closure]
+	(const event &event)
+	{
+		const string_view &key
+		{
+			at<"state_key"_>(event)
+		};
+
+		const string_view &value
+		{
+			unquote(json::get<"content"_>(event).get("text"))
+		};
+
+		return closure(key, value);
+	}});
 }
 
-static void
-handle_my_profile_changed__displayname(const m::event &event)
-{
-	_rejoin_rooms(at<"sender"_>(event));
-}
-
-static void
-handle_my_profile_changed__avatar_url(const m::event &event)
-{
-	_rejoin_rooms(at<"sender"_>(event));
-}
-
-static void
+void
 handle_my_profile_changed(const m::event &event,
                           m::vm::eval &eval)
 {
@@ -390,12 +381,47 @@ handle_my_profile_changed(const m::event &event,
 		return handle_my_profile_changed__avatar_url(event);
 }
 
-const m::hookfn<m::vm::eval &>
-my_profile_changed
+void
+handle_my_profile_changed__avatar_url(const m::event &event)
 {
-	handle_my_profile_changed,
+	_rejoin_rooms(at<"sender"_>(event));
+}
+
+void
+handle_my_profile_changed__displayname(const m::event &event)
+{
+	_rejoin_rooms(at<"sender"_>(event));
+}
+
+void
+_rejoin_rooms(const m::user::id &user_id)
+{
+	assert(my(user_id));
+	const m::user::rooms &rooms
 	{
-		{ "_site",  "vm.effect"     },
-		{ "type",   "ircd.profile"  },
-	}
-};
+		user_id
+	};
+
+	rooms.for_each("join", [&user_id]
+	(const m::room &room, const string_view &)
+	{
+		_rejoin_room(room, user_id);
+	});
+}
+
+void
+_rejoin_room(const m::room &room,
+             const m::user &user)
+try
+{
+	m::join(room, user);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Failed to rejoin '%s' to room '%s' to update profile",
+		string_view{user.user_id},
+		string_view{room.room_id}
+	};
+}
