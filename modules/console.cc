@@ -8928,7 +8928,144 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__user__device(opt &out, const string_view &line)
+console_cmd__user__profile(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "key"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const string_view &key
+	{
+		param["key"]
+	};
+
+	const m::user::profile profile
+	{
+		user_id
+	};
+
+	if(key)
+	{
+		profile.get(key, [&out]
+		(const string_view &key, const string_view &val)
+		{
+			out << val << std::endl;
+		});
+
+		return true;
+	}
+
+	profile.for_each([&out]
+	(const string_view &key, const string_view &val)
+	{
+		out << key << ": " << val << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__user__account_data(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "key"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const string_view &key
+	{
+		param["key"]
+	};
+
+	const m::user::account_data account_data
+	{
+		user_id
+	};
+
+	if(key)
+	{
+		account_data.get(key, [&out]
+		(const string_view &key, const json::object &val)
+		{
+			out << val << std::endl;
+		});
+
+		return true;
+	}
+
+	account_data.for_each([&out]
+	(const string_view &key, const json::object &val)
+	{
+		out << key << ": " << val << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__user__room_account_data(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "room_id", "key"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const string_view &key
+	{
+		param["key"]
+	};
+
+	const m::user::room_account_data room_account_data
+	{
+		user_id, room_id
+	};
+
+	if(key)
+	{
+		room_account_data.get(key, [&out]
+		(const string_view &key, const json::object &val)
+		{
+			out << val << std::endl;
+		});
+
+		return true;
+	}
+
+	room_account_data.for_each([&out]
+	(const string_view &key, const json::object &val)
+	{
+		out << key << ": " << val << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__user__devices(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
