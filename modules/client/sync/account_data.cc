@@ -50,9 +50,14 @@ ircd::m::sync::account_data_polylog(data &data)
 		data.out, "events"
 	};
 
-	const m::room::state &state
+	static const m::event::fetch::opts fopts
 	{
-		data.user_state
+		m::event::keys::include {"event_id", "state_key", "content"}
+	};
+
+	const m::room::state state
+	{
+		data.user_room, &fopts
 	};
 
 	state.for_each("ircd.account_data", [&data, &array]

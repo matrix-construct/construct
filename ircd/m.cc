@@ -2532,142 +2532,6 @@ const
 }
 
 ircd::m::event::id::buf
-ircd::m::user::account_data(const m::room &room,
-                            const m::user &sender,
-                            const string_view &type,
-                            const json::object &val)
-{
-	using prototype = event::id::buf (const m::user &, const m::room &, const m::user &, const string_view &, const json::object &);
-
-	static mods::import<prototype> function
-	{
-		"client_user", "room_account_data_set"
-	};
-
-	return function(*this, room, sender, type, val);
-}
-
-ircd::m::event::id::buf
-ircd::m::user::account_data(const m::user &sender,
-                            const string_view &type,
-                            const json::object &val)
-{
-	using prototype = event::id::buf (const m::user &, const m::user &, const string_view &, const json::object &);
-
-	static mods::import<prototype> function
-	{
-		"client_user", "account_data_set"
-	};
-
-	return function(*this, sender, type, val);
-}
-
-ircd::json::object
-ircd::m::user::account_data(const mutable_buffer &out,
-                            const m::room &room,
-                            const string_view &type)
-const
-{
-	json::object ret;
-	account_data(std::nothrow, room, type, [&out, &ret]
-	(const json::object &val)
-	{
-		ret = string_view { data(out), copy(out, val) };
-	});
-
-	return ret;
-}
-
-ircd::json::object
-ircd::m::user::account_data(const mutable_buffer &out,
-                            const string_view &type)
-const
-{
-	json::object ret;
-	account_data(std::nothrow, type, [&out, &ret]
-	(const json::object &val)
-	{
-		ret = string_view { data(out), copy(out, val) };
-	});
-
-	return ret;
-}
-
-bool
-ircd::m::user::account_data(std::nothrow_t,
-                            const m::room &room,
-                            const string_view &type,
-                            const account_data_closure &closure)
-const try
-{
-	account_data(room, type, closure);
-	return true;
-}
-catch(const std::exception &e)
-{
-	return false;
-}
-
-bool
-ircd::m::user::account_data(std::nothrow_t,
-                            const string_view &type,
-                            const account_data_closure &closure)
-const try
-{
-	account_data(type, closure);
-	return true;
-}
-catch(const std::exception &e)
-{
-	return false;
-}
-
-void
-ircd::m::user::account_data(const m::room &room,
-                            const string_view &type,
-                            const account_data_closure &closure)
-const
-{
-	using prototype = void (const m::user &, const m::room &, const string_view &, const account_data_closure &);
-
-	static mods::import<prototype> function
-	{
-		"client_user", "room_account_data_get"
-	};
-
-	return function(*this, room, type, closure);
-}
-
-void
-ircd::m::user::account_data(const string_view &type,
-                            const account_data_closure &closure)
-const
-{
-	using prototype = void (const m::user &, const string_view &, const account_data_closure &);
-
-	static mods::import<prototype> function
-	{
-		"client_user", "account_data_get"
-	};
-
-	return function(*this, type, closure);
-}
-
-ircd::string_view
-ircd::m::user::_account_data_type(const mutable_buffer &out,
-                                  const m::room::id &room_id)
-{
-	using prototype = string_view (const mutable_buffer &, const m::room::id &);
-
-	static mods::import<prototype> function
-	{
-		"client_user", "room_account_data_type"
-	};
-
-	return function(out, room_id);
-}
-
-ircd::m::event::id::buf
 ircd::m::user::password(const string_view &password)
 {
 	using prototype = event::id::buf (const m::user::id &, const string_view &) noexcept;
@@ -3262,10 +3126,232 @@ ircd::m::user::profile::for_each(const m::user &u,
 
 	static mods::import<prototype> function
 	{
-		"m_user", "ircd::m::user::profile::for_each"
+		"client_profile", "ircd::m::user::profile::for_each"
 	};
 
 	return function(u, c);
+}
+
+//
+// user::account_data
+//
+
+ircd::m::event::id::buf
+ircd::m::user::account_data::set(const string_view &type,
+                                 const json::object &val)
+const
+{
+	return set(user, type, val);
+}
+
+ircd::json::object
+ircd::m::user::account_data::get(const mutable_buffer &out,
+                                 const string_view &type)
+const
+{
+	json::object ret;
+	get(std::nothrow, type, [&out, &ret]
+	(const string_view &type, const json::object &val)
+	{
+		ret = string_view { data(out), copy(out, val) };
+	});
+
+	return ret;
+}
+
+void
+ircd::m::user::account_data::get(const string_view &type,
+                                 const closure &closure)
+const
+{
+	if(!get(std::nothrow, user, type, closure))
+		throw m::NOT_FOUND
+		{
+			"account data type '%s' for user %s not found",
+			type,
+			string_view{user.user_id}
+		};
+}
+
+bool
+ircd::m::user::account_data::get(std::nothrow_t,
+                                 const string_view &type,
+                                 const closure &closure)
+const
+{
+	return get(std::nothrow, user, type, closure);
+}
+
+bool
+ircd::m::user::account_data::for_each(const closure_bool &closure)
+const
+{
+	return for_each(user, closure);
+}
+
+ircd::m::event::id::buf
+ircd::m::user::account_data::set(const m::user &u,
+                                 const string_view &t,
+                                 const json::object &v)
+{
+	using prototype = event::id::buf (const m::user &, const string_view &, const json::object &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::account_data::set"
+	};
+
+	return function(u, t, v);
+}
+
+bool
+ircd::m::user::account_data::get(std::nothrow_t,
+                                 const m::user &u,
+                                 const string_view &t,
+                                 const closure &c)
+{
+	using prototype = bool (std::nothrow_t, const m::user &, const string_view &, const closure &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::account_data::get"
+	};
+
+	return function(std::nothrow, u, t, c);
+}
+
+bool
+ircd::m::user::account_data::for_each(const m::user &u,
+                                      const closure_bool &c)
+{
+	using prototype = bool (const m::user &, const closure_bool &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::account_data::for_each"
+	};
+
+	return function(u, c);
+}
+
+//
+// user::room_account_data
+//
+
+ircd::m::event::id::buf
+ircd::m::user::room_account_data::set(const string_view &type,
+                                      const json::object &val)
+const
+{
+	return set(user, room, type, val);
+}
+
+ircd::json::object
+ircd::m::user::room_account_data::get(const mutable_buffer &out,
+                                      const string_view &type)
+const
+{
+	json::object ret;
+	get(std::nothrow, type, [&out, &ret]
+	(const string_view &type, const json::object &val)
+	{
+		ret = string_view { data(out), copy(out, val) };
+	});
+
+	return ret;
+}
+
+void
+ircd::m::user::room_account_data::get(const string_view &type,
+                                      const closure &closure)
+const
+{
+	if(!get(std::nothrow, user, room, type, closure))
+		throw m::NOT_FOUND
+		{
+			"account data type '%s' for user %s in room %s not found",
+			type,
+			string_view{user.user_id},
+			string_view{room.room_id}
+		};
+}
+
+bool
+ircd::m::user::room_account_data::get(std::nothrow_t,
+                                     const string_view &type,
+                                     const closure &closure)
+const
+{
+	return get(std::nothrow, user, room, type, closure);
+}
+
+bool
+ircd::m::user::room_account_data::for_each(const closure_bool &closure)
+const
+{
+	return for_each(user, room, closure);
+}
+
+ircd::m::event::id::buf
+ircd::m::user::room_account_data::set(const m::user &u,
+                                      const m::room &r,
+                                      const string_view &t,
+                                      const json::object &v)
+{
+	using prototype = event::id::buf (const m::user &, const m::room &, const string_view &, const json::object &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::room_account_data::set"
+	};
+
+	return function(u, r, t, v);
+}
+
+bool
+ircd::m::user::room_account_data::get(std::nothrow_t,
+                                      const m::user &u,
+                                      const m::room &r,
+                                      const string_view &t,
+                                      const closure &c)
+{
+	using prototype = bool (std::nothrow_t, const m::user &, const m::room &, const string_view &, const closure &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::room_account_data::get"
+	};
+
+	return function(std::nothrow, u, r, t, c);
+}
+
+bool
+ircd::m::user::room_account_data::for_each(const m::user &u,
+                                           const m::room &r,
+                                           const closure_bool &c)
+{
+	using prototype = bool (const m::user &, const m::room &, const closure_bool &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::room_account_data::for_each"
+	};
+
+	return function(u, r, c);
+}
+
+ircd::string_view
+ircd::m::user::room_account_data::_type(const mutable_buffer &out,
+                                        const m::room::id &room_id)
+{
+	using prototype = string_view (const mutable_buffer &, const m::room::id &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::room_account_data::_type"
+	};
+
+	return function(out, room_id);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

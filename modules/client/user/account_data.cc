@@ -12,17 +12,6 @@
 
 using namespace ircd;
 
-extern "C" void
-account_data_get(const m::user &user,
-                 const string_view &type,
-                 const m::user::account_data_closure &closure);
-
-extern "C" m::event::id::buf
-account_data_set(const m::user &user,
-                 const m::user &sender,
-                 const string_view &type,
-                 const json::object &value);
-
 resource::response
 put__account_data(client &client,
                   const resource::request &request,
@@ -47,7 +36,7 @@ put__account_data(client &client,
 
 	const auto event_id
 	{
-		account_data_set(user, user, type, value)
+		m::user::account_data{user}.set(type, value)
 	};
 
 	return resource::response
@@ -73,8 +62,8 @@ get__account_data(client &client,
 		url::decode(typebuf, request.parv[2])
 	};
 
-	account_data_get(user, type, [&client]
-	(const json::object &value)
+	m::user::account_data{user}.get(type, [&client]
+	(const string_view &type, const json::object &value)
 	{
 		resource::response
 		{
@@ -85,48 +74,70 @@ get__account_data(client &client,
 	return {}; // responded from closure
 }
 
-void
-account_data_get(const m::user &user,
-                 const string_view &type,
-                 const m::user::account_data_closure &closure)
-try
+ircd::m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::user::account_data::set(const m::user &user,
+                                 const string_view &type,
+                                 const json::object &value)
 {
 	const m::user::room user_room
 	{
 		user
 	};
 
-	user_room.get("ircd.account_data", type, [&closure]
-	(const m::event &event)
-	{
-		const json::object &value
-		{
-			at<"content"_>(event)
-		};
+	return send(user_room, user, "ircd.account_data", type, value);
+}
 
-		closure(value);
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::account_data::get(std::nothrow_t,
+                                 const m::user &user,
+                                 const string_view &type,
+                                 const closure &closure)
+{
+	const user::room user_room{user};
+	const room::state state{user_room};
+	const event::idx &event_idx
+	{
+		state.get(std::nothrow, "ircd.account_data", type)
+	};
+
+	return event_idx && m::get(std::nothrow, event_idx, "content", [&type, &closure]
+	(const json::object &content)
+	{
+		closure(type, content);
 	});
 }
-catch(const m::NOT_FOUND &e)
-{
-	throw m::NOT_FOUND
-	{
-		"Nothing about '%s' account_data for '%s'",
-		type,
-		string_view{user.user_id}
-	};
-}
 
-m::event::id::buf
-account_data_set(const m::user &user,
-                 const m::user &sender,
-                 const string_view &type,
-                 const json::object &value)
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::account_data::for_each(const m::user &user,
+                                      const closure_bool &closure)
 {
-	const m::user::room user_room
+	static const event::fetch::opts fopts
 	{
-		user
+		event::keys::include {"state_key", "content"}
 	};
 
-	return send(user_room, sender, "ircd.account_data", type, value);
+	const user::room user_room{user};
+	const room::state state
+	{
+		user_room, &fopts
+	};
+
+	return state.for_each("ircd.account_data", event::closure_bool{[&closure]
+	(const m::event &event)
+	{
+		const auto &key
+		{
+			at<"state_key"_>(event)
+		};
+
+		const auto &val
+		{
+			json::get<"content"_>(event)
+		};
+
+		return closure(key, val);
+	}});
 }

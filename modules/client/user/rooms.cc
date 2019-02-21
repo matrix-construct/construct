@@ -12,19 +12,6 @@
 
 using namespace ircd;
 
-extern "C" void
-room_account_data_get(const m::user &user,
-                      const m::room &room,
-                      const string_view &type,
-                      const m::user::account_data_closure &closure);
-
-extern "C" m::event::id::buf
-room_account_data_set(const m::user &user,
-                      const m::room &room,
-                      const m::user &sender,
-                      const string_view &type,
-                      const json::object &value);
-
 static resource::response
 put__account_data(client &client,
                   const resource::request &request,
@@ -134,7 +121,7 @@ put__account_data(client &client,
 
 	const auto event_id
 	{
-		room_account_data_set(user, room, user, type, value)
+		m::user::room_account_data{user, room}.set(type, value)
 	};
 
 	return resource::response
@@ -162,8 +149,8 @@ get__account_data(client &client,
 		url::decode(typebuf, request.parv[4])
 	};
 
-	room_account_data_get(user, room, type, [&client]
-	(const json::object &value)
+	m::user::room_account_data{user, room}.get(type, [&client]
+	(const string_view &type, const json::object &value)
 	{
 		resource::response
 		{
@@ -186,9 +173,99 @@ room_account_data_typebuf_size
 	m::room::id::MAX_SIZE + size(room_account_data_type_prefix)
 };
 
-extern "C" string_view
-room_account_data_type(const mutable_buffer &out,
-                       const m::room::id &room_id)
+m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::user::room_account_data::set(const m::user &user,
+                                      const m::room &room,
+                                      const string_view &user_type,
+                                      const json::object &value)
+{
+	char typebuf[room_account_data_typebuf_size];
+	const string_view type
+	{
+		_type(typebuf, room.room_id)
+	};
+
+	const m::user::room user_room
+	{
+		user
+	};
+
+	return send(user_room, user, type, user_type, value);
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::room_account_data::get(std::nothrow_t,
+                                      const m::user &user,
+                                      const m::room &room,
+                                      const string_view &user_type,
+                                      const closure &closure)
+{
+	char typebuf[room_account_data_typebuf_size];
+	const string_view type
+	{
+		_type(typebuf, room.room_id)
+	};
+
+	const user::room user_room{user};
+	const room::state state{user_room};
+	const event::idx event_idx
+	{
+		state.get(std::nothrow, type, user_type)
+	};
+
+	return event_idx && m::get(std::nothrow, event_idx, "content", [&user_type, &closure]
+	(const json::object &content)
+	{
+		closure(user_type, content);
+	});
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::room_account_data::for_each(const m::user &user,
+                                           const m::room &room,
+                                           const closure_bool &closure)
+{
+	char typebuf[room_account_data_typebuf_size];
+	const string_view type
+	{
+		_type(typebuf, room.room_id)
+	};
+
+	static const event::fetch::opts fopts
+	{
+		event::keys::include {"state_key", "content"}
+	};
+
+	const user::room user_room{user};
+	const room::state state
+	{
+		user_room, &fopts
+	};
+
+	return state.for_each(type, event::closure_bool{[&closure]
+	(const m::event &event)
+	{
+		const auto &user_type
+		{
+			at<"state_key"_>(event)
+		};
+
+		const auto &content
+		{
+			json::get<"content"_>(event)
+		};
+
+		return closure(user_type, content);
+	}});
+}
+
+ircd::string_view
+IRCD_MODULE_EXPORT
+ircd::m::user::room_account_data::_type(const mutable_buffer &out,
+                                        const m::room::id &room_id)
 {
 	assert(size(out) >= room_account_data_typebuf_size);
 
@@ -196,65 +273,4 @@ room_account_data_type(const mutable_buffer &out,
 	ret = strlcpy(out, room_account_data_type_prefix);
 	ret = strlcat(out, room_id);
 	return ret;
-}
-
-void
-room_account_data_get(const m::user &user,
-                      const m::room &room,
-                      const string_view &user_type,
-                      const m::user::account_data_closure &closure)
-try
-{
-	char typebuf[room_account_data_typebuf_size];
-	const string_view type
-	{
-		room_account_data_type(typebuf, room.room_id)
-	};
-
-	const m::user::room user_room
-	{
-		user
-	};
-
-	user_room.get(type, user_type, [&closure]
-	(const m::event &event)
-	{
-		const json::object &value
-		{
-			at<"content"_>(event)
-		};
-
-		closure(value);
-	});
-}
-catch(const m::NOT_FOUND &e)
-{
-	throw m::NOT_FOUND
-	{
-		"Nothing about '%s' account_data for %s in room %s",
-		user_type,
-		string_view{user.user_id},
-		string_view{room.room_id}
-	};
-}
-
-m::event::id::buf
-room_account_data_set(const m::user &user,
-                      const m::room &room,
-                      const m::user &sender,
-                      const string_view &user_type,
-                      const json::object &value)
-{
-	char typebuf[room_account_data_typebuf_size];
-	const string_view type
-	{
-		room_account_data_type(typebuf, room.room_id)
-	};
-
-	const m::user::room user_room
-	{
-		user
-	};
-
-	return send(user_room, sender, type, user_type, value);
 }

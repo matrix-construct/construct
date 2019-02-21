@@ -49,16 +49,21 @@ ircd::m::sync::room_account_data_polylog_events(data &data)
 		data.out, "events"
 	};
 
-	const m::room::state state
-	{
-		data.user_room
-	};
-
 	assert(data.room);
 	char typebuf[288]; //TODO: room_account_data_typebuf_size
 	const auto type
 	{
-		m::user::_account_data_type(typebuf, data.room->room_id)
+		m::user::room_account_data::_type(typebuf, data.room->room_id)
+	};
+
+	static const m::event::fetch::opts &fopts
+	{
+		m::event::keys::include {"event_id", "state_key", "content"}
+	};
+
+	const m::room::state state
+	{
+		data.user_room, &fopts
 	};
 
 	state.for_each(type, [&data]

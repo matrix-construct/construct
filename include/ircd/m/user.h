@@ -28,6 +28,9 @@ struct ircd::m::user
 	struct mitsein;
 	struct events;
 	struct profile;
+	struct account_data;
+	struct room_account_data;
+
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;
 	using closure_bool = std::function<bool (const user &)>;
@@ -47,17 +50,6 @@ struct ircd::m::user
 
 	bool is_password(const string_view &password) const noexcept;
 	event::id::buf password(const string_view &password);
-
-	using account_data_closure = std::function<void (const json::object &)>;
-	static string_view _account_data_type(const mutable_buffer &out, const m::room::id &);
-	void account_data(const string_view &type, const account_data_closure &) const;
-	void account_data(const m::room &, const string_view &type, const account_data_closure &) const;
-	bool account_data(std::nothrow_t, const string_view &type, const account_data_closure &) const;
-	bool account_data(std::nothrow_t, const m::room &, const string_view &type, const account_data_closure &) const;
-	json::object account_data(const mutable_buffer &out, const string_view &type) const; //nothrow
-	json::object account_data(const mutable_buffer &out, const m::room &, const string_view &type) const; //nothrow
-	event::id::buf account_data(const m::user &sender, const string_view &type, const json::object &value);
-	event::id::buf account_data(const m::room &, const m::user &sender, const string_view &type, const json::object &value);
 
 	using filter_closure = std::function<void (const json::object &)>;
 	bool filter(std::nothrow_t, const string_view &filter_id, const filter_closure &) const;
@@ -204,6 +196,55 @@ struct ircd::m::user::profile
 
 	profile(const m::user &user)
 	:user{user}
+	{}
+};
+
+struct ircd::m::user::account_data
+{
+	using closure_bool = std::function<bool (const string_view &key, const json::object &)>;
+	using closure = std::function<void (const string_view &key, const json::object &)>;
+
+	m::user user;
+
+	static bool for_each(const m::user &, const closure_bool &);
+	static bool get(std::nothrow_t, const m::user &, const string_view &type, const closure &);
+	static event::id::buf set(const m::user &, const string_view &type, const json::object &value);
+
+  public:
+	bool for_each(const closure_bool &) const;
+	bool get(std::nothrow_t, const string_view &type, const closure &) const;
+	void get(const string_view &type, const closure &) const;
+	json::object get(const mutable_buffer &out, const string_view &type) const; //nothrow
+	event::id::buf set(const string_view &type, const json::object &value) const;
+
+	account_data(const m::user &user)
+	:user{user}
+	{}
+};
+
+struct ircd::m::user::room_account_data
+{
+	using closure_bool = std::function<bool (const string_view &key, const json::object &)>;
+	using closure = std::function<void (const string_view &key, const json::object &)>;
+
+	m::user user;
+	m::room room;
+
+	static string_view _type(const mutable_buffer &out, const m::room::id &);
+	static bool for_each(const m::user &, const m::room &, const closure_bool &);
+	static bool get(std::nothrow_t, const m::user &, const m::room &, const string_view &type, const closure &);
+	static event::id::buf set(const m::user &, const m::room &, const string_view &type, const json::object &value);
+
+  public:
+	bool for_each(const closure_bool &) const;
+	bool get(std::nothrow_t, const string_view &type, const closure &) const;
+	void get(const string_view &type, const closure &) const;
+	json::object get(const mutable_buffer &out, const string_view &type) const; //nothrow
+	event::id::buf set(const string_view &type, const json::object &value) const;
+
+	room_account_data(const m::user &user, const m::room &room)
+	:user{user}
+	,room{room}
 	{}
 };
 
