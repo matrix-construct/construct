@@ -4639,7 +4639,7 @@ console_cmd__resource(opt &out, const string_view &line)
 		param["method"]
 	};
 
-	if(path && method)
+	if(path && method && path != "-a")
 	{
 		const auto &r
 		{
@@ -4671,6 +4671,9 @@ console_cmd__resource(opt &out, const string_view &line)
 		{
 			assert(mp.second);
 			const auto &m{*mp.second};
+			if(path != "-a" && !m.stats->requests)
+				continue;
+
 			out << std::setw(56) << std::left << p.first
 			    << " "
 			    << std::setw(7) << mp.first
