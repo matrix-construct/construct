@@ -161,7 +161,6 @@ client_client_sync_la_SOURCES = client/sync.cc
 client_client_presence_la_SOURCES = client/presence.cc
 client_client_profile_la_SOURCES = client/profile.cc
 client_client_devices_la_SOURCES = client/devices.cc
-client_client_keys_la_SOURCES = client/keys.cc
 client_client_pushers_la_SOURCES = client/pushers.cc
 client_client_publicrooms_la_SOURCES = client/publicrooms.cc
 client_client_createroom_la_SOURCES = client/createroom.cc
@@ -186,7 +185,6 @@ client_module_LTLIBRARIES = \
 	client/client_presence.la \
 	client/client_profile.la \
 	client/client_devices.la \
-	client/client_keys.la \
 	client/client_pushers.la \
 	client/client_publicrooms.la \
 	client/client_createroom.la \
@@ -338,6 +336,22 @@ client_client_sync_rooms_ephemeral_receipt_la_SOURCES = client/sync/rooms/epheme
 
 client_module_LTLIBRARIES += \
 	client/client_sync_rooms_ephemeral_receipt.la \
+	###
+
+#
+# client/keys/
+#
+
+client_client_keys_upload_la_SOURCES = client/keys/upload.cc
+client_client_keys_query_la_SOURCES = client/keys/query.cc
+client_client_keys_claim_la_SOURCES = client/keys/claim.cc
+client_client_keys_changes_la_SOURCES = client/keys/changes.cc
+
+client_module_LTLIBRARIES += \
+	client/client_keys_upload.la \
+	client/client_keys_query.la \
+	client/client_keys_claim.la \
+	client/client_keys_changes.la \
 	###
 
 ###############################################################################
