@@ -1,7 +1,7 @@
 // Matrix Construct
 //
 // Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) 2016-2019 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,15 +17,6 @@ IRCD_MODULE
 };
 
 resource
-user_keys_claim_resource
-{
-	"/_matrix/federation/v1/user/keys/claim",
-	{
-		"federation user keys claim",
-	}
-};
-
-resource
 user_keys_query_resource
 {
 	"/_matrix/federation/v1/user/keys/query",
@@ -34,12 +25,15 @@ user_keys_query_resource
 	}
 };
 
-static resource::response
-post__user_keys_query(client &client,
-                      const resource::request &request);
+static bool
+_query_user_device(client &client,
+                   const resource::request &request,
+                   const m::user::id &user_id,
+                   const string_view &device_id,
+                   json::stack::object &out);
 
 static resource::response
-post__user_keys_claim(client &client,
+post__user_keys_query(client &client,
                       const resource::request &request);
 
 resource::method
@@ -50,32 +44,6 @@ user_keys_query__post
 		user_keys_query__post.VERIFY_ORIGIN
 	}
 };
-
-resource::method
-user_keys_claim__post
-{
-	user_keys_claim_resource, "POST", post__user_keys_claim,
-	{
-		user_keys_claim__post.VERIFY_ORIGIN
-	}
-};
-
-resource::response
-post__user_keys_claim(client &client,
-                      const resource::request &request)
-{
-	return resource::response
-	{
-		client, http::NOT_FOUND
-	};
-}
-
-static bool
-_query_user_device(client &client,
-                   const resource::request &request,
-                   const m::user::id &user_id,
-                   const string_view &device_id,
-                   json::stack::object &out);
 
 resource::response
 post__user_keys_query(client &client,

@@ -396,7 +396,8 @@ federation_federation_event_auth_la_SOURCES = federation/event_auth.cc
 federation_federation_query_auth_la_SOURCES = federation/query_auth.cc
 federation_federation_publicrooms_la_SOURCES = federation/publicrooms.cc
 federation_federation_user_devices_la_SOURCES = federation/user_devices.cc
-federation_federation_user_keys_la_SOURCES = federation/user_keys.cc
+federation_federation_user_keys_query_la_SOURCES = federation/user_keys_query.cc
+federation_federation_user_keys_claim_la_SOURCES = federation/user_keys_claim.cc
 federation_federation_federation_la_SOURCES = federation/federation.cc
 
 federation_module_LTLIBRARIES = \
@@ -420,7 +421,8 @@ federation_module_LTLIBRARIES = \
 	federation/federation_query_auth.la \
 	federation/federation_publicrooms.la \
 	federation/federation_user_devices.la \
-	federation/federation_user_keys.la \
+	federation/federation_user_keys_query.la \
+	federation/federation_user_keys_claim.la \
 	federation/federation_federation.la \
 	###
 
