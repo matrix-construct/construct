@@ -121,14 +121,6 @@ struct ircd::json::array::const_iterator
 	friend bool operator>(const const_iterator &, const const_iterator &);
 };
 
-inline ircd::string_view
-ircd::json::array::operator[](const size_t &i)
-const
-{
-	const auto it(find(i));
-	return it != end()? *it : string_view{};
-}
-
 template<class T>
 T
 ircd::json::array::at(const size_t &i)
@@ -142,104 +134,4 @@ catch(const bad_lex_cast &e)
 	{
 		"indice %zu must cast to type %s", i, typeid(T).name()
 	};
-}
-
-inline ircd::string_view
-ircd::json::array::at(const size_t &i)
-const
-{
-	const auto it(find(i));
-	if(it == end())
-		throw not_found
-		{
-			"indice %zu", i
-		};
-
-	return *it;
-}
-
-inline ircd::json::array::const_iterator
-ircd::json::array::find(size_t i)
-const
-{
-	auto it(begin());
-	for(; it != end() && i; ++it, i--);
-	return it;
-}
-
-inline size_t
-ircd::json::size(const array &array)
-{
-	return array.size();
-}
-
-inline size_t
-ircd::json::array::size()
-const
-{
-	return count();
-}
-
-inline size_t
-ircd::json::array::count()
-const
-{
-	return std::distance(begin(), end());
-}
-
-inline bool
-ircd::json::operator!(const array &array)
-{
-	return empty(array);
-}
-
-inline bool
-ircd::json::empty(const array &array)
-{
-	return array.empty();
-}
-
-inline bool
-ircd::json::array::empty()
-const
-{
-	const string_view &sv{*this};
-	assert(sv.size() > 2 || (sv.empty() || sv == empty_array));
-	return sv.size() <= 2;
-}
-
-inline bool
-ircd::json::operator==(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start == b.start;
-}
-
-inline bool
-ircd::json::operator!=(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start != b.start;
-}
-
-inline bool
-ircd::json::operator<=(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start <= b.start;
-}
-
-inline bool
-ircd::json::operator>=(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start >= b.start;
-}
-
-inline bool
-ircd::json::operator<(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start < b.start;
-}
-
-inline bool
-ircd::json::operator>(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start > b.start;
 }

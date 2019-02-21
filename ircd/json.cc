@@ -2266,6 +2266,13 @@ ircd::json::array::max_recursion_depth
 	32
 };
 
+std::ostream &
+ircd::json::operator<<(std::ostream &s, const array &a)
+{
+	s << json::strung(a);
+	return s;
+}
+
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const array &v)
@@ -2319,6 +2326,28 @@ ircd::json::serialized(const string_view *const &b,
 	return array::serialized(b, e);
 }
 
+size_t
+ircd::json::size(const array &array)
+{
+	return array.size();
+}
+
+bool
+ircd::json::operator!(const array &array)
+{
+	return empty(array);
+}
+
+bool
+ircd::json::empty(const array &array)
+{
+	return array.empty();
+}
+
+//
+// array::array
+//
+
 template<class it>
 ircd::string_view
 ircd::json::array::stringify(mutable_buffer &buf,
@@ -2359,43 +2388,6 @@ ircd::json::array::serialized(const it &b,
 	{
 		return ret += json::serialized(value) + 1;
 	});
-}
-
-std::ostream &
-ircd::json::operator<<(std::ostream &s, const array &a)
-{
-	s << json::strung(a);
-	return s;
-}
-
-ircd::json::array::const_iterator &
-ircd::json::array::const_iterator::operator++()
-try
-{
-	static const auto &ws
-	{
-		parser.ws
-	};
-
-	static const parser::rule<string_view> value
-	{
-		raw[parser.value(0)]
-		,"array element"
-	};
-
-	static const parser::rule<string_view> parse_next
-	{
-		(parser.array_end | (parser.value_sep >> -ws >> value)) >> -ws
-		,"next array element or end"
-	};
-
-	state = string_view{};
-	qi::parse(start, stop, eps > parse_next, state);
-	return *this;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure(start, e);
 }
 
 ircd::json::array::operator std::string()
@@ -2445,6 +2437,131 @@ ircd::json::array::end()
 const
 {
 	return { string_view::end(), string_view::end() };
+}
+
+
+ircd::string_view
+ircd::json::array::operator[](const size_t &i)
+const
+{
+	const auto it(find(i));
+	return it != end()? *it : string_view{};
+}
+
+ircd::string_view
+ircd::json::array::at(const size_t &i)
+const
+{
+	const auto it(find(i));
+	if(it == end())
+		throw not_found
+		{
+			"indice %zu", i
+		};
+
+	return *it;
+}
+
+ircd::json::array::const_iterator
+ircd::json::array::find(size_t i)
+const
+{
+	auto it(begin());
+	for(; it != end() && i; ++it, i--);
+	return it;
+}
+
+size_t
+ircd::json::array::size()
+const
+{
+	return count();
+}
+
+size_t
+ircd::json::array::count()
+const
+{
+	return std::distance(begin(), end());
+}
+
+bool
+ircd::json::array::empty()
+const
+{
+	const string_view &sv{*this};
+	assert(sv.size() > 2 || (sv.empty() || sv == empty_array));
+	return sv.size() <= 2;
+}
+
+//
+// array::const_iterator
+//
+
+ircd::json::array::const_iterator &
+ircd::json::array::const_iterator::operator++()
+try
+{
+	static const auto &ws
+	{
+		parser.ws
+	};
+
+	static const parser::rule<string_view> value
+	{
+		raw[parser.value(0)]
+		,"array element"
+	};
+
+	static const parser::rule<string_view> parse_next
+	{
+		(parser.array_end | (parser.value_sep >> -ws >> value)) >> -ws
+		,"next array element or end"
+	};
+
+	state = string_view{};
+	qi::parse(start, stop, eps > parse_next, state);
+	return *this;
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure(start, e);
+}
+
+bool
+ircd::json::operator==(const array::const_iterator &a, const array::const_iterator &b)
+{
+	return a.start == b.start;
+}
+
+bool
+ircd::json::operator!=(const array::const_iterator &a, const array::const_iterator &b)
+{
+	return a.start != b.start;
+}
+
+bool
+ircd::json::operator<=(const array::const_iterator &a, const array::const_iterator &b)
+{
+	return a.start <= b.start;
+}
+
+bool
+ircd::json::operator>=(const array::const_iterator &a, const array::const_iterator &b)
+{
+	return a.start >= b.start;
+}
+
+bool
+ircd::json::operator<(const array::const_iterator &a, const array::const_iterator &b)
+{
+	return a.start < b.start;
+}
+
+bool
+ircd::json::operator>(const array::const_iterator &a, const array::const_iterator &b)
+{
+	return a.start > b.start;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
