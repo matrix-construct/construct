@@ -317,8 +317,8 @@ register_user(const m::registar &request,
 		{
 			m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
 			{
-				{ "ip",      client? string(remote(*client)) : std::string{} },
-				{ "device",  device_id                                       },
+				{ "ip",         client? string(remote(*client)) : std::string{} },
+				{ "device_id",  device_id                                       },
 			})
 		};
 
