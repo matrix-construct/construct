@@ -2490,7 +2490,11 @@ ircd::json::array::empty()
 const
 {
 	const string_view &sv{*this};
-	assert(sv.size() > 2 || (sv.empty() || sv == empty_array));
+	// Allow empty objects '{}' to pass this assertion; this function is not
+	// a type-check. Some serializers (like browser JS) might give an empty
+	// object before it has any context that the set is an array; it doesn't
+	// matter here for us.
+	assert(sv.size() > 2 || sv.empty() || sv == empty_array || sv == empty_object);
 	return sv.size() <= 2;
 }
 
