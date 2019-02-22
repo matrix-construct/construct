@@ -37,7 +37,28 @@ send_to_device_resource__unstable
 	}
 };
 
+static void
+send_to_device(const string_view &txnid,
+               const m::user::id &sender,
+               const m::user::id &target,
+               const string_view &type,
+               const json::object &message);
+
 static resource::response
+put__send_to_device(client &client,
+                    const resource::request &request);
+
+
+resource::method
+method_put
+{
+	send_to_device_resource, "PUT", put__send_to_device,
+	{
+		method_put.REQUIRES_AUTH
+	}
+};
+
+resource::response
 put__send_to_device(client &client,
                     const resource::request &request)
 {
@@ -70,17 +91,52 @@ put__send_to_device(client &client,
 		request["messages"]
 	};
 
+	if(size(messages) > 1)
+		throw m::UNSUPPORTED
+		{
+			"Multiple user targets is not yet supported."
+		};
+
+	for(const auto &[user_id, message] : messages)
+		send_to_device(txnid, request.user_id, user_id, type, messages);
+
 	return resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::method
-method_put
+void
+send_to_device(const string_view &txnid,
+               const m::user::id &sender,
+               const m::user::id &target,
+               const string_view &type,
+               const json::object &message)
 {
-	send_to_device_resource, "PUT", put__send_to_device,
+	json::iov event, content;
+	const json::iov::push push[]
 	{
-		method_put.REQUIRES_AUTH
-	}
-};
+		// The federation sender considers the room_id property of an event
+		// as the "destination" and knows what to do if it's actually some
+		// some other string like the user::id we're targeting here.
+		{ event,   { "room_id",      target              } },
+		{ event,   { "type",        "m.direct_to_device" } },
+		{ content, { "type",         type                } },
+		{ content, { "sender",       sender              } },
+		{ content, { "message_id",   txnid               } },
+		{ content, { "messages",     message             } },
+	};
+
+	m::vm::copts opts;
+	opts.add_hash = false;
+	opts.add_sig = false;
+	opts.add_event_id = false;
+	opts.add_origin = true;
+	opts.add_origin_server_ts = false;
+	opts.conforming = false;
+	opts.notify_clients = false;
+	m::vm::eval
+	{
+		event, content, opts
+	};
+}
