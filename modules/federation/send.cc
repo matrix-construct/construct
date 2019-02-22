@@ -26,6 +26,13 @@ send_resource
 	}
 };
 
+conf::item<bool>
+allow_self
+{
+	{ "name",     "ircd.federation.send.allow_self" },
+	{ "default",  "false"                           },
+};
+
 void
 handle_edu(client &client,
            const resource::request::object<m::txn> &request,
@@ -138,7 +145,7 @@ handle_put(client &client,
 	// Don't accept sends to ourself for whatever reason (i.e a 127.0.0.1
 	// leaked into the target list). This should be a 500 so it's not
 	// considered success or cached as failure by the sender's state.
-	if(unlikely(my_host(request.origin)))
+	if(unlikely(my_host(request.origin)) && !bool(allow_self))
 		throw m::error
 		{
 			"M_SEND_TO_SELF", "Tried to send %s from myself to myself.",
