@@ -419,10 +419,17 @@ ircd::m::sync::pool
 	"sync", pool_opts
 };
 
-decltype(ircd::m::sync::debug_stats)
-ircd::m::sync::debug_stats
+decltype(ircd::m::sync::stats_info)
+ircd::m::sync::stats_info
 {
-	{ "name",     "ircd.m.sync.debug_stats" },
+	{ "name",     "ircd.m.sync.stats.info" },
+	{ "default",  false                    },
+};
+
+decltype(ircd::m::sync::stats_debug)
+ircd::m::sync::stats_debug
+{
+	{ "name",     "ircd.m.sync.stats.debug" },
 	{ "default",  false                     },
 };
 
@@ -684,7 +691,7 @@ try
 	_polylog(data);
 
 	#ifdef RB_DEBUG
-	if(data.stats && bool(debug_stats))
+	if(data.stats && bool(stats_debug))
 	{
 		//data.out.flush();
 		thread_local char tmbuf[32];

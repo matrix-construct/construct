@@ -230,7 +230,7 @@ try
 		}
 	};
 
-	log::info
+	if(stats_info) log::info
 	{
 		log, "polylog %s complete", loghead(data)
 	};
