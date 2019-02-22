@@ -10955,6 +10955,67 @@ console_cmd__fed__user__keys__query(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__user__keys__claim(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "device_id", "algorithm", "remote"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const string_view &device_id
+	{
+		param.at("device_id")
+	};
+
+	const string_view &algorithm
+	{
+		param.at("algorithm")
+	};
+
+	const net::hostport remote
+	{
+		param.at("remote", user_id.host())
+	};
+
+	m::v1::user::opts opts;
+	opts.remote = remote;
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		32_KiB
+	};
+
+	m::v1::user::keys::claim request
+	{
+		user_id, device_id, algorithm, buf, std::move(opts)
+	};
+
+	request.wait(out.timeout);
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	const json::object &one_time_keys
+	{
+		response["one_time_keys"]
+	};
+
+	out << one_time_keys << std::endl;
+	return true;
+}
+
+bool
 console_cmd__fed__key(opt &out, const string_view &line)
 {
 	const params param{line, " ",
