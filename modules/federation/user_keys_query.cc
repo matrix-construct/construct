@@ -25,7 +25,7 @@ user_keys_query_resource
 	}
 };
 
-static bool
+static void
 _query_user_device(client &client,
                    const resource::request &request,
                    const m::user::id &user_id,
@@ -94,19 +94,39 @@ post__user_keys_query(client &client,
 	return response;
 }
 
-bool
+void
 _query_user_device(client &client,
                    const resource::request &request,
                    const m::user::id &user_id,
                    const string_view &device_id,
                    json::stack::object &out)
 {
-	return m::device::get(std::nothrow, user_id, device_id, "keys", [&device_id, &out]
+	json::stack::object object
+	{
+		out, device_id
+	};
+
+	m::device::get(std::nothrow, user_id, device_id, "keys", [&device_id, &object]
 	(const json::object &device_keys)
 	{
+		for(const auto &member : device_keys)
+			json::stack::member
+			{
+				object, member.first, member.second
+			};
+	});
+
+	m::device::get(std::nothrow, user_id, device_id, "display_name", [&device_id, &object]
+	(const string_view &display_name)
+	{
+		json::stack::object non_hancock
+		{
+			object, "unsigned"
+		};
+
 		json::stack::member
 		{
-			out, device_id, device_keys
+			non_hancock, "device_display_name", display_name
 		};
 	});
 }
