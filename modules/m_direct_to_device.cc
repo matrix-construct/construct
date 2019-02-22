@@ -42,9 +42,6 @@ handle_edu_m_direct_to_device(const m::event &event,
                               m::vm::eval &eval)
 try
 {
-	if(m::my_host(at<"origin"_>(event)))
-		return;
-
 	const json::object &content
 	{
 		at<"content"_>(event)
@@ -74,25 +71,16 @@ try
 			user_messages.first
 		};
 
+		if(!my_host(user_id.host()))
+			continue;
+
 		const json::object &device_messages
 		{
 			user_messages.second
 		};
 
-		for(const auto &device_message : device_messages)
-		{
-			const string_view &device_id
-			{
-				device_message.first
-			};
-
-			const json::object &message_body
-			{
-				device_message.second
-			};
-
+		for(const auto &[device_id, message_body] : device_messages)
 			handle_m_direct_to_device(eval, edu, user_id, device_id, message_body);
-		}
 	}
 }
 catch(const std::exception &e)
@@ -111,11 +99,20 @@ handle_m_direct_to_device(m::vm::eval &eval,
                           const m::user::id &user_id,
                           const string_view &device_id,
                           const json::object &message)
+try
 {
 	const m::user::room user_room
 	{
 		user_id
 	};
+
+	send(user_room, at<"sender"_>(edu), "ircd.to_device",
+	{
+		{ "sender",    at<"sender"_>(edu) },
+		{ "type",      at<"type"_>(edu)   },
+		{ "device_id", device_id          },
+		{ "content",   message            },
+	});
 
 	log::info
 	{
@@ -125,5 +122,17 @@ handle_m_direct_to_device(m::vm::eval &eval,
 		string_view{user_id},
 		device_id,
 		size(string_view{message})
+	};
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		m::log, "m.direct_to_device %s to %s device of %s from %s :%s ",
+		at<"type"_>(edu),
+		device_id,
+		string_view{user_id},
+		at<"sender"_>(edu),
+		e.what()
 	};
 }
