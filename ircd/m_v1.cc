@@ -1087,6 +1087,40 @@ ircd::m::v1::user::keys::claim::claim(const vector_view<const user_devices> &v,
 	};
 }
 
+ircd::m::v1::user::keys::claim::claim(const user_devices_map &map,
+                                      const mutable_buffer &buf,
+                                      opts opts)
+{
+	json::stack out{buf};
+	{
+		json::stack::object top{out};
+		json::stack::object one_time_keys
+		{
+			top, "one_time_keys"
+		};
+
+		for(const auto &p : map)
+		{
+			const m::user::id &user_id(p.first);
+			const json::object &devices(p.second);
+			json::stack::member user
+			{
+				one_time_keys, user_id, devices
+			};
+		}
+	}
+
+	const json::object &content
+	{
+		out.completed()
+	};
+
+	new (this) claim
+	{
+		content, buf + size(string_view(content)), std::move(opts)
+	};
+}
+
 ircd::m::v1::user::keys::claim::claim(const json::object &content,
                                       const mutable_buffer &buf,
                                       opts opts)
