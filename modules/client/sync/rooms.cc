@@ -109,7 +109,7 @@ ircd::m::sync::_rooms_polylog(data &data,
 
 		#ifdef RB_DEBUG
 		thread_local char tmbuf[32];
-		if(data.stats) log::debug
+		if(data.stats && bool(debug_stats)) log::debug
 		{
 			log, "polylog %s %s in %s",
 			loghead(data),

@@ -36,6 +36,7 @@ namespace ircd::m::sync
 
 	extern log::log log;
 	extern ctx::pool pool;
+	extern conf::item<bool> debug_stats;
 }
 
 struct ircd::m::sync::item

@@ -419,6 +419,13 @@ ircd::m::sync::pool
 	"sync", pool_opts
 };
 
+decltype(ircd::m::sync::debug_stats)
+ircd::m::sync::debug_stats
+{
+	{ "name",     "ircd.m.sync.debug_stats" },
+	{ "default",  false                     },
+};
+
 bool
 ircd::m::sync::for_each(const item_closure_bool &closure)
 {
@@ -677,7 +684,7 @@ try
 	_polylog(data);
 
 	#ifdef RB_DEBUG
-	if(data.stats)
+	if(data.stats && bool(debug_stats))
 	{
 		//data.out.flush();
 		thread_local char tmbuf[32];
