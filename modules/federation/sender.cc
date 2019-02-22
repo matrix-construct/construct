@@ -22,6 +22,7 @@ static void recv();
 static void recv_worker();
 ctx::dock recv_action;
 
+static void send(const m::event &, const m::user::id &user_id);
 static void send(const m::event &, const m::room::id &room_id);
 static void send(const m::event &);
 static void send_worker();
@@ -126,8 +127,11 @@ send(const m::event &event)
 	if(json::get<"depth"_>(event) == json::undefined_number)
 		return;
 
-	if(room_id)
-		return send(event, room_id);
+	if(valid(m::id::ROOM, room_id))
+		return send(event, m::room::id{room_id});
+
+	if(valid(m::id::USER, room_id))
+		return send(event, m::user::id{room_id});
 }
 
 void
@@ -164,6 +168,40 @@ send(const m::event &event,
 		node.push(unit);
 		node.flush();
 	});
+}
+
+void
+send(const m::event &event,
+     const m::user::id &user_id)
+{
+	const string_view &remote
+	{
+		user_id.host()
+	};
+
+	if(my_host(remote))
+		return;
+
+	auto it{nodes.lower_bound(remote)};
+	if(it == end(nodes) || it->first != remote)
+	{
+		if(server::errmsg(remote))
+			return;
+
+		it = nodes.emplace_hint(it, remote, remote);
+	}
+
+	auto &node{it->second};
+	if(node.err)
+		return;
+
+	auto unit
+	{
+		std::make_shared<struct unit>(event)
+	};
+
+	node.push(std::move(unit));
+	node.flush();
 }
 
 void
