@@ -39,11 +39,6 @@ ircd::m::sync::rooms_ephemeral_linear(data &data)
 void
 ircd::m::sync::rooms_ephemeral_polylog(data &data)
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
 	rooms_ephemeral_events_polylog(data);
 }
 

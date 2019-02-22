@@ -33,11 +33,6 @@ ircd::m::sync::room_account_data
 void
 ircd::m::sync::room_account_data_polylog(data &data)
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
 	room_account_data_polylog_events(data);
 }
 

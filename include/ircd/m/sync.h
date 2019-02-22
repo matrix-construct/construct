@@ -95,6 +95,7 @@ struct ircd::m::sync::data
 	const m::event *event {nullptr};
 	const m::room *room {nullptr};
 	string_view membership;
+	event::idx room_head {0};
 
 	data(const m::user &user,
 	     const m::events::range &range,

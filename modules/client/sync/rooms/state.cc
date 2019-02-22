@@ -78,20 +78,8 @@ ircd::m::sync::room_state_linear(data &data)
 void
 ircd::m::sync::room_state_polylog(data &data)
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
-	const auto head_idx
-	{
-		m::head_idx(std::nothrow, *data.room)
-	};
-
-	if(!apropos(data, head_idx))
-		return;
-
-	room_state_polylog_events(data);
+	if(apropos(data, data.room_head))
+		room_state_polylog_events(data);
 }
 
 void

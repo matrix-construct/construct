@@ -99,21 +99,11 @@ ircd::m::sync::_room_timeline_linear_events(data &data,
 void
 ircd::m::sync::room_timeline_polylog(data &data)
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
-	assert(data.room);
-	const auto head_idx
-	{
-		m::head_idx(std::nothrow, *data.room)
-	};
-
-	if(!head_idx || !apropos(data, head_idx))
+	if(!apropos(data, data.room_head))
 		return;
 
 	// events
+	assert(data.room);
 	bool limited{false};
 	m::event::id::buf prev
 	{
@@ -123,13 +113,13 @@ ircd::m::sync::room_timeline_polylog(data &data)
 	// prev_batch
 	json::stack::member
 	{
-		object, "prev_batch", string_view{prev}
+		data.out, "prev_batch", string_view{prev}
 	};
 
 	// limited
 	json::stack::member
 	{
-		object, "limited", json::value{limited}
+		data.out, "limited", json::value{limited}
 	};
 }
 

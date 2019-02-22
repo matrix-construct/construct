@@ -134,10 +134,20 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 		data.out, room.room_id
 	};
 
+	const event::idx room_head
+	{
+		head_idx(std::nothrow, room)
+	};
+
+	const scope_restore<decltype(data.room_head)> their_head
+	{
+		data.room_head, room_head
+	};
+
 	m::sync::for_each("rooms", [&data]
 	(item &item)
 	{
-		json::stack::member member
+		json::stack::object object
 		{
 			data.out, item.member_name()
 		};
