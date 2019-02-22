@@ -190,6 +190,12 @@ try
 	if(line == "ABORT")
 		abort();
 
+	if(line == "TERMINATE")
+		std::terminate();
+
+	if(line == "terminate")
+		ircd::terminate();
+
 	if(line == "EXIT")
 		exit(0);
 
