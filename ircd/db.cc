@@ -1333,10 +1333,24 @@ try
 }
 catch(const error &e)
 {
+	log::error
+	{
+		"Error opening db '%s': %s",
+		this->name,
+		e.what()
+	};
+
 	throw;
 }
 catch(const std::exception &e)
 {
+	log::error
+	{
+		"Error opening db '%s': %s",
+		this->name,
+		e.what()
+	};
+
 	throw error
 	{
 		"Failed to open db '%s': %s",
