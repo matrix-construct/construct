@@ -26,6 +26,17 @@ send_to_device_resource
 	}
 };
 
+ircd::resource::redirect::permanent
+send_to_device_resource__unstable
+{
+	"/_matrix/client/unstable/sendToDevice/",
+	"/_matrix/client/r0/sendToDevice/",
+	{
+		"(14.9.3) Protocol definitions",
+		resource::DIRECTORY,
+	}
+};
+
 static resource::response
 put__send_to_device(client &client,
                     const resource::request &request)
