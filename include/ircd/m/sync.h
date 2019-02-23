@@ -37,7 +37,6 @@ namespace ircd::m::sync
 	extern log::log log;
 	extern ctx::pool pool;
 	extern conf::item<bool> stats_info;
-	extern conf::item<bool> stats_debug;
 }
 
 struct ircd::m::sync::item
@@ -45,6 +44,9 @@ struct ircd::m::sync::item
 {
 	using handle = std::function<void (data &)>;
 
+	std::string conf_name[2];
+	conf::item<bool> enable;
+	conf::item<bool> stats_debug;
 	handle _polylog;
 	handle _linear;
 

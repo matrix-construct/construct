@@ -426,13 +426,6 @@ ircd::m::sync::stats_info
 	{ "default",  false                    },
 };
 
-decltype(ircd::m::sync::stats_debug)
-ircd::m::sync::stats_debug
-{
-	{ "name",     "ircd.m.sync.stats.debug" },
-	{ "default",  false                     },
-};
-
 bool
 ircd::m::sync::for_each(const item_closure_bool &closure)
 {
@@ -644,6 +637,21 @@ ircd::m::sync::item::item(std::string name,
 {
 	std::move(name)
 }
+,conf_name
+{
+	fmt::snstringf{128, "ircd.m.sync.%s.enable", this->name()},
+	fmt::snstringf{128, "ircd.m.sync.%s.stats.debug", this->name()},
+}
+,enable
+{
+	{ "name",     conf_name[0] },
+	{ "default",  true         },
+}
+,stats_debug
+{
+	{ "name",     conf_name[1] },
+	{ "default",  false        },
+}
 ,_polylog
 {
 	std::move(polylog)
@@ -676,22 +684,25 @@ void
 ircd::m::sync::item::polylog(data &data)
 try
 {
+	if(!enable)
+		return;
+
 	#ifdef RB_DEBUG
 	sync::stats stats
 	{
-		data.stats?
+		data.stats && (stats_info || stats_debug)?
 			*data.stats:
 			sync::stats{}
 	};
 
-	if(data.stats)
+	if(data.stats && (stats_info || stats_debug))
 		stats.timer = {};
 	#endif
 
 	_polylog(data);
 
 	#ifdef RB_DEBUG
-	if(data.stats && bool(stats_debug))
+	if(data.stats && (stats_info || stats_debug))
 	{
 		//data.out.flush();
 		thread_local char tmbuf[32];

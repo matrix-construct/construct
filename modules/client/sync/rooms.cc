@@ -93,7 +93,7 @@ ircd::m::sync::_rooms_polylog(data &data,
 	data.user_rooms.for_each(membership, [&data]
 	(const m::room &room, const string_view &membership_)
 	{
-		#ifdef RB_DEBUG
+		#if defined(RB_DEBUG) && 0
 		sync::stats stats
 		{
 			data.stats?
@@ -107,7 +107,7 @@ ircd::m::sync::_rooms_polylog(data &data,
 
 		_rooms_polylog_room(data, room);
 
-		#ifdef RB_DEBUG
+		#if defined(RB_DEBUG) && 0
 		thread_local char tmbuf[32];
 		if(data.stats && bool(stats_debug)) log::debug
 		{
