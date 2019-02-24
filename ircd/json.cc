@@ -447,6 +447,10 @@ noexcept
 ircd::json::stack::~stack()
 noexcept
 {
+	assert(closed());
+	if(buf.consumed())
+		flush(true);
+
 	assert(clean() || done());
 }
 
@@ -688,7 +692,7 @@ ircd::json::stack::object::object(stack &s)
 }
 
 ircd::json::stack::object::object(stack &s,
-                                const string_view &name)
+                                  const string_view &name)
 :object{object::top(s), name}
 {
 }
@@ -784,13 +788,12 @@ noexcept
 		return;
 	}
 
-	// branch taken if top of stack:: (w/ final flush)
+	// branch taken if top of stack::
 	assert(s->co == this);
 	assert(s->ca == nullptr);
 	assert(pm == nullptr && pa == nullptr);
 	s->co = nullptr;
-	assert(s->done());
-	s->flush(true);
+	assert(s->closed());
 }
 
 //
@@ -958,13 +961,12 @@ noexcept
 		return;
 	}
 
-	// branch taken if top of stack:: (w/ final flush)
+	// branch taken if top of stack::
 	assert(s->ca == this);
 	assert(s->co == nullptr);
 	assert(pm == nullptr && pa == nullptr);
 	s->ca = nullptr;
-	assert(s->done());
-	s->flush(true);
+	assert(s->closed());
 }
 
 void
