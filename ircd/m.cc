@@ -1622,6 +1622,22 @@ ircd::m::device::set(const m::user &user,
 }
 
 bool
+ircd::m::device::set(const m::user &user,
+                     const string_view &id,
+                     const string_view &prop,
+                     const string_view &val)
+{
+	using prototype = bool (const m::user &, const string_view &, const string_view &, const string_view &);
+
+	static mods::import<prototype> function
+	{
+		"m_device", "ircd::m::device::set"
+	};
+
+	return function(user, id, prop, val);
+}
+
+bool
 ircd::m::device::del(const m::user &user,
                      const string_view &id)
 {

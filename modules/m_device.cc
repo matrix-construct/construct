@@ -52,6 +52,28 @@ ircd::m::device::set(const m::user &user,
 	return true;
 }
 
+bool
+IRCD_MODULE_EXPORT
+ircd::m::device::set(const m::user &user,
+                     const string_view &id,
+                     const string_view &prop,
+                     const string_view &val)
+{
+	char buf[m::event::TYPE_MAX_SIZE];
+	const string_view type{fmt::sprintf
+	{
+		buf, "ircd.device.%s", prop
+	}};
+
+	const user::room user_room{user};
+	m::send(user_room, user, type, id,
+	{
+		{ "", val }
+	});
+
+	return true;
+}
+
 /// To delete a device we iterate the user's room state for all types matching
 /// ircd.device.* (and ircd.device) which have a state_key of the device_id.
 /// Those events are redacted which removes them from appearing in the state.
