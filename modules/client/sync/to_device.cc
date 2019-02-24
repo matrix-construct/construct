@@ -16,8 +16,8 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static void to_device_polylog(data &);
-	static void to_device_linear(data &);
+	static bool to_device_polylog(data &);
+	static bool to_device_linear(data &);
 
 	extern item to_device;
 }
@@ -30,20 +30,15 @@ ircd::m::sync::to_device
 	to_device_linear
 };
 
-void
+bool
 ircd::m::sync::to_device_linear(data &data)
 {
-
+	return false;
 }
 
-void
+bool
 ircd::m::sync::to_device_polylog(data &data)
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
 	json::stack::array array
 	{
 		data.out, "events"
@@ -59,6 +54,7 @@ ircd::m::sync::to_device_polylog(data &data)
 		user_room
 	};
 
+	bool ret{false};
 	for(; it; ++it)
 	{
 		const auto &event_idx(it.event_idx());
@@ -75,10 +71,9 @@ ircd::m::sync::to_device_polylog(data &data)
 		if(!relevant)
 			continue;
 
-		m::get(std::nothrow, event_idx, "content", [&data, &array]
+		m::get(std::nothrow, event_idx, "content", [&data, &array, &ret]
 		(const json::object &content)
 		{
-			data.commit();
 			json::stack::object event
 			{
 				array
@@ -109,6 +104,10 @@ ircd::m::sync::to_device_polylog(data &data)
 				{
 					content_, property, value
 				};
+
+			ret = true;
 		});
 	}
+
+	return ret;
 }

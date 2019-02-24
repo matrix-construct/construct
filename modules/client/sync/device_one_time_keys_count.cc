@@ -16,8 +16,8 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static void device_one_time_keys_count_polylog(data &);
-	static void device_one_time_keys_count_linear(data &);
+	static bool device_one_time_keys_count_polylog(data &);
+	static bool device_one_time_keys_count_linear(data &);
 
 	extern item device_one_time_keys_count;
 }
@@ -30,18 +30,14 @@ ircd::m::sync::device_one_time_keys_count
 	device_one_time_keys_count_linear
 };
 
-void
+bool
 ircd::m::sync::device_one_time_keys_count_linear(data &data)
 {
-
+	return false;
 }
 
-void
+bool
 ircd::m::sync::device_one_time_keys_count_polylog(data &data)
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
+	return false;
 }

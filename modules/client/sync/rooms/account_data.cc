@@ -16,9 +16,9 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static void room_account_data_polylog_events_event(data &, const m::event &);
-	static void room_account_data_polylog_events(data &);
-	static void room_account_data_polylog(data &);
+	static bool room_account_data_polylog_events_event(data &, const m::event &);
+	static bool room_account_data_polylog_events(data &);
+	static bool room_account_data_polylog(data &);
 
 	extern item room_account_data;
 }
@@ -30,13 +30,13 @@ ircd::m::sync::room_account_data
 	room_account_data_polylog
 };
 
-void
+bool
 ircd::m::sync::room_account_data_polylog(data &data)
 {
-	room_account_data_polylog_events(data);
+	return room_account_data_polylog_events(data);
 }
 
-void
+bool
 ircd::m::sync::room_account_data_polylog_events(data &data)
 {
 	json::stack::array array
@@ -61,19 +61,21 @@ ircd::m::sync::room_account_data_polylog_events(data &data)
 		data.user_room, &fopts
 	};
 
-	state.for_each(type, [&data]
+	bool ret{false};
+	state.for_each(type, [&data, &ret]
 	(const m::event &event)
 	{
 		if(apropos(data, event))
-			room_account_data_polylog_events_event(data, event);
+			ret |= room_account_data_polylog_events_event(data, event);
 	});
+
+	return ret;
 }
 
-void
+bool
 ircd::m::sync::room_account_data_polylog_events_event(data &data,
                                                       const m::event &event)
 {
-	data.commit();
 	json::stack::object object
 	{
 		data.out
@@ -88,4 +90,6 @@ ircd::m::sync::room_account_data_polylog_events_event(data &data,
 	{
 		object, "content", at<"content"_>(event)
 	};
+
+	return true;
 }

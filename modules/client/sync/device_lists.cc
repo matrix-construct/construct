@@ -16,8 +16,8 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static void device_lists_polylog(data &);
-	static void device_lists_linear(data &);
+	static bool device_lists_polylog(data &);
+	static bool device_lists_linear(data &);
 
 	extern item device_lists;
 }
@@ -30,20 +30,15 @@ ircd::m::sync::device_lists
 	device_lists_linear
 };
 
-void
+bool
 ircd::m::sync::device_lists_linear(data &data)
 {
-
+	return false;
 }
 
-void
+bool
 ircd::m::sync::device_lists_polylog(data &data)
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
 	json::stack::array
 	{
 		data.out, "changed"
@@ -53,4 +48,6 @@ ircd::m::sync::device_lists_polylog(data &data)
 	{
 		data.out, "left"
 	};
+
+	return false;
 }

@@ -16,9 +16,9 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static void _handle_message_receipt(data &, const m::event &);
-	static void _handle_message(data &, const m::event::idx &);
-	static void room_ephemeral_m_receipt_m_read_polylog(data &);
+	static bool _handle_message_receipt(data &, const m::event &);
+	static bool _handle_message(data &, const m::event::idx &);
+	static bool room_ephemeral_m_receipt_m_read_polylog(data &);
 	extern item room_ephemeral_m_receipt_m_read;
 }
 
@@ -29,7 +29,7 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read
 	room_ephemeral_m_receipt_m_read_polylog
 };
 
-void
+bool
 ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 {
 	const m::room &room{*data.room};
@@ -54,17 +54,24 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 	if(i > 0 && !it && idx)
 		it.seek(idx);
 
+	bool ret{false};
 	if(i > 0 && idx)
 		for(; it && i > -1; ++it, --i)
-			_handle_message(data, it.event_idx());
+			ret |= _handle_message(data, it.event_idx());
+
+	return ret;
 }
 
-void
+bool
 ircd::m::sync::_handle_message(data &data,
                                const event::idx &idx)
 {
+	bool ret{false};
+	if(!apropos(data, idx))
+		return ret;
+
 	const event::refs refs{idx};
-	refs.for_each(dbs::ref::M_RECEIPT__M_READ, [&data]
+	refs.for_each(dbs::ref::M_RECEIPT__M_READ, [&data, &ret]
 	(const event::idx &idx, const auto &type)
 	{
 		assert(type == dbs::ref::M_RECEIPT__M_READ);
@@ -79,17 +86,18 @@ ircd::m::sync::_handle_message(data &data,
 		};
 
 		if(event.valid)
-			_handle_message_receipt(data, event);
+			ret |= _handle_message_receipt(data, event);
 
 		return true;
 	});
+
+	return ret;
 }
 
-void
+bool
 ircd::m::sync::_handle_message_receipt(data &data,
                                        const m::event &event)
 {
-	data.commit();
 	const json::object content
 	{
 		at<"content"_>(event)
@@ -131,4 +139,6 @@ ircd::m::sync::_handle_message_receipt(data &data,
 	{
 		sender_, "ts", json::value(content.at("ts"))
 	};
+
+	return true;
 }

@@ -16,9 +16,9 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static void rooms_ephemeral_events_polylog(data &);
-	static void rooms_ephemeral_polylog(data &);
-	static void rooms_ephemeral_linear(data &);
+	static bool rooms_ephemeral_events_polylog(data &);
+	static bool rooms_ephemeral_polylog(data &);
+	static bool rooms_ephemeral_linear(data &);
 	extern item rooms_ephemeral;
 }
 
@@ -30,19 +30,19 @@ ircd::m::sync::rooms_ephemeral
 	rooms_ephemeral_linear
 };
 
-void
+bool
 ircd::m::sync::rooms_ephemeral_linear(data &data)
 {
-
+	return false;
 }
 
-void
+bool
 ircd::m::sync::rooms_ephemeral_polylog(data &data)
 {
-	rooms_ephemeral_events_polylog(data);
+	return rooms_ephemeral_events_polylog(data);
 }
 
-void
+bool
 ircd::m::sync::rooms_ephemeral_events_polylog(data &data)
 {
 	json::stack::array array
@@ -50,10 +50,22 @@ ircd::m::sync::rooms_ephemeral_events_polylog(data &data)
 		data.out, "events"
 	};
 
-	m::sync::for_each("rooms.ephemeral", [&]
+	bool ret{false};
+	m::sync::for_each("rooms.ephemeral", [&data, &ret]
 	(item &item)
 	{
-		item.polylog(data);
+		json::stack::checkpoint checkpoint
+		{
+			data.out
+		};
+
+		if(item.polylog(data))
+			ret = true;
+		else
+			checkpoint.rollback();
+
 		return true;
 	});
+
+	return ret;
 }

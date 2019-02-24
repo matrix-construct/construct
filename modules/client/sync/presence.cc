@@ -16,11 +16,11 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static void presence_polylog_events(data &);
-	static void presence_polylog(data &);
+	static bool presence_polylog_events(data &);
+	static bool presence_polylog(data &);
 
-	static void presence_linear_events(data &);
-	static void presence_linear(data &);
+	static bool presence_linear_events(data &);
+	static bool presence_linear(data &);
 
 	extern item presence;
 }
@@ -33,11 +33,9 @@ ircd::m::sync::presence
 	presence_linear,
 };
 
-void
+bool
 ircd::m::sync::presence_linear(data &data)
 {
-	return;
-
 	assert(data.event);
 	const m::event &event
 	{
@@ -45,10 +43,10 @@ ircd::m::sync::presence_linear(data &data)
 	};
 
 	if(json::get<"type"_>(event) != "ircd.presence")
-		return;
+		return false;
 
 	if(json::get<"sender"_>(event) != m::me.user_id)
-		return;
+		return false;
 
 	// sender
 	json::stack::member
@@ -68,21 +66,16 @@ ircd::m::sync::presence_linear(data &data)
 		data.out, "content", at<"content"_>(event)
 	};
 
-	return;
+	return true;
 }
 
-void
+bool
 ircd::m::sync::presence_polylog(data &data)
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
-	presence_polylog_events(data);
+	return presence_polylog_events(data);
 }
 
-void
+bool
 ircd::m::sync::presence_polylog_events(data &data)
 {
 	json::stack::array array
@@ -90,16 +83,17 @@ ircd::m::sync::presence_polylog_events(data &data)
 		data.out, "events"
 	};
 
+	bool ret{false};
 	ctx::mutex mutex;
-	const auto append_event{[&data, &array, &mutex]
+	const auto append_event{[&data, &array, &mutex, &ret]
 	(const json::object &event)
 	{
 		// Lock the json::stack for the append operations. This mutex will only be
 		// contended during a json::stack flush to the client; not during database
 		// queries leading to this.
 		const std::lock_guard<decltype(mutex)> l{mutex};
+		ret = true;
 
-		data.commit();
 		json::stack::object object
 		{
 			array
@@ -158,4 +152,6 @@ ircd::m::sync::presence_polylog_events(data &data)
 		q[pos] = strlcpy(buf->at(pos), user.user_id);
 		parallel();
 	});
+
+	return ret;
 }

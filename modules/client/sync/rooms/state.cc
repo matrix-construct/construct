@@ -10,11 +10,11 @@
 
 namespace ircd::m::sync
 {
-	static void room_state_polylog_events(data &);
-	static void room_state_polylog(data &);
+	static bool room_state_polylog_events(data &);
+	static bool room_state_polylog(data &);
 
-	static void room_state_linear_events(data &);
-	static void room_state_linear(data &);
+	static bool room_state_linear_events(data &);
+	static bool room_state_linear(data &);
 
 	extern const event::keys::include _default_keys;
 	extern event::fetch::opts _default_fopts;
@@ -59,7 +59,7 @@ ircd::m::sync::_default_fopts
 	_default_keys
 };
 
-void
+bool
 ircd::m::sync::room_state_linear(data &data)
 {
 	assert(data.event);
@@ -67,22 +67,25 @@ ircd::m::sync::room_state_linear(data &data)
 	assert(json::get<"room_id"_>(*data.event));
 
 	if(!json::get<"state_key"_>(*data.event))
-		return;
+		return false;
 
 	if(!data.room->membership(data.user, data.membership))
-		return;
+		return false;
 
 	//data.array->append(*data.event);
+	return false;
 }
 
-void
+bool
 ircd::m::sync::room_state_polylog(data &data)
 {
-	if(apropos(data, data.room_head))
-		room_state_polylog_events(data);
+	if(!apropos(data, data.room_head))
+		return false;
+
+	return room_state_polylog_events(data);
 }
 
-void
+bool
 ircd::m::sync::room_state_polylog_events(data &data)
 {
 	const m::room &room{*data.room};
@@ -92,8 +95,9 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		data.out, "events"
 	};
 
+	bool ret{false};
 	ctx::mutex mutex;
-	const event::closure_idx each_idx{[&data, &array, &mutex]
+	const event::closure_idx each_idx{[&data, &array, &mutex, &ret]
 	(const m::event::idx event_idx)
 	{
 		const event::fetch event
@@ -106,8 +110,8 @@ ircd::m::sync::room_state_polylog_events(data &data)
 			return;
 
 		const std::lock_guard<decltype(mutex)> lock{mutex};
-		data.commit();
 		array.append(event);
+		ret = true;
 	}};
 
 	//TODO: conf
@@ -123,4 +127,6 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		if(apropos(data, event_idx))
 			parallel(event_idx);
 	});
+
+	return ret;
 }

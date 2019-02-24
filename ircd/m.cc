@@ -531,13 +531,12 @@ ircd::m::sync::loghead(const data &data)
 
 	return fmt::sprintf
 	{
-		headbuf, "%s %s %lu:%lu %s commit:%b chunk:%zu %s in %s",
+		headbuf, "%s %s %lu:%lu %s chunk:%zu %s in %s",
 		remstr,
 		string_view{data.user.user_id},
 		data.range.first,
 		data.range.second,
 		ircd::pretty(iecbuf[0], iec(flush_bytes + size(data.out.completed()))),
-		data.committed,
 		flush_count,
 		ircd::pretty(iecbuf[1], iec(flush_bytes)),
 		tmstr
@@ -609,14 +608,6 @@ noexcept
 {
 }
 
-bool
-ircd::m::sync::data::commit()
-{
-	const auto ret{committed};
-	committed = true;
-	return ret;
-}
-
 //
 // item
 //
@@ -680,12 +671,12 @@ noexcept
 	};
 }
 
-void
+bool
 ircd::m::sync::item::polylog(data &data)
 try
 {
 	if(!enable)
-		return;
+		return false;
 
 	#ifdef RB_DEBUG
 	sync::stats stats
@@ -699,7 +690,10 @@ try
 		stats.timer = {};
 	#endif
 
-	_polylog(data);
+	const bool ret
+	{
+		_polylog(data)
+	};
 
 	#ifdef RB_DEBUG
 	if(data.stats && (stats_info || stats_debug))
@@ -708,13 +702,16 @@ try
 		thread_local char tmbuf[32];
 		log::debug
 		{
-			log, "polylog %s '%s' %s",
+			log, "polylog %s commit:%b '%s' %s",
 			loghead(data),
+			ret,
 			name(),
 			ircd::pretty(tmbuf, stats.timer.at<microseconds>(), true)
 		};
 	}
 	#endif
+
+	return ret;
 }
 catch(const std::bad_function_call &e)
 {
@@ -725,6 +722,8 @@ catch(const std::bad_function_call &e)
 		name(),
 		e.what()
 	};
+
+	return false;
 }
 catch(const m::error &e)
 {
@@ -736,6 +735,8 @@ catch(const m::error &e)
 		e.what(),
 		e.content
 	};
+
+	return false;
 }
 catch(const std::exception &e)
 {
@@ -750,11 +751,11 @@ catch(const std::exception &e)
 	throw;
 }
 
-void
+bool
 ircd::m::sync::item::linear(data &data)
 try
 {
-	_linear(data);
+	return _linear(data);
 }
 catch(const std::bad_function_call &e)
 {
@@ -766,9 +767,11 @@ catch(const std::bad_function_call &e)
 		name(),
 		e.what()
 	};
+
+	return false;
 }
 
-void
+bool
 ircd::m::sync::item::poll(data &data,
                           const m::event &event)
 try
@@ -778,7 +781,7 @@ try
 		data.event, &event
 	};
 
-	_linear(data);
+	return _linear(data);
 }
 catch(const std::bad_function_call &e)
 {
@@ -790,6 +793,8 @@ catch(const std::bad_function_call &e)
 		name(),
 		e.what()
 	};
+
+	return false;
 }
 
 ircd::string_view

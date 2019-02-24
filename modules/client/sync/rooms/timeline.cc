@@ -16,11 +16,11 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &);
-	static void room_timeline_polylog(data &);
+	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &, bool &);
+	static bool room_timeline_polylog(data &);
 
 	static event::id::buf _room_timeline_linear_events(data &, const m::room &, bool &);
-	static void room_timeline_linear(data &);
+	static bool room_timeline_linear(data &);
 
 	extern const event::keys::include default_keys;
 	extern item room_timeline;
@@ -49,11 +49,9 @@ ircd::m::sync::default_keys
 	"type",
 };
 
-void
+bool
 ircd::m::sync::room_timeline_linear(data &data)
 {
-	return;
-
 	json::stack::object object
 	{
 		data.out
@@ -80,7 +78,7 @@ ircd::m::sync::room_timeline_linear(data &data)
 		object, "limited", json::value{limited}
 	};
 
-	return;
+	return false;
 }
 
 ircd::m::event::id::buf
@@ -96,18 +94,18 @@ ircd::m::sync::_room_timeline_linear_events(data &data,
 	return {};
 }
 
-void
+bool
 ircd::m::sync::room_timeline_polylog(data &data)
 {
 	if(!apropos(data, data.room_head))
-		return;
+		return false;
 
 	// events
 	assert(data.room);
-	bool limited{false};
+	bool limited{false}, ret{false};
 	m::event::id::buf prev
 	{
-		_room_timeline_polylog_events(data, *data.room, limited)
+		_room_timeline_polylog_events(data, *data.room, limited, ret)
 	};
 
 	// prev_batch
@@ -121,12 +119,15 @@ ircd::m::sync::room_timeline_polylog(data &data)
 	{
 		data.out, "limited", json::value{limited}
 	};
+
+	return ret;
 }
 
 ircd::m::event::id::buf
 ircd::m::sync::_room_timeline_polylog_events(data &data,
                                              const m::room &room,
-                                             bool &limited)
+                                             bool &limited,
+                                             bool &ret)
 {
 	static const event::fetch::opts fopts
 	{
@@ -159,23 +160,12 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	}
 
 	limited = i >= 10;
-	if(i > 0)
-		data.commit();
-
 	if(i > 0 && !it)
 		it.seek(event_id);
-
-	if(i > 0 && it)
-	{
-		data.commit();
-		//const m::event &event{*it};
-		//data.state_at = at<"depth"_>(event);
-	}
 
 	if(i > 0)
 		for(; it && i > -1; ++it, --i)
 		{
-			data.commit();
 			json::stack::object object
 			{
 				array
@@ -183,6 +173,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 
 			const m::event &event(*it);
 			object.append(event);
+			ret = true;
 
 			json::stack::object unsigned_
 			{

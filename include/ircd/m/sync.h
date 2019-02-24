@@ -42,7 +42,7 @@ namespace ircd::m::sync
 struct ircd::m::sync::item
 :instance_multimap<std::string, item, std::less<>>
 {
-	using handle = std::function<void (data &)>;
+	using handle = std::function<bool (data &)>;
 
 	std::string conf_name[2];
 	conf::item<bool> enable;
@@ -54,9 +54,9 @@ struct ircd::m::sync::item
 	string_view name() const;
 	string_view member_name() const;
 
-	void poll(data &, const m::event &);
-	void linear(data &);
-	void polylog(data &);
+	bool poll(data &, const m::event &);
+	bool linear(data &);
+	bool polylog(data &);
 
 	item(std::string name,
 	     handle polylog    = {},
@@ -90,8 +90,6 @@ struct ircd::m::sync::data
 
 	/// The json::stack master object
 	json::stack out;
-	bool committed {false};
-	bool commit();
 
 	// apropos contextual
 	const m::event *event {nullptr};

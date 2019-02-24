@@ -16,12 +16,12 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static void _rooms_polylog_room(data &, const m::room &);
-	static void _rooms_polylog(data &, const string_view &membership);
-	static void rooms_polylog(data &);
+	static bool _rooms_polylog_room(data &, const m::room &);
+	static bool _rooms_polylog(data &, const string_view &membership);
+	static bool rooms_polylog(data &);
 
-	static void _rooms_linear(data &, const string_view &membership);
-	static void rooms_linear(data &);
+	static bool _rooms_linear(data &, const string_view &membership);
+	static bool rooms_linear(data &);
 
 	extern item rooms;
 }
@@ -34,17 +34,33 @@ ircd::m::sync::rooms
 	rooms_linear
 };
 
-void
+bool
 ircd::m::sync::rooms_linear(data &data)
 {
-	json::stack::object object{data.out};
-	_rooms_linear(data, "invite");
-	_rooms_linear(data, "join");
-	_rooms_linear(data, "leave");
-	_rooms_linear(data, "ban");
+	assert(data.event);
+	const auto &event{*data.event};
+	if(!json::get<"room_id"_>(event))
+		return false;
+
+	const m::room room
+	{
+		json::get<"room_id"_>(event)
+	};
+
+	const scope_restore<decltype(data.room)> theirs
+	{
+		data.room, &room
+	};
+
+	bool ret{false};
+	ret |= _rooms_linear(data, "invite");
+	ret |= _rooms_linear(data, "join");
+	ret |= _rooms_linear(data, "leave");
+	ret |= _rooms_linear(data, "ban");
+	return ret;
 }
 
-void
+bool
 ircd::m::sync::_rooms_linear(data &data,
                              const string_view &membership)
 {
@@ -53,30 +69,34 @@ ircd::m::sync::_rooms_linear(data &data,
 		data.membership, membership
 	};
 
-	m::sync::for_each("rooms", [&](item &item)
+	bool ret{false};
+	m::sync::for_each("rooms", [&data, &ret]
+	(item &item)
 	{
-		json::stack::member member
+		json::stack::object object
 		{
 			data.out, item.member_name()
 		};
 
-		item.linear(data);
+		ret |= item.linear(data);
 		return true;
 	});
+
+	return ret;
 }
 
-void
+bool
 ircd::m::sync::rooms_polylog(data &data)
 {
-	json::stack::object object{data.out};
-	_rooms_polylog(data, "invite");
-	_rooms_polylog(data, "join");
-	_rooms_polylog(data, "leave");
-	_rooms_polylog(data, "ban");
-	return;
+	bool ret{false};
+	ret |= _rooms_polylog(data, "invite");
+	ret |= _rooms_polylog(data, "join");
+	ret |= _rooms_polylog(data, "leave");
+	ret |= _rooms_polylog(data, "ban");
+	return ret;
 }
 
-void
+bool
 ircd::m::sync::_rooms_polylog(data &data,
                               const string_view &membership)
 {
@@ -85,12 +105,18 @@ ircd::m::sync::_rooms_polylog(data &data,
 		data.membership, membership
 	};
 
+	json::stack::checkpoint checkpoint
+	{
+		data.out
+	};
+
 	json::stack::object object
 	{
 		data.out, membership
 	};
 
-	data.user_rooms.for_each(membership, [&data]
+	bool ret{false};
+	data.user_rooms.for_each(membership, [&data, &ret]
 	(const m::room &room, const string_view &membership_)
 	{
 		#if defined(RB_DEBUG) && 0
@@ -105,7 +131,7 @@ ircd::m::sync::_rooms_polylog(data &data,
 			stats.timer = timer{};
 		#endif
 
-		_rooms_polylog_room(data, room);
+		ret |= _rooms_polylog_room(data, room);
 
 		#if defined(RB_DEBUG) && 0
 		thread_local char tmbuf[32];
@@ -118,15 +144,25 @@ ircd::m::sync::_rooms_polylog(data &data,
 		};
 		#endif
 	});
+
+	if(!ret)
+		checkpoint.rollback();
+
+	return ret;
 }
 
-void
+bool
 ircd::m::sync::_rooms_polylog_room(data &data,
                                    const m::room &room)
 {
 	const scope_restore<decltype(data.room)> theirs
 	{
 		data.room, &room
+	};
+
+	json::stack::checkpoint checkpoint
+	{
+		data.out
 	};
 
 	json::stack::object object
@@ -144,15 +180,30 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 		data.room_head, room_head
 	};
 
-	m::sync::for_each("rooms", [&data]
+	bool ret{false};
+	m::sync::for_each("rooms", [&data, &ret]
 	(item &item)
 	{
+		json::stack::checkpoint checkpoint
+		{
+			data.out
+		};
+
 		json::stack::object object
 		{
 			data.out, item.member_name()
 		};
 
-		item.polylog(data);
+		if(item.polylog(data))
+			ret = true;
+		else
+			checkpoint.rollback();
+
 		return true;
 	});
+
+	if(!ret)
+		checkpoint.rollback();
+
+	return ret;
 }

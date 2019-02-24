@@ -17,8 +17,8 @@ IRCD_MODULE
 namespace ircd::m::sync
 {
 	static bool account_data_(data &, const m::event &, const m::event::idx &);
-	static void account_data_polylog(data &);
-	static void account_data_linear(data &);
+	static bool account_data_polylog(data &);
+	static bool account_data_linear(data &);
 
 	extern item account_data;
 }
@@ -31,20 +31,15 @@ ircd::m::sync::account_data
 	account_data_linear
 };
 
-void
+bool
 ircd::m::sync::account_data_linear(data &data)
 {
-
+	return false;
 }
 
-void
+bool
 ircd::m::sync::account_data_polylog(data &data)
 {
-	json::stack::object object
-	{
-		data.out
-	};
-
 	json::stack::array array
 	{
 		data.out, "events"
@@ -60,12 +55,14 @@ ircd::m::sync::account_data_polylog(data &data)
 		data.user_room, &fopts
 	};
 
-	state.for_each("ircd.account_data", [&data, &array]
+	bool ret{false};
+	state.for_each("ircd.account_data", [&data, &array, &ret]
 	(const m::event &event)
 	{
-		if(account_data_(data, event, index(event)))
-			data.commit();
+		ret |= account_data_(data, event, index(event));
 	});
+
+	return ret;
 }
 
 bool
@@ -81,8 +78,6 @@ ircd::m::sync::account_data_(data &data,
 
 	if(json::get<"room_id"_>(event) != data.user_room.room_id)
 		return false;
-
-	data.commit();
 
 	// Each account_data event is an object in the events array
 	json::stack::object object

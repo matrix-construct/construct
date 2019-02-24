@@ -160,7 +160,17 @@ ircd::m::sync::handle_get(client &client,
 void
 ircd::m::sync::empty_response(data &data)
 {
-	data.commit();
+	// Empty objects added to output otherwise Riot b0rks.
+	json::stack::object
+	{
+		data.out, "rooms"
+	};
+
+	json::stack::object
+	{
+		data.out, "presence"
+	};
+
 	json::stack::member
 	{
 		data.out, "next_batch", json::value
@@ -168,10 +178,6 @@ ircd::m::sync::empty_response(data &data)
 			lex_cast(data.range.second), json::STRING
 		}
 	};
-
-	// Empty objects added to output otherwise Riot b0rks.
-	json::stack::object{data.out, "rooms"};
-	json::stack::object{data.out, "presence"};
 }
 
 ircd::const_buffer
@@ -179,12 +185,6 @@ ircd::m::sync::flush(data &data,
                      resource::response::chunked &response,
                      const const_buffer &buffer)
 {
-	if(!data.committed)
-		return const_buffer
-		{
-			buffer::data(buffer), 0UL
-		};
-
 	const size_t wrote
 	{
 		response.write(buffer)
@@ -210,32 +210,53 @@ bool
 ircd::m::sync::polylog::handle(data &data)
 try
 {
-	m::sync::for_each(string_view{}, [&data]
+	json::stack::checkpoint checkpoint
+	{
+		data.out
+	};
+
+	bool ret{false};
+	m::sync::for_each(string_view{}, [&data, &ret]
 	(item &item)
 	{
-		json::stack::member member
+		json::stack::checkpoint checkpoint
+		{
+			data.out
+		};
+
+		json::stack::object object
 		{
 			data.out, item.member_name()
 		};
 
-		item.polylog(data);
+		if(item.polylog(data))
+			ret = true;
+		else
+			checkpoint.rollback();
+
 		return true;
 	});
 
-	json::stack::member
-	{
-		data.out, "next_batch", json::value
+	if(ret)
+		json::stack::member
 		{
-			lex_cast(data.range.second), json::STRING
-		}
-	};
+			data.out, "next_batch", json::value
+			{
+				lex_cast(data.range.second), json::STRING
+			}
+		};
+
+	if(!ret)
+		checkpoint.rollback();
 
 	if(stats_info) log::info
 	{
-		log, "polylog %s complete", loghead(data)
+		log, "polylog %s commit:%b complete",
+		loghead(data),
+		ret
 	};
 
-	return data.committed;
+	return ret;
 }
 catch(const std::exception &e)
 {
@@ -257,7 +278,8 @@ bool
 ircd::m::sync::linear::handle(data &data)
 try
 {
-	m::events::for_each(data.range, [&data]
+	bool ret{false};
+	m::events::for_each(data.range, [&data, &ret]
 	(const m::event::idx &event_idx, const m::event &event)
 	{
 		const scope_restore<decltype(data.event)> theirs
@@ -265,7 +287,7 @@ try
 			data.event, &event
 		};
 
-		m::sync::for_each(string_view{}, [&data]
+		m::sync::for_each(string_view{}, [&data, &ret]
 		(item &item)
 		{
 			json::stack::member member
@@ -273,7 +295,7 @@ try
 				data.out, item.member_name()
 			};
 
-			item.linear(data);
+			ret |= item.linear(data);
 			return true;
 		});
 
@@ -293,7 +315,7 @@ try
 		log, "linear %s complete", loghead(data)
 	};
 
-	return data.committed;
+	return ret;
 }
 catch(const std::exception &e)
 {
