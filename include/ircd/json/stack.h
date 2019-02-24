@@ -47,11 +47,13 @@ struct ircd::json::stack
 	struct member;
 	struct chase;
 	struct const_chase;
+	struct checkpoint;
 	using flush_callback = std::function<const_buffer (const const_buffer &)>;
 
 	window_buffer buf;
 	flush_callback flusher;
 	std::exception_ptr eptr;
+	checkpoint *cp {nullptr};
 	size_t hiwat;                      ///< autoflush watermark
 	size_t lowat;                      ///< flush(false) call min watermark
 
@@ -229,6 +231,25 @@ struct ircd::json::stack::const_chase
 
 	const_chase(const stack &s, const bool &prechase = false);
 	const_chase() = default;
+};
+
+struct ircd::json::stack::checkpoint
+{
+	stack *s {nullptr};
+	checkpoint *pc {nullptr};
+	size_t point {0};
+	size_t vc {0};
+	bool committed {true};
+
+  public:
+	bool committing() const;
+	bool recommit();
+	bool rollback();
+
+	checkpoint(stack &s);
+	checkpoint(checkpoint &&) = delete;
+	checkpoint(const checkpoint &) = delete;
+	~checkpoint() noexcept;
 };
 
 template<class... T>

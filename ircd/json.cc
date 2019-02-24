@@ -435,11 +435,13 @@ noexcept
 :buf{std::move(other.buf)}
 ,flusher{std::move(other.flusher)}
 ,eptr{std::move(other.eptr)}
+,cp{std::move(other.cp)}
 ,hiwat{std::move(other.hiwat)}
 ,lowat{std::move(other.lowat)}
 ,co{std::move(other.co)}
 ,ca{std::move(other.ca)}
 {
+	other.cp = nullptr;
 	other.co = nullptr;
 	other.ca = nullptr;
 }
@@ -538,6 +540,12 @@ noexcept try
 
 	if(!force && buf.consumed() < lowat)
 		return false;
+
+	if(!force && cp)
+		return false;
+
+	if(cp)
+		cp = nullptr;
 
 	// The user returns the portion of the buffer they were able to flush
 	// rather than forcing them to wait on their sink to flush the whole
@@ -1159,6 +1167,92 @@ void
 ircd::json::stack::member::_post_append()
 {
 	vc |= true;
+}
+
+//
+// stack::checkpoint
+//
+
+ircd::json::stack::checkpoint::checkpoint(stack &s)
+:s{&s}
+,pc{s.cp}
+,point
+{
+	s.buf.consumed()
+}
+,vc{[&s]
+{
+	const chase top
+	{
+		s, true
+	};
+
+	return
+		top.o?
+			top.o->mc:
+		top.a?
+			top.a->vc:
+		top.m?
+			top.m->vc:
+		0;
+}()}
+{
+	s.cp = this;
+}
+
+ircd::json::stack::checkpoint::~checkpoint()
+noexcept
+{
+	if(!s)
+		return;
+
+	if(!s->cp)
+		return;
+
+	if(std::uncaught_exceptions())
+		rollback();
+
+	if(!committing())
+	{
+		assert(point <= s->buf.consumed());
+		s->buf.rewind(s->buf.consumed() - point);
+
+		const chase top
+		{
+			*s, true
+		};
+
+		if(top.o)
+			top.o->mc = vc;
+		else if(top.a)
+			top.a->vc = vc;
+		else if(top.m)
+			top.m->vc = vc;
+	}
+
+	assert(s->cp == this);
+	s->cp = pc;
+}
+
+bool
+ircd::json::stack::checkpoint::rollback()
+{
+	committed = false;
+	return true;
+}
+
+bool
+ircd::json::stack::checkpoint::recommit()
+{
+	committed = true;
+	return true;
+}
+
+bool
+ircd::json::stack::checkpoint::committing()
+const
+{
+	return committed;
 }
 
 //
