@@ -18,6 +18,9 @@ content_type(const mutable_buffer &out, const string_view &filename, const strin
 resource::response
 get_root(client &client, const resource::request &request);
 
+resource::response
+non_get_root(client &client, const resource::request &request);
+
 static void
 init_files();
 
@@ -42,6 +45,30 @@ resource::method
 root_get
 {
 	root_resource, "GET", get_root
+};
+
+resource::method
+root_put
+{
+	root_resource, "PUT", non_get_root
+};
+
+resource::method
+root_post
+{
+	root_resource, "POST", non_get_root
+};
+
+resource::method
+root_options
+{
+	root_resource, "OPTIONS", non_get_root
+};
+
+resource::method
+root_delete
+{
+	root_resource, "DELETE", non_get_root
 };
 
 conf::item<std::string>
@@ -77,6 +104,38 @@ init_files()
 		const auto name(lstrip(file, path));
 		files.emplace(std::string(name), file);
 	}
+}
+
+/// This handler exists because the root resource on path "/" catches
+/// everything rejected by all the other registered resources; after that
+/// happens if the method was not GET the client always gets a 405 even if
+/// the path they specified truly does not exist. This handler allows us to
+/// give them a 404 first instead by checking the path's existence; then a 405
+/// if it does exist and they did not use GET.
+resource::response
+non_get_root(client &client,
+             const resource::request &request)
+{
+	const auto &path
+	{
+		!request.head.path?
+			"index.html":
+		request.head.path == "/"?
+			"index.html":
+		request.head.path
+	};
+
+	const http::code code
+	{
+		files.count(lstrip(path, '/'))?
+			http::METHOD_NOT_ALLOWED:
+			http::NOT_FOUND
+	};
+
+	return resource::response
+	{
+		client, code
+	};
 }
 
 resource::response
