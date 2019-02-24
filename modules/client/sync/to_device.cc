@@ -55,7 +55,7 @@ ircd::m::sync::to_device_polylog(data &data)
 	};
 
 	bool ret{false};
-	for(; it; ++it)
+	for(it.seek(data.range.first); it; --it)
 	{
 		const auto &event_idx(it.event_idx());
 		if(!apropos(data, event_idx))
