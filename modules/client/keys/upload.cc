@@ -40,6 +40,7 @@ upload_resource__unstable
 static void
 upload_device_keys(client &,
                    const resource::request &,
+                   const m::device::id &,
                    const m::device_keys &);
 
 resource::response
@@ -56,34 +57,70 @@ post__keys_upload(client &client,
 		request["device_keys"]
 	};
 
+	const m::device::id::buf device_id
+	{
+		m::user::get_device_from_access_token(request.access_token)
+	};
+
 	if(!empty(device_keys))
-		upload_device_keys(client, request, device_keys);
+		upload_device_keys(client, request, device_id, device_keys);
 
 	const json::object &one_time_keys
 	{
 		request["one_time_keys"]
 	};
 
-	const int64_t curve25519_count{0};
-	const int64_t signed_curve25519_count{0};
-	const json::members one_time_key_counts
+	m::device::set(request.user_id, device_id, "one_time_keys", one_time_keys);
+
+	size_t buf_est{64};
+	std::map<string_view, long, std::less<>> counts;
+	for(const auto &one_time_key : one_time_keys)
 	{
-		{ "curve25519",         curve25519_count        },
-		{ "signed_curve25519",  signed_curve25519_count },
+		const auto name(split(one_time_key.first, ':'));
+		const string_view &data(one_time_key.second);
+		const string_view &algorithm(name.first);
+		auto it(counts.lower_bound(algorithm));
+		if(it == end(counts) || it->first != algorithm)
+		{
+			it = counts.emplace_hint(it, algorithm, 0L);
+			buf_est += size(algorithm) + 32;
+		}
+
+		auto &count(it->second);
+		// 0 or riot infinite-loops
+		//++count;
+	}
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		buf_est * 2
 	};
+
+	json::stack out{buf};
+	{
+		json::stack::object top{out};
+		json::stack::object one_time_key_counts
+		{
+			top, "one_time_key_counts"
+		};
+
+		for(const auto &[algorithm, count] : counts)
+			json::stack::member
+			{
+				one_time_key_counts, algorithm, json::value{count}
+			};
+	}
 
 	return resource::response
 	{
-		client, json::members
-		{
-			{ "one_time_key_counts", one_time_key_counts },
-		}
+		client, json::object(out.completed())
 	};
 }
 
 void
 upload_device_keys(client &client,
                    const resource::request &request,
+                   const m::device::id &device_id,
                    const m::device_keys &device_keys)
 {
 	if(at<"user_id"_>(device_keys) != request.user_id)
@@ -92,11 +129,6 @@ upload_device_keys(client &client,
 			"client 14.11.5.2.1: device_keys.user_id: "
 			"Must match the user_id used when logging in."
 		};
-
-	const m::device::id::buf device_id
-	{
-		m::user::get_device_from_access_token(request.access_token)
-	};
 
 	if(at<"device_id"_>(device_keys) != device_id)
 		throw m::FORBIDDEN
