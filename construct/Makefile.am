@@ -23,7 +23,6 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = \
 	-dlopen self \
 	-Wl,-fuse-ld=gold \
-	-Wl,--gdb-index \
 	-Wl,--warn-execstack \
 	-Wl,--warn-common \
 	-Wl,--detect-odr-violations \
