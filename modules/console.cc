@@ -3159,7 +3159,7 @@ try
 {
 	const params param{line, " ",
 	{
-		"dbname", "column"
+		"dbname", "column", "key"
 	}};
 
 	auto &database
@@ -3167,7 +3167,7 @@ try
 		db::database::get(param.at(0))
 	};
 
-	if(!param[1] || param[1] == "*")
+	if(!param["column"] || param["column"] == "*")
 	{
 		const auto bytes
 		{
@@ -3175,6 +3175,61 @@ try
 		};
 
 		out << bytes << std::endl;
+		return true;
+	}
+
+	if(param["key"])
+	{
+		db::column column
+		{
+			database, param["column"]
+		};
+
+		const bool is_integer_key
+		{
+			try_lex_cast<ulong>(param["key"])
+		};
+
+		const uint64_t integer_key[2]
+		{
+			is_integer_key?
+				lex_cast<ulong>(param["key"]):
+				0UL,
+
+			integer_key[0] + 1
+		};
+
+		const string_view key[2]
+		{
+			is_integer_key?
+				byte_view<string_view>{integer_key[0]}:
+				param["key"],
+
+			is_integer_key?
+				byte_view<string_view>{integer_key[1]}:
+				param["key"]
+		};
+
+		const auto value
+		{
+			db::bytes_value(column, key[0])
+		};
+
+		const auto value_compressed
+		{
+			db::bytes(column, {key[0], key[1]})
+		};
+
+		out << param["column"]
+		    << (is_integer_key? "[(binary)" : "[") << param["key"] << "] "
+		    << ": " << value << " (uncompressed value)"
+		    << std::endl;
+
+		out << param["column"]
+		    << (is_integer_key? "[(binary)" : "[") << param["key"] << "] "
+		    << ": " << value_compressed
+		    << std::endl;
+
 		return true;
 	}
 
@@ -3196,15 +3251,15 @@ try
 		    << std::endl;
 	}};
 
-	if(param[1] != "**")
+	if(param["column"] == "**")
 	{
-		query(param.at(1));
+		for(const auto &column : database.columns)
+			query(name(*column));
+
 		return true;
 	}
 
-	for(const auto &column : database.columns)
-		query(name(*column));
-
+	query(param["column"]);
 	return true;
 }
 catch(const std::out_of_range &e)

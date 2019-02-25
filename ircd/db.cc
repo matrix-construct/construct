@@ -5520,6 +5520,38 @@ ircd::db::write(column &column,
 	};
 }
 
+size_t
+ircd::db::bytes_value(column &column,
+                      const string_view &key,
+                      const gopts &gopts)
+{
+	size_t ret{0};
+	column(key, std::nothrow, gopts, [&ret]
+	(const string_view &value)
+	{
+		ret = value.size();
+	});
+
+	return ret;
+}
+
+size_t
+ircd::db::bytes(column &column,
+                const std::pair<string_view, string_view> &key,
+                const gopts &gopts)
+{
+	database &d(column);
+	database::column &c(column);
+	const rocksdb::Range range[1]
+	{
+		{ slice(key.first), slice(key.second) }
+	};
+
+	uint64_t ret[1] {0};
+	d.d->GetApproximateSizes(c, range, 1, ret);
+	return ret[0];
+}
+
 void
 ircd::db::prefetch(column &column,
                    const string_view &key,

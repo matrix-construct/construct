@@ -44,6 +44,10 @@ namespace ircd::db
 	bool cached(column &, const string_view &key, const gopts & = {});
 	void prefetch(column &, const string_view &key, const gopts & = {});
 
+	// [GET] Query space usage
+	size_t bytes(column &, const std::pair<string_view, string_view> &range, const gopts & = {});
+	size_t bytes_value(column &, const string_view &key, const gopts & = {});
+
 	// [GET] Convenience functions to copy data into your buffer.
 	string_view read(column &, const string_view &key, const mutable_buffer &, const gopts & = {});
 	std::string read(column &, const string_view &key, const gopts & = {});
