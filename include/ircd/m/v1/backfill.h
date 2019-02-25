@@ -27,7 +27,6 @@ struct ircd::m::v1::backfill
 	}
 
 	backfill(const room::id &, const mutable_buffer &, opts);
-	backfill(const room::id &, const mutable_buffer &);
 	backfill() = default;
 };
 

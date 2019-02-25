@@ -231,7 +231,10 @@ room_alias_fetch(const mutable_buffer &out,
 {
 	m::v1::query::directory federation_request
 	{
-		alias, out
+		alias, out, m::v1::query::opts
+		{
+			alias.host()
+		}
 	};
 
 	if(!federation_request.wait(seconds(room_alias_fetch_timeout), std::nothrow))

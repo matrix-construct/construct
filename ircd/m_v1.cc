@@ -143,15 +143,6 @@ ircd::m::v1::send::send(const string_view &txnid,
 //
 
 ircd::m::v1::public_rooms::public_rooms(const net::hostport &remote,
-                                        const mutable_buffer &buf)
-:public_rooms
-{
-	remote, buf, opts{}
-}
-{
-}
-
-ircd::m::v1::public_rooms::public_rooms(const net::hostport &remote,
                                         const mutable_buffer &buf,
                                         opts opts)
 :server::request{[&]
@@ -324,15 +315,6 @@ ircd::m::v1::frontfill::make_content(const mutable_buffer &buf,
 //
 
 ircd::m::v1::backfill::backfill(const room::id &room_id,
-                                const mutable_buffer &buf)
-:backfill
-{
-	room_id, buf, opts{}
-}
-{
-}
-
-ircd::m::v1::backfill::backfill(const room::id &room_id,
                                 const mutable_buffer &buf,
                                 opts opts)
 :server::request{[&]
@@ -394,15 +376,6 @@ ircd::m::v1::backfill::backfill(const room::id &room_id,
 //
 // v1/state.h
 //
-
-ircd::m::v1::state::state(const room::id &room_id,
-                          const mutable_buffer &buf)
-:state
-{
-	room_id, buf, opts{}
-}
-{
-}
 
 ircd::m::v1::state::state(const room::id &room_id,
                           const mutable_buffer &buf,
@@ -529,16 +502,6 @@ ircd::m::v1::query_auth::query_auth(const m::room::id &room_id,
 
 ircd::m::v1::event_auth::event_auth(const m::room::id &room_id,
                                     const m::event::id &event_id,
-                                    const mutable_buffer &buf)
-:event_auth
-{
-	room_id, event_id, buf, opts{}
-}
-{
-}
-
-ircd::m::v1::event_auth::event_auth(const m::room::id &room_id,
-                                    const m::event::id &event_id,
                                     const mutable_buffer &buf,
                                     opts opts)
 :server::request{[&]
@@ -592,15 +555,6 @@ ircd::m::v1::event_auth::event_auth(const m::room::id &room_id,
 //
 // v1/event.h
 //
-
-ircd::m::v1::event::event(const m::event::id &event_id,
-                          const mutable_buffer &buf)
-:event
-{
-	event_id, buf, opts{}
-}
-{
-}
 
 ircd::m::v1::event::event(const m::event::id &event_id,
                           const mutable_buffer &buf,
@@ -767,16 +721,6 @@ ircd::m::v1::send_join::send_join(const room::id &room_id,
 //
 // v1/make_join.h
 //
-
-ircd::m::v1::make_join::make_join(const room::id &room_id,
-                                  const id::user &user_id,
-                                  const mutable_buffer &buf)
-:make_join
-{
-	room_id, user_id, buf, opts{}
-}
-{
-}
 
 ircd::m::v1::make_join::make_join(const room::id &room_id,
                                   const id::user &user_id,
@@ -1227,15 +1171,6 @@ namespace ircd::m::v1
 }
 
 ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
-                                         const mutable_buffer &buf)
-:directory
-{
-	room_alias, buf, opts{room_alias.host()}
-}
-{
-}
-
-ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
                                          const mutable_buffer &buf,
                                          opts opts)
 :query
@@ -1252,15 +1187,6 @@ ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
 }
 
 ircd::m::v1::query::profile::profile(const id::user &user_id,
-                                     const mutable_buffer &buf)
-:profile
-{
-	user_id, buf, opts{user_id.host()}
-}
-{
-}
-
-ircd::m::v1::query::profile::profile(const id::user &user_id,
                                      const mutable_buffer &buf,
                                      opts opts)
 :query
@@ -1272,16 +1198,6 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 	},
 	buf,
 	std::move(opts)
-}
-{
-}
-
-ircd::m::v1::query::profile::profile(const id::user &user_id,
-                                     const string_view &field,
-                                     const mutable_buffer &buf)
-:profile
-{
-	user_id, field, buf, opts{user_id.host()}
 }
 {
 }

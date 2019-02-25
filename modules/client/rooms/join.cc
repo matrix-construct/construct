@@ -151,9 +151,14 @@ bootstrap(const string_view &host,
 		16_KiB
 	};
 
+	m::v1::make_join::opts mjopts
+	{
+		net::hostport{host}
+	};
+
 	m::v1::make_join request
 	{
-		room_id, user_id, buf, { host }
+		room_id, user_id, buf, std::move(mjopts)
 	};
 
 	request.wait(seconds(make_join_timeout));
@@ -271,9 +276,14 @@ bootstrap(const string_view &host,
 		16_KiB
 	};
 
+	m::v1::send_join::opts sjopts
+	{
+		net::hostport{host}
+	};
+
 	m::v1::send_join sj
 	{
-		room_id, event_id, strung, buf2, { host }
+		room_id, event_id, strung, buf2, std::move(sjopts)
 	};
 
 	sj.wait(seconds(send_join_timeout));

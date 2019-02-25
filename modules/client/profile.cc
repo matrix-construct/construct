@@ -252,7 +252,10 @@ get__profile_remote(client &client,
 
 	m::v1::query::profile federation_request
 	{
-		user.user_id, param, buf
+		user.user_id, param, buf, m::v1::query::opts
+		{
+			user.user_id.host()
+		}
 	};
 
 	//TODO: conf

@@ -27,7 +27,6 @@ struct ircd::m::v1::state
 	}
 
 	state(const room::id &, const mutable_buffer &, opts);
-	state(const room::id &, const mutable_buffer &);
 	state() = default;
 };
 

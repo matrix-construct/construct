@@ -27,7 +27,6 @@ struct ircd::m::v1::public_rooms
 	}
 
 	public_rooms(const net::hostport &, const mutable_buffer &, opts);
-	public_rooms(const net::hostport &, const mutable_buffer &);
 	public_rooms() = default;
 };
 

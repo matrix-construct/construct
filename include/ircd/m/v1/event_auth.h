@@ -28,7 +28,6 @@ struct ircd::m::v1::event_auth
 	}
 
 	event_auth(const m::room::id &, const m::event::id &, const mutable_buffer &, opts);
-	event_auth(const m::room::id &, const m::event::id &, const mutable_buffer &);
 	event_auth() = default;
 };
 
