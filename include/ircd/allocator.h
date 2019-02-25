@@ -252,7 +252,7 @@ template<class T,
 typename ircd::allocator::fixed<T, SIZE>::allocator
 ircd::allocator::fixed<T, SIZE>::operator()()
 {
-	return { *this };
+	return ircd::allocator::fixed<T, SIZE>::allocator(*this);
 }
 
 template<class T,
@@ -260,7 +260,7 @@ template<class T,
 ircd::allocator::fixed<T, SIZE>::operator
 allocator()
 {
-	return { *this };
+	return ircd::allocator::fixed<T, SIZE>::allocator(*this);
 }
 
 /// The dynamic allocator provides a pool of a fixed size known at runtime.
@@ -368,14 +368,14 @@ template<class T>
 typename ircd::allocator::dynamic<T>::allocator
 ircd::allocator::dynamic<T>::operator()()
 {
-	return { *this };
+	return ircd::allocator::dynamic<T>::allocator(*this);
 }
 
 template<class T>
 ircd::allocator::dynamic<T>::operator
 allocator()
 {
-	return { *this };
+	return ircd::allocator::dynamic<T>::allocator(*this);
 }
 
 /// Allows elements of an STL container to be manually handled by the user.
