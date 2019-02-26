@@ -137,33 +137,35 @@ ircd::m::pretty_oneline(std::ostream &s,
                         const event &event,
                         const bool &content_keys)
 {
-	const auto out{[&s]
-	(const string_view &key, auto&& val)
-	{
-		if(defined(json::value(val)))
-			s << val << " ";
-		else
-			s << "* ";
-	}};
-
-	const string_view top_keys[]
-	{
-		"origin",
-		"event_id",
-		"sender",
-	};
-
 	if(defined(json::get<"room_id"_>(event)))
 		s << json::get<"room_id"_>(event) << " ";
 	else
 		s << "* ";
 
 	if(json::get<"depth"_>(event) != json::undefined_number)
-		s << json::get<"depth"_>(event) << " :";
+		s << json::get<"depth"_>(event) << " ";
 	else
-		s << "* :";
+		s << "* ";
 
-	json::for_each(event, top_keys, out);
+	if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
+		s << json::get<"origin_server_ts"_>(event) << " ";
+	else
+		s << "* ";
+
+	if(defined(json::get<"origin"_>(event)))
+		s << ':' << json::get<"origin"_>(event) << " ";
+	else
+		s << ":* ";
+
+	if(defined(json::get<"sender"_>(event)))
+		s << json::get<"sender"_>(event) << " ";
+	else
+		s << "* ";
+
+	if(defined(json::get<"event_id"_>(event)))
+		s << json::get<"event_id"_>(event) << " ";
+	else
+		s << "* ";
 
 	const auto &auth_events{json::get<"auth_events"_>(event)};
 	s << "A:" << auth_events.count() << " ";
@@ -192,7 +194,10 @@ ircd::m::pretty_oneline(std::ostream &s,
 	}
 	s << "] ";
 
-	out("type", json::get<"type"_>(event));
+	if(defined(json::get<"type"_>(event)))
+		s << json::get<"type"_>(event) << " ";
+	else
+		s << "* ";
 
 	const auto &state_key
 	{
@@ -210,11 +215,15 @@ ircd::m::pretty_oneline(std::ostream &s,
 	{
 		json::get<"type"_>(event) == "m.room.member"?
 			m::membership(event):
-			string_view{}
+			"*"_sv
 	};
 
-	out("content.membership", membership);
-	out("redacts", json::get<"redacts"_>(event));
+	s << membership << " ";
+
+	if(defined(json::get<"redacts"_>(event)))
+		s << json::get<"redacts"_>(event) << " ";
+	else
+		s << "* ";
 
 	const json::object &contents
 	{
