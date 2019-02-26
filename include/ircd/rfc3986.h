@@ -19,7 +19,7 @@ namespace ircd::rfc3986
 	IRCD_EXCEPTION(coding_error, encoding_error)
 	IRCD_EXCEPTION(coding_error, decoding_error)
 
-	struct parser extern const parser;
+	struct parser;
 	struct encoder extern const encoder;
 	struct decoder extern const decoder;
 
@@ -34,7 +34,6 @@ namespace ircd::rfc3986
 
 	string_view encode(const mutable_buffer &, const string_view &url);
 	string_view encode(const mutable_buffer &, const json::members &);
-
 	string_view decode(const mutable_buffer &, const string_view &url);
 }
 
@@ -42,3 +41,28 @@ namespace ircd
 {
 	namespace url = rfc3986;
 }
+
+struct ircd::rfc3986::parser
+{
+	using it = const char *;
+	using unused = boost::spirit::unused_type;
+
+	template<class R = unused>
+	using rule = boost::spirit::qi::rule<it, R, unused, unused, unused>;
+
+	static const rule<uint16_t> port;
+	static const rule<> ip4_octet;
+	static const rule<> ip4_literal;
+	static const rule<> ip6_char;
+	static const rule<> ip6_h16;
+	static const rule<> ip6_piece;
+	static const rule<> ip6_ipiece;
+	static const rule<> ip6_ls32;
+	static const rule<> ip6_addr[9];
+	static const rule<> ip6_address;
+	static const rule<> ip6_literal;
+	static const rule<> hostname;
+	static const rule<> domain;
+	static const rule<> host;
+	static const rule<> remote;
+};

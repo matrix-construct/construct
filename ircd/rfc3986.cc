@@ -13,121 +13,7 @@
 namespace ircd::rfc3986
 {
 	using namespace ircd::spirit;
-
-	struct grammar;
 }
-
-struct ircd::rfc3986::grammar
-:qi::grammar<const char *, unused_type>
-{
-	using it = const char *;
-	template<class R = unused_type, class... S> using rule = qi::rule<it, R, S...>;
-
-	const rule<> port
-	{
-		ushort_
-		,"port number"
-	};
-
-	const rule<> ip4_octet
-	{
-		repeat(1,3)[char_("0-9")]
-		,"IPv4 octet"
-	};
-
-	const rule<> ip4_literal
-	{
-		repeat(3)[ip4_octet >> '.'] >> ip4_octet
-		,"IPv4 literal"
-	};
-
-	const rule<> ip6_char
-	{
-		char_("0-9a-fA-F")
-		,"IPv6 character"
-	};
-
-	const rule<> ip6_h16
-	{
-		repeat(1,4)[ip6_char]
-		,"IPv6 hexdigit"
-	};
-
-	const rule<> ip6_piece
-	{
-		ip6_h16 >> ':'
-		,"IPv6 address piece"
-	};
-
-	// This is reversed from the BNF in the RFC otherwise it requires
-	// backtracking during the repeat[]; grammars are adjusted accordingly.
-	const rule<> ip6_ipiece
-	{
-		':' >> ip6_h16
-		,"IPv6 address piece"
-	};
-
-	const rule<> ip6_ls32
-	{
-		(ip6_h16 >> ':' >> ip6_h16) | ip4_literal
-	};
-
-	/// https://tools.ietf.org/html/rfc3986 Appendix A
-	const rule<> ip6_addr[9]
-	{
-		{                                                     repeat(6)[ip6_piece] >> ip6_ls32     },
-		{                                        lit("::") >> repeat(5)[ip6_piece] >> ip6_ls32     },
-		{                             ip6_h16 >> lit("::") >> repeat(4)[ip6_piece] >> ip6_ls32     },
-		{  ip6_h16 >> repeat(0,1)[ip6_ipiece] >> lit("::") >> repeat(3)[ip6_piece] >> ip6_ls32     },
-		{  ip6_h16 >> repeat(0,2)[ip6_ipiece] >> lit("::") >> repeat(2)[ip6_piece] >> ip6_ls32     },
-		{  ip6_h16 >> repeat(0,3)[ip6_ipiece] >> lit("::") >> ip6_piece >> ip6_ls32                },
-		{  ip6_h16 >> repeat(0,4)[ip6_ipiece] >> lit("::") >> ip6_ls32                             },
-		{  ip6_h16 >> repeat(0,5)[ip6_ipiece] >> lit("::") >> -ip6_h16                             },
-		{                                        lit("::") >> -ip6_h16                             },
-	};
-
-	const rule<> ip6_address
-	{
-		ip6_addr[0] | ip6_addr[1] | ip6_addr[2] |
-		ip6_addr[3] | ip6_addr[4] | ip6_addr[5] |
-		ip6_addr[6] | ip6_addr[7] | ip6_addr[8]
-		,"IPv6 address"
-	};
-
-	const rule<> ip6_literal
-	{
-		'[' >> ip6_address >> ']'
-		,"ip6 literal"
-	};
-
-	const rule<> hostname
-	{
-		char_("A-Za-z0-9") >> *(char_("A-Za-z0-9\x2D")) // x2D is '-'
-		,"hostname"
-	};
-
-	const rule<> domain
-	{
-		hostname % '.'
-		,"domain"
-	};
-
-	const rule<> host
-	{
-		ip6_literal | ip4_literal | domain
-		,"host"
-	};
-
-	const rule<> remote
-	{
-		host >> -(':' > port)
-		,"remote"
-	};
-
-	grammar()
-	:grammar::base_type{rule<>{}}
-	{}
-};
 
 struct ircd::rfc3986::encoder
 :karma::grammar<char *, const string_view &>
@@ -180,35 +66,121 @@ struct ircd::rfc3986::decoder
 }
 const ircd::rfc3986::decoder;
 
-struct ircd::rfc3986::parser
-:grammar
+decltype(ircd::rfc3986::parser::port)
+ircd::rfc3986::parser::port
 {
-	string_view operator()(const string_view &url) const;
-}
-const ircd::rfc3986::parser;
+	ushort_
+	,"port number"
+};
 
-ircd::string_view
-ircd::rfc3986::parser::operator()(const string_view &url)
-const try
+decltype(ircd::rfc3986::parser::ip4_octet)
+ircd::rfc3986::parser::ip4_octet
 {
-	string_view out;
-	const char *start{url.data()};
-	const char *const stop{url.data() + url.size()};
-	//qi::parse(start, stop, , out);
-	return out;
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	auto rule
-	{
-		ircd::string(e.what_)
-	};
+	repeat(1,3)[char_("0-9")]
+	,"IPv4 octet"
+};
 
-	throw error
-	{
-		"Not a valid url because of an invalid %s.", between(rule, '<', '>')
-	};
-}
+decltype(ircd::rfc3986::parser::ip4_literal)
+ircd::rfc3986::parser::ip4_literal
+{
+	repeat(3)[ip4_octet >> '.'] >> ip4_octet
+	,"IPv4 literal"
+};
+
+decltype(ircd::rfc3986::parser::ip6_char)
+ircd::rfc3986::parser::ip6_char
+{
+	char_("0-9a-fA-F")
+	,"IPv6 character"
+};
+
+decltype(ircd::rfc3986::parser::ip6_h16)
+ircd::rfc3986::parser::ip6_h16
+{
+	repeat(1,4)[ip6_char]
+	,"IPv6 hexdigit"
+};
+
+decltype(ircd::rfc3986::parser::ip6_piece)
+ircd::rfc3986::parser::ip6_piece
+{
+	ip6_h16 >> ':'
+	,"IPv6 address piece"
+};
+
+// This is reversed from the BNF in the RFC otherwise it requires
+// backtracking during the repeat[]; parsers are adjusted accordingly.
+decltype(ircd::rfc3986::parser::ip6_ipiece)
+ircd::rfc3986::parser::ip6_ipiece
+{
+	':' >> ip6_h16
+	,"IPv6 address piece"
+};
+
+decltype(ircd::rfc3986::parser::ip6_ls32)
+ircd::rfc3986::parser::ip6_ls32
+{
+	(ip6_h16 >> ':' >> ip6_h16) | ip4_literal
+};
+
+/// https://tools.ietf.org/html/rfc3986 Appendix A
+decltype(ircd::rfc3986::parser::ip6_addr)
+ircd::rfc3986::parser::ip6_addr
+{
+	{                                                     repeat(6)[ip6_piece] >> ip6_ls32     },
+	{                                        lit("::") >> repeat(5)[ip6_piece] >> ip6_ls32     },
+	{                             ip6_h16 >> lit("::") >> repeat(4)[ip6_piece] >> ip6_ls32     },
+	{  ip6_h16 >> repeat(0,1)[ip6_ipiece] >> lit("::") >> repeat(3)[ip6_piece] >> ip6_ls32     },
+	{  ip6_h16 >> repeat(0,2)[ip6_ipiece] >> lit("::") >> repeat(2)[ip6_piece] >> ip6_ls32     },
+	{  ip6_h16 >> repeat(0,3)[ip6_ipiece] >> lit("::") >> ip6_piece >> ip6_ls32                },
+	{  ip6_h16 >> repeat(0,4)[ip6_ipiece] >> lit("::") >> ip6_ls32                             },
+	{  ip6_h16 >> repeat(0,5)[ip6_ipiece] >> lit("::") >> -ip6_h16                             },
+	{                                        lit("::") >> -ip6_h16                             },
+};
+
+decltype(ircd::rfc3986::parser::ip6_address)
+ircd::rfc3986::parser::ip6_address
+{
+	ip6_addr[0] | ip6_addr[1] | ip6_addr[2] |
+	ip6_addr[3] | ip6_addr[4] | ip6_addr[5] |
+	ip6_addr[6] | ip6_addr[7] | ip6_addr[8]
+	,"IPv6 address"
+};
+
+decltype(ircd::rfc3986::parser::ip6_literal)
+ircd::rfc3986::parser::ip6_literal
+{
+	'[' >> ip6_address >> ']'
+	,"ip6 literal"
+};
+
+decltype(ircd::rfc3986::parser::hostname)
+ircd::rfc3986::parser::hostname
+{
+	char_("A-Za-z0-9") >> *(char_("A-Za-z0-9\x2D")) // x2D is '-'
+	,"hostname"
+};
+
+decltype(ircd::rfc3986::parser::domain)
+ircd::rfc3986::parser::domain
+{
+	hostname % '.'
+	,"domain"
+};
+
+decltype(ircd::rfc3986::parser::host)
+ircd::rfc3986::parser::host
+{
+	ip6_literal | ip4_literal | domain
+	,"host"
+};
+
+decltype(ircd::rfc3986::parser::remote)
+ircd::rfc3986::parser::remote
+{
+	host >> -(':' > port)
+	,"remote"
+};
 
 ircd::string_view
 ircd::rfc3986::encode(const mutable_buffer &out,
@@ -299,7 +271,7 @@ ircd::rfc3986::valid_remote(std::nothrow_t,
 {
 	static const auto &rule
 	{
-		parser.remote >> eoi
+		parser::remote >> eoi
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
@@ -312,7 +284,7 @@ try
 {
 	static const auto &rule
 	{
-		parser.remote >> eoi
+		parser::remote >> eoi
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
@@ -329,7 +301,7 @@ ircd::rfc3986::valid_host(std::nothrow_t,
 {
 	static const auto &rule
 	{
-		parser.host >> eoi
+		parser::host >> eoi
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
@@ -342,7 +314,7 @@ try
 {
 	static const auto &rule
 	{
-		parser.host >> eoi
+		parser::host >> eoi
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
@@ -359,7 +331,7 @@ ircd::rfc3986::valid_domain(std::nothrow_t,
 {
 	static const auto &rule
 	{
-		parser.domain >> eoi
+		parser::domain >> eoi
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
@@ -372,7 +344,7 @@ try
 {
 	static const auto &rule
 	{
-		parser.host >> eoi
+		parser::host >> eoi
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
@@ -389,7 +361,7 @@ ircd::rfc3986::valid_hostname(std::nothrow_t,
 {
 	static const auto &rule
 	{
-		parser.hostname >> eoi
+		parser::hostname >> eoi
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
@@ -402,7 +374,7 @@ try
 {
 	static const auto &rule
 	{
-		parser.hostname >> eoi
+		parser::hostname >> eoi
 	};
 
 	const char *start(str.data()), *const stop(start + str.size());
