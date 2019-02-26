@@ -41,7 +41,7 @@ ircd::m::sync::room_account_data_polylog_events(data &data)
 {
 	json::stack::array array
 	{
-		data.out, "events"
+		*data.out, "events"
 	};
 
 	assert(data.room);
@@ -78,7 +78,7 @@ ircd::m::sync::room_account_data_polylog_events_event(data &data,
 {
 	json::stack::object object
 	{
-		data.out
+		*data.out
 	};
 
 	json::stack::member

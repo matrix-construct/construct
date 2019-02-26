@@ -47,7 +47,7 @@ ircd::m::sync::rooms_ephemeral_events_polylog(data &data)
 {
 	json::stack::array array
 	{
-		data.out, "events"
+		*data.out, "events"
 	};
 
 	bool ret{false};
@@ -56,7 +56,7 @@ ircd::m::sync::rooms_ephemeral_events_polylog(data &data)
 	{
 		json::stack::checkpoint checkpoint
 		{
-			data.out
+			*data.out
 		};
 
 		if(item.polylog(data))

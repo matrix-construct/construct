@@ -41,12 +41,12 @@ ircd::m::sync::device_lists_polylog(data &data)
 {
 	json::stack::array
 	{
-		data.out, "changed"
+		*data.out, "changed"
 	};
 
 	json::stack::array
 	{
-		data.out, "left"
+		*data.out, "left"
 	};
 
 	return false;

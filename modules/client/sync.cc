@@ -98,6 +98,18 @@ ircd::m::sync::handle_get(client &client,
 			"Since parameter is too far in the future..."
 		};
 
+	// Keep state for statistics of this sync here on the stack.
+	stats stats;
+	data data
+	{
+		request.user_id,
+		range,
+		&client,
+		nullptr,
+		&stats,
+		args.filter_id
+	};
+
 	// Setup an output buffer to compose the response. This has to be at least
 	// the worst-case size of a matrix event (64_KiB) or bad things happen.
 	const unique_buffer<mutable_buffer> buffer
@@ -105,25 +117,19 @@ ircd::m::sync::handle_get(client &client,
 		size_t(buffer_size)
 	};
 
-	// Setup a chunked encoded response.
+	// Start the chunked encoded response.
 	resource::response::chunked response
 	{
-		client, http::OK
+		client, http::OK, 0
 	};
 
-	// Keep state for statistics of this sync here on the stack.
-	stats stats;
-	data data
+	json::stack out
 	{
-		request.user_id,
-		range,
 		buffer,
 		std::bind(&sync::flush, std::ref(data), std::ref(response), ph::_1),
-		size_t(flush_hiwat),
-		&client,
-		&stats,
-		args.filter_id
+		size_t(flush_hiwat)
 	};
+	data.out = &out;
 
 	log::debug
 	{
@@ -132,7 +138,7 @@ ircd::m::sync::handle_get(client &client,
 
 	json::stack::object object
 	{
-		data.out
+		*data.out
 	};
 
 	const bool shortpolled
@@ -163,17 +169,17 @@ ircd::m::sync::empty_response(data &data)
 	// Empty objects added to output otherwise Riot b0rks.
 	json::stack::object
 	{
-		data.out, "rooms"
+		*data.out, "rooms"
 	};
 
 	json::stack::object
 	{
-		data.out, "presence"
+		*data.out, "presence"
 	};
 
 	json::stack::member
 	{
-		data.out, "next_batch", json::value
+		*data.out, "next_batch", json::value
 		{
 			lex_cast(data.range.second), json::STRING
 		}
@@ -212,7 +218,7 @@ try
 {
 	json::stack::checkpoint checkpoint
 	{
-		data.out
+		*data.out
 	};
 
 	bool ret{false};
@@ -221,12 +227,12 @@ try
 	{
 		json::stack::checkpoint checkpoint
 		{
-			data.out
+			*data.out
 		};
 
 		json::stack::object object
 		{
-			data.out, item.member_name()
+			*data.out, item.member_name()
 		};
 
 		if(item.polylog(data))
@@ -240,7 +246,7 @@ try
 	if(ret)
 		json::stack::member
 		{
-			data.out, "next_batch", json::value
+			*data.out, "next_batch", json::value
 			{
 				lex_cast(data.range.second), json::STRING
 			}

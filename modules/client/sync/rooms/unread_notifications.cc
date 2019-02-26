@@ -56,7 +56,7 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	// highlight_count
 	json::stack::member
 	{
-		data.out, "highlight_count", json::value
+		*data.out, "highlight_count", json::value
 		{
 			_highlight_count(room, data.user, start_idx, data.range.second)
 		}
@@ -65,7 +65,7 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	// notification_count
 	json::stack::member
 	{
-		data.out, "notification_count", json::value
+		*data.out, "notification_count", json::value
 		{
 			_notification_count(room, start_idx, data.range.second)
 		}

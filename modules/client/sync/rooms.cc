@@ -75,7 +75,7 @@ ircd::m::sync::_rooms_linear(data &data,
 	{
 		json::stack::object object
 		{
-			data.out, item.member_name()
+			*data.out, item.member_name()
 		};
 
 		ret |= item.linear(data);
@@ -107,12 +107,12 @@ ircd::m::sync::_rooms_polylog(data &data,
 
 	json::stack::checkpoint checkpoint
 	{
-		data.out
+		*data.out
 	};
 
 	json::stack::object object
 	{
-		data.out, membership
+		*data.out, membership
 	};
 
 	bool ret{false};
@@ -162,12 +162,12 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 
 	json::stack::checkpoint checkpoint
 	{
-		data.out
+		*data.out
 	};
 
 	json::stack::object object
 	{
-		data.out, room.room_id
+		*data.out, room.room_id
 	};
 
 	const event::idx room_head
@@ -186,12 +186,12 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 	{
 		json::stack::checkpoint checkpoint
 		{
-			data.out
+			*data.out
 		};
 
 		json::stack::object object
 		{
-			data.out, item.member_name()
+			*data.out, item.member_name()
 		};
 
 		if(item.polylog(data))

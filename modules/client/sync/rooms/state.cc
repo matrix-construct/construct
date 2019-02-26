@@ -92,7 +92,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	const m::room::state state{room};
 	json::stack::array array
 	{
-		data.out, "events"
+		*data.out, "events"
 	};
 
 	bool ret{false};

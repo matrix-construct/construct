@@ -536,7 +536,9 @@ ircd::m::sync::loghead(const data &data)
 		string_view{data.user.user_id},
 		data.range.first,
 		data.range.second,
-		ircd::pretty(iecbuf[0], iec(flush_bytes + size(data.out.completed()))),
+		data.out?
+			ircd::pretty(iecbuf[0], iec(flush_bytes + size(data.out->completed()))):
+			string_view{},
 		flush_count,
 		ircd::pretty(iecbuf[1], iec(flush_bytes)),
 		tmstr
@@ -551,10 +553,8 @@ ircd::m::sync::data::data
 (
 	const m::user &user,
 	const m::events::range &range,
-	const mutable_buffer &buf,
-	json::stack::flush_callback flusher,
-	const size_t &flush_hiwat,
 	ircd::client *const &client,
+	json::stack *const &out,
 	sync::stats *const &stats,
 	const string_view &filter_id
 )
@@ -598,7 +598,7 @@ ircd::m::sync::data::data
 }
 ,out
 {
-	buf, std::move(flusher), flush_hiwat
+	out
 }
 {
 }

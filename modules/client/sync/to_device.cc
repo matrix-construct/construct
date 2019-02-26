@@ -41,7 +41,7 @@ ircd::m::sync::to_device_polylog(data &data)
 {
 	json::stack::array array
 	{
-		data.out, "events"
+		*data.out, "events"
 	};
 
 	const m::room &user_room

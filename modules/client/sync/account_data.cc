@@ -42,7 +42,7 @@ ircd::m::sync::account_data_polylog(data &data)
 {
 	json::stack::array array
 	{
-		data.out, "events"
+		*data.out, "events"
 	};
 
 	static const m::event::fetch::opts fopts
@@ -82,19 +82,19 @@ ircd::m::sync::account_data_(data &data,
 	// Each account_data event is an object in the events array
 	json::stack::object object
 	{
-		data.out
+		*data.out
 	};
 
 	// type
 	json::stack::member
 	{
-		data.out, "type", at<"state_key"_>(event)
+		*data.out, "type", at<"state_key"_>(event)
 	};
 
 	// content
 	json::stack::member
 	{
-		data.out, "content", at<"content"_>(event)
+		*data.out, "content", at<"content"_>(event)
 	};
 
 	return true;

@@ -89,7 +89,7 @@ struct ircd::m::sync::data
 	const m::filter filter;
 
 	/// The json::stack master object
-	json::stack out;
+	json::stack *out {nullptr};
 
 	// apropos contextual
 	const m::event *event {nullptr};
@@ -99,10 +99,8 @@ struct ircd::m::sync::data
 
 	data(const m::user &user,
 	     const m::events::range &range,
-	     const mutable_buffer &,
-	     json::stack::flush_callback,
-	     const size_t &flush_hiwat = 64_KiB,
 	     ircd::client *const &client = nullptr,
+	     json::stack *const &out = nullptr,
 	     sync::stats *const &stats = nullptr,
 	     const string_view &filter_id = {});
 

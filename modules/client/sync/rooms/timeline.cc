@@ -54,7 +54,7 @@ ircd::m::sync::room_timeline_linear(data &data)
 {
 	json::stack::object object
 	{
-		data.out
+		*data.out
 	};
 
 	m::room room;
@@ -88,7 +88,7 @@ ircd::m::sync::_room_timeline_linear_events(data &data,
 {
 	json::stack::array array
 	{
-		data.out, "events"
+		*data.out, "events"
 	};
 
 	return {};
@@ -111,13 +111,13 @@ ircd::m::sync::room_timeline_polylog(data &data)
 	// prev_batch
 	json::stack::member
 	{
-		data.out, "prev_batch", string_view{prev}
+		*data.out, "prev_batch", string_view{prev}
 	};
 
 	// limited
 	json::stack::member
 	{
-		data.out, "limited", json::value{limited}
+		*data.out, "limited", json::value{limited}
 	};
 
 	return ret;
@@ -136,7 +136,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 
 	json::stack::array array
 	{
-		data.out, "events"
+		*data.out, "events"
 	};
 
 	// messages seeks to the newest event, but the client wants the oldest

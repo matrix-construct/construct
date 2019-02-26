@@ -105,7 +105,7 @@ ircd::m::sync::_handle_message_receipt(data &data,
 
 	json::stack::object object
 	{
-		data.out
+		*data.out
 	};
 
 	// type

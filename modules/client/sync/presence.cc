@@ -16,10 +16,7 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static bool presence_polylog_events(data &);
 	static bool presence_polylog(data &);
-
-	static bool presence_linear_events(data &);
 	static bool presence_linear(data &);
 
 	extern item presence;
@@ -37,33 +34,39 @@ bool
 ircd::m::sync::presence_linear(data &data)
 {
 	assert(data.event);
-	const m::event &event
-	{
-		*data.event
-	};
-
+	const m::event &event{*data.event};
 	if(json::get<"type"_>(event) != "ircd.presence")
 		return false;
 
-	if(json::get<"sender"_>(event) != m::me.user_id)
+	if(!my_host(json::get<"origin"_>(event)))
 		return false;
+
+	json::stack::array array
+	{
+		*data.out, "events"
+	};
+
+	json::stack::object object
+	{
+		*data.out
+	};
 
 	// sender
 	json::stack::member
 	{
-		data.out, "sender", unquote(at<"content"_>(event).get("user_id"))
+		*data.out, "sender", unquote(at<"content"_>(event).get("user_id"))
 	};
 
 	// type
 	json::stack::member
 	{
-		data.out, "type", json::value{"m.presence"}
+		*data.out, "type", json::value{"m.presence"}
 	};
 
 	// content
 	json::stack::member
 	{
-		data.out, "content", at<"content"_>(event)
+		*data.out, "content", at<"content"_>(event)
 	};
 
 	return true;
@@ -72,15 +75,9 @@ ircd::m::sync::presence_linear(data &data)
 bool
 ircd::m::sync::presence_polylog(data &data)
 {
-	return presence_polylog_events(data);
-}
-
-bool
-ircd::m::sync::presence_polylog_events(data &data)
-{
 	json::stack::array array
 	{
-		data.out, "events"
+		*data.out, "events"
 	};
 
 	bool ret{false};
