@@ -430,6 +430,24 @@ noexcept
 	other.cp = nullptr;
 	other.co = nullptr;
 	other.ca = nullptr;
+
+	if(cp)
+	{
+		assert(cp->s == &other);
+		cp->s = this;
+	}
+
+	if(co)
+	{
+		assert(co->s == &other);
+		co->s = this;
+	}
+
+	if(ca)
+	{
+		assert(ca->s == &other);
+		ca->s = this;
+	}
 }
 
 ircd::json::stack::~stack()
@@ -658,6 +676,29 @@ noexcept
 ,mc{std::move(other.mc)}
 {
 	other.s = nullptr;
+
+	if(s)
+	{
+		assert(s->co == &other);
+		s->co = this;
+	}
+
+	if(pm)
+	{
+		assert(pm->co == &other);
+		pm->co = this;
+	}
+	else if(pa)
+	{
+		assert(pa->co == &other);
+		pa->co = this;
+	}
+
+	if(cm)
+	{
+		assert(cm->po == &other);
+		cm->po = this;
+	}
 }
 
 ircd::json::stack::object::object(stack &s)
@@ -839,6 +880,34 @@ noexcept
 ,vc{std::move(other.vc)}
 {
 	other.s = nullptr;
+
+	if(s)
+	{
+		assert(s->ca == &other);
+		s->ca = this;
+	}
+
+	if(pm)
+	{
+		assert(pm->ca == &other);
+		pm->ca = this;
+	}
+	else if(pa)
+	{
+		assert(pa->ca == &other);
+		pa->ca = this;
+	}
+
+	if(co)
+	{
+		assert(co->pa == &other);
+		co->pa = this;
+	}
+	else if(ca)
+	{
+		assert(ca->pa == &other);
+		ca->pa = this;
+	}
 }
 
 ircd::json::stack::array::array(stack &s)
@@ -1040,8 +1109,26 @@ noexcept
 ,name{std::move(other.name)}
 ,co{std::move(other.co)}
 ,ca{std::move(other.ca)}
+,vc{std::move(other.vc)}
 {
 	other.s = nullptr;
+
+	if(po)
+	{
+		assert(po->cm == &other);
+		po->cm = this;
+	}
+
+	if(co)
+	{
+		assert(co->pm == &other);
+		co->pm = this;
+	}
+	else if(ca)
+	{
+		assert(ca->pm == &other);
+		ca->pm = this;
+	}
 }
 
 ircd::json::stack::member::member(stack &s,
