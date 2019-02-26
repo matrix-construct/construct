@@ -36,6 +36,7 @@
 #include "stringops.h"
 #include "tokens.h"
 #include "iov.h"
+#include "grammar.h"
 #include "parse.h"
 #include "rfc1459.h"
 #include "json/json.h"
