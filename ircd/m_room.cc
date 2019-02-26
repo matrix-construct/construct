@@ -2573,3 +2573,59 @@ const
 	closure(power_event_content);
 	return !empty(power_event_content);
 }
+
+//
+// room::stats
+//
+
+size_t
+ircd::m::room::stats::bytes_json_compressed(const m::room &room)
+{
+	using prototype = size_t (const m::room &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::stats::bytes_json_compressed"
+	};
+
+	return call(room);
+}
+
+size_t
+ircd::m::room::stats::bytes_json(const m::room &room)
+{
+	using prototype = size_t (const m::room &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::stats::bytes_json"
+	};
+
+	return call(room);
+}
+
+size_t
+ircd::m::room::stats::bytes_total_compressed(const m::room &room)
+{
+	using prototype = size_t (const m::room &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::stats::bytes_total_compressed"
+	};
+
+	return call(room);
+}
+
+size_t
+ircd::m::room::stats::bytes_total(const m::room &room)
+{
+	using prototype = size_t (const m::room &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::stats::bytes_total"
+	};
+
+	return call(room);
+}

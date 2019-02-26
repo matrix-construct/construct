@@ -37,6 +37,7 @@ struct ircd::m::room
 	struct head;
 	struct auth;
 	struct power;
+	struct stats;
 
 	using id = m::id::room;
 	using alias = m::id::room_alias;

@@ -8371,6 +8371,31 @@ console_cmd__room__auth(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__room__stats(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const size_t bytes_json
+	{
+		m::room::stats::bytes_json(room_id)
+	};
+
+	out << "JSON bytes:    "
+	    << pretty(iec(bytes_json))
+	    << std::endl;
+
+	return true;
+}
+
 //
 // user
 //

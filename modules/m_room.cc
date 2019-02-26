@@ -860,3 +860,64 @@ ircd::m::room::auth::for_each(const auth &a,
 
 	return true;
 }
+
+size_t
+IRCD_MODULE_EXPORT
+__attribute__((noreturn))
+ircd::m::room::stats::bytes_total(const m::room &room)
+{
+	throw m::UNSUPPORTED
+	{
+		"Not yet implemented."
+	};
+}
+
+size_t
+IRCD_MODULE_EXPORT
+__attribute__((noreturn))
+ircd::m::room::stats::bytes_total_compressed(const m::room &room)
+{
+	throw m::UNSUPPORTED
+	{
+		"Not yet implemented."
+	};
+}
+
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::stats::bytes_json(const m::room &room)
+{
+	size_t ret(0);
+	for(m::room::messages it(room); it; --it)
+	{
+		const m::event::idx &event_idx
+		{
+			it.event_idx()
+		};
+
+		const byte_view<string_view> key
+		{
+			event_idx
+		};
+
+		static const db::gopts gopts
+		{
+			db::get::NO_CACHE
+		};
+
+		ret += db::bytes_value(m::dbs::event_json, key, gopts);
+	}
+
+	return ret;
+}
+
+size_t
+IRCD_MODULE_EXPORT
+__attribute__((noreturn))
+ircd::m::room::stats::bytes_json_compressed(const m::room &room)
+{
+	throw m::UNSUPPORTED
+	{
+		"Not yet implemented."
+	};
+}
