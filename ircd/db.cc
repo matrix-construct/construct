@@ -1018,9 +1018,9 @@ try
 	opts->max_background_flushes = 1;
 	opts->max_background_compactions = 1;
 
-	opts->max_total_wal_size = 16_MiB; //TODO: conf
-	opts->db_write_buffer_size = 16_MiB; //TODO: conf
-	opts->max_log_file_size = 1_MiB; //TODO: conf
+	opts->max_total_wal_size = 32_MiB; //TODO: conf
+	opts->db_write_buffer_size = 32_MiB; //TODO: conf
+	//opts->max_log_file_size = 32_MiB; //TODO: conf
 
 	//TODO: range_sync
 	opts->bytes_per_sync = 0;
@@ -1739,13 +1739,13 @@ ircd::db::database::column::column(database &d,
 	this->options.level_compaction_dynamic_level_bytes = false;
 
 	this->options.num_levels = 7;
-	this->options.write_buffer_size = 512_KiB;
+	this->options.write_buffer_size = 4_MiB;
 	this->options.max_write_buffer_number = 8;
 	this->options.min_write_buffer_number_to_merge = 4;
 	this->options.max_write_buffer_number_to_maintain = 0;
 	this->options.level0_file_num_compaction_trigger = 2;
-	this->options.target_file_size_base = 32_MiB;
-	this->options.target_file_size_multiplier = 4;
+	this->options.target_file_size_base = 24_MiB;
+	this->options.target_file_size_multiplier = 16;
 	this->options.max_bytes_for_level_base = 1_MiB;
 	this->options.max_bytes_for_level_multiplier = 2;
 
@@ -1769,13 +1769,13 @@ ircd::db::database::column::column(database &d,
 	table_opts.pin_top_level_index_and_filter = false;
 	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
 	table_opts.enable_index_compression = false;
-	table_opts.index_block_restart_interval = 8;
+	table_opts.index_block_restart_interval = 64;
 
 	// Setup the block size
 	table_opts.block_size = this->descriptor->block_size;
 	table_opts.metadata_block_size = this->descriptor->meta_block_size;
 	table_opts.block_size_deviation = 50;
-	table_opts.block_restart_interval = 16;
+	table_opts.block_restart_interval = 64;
 
 	//table_opts.data_block_index_type = rocksdb::BlockBasedTableOptions::kDataBlockBinaryAndHash;
 	//table_opts.data_block_hash_table_util_ratio = 0.75;
