@@ -21,6 +21,8 @@ namespace ircd::json
 	// Instantiations of the grammars
 	struct parser extern const parser;
 	struct printer extern const printer;
+
+	const size_t &error_show_max {48};
 }
 
 BOOST_FUSION_ADAPT_STRUCT
@@ -282,22 +284,6 @@ struct ircd::json::output
 		for(const auto &p : escapes)
 			escaped.add(p.first, p.second);
 	}
-};
-
-struct ircd::json::expectation_failure
-:parse_error
-{
-	expectation_failure(const char *const &start,
-	                    const qi::expectation_failure<const char *> &e,
-	                    const ssize_t &show_max = 64)
-	:parse_error
-	{
-		"Expected %s. You input %zd invalid characters at position %zd: %s",
-		ircd::string(e.what_),
-		std::distance(e.first, e.last),
-		std::distance(start, e.first),
-		string_view{e.first, e.first + std::min(std::distance(e.first, e.last), show_max)}
-	}{}
 };
 
 struct ircd::json::parser
@@ -1889,7 +1875,10 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	throw expectation_failure(start, e);
+	throw expectation_failure<parse_error>
+	{
+		e, start, error_show_max
+	};
 }
 
 ircd::json::vector::const_iterator
@@ -1918,7 +1907,10 @@ const try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	throw expectation_failure(string_view::begin(), e);
+	throw expectation_failure<parse_error>
+	{
+		e, string_view::data(), error_show_max
+	};
 }
 
 ircd::json::vector::const_iterator
@@ -2151,7 +2143,10 @@ const try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	throw expectation_failure(string_view::begin(), e);
+	throw expectation_failure<parse_error>
+	{
+		e, string_view::begin(), error_show_max
+	};
 }
 
 ircd::json::object::const_iterator
@@ -2229,7 +2224,10 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	throw expectation_failure(start, e);
+	throw expectation_failure<parse_error>
+	{
+		e, start, error_show_max
+	};
 }
 
 //
@@ -2525,7 +2523,10 @@ const try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	throw expectation_failure(string_view::begin(), e);
+	throw expectation_failure<parse_error>
+	{
+		e, string_view::data(), error_show_max
+	};
 }
 
 ircd::json::array::const_iterator
@@ -2625,7 +2626,10 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	throw expectation_failure(start, e);
+	throw expectation_failure<parse_error>
+	{
+		e, start, error_show_max
+	};
 }
 
 bool
@@ -3737,7 +3741,7 @@ try
 	valid(s);
 	return {};
 }
-catch(const expectation_failure &e)
+catch(const std::exception &e)
 {
 	return e.what();
 }
@@ -3774,7 +3778,10 @@ try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
-	throw expectation_failure(begin(s), e);
+	throw expectation_failure<parse_error>
+	{
+		e, begin(s), error_show_max
+	};
 }
 
 void
