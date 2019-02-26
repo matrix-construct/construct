@@ -47,10 +47,10 @@ struct ircd::resource::response::chunked
 
 	std::function<const_buffer (const const_buffer &)> flusher();
 
-	chunked(client &, const http::code &, const string_view &content_type, const string_view &headers = {});
-	chunked(client &, const http::code &, const string_view &content_type, const vector_view<const http::header> &);
-	chunked(client &, const http::code &, const vector_view<const http::header> &);
-	chunked(client &, const http::code &);
+	chunked(client &, const http::code &, const string_view &content_type, const string_view &headers = {}, const size_t &buffer_size = default_buffer_size);
+	chunked(client &, const http::code &, const string_view &content_type, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size);
+	chunked(client &, const http::code &, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size);
+	chunked(client &, const http::code &, const size_t &buffer_size = default_buffer_size);
 	chunked(const chunked &) = delete;
 	chunked(chunked &&) noexcept;
 	chunked() = default;

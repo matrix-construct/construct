@@ -735,20 +735,22 @@ noexcept
 }
 
 ircd::resource::response::chunked::chunked(client &client,
-                                           const http::code &code)
+                                           const http::code &code,
+                                           const size_t &buffer_size)
 :chunked
 {
-	client, code, "application/json; charset=utf-8"_sv, string_view{}
+	client, code, "application/json; charset=utf-8"_sv, string_view{}, buffer_size
 }
 {
 }
 
 ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
-                                           const vector_view<const http::header> &headers)
+                                           const vector_view<const http::header> &headers,
+                                           const size_t &buffer_size)
 :chunked
 {
-	client, code, "application/json; charset=utf-8"_sv, headers
+	client, code, "application/json; charset=utf-8"_sv, headers, buffer_size
 }
 {
 }
@@ -756,10 +758,14 @@ ircd::resource::response::chunked::chunked(client &client,
 ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
                                            const string_view &content_type,
-                                           const vector_view<const http::header> &headers)
+                                           const vector_view<const http::header> &headers,
+                                           const size_t &buffer_size)
 :chunked
 {
-	client, code, content_type, [&headers]
+	client,
+	code,
+	content_type,
+	[&headers]
 	{
 		// Note that the headers which are composed into this buffer are
 		// copied again before the response goes out from resource::response.
@@ -770,7 +776,8 @@ ircd::resource::response::chunked::chunked(client &client,
 		window_buffer sb{buffer};
 		http::write(sb, headers);
 		return string_view{sb.completed()};
-	}()
+	}(),
+	buffer_size
 }
 {
 }
@@ -785,7 +792,8 @@ ircd::resource::response::chunked::default_buffer_size
 ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
                                            const string_view &content_type,
-                                           const string_view &headers)
+                                           const string_view &headers,
+                                           const size_t &buffer_size)
 :response
 {
 	client, code, content_type, size_t(-1), headers
@@ -796,7 +804,7 @@ ircd::resource::response::chunked::chunked(client &client,
 }
 ,buf
 {
-	size_t(default_buffer_size)
+	buffer_size
 }
 {
 	assert(!empty(content_type));
