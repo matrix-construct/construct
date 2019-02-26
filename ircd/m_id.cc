@@ -456,6 +456,25 @@ ircd::m::id::id(const enum sigil &sigil,
 {
 }
 
+bool
+ircd::m::id::literal()
+const
+{
+	static const parser::rule<string_view> rule
+	{
+		rfc3986::parser::ip4_literal |
+		rfc3986::parser::ip6_literal
+	};
+
+	const auto &hostname
+	{
+		this->hostname()
+	};
+
+	const char *start(hostname.begin()), *const stop(hostname.end());
+	return qi::parse(start, stop, rule);
+}
+
 uint16_t
 ircd::m::id::port()
 const

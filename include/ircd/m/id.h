@@ -72,6 +72,7 @@ struct ircd::m::id
 	string_view localname() const;    // The localpart not including sigil
 	string_view hostname() const;     // The server part not including port
 	uint16_t port() const;            // Just the port number or 0 if none
+	bool literal() const;             // Whether the hostname() is IP literal
 
 	IRCD_USING_OVERLOAD(generate, m::generate);
 
