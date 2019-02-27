@@ -95,7 +95,8 @@ struct ircd::m::sync::data
 	const m::event *event {nullptr};
 	const m::room *room {nullptr};
 	string_view membership;
-	event::idx room_head {0};
+	event::idx room_head {0}; // if *room
+	event::idx event_idx {0}; // if *event
 
 	data(const m::user &user,
 	     const m::events::range &range,

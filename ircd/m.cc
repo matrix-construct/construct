@@ -755,6 +755,9 @@ bool
 ircd::m::sync::item::linear(data &data)
 try
 {
+	if(!enable)
+		return false;
+
 	return _linear(data);
 }
 catch(const std::bad_function_call &e)

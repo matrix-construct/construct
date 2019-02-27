@@ -21,9 +21,12 @@ namespace ircd::m::sync
 
 	extern conf::item<size_t> flush_hiwat;
 	extern conf::item<size_t> buffer_size;
+	extern conf::item<size_t> linear_delta_max;
 
 	static const_buffer flush(data &, resource::response::chunked &, const const_buffer &);
 	static void empty_response(data &);
+	static bool linear_handle(data &);
+	static bool polylog_handle(data &);
 	static resource::response handle_get(client &, const resource::request &);
 }
 
@@ -63,18 +66,6 @@ namespace ircd::m::sync::longpoll
 	static bool poll(data &, const args &);
 	static void handle_notify(const m::event &, m::vm::eval &);
 	extern m::hookfn<m::vm::eval &> notified;
-}
-
-namespace ircd::m::sync::linear
-{
-	extern conf::item<size_t> delta_max;
-
-	static bool handle(data &);
-}
-
-namespace ircd::m::sync::polylog
-{
-	static bool handle(data &);
 }
 
 struct ircd::m::sync::args
