@@ -534,7 +534,51 @@ ircd::m::sync::longpoll::handle(data &data,
                                 const args &args,
                                 const accepted &event)
 {
-	return false;
+	const scope_restore their_event
+	{
+		data.event, &event
+	};
+
+	const scope_restore their_event_idx
+	{
+		data.event_idx, event.event_idx
+	};
+
+	json::stack::checkpoint checkpoint
+	{
+		*data.out
+	};
+
+	json::stack::object top
+	{
+		*data.out
+	};
+
+	const bool ret
+	{
+		linear_proffer_event_one(data)
+	};
+
+	if(ret)
+	{
+		json::stack::member
+		{
+			*data.out, "next_batch", json::value
+			{
+				lex_cast(event.event_idx + 1), json::STRING
+			}
+		};
+
+		log::debug
+		{
+			log, "longpoll %s idx:%lu complete",
+			loghead(data),
+			event.event_idx
+		};
+	}
+	else checkpoint.rollback();
+
+	return ret;
 }
 
 //
