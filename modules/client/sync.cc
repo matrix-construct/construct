@@ -134,7 +134,7 @@ ircd::m::sync::handle_get(client &client,
 		range.first > range.second?
 			false:
 		range.second - range.first <= size_t(linear_delta_max)?
-			polylog_handle(data):
+			linear_handle(data):
 			polylog_handle(data)
 	};
 
@@ -301,7 +301,6 @@ namespace ircd::m::sync
 	static bool linear_proffer_event_one(data &);
 	static size_t linear_proffer_event(data &, const mutable_buffer &);
 	static event::idx linear_proffer(data &, window_buffer &);
-	static void linear_rewrite(data &, const json::vector &);
 }
 
 bool
@@ -338,13 +337,13 @@ try
 	{
 		json::stack::member
 		{
-			*data.out, "next_batch", json::value
+			top, "next_batch", json::value
 			{
 				lex_cast(last+1), json::STRING
 			}
 		};
 
-		linear_rewrite(data, vector);
+		json::merge(top, vector);
 	}
 	else checkpoint.rollback();
 
@@ -367,13 +366,6 @@ catch(const std::exception &e)
 	};
 
 	throw;
-}
-
-void
-ircd::m::sync::linear_rewrite(data &data,
-                              const json::vector &vector)
-{
-
 }
 
 /// Iterates the events in the data.range and creates a json::vector in
