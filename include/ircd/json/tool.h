@@ -13,6 +13,8 @@
 
 namespace ircd::json
 {
+	void merge(stack::object &out, const vector &);
+
 	strung remove(const strung &, const string_view &key);
 	strung remove(const strung &, const size_t &index);
 	strung insert(const strung &, const member &);

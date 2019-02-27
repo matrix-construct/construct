@@ -482,6 +482,108 @@ ircd::json::remove(const strung &s,
 	};
 }
 
+void
+ircd::json::merge(stack::object &out,
+                  const vector &v)
+{
+	struct val
+	{
+		std::map<string_view, val, std::less<>> o;
+		std::vector<string_view> a;
+		string_view v;
+
+		void _merge_object(const json::object &o)
+		{
+			for(const auto &m : o)
+			{
+				val &v(this->o[m.first]);
+				v.merge(m.second);
+			}
+		}
+
+		void _merge_array(const json::array &a)
+		{
+			for(const auto &v : a)
+				this->a.emplace_back(v);
+		}
+
+		void merge(const string_view &v)
+		{
+			if(type(v) == json::OBJECT)
+				_merge_object(v);
+			else if(type(v) == json::ARRAY)
+				_merge_array(v);
+			else
+				this->v = v;
+		}
+
+		void _compose_object(json::stack &out, json::stack::object &object) const
+		{
+			for(const auto &m : o)
+			{
+				json::stack::member member{object, m.first};
+				m.second.compose(out);
+			}
+		}
+
+		void _compose_object(json::stack &out, json::stack::member &member) const
+		{
+			json::stack::object object{member};
+			_compose_object(out, object);
+		}
+
+		void _compose_object(json::stack &out) const
+		{
+			json::stack::chase c{out, true};
+			if(c.m)
+				_compose_object(out, *c.m);
+			else if(c.o)
+				_compose_object(out, *c.o);
+		}
+
+		void _compose_array(json::stack &out) const
+		{
+			json::stack::array array{out};
+			for(const auto &v : a)
+				array.append(v);
+		}
+
+		void _compose_value(json::stack &out) const
+		{
+			json::stack::chase c{out, true};
+			if(c.a)
+				c.a->append(v);
+			else if(c.m)
+				c.m->append(v);
+			else
+				assert(0);
+		}
+
+		void compose(json::stack &out) const
+		{
+			if(!o.empty())
+				_compose_object(out);
+			else if(!a.empty())
+				_compose_array(out);
+			else if(!v.empty())
+				_compose_value(out);
+		}
+
+		val() = default;
+		val(const string_view &v)
+		{
+			merge(v);
+		}
+	};
+
+	val top;
+	for(const auto &o : v)
+		top.merge(o);
+
+	assert(out.s);
+	top.compose(*out.s);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // json/stack.h
