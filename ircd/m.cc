@@ -1938,7 +1938,7 @@ ircd::m::events::for_each(const range &range,
 
 	const bool ascending
 	{
-		range.first < range.second
+		range.first <= range.second
 	};
 
 	auto start
