@@ -1912,37 +1912,37 @@ const
 bool
 ircd::json::operator==(const vector::const_iterator &a, const vector::const_iterator &b)
 {
-	return a.start == b.start;
+	return a.state == b.state;
 }
 
 bool
 ircd::json::operator!=(const vector::const_iterator &a, const vector::const_iterator &b)
 {
-	return a.start != b.start;
+	return a.state != b.state;
 }
 
 bool
 ircd::json::operator<=(const vector::const_iterator &a, const vector::const_iterator &b)
 {
-	return a.start <= b.start;
+	return a.state <= b.state;
 }
 
 bool
 ircd::json::operator>=(const vector::const_iterator &a, const vector::const_iterator &b)
 {
-	return a.start >= b.start;
+	return a.state >= b.state;
 }
 
 bool
 ircd::json::operator<(const vector::const_iterator &a, const vector::const_iterator &b)
 {
-	return a.start < b.start;
+	return a.state < b.state;
 }
 
 bool
 ircd::json::operator>(const vector::const_iterator &a, const vector::const_iterator &b)
 {
-	return a.start > b.start;
+	return a.state > b.state;
 }
 
 ircd::json::vector::const_iterator &
