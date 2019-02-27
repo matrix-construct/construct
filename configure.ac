@@ -962,6 +962,7 @@ AC_HELP_STRING([--with-ssl-libs=[[[DIR]]]], [Path to SSL library directory]),
 ], [])
 
 RB_CHK_SYSHEADER(openssl/err.h, [OPENSSL_ERR_H])
+RB_CHK_SYSHEADER(openssl/asn1.h, [OPENSSL_ASN1_H])
 RB_CHK_SYSHEADER(openssl/sha.h, [OPENSSL_SHA_H])
 RB_CHK_SYSHEADER(openssl/hmac.h, [OPENSSL_HMAC_H])
 RB_CHK_SYSHEADER(openssl/ssl.h, [OPENSSL_SSL_H])

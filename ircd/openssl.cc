@@ -9,6 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_OPENSSL_ERR_H
+#include <RB_INC_OPENSSL_ASN1_H
 #include <RB_INC_OPENSSL_SHA_H
 #include <RB_INC_OPENSSL_HMAC_H
 #include <RB_INC_OPENSSL_SSL_H
