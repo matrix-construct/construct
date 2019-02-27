@@ -402,6 +402,88 @@ ircd::json::input::throws_exceeded()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// json/tool.h
+//
+
+ircd::json::strung
+ircd::json::insert(const strung &s,
+                   const json::member &m)
+{
+	if(!empty(s) && type(s) != type::OBJECT)
+		throw type_error
+		{
+			"Cannot insert member into JSON of type %s",
+			reflect(type(s))
+		};
+
+	size_t mctr {0};
+	thread_local std::array<member, iov::max_size> mb;
+	for(const object::member &m : object{s})
+		mb.at(mctr++) = member{m};
+
+	mb.at(mctr++) = m;
+	return strung
+	{
+		mb.data(), mb.data() + mctr
+	};
+}
+
+ircd::json::strung
+ircd::json::remove(const strung &s,
+                   const string_view &key)
+{
+	if(empty(s))
+		return s;
+
+	if(type(s) != type::OBJECT)
+		throw type_error
+		{
+			"Cannot remove object member '%s' from JSON of type %s",
+			key,
+			reflect(type(s))
+		};
+
+	size_t mctr {0};
+	thread_local std::array<object::member, iov::max_size> mb;
+	for(const object::member &m : object{s})
+		if(m.first != key)
+			mb.at(mctr++) = m;
+
+	return strung
+	{
+		mb.data(), mb.data() + mctr
+	};
+}
+
+ircd::json::strung
+ircd::json::remove(const strung &s,
+                   const size_t &idx)
+{
+	if(empty(s))
+		return s;
+
+	if(type(s) != type::ARRAY)
+		throw type_error
+		{
+			"Cannot remove array element [%zu] from JSON of type %s",
+			idx,
+			reflect(type(s))
+		};
+
+	size_t mctr{0}, i{0};
+	thread_local std::array<string_view, iov::max_size> mb;
+	for(const string_view &m : array{s})
+		if(i++ != idx)
+			mb.at(mctr++) = m;
+
+	return strung
+	{
+		mb.data(), mb.data() + mctr
+	};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // json/stack.h
 //
 
@@ -1762,83 +1844,6 @@ ircd::json::iov::defaults::defaults(iov &iov,
 // json/strung.h
 //
 
-ircd::json::strung
-ircd::json::insert(const strung &s,
-                   const json::member &m)
-{
-	if(!empty(s) && type(s) != type::OBJECT)
-		throw type_error
-		{
-			"Cannot insert member into JSON of type %s",
-			reflect(type(s))
-		};
-
-	size_t mctr {0};
-	thread_local std::array<member, iov::max_size> mb;
-	for(const object::member &m : object{s})
-		mb.at(mctr++) = member{m};
-
-	mb.at(mctr++) = m;
-	return strung
-	{
-		mb.data(), mb.data() + mctr
-	};
-}
-
-ircd::json::strung
-ircd::json::remove(const strung &s,
-                   const string_view &key)
-{
-	if(empty(s))
-		return s;
-
-	if(type(s) != type::OBJECT)
-		throw type_error
-		{
-			"Cannot remove object member '%s' from JSON of type %s",
-			key,
-			reflect(type(s))
-		};
-
-	size_t mctr {0};
-	thread_local std::array<object::member, iov::max_size> mb;
-	for(const object::member &m : object{s})
-		if(m.first != key)
-			mb.at(mctr++) = m;
-
-	return strung
-	{
-		mb.data(), mb.data() + mctr
-	};
-}
-
-ircd::json::strung
-ircd::json::remove(const strung &s,
-                   const size_t &idx)
-{
-	if(empty(s))
-		return s;
-
-	if(type(s) != type::ARRAY)
-		throw type_error
-		{
-			"Cannot remove array element [%zu] from JSON of type %s",
-			idx,
-			reflect(type(s))
-		};
-
-	size_t mctr{0}, i{0};
-	thread_local std::array<string_view, iov::max_size> mb;
-	for(const string_view &m : array{s})
-		if(i++ != idx)
-			mb.at(mctr++) = m;
-
-	return strung
-	{
-		mb.data(), mb.data() + mctr
-	};
-}
-
 ircd::json::strung::operator
 json::array()
 const
@@ -3196,7 +3201,7 @@ ircd::json::defined(const value &a)
 enum ircd::json::type
 ircd::json::type(const value &a)
 {
-	return a.type;
+	return static_cast<enum json::type>(a.type);
 }
 
 //

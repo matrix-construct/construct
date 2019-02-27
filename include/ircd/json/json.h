@@ -22,30 +22,13 @@ namespace ircd::json
 	IRCD_EXCEPTION(error, not_found);
 	IRCD_EXCEPTION(parse_error, recursion_limit);
 
-	struct value;
-	struct member;
-	struct string;
-	struct object;
-	struct array;
-	struct vector;
-	struct iov;
-
-	enum type
-	{
-		STRING  = 0,
-		OBJECT  = 1,
-		ARRAY   = 2,
-		NUMBER  = 3,
-		LITERAL = 4,
-	};
-	enum type type(const string_view &);
-	enum type type(const string_view &, std::nothrow_t);
-	string_view reflect(const enum type &);
-
-	template<class... T> string_view stringify(const mutable_buffer &&mb, T&&... t);
+	template<class... T>
+	string_view stringify(const mutable_buffer &&mb, T&&... t);
 }
 
+#include "type.h"
 #include "util.h"
+#include "string.h"
 #include "array.h"
 #include "object.h"
 #include "vector.h"
@@ -55,6 +38,7 @@ namespace ircd::json
 #include "strung.h"
 #include "tuple/tuple.h"
 #include "stack.h"
+#include "tool.h"
 
 namespace ircd
 {

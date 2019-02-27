@@ -81,7 +81,7 @@ struct ircd::json::value
 	};
 
 	uint64_t len     : 57;      ///< length indicator
-	enum type type   : 3;       ///< json::type indicator
+	uint64_t type    : 3;       ///< json::type indicator
 	uint64_t serial  : 1;       ///< only *string is used. type indicates JSON
 	uint64_t alloc   : 1;       ///< indicates the pointer for type is owned
 	uint64_t floats  : 1;       ///< for NUMBER type, integer or floating
