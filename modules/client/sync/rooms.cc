@@ -47,40 +47,74 @@ ircd::m::sync::rooms_linear(data &data)
 		json::get<"room_id"_>(event)
 	};
 
-	const scope_restore<decltype(data.room)> theirs
+	const scope_restore their_room
 	{
 		data.room, &room
 	};
 
-	bool ret{false};
-	ret |= _rooms_linear(data, "invite");
-	ret |= _rooms_linear(data, "join");
-	ret |= _rooms_linear(data, "leave");
-	ret |= _rooms_linear(data, "ban");
-	return ret;
-}
+	char membuf[32];
+	const string_view &membership
+	{
+		data.room->membership(membuf, data.user)
+	};
 
-bool
-ircd::m::sync::_rooms_linear(data &data,
-                             const string_view &membership)
-{
-	const scope_restore<decltype(data.membership)> theirs
+	if(!membership)
+		return false;
+
+	const scope_restore their_membership
 	{
 		data.membership, membership
 	};
 
-	bool ret{false};
+	const event::idx room_head
+	{
+		head_idx(std::nothrow, *data.room)
+	};
+
+	const scope_restore their_head
+	{
+		data.room_head, room_head
+	};
+
+	json::stack::checkpoint checkpoint
+	{
+		*data.out
+	};
+
+	json::stack::object membership_
+	{
+		*data.out, membership
+	};
+
+	json::stack::object room_
+	{
+		*data.out, data.room->room_id
+	};
+
+	bool ret(false);
 	m::sync::for_each("rooms", [&data, &ret]
 	(item &item)
 	{
+		json::stack::checkpoint checkpoint
+		{
+			*data.out
+		};
+
 		json::stack::object object
 		{
 			*data.out, item.member_name()
 		};
 
-		ret |= item.linear(data);
-		return true;
+		if(item.linear(data))
+			ret = true;
+		else
+			checkpoint.rollback();
+
+		return !ret;
 	});
+
+	if(!ret)
+		checkpoint.rollback();
 
 	return ret;
 }

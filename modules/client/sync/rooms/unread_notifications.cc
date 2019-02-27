@@ -34,7 +34,39 @@ ircd::m::sync::room_unread_notifications
 bool
 ircd::m::sync::room_unread_notifications_linear(data &data)
 {
-	return false;
+	assert(data.event);
+	if(!json::get<"event_id"_>(*data.event))
+		return false;
+
+	const auto &room{*data.room};
+	m::event::id::buf last_read;
+	if(!m::receipt::read(last_read, room.room_id, data.user))
+		return false;
+
+	const auto start_idx
+	{
+		index(last_read)
+	};
+
+	// highlight_count
+	json::stack::member
+	{
+		*data.out, "highlight_count", json::value
+		{
+			_highlight_count(room, data.user, start_idx, data.range.second)
+		}
+	};
+
+	// notification_count
+	json::stack::member
+	{
+		*data.out, "notification_count", json::value
+		{
+			_notification_count(room, start_idx, data.range.second)
+		}
+	};
+
+	return true;
 }
 
 bool

@@ -34,7 +34,14 @@ ircd::m::sync::account_data
 bool
 ircd::m::sync::account_data_linear(data &data)
 {
-	return false;
+	assert(data.event);
+	assert(data.event_idx);
+	json::stack::array array
+	{
+		*data.out, "events"
+	};
+
+	return account_data_(data, *data.event, data.event_idx);
 }
 
 bool

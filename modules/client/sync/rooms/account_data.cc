@@ -19,6 +19,7 @@ namespace ircd::m::sync
 	static bool room_account_data_polylog_events_event(data &, const m::event &);
 	static bool room_account_data_polylog_events(data &);
 	static bool room_account_data_polylog(data &);
+	static bool room_account_data_linear(data &);
 
 	extern item room_account_data;
 }
@@ -27,8 +28,15 @@ decltype(ircd::m::sync::room_account_data)
 ircd::m::sync::room_account_data
 {
 	"rooms.account_data",
-	room_account_data_polylog
+	room_account_data_polylog,
+	room_account_data_linear
 };
+
+bool
+ircd::m::sync::room_account_data_linear(data &data)
+{
+	return false;
+}
 
 bool
 ircd::m::sync::room_account_data_polylog(data &data)

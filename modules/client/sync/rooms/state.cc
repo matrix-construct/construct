@@ -63,17 +63,16 @@ bool
 ircd::m::sync::room_state_linear(data &data)
 {
 	assert(data.event);
-	assert(data.room);
-	assert(json::get<"room_id"_>(*data.event));
-
 	if(!json::get<"state_key"_>(*data.event))
 		return false;
 
-	if(!data.room->membership(data.user, data.membership))
-		return false;
+	json::stack::array array
+	{
+		*data.out, "events"
+	};
 
-	//data.array->append(*data.event);
-	return false;
+	array.append(*data.event);
+	return true;
 }
 
 bool

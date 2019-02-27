@@ -19,7 +19,6 @@ namespace ircd::m::sync
 	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &, bool &);
 	static bool room_timeline_polylog(data &);
 
-	static event::id::buf _room_timeline_linear_events(data &, const m::room &, bool &);
 	static bool room_timeline_linear(data &);
 
 	extern const event::keys::include default_keys;
@@ -52,46 +51,17 @@ ircd::m::sync::default_keys
 bool
 ircd::m::sync::room_timeline_linear(data &data)
 {
-	json::stack::object object
-	{
-		*data.out
-	};
+	assert(data.event);
+	if(!json::get<"event_id"_>(*data.event))
+		return false;
 
-	m::room room;
-
-	// events
-	bool limited{false};
-	m::event::id::buf prev
-	{
-		_room_timeline_linear_events(data, room, limited)
-	};
-
-	// prev_batch
-	json::stack::member
-	{
-		object, "prev_batch", string_view{prev}
-	};
-
-	// limited
-	json::stack::member
-	{
-		object, "limited", json::value{limited}
-	};
-
-	return false;
-}
-
-ircd::m::event::id::buf
-ircd::m::sync::_room_timeline_linear_events(data &data,
-                                            const m::room &room,
-                                            bool &limited)
-{
 	json::stack::array array
 	{
 		*data.out, "events"
 	};
 
-	return {};
+	array.append(*data.event);
+	return true;
 }
 
 bool

@@ -19,6 +19,7 @@ namespace ircd::m::sync
 	static bool _handle_message_receipt(data &, const m::event &);
 	static bool _handle_message(data &, const m::event::idx &);
 	static bool room_ephemeral_m_receipt_m_read_polylog(data &);
+	static bool room_ephemeral_m_receipt_m_read_linear(data &);
 	extern item room_ephemeral_m_receipt_m_read;
 }
 
@@ -26,8 +27,20 @@ decltype(ircd::m::sync::room_ephemeral_m_receipt_m_read)
 ircd::m::sync::room_ephemeral_m_receipt_m_read
 {
 	"rooms.ephemeral.m_receipt",
-	room_ephemeral_m_receipt_m_read_polylog
+	room_ephemeral_m_receipt_m_read_polylog,
+	room_ephemeral_m_receipt_m_read_linear
 };
+
+bool
+ircd::m::sync::room_ephemeral_m_receipt_m_read_linear(data &data)
+{
+	assert(data.event);
+	if(json::get<"type"_>(*data.event) != "m.receipt")
+		return false;
+
+	_handle_message_receipt(data, *data.event);
+	return true;
+}
 
 bool
 ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)

@@ -33,7 +33,33 @@ ircd::m::sync::rooms_ephemeral
 bool
 ircd::m::sync::rooms_ephemeral_linear(data &data)
 {
-	return false;
+	assert(data.event);
+	if(json::get<"event_id"_>(*data.event))
+		return false;
+
+	json::stack::array array
+	{
+		*data.out, "events"
+	};
+
+	bool ret{false};
+	m::sync::for_each("rooms.ephemeral", [&data, &ret]
+	(item &item)
+	{
+		json::stack::checkpoint checkpoint
+		{
+			*data.out
+		};
+
+		if(item.linear(data))
+			ret = true;
+		else
+			checkpoint.rollback();
+
+		return true;
+	});
+
+	return ret;
 }
 
 bool
