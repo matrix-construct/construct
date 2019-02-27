@@ -110,22 +110,15 @@ ircd::m::sync::handle_get(client &client,
 		args.filter_id
 	};
 
-	// Setup an output buffer to compose the response. This has to be at least
-	// the worst-case size of a matrix event (64_KiB) or bad things happen.
-	const unique_buffer<mutable_buffer> buffer
-	{
-		size_t(buffer_size)
-	};
-
 	// Start the chunked encoded response.
 	resource::response::chunked response
 	{
-		client, http::OK, 0
+		client, http::OK, buffer_size
 	};
 
 	json::stack out
 	{
-		buffer,
+		response.buf,
 		std::bind(&sync::flush, std::ref(data), std::ref(response), ph::_1),
 		size_t(flush_hiwat)
 	};
