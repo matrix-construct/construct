@@ -1858,6 +1858,61 @@ const
 // json/vector.h
 //
 
+bool
+ircd::json::operator!(const vector &v)
+{
+	return v.empty();
+}
+
+size_t
+ircd::json::size(const vector &v)
+{
+	return v.size();
+}
+
+bool
+ircd::json::empty(const vector &v)
+{
+	return v.empty();
+}
+
+//
+// vector::vector
+//
+
+size_t
+ircd::json::vector::size()
+const
+{
+	return count();
+}
+
+size_t
+ircd::json::vector::count()
+const
+{
+	return std::distance(begin(), end());
+}
+
+ircd::json::vector::operator
+bool()
+const
+{
+	return !empty();
+}
+
+bool
+ircd::json::vector::empty()
+const
+{
+	const string_view &sv
+	{
+		*static_cast<const string_view *>(this)
+	};
+
+	return sv.empty();
+}
+
 ircd::json::vector::value_type
 ircd::json::vector::operator[](const size_t &i)
 const
@@ -1888,23 +1943,6 @@ const
 	for(; it != end() && i; ++it, i--);
 	return it;
 }
-
-__attribute__((warning("Taking string_view::size() not the count() of vector elements")))
-size_t
-ircd::json::vector::size()
-const
-{
-	return count();
-}
-
-size_t
-ircd::json::vector::count()
-const
-{
-	return std::distance(begin(), end());
-}
-
-
 //
 // vector::const_iterator
 //

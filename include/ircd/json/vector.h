@@ -14,6 +14,10 @@
 namespace ircd::json
 {
 	struct vector;
+
+	bool empty(const json::vector &);
+	size_t size(const json::vector &);
+	bool operator!(const json::vector &);
 }
 
 /// Interface for non-standard, non-delimited concatenations of objects
@@ -43,11 +47,13 @@ struct ircd::json::vector
 	const_iterator begin() const;
 
 	const_iterator find(size_t i) const;
-	size_t count() const;
-	size_t size() const;
-
 	value_type at(const size_t &i) const;
 	value_type operator[](const size_t &i) const;
+
+	bool empty() const;
+	operator bool() const;
+	size_t count() const;
+	size_t size() const;
 
 	using string_view::string_view;
 };
