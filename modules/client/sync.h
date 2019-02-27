@@ -37,6 +37,7 @@ namespace ircd::m::sync::longpoll
 	{
 		json::strung strung;
 		std::string client_txnid;
+		event::idx event_idx;
 
 		accepted(const m::vm::eval &eval)
 		:strung
@@ -48,6 +49,10 @@ namespace ircd::m::sync::longpoll
 			eval.copts?
 				eval.copts->client_txnid:
 				string_view{}
+		}
+		,event_idx
+		{
+			eval.sequence
 		}
 		{
 			const json::object object{this->strung};

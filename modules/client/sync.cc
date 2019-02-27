@@ -129,11 +129,6 @@ ircd::m::sync::handle_get(client &client,
 		log, "request %s", loghead(data)
 	};
 
-	json::stack::object object
-	{
-		*data.out
-	};
-
 	const bool shortpolled
 	{
 		range.first > range.second?
@@ -159,6 +154,11 @@ ircd::m::sync::handle_get(client &client,
 void
 ircd::m::sync::empty_response(data &data)
 {
+	json::stack::object top
+	{
+		*data.out
+	};
+
 	// Empty objects added to output otherwise Riot b0rks.
 	json::stack::object
 	{
@@ -218,6 +218,11 @@ ircd::m::sync::polylog_handle(data &data)
 try
 {
 	json::stack::checkpoint checkpoint
+	{
+		*data.out
+	};
+
+	json::stack::object top
 	{
 		*data.out
 	};
@@ -304,6 +309,11 @@ ircd::m::sync::linear_handle(data &data)
 try
 {
 	json::stack::checkpoint checkpoint
+	{
+		*data.out
+	};
+
+	json::stack::object top
 	{
 		*data.out
 	};
@@ -420,7 +430,18 @@ ircd::m::sync::linear_proffer_event(data &data,
 		data.out, &out
 	};
 
-	return linear_proffer_event_one(data)?
+	json::stack::object top
+	{
+		*data.out
+	};
+
+	const bool success
+	{
+		linear_proffer_event_one(data)
+	};
+
+	top.~object();
+	return success?
 		size(out.completed()):
 		0UL;
 }
@@ -430,11 +451,6 @@ ircd::m::sync::linear_proffer_event(data &data,
 bool
 ircd::m::sync::linear_proffer_event_one(data &data)
 {
-	json::stack::object top
-	{
-		*data.out
-	};
-
 	return !m::sync::for_each(string_view{}, [&data]
 	(item &item)
 	{
