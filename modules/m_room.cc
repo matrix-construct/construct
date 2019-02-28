@@ -52,10 +52,11 @@ ircd::m::send(const m::room &room,
 	return commit(room, event, content);
 }
 
-extern "C" size_t
-count_since(const m::room &room,
-            const m::event::idx &a,
-            const m::event::idx &b)
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::count_since(const m::room &room,
+                     const m::event::idx &a,
+                     const m::event::idx &b)
 {
 	m::room::messages it
 	{

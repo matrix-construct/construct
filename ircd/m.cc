@@ -3753,16 +3753,16 @@ ircd::m::count_since(const room &r,
                      const event::idx &a,
                      const event::idx &b)
 {
-	using prototype = bool (const room &,
-	                        const event::idx &,
-	                        const event::idx &);
+	using prototype = size_t (const room &,
+	                          const event::idx &,
+	                          const event::idx &);
 
-	static mods::import<prototype> _count_since
+	static mods::import<prototype> call
 	{
-		"m_room", "count_since"
+		"m_room", "ircd::m::count_since"
 	};
 
-	return _count_since(r, std::min(a, b), std::max(a, b));
+	return call(r, std::min(a, b), std::max(a, b));
 }
 
 ircd::m::id::room::buf
