@@ -32,6 +32,9 @@ ircd::m::sync::room_ephemeral_m_typing
 bool
 ircd::m::sync::room_ephemeral_m_typing_linear(data &data)
 {
+	if(data.event_idx)
+		return false;
+
 	assert(data.event);
 	if(json::get<"type"_>(*data.event) != "m.typing")
 		return false;

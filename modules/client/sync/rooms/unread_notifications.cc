@@ -34,6 +34,9 @@ ircd::m::sync::room_unread_notifications
 bool
 ircd::m::sync::room_unread_notifications_linear(data &data)
 {
+	if(!data.event_idx)
+		return false;
+
 	assert(data.event);
 	if(!json::get<"event_id"_>(*data.event))
 		return false;

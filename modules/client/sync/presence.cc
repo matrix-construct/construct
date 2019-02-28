@@ -33,6 +33,9 @@ ircd::m::sync::presence
 bool
 ircd::m::sync::presence_linear(data &data)
 {
+	if(!data.event_idx)
+		return false;
+
 	assert(data.event);
 	const m::event &event{*data.event};
 	if(json::get<"type"_>(event) != "ircd.presence")

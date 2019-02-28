@@ -62,6 +62,9 @@ ircd::m::sync::_default_fopts
 bool
 ircd::m::sync::room_state_linear(data &data)
 {
+	if(!data.event_idx)
+		return false;
+
 	assert(data.event);
 	if(!json::get<"state_key"_>(*data.event))
 		return false;
