@@ -300,7 +300,7 @@ namespace ircd::m::sync
 {
 	static bool linear_proffer_event_one(data &);
 	static size_t linear_proffer_event(data &, const mutable_buffer &);
-	static event::idx linear_proffer(data &, window_buffer &);
+	static std::pair<event::idx, bool> linear_proffer(data &, window_buffer &);
 }
 
 bool
@@ -323,7 +323,7 @@ try
 	};
 
 	window_buffer wb{buf};
-	const event::idx last
+	const auto &[last, completed]
 	{
 		linear_proffer(data, wb)
 	};
@@ -335,11 +335,18 @@ try
 
 	if(last)
 	{
+		const auto next
+		{
+			completed?
+				data.range.second:
+				last + 1
+		};
+
 		json::stack::member
 		{
 			top, "next_batch", json::value
 			{
-				lex_cast(last + 1), json::STRING
+				lex_cast(next), json::STRING
 			}
 		};
 
@@ -349,10 +356,11 @@ try
 
 	log::debug
 	{
-		log, "request %s linear %lu:%lu complete",
+		log, "request %s linear %lu:%lu complete:%b",
 		loghead(data),
 		data.range.first,
-		last
+		last,
+		completed
 	};
 
 	return last;
@@ -373,12 +381,12 @@ catch(const std::exception &e)
 /// the supplied window_buffer. The return value is the event_idx of the
 /// last event which fit in the buffer, or 0 of nothing was of interest
 /// to our client in the event iteration.
-ircd::m::event::idx
+std::pair<ircd::m::event::idx, bool>
 ircd::m::sync::linear_proffer(data &data,
                               window_buffer &wb)
 {
 	event::idx ret(0);
-	m::events::for_each(data.range, [&data, &wb, &ret]
+	const auto closure{[&data, &wb, &ret]
 	(const m::event::idx &event_idx, const m::event &event)
 	{
 		const scope_restore their_event
@@ -406,9 +414,17 @@ ircd::m::sync::linear_proffer(data &data,
 		});
 
 		return wb.remaining() >= 65_KiB; //TODO: XXX
-	});
+	}};
 
-	return ret;
+	const auto completed
+	{
+		m::events::for_each(data.range, closure)
+	};
+
+	return
+	{
+		ret, completed
+	};
 }
 
 /// Sets up a json::stack for the iteration of handlers for
