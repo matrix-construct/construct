@@ -47,6 +47,8 @@ handle_edu(client &client,
 	json::get<"depth"_>(event) = json::undefined_number;
 
 	m::vm::opts vmopts;
+	vmopts.notify_clients = false;
+	vmopts.notify_servers = false;
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_EVENT_ID);
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_ROOM_ID);
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_SENDER_ID);
