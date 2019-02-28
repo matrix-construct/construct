@@ -150,9 +150,11 @@ try
 		return;
 	}
 
+	m::vm::copts copts;
+	copts.notify_clients = false;
 	const m::user::room user_room
 	{
-		user
+		user, &copts
 	};
 
 	const auto evid
