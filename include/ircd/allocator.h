@@ -217,7 +217,9 @@ struct ircd::allocator::fixed<T, SIZE>::allocator
 		return &x;
 	}
 
-	pointer allocate(std::nothrow_t, const size_type &n, const const_pointer &hint = nullptr)
+	pointer
+	__attribute__((malloc, warn_unused_result))
+	allocate(std::nothrow_t, const size_type &n, const const_pointer &hint = nullptr)
 	{
 		const auto base(reinterpret_cast<pointer>(s->buf.data()));
 		const uint hintpos(hint? hint - base : -1);
@@ -225,7 +227,9 @@ struct ircd::allocator::fixed<T, SIZE>::allocator
 		return s->in_range(ret)? ret : nullptr;
 	}
 
-	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
+	pointer
+	__attribute__((malloc, returns_nonnull, warn_unused_result))
+	allocate(const size_type &n, const const_pointer &hint = nullptr)
 	{
 		const auto base(reinterpret_cast<pointer>(s->buf.data()));
 		const uint hintpos(hint? hint - base : -1);
@@ -346,7 +350,9 @@ struct ircd::allocator::dynamic<T>::allocator
 	auto address(reference x) const              { return &x;                                      }
 	auto address(const_reference x) const        { return &x;                                      }
 
-	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
+	pointer
+	__attribute__((malloc, returns_nonnull, warn_unused_result))
+	allocate(const size_type &n, const const_pointer &hint = nullptr)
 	{
 		const uint hintpos(hint? hint - s->buf : -1);
 		return s->buf + s->state::allocate(n, hintpos);
@@ -461,7 +467,9 @@ struct ircd::allocator::node<T>::allocator
 		new (p) T(val);
 	}
 
-	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
+	pointer
+	__attribute__((returns_nonnull, warn_unused_result))
+	allocate(const size_type &n, const const_pointer &hint = nullptr)
 	{
 		assert(n == 1);
 		assert(hint == nullptr);
@@ -563,7 +571,9 @@ struct ircd::allocator::twolevel<T, L0_SIZE>::allocator
 		return &x;
 	}
 
-	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
+	pointer
+	__attribute__((malloc, returns_nonnull, warn_unused_result))
+	allocate(const size_type &n, const const_pointer &hint = nullptr)
 	{
 		assert(s);
 		return

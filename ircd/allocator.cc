@@ -433,8 +433,8 @@ ircd::allocator::operator+=(profile &a,
 
 #ifdef RB_PROF_ALLOC // --------------------------------------------------
 
-__attribute__((alloc_size(1), malloc, returns_nonnull))
 void *
+__attribute__((alloc_size(1), malloc, returns_nonnull))
 operator new(const size_t size)
 {
 	void *const &ptr(::malloc(size));
