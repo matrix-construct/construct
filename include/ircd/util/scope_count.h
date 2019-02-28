@@ -13,31 +13,32 @@
 
 namespace ircd::util
 {
-	struct scope_count;
+	template<class T> struct scope_count;
 };
 
 /// A simple boiler-plate for incrementing a counter when constructed and
 /// decrementing it to its previous value when destructed. This takes a runtime
 /// reference to that counter.
+template<class T>
 struct ircd::util::scope_count
 {
-	ulong *count {nullptr};
+	T *count {nullptr};
 
-	scope_count(ulong &count);
+	scope_count(T &count);
 	scope_count(const scope_count &) = delete;
 	scope_count(scope_count &&) noexcept = delete;
 	~scope_count() noexcept;
 };
 
-inline
-ircd::util::scope_count::scope_count(ulong &count)
+template<class T>
+ircd::util::scope_count<T>::scope_count(T &count)
 :count{&count}
 {
 	++count;
 }
 
-inline
-ircd::util::scope_count::~scope_count()
+template<class T>
+ircd::util::scope_count<T>::~scope_count()
 noexcept
 {
 	assert(count);
