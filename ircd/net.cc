@@ -3219,7 +3219,7 @@ ircd::net::string(const mutable_buffer &buf,
 		is_v6(ipp)? fmt::sprintf
 		{
 			buf, "%s:%u",
-			ip::address_v6{std::get<ipp.IP>(ipp)}.to_string(),
+			ip::address_v6{std::get<ipp.IP>(ipp).byte}.to_string(),
 			port(ipp)
 		}:
 		0
@@ -3253,7 +3253,7 @@ ircd::net::make_endpoint_udp(const ipport &ipport)
 	{
 		is_v6(ipport)? ip::udp::endpoint
 		{
-			asio::ip::address_v6 { std::get<ipport.IP>(ipport) }, port(ipport)
+			asio::ip::address_v6 { std::get<ipport.IP>(ipport).byte }, port(ipport)
 		}
 		: ip::udp::endpoint
 		{
@@ -3269,7 +3269,7 @@ ircd::net::make_endpoint(const ipport &ipport)
 	{
 		is_v6(ipport)? ip::tcp::endpoint
 		{
-			asio::ip::address_v6 { std::get<ipport.IP>(ipport) }, port(ipport)
+			asio::ip::address_v6 { std::get<ipport.IP>(ipport).byte }, port(ipport)
 		}
 		: ip::tcp::endpoint
 		{
@@ -3289,7 +3289,7 @@ const
 		return false;
 
 	assert((is_v4(a) && is_v4(b)) || (is_v6(a) && is_v6(b)));
-	return std::get<a.IP>(a) < std::get<b.IP>(b);
+	return std::get<a.IP>(a).byte < std::get<b.IP>(b).byte;
 }
 
 bool
@@ -3347,8 +3347,8 @@ ircd::net::ipport::ipport(const boost::asio::ip::address &address,
 
 	if(is_v6(*this))
 	{
-		std::get<IP>(*this) = address.to_v6().to_bytes();
-		std::reverse(std::get<IP>(*this).begin(), std::get<IP>(*this).end());
+		std::get<IP>(*this).byte = address.to_v6().to_bytes();
+		std::reverse(std::get<IP>(*this).byte.begin(), std::get<IP>(*this).byte.end());
 	}
 	else host4(*this) = address.to_v4().to_ulong();
 }

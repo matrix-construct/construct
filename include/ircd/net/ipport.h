@@ -11,12 +11,6 @@
 #pragma once
 #define HAVE_IRCD_NET_IPPORT_H
 
-// Forward declarations for boost because it is not included here.
-namespace boost::asio::ip
-{
-	struct address;
-};
-
 namespace ircd::net
 {
 	struct ipport;
@@ -55,7 +49,7 @@ namespace ircd
 /// std::get the type directly.
 ///
 struct ircd::net::ipport
-:std::tuple<std::array<uint8_t, 16>, uint16_t, bool>
+:std::tuple<ipaddr, uint16_t, bool>
 {
 	enum { IP, PORT, TYPE };
 
@@ -97,8 +91,6 @@ ircd::net::ipport::ipport()
 {
 	std::get<PORT>(*this) = 0;
 	std::get<TYPE>(*this) = 0;
-	auto &ip(std::get<IP>(*this));
-	ip.fill(0);
 }
 
 inline ircd::net::ipport::operator
@@ -111,15 +103,13 @@ const
 inline ircd::uint128_t &
 ircd::net::host6(ipport &ipp)
 {
-	auto &bytes{std::get<ipp.IP>(ipp)};
-	return *reinterpret_cast<uint128_t *>(bytes.data());
+	return std::get<ipp.IP>(ipp).v6;
 }
 
 inline const ircd::uint128_t &
 ircd::net::host6(const ipport &ipp)
 {
-	const auto &bytes{std::get<ipp.IP>(ipp)};
-	return *reinterpret_cast<const uint128_t *>(bytes.data());
+	return std::get<ipp.IP>(ipp).v6;
 }
 
 inline bool
@@ -131,15 +121,13 @@ ircd::net::is_v6(const ipport &ipp)
 inline uint32_t &
 ircd::net::host4(ipport &ipp)
 {
-	auto &bytes{std::get<ipp.IP>(ipp)};
-	return *reinterpret_cast<uint32_t *>(bytes.data());
+	return std::get<ipp.IP>(ipp).v4;
 }
 
 inline const uint32_t &
 ircd::net::host4(const ipport &ipp)
 {
-	const auto &bytes{std::get<ipp.IP>(ipp)};
-	return *reinterpret_cast<const uint32_t *>(bytes.data());
+	return std::get<ipp.IP>(ipp).v4;
 }
 
 inline bool
