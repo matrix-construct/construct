@@ -26,14 +26,14 @@ namespace ircd::m::events
 /// (event::idx of 0 is a sentinel)
 ///
 struct ircd::m::events::range
-:std::pair<event::idx, event::idx>
+:event::idx_range
 {
 	const event::fetch::opts *fopts {nullptr};
 
 	range(const event::idx &start,
 	      const event::idx &stop = -1,
 	      const event::fetch::opts *const &fopts = nullptr)
-	:std::pair<event::idx, event::idx>{start, stop}
+	:event::idx_range{start, stop}
 	,fopts{fopts}
 	{}
 };

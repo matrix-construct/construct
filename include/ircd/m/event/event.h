@@ -51,6 +51,7 @@ struct ircd::m::event
 	using keys = json::keys<event>;
 	using id = m::id::event;
 	using idx = uint64_t;
+	using idx_range = std::pair<idx, idx>;
 	using closure = std::function<void (const event &)>;
 	using closure_bool = std::function<bool (const event &)>;
 	using closure_idx = std::function<void (const idx &)>;
