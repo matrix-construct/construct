@@ -20,7 +20,7 @@ template<class T>
 class ircd::ctx::queue
 {
 	dock d;
-	std::queue<T> q;
+	std::deque<T> q;
 	size_t w {0};
 
   public:
@@ -54,7 +54,7 @@ void
 ircd::ctx::queue<T>::push(T&& t)
 noexcept
 {
-	q.push(std::forward<T>(t));
+	q.push_back(std::forward<T>(t));
 	d.notify();
 }
 
@@ -62,7 +62,7 @@ template<class T>
 void
 ircd::ctx::queue<T>::push(const T &t)
 {
-	q.push(t);
+	q.push_back(t);
 	d.notify();
 }
 
@@ -92,7 +92,7 @@ ircd::ctx::queue<T>::pop()
 
 	assert(!q.empty());
 	auto ret(std::move(q.front()));
-	q.pop();
+	q.pop_front();
 	return ret;
 }
 
