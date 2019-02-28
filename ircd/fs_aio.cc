@@ -173,12 +173,8 @@ ircd::fs::aio::read(const fd &fd,
 		fd, bufs, opts
 	};
 
-	stats.cur_reads++;
+	const scope_count cur_reads{stats.cur_reads};
 	stats.max_reads = std::max(stats.max_reads, stats.cur_reads);
-	const unwind dec{[]
-	{
-		stats.cur_reads--;
-	}};
 
 	// Make request; blocks ircd::ctx until completed or throw.
 	const size_t bytes
@@ -225,13 +221,15 @@ ircd::fs::aio::write(const fd &fd,
 	};
 	#endif
 
-	stats.cur_bytes_write += req_bytes;
-	stats.cur_writes++;
+	// track current write count
+	const scope_count cur_writes{stats.cur_writes};
 	stats.max_writes = std::max(stats.max_writes, stats.cur_writes);
+
+	// track current write bytes count
+	stats.cur_bytes_write += req_bytes;
 	const unwind dec{[&req_bytes]
 	{
 		stats.cur_bytes_write -= req_bytes;
-		stats.cur_writes--;
 	}};
 
 	// Make the request; ircd::ctx blocks here. Throws on error

@@ -1767,11 +1767,10 @@ ircd::net::listener_udp::acceptor::operator()(datagram &datagram)
 		this->interrupt();
 	}};
 
-	this->waiting++;
-	const unwind dec{[this]
+	const scope_count waiting
 	{
-		this->waiting--;
-	}};
+		this->waiting
+	};
 
 	ip::udp::endpoint ep;
 	size_t rlen; continuation

@@ -517,12 +517,7 @@ ircd::m::sync::longpoll::poll(data &data,
                               const args &args)
 try
 {
-	const unwind unpoll{[]
-	{
-		--polling;
-	}};
-
-	++polling; do
+	const scope_count polling{longpoll::polling}; do
 	{
 		if(!dock.wait_until(args.timesout))
 			break;
@@ -537,7 +532,7 @@ try
 
 		const unwind pop{[]
 		{
-			if(polling <= 1)
+			if(longpoll::polling <= 1)
 				queue.pop_front();
 		}};
 

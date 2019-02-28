@@ -102,11 +102,10 @@ template<class T,
 T
 ircd::ctx::queue<T, A>::pop()
 {
-	++w;
-	const unwind uw{[this]
+	const scope_count w
 	{
-		--w;
-	}};
+		this->w
+	};
 
 	d.wait([this]
 	{
@@ -125,11 +124,10 @@ template<class duration>
 T
 ircd::ctx::queue<T, A>::pop_for(const duration &dur)
 {
-	++w;
-	const unwind uw{[this]
+	const scope_count w
 	{
-		--w;
-	}};
+		this->w
+	};
 
 	const bool ready
 	{
@@ -154,11 +152,10 @@ template<class time_point>
 T
 ircd::ctx::queue<T, A>::pop_until(time_point&& tp)
 {
-	++w;
-	const unwind uw{[this]
+	const scope_count w
 	{
-		--w;
-	}};
+		this->w
+	};
 
 	const bool ready
 	{

@@ -1391,13 +1391,12 @@ void
 ircd::ctx::pool::main()
 noexcept try
 {
-	++running;
-	q_max.notify();
-	const unwind avail([this]
+	const scope_count running
 	{
-		--running;
-	});
+		this->running
+	};
 
+	q_max.notify();
 	while(!termination(cur()))
 		work();
 }
@@ -1425,10 +1424,13 @@ try
 		std::move(q.pop())
 	};
 
-	++working;
+	const scope_count working
+	{
+		this->working
+	};
+
 	const unwind avail([this]
 	{
-		--working;
 		q_max.notify();
 	});
 

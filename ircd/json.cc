@@ -2188,13 +2188,9 @@ try
 
 	thread_local member_arrays ma;
 	thread_local size_t mctr;
-	const size_t mc{mctr++};
+	const size_t mc{mctr};
+	const scope_count _mc{mctr};
 	assert(mc < ma.size());
-	const unwind uw{[&mc]
-	{
-		--mctr;
-		assert(mctr == mc);
-	}};
 
 	size_t i(0);
 	auto &m{ma.at(mc)};
@@ -2932,13 +2928,9 @@ try
 
 	thread_local member_arrays ma;
 	thread_local size_t mctr;
-	const size_t mc{mctr++};
+	const size_t mc{mctr};
+	const scope_count _mc{mctr};
 	assert(mc < ma.size());
-	const unwind uw{[&mc]
-	{
-		--mctr;
-		assert(mctr == mc);
-	}};
 
 	size_t i(0);
 	auto &m{ma.at(mc)};

@@ -311,11 +311,10 @@ ircd::m::state::_dfs_recurse(const search_closure &closure,
                              const json::array &key,
                              int &depth)
 {
-	++depth;
-	const unwind down{[&depth]
+	const scope_count down
 	{
-		--depth;
-	}};
+		depth
+	};
 
 	const node::rep rep{node};
 	const auto kpos{rep.find(key)};
@@ -458,9 +457,12 @@ ircd::m::state::_insert(int8_t &height,
                         node::rep &push)
 {
 	// Recursion metrics
-	const unwind down{[&height]{ --height; }};
-	if(unlikely(++height >= MAX_HEIGHT))
-		throw panic{"recursion limit exceeded"};
+	const scope_count down{height};
+	if(unlikely(height >= MAX_HEIGHT))
+		throw panic
+		{
+			"recursion limit exceeded"
+		};
 
 	// This function assumes that any node argument is a previously "existing"
 	// node which means it contains at least one key/value.
@@ -748,9 +750,12 @@ ircd::m::state::_remove(int8_t &height,
                         const mutable_buffer &idbuf,
                         node::rep &push)
 {
-	const unwind down{[&height]{ --height; }};
-	if(unlikely(++height >= MAX_HEIGHT))
-		throw panic{"recursion limit exceeded"};
+	const scope_count down{height};
+	if(unlikely(height >= MAX_HEIGHT))
+		throw panic
+		{
+			"recursion limit exceeded"
+		};
 
 	node::rep rep{node};
 	const auto pos{node.find(key)};

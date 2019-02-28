@@ -302,14 +302,17 @@ ircd::resource::method::operator()(client &client,
                                    const string_view &content_partial)
 try
 {
-	++stats->requests;
-	++stats->pending;
-	const unwind dec_pending{[this]
+	const unwind on_idle{[this]
 	{
-		assert(stats->pending > 0);
-		if(--stats->pending == 0)
+		if(stats->pending == 0)
 			idle_dock.notify_all();
 	}};
+
+	++stats->requests;
+	const scope_count pending
+	{
+		stats->pending
+	};
 
 	// Bail out if the method limited the amount of content and it was exceeded.
 	if(head.content_length > opts->payload_max)
