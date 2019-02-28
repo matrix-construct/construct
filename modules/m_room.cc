@@ -298,11 +298,10 @@ make_prev__buf(const m::room &room,
 	};
 }
 
-extern "C" std::pair<bool, int64_t>
-is_complete(const m::room &room)
+std::pair<bool, int64_t>
+IRCD_MODULE_EXPORT
+ircd::m::is_complete(const room &room)
 {
-	using namespace ircd::m;
-
 	static const event::keys::include fkeys
 	{
 		"depth"

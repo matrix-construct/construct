@@ -3719,6 +3719,19 @@ ircd::m::commit(const room &room,
 	return eval.event_id;
 }
 
+std::pair<bool, int64_t>
+ircd::m::is_complete(const room &r)
+{
+	using prototype = std::pair<bool, int64_t> (const room &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::is_complete"
+	};
+
+	return call(r);
+}
+
 size_t
 ircd::m::count_since(const m::event::id &a,
                      const m::event::id &b)

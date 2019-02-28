@@ -20,6 +20,9 @@ namespace ircd::m
 	size_t count_since(const room &, const m::event::id &, const m::event::id &);
 	size_t count_since(const m::event::idx &, const m::event::idx &);
 	size_t count_since(const m::event::id &, const m::event::id &);
+
+	// [GET] Check if fully acquired locally
+	std::pair<bool, int64_t> is_complete(const room &);
 }
 
 /// Interface to room messages
