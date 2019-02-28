@@ -661,6 +661,7 @@ RB_CHK_SYSHEADER(string_view, [STRING_VIEW])
 RB_CHK_SYSHEADER(optional, [OPTIONAL])
 RB_CHK_SYSHEADER(new, [NEW])
 RB_CHK_SYSHEADER(regex, [REGEX])
+RB_CHK_SYSHEADER(memory_resource, [MEMORY_RESOURCE])
 
 dnl unix platform
 RB_CHK_SYSHEADER(unistd.h, [UNISTD_H])

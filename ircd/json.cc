@@ -488,6 +488,7 @@ ircd::json::merge(stack::object &out,
 {
 	struct val
 	{
+		//TODO: optimize with std::pmr::monotonic_buffer_resource et al
 		std::map<string_view, val, std::less<>> o;
 		std::vector<string_view> a;
 		string_view v;
