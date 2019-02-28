@@ -910,6 +910,23 @@ ircd::m::room::state::state(const m::room &room,
 {
 }
 
+size_t
+ircd::m::room::state::prefetch(const event::idx &start,
+                               const event::idx &stop)
+const
+{
+	return prefetch(string_view{}, start, stop);
+}
+
+size_t
+ircd::m::room::state::prefetch(const string_view &type,
+                               const event::idx &start,
+                               const event::idx &stop)
+const
+{
+	return prefetch(*this, type, event::idx_range{start, stop});
+}
+
 ircd::m::event::idx
 ircd::m::room::state::get(const string_view &type,
                           const string_view &state_key)

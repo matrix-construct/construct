@@ -346,13 +346,21 @@ ircd::m::is_complete(const room &room)
 	return { true, depth };
 }
 
-extern "C" bool
-state__force_present(const m::event &event)
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::state::force_present(const m::event &event)
 {
 	db::txn txn
 	{
 		*m::dbs::events
 	};
+
+	if(!defined(json::get<"room_id"_>(event)))
+		throw error
+		{
+			"event %s is not a room event (no room_id)",
+			json::get<"event_id"_>(event)
+		};
 
 	if(!defined(json::get<"state_key"_>(event)))
 		throw error
@@ -362,7 +370,7 @@ state__force_present(const m::event &event)
 		};
 
 	m::dbs::write_opts opts;
-	opts.event_idx = index(event);
+	opts.event_idx = m::index(event);
 	opts.present = true;
 	opts.history = false;
 	opts.room_head = false;
@@ -375,15 +383,11 @@ state__force_present(const m::event &event)
 	return true;
 }
 
-extern "C" size_t
-state__rebuild_present(const m::room &room)
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::state::rebuild_present(const state &state)
 {
 	size_t ret{0};
-	const m::room::state state
-	{
-		room
-	};
-
 	const auto create_idx
 	{
 		state.get("m.room.create")
@@ -392,6 +396,11 @@ state__rebuild_present(const m::room &room)
 	static const m::event::fetch::opts fopts
 	{
 		{ db::get::NO_CACHE }
+	};
+
+	const m::room room
+	{
+		state.room_id, nullptr, state.fopts
 	};
 
 	m::room::messages it
@@ -429,15 +438,11 @@ state__rebuild_present(const m::room &room)
 	return ret;
 }
 
-extern "C" size_t
-state__rebuild_history(const m::room &room)
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::state::rebuild_history(const state &state)
 {
 	size_t ret{0};
-	const m::room::state state
-	{
-		room
-	};
-
 	const auto create_idx
 	{
 		state.get("m.room.create")
@@ -446,6 +451,11 @@ state__rebuild_history(const m::room &room)
 	static const m::event::fetch::opts fopts
 	{
 		{ db::get::NO_CACHE }
+	};
+
+	const m::room room
+	{
+		state.room_id, nullptr, state.fopts
 	};
 
 	m::room::messages it
@@ -512,8 +522,9 @@ state__rebuild_history(const m::room &room)
 }
 
 //TODO: state btree.
-extern "C" size_t
-state__clear_history(const m::room &room)
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::state::clear_history(const state &state)
 {
 	static const db::gopts gopts
 	{
@@ -527,7 +538,7 @@ state__clear_history(const m::room &room)
 
 	auto it
 	{
-		m::dbs::room_events.begin(room.room_id, gopts)
+		m::dbs::room_events.begin(state.room_id, gopts)
 	};
 
 	size_t ret{0};
@@ -543,7 +554,7 @@ state__clear_history(const m::room &room)
 		thread_local char buf[m::dbs::ROOM_EVENTS_KEY_MAX_SIZE];
 		const string_view key
 		{
-			m::dbs::room_events_key(buf, room.room_id, depth, event_idx)
+			m::dbs::room_events_key(buf, state.room_id, depth, event_idx)
 		};
 
 		db::txn::append
@@ -567,10 +578,11 @@ state__prefetch__yield_modulus
 	{ "default",  256L                                       },
 };
 
-extern "C" size_t
-state__prefetch(const m::room::state &state,
-                const string_view &type,
-                const std::pair<m::event::idx, m::event::idx> &range)
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::state::prefetch(const state &state,
+                               const string_view &type,
+                               const event::idx_range &range)
 {
 	const m::event::fetch::opts &fopts
 	{

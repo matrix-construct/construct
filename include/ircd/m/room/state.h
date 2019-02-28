@@ -92,4 +92,10 @@ struct ircd::m::room::state
 	state() = default;
 	state(const state &) = delete;
 	state &operator=(const state &) = delete;
+
+	static size_t prefetch(const state &, const string_view &, const event::idx_range &);
+	static size_t clear_history(const state &);
+	static size_t rebuild_history(const state &);
+	static size_t rebuild_present(const state &);
+	static bool force_present(const event &);
 };

@@ -3408,28 +3408,71 @@ ircd::m::user::room_account_data::_type(const mutable_buffer &out,
 // m/room.h
 //
 
-size_t
-ircd::m::room::state::prefetch(const event::idx &start,
-                               const event::idx &stop)
-const
+bool
+ircd::m::room::state::force_present(const event &event)
 {
-	return prefetch(string_view{}, start, stop);
+	using prototype = bool (const m::event &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::force_present"
+	};
+
+	return call(event);
 }
 
 size_t
-ircd::m::room::state::prefetch(const string_view &type,
-                               const event::idx &start,
-                               const event::idx &stop)
-const
+ircd::m::room::state::rebuild_present(const state &state)
 {
-	using prototype = size_t (const state &, const string_view &, const std::pair<event::idx, event::idx> &);
+	using prototype = bool (const room::state &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"m_room", "state__prefetch"
+		"m_room", "ircd::m::room::state::rebuild_present"
 	};
 
-	return function(*this, type, std::pair<event::idx, event::idx>{start, stop});
+	return call(state);
+}
+
+size_t
+ircd::m::room::state::rebuild_history(const state &state)
+{
+	using prototype = bool (const room::state &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::rebuild_history"
+	};
+
+	return call(state);
+}
+
+size_t
+ircd::m::room::state::clear_history(const state &state)
+{
+	using prototype = bool (const room::state &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::clear_history"
+	};
+
+	return call(state);
+}
+
+size_t
+ircd::m::room::state::prefetch(const state &state,
+                               const string_view &type,
+                               const event::idx_range &range)
+{
+	using prototype = size_t (const room::state &, const string_view &, const event::idx_range &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::prefetch"
+	};
+
+	return call(state, type, range);
 }
 
 ircd::m::room

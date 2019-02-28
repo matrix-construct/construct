@@ -6870,15 +6870,9 @@ console_cmd__room__complete(opt &out, const string_view &line)
 		room_id
 	};
 
-	using prototype = std::pair<bool, int64_t> (const m::room &);
-	static mods::import<prototype> is_complete
-	{
-		"m_room", "is_complete"
-	};
-
 	const auto res
 	{
-		is_complete(room)
+		m::is_complete(room)
 	};
 
 	out << (res.first? "YES" : "NO")
@@ -7456,15 +7450,9 @@ console_cmd__room__state__force(opt &out, const string_view &line)
 		event_id
 	};
 
-	using prototype = bool (const m::event &);
-	static mods::import<prototype> state__force_present
-	{
-		"m_room", "state__force_present"
-	};
-
 	const auto res
 	{
-		state__force_present(event)
+		m::room::state::force_present(event)
 	};
 
 	out << "forced " << event_id << " into present state" << std::endl;
@@ -7486,20 +7474,16 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 			"*"_sv
 	};
 
-	using prototype = size_t (const m::room &);
-	static mods::import<prototype> state__rebuild_present
-	{
-		"m_room", "state__rebuild_present"
-	};
-
 	if(room_id == "*")
 	{
 		m::rooms::for_each(m::room::id::closure{[&out]
 		(const m::room::id &room_id)
 		{
+			const m::room room{room_id};
+			const m::room::state state{room};
 			const size_t count
 			{
-				state__rebuild_present(m::room{room_id})
+				m::room::state::rebuild_present(state)
 			};
 
 			out << "done " << room_id << " " << count << std::endl;
@@ -7508,9 +7492,11 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 		return true;
 	}
 
+	const m::room room{room_id};
+	const m::room::state state{room};
 	const size_t count
 	{
-		state__rebuild_present(m::room{room_id})
+		state.rebuild_present(state)
 	};
 
 	out << "done " << room_id << " " << count << std::endl;
@@ -7530,20 +7516,14 @@ console_cmd__room__state__rebuild__history(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const m::room room
+	const m::room::state state
 	{
 		room_id
 	};
 
-	using prototype = size_t (const m::room &);
-	static mods::import<prototype> state__rebuild_history
-	{
-		"m_room", "state__rebuild_history"
-	};
-
 	const size_t count
 	{
-		state__rebuild_history(room)
+		state.rebuild_history(state)
 	};
 
 	out << "done " << count << std::endl;
@@ -7563,7 +7543,7 @@ console_cmd__room__state__history__clear(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const m::room room
+	const m::room::state state
 	{
 		room_id
 	};
@@ -7576,7 +7556,7 @@ console_cmd__room__state__history__clear(opt &out, const string_view &line)
 
 	const size_t count
 	{
-		state__clear_history(room)
+		state.clear_history(state)
 	};
 
 	out << "done " << count << std::endl;
