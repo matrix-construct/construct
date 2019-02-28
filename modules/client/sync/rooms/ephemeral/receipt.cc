@@ -41,7 +41,12 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_linear(data &data)
 	if(json::get<"type"_>(*data.event) != "m.receipt")
 		return false;
 
-	_handle_message_receipt(data, *data.event);
+	json::stack::object object
+	{
+		*data.out
+	};
+
+	object.append(*data.event);
 	return true;
 }
 
