@@ -162,17 +162,17 @@ ircd::m::sync::empty_response(data &data)
 	// Empty objects added to output otherwise Riot b0rks.
 	json::stack::object
 	{
-		*data.out, "rooms"
+		top, "rooms"
 	};
 
 	json::stack::object
 	{
-		*data.out, "presence"
+		top, "presence"
 	};
 
 	json::stack::member
 	{
-		*data.out, "next_batch", json::value
+		top, "next_batch", json::value
 		{
 			lex_cast(data.range.second), json::STRING
 		}
@@ -263,7 +263,7 @@ try
 
 	if(stats_info) log::info
 	{
-		log, "polylog %s commit:%b complete",
+		log, "request %s polylog commit:%b complete",
 		loghead(data),
 		ret
 	};
@@ -339,7 +339,7 @@ try
 		{
 			top, "next_batch", json::value
 			{
-				lex_cast(last+1), json::STRING
+				lex_cast(last + 1), json::STRING
 			}
 		};
 
@@ -349,8 +349,9 @@ try
 
 	log::debug
 	{
-		log, "linear %s last:%lu complete",
+		log, "request %s linear %lu:%lu complete",
 		loghead(data),
+		data.range.first,
 		last
 	};
 
@@ -498,17 +499,17 @@ ircd::m::sync::longpoll::handle_notify(const m::event &event,
 bool
 ircd::m::sync::longpoll::poll(data &data,
                               const args &args)
+try
 {
-	++polling;
 	const unwind unpoll{[]
 	{
 		--polling;
 	}};
 
-	while(1)
+	++polling; do
 	{
 		if(!dock.wait_until(args.timesout))
-			return false;
+			break;
 
 		if(queue.empty())
 			continue;
@@ -527,6 +528,20 @@ ircd::m::sync::longpoll::poll(data &data,
 		if(handle(data, args, accepted))
 			return true;
 	}
+	while(1);
+
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "longpoll %s FAILED :%s",
+		loghead(data),
+		e.what()
+	};
+
+	throw;
 }
 
 bool
@@ -561,19 +576,28 @@ ircd::m::sync::longpoll::handle(data &data,
 
 	if(ret)
 	{
+		const auto next
+		{
+			event.event_idx?
+				event.event_idx + 1:
+				data.range.second
+		};
+
 		json::stack::member
 		{
 			*data.out, "next_batch", json::value
 			{
-				lex_cast(event.event_idx + 1), json::STRING
+				lex_cast(next), json::STRING
 			}
 		};
 
 		log::debug
 		{
-			log, "longpoll %s idx:%lu complete",
+			log, "request %s longpoll %lu:%lu vm:%lu complete",
 			loghead(data),
-			event.event_idx
+			event.event_idx,
+			next,
+			vm::current_sequence
 		};
 	}
 	else checkpoint.rollback();
