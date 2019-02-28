@@ -37,6 +37,7 @@ namespace ircd::buffer
 	struct const_buffer;
 	struct mutable_buffer;
 	struct window_buffer;
+	struct parse_buffer;
 	template<class buffer, size_t SIZE> struct fixed_buffer;
 	template<class buffer> struct unique_buffer;
 	template<class buffer> struct shared_buffer;
@@ -96,6 +97,7 @@ namespace ircd::buffer::buffers
 #include "const_buffer.h"
 #include "fixed_buffer.h"
 #include "window_buffer.h"
+#include "parse_buffer.h"
 #include "unique_buffer.h"
 #include "shared_buffer.h"
 
