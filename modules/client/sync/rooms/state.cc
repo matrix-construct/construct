@@ -62,6 +62,11 @@ ircd::m::sync::_default_fopts
 bool
 ircd::m::sync::room_state_linear(data &data)
 {
+	// if since token is non-zero, any events in the range are
+	// included in the timeline array and not the state array.
+	if(data.range.first)
+		return false;
+
 	if(!data.event_idx)
 		return false;
 

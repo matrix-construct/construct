@@ -54,9 +54,6 @@ ircd::m::sync::room_timeline_linear(data &data)
 		return false;
 
 	assert(data.event);
-	if(!json::get<"event_id"_>(*data.event))
-		return false;
-
 	json::stack::array array
 	{
 		*data.out, "events"
