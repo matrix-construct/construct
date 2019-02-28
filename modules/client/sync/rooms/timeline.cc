@@ -16,11 +16,10 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
+	static void _room_timeline_append(data &, json::stack::array &, const m::event::idx &, const m::event &);
 	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &, bool &);
 	static bool room_timeline_polylog(data &);
-
 	static bool room_timeline_linear(data &);
-
 	extern const event::keys::include default_keys;
 	extern item room_timeline;
 }
@@ -60,7 +59,7 @@ ircd::m::sync::room_timeline_linear(data &data)
 		*data.out, "events"
 	};
 
-	array.append(*data.event);
+	_room_timeline_append(data, array, data.event_idx, *data.event);
 	return true;
 }
 
@@ -136,28 +135,38 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	if(i > 0)
 		for(; it && i > -1; ++it, --i)
 		{
-			json::stack::object object
-			{
-				array
-			};
-
 			const m::event &event(*it);
-			object.append(event);
+			const m::event::idx &event_idx(it.event_idx());
+			_room_timeline_append(data, array, event_idx, event);
 			ret = true;
-
-			json::stack::object unsigned_
-			{
-				object, "unsigned"
-			};
-
-			json::stack::member
-			{
-				unsigned_, "age", json::value
-				{
-					long(vm::current_sequence - it.event_idx())
-				}
-			};
 		}
 
 	return event_id;
+}
+
+void
+ircd::m::sync::_room_timeline_append(data &data,
+                                     json::stack::array &events,
+                                     const m::event::idx &event_idx,
+                                     const m::event &event)
+{
+	json::stack::object object
+	{
+		events
+	};
+
+	object.append(event);
+
+	json::stack::object unsigned_
+	{
+		object, "unsigned"
+	};
+
+	json::stack::member
+	{
+		unsigned_, "age", json::value
+		{
+			long(vm::current_sequence - event_idx)
+		}
+	};
 }
