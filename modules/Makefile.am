@@ -332,9 +332,11 @@ client_module_LTLIBRARIES += \
 # client/sync/rooms/ephemeral/
 
 client_client_sync_rooms_ephemeral_receipt_la_SOURCES = client/sync/rooms/ephemeral/receipt.cc
+client_client_sync_rooms_ephemeral_typing_la_SOURCES = client/sync/rooms/ephemeral/typing.cc
 
 client_module_LTLIBRARIES += \
 	client/client_sync_rooms_ephemeral_receipt.la \
+	client/client_sync_rooms_ephemeral_typing.la \
 	###
 
 #
