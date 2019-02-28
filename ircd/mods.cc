@@ -828,12 +828,19 @@ try
 		std::make_shared<mod>(std::move(path), flags)
 	};
 
+	assert(ret);
+	assert(ret->header);
+	assert(ret->header->meta);
+	if(!ret || !ret->header)
+		throw panic
+		{
+			"Unknown module error."
+		};
+
 	// Call the user-supplied init function well after fully loading and
 	// construction of the module. This way the init function sees the module
 	// as loaded and can make shared_ptr references, etc.
-	assert(ret->header);
-	assert(ret->header->meta);
-	if(ret->header->meta->init)
+	if(ret->header->meta && ret->header->meta->init)
 		ret->header->meta->init();
 
 	log::info
