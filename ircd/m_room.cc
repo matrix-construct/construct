@@ -2244,7 +2244,7 @@ const try
 
 		const json::object &users
 		{
-			content.at("users")
+			content.get("users")
 		};
 
 		ret = users.get<int64_t>(user_id, users_default);
@@ -2280,7 +2280,7 @@ const try
 		default_event_level
 	};
 
-	view([&type, &ret]
+	const auto closure{[&type, &ret]
 	(const json::object &content)
 	{
 		const auto &events_default
@@ -2294,7 +2294,12 @@ const try
 		};
 
 		ret = events.get<int64_t>(type, events_default);
-	});
+	}};
+
+	const bool has_power_levels_event
+	{
+		view(closure)
+	};
 
 	return ret;
 }
@@ -2316,7 +2321,7 @@ const try
 		default_power_level
 	};
 
-	view([&type, &ret]
+	const auto closure{[&type, &ret]
 	(const json::object &content)
 	{
 		const auto &state_default
@@ -2330,7 +2335,12 @@ const try
 		};
 
 		ret = events.get<int64_t>(type, state_default);
-	});
+	}};
+
+	const bool has_power_levels_event
+	{
+		view(closure)
+	};
 
 	return ret;
 }
