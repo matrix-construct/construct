@@ -87,9 +87,25 @@ uint
 ircd::allocator::state::allocate(const size_type &n,
                                  const uint &hint)
 {
+	const auto ret
+	{
+		allocate(std::nothrow, n, hint)
+	};
+
+	if(unlikely(ret >= size))
+		throw std::bad_alloc();
+
+	return ret;
+}
+
+uint
+ircd::allocator::state::allocate(std::nothrow_t,
+                                 const size_type &n,
+                                 const uint &hint)
+{
 	const auto next(this->next(n));
 	if(unlikely(next >= size))         // No block of n was found anywhere (next is past-the-end)
-		throw std::bad_alloc();
+		return next;
 
 	for(size_t i(0); i < n; ++i)
 	{

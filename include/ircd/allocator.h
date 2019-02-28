@@ -127,6 +127,7 @@ struct ircd::allocator::state
   public:
 	bool available(const size_t &n = 1) const;
 	void deallocate(const uint &p, const size_t &n);
+	uint allocate(std::nothrow_t, const size_t &n, const uint &hint = -1);
 	uint allocate(const size_t &n, const uint &hint = -1);
 
 	state(const size_t &size = 0,
@@ -158,6 +159,12 @@ struct ircd::allocator::fixed
 	std::array<typename value::type, MAX> buf;
 
   public:
+	bool in_range(const T *const &ptr) const
+	{
+		const auto base(reinterpret_cast<const T *>(buf.data()));
+		return ptr >= base && ptr < base + MAX;
+	}
+
 	allocator operator()();
 	operator allocator();
 
@@ -207,6 +214,14 @@ struct ircd::allocator::fixed<T, SIZE>::allocator
 	auto address(const_reference x) const
 	{
 		return &x;
+	}
+
+	pointer allocate(std::nothrow_t, const size_type &n, const const_pointer &hint = nullptr)
+	{
+		const auto base(reinterpret_cast<pointer>(s->buf.data()));
+		const uint hintpos(hint? hint - base : -1);
+		const pointer ret(base + s->state::allocate(std::nothrow, n, hintpos));
+		return s->in_range(ret)? ret : nullptr;
 	}
 
 	pointer allocate(const size_type &n, const const_pointer &hint = nullptr)
