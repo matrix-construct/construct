@@ -862,7 +862,7 @@ ircd::resource::response::chunked::finish()
 	if(!c)
 		return false;
 
-	write(const_buffer{});
+	write(const_buffer{}, false);
 	c = nullptr;
 	return true;
 }
@@ -879,12 +879,16 @@ ircd::resource::response::chunked::flush(const const_buffer &buf)
 }
 
 size_t
-ircd::resource::response::chunked::write(const const_buffer &chunk)
+ircd::resource::response::chunked::write(const const_buffer &chunk,
+                                         const bool &ignore_empty)
 try
 {
 	size_t ret{0};
 
 	if(!c)
+		return ret;
+
+	if(ignore_empty && empty(chunk))
 		return ret;
 
 	//TODO: bring iov from net::socket -> net::write_() -> client::write_()

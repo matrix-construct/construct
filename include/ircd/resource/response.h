@@ -41,7 +41,7 @@ struct ircd::resource::response::chunked
 	client *c {nullptr};
 	unique_buffer<mutable_buffer> buf;
 
-	size_t write(const const_buffer &chunk);
+	size_t write(const const_buffer &chunk, const bool &ignore_empty = true);
 	const_buffer flush(const const_buffer &);
 	bool finish();
 
