@@ -33,6 +33,7 @@ struct ircd::m::room::origins
 	size_t count() const;
 
 	// select an origin in the room at random; use proffer to refuse and try another.
+	static bool random(const origins &, const closure &, const closure_bool &);
 	string_view random(const mutable_buffer &buf, const closure_bool &proffer = nullptr) const;
 	bool random(const closure &, const closure_bool &proffer = nullptr) const;
 

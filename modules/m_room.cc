@@ -88,17 +88,13 @@ ircd::m::count_since(const m::room &room,
 	return ret;
 }
 
-extern "C" bool
-random_origin(const m::room &room,
-              const m::room::origins::closure &view,
-              const m::room::origins::closure_bool &proffer = nullptr)
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::origins::random(const origins &origins,
+                               const closure &view,
+                               const closure_bool &proffer)
 {
 	bool ret{false};
-	const m::room::origins origins
-	{
-		room
-	};
-
 	const size_t max
 	{
 		origins.count()
@@ -112,7 +108,7 @@ random_origin(const m::room &room,
 		ssize_t(rand::integer(0, max - 1))
 	};
 
-	const m::room::origins::closure_bool closure{[&proffer, &view, &select]
+	const closure_bool closure{[&proffer, &view, &select]
 	(const string_view &origin)
 	{
 		if(select-- > 0)

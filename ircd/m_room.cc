@@ -1861,16 +1861,22 @@ ircd::m::room::origins::random(const closure &view,
                                const closure_bool &proffer)
 const
 {
-	using prototype = bool (const m::room &,
-	                        const m::room::origins::closure &,
-	                        const m::room::origins::closure_bool &);
+	return random(*this, view, proffer);
+}
 
-	static mods::import<prototype> random_origin
+bool
+ircd::m::room::origins::random(const origins &o,
+                               const closure &view,
+                               const closure_bool &proffer)
+{
+	using prototype = bool (const origins &, const closure &, const closure_bool &);
+
+	static mods::import<prototype> call
 	{
-		"m_room", "random_origin"
+		"m_room", "ircd::m::room::origins::random"
 	};
 
-	return random_origin(room, view, proffer);
+	return call(o, view, proffer);
 }
 
 size_t
