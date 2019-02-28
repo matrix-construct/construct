@@ -214,6 +214,9 @@ namespace ircd
 	static void cache_warm_origin(const string_view &origin);
 }
 
+decltype(ircd::resource::method::idle_dock)
+ircd::resource::method::idle_dock;
+
 //
 // method::method
 //
@@ -277,6 +280,20 @@ ircd::resource::method::method(struct resource &resource,
 ircd::resource::method::~method()
 noexcept
 {
+	assert(resource);
+	if(stats && stats->pending)
+		log::dwarning
+		{
+			"Resource '%s' method '%s' still waiting for %zu pending requests",
+			resource->path,
+			name,
+			stats->pending
+		};
+
+	idle_dock.wait([this]
+	{
+		return !stats || stats->pending == 0;
+	});
 }
 
 void
@@ -286,6 +303,13 @@ ircd::resource::method::operator()(client &client,
 try
 {
 	++stats->requests;
+	++stats->pending;
+	const unwind dec_pending{[this]
+	{
+		assert(stats->pending > 0);
+		if(--stats->pending == 0)
+			idle_dock.notify_all();
+	}};
 
 	// Bail out if the method limited the amount of content and it was exceeded.
 	if(head.content_length > opts->payload_max)

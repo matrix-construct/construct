@@ -4733,6 +4733,7 @@ console_cmd__resource(opt &out, const string_view &line)
 			    << " "
 			    << std::setw(7) << mp.first
 			    << std::right
+			    << " | CUR " << std::setw(8) << m.stats->pending
 			    << " | REQ " << std::setw(8) << m.stats->requests
 			    << " | RET " << std::setw(8) << m.stats->completions
 			    << " | TIM " << std::setw(8) << m.stats->timeouts

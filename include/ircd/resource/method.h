@@ -20,6 +20,7 @@ struct ircd::resource::method
 
 	static conf::item<bool> x_matrix_verify_origin;
 	static conf::item<bool> x_matrix_verify_destination;
+	static ctx::dock idle_dock;
 
 	struct resource *resource;
 	string_view name;
@@ -68,6 +69,7 @@ struct ircd::resource::method::opts
 
 struct ircd::resource::method::stats
 {
+	uint64_t pending {0};             // Clients currently inside the method
 	uint64_t requests {0};            // The method was found and called.
 	uint64_t timeouts {0};            // The method's timeout was exceeded.
 	uint64_t completions {0};         // The handler returned without throwing.
