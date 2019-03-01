@@ -110,10 +110,10 @@ try
 	};
 
 	std::vector<std::string> ret;
-	std::transform(it, end, std::back_inserter(ret), []
+	std::for_each(it, end, [&ret]
 	(const auto &ent)
 	{
-		return ent.path().string();
+		ret.emplace_back(ent.path().string());
 	});
 
 	return ret;
@@ -134,10 +134,10 @@ try
 	};
 
 	std::vector<std::string> ret;
-	std::transform(it, end, std::back_inserter(ret), []
+	std::for_each(it, end, [&ret]
 	(const auto &ent)
 	{
-		return ent.path().string();
+		ret.emplace_back(ent.path().string());
 	});
 
 	return ret;
