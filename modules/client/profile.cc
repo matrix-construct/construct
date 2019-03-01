@@ -232,6 +232,13 @@ get__profile_full(client &client,
 	return {};
 }
 
+conf::item<seconds>
+remote_request_timeout
+{
+	{ "name",    "ircd.client.profile.remote_request.timeout" },
+	{ "default", 10L                                          }
+};
+
 resource::response
 get__profile_remote(client &client,
                     const resource::request &request,
@@ -259,8 +266,8 @@ try
 		}
 	};
 
-	//TODO: conf
-	if(!federation_request.wait(seconds(8), std::nothrow))
+	const seconds &timeout(remote_request_timeout);
+	if(!federation_request.wait(timeout, std::nothrow))
 		throw m::error
 		{
 			http::GATEWAY_TIMEOUT, "M_PROFILE_TIMEOUT",
