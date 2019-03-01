@@ -780,6 +780,10 @@ try
 
 	return ret;
 }
+catch(const ctx::interrupted &e)
+{
+	throw;
+}
 catch(const std::system_error &e)
 {
 	static const auto operation_canceled
@@ -801,22 +805,24 @@ catch(const std::system_error &e)
 
 	return false;
 }
-catch(const std::exception &e)
+catch(const http::error &e)
 {
+	log::derror
+	{
+		resource::log, "%s HTTP 400 BAD REQUEST :%u %s :%s",
+		loghead(),
+		uint(e.code),
+		http::status(e.code),
+		e.content
+	};
+
 	if(!sock || sock->fini)
 		return false;
-
-	log::error
-	{
-		log, "%s HTTP 500 Internal Error: %s",
-		loghead(),
-		e.what()
-	};
 
 	const ctx::exception_handler eh;
 	resource::response
 	{
-		*this, e.what(), "text/html; charset=utf-8", http::INTERNAL_SERVER_ERROR
+		*this, e.content, "text/html; charset=utf-8", http::BAD_REQUEST, e.headers
 	};
 
 	return false;
@@ -846,6 +852,14 @@ try
 	method(*this, head, content_partial);
 	discard_unconsumed(head);
 	return true;
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::system_error &)
+{
+	throw;
 }
 catch(const http::error &e)
 {
@@ -882,6 +896,25 @@ catch(const http::error &e)
 			discard_unconsumed(head);
 			return true;
 	}
+}
+catch(const std::exception &e)
+{
+	const ctx::exception_handler eh;
+
+	log::error
+	{
+		log, "%s HTTP 500 Internal Error `%s' :%s",
+		loghead(),
+		head.uri,
+		e.what()
+	};
+
+	resource::response
+	{
+		*this, e.what(), "text/html; charset=utf-8", http::INTERNAL_SERVER_ERROR
+	};
+
+	return false;
 }
 
 void
