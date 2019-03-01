@@ -18,12 +18,20 @@
 
 #include <boost/lexical_cast.hpp>
 
+decltype(ircd::LEX_CAST_BUFS)
+ircd::LEX_CAST_BUFS
+{
+	64 // plenty
+};
+
+decltype(ircd::LEX_CAST_BUFSIZE)
+ircd::LEX_CAST_BUFSIZE
+{
+	64
+};
+
 namespace ircd
 {
-	/// The static lex_cast ring buffers are each LEX_CAST_BUFSIZE bytes;
-	/// Consider increasing if some lex_cast<T>(str) has more characters.
-	const size_t LEX_CAST_BUFSIZE {64};
-
 	/// This is a static "ring buffer" to simplify a majority of lex_cast uses.
 	/// If the lex_cast has binary input and string output, and no user buffer
 	/// is supplied, the next buffer here will be used instead. The returned

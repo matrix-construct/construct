@@ -29,7 +29,8 @@ namespace ircd
 	template<class T> string_view lex_cast(T, const mutable_buffer &buf);
 
 	// Circular static thread_local buffer
-	const size_t LEX_CAST_BUFS {256}; // plenty
+	extern const size_t LEX_CAST_BUFS;
+	extern const size_t LEX_CAST_BUFSIZE;
 	template<class T> string_view lex_cast(const T &t);
 }
 
