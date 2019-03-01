@@ -184,21 +184,18 @@ ircd::m::sync::flush(data &data,
                      resource::response::chunked &response,
                      const const_buffer &buffer)
 {
-	const size_t wrote
+	const auto wrote
 	{
-		response.write(buffer)
+		response.flush(buffer)
 	};
 
 	if(data.stats)
 	{
-		data.stats->flush_bytes += wrote;
+		data.stats->flush_bytes += size(wrote);
 		data.stats->flush_count++;
 	}
 
-	return const_buffer
-	{
-		buffer::data(buffer), wrote
-	};
+	return wrote;
 }
 
 // polylog
