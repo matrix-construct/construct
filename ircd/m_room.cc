@@ -869,7 +869,7 @@ decltype(ircd::m::room::state::disable_history)
 ircd::m::room::state::disable_history
 {
 	{ "name",     "ircd.m.room.state.disable_history" },
-	{ "default",  false                               },
+	{ "default",  true                                },
 };
 
 decltype(ircd::m::room::state::readahead_size)

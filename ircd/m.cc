@@ -49,6 +49,15 @@ try
 }
 {
 	presence::set(me, "online", me_online_status_msg);
+
+	if(room::state::disable_history)
+		log::warning
+		{
+			m::log, "Room state history is disabled by the configuration"
+			" (ircd.m.room.state.disable_history). This is for development"
+			" only. You must change this manually when instructed to do so"
+			" by the developer before production use."
+		};
 }
 catch(const http::error &e)
 {
