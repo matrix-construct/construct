@@ -82,6 +82,15 @@ ircd::m::rooms::_for_each(const string_view &room_id_lb,
 	return state.for_each("ircd.room", room_id_lb, keys);
 }
 
+bool
+IRCD_MODULE_EXPORT
+ircd::m::rooms::is_public(const room::id &room_id)
+{
+	const m::room room{public_room_id};
+	const m::room::state state{room};
+	return state.has("ircd.room", room_id);
+}
+
 size_t
 ircd::m::rooms::_count_public(const string_view &server)
 {

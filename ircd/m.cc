@@ -2209,6 +2209,19 @@ ircd::m::rooms::for_each(const user &user,
 	return rooms.for_each(membership, closure);
 }
 
+bool
+ircd::m::rooms::is_public(const room::id &room_id)
+{
+	using prototype = bool (const room::id &);
+
+	static mods::import<prototype> call
+	{
+		"m_rooms", "ircd::m::rooms::is_public"
+	};
+
+	return call(room_id);
+}
+
 size_t
 ircd::m::rooms::count_public(const string_view &server)
 {
