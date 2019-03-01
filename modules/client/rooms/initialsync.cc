@@ -10,109 +10,231 @@
 
 using namespace ircd;
 
-conf::item<size_t>
-initial_backfill
-{
-	{ "name",      "ircd.rooms.initialsync.backfill" },
-	{ "default",   64L                               }
-};
-
 static resource::response
 get__initialsync_remote(client &client,
                         const resource::request &request,
-                        const m::room::id &room_id)
+                        const m::room &room);
+
+static void
+get__initialsync_local(client &client,
+                       const resource::request &request,
+                       const m::room &room,
+                       const m::user &user,
+                       json::stack::object &out);
+
+static conf::item<size_t>
+initial_backfill
 {
-	string_view membership{"join"};
-	const string_view visibility{"public"};
-	std::vector<m::event> messages;
-	std::vector<m::event> state;
-	std::vector<json::value> account_data;
-	const json::strung chunk
-	{
-		messages.data(), messages.data() + messages.size()
-	};
+	{ "name",      "ircd.client.rooms.initialsync.backfill" },
+	{ "default",   20L                                      },
+};
 
-	const json::strung states
-	{
-		state.data(), state.data() + state.size()
-	};
+static conf::item<size_t>
+buffer_size
+{
+	{ "name",     "ircd.client.rooms.initialsync.buffer_size" },
+	{ "default",  long(96_KiB)                                },
+};
 
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "room_id",       room_id                                        },
-			{ "membership",    membership                                     },
-			{ "state",         states                                         },
-			{ "visibility",    visibility                                     },
-			{ "account_data",  { account_data.data(), account_data.size() }   },
-			{ "messages",      json::members
-			{
-				{ "chunk",  chunk }
-			}},
-		}
-	};
-}
+static conf::item<size_t>
+flush_hiwat
+{
+	{ "name",     "ircd.client.rooms.initialsync.flush.hiwat" },
+	{ "default",  long(32_KiB)                                },
+};
 
 resource::response
 get__initialsync(client &client,
                  const resource::request &request,
                  const m::room::id &room_id)
 {
-	if(!exists(room_id))
+	const m::room room
 	{
-		if(!my(room_id))
-			return get__initialsync_remote(client, request, room_id);
+		room_id
+	};
+
+	if(!exists(room))
+	{
+		if(!my(room))
+			return get__initialsync_remote(client, request, room);
 
 		throw m::NOT_FOUND
 		{
-			"room_id '%s' does not exist", string_view{room_id}
+			"room_id '%s' does not exist.", string_view{room_id}
 		};
 	}
 
-	const m::room room{room_id};
-	const m::room::state state
+	resource::response::chunked response
 	{
-		room
+		client, http::OK, buffer_size
 	};
 
-	string_view membership{"join"};
-	const string_view visibility{"public"};
-	std::vector<m::event> messages;
-	std::vector<m::event> statev;
-	std::vector<json::value> account_data;
-	const string_view messages_start{};
-	const string_view messages_end{};
-	const json::strung chunk
+	json::stack out
 	{
-		messages.data(), messages.data() + messages.size()
+		response.buf, response.flusher(), size_t(flush_hiwat)
 	};
 
-	const json::strung states
+	json::stack::object top
 	{
-		statev.data(), statev.data() + statev.size()
+		out
 	};
 
-	const json::strung account_datas
+	get__initialsync_local(client, request, room, request.user_id, top);
+	return response;
+}
+
+void
+get__initialsync_local(client &client,
+                       const resource::request &request,
+                       const m::room &room,
+                       const m::user &user,
+                       json::stack::object &out)
+{
+	char membership_buf[32];
+	json::stack::member
 	{
-		account_data.data(), account_data.data() + account_data.size()
+		out, "membership", room.membership(membership_buf, request.user_id)
 	};
 
-	return resource::response
+	json::stack::member
 	{
-		client, json::members
+		out, "visibility", m::rooms::is_public(room)? "public"_sv: "private"_sv
+	};
+
+	const m::user::room_account_data room_account_data
+	{
+		user, room
+	};
+
+	json::stack::array account_data
+	{
+		out, "account_data"
+	};
+
+	room_account_data.for_each([&account_data]
+	(const string_view &type, const json::object &content)
+	{
+		json::stack::object object
 		{
-			{ "room_id",       room_id        },
-			{ "membership",    membership     },
-			{ "state",         states,        },
-			{ "visibility",    visibility     },
-			{ "account_data",  account_datas  },
-			{ "messages",      json::members
+			account_data
+		};
+
+		json::stack::member
+		{
+			object, "type", type
+		};
+
+		json::stack::member
+		{
+			object, "content", content
+		};
+
+		return true;
+	});
+	account_data.~array();
+
+	json::stack::array state
+	{
+		out, "state"
+	};
+
+	const m::room::state room_state{room};
+	room_state.for_each(m::event::id::closure_bool{[&state, &room, &user]
+	(const m::event::id &event_id)
+	{
+		if(!visible(event_id, user.user_id))
+			return true;
+
+		const m::event::fetch event
+		{
+			event_id, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
+
+		json::stack::object room_event
+		{
+			state
+		};
+
+		room_event.append(event);
+		json::stack::object unsigned_
+		{
+			room_event, "unsigned"
+		};
+
+		json::stack::member
+		{
+			unsigned_, "age", json::value
 			{
-				{ "start", messages_start },
-				{ "chunk", chunk },
-				{ "end", messages_end },
-			}},
-		}
+				long(m::vm::current_sequence - event.event_idx)
+			}
+		};
+
+		return true;
+	}});
+	state.~array();
+
+	m::room::messages it{room};
+	json::stack::object messages
+	{
+		out, "messages"
+	};
+
+	if(it)
+		json::stack::member
+		{
+			messages, "start", it.event_id()
+		};
+
+	// seek down first to give events in chronological order.
+	for(size_t i(0); it && i <= size_t(initial_backfill); --it, ++i);
+	if(it)
+		json::stack::member
+		{
+			messages, "end", it.event_id()
+		};
+
+	json::stack::array chunk
+	{
+		messages, "chunk"
+	};
+
+	for(; it; ++it)
+	{
+		const auto &event_id(it.event_id());
+		if(!visible(event_id, user.user_id))
+			continue;
+
+		json::stack::object room_event
+		{
+			chunk
+		};
+
+		room_event.append(*it);
+		json::stack::object unsigned_
+		{
+			room_event, "unsigned"
+		};
+
+		json::stack::member
+		{
+			unsigned_, "age", json::value
+			{
+				long(m::vm::current_sequence - it.event_idx())
+			}
+		};
+	}
+}
+
+resource::response
+get__initialsync_remote(client &client,
+                        const resource::request &request,
+                        const m::room &room)
+{
+	throw m::UNSUPPORTED
+	{
+		"Remote room initialSync not yet implemented."
 	};
 }
