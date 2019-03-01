@@ -1990,6 +1990,9 @@ ircd::ctx::ole::pop()
 void
 ircd::ctx::promise<void>::set_value()
 {
+	if(!valid())
+		return;
+
 	check_pending();
 	make_ready();
 }
@@ -2060,6 +2063,9 @@ noexcept
 void
 ircd::ctx::promise_base::set_exception(std::exception_ptr eptr)
 {
+	if(!valid())
+		return;
+
 	check_pending();
 	state().eptr = std::move(eptr);
 	make_ready();

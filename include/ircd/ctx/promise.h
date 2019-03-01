@@ -133,6 +133,9 @@ template<class T>
 void
 ircd::ctx::promise<T>::set_value(T&& val)
 {
+	if(!valid())
+		return;
+
 	check_pending();
 	state().val = std::move(val);
 	make_ready();
@@ -142,6 +145,9 @@ template<class T>
 void
 ircd::ctx::promise<T>::set_value(const T &val)
 {
+	if(!valid())
+		return;
+
 	check_pending();
 	state().val = val;
 	make_ready();
