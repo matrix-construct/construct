@@ -97,6 +97,7 @@ struct ircd::m::sync::data
 	string_view membership;
 	event::idx room_head {0}; // if *room
 	event::idx event_idx {0}; // if *event
+	string_view client_txnid;
 
 	data(const m::user &user,
 	     const m::events::range &range,

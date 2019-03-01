@@ -567,6 +567,11 @@ ircd::m::sync::longpoll::handle(data &data,
 		data.event_idx, event.event_idx
 	};
 
+	const scope_restore client_txnid
+	{
+		data.client_txnid, event.client_txnid
+	};
+
 	json::stack::checkpoint checkpoint
 	{
 		*data.out

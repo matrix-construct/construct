@@ -169,4 +169,10 @@ ircd::m::sync::_room_timeline_append(data &data,
 			long(vm::current_sequence - event_idx)
 		}
 	};
+
+	if(data.client_txnid)
+		json::stack::member
+		{
+			unsigned_, "transaction_id", data.client_txnid
+		};
 }
