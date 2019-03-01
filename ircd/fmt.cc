@@ -790,6 +790,8 @@ const
 	});
 }
 
+//TODO: note long double is narrowed to double for now otherwise
+//TODO: valgrind loops somewhere in here and eats all the system's RAM.
 bool
 ircd::fmt::float_specifier::operator()(char *&out,
                                        const size_t &max,
@@ -805,31 +807,31 @@ const
 	thread_local uint _precision_;
 	_precision_ = s.precision;
 
-	const auto closure([&](const long double &floating)
+	const auto closure([&](const double &floating)
 	{
 		using karma::double_;
 		using karma::maxwidth;
 
 		struct generator
-		:karma::grammar<char *, long double()>
+		:karma::grammar<char *, double()>
 		{
 			struct policy
-			:karma::real_policies<long double>
+			:karma::real_policies<double>
 			{
-				static uint precision(const long double &)
+				static uint precision(const double &)
 				{
 					return _precision_;
 				}
 
-				static bool trailing_zeros(const long double &)
+				static bool trailing_zeros(const double &)
 				{
 					return _precision_ > 0;
 				}
 			};
 
-			karma::rule<char *, long double()> rule
+			karma::rule<char *, double()> rule
 			{
-				karma::real_generator<long double, policy>()
+				karma::real_generator<double, policy>()
 				,"floating point real"
 			};
 
