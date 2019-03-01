@@ -52,7 +52,7 @@ struct ircd::resource::response::chunked
 	chunked(client &, const http::code &, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size);
 	chunked(client &, const http::code &, const size_t &buffer_size = default_buffer_size);
 	chunked(const chunked &) = delete;
-	chunked(chunked &&) noexcept;
+	chunked(chunked &&) = delete;
 	chunked() = default;
 	~chunked() noexcept;
 };

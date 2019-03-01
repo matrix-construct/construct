@@ -140,15 +140,15 @@ ircd::m::sync::handle_get(client &client,
 
 	// When shortpoll was successful, do nothing else.
 	if(shortpolled)
-		return response;
+		return {};
 
 	if(longpoll::poll(data, args))
-		return response;
+		return {};
 
 	// A user-timeout occurred. According to the spec we return a
 	// 200 with empty fields rather than a 408.
 	empty_response(data);
-	return response;
+	return {};
 }
 
 void

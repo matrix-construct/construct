@@ -754,13 +754,6 @@ catch(const std::exception &e)
 // resource::response::chunked
 //
 
-ircd::resource::response::chunked::chunked(chunked &&other)
-noexcept
-:c{std::move(other.c)}
-{
-	other.c = nullptr;
-}
-
 ircd::resource::response::chunked::chunked(client &client,
                                            const http::code &code,
                                            const size_t &buffer_size)
