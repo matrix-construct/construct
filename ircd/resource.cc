@@ -1179,6 +1179,10 @@ ircd::resource::response::response(client &client,
 			log::level::DWARNING:
 		ushort(code) >= 400 && ushort(code) < 500?
 			log::level::DERROR:
+		ushort(code) == 500?
+			log::level::ERROR:
+		ushort(code) > 500?
+			log::level::DERROR:
 			log::level::ERROR
 	};
 
