@@ -11250,33 +11250,28 @@ console_cmd__file__download(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"server|amalgam", "file"
+		"server|file", "[remote]"
 	}};
 
-	auto server
+	const string_view &path
 	{
-		param.at(0)
+		param.at("server|file")
 	};
 
-	auto file
+	const auto &server
 	{
-		param[1]
+		split(path, '/').first
 	};
 
-	auto remote
+	const auto &file
 	{
-		has(server, '/')? param[1] : param[2]
+		split(path, '/').second
 	};
 
-	if(has(server, '/'))
+	const string_view &remote
 	{
-		const auto s(split(server, '/'));
-		server = s.first;
-		file = s.second;
-	}
-
-	if(!remote)
-		remote = server;
+		param.at("[remote]", server)
+	};
 
 	using prototype = m::room::id::buf (const string_view &server,
 	                                    const string_view &file,
