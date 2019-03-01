@@ -40,6 +40,7 @@ struct ircd::m::event::fetch
 	static const opts default_opts;
 
 	const opts *fopts {&default_opts};
+	idx event_idx {0};
 	std::array<db::cell, event::size()> cell;
 	db::cell _json;
 	db::row row;

@@ -859,14 +859,15 @@ ircd::m::seek(event::fetch &fetch,
               const event::idx &event_idx,
               std::nothrow_t)
 {
-	auto &event
-	{
-		static_cast<m::event &>(fetch)
-	};
-
+	fetch.event_idx = event_idx;
 	const string_view &key
 	{
 		byte_view<string_view>(event_idx)
+	};
+
+	auto &event
+	{
+		static_cast<m::event &>(fetch)
 	};
 
 	assert(fetch.fopts);
@@ -960,6 +961,10 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 :fopts
 {
 	&opts
+}
+,event_idx
+{
+	event_idx
 }
 ,_json
 {
