@@ -1764,6 +1764,7 @@ ircd::server::link::read(const mutable_buffer &buf)
 void
 ircd::server::link::discard_read()
 {
+	assert(socket);
 	ssize_t discard
 	{
 		SSL_pending(socket->ssl.native_handle())
@@ -1785,14 +1786,27 @@ ircd::server::link::discard_read()
 
 	// Shouldn't ever be hit because the read() within discard() throws
 	// the pending error like an eof.
-	log::warning
+	const fmt::snstringf msg
 	{
-		log, "link(%p) socket(%p) to %s discarded %zu of %zd unexpected bytes",
+		512, "peer(%p %s) link(%p q:%zu) socket(%s) discarded %zu of %zd unexpected bytes",
+		peer,
+		peer?
+			peer->hostcanon:
+			std::string{},
 		this,
-		socket.get(),
-		likely(peer)? string(peer->remote) : string(remote_ipport(*socket)),
+		queue.size(),
+		likely(peer)?
+			string(peer->remote):
+		socket?
+			string(remote_ipport(*socket)):
+			std::string{},
 		discarded,
 		discard
+	};
+
+	log::warning
+	{
+		log, "%s", string_view{msg}
 	};
 
 	// just in case so this doesn't get loopy with discarding zero with
@@ -1800,10 +1814,7 @@ ircd::server::link::discard_read()
 	if(unlikely(!discard && !discarded))
 		throw panic
 		{
-			"peer(%p) link(%p) socket(%p) queue is empty and nothing to discard.",
-			peer,
-			this,
-			socket.get()
+			"%s", string_view{msg}
 		};
 }
 
