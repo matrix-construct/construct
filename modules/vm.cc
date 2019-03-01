@@ -10,12 +10,6 @@
 
 namespace ircd::m::vm
 {
-	extern hook::site<eval &> commit_hook;  ///< Called when this server issues event
-	extern hook::site<eval &> fetch_hook;   ///< Called to resolve dependencies
-	extern hook::site<eval &> eval_hook;    ///< Called when evaluating event
-	extern hook::site<eval &> notify_hook;  ///< Called to broadcast successful eval
-	extern hook::site<eval &> effect_hook;  ///< Called to apply effects of eval
-
 	static void _commit(eval &);
 	static void _write(eval &, const event &);
 	static fault _eval_edu(eval &, const event &);
@@ -30,6 +24,15 @@ namespace ircd::m::vm
 
 	static void init();
 	static void fini();
+
+	extern hook::site<eval &> commit_hook;  ///< Called when this server issues event
+	extern hook::site<eval &> fetch_hook;   ///< Called to resolve dependencies
+	extern hook::site<eval &> eval_hook;    ///< Called when evaluating event
+	extern hook::site<eval &> notify_hook;  ///< Called to broadcast successful eval
+	extern hook::site<eval &> effect_hook;  ///< Called to apply effects of eval
+
+	extern conf::item<bool> log_accept_debug;
+	extern conf::item<bool> log_accept_info;
 }
 
 ircd::mapi::header
@@ -37,6 +40,20 @@ IRCD_MODULE
 {
 	"Matrix Virtual Machine",
 	ircd::m::vm::init, ircd::m::vm::fini
+};
+
+decltype(ircd::m::vm::log_accept_debug)
+ircd::m::vm::log_accept_debug
+{
+	{ "name",     "ircd.m.vm.log.accept.debug" },
+	{ "default",  false                        },
+};
+
+decltype(ircd::m::vm::log_accept_info)
+ircd::m::vm::log_accept_info
+{
+	{ "name",     "ircd.m.vm.log.accept.info" },
+	{ "default",  false                       },
 };
 
 decltype(ircd::m::vm::commit_hook)
@@ -488,14 +505,14 @@ try
 	if(opts.effects)
 		effect_hook(event, eval);
 
-	if(opts.debuglog_accept)
+	if(opts.debuglog_accept || bool(log_accept_debug))
 		log::debug
 		{
 			log, "%s", pretty_oneline(event)
 		};
 
-	if(opts.infolog_accept)
-		log::debug
+	if(opts.infolog_accept || bool(log_accept_info))
+		log::info
 		{
 			log, "%s", pretty_oneline(event)
 		};
