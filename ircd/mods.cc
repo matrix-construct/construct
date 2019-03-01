@@ -490,7 +490,8 @@ ircd::mods::is_module(const string_view &path,
                       std::nothrow_t)
 try
 {
-	return is_module(path);
+	std::string why;
+	return is_module(path, why);
 }
 catch(const std::exception &e)
 {
