@@ -415,10 +415,10 @@ ircd::replace(const string_view &s,
               const char &before,
               const string_view &after)
 {
-	const auto occurs
-	{
+	const uint32_t occurs
+	(
 		std::count(begin(s), end(s), before)
-	};
+	);
 
 	const size_t size
 	{

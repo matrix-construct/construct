@@ -293,9 +293,9 @@ ircd::buffer::move(it &dest,
 {
 	assert(dest <= stop);
 	const it ret(dest);
-	const ssize_t &srcsz(size(src));
-	const ssize_t &remain(std::distance(ret, stop));
-	const ssize_t &mvsz(std::min(srcsz, remain));
+	const size_t &srcsz(size(src));
+	const size_t &remain(std::distance(ret, stop));
+	const size_t &mvsz(std::min(srcsz, remain));
 	dest += mvsz;
 	assert(dest <= stop);
 	assert(mvsz <= srcsz);
@@ -313,9 +313,9 @@ ircd::buffer::copy(it &dest,
 {
 	assert(dest <= stop);
 	const it ret(dest);
-	const ssize_t &srcsz(size(src));
-	const ssize_t &remain(std::distance(ret, stop));
-	const ssize_t &cpsz(std::min(srcsz, remain));
+	const size_t &srcsz(size(src));
+	const size_t &remain(std::distance(ret, stop));
+	const size_t &cpsz(std::min(srcsz, remain));
 	dest += cpsz;
 	assert(dest <= stop);
 	assert(cpsz <= srcsz);

@@ -832,7 +832,7 @@ room_herd(const m::room &room,
 		return true;
 	});
 
-	ssize_t i(0);
+	size_t i(0);
 	for(const m::event::id &event_id : event_ids)
 		if(exists(event_id))
 		{
@@ -845,7 +845,7 @@ room_herd(const m::room &room,
 		room
 	};
 
-	for(; i >= 0 && head.count() > 1; --i)
+	for(; i + 1 >= 1 && head.count() > 1; --i)
 	{
 		const auto eid
 		{
