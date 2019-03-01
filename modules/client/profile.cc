@@ -236,6 +236,7 @@ resource::response
 get__profile_remote(client &client,
                     const resource::request &request,
                     const m::user &user)
+try
 {
 	//TODO: XXX cache strat user's room
 
@@ -260,9 +261,12 @@ get__profile_remote(client &client,
 
 	//TODO: conf
 	if(!federation_request.wait(seconds(8), std::nothrow))
-		throw http::error
+		throw m::error
 		{
-			http::REQUEST_TIMEOUT
+			http::GATEWAY_TIMEOUT, "M_PROFILE_TIMEOUT",
+			"Server '%s' did not respond with profile for %s in time.",
+			user.user_id.host(),
+			string_view{user.user_id}
 		};
 
 	const http::code &code
@@ -280,6 +284,32 @@ get__profile_remote(client &client,
 	return resource::response
 	{
 		client, response
+	};
+}
+catch(const http::error &)
+{
+	throw;
+}
+catch(const server::unavailable &e)
+{
+	throw m::error
+	{
+		http::SERVICE_UNAVAILABLE, "M_PROFILE_UNAVAILABLE",
+		"Server '%s' cannot be contacted for profile of %s :%s",
+		user.user_id.host(),
+		string_view{user.user_id},
+		e.what()
+	};
+}
+catch(const server::error &e)
+{
+	throw m::error
+	{
+		http::BAD_GATEWAY, "M_PROFILE_UNAVAILABLE",
+		"Error when contacting '%s' for profile of %s :%s",
+		user.user_id.host(),
+		string_view{user.user_id},
+		e.what()
 	};
 }
 
