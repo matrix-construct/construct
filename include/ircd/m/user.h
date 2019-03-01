@@ -227,6 +227,16 @@ struct ircd::m::user::room_account_data
 	using closure_bool = std::function<bool (const string_view &key, const json::object &)>;
 	using closure = std::function<void (const string_view &key, const json::object &)>;
 
+	static constexpr const string_view &type_prefix
+	{
+		"ircd.account_data"
+	};
+
+	static constexpr const size_t &typebuf_size
+	{
+		m::room::id::MAX_SIZE + size(type_prefix)
+	};
+
 	m::user user;
 	m::room room;
 

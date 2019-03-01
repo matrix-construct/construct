@@ -161,18 +161,6 @@ get__account_data(client &client,
 	return {}; // responded from closure
 }
 
-constexpr string_view
-room_account_data_type_prefix
-{
-	"ircd.account_data"_sv
-};
-
-constexpr size_t
-room_account_data_typebuf_size
-{
-	m::room::id::MAX_SIZE + size(room_account_data_type_prefix)
-};
-
 m::event::id::buf
 IRCD_MODULE_EXPORT
 ircd::m::user::room_account_data::set(const m::user &user,
@@ -180,7 +168,7 @@ ircd::m::user::room_account_data::set(const m::user &user,
                                       const string_view &user_type,
                                       const json::object &value)
 {
-	char typebuf[room_account_data_typebuf_size];
+	char typebuf[typebuf_size];
 	const string_view type
 	{
 		_type(typebuf, room.room_id)
@@ -202,7 +190,7 @@ ircd::m::user::room_account_data::get(std::nothrow_t,
                                       const string_view &user_type,
                                       const closure &closure)
 {
-	char typebuf[room_account_data_typebuf_size];
+	char typebuf[typebuf_size];
 	const string_view type
 	{
 		_type(typebuf, room.room_id)
@@ -228,7 +216,7 @@ ircd::m::user::room_account_data::for_each(const m::user &user,
                                            const m::room &room,
                                            const closure_bool &closure)
 {
-	char typebuf[room_account_data_typebuf_size];
+	char typebuf[typebuf_size];
 	const string_view type
 	{
 		_type(typebuf, room.room_id)
@@ -267,10 +255,10 @@ IRCD_MODULE_EXPORT
 ircd::m::user::room_account_data::_type(const mutable_buffer &out,
                                         const m::room::id &room_id)
 {
-	assert(size(out) >= room_account_data_typebuf_size);
+	assert(size(out) >= typebuf_size);
 
 	string_view ret;
-	ret = strlcpy(out, room_account_data_type_prefix);
+	ret = strlcpy(out, type_prefix);
 	ret = strlcat(out, room_id);
 	return ret;
 }
