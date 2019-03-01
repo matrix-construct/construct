@@ -16,7 +16,7 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static bool account_data_(data &, const m::event &, const m::event::idx &);
+	static bool account_data_(data &, const m::event &);
 	static bool account_data_polylog(data &);
 	static bool account_data_linear(data &);
 
@@ -38,12 +38,19 @@ ircd::m::sync::account_data_linear(data &data)
 		return false;
 
 	assert(data.event);
+	const m::event &event{*data.event};
+	if(json::get<"type"_>(event) != "ircd.account_data")
+		return false;
+
+	if(json::get<"room_id"_>(event) != data.user_room.room_id)
+		return false;
+
 	json::stack::array array
 	{
 		*data.out, "events"
 	};
 
-	return account_data_(data, *data.event, data.event_idx);
+	return account_data_(data, event);
 }
 
 bool
@@ -54,21 +61,32 @@ ircd::m::sync::account_data_polylog(data &data)
 		*data.out, "events"
 	};
 
-	static const m::event::fetch::opts fopts
-	{
-		m::event::keys::include {"event_id", "state_key", "content"}
-	};
-
 	const m::room::state state
 	{
-		data.user_room, &fopts
+		data.user_room
 	};
 
 	bool ret{false};
 	state.for_each("ircd.account_data", [&data, &array, &ret]
-	(const m::event &event)
+	(const m::event::idx &event_idx)
 	{
-		ret |= account_data_(data, event, index(event));
+		if(!apropos(data, event_idx))
+			return;
+
+		static const m::event::fetch::opts fopts
+		{
+			m::event::keys::include {"state_key", "content"}
+		};
+
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow, fopts
+		};
+
+		if(!event.valid)
+			return;
+
+		ret |= account_data_(data, event);
 	});
 
 	return ret;
@@ -76,18 +94,8 @@ ircd::m::sync::account_data_polylog(data &data)
 
 bool
 ircd::m::sync::account_data_(data &data,
-                             const m::event &event,
-                             const m::event::idx &event_idx)
+                             const m::event &event)
 {
-	if(!apropos(data, event_idx))
-		return false;
-
-	if(json::get<"type"_>(event) != "ircd.account_data")
-		return false;
-
-	if(json::get<"room_id"_>(event) != data.user_room.room_id)
-		return false;
-
 	// Each account_data event is an object in the events array
 	json::stack::object object
 	{
