@@ -35,7 +35,28 @@ ircd::m::sync::room_account_data
 bool
 ircd::m::sync::room_account_data_linear(data &data)
 {
-	return false;
+	if(!data.event || !data.event_idx)
+		return false;
+
+	const m::event &event{*data.event};
+	if(json::get<"room_id"_>(event) != data.user_room.room_id)
+		return false;
+
+	char typebuf[m::user::room_account_data::typebuf_size];
+	const auto type
+	{
+		m::user::room_account_data::_type(typebuf, data.room->room_id)
+	};
+
+	if(json::get<"type"_>(event) != type)
+		return false;
+
+	json::stack::array array
+	{
+		*data.out, "events"
+	};
+
+	return room_account_data_polylog_events_event(data, event);
 }
 
 bool
