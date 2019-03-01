@@ -53,28 +53,33 @@ ircd::m::sync::room_account_data_polylog_events(data &data)
 	};
 
 	assert(data.room);
-	char typebuf[288]; //TODO: room_account_data_typebuf_size
+	char typebuf[m::user::room_account_data::typebuf_size];
 	const auto type
 	{
 		m::user::room_account_data::_type(typebuf, data.room->room_id)
 	};
 
-	static const m::event::fetch::opts &fopts
-	{
-		m::event::keys::include {"event_id", "state_key", "content"}
-	};
-
-	const m::room::state state
-	{
-		data.user_room, &fopts
-	};
-
 	bool ret{false};
-	state.for_each(type, [&data, &ret]
-	(const m::event &event)
+	data.user_state.for_each(type, [&data, &ret]
+	(const m::event::idx &event_idx)
 	{
-		if(apropos(data, event))
-			ret |= room_account_data_polylog_events_event(data, event);
+		if(!apropos(data, event_idx))
+			return;
+
+		static const event::fetch::opts fopts
+		{
+			event::keys::include {"state_key", "content"}
+		};
+
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow, fopts
+		};
+
+		if(!event.valid)
+			return;
+
+		ret |= room_account_data_polylog_events_event(data, event);
 	});
 
 	return ret;
