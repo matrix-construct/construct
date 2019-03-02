@@ -40,10 +40,29 @@ validate_user_id
 	"client_register", "validate_user_id"
 };
 
+mods::import<ircd::conf::item<bool>>
+register_enable
+{
+	"client_register", "register_enable"
+};
+
+mods::import<ircd::conf::item<bool>>
+register_user_enable
+{
+	"client_register", "register_user_enable"
+};
+
 resource::response
 get__register_available(client &client,
                         const resource::request &request)
 {
+	if(!bool(register_enable) || !bool(register_user_enable))
+		throw m::error
+		{
+			http::FORBIDDEN, "M_REGISTRATION_DISABLED",
+			"Registration is disabled. No username is available."
+		};
+
 	// The successful construction of this m::user::id implies valid
 	// formatting otherwise an m::INVALID_MXID (400) is thrown.
 	m::user::id::buf user_id

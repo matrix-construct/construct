@@ -55,6 +55,7 @@ method_post
 };
 
 ircd::conf::item<bool>
+IRCD_MODULE_EXPORT
 register_enable
 {
 	{ "name",     "ircd.client.register.enable" },
@@ -103,6 +104,7 @@ post__register(client &client,
 }
 
 ircd::conf::item<bool>
+IRCD_MODULE_EXPORT
 register_user_enable
 {
 	{ "name",     "ircd.client.register.user.enable" },
