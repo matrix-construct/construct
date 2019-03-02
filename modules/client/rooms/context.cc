@@ -55,9 +55,17 @@ get__context(client &client,
              const resource::request &request,
              const m::room::id &room_id)
 {
+	if(request.parv.size() < 3)
+		throw m::NEED_MORE_PARAMS
+		{
+			"event_id path parameter required"
+		};
+
 	m::event::id::buf event_id
 	{
-		url::decode(event_id, request.parv[2])
+		m::sigil(request.parv[2]) == m::id::EVENT?
+			url::decode(event_id, request.parv[2]):
+			m::head(room_id)
 	};
 
 	const auto limit{[&request]
