@@ -540,16 +540,17 @@ ircd::m::sync::loghead(const data &data)
 
 	return fmt::sprintf
 	{
-		headbuf, "%s %s %lu:%lu %s chunk:%zu %s in %s",
+		headbuf, "%s %s %lu:%lu|%lu chunk:%zu sent:%s of %s in %s",
 		remstr,
 		string_view{data.user.user_id},
 		data.range.first,
 		data.range.second,
+		vm::current_sequence,
+		flush_count,
+		ircd::pretty(iecbuf[1], iec(flush_bytes)),
 		data.out?
 			ircd::pretty(iecbuf[0], iec(flush_bytes + size(data.out->completed()))):
 			string_view{},
-		flush_count,
-		ircd::pretty(iecbuf[1], iec(flush_bytes)),
 		tmstr
 	};
 }
