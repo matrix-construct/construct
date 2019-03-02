@@ -591,9 +591,7 @@ ircd::m::sync::longpoll::handle(data &data,
 	{
 		const auto next
 		{
-			event.event_idx?
-				event.event_idx + 1:
-				data.range.second
+			data.range.second
 		};
 
 		json::stack::member
@@ -606,11 +604,9 @@ ircd::m::sync::longpoll::handle(data &data,
 
 		log::debug
 		{
-			log, "request %s longpoll %lu:%lu vm:%lu complete",
+			log, "request %s longpoll got:%lu complete",
 			loghead(data),
-			event.event_idx,
-			next,
-			vm::current_sequence
+			event.event_idx
 		};
 	}
 	else checkpoint.rollback();
