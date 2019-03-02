@@ -67,13 +67,6 @@ resource::response
 post__register(client &client,
                const resource::request::object<m::registar> &request)
 {
-	if(!bool(register_enable))
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_REGISTRATION_DISABLED",
-			"Registration for this server is disabled."
-		};
-
 	const json::object &auth
 	{
 		json::get<"auth"_>(request)
@@ -83,6 +76,13 @@ post__register(client &client,
 		return resource::response
 		{
 			client, http::UNAUTHORIZED, json::object{flows}
+		};
+
+	if(!bool(register_enable))
+		throw m::error
+		{
+			http::FORBIDDEN, "M_REGISTRATION_DISABLED",
+			"Registration for this server is disabled."
 		};
 
 	const auto kind
@@ -117,7 +117,7 @@ try
 	if(!bool(register_user_enable))
 		throw m::error
 		{
-			http::UNAUTHORIZED, "M_REGISTRATION_DISABLED",
+			http::FORBIDDEN, "M_REGISTRATION_DISABLED",
 			"User registration for this server is disabled."
 		};
 
