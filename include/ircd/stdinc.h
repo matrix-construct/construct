@@ -84,6 +84,7 @@ extern "C"
 #include <RB_INC_BITSET
 #include <RB_INC_OPTIONAL
 #include <RB_INC_NEW
+#include <RB_INC_FILESYSTEM
 
 #include <RB_INC_EXPERIMENTAL_STRING_VIEW
 #include <RB_INC_EXPERIMENTAL_OPTIONAL
