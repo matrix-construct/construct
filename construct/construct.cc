@@ -21,6 +21,36 @@ static void applyargs();
 static void enable_coredumps();
 static int print_version();
 
+bool printversion;
+bool cmdline;
+bool quietmode;
+bool debugmode;
+bool nolisten;
+bool noautomod;
+bool checkdb;
+bool pitrecdb;
+bool nojs;
+bool nodirect;
+bool noaio;
+const char *execute;
+lgetopt opts[] =
+{
+	{ "help",       nullptr,        lgetopt::USAGE,   "Print this text" },
+	{ "version",    &printversion,  lgetopt::BOOL,    "Print version and exit" },
+	{ "debug",      &debugmode,     lgetopt::BOOL,    "Enable options for debugging" },
+	{ "quiet",      &quietmode,     lgetopt::BOOL,    "Suppress log messages at the terminal." },
+	{ "console",    &cmdline,       lgetopt::BOOL,    "Drop to a command line immediately after startup" },
+	{ "execute",    &execute,       lgetopt::STRING,  "Execute command lines immediately after startup" },
+	{ "nolisten",   &nolisten,      lgetopt::BOOL,    "Normal execution but without listening sockets" },
+	{ "noautomod",  &noautomod,     lgetopt::BOOL,    "Normal execution but without autoloading modules" },
+	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
+	{ "pitrecdb",   &pitrecdb,      lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
+	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
+	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
+	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
+	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
+};
+
 const char *const fatalerrstr
 {R"(
 ***
@@ -40,45 +70,7 @@ const char *const usererrstr
 %s
 )"};
 
-bool printversion;
-bool cmdline;
-bool quietmode;
-bool debugmode;
-bool nolisten;
-bool noautomod;
-bool checkdb;
-bool pitrecdb;
-bool nojs;
-bool nodirect;
-bool noaio;
-const char *configfile;
-const char *execute;
-lgetopt opts[] =
-{
-	{ "help",       nullptr,        lgetopt::USAGE,   "Print this text" },
-	{ "version",    &printversion,  lgetopt::BOOL,    "Print version and exit" },
-	{ "configfile", &configfile,    lgetopt::STRING,  "File to use for ircd.conf" },
-	{ "debug",      &debugmode,     lgetopt::BOOL,    "Enable options for debugging" },
-	{ "quiet",      &quietmode,     lgetopt::BOOL,    "Suppress log messages at the terminal." },
-	{ "console",    &cmdline,       lgetopt::BOOL,    "Drop to a command line immediately after startup" },
-	{ "execute",    &execute,       lgetopt::STRING,  "Execute command lines immediately after startup" },
-	{ "nolisten",   &nolisten,      lgetopt::BOOL,    "Normal execution but without listening sockets" },
-	{ "noautomod",  &noautomod,     lgetopt::BOOL,    "Normal execution but without autoloading modules" },
-	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
-	{ "pitrecdb",   &pitrecdb,      lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
-	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
-	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
-	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
-	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
-};
-
-std::unique_ptr<boost::asio::io_context> ios
-{
-	// Having trouble with static dtor in clang so this has tp be dynamic
-	std::make_unique<boost::asio::io_context>()
-};
-
-int main(int argc, char *const *argv)
+int main(int argc, char *const *argv, const char *const *const envp)
 try
 {
 	umask(077);       // better safe than sorry --SRB
@@ -134,7 +126,8 @@ try
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
 	// note: only supports service for one hostname at this time.
-	ircd::init(*ios, origin, hostname);
+	boost::asio::io_context ios;
+	ircd::init(ios, origin, hostname);
 
 	// libircd does no signal handling (or at least none that you ever have to
 	// care about); reaction to all signals happens out here instead. Handling
@@ -143,7 +136,7 @@ try
 	// event loop. This means we lose the true instant hardware-interrupt gratitude
 	// of signals but with the benefit of unconditional safety and cross-
 	// platformness with windows etc.
-	const construct::signals signals{*ios};
+	const construct::signals signals{ios};
 
 	// If the user wants to immediately drop to a command line without having to
 	// send a ctrl-c for it, that is provided here.
@@ -155,7 +148,7 @@ try
 
 	// Execution.
 	// Blocks until a clean exit from a quit() or an exception comes out of it.
-	ios->run();
+	ios.run();
 }
 catch(const ircd::user_error &e)
 {
