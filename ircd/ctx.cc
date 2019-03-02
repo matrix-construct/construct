@@ -1865,7 +1865,7 @@ ircd::ctx::ole::init::init()
 ircd::ctx::ole::init::~init()
 noexcept
 {
-	std::unique_lock<decltype(mutex)> lock(mutex);
+	std::unique_lock lock(mutex);
 	termination = true;
 	cond.notify_all();
 	cond.wait(lock, []
@@ -1927,7 +1927,7 @@ ircd::ctx::ole::push(closure &&func)
 	if(unlikely(threads.size() < size_t(thread_max)))
 		threads.emplace_back(&worker);
 
-	const std::lock_guard<decltype(mutex)> lock(mutex);
+	const std::lock_guard lock(mutex);
 	queue.emplace_back(std::move(func));
 	cond.notify_all();
 }
@@ -1944,7 +1944,7 @@ noexcept try
 }
 catch(const interrupted &)
 {
-	std::unique_lock<decltype(mutex)> lock(mutex);
+	std::unique_lock lock(mutex);
 	const auto it(std::find_if(begin(threads), end(threads), []
 	(const auto &thread)
 	{
@@ -1961,7 +1961,7 @@ catch(const interrupted &)
 ircd::ctx::ole::closure
 ircd::ctx::ole::pop()
 {
-	std::unique_lock<decltype(mutex)> lock(mutex);
+	std::unique_lock lock(mutex);
 	cond.wait(lock, []
 	{
 		if(!queue.empty())

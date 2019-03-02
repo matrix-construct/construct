@@ -416,7 +416,7 @@ ircd::db::resume(database &d)
 {
 	assert(d.d);
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const std::lock_guard lock{write_mutex};
 	const auto errors
 	{
 		db::errors(d)
@@ -538,7 +538,7 @@ ircd::db::checkpoint(database &d)
 			name(d)
 		};
 
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const std::lock_guard lock{write_mutex};
 	const ctx::uninterruptible::nothrow ui;
 	const auto seqnum
 	{
@@ -1363,7 +1363,7 @@ ircd::db::database::~database()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::unique_lock<decltype(write_mutex)> lock{write_mutex};
+	const std::unique_lock lock{write_mutex};
 	log::info
 	{
 		log, "'%s': closing database @ `%s'...",
@@ -5239,7 +5239,7 @@ ircd::db::sort(column &column,
 	opts.allow_write_stall = now;
 
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const std::lock_guard lock{write_mutex};
 	log::debug
 	{
 		log, "'%s':'%s' @%lu FLUSH (sort) %s %s",
@@ -5278,7 +5278,7 @@ ircd::db::compact(column &column,
 			continue;
 
 		const ctx::uninterruptible ui;
-		const std::lock_guard<decltype(write_mutex)> lock
+		const std::lock_guard lock
 		{
 			write_mutex
 		};
@@ -5433,7 +5433,7 @@ ircd::db::ingest(column &column,
 		{ std::string{path} }
 	};
 
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const std::lock_guard lock{write_mutex};
 	const ctx::uninterruptible::nothrow ui;
 	throw_on_error
 	{
@@ -5450,7 +5450,7 @@ ircd::db::del(column &column,
 	database::column &c(column);
 	auto opts(make_opts(sopts));
 
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const std::lock_guard lock{write_mutex};
 	const ctx::uninterruptible::nothrow ui;
 	log::debug
 	{
@@ -5475,7 +5475,7 @@ ircd::db::del(column &column,
 	database::column &c(column);
 	auto opts(make_opts(sopts));
 
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const std::lock_guard lock{write_mutex};
 	const ctx::uninterruptible::nothrow ui;
 	log::debug
 	{
@@ -5502,7 +5502,7 @@ ircd::db::write(column &column,
 	database::column &c(column);
 	auto opts(make_opts(sopts));
 
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const std::lock_guard lock{write_mutex};
 	const ctx::uninterruptible::nothrow ui;
 	log::debug
 	{
@@ -6333,7 +6333,7 @@ ircd::db::for_each(const rocksdb::Cache &cache,
 	// C-style callback for RocksDB, we have to make use of this function
 	// exclusive for different contexts.
 	thread_local ctx::mutex mutex;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	thread_local rocksdb::Cache *_cache;
 	_cache = const_cast<rocksdb::Cache *>(&cache);
@@ -6869,7 +6869,7 @@ ircd::db::commit(database &d,
 	ircd::timer timer;
 	#endif
 
-	const std::lock_guard<decltype(write_mutex)> lock{write_mutex};
+	const std::lock_guard lock{write_mutex};
 	const ctx::uninterruptible ui;
 	throw_on_error
 	{

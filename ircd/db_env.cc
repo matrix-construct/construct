@@ -1299,7 +1299,7 @@ ircd::db::database::env::writable_file::Close()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	if(!fd)
 		return Status::OK();
@@ -1347,7 +1347,7 @@ ircd::db::database::env::writable_file::Flush()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1396,7 +1396,7 @@ ircd::db::database::env::writable_file::Sync()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1441,7 +1441,7 @@ ircd::db::database::env::writable_file::Fsync()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1487,7 +1487,7 @@ ircd::db::database::env::writable_file::RangeSync(uint64_t offset,
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1551,7 +1551,7 @@ ircd::db::database::env::writable_file::Truncate(uint64_t size)
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1605,7 +1605,7 @@ ircd::db::database::env::writable_file::InvalidateCache(size_t offset,
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1663,7 +1663,7 @@ noexcept try
 {
 	assert(!opts.direct);
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1726,7 +1726,7 @@ noexcept try
 {
 	assert(!opts.direct);
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1792,7 +1792,7 @@ ircd::db::database::env::writable_file::Allocate(uint64_t offset,
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1851,7 +1851,7 @@ ircd::db::database::env::writable_file::PrepareWrite(size_t offset,
 noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1945,7 +1945,7 @@ ircd::db::database::env::writable_file::GetPreallocationStatus(size_t *const blo
 noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	*block_size = this->preallocation_block_size;
 	*last_allocated_block = this->preallocation_last_block;
@@ -1969,7 +1969,7 @@ ircd::db::database::env::writable_file::SetPreallocationBlockSize(size_t size)
 noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -1989,7 +1989,7 @@ ircd::db::database::env::writable_file::GetFileSize()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -2169,7 +2169,7 @@ ircd::db::database::env::writable_file_direct::Close()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	if(!fd)
 		return Status::OK();
@@ -2225,7 +2225,7 @@ ircd::db::database::env::writable_file_direct::Truncate(uint64_t size)
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -2279,7 +2279,7 @@ ircd::db::database::env::writable_file_direct::Append(const Slice &s)
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	if(!aligned(logical_offset) || !aligned(data(s)))
 		log::dwarning
@@ -2364,7 +2364,7 @@ ircd::db::database::env::writable_file_direct::PositionedAppend(const Slice &s,
 noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -2390,7 +2390,7 @@ ircd::db::database::env::writable_file_direct::GetFileSize()
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::lock_guard<decltype(mutex)> lock{mutex};
+	const std::lock_guard lock{mutex};
 
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
@@ -2857,7 +2857,7 @@ ircd::db::database::env::sequential_file::Read(size_t length,
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::unique_lock<decltype(mutex)> lock
+	const std::unique_lock lock
 	{
 		mutex, std::try_to_lock
 	};
@@ -2946,7 +2946,7 @@ ircd::db::database::env::sequential_file::PositionedRead(uint64_t offset,
 noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::unique_lock<decltype(mutex)> lock
+	const std::unique_lock lock
 	{
 		mutex, std::try_to_lock
 	};
@@ -3031,7 +3031,7 @@ ircd::db::database::env::sequential_file::Skip(uint64_t size)
 noexcept
 {
 	const ctx::uninterruptible::nothrow ui;
-	const std::unique_lock<decltype(mutex)> lock
+	const std::unique_lock lock
 	{
 		mutex, std::try_to_lock
 	};

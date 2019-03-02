@@ -789,7 +789,7 @@ ircd::m::sync::item::poll(data &data,
                           const m::event &event)
 try
 {
-	const scope_restore<decltype(data.event)> theirs
+	const scope_restore theirs
 	{
 		data.event, &event
 	};

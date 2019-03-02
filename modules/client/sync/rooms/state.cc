@@ -116,7 +116,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		if(unlikely(!event.valid))
 			return;
 
-		const std::lock_guard<decltype(mutex)> lock{mutex};
+		const std::lock_guard lock{mutex};
 		array.append(event);
 		ret = true;
 	}};

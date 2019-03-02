@@ -134,7 +134,7 @@ bool
 ircd::m::sync::_rooms_polylog(data &data,
                               const string_view &membership)
 {
-	const scope_restore<decltype(data.membership)> theirs
+	const scope_restore theirs
 	{
 		data.membership, membership
 	};
@@ -189,7 +189,7 @@ bool
 ircd::m::sync::_rooms_polylog_room(data &data,
                                    const m::room &room)
 {
-	const scope_restore<decltype(data.room)> theirs
+	const scope_restore theirs
 	{
 		data.room, &room
 	};
@@ -209,7 +209,7 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 		head_idx(std::nothrow, room)
 	};
 
-	const scope_restore<decltype(data.room_head)> their_head
+	const scope_restore their_head
 	{
 		data.room_head, room_head
 	};

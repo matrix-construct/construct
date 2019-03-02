@@ -154,12 +154,12 @@ ircd::m::vm::eval__commit_room(eval &eval,
 	// Set a member pointer to the json::iov currently being composed. This
 	// allows other parallel evals to have deep access to exactly what this
 	// eval is attempting to do.
-	const scope_restore<decltype(eval.issue)> eval_issue
+	const scope_restore eval_issue
 	{
 		eval.issue, &event
 	};
 
-	const scope_restore<decltype(eval.room_id)> eval_room_id
+	const scope_restore eval_room_id
 	{
 		eval.room_id, room.room_id
 	};
@@ -440,7 +440,7 @@ try
 	// allows other parallel evals to have deep access to exactly what this
 	// eval is working on.
 	assert(!eval.event_);
-	const scope_restore<decltype(eval.event_)> eval_event
+	const scope_restore eval_event
 	{
 		eval.event_, &event
 	};
@@ -694,7 +694,7 @@ ircd::m::vm::_write(eval &eval,
 	};
 
 	// Expose to eval interface
-	const scope_restore<decltype(eval.txn)> eval_txn
+	const scope_restore eval_txn
 	{
 		eval.txn, &txn
 	};

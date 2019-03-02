@@ -91,7 +91,7 @@ ircd::m::sync::presence_polylog(data &data)
 		// Lock the json::stack for the append operations. This mutex will only be
 		// contended during a json::stack flush to the client; not during database
 		// queries leading to this.
-		const std::lock_guard<decltype(mutex)> l{mutex};
+		const std::lock_guard l{mutex};
 		ret = true;
 
 		json::stack::object object
