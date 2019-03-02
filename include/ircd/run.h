@@ -21,11 +21,10 @@ namespace ircd::run
 	enum class level :int;
 	struct changed;
 
-	extern const enum level &level;
-
 	string_view reflect(const enum level &);
-
 	bool set(const enum level &);
+
+	extern const enum level &level;
 }
 
 /// An instance of this class registers itself to be called back when

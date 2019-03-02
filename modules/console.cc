@@ -450,6 +450,14 @@ console_cmd__debug(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__restart(opt &out, const string_view &line)
+{
+	ircd::restart.set("true");
+	ircd::quit();
+	return false;
+}
+
+bool
 console_cmd__die(opt &out, const string_view &line)
 {
 	ircd::quit();

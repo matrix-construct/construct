@@ -70,12 +70,14 @@ const char *const usererrstr
 %s
 )"};
 
-int main(int argc, char *const *argv, const char *const *const envp)
+int main(int _argc, char *const *_argv, char *const *const _envp)
 try
 {
 	umask(077);       // better safe than sorry --SRB
 
 	// '-' switched arguments come first; this function incs argv and decs argc
+	auto argc(_argc);
+	auto argv(_argv), envp(_envp);
 	parseargs(&argc, &argv, opts);
 	applyargs();
 
@@ -149,6 +151,11 @@ try
 	// Execution.
 	// Blocks until a clean exit from a quit() or an exception comes out of it.
 	ios.run();
+
+	// The restart flag can be set by the console command "restart" which
+	// calls ircd::quit() to clean break from the run() loop.
+	if(ircd::restart)
+		ircd::syscall(::execve, _argv[0], _argv, _envp);
 }
 catch(const ircd::user_error &e)
 {

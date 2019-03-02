@@ -25,6 +25,14 @@ ircd::debugmode
 	{ "persist",  false             },
 };
 
+decltype(ircd::restart)
+ircd::restart
+{
+	{ "name",     "ircd.restart"  },
+	{ "default",  false           },
+	{ "persist",  false           },
+};
+
 /// Sets up the IRCd and its main context, then returns without blocking.
 //
 /// Pass your io_context instance, it will share it with the rest of your program.
