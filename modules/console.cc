@@ -4754,6 +4754,78 @@ console_cmd__resource(opt &out, const string_view &line)
 }
 
 //
+//
+//
+
+bool
+console_cmd__crt(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"listener|path"
+	}};
+
+	string_view filename;
+	const string_view &targ
+	{
+		param.at("listener|path")
+	};
+
+	static mods::import<std::list<net::listener>> listeners
+	{
+		"s_listen", "listeners"
+	};
+
+	const auto &list{*listeners};
+	for(const auto &listener : list)
+	{
+		if(listener.name() != targ)
+			continue;
+
+		const json::object &config
+		{
+			listener
+		};
+
+		filename = unquote(config.get("certificate_pem_path"));
+	}
+
+	if(!filename)
+	{
+		filename = targ;
+		return true;
+	}
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		32_KiB
+	};
+
+	const std::string certfile
+	{
+		fs::read(filename)
+	};
+
+	out << openssl::printX509(buf, certfile) << std::endl;
+	return true;
+}
+
+bool
+console_cmd__crt__create(opt &out, const string_view &line)
+{
+	using prototype = void (const m::event &);
+	static mods::import<prototype> create_my_key
+	{
+		"s_keys", "create_my_key"
+	};
+
+	create_my_key({});
+
+	out << "done" << std::endl;
+	return true;
+}
+
+//
 // key
 //
 
@@ -4809,21 +4881,6 @@ console_cmd__key__get(opt &out, const string_view &line)
 		});
 	}
 
-	return true;
-}
-
-bool
-console_cmd__key__crt__sign(opt &out, const string_view &line)
-{
-	using prototype = void (const m::event &);
-	static mods::import<prototype> create_my_key
-	{
-		"s_keys", "create_my_key"
-	};
-
-	create_my_key({});
-
-	out << "done" << std::endl;
 	return true;
 }
 
