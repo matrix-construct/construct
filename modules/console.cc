@@ -4455,6 +4455,7 @@ console_cmd__net__listen(opt &out, const string_view &line)
 		"port",
 		"certificate_pem_path",
 		"private_key_pem_path",
+		"certificate_chain_path",
 		"tmp_dh_path",
 		"backlog",
 		"max_connections",
@@ -4462,13 +4463,14 @@ console_cmd__net__listen(opt &out, const string_view &line)
 
 	const json::members opts
 	{
-		{ "host",                      token.at("host", "0.0.0.0"_sv)           },
-		{ "port",                      token.at("port", 8448L)                  },
-		{ "certificate_pem_path",      token.at("certificate_pem_path")         },
-		{ "private_key_pem_path",      token.at("private_key_pem_path")         },
-		{ "tmp_dh_path",               token.at("tmp_dh_path", ""_sv)           },
-		{ "backlog",                   token.at("backlog", -1L)                 },
-		{ "max_connections",           token.at("max_connections", -1L)         },
+		{ "host",                        token.at("host", "0.0.0.0"_sv)            },
+		{ "port",                        token.at("port", 8448L)                   },
+		{ "certificate_pem_path",        token.at("certificate_pem_path")          },
+		{ "private_key_pem_path",        token.at("private_key_pem_path")          },
+		{ "certificate_chain_path",      token.at("certificate_chain_path", ""_sv) },
+		{ "tmp_dh_path",                 token.at("tmp_dh_path", ""_sv)            },
+		{ "backlog",                     token.at("backlog", -1L)                  },
+		{ "max_connections",             token.at("max_connections", -1L)          },
 	};
 
 	const auto eid
