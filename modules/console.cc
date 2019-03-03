@@ -8815,21 +8815,25 @@ console_cmd__user__filter(opt &out, const string_view &line)
 		param[1]
 	};
 
+	const m::user::filter filter
+	{
+		user
+	};
+
 	if(filter_id)
 	{
-		out << user.filter(filter_id) << std::endl;
+		out << filter.get(filter_id) << std::endl;
 		return true;
 	}
 
-	const m::user::room user_room{user};
-	const m::room::state state{user_room};
-	state.for_each("ircd.filter", m::event::closure{[&out]
-	(const m::event &event)
+	filter.for_each([&out]
+	(const string_view &id, const json::object &filter)
 	{
-		out << at<"state_key"_>(event) << std::endl;
-		out << at<"content"_>(event) << std::endl;
+		out << id << std::endl;
+		out << filter << std::endl;
 		out << std::endl;
-	}});
+		return true;
+	});
 
 	return true;
 }

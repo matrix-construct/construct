@@ -28,8 +28,13 @@ get__filter(client &client,
 		user_id
 	};
 
-	user.filter(filter_id, [&client]
-	(const json::object &filter)
+	const m::user::filter filter
+	{
+		user_id
+	};
+
+	filter.get(filter_id, [&client]
+	(const string_view &filter_id, const json::object &filter)
 	{
 		resource::response
 		{
@@ -99,15 +104,20 @@ post__filter(client &client,
 		json::get<"presence"_>(request)
 	};
 
-	m::user user
+	const m::user user
 	{
 		user_id
 	};
 
-	char filter_id_buf[64];
+	const m::user::filter filter
+	{
+		user
+	};
+
+	char filter_id_buf[m::id::MAX_SIZE];
 	const auto filter_id
 	{
-		user.filter(request.body, filter_id_buf)
+		filter.set(filter_id_buf, request.body)
 	};
 
 	return resource::response
@@ -119,12 +129,13 @@ post__filter(client &client,
 	};
 }
 
-m::event::id::buf
-filter_set(const m::user &user,
-           const json::object &filter,
-           const mutable_buffer &idbuf)
+string_view
+IRCD_MODULE_EXPORT
+ircd::m::user::filter::set(const mutable_buffer &idbuf,
+                           const m::user &user,
+                           const json::object &filter)
 {
-	const m::user::room user_room
+	const user::room user_room
 	{
 		user
 	};
@@ -144,21 +155,28 @@ filter_set(const m::user &user,
 		return {};
 
 	//TODO: ABA
-	return send(user_room, user.user_id, "ircd.filter", filter_id, filter);
+	send(user_room, user.user_id, "ircd.filter", filter_id, filter);
+	return filter_id;
 }
 
 bool
-filter_get(std::nothrow_t,
-           const m::user &user,
-           const string_view &filter_id,
-           const m::user::filter_closure &closure)
+IRCD_MODULE_EXPORT
+ircd::m::user::filter::get(std::nothrow_t,
+                           const m::user &user,
+                           const string_view &filter_id,
+                           const closure &closure)
 {
-	const m::user::room user_room
+	static const event::fetch::opts fopts
 	{
-		user
+		event::keys::include {"content"}
 	};
 
-	return user_room.get(std::nothrow, "ircd.filter", filter_id, [&closure]
+	const user::room user_room
+	{
+		user, nullptr, &fopts
+	};
+
+	return user_room.get(std::nothrow, "ircd.filter", filter_id, [&filter_id, &closure]
 	(const m::event &event)
 	{
 		const json::object &content
@@ -166,6 +184,51 @@ filter_get(std::nothrow_t,
 			at<"content"_>(event)
 		};
 
-		closure(content);
+		closure(filter_id, content);
 	});
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::filter::for_each(const m::user &user,
+                                const closure_bool &closure)
+{
+	const user::room user_room
+	{
+		user
+	};
+
+	const room::state state
+	{
+		user_room
+	};
+
+	return state.for_each("ircd.filter", event::closure_idx_bool{[&closure]
+	(const m::event::idx &event_idx)
+	{
+		static const event::fetch::opts fopts
+		{
+			event::keys::include {"state_key", "content"}
+		};
+
+		const event::fetch event
+		{
+			event_idx, std::nothrow, fopts
+		};
+
+		if(!event.valid)
+			return true;
+
+		const auto &filter_id
+		{
+			at<"state_key"_>(event)
+		};
+
+		const json::object &content
+		{
+			at<"content"_>(event)
+		};
+
+		return closure(filter_id, content);
+	}});
 }

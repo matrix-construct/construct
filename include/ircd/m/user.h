@@ -30,6 +30,7 @@ struct ircd::m::user
 	struct profile;
 	struct account_data;
 	struct room_account_data;
+	struct filter;
 
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;
@@ -50,13 +51,6 @@ struct ircd::m::user
 
 	bool is_password(const string_view &password) const noexcept;
 	event::id::buf password(const string_view &password);
-
-	using filter_closure = std::function<void (const json::object &)>;
-	bool filter(std::nothrow_t, const string_view &filter_id, const filter_closure &) const;
-	void filter(const string_view &filter_id, const filter_closure &) const;
-	std::string filter(std::nothrow_t, const string_view &filter_id) const;
-	std::string filter(const string_view &filter_id) const;
-	event::id::buf filter(const json::object &filter, const mutable_buffer &id);
 
 	bool is_active() const;
 	event::id::buf deactivate();
@@ -255,6 +249,30 @@ struct ircd::m::user::room_account_data
 	room_account_data(const m::user &user, const m::room &room)
 	:user{user}
 	,room{room}
+	{}
+};
+
+struct ircd::m::user::filter
+{
+	using closure_bool = std::function<bool (const string_view &, const json::object &)>;
+	using closure = std::function<void (const string_view &, const json::object &)>;
+
+	m::user user;
+
+	static bool for_each(const m::user &, const closure_bool &);
+	static bool get(std::nothrow_t, const m::user &, const string_view &id, const closure &);
+	static string_view set(const mutable_buffer &idbuf, const m::user &, const json::object &);
+
+  public:
+	bool for_each(const closure_bool &) const;
+	bool get(std::nothrow_t, const string_view &filter_id, const closure &) const;
+	void get(const string_view &id, const closure &) const;
+	json::object get(const mutable_buffer &out, const string_view &id) const; // nothrow
+	std::string get(const string_view &id) const; // nothrow
+	string_view set(const mutable_buffer &idbuf, const json::object &filter) const;
+
+	filter(const m::user &user)
+	:user{user}
 	{}
 };
 
