@@ -121,70 +121,69 @@ put__send_join(client &client,
 		room_id
 	};
 
-	//TODO: direct to socket
-	const unique_buffer<mutable_buffer> buf{2_MiB}; //TODO: XXX
-	json::stack out{buf};
+	const m::event::auth::chain auth_chain
 	{
-		json::stack::array top
+		m::head_idx(room_id)
+	};
+
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::array top
+	{
+		out
+	};
+
+	// First element is the 200
+	top.append(json::value(200L));
+
+	// Second element is the object
+	json::stack::object data{top};
+
+	// auth_chain
+	{
+		json::stack::array auth_chain_a
 		{
-			out
+			data, "auth_chain"
 		};
 
-		// First element is the 200
-		top.append(json::value(200L));
-
-		// Second element is the object
-		json::stack::object data{top};
+		auth_chain.for_each(m::event::closure_idx_bool{[&auth_chain_a]
+		(const m::event::idx &event_idx)
 		{
-			json::stack::member auth_chain_m
+			const m::event::fetch event
 			{
-				data, "auth_chain"
+				event_idx, std::nothrow
 			};
 
-			json::stack::array auth_chain_a
-			{
-				auth_chain_m
-			};
-
-			const auto appender{[&auth_chain_a]
-			(const m::event &event)
-			{
+			if(event.valid)
 				auth_chain_a.append(event);
-			}};
 
-			state.get(std::nothrow, "m.room.create", "", appender);
-			state.get(std::nothrow, "m.room.power_levels", "", appender);
-			state.get(std::nothrow, "m.room.join_rules", "", appender);
-			state.get(std::nothrow, "m.room.member", at<"state_key"_>(event), appender);
-		}
-
-		{
-			json::stack::member state_m
-			{
-				data, "state"
-			};
-
-			json::stack::array state_a
-			{
-				state_m
-			};
-
-			state.for_each([&state_a]
-			(const m::event &event)
-			{
-				state_a.append(event);
-			});
-
-		}
+			return true;
+		}});
 	}
 
-	return resource::response
+	// state
 	{
-		client, json::array
+		json::stack::array state_a
 		{
-			out.completed()
-		}
-	};
+			data, "state"
+		};
+
+		state.for_each([&state_a]
+		(const m::event &event)
+		{
+			state_a.append(event);
+		});
+	}
+
+	return {};
 }
 
 resource::method
