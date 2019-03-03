@@ -640,6 +640,7 @@ bool
 console_cmd__date(opt &out, const string_view &line)
 {
 	out << ircd::time() << std::endl;
+	out << ircd::time<milliseconds>() << std::endl;
 
 	thread_local char buf[128];
 	const auto now{ircd::now<system_point>()};
@@ -4810,21 +4811,6 @@ console_cmd__crt(opt &out, const string_view &line)
 	return true;
 }
 
-bool
-console_cmd__crt__create(opt &out, const string_view &line)
-{
-	using prototype = void (const m::event &);
-	static mods::import<prototype> create_my_key
-	{
-		"s_keys", "create_my_key"
-	};
-
-	create_my_key({});
-
-	out << "done" << std::endl;
-	return true;
-}
-
 //
 // key
 //
@@ -4837,6 +4823,21 @@ console_cmd__key(opt &out, const string_view &line)
 	out << "public key base64:       " << m::self::public_key_b64 << std::endl;
 	out << "TLS cert sha256 base64:  " << m::self::tls_cert_der_sha256_b64 << std::endl;
 
+	return true;
+}
+
+bool
+console_cmd__key__create(opt &out, const string_view &line)
+{
+	using prototype = void (const m::event &);
+	static mods::import<prototype> create_my_key
+	{
+		"s_keys", "create_my_key"
+	};
+
+	create_my_key({});
+
+	out << "done" << std::endl;
 	return true;
 }
 
