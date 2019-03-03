@@ -4807,7 +4807,7 @@ console_cmd__crt(opt &out, const string_view &line)
 		fs::read(filename)
 	};
 
-	out << openssl::printX509(buf, certfile) << std::endl;
+	out << openssl::printX509(buf, certfile, 0) << std::endl;
 	return true;
 }
 
