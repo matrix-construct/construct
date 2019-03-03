@@ -85,8 +85,7 @@ get__query_profile(client &client,
 
 	const string_view field
 	{
-		//TODO: XXX full profile aggregation w/ user:: linkage
-		request.query.at("field")
+		request.query["field"]
 	};
 
 	const m::user user
@@ -99,19 +98,50 @@ get__query_profile(client &client,
 		user
 	};
 
-	profile.get(field, [&client]
-	(const string_view &field, const string_view &value)
+	if(!empty(field))
 	{
-		resource::response
+		profile.get(field, [&client]
+		(const string_view &field, const string_view &value)
 		{
-			client, json::members
+			resource::response
 			{
-				{ field, value }
-			}
+				client, json::members
+				{
+					{ field, value }
+				}
+			};
+		});
+
+		return {};
+	}
+
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	profile.for_each([&top]
+	(const string_view &key, const string_view &val)
+	{
+		json::stack::member
+		{
+			top, key, val
 		};
+
+		return true;
 	});
 
-	return {}; // responded from closure
+	return response;
 }
 
 resource::response
