@@ -325,7 +325,10 @@ create_my_key(const m::event &,
 	m::keys my_key;
 	json::get<"server_name"_>(my_key) = my_host();
 	json::get<"old_verify_keys"_>(my_key) = "{}";
-	json::get<"valid_until_ts"_>(my_key) = ircd::time<milliseconds>() + duration_cast<milliseconds>(hours(2160)).count();
+
+	//TODO: conf
+	json::get<"valid_until_ts"_>(my_key) =
+		ircd::time<milliseconds>() + milliseconds(1000UL * 60 * 60 * 24 * 180).count();
 
 	const json::strung verify_keys{verify_keys_}; // must be on stack until my_keys serialized.
 	json::get<"verify_keys"_>(my_key) = verify_keys;
