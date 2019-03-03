@@ -198,6 +198,28 @@ get__profile_full(client &client,
                   const resource::request &request,
                   const m::user &user)
 {
+	const m::user::profile profile
+	{
+		user
+	};
+
+	// Have to return a 404 if the profile is empty rather than a {},
+	// so we iterate for at least one element first to check that.
+	bool empty{true};
+	profile.for_each([&empty]
+	(const string_view &, const string_view &)
+	{
+		empty = false;
+		return false;
+	});
+
+	if(empty)
+		throw m::NOT_FOUND
+		{
+			"Profile for %s is empty.",
+			string_view{user.user_id}
+		};
+
 	resource::response::chunked response
 	{
 		client, http::OK
@@ -211,11 +233,6 @@ get__profile_full(client &client,
 	json::stack::object top
 	{
 		out
-	};
-
-	const m::user::profile profile
-	{
-		user
 	};
 
 	profile.for_each([&top]
