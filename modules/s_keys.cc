@@ -532,7 +532,7 @@ noexcept try
 	if(valid_until_ts < ircd::time<milliseconds>())
 		throw ircd::error
 		{
-			"Key was valid until %s", timestr(valid_until_ts)
+			"Key was valid until %s", timestr(valid_until_ts / 1000L)
 		};
 
 	const json::object &verify_keys
