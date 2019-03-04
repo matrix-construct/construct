@@ -153,5 +153,6 @@ ircd::m::sync::presence_polylog(data &data)
 		parallel();
 	});
 
+	parallel.wait_done();
 	return ret;
 }

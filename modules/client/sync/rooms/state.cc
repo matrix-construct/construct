@@ -135,5 +135,6 @@ ircd::m::sync::room_state_polylog_events(data &data)
 			parallel(event_idx);
 	});
 
+	parallel.wait_done();
 	return ret;
 }
