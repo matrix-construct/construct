@@ -380,7 +380,9 @@ flows
 		{
 			"stages":
 			[
-				"m.login.dummy", "m.login.password"
+				"m.login.dummy",
+				"m.login.password",
+				"m.login.email.identity"
 			]
 		}
 	]
