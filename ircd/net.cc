@@ -1240,11 +1240,6 @@ try
 {
 	assert(!handle_set);
 	handle_set = true;
-	const unwind::exceptional unset{[this]
-	{
-		handle_set = false;
-	}};
-
 	auto sock
 	{
 		std::make_shared<ircd::socket>(ssl)
