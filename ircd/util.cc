@@ -32,6 +32,14 @@ ircd::util::size(std::ostream &s)
 #pragma STDC FENV_ACCESS on
 #endif
 
+std::fexcept_t
+ircd::util::fpe::set(const ushort &flags)
+{
+	std::fexcept_t theirs;
+	syscall(std::fesetexceptflag, &theirs, flags);
+	return theirs;
+}
+
 void
 ircd::util::fpe::throw_errors(const ushort &flags)
 {

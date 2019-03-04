@@ -18,7 +18,9 @@ namespace ircd::util::fpe
 	string_view reflect_sicode(const int &);
 	string_view reflect(const ushort &flag);
 	string_view reflect(const mutable_buffer &, const ushort &flags);
+
 	void throw_errors(const ushort &flags);
+	std::fexcept_t set(const ushort &flag);
 }
 
 /// Perform a single floating point operation at a time within the scope
@@ -26,7 +28,7 @@ namespace ircd::util::fpe
 /// unit for an error status flag and throw a C++ exception.
 struct ircd::util::fpe::errors_handle
 {
-	fexcept_t theirs;
+	std::fexcept_t theirs;
 
   public:
 	ushort pending() const;
