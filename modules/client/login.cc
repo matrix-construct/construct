@@ -30,10 +30,33 @@ resource::response
 post__login_password(client &client,
                      const resource::request::object<m::login> &request)
 {
+	const json::object &identifier
+	{
+		json::get<"identifier"_>(request)
+	};
+
+	const json::string &identifier_type
+	{
+		identifier.get("type")
+	};
+
+	if(identifier_type && identifier_type != "m.id.user")
+		throw m::UNSUPPORTED
+		{
+			"Identifier type '%s' is not supported.", identifier_type
+		};
+
+	const json::string &username
+	{
+		identifier_type == "m.id.user"?
+			json::string(identifier.at("user")):
+			at<"user"_>(request)
+	};
+
 	// Build a canonical MXID from a the user field
 	const m::id::user::buf user_id
 	{
-		at<"user"_>(request), my_host()
+		username, my_host()
 	};
 
 	const string_view &supplied_password

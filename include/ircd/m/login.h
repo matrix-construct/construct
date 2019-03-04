@@ -23,6 +23,9 @@ struct ircd::m::login
 	/// "m.login.token"]
 	json::property<name::type, json::string>,
 
+	/// Identification information for the user.
+	json::property<name::identifier, json::object>,
+
 	/// The fully qualified user ID or just local part of the user ID, to
 	/// log in.
 	json::property<name::user, json::string>,

@@ -94,6 +94,7 @@ constexpr const char *const ircd::m::name::password;
 constexpr const char *const ircd::m::name::token;
 constexpr const char *const ircd::m::name::device_id;
 constexpr const char *const ircd::m::name::initial_device_display_name;
+constexpr const char *const ircd::m::name::identifier;
 
 constexpr const char *const ircd::m::name::username;
 constexpr const char *const ircd::m::name::bind_email;

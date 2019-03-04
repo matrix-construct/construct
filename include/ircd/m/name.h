@@ -115,6 +115,7 @@ struct ircd::m::name
 	static constexpr const char *const token {"token"};
 	static constexpr const char *const device_id {"device_id"};
 	static constexpr const char *const initial_device_display_name {"initial_device_display_name"};
+	static constexpr const char *const identifier {"identifier"};
 
 	static constexpr const char *const username {"username"};
 	static constexpr const char *const bind_email {"bind_email"};
