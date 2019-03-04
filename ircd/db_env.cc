@@ -2777,7 +2777,7 @@ try
 {
 	opts.direct?
 		fs::block_size(fd):
-		0
+		1
 }
 ,offset
 {
@@ -3169,7 +3169,7 @@ try
 {
 	opts.direct?
 		fs::block_size(fd):
-		0
+		1
 }
 ,aio
 {
@@ -3474,7 +3474,7 @@ try
 {
 	opts.direct?
 		fs::block_size(fd):
-		0
+		1
 }
 ,aio
 {
