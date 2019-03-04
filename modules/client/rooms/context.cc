@@ -125,12 +125,18 @@ get__context(client &client,
 		for(size_t i(0); i < limit && before; --before, ++i)
 		{
 			const m::event &event{*before};
-			if(!visible(event, request.user_id))
-				break;
-
 			start = at<"event_id"_>(event);
+			if(!visible(event, request.user_id))
+				continue;
+
 			array.append(event);
 		}
+
+		if(before)
+			--before;
+
+		if(before)
+			start = before.event_id();
 	}
 
 	json::stack::member
@@ -153,12 +159,18 @@ get__context(client &client,
 		for(size_t i(0); i < limit && after; ++after, ++i)
 		{
 			const m::event &event{*after};
-			if(!visible(event, request.user_id))
-				break;
-
 			end = at<"event_id"_>(event);
+			if(!visible(event, request.user_id))
+				continue;
+
 			array.append(event);
 		}
+
+		if(after)
+			++after;
+
+		if(after)
+			end = after.event_id();
 	}
 
 	json::stack::member
