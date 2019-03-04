@@ -18,9 +18,9 @@ get__event(client &client,
            const m::room::id &room_id)
 {
 	if(request.parv.size() < 3)
-		throw m::ACCESS_DENIED
+		throw m::NEED_MORE_PARAMS
 		{
-			"You are not permitted to view the room at this event"
+			"event_id path parameter required"
 		};
 
 	m::event::id::buf event_id
