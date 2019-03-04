@@ -121,7 +121,14 @@ get__messages(client &client,
 	else if(it)
 		++it;
 
-	m::event::id::buf start, end;
+	m::event::id::buf start
+	{
+		page.dir == 'b'?
+			page.from:
+			m::event::id::buf{}
+	};
+
+	m::event::id::buf end;
 	{
 		json::stack::member member{ret, "chunk"};
 		json::stack::array chunk{member};
