@@ -110,70 +110,72 @@ get__messages(client &client,
 		response.buf, response.flusher()
 	};
 
-	json::stack::object ret
+	json::stack::object top
 	{
 		out
 	};
 
 	// Spec sez the 'from' token is exclusive
-	if(it && page.dir == 'b')
-		--it;
-	else if(it)
-		++it;
+	if(page.from && it)
+	{
+		if(page.dir == 'b')
+			--it;
+		else
+			++it;
+	}
 
 	m::event::id::buf start
 	{
-		page.dir == 'b'?
-			page.from:
-			m::event::id::buf{}
+		page.dir == 'b'? page.from : m::event::id::buf{}
 	};
 
-	m::event::id::buf end;
+	m::event::id::buf end
 	{
-		json::stack::member member{ret, "chunk"};
-		json::stack::array chunk{member};
-		size_t hit{0}, miss{0};
-		for(; it; page.dir == 'b'? --it : ++it)
+		page.dir == 'b'? page.to : m::event::id::buf{}
+	};
+
+	json::stack::array chunk
+	{
+		top, "chunk"
+	};
+
+	size_t hit{0}, miss{0};
+	for(; it; page.dir == 'b'? --it : ++it)
+	{
+		const m::event &event{*it};
+		if(page.dir != 'b')
+			start = at<"event_id"_>(event);
+		else
+			end = at<"event_id"_>(event);
+
+		if(hit >= page.limit || miss >= size_t(max_filter_miss))
+			break;
+
+		if(!visible(event, request.user_id))
 		{
-			const m::event &event{*it};
-			if(!visible(event, request.user_id))
-				break;
-
-			if(page.to && at<"event_id"_>(event) == page.to)
-			{
-				if(page.dir != 'b')
-					start = at<"event_id"_>(event);
-
-				break;
-			}
-
-			if(empty(filter_json) || match(filter, event))
-			{
-				_append(chunk, event, it.event_idx());
-				++hit;
-			}
-			else ++miss;
-
-			if(hit >= page.limit || miss >= size_t(max_filter_miss))
-			{
-				if(page.dir == 'b')
-					end = at<"event_id"_>(event);
-				else
-					start = at<"event_id"_>(event);
-
-				break;
-			}
+			++miss;
+			continue;
 		}
+
+		if(!empty(filter_json) && !match(filter, event))
+		{
+			++miss;
+			continue;
+		}
+
+		_append(chunk, event, it.event_idx());
+		++hit;
 	}
+	chunk.~array();
 
 	json::stack::member
 	{
-		ret, "start", json::value{start}
+		top, "start", json::value{start}
 	};
 
 	json::stack::member
 	{
-		ret, "end", json::value{end}
+		top, "end", json::value{end}
 	};
 
 	return {};
