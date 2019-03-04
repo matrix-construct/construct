@@ -152,7 +152,7 @@ ircd::conf::item<bool>
 register_guest_enable
 {
 	{ "name",     "ircd.client.register.guest.enable" },
-	{ "default",  true                                }
+	{ "default",  false                               }
 };
 
 resource::response
