@@ -50,14 +50,6 @@ put__send_join(client &client,
 		url::decode(room_id, request.parv[0])
 	};
 
-	if(!my_host(room_id.host()))
-		throw m::error
-		{
-			http::FORBIDDEN, "M_INVALID_ROOM_ID",
-			"Can only send_join for rooms on my host '%s'",
-			my_host()
-		};
-
 	if(request.parv.size() < 2)
 		throw m::NEED_MORE_PARAMS
 		{
