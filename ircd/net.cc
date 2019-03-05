@@ -1399,13 +1399,24 @@ noexcept try
 
 	--handshaking;
 	assert(bool(sock));
+
+	#ifdef RB_DEBUG
+	const auto &current_cipher
+	{
+		openssl::current_cipher(*sock)
+	};
+
 	log::debug
 	{
-		log, "%s handshook(%zu) %s",
+		log, "%s handshook(%zu) cipher:%s %s",
 		loghead(*sock),
 		handshaking,
+		current_cipher?
+			openssl::name(*current_cipher):
+			"<NO CIPHER>"_sv,
 		string(ec)
 	};
+	#endif
 
 	check_handshake_error(ec, *sock);
 	sock->cancel_timeout();
@@ -2581,12 +2592,22 @@ noexcept try
 	if(timedout && ec == errc::operation_canceled)
 		ec = make_error_code(errc::timed_out);
 
+	#ifdef RB_DEBUG
+	const auto &current_cipher
+	{
+		openssl::current_cipher(*this)
+	};
+
 	log::debug
 	{
-		log, "%s handshake %s",
+		log, "%s handshake cipher:%s %s",
 		loghead(*this),
+		current_cipher?
+			openssl::name(*current_cipher):
+			"<NO CIPHER>"_sv,
 		string(ec)
 	};
+	#endif
 
 	// This is the end of the asynchronous call chain; the user is called
 	// back with or without error here.
