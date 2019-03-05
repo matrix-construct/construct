@@ -1521,7 +1521,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		return "foobar";
 	});
 
-	if(opts.has("certificate_chain_path"))
+	if(!empty(unquote(opts["certificate_chain_path"])))
 	{
 		const std::string filename
 		{
@@ -1545,7 +1545,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		};
 	}
 
-	if(opts.has("certificate_pem_path"))
+	if(!empty(unquote(opts["certificate_pem_path"])))
 	{
 		const std::string filename
 		{
@@ -1569,7 +1569,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		};
 	}
 
-	if(opts.has("private_key_pem_path"))
+	if(!empty(unquote(opts["private_key_pem_path"])))
 	{
 		const std::string filename
 		{
@@ -1593,7 +1593,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 		};
 	}
 
-	if(opts.has("tmp_dh_path") && !empty(unquote(opts.at("tmp_dh_path"))))
+	if(!empty(unquote(opts["tmp_dh_path"])))
 	{
 		const std::string filename
 		{
@@ -1616,7 +1616,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 			filename
 		};
 	}
-	else if(opts.has("tmp_dh"))
+	else if(!empty(unquote(opts["tmp_dh"])))
 	{
 		const const_buffer buf
 		{
