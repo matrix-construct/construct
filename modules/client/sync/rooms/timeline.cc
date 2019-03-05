@@ -16,6 +16,7 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
+	static void _room_timeline_append_txnid(data &, json::stack::object &, const m::event &);
 	static void _room_timeline_append(data &, json::stack::array &, const m::event::idx &, const m::event &);
 	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &, bool &);
 	static bool room_timeline_polylog(data &);
@@ -170,9 +171,42 @@ ircd::m::sync::_room_timeline_append(data &data,
 		}
 	};
 
+	_room_timeline_append_txnid(data, unsigned_, event);
+}
+
+
+void
+ircd::m::sync::_room_timeline_append_txnid(data &data,
+                                           json::stack::object &unsigned_,
+                                           const m::event &event)
+{
 	if(data.client_txnid)
+	{
 		json::stack::member
 		{
 			unsigned_, "transaction_id", data.client_txnid
 		};
+
+		return;
+	}
+
+	if(json::get<"sender"_>(event) != data.user.user_id)
+		return;
+
+	const auto txnid_idx
+	{
+		data.user_room.get(std::nothrow, "ircd.client.txnid", at<"event_id"_>(event))
+	};
+
+	if(!txnid_idx)
+		return;
+
+	m::get(std::nothrow, txnid_idx, "content", [&unsigned_]
+	(const json::object &content)
+	{
+		json::stack::member
+		{
+			unsigned_, "transaction_id", unquote(content.get("transaction_id"))
+		};
+	});
 }
