@@ -133,6 +133,7 @@ struct ircd::m::name
 	static constexpr const char *const preset {"preset"};
 	static constexpr const char *const is_direct {"is_direct"};
 	static constexpr const char *const guest_can_join {"guest_can_join"};
+	static constexpr const char *const power_level_content_override {"power_level_content_override"};
 
 	static constexpr const char *const id_server {"id_server"};
 

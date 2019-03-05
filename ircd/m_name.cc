@@ -112,6 +112,7 @@ constexpr const char *const ircd::m::name::initial_state;
 constexpr const char *const ircd::m::name::preset;
 constexpr const char *const ircd::m::name::is_direct;
 constexpr const char *const ircd::m::name::guest_can_join;
+constexpr const char *const ircd::m::name::power_level_content_override;
 
 constexpr const char *const ircd::m::name::id_server;
 

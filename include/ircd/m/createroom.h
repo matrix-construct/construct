@@ -81,7 +81,13 @@ struct ircd::m::createroom
 	/// developer note: this is false if undefined, but an m.room.guest_access
 	/// may be present in the initial vector which allows guest access. This is
 	/// only meaningful if and only if true.
-	json::property<name::guest_can_join, bool>
+	json::property<name::guest_can_join, bool>,
+
+	/// The power level content to override in the default power level event.
+	/// This object is applied on top of the generated m.room.power_levels
+	/// event content prior to it being sent to the room. Defaults to
+	/// overriding nothing.
+	json::property<name::power_level_content_override, json::object>
 >
 {
 	using super_type::tuple;

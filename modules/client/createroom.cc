@@ -100,6 +100,23 @@ try
 		join(room, sender_id)
 	};
 
+	thread_local char pl_content_buf[4_KiB]; try
+	{
+		send(room, sender_id, "m.room.power_levels", "",
+		{
+			json::get<"power_level_content_override"_>(request)?
+				json::get<"power_level_content_override"_>(request):
+				m::room::power::default_content(pl_content_buf, sender_id)
+		});
+	}
+	catch(const std::exception &e)
+	{
+		errors.append(string_view{fmt::sprintf
+		{
+			error_buf, "Failed to set power_levels: %s", e.what()
+		}});
+	}
+
 	// Takes precedence over events set by preset, but gets overriden by name
 	// and topic keys.
 	size_t i(0);
