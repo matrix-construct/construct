@@ -179,8 +179,8 @@ try
 
 	const string_view &guest_access
 	{
-		preset == "private_chat"?         "can_join":
-		preset == "trusted_private_chat"? "can_join":
+		preset == "private_chat"?         "forbidden":
+		preset == "trusted_private_chat"? "forbidden":
 		preset == "public_chat"?          "forbidden":
 		                                  "forbidden"
 	};
