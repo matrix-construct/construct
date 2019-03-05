@@ -10,6 +10,8 @@
 
 namespace ircd::m::sync
 {
+	static void room_state_append(data &, json::stack::array &, const m::event &, const m::event::idx &);
+
 	static bool room_state_polylog_events(data &);
 	static bool _room_state_polylog(data &);
 	static bool room_state_polylog(data &);
@@ -110,7 +112,7 @@ ircd::m::sync::_room_state_linear(data &data)
 		*data.out, "events"
 	};
 
-	array.append(*data.event);
+	room_state_append(data, array, *data.event, data.event_idx);
 	return true;
 }
 
@@ -166,7 +168,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 			return;
 
 		const std::lock_guard lock{mutex};
-		array.append(event);
+		room_state_append(data, array, event, event_idx);
 		ret = true;
 	}};
 
@@ -186,4 +188,31 @@ ircd::m::sync::room_state_polylog_events(data &data)
 
 	parallel.wait_done();
 	return ret;
+}
+
+void
+ircd::m::sync::room_state_append(data &data,
+                                 json::stack::array &events,
+                                 const m::event &event,
+                                 const m::event::idx &event_idx)
+{
+	json::stack::object object
+	{
+		events
+	};
+
+	object.append(event);
+
+	json::stack::object unsigned_
+	{
+		object, "unsigned"
+	};
+
+	json::stack::member
+	{
+		unsigned_, "age", json::value
+		{
+			long(vm::current_sequence - event_idx)
+		}
+	};
 }
