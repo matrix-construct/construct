@@ -109,6 +109,7 @@ _can_join_room_hookfn
 	{
 		{ "_site",          "vm.eval"       },
 		{ "type",           "m.room.member" },
+		{ "membership",     "join"          },
 	},
 	_can_join_room
 };
