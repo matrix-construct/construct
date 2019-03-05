@@ -101,6 +101,10 @@ github_handle__pull_request(std::ostream &,
                             const json::object &content);
 
 static std::ostream &
+github_handle__issue_comment(std::ostream &,
+                             const json::object &content);
+
+static std::ostream &
 github_handle__issues(std::ostream &,
                       const json::object &content);
 
@@ -165,6 +169,8 @@ github_handle(client &client,
 		github_handle__pull_request(out, request.content);
 	else if(type == "issues")
 		github_handle__issues(out, request.content);
+	else if(type == "issue_comment")
+		github_handle__issue_comment(out, request.content);
 	else if(type == "watch")
 		github_handle__watch(out, request.content);
 
@@ -559,6 +565,76 @@ github_handle__issues(std::ostream &out,
 		}
 
 		out << "</ul>";
+	}
+
+	return out;
+}
+
+static std::ostream &
+github_handle__issue_comment(std::ostream &out,
+                             const json::object &content)
+{
+	const json::object issue
+	{
+		content["issue"]
+	};
+
+	const json::object comment
+	{
+		content["comment"]
+	};
+
+	const json::string action
+	{
+		content["action"]
+	};
+
+	out << " <b>";
+	switch(hash(action))
+	{
+		case "created"_:
+			out << "commented on";
+			break;
+
+		default:
+			out << action;
+			break;
+	}
+	out << "</b>";
+
+	out << " "
+	    << "<a href=\""
+	    << unquote(issue["html_url"])
+	    << "\">"
+	    << "<b><u>"
+	    << unquote(issue["title"])
+	    << "</u></b>"
+	    << "</a>"
+	    ;
+
+	if(action == "created")
+	{
+		out << " "
+		    << "<blockquote>"
+		    << "<pre><code>"
+		    ;
+
+		static const auto delim("\\r\\n");
+		const auto body(unquote(comment["body"]));
+		auto lines(split(body, delim)); do
+		{
+			out << lines.first
+			    << "<br />"
+			    ;
+
+			lines = split(lines.second, delim);
+		}
+		while(!empty(lines.second));
+
+		out << ""
+		    << "</code></pre>"
+		    << "</blockquote>"
+		    ;
 	}
 
 	return out;
