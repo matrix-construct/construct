@@ -117,6 +117,80 @@ try
 		}});
 	}
 
+	const json::string preset
+	{
+		json::get<"preset"_>(request)
+	};
+
+	const string_view &join_rule
+	{
+		preset == "private_chat"?         "invite":
+		preset == "trusted_private_chat"? "invite":
+		preset == "public_chat"?          "public":
+		                                  "invite"
+	};
+
+	if(join_rule != "invite") try
+	{
+		send(room, sender_id, "m.room.join_rules", "",
+		{
+			{ "join_rule", join_rule }
+		});
+	}
+	catch(const std::exception &e)
+	{
+		errors.append(string_view{fmt::sprintf
+		{
+			error_buf, "Failed to set join_rules: %s", e.what()
+		}});
+	}
+
+	const string_view &history_visibility
+	{
+		preset == "private_chat"?         "shared":
+		preset == "trusted_private_chat"? "shared":
+		preset == "public_chat"?          "shared":
+		                                  "shared"
+	};
+
+	if(history_visibility != "shared") try
+	{
+		send(room, sender_id, "m.room.history_visibility", "",
+		{
+			{ "history_visibility", history_visibility }
+		});
+	}
+	catch(const std::exception &e)
+	{
+		errors.append(string_view{fmt::sprintf
+		{
+			error_buf, "Failed to set history_visibility: %s", e.what()
+		}});
+	}
+
+	const string_view &guest_access
+	{
+		preset == "private_chat"?         "can_join":
+		preset == "trusted_private_chat"? "can_join":
+		preset == "public_chat"?          "forbidden":
+		                                  "forbidden"
+	};
+
+	if(guest_access == "can_join") try
+	{
+		send(room, sender_id, "m.room.guest_access", "",
+		{
+			{ "guest_access", "can_join" }
+		});
+	}
+	catch(const std::exception &e)
+	{
+		errors.append(string_view{fmt::sprintf
+		{
+			error_buf, "Failed to set guest_access: %s", e.what()
+		}});
+	}
+
 	// Takes precedence over events set by preset, but gets overriden by name
 	// and topic keys.
 	size_t i(0);
@@ -190,7 +264,7 @@ try
 		}});
 	}
 
-	if(json::get<"guest_can_join"_>(request)) try
+	if(json::get<"guest_can_join"_>(request) && guest_access != "can_join") try
 	{
 		send(room, sender_id, "m.room.guest_access", "",
 		{
