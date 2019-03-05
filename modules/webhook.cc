@@ -532,6 +532,34 @@ github_handle__issues(std::ostream &out,
 		    << "</blockquote>"
 		    ;
 	}
+	else if(unquote(content["action"]) == "labeled")
+	{
+		const json::array labels
+		{
+			issue["labels"]
+		};
+
+		const json::object label
+		{
+			content["label"]
+		};
+
+		out << "<ul>";
+		for(const json::object &label : labels)
+		{
+			out << "<li>";
+			out << "<font color="
+			    << label["color"]
+			    << ">";
+
+			out << unquote(label["name"]);
+
+			out << "</font>";
+			out << "</li>";
+		}
+
+		out << "</ul>";
+	}
 
 	return out;
 }
