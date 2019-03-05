@@ -48,6 +48,36 @@ namespace ircd::openssl
 //
 
 //
+// SSL
+//
+
+ircd::string_view
+ircd::openssl::cipher_list(const SSL &ssl,
+                           const int &priority)
+{
+	return SSL_get_cipher_list(&ssl, priority);
+}
+
+ircd::string_view
+ircd::openssl::shared_ciphers(const mutable_buffer &buf,
+                              const SSL &ssl)
+{
+	return SSL_get_shared_ciphers(&ssl, data(buf), size(buf));
+}
+
+const SSL_CIPHER *
+ircd::openssl::current_cipher(const SSL &ssl)
+{
+	return SSL_get_current_cipher(&ssl);
+}
+
+ircd::string_view
+ircd::openssl::name(const SSL_CIPHER &cipher)
+{
+	return SSL_CIPHER_get_name(&cipher);
+}
+
+//
 // X509
 //
 

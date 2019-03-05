@@ -15,6 +15,8 @@
 // that these are declared in the extern namespace outside of ircd:: but
 // match those in the OpenSSL headers and should not be too much trouble.
 struct ssl_st;
+struct ssl_ctx_st;
+struct ssl_cipher_st;
 struct rsa_st;
 struct x509_st;
 struct x509_store_ctx_st;
@@ -39,6 +41,8 @@ namespace ircd::openssl
 
 	// typedef analogues
 	using SSL = ::ssl_st;
+	using SSL_CTX = ::ssl_ctx_st;
+	using SSL_CIPHER = ::ssl_cipher_st;
 	using RSA = ::rsa_st;
 	using X509 = ::x509_st;
 	using X509_STORE_CTX = ::x509_store_ctx_st;
@@ -118,6 +122,12 @@ namespace ircd::openssl
 	uint get_error_depth(const X509_STORE_CTX &);
 	const X509 &current_cert(const X509_STORE_CTX &);
 	X509 &current_cert(X509_STORE_CTX &);
+
+	// SSL suite
+	string_view name(const SSL_CIPHER &);
+	const SSL_CIPHER *current_cipher(const SSL &);
+	string_view shared_ciphers(const mutable_buffer &buf, const SSL &);
+	string_view cipher_list(const SSL &, const int &priority = -1);
 }
 
 /// OpenSSL BIO convenience utils and wraps; also secure file IO closures
