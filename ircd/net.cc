@@ -1496,7 +1496,7 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 	(
 		0
 		//| ssl.default_workarounds
-		//| ssl.no_tlsv1
+		| ssl.no_tlsv1
 		//| ssl.no_tlsv1_1
 		//| ssl.no_tlsv1_2
 		//| ssl.no_sslv2
