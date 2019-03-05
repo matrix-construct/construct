@@ -32,6 +32,9 @@ extern "C" room
 createroom_(const id::room &room_id,
             const id::user &creator);
 
+thread_local char
+error_buf[512];
+
 const room::id::buf
 init_room_id
 {
@@ -67,6 +70,31 @@ try
 		createroom_(room_id, sender_id)
 	};
 
+	resource::response::chunked response
+	{
+		client, http::CREATED, 2_KiB
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::member
+	{
+		top, "room_id", room.room_id
+	};
+
+	json::stack::array errors
+	{
+		top, "errors"
+	};
+
 	const event::id::buf join_event_id
 	{
 		join(room, sender_id)
@@ -74,26 +102,39 @@ try
 
 	// Takes precedence over events set by preset, but gets overriden by name
 	// and topic keys.
-	for(const json::object &event : json::get<"initial_state"_>(request))
+	size_t i(0);
+	for(const json::object &event : json::get<"initial_state"_>(request)) try
 	{
 		const json::string &type(event["type"]);
-		if(empty(type))
-			continue;
-
 		const json::string &state_key(event["state_key"]);
 		const json::object &content(event["content"]);
 		send(room, sender_id, type, state_key, content);
+		++i;
+	}
+	catch(const std::exception &e)
+	{
+		errors.append(string_view{fmt::sprintf
+		{
+			error_buf, "Failed to set initial_state event @%zu: %s", i++, e.what()
+		}});
 	}
 
-	if(json::get<"guest_can_join"_>(request))
+	if(json::get<"guest_can_join"_>(request)) try
 	{
 		send(room, sender_id, "m.room.guest_access", "",
 		{
 			{ "guest_access", "can_join" }
 		});
 	}
+	catch(const std::exception &e)
+	{
+		errors.append(string_view{fmt::sprintf
+		{
+			error_buf, "Failed to set guest_access: %s", e.what()
+		}});
+	}
 
-	if(json::get<"name"_>(request))
+	if(json::get<"name"_>(request)) try
 	{
 		static const size_t name_max_len
 		{
@@ -111,28 +152,43 @@ try
 			{ "name", name }
 		});
 	}
+	catch(const std::exception &e)
+	{
+		errors.append(string_view{fmt::sprintf
+		{
+			error_buf, "Failed to set room name: %s", e.what()
+		}});
+	}
 
-	if(json::get<"topic"_>(request))
+	if(json::get<"topic"_>(request)) try
 	{
 		send(room, sender_id, "m.room.topic", "",
 		{
 			{ "topic", json::get<"topic"_>(request) }
 		});
 	}
+	catch(const std::exception &e)
+	{
+		errors.append(string_view{fmt::sprintf
+		{
+			error_buf, "Failed to set room topic: %s", e.what()
+		}});
+	}
 
-	for(const json::string &_user_id : json::get<"invite"_>(request))
+	for(const json::string &_user_id : json::get<"invite"_>(request)) try
 	{
 		const m::user::id &user_id{_user_id};
 		invite(room, user_id, sender_id);
 	}
-
-	return resource::response
+	catch(const std::exception &e)
 	{
-		client, http::CREATED,
+		errors.append(string_view{fmt::sprintf
 		{
-			{ "room_id", room_id },
-		}
-	};
+			error_buf, "Failed to invite user '%s': %s", _user_id, e.what()
+		}});
+	}
+
+	return {};
 }
 catch(const db::not_found &e)
 {
