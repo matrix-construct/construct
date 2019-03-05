@@ -119,21 +119,6 @@ try
 		}});
 	}
 
-	if(json::get<"guest_can_join"_>(request)) try
-	{
-		send(room, sender_id, "m.room.guest_access", "",
-		{
-			{ "guest_access", "can_join" }
-		});
-	}
-	catch(const std::exception &e)
-	{
-		errors.append(string_view{fmt::sprintf
-		{
-			error_buf, "Failed to set guest_access: %s", e.what()
-		}});
-	}
-
 	if(json::get<"name"_>(request)) try
 	{
 		static const size_t name_max_len
@@ -185,6 +170,36 @@ try
 		errors.append(string_view{fmt::sprintf
 		{
 			error_buf, "Failed to invite user '%s': %s", _user_id, e.what()
+		}});
+	}
+
+	if(json::get<"guest_can_join"_>(request)) try
+	{
+		send(room, sender_id, "m.room.guest_access", "",
+		{
+			{ "guest_access", "can_join" }
+		});
+	}
+	catch(const std::exception &e)
+	{
+		errors.append(string_view{fmt::sprintf
+		{
+			error_buf, "Failed to set guest_access: %s", e.what()
+		}});
+	}
+
+	if(json::get<"visibility"_>(request) == "public") try
+	{
+		// This call sends a message to the !public room to list this room in the
+		// public rooms list. We set an empty summary for this room because we
+		// already have its state on this server;
+		m::rooms::summary_set(room.room_id, json::object{});
+	}
+	catch(const std::exception &e)
+	{
+		errors.append(string_view{fmt::sprintf
+		{
+			error_buf, "Failed to set public visibility: %s", e.what()
 		}});
 	}
 
