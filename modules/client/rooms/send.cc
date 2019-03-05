@@ -66,3 +66,48 @@ put__send(client &client,
 		}
 	};
 }
+
+static void
+save_transaction_id(const m::event &event,
+                    m::vm::eval &eval);
+
+m::hookfn<m::vm::eval &>
+save_transaction_id_hookfn
+{
+	save_transaction_id,
+	{
+		{ "_site",    "vm.effect" },
+		{ "origin",   my_host()   },
+	}
+};
+
+void
+save_transaction_id(const m::event &event,
+                    m::vm::eval &eval)
+{
+	if(!eval.copts)
+		return;
+
+	if(!eval.copts->client_txnid)
+		return;
+
+	if(!json::get<"event_id"_>(event))
+		return;
+
+	assert(my_host(at<"origin"_>(event)));
+	const m::user::room user_room
+	{
+		at<"sender"_>(event)
+	};
+
+	static const string_view &type{"ircd.client.txnid"};
+	const auto &state_key
+	{
+		at<"event_id"_>(event)
+	};
+
+	send(user_room, at<"sender"_>(event), type, state_key,
+	{
+		{ "transaction_id", eval.copts->client_txnid }
+	});
+}
