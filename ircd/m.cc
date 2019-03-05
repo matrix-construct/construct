@@ -351,9 +351,31 @@ ircd::m::my_node
 };
 
 bool
-ircd::m::self::host(const string_view &s)
+ircd::m::self::host(const string_view &other)
 {
-	return s == host();
+	// port() is 0 when the origin has no port (and implies 8448)
+	const auto port
+	{
+		me.user_id.port()
+	};
+
+	// If my_host has a port number, then the argument must also have the
+	// same port number.
+	if(port)
+		return host() == other;
+
+	/// If my_host has no port number, then the argument can have port
+	/// 8448 or no port number, which will initialize net::hostport.port to
+	/// the "canon_port" of 8448.
+	assert(net::canon_port == 8448);
+	const net::hostport _other{other};
+	if(net::port(_other) != net::canon_port)
+		return false;
+
+	if(host() != host(_other))
+		return false;
+
+	return true;
 }
 
 ircd::string_view
