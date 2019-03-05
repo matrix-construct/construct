@@ -72,6 +72,60 @@ try
 		join(room, sender_id)
 	};
 
+	// Takes precedence over events set by preset, but gets overriden by name
+	// and topic keys.
+	for(const json::object &event : json::get<"initial_state"_>(request))
+	{
+		const json::string &type(event["type"]);
+		if(empty(type))
+			continue;
+
+		const json::string &state_key(event["state_key"]);
+		const json::object &content(event["content"]);
+		send(room, sender_id, type, state_key, content);
+	}
+
+	if(json::get<"guest_can_join"_>(request))
+	{
+		send(room, sender_id, "m.room.guest_access", "",
+		{
+			{ "guest_access", "can_join" }
+		});
+	}
+
+	if(json::get<"name"_>(request))
+	{
+		static const size_t name_max_len
+		{
+			// 14.2.1.3: The name of the room. This MUST NOT exceed 255 bytes.
+			255
+		};
+
+		const auto name
+		{
+			trunc(json::get<"name"_>(request), name_max_len)
+		};
+
+		send(room, sender_id, "m.room.name", "",
+		{
+			{ "name", name }
+		});
+	}
+
+	if(json::get<"topic"_>(request))
+	{
+		send(room, sender_id, "m.room.topic", "",
+		{
+			{ "topic", json::get<"topic"_>(request) }
+		});
+	}
+
+	for(const json::string &_user_id : json::get<"invite"_>(request))
+	{
+		const m::user::id &user_id{_user_id};
+		invite(room, user_id, sender_id);
+	}
+
 	return resource::response
 	{
 		client, http::CREATED,
