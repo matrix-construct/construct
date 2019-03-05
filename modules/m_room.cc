@@ -88,6 +88,86 @@ ircd::m::count_since(const m::room &room,
 	return ret;
 }
 
+ircd::json::object
+IRCD_MODULE_EXPORT
+ircd::m::room::power::default_content(const mutable_buffer &buf,
+                                      const m::user::id &creator)
+{
+	json::stack out{buf};
+	json::stack::object content{out};
+
+	assert(default_power_level == 50);
+	json::stack::member
+	{
+		content, "ban", json::value(default_power_level)
+	};
+
+	json::stack::object
+	{
+		content, "events"
+	};
+
+	assert(default_event_level == 0);
+	json::stack::member
+	{
+		content, "events_default", json::value(default_event_level)
+	};
+
+	json::stack::member
+	{
+		content, "invite", json::value(default_power_level)
+	};
+
+	json::stack::member
+	{
+		content, "kick", json::value(default_power_level)
+	};
+
+	{
+		json::stack::object notifications
+		{
+			content, "notifications"
+		};
+
+		json::stack::member
+		{
+			notifications, "room", json::value(default_power_level)
+		};
+	}
+
+	json::stack::member
+	{
+		content, "redact", json::value(default_power_level)
+	};
+
+	json::stack::member
+	{
+		content, "state_default", json::value(default_power_level)
+	};
+
+	{
+		json::stack::object users
+		{
+			content, "users"
+		};
+
+		assert(default_creator_level == 100);
+		json::stack::member
+		{
+			users, creator, json::value(default_creator_level)
+		};
+	}
+
+	assert(default_user_level == 0);
+	json::stack::member
+	{
+		content, "users_default", json::value(default_user_level)
+	};
+
+	content.~object();
+	return json::object{out.completed()};
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::room::origins::random(const origins &origins,

@@ -2174,6 +2174,24 @@ ircd::m::room::power::default_user_level
 	0
 };
 
+ircd::json::object
+ircd::m::room::power::default_content(const mutable_buffer &out,
+                                     const m::user::id &creator)
+{
+	using prototype = json::object (const mutable_buffer &, const m::user::id &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::power::default_content"
+	};
+
+	return call(out, creator);
+}
+
+//
+// room::power::power
+//
+
 ircd::m::room::power::power(const m::room &room)
 :power
 {

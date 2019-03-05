@@ -76,4 +76,6 @@ struct ircd::m::room::power
 	power(const m::room &, const event::idx &power_event_idx);
 	power(const m::room &);
 	power() = default;
+
+	static json::object default_content(const mutable_buffer &out, const m::id::user &creator);
 };
