@@ -32,9 +32,6 @@ extern "C" room
 createroom_(const id::room &room_id,
             const id::user &creator);
 
-thread_local char
-error_buf[512];
-
 const room::id::buf
 init_room_id
 {
@@ -48,6 +45,18 @@ createroom_resource
 	{
 		"(7.1.1) Create a new room with various configuration options."
 	}
+};
+
+struct report_error
+{
+	static thread_local char buf[512];
+
+	template<class... args>
+	report_error(json::stack::array &errors,
+	             const string_view &room_id,
+	             const string_view &user_id,
+	             const string_view &fmt,
+	             args&&... a);
 };
 
 resource::response
@@ -111,10 +120,10 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		errors.append(string_view{fmt::sprintf
+		report_error
 		{
-			error_buf, "Failed to set power_levels: %s", e.what()
-		}});
+			errors, room_id, sender_id, "Failed to set power_levels: %s", e.what()
+		};
 	}
 
 	const json::string preset
@@ -139,10 +148,10 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		errors.append(string_view{fmt::sprintf
+		report_error
 		{
-			error_buf, "Failed to set join_rules: %s", e.what()
-		}});
+			errors, room_id, sender_id, "Failed to set join_rules: %s", e.what()
+		};
 	}
 
 	const string_view &history_visibility
@@ -162,10 +171,10 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		errors.append(string_view{fmt::sprintf
+		report_error
 		{
-			error_buf, "Failed to set history_visibility: %s", e.what()
-		}});
+			errors, room_id, sender_id, "Failed to set history_visibility: %s", e.what()
+		};
 	}
 
 	const string_view &guest_access
@@ -185,10 +194,10 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		errors.append(string_view{fmt::sprintf
+		report_error
 		{
-			error_buf, "Failed to set guest_access: %s", e.what()
-		}});
+			errors, room_id, sender_id, "Failed to set guest_access: %s", e.what()
+		};
 	}
 
 	// Takes precedence over events set by preset, but gets overriden by name
@@ -204,10 +213,12 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		errors.append(string_view{fmt::sprintf
+		report_error
 		{
-			error_buf, "Failed to set initial_state event @%zu: %s", i++, e.what()
-		}});
+			errors, room_id, sender_id, "Failed to set initial_state event @%zu: %s",
+			i++,
+			e.what()
+		};
 	}
 
 	if(json::get<"name"_>(request)) try
@@ -230,10 +241,10 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		errors.append(string_view{fmt::sprintf
+		report_error
 		{
-			error_buf, "Failed to set room name: %s", e.what()
-		}});
+			errors, room_id, sender_id, "Failed to set room name: %s", e.what()
+		};
 	}
 
 	if(json::get<"topic"_>(request)) try
@@ -245,10 +256,10 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		errors.append(string_view{fmt::sprintf
+		report_error
 		{
-			error_buf, "Failed to set room topic: %s", e.what()
-		}});
+			errors, room_id, sender_id, "Failed to set room topic: %s", e.what()
+		};
 	}
 
 	for(const json::string &_user_id : json::get<"invite"_>(request)) try
@@ -258,10 +269,12 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		errors.append(string_view{fmt::sprintf
+		report_error
 		{
-			error_buf, "Failed to invite user '%s': %s", _user_id, e.what()
-		}});
+			errors, room_id, sender_id, "Failed to invite user '%s': %s",
+			_user_id,
+			e.what()
+		};
 	}
 
 	if(json::get<"guest_can_join"_>(request) && guest_access != "can_join") try
@@ -273,10 +286,10 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		errors.append(string_view{fmt::sprintf
+		report_error
 		{
-			error_buf, "Failed to set guest_access: %s", e.what()
-		}});
+			errors, room_id, sender_id, "Failed to set guest_access: %s", e.what()
+		};
 	}
 
 	if(json::get<"visibility"_>(request) == "public") try
@@ -288,10 +301,10 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		errors.append(string_view{fmt::sprintf
+		report_error
 		{
-			error_buf, "Failed to set public visibility: %s", e.what()
-		}});
+			errors, room_id, sender_id, "Failed to set public visibility: %s", e.what()
+		};
 	}
 
 	return {};
@@ -383,4 +396,30 @@ createroom__parent_type(const id::room &room_id,
 
 	commit(room, event, content);
 	return room;
+}
+
+decltype(report_error::buf) thread_local
+report_error::buf;
+
+template<class... args>
+report_error::report_error(json::stack::array &errors,
+                           const string_view &room_id,
+                           const string_view &user_id,
+                           const string_view &fmt,
+                           args&&... a)
+{
+	const string_view msg{fmt::sprintf
+	{
+		buf, fmt, std::forward<args>(a)...
+	}};
+
+	log::derror
+	{
+		m::log, "Error when creating room %s for user %s :%s",
+		room_id,
+		user_id,
+		msg
+	};
+
+	errors.append(msg);
 }
