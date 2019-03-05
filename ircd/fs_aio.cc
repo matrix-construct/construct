@@ -495,7 +495,7 @@ ircd::fs::aio::system::cancel(request &request)
 
 	const auto eit
 	{
-		std::remove(begin(queue), end(queue), cb)
+		std::remove(begin(queue), begin(queue) + qcount, cb)
 	};
 
 	const auto qcount
