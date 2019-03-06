@@ -215,8 +215,8 @@ ircd::m::vm::eval__commit_room(eval &eval,
 	};
 
 	char ae_buf[1024];
-	json::array auth_events;
-	if(depth != -1 && opts.add_auth_events)
+	json::array auth_events{json::empty_array};
+	if(depth != -1 && event.at("type") != "m.room.create" && opts.add_auth_events)
 	{
 		static const string_view types[]
 		{
