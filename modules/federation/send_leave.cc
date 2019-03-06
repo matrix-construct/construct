@@ -108,9 +108,14 @@ put__send_leave(client &client,
 		event, vmopts
 	};
 
+	static const json::array &response
+	{
+		"[200, {}]"
+	};
+
 	return resource::response
 	{
-		client, http::OK
+		client, http::OK, response
 	};
 }
 
