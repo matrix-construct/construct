@@ -13,7 +13,9 @@
 
 namespace ircd::json
 {
-	template<const char *const &name, class value_type> struct property;
+	template<const char *const &name,
+	         class value_type>
+	struct property;
 }
 
 /// The property template specifies a key/value member of a json::tuple
@@ -33,19 +35,33 @@ struct ircd::json::property
 
 	T value;
 
-	operator const T &() const;
-	operator T &();
-
-	property(T&& value)
-	:value{value}
-	{}
+	constexpr operator const T &() const;
+	constexpr operator T &();
 
 	property() = default;
+	constexpr property(T&& value);
+	constexpr property &operator=(T&& value);
 };
 
 template<const char *const &name,
          class T>
-ircd::json::property<name, T>::operator
+constexpr
+ircd::json::property<name, T>::property(T&& value)
+:value{std::forward<T>(value)}
+{}
+
+template<const char *const &name,
+         class T>
+constexpr ircd::json::property<name, T> &
+ircd::json::property<name, T>::operator=(T&& value)
+{
+	this->value = std::forward<T>(value);
+	return *this;
+}
+
+template<const char *const &name,
+         class T>
+constexpr ircd::json::property<name, T>::operator
 T &()
 {
 	return value;
@@ -53,7 +69,7 @@ T &()
 
 template<const char *const &name,
          class T>
-ircd::json::property<name, T>::operator
+constexpr ircd::json::property<name, T>::operator
 const T &()
 const
 {
