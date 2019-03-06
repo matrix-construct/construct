@@ -139,6 +139,12 @@ put__send_join(client &client,
 	// Second element is the object
 	json::stack::object data{top};
 
+	// Required. The resident server's DNS name.
+	json::stack::member
+	{
+		data, "origin", my_host()
+	};
+
 	// auth_chain
 	{
 		json::stack::array auth_chain_a
