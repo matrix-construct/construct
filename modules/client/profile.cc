@@ -15,8 +15,8 @@ static void _rejoin_rooms(const m::user::id &user_id);
 static void handle_my_profile_changed__displayname(const m::event &event);
 static void handle_my_profile_changed__avatar_url(const m::event &event);
 static void handle_my_profile_changed(const m::event &, m::vm::eval &);
-static resource::response get__profile_full(client &, const resource::request &, const m::user &);
-static resource::response get__profile_remote(client &, const resource::request &, const m::user &);
+static void rethrow(const std::exception_ptr &, const m::user &, const string_view &);
+static std::exception_ptr fetch_profile_remote(const m::user &, const string_view &);
 static resource::response get__profile(client &, const resource::request &);
 static resource::response put__profile(client &, const resource::request &);
 
@@ -39,6 +39,7 @@ my_profile_changed
 	{
 		{ "_site",  "vm.effect"     },
 		{ "type",   "ircd.profile"  },
+		{ "origin",  my_host()      },
 	}
 };
 
@@ -161,47 +162,56 @@ get__profile(client &client,
 		user_id
 	};
 
-	if(!my(user) && !exists(user))
-		return get__profile_remote(client, request, user);
-
-	if(request.parv.size() < 2)
-		return get__profile_full(client, request, user);
-
 	char parambuf[PARAM_MAX_SIZE];
 	const string_view &param
 	{
-		url::decode(parambuf, request.parv[1])
+		request.parv.size() > 1?
+			url::decode(parambuf, request.parv[1]):
+			string_view{}
 	};
 
+	// For remote users, we try to get the latest profile data
+	// from the remote server and cache it locally. When there's
+	// a problem, we store that problem in this eptr for later.
+	const std::exception_ptr eptr
+	{
+		!my(user)?
+			fetch_profile_remote(user, param):
+			std::exception_ptr{}
+	};
+
+	// Now we treat the profile as local data in any case
 	const m::user::profile profile
 	{
 		user
 	};
 
-	profile.get(param, [&client]
-	(const string_view &param, const string_view &value)
+	if(param) try
 	{
-		resource::response
+		// throws if param not found
+		profile.get(param, [&client]
+		(const string_view &param, const string_view &value)
 		{
-			client, json::members
+			resource::response
 			{
-				{ param, value }
-			}
-		};
-	});
+				client, json::members
+				{
+					{ param, value }
+				}
+			};
+		});
 
-	return {}; // responded from closure
-}
-
-resource::response
-get__profile_full(client &client,
-                  const resource::request &request,
-                  const m::user &user)
-{
-	const m::user::profile profile
+		return {};
+	}
+	catch(const std::exception &e)
 	{
-		user
-	};
+		// If there was a problem querying locally for this param and the
+		// user is remote, eptr will have a better error for the client.
+		if(!my(user))
+			rethrow(eptr, user, param);
+
+		throw;
+	}
 
 	// Have to return a 404 if the profile is empty rather than a {},
 	// so we iterate for at least one element first to check that.
@@ -213,6 +223,12 @@ get__profile_full(client &client,
 		return false;
 	});
 
+	// If we have no profile data and the user is not ours, eptr might have
+	// a better error for our client.
+	if(empty && !my(user))
+		rethrow(eptr, user, param);
+
+	// Otherwise if there's no profile data we 404 our client.
 	if(empty)
 		throw m::NOT_FOUND
 		{
@@ -256,63 +272,40 @@ remote_request_timeout
 	{ "default", 10L                                          }
 };
 
-resource::response
-get__profile_remote(client &client,
-                    const resource::request &request,
-                    const m::user &user)
+std::exception_ptr
+fetch_profile_remote(const m::user &user,
+                     const string_view &key)
 try
 {
-	//TODO: XXX cache strat user's room
+	m::user::profile::fetch(user, user.user_id.host(), key);
+	return {};
+}
+catch(const std::exception &e)
+{
+	return std::current_exception();
+}
 
-	char parambuf[128];
-	const string_view &param
-	{
-		url::decode(parambuf, request.parv[1])
-	};
-
-	const unique_buffer<mutable_buffer> buf
-	{
-		64_KiB
-	};
-
-	m::v1::query::profile federation_request
-	{
-		user.user_id, param, buf, m::v1::query::opts
-		{
-			user.user_id.host()
-		}
-	};
-
-	const seconds &timeout(remote_request_timeout);
-	if(!federation_request.wait(timeout, std::nothrow))
-		throw m::error
-		{
-			http::GATEWAY_TIMEOUT, "M_PROFILE_TIMEOUT",
-			"Server '%s' did not respond with profile for %s in time.",
-			user.user_id.host(),
-			string_view{user.user_id}
-		};
-
-	const http::code &code
-	{
-		federation_request.get()
-	};
-
-	const json::object &response
-	{
-		federation_request
-	};
-
-	//TODO: cache into a room with ttl
-
-	return resource::response
-	{
-		client, response
-	};
+void
+rethrow(const std::exception_ptr &eptr,
+        const m::user &user,
+        const string_view &key)
+try
+{
+	std::rethrow_exception(eptr);
 }
 catch(const http::error &)
 {
 	throw;
+}
+catch(const ctx::timeout &)
+{
+	throw m::error
+	{
+		http::GATEWAY_TIMEOUT, "M_PROFILE_TIMEOUT",
+		"Server '%s' did not respond with profile for %s in time.",
+		user.user_id.host(),
+		string_view{user.user_id}
+	};
 }
 catch(const server::unavailable &e)
 {
@@ -428,12 +421,12 @@ ircd::m::user::profile::fetch(const m::user &user,
 	{
 		user.user_id, key, buf, m::v1::query::opts
 		{
-			.remote = remote? remote : user.user_id.host(),
+			.remote = remote?: user.user_id.host(),
 			.dynamic = true,
 		}
 	};
 
-	federation_request.wait(remote_request_timeout);
+	federation_request.wait(seconds(remote_request_timeout));
 	const http::code &code{federation_request.get()};
 	const json::object &response
 	{
@@ -468,13 +461,13 @@ void
 handle_my_profile_changed(const m::event &event,
                           m::vm::eval &eval)
 {
-	if(!my(event))
-		return;
-
 	const m::user::id &user_id
 	{
 		json::get<"sender"_>(event)
 	};
+
+	if(!my(event) || !my(user_id))
+		return;
 
 	// The event has to be an ircd.profile in the user's room, not just a
 	// random ircd.profile typed event in some other room...
