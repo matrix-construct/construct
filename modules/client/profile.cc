@@ -417,13 +417,12 @@ ircd::m::user::profile::fetch(const m::user &user,
 		64_KiB
 	};
 
+	m::v1::query::opts opts;
+	opts.remote = remote?: user.user_id.host();
+	opts.dynamic = true;
 	m::v1::query::profile federation_request
 	{
-		user.user_id, key, buf, m::v1::query::opts
-		{
-			.remote = remote?: user.user_id.host(),
-			.dynamic = true,
-		}
+		user.user_id, key, buf, std::move(opts)
 	};
 
 	federation_request.wait(seconds(remote_request_timeout));
