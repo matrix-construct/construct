@@ -81,14 +81,9 @@ get__event_auth(client &client,
 	};
 
 	json::stack::object top{out};
-	json::stack::member auth_chain_m
-	{
-		top, "auth_chain"
-	};
-
 	json::stack::array auth_chain
 	{
-		auth_chain_m
+		top, "auth_chain"
 	};
 
 	const m::event::auth::chain chain

@@ -66,14 +66,9 @@ handle_get(client &client,
 	};
 
 	json::stack::object top{out};
-	json::stack::member pdus_m
-	{
-		top, "pdus"
-	};
-
 	json::stack::array pdus
 	{
-		pdus_m
+		top, "pdus"
 	};
 
 	pdus.append(event);

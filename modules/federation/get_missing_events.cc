@@ -119,14 +119,9 @@ get__missing_events(client &client,
 	};
 
 	json::stack::object top{out};
-	json::stack::member events_m
-	{
-		top, "events"
-	};
-
 	json::stack::array events
 	{
-		events_m
+		top, "events"
 	};
 
 	std::deque<std::string> queue;

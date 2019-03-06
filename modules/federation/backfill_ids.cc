@@ -113,14 +113,9 @@ get__backfill_ids(client &client,
 	};
 
 	json::stack::object top{out};
-	json::stack::member pdus_m
-	{
-		top, "pdu_ids"
-	};
-
 	json::stack::array pdus
 	{
-		pdus_m
+		top, "pdu_ids"
 	};
 
 	size_t count{0};

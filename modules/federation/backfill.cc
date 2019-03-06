@@ -112,14 +112,9 @@ get__backfill(client &client,
 	};
 
 	json::stack::object top{out};
-	json::stack::member pdus_m
-	{
-		top, "pdus"
-	};
-
 	json::stack::array pdus
 	{
-		pdus_m
+		top, "pdus"
 	};
 
 	size_t count{0};

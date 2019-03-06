@@ -95,8 +95,10 @@ handle_get(client &client,
 	m::room::id::buf next_batch_buf;
 	json::stack::object top{out};
 	{
-		json::stack::member chunk_m{top, "chunk"};
-		json::stack::array chunk{chunk_m};
+		json::stack::array chunk
+		{
+			top, "chunk"
+		};
 
 		const string_view &key
 		{
