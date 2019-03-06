@@ -58,6 +58,7 @@ struct ircd::net::hostport
 	string_view service {canon_service};
 	uint16_t port {canon_port};
 
+	explicit operator bool() const;
 	bool operator!() const;
 
 	hostport(const string_view &host, const string_view &service, const uint16_t &port = canon_port);
@@ -130,12 +131,20 @@ ircd::net::hostport::hostport(const string_view &amalgam)
 	}
 }
 
+inline
+ircd::net::hostport::operator
+bool()
+const
+{
+	static const hostport defaults{};
+	return net::host(*this) != net::host(defaults);
+}
+
 inline bool
 ircd::net::hostport::operator!()
 const
 {
-	static const hostport defaults{};
-	return net::host(*this) == net::host(defaults);
+	return !bool(*this);
 }
 
 inline ircd::string_view &
