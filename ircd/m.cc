@@ -3155,6 +3155,21 @@ ircd::m::user::profile::for_each(const m::user &u,
 	return function(u, c);
 }
 
+void
+ircd::m::user::profile::fetch(const m::user &u,
+                              const net::hostport &remote,
+                              const string_view &key)
+{
+	using prototype = void (const m::user &, const net::hostport &, const string_view &);
+
+	static mods::import<prototype> function
+	{
+		"client_profile", "ircd::m::user::profile::fetch"
+	};
+
+	return function(u, remote, key);
+}
+
 //
 // user::account_data
 //

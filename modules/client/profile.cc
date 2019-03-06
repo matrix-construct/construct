@@ -414,6 +414,57 @@ ircd::m::user::profile::for_each(const m::user &user,
 }
 
 void
+IRCD_MODULE_EXPORT
+ircd::m::user::profile::fetch(const m::user &user,
+                              const net::hostport &remote,
+                              const string_view &key)
+{
+	const unique_buffer<mutable_buffer> buf
+	{
+		64_KiB
+	};
+
+	m::v1::query::profile federation_request
+	{
+		user.user_id, key, buf, m::v1::query::opts
+		{
+			.remote = remote? remote : user.user_id.host(),
+			.dynamic = true,
+		}
+	};
+
+	federation_request.wait(remote_request_timeout);
+	const http::code &code{federation_request.get()};
+	const json::object &response
+	{
+		federation_request
+	};
+
+	if(!exists(user))
+		create(user);
+
+	const m::user::profile profile{user};
+	const m::user::room &user_room{user};
+	for(const auto &member : response)
+	{
+		bool exists{false};
+		profile.get(std::nothrow, member.first, [&exists, &member]
+		(const string_view &key, const string_view &val)
+		{
+			exists = member.second == val;
+		});
+
+		if(exists)
+			continue;
+
+		send(user_room, user.user_id, "ircd.profile", member.first,
+		{
+			{ "text", member.second }
+		});
+	}
+}
+
+void
 handle_my_profile_changed(const m::event &event,
                           m::vm::eval &eval)
 {
