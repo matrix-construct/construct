@@ -113,12 +113,41 @@ template<class dst,
          class src>
 typename std::enable_if
 <
-	ircd::json::is_tuple<dst>(),
+	ircd::json::is_tuple<dst>() &&
+	std::is_assignable<dst, src>(),
+void>::type
+_assign(dst &d,
+        src&& s)
+{
+	d = std::forward<src>(s);
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	ircd::json::is_tuple<dst>() &&
+	!std::is_assignable<dst, src>() &&
+	std::is_constructible<dst, src>(),
 void>::type
 _assign(dst &d,
         src&& s)
 {
 	d = dst{std::forward<src>(s)};
+}
+
+template<class dst,
+         class src>
+typename std::enable_if
+<
+	ircd::json::is_tuple<dst>() &&
+	!std::is_assignable<dst, src>() &&
+	!std::is_constructible<dst, src>(),
+void>::type
+__attribute__((error("Unhandled assignment to json::tuple property")))
+_assign(dst &d,
+        src&& s)
+{
 }
 
 template<class V,
