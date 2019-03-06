@@ -87,7 +87,19 @@ struct ircd::m::createroom
 	/// This object is applied on top of the generated m.room.power_levels
 	/// event content prior to it being sent to the room. Defaults to
 	/// overriding nothing.
-	json::property<name::power_level_content_override, json::object>
+	json::property<name::power_level_content_override, json::object>,
+
+	/// (non-spec) Manually specify the room_id rather than generating one for
+	/// this room. This is intended for privileged users only and will not be
+	/// honored otherwise.
+	json::property<name::room_id, json::string>,
+
+	/// (non-spec) A room_id to be referenced as a "parent" room.
+	json::property<name::parent_room_id, json::string>,
+
+	/// (non-spec) Manually specify the room creator. This is an interface
+	/// convenience and will be overwritten/ignored from unprivileged users.
+	json::property<name::creator, json::string>
 >
 {
 	using super_type::tuple;

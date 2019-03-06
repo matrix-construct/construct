@@ -3725,32 +3725,28 @@ ircd::m::room::state::prefetch(const state &state,
 ircd::m::room
 ircd::m::create(const id::room &room_id,
                 const id::user &creator,
-                const string_view &type)
+                const string_view &preset)
 {
-	using prototype = room (const id::room &, const id::user &, const string_view &);
-
-	static mods::import<prototype> function
+	return create(createroom
 	{
-		"client_createroom", "createroom__type"
-	};
-
-	return function(room_id, creator, type);
+		{ "room_id",  room_id },
+		{ "creator",  creator },
+		{ "preset",   preset  },
+	});
 }
 
 ircd::m::room
-ircd::m::create(const id::room &room_id,
-                const id::user &creator,
-                const id::room &parent,
-                const string_view &type)
+ircd::m::create(const createroom &c,
+                json::stack::array *const &errors)
 {
-	using prototype = room (const id::room &, const id::user &, const id::room &, const string_view &);
+	using prototype = room (const createroom &, json::stack::array *const &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"client_createroom", "createroom__parent_type"
+		"client_createroom", "ircd::m::create"
 	};
 
-	return function(room_id, creator, parent, type);
+	return call(c, errors);
 }
 
 ircd::m::event::id::buf

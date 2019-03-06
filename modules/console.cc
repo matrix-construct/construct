@@ -8213,13 +8213,10 @@ console_cmd__room__leave(opt &out, const string_view &line)
 bool
 console_cmd__room__create(opt &out, const string_view &line)
 {
-	const params param
+	const params param{line, " ",
 	{
-		line, " ",
-		{
-			"room_id", "[creator]", "[type]", "[parent]"
-		}
-	};
+		"room_id", "[creator]", "[type]"
+	}};
 
 	const m::room::id room_id
 	{
@@ -8236,16 +8233,9 @@ console_cmd__room__create(opt &out, const string_view &line)
 		param[2]
 	};
 
-	const string_view &parent
-	{
-		param[3]
-	};
-
 	const m::room room
 	{
-		parent?
-			m::create(room_id, creator, parent, type):
-			m::create(room_id, creator, type)
+		m::create(room_id, creator, type)
 	};
 
 	out << room.room_id << std::endl;

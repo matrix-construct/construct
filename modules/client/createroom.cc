@@ -8,8 +8,11 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd::m;
 using namespace ircd;
+
+static resource::response
+post__createroom(client &client,
+                 const resource::request::object<m::createroom> &request);
 
 mapi::header
 IRCD_MODULE
@@ -17,22 +20,7 @@ IRCD_MODULE
 	"Client 7.1.1 :Create Room"
 };
 
-extern "C" room
-createroom__parent_type(const id::room &room_id,
-                        const id::user &creator,
-                        const id::room &parent,
-                        const string_view &type);
-
-extern "C" room
-createroom__type(const id::room &room_id,
-                 const id::user &creator,
-                 const string_view &type);
-
-extern "C" room
-createroom_(const id::room &room_id,
-            const id::user &creator);
-
-const room::id::buf
+const m::room::id::buf
 init_room_id
 {
 	"init", ircd::my_host()
@@ -47,12 +35,21 @@ createroom_resource
 	}
 };
 
+resource::method
+post_method
+{
+	createroom_resource, "POST", post__createroom,
+	{
+		post_method.REQUIRES_AUTH
+	}
+};
+
 struct report_error
 {
 	static thread_local char buf[512];
 
 	template<class... args>
-	report_error(json::stack::array &errors,
+	report_error(json::stack::array *const &errors,
 	             const string_view &room_id,
 	             const string_view &user_id,
 	             const string_view &fmt,
@@ -62,33 +59,37 @@ struct report_error
 resource::response
 post__createroom(client &client,
                  const resource::request::object<m::createroom> &request)
-try
 {
-	const id::user &sender_id
+	m::createroom c
 	{
-		request.user_id
+		request
 	};
 
-	const id::room::buf room_id
+	json::get<"creator"_>(c) = request.user_id;
+
+	const m::id::room::buf room_id
 	{
-		id::generate, my_host()
+		m::id::generate, my_host()
 	};
 
-	const room room
+	json::get<"room_id"_>(c) = room_id;
+
+	static const string_view presets[]
 	{
-		createroom_(room_id, sender_id)
+		"private_chat",
+		"public_chat",
+		"trusted_private_chat"
 	};
 
-	resource::response::chunked response
+	if(std::find(begin(presets), end(presets), json::get<"preset"_>(c)) == end(presets))
+		json::get<"preset"_>(c) = string_view{};
+
+	const unique_buffer<mutable_buffer> buf
 	{
-		client, http::CREATED, 2_KiB
+		4_KiB
 	};
 
-	json::stack out
-	{
-		response.buf, response.flusher()
-	};
-
+	json::stack out{buf};
 	json::stack::object top
 	{
 		out
@@ -96,7 +97,7 @@ try
 
 	json::stack::member
 	{
-		top, "room_id", room.room_id
+		top, "room_id", room_id
 	};
 
 	json::stack::array errors
@@ -104,31 +105,80 @@ try
 		top, "errors"
 	};
 
+	const m::room room
+	{
+		m::create(c, &errors)
+	};
+
+	errors.~array();
+	top.~object();
+	return resource::response
+	{
+		client, http::CREATED, json::object{out.completed()}
+	};
+
+	return {};
+}
+
+namespace ircd::m
+{
+	static room _create_event(const createroom &);
+};
+
+ircd::m::room
+IRCD_MODULE_EXPORT
+ircd::m::create(const createroom &c,
+                json::stack::array *const &errors)
+try
+{
+	const m::user::id &creator
+	{
+		at<"creator"_>(c)
+	};
+
+	// initial create event
+
+	const room room
+	{
+		_create_event(c)
+	};
+
+	const m::room::id &room_id
+	{
+		room.room_id
+	};
+
+	// creator join event
+
 	const event::id::buf join_event_id
 	{
-		join(room, sender_id)
+		join(room, creator)
 	};
+
+	// initial power_levels
 
 	thread_local char pl_content_buf[4_KiB]; try
 	{
-		send(room, sender_id, "m.room.power_levels", "",
+		send(room, creator, "m.room.power_levels", "",
 		{
-			json::get<"power_level_content_override"_>(request)?
-				json::get<"power_level_content_override"_>(request):
-				m::room::power::default_content(pl_content_buf, sender_id)
+			json::get<"power_level_content_override"_>(c)?
+				json::get<"power_level_content_override"_>(c):
+				m::room::power::default_content(pl_content_buf, creator)
 		});
 	}
 	catch(const std::exception &e)
 	{
 		report_error
 		{
-			errors, room_id, sender_id, "Failed to set power_levels: %s", e.what()
+			errors, room_id, creator, "Failed to set power_levels: %s", e.what()
 		};
 	}
 
+	// initial join_rules
+
 	const json::string preset
 	{
-		json::get<"preset"_>(request)
+		json::get<"preset"_>(c)
 	};
 
 	const string_view &join_rule
@@ -141,7 +191,7 @@ try
 
 	if(join_rule != "invite") try
 	{
-		send(room, sender_id, "m.room.join_rules", "",
+		send(room, creator, "m.room.join_rules", "",
 		{
 			{ "join_rule", join_rule }
 		});
@@ -150,9 +200,11 @@ try
 	{
 		report_error
 		{
-			errors, room_id, sender_id, "Failed to set join_rules: %s", e.what()
+			errors, room_id, creator, "Failed to set join_rules: %s", e.what()
 		};
 	}
+
+	// initial history_visibility
 
 	const string_view &history_visibility
 	{
@@ -164,7 +216,7 @@ try
 
 	if(history_visibility != "shared") try
 	{
-		send(room, sender_id, "m.room.history_visibility", "",
+		send(room, creator, "m.room.history_visibility", "",
 		{
 			{ "history_visibility", history_visibility }
 		});
@@ -173,9 +225,11 @@ try
 	{
 		report_error
 		{
-			errors, room_id, sender_id, "Failed to set history_visibility: %s", e.what()
+			errors, room_id, creator, "Failed to set history_visibility: %s", e.what()
 		};
 	}
+
+	// initial guest_access
 
 	const string_view &guest_access
 	{
@@ -187,7 +241,7 @@ try
 
 	if(guest_access == "can_join") try
 	{
-		send(room, sender_id, "m.room.guest_access", "",
+		send(room, creator, "m.room.guest_access", "",
 		{
 			{ "guest_access", "can_join" }
 		});
@@ -196,32 +250,37 @@ try
 	{
 		report_error
 		{
-			errors, room_id, sender_id, "Failed to set guest_access: %s", e.what()
+			errors, room_id, creator, "Failed to set guest_access: %s", e.what()
 		};
 	}
 
+	// user's initial state vector
+	//
 	// Takes precedence over events set by preset, but gets overriden by name
 	// and topic keys.
+
 	size_t i(0);
-	for(const json::object &event : json::get<"initial_state"_>(request)) try
+	for(const json::object &event : json::get<"initial_state"_>(c)) try
 	{
 		const json::string &type(event["type"]);
 		const json::string &state_key(event["state_key"]);
 		const json::object &content(event["content"]);
-		send(room, sender_id, type, state_key, content);
+		send(room, creator, type, state_key, content);
 		++i;
 	}
 	catch(const std::exception &e)
 	{
 		report_error
 		{
-			errors, room_id, sender_id, "Failed to set initial_state event @%zu: %s",
+			errors, room_id, creator, "Failed to set initial_state event @%zu: %s",
 			i++,
 			e.what()
 		};
 	}
 
-	if(json::get<"name"_>(request)) try
+	// override room name
+
+	if(json::get<"name"_>(c)) try
 	{
 		static const size_t name_max_len
 		{
@@ -231,10 +290,10 @@ try
 
 		const auto name
 		{
-			trunc(json::get<"name"_>(request), name_max_len)
+			trunc(json::get<"name"_>(c), name_max_len)
 		};
 
-		send(room, sender_id, "m.room.name", "",
+		send(room, creator, "m.room.name", "",
 		{
 			{ "name", name }
 		});
@@ -243,43 +302,47 @@ try
 	{
 		report_error
 		{
-			errors, room_id, sender_id, "Failed to set room name: %s", e.what()
+			errors, room_id, creator, "Failed to set room name: %s", e.what()
 		};
 	}
 
-	if(json::get<"topic"_>(request)) try
+	// override topic
+
+	if(json::get<"topic"_>(c)) try
 	{
-		send(room, sender_id, "m.room.topic", "",
+		send(room, creator, "m.room.topic", "",
 		{
-			{ "topic", json::get<"topic"_>(request) }
+			{ "topic", json::get<"topic"_>(c) }
 		});
 	}
 	catch(const std::exception &e)
 	{
 		report_error
 		{
-			errors, room_id, sender_id, "Failed to set room topic: %s", e.what()
+			errors, room_id, creator, "Failed to set room topic: %s", e.what()
 		};
 	}
 
-	for(const json::string &_user_id : json::get<"invite"_>(request)) try
+	for(const json::string &_user_id : json::get<"invite"_>(c)) try
 	{
 		const m::user::id &user_id{_user_id};
-		invite(room, user_id, sender_id);
+		invite(room, user_id, creator);
 	}
 	catch(const std::exception &e)
 	{
 		report_error
 		{
-			errors, room_id, sender_id, "Failed to invite user '%s': %s",
+			errors, room_id, creator, "Failed to invite user '%s': %s",
 			_user_id,
 			e.what()
 		};
 	}
 
-	if(json::get<"guest_can_join"_>(request) && guest_access != "can_join") try
+	// override guest_access
+
+	if(json::get<"guest_can_join"_>(c) && guest_access != "can_join") try
 	{
-		send(room, sender_id, "m.room.guest_access", "",
+		send(room, creator, "m.room.guest_access", "",
 		{
 			{ "guest_access", "can_join" }
 		});
@@ -288,11 +351,13 @@ try
 	{
 		report_error
 		{
-			errors, room_id, sender_id, "Failed to set guest_access: %s", e.what()
+			errors, room_id, creator, "Failed to set guest_access: %s", e.what()
 		};
 	}
 
-	if(json::get<"visibility"_>(request) == "public") try
+	// room directory
+
+	if(json::get<"visibility"_>(c) == "public") try
 	{
 		// This call sends a message to the !public room to list this room in the
 		// public rooms list. We set an empty summary for this room because we
@@ -303,11 +368,11 @@ try
 	{
 		report_error
 		{
-			errors, room_id, sender_id, "Failed to set public visibility: %s", e.what()
+			errors, room_id, creator, "Failed to set public visibility: %s", e.what()
 		};
 	}
 
-	return {};
+	return room;
 }
 catch(const db::not_found &e)
 {
@@ -322,47 +387,50 @@ catch(const db::not_found &e)
 	};
 }
 
-resource::method
-post_method
+ircd::m::room
+ircd::m::_create_event(const createroom &c)
 {
-	createroom_resource, "POST", post__createroom,
+	const m::user::id &creator
 	{
-		post_method.REQUIRES_AUTH
-	}
-};
+		at<"creator"_>(c)
+	};
 
-room
-createroom_(const id::room &room_id,
-            const id::user &creator)
-{
-	return createroom__type(room_id, creator, string_view{});
-}
+	const auto &type
+	{
+		json::get<"preset"_>(c)
+	};
 
-room
-createroom__type(const id::room &room_id,
-                 const id::user &creator,
-                 const string_view &type)
-{
-	return createroom__parent_type(room_id, creator, init_room_id, type);
-}
+	const auto &parent
+	{
+		json::get<"parent_room_id"_>(c)
+	};
 
-room
-createroom__parent_type(const id::room &room_id,
-                        const id::user &creator,
-                        const id::room &parent,
-                        const string_view &type)
-{
+	const json::object &user_content
+	{
+		json::get<"creation_content"_>(c)
+	};
+
+	const size_t user_content_count
+	{
+		std::min(size(user_content), 16UL) // cap the number of keys
+	};
+
 	json::iov event;
 	json::iov content;
+	json::iov::push _user_content[user_content_count];
+	make_iov(content, _user_content, user_content_count, user_content);
 	const json::iov::push push[]
 	{
-		{ event,     { "sender",   creator  }},
-		{ content,   { "creator",  creator  }},
+		{ event,     { "depth",       0L               }},
+		{ event,     { "sender",      creator          }},
+		{ event,     { "state_key",   ""               }},
+		{ event,     { "type",        "m.room.create"  }},
+		{ content,   { "creator",     creator          }},
 	};
 
 	const json::iov::add _parent
 	{
-		content, !parent.empty() && parent.local() != "init",
+		content, !parent.empty() && m::room::id(parent).local() != "init",
 		{
 			"parent", [&parent]() -> json::value
 			{
@@ -382,16 +450,9 @@ createroom__parent_type(const id::room &room_id,
 		}
 	};
 
-	const json::iov::push _push[]
-	{
-		{ event,  { "depth",       0L               }},
-		{ event,  { "type",        "m.room.create"  }},
-		{ event,  { "state_key",   ""               }},
-	};
-
 	room room
 	{
-		room_id
+		at<"room_id"_>(c)
 	};
 
 	commit(room, event, content);
@@ -402,7 +463,7 @@ decltype(report_error::buf) thread_local
 report_error::buf;
 
 template<class... args>
-report_error::report_error(json::stack::array &errors,
+report_error::report_error(json::stack::array *const &errors,
                            const string_view &room_id,
                            const string_view &user_id,
                            const string_view &fmt,
@@ -421,5 +482,6 @@ report_error::report_error(json::stack::array &errors,
 		msg
 	};
 
-	errors.append(msg);
+	if(errors)
+		errors->append(msg);
 }

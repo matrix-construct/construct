@@ -72,8 +72,8 @@ namespace ircd::m
 	event::id::buf join(const id::room_alias &, const m::id::user &);
 
 	// [SET] Create new room
-	room create(const id::room &, const id::user &creator, const id::room &parent, const string_view &type);
-	room create(const id::room &, const id::user &creator, const string_view &type = {});
+	room create(const createroom &, json::stack::array *const &errors = nullptr);
+	room create(const id::room &, const id::user &creator, const string_view &preset = {});
 }
 
 #include "room/room.h"
