@@ -134,34 +134,43 @@ ircd::m::top(std::nothrow_t,
 	return ret;
 }
 
-uint
-ircd::m::version(const id::room &room_id)
+ircd::string_view
+ircd::m::version(const mutable_buffer &buf,
+                 const room &room)
 {
-	static const m::event::fetch::opts fopts
+	const auto ret
 	{
-		event::keys::include
-		{
-			"content",
-		}
+		version(buf, room, std::nothrow)
 	};
 
-	const m::room::state state
-	{
-		room_id, &fopts
-	};
-
-	uint ret;
-	state.get("m.room.create", "", [&ret]
-	(const m::event &event)
-	{
-		const auto version_string
+	if(!ret)
+		throw m::NOT_FOUND
 		{
-			unquote(json::get<"content"_>(event).get("version", "1"))
+			"Failed to find room %s to query its version",
+			string_view{room.room_id}
 		};
 
-		ret = version_string?
-			lex_cast<uint>(version_string):
-			1;
+	return ret;
+}
+
+ircd::string_view
+ircd::m::version(const mutable_buffer &buf,
+                 const room &room,
+                 std::nothrow_t)
+{
+	string_view ret;
+	const auto event_idx
+	{
+		room.get(std::nothrow, "m.room.create", "")
+	};
+
+	if(!event_idx)
+		return ret;
+
+	m::get(std::nothrow, event_idx, "content", [&ret]
+	(const json::object &content)
+	{
+		ret = unquote(content.get("version", "1"));
 	});
 
 	return ret;
