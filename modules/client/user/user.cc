@@ -174,3 +174,52 @@ put_method
 		put_method.REQUIRES_AUTH
 	}
 };
+
+resource::response
+delete_user(client &client, const resource::request &request)
+{
+	if(request.parv.size() < 1)
+		throw m::NEED_MORE_PARAMS
+		{
+			"user_id required"
+		};
+
+	m::user::id::buf user_id
+	{
+		url::decode(user_id, request.parv[0])
+	};
+
+	if(request.user_id != user_id)
+		throw m::UNSUPPORTED
+		{
+			"Deleting user data as someone else is not yet supported"
+		};
+
+	if(request.parv.size() < 2)
+		throw m::NEED_MORE_PARAMS
+		{
+			"user command required"
+		};
+
+	const string_view &cmd
+	{
+		request.parv[1]
+	};
+
+	if(cmd == "rooms")
+		return delete__rooms(client, request, user_id);
+
+	throw m::NOT_FOUND
+	{
+		"/user command not found"
+	};
+}
+
+resource::method
+delete_method
+{
+	user_resource, "DELETE", delete_user,
+	{
+		delete_method.REQUIRES_AUTH
+	}
+};

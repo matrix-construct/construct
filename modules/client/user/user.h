@@ -64,3 +64,8 @@ ircd::resource::response
 put__rooms(ircd::client &client,
            const ircd::resource::request &request,
            const ircd::m::user::id &user_id);
+
+ircd::resource::response
+delete__rooms(ircd::client &client,
+              const ircd::resource::request &request,
+              const ircd::m::user::id &user_id);

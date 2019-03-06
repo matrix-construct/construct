@@ -3378,6 +3378,148 @@ ircd::m::user::room_account_data::_type(const mutable_buffer &out,
 }
 
 //
+// user::room_tags
+//
+
+bool
+ircd::m::user::room_tags::del(const string_view &type)
+const
+{
+	return del(user, room, type);
+}
+
+ircd::m::event::id::buf
+ircd::m::user::room_tags::set(const string_view &type,
+                              const json::object &val)
+const
+{
+	return set(user, room, type, val);
+}
+
+ircd::json::object
+ircd::m::user::room_tags::get(const mutable_buffer &out,
+                              const string_view &type)
+const
+{
+	json::object ret;
+	get(std::nothrow, type, [&out, &ret]
+	(const string_view &type, const json::object &val)
+	{
+		ret = string_view { data(out), copy(out, val) };
+	});
+
+	return ret;
+}
+
+void
+ircd::m::user::room_tags::get(const string_view &type,
+                              const closure &closure)
+const
+{
+	if(!get(std::nothrow, user, room, type, closure))
+		throw m::NOT_FOUND
+		{
+			"account data type '%s' for user %s in room %s not found",
+			type,
+			string_view{user.user_id},
+			string_view{room.room_id}
+		};
+}
+
+bool
+ircd::m::user::room_tags::get(std::nothrow_t,
+                              const string_view &type,
+                              const closure &closure)
+const
+{
+	return get(std::nothrow, user, room, type, closure);
+}
+
+bool
+ircd::m::user::room_tags::for_each(const closure_bool &closure)
+const
+{
+	return for_each(user, room, closure);
+}
+
+bool
+ircd::m::user::room_tags::del(const m::user &u,
+                              const m::room &r,
+                              const string_view &t)
+{
+	using prototype = bool (const m::user &, const m::room &, const string_view &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::room_tags::del"
+	};
+
+	return function(u, r, t);
+}
+
+ircd::m::event::id::buf
+ircd::m::user::room_tags::set(const m::user &u,
+                              const m::room &r,
+                              const string_view &t,
+                              const json::object &v)
+{
+	using prototype = event::id::buf (const m::user &, const m::room &, const string_view &, const json::object &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::room_tags::set"
+	};
+
+	return function(u, r, t, v);
+}
+
+bool
+ircd::m::user::room_tags::get(std::nothrow_t,
+                              const m::user &u,
+                              const m::room &r,
+                              const string_view &t,
+                              const closure &c)
+{
+	using prototype = bool (std::nothrow_t, const m::user &, const m::room &, const string_view &, const closure &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::room_tags::get"
+	};
+
+	return function(std::nothrow, u, r, t, c);
+}
+
+bool
+ircd::m::user::room_tags::for_each(const m::user &u,
+                                   const m::room &r,
+                                   const closure_bool &c)
+{
+	using prototype = bool (const m::user &, const m::room &, const closure_bool &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::room_tags::for_each"
+	};
+
+	return function(u, r, c);
+}
+
+ircd::string_view
+ircd::m::user::room_tags::_type(const mutable_buffer &out,
+                                const m::room::id &room_id)
+{
+	using prototype = string_view (const mutable_buffer &, const m::room::id &);
+
+	static mods::import<prototype> function
+	{
+		"client_user", "ircd::m::user::room_tags::_type"
+	};
+
+	return function(out, room_id);
+}
+
+//
 // user::filter
 //
 

@@ -9201,6 +9201,55 @@ console_cmd__user__room_account_data(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__room_tags(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "room_id", "tag"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const string_view &tag
+	{
+		param["tag"]
+	};
+
+	const m::user::room_tags room_tags
+	{
+		user_id, room_id
+	};
+
+	if(tag)
+	{
+		room_tags.get(tag, [&out]
+		(const string_view &key, const json::object &val)
+		{
+			out << val << std::endl;
+		});
+
+		return true;
+	}
+
+	room_tags.for_each([&out]
+	(const string_view &key, const json::object &val)
+	{
+		out << key << ": " << val << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__user__devices(opt &out, const string_view &line)
 {
 	const params param{line, " ",

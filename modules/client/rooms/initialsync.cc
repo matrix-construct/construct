@@ -131,6 +131,46 @@ get__initialsync_local(client &client,
 
 		return true;
 	});
+
+	const m::user::room_tags room_tags
+	{
+		user, room
+	};
+
+	json::stack::object tag
+	{
+		account_data
+	};
+
+	json::stack::member
+	{
+		tag, "type", "m.tag"
+	};
+
+	json::stack::object tag_content
+	{
+		tag, "content"
+	};
+
+	json::stack::object tags
+	{
+		tag_content, "tags"
+	};
+
+	room_tags.for_each([&tags]
+	(const string_view &type, const json::object &content)
+	{
+		json::stack::member
+		{
+			tags, type, content
+		};
+
+		return true;
+	});
+
+	tags.~object();
+	tag_content.~object();
+	tag.~object();
 	account_data.~array();
 
 	json::stack::array state
