@@ -250,15 +250,16 @@ purge(const m::room &room)
 	return ret;
 }
 
-extern "C" void
-make_auth(const m::room &room,
-          json::stack::array &out,
-          const vector_view<const string_view> &types,
-          const string_view &member)
+void
+IRCD_MODULE_EXPORT
+ircd::m::room::auth::make_refs(const auth &auth,
+                               json::stack::array &out,
+                               const types &types,
+                               const user::id &user_id)
 {
 	const m::room::state state
 	{
-		room
+		auth.room
 	};
 
 	const auto fetch{[&out, &state]
@@ -282,23 +283,8 @@ make_auth(const m::room &room,
 	for(const auto &type : types)
 		fetch(type, "");
 
-	if(member)
-		fetch("m.room.member", member);
-}
-
-extern "C" json::array
-make_auth__buf(const m::room &room,
-               const mutable_buffer &buf,
-               const vector_view<const string_view> &types,
-               const string_view &member)
-{
-	json::stack ps{buf};
-	{
-		json::stack::array top{ps};
-		make_auth(room, top, types, member);
-	}
-
-	return json::array{ps.completed()};
+	if(user_id)
+		fetch("m.room.member", user_id);
 }
 
 extern "C" int64_t

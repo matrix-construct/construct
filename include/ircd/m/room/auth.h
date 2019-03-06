@@ -17,12 +17,19 @@ struct ircd::m::room::auth
 {
 	using closure_bool = std::function<bool (const event::idx &)>;
 	using closure = std::function<void (const event::idx &)>;
+	using types = vector_view<const string_view>;
+
+	static bool for_each(const auth &, const closure_bool &);
+	static void make_refs(const auth &, json::stack::array &, const types &, const m::id::user & = {});
 
 	m::room room;
 
-	static bool for_each(const auth &, const closure_bool &);
+  public:
 	bool for_each(const closure_bool &) const;
 	void for_each(const closure &) const;
+
+	void make_refs(json::stack::array &, const types &, const m::id::user & = {}) const;
+	json::array make_refs(const mutable_buffer &, const types &, const m::id::user & = {}) const;
 
 	auth(const m::room &room)
 	:room{room}

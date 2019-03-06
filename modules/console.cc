@@ -5080,16 +5080,6 @@ console_cmd__stage__make_auth(opt &out, const string_view &line)
 		stage.at(id)
 	};
 
-	using prototype = json::array (const m::room &,
-	                               const mutable_buffer &,
-	                               const vector_view<const string_view> &,
-	                               const string_view &);
-
-	static mods::import<prototype> make_auth__buf
-	{
-		"m_room", "make_auth__buf"
-	};
-
 	static const string_view types_general[]
 	{
 		"m.room.create",
@@ -5127,8 +5117,13 @@ console_cmd__stage__make_auth(opt &out, const string_view &line)
 		at<"room_id"_>(event)
 	};
 
+	const m::room::auth auth
+	{
+		room
+	};
+
 	thread_local char buf[1024];
-	json::get<"auth_events"_>(event) = make_auth__buf(room, buf, types, member);
+	json::get<"auth_events"_>(event) = auth.make_refs(buf, types, member);
 
 	stage.at(id) = json::strung
 	{

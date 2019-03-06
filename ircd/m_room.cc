@@ -2114,6 +2114,28 @@ const
 // room::auth
 //
 
+ircd::json::array
+ircd::m::room::auth::make_refs(const mutable_buffer &buf,
+                               const types &types,
+                               const m::id::user &user)
+const
+{
+	json::stack out{buf};
+	json::stack::array array{out};
+	make_refs(array, types, user);
+	array.~array();
+	return json::array{out.completed()};
+}
+
+void
+ircd::m::room::auth::make_refs(json::stack::array &out,
+                               const types &types,
+                               const m::id::user &user)
+const
+{
+	make_refs(*this, out, types, user);
+}
+
 void
 ircd::m::room::auth::for_each(const closure &c)
 const
@@ -2134,7 +2156,8 @@ const
 }
 
 bool
-ircd::m::room::auth::for_each(const auth &a, const closure_bool &c)
+ircd::m::room::auth::for_each(const auth &a,
+                              const closure_bool &c)
 {
 	using prototype = bool (const auth &, const closure_bool &);
 
@@ -2144,6 +2167,22 @@ ircd::m::room::auth::for_each(const auth &a, const closure_bool &c)
 	};
 
 	return call(a, c);
+}
+
+void
+ircd::m::room::auth::make_refs(const auth &a,
+                               json::stack::array &out,
+                               const types &t,
+                               const m::id::user &u)
+{
+	using prototype = void (const auth &, json::stack::array &, const types &, const m::id::user &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::auth::make_refs"
+	};
+
+	return call(a, out, t, u);
 }
 
 //

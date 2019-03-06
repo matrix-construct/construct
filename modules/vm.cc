@@ -212,17 +212,12 @@ ircd::m::vm::eval__commit_room(eval &eval,
 		}
 	};
 
-	using auth_prototype = json::array (const m::room &,
-	                                    const mutable_buffer &,
-	                                    const vector_view<const string_view> &,
-	                                    const string_view &);
-
-	static mods::import<auth_prototype> make_auth__buf
+	const m::room::auth auth
 	{
-		"m_room", "make_auth__buf"
+		room
 	};
 
-	char ae_buf[512];
+	char ae_buf[1024];
 	json::array auth_events;
 	if(depth != -1 && opts.add_auth_events)
 	{
@@ -233,14 +228,14 @@ ircd::m::vm::eval__commit_room(eval &eval,
 			"m.room.power_levels",
 		};
 
-		const auto member
+		const m::user::id &member
 		{
 			event.at("type") != "m.room.member"?
-				string_view{event.at("sender")}:
-				string_view{}
+				m::user::id{event.at("sender")}:
+				m::user::id{}
 		};
 
-		auth_events = make_auth__buf(room, ae_buf, types, member);
+		auth_events = auth.make_refs(ae_buf, types, member);
 	}
 
 	const json::iov::add auth_events_
