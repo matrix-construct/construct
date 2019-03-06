@@ -2443,7 +2443,7 @@ ircd::m::membership(const event &event)
 		json::get<"content"_>(event)
 	};
 
-	return unquote(content.get("membership"));
+	return unquote(content.get("membership", json::get<"membership"_>(event)));
 }
 
 size_t
