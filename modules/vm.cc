@@ -180,20 +180,17 @@ ircd::m::vm::eval__commit_room(eval &eval,
 		event, { "room_id", room.room_id }
 	};
 
-	using prev_prototype = std::pair<json::array, int64_t> (const m::room &,
-	                                                        const mutable_buffer &,
-	                                                        const size_t &,
-	                                                        const bool &);
-	static mods::import<prev_prototype> make_prev__buf
+	const m::room::head head
 	{
-		"m_room", "make_prev__buf"
+		room
 	};
 
 	const bool need_tophead{event.at("type") != "m.room.create"};
 	const unique_buffer<mutable_buffer> prev_buf{8192};
+	static const size_t prev_limit{16};
 	const auto prev
 	{
-		make_prev__buf(room, prev_buf, 16, need_tophead)
+		head.make_refs(prev_buf, prev_limit, need_tophead)
 	};
 
 	const auto &prev_events{prev.first};

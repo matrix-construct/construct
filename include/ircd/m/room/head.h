@@ -43,12 +43,22 @@ struct ircd::m::room::head
 	using closure = std::function<void (const event::idx &, const event::id &)>;
 	using closure_bool = std::function<bool (const event::idx &, const event::id &)>;
 
+	static size_t reset(const head &);
+	static size_t rebuild(const head &);
+	static void modify(const event::id &, const db::op &, const bool &);
+	static int64_t make_refs(const head &, json::stack::array &, const size_t &, const bool &);
+	static bool for_each(const head &, const closure_bool &);
+
+  public:
 	m::room room;
 
 	bool for_each(const closure_bool &) const;
 	void for_each(const closure &) const;
 	bool has(const event::id &) const;
 	size_t count() const;
+
+	int64_t make_refs(json::stack::array &, const size_t &, const bool &) const;
+	std::pair<json::array, int64_t> make_refs(const mutable_buffer &, const size_t &, const bool &) const;
 
 	head(const m::room &room)
 	:room{room}

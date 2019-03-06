@@ -2036,6 +2036,35 @@ const
 // room::head
 //
 
+std::pair<ircd::json::array, int64_t>
+ircd::m::room::head::make_refs(const mutable_buffer &buf,
+                               const size_t &limit,
+                               const bool &need_top)
+const
+{
+	json::stack out{buf};
+	json::stack::array array{out};
+	const auto depth
+	{
+		make_refs(array, limit, need_top)
+	};
+	array.~array();
+	return
+	{
+		json::array{out.completed()},
+		depth
+	};
+}
+
+int64_t
+ircd::m::room::head::make_refs(json::stack::array &out,
+                               const size_t &limit,
+                               const bool &need_top)
+const
+{
+	return make_refs(*this, out, limit, need_top);
+}
+
 size_t
 ircd::m::room::head::count()
 const
@@ -2081,33 +2110,78 @@ bool
 ircd::m::room::head::for_each(const closure_bool &closure)
 const
 {
-	auto &index
+	return for_each(*this, closure);
+}
+
+bool
+ircd::m::room::head::for_each(const head &h,
+                              const closure_bool &c)
+{
+	using prototype = bool (const head &, const closure_bool &);
+
+	static mods::import<prototype> call
 	{
-		dbs::room_head
+		"m_room", "ircd::m::room::head::for_each"
 	};
 
-	auto it
+	return call(h, c);
+}
+
+int64_t
+ircd::m::room::head::make_refs(const head &h,
+                               json::stack::array &a,
+                               const size_t &limit,
+                               const bool &need_top)
+{
+	using prototype = int64_t (const head &, json::stack::array &, const size_t &, const bool &);
+
+	static mods::import<prototype> call
 	{
-		index.begin(room.room_id)
+		"m_room", "ircd::m::room::head::make_refs"
 	};
 
-	for(; it; ++it)
+	return call(h, a, limit, need_top);
+}
+
+void
+ircd::m::room::head::modify(const event::id &event_id,
+                            const db::op &op,
+                            const bool &refs)
+{
+	using prototype = void (const event::id &, const db::op &, const bool &);
+
+	static mods::import<prototype> call
 	{
-		const event::id &event_id
-		{
-			dbs::room_head_key(it->first)
-		};
+		"m_room", "ircd::m::room::head::modify"
+	};
 
-		const event::idx &event_idx
-		{
-			byte_view<event::idx>{it->second}
-		};
+	return call(event_id, op, refs);
+}
 
-		if(!closure(event_idx, event_id))
-			return false;
-	}
+size_t
+ircd::m::room::head::rebuild(const head &h)
+{
+	using prototype = size_t (const head &);
 
-	return true;
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::head::rebuild"
+	};
+
+	return call(h);
+}
+
+size_t
+ircd::m::room::head::reset(const head &h)
+{
+	using prototype = size_t (const head &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::head::reset"
+	};
+
+	return call(h);
 }
 
 //

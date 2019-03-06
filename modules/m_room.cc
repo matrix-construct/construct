@@ -287,12 +287,151 @@ ircd::m::room::auth::make_refs(const auth &auth,
 		fetch("m.room.member", user_id);
 }
 
-extern "C" int64_t
-make_prev(const m::room &room,
-          json::stack::array &out,
-          size_t limit,
-          bool need_tophead = true)
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::head::rebuild(const head &head)
 {
+	size_t ret{0};
+	const auto &room{head.room};
+	const m::room::state state{room};
+	const auto create_idx
+	{
+		state.get("m.room.create")
+	};
+
+	static const m::event::fetch::opts fopts
+	{
+		{ db::get::NO_CACHE }
+	};
+
+	m::room::messages it
+	{
+		room, create_idx, &fopts
+	};
+
+	if(!it)
+		return ret;
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	m::dbs::write_opts opts;
+	opts.op = db::op::SET;
+	opts.room_head = true;
+	opts.room_refs = true;
+	for(; it; ++it)
+	{
+		const m::event &event{*it};
+		opts.event_idx = it.event_idx();
+		m::dbs::_index__room_head(txn, event, opts);
+		++ret;
+	}
+
+	txn();
+	return ret;
+}
+
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::head::reset(const head &head)
+{
+	size_t ret{0};
+	const auto &room{head.room};
+	m::room::messages it{room};
+	if(!it)
+		return ret;
+
+	// Replacement will be the single new head
+	const m::event replacement
+	{
+		*it
+	};
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	// Iterate all of the existing heads with a delete operation
+	m::dbs::write_opts opts;
+	opts.op = db::op::DELETE;
+	opts.room_head = true;
+	m::room::head{room}.for_each([&room, &opts, &txn, &ret]
+	(const m::event::idx &event_idx, const m::event::id &event_id)
+	{
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+		{
+			log::derror
+			{
+				m::log, "Invalid event '%s' idx %lu in head for %s",
+				string_view{event_id},
+				event_idx,
+				string_view{room.room_id}
+			};
+
+			return;
+		}
+
+		opts.event_idx = event_idx;
+		m::dbs::_index__room_head(txn, event, opts);
+		++ret;
+	});
+
+	// Finally add the replacement to the txn
+	opts.op = db::op::SET;
+	opts.event_idx = it.event_idx();
+	m::dbs::_index__room_head(txn, replacement, opts);
+
+	// Commit txn
+	txn();
+	return ret;
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::room::head::modify(const m::event::id &event_id,
+                            const db::op &op,
+                            const bool &refs)
+{
+	const m::event::fetch event
+	{
+		event_id
+	};
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	// Iterate all of the existing heads with a delete operation
+	m::dbs::write_opts opts;
+	opts.op = op;
+	opts.room_head = true;
+	opts.room_refs = refs;
+	opts.event_idx = event.event_idx;
+	m::dbs::_index__room_head(txn, event, opts);
+
+	// Commit txn
+	txn();
+}
+
+int64_t
+IRCD_MODULE_EXPORT
+ircd::m::room::head::make_refs(const head &head,
+                               json::stack::array &out,
+                               const size_t &_limit,
+                               const bool &_need_tophead)
+{
+	size_t limit{_limit};
+	bool need_tophead{_need_tophead};
+	const auto &room{head.room};
 	const auto top_head
 	{
 		need_tophead?
@@ -302,7 +441,6 @@ make_prev(const m::room &room,
 
 	int64_t depth{-1};
 	m::event::fetch event;
-	const m::room::head head{room};
 	head.for_each(m::room::head::closure_bool{[&]
 	(const m::event::idx &idx, const m::event::id &event_id)
 	{
@@ -345,23 +483,33 @@ make_prev(const m::room &room,
 	return depth;
 }
 
-extern "C" std::pair<json::array, int64_t>
-make_prev__buf(const m::room &room,
-               const mutable_buffer &buf,
-               const size_t &limit,
-               const bool &need_tophead)
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::head::for_each(const head &head,
+                              const closure_bool &closure)
 {
-	int64_t depth;
-	json::stack ps{buf};
+	auto it
 	{
-		json::stack::array top{ps};
-		depth = make_prev(room, top, limit, need_tophead);
+		dbs::room_head.begin(head.room.room_id)
+	};
+
+	for(; it; ++it)
+	{
+		const event::id &event_id
+		{
+			dbs::room_head_key(it->first)
+		};
+
+		const event::idx &event_idx
+		{
+			byte_view<event::idx>{it->second}
+		};
+
+		if(!closure(event_idx, event_id))
+			return false;
 	}
 
-	return
-	{
-		json::array{ps.completed()}, depth
-	};
+	return true;
 }
 
 std::pair<bool, int64_t>
@@ -679,140 +827,6 @@ ircd::m::room::state::prefetch(const state &state,
 }
 
 extern "C" size_t
-head__rebuild(const m::room &room)
-{
-	size_t ret{0};
-	const m::room::state state{room};
-	const auto create_idx
-	{
-		state.get("m.room.create")
-	};
-
-	static const m::event::fetch::opts fopts
-	{
-		{ db::get::NO_CACHE }
-	};
-
-	m::room::messages it
-	{
-		room, create_idx, &fopts
-	};
-
-	if(!it)
-		return ret;
-
-	db::txn txn
-	{
-		*m::dbs::events
-	};
-
-	m::dbs::write_opts opts;
-	opts.op = db::op::SET;
-	opts.room_head = true;
-	opts.room_refs = true;
-	for(; it; ++it)
-	{
-		const m::event &event{*it};
-		opts.event_idx = it.event_idx();
-		m::dbs::_index__room_head(txn, event, opts);
-		++ret;
-	}
-
-	txn();
-	return ret;
-}
-
-extern "C" size_t
-head__reset(const m::room &room)
-{
-	size_t ret{0};
-	m::room::messages it
-	{
-		room
-	};
-
-	if(!it)
-		return ret;
-
-	// Replacement will be the single new head
-	const m::event replacement
-	{
-		*it
-	};
-
-	db::txn txn
-	{
-		*m::dbs::events
-	};
-
-	// Iterate all of the existing heads with a delete operation
-	m::dbs::write_opts opts;
-	opts.op = db::op::DELETE;
-	opts.room_head = true;
-	m::room::head{room}.for_each([&room, &opts, &txn, &ret]
-	(const m::event::idx &event_idx, const m::event::id &event_id)
-	{
-		const m::event::fetch event
-		{
-			event_idx, std::nothrow
-		};
-
-		if(!event.valid)
-		{
-			log::derror
-			{
-				m::log, "Invalid event '%s' idx %lu in head for %s",
-				string_view{event_id},
-				event_idx,
-				string_view{room.room_id}
-			};
-
-			return;
-		}
-
-		opts.event_idx = event_idx;
-		m::dbs::_index__room_head(txn, event, opts);
-		++ret;
-	});
-
-	// Finally add the replacement to the txn
-	opts.op = db::op::SET;
-	opts.event_idx = it.event_idx();
-	m::dbs::_index__room_head(txn, replacement, opts);
-
-	// Commit txn
-	txn();
-	return ret;
-}
-
-extern "C" void
-head__modify(const m::event::id &event_id,
-             const db::op &op,
-             const bool &refs)
-{
-	const m::event::fetch event
-	{
-		event_id
-	};
-
-	db::txn txn
-	{
-		*m::dbs::events
-	};
-
-	// Iterate all of the existing heads with a delete operation
-	m::dbs::write_opts opts;
-	opts.op = op;
-	opts.room_head = true;
-	opts.room_refs = refs;
-	opts.event_idx = index(event);
-	m::dbs::_index__room_head(txn, event, opts);
-
-	// Commit txn
-	txn();
-}
-
-extern "C" size_t
 dagree_histogram(const m::room &room,
                  std::vector<size_t> &vec)
 {
@@ -902,7 +916,7 @@ room_herd(const m::room &room,
 	for(const m::event::id &event_id : event_ids)
 		if(exists(event_id))
 		{
-			head__modify(event_id, db::op::SET, false);
+			m::room::head::modify(event_id, db::op::SET, false);
 			++i;
 		}
 

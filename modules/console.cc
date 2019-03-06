@@ -5033,19 +5033,20 @@ console_cmd__stage__make_prev(opt &out, const string_view &line)
 		stage.at(id)
 	};
 
-	using prototype = std::pair<json::array, int64_t> (const m::room &,
-	                                                   const mutable_buffer &,
-	                                                   const size_t &,
-	                                                   const bool &);
-	static mods::import<prototype> make_prev__buf
+	const m::room room
 	{
-		"m_room", "make_prev__buf"
+		at<"room_id"_>(event)
+	};
+
+	const m::room::head head
+	{
+		room
 	};
 
 	thread_local char buf[8192];
 	const auto prev
 	{
-		make_prev__buf(m::room{at<"room_id"_>(event)}, buf, limit, true)
+		head.make_refs(buf, limit, true)
 	};
 
 	json::get<"prev_events"_>(event) = prev.first;
@@ -6790,15 +6791,14 @@ console_cmd__room__head__rebuild(opt &out, const string_view &line)
 		room_id
 	};
 
-	using prototype = size_t (const m::room &);
-	static mods::import<prototype> head__rebuild
+	const m::room::head head
 	{
-		"m_room", "head__rebuild"
+		room
 	};
 
 	const size_t count
 	{
-		head__rebuild(room)
+		head.rebuild(head)
 	};
 
 	out << "done " << count << std::endl;
@@ -6818,13 +6818,7 @@ console_cmd__room__head__add(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	using prototype = void (const m::event::id &, const db::op &, const bool &);
-	static mods::import<prototype> head__modify
-	{
-		"m_room", "head__modify"
-	};
-
-	head__modify(event_id, db::op::SET, true);
+	m::room::head::modify(event_id, db::op::SET, true);
 	out << "Added " << event_id << " to head " << std::endl;
 	return true;
 }
@@ -6842,13 +6836,7 @@ console_cmd__room__head__del(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	using prototype = void (const m::event::id &, const db::op &, const bool &);
-	static mods::import<prototype> head__modify
-	{
-		"m_room", "head__modify"
-	};
-
-	head__modify(event_id, db::op::DELETE, true);
+	m::room::head::modify(event_id, db::op::DELETE, true);
 	out << "Deleted " << event_id << " from head (if existed)" << std::endl;
 	return true;
 }
@@ -6900,15 +6888,14 @@ console_cmd__room__head__reset(opt &out, const string_view &line)
 		room_id
 	};
 
-	using prototype = size_t (const m::room &);
-	static mods::import<prototype> head__reset
+	const m::room::head head
 	{
-		"m_room", "head__reset"
+		room
 	};
 
 	const size_t count
 	{
-		head__reset(room)
+		head.reset(head)
 	};
 
 	out << "done " << count << std::endl;
