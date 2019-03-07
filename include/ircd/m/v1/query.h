@@ -43,6 +43,12 @@ struct ircd::m::v1::query::opts
 	server::in in;
 	const struct server::request::opts *sopts {nullptr};
 	bool dynamic {false};
+
+	opts(const net::hostport &remote)
+	:remote{remote}
+	{}
+
+	opts() = default;
 };
 
 struct ircd::m::v1::query::profile
