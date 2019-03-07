@@ -22,9 +22,11 @@ namespace ircd::m::sync
 	extern conf::item<size_t> flush_hiwat;
 	extern conf::item<size_t> buffer_size;
 	extern conf::item<size_t> linear_delta_max;
+	extern conf::item<bool> longpoll_enable;
+	extern conf::item<bool> polylog_only;
 
 	static const_buffer flush(data &, resource::response::chunked &, const const_buffer &);
-	static void empty_response(data &);
+	static void empty_response(data &, const uint64_t &next_batch);
 	static bool linear_handle(data &);
 	static bool polylog_handle(data &);
 	static resource::response handle_get(client &, const resource::request &);

@@ -56,6 +56,20 @@ ircd::m::sync::linear_delta_max
 	{ "default",  1024                                },
 };
 
+decltype(ircd::m::sync::polylog_only)
+ircd::m::sync::polylog_only
+{
+	{ "name",     "ircd.client.sync.polylog_only" },
+	{ "default",  false                           },
+};
+
+decltype(ircd::m::sync::longpoll_enable)
+ircd::m::sync::longpoll_enable
+{
+	{ "name",     "ircd.client.sync.longpoll.enable" },
+	{ "default",  true                               },
+};
+
 //
 // GET sync
 //
@@ -129,11 +143,23 @@ ircd::m::sync::handle_get(client &client,
 		log, "request %s", loghead(data)
 	};
 
+	const bool should_longpoll
+	{
+		range.first > range.second
+	};
+
+	const bool should_linear
+	{
+		!should_longpoll &&
+		!bool(polylog_only) &&
+		range.second - range.first <= size_t(linear_delta_max)
+	};
+
 	const bool shortpolled
 	{
-		range.first > range.second?
+		should_longpoll?
 			false:
-		range.second - range.first <= size_t(linear_delta_max)?
+		should_linear?
 			linear_handle(data):
 			polylog_handle(data)
 	};
@@ -142,17 +168,25 @@ ircd::m::sync::handle_get(client &client,
 	if(shortpolled)
 		return {};
 
-	if(longpoll::poll(data, args))
+	if(longpoll_enable && longpoll::poll(data, args))
 		return {};
+
+	const auto &next_batch
+	{
+		polylog_only?
+			data.range.first:
+			data.range.second
+	};
 
 	// A user-timeout occurred. According to the spec we return a
 	// 200 with empty fields rather than a 408.
-	empty_response(data);
+	empty_response(data, next_batch);
 	return {};
 }
 
 void
-ircd::m::sync::empty_response(data &data)
+ircd::m::sync::empty_response(data &data,
+                              const uint64_t &next_batch)
 {
 	json::stack::object top
 	{
@@ -174,7 +208,7 @@ ircd::m::sync::empty_response(data &data)
 	{
 		top, "next_batch", json::value
 		{
-			lex_cast(data.range.second), json::STRING
+			lex_cast(next_batch), json::STRING
 		}
 	};
 }
@@ -532,6 +566,9 @@ try
 			if(longpoll::polling <= 1)
 				queue.pop_front();
 		}};
+
+		if(polylog_only)
+			return false;
 
 		if(handle(data, args, accepted))
 			return true;
