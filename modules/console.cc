@@ -9082,6 +9082,36 @@ console_cmd__user__profile(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__profile__fetch(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "key", "remote"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const string_view &key
+	{
+		param["key"]
+	};
+
+	const net::hostport &remote
+	{
+		param["remote"]?
+			param["remote"]:
+			user_id.host()
+	};
+
+	m::user::profile::fetch(user_id, remote, key);
+	out << "done" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__user__account_data(opt &out, const string_view &line)
 {
 	const params param{line, " ",
