@@ -24,9 +24,10 @@ put__send(client &client,
 			"type parameter missing"
 		};
 
+	char type_buf[m::event::TYPE_MAX_SIZE];
 	const string_view &type
 	{
-		request.parv[2]
+		url::decode(type_buf, request.parv[2])
 	};
 
 	if(request.parv.size() < 4)
@@ -35,9 +36,10 @@ put__send(client &client,
 			"txnid parameter missing"
 		};
 
+	char transaction_id_buf[64];
 	const string_view &transaction_id
 	{
-		request.parv[3]
+		url::decode(transaction_id_buf, request.parv[3])
 	};
 
 	m::vm::copts copts;
