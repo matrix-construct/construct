@@ -436,7 +436,6 @@ ircd::m::user::profile::fetch(const m::user &user,
 		create(user);
 
 	const m::user::profile profile{user};
-	const m::user::room &user_room{user};
 	for(const auto &member : response)
 	{
 		bool exists{false};
@@ -446,13 +445,8 @@ ircd::m::user::profile::fetch(const m::user &user,
 			exists = member.second == val;
 		});
 
-		if(exists)
-			continue;
-
-		send(user_room, user.user_id, "ircd.profile", member.first,
-		{
-			{ "text", member.second }
-		});
+		if(!exists)
+			profile.set(user, member.first, member.second);
 	}
 }
 
