@@ -110,7 +110,7 @@ put__profile(client &client,
 
 	const string_view &value
 	{
-		unquote(request.at(param))
+		request.at(param)
 	};
 
 	const m::user::profile profile
@@ -366,7 +366,7 @@ ircd::m::user::profile::get(std::nothrow_t,
 	{
 		const string_view &value
 		{
-			unquote(content.get("text"))
+			content.get("text")
 		};
 
 		closure(key, value);
@@ -399,7 +399,7 @@ ircd::m::user::profile::for_each(const m::user &user,
 
 		const string_view &value
 		{
-			unquote(json::get<"content"_>(event).get("text"))
+			json::get<"content"_>(event).get("text")
 		};
 
 		return closure(key, value);
