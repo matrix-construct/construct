@@ -162,6 +162,13 @@ download(const string_view &server,
 		file_room_id(server, mediaid)
 	};
 
+	thread_local char rembuf[256];
+	if(remote && my_host(string(rembuf, remote)))
+		return room_id;
+
+	if(!remote && my_host(server))
+		return room_id;
+
 	download(server, mediaid, user_id, remote, room_id);
 	return room_id;
 }
@@ -278,6 +285,8 @@ download(const mutable_buffer &head_buf,
          server::request::opts *const opts)
 {
 	thread_local char rembuf[256];
+	assert(remote || !my_host(server));
+	assert(!remote || !my_host(string(rembuf, remote)));
 
 	if(!remote)
 		remote = server;
