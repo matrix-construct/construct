@@ -148,17 +148,29 @@ try
 		room.room_id
 	};
 
+	const json::string preset
+	{
+		json::get<"preset"_>(c)
+	};
+
 	// creator join event
 
-	const event::id::buf join_event_id
+	// user rooms don't have their user joined to them at this time otherwise
+	// they'll appear to clients.
+	if(preset != "user")
 	{
-		join(room, creator)
-	};
+		const event::id::buf join_event_id
+		{
+			join(room, creator)
+		};
+	}
 
 	// initial power_levels
 
-	thread_local char pl_content_buf[4_KiB]; try
+	// initial power levels aren't set on internal user rooms for now.
+	if(preset != "user") try
 	{
+		thread_local char pl_content_buf[4_KiB];
 		send(room, creator, "m.room.power_levels", "",
 		{
 			json::get<"power_level_content_override"_>(c)?
@@ -175,11 +187,6 @@ try
 	}
 
 	// initial join_rules
-
-	const json::string preset
-	{
-		json::get<"preset"_>(c)
-	};
 
 	const string_view &join_rule
 	{
