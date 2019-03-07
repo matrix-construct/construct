@@ -142,10 +142,17 @@ struct ircd::http::query::string
 	using closure = std::function<bool (const query &)>;
 
 	bool for_each(const closure &) const;
-	string_view at(const string_view &key) const;
+	bool for_each(const string_view &key, const closure &) const;
+
+	string_view _get(const string_view &key, size_t idx = 0) const;
+	template<class T = string_view> T get(const string_view &key, const T &def = {}, const size_t &idx = 0) const;
 	string_view operator[](const string_view &key) const;
-	template<class T> T at(const string_view &key) const;
-	template<class T = string_view> T get(const string_view &key, const T &def = {}) const;
+
+	string_view at(const string_view &key, const size_t &idx = 0) const;
+	template<class T> T at(const string_view &key, const size_t &idx = 0) const;
+
+	size_t count(const string_view &key) const;
+	bool has(const string_view &key) const;
 
 	using string_view::string_view;
 };
@@ -336,10 +343,11 @@ enum ircd::http::code
 template<class T>
 T
 ircd::http::query::string::get(const string_view &key,
-                               const T &def)
+                               const T &def,
+                               const size_t &idx)
 const try
 {
-	const auto val(operator[](key));
+	const auto val(_get(key, idx));
 	return val? lex_cast<T>(val) : def;
 }
 catch(const bad_lex_cast &)
@@ -349,10 +357,11 @@ catch(const bad_lex_cast &)
 
 template<class T>
 T
-ircd::http::query::string::at(const string_view &key)
+ircd::http::query::string::at(const string_view &key,
+                              const size_t &idx)
 const
 {
-	return lex_cast<T>(at(key));
+	return lex_cast<T>(at(key, idx));
 }
 
 template<size_t BUFSIZE,

@@ -698,17 +698,58 @@ ircd::http::line::line(parse::capstan &pc)
 {
 }
 
-ircd::string_view
-ircd::http::query::string::at(const string_view &key)
+//
+// query::string
+//
+
+bool
+ircd::http::query::string::has(const string_view &key)
 const
 {
-	const auto ret(operator[](key));
-	if(ret.empty())
+	bool ret{false};
+	for_each(key, [&ret]
+	(const auto &)
+	{
+		ret = true;
+		return false;
+	});
+
+	return ret;
+}
+
+size_t
+ircd::http::query::string::count(const string_view &key)
+const
+{
+	size_t ret{0};
+	for_each(key, [&ret]
+	(const auto &)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+ircd::string_view
+ircd::http::query::string::at(const string_view &key,
+                              const size_t &idx)
+const
+{
+	const string_view &ret
+	{
+		_get(key, idx)
+	};
+
+	if(!ret)
 	{
 		thread_local char buf[1024];
 		const string_view msg{fmt::sprintf
 		{
-			buf, "Failed to find value for required query string key '%s'", key
+			buf, "Failed to find value for required query string key '%s' #%zu.",
+			key,
+			idx
 		}};
 
 		throw std::out_of_range
@@ -724,19 +765,42 @@ ircd::string_view
 ircd::http::query::string::operator[](const string_view &key)
 const
 {
+	return _get(key, 0);
+}
+
+ircd::string_view
+ircd::http::query::string::_get(const string_view &key,
+                                size_t idx)
+const
+{
 	string_view ret;
-	const auto match{[&key, &ret]
-	(const query &query) -> bool
+	for_each(key, [&idx, &ret]
+	(const auto &query)
+	{
+		if(!idx--)
+		{
+			ret = query.second;
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::http::query::string::for_each(const string_view &key,
+                                    const closure &closure)
+const
+{
+	return for_each([&key, &closure]
+	(const auto &query)
 	{
 		if(query.first != key)
 			return true;
 
-		ret = query.second;
-		return false;         // false to break out of for_each()
-	}};
-
-	for_each(match);
-	return ret;
+		return closure(query);
+	});
 }
 
 bool
@@ -759,6 +823,10 @@ const
 	return qi::parse(start, stop, grammar);
 }
 
+//
+// parser util
+//
+
 size_t
 ircd::http::parser::content_length(const string_view &str)
 {
@@ -778,6 +846,10 @@ ircd::http::parser::content_length(const string_view &str)
 
 	return ret;
 }
+
+//
+// util
+//
 
 ircd::const_buffer
 ircd::http::writechunk(const mutable_buffer &buf,
