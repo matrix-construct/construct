@@ -251,9 +251,15 @@ try
 }
 catch(const ircd::server::unavailable &e)
 {
-	throw http::error
+	thread_local char rembuf[256];
+	throw m::error
 	{
-		http::BAD_GATEWAY, e.what()
+		http::BAD_GATEWAY, "M_MEDIA_UNAVAILABLE",
+		"Server '%s' is not available for media for '%s/%s' :%s",
+		string(rembuf, remote),
+		server,
+		mediaid,
+		e.what()
 	};
 }
 
@@ -271,6 +277,8 @@ download(const mutable_buffer &head_buf,
          net::hostport remote,
          server::request::opts *const opts)
 {
+	thread_local char rembuf[256];
+
 	if(!remote)
 		remote = server;
 
@@ -304,9 +312,13 @@ download(const mutable_buffer &head_buf,
 	};
 
 	if(!remote_request.wait(seconds(media_download_timeout), std::nothrow))
-		throw http::error
+		throw m::error
 		{
-			http::REQUEST_TIMEOUT
+			http::GATEWAY_TIMEOUT, "M_MEDIA_DOWNLOAD_TIMEOUT",
+			"Server '%s' did not respond with media for '%s/%s' in time",
+			string(rembuf, remote),
+			server,
+			mediaid
 		};
 
 	const auto &code
