@@ -56,6 +56,20 @@ struct report_error
 	             args&&... a);
 };
 
+const string_view
+spec_presets[]
+{
+	"private_chat",
+	"public_chat",
+	"trusted_private_chat"
+};
+
+static bool
+spec_preset(const string_view &preset)
+{
+	return std::find(begin(spec_presets), end(spec_presets), preset) != end(spec_presets);
+}
+
 resource::response
 post__createroom(client &client,
                  const resource::request::object<m::createroom> &request)
@@ -74,14 +88,7 @@ post__createroom(client &client,
 
 	json::get<"room_id"_>(c) = room_id;
 
-	static const string_view presets[]
-	{
-		"private_chat",
-		"public_chat",
-		"trusted_private_chat"
-	};
-
-	if(std::find(begin(presets), end(presets), json::get<"preset"_>(c)) == end(presets))
+	if(!spec_preset(json::get<"preset"_>(c)))
 		json::get<"preset"_>(c) = string_view{};
 
 	const unique_buffer<mutable_buffer> buf
@@ -157,7 +164,7 @@ try
 
 	// user rooms don't have their user joined to them at this time otherwise
 	// they'll appear to clients.
-	if(preset != "user")
+	if(!preset || spec_preset(preset))
 	{
 		const event::id::buf join_event_id
 		{
@@ -168,7 +175,7 @@ try
 	// initial power_levels
 
 	// initial power levels aren't set on internal user rooms for now.
-	if(preset != "user") try
+	if(!preset || spec_preset(preset)) try
 	{
 		thread_local char pl_content_buf[4_KiB];
 		send(room, creator, "m.room.power_levels", "",
