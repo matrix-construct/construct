@@ -3501,7 +3501,7 @@ ircd::json::value::value(const value &other)
 		create_string(len, [&other]
 		(mutable_buffer &buffer)
 		{
-			json::stringify(buffer, string_view{other});
+			json::stringify(buffer, other);
 		});
 	}
 	else switch(type)
