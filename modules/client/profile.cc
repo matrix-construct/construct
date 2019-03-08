@@ -378,32 +378,25 @@ IRCD_MODULE_EXPORT
 ircd::m::user::profile::for_each(const m::user &user,
                                  const closure_bool &closure)
 {
-	static const event::fetch::opts fopts
-	{
-		event::keys::include {"content", "state_key"}
-	};
-
 	const user::room user_room{user};
-	const room::state state
+	const room::state state{user_room};
+	return state.for_each("ircd.profile", [&closure]
+	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 	{
-		user_room, &fopts
-	};
-
-	return state.for_each("ircd.profile", event::closure_bool{[&closure]
-	(const event &event)
-	{
-		const string_view &key
+		bool ret{true};
+		m::get(std::nothrow, event_idx, "content", [&closure, &state_key, &ret]
+		(const json::object &content)
 		{
-			at<"state_key"_>(event)
-		};
+			const string_view &value
+			{
+				content.get("text")
+			};
 
-		const string_view &value
-		{
-			json::get<"content"_>(event).get("text")
-		};
+			ret = closure(state_key, value);
+		});
 
-		return closure(key, value);
-	}});
+		return ret;
+	});
 }
 
 void
