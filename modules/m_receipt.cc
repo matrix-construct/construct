@@ -166,35 +166,6 @@ try
 		})
 	};
 
-	m::event receipt;
-	json::get<"depth"_>(receipt) = json::undefined_number;
-	json::get<"type"_>(receipt) = "m.receipt"_sv;
-	json::get<"room_id"_>(receipt) = room_id;
-	json::get<"sender"_>(receipt) = user_id;
-	json::get<"origin"_>(receipt) = user_id.host();
-
-	char buf[768];
-	json::get<"content"_>(receipt) = json::stringify(mutable_buffer{buf}, json::members
-	{
-		{ event_id,
-		{
-			{ "m.read",
-			{
-				{ user_id,
-				{
-					{ "ts", ts }
-				}}
-			}}
-		}}
-	});
-
-	m::vm::opts vmopts;
-	vmopts.conforming = false;
-	m::vm::eval eval
-	{
-		receipt, vmopts
-	};
-
 	log::info
 	{
 		m::log, "%s read by %s in %s @ %zd",
