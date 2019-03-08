@@ -225,7 +225,17 @@ ircd::m::sync::_room_timeline_append_txnid(data &data,
 	};
 
 	if(!txnid_idx)
+	{
+		log::dwarning
+		{
+			log, "Could not find transaction_id for %s from %s in %s",
+			json::get<"event_id"_>(event),
+			json::get<"sender"_>(event),
+			json::get<"room_id"_>(event)
+		};
+
 		return;
+	}
 
 	m::get(std::nothrow, txnid_idx, "content", [&unsigned_]
 	(const json::object &content)
