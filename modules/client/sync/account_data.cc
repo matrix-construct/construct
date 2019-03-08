@@ -45,6 +45,11 @@ ircd::m::sync::account_data_linear(data &data)
 	if(json::get<"room_id"_>(event) != data.user_room.room_id)
 		return false;
 
+	json::stack::object account_data
+	{
+		*data.out, "account_data"
+	};
+
 	json::stack::array array
 	{
 		*data.out, "events"

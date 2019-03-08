@@ -499,11 +499,6 @@ ircd::m::sync::linear_proffer_event_one(data &data)
 			*data.out
 		};
 
-		json::stack::object object
-		{
-			*data.out, item.member_name()
-		};
-
 		if(item.linear(data))
 			return false;
 

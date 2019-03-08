@@ -44,6 +44,11 @@ ircd::m::sync::presence_linear(data &data)
 	if(!my_host(json::get<"origin"_>(event)))
 		return false;
 
+	json::stack::object presence
+	{
+		*data.out, "presence"
+	};
+
 	json::stack::array array
 	{
 		*data.out, "events"

@@ -37,10 +37,13 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 	if(!data.event_idx)
 		return false;
 
-	assert(data.event);
-	if(!json::get<"event_id"_>(*data.event))
+	if(!data.membership)
 		return false;
 
+	if(!data.room)
+		return false;
+
+	assert(data.event);
 	const auto &room{*data.room};
 	m::event::id::buf last_read;
 	if(!m::receipt::read(last_read, room.room_id, data.user))
@@ -49,6 +52,26 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 	const auto start_idx
 	{
 		index(last_read)
+	};
+
+	json::stack::object rooms
+	{
+		*data.out, "rooms"
+	};
+
+	json::stack::object membership_
+	{
+		*data.out, data.membership
+	};
+
+	json::stack::object room_
+	{
+		*data.out, data.room->room_id
+	};
+
+	json::stack::object unread_notifications
+	{
+		*data.out, "unread_notifications"
 	};
 
 	// highlight_count

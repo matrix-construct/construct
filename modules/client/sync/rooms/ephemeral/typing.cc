@@ -39,12 +39,54 @@ ircd::m::sync::room_ephemeral_m_typing_linear(data &data)
 	if(json::get<"type"_>(*data.event) != "m.typing")
 		return false;
 
+	const m::room room
+	{
+		json::get<"room_id"_>(*data.event)
+	};
+
+	if(!room.membership(data.user, "join"))
+		return false;
+
+	json::stack::object rooms
+	{
+		*data.out, "rooms"
+	};
+
+	json::stack::object membership_
+	{
+		*data.out, "join"
+	};
+
+	json::stack::object room_
+	{
+		*data.out, room.room_id
+	};
+
+	json::stack::object ephemeral
+	{
+		*data.out, "ephemeral"
+	};
+
+	json::stack::array events
+	{
+		*data.out, "events"
+	};
+
 	json::stack::object object
 	{
 		*data.out
 	};
 
-	object.append(*data.event);
+	json::stack::member
+	{
+		object, "type", "m.typing"
+	};
+
+	json::stack::member
+	{
+		object, "content", json::get<"content"_>(*data.event)
+	};
+
 	return true;
 }
 

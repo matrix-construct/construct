@@ -75,12 +75,41 @@ ircd::m::sync::room_account_data_linear_events(data &data,
 		lstrip(json::get<"type"_>(event), type.first)
 	};
 
+	char membuf[32];
+	const auto membership
+	{
+		room.membership(membuf, data.user)
+	};
+
+	if(!membership)
+		return false;
+
+	json::stack::object rooms
+	{
+		*data.out, "rooms"
+	};
+
+	json::stack::object membership_
+	{
+		*data.out, membership
+	};
+
+	json::stack::object room_
+	{
+		*data.out, room.room_id
+	};
+
+	json::stack::object account_data
+	{
+		*data.out, "account_data"
+	};
+
 	json::stack::array array
 	{
 		*data.out, "events"
 	};
 
-	const scope_restore room_{data.room, &room};
+	const scope_restore room__{data.room, &room};
 	return room_account_data_polylog_events_event(data, event);
 }
 
@@ -104,6 +133,35 @@ ircd::m::sync::room_account_data_linear_tags(data &data,
 		lstrip(json::get<"type"_>(event), type.first)
 	};
 
+	char membuf[32];
+	const auto membership
+	{
+		room.membership(membuf, data.user)
+	};
+
+	if(!membership)
+		return false;
+
+	json::stack::object rooms
+	{
+		*data.out, "rooms"
+	};
+
+	json::stack::object membership_
+	{
+		*data.out, membership
+	};
+
+	json::stack::object room_
+	{
+		*data.out, room.room_id
+	};
+
+	json::stack::object account_data
+	{
+		*data.out, "account_data"
+	};
+
 	json::stack::array array
 	{
 		*data.out, "events"
@@ -116,7 +174,7 @@ ircd::m::sync::room_account_data_linear_tags(data &data,
 	// the required format. The event_idx is hacked to 0 here to trick the
 	// polylog apropos() into composing all tags unconditionally.
 	const scope_restore range{data.range.first, 0UL};
-	const scope_restore room_{data.room, &room};
+	const scope_restore room__{data.room, &room};
 	return room_account_data_polylog_tags(data);
 }
 

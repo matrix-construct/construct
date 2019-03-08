@@ -18,9 +18,7 @@ namespace ircd::m::sync
 	static bool room_invite_state_polylog(data &);
 
 	static bool room_state_linear_events(data &);
-	static bool _room_state_linear(data &);
 	static bool room_state_linear(data &);
-	static bool room_invite_state_linear(data &);
 
 	extern const event::keys::include _default_keys;
 	extern event::fetch::opts _default_fopts;
@@ -51,7 +49,7 @@ ircd::m::sync::room_invite_state
 {
 	"rooms.invite_state",
 	room_invite_state_polylog,
-	room_invite_state_linear
+	room_state_linear
 };
 
 decltype(ircd::m::sync::_default_keys)
@@ -77,24 +75,6 @@ ircd::m::sync::_default_fopts
 bool
 ircd::m::sync::room_state_linear(data &data)
 {
-	if(data.membership == "invite")
-		return false;
-
-	return _room_state_linear(data);
-}
-
-bool
-ircd::m::sync::room_invite_state_linear(data &data)
-{
-	if(data.membership != "invite")
-		return false;
-
-	return _room_state_linear(data);
-}
-
-bool
-ircd::m::sync::_room_state_linear(data &data)
-{
 	// if since token is non-zero, any events in the range are
 	// included in the timeline array and not the state array.
 	if(data.range.first)
@@ -103,9 +83,35 @@ ircd::m::sync::_room_state_linear(data &data)
 	if(!data.event_idx)
 		return false;
 
+	if(!data.membership)
+		return false;
+
+	if(!data.room)
+		return false;
+
 	assert(data.event);
 	if(!json::get<"state_key"_>(*data.event))
 		return false;
+
+	json::stack::object rooms
+	{
+		*data.out, "rooms"
+	};
+
+	json::stack::object membership_
+	{
+		*data.out, data.membership
+	};
+
+	json::stack::object room_
+	{
+		*data.out, data.room->room_id
+	};
+
+	json::stack::object state
+	{
+		*data.out, "state"
+	};
 
 	json::stack::array array
 	{

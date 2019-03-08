@@ -34,19 +34,44 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read
 bool
 ircd::m::sync::room_ephemeral_m_receipt_m_read_linear(data &data)
 {
-	if(data.event_idx)
-		return false;
-
 	assert(data.event);
-	if(json::get<"type"_>(*data.event) != "m.receipt")
+	if(json::get<"type"_>(*data.event) != "ircd.read")
 		return false;
 
-	json::stack::object object
+	const m::room room
 	{
-		*data.out
+		json::get<"state_key"_>(*data.event)
 	};
 
-	object.append(*data.event);
+	if(!room.membership(data.user, "join"))
+		return false;
+
+	json::stack::object rooms
+	{
+		*data.out, "rooms"
+	};
+
+	json::stack::object membership_
+	{
+		*data.out, "join"
+	};
+
+	json::stack::object room_
+	{
+		*data.out, room.room_id
+	};
+
+	json::stack::object ephemeral
+	{
+		*data.out, "ephemeral"
+	};
+
+	json::stack::array events
+	{
+		*data.out, "events"
+	};
+
+	_handle_message_receipt(data, *data.event);
 	return true;
 }
 

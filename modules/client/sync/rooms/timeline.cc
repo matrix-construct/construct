@@ -54,7 +54,33 @@ ircd::m::sync::room_timeline_linear(data &data)
 	if(!data.event_idx)
 		return false;
 
+	if(!data.membership)
+		return false;
+
+	if(!data.room)
+		return false;
+
 	assert(data.event);
+	json::stack::object rooms
+	{
+		*data.out, "rooms"
+	};
+
+	json::stack::object membership_
+	{
+		*data.out, data.membership
+	};
+
+	json::stack::object room_
+	{
+		*data.out, data.room->room_id
+	};
+
+	json::stack::object timeline
+	{
+		*data.out, "timeline"
+	};
+
 	json::stack::array array
 	{
 		*data.out, "events"
