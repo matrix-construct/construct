@@ -211,6 +211,13 @@ ircd::m::sync::empty_response(data &data,
 			lex_cast(next_batch), json::STRING
 		}
 	};
+
+	log::debug
+	{
+		log, "request %s timeout next_batch:%lu",
+		loghead(data),
+		next_batch
+	};
 }
 
 ircd::const_buffer
@@ -623,7 +630,9 @@ ircd::m::sync::longpoll::handle(data &data,
 	{
 		const auto next
 		{
-			data.range.second
+			data.event_idx?
+				data.event_idx + 1:
+				data.range.second
 		};
 
 		json::stack::member
