@@ -58,12 +58,14 @@ webroot_la_SOURCES = webroot.cc
 webhook_la_SOURCES = webhook.cc
 console_la_SOURCES = console.cc
 vm_la_SOURCES = vm.cc
+metrics_la_SOURCES = metrics.cc
 
 module_LTLIBRARIES = \
 	webroot.la \
 	webhook.la \
 	console.la \
 	vm.la \
+	metrics.la \
 	###
 
 ###############################################################################
