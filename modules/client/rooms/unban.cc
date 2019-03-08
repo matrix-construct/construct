@@ -22,8 +22,53 @@ post__unban(client &client,
 		unquote(request.at("user_id"))
 	};
 
+	const json::string &reason // non-spec, but wth
+	{
+		request["reason"]
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	// These items will be checked again during eval for an atomic
+	// determination of whether this request will go through. However
+	// we can save a lot of trouble by testing these conditions first
+	// out here and erroring early; this also warms the cache for eval.
+
+	const m::room::power power{room};
+	if(!power(request.user_id, "ban"))
+		throw m::ACCESS_DENIED
+		{
+			"Your power level (%ld) is not high enough for ban (%ld) so you cannot unban.",
+			power.level_user(request.user_id),
+			power.level("ban")
+		};
+
+	if(!room.membership(user_id, "ban"))
+		throw m::error
+		{
+			http::OK, "M_BAD_STATE",
+			"User %s is not banned from room %s",
+			string_view{user_id},
+			string_view{room_id}
+		};
+
+	const auto event_id
+	{
+		send(room, request.user_id, "m.room.member", user_id,
+		{
+			{ "membership", "leave" },
+			{ "reason",     reason  },
+		})
+	};
+
 	return resource::response
 	{
-		client, http::OK
+		client, http::OK, json::members
+		{
+			{ "event_id", event_id }
+		}
 	};
 }
