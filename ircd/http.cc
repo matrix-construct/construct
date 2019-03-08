@@ -92,6 +92,7 @@ ircd::http::reason
 	{ code::EXPECTATION_FAILED,                  "Expectation Failed"                              },
 	{ code::IM_A_TEAPOT,                         "Negative, I Am A Meat Popsicle"                  },
 	{ code::UNPROCESSABLE_ENTITY,                "Unprocessable Entity"                            },
+	{ code::PRECONDITION_REQUIRED,               "Precondition Required"                           },
 	{ code::TOO_MANY_REQUESTS,                   "Too Many Requests"                               },
 	{ code::REQUEST_HEADER_FIELDS_TOO_LARGE,     "Request Header Fields Too Large"                 },
 
