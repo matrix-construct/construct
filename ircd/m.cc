@@ -2692,40 +2692,32 @@ ircd::m::user::rooms::for_each(const string_view &membership,
                                const closure_bool &closure)
 const
 {
-	// Setup the list of event fields to fetch for the closure
-	static const event::keys::include keys
-	{
-		"state_key", "content",
-    };
-
-	const m::event::fetch::opts fopts
-	{
-		keys, user_room.fopts? user_room.fopts->gopts : db::gopts{}
-	};
-
 	const m::room::state state
 	{
-		user_room, &fopts
+		user_room
 	};
 
-	return state.for_each("ircd.member", event::closure_bool{[&membership, &closure]
-	(const m::event &event)
+	return state.for_each("ircd.member", [&membership, &closure]
+	(const string_view &, const string_view &state_key, const m::event::idx &event_idx)
 	{
-		const string_view &membership_
+		bool ret{true};
+		m::get(std::nothrow, event_idx, "content", [&state_key, &membership, &closure, &ret]
+		(const json::object &content)
 		{
-			m::membership(event)
-		};
+			const json::string &membership_
+			{
+				content.get("membership")
+			};
 
-		if(membership && membership_ != membership)
-			return true;
+			if(!membership || membership_ == membership)
+			{
+				const m::room::id &room_id{state_key};
+				ret = closure(room_id, membership_);
+			}
+		});
 
-		const m::room::id &room_id
-		{
-			at<"state_key"_>(event)
-		};
-
-		return closure(room_id, membership);
-	}});
+		return ret;
+	});
 }
 
 //
