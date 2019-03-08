@@ -21,9 +21,17 @@ namespace ircd::net
 {
 	union ipaddr;
 
+	const uint128_t &host6(const ipaddr &);
+	const uint32_t &host4(const ipaddr &);
+	uint128_t &host6(ipaddr &);
+	uint32_t &host4(ipaddr &);
+
 	bool operator!(const ipaddr &);
 	bool operator<(const ipaddr &, const ipaddr &);
 	bool operator==(const ipaddr &, const ipaddr &);
+
+	string_view string(const mutable_buffer &out, const uint32_t &);
+	string_view string(const mutable_buffer &out, const uint128_t &);
 }
 
 union ircd::net::ipaddr
@@ -59,4 +67,28 @@ inline bool
 ircd::net::operator!(const ipaddr &a)
 {
 	return !a.v6;
+}
+
+inline uint32_t &
+ircd::net::host4(ipaddr &ipaddr)
+{
+	return ipaddr.v4;
+}
+
+inline ircd::uint128_t &
+ircd::net::host6(ipaddr &ipaddr)
+{
+	return ipaddr.v6;
+}
+
+inline const uint32_t &
+ircd::net::host4(const ipaddr &ipaddr)
+{
+	return ipaddr.v4;
+}
+
+inline const ircd::uint128_t &
+ircd::net::host6(const ipaddr &ipaddr)
+{
+	return ipaddr.v6;
 }

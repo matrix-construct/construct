@@ -26,8 +26,6 @@ namespace ircd::net
 	uint128_t &host6(ipport &);
 	uint32_t &host4(ipport &);
 
-	string_view string(const mutable_buffer &out, const uint32_t &);
-	string_view string(const mutable_buffer &out, const uint128_t &);
 	string_view string(const mutable_buffer &out, const ipport &);
 	std::ostream &operator<<(std::ostream &, const ipport &);
 }
@@ -103,13 +101,13 @@ const
 inline ircd::uint128_t &
 ircd::net::host6(ipport &ipp)
 {
-	return std::get<ipp.IP>(ipp).v6;
+	return host6(std::get<ipp.IP>(ipp));
 }
 
 inline const ircd::uint128_t &
 ircd::net::host6(const ipport &ipp)
 {
-	return std::get<ipp.IP>(ipp).v6;
+	return host6(std::get<ipp.IP>(ipp));
 }
 
 inline bool
@@ -121,13 +119,13 @@ ircd::net::is_v6(const ipport &ipp)
 inline uint32_t &
 ircd::net::host4(ipport &ipp)
 {
-	return std::get<ipp.IP>(ipp).v4;
+	return host4(std::get<ipp.IP>(ipp));
 }
 
 inline const uint32_t &
 ircd::net::host4(const ipport &ipp)
 {
-	return std::get<ipp.IP>(ipp).v4;
+	return host4(std::get<ipp.IP>(ipp));
 }
 
 inline bool

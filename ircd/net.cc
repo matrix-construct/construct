@@ -3188,40 +3188,6 @@ ircd::net::operator<<(std::ostream &s, const ipport &t)
 
 ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
-                  const uint32_t &ip)
-{
-	const auto len
-	{
-		ip::address_v4{ip}.to_string().copy(data(buf), size(buf))
-	};
-
-	return { data(buf), size_t(len) };
-}
-
-ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const uint128_t &ip)
-{
-	const auto &pun
-	{
-		reinterpret_cast<const uint8_t (&)[16]>(ip)
-	};
-
-	const auto &punpun
-	{
-		reinterpret_cast<const std::array<uint8_t, 16> &>(pun)
-	};
-
-	const auto len
-	{
-		ip::address_v6{punpun}.to_string().copy(data(buf), size(buf))
-	};
-
-	return { data(buf), size_t(len) };
-}
-
-ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
                   const ipport &ipp)
 {
 	const auto len
@@ -3384,6 +3350,45 @@ ircd::net::ipport::ipport(const uint128_t &ip,
 	std::get<TYPE>(*this) = true;
 	host6(*this) = ip;
 	port(*this) = p;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// net/ipaddr.h
+//
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const uint32_t &ip)
+{
+	const auto len
+	{
+		ip::address_v4{ip}.to_string().copy(data(buf), size(buf))
+	};
+
+	return { data(buf), size_t(len) };
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const uint128_t &ip)
+{
+	const auto &pun
+	{
+		reinterpret_cast<const uint8_t (&)[16]>(ip)
+	};
+
+	const auto &punpun
+	{
+		reinterpret_cast<const std::array<uint8_t, 16> &>(pun)
+	};
+
+	const auto len
+	{
+		ip::address_v6{punpun}.to_string().copy(data(buf), size(buf))
+	};
+
+	return { data(buf), size_t(len) };
 }
 
 ///////////////////////////////////////////////////////////////////////////////
