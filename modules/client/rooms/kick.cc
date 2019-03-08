@@ -12,12 +12,6 @@
 
 using namespace ircd;
 
-extern "C" m::event::id::buf
-kick(const m::room &room,
-     const m::id::user &sender,
-     const m::id::user &target,
-     const string_view &reason);
-
 resource::response
 post__kick(client &client,
            const resource::request &request,
@@ -33,19 +27,11 @@ post__kick(client &client,
 		unquote(request["reason"])
 	};
 
-	const m::room room
-	{
-		room_id
-	};
-
-	const m::room::power power
-	{
-		room
-	};
-
 	// Power levels will be checked again at some point during eval, however
 	// it's fine to just check first and avoid all of the eval machinery. This
 	// data is also cached.
+	const m::room room{room_id};
+	const m::room::power power{room};
 	if(!power(request.user_id, "kick"))
 		throw m::ACCESS_DENIED
 		{
@@ -54,41 +40,20 @@ post__kick(client &client,
 			power.level("kick")
 		};
 
-	const auto eid
+	const auto event_id
 	{
-		kick(room, request.user_id, user_id, reason)
+		send(room, request.user_id, "m.room.member", user_id,
+		{
+			{ "membership",  "leave"  },
+			{ "reason",      reason   },
+		})
 	};
 
 	return resource::response
 	{
-		client, http::OK
-	};
-}
-
-m::event::id::buf
-kick(const m::room &room,
-     const m::id::user &sender,
-     const m::id::user &target,
-     const string_view &reason)
-{
-	json::iov event, content;
-	const json::iov::push push[]
-	{
-		{ event,    { "type",        "m.room.member"  }},
-		{ event,    { "sender",       sender          }},
-		{ content,  { "membership",   "leave"         }},
-	};
-
-	const json::iov::add reason_
-	{
-		content, !empty(reason),
+		client, http::OK, json::members
 		{
-			"reason", [&reason]() -> json::value
-			{
-				return reason;
-			}
+			{ "event_id", event_id }
 		}
 	};
-
-	return commit(room, event, content);
 }
