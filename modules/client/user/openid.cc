@@ -53,6 +53,6 @@ post__openid__request_token(client &client,
 {
 	return resource::response
 	{
-		client, http::NOT_FOUND
+		client, http::TOO_MANY_REQUESTS
 	};
 }
