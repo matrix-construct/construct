@@ -13,36 +13,29 @@
 using namespace ircd::m;
 using namespace ircd;
 
-extern "C" event::id::buf
-leave__room_user(const room &room,
-                 const id::user &user_id);
-
 resource::response
 post__leave(client &client,
             const resource::request &request,
             const room::id &room_id)
 {
-	leave__room_user(room_id, request.user_id);
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto event_id
+	{
+		send(room, request.user_id, "m.room.member", request.user_id,
+		{
+			{ "membership", "leave" }
+		})
+	};
 
 	return resource::response
 	{
-		client, http::OK
+		client, http::OK, json::members
+		{
+			{ "event_id", event_id }
+		}
 	};
-}
-
-event::id::buf
-leave__room_user(const room &room,
-                 const id::user &user_id)
-{
-	json::iov event;
-	json::iov content;
-	const json::iov::push push[]
-	{
-		{ event,    { "type",        "m.room.member"  }},
-		{ event,    { "sender",      user_id          }},
-		{ event,    { "state_key",   user_id          }},
-		{ content,  { "membership",  "leave"          }},
-	};
-
-	return commit(room, event, content);
 }
