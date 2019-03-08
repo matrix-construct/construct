@@ -222,10 +222,10 @@ ircd::m::init::bootstrap()
 		};
 
 	if(!exists(user::users))
-		create(user::users, me.user_id);
+		create(user::users, me.user_id, "internal");
 
 	if(!exists(my_room))
-		create(my_room, me.user_id);
+		create(my_room, me.user_id, "internal");
 
 	if(!exists(me))
 	{
