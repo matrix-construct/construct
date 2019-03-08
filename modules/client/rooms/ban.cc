@@ -22,13 +22,38 @@ post__ban(client &client,
 		unquote(request.at("user_id"))
 	};
 
-	const string_view &reason
+	const json::string &reason
 	{
-		unquote(request["reason"])
+		request["reason"]
+	};
+
+	// Power levels will be checked again at some point during eval, however
+	// it's fine to just check first and avoid all of the eval machinery. This
+	// data is also cached.
+	const m::room room{room_id};
+	const m::room::power power{room};
+	if(!power(request.user_id, "ban"))
+		throw m::ACCESS_DENIED
+		{
+			"Your power level (%ld) is not high enough for ban (%ld)",
+			power.level_user(request.user_id),
+			power.level("ban")
+		};
+
+	const auto event_id
+	{
+		send(room, request.user_id, "m.room.member", user_id,
+		{
+			{ "membership",  "ban"   },
+			{ "reason",      reason  },
+		})
 	};
 
 	return resource::response
 	{
-		client, http::OK
+		client, http::OK, json::members
+		{
+			{ "event_id", event_id }
+		}
 	};
 }
