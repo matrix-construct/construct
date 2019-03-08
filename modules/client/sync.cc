@@ -214,7 +214,7 @@ ircd::m::sync::empty_response(data &data,
 
 	log::debug
 	{
-		log, "request %s timeout next_batch:%lu",
+		log, "request %s timeout @%lu",
 		loghead(data),
 		next_batch
 	};
@@ -301,9 +301,10 @@ try
 
 	if(stats_info) log::info
 	{
-		log, "request %s polylog commit:%b complete",
+		log, "request %s polylog commit:%b complete @%lu",
 		loghead(data),
-		ret
+		ret,
+		data.range.second
 	};
 
 	return ret;
@@ -371,15 +372,17 @@ try
 		wb.completed()
 	};
 
+	const auto next
+	{
+		last && completed?
+			data.range.second:
+		last?
+			last + 1:
+			0UL
+	};
+
 	if(last)
 	{
-		const auto next
-		{
-			completed?
-				data.range.second:
-				last + 1
-		};
-
 		json::stack::member
 		{
 			top, "next_batch", json::value
@@ -394,11 +397,11 @@ try
 
 	log::debug
 	{
-		log, "request %s linear %lu:%lu complete:%b",
+		log, "request %s linear last:%lu complete:%b @%lu",
 		loghead(data),
-		data.range.first,
 		last,
-		completed
+		completed,
+		next
 	};
 
 	return last;
@@ -645,9 +648,10 @@ ircd::m::sync::longpoll::handle(data &data,
 
 		log::debug
 		{
-			log, "request %s longpoll got:%lu complete",
+			log, "request %s longpoll got:%lu complete @%lu",
 			loghead(data),
-			event.event_idx
+			event.event_idx,
+			next
 		};
 	}
 	else checkpoint.rollback();
