@@ -146,25 +146,27 @@ ircd::m::sync::room_account_data_polylog_events(data &data)
 
 	bool ret{false};
 	data.user_state.for_each(type, [&data, &ret]
-	(const m::event::idx &event_idx)
+	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
 	{
 		if(!apropos(data, event_idx))
-			return;
+			return true;
 
 		static const event::fetch::opts fopts
 		{
-			event::keys::include {"state_key", "content"}
+			event::keys::include {"content"}
 		};
 
-		const m::event::fetch event
+		m::event::fetch event
 		{
 			event_idx, std::nothrow, fopts
 		};
 
 		if(!event.valid)
-			return;
+			return true;
 
+		json::get<"state_key"_>(event) = state_key;
 		ret |= room_account_data_polylog_events_event(data, event);
+		return true;
 	});
 
 	return ret;
@@ -229,14 +231,14 @@ ircd::m::sync::room_account_data_polylog_tags(data &data)
 
 	bool ret{false};
 	data.user_state.for_each(type, [&data, &tags, &ret]
-	(const m::event::idx &event_idx)
+	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
 	{
 		if(!apropos(data, event_idx))
-			return;
+			return true;
 
 		static const event::fetch::opts fopts
 		{
-			event::keys::include {"state_key", "content"}
+			event::keys::include {"content"}
 		};
 
 		const m::event::fetch event
@@ -245,14 +247,15 @@ ircd::m::sync::room_account_data_polylog_tags(data &data)
 		};
 
 		if(!event.valid)
-			return;
+			return true;
 
 		json::stack::member tag
 		{
-			tags, json::get<"state_key"_>(event), json::get<"content"_>(event)
+			tags, state_key, json::get<"content"_>(event)
 		};
 
 		ret = true;
+		return true;
 	});
 
 	if(!ret)
