@@ -78,8 +78,8 @@ save_transaction_id_hookfn
 {
 	save_transaction_id,
 	{
-		{ "_site",    "vm.effect" },
-		{ "origin",   my_host()   },
+		{ "_site",    "vm.post" },
+		{ "origin",   my_host() },
 	}
 };
 
