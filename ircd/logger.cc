@@ -448,9 +448,9 @@ noexcept
 	  << reflect(lev)
 	  << (string_view{conf.console_ansi}? "\033[0m " : " ")
 //	  << (log.snote? log.snote : '-')
-	  << std::setw(9)
+	  << std::setw(8)
 	  << std::right
-	  << log.name
+	  << trunc(log.name, 8)
 	  << ' '
 	  << std::setw(8)
 	  << trunc(ctx::name(), 8)

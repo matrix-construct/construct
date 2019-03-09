@@ -480,7 +480,7 @@ console_cmd__log(opt &out, const string_view &line)
 {
 	for(const auto *const &log : log::log::list)
 		out << (log->snote? log->snote : '-')
-		    << " " << std::setw(8) << std::left << log->name
+		    << " " << std::setw(16) << std::left << log->name
 		    << " "
 		    << (log->fmasked? " FILE" : "")
 		    << (log->cmasked? " CONSOLE" : "")
