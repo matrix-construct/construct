@@ -52,6 +52,7 @@ struct ircd::m::vm::eval
 
 	const vm::opts *opts {&default_opts};
 	const vm::copts *copts {nullptr};
+	event::conforms report;
 
 	uint64_t sequence {0};
 	db::txn *txn {nullptr};
@@ -113,6 +114,9 @@ enum ircd::m::vm::fault
 /// Evaluation Options
 struct ircd::m::vm::opts
 {
+	/// Call conform hooks (detailed behavior can be tweaked below)
+	bool conform {true};
+
 	/// Make fetches or false to bypass fetch stage.
 	bool fetch {true};
 

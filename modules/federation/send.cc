@@ -55,6 +55,7 @@ handle_edu(client &client,
 	vmopts.non_conform.set(m::event::conforms::MISSING_ORIGIN_SIGNATURE);
 	vmopts.non_conform.set(m::event::conforms::MISSING_SIGNATURES);
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_EVENTS);
+	vmopts.non_conform.set(m::event::conforms::MISSING_AUTH_EVENTS);
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.non_conform.set(m::event::conforms::DEPTH_ZERO);
 	m::vm::eval eval

@@ -25,9 +25,10 @@ namespace ircd::m::vm
 	static void init();
 	static void fini();
 
-	extern hook::site<eval &> issue_hook;    ///< Called when this server issues event
+	extern hook::site<eval &> issue_hook;    ///< Called when this server is issuing event
+	extern hook::site<eval &> conform_hook;  ///< Called for static evaluations of event
 	extern hook::site<eval &> fetch_hook;    ///< Called to resolve dependencies
-	extern hook::site<eval &> eval_hook;     ///< Called when evaluating event
+	extern hook::site<eval &> eval_hook;     ///< Called for final event evaluation
 	extern hook::site<eval &> post_hook;     ///< Called to apply effects pre-notify
 	extern hook::site<eval &> notify_hook;   ///< Called to broadcast successful eval
 	extern hook::site<eval &> effect_hook;   ///< Called to apply effects post-notify
@@ -61,6 +62,12 @@ decltype(ircd::m::vm::issue_hook)
 ircd::m::vm::issue_hook
 {
 	{ "name", "vm.issue" }
+};
+
+decltype(ircd::m::vm::conform_hook)
+ircd::m::vm::conform_hook
+{
+	{ "name", "vm.conform" }
 };
 
 decltype(ircd::m::vm::fetch_hook)
@@ -448,46 +455,22 @@ try
 	assert(eval.event_);
 	assert(eval.id);
 	assert(eval.ctx);
-
 	const auto &opts
 	{
 		*eval.opts
 	};
 
-	if(eval.copts)
-	{
-		if(unlikely(!my_host(at<"origin"_>(event))))
-			throw error
-			{
-				fault::GENERAL, "Committing event for origin: %s", at<"origin"_>(event)
-			};
-
-		if(eval.copts->debuglog_precommit)
-			log::debug
-			{
-				log, "Injecting event %s", pretty_oneline(event)
-			};
-
-		check_size(event);
-
-		if(eval.copts->issue)
-			issue_hook(event, eval);
-	}
-
-	event::conforms report
-	{
-		opts.conforming && !opts.conformed?
-			event::conforms{event, opts.non_conform.report}:
-			opts.report
-	};
-
-	report.del(event::conforms::MISSING_AUTH_EVENTS);
-
-	if(opts.conforming && !report.clean())
-		throw error
+	if(eval.copts && eval.copts->debuglog_precommit)
+		log::debug
 		{
-			fault::INVALID, "Non-conforming event: %s", string(report)
+			log, "Issuing: %s", pretty_oneline(event)
 		};
+
+	if(eval.copts && eval.copts->issue)
+		issue_hook(event, eval);
+
+	if(opts.conform)
+		conform_hook(event, eval);
 
 	// A conforming (with lots of masks) event without an event_id is an EDU.
 	const fault ret

@@ -8,13 +8,99 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd::m;
-using namespace ircd;
-
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix event library; modular components."
+};
+
+namespace ircd::m::vm
+{
+	extern const m::hookfn<eval &> issue_missing_auth;
+	extern const m::hookfn<eval &> conform_check_origin;
+	extern const m::hookfn<eval &> conform_check_size;
+	extern const m::hookfn<eval &> conform_report;
+}
+
+/// Check if an eval with a copts structure (indicating this server is
+/// creating the event) has an origin set to !my_host().
+decltype(ircd::m::vm::conform_check_origin)
+ircd::m::vm::conform_check_origin
+{
+	{
+		{ "_site", "vm.conform" }
+	},
+	[](const m::event &event, eval &eval)
+	{
+		if(unlikely(eval.copts && !my_host(at<"origin"_>(event))))
+			throw error
+			{
+				fault::GENERAL, "Issuing event for origin: %s", at<"origin"_>(event)
+			};
+	}
+};
+
+/// Check if an event originating from this server exceeds maximum size.
+decltype(ircd::m::vm::conform_check_size)
+ircd::m::vm::conform_check_size
+{
+	{
+		{ "_site",  "vm.conform"  },
+		{ "origin",  my_host()    }
+	},
+	[](const m::event &event, eval &eval)
+	{
+		const size_t &event_size
+		{
+			serialized(event)
+		};
+
+		if(event_size > size_t(event::max_size))
+			throw m::BAD_JSON
+			{
+				"Event is %zu bytes which is larger than the maximum %zu bytes",
+				event_size,
+				size_t(event::max_size)
+			};
+	}
+};
+
+/// Check if an event originating from this server exceeds maximum size.
+decltype(ircd::m::vm::conform_report)
+ircd::m::vm::conform_report
+{
+	{
+		{ "_site",  "vm.conform"  }
+	},
+	[](const m::event &event, eval &eval)
+	{
+		assert(eval.opts);
+		auto &opts(*eval.opts);
+
+		// When opts.conformed is set the report is already generated
+		if(opts.conformed)
+		{
+			eval.report = opts.report;
+			return;
+		}
+
+		// Generate the report here.
+		eval.report = event::conforms
+		{
+			event, opts.non_conform.report
+		};
+
+		// When opts.conforming is false a bad report is not an error.
+		if(!opts.conforming)
+			return;
+
+		// Otherwise this will kill the eval
+		if(!eval.report.clean())
+			throw error
+			{
+				fault::INVALID, "Non-conforming event: %s", string(eval.report)
+			};
+	}
 };
 
 std::ostream &
