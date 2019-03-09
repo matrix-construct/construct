@@ -282,9 +282,15 @@ ircd::http::request::head::head(parse::capstan &pc,
 	query?    string_view { begin(path), end(query)    }:
 	          string_view { begin(path), end(path)     }
 }
-,headers
+,headers{[this, &pc, &c]
 {
-	http::headers{pc, [this, &c](const auto &h)
+	if(!this->version || this->version != "HTTP/1.1")
+		throw error
+		{
+			HTTP_VERSION_NOT_SUPPORTED, "Sorry, only HTTP/1.1 supported here."
+		};
+
+	return http::headers{pc, [this, &c](const auto &h)
 	{
 		if(iequals(h.first, "host"_sv))
 			this->host = h.second;
@@ -305,8 +311,8 @@ ircd::http::request::head::head(parse::capstan &pc,
 
 		if(c)
 			c(h);
-	}}
-}
+	}};
+}()}
 {
 }
 
