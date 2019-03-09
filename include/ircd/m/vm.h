@@ -269,6 +269,9 @@ struct ircd::m::vm::copts
 
 	/// Whether to log an info message after commit accepted
 	bool infolog_postcommit {false};
+
+	/// Call the issue hook or bypass
+	bool issue {true};
 };
 
 struct ircd::m::vm::error

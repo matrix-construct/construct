@@ -218,7 +218,7 @@ const m::hookfn<m::vm::eval &>
 invite_foreign_hookfn
 {
 	{
-		{ "_site",          "vm.commit"     },
+		{ "_site",          "vm.issue"      },
 		{ "type",           "m.room.member" },
 		{ "membership",     "invite"        },
 	},

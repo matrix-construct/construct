@@ -25,7 +25,7 @@ namespace ircd::m::vm
 	static void init();
 	static void fini();
 
-	extern hook::site<eval &> commit_hook;   ///< Called when this server issues event
+	extern hook::site<eval &> issue_hook;    ///< Called when this server issues event
 	extern hook::site<eval &> fetch_hook;    ///< Called to resolve dependencies
 	extern hook::site<eval &> eval_hook;     ///< Called when evaluating event
 	extern hook::site<eval &> post_hook;     ///< Called to apply effects pre-notify
@@ -57,10 +57,10 @@ ircd::m::vm::log_accept_info
 	{ "default",  false                       },
 };
 
-decltype(ircd::m::vm::commit_hook)
-ircd::m::vm::commit_hook
+decltype(ircd::m::vm::issue_hook)
+ircd::m::vm::issue_hook
 {
-	{ "name", "vm.commit" }
+	{ "name", "vm.issue" }
 };
 
 decltype(ircd::m::vm::fetch_hook)
@@ -469,7 +469,9 @@ try
 			};
 
 		check_size(event);
-		commit_hook(event, eval);
+
+		if(eval.copts->issue)
+			issue_hook(event, eval);
 	}
 
 	event::conforms report
