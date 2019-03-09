@@ -3234,13 +3234,15 @@ const
 {
 	assert(request);
 	assert(content_overflow() > 0);
-	assert(content_overflow() <= state.content_read);
+	assert(content_overflow() <= state.content_length);
 	assert(state.content_read >= size(request->in.content));
+	assert(state.content_length >= state.content_read);
 	const size_t remaining
 	{
-		content_overflow() - state.content_read
+		state.content_length - state.content_read
 	};
 
+	assert(remaining <= state.content_length);
 	static char buffer[512];
 	const size_t buffer_max
 	{
