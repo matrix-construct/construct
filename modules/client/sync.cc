@@ -145,7 +145,7 @@ ircd::m::sync::handle_get(client &client,
 
 	const bool should_longpoll
 	{
-		range.first > range.second
+		range.first > vm::current_sequence
 	};
 
 	const bool should_linear
