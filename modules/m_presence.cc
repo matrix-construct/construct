@@ -19,6 +19,12 @@ IRCD_MODULE
 	"Matrix Presence"
 };
 
+log::log
+presence_log
+{
+	"m.presence"
+};
+
 extern const string_view
 valid_states[];
 
@@ -146,11 +152,12 @@ try
 	};
 
 	m::presence::get(std::nothrow, user_id, closure, &fopts);
+
 	if(!useful)
 	{
 		log::debug
 		{
-			m::log, "presence spam from %s %s is %s and %s %zd seconds ago",
+			presence_log, "presence spam from %s %s is %s and %s %zd seconds ago",
 			at<"origin"_>(event),
 			string_view{user_id},
 			json::get<"currently_active"_>(object)? "active"_sv : "inactive"_sv,
@@ -168,7 +175,7 @@ try
 
 	log::info
 	{
-		m::log, "%s %s is %s and %s %zd seconds ago",
+		presence_log, "%s %s is %s and %s %zd seconds ago",
 		at<"origin"_>(event),
 		string_view{user_id},
 		json::get<"currently_active"_>(object)? "active"_sv : "inactive"_sv,
