@@ -11023,7 +11023,7 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 
 	const unique_buffer<mutable_buffer> buf
 	{
-		32_KiB
+		8_KiB
 	};
 
 	m::v1::user::devices request
@@ -11087,7 +11087,7 @@ console_cmd__fed__user__keys__query(opt &out, const string_view &line)
 
 	const unique_buffer<mutable_buffer> buf
 	{
-		32_KiB
+		8_KiB
 	};
 
 	m::v1::user::keys::query request
@@ -11173,7 +11173,7 @@ console_cmd__fed__user__keys__claim(opt &out, const string_view &line)
 
 	const unique_buffer<mutable_buffer> buf
 	{
-		32_KiB
+		8_KiB
 	};
 
 	m::v1::user::keys::claim request

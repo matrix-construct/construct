@@ -261,7 +261,7 @@ try
 	opts.remote = remote;
 	const auto &buffer
 	{
-		buffers.emplace_back(32_KiB)
+		buffers.emplace_back(8_KiB)
 	};
 
 	ret.emplace
