@@ -113,17 +113,17 @@ enum ircd::m::vm::fault
 /// Evaluation Options
 struct ircd::m::vm::opts
 {
-	/// Make writes to database
-	bool write {true};
-
 	/// Make fetches or false to bypass fetch stage.
 	bool fetch {true};
 
 	/// Call eval hooks or false to bypass this stage.
 	bool eval {true};
 
-	/// Apply effects of this event or false to bypass this stage.
-	bool effects {true};
+	/// Make writes to database
+	bool write {true};
+
+	/// Call post hooks or false to bypass post-write / pre-notify effects.
+	bool post {true};
 
 	/// Broadcast to clients/servers. When true, individual notify options
 	/// that follow are considered. When false, no notifications occur.
@@ -134,6 +134,9 @@ struct ircd::m::vm::opts
 
 	/// Broadcast to federation servers (/federation/send/).
 	bool notify_servers {true};
+
+	/// Apply effects of this event or false to bypass this stage.
+	bool effects {true};
 
 	/// False to allow a dirty conforms report (not recommended).
 	bool conforming {true};

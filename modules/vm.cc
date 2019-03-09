@@ -25,11 +25,12 @@ namespace ircd::m::vm
 	static void init();
 	static void fini();
 
-	extern hook::site<eval &> commit_hook;  ///< Called when this server issues event
-	extern hook::site<eval &> fetch_hook;   ///< Called to resolve dependencies
-	extern hook::site<eval &> eval_hook;    ///< Called when evaluating event
-	extern hook::site<eval &> notify_hook;  ///< Called to broadcast successful eval
-	extern hook::site<eval &> effect_hook;  ///< Called to apply effects of eval
+	extern hook::site<eval &> commit_hook;   ///< Called when this server issues event
+	extern hook::site<eval &> fetch_hook;    ///< Called to resolve dependencies
+	extern hook::site<eval &> eval_hook;     ///< Called when evaluating event
+	extern hook::site<eval &> post_hook;     ///< Called to apply effects pre-notify
+	extern hook::site<eval &> notify_hook;   ///< Called to broadcast successful eval
+	extern hook::site<eval &> effect_hook;   ///< Called to apply effects post-notify
 
 	extern conf::item<bool> log_accept_debug;
 	extern conf::item<bool> log_accept_info;
@@ -72,6 +73,12 @@ decltype(ircd::m::vm::eval_hook)
 ircd::m::vm::eval_hook
 {
 	{ "name", "vm.eval" }
+};
+
+decltype(ircd::m::vm::post_hook)
+ircd::m::vm::post_hook
+{
+	{ "name", "vm.post" }
 };
 
 decltype(ircd::m::vm::notify_hook)
@@ -490,6 +497,9 @@ try
 
 	if(ret != fault::ACCEPT)
 		return ret;
+
+	if(opts.post)
+		post_hook(event, eval);
 
 	if(opts.notify)
 		notify_hook(event, eval);
