@@ -151,6 +151,14 @@ struct ircd::server::request::opts
 	/// set to the number of chunks expected in a response to avoid growth of
 	/// that vector ... if you somehow know what that is going to be.
 	uint16_t chunks_reserve {4};
+
+	/// When true, if the buffer supplied to receive content is smaller than
+	/// the content-length, the overflowing portion of content is discarded
+	/// and the request completes without error. The user must check the
+	/// the content length to know if their content is incomplete. Otherwise
+	/// when false an overflow is an error and an exception is set so the
+	/// user does not process incomplete content.
+	bool truncate_content {false};
 };
 
 inline

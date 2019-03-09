@@ -2562,10 +2562,23 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 
 	if(state.content_read == size(content) + content_overflow())
 	{
-		assert(state.content_read == state.content_length);
 		assert(!done);
 		done = true;
-		set_value(state.status);
+
+		assert(req.opt);
+		assert(state.content_read == state.content_length);
+		if(content_overflow() && !req.opt->truncate_content)
+		{
+			assert(state.content_read > size(content));
+			set_exception(buffer_overrun
+			{
+				"buffer of %zu bytes too small for content-length %zu bytes by %zu bytes",
+				size(content),
+				state.content_length,
+				content_overflow()
+			});
+		}
+		else set_value(state.status);
 	}
 
 	return {};
