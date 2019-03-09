@@ -1001,6 +1001,20 @@ ircd::m::vm::retired_sequence(event::id::buf &event_id)
 	return ret;
 }
 
+ircd::http::code
+ircd::m::vm::http_code(const fault &code)
+{
+	switch(code)
+	{
+		case fault::ACCEPT:       return http::OK;
+		case fault::EXISTS:       return http::CONFLICT;
+		case fault::INVALID:      return http::BAD_REQUEST;
+		case fault::GENERAL:      return http::FORBIDDEN;
+		case fault::STATE:        return http::NOT_FOUND;
+		default:                  return http::INTERNAL_SERVER_ERROR;
+	}
+}
+
 ircd::string_view
 ircd::m::vm::reflect(const enum fault &code)
 {

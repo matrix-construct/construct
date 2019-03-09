@@ -29,6 +29,7 @@ namespace ircd::m::vm
 	extern const copts default_copts;
 
 	string_view reflect(const fault &);
+	http::code http_code(const fault &);
 	const uint64_t &sequence(const eval &);
 	uint64_t retired_sequence(id::event::buf &);
 	uint64_t retired_sequence();
@@ -303,7 +304,7 @@ ircd::m::vm::error::error(const fault &code,
                           args&&... a)
 :error
 {
-	http::NOT_MODIFIED, code, fmt, std::forward<args>(a)...
+	http_code(code), code, fmt, std::forward<args>(a)...
 }
 {}
 
