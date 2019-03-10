@@ -1019,7 +1019,7 @@ ircd::net::listener_udp::listener_udp(const string_view &name,
                                       const json::object &opts)
 :acceptor
 {
-	std::make_unique<struct acceptor>(name, opts)
+	std::make_unique<net::acceptor_udp>(name, opts)
 }
 {
 }
@@ -1065,24 +1065,24 @@ namespace ircd::net
 }
 
 //
-// listener::acceptor
+// acceptor
 //
 
-decltype(ircd::net::listener::acceptor::log)
-ircd::net::listener::acceptor::log
+decltype(ircd::net::acceptor::log)
+ircd::net::acceptor::log
 {
 	"listener"
 };
 
-decltype(ircd::net::listener::acceptor::timeout)
-ircd::net::listener::acceptor::timeout
+decltype(ircd::net::acceptor::timeout)
+ircd::net::acceptor::timeout
 {
 	{ "name",     "ircd.net.acceptor.timeout" },
 	{ "default",  12000L                      },
 };
 
 std::ostream &
-ircd::net::operator<<(std::ostream &s, const struct listener::acceptor &a)
+ircd::net::operator<<(std::ostream &s, const acceptor &a)
 {
 	thread_local char addrbuf[128];
 	s << "'" << a.name << "' @ [" << string(addrbuf, a.ep.address()) << "]:" << a.ep.port();
@@ -1090,16 +1090,16 @@ ircd::net::operator<<(std::ostream &s, const struct listener::acceptor &a)
 }
 
 //
-// listener::acceptor::acceptor
+// acceptor::acceptor
 //
 
-ircd::net::listener::acceptor::acceptor(net::listener &listener,
-                                        const string_view &name,
-                                        const json::object &opts,
-                                        listener::callback cb,
-                                        listener::proffer pcb)
+ircd::net::acceptor::acceptor(net::listener &listener,
+                              const string_view &name,
+                              const json::object &opts,
+                              listener::callback cb,
+                              listener::proffer pcb)
 try
-:listener
+:listener_
 {
 	&listener
 }
@@ -1185,13 +1185,13 @@ catch(const boost::system::system_error &e)
 	throw_system_error(e);
 }
 
-ircd::net::listener::acceptor::~acceptor()
+ircd::net::acceptor::~acceptor()
 noexcept
 {
 }
 
 void
-ircd::net::listener::acceptor::join()
+ircd::net::acceptor::join()
 noexcept try
 {
 	interrupt();
@@ -1211,7 +1211,7 @@ catch(const std::exception &e)
 }
 
 bool
-ircd::net::listener::acceptor::interrupt()
+ircd::net::acceptor::interrupt()
 noexcept try
 {
 	interrupting = true;
@@ -1235,7 +1235,7 @@ catch(const boost::system::system_error &e)
 /// socket. After the connect, an asynchronous SSL handshake handler is set
 /// for the socket.
 bool
-ircd::net::listener::acceptor::set_handle()
+ircd::net::acceptor::set_handle()
 try
 {
 	assert(!handle_set);
@@ -1262,9 +1262,9 @@ catch(const std::exception &e)
 /// asynchronous SSL handshake sequence.
 ///
 void
-ircd::net::listener::acceptor::accept(const error_code &ec,
-                                      const std::shared_ptr<socket> sock,
-                                      const std::weak_ptr<acceptor> a)
+ircd::net::acceptor::accept(const error_code &ec,
+                            const std::shared_ptr<socket> sock,
+                            const std::weak_ptr<acceptor> a)
 noexcept try
 {
 	if(unlikely(a.expired()))
@@ -1290,7 +1290,7 @@ noexcept try
 
 	// Call the proffer-callback if available. This allows the application
 	// to check whether to allow or deny this remote before the handshake.
-	if(pcb && !pcb(*listener, remote_ipport(*sock)))
+	if(pcb && !pcb(*listener_, remote_ipport(*sock)))
 	{
 		net::close(*sock, dc::RST, close_ignore);
 		return;
@@ -1365,8 +1365,8 @@ catch(const std::exception &e)
 /// result.
 ///
 bool
-ircd::net::listener::acceptor::check_accept_error(const error_code &ec,
-                                                  socket &sock)
+ircd::net::acceptor::check_accept_error(const error_code &ec,
+                                        socket &sock)
 {
 	using std::errc;
 
@@ -1389,9 +1389,9 @@ ircd::net::listener::acceptor::check_accept_error(const error_code &ec,
 }
 
 void
-ircd::net::listener::acceptor::handshake(const error_code &ec,
-                                         const std::shared_ptr<socket> sock,
-                                         const std::weak_ptr<acceptor> a)
+ircd::net::acceptor::handshake(const error_code &ec,
+                               const std::shared_ptr<socket> sock,
+                               const std::weak_ptr<acceptor> a)
 noexcept try
 {
 	if(unlikely(a.expired()))
@@ -1421,7 +1421,7 @@ noexcept try
 	check_handshake_error(ec, *sock);
 	sock->cancel_timeout();
 	assert(bool(cb));
-	cb(*listener, sock);
+	cb(*listener_, sock);
 }
 catch(const ctx::interrupted &e)
 {
@@ -1469,8 +1469,8 @@ catch(const std::exception &e)
 /// result.
 ///
 void
-ircd::net::listener::acceptor::check_handshake_error(const error_code &ec,
-                                                     socket &sock)
+ircd::net::acceptor::check_handshake_error(const error_code &ec,
+                                           socket &sock)
 {
 	using std::errc;
 
@@ -1496,7 +1496,7 @@ ircd::net::listener::acceptor::check_handshake_error(const error_code &ec,
 }
 
 void
-ircd::net::listener::acceptor::configure(const json::object &opts)
+ircd::net::acceptor::configure(const json::object &opts)
 {
 	log::debug
 	{
@@ -1659,22 +1659,22 @@ ircd::net::listener::acceptor::configure(const json::object &opts)
 }
 
 //
-// listener_udp::acceptor
+// acceptor_udp
 //
 
 std::ostream &
-ircd::net::operator<<(std::ostream &s, const struct listener_udp::acceptor &a)
+ircd::net::operator<<(std::ostream &s, const acceptor_udp &a)
 {
 	s << "'" << a.name << "' @ [" << string(a.ep.address()) << "]:" << a.ep.port();
 	return s;
 }
 
 //
-// listener_udp::acceptor::acceptor
+// acceptor_udp::acceptor
 //
 
-ircd::net::listener_udp::acceptor::acceptor(const string_view &name,
-                                            const json::object &opts)
+ircd::net::acceptor_udp::acceptor_udp(const string_view &name,
+                                      const json::object &opts)
 try
 :name
 {
@@ -1717,13 +1717,13 @@ catch(const boost::system::system_error &e)
 	throw_system_error(e);
 }
 
-ircd::net::listener_udp::acceptor::~acceptor()
+ircd::net::acceptor_udp::~acceptor_udp()
 noexcept
 {
 }
 
 void
-ircd::net::listener_udp::acceptor::join()
+ircd::net::acceptor_udp::join()
 noexcept try
 {
 	interrupt();
@@ -1741,7 +1741,7 @@ catch(const std::exception &e)
 }
 
 bool
-ircd::net::listener_udp::acceptor::interrupt()
+ircd::net::acceptor_udp::interrupt()
 noexcept try
 {
 	a.cancel();
@@ -1758,7 +1758,7 @@ catch(const boost::system::system_error &e)
 }
 
 ircd::net::listener_udp::datagram &
-ircd::net::listener_udp::acceptor::operator()(datagram &datagram)
+ircd::net::acceptor_udp::operator()(datagram &datagram)
 {
 	assert(ctx::current);
 
@@ -1794,7 +1794,7 @@ ircd::net::listener_udp::acceptor::operator()(datagram &datagram)
 }
 
 boost::asio::ip::udp::socket::message_flags
-ircd::net::listener_udp::acceptor::flags(const flag &flag)
+ircd::net::acceptor_udp::flags(const flag &flag)
 {
 	ip::udp::socket::message_flags ret{0};
 

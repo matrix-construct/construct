@@ -16,21 +16,17 @@
 // is part of the <ircd/asio.h> stack which can be included in your
 // definition file if you need low level access to this acceptor API.
 
-namespace ircd::net
-{
-	std::ostream &operator<<(std::ostream &s, const struct listener::acceptor &);
-	std::ostream &operator<<(std::ostream &s, const struct listener_udp::acceptor &);
-}
-
-struct ircd::net::listener::acceptor
-:std::enable_shared_from_this<struct ircd::net::listener::acceptor>
+struct ircd::net::acceptor
+:std::enable_shared_from_this<struct ircd::net::acceptor>
 {
 	using error_code = boost::system::error_code;
+	using callback = listener::callback;
+	using proffer = listener::proffer;
 
 	static log::log log;
 	static conf::item<milliseconds> timeout;
 
-	net::listener *listener;
+	net::listener *listener_;
 	std::string name;
 	std::string opts;
 	size_t backlog;
@@ -71,11 +67,13 @@ struct ircd::net::listener::acceptor
 	~acceptor() noexcept;
 };
 
-struct ircd::net::listener_udp::acceptor
+struct ircd::net::acceptor_udp
 {
 	using error_code = boost::system::error_code;
+	using datagram = listener_udp::datagram;
+	using flag = listener_udp::flag;
 
-	static constexpr log::log &log {listener::acceptor::log};
+	static constexpr log::log &log {acceptor::log};
 	static ip::udp::socket::message_flags flags(const flag &);
 
 	std::string name;
@@ -92,8 +90,8 @@ struct ircd::net::listener_udp::acceptor
 	bool interrupt() noexcept;
 	void join() noexcept;
 
-	acceptor(const string_view &name,
-	         const json::object &opts);
+	acceptor_udp(const string_view &name,
+	             const json::object &opts);
 
-	~acceptor() noexcept;
+	~acceptor_udp() noexcept;
 };

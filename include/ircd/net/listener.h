@@ -14,24 +14,27 @@
 namespace ircd::net
 {
 	struct listener;
+	struct acceptor;
 	struct listener_udp;
+	struct acceptor_udp;
 
 	std::ostream &operator<<(std::ostream &s, const listener &);
+	std::ostream &operator<<(std::ostream &s, const acceptor &);
 	std::ostream &operator<<(std::ostream &s, const listener_udp &);
+	std::ostream &operator<<(std::ostream &s, const acceptor_udp &);
 
 	extern conf::item<bool> listen;
 }
 
 struct ircd::net::listener
 {
-	struct acceptor;
 	using callback = std::function<void (listener &, const std::shared_ptr<socket> &)>;
 	using proffer = std::function<bool (listener &, const ipport &)>;
 
 	IRCD_EXCEPTION(net::error, error)
 
   private:
-	std::shared_ptr<struct acceptor> acceptor;
+	std::shared_ptr<net::acceptor> acceptor;
 
   public:
 	explicit operator json::object() const;
@@ -57,14 +60,13 @@ struct ircd::net::listener
 
 struct ircd::net::listener_udp
 {
-	struct acceptor;
 	struct datagram;
 	enum flag :uint;
 
 	IRCD_EXCEPTION(net::error, error)
 
   private:
-	std::unique_ptr<struct acceptor> acceptor;
+	std::unique_ptr<net::acceptor_udp> acceptor;
 
   public:
 	explicit operator json::object() const;
