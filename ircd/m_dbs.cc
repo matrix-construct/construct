@@ -360,6 +360,9 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 
 	if(opts.event_refs.test(uint(ref::M_RELATES__M_REPLY)))
 		_index_event_refs_m_relates_m_reply(txn, event, opts);
+
+	if(opts.event_refs.test(uint(ref::M_ROOM_REDACTION)))
+		_index_event_refs_m_room_redaction(txn, event, opts);
 }
 
 void
@@ -541,6 +544,48 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	const string_view &key
 	{
 		event_refs_key(buf, event_idx, ref::M_RELATES__M_REPLY, opts.event_idx)
+	};
+
+	db::txn::append
+	{
+		txn, dbs::event_refs,
+		{
+			opts.op, key, string_view{}
+		}
+	};
+}
+
+void
+ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
+                                                 const event &event,
+                                                 const write_opts &opts)
+{
+	assert(opts.event_refs.test(uint(ref::M_ROOM_REDACTION)));
+
+	if(json::get<"type"_>(event) != "m.room.redaction")
+		return;
+
+	if(!valid(m::id::EVENT, json::get<"redacts"_>(event)))
+		return;
+
+	const auto &event_id
+	{
+		json::get<"redacts"_>(event)
+	};
+
+	const event::idx &event_idx
+	{
+		m::index(event_id, std::nothrow) // query
+	};
+
+	if(!event_idx)
+		return;
+
+	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
+	assert(opts.event_idx != 0 && event_idx != 0);
+	const string_view &key
+	{
+		event_refs_key(buf, event_idx, ref::M_ROOM_REDACTION, opts.event_idx)
 	};
 
 	db::txn::append
@@ -1221,6 +1266,9 @@ ircd::m::dbs::reflect(const ref &type)
 
 		case ref::M_RELATES__M_REPLY:
 			return "M_RELATES__M_REPLY";
+
+		case ref::M_ROOM_REDACTION:
+			return "M_ROOM_REDACTION";
 	}
 
 	return "????";

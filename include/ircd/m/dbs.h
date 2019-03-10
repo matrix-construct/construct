@@ -153,6 +153,9 @@ enum class ircd::m::dbs::ref
 
 	// m.relates_to
 	M_RELATES__M_REPLY  = 0x20,
+
+	// m.room.redaction
+	M_ROOM_REDACTION    = 0x40,
 };
 
 /// Database Schema Descriptors
@@ -299,6 +302,7 @@ namespace ircd::m::dbs
 	string_view _index_redact(db::txn &, const event &, const write_opts &);
 	string_view _index_other(db::txn &, const event &, const write_opts &);
 	string_view _index_room(db::txn &, const event &, const write_opts &);
+	void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_auth(db::txn &, const event &, const write_opts &);
