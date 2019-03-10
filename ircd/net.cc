@@ -1511,16 +1511,16 @@ ircd::net::acceptor::configure(const json::object &opts)
 	if(opts.get<bool>("ssl_single_dh_use", false))
 		flags |= ssl.single_dh_use;
 
-	if(opts.get<bool>("ssl_no_sslv2", true))
+	if(opts.get<bool>("ssl_no_sslv2", false))
 		flags |= ssl.no_sslv2;
 
-	if(opts.get<bool>("ssl_no_sslv3", true))
+	if(opts.get<bool>("ssl_no_sslv3", false))
 		flags |= ssl.no_sslv3;
 
-	if(opts.get<bool>("ssl_no_tlsv1", true))
+	if(opts.get<bool>("ssl_no_tlsv1", false))
 		flags |= ssl.no_tlsv1;
 
-	if(opts.get<bool>("ssl_no_tlsv1_1", true))
+	if(opts.get<bool>("ssl_no_tlsv1_1", false))
 		flags |= ssl.no_tlsv1_1;
 
 	if(opts.get<bool>("ssl_no_tlsv1_2", false))
