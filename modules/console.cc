@@ -535,26 +535,14 @@ console_cmd__log__level(opt &out, const string_view &line)
 bool
 console_cmd__log__mask(opt &out, const string_view &line)
 {
-	thread_local string_view list[64];
-	const auto &count
-	{
-		tokens(line, ' ', list)
-	};
-
-	log::console_mask({list, count});
+	log::console_mask(tokens<std::vector>(line, ' '));
 	return true;
 }
 
 bool
 console_cmd__log__unmask(opt &out, const string_view &line)
 {
-	thread_local string_view list[64];
-	const auto &count
-	{
-		tokens(line, ' ', list)
-	};
-
-	log::console_unmask({list, count});
+	log::console_unmask(tokens<std::vector>(line, ' '));
 	return true;
 }
 
