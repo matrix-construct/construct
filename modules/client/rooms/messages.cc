@@ -159,15 +159,17 @@ get__messages(client &client,
 	}
 	chunk.~array();
 
-	json::stack::member
-	{
-		top, "start", json::value{start}
-	};
+	if(it || page.dir == 'b')
+		json::stack::member
+		{
+			top, "start", json::value{start}
+		};
 
-	json::stack::member
-	{
-		top, "end", json::value{end}
-	};
+	if(it || page.dir != 'b')
+		json::stack::member
+		{
+			top, "end", json::value{end}
+		};
 
 	return {};
 }
