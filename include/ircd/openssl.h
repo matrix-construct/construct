@@ -128,6 +128,13 @@ namespace ircd::openssl
 	const SSL_CIPHER *current_cipher(const SSL &);
 	string_view shared_ciphers(const mutable_buffer &buf, const SSL &);
 	string_view cipher_list(const SSL &, const int &priority = -1);
+	void set_cipher_list(SSL &, const std::string &list);
+	void set_cipher_list(SSL_CTX &, const std::string &list);
+	void set_ecdh_auto(SSL_CTX &, const bool & = true);
+	void set_ecdh_auto(SSL &, const bool & = true);
+	void set_tmp_ecdh(SSL_CTX &, EC_KEY &);
+	void set_curves(SSL_CTX &, std::string list);
+	void set_curves(SSL &, std::string list);
 }
 
 /// OpenSSL BIO convenience utils and wraps; also secure file IO closures

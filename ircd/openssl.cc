@@ -51,6 +51,60 @@ namespace ircd::openssl
 // SSL
 //
 
+void
+ircd::openssl::set_curves(SSL &ssl,
+                          std::string list)
+{
+	auto data(const_cast<char *>(list.data()));
+	call(::SSL_ctrl, &ssl, SSL_CTRL_SET_CURVES_LIST, 0, data);
+}
+
+void
+ircd::openssl::set_curves(SSL_CTX &ssl,
+                          std::string list)
+{
+	auto data(const_cast<char *>(list.data()));
+	call(::SSL_CTX_ctrl, &ssl, SSL_CTRL_SET_CURVES_LIST, 0, data);
+}
+
+void
+ircd::openssl::set_tmp_ecdh(SSL_CTX &ssl,
+                            EC_KEY &key)
+{
+	auto data(reinterpret_cast<char *>(&key));
+	call(::SSL_CTX_ctrl, &ssl, SSL_CTRL_SET_TMP_ECDH, 0, data);
+}
+
+void
+ircd::openssl::set_ecdh_auto(SSL &ssl,
+                             const bool &on)
+{
+	long _on(on);
+	call(::SSL_ctrl, &ssl, SSL_CTRL_SET_ECDH_AUTO, _on, nullptr);
+}
+
+void
+ircd::openssl::set_ecdh_auto(SSL_CTX &ssl,
+                             const bool &on)
+{
+	long _on(on);
+	call(::SSL_CTX_ctrl, &ssl, SSL_CTRL_SET_ECDH_AUTO, _on, nullptr);
+}
+
+void
+ircd::openssl::set_cipher_list(SSL_CTX &ssl,
+                               const std::string &list)
+{
+	call(::SSL_CTX_set_cipher_list, &ssl, list.c_str());
+}
+
+void
+ircd::openssl::set_cipher_list(SSL &ssl,
+                               const std::string &list)
+{
+	call(::SSL_set_cipher_list, &ssl, list.c_str());
+}
+
 ircd::string_view
 ircd::openssl::cipher_list(const SSL &ssl,
                            const int &priority)
