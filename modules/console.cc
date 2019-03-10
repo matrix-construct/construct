@@ -4444,22 +4444,25 @@ console_cmd__net__listen(opt &out, const string_view &line)
 		"private_key_pem_path",
 		"certificate_pem_path",
 		"certificate_chain_path",
-		"tmp_dh_path",
-		"backlog",
-		"max_connections",
 	}};
 
-	const json::members opts
+	const json::members _opts
 	{
 		{ "host",                        token.at("host", "0.0.0.0"_sv)            },
 		{ "port",                        token.at("port", 8448L)                   },
 		{ "private_key_pem_path",        token.at("private_key_pem_path")          },
 		{ "certificate_pem_path",        token.at("certificate_pem_path")          },
 		{ "certificate_chain_path",      token.at("certificate_chain_path", ""_sv) },
-		{ "tmp_dh_path",                 token.at("tmp_dh_path", ""_sv)            },
-		{ "backlog",                     token.at("backlog", -1L)                  },
-		{ "max_connections",             token.at("max_connections", -1L)          },
 	};
+
+	const json::object &addl
+	{
+		tokens_after(line, ' ', token.names.size())
+	};
+
+	json::strung opts{_opts};
+	for(const auto &[name, prop] : addl)
+		opts = insert(opts, json::member(name, prop));
 
 	const auto eid
 	{
