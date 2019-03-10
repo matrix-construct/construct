@@ -50,6 +50,12 @@ default_fetch_opts
 	},
 };
 
+static void
+_append(json::stack::array &,
+        const m::event &,
+        const m::event::idx &,
+        const m::user::room &);
+
 resource::response
 get__context(client &client,
              const resource::request &request,
@@ -88,6 +94,11 @@ get__context(client &client,
 	const m::event::fetch event
 	{
 		event_id
+	};
+
+	const m::user::room &user_room
+	{
+		request.user_id
 	};
 
 	resource::response::chunked response
@@ -129,7 +140,7 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				continue;
 
-			array.append(event);
+			_append(array, event, before.event_idx(), user_room);
 		}
 
 		if(before && limit > 0)
@@ -165,7 +176,7 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				continue;
 
-			array.append(event);
+			_append(array, event, after.event_idx(), user_room);
 		}
 
 		if(after && limit > 0)
@@ -201,4 +212,51 @@ get__context(client &client,
 	}
 
 	return {};
+}
+
+void
+_append(json::stack::array &chunk,
+        const m::event &event,
+        const m::event::idx &event_idx,
+        const m::user::room &user_room)
+{
+	json::stack::object object
+	{
+		chunk
+	};
+
+	object.append(event);
+
+	json::stack::object unsigned_
+	{
+		object, "unsigned"
+	};
+
+	json::stack::member
+	{
+		unsigned_, "age", json::value
+		{
+			long(m::vm::current_sequence - event_idx)
+		}
+	};
+
+	if(at<"sender"_>(event) != user_room.user.user_id)
+		return;
+
+	const auto txnid_idx
+	{
+		user_room.get(std::nothrow, "ircd.client.txnid", at<"event_id"_>(event))
+	};
+
+	if(!txnid_idx)
+		return;
+
+	m::get(std::nothrow, txnid_idx, "content", [&unsigned_]
+	(const json::object &content)
+	{
+		json::stack::member
+		{
+			unsigned_, "transaction_id", unquote(content.get("transaction_id"))
+		};
+	});
 }
