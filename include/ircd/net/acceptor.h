@@ -66,32 +66,3 @@ struct ircd::net::acceptor
 
 	~acceptor() noexcept;
 };
-
-struct ircd::net::acceptor_udp
-{
-	using error_code = boost::system::error_code;
-	using datagram = listener_udp::datagram;
-	using flag = listener_udp::flag;
-
-	static constexpr log::log &log {acceptor::log};
-	static ip::udp::socket::message_flags flags(const flag &);
-
-	std::string name;
-	std::string opts;
-	ip::udp::endpoint ep;
-	ip::udp::socket a;
-	size_t waiting {0};
-	ctx::dock joining;
-
-	// Yield context for datagram.
-	datagram &operator()(datagram &);
-
-	// Acceptor shutdown
-	bool interrupt() noexcept;
-	void join() noexcept;
-
-	acceptor_udp(const string_view &name,
-	             const json::object &opts);
-
-	~acceptor_udp() noexcept;
-};

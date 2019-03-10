@@ -15,13 +15,9 @@ namespace ircd::net
 {
 	struct listener;
 	struct acceptor;
-	struct listener_udp;
-	struct acceptor_udp;
 
 	std::ostream &operator<<(std::ostream &s, const listener &);
 	std::ostream &operator<<(std::ostream &s, const acceptor &);
-	std::ostream &operator<<(std::ostream &s, const listener_udp &);
-	std::ostream &operator<<(std::ostream &s, const acceptor_udp &);
 
 	extern conf::item<bool> listen;
 }
@@ -56,65 +52,4 @@ struct ircd::net::listener
 	~listener() noexcept;
 
 	friend std::ostream &operator<<(std::ostream &s, const listener &);
-};
-
-struct ircd::net::listener_udp
-{
-	struct datagram;
-	enum flag :uint;
-
-	IRCD_EXCEPTION(net::error, error)
-
-  private:
-	std::unique_ptr<net::acceptor_udp> acceptor;
-
-  public:
-	explicit operator json::object() const;
-	string_view name() const;
-
-	datagram &operator()(datagram &);
-
-	listener_udp(const string_view &name,
-	             const json::object &options);
-
-	explicit
-	listener_udp(const string_view &name,
-	             const std::string &options);
-
-	~listener_udp() noexcept;
-
-	friend std::ostream &operator<<(std::ostream &s, const listener_udp &);
-};
-
-struct ircd::net::listener_udp::datagram
-{
-	union
-	{
-		const_buffer cbuf;
-		mutable_buffer mbuf;
-	};
-
-	union
-	{
-		vector_view<const_buffer> cbufs;
-		vector_view<mutable_buffer> mbufs;
-	};
-
-	ipport remote;
-	enum flag flag {(enum flag)0};
-
-	datagram(const const_buffer &buf,
-	         const ipport &remote,
-	         const enum flag &flag = (enum flag)0);
-
-	datagram(const mutable_buffer &buf,
-	         const enum flag &flag = (enum flag)0);
-
-	datagram() = default;
-};
-
-enum ircd::net::listener_udp::flag
-:uint
-{
-	PEEK  = 0x01,
 };

@@ -38,6 +38,7 @@ namespace ircd::net
 #include "ipport.h"
 #include "dns.h"
 #include "listener.h"
+#include "listener_udp.h"
 #include "sock_opts.h"
 #include "open.h"
 #include "close.h"
