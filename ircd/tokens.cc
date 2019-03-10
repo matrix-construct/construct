@@ -265,6 +265,37 @@ ircd::tokens(const string_view &str,
 	return i;
 }
 
+bool
+ircd::tokens(const string_view &str,
+             const char &sep,
+             const token_view_bool &closure)
+{
+	const char ssep[2] { sep, '\0' };
+	return tokens(str, ssep, closure);
+}
+
+bool
+ircd::tokens(const string_view &str,
+             const char *const &sep,
+             const token_view_bool &closure)
+{
+	using type = string_view;
+	using iter = typename type::const_iterator;
+	using delim = boost::char_separator<char>;
+
+	const delim d{sep};
+	const boost::tokenizer<delim, iter, type> view
+	{
+		str, d
+	};
+
+	for(auto it(begin(view)); it != end(view); ++it)
+		if(!closure(*it))
+			return false;
+
+	return true;
+}
+
 void
 ircd::tokens(const string_view &str,
              const char &sep,

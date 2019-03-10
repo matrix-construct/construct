@@ -20,8 +20,11 @@ namespace ircd
 	// required to be null terminated. Construct an std::string from the view
 	// to allocate and copy the token with null termination.
 	using token_view = std::function<void (const string_view &)>;
+	using token_view_bool = std::function<bool (const string_view &)>;
 	void tokens(const string_view &str, const char &sep, const token_view &);
 	void tokens(const string_view &str, const char *const &sep, const token_view &);
+	bool tokens(const string_view &str, const char &sep, const token_view_bool &);
+	bool tokens(const string_view &str, const char *const &sep, const token_view_bool &);
 	size_t tokens(const string_view &str, const char &sep, const size_t &limit, const token_view &);
 	size_t tokens(const string_view &str, const char *const &sep, const size_t &limit, const token_view &);
 
