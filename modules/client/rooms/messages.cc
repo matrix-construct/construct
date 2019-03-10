@@ -25,7 +25,8 @@ struct pagination_tokens
 static void
 _append(json::stack::array &chunk,
         const m::event &,
-        const m::event::idx &);
+        const m::event::idx &,
+        const m::user::room &user_room);
 
 conf::item<size_t>
 max_filter_miss
@@ -95,6 +96,11 @@ get__messages(client &client,
 			"You are not permitted to view the room at this event"
 		};
 
+	const m::user::room user_room
+	{
+		request.user_id
+	};
+
 	m::room::messages it
 	{
 		room, page.from, &default_fetch_opts
@@ -154,7 +160,7 @@ get__messages(client &client,
 			continue;
 		}
 
-		_append(chunk, event, it.event_idx());
+		_append(chunk, event, it.event_idx(), user_room);
 		++hit;
 	}
 	chunk.~array();
@@ -177,7 +183,8 @@ get__messages(client &client,
 void
 _append(json::stack::array &chunk,
         const m::event &event,
-        const m::event::idx &event_idx)
+        const m::event::idx &event_idx,
+        const m::user::room &user_room)
 {
 	json::stack::object object
 	{
@@ -198,6 +205,26 @@ _append(json::stack::array &chunk,
 			long(m::vm::current_sequence - event_idx)
 		}
 	};
+
+	if(at<"sender"_>(event) != user_room.user.user_id)
+		return;
+
+	const auto txnid_idx
+	{
+		user_room.get(std::nothrow, "ircd.client.txnid", at<"event_id"_>(event))
+	};
+
+	if(!txnid_idx)
+		return;
+
+	m::get(std::nothrow, txnid_idx, "content", [&unsigned_]
+	(const json::object &content)
+	{
+		json::stack::member
+		{
+			unsigned_, "transaction_id", unquote(content.get("transaction_id"))
+		};
+	});
 }
 
 // Client-Server 6.3.6 query parameters
