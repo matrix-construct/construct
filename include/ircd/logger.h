@@ -50,8 +50,10 @@ namespace ircd::log
 	// all loggers. An empty unmask allows all loggers. An unmask of a logger
 	// that wasn't masked has no effect. Provided string_views don't have to
 	// remain valid after call.
-	void console_unmask(const vector_view<string_view> & = {});
-	void console_mask(const vector_view<string_view> & = {});
+	void console_unmask(const vector_view<const string_view> & = {});
+	void console_mask(const vector_view<const string_view> & = {});
+	void file_unmask(const vector_view<const string_view> & = {});
+	void file_mask(const vector_view<const string_view> & = {});
 
 	// This suite adjusts the output for an entire level.
 	bool console_enabled(const level &);

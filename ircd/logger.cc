@@ -186,14 +186,28 @@ ircd::log::console_enabled(const level &lev)
 }
 
 void
-ircd::log::console_mask(const vector_view<string_view> &list)
+ircd::log::file_mask(const vector_view<const string_view> &list)
+{
+	for(auto *const &log : log::list)
+		log->fmasked = std::find(begin(list), end(list), log->name) != end(list);
+}
+
+void
+ircd::log::file_unmask(const vector_view<const string_view> &list)
+{
+	for(auto *const &log : log::list)
+		log->fmasked = std::find(begin(list), end(list), log->name) == end(list);
+}
+
+void
+ircd::log::console_mask(const vector_view<const string_view> &list)
 {
 	for(auto *const &log : log::list)
 		log->cmasked = std::find(begin(list), end(list), log->name) != end(list);
 }
 
 void
-ircd::log::console_unmask(const vector_view<string_view> &list)
+ircd::log::console_unmask(const vector_view<const string_view> &list)
 {
 	for(auto *const &log : log::list)
 		log->cmasked = std::find(begin(list), end(list), log->name) == end(list);
