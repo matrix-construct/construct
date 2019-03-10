@@ -132,11 +132,13 @@ get__context(client &client,
 			array.append(event);
 		}
 
-		if(before)
+		if(before && limit > 0)
 			--before;
 
 		if(before)
 			start = before.event_id();
+		else
+			start = {};
 	}
 
 	json::stack::member
@@ -166,11 +168,13 @@ get__context(client &client,
 			array.append(event);
 		}
 
-		if(after)
+		if(after && limit > 0)
 			++after;
 
 		if(after)
 			end = after.event_id();
+		else
+			end = {};
 	}
 
 	json::stack::member
