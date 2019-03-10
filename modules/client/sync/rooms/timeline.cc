@@ -21,6 +21,8 @@ namespace ircd::m::sync
 	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &, bool &);
 	static bool room_timeline_polylog(data &);
 	static bool room_timeline_linear(data &);
+
+	extern conf::item<size_t> limit_default;
 	extern const event::keys::include default_keys;
 	extern item room_timeline;
 }
@@ -46,6 +48,13 @@ ircd::m::sync::default_keys
 	"sender",
 	"state_key",
 	"type",
+};
+
+decltype(ircd::m::sync::limit_default)
+ircd::m::sync::limit_default
+{
+	{ "name",     "ircd.client.sync.rooms.timeline.limit.default" },
+	{ "default",  10L                                             },
 };
 
 bool
@@ -148,14 +157,15 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 		room, &fopts
 	};
 
-	for(; it && i < 10; --it, ++i)
+	const ssize_t limit(limit_default);
+	for(; it && i < limit; --it, ++i)
 	{
 		event_id = it.event_id();
 		if(!apropos(data, it.event_idx()))
 			break;
 	}
 
-	limited = i >= 10;
+	limited = i >= limit;
 	if(i > 0 && !it)
 		it.seek(event_id);
 
