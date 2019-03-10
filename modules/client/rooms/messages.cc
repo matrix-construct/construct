@@ -115,15 +115,6 @@ get__messages(client &client,
 		out
 	};
 
-	// Spec sez the 'from' token is exclusive
-	if(page.from && it)
-	{
-		if(page.dir == 'b')
-			--it;
-		else
-			++it;
-	}
-
 	m::event::id::buf start
 	{
 		page.dir == 'b'? page.from : m::event::id::buf{}
@@ -148,7 +139,7 @@ get__messages(client &client,
 		else
 			end = at<"event_id"_>(event);
 
-		if(hit >= page.limit || miss >= size_t(max_filter_miss))
+		if(hit > page.limit || miss >= size_t(max_filter_miss))
 			break;
 
 		if(!visible(event, request.user_id))
