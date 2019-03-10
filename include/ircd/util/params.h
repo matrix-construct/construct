@@ -19,8 +19,12 @@ namespace ircd::util
 	struct params;
 }
 
-class ircd::util::params
+struct ircd::util::params
 {
+	IRCD_EXCEPTION(ircd::error, error)
+	IRCD_EXCEPTION(error, missing)
+	IRCD_EXCEPTION(error, invalid)
+
 	string_view in;
 	const char *sep;
 	std::vector<const char *> names;
@@ -29,10 +33,6 @@ class ircd::util::params
 	size_t name(const string_view &) const;
 
   public:
-	IRCD_EXCEPTION(ircd::error, error)
-	IRCD_EXCEPTION(error, missing)
-	IRCD_EXCEPTION(error, invalid)
-
 	size_t count() const;
 
 	// Get positional argument by position index
