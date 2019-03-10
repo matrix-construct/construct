@@ -1528,6 +1528,28 @@ ircd::net::acceptor::configure(const json::object &opts)
 
 	ssl.set_options(flags);
 
+	if(!empty(unquote(opts["ssl_cipher_list"])))
+	{
+		const json::string &list
+		{
+			opts["ssl_cipher_list"]
+		};
+
+		assert(ssl.native_handle());
+		openssl::set_cipher_list(*ssl.native_handle(), list);
+	}
+
+	if(!empty(unquote(opts["ssl_curve_list"])))
+	{
+		const json::string &list
+		{
+			opts["ssl_curve_list"]
+		};
+
+		assert(ssl.native_handle());
+		openssl::set_curves(*ssl.native_handle(), list);
+	}
+
 	if(!empty(unquote(opts["certificate_chain_path"])))
 	{
 		const std::string filename
