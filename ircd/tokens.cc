@@ -173,6 +173,33 @@ ircd::token(const string_view &str,
 	return *at(begin(view), end(view), i);
 }
 
+bool
+ircd::token_exists(const string_view &str,
+                   const char &sep,
+                   const string_view &tok)
+{
+	const char ssep[2] { sep, '\0' };
+	return token_exists(str, ssep, tok);
+}
+
+bool
+ircd::token_exists(const string_view &str,
+                   const char *const &sep,
+                   const string_view &tok)
+{
+	using type = string_view;
+	using iter = typename type::const_iterator;
+	using delim = boost::char_separator<char>;
+
+	const delim d{sep};
+	const boost::tokenizer<delim, iter, type> view
+	{
+		str, d
+	};
+
+	return std::find(begin(view), end(view), tok) != end(view);
+}
+
 size_t
 ircd::token_count(const string_view &str,
                   const char &sep)

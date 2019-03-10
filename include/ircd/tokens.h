@@ -76,6 +76,8 @@ namespace ircd
 	// Convenience to get individual tokens
 	size_t token_count(const string_view &str, const char &sep);
 	size_t token_count(const string_view &str, const char *const &sep);
+	bool token_exists(const string_view &str, const char &sep, const string_view &token);
+	bool token_exists(const string_view &str, const char *const &, const string_view &token);
 	string_view token(const string_view &str, const char &sep, const size_t &at);
 	string_view token(const string_view &str, const char *const &sep, const size_t &at);
 	string_view token(const string_view &str, const char &sep, const size_t &at, const string_view &def);
