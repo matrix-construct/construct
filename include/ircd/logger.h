@@ -94,8 +94,8 @@ struct ircd::log::log
 {
 	string_view name;                  // name of this logger
 	char snote;                        // snomask character
-	bool cmasked {true};               // currently in the console mask (enabled)
-	bool fmasked {true};               // currently in the file mask (enabled)
+	bool cmasked;                      // currently in the console mask (enabled)
+	bool fmasked;                      // currently in the file mask (enabled)
 
   public:
 	template<class... args> void operator()(const level &, const string_view &fmt, args&&...);
@@ -151,6 +151,8 @@ struct ircd::log::log
 	#endif
 
 	log(const string_view &name, const char &snote = '\0');
+	log(log &&) = delete;
+	log(const log &) = delete;
 
 	static bool exists(const log *const &ptr);
 	static log *find(const string_view &name);

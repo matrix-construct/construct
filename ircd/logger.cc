@@ -19,6 +19,13 @@ namespace ircd::log
 	extern const std::array<string_view, num_of<level>()> default_ansi;
 	extern std::array<confs, num_of<level>()> confs;
 
+	extern conf::item<std::string> unmask_file;
+	extern conf::item<std::string> unmask_console;
+	extern conf::item<std::string> mask_file;
+	extern conf::item<std::string> mask_console;
+	static bool is_conf_mask_file(const string_view &name);
+	static bool is_conf_mask_console(const string_view &name);
+
 	std::array<std::ofstream, num_of<level>()> file;
 	std::array<ulong, num_of<level>()> console_quiet_stdout;
 	std::array<ulong, num_of<level>()> console_quiet_stderr;
@@ -318,6 +325,14 @@ ircd::log::log::log(const string_view &name,
                     const char &snote)
 :name{name}
 ,snote{snote}
+,cmasked
+{
+	is_conf_mask_console(name)
+}
+,fmasked
+{
+	is_conf_mask_file(name)
+}
 {
 	for(const auto *const &other : list)
 	{
@@ -660,6 +675,84 @@ ircd::smalldate(const time_t &ltime)
 
 	return buf;
 }
+
+bool
+ircd::log::is_conf_mask_console(const string_view &name)
+{
+	if(token_exists(string_view(mask_console), ' ', name))
+		return true;
+
+	if(token_exists(string_view(unmask_console), ' ', name))
+		return false;
+
+	// When nothing is in the list then we consider this item masked.
+	return empty(string_view(mask_console));
+}
+
+bool
+ircd::log::is_conf_mask_file(const string_view &name)
+{
+	if(token_exists(string_view(mask_file), ' ', name))
+		return true;
+
+	if(token_exists(string_view(unmask_file), ' ', name))
+		return false;
+
+	// When nothing is in the list then we consider this item masked.
+	return empty(string_view(mask_file));
+}
+
+decltype(ircd::log::unmask_file)
+ircd::log::unmask_file
+{
+	{
+		{ "name",     "ircd.log.unmask.file" },
+		{ "default",  string_view{}          },
+	}, []
+	{
+		if(!empty(string_view(unmask_file)))
+			file_unmask(tokens<std::vector>(unmask_file, ' '));
+	}
+};
+
+decltype(ircd::log::unmask_console)
+ircd::log::unmask_console
+{
+	{
+		{ "name",     "ircd.log.unmask.console" },
+		{ "default",  string_view{}             },
+	}, []
+	{
+		if(!empty(string_view(unmask_console)))
+			console_unmask(tokens<std::vector>(unmask_console, ' '));
+	}
+};
+
+decltype(ircd::log::mask_file)
+ircd::log::mask_file
+{
+	{
+		{ "name",     "ircd.log.mask.file" },
+		{ "default",  string_view{}        },
+	}, []
+	{
+		if(!empty(string_view(mask_file)))
+			file_mask(tokens<std::vector>(mask_file, ' '));
+	}
+};
+
+decltype(ircd::log::mask_console)
+ircd::log::mask_console
+{
+	{
+		{ "name",     "ircd.log.mask.console" },
+		{ "default",  string_view{}           },
+	}, []
+	{
+		if(!empty(string_view(mask_console)))
+			console_mask(tokens<std::vector>(mask_console, ' '));
+	}
+};
 
 decltype(ircd::log::confs)
 ircd::log::confs
