@@ -1503,34 +1503,30 @@ ircd::net::acceptor::configure(const json::object &opts)
 		log, "%s preparing listener socket configuration...", string(logheadbuf, *this)
 	};
 
-	ssl.set_options
-	(
-		0
-		//| ssl.default_workarounds
-		| ssl.no_tlsv1
-		//| ssl.no_tlsv1_1
-		//| ssl.no_tlsv1_2
-		//| ssl.no_sslv2
-		//| ssl.no_sslv3
-		//| ssl.single_dh_use
-	);
+	ulong flags(0);
 
-	//TODO: XXX
-	ssl.set_password_callback([this]
-	(const auto &size, const auto &purpose)
-	{
-		log::notice
-		{
-			log, "%s asking for password with purpose '%s' (size: %zu)",
-			string(logheadbuf, *this),
-			purpose,
-			size
-		};
+	if(opts.get<bool>("ssl_default_workarounds", false))
+		flags |= ssl.default_workarounds;
 
-		//XXX: TODO
-		assert(0);
-		return "foobar";
-	});
+	if(opts.get<bool>("ssl_single_dh_use", false))
+		flags |= ssl.single_dh_use;
+
+	if(opts.get<bool>("ssl_no_sslv2", true))
+		flags |= ssl.no_sslv2;
+
+	if(opts.get<bool>("ssl_no_sslv3", true))
+		flags |= ssl.no_sslv3;
+
+	if(opts.get<bool>("ssl_no_tlsv1", true))
+		flags |= ssl.no_tlsv1;
+
+	if(opts.get<bool>("ssl_no_tlsv1_1", true))
+		flags |= ssl.no_tlsv1_1;
+
+	if(opts.get<bool>("ssl_no_tlsv1_2", false))
+		flags |= ssl.no_tlsv1_2;
+
+	ssl.set_options(flags);
 
 	if(!empty(unquote(opts["certificate_chain_path"])))
 	{
@@ -1656,6 +1652,23 @@ ircd::net::acceptor::configure(const json::object &opts)
 			string(logheadbuf, *this)
 		};
 	}
+
+	//TODO: XXX
+	ssl.set_password_callback([this]
+	(const auto &size, const auto &purpose)
+	{
+		log::notice
+		{
+			log, "%s asking for password with purpose '%s' (size: %zu)",
+			string(logheadbuf, *this),
+			purpose,
+			size
+		};
+
+		//XXX: TODO
+		assert(0);
+		return "foobar";
+	});
 }
 
 //
