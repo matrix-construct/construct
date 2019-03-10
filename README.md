@@ -211,6 +211,15 @@ to point at Riot's `webapp/` directory by entering the following:
 
 6. Browse to `https://host.tld:8448/` and register a user.
 
+#### Additional Notes
+
+##### Recovering from broken configurations
+
+If your server ever fails to start from an errant conf item: you can override
+any item using an environmental variable before starting the program. To do
+this simply replace the '.' characters with '_' in the name of the item when
+setting it in the environment. The name is otherwise the same, including its
+lower case.
 
 ## Developers
 
