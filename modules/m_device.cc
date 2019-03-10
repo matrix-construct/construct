@@ -176,6 +176,22 @@ ircd::m::device::has(const m::user &user,
 
 bool
 IRCD_MODULE_EXPORT
+ircd::m::device::has(const m::user &user,
+                     const string_view &id,
+                     const string_view &prop)
+{
+	bool ret{false};
+	get(std::nothrow, user, id, prop, [&ret]
+	(const string_view &value)
+	{
+		ret = !empty(value);
+	});
+
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
 ircd::m::device::get(std::nothrow_t,
                      const m::user &user,
                      const string_view &id,

@@ -1715,6 +1715,21 @@ ircd::m::device::has(const m::user &user,
 }
 
 bool
+ircd::m::device::has(const m::user &user,
+                     const string_view &id,
+                     const string_view &prop)
+{
+	using prototype = bool (const m::user &, const string_view &id, const string_view &prop);
+
+	static mods::import<prototype> function
+	{
+		"m_device", "ircd::m::device::has"
+	};
+
+	return function(user, id, prop);
+}
+
+bool
 ircd::m::device::get(const m::user &user,
                      const string_view &id,
                      const string_view &prop,

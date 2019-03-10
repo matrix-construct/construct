@@ -124,6 +124,7 @@ struct ircd::m::device
 	static bool for_each(const user &, const string_view &id, const closure_bool &); // each property
 	static bool get(std::nothrow_t, const user &, const string_view &id, const string_view &prop, const closure &);
 	static bool get(const user &, const string_view &id, const string_view &prop, const closure &);
+	static bool has(const user &, const string_view &id, const string_view &prop);
 	static bool has(const user &, const string_view &id);
 	static bool del(const user &, const string_view &id);
 	static bool set(const user &, const string_view &id, const string_view &prop, const string_view &val);
