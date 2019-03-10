@@ -101,6 +101,9 @@ _query_user_device(client &client,
                    const string_view &device_id,
                    json::stack::object &out)
 {
+	if(!m::device::has(user_id, device_id, "keys"))
+		return;
+
 	json::stack::object object
 	{
 		out, device_id
