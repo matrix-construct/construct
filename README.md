@@ -179,30 +179,20 @@ this is your origin and mxid `@user:host.tld` hostpart. If your DNS uses
 
 
 3. Create a general listener socket by entering the following command:
-	- If you have existing TLS certificates, replace those parts of the
-	command with paths to your certificate and key, respectively. If you
-	do not, those files will be created and self-signed in the current
-	directory; another target path may be specified.
 
 	```
-	net listen matrix 0.0.0.0 8448 host.tld.crt host.tld.crt.key
+	net listen matrix 0.0.0.0 8448 privkey.pem cert.pem chain.pem
 	```
+	- `matrix` is your name for this listener; you can use any name.
+	- `0.0.0.0` and `8448` is the local address and port to bind.
+	- `privkey.pem` and `cert.pem` and `chain.pem` are paths (ideally
+	absolute paths) to PEM-format files for the listener's TLS.
 
 	> The Matrix Federation Tester should now pass. Browse to
 	https://matrix.org/federationtester/api/report?server_name=host.tld and
 	verify `"AllChecksOK": true`
 
-4. Relax restrictions for self-signed certificates.
-	- We cannot, in good faith, ship this software configured insecurely
-	by default; therefor we leave this step to you.
-
-	```
-	conf set ircd.net.open.allow_self_signed true
-	```
-	> Most federation servers are personal deployments with self-signed
-	certificates. Setting this option will decrease federation fragmentation.
-
-5. To use a web-based client like Riot, configure the "webroot" directory
+4. To use a web-based client like Riot, configure the "webroot" directory
 to point at Riot's `webapp/` directory by entering the following:
 	```
 	conf set ircd.webroot.path /path/to/riot-web/webapp/
