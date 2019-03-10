@@ -4474,6 +4474,37 @@ console_cmd__net__listen(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__net__listen__del(opt &out, const string_view &line)
+{
+	const params token{line, " ",
+	{
+		"name"
+	}};
+
+	const auto event_idx
+	{
+		m::my_room.get("ircd.listen", token.at("name"))
+	};
+
+	const auto event_id
+	{
+		m::event_id(event_idx)
+	};
+
+	const auto redact_id
+	{
+		m::redact(m::my_room, m::me, event_id, "deleted")
+	};
+
+	out << "Removed listener '" << token.at("name") << "' configuration. " << std::endl
+	    << "The configuration is still saved in the content of " << event_id << std::endl
+	    << "You may still need to unload this listener from service." << std::endl
+	    ;
+
+	return true;
+}
+
+bool
 console_cmd__net__listen__load(opt &out, const string_view &line)
 {
 	using prototype = bool (const string_view &);
