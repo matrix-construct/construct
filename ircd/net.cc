@@ -1638,6 +1638,11 @@ ircd::net::acceptor::configure(const json::object &opts)
 			size(buf)
 		};
 	}
+	else
+	{
+		assert(ssl.native_handle());
+		openssl::set_ecdh_auto(*ssl.native_handle(), true);
+	}
 
 	//TODO: XXX
 	ssl.set_password_callback([this]
