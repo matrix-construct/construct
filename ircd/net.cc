@@ -1638,20 +1638,6 @@ ircd::net::acceptor::configure(const json::object &opts)
 			size(buf)
 		};
 	}
-	else
-	{
-		const const_buffer &buf
-		{
-			openssl::rfc3526_dh_params_pem
-		};
-
-		ssl.use_tmp_dh(buf);
-		log::info
-		{
-			log, "%s using pre-supplied rfc3526 DH parameters.",
-			string(logheadbuf, *this)
-		};
-	}
 
 	//TODO: XXX
 	ssl.set_password_callback([this]
