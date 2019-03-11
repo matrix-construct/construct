@@ -3743,6 +3743,60 @@ ircd::m::room::state::prefetch(const state &state,
 	return call(state, type, range);
 }
 
+ircd::m::event::idx
+ircd::m::room::state::next(const event::idx &event_idx)
+{
+	using prototype = event::idx (const event::idx &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::next"
+	};
+
+	return call(event_idx);
+}
+
+ircd::m::event::idx
+ircd::m::room::state::prev(const event::idx &event_idx)
+{
+	using prototype = event::idx (const event::idx &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::prev"
+	};
+
+	return call(event_idx);
+}
+
+bool
+ircd::m::room::state::next(const event::idx &event_idx,
+                           const event::closure_idx_bool &closure)
+{
+	using prototype = bool (const event::idx &, const event::closure_idx_bool &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::next"
+	};
+
+	return call(event_idx, closure);
+}
+
+bool
+ircd::m::room::state::prev(const event::idx &event_idx,
+                           const event::closure_idx_bool &closure)
+{
+	using prototype = bool (const event::idx &, const event::closure_idx_bool &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::prev"
+	};
+
+	return call(event_idx, closure);
+}
+
 ircd::m::room
 ircd::m::create(const id::room &room_id,
                 const id::user &creator,

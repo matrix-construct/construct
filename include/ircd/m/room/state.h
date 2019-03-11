@@ -98,6 +98,11 @@ struct ircd::m::room::state
 	state(const state &) = delete;
 	state &operator=(const state &) = delete;
 
+	static bool prev(const event::idx &, const event::closure_idx_bool &);
+	static bool next(const event::idx &, const event::closure_idx_bool &);
+	static event::idx prev(const event::idx &);
+	static event::idx next(const event::idx &);
+
 	static size_t prefetch(const state &, const string_view &, const event::idx_range &);
 	static size_t clear_history(const state &);
 	static size_t rebuild_history(const state &);

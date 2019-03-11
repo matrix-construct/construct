@@ -826,6 +826,76 @@ ircd::m::room::state::prefetch(const state &state,
 	return ret;
 }
 
+ircd::m::event::idx
+IRCD_MODULE_EXPORT
+ircd::m::room::state::prev(const event::idx &event_idx)
+{
+	event::idx ret{0};
+	prev(event_idx, [&ret]
+	(const event::idx &event_idx)
+	{
+		if(event_idx > ret)
+			ret = event_idx;
+
+		return true;
+	});
+
+	return ret;
+}
+
+ircd::m::event::idx
+IRCD_MODULE_EXPORT
+ircd::m::room::state::next(const event::idx &event_idx)
+{
+	event::idx ret{0};
+	next(event_idx, [&ret]
+	(const event::idx &event_idx)
+	{
+		if(event_idx > ret)
+			ret = event_idx;
+
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::state::next(const event::idx &event_idx,
+                           const event::closure_idx_bool &closure)
+{
+	const m::event::refs refs
+	{
+		event_idx
+	};
+
+	return refs.for_each(dbs::ref::STATE, [&closure]
+	(const event::idx &event_idx, const dbs::ref &ref)
+	{
+		assert(ref == dbs::ref::STATE);
+		return closure(event_idx);
+	});
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::state::prev(const event::idx &event_idx,
+                           const event::closure_idx_bool &closure)
+{
+	const m::event::refs refs
+	{
+		event_idx
+	};
+
+	return refs.for_each(dbs::ref::PREV_STATE, [&closure]
+	(const event::idx &event_idx, const dbs::ref &ref)
+	{
+		assert(ref == dbs::ref::PREV_STATE);
+		return closure(event_idx);
+	});
+}
+
 extern "C" size_t
 dagree_histogram(const m::room &room,
                  std::vector<size_t> &vec)
