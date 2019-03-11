@@ -150,7 +150,7 @@ ircd::net::dns::resolver::sendq_worker()
 		dock.wait([this]
 		{
 			assert(sendq.empty() || !tags.empty());
-			return !sendq.empty();
+			return !sendq.empty() && !server.empty();
 		});
 
 		if(tags.size() > size_t(send_burst))
@@ -836,9 +836,23 @@ const
 
 void
 ircd::net::dns::resolver::set_servers()
+try
 {
 	const std::string &list(resolver::servers);
 	set_servers(list);
+	dock.notify_all();
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		net::log, "Erroneous configuration; falling back to defaults :%s",
+		e.what()
+	};
+
+	resolver::servers.fault();
+	if(!ircd::net::dns::resolver)
+		set_servers();
 }
 
 void
@@ -847,20 +861,47 @@ ircd::net::dns::resolver::set_servers(const string_view &list)
 	server.clear();
 	server_next = 0;
 	tokens(list, ';', [this]
-	(const hostport &hp)
+	(const string_view &hp)
 	{
-		const auto &port
-		{
-			net::port(hp) != canon_port? net::port(hp) : uint16_t(53)
-		};
-
-		const ipport ipp
-		{
-			host(hp), port
-		};
-
-		add_server(ipp);
+		add_server(hp);
 	});
+
+	if(!empty(list) && server.empty())
+		throw error
+		{
+			"Failed to set any valid DNS servers from a non-empty list."
+		};
+}
+
+void
+ircd::net::dns::resolver::add_server(const string_view &str)
+try
+{
+	const hostport hp
+	{
+		str
+	};
+
+	const auto &port
+	{
+		net::port(hp) != canon_port? net::port(hp) : uint16_t(53)
+	};
+
+	const ipport ipp
+	{
+		host(hp), port
+	};
+
+	add_server(ipp);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		net::log, "Failed to add server '%s' :%s",
+		str,
+		e.what()
+	};
 }
 
 void

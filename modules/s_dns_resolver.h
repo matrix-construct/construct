@@ -30,6 +30,7 @@ struct ircd::net::dns::resolver
 	unique_buffer<mutable_buffer> reply;         // Buffer for recv
 
 	void add_server(const ipport &);
+	void add_server(const string_view &);
 	void set_servers(const string_view &list);
 	void set_servers();
 
