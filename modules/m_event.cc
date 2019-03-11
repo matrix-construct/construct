@@ -450,6 +450,84 @@ ircd::m::pretty_oneline(std::ostream &s,
 	return s;
 }
 
+void
+IRCD_MODULE_EXPORT
+ircd::m::append(json::stack::object &object,
+                const event &event,
+                const event_append_opts &opts)
+{
+	const bool has_event_idx
+	{
+		opts.event_idx && *opts.event_idx
+	};
+
+	const bool has_client_txnid
+	{
+		opts.client_txnid && *opts.client_txnid
+	};
+
+	const bool has_user
+	{
+		opts.user_id && opts.user_room
+	};
+
+	const bool sender_is_user
+	{
+		has_user && json::get<"sender"_>(event) == *opts.user_id
+	};
+
+	const auto txnid_idx
+	{
+		!has_client_txnid && sender_is_user?
+			opts.user_room->get(std::nothrow, "ircd.client.txnid", at<"event_id"_>(event)):
+			0UL
+	};
+
+	if(!has_client_txnid && !txnid_idx && sender_is_user)
+		log::dwarning
+		{
+			log, "Could not find transaction_id for %s from %s in %s",
+			json::get<"event_id"_>(event),
+			json::get<"sender"_>(event),
+			json::get<"room_id"_>(event)
+		};
+
+	object.append(event);
+
+	if(!has_event_idx && !txnid_idx)
+		return;
+
+	json::stack::object unsigned_
+	{
+		object, "unsigned"
+	};
+
+	if(has_client_txnid)
+		json::stack::member
+		{
+			unsigned_, "transaction_id", *opts.client_txnid
+		};
+
+	if(has_event_idx)
+		json::stack::member
+		{
+			unsigned_, "age", json::value
+			{
+				long(vm::current_sequence - *opts.event_idx)
+			}
+		};
+
+	if(txnid_idx)
+		m::get(std::nothrow, txnid_idx, "content", [&unsigned_]
+		(const json::object &content)
+		{
+			json::stack::member
+			{
+				unsigned_, "transaction_id", unquote(content.get("transaction_id"))
+			};
+		});
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::event::auth::chain::for_each(const auth::chain &c,

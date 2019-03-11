@@ -74,4 +74,5 @@ namespace ircd::m
 #include "event/cached.h"
 #include "event/prefetch.h"
 #include "event/conforms.h"
+#include "event/append.h"
 #include "event/pretty.h"

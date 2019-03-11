@@ -145,6 +145,39 @@ ircd::m::pretty_oneline(std::ostream &s,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// event/append.h
+//
+
+void
+ircd::m::append(json::stack::array &array,
+                const event &event_,
+                const event_append_opts &opts)
+{
+	json::stack::object object
+	{
+		array
+	};
+
+	append(object, event_, opts);
+}
+
+void
+ircd::m::append(json::stack::object &object,
+                const event &event_,
+                const event_append_opts &opts)
+{
+	using prototype = void (json::stack::object &, const event &, const event_append_opts &);
+
+	static mods::import<prototype> call
+	{
+		"m_event", "ircd::m::append"
+	};
+
+	call(object, event_, opts);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // event/conforms.h
 //
 
