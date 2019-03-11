@@ -355,6 +355,9 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 	if(opts.event_refs.test(uint(ref::AUTH)))
 		_index_event_refs_auth(txn, event, opts);
 
+	if(opts.event_refs.test(uint(ref::STATE)))
+		_index_event_refs_state(txn, event, opts);
+
 	if(opts.event_refs.test(uint(ref::M_RECEIPT__M_READ)))
 		_index_event_refs_m_receipt_m_read(txn, event, opts);
 
@@ -445,6 +448,53 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 			}
 		};
 	}
+}
+
+void
+ircd::m::dbs::_index_event_refs_state(db::txn &txn,
+                                      const event &event,
+                                      const write_opts &opts)
+{
+	assert(opts.event_refs.test(uint(ref::STATE)));
+
+	if(!json::get<"room_id"_>(event))
+		return;
+
+	if(!json::get<"state_key"_>(event))
+		return;
+
+	const m::room room
+	{
+		at<"room_id"_>(event) //TODO: ABA ABA ABA ABA
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	const event::idx &prev_state_idx
+	{
+		state.get(std::nothrow, at<"type"_>(event), at<"state_key"_>(event)) // query
+	};
+
+	if(!prev_state_idx)
+		return;
+
+	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
+	assert(opts.event_idx != 0 && prev_state_idx != 0);
+	const string_view &key
+	{
+		event_refs_key(buf, prev_state_idx, ref::STATE, opts.event_idx)
+	};
+
+	db::txn::append
+	{
+		txn, dbs::event_refs,
+		{
+			opts.op, key, string_view{}
+		}
+	};
 }
 
 void
@@ -1260,6 +1310,9 @@ ircd::m::dbs::reflect(const ref &type)
 
 		case ref::AUTH:
 			return "AUTH";
+
+		case ref::STATE:
+			return "STATE";
 
 		case ref::M_RECEIPT__M_READ:
 			return "M_RECEIPT__M_READ";

@@ -147,6 +147,7 @@ enum class ircd::m::dbs::ref
 	// DAG
 	PREV                = 0x00,
 	AUTH                = 0x01,
+	STATE               = 0x02,
 
 	// m.receipt
 	M_RECEIPT__M_READ   = 0x10,
@@ -305,6 +306,7 @@ namespace ircd::m::dbs
 	void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &);
+	void _index_event_refs_state(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_auth(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_prev(db::txn &, const event &, const write_opts &);
 	void _index_event_refs(db::txn &, const event &, const write_opts &);
