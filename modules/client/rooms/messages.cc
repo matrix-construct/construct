@@ -186,45 +186,11 @@ _append(json::stack::array &chunk,
         const m::event::idx &event_idx,
         const m::user::room &user_room)
 {
-	json::stack::object object
-	{
-		chunk
-	};
-
-	object.append(event);
-
-	json::stack::object unsigned_
-	{
-		object, "unsigned"
-	};
-
-	json::stack::member
-	{
-		unsigned_, "age", json::value
-		{
-			long(m::vm::current_sequence - event_idx)
-		}
-	};
-
-	if(at<"sender"_>(event) != user_room.user.user_id)
-		return;
-
-	const auto txnid_idx
-	{
-		user_room.get(std::nothrow, "ircd.client.txnid", at<"event_id"_>(event))
-	};
-
-	if(!txnid_idx)
-		return;
-
-	m::get(std::nothrow, txnid_idx, "content", [&unsigned_]
-	(const json::object &content)
-	{
-		json::stack::member
-		{
-			unsigned_, "transaction_id", unquote(content.get("transaction_id"))
-		};
-	});
+	m::event_append_opts opts;
+	opts.event_idx = &event_idx;
+	opts.user_id = &user_room.user.user_id;
+	opts.user_room = &user_room;
+	m::append(chunk, event, opts);
 }
 
 // Client-Server 6.3.6 query parameters

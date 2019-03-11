@@ -193,25 +193,9 @@ get__initialsync_local(client &client,
 		if(!event.valid)
 			return true;
 
-		json::stack::object room_event
-		{
-			state
-		};
-
-		room_event.append(event);
-		json::stack::object unsigned_
-		{
-			room_event, "unsigned"
-		};
-
-		json::stack::member
-		{
-			unsigned_, "age", json::value
-			{
-				long(m::vm::current_sequence - event.event_idx)
-			}
-		};
-
+		m::event_append_opts opts;
+		opts.event_idx = &event.event_idx;
+		m::append(state, event, opts);
 		return true;
 	}});
 	state.~array();
@@ -247,24 +231,12 @@ get__initialsync_local(client &client,
 		if(!visible(event_id, user.user_id))
 			continue;
 
-		json::stack::object room_event
-		{
-			chunk
-		};
+		const m::event &event(*it);
+		const auto &event_idx(it.event_idx());
 
-		room_event.append(*it);
-		json::stack::object unsigned_
-		{
-			room_event, "unsigned"
-		};
-
-		json::stack::member
-		{
-			unsigned_, "age", json::value
-			{
-				long(m::vm::current_sequence - it.event_idx())
-			}
-		};
+		m::event_append_opts opts;
+		opts.event_idx = &event_idx;
+		m::append(chunk, event, opts);
 	}
 }
 

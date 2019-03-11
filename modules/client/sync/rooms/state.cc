@@ -202,23 +202,9 @@ ircd::m::sync::room_state_append(data &data,
                                  const m::event &event,
                                  const m::event::idx &event_idx)
 {
-	json::stack::object object
-	{
-		events
-	};
-
-	object.append(event);
-
-	json::stack::object unsigned_
-	{
-		object, "unsigned"
-	};
-
-	json::stack::member
-	{
-		unsigned_, "age", json::value
-		{
-			long(vm::current_sequence - event_idx)
-		}
-	};
+	m::event_append_opts opts;
+	opts.event_idx = &event_idx;
+	opts.client_txnid = &data.client_txnid;
+	opts.user_id = &data.user.user_id;
+	opts.user_room = &data.user_room;
 }
