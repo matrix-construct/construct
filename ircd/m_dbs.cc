@@ -355,7 +355,8 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 	if(opts.event_refs.test(uint(ref::AUTH)))
 		_index_event_refs_auth(txn, event, opts);
 
-	if(opts.event_refs.test(uint(ref::STATE)))
+	if(opts.event_refs.test(uint(ref::STATE)) ||
+	   opts.event_refs.test(uint(ref::PREV_STATE)))
 		_index_event_refs_state(txn, event, opts);
 
 	if(opts.event_refs.test(uint(ref::M_RECEIPT__M_READ)))
@@ -455,7 +456,8 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
                                       const event &event,
                                       const write_opts &opts)
 {
-	assert(opts.event_refs.test(uint(ref::STATE)));
+	assert(opts.event_refs.test(uint(ref::STATE)) ||
+	       opts.event_refs.test(uint(ref::PREV_STATE)));
 
 	if(!json::get<"room_id"_>(event))
 		return;
@@ -483,18 +485,38 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
 
 	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 	assert(opts.event_idx != 0 && prev_state_idx != 0);
-	const string_view &key
-	{
-		event_refs_key(buf, prev_state_idx, ref::STATE, opts.event_idx)
-	};
 
-	db::txn::append
+	if(opts.event_refs.test(uint(ref::STATE)))
 	{
-		txn, dbs::event_refs,
+		const string_view &key
 		{
-			opts.op, key, string_view{}
-		}
-	};
+			event_refs_key(buf, prev_state_idx, ref::STATE, opts.event_idx)
+		};
+
+		db::txn::append
+		{
+			txn, dbs::event_refs,
+			{
+				opts.op, key, string_view{}
+			}
+		};
+	}
+
+	if(opts.event_refs.test(uint(ref::PREV_STATE)))
+	{
+		const string_view &key
+		{
+			event_refs_key(buf, opts.event_idx, ref::PREV_STATE, prev_state_idx)
+		};
+
+		db::txn::append
+		{
+			txn, dbs::event_refs,
+			{
+				opts.op, key, string_view{}
+			}
+		};
+	}
 }
 
 void
@@ -1313,6 +1335,9 @@ ircd::m::dbs::reflect(const ref &type)
 
 		case ref::STATE:
 			return "STATE";
+
+		case ref::PREV_STATE:
+			return "PREV_STATE";
 
 		case ref::M_RECEIPT__M_READ:
 			return "M_RECEIPT__M_READ";

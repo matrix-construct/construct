@@ -148,6 +148,7 @@ enum class ircd::m::dbs::ref
 	PREV                = 0x00,
 	AUTH                = 0x01,
 	STATE               = 0x02,
+	PREV_STATE          = 0x04,
 
 	// m.receipt
 	M_RECEIPT__M_READ   = 0x10,
