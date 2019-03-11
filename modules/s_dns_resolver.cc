@@ -181,7 +181,7 @@ try
 		tags.at(next)
 	};
 
-	send_query(tag);
+	submit(tag);
 }
 catch(const std::out_of_range &e)
 {
@@ -422,7 +422,19 @@ ircd::net::dns::resolver::queue_query(tag &tag)
 void
 ircd::net::dns::resolver::submit(tag &tag)
 {
-	assert(ns.is_open());
+	if(!ns.is_open() || server.empty())
+	{
+		log::warning
+		{
+			net::log, "dns tag:%u submit queued because no nameserver is available.",
+			tag.id
+		};
+
+		queue_query(tag);
+		return;
+	}
+
+	assert(!server.empty());
 	const auto rate(milliseconds(send_rate) / server.size());
 	const auto elapsed(now<steady_point>() - send_last);
 	if(elapsed >= rate || tags.size() < size_t(send_burst))
@@ -469,6 +481,7 @@ void
 ircd::net::dns::resolver::send_query(const ip::udp::endpoint &ep,
                                      tag &tag)
 {
+	assert(ns.is_open());
 	assert(ns.non_blocking());
 	assert(!empty(tag.question));
 	const const_buffer &buf{tag.question};
