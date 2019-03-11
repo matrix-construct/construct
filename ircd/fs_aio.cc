@@ -488,7 +488,10 @@ catch(const ctx::terminated &)
 void
 ircd::fs::aio::system::cancel(request &request)
 {
-	const auto &cb
+	assert(request.retval == std::numeric_limits<ssize_t>::min());
+	assert(request.aio_data == uintptr_t(&request));
+
+	iocb *const cb
 	{
 		static_cast<iocb *>(&request)
 	};
@@ -793,7 +796,8 @@ noexcept try
 
 	// Check that everything lines up.
 	assert(iocb == static_cast<struct ::iocb *>(&request));
-	assert(reinterpret_cast<aio::request *>(iocb->aio_data) == &request);
+	assert(request.aio_data == iocb->aio_data);
+	assert(request.aio_data == uintptr_t(&request));
 
 	// Assert that we understand the return-value semantics of this interface.
 	assert(event.res2 >= 0);
