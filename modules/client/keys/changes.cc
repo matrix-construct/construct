@@ -10,6 +10,10 @@
 
 using namespace ircd;
 
+static resource::response
+get__keys_changes(client &client,
+                  const resource::request &request);
+
 mapi::header
 IRCD_MODULE
 {
@@ -25,13 +29,30 @@ changes_resource
 	}
 };
 
-ircd::resource::redirect::permanent
+ircd::resource
 changes_resource__unstable
 {
 	"/_matrix/client/unstable/keys/changes",
-	"/_matrix/client/r0/keys/changes",
 	{
 		"(14.11.5.2.4) Keys changes",
+	}
+};
+
+resource::method
+method_get
+{
+	changes_resource, "GET", get__keys_changes,
+	{
+		method_get.REQUIRES_AUTH
+	}
+};
+
+resource::method
+method_get__unstable
+{
+	changes_resource__unstable, "GET", get__keys_changes,
+	{
+		method_get.REQUIRES_AUTH
 	}
 };
 
@@ -44,12 +65,3 @@ get__keys_changes(client &client,
 		client, http::OK
 	};
 }
-
-resource::method
-method_get
-{
-	changes_resource, "GET", get__keys_changes,
-	{
-		method_get.REQUIRES_AUTH
-	}
-};

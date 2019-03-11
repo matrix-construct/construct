@@ -67,11 +67,10 @@ claim_resource
 	}
 };
 
-ircd::resource::redirect::permanent
+ircd::resource
 claim_resource__unstable
 {
 	"/_matrix/client/unstable/keys/claim",
-	"/_matrix/client/r0/keys/claim",
 	{
 		"(14.11.5.2.2) Keys claim",
 	}
@@ -81,6 +80,15 @@ resource::method
 method_post
 {
 	claim_resource, "POST", post__keys_claim,
+	{
+		method_post.REQUIRES_AUTH
+	}
+};
+
+resource::method
+method_post__unstable
+{
+	claim_resource__unstable, "POST", post__keys_claim,
 	{
 		method_post.REQUIRES_AUTH
 	}

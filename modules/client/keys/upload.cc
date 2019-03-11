@@ -10,6 +10,16 @@
 
 using namespace ircd;
 
+static void
+upload_device_keys(client &,
+                   const resource::request &,
+                   const m::device::id &,
+                   const m::device_keys &);
+
+static resource::response
+post__keys_upload(client &client,
+                  const resource::request &request);
+
 mapi::header
 IRCD_MODULE
 {
@@ -26,22 +36,33 @@ upload_resource
 	}
 };
 
-ircd::resource::redirect::permanent
+ircd::resource
 upload_resource__unstable
 {
 	"/_matrix/client/unstable/keys/upload",
-	"/_matrix/client/r0/keys/upload",
 	{
 		"(14.11.5.2.1) Keys Upload",
 		resource::DIRECTORY
 	}
 };
 
-static void
-upload_device_keys(client &,
-                   const resource::request &,
-                   const m::device::id &,
-                   const m::device_keys &);
+resource::method
+method_post
+{
+	upload_resource, "POST", post__keys_upload,
+	{
+		method_post.REQUIRES_AUTH
+	}
+};
+
+resource::method
+method_post__unstable
+{
+	upload_resource__unstable, "POST", post__keys_upload,
+	{
+		method_post.REQUIRES_AUTH
+	}
+};
 
 resource::response
 post__keys_upload(client &client,
@@ -157,12 +178,3 @@ upload_device_keys(client &client,
 	json::get<"keys"_>(data) = request["device_keys"];
 	m::device::set(request.user_id, data);
 }
-
-resource::method
-method_post
-{
-	upload_resource, "POST", post__keys_upload,
-	{
-		method_post.REQUIRES_AUTH
-	}
-};

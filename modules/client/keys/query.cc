@@ -67,13 +67,30 @@ query_resource
 	}
 };
 
-ircd::resource::redirect::permanent
+ircd::resource
 query_resource__unstable
 {
 	"/_matrix/client/unstable/keys/query",
-	"/_matrix/client/r0/keys/query",
 	{
 		"(14.11.5.2.2) Keys query",
+	}
+};
+
+resource::method
+method_post
+{
+	query_resource, "POST", post__keys_query,
+	{
+		method_post.REQUIRES_AUTH
+	}
+};
+
+resource::method
+method_post__unstable
+{
+	query_resource__unstable, "POST", post__keys_query,
+	{
+		method_post.REQUIRES_AUTH
 	}
 };
 
@@ -96,15 +113,6 @@ query_timeout_max
 {
 	{ "name",     "ircd.client.keys.query.timeout.max" },
 	{ "default",  20000L                               },
-};
-
-resource::method
-method_post
-{
-	query_resource, "POST", post__keys_query,
-	{
-		method_post.REQUIRES_AUTH
-	}
 };
 
 resource::response

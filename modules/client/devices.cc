@@ -10,6 +10,30 @@
 
 using namespace ircd;
 
+static void
+_get_device(json::stack::object &obj,
+            const m::user &user,
+            const string_view &device_id);
+
+static resource::response
+get__devices_all(client &client,
+                 const resource::request &request,
+                 const m::room user_room);
+
+static resource::response
+get__devices(client &client,
+             const resource::request &request);
+
+static resource::response
+put__devices(client &client,
+             const resource::request &request);
+
+static resource::response
+delete__devices(client &client,
+                const resource::request &request);
+
+extern const std::string flows;
+
 mapi::header
 IRCD_MODULE
 {
@@ -26,90 +50,69 @@ devices_resource
 	}
 };
 
-ircd::resource::redirect::permanent
+ircd::resource
 devices_resource__unstable
 {
 	"/_matrix/client/unstable/devices/",
-	"/_matrix/client/r0/devices/",
 	{
 		"(11.9) Device Management",
 		resource::DIRECTORY,
 	}
 };
 
-static void
-_get_device(json::stack::object &obj,
-            const m::user &user,
-            const string_view &device_id)
+resource::method
+method_get
 {
-	json::stack::member
+	devices_resource, "GET", get__devices,
 	{
-		obj, "device_id", device_id
-	};
+		method_get.REQUIRES_AUTH
+	}
+};
 
-	m::device::get(std::nothrow, user, device_id, "display_name", [&obj]
-	(const string_view &value)
-	{
-		json::stack::member
-		{
-			obj, "display_name", unquote(value)
-		};
-	});
-
-	m::device::get(std::nothrow, user, device_id, "last_seen_ip", [&obj]
-	(const string_view &value)
-	{
-		json::stack::member
-		{
-			obj, "last_seen_ip", unquote(value)
-		};
-	});
-
-	m::device::get(std::nothrow, user, device_id, "last_seen_ts", [&obj]
-	(const string_view &value)
-	{
-		json::stack::member
-		{
-			obj, "last_seen_ts", value
-		};
-	});
-}
-
-static resource::response
-get__devices_all(client &client,
-                 const resource::request &request,
-                 const m::room user_room)
+resource::method
+method_get__unstable
 {
-	resource::response::chunked response
+	devices_resource__unstable, "GET", get__devices,
 	{
-		client, http::OK
-	};
+		method_get.REQUIRES_AUTH
+	}
+};
 
-	json::stack out
+resource::method
+method_delete
+{
+	devices_resource, "DELETE", delete__devices,
 	{
-		response.buf, response.flusher()
-	};
+		method_delete.REQUIRES_AUTH
+	}
+};
 
-	json::stack::object top
+resource::method
+method_delete__unstable
+{
+	devices_resource__unstable, "DELETE", delete__devices,
 	{
-		out
-	};
+		method_delete.REQUIRES_AUTH
+	}
+};
 
-	json::stack::array devices
+resource::method
+method_put
+{
+	devices_resource, "PUT", put__devices,
 	{
-		top, "devices"
-	};
+		method_put.REQUIRES_AUTH
+	}
+};
 
-	m::device::for_each(request.user_id, [&request, &devices]
-	(const string_view &device_id)
+resource::method
+method_put__unstable
+{
+	devices_resource__unstable, "PUT", put__devices,
 	{
-		json::stack::object obj{devices};
-		_get_device(obj, request.user_id, device_id);
-		return true;
-	});
-
-	return {};
-}
+		method_put.REQUIRES_AUTH
+	}
+};
 
 resource::response
 get__devices(client &client,
@@ -153,15 +156,6 @@ get__devices(client &client,
 	return {};
 }
 
-resource::method
-method_get
-{
-	devices_resource, "GET", get__devices,
-	{
-		method_get.REQUIRES_AUTH
-	}
-};
-
 resource::response
 put__devices(client &client,
              const resource::request &request)
@@ -187,18 +181,6 @@ put__devices(client &client,
 		client, http::OK
 	};
 }
-
-resource::method
-method_put
-{
-	devices_resource, "PUT", put__devices,
-	{
-		method_put.REQUIRES_AUTH
-	}
-};
-
-extern const std::string
-flows;
 
 resource::response
 delete__devices(client &client,
@@ -243,14 +225,79 @@ delete__devices(client &client,
 	};
 }
 
-resource::method
-method_delete
+resource::response
+get__devices_all(client &client,
+                 const resource::request &request,
+                 const m::room user_room)
 {
-	devices_resource, "DELETE", delete__devices,
+	resource::response::chunked response
 	{
-		method_delete.REQUIRES_AUTH
-	}
-};
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::array devices
+	{
+		top, "devices"
+	};
+
+	m::device::for_each(request.user_id, [&request, &devices]
+	(const string_view &device_id)
+	{
+		json::stack::object obj{devices};
+		_get_device(obj, request.user_id, device_id);
+		return true;
+	});
+
+	return {};
+}
+
+void
+_get_device(json::stack::object &obj,
+            const m::user &user,
+            const string_view &device_id)
+{
+	json::stack::member
+	{
+		obj, "device_id", device_id
+	};
+
+	m::device::get(std::nothrow, user, device_id, "display_name", [&obj]
+	(const string_view &value)
+	{
+		json::stack::member
+		{
+			obj, "display_name", unquote(value)
+		};
+	});
+
+	m::device::get(std::nothrow, user, device_id, "last_seen_ip", [&obj]
+	(const string_view &value)
+	{
+		json::stack::member
+		{
+			obj, "last_seen_ip", unquote(value)
+		};
+	});
+
+	m::device::get(std::nothrow, user, device_id, "last_seen_ts", [&obj]
+	(const string_view &value)
+	{
+		json::stack::member
+		{
+			obj, "last_seen_ts", value
+		};
+	});
+}
 
 const std::string
 flows

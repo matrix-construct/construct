@@ -10,6 +10,17 @@
 
 using namespace ircd;
 
+static void
+send_to_device(const string_view &txnid,
+               const m::user::id &sender,
+               const m::user::id &target,
+               const string_view &type,
+               const json::object &message);
+
+static resource::response
+put__send_to_device(client &client,
+                    const resource::request &request);
+
 mapi::header
 IRCD_MODULE
 {
@@ -26,33 +37,29 @@ send_to_device_resource
 	}
 };
 
-ircd::resource::redirect::permanent
+ircd::resource
 send_to_device_resource__unstable
 {
 	"/_matrix/client/unstable/sendToDevice/",
-	"/_matrix/client/r0/sendToDevice/",
 	{
 		"(14.9.3) Protocol definitions",
 		resource::DIRECTORY,
 	}
 };
 
-static void
-send_to_device(const string_view &txnid,
-               const m::user::id &sender,
-               const m::user::id &target,
-               const string_view &type,
-               const json::object &message);
-
-static resource::response
-put__send_to_device(client &client,
-                    const resource::request &request);
-
-
 resource::method
 method_put
 {
 	send_to_device_resource, "PUT", put__send_to_device,
+	{
+		method_put.REQUIRES_AUTH
+	}
+};
+
+resource::method
+method_put__unstable
+{
+	send_to_device_resource__unstable, "PUT", put__send_to_device,
 	{
 		method_put.REQUIRES_AUTH
 	}

@@ -10,6 +10,12 @@
 
 using namespace ircd;
 
+static resource::response
+post__delete_devices(client &client,
+                     const resource::request &request);
+
+extern const std::string flows;
+
 mapi::header
 IRCD_MODULE
 {
@@ -25,19 +31,14 @@ delete_devices_resource
 	}
 };
 
-ircd::resource::redirect::permanent
+ircd::resource
 delete_devices_resource__unstable
 {
 	"/_matrix/client/unstable/delete_devices/",
-	"/_matrix/client/r0/delete_devices/",
 	{
 		"14.10.1.5 :Device Management (redirect)"
 	}
 };
-
-static resource::response
-post__delete_devices(client &client,
-                     const resource::request &request);
 
 resource::method
 method_post
@@ -48,8 +49,14 @@ method_post
 	}
 };
 
-extern const std::string
-flows;
+resource::method
+method_post__unstable
+{
+	delete_devices_resource__unstable, "POST", post__delete_devices,
+	{
+		method_post.REQUIRES_AUTH
+	}
+};
 
 resource::response
 post__delete_devices(client &client,
