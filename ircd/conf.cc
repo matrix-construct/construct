@@ -221,24 +221,19 @@ noexcept
 bool
 ircd::conf::item<void>::set(const string_view &val)
 {
-	const bool ret
+	std::string existing(get()); try
 	{
-		on_set(val)
-	};
-
-	if(set_cb) try
-	{
-		set_cb();
+		if(on_set(val))
+			if(set_cb)
+				set_cb();
 	}
-	catch(const std::exception &e)
+	catch(...)
 	{
-		log::error
-		{
-			"conf item[%s] set callback :%s", e.what()
-		};
+		on_set(existing);
+		throw;
 	}
 
-	return ret;
+	return true;
 }
 
 std::string
@@ -262,7 +257,7 @@ const
 bool
 ircd::conf::item<void>::on_set(const string_view &)
 {
-	return false;
+	return true;
 }
 
 ircd::string_view
