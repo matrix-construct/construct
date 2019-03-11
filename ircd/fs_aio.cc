@@ -345,6 +345,13 @@ ircd::fs::aio::request::operator()()
 	return size_t(retval);
 }
 
+bool
+ircd::fs::aio::request::completed()
+const
+{
+	return retval != std::numeric_limits<decltype(retval)>::min();
+}
+
 ircd::fs::const_iovec_view
 ircd::fs::aio::request::iovec()
 const
@@ -476,12 +483,16 @@ catch(const ctx::interrupted &e)
 	// When the ctx is interrupted we're obligated to cancel the request.
 	// The handler callstack is invoked directly from here by cancel() for
 	// what it's worth but we rethrow the interrupt anyway.
-	cancel(request);
+	if(!request.completed())
+		request.cancel();
+
 	throw;
 }
 catch(const ctx::terminated &)
 {
-	cancel(request);
+	if(!request.completed())
+		request.cancel();
+
 	throw;
 }
 

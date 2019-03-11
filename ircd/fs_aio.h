@@ -96,6 +96,7 @@ struct ircd::fs::aio::request
 
   public:
 	const_iovec_view iovec() const;
+	bool completed() const;
 
 	size_t operator()();
 	void cancel();
