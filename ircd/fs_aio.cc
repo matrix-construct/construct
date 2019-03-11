@@ -800,29 +800,31 @@ noexcept try
 
 	// We referenced our request (which extends the same iocb anyway)
 	// for the kernel to carry through as an opaque in `event.data`.
-	auto &request
+	auto *const request
 	{
-		*reinterpret_cast<aio::request *>(event.data)
+		reinterpret_cast<aio::request *>(event.data)
 	};
 
 	// Check that everything lines up.
-	assert(iocb == static_cast<struct ::iocb *>(&request));
-	assert(request.aio_data == iocb->aio_data);
-	assert(request.aio_data == uintptr_t(&request));
+	assert(request && iocb);
+	assert(iocb == static_cast<struct ::iocb *>(request));
+	assert(request->aio_data == event.data);
+	assert(request->aio_data == iocb->aio_data);
+	assert(request->aio_data == uintptr_t(request));
 
 	// Assert that we understand the return-value semantics of this interface.
 	assert(event.res2 >= 0);
 	assert(event.res == -1 || event.res2 == 0);
 
 	// Set result indicators
-	request.retval = std::max(event.res, -1LL);
-	request.errcode = event.res >= -1? event.res2 : std::abs(event.res);
+	request->retval = std::max(event.res, -1LL);
+	request->errcode = event.res >= -1? event.res2 : std::abs(event.res);
 
 	// Notify the waiting context. Note that we are on the main async stack
 	// but it is safe to notify from here.
-	assert(request.waiter);
+	assert(request->waiter);
 	assert(ctx::current == nullptr);
-	ctx::notify(*request.waiter);
+	ctx::notify(*request->waiter);
 	stats.events++;
 }
 catch(const std::exception &e)
