@@ -391,20 +391,18 @@ try
 		};
 	}
 
-	client.request = resource::request
-	{
-		head, content
-	};
-
 	// We take the extra step here to clear the assignment to client.request
 	// when this request stack has finished for two reasons:
 	// - It allows other ctxs to peep at the client::list to see what this
 	//   client/ctx/request is currently working on with some more safety.
 	// - It prevents an easy source for stale refs wrt the longpoll thing.
-	const unwind clear_request{[&client]
+	const scope_restore client_request
 	{
-		client.request = {};
-	}};
+		client.request, resource::request
+		{
+			head, content
+		}
+	};
 
 	const auto pathparm
 	{

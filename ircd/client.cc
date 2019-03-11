@@ -770,6 +770,17 @@ try
 		content_consumed
 	};
 
+	// Sets values in this->client::request based on everything we know from
+	// the head for this scope. This gets updated again in the resource::
+	// unit for their scope with more data including the content.
+	const scope_restore request
+	{
+		this->request, resource::request
+		{
+			head, string_view{} // no content considered yet
+		}
+	};
+
 	bool ret
 	{
 		resource_request(head)
