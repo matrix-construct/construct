@@ -86,6 +86,7 @@ struct ircd::conf::item<void>
 	void call_init();
 
   public:
+	virtual size_t size() const = 0;
 	string_view get(const mutable_buffer &) const;
 	bool set(const string_view &);
 
@@ -132,6 +133,11 @@ struct ircd::conf::lex_castable
 		return true;
 	}
 
+	size_t size() const override
+	{
+		return LEX_CAST_BUFSIZE;
+	}
+
 	lex_castable(const json::members &members,
 	             conf::set_cb set_cb = {})
 	:conf::item<>
@@ -164,6 +170,7 @@ struct ircd::conf::item<std::string>
 
 	string_view on_get(const mutable_buffer &out) const override;
 	bool on_set(const string_view &s) override;
+	size_t size() const override;
 
 	item(const json::members &members, conf::set_cb set_cb = {});
 };
@@ -175,6 +182,7 @@ struct ircd::conf::item<bool>
 {
 	string_view on_get(const mutable_buffer &out) const override;
 	bool on_set(const string_view &s) override;
+	size_t size() const override;
 
 	item(const json::members &members, conf::set_cb set_cb = {});
 };

@@ -176,12 +176,12 @@ ircd::conf::item<void>::item(const json::members &opts,
 	std::move(set_cb)
 }
 {
-	if(size(name) > NAME_MAX_LEN)
+	if(name.size() > NAME_MAX_LEN)
 		throw error
 		{
 			"Conf item '%s' name length:%zu exceeds max:%zu",
 			name,
-			size(name),
+			name.size(),
 			NAME_MAX_LEN
 		};
 
@@ -334,6 +334,13 @@ ircd::conf::item<std::string>::item(const json::members &members,
 	call_init();
 }
 
+size_t
+ircd::conf::item<std::string>::size()
+const
+{
+	return _value.size();
+}
+
 bool
 ircd::conf::item<std::string>::on_set(const string_view &s)
 {
@@ -345,7 +352,7 @@ ircd::string_view
 ircd::conf::item<std::string>::on_get(const mutable_buffer &out)
 const
 {
-	return { data(out), _value.copy(data(out), size(out)) };
+	return { data(out), _value.copy(data(out), buffer::size(out)) };
 }
 
 //
@@ -364,6 +371,15 @@ ircd::conf::item<bool>::item(const json::members &members,
 }
 {
 	call_init();
+}
+
+size_t
+ircd::conf::item<bool>::size()
+const
+{
+	return _value?
+		ircd::size("true"_sv):
+		ircd::size("false"_sv);
 }
 
 bool
@@ -388,6 +404,6 @@ ircd::conf::item<bool>::on_get(const mutable_buffer &out)
 const
 {
 	return _value?
-		strlcpy(out, "true"_sv):
-		strlcpy(out, "false"_sv);
+		string_view { data(out), copy(out, "true"_sv)  }:
+		string_view { data(out), copy(out, "false"_sv) };
 }
