@@ -68,6 +68,35 @@ catch(const std::exception &e)
 	throw;
 }
 
+void
+ircd::conf::fault(const string_view &key)
+try
+{
+	auto &item(*items.at(key));
+	item.fault();
+}
+catch(const std::out_of_range &e)
+{
+	throw not_found
+	{
+		"Conf item '%s' is not available", key
+	};
+}
+
+bool
+ircd::conf::fault(std::nothrow_t,
+                  const string_view &key)
+noexcept try
+{
+	auto &item(*items.at(key));
+	item.fault();
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	return false;
+}
+
 bool
 ircd::conf::set(std::nothrow_t,
                 const string_view &key,
@@ -218,6 +247,36 @@ noexcept
 	}
 }
 
+void
+ircd::conf::item<void>::fault()
+noexcept try
+{
+	const json::string &default_
+	{
+		feature.get("default")
+	};
+
+	log::warning
+	{
+		"conf item[%s] defaulting with featured value :%s",
+		name,
+		string_view{default_}
+	};
+
+	if(on_set(default_))
+		if(set_cb)
+			set_cb();
+}
+catch(const std::exception &e)
+{
+	throw panic
+	{
+		"Conf item '%s' failed to set its default value (double-fault) :%s",
+		name,
+		e.what()
+	};
+}
+
 bool
 ircd::conf::item<void>::set(const string_view &val)
 {
@@ -229,7 +288,17 @@ ircd::conf::item<void>::set(const string_view &val)
 	}
 	catch(...)
 	{
-		on_set(existing);
+		try
+		{
+			if(on_set(existing))
+				if(set_cb)
+					set_cb();
+		}
+		catch(...)
+		{
+			fault();
+		}
+
 		throw;
 	}
 

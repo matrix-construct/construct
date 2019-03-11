@@ -64,6 +64,8 @@ namespace ircd::conf
 	std::string get(const string_view &key);
 	bool set(const string_view &key, const string_view &value);
 	bool set(std::nothrow_t, const string_view &key, const string_view &value);
+	bool fault(std::nothrow_t, const string_view &key) noexcept;
+	void fault(const string_view &key);
 	bool reset(std::nothrow_t, const string_view &key);
 	bool reset(const string_view &key);
 	size_t reset();
@@ -91,6 +93,7 @@ struct ircd::conf::item<void>
 	string_view get(const mutable_buffer &) const;
 	std::string get() const;
 	bool set(const string_view &);
+	void fault() noexcept;
 
 	item(const json::members &, conf::set_cb);
 	item(item &&) = delete;
