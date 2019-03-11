@@ -494,6 +494,24 @@ ircd::m::append(json::stack::object &object,
 
 	object.append(event);
 
+	if(json::get<"state_key"_>(event) && has_event_idx)
+	{
+		const auto prev_idx
+		{
+			room::state::prev(*opts.event_idx)
+		};
+
+		if(prev_idx)
+			m::get(std::nothrow, prev_idx, "content", [&object]
+			(const json::object &content)
+			{
+				json::stack::member
+				{
+					object, "prev_content", content
+				};
+			});
+	}
+
 	if(!has_event_idx && !txnid_idx)
 		return;
 
