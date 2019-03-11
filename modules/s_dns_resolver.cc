@@ -20,7 +20,7 @@ ircd::net::dns::resolver::servers
 {
 	{
 		{ "name",     "ircd.net.dns.resolver.servers"                    },
-		{ "default",   "4.2.2.1;4.2.2.2;4.2.2.3;4.2.2.4;4.2.2.5;4.2.2.6" },
+		{ "default",   "4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4 4.2.2.5 4.2.2.6" },
 	}, []
 	{
 		if(bool(ircd::net::dns::resolver))
@@ -860,7 +860,7 @@ ircd::net::dns::resolver::set_servers(const string_view &list)
 {
 	server.clear();
 	server_next = 0;
-	tokens(list, ';', [this]
+	tokens(list, ' ', [this]
 	(const string_view &hp)
 	{
 		add_server(hp);
