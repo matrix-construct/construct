@@ -70,7 +70,7 @@ post__keys_upload(client &client,
 		request["one_time_keys"]
 	};
 
-	m::device::set(request.user_id, device_id, "one_time_keys", one_time_keys);
+	//m::device::set(request.user_id, device_id, "one_time_keys", one_time_keys);
 
 	size_t buf_est{64};
 	std::map<string_view, long, std::less<>> counts;
