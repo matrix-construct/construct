@@ -109,6 +109,21 @@ catch(const std::out_of_range &e)
 	};
 }
 
+std::string
+ircd::conf::get(const string_view &key)
+try
+{
+	const auto &item(*items.at(key));
+	return item.get();
+}
+catch(const std::out_of_range &e)
+{
+	throw not_found
+	{
+		"Conf item '%s' is not available", key
+	};
+}
+
 ircd::string_view
 ircd::conf::get(const string_view &key,
                 const mutable_buffer &out)
@@ -224,6 +239,17 @@ ircd::conf::item<void>::set(const string_view &val)
 	}
 
 	return ret;
+}
+
+std::string
+ircd::conf::item<void>::get()
+const
+{
+	return ircd::string(size(), [this]
+	(const mutable_buffer &buf)
+	{
+		return get(buf);
+	});
 }
 
 ircd::string_view

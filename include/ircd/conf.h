@@ -61,6 +61,7 @@ namespace ircd::conf
 	bool exists(const string_view &key);
 	bool persists(const string_view &key);
 	string_view get(const string_view &key, const mutable_buffer &out);
+	std::string get(const string_view &key);
 	bool set(const string_view &key, const string_view &value);
 	bool set(std::nothrow_t, const string_view &key, const string_view &value);
 	bool reset(std::nothrow_t, const string_view &key);
@@ -88,6 +89,7 @@ struct ircd::conf::item<void>
   public:
 	virtual size_t size() const = 0;
 	string_view get(const mutable_buffer &) const;
+	std::string get() const;
 	bool set(const string_view &);
 
 	item(const json::members &, conf::set_cb);
