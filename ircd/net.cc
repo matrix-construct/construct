@@ -2958,6 +2958,12 @@ const
 // net/dns.h
 //
 
+decltype(ircd::net::dns::log)
+ircd::net::dns::log
+{
+	"net.dns"
+};
+
 /// Linkage for default opts
 decltype(ircd::net::dns::opts_default)
 ircd::net::dns::opts_default;

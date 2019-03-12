@@ -44,6 +44,8 @@ namespace ircd::net::dns
 	// (internal) generate strings for rfc1035 questions or dns::cache keys.
 	string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
 	string_view unmake_SRV_key(const string_view &);
+
+	extern log::log log;
 };
 
 /// DNS resolution options

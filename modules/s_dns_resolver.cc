@@ -420,6 +420,16 @@ decltype(ircd::net::dns::resolver::tags)::iterator
 ircd::net::dns::resolver::remove(tag &tag,
                                  const decltype(tags)::iterator &it)
 {
+	log::debug
+	{
+		log, "dns tag:%u t:%u qtype:%u removing (tags:%zu sendq:%zu)",
+		tag.id,
+		tag.tries,
+		tag.opts.qtype,
+		tags.size(),
+		sendq.size()
+	};
+
 	unqueue(tag);
 	return it != end(tags)? tags.erase(it) : it;
 }
@@ -442,6 +452,16 @@ ircd::net::dns::resolver::queue_query(tag &tag)
 	assert(sendq.size() <= tags.size());
 	sendq.emplace_back(tag.id);
 	dock.notify_one();
+
+	log::debug
+	{
+		log, "dns tag:%u t:%u qtype:%u added to sendq (tags:%zu sendq:%zu)",
+		tag.id,
+		tag.tries,
+		tag.opts.qtype,
+		tags.size(),
+		sendq.size()
+	};
 }
 
 void
@@ -451,7 +471,7 @@ ircd::net::dns::resolver::submit(tag &tag)
 	{
 		log::warning
 		{
-			net::log, "dns tag:%u submit queued because no nameserver is available.",
+			log, "dns tag:%u submit queued because no nameserver is available.",
 			tag.id
 		};
 
@@ -485,12 +505,12 @@ try
 	thread_local char buf[128];
 	log::debug
 	{
-		net::log, "dns %s send tag:%u t:%u qtype:%u `%s'",
+		log, "dns %s send tag:%u t:%u qtype:%u `%s'",
 		string(buf, make_ipport(ep)),
 		tag.id,
 		tag.tries,
 		tag.opts.qtype,
-		host(tag.hp),
+		host(tag.hp)
 	};
 	#endif
 }
@@ -617,7 +637,7 @@ try
 
 	log::debug
 	{
-		net::log, "dns %s recv tag:%u t:%u qtype:%u qd:%u an:%u ns:%u ar:%u",
+		log, "dns %s recv tag:%u t:%u qtype:%u qd:%u an:%u ns:%u ar:%u",
 		string(addr_strbuf[0], make_ipport(reply_from)),
 		tag.id,
 		tag.tries,
@@ -871,7 +891,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		net::log, "Erroneous configuration; falling back to defaults :%s",
+		log, "Erroneous configuration; falling back to defaults :%s",
 		e.what()
 	};
 
@@ -923,7 +943,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		net::log, "Failed to add server '%s' :%s",
+		log, "Failed to add server '%s' :%s",
 		str,
 		e.what()
 	};
