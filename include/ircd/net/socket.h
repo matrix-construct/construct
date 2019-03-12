@@ -91,10 +91,15 @@ struct ircd::net::socket
 	template<class iov> size_t read_few(iov&&);  // yielding
 	template<class iov> size_t read_all(iov&&);  // yielding
 
+	// low level check suite
+	error_code check(std::nothrow_t, const ready &) noexcept;
+	void check(const ready &);
+
 	// low level wait suite
 	void wait(const wait_opts &);
 	void wait(const wait_opts &, wait_callback_ec);
 	void wait(const wait_opts &, wait_callback_eptr);
+
 	void cancel() noexcept;
 
 	// Alias to wait()

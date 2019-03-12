@@ -417,6 +417,27 @@ ircd::net::read_one(socket &socket,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// net/check.h
+//
+
+void
+ircd::net::check(socket &socket,
+                 const ready &type)
+{
+	socket.check(type);
+}
+
+std::error_code
+ircd::net::check(std::nothrow_t,
+                 socket &socket,
+                 const ready &type)
+noexcept
+{
+	return socket.check(std::nothrow, type);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // net/wait.h
 //
 
@@ -2324,6 +2345,58 @@ catch(...)
 {
 	cancel_timeout();
 	throw;
+}
+
+void
+ircd::net::socket::check(const ready &type)
+{
+	const error_code ec
+	{
+		check(std::nothrow, type)
+	};
+
+	if(ec.value())
+		throw_system_error(ec);
+}
+
+std::error_code
+ircd::net::socket::check(std::nothrow_t,
+                         const ready &type)
+noexcept
+{
+	assert(type == ready::ERROR);
+
+	static char buf[1] alignas(16);
+	static const ilist<mutable_buffer> bufs{buf};
+	static const std::error_code eof
+	{
+		make_error_code(boost::system::error_code
+		{
+			boost::asio::error::eof, boost::asio::error::get_misc_category()
+		})
+	};
+
+	std::error_code ret;
+	if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) >= ssize_t(sizeof(buf)))
+		return ret;
+
+	assert(!blocking(*this));
+	boost::system::error_code ec;
+	if(sd.receive(bufs, sd.message_peek, ec) >= ssize_t(sizeof(buf)))
+	{
+		assert(!ec.value());
+		return ret;
+	}
+
+	if(ec.value())
+		ret = make_error_code(ec);
+	else
+		ret = eof;
+
+	if(ret == std::errc::resource_unavailable_try_again)
+		ret = {};
+
+	return ret;
 }
 
 void

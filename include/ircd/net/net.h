@@ -43,6 +43,7 @@ namespace ircd::net
 #include "open.h"
 #include "close.h"
 #include "wait.h"
+#include "check.h"
 #include "read.h"
 #include "write.h"
 #include "scope_timeout.h"
