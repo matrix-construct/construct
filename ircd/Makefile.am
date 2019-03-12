@@ -110,6 +110,7 @@ libircd_la_SOURCES =   \
 	json.cc            \
 	locale.cc          \
 	conf.cc            \
+	stats.cc           \
 	logger.cc          \
 	sodium.cc          \
 	rfc1459.cc         \
