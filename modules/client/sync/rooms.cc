@@ -99,11 +99,6 @@ ircd::m::sync::_rooms_polylog(data &data,
 		data.membership, membership
 	};
 
-	json::stack::checkpoint checkpoint
-	{
-		*data.out
-	};
-
 	json::stack::object object
 	{
 		*data.out, membership
@@ -138,9 +133,6 @@ ircd::m::sync::_rooms_polylog(data &data,
 		};
 		#endif
 	});
-
-	if(!ret)
-		checkpoint.rollback();
 
 	return ret;
 }
