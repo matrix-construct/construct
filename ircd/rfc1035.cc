@@ -403,10 +403,20 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 		pos += len;
 	}
 
-	assert(size_t(pos - begin(in)) <= size(in));
-	assert(size_t(pos - begin(in)) <= size(out));
 	assert(ssize_t(pos - begin(in)) > 0);
-	return pos - begin(in);
+	const size_t ret(pos - data(in));
+	if(ret > size(out) - 1)
+		throw error
+		{
+			"Not enough space in name output buffer; have:%zu need:%zu",
+			size(out),
+			ret + 1
+		};
+
+	assert(strnlen(data(out), size(out)) + 1 == ret);
+	assert(ret <= size(in));
+	assert(ret <= size(out));
+	return ret;
 }
 
 std::string
