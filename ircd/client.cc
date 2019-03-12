@@ -876,15 +876,16 @@ catch(const http::error &e)
 {
 	const ctx::exception_handler eh;
 
-	log::derror
-	{
-		resource::log, "%s HTTP %u `%s' %s :%s",
-		loghead(),
-		uint(e.code),
-		head.uri,
-		http::status(e.code),
-		e.content
-	};
+	if(!empty(e.content))
+		log::derror
+		{
+			log, "%s HTTP %u `%s' %s :%s",
+			loghead(),
+			uint(e.code),
+			head.uri,
+			http::status(e.code),
+			e.content
+		};
 
 	resource::response
 	{
