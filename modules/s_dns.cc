@@ -187,11 +187,29 @@ ircd::net::dns::handle__A(callback_A_one callback,
 	if(eptr)
 		return callback(std::move(eptr), hp, empty);
 
-	//TODO: prng plz
+	// Get the actual number of A records in these results
+	size_t rec_count(0);
+	for(size_t i(0); i < rrs.size(); ++i)
+		rec_count += rrs.at(i)->type == qtype;
+
+	// Make a random selection for round-robin; rand::integer's range
+	// is inclusive so it's shifted down by one.
+	uint64_t selection
+	{
+		rec_count > 1?
+			rand::integer(1, rec_count) - 1:
+			0
+	};
+
+	assert(!rec_count || selection < rec_count);
+	assert(rec_count || selection == 0);
 	for(size_t i(0); i < rrs.size(); ++i)
 	{
 		const auto &rr(*rrs.at(i));
 		if(rr.type != qtype)
+			continue;
+
+		if(selection-- != 0)
 			continue;
 
 		const auto &record(rr.as<const rfc1035::record::A>());
