@@ -482,7 +482,7 @@ ircd::net::dns::resolver::submit(tag &tag)
 	assert(!server.empty());
 	const auto rate(milliseconds(send_rate) / server.size());
 	const auto elapsed(now<steady_point>() - send_last);
-	if(elapsed >= rate || tags.size() < size_t(send_burst))
+	if(elapsed >= rate || tags.size() <= size_t(send_burst))
 		send_query(tag);
 	else
 		queue_query(tag);
