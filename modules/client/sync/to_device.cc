@@ -44,18 +44,13 @@ ircd::m::sync::to_device_polylog(data &data)
 		*data.out, "events"
 	};
 
-	const m::room &user_room
+	m::room::messages it
 	{
 		data.user_room
 	};
 
-	m::room::messages it
-	{
-		user_room
-	};
-
 	bool ret{false};
-	for(it.seek(data.range.first); it; --it)
+	for(it.seek_idx(data.range.first); it; --it)
 	{
 		const auto &event_idx(it.event_idx());
 		if(!apropos(data, event_idx))
