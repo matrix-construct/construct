@@ -207,4 +207,5 @@ ircd::m::sync::room_state_append(data &data,
 	opts.client_txnid = &data.client_txnid;
 	opts.user_id = &data.user.user_id;
 	opts.user_room = &data.user_room;
+	m::append(events, event, opts);
 }
