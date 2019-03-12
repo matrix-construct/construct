@@ -558,6 +558,9 @@ try
 		if(!dock.wait_until(args.timesout))
 			break;
 
+		assert(data.client && data.client->sock);
+		check(*data.client->sock);
+
 		if(queue.empty())
 			continue;
 
@@ -581,6 +584,17 @@ try
 	while(1);
 
 	return false;
+}
+catch(const std::system_error &e)
+{
+	log::derror
+	{
+		log, "longpoll %s failed :%s",
+		loghead(data),
+		e.what()
+	};
+
+	throw;
 }
 catch(const std::exception &e)
 {
