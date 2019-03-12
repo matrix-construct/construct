@@ -166,7 +166,6 @@ ircd::net::dns::resolver::sendq_work()
 	assert(!sendq.empty());
 	assert(sendq.size() < 65535);
 	assert(sendq.size() <= tags.size());
-	const unwind::nominal::assertion na;
 	const uint16_t next(sendq.front());
 	sendq.pop_front();
 	flush(next);
@@ -335,19 +334,16 @@ ircd::net::dns::resolver::operator()(const hostport &hp,
                                      const opts &opts,
                                      callback &&callback)
 {
-	auto &tag
+	auto &tag(set_tag(hp, opts, std::move(callback))); try
 	{
-		set_tag(hp, opts, std::move(callback))
-	};
-
-	// Escape trunk
-	const unwind::exceptional untag{[this, &tag]
+		tag.question = make_query(tag.qbuf, tag);
+		submit(tag);
+	}
+	catch(...)
 	{
 		remove(tag);
-	}};
-
-	tag.question = make_query(tag.qbuf, tag);
-	submit(tag);
+		throw;
+	}
 }
 
 ircd::const_buffer

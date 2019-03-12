@@ -49,15 +49,11 @@ class ircd::ctx::dock
 template<class duration>
 bool
 ircd::ctx::dock::wait_for(const duration &dur)
+try
 {
 	static const duration zero(0);
 
 	assert(current);
-	const unwind::exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -66,12 +62,18 @@ ircd::ctx::dock::wait_for(const duration &dur)
 	q.push_back(current);
 	return ircd::ctx::wait<std::nothrow_t>(dur) > zero;
 }
+catch(...)
+{
+	notify_one();
+	throw;
+}
 
 /// Returns true if predicate passed; false if timed out
 template<class duration>
 bool
 ircd::ctx::dock::wait_for(const duration &dur,
                           const predicate &pred)
+try
 {
 	static const duration zero(0);
 
@@ -79,11 +81,6 @@ ircd::ctx::dock::wait_for(const duration &dur,
 		return true;
 
 	assert(current);
-	const unwind::exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -104,18 +101,19 @@ ircd::ctx::dock::wait_for(const duration &dur,
 	}
 	while(1);
 }
+catch(...)
+{
+	notify_one();
+	throw;
+}
 
 /// Returns true if notified; false if timed out
 template<class time_point>
 bool
 ircd::ctx::dock::wait_until(time_point&& tp)
+try
 {
 	assert(current);
-	const unwind::exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -124,22 +122,23 @@ ircd::ctx::dock::wait_until(time_point&& tp)
 	q.push_back(current);
 	return !ircd::ctx::wait_until<std::nothrow_t>(tp);
 }
+catch(...)
+{
+	notify_one();
+	throw;
+}
 
 /// Returns true if predicate passed; false if timed out
 template<class time_point>
 bool
 ircd::ctx::dock::wait_until(time_point&& tp,
                             const predicate &pred)
+try
 {
 	if(pred())
 		return true;
 
 	assert(current);
-	const unwind::exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -159,4 +158,9 @@ ircd::ctx::dock::wait_until(time_point&& tp,
 			return false;
 	}
 	while(1);
+}
+catch(...)
+{
+	notify_one();
+	throw;
 }

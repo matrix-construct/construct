@@ -1087,27 +1087,6 @@ ircd::ctx::context::context(const string_view &name,
 	// which is probably the same event-slice as event::CUR_ENTER and not as useful.
 	mark(prof::event::SPAWN);
 
-	// When the user passes the DETACH flag we want to release the unique_ptr
-	// of the ctx if and only if that ctx is committed to freeing itself. Our
-	// commitment ends at the 180 of this function. If no exception was thrown
-	// we expect the context to be committed to entry. If the POST flag is
-	// supplied and it gets lost in the asio queue it will not be entered, and
-	// will not be able to free itself; that will leak.
-	const unwind::nominal release
-	{
-		[this, &flags]
-		{
-			if(flags & context::DETACH)
-				this->detach();
-		}
-	};
-
-	if(flags & POST)
-	{
-		ios::post(std::move(spawn));
-		return;
-	}
-
 	// The current context must be reasserted if spawn returns here
 	auto *const theirs(ircd::ctx::current);
 	const unwind recurrent([&theirs]
@@ -1115,10 +1094,21 @@ ircd::ctx::context::context(const string_view &name,
 		ircd::ctx::current = theirs;
 	});
 
-	if(flags & DISPATCH)
+	if(flags & POST)
+		ios::post(std::move(spawn));
+	else if(flags & DISPATCH)
 		ios::dispatch(std::move(spawn));
 	else
 		spawn();
+
+	// When the user passes the DETACH flag we want to release the unique_ptr
+	// of the ctx if and only if that ctx is committed to freeing itself. Our
+	// commitment ends at the 180 of this function. If no exception was thrown
+	// we expect the context to be committed to entry. If the POST flag is
+	// supplied and it gets lost in the asio queue it will not be entered, and
+	// will not be able to free itself; that will leak.
+	if(flags & context::DETACH)
+		this->detach();
 }
 
 ircd::ctx::context::context(const string_view &name,
@@ -2417,13 +2407,9 @@ noexcept
 
 void
 ircd::ctx::dock::wait()
+try
 {
 	assert(current);
-	const unwind::exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -2432,19 +2418,20 @@ ircd::ctx::dock::wait()
 	q.push_back(current);
 	ircd::ctx::wait();
 }
+catch(...)
+{
+	notify_one();
+	throw;
+}
 
 void
 ircd::ctx::dock::wait(const predicate &pred)
+try
 {
 	if(pred())
 		return;
 
 	assert(current);
-	const unwind::exceptional renotify{[this]
-	{
-		notify_one();
-	}};
-
 	const unwind remove{[this]
 	{
 		q.remove(current);
@@ -2455,6 +2442,11 @@ ircd::ctx::dock::wait(const predicate &pred)
 		ircd::ctx::wait();
 	}
 	while(!pred());
+}
+catch(...)
+{
+	notify_one();
+	throw;
 }
 
 void
