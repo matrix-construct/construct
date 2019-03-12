@@ -243,7 +243,7 @@ ircd::net::dns::resolver::check_timeouts(const milliseconds &timeout)
 		const auto &id(it->first);
 		auto &tag(it->second);
 		if(check_timeout(id, tag, cutoff))
-			it = tags.erase(it);
+			it = remove(tag, it);
 		else
 			++it;
 	}
@@ -326,8 +326,7 @@ ircd::net::dns::resolver::handle_post_error(const uint16_t id,
 
 	assert(tag.cb);
 	tag.cb(std::make_exception_ptr(ec), tag.hp, {});
-	const auto erased(tags.erase(tag.id));
-	assert(erased == 1);
+	remove(tag);
 }
 
 /// Internal resolver entry interface.
@@ -344,7 +343,7 @@ ircd::net::dns::resolver::operator()(const hostport &hp,
 	// Escape trunk
 	const unwind::exceptional untag{[this, &tag]
 	{
-		tags.erase(tag.id);
+		remove(tag);
 	}};
 
 	tag.question = make_query(tag.qbuf, tag);
@@ -409,6 +408,32 @@ ircd::net::dns::resolver::set_tag(A&&... args)
 	{
 		"Too many DNS queries"
 	};
+}
+
+void
+ircd::net::dns::resolver::remove(tag &tag)
+{
+	remove(tag, tags.find(tag.id));
+}
+
+decltype(ircd::net::dns::resolver::tags)::iterator
+ircd::net::dns::resolver::remove(tag &tag,
+                                 const decltype(tags)::iterator &it)
+{
+	unqueue(tag);
+	return it != end(tags)? tags.erase(it) : it;
+}
+
+void
+ircd::net::dns::resolver::unqueue(tag &tag)
+{
+	const auto it
+	{
+		std::find(begin(sendq), end(sendq), tag.id)
+	};
+
+	if(it != end(sendq))
+		sendq.erase(it);
 }
 
 void
@@ -585,9 +610,9 @@ try
 			string(addr_strbuf[1], tag.server)
 		};
 
-	const unwind untag{[this, &it]
+	const unwind untag{[this, &tag, &it]
 	{
-		tags.erase(it);
+		remove(tag, it);
 	}};
 
 	log::debug

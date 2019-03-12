@@ -46,6 +46,9 @@ struct ircd::net::dns::resolver
 	void send_query(tag &);
 	void submit(tag &);
 
+	void unqueue(tag &);
+	void remove(tag &);
+	decltype(tags)::iterator remove(tag &, const decltype(tags)::iterator &);
 	template<class... A> tag &set_tag(A&&...);
 	static const_buffer make_query(const mutable_buffer &buf, const tag &);
 	void operator()(const hostport &, const opts &, callback &&);
