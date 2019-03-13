@@ -274,6 +274,9 @@ ircd::rfc3986::valid_remote(std::nothrow_t,
 		parser::remote >> eoi
 	};
 
+	if(str.size() > DOMAIN_MAX + 6)
+		return false;
+
 	const char *start(str.data()), *const stop(start + str.size());
 	return qi::parse(start, stop, rule);
 }
@@ -286,6 +289,14 @@ try
 	{
 		parser::remote >> eoi
 	};
+
+	if(str.size() > DOMAIN_MAX + 6)
+		throw error
+		{
+			"String length %zu exceeds maximum of %zu characters",
+			size(str),
+			DOMAIN_MAX + 6
+		};
 
 	const char *start(str.data()), *const stop(start + str.size());
 	qi::parse(start, stop, eps > rule);
@@ -304,6 +315,9 @@ ircd::rfc3986::valid_host(std::nothrow_t,
 		parser::host >> eoi
 	};
 
+	if(str.size() > DOMAIN_MAX)
+		return false;
+
 	const char *start(str.data()), *const stop(start + str.size());
 	return qi::parse(start, stop, rule);
 }
@@ -316,6 +330,14 @@ try
 	{
 		parser::host >> eoi
 	};
+
+	if(str.size() > DOMAIN_MAX)
+		throw error
+		{
+			"String length %zu exceeds maximum of %zu characters",
+			size(str),
+			DOMAIN_MAX
+		};
 
 	const char *start(str.data()), *const stop(start + str.size());
 	qi::parse(start, stop, eps > rule);
@@ -334,6 +356,9 @@ ircd::rfc3986::valid_domain(std::nothrow_t,
 		parser::domain >> eoi
 	};
 
+	if(str.size() > DOMAIN_MAX)
+		return false;
+
 	const char *start(str.data()), *const stop(start + str.size());
 	return qi::parse(start, stop, rule);
 }
@@ -346,6 +371,14 @@ try
 	{
 		parser::host >> eoi
 	};
+
+	if(str.size() > DOMAIN_MAX)
+		throw error
+		{
+			"String length %zu exceeds maximum of %zu characters",
+			size(str),
+			DOMAIN_MAX
+		};
 
 	const char *start(str.data()), *const stop(start + str.size());
 	qi::parse(start, stop, eps > rule);
@@ -364,6 +397,9 @@ ircd::rfc3986::valid_hostname(std::nothrow_t,
 		parser::hostname >> eoi
 	};
 
+	if(str.size() > HOSTNAME_MAX)
+		return false;
+
 	const char *start(str.data()), *const stop(start + str.size());
 	return qi::parse(start, stop, rule);
 }
@@ -376,6 +412,14 @@ try
 	{
 		parser::hostname >> eoi
 	};
+
+	if(str.size() > HOSTNAME_MAX)
+		throw error
+		{
+			"String length %zu exceeds maximum of %zu characters",
+			size(str),
+			HOSTNAME_MAX
+		};
 
 	const char *start(str.data()), *const stop(start + str.size());
 	qi::parse(start, stop, eps > rule);

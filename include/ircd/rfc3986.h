@@ -23,6 +23,9 @@ namespace ircd::rfc3986
 	struct encoder extern const encoder;
 	struct decoder extern const decoder;
 
+	constexpr size_t HOSTNAME_MAX {rfc1035::LABEL_MAX};
+	constexpr size_t DOMAIN_MAX {rfc1035::NAME_MAX};
+
 	void valid_hostname(const string_view &); // name part
 	bool valid_hostname(std::nothrow_t, const string_view &);
 	void valid_domain(const string_view &); // dot delimited hostnames

@@ -427,21 +427,29 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 	return ret;
 }
 
-bool
+void
 ircd::rfc1035::valid_name(const string_view &name)
 {
-	if(size(name) > NAME_MAX)
-		return false;
+	rfc3986::valid_domain(name);
+}
 
+void
+ircd::rfc1035::valid_label(const string_view &label)
+{
+	rfc3986::valid_hostname(label);
+}
+
+bool
+ircd::rfc1035::valid_name(std::nothrow_t,
+                          const string_view &name)
+{
 	return rfc3986::valid_domain(std::nothrow, name);
 }
 
 bool
-ircd::rfc1035::valid_label(const string_view &label)
+ircd::rfc1035::valid_label(std::nothrow_t,
+                           const string_view &label)
 {
-	if(size(label) > LABEL_MAX)
-		return false;
-
 	return rfc3986::valid_hostname(std::nothrow, label);
 }
 
