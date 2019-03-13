@@ -1102,6 +1102,13 @@ ircd::net::acceptor::timeout
 	{ "default",  12000L                      },
 };
 
+decltype(ircd::net::acceptor::ssl_cipher_list)
+ircd::net::acceptor::ssl_cipher_list
+{
+	{ "name",     "ircd.net.acceptor.ssl.cipher.list" },
+	{ "default",  string_view{}                       },
+};
+
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const acceptor &a)
 {
@@ -1557,6 +1564,12 @@ ircd::net::acceptor::configure(const json::object &opts)
 		};
 
 		assert(ssl.native_handle());
+		openssl::set_cipher_list(*ssl.native_handle(), list);
+	}
+	else if(!empty(string_view(ssl_cipher_list)))
+	{
+		assert(ssl.native_handle());
+		const string_view &list(ssl_cipher_list);
 		openssl::set_cipher_list(*ssl.native_handle(), list);
 	}
 
