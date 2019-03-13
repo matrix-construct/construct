@@ -23,7 +23,14 @@ namespace ircd::rfc1035
 	struct record;
 	enum class op :uint8_t;
 
-	constexpr size_t NAME_BUF_SIZE {256};
+	// Section 2.3.4 Size Limits
+	constexpr size_t LABEL_MAX {63};
+	constexpr size_t NAME_MAX {255};
+	constexpr size_t TTL_MAX {std::numeric_limits<int32_t>::max()};
+
+	constexpr size_t LABEL_BUF_SIZE {LABEL_MAX + 1};
+	constexpr size_t NAME_BUF_SIZE {NAME_MAX + 1};
+
 	extern const std::array<string_view, 25> rcode;
 	extern const std::unordered_map<string_view, uint16_t> qtype;
 	extern const std::map<uint16_t, string_view> rqtype;

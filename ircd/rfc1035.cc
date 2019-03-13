@@ -356,10 +356,11 @@ ircd::rfc1035::make_name(const mutable_buffer &out,
 	*pos = '\0';
 	ircd::tokens(fqdn, '.', [&pos, &out](const string_view &label)
 	{
-		if(unlikely(size(label) >= 64))
+		if(unlikely(size(label) > LABEL_MAX))
 			throw error
 			{
-				"Single part of domain cannot exceed 63 characters"
+				"Single part of domain cannot exceed %zu characters",
+				LABEL_MAX
 			};
 
 		*pos++ = size(label);
@@ -378,7 +379,14 @@ size_t
 ircd::rfc1035::parse_name(const mutable_buffer &out,
                           const const_buffer &in)
 {
-	assert(!empty(out));
+	if(unlikely(size(out) < NAME_BUF_SIZE))
+		throw error
+		{
+			"Name output buffer is %zu but RFC1035 requires %zu",
+			size(out),
+			NAME_BUF_SIZE
+		};
+
 	if(unlikely(empty(in)))
 		throw error
 		{
@@ -408,9 +416,9 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 	if(ret > size(out) - 1)
 		throw error
 		{
-			"Not enough space in name output buffer; have:%zu need:%zu",
-			size(out),
-			ret + 1
+			"Name of length %zu larger than %zu and would be truncated",
+			size_t(pos - data(in)),
+			NAME_MAX
 		};
 
 	assert(strnlen(data(out), size(out)) + 1 == ret);
