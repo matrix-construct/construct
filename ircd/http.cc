@@ -284,7 +284,7 @@ ircd::http::request::head::head(parse::capstan &pc,
 }
 ,headers{[this, &pc, &c]
 {
-	if(!this->version || this->version != "HTTP/1.1")
+	if(this->version != "HTTP/1.1")
 		throw error
 		{
 			HTTP_VERSION_NOT_SUPPORTED, "Sorry, only HTTP/1.1 supported here."
