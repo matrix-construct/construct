@@ -1530,6 +1530,91 @@ ircd::net::acceptor::check_handshake_error(const error_code &ec,
 	throw_system_error(ec);
 }
 
+bool
+ircd::net::acceptor::handle_sni(SSL &ssl,
+                                int &ad)
+try
+{
+	const string_view &name
+	{
+		openssl::server_name(ssl)
+	};
+
+	log::debug
+	{
+		log, "%s offered SNI '%s'",
+		string(logheadbuf, *this),
+		name
+	};
+
+	if(!name)
+		return false;
+
+	return true;
+}
+catch(const sni_warning &e)
+{
+	log::warning
+	{
+		log, "%s during SNI :%s",
+		string(logheadbuf, *this),
+		e.what()
+	};
+
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "%s during SNI :%s",
+		string(logheadbuf, *this),
+		e.what()
+	};
+
+	throw;
+}
+
+static int
+ircd_net_acceptor_handle_sni(SSL *const s,
+                             int *const i,
+                             void *const a)
+noexcept try
+{
+	if(unlikely(!s || !i || !a))
+		throw ircd::panic
+		{
+			"Missing arguments to callback s:%p i:%p a:%p", s, i, a
+		};
+
+	auto &acceptor
+	{
+		*reinterpret_cast<ircd::net::acceptor *>(a)
+	};
+
+	return acceptor.handle_sni(*s, *i)?
+		SSL_TLSEXT_ERR_OK:
+		SSL_TLSEXT_ERR_NOACK;
+}
+catch(const ircd::net::acceptor::sni_warning &)
+{
+	return SSL_TLSEXT_ERR_ALERT_WARNING;
+}
+catch(const std::exception &)
+{
+	return SSL_TLSEXT_ERR_ALERT_FATAL;
+}
+catch(...)
+{
+	ircd::log::critical
+	{
+		ircd::net::acceptor::log,
+		"Acceptor SNI callback unhandled."
+	};
+
+	throw;
+}
+
 void
 ircd::net::acceptor::configure(const json::object &opts)
 {
@@ -1742,6 +1827,9 @@ ircd::net::acceptor::configure(const json::object &opts)
 		assert(0);
 		return "foobar";
 	});
+
+	SSL_CTX_set_tlsext_servername_callback(ssl.native_handle(), ircd_net_acceptor_handle_sni);
+	SSL_CTX_set_tlsext_servername_arg(ssl.native_handle(), this);
 }
 
 //

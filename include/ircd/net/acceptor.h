@@ -24,6 +24,7 @@ struct ircd::net::acceptor
 	using proffer = listener::proffer;
 
 	IRCD_EXCEPTION(listener::error, error)
+	IRCD_EXCEPTION(error, sni_warning)
 
 	static log::log log;
 	static conf::item<milliseconds> timeout;
@@ -48,6 +49,7 @@ struct ircd::net::acceptor
 	void configure(const json::object &opts);
 
 	// Handshake stack
+	bool handle_sni(SSL &, int &ad);
 	void check_handshake_error(const error_code &ec, socket &);
 	void handshake(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
 
