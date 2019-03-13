@@ -1109,6 +1109,13 @@ ircd::net::acceptor::ssl_cipher_list
 	{ "default",  string_view{}                       },
 };
 
+decltype(ircd::net::acceptor::ssl_cipher_blacklist)
+ircd::net::acceptor::ssl_cipher_blacklist
+{
+	{ "name",     "ircd.net.acceptor.ssl.cipher.blacklist" },
+	{ "default",  string_view{}                            },
+};
+
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const acceptor &a)
 {
@@ -1570,6 +1577,25 @@ ircd::net::acceptor::configure(const json::object &opts)
 	{
 		assert(ssl.native_handle());
 		const string_view &list(ssl_cipher_list);
+		openssl::set_cipher_list(*ssl.native_handle(), list);
+	}
+	else if(!empty(string_view(ssl_cipher_blacklist)))
+	{
+		assert(ssl.native_handle());
+
+		std::stringstream res;
+		const string_view &blacklist(ssl_cipher_blacklist);
+		const auto ciphers(openssl::cipher_list(*ssl.native_handle(), 0));
+		ircd::tokens(ciphers, ':', [&res, &blacklist]
+		(const string_view &cipher)
+		{
+			if(!has(blacklist, cipher))
+				res << cipher << ':';
+		});
+
+		std::string list(res.str());
+		assert(list.empty() || list.back() == ':');
+		list.pop_back();
 		openssl::set_cipher_list(*ssl.native_handle(), list);
 	}
 
