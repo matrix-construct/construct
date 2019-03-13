@@ -512,27 +512,27 @@ ircd::m::append(json::stack::object &object,
 			});
 	}
 
-	if(!has_event_idx && !txnid_idx)
-		return;
-
 	json::stack::object unsigned_
 	{
 		object, "unsigned"
+	};
+
+	json::stack::member
+	{
+		unsigned_, "age", json::value
+		{
+			has_event_idx && opts.age != std::numeric_limits<long>::min()?
+				long(vm::current_sequence - *opts.event_idx):
+			opts.age != std::numeric_limits<long>::min()?
+				opts.age:
+			0L
+		}
 	};
 
 	if(has_client_txnid)
 		json::stack::member
 		{
 			unsigned_, "transaction_id", *opts.client_txnid
-		};
-
-	if(has_event_idx)
-		json::stack::member
-		{
-			unsigned_, "age", json::value
-			{
-				long(vm::current_sequence - *opts.event_idx)
-			}
 		};
 
 	if(txnid_idx)
