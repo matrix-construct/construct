@@ -964,7 +964,7 @@ console_cmd__conf__set(opt &out, const string_view &line)
 
 	const auto &val
 	{
-		param[1]
+		tokens_after(line, ' ', 0)
 	};
 
 	using prototype = m::event::id::buf (const m::user::id &,
