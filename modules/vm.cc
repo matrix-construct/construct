@@ -483,9 +483,6 @@ try
 	if(ret != fault::ACCEPT)
 		return ret;
 
-	if(opts.post)
-		post_hook(event, eval);
-
 	if(opts.notify)
 		notify_hook(event, eval);
 
@@ -645,6 +642,9 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	// Evaluation by module hooks
 	if(opts.eval)
 		eval_hook(event, eval);
+
+	if(opts.post)
+		post_hook(event, eval);
 
 	if(opts.write)
 		_write(eval, event);
