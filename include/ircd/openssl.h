@@ -140,6 +140,7 @@ namespace ircd::openssl
 
 	// SNI suite
 	string_view server_name(const SSL &); // provided by client
+	void server_name(SSL &, const string_view &); // set by client
 }
 
 /// OpenSSL BIO convenience utils and wraps; also secure file IO closures

@@ -52,6 +52,15 @@ namespace ircd::openssl
 // SNI
 //
 
+void
+ircd::openssl::server_name(SSL &ssl,
+                           const string_view &name)
+{
+	thread_local char buf[256];
+	strlcpy(buf, name);
+	call(::SSL_ctrl, &ssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name, buf);
+}
+
 ircd::string_view
 ircd::openssl::server_name(const SSL &ssl)
 {
