@@ -820,7 +820,7 @@ catch(const http::error &e)
 {
 	log::derror
 	{
-		resource::log, "%s HTTP 400 BAD REQUEST :%u %s :%s",
+		resource::log, "%s HTTP %u %s :%s",
 		loghead(),
 		uint(e.code),
 		http::status(e.code),
@@ -833,7 +833,7 @@ catch(const http::error &e)
 	const ctx::exception_handler eh;
 	resource::response
 	{
-		*this, e.content, "text/html; charset=utf-8", http::BAD_REQUEST, e.headers
+		*this, e.content, "text/html; charset=utf-8", e.code, e.headers
 	};
 
 	return false;
