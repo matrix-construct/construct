@@ -4174,7 +4174,7 @@ ircd::db::write(const row::delta *const &begin,
 // to only see a report of the row seek as a whole. If RB_DEBUG_DB_SEEK is
 // enabled that implies RB_DEBUG_DB_SEEK_ROW as well.
 //
-#if !defined(RB_DEBUG_DB_SEEK_ROW) && defined(RB_DEBUG_DB_SEEK_ROW)
+#if !defined(RB_DEBUG_DB_SEEK_ROW) && defined(RB_DEBUG_DB_SEEK)
 	#define RB_DEBUG_DB_SEEK_ROW
 #endif
 
