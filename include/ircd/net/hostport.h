@@ -105,30 +105,35 @@ inline
 ircd::net::hostport::hostport(const string_view &amalgam)
 :host
 {
-	//TODO: grammar
-	rsplit(amalgam, ':').first
+	rfc3986::host(amalgam)
+}
+,port
+{
+	rfc3986::port(amalgam)
 }
 {
-	const auto port
+	// When the amalgam has no port
+	if(amalgam == host)
+	{
+		// set the port to the canon_port; port=0 is bad
+		port = port?: canon_port;
+		return;
+	}
+
+	// or a valid integer port
+	if(port)
+		return;
+
+	// When the port is actually a service string
+	const auto service
 	{
 		rsplit(amalgam, ':').second
 	};
 
-	if(amalgam == host || empty(port))
-	{
-		rfc3986::valid_host(host);
-		return;
-	}
-
-	if(try_lex_cast<uint16_t>(port))
-	{
-		this->service = {};
-		this->port = lex_cast<uint16_t>(port);
-		rfc3986::valid_remote(amalgam);
-	} else {
-		this->service = port;
-		rfc3986::valid_host(host);
-	}
+	if(service)
+		this->service = service;
+	else
+		this->port = canon_port;
 }
 
 inline
