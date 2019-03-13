@@ -406,6 +406,13 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 	for(uint8_t len(*pos++); len && pos + len < end(in); len = *pos++)
 	{
 		const string_view label{pos, len};
+		if(unlikely(size(label) > LABEL_MAX))
+			throw error
+			{
+				"Single part of domain cannot exceed %zu characters",
+				LABEL_MAX
+			};
+
 		strlcat(out, label);
 		strlcat(out, ".");
 		pos += len;
@@ -413,15 +420,14 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 
 	assert(ssize_t(pos - begin(in)) > 0);
 	const size_t ret(pos - data(in));
-	if(ret > size(out) - 1)
+	if(ret >= size(out))
 		throw error
 		{
 			"Name of length %zu larger than %zu and would be truncated",
 			size_t(pos - data(in)),
-			NAME_MAX
+			size(out)
 		};
 
-	assert(strnlen(data(out), size(out)) + 1 == ret);
 	assert(ret <= size(in));
 	assert(ret <= size(out));
 	return ret;
