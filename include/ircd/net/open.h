@@ -17,6 +17,7 @@ namespace ircd::net
 	using open_callback = std::function<void (std::exception_ptr)>;
 
 	string_view common_name(const open_opts &);
+	string_view server_name(const open_opts &);
 
 	// Open existing socket with callback.
 	void open(socket &, const open_opts &, open_callback);
@@ -91,6 +92,16 @@ struct ircd::net::open_opts
 	/// some rfc2818/rfc2459 wildcard we will properly match that for you.
 	string_view common_name;
 
+	/// The server name identification string to send in the ClientHello.
+	/// If this is not set, then common_name is used (or if common_name is
+	/// empty, the value that is eventually used for common_name).
+	string_view server_name;
+
+	/// Option to toggle whether server name identification is sent. If
+	/// false, it will not be sent regardless of the string values having
+	/// been set. If true, it will be sent regardless.
+	bool send_sni { true };
+
 	/// Option to toggle whether to allow self-signed certificates. This
 	/// currently defaults to true to not break Matrix development but will
 	/// likely change later and require setting to true for specific conns.
@@ -119,6 +130,12 @@ ircd::net::open_opts::open_opts(const net::ipport &ipport,
 :hostport{hostport}
 ,ipport{ipport}
 {}
+
+inline ircd::string_view
+ircd::net::server_name(const open_opts &opts)
+{
+	return opts.server_name?: common_name(opts);
+}
 
 inline ircd::string_view
 ircd::net::common_name(const open_opts &opts)

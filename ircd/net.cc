@@ -2188,8 +2188,11 @@ ircd::net::socket::handshake(const open_opts &opts,
 {
 	log::debug
 	{
-		log, "%s handshaking for '%s' to:%ld$ms",
+		log, "%s handshaking to '%s' for '%s' to:%ld$ms",
 		loghead(*this),
+		opts.send_sni?
+			server_name(opts):
+			"<no sni>"_sv,
 		common_name(opts),
 		opts.handshake_timeout.count()
 	};
@@ -2205,6 +2208,10 @@ ircd::net::socket::handshake(const open_opts &opts,
 	};
 
 	set_timeout(opts.handshake_timeout);
+
+	if(opts.send_sni)
+		openssl::server_name(*this, server_name(opts));
+
 	ssl.set_verify_callback(std::move(verify_handler));
 	ssl.async_handshake(handshake_type::client, std::move(handshake_handler));
 }
