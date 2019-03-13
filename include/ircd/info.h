@@ -51,6 +51,9 @@ namespace ircd::info
 	#ifdef HAVE_SYS_UTSNAME_H
 	extern const ::utsname utsname;
 	#endif
+	extern const string_view kname;
+	extern const string_view kversion_str;
+	extern const int kversion[3];
 
 	// Third-party information
 	extern const int glibc_version[3];

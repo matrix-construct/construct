@@ -200,6 +200,46 @@ ircd::info::utsname{[]
 }()};
 #endif
 
+decltype(ircd::info::kname)
+ircd::info::kname
+{
+	#ifdef HAVE_SYS_UTSNAME_H
+	utsname.sysname
+	#endif
+};
+
+decltype(ircd::info::kversion_str)
+ircd::info::kversion_str
+{
+	#ifdef HAVE_SYS_UTSNAME_H
+	utsname.release
+	#endif
+};
+
+decltype(ircd::info::kversion)
+ircd::info::kversion
+{
+	[] // major
+	{
+		const auto str(split(kversion_str, '.').first);
+		return try_lex_cast<int>(str)?
+			lex_cast<int>(str):
+			0;
+	}(),
+
+	[] // minor
+	{
+		auto str(split(kversion_str, '.').second);
+		str = split(str, '.').first;
+		return try_lex_cast<int>(str)?
+			lex_cast<int>(str):
+			0;
+	}(),
+
+	// patch
+	0
+};
+
 //
 // System information
 //
