@@ -28,6 +28,8 @@ namespace ircd::rfc1035
 	extern const std::unordered_map<string_view, uint16_t> qtype;
 	extern const std::map<uint16_t, string_view> rqtype;
 
+	bool valid_label(const string_view &);
+	bool valid_name(const string_view &);
 	const_buffer make_name(const mutable_buffer &out, const string_view &fqdn);
 	size_t parse_name(const mutable_buffer &out, const const_buffer &in);
 

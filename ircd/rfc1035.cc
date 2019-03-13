@@ -419,6 +419,24 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 	return ret;
 }
 
+bool
+ircd::rfc1035::valid_name(const string_view &name)
+{
+	if(size(name) > NAME_MAX)
+		return false;
+
+	return rfc3986::valid_domain(std::nothrow, name);
+}
+
+bool
+ircd::rfc1035::valid_label(const string_view &label)
+{
+	if(size(label) > LABEL_MAX)
+		return false;
+
+	return rfc3986::valid_hostname(std::nothrow, label);
+}
+
 std::string
 ircd::rfc1035::header::debug()
 const
