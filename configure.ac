@@ -976,6 +976,7 @@ RB_CHK_SYSHEADER(openssl/x509.h, [OPENSSL_X509_H])
 RB_CHK_SYSHEADER(openssl/evp.h, [OPENSSL_EVP_H])
 RB_CHK_SYSHEADER(openssl/ripemd.h, [OPENSSL_RIPEMD_H])
 RB_CHK_SYSHEADER(openssl/dh.h, [OPENSSL_DH_H])
+RB_CHK_SYSHEADER(openssl/tls1.h, [OPENSSL_TLS1_H])
 AC_CHECK_LIB(ssl, SSL_version,
 [
 	have_ssl="yes"

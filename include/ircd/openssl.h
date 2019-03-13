@@ -123,9 +123,10 @@ namespace ircd::openssl
 	const X509 &current_cert(const X509_STORE_CTX &);
 	X509 &current_cert(X509_STORE_CTX &);
 
-	// SSL suite
+	// Cipher suite
 	string_view name(const SSL_CIPHER &);
 	const SSL_CIPHER *current_cipher(const SSL &);
+
 	string_view shared_ciphers(const mutable_buffer &buf, const SSL &);
 	string_view cipher_list(const SSL &, const int &priority);
 	std::string cipher_list(const SSL_CTX &, const int &priority = 0);
@@ -136,6 +137,9 @@ namespace ircd::openssl
 	void set_tmp_ecdh(SSL_CTX &, EC_KEY &);
 	void set_curves(SSL_CTX &, std::string list);
 	void set_curves(SSL &, std::string list);
+
+	// SNI suite
+	string_view server_name(const SSL &); // provided by client
 }
 
 /// OpenSSL BIO convenience utils and wraps; also secure file IO closures

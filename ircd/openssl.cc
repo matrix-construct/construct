@@ -19,6 +19,7 @@
 #include <RB_INC_OPENSSL_EVP_H
 #include <RB_INC_OPENSSL_RIPEMD_H
 #include <RB_INC_OPENSSL_DH_H
+#include <RB_INC_OPENSSL_TLS1_H
 
 #if defined(LIBRESSL_VERSION_NUMBER)
 static time_t ASN1_TIME_seconds(const ASN1_TIME *);
@@ -48,7 +49,18 @@ namespace ircd::openssl
 //
 
 //
-// SSL
+// SNI
+//
+
+ircd::string_view
+ircd::openssl::server_name(const SSL &ssl)
+{
+	const int type(::SSL_get_servername_type(&ssl));
+	return ::SSL_get_servername(&ssl, type);
+}
+
+//
+// Cipher suite
 //
 
 void
