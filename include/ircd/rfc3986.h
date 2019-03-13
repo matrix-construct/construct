@@ -35,6 +35,9 @@ namespace ircd::rfc3986
 	void valid_remote(const string_view &); // host + optional :port
 	bool valid_remote(std::nothrow_t, const string_view &);
 
+	uint16_t port(const string_view &remote); // get portnum from valid remote
+	string_view host(const string_view &remote); // get host without portnum
+
 	string_view encode(const mutable_buffer &, const string_view &url);
 	string_view encode(const mutable_buffer &, const json::members &);
 	string_view decode(const mutable_buffer &, const string_view &url);

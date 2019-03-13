@@ -265,6 +265,46 @@ catch(const qi::expectation_failure<const char *> &e)
 	};
 }
 
+ircd::string_view
+ircd::rfc3986::host(const string_view &str)
+try
+{
+	static const parser::rule<string_view> rule
+	{
+		raw[parser::host]
+		,"host"
+	};
+
+	string_view ret;
+	const char *start(str.data()), *const stop(start + str.size());
+	qi::parse(start, stop, eps > rule, ret);
+	return ret;
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure<error>{e};
+}
+
+uint16_t
+ircd::rfc3986::port(const string_view &str)
+try
+{
+	static const parser::rule<uint16_t> rule
+	{
+		(eps > parser::host) >> -(lit(':') >> parser::port)
+		,"port"
+	};
+
+	uint16_t ret(0);
+	const char *start(str.data()), *const stop(start + str.size());
+	qi::parse(start, stop, rule, ret);
+	return ret;
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure<error>{e};
+}
+
 bool
 ircd::rfc3986::valid_remote(std::nothrow_t,
                             const string_view &str)
