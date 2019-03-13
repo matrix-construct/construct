@@ -105,6 +105,28 @@ ircd::openssl::set_cipher_list(SSL &ssl,
 	call(::SSL_set_cipher_list, &ssl, list.c_str());
 }
 
+std::string
+ircd::openssl::cipher_list(const SSL_CTX &ctx,
+                           const int &priority)
+{
+	const custom_ptr<SSL> ssl
+	{
+		SSL_new(const_cast<SSL_CTX *>(&ctx)), SSL_free
+	};
+
+	std::stringstream ret;
+	for(int i(priority); priority? i <= priority : true; ++i)
+	{
+		const auto cipher(cipher_list(*ssl, i));
+		if(!empty(cipher))
+			ret << cipher << ':';
+		else
+			break;
+	}
+
+	return ret.str();
+}
+
 ircd::string_view
 ircd::openssl::cipher_list(const SSL &ssl,
                            const int &priority)

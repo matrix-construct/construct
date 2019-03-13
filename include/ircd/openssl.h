@@ -127,7 +127,8 @@ namespace ircd::openssl
 	string_view name(const SSL_CIPHER &);
 	const SSL_CIPHER *current_cipher(const SSL &);
 	string_view shared_ciphers(const mutable_buffer &buf, const SSL &);
-	string_view cipher_list(const SSL &, const int &priority = -1);
+	string_view cipher_list(const SSL &, const int &priority);
+	std::string cipher_list(const SSL_CTX &, const int &priority = 0);
 	void set_cipher_list(SSL &, const std::string &list);
 	void set_cipher_list(SSL_CTX &, const std::string &list);
 	void set_ecdh_auto(SSL_CTX &, const bool & = true);
