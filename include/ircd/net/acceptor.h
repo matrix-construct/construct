@@ -23,6 +23,8 @@ struct ircd::net::acceptor
 	using callback = listener::callback;
 	using proffer = listener::proffer;
 
+	IRCD_EXCEPTION(listener::error, error)
+
 	static log::log log;
 	static conf::item<milliseconds> timeout;
 	static conf::item<std::string> ssl_cipher_list;

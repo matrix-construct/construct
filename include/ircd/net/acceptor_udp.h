@@ -22,6 +22,8 @@ struct ircd::net::acceptor_udp
 	using datagram = listener_udp::datagram;
 	using flag = listener_udp::flag;
 
+	IRCD_EXCEPTION(listener_udp::error, error)
+
 	static constexpr log::log &log {acceptor::log};
 	static ip::udp::socket::message_flags flags(const flag &);
 
