@@ -1092,7 +1092,7 @@ namespace ircd::net
 decltype(ircd::net::acceptor::log)
 ircd::net::acceptor::log
 {
-	"listener"
+	"net.listen"
 };
 
 decltype(ircd::net::acceptor::timeout)
