@@ -33,6 +33,9 @@ struct ircd::net::listener
 	std::shared_ptr<net::acceptor> acceptor;
 
   public:
+	operator const net::acceptor &() const;
+	operator net::acceptor &();
+
 	explicit operator json::object() const;
 	string_view name() const;
 

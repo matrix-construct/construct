@@ -1012,6 +1012,21 @@ const
 	return acceptor->opts;
 }
 
+ircd::net::listener::operator
+net::acceptor &()
+{
+	assert(acceptor);
+	return *acceptor;
+}
+
+ircd::net::listener::operator
+const net::acceptor &()
+const
+{
+	assert(acceptor);
+	return *acceptor;
+}
+
 //
 // listener_udp
 //
