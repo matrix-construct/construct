@@ -483,6 +483,7 @@ ircd::m::append(json::stack::object &object,
 			0UL
 	};
 
+	#if defined(RB_DEBUG) && 0
 	if(!has_client_txnid && !txnid_idx && sender_is_user && opts.query_txnid)
 		log::dwarning
 		{
@@ -491,6 +492,7 @@ ircd::m::append(json::stack::object &object,
 			json::get<"sender"_>(event),
 			json::get<"room_id"_>(event)
 		};
+	#endif
 
 	object.append(event);
 
