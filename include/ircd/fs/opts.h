@@ -21,16 +21,28 @@ namespace ircd::fs
 /// Options common to all operations
 struct ircd::fs::opts
 {
-    /// Offset in the file.
-    off_t offset {0};
+	static const int highest_priority;
 
-	/// Request priority. Lower value takes priority over higher.
+	/// Offset in the file. If this is -1, for writes, it indicates an append
+	/// at the end of the file (RWF_APPEND or legacy non-atomic lseek()).
+	off_t offset {0};
+
+	/// Request priority. Lower value takes priority over higher. The lowest
+	/// possible priority value is special, on supporting platforms (RWF_HIPRI).
+	/// One can either simply set the integer minimum or use the extern value.
 	int8_t priority {0};
 
 	/// Submits the I/O request immediately rather than allowing IRCd to
 	/// queue requests for a few iterations of the ircd::ios event loop.
 	/// (only relevant to aio).
 	bool nodelay {false};
+
+	/// Setting this to false enables non-blocking behavior. If the operation
+	/// would block, EAGAIN is returned. This is only available with RWF_NOWAIT
+	/// on newer systems, otherwise this value is ignored and is always true.
+	/// This feature makes up for the fact that O_NONBLOCK when opening the
+	/// file is ineffective for regular files.
+	bool blocking {true};
 
 	/// Determines whether this operation is conducted via AIO. If not, a
 	/// direct syscall is made. Using AIO will only block one ircd::ctx while

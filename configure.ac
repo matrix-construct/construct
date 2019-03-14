@@ -711,6 +711,7 @@ AC_CHECK_FUNCS([        \
 	vsnprintf           \
 	posix_fadvise       \
 	pwritev2            \
+	preadv2             \
 ])
 
 AC_SEARCH_LIBS(dlinfo, dl, AC_DEFINE(HAVE_DLINFO, 1, [Define if you have dlinfo]))

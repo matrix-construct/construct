@@ -408,6 +408,7 @@ ircd::fs::flush(const fd &fd,
 
 namespace ircd::fs
 {
+	static size_t _read(const fd &, const const_iovec_view &, const read_opts &);
 	static size_t read(const fd &, const const_iovec_view &, const read_opts &);
 }
 
@@ -568,7 +569,7 @@ ircd::fs::read(const fd &fd,
 }
 #pragma GCC diagnostic pop
 
-/// Lowest-level read() call. This call only conducts a single operation
+/// Lowest-level'ish read() call. This call only conducts a single operation
 /// (no looping) and can return a partial read(). It does have branches
 /// for various read_opts. The arguments involve `struct ::iovec` which
 /// we do not expose to the ircd.h API; thus this function is internal to
@@ -584,6 +585,38 @@ ircd::fs::read(const fd &fd,
 		return aio::read(fd, iov, opts);
 	#endif
 
+	return _read(fd, iov, opts);
+}
+
+#ifdef HAVE_PREADV2
+size_t
+ircd::fs::_read(const fd &fd,
+                const const_iovec_view &iov,
+                const read_opts &opts)
+{
+	int flags{0};
+
+	if(aio::support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
+		flags |= RWF_HIPRI;
+
+	if(aio::support_nowait && !opts.blocking)
+		flags |= RWF_NOWAIT;
+
+	const auto ret
+	{
+		opts.interruptible?
+			syscall(::preadv2, fd, iov.data(), iov.size(), opts.offset, flags):
+			syscall_nointr(::preadv2, fd, iov.data(), iov.size(), opts.offset, flags)
+	};
+
+	return size_t(ret);
+}
+#else
+size_t
+ircd::fs::_read(const fd &fd,
+                const const_iovec_view &iov,
+                const read_opts &opts)
+{
 	const auto ret
 	{
 		opts.interruptible?
@@ -593,6 +626,7 @@ ircd::fs::read(const fd &fd,
 
 	return size_t(ret);
 }
+#endif // HAVE_PREADV2
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -738,17 +772,39 @@ ircd::fs::append(const string_view &path,
 	return append(fd, bufs, opts);
 }
 
+// When we have pwritev2() we can use RWF_APPEND indicated by
+// the -1. Otherwise, we don't keep flags in userspace and we
+// don't check the fd for whether it was opened with O_APPEND
+// so the user may just have to eat the cost of an extra lseek().
+#ifdef HAVE_PWRITEV2
 size_t
 ircd::fs::append(const fd &fd,
                  const const_buffers &bufs,
                  const write_opts &opts_)
 {
 	auto opts(opts_);
-	if(!opts.offset)
+	if(!aio::support_append)
+	{
+		if(!opts.offset)
+			opts.offset = syscall(::lseek, fd, 0, SEEK_END);
+	}
+	else opts.offset = -1;
+
+	return write(fd, bufs, opts);
+}
+#else
+size_t
+ircd::fs::append(const fd &fd,
+                 const const_buffers &bufs,
+                 const write_opts &opts_)
+{
+	auto opts(opts_);
+	if(!opts.offset || opts.offset == -1)
 		opts.offset = syscall(::lseek, fd, 0, SEEK_END);
 
 	return write(fd, bufs, opts);
 }
+#endif // HAVE_PWRITEV2
 
 ircd::const_buffer
 ircd::fs::write(const string_view &path,
@@ -812,8 +868,8 @@ ircd::fs::write(const fd &fd,
 			info::iov_max
 		};
 
+	size_t off(0);
 	write_opts opts(opts_);
-	size_t off(opts.offset - opts_.offset);
 	assert(bufs.size() <= info::iov_max);
 	struct ::iovec iovbuf[bufs.size()]; do
 	{
@@ -825,9 +881,8 @@ ircd::fs::write(const fd &fd,
 		opts.offset += write(fd, iov, opts);
 		assert(opts.offset >= opts_.offset);
 		off = opts.offset - opts_.offset;
-		assert(off <= buffers::size(bufs));
 	}
-	while(opts.all && off < buffers::size(bufs));
+	while(opts.all && opts_.offset >= 0 && off < buffers::size(bufs));
 	assert(opts.offset >= opts_.offset);
 	assert(ssize_t(off) == opts.offset - opts_.offset);
 	assert(!opts.all || off == buffers::size(bufs));
@@ -862,10 +917,34 @@ ircd::fs::_write(const fd &fd,
 {
 	int flags{0};
 
+	assert(opts.offset >= 0 || aio::support_append);
+	if(aio::support_append && opts.offset == -1)
+		flags |= RWF_APPEND;
+
+	if(aio::support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
+		flags |= RWF_HIPRI;
+
+	if(aio::support_nowait && !opts.blocking)
+		flags |= RWF_NOWAIT;
+
+	if(aio::support_dsync && opts.sync && !opts.metadata)
+		flags |= RWF_DSYNC;
+
+	if(aio::support_sync && opts.sync && opts.metadata)
+		flags |= RWF_SYNC;
+
+	// Manpages sez that when appending with RWF_APPEND, the offset has no
+	// effect on the write; but if the value of the offset is -1 then the
+	// fd's offset is updated, otherwise it is not.
+	const off_t &offset
+	{
+		(flags & RWF_APPEND) && !opts.update_offset? 0 : opts.offset
+	};
+
 	return
 		opts.interruptible?
-			syscall(::pwritev2, fd, iov.data(), iov.size(), opts.offset, flags):
-			syscall_nointr(::pwritev2, fd, iov.data(), iov.size(), opts.offset, flags);
+			syscall(::pwritev2, fd, iov.data(), iov.size(), offset, flags):
+			syscall_nointr(::pwritev2, fd, iov.data(), iov.size(), offset, flags);
 }
 #else
 size_t
@@ -894,21 +973,61 @@ decltype(ircd::fs::aio::support)
 extern __attribute__((weak))
 ircd::fs::aio::support;
 
-decltype(ircd::fs::aio::support_fsync)
+decltype(ircd::fs::aio::support_sync)
 extern __attribute__((weak))
-ircd::fs::aio::support_fsync;
+ircd::fs::aio::support_sync
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 7
+};
 
-decltype(ircd::fs::aio::support_fdsync)
+decltype(ircd::fs::aio::support_dsync)
 extern __attribute__((weak))
-ircd::fs::aio::support_fdsync;
+ircd::fs::aio::support_dsync
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 7
+};
 
-decltype(ircd::fs::aio::support_append)
+decltype(ircd::fs::aio::support_hipri)
 extern __attribute__((weak))
-ircd::fs::aio::support_append;
+ircd::fs::aio::support_hipri
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 6
+};
 
 decltype(ircd::fs::aio::support_nowait)
 extern __attribute__((weak))
-ircd::fs::aio::support_nowait;
+ircd::fs::aio::support_nowait
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 14
+};
+
+decltype(ircd::fs::aio::support_append)
+extern __attribute__((weak))
+ircd::fs::aio::support_append
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 16
+};
+
+decltype(ircd::fs::aio::support_fsync)
+extern __attribute__((weak))
+ircd::fs::aio::support_fsync
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 18
+};
+
+decltype(ircd::fs::aio::support_fdsync)
+extern __attribute__((weak))
+ircd::fs::aio::support_fdsync
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 18
+};
 
 decltype(ircd::fs::aio::MAX_EVENTS)
 extern __attribute__((weak))
@@ -1245,6 +1364,12 @@ decltype(ircd::fs::opts_default)
 ircd::fs::opts_default
 {};
 
+decltype(ircd::fs::opts::highest_priority)
+ircd::fs::opts::highest_priority
+{
+	std::numeric_limits<decltype(priority)>::min()
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // fs/iov.h
@@ -1255,6 +1380,7 @@ ircd::fs::make_iov(const iovec_view &iov,
                    const mutable_buffers &bufs,
                    const size_t &offset)
 {
+	assert(offset <= buffers::size(bufs));
 	const size_t max
 	{
 		std::min(iov.size(), bufs.size())
@@ -1293,6 +1419,7 @@ ircd::fs::make_iov(const iovec_view &iov,
                    const const_buffers &bufs,
                    const size_t &offset)
 {
+	assert(offset <= buffers::size(bufs));
 	const size_t max
 	{
 		std::min(iov.size(), bufs.size())

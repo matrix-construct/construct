@@ -66,6 +66,23 @@ struct ircd::fs::write_opts
 	/// in the useful propagation of an exception for this event.
 	bool interruptible {true};
 
+	/// Whether to update the fd's offset on appends. This happens naturally
+	/// when the file is opened in append mode. If not, we get the same per-
+	/// write atomic seek behavior if RWF_APPEND is supported. In the latter
+	/// case, this option determines whether the fd's offset is affected.
+	bool update_offset {true};
+
+	/// Whether to RWF_SYNC or RWF_DSYNC depending on the metadata option. This
+	/// is a range-sync, it only covers the offset and size of the write;
+	/// perhaps a worthy replacement for sync_file_range(2).
+	bool sync {false};
+
+	/// When sync is true: if metadata is true RWF_SYNC (like fsync(2)) is used,
+	/// otherwise RWF_DSYNC (like fdsync(2)) is used. This is only if available,
+	/// Careful, if it is not available you are responsible for following the
+	/// write with fsync(2)/fdsync(2) yourself.
+	bool metadata {false};
+
 	write_opts(const off_t &);
 	write_opts() = default;
 };

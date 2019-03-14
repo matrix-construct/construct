@@ -30,6 +30,9 @@ namespace ircd::fs::aio
 	extern const bool support_fdsync;
 	extern const bool support_append;
 	extern const bool support_nowait;
+	extern const bool support_hipri;
+	extern const bool support_sync;
+	extern const bool support_dsync;
 
 	extern const size_t MAX_EVENTS;
 	extern const size_t MAX_REQPRIO;
