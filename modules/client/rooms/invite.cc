@@ -13,11 +13,6 @@
 using namespace ircd;
 
 extern "C" m::event::id::buf
-invite__room_user(const m::room &,
-                  const m::user::id &target,
-                  const m::user::id &sender);
-
-extern "C" m::event::id::buf
 invite__foreign(const m::event &);
 
 resource::response
@@ -37,7 +32,7 @@ post__invite(client &client,
 
 	const auto event_id
 	{
-		invite__room_user(room_id, target, sender)
+		m::invite(room_id, target, sender)
 	};
 
 	return resource::response
@@ -47,9 +42,11 @@ post__invite(client &client,
 }
 
 m::event::id::buf
-invite__room_user(const m::room &room,
-                  const m::user::id &target,
-                  const m::user::id &sender)
+IRCD_MODULE_EXPORT
+ircd::m::invite(const m::room &room,
+                const m::user::id &target,
+                const m::user::id &sender,
+                json::iov &content)
 {
 	if(!exists(room))
 		throw m::NOT_FOUND
@@ -59,7 +56,6 @@ invite__room_user(const m::room &room,
 		};
 
 	json::iov event;
-	json::iov content;
 	const json::iov::push push[]
 	{
 		{ event,    { "type",        "m.room.member"  }},

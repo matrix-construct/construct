@@ -3884,14 +3884,24 @@ ircd::m::invite(const room &room,
                 const id::user &target,
                 const id::user &sender)
 {
-	using prototype = event::id::buf (const m::room &, const id::user &, const id::user &);
+	json::iov content;
+	return invite(room, target, sender, content);
+}
 
-	static mods::import<prototype> function
+ircd::m::event::id::buf
+ircd::m::invite(const room &room,
+                const id::user &target,
+                const id::user &sender,
+                json::iov &content)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &, const id::user &, json::iov &);
+
+	static mods::import<prototype> call
 	{
-		"client_rooms", "invite__room_user"
+		"client_rooms", "ircd::m::invite"
 	};
 
-	return function(room, target, sender);
+	return call(room, target, sender, content);
 }
 
 ircd::m::event::id::buf
