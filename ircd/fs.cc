@@ -601,6 +601,7 @@ ircd::fs::read(const fd &fd,
 
 namespace ircd::fs
 {
+	static size_t _write(const fd &, const const_iovec_view &, const write_opts &);
 	static size_t write(const fd &, const const_iovec_view &, const write_opts &);
 }
 
@@ -834,7 +835,7 @@ ircd::fs::write(const fd &fd,
 }
 #pragma GCC diagnostic pop
 
-/// Lowest-level write() call. This call only conducts a single operation
+/// Lowest-level'ish write() call. This call only conducts a single operation
 /// (no looping) and can return early with a partial write(). It does have
 /// branches for various write_opts. The arguments involve `struct ::iovec`
 /// which we do not expose to the ircd.h API; thus this function is internal to
@@ -850,15 +851,34 @@ ircd::fs::write(const fd &fd,
 		return aio::write(fd, iov, opts);
 	#endif
 
-	const auto ret
-	{
+	return _write(fd, iov, opts);
+}
+
+#ifdef HAVE_PWRITEV2
+size_t
+ircd::fs::_write(const fd &fd,
+                 const const_iovec_view &iov,
+                 const write_opts &opts)
+{
+	int flags{0};
+
+	return
+		opts.interruptible?
+			syscall(::pwritev2, fd, iov.data(), iov.size(), opts.offset, flags):
+			syscall_nointr(::pwritev2, fd, iov.data(), iov.size(), opts.offset, flags);
+}
+#else
+size_t
+ircd::fs::_write(const fd &fd,
+                 const const_iovec_view &iov,
+                 const write_opts &opts)
+{
+	return
 		opts.interruptible?
 			syscall(::pwritev, fd, iov.data(), iov.size(), opts.offset):
-			syscall_nointr(::pwritev, fd, iov.data(), iov.size(), opts.offset)
-	};
-
-	return size_t(ret);
+			syscall_nointr(::pwritev, fd, iov.data(), iov.size(), opts.offset);
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
