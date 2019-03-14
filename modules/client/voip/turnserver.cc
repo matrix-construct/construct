@@ -26,20 +26,62 @@ turnserver_resource
 	}
 };
 
-resource::response
-get__turnserver(client &client, const resource::request &request)
-{
-	return resource::response
-	{
-		client, http::OK
-	};
-}
+static resource::response
+get__turnserver(client &client,
+                const resource::request &request);
 
 resource::method
 turnserver_get
 {
 	turnserver_resource, "GET", get__turnserver,
 	{
-		//get_turnserver.REQUIRES_AUTH
+		turnserver_get.REQUIRES_AUTH |
+		turnserver_get.RATE_LIMITED
 	}
 };
+
+
+conf::item<std::string>
+turnserver_username
+{
+	{ "name",     "ircd.client.voip.turnserver.username" },
+	{ "default",  string_view{}                          },
+};
+
+conf::item<std::string>
+turnserver_password
+{
+	{ "name",     "ircd.client.voip.turnserver.password" },
+	{ "default",  string_view{}                          },
+};
+
+conf::item<seconds>
+turnserver_ttl
+{
+	{ "name",     "ircd.client.voip.turnserver.ttl" },
+	{ "default",  86400                             },
+};
+
+// note: This has to be a fully valid JSON array of strings
+conf::item<std::string>
+turnserver_uris
+{
+	{ "name",     "ircd.client.voip.turnserver.uris" },
+	{ "default",  json::empty_array                  },
+};
+
+resource::response
+get__turnserver(client &client,
+                const resource::request &request)
+{
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "username",  string_view{turnserver_username}  },
+			{ "password",  string_view{turnserver_password}  },
+			{ "uris",      string_view{turnserver_uris}      },
+			{ "ttl",       seconds(turnserver_ttl).count()   },
+		}
+	};
+}
