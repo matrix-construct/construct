@@ -66,6 +66,8 @@ ircd::mapi::static_destruction;
 // mods::mod::mod
 //
 
+static void (*their_terminate)();
+
 ircd::mods::mod::mod(std::string path,
                      const load_mode::type &mode)
 try
@@ -89,22 +91,22 @@ try
 	// and destruction but not during its lifetime.
 	const ctx::uninterruptible ui;
 
+	// The existing terminate handler is saved here for restoration.
+	their_terminate = std::get_terminate();
+
 	// This will be the terminate handler installed during the dlopen() and
 	// uninstalled after it completes.
-	const auto ours([]
+	const auto ours{[]
 	{
+		// Immediately go back to their terminate so if our terminate
+		// actually itself terminates it won't loop.
+		std::set_terminate(their_terminate);
 		log::critical
 		{
 			log, "Error during the static construction of module (fatal) :%s",
 			what(std::current_exception())
 		};
-	});
-
-	// The existing terminate handler is saved here for restoration.
-	const auto theirs
-	{
-		std::get_terminate()
-	};
+	}};
 
 	// Reference this instance at the top of the loading stack.
 	loading.emplace_front(this);
@@ -116,9 +118,9 @@ try
 
 	// Set the terminate handler for the duration of the dlopen().
 	std::set_terminate(ours);
-	const unwind pop_terminate{[&theirs]
+	const unwind pop_terminate{[]
 	{
-		std::set_terminate(theirs);
+		std::set_terminate(their_terminate);
 	}};
 
 	return boost::dll::shared_library
