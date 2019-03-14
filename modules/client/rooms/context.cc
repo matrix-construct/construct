@@ -54,7 +54,8 @@ static void
 _append(json::stack::array &,
         const m::event &,
         const m::event::idx &,
-        const m::user::room &);
+        const m::user::room &,
+        const bool &query_txnid = true);
 
 resource::response
 get__context(client &client,
@@ -215,7 +216,7 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				return;
 
-			_append(array, event, event_idx, user_room);
+			_append(array, event, event_idx, user_room, false);
 		});
 	}
 
@@ -226,7 +227,8 @@ void
 _append(json::stack::array &chunk,
         const m::event &event,
         const m::event::idx &event_idx,
-        const m::user::room &user_room)
+        const m::user::room &user_room,
+        const bool &query_txnid)
 {
 	m::event_append_opts opts;
 	opts.event_idx = &event_idx;

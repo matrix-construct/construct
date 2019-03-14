@@ -478,12 +478,12 @@ ircd::m::append(json::stack::object &object,
 
 	const auto txnid_idx
 	{
-		!has_client_txnid && sender_is_user?
+		!has_client_txnid && sender_is_user && opts.query_txnid?
 			opts.user_room->get(std::nothrow, "ircd.client.txnid", at<"event_id"_>(event)):
 			0UL
 	};
 
-	if(!has_client_txnid && !txnid_idx && sender_is_user)
+	if(!has_client_txnid && !txnid_idx && sender_is_user && opts.query_txnid)
 		log::dwarning
 		{
 			log, "Could not find transaction_id for %s from %s in %s",

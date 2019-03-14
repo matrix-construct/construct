@@ -20,6 +20,7 @@ namespace ircd::m
 		const id::user *user_id {nullptr};
 		const room *user_room {nullptr};
 		long age {std::numeric_limits<long>::min()};
+		bool query_txnid {true};
 	};
 
 	void append(json::stack::object &, const event &, const event_append_opts & = {});
