@@ -20,6 +20,8 @@ namespace ircd::net
 	std::ostream &operator<<(std::ostream &s, const acceptor &);
 
 	extern conf::item<bool> listen;
+
+	std::string cipher_list(const acceptor &);
 }
 
 struct ircd::net::listener

@@ -945,6 +945,13 @@ ircd::net::listen
 // listener
 //
 
+std::string
+ircd::net::cipher_list(const acceptor &a)
+{
+	auto &ssl(const_cast<acceptor &>(a).ssl);
+	return openssl::cipher_list(*ssl.native_handle());
+}
+
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const listener &a)
 {

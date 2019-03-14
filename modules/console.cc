@@ -4431,6 +4431,41 @@ console_cmd__net__listen__list(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__net__listen__ciphers(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"name",
+	}};
+
+	const auto &name
+	{
+		param["name"]
+	};
+
+	using list = std::list<net::listener>;
+
+	static mods::import<list> listeners
+	{
+		"s_listen", "listeners"
+	};
+
+	const list &l(listeners);
+	for(const auto &listener : l)
+	{
+		if(name && listener.name() != name)
+			continue;
+
+		out << listener.name() << ": " << std::endl
+		    << cipher_list(listener)
+		    << std::endl
+		    << std::endl;
+	}
+
+	return true;
+}
+
+bool
 console_cmd__net__listen(opt &out, const string_view &line)
 {
 	if(empty(line))
