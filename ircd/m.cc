@@ -2161,6 +2161,19 @@ ircd::m::event_filter::event_filter(const mutable_buffer &buf,
 //
 
 ircd::m::event::id::buf
+ircd::m::rooms::summary_del(const m::room &r)
+{
+	using prototype = event::id::buf (const m::room &);
+
+	static mods::import<prototype> call
+	{
+		"m_rooms", "ircd::m::rooms::summary_del"
+	};
+
+	return call(r);
+}
+
+ircd::m::event::id::buf
 ircd::m::rooms::summary_set(const m::room &room)
 {
 	if(!exists(room))

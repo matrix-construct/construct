@@ -399,6 +399,25 @@ ircd::m::rooms::_fetch_update_(const net::hostport &hp,
 }
 
 ircd::m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::rooms::summary_del(const m::room &room)
+{
+	char state_key_buf[m::event::STATE_KEY_MAX_SIZE];
+	const m::room::state state{public_room_id};
+	const m::event::idx &event_idx
+	{
+		state.get("ircd.rooms", make_state_key(state_key_buf, room.room_id))
+	};
+
+	const m::event::id::buf event_id
+	{
+		m::event_id(event_idx)
+	};
+
+	return redact(public_room_id, m::me, event_id, "delisted");
+}
+
+ircd::m::event::id::buf
 ircd::m::rooms::_summary_set(const m::room::id &room_id,
                              const json::object &summary)
 {

@@ -44,4 +44,5 @@ namespace ircd::m::rooms
 	json::object summary_chunk(const m::room &, const mutable_buffer &out);
 	event::id::buf summary_set(const m::room::id &, const json::object &summary);
 	event::id::buf summary_set(const m::room &);
+	event::id::buf summary_del(const m::room &);
 }
