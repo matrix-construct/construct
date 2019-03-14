@@ -882,6 +882,14 @@ decltype(ircd::fs::aio::support_fdsync)
 extern __attribute__((weak))
 ircd::fs::aio::support_fdsync;
 
+decltype(ircd::fs::aio::support_append)
+extern __attribute__((weak))
+ircd::fs::aio::support_append;
+
+decltype(ircd::fs::aio::support_nowait)
+extern __attribute__((weak))
+ircd::fs::aio::support_nowait;
+
 decltype(ircd::fs::aio::MAX_REQPRIO)
 extern __attribute__((weak))
 ircd::fs::aio::MAX_REQPRIO;

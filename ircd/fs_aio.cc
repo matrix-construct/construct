@@ -33,6 +33,22 @@ ircd::fs::aio::support
 	true
 };
 
+/// True if RWF_NOWAIT is support by AIO.
+decltype(ircd::fs::aio::support_nowait)
+ircd::fs::aio::support_nowait
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 14
+};
+
+/// True if RWF_APPEND is support by AIO.
+decltype(ircd::fs::aio::support_append)
+ircd::fs::aio::support_append
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 16
+};
+
 /// True if IOCB_CMD_FSYNC is supported by AIO. If this is false then
 /// fs::fsync_opts::async=true flag is ignored.
 decltype(ircd::fs::aio::support_fsync)
