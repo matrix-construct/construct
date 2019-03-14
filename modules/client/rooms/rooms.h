@@ -204,3 +204,13 @@ ircd::resource::response
 get__initialsync(ircd::client &,
                  const ircd::resource::request &,
                  const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// report.cc
+//
+
+ircd::resource::response
+post__report(ircd::client &,
+             const ircd::resource::request &,
+             const ircd::m::room::id &);

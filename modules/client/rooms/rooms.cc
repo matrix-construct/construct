@@ -179,6 +179,9 @@ post_rooms(client &client,
 	if(cmd == "redact")
 		return post__redact(client, request, room_id);
 
+	if(cmd == "report")
+		return post__report(client, request, room_id);
+
 	throw NOT_FOUND
 	{
 		"/rooms command not found"
