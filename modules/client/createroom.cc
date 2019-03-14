@@ -339,8 +339,17 @@ try
 
 	for(const json::string &_user_id : json::get<"invite"_>(c)) try
 	{
+		json::iov content;
+		const json::iov::add is_direct // Conditionally add is_direct
+		{
+			content, json::get<"is_direct"_>(c),
+			{
+				"is_direct", []() -> json::value { return json::literal_true; }
+			}
+		};
+
 		const m::user::id &user_id{_user_id};
-		invite(room, user_id, creator);
+		invite(room, user_id, creator, content);
 	}
 	catch(const std::exception &e)
 	{
