@@ -63,6 +63,9 @@ struct ircd::fs::aio::system
 	void handle(const boost::system::error_code &, const size_t) noexcept;
 	void set_handle();
 
+	void dequeue_one(const std::error_code &);
+	void dequeue_all(const std::error_code &);
+	size_t io_submit();
 	size_t submit();
 	void chase() noexcept;
 

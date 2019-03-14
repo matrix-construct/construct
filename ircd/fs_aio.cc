@@ -698,16 +698,17 @@ try
 		in_flight == 0
 	};
 
-	const auto submitted
+	size_t submitted; do
 	{
-		syscall<SYS_io_submit>(idp, qcount, queue.data())
-	};
+		submitted = io_submit();
+	}
+	while(qcount > 0 && !submitted);
 
 	in_flight += submitted;
 	qcount -= submitted;
 	assert(!qcount);
 
-	stats.submits++;
+	stats.submits += bool(submitted);
 	stats.cur_queued -= submitted;
 	stats.cur_submits += submitted;
 	stats.max_submits = std::max(stats.max_submits, stats.cur_submits);
@@ -721,24 +722,70 @@ try
 }
 catch(const std::system_error &e)
 {
-	using std::errc;
 	switch(e.code().value())
 	{
 		// EAGAIN may be thrown to prevent blocking. TODO: handle
-		case int(errc::resource_unavailable_try_again):
-			//throw;
+		case int(std::errc::resource_unavailable_try_again):
+			break;
+	}
 
+	ircd::terminate{ircd::error
+	{
+		"AIO(%p) system::submit() qcount:%zu :%s",
+		this,
+		qcount,
+		e.what()
+	}};
+}
+
+size_t
+ircd::fs::aio::system::io_submit()
+try
+{
+	return syscall<SYS_io_submit>(idp, qcount, queue.data());
+}
+catch(const std::system_error &e)
+{
+	switch(e.code().value())
+	{
 		// Manpages sez that EBADF is thrown if the fd in the FIRST iocb has
 		// an issue. TODO: handle this by tossing the first iocb and continue.
-		case int(errc::bad_file_descriptor):
-			//throw;
+		case int(std::errc::bad_file_descriptor):
+			dequeue_one(e.code());
+			return 0;
 
-		// All other errors unexpected.
-		default: ircd::terminate{ircd::error
-		{
-			"AIO(%p) system::submit() qcount:%zu :%s", this, qcount, e.what()
-		}};
+		// Do we have to kill all the requests just because one has EINVAL? Can
+		// we just find the one at issue?
+		case int(std::errc::invalid_argument):
+			dequeue_all(e.code());
+			return 0;
 	}
+
+	throw;
+}
+
+void
+ircd::fs::aio::system::dequeue_all(const std::error_code &ec)
+{
+	while(qcount > 0)
+		dequeue_one(ec);
+}
+
+void
+ircd::fs::aio::system::dequeue_one(const std::error_code &ec)
+{
+	assert(qcount > 0);
+	iocb *const cb(queue.front());
+	std::rotate(begin(queue), begin(queue)+1, end(queue));
+	stats.cur_queued--;
+	qcount--;
+
+	io_event result {0};
+	result.data = cb->aio_data;
+	result.obj = uintptr_t(cb);
+	result.res = -1;
+	result.res2 = ec.value();
+	handle_event(result);
 }
 
 void
