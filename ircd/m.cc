@@ -3950,6 +3950,7 @@ ircd::m::message(const room &room,
 }
 
 ircd::m::event::id::buf
+__attribute__((stack_protect))
 ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
@@ -3967,6 +3968,7 @@ ircd::m::send(const room &room,
 }
 
 ircd::m::event::id::buf
+__attribute__((stack_protect))
 ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
@@ -4001,6 +4003,7 @@ ircd::m::send(const room &room,
 }
 
 ircd::m::event::id::buf
+__attribute__((stack_protect))
 ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
@@ -4017,6 +4020,7 @@ ircd::m::send(const room &room,
 }
 
 ircd::m::event::id::buf
+__attribute__((stack_protect))
 ircd::m::send(const room &room,
               const m::id::user &sender,
               const string_view &type,
