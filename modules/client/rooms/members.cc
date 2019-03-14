@@ -17,26 +17,57 @@ get__members(client &client,
              const resource::request &request,
              const m::room::id &room_id)
 {
-	const m::room::members members
+	const m::room room
 	{
 		room_id
 	};
 
-	std::vector<json::value> ret;
-	ret.reserve(32);
+	if(!exists(room))
+		throw m::NOT_FOUND
+		{
+			"Room %s does not exist.",
+			string_view{room_id}
+		};
 
-	members.for_each([&ret](const m::event &event)
+	if(!room.visible(request.user_id))
+		throw m::ACCESS_DENIED
+		{
+			"You do not have permission to view %s members.",
+			string_view{room_id}
+		};
+
+	resource::response::chunked response
 	{
-		ret.emplace_back(event);
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::array chunk
+	{
+		top, "chunk"
+	};
+
+	const m::room::members members
+	{
+		room
+	};
+
+	members.for_each([&request, &chunk]
+	(const m::event &event)
+	{
+		chunk.append(event);
 	});
 
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "chunk", json::value { ret.data(), ret.size() } }
-		}
-	};
+	return response;
 }
 
 resource::response
@@ -44,32 +75,76 @@ get__joined_members(client &client,
                     const resource::request &request,
                     const m::room::id &room_id)
 {
-	const m::room::members members
+	const m::room room
 	{
 		room_id
 	};
 
-	std::vector<json::member> ret;
-	ret.reserve(32);
-
-	members.for_each("join", [&ret](const m::event &event)
-	{
-		ret.emplace_back(json::member
+	if(!exists(room))
+		throw m::NOT_FOUND
 		{
-			at<"sender"_>(event), at<"content"_>(event)
+			"Room %s does not exist.",
+			string_view{room_id}
+		};
+
+	if(!room.visible(request.user_id))
+		throw m::ACCESS_DENIED
+		{
+			"You do not have permission to view %s joined members.",
+			string_view{room_id}
+		};
+
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::object joined
+	{
+		top, "joined"
+	};
+
+	const m::room::members members
+	{
+		room
+	};
+
+	members.for_each("join", m::room::members::closure{[&joined, &room]
+	(const m::user::id &user_id)
+	{
+		const m::event::idx &event_idx
+		{
+			room.get(std::nothrow, "m.room.member", user_id)
+		};
+
+		if(!event_idx)
+			return;
+
+		json::stack::object room_member
+		{
+			joined, user_id
+		};
+
+		m::get(std::nothrow, event_idx, "content", [&room_member]
+		(const json::object &content)
+		{
+			for(const auto &[key, val] : content)
+				json::stack::member
+				{
+					room_member, key, val
+				};
 		});
-	});
+	}});
 
-	const json::strung joined
-	{
-		ret.data(), ret.data() + ret.size()
-	};
-
-	return resource::response
-	{
-		client, json::members
-		{
-			{ "joined", joined }
-		}
-	};
+	return response;
 }
