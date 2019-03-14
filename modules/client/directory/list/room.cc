@@ -93,6 +93,25 @@ put__list_room(client &client,
 		request.at("visibility")
 	};
 
+	switch(hash(visibility))
+	{
+		case "public"_:
+			// We set an empty summary for this room because
+			// we already have its state on this server;
+			m::rooms::summary_set(room.room_id, json::object{});
+			break;
+
+		case "private"_:
+			m::rooms::summary_del(room.room_id);
+			break;
+
+		default: throw m::UNSUPPORTED
+		{
+			"visibility type '%s' is not supported here",
+			string_view{visibility}
+		};
+	}
+
 	return resource::response
 	{
 		client, http::OK
