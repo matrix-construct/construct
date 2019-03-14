@@ -276,6 +276,16 @@ client_module_LTLIBRARIES += \
 	###
 
 #
+# client/directory/list
+#
+
+client_client_directory_list_room_la_SOURCES = client/directory/list/room.cc
+
+client_module_LTLIBRARIES += \
+	client/client_directory_list_room.la \
+	###
+
+#
 # client/voip/
 #
 
