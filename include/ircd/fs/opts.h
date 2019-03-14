@@ -14,6 +14,8 @@
 namespace ircd::fs
 {
 	struct opts extern const opts_default;
+
+	int reqprio(int);
 }
 
 /// Options common to all operations

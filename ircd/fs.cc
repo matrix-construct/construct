@@ -910,13 +910,16 @@ decltype(ircd::fs::aio::support_nowait)
 extern __attribute__((weak))
 ircd::fs::aio::support_nowait;
 
-decltype(ircd::fs::aio::MAX_REQPRIO)
-extern __attribute__((weak))
-ircd::fs::aio::MAX_REQPRIO;
-
 decltype(ircd::fs::aio::MAX_EVENTS)
 extern __attribute__((weak))
 ircd::fs::aio::MAX_EVENTS;
+
+decltype(ircd::fs::aio::MAX_REQPRIO)
+extern __attribute__((weak))
+ircd::fs::aio::MAX_REQPRIO
+{
+	20
+};
 
 /// Conf item to control whether AIO is enabled or bypassed.
 decltype(ircd::fs::aio::enable)
@@ -1739,4 +1742,28 @@ ircd::fs::posix_flags(const std::ios::openmode &mode)
 	ret |= ret & O_WRONLY? O_CREAT : 0;
 	ret |= ret & O_RDWR && ret & (O_TRUNC | O_APPEND)? O_CREAT : 0;
 	return ret;
+}
+
+/// Translate an ircd::fs opts priority integer to an AIO priority integer.
+/// The ircd::fs priority integer is like a nice value. The AIO value is
+/// positive [0, MAX_REQPRIO]. This function takes an ircd::fs value and
+/// shifts it to the AIO value.
+int
+ircd::fs::reqprio(int input)
+{
+	const auto &max_reqprio
+	{
+		aio::MAX_REQPRIO
+	};
+
+	static const auto median
+	{
+		int(max_reqprio / 2)
+	};
+
+	input = std::max(input, 0 - median);
+	input = std::min(input, median);
+	input = max_reqprio - (input + median);
+	assert(input >= 0 && input <= int(max_reqprio));
+	return input;
 }

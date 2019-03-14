@@ -13,11 +13,6 @@
 #include <ircd/asio.h>
 #include "fs_aio.h"
 
-namespace ircd::fs::aio
-{
-	static int reqprio(int);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/fs/aio.h
@@ -883,27 +878,4 @@ ircd::fs::aio::system::max_events()
 const
 {
 	return event.size();
-}
-
-//
-// internal util
-//
-
-/// Translate an ircd::fs opts priority integer to an AIO priority integer.
-/// The ircd::fs priority integer is like a nice value. The AIO value is
-/// positive [0, MAX_REQPRIO]. This function takes an ircd::fs value and
-/// shifts it to the AIO value.
-int
-ircd::fs::aio::reqprio(int input)
-{
-	static const auto median
-	{
-		int(MAX_REQPRIO / 2)
-	};
-
-	input = std::max(input, 0 - median);
-	input = std::min(input, median);
-	input = MAX_REQPRIO - (input + median);
-	assert(input >= 0 && input <= int(MAX_REQPRIO));
-	return input;
 }
