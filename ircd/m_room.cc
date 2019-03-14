@@ -2442,7 +2442,7 @@ const
 
 	const auto &required_level
 	{
-		prop == "events"?
+		empty(prop) || prop == "events"?
 			level_event(type, state_key):
 			level(prop)
 	};
