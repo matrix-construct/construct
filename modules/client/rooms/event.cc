@@ -39,18 +39,15 @@ get__event(client &client,
 			"You are not permitted to view the room at this event"
 		};
 
+	m::event::fetch::opts fopts;
+	fopts.query_json_force = true;
 	const m::event::fetch event
 	{
-		event_id
-	};
-
-	const json::strung buffer
-	{
-		event
+		event_id, fopts
 	};
 
 	return resource::response
 	{
-		client, json::object{buffer}
+		client, event.source
 	};
 }
