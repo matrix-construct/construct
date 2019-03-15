@@ -135,7 +135,6 @@ ircd::fs::aio::request::fsync::fsync(const int &fd,
                                      const sync_opts &opts)
 :request{fd, &opts}
 {
-	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_FSYNC;
 
 	aio_buf = 0;
@@ -163,7 +162,6 @@ ircd::fs::aio::request::fdsync::fdsync(const int &fd,
                                        const sync_opts &opts)
 :request{fd, &opts}
 {
-	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_FDSYNC;
 
 	aio_buf = 0;
@@ -192,7 +190,6 @@ ircd::fs::aio::request::read::read(const int &fd,
                                    const read_opts &opts)
 :request{fd, &opts}
 {
-	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_PREADV;
 
 	aio_buf = uintptr_t(iov.data());
@@ -233,7 +230,6 @@ ircd::fs::aio::request::write::write(const int &fd,
                                      const write_opts &opts)
 :request{fd, &opts}
 {
-	aio_reqprio = reqprio(opts.priority);
 	aio_lio_opcode = IOCB_CMD_PWRITEV;
 
 	aio_buf = uintptr_t(iov.data());
@@ -330,9 +326,10 @@ ircd::fs::aio::request::request(const int &fd,
 	aio_resfd = system->resfd.native_handle();
 	aio_fildes = fd;
 	aio_data = uintptr_t(this);
+	aio_reqprio = reqprio(opts->priority);
 
 	#if defined(HAVE_PWRITEV2) && defined(HAVE_PREADV2) && defined(RWF_HIPRI)
-	if(aio::support_hipri && reqprio(opts->priority) == reqprio(opts::highest_priority))
+	if(aio::support_hipri && aio_reqprio == reqprio(opts::highest_priority))
 		aio_rw_flags |= RWF_HIPRI;
 	#endif
 
