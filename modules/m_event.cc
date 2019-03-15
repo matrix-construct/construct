@@ -494,6 +494,23 @@ ircd::m::append(json::stack::object &object,
 		};
 	#endif
 
+	if(!json::get<"state_key"_>(event) && has_user)
+	{
+		const m::user::ignores ignores{*opts.user_id};
+		if(ignores.enforce("events") && ignores.has(json::get<"sender"_>(event)))
+		{
+			log::debug
+			{
+				log, "Not sending event '%s' because '%s' is ignored by '%s'",
+				json::get<"event_id"_>(event),
+				json::get<"sender"_>(event),
+				string_view{*opts.user_id}
+			};
+
+			return;
+		}
+	}
+
 	object.append(event);
 
 	if(json::get<"state_key"_>(event) && has_event_idx)
