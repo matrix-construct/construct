@@ -283,9 +283,11 @@ client_module_LTLIBRARIES += \
 #
 
 client_client_directory_list_room_la_SOURCES = client/directory/list/room.cc
+client_client_directory_list_appservice_la_SOURCES = client/directory/list/appservice.cc
 
 client_module_LTLIBRARIES += \
 	client/client_directory_list_room.la \
+	client/client_directory_list_appservice.la \
 	###
 
 #
