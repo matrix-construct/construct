@@ -16,6 +16,8 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
+	static bool should_ignore(const data &);
+
 	static bool _rooms_polylog_room(data &, const m::room &);
 	static bool _rooms_polylog(data &, const string_view &membership);
 	static bool rooms_polylog(data &);
@@ -62,6 +64,9 @@ ircd::m::sync::rooms_linear(data &data)
 	{
 		data.membership, membership
 	};
+
+	if(should_ignore(data))
+		return false;
 
 	return !m::sync::for_each("rooms", [&data]
 	(item &item)
@@ -146,6 +151,9 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 		data.room, &room
 	};
 
+	if(should_ignore(data))
+		return false;
+
 	json::stack::checkpoint checkpoint
 	{
 		*data.out
@@ -190,6 +198,41 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 
 	if(!ret)
 		checkpoint.rollback();
+
+	return ret;
+}
+
+bool
+ircd::m::sync::should_ignore(const data &data)
+{
+	if(data.membership != "invite")
+		return false;
+
+	if(!m::user::ignores::enforce("invites"))
+		return false;
+
+	assert(data.room);
+	const m::room::state state
+	{
+		*data.room
+	};
+
+	const m::event::idx &event_idx
+	{
+		state.get(std::nothrow, "m.room.member", data.user.user_id)
+	};
+
+	const m::user::ignores ignores
+	{
+		data.user.user_id
+	};
+
+	bool ret{false};
+	m::get(std::nothrow, event_idx, "sender", [&ignores, &ret]
+	(const m::user::id &sender)
+	{
+		ret = ignores.has(sender);
+	});
 
 	return ret;
 }
