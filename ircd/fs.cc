@@ -406,12 +406,6 @@ ircd::fs::flush(const fd &fd,
 // fs/read.h
 //
 
-namespace ircd::fs
-{
-	static size_t _read(const fd &, const const_iovec_view &, const read_opts &);
-	static size_t read(const fd &, const const_iovec_view &, const read_opts &);
-}
-
 ircd::fs::read_opts
 const ircd::fs::read_opts_default
 {};
@@ -515,6 +509,13 @@ ircd::fs::read(const string_view &path,
 	return read(fd, bufs, opts);
 }
 
+namespace ircd::fs
+{
+	static int flags(const read_opts &opts);
+	static size_t _read(const fd &, const const_iovec_view &, const read_opts &);
+	static size_t read(const fd &, const const_iovec_view &, const read_opts &);
+}
+
 /// Read from file descriptor fd into buffers. The number of bytes read into
 /// the buffers is returned. By default (via read_opts.all) this call will
 /// loop internally until the buffers are full or EOF. To allow for a partial
@@ -594,19 +595,16 @@ ircd::fs::_read(const fd &fd,
                 const const_iovec_view &iov,
                 const read_opts &opts)
 {
-	int flags{0};
-
-	if(aio::support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
-		flags |= RWF_HIPRI;
-
-	if(aio::support_nowait && !opts.blocking)
-		flags |= RWF_NOWAIT;
+	const auto &flags_
+	{
+		flags(opts)
+	};
 
 	const auto ret
 	{
 		opts.interruptible?
-			syscall(::preadv2, fd, iov.data(), iov.size(), opts.offset, flags):
-			syscall_nointr(::preadv2, fd, iov.data(), iov.size(), opts.offset, flags)
+			syscall(::preadv2, fd, iov.data(), iov.size(), opts.offset, flags_):
+			syscall_nointr(::preadv2, fd, iov.data(), iov.size(), opts.offset, flags_)
 	};
 
 	return size_t(ret);
@@ -628,16 +626,28 @@ ircd::fs::_read(const fd &fd,
 }
 #endif // HAVE_PREADV2
 
+int
+ircd::fs::flags(const read_opts &opts)
+{
+	int ret{0};
+
+	#if defined(RWF_HIPRI)
+	if(aio::support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
+		ret |= RWF_HIPRI;
+	#endif
+
+	#if defined(RWF_NOWAIT)
+	if(aio::support_nowait && !opts.blocking)
+		ret |= RWF_NOWAIT;
+	#endif
+
+	return ret;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // fs/write.h
 //
-
-namespace ircd::fs
-{
-	static size_t _write(const fd &, const const_iovec_view &, const write_opts &);
-	static size_t write(const fd &, const const_iovec_view &, const write_opts &);
-}
 
 ircd::fs::write_opts
 const ircd::fs::write_opts_default
@@ -851,6 +861,13 @@ ircd::fs::write(const string_view &path,
 	return write(fd, bufs, opts);
 }
 
+namespace ircd::fs
+{
+	static int flags(const write_opts &opts);
+	static size_t _write(const fd &, const const_iovec_view &, const write_opts &);
+	static size_t write(const fd &, const const_iovec_view &, const write_opts &);
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstack-usage="
 size_t
@@ -915,36 +932,23 @@ ircd::fs::_write(const fd &fd,
                  const const_iovec_view &iov,
                  const write_opts &opts)
 {
-	int flags{0};
-
-	assert(opts.offset >= 0 || aio::support_append);
-	if(aio::support_append && opts.offset == -1)
-		flags |= RWF_APPEND;
-
-	if(aio::support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
-		flags |= RWF_HIPRI;
-
-	if(aio::support_nowait && !opts.blocking)
-		flags |= RWF_NOWAIT;
-
-	if(aio::support_dsync && opts.sync && !opts.metadata)
-		flags |= RWF_DSYNC;
-
-	if(aio::support_sync && opts.sync && opts.metadata)
-		flags |= RWF_SYNC;
-
 	// Manpages sez that when appending with RWF_APPEND, the offset has no
 	// effect on the write; but if the value of the offset is -1 then the
 	// fd's offset is updated, otherwise it is not.
 	const off_t &offset
 	{
-		(flags & RWF_APPEND) && !opts.update_offset? 0 : opts.offset
+		opts.offset == -1 && !opts.update_offset? 0 : opts.offset
+	};
+
+	const auto &flags_
+	{
+		flags(opts)
 	};
 
 	return
 		opts.interruptible?
-			syscall(::pwritev2, fd, iov.data(), iov.size(), offset, flags):
-			syscall_nointr(::pwritev2, fd, iov.data(), iov.size(), offset, flags);
+			syscall(::pwritev2, fd, iov.data(), iov.size(), offset, flags_):
+			syscall_nointr(::pwritev2, fd, iov.data(), iov.size(), offset, flags_);
 }
 #else
 size_t
@@ -958,6 +962,40 @@ ircd::fs::_write(const fd &fd,
 			syscall_nointr(::pwritev, fd, iov.data(), iov.size(), opts.offset);
 }
 #endif
+
+int
+ircd::fs::flags(const write_opts &opts)
+{
+	int ret{0};
+
+	#if defined(RWF_APPEND)
+	assert(opts.offset >= 0 || aio::support_append);
+	if(aio::support_append && opts.offset == -1)
+		ret |= RWF_APPEND;
+	#endif
+
+	#if defined(RWF_HIPRI)
+	if(aio::support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
+		ret |= RWF_HIPRI;
+	#endif
+
+	#if defined(RWF_NOWAIT)
+	if(aio::support_nowait && !opts.blocking)
+		ret |= RWF_NOWAIT;
+	#endif
+
+	#if defined(RWF_DSYNC)
+	if(aio::support_dsync && opts.sync && !opts.metadata)
+		ret |= RWF_DSYNC;
+	#endif
+
+	#if defined(RWF_SYNC)
+	if(aio::support_sync && opts.sync && opts.metadata)
+		ret |= RWF_SYNC;
+	#endif
+
+	return ret;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
