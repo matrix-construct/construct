@@ -1844,8 +1844,11 @@ ircd::fs::debug_paths()
 const char *
 ircd::fs::path_str(const string_view &s)
 {
-	thread_local char buf[PATH_MAX_LEN + 1];
-	return data(strlcpy(buf, s));
+	static const size_t buf_sz{PATH_MAX_LEN}, buf_cnt{4};
+	thread_local char buf[buf_cnt][buf_sz];
+	thread_local size_t i{0};
+
+	return data(strlcpy(buf[i++ % buf_cnt], s));
 }
 
 uint
