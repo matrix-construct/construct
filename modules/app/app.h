@@ -8,12 +8,20 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m::app::ns
+{
+	extern std::set<std::string> users;
+	extern std::set<std::string> aliases;
+	extern std::set<std::string> rooms;
+}
+
 // app.cc
 namespace ircd::m::app
 {
+	void init_app(const string_view &id, const json::object &config);
+	void init_apps();
 	void init();
 	void fini();
 
 	extern const m::room::id::buf app_room_id;
-	extern std::map<std::string, m::room::id::buf> apps;
 }

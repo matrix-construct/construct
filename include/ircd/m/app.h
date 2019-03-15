@@ -15,7 +15,11 @@ namespace ircd::m::app
 {
 	struct namespace_;
 	struct namespaces;
-	struct registration;
+	struct config;
+
+	bool exists(const string_view &id);
+
+	extern log::log log;
 }
 
 struct ircd::m::app::namespace_
@@ -49,7 +53,7 @@ struct ircd::m::app::namespaces
 	using super_type::tuple;
 };
 
-struct ircd::m::app::registration
+struct ircd::m::app::config
 :json::tuple
 <
 	/// Required. A unique, user-defined ID of the application service which
@@ -83,5 +87,13 @@ struct ircd::m::app::registration
 	json::property<name::protocols, json::array>
 >
 {
+	static event::idx idx(std::nothrow_t, const string_view &id);
+	static event::idx idx(const string_view &id);
+
+	static bool get(std::nothrow_t, const string_view &id, const event::fetch::view_closure &);
+	static void get(const string_view &id, const event::fetch::view_closure &);
+	static std::string get(std::nothrow_t, const string_view &id);
+	static std::string get(const string_view &id);
+
 	using super_type::tuple;
 };

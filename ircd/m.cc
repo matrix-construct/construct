@@ -848,6 +848,113 @@ const
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/app.h
+//
+
+decltype(ircd::m::app::log)
+ircd::m::app::log
+{
+	"m.app"
+};
+
+std::string
+ircd::m::app::config::get(const string_view &id)
+{
+	using prototype = std::string (const string_view &);
+
+	static mods::import<prototype> call
+	{
+		"app_app", "ircd::m::app::config::get"
+	};
+
+	return call(id);
+}
+
+std::string
+ircd::m::app::config::get(std::nothrow_t,
+                       const string_view &id)
+{
+	using prototype = std::string (std::nothrow_t, const string_view &);
+
+	static mods::import<prototype> call
+	{
+		"app_app", "ircd::m::app::config::get"
+	};
+
+	return call(std::nothrow, id);
+}
+
+void
+ircd::m::app::config::get(const string_view &id,
+                       const event::fetch::view_closure &closure)
+{
+	using prototype = void (const string_view &, const event::fetch::view_closure &);
+
+	static mods::import<prototype> call
+	{
+		"app_app", "ircd::m::app::config::get"
+	};
+
+	return call(id, closure);
+}
+
+bool
+ircd::m::app::config::get(std::nothrow_t,
+                          const string_view &id,
+                          const event::fetch::view_closure &closure)
+{
+	using prototype = bool (std::nothrow_t, const string_view &, const event::fetch::view_closure &);
+
+	static mods::import<prototype> call
+	{
+		"app_app", "ircd::m::app::config::get"
+	};
+
+	return call(std::nothrow, id, closure);
+}
+
+ircd::m::event::idx
+ircd::m::app::config::idx(const string_view &id)
+{
+	using prototype = event::idx (const string_view &);
+
+	static mods::import<prototype> call
+	{
+		"app_app", "ircd::m::app::config::idx"
+	};
+
+	return call(id);
+}
+
+ircd::m::event::idx
+ircd::m::app::config::idx(std::nothrow_t,
+                          const string_view &id)
+{
+	using prototype = event::idx (std::nothrow_t, const string_view &);
+
+	static mods::import<prototype> call
+	{
+		"app_app", "ircd::m::app::config::idx"
+	};
+
+	return call(std::nothrow, id);
+}
+
+bool
+ircd::m::app::exists(const string_view &id)
+{
+	using prototype = bool (const string_view &);
+
+	static mods::import<prototype> call
+	{
+		"app_app", "exists"
+	};
+
+	return call(id);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/feds.h
 //
 
