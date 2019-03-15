@@ -25,7 +25,7 @@ noexcept
 }
 
 void
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(RB_ASSERT)
 __attribute__((noreturn))
 #endif
 ircd::panicking(const std::exception_ptr &eptr)
@@ -41,7 +41,7 @@ noexcept
 /// log a critical message, which is actually what triggers a termination when
 /// assertions are enabled (!NDEBUG) otherwise a no-op.
 void
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(RB_ASSERT)
 __attribute__((noreturn))
 #endif
 ircd::panicking(const std::exception &e)

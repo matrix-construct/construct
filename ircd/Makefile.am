@@ -100,6 +100,7 @@ libircd_la_LIBADD = \
 # the units that compile spirit grammars otherwise they thrash weaker
 # systems.
 libircd_la_SOURCES =   \
+	assert.cc          \
 	info.cc            \
 	allocator.cc       \
 	exception.cc       \

@@ -100,7 +100,7 @@ struct ircd::log::log
   public:
 	template<class... args> void operator()(const level &, const string_view &fmt, args&&...);
 
-	#if RB_LOG_LEVEL >= 0 && !defined(NDEBUG)
+	#if RB_LOG_LEVEL >= 0 && !defined(NDEBUG) && !defined(RB_ASSERT)
 	template<class... args> [[noreturn]] void critical(const string_view &fmt, args&&...);
 	#elif RB_LOG_LEVEL >= 0
 	template<class... args> void critical(const string_view &fmt, args&&...);
@@ -398,18 +398,30 @@ struct ircd::log::error
 #if RB_LOG_LEVEL >= 0 && !defined(NDEBUG)
 struct ircd::log::critical
 {
-	template<class... args> [[noreturn]]
+	template<class... args>
+	#if !defined(RB_ASSERT)
+	[[noreturn]]
+	#endif
 	critical(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
-		ircd::terminate();
+
+		#ifndef NDEBUG
+		__assert_fail("critical", "", 0, "");
+		#endif
 	}
 
-	template<class... args> [[noreturn]]
+	template<class... args>
+	#if !defined(RB_ASSERT)
+	[[noreturn]]
+	#endif
 	critical(const string_view &fmt, args&&... a)
 	{
 		vlog(general, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
-		ircd::terminate();
+
+		#ifndef NDEBUG
+		__assert_fail("critical", "", 0, "");
+		#endif
 	}
 };
 #elif RB_LOG_LEVEL >= 0
@@ -570,7 +582,7 @@ ircd::log::log::critical(const string_view &fmt,
 	operator()(level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 
 	#ifndef NDEBUG
-	ircd::terminate();;
+	__assert_fail("critical", "", 0, "");
 	#endif
 }
 #else

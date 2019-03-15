@@ -185,6 +185,34 @@ AM_COND_IF(ASSERT,
 ])
 
 dnl
+dnl Switch to control the action of assert()
+dnl
+
+AC_MSG_CHECKING(whether to change the behavior of assertions)
+AC_ARG_WITH(assert, AC_HELP_STRING([--with-assert[[[=trap]]]], [Soften assertion behavior]),
+[
+	assert_type=$withval
+	AC_MSG_RESULT([yes])
+	AC_SUBST(ASSERT_TYPE, $assert_type)
+], [
+	AM_COND_IF(DEBUG,
+	[
+		assert_type="trap"
+		AC_MSG_RESULT([no, defaulting to "$assert_type"])
+		AC_SUBST(ASSERT_TYPE, $assert_type)
+	], [
+		AC_MSG_RESULT([no])
+	])
+])
+
+AM_COND_IF(ASSERT,
+[
+	if [[ ! -z "$assert_type" ]]; then
+		RB_DEFINE_UNQUOTED([ASSERT], ["$assert_type"], [Assertion behavior])
+	fi
+])
+
+dnl
 dnl Explicit optimize switch for enabling optimization when using --enable-debug
 dnl
 
@@ -616,6 +644,7 @@ RB_CHK_SYSHEADER(stdarg.h, [STDARG_H])
 dnl libc++
 RB_CHK_SYSHEADER(cstddef, [CSTDDEF])
 RB_CHK_SYSHEADER(cstdint, [CSTDINT])
+RB_CHK_SYSHEADER(cstdlib, [CSTDLIB])
 RB_CHK_SYSHEADER(limits, [LIMITS])
 RB_CHK_SYSHEADER(type_traits, [TYPE_TRAITS])
 RB_CHK_SYSHEADER(typeindex, [TYPEINDEX])
@@ -1582,7 +1611,7 @@ echo "Linux AIO support ................. $aio"
 echo "IPv6 support ...................... $ipv6"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
-echo "Developer assert .................. $assert"
+echo "Developer assert .................. $assert ($assert_type)"
 echo "Optimized build ................... $optimize"
 echo "Link-time optimized ............... $lto"
 echo "Optimization level ................ $optimize_level"

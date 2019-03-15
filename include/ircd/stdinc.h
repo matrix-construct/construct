@@ -39,6 +39,7 @@ extern "C"
 
 #include <RB_INC_CSTDDEF
 #include <RB_INC_CSTDINT
+#include <RB_INC_CSTDLIB
 #include <RB_INC_LIMITS
 #include <RB_INC_TYPE_TRAITS
 #include <RB_INC_TYPEINDEX
