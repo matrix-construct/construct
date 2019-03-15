@@ -26,11 +26,13 @@ __assert_fail(const char *__assertion,
 		        __function,
 		        __assertion);
 
-	if(strcmp(RB_ASSERT, "trap") == 0)
-		__asm__ volatile ("int $3");
-
-	else if(strcmp(RB_ASSERT, "quit") == 0)
+	if(strcmp(RB_ASSERT, "quit") == 0)
 		ircd::quit();
+
+	#if defined(__x86_64__)
+	else if(strcmp(RB_ASSERT, "trap") == 0)
+		__asm__ volatile ("int $3");
+	#endif
 
 	#if defined(HAVE_EXCEPTION)
 	else if(strcmp(RB_ASSERT, "term") == 0)
