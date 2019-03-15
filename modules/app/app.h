@@ -1,17 +1,19 @@
 // Matrix Construct
 //
 // Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) 2016-2019 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
-
-mapi::header
-IRCD_MODULE
+// app.cc
+namespace ircd::m::app
 {
-	"2.1 :Application Services :Registration",
-};
+	void init();
+	void fini();
+
+	extern const m::room::id::buf app_room_id;
+	extern std::map<std::string, m::room::id::buf> apps;
+}

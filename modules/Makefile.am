@@ -468,12 +468,13 @@ media_module_LTLIBRARIES = \
 
 app_moduledir = @moduledir@
 
-app_app_register_la_SOURCES = \
-	app/register.cc \
+app_app_app_la_SOURCES = \
+	app/app.cc \
+	app/transactions.cc \
 	###
 
 app_module_LTLIBRARIES = \
-	app/app_register.la \
+	app/app_app.la \
 	###
 
 ###############################################################################
