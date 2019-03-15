@@ -22,6 +22,7 @@ struct ircd::m::user
 	struct room_account_data;
 	struct room_tags;
 	struct filter;
+	struct ignores;
 
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;

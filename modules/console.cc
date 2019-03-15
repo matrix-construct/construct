@@ -9357,6 +9357,54 @@ console_cmd__user__devices(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__ignores(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "other_id"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const string_view &other_id
+	{
+		param["other_id"]
+	};
+
+	const m::user::ignores ignores
+	{
+		user_id
+	};
+
+	if(other_id)
+	{
+		const bool ignored(ignores.has(other_id));
+		out << user_id << " is "
+		    << (ignored? "" : "not ")
+		    << "ignoring " << other_id
+		    << std::endl;
+
+		return true;
+	}
+
+	ignores.for_each([&out]
+	(const m::user::id &user_id, const json::object &object)
+	{
+		out << user_id;
+		if(!empty(object))
+			out << " " << object;
+
+		out << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
 //
 // users
 //

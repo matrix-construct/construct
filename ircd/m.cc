@@ -3684,6 +3684,65 @@ ircd::m::user::filter::for_each(const m::user &u,
 	return function(u, c);
 }
 
+//
+// user::ignores
+//
+
+bool
+ircd::m::user::ignores::has(const m::user::id &other)
+const
+{
+	return has(user, other);
+}
+
+bool
+ircd::m::user::ignores::for_each(const closure_bool &closure)
+const
+{
+	return for_each(user, closure);
+}
+
+bool
+ircd::m::user::ignores::has(const m::user &u,
+                            const m::user::id &other)
+{
+	using prototype = bool (const m::user &, const m::user::id &);
+
+	static mods::import<prototype> call
+	{
+		"m_ignored_user_list", "ircd::m::user::ignores::has"
+	};
+
+	return call(u, other);
+}
+
+bool
+ircd::m::user::ignores::for_each(const m::user &u,
+                                 const closure_bool &c)
+{
+	using prototype = bool (const m::user &, const closure_bool &);
+
+	static mods::import<prototype> call
+	{
+		"m_ignored_user_list", "ircd::m::user::ignores::for_each"
+	};
+
+	return call(u, c);
+}
+
+bool
+ircd::m::user::ignores::enforce(const string_view &type)
+{
+	using prototype = bool (const string_view &);
+
+	static mods::import<prototype> call
+	{
+		"m_ignored_user_list", "ircd::m::user::ignores::enforce"
+	};
+
+	return call(type);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/room.h

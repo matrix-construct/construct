@@ -32,3 +32,4 @@ namespace ircd::m
 #include "user/room_account_data.h"
 #include "user/room_tags.h"
 #include "user/filter.h"
+#include "user/ignores.h"
