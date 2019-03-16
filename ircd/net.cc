@@ -995,28 +995,20 @@ noexcept
 		acceptor->join();
 }
 
-bool
-ircd::net::listener::start()
-{
-	return acceptor && !acceptor->handle_set?
-		acceptor->set_handle():
-		false;
-}
-
 ircd::string_view
 ircd::net::listener::name()
 const
 {
-	assert(acceptor);
-	return acceptor->name;
+	const net::acceptor &a(*this);
+	return net::name(a);
 }
 
 ircd::net::listener::operator
 ircd::json::object()
 const
 {
-	assert(acceptor);
-	return acceptor->opts;
+	const net::acceptor &a(*this);
+	return net::config(a);
 }
 
 ircd::net::listener::operator
@@ -1137,6 +1129,30 @@ ircd::net::acceptor::ssl_cipher_blacklist
 	{ "name",     "ircd.net.acceptor.ssl.cipher.blacklist" },
 	{ "default",  string_view{}                            },
 };
+
+bool
+ircd::net::start(acceptor &a)
+{
+	if(a.handle_set)
+		return false;
+
+	a.set_handle();
+	return true;
+}
+
+ircd::json::object
+ircd::net::config(const acceptor &a)
+const
+{
+	return a.opts;
+}
+
+ircd::string_view
+ircd::net::name(const acceptor &a)
+const
+{
+	return a.name;
+}
 
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const acceptor &a)

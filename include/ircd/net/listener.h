@@ -22,6 +22,10 @@ namespace ircd::net
 	extern conf::item<bool> listen;
 
 	std::string cipher_list(const acceptor &);
+	json::object config(const acceptor &);
+	string_view name(const acceptor &);
+
+	bool start(acceptor &);
 }
 
 struct ircd::net::listener
@@ -40,8 +44,6 @@ struct ircd::net::listener
 
 	explicit operator json::object() const;
 	string_view name() const;
-
-	bool start();
 
 	listener(const string_view &name,
 	         const json::object &options,
