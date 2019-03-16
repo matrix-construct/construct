@@ -1412,12 +1412,14 @@ ircd::fs::make_iov(const iovec_view &iov,
 
 	size_t i(0), off(0);
 	for(; i < max; off += size(bufs[i++]))
-		if(size(bufs[i]) > offset - off)
+		if(size(bufs[i]) >= offset - off)
 		{
+			assert(offset >= off);
 			off = offset - off;
 			break;
 		}
 
+	assert(i <= max);
 	if(i < max)
 	{
 		assert(off <= size(bufs[i]));
@@ -1433,6 +1435,7 @@ ircd::fs::make_iov(const iovec_view &iov,
 			};
 	}
 
+	assert(i <= max);
 	const const_iovec_view ret{iov.data(), i};
 	assert(bytes(ret) <= buffer::buffers::size(bufs));
 	return ret;
@@ -1451,12 +1454,14 @@ ircd::fs::make_iov(const iovec_view &iov,
 
 	size_t i(0), off(0);
 	for(; i < max; off += size(bufs[i++]))
-		if(size(bufs[i]) > offset - off)
+		if(size(bufs[i]) >= offset - off)
 		{
+			assert(offset >= off);
 			off = offset - off;
 			break;
 		}
 
+	assert(i <= max);
 	if(i < max)
 	{
 		assert(off <= size(bufs[i]));
@@ -1472,6 +1477,7 @@ ircd::fs::make_iov(const iovec_view &iov,
 			};
 	}
 
+	assert(i <= max);
 	const const_iovec_view ret{iov.data(), i};
 	assert(bytes(ret) <= buffer::buffers::size(bufs));
 	return ret;
