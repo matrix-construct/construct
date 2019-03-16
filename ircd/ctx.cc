@@ -2039,15 +2039,19 @@ noexcept
 }
 
 ircd::ctx::promise_base::~promise_base()
-noexcept
+noexcept try
 {
 	if(!valid())
 		return;
 
 	if(refcount(state()) == 1)
-		set_exception(std::make_exception_ptr(broken_promise()));
+		throw broken_promise{};
 	else
 		remove(state(), *this);
+}
+catch(const std::exception &e)
+{
+	set_exception(std::current_exception());
 }
 
 void

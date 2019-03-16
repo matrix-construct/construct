@@ -65,13 +65,8 @@ ircd::net::dns::handle_ipport__A(callback_ipport_one callback,
                                  const hostport &hp,
                                  const rfc1035::record::A &record)
 {
-	static const ircd::net::not_found no_record
-	{
-		"Host has no A record"
-	};
-
 	if(!eptr && !record.ip4)
-		eptr = std::make_exception_ptr(no_record);
+		eptr = make_exception_ptr<not_found>("Host has no A record");
 
 	const ipport ipport
 	{

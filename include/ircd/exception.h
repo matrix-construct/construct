@@ -41,6 +41,7 @@ namespace ircd
 	std::system_error make_system_error(const boost::system::system_error &);
 	template<class... args> std::exception_ptr make_system_eptr(args&&...);
 	template<class... args> [[noreturn]] void throw_system_error(args&&...);
+	template<class E, class... args> std::exception_ptr make_exception_ptr(args&&...);
 
 	string_view string(const mutable_buffer &, const std::error_code &);
 	string_view string(const mutable_buffer &, const std::system_error &);
@@ -220,6 +221,19 @@ namespace ircd
 	IRCD_PANICKING(exception, panic)
 	IRCD_PANICKING(panic, not_implemented)
 }
+
+template<class E,
+         class... args>
+std::exception_ptr
+ircd::make_exception_ptr(args&&... a)
+try
+{
+	throw E{std::forward<args>(a)...};
+}
+catch(const E &)
+{
+	return std::current_exception();
+};
 
 template<class... args>
 void

@@ -43,7 +43,7 @@ struct ircd::server::tag
 	std::unique_ptr<char[]> cancellation;
 
 	void set_exception(std::exception_ptr);
-	template<class... args> void set_exception(args&&...);
+	template<class T, class... args> void set_exception(args&&...);
 	template<class... args> void set_value(args&&...);
 
 	const_buffer make_write_content_buffer() const;

@@ -311,10 +311,7 @@ ircd::server::cancel(request &request)
 	};
 */
 
-	tag.set_exception(canceled
-	{
-		"Request canceled"
-	});
+	tag.set_exception<canceled>("Request canceled");
 
 	// We got off easy... The link's write loop won't start an abandoned
 	// request. All that has to be done is indicate a full cancellation
@@ -414,10 +411,10 @@ void
 ircd::server::peer::cancel()
 {
 	for(auto &link : this->links)
-		link.cancel_all(std::make_exception_ptr(canceled
-		{
+		link.cancel_all(make_exception_ptr<canceled>
+		(
 			"Request was aborted due to interruption."
-		}));
+		));
 }
 
 bool
@@ -503,10 +500,10 @@ try
 			"No link to peer %s available", hostcanon
 		};
 	else
-		request.tag->set_exception(unavailable
-		{
+		request.tag->set_exception<unavailable>
+		(
 			"No link to peer %s available", hostcanon
-		});
+		);
 }
 catch(const std::exception &e)
 {
@@ -854,10 +851,10 @@ void
 ircd::server::peer::disperse(link &link)
 {
 	disperse_uncommitted(link);
-	link.cancel_committed(std::make_exception_ptr(canceled
-	{
+	link.cancel_committed(make_exception_ptr<canceled>
+	(
 		"Request was aborted; though it was partially completed"
-	}));
+	));
 
 	assert(link.queue.empty());
 }
@@ -1738,9 +1735,9 @@ try
 	assert(done || empty(overrun));
 	return overrun;
 }
-catch(const buffer_overrun &e)
+catch(const buffer_overrun &)
 {
-	tag.set_exception(e);
+	tag.set_exception(std::current_exception());
 	throw;
 }
 
@@ -2573,13 +2570,13 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 		if(content_overflow() && !req.opt->truncate_content)
 		{
 			assert(state.content_read > size(content));
-			set_exception(buffer_overrun
-			{
+			set_exception<buffer_overrun>
+			(
 				"buffer of %zu bytes too small for content-length %zu bytes by %zu bytes",
 				size(content),
 				state.content_length,
 				content_overflow()
-			});
+			);
 		}
 		else set_value(state.status);
 	}
@@ -3309,21 +3306,30 @@ ircd::server::tag::set_value(args&&... a)
 			data(request->in.content), size(request->in.content)
 		};
 
-		set_exception(http::error{code, std::string{content}});
+		set_exception<http::error>(code, std::string{content});
 		return;
 	}
 
 	p.set_value(code);
 }
 
-template<class... args>
+template<class E,
+         class... args>
 void
 ircd::server::tag::set_exception(args&&... a)
+try
 {
 	if(abandoned())
 		return;
 
-	set_exception(std::make_exception_ptr(std::forward<args>(a)...));
+	throw E
+	{
+		std::forward<args>(a)...
+	};
+}
+catch(const std::exception &e)
+{
+	set_exception(std::current_exception());
 }
 
 void

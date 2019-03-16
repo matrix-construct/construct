@@ -101,10 +101,12 @@ ircd::net::dns::cache::_get(const hostport &hp,
 				//TODO: we don't cache what the error was, assuming it's
 				//TODO: NXDomain can be incorrect and in bad ways downstream...
 				static const auto rcode{3}; //NXDomain
-				eptr = std::make_exception_ptr(rfc1035::error
-				{
-					"protocol error #%u (cached) :%s", rcode, rfc1035::rcode.at(rcode)
-				});
+				eptr = make_exception_ptr<rfc1035::error>
+				(
+					"protocol error #%u (cached) :%s",
+					rcode,
+					rfc1035::rcode.at(rcode)
+				);
 			}
 
 			if(count < record.size())
@@ -143,10 +145,12 @@ ircd::net::dns::cache::_get(const hostport &hp,
 				//TODO: we don't cache what the error was, assuming it's
 				//TODO: NXDomain can be incorrect and in bad ways downstream...
 				static const auto rcode{3}; //NXDomain
-				eptr = std::make_exception_ptr(rfc1035::error
-				{
-					"protocol error #%u (cached) :%s", rcode, rfc1035::rcode.at(rcode)
-				});
+				eptr = make_exception_ptr<rfc1035::error>
+				(
+					"protocol error #%u (cached) :%s",
+					rcode,
+					rfc1035::rcode.at(rcode)
+				);
 			}
 
 			if(count < record.size())
