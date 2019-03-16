@@ -757,7 +757,6 @@ ircd::m::vm::_commit(eval &eval)
 	#endif
 
 	txn();
-	++vm::current_sequence;
 
 	#ifdef RB_DEBUG
 	const auto db_seq_after(sequence(*m::dbs::events));
@@ -775,6 +774,8 @@ ircd::m::vm::_commit(eval &eval)
 			txn.size(),
 			txn.bytes()
 		};
+
+	++vm::current_sequence;
 }
 
 uint64_t
