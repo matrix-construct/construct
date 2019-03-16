@@ -63,6 +63,8 @@ struct ircd::net::acceptor
 	// Acceptor shutdown
 	bool interrupt() noexcept;
 	void join() noexcept;
+	void close();
+	void open();
 
 	acceptor(net::listener &,
 	         const string_view &name,

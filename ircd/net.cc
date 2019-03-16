@@ -992,7 +992,7 @@ ircd::net::listener::~listener()
 noexcept
 {
 	if(acceptor)
-		acceptor->join();
+		acceptor->close();
 }
 
 ircd::string_view
@@ -1133,23 +1133,30 @@ ircd::net::acceptor::ssl_cipher_blacklist
 bool
 ircd::net::start(acceptor &a)
 {
-	if(a.handle_set)
-		return false;
+	if(!a.a.is_open())
+		a.open();
 
-	a.set_handle();
+	if(!a.handle_set)
+		a.set_handle();
+
+	return true;
+}
+
+bool
+ircd::net::stop(acceptor &a)
+{
+	a.close();
 	return true;
 }
 
 ircd::json::object
 ircd::net::config(const acceptor &a)
-const
 {
 	return a.opts;
 }
 
 ircd::string_view
 ircd::net::name(const acceptor &a)
-const
 {
 	return a.name;
 }
@@ -1212,18 +1219,6 @@ try
 	ios::get()
 }
 {
-	static const auto &max_connections
-	{
-		//TODO: XXX
-		//boost::asio::ip::tcp::socket::max_connections   <-- linkage failed?
-		std::min(opts.get<uint>("max_connections", SOMAXCONN), uint(SOMAXCONN))
-	};
-
-	static const ip::tcp::acceptor::reuse_address reuse_address
-	{
-		true
-	};
-
 	configure(opts);
 
 	log::debug
@@ -1231,6 +1226,43 @@ try
 		log, "%s configured listener SSL", string(logheadbuf, *this)
 	};
 
+	open();
+}
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
+
+ircd::net::acceptor::~acceptor()
+noexcept
+{
+	if(accepting || handshaking)
+		log::critical
+		{
+			"The acceptor must not have clients during destruction!"
+			" (accepting:%zu handshaking:%zu)",
+			accepting,
+			handshaking
+		};
+}
+
+void
+ircd::net::acceptor::open()
+{
+	static const auto &max_connections
+	{
+		//TODO: XXX
+		//boost::asio::ip::tcp::socket::max_connections   <-- linkage failed?
+		std::min(json::object(opts).get<uint>("max_connections", SOMAXCONN), uint(SOMAXCONN))
+	};
+
+	static const ip::tcp::acceptor::reuse_address reuse_address
+	{
+		true
+	};
+
+	assert(!interrupting);
+	interrupting = false;
 	a.open(ep.protocol());
 	a.set_option(reuse_address);
 	log::debug
@@ -1253,25 +1285,39 @@ try
 		max_connections
 	};
 }
-catch(const boost::system::system_error &e)
-{
-	throw_system_error(e);
-}
 
-ircd::net::acceptor::~acceptor()
-noexcept
+void
+ircd::net::acceptor::close()
 {
+	if(!interrupting)
+		interrupt();
+
+	if(a.is_open())
+		a.close();
+
+	join();
+	log::debug
+	{
+		log, "%s listener finished", string(logheadbuf, *this)
+	};
 }
 
 void
 ircd::net::acceptor::join()
 noexcept try
 {
-	interrupt();
+	if(!interrupting)
+		interrupt();
+
+	if(!ctx::current)
+		return;
+
 	joining.wait([this]
 	{
 		return !accepting && !handshaking;
 	});
+
+	interrupting = false;
 }
 catch(const std::exception &e)
 {
@@ -1287,6 +1333,9 @@ bool
 ircd::net::acceptor::interrupt()
 noexcept try
 {
+	if(interrupting)
+		return false;
+
 	interrupting = true;
 	a.cancel();
 	return true;
@@ -1416,6 +1465,7 @@ catch(const std::system_error &e)
 	error_code ec_;
 	sock->sd.close(ec_);
 	assert(!ec_);
+	joining.notify_all();
 }
 catch(const std::exception &e)
 {
@@ -1431,6 +1481,7 @@ catch(const std::exception &e)
 	error_code ec_;
 	sock->sd.close(ec_);
 	assert(!ec_);
+	joining.notify_all();
 }
 
 /// Error handler for the accept socket callback. This handler determines
@@ -1507,7 +1558,7 @@ catch(const ctx::interrupted &e)
 		string(ec)
 	};
 
-	close(*sock, dc::RST, close_ignore);
+	net::close(*sock, dc::RST, close_ignore);
 	joining.notify_all();
 }
 catch(const std::system_error &e)
@@ -1521,7 +1572,8 @@ catch(const std::system_error &e)
 		e.what()
 	};
 
-	close(*sock, dc::RST, close_ignore);
+	net::close(*sock, dc::RST, close_ignore);
+	joining.notify_all();
 }
 catch(const std::exception &e)
 {
@@ -1534,7 +1586,8 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	close(*sock, dc::RST, close_ignore);
+	net::close(*sock, dc::RST, close_ignore);
+	joining.notify_all();
 }
 
 /// Error handler for the SSL handshake callback. This handler determines

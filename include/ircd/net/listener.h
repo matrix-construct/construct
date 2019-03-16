@@ -26,6 +26,7 @@ namespace ircd::net
 	string_view name(const acceptor &);
 
 	bool start(acceptor &);
+	bool stop(acceptor &);
 }
 
 struct ircd::net::listener
