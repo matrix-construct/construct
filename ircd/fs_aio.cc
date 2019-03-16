@@ -28,46 +28,6 @@ ircd::fs::aio::support
 	true
 };
 
-/// True if RWF_SYNC is supported by AIO.
-decltype(ircd::fs::aio::support_sync)
-ircd::fs::aio::support_sync
-{
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 7
-};
-
-/// True if RWF_DSYNC is supported by AIO.
-decltype(ircd::fs::aio::support_dsync)
-ircd::fs::aio::support_dsync
-{
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 7
-};
-
-/// True if RWF_HIPRI is supported by AIO.
-decltype(ircd::fs::aio::support_hipri)
-ircd::fs::aio::support_hipri
-{
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 6
-};
-
-/// True if RWF_NOWAIT is supported by AIO.
-decltype(ircd::fs::aio::support_nowait)
-ircd::fs::aio::support_nowait
-{
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 14
-};
-
-/// True if RWF_APPEND is supported by AIO.
-decltype(ircd::fs::aio::support_append)
-ircd::fs::aio::support_append
-{
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 16
-};
-
 /// True if IOCB_CMD_FSYNC is supported by AIO. If this is false then
 /// fs::fsync_opts::async=true flag is ignored.
 decltype(ircd::fs::aio::support_fsync)
@@ -237,7 +197,7 @@ ircd::fs::aio::request::write::write(const int &fd,
 	aio_offset = opts.offset;
 
 	#if defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
-	if(aio::support_append && opts.offset == -1)
+	if(support_append && opts.offset == -1)
 	{
 		// AIO departs from pwritev2() behavior and EINVAL's on -1.
 		aio_offset = 0;
@@ -246,12 +206,12 @@ ircd::fs::aio::request::write::write(const int &fd,
 	#endif
 
 	#if defined(HAVE_PWRITEV2) && defined(RWF_DSYNC)
-	if(aio::support_dsync && opts.sync && !opts.metadata)
+	if(support_dsync && opts.sync && !opts.metadata)
 		aio_rw_flags |= RWF_DSYNC;
 	#endif
 
 	#if defined(HAVE_PWRITEV2) && defined(RWF_SYNC)
-	if(aio::support_sync && opts.sync && opts.metadata)
+	if(support_sync && opts.sync && opts.metadata)
 		aio_rw_flags |= RWF_SYNC;
 	#endif
 }
@@ -329,12 +289,12 @@ ircd::fs::aio::request::request(const int &fd,
 	aio_reqprio = reqprio(opts->priority);
 
 	#if defined(HAVE_PWRITEV2) && defined(HAVE_PREADV2) && defined(RWF_HIPRI)
-	if(aio::support_hipri && aio_reqprio == reqprio(opts::highest_priority))
+	if(support_hipri && aio_reqprio == reqprio(opts::highest_priority))
 		aio_rw_flags |= RWF_HIPRI;
 	#endif
 
 	#if defined(HAVE_PWRITEV2) && defined(HAVE_PREADV2) && defined(RWF_NOWAIT)
-	if(aio::support_nowait && !opts->blocking)
+	if(support_nowait && !opts->blocking)
 		aio_rw_flags |= RWF_NOWAIT;
 	#endif
 }

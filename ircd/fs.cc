@@ -26,6 +26,41 @@ namespace ircd::fs
 	static void debug_paths();
 }
 
+decltype(ircd::fs::support_sync)
+ircd::fs::support_sync
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 7
+};
+
+decltype(ircd::fs::support_dsync)
+ircd::fs::support_dsync
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 7
+};
+
+decltype(ircd::fs::support_hipri)
+ircd::fs::support_hipri
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 6
+};
+
+decltype(ircd::fs::support_nowait)
+ircd::fs::support_nowait
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 14
+};
+
+decltype(ircd::fs::support_append)
+ircd::fs::support_append
+{
+	info::kversion[0] >= 4 &&
+	info::kversion[1] >= 16
+};
+
 //
 // init
 //
@@ -632,12 +667,12 @@ ircd::fs::flags(const read_opts &opts)
 	int ret{0};
 
 	#if defined(RWF_HIPRI)
-	if(aio::support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
+	if(support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
 		ret |= RWF_HIPRI;
 	#endif
 
 	#if defined(RWF_NOWAIT)
-	if(aio::support_nowait && !opts.blocking)
+	if(support_nowait && !opts.blocking)
 		ret |= RWF_NOWAIT;
 	#endif
 
@@ -795,7 +830,7 @@ ircd::fs::append(const fd &fd,
 	auto opts(opts_);
 
 	#if defined(RWF_APPEND)
-	if(aio::support_append)
+	if(support_append)
 		opts.offset = -1;
 	#endif
 
@@ -971,28 +1006,28 @@ ircd::fs::flags(const write_opts &opts)
 	int ret{0};
 
 	#if defined(RWF_APPEND)
-	assert(opts.offset >= 0 || aio::support_append);
-	if(aio::support_append && opts.offset == -1)
+	assert(opts.offset >= 0 || support_append);
+	if(support_append && opts.offset == -1)
 		ret |= RWF_APPEND;
 	#endif
 
 	#if defined(RWF_HIPRI)
-	if(aio::support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
+	if(support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
 		ret |= RWF_HIPRI;
 	#endif
 
 	#if defined(RWF_NOWAIT)
-	if(aio::support_nowait && !opts.blocking)
+	if(support_nowait && !opts.blocking)
 		ret |= RWF_NOWAIT;
 	#endif
 
 	#if defined(RWF_DSYNC)
-	if(aio::support_dsync && opts.sync && !opts.metadata)
+	if(support_dsync && opts.sync && !opts.metadata)
 		ret |= RWF_DSYNC;
 	#endif
 
 	#if defined(RWF_SYNC)
-	if(aio::support_sync && opts.sync && opts.metadata)
+	if(support_sync && opts.sync && opts.metadata)
 		ret |= RWF_SYNC;
 	#endif
 
@@ -1012,46 +1047,6 @@ ircd::fs::flags(const write_opts &opts)
 decltype(ircd::fs::aio::support)
 extern __attribute__((weak))
 ircd::fs::aio::support;
-
-decltype(ircd::fs::aio::support_sync)
-extern __attribute__((weak))
-ircd::fs::aio::support_sync
-{
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 7
-};
-
-decltype(ircd::fs::aio::support_dsync)
-extern __attribute__((weak))
-ircd::fs::aio::support_dsync
-{
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 7
-};
-
-decltype(ircd::fs::aio::support_hipri)
-extern __attribute__((weak))
-ircd::fs::aio::support_hipri
-{
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 6
-};
-
-decltype(ircd::fs::aio::support_nowait)
-extern __attribute__((weak))
-ircd::fs::aio::support_nowait
-{
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 14
-};
-
-decltype(ircd::fs::aio::support_append)
-extern __attribute__((weak))
-ircd::fs::aio::support_append
-{
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 16
-};
 
 decltype(ircd::fs::aio::support_fsync)
 extern __attribute__((weak))

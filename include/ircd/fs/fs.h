@@ -36,6 +36,13 @@ namespace ircd::fs
 	// from here; it is used internally only. Some exposed interfaces
 	// may make forward-declared references to boost symbols.
 	namespace filesystem = boost::filesystem;
+
+	// RWF_ support
+	extern const bool support_append;
+	extern const bool support_nowait;
+	extern const bool support_hipri;
+	extern const bool support_sync;
+	extern const bool support_dsync;
 }
 
 #include "error.h"
