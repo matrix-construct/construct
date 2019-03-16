@@ -933,7 +933,6 @@ noexcept try
 	// Notify the waiting context. Note that we are on the main async stack
 	// but it is safe to notify from here.
 	assert(request->waiter);
-	assert(ctx::current == nullptr);
 	ctx::notify(*request->waiter);
 	stats.events++;
 }
