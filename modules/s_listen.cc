@@ -18,6 +18,7 @@ static bool load_listener(const m::event &);
 extern "C" bool unload_listener(const string_view &name);
 extern "C" bool load_listener(const string_view &name);
 static void init_listeners();
+static void on_quit();
 static void on_run();
 static void on_unload();
 static void on_load();
@@ -29,10 +30,12 @@ IRCD_MODULE
 };
 
 const ircd::run::changed
-_on_run{[](const auto &level)
+_on_change{[](const auto &level)
 {
 	if(level == run::level::RUN)
 		on_run();
+	else if(level == run::level::QUIT)
+		on_quit();
 }};
 
 /// Active listener state
@@ -83,6 +86,19 @@ on_run()
 
 	for(auto &listener : listeners)
 		start(listener);
+}
+
+void
+on_quit()
+{
+	log::debug
+	{
+		"Disallowing %zu listeners from accepting connections...",
+		listeners.size()
+	};
+
+	for(auto &listener : listeners)
+		stop(listener);
 }
 
 void
