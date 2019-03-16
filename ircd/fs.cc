@@ -821,20 +821,16 @@ ircd::fs::append(const string_view &path,
 // the -1. Otherwise, we don't keep flags in userspace and we
 // don't check the fd for whether it was opened with O_APPEND
 // so the user may just have to eat the cost of an extra lseek().
-#ifdef HAVE_PWRITEV2
+#if defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
 size_t
 ircd::fs::append(const fd &fd,
                  const const_buffers &bufs,
                  const write_opts &opts_)
 {
 	auto opts(opts_);
-
-	#if defined(RWF_APPEND)
 	if(support_append)
 		opts.offset = -1;
-	#endif
-
-	if(!opts.offset)
+	else if(!opts.offset || opts.offset == -1)
 		opts.offset = syscall(::lseek, fd, 0, SEEK_END);
 
 	return write(fd, bufs, opts);
