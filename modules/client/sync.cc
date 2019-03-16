@@ -109,7 +109,10 @@ ircd::m::sync::handle_get(client &client,
 	if(range.first > range.second)
 		throw m::NOT_FOUND
 		{
-			"Since parameter is too far in the future..."
+			"Since parameter '%lu' is too far in the future."
+			" Cannot be greater than '%lu'.",
+			range.first,
+			range.second
 		};
 
 	// Keep state for statistics of this sync here on the stack.
