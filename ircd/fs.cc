@@ -793,12 +793,14 @@ ircd::fs::append(const fd &fd,
                  const write_opts &opts_)
 {
 	auto opts(opts_);
-	if(!aio::support_append)
-	{
-		if(!opts.offset)
-			opts.offset = syscall(::lseek, fd, 0, SEEK_END);
-	}
-	else opts.offset = -1;
+
+	#if defined(RWF_APPEND)
+	if(aio::support_append)
+		opts.offset = -1;
+	#endif
+
+	if(!opts.offset)
+		opts.offset = syscall(::lseek, fd, 0, SEEK_END);
 
 	return write(fd, bufs, opts);
 }
