@@ -647,13 +647,6 @@ try
 	assert(qcount > 0);
 	assert(in_flight + qcount <= MAX_EVENTS);
 	assert(in_flight + qcount <= max_events());
-	const ctx::slice_usage_warning message
-	{
-		"fs::aio::system::submit(in_flight:%zu qcount:%zu)",
-		in_flight,
-		qcount
-	};
-
 	const bool idle
 	{
 		in_flight == 0
@@ -703,6 +696,13 @@ size_t
 ircd::fs::aio::system::io_submit()
 try
 {
+	const ctx::slice_usage_warning message
+	{
+		"fs::aio::system::submit(in_flight:%zu qcount:%zu)",
+		in_flight,
+		qcount
+	};
+
 	return syscall<SYS_io_submit>(idp, qcount, queue.data());
 }
 catch(const std::system_error &e)
