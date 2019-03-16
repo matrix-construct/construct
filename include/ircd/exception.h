@@ -80,7 +80,7 @@ namespace ircd
 /// IS TO RETURN CONTROL FROM THE CATCH BLOCK BEFORE CONTEXT SWITCHING.
 /// !!!
 struct ircd::exception
-:std::exception
+:virtual std::exception
 {
 	static constexpr const size_t &BUFSIZE
 	{
@@ -101,10 +101,15 @@ struct ircd::exception
 		return buf;
 	}
 
-	exception(const generate_skip_t = {}) noexcept
+	exception(generate_skip_t = {}) noexcept
 	{
 		buf[0] = '\0';
 	}
+
+	exception(exception &&) = delete;
+	exception(const exception &) = delete;
+	exception &operator=(exception &&) = delete;
+	exception &operator=(const exception &) = delete;
 };
 
 /// Always prefer ircd::terminate() to std::terminate() for all project code.
