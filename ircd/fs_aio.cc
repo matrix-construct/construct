@@ -259,18 +259,6 @@ ircd::fs::aio::write(const fd &fd,
 }
 
 //
-// request::prefetch
-//
-
-void
-ircd::fs::aio::prefetch(const fd &fd,
-                        const size_t &size,
-                        const read_opts &opts)
-{
-
-}
-
-//
 // request
 //
 

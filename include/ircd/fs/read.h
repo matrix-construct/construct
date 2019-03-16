@@ -28,7 +28,7 @@ namespace ircd::fs
 	std::string read(const string_view &path, const read_opts & = read_opts_default);
 
 	// Prefetch bytes for subsequent read(); offset is given in opts.
-	void prefetch(const fd &, const size_t &, const read_opts & = read_opts_default);
+	size_t prefetch(const fd &, const size_t &, const read_opts & = read_opts_default);
 }
 
 /// Options for a read operation

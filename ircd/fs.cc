@@ -445,36 +445,29 @@ ircd::fs::read_opts
 const ircd::fs::read_opts_default
 {};
 
-#ifdef __linux__
-void
+size_t
 ircd::fs::prefetch(const fd &fd,
                    const size_t &count,
                    const read_opts &opts)
 {
-	const auto flags
+	static const size_t max_count
 	{
-		syscall(::fcntl, fd, F_GETFL)
+		128_KiB
 	};
 
-	if(~flags & O_DIRECT)
+	size_t i(0), off, cnt; do
 	{
-		syscall(::readahead, fd, opts.offset, count);
-		return;
+		off = opts.offset + max_count * i++;
+		cnt = std::min(opts.offset + count - off, max_count);
+		switch(const auto r(::posix_fadvise(fd, off, cnt, POSIX_FADV_WILLNEED)); r)
+		{
+			case 0:   break;
+			default:  throw_system_error(r);
+		}
 	}
-
-	#ifdef IRCD_USE_AIO
-	if(likely(aio::system) && opts.aio)
-		aio::prefetch(fd, count, opts);
-	#endif
+	while(off + cnt < opts.offset + count);
+	return count;
 }
-#else
-void
-ircd::fs::prefetch(const fd &fd,
-                   const size_t &count,
-                   const read_opts &opts)
-{
-}
-#endif
 
 std::string
 ircd::fs::read(const string_view &path,
