@@ -398,11 +398,9 @@ ircd::fs::aio::request::operator()()
 	{
 		stats.bytes_errors += submitted_bytes;
 		stats.errors++;
-
-		throw fs::error
-		{
-			make_error_code(errcode)
-		};
+		assert(errcode != EINVAL);
+		throw_system_error(errcode);
+		__builtin_unreachable();
 	}
 
 	return size_t(retval);
