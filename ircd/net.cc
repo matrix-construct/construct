@@ -1554,7 +1554,7 @@ ircd::net::acceptor::check_handshake_error(const error_code &ec,
 
 bool
 ircd::net::acceptor::handle_sni(SSL &ssl,
-                                int &ad)
+                                int &client_server)
 try
 {
 	const string_view &name
@@ -1568,9 +1568,6 @@ try
 		string(logheadbuf, *this),
 		name
 	};
-
-	if(!name)
-		return false;
 
 	return true;
 }
