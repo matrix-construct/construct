@@ -33,6 +33,7 @@ namespace ircd::m::vm
 	extern hook::site<eval &> notify_hook;   ///< Called to broadcast successful eval
 	extern hook::site<eval &> effect_hook;   ///< Called to apply effects post-notify
 
+	extern conf::item<bool> log_commit_debug;
 	extern conf::item<bool> log_accept_debug;
 	extern conf::item<bool> log_accept_info;
 }
@@ -42,6 +43,13 @@ IRCD_MODULE
 {
 	"Matrix Virtual Machine",
 	ircd::m::vm::init, ircd::m::vm::fini
+};
+
+decltype(ircd::m::vm::log_commit_debug)
+ircd::m::vm::log_commit_debug
+{
+	{ "name",     "ircd.m.vm.log.commit.debug" },
+	{ "default",  true                         },
 };
 
 decltype(ircd::m::vm::log_accept_debug)
@@ -744,14 +752,26 @@ ircd::m::vm::_commit(eval &eval)
 	assert(eval.txn);
 	auto &txn(*eval.txn);
 
+	#ifdef RB_DEBUG
+	const auto db_seq_before(sequence(*m::dbs::events));
+	#endif
+
 	txn();
 	++vm::current_sequence;
-	if(eval.opts->debuglog_accept)
+
+	#ifdef RB_DEBUG
+	const auto db_seq_after(sequence(*m::dbs::events));
+	#endif
+
+	if(log_commit_debug || eval.opts->debuglog_accept)
 		log::debug
 		{
-			log, "sequence[%lu:%lu] :Committed %zu cells in %zu bytes to events database ...",
-			vm::current_sequence,
+			log, "vm seq %lu:%lu:%lu | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
 			vm::uncommitted_sequence,
+			vm::current_sequence,
+			eval.sequence,
+			db_seq_before,
+			db_seq_after,
 			txn.size(),
 			txn.bytes()
 		};
