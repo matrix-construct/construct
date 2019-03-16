@@ -652,7 +652,7 @@ ircd::m::sync::longpoll::handle(data &data,
 		{
 			data.event_idx?
 				data.event_idx + 1:
-				data.range.second
+				data.range.first
 		};
 
 		json::stack::member
