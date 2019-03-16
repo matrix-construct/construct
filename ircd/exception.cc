@@ -33,7 +33,7 @@ noexcept
 {
 	log::critical
 	{
-		"IRCd panic %s", what(eptr)
+		"IRCd panic :%s", what(eptr)
 	};
 }
 
@@ -49,7 +49,7 @@ noexcept
 {
 	log::critical
 	{
-		"IRCd panic %s", e.what()
+		"IRCd panic :%s", e.what()
 	};
 }
 
@@ -245,7 +245,7 @@ noexcept
 	size_t size(0);
 	const bool empty(!fmt || !fmt[0] || fmt[0] == ' ');
 	size = strlcat(buf, name, sizeof(buf));
-	size = strlcat(buf, empty? "." : ": ", sizeof(buf));
+	size = strlcat(buf, empty? "." : " :", sizeof(buf));
 	if(size < sizeof(buf))
 		size += fmt::vsnprintf(buf + size, sizeof(buf) - size, fmt, ap);
 
@@ -282,7 +282,7 @@ noexcept
 ircd::terminate::terminate(const std::exception &e)
 noexcept
 {
-	fprintf(stderr, "\nIRCd Terminated: %s\n", e.what());
+	fprintf(stderr, "\nIRCd Terminated :%s\n", e.what());
 	::fflush(stderr);
 	std::terminate();
 }
