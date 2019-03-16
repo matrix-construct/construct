@@ -342,16 +342,26 @@ ircd::fs::aio::request::operator()()
 	stats.bytes_complete += submitted_bytes;
 	stats.complete++;
 
-	if(retval == -1)
-	{
-		stats.bytes_errors += submitted_bytes;
-		stats.errors++;
-		assert(errcode != EINVAL);
-		throw_system_error(errcode);
-		__builtin_unreachable();
-	}
+	if(likely(retval != -1))
+		return size_t(retval);
 
-	return size_t(retval);
+	stats.errors++;
+	stats.bytes_errors += submitted_bytes;
+	thread_local char errbuf[2][512]; fmt::sprintf
+	{
+		errbuf[0], "fd:%d size:%zu off:%zd op:%u pri:%u #%lu",
+		aio_fildes,
+		aio_nbytes,
+		aio_offset,
+		aio_lio_opcode,
+		aio_reqprio,
+		errcode
+	};
+
+	throw std::system_error
+	{
+		make_error_code(errcode), errbuf[0]
+	};
 }
 
 bool
