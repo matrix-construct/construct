@@ -24,6 +24,12 @@ ircd::net::dns::cache::min_ttl
 	{ "default",   900L                        },
 };
 
+decltype(ircd::net::dns::cache::room_id)
+ircd::net::dns::cache::room_id
+{
+	"dns", my_host()
+};
+
 decltype(ircd::net::dns::cache::cache_A)
 ircd::net::dns::cache::cache_A;
 
@@ -282,4 +288,78 @@ ircd::net::dns::cache::_for_each_(Map &map,
 	}
 
 	return true;
+}
+
+//
+// cache room creation
+//
+
+namespace ircd::net::dns::cache
+{
+	static void create_room();
+
+	extern bool room_exists;
+	extern const m::hookfn<m::vm::eval &> create_room_hook;
+	extern const ircd::run::changed create_room_hook_alt;
+}
+
+decltype(ircd::net::dns::cache::room_exists)
+ircd::net::dns::cache::room_exists
+{
+	m::exists(room_id)
+};
+
+decltype(ircd::net::dns::cache::create_room_hook)
+ircd::net::dns::cache::create_room_hook
+{
+	{
+		{ "_site",       "vm.effect"      },
+		{ "room_id",     "!ircd"          },
+		{ "type",        "m.room.create"  },
+	},
+	[](const m::event &, m::vm::eval &)
+	{
+		create_room();
+	}
+};
+
+/// This is for existing installations that won't catch an
+/// !ircd room create and must create this room.
+decltype(ircd::net::dns::cache::create_room_hook_alt)
+ircd::net::dns::cache::create_room_hook_alt{[]
+(const auto &level)
+{
+	if(level != run::level::RUN || room_exists)
+		return;
+
+	context{[]
+	{
+		if(m::exists(m::my_room))  // if false, the other hook will succeed.
+			create_room();
+	}};
+}};
+
+void
+ircd::net::dns::cache::create_room()
+try
+{
+	const m::room room
+	{
+		m::create(room_id, m::me, "internal")
+	};
+
+	log::debug
+	{
+		m::log, "Created '%s' for the DNS cache module.",
+		string_view{room.room_id}
+	};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		m::log, "Creating the '%s' room failed :%s",
+		string_view{room_id},
+		e.what()
+	};
 }

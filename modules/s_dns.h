@@ -34,6 +34,7 @@ namespace ircd::net::dns::cache
 {
 	extern conf::item<seconds> min_ttl;
 	extern conf::item<seconds> clear_nxdomain;
+	extern const m::room::id::buf room_id;
 
 	extern std::multimap<std::string, rfc1035::record::A, std::less<>> cache_A;
 	extern std::multimap<std::string, rfc1035::record::SRV, std::less<>> cache_SRV;
