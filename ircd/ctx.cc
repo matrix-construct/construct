@@ -2052,6 +2052,7 @@ noexcept try
 catch(const std::exception &e)
 {
 	set_exception(std::current_exception());
+	return;
 }
 
 void
