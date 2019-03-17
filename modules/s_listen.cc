@@ -260,6 +260,10 @@ try
 		};
 
 	listeners.emplace_back(name, opts, client::create, _listener_proffer);
+
+	if(ircd::run::level == ircd::run::level::RUN)
+		start(listeners.back());
+
 	return true;
 }
 catch(const std::exception &e)
