@@ -380,7 +380,7 @@ try
 		last && completed?
 			data.range.second:
 		last?
-			last + 1:
+			std::min(last + 1, data.range.second):
 			0UL
 	};
 
@@ -651,7 +651,7 @@ ircd::m::sync::longpoll::handle(data &data,
 		const auto next
 		{
 			data.event_idx?
-				data.event_idx + 1:
+				std::min(data.event_idx + 1, vm::current_sequence + 1):
 				data.range.first
 		};
 
