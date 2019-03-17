@@ -12,6 +12,8 @@
 
 using namespace ircd;
 
+static void create_report_room(const m::event &, m::vm::eval &);
+
 const m::room::id::buf
 report_room_id
 {
@@ -23,6 +25,17 @@ reason_max
 {
 	{ "name",    "ircd.client.rooms.report.reason.max" },
 	{ "default",  512L                                 }
+};
+
+const m::hookfn<m::vm::eval &>
+create_report_room_hook
+{
+	create_report_room,
+	{
+		{ "_site",       "vm.effect"      },
+		{ "room_id",     "!ircd"          },
+		{ "type",        "m.room.create"  },
+	}
 };
 
 resource::response
@@ -90,13 +103,9 @@ post__report(client &client,
 	};
 }
 
-struct create_report_room
-{
-	create_report_room();
-}
-static create_report_room;
-
-create_report_room::create_report_room()
+void
+create_report_room(const m::event &,
+                   m::vm::eval &)
 try
 {
 	if(m::exists(report_room_id))
