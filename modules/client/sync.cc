@@ -35,6 +35,38 @@ on the server, and then continue to call this API to get incremental deltas
 to the state, and to receive new messages.
 )"};
 
+const auto linear_delta_max_help
+{R"(
+
+Maximum number of events to scan sequentially for a /sync. This determines
+whether linear-sync or polylog-sync mode is used to satisfy the request. If
+the difference between the since token (lower-bound) and the upper-bound of
+the sync is within this value, the linear-sync mode is used. If it is more
+than this value a polylog-sync mode is used. The latter is used because at
+some threshold it becomes too expensive to scan a huge number of events to
+grab only those that the client requires; it is cheaper to conduct a series
+of random-access queries with polylog-sync instead. Note the exclusive
+upper-bound of a sync is determined either by a non-spec query parameter
+'next_batch' or the vm::current_sequence+1.
+
+)"};
+
+const auto linear_buffer_size_help
+{R"(
+
+The size of the coalescing buffer used when conducting a linear-sync. During
+the sequential scan of events, when an event is marked as required for the
+client's sync it is stringified and appended to this buffer. The buffer has
+the format of a json::vector of individual events. At the end of the linear
+sync, the objects in this buffer are merged into a single spec /sync response.
+
+When this buffer is full the linear sync must finish and respond to the client
+with whatever it has. The event::idx of the last event that fit into the buffer
+forms the basis for the next_batch so the client can continue with another linear
+/sync to complete the range.
+
+)"};
+
 decltype(ircd::m::sync::flush_hiwat)
 ircd::m::sync::flush_hiwat
 {
@@ -47,13 +79,23 @@ ircd::m::sync::buffer_size
 {
 	{ "name",     "ircd.client.sync.buffer_size" },
 	{ "default",  long(128_KiB)                  },
+	{ "help",     "Response chunk buffer size"   },
+};
+
+decltype(ircd::m::sync::linear_buffer_size)
+ircd::m::sync::linear_buffer_size
+{
+	{ "name",     "ircd.client.sync.linear.buffer_size" },
+	{ "default",  long(96_KiB)                          },
+	{ "help",     linear_buffer_size_help               },
 };
 
 decltype(ircd::m::sync::linear_delta_max)
 ircd::m::sync::linear_delta_max
 {
-	{ "name",     "ircd.client.sync.linear.delta.max" },
-	{ "default",  1024                                },
+	{ "name",     "ircd.client.sync.linear.delta.max"  },
+	{ "default",  1024                                 },
+	{ "help",     linear_delta_max_help                },
 };
 
 decltype(ircd::m::sync::polylog_only)
@@ -361,7 +403,8 @@ try
 
 	const unique_buffer<mutable_buffer> buf
 	{
-		96_KiB //TODO: XXX
+		// must be at least worst-case size of m::event plus some.
+		std::max(size_t(linear_buffer_size), size_t(96_KiB))
 	};
 
 	window_buffer wb{buf};
@@ -457,7 +500,15 @@ ircd::m::sync::linear_proffer(data &data,
 			return consumed;
 		});
 
-		return wb.remaining() >= 65_KiB; //TODO: XXX
+		const bool enough_space_for_more
+		{
+			// The buffer must have at least this much more space
+			// to continue with the iteration. Otherwise if the next
+			// worst-case event does not fit, bad things.
+			wb.remaining() >= 68_KiB
+		};
+
+		return enough_space_for_more;
 	}};
 
 	const auto completed

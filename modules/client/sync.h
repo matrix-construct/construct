@@ -21,6 +21,7 @@ namespace ircd::m::sync
 
 	extern conf::item<size_t> flush_hiwat;
 	extern conf::item<size_t> buffer_size;
+	extern conf::item<size_t> linear_buffer_size;
 	extern conf::item<size_t> linear_delta_max;
 	extern conf::item<bool> longpoll_enable;
 	extern conf::item<bool> polylog_only;
