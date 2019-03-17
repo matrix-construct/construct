@@ -126,7 +126,8 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		m::log, "Creating the '%s' room failed",
-		string_view{report_room_id}
+		m::log, "Creating the '%s' room failed :%s",
+		string_view{report_room_id},
+		e.what()
 	};
 }
