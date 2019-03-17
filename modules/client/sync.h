@@ -34,36 +34,7 @@ namespace ircd::m::sync
 
 namespace ircd::m::sync::longpoll
 {
-	struct accepted
-	:m::event
-	{
-		json::strung strung;
-		std::string client_txnid;
-		event::idx event_idx;
-
-		accepted(const m::vm::eval &eval)
-		:strung
-		{
-			*eval.event_
-		}
-		,client_txnid
-		{
-			eval.copts?
-				eval.copts->client_txnid:
-				string_view{}
-		}
-		,event_idx
-		{
-			eval.sequence
-		}
-		{
-			const json::object object{this->strung};
-			static_cast<m::event &>(*this) = m::event{object};
-		}
-
-		accepted(accepted &&) = default;
-		accepted(const accepted &) = delete;
-	};
+	struct accepted;
 
 	size_t polling {0};
 	std::deque<accepted> queue;
@@ -74,6 +45,37 @@ namespace ircd::m::sync::longpoll
 	static void handle_notify(const m::event &, m::vm::eval &);
 	extern m::hookfn<m::vm::eval &> notified;
 }
+
+struct ircd::m::sync::longpoll::accepted
+:m::event
+{
+	json::strung strung;
+	std::string client_txnid;
+	event::idx event_idx;
+
+	accepted(const m::vm::eval &eval)
+	:strung
+	{
+		*eval.event_
+	}
+	,client_txnid
+	{
+		eval.copts?
+			eval.copts->client_txnid:
+			string_view{}
+	}
+	,event_idx
+	{
+		eval.sequence
+	}
+	{
+		const json::object object{this->strung};
+		static_cast<m::event &>(*this) = m::event{object};
+	}
+
+	accepted(accepted &&) = default;
+	accepted(const accepted &) = delete;
+};
 
 struct ircd::m::sync::args
 {

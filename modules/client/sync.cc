@@ -400,10 +400,10 @@ try
 
 	log::debug
 	{
-		log, "request %s linear last:%lu complete:%b @%lu",
+		log, "request %s linear last:%lu %s@%lu",
 		loghead(data),
 		last,
-		completed,
+		completed? "complete "_sv : string_view{},
 		next
 	};
 
@@ -665,7 +665,7 @@ ircd::m::sync::longpoll::handle(data &data,
 
 		log::debug
 		{
-			log, "request %s longpoll got:%lu complete @%lu",
+			log, "request %s longpoll hit:%lu complete @%lu",
 			loghead(data),
 			event.event_idx,
 			next
