@@ -17,41 +17,37 @@ namespace boost::filesystem
 	struct filesystem_error;
 }
 
+namespace ircd::fs
+{
+	struct error; // does not participate in ircd::exception hierarchy
+}
+
 namespace ircd
 {
-	struct error;
-
 	std::error_code make_error_code(const boost::filesystem::filesystem_error &);
+	std::system_error make_system_error(const boost::filesystem::filesystem_error &);
+
+	string_view string(const mutable_buffer &, const boost::filesystem::filesystem_error &);
+	std::string string(const boost::filesystem::filesystem_error &);
 }
 
 struct ircd::fs::error
 :std::system_error
-,ircd::error
 {
-	const char *what() const noexcept override;
+	static thread_local char buf[1024];
 
+  public:
 	template<class... args>
-	error(const string_view &fmt = " ",
-	      args&&...);
-
-	template<class... args>
-	error(const std::error_code &,
+	error(const boost::filesystem::filesystem_error &e,
 	      const string_view &fmt,
 	      args&&...);
 
 	template<class... args>
-	error(const std::system_error &,
+	error(const std::error_code &e,
 	      const string_view &fmt,
 	      args&&...);
 
-	template<class... args>
-	error(const boost::filesystem::filesystem_error &,
-	      const string_view &fmt,
-	      args&&...);
-
-	error(const std::error_code &e);
-	error(const std::system_error &);
-	error(const boost::filesystem::filesystem_error &);
+	error(const boost::filesystem::filesystem_error &e);
 };
 
 template<class... args>
@@ -65,38 +61,13 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &e,
 {}
 
 template<class... args>
-ircd::fs::error::error(const std::system_error &e,
-                       const string_view &fmt,
-                       args&&... a)
-:error
-{
-	make_error_code(e), fmt, std::forward<args>(a)...
-}
-{}
-
-template<class... args>
 ircd::fs::error::error(const std::error_code &e,
                        const string_view &fmt,
                        args&&... a)
-:std::system_error
+:std::system_error{[&]
+() -> std::system_error
 {
-	make_error_code(e)
-}
-,ircd::error
-{
-	fmt, std::forward<args>(a)...
-}
-{}
-
-template<class... args>
-ircd::fs::error::error(const string_view &fmt,
-                       args&&... a)
-:std::system_error
-{
-	make_error_code(std::errc::invalid_argument)
-}
-,ircd::error
-{
-	fmt, std::forward<args>(a)...
-}
+	fmt::sprintf{buf, fmt, std::forward<args>(a)...};
+	return {e, buf};
+}()}
 {}

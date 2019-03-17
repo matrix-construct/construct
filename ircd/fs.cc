@@ -1797,6 +1797,35 @@ noexcept
 // fs/error.h
 //
 
+std::string
+ircd::string(const boost::filesystem::filesystem_error &e)
+{
+	return ircd::string(512, [&e]
+	(const mutable_buffer &buf)
+	{
+		return string(buf, e);
+	});
+}
+
+ircd::string_view
+ircd::string(const mutable_buffer &buf,
+             const boost::filesystem::filesystem_error &e)
+{
+	return fmt::sprintf
+	{
+		buf, "%s :%s", e.code().category().name(), e.what()
+	};
+}
+
+std::system_error
+ircd::make_system_error(const boost::filesystem::filesystem_error &e)
+{
+	return std::system_error
+	{
+		make_error_code(e), e.what()
+	};
+}
+
 std::error_code
 ircd::make_error_code(const boost::filesystem::filesystem_error &e)
 {
@@ -1812,38 +1841,15 @@ ircd::make_error_code(const boost::filesystem::filesystem_error &e)
 // error::error
 //
 
-ircd::fs::error::error(const boost::filesystem::filesystem_error &code)
+decltype(ircd::fs::error::buf) thread_local
+ircd::fs::error::buf;
+
+ircd::fs::error::error(const boost::filesystem::filesystem_error &e)
 :std::system_error
 {
-    make_error_code(code)
+	make_error_code(e), e.what()
 }
 {
-	const string_view &msg
-	{
-		// Strip this prefix off the message to simplify it for our user.
-		lstrip(code.what(), "boost::filesystem::")
-	};
-
-	copy(this->buf, msg);
-}
-
-ircd::fs::error::error(const std::system_error &code)
-:std::system_error{code}
-{
-	string(this->buf, code);
-}
-
-ircd::fs::error::error(const std::error_code &code)
-:std::system_error{code}
-{
-	string(this->buf, code);
-}
-
-const char *
-ircd::fs::error::what()
-const noexcept
-{
-	return this->ircd::error::what();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

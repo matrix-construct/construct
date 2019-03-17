@@ -1114,6 +1114,7 @@ ircd::mods::paths::add(const string_view &dir)
 	if(!fs::is_dir(path))
 		throw fs::error
 		{
+			make_error_code(std::errc::not_a_directory),
 			"path `%s' (%s) is not a directory",
 			dir,
 			path

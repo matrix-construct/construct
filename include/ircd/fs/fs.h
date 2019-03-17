@@ -30,7 +30,6 @@ namespace boost::filesystem {}
 namespace ircd::fs
 {
 	struct init;
-	struct error; // custom exception; still inherits from ircd::error
 
 	// Forward interface to boost::filesystem. We do not include boost
 	// from here; it is used internally only. Some exposed interfaces

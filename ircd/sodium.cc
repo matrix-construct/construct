@@ -137,7 +137,7 @@ try
 		::crypto_sign_ed25519_sk_to_pk(pk_data, key.get())
 	};
 }
-catch(const fs::error &e)
+catch(const std::exception &e)
 {
 	throw error
 	{
