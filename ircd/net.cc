@@ -3687,7 +3687,17 @@ ircd::net::ipport::ipport(const uint128_t &ip,
 
 ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
-                  const uint32_t &ip)
+                  const ipaddr &ipaddr)
+{
+	throw not_implemented
+	{
+		"string(ipaddr): not implemented yet"
+	};
+}
+
+ircd::string_view
+ircd::net::string_ip4(const mutable_buffer &buf,
+                      const uint32_t &ip)
 {
 	const auto len
 	{
@@ -3698,8 +3708,8 @@ ircd::net::string(const mutable_buffer &buf,
 }
 
 ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const uint128_t &ip)
+ircd::net::string_ip6(const mutable_buffer &buf,
+                      const uint128_t &ip)
 {
 	const auto &pun
 	{

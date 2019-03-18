@@ -30,8 +30,9 @@ namespace ircd::net
 	bool operator<(const ipaddr &, const ipaddr &);
 	bool operator==(const ipaddr &, const ipaddr &);
 
-	string_view string(const mutable_buffer &out, const uint32_t &);
-	string_view string(const mutable_buffer &out, const uint128_t &);
+	string_view string_ip4(const mutable_buffer &out, const uint32_t &);
+	string_view string_ip6(const mutable_buffer &out, const uint128_t &);
+	string_view string(const mutable_buffer &out, const ipaddr &);
 }
 
 union ircd::net::ipaddr
