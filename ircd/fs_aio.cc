@@ -412,6 +412,14 @@ try
 }
 {
 	syscall<SYS_io_setup>(this->max_events(), &idp);
+
+	const aio_ring *const ring
+	{
+		reinterpret_cast<const aio_ring *>(idp)
+	};
+
+	assert(ring->magic == aio_ring::MAGIC);
+
 	log::debug
 	{
 		"Established AIO(%p) context (fd:%d max_events:%zu max_submit:%zu)",
