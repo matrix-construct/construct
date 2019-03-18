@@ -217,6 +217,22 @@ ircd::rfc1035::record::A::A(const answer &answer)
 	ip4 = bswap(*(const uint32_t *)data(rdata));
 }
 
+void
+ircd::rfc1035::record::A::append(json::stack::object &out)
+const
+{
+	thread_local char ipbuf[64];
+	json::stack::member
+	{
+		out, "ip", net::string_ip4(ipbuf, ip4)
+	};
+
+	json::stack::member
+	{
+		out, "ttl", json::value(ttl)
+	};
+}
+
 bool
 ircd::rfc1035::operator!=(const record::A &a, const record::A &b)
 {
@@ -251,6 +267,22 @@ ircd::rfc1035::record::AAAA::AAAA(const answer &answer)
 	ip6 = bswap(*(const uint128_t *)data(rdata));
 }
 
+void
+ircd::rfc1035::record::AAAA::append(json::stack::object &out)
+const
+{
+	thread_local char ipbuf[64];
+	json::stack::member
+	{
+		out, "ip", net::string_ip6(ipbuf, ip6)
+	};
+
+	json::stack::member
+	{
+		out, "ttl", json::value(ttl)
+	};
+}
+
 bool
 ircd::rfc1035::operator!=(const record::AAAA &a, const record::AAAA &b)
 {
@@ -283,6 +315,21 @@ ircd::rfc1035::record::CNAME::CNAME(const answer &answer)
 
 	const auto len{parse_name(namebuf, rdata)};
 	name = string_view{namebuf, len - 1};
+}
+
+void
+ircd::rfc1035::record::CNAME::append(json::stack::object &out)
+const
+{
+	json::stack::member
+	{
+		out, "name", name
+	};
+
+	json::stack::member
+	{
+		out, "ttl", json::value(ttl)
+	};
 }
 
 bool
@@ -326,6 +373,36 @@ ircd::rfc1035::record::SRV::SRV(const answer &answer)
 	pos += len;
 
 	assert(std::distance(pos, end(rdata)) >= 0);
+}
+
+void
+ircd::rfc1035::record::SRV::append(json::stack::object &out)
+const
+{
+	json::stack::member
+	{
+		out, "port", json::value(port)
+	};
+
+	json::stack::member
+	{
+		out, "prio", json::value(priority)
+	};
+
+	json::stack::member
+	{
+		out, "tgt", tgt
+	};
+
+	json::stack::member
+	{
+		out, "ttl", json::value(ttl)
+	};
+
+	json::stack::member
+	{
+		out, "weight", json::value(weight)
+	};
 }
 
 bool

@@ -209,6 +209,8 @@ struct ircd::rfc1035::record::A
 {
 	uint32_t ip4 {0};
 
+	void append(json::stack::object &) const;
+
 	A(const answer &);
 	A();
 };
@@ -220,6 +222,8 @@ struct ircd::rfc1035::record::AAAA
 {
 	uint128_t ip6 {0};
 
+	void append(json::stack::object &) const;
+
 	AAAA(const answer &);
 	AAAA();
 };
@@ -230,6 +234,8 @@ struct ircd::rfc1035::record::CNAME
 {
 	string_view name;
 	char namebuf[NAME_BUF_SIZE];
+
+	void append(json::stack::object &) const;
 
 	CNAME(const answer &);
 	CNAME();
@@ -245,6 +251,8 @@ struct ircd::rfc1035::record::SRV
 	uint16_t port {0};
 	string_view tgt;
 	char tgtbuf[NAME_BUF_SIZE];
+
+	void append(json::stack::object &) const;
 
 	SRV(const answer &);
 	SRV();
