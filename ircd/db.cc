@@ -3820,7 +3820,10 @@ ircd::db::txn::operator()(database &d,
                           const sopts &opts)
 {
 	assert(bool(wb));
+	assert(this->state == state::BUILD);
+	this->state = state::COMMIT;
 	commit(d, *wb, opts);
+	this->state = state::COMMITTED;
 }
 
 void
@@ -3828,6 +3831,7 @@ ircd::db::txn::clear()
 {
 	assert(bool(wb));
 	wb->Clear();
+	this->state = state::BUILD;
 }
 
 size_t

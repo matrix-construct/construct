@@ -28,8 +28,11 @@ namespace ircd::db
 
 struct ircd::db::txn
 {
+	enum state :uint8_t;
+
 	database *d {nullptr};
 	std::unique_ptr<rocksdb::WriteBatch> wb;
+	enum state state {0};
 
   public:
 	struct opts;
@@ -70,6 +73,14 @@ struct ircd::db::txn
 	txn(database &, const opts &);
 	txn(database &, std::unique_ptr<rocksdb::WriteBatch> &&);
 	~txn() noexcept;
+};
+
+enum ircd::db::txn::state
+:uint8_t
+{
+	BUILD       = 0,
+	COMMIT      = 1,
+	COMMITTED   = 2,
 };
 
 struct ircd::db::txn::append
