@@ -23,17 +23,25 @@ namespace ircd::m::vm
 	using fault_t = std::underlying_type<fault>::type;
 
 	extern log::log log;
-	extern uint64_t current_sequence;
-	extern uint64_t uncommitted_sequence;
 	extern const opts default_opts;
 	extern const copts default_copts;
 
 	string_view reflect(const fault &);
 	http::code http_code(const fault &);
-	const uint64_t &sequence(const eval &);
-	uint64_t retired_sequence(id::event::buf &);
-	uint64_t retired_sequence();
 }
+
+namespace ircd::m::vm::sequence
+{
+	extern uint64_t retired;      // already written; always monotonic
+	extern uint64_t committed;    // pending write; usually monotonic
+	extern uint64_t uncommitted;  // evaluating; not monotonic
+	extern ctx::dock dock;
+
+	uint64_t get(id::event::buf &); // [GET]
+	const uint64_t &get(const eval &);
+	uint64_t max();
+	uint64_t min();
+};
 
 /// Event Evaluation Device
 ///
@@ -46,24 +54,25 @@ namespace ircd::m::vm
 struct ircd::m::vm::eval
 :instance_list<eval>
 {
-	static uint64_t id_ctr; // monotonic
-
-	uint64_t id {++id_ctr};
-	ctx::ctx *ctx {ctx::current};
+	static uint64_t id_ctr;
 
 	const vm::opts *opts {&default_opts};
 	const vm::copts *copts {nullptr};
-	event::conforms report;
+	ctx::ctx *ctx {ctx::current};
 
+	uint64_t id {++id_ctr};
 	uint64_t sequence {0};
 	db::txn *txn {nullptr};
 
-	string_view room_id;
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};
 	json::array pdus;
 
+	string_view room_id;
 	event::id::buf event_id;
+	event::conforms report;
+
+	static bool for_each_pdu(const std::function<bool (const json::object &)> &);
 
   public:
 	operator const event::id::buf &() const;
@@ -86,8 +95,11 @@ struct ircd::m::vm::eval
 	static bool for_each(const std::function<bool (eval &)> &);
 	static eval *find(const event::id &);
 	static eval &get(const event::id &);
-
-	static bool for_each_pdu(const std::function<bool (const json::object &)> &);
+	static bool sequnique(const uint64_t &seq);
+	static eval *seqnext(const uint64_t &seq);
+	static eval *seqmax();
+	static eval *seqmin();
+	static void seqsort();
 };
 
 /// Evaluation faults. These are reasons which evaluation has halted but may

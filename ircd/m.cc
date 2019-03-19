@@ -567,7 +567,7 @@ ircd::m::sync::loghead(const data &data)
 		string_view{data.user.user_id},
 		data.range.first,
 		data.range.second,
-		vm::current_sequence,
+		vm::sequence::retired,
 		flush_count,
 		ircd::pretty(iecbuf[1], iec(flush_bytes)),
 		data.out?
@@ -1044,14 +1044,6 @@ ircd::m::vm::log
 	"vm", 'v'
 };
 
-decltype(ircd::m::vm::current_sequence)
-ircd::m::vm::current_sequence
-{};
-
-decltype(ircd::m::vm::uncommitted_sequence)
-ircd::m::vm::uncommitted_sequence
-{};
-
 decltype(ircd::m::vm::default_opts)
 ircd::m::vm::default_opts
 {};
@@ -1059,54 +1051,6 @@ ircd::m::vm::default_opts
 decltype(ircd::m::vm::default_copts)
 ircd::m::vm::default_copts
 {};
-
-const uint64_t &
-ircd::m::vm::sequence(const eval &eval)
-{
-	return eval.sequence;
-}
-
-uint64_t
-ircd::m::vm::retired_sequence()
-{
-	event::id::buf event_id;
-	return retired_sequence(event_id);
-}
-
-uint64_t
-ircd::m::vm::retired_sequence(event::id::buf &event_id)
-{
-	static constexpr auto column_idx
-	{
-		json::indexof<event, "event_id"_>()
-	};
-
-	auto &column
-	{
-		dbs::event_column.at(column_idx)
-	};
-
-	const auto it
-	{
-		column.rbegin()
-	};
-
-	if(!it)
-	{
-		// If this iterator is invalid the events db should
-		// be completely fresh.
-		assert(db::sequence(*dbs::events) == 0);
-		return 0;
-	}
-
-	const auto &ret
-	{
-		byte_view<uint64_t>(it->first)
-	};
-
-	event_id = it->second;
-	return ret;
-}
 
 ircd::http::code
 ircd::m::vm::http_code(const fault &code)
@@ -1158,16 +1102,94 @@ decltype(ircd::m::vm::eval::id_ctr)
 ircd::m::vm::eval::id_ctr
 {};
 
-bool
-ircd::m::vm::eval::for_each_pdu(const std::function<bool (const json::object &)> &closure)
+void
+ircd::m::vm::eval::seqsort()
 {
-	return for_each([&closure](eval &e)
+	eval::list.sort([]
+	(const auto *const &a, const auto *const &b)
 	{
-		for(const json::object &pdu : e.pdus)
-			if(!closure(pdu))
+		if(sequence::get(*a) == 0)
+			return false;
+
+		if(sequence::get(*b) == 0)
+			return true;
+
+		return sequence::get(*a) < sequence::get(*b);
+	});
+}
+
+ircd::m::vm::eval *
+ircd::m::vm::eval::seqmin()
+{
+	const auto it
+	{
+		std::min_element(begin(eval::list), end(eval::list), []
+		(const auto *const &a, const auto *const &b)
+		{
+			if(sequence::get(*a) == 0)
 				return false;
 
-		return true;
+			if(sequence::get(*b) == 0)
+				return true;
+
+			return sequence::get(*a) < sequence::get(*b);
+		})
+	};
+
+	if(it == end(eval::list))
+		return nullptr;
+
+	if(sequence::get(**it) == 0)
+		return nullptr;
+
+	return *it;
+}
+
+ircd::m::vm::eval *
+ircd::m::vm::eval::seqmax()
+{
+	const auto it
+	{
+		std::max_element(begin(eval::list), end(eval::list), []
+		(const auto *const &a, const auto *const &b)
+		{
+			return sequence::get(*a) < sequence::get(*b);
+		})
+	};
+
+	if(it == end(eval::list))
+		return nullptr;
+
+	if(sequence::get(**it) == 0)
+		return nullptr;
+
+	return *it;
+}
+
+ircd::m::vm::eval *
+ircd::m::vm::eval::seqnext(const uint64_t &seq)
+{
+	eval *ret{nullptr};
+	for(auto *const &eval : eval::list)
+	{
+		if(sequence::get(*eval) <= seq)
+			continue;
+
+		if(!ret || sequence::get(*eval) < sequence::get(*ret))
+			ret = eval;
+	}
+
+	assert(!ret || sequence::get(*ret) > seq);
+	return ret;
+}
+
+bool
+ircd::m::vm::eval::sequnique(const uint64_t &seq)
+{
+	return 1 == std::count_if(begin(eval::list), end(eval::list), [&seq]
+	(const auto *const &eval)
+	{
+		return sequence::get(*eval) == seq;
 	});
 }
 
@@ -1283,6 +1305,19 @@ const
 	return event_id;
 }
 
+bool
+ircd::m::vm::eval::for_each_pdu(const std::function<bool (const json::object &)> &closure)
+{
+	return for_each([&closure](eval &e)
+	{
+		for(const json::object &pdu : e.pdus)
+			if(!closure(pdu))
+				return false;
+
+		return true;
+	});
+}
+
 ///
 /// Figure 1:
 ///          in     .  <-- injection
@@ -1351,6 +1386,86 @@ ircd::m::vm::eval::operator()(const event &event)
 
 	return ret;
 }
+
+//
+// sequence
+//
+
+decltype(ircd::m::vm::sequence::retired)
+ircd::m::vm::sequence::retired;
+
+decltype(ircd::m::vm::sequence::committed)
+ircd::m::vm::sequence::committed;
+
+decltype(ircd::m::vm::sequence::uncommitted)
+ircd::m::vm::sequence::uncommitted;
+
+decltype(ircd::m::vm::sequence::dock)
+ircd::m::vm::sequence::dock;
+
+uint64_t
+ircd::m::vm::sequence::min()
+{
+	const auto *const e
+	{
+		eval::seqmin()
+	};
+
+	return e? get(*e) : 0;
+}
+
+uint64_t
+ircd::m::vm::sequence::max()
+{
+	const auto *const e
+	{
+		eval::seqmax()
+	};
+
+	return e? get(*e) : 0;
+}
+
+uint64_t
+ircd::m::vm::sequence::get(id::event::buf &event_id)
+{
+	static constexpr auto column_idx
+	{
+		json::indexof<event, "event_id"_>()
+	};
+
+	auto &column
+	{
+		dbs::event_column.at(column_idx)
+	};
+
+	const auto it
+	{
+		column.rbegin()
+	};
+
+	if(!it)
+	{
+		// If this iterator is invalid the events db should
+		// be completely fresh.
+		assert(db::sequence(*dbs::events) == 0);
+		return 0;
+	}
+
+	const auto &ret
+	{
+		byte_view<uint64_t>(it->first)
+	};
+
+	event_id = it->second;
+	return ret;
+}
+
+const uint64_t &
+ircd::m::vm::sequence::get(const eval &eval)
+{
+	return eval.sequence;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -2113,13 +2228,13 @@ ircd::m::events::for_each(const range &range,
 	{
 		ascending?
 			range.first:
-			std::min(range.first, vm::current_sequence)
+			std::min(range.first, vm::sequence::retired)
 	};
 
 	const auto stop
 	{
 		ascending?
-			std::min(range.second, vm::current_sequence + 1):
+			std::min(range.second, vm::sequence::retired + 1):
 			range.second
 	};
 

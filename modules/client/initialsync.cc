@@ -165,7 +165,7 @@ _initialsync(client &client,
 
 	const auto next_batch
 	{
-		int64_t(m::vm::current_sequence)
+		int64_t(m::vm::sequence::retired)
 	};
 
 	// rooms

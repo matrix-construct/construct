@@ -5632,7 +5632,7 @@ console_cmd__events__dump(opt &out, const string_view &line)
 
 			const double pct
 			{
-				(seq / double(m::vm::current_sequence)) * 100.0
+				(seq / double(m::vm::sequence::retired)) * 100.0
 			};
 
 			log::info
@@ -5642,7 +5642,7 @@ console_cmd__events__dump(opt &out, const string_view &line)
 				pct,
 				'%', //TODO: fix gram
 				seq,
-				m::vm::current_sequence,
+				m::vm::sequence::retired,
 				ecount,
 				foff,
 				acount,
@@ -11530,7 +11530,7 @@ bool
 console_cmd__vm(opt &out, const string_view &line)
 {
 	out << "sequence:       "
-	    << std::right << std::setw(10) << m::vm::current_sequence
+	    << std::right << std::setw(10) << m::vm::sequence::retired
 	    << std::endl;
 
 	out << "eval total:     "

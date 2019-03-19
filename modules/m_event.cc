@@ -541,7 +541,7 @@ ircd::m::append(json::stack::object &object,
 		unsigned_, "age", json::value
 		{
 			has_event_idx && opts.age != std::numeric_limits<long>::min()?
-				long(vm::current_sequence - *opts.event_idx):
+				long(vm::sequence::retired - *opts.event_idx):
 			opts.age != std::numeric_limits<long>::min()?
 				opts.age:
 			0L
@@ -658,7 +658,7 @@ ircd::m::event::refs::rebuild()
 				m::log, "Refs builder @%zu:%zu of %lu (@idx: %lu)",
 				i,
 				j,
-				m::vm::current_sequence,
+				m::vm::sequence::retired,
 				event_idx
 			};
 

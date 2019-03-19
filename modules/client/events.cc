@@ -315,7 +315,7 @@ get_events_from(client &client,
 		{
 			unsigned_, "age", json::value
 			{
-				 long(m::vm::current_sequence - it.event_idx())
+				 long(m::vm::sequence::retired - it.event_idx())
 			}
 		};
 	}

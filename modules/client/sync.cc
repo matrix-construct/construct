@@ -47,7 +47,7 @@ some threshold it becomes too expensive to scan a huge number of events to
 grab only those that the client requires; it is cheaper to conduct a series
 of random-access queries with polylog-sync instead. Note the exclusive
 upper-bound of a sync is determined either by a non-spec query parameter
-'next_batch' or the vm::current_sequence+1.
+'next_batch' or the vm::sequence::retired+1.
 
 )"};
 
@@ -139,10 +139,10 @@ ircd::m::sync::handle_get(client &client,
 	// The range to `/sync`. We involve events starting at the range.first
 	// index in this sync. We will not involve events with an index equal
 	// or greater than the range.second. In this case the range.second does not
-	// exist yet because it is one past the server's current_sequence counter.
+	// exist yet because it is one past the server's sequence::retired counter.
 	const m::events::range range
 	{
-		args.since, std::min(args.next_batch, m::vm::current_sequence + 1)
+		args.since, std::min(args.next_batch, m::vm::sequence::retired + 1)
 	};
 
 	// When the range indexes are the same, the client is polling for the next
@@ -190,7 +190,7 @@ ircd::m::sync::handle_get(client &client,
 
 	const bool should_longpoll
 	{
-		range.first > vm::current_sequence
+		range.first > vm::sequence::retired
 	};
 
 	const bool should_linear
@@ -702,7 +702,7 @@ ircd::m::sync::longpoll::handle(data &data,
 		const auto next
 		{
 			data.event_idx?
-				std::min(data.event_idx + 1, vm::current_sequence + 1):
+				std::min(data.event_idx + 1, vm::sequence::retired + 1):
 				data.range.first
 		};
 

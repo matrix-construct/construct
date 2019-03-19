@@ -116,15 +116,16 @@ void
 ircd::m::vm::init()
 {
 	id::event::buf event_id;
-	current_sequence = retired_sequence(event_id);
-	uncommitted_sequence = current_sequence;
+	sequence::retired = sequence::get(event_id);
+	sequence::committed = sequence::retired;
+	sequence::uncommitted = sequence::committed;
 
 	log::info
 	{
 		log, "BOOT %s @%lu [%s]",
 		string_view{m::my_node.node_id},
-		current_sequence,
-		current_sequence? string_view{event_id} : "NO EVENTS"_sv
+		sequence::retired,
+		sequence::retired? string_view{event_id} : "NO EVENTS"_sv
 	};
 }
 
@@ -133,20 +134,21 @@ ircd::m::vm::fini()
 {
 	assert(eval::list.empty());
 
-	id::event::buf event_id;
-	const auto current_sequence
+	event::id::buf event_id;
+	const auto retired
 	{
-		retired_sequence(event_id)
+		sequence::get(event_id)
 	};
 
 	log::info
 	{
-		log, "HLT '%s' @%lu [%s] %lu:%lu",
+		log, "HLT '%s' @%lu [%s] %lu:%lu:%lu",
 		string_view{m::my_node.node_id},
-		current_sequence,
-		current_sequence? string_view{event_id} : "NO EVENTS"_sv,
-		vm::uncommitted_sequence,
-		vm::current_sequence,
+		retired,
+		retired? string_view{event_id} : "NO EVENTS"_sv,
+		sequence::retired,
+		sequence::committed,
+		sequence::uncommitted
 	};
 }
 
@@ -645,17 +647,95 @@ ircd::m::vm::_eval_pdu(eval &eval,
 
 	// Obtain sequence number here
 	if(opts.write)
-		eval.sequence = ++vm::uncommitted_sequence;
+	{
+		const auto *const &top(eval::seqmax());
+		eval.sequence = top?
+			std::max(sequence::get(*top) + 1, sequence::committed + 1):
+			sequence::committed + 1;
+
+		log::debug
+		{
+			log, "vm seq %lu[%lu]%lu|%lu|%lu:%lu | acquire",
+			vm::sequence::max(),
+			sequence::get(eval),
+			vm::sequence::uncommitted,
+			vm::sequence::committed,
+			vm::sequence::retired,
+			vm::sequence::min(),
+		};
+
+		assert(eval.sequence != 0);
+		assert(sequence::uncommitted <= sequence::get(eval));
+		assert(sequence::committed < sequence::get(eval));
+		assert(sequence::retired < sequence::get(eval));
+		assert(eval::sequnique(sequence::get(eval)));
+		sequence::uncommitted = sequence::get(eval);
+	}
 
 	// Evaluation by module hooks
 	if(opts.eval)
 		eval_hook(event, eval);
 
+	if(opts.write)
+	{
+		log::debug
+		{
+			log, "vm seq %lu:%lu[%lu]%lu|%lu:%lu | commit",
+			vm::sequence::max(),
+			vm::sequence::uncommitted,
+			sequence::get(eval),
+			vm::sequence::committed,
+			vm::sequence::retired,
+			vm::sequence::min(),
+		};
+
+		sequence::dock.wait([&eval]
+		{
+			return eval::seqnext(sequence::committed) == &eval;
+		});
+
+		assert(sequence::committed < sequence::get(eval));
+		assert(sequence::retired < sequence::get(eval));
+		sequence::committed = sequence::get(eval);
+		sequence::dock.notify_all();
+
+		log::debug
+		{
+			log, "vm seq %lu:%lu[%lu|%lu]%lu:%lu | write",
+			vm::sequence::max(),
+			vm::sequence::uncommitted,
+			vm::sequence::committed,
+			sequence::get(eval),
+			vm::sequence::retired,
+			vm::sequence::min(),
+		};
+
+		_write(eval, event);
+
+		sequence::dock.wait([&eval]
+		{
+			return eval::seqnext(sequence::retired) == &eval;
+		});
+
+		assert(sequence::retired < sequence::get(eval));
+		sequence::retired = sequence::get(eval);
+		sequence::dock.notify_all();
+
+		log::debug
+		{
+			log, "vm seq %lu:%lu|%lu[%lu|%lu]%lu | retire",
+			vm::sequence::max(),
+			vm::sequence::uncommitted,
+			vm::sequence::committed,
+			vm::sequence::retired,
+			sequence::get(eval),
+			vm::sequence::min(),
+		};
+	}
+
+	// pre-notify effect hooks
 	if(opts.post)
 		post_hook(event, eval);
-
-	if(opts.write)
-		_write(eval, event);
 
 	return fault::ACCEPT;
 }
@@ -753,69 +833,28 @@ ircd::m::vm::_commit(eval &eval)
 	auto &txn(*eval.txn);
 
 	#ifdef RB_DEBUG
-	const auto db_seq_before(sequence(*m::dbs::events));
+	const auto db_seq_before(db::sequence(*m::dbs::events));
 	#endif
 
 	txn();
 
 	#ifdef RB_DEBUG
-	const auto db_seq_after(sequence(*m::dbs::events));
+	const auto db_seq_after(db::sequence(*m::dbs::events));
 	#endif
 
-	if(log_commit_debug || eval.opts->debuglog_accept)
+	if(log_commit_debug && !eval.opts->debuglog_accept)
 		log::debug
 		{
-			log, "vm seq %lu:%lu:%lu | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
-			vm::uncommitted_sequence,
-			vm::current_sequence,
-			eval.sequence,
+			log, "vm seq %lu:%lu|%lu[%lu]%lu:%lu | wrote | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
+			vm::sequence::max(),
+			vm::sequence::uncommitted,
+			vm::sequence::committed,
+			sequence::get(eval),
+			vm::sequence::retired,
+			vm::sequence::min(),
 			db_seq_before,
 			db_seq_after,
 			txn.size(),
 			txn.bytes()
 		};
-
-	++vm::current_sequence;
-}
-
-uint64_t
-ircd::m::vm::retired_sequence()
-{
-	event::id::buf event_id;
-	return retired_sequence(event_id);
-}
-
-uint64_t
-ircd::m::vm::retired_sequence(event::id::buf &event_id)
-{
-	static constexpr auto column_idx
-	{
-		json::indexof<event, "event_id"_>()
-	};
-
-	auto &column
-	{
-		dbs::event_column.at(column_idx)
-	};
-
-	const auto it
-	{
-		column.rbegin()
-	};
-
-	if(!it)
-	{
-		// If this iterator is invalid the events db should
-		// be completely fresh.
-		assert(db::sequence(*dbs::events) == 0);
-		return 0;
-	}
-
-	const auto &ret
-	{
-		byte_view<uint64_t>(it->first)
-	};
-
-	event_id = it->second;
-	return ret;
 }
