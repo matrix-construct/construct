@@ -3792,16 +3792,22 @@ ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
                   const hostport &hp)
 {
-	if(empty(service(hp)))
+	if(empty(service(hp)) && port(hp) == 0)
+		return fmt::sprintf
+		{
+			buf, "%s", host(hp)
+		};
+
+	if(!empty(service(hp)))
+		return fmt::sprintf
+		{
+			buf, "%s:%s", host(hp), service(hp)
+		};
+
+	if(empty(service(hp)) && port(hp) != 0)
 		return fmt::sprintf
 		{
 			buf, "%s:%u", host(hp), port(hp)
-		};
-
-	if(port(hp) == 0)
-		return fmt::sprintf
-		{
-			buf, "%s (%s)", host(hp), service(hp)
 		};
 
 	return fmt::sprintf
