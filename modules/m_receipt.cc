@@ -210,7 +210,7 @@ ircd::m::receipt::read(const m::room::id &room_id,
 
 	log::info
 	{
-		"%s read by %s in %s @ %zd => %s (local)",
+		m::log, "%s read by %s in %s @ %zd => %s (local)",
 		string_view{event_id},
 		string_view{user_id},
 		string_view{room_id},
