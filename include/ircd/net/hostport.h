@@ -54,6 +54,8 @@ namespace ircd
 ///
 struct ircd::net::hostport
 {
+	IRCD_OVERLOAD(verbatim)
+
 	string_view host {"0.0.0.0"};
 	string_view service {canon_service};
 	uint16_t port {canon_port};
@@ -64,6 +66,7 @@ struct ircd::net::hostport
 	hostport(const string_view &host, const string_view &service, const uint16_t &port = canon_port);
 	hostport(const string_view &host, const uint16_t &port);
 	hostport(const string_view &amalgam);
+	hostport(const string_view &amalgam, verbatim_t);
 	hostport() = default;
 };
 
@@ -76,12 +79,10 @@ inline
 ircd::net::hostport::hostport(const string_view &host,
                               const string_view &service,
                               const uint16_t &port)
-:host{host}
+:host{rfc3986::host(host)}
 ,service{service}
 ,port{port}
-{
-	rfc3986::valid_host(host);
-}
+{}
 
 /// Creates a host:port pair from a hostname and a port number. When
 /// passed to net::dns() no SRV resolution will be done because no
@@ -135,6 +136,25 @@ ircd::net::hostport::hostport(const string_view &amalgam)
 	else
 		this->port = canon_port;
 }
+
+inline
+ircd::net::hostport::hostport(const string_view &amalgam,
+                              verbatim_t)
+:host
+{
+	rfc3986::host(amalgam)
+}
+,service
+{
+	amalgam != host && !rfc3986::port(amalgam)?
+		rsplit(amalgam, ':').second:
+		string_view{}
+}
+,port
+{
+	rfc3986::port(amalgam)
+}
+{}
 
 inline
 ircd::net::hostport::operator
