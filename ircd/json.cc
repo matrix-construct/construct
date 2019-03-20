@@ -2372,6 +2372,17 @@ const try
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
+	const auto type
+	{
+		json::type(*this)
+	};
+
+	if(type != type::OBJECT)
+		throw type_error
+		{
+			"Expected JSON type OBJECT, not %s.", reflect(type)
+		};
+
 	throw expectation_failure<parse_error>
 	{
 		e, string_view::begin(), error_show_max
