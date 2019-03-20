@@ -36,6 +36,10 @@ namespace ircd::m::vm
 	extern conf::item<bool> log_commit_debug;
 	extern conf::item<bool> log_accept_debug;
 	extern conf::item<bool> log_accept_info;
+
+	extern conf::item<size_t> pool_size;
+	extern const ctx::pool::opts pool_opts;
+	extern ctx::pool pool;
 }
 
 ircd::mapi::header
@@ -108,6 +112,29 @@ ircd::m::vm::effect_hook
 	{ "name", "vm.effect" }
 };
 
+decltype(ircd::m::vm::pool_size)
+ircd::m::vm::pool_size
+{
+	{ "name",     "ircd.m.vm.pool.size" },
+	{ "default",  16L                   },
+};
+
+decltype(ircd::m::vm::pool_opts)
+ircd::m::vm::pool_opts
+{
+	ctx::DEFAULT_STACK_SIZE,
+	0,
+	-1,
+	0
+};
+
+decltype(ircd::m::vm::pool)
+ircd::m::vm::pool
+{
+	"vm", pool_opts
+};
+
+
 //
 // init
 //
@@ -115,6 +142,8 @@ ircd::m::vm::effect_hook
 void
 ircd::m::vm::init()
 {
+	pool.min(size_t(pool_size));
+
 	id::event::buf event_id;
 	sequence::retired = sequence::get(event_id);
 	sequence::committed = sequence::retired;
@@ -132,6 +161,9 @@ ircd::m::vm::init()
 void
 ircd::m::vm::fini()
 {
+	pool.terminate();
+	pool.join();
+
 	assert(eval::list.empty());
 
 	event::id::buf event_id;
@@ -711,7 +743,24 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		};
 
 		_write(eval, event);
+	}
 
+	// pre-notify effect hooks
+	bool post_hook_complete{false};
+	if(opts.post)
+		pool([&event, &eval, &post_hook_complete]
+		{
+			const unwind notify{[&post_hook_complete]
+			{
+				post_hook_complete = true;
+				sequence::dock.notify_all();
+			}};
+
+			post_hook(event, eval);
+		});
+
+	if(opts.write)
+	{
 		sequence::dock.wait([&eval]
 		{
 			return eval::seqnext(sequence::retired) == &eval;
@@ -733,9 +782,24 @@ ircd::m::vm::_eval_pdu(eval &eval,
 		};
 	}
 
-	// pre-notify effect hooks
 	if(opts.post)
-		post_hook(event, eval);
+	{
+		sequence::dock.wait([&post_hook_complete]
+		{
+			return post_hook_complete;
+		});
+
+		log::debug
+		{
+			log, "vm seq %lu:%lu|%lu[%lu|%lu]%lu | accept",
+			vm::sequence::max(),
+			vm::sequence::uncommitted,
+			vm::sequence::committed,
+			vm::sequence::retired,
+			sequence::get(eval),
+			vm::sequence::min(),
+		};
+	}
 
 	return fault::ACCEPT;
 }
