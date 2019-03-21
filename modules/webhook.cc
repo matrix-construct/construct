@@ -477,9 +477,14 @@ static std::ostream &
 github_handle__issues(std::ostream &out,
                       const json::object &content)
 {
+	const json::string &action
+	{
+		content["action"]
+	};
+
 	out << " "
 	    << "<b>"
-	    << unquote(content["action"])
+	    << action
 	    << "</b>"
 	    ;
 
@@ -488,7 +493,7 @@ github_handle__issues(std::ostream &out,
 		content["issue"]
 	};
 
-	switch(hash(unquote(content["action"])))
+	switch(hash(action))
 	{
 		case "assigned"_:
 		case "unassigned"_:
@@ -520,7 +525,25 @@ github_handle__issues(std::ostream &out,
 	    << "</a>"
 	    ;
 
-	if(unquote(content["action"]) == "opened")
+	if(action != "labeled")
+		for(const json::object &label : json::array(issue["labels"]))
+		{
+			out << "&nbsp;";
+			out << "<font color=\"#FFFFFF\""
+			    << "data-mx-bg-color=\"#"
+			    << unquote(label["color"])
+			    << "\">";
+
+			out << "<b>";
+			out << "&nbsp;";
+			out << unquote(label["name"]);
+			out << "&nbsp;";
+			out << "</b>";
+
+			out << "</font>";
+		}
+
+	if(action == "opened")
 	{
 		out << " "
 		    << "<blockquote>"
@@ -544,7 +567,7 @@ github_handle__issues(std::ostream &out,
 		    << "</blockquote>"
 		    ;
 	}
-	else if(unquote(content["action"]) == "labeled")
+	else if(action == "labeled")
 	{
 		const json::array labels
 		{
@@ -566,9 +589,9 @@ github_handle__issues(std::ostream &out,
 			    << "\">";
 
 			out << "<b>";
-			out << " &nbsp; ";
+			out << "&nbsp;";
 			out << unquote(label["name"]);
-			out << " &nbsp; ";
+			out << "&nbsp;";
 			out << "</b>";
 
 			out << "</font>";
