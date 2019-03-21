@@ -1389,12 +1389,12 @@ ircd::m::vm::eval::operator()(const room &room,
 {
 	using prototype = fault (eval &, const m::room &, json::iov &, const json::iov &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"vm", "eval__commit_room"
+		"vm", "ircd::m::vm::inject"
 	};
 
-	return function(*this, room, event, contents);
+	return call(*this, room, event, contents);
 }
 
 /// Inject a new event originating from this server.
@@ -1405,12 +1405,12 @@ ircd::m::vm::eval::operator()(json::iov &event,
 {
 	using prototype = fault (eval &, json::iov &, const json::iov &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"vm", "eval__commit"
+		"vm", "ircd::m::vm::inject"
 	};
 
-	return function(*this, event, contents);
+	return call(*this, event, contents);
 }
 
 enum ircd::m::vm::fault
@@ -1418,17 +1418,12 @@ ircd::m::vm::eval::operator()(const event &event)
 {
 	using prototype = fault (eval &, const m::event &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"vm", "eval__event"
+		"vm", "ircd::m::vm::execute"
 	};
 
-	const vm::fault ret
-	{
-		function(*this, event)
-	};
-
-	return ret;
+	return call(*this, event);
 }
 
 //

@@ -13,15 +13,15 @@ namespace ircd::m::vm
 	static void write_commit(eval &);
 	static void write_append(eval &, const event &);
 	static void write_prepare(eval &, const event &);
-	static fault _eval_edu(eval &, const event &);
-	static fault _eval_pdu(eval &, const event &);
+	static fault execute_edu(eval &, const event &);
+	static fault execute_pdu(eval &, const event &);
 
 	template<class... args>
 	static fault handle_error(const opts &opts, const fault &code, const string_view &fmt, args&&... a);
 
-	extern "C" fault eval__event(eval &, const event &);
-	extern "C" fault eval__commit(eval &, json::iov &, const json::iov &);
-	extern "C" fault eval__commit_room(eval &, const room &, json::iov &, const json::iov &);
+	fault execute(eval &, const event &);
+	fault inject(eval &, json::iov &, const json::iov &);
+	fault inject(eval &, const room &, json::iov &, const json::iov &);
 
 	static void init();
 	static void fini();
@@ -190,10 +190,11 @@ ircd::m::vm::fini()
 //
 
 enum ircd::m::vm::fault
-ircd::m::vm::eval__commit_room(eval &eval,
-                               const room &room,
-                               json::iov &event,
-                               const json::iov &contents)
+IRCD_MODULE_EXPORT
+ircd::m::vm::inject(eval &eval,
+                    const room &room,
+                    json::iov &event,
+                    const json::iov &contents)
 {
 	// This eval entry point is only used for commits. We try to find the
 	// commit opts the user supplied directly to this eval or with the room.
@@ -325,13 +326,14 @@ ircd::m::vm::eval__commit_room(eval &eval,
 		}
 	};
 
-	return eval(event, contents);
+	return inject(eval, event, contents);
 }
 
 enum ircd::m::vm::fault
-ircd::m::vm::eval__commit(eval &eval,
-                          json::iov &event,
-                          const json::iov &contents)
+IRCD_MODULE_EXPORT
+ircd::m::vm::inject(eval &eval,
+                    json::iov &event,
+                    const json::iov &contents)
 {
 	// This eval entry point is only used for commits. If the user did not
 	// supply commit opts we supply the default ones here.
@@ -477,12 +479,13 @@ ircd::m::vm::eval__commit(eval &eval,
 		event, { "content", content },
 	};
 
-	return eval(event);
+	return execute(eval, event);
 }
 
 enum ircd::m::vm::fault
-ircd::m::vm::eval__event(eval &eval,
-                         const event &event)
+IRCD_MODULE_EXPORT
+ircd::m::vm::execute(eval &eval,
+                     const event &event)
 try
 {
 	// Set a member pointer to the event currently being evaluated. This
@@ -519,8 +522,8 @@ try
 	const fault ret
 	{
 		json::get<"event_id"_>(event)?
-			_eval_pdu(eval, event):
-			_eval_edu(eval, event)
+			execute_pdu(eval, event):
+			execute_edu(eval, event)
 	};
 
 	if(ret != fault::ACCEPT)
@@ -621,8 +624,8 @@ ircd::m::vm::handle_error(const vm::opts &opts,
 }
 
 enum ircd::m::vm::fault
-ircd::m::vm::_eval_edu(eval &eval,
-                       const event &event)
+ircd::m::vm::execute_edu(eval &eval,
+                          const event &event)
 {
 	if(eval.opts->eval)
 		eval_hook(event, eval);
@@ -631,8 +634,8 @@ ircd::m::vm::_eval_edu(eval &eval,
 }
 
 enum ircd::m::vm::fault
-ircd::m::vm::_eval_pdu(eval &eval,
-                       const event &event)
+ircd::m::vm::execute_pdu(eval &eval,
+                          const event &event)
 {
 	assert(eval.opts);
 	const auto &opts
