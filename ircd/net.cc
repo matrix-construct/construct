@@ -1631,6 +1631,9 @@ try
 		openssl::server_name(ssl)
 	};
 
+	if(!name)
+		return true;
+
 	log::debug
 	{
 		log, "%s offered SNI '%s'",
