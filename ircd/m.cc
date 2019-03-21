@@ -1259,12 +1259,34 @@ ircd::m::vm::eval::find(const event::id &event_id)
 	return ret;
 }
 
+size_t
+ircd::m::vm::eval::count(const ctx::ctx *const &c)
+{
+	return std::count_if(begin(eval::list), end(eval::list), [&c]
+	(const eval *const &eval)
+	{
+		return eval->ctx == c;
+	});
+}
+
 bool
 ircd::m::vm::eval::for_each(const std::function<bool (eval &)> &closure)
 {
 	for(eval *const &eval : eval::list)
 		if(!closure(*eval))
 			return false;
+
+	return true;
+}
+
+bool
+ircd::m::vm::eval::for_each(const ctx::ctx *const &c,
+                            const std::function<bool (eval &)> &closure)
+{
+	for(eval *const &eval : eval::list)
+		if(eval->ctx == c)
+			if(!closure(*eval))
+				return false;
 
 	return true;
 }

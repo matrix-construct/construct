@@ -40,8 +40,8 @@ namespace ircd::m::vm::sequence
 	extern uint64_t uncommitted;  // evaluating; not monotonic
 	extern ctx::dock dock;
 
-	uint64_t get(id::event::buf &); // [GET]
 	const uint64_t &get(const eval &);
+	uint64_t get(id::event::buf &); // [GET]
 	uint64_t max();
 	uint64_t min();
 };
@@ -95,7 +95,9 @@ struct ircd::m::vm::eval
 	eval(const eval &) = delete;
 	~eval() noexcept;
 
+	static bool for_each(const ctx::ctx *const &, const std::function<bool (eval &)> &);
 	static bool for_each(const std::function<bool (eval &)> &);
+	static size_t count(const ctx::ctx *const &);
 	static eval *find(const event::id &);
 	static eval &get(const event::id &);
 	static bool sequnique(const uint64_t &seq);
