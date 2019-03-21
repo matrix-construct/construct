@@ -604,14 +604,26 @@ AC_TYPE_PID_T
 
 AC_CHECK_TYPES([intptr_t])
 AC_CHECK_TYPES([uintptr_t])
+AC_CHECK_TYPES([int128_t])
+AC_CHECK_TYPES([uint128_t])
 AC_CHECK_TYPES([__int128])
+AC_CHECK_TYPES([__int128_t])
+AC_CHECK_TYPES([__uint128_t])
+AC_CHECK_TYPES([long double])
 
 AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(float)
+AC_CHECK_SIZEOF(double)
+AC_CHECK_SIZEOF(long double)
+AC_CHECK_SIZEOF(int128_t)
+AC_CHECK_SIZEOF(uint128_t)
 AC_CHECK_SIZEOF(__int128)
+AC_CHECK_SIZEOF(__int128_t)
+AC_CHECK_SIZEOF(__uint128_t)
 
 dnl -fsigned-char ensures 'char' is signed on all platforms
 CXXFLAGS+=" -fsigned-char"
