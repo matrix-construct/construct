@@ -1065,13 +1065,12 @@ ircd::m::vm::loghead(const mutable_buffer &buf,
 {
 	return fmt::sprintf
 	{
-		buf, "vm[%lu:%lu:%lu] eval[%lu] id:%lu txn:%p",
+		buf, "vm[%lu:%lu:%lu] eval[%lu] id:%lu",
 		sequence::uncommitted,
 		sequence::committed,
 		sequence::retired,
 		sequence::get(eval),
 		eval.id,
-		(const void *)txn
 	};
 }
 

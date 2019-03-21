@@ -10,8 +10,9 @@
 
 namespace ircd::m::vm
 {
-	static void _commit(eval &);
-	static void _write(eval &, const event &);
+	static void write_commit(eval &);
+	static void write_append(eval &, const event &);
+	static void write_prepare(eval &, const event &);
 	static fault _eval_edu(eval &, const event &);
 	static fault _eval_pdu(eval &, const event &);
 
@@ -142,8 +143,6 @@ ircd::m::vm::pool
 void
 ircd::m::vm::init()
 {
-	pool.min(size_t(pool_size));
-
 	id::event::buf event_id;
 	sequence::retired = sequence::get(event_id);
 	sequence::committed = sequence::retired;
@@ -156,6 +155,8 @@ ircd::m::vm::init()
 		sequence::retired,
 		sequence::retired? string_view{event_id} : "NO EVENTS"_sv
 	};
+
+	//pool.min(size_t(pool_size));
 }
 
 void
@@ -677,165 +678,148 @@ ircd::m::vm::_eval_pdu(eval &eval,
 	if(opts.fetch)
 		fetch_hook(event, eval);
 
-	// Obtain sequence number here
-	if(opts.write)
+	// Obtain sequence number here.
+	const auto *const &top(eval::seqmax());
+	eval.sequence_shared[0] = 0;
+	eval.sequence_shared[1] = 0;
+	eval.sequence =
 	{
-		const auto *const &top(eval::seqmax());
-		eval.sequence = top?
+		top?
 			std::max(sequence::get(*top) + 1, sequence::committed + 1):
-			sequence::committed + 1;
+			sequence::committed + 1
+	};
 
-		log::debug
-		{
-			log, "vm seq %lu[%lu]%lu|%lu|%lu:%lu | acquire",
-			vm::sequence::max(),
-			sequence::get(eval),
-			vm::sequence::uncommitted,
-			vm::sequence::committed,
-			vm::sequence::retired,
-			vm::sequence::min(),
-		};
+	log::debug
+	{
+		log, "%s | acquire", loghead(eval)
+	};
 
-		assert(eval.sequence != 0);
-		assert(sequence::uncommitted <= sequence::get(eval));
-		assert(sequence::committed < sequence::get(eval));
-		assert(sequence::retired < sequence::get(eval));
-		assert(eval::sequnique(sequence::get(eval)));
-		sequence::uncommitted = sequence::get(eval);
-	}
+	assert(eval.sequence != 0);
+	assert(sequence::uncommitted <= sequence::get(eval));
+	assert(sequence::committed < sequence::get(eval));
+	assert(sequence::retired < sequence::get(eval));
+	assert(eval::sequnique(sequence::get(eval)));
+	sequence::uncommitted = sequence::get(eval);
 
 	// Evaluation by module hooks
 	if(opts.eval)
 		eval_hook(event, eval);
 
-	if(opts.write)
+	// Wait until this is the lowest sequence number
+	sequence::dock.wait([&eval]
 	{
-		log::debug
-		{
-			log, "vm seq %lu:%lu[%lu]%lu|%lu:%lu | commit",
-			vm::sequence::max(),
-			vm::sequence::uncommitted,
-			sequence::get(eval),
-			vm::sequence::committed,
-			vm::sequence::retired,
-			vm::sequence::min(),
-		};
+		return eval::seqnext(sequence::committed) == &eval;
+	});
 
-		sequence::dock.wait([&eval]
-		{
-			return eval::seqnext(sequence::committed) == &eval;
-		});
+	log::debug
+	{
+		log, "%s | commit", loghead(eval)
+	};
 
-		assert(sequence::committed < sequence::get(eval));
-		assert(sequence::retired < sequence::get(eval));
-		sequence::committed = sequence::get(eval);
-		sequence::dock.notify_all();
-
-		log::debug
-		{
-			log, "vm seq %lu:%lu[%lu|%lu]%lu:%lu | write",
-			vm::sequence::max(),
-			vm::sequence::uncommitted,
-			vm::sequence::committed,
-			sequence::get(eval),
-			vm::sequence::retired,
-			vm::sequence::min(),
-		};
-
-		_write(eval, event);
-	}
-
-	// pre-notify effect hooks
-	bool post_hook_complete{false};
-	if(opts.post)
-		pool([&event, &eval, &post_hook_complete]
-		{
-			const unwind notify{[&post_hook_complete]
-			{
-				post_hook_complete = true;
-				sequence::dock.notify_all();
-			}};
-
-			post_hook(event, eval);
-		});
+	assert(sequence::committed < sequence::get(eval));
+	assert(sequence::retired < sequence::get(eval));
+	sequence::committed = sequence::get(eval);
+	sequence::dock.notify_all();
 
 	if(opts.write)
+		write_prepare(eval, event);
+
+	if(opts.write)
+		write_append(eval, event);
+
+	// Generate post-eval/pre-notify effects. This function may conduct
+	// an entire eval of several more events recursively before returning.
+	if(opts.post)
+		post_hook(event, eval);
+
+	// Commit the transaction to database iff this eval is at the stack base.
+	if(opts.write && !eval.sequence_shared[0])
+		write_commit(eval);
+
+	// Wait for sequencing only if this is the stack base, otherwise we'll
+	// never return back to that stack base.
+	if(!eval.sequence_shared[0])
 	{
 		sequence::dock.wait([&eval]
 		{
 			return eval::seqnext(sequence::retired) == &eval;
 		});
 
+		log::debug
+		{
+			log, "%s | retire %lu:%lu",
+			loghead(eval),
+			sequence::get(eval),
+			eval.sequence_shared[1],
+		};
+
 		assert(sequence::retired < sequence::get(eval));
-		sequence::retired = sequence::get(eval);
+		sequence::retired = std::max(eval.sequence_shared[1], sequence::get(eval));
 		sequence::dock.notify_all();
-
-		log::debug
-		{
-			log, "vm seq %lu:%lu|%lu[%lu|%lu]%lu | retire",
-			vm::sequence::max(),
-			vm::sequence::uncommitted,
-			vm::sequence::committed,
-			vm::sequence::retired,
-			sequence::get(eval),
-			vm::sequence::min(),
-		};
-	}
-
-	if(opts.post)
-	{
-		sequence::dock.wait([&post_hook_complete]
-		{
-			return post_hook_complete;
-		});
-
-		log::debug
-		{
-			log, "vm seq %lu:%lu|%lu[%lu|%lu]%lu | accept",
-			vm::sequence::max(),
-			vm::sequence::uncommitted,
-			vm::sequence::committed,
-			vm::sequence::retired,
-			sequence::get(eval),
-			vm::sequence::min(),
-		};
 	}
 
 	return fault::ACCEPT;
 }
 
 void
-ircd::m::vm::_write(eval &eval,
-                    const event &event)
+ircd::m::vm::write_prepare(eval &eval,
+                           const event &event)
 
 {
 	assert(eval.opts);
-	const auto &opts
+	const auto &opts{*eval.opts};
+
+	// Share a transaction with any other evals on this stack. This
+	// should mean the bottom-most/lowest-sequence eval on this ctx.
+	const auto get_other_txn{[&eval]
+	(auto &other)
 	{
-		*eval.opts
-	};
+		if(&other != &eval && other.txn)
+		{
+			other.sequence_shared[1] = std::max(other.sequence_shared[1], sequence::get(eval));
+			eval.sequence_shared[0] = sequence::get(other);
+			eval.txn = other.txn;
+			return false;
+		}
+		else return true;
+	}};
+
+	// If we broke from the iteration then this eval is sharing a transaction
+	// from another eval on this stack.
+	if(!eval.for_each(eval.ctx, get_other_txn))
+		return;
 
 	const size_t reserve_bytes
 	{
 		opts.reserve_bytes == size_t(-1)?
 			size_t(json::serialized(event) * 1.66):
-
-		opts.reserve_bytes
+			opts.reserve_bytes
 	};
 
-	db::txn txn
-	{
+	eval.txn = std::make_shared<db::txn>
+	(
 		*dbs::events, db::txn::opts
 		{
 			reserve_bytes + opts.reserve_index,   // reserve_bytes
 			0,                                    // max_bytes (no max)
 		}
-	};
+	);
+}
 
-	// Expose to eval interface
-	const scope_restore eval_txn
+void
+ircd::m::vm::write_append(eval &eval,
+                          const event &event)
+
+{
+	assert(eval.opts);
+	assert(eval.txn);
+
+	const auto &opts{*eval.opts};
+	auto &txn{*eval.txn};
+
+	log::debug
 	{
-		eval.txn, &txn
+		log, "%s | append", loghead(eval)
 	};
 
 	// Preliminary write_opts
@@ -851,8 +835,7 @@ ircd::m::vm::_write(eval &eval,
 
 	if(at<"type"_>(event) == "m.room.create")
 	{
-		dbs::write(txn, event, wopts);
-		_commit(eval);
+		dbs::write(*eval.txn, event, wopts);
 		return;
 	}
 
@@ -886,14 +869,15 @@ ircd::m::vm::_write(eval &eval,
 	};
 
 	wopts.root_in = state.root_id;
-	dbs::write(txn, event, wopts);
-	_commit(eval);
+	dbs::write(*eval.txn, event, wopts);
 }
 
 void
-ircd::m::vm::_commit(eval &eval)
+ircd::m::vm::write_commit(eval &eval)
 {
 	assert(eval.txn);
+	assert(eval.txn.use_count() == 1);
+	assert(eval.sequence_shared[0] == 0);
 	auto &txn(*eval.txn);
 
 	#ifdef RB_DEBUG
@@ -906,19 +890,15 @@ ircd::m::vm::_commit(eval &eval)
 	const auto db_seq_after(db::sequence(*m::dbs::events));
 	#endif
 
-	if(log_commit_debug && !eval.opts->debuglog_accept)
-		log::debug
-		{
-			log, "vm seq %lu:%lu|%lu[%lu]%lu:%lu | wrote | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
-			vm::sequence::max(),
-			vm::sequence::uncommitted,
-			vm::sequence::committed,
-			sequence::get(eval),
-			vm::sequence::retired,
-			vm::sequence::min(),
-			db_seq_before,
-			db_seq_after,
-			txn.size(),
-			txn.bytes()
-		};
+	log::debug
+	{
+		log, "%s | wrote  %lu:%lu | db seq %lu:%lu %zu cells in %zu bytes to events database ...",
+		loghead(eval),
+		sequence::get(eval),
+		eval.sequence_shared[1],
+		db_seq_before,
+		db_seq_after,
+		txn.size(),
+		txn.bytes()
+	};
 }

@@ -65,7 +65,8 @@ struct ircd::m::vm::eval
 
 	uint64_t id {++id_ctr};
 	uint64_t sequence {0};
-	db::txn *txn {nullptr};
+	uint64_t sequence_shared[2] {0}; // min, max
+	std::shared_ptr<db::txn> txn;
 
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};
