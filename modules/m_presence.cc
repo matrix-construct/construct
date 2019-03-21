@@ -19,6 +19,13 @@ IRCD_MODULE
 	"Matrix Presence"
 };
 
+conf::item<bool>
+federation_incoming
+{
+	{ "name",     "ircd.m.presence.federation.incoming" },
+	{ "default",  true                                  },
+};
+
 log::log
 presence_log
 {
@@ -43,6 +50,9 @@ handle_edu_m_presence(const m::event &event,
                       m::vm::eval &eval)
 try
 {
+	if(!federation_incoming)
+		return;
+
 	if(m::my_host(at<"origin"_>(event)))
 		return;
 
