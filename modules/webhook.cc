@@ -560,12 +560,15 @@ github_handle__issues(std::ostream &out,
 		for(const json::object &label : labels)
 		{
 			out << "<li>";
-			out << "<font color="
-			    << label["color"]
-			    << ">";
+			out << "<font color=\"#FFFFFF\""
+			    << "data-mx-bg-color=\"#"
+			    << unquote(label["color"])
+			    << "\">";
 
 			out << "<b>";
+			out << " &nbsp; ";
 			out << unquote(label["name"]);
+			out << " &nbsp; ";
 			out << "</b>";
 
 			out << "</font>";
@@ -670,12 +673,15 @@ github_handle__label(std::ostream &out,
 
 	out << "<ul>";
 	out << "<li>";
-	out << "<font color=\"#"
+	out << "<font color=\"#FFFFFF\""
+	    << "data-mx-bg-color=\"#"
 	    << unquote(label["color"])
 	    << "\">";
 
 	out << "<b>";
+	out << " &nbsp; ";
 	out << unquote(label["name"]);
+	out << " &nbsp; ";
 	out << "</b>";
 	out << "</font>";
 	out << "</li>";
@@ -715,12 +721,15 @@ github_handle__label(std::ostream &out,
 		out << "from: ";
 		out << "<ul>";
 		out << "<li>";
-		out << "<font color=\"#"
+		out << "<font color=\"#FFFFFF\""
+		    << "data-mx-bg-color=\"#"
 		    << color
 		    << "\">";
 
 		out << "<b>";
+		out << " &nbsp; ";
 		out << name;
+		out << " &nbsp; ";
 		out << "</b>";
 		out << "</font>";
 		out << "</li>";
