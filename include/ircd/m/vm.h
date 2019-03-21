@@ -28,6 +28,9 @@ namespace ircd::m::vm
 
 	string_view reflect(const fault &);
 	http::code http_code(const fault &);
+
+	string_view loghead(const mutable_buffer &, const eval &);
+	string_view loghead(const eval &);    // single tls buffer
 }
 
 namespace ircd::m::vm::sequence

@@ -1052,6 +1052,29 @@ decltype(ircd::m::vm::default_copts)
 ircd::m::vm::default_copts
 {};
 
+ircd::string_view
+ircd::m::vm::loghead(const eval &eval)
+{
+	thread_local char buf[128];
+	return loghead(buf, eval);
+}
+
+ircd::string_view
+ircd::m::vm::loghead(const mutable_buffer &buf,
+                     const eval &eval)
+{
+	return fmt::sprintf
+	{
+		buf, "vm[%lu:%lu:%lu] eval[%lu] id:%lu txn:%p",
+		sequence::uncommitted,
+		sequence::committed,
+		sequence::retired,
+		sequence::get(eval),
+		eval.id,
+		(const void *)txn
+	};
+}
+
 ircd::http::code
 ircd::m::vm::http_code(const fault &code)
 {
