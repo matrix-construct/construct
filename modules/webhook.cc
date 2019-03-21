@@ -113,6 +113,10 @@ github_handle__watch(std::ostream &,
                      const json::object &content);
 
 static std::ostream &
+github_handle__label(std::ostream &,
+                     const json::object &content);
+
+static std::ostream &
 github_handle__ping(std::ostream &,
                     const json::object &content);
 
@@ -173,6 +177,8 @@ github_handle(client &client,
 		github_handle__issue_comment(out, request.content);
 	else if(type == "watch")
 		github_handle__watch(out, request.content);
+	else if(type == "label")
+		github_handle__label(out, request.content);
 
 	if(!string_view(webhook_room))
 		return;
@@ -558,7 +564,9 @@ github_handle__issues(std::ostream &out,
 			    << label["color"]
 			    << ">";
 
+			out << "<b>";
 			out << unquote(label["name"]);
+			out << "</b>";
 
 			out << "</font>";
 			out << "</li>";
@@ -635,6 +643,88 @@ github_handle__issue_comment(std::ostream &out,
 		    << "</code></pre>"
 		    << "</blockquote>"
 		    ;
+	}
+
+	return out;
+}
+
+std::ostream &
+github_handle__label(std::ostream &out,
+                     const json::object &content)
+{
+	const json::string &action
+	{
+		content["action"]
+	};
+
+	out << " "
+	    << "<b>"
+	    << action
+	    << "</b>"
+	    ;
+
+	const json::object &label
+	{
+		content["label"]
+	};
+
+	out << "<ul>";
+	out << "<li>";
+	out << "<font color=\"#"
+	    << unquote(label["color"])
+	    << "\">";
+
+	out << "<b>";
+	out << unquote(label["name"]);
+	out << "</b>";
+	out << "</font>";
+	out << "</li>";
+	out << "</ul>";
+
+	if(action == "edited")
+	{
+		const json::object &changes
+		{
+			content["changes"]
+		};
+
+		const json::object &color_obj
+		{
+			changes["color"]
+		};
+
+		const json::string &color
+		{
+			empty(color_obj)?
+				label["color"]:
+				color_obj["from"]
+		};
+
+		const json::object &name_obj
+		{
+			changes["name"]
+		};
+
+		const json::string &name
+		{
+			empty(name_obj)?
+				label["name"]:
+				name_obj["from"]
+		};
+
+		out << "from: ";
+		out << "<ul>";
+		out << "<li>";
+		out << "<font color=\"#"
+		    << color
+		    << "\">";
+
+		out << "<b>";
+		out << name;
+		out << "</b>";
+		out << "</font>";
+		out << "</li>";
+		out << "</ul>";
 	}
 
 	return out;
