@@ -137,13 +137,27 @@ namespace std
 //
 // libircd API
 //
-
 // Some items imported into our namespace.
+//
+
+// 128 bit integer support
+#if !defined(HAVE_INT128_T) || !defined(HAVE_UINT128_T)
 namespace ircd
 {
-	using int128_t = signed __int128;
-	using uint128_t = unsigned __int128;
+	#if defined(HAVE___INT128_T) && defined(HAVE__UINT128_T)
+		using int128_t = __int128_t;
+		using uint128_t = __uint128_t;
+	#elif defined(HAVE___INT128)
+		using int128_t = signed __int128;
+		using uint128_t = unsigned __int128;
+	#else
+		#error "Missing 128 bit integer types on this platform."
+	#endif
+}
+#endif
 
+namespace ircd
+{
 	using std::get;
 	using std::end;
 	using std::begin;
