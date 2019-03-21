@@ -22,23 +22,25 @@ namespace ircd::m::vm
 	enum fault :uint;
 	using fault_t = std::underlying_type<fault>::type;
 
-	extern log::log log;
-	extern const opts default_opts;
-	extern const copts default_copts;
-
 	string_view reflect(const fault &);
 	http::code http_code(const fault &);
-
 	string_view loghead(const mutable_buffer &, const eval &);
 	string_view loghead(const eval &);    // single tls buffer
+
+	extern const opts default_opts;
+	extern const copts default_copts;
+	extern log::log log;
+	extern ctx::dock dock;
+	extern bool ready;
 }
 
 namespace ircd::m::vm::sequence
 {
+	extern ctx::dock dock;
 	extern uint64_t retired;      // already written; always monotonic
 	extern uint64_t committed;    // pending write; usually monotonic
 	extern uint64_t uncommitted;  // evaluating; not monotonic
-	extern ctx::dock dock;
+	static uint pending;
 
 	const uint64_t &get(const eval &);
 	uint64_t get(id::event::buf &); // [GET]
@@ -58,11 +60,13 @@ struct ircd::m::vm::eval
 :instance_list<eval>
 {
 	static uint64_t id_ctr;
+	static uint executing;
+	static uint injecting;
+	static uint injecting_room;
 
 	const vm::opts *opts {&default_opts};
 	const vm::copts *copts {nullptr};
 	ctx::ctx *ctx {ctx::current};
-
 	uint64_t id {++id_ctr};
 	uint64_t sequence {0};
 	uint64_t sequence_shared[2] {0}; // min, max
@@ -256,7 +260,7 @@ struct ircd::m::vm::opts
 
 /// Extension structure to vm::opts which includes additional options for
 /// commissioning events originating from this server which are then passed
-/// through eval (this process is committing).
+/// through eval (this process is also known as issuing).
 struct ircd::m::vm::copts
 :opts
 {

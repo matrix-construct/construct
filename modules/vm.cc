@@ -148,6 +148,10 @@ ircd::m::vm::init()
 	sequence::committed = sequence::retired;
 	sequence::uncommitted = sequence::committed;
 
+	//pool.min(size_t(pool_size));
+	vm::ready = true;
+	vm::dock.notify_all();
+
 	log::info
 	{
 		log, "BOOT %s @%lu [%s]",
@@ -155,17 +159,32 @@ ircd::m::vm::init()
 		sequence::retired,
 		sequence::retired? string_view{event_id} : "NO EVENTS"_sv
 	};
-
-	//pool.min(size_t(pool_size));
 }
 
 void
 ircd::m::vm::fini()
 {
+	vm::ready = false;
 	pool.terminate();
-	pool.join();
 
-	assert(eval::list.empty());
+	if(!eval::list.empty())
+		log::warning
+		{
+			log, "Waiting for %zu evals (exec:%zu inject:%zu room:%zu pending:%zu)",
+			eval::list.size(),
+			eval::executing,
+			eval::injecting,
+			eval::injecting_room,
+			sequence::pending,
+		};
+
+	vm::dock.wait([]
+	{
+		return !eval::executing && !eval::injecting && !eval::injecting_room;
+	});
+
+	pool.join();
+	assert(!sequence::pending);
 
 	event::id::buf event_id;
 	const auto retired
@@ -183,6 +202,8 @@ ircd::m::vm::fini()
 		sequence::committed,
 		sequence::uncommitted
 	};
+
+	assert(retired == sequence::retired);
 }
 
 //
@@ -196,6 +217,10 @@ ircd::m::vm::inject(eval &eval,
                     json::iov &event,
                     const json::iov &contents)
 {
+	// m::vm bookkeeping that someone entered this function
+	const scope_count injecting_room{eval::injecting_room};
+	const scope_notify notify{vm::dock};
+
 	// This eval entry point is only used for commits. We try to find the
 	// commit opts the user supplied directly to this eval or with the room.
 	if(!eval.copts)
@@ -335,6 +360,10 @@ ircd::m::vm::inject(eval &eval,
                     json::iov &event,
                     const json::iov &contents)
 {
+	// m::vm bookkeeping that someone entered this function
+	const scope_count injecting{eval::injecting};
+	const scope_notify notify{vm::dock};
+
 	// This eval entry point is only used for commits. If the user did not
 	// supply commit opts we supply the default ones here.
 	if(!eval.copts)
@@ -488,6 +517,10 @@ ircd::m::vm::execute(eval &eval,
                      const event &event)
 try
 {
+	// m::vm bookkeeping that someone entered this function
+	const scope_count executing{eval::executing};
+	const scope_notify notify{vm::dock};
+
 	// Set a member pointer to the event currently being evaluated. This
 	// allows other parallel evals to have deep access to exactly what this
 	// eval is working on.
@@ -637,6 +670,11 @@ enum ircd::m::vm::fault
 ircd::m::vm::execute_pdu(eval &eval,
                           const event &event)
 {
+	const scope_count pending
+	{
+		sequence::pending
+	};
+
 	assert(eval.opts);
 	const auto &opts
 	{

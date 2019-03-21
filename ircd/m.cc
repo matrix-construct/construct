@@ -1038,19 +1038,23 @@ ircd::m::feds::head::head(const m::room::id &room_id,
 // m/vm.h
 //
 
+decltype(ircd::m::vm::default_opts)
+ircd::m::vm::default_opts;
+
+decltype(ircd::m::vm::default_copts)
+ircd::m::vm::default_copts;
+
 decltype(ircd::m::vm::log)
 ircd::m::vm::log
 {
 	"vm", 'v'
 };
 
-decltype(ircd::m::vm::default_opts)
-ircd::m::vm::default_opts
-{};
+decltype(ircd::m::vm::dock)
+ircd::m::vm::dock;
 
-decltype(ircd::m::vm::default_copts)
-ircd::m::vm::default_copts
-{};
+decltype(ircd::m::vm::ready)
+ircd::m::vm::ready;
 
 ircd::string_view
 ircd::m::vm::loghead(const eval &eval)
@@ -1121,8 +1125,16 @@ ircd::util::instance_list<ircd::m::vm::eval>::list
 {};
 
 decltype(ircd::m::vm::eval::id_ctr)
-ircd::m::vm::eval::id_ctr
-{};
+ircd::m::vm::eval::id_ctr;
+
+decltype(ircd::m::vm::eval::executing)
+ircd::m::vm::eval::executing;
+
+decltype(ircd::m::vm::eval::injecting)
+ircd::m::vm::eval::injecting;
+
+decltype(ircd::m::vm::eval::injecting_room)
+ircd::m::vm::eval::injecting_room;
 
 void
 ircd::m::vm::eval::seqsort()
@@ -1394,6 +1406,11 @@ ircd::m::vm::eval::operator()(const room &room,
 		"vm", "ircd::m::vm::inject"
 	};
 
+	vm::dock.wait([]
+	{
+		return vm::ready;
+	});
+
 	return call(*this, room, event, contents);
 }
 
@@ -1410,6 +1427,11 @@ ircd::m::vm::eval::operator()(json::iov &event,
 		"vm", "ircd::m::vm::inject"
 	};
 
+	vm::dock.wait([]
+	{
+		return vm::ready;
+	});
+
 	return call(*this, event, contents);
 }
 
@@ -1423,12 +1445,20 @@ ircd::m::vm::eval::operator()(const event &event)
 		"vm", "ircd::m::vm::execute"
 	};
 
+	vm::dock.wait([]
+	{
+		return vm::ready;
+	});
+
 	return call(*this, event);
 }
 
 //
 // sequence
 //
+
+decltype(ircd::m::vm::sequence::dock)
+ircd::m::vm::sequence::dock;
 
 decltype(ircd::m::vm::sequence::retired)
 ircd::m::vm::sequence::retired;
@@ -1438,9 +1468,6 @@ ircd::m::vm::sequence::committed;
 
 decltype(ircd::m::vm::sequence::uncommitted)
 ircd::m::vm::sequence::uncommitted;
-
-decltype(ircd::m::vm::sequence::dock)
-ircd::m::vm::sequence::dock;
 
 uint64_t
 ircd::m::vm::sequence::min()
