@@ -87,6 +87,7 @@ namespace ircd::ctx
 #include "upgrade_lock.h"
 #include "unlock_guard.h"
 #include "condition_variable.h"
+#include "scope_notify.h"
 #include "view.h"
 #include "shared_state.h"
 #include "promise.h"
