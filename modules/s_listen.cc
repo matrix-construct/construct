@@ -219,7 +219,7 @@ _listener_proffer(net::listener &listener,
 
 	// Sets the asynchronous handler for the next accept. We can play with
 	// delaying this call under certain conditions to provide flow control.
-	start(listener);
+	allow(listener);
 
 	if(unlikely(client::map.size() >= size_t(client::settings::max_client)))
 	{

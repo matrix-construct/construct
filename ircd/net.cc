@@ -1131,21 +1131,32 @@ ircd::net::acceptor::ssl_cipher_blacklist
 };
 
 bool
+ircd::net::stop(acceptor &a)
+{
+	a.close();
+	return true;
+}
+
+bool
 ircd::net::start(acceptor &a)
 {
 	if(!a.a.is_open())
 		a.open();
 
-	if(!a.handle_set)
-		a.set_handle();
-
+	allow(a);
 	return true;
 }
 
 bool
-ircd::net::stop(acceptor &a)
+ircd::net::allow(acceptor &a)
 {
-	a.close();
+	if(unlikely(!a.a.is_open()))
+		return false;
+
+	if(unlikely(a.handle_set))
+		return false;
+
+	a.set_handle();
 	return true;
 }
 

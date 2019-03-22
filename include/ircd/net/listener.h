@@ -25,6 +25,7 @@ namespace ircd::net
 	json::object config(const acceptor &);
 	string_view name(const acceptor &);
 
+	bool allow(acceptor &);
 	bool start(acceptor &);
 	bool stop(acceptor &);
 }
