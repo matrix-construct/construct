@@ -160,16 +160,28 @@ ircd::net::dns::resolve(const hostport &hp,
 		if(cache::get(hp, opts, cb))
 			return;
 
-	waiting.emplace_front([cb(std::move(cb)), opts, h(std::string(host(hp)))]
-	(const string_view &type, const string_view &key, const json::array &rrs)
+	auto key
+	{
+		opts.qtype == 33?
+			ircd::string_buffer(rfc1035::NAME_BUF_SIZE*2, make_SRV_key, hp, opts):
+			std::string(host(hp))
+	};
+
+	waiting.emplace_front([cb(std::move(cb)), opts, key(std::move(key)), port(net::port(hp))]
+	(const string_view &type, const string_view &state_key, const json::array &rrs)
 	{
 		if(type != rfc1035::rqtype.at(opts.qtype))
 			return false;
 
-		if(cache::get(hostport(h), opts, cb))
-			return true;
+		if(state_key != key)
+			return false;
 
-		cb(hostport(h), rrs);
+		const hostport &hp
+		{
+			opts.qtype == 33? unmake_SRV_key(state_key): state_key, port
+		};
+
+		cb(hp, rrs);
 		return true;
 	});
 
