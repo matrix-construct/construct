@@ -107,15 +107,17 @@ ircd::net::dns::resolve(const hostport &hp,
 		(const hostport &hp, const json::object &rr)
 		{
 			const json::string &error(rr.get("error"));
+			const json::string &ip(rr.get("ip", "0.0.0.0"));
+			const net::ipport ipport(ip, port(target));
 			const auto eptr
 			{
 				!empty(error)?
 					make_exception_ptr<rfc1035::error>("%s", error):
+				!ipport?
+					make_exception_ptr<net::error>("Host has no A record."):
 					std::exception_ptr{}
 			};
 
-			const json::string &ip(rr.get("ip", "0.0.0.0"));
-			const net::ipport ipport(ip, port(target));
 			return callback(eptr, {host(hp), port(target)}, ipport);
 		}});
 	}});

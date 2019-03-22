@@ -983,6 +983,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
+	const ctx::exception_handler eh;
 	close();
 }
 

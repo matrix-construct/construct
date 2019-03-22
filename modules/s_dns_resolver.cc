@@ -690,20 +690,24 @@ try
 }
 catch(const std::exception &e)
 {
-	const ctx::exception_handler eh;
-
 	// There's no need to flash red to the log for NXDOMAIN which is
 	// common in this system when probing SRV.
-	if(unlikely(header.rcode != 3))
-		log::error
-		{
-			log, "resolver tag:%u: %s",
-			tag.id,
-			e.what()
-		};
+	const auto level
+	{
+		header.rcode != 3? log::ERROR : log::DERROR
+	};
+
+	log::logf
+	{
+		log, level, "resolver tag:%u: %s",
+		tag.id,
+		e.what()
+	};
 
 	assert(header.rcode != 3 || tag.opts.nxdomain_exceptions);
-	callback(std::current_exception(), tag, answers{});
+	const auto eptr(std::current_exception());
+	const ctx::exception_handler eh;
+	callback(eptr, tag, answers{});
 }
 
 bool
