@@ -96,43 +96,40 @@ libircd_la_LIBADD = \
 # Add the most dependent units at the end and the least dependent units
 # at the beginning.
 #
-# Note: Some exceptions to the order have been made for now to diffuse
-# the units that compile spirit grammars otherwise they thrash weaker
-# systems.
 libircd_la_SOURCES =   \
 	assert.cc          \
 	info.cc            \
 	allocator.cc       \
 	exception.cc       \
 	util.cc            \
-	ios.cc             \
+	demangle.cc        \
+	locale.cc          \
 	lexical.cc         \
 	tokens.cc          \
-	json.cc            \
-	locale.cc          \
-	conf.cc            \
-	stats.cc           \
-	logger.cc          \
-	sodium.cc          \
-	rfc1459.cc         \
-	rand.cc            \
-	crh.cc             \
-	base.cc            \
 	parse.cc           \
-	openssl.cc         \
+	rand.cc            \
+	base.cc            \
+	crh.cc             \
+	fmt.cc             \
+	json.cc            \
+	conf.cc            \
+	logger.cc          \
 	magic.cc           \
+	stats.cc           \
 	fs.cc              \
-	ctx.cc             \
+	sodium.cc          \
+	openssl.cc         \
+	rfc1459.cc         \
 	rfc3986.cc         \
 	rfc1035.cc         \
-	demangle.cc        \
+	http.cc            \
+	ios.cc             \
+	ctx.cc             \
 	mods.cc            \
-	fmt.cc             \
 	db_port.cc         \
 	db_env.cc          \
 	db.cc              \
 	net.cc             \
-	http.cc            \
 	server.cc          \
 	client.cc          \
 	resource.cc        \
@@ -157,4 +154,16 @@ if JS
 libircd_la_SOURCES +=  \
 	js.cc              \
 	###
+endif
+
+# The recursive grammars can consume a large amount of RAM when compiling
+# (>= 2 GiB) which can thrash small systems and even sometimes crash GCC.
+# This option reduces memory consumption at the cost of compilation speed.
+if GCC
+json.lo:      CXXFLAGS += --param ggc-min-expand=3
+#http.lo:      CXXFLAGS += --param ggc-min-expand=15
+#rfc3986.lo:   CXXFLAGS += --param ggc-min-expand=15
+#rfc1459.lo:   CXXFLAGS += --param ggc-min-expand=15
+#m_id.lo:      CXXFLAGS += --param ggc-min-expand=15
+#fmt.lo:       CXXFLAGS += --param ggc-min-expand=15
 endif
