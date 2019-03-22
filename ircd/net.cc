@@ -668,7 +668,7 @@ ircd::net::open(socket &socket,
 		handler(std::move(eptr));
 	}};
 
-	auto connector{[&socket, opts, complete(std::move(complete))]
+	const dns::callback_ipport connector{[&socket, opts, complete(std::move(complete))]
 	(std::exception_ptr eptr, const hostport &hp, const ipport &ipport)
 	{
 		if(eptr)
@@ -679,7 +679,7 @@ ircd::net::open(socket &socket,
 	}};
 
 	if(!opts.ipport)
-		dns::resolve(opts.hostport, std::move(connector));
+		dns::resolve(opts.hostport, dns::opts_default, std::move(connector));
 	else
 		connector({}, opts.hostport, opts.ipport);
 }
@@ -3278,80 +3278,36 @@ ircd::net::dns::log
 decltype(ircd::net::dns::opts_default)
 ircd::net::dns::opts_default;
 
-decltype(ircd::net::dns::prefetch_ipport)
-ircd::net::dns::prefetch_ipport{[]
-(std::exception_ptr, const auto &hostport, const auto &record)
-{
-	// Do nothing; cache already updated if necessary
-}};
-
-decltype(ircd::net::dns::prefetch_SRV)
-ircd::net::dns::prefetch_SRV{[]
-(std::exception_ptr, const auto &hostport, const auto &record)
-{
-	// Do nothing; cache already updated if necessary
-}};
-
-decltype(ircd::net::dns::prefetch_A)
-ircd::net::dns::prefetch_A{[]
-(std::exception_ptr, const auto &hostport, const auto &record)
-{
-	// Do nothing; cache already updated if necessary
-}};
-
-/// Convenience composition with a single ipport callback. This is the result of
-/// an automatic chain of queries such as SRV and A/AAAA based on the input and
-/// intermediate results.
 void
 ircd::net::dns::resolve(const hostport &hp,
                         const opts &op,
-                        callback_ipport_one cb)
+                        callback_ipport cb)
 {
-	using prototype = void (const hostport &, opts, callback_ipport_one);
+	using prototype = void (const hostport &, const opts &, callback_ipport);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"s_dns", "_resolve_ipport"
+		"s_dns", "ircd::net::dns::resolve"
 	};
 
-	function(hp, op, std::move(cb));
+	call(hp, op, std::move(cb));
 }
 
-/// Convenience callback with a single SRV record which was selected from
-/// the vector with stochastic respect for weighting and priority.
 void
 ircd::net::dns::resolve(const hostport &hp,
                         const opts &op,
-                        callback_SRV_one cb)
+                        callback_one cb)
 {
-	using prototype = void (const hostport &, opts, callback_SRV_one);
+	using prototype = void (const hostport &, const opts &, callback_one);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"s_dns", "_resolve__SRV"
+		"s_dns", "ircd::net::dns::resolve"
 	};
 
-	function(hp, op, std::move(cb));
+	call(hp, op, std::move(cb));
 }
 
-/// Convenience callback with a single A record which was selected from
-/// the vector randomly.
-void
-ircd::net::dns::resolve(const hostport &hp,
-                        const opts &op,
-                        callback_A_one cb)
-{
-	using prototype = void (const hostport &, opts, callback_A_one);
-
-	static mods::import<prototype> function
-	{
-		"s_dns", "_resolve__A"
-	};
-
-	function(hp, op, std::move(cb));
-}
-
-/// Fundamental callback with a vector of abstract resource records.
 void
 ircd::net::dns::resolve(const hostport &hp,
                         const opts &op,
@@ -3359,12 +3315,12 @@ ircd::net::dns::resolve(const hostport &hp,
 {
 	using prototype = void (const hostport &, const opts &, callback);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"s_dns", "_resolve__"
+		"s_dns", "ircd::net::dns::resolve"
 	};
 
-	function(hp, op, std::move(cb));
+	call(hp, op, std::move(cb));
 }
 
 /// Really assumptional and hacky right now. We're just assuming the SRV
@@ -3407,56 +3363,61 @@ ircd::net::dns::make_SRV_key(const mutable_buffer &out,
 // cache
 //
 
-ircd::rfc1035::record *
-ircd::net::dns::cache::put_error(const rfc1035::question &question,
-                                 const uint &code)
+bool
+ircd::net::dns::cache::put(const hostport &h,
+                           const opts &o,
+                           const uint &r,
+                           const string_view &m)
 try
 {
-	using prototype = rfc1035::record *(const rfc1035::question &, const uint &);
+	using prototype = bool (const hostport &, const opts &, const uint &, const string_view &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"s_dns", "_put_error"
+		"s_dns", "ircd::net::dns::cache::put"
 	};
 
-	return function(question, code);
+	return call(h, o, r, m);
 }
 catch(const mods::unavailable &e)
 {
+	thread_local char buf[128];
 	log::dwarning
 	{
 		log, "Failed to put error for '%s' in DNS cache :%s",
-		question.name,
+		string(buf, h),
 		e.what()
 	};
 
-	return nullptr;
+	return false;
 }
 
-ircd::rfc1035::record *
-ircd::net::dns::cache::put(const rfc1035::question &question,
-                           const rfc1035::answer &answer)
+bool
+ircd::net::dns::cache::put(const hostport &h,
+                           const opts &o,
+                           const records &r)
 try
 {
-	using prototype = rfc1035::record *(const rfc1035::question &, const rfc1035::answer &);
+	using prototype = bool (const hostport &, const opts &, const records &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"s_dns", "_put"
+		"s_dns", "ircd::net::dns::cache::put"
 	};
 
-	return function(question, answer);
+	return call(h, o, r);
 }
 catch(const mods::unavailable &e)
 {
+	thread_local char buf[128];
 	log::dwarning
 	{
 		log, "Failed to put '%s' in DNS cache :%s",
-		question.name,
+		string(buf, h),
 		e.what()
 	};
 
-	return nullptr;
+	return false;
 }
 
 /// This function has an opportunity to respond from the DNS cache. If it
@@ -3466,19 +3427,19 @@ catch(const mods::unavailable &e)
 /// be of a cached successful result, or a cached error. Both will return
 /// true.
 bool
-ircd::net::dns::cache::get(const hostport &hp,
+ircd::net::dns::cache::get(const hostport &h,
                            const opts &o,
-                           const callback &cb)
+                           const callback &c)
 try
 {
 	using prototype = bool (const hostport &, const opts &, const callback &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"s_dns", "_get"
+		"s_dns", "ircd::net::dns::cache::get"
 	};
 
-	return function(hp, o, cb);
+	return call(h, o, c);
 }
 catch(const mods::unavailable &e)
 {
@@ -3486,7 +3447,7 @@ catch(const mods::unavailable &e)
 	log::dwarning
 	{
 		log, "Failed to get '%s' from DNS cache :%s",
-		string(buf, hp),
+		string(buf, h),
 		e.what()
 	};
 
@@ -3494,24 +3455,57 @@ catch(const mods::unavailable &e)
 }
 
 bool
-ircd::net::dns::cache::for_each(const string_view &type,
-                                const closure &closure)
+ircd::net::dns::cache::for_each(const hostport &h,
+                                const opts &o,
+                                const closure &c)
 {
-	return for_each(rfc1035::qtype.at(type), closure);
+	using prototype = bool (const hostport &, const opts &, const closure &);
+
+	static mods::import<prototype> call
+	{
+		"s_dns", "ircd::net::dns::cache::for_each"
+	};
+
+	return call(h, o, c);
 }
 
 bool
-ircd::net::dns::cache::for_each(const uint16_t &type,
+ircd::net::dns::cache::for_each(const string_view &type,
                                 const closure &c)
 {
-	using prototype = bool (const uint16_t &, const closure &);
+	using prototype = bool (const string_view &, const closure &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"s_dns", "_for_each"
+		"s_dns", "ircd::net::dns::cache::for_each"
 	};
 
-	return function(type, c);
+	return call(type, c);
+}
+
+ircd::string_view
+ircd::net::dns::cache::make_type(const mutable_buffer &out,
+                                 const uint16_t &type)
+try
+{
+	return make_type(out, rfc1035::rqtype.at(type));
+}
+catch(const std::out_of_range &)
+{
+	throw error
+	{
+		"Record type[%u] is not recognized", type
+	};
+}
+
+ircd::string_view
+ircd::net::dns::cache::make_type(const mutable_buffer &out,
+                                 const string_view &type)
+{
+	return fmt::sprintf
+	{
+		out, "ircd.dns.rrs.%s", type
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////

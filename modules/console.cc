@@ -4184,7 +4184,7 @@ console_cmd__net__host(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"hostport"
+		"hostport", "qtype"
 	}};
 
 	const net::hostport hostport
@@ -4192,18 +4192,41 @@ console_cmd__net__host(opt &out, const string_view &line)
 		param["hostport"]
 	};
 
+	const string_view &qtype
+	{
+		param["qtype"]
+	};
+
 	ctx::dock dock;
 	bool done{false};
-	net::ipport ipport;
+	std::string res[2];
 	std::exception_ptr eptr;
-	net::dns::resolve(hostport, [&done, &dock, &eptr, &ipport]
-	(std::exception_ptr eptr_, const net::hostport &, const net::ipport &ipport_)
+	net::dns::opts opts;
+	opts.qtype = qtype? rfc1035::qtype.at(qtype) : 0;
+
+	const net::dns::callback_ipport cbipp{[&done, &dock, &eptr, &res]
+	(std::exception_ptr eptr_, const net::hostport &hp, const net::ipport &ipport)
 	{
 		eptr = std::move(eptr_);
-		ipport = ipport_;
+		res[0] = string(hp);
+		res[1] = string(ipport);
 		done = true;
 		dock.notify_one();
-	});
+	}};
+
+	const net::dns::callback cbarr{[&done, &dock, &eptr, &res]
+	(const net::hostport &hp, const json::array &rrs)
+	{
+		res[0] = string(hp);
+		res[1] = rrs;
+		done = true;
+		dock.notify_one();
+	}};
+
+	if(!opts.qtype)
+		net::dns::resolve(hostport, opts, cbipp);
+	else
+		net::dns::resolve(hostport, opts, cbarr);
 
 	while(!done)
 		dock.wait();
@@ -4211,7 +4234,7 @@ console_cmd__net__host(opt &out, const string_view &line)
 	if(eptr)
 		std::rethrow_exception(eptr);
 	else
-		out << ipport << std::endl;
+		out << res[0] << " : " << res[1] << std::endl;
 
 	return true;
 }
@@ -4223,96 +4246,45 @@ console_cmd__host(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__net__host__cache__A(opt &out, const string_view &line)
-{
-	net::dns::cache::for_each("A", [&]
-	(const auto &host, const auto &r)
-	{
-		const auto &record
-		{
-			dynamic_cast<const rfc1035::record::A &>(r)
-		};
-
-		const net::ipport ipp{record.ip4, 0};
-		out << std::setw(48) << std::right << host
-		    << "  =>  " << std::setw(21) << std::left << ipp
-		    << "  expires " << timestr(record.ttl, ircd::localtime)
-		    << " (" << record.ttl << ")"
-		    << std::endl;
-
-		return true;
-	});
-
-	return true;
-}
-
-bool
-console_cmd__net__host__cache__A__count(opt &out, const string_view &line)
-{
-	size_t count[2] {0};
-	net::dns::cache::for_each("A", [&]
-	(const auto &host, const auto &r)
-	{
-		const auto &record
-		{
-			dynamic_cast<const rfc1035::record::A &>(r)
-		};
-
-		++count[bool(record.ip4)];
-		return true;
-	});
-
-	out << "resolved:  " << count[1] << std::endl;
-	out << "error:     " << count[0] << std::endl;
-	return true;
-}
-
-bool
-console_cmd__net__host__cache__A__clear(opt &out, const string_view &line)
+console_cmd__net__host__cache(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"hostport"
+		"qtype", "hostport"
 	}};
 
-	if(!param.count())
+	const string_view &qtype
 	{
-		out << "NOT IMPLEMENTED" << std::endl;
+		param["qtype"]
+	};
+
+	if(!param["hostport"])
+	{
+		net::dns::cache::for_each(qtype, [&]
+		(const string_view &host, const auto &r)
+		{
+			out << std::left << std::setw(48) << host
+			    << r
+			    << std::endl;
+
+			return true;
+		});
+
 		return true;
 	}
 
 	const net::hostport hostport
 	{
-		param.at("hostport")
+		param["hostport"]
 	};
 
-	out << "NOT IMPLEMENTED" << std::endl;
-	return true;
-}
-
-bool
-console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
-{
-	net::dns::cache::for_each("SRV", [&]
-	(const auto &key, const auto &r)
+	net::dns::opts opts;
+	opts.qtype = rfc1035::qtype.at(qtype);
+	net::dns::cache::for_each(hostport, opts, [&]
+	(const auto &host, const auto &r)
 	{
-		const auto &record
-		{
-			dynamic_cast<const rfc1035::record::SRV &>(r)
-		};
-
-		thread_local char buf[256];
-		const string_view remote{fmt::sprintf
-		{
-			buf, "%s:%u",
-			rstrip(record.tgt, '.'),
-			record.port
-		}};
-
-		out << std::setw(48) << std::right << key
-		    << "  =>  " << std::setw(48) << std::left << remote
-		    <<  " expires " << timestr(record.ttl, ircd::localtime)
-		    << " (" << record.ttl << ")"
+		out << std::left << std::setw(48) << host
+		    << r
 		    << std::endl;
 
 		return true;
@@ -4322,18 +4294,23 @@ console_cmd__net__host__cache__SRV(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__net__host__cache__SRV__count(opt &out, const string_view &line)
+console_cmd__net__host__cache__count(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"qtype"
+	}};
+
+	const string_view &qtype
+	{
+		param["qtype"]
+	};
+
 	size_t count[2] {0};
-	net::dns::cache::for_each("SRV", [&]
+	net::dns::cache::for_each(qtype, [&]
 	(const auto &host, const auto &r)
 	{
-		const auto &record
-		{
-			dynamic_cast<const rfc1035::record::SRV &>(r)
-		};
-
-		++count[bool(record.tgt)];
+		++count[bool(r.size() > 1)];
 		return true;
 	});
 
@@ -4343,70 +4320,14 @@ console_cmd__net__host__cache__SRV__count(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__net__host__cache__SRV__clear(opt &out, const string_view &line)
+console_cmd__net__host__cache__clear(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
 		"hostport", "[service]"
 	}};
 
-	if(!param.count())
-	{
-		out << "NOT IMPLEMENTED" << std::endl;
-		return true;
-	}
-
-	const net::hostport hostport
-	{
-		param.at("hostport")
-	};
-
-	net::dns::opts opts;
-	opts.srv = param.at("[service]", "_matrix._tcp."_sv);
-
-	thread_local char srv_key_buf[128];
-	const auto srv_key
-	{
-		net::dns::make_SRV_key(srv_key_buf, hostport, opts)
-	};
-
 	out << "NOT IMPLEMENTED" << std::endl;
-	return true;
-}
-
-bool
-console_cmd__net__host__prefetch(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"room_id",
-	}};
-
-	const auto &room_id
-	{
-		m::room_id(param.at(0))
-	};
-
-	const m::room room
-	{
-		room_id
-	};
-
-	const m::room::origins origins
-	{
-		room
-	};
-
-	size_t count{0};
-	origins.for_each([&count](const string_view &origin)
-	{
-		net::dns::resolve(origin, net::dns::prefetch_ipport);
-		++count;
-	});
-
-	out << "Prefetch resolving " << count << " origins."
-	    << std::endl;
-
 	return true;
 }
 

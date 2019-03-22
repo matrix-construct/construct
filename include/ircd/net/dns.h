@@ -19,27 +19,21 @@
 ///
 namespace ircd::net::dns
 {
+	struct tag;
 	struct opts extern const opts_default;
 
+	using answers = vector_view<const rfc1035::answer>;
 	using records = vector_view<const rfc1035::record *>;
-	using callback = std::function<void (std::exception_ptr, const hostport &, const records  &)>;
-	using callback_A_one = std::function<void (std::exception_ptr, const hostport &, const rfc1035::record::A &)>;
-	using callback_SRV_one = std::function<void (std::exception_ptr, const hostport &, const rfc1035::record::SRV &)>;
-	using callback_ipport_one = std::function<void (std::exception_ptr, const hostport &, const ipport &)>;
+	using answers_callback = std::function<void (std::exception_ptr, const tag &, const answers &)>;
 
-	// Cache warming drop-in callbacks.
-	extern const callback_A_one prefetch_A;
-	extern const callback_SRV_one prefetch_SRV;
-	extern const callback_ipport_one prefetch_ipport;
+	using callback = std::function<void (const hostport &, const json::array &)>;
+	using callback_one = std::function<void (const hostport &, const json::object &)>;
+	using callback_ipport = std::function<void (std::exception_ptr, const hostport &, const ipport &)>;
 
 	// Callback-based interface
 	void resolve(const hostport &, const opts &, callback);
-	void resolve(const hostport &, const opts &, callback_A_one);
-	void resolve(const hostport &, const opts &, callback_SRV_one);
-	void resolve(const hostport &, const opts &, callback_ipport_one);
-
-	// Callback-based interface (default options)
-	template<class Callback> void resolve(const hostport &, Callback&&);
+	void resolve(const hostport &, const opts &, callback_one); // convenience
+	void resolve(const hostport &, const opts &, callback_ipport); // convenience
 
 	// (internal) generate strings for rfc1035 questions or dns::cache keys.
 	string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
@@ -76,9 +70,7 @@ struct ircd::net::dns::opts
 	bool cache_check {true};
 
 	/// Whether the result of this lookup from the nameserver should be
-	/// added to the cache. If true, the TTL value in result records will be
-	/// modified to an absolute expiration time. If false, no modification
-	/// occurs from the original value.
+	/// added to the cache.
 	bool cache_result {true};
 
 	/// When false, nxdomain errors are not treated as exceptions and the
@@ -94,19 +86,14 @@ struct ircd::net::dns::opts
 /// (internal) DNS cache
 namespace ircd::net::dns::cache
 {
-	using closure = std::function<bool (const string_view &, const rfc1035::record &)>;
+	using closure = std::function<bool (const string_view &, const json::object &)>;
 
-	bool for_each(const uint16_t &type, const closure &);
-	bool for_each(const string_view &type, const closure &);
+	string_view make_type(const mutable_buffer &out, const string_view &);
+	string_view make_type(const mutable_buffer &out, const uint16_t &);
+
+	bool for_each(const string_view &type, const closure &); // do not make_type() here
+	bool for_each(const hostport &, const opts &, const closure &);
 	bool get(const hostport &, const opts &, const callback &);
-	rfc1035::record *put(const rfc1035::question &, const rfc1035::answer &);
-	rfc1035::record *put_error(const rfc1035::question &, const uint &code);
+	bool put(const hostport &, const opts &, const records &);
+	bool put(const hostport &, const opts &, const uint &code, const string_view &msg = {});
 };
-
-template<class Callback>
-void
-ircd::net::dns::resolve(const hostport &hostport,
-                        Callback&& callback)
-{
-	resolve(hostport, opts_default, std::forward<Callback>(callback));
-}

@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Domain Name System Client, Cache & Components",
 	[] // init
 	{
-		ircd::net::dns::resolver_init();
+		ircd::net::dns::resolver_init(ircd::net::dns::handle_resolved);
 	},
 	[] // fini
 	{
@@ -24,202 +24,132 @@ IRCD_MODULE
 	}
 };
 
-/// Convenience composition with a single ipport callback. This is the result of
-/// an automatic chain of queries such as SRV and A/AAAA based on the input and
-/// intermediate results.
-void
-ircd::net::dns::_resolve_ipport(const hostport &hp,
-                                opts opts,
-                                callback_ipport_one callback)
+decltype(ircd::net::dns::cache::error_ttl)
+ircd::net::dns::cache::error_ttl
 {
-	auto handler
-	{
-		std::bind(&handle_ipport__A, std::move(callback), ph::_1, ph::_2, ph::_3)
-	};
+	{ "name",     "ircd.net.dns.cache.error_ttl" },
+	{ "default",  1200L                          },
+};
 
-	if(!hp.service)
-		return _resolve__A(hp, opts, std::move(handler));
+decltype(ircd::net::dns::cache::nxdomain_ttl)
+ircd::net::dns::cache::nxdomain_ttl
+{
+	{ "name",     "ircd.net.dns.cache.nxdomain_ttl" },
+	{ "default",  43200L                            },
+};
 
+decltype(ircd::net::dns::cache::min_ttl)
+ircd::net::dns::cache::min_ttl
+{
+	{ "name",     "ircd.net.dns.cache.min_ttl" },
+	{ "default",  1200L                        },
+};
+
+decltype(ircd::net::dns::cache::room_id)
+ircd::net::dns::cache::room_id
+{
+	"dns", my_host()
+};
+
+decltype(ircd::net::dns::cache::hook)
+ircd::net::dns::cache::hook
+{
+    handle_cached,
+    {
+        { "_site",       "vm.notify"          },
+        { "room_id",     string_view{room_id} },
+    }
+};
+
+decltype(ircd::net::dns::waiting)
+ircd::net::dns::waiting;
+
+void
+IRCD_MODULE_EXPORT
+ircd::net::dns::resolve(const hostport &hp,
+                        const opts &opts_,
+                        callback_ipport callback)
+{
+	if(unlikely(!port(hp) && !hp.service))
+		throw error
+		{
+			"Port or service is required for this query"
+		};
+
+	dns::opts opts(opts_);
+	opts.qtype = 33;
 	opts.nxdomain_exceptions = false;
-	_resolve__SRV(hp, opts, [opts(opts), handler(std::move(handler))]
-	(std::exception_ptr eptr, hostport hp, const rfc1035::record::SRV &record)
+	resolve(hp, opts, dns::callback_one{[opts, callback(std::move(callback))]
+	(const hostport &hp, const json::object &rr)
 	mutable
 	{
-		if(eptr)
+		if(rr.has("error"))
 		{
-			static const rfc1035::record::A empty;
-			return handler(std::move(eptr), hp, empty);
+			const json::string &error(rr.get("error"));
+			const auto eptr(make_exception_ptr<rfc1035::error>("%s", error));
+			return callback(eptr, {host(hp), 0}, {});
 		}
 
-		opts.qtype = 0;
+		const net::hostport target
+		{
+			rr.has("tgt")?
+				rstrip(unquote(rr.at("tgt")), '.'):
+				host(hp),
+
+			rr.has("port")?
+				rr.get<uint16_t>("port"):
+				port(hp)
+		};
+
+		opts.qtype = 1;
 		opts.nxdomain_exceptions = true;
-		hp.host = record.tgt?: unmake_SRV_key(hp.host);
-		hp.port = record.port? record.port : hp.port;
-		_resolve__A(hp, opts, std::move(handler));
-	});
+		resolve(target, opts, dns::callback_one{[callback(std::move(callback)), target]
+		(const hostport &hp, const json::object &rr)
+		{
+			const json::string &error(rr.get("error"));
+			const auto eptr
+			{
+				!empty(error)?
+					make_exception_ptr<rfc1035::error>("%s", error):
+					std::exception_ptr{}
+			};
+
+			const json::string &ip(rr.get("ip", "0.0.0.0"));
+			const net::ipport ipport(ip, port(target));
+			return callback(eptr, {host(hp), port(target)}, ipport);
+		}});
+	}});
 }
 
 void
-ircd::net::dns::handle_ipport__A(callback_ipport_one callback,
-                                 std::exception_ptr eptr,
-                                 const hostport &hp,
-                                 const rfc1035::record::A &record)
+IRCD_MODULE_EXPORT
+ircd::net::dns::resolve(const hostport &hp,
+                        const opts &opts,
+                        callback_one callback)
 {
-	if(!eptr && !record.ip4)
-		eptr = make_exception_ptr<not_found>("Host has no A record");
-
-	const ipport ipport
-	{
-		record.ip4, port(hp)
-	};
-
-	callback(std::move(eptr), hp, ipport);
-}
-
-/// Convenience callback with a single SRV record which was selected from
-/// the vector with stochastic respect for weighting and priority.
-void
-ircd::net::dns::_resolve__SRV(const hostport &hp,
-                              opts opts,
-                              callback_SRV_one callback)
-{
-	static const auto &qtype
-	{
-		rfc1035::qtype.at("SRV")
-	};
-
-	if(unlikely(opts.qtype && opts.qtype != qtype))
+	if(unlikely(!opts.qtype))
 		throw error
 		{
-			"Specified query type '%s' (%u) but user's callback is for SRV records only.",
-			rfc1035::rqtype.at(opts.qtype),
-			opts.qtype
+			"A query type is required; not specified; cannot be deduced here."
 		};
 
-	if(!opts.qtype)
-		opts.qtype = qtype;
-
-	auto handler
+	resolve(hp, opts, dns::callback{[callback(std::move(callback))]
+	(const hostport &hp, const json::array &rrs)
 	{
-		std::bind(&handle__SRV, std::move(callback), ph::_1, ph::_2, ph::_3)
-	};
-
-	_resolve__(hp, opts, std::move(handler));
+		const size_t &count(rrs.size());
+		const auto choice(count? rand::integer(0, count - 1) : 0UL);
+		const json::object &rr(rrs[choice]);
+		callback(hp, rr);
+	}});
 }
 
 void
-ircd::net::dns::handle__SRV(callback_SRV_one callback,
-                            std::exception_ptr eptr,
-                            const hostport &hp,
-                            const records &rrs)
+IRCD_MODULE_EXPORT
+ircd::net::dns::resolve(const hostport &hp,
+                        const opts &opts,
+                        callback cb)
 {
-	static const rfc1035::record::SRV empty;
-	static const auto &qtype
-	{
-		rfc1035::qtype.at("SRV")
-	};
-
-	if(eptr)
-		return callback(std::move(eptr), hp, empty);
-
-	//TODO: prng on weight / prio plz
-	for(size_t i(0); i < rrs.size(); ++i)
-	{
-		const auto &rr(*rrs.at(i));
-		if(rr.type != qtype)
-			continue;
-
-		const auto &record(rr.as<const rfc1035::record::SRV>());
-		return callback(std::move(eptr), hp, record);
-	}
-
-	return callback(std::move(eptr), hp, empty);
-}
-
-/// Convenience callback with a single A record which was selected from
-/// the vector randomly.
-void
-ircd::net::dns::_resolve__A(const hostport &hp,
-                            opts opts,
-                            callback_A_one callback)
-{
-	static const auto &qtype
-	{
-		rfc1035::qtype.at("A")
-	};
-
-	if(unlikely(opts.qtype && opts.qtype != qtype))
-		throw error
-		{
-			"Specified query type '%s' (%u) but user's callback is for A records only.",
-			rfc1035::rqtype.at(opts.qtype),
-			opts.qtype
-		};
-
-	if(!opts.qtype)
-		opts.qtype = qtype;
-
-	auto handler
-	{
-		std::bind(&handle__A, std::move(callback), ph::_1, ph::_2, ph::_3)
-	};
-
-	_resolve__(hp, opts, std::move(handler));
-}
-
-void
-ircd::net::dns::handle__A(callback_A_one callback,
-                          std::exception_ptr eptr,
-                          const hostport &hp,
-                          const records &rrs)
-{
-	static const rfc1035::record::A empty;
-	static const auto &qtype
-	{
-		rfc1035::qtype.at("A")
-	};
-
-	if(eptr)
-		return callback(std::move(eptr), hp, empty);
-
-	// Get the actual number of A records in these results
-	size_t rec_count(0);
-	for(size_t i(0); i < rrs.size(); ++i)
-		rec_count += rrs.at(i)->type == qtype;
-
-	// Make a random selection for round-robin; rand::integer's range
-	// is inclusive so it's shifted down by one.
-	uint64_t selection
-	{
-		rec_count > 1?
-			rand::integer(1, rec_count) - 1:
-			0
-	};
-
-	assert(!rec_count || selection < rec_count);
-	assert(rec_count || selection == 0);
-	for(size_t i(0); i < rrs.size(); ++i)
-	{
-		const auto &rr(*rrs.at(i));
-		if(rr.type != qtype)
-			continue;
-
-		if(selection-- != 0)
-			continue;
-
-		const auto &record(rr.as<const rfc1035::record::A>());
-		return callback(std::move(eptr), hp, record);
-	}
-
-	return callback(std::move(eptr), hp, empty);
-}
-
-/// Fundamental callback with a vector of abstract resource records.
-void
-ircd::net::dns::_resolve__(const hostport &hp,
-                           const opts &opts,
-                           callback cb)
-{
+	assert(ctx::current);
 	if(unlikely(!opts.qtype))
 		throw error
 		{
@@ -230,5 +160,609 @@ ircd::net::dns::_resolve__(const hostport &hp,
 		if(cache::get(hp, opts, cb))
 			return;
 
-	resolver_call(hp, opts, std::move(cb));
+	waiting.emplace_front([cb(std::move(cb)), opts, h(std::string(host(hp)))]
+	(const string_view &type, const string_view &key, const json::array &rrs)
+	{
+		if(type != rfc1035::rqtype.at(opts.qtype))
+			return false;
+
+		if(cache::get(hostport(h), opts, cb))
+			return true;
+
+		cb(hostport(h), rrs);
+		return true;
+	});
+
+	resolver_call(hp, opts);
+}
+
+void
+ircd::net::dns::handle_cached(const m::event &event,
+                              m::vm::eval &eval)
+try
+{
+	const string_view &full_type
+	{
+		json::get<"type"_>(event)
+	};
+
+	if(!startswith(full_type, "ircd.dns.rrs."))
+		return;
+
+	const string_view &type
+	{
+		lstrip(full_type, "ircd.dns.rrs.")
+	};
+
+	const string_view &state_key
+	{
+		json::get<"state_key"_>(event)
+	};
+
+	const json::array &rrs
+	{
+		json::get<"content"_>(event).get("")
+	};
+
+	auto it(begin(waiting));
+	while(it != end(waiting)) try
+	{
+		const auto &proffer(*it);
+		if(proffer(type, state_key, rrs))
+			it = waiting.erase(it);
+		else
+			++it;
+	}
+	catch(const std::exception &e)
+	{
+		++it;
+		log::error
+		{
+			log, "proffer :%s", e.what()
+		};
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "handle_cached() :%s", e.what()
+	};
+}
+
+/// Called back from the dns::resolver with a vector of answers to the
+/// question (we get the whole tag here).
+///
+/// This is being invoked on the dns::resolver's receiver context stack
+/// under lock preventing any other activity with the resolver.
+///
+/// We process these results and insert them into our cache. The cache
+/// insertion involves sending a message to the DNS room. Matrix hooks
+/// on that room will catch this message for the user(s) which initiated
+/// this query; we don't callback or deal with said users here.
+///
+void
+ircd::net::dns::handle_resolved(std::exception_ptr eptr,
+                                const tag &tag,
+                                const answers &an)
+try
+{
+	static const size_t recsz(1024);
+	thread_local char recbuf[recsz * MAX_COUNT];
+	thread_local std::array<const rfc1035::record *, MAX_COUNT> record;
+
+	size_t i(0);
+	mutable_buffer buf{recbuf};
+	for(; i < an.size(); ++i) switch(an.at(i).qtype)
+	{
+		case 1:
+			record.at(i) = new_record<rfc1035::record::A>(buf, an.at(i));
+			continue;
+
+		case 5:
+			record.at(i) = new_record<rfc1035::record::CNAME>(buf, an.at(i));
+			continue;
+
+		case 28:
+			record.at(i) = new_record<rfc1035::record::AAAA>(buf, an.at(i));
+			continue;
+
+		case 33:
+			record.at(i) = new_record<rfc1035::record::SRV>(buf, an.at(i));
+			continue;
+
+		default:
+			record.at(i) = new_record<rfc1035::record>(buf, an.at(i));
+			continue;
+	}
+
+	// Sort the records by type so we can create smaller vectors to send to the
+	// cache. nulls from running out of space should be pushed to the back.
+	std::sort(begin(record), begin(record) + an.size(), []
+	(const auto *const &a, const auto *const &b)
+	{
+		if(!a)
+			return false;
+
+		if(!b)
+			return true;
+
+		return a->type < b->type;
+	});
+
+	//TODO: don't send cache ephemeral rcodes
+	// Bail on error here; send the cache the message
+	if(eptr)
+	{
+		cache::put(tag.hp, tag.opts, tag.rcode, what(eptr));
+		return;
+	}
+
+	// Branch on no records with no error
+	if(!i)
+	{
+		static const records empty;
+		cache::put(tag.hp, tag.opts, empty);
+		return;
+	}
+
+	// Iterate the record vector which was sorted by type;
+	// send the cache an individual view of each type since
+	// the cache is organized by record type.
+	size_t s(0), e(0);
+	auto last(record.at(e)->type);
+	for(++e; e <= i; ++e)
+	{
+		if(e < i && record.at(e)->type == last)
+			continue;
+
+		const vector_view<const rfc1035::record *> records
+		{
+			record.data() + s, record.data() + e
+		};
+
+		cache::put(tag.hp, tag.opts, records);
+
+		if(e < i)
+		{
+			last = record.at(e)->type;
+			s = e;
+		}
+	}
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "handle resolved: tag[%u] :%s",
+		tag.id,
+		e.what()
+	};
+
+	throw;
+}
+
+template<class type>
+ircd::rfc1035::record *
+ircd::net::dns::new_record(mutable_buffer &buf,
+                           const rfc1035::answer &answer)
+{
+	if(unlikely(sizeof(type) > size(buf)))
+		return nullptr;
+
+	const auto pos(data(buf));
+	consume(buf, sizeof(type));
+	return new (data(buf)) type(answer);
+}
+
+//
+// cache
+//
+
+bool
+IRCD_MODULE_EXPORT
+ircd::net::dns::cache::put(const hostport &hp,
+                           const opts &opts,
+                           const uint &code,
+                           const string_view &msg)
+{
+	char type_buf[64];
+	const string_view type
+	{
+		make_type(type_buf, opts.qtype)
+	};
+
+	char state_key_buf[rfc1035::NAME_BUF_SIZE * 2];
+	const string_view &state_key
+	{
+		opts.qtype == 33?
+			make_SRV_key(state_key_buf, host(hp), opts):
+			host(hp)
+	};
+
+	char content_buf[768];
+	json::stack out{content_buf};
+	json::stack::object content{out};
+	json::stack::array array
+	{
+		content, ""
+	};
+
+	json::stack::object rr0
+	{
+		array
+	};
+
+	json::stack::member
+	{
+		rr0, "errcode", lex_cast(code)
+	};
+
+	json::stack::member
+	{
+		rr0, "error", msg
+	};
+
+	json::stack::member
+	{
+		rr0, "ttl", json::value
+		{
+			code == 3?
+				long(seconds(nxdomain_ttl).count()):
+				long(seconds(error_ttl).count())
+		}
+	};
+
+	rr0.~object();
+	array.~array();
+	content.~object();
+	send(room_id, m::me, type, state_key, json::object(out.completed()));
+	return true;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::net::dns::cache::put(const hostport &hp,
+                           const opts &opts,
+                           const records &rrs)
+{
+	const auto &type_code
+	{
+		!rrs.empty()? rrs.at(0)->type : opts.qtype
+	};
+
+	char type_buf[48];
+	const string_view type
+	{
+		make_type(type_buf, type_code)
+	};
+
+	char state_key_buf[rfc1035::NAME_BUF_SIZE * 2];
+	const string_view &state_key
+	{
+		opts.qtype == 33?
+			make_SRV_key(state_key_buf, host(hp), opts):
+			host(hp)
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		8_KiB
+	};
+
+	json::stack out{buf};
+	json::stack::object content{out};
+	json::stack::array array
+	{
+		content, ""
+	};
+
+	if(rrs.empty())
+	{
+		// Add one object to the array with nothing except a ttl indicating no
+		// records (and no error) so we can cache that for the ttl. We use the
+		// nxdomain ttl for this value.
+		json::stack::object rr0{array};
+		json::stack::member
+		{
+			rr0, "ttl", json::value
+			{
+				long(seconds(nxdomain_ttl).count())
+			}
+		};
+	}
+	else for(const auto &record : rrs)
+	{
+		switch(record->type)
+		{
+			case 1: // A
+			{
+				json::stack::object object{array};
+				dynamic_cast<const rfc1035::record::A *>(record)->append(object);
+				continue;
+			}
+
+			case 5: // CNAME
+			{
+				json::stack::object object{array};
+				dynamic_cast<const rfc1035::record::CNAME *>(record)->append(object);
+				continue;
+			}
+
+			case 28: // AAAA
+			{
+				json::stack::object object{array};
+				dynamic_cast<const rfc1035::record::AAAA *>(record)->append(object);
+				continue;
+			}
+
+			case 33: // SRV
+			{
+				json::stack::object object{array};
+				dynamic_cast<const rfc1035::record::SRV *>(record)->append(object);
+				continue;
+			}
+		}
+	}
+
+	array.~array();
+	content.~object();
+	send(room_id, m::me, type, state_key, json::object{out.completed()});
+	return true;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::net::dns::cache::get(const hostport &hp,
+                           const opts &opts,
+                           const callback &closure)
+{
+	char type_buf[48];
+	const string_view type
+	{
+		make_type(type_buf, opts.qtype)
+	};
+
+	char state_key_buf[rfc1035::NAME_BUF_SIZE * 2];
+	const string_view &state_key
+	{
+		opts.qtype == 33?
+			make_SRV_key(state_key_buf, host(hp), opts):
+			host(hp)
+	};
+
+	const m::room::state state
+	{
+		room_id
+	};
+
+	const m::event::idx &event_idx
+	{
+		state.get(std::nothrow, type, state_key)
+	};
+
+	if(!event_idx)
+		return false;
+
+	time_t origin_server_ts;
+	if(!m::get<time_t>(event_idx, "origin_server_ts", origin_server_ts))
+		return false;
+
+	bool ret{false};
+	const time_t ts{origin_server_ts / 1000L};
+	m::get(std::nothrow, event_idx, "content", [&hp, &closure, &ret, &ts]
+	(const json::object &content)
+	{
+		const json::array &rrs
+		{
+			content.get("")
+		};
+
+		// If all records are expired then skip; otherwise since this closure
+		// expects a single array we reveal both expired and valid records.
+		ret = !std::all_of(begin(rrs), end(rrs), [&ts]
+		(const json::object &rr)
+		{
+			return expired(rr, ts);
+		});
+
+		if(ret)
+			closure(hp, rrs);
+	});
+
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::net::dns::cache::for_each(const hostport &hp,
+                                const opts &opts,
+                                const closure &closure)
+{
+	char type_buf[48];
+	const string_view type
+	{
+		make_type(type_buf, opts.qtype)
+	};
+
+	char state_key_buf[rfc1035::NAME_BUF_SIZE * 2];
+	const string_view &state_key
+	{
+		opts.qtype == 33?
+			make_SRV_key(state_key_buf, host(hp), opts):
+			host(hp)
+	};
+
+	const m::room::state state
+	{
+		room_id
+	};
+
+	const m::event::idx &event_idx
+	{
+		state.get(std::nothrow, type, state_key)
+	};
+
+	if(!event_idx)
+		return false;
+
+	time_t origin_server_ts;
+	if(!m::get<time_t>(event_idx, "origin_server_ts", origin_server_ts))
+		return false;
+
+	bool ret{true};
+	const time_t ts{origin_server_ts / 1000L};
+	m::get(std::nothrow, event_idx, "content", [&state_key, &closure, &ret, &ts]
+	(const json::object &content)
+	{
+		for(const json::object &rr : json::array(content.get("")))
+		{
+			if(expired(rr, ts))
+				continue;
+
+			if(!(ret = closure(state_key, rr)))
+				break;
+		}
+	});
+
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::net::dns::cache::for_each(const string_view &type,
+                                const closure &closure)
+{
+	char type_buf[48];
+	const string_view full_type
+	{
+		make_type(type_buf, type)
+	};
+
+	const m::room::state state
+	{
+		room_id
+	};
+
+	return state.for_each(full_type, [&closure]
+	(const string_view &, const string_view &state_key, const m::event::idx &event_idx)
+	{
+		time_t origin_server_ts;
+		if(!m::get<time_t>(event_idx, "origin_server_ts", origin_server_ts))
+			return true;
+
+		bool ret{true};
+		const time_t ts{origin_server_ts / 1000L};
+		m::get(std::nothrow, event_idx, "content", [&state_key, &closure, &ret, &ts]
+		(const json::object &content)
+		{
+			for(const json::object &rr : json::array(content.get("")))
+			{
+				if(expired(rr, ts))
+					continue;
+
+				if(!(ret = closure(state_key, rr)))
+					break;
+			}
+		});
+
+		return ret;
+	});
+}
+
+bool
+ircd::net::dns::cache::expired(const json::object &rr,
+                               const time_t &ts)
+{
+	const auto ttl(get_ttl(rr));
+	return ts + ttl < ircd::time();
+}
+
+time_t
+ircd::net::dns::cache::get_ttl(const json::object &rr)
+{
+	const seconds &min_ttl_s(min_ttl);
+	const seconds &err_ttl_s(error_ttl);
+	const time_t min_ttl_t(min_ttl_s.count());
+	const time_t err_ttl_t(err_ttl_s.count());
+	const time_t rr_ttl
+	{
+		rr.get<time_t>("ttl", err_ttl_t)
+	};
+
+	return std::max(rr_ttl, min_ttl_t);
+}
+
+//
+// cache room creation
+//
+
+namespace ircd::net::dns::cache
+{
+	static void create_room();
+
+	extern bool room_exists;
+	extern const m::hookfn<m::vm::eval &> create_room_hook;
+	extern const ircd::run::changed create_room_hook_alt;
+}
+
+decltype(ircd::net::dns::cache::room_exists)
+ircd::net::dns::cache::room_exists
+{
+	m::exists(room_id)
+};
+
+decltype(ircd::net::dns::cache::create_room_hook)
+ircd::net::dns::cache::create_room_hook
+{
+	{
+		{ "_site",       "vm.effect"      },
+		{ "room_id",     "!ircd"          },
+		{ "type",        "m.room.create"  },
+	},
+	[](const m::event &, m::vm::eval &)
+	{
+		create_room();
+	}
+};
+
+/// This is for existing installations that won't catch an
+/// !ircd room create and must create this room.
+decltype(ircd::net::dns::cache::create_room_hook_alt)
+ircd::net::dns::cache::create_room_hook_alt{[]
+(const auto &level)
+{
+	if(level != run::level::RUN || room_exists)
+		return;
+
+	context{[]
+	{
+		if(m::exists(m::my_room))  // if false, the other hook will succeed.
+			create_room();
+	}};
+}};
+
+void
+ircd::net::dns::cache::create_room()
+try
+{
+	const m::room room
+	{
+		m::create(room_id, m::me, "internal")
+	};
+
+	log::debug
+	{
+		m::log, "Created '%s' for the DNS cache module.",
+		string_view{room.room_id}
+	};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		m::log, "Creating the '%s' room failed :%s",
+		string_view{room_id},
+		e.what()
+	};
 }

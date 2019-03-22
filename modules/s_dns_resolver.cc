@@ -8,9 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/asio.h>
 #include "s_dns.h"
-#include "s_dns_resolver.h"
 
 decltype(ircd::net::dns::resolver)
 ircd::net::dns::resolver;
@@ -61,10 +59,13 @@ ircd::net::dns::resolver::retry_max
 //
 
 void
-ircd::net::dns::resolver_init()
+ircd::net::dns::resolver_init(answers_callback callback)
 {
 	assert(!ircd::net::dns::resolver);
-	ircd::net::dns::resolver = new typename ircd::net::dns::resolver{};
+	ircd::net::dns::resolver = new typename ircd::net::dns::resolver
+	{
+		std::move(callback)
+	};
 }
 
 void
@@ -76,8 +77,7 @@ ircd::net::dns::resolver_fini()
 
 void
 ircd::net::dns::resolver_call(const hostport &hp,
-                              const opts &opts,
-                              callback &&cb)
+                              const opts &opts)
 {
 	if(unlikely(!resolver))
 		throw error
@@ -94,18 +94,25 @@ ircd::net::dns::resolver_call(const hostport &hp,
 			host(hp)
 		};
 
-	resolver(hp, opts, std::move(cb));
+	resolver(hp, opts);
 }
 
 //
 // resolver::resolver
 //
 
-ircd::net::dns::resolver::resolver()
-:ns{ios::get()}
-,reply
+ircd::net::dns::resolver::resolver(answers_callback callback)
+:callback
 {
-	64_KiB // worst-case UDP datagram size
+	std::move(callback)
+}
+,ns
+{
+	ios::get()
+}
+,recv_context
+{
+	"dnsres R", 128_KiB, std::bind(&resolver::recv_worker, this), context::POST
 }
 ,timeout_context
 {
@@ -119,30 +126,118 @@ ircd::net::dns::resolver::resolver()
 	ns.open(ip::udp::v4());
 	ns.non_blocking(true);
 	set_servers();
-	set_handle();
 }
 
 ircd::net::dns::resolver::~resolver()
 noexcept
 {
-	ns.close();
-	sendq_context.terminate();
-	timeout_context.terminate();
-	while(!tags.empty())
-	{
-		log::warning
-		{
-			log, "Waiting for %zu unfinished DNS resolutions", tags.size()
-		};
+	if(ns.is_open())
+		ns.close();
 
-		ctx::sleep(3);
-	}
+	timeout_context.terminate();
+	sendq_context.terminate();
+	recv_context.terminate();
+	done.wait([this]
+	{
+		const bool ret(tags.empty());
+
+		if(!ret)
+			log::warning
+			{
+				log, "Waiting for %zu unfinished DNS resolutions", tags.size()
+			};
+
+		return ret;
+	});
 
 	assert(tags.empty());
 }
 
-__attribute__((noreturn))
+/// Internal resolver entry interface.
+uint16_t
+ircd::net::dns::resolver::operator()(const hostport &hp,
+                                     const opts &opts)
+{
+	auto &tag(set_tag(hp, opts)); try
+	{
+		tag.question = make_query(tag.qbuf, tag);
+		tag.hp.host = strlcpy(tag.hostbuf, host(hp));
+		tag.hp.service = {};
+		submit(tag);
+	}
+	catch(...)
+	{
+		remove(tag);
+		throw;
+	}
+
+	return tag.id;
+}
+
+ircd::const_buffer
+ircd::net::dns::resolver::make_query(const mutable_buffer &buf,
+                                     tag &tag)
+{
+	thread_local char hostbuf[rfc1035::NAME_BUF_SIZE * 2];
+	string_view hoststr;
+	switch(tag.opts.qtype)
+	{
+		case 0: throw error
+		{
+			"A query type is required to form a question."
+		};
+
+		case 33: // SRV
+			hoststr = make_SRV_key(hostbuf, host(tag.hp), tag.opts);
+			break;
+
+		default:
+			hoststr = host(tag.hp);
+			break;
+	}
+
+	assert(hoststr);
+	assert(tag.opts.qtype);
+	const rfc1035::question question
+	{
+		hoststr, tag.opts.qtype
+	};
+
+	return rfc1035::make_query(buf, tag.id, question);
+}
+
+template<class... A>
+ircd::net::dns::tag &
+ircd::net::dns::resolver::set_tag(A&&... args)
+{
+	while(tags.size() < 65535)
+	{
+		auto id
+		{
+			ircd::rand::integer(1, 65535)
+		};
+
+		auto it{tags.lower_bound(id)};
+		if(it != end(tags) && it->first == id)
+			continue;
+
+		it = tags.emplace_hint(it,
+		                       std::piecewise_construct,
+		                       std::forward_as_tuple(id),
+		                       std::forward_as_tuple(std::forward<A>(args)...));
+		it->second.id = id;
+		dock.notify_one();
+		return it->second;
+	}
+
+	throw panic
+	{
+		"Too many DNS queries"
+	};
+}
+
 void
+__attribute__((noreturn))
 ircd::net::dns::resolver::sendq_worker()
 {
 	while(1)
@@ -163,6 +258,11 @@ ircd::net::dns::resolver::sendq_worker()
 void
 ircd::net::dns::resolver::sendq_work()
 {
+	const std::lock_guard lock
+	{
+		mutex
+	};
+
 	assert(!sendq.empty());
 	assert(sendq.size() < 65535);
 	assert(sendq.size() <= tags.size());
@@ -207,30 +307,18 @@ try
 }
 catch(const ctx::terminated &)
 {
-	cancel_all_tags();
-}
-
-void
-ircd::net::dns::resolver::cancel_all_tags()
-{
-	static const std::system_error ec
-	{
-		make_error_code(std::errc::operation_canceled)
-	};
-
-	if(!tags.empty())
-		log::dwarning
-		{
-			log, "Attempting to cancel all %zu pending tags.", tags.size()
-		};
-
-	for(auto &p : tags)
-		post_error(p.second, ec);
+	const ctx::exception_handler eh;
+	cancel_all();
 }
 
 void
 ircd::net::dns::resolver::check_timeouts(const milliseconds &timeout)
 {
+	const std::lock_guard lock
+	{
+		mutex
+	};
+
 	const auto cutoff
 	{
 		now<steady_point>() - timeout
@@ -280,185 +368,13 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 		make_error_code(std::errc::timed_out)
 	};
 
-	post_error(tag, ec);
+	error_one(tag, ec);
 	return true;
 }
 
-void
-ircd::net::dns::resolver::post_error(tag &tag,
-                                     const std::system_error &ec)
-{
-	// We ignore this request to post an error here if the tag has no callback
-	// function set. Nulling the callback is used as hack-hoc state to indicate
-	// that something else has called back the user and will unmap this tag so
-	// there's no reason for us to post this.
-	if(!tag.cb)
-		return;
-
-	auto handler
-	{
-		std::bind(&resolver::handle_post_error, this, tag.id, std::ref(tag), std::cref(ec))
-	};
-
-	// Callback gets a fresh stack off this timeout worker ctx's stack.
-	ircd::post(std::move(handler));
-}
-
-void
-ircd::net::dns::resolver::handle_post_error(const uint16_t id,
-                                            tag &tag,
-                                            const std::system_error &ec)
-{
-	// Have to check if the tag is still mapped at this point. It may
-	// have been removed if a belated reply came in while this closure
-	// was posting. If so, that's good news and we bail on the timeout.
-	if(!tags.count(id))
-		return;
-
-	log::error
-	{
-		log, "DNS error id:%u for '%s' :%s",
-		id,
-		string(tag.hp),
-		string(ec)
-	};
-
-	assert(tag.cb);
-	tag.cb(std::make_exception_ptr(ec), tag.hp, {});
-	remove(tag);
-}
-
-/// Internal resolver entry interface.
-void
-ircd::net::dns::resolver::operator()(const hostport &hp,
-                                     const opts &opts,
-                                     callback &&callback)
-{
-	auto &tag(set_tag(hp, opts, std::move(callback))); try
-	{
-		tag.question = make_query(tag.qbuf, tag);
-		submit(tag);
-	}
-	catch(...)
-	{
-		remove(tag);
-		throw;
-	}
-}
-
-ircd::const_buffer
-ircd::net::dns::resolver::make_query(const mutable_buffer &buf,
-                                     const tag &tag)
-{
-	thread_local char hostbuf[rfc1035::NAME_BUF_SIZE * 2];
-	string_view hoststr;
-	switch(tag.opts.qtype)
-	{
-		case 0: throw error
-		{
-			"A query type is required to form a question."
-		};
-
-		case 33: // SRV
-		{
-			hoststr = make_SRV_key(hostbuf, host(tag.hp), tag.opts);
-			break;
-		}
-
-		default:
-			hoststr = host(tag.hp);
-			break;
-	}
-
-	assert(hoststr);
-	assert(tag.opts.qtype);
-	const rfc1035::question question
-	{
-		hoststr, tag.opts.qtype
-	};
-
-	return rfc1035::make_query(buf, tag.id, question);
-}
-
-template<class... A>
-ircd::net::dns::resolver::tag &
-ircd::net::dns::resolver::set_tag(A&&... args)
-{
-	while(tags.size() < 65535)
-	{
-		auto id(ircd::rand::integer(1, 65535));
-		auto it{tags.lower_bound(id)};
-		if(it != end(tags) && it->first == id)
-			continue;
-
-		it = tags.emplace_hint(it,
-		                       std::piecewise_construct,
-		                       std::forward_as_tuple(id),
-		                       std::forward_as_tuple(std::forward<A>(args)...));
-		it->second.id = id;
-		dock.notify_one();
-		return it->second;
-	}
-
-	throw panic
-	{
-		"Too many DNS queries"
-	};
-}
-
-void
-ircd::net::dns::resolver::remove(tag &tag)
-{
-	remove(tag, tags.find(tag.id));
-}
-
-decltype(ircd::net::dns::resolver::tags)::iterator
-ircd::net::dns::resolver::remove(tag &tag,
-                                 const decltype(tags)::iterator &it)
-{
-	log::debug
-	{
-		log, "dns tag:%u t:%u qtype:%u removing (tags:%zu sendq:%zu)",
-		tag.id,
-		tag.tries,
-		tag.opts.qtype,
-		tags.size(),
-		sendq.size()
-	};
-
-	unqueue(tag);
-	return it != end(tags)? tags.erase(it) : it;
-}
-
-void
-ircd::net::dns::resolver::unqueue(tag &tag)
-{
-	const auto it
-	{
-		std::find(begin(sendq), end(sendq), tag.id)
-	};
-
-	if(it != end(sendq))
-		sendq.erase(it);
-}
-
-void
-ircd::net::dns::resolver::queue_query(tag &tag)
-{
-	assert(sendq.size() <= tags.size());
-	sendq.emplace_back(tag.id);
-	dock.notify_one();
-
-	log::debug
-	{
-		log, "dns tag:%u t:%u qtype:%u added to sendq (tags:%zu sendq:%zu)",
-		tag.id,
-		tag.tries,
-		tag.opts.qtype,
-		tags.size(),
-		sendq.size()
-	};
-}
+//
+// submit
+//
 
 void
 ircd::net::dns::resolver::submit(tag &tag)
@@ -519,6 +435,24 @@ catch(const std::out_of_range &)
 }
 
 void
+ircd::net::dns::resolver::queue_query(tag &tag)
+{
+	assert(sendq.size() <= tags.size());
+	sendq.emplace_back(tag.id);
+	dock.notify_one();
+
+	log::debug
+	{
+		log, "dns tag:%u t:%u qtype:%u added to sendq (tags:%zu sendq:%zu)",
+		tag.id,
+		tag.tries,
+		tag.opts.qtype,
+		tags.size(),
+		sendq.size()
+	};
+}
+
+void
 ircd::net::dns::resolver::send_query(const ip::udp::endpoint &ep,
                                      tag &tag)
 {
@@ -537,47 +471,87 @@ ircd::net::dns::resolver::send_query(const ip::udp::endpoint &ep,
 	tag.tries++;
 }
 
+//
+// recv
+//
+
 void
-ircd::net::dns::resolver::set_handle()
+ircd::net::dns::resolver::recv_worker()
+try
 {
-	auto handler
+	const unique_buffer<mutable_buffer> buf
 	{
-		std::bind(&resolver::handle, this, ph::_1, ph::_2)
+		64_KiB
 	};
 
-	const asio::mutable_buffers_1 bufs{reply};
-	ns.async_receive_from(bufs, reply_from, std::move(handler));
+	const auto interruption{[this]
+	(ctx::ctx *const &)
+	{
+		if(this->ns.is_open())
+			this->ns.cancel();
+	}};
+
+	const asio::mutable_buffers_1 bufs{buf};
+	ip::udp::endpoint ep;
+	while(ns.is_open()) try
+	{
+		size_t recv; continuation
+		{
+			continuation::asio_predicate, interruption, [this, &bufs, &recv, &ep]
+			(auto &yield)
+			{
+				recv = ns.async_receive_from(bufs, ep, yield);
+			}
+		};
+
+		const mutable_buffer &reply
+		{
+			data(buf), recv
+		};
+
+		const net::ipport &from
+		{
+			make_ipport(ep)
+		};
+
+		handle(from, reply);
+	}
+	catch(const boost::system::system_error &e)
+	{
+		switch(make_error_code(e).value())
+		{
+			case int(std::errc::operation_canceled):
+				break;
+
+			default:
+				throw;
+		}
+	}
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "%s", e.what()
+	};
 }
 
 void
-ircd::net::dns::resolver::handle(const error_code &ec,
-                                 const size_t &bytes)
-noexcept try
+ircd::net::dns::resolver::handle(const ipport &from,
+                                 const mutable_buffer &buf)
+try
 {
-	if(!handle_error(ec))
-		return;
-
-	const unwind reset{[this]
-	{
-		set_handle();
-	}};
-
-	if(unlikely(bytes < sizeof(rfc1035::header)))
+	if(unlikely(size(buf) < sizeof(rfc1035::header)))
 		throw rfc1035::error
 		{
 			"Got back %zu bytes < rfc1035 %zu byte header",
-			bytes,
+			size(buf),
 			sizeof(rfc1035::header)
 		};
 
-	char *const reply
-	{
-		data(this->reply)
-	};
-
 	rfc1035::header &header
 	{
-		*reinterpret_cast<rfc1035::header *>(reply)
+		*reinterpret_cast<rfc1035::header *>(data(buf))
 	};
 
 	bswap(&header.qdcount);
@@ -587,41 +561,51 @@ noexcept try
 
 	const const_buffer body
 	{
-		reply + sizeof(header), bytes - sizeof(header)
+		data(buf) + sizeof(header), size(buf) - sizeof(header)
 	};
 
-	handle_reply(header, body);
+	handle_reply(from, header, body);
 }
 catch(const std::exception &e)
 {
-	throw panic
+	log::error
 	{
-		"resolver::handle_reply(): %s", e.what()
+		log, "%s", e.what()
 	};
 }
 
 void
-ircd::net::dns::resolver::handle_reply(const header &header,
+ircd::net::dns::resolver::handle_reply(const ipport &from,
+                                       const header &header,
                                        const const_buffer &body)
-try
 {
 	thread_local char addr_strbuf[2][128];
+	const std::lock_guard lock
+	{
+		// The primary mutex is locked here while this result is
+		// processed. This locks out the sendq and timeout worker.
+		mutex
+	};
 
-	const auto it{tags.find(header.id)};
+	const auto it
+	{
+		tags.find(header.id)
+	};
+
 	if(it == end(tags))
 		throw error
 		{
 			"DNS reply from %s for unrecognized tag id:%u",
-			string(addr_strbuf[0], reply_from),
+			string(addr_strbuf[0], from),
 			header.id
 		};
 
 	auto &tag{it->second};
-	if(make_ipport(reply_from) != tag.server)
+	if(from != tag.server)
 		throw error
 		{
 			"DNS reply from %s for tag:%u which we sent to %s",
-			string(addr_strbuf[0], reply_from),
+			string(addr_strbuf[0], from),
 			header.id,
 			string(addr_strbuf[1], tag.server)
 		};
@@ -634,7 +618,7 @@ try
 	log::debug
 	{
 		log, "dns %s recv tag:%u t:%u qtype:%u qd:%u an:%u ns:%u ar:%u",
-		string(addr_strbuf[0], make_ipport(reply_from)),
+		string(addr_strbuf[0], from),
 		tag.id,
 		tag.tries,
 		tag.opts.qtype,
@@ -646,16 +630,8 @@ try
 
 	assert(tag.tries > 0);
 	tag.last = steady_point::min();
+	tag.rcode = header.rcode;
 	handle_reply(header, body, tag);
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "%s", e.what()
-	};
-
-	return;
 }
 
 void
@@ -676,6 +652,20 @@ try
 			"Response contains too many sections..."
 		};
 
+	if(header.qdcount < 1)
+		throw error
+		{
+			"Response does not contain the question."
+		};
+
+	if(!handle_error(header, tag))
+		throw rfc1035::error
+		{
+			"protocol error #%u :%s",
+			header.rcode,
+			rfc1035::rcode.at(header.rcode)
+		};
+
 	const_buffer buffer
 	{
 		body
@@ -686,118 +676,22 @@ try
 	for(size_t i(0); i < header.qdcount; ++i)
 		consume(buffer, size(qd.at(i).parse(buffer)));
 
-	if(!handle_error(header, qd.at(0), tag))
-		throw rfc1035::error
-		{
-			"protocol error #%u :%s", header.rcode, rfc1035::rcode.at(header.rcode)
-		};
-
 	// Answers are parsed into this buffer
 	thread_local std::array<rfc1035::answer, MAX_COUNT> an;
 	for(size_t i(0); i < header.ancount; ++i)
 		consume(buffer, size(an.at(i).parse(buffer)));
 
-	if(tag.opts.cache_result)
+	const vector_view<const rfc1035::answer> answers
 	{
-		// We convert all TTL values in the answers to absolute epoch time
-		// indicating when they expire. This makes more sense for our caches.
-		const auto &now{ircd::time()};
-		for(size_t i(0); i < header.ancount; ++i)
-		{
-			const uint &min_ttl(seconds(cache::min_ttl).count());
-			an.at(i).ttl = now + std::max(an.at(i).ttl, min_ttl);
-		}
-	}
+		an.data(), header.ancount
+	};
 
-	// The callback to the user will be passed a vector_view of pointers
-	// to this array. The actual record instances will either be located
-	// in the cache map or placement-newed to the buffer below.
-	thread_local std::array<const rfc1035::record *, MAX_COUNT> record;
-
-	// This will be where we place the record instances which are dynamically
-	// laid out and sized types. 512 bytes is assumed as a soft maximum for
-	// each RR instance.
-	static const size_t recsz(512);
-	thread_local uint8_t recbuf[recsz * MAX_COUNT];
-
-	size_t i(0);
-	uint8_t *pos{recbuf};
-	for(; i < header.ancount; ++i) switch(an.at(i).qtype)
-	{
-		case 1: // A records are inserted into cache
-		{
-			using type = rfc1035::record::A;
-			if(!tag.opts.cache_result)
-			{
-				if(unlikely(pos + sizeof(type) > recbuf + sizeof(recbuf)))
-					break;
-
-				record.at(i) = new (pos) type(an.at(i));
-				pos += sizeof(type);
-				continue;
-			}
-
-			record.at(i) = cache::put(qd.at(0), an.at(i));
-			continue;
-		}
-
-		case 5:
-		{
-			using type = rfc1035::record::CNAME;
-			if(unlikely(pos + sizeof(type) > recbuf + sizeof(recbuf)))
-				break;
-
-			record.at(i) = new (pos) type(an.at(i));
-			pos += sizeof(type);
-			continue;
-		}
-
-		case 33:
-		{
-			using type = rfc1035::record::SRV;
-			if(!tag.opts.cache_result)
-			{
-				if(unlikely(pos + sizeof(type) > recbuf + sizeof(recbuf)))
-					break;
-
-				record.at(i) = new (pos) type(an.at(i));
-				pos += sizeof(type);
-				continue;
-			}
-
-			record.at(i) = cache::put(qd.at(0), an.at(i));
-			continue;
-		}
-
-		default:
-		{
-			using type = rfc1035::record;
-			if(unlikely(pos + sizeof(type) > recbuf + sizeof(recbuf)))
-				break;
-
-			record.at(i) = new (pos) type(an.at(i));
-			pos += sizeof(type);
-			continue;
-		}
-	}
-
-	// Cache no answers here.
-	if(!header.ancount && tag.opts.cache_result)
-		cache::put_error(qd.at(0), header.rcode);
-
-	if(tag.cb)
-	{
-		static const std::exception_ptr no_exception{};
-		const vector_view<const rfc1035::record *> records
-		{
-			record.data(), i
-		};
-
-		tag.cb(no_exception, tag.hp, records);
-	}
+	callback({}, tag, answers);
 }
 catch(const std::exception &e)
 {
+	const ctx::exception_handler eh;
+
 	// There's no need to flash red to the log for NXDOMAIN which is
 	// common in this system when probing SRV.
 	if(unlikely(header.rcode != 3))
@@ -808,16 +702,12 @@ catch(const std::exception &e)
 			e.what()
 		};
 
-	if(tag.cb)
-	{
-		assert(header.rcode != 3 || tag.opts.nxdomain_exceptions);
-		tag.cb(std::current_exception(), tag.hp, {});
-	}
+	assert(header.rcode != 3 || tag.opts.nxdomain_exceptions);
+	callback(std::current_exception(), tag, answers{});
 }
 
 bool
 ircd::net::dns::resolver::handle_error(const header &header,
-                                       const rfc1035::question &question,
                                        tag &tag)
 {
 	switch(header.rcode)
@@ -826,54 +716,121 @@ ircd::net::dns::resolver::handle_error(const header &header,
 			return true;
 
 		case 3: // NXDomain; exception
-		{
-			if(!tag.opts.cache_result)
-				return false;
-
-			const auto *record
+			if(!tag.opts.nxdomain_exceptions)
 			{
-				cache::put_error(question, header.rcode)
-			};
-
-			// When the user doesn't want an eptr for nxdomain we just make
-			// their callback here and then null the cb pointer so it's not
-			// called again. It is done here because we have a reference to
-			// the cached error record readily accessible.
-			if(!tag.opts.nxdomain_exceptions && tag.cb)
-			{
-				assert(record);
-				tag.cb({}, tag.hp, vector_view<const rfc1035::record *>(&record, 1));
-				tag.cb = {};
+				callback({}, tag, answers{});
+				return true;
 			}
 
 			return false;
-		}
 
 		default: // Unhandled error; exception
 			return false;
 	}
 }
 
-bool
-ircd::net::dns::resolver::handle_error(const error_code &ec)
-const
+//
+// removal
+//
+// This whole stack must be called under lock
+//
+
+void
+ircd::net::dns::resolver::cancel_all()
 {
-	using std::errc;
-
-	if(system_category(ec)) switch(ec.value())
+	static const std::error_code &ec
 	{
-		case 0:
-			return true;
+		make_error_code(std::errc::operation_canceled)
+	};
 
-		case int(errc::operation_canceled):
-			return false;
-
-		default:
-			break;
-	}
-
-	throw std::system_error{ec};
+	error_all(ec);
 }
+
+void
+ircd::net::dns::resolver::error_all(const std::error_code &ec)
+{
+	if(tags.empty())
+		return;
+
+	log::dwarning
+	{
+		log, "Attempting to cancel all %zu pending tags.", tags.size()
+	};
+
+	const auto eptr
+	{
+		make_system_eptr(ec)
+	};
+
+	for(auto &p : tags)
+		error_one(p.second, eptr);
+}
+
+void
+ircd::net::dns::resolver::error_one(tag &tag,
+                                    const std::system_error &se)
+{
+	error_one(tag, std::make_exception_ptr(se));
+}
+
+void
+ircd::net::dns::resolver::error_one(tag &tag,
+                                    const std::exception_ptr &eptr)
+{
+	thread_local char hpbuf[128];
+	log::error
+	{
+		log, "DNS error id:%u for '%s' :%s",
+		tag.id,
+		string(hpbuf, tag.hp),
+		what(eptr)
+	};
+
+	static const answers empty;
+	callback(eptr, tag, empty);
+	remove(tag);
+}
+
+void
+ircd::net::dns::resolver::remove(tag &tag)
+{
+	remove(tag, tags.find(tag.id));
+}
+
+decltype(ircd::net::dns::resolver::tags)::iterator
+ircd::net::dns::resolver::remove(tag &tag,
+                                 const decltype(tags)::iterator &it)
+{
+	log::debug
+	{
+		log, "dns tag:%u t:%u qtype:%u removing (tags:%zu sendq:%zu)",
+		tag.id,
+		tag.tries,
+		tag.opts.qtype,
+		tags.size(),
+		sendq.size()
+	};
+
+	unqueue(tag);
+	done.notify_all();
+	return it != end(tags)? tags.erase(it) : it;
+}
+
+void
+ircd::net::dns::resolver::unqueue(tag &tag)
+{
+	const auto it
+	{
+		std::find(begin(sendq), end(sendq), tag.id)
+	};
+
+	if(it != end(sendq))
+		sendq.erase(it);
+}
+
+//
+// util
+//
 
 void
 ircd::net::dns::resolver::set_servers()
