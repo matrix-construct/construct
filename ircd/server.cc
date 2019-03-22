@@ -115,7 +115,7 @@ ircd::server::interrupt_all()
 ircd::server::peer &
 ircd::server::get(const net::hostport &hostport)
 {
-	thread_local char canonbuf[512];
+	char canonbuf[256];
 	const auto canonized
 	{
 		net::canonize(canonbuf, hostport)
@@ -140,7 +140,6 @@ ircd::server::get(const net::hostport &hostport)
 		assert(!empty(peer->hostcanon));
 		const string_view key{peer->hostcanon};
 		it = peers.emplace_hint(it, key, std::move(peer));
-		it->second->resolve(it->second->open_opts.hostport);
 		assert(it->second->hostcanon.data() == it->first.data());
 		assert(key == canonized);
 	}
@@ -156,6 +155,7 @@ ircd::server::create(const net::hostport &hostport)
 		std::make_unique<server::peer>(hostport)
 	};
 
+	peer->resolve(peer->open_opts.hostport);
 	return peer;
 }
 
