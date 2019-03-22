@@ -530,7 +530,7 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error
+	log::critical
 	{
 		log, "%s", e.what()
 	};
@@ -610,11 +610,6 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 			string(addr_strbuf[1], tag.server)
 		};
 
-	const unwind untag{[this, &tag, &it]
-	{
-		remove(tag, it);
-	}};
-
 	log::debug
 	{
 		log, "dns %s recv tag:%u t:%u qtype:%u qd:%u an:%u ns:%u ar:%u",
@@ -627,6 +622,34 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 		header.nscount,
 		header.arcount,
 	};
+
+	// Handle ServFail as a special case here. We can try again without
+	// handling this tag or propagating this error any further yet.
+	if(header.rcode == 2 && tag.tries < size_t(retry_max))
+	{
+		log::error
+		{
+			log, "dns %s recv tag:%u t:%u qtype:%u protocol error #%u :%s",
+			string(addr_strbuf[0], from),
+			tag.id,
+			tag.tries,
+			tag.opts.qtype,
+			header.rcode,
+			rfc1035::rcode.at(header.rcode)
+		};
+
+		assert(tag.tries > 0);
+		tag.last = steady_point::min();
+		submit(tag);
+		return;
+	}
+
+	// The tag is committed to being handled after this point. It will be
+	// removed from the tags map and any retry must c
+	const unwind untag{[this, &tag, &it]
+	{
+		remove(tag, it);
+	}};
 
 	assert(tag.tries > 0);
 	tag.last = steady_point::min();
