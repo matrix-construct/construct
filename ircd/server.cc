@@ -136,8 +136,11 @@ ircd::server::get(const net::hostport &hostport)
 			canonized
 		};
 
+		assert(bool(peer));
+		assert(!empty(peer->hostcanon));
 		const string_view key{peer->hostcanon};
 		it = peers.emplace_hint(it, key, std::move(peer));
+		it->second->resolve(it->second->open_opts.hostport);
 		assert(it->second->hostcanon.data() == it->first.data());
 		assert(key == canonized);
 	}
@@ -153,9 +156,6 @@ ircd::server::create(const net::hostport &hostport)
 		std::make_unique<server::peer>(hostport)
 	};
 
-	// Async DNS resolve. The links for the new peer will be connected
-	// once the resolver calls back into peer::handle_resolve().
-	peer->resolve(peer->open_opts.hostport);
 	return peer;
 }
 
