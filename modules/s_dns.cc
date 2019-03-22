@@ -343,6 +343,19 @@ try
 			s = e;
 		}
 	}
+
+	// We have to send something to the cache with the same type
+	// as the query, otherwise our user will never get a response
+	// to what they're waiting for.
+	bool has_tag_qtype{false};
+	for(size_t i(0); i < an.size() && !has_tag_qtype; ++i)
+		has_tag_qtype = an.at(i).qtype == tag.opts.qtype;
+
+	if(!has_tag_qtype)
+	{
+		static const records empty;
+		cache::put(tag.hp, tag.opts, empty);
+	}
 }
 catch(const std::exception &e)
 {
