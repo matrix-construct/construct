@@ -75,7 +75,7 @@ ircd::net::dns::resolver_fini()
 	ircd::net::dns::resolver = nullptr;
 }
 
-void
+uint16_t
 ircd::net::dns::resolver_call(const hostport &hp,
                               const opts &opts)
 {
@@ -94,7 +94,7 @@ ircd::net::dns::resolver_call(const hostport &hp,
 			host(hp)
 		};
 
-	resolver(hp, opts);
+	return resolver(hp, opts);
 }
 
 //

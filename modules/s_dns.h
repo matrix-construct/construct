@@ -49,7 +49,7 @@ namespace ircd::net::dns
 	// Resolver instance
 	struct resolver extern *resolver;
 
-	void resolver_call(const hostport &, const opts &);
+	uint16_t resolver_call(const hostport &, const opts &);
 	void resolver_init(answers_callback);
 	void resolver_fini();
 }
