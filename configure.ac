@@ -718,6 +718,7 @@ RB_CHK_SYSHEADER(new, [NEW])
 RB_CHK_SYSHEADER(regex, [REGEX])
 RB_CHK_SYSHEADER(memory_resource, [MEMORY_RESOURCE])
 RB_CHK_SYSHEADER(filesystem, [FILESYSTEM])
+RB_CHK_SYSHEADER(cxxabi.h, [CXXABI_H])
 
 dnl unix platform
 RB_CHK_SYSHEADER(unistd.h, [UNISTD_H])

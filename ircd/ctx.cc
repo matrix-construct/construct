@@ -762,11 +762,16 @@ noexcept
 
 ircd::ctx::this_ctx::exception_handler::exception_handler()
 noexcept
-:std::exception_ptr{std::current_exception()}
+:std::exception_ptr
+{
+	std::current_exception()
+}
 {
 	assert(bool(*this));
-	//assert(!std::uncaught_exceptions());
+
+	#ifdef HAVE_CXXABI_H
 	__cxa_end_catch();
+	#endif
 
 	// We don't yet support more levels of exceptions; after ending this
 	// catch we can't still be in another one. This doesn't apply if we're
@@ -949,6 +954,14 @@ ircd::ctx::continuation::noop_interruptor{[]
 	return;
 }};
 
+#ifdef HAVE_CXXABI_H
+struct __cxxabiv1::__cxa_eh_globals
+{
+	__cxa_exception *caughtExceptions;
+	unsigned int uncaughtExceptions;
+};
+#endif
+
 //
 // continuation
 //
@@ -969,6 +982,10 @@ try
 {
 	&intr
 }
+,uncaught_exceptions
+{
+	uint(std::uncaught_exceptions())
+}
 {
 	assert(self != nullptr);
 	assert(self->notes <= 1);
@@ -986,7 +1003,6 @@ try
 	// cannot interleave _cxa_begin_catch() and __cxa_end_catch() by yielding
 	// the ircd::ctx in an exception handler.
 	assert(!std::current_exception());
-	//assert(!std::uncaught_exceptions());
 
 	// Point to this continuation instance (which is on the context's stack)
 	// from the context's instance. This allows its features to be accessed
@@ -999,6 +1015,15 @@ try
 	// Tell the profiler this is the point where the context has concluded
 	// its execution run and is now yielding.
 	mark(prof::event::YIELD);
+
+	#ifdef HAVE_CXXABI_H
+	using __cxxabiv1::__cxa_get_globals_fast;
+	assert(__cxa_get_globals_fast());
+	assert(__cxa_get_globals_fast()->uncaughtExceptions == uncaught_exceptions);
+	__cxa_get_globals_fast()->uncaughtExceptions = 0;
+	#else
+	assert(!uncaught_exceptions);
+	#endif
 
 	// Null the fundamental current context register as the last operation
 	// during execution before yielding. When a context resumes it will
@@ -1023,6 +1048,17 @@ noexcept
 	// Set the fundamental current context register as the first operation
 	// upon resuming execution.
 	ircd::ctx::current = self;
+
+	#ifdef HAVE_CXXABI_H
+	using __cxxabiv1::__cxa_get_globals_fast;
+	assert(__cxa_get_globals_fast());
+	assert(__cxa_get_globals_fast()->uncaughtExceptions == 0);
+	__cxa_get_globals_fast()->uncaughtExceptions = uncaught_exceptions;
+	assert(uint(std::uncaught_exceptions()) == uncaught_exceptions);
+	#else
+	assert(std::uncaught_exceptions() == 0);
+	assert(uncaught_exceptions == 0);
+	#endif
 
 	// Tell the profiler this is the point where the context is now resuming.
 	// On some optimized builds this might lead nowhere.
