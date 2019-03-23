@@ -52,7 +52,6 @@ struct ircd::http::error
 	error() = default;
 	error(const http::code &, std::string content = {}, std::string headers = {});
 	error(const http::code &, std::string content, const vector_view<const header> &);
-	template<size_t BUFSIZE, class... args> error(const http::code &, const string_view &fmt, args&&...);
 };
 
 /// Represents a single \r\n delimited line used in HTTP.
@@ -364,17 +363,3 @@ const
 {
 	return lex_cast<T>(at(key, idx));
 }
-
-template<size_t BUFSIZE,
-         class... args>
-ircd::http::error::error(const http::code &code,
-                         const string_view &fmt,
-                         args&&... a)
-:http::error
-{
-	code, fmt::snstringf
-	{
-		BUFSIZE, fmt, std::forward<args>(a)...
-	}
-}
-{}
