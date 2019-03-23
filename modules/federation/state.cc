@@ -68,6 +68,13 @@ get__state(client &client,
 		room
 	};
 
+	const m::event::auth::chain ac
+	{
+		event_id?
+			m::index(event_id):
+			m::head_idx(room)
+	};
+
 	resource::response::chunked response
 	{
 		client, http::OK
@@ -99,11 +106,6 @@ get__state(client &client,
 		json::stack::array auth_chain
 		{
 			top, "auth_chain"
-		};
-
-		const m::event::auth::chain ac
-		{
-			m::index(event_id)
 		};
 
 		m::event::fetch event;
