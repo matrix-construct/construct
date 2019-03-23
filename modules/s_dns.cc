@@ -24,46 +24,6 @@ IRCD_MODULE
 	}
 };
 
-decltype(ircd::net::dns::cache::error_ttl)
-ircd::net::dns::cache::error_ttl
-{
-	{ "name",     "ircd.net.dns.cache.error_ttl" },
-	{ "default",  1200L                          },
-};
-
-decltype(ircd::net::dns::cache::nxdomain_ttl)
-ircd::net::dns::cache::nxdomain_ttl
-{
-	{ "name",     "ircd.net.dns.cache.nxdomain_ttl" },
-	{ "default",  43200L                            },
-};
-
-decltype(ircd::net::dns::cache::min_ttl)
-ircd::net::dns::cache::min_ttl
-{
-	{ "name",     "ircd.net.dns.cache.min_ttl" },
-	{ "default",  1200L                        },
-};
-
-decltype(ircd::net::dns::cache::room_id)
-ircd::net::dns::cache::room_id
-{
-	"dns", my_host()
-};
-
-decltype(ircd::net::dns::cache::hook)
-ircd::net::dns::cache::hook
-{
-    handle_cached,
-    {
-        { "_site",       "vm.notify"          },
-        { "room_id",     string_view{room_id} },
-    }
-};
-
-decltype(ircd::net::dns::waiting)
-ircd::net::dns::waiting;
-
 void
 IRCD_MODULE_EXPORT
 ircd::net::dns::resolve(const hostport &hp,
@@ -79,48 +39,12 @@ ircd::net::dns::resolve(const hostport &hp,
 	dns::opts opts(opts_);
 	opts.qtype = 33;
 	opts.nxdomain_exceptions = false;
-	resolve(hp, opts, dns::callback_one{[opts, callback(std::move(callback))]
-	(const hostport &hp, const json::object &rr)
-	mutable
+	net::dns::callback_one handler
 	{
-		if(rr.has("error"))
-		{
-			const json::string &error(rr.get("error"));
-			const auto eptr(make_exception_ptr<rfc1035::error>("%s", error));
-			return callback(eptr, {host(hp), 0}, {});
-		}
+		std::bind(&handle_resolve_SRV_ipport, ph::_1, ph::_2, opts, std::move(callback))
+	};
 
-		const net::hostport target
-		{
-			rr.has("tgt")?
-				rstrip(unquote(rr.at("tgt")), '.'):
-				host(hp),
-
-			rr.has("port")?
-				rr.get<uint16_t>("port"):
-				port(hp)
-		};
-
-		opts.qtype = 1;
-		opts.nxdomain_exceptions = true;
-		resolve(target, opts, dns::callback_one{[callback(std::move(callback)), target]
-		(const hostport &hp, const json::object &rr)
-		{
-			const json::string &error(rr.get("error"));
-			const json::string &ip(rr.get("ip", "0.0.0.0"));
-			const net::ipport ipport(ip, port(target));
-			const auto eptr
-			{
-				!empty(error)?
-					make_exception_ptr<rfc1035::error>("%s", error):
-				!ipport?
-					make_exception_ptr<net::error>("Host has no A record."):
-					std::exception_ptr{}
-			};
-
-			return callback(eptr, {host(hp), port(target)}, ipport);
-		}});
-	}});
+	resolve(hp, opts, std::move(handler));
 }
 
 void
@@ -135,14 +59,12 @@ ircd::net::dns::resolve(const hostport &hp,
 			"A query type is required; not specified; cannot be deduced here."
 		};
 
-	resolve(hp, opts, dns::callback{[callback(std::move(callback))]
-	(const hostport &hp, const json::array &rrs)
+	dns::callback handler
 	{
-		const size_t &count(rrs.size());
-		const auto choice(count? rand::integer(0, count - 1) : 0UL);
-		const json::object &rr(rrs[choice]);
-		callback(hp, rr);
-	}});
+		std::bind(&handle_resolve_one, ph::_1, ph::_2, std::move(callback))
+	};
+
+	resolve(hp, opts, std::move(handler));
 }
 
 void
@@ -162,86 +84,107 @@ ircd::net::dns::resolve(const hostport &hp,
 		if(cache::get(hp, opts, cb))
 			return;
 
-	auto key
-	{
-		opts.qtype == 33?
-			ircd::string_buffer(rfc1035::NAME_BUF_SIZE*2, make_SRV_key, hp, opts):
-			std::string(host(hp))
-	};
-
-	waiting.emplace_front([cb(std::move(cb)), opts, key(std::move(key)), port(net::port(hp))]
-	(const string_view &type, const string_view &state_key, const json::array &rrs)
-	{
-		if(type != rfc1035::rqtype.at(opts.qtype))
-			return false;
-
-		if(state_key != key)
-			return false;
-
-		const hostport &hp
-		{
-			opts.qtype == 33? unmake_SRV_key(state_key): state_key, port
-		};
-
-		cb(hp, rrs);
-		return true;
-	});
-
+	cache::waiting.emplace_back(hp, opts, std::move(cb));
 	resolver_call(hp, opts);
 }
 
 void
-ircd::net::dns::handle_cached(const m::event &event,
-                              m::vm::eval &eval)
-try
+ircd::net::dns::handle_resolve_one(const hostport &hp,
+                                   const json::array &rrs,
+                                   callback_one callback)
 {
-	const string_view &full_type
+	const size_t &count{rrs.size()};
+	const auto choice
 	{
-		json::get<"type"_>(event)
+		count? rand::integer(0, count - 1) : 0UL
 	};
 
-	if(!startswith(full_type, "ircd.dns.rrs."))
-		return;
-
-	const string_view &type
+	const json::object &rr
 	{
-		lstrip(full_type, "ircd.dns.rrs.")
+		rrs[choice]
 	};
 
-	const string_view &state_key
-	{
-		json::get<"state_key"_>(event)
-	};
-
-	const json::array &rrs
-	{
-		json::get<"content"_>(event).get("")
-	};
-
-	auto it(begin(waiting));
-	while(it != end(waiting)) try
-	{
-		const auto &proffer(*it);
-		if(proffer(type, state_key, rrs))
-			it = waiting.erase(it);
-		else
-			++it;
-	}
-	catch(const std::exception &e)
-	{
-		++it;
-		log::error
-		{
-			log, "proffer :%s", e.what()
-		};
-	}
+	callback(hp, rr);
 }
-catch(const std::exception &e)
+
+void
+ircd::net::dns::handle_resolve_SRV_ipport(const hostport &hp,
+                                          const json::object &rr,
+                                          opts opts,
+                                          callback_ipport callback)
 {
-	log::critical
+	const json::string &error
 	{
-		log, "handle_cached() :%s", e.what()
+		rr.get("error")
 	};
+
+	const hostport &target
+	{
+		rr.has("tgt")?
+			rstrip(unquote(rr.at("tgt")), '.'):
+			host(hp),
+
+		rr.has("port")?
+			rr.get<uint16_t>("port"):
+		!error?
+			port(hp):
+			uint16_t(0)
+	};
+
+	if(error)
+	{
+		static const ipport empty;
+		const auto eptr(make_exception_ptr<rfc1035::error>("%s", error));
+		return callback(eptr, target, empty);
+	}
+
+	opts.qtype = 1;
+	opts.nxdomain_exceptions = true;
+	net::dns::callback_one handler
+	{
+		std::bind(&handle_resolve_A_ipport, ph::_1, ph::_2, opts, port(target), std::move(callback))
+	};
+
+	resolve(target, opts, std::move(handler));
+}
+
+void
+ircd::net::dns::handle_resolve_A_ipport(const hostport &hp,
+                                        const json::object &rr,
+                                        const opts opts,
+                                        const uint16_t port,
+                                        const callback_ipport callback)
+{
+	const json::string &error
+	{
+		rr.get("error")
+	};
+
+	const json::string &ip
+	{
+		rr.get("ip", "0.0.0.0"_sv)
+	};
+
+	const ipport &ipport
+	{
+		ip, port
+	};
+
+	const hostport &target
+	{
+		host(hp), port
+	};
+
+	const auto eptr
+	{
+		!empty(error)?
+			make_exception_ptr<rfc1035::error>("%s", error):
+		!ipport?
+			make_exception_ptr<net::error>("Host has no A record."):
+			std::exception_ptr{}
+	};
+
+	callback(eptr, target, ipport);
 }
 
 /// Called back from the dns::resolver with a vector of answers to the
@@ -385,6 +328,46 @@ ircd::net::dns::new_record(mutable_buffer &buf,
 //
 // cache
 //
+
+decltype(ircd::net::dns::cache::error_ttl)
+ircd::net::dns::cache::error_ttl
+{
+	{ "name",     "ircd.net.dns.cache.error_ttl" },
+	{ "default",  1200L                          },
+};
+
+decltype(ircd::net::dns::cache::nxdomain_ttl)
+ircd::net::dns::cache::nxdomain_ttl
+{
+	{ "name",     "ircd.net.dns.cache.nxdomain_ttl" },
+	{ "default",  43200L                            },
+};
+
+decltype(ircd::net::dns::cache::min_ttl)
+ircd::net::dns::cache::min_ttl
+{
+	{ "name",     "ircd.net.dns.cache.min_ttl" },
+	{ "default",  1200L                        },
+};
+
+decltype(ircd::net::dns::cache::room_id)
+ircd::net::dns::cache::room_id
+{
+	"dns", my_host()
+};
+
+decltype(ircd::net::dns::cache::hook)
+ircd::net::dns::cache::hook
+{
+    handle,
+    {
+        { "_site",       "vm.notify"          },
+        { "room_id",     string_view{room_id} },
+    }
+};
+
+decltype(ircd::net::dns::cache::waiting)
+ircd::net::dns::cache::waiting;
 
 bool
 IRCD_MODULE_EXPORT
@@ -695,6 +678,86 @@ ircd::net::dns::cache::for_each(const string_view &type,
 
 		return ret;
 	});
+}
+
+void
+ircd::net::dns::cache::handle(const m::event &event,
+                              m::vm::eval &eval)
+try
+{
+	const string_view &full_type
+	{
+		json::get<"type"_>(event)
+	};
+
+	if(!startswith(full_type, "ircd.dns.rrs."))
+		return;
+
+	const string_view &type
+	{
+		lstrip(full_type, "ircd.dns.rrs.")
+	};
+
+	const string_view &state_key
+	{
+		json::get<"state_key"_>(event)
+	};
+
+	const json::array &rrs
+	{
+		json::get<"content"_>(event).get("")
+	};
+
+	auto it(begin(waiting));
+	while(it != end(waiting)) try
+	{
+		auto &waiter(*it);
+		if(call_waiter(type, state_key, rrs, waiter))
+			it = waiting.erase(it);
+		else
+			++it;
+	}
+	catch(const std::exception &e)
+	{
+		++it;
+		log::error
+		{
+			log, "proffer :%s", e.what()
+		};
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "handle_cached() :%s", e.what()
+	};
+}
+
+bool
+ircd::net::dns::cache::call_waiter(const string_view &type,
+                                   const string_view &state_key,
+                                   const json::array &rrs,
+                                   waiter &waiter)
+{
+	if(state_key != waiter.key)
+		return false;
+
+	if(type != rfc1035::rqtype.at(waiter.opts.qtype))
+		return false;
+
+	const hostport &target
+	{
+		waiter.opts.qtype == 33?
+			unmake_SRV_key(waiter.key):
+			waiter.key,
+
+		waiter.port
+	};
+
+	assert(waiter.callback);
+	waiter.callback(target, rrs);
+	return true;
 }
 
 bool

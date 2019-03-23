@@ -13,19 +13,14 @@
 
 /// DNS resolution suite.
 ///
-/// Note that in returned rfc1035::records that TTL values are modified from their
-/// original value to an absolute epoch time in seconds which we use for caching.
-/// This modification only occurs if the dns query allows result caching (default).
+/// Note that at this time these functions must be called on an ircd::ctx to
+/// conduct any queries of the cache.
 ///
 namespace ircd::net::dns
 {
-	struct tag;
 	struct opts extern const opts_default;
 
-	using answers = vector_view<const rfc1035::answer>;
 	using records = vector_view<const rfc1035::record *>;
-	using answers_callback = std::function<void (std::exception_ptr, const tag &, const answers &)>;
-
 	using callback = std::function<void (const hostport &, const json::array &)>;
 	using callback_one = std::function<void (const hostport &, const json::object &)>;
 	using callback_ipport = std::function<void (std::exception_ptr, const hostport &, const ipport &)>;
@@ -40,7 +35,7 @@ namespace ircd::net::dns
 	string_view unmake_SRV_key(const string_view &);
 
 	extern log::log log;
-};
+}
 
 /// DNS resolution options
 struct ircd::net::dns::opts
@@ -96,4 +91,4 @@ namespace ircd::net::dns::cache
 	bool get(const hostport &, const opts &, const callback &);
 	bool put(const hostport &, const opts &, const records &);
 	bool put(const hostport &, const opts &, const uint &code, const string_view &msg = {});
-};
+}

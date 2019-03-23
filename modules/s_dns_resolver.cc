@@ -161,8 +161,6 @@ ircd::net::dns::resolver::operator()(const hostport &hp,
 	auto &tag(set_tag(hp, opts)); try
 	{
 		tag.question = make_query(tag.qbuf, tag);
-		tag.hp.host = strlcpy(tag.hostbuf, host(hp));
-		tag.hp.service = {};
 		submit(tag);
 	}
 	catch(...)

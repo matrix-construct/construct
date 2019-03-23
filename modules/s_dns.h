@@ -15,30 +15,61 @@ IRCD_MODULE;
 
 namespace ircd::net::dns
 {
-	struct waiter;
-	using proffer = std::function<bool (const string_view &, const string_view &, const json::array &)>;
+	struct tag;
+
+	using answers = vector_view<const rfc1035::answer>;
+	using answers_callback = std::function<void (std::exception_ptr, const tag &, const answers &)>;
 
 	constexpr const size_t MAX_COUNT {64};
 
-	template<class T> rfc1035::record *new_record(mutable_buffer &, const rfc1035::answer &);
-	void handle_resolved(std::exception_ptr, const tag &, const answers &);
-	void handle_cached(const m::event &, m::vm::eval &);
+	template<class T> static rfc1035::record *new_record(mutable_buffer &, const rfc1035::answer &);
+	static void handle_resolved(std::exception_ptr, const tag &, const answers &);
 
-	extern std::list<proffer> waiting;
+	static void handle_resolve_A_ipport(const hostport &, const json::object &rr, opts, uint16_t, callback_ipport);
+	static void handle_resolve_SRV_ipport(const hostport &, const json::object &rr, opts, callback_ipport);
+	static void handle_resolve_one(const hostport &, const json::array &rr, callback_one);
 }
 
 namespace ircd::net::dns::cache
 {
+	struct waiter;
+
 	static time_t get_ttl(const json::object &rr);
 	static bool expired(const json::object &rr, const time_t &ts);
+
+	static bool call_waiter(const string_view &, const string_view &, const json::array &, waiter &);
+	static void handle(const m::event &, m::vm::eval &);
 
 	extern conf::item<seconds> min_ttl;
 	extern conf::item<seconds> error_ttl;
 	extern conf::item<seconds> nxdomain_ttl;
+
 	extern const m::room::id::buf room_id;
 	extern m::hookfn<m::vm::eval &> hook;
+	extern std::list<waiter> waiting;
 	extern ctx::dock dock;
 }
+
+struct ircd::net::dns::cache::waiter
+{
+	dns::callback callback;
+	dns::opts opts;
+	uint16_t port {0};
+	string_view key;
+	char keybuf[rfc1035::NAME_BUF_SIZE*2];
+
+	waiter(const hostport &hp, const dns::opts &opts, dns::callback &&callback)
+	:callback{std::move(callback)}
+	,opts{opts}
+	,port{net::port(hp)}
+	,key
+	{
+		opts.qtype == 33?
+			make_SRV_key(keybuf, hp, opts):
+			strlcpy(keybuf, host(hp))
+	}
+	{}
+};
 
 //
 // s_dns_resolver.cc
@@ -137,16 +168,14 @@ struct ircd::net::dns::tag
 	char hostbuf[rfc1035::NAME_BUF_SIZE];
 	char qbuf[512];
 
-	tag(const hostport &, const dns::opts &);
+	tag(const hostport &hp, const dns::opts &opts)
+	:hp{hp}
+	,opts{opts}
+	{
+		this->hp.host = { hostbuf, copy(hostbuf, hp.host) };
+		this->hp.service = {};
+	}
+
 	tag(tag &&) = delete;
 	tag(const tag &) = delete;
 };
-
-inline
-ircd::net::dns::tag::tag(const hostport &hp,
-                         const dns::opts &opts)
-:hp{hp}
-,opts{opts}
-{
-	this->hp.host = { hostbuf, copy(hostbuf, hp.host) };
-}
