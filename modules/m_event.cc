@@ -894,8 +894,21 @@ ircd::m::event::auth::failed(const m::event &event,
 		if(membership(event) == "invite")
 		{
 			// i. If content has third_party_invite key
-			//TODO: XXX
-
+			if(json::get<"content"_>(event).has("third_party_invite"))
+			{
+				//TODO: XXX
+				// 1. If target user is banned, reject.
+				// 2. If content.third_party_invite does not have a signed key, reject.
+				// 3. If signed does not have mxid and token keys, reject.
+				// 4. If mxid does not match state_key, reject.
+				// 5. If there is no m.room.third_party_invite event in the current room state with state_key matching token, reject.
+				// 6. If sender does not match sender of the m.room.third_party_invite, reject.
+				// 7. If any signature in signed matches any public key in the m.room.third_party_invite event, allow. The public keys are in content of m.room.third_party_invite as:
+				// 7.1. A single public key in the public_key field.
+				// 7.2. A list of public keys in the public_keys field.
+				// 8. Otherwise, reject.
+				return "third_party_invite fails authorization.";
+			}
 
 			// ii. If the sender's current membership state is not join, reject.
 			if(auth_member_sender)
@@ -991,7 +1004,12 @@ ircd::m::event::auth::failed(const m::event &event,
 	// 7. If type is m.room.third_party_invite:
 	if(json::get<"type"_>(event) == "m.room.third_party_invite")
 	{
-		//TODO: XXX
+		// a. Allow if and only if sender's current power level is greater
+		// than or equal to the invite level.
+		if(power(at<"sender"_>(event), "invite"))
+			return {};
+
+		return "sender has power level less than required for invite.";
 	}
 
 	// 8. If the event type's required power level is greater than the
