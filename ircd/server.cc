@@ -21,7 +21,8 @@ namespace ircd::server
 	template<class F> size_t accumulate_tags(F&&);
 
 	// Internal control
-	std::unique_ptr<peer> create(const net::hostport &);
+	static decltype(ircd::server::peers)::iterator
+	create(const net::hostport &, decltype(peers)::iterator &);
 }
 
 decltype(ircd::server::log)
@@ -123,40 +124,35 @@ ircd::server::get(const net::hostport &hostport)
 
 	auto it(peers.lower_bound(canonized));
 	if(it == peers.end() || it->first != canonized)
-	{
-		auto peer
-		{
-			create(hostport)
-		};
-
-		log::debug
-		{
-			log, "peer(%p) for %s created; adding...",
-			peer.get(),
-			canonized
-		};
-
-		assert(bool(peer));
-		assert(!empty(peer->hostcanon));
-		const string_view key{peer->hostcanon};
-		it = peers.emplace_hint(it, key, std::move(peer));
-		assert(it->second->hostcanon.data() == it->first.data());
-		assert(key == canonized);
-	}
+		it = create(hostport, it);
 
 	return *it->second;
 }
 
-std::unique_ptr<ircd::server::peer>
-ircd::server::create(const net::hostport &hostport)
+decltype(ircd::server::peers)::iterator
+ircd::server::create(const net::hostport &hostport,
+                     decltype(peers)::iterator &it)
 {
 	auto peer
 	{
 		std::make_unique<server::peer>(hostport)
 	};
 
-	peer->resolve(peer->open_opts.hostport);
-	return peer;
+	log::debug
+	{
+		log, "peer(%p) for %s created; adding...",
+		peer.get(),
+		peer->hostcanon,
+	};
+
+	assert(bool(peer));
+	assert(!empty(peer->hostcanon));
+	const string_view key{peer->hostcanon};
+	it = peers.emplace_hint(it, key, std::move(peer));
+
+	assert(it->second->hostcanon.data() == it->first.data());
+	it->second->resolve(it->second->open_opts.hostport);
+	return it;
 }
 
 ircd::server::peer &
