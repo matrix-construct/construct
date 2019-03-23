@@ -418,6 +418,18 @@ fi
 
 AM_CONDITIONAL([ASYNCEXCEPT], [[[[ $asyncexcept = "yes" ]]]])
 
+dnl
+dnl Low memory compilation mode
+dnl
+
+AC_ARG_ENABLE(lowmem-compile, AC_HELP_STRING([--enable-lowmem-compile], [Enable low-memory compilation options]),
+[
+	lowmem_compile="yes"
+], [
+	lowmem_compile="no"
+])
+
+AM_CONDITIONAL([LOWMEM_COMPILE], [[[[ $lowmem_compile = "yes" ]]]])
 
 dnl
 dnl Optimization

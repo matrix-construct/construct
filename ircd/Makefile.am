@@ -160,10 +160,12 @@ endif
 # (>= 2 GiB) which can thrash small systems and even sometimes crash GCC.
 # This option reduces memory consumption at the cost of compilation speed.
 if GCC
-json.lo:      CXXFLAGS += --param ggc-min-expand=3
-#http.lo:      CXXFLAGS += --param ggc-min-expand=15
-#rfc3986.lo:   CXXFLAGS += --param ggc-min-expand=15
-#rfc1459.lo:   CXXFLAGS += --param ggc-min-expand=15
-#m_id.lo:      CXXFLAGS += --param ggc-min-expand=15
-#fmt.lo:       CXXFLAGS += --param ggc-min-expand=15
+if LOWMEM_COMPILE
+json.lo:     CXXFLAGS += --param ggc-min-expand=1
+http.lo:     CXXFLAGS += --param ggc-min-expand=1
+fmt.lo:      CXXFLAGS += --param ggc-min-expand=1
+rfc3986.lo:  CXXFLAGS += --param ggc-min-expand=1
+rfc1459.lo:  CXXFLAGS += --param ggc-min-expand=1
+m_id.lo:     CXXFLAGS += --param ggc-min-expand=1
+endif
 endif
