@@ -37,7 +37,7 @@ ircd::net::dns::resolve(const hostport &hp,
 		};
 
 	dns::opts opts(opts_);
-	opts.qtype = 33;
+	opts.qtype = opts_.qtype?: 33; // default to SRV
 	opts.nxdomain_exceptions = false;
 	net::dns::callback_one handler
 	{
