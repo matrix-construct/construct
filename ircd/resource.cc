@@ -662,7 +662,8 @@ const try
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_NOT_MY_HOST",
-			"The X-Matrix Authorization destination host is not recognized here."
+			"The X-Matrix Authorization destination '%s' is not recognized here.",
+			request.head.host
 		};
 
 	const m::request::x_matrix x_matrix
