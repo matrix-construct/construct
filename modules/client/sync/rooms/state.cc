@@ -171,7 +171,17 @@ ircd::m::sync::room_state_polylog_events(data &data)
 
 		//assert(event.valid);
 		if(unlikely(!event.valid))
+		{
+			assert(data.room);
+			log::error
+			{
+				log, "Failed to fetch event idx:%lu in room %s state.",
+				event_idx,
+				string_view{data.room->room_id}
+			};
+
 			return;
+		}
 
 		const std::lock_guard lock{mutex};
 		room_state_append(data, array, event, event_idx);
