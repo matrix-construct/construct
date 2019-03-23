@@ -2508,6 +2508,11 @@ ircd::net::socket::wait(const wait_opts &opts,
 try
 {
 	set_timeout(opts.timeout);
+	const unwind::exceptional unset{[this]
+	{
+		cancel_timeout();
+	}};
+
 	switch(opts.type)
 	{
 		case ready::ERROR:
@@ -2574,13 +2579,7 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	cancel_timeout();
 	throw_system_error(e);
-}
-catch(...)
-{
-	cancel_timeout();
-	throw;
 }
 
 void

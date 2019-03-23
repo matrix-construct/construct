@@ -194,6 +194,11 @@ try
 		file_size
 	};
 
+	const unwind::exceptional terminate{[&client]
+	{
+		client.close(net::dc::RST, net::close_ignore);
+	}};
+
 	size_t written
 	{
 		client.write_all(chunk)
@@ -227,15 +232,6 @@ catch(const fs::error &e)
 
 		"%s", e.what()
 	};
-}
-catch(const http::error &)
-{
-	throw;
-}
-catch(...)
-{
-	client.close(net::dc::RST, net::close_ignore);
-	throw;
 }
 
 string_view

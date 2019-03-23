@@ -1296,7 +1296,6 @@ ircd::server::link::cancel_uncommitted(std::exception_ptr eptr)
 
 bool
 ircd::server::link::open(const net::open_opts &open_opts)
-try
 {
 	assert(ircd::run::level == ircd::run::level::RUN);
 
@@ -1309,13 +1308,13 @@ try
 	};
 
 	op_init = true;
+	const unwind::exceptional unhandled{[this]
+	{
+		op_init = false;
+	}};
+
 	socket = net::open(open_opts, std::move(handler));
 	return true;
-}
-catch(...)
-{
-	op_init = false;
-	throw;
 }
 
 void
@@ -1375,7 +1374,6 @@ ircd::server::link::handle_close(std::exception_ptr eptr)
 
 void
 ircd::server::link::wait_writable()
-try
 {
 	if(op_write || unlikely(op_fini))
 		return;
@@ -1387,12 +1385,12 @@ try
 
 	assert(ready());
 	op_write = true;
+	const unwind::exceptional unhandled{[this]
+	{
+		op_write = false;
+	}};
+
 	net::wait(*socket, net::ready::WRITE, std::move(handler));
-}
-catch(...)
-{
-	op_write = false;
-	throw;
 }
 
 void
@@ -1546,24 +1544,23 @@ ircd::server::link::process_write_next(const const_buffer &buffer)
 
 void
 ircd::server::link::wait_readable()
-try
 {
 	if(op_read || op_fini)
 		return;
 
 	assert(ready());
 	op_read = true;
+	const unwind::exceptional unhandled{[this]
+	{
+		op_read = false;
+	}};
+
 	auto handler
 	{
 		std::bind(&link::handle_readable, this, ph::_1)
 	};
 
 	net::wait(*socket, net::ready::READ, std::move(handler));
-}
-catch(...)
-{
-	op_read = false;
-	throw;
 }
 
 void
