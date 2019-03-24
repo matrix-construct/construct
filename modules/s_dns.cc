@@ -359,14 +359,14 @@ decltype(ircd::net::dns::cache::nxdomain_ttl)
 ircd::net::dns::cache::nxdomain_ttl
 {
 	{ "name",     "ircd.net.dns.cache.nxdomain_ttl" },
-	{ "default",  43200L                            },
+	{ "default",  86400L                            },
 };
 
 decltype(ircd::net::dns::cache::min_ttl)
 ircd::net::dns::cache::min_ttl
 {
 	{ "name",     "ircd.net.dns.cache.min_ttl" },
-	{ "default",  1200L                        },
+	{ "default",  28800L                       },
 };
 
 decltype(ircd::net::dns::cache::room_id)
@@ -409,7 +409,11 @@ ircd::net::dns::cache::put(const hostport &hp,
 			host(hp)
 	};
 
-	char content_buf[768];
+	const unique_buffer<mutable_buffer> content_buf
+	{
+		1_KiB
+	};
+
 	json::stack out{content_buf};
 	json::stack::object content{out};
 	json::stack::array array
