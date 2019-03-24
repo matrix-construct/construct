@@ -34,15 +34,12 @@ namespace ircd::net::dns::cache
 {
 	struct waiter;
 
-	static time_t get_ttl(const json::object &rr);
-	static bool expired(const json::object &rr, const time_t &ts);
-
 	static bool call_waiter(const string_view &, const string_view &, const json::array &, waiter &);
 	static void handle(const m::event &, m::vm::eval &);
 
-	extern conf::item<seconds> min_ttl;
-	extern conf::item<seconds> error_ttl;
-	extern conf::item<seconds> nxdomain_ttl;
+	extern conf::item<seconds> min_ttl IRCD_MODULE_EXPORT_DATA;
+	extern conf::item<seconds> error_ttl IRCD_MODULE_EXPORT_DATA;
+	extern conf::item<seconds> nxdomain_ttl IRCD_MODULE_EXPORT_DATA;
 
 	extern const m::room::id::buf room_id;
 	extern m::hookfn<m::vm::eval &> hook;

@@ -760,29 +760,6 @@ ircd::net::dns::cache::call_waiter(const string_view &type,
 	return true;
 }
 
-bool
-ircd::net::dns::cache::expired(const json::object &rr,
-                               const time_t &ts)
-{
-	const auto ttl(get_ttl(rr));
-	return ts + ttl < ircd::time();
-}
-
-time_t
-ircd::net::dns::cache::get_ttl(const json::object &rr)
-{
-	const seconds &min_ttl_s(min_ttl);
-	const seconds &err_ttl_s(error_ttl);
-	const time_t min_ttl_t(min_ttl_s.count());
-	const time_t err_ttl_t(err_ttl_s.count());
-	const time_t rr_ttl
-	{
-		rr.get<time_t>("ttl", err_ttl_t)
-	};
-
-	return std::max(rr_ttl, min_ttl_t);
-}
-
 //
 // cache room creation
 //

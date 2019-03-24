@@ -83,6 +83,10 @@ namespace ircd::net::dns::cache
 {
 	using closure = std::function<bool (const string_view &, const json::object &)>;
 
+	bool is_error(const json::object &rr);
+	time_t get_ttl(const json::object &rr);
+	bool expired(const json::object &rr, const time_t &rr_ts, const time_t &min_ttl);
+	bool expired(const json::object &rr, const time_t &rr_ts);
 	string_view make_type(const mutable_buffer &out, const string_view &);
 	string_view make_type(const mutable_buffer &out, const uint16_t &);
 
