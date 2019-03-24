@@ -335,6 +335,40 @@ ircd::server::submit(const hostport &hostport,
 	peer.submit(request);
 }
 
+ircd::string_view
+ircd::server::loghead(const mutable_buffer &buf,
+                      const request &request)
+try
+{
+	if(empty(request.in.head))
+		return "<no header>";
+
+	parse::buffer pb{request.out.head};
+	parse::capstan pc{pb};
+	pc.read += size(request.out.head);
+	const http::request::head head{pc};
+	return fmt::sprintf
+	{
+		buf, "%s %s", head.method, head.path
+	};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "server::loghead(): %s", e.what()
+	};
+
+	return "<loghead error>";
+}
+
+ircd::string_view
+ircd::server::loghead(const request &request)
+{
+	thread_local char buf[256];
+	return loghead(buf, request);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // server/peer.h
@@ -776,10 +810,13 @@ noexcept try
 {
 	log::debug
 	{
-		log, "peer(%p) link(%p) tag(%p) done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu; %zu more in queue",
+		log, "peer(%p) link(%p) tag(%p) [%s] done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu; %zu more in queue",
 		this,
 		&link,
 		&tag,
+		tag.request?
+			loghead(*tag.request):
+			"<no request>"_sv,
 		tag.write_size(),
 		tag.read_size(),
 		tag.state.head_read,
@@ -1489,13 +1526,16 @@ ircd::server::link::process_write(tag &tag)
 	if(!tag.committed())
 		log::debug
 		{
-			log, "peer(%p) link(%p) starting on tag(%p) %zu of %zu: wt:%zu",
+			log, "peer(%p) link(%p) starting on tag(%p) %zu of %zu: wt:%zu [%s]",
 			peer,
 			this,
 			&tag,
 			tag_committed(),
 			tag_count(),
-			tag.write_size()
+			tag.write_size(),
+			tag.request?
+				loghead(*tag.request):
+				"<no attached request>"_sv
 		};
 
 	while(tag.write_remaining())

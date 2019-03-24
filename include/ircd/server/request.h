@@ -21,6 +21,9 @@ namespace ircd::server
 	size_t size(const out &);
 	size_t size_chunks(const in &);
 
+	string_view loghead(const mutable_buffer &out, const request &);
+	string_view loghead(const request &);
+
 	void submit(const hostport &, request &);
 	bool cancel(request &);
 }
