@@ -1222,7 +1222,7 @@ try
 }
 ,ep
 {
-	ip::address::from_string(unquote(opts.get("host", "0.0.0.0"s))),
+	make_address(unquote(opts.get("host", "*"_sv))),
 	opts.get<uint16_t>("port", 8448L)
 }
 ,a
@@ -1962,7 +1962,7 @@ try
 }
 ,ep
 {
-	ip::address::from_string(unquote(opts.get("host", "0.0.0.0"s))),
+	make_address(unquote(opts.get("host", "*"_sv))),
 	opts.get<uint16_t>("port", 8448L)
 }
 ,a
@@ -3725,7 +3725,7 @@ ircd::net::ipport::ipport(const string_view &ip,
                           const uint16_t &port)
 :ipport
 {
-	asio::ip::make_address(ip), port
+	make_address(ip), port
 }
 {
 }
@@ -3783,6 +3783,19 @@ ircd::net::ipport::ipport(const uint128_t &ip,
 //
 // net/ipaddr.h
 //
+
+boost::asio::ip::address
+ircd::net::make_address(const string_view &ip)
+try
+{
+	return ip && ip != "*"?
+		boost::asio::ip::make_address(ip):
+		boost::asio::ip::address{};
+}
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
 
 ircd::string_view
 ircd::net::string(const mutable_buffer &buf,

@@ -33,6 +33,8 @@ namespace ircd::net
 	string_view string_ip4(const mutable_buffer &out, const uint32_t &);
 	string_view string_ip6(const mutable_buffer &out, const uint128_t &);
 	string_view string(const mutable_buffer &out, const ipaddr &);
+
+	boost::asio::ip::address make_address(const string_view &ip);
 }
 
 union ircd::net::ipaddr
