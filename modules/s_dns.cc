@@ -38,13 +38,30 @@ ircd::net::dns::resolve(const hostport &hp,
 
 	dns::opts opts(opts_);
 	opts.qtype = opts_.qtype?: 33; // default to SRV
-	opts.nxdomain_exceptions = false;
-	net::dns::callback_one handler
-	{
-		std::bind(&handle_resolve_SRV_ipport, ph::_1, ph::_2, opts, std::move(callback))
-	};
 
-	resolve(hp, opts, std::move(handler));
+	if(opts.qtype == 33)
+	{
+		opts.nxdomain_exceptions = false;
+		net::dns::callback_one handler
+		{
+			std::bind(&handle_resolve_SRV_ipport, ph::_1, ph::_2, opts, std::move(callback))
+		};
+
+		resolve(hp, opts, std::move(handler));
+	}
+	else if(opts.qtype == 1 || opts.qtype == 28)
+	{
+		net::dns::callback_one handler
+		{
+			std::bind(&handle_resolve_A_ipport, ph::_1, ph::_2, opts, port(hp), std::move(callback))
+		};
+
+		resolve(hp, opts, std::move(handler));
+	}
+	else throw error
+	{
+		"Query type:%u not valid for ipport result callback.", opts.qtype
+	};
 }
 
 void
@@ -162,7 +179,9 @@ ircd::net::dns::handle_resolve_A_ipport(const hostport &hp,
 
 	const json::string &ip
 	{
-		rr.get("ip", "0.0.0.0"_sv)
+		opts.qtype == 28?
+			rr.get("ip", ":::0"_sv):
+			rr.get("ip", "0.0.0.0"_sv)
 	};
 
 	const ipport &ipport
