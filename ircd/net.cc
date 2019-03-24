@@ -3507,6 +3507,31 @@ ircd::net::dns::cache::make_type(const mutable_buffer &out,
 	};
 }
 
+ircd::json::object
+ircd::net::dns::cache::random_choice(const json::array &rrs)
+{
+	const size_t &count
+	{
+		rrs.size()
+	};
+
+	if(!count)
+		return json::object{};
+
+	const auto choice
+	{
+		rand::integer(0, count - 1)
+	};
+
+	assert(choice < count);
+	const json::object &rr
+	{
+		rrs[choice]
+	};
+
+	return rr;
+}
+
 bool
 ircd::net::dns::cache::expired(const json::object &rr,
                                const time_t &rr_ts)
@@ -3556,6 +3581,16 @@ time_t
 ircd::net::dns::cache::get_ttl(const json::object &rr)
 {
 	return rr.get<time_t>("ttl", 0L);
+}
+
+bool
+ircd::net::dns::cache::is_error(const json::array &rrs)
+{
+	return !std::none_of(begin(rrs), end(rrs), []
+	(const json::object &rr)
+	{
+		return is_error(rr);
+	});
 }
 
 bool

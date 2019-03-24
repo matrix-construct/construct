@@ -110,15 +110,9 @@ ircd::net::dns::handle_resolve_one(const hostport &hp,
                                    const json::array &rrs,
                                    callback_one callback)
 {
-	const size_t &count{rrs.size()};
-	const auto choice
-	{
-		count? rand::integer(0, count - 1) : 0UL
-	};
-
 	const json::object &rr
 	{
-		rrs[choice]
+		cache::random_choice(rrs)
 	};
 
 	callback(hp, rr);
