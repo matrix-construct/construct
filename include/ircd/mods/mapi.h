@@ -11,10 +11,18 @@
 #pragma once
 #define HAVE_IRCD_MAPI_H
 
-#define IRCD_MODULE_EXPORT_SECTION "ircd"
+#define IRCD_MODULE_EXPORT_CODE_SECTION "ircd.code"
+#define IRCD_MODULE_EXPORT_DATA_SECTION "ircd.data"
 
+#define IRCD_MODULE_EXPORT_CODE \
+	__attribute__((section(IRCD_MODULE_EXPORT_CODE_SECTION)))
+
+#define IRCD_MODULE_EXPORT_DATA \
+	__attribute__((section(IRCD_MODULE_EXPORT_DATA_SECTION)))
+
+// Common convenience
 #define IRCD_MODULE_EXPORT \
-	__attribute__((section(IRCD_MODULE_EXPORT_SECTION)))
+	IRCD_MODULE_EXPORT_CODE
 
 /// Module API: Interface for module developers.
 namespace ircd::mapi
@@ -37,11 +45,8 @@ namespace ircd::mapi
 		"IRCD_MODULE"
 	};
 
-	/// Symbols in this section are automatically demangle-mapped on load.
-	const char *const import_section_name
-	{
-		IRCD_MODULE_EXPORT_SECTION
-	};
+	/// Symbols in these sections are automatically demangle-mapped on load.
+	extern const char *const import_section_names[];
 }
 
 /// The magic number at the front of the header

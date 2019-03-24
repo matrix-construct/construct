@@ -62,6 +62,14 @@ ircd::mods::mod::loaded
 bool
 ircd::mapi::static_destruction;
 
+const char *const
+ircd::mapi::import_section_names[]
+{
+	IRCD_MODULE_EXPORT_CODE_SECTION,
+	IRCD_MODULE_EXPORT_DATA_SECTION,
+	nullptr
+};
+
 //
 // mods::mod::mod
 //
@@ -79,10 +87,14 @@ try
 {
 	mode
 }
-,exports
+,exports{[this]
 {
-	mods::mangles(this->path, mapi::import_section_name)
-}
+	std::map<std::string, std::string> ret;
+	for(auto section(mapi::import_section_names); *section; ++section)
+		ret.merge(mods::mangles(this->path, *section));
+
+	return ret;
+}()}
 ,handle{[this]
 {
 	// Can't interrupt this ctx during the dlopen() as long as exceptions
@@ -747,7 +759,10 @@ ircd::mods::make_target_name(const string_view &name,
 
 	auto ret{fmt::snstringf
 	{
-		4096, "%s(%s", name, prototype
+		4096, "%s%s%s",
+		name,
+		prototype? "(" : "",
+		prototype
 	}};
 
 	ret.shrink_to_fit();
