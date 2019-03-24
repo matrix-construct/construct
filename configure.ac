@@ -777,16 +777,17 @@ dnl
 
 AC_ARG_ENABLE(ipv6, AC_HELP_STRING([--disable-ipv6], [Disable IPv6 support]),
 [
-	ipv6=$enableval
+	ipv6="no"
 ], [
-	ipv6=yes
+	ipv6="yes"
 ])
 
-dnl TODO: IPV6 CHECKS
+AM_CONDITIONAL([HAVE_IPV6], [[[[ "$ipv6" = "yes" ]]]])
 
-if test x$ipv6 = "Xyes"; then
+AM_COND_IF(HAVE_IPV6,
+[
 	AC_DEFINE([HAVE_IPV6], [1], [IPv6 is supported])
-fi
+],[])
 
 
 dnl ***************************************************************************
