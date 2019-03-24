@@ -742,7 +742,7 @@ ircd::net::write_lowat(socket &socket,
                        const size_t &bytes)
 {
 	assert(bytes <= std::numeric_limits<int>::max());
-	ip::tcp::socket::send_low_watermark option
+	const ip::tcp::socket::send_low_watermark option
 	{
 		int(bytes)
 	};
@@ -756,7 +756,7 @@ ircd::net::read_lowat(socket &socket,
                       const size_t &bytes)
 {
 	assert(bytes <= std::numeric_limits<int>::max());
-	ip::tcp::socket::receive_low_watermark option
+	const ip::tcp::socket::receive_low_watermark option
 	{
 		int(bytes)
 	};
@@ -770,7 +770,7 @@ ircd::net::write_bufsz(socket &socket,
                        const size_t &bytes)
 {
 	assert(bytes <= std::numeric_limits<int>::max());
-	ip::tcp::socket::send_buffer_size option
+	const ip::tcp::socket::send_buffer_size option
 	{
 		int(bytes)
 	};
@@ -784,7 +784,7 @@ ircd::net::read_bufsz(socket &socket,
                       const size_t &bytes)
 {
 	assert(bytes <= std::numeric_limits<int>::max());
-	ip::tcp::socket::receive_buffer_size option
+	const ip::tcp::socket::receive_buffer_size option
 	{
 		int(bytes)
 	};
@@ -799,7 +799,7 @@ ircd::net::linger(socket &socket,
 {
 	assert(t >= std::numeric_limits<int>::min());
 	assert(t <= std::numeric_limits<int>::max());
-	ip::tcp::socket::linger option
+	const ip::tcp::socket::linger option
 	{
 		t >= 0,                // ON / OFF boolean
 		t >= 0? int(t) : 0     // Uses 0 when OFF
@@ -813,7 +813,7 @@ void
 ircd::net::keepalive(socket &socket,
                      const bool &b)
 {
-	ip::tcp::socket::keep_alive option{b};
+	const ip::tcp::socket::keep_alive option{b};
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
 }
@@ -822,7 +822,7 @@ void
 ircd::net::nodelay(socket &socket,
                    const bool &b)
 {
-	ip::tcp::no_delay option{b};
+	const ip::tcp::no_delay option{b};
 	ip::tcp::socket &sd(socket);
 	sd.set_option(option);
 }
