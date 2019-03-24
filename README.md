@@ -181,10 +181,10 @@ this is your origin and mxid `@user:host.tld` hostpart. If your DNS uses
 3. Create a general listener socket by entering the following command:
 
 	```
-	net listen matrix 0.0.0.0 8448 privkey.pem cert.pem chain.pem
+	net listen matrix * 8448 privkey.pem cert.pem chain.pem
 	```
 	- `matrix` is your name for this listener; you can use any name.
-	- `0.0.0.0` and `8448` is the local address and port to bind.
+	- `*` and `8448` is the local address and port to bind.
 	- `privkey.pem` and `cert.pem` and `chain.pem` are paths (ideally
 	absolute paths) to PEM-format files for the listener's TLS.
 
