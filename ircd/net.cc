@@ -691,7 +691,8 @@ ircd::net::open(socket &socket,
 
 /// Construct sock_opts with the current options from socket argument
 ircd::net::sock_opts::sock_opts(const socket &socket)
-:blocking{net::blocking(socket)}
+:v6only{net::v6only(socket)}
+,blocking{net::blocking(socket)}
 ,nodelay{net::nodelay(socket)}
 ,keepalive{net::keepalive(socket)}
 ,linger{net::linger(socket)}
@@ -708,6 +709,9 @@ void
 ircd::net::set(socket &socket,
                const sock_opts &opts)
 {
+	if(opts.v6only != opts.IGN)
+		net::v6only(socket, opts.v6only);
+
 	if(opts.blocking != opts.IGN)
 		net::blocking(socket, opts.blocking);
 
@@ -855,6 +859,15 @@ ircd::net::blocking(socket &socket,
 	sd.non_blocking(!b);
 }
 
+void
+ircd::net::v6only(socket &socket,
+                  const bool &b)
+{
+	const ip::v6_only option{b};
+	ip::tcp::socket &sd(socket);
+	sd.set_option(option);
+}
+
 size_t
 ircd::net::write_lowat(const socket &socket)
 {
@@ -923,6 +936,15 @@ ircd::net::blocking(const socket &socket)
 {
 	const ip::tcp::socket &sd(socket);
 	return !sd.non_blocking();
+}
+
+bool
+ircd::net::v6only(const socket &socket)
+{
+	const ip::tcp::socket &sd(socket);
+	ip::v6_only option;
+	sd.get_option(option);
+	return option.value();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

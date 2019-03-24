@@ -15,6 +15,7 @@ namespace ircd::net
 {
 	struct sock_opts;
 
+	bool v6only(const socket &);
 	bool blocking(const socket &);
 	bool nodelay(const socket &);
 	bool keepalive(const socket &);
@@ -24,6 +25,7 @@ namespace ircd::net
 	size_t read_lowat(const socket &);
 	size_t write_lowat(const socket &);
 
+	void v6only(socket &, const bool &);
 	void blocking(socket &, const bool &);
 	void nodelay(socket &, const bool &);
 	void keepalive(socket &, const bool &);
@@ -45,6 +47,7 @@ struct ircd::net::sock_opts
 	/// Magic value to not set this option on a set() pass.
 	static constexpr int8_t IGN { std::numeric_limits<int8_t>::min() };
 
+	int8_t v6only { IGN };
 	int8_t blocking { IGN };             // Simulates blocking behavior
 	int8_t nodelay { IGN };
 	int8_t keepalive { IGN };
