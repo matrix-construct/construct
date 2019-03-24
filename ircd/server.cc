@@ -955,43 +955,44 @@ ircd::server::peer::del(link &link)
 void
 ircd::server::peer::resolve(const hostport &hostport)
 {
+	net::dns::opts opts;
+	opts.qtype = 33; // start with SRV.
+	opts.nxdomain_exceptions = false;
+	resolve(hostport, opts);
+}
+
+void
+ircd::server::peer::resolve(const hostport &hostport,
+                            const net::dns::opts &opts)
+{
 	if(op_resolve || op_fini)
 		return;
 
+	if(unlikely(opts.qtype != 33 && opts.qtype != 28 && opts.qtype != 1))
+		throw error
+		{
+			"Unsupported DNS question type '%u' for resolve", opts.qtype
+		};
+
 	auto handler
 	{
-		std::bind(&peer::handle_resolve, this, ph::_1, ph::_2, ph::_3)
+		opts.qtype == 33?
+			net::dns::callback(std::bind(&peer::handle_resolve_SRV, this, ph::_1, ph::_2)):
+			net::dns::callback(std::bind(&peer::handle_resolve_A, this, ph::_1, ph::_2))
 	};
 
 	op_resolve = true;
-	net::dns::opts opts;
+	assert(ctx::current); // sorry, ircd::ctx required for now.
 	net::dns::resolve(hostport, opts, std::move(handler));
 }
 
 void
-ircd::server::peer::handle_resolve(std::exception_ptr eptr,
-                                   const hostport &,
-                                   const ipport &ipport)
+ircd::server::peer::handle_resolve_SRV(const hostport &hp,
+                                       const json::array &rrs)
 try
 {
-	const ctx::critical_assertion ca;
 	assert(op_resolve);
 	op_resolve = false;
-
-	if(eptr)
-	{
-		err_set(eptr);
-		std::rethrow_exception(eptr);
-		__builtin_unreachable();
-	}
-
-	// Save the results of the query to this object instance.
-	this->remote = ipport;
-	open_opts.ipport = this->remote;
-	port(open_opts.hostport) = port(ipport);
-
-	// The hostname in open_opts should still reference this object's string.
-	assert(host(open_opts.hostport).data() == this->hostcanon.data());
 
 	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 		op_fini = true;
@@ -1002,6 +1003,117 @@ try
 	if(op_fini)
 		return;
 
+	const json::object &rr
+	{
+		net::dns::random_choice(rrs)
+	};
+
+	if(net::dns::is_error(rr))
+	{
+		const json::string &error(rr.get("error"));
+		err_set(make_exception_ptr<rfc1035::error>("%s", error));
+		assert(this->e && this->e->eptr);
+		std::rethrow_exception(this->e->eptr);
+		__builtin_unreachable();
+	}
+
+	// Target for the next address record query.
+    const hostport &target
+    {
+        rr.has("tgt")?
+            rstrip(unquote(rr.at("tgt")), '.'):
+            host(hp),
+
+        rr.has("port")?
+            rr.get<uint16_t>("port"):
+            port(hp)
+    };
+
+	// Save the port from the SRV record to a class member because it won't
+	// get carried through the next A/AAAA query.
+	port(remote) = port(target);
+
+	// Setup the address record query off this SRV response.
+	net::dns::opts opts;
+	opts.qtype = 1;
+
+	log::debug
+	{
+		log, "peer(%p) resolved %s SRV rrs:%zu resolving %s %s",
+		this,
+		host(hp),
+		rrs.size(),
+		host(target),
+		rfc1035::rqtype.at(opts.qtype)
+	};
+
+	resolve(target, opts);
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "peer(%p) resolve SRV: %s",
+		this,
+		e.what()
+	};
+
+	const ctx::exception_handler eh;
+	close();
+}
+
+void
+ircd::server::peer::handle_resolve_A(const hostport &,
+                                     const json::array &rrs)
+try
+{
+	const ctx::critical_assertion ca;
+	assert(op_resolve);
+	op_resolve = false;
+
+	if(unlikely(ircd::run::level != ircd::run::level::RUN))
+		op_fini = true;
+
+	if(unlikely(finished()))
+		return handle_finished();
+
+	if(op_fini)
+		return;
+
+	if(empty(rrs))
+	{
+		err_set(make_exception_ptr<unavailable>("Host has no address record."));
+		assert(this->e && this->e->eptr);
+		std::rethrow_exception(this->e->eptr);
+		__builtin_unreachable();
+	}
+
+	const json::object &rr
+	{
+		net::dns::random_choice(rrs)
+	};
+
+	if(net::dns::is_error(rr))
+	{
+		const json::string &error(rr.get("error"));
+		err_set(make_exception_ptr<rfc1035::error>("%s", error));
+		assert(this->e && this->e->eptr);
+		std::rethrow_exception(this->e->eptr);
+		__builtin_unreachable();
+	}
+
+	// Save the results of the query to this object instance.
+	this->remote = net::ipport
+	{
+		unquote(rr.at("ip")), net::port(this->remote)
+	};
+
+	open_opts.ipport = this->remote;
+	port(open_opts.hostport) = port(this->remote);
+
+	// The hostname in open_opts should still reference this object's string.
+	assert(host(open_opts.hostport).data() == this->hostcanon.data());
+
 	link *links[LINK_MAX];
 	const auto end(pointers(this->links, links));
 	for(link **link(links); link != end; ++link)
@@ -1011,7 +1123,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p): %s",
+		log, "peer(%p) resolve A/AAAA: %s",
 		this,
 		e.what()
 	};
