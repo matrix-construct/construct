@@ -3358,6 +3358,98 @@ ircd::net::dns::make_SRV_key(const mutable_buffer &out,
 		};
 }
 
+ircd::json::object
+ircd::net::dns::random_choice(const json::array &rrs)
+{
+	const size_t &count
+	{
+		rrs.size()
+	};
+
+	if(!count)
+		return json::object{};
+
+	const auto choice
+	{
+		rand::integer(0, count - 1)
+	};
+
+	assert(choice < count);
+	const json::object &rr
+	{
+		rrs[choice]
+	};
+
+	return rr;
+}
+
+bool
+ircd::net::dns::expired(const json::object &rr,
+                        const time_t &rr_ts)
+{
+	static mods::import<conf::item<seconds>> min_ttl
+	{
+		"s_dns", "ircd::net::dns::cache::min_ttl"
+	};
+
+	static mods::import<conf::item<seconds>> error_ttl
+	{
+		"s_dns", "ircd::net::dns::cache::error_ttl"
+	};
+
+	const conf::item<seconds> &min_ttl_item
+	{
+		static_cast<conf::item<seconds> &>(min_ttl)
+	};
+
+	const conf::item<seconds> &error_ttl_item
+	{
+		static_cast<conf::item<seconds> &>(error_ttl)
+	};
+
+	const seconds &min_seconds(min_ttl_item);
+	const seconds &err_seconds(error_ttl_item);
+	const time_t &min
+	{
+		is_error(rr)?
+			err_seconds.count():
+			min_seconds.count()
+	};
+
+	return expired(rr, rr_ts, min);
+}
+
+bool
+ircd::net::dns::expired(const json::object &rr,
+                        const time_t &rr_ts,
+                        const time_t &min_ttl)
+{
+	const auto ttl(get_ttl(rr));
+	return rr_ts + std::max(ttl, min_ttl) < ircd::time();
+}
+
+time_t
+ircd::net::dns::get_ttl(const json::object &rr)
+{
+	return rr.get<time_t>("ttl", 0L);
+}
+
+bool
+ircd::net::dns::is_error(const json::array &rrs)
+{
+	return !std::none_of(begin(rrs), end(rrs), []
+	(const json::object &rr)
+	{
+		return is_error(rr);
+	});
+}
+
+bool
+ircd::net::dns::is_error(const json::object &rr)
+{
+	return rr.has("error");
+}
+
 //
 // cache
 //
@@ -3505,98 +3597,6 @@ ircd::net::dns::cache::make_type(const mutable_buffer &out,
 	{
 		out, "ircd.dns.rrs.%s", type
 	};
-}
-
-ircd::json::object
-ircd::net::dns::cache::random_choice(const json::array &rrs)
-{
-	const size_t &count
-	{
-		rrs.size()
-	};
-
-	if(!count)
-		return json::object{};
-
-	const auto choice
-	{
-		rand::integer(0, count - 1)
-	};
-
-	assert(choice < count);
-	const json::object &rr
-	{
-		rrs[choice]
-	};
-
-	return rr;
-}
-
-bool
-ircd::net::dns::cache::expired(const json::object &rr,
-                               const time_t &rr_ts)
-{
-	static mods::import<conf::item<seconds>> min_ttl
-	{
-		"s_dns", "ircd::net::dns::cache::min_ttl"
-	};
-
-	static mods::import<conf::item<seconds>> error_ttl
-	{
-		"s_dns", "ircd::net::dns::cache::error_ttl"
-	};
-
-	const conf::item<seconds> &min_ttl_item
-	{
-		static_cast<conf::item<seconds> &>(min_ttl)
-	};
-
-	const conf::item<seconds> &error_ttl_item
-	{
-		static_cast<conf::item<seconds> &>(error_ttl)
-	};
-
-	const seconds &min_seconds(min_ttl_item);
-	const seconds &err_seconds(error_ttl_item);
-	const time_t &min
-	{
-		is_error(rr)?
-			err_seconds.count():
-			min_seconds.count()
-	};
-
-	return expired(rr, rr_ts, min);
-}
-
-bool
-ircd::net::dns::cache::expired(const json::object &rr,
-                               const time_t &rr_ts,
-                               const time_t &min_ttl)
-{
-	const auto ttl(get_ttl(rr));
-	return rr_ts + std::max(ttl, min_ttl) < ircd::time();
-}
-
-time_t
-ircd::net::dns::cache::get_ttl(const json::object &rr)
-{
-	return rr.get<time_t>("ttl", 0L);
-}
-
-bool
-ircd::net::dns::cache::is_error(const json::array &rrs)
-{
-	return !std::none_of(begin(rrs), end(rrs), []
-	(const json::object &rr)
-	{
-		return is_error(rr);
-	});
-}
-
-bool
-ircd::net::dns::cache::is_error(const json::object &rr)
-{
-	return rr.has("error");
 }
 
 ///////////////////////////////////////////////////////////////////////////////

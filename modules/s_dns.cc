@@ -112,7 +112,7 @@ ircd::net::dns::handle_resolve_one(const hostport &hp,
 {
 	const json::object &rr
 	{
-		cache::random_choice(rrs)
+		random_choice(rrs)
 	};
 
 	callback(hp, rr);

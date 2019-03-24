@@ -30,7 +30,13 @@ namespace ircd::net::dns
 	void resolve(const hostport &, const opts &, callback_one); // convenience
 	void resolve(const hostport &, const opts &, callback_ipport); // convenience
 
-	// (internal) generate strings for rfc1035 questions or dns::cache keys.
+	// Utilities
+	bool is_error(const json::object &rr);
+	bool is_error(const json::array &rr);
+	time_t get_ttl(const json::object &rr);
+	bool expired(const json::object &rr, const time_t &rr_ts, const time_t &min_ttl);
+	bool expired(const json::object &rr, const time_t &rr_ts);
+	json::object random_choice(const json::array &);
 	string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
 	string_view unmake_SRV_key(const string_view &);
 
@@ -83,12 +89,6 @@ namespace ircd::net::dns::cache
 {
 	using closure = std::function<bool (const string_view &, const json::object &)>;
 
-	bool is_error(const json::object &rr);
-	bool is_error(const json::array &rr);
-	time_t get_ttl(const json::object &rr);
-	bool expired(const json::object &rr, const time_t &rr_ts, const time_t &min_ttl);
-	bool expired(const json::object &rr, const time_t &rr_ts);
-	json::object random_choice(const json::array &);
 	string_view make_type(const mutable_buffer &out, const string_view &);
 	string_view make_type(const mutable_buffer &out, const uint16_t &);
 
