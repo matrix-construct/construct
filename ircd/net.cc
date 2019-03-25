@@ -3629,7 +3629,7 @@ ircd::net::dns::cache::make_type(const mutable_buffer &out,
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const ipport &t)
 {
-	thread_local char buf[256];
+	thread_local char buf[128];
 	const critical_assertion ca;
 	s << net::string(buf, t);
 	return s;
@@ -3639,24 +3639,11 @@ ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
                   const ipport &ipp)
 {
-	const auto len
-	{
-		is_v4(ipp)? fmt::sprintf
-		{
-			buf, "%s:%u",
-			ip::address_v4{host4(ipp)}.to_string(),
-			port(ipp)
-		}:
-		is_v6(ipp)? fmt::sprintf
-		{
-			buf, "%s:%u",
-			ip::address_v6{std::get<ipp.IP>(ipp).byte}.to_string(),
-			port(ipp)
-		}:
-		0
-	};
-
-	return { data(buf), size_t(len) };
+	mutable_buffer out{buf};
+	consume(out, size(string(out, std::get<ipp.IP>(ipp))));
+	consume(out, copy(out, ":"_sv));
+	consume(out, size(lex_cast(port(ipp), out)));
+	return { data(buf), data(out) };
 }
 
 ircd::net::ipport
@@ -3682,14 +3669,7 @@ ircd::net::make_endpoint_udp(const ipport &ipport)
 {
 	return
 	{
-		is_v6(ipport)? ip::udp::endpoint
-		{
-			asio::ip::address_v6 { std::get<ipport.IP>(ipport).byte }, port(ipport)
-		}
-		: ip::udp::endpoint
-		{
-			asio::ip::address_v4 { host4(ipport) }, port(ipport)
-		},
+		make_address(std::get<ipport.IP>(ipport)), port(ipport)
 	};
 }
 
@@ -3698,29 +3678,19 @@ ircd::net::make_endpoint(const ipport &ipport)
 {
 	return
 	{
-		is_v6(ipport)? ip::tcp::endpoint
-		{
-			asio::ip::address_v6 { std::get<ipport.IP>(ipport).byte }, port(ipport)
-		}
-		: ip::tcp::endpoint
-		{
-			asio::ip::address_v4 { host4(ipport) }, port(ipport)
-		},
+		make_address(std::get<ipport.IP>(ipport)), port(ipport)
 	};
 }
+
+//
+// cmp
+//
 
 bool
 ircd::net::ipport::cmp_ip::operator()(const ipport &a, const ipport &b)
 const
 {
-	if(is_v4(a) && is_v6(b))
-		return true;
-
-	if(is_v6(a) && is_v4(b))
-		return false;
-
-	assert((is_v4(a) && is_v4(b)) || (is_v6(a) && is_v6(b)));
-	return std::get<a.IP>(a).byte < std::get<b.IP>(b).byte;
+	return ipaddr::cmp()(std::get<a.IP>(a), std::get<b.IP>(b));
 }
 
 bool
@@ -3730,137 +3700,178 @@ const
 	return std::get<a.PORT>(a) < std::get<b.PORT>(b);
 }
 
-//
-// ipport::ipport
-//
-
-ircd::net::ipport::ipport(const string_view &ip,
-                          const string_view &port)
-:ipport
-{
-	ip, lex_cast<uint16_t>(port)
-}
-{
-}
-
-ircd::net::ipport::ipport(const string_view &ip,
-                          const uint16_t &port)
-:ipport
-{
-	make_address(ip), port
-}
-{
-}
-
-ircd::net::ipport::ipport(const rfc1035::record::A &rr,
-                          const uint16_t &port)
-:ipport
-{
-	rr.ip4, port
-}
-{
-}
-
-ircd::net::ipport::ipport(const rfc1035::record::AAAA &rr,
-                          const uint16_t &port)
-:ipport
-{
-	rr.ip6, port
-}
-{
-}
-
-ircd::net::ipport::ipport(const boost::asio::ip::address &address,
-                          const uint16_t &port)
-{
-	std::get<TYPE>(*this) = address.is_v6();
-	std::get<PORT>(*this) = port;
-
-	if(is_v6(*this))
-	{
-		std::get<IP>(*this).byte = address.to_v6().to_bytes();
-		std::reverse(std::get<IP>(*this).byte.begin(), std::get<IP>(*this).byte.end());
-	}
-	else host4(*this) = address.to_v4().to_ulong();
-}
-
-ircd::net::ipport::ipport(const uint32_t &ip,
-                          const uint16_t &p)
-{
-	std::get<TYPE>(*this) = false;
-	host6(*this) = 0;
-	host4(*this) = ip;
-	port(*this) = p;
-}
-
-ircd::net::ipport::ipport(const uint128_t &ip,
-                          const uint16_t &p)
-{
-	std::get<TYPE>(*this) = true;
-	host6(*this) = ip;
-	port(*this) = p;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // net/ipaddr.h
 //
 
 boost::asio::ip::address
+ircd::net::make_address(const ipaddr &ipaddr)
+{
+	return is_v6(ipaddr)?
+		ip::address(make_address(ipaddr.v6)):
+		ip::address(make_address(ipaddr.v4));
+}
+
+boost::asio::ip::address
 ircd::net::make_address(const string_view &ip)
 try
 {
-	return ip && ip != "*"?
-		boost::asio::ip::make_address(ip):
-		boost::asio::ip::address{};
+	return
+		ip && ip == "*"?
+			boost::asio::ip::address_v6::any():
+		ip?
+			boost::asio::ip::make_address(ip):
+			boost::asio::ip::address{};
 }
 catch(const boost::system::system_error &e)
 {
 	throw_system_error(e);
 }
 
-ircd::string_view
-ircd::net::string(const mutable_buffer &buf,
-                  const ipaddr &ipaddr)
+boost::asio::ip::address_v4
+ircd::net::make_address(const uint32_t &ip)
 {
-	throw not_implemented
-	{
-		"string(ipaddr): not implemented yet"
-	};
+	return ip::address_v4{ip};
 }
 
-ircd::string_view
-ircd::net::string_ip4(const mutable_buffer &buf,
-                      const uint32_t &ip)
-{
-	const auto len
-	{
-		ip::address_v4{ip}.to_string().copy(data(buf), size(buf))
-	};
-
-	return { data(buf), size_t(len) };
-}
-
-ircd::string_view
-ircd::net::string_ip6(const mutable_buffer &buf,
-                      const uint128_t &ip)
+boost::asio::ip::address_v6
+ircd::net::make_address(const uint128_t &ip)
 {
 	const auto &pun
 	{
 		reinterpret_cast<const uint8_t (&)[16]>(ip)
 	};
 
-	const auto &punpun
+	auto punpun
 	{
 		reinterpret_cast<const std::array<uint8_t, 16> &>(pun)
 	};
 
-	const auto len
+	std::reverse(begin(punpun), end(punpun));
+	return ip::address_v6{punpun};
+}
+
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const ipaddr &ipa)
+{
+	thread_local char buf[128];
+	const critical_assertion ca;
+	s << net::string(buf, ipa);
+	return s;
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const ipaddr &ipaddr)
+{
+	return is_v6(ipaddr)?
+		string_ip6(buf, ipaddr.v6):
+		string_ip4(buf, ipaddr.v4);
+}
+
+ircd::string_view
+ircd::net::string_ip4(const mutable_buffer &buf,
+                      const uint32_t &ip)
+{
+	return string(buf, make_address(ip));
+}
+
+ircd::string_view
+ircd::net::string_ip6(const mutable_buffer &buf,
+                      const uint128_t &ip)
+{
+	return string(buf, make_address(ip));
+}
+
+bool
+ircd::net::is_loop(const ipaddr &ipaddr)
+{
+	return is_v6(ipaddr)?
+		make_address(ipaddr.v6).is_loopback():
+		make_address(ipaddr.v4).is_loopback();
+}
+
+bool
+ircd::net::is_v4(const ipaddr &ipaddr)
+{
+	return ipaddr.v6 == 0 ||
+	       (ipaddr.byte[4] == 0xff && ipaddr.byte[5] == 0xff);
+}
+
+bool
+ircd::net::is_v6(const ipaddr &ipaddr)
+{
+	return ipaddr.v6 == 0 ||
+	       !(ipaddr.byte[4] == 0xff && ipaddr.byte[5] == 0xff);
+}
+
+//
+// ipaddr::ipaddr
+//
+
+ircd::net::ipaddr::ipaddr(const string_view &ip)
+:ipaddr
+{
+	make_address(ip)
+}
+{
+}
+
+ircd::net::ipaddr::ipaddr(const rfc1035::record::A &rr)
+:ipaddr
+{
+	rr.ip4
+}
+{
+}
+
+ircd::net::ipaddr::ipaddr(const rfc1035::record::AAAA &rr)
+:ipaddr
+{
+	rr.ip6
+}
+{
+}
+
+ircd::net::ipaddr::ipaddr(const uint32_t &ip)
+:ipaddr
+{
+	make_address(ip)
+}
+{
+}
+
+ircd::net::ipaddr::ipaddr(const uint128_t &ip)
+:ipaddr
+{
+	make_address(ip)
+}
+{
+}
+
+ircd::net::ipaddr::ipaddr(const asio::ip::address &address)
+{
+	const auto address_
 	{
-		ip::address_v6{punpun}.to_string().copy(data(buf), size(buf))
+		address.is_v6()?
+			address.to_v6():
+			make_address_v6(ip::v4_mapped, address.to_v4())
 	};
 
-	return { data(buf), size_t(len) };
+	byte = address_.to_bytes();
+	std::reverse(byte.begin(), byte.end());
+}
+
+//
+// ipaddr::ipaddr
+//
+
+bool
+ircd::net::ipaddr::cmp::operator()(const ipaddr &a, const ipaddr &b)
+const
+{
+	return a.byte < b.byte;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3956,19 +3967,24 @@ ircd::net::string(const mutable_buffer &buf,
 //
 
 std::string
-ircd::net::string(const ip::address &addr)
-{
-	return addr.to_string();
-}
-
-std::string
 ircd::net::string(const ip::tcp::endpoint &ep)
 {
-	std::string ret(128, char{});
-	const auto addr{string(net::addr(ep))};
-	const auto data{const_cast<char *>(ret.data())};
-	ret.resize(snprintf(data, ret.size(), "%s:%u", addr.c_str(), port(ep)));
-	return ret;
+	return util::string(64, [&ep]
+	(const mutable_buffer &out)
+	{
+		return string(out, ep);
+	});
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &buf,
+                  const ip::tcp::endpoint &ep)
+{
+	mutable_buffer out{buf};
+	consume(out, size(string(out, net::addr(ep))));
+	consume(out, copy(out, ":"_sv));
+	consume(out, size(lex_cast(port(ep), out)));
+	return {data(buf), data(out)};
 }
 
 std::string
@@ -3987,6 +4003,66 @@ uint16_t
 ircd::net::port(const ip::tcp::endpoint &ep)
 {
 	return ep.port();
+}
+
+std::string
+ircd::net::string(const ip::address &addr)
+{
+	return
+		addr.is_v4()?
+			string(addr.to_v4()):
+			string(addr.to_v6());
+}
+
+std::string
+ircd::net::string(const ip::address_v4 &addr)
+{
+	return util::string(16, [&addr]
+	(const mutable_buffer &out)
+	{
+		return string(out, addr);
+	});
+}
+
+std::string
+ircd::net::string(const ip::address_v6 &addr)
+{
+	return addr.to_string();
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &out,
+                  const ip::address &addr)
+{
+	return
+		addr.is_v4()?
+			string(out, addr.to_v4()):
+			string(out, addr.to_v6());
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &out,
+                  const ip::address_v4 &addr)
+{
+	const uint32_t a(addr.to_ulong());
+	return fmt::sprintf
+	{
+		out, "%u.%u.%u.%u",
+		(a & 0xFF000000U) >> 24,
+		(a & 0x00FF0000U) >> 16,
+		(a & 0x0000FF00U) >> 8,
+		(a & 0x000000FFU) >> 0,
+	};
+}
+
+ircd::string_view
+ircd::net::string(const mutable_buffer &out,
+                  const ip::address_v6 &addr)
+{
+	return
+	{
+		data(out), string(addr).copy(data(out), size(out))
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////

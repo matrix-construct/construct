@@ -25,10 +25,17 @@ namespace ircd::net
 	using asio::steady_timer;
 	using ircd::string;
 
+	string_view string(const mutable_buffer &, const ip::address_v6 &);
+	string_view string(const mutable_buffer &, const ip::address_v4 &);
+	string_view string(const mutable_buffer &, const ip::address &);
+	std::string string(const ip::address_v6 &);
+	std::string string(const ip::address_v4 &);
+	std::string string(const ip::address &);
+
 	uint16_t port(const ip::tcp::endpoint &);
 	ip::address addr(const ip::tcp::endpoint &);
 	std::string host(const ip::tcp::endpoint &);
-	std::string string(const ip::address &);
+	string_view string(const mutable_buffer &, const ip::tcp::endpoint &);
 	std::string string(const ip::tcp::endpoint &);
 
 	ipport make_ipport(const boost::asio::ip::tcp::endpoint &);
