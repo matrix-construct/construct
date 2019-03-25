@@ -1110,7 +1110,25 @@ try
 
 	open_opts.ipport = this->remote;
 	port(open_opts.hostport) = port(this->remote);
+	open_links();
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "peer(%p) resolve A/AAAA: %s",
+		this,
+		e.what()
+	};
 
+	const ctx::exception_handler eh;
+	close();
+}
+
+void
+ircd::server::peer::open_links()
+try
+{
 	// The hostname in open_opts should still reference this object's string.
 	assert(host(open_opts.hostport).data() == this->hostcanon.data());
 
@@ -1123,7 +1141,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) resolve A/AAAA: %s",
+		log, "peer(%p) open links: %s",
 		this,
 		e.what()
 	};

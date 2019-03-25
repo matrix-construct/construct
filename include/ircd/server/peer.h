@@ -43,6 +43,7 @@ struct ircd::server::peer
 	template<class F> size_t accumulate_tags(F&&) const;
 
 	void handle_finished();
+	void open_links();
 	void handle_resolve_A(const hostport &, const json::array &);
 	void handle_resolve_SRV(const hostport &, const json::array &);
 	void resolve(const hostport &, const net::dns::opts &);
