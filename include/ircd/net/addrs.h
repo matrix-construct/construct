@@ -24,6 +24,8 @@ namespace ircd::net::addrs
 
 	bool for_each(const raw_closure &);
 	bool for_each(const closure &);
+
+	bool has_usable_ipv6_interface();
 }
 
 struct ircd::net::addrs::addr

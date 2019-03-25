@@ -691,6 +691,28 @@ ircd::net::open(socket &socket,
 //
 
 bool
+ircd::net::addrs::has_usable_ipv6_interface()
+{
+	return !for_each([](const addr &a)
+	{
+		if(a.family != AF_INET6)
+			return true;
+
+		if(a.scope_id != 0) // global scope
+			return true;
+
+		if(~a.flags & IFF_UP) // not up
+			return true;
+
+		if(a.flags & IFF_LOOPBACK) // not usable
+			return true;
+
+		// return false to break
+		return false;
+	});
+}
+
+bool
 ircd::net::addrs::for_each(const closure &closure)
 {
 	return for_each([&closure]
