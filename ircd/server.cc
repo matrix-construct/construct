@@ -378,6 +378,13 @@ decltype(ircd::server::peers)
 ircd::server::peers
 {};
 
+decltype(ircd::server::peer::enable_ipv6)
+ircd::server::peer::enable_ipv6
+{
+	{ "name",     "ircd.server.peer.enable_ipv6" },
+	{ "default",  true                           }
+};
+
 decltype(ircd::server::peer::link_min_default)
 ircd::server::peer::link_min_default
 {

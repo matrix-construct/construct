@@ -23,6 +23,7 @@ struct ircd::server::peer
 	struct err;
 
 	static constexpr const size_t &LINK_MAX{16};
+	static conf::item<bool> enable_ipv6;
 	static conf::item<size_t> link_min_default;
 	static conf::item<size_t> link_max_default;
 	static conf::item<seconds> error_clear_default;
