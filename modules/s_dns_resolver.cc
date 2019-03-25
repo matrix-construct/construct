@@ -112,7 +112,7 @@ ircd::net::dns::resolver::resolver(answers_callback callback)
 }
 ,recv_context
 {
-	"dnsres R", 128_KiB, std::bind(&resolver::recv_worker, this), context::POST
+	"dnsres R", 1_MiB, std::bind(&resolver::recv_worker, this), context::POST
 }
 ,timeout_context
 {
