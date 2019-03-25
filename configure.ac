@@ -723,6 +723,8 @@ RB_CHK_SYSHEADER(cxxabi.h, [CXXABI_H])
 dnl unix platform
 RB_CHK_SYSHEADER(unistd.h, [UNISTD_H])
 RB_CHK_SYSHEADER(signal.h, [SIGNAL_H])
+RB_CHK_SYSHEADER(ifaddrs.h, [IFADDRS_H])
+RB_CHK_SYSHEADER(sys/types.h, [SYS_TYPES_H])
 RB_CHK_SYSHEADER(sys/time.h, [SYS_TIME_H])
 RB_CHK_SYSHEADER(sys/stat.h, [SYS_STAT_H])
 RB_CHK_SYSHEADER(sys/statfs.h, [SYS_STATFS_H])
