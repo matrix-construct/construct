@@ -32,6 +32,7 @@ bool pitrecdb;
 bool nojs;
 bool nodirect;
 bool noaio;
+bool no6;
 const char *execute;
 lgetopt opts[] =
 {
@@ -48,6 +49,7 @@ lgetopt opts[] =
 	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
 	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
 	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
+	{ "no6",        &no6,           lgetopt::BOOL,    "Disable IPv6 operations" },
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -273,4 +275,7 @@ applyargs()
 		ircd::fs::aio::enable.set("false");
 	else
 		ircd::fs::aio::enable.set("true");
+
+	if(no6)
+		ircd::net::enable_ipv6.set("false");
 }
