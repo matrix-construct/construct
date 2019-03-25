@@ -810,13 +810,14 @@ noexcept try
 {
 	log::debug
 	{
-		log, "peer(%p) link(%p) tag(%p) [%s] done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu; %zu more in queue",
+		log, "peer(%p) link(%p) tag(%p) [%s] => [%u] done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu; %zu more in queue",
 		this,
 		&link,
 		&tag,
 		tag.request?
 			loghead(*tag.request):
 			"<no request>"_sv,
+		uint(tag.state.status),
 		tag.write_size(),
 		tag.read_size(),
 		tag.state.head_read,
