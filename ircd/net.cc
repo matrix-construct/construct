@@ -3656,10 +3656,27 @@ ircd::net::string(const mutable_buffer &buf,
                   const ipport &ipp)
 {
 	mutable_buffer out{buf};
+	const bool has_port(port(ipp));
+	const bool need_bracket(has_port && is_v6(ipp));
+
+	if(need_bracket)
+		consume(out, copy(out, "["_sv));
+
 	consume(out, size(string(out, std::get<ipp.IP>(ipp))));
-	consume(out, copy(out, ":"_sv));
-	consume(out, size(lex_cast(port(ipp), out)));
-	return { data(buf), data(out) };
+
+	if(need_bracket)
+		consume(out, copy(out, "]"_sv));
+
+	if(has_port)
+	{
+		consume(out, copy(out, ":"_sv));
+		consume(out, size(lex_cast(port(ipp), out)));
+	}
+
+	return
+	{
+		data(buf), data(out)
+	};
 }
 
 ircd::net::ipport
@@ -3985,22 +4002,14 @@ ircd::net::string(const mutable_buffer &buf,
 std::string
 ircd::net::string(const ip::tcp::endpoint &ep)
 {
-	return util::string(64, [&ep]
-	(const mutable_buffer &out)
-	{
-		return string(out, ep);
-	});
+	return string(make_ipport(ep));
 }
 
 ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
                   const ip::tcp::endpoint &ep)
 {
-	mutable_buffer out{buf};
-	consume(out, size(string(out, net::addr(ep))));
-	consume(out, copy(out, ":"_sv));
-	consume(out, size(lex_cast(port(ep), out)));
-	return {data(buf), data(out)};
+	return string(buf, make_ipport(ep));
 }
 
 std::string
