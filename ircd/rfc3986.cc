@@ -429,6 +429,38 @@ catch(const qi::expectation_failure<const char *> &e)
 }
 
 bool
+ircd::rfc3986::valid_literal(std::nothrow_t,
+                            const string_view &str)
+{
+	static const auto &rule
+	{
+		(parser::ip6_literal >> eoi) |
+		(parser::ip4_literal >> eoi)
+	};
+
+	const char *start(str.data()), *const stop(start + str.size());
+	return qi::parse(start, stop, rule);
+}
+
+void
+ircd::rfc3986::valid_literal(const string_view &str)
+try
+{
+	static const auto &rule
+	{
+		(parser::ip6_literal >> eoi) |
+		(parser::ip4_literal >> eoi)
+	};
+
+	const char *start(str.data()), *const stop(start + str.size());
+	qi::parse(start, stop, eps > rule);
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure<error>{e};
+}
+
+bool
 ircd::rfc3986::valid_hostname(std::nothrow_t,
                               const string_view &str)
 {

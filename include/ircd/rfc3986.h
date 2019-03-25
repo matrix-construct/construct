@@ -28,6 +28,8 @@ namespace ircd::rfc3986
 
 	void valid_hostname(const string_view &); // name part
 	bool valid_hostname(std::nothrow_t, const string_view &);
+	void valid_literal(const string_view &); // ip4 | ip6
+	bool valid_literal(std::nothrow_t, const string_view &);
 	void valid_domain(const string_view &); // dot delimited hostnames
 	bool valid_domain(std::nothrow_t, const string_view &);
 	void valid_host(const string_view &); // domain | ip4 | ip6
