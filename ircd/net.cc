@@ -1182,16 +1182,28 @@ ircd::net::allow(acceptor &a)
 	return true;
 }
 
-ircd::json::object
-ircd::net::config(const acceptor &a)
+ircd::net::ipport
+ircd::net::local(const acceptor &a)
 {
-	return a.opts;
+	return make_ipport(a.a.local_endpoint());
+}
+
+ircd::net::ipport
+ircd::net::binder(const acceptor &a)
+{
+	return make_ipport(a.ep);
 }
 
 ircd::string_view
 ircd::net::name(const acceptor &a)
 {
 	return a.name;
+}
+
+ircd::json::object
+ircd::net::config(const acceptor &a)
+{
+	return a.opts;
 }
 
 std::ostream &

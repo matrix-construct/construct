@@ -24,6 +24,8 @@ namespace ircd::net
 	std::string cipher_list(const acceptor &);
 	json::object config(const acceptor &);
 	string_view name(const acceptor &);
+	ipport binder(const acceptor &);
+	ipport local(const acceptor &);
 
 	bool allow(acceptor &);
 	bool start(acceptor &);

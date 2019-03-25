@@ -4344,8 +4344,11 @@ console_cmd__net__listen__list(opt &out, const string_view &line)
 	const list &l(listeners);
 	for(const auto &listener : l)
 	{
-		const json::object opts(listener);
-		out << listener << ": " << opts << std::endl;
+		out << "name       : " << net::name(listener) << std::endl;
+		out << "binder     : " << net::binder(listener) << std::endl;
+		out << "bound      : " << net::local(listener) << std::endl;
+		out << "config     : " << net::config(listener) << std::endl;
+		out << std::endl;
 	}
 
 	return true;
