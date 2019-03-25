@@ -1056,7 +1056,7 @@ try
 
 	// Setup the address record query off this SRV response.
 	net::dns::opts opts;
-	opts.qtype = 28;
+	opts.qtype = bool(peer::enable_ipv6) && bool(net::enable_ipv6)? 28: 1;
 
 	log::debug
 	{
