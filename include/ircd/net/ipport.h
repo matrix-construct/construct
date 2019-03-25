@@ -57,6 +57,7 @@ struct ircd::net::ipport
 
 	template<class iparg> ipport(iparg&&, const uint16_t &port);
 	template<class iparg> ipport(iparg&&, const string_view &port);
+	ipport(const string_view &amalgam);
 	ipport();
 };
 
@@ -81,6 +82,14 @@ ircd::net::ipport::ipport()
 :std::pair<ipaddr, uint16_t>
 {
 	{}, 0
+}
+{}
+
+inline
+ircd::net::ipport::ipport(const string_view &amalgam)
+:std::pair<ipaddr, uint16_t>
+{
+	rfc3986::host(amalgam), rfc3986::port(amalgam)
 }
 {}
 
