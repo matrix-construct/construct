@@ -4180,6 +4180,23 @@ catch(const std::out_of_range &e)
 //
 
 bool
+console_cmd__net__addrs(opt &out, const string_view &line)
+{
+	net::addrs::for_each([&out]
+	(const string_view &name, const ipport &addr, const uint &flags)
+	{
+		out << std::left << std::setw(16) << name << " "
+		    << std::setw(32) << addr << " "
+		    << "(0x" << std::hex << flags << ")" << std::dec
+		    << std::endl;
+
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__net__host(opt &out, const string_view &line)
 {
 	const params param{line, " ",

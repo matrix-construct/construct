@@ -40,6 +40,7 @@ namespace ircd::net
 #include "listener.h"
 #include "listener_udp.h"
 #include "sock_opts.h"
+#include "addrs.h"
 #include "open.h"
 #include "close.h"
 #include "wait.h"

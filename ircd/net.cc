@@ -9,6 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #include <ircd/asio.h>
+#include <RB_INC_IFADDRS_H
 
 namespace ircd::net
 {
@@ -683,6 +684,74 @@ ircd::net::open(socket &socket,
 	else
 		connector({}, opts.hostport, opts.ipport);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// net/addrs.h
+//
+
+bool
+ircd::net::addrs::for_each(const closure &closure)
+{
+	return for_each([&closure]
+	(const struct ::ifaddrs &ifa)
+	{
+		const string_view &name(ifa.ifa_name);
+		const uint &flags(ifa.ifa_flags);
+
+		ipport ipport;
+		if(ifa.ifa_addr) switch(ifa.ifa_addr->sa_family)
+		{
+			case AF_INET6:
+			{
+				const auto &sin(reinterpret_cast<const struct sockaddr_in6 *>(ifa.ifa_addr));
+				ipport =
+				{
+					ntoh(*reinterpret_cast<const uint128_t *>(sin->sin6_addr.s6_addr)),
+					sin->sin6_port
+				};
+				break;
+			}
+
+			case AF_INET:
+			{
+				const auto &sin(reinterpret_cast<const struct sockaddr_in *>(ifa.ifa_addr));
+				ipport = { ntoh(sin->sin_addr.s_addr), sin->sin_port };
+				break;
+			}
+
+			default:
+				return true;
+		}
+
+		return closure(name, ipport, flags);
+	});
+}
+
+#ifdef HAVE_IFADDRS_H
+bool
+ircd::net::addrs::for_each(const raw_closure &closure)
+{
+	struct ::ifaddrs *ifap_;
+	syscall(::getifaddrs, &ifap_);
+	const custom_ptr<struct ::ifaddrs> ifap
+	{
+		ifap_, ::freeifaddrs
+	};
+
+	for(auto ifa(ifap.get()); ifa; ifa = ifa->ifa_next)
+		if(!closure(*ifa))
+			return false;
+
+	return true;
+}
+#else
+bool
+ircd::net::addrs::for_each(const raw_closure &closure)
+{
+	return true;
+}
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
