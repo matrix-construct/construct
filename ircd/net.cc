@@ -37,6 +37,10 @@ ircd::net::wait_close_sockets()
 /// Network subsystem initialization
 ircd::net::init::init()
 {
+	if(enable_ipv6)
+		if(!addrs::has_usable_ipv6_interface())
+			enable_ipv6.set("false");
+
 	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
 	sslv23_client.set_default_verify_paths();
 }
@@ -58,6 +62,14 @@ struct ircd::log::log
 ircd::net::log
 {
 	"net", 'N'
+};
+
+decltype(ircd::net::enable_ipv6)
+ircd::net::enable_ipv6
+{
+	{ "name",     "ircd.net.enable_ipv6"  },
+	{ "default",  true                    },
+	{ "persist",  false                   },
 };
 
 ircd::string_view

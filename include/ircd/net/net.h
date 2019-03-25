@@ -31,6 +31,8 @@ namespace ircd::net
 
 	// SNOMASK 'N' "net"
 	extern log::log log;
+
+	extern conf::item<bool> enable_ipv6;
 }
 
 #include "hostport.h"
