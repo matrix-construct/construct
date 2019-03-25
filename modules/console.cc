@@ -3867,9 +3867,9 @@ console_cmd__peer(opt &out, const string_view &line)
 		out << setw(40) << left << host;
 
 		if(ipp)
-		    out << ' ' << setw(22) << left << ipp;
+		    out << ' ' << setw(40) << left << ipp;
 		else
-		    out << ' ' << setw(22) << left << " ";
+		    out << ' ' << setw(40) << left << " ";
 
 		out << " " << setw(2) << right << peer.link_count()     << " L"
 		    << " " << setw(2) << right << peer.tag_count()      << " T"
@@ -3962,9 +3962,9 @@ console_cmd__peer__error(opt &out, const string_view &line)
 		out << setw(40) << right << host;
 
 		if(ipp)
-		    out << ' ' << setw(22) << left << ipp;
+		    out << ' ' << setw(40) << left << ipp;
 		else
-		    out << ' ' << setw(22) << left << " ";
+		    out << ' ' << setw(40) << left << " ";
 
 		out << peer.e->etime;
 
@@ -4050,9 +4050,9 @@ console_cmd__peer__version(opt &out, const string_view &line)
 		out << setw(40) << right << host;
 
 		if(ipp)
-		    out << ' ' << setw(22) << left << ipp;
+		    out << ' ' << setw(40) << left << ipp;
 		else
-		    out << ' ' << setw(22) << left << " ";
+		    out << ' ' << setw(40) << left << " ";
 
 		if(!empty(peer.server_name))
 			out << " :" << peer.server_name;
@@ -4572,9 +4572,9 @@ console_cmd__client(opt &out, const string_view &line)
 	    << setw(8) << "SOCKID"
 	    << " "
 	    << left
-	    << setw(22) << "LOCAL"
+	    << setw(40) << "LOCAL"
 	    << " "
-	    << setw(22) << "REMOTE"
+	    << setw(40) << "REMOTE"
 	    << " "
 	    << right
 	    << setw(25) << "BYTES FROM"
@@ -4612,9 +4612,9 @@ console_cmd__client(opt &out, const string_view &line)
 		    ;
 
 		out << " "
-		    << left << setw(22) << local(*client)
+		    << left << setw(40) << local(*client)
 		    << " "
-		    << left << setw(22) << remote(*client)
+		    << left << setw(40) << remote(*client)
 		    ;
 
 		const std::pair<size_t, size_t> stat
