@@ -15,7 +15,8 @@ namespace ircd::net
 {
 	ctx::dock dock;
 
-	void wait_close_sockets();
+	static void init_ipv6();
+	static void wait_close_sockets();
 }
 
 void
@@ -29,6 +30,38 @@ ircd::net::wait_close_sockets()
 			};
 }
 
+void
+ircd::net::init_ipv6()
+{
+	if(!enable_ipv6)
+	{
+		log::warning
+		{
+			log, "IPv6 is disabled by the configuration."
+			" Not checking for usable interfaces."
+		};
+		return;
+	}
+
+	if(!addrs::has_usable_ipv6_interface())
+	{
+		log::dwarning
+		{
+			log, "No usable IPv6 interfaces detected."
+		};
+
+		enable_ipv6.set("false");
+		return;
+	}
+
+	log::info
+	{
+		log, "Detected usable IPv6 interfaces."
+		" Server will query AAAA records and attempt IPv6 connections. If this"
+		" is an error please set ircd.net.enable_ipv6 to false or start with -no6."
+	};
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // init
@@ -37,10 +70,7 @@ ircd::net::wait_close_sockets()
 /// Network subsystem initialization
 ircd::net::init::init()
 {
-	if(enable_ipv6)
-		if(!addrs::has_usable_ipv6_interface())
-			enable_ipv6.set("false");
-
+	init_ipv6();
 	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
 	sslv23_client.set_default_verify_paths();
 }
@@ -704,6 +734,7 @@ ircd::net::open(socket &socket,
 
 bool
 ircd::net::addrs::has_usable_ipv6_interface()
+try
 {
 	return !for_each([](const addr &a)
 	{
@@ -722,6 +753,16 @@ ircd::net::addrs::has_usable_ipv6_interface()
 		// return false to break
 		return false;
 	});
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to check for usable IPv6 interfaces :%s",
+		e.what()
+	};
+
+	return false;
 }
 
 bool
