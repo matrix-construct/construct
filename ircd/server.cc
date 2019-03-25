@@ -969,12 +969,6 @@ ircd::server::peer::resolve(const hostport &hostport,
 	if(op_resolve || op_fini)
 		return;
 
-	if(unlikely(opts.qtype != 33 && opts.qtype != 28 && opts.qtype != 1))
-		throw error
-		{
-			"Unsupported DNS question type '%u' for resolve", opts.qtype
-		};
-
 	// Skip DNS resolution for IP literals
 	if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_address, host(hostport)))
 	{
@@ -985,10 +979,18 @@ ircd::server::peer::resolve(const hostport &hostport,
 		return;
 	}
 
+	if(unlikely(opts.qtype != 33 && opts.qtype != 28 && opts.qtype != 1))
+		throw error
+		{
+			"Unsupported DNS question type '%u' for resolve", opts.qtype
+		};
+
 	auto handler
 	{
 		opts.qtype == 33?
 			net::dns::callback(std::bind(&peer::handle_resolve_SRV, this, ph::_1, ph::_2)):
+		opts.qtype == 28?
+			net::dns::callback(std::bind(&peer::handle_resolve_AAAA, this, ph::_1, ph::_2)):
 			net::dns::callback(std::bind(&peer::handle_resolve_A, this, ph::_1, ph::_2))
 	};
 
@@ -1043,16 +1045,17 @@ try
 	// Save the port from the SRV record to a class member because it won't
 	// get carried through the next A/AAAA query.
 	port(remote) = port(target);
+	port(open_opts.hostport) = port(target);
 
 	// Setup the address record query off this SRV response.
 	net::dns::opts opts;
-	opts.qtype = 1;
+	opts.qtype = 28;
 
 	log::debug
 	{
 		log, "peer(%p) resolved %s SRV rrs:%zu resolving %s %s",
 		this,
-		host(hp),
+		hostcanon,
 		rrs.size(),
 		host(target),
 		rfc1035::rqtype.at(opts.qtype)
@@ -1065,6 +1068,70 @@ catch(const std::exception &e)
 	log::derror
 	{
 		log, "peer(%p) resolve SRV: %s",
+		this,
+		e.what()
+	};
+
+	const ctx::exception_handler eh;
+	close();
+}
+
+void
+ircd::server::peer::handle_resolve_AAAA(const hostport &target,
+                                        const json::array &rrs)
+try
+{
+	assert(op_resolve);
+	op_resolve = false;
+
+	if(unlikely(ircd::run::level != ircd::run::level::RUN))
+		op_fini = true;
+
+	if(unlikely(finished()))
+		return handle_finished();
+
+	if(op_fini)
+		return;
+
+	if(net::dns::is_empty(rrs) || net::dns::is_error(rrs))
+	{
+		// Setup the address record query off this SRV response.
+		net::dns::opts opts;
+		opts.qtype = 1;
+
+		log::debug
+		{
+			log, "peer(%p) resolved %s AAAA rrs:%zu resolving %s %s",
+			this,
+			hostcanon,
+			rrs.size(),
+			host(target),
+			rfc1035::rqtype.at(opts.qtype)
+		};
+
+		resolve(target, opts);
+		return;
+	}
+
+	const json::object &rr
+	{
+		net::dns::random_choice(rrs)
+	};
+
+	assert(!net::dns::is_error(rr));
+	this->remote = net::ipport
+	{
+		unquote(rr.at("ip")), net::port(this->remote)
+	};
+
+	open_opts.ipport = this->remote;
+	open_links();
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "peer(%p) resolve AAAA: %s",
 		this,
 		e.what()
 	};
@@ -1120,14 +1187,13 @@ try
 	};
 
 	open_opts.ipport = this->remote;
-	port(open_opts.hostport) = port(this->remote);
 	open_links();
 }
 catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) resolve A/AAAA: %s",
+		log, "peer(%p) resolve A: %s",
 		this,
 		e.what()
 	};

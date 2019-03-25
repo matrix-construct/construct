@@ -45,6 +45,7 @@ struct ircd::server::peer
 	void handle_finished();
 	void open_links();
 	void handle_resolve_A(const hostport &, const json::array &);
+	void handle_resolve_AAAA(const hostport &, const json::array &);
 	void handle_resolve_SRV(const hostport &, const json::array &);
 	void resolve(const hostport &, const net::dns::opts &);
 	void resolve(const hostport &);
