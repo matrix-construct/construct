@@ -101,7 +101,9 @@ ircd::net::dns::resolve(const hostport &hp,
 		if(cache::get(hp, opts, cb))
 			return;
 
-	cache::waiting.emplace_back(hp, opts, std::move(cb));
+	if(cb)
+		cache::waiting.emplace_back(hp, opts, std::move(cb));
+
 	resolver_call(hp, opts);
 }
 
@@ -593,7 +595,7 @@ ircd::net::dns::cache::get(const hostport &hp,
 			return expired(rr, ts);
 		});
 
-		if(ret)
+		if(ret && closure)
 			closure(hp, rrs);
 	});
 
