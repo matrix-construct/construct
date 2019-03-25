@@ -696,27 +696,34 @@ ircd::net::addrs::for_each(const closure &closure)
 	return for_each([&closure]
 	(const struct ::ifaddrs &ifa)
 	{
-		const string_view &name(ifa.ifa_name);
-		const uint &flags(ifa.ifa_flags);
+		addr a;
+		a.name = ifa.ifa_name;
+		a.flags = ifa.ifa_flags;
 
-		ipport ipport;
 		if(ifa.ifa_addr) switch(ifa.ifa_addr->sa_family)
 		{
 			case AF_INET6:
 			{
 				const auto &sin(reinterpret_cast<const struct sockaddr_in6 *>(ifa.ifa_addr));
-				ipport =
+				a.family = sin->sin6_family;
+				a.address =
 				{
 					ntoh(*reinterpret_cast<const uint128_t *>(sin->sin6_addr.s6_addr)),
 					sin->sin6_port
 				};
+				a.scope_id = sin->sin6_scope_id;
+				a.flowinfo = sin->sin6_flowinfo;
 				break;
 			}
 
 			case AF_INET:
 			{
 				const auto &sin(reinterpret_cast<const struct sockaddr_in *>(ifa.ifa_addr));
-				ipport = { ntoh(sin->sin_addr.s_addr), sin->sin_port };
+				a.family = sin->sin_family;
+				a.address =
+				{
+					ntoh(sin->sin_addr.s_addr), sin->sin_port
+				};
 				break;
 			}
 
@@ -724,7 +731,7 @@ ircd::net::addrs::for_each(const closure &closure)
 				return true;
 		}
 
-		return closure(name, ipport, flags);
+		return closure(a);
 	});
 }
 

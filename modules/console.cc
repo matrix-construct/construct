@@ -4183,11 +4183,14 @@ bool
 console_cmd__net__addrs(opt &out, const string_view &line)
 {
 	net::addrs::for_each([&out]
-	(const string_view &name, const ipport &addr, const uint &flags)
+	(const net::addrs::addr &addr)
 	{
-		out << std::left << std::setw(16) << name << " "
-		    << std::setw(32) << addr << " "
-		    << "(0x" << std::hex << flags << ")" << std::dec
+		out << std::left << std::setw(16) << addr.name << " "
+		    << std::setw(32) << addr.address << " "
+		    << "family[" << std::setw(2) << addr.family << "] "
+		    << "scope[" << addr.scope_id << "] "
+		    << "flowinfo[" << addr.flowinfo << "] "
+		    << "flags[0x" << std::hex << addr.flags << "]" << std::dec
 		    << std::endl;
 
 		return true;
