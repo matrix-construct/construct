@@ -33,6 +33,8 @@ namespace ircd::net::dns
 	// Utilities
 	bool is_error(const json::object &rr);
 	bool is_error(const json::array &rr);
+	bool is_empty(const json::object &rr);
+	bool is_empty(const json::array &rr);
 	time_t get_ttl(const json::object &rr);
 	bool expired(const json::object &rr, const time_t &rr_ts, const time_t &min_ttl);
 	bool expired(const json::object &rr, const time_t &rr_ts);

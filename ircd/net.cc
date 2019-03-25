@@ -3457,6 +3457,22 @@ ircd::net::dns::get_ttl(const json::object &rr)
 }
 
 bool
+ircd::net::dns::is_empty(const json::array &rrs)
+{
+	return std::all_of(begin(rrs), end(rrs), []
+	(const json::object &rr)
+	{
+		return is_empty(rr);
+	});
+}
+
+bool
+ircd::net::dns::is_empty(const json::object &rr)
+{
+	return empty(rr) || (rr.has("ttl") && size(rr) == 1);
+}
+
+bool
 ircd::net::dns::is_error(const json::array &rrs)
 {
 	return !std::none_of(begin(rrs), end(rrs), []

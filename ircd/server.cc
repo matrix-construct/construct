@@ -1080,7 +1080,7 @@ try
 	if(op_fini)
 		return;
 
-	if(empty(rrs))
+	if(net::dns::is_empty(rrs))
 	{
 		err_set(make_exception_ptr<unavailable>("Host has no address record."));
 		assert(this->e && this->e->eptr);
