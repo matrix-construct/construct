@@ -80,11 +80,25 @@ ircd::rfc3986::parser::ip4_octet
 	,"IPv4 octet"
 };
 
+decltype(ircd::rfc3986::parser::ip4_address)
+ircd::rfc3986::parser::ip4_address
+{
+	repeat(3)[ip4_octet >> '.'] >> ip4_octet
+	,"IPv4 address"
+};
+
 decltype(ircd::rfc3986::parser::ip4_literal)
 ircd::rfc3986::parser::ip4_literal
 {
-	repeat(3)[ip4_octet >> '.'] >> ip4_octet
+	ip4_address
 	,"IPv4 literal"
+};
+
+decltype(ircd::rfc3986::parser::ip4_remote)
+ircd::rfc3986::parser::ip4_remote
+{
+	ip4_literal >> -(':' > port)
+	,"IPv4 remote"
 };
 
 decltype(ircd::rfc3986::parser::ip6_char)
@@ -120,7 +134,7 @@ ircd::rfc3986::parser::ip6_ipiece
 decltype(ircd::rfc3986::parser::ip6_ls32)
 ircd::rfc3986::parser::ip6_ls32
 {
-	(ip6_h16 >> ':' >> ip6_h16) | ip4_literal
+	(ip6_h16 >> ':' >> ip6_h16) | ip4_address
 };
 
 /// https://tools.ietf.org/html/rfc3986 Appendix A
@@ -151,7 +165,35 @@ decltype(ircd::rfc3986::parser::ip6_literal)
 ircd::rfc3986::parser::ip6_literal
 {
 	'[' >> ip6_address >> ']'
-	,"ip6 literal"
+	,"IPv6 literal"
+};
+
+decltype(ircd::rfc3986::parser::ip6_remote)
+ircd::rfc3986::parser::ip6_remote
+{
+	ip6_literal >> -(':' > port)
+	,"IPv6 literal"
+};
+
+decltype(ircd::rfc3986::parser::ip_address)
+ircd::rfc3986::parser::ip_address
+{
+	ip6_address | ip4_address
+	,"IP address"
+};
+
+decltype(ircd::rfc3986::parser::ip_literal)
+ircd::rfc3986::parser::ip_literal
+{
+	ip6_literal | ip4_literal
+	,"IP literal"
+};
+
+decltype(ircd::rfc3986::parser::ip_remote)
+ircd::rfc3986::parser::ip_remote
+{
+	ip_literal >> -(':' > port)
+	,"IP literal"
 };
 
 decltype(ircd::rfc3986::parser::hostname)
@@ -168,17 +210,31 @@ ircd::rfc3986::parser::domain
 	,"domain"
 };
 
+decltype(ircd::rfc3986::parser::hostport)
+ircd::rfc3986::parser::hostport
+{
+	domain >> -(':' > port)
+	,"hostport"
+};
+
 decltype(ircd::rfc3986::parser::host)
 ircd::rfc3986::parser::host
 {
-	ip6_literal | ip4_literal | domain
+	ip6_address | ip4_address | domain
 	,"host"
+};
+
+decltype(ircd::rfc3986::parser::host_literal)
+ircd::rfc3986::parser::host_literal
+{
+	ip_literal | domain
+	,"host literal"
 };
 
 decltype(ircd::rfc3986::parser::remote)
 ircd::rfc3986::parser::remote
 {
-	host >> -(':' > port)
+	ip_remote | hostport
 	,"remote"
 };
 
@@ -269,9 +325,19 @@ ircd::string_view
 ircd::rfc3986::host(const string_view &str)
 try
 {
+	static const parser::rule<string_view> literal
+	{
+		parser::ip6_address
+	};
+
+	static const parser::rule<string_view> non_literal
+	{
+		parser::ip6_address | parser::ip4_address | parser::domain
+	};
+
 	static const parser::rule<string_view> rule
 	{
-		raw[parser::host]
+		(lit('[') >> raw[literal]) | raw[non_literal]
 		,"host"
 	};
 
@@ -289,9 +355,19 @@ uint16_t
 ircd::rfc3986::port(const string_view &str)
 try
 {
+	static const parser::rule<> literal
+	{
+		parser::ip6_literal | parser::ip4_literal | parser::domain
+	};
+
+	static const parser::rule<> non_literal
+	{
+		parser::ip6_address
+	};
+
 	static const parser::rule<uint16_t> rule
 	{
-		(eps > parser::host) >> -(lit(':') >> parser::port)
+		non_literal | (literal >> -(lit(':') >> parser::port) >> eoi)
 		,"port"
 	};
 
@@ -309,27 +385,15 @@ bool
 ircd::rfc3986::valid_remote(std::nothrow_t,
                             const string_view &str)
 {
-	static const auto &rule
-	{
-		parser::remote >> eoi
-	};
-
 	if(str.size() > DOMAIN_MAX + 6)
 		return false;
 
-	const char *start(str.data()), *const stop(start + str.size());
-	return qi::parse(start, stop, rule);
+	return valid(std::nothrow, parser::remote, str);
 }
 
 void
 ircd::rfc3986::valid_remote(const string_view &str)
-try
 {
-	static const auto &rule
-	{
-		parser::remote >> eoi
-	};
-
 	if(str.size() > DOMAIN_MAX + 6)
 		throw error
 		{
@@ -338,39 +402,46 @@ try
 			DOMAIN_MAX + 6
 		};
 
-	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, eps > rule);
+	valid(parser::remote, str);
 }
-catch(const qi::expectation_failure<const char *> &e)
+
+bool
+ircd::rfc3986::valid_domain(std::nothrow_t,
+                           const string_view &str)
 {
-	throw expectation_failure<error>{e};
+	if(str.size() > DOMAIN_MAX)
+		return false;
+
+	return valid(std::nothrow, parser::domain, str);
+}
+
+void
+ircd::rfc3986::valid_domain(const string_view &str)
+{
+	if(str.size() > DOMAIN_MAX)
+		throw error
+		{
+			"String length %zu exceeds maximum of %zu characters",
+			size(str),
+			DOMAIN_MAX
+		};
+
+	valid(parser::domain, str);
 }
 
 bool
 ircd::rfc3986::valid_host(std::nothrow_t,
                           const string_view &str)
 {
-	static const auto &rule
-	{
-		parser::host >> eoi
-	};
-
 	if(str.size() > DOMAIN_MAX)
 		return false;
 
-	const char *start(str.data()), *const stop(start + str.size());
-	return qi::parse(start, stop, rule);
+	return valid(std::nothrow, parser::host, str);
 }
 
 void
 ircd::rfc3986::valid_host(const string_view &str)
-try
 {
-	static const auto &rule
-	{
-		parser::host >> eoi
-	};
-
 	if(str.size() > DOMAIN_MAX)
 		throw error
 		{
@@ -379,112 +450,22 @@ try
 			DOMAIN_MAX
 		};
 
-	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, eps > rule);
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<error>{e};
-}
-
-bool
-ircd::rfc3986::valid_domain(std::nothrow_t,
-                            const string_view &str)
-{
-	static const auto &rule
-	{
-		parser::domain >> eoi
-	};
-
-	if(str.size() > DOMAIN_MAX)
-		return false;
-
-	const char *start(str.data()), *const stop(start + str.size());
-	return qi::parse(start, stop, rule);
-}
-
-void
-ircd::rfc3986::valid_domain(const string_view &str)
-try
-{
-	static const auto &rule
-	{
-		parser::host >> eoi
-	};
-
-	if(str.size() > DOMAIN_MAX)
-		throw error
-		{
-			"String length %zu exceeds maximum of %zu characters",
-			size(str),
-			DOMAIN_MAX
-		};
-
-	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, eps > rule);
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<error>{e};
-}
-
-bool
-ircd::rfc3986::valid_literal(std::nothrow_t,
-                            const string_view &str)
-{
-	static const auto &rule
-	{
-		(parser::ip6_literal >> eoi) |
-		(parser::ip4_literal >> eoi)
-	};
-
-	const char *start(str.data()), *const stop(start + str.size());
-	return qi::parse(start, stop, rule);
-}
-
-void
-ircd::rfc3986::valid_literal(const string_view &str)
-try
-{
-	static const auto &rule
-	{
-		(parser::ip6_literal >> eoi) |
-		(parser::ip4_literal >> eoi)
-	};
-
-	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, eps > rule);
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	throw expectation_failure<error>{e};
+	valid(parser::host, str);
 }
 
 bool
 ircd::rfc3986::valid_hostname(std::nothrow_t,
                               const string_view &str)
 {
-	static const auto &rule
-	{
-		parser::hostname >> eoi
-	};
-
 	if(str.size() > HOSTNAME_MAX)
 		return false;
 
-	const char *start(str.data()), *const stop(start + str.size());
-	return qi::parse(start, stop, rule);
+	return valid(std::nothrow, parser::hostname, str);
 }
 
 void
 ircd::rfc3986::valid_hostname(const string_view &str)
-try
 {
-	static const auto &rule
-	{
-		parser::hostname >> eoi
-	};
-
 	if(str.size() > HOSTNAME_MAX)
 		throw error
 		{
@@ -493,8 +474,35 @@ try
 			HOSTNAME_MAX
 		};
 
+	valid(parser::hostname, str);
+}
+
+bool
+ircd::rfc3986::valid(std::nothrow_t,
+                     const parser::rule<> &rule,
+                     const string_view &str)
+{
+	static const parser::rule<> only_rule
+	{
+		rule >> eoi
+	};
+
 	const char *start(str.data()), *const stop(start + str.size());
-	qi::parse(start, stop, eps > rule);
+	return qi::parse(start, stop, only_rule);
+}
+
+void
+ircd::rfc3986::valid(const parser::rule<> &rule,
+                     const string_view &str)
+try
+{
+	static const parser::rule<> only_rule
+	{
+		rule >> eoi
+	};
+
+	const char *start(str.data()), *const stop(start + str.size());
+	qi::parse(start, stop, eps > only_rule);
 }
 catch(const qi::expectation_failure<const char *> &e)
 {
