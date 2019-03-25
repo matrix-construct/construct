@@ -975,6 +975,16 @@ ircd::server::peer::resolve(const hostport &hostport,
 			"Unsupported DNS question type '%u' for resolve", opts.qtype
 		};
 
+	// Skip DNS resolution for IP literals
+	if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_address, host(hostport)))
+	{
+		this->remote = {host(hostport), port(hostport)};
+		open_opts.ipport = this->remote;
+		open_opts.hostport = hostport;
+		open_links();
+		return;
+	}
+
 	auto handler
 	{
 		opts.qtype == 33?
