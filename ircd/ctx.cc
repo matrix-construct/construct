@@ -1221,7 +1221,12 @@ noexcept
 	if(current)
 	{
 		const uninterruptible::nothrow ui;
-		terminate();
+
+		// When the WAIT_JOIN flag is given we wait for the context to
+		// complete cooperatively before this destructs.
+		if(~c->flags & context::WAIT_JOIN)
+			terminate();
+
 		join();
 		return;
 	}

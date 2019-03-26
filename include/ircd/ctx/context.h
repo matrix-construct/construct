@@ -104,6 +104,7 @@ enum ircd::ctx::context::flags
 	NOINTERRUPT     = 0x0008,   ///< Interruption points won't throw while lit.
 	SLICE_EXEMPT    = 0x0010,   ///< The watchdog will ignore excessive cpu usage.
 	STACK_EXEMPT    = 0x0020,   ///< The watchdog will ignore excessive stack usage.
+	WAIT_JOIN       = 0x0040,   ///< Destruction of instance won't terminate ctx.
 
 	INTERRUPTED     = 0x4000,   ///< (INDICATOR) Marked
 	TERMINATED      = 0x8000,   ///< (INDICATOR)
