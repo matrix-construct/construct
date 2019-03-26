@@ -934,7 +934,6 @@ ircd::m::vm::write_commit(eval &eval)
 
 	#ifdef RB_DEBUG
 	const auto db_seq_after(db::sequence(*m::dbs::events));
-	#endif
 
 	log::debug
 	{
@@ -947,4 +946,5 @@ ircd::m::vm::write_commit(eval &eval)
 		txn.size(),
 		txn.bytes()
 	};
+	#endif
 }

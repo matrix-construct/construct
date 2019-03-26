@@ -40,7 +40,7 @@ namespace ircd::m::vm::sequence
 	extern uint64_t retired;      // already written; always monotonic
 	extern uint64_t committed;    // pending write; usually monotonic
 	extern uint64_t uncommitted;  // evaluating; not monotonic
-	static uint pending;
+	static size_t pending;
 
 	const uint64_t &get(const eval &);
 	uint64_t get(id::event::buf &); // [GET]
