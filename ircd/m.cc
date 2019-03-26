@@ -4036,6 +4036,19 @@ ircd::m::user::ignores::enforce(const string_view &type)
 // m/room.h
 //
 
+size_t
+ircd::m::room::purge(const room &room)
+{
+	using prototype = size_t (const m::room &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::purge"
+	};
+
+	return call(room);
+}
+
 bool
 ircd::m::room::state::force_present(const event &event)
 {

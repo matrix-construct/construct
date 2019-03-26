@@ -222,8 +222,9 @@ ircd::m::room::origins::random(const origins &origins,
 	return ret;
 }
 
-extern "C" size_t
-purge(const m::room &room)
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::purge(const room &room)
 {
 	size_t ret(0);
 	db::txn txn

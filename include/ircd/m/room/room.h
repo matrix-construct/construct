@@ -108,6 +108,8 @@ struct ircd::m::room
 	// Index of create event
 	static event::idx index(const id &, std::nothrow_t);
 	static event::idx index(const id &);
+
+	static size_t purge(const room &); // cuidado!
 };
 
 inline ircd::m::room::operator

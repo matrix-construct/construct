@@ -8271,9 +8271,14 @@ console_cmd__room__id(opt &out, const string_view &id)
 bool
 console_cmd__room__purge(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
 	const auto &room_id
 	{
-		m::room_id(token(line, ' ', 0))
+		m::room_id(param.at(0))
 	};
 
 	const m::room room
@@ -8281,15 +8286,9 @@ console_cmd__room__purge(opt &out, const string_view &line)
 		room_id
 	};
 
-	using prototype = size_t (const m::room &);
-	static mods::import<prototype> purge
-	{
-		"m_room", "purge"
-	};
-
 	const size_t ret
 	{
-		purge(room)
+		m::room::purge(room)
 	};
 
 	out << "erased " << ret << std::endl;
