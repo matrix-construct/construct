@@ -534,6 +534,11 @@ ircd::net::dns::cache::put(const hostport &hp,
 		}
 	}
 
+	// When the array has a zero value count we didn't know how to cache
+	// any of these records; don't send anything to the cache room.
+	if(!array.vc)
+		return false;
+
 	array.~array();
 	content.~object();
 	send(room_id, m::me, type, state_key, json::object{out.completed()});
