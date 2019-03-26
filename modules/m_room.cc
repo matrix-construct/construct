@@ -561,6 +561,39 @@ ircd::m::is_complete(const room &room)
 	return { true, depth };
 }
 
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::state::purge_replaced(const state &state)
+{
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	size_t ret(0);
+	m::room::messages it
+	{
+		state.room_id, uint64_t(0)
+	};
+
+	if(!it)
+		return ret;
+
+	for(; it; ++it)
+	{
+		const m::event::idx &event_idx(it.event_idx());
+		if(!m::get(std::nothrow, event_idx, "state_key", [](const auto &) {}))
+			continue;
+
+		if(!m::event::refs(event_idx).count(m::dbs::ref::STATE))
+			continue;
+
+		// TODO: erase event
+	}
+
+	return ret;
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::room::state::force_present(const m::event &event)

@@ -7513,6 +7513,33 @@ console_cmd__room__state__force(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__state__purge__replaced(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::room::state state
+	{
+		room_id
+	};
+
+	const size_t ret
+	{
+		m::room::state::purge_replaced(state)
+	};
+
+	out << "erased " << ret << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 {
 	const params param{line, " ",

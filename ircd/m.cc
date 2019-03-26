@@ -4049,6 +4049,19 @@ ircd::m::room::purge(const room &room)
 	return call(room);
 }
 
+size_t
+ircd::m::room::state::purge_replaced(const state &state)
+{
+	using prototype = size_t (const room::state &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::purge_replaced"
+	};
+
+	return call(state);
+}
+
 bool
 ircd::m::room::state::force_present(const event &event)
 {
