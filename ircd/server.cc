@@ -340,13 +340,20 @@ ircd::server::loghead(const mutable_buffer &buf,
                       const request &request)
 try
 {
-	if(empty(request.in.head))
-		return "<no header>";
+	if(empty(request.out.head))
+		return "<no head>";
 
 	parse::buffer pb{request.out.head};
-	parse::capstan pc{pb};
+	parse::capstan pc{pb, [](char *&read, char *stop)
+	{
+		read = stop;
+	}};
+
 	pc.read += size(request.out.head);
 	const http::request::head head{pc};
+	if(!head.method || !head.path)
+		return "<no head data>";
+
 	return fmt::sprintf
 	{
 		buf, "%s %s", head.method, head.path
