@@ -116,7 +116,7 @@ ircd::server::interrupt_all()
 ircd::server::peer &
 ircd::server::get(const net::hostport &hostport)
 {
-	char canonbuf[256];
+	thread_local char canonbuf[256];
 	const auto canonized
 	{
 		net::canonize(canonbuf, hostport)
