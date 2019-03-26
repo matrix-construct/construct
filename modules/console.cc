@@ -67,7 +67,7 @@ struct cmd
 {
 	using is_transparent = void;
 
-	static constexpr const size_t &PATH_MAX
+	static constexpr const size_t &MAX_DEPTH
 	{
 		8
 	};
@@ -148,7 +148,7 @@ find_cmd(const string_view &line)
 {
 	const size_t elems
 	{
-		std::min(token_count(line, ' '), cmd::PATH_MAX)
+		std::min(token_count(line, ' '), cmd::MAX_DEPTH)
 	};
 
 	for(size_t e(elems+1); e > 0; --e)
@@ -254,7 +254,7 @@ console_cmd__help(opt &out, const string_view &line)
 
 	const size_t elems
 	{
-		std::min(token_count(line, ' '), cmd::PATH_MAX)
+		std::min(token_count(line, ' '), cmd::MAX_DEPTH)
 	};
 
 	for(size_t e(elems+1); e > 0; --e)
