@@ -988,7 +988,6 @@ ircd::server::peer::resolve(const hostport &hostport,
 	{
 		this->remote = {host(hostport), port(hostport)};
 		open_opts.ipport = this->remote;
-		open_opts.hostport = hostport;
 		open_links();
 		return;
 	}
