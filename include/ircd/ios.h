@@ -20,6 +20,9 @@ namespace boost::asio
 {
 	struct io_context;
 	struct signal_set;
+
+	template<class function>
+	void asio_handler_invoke(function&, ...);
 }
 
 namespace ircd
@@ -32,6 +35,10 @@ namespace ircd
 
 namespace ircd::ios
 {
+	struct handler;
+	struct descriptor;
+	template<class function> struct handle;
+
 	extern const std::thread::id static_thread_id;
 	extern std::thread::id main_thread_id;
 	extern asio::io_context *user;
@@ -43,9 +50,10 @@ namespace ircd::ios
 	bool available();
 	asio::io_context &get();
 
+	void dispatch(descriptor &, std::function<void ()>);
+	void post(descriptor &, std::function<void ()>);
 	void dispatch(std::function<void ()>);
 	void post(std::function<void ()>);
-
 	void init(asio::io_context &user);
 }
 
@@ -53,9 +61,87 @@ namespace ircd
 {
 	using ios::assert_main_thread;
 	using ios::is_main_thread;
-
 	using ios::dispatch;
 	using ios::post;
+}
+
+struct ircd::ios::descriptor
+:instance_list<descriptor>
+{
+	static uint64_t ids;
+
+	string_view name;
+	uint64_t id {++ids};
+	uint64_t calls {0};
+	uint64_t faults {0};
+
+	descriptor(const string_view &name);
+	descriptor(descriptor &&) = delete;
+	descriptor(const descriptor &) = delete;
+	~descriptor() noexcept;
+};
+
+struct ircd::ios::handler
+{
+	static void enter(handler *const &);
+	static void leave(handler *const &);
+	static bool fault(handler *const &);
+
+	ios::descriptor *descriptor;
+};
+
+template<class function>
+struct ircd::ios::handle
+:handler
+{
+	function f;
+
+	template<class... args>
+	void operator()(args&&... a) const;
+
+	handle(ios::descriptor &d, function&& f);
+};
+
+namespace ircd::ios
+{
+	template<class callable,
+	         class function>
+	void asio_handler_invoke(callable &f, handle<function> *);
+}
+
+template<class function>
+ircd::ios::handle<function>::handle(ios::descriptor &d,
+                                    function&& f)
+:handler{&d}
+,f{std::forward<function>(f)}
+{}
+
+template<class function>
+template<class... args>
+void
+ircd::ios::handle<function>::operator()(args&&... a)
+const
+{
+	f(std::forward<args>(a)...);
+}
+
+template<class callable,
+         class function>
+void
+ircd::ios::asio_handler_invoke(callable &f,
+                               handle<function> *const h)
+try
+{
+	handler::enter(h);
+	boost::asio::asio_handler_invoke(f, &h);
+	handler::leave(h);
+}
+catch(...)
+{
+	if(handler::fault(h))
+		handler::leave(h);
+	else
+		throw;
 }
 
 inline void

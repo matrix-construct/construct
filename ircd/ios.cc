@@ -71,6 +71,20 @@ ircd::ios::dispatch(std::function<void ()> function)
 	boost::asio::dispatch(get(), std::move(function));
 }
 
+void
+ircd::ios::post(descriptor &descriptor,
+                std::function<void ()> function)
+{
+	boost::asio::post(get(), handle(descriptor, std::move(function)));
+}
+
+void
+ircd::ios::dispatch(descriptor &descriptor,
+                    std::function<void ()> function)
+{
+	boost::asio::dispatch(get(), handle(descriptor, std::move(function)));
+}
+
 boost::asio::io_context &
 ircd::ios::get()
 {
@@ -82,4 +96,58 @@ bool
 ircd::ios::available()
 {
 	return bool(user);
+}
+
+//
+// descriptor
+//
+
+template<>
+decltype(ircd::util::instance_list<ircd::ios::descriptor>::list)
+ircd::util::instance_list<ircd::ios::descriptor>::list
+{};
+
+decltype(ircd::ios::descriptor::ids)
+ircd::ios::descriptor::ids;
+
+//
+// descriptor::descriptor
+//
+
+ircd::ios::descriptor::descriptor(const string_view &name)
+:name{name}
+{
+}
+
+ircd::ios::descriptor::~descriptor()
+noexcept
+{
+}
+
+//
+// handler
+//
+
+bool
+ircd::ios::handler::fault(handler *const &handler)
+{
+	assert(handler && handler->descriptor);
+	auto &descriptor(*handler->descriptor);
+	++descriptor.faults;
+	return false;
+}
+
+void
+ircd::ios::handler::leave(handler *const &handler)
+{
+	assert(handler && handler->descriptor);
+	auto &descriptor(*handler->descriptor);
+}
+
+void
+ircd::ios::handler::enter(handler *const &handler)
+{
+	assert(handler && handler->descriptor);
+	auto &descriptor(*handler->descriptor);
+	++descriptor.calls;
 }
