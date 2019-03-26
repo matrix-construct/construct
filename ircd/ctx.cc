@@ -112,14 +112,16 @@ noexcept try
 
 	// Call the user's function.
 	func();
+
+	assert(!std::uncaught_exceptions());
 }
 catch(const ircd::ctx::interrupted &)
 {
-
+	assert(!std::uncaught_exceptions());
 }
 catch(const ircd::ctx::terminated &)
 {
-
+	assert(!std::uncaught_exceptions());
 }
 catch(const std::exception &e)
 {
