@@ -540,10 +540,10 @@ ircd::m::append(json::stack::object &object,
 	{
 		unsigned_, "age", json::value
 		{
-			has_event_idx && opts.age != std::numeric_limits<long>::min()?
-				long(vm::sequence::retired - *opts.event_idx):
 			opts.age != std::numeric_limits<long>::min()?
 				opts.age:
+			json::get<"origin_server_ts"_>(event)?
+				ircd::time<milliseconds>() - json::get<"origin_server_ts"_>(event):
 			0L
 		}
 	};
