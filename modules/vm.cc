@@ -508,7 +508,18 @@ ircd::m::vm::inject(eval &eval,
 		event, { "content", content },
 	};
 
-	return execute(eval, event);
+	const m::event event_tuple
+	{
+		event
+	};
+
+	if(opts.debuglog_precommit)
+		log::debug
+		{
+			log, "Issuing: %s", pretty_oneline(event_tuple)
+		};
+
+	return execute(eval, event_tuple);
 }
 
 enum ircd::m::vm::fault
@@ -538,12 +549,6 @@ try
 	{
 		*eval.opts
 	};
-
-	if(eval.copts && eval.copts->debuglog_precommit)
-		log::debug
-		{
-			log, "Issuing: %s", pretty_oneline(event)
-		};
 
 	if(eval.copts && eval.copts->issue)
 		issue_hook(event, eval);
