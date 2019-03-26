@@ -293,13 +293,11 @@ try
 			record.data() + s, record.data() + e
 		};
 
+		assert(!empty(records));
 		cache::put(tag.hp, tag.opts, records);
-
+		s = e;
 		if(e < i)
-		{
 			last = record.at(e)->type;
-			s = e;
-		}
 	}
 
 	// We have to send something to the cache with the same type

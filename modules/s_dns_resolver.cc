@@ -742,10 +742,7 @@ ircd::net::dns::resolver::handle_error(const header &header,
 
 		case 3: // NXDomain; exception
 			if(!tag.opts.nxdomain_exceptions)
-			{
-				callback({}, tag, answers{});
 				return true;
-			}
 
 			return false;
 
