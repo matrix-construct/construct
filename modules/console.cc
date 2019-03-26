@@ -7840,7 +7840,8 @@ console_cmd__room__events(opt &out, const string_view &line)
 			    << " " << it.event_id()
 			    << std::endl;
 		else
-			out << pretty_oneline(*it)
+			out << std::left << std::setw(10) << it.event_idx() << " "
+			    << pretty_oneline(*it)
 			    << std::endl;
 
 	return true;
