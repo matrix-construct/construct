@@ -117,6 +117,10 @@ github_handle__label(std::ostream &,
                      const json::object &content);
 
 static std::ostream &
+github_handle__organization(std::ostream &,
+                            const json::object &content);
+
+static std::ostream &
 github_handle__ping(std::ostream &,
                     const json::object &content);
 
@@ -179,6 +183,8 @@ github_handle(client &client,
 		github_handle__watch(out, request.content);
 	else if(type == "label")
 		github_handle__label(out, request.content);
+	else if(type == "organization")
+		github_handle__organization(out, request.content);
 
 	if(!string_view(webhook_room))
 		return;
@@ -788,6 +794,47 @@ github_handle__label(std::ostream &out,
 		out << "</font>";
 		out << "</li>";
 		out << "</ul>";
+	}
+
+	return out;
+}
+
+std::ostream &
+github_handle__organization(std::ostream &out,
+                            const json::object &content)
+{
+	const json::string &action
+	{
+		content["action"]
+	};
+
+	out << " "
+	    << "<b>"
+	    << action
+	    << "</b>"
+	    ;
+
+	if(action == "member_added")
+	{
+		const json::object &membership
+		{
+			content["membership"]
+		};
+
+		const json::object &user
+		{
+			membership["user"]
+		};
+
+		out << " "
+		    << "<a href=" << user["html_url"] << ">"
+		    << unquote(user["login"])
+		    << "</a>"
+		    ;
+
+		out << " with role "
+		    << unquote(membership["role"])
+		    ;
 	}
 
 	return out;
