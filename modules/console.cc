@@ -811,6 +811,7 @@ console_cmd__ios(opt &out, const string_view &line)
 	    << " " << std::left << std::setw(48) << "NAME"
 	    << " " << std::right << std::setw(6) << "FAULTS"
 	    << " " << std::right << std::setw(10) << "CALLS"
+	    << " " << std::right << std::setw(15) << "CYCLES"
 	    << " " << std::right << std::setw(10) << "ALLOCS"
 	    << " " << std::right << std::setw(10) << "FREES"
 	    << " " << std::right << std::setw(26) << "ALLOCATED"
@@ -827,6 +828,7 @@ console_cmd__ios(opt &out, const string_view &line)
 		    << " " << std::left << std::setw(48) << d.name
 		    << " " << std::right << std::setw(6) << d.faults
 		    << " " << std::right << std::setw(10) << d.calls
+		    << " " << std::right << std::setw(15) << d.slice_total
 		    << " " << std::right << std::setw(10) << d.allocs
 		    << " " << std::right << std::setw(10) << d.frees
 		    << " " << std::right << std::setw(26) << pretty(iec(d.alloc_bytes))

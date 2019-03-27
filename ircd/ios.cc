@@ -144,7 +144,17 @@ ircd::ios::handler::fault(handler *const &handler)
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
 	++descriptor.faults;
-	return false;
+	bool ret(false);
+
+	// leave() isn't called if we return false so the tsc counter
+	// needs to be tied off here instead.
+	if(!ret)
+	{
+		descriptor.slice_last = rdtsc() - handler->slice_start;
+		descriptor.slice_total += descriptor.slice_last;
+	}
+
+	return ret;
 }
 
 void
@@ -152,6 +162,8 @@ ircd::ios::handler::leave(handler *const &handler)
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
+	descriptor.slice_last = rdtsc() - handler->slice_start;
+	descriptor.slice_total += descriptor.slice_last;
 }
 
 void
@@ -160,6 +172,7 @@ ircd::ios::handler::enter(handler *const &handler)
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
 	++descriptor.calls;
+	handler->slice_start = rdtsc();
 }
 
 void

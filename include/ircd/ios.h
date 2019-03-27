@@ -78,6 +78,8 @@ struct ircd::ios::descriptor
 	uint64_t alloc_bytes{0};
 	uint64_t frees {0};
 	uint64_t free_bytes{0};
+	uint64_t slice_total {0};
+	uint64_t slice_last {0};
 
 	descriptor(const string_view &name);
 	descriptor(descriptor &&) = delete;
@@ -94,6 +96,7 @@ struct ircd::ios::handler
 	static bool fault(handler *const &);
 
 	ios::descriptor *descriptor;
+	uint64_t slice_start {0};
 };
 
 template<class function>
