@@ -89,6 +89,8 @@ struct ircd::ios::descriptor
 
 struct ircd::ios::handler
 {
+	static thread_local handler *current;
+
 	static void *allocate(handler *const &, const size_t &);
 	static void deallocate(handler *const &, void *const &, const size_t &);
 	static void enter(handler *const &);

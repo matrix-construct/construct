@@ -138,6 +138,9 @@ noexcept
 // handler
 //
 
+decltype(ircd::ios::handler::current) thread_local
+ircd::ios::handler::current;
+
 bool
 ircd::ios::handler::fault(handler *const &handler)
 {
@@ -164,6 +167,8 @@ ircd::ios::handler::leave(handler *const &handler)
 	auto &descriptor(*handler->descriptor);
 	descriptor.slice_last = cycles() - handler->slice_start;
 	descriptor.slice_total += descriptor.slice_last;
+	assert(handler::current == handler);
+	handler::current = nullptr;
 }
 
 void
@@ -172,6 +177,8 @@ ircd::ios::handler::enter(handler *const &handler)
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
 	++descriptor.calls;
+	assert(!handler::current);
+	handler::current = handler;
 	handler->slice_start = cycles();
 }
 
