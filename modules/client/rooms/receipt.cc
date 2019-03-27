@@ -34,6 +34,13 @@ post__receipt(client &client,
 		request.parv[2]
 	};
 
+	if(receipt_type != "m.read")
+		throw m::UNSUPPORTED
+		{
+			"Sorry, receipt type '%s' is not supported here.",
+			receipt_type
+		};
+
 	m::event::id::buf event_id
 	{
 		url::decode(event_id, request.parv[3])
