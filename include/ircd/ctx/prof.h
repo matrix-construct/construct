@@ -33,7 +33,7 @@ namespace ircd::ctx::prof
 	struct ticker;
 
 	// util
-	ulong rdtsc();
+	unsigned long long rdtsc();
 	string_view reflect(const event &);
 
 	// totals
@@ -97,3 +97,19 @@ struct ircd::ctx::prof::ticker
 	// monotonic counters for events
 	std::array<uint64_t, num_of<prof::event>()> event {{0}};
 };
+
+#if defined(__x86_64__) || defined(__i386__)
+inline unsigned long long
+__attribute__((flatten, always_inline, gnu_inline, artificial))
+ircd::ctx::prof::rdtsc()
+{
+	return __builtin_ia32_rdtsc();
+}
+#else
+inline unsigned long long
+ircd::ctx::prof::rdtsc()
+{
+	static_assert(false, "TODO: Implement fallback here");
+	return 0;
+}
+#endif

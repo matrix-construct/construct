@@ -1867,25 +1867,6 @@ ircd::ctx::prof::reflect(const event &e)
 	return "?????";
 }
 
-#ifdef HAVE_X86INTRIN_H
-ulong
-ircd::ctx::prof::rdtsc()
-{
-	return __rdtsc();
-}
-#else
-ulong
-ircd::ctx::prof::rdtsc()
-{
-	static_assert
-	(
-		0, "TODO: Implement fallback here"
-	);
-
-	return 0;
-}
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ctx_ole.h
