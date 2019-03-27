@@ -74,6 +74,10 @@ struct ircd::ios::descriptor
 	uint64_t id {++ids};
 	uint64_t calls {0};
 	uint64_t faults {0};
+	uint64_t allocs {0};
+	uint64_t alloc_bytes{0};
+	uint64_t frees {0};
+	uint64_t free_bytes{0};
 
 	descriptor(const string_view &name);
 	descriptor(descriptor &&) = delete;
@@ -83,6 +87,8 @@ struct ircd::ios::descriptor
 
 struct ircd::ios::handler
 {
+	static void *allocate(handler *const &, const size_t &);
+	static void deallocate(handler *const &, void *const &, const size_t &);
 	static void enter(handler *const &);
 	static void leave(handler *const &);
 	static bool fault(handler *const &);
@@ -104,6 +110,12 @@ struct ircd::ios::handle
 
 namespace ircd::ios
 {
+	template<class function>
+	void asio_handler_deallocate(void *, size_t, handle<function> *);
+
+	template<class function>
+	void *asio_handler_allocate(size_t, handle<function> *);
+
 	template<class callable,
 	         class function>
 	void asio_handler_invoke(callable &f, handle<function> *);
@@ -123,6 +135,24 @@ ircd::ios::handle<function>::operator()(args&&... a)
 const
 {
 	f(std::forward<args>(a)...);
+}
+
+template<class function>
+void
+ircd::ios::asio_handler_deallocate(void *const ptr,
+                                   size_t size,
+                                   handle<function> *const h)
+{
+	handler::deallocate(h, ptr, size);
+}
+
+template<class function>
+void *
+__attribute__((malloc, returns_nonnull, warn_unused_result, alloc_size(1)))
+ircd::ios::asio_handler_allocate(size_t size,
+                                 handle<function> *const h)
+{
+	return handler::allocate(h, size);
 }
 
 template<class callable,

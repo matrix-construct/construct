@@ -161,3 +161,26 @@ ircd::ios::handler::enter(handler *const &handler)
 	auto &descriptor(*handler->descriptor);
 	++descriptor.calls;
 }
+
+void
+ircd::ios::handler::deallocate(handler *const &handler,
+                               void *const &ptr,
+                               const size_t &size)
+{
+	assert(handler && handler->descriptor);
+	auto &descriptor(*handler->descriptor);
+	::operator delete(ptr, size);
+	descriptor.free_bytes += size;
+	++descriptor.frees;
+}
+
+void *
+ircd::ios::handler::allocate(handler *const &handler,
+                             const size_t &size)
+{
+	assert(handler && handler->descriptor);
+	auto &descriptor(*handler->descriptor);
+	descriptor.alloc_bytes += size;
+	++descriptor.allocs;
+	return ::operator new(size);
+}
