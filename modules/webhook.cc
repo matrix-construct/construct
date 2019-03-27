@@ -600,6 +600,30 @@ github_handle__issues(std::ostream &out,
 
 		out << "</ul>";
 	}
+	else if(action == "unlabeled")
+	{
+		const json::object label
+		{
+			content["label"]
+		};
+
+		out << "<ul>";
+		out << "<li>removed: ";
+		out << "<font color=\"#FFFFFF\""
+		    << "data-mx-bg-color=\"#"
+		    << unquote(label["color"])
+		    << "\">";
+
+		out << "<b>";
+		out << "&nbsp;";
+		out << unquote(label["name"]);
+		out << "&nbsp;";
+		out << "</b>";
+
+		out << "</font>";
+		out << "</li>";
+		out << "</ul>";
+	}
 
 	return out;
 }
