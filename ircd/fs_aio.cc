@@ -781,18 +781,41 @@ try
 		std::bind(&system::handle, this, ph::_1, ph::_2)
 	};
 
-	static ios::descriptor descriptor
-	{
-		"ircd::fs::aio sigfd"
-	};
-
-	resfd.async_read_some(bufs, ios::handle(descriptor, std::move(handler)));
+	resfd.async_read_some(bufs, ios::handle(handle_descriptor, std::move(handler)));
 }
 catch(...)
 {
 	handle_set = false;
 	throw;
 }
+
+decltype(ircd::fs::aio::system::handle_descriptor)
+ircd::fs::aio::system::handle_descriptor
+{
+	"ircd::fs::aio sigfd",
+
+	// allocator; custom allocation strategy because this handler
+	// appears to excessively allocate and deallocate 120 bytes; this
+	// is a simple asynchronous operation, we can do better (and perhaps
+	// even better than this below).
+	[](auto &handler, const size_t &size)
+	{
+		assert(ircd::fs::aio::system);
+		auto &system(*ircd::fs::aio::system);
+
+		if(unlikely(!system.handle_data))
+		{
+			system.handle_size = size;
+			system.handle_data = std::make_unique<uint8_t[]>(size);
+		}
+
+		assert(system.handle_size == size);
+		return system.handle_data.get();
+	},
+
+	// no deallocation; satisfied by class member unique_ptr
+	[](auto &handler, void *const &ptr, const auto &size) {}
+};
 
 /// Handle notifications that requests are complete.
 void

@@ -44,6 +44,10 @@ struct ircd::fs::aio::system
 	size_t in_flight {0};
 	bool handle_set {false};
 
+	size_t handle_size {0};
+	std::unique_ptr<uint8_t[]> handle_data;
+	static ios::descriptor handle_descriptor;
+
 	/// An eventfd which will be notified by the system; we integrate this with
 	/// the ircd io_service core epoll() event loop. The EFD_SEMAPHORE flag is
 	/// not used to reduce the number of triggers. The semaphore value is the
