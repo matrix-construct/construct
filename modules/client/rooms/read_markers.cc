@@ -12,64 +12,69 @@
 
 using namespace ircd;
 
+void // This is in receipt.cc; not listed in rooms.h so we declare here.
+handle_receipt_m_read(client &client,
+                      const resource::request &request,
+                      const m::room::id &room_id,
+                      const m::event::id &event_id);
+
+static void
+handle_m_fully_read(client &client,
+                    const resource::request &request,
+                    const m::room::id &room_id,
+                    const json::string &input);
+
 resource::response
 post__read_markers(client &client,
                    const resource::request &request,
                    const m::room::id &room_id)
 {
-	const string_view m_fully_read
+	const json::string &m_read
 	{
-		unquote(request["m.fully_read"])
+		request["m.read"]
 	};
 
-	const string_view m_read
+	const json::string &m_fully_read
 	{
-		unquote(request["m.read"])
+		request["m.fully_read"]
 	};
 
-	const auto &marker
-	{
-		m_read?: m_fully_read
-	};
+	if(m_fully_read)
+		handle_m_fully_read(client, request, room_id, m_fully_read);
 
-	m::event::id::buf head;
-	if(marker) switch(m::sigil(marker))
-	{
-		case m::id::EVENT:
-			head = marker;
-			break;
-
-		case m::id::ROOM:
-			head = m::head(m::room::id(marker));
-			break;
-
-		default: log::dwarning
-		{
-			"Unhandled read marker '%s' sigil type",
-			string_view{marker}
-		};
-	}
-
-	const bool useful
-	{
-		head &&
-
-		// Check if the marker is more recent than the last marker they sent.
-		// We currently don't do anything with markers targeting the past
-		m::receipt::freshest(room_id, request.user_id, head) &&
-
-		// Check if the user wants to prevent sending a receipt to the room.
-		!m::receipt::ignoring(request.user_id, room_id) &&
-
-		// Check if the user wants to prevent based on this event's specifics.
-		!m::receipt::ignoring(request.user_id, head)
-	};
-
-	if(useful)
-		m::receipt::read(room_id, request.user_id, head);
+	if(m_read)
+		handle_receipt_m_read(client, request, room_id, m_read);
 
 	return resource::response
 	{
 		client, http::OK
 	};
+}
+
+void
+handle_m_fully_read(client &client,
+                    const resource::request &request,
+                    const m::room::id &room_id,
+                    const json::string &input)
+{
+	m::event::id::buf event_id_buf;
+	if(!m::valid(m::id::EVENT, input))
+		event_id_buf = m::head(room_id);
+
+	const m::event::id &event_id
+	{
+		event_id_buf?: m::event::id{input}
+	};
+
+	const m::user::room_account_data account_data
+	{
+		request.user_id, room_id
+	};
+
+	const json::strung content{json::members
+	{
+		{ "event_id", event_id }
+	}};
+
+	account_data.set("m.fully_read", json::object(content));
 }
