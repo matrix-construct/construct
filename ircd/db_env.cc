@@ -4045,7 +4045,7 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 		// Don't start a background task before RUN.
 		run::changed::dock.wait([]
 		{
-			return run::level == run::level::RUN;
+			return run::level != run::level::START;
 		});
 
 		const ctx::uninterruptible::nothrow ui;
