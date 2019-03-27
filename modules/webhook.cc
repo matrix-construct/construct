@@ -525,23 +525,22 @@ github_handle__issues(std::ostream &out,
 	    << "</a>"
 	    ;
 
-	if(action != "labeled")
-		for(const json::object &label : json::array(issue["labels"]))
-		{
-			out << "&nbsp;";
-			out << "<font color=\"#FFFFFF\""
-			    << "data-mx-bg-color=\"#"
-			    << unquote(label["color"])
-			    << "\">";
+	for(const json::object &label : json::array(issue["labels"]))
+	{
+		out << "&nbsp;";
+		out << "<font color=\"#FFFFFF\""
+		    << "data-mx-bg-color=\"#"
+		    << unquote(label["color"])
+		    << "\">";
 
-			out << "<b>";
-			out << "&nbsp;";
+		out << "<b>";
+		out << "&nbsp;";
 			out << unquote(label["name"]);
-			out << "&nbsp;";
-			out << "</b>";
+		out << "&nbsp;";
+		out << "</b>";
 
-			out << "</font>";
-		}
+		out << "</font>";
+	}
 
 	if(action == "opened")
 	{
@@ -569,35 +568,26 @@ github_handle__issues(std::ostream &out,
 	}
 	else if(action == "labeled")
 	{
-		const json::array labels
-		{
-			issue["labels"]
-		};
-
 		const json::object label
 		{
 			content["label"]
 		};
 
 		out << "<ul>";
-		for(const json::object &label : labels)
-		{
-			out << "<li>";
-			out << "<font color=\"#FFFFFF\""
-			    << "data-mx-bg-color=\"#"
-			    << unquote(label["color"])
-			    << "\">";
+		out << "<li>added: ";
+		out << "<font color=\"#FFFFFF\""
+		    << "data-mx-bg-color=\"#"
+		    << unquote(label["color"])
+		    << "\">";
 
-			out << "<b>";
-			out << "&nbsp;";
-			out << unquote(label["name"]);
-			out << "&nbsp;";
-			out << "</b>";
+		out << "<b>";
+		out << "&nbsp;";
+		out << unquote(label["name"]);
+		out << "&nbsp;";
+		out << "</b>";
 
-			out << "</font>";
-			out << "</li>";
-		}
-
+		out << "</font>";
+		out << "</li>";
 		out << "</ul>";
 	}
 	else if(action == "unlabeled")
