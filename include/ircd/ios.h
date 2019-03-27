@@ -70,6 +70,9 @@ struct ircd::ios::descriptor
 {
 	static uint64_t ids;
 
+	static void *default_allocator(handler &, const size_t &);
+	static void default_deallocator(handler &, void *const &, const size_t &);
+
 	string_view name;
 	uint64_t id {++ids};
 	uint64_t calls {0};
@@ -81,7 +84,13 @@ struct ircd::ios::descriptor
 	uint64_t slice_total {0};
 	uint64_t slice_last {0};
 
-	descriptor(const string_view &name);
+	std::function<void *(handler &, const size_t &)> allocator;
+	std::function<void (handler &, void *const &, const size_t &)> deallocator;
+
+	descriptor(const string_view &name,
+	           const decltype(allocator) & = default_allocator,
+	           const decltype(deallocator) & = default_deallocator);
+
 	descriptor(descriptor &&) = delete;
 	descriptor(const descriptor &) = delete;
 	~descriptor() noexcept;

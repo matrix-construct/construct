@@ -124,14 +124,35 @@ ircd::ios::descriptor::ids;
 // descriptor::descriptor
 //
 
-ircd::ios::descriptor::descriptor(const string_view &name)
+ircd::ios::descriptor::descriptor(const string_view &name,
+                                  const decltype(allocator) &allocator,
+                                  const decltype(deallocator) &deallocator)
 :name{name}
+,allocator{allocator}
+,deallocator{deallocator}
 {
+	assert(allocator);
+	assert(deallocator);
 }
 
 ircd::ios::descriptor::~descriptor()
 noexcept
 {
+}
+
+void
+ircd::ios::descriptor::default_deallocator(handler &handler,
+                                           void *const &ptr,
+                                           const size_t &size)
+{
+	::operator delete(ptr, size);
+}
+
+void *
+ircd::ios::descriptor::default_allocator(handler &handler,
+                                         const size_t &size)
+{
+	return ::operator new(size);
 }
 
 //
@@ -189,7 +210,7 @@ ircd::ios::handler::deallocate(handler *const &handler,
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
-	::operator delete(ptr, size);
+	descriptor.deallocator(*handler, ptr, size);
 	descriptor.free_bytes += size;
 	++descriptor.frees;
 }
@@ -202,5 +223,5 @@ ircd::ios::handler::allocate(handler *const &handler,
 	auto &descriptor(*handler->descriptor);
 	descriptor.alloc_bytes += size;
 	++descriptor.allocs;
-	return ::operator new(size);
+	return descriptor.allocator(*handler, size);
 }
