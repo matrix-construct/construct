@@ -413,12 +413,12 @@ try
 {
 	syscall<SYS_io_setup>(this->max_events(), &idp);
 
-	const aio_ring *const ring
+	const system::ring *const ring
 	{
-		reinterpret_cast<const aio_ring *>(idp)
+		reinterpret_cast<const system::ring *>(idp)
 	};
 
-	assert(ring->magic == aio_ring::MAGIC);
+	assert(ring->magic == ring::MAGIC);
 
 	log::debug
 	{

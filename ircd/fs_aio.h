@@ -23,26 +23,12 @@ namespace ircd::fs::aio
 	void fsync(const fd &, const sync_opts &);
 }
 
-struct aio_ring
-{
-	static constexpr uint MAGIC {0xa10a10a1};
-
-	uint id; // kernel internal index number
-	uint nr; // number of io_events
-	uint head;
-	uint tail;
-	uint magic;
-	uint compat_features;
-	uint incompat_features;
-	uint header_length;  // size of aio_ring
-	struct io_event io_events[0];
-};
-// 128 bytes + ring size
-
 /// AIO context instance from the system. Right now this is a singleton with
 /// an extern instance pointer at fs::aio::context maintained by fs::aio::init.
 struct ircd::fs::aio::system
 {
+	struct ring;
+
 	static const int eventfd_flags;
 
 	/// io_getevents vector (in)
@@ -97,6 +83,22 @@ struct ircd::fs::aio::system
 
 	~system() noexcept;
 };
+
+struct ircd::fs::aio::system::ring
+{
+	static constexpr uint MAGIC {0xA10A10A1};
+
+	uint id; // kernel internal index number
+	uint nr; // number of io_events
+	uint head;
+	uint tail;
+	uint magic;
+	uint compat_features;
+	uint incompat_features;
+	uint header_length;  // size of aio_ring
+	struct io_event io_events[0];
+};
+// 128 bytes + ring size
 
 /// Generic request control block.
 struct ircd::fs::aio::request
