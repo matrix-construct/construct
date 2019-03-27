@@ -128,6 +128,7 @@ put__invite(client &client,
 	// also try to sync the room as best as possible. The invitee will then be
 	// presented with this invite request in their rooms list.
 	m::vm::opts vmopts;
+	vmopts.prev_check_exists = false;
 	m::vm::eval
 	{
 		signed_event, vmopts
