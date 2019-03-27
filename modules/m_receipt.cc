@@ -218,6 +218,10 @@ ircd::m::receipt::read(const m::room::id &room_id,
 		string_view{evid}
 	};
 
+	//
+	// federation send composition
+	//
+
 	const json::value event_ids[]
 	{
 		{ event_id }
@@ -229,7 +233,10 @@ ircd::m::receipt::read(const m::room::id &room_id,
 		{
 			{ "ts", ms }
 		}},
-		{ "event_ids", { event_ids, 1 } },
+		{ "event_ids",
+		{
+			event_ids, 1
+		}},
 	};
 
 	json::iov event, content;
