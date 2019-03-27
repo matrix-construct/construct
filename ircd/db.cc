@@ -498,9 +498,20 @@ ircd::db::bgcancel(database &d,
 	assert(d.env);
 	assert(d.env->st);
 	const ctx::uninterruptible::nothrow ui;
-	for(auto &pool : d.env->st->pool)
-		if(pool)
-			pool->wait();
+	for(auto &pool : d.env->st->pool) if(pool)
+	{
+		log::debug
+		{
+			log, "'%s': Waiting for tasks:%zu queued:%zu active:%zu in pool '%s'",
+			name(d),
+			pool->tasks.size(),
+			pool->p.pending(),
+			pool->p.active(),
+			ctx::name(pool->p),
+		};
+
+		pool->wait();
+	}
 
 	const auto errors
 	{
