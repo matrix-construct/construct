@@ -373,8 +373,13 @@ try
 			latch.count_down();
 	}};
 
+	static ios::descriptor descriptor
+	{
+		"ircd::run::set"
+	};
+
 	if(changed::list.size())
-		ircd::post(call_users);
+		ircd::post(descriptor, call_users);
 	else
 		call_users();
 

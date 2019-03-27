@@ -32,7 +32,12 @@ static void
 _cmd__die(const m::event &event,
           const string_view &line)
 {
-	ircd::post([]
+	static ios::descriptor descriptor
+	{
+		"s_control die"
+	};
+
+	ircd::post(descriptor, []
 	{
 		ircd::quit();
 	});

@@ -616,7 +616,15 @@ ircd::fs::aio::system::submit(request &request)
 	// items the chaser was already posted after the first item and will
 	// flush the whole queue down to 0.
 	if(qcount == 1)
-		ircd::post(std::bind(&system::chase, this));
+	{
+		static ios::descriptor descriptor
+		{
+			"ircd::fs::aio chase"
+		};
+
+		auto handler(std::bind(&system::chase, this));
+		ircd::post(descriptor, std::move(handler));
+	}
 }
 
 /// The chaser is posted to the IRCd event loop after the first request is
@@ -773,7 +781,12 @@ try
 		std::bind(&system::handle, this, ph::_1, ph::_2)
 	};
 
-	resfd.async_read_some(bufs, std::move(handler));
+	static ios::descriptor descriptor
+	{
+		"ircd::fs::aio sigfd"
+	};
+
+	resfd.async_read_some(bufs, ios::handle(descriptor, std::move(handler)));
 }
 catch(...)
 {

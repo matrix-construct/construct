@@ -621,6 +621,11 @@ ircd::ctx::this_ctx::wait()
 void
 ircd::ctx::this_ctx::yield()
 {
+	static ios::descriptor descriptor
+	{
+		"ircd::ctx courtesy yield"
+	};
+
 	bool done(false);
 	const auto restore([&done, &me(cur())]
 	{
@@ -629,7 +634,7 @@ ircd::ctx::this_ctx::yield()
 	});
 
 	// All spurious notifications are ignored until `done`
-	ircd::post(restore); do
+	ircd::post(descriptor, restore); do
 	{
 		wait();
 	}
@@ -1142,7 +1147,12 @@ ircd::ctx::context::context(const string_view &name,
 
 	if(flags & POST)
 	{
-		ios::post(std::move(spawn));
+		static ios::descriptor descriptor
+		{
+			"ircd::ctx::spawn post"
+		};
+
+		ios::post(descriptor, std::move(spawn));
 		return;
 	}
 
@@ -1154,9 +1164,15 @@ ircd::ctx::context::context(const string_view &name,
 	});
 
 	if(flags & DISPATCH)
-		ios::dispatch(std::move(spawn));
-	else
-		spawn();
+	{
+		static ios::descriptor descriptor
+		{
+			"ircd::ctx::spawn dispatch"
+		};
+
+		ios::dispatch(descriptor, std::move(spawn));
+	}
+	else spawn();
 }
 
 ircd::ctx::context::context(const string_view &name,

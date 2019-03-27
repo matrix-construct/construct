@@ -62,13 +62,23 @@ ircd::ios::init(asio::io_context &user)
 void
 ircd::ios::post(std::function<void ()> function)
 {
-	boost::asio::post(get(), std::move(function));
+	static descriptor descriptor
+	{
+		"ircd::ios post"
+	};
+
+	post(descriptor, std::move(function));
 }
 
 void
 ircd::ios::dispatch(std::function<void ()> function)
 {
-	boost::asio::dispatch(get(), std::move(function));
+	static descriptor descriptor
+	{
+		"ircd::ios dispatch"
+	};
+
+	dispatch(descriptor, std::move(function));
 }
 
 void

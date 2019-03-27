@@ -391,6 +391,11 @@ ircd::log::vlog_threadsafe(const log &log,
                            const string_view &fmt,
                            const va_rtti &ap)
 {
+	static ios::descriptor descriptor
+	{
+		"ircd::log::vlog_threadsafe"
+	};
+
 	// Generate the formatted message on this thread first
 	std::string str
 	{
@@ -399,7 +404,7 @@ ircd::log::vlog_threadsafe(const log &log,
 
 	// The pointer to the logger is copied to the main thread.
 	auto *const logp{&log};
-	ircd::post([lev, str(std::move(str)), logp]
+	ircd::post(descriptor, [lev, str(std::move(str)), logp]
 	{
 		// If that named logger was destroyed while this closure was
 		// travelling to the main thread then we just discard this message.

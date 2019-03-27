@@ -1556,6 +1556,11 @@ bool
 ircd::net::acceptor::set_handle()
 try
 {
+	static ios::descriptor desc
+	{
+		"ircd::net::socket timer"
+	};
+
 	assert(!handle_set);
 	handle_set = true;
 	auto sock
@@ -1565,7 +1570,12 @@ try
 
 	++accepting;
 	ip::tcp::socket &sd(*sock);
-	a.async_accept(sd, std::bind(&acceptor::accept, this, ph::_1, sock, weak_from(*this)));
+	auto handler
+	{
+		std::bind(&acceptor::accept, this, ph::_1, sock, weak_from(*this))
+	};
+
+	a.async_accept(sd, ios::handle(desc, std::move(handler)));
 	return true;
 }
 catch(const std::exception &e)
@@ -1622,6 +1632,11 @@ noexcept try
 		socket::handshake_type::server
 	};
 
+	static ios::descriptor desc
+	{
+		"ircd::net::acceptor async_handshake"
+	};
+
 	auto handshake
 	{
 		std::bind(&acceptor::handshake, this, ph::_1, sock, a)
@@ -1629,7 +1644,7 @@ noexcept try
 
 	++handshaking;
 	sock->set_timeout(milliseconds(timeout));
-	sock->ssl.async_handshake(handshake_type, std::move(handshake));
+	sock->ssl.async_handshake(handshake_type, ios::handle(desc, std::move(handshake)));
 }
 catch(const ctx::interrupted &e)
 {
@@ -2460,13 +2475,18 @@ ircd::net::socket::connect(const endpoint &ep,
 		opts.connect_timeout.count()
 	};
 
+	static ios::descriptor desc
+	{
+		"ircd::net::socket connect"
+	};
+
 	auto connect_handler
 	{
 		std::bind(&socket::handle_connect, this, weak_from(*this), opts, std::move(callback), ph::_1)
 	};
 
 	set_timeout(opts.connect_timeout);
-	sd.async_connect(ep, std::move(connect_handler));
+	sd.async_connect(ep, ios::handle(desc, std::move(connect_handler)));
 }
 
 void
@@ -2482,6 +2502,11 @@ ircd::net::socket::handshake(const open_opts &opts,
 			"<no sni>"_sv,
 		common_name(opts),
 		opts.handshake_timeout.count()
+	};
+
+	static ios::descriptor desc
+	{
+		"ircd::net::socket handshake"
 	};
 
 	auto handshake_handler
@@ -2500,7 +2525,7 @@ ircd::net::socket::handshake(const open_opts &opts,
 		openssl::server_name(*this, server_name(opts));
 
 	ssl.set_verify_callback(std::move(verify_handler));
-	ssl.async_handshake(handshake_type::client, std::move(handshake_handler));
+	ssl.async_handshake(handshake_type::client, ios::handle(desc, std::move(handshake_handler)));
 }
 
 void
@@ -2550,13 +2575,18 @@ try
 
 		case dc::SSL_NOTIFY:
 		{
+			static ios::descriptor desc
+			{
+				"ircd::net::socket shutdown"
+			};
+
 			auto disconnect_handler
 			{
 				std::bind(&socket::handle_disconnect, this, shared_from(*this), std::move(callback), ph::_1)
 			};
 
 			set_timeout(opts.timeout);
-			ssl.async_shutdown(std::move(disconnect_handler));
+			ssl.async_shutdown(ios::handle(desc, std::move(disconnect_handler)));
 			return;
 		}
 	}
@@ -2702,23 +2732,33 @@ try
 	{
 		case ready::ERROR:
 		{
+			static ios::descriptor desc
+			{
+				"ircd::net::socket::wait ready::ERROR"
+			};
+
 			auto handle
 			{
 				std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1, 0UL)
 			};
 
-			sd.async_wait(wait_type::wait_error, std::move(handle));
+			sd.async_wait(wait_type::wait_error, ios::handle(desc, std::move(handle)));
 			break;
 		}
 
 		case ready::WRITE:
 		{
+			static ios::descriptor desc
+			{
+				"ircd::net::socket::wait ready::WRITE"
+			};
+
 			auto handle
 			{
 				std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1, 0UL)
 			};
 
-			sd.async_wait(wait_type::wait_write, std::move(handle));
+			sd.async_wait(wait_type::wait_write, ios::handle(desc, std::move(handle)));
 			break;
 		}
 
@@ -2727,6 +2767,10 @@ try
 			static char buf[1] alignas(16);
 			static const ilist<mutable_buffer> bufs{buf};
 			__builtin_prefetch(buf, 1, 0); // 1 = write, 0 = no cache
+			static ios::descriptor desc
+			{
+				"ircd::net::socket::wait ready::READ"
+			};
 
 			auto handle
 			{
@@ -2741,7 +2785,7 @@ try
 			// real socket wait.
 			if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) >= ssize_t(sizeof(buf)))
 			{
-				ircd::post([handle(std::move(handle))]
+				ircd::post(desc, [handle(std::move(handle))]
 				{
 					handle(error_code{}, 1UL);
 				});
@@ -2753,7 +2797,7 @@ try
 			// socket error and when data is actually available. We then have to check
 			// using a non-blocking peek in the handler. By doing it this way here we
 			// just get the error in the handler's ec.
-			sd.async_receive(bufs, sd.message_peek, std::move(handle));
+			sd.async_receive(bufs, sd.message_peek, ios::handle(desc, std::move(handle)));
 			//sd.async_wait(wait_type::wait_read, std::move(handle));
 			break;
 		}
@@ -3399,6 +3443,11 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 	if(t < milliseconds(0))
 		return;
 
+	static ios::descriptor descriptor
+	{
+		"ircd::net::socket timer"
+	};
+
 	auto handler
 	{
 		std::bind(&socket::handle_timeout, this, weak_from(*this), std::move(callback), ph::_1)
@@ -3413,7 +3462,7 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 	++timer_sem[1];
 	timer_set = true;
 	timer.expires_from_now(t);
-	timer.async_wait(std::move(handler));
+	timer.async_wait(ios::handle(descriptor, std::move(handler)));
 }
 
 boost::asio::ip::tcp::endpoint
