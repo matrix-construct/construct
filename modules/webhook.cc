@@ -221,9 +221,26 @@ github_heading(std::ostream &out,
 		content["repository"]
 	};
 
-	out << "<a href=\"" << unquote(repository["html_url"]) << "\">"
-	    << unquote(repository["full_name"])
-	    << "</a>";
+	const json::object organization
+	{
+		content["organization"]
+	};
+
+	if(empty(repository))
+	{
+		const auto url
+		{
+			lstrip(unquote(organization["url"]), "https://api.")
+		};
+
+		out << "<a href=\"https://" << url << "\">"
+		    << unquote(organization["login"])
+		    << "</a>";
+	}
+	else
+		out << "<a href=" << repository["html_url"] << ">"
+		    << unquote(repository["full_name"])
+		    << "</a>";
 
 	const string_view commit_hash
 	{
