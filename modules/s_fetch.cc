@@ -106,30 +106,38 @@ ircd::m::fetch::hook_handler(const event &event,
 }
 
 //
-// util
+// auth chain fetch
 //
 
-namespace ircd::m::fetch
+void
+IRCD_MODULE_EXPORT
+ircd::m::room::auth::chain_eval(const auth &auth,
+                                const net::hostport &remote)
 {
-	extern "C" void
-	auth_chain_fetch(const m::room::id &room_id,
-	                 const m::event::id &event_id,
-	                 const net::hostport &remote,
-	                 const milliseconds &timeout,
-	                 const std::function<bool (const m::event &)> &);
+	m::vm::opts opts;
+	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	opts.infolog_accept = true;
+	opts.warnlog |= m::vm::fault::STATE;
+	opts.warnlog &= ~m::vm::fault::EXISTS;
+	opts.errorlog &= ~m::vm::fault::STATE;
 
-	extern "C" void
-	auth_chain_eval(const m::room::id &room_id,
-	                const m::event::id &event_id,
-	                const net::hostport &remote);
+	chain_fetch(auth, remote, [&opts]
+	(const json::object &event)
+	{
+		m::vm::eval
+		{
+			m::event{event}, opts
+		};
+
+		return true;
+	});
 }
 
-extern "C" void
-ircd::m::fetch::auth_chain_fetch(const m::room::id &room_id,
-                                 const m::event::id &event_id,
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::auth::chain_fetch(const auth &auth,
                                  const net::hostport &remote,
-                                 const milliseconds &timeout,
-                                 const std::function<bool (const m::event &)> &closure)
+                                 const fetch_closure &closure)
 {
 	m::v1::event_auth::opts opts;
 	opts.remote = remote;
@@ -141,52 +149,29 @@ ircd::m::fetch::auth_chain_fetch(const m::room::id &room_id,
 
 	m::v1::event_auth request
 	{
-		room_id, event_id, buf, std::move(opts)
+		auth.room.room_id, auth.room.event_id, buf, std::move(opts)
 	};
 
-	request.wait(timeout);
+	request.wait(seconds(20)); //TODO: conf
 	request.get();
-
     const json::array &auth_chain
     {
         request
     };
 
-	std::vector<m::event> events{auth_chain.count()};
-	std::transform(begin(auth_chain), end(auth_chain), begin(events), []
-	(const json::object &pdu)
+	std::vector<json::object> events(auth_chain.count());
+	std::copy(begin(auth_chain), end(auth_chain), begin(events));
+	std::sort(begin(events), end(events), []
+	(const json::object &a, const json::object &b)
 	{
-		return m::event{pdu};
+		return a.at<uint64_t>("depth") < b.at<uint64_t>("depth");
 	});
 
-	std::sort(begin(events), end(events));
 	for(const auto &event : events)
 		if(!closure(event))
-			return;
-}
+			return false;
 
-extern "C" void
-ircd::m::fetch::auth_chain_eval(const m::room::id &room_id,
-                                const m::event::id &event_id,
-                                const net::hostport &remote)
-{
-	m::vm::opts opts;
-	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	opts.infolog_accept = true;
-	opts.warnlog |= m::vm::fault::STATE;
-	opts.warnlog &= ~m::vm::fault::EXISTS;
-	opts.errorlog &= ~m::vm::fault::STATE;
-
-	auth_chain_fetch(room_id, event_id, remote, seconds(30), [&opts]
-	(const auto &event)
-	{
-		m::vm::eval
-		{
-			event, opts
-		};
-
-		return true;
-	});
+	return true;
 }
 
 //

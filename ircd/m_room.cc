@@ -2259,6 +2259,35 @@ ircd::m::room::head::reset(const head &h)
 // room::auth
 //
 
+void
+ircd::m::room::auth::chain_eval(const auth &a,
+                                const net::hostport &h)
+{
+	using prototype = bool (const auth &, const net::hostport &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::room::auth::chain_eval"
+	};
+
+	call(a, h);
+}
+
+bool
+ircd::m::room::auth::chain_fetch(const auth &a,
+                                 const net::hostport &h,
+                                 const fetch_closure &c)
+{
+	using prototype = bool (const auth &, const net::hostport &, const fetch_closure &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::room::auth::chain_fetch"
+	};
+
+	return call(a, h, c);
+}
+
 ircd::json::array
 ircd::m::room::auth::make_refs(const mutable_buffer &buf,
                                const types &types,
