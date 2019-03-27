@@ -8,7 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <RB_INC_X86INTRIN_H
 #include <cxxabi.h>
 #include <ircd/asio.h>
 #include "ctx.h"
@@ -874,7 +873,7 @@ ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view 
 	// Set the start value to the total number of cycles accrued by this
 	// context including the current time slice.
 	!current?
-		rdtsc():
+		prof::cycles():
 	~cur().flags & context::SLICE_EXEMPT?
 		cur().profile.cycles + prof::cur_slice_cycles():
 		0
@@ -900,7 +899,7 @@ noexcept
 	{
 		current?
 			cur().profile.cycles + prof::cur_slice_cycles():
-			rdtsc()
+			prof::cycles()
 	};
 
 	assert(stop >= start);
@@ -1665,13 +1664,13 @@ ircd::ctx::prof::handle_cur_continue()
 void
 ircd::ctx::prof::slice_enter()
 {
-	_slice_start = rdtsc();
+	_slice_start = cycles();
 }
 
 void
 ircd::ctx::prof::slice_leave()
 {
-	_slice_stop = rdtsc();
+	_slice_stop = cycles();
 
 	auto &c(cur());
 	assert(_slice_stop >= _slice_start);
@@ -1813,7 +1812,7 @@ ircd::ctx::prof::slice_exceeded_warning(const ulong &cycles)
 ulong
 ircd::ctx::prof::cur_slice_cycles()
 {
-	return rdtsc() - cur_slice_start();
+	return cycles() - cur_slice_start();
 }
 
 const ulong &

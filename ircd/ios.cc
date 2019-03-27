@@ -150,7 +150,7 @@ ircd::ios::handler::fault(handler *const &handler)
 	// needs to be tied off here instead.
 	if(!ret)
 	{
-		descriptor.slice_last = rdtsc() - handler->slice_start;
+		descriptor.slice_last = cycles() - handler->slice_start;
 		descriptor.slice_total += descriptor.slice_last;
 	}
 
@@ -162,7 +162,7 @@ ircd::ios::handler::leave(handler *const &handler)
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
-	descriptor.slice_last = rdtsc() - handler->slice_start;
+	descriptor.slice_last = cycles() - handler->slice_start;
 	descriptor.slice_total += descriptor.slice_last;
 }
 
@@ -172,7 +172,7 @@ ircd::ios::handler::enter(handler *const &handler)
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
 	++descriptor.calls;
-	handler->slice_start = rdtsc();
+	handler->slice_start = cycles();
 }
 
 void
