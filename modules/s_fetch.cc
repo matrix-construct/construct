@@ -59,18 +59,30 @@ ircd::m::fetch::hook_handler(const event &event,
 	if(type == "m.room.create")
 		return;
 
+	const m::event::id &event_id
+	{
+		at<"event_id"_>(event)
+	};
+
 	const m::room::id &room_id
 	{
 		at<"room_id"_>(event)
 	};
 
-	if(opts.head_must_exist || opts.history)
-		if(!exists(room_id))
+	if(!exists(room_id))
+	{
+		if((opts.head_must_exist || opts.history) && !opts.fetch_auth_chain)
 			throw vm::error
 			{
 				vm::fault::STATE, "Missing state for room %s",
 				string_view{room_id}
 			};
+
+		m::room room{room_id};
+		room.event_id = event_id;
+		const m::room::auth auth{room};
+		auth.chain_eval(auth, event_id.host());
+	}
 
 	const event::prev prev
 	{
@@ -117,6 +129,7 @@ ircd::m::room::auth::chain_eval(const auth &auth,
 	m::vm::opts opts;
 	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	opts.infolog_accept = true;
+	opts.prev_check_exists = false;
 	opts.warnlog |= m::vm::fault::STATE;
 	opts.warnlog &= ~m::vm::fault::EXISTS;
 	opts.errorlog &= ~m::vm::fault::STATE;

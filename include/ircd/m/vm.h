@@ -219,6 +219,10 @@ struct ircd::m::vm::opts
 	/// TODO: Y
 	bool head_must_exist {false};
 
+	/// Whether to automatically fetch and evaluate the auth chain for the
+	/// event; effective when there is no state for this room on the server.
+	bool fetch_auth_chain {true};
+
 	/// Evaluators can set this value to optimize the creation of the database
 	/// transaction where the event will be stored. This value should be set
 	/// to the amount of space the event consumes; the JSON-serialized size is
