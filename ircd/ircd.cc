@@ -11,7 +11,7 @@
 namespace ircd
 {
 	std::string _origin;                         // user's supplied param
-	std::string _hostname;                       // user's supplied param
+	std::string _servername;                     // user's supplied param
 	ctx::ctx *main_context;                      // Main program loop
 
 	void main() noexcept;
@@ -45,7 +45,7 @@ ircd::restart
 void
 ircd::init(boost::asio::io_context &user_ios,
            const string_view &origin,
-           const string_view &hostname)
+           const string_view &servername)
 try
 {
 	if(run::level != run::level::HALT)
@@ -58,7 +58,7 @@ try
 
 	// Save the params used for m::init later.
 	_origin = std::string{origin};
-	_hostname = std::string{hostname};
+	_servername = std::string{servername};
 
 	// The log is available. but it is console-only until conf opens files.
 	log::init();
@@ -214,7 +214,7 @@ noexcept try
 	m::init _matrix_         // Matrix
 	{
 		string_view{_origin},
-		string_view{_hostname}
+		string_view{_servername}
 	};
 
 	// Any deinits which have to be done with all subsystems intact

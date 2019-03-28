@@ -160,12 +160,19 @@ in your git repo to the library path:
 `export LD_LIBRARY_PATH=/path/to/src/deps/rocksdb:$LD_LIBRARY_PATH`
 
 - We will refer to your server as `host.tld`. For those familiar with matrix:
-this is your origin and mxid `@user:host.tld` hostpart. If your DNS uses
-`matrix.host.tld` that subdomain is not involved when we refer to
-`host.tld` unless we explicitly mention to involve it.
+this is your _origin_ and mxid `@user:host.tld` hostpart. If you delegate
+your server's location to something like `matrix.host.tld:1234` we refer to
+this as your _servername_.
+
+> Construct clusters all share the same _origin_ but each individual instance
+of the daemon has a unique _servername_.
 
 
 1. Execute
+
+	There are two arguments: `<origin> [servername]`. If the _servername_
+	argument is missing, the _origin_ will be used for it instead.
+
 	```
 	bin/construct host.tld
 	````

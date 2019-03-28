@@ -37,11 +37,11 @@ me_offline_status_msg
 //
 
 ircd::m::init::init(const string_view &origin,
-                    const string_view &hostname)
+                    const string_view &servername)
 try
 :_self
 {
-	origin
+	origin, servername
 }
 ,_modules
 {
@@ -278,6 +278,10 @@ std::string
 ircd::m::self::origin
 {};
 
+std::string
+ircd::m::self::servername
+{};
+
 ircd::ed25519::sk
 ircd::m::self::secret_key
 {};
@@ -393,9 +397,11 @@ extern ircd::m::room::id::buf users_room_id;
 extern ircd::m::room::id::buf tokens_room_id;
 extern ircd::m::room::id::buf nodes_room_id;
 
-ircd::m::self::init::init(const string_view &origin)
+ircd::m::self::init::init(const string_view &origin,
+                          const string_view &servername)
 {
-	self::origin = std::string{origin};
+	self::origin = origin;
+	self::servername = servername;
 
 	ircd_user_id = {"ircd", origin};
 	m::me = {ircd_user_id};

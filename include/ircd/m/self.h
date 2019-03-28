@@ -16,6 +16,7 @@ namespace ircd::m::self
 	struct init;
 
 	extern std::string origin;
+	extern std::string servername;
 	extern ed25519::sk secret_key;
 	extern ed25519::pk public_key;
 	extern std::string public_key_b64;
@@ -44,7 +45,7 @@ namespace ircd
 
 struct ircd::m::self::init
 {
-	init(const string_view &origin);
+	init(const string_view &origin, const string_view &servername);
 };
 
 inline ircd::string_view
