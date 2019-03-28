@@ -1076,12 +1076,17 @@ ircd::m::vm::loghead(const mutable_buffer &buf,
 {
 	return fmt::sprintf
 	{
-		buf, "vm[%lu:%lu:%lu] eval[%lu] id:%lu",
+		buf, "vm:%lu:%lu:%lu eval:%lu seq:%lu share:%lu:%lu] %s",
 		sequence::uncommitted,
 		sequence::committed,
 		sequence::retired,
-		sequence::get(eval),
 		eval.id,
+		sequence::get(eval),
+		eval.sequence_shared[0],
+		eval.sequence_shared[1],
+		eval.event_?
+			string_view{json::get<"event_id"_>(*eval.event_)}:
+			"<unidentified>"_sv,
 	};
 }
 

@@ -673,7 +673,7 @@ ircd::m::vm::execute_edu(eval &eval,
 
 enum ircd::m::vm::fault
 ircd::m::vm::execute_pdu(eval &eval,
-                          const event &event)
+                         const event &event)
 {
 	const scope_count pending
 	{
