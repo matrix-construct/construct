@@ -436,6 +436,9 @@ void
 ircd::net::dns::resolver::queue_query(tag &tag)
 {
 	assert(sendq.size() <= tags.size());
+	if(std::find(begin(sendq), end(sendq), tag.id) != end(sendq))
+		return;
+
 	sendq.emplace_back(tag.id);
 	dock.notify_one();
 
