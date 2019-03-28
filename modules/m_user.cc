@@ -112,7 +112,7 @@ highlighted_count__between(const user &user,
 		};
 
 	size_t ret{0};
-	for(++it; it && it.event_idx() <= b; ++it)
+	for(++it; it && it.event_idx() < b; ++it)
 	{
 		const event &event{*it};
 		ret += highlighted_event(event, user);

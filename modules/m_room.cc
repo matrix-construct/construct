@@ -84,7 +84,7 @@ ircd::m::count_since(const m::room &room,
 	size_t ret{0};
 	// Hit the iterator once first otherwise the count will always increment
 	// to `1` erroneously when it ought to show `0`.
-	for(++it; it && it.event_idx() <= b; ++it, ++ret);
+	for(++it; it && it.event_idx() < b; ++it, ++ret);
 	return ret;
 }
 
