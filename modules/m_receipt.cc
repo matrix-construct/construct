@@ -400,6 +400,11 @@ try
 		at<"content"_>(event).get("event_id")
 	};
 
+	// Lastly, we elide broadcasts of receipts for a user's own message.
+	m::user::id::buf sender_buf;
+	if(m::get(std::nothrow, event_id, "sender", sender_buf) == user.user_id)
+		return;
+
 	const time_t &ms
 	{
 		at<"content"_>(event).get<time_t>("ts", 0)
