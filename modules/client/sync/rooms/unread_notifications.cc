@@ -74,12 +74,17 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 		*data.out, "unread_notifications"
 	};
 
+	const event::idx upper_bound
+	{
+		std::max(data.range.second, data.event_idx + 1)
+	};
+
 	// highlight_count
 	json::stack::member
 	{
 		*data.out, "highlight_count", json::value
 		{
-			_highlight_count(room, data.user, start_idx, data.range.second)
+			_highlight_count(room, data.user, start_idx, upper_bound)
 		}
 	};
 
@@ -88,7 +93,7 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 	{
 		*data.out, "notification_count", json::value
 		{
-			_notification_count(room, start_idx, data.range.second)
+			_notification_count(room, start_idx, upper_bound)
 		}
 	};
 
