@@ -815,19 +815,24 @@ ircd::m::vm::write_prepare(eval &eval,
 	assert(eval.opts);
 	const auto &opts{*eval.opts};
 
-	// Share a transaction with any other evals on this stack. This
+	// Share a transaction with any other unretired evals on this stack. This
 	// should mean the bottom-most/lowest-sequence eval on this ctx.
 	const auto get_other_txn{[&eval]
 	(auto &other)
 	{
-		if(&other != &eval && other.txn)
-		{
-			other.sequence_shared[1] = std::max(other.sequence_shared[1], sequence::get(eval));
-			eval.sequence_shared[0] = sequence::get(other);
-			eval.txn = other.txn;
-			return false;
-		}
-		else return true;
+		if(&other == &eval)
+			return true;
+
+		if(!other.txn)
+			return true;
+
+		if(sequence::get(other) <= sequence::retired)
+			return true;
+
+		other.sequence_shared[1] = std::max(other.sequence_shared[1], sequence::get(eval));
+		eval.sequence_shared[0] = sequence::get(other);
+		eval.txn = other.txn;
+		return false;
 	}};
 
 	// If we broke from the iteration then this eval is sharing a transaction
