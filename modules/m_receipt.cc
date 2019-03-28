@@ -10,11 +10,15 @@
 
 using namespace ircd;
 
+static void handle_ircd_m_read(const m::event &, m::vm::eval &);
+extern const m::hookfn<m::vm::eval &> _ircd_read_eval;
+
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::event::id &, const time_t &);
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::edu::m_receipt::m_read &);
 static void handle_m_receipt_m_read(const m::room::id &, const json::object &);
 static void handle_m_receipt(const m::room::id &, const json::object &);
 static void handle_edu_m_receipt(const m::event &, m::vm::eval &);
+extern const m::hookfn<m::vm::eval &> _m_receipt_eval;
 
 mapi::header
 IRCD_MODULE
@@ -22,7 +26,7 @@ IRCD_MODULE
 	"Matrix Receipts"
 };
 
-const m::hookfn<m::vm::eval &>
+decltype(_m_receipt_eval)
 _m_receipt_eval
 {
 	handle_edu_m_receipt,
@@ -150,30 +154,7 @@ try
 		return;
 	}
 
-	m::vm::copts copts;
-	copts.notify_clients = false;
-	const m::user::room user_room
-	{
-		user, &copts
-	};
-
-	const auto evid
-	{
-		send(user_room, user_id, "ircd.read", room_id,
-		{
-			{ "event_id", event_id },
-			{ "ts",       ts       }
-		})
-	};
-
-	log::info
-	{
-		m::log, "%s read by %s in %s @ %zd",
-		string_view{event_id},
-		string_view{user_id},
-		string_view{room_id},
-		ts
-	};
+	m::receipt::read(room_id, user_id, event_id, ts);
 }
 catch(const std::exception &e)
 {
@@ -210,7 +191,7 @@ ircd::m::receipt::read(const m::room::id &room_id,
 
 	log::info
 	{
-		m::log, "%s read by %s in %s @ %zd => %s (local)",
+		m::log, "%s read by %s in %s @ %zd",
 		string_view{event_id},
 		string_view{user_id},
 		string_view{room_id},
@@ -218,52 +199,7 @@ ircd::m::receipt::read(const m::room::id &room_id,
 		string_view{evid}
 	};
 
-	//
-	// federation send composition
-	//
-
-	const json::value event_ids[]
-	{
-		{ event_id }
-	};
-
-	const json::members m_read
-	{
-		{ "data",
-		{
-			{ "ts", ms }
-		}},
-		{ "event_ids",
-		{
-			event_ids, 1
-		}},
-	};
-
-	json::iov event, content;
-	const json::iov::push push[]
-	{
-		{ event,    { "type",     "m.receipt" } },
-		{ event,    { "room_id",  room_id     } },
-		{ content,  { room_id,
-		{
-			{ "m.read",
-			{
-				{ user_id, m_read }
-			}}
-		}}}
-	};
-
-	m::vm::copts opts;
-	opts.add_hash = false;
-	opts.add_sig = false;
-	opts.add_event_id = false;
-	opts.add_origin = true;
-	opts.add_origin_server_ts = false;
-	opts.conforming = false;
-	return m::vm::eval
-	{
-		event, content, opts
-	};
+	return evid;
 }
 
 bool
@@ -411,4 +347,120 @@ ircd::m::receipt::exists(const m::room::id &room_id,
 	});
 
 	return ret;
+}
+
+decltype(_ircd_read_eval)
+_ircd_read_eval
+{
+	handle_ircd_m_read,
+	{
+		{ "_site",   "vm.effect"  },
+		{ "type",    "ircd.read"  },
+		{ "origin",  my_host()    },
+	}
+};
+
+/// This handler looks for ircd.read events and conducts a federation
+/// broadcast of the m.receipt edu.
+void
+handle_ircd_m_read(const m::event &event,
+                   m::vm::eval &eval)
+try
+{
+	if(!json::get<"state_key"_>(event))
+		return;
+
+	// The state_key of an ircd.read event is the target room_id
+	const m::room::id &room_id
+	{
+		at<"state_key"_>(event)
+	};
+
+	const m::user user
+	{
+		at<"sender"_>(event)
+	};
+
+	// This handler does federation broadcasts of receipts from
+	// this server only.
+	if(!my(user))
+		return;
+
+	const m::user::room user_room
+	{
+		at<"sender"_>(event)
+	};
+
+	// Ignore anybody that creates an ircd.read event in some other room.
+	if(json::get<"room_id"_>(event) != user_room.room_id)
+		return;
+
+	const json::string &event_id
+	{
+		at<"content"_>(event).get("event_id")
+	};
+
+	const time_t &ms
+	{
+		at<"content"_>(event).get<time_t>("ts", 0)
+	};
+
+	const json::value event_ids[]
+	{
+		{ event_id }
+	};
+
+	const json::members m_read
+	{
+		{ "data",
+		{
+			{ "ts", ms }
+		}},
+		{ "event_ids",
+		{
+			event_ids, 1
+		}},
+	};
+
+	json::iov edu_event, content;
+	const json::iov::push push[]
+	{
+		{ edu_event, { "type",     "m.receipt" } },
+		{ edu_event, { "room_id",  room_id     } },
+		{ content,   { room_id,
+		{
+			{ "m.read",
+			{
+				{ user.user_id, m_read }
+			}}
+		}}}
+	};
+
+	m::vm::copts opts;
+
+	// EDU options
+	opts.add_hash = false;
+	opts.add_sig = false;
+	opts.add_event_id = false;
+	opts.add_origin = true;
+	opts.add_origin_server_ts = false;
+	opts.conforming = false;
+
+	// Don't need to notify clients, the /sync system understood the
+	// `ircd.read` directly. The federation sender is what we're hitting here.
+	opts.notify_clients = false;
+
+	m::vm::eval
+	{
+		edu_event, content, opts
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "ircd.read hook on %s for federation broadcast :%s",
+		json::get<"event_id"_>(event),
+		e.what(),
+	};
 }
