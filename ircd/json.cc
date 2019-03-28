@@ -671,7 +671,7 @@ ircd::json::stack::append(const size_t &expect,
                           const window_buffer::closure &closure)
 noexcept try
 {
-	if(unlikely(eptr))
+	if(unlikely(failed()))
 		return;
 
 	if(expect > buf.remaining())
@@ -724,7 +724,7 @@ noexcept try
 	if(!flusher)
 		return false;
 
-	if(unlikely(eptr))
+	if(unlikely(failed()))
 		return false;
 
 	if(!force && buf.consumed() < lowat)
@@ -785,6 +785,13 @@ ircd::json::stack::remaining()
 const
 {
 	return buf.remaining();
+}
+
+bool
+ircd::json::stack::failed()
+const
+{
+	return bool(eptr);
 }
 
 bool

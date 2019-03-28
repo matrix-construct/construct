@@ -68,6 +68,7 @@ struct ircd::json::stack
   public:
 	bool opened() const;               ///< Current stacking in progress.
 	bool closed() const;               ///< No stacking in progress.
+	bool failed() const;               ///< Exception pending in eptr.
 	bool clean() const;                ///< Never opened.
 	bool done() const;                 ///< Opened and closed.
 	size_t remaining() const;
