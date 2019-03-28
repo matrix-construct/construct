@@ -196,7 +196,7 @@ ircd::fs::aio::request::write::write(const int &fd,
 	aio_nbytes = iov.size();
 	aio_offset = opts.offset;
 
-	#if defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
+	#if defined(RWF_APPEND)
 	if(support_append && opts.offset == -1)
 	{
 		// AIO departs from pwritev2() behavior and EINVAL's on -1.
@@ -205,12 +205,12 @@ ircd::fs::aio::request::write::write(const int &fd,
 	}
 	#endif
 
-	#if defined(HAVE_PWRITEV2) && defined(RWF_DSYNC)
+	#if defined(RWF_DSYNC)
 	if(support_dsync && opts.sync && !opts.metadata)
 		aio_rw_flags |= RWF_DSYNC;
 	#endif
 
-	#if defined(HAVE_PWRITEV2) && defined(RWF_SYNC)
+	#if defined(RWF_SYNC)
 	if(support_sync && opts.sync && opts.metadata)
 		aio_rw_flags |= RWF_SYNC;
 	#endif
@@ -276,12 +276,12 @@ ircd::fs::aio::request::request(const int &fd,
 	aio_data = uintptr_t(this);
 	aio_reqprio = reqprio(opts->priority);
 
-	#if defined(HAVE_PWRITEV2) && defined(HAVE_PREADV2) && defined(RWF_HIPRI)
+	#if defined(RWF_HIPRI)
 	if(support_hipri && aio_reqprio == reqprio(opts::highest_priority))
 		aio_rw_flags |= RWF_HIPRI;
 	#endif
 
-	#if defined(HAVE_PWRITEV2) && defined(HAVE_PREADV2) && defined(RWF_NOWAIT)
+	#if defined(RWF_NOWAIT)
 	if(support_nowait && !opts->blocking)
 		aio_rw_flags |= RWF_NOWAIT;
 	#endif

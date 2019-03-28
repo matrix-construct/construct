@@ -814,7 +814,7 @@ ircd::fs::append(const string_view &path,
 // the -1. Otherwise, we don't keep flags in userspace and we
 // don't check the fd for whether it was opened with O_APPEND
 // so the user may just have to eat the cost of an extra lseek().
-#if defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
+#if defined(RWF_APPEND)
 size_t
 ircd::fs::append(const fd &fd,
                  const const_buffers &bufs,
@@ -840,7 +840,7 @@ ircd::fs::append(const fd &fd,
 
 	return write(fd, bufs, opts);
 }
-#endif // HAVE_PWRITEV2
+#endif // RWF_APPEND
 
 ircd::const_buffer
 ircd::fs::write(const string_view &path,
