@@ -686,9 +686,26 @@ ircd::m::sync::longpoll::handle(data &data,
 		data.client_txnid, event.client_txnid
 	};
 
-	json::stack::checkpoint checkpoint
+	const unique_buffer<mutable_buffer> buf
 	{
-		*data.out
+		// must be at least worst-case size of m::event plus some.
+		std::max(size_t(linear_buffer_size), size_t(96_KiB))
+	};
+
+	const size_t consumed
+	{
+		linear_proffer_event(data, buf)
+	};
+
+	if(!consumed)
+		return false;
+
+	const json::vector vector
+	{
+		string_view
+		{
+			buffer::data(buf), consumed
+		}
 	};
 
 	json::stack::object top
@@ -696,39 +713,32 @@ ircd::m::sync::longpoll::handle(data &data,
 		*data.out
 	};
 
-	const bool ret
+	json::merge(top, vector);
+
+	const auto next
 	{
-		linear_proffer_event_one(data)
+		data.event_idx?
+			std::min(data.event_idx + 1, vm::sequence::retired + 1):
+			data.range.first
 	};
 
-	if(ret)
+	json::stack::member
 	{
-		const auto next
+		top, "next_batch", json::value
 		{
-			data.event_idx?
-				std::min(data.event_idx + 1, vm::sequence::retired + 1):
-				data.range.first
-		};
+			lex_cast(next), json::STRING
+		}
+	};
 
-		json::stack::member
-		{
-			*data.out, "next_batch", json::value
-			{
-				lex_cast(next), json::STRING
-			}
-		};
+	log::debug
+	{
+		log, "request %s longpoll hit:%lu complete @%lu",
+		loghead(data),
+		event.event_idx,
+		next
+	};
 
-		log::debug
-		{
-			log, "request %s longpoll hit:%lu complete @%lu",
-			loghead(data),
-			event.event_idx,
-			next
-		};
-	}
-	else checkpoint.rollback();
-
-	return ret;
+	return true;
 }
 
 //
