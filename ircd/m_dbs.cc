@@ -390,7 +390,16 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 		};
 
 		if(!prev_idx)
+		{
+			log::warning
+			{
+				log, "No index found to ref %s PREV of %s",
+				string_view{prev_id},
+				json::get<"event_id"_>(event),
+			};
+
 			continue;
+		}
 
 		thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 		assert(opts.event_idx != 0 && prev_idx != 0);
@@ -431,8 +440,17 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 			m::index(auth_id, std::nothrow)  // query
 		};
 
-		if(!auth_idx)
+		if(unlikely(!auth_idx))
+		{
+			log::error
+			{
+				log, "No index found to ref %s AUTH of %s",
+				string_view{auth_id},
+				json::get<"event_id"_>(event)
+			};
+
 			continue;
+		}
 
 		thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 		assert(opts.event_idx != 0 && auth_idx != 0);
@@ -534,9 +552,9 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 
 	//TODO: disallow local forge?
 
-	const auto &event_id
+	const json::string &event_id
 	{
-		unquote(json::get<"content"_>(event).get("event_id"))
+		json::get<"content"_>(event).get("event_id")
 	};
 
 	const event::idx &event_idx
@@ -545,7 +563,15 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 	};
 
 	if(!event_idx)
+	{
+		log::derror
+		{
+			log, "No index found to ref %s M_RECEIPT__M_READ of %s",
+			string_view{event_id},
+			json::get<"event_id"_>(event)
+		};
 		return;
+	}
 
 	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 	assert(opts.event_idx != 0 && event_idx != 0);
@@ -588,20 +614,37 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 		return;
 
 	if(json::type(m_relates_to.get("m.in_reply_to")) != json::OBJECT)
+	{
+		log::derror
+		{
+			log, "Cannot index m.in_reply_to in %s; not an OBJECT.",
+			json::get<"event_id"_>(event)
+		};
+
 		return;
+	}
 
 	const json::object &m_in_reply_to
 	{
 		m_relates_to.get("m.in_reply_to")
 	};
 
-	const auto &event_id
+	const json::string &event_id
 	{
-		unquote(m_in_reply_to.get("event_id"))
+		m_in_reply_to.get("event_id")
 	};
 
 	if(!valid(m::id::USER, event_id))
+	{
+		log::derror
+		{
+			log, "Cannot index m.in_reply_to in %s; '%s' is not an event_id.",
+			json::get<"event_id"_>(event),
+			string_view{event_id}
+		};
+
 		return;
+	}
 
 	const event::idx &event_idx
 	{
@@ -609,7 +652,16 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	};
 
 	if(!event_idx)
+	{
+		log::dwarning
+		{
+			log, "Cannot index m.in_reply_to in %s; referenced %s not found.",
+			json::get<"event_id"_>(event),
+			string_view{event_id}
+		};
+
 		return;
+	}
 
 	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 	assert(opts.event_idx != 0 && event_idx != 0);
