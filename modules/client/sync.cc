@@ -555,7 +555,8 @@ ircd::m::sync::linear_proffer_event(data &data,
 bool
 ircd::m::sync::linear_proffer_event_one(data &data)
 {
-	return !m::sync::for_each(string_view{}, [&data]
+	bool ret{false};
+	m::sync::for_each(string_view{}, [&data, &ret]
 	(item &item)
 	{
 		json::stack::checkpoint checkpoint
@@ -564,11 +565,14 @@ ircd::m::sync::linear_proffer_event_one(data &data)
 		};
 
 		if(item.linear(data))
-			return false;
+			ret = true;
+		else
+			checkpoint.rollback();
 
-		checkpoint.rollback();
 		return true;
 	});
+
+	return ret;
 }
 
 //

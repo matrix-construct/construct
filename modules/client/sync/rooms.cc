@@ -68,7 +68,8 @@ ircd::m::sync::rooms_linear(data &data)
 	if(should_ignore(data))
 		return false;
 
-	return !m::sync::for_each("rooms", [&data]
+	bool ret{false};
+	m::sync::for_each("rooms", [&data, &ret]
 	(item &item)
 	{
 		json::stack::checkpoint checkpoint
@@ -77,11 +78,14 @@ ircd::m::sync::rooms_linear(data &data)
 		};
 
 		if(item.linear(data))
-			return false;
+			ret = true;
+		else
+			checkpoint.rollback();
 
-		checkpoint.rollback();
 		return true;
 	});
+
+	return ret;
 }
 
 bool

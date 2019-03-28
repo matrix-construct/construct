@@ -33,7 +33,8 @@ ircd::m::sync::rooms_ephemeral
 bool
 ircd::m::sync::rooms_ephemeral_linear(data &data)
 {
-	return !m::sync::for_each("rooms.ephemeral", [&data]
+	bool ret{false};
+	m::sync::for_each("rooms.ephemeral", [&data, &ret]
 	(item &item)
 	{
 		json::stack::checkpoint checkpoint
@@ -42,11 +43,14 @@ ircd::m::sync::rooms_ephemeral_linear(data &data)
 		};
 
 		if(item.linear(data))
-			return false;
+			ret = true;
+		else
+			checkpoint.rollback();
 
-		checkpoint.rollback();
 		return true;
 	});
+
+	return ret;
 }
 
 bool
