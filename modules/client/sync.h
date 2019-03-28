@@ -41,7 +41,7 @@ namespace ircd::m::sync::longpoll
 	std::deque<accepted> queue;
 	ctx::dock dock;
 
-	static bool handle(data &, const args &, const accepted &);
+	static bool handle(data &, const args &, const accepted &, const mutable_buffer &scratch);
 	static bool poll(data &, const args &);
 	static void handle_notify(const m::event &, m::vm::eval &);
 	extern m::hookfn<m::vm::eval &> notified;

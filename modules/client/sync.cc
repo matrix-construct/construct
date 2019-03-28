@@ -611,6 +611,11 @@ ircd::m::sync::longpoll::poll(data &data,
                               const args &args)
 try
 {
+	const unique_buffer<mutable_buffer> scratch
+	{
+		96_KiB
+	};
+
 	const scope_count polling{longpoll::polling}; do
 	{
 		if(!dock.wait_until(args.timesout))
@@ -636,7 +641,7 @@ try
 		if(polylog_only)
 			return false;
 
-		if(handle(data, args, accepted))
+		if(handle(data, args, accepted, scratch))
 			return true;
 	}
 	while(1);
@@ -669,7 +674,8 @@ catch(const std::exception &e)
 bool
 ircd::m::sync::longpoll::handle(data &data,
                                 const args &args,
-                                const accepted &event)
+                                const accepted &event,
+                                const mutable_buffer &scratch)
 {
 	const scope_restore their_event
 	{
@@ -686,15 +692,9 @@ ircd::m::sync::longpoll::handle(data &data,
 		data.client_txnid, event.client_txnid
 	};
 
-	const unique_buffer<mutable_buffer> buf
-	{
-		// must be at least worst-case size of m::event plus some.
-		std::max(size_t(linear_buffer_size), size_t(96_KiB))
-	};
-
 	const size_t consumed
 	{
-		linear_proffer_event(data, buf)
+		linear_proffer_event(data, scratch)
 	};
 
 	if(!consumed)
@@ -704,7 +704,7 @@ ircd::m::sync::longpoll::handle(data &data,
 	{
 		string_view
 		{
-			buffer::data(buf), consumed
+			buffer::data(scratch), consumed
 		}
 	};
 
