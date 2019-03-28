@@ -59,6 +59,7 @@ webhook_la_SOURCES = webhook.cc
 console_la_SOURCES = console.cc
 vm_la_SOURCES = vm.cc
 metrics_la_SOURCES = metrics.cc
+well_known_la_SOURCES = well_known.cc
 
 module_LTLIBRARIES = \
 	webroot.la \
@@ -66,6 +67,7 @@ module_LTLIBRARIES = \
 	console.la \
 	vm.la \
 	metrics.la \
+	well_known.la \
 	###
 
 ###############################################################################

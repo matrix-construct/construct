@@ -189,6 +189,7 @@ ircd::m::init::modules::init_imports()
 				mods::imports.emplace(name, name);
 
 	// Manually load last modules
+	mods::imports.emplace("well_known"s, "well_known"s);
 	mods::imports.emplace("webroot"s, "webroot"s);
 
 	if(db::sequence(*dbs::events) == 0)
