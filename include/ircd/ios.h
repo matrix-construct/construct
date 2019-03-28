@@ -86,10 +86,12 @@ struct ircd::ios::descriptor
 
 	std::function<void *(handler &, const size_t &)> allocator;
 	std::function<void (handler &, void *const &, const size_t &)> deallocator;
+	bool continuation;
 
 	descriptor(const string_view &name,
 	           const decltype(allocator) & = default_allocator,
-	           const decltype(deallocator) & = default_deallocator);
+	           const decltype(deallocator) & = default_deallocator,
+	           const bool &continuation = false);
 
 	descriptor(descriptor &&) = delete;
 	descriptor(const descriptor &) = delete;
@@ -102,6 +104,7 @@ struct ircd::ios::handler
 
 	static void *allocate(handler *const &, const size_t &);
 	static void deallocate(handler *const &, void *const &, const size_t &);
+	static bool continuation(handler *const &);
 	static void enter(handler *const &);
 	static void leave(handler *const &);
 	static bool fault(handler *const &);
@@ -130,6 +133,9 @@ namespace ircd::ios
 	template<class function>
 	void *asio_handler_allocate(size_t, handle<function> *);
 
+	template<class function>
+	bool asio_handler_is_continuation(handle<function> *);
+
 	template<class callable,
 	         class function>
 	void asio_handler_invoke(callable &f, handle<function> *);
@@ -151,24 +157,6 @@ const
 	f(std::forward<args>(a)...);
 }
 
-template<class function>
-void
-ircd::ios::asio_handler_deallocate(void *const ptr,
-                                   size_t size,
-                                   handle<function> *const h)
-{
-	handler::deallocate(h, ptr, size);
-}
-
-template<class function>
-void *
-__attribute__((malloc, returns_nonnull, warn_unused_result, alloc_size(1)))
-ircd::ios::asio_handler_allocate(size_t size,
-                                 handle<function> *const h)
-{
-	return handler::allocate(h, size);
-}
-
 template<class callable,
          class function>
 void
@@ -186,6 +174,31 @@ catch(...)
 		handler::leave(h);
 	else
 		throw;
+}
+
+template<class function>
+bool
+ircd::ios::asio_handler_is_continuation(handle<function> *const h)
+{
+	return handler::continuation(h);
+}
+
+template<class function>
+void *
+__attribute__((malloc, returns_nonnull, warn_unused_result, alloc_size(1)))
+ircd::ios::asio_handler_allocate(size_t size,
+                                 handle<function> *const h)
+{
+	return handler::allocate(h, size);
+}
+
+template<class function>
+void
+ircd::ios::asio_handler_deallocate(void *const ptr,
+                                   size_t size,
+                                   handle<function> *const h)
+{
+	handler::deallocate(h, ptr, size);
 }
 
 inline void

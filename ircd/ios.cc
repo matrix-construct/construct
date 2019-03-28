@@ -126,10 +126,12 @@ ircd::ios::descriptor::ids;
 
 ircd::ios::descriptor::descriptor(const string_view &name,
                                   const decltype(allocator) &allocator,
-                                  const decltype(deallocator) &deallocator)
+                                  const decltype(deallocator) &deallocator,
+                                  const bool &continuation)
 :name{name}
 ,allocator{allocator}
 ,deallocator{deallocator}
+,continuation{continuation}
 {
 	assert(allocator);
 	assert(deallocator);
@@ -201,6 +203,14 @@ ircd::ios::handler::enter(handler *const &handler)
 	assert(!handler::current);
 	handler::current = handler;
 	handler->slice_start = cycles();
+}
+
+bool
+ircd::ios::handler::continuation(handler *const &handler)
+{
+	assert(handler && handler->descriptor);
+	auto &descriptor(*handler->descriptor);
+	return descriptor.continuation;
 }
 
 void
