@@ -34,7 +34,7 @@ _m_receipt_eval
 {
 	handle_edu_m_receipt,
 	{
-		{ "_site",   "vm.eval"    },
+		{ "_site",   "vm.effect"  },
 		{ "type",    "m.receipt"  },
 	}
 };
@@ -44,6 +44,9 @@ handle_edu_m_receipt(const m::event &event,
                      m::vm::eval &eval)
 {
 	if(json::get<"room_id"_>(event))
+		return;
+
+	if(my_host(json::get<"origin"_>(event)))
 		return;
 
 	const json::object &content
@@ -144,6 +147,10 @@ try
 		user_id
 	};
 
+	// This handler only cares about remote users.
+	if(my(user))
+		return;
+
 	if(!exists(user))
 	{
 		log::dwarning
@@ -157,7 +164,10 @@ try
 		return;
 	}
 
-	m::receipt::read(room_id, user_id, event_id, ts);
+	const auto evid
+	{
+		m::receipt::read(room_id, user_id, event_id, ts)
+	};
 }
 catch(const std::exception &e)
 {
@@ -198,8 +208,7 @@ ircd::m::receipt::read(const m::room::id &room_id,
 		string_view{event_id},
 		string_view{user_id},
 		string_view{room_id},
-		ms,
-		string_view{evid}
+		ms
 	};
 
 	return evid;
@@ -371,6 +380,9 @@ handle_implicit_receipt(const m::event &event,
                         m::vm::eval &eval)
 try
 {
+	if(!json::get<"event_id"_>(event))
+		return;
+
 	const m::user::id &user_id
 	{
 		at<"sender"_>(event)
