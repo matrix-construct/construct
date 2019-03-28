@@ -433,14 +433,35 @@ console_cmd__debug(opt &out, const string_view &line)
 		return true;
 	}
 
-	if(log::console_enabled(log::DEBUG))
+	const params param{line, " ",
+	{
+		"onoff"
+	}};
+
+	if(param["onoff"] == "on")
+	{
+		out << "Turning on debuglog..." << std::endl;
+		while(!log::console_enabled(log::DEBUG))
+			log::console_enable(log::DEBUG);
+
+		return true;
+	}
+	else if(param["onoff"] == "off")
+	{
+		out << "Turning off debuglog..." << std::endl;
+		log::console_disable(log::DEBUG);
+		return true;
+	}
+	else if(log::console_enabled(log::DEBUG))
 	{
 		out << "Turning off debuglog..." << std::endl;
 		log::console_disable(log::DEBUG);
 		return true;
 	} else {
 		out << "Turning on debuglog..." << std::endl;
-		log::console_enable(log::DEBUG);
+		while(!log::console_enabled(log::DEBUG))
+			log::console_enable(log::DEBUG);
+
 		return true;
 	}
 }
