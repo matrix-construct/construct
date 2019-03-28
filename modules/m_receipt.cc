@@ -13,6 +13,9 @@ using namespace ircd;
 static void handle_ircd_m_read(const m::event &, m::vm::eval &);
 extern const m::hookfn<m::vm::eval &> _ircd_read_eval;
 
+static void handle_implicit_receipt(const m::event &, m::vm::eval &);
+extern const m::hookfn<m::vm::eval &> _implicit_receipt;
+
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::event::id &, const time_t &);
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::edu::m_receipt::m_read &);
 static void handle_m_receipt_m_read(const m::room::id &, const json::object &);
@@ -347,6 +350,64 @@ ircd::m::receipt::exists(const m::room::id &room_id,
 	});
 
 	return ret;
+}
+
+decltype(_implicit_receipt)
+_implicit_receipt
+{
+	handle_implicit_receipt,
+	{
+		{ "_site",   "vm.effect"       },
+		{ "type",    "m.room.message"  },
+		{ "origin",  my_host()         },
+	}
+};
+
+/// This handler generates receipts for messages sent by that user. These are
+/// required for notification counts. They're not broadcast, we just keep state
+/// for them.
+void
+handle_implicit_receipt(const m::event &event,
+                        m::vm::eval &eval)
+try
+{
+	const m::user::id &user_id
+	{
+		at<"sender"_>(event)
+	};
+
+	// This handler does not care about remote users.
+	if(!my(user_id))
+		return;
+
+	const m::room::id &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
+	const m::event::id &event_id
+	{
+		at<"event_id"_>(event)
+	};
+
+	const time_t &ms
+	{
+		at<"origin_server_ts"_>(event)
+	};
+
+	const auto receipt_event_id
+	{
+		m::receipt::read(room_id, user_id, event_id, ms)
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Implicit receipt hook for %s :%s",
+		json::get<"event_id"_>(event),
+		e.what(),
+	};
 }
 
 decltype(_ircd_read_eval)
