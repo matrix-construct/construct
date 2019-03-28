@@ -734,7 +734,17 @@ noexcept try
 		return false;
 
 	if(cp)
+	{
+		log::dwarning
+		{
+			"Flushing json::stack(%p) %zu bytes under checkpoint(%p)",
+			this,
+			size(buf.completed()),
+			cp,
+		};
+
 		cp = nullptr;
+	}
 
 	// The user returns the portion of the buffer they were able to flush
 	// rather than forcing them to wait on their sink to flush the whole
