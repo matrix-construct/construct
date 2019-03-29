@@ -837,10 +837,26 @@ console_cmd__ios(opt &out, const string_view &line)
 	    << " " << std::right << std::setw(10) << "FREES"
 	    << " " << std::right << std::setw(26) << "ALLOCATED"
 	    << " " << std::right << std::setw(26) << "FREED"
-	    << " " << std::right << std::setw(6) << "FAULTS"
+	    << " " << std::right << std::setw(8) << "FAULTS"
 	    << std::endl
 	    ;
 
+	const auto stats_output{[&out]
+	(const auto &s)
+	{
+		thread_local char pbuf[64];
+		out << " " << std::right << std::setw(10) << s.calls
+		    << " " << std::right << std::setw(15) << s.slice_total
+		    << " " << std::right << std::setw(15) << s.slice_last
+		    << " " << std::right << std::setw(10) << s.allocs
+		    << " " << std::right << std::setw(10) << s.frees
+		    << " " << std::right << std::setw(26) << pretty(iec(s.alloc_bytes))
+		    << " " << std::right << std::setw(26) << pretty(iec(s.free_bytes))
+		    << " " << std::right << std::setw(8) << s.faults
+		    ;
+	}};
+
+	struct ios::descriptor::stats total;
 	for(const auto *const &descriptor : ios::descriptor::list)
 	{
 		assert(descriptor);
@@ -848,22 +864,19 @@ console_cmd__ios(opt &out, const string_view &line)
 
 		assert(d.stats);
 		const auto &s(*d.stats);
+		total += s;
 
-		thread_local char pbuf[64];
 		out << std::left << std::setw(3) << d.id
-		    << " " << std::left << std::setw(48) << d.name
-		    << " " << std::right << std::setw(10) << s.calls
-		    << " " << std::right << std::setw(15) << s.slice_total
-		    << " " << std::right << std::setw(15) << s.slice_last
-		    << " " << std::right << std::setw(10) << s.allocs
-		    << " " << std::right << std::setw(10) << s.frees
-		    << " " << std::right << std::setw(26) << pretty(iec(s.alloc_bytes))
-		    << " " << std::right << std::setw(26) << pretty(iec(s.free_bytes))
-		    << " " << std::right << std::setw(6) << s.faults
-		    << std::endl
-		    ;
+		    << " " << std::left << std::setw(48) << d.name;
+		stats_output(s);
+		out << std::endl;
 	}
 
+	out << std::endl;
+	out << std::left << std::setw(3) << '-'
+	    << " " << std::left << std::setw(48) << "TOTAL";
+	stats_output(total);
+	out << std::endl;
 	return true;
 }
 

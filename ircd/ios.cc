@@ -171,7 +171,7 @@ noexcept
 {
 }
 
-ircd::ios::descriptor::stats &
+struct ircd::ios::descriptor::stats &
 ircd::ios::descriptor::stats::operator+=(const stats &o)
 &
 {
