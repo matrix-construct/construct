@@ -38,6 +38,9 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_linear(data &data)
 	if(json::get<"type"_>(*data.event) != "ircd.read")
 		return false;
 
+	if(json::get<"sender"_>(*data.event) == data.user.user_id)
+		return false;
+
 	const m::room room
 	{
 		json::get<"state_key"_>(*data.event)
