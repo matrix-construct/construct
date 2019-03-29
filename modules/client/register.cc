@@ -315,12 +315,22 @@ register_user(const m::registar &request,
 	// access_token will be committed and the user will be logged in.
 	if(gen_token)
 	{
+		char remote_buf[96];
+		const json::value last_seen_ip
+		{
+			client?
+				string(remote_buf, remote(*client)):
+				string_view{},
+
+			json::STRING
+		};
+
 		const m::event::id::buf access_token_id
 		{
 			m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
 			{
-				{ "ip",         client? string(remote(*client)) : std::string{} },
-				{ "device_id",  device_id                                       },
+				{ "ip",         last_seen_ip },
+				{ "device_id",  device_id    },
 			})
 		};
 
@@ -329,7 +339,7 @@ register_user(const m::registar &request,
 			{ "device_id",        device_id                    },
 			{ "display_name",     initial_device_display_name  },
 			{ "last_seen_ts",     ircd::time<milliseconds>()   },
-			{ "last_seen_ip",     string(remote(*client))      },
+			{ "last_seen_ip",     last_seen_ip                 },
 			{ "access_token_id",  access_token_id              },
 		});
 	}

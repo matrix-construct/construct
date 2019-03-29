@@ -104,6 +104,12 @@ post__login_password(client &client,
 		m::user::gen_access_token(access_token_buf)
 	};
 
+	char remote_buf[96];
+	const json::value last_seen_ip
+	{
+		string(remote_buf, remote(client)), json::STRING
+	};
+
 	// Log the user in by issuing an event in the tokens room containing
 	// the generated token. When this call completes without throwing the
 	// access_token will be committed and the user will be logged in.
@@ -111,18 +117,18 @@ post__login_password(client &client,
 	{
 		m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
 		{
-			{ "ip",         string(remote(client)) },
-			{ "device_id",  device_id              },
+			{ "ip",         last_seen_ip   },
+			{ "device_id",  device_id      },
 		})
 	};
 
 	m::device::set(user_id,
 	{
-		{ "device_id",       device_id                    },
-		{ "display_name",    initial_device_display_name  },
-		{ "last_seen_ts",    ircd::time<milliseconds>()   },
-		{ "last_seen_ip",    string(remote(client))       },
-		{ "access_token_id", access_token_id              },
+		{ "device_id",        device_id                    },
+		{ "display_name",     initial_device_display_name  },
+		{ "last_seen_ts",     ircd::time<milliseconds>()   },
+		{ "last_seen_ip",     last_seen_ip                 },
+		{ "access_token_id",  access_token_id              },
 	});
 
 	// Send response to user
