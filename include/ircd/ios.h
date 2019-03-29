@@ -68,6 +68,8 @@ namespace ircd
 struct ircd::ios::descriptor
 :instance_list<descriptor>
 {
+	struct stats;
+
 	static uint64_t ids;
 
 	static void *default_allocator(handler &, const size_t &);
@@ -75,15 +77,7 @@ struct ircd::ios::descriptor
 
 	string_view name;
 	uint64_t id {++ids};
-	uint64_t calls {0};
-	uint64_t faults {0};
-	uint64_t allocs {0};
-	uint64_t alloc_bytes{0};
-	uint64_t frees {0};
-	uint64_t free_bytes{0};
-	uint64_t slice_total {0};
-	uint64_t slice_last {0};
-
+	std::unique_ptr<struct stats> stats;
 	std::function<void *(handler &, const size_t &)> allocator;
 	std::function<void (handler &, void *const &, const size_t &)> deallocator;
 	bool continuation;
@@ -96,6 +90,23 @@ struct ircd::ios::descriptor
 	descriptor(descriptor &&) = delete;
 	descriptor(const descriptor &) = delete;
 	~descriptor() noexcept;
+};
+
+struct ircd::ios::descriptor::stats
+{
+	uint64_t calls {0};
+	uint64_t faults {0};
+	uint64_t allocs {0};
+	uint64_t alloc_bytes{0};
+	uint64_t frees {0};
+	uint64_t free_bytes{0};
+	uint64_t slice_total {0};
+	uint64_t slice_last {0};
+
+	stats &operator+=(const stats &) &;
+
+	stats();
+	~stats() noexcept;
 };
 
 struct ircd::ios::handler

@@ -830,13 +830,14 @@ console_cmd__ios(opt &out, const string_view &line)
 {
 	out << std::left << std::setw(3) << "ID"
 	    << " " << std::left << std::setw(48) << "NAME"
-	    << " " << std::right << std::setw(6) << "FAULTS"
 	    << " " << std::right << std::setw(10) << "CALLS"
-	    << " " << std::right << std::setw(15) << "CYCLES"
+	    << " " << std::right << std::setw(15) << "TOTAL CYCLES"
+	    << " " << std::right << std::setw(15) << "LAST CYCLES"
 	    << " " << std::right << std::setw(10) << "ALLOCS"
 	    << " " << std::right << std::setw(10) << "FREES"
 	    << " " << std::right << std::setw(26) << "ALLOCATED"
 	    << " " << std::right << std::setw(26) << "FREED"
+	    << " " << std::right << std::setw(6) << "FAULTS"
 	    << std::endl
 	    ;
 
@@ -844,16 +845,21 @@ console_cmd__ios(opt &out, const string_view &line)
 	{
 		assert(descriptor);
 		const auto &d(*descriptor);
+
+		assert(d.stats);
+		const auto &s(*d.stats);
+
 		thread_local char pbuf[64];
 		out << std::left << std::setw(3) << d.id
 		    << " " << std::left << std::setw(48) << d.name
-		    << " " << std::right << std::setw(6) << d.faults
-		    << " " << std::right << std::setw(10) << d.calls
-		    << " " << std::right << std::setw(15) << d.slice_total
-		    << " " << std::right << std::setw(10) << d.allocs
-		    << " " << std::right << std::setw(10) << d.frees
-		    << " " << std::right << std::setw(26) << pretty(iec(d.alloc_bytes))
-		    << " " << std::right << std::setw(26) << pretty(iec(d.free_bytes))
+		    << " " << std::right << std::setw(10) << s.calls
+		    << " " << std::right << std::setw(15) << s.slice_total
+		    << " " << std::right << std::setw(15) << s.slice_last
+		    << " " << std::right << std::setw(10) << s.allocs
+		    << " " << std::right << std::setw(10) << s.frees
+		    << " " << std::right << std::setw(26) << pretty(iec(s.alloc_bytes))
+		    << " " << std::right << std::setw(26) << pretty(iec(s.free_bytes))
+		    << " " << std::right << std::setw(6) << s.faults
 		    << std::endl
 		    ;
 	}

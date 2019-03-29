@@ -129,6 +129,7 @@ ircd::ios::descriptor::descriptor(const string_view &name,
                                   const decltype(deallocator) &deallocator,
                                   const bool &continuation)
 :name{name}
+,stats{std::make_unique<struct stats>()}
 ,allocator{allocator}
 ,deallocator{deallocator}
 ,continuation{continuation}
@@ -158,6 +159,34 @@ ircd::ios::descriptor::default_allocator(handler &handler,
 }
 
 //
+// descriptor::stats
+//
+
+ircd::ios::descriptor::stats::stats()
+{
+}
+
+ircd::ios::descriptor::stats::~stats()
+noexcept
+{
+}
+
+ircd::ios::descriptor::stats &
+ircd::ios::descriptor::stats::operator+=(const stats &o)
+&
+{
+	calls += o.calls;
+	faults += o.faults;
+	allocs += o.allocs;
+	alloc_bytes += o.alloc_bytes;
+	frees += o.frees;
+	free_bytes += o.free_bytes;
+	slice_total += o.slice_total;
+	slice_last += o.slice_last;
+	return *this;
+}
+
+//
 // handler
 //
 
@@ -169,15 +198,18 @@ ircd::ios::handler::fault(handler *const &handler)
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
-	++descriptor.faults;
-	bool ret(false);
 
+	assert(descriptor.stats);
+	auto &stats(*descriptor.stats);
+	++stats.faults;
+
+	bool ret(false);
 	// leave() isn't called if we return false so the tsc counter
 	// needs to be tied off here instead.
 	if(!ret)
 	{
-		descriptor.slice_last = cycles() - handler->slice_start;
-		descriptor.slice_total += descriptor.slice_last;
+		stats.slice_last = cycles() - handler->slice_start;
+		stats.slice_total += stats.slice_last;
 	}
 
 	return ret;
@@ -188,8 +220,12 @@ ircd::ios::handler::leave(handler *const &handler)
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
-	descriptor.slice_last = cycles() - handler->slice_start;
-	descriptor.slice_total += descriptor.slice_last;
+
+	assert(descriptor.stats);
+	auto &stats(*descriptor.stats);
+	stats.slice_last = cycles() - handler->slice_start;
+	stats.slice_total += stats.slice_last;
+
 	assert(handler::current == handler);
 	handler::current = nullptr;
 }
@@ -199,7 +235,11 @@ ircd::ios::handler::enter(handler *const &handler)
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
-	++descriptor.calls;
+
+	assert(descriptor.stats);
+	auto &stats(*descriptor.stats);
+	++stats.calls;
+
 	assert(!handler::current);
 	handler::current = handler;
 	handler->slice_start = cycles();
@@ -220,9 +260,13 @@ ircd::ios::handler::deallocate(handler *const &handler,
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
+
 	descriptor.deallocator(*handler, ptr, size);
-	descriptor.free_bytes += size;
-	++descriptor.frees;
+
+	assert(descriptor.stats);
+	auto &stats(*descriptor.stats);
+	stats.free_bytes += size;
+	++stats.frees;
 }
 
 void *
@@ -231,7 +275,11 @@ ircd::ios::handler::allocate(handler *const &handler,
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
-	descriptor.alloc_bytes += size;
-	++descriptor.allocs;
+
+	assert(descriptor.stats);
+	auto &stats(*descriptor.stats);
+	stats.alloc_bytes += size;
+	++stats.allocs;
+
 	return descriptor.allocator(*handler, size);
 }
