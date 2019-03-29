@@ -3429,7 +3429,7 @@ ircd::json::value::value(const char *const &str,
 }
 
 ircd::json::value::value(const string_view &sv)
-:value{sv, json::type(sv, std::nothrow)}
+:value{sv, json::type(sv, strict, std::nothrow)}
 {
 }
 
@@ -3445,7 +3445,7 @@ ircd::json::value::value(const string_view &sv,
 }
 
 ircd::json::value::value(const std::string &s)
-:value{s, json::type(s, std::nothrow)}
+:value{s, json::type(s, strict, std::nothrow)}
 {
 }
 
