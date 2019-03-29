@@ -21,7 +21,7 @@ namespace ircd::json
 	struct array;
 	struct vector;
 	struct iov;
-	using members = std::initializer_list<member>;
+	using members = std::initializer_list<const member>;
 
 	enum type type(const string_view &);
 	enum type type(const string_view &, std::nothrow_t);

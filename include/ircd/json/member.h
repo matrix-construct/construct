@@ -14,7 +14,7 @@
 namespace ircd::json
 {
 	struct member;
-	using members = std::initializer_list<member>;
+	using members = std::initializer_list<const member>;
 
 	bool operator==(const member &a, const member &b);
 	bool operator==(const member &a, const string_view &b);
@@ -63,24 +63,24 @@ ircd::json::member::member(const string_view &key,
 template<class V>
 ircd::json::member::member(const string_view &key,
                            V&& v)
-:std::pair<value, value>
+:member
 {
-	{ key, json::STRING }, std::forward<V>(v)
+	key, value { std::forward<V>(v) }
 }
 {}
 
 inline
 ircd::json::member::member(const object::member &m)
-:std::pair<value, value>
+:member
 {
-	{ m.first, json::STRING }, value { m.second, type(m.second) }
+	m.first, value { m.second, type(m.second) }
 }
 {}
 
 inline
 ircd::json::member::member(const string_view &k)
-:std::pair<value, value>
+:member
 {
-	{ k, json::STRING }, string_view{}
+	k, value{}
 }
 {}

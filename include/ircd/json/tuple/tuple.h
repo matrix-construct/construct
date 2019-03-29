@@ -67,7 +67,7 @@ struct tuple
 	template<class U> explicit tuple(const tuple &, const json::keys<U> &);
 	tuple(const json::object &);
 	tuple(const json::iov &);
-	tuple(const std::initializer_list<member> &);
+	tuple(const json::members &);
 	tuple() = default;
 };
 
@@ -200,7 +200,7 @@ tuple<T...>::tuple(const json::iov &iov)
 }
 
 template<class... T>
-tuple<T...>::tuple(const std::initializer_list<member> &members)
+tuple<T...>::tuple(const json::members &members)
 {
 	std::for_each(std::begin(members), std::end(members), [this]
 	(const auto &member)
