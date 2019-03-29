@@ -23,8 +23,11 @@ namespace ircd::json
 	struct iov;
 	using members = std::initializer_list<const member>;
 
+	IRCD_OVERLOAD(strict)
 	enum type type(const string_view &);
 	enum type type(const string_view &, std::nothrow_t);
+	enum type type(const string_view &, strict_t);
+	enum type type(const string_view &, strict_t, std::nothrow_t);
 	string_view reflect(const enum type &);
 
 	extern const string_view literal_null;

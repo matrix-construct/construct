@@ -157,13 +157,23 @@ struct ircd::json::input
 		,"value"
 	};
 
-	rule<int> type
+	rule<enum json::type> type
 	{
 		(omit[quote]           >> attr(json::STRING))  |
 		(omit[object_begin]    >> attr(json::OBJECT))  |
 		(omit[array_begin]     >> attr(json::ARRAY))   |
 		(omit[number >> eoi]   >> attr(json::NUMBER))  |
 		(omit[literal >> eoi]  >> attr(json::LITERAL))
+		,"type"
+	};
+
+	rule<enum json::type> type_strict
+	{
+		(omit[string]     >> attr(json::STRING))  |
+		(omit[object(0)]  >> attr(json::OBJECT))  |
+		(omit[array(0)]   >> attr(json::ARRAY))   |
+		(omit[number]     >> attr(json::NUMBER))  |
+		(omit[literal]    >> attr(json::LITERAL))
 		,"type"
 	};
 
@@ -4091,6 +4101,42 @@ ircd::json::serialized(const string_view &v)
 //
 // json/json.h
 //
+
+enum ircd::json::type
+ircd::json::type(const string_view &buf,
+                 strict_t)
+{
+	static const parser::rule<enum json::type> rule
+	{
+		-parser.ws >> parser.type_strict >> -parser.ws >> eoi
+	};
+
+	enum type ret;
+	if(!qi::parse(begin(buf), end(buf), rule , ret))
+		throw type_error
+		{
+			"Failed to derive JSON value type from input buffer."
+		};
+
+	return ret;
+}
+
+enum ircd::json::type
+ircd::json::type(const string_view &buf,
+                 strict_t,
+                 std::nothrow_t)
+{
+	static const parser::rule<enum json::type> rule
+	{
+		-parser.ws >> parser.type_strict >> -parser.ws >> eoi
+	};
+
+	enum type ret;
+	if(!qi::parse(begin(buf), end(buf), rule, ret))
+		return STRING;
+
+	return ret;
+}
 
 enum ircd::json::type
 ircd::json::type(const string_view &buf)
