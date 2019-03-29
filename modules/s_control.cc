@@ -108,6 +108,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
+	const ctx::exception_handler eh;
 	notice(control_room, e.what());
 }
 
