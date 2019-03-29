@@ -9224,7 +9224,7 @@ console_cmd__user__account_data(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"user_id", "key"
+		"user_id", "key", "[val]"
 	}};
 
 	const m::user::id &user_id
@@ -9237,10 +9237,21 @@ console_cmd__user__account_data(opt &out, const string_view &line)
 		param["key"]
 	};
 
+	const json::object &val
+	{
+		param["[val]"]
+	};
+
 	const m::user::account_data account_data
 	{
 		user_id
 	};
+
+	if(!empty(val))
+	{
+		account_data.set(key, val);
+		return true;
+	}
 
 	if(key)
 	{
@@ -9268,7 +9279,7 @@ console_cmd__user__room_account_data(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"user_id", "room_id", "key"
+		"user_id", "room_id", "key", "[val]"
 	}};
 
 	const m::user::id &user_id
@@ -9286,10 +9297,21 @@ console_cmd__user__room_account_data(opt &out, const string_view &line)
 		param["key"]
 	};
 
+	const json::object &val
+	{
+		param["[val]"]
+	};
+
 	const m::user::room_account_data room_account_data
 	{
 		user_id, room_id
 	};
+
+	if(!empty(val))
+	{
+		room_account_data.set(key, val);
+		return true;
+	}
 
 	if(key)
 	{
