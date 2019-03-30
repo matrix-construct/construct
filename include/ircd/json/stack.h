@@ -247,7 +247,7 @@ struct ircd::json::stack::checkpoint
 	bool recommit();
 	bool rollback();
 
-	checkpoint(stack &s);
+	checkpoint(stack &s, const bool &committed = true);
 	checkpoint(checkpoint &&) = delete;
 	checkpoint(const checkpoint &) = delete;
 	~checkpoint() noexcept;

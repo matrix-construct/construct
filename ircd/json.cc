@@ -1458,7 +1458,8 @@ ircd::json::stack::member::_post_append()
 // stack::checkpoint
 //
 
-ircd::json::stack::checkpoint::checkpoint(stack &s)
+ircd::json::stack::checkpoint::checkpoint(stack &s,
+                                          const bool &committed)
 :s{&s}
 ,pc{s.cp}
 ,point
@@ -1481,6 +1482,10 @@ ircd::json::stack::checkpoint::checkpoint(stack &s)
 			top.m->vc:
 		0;
 }()}
+,committed
+{
+	committed
+}
 {
 	s.cp = this;
 }
