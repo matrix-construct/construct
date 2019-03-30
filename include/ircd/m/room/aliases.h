@@ -20,8 +20,11 @@ struct ircd::m::room::aliases
 {
 	using closure_bool = std::function<bool (const alias &)>;
 
+	static bool for_each(const m::room &, const string_view &server, const closure_bool &);
+
 	m::room room;
 
+  public:
 	bool for_each(const string_view &server, const closure_bool &) const;
 	bool for_each(const closure_bool &) const;
 	bool has(const alias &) const;

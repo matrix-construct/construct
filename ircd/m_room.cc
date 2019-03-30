@@ -2420,40 +2420,22 @@ const
 	if(!server)
 		return for_each(closure);
 
-	const room::state state
+	return for_each(room, server, closure);
+}
+
+bool
+ircd::m::room::aliases::for_each(const m::room &room,
+                                 const string_view &server,
+                                 const closure_bool &closure)
+{
+	using prototype = bool (const m::room &, const string_view &, const closure_bool &);
+
+	static mods::import<prototype> call
 	{
-		room
+		"m_room_aliases", "ircd::m::room::aliases::for_each"
 	};
 
-	const event::idx &event_idx
-	{
-		state.get(std::nothrow, "m.room.aliases", server)
-	};
-
-	if(!event_idx)
-		return true;
-
-	bool ret{true};
-	m::get(std::nothrow, event_idx, "content", [&closure, &ret]
-	(const json::object &content)
-	{
-		const json::array &aliases
-		{
-			content["aliases"]
-		};
-
-		for(auto it(begin(aliases)); it != end(aliases) && ret; ++it)
-		{
-			const json::string &alias(*it);
-			if(!valid(m::id::ROOM_ALIAS, alias))
-				continue;
-
-			if(!closure(alias))
-				ret = false;
-		}
-	});
-
-	return ret;
+	return call(room, server, closure);
 }
 
 //

@@ -28,6 +28,57 @@ alias_room
 	alias_room_id
 };
 
+//
+// m::room::aliases impl
+//
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::for_each(const m::room &room,
+                                 const string_view &server,
+                                 const closure_bool &closure)
+{
+	const room::state state
+	{
+		room
+	};
+
+	assert(server);
+	const event::idx &event_idx
+	{
+		state.get(std::nothrow, "m.room.aliases", server)
+	};
+
+	if(!event_idx)
+		return true;
+
+	bool ret{true};
+	m::get(std::nothrow, event_idx, "content", [&closure, &ret]
+	(const json::object &content)
+	{
+		const json::array &aliases
+		{
+			content["aliases"]
+		};
+
+		for(auto it(begin(aliases)); it != end(aliases) && ret; ++it)
+		{
+			const json::string &alias(*it);
+			if(!valid(m::id::ROOM_ALIAS, alias))
+				continue;
+
+			if(!closure(alias))
+				ret = false;
+		}
+	});
+
+	return ret;
+}
+
+//
+// hook handlers
+//
+
 void
 _changed_aliases(const m::event &event,
                  m::vm::eval &)
