@@ -258,6 +258,18 @@ ircd::fs::aio::write(const fd &fd,
 	return bytes;
 }
 
+bool
+ircd::fs::aio::for_each_completed(const std::function<bool (const request &)> &closure)
+{
+	assert(system);
+	const size_t max(system->max_events());
+	for(size_t i(system->head->head % max); i != system->head->tail % max; ++i %= max)
+		if(!closure(*reinterpret_cast<const request *>(system->ring[i].data)))
+			return false;
+
+	return true;
+}
+
 //
 // request
 //
