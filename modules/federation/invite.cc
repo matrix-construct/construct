@@ -129,9 +129,30 @@ put__invite(client &client,
 	// presented with this invite request in their rooms list.
 	m::vm::opts vmopts;
 	vmopts.prev_check_exists = false;
+
+	// We don't want this eval throwing an exception because the response has
+	// already been made for this request.
+	const unwind::nominal::assertion na;
+	vmopts.nothrows = -1;
+
 	m::vm::eval
 	{
 		signed_event, vmopts
+	};
+
+	// The remote maybe gave us some events they purport to be the room's
+	// state. If so, we can try to evaluate them to give our client more info.
+	const json::array &invite_room_state
+	{
+		json::object(request["unsigned"]).get("invite_room_state")
+	};
+
+	if(!empty(invite_room_state))
+	{
+		m::vm::eval
+		{
+			invite_room_state, vmopts
+		};
 	};
 
 	// note: returning a resource response is a symbolic/indicator action to
