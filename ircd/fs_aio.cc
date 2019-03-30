@@ -347,9 +347,9 @@ ircd::fs::aio::request::operator()()
 
 	stats.errors++;
 	stats.bytes_errors += submitted_bytes;
-	thread_local char errbuf[2][512]; fmt::sprintf
+	thread_local char errbuf[512]; fmt::sprintf
 	{
-		errbuf[0], "fd:%d size:%zu off:%zd op:%u pri:%u #%lu",
+		errbuf, "fd:%d size:%zu off:%zd op:%u pri:%u #%lu",
 		aio_fildes,
 		aio_nbytes,
 		aio_offset,
@@ -360,7 +360,7 @@ ircd::fs::aio::request::operator()()
 
 	throw std::system_error
 	{
-		make_error_code(errcode), errbuf[0]
+		make_error_code(errcode), errbuf
 	};
 }
 
