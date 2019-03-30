@@ -410,23 +410,59 @@ try
 {
 	ios::get(), int(syscall(::eventfd, ecount, eventfd_flags))
 }
+,head
 {
-	syscall<SYS_io_setup>(this->max_events(), &idp);
-
-	const system::ring *const ring
+	[this]
 	{
-		reinterpret_cast<const system::ring *>(idp)
-	};
+		aio_context *idp;
+		syscall<SYS_io_setup>(this->max_events(), &idp);
+		return idp;
+	}(), []
+	(const aio_context *const &head)
+	{
+		syscall<SYS_io_destroy>(head);
+	}
+}
+,ring
+{
+	reinterpret_cast<const io_event *>
+	(
+		reinterpret_cast<const uint8_t *>(head.get()) +
+		sizeof(aio_context)
+	)
+}
+{
+	assert(head->magic == aio_context::MAGIC);
+	assert(sizeof(aio_context) == head->header_length);
+	if(unlikely(head->magic != aio_context::MAGIC))
+		throw panic
+		{
+			"ircd::fs::aio kernel context structure magic:%u != %u",
+			head->magic,
+			aio_context::MAGIC,
+		};
 
-	assert(ring->magic == ring::MAGIC);
+	if(unlikely(head->header_length != sizeof(*head)))
+		throw panic
+		{
+			"ircd::fs::aio kernel context structure length:%u != %u",
+			head->header_length,
+			sizeof(*head),
+		};
 
 	log::debug
 	{
-		"Established AIO(%p) context (fd:%d max_events:%zu max_submit:%zu)",
-		this,
+		"Established head(%p) ring(%p) id:%u fd:%d max_events:%zu max_submit:%zu compat:%x incompat:%x len:%u nr:%u",
+		head.get(),
+		ring,
+		head->id,
 		int(resfd.native_handle()),
 		this->max_events(),
 		this->max_submit(),
+		head->compat_features,
+		head->incompat_features,
+		head->header_length,
+		head->nr
 	};
 }
 catch(const std::exception &e)
@@ -450,8 +486,6 @@ noexcept try
 
 	boost::system::error_code ec;
 	resfd.close(ec);
-
-	syscall<SYS_io_destroy>(idp);
 }
 catch(const std::exception &e)
 {
@@ -572,7 +606,7 @@ ircd::fs::aio::system::cancel(request &request)
 		result.res = -1;
 		result.res2 = ECANCELED;
 	} else {
-		syscall_nointr<SYS_io_cancel>(idp, cb, &result);
+		syscall_nointr<SYS_io_cancel>(head.get(), cb, &result);
 		in_flight--;
 		stats.cur_submits--;
 		dock.notify_one();
@@ -717,7 +751,7 @@ try
 		qcount
 	};
 
-	return syscall<SYS_io_submit>(idp, qcount, queue.data());
+	return syscall<SYS_io_submit>(head.get(), qcount, queue.data());
 }
 catch(const std::system_error &e)
 {
@@ -871,7 +905,7 @@ noexcept try
 	// events but it never blocks to do so.
 	const auto count
 	{
-		syscall_nointr<SYS_io_getevents>(idp, 0, event.size(), event.data(), nullptr)
+		syscall_nointr<SYS_io_getevents>(head.get(), 0, event.size(), event.data(), nullptr)
 	};
 
 	// The count should be at least 1 event. The only reason to return 0 might

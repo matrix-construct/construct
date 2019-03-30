@@ -27,7 +27,7 @@ namespace ircd::fs::aio
 /// an extern instance pointer at fs::aio::context maintained by fs::aio::init.
 struct ircd::fs::aio::system
 {
-	struct ring;
+	struct aio_context;
 
 	static const int eventfd_flags;
 
@@ -55,7 +55,8 @@ struct ircd::fs::aio::system
 	asio::posix::stream_descriptor resfd;
 
 	/// Handler to the io context we submit requests to the system with
-	aio_context_t idp {0};
+	const custom_ptr<const aio_context> head;
+	const io_event *ring {nullptr};
 
 	size_t max_events() const;
 	size_t max_submit() const;
@@ -88,7 +89,7 @@ struct ircd::fs::aio::system
 	~system() noexcept;
 };
 
-struct ircd::fs::aio::system::ring
+struct ircd::fs::aio::system::aio_context
 {
 	static constexpr uint MAGIC {0xA10A10A1};
 
@@ -99,7 +100,7 @@ struct ircd::fs::aio::system::ring
 	uint magic;
 	uint compat_features;
 	uint incompat_features;
-	uint header_length;  // size of aio_ring
+	uint header_length;  // size of aio_context
 	struct io_event io_events[0];
 };
 // 128 bytes + ring size
