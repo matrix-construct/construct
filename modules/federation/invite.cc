@@ -10,6 +10,14 @@
 
 using namespace ircd;
 
+static void
+check_event(const resource::request &request,
+            const m::event &event);
+
+static resource::response
+put__invite(client &client,
+            const resource::request &request);
+
 mapi::header
 IRCD_MODULE
 {
@@ -34,9 +42,14 @@ invite_resource
 	}
 };
 
-static void
-check_event(const resource::request &request,
-            const m::event &event);
+resource::method
+method_put
+{
+	invite_resource, "PUT", put__invite,
+	{
+		method_put.VERIFY_ORIGIN
+	}
+};
 
 resource::response
 put__invite(client &client,
@@ -159,15 +172,6 @@ put__invite(client &client,
 	// the caller and has no real effect at the point of return.
 	return response;
 }
-
-resource::method
-method_put
-{
-	invite_resource, "PUT", put__invite,
-	{
-		method_put.VERIFY_ORIGIN
-	}
-};
 
 void
 check_event(const resource::request &request,
