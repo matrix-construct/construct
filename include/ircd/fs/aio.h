@@ -44,16 +44,16 @@ namespace ircd::fs::aio
 ///
 struct ircd::fs::aio::stats
 {
-	uint32_t requests {0};             ///< count of requests created
-	uint32_t complete {0};             ///< count of requests completed
-	uint32_t submits {0};              ///< count of io_submit calls
-	uint32_t chases {0};               ///< count of chase calls
-	uint32_t handles {0};              ///< count of event_fd callbacks
-	uint32_t events {0};               ///< count of events from io_getevents
-	uint32_t cancel {0};               ///< count of requests canceled
-	uint32_t errors {0};               ///< count of response errcodes
-	uint32_t reads {0};                ///< count of read complete
-	uint32_t writes {0};               ///< count of write complete
+	uint64_t requests {0};             ///< count of requests created
+	uint64_t complete {0};             ///< count of requests completed
+	uint64_t submits {0};              ///< count of io_submit calls
+	uint64_t chases {0};               ///< count of chase calls
+	uint64_t handles {0};              ///< count of event_fd callbacks
+	uint64_t events {0};               ///< count of events from io_getevents
+	uint64_t cancel {0};               ///< count of requests canceled
+	uint64_t errors {0};               ///< count of response errcodes
+	uint64_t reads {0};                ///< count of read complete
+	uint64_t writes {0};               ///< count of write complete
 
 	uint64_t bytes_requests {0};       ///< total bytes for requests created
 	uint64_t bytes_complete {0};       ///< total bytes for requests completed
@@ -62,17 +62,17 @@ struct ircd::fs::aio::stats
 	uint64_t bytes_read {0};           ///< total bytes for read completed
 	uint64_t bytes_write {0};          ///< total bytes for write completed
 
-	uint32_t cur_reads {0};            ///< pending reads
-	uint32_t cur_writes {0};           ///< pending write
 	uint32_t cur_bytes_write {0};      ///< pending write bytes
-	uint32_t cur_queued {0};           ///< size of submit queues
-	uint32_t cur_submits {0};          ///< submits in flight
+	uint16_t cur_reads {0};            ///< pending reads
+	uint16_t cur_writes {0};           ///< pending write
+	uint16_t cur_queued {0};           ///< nr of requests in userspace queue
+	uint16_t cur_submits {0};          ///< nr requests in flight with kernel
 
-	uint32_t max_requests {0};         ///< maximum observed pending requests
-	uint32_t max_reads {0};            ///< maximum observed pending reads
-	uint32_t max_writes {0};           ///< maximum observed pending write
-	uint32_t max_queued {0};           ///< maximum observed in queue.
-	uint32_t max_submits {0};          ///< maximum observed in flight.
+	uint16_t max_requests {0};         ///< maximum observed pending requests
+	uint16_t max_reads {0};            ///< maximum observed pending reads
+	uint16_t max_writes {0};           ///< maximum observed pending write
+	uint16_t max_queued {0};           ///< maximum observed in queue.
+	uint16_t max_submits {0};          ///< maximum observed in flight.
 };
 
 struct ircd::fs::aio::init

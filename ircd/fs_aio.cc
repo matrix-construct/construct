@@ -322,7 +322,7 @@ ircd::fs::aio::request::operator()()
 	stats.bytes_requests += submitted_bytes;
 	stats.requests++;
 
-	const auto &curcnt(stats.requests - stats.complete);
+	const uint16_t &curcnt(stats.requests - stats.complete);
 	stats.max_requests = std::max(stats.max_requests, curcnt);
 
 	// Wait here until there's room to submit a request
