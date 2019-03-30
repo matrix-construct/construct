@@ -221,6 +221,7 @@ struct ircd::json::stack::chase
 	chase() = default;
 };
 
+/// This device chases the current active path by updating its member pointers.
 struct ircd::json::stack::const_chase
 {
 	const array *a {nullptr};
@@ -234,6 +235,25 @@ struct ircd::json::stack::const_chase
 	const_chase() = default;
 };
 
+/// Checkpoint captures the current state of the json::stack on construction
+/// and allows a restoration to that state in one of three ways:
+///
+/// - Calling rollback() will immediately rewind the json::stack buffer and
+/// allow continuing from the check point. This should be used with care, as
+/// other json::stack objects may still be pending on the stack and destruct
+/// after calling rollback(), leaving an incoherent attempt to close the JSON.
+///
+/// - Calling decommit() will defer the rollback() until destruction time. Take
+/// care again that the checkpoint was still placed on the stack to avoid the
+/// rollback() pitfall.
+///
+/// - Destruction under an exception is equivalent to a decommit() and will
+/// perform a rollback().
+///
+/// Flushes are avoided under the scope of a checkpoint, but they are still
+/// forced if the json::stack buffer fills up. In this case all active
+/// checkpoints are invalidated and cannot be rolled back.
+///
 struct ircd::json::stack::checkpoint
 {
 	stack *s {nullptr};
