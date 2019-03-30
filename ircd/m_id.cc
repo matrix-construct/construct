@@ -456,6 +456,48 @@ ircd::m::id::id(const enum sigil &sigil,
 {
 }
 
+ircd::string_view
+ircd::m::id::swap(const mutable_buffer &buf)
+const
+{
+	return swap(*this, buf);
+}
+
+ircd::string_view
+ircd::m::id::swap(const id &id,
+                  const mutable_buffer &buf_)
+{
+	using buffer::consume;
+	using buffer::copy;
+	using buffer::data;
+
+	mutable_buffer buf(buf_);
+	consume(buf, copy(buf, id.host()));
+	consume(buf, copy(buf, id.local()));
+	return { data(buf_), data(buf) };
+}
+
+ircd::m::id
+ircd::m::id::unswap(const string_view &str,
+                    const mutable_buffer &buf)
+{
+	size_t i(0);
+	for(; i < str.size(); ++i)
+		if(is_sigil(str[i]))
+			break;
+
+	if(unlikely(!i || i >= str.size()))
+		throw m::INVALID_MXID
+		{
+			"Failed to reconstruct any MXID out of '%s'", str
+		};
+
+	return id
+	{
+		sigil(str[i]), buf, str.substr(i), str.substr(0, i)
+	};
+}
+
 bool
 ircd::m::id::literal()
 const

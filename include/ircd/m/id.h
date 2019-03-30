@@ -74,6 +74,12 @@ struct ircd::m::id
 	uint16_t port() const;            // Just the port number or 0 if none
 	bool literal() const;             // Whether the hostname() is IP literal
 
+	// Rewrites the ID so the local and host parts are swapped; for indexing.
+	// e.g. `$foo:bar.com` becomes `bar.com$foo`; unswap() reverses to normal.
+	static id unswap(const string_view &, const mutable_buffer &);
+	static string_view swap(const id &, const mutable_buffer &);
+	string_view swap(const mutable_buffer &) const;
+
 	IRCD_USING_OVERLOAD(generate, m::generate);
 
 	id(const enum sigil &, const mutable_buffer &, const generate_t &, const string_view &host);
