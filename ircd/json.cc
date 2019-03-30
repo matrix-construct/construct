@@ -1496,29 +1496,11 @@ noexcept
 	if(!s)
 		return;
 
-	if(!s->cp)
-		return;
-
 	if(std::uncaught_exceptions())
-		rollback();
+		decommit();
 
 	if(!committing())
-	{
-		assert(point <= s->buf.consumed());
-		s->buf.rewind(s->buf.consumed() - point);
-
-		const chase top
-		{
-			*s, true
-		};
-
-		if(top.o)
-			top.o->mc = vc;
-		else if(top.a)
-			top.a->vc = vc;
-		else if(top.m)
-			top.m->vc = vc;
-	}
+		rollback();
 
 	assert(s->cp == this);
 	s->cp = pc;
@@ -1527,6 +1509,34 @@ noexcept
 bool
 ircd::json::stack::checkpoint::rollback()
 {
+	if(!s || !s->cp)
+		return false;
+
+	assert(point <= s->buf.consumed());
+	s->buf.rewind(s->buf.consumed() - point);
+
+	const chase top
+	{
+		*s, true
+	};
+
+	if(top.o)
+		top.o->mc = vc;
+	else if(top.a)
+		top.a->vc = vc;
+	else if(top.m)
+		top.m->vc = vc;
+
+	recommit();
+	return true;
+}
+
+bool
+ircd::json::stack::checkpoint::decommit()
+{
+	if(!s || !s->cp)
+		return false;
+
 	committed = false;
 	return true;
 }
@@ -1534,6 +1544,9 @@ ircd::json::stack::checkpoint::rollback()
 bool
 ircd::json::stack::checkpoint::recommit()
 {
+	if(!s || !s->cp)
+		return false;
+
 	committed = true;
 	return true;
 }

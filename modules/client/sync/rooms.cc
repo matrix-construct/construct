@@ -195,13 +195,13 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 		if(item.polylog(data))
 			ret = true;
 		else
-			checkpoint.rollback();
+			checkpoint.decommit();
 
 		return true;
 	});
 
 	if(!ret)
-		checkpoint.rollback();
+		checkpoint.decommit();
 
 	return ret;
 }

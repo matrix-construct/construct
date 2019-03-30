@@ -243,9 +243,10 @@ struct ircd::json::stack::checkpoint
 	bool committed {true};
 
   public:
-	bool committing() const;
-	bool recommit();
-	bool rollback();
+	bool committing() const;     ///< When false, destructor will rollback()
+	bool recommit();             ///< Sets committing() to true.
+	bool decommit();             ///< Sets committing() to false.
+	bool rollback();             ///< Performs rollback of buffer.
 
 	checkpoint(stack &s, const bool &committed = true);
 	checkpoint(checkpoint &&) = delete;

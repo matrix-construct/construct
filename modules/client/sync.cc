@@ -327,7 +327,7 @@ try
 		if(item.polylog(data))
 			ret = true;
 		else
-			checkpoint.rollback();
+			checkpoint.decommit();
 
 		return true;
 	});
@@ -342,7 +342,7 @@ try
 		};
 
 	if(!ret)
-		checkpoint.rollback();
+		checkpoint.decommit();
 
 	if(stats_info) log::info
 	{
@@ -439,7 +439,7 @@ try
 
 		json::merge(top, vector);
 	}
-	else checkpoint.rollback();
+	else checkpoint.decommit();
 
 	log::debug
 	{
