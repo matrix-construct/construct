@@ -7081,6 +7081,39 @@ console_cmd__room__visible(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__aliases(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "server"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const string_view &server
+	{
+		param["server"]
+	};
+
+	const m::room::aliases aliases
+	{
+		room_id
+	};
+
+	aliases.for_each(server, [&out]
+	(const m::room::alias &alias)
+	{
+		out << alias << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__room__members(opt &out, const string_view &line)
 {
 	const params param{line, " ",

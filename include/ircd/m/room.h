@@ -85,4 +85,5 @@ namespace ircd::m
 #include "room/head.h"
 #include "room/auth.h"
 #include "room/power.h"
+#include "room/aliases.h"
 #include "room/stats.h"

@@ -2360,6 +2360,103 @@ ircd::m::room::auth::make_refs(const auth &a,
 }
 
 //
+// room::aliases
+//
+
+size_t
+ircd::m::room::aliases::count()
+const
+{
+	return count(string_view{});
+}
+
+size_t
+ircd::m::room::aliases::count(const string_view &server)
+const
+{
+	size_t ret(0);
+	for_each(server, [&ret](const auto &a)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::room::aliases::has(const alias &alias)
+const
+{
+	return !for_each(alias.host(), [&alias]
+	(const id::room_alias &a)
+	{
+		assert(a.host() == alias.host());
+		return a == alias? false : true; // false to break on found
+	});
+}
+
+bool
+ircd::m::room::aliases::for_each(const closure_bool &closure)
+const
+{
+	const room::state state
+	{
+		room
+	};
+
+	return state.for_each("m.room.aliases", room::state::keys_bool{[this, &closure]
+	(const string_view &state_key)
+	{
+		return for_each(state_key, closure);
+	}});
+}
+
+bool
+ircd::m::room::aliases::for_each(const string_view &server,
+                                 const closure_bool &closure)
+const
+{
+	if(!server)
+		return for_each(closure);
+
+	const room::state state
+	{
+		room
+	};
+
+	const event::idx &event_idx
+	{
+		state.get(std::nothrow, "m.room.aliases", server)
+	};
+
+	if(!event_idx)
+		return true;
+
+	bool ret{true};
+	m::get(std::nothrow, event_idx, "content", [&closure, &ret]
+	(const json::object &content)
+	{
+		const json::array &aliases
+		{
+			content["aliases"]
+		};
+
+		for(auto it(begin(aliases)); it != end(aliases) && ret; ++it)
+		{
+			const json::string &alias(*it);
+			if(!valid(m::id::ROOM_ALIAS, alias))
+				continue;
+
+			if(!closure(alias))
+				ret = false;
+		}
+	});
+
+	return ret;
+}
+
+//
 // room::power
 //
 
