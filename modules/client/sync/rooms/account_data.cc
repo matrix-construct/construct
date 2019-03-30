@@ -46,12 +46,19 @@ ircd::m::sync::room_account_data_linear(data &data)
 	if(json::get<"room_id"_>(event) != data.user_room.room_id)
 		return false;
 
+	json::stack::checkpoint checkpoint
+	{
+		*data.out
+	};
+
 	if(room_account_data_linear_events(data, event))
 		return true;
 
+	checkpoint.rollback();
 	if(room_account_data_linear_tags(data, event))
 		return true;
 
+	checkpoint.rollback();
 	return false;
 }
 
@@ -257,11 +264,6 @@ ircd::m::sync::room_account_data_polylog_events_event(data &data,
 bool
 ircd::m::sync::room_account_data_polylog_tags(data &data)
 {
-	json::stack::checkpoint checkpoint
-	{
-		*data.out
-	};
-
 	json::stack::object object
 	{
 		*data.out
@@ -317,9 +319,6 @@ ircd::m::sync::room_account_data_polylog_tags(data &data)
 		ret = true;
 		return true;
 	});
-
-	if(!ret)
-		checkpoint.rollback();
 
 	return ret;
 }
