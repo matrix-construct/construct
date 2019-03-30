@@ -96,15 +96,15 @@ noexcept try
 	notes = 1;
 	stack.base = uintptr_t(__builtin_frame_address(0));
 	mark(prof::event::ENTER);
-	const unwind atexit([this]
+	const unwind atexit{[this]
 	{
 		mark(prof::event::LEAVE);
 		adjoindre.notify_all();
 		this->yc = nullptr;
 		ircd::ctx::current = nullptr;
-		if(flags & context::DETACH)
+		if(flags & context::DETACH && !std::uncaught_exceptions())
 			delete this;
-	});
+	}};
 
 	// Check for a precocious interrupt
 	interruption_point();
@@ -117,10 +117,14 @@ noexcept try
 catch(const ircd::ctx::interrupted &)
 {
 	assert(!std::uncaught_exceptions());
+	if(flags & context::DETACH)
+		delete this;
 }
 catch(const ircd::ctx::terminated &)
 {
 	assert(!std::uncaught_exceptions());
+	if(flags & context::DETACH)
+		delete this;
 }
 catch(const std::exception &e)
 {
@@ -131,15 +135,10 @@ catch(const std::exception &e)
 		id,
 		e.what()
 	};
-}
-catch(...)
-{
-	log::critical
-	{
-		log, "ctx('%s' id:%u): unexpected",
-		name,
-		id
-	};
+
+	assert(!std::uncaught_exceptions());
+	if(flags & context::DETACH)
+		delete this;
 }
 
 /// Direct context switch to this context.
