@@ -1459,7 +1459,8 @@ ircd::json::stack::member::_post_append()
 //
 
 ircd::json::stack::checkpoint::checkpoint(stack &s,
-                                          const bool &committed)
+                                          const bool &committed,
+                                          const bool &exception_rollback)
 :s{&s}
 ,pc{s.cp}
 ,point
@@ -1486,6 +1487,10 @@ ircd::json::stack::checkpoint::checkpoint(stack &s,
 {
 	committed
 }
+,exception_rollback
+{
+	exception_rollback
+}
 {
 	s.cp = this;
 }
@@ -1496,7 +1501,7 @@ noexcept
 	if(!s)
 		return;
 
-	if(std::uncaught_exceptions())
+	if(std::uncaught_exceptions() && exception_rollback)
 		decommit();
 
 	if(!committing())

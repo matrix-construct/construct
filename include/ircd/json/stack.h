@@ -248,7 +248,7 @@ struct ircd::json::stack::const_chase
 /// rollback() pitfall.
 ///
 /// - Destruction under an exception is equivalent to a decommit() and will
-/// perform a rollback().
+/// perform a rollback() if exception_rollback is set.
 ///
 /// Flushes are avoided under the scope of a checkpoint, but they are still
 /// forced if the json::stack buffer fills up. In this case all active
@@ -261,6 +261,7 @@ struct ircd::json::stack::checkpoint
 	size_t point {0};
 	size_t vc {0};
 	bool committed {true};
+	bool exception_rollback {true};
 
   public:
 	bool committing() const;     ///< When false, destructor will rollback()
@@ -268,7 +269,10 @@ struct ircd::json::stack::checkpoint
 	bool decommit();             ///< Sets committing() to false.
 	bool rollback();             ///< Performs rollback of buffer.
 
-	checkpoint(stack &s, const bool &committed = true);
+	checkpoint(stack &s,
+	           const bool &committed = true,
+	           const bool &exception_rollback = true);
+
 	checkpoint(checkpoint &&) = delete;
 	checkpoint(const checkpoint &) = delete;
 	~checkpoint() noexcept;
