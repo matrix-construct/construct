@@ -325,9 +325,11 @@ try
 		};
 
 		if(item.polylog(data))
+		{
 			ret = true;
-		else
-			checkpoint.decommit();
+			data.out->invalidate_checkpoints();
+		}
+		else checkpoint.decommit();
 
 		return true;
 	});

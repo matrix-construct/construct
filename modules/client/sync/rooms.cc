@@ -193,9 +193,11 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 		};
 
 		if(item.polylog(data))
+		{
 			ret = true;
-		else
-			checkpoint.decommit();
+			data.out->invalidate_checkpoints();
+		}
+		else checkpoint.decommit();
 
 		return true;
 	});

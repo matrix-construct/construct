@@ -77,9 +77,11 @@ ircd::m::sync::rooms_ephemeral_events_polylog(data &data)
 		};
 
 		if(item.polylog(data))
+		{
 			ret = true;
-		else
-			checkpoint.rollback();
+			data.out->invalidate_checkpoints();
+		}
+		else checkpoint.rollback();
 
 		return true;
 	});
