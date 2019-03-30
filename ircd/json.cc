@@ -745,15 +745,18 @@ noexcept try
 
 	if(cp)
 	{
-		log::dwarning
+		const size_t invalidated
 		{
-			"Flushing json::stack(%p) %zu bytes under checkpoint(%p)",
-			this,
-			size(buf.completed()),
-			cp,
+			invalidate_checkpoints()
 		};
 
-		cp = nullptr;
+		log::dwarning
+		{
+			"Flushing json::stack(%p) %zu bytes under %zu checkpoints.",
+			this,
+			size(buf.completed()),
+			invalidated,
+		};
 	}
 
 	// The user returns the portion of the buffer they were able to flush
@@ -773,6 +776,17 @@ catch(...)
 	assert(!this->eptr);
 	this->eptr = std::current_exception();
 	return false;
+}
+
+size_t
+ircd::json::stack::invalidate_checkpoints()
+{
+	size_t ret(0);
+	for(auto cp(this->cp); cp; cp = cp->pc, ++ret)
+		cp->s = nullptr;
+
+	this->cp = nullptr;
+	return ret;
 }
 
 void
@@ -1498,14 +1512,14 @@ ircd::json::stack::checkpoint::checkpoint(stack &s,
 ircd::json::stack::checkpoint::~checkpoint()
 noexcept
 {
-	if(!s)
-		return;
-
 	if(std::uncaught_exceptions() && exception_rollback)
 		decommit();
 
 	if(!committing())
 		rollback();
+
+	if(!s)
+		return;
 
 	assert(s->cp == this);
 	s->cp = pc;
@@ -1514,11 +1528,19 @@ noexcept
 bool
 ircd::json::stack::checkpoint::rollback()
 {
-	if(!s || !s->cp)
+	if(!s)
+	{
+		log::dwarning
+		{
+			"Attempting rollback of invalidated checkpoint(%p).",
+			this,
+		};
+
 		return false;
+	}
 
 	assert(point <= s->buf.consumed());
-	s->buf.rewind(s->buf.consumed() - point);
+	s->rewind(s->buf.consumed() - point);
 
 	const chase top
 	{
@@ -1539,9 +1561,6 @@ ircd::json::stack::checkpoint::rollback()
 bool
 ircd::json::stack::checkpoint::decommit()
 {
-	if(!s || !s->cp)
-		return false;
-
 	committed = false;
 	return true;
 }
@@ -1549,9 +1568,6 @@ ircd::json::stack::checkpoint::decommit()
 bool
 ircd::json::stack::checkpoint::recommit()
 {
-	if(!s || !s->cp)
-		return false;
-
 	committed = true;
 	return true;
 }

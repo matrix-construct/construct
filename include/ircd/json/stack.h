@@ -74,6 +74,7 @@ struct ircd::json::stack
 	size_t remaining() const;
 	const_buffer completed() const;
 
+	size_t invalidate_checkpoints();
 	bool flush(const bool &force = false) noexcept;
 	size_t rewind(const size_t &bytes);
 	void clear();
