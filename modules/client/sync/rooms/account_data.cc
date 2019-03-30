@@ -110,6 +110,7 @@ ircd::m::sync::room_account_data_linear_events(data &data,
 	};
 
 	const scope_restore room__{data.room, &room};
+	const scope_restore range_upper{data.range.second, data.event_idx + 1};
 	return room_account_data_polylog_events_event(data, event);
 }
 
@@ -173,7 +174,8 @@ ircd::m::sync::room_account_data_linear_tags(data &data,
 	// past the events[] array and know to combine all of room tags into
 	// the required format. The event_idx is hacked to 0 here to trick the
 	// polylog apropos() into composing all tags unconditionally.
-	const scope_restore range{data.range.first, 0UL};
+	const scope_restore range_lower{data.range.first, 0UL};
+	const scope_restore range_upper{data.range.second, data.event_idx + 1};
 	const scope_restore room__{data.room, &room};
 	return room_account_data_polylog_tags(data);
 }
