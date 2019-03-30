@@ -210,6 +210,9 @@ ircd::ios::handler::fault(handler *const &handler)
 	{
 		stats.slice_last = cycles() - handler->slice_start;
 		stats.slice_total += stats.slice_last;
+
+		assert(handler::current == handler);
+		handler::current = nullptr;
 	}
 
 	return ret;
