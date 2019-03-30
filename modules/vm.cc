@@ -680,6 +680,11 @@ ircd::m::vm::execute_pdu(eval &eval,
 		sequence::pending
 	};
 
+	const scope_restore remove_txn
+	{
+		eval.txn, std::shared_ptr<db::txn>{}
+	};
+
 	assert(eval.opts);
 	const auto &opts
 	{
