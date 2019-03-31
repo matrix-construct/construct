@@ -149,19 +149,24 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	// toxic as soon as it becomes invalid. As a result we have to copy the
 	// event_id on the way down in case of renewing the iterator for the
 	// way back. This is not a big deal but rocksdb should fix their shit.
-	ssize_t i(0);
 	m::event::id::buf event_id;
 	m::room::messages it
 	{
 		room, &fopts
 	};
 
+	ssize_t i(0);
 	const ssize_t limit(limit_default);
-	for(; it && i < limit; --it, ++i)
+	for(; it && i <= limit; --it)
 	{
+		if(!i && it.event_idx() >= data.range.second)
+			continue;
+
 		event_id = it.event_id();
-		if(!apropos(data, it.event_idx()))
+		if(it.event_idx() < data.range.first)
 			break;
+
+		++i;
 	}
 
 	limited = i >= limit;
@@ -169,7 +174,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 		it.seek(event_id);
 
 	if(i > 0)
-		for(; it && i > -1; ++it, --i)
+		for(++it; it && i > -1; ++it, --i)
 		{
 			const m::event &event(*it);
 			const m::event::idx &event_idx(it.event_idx());
