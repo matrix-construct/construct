@@ -1246,27 +1246,11 @@ bool
 ircd::m::room::state::for_each(const event::closure_idx_bool &closure)
 const
 {
-	if(!present())
-		return m::state::for_each(root_id, m::state::iter_bool_closure{[&closure]
-		(const json::array &key, const string_view &event_id)
-		{
-			return closure(index(m::event::id(unquote(event_id)), std::nothrow));
-		}});
-
-	db::gopts opts
+	return for_each(closure_bool{[&closure]
+	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 	{
-		this->fopts? this->fopts->gopts : db::gopts{}
-	};
-
-	if(!opts.readahead)
-		opts.readahead = size_t(readahead_size);
-
-	auto &column{dbs::room_state};
-	for(auto it{column.begin(room_id, opts)}; bool(it); ++it)
-		if(!closure(byte_view<event::idx>(it->second)))
-			return false;
-
-	return true;
+		return closure(event_idx);
+	}});
 }
 
 bool
