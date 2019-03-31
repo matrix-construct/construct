@@ -7080,8 +7080,12 @@ console_cmd__room__visible(opt &out, const string_view &line)
 	return true;
 }
 
+//
+// room alias
+//
+
 bool
-console_cmd__room__aliases(opt &out, const string_view &line)
+console_cmd__room__alias(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -7110,6 +7114,152 @@ console_cmd__room__aliases(opt &out, const string_view &line)
 		return true;
 	});
 
+	return true;
+}
+
+//
+// room cache
+//
+
+bool
+console_cmd__room__alias__cache(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"server"
+	}};
+
+	const string_view &server
+	{
+		param["server"]
+	};
+
+	m::room::aliases::cache::for_each(server, [&out]
+	(const m::room::alias &alias, const m::room::id &room_id)
+	{
+		out << std::left << std::setw(40) << alias << " " << room_id << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__room__alias__cache__has(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"alias"
+	}};
+
+	const m::room::alias &alias
+	{
+		param["alias"]
+	};
+
+	const bool has
+	{
+		m::room::aliases::cache::has(alias)
+	};
+
+	out << std::boolalpha << has << std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__alias__cache__set(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"alias", "room_id"
+	}};
+
+	const m::room::alias &alias
+	{
+		param["alias"]
+	};
+
+	const m::room::id &room_id
+	{
+		param["room_id"]
+	};
+
+	const bool set
+	{
+		m::room::aliases::cache::set(alias, room_id)
+	};
+
+	out << std::boolalpha << set << std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__alias__cache__fetch(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"alias", "remote"
+	}};
+
+	const m::room::alias &alias
+	{
+		param["alias"]
+	};
+
+	const net::hostport &remote
+	{
+		param["remote"]?
+			param["remote"]:
+			alias.host()
+	};
+
+	m::room::aliases::cache::fetch(alias, remote);
+
+	out << "done" << std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__alias__cache__get(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"alias"
+	}};
+
+	const m::room::alias &alias
+	{
+		param["alias"]
+	};
+
+	const m::room::id::buf room_id
+	{
+		m::room::aliases::cache::get(alias)
+	};
+
+	out << room_id << std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__alias__cache__del(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"alias"
+	}};
+
+	const m::room::alias &alias
+	{
+		param["alias"]
+	};
+
+	const bool del
+	{
+		m::room::aliases::cache::del(alias)
+	};
+
+	out << std::boolalpha << del << std::endl;
 	return true;
 }
 
