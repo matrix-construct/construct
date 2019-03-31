@@ -35,6 +35,13 @@ alias_cache_ttl
 	{ "default", 604800L                         },
 };
 
+conf::item<seconds>
+alias_fetch_timeout
+{
+	{ "name",    "ircd.m.room.aliases.fetch.timeout" },
+	{ "default", 10L                                 },
+};
+
 //
 // m::room::aliases
 //
@@ -98,7 +105,7 @@ ircd::m::room::aliases::cache::del(const alias &alias)
 
 	const auto &event_idx
 	{
-		alias_room.get("ircd.room.alias", key)
+		alias_room.get(std::nothrow, "ircd.room.alias", key)
 	};
 
 	if(!event_idx)
@@ -106,7 +113,7 @@ ircd::m::room::aliases::cache::del(const alias &alias)
 
 	const auto event_id
 	{
-		m::event_id(event_idx)
+		m::event_id(event_idx, std::nothrow)
 	};
 
 	if(!event_id)
@@ -154,22 +161,35 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 		alias.swap(swapbuf)
 	};
 
-	const auto &event_idx
+	m::event::idx event_idx
 	{
-		alias_room.get("ircd.room.alias", key)
+		alias_room.get(std::nothrow, "ircd.room.alias", key)
 	};
 
-	bool ret{false};
 	if(!event_idx)
-		return ret;
+	{
+		if(!fetch(std::nothrow, alias, alias.host()))
+			return false;
+
+		event_idx = alias_room.get(std::nothrow, "ircd.room.alias", key);
+	}
 
 	time_t ts;
 	if(!m::get(event_idx, "origin_server_ts", ts))
-		return ret;
+		return false;
 
 	if(ircd::time() - ts > seconds(alias_cache_ttl).count())
-		return ret;
+	{
+		if(!fetch(std::nothrow, alias, alias.host()))
+			return false;
 
+		event_idx = alias_room.get(std::nothrow, "ircd.room.alias", key);
+	}
+
+	if(!event_idx)
+		return false;
+
+	bool ret{false};
 	m::get(std::nothrow, event_idx, "content", [&closure, &ret]
 	(const json::object &content)
 	{
@@ -271,7 +291,7 @@ ircd::m::room::aliases::cache::has(const alias &alias)
 
 	const auto &event_idx
 	{
-		alias_room.get("ircd.room.alias", key)
+		alias_room.get(std::nothrow, "ircd.room.alias", key)
 	};
 
 	if(!event_idx)

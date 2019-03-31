@@ -46,8 +46,11 @@ struct ircd::m::room::aliases::cache
 	static bool for_each(const string_view &server, const closure_bool &);
 	static bool for_each(const closure_bool &);
 	static bool has(const alias &);
+	static void fetch(const alias &, const net::hostport &remote);
+	static bool fetch(std::nothrow_t, const alias &, const net::hostport &remote);
 	static bool get(std::nothrow_t, const alias &, const id::closure &);
 	static void get(const alias &, const id::closure &);
+	static id::buf get(std::nothrow_t, const alias &);
 	static id::buf get(const alias &);
 	static bool set(const alias &, const id &);
 	static bool del(const alias &);

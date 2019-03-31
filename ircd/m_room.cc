@@ -2469,11 +2469,63 @@ ircd::m::room::aliases::cache::set(const alias &a,
 	return call(a, i);
 }
 
+bool
+ircd::m::room::aliases::cache::fetch(std::nothrow_t,
+                                     const alias &a,
+                                     const net::hostport &hp)
+try
+{
+	fetch(a, hp);
+	return true;
+}
+catch(const std::exception &e)
+{
+	thread_local char buf[384];
+	log::error
+	{
+		log, "Failed to fetch room_id for %s from %s :%s",
+		string_view{a},
+		string(buf, hp),
+		e.what(),
+	};
+
+	return false;
+}
+
+void
+ircd::m::room::aliases::cache::fetch(const alias &a,
+                                     const net::hostport &hp)
+{
+	using prototype = void (const alias &, const net::hostport &);
+
+	static mods::import<prototype> call
+	{
+		"m_room_aliases", "ircd::m::room::aliases::cache::fetch"
+	};
+
+	return call(a, hp);
+}
+
 ircd::m::room::id::buf
 ircd::m::room::aliases::cache::get(const alias &a)
 {
 	id::buf ret;
-	get(a, [&ret](const id &room_id)
+	get(a, [&ret]
+	(const id &room_id)
+	{
+		ret = room_id;
+	});
+
+	return ret;
+}
+
+ircd::m::room::id::buf
+ircd::m::room::aliases::cache::get(std::nothrow_t,
+                                   const alias &a)
+{
+	id::buf ret;
+	get(std::nothrow, a, [&ret]
+	(const id &room_id)
 	{
 		ret = room_id;
 	});
