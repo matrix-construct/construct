@@ -93,6 +93,8 @@ struct ircd::m::name
 	static constexpr const char *const not_senders {"not_senders"};
 	static constexpr const char *const limit {"limit"};
 	static constexpr const char *const contains_url {"contains_url"};
+	static constexpr const char *const lazy_load_members {"lazy_load_members"};
+	static constexpr const char *const include_redundant_members {"include_redundant_members"};
 
 	static constexpr const char *const edu_type {"edu_type"};
 

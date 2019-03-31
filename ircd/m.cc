@@ -2430,6 +2430,19 @@ ircd::m::room_filter::room_filter(const mutable_buffer &buf,
 }
 
 //
+// state_filter
+//
+
+ircd::m::state_filter::state_filter(const mutable_buffer &buf,
+                                    const json::members &members)
+:super_type::tuple
+{
+	json::stringify(mutable_buffer{buf}, members)
+}
+{
+}
+
+//
 // room_event_filter
 //
 

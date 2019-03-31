@@ -72,6 +72,8 @@ constexpr const char *const ircd::m::name::senders;
 constexpr const char *const ircd::m::name::not_senders;
 constexpr const char *const ircd::m::name::limit;
 constexpr const char *const ircd::m::name::contains_url;
+constexpr const char *const ircd::m::name::lazy_load_members;
+constexpr const char *const ircd::m::name::include_redundant_members;
 
 constexpr const char *const ircd::m::name::edu_type;
 

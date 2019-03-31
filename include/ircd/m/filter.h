@@ -17,6 +17,7 @@ namespace ircd::m
 	struct room_filter;
 	struct event_filter;
 	struct room_event_filter;
+	struct state_filter;
 
 	bool match(const event_filter &, const event &);
 	bool match(const room_event_filter &, const event &);
@@ -59,13 +60,35 @@ struct ircd::m::room_event_filter
 	using super_type::operator=;
 };
 
+/// "StateFilter"
+struct ircd::m::state_filter
+:json::tuple
+<
+	json::property<name::limit, long>,
+	json::property<name::types, json::array>,
+	json::property<name::rooms, json::array>,
+	json::property<name::senders, json::array>,
+	json::property<name::not_types, json::array>,
+	json::property<name::not_rooms, json::array>,
+	json::property<name::not_senders, json::array>,
+	json::property<name::contains_url, bool>,
+	json::property<name::lazy_load_members, bool>,
+	json::property<name::include_redundant_members, bool>
+>
+{
+	using super_type::tuple;
+	state_filter(const mutable_buffer &, const json::members &);
+	state_filter() = default;
+	using super_type::operator=;
+};
+
 /// 5.1 "RoomFilter"
 struct ircd::m::room_filter
 :json::tuple
 <
 	json::property<name::rooms, json::array>,
 	json::property<name::not_rooms, json::array>,
-	json::property<name::state, room_event_filter>,
+	json::property<name::state, state_filter>,
 	json::property<name::timeline, room_event_filter>,
 	json::property<name::ephemeral, room_event_filter>,
 	json::property<name::account_data, room_event_filter>,
