@@ -29,7 +29,7 @@ alias_room
 };
 
 //
-// m::room::aliases impl
+// m::room::aliases
 //
 
 bool
@@ -72,6 +72,160 @@ ircd::m::room::aliases::for_each(const m::room &room,
 		}
 	});
 
+	return ret;
+}
+
+//
+// m::room::aliases::cache
+//
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::del(const alias &alias)
+{
+	char swapbuf[m::id::room_alias::buf::SIZE];
+	const string_view &key
+	{
+		alias.swap(swapbuf)
+	};
+
+	const auto &event_idx
+	{
+		alias_room.get("ircd.room.alias", key)
+	};
+
+	if(!event_idx)
+		return false;
+
+	const auto event_id
+	{
+		m::event_id(event_idx)
+	};
+
+	if(!event_id)
+		return false;
+
+	const auto ret
+	{
+		redact(alias_room, m::me.user_id, event_id, "deleted")
+	};
+
+	return true;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::set(const alias &alias,
+                                   const id &id)
+{
+	char swapbuf[m::id::room_alias::buf::SIZE];
+	const string_view &key
+	{
+		alias.swap(swapbuf)
+	};
+
+	const auto ret
+	{
+		send(alias_room, m::me.user_id, "ircd.room.alias", key,
+		{
+			{ "room_id", id }
+		})
+	};
+
+	return true;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::get(std::nothrow_t,
+                                   const alias &alias,
+                                   const id::closure &closure)
+{
+	char swapbuf[m::id::room_alias::buf::SIZE];
+	const string_view &key
+	{
+		alias.swap(swapbuf)
+	};
+
+	const auto &event_idx
+	{
+		alias_room.get("ircd.room.alias", key)
+	};
+
+	if(!event_idx)
+		return false;
+
+	bool ret{false};
+	m::get(std::nothrow, event_idx, "content", [&closure, &ret]
+	(const json::object &content)
+	{
+		const json::string &room_id
+		{
+			content.get("room_id")
+		};
+
+		if(!empty(room_id))
+		{
+			ret = true;
+			closure(room_id);
+		}
+	});
+
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::has(const alias &alias)
+{
+	char swapbuf[m::id::room_alias::buf::SIZE];
+	const string_view &key
+	{
+		alias.swap(swapbuf)
+	};
+
+	return alias_room.has("ircd.room.alias", key);
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::for_each(const string_view &server,
+                                        const closure_bool &closure)
+{
+	const m::room::state state
+	{
+		alias_room
+	};
+
+	bool ret{true};
+	const m::room::state::closure_bool reclosure{[&server, &closure, &ret]
+	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
+	{
+		thread_local char swapbuf[m::id::room_alias::buf::SIZE];
+		const alias &alias
+		{
+			m::id::unswap(state_key, swapbuf)
+		};
+
+		if(server && alias.host() != server)
+			return false;
+
+		m::get(std::nothrow, event_idx, "content", [&closure, &ret, &alias]
+		(const json::object &content)
+		{
+			const json::string &room_id
+			{
+				content.get("room_id")
+			};
+
+			if(!empty(room_id))
+				ret = closure(alias, room_id);
+		});
+
+		return ret;
+	}};
+
+	state.for_each("ircd.room.alias", server, reclosure);
 	return ret;
 }
 

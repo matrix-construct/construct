@@ -13,11 +13,14 @@
 
 /// Interface to the aliases
 ///
-/// This interface focuses specifically on room aliases. These are aliases contained
-/// in a room's state.
+/// This interface focuses specifically on room aliases. These are aliases
+/// contained in a room's state. There is also an aliases::cache which stores
+/// the result of directory lookups as well as the contents found through this
+/// interface in order to resolve aliases to room_ids.
 ///
 struct ircd::m::room::aliases
 {
+	struct cache;
 	using closure_bool = std::function<bool (const alias &)>;
 
 	static bool for_each(const m::room &, const string_view &server, const closure_bool &);
@@ -34,4 +37,18 @@ struct ircd::m::room::aliases
 	aliases(const m::room &room)
 	:room{room}
 	{}
+};
+
+struct ircd::m::room::aliases::cache
+{
+	using closure_bool = std::function<bool (const alias &, const id &)>;
+
+	static bool for_each(const string_view &server, const closure_bool &);
+	static bool for_each(const closure_bool &);
+	static bool has(const alias &);
+	static bool get(std::nothrow_t, const alias &, const id::closure &);
+	static void get(const alias &, const id::closure &);
+	static id::buf get(const alias &);
+	static bool set(const alias &, const id &);
+	static bool del(const alias &);
 };

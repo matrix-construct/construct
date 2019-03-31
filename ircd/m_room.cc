@@ -2439,6 +2439,109 @@ ircd::m::room::aliases::for_each(const m::room &room,
 }
 
 //
+// room::aliases::cache
+//
+
+bool
+ircd::m::room::aliases::cache::del(const alias &a)
+{
+	using prototype = bool (const alias &);
+
+	static mods::import<prototype> call
+	{
+		"m_room_aliases", "ircd::m::room::aliases::cache::del"
+	};
+
+	return call(a);
+}
+
+bool
+ircd::m::room::aliases::cache::set(const alias &a,
+                                   const id &i)
+{
+	using prototype = bool (const alias &, const id &);
+
+	static mods::import<prototype> call
+	{
+		"m_room_aliases", "ircd::m::room::aliases::cache::set"
+	};
+
+	return call(a, i);
+}
+
+ircd::m::room::id::buf
+ircd::m::room::aliases::cache::get(const alias &a)
+{
+	id::buf ret;
+	get(a, [&ret](const id &room_id)
+	{
+		ret = room_id;
+	});
+
+	return ret;
+}
+
+void
+ircd::m::room::aliases::cache::get(const alias &a,
+                                   const id::closure &c)
+{
+	if(!get(std::nothrow, a, c))
+		throw m::NOT_FOUND
+		{
+			"Cannot find room_id for %s",
+			string_view{a}
+		};
+}
+
+bool
+ircd::m::room::aliases::cache::get(std::nothrow_t,
+                                   const alias &a,
+                                   const id::closure &c)
+{
+	using prototype = bool (std::nothrow_t, const alias &, const id::closure &);
+
+	static mods::import<prototype> call
+	{
+		"m_room_aliases", "ircd::m::room::aliases::cache::get"
+	};
+
+	return call(std::nothrow, a, c);
+}
+
+bool
+ircd::m::room::aliases::cache::has(const alias &a)
+{
+	using prototype = bool (const alias &);
+
+	static mods::import<prototype> call
+	{
+		"m_room_aliases", "ircd::m::room::aliases::cache::has"
+	};
+
+	return call(a);
+}
+
+bool
+ircd::m::room::aliases::cache::for_each(const closure_bool &c)
+{
+	return for_each(string_view{}, c);
+}
+
+bool
+ircd::m::room::aliases::cache::for_each(const string_view &s,
+                                        const closure_bool &c)
+{
+	using prototype = bool (const string_view &, const closure_bool &);
+
+	static mods::import<prototype> call
+	{
+		"m_room_aliases", "ircd::m::room::aliases::cache::for_each"
+	};
+
+	return call(s, c);
+}
+
+//
 // room::power
 //
 
