@@ -28,6 +28,13 @@ alias_room
 	alias_room_id
 };
 
+conf::item<seconds>
+alias_cache_ttl
+{
+	{ "name",    "ircd.m.room.aliases.cache.ttl" },
+	{ "default", 604800L                         },
+};
+
 //
 // m::room::aliases
 //
@@ -152,10 +159,17 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 		alias_room.get("ircd.room.alias", key)
 	};
 
-	if(!event_idx)
-		return false;
-
 	bool ret{false};
+	if(!event_idx)
+		return ret;
+
+	time_t ts;
+	if(!m::get(event_idx, "origin_server_ts", ts))
+		return ret;
+
+	if(ircd::time() - ts > seconds(alias_cache_ttl).count())
+		return ret;
+
 	m::get(std::nothrow, event_idx, "content", [&closure, &ret]
 	(const json::object &content)
 	{
@@ -174,6 +188,77 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 	return ret;
 }
 
+namespace ircd::m
+{
+	thread_local char room_aliases_cache_fetch_hpbuf[384];
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::fetch(const alias &alias,
+                                     const net::hostport &hp)
+try
+{
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::v1::query::opts opts;
+	opts.remote = hp;
+
+	m::v1::query::directory request
+	{
+		alias, buf, std::move(opts)
+    };
+
+	request.wait(seconds(alias_fetch_timeout));
+	const http::code &code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request
+	};
+
+	if(!response.has("room_id"))
+		throw m::NOT_FOUND
+		{
+			"Server '%s' does not know room_id for %s",
+			string(room_aliases_cache_fetch_hpbuf, hp),
+			string_view{alias},
+		};
+
+	const m::room::id &room_id
+	{
+		unquote(response["room_id"])
+	};
+
+	set(alias, room_id);
+}
+catch(const ctx::timeout &e)
+{
+	throw m::error
+	{
+		http::GATEWAY_TIMEOUT, "M_ROOM_ALIAS_TIMEOUT",
+		"Server '%s' did not respond with a room_id for %s in time",
+		string(room_aliases_cache_fetch_hpbuf, hp),
+		string_view{alias},
+	};
+}
+catch(const server::unavailable &e)
+{
+	throw m::error
+	{
+		http::BAD_GATEWAY, "M_ROOM_ALIAS_UNAVAILABLE",
+		"Server '%s' is not available to query a room_id for %s",
+		string(room_aliases_cache_fetch_hpbuf, hp),
+		string_view{alias},
+	};
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::has(const alias &alias)
@@ -184,7 +269,34 @@ ircd::m::room::aliases::cache::has(const alias &alias)
 		alias.swap(swapbuf)
 	};
 
-	return alias_room.has("ircd.room.alias", key);
+	const auto &event_idx
+	{
+		alias_room.get("ircd.room.alias", key)
+	};
+
+	if(!event_idx)
+		return false;
+
+	time_t ts;
+	if(!m::get(event_idx, "origin_server_ts", ts))
+		return false;
+
+	if(ircd::time() - ts > seconds(alias_cache_ttl).count())
+		return false;
+
+	bool ret{false};
+	m::get(std::nothrow, event_idx, "content", [&ret]
+	(const json::object &content)
+	{
+		const json::string &room_id
+		{
+			content.get("room_id")
+		};
+
+		ret = !empty(room_id);
+	});
+
+	return ret;
 }
 
 bool
@@ -209,6 +321,13 @@ ircd::m::room::aliases::cache::for_each(const string_view &server,
 
 		if(server && alias.host() != server)
 			return false;
+
+		time_t ts;
+		if(!m::get(event_idx, "origin_server_ts", ts))
+			return true;
+
+		if(ircd::time() - ts > seconds(alias_cache_ttl).count())
+			return true;
 
 		m::get(std::nothrow, event_idx, "content", [&closure, &ret, &alias]
 		(const json::object &content)
