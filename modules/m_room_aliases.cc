@@ -43,6 +43,123 @@ alias_fetch_timeout
 };
 
 //
+// hook handlers
+//
+
+const m::hookfn<m::vm::eval &>
+_create_alias_room
+{
+	{
+		{ "_site",       "vm.effect"      },
+		{ "room_id",     "!ircd"          },
+		{ "type",        "m.room.create"  },
+	},
+	[](const m::event &, m::vm::eval &)
+	{
+		m::create(alias_room_id, m::me.user_id);
+	}
+};
+
+static void
+_can_change_aliases(const m::event &event,
+                    m::vm::eval &);
+
+const m::hookfn<m::vm::eval &>
+_can_change_aliases_hookfn
+{
+	_can_change_aliases,
+	{
+		{ "_site",    "vm.eval"         },
+		{ "type",     "m.room.aliases"  },
+	}
+};
+
+void
+_can_change_aliases(const m::event &event,
+                    m::vm::eval &eval)
+{
+	const m::room::id &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
+	const json::array &aliases
+	{
+		at<"content"_>(event).get("aliases")
+	};
+
+	for(const json::string &alias_ : aliases)
+	{
+		const m::room::alias &alias{alias_};
+		if(at<"origin"_>(event) != alias.host())
+			throw m::ACCESS_DENIED
+			{
+				"Cannot set alias for host '%s' from origin '%s'",
+				alias.host(),
+				at<"origin"_>(event)
+			};
+	}
+}
+
+static void
+_changed_aliases(const m::event &event,
+                 m::vm::eval &);
+
+const m::hookfn<m::vm::eval &>
+_changed_aliases_hookfn
+{
+	_changed_aliases,
+	{
+		{ "_site",    "vm.effect"       },
+		{ "type",     "m.room.aliases"  },
+	}
+};
+
+void
+_changed_aliases(const m::event &event,
+                 m::vm::eval &)
+{
+	const m::room::id &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
+	const json::array &aliases
+	{
+		at<"content"_>(event).get("aliases")
+	};
+
+	for(const json::string &alias : aliases) try
+	{
+		if(m::room::aliases::cache::has(alias))
+			continue;
+
+		m::room::aliases::cache::set(alias, room_id);
+
+		log::info
+		{
+			m::log, "Updated aliases of %s by %s in %s with %s",
+			string_view{room_id},
+			json::get<"sender"_>(event),
+			json::get<"event_id"_>(event),
+			string_view{alias},
+		};
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			m::log, "Updating aliases of %s by %s in %s with %s :%s",
+			string_view{room_id},
+			json::get<"sender"_>(event),
+			json::get<"event_id"_>(event),
+			string_view{alias},
+			e.what(),
+		};
+	}
+}
+
+//
 // m::room::aliases
 //
 
@@ -367,88 +484,3 @@ ircd::m::room::aliases::cache::for_each(const string_view &server,
 	state.for_each("ircd.room.alias", server, reclosure);
 	return ret;
 }
-
-//
-// hook handlers
-//
-
-void
-_changed_aliases(const m::event &event,
-                 m::vm::eval &)
-{
-	const m::room::id &room_id
-	{
-		at<"room_id"_>(event)
-	};
-
-	const json::array &aliases
-	{
-		at<"content"_>(event).get("aliases")
-	};
-
-	for(const json::string &alias_ : aliases)
-	{
-		const m::room::alias &alias{alias_};
-		const auto event_id
-		{
-			send(alias_room, m::me.user_id, "ircd.alias", alias, json::strung{event})
-		};
-
-		log::info
-		{
-			m::log, "Updated aliases of %s by %s in %s [%s] => %s",
-			string_view{room_id},
-			json::get<"sender"_>(event),
-			json::get<"event_id"_>(event),
-			string_view{alias},
-			string_view{event_id}
-		};
-	}
-}
-
-const m::hookfn<m::vm::eval &>
-_changed_aliases_hookfn
-{
-	_changed_aliases,
-	{
-		{ "_site",    "vm.effect"       },
-		{ "type",     "m.room.aliases"  },
-	}
-};
-
-void
-_can_change_aliases(const m::event &event,
-                    m::vm::eval &eval)
-{
-	const m::room::id &room_id
-	{
-		at<"room_id"_>(event)
-	};
-
-	const json::array &aliases
-	{
-		at<"content"_>(event).get("aliases")
-	};
-
-	for(const json::string &alias_ : aliases)
-	{
-		const m::room::alias &alias{alias_};
-		if(at<"origin"_>(event) != alias.host())
-			throw m::ACCESS_DENIED
-			{
-				"Cannot set alias for host '%s' from origin '%s'",
-				alias.host(),
-				at<"origin"_>(event)
-			};
-	}
-}
-
-const m::hookfn<m::vm::eval &>
-_can_change_aliases_hookfn
-{
-	_can_change_aliases,
-	{
-		{ "_site",    "vm.eval"         },
-		{ "type",     "m.room.aliases"  },
-	}
-};
