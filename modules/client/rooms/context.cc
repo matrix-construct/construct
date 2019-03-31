@@ -70,9 +70,7 @@ get__context(client &client,
 
 	m::event::id::buf event_id
 	{
-		m::sigil(request.parv[2]) == m::id::EVENT?
-			url::decode(event_id, request.parv[2]):
-			m::head(room_id)
+		url::decode(event_id, request.parv[2])
 	};
 
 	const auto limit{[&request]
