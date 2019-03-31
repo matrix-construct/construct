@@ -120,10 +120,13 @@ get__context(client &client,
 		ret, "event", event
 	};
 
-	m::event::id::buf start{event_id};
+	m::event::id::buf start;
 	{
-		json::stack::member member{ret, "events_before"};
-		json::stack::array array{member};
+		json::stack::array array
+		{
+			ret, "events_before"
+		};
+
 		m::room::messages before
 		{
 			room, event_id, &default_fetch_opts
@@ -151,15 +154,19 @@ get__context(client &client,
 			start = {};
 	}
 
-	json::stack::member
-	{
-		ret, "start", json::value{start}
-	};
+	if(start)
+		json::stack::member
+		{
+			ret, "start", json::value{start}
+		};
 
-	m::event::id::buf end{event_id};
+	m::event::id::buf end;
 	{
-		json::stack::member member{ret, "events_after"};
-		json::stack::array array{member};
+		json::stack::array array
+		{
+			ret, "events_after"
+		};
+
 		m::room::messages after
 		{
 			room, event_id, &default_fetch_opts
@@ -187,14 +194,18 @@ get__context(client &client,
 			end = {};
 	}
 
-	json::stack::member
-	{
-		ret, "end", json::value{end}
-	};
+	if(end)
+		json::stack::member
+		{
+			ret, "end", json::value{end}
+		};
 
 	{
-		json::stack::member member{ret, "state"};
-		json::stack::array array{member};
+		json::stack::array array
+		{
+			ret, "state"
+		};
+
 		const m::room::state state
 		{
 			room, &default_fetch_opts
@@ -218,7 +229,7 @@ get__context(client &client,
 		});
 	}
 
-	return {};
+	return response;
 }
 
 void
