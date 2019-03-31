@@ -83,6 +83,19 @@ _can_change_aliases(const m::event &event,
 		at<"room_id"_>(event)
 	};
 
+	const string_view &state_key
+	{
+		at<"state_key"_>(event)
+	};
+
+	if(state_key != at<"origin"_>(event))
+		throw m::ACCESS_DENIED
+		{
+			"Cannot set aliases for host '%s' from origin '%s'",
+			state_key,
+			at<"origin"_>(event)
+		};
+
 	const json::array &aliases
 	{
 		at<"content"_>(event).get("aliases")
@@ -298,11 +311,8 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 	if(!m::get(event_idx, "origin_server_ts", ts))
 		return false;
 
-	if(ircd::time() - ts > seconds(alias_cache_ttl).count())
+	if(!my_host(alias.host()) && ircd::time() - ts > seconds(alias_cache_ttl).count())
 	{
-		if(my_host(alias.host()))
-			return false;
-
 		if(!fetch(std::nothrow, alias, alias.host()))
 			return false;
 
