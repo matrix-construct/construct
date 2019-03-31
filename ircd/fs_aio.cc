@@ -429,8 +429,8 @@ try
 		aio_context *idp;
 		syscall<SYS_io_setup>(this->max_events(), &idp);
 		return idp;
-	}(), []
-	(const aio_context *const &head)
+	}(),
+	[](const aio_context *const &head)
 	{
 		syscall<SYS_io_destroy>(head);
 	}
@@ -445,7 +445,6 @@ try
 }
 {
 	assert(head->magic == aio_context::MAGIC);
-	assert(sizeof(aio_context) == head->header_length);
 	if(unlikely(head->magic != aio_context::MAGIC))
 		throw panic
 		{
@@ -454,6 +453,7 @@ try
 			aio_context::MAGIC,
 		};
 
+	assert(sizeof(aio_context) == head->header_length);
 	if(unlikely(head->header_length != sizeof(*head)))
 		throw panic
 		{
