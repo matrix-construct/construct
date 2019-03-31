@@ -741,6 +741,8 @@ RB_CHK_SYSHEADER(sys/inotify.h, [SYS_INOTIFY_H])
 RB_CHK_SYSHEADER(sys/sysmacros.h, [SYS_SYSMACROS_H])
 RB_CHK_SYSHEADER(linux/aio_abi.h, [LINUX_AIO_ABI_H])
 RB_CHK_SYSHEADER(linux/magic.h, [LINUX_MAGIC_H])
+RB_CHK_SYSHEADER(linux/perf_event.h, [LINUX_PERF_EVENT_H])
+RB_CHK_SYSHEADER(linux/hw_breakpoint.h, [LINUX_HW_BREAKPOINT_H])
 
 dnl windows platform
 RB_CHK_SYSHEADER(windows.h, [WINDOWS_H])
