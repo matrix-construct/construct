@@ -114,4 +114,6 @@ struct ircd::m::filter
 	using super_type::tuple;
 	filter(const user &, const string_view &filter_id, const mutable_buffer &);
 	using super_type::operator=;
+
+	static std::string get(const string_view &urle_id_or_json, const m::user &);
 };

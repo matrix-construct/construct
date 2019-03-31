@@ -627,9 +627,7 @@ ircd::m::sync::data::data
 }
 ,filter_buf
 {
-	filter_id?
-		m::user::filter{user}.get(filter_id):
-		std::string{}
+	m::filter::get(filter_id, user)
 }
 ,filter
 {
@@ -2394,26 +2392,64 @@ ircd::m::match(const event_filter &filter,
 // filter
 //
 
+/// Convenience interface for filters out of common `?filter=` query string
+/// arguments. This function expects a raw urlencoded value of the filter
+/// query parameter. It detects if the value is an "inline" filter by being
+/// a valid JSON object; otherwise it considers the value an ID and fetches
+/// the filter stored previously by the user.
+std::string
+ircd::m::filter::get(const string_view &val,
+                     const m::user &user)
+{
+	if(!val)
+		return {};
+
+	const bool is_inline
+	{
+		startswith(val, "{") || startswith(val, "%7B")
+	};
+
+	if(is_inline)
+		return util::string(val.size(), [&val]
+		(const mutable_buffer &buf)
+		{
+			return url::decode(buf, val);
+		});
+
+	if(!user.user_id)
+		return {};
+
+	char idbuf[m::event::STATE_KEY_MAX_SIZE];
+	const string_view &id
+	{
+		url::decode(idbuf, val)
+	};
+
+	const m::user::filter filter
+	{
+		user
+	};
+
+	return filter.get(id);
+}
+
+//
+// filter::filter
+//
+
 ircd::m::filter::filter(const user &user,
                         const string_view &filter_id,
                         const mutable_buffer &buf)
 {
-	get(user, filter_id, [this, &buf]
-	(const json::object &filter)
+	const json::object &obj
 	{
-		const size_t len
-		{
-			copy(buf, string_view{filter})
-		};
+		user::filter(user).get(buf, filter_id)
+	};
 
-		new (this) m::filter
-		{
-			json::object
-			{
-				data(buf), len
-			}
-		};
-	});
+	new (this) m::filter
+	{
+		obj
+	};
 }
 
 //
