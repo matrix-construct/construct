@@ -179,6 +179,7 @@ client_client_register_available_la_SOURCES = client/register_available.cc
 client_client_capabilities_la_SOURCES = client/capabilities.cc
 client_client_send_to_device_la_SOURCES = client/send_to_device.cc
 client_client_delete_devices_la_SOURCES = client/delete_devices.cc
+client_client_notifications_la_SOURCES = client/notifications.cc
 
 client_module_LTLIBRARIES = \
 	client/client_versions.la \
@@ -203,6 +204,7 @@ client_module_LTLIBRARIES = \
 	client/client_capabilities.la \
 	client/client_send_to_device.la \
 	client/client_delete_devices.la \
+	client/client_notifications.la \
 	###
 
 #
