@@ -285,6 +285,9 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 
 	if(!event_idx)
 	{
+		if(my_host(alias.host()))
+			return false;
+
 		if(!fetch(std::nothrow, alias, alias.host()))
 			return false;
 
@@ -297,6 +300,9 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 
 	if(ircd::time() - ts > seconds(alias_cache_ttl).count())
 	{
+		if(my_host(alias.host()))
+			return false;
+
 		if(!fetch(std::nothrow, alias, alias.host()))
 			return false;
 
