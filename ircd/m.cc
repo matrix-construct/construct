@@ -4585,28 +4585,27 @@ ircd::m::id::room
 ircd::m::room_id(const mutable_buffer &out,
                  const id::room_alias &room_alias)
 {
-	using prototype = id::room (const mutable_buffer &, const id::room_alias &);
-
-	static mods::import<prototype> function
+	room::id ret;
+	room::aliases::cache::get(room_alias, [&out, &ret]
+	(const room::id &room_id)
 	{
-		"client_directory_room", "room_id__room_alias"
-	};
+		ret = string_view { data(out), copy(out, room_id) };
+	});
 
-	return function(out, room_alias);
+	return ret;
 }
 
 bool
 ircd::m::exists(const id::room_alias &room_alias,
                 const bool &remote_query)
 {
-	using prototype = bool (const id::room_alias, const bool &);
+	if(room::aliases::cache::has(room_alias))
+		return true;
 
-	static mods::import<prototype> function
-	{
-		"client_directory_room", "room_alias_exists"
-	};
+	if(!remote_query)
+		return false;
 
-	return function(room_alias, remote_query);
+	return room::aliases::cache::get(std::nothrow, room_alias, [](const room::id &room_id) {});
 }
 
 ///////////////////////////////////////////////////////////////////////////////
