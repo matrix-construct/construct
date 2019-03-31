@@ -10,6 +10,7 @@
 
 #include <RB_INC_SYS_RESOURCE_H
 #include <RB_INC_UNISTD_H
+#include <RB_INC_CPUID_H
 
 void
 ircd::info::init()
@@ -66,7 +67,8 @@ ircd::info::dump()
 	// IRCd is compiled for and running on.
 	log::debug
 	{
-		"page_size=%zu max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
+		"cpu[%s] page_size=%zu max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
+		cpuvendor,
 		page_size,
 		max_align,
 		hardware_concurrency,
@@ -331,6 +333,89 @@ ircd::info::page_size
 	size_t(syscall(::sysconf, _SC_PAGESIZE))
 	#endif
 };
+
+//
+// Platform information
+//
+
+#ifdef HAVE_CPUID_H
+static ircd::uint128_t
+get_cpuid(const uint &leaf,
+          const uint &subleaf)
+{
+	using ircd::uint128_t;
+
+	uint32_t reg[4];
+	asm volatile
+	(
+		"cpuid" "\n\t"
+		: "=a"  (reg[0]),
+		  "=b"  (reg[1]),
+		  "=c"  (reg[2]),
+		  "=d"  (reg[3])
+		: "0"  (leaf),
+		  "2"  (subleaf)
+	);
+
+	return uint128_t
+	{
+		(uint128_t(reg[3]) << 96) |  // edx
+		(uint128_t(reg[2]) << 64) |  // ecx
+		(uint128_t(reg[1]) << 32) |  // ebx
+		(uint128_t(reg[0]) << 0)     // eax
+	};
+}
+#else
+static ircd::uint128_t
+get_cpuid(const uint &leaf,
+          const uint &subleaf)
+{
+	return 0;
+}
+#endif
+
+decltype(ircd::info::cpuid)
+ircd::info::cpuid
+{
+	get_cpuid(0x00000000U, 0),
+	get_cpuid(0x00000001U, 0),
+	get_cpuid(0x00000002U, 0),
+	get_cpuid(0x00000004U, 0),
+	get_cpuid(0x80000000U, 0),
+	0UL,
+	0UL,
+	0UL,
+};
+
+char
+_cpuvendor_[16];
+
+decltype(ircd::info::cpuvendor)
+ircd::info::cpuvendor{[&]
+{
+	const auto b
+	{
+		reinterpret_cast<const uint8_t *>(cpuid + 0)
+	};
+
+	_cpuvendor_[0] = b[4];
+	_cpuvendor_[1] = b[5];
+	_cpuvendor_[2] = b[6];
+	_cpuvendor_[3] = b[7];
+	_cpuvendor_[4] = b[12];
+	_cpuvendor_[5] = b[13];
+	_cpuvendor_[6] = b[14];
+	_cpuvendor_[7] = b[15];
+	_cpuvendor_[8] = b[8];
+	_cpuvendor_[9] = b[9];
+	_cpuvendor_[10] = b[10];
+	_cpuvendor_[11] = b[11];
+
+	return string_view
+	{
+		_cpuvendor_, sizeof(_cpuvendor_)
+	};
+}()};
 
 decltype(ircd::info::constructive_interference)
 ircd::info::constructive_interference

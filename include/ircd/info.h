@@ -32,11 +32,15 @@ namespace ircd::info
 	extern const string_view compiled;
 	extern const string_view startup;
 
-	// System information
+	// Platform information
 	extern const size_t max_align;
 	extern const size_t hardware_concurrency;
 	extern const size_t destructive_interference;
 	extern const size_t constructive_interference;
+	extern const uint128_t cpuid[8];
+	extern const string_view cpuvendor;
+
+	// System information
 	extern const size_t page_size;
 	extern const size_t iov_max;
 	extern const size_t aio_max;
