@@ -139,6 +139,32 @@ ircd::resource::resource(const string_view &path,
 		resources, iit.first
 	};
 }()}
+,default_method_head{[this, &opts]
+() -> std::unique_ptr<method>
+{
+	if(opts.flags & flag::OVERRIDE_HEAD)
+		return {};
+
+	auto handler
+	{
+		std::bind(&resource::handle_head, this, ph::_1, ph::_2)
+	};
+
+	return std::make_unique<method>(*this, "HEAD", std::move(handler));
+}()}
+,default_method_options{[this, &opts]
+() -> std::unique_ptr<method>
+{
+	if(opts.flags & flag::OVERRIDE_OPTIONS)
+		return {};
+
+	auto handler
+	{
+		std::bind(&resource::handle_options, this, ph::_1, ph::_2)
+	};
+
+	return std::make_unique<method>(*this, "OPTIONS", std::move(handler));
+}()}
 {
 	log::debug
 	{
@@ -178,6 +204,28 @@ catch(const std::out_of_range &e)
 	throw http::error
 	{
 		http::METHOD_NOT_ALLOWED, {}, headers
+	};
+}
+
+ircd::resource::response
+ircd::resource::handle_head(client &client,
+                            const request &request)
+const
+{
+	return response
+	{
+		client, http::METHOD_NOT_ALLOWED
+	};
+}
+
+ircd::resource::response
+ircd::resource::handle_options(client &client,
+                               const request &request)
+const
+{
+	return response
+	{
+		client, http::METHOD_NOT_ALLOWED
 	};
 }
 

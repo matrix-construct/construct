@@ -37,8 +37,12 @@ struct ircd::resource
 	std::unique_ptr<const struct opts> opts;
 	std::map<string_view, method *> methods;
 	unique_const_iterator<decltype(resources)> resources_it;
+	std::unique_ptr<method> default_method_head;
+	std::unique_ptr<method> default_method_options;
 
 	string_view allow_methods_list(const mutable_buffer &buf) const;
+	response handle_options(client &, const request &) const;
+	response handle_head(client &, const request &) const;
 
   public:
 	method &operator[](const string_view &name) const;
@@ -59,7 +63,9 @@ struct ircd::resource
 enum ircd::resource::flag
 :uint
 {
-	DIRECTORY  = 0x01,
+	DIRECTORY          = 0x01,
+	OVERRIDE_HEAD      = 0x02,
+	OVERRIDE_OPTIONS   = 0x04,
 };
 
 struct ircd::resource::opts
