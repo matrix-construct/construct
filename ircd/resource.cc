@@ -223,9 +223,56 @@ ircd::resource::handle_options(client &client,
                                const request &request)
 const
 {
+	const http::headers headers
+	{
+		request.head.headers
+	};
+
+	const string_view &request_origin
+	{
+		headers["origin"]
+	};
+
+	const string_view &allow_origin
+	{
+		resource::response::access_control_allow_origin
+	};
+
+	const string_view &request_headers
+	{
+		headers["access-control-request-headers"]
+	};
+
+	const string_view &allow_headers
+	{
+		request_headers
+	};
+
+	const string_view &request_method
+	{
+		headers["access-control-request-method"]
+	};
+
+	char allow_methods_buf[48];
+	const string_view &allow_methods
+	{
+		method_list(allow_methods_buf, [&](const method &method)
+		{
+			return true;
+		})
+	};
+
+	const http::header response_headers[]
+	{
+		// ACAO sent further up stack
+		//{ "Access-Control-Allow-Origin",   allow_origin   },
+		{ "Access-Control-Allow-Methods",  allow_methods  },
+		{ "Access-Control-Allow-Headers",  allow_headers  },
+	};
+
 	return response
 	{
-		client, http::METHOD_NOT_ALLOWED
+		client, {}, {}, http::OK, response_headers
 	};
 }
 
@@ -1209,6 +1256,12 @@ ircd::resource::response::response(client &client,
 		pretty(rtime_buf, request_time, true)
 	};
 
+	const http::header headers_addl[]
+	{
+		{ "X-IRCd-Request-Timer",         rtime                                    },
+		{ "Access-Control-Allow-Origin",  string_view(access_control_allow_origin) },
+	};
+
 	char head_buf[HEAD_BUF_SZ];
 	window_buffer head{head_buf};
 	http::response
@@ -1218,10 +1271,7 @@ ircd::resource::response::response(client &client,
 		content_length,
 		content_type,
 		headers,
-		{
-			{ "Access-Control-Allow-Origin",  string_view(access_control_allow_origin) },
-			{ "X-IRCd-Request-Timer",         rtime                                    },
-		},
+		headers_addl,
 	};
 
 	// Maximum size is realistically ok but ideally a small

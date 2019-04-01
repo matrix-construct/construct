@@ -60,12 +60,6 @@ root_post
 };
 
 resource::method
-root_options
-{
-	root_resource, "OPTIONS", non_get_root
-};
-
-resource::method
 root_delete
 {
 	root_resource, "DELETE", non_get_root
