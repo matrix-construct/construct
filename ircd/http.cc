@@ -563,7 +563,7 @@ const
 	(const header &header)
 	{
 		// true to continue; false to break (for_each protocol)
-		return header != key;
+		return iequals(header.first, key)? false : true;
 	});
 }
 
@@ -589,7 +589,7 @@ const
 	string_view ret;
 	for_each([&key, &ret](const auto &header)
 	{
-		if(header == key)
+		if(iequals(header.first, key))
 		{
 			ret = header.second;
 			return false;
