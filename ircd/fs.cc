@@ -1252,6 +1252,11 @@ ircd::fs::fd::opts::opts(const std::ios::openmode &mode)
 // fd::fd
 //
 
+ircd::fs::fd::fd(const int &fdno)
+:fdno{fdno}
+{
+}
+
 ircd::fs::fd::fd(const string_view &path)
 :fd{path, opts{}}
 {
