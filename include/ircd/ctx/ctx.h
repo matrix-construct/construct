@@ -118,6 +118,4 @@ namespace ircd
 
 	using ctx::critical_assertion;
 	using ctx::critical_indicator;
-
-	using ctx::prof::cycles;
 }

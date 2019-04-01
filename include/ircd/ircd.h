@@ -47,6 +47,7 @@
 #include "magics.h"
 #include "conf.h"
 #include "stats.h"
+#include "perf.h"
 #include "fs/fs.h"
 #include "ios.h"
 #include "ctx/ctx.h"

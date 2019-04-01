@@ -202,6 +202,7 @@ noexcept try
 	// more appropriate.
 
 	fs::init _fs_;           // Local filesystem
+	perf::init _perf_;       // Profiling related
 	magic::init _magic_;     // libmagic
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
 	nacl::init _nacl_;       // nacl crypto

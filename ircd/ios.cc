@@ -208,7 +208,7 @@ ircd::ios::handler::fault(handler *const &handler)
 	// needs to be tied off here instead.
 	if(!ret)
 	{
-		stats.slice_last = cycles() - handler->slice_start;
+		stats.slice_last = perf::cycles() - handler->slice_start;
 		stats.slice_total += stats.slice_last;
 
 		assert(handler::current == handler);
@@ -226,7 +226,7 @@ ircd::ios::handler::leave(handler *const &handler)
 
 	assert(descriptor.stats);
 	auto &stats(*descriptor.stats);
-	stats.slice_last = cycles() - handler->slice_start;
+	stats.slice_last = perf::cycles() - handler->slice_start;
 	stats.slice_total += stats.slice_last;
 
 	assert(handler::current == handler);
@@ -245,7 +245,7 @@ ircd::ios::handler::enter(handler *const &handler)
 
 	assert(!handler::current);
 	handler::current = handler;
-	handler->slice_start = cycles();
+	handler->slice_start = perf::cycles();
 }
 
 bool

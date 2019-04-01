@@ -32,12 +32,6 @@ namespace ircd::ctx::prof
 	enum class event :uint8_t;
 	struct ticker;
 
-	// util
-	unsigned long long rdpmc(const uint &);
-	unsigned long long rdtscp();
-	unsigned long long rdtsc();
-	uint64_t cycles();
-
 	string_view reflect(const event &);
 
 	// totals
@@ -101,59 +95,3 @@ struct ircd::ctx::prof::ticker
 	// monotonic counters for events
 	std::array<uint64_t, num_of<prof::event>()> event {{0}};
 };
-
-inline uint64_t
-__attribute__((flatten, always_inline, gnu_inline, artificial))
-ircd::ctx::prof::cycles()
-{
-	return rdtsc();
-}
-
-#if defined(__x86_64__) || defined(__i386__)
-inline unsigned long long
-__attribute__((always_inline, gnu_inline, artificial))
-ircd::ctx::prof::rdtsc()
-{
-	return __builtin_ia32_rdtsc();
-}
-#else
-inline unsigned long long
-ircd::ctx::prof::rdtsc()
-{
-	static_assert(false, "TODO: Implement fallback here");
-	return 0;
-}
-#endif
-
-#if defined(__x86_64__) || defined(__i386__)
-inline unsigned long long
-__attribute__((always_inline, gnu_inline, artificial))
-ircd::ctx::prof::rdtscp()
-{
-	uint32_t ia32_tsc_aux;
-	return __builtin_ia32_rdtscp(&ia32_tsc_aux);
-}
-#else
-inline unsigned long long
-ircd::ctx::prof::rdtscp()
-{
-	static_assert(false, "TODO: Implement fallback here");
-	return 0;
-}
-#endif
-
-#if defined(__x86_64__) || defined(__i386__)
-inline unsigned long long
-__attribute__((always_inline, gnu_inline, artificial))
-ircd::ctx::prof::rdpmc(const uint &c)
-{
-	return __builtin_ia32_rdpmc(c);
-}
-#else
-inline unsigned long long
-ircd::ctx::prof::rdpmc(const uint &c)
-{
-	static_assert(false, "TODO: Implement fallback here");
-	return 0;
-}
-#endif
