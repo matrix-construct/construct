@@ -265,13 +265,14 @@ ircd::resource::method::method(struct resource &resource,
 	if(!iit.second)
 		throw error
 		{
-			"resource \"%s\" already registered", name
+			"Resource method '%s' already registered to '%s'",
+			name,
+			this->resource->path
 		};
 
 	return unique_const_iterator<decltype(resource::methods)>
 	{
-		this->resource->methods,
-		iit.first
+		this->resource->methods, iit.first
 	};
 }()}
 {
