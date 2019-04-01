@@ -198,7 +198,7 @@ catch(const std::out_of_range &e)
 	thread_local char buf[512];
 	const http::header headers[]
 	{
-		{ "Allow", allow_methods_list(buf) }
+		{ "Allow", method_list(buf) }
 	};
 
 	throw http::error
@@ -230,7 +230,19 @@ const
 }
 
 ircd::string_view
-ircd::resource::allow_methods_list(const mutable_buffer &buf)
+ircd::resource::method_list(const mutable_buffer &buf)
+const
+{
+	return method_list(buf, []
+	(const method &)
+	{
+		return true;
+	});
+}
+
+ircd::string_view
+ircd::resource::method_list(const mutable_buffer &buf,
+                            const method_closure &closure)
 const
 {
 	size_t len(0);
@@ -240,9 +252,16 @@ const
 	auto it(begin(methods));
 	if(it != end(methods))
 	{
-		len = strlcat(buf, it->first);
+		assert(it->second);
+		if(closure(*it->second))
+			len = strlcat(buf, it->first);
+
 		for(++it; it != end(methods); ++it)
 		{
+			assert(it->second);
+			if(!closure(*it->second))
+				continue;
+
 			len = strlcat(buf, " ");
 			len = strlcat(buf, it->first);
 		}

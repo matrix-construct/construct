@@ -40,7 +40,10 @@ struct ircd::resource
 	std::unique_ptr<method> default_method_head;
 	std::unique_ptr<method> default_method_options;
 
-	string_view allow_methods_list(const mutable_buffer &buf) const;
+	using method_closure = std::function<bool (const method &)>;
+	string_view method_list(const mutable_buffer &buf, const method_closure &) const;
+	string_view method_list(const mutable_buffer &buf) const;
+
 	response handle_options(client &, const request &) const;
 	response handle_head(client &, const request &) const;
 
