@@ -338,7 +338,7 @@ ircd::info::page_size
 // Platform information
 //
 
-#ifdef HAVE_CPUID_H
+#ifdef __x86_64__
 static ircd::uint128_t
 get_cpuid(const uint &leaf,
           const uint &subleaf)
@@ -388,7 +388,7 @@ ircd::info::cpuid
 };
 
 char
-_cpuvendor_[16];
+_cpuvendor_[12];
 
 decltype(ircd::info::cpuvendor)
 ircd::info::cpuvendor{[&]
