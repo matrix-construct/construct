@@ -83,6 +83,9 @@ github_validate(const string_view &sig,
                 const const_buffer &content,
                 const string_view &secret);
 
+static std::string
+github_url(const json::string &url);
+
 static string_view
 github_find_commit_hash(const json::object &content);
 
@@ -236,10 +239,10 @@ github_heading(std::ostream &out,
 	{
 		const auto url
 		{
-			lstrip(unquote(organization["url"]), "https://api.")
+			github_url(organization["url"])
 		};
 
-		out << "<a href=\"https://" << url << "\">"
+		out << "<a href=\"" << url << "\">"
 		    << unquote(organization["login"])
 		    << "</a>";
 	}
@@ -943,6 +946,13 @@ github_find_commit_hash(const json::object &content)
 		return unquote(content["commit"]);
 
 	return {};
+}
+
+std::string
+github_url(const json::string &url)
+{
+	std::string base("https://");
+	return base + std::string(lstrip(url, "https://api."));
 }
 
 bool
