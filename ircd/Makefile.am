@@ -116,7 +116,7 @@ libircd_la_SOURCES =   \
 	logger.cc          \
 	magic.cc           \
 	stats.cc           \
-	perf.cc            \
+	prof.cc            \
 	fs.cc              \
 	sodium.cc          \
 	openssl.cc         \

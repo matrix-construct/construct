@@ -872,7 +872,7 @@ ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view 
 	// Set the start value to the total number of cycles accrued by this
 	// context including the current time slice.
 	!current?
-		perf::cycles():
+		prof::cycles():
 	~cur().flags & context::SLICE_EXEMPT?
 		cur().profile.cycles + prof::cur_slice_cycles():
 		0
@@ -898,7 +898,7 @@ noexcept
 	{
 		current?
 			cur().profile.cycles + prof::cur_slice_cycles():
-			perf::cycles()
+			prof::cycles()
 	};
 
 	assert(stop >= start);
@@ -1663,13 +1663,13 @@ ircd::ctx::prof::handle_cur_continue()
 void
 ircd::ctx::prof::slice_enter()
 {
-	_slice_start = perf::cycles();
+	_slice_start = cycles();
 }
 
 void
 ircd::ctx::prof::slice_leave()
 {
-	_slice_stop = perf::cycles();
+	_slice_stop = cycles();
 
 	auto &c(cur());
 	assert(_slice_stop >= _slice_start);
@@ -1811,7 +1811,7 @@ ircd::ctx::prof::slice_exceeded_warning(const ulong &cycles)
 ulong
 ircd::ctx::prof::cur_slice_cycles()
 {
-	return perf::cycles() - cur_slice_start();
+	return cycles() - cur_slice_start();
 }
 
 const ulong &

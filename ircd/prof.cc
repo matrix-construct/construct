@@ -17,24 +17,24 @@
 //
 
 #ifdef HAVE_LINUX_PERF_EVENT_H
-ircd::perf::init::init()
+ircd::prof::init::init()
 {
 
 }
 #else
-ircd::perf::init::init()
+ircd::prof::init::init()
 {
 }
 #endif
 
 #ifdef HAVE_LINUX_PERF_EVENT_H
-ircd::perf::init::~init()
+ircd::prof::init::~init()
 noexcept
 {
 
 }
 #else
-ircd::perf::init::~init()
+ircd::prof::init::~init()
 noexcept
 {
 }

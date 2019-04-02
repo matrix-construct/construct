@@ -9,9 +9,9 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_PERF_H
+#define HAVE_IRCD_PROF_H
 
-namespace ircd::perf
+namespace ircd::prof
 {
 	struct init;
 
@@ -26,10 +26,10 @@ namespace ircd::perf
 
 namespace ircd
 {
-	using perf::cycles;
+	using prof::cycles;
 }
 
-struct ircd::perf::init
+struct ircd::prof::init
 {
 	init();
 	~init() noexcept;
@@ -37,21 +37,21 @@ struct ircd::perf::init
 
 inline uint64_t
 __attribute__((flatten, always_inline, gnu_inline, artificial))
-ircd::perf::cycles()
+ircd::prof::cycles()
 {
-	return perf::rdtsc();
+	return prof::rdtsc();
 }
 
 #if defined(__x86_64__) || defined(__i386__)
 inline unsigned long long
 __attribute__((always_inline, gnu_inline, artificial))
-ircd::perf::rdtsc()
+ircd::prof::rdtsc()
 {
 	return __builtin_ia32_rdtsc();
 }
 #else
 inline unsigned long long
-ircd::perf::rdtsc()
+ircd::prof::rdtsc()
 {
 	static_assert(false, "TODO: Implement fallback here");
 	return 0;
@@ -61,14 +61,14 @@ ircd::perf::rdtsc()
 #if defined(__x86_64__) || defined(__i386__)
 inline unsigned long long
 __attribute__((always_inline, gnu_inline, artificial))
-ircd::perf::rdtscp()
+ircd::prof::rdtscp()
 {
 	uint32_t ia32_tsc_aux;
 	return __builtin_ia32_rdtscp(&ia32_tsc_aux);
 }
 #else
 inline unsigned long long
-ircd::perf::rdtscp()
+ircd::prof::rdtscp()
 {
 	static_assert(false, "TODO: Implement fallback here");
 	return 0;
@@ -78,13 +78,13 @@ ircd::perf::rdtscp()
 #if defined(__x86_64__) || defined(__i386__)
 inline unsigned long long
 __attribute__((always_inline, gnu_inline, artificial))
-ircd::perf::rdpmc(const uint &c)
+ircd::prof::rdpmc(const uint &c)
 {
 	return __builtin_ia32_rdpmc(c);
 }
 #else
 inline unsigned long long
-ircd::perf::rdpmc(const uint &c)
+ircd::prof::rdpmc(const uint &c)
 {
 	static_assert(false, "TODO: Implement fallback here");
 	return 0;

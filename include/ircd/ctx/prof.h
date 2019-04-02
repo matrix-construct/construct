@@ -32,6 +32,7 @@ namespace ircd::ctx::prof
 	enum class event :uint8_t;
 	struct ticker;
 
+	uint64_t cycles();
 	string_view reflect(const event &);
 
 	// totals
@@ -95,3 +96,10 @@ struct ircd::ctx::prof::ticker
 	// monotonic counters for events
 	std::array<uint64_t, num_of<prof::event>()> event {{0}};
 };
+
+inline uint64_t
+__attribute__((flatten, always_inline, gnu_inline, artificial))
+ircd::ctx::prof::cycles()
+{
+	return ircd::prof::cycles();
+}
