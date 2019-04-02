@@ -259,7 +259,7 @@ github_heading(std::ostream &out,
 	if(commit_hash && type == "push")
 		out << " <b><font color=\"#FF5733\">";
 	else if(commit_hash && type == "pull_request")
-		out << " <b><font color=\"#CC00CC\">";
+		out << " <b><font color=\"#FF5733\">";
 	else if(commit_hash)
 		out << " <b>";
 
@@ -388,13 +388,50 @@ github_handle__pull_request(std::ostream &out,
 		    << "</b>"
 		    ;
 
+	if(pr["title"])
+		out << " "
+		    << "<a href="
+		    << pr["html_url"]
+		    << ">"
+		    << unquote(pr["title"])
+		    << "</a>"
+		    ;
+
+	const json::object head
+	{
+		pr["head"]
+	};
+
+	const json::object base
+	{
+		pr["base"]
+	};
+
+	for(const json::object &label : json::array(pr["labels"]))
+	{
+		out << "&nbsp;";
+		out << "<font color=\"#FFFFFF\""
+		    << "data-mx-bg-color=\"#"
+		    << unquote(label["color"])
+		    << "\">";
+
+		out << "<b>";
+		out << "&nbsp;";
+			out << unquote(label["name"]);
+		out << "&nbsp;";
+		out << "</b>";
+
+		out << "</font>";
+	}
+
 	if(pr["merged"] == "true")
 		out << ' '
+		    << "<font color=\"#FFFFFF\""
+		    << "data-mx-bg-color=\"#6f42c1\""
 		    << "<b>"
-		    << "<font color=\"#CC00CC\">"
 		    << "merged"
-		    << "</font>"
 		    << "</b>"
+		    << "</font>"
 		    ;
 
 	if(pr.has("merged_by") && pr["merged_by"] != "null")
@@ -410,39 +447,57 @@ github_handle__pull_request(std::ostream &out,
 		    ;
 	}
 
-	if(pr["merged"] == "false") switch(hash(pr["mergeable"]))
+	const json::string &body
 	{
-		default:
-		case hash("null"):
-			out << " / "
-			    << "<b>"
-			    << "<font color=\"#FFCC00\">"
-			    << "CHECKING MERGE"
-			    << "</font>"
-			    << "</b>"
-			    ;
-			break;
+		pr["body"]
+	};
 
-		case hash("true"):
-			out << " / "
-			    << "<b>"
-			    << "<font color=\"#33CC33\">"
-			    << "MERGEABLE"
-			    << "</font>"
-			    << "</b>"
-			    ;
-			break;
+	if(!empty(body))
+		out << " "
+		    << "<pre><code>"
+		    << body
+		    << "</code></pre>"
+		    ;
 
-		case hash("false"):
-			out << " / "
-			    << "<b>"
-			    << "<font color=\"#CC0000\">"
-			    << "MERGE CONFLICT"
-			    << "</font>"
-			    << "</b>"
-			    ;
-			break;
-	}
+	if(pr.has("commits"))
+		out << " "
+		    << "<b>"
+		    << pr["commits"]
+		    << ' '
+		    << "<a href="
+		    << github_url(pr["commits_url"])
+		    << ">"
+		    << "commits"
+		    << "</a>"
+		    << "</b>"
+		    ;
+
+	if(pr.has("comments"))
+		out << " / "
+		    << "<b>"
+		    << pr["comments"]
+		    << ' '
+		    << "<a href="
+		    << github_url(pr["comments_url"])
+		    << ">"
+		    << "comments"
+		    << "</a>"
+		    << "</b>"
+		    ;
+
+	if(pr.has("changed_files"))
+		out << " / "
+		    << "<b>"
+		    << pr["changed_files"]
+		    << ' '
+		    << "<a href=\""
+		    << unquote(pr["html_url"])
+		    << "/files"
+		    << "\">"
+		    << "files"
+		    << "</a>"
+		    << "</b>"
+		    ;
 
 	if(pr.has("additions"))
 		out << " / "
@@ -464,37 +519,48 @@ github_handle__pull_request(std::ostream &out,
 		    << "</b>"
 		    ;
 
-	if(pr.has("changed_files"))
-		out << " / "
-		    << "<b>"
-		    << pr["changed_files"]
-		    << ' '
-		    << "<font color=\"#476b6b\">"
-		    << "files"
-		    << "</font>"
-		    << "</b>"
-		    ;
-
-	const json::object head
+	if(pr["merged"] == "false") switch(hash(pr["mergeable"]))
 	{
-		pr["head"]
-	};
+		default:
+		case hash("null"):
+			out << " / "
+			    << "<font color=\"#000000\""
+			    << "data-mx-bg-color=\"#EEBB00\">"
+			    << "<b>"
+			    << "&nbsp;"
+			    << "CHECKING"
+			    << "&nbsp;"
+			    << "</b>"
+			    << "</font>"
+			    ;
+			break;
 
-	out << " "
-	    << "<pre><code>"
-	    << "<a href=\""
-	    << unquote(pr["html_url"])
-	    << "\">"
-	    << "<b>"
-	    << unquote(head["sha"]).substr(0, 8)
-	    << "</b>"
-	    << "</a>"
-	    << " "
-	    << "<u>"
-	    << unquote(pr["title"])
-	    << "</u>"
-	    << "</code></pre>"
-	    ;
+		case hash("true"):
+			out << " / "
+			    << "<font color=\"#FFFFFF\""
+			    << "data-mx-bg-color=\"#03B381\">"
+			    << "<b>"
+			    << "&nbsp;"
+			    << "NO CONFLICTS"
+			    << "&nbsp;"
+			    << "</b>"
+			    << "</font>"
+			    ;
+			break;
+
+		case hash("false"):
+			out << " / "
+			    << "<font color=\"#FFFFFF\""
+			    << "data-mx-bg-color=\"#CC0000\">"
+			    << "<b>"
+			    << "&nbsp;"
+			    << "MERGE CONFLICT"
+			    << "&nbsp;"
+			    << "</b>"
+			    << "</font>"
+			    ;
+			break;
+	}
 
 	return out;
 }
@@ -944,6 +1010,11 @@ github_find_commit_hash(const json::object &content)
 
 	if(content["commit"])
 		return unquote(content["commit"]);
+
+	const json::object pr{content["pull_request"]};
+	const json::object prhead{pr["head"]};
+	if(prhead["sha"])
+		return unquote(prhead["sha"]);
 
 	return {};
 }
