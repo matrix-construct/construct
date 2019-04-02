@@ -77,6 +77,9 @@ ircd::m::sync::room_account_data_linear_events(data &data,
 	if(type.first != "ircd.account_data")
 		return false;
 
+	if(!type.second)
+		return false;
+
 	const m::room room
 	{
 		lstrip(json::get<"type"_>(event), type.first)
@@ -134,6 +137,9 @@ ircd::m::sync::room_account_data_linear_tags(data &data,
 	};
 
 	if(type.first != "ircd.room_tag")
+		return false;
+
+	if(!type.second)
 		return false;
 
 	const m::room room
