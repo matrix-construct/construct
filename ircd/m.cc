@@ -810,6 +810,31 @@ catch(const std::bad_function_call &e)
 
 	return false;
 }
+catch(const m::error &e)
+{
+	log::derror
+	{
+		log, "linear %s '%s' :%s %s",
+		loghead(data),
+		name(),
+		e.what(),
+		e.content
+	};
+
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "linear %s '%s' :%s",
+		loghead(data),
+		name(),
+		e.what()
+	};
+
+	throw;
+}
 
 bool
 ircd::m::sync::item::poll(data &data,
