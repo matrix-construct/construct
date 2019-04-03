@@ -82,6 +82,12 @@ namespace ircd::spirit
 	using karma::maxwidth;
 	using karma::buffer;
 
+	using _val_type = phx::actor<spirit::attribute<0>>;
+	using _r0_type = phx::actor<spirit::attribute<0>>;
+	using _r1_type = phx::actor<spirit::attribute<1>>;
+	using _r2_type = phx::actor<spirit::attribute<2>>;
+	using _r3_type = phx::actor<spirit::attribute<3>>;
+
 	template<class parent_error> struct expectation_failure;
 
 	extern thread_local char rulebuf[64]; // parse.cc
