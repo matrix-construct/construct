@@ -201,8 +201,8 @@ noexcept try
 	// also occur in ircd::init() or static initialization itself if either are
 	// more appropriate.
 
-	fs::init _fs_;           // Local filesystem
 	prof::init _prof_;       // Profiling related
+	fs::init _fs_;           // Local filesystem
 	magic::init _magic_;     // libmagic
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
 	nacl::init _nacl_;       // nacl crypto
