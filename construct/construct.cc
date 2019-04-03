@@ -33,6 +33,7 @@ bool nojs;
 bool nodirect;
 bool noaio;
 bool no6;
+bool norun;
 const char *execute;
 lgetopt opts[] =
 {
@@ -50,6 +51,7 @@ lgetopt opts[] =
 	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
 	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
 	{ "no6",        &no6,           lgetopt::BOOL,    "Disable IPv6 operations" },
+	{ "norun",      &norun,         lgetopt::BOOL,    "[debug & testing only] Initialize but never run the event loop." },
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -149,6 +151,11 @@ try
 
 	if(execute)
 		construct::console::execute({execute});
+
+	// For developer debugging and testing this branch from a "-norun" argument
+	// will exit before committing to the ios.run().
+	if(norun)
+		return EXIT_SUCCESS;
 
 	// Execution.
 	// Blocks until a clean exit from a quit() or an exception comes out of it.
