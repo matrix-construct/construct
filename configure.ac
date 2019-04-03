@@ -733,6 +733,7 @@ RB_CHK_SYSHEADER(sys/resource.h, [SYS_RESOURCE_H])
 RB_CHK_SYSHEADER(sys/syscall.h, [SYS_SYSCALL_H])
 RB_CHK_SYSHEADER(sys/utsname.h, [SYS_UTSNAME_H])
 RB_CHK_SYSHEADER(sys/ioctl.h, [SYS_IOCTL_H])
+RB_CHK_SYSHEADER(sys/mman.h, [SYS_MMAN_H])
 
 dnl linux platform
 RB_CHK_SYSHEADER(malloc.h, [MALLOC_H])
