@@ -755,7 +755,7 @@ const
 bool
 ircd::fmt::hex_lowercase_specifier::operator()(char *&out,
                                                const size_t &max,
-                                               const spec &s,
+                                               const spec &spec,
                                                const arg &val)
 const
 {
@@ -777,11 +777,43 @@ const
 				,"unsigned lowercase hexadecimal"
 			};
 
+			_r1_type width;
+			karma::rule<char *, long(ushort)> aligned_left
+			{
+				karma::left_align(width)[rule]
+				,"left aligned"
+			};
+
+			karma::rule<char *, long(ushort)> aligned_right
+			{
+				karma::right_align(width)[rule]
+				,"right aligned"
+			};
+
+			karma::rule<char *, long(ushort)> aligned_center
+			{
+				karma::center(width)[rule]
+				,"center aligned"
+			};
+
 			generator(): generator::base_type{rule} {}
 		}
 		static const generator;
 
-		return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], integer);
+		const auto &mw(maxwidth(max));
+		static const auto &ep(eps[throw_illegal]);
+
+		if(!spec.width)
+			return karma::generate(out, mw[generator] | ep, integer);
+
+		if(spec.sign == '-')
+		{
+			const auto &g(generator.aligned_left(spec.width));
+			return karma::generate(out, mw[g] | ep, integer);
+		}
+
+		const auto &g(generator.aligned_right(spec.width));
+		return karma::generate(out, mw[g] | ep, integer);
 	});
 
 	return !until(types, [&](auto type)
