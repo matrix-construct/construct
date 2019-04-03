@@ -49,6 +49,7 @@ namespace ircd::fmt
 struct ircd::fmt::spec
 {
 	char sign {'+'};
+	char pad {' '};
 	ushort width {0};
 	ushort precision {0};
 	string_view name;
@@ -62,6 +63,7 @@ BOOST_FUSION_ADAPT_STRUCT
 (
 	ircd::fmt::spec,
 	( decltype(ircd::fmt::spec::sign),       sign       )
+	( decltype(ircd::fmt::spec::pad),        pad        )
 	( decltype(ircd::fmt::spec::width),      width      )
 	( decltype(ircd::fmt::spec::precision),  precision  )
 	( decltype(ircd::fmt::spec::name),       name       )
@@ -124,6 +126,7 @@ struct ircd::fmt::parser
 
 		spec %= specsym
 		     >> -(char_('+') | char_('-'))
+		     >> (-char_('0') | attr(' '))
 		     >> -ushort_
 		     >> -(lit('.') >> ushort_)
 		     >> name[is_valid]
@@ -499,11 +502,10 @@ ircd::fmt::visit_type(const arg &val,
 bool
 ircd::fmt::pointer_specifier::operator()(char *&out,
                                          const size_t &max,
-                                         const spec &,
+                                         const spec &spec,
                                          const arg &val)
 const
 {
-	using karma::ulong_;
 	using karma::eps;
 	using karma::maxwidth;
 
@@ -515,19 +517,56 @@ const
 	struct generator
 	:karma::grammar<char *, uintptr_t()>
 	{
-		karma::rule<char *, uintptr_t()> pointer_hex
+		karma::rule<char *, uintptr_t()> rule
 		{
 			lit("0x") << karma::hex
 		};
 
-		generator(): generator::base_type{pointer_hex} {}
+		_r1_type width;
+		_r2_type pad;
+		karma::rule<char *, uintptr_t(ushort, char)> aligned_left
+		{
+			karma::left_align(width, pad)[rule]
+			,"left aligned"
+		};
+
+		karma::rule<char *, uintptr_t(ushort, char)> aligned_right
+		{
+			karma::right_align(width, pad)[rule]
+			,"right aligned"
+		};
+
+		karma::rule<char *, uintptr_t(ushort, char)> aligned_center
+		{
+			karma::center(width, pad)[rule]
+			,"center aligned"
+		};
+
+		generator(): generator::base_type{rule} {}
 	}
 	static const generator;
 
 	const auto &ptr(get<0>(val));
 	const auto &type(get<1>(val));
-	const void *const p(*static_cast<const void *const *>(ptr));
-	return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], uintptr_t(p));
+	const void *const p
+	{
+		*static_cast<const void *const *>(ptr)
+	};
+
+	const auto &mw(maxwidth(max));
+	static const auto &ep(eps[throw_illegal]);
+
+	if(!spec.width)
+		return karma::generate(out, mw[generator] | ep, uintptr_t(p));
+
+	if(spec.sign == '-')
+	{
+		const auto &g(generator.aligned_left(spec.width, spec.pad));
+		return karma::generate(out, mw[g] | ep, uintptr_t(p));
+	}
+
+	const auto &g(generator.aligned_right(spec.width, spec.pad));
+	return karma::generate(out, mw[g] | ep, uintptr_t(p));
 }
 
 bool
@@ -637,21 +676,22 @@ const
 			};
 
 			_r1_type width;
-			karma::rule<char *, long(ushort)> aligned_left
+			_r2_type pad;
+			karma::rule<char *, long(ushort, char)> aligned_left
 			{
-				karma::left_align(width)[rule]
+				karma::left_align(width, pad)[rule]
 				,"left aligned"
 			};
 
-			karma::rule<char *, long(ushort)> aligned_right
+			karma::rule<char *, long(ushort, char)> aligned_right
 			{
-				karma::right_align(width)[rule]
+				karma::right_align(width, pad)[rule]
 				,"right aligned"
 			};
 
-			karma::rule<char *, long(ushort)> aligned_center
+			karma::rule<char *, long(ushort, char)> aligned_center
 			{
-				karma::center(width)[rule]
+				karma::center(width, pad)[rule]
 				,"center aligned"
 			};
 
@@ -667,11 +707,11 @@ const
 
 		if(spec.sign == '-')
 		{
-			const auto &g(generator.aligned_left(spec.width));
+			const auto &g(generator.aligned_left(spec.width, spec.pad));
 			return karma::generate(out, mw[g] | ep, integer);
 		}
 
-		const auto &g(generator.aligned_right(spec.width));
+		const auto &g(generator.aligned_right(spec.width, spec.pad));
 		return karma::generate(out, mw[g] | ep, integer);
 	});
 
@@ -708,21 +748,22 @@ const
 			};
 
 			_r1_type width;
-			karma::rule<char *, ulong(ushort)> aligned_left
+			_r2_type pad;
+			karma::rule<char *, ulong(ushort, char)> aligned_left
 			{
-				karma::left_align(width)[rule]
+				karma::left_align(width, pad)[rule]
 				,"left aligned"
 			};
 
-			karma::rule<char *, ulong(ushort)> aligned_right
+			karma::rule<char *, ulong(ushort, char)> aligned_right
 			{
-				karma::right_align(width)[rule]
+				karma::right_align(width, pad)[rule]
 				,"right aligned"
 			};
 
-			karma::rule<char *, ulong(ushort)> aligned_center
+			karma::rule<char *, ulong(ushort, char)> aligned_center
 			{
-				karma::center(width)[rule]
+				karma::center(width, pad)[rule]
 				,"center aligned"
 			};
 
@@ -738,11 +779,11 @@ const
 
 		if(spec.sign == '-')
 		{
-			const auto &g(generator.aligned_left(spec.width));
+			const auto &g(generator.aligned_left(spec.width, spec.pad));
 			return karma::generate(out, mw[g] | ep, integer);
 		}
 
-		const auto &g(generator.aligned_right(spec.width));
+		const auto &g(generator.aligned_right(spec.width, spec.pad));
 		return karma::generate(out, mw[g] | ep, integer);
 	});
 
@@ -764,35 +805,36 @@ const
 		throw illegal("Failed to print hexadecimal value");
 	});
 
-	const auto closure([&](const uint &integer)
+	const auto closure([&](const ulong &integer)
 	{
 		using karma::maxwidth;
 
 		struct generator
-		:karma::grammar<char *, uint()>
+		:karma::grammar<char *, ulong()>
 		{
-			karma::rule<char *, uint()> rule
+			karma::rule<char *, ulong()> rule
 			{
 				karma::lower[karma::hex]
 				,"unsigned lowercase hexadecimal"
 			};
 
 			_r1_type width;
-			karma::rule<char *, long(ushort)> aligned_left
+			_r2_type pad;
+			karma::rule<char *, ulong(ushort, char)> aligned_left
 			{
-				karma::left_align(width)[rule]
+				karma::left_align(width, pad)[rule]
 				,"left aligned"
 			};
 
-			karma::rule<char *, long(ushort)> aligned_right
+			karma::rule<char *, ulong(ushort, char)> aligned_right
 			{
-				karma::right_align(width)[rule]
+				karma::right_align(width, pad)[rule]
 				,"right aligned"
 			};
 
-			karma::rule<char *, long(ushort)> aligned_center
+			karma::rule<char *, ulong(ushort, char)> aligned_center
 			{
-				karma::center(width)[rule]
+				karma::center(width, pad)[rule]
 				,"center aligned"
 			};
 
@@ -808,11 +850,11 @@ const
 
 		if(spec.sign == '-')
 		{
-			const auto &g(generator.aligned_left(spec.width));
+			const auto &g(generator.aligned_left(spec.width, spec.pad));
 			return karma::generate(out, mw[g] | ep, integer);
 		}
 
-		const auto &g(generator.aligned_right(spec.width));
+		const auto &g(generator.aligned_right(spec.width, spec.pad));
 		return karma::generate(out, mw[g] | ep, integer);
 	});
 
@@ -907,21 +949,22 @@ const
 		};
 
 		_r1_type width;
-		karma::rule<char *, const string_view &(ushort)> aligned_left
+		_r2_type pad;
+		karma::rule<char *, const string_view &(ushort, char)> aligned_left
 		{
-			karma::left_align(width)[string]
+			karma::left_align(width, pad)[string]
 			,"left aligned"
 		};
 
-		karma::rule<char *, const string_view &(ushort)> aligned_right
+		karma::rule<char *, const string_view &(ushort, char)> aligned_right
 		{
-			karma::right_align(width)[string]
+			karma::right_align(width, pad)[string]
 			,"right aligned"
 		};
 
-		karma::rule<char *, const string_view &(ushort)> aligned_center
+		karma::rule<char *, const string_view &(ushort, char)> aligned_center
 		{
-			karma::center(width)[string]
+			karma::center(width, pad)[string]
 			,"center aligned"
 		};
 
@@ -937,11 +980,11 @@ const
 
 	if(spec.sign == '-')
 	{
-		const auto &g(generator.aligned_left(spec.width));
+		const auto &g(generator.aligned_left(spec.width, spec.pad));
 		return generate_string(out, mw[g] | ep, val);
 	}
 
-	const auto &g(generator.aligned_right(spec.width));
+	const auto &g(generator.aligned_right(spec.width, spec.pad));
 	return generate_string(out, mw[g] | ep, val);
 }
 
