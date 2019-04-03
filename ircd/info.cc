@@ -63,32 +63,66 @@ ircd::info::dump()
 	};
 	#endif
 
+	// This message flashes posix information about the resource limits
+	log::debug
+	{
+		"AS=%lu DATA=%lu RSS=%lu NOFILE=%lu; RTTIME=%lu"
+		" page_size=%zu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu",
+		rlimit_as,
+		rlimit_data,
+		rlimit_rss,
+		rlimit_nofile,
+		rlimit_rttime,
+		page_size,
+		iov_max,
+		aio_max,
+		aio_reqprio_max,
+	};
+
 	// This message flashes standard information about the system and platform
 	// IRCd is compiled for and running on.
 	log::debug
 	{
-		"cpu[%s] page_size=%zu max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
+		"cpu[%s] max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
 		cpuvendor,
-		page_size,
 		max_align,
 		hardware_concurrency,
 		destructive_interference,
 		constructive_interference,
 	};
 
-	// This message flashes posix information about the resource limits
+	// This message flashes standard hardware feature information
+	#ifdef __x86_64__
 	log::debug
 	{
-		"AS=%lu DATA=%lu RSS=%lu NOFILE=%lu; RTTIME=%lu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu",
-		rlimit_as,
-		rlimit_data,
-		rlimit_rss,
-		rlimit_nofile,
-		rlimit_rttime,
-		iov_max,
-		aio_max,
-		aio_reqprio_max,
+		"0..01 [%08x|%08x|%08x|%08x] "
+		"0..07 [%08x|%08x|%08x|%08x]",
+		uint32_t(cpuid[1]),
+		uint32_t(cpuid[1] >> 32),
+		uint32_t(cpuid[1] >> 64),
+		uint32_t(cpuid[1] >> 96),
+		uint32_t(cpuid[3]),
+		uint32_t(cpuid[3] >> 32),
+		uint32_t(cpuid[3] >> 64),
+		uint32_t(cpuid[3] >> 96),
 	};
+	#endif
+
+	#ifdef __x86_64__
+	log::debug
+	{
+		"8..01 [%08x|%08x|%08x|%08x] "
+		"8..1c [%08x|%08x|%08x|%08x]",
+		uint32_t(cpuid[5]),
+		uint32_t(cpuid[5] >> 32),
+		uint32_t(cpuid[5] >> 64),
+		uint32_t(cpuid[5] >> 96),
+		uint32_t(cpuid[6]),
+		uint32_t(cpuid[6] >> 32),
+		uint32_t(cpuid[6] >> 64),
+		uint32_t(cpuid[6] >> 96),
+	};
+	#endif
 }
 
 decltype(ircd::info::credits)
@@ -379,11 +413,11 @@ ircd::info::cpuid
 {
 	get_cpuid(0x00000000U, 0),
 	get_cpuid(0x00000001U, 0),
-	get_cpuid(0x00000002U, 0),
-	get_cpuid(0x00000004U, 0),
+	0UL,
+	get_cpuid(0x00000007U, 0U),
 	get_cpuid(0x80000000U, 0),
-	0UL,
-	0UL,
+	get_cpuid(0x80000001U, 0),
+	get_cpuid(0x8000001CU, 0), //AMD Vol.2 13.4.3.3 (LWP)
 	0UL,
 };
 
