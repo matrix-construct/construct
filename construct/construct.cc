@@ -129,10 +129,13 @@ try
 			"Must specify the origin after any switched parameters."
 		};
 
+	// This is the sole io_context for Construct, and the ios.run() below is the
+	// the only place where the program actually blocks.
+	boost::asio::io_context ios;
+
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
-	// note: only supports service for one hostname at this time.
-	boost::asio::io_context ios;
+	// note: only supports service for one hostname/origin at this time.
 	ircd::init(ios, origin, hostname);
 
 	// libircd does no signal handling (or at least none that you ever have to
@@ -144,11 +147,14 @@ try
 	// platformness with windows etc.
 	const construct::signals signals{ios};
 
-	// If the user wants to immediately drop to a command line without having to
-	// send a ctrl-c for it, that is provided here.
+	// If the user wants to immediately drop to an interactive command line
+	// without having to send a ctrl-c for it, that is provided here. This does
+	// not actually take effect until it's processed in the ios.run() below.
 	if(cmdline)
 		construct::console::spawn();
 
+	// If the user wants to immediately process console commands
+	// non-interactively from a program argument input, that is enqueued here.
 	if(execute)
 		construct::console::execute({execute});
 
