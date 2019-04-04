@@ -445,9 +445,9 @@ github_handle__pull_request(std::ostream &out,
 		out << ' '
 		    << "<font color=\"#FFFFFF\""
 		    << "data-mx-bg-color=\"#6f42c1\">"
-		    << "<b>"
+		    << "&nbsp;<b>"
 		    << "merged"
-		    << "</b>"
+		    << "</b>&nbsp;"
 		    << "</font>"
 		    ;
 
