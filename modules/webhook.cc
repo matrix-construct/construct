@@ -956,6 +956,11 @@ github_handle__status(std::ostream &out,
 		    << "<font data-mx-bg-color=\"#CC0000\">"
 		    ;
 
+	else if(state == "error")
+		out << " "
+		    << "<font data-mx-bg-color=\"#280000\">"
+		    ;
+
 	out << "&nbsp;"
 	    << "<a href="
 	    << url
