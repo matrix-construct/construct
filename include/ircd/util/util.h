@@ -35,6 +35,7 @@ namespace ircd
 #include "unwind.h"
 #include "reentrance.h"
 #include "enum.h"
+#include "custom_ptr.h"
 #include "syscall.h"
 #include "env.h"
 #include "va_rtti.h"
@@ -62,13 +63,6 @@ namespace ircd
 // Unsorted section
 namespace ircd {
 namespace util {
-
-/// A standard unique_ptr but accepting an std::function for T as its custom
-/// deleter. This reduces the boilerplate burden on declaring the right
-/// unique_ptr template for custom deleters every single time.
-///
-template<class T>
-using custom_ptr = std::unique_ptr<T, std::function<void (T *)>>;
 
 //
 // Misc size() participants.
