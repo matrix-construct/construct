@@ -6,7 +6,7 @@ RUN \
     add-apt-repository -y ppa:mhier/libboost-latest && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
     apt-get update && \
-    apt-get install -y \
+    apt-get install --no-install-recommends -y \
         autoconf \
         autoconf-archive \
         autoconf2.13 \
@@ -18,22 +18,17 @@ RUN \
         curl \
         g++-8 \
         gcc-8 \
-        git \
         libbz2-dev \
         libgflags-dev \
-        libjemalloc-dev \
         libmagic-dev \
         libsnappy-dev \
         libsodium-dev \
         libssl1.0-dev \
         libtool \
         libzstd-dev \
-        openssl \
         shtool \
         xz-utils \
-        zlib1g-dev
-
-RUN \
+        zlib1g-dev && \
     apt-get clean && \
     apt-get autoremove --purge -y
 
@@ -50,7 +45,7 @@ RUN \
         -DWITH_TESTS=0 \
         -DWITH_TOOLS=0 \
         -DUSE_RTTI=1 \
-        -DWITH_JEMALLOC=1 \
+        -DWITH_ZLIB=1 \
         -DWITH_SNAPPY=1 \
         -DBUILD_SHARED_LIBS=1 && \
     cmake --build build --target install && \

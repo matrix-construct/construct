@@ -1,0 +1,9 @@
+image: Ubuntu1804
+
+version: 1.0.{build}
+
+services:
+- docker
+
+build_script:
+- docker run -v `pwd`:/build mujx/construct-ci:18.04 /bin/bash -c "./autogen.sh && ./configure --enable-debug && make"
