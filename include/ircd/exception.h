@@ -28,7 +28,9 @@ namespace ircd
 	// util
 	bool system_category(const std::error_category &) noexcept;
 	bool system_category(const std::error_code &) noexcept;
+	bool system_category(const boost::system::error_code &) noexcept;
 	bool is(const std::error_code &, const std::errc &) noexcept;
+	bool is(const boost::system::error_code &, const std::errc &) noexcept;
 	std::error_code make_error_code(const int &code = errno);
 	std::error_code make_error_code(const std::error_code &);
 	std::error_code make_error_code(const std::system_error &);
@@ -244,10 +246,7 @@ template<class... args>
 void
 ircd::throw_system_error(args&&... a)
 {
-	throw std::system_error
-	{
-		make_error_code(std::forward<args>(a)...)
-	};
+	throw make_system_error(std::forward<args>(a)...);
 }
 
 template<class... args>
