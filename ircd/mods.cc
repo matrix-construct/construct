@@ -197,27 +197,8 @@ try
 }
 catch(const boost::system::system_error &e)
 {
-	using std::errc;
-
-	const auto &ec(e.code());
-	if(system_category(ec)) switch(ec.value())
-	{
-		case int(errc::bad_file_descriptor):
-		{
-			const string_view what(e.what());
-			const auto pos(what.find("undefined symbol: "));
-			if(pos == std::string_view::npos)
-				break;
-
-			const string_view msg(what.substr(pos));
-			const std::string mangled(between(msg, ": ", ")"));
-			const std::string demangled(demangle(mangled));
-			throw undefined_symbol
-			{
-				"undefined symbol: '%s' (%s)", demangled, mangled
-			};
-		}
-	}
+	if(is(e.code(), std::errc::bad_file_descriptor))
+		handle_ebadf(e.what());
 
 	throw_system_error(e);
 }
@@ -317,6 +298,22 @@ const
 {
 	assert(header);
 	return header->operator[](key);
+}
+
+void
+ircd::mods::handle_ebadf(const string_view &what)
+{
+	const auto pos(what.find("undefined symbol: "));
+	if(pos == std::string_view::npos)
+		return;
+
+	const string_view msg(what.substr(pos));
+	const std::string mangled(between(msg, ": ", ")"));
+	const std::string demangled(demangle(mangled));
+	throw undefined_symbol
+	{
+		"undefined symbol: '%s' (%s)", demangled, mangled
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////

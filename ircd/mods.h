@@ -14,6 +14,8 @@ namespace ircd::mods
 	extern const std::string suffix;
 
 	template<class R, class F> R info(const string_view &, F&& closure);
+
+	void handle_ebadf(const string_view &what);
 }
 
 /// Internal module representation
