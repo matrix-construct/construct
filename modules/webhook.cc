@@ -65,12 +65,19 @@ static void
 github_handle(client &,
               const resource::request &);
 
+static void
+appveyor_handle(client &,
+                const resource::request &);
+
 resource::response
 post__webhook(client &client,
               const resource::request &request)
 {
 	if(has(http::headers(request.head.headers), "X-GitHub-Event"_sv))
 		github_handle(client, request);
+
+	else if(has(http::headers(request.head.headers), "X-Appveyor-Secret"_sv))
+		appveyor_handle(client, request);
 
 	return resource::response
 	{
@@ -124,6 +131,10 @@ github_handle__organization(std::ostream &,
                             const json::object &content);
 
 static std::ostream &
+github_handle__status(std::ostream &,
+                      const json::object &content);
+
+static std::ostream &
 github_handle__ping(std::ostream &,
                     const json::object &content);
 
@@ -162,6 +173,10 @@ github_handle(client &client,
 		headers.at("X-GitHub-Delivery")
 	};
 
+	if(type == "status")
+		if(unquote(request["state"]) == "pending")
+			return;
+
 	const unique_buffer<mutable_buffer> buf
 	{
 		48_KiB
@@ -188,6 +203,8 @@ github_handle(client &client,
 		github_handle__label(out, request.content);
 	else if(type == "organization")
 		github_handle__organization(out, request.content);
+	else if(type == "status")
+		github_handle__status(out, request.content);
 
 	if(!string_view(webhook_room))
 		return;
@@ -427,7 +444,7 @@ github_handle__pull_request(std::ostream &out,
 	if(pr["merged"] == "true")
 		out << ' '
 		    << "<font color=\"#FFFFFF\""
-		    << "data-mx-bg-color=\"#6f42c1\""
+		    << "data-mx-bg-color=\"#6f42c1\">"
 		    << "<b>"
 		    << "merged"
 		    << "</b>"
@@ -910,6 +927,55 @@ github_handle__organization(std::ostream &out,
 }
 
 std::ostream &
+github_handle__status(std::ostream &out,
+                      const json::object &content)
+{
+	const json::string &state
+	{
+		content["state"]
+	};
+
+	const json::string &description
+	{
+		content["description"]
+	};
+
+	const string_view &url
+	{
+		content["target_url"]
+	};
+
+
+	if(state == "success")
+		out << " "
+		    << "<font data-mx-bg-color=\"#03B381\">"
+		    ;
+
+	else if(state == "failure")
+		out << " "
+		    << "<font data-mx-bg-color=\"#CC0000\">"
+		    ;
+
+	out << "&nbsp;"
+	    << "<a href="
+	    << url
+	    << ">";
+
+	out << ""
+	    << "<font color=\"#FFFFFF\">"
+	    << "<b>"
+	    << description
+	    << "</b>"
+	    << "</font>"
+	    << "</a>"
+	    << "&nbsp;"
+	    << "</font>"
+	    ;
+
+	return out;
+}
+
+std::ostream &
 github_handle__watch(std::ostream &out,
                      const json::object &content)
 {
@@ -1070,5 +1136,15 @@ catch(const crh::error &e)
 	throw http::error
 	{
 		http::NOT_IMPLEMENTED, "The signature algorithm is not supported.",
+	};
+}
+
+void
+appveyor_handle(client &client,
+                const resource::request &request)
+{
+	const http::headers &headers
+	{
+		request.head.headers
 	};
 }
