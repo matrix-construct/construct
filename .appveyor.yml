@@ -1,18 +1,32 @@
 version: master_{build}
-clone_depth: 10
-install:
-  - c:\msys64\usr\bin\sh.exe -lc "pacman -Sy --noconfirm git"
-  - c:\msys64\usr\bin\sh.exe -lc "uname -a"
-  - c:\msys64\usr\bin\sh.exe -lc "cat /proc/cpuinfo"
-  - c:\msys64\usr\bin\sh.exe -lc "cat /proc/meminfo"
-  - c:\msys64\usr\bin\sh.exe -lc "cygcheck -s -v > $APPVEYOR_BUILD_FOLDER/cygcheck.log 2>&1"
-  - ps: Push-AppveyorArtifact cygcheck.log
+clone_depth: 1
+
+image:
+- Ubuntu1804
+
+services:
+- docker
+
 build_script:
-  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; sh tools/appveyor-build.sh"
+  - docker run -v `pwd`:/build mujx/construct-ci:18.04 /bin/bash -c "./autogen.sh && ./configure --enable-debug && make"
+#  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; sh tools/appveyor-build.sh"
 #  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER/build/bin; ./charybdis -version"
-on_failure:
-  - ps: Push-AppveyorArtifact config.log
-  - ps: Push-AppveyorArtifact include\rb\config.h
-branches:
-  except:
-    - release/3.5
+
+#install:
+#  - c:\msys64\usr\bin\sh.exe -lc "pacman -Sy --noconfirm git"
+#  - c:\msys64\usr\bin\sh.exe -lc "uname -a"
+#  - c:\msys64\usr\bin\sh.exe -lc "cat /proc/cpuinfo"
+#  - c:\msys64\usr\bin\sh.exe -lc "cat /proc/meminfo"
+#  - c:\msys64\usr\bin\sh.exe -lc "cygcheck -s -v > $APPVEYOR_BUILD_FOLDER/cygcheck.log 2>&1"
+#  - ps: Push-AppveyorArtifact cygcheck.log
+
+#on_failure:
+#  - ps: Push-AppveyorArtifact config.log
+#  - ps: Push-AppveyorArtifact include\ircd\config.h
+
+notifications:
+  - provider: Webhook
+    url: http://zemos.net:8448/webhook
+    on_build_success: true
+    on_build_failure: true
+    on_build_status_changed: true
