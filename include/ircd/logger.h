@@ -40,9 +40,6 @@ namespace ircd::log
 	struct info;
 	struct debug;
 
-	extern log star;     // "*", '*'
-	extern log general;  // "ircd", 'G'
-
 	string_view reflect(const level &);
 	level reflect(const string_view &);
 
@@ -68,6 +65,9 @@ namespace ircd::log
 
 	void init();
 	void fini();
+
+	extern log star;     // "*", '*'
+	extern log general;  // "ircd", 'G'
 }
 
 enum ircd::log::level

@@ -16,27 +16,30 @@ namespace ircd::log
 {
 	struct confs;
 
+	static void check(std::ostream &) noexcept;
+	static bool can_skip(const log &, const level &);
+	static bool is_conf_mask_file(const string_view &name);
+	static bool is_conf_mask_console(const string_view &name);
+	static void slog(const log &, const level &, const window_buffer::closure &) noexcept;
+	static void vlog_threadsafe(const log &, const level &, const string_view &fmt, const va_rtti &ap);
+	static std::string file_path(const level &);
+	static void open(const level &);
+	static void mkdir();
+
+	extern const size_t CTX_NAME_TRUNC;
+	extern const size_t LOG_NAME_TRUNC;
+	extern const size_t LOG_BUFSIZE;
 	extern const std::array<string_view, num_of<level>()> default_ansi;
 	extern std::array<confs, num_of<level>()> confs;
-
 	extern conf::item<std::string> unmask_file;
 	extern conf::item<std::string> unmask_console;
 	extern conf::item<std::string> mask_file;
 	extern conf::item<std::string> mask_console;
-	static bool is_conf_mask_file(const string_view &name);
-	static bool is_conf_mask_console(const string_view &name);
-
-	std::array<std::ofstream, num_of<level>()> file;
-	std::array<ulong, num_of<level>()> console_quiet_stdout;
-	std::array<ulong, num_of<level>()> console_quiet_stderr;
-
+	extern std::array<std::ofstream, num_of<level>()> file;
+	extern std::array<ulong, num_of<level>()> console_quiet_stdout;
+	extern std::array<ulong, num_of<level>()> console_quiet_stderr;
 	std::ostream &out_console{std::cout};
 	std::ostream &err_console{std::cerr};
-
-	static std::string file_path(const level &);
-
-	static void mkdir();
-	static void open(const level &);
 }
 
 struct ircd::log::confs
@@ -47,6 +50,57 @@ struct ircd::log::confs
 	conf::item<bool> console_stderr;
 	conf::item<bool> console_flush;
 	conf::item<std::string> console_ansi;
+};
+
+/// Linkage for list of named loggers.
+template<>
+decltype(ircd::instance_list<ircd::log::log>::list)
+ircd::instance_list<ircd::log::log>::list
+{};
+
+decltype(ircd::log::file)
+ircd::log::file;
+
+decltype(ircd::log::console_quiet_stdout)
+ircd::log::console_quiet_stdout;
+
+decltype(ircd::log::console_quiet_stderr)
+ircd::log::console_quiet_stderr;
+
+decltype(ircd::log::LOG_BUFSIZE)
+ircd::log::LOG_BUFSIZE
+{
+	1024
+};
+
+decltype(ircd::log::LOG_NAME_TRUNC)
+ircd::log::LOG_NAME_TRUNC
+{
+	8
+};
+
+decltype(ircd::log::CTX_NAME_TRUNC)
+ircd::log::CTX_NAME_TRUNC
+{
+	8
+};
+
+/// The '*' logger is for log::mark()'s which do not target any specific named
+/// logger because such mark()'s are not repeated to all named loggers. The '*'
+/// logger should not otherwise be the target of log messages.
+decltype(ircd::log::star)
+ircd::log::star
+{
+	"*", '*'
+};
+
+/// The general logger is for all core and miscellaneous log messages. This
+/// is the default logger target for log:: calls which do not pass a specific
+/// logger.
+decltype(ircd::log::general)
+ircd::log::general
+{
+	"ircd", 'G'
 };
 
 void
@@ -263,12 +317,6 @@ ircd::log::mark::mark(const level &lev,
 // log
 //
 
-/// Linkage for list of named loggers.
-template<>
-decltype(ircd::instance_list<ircd::log::log>::list)
-ircd::instance_list<ircd::log::log>::list
-{};
-
 ircd::log::log *
 ircd::log::log::find(const string_view &name)
 {
@@ -362,25 +410,6 @@ ircd::log::log::log(const string_view &name,
 // vlog
 //
 
-namespace ircd::log
-{
-	static void check(std::ostream &) noexcept;
-	static void slog(const log &, const level &, const window_buffer::closure &) noexcept;
-	static void vlog_threadsafe(const log &, const level &, const string_view &fmt, const va_rtti &ap);
-}
-
-decltype(ircd::log::star)
-ircd::log::star
-{
-	"*", '*'
-};
-
-decltype(ircd::log::general)
-ircd::log::general
-{
-	"ircd", 'G'
-};
-
 /// ircd::log is not thread-safe. This internal function is called when the
 /// normal vlog() detects it's not on the main IRCd thread. It then generates
 /// the formatted log message on this thread, and posts the message to the
@@ -437,10 +466,7 @@ ircd::log::vlog::vlog(const log &log,
 
 namespace ircd::log
 {
-	// linkage for slog() reentrance assertion
 	bool entered;
-
-	static bool can_skip(const log &, const level &);
 }
 
 void
@@ -466,7 +492,7 @@ noexcept
 
 	// The principal buffer doesn't have to be static but courtesy of all the
 	// above effort we might as well take advantage...
-	static char buf[1024], date[64];
+	static char buf[LOG_BUFSIZE], date[64];
 
 	// Maximum size of log line leaving 2 characters for \r\n
 	const size_t max(sizeof(buf) - 2);
@@ -482,14 +508,14 @@ noexcept
 	  << reflect(lev)
 	  << (string_view{conf.console_ansi}? "\033[0m " : " ")
 //	  << (log.snote? log.snote : '-')
-	  << std::setw(8)
+	  << std::setw(LOG_NAME_TRUNC)
 	  << std::right
-	  << trunc(log.name, 8)
+	  << trunc(log.name, LOG_NAME_TRUNC)
 	  << ' '
-	  << std::setw(8)
-	  << trunc(ctx::name(), 8)
+	  << std::setw(CTX_NAME_TRUNC)
+	  << trunc(ctx::name(), CTX_NAME_TRUNC)
 	  << ' '
-	  << std::setw(6)
+	  << std::setw(5)
 	  << std::right
 	  << ctx::id()
 	  << " :";
