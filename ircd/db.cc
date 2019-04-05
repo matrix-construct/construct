@@ -25,7 +25,7 @@ ircd::db::log
 decltype(ircd::db::rog)
 ircd::db::rog
 {
-	"rdb", 'R'
+	"db.rocksdb"
 };
 
 ircd::conf::item<size_t>

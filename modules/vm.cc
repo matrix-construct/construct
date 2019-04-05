@@ -135,7 +135,6 @@ ircd::m::vm::pool
 	"vm", pool_opts
 };
 
-
 //
 // init
 //

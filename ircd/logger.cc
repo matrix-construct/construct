@@ -76,7 +76,7 @@ ircd::log::LOG_BUFSIZE
 decltype(ircd::log::LOG_NAME_TRUNC)
 ircd::log::LOG_NAME_TRUNC
 {
-	8
+	12
 };
 
 decltype(ircd::log::CTX_NAME_TRUNC)

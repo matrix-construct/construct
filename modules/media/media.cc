@@ -38,7 +38,7 @@ IRCD_MODULE
 decltype(media_log)
 media_log
 {
-	"media"
+	"matrix.media"
 };
 
 decltype(media_blocks_cache_enable)

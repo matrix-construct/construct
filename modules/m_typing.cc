@@ -19,7 +19,7 @@ IRCD_MODULE
 log::log
 typing_log
 {
-	"m.typing"
+	"matrix.typing"
 };
 
 struct typist

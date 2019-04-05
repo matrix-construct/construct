@@ -29,7 +29,7 @@ federation_incoming
 log::log
 presence_log
 {
-	"m.presence"
+	"matrix.presence"
 };
 
 extern const string_view

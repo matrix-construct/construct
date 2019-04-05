@@ -437,7 +437,7 @@ ircd::m::self::init::init(const string_view &origin,
 decltype(ircd::m::sync::log)
 ircd::m::sync::log
 {
-	"sync", 's'
+	"matrix.sync", 's'
 };
 
 namespace ircd::m::sync
@@ -884,7 +884,7 @@ const
 decltype(ircd::m::app::log)
 ircd::m::app::log
 {
-	"m.app"
+	"matrix.app"
 };
 
 std::string
@@ -1077,7 +1077,7 @@ ircd::m::vm::default_copts;
 decltype(ircd::m::vm::log)
 ircd::m::vm::log
 {
-	"vm", 'v'
+	"matrix.vm", 'v'
 };
 
 decltype(ircd::m::vm::dock)
