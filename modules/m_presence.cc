@@ -73,7 +73,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		m::log, "Presence from %s :%s",
+		presence_log, "Presence from %s :%s",
 		json::get<"origin"_>(event),
 		e.what(),
 	};
@@ -93,7 +93,7 @@ try
 	{
 		log::dwarning
 		{
-			m::log, "Ignoring %s from %s for user %s",
+			presence_log, "Ignoring %s from %s for user %s",
 			at<"type"_>(event),
 			at<"origin"_>(event),
 			string_view{user_id}
@@ -197,7 +197,7 @@ catch(const m::error &e)
 {
 	log::error
 	{
-		m::log, "Presence from %s :%s :%s",
+		presence_log, "Presence from %s :%s :%s",
 		json::get<"origin"_>(event),
 		e.what(),
 		e.content
