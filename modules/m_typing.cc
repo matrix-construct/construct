@@ -16,6 +16,12 @@ IRCD_MODULE
 	"Matrix Typing"
 };
 
+log::log
+typing_log
+{
+	"m.typing"
+};
+
 struct typist
 {
 	using is_transparent = void;
@@ -173,7 +179,7 @@ _handle_edu_m_typing(const m::event &event,
 	{
 		log::dwarning
 		{
-			m::log, "Ignoring %s from %s for user %s",
+			typing_log, "Ignoring %s from %s for user %s",
 			at<"type"_>(event),
 			at<"origin"_>(event),
 			string_view{user_id}
@@ -195,7 +201,7 @@ _handle_edu_m_typing(const m::event &event,
 		{
 			log::dwarning
 			{
-				m::log, "Ignoring %s from %s for user %s because not in room '%s'",
+				typing_log, "Ignoring %s from %s for user %s because not in room '%s'",
 				at<"type"_>(event),
 				at<"origin"_>(event),
 				string_view{user_id},
@@ -216,7 +222,7 @@ _handle_edu_m_typing(const m::event &event,
 
 	log::info
 	{
-		m::log, "%s %s %s typing in %s",
+		typing_log, "%s %s %s typing in %s",
 		at<"origin"_>(event),
 		string_view{user_id},
 		json::get<"typing"_>(edu)? "started"_sv : "stopped"_sv,
@@ -310,7 +316,7 @@ timeout_timeout(const typist &t)
 
 	log::debug
 	{
-		m::log, "Typing timeout for %s in %s",
+		typing_log, "Typing timeout for %s in %s",
 		string_view{t.user_id},
 		string_view{t.room_id}
 	};
@@ -416,7 +422,7 @@ update_state(const m::typing &object)
 
 	log::debug
 	{
-		m::log, "Typing %s in %s now[%b] was[%b] xmit[%b]",
+		typing_log, "Typing %s in %s now[%b] was[%b] xmit[%b]",
 		string_view{at<"user_id"_>(object)},
 		string_view{at<"room_id"_>(object)},
 		json::get<"typing"_>(object),

@@ -29,6 +29,12 @@ IRCD_MODULE
 	"Matrix Receipts"
 };
 
+log::log
+receipt_log
+{
+	"m.receipt"
+};
+
 decltype(_m_receipt_eval)
 _m_receipt_eval
 {
@@ -84,7 +90,7 @@ handle_m_receipt(const m::room::id &room_id,
 
 		log::dwarning
 		{
-			m::log, "Unhandled m.receipt type '%s' to room '%s'",
+			receipt_log, "Unhandled m.receipt type '%s' to room '%s'",
 			type,
 			string_view{room_id}
 		};
@@ -155,7 +161,7 @@ try
 	{
 		log::dwarning
 		{
-			m::log, "ignoring m.receipt m.read for unknown %s in %s for %s",
+			receipt_log, "ignoring m.receipt m.read for unknown %s in %s for %s",
 			string_view{user_id},
 			string_view{room_id},
 			string_view{event_id}
@@ -173,7 +179,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		m::log, "failed to save m.receipt m.read for %s in %s for %s :%s",
+		receipt_log, "failed to save m.receipt m.read for %s in %s for %s :%s",
 		string_view{user_id},
 		string_view{room_id},
 		string_view{event_id},
@@ -204,7 +210,7 @@ ircd::m::receipt::read(const m::room::id &room_id,
 
 	log::info
 	{
-		m::log, "%s read by %s in %s @ %zd",
+		receipt_log, "%s read by %s in %s @ %zd",
 		string_view{event_id},
 		string_view{user_id},
 		string_view{room_id},
@@ -325,7 +331,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		m::log, "Freshness of receipt in %s from %s for %s :%s",
+		receipt_log, "Freshness of receipt in %s from %s for %s :%s",
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
@@ -416,7 +422,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "Implicit receipt hook for %s :%s",
+		receipt_log, "Implicit receipt hook for %s :%s",
 		json::get<"event_id"_>(event),
 		e.what(),
 	};
@@ -537,7 +543,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "ircd.read hook on %s for federation broadcast :%s",
+		receipt_log, "ircd.read hook on %s for federation broadcast :%s",
 		json::get<"event_id"_>(event),
 		e.what(),
 	};
