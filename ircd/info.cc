@@ -336,6 +336,20 @@ ircd::info::rlimit_as
 	#endif
 };
 
+#ifdef _SC_CLK_TCK
+decltype(ircd::info::clk_tck)
+ircd::info::clk_tck
+{
+	size_t(syscall(::sysconf, _SC_CLK_TCK))
+};
+#else
+decltype(ircd::info::clk_tck)
+ircd::info::clk_tck
+{
+	1 // prevent #DE
+};
+#endif
+
 decltype(ircd::info::aio_reqprio_max)
 ircd::info::aio_reqprio_max
 {

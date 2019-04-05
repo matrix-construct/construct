@@ -45,6 +45,7 @@ namespace ircd::info
 	extern const size_t iov_max;
 	extern const size_t aio_max;
 	extern const size_t aio_reqprio_max;
+	extern const size_t clk_tck;
 	extern const size_t rlimit_as;
 	extern const size_t rlimit_data;
 	extern const size_t rlimit_rss;
