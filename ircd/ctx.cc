@@ -62,8 +62,11 @@ ircd::ctx::spawn(ctx *const c,
 {
 	const boost::coroutines::attributes attrs
 	{
+		// Pass the requested stack size
 		c->stack.max,
-		boost::coroutines::stack_unwind
+
+		// We ensure stack unwinding and cleanup out here instead.
+		boost::coroutines::no_stack_unwind,
 	};
 
 	auto bound
