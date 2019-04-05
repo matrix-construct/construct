@@ -16,6 +16,7 @@ namespace ircd::prof
 	struct init;
 	struct type;
 	struct event;
+	struct times;
 	struct system;
 	enum dpl :uint8_t;
 	enum counter :uint8_t;
@@ -24,8 +25,10 @@ namespace ircd::prof
 
 	IRCD_EXCEPTION(ircd::error, error)
 
-	// Monotonic reference cycles
-	uint64_t cycles();
+	uint64_t cycles();      ///< Monotonic reference cycles (since system boot)
+	uint64_t time_user();   ///< Nanoseconds of CPU time in userspace.
+	uint64_t time_kern();   ///< Nanoseconds of CPU time in kernelland.
+	uint64_t time_real();   ///< Nanoseconds of CPU time real.
 
 	// Observe
 	system &hotsample(system &) noexcept;
@@ -53,6 +56,17 @@ namespace ircd
 {
 	using prof::cycles;
 }
+
+struct ircd::prof::times
+{
+	uint64_t real {0};
+	uint64_t kern {0};
+	uint64_t user {0};
+
+	IRCD_OVERLOAD(sample)
+	times(sample_t);
+	times() = default;
+};
 
 struct ircd::prof::system
 :std::array<std::array<uint64_t, 2>, 7>

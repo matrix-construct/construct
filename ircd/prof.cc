@@ -12,6 +12,8 @@
 #include <RB_INC_SYS_IOCTL_H
 #include <RB_INC_SYS_MMAN_H
 #include <linux/perf_event.h>
+#include <boost/chrono/chrono.hpp>
+#include <boost/chrono/process_cpu_clocks.hpp>
 
 namespace ircd::prof
 {
@@ -645,4 +647,50 @@ ircd::prof::debug(std::ostream &s,
 	s << "aux_size:              " << head.aux_size             << std::endl;
 
 	return s;
+}
+
+//
+// Interface (cross-platform)
+//
+
+uint64_t
+ircd::prof::time_real()
+{
+	return boost::chrono::process_real_cpu_clock::now().time_since_epoch().count();
+}
+
+uint64_t
+ircd::prof::time_kern()
+{
+	return boost::chrono::process_system_cpu_clock::now().time_since_epoch().count();
+}
+
+uint64_t
+ircd::prof::time_user()
+{
+	return boost::chrono::process_user_cpu_clock::now().time_since_epoch().count();
+}
+
+//
+// times
+//
+
+ircd::prof::times::times(sample_t)
+:real{}
+,kern{}
+,user{}
+{
+	const auto tp
+	{
+		boost::chrono::process_cpu_clock::now()
+	};
+
+	const auto d
+	{
+		tp.time_since_epoch()
+	};
+
+	this->real = d.count().real;
+	this->kern = d.count().system;
+	this->user = d.count().user;
 }
