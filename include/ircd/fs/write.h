@@ -83,11 +83,10 @@ struct ircd::fs::write_opts
 	/// write with fsync(2)/fdsync(2) yourself.
 	bool metadata {false};
 
-	write_opts(const off_t &);
-	write_opts() = default;
+	write_opts(const off_t & = 0);
 };
 
 inline
 ircd::fs::write_opts::write_opts(const off_t &offset)
-:opts{offset}
+:opts{offset, op::WRITE}
 {}

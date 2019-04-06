@@ -51,11 +51,20 @@ struct ircd::fs::opts
 	/// this has no effect.
 	bool aio {true};
 
-	opts(const off_t &);
+	/// The enumerated operation code to identify the type of request being
+	/// made at runtime from any abstract list of requests. This is set by
+	/// the fs:: interface call and not the user in most cases. The user
+	/// should not rely on this value being preserved if, e.g. they set a read
+	/// opcode and then pass the opts structure to write().
+	enum op op {op::NOOP};
+
+	opts(const off_t &, const enum op &op);
 	opts() = default;
 };
 
 inline
-ircd::fs::opts::opts(const off_t &offset)
+ircd::fs::opts::opts(const off_t &offset,
+                     const enum op &op)
 :offset{offset}
+,op{op}
 {}

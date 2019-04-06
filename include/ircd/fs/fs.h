@@ -47,6 +47,7 @@ namespace ircd::fs
 #include "error.h"
 #include "path.h"
 #include "iov.h"
+#include "op.h"
 #include "opts.h"
 #include "dev.h"
 #include "fd.h"

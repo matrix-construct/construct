@@ -380,6 +380,7 @@ void
 ircd::fs::sync(const fd &fd,
                const sync_opts &opts)
 {
+	assert(opts.op == op::SYNC);
 	const ctx::slice_usage_warning message
 	{
 		"fs::sync(fd:%d)", int(fd)
@@ -405,6 +406,7 @@ void
 ircd::fs::flush(const fd &fd,
                 const sync_opts &opts)
 {
+	assert(opts.op == op::SYNC);
 	const ctx::slice_usage_warning message
 	{
 		"fs::flush(fd:%d, {metadata:%b aio:%b:%b})",
@@ -433,11 +435,6 @@ ircd::fs::flush(const fd &fd,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// fs/prefetch.h
-//
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // fs/read.h
 //
 
@@ -450,6 +447,7 @@ ircd::fs::prefetch(const fd &fd,
                    const size_t &count,
                    const read_opts &opts)
 {
+	assert(opts.op == op::READ);
 	static const size_t max_count
 	{
 		128_KiB
@@ -609,6 +607,8 @@ ircd::fs::read(const fd &fd,
                const const_iovec_view &iov,
                const read_opts &opts)
 {
+	assert(opts.op == op::READ);
+
 	#ifdef IRCD_USE_AIO
 	if(aio::system && opts.aio)
 		return aio::read(fd, iov, opts);
@@ -686,6 +686,8 @@ ircd::fs::allocate(const fd &fd,
                    const size_t &size,
                    const write_opts &opts)
 {
+	assert(opts.op == op::WRITE);
+
 	int mode{0};
 	mode |= opts.keep_size? FALLOC_FL_KEEP_SIZE : 0;
 	syscall(::fallocate, fd, mode, opts.offset, size);
@@ -709,6 +711,7 @@ ircd::fs::truncate(const fd &fd,
                    const size_t &size,
                    const write_opts &opts)
 {
+	assert(opts.op == op::WRITE);
 	syscall(::ftruncate, fd, size);
 }
 
@@ -944,6 +947,8 @@ ircd::fs::write(const fd &fd,
                 const const_iovec_view &iov,
                 const write_opts &opts)
 {
+	assert(opts.op == op::WRITE);
+
 	#ifdef IRCD_USE_AIO
 	if(likely(aio::system) && opts.aio)
 		return aio::write(fd, iov, opts);
@@ -1398,6 +1403,32 @@ ircd::fs::opts::highest_priority
 {
 	std::numeric_limits<decltype(priority)>::min()
 };
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// fs/op.h
+//
+
+ircd::string_view
+ircd::fs::reflect(const op &op)
+{
+	switch(op)
+	{
+		case op::NOOP:    return "NOOP";
+		case op::READ:    return "READ";
+		case op::WRITE:   return "WRITE";
+		case op::SYNC:    return "SYNC";
+	}
+
+	return "????";
+}
+
+ircd::fs::op
+__attribute__((weak)) // overriden in fs_aio.cc
+ircd::fs::aio::translate(const int &val)
+{
+	return op::NOOP;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //

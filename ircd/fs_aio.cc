@@ -84,6 +84,30 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/fs/op.h
+//
+// The contents of this section override weak symbols in ircd/fs.cc when this
+// unit is conditionally compiled and linked on AIO-supporting platforms.
+
+ircd::fs::op
+ircd::fs::aio::translate(const int &val)
+{
+	switch(val)
+	{
+		case IOCB_CMD_PREAD:     return op::READ;
+		case IOCB_CMD_PWRITE:    return op::WRITE;
+		case IOCB_CMD_FSYNC:     return op::SYNC;
+		case IOCB_CMD_FDSYNC:    return op::SYNC;
+		case IOCB_CMD_NOOP:      return op::NOOP;
+		case IOCB_CMD_PREADV:    return op::READ;
+		case IOCB_CMD_PWRITEV:   return op::WRITE;
+	}
+
+	return op::NOOP;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fs_aio.h
 //
 
@@ -95,6 +119,7 @@ ircd::fs::aio::request::fsync::fsync(const int &fd,
                                      const sync_opts &opts)
 :request{fd, &opts}
 {
+	assert(opts.op == op::SYNC);
 	aio_lio_opcode = IOCB_CMD_FSYNC;
 
 	aio_buf = 0;
@@ -122,6 +147,7 @@ ircd::fs::aio::request::fdsync::fdsync(const int &fd,
                                        const sync_opts &opts)
 :request{fd, &opts}
 {
+	assert(opts.op == op::SYNC);
 	aio_lio_opcode = IOCB_CMD_FDSYNC;
 
 	aio_buf = 0;
@@ -150,6 +176,7 @@ ircd::fs::aio::request::read::read(const int &fd,
                                    const read_opts &opts)
 :request{fd, &opts}
 {
+	assert(opts.op == op::READ);
 	aio_lio_opcode = IOCB_CMD_PREADV;
 
 	aio_buf = uintptr_t(iov.data());
@@ -190,6 +217,7 @@ ircd::fs::aio::request::write::write(const int &fd,
                                      const write_opts &opts)
 :request{fd, &opts}
 {
+	assert(opts.op == op::WRITE);
 	aio_lio_opcode = IOCB_CMD_PWRITEV;
 
 	aio_buf = uintptr_t(iov.data());

@@ -47,11 +47,10 @@ struct ircd::fs::read_opts
 	/// in the useful propagation of an exception for this event.
 	bool interruptible {true};
 
-	read_opts(const off_t &);
-	read_opts() = default;
+	read_opts(const off_t & = 0);
 };
 
 inline
 ircd::fs::read_opts::read_opts(const off_t &offset)
-:opts{offset}
+:opts{offset, op::READ}
 {}

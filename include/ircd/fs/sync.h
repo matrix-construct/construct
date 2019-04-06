@@ -31,11 +31,10 @@ struct ircd::fs::sync_opts
 	/// sync_file_range() et al.
 	bool metadata {true};
 
-	sync_opts(const off_t &offset);
-	sync_opts() = default;
+	sync_opts(const off_t &offset = 0);
 };
 
 inline
 ircd::fs::sync_opts::sync_opts(const off_t &offset)
-:opts{offset}
+:opts{offset, op::SYNC}
 {}
