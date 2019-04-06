@@ -650,6 +650,26 @@ ircd::prof::debug(std::ostream &s,
 }
 
 //
+// Interface
+//
+
+uint64_t
+ircd::prof::time_thrd()
+{
+	struct ::timespec tv;
+	syscall(::clock_gettime, CLOCK_THREAD_CPUTIME_ID, &tv);
+	return ulong(tv.tv_sec) * 1000000000UL + tv.tv_nsec;
+}
+
+uint64_t
+ircd::prof::time_proc()
+{
+	struct ::timespec tv;
+	syscall(::clock_gettime, CLOCK_PROCESS_CPUTIME_ID, &tv);
+	return ulong(tv.tv_sec) * 1000000000UL + tv.tv_nsec;
+}
+
+//
 // Interface (cross-platform)
 //
 

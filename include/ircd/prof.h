@@ -29,6 +29,8 @@ namespace ircd::prof
 	uint64_t time_user();   ///< Nanoseconds of CPU time in userspace.
 	uint64_t time_kern();   ///< Nanoseconds of CPU time in kernelland.
 	uint64_t time_real();   ///< Nanoseconds of CPU time real.
+	uint64_t time_proc();   ///< Nanoseconds of CPU time for process.
+	uint64_t time_thrd();   ///< Nanoseconds of CPU time for thread.
 
 	// Observe
 	system &hotsample(system &) noexcept;
