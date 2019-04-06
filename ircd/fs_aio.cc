@@ -290,10 +290,11 @@ bool
 ircd::fs::aio::for_each_completed(const std::function<bool (const request &)> &closure)
 {
 	assert(system && system->head);
-	const size_t max(system->head->nr);
-	std::atomic_signal_fence(std::memory_order_acquire);
-	for(auto i(system->head->head); i != system->head->tail; ++i)
-		if(!closure(*reinterpret_cast<const request *>(system->ring[i % max].data)))
+	const auto &max{system->head->nr};
+	volatile auto head(system->head->head);
+	volatile const auto &tail(system->head->tail);
+	for(; head != tail; ++head, head %= max)
+		if(!closure(*reinterpret_cast<const request *>(system->ring[head].data)))
 			return false;
 
 	return true;
