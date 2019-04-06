@@ -261,10 +261,11 @@ ircd::fs::aio::write(const fd &fd,
 bool
 ircd::fs::aio::for_each_completed(const std::function<bool (const request &)> &closure)
 {
-	assert(system);
-	const size_t max(system->max_events());
-	for(size_t i(system->head->head % max); i != system->head->tail % max; ++i %= max)
-		if(!closure(*reinterpret_cast<const request *>(system->ring[i].data)))
+	assert(system && system->head);
+	const size_t max(system->head->nr);
+	std::atomic_signal_fence(std::memory_order_acquire);
+	for(auto i(system->head->head); i != system->head->tail; ++i)
+		if(!closure(*reinterpret_cast<const request *>(system->ring[i % max].data)))
 			return false;
 
 	return true;
