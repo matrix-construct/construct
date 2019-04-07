@@ -42,6 +42,9 @@ namespace ircd::fs
 	extern const bool support_hipri;
 	extern const bool support_sync;
 	extern const bool support_dsync;
+
+	// Log facility for ircd::fs
+	extern log::log log;
 }
 
 #include "error.h"

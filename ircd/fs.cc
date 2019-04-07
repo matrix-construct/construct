@@ -26,6 +26,12 @@ namespace ircd::fs
 	static void debug_paths();
 }
 
+decltype(ircd::fs::log)
+ircd::fs::log
+{
+	"fs"
+};
+
 decltype(ircd::fs::support_sync)
 ircd::fs::support_sync
 {
@@ -1112,7 +1118,7 @@ ircd::fs::aio::init::init()
 	assert(!context);
 	log::warning
 	{
-		"No support for asynchronous local filesystem IO..."
+		log, "No support for asynchronous local filesystem IO..."
 	};
 }
 #endif
@@ -1899,14 +1905,14 @@ ircd::fs::debug_paths()
 	thread_local char buf[PATH_MAX_LEN + 1];
 	log::debug
 	{
-		"Current working directory: `%s'", cwd(buf)
+		log, "Current working directory: `%s'", cwd(buf)
 	};
 
 	for_each<base>([](const base &base)
 	{
 		log::debug
 		{
-			"Working %s is `%s'",
+			log, "Working %s is `%s'",
 			basepath::get(base).name,
 			basepath::get(base).path,
 		};

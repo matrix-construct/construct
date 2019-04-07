@@ -494,7 +494,7 @@ try
 
 	log::debug
 	{
-		"Established head(%p) ring(%p) id:%u fd:%d max_events:%zu max_submit:%zu compat:%x incompat:%x len:%u nr:%u",
+		log, "Established head(%p) ring(%p) id:%u fd:%d max_events:%zu max_submit:%zu compat:%x incompat:%x len:%u nr:%u",
 		head.get(),
 		ring,
 		head->id,
@@ -511,7 +511,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"Error starting AIO context %p :%s",
+		log, "Error starting AIO context %p :%s",
 		(const void *)this,
 		e.what()
 	};
@@ -533,7 +533,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"Error shutting down AIO context %p :%s",
+		log, "Error shutting down AIO context %p :%s",
 		(const void *)this,
 		e.what()
 	};
@@ -561,7 +561,7 @@ ircd::fs::aio::system::wait()
 
 	log::debug
 	{
-		"Waiting for AIO context %p", this
+		log, "Waiting for AIO context %p", this
 	};
 
 	dock.wait([this]
@@ -929,7 +929,7 @@ catch(const ctx::interrupted &)
 {
 	log::debug
 	{
-		"AIO context %p interrupted", this
+		log, "AIO context %p interrupted", this
 	};
 
 	ecount = -1;
@@ -968,7 +968,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"AIO(%p) handle_events: %s",
+		log, "AIO(%p) handle_events: %s",
 		this,
 		e.what()
 	};
@@ -1016,7 +1016,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"Unhandled request(%lu) event(%p) error: %s",
+		log, "Unhandled request(%lu) event(%p) error: %s",
 		event.data,
 		&event,
 		e.what()
