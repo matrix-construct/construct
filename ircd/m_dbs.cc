@@ -1647,7 +1647,7 @@ ircd::m::dbs::desc::events__room_head
 	[room_id | event_id => event_idx]
 
 	The key is a room_id and event_id concatenation. The value is an event_idx
-	of the event_id in the key. The key amalgan was specifically selected to
+	of the event_id in the key. The key amalgam was specifically selected to
 	allow for DELETES sent to the WAL "in the blind" for all prev_events when
 	any new event is saved to the database, without making any read IO's to
 	look up anything about the prev reference to remove.
