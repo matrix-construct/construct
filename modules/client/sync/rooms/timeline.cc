@@ -19,6 +19,8 @@ namespace ircd::m::sync
 	static void _room_timeline_append(data &, json::stack::array &, const m::event::idx &, const m::event &);
 	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &, bool &);
 	static bool room_timeline_polylog(data &);
+
+	static bool _room_timeline_linear_command(data &);
 	static bool room_timeline_linear(data &);
 
 	extern conf::item<size_t> limit_default;
@@ -62,17 +64,28 @@ ircd::m::sync::room_timeline_linear(data &data)
 	if(!data.event_idx)
 		return false;
 
-	if(!data.membership)
-		return false;
-
 	if(!data.room)
 		return false;
 
-	assert(data.event);
+	if(!data.membership && *data.room != data.user_room)
+		return false;
+
 	json::stack::object rooms
 	{
 		*data.out, "rooms"
 	};
+
+	assert(data.event);
+	const bool command
+	{
+		*data.room == data.user_room &&
+		startswith(json::get<"type"_>(*data.event), "ircd.cmd") &&
+		(json::get<"sender"_>(*data.event) == m::me.user_id ||
+		 json::get<"sender"_>(*data.event) == data.user.user_id)
+	};
+
+	if(command)
+		return _room_timeline_linear_command(data);
 
 	json::stack::object membership_
 	{
@@ -95,6 +108,56 @@ ircd::m::sync::room_timeline_linear(data &data)
 	};
 
 	_room_timeline_append(data, array, data.event_idx, *data.event);
+	return true;
+}
+
+bool
+ircd::m::sync::_room_timeline_linear_command(data &data)
+{
+	const m::room &room
+	{
+		unquote(json::get<"content"_>(*data.event).get("room_id"))
+	};
+
+	const scope_restore _room
+	{
+		data.room, &room
+	};
+
+	const scope_restore _membership
+	{
+		data.membership, "join"_sv
+	};
+
+	json::stack::object membership_
+	{
+		*data.out, data.membership
+	};
+
+	json::stack::object room_
+	{
+		*data.out, data.room->room_id
+	};
+
+	json::stack::object timeline
+	{
+		*data.out, "timeline"
+	};
+
+	json::stack::array array
+	{
+		*data.out, "events"
+	};
+
+	m::event event{*data.event};
+	json::get<"type"_>(event) = "m.room.message";
+	json::get<"room_id"_>(event) = room.room_id;
+	const scope_restore _event
+	{
+		data.event, &event
+	};
+
+	_room_timeline_append(data, array, data.event_idx, event);
 	return true;
 }
 

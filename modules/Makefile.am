@@ -79,6 +79,7 @@ s_moduledir = @moduledir@
 
 s_conf_la_SOURCES = s_conf.cc
 s_control_la_SOURCES = s_control.cc
+s_command_la_SOURCES = s_command.cc
 s_dns_la_SOURCES =  s_dns.cc s_dns_resolver.cc
 s_node_la_SOURCES = s_node.cc
 s_listen_la_SOURCES = s_listen.cc
@@ -88,6 +89,7 @@ s_fetch_la_SOURCES = s_fetch.cc
 s_module_LTLIBRARIES = \
 	s_conf.la \
 	s_control.la \
+	s_command.la \
 	s_dns.la \
 	s_node.la \
 	s_listen.la \

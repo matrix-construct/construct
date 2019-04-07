@@ -13,6 +13,25 @@
 using namespace ircd::m;
 using namespace ircd;
 
+static void
+save_transaction_id(const m::event &,
+                    m::vm::eval &);
+
+static resource::response
+handle_command(client &,
+               const resource::request &,
+               const room &);
+
+m::hookfn<m::vm::eval &>
+save_transaction_id_hookfn
+{
+	save_transaction_id,
+	{
+		{ "_site",    "vm.post" },
+		{ "origin",   my_host() },
+	}
+};
+
 resource::response
 put__send(client &client,
           const resource::request &request,
@@ -44,16 +63,25 @@ put__send(client &client,
 
 	m::vm::copts copts;
 	copts.client_txnid = transaction_id;
-
-	room room
+	const room room
 	{
 		room_id, &copts
 	};
 
 	const json::object &content
 	{
-		request.content
+		request
 	};
+
+	const bool cmd
+	{
+		type == "m.room.message" &&
+		unquote(content.get("msgtype")) == "m.text" &&
+		startswith(unquote(content.get("body")), "\\\\")
+	};
+
+	if(cmd)
+		return handle_command(client, request, room);
 
 	const auto event_id
 	{
@@ -69,19 +97,35 @@ put__send(client &client,
 	};
 }
 
-static void
-save_transaction_id(const m::event &event,
-                    m::vm::eval &eval);
-
-m::hookfn<m::vm::eval &>
-save_transaction_id_hookfn
+resource::response
+handle_command(client &client,
+               const resource::request &request,
+               const room &room)
 {
-	save_transaction_id,
+	const user::room user_room
 	{
-		{ "_site",    "vm.post" },
-		{ "origin",   my_host() },
-	}
-};
+		request.user_id, room.copts
+	};
+
+	const auto event_id
+	{
+		send(user_room, request.user_id, "ircd.cmd",
+		{
+			{ "msgtype",  "m.text"         },
+			{ "body",     request["body"]  },
+			{ "room_id",  room.room_id     },
+		})
+	};
+
+	return resource::response
+	{
+		client, json::members
+		{
+			{ "event_id",  event_id },
+			{ "cmd",       true     },
+		}
+	};
+}
 
 void
 save_transaction_id(const m::event &event,
@@ -102,7 +146,11 @@ save_transaction_id(const m::event &event,
 		at<"sender"_>(event)
 	};
 
-	static const string_view &type{"ircd.client.txnid"};
+	static const string_view &type
+	{
+		"ircd.client.txnid"
+	};
+
 	const auto &state_key
 	{
 		at<"event_id"_>(event)
