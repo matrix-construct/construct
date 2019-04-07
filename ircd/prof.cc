@@ -11,6 +11,7 @@
 #include <RB_INC_SYS_SYSCALL_H
 #include <RB_INC_SYS_IOCTL_H
 #include <RB_INC_SYS_MMAN_H
+#include <RB_INC_SYS_RESOURCE_H
 #include <linux/perf_event.h>
 #include <boost/chrono/chrono.hpp>
 #include <boost/chrono/process_cpu_clocks.hpp>
@@ -171,6 +172,68 @@ catch(const std::exception &e)
 	};
 
 	return nullptr;
+}
+
+//
+// resource
+//
+
+ircd::prof::resource
+ircd::prof::operator-(const resource &a,
+                      const resource &b)
+{
+	resource ret;
+	std::transform(begin(a), end(a), begin(b), begin(ret), std::minus<resource::value_type>{});
+	return ret;
+}
+
+ircd::prof::resource
+ircd::prof::operator+(const resource &a,
+                      const resource &b)
+{
+	resource ret;
+	std::transform(begin(a), end(a), begin(b), begin(ret), std::plus<resource::value_type>{});
+	return ret;
+}
+
+ircd::prof::resource &
+ircd::prof::operator-=(resource &a,
+                       const resource &b)
+{
+	for(size_t i(0); i < a.size(); ++i)
+		a[i] -= b[i];
+
+	return a;
+}
+
+ircd::prof::resource &
+ircd::prof::operator+=(resource &a,
+                       const resource &b)
+{
+	for(size_t i(0); i < a.size(); ++i)
+		a[i] += b[i];
+
+	return a;
+}
+
+//
+// resource::resource
+//
+
+ircd::prof::resource::resource(sample_t)
+{
+	struct ::rusage ru;
+	syscall(::getrusage, RUSAGE_SELF, &ru);
+
+	at(TIME_USER) = ru.ru_utime.tv_sec * 1000000UL + ru.ru_utime.tv_usec;
+	at(TIME_KERN) = ru.ru_stime.tv_sec * 1000000UL + ru.ru_stime.tv_usec;
+	at(RSS_MAX) = ru.ru_maxrss;
+	at(PF_MINOR) = ru.ru_minflt;
+	at(PF_MAJOR) = ru.ru_majflt;
+	at(BLOCK_IN) = ru.ru_inblock;
+	at(BLOCK_OUT) = ru.ru_oublock;
+	at(SCHED_YIELD) = ru.ru_nvcsw;
+	at(SCHED_PREEMPT) = ru.ru_nivcsw;
 }
 
 //

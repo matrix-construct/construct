@@ -18,6 +18,7 @@ namespace ircd::prof
 	struct event;
 	struct times;
 	struct system;
+	struct resource;
 	enum dpl :uint8_t;
 	enum counter :uint8_t;
 	enum cacheop :uint8_t;
@@ -38,6 +39,11 @@ namespace ircd::prof
 	system &operator-=(system &a, const system &b);
 	system operator+(const system &a, const system &b);
 	system operator-(const system &a, const system &b);
+
+	resource &operator+=(resource &a, const resource &b);
+	resource &operator-=(resource &a, const resource &b);
+	resource operator+(const resource &a, const resource &b);
+	resource operator-(const resource &a, const resource &b);
 
 	// Control
 	void stop(group &);
@@ -66,6 +72,28 @@ struct ircd::prof::times
 
 	times(sample_t);
 	times() = default;
+};
+
+struct ircd::prof::resource
+:std::array<uint64_t, 9>
+{
+	enum
+	{
+		TIME_USER, // microseconds
+		TIME_KERN, // microseconds
+		RSS_MAX,
+		PF_MINOR,
+		PF_MAJOR,
+		BLOCK_IN,
+		BLOCK_OUT,
+		SCHED_YIELD,
+		SCHED_PREEMPT,
+	};
+
+	resource(sample_t);
+	resource()
+	:std::array<uint64_t, 9>{{0}}
+	{}
 };
 
 struct ircd::prof::system
