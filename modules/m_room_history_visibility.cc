@@ -92,9 +92,10 @@ _visible(const m::event &event,
 	}
 }
 
-extern "C" bool
-visible(const m::event &event,
-        const string_view &mxid)
+bool
+IRCD_MODULE_EXPORT
+ircd::m::visible(const m::event &event,
+                 const string_view &mxid)
 {
 	const m::room room
 	{

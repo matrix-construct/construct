@@ -1656,12 +1656,12 @@ ircd::m::visible(const event &event,
 {
 	using prototype = bool (const m::event &, const string_view &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"m_room_history_visibility", "visible"
+		"m_room_history_visibility", "ircd::m::visible"
 	};
 
-	return function(event, mxid);
+	return call(event, mxid);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
