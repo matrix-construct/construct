@@ -116,11 +116,11 @@ ircd::m::visible(const m::event &event,
 	const bool has_state_event
 	{
 		state.get(std::nothrow, "m.room.history_visibility", "", [&]
-		(const m::event &event)
+		(const m::event &visibility_event)
 		{
 			const json::object &content
 			{
-				json::get<"content"_>(event)
+				json::get<"content"_>(visibility_event)
 			};
 
 			const string_view &history_visibility
