@@ -667,6 +667,9 @@ ircd::m::vm::execute_edu(eval &eval,
 	if(eval.opts->eval)
 		eval_hook(event, eval);
 
+	if(eval.opts->post)
+		post_hook(event, eval);
+
 	return fault::ACCEPT;
 }
 
