@@ -22,7 +22,7 @@ namespace ircd::prof
 	enum counter :uint8_t;
 	enum cacheop :uint8_t;
 	using group = std::vector<std::unique_ptr<event>>;
-
+	IRCD_OVERLOAD(sample)
 	IRCD_EXCEPTION(ircd::error, error)
 
 	uint64_t cycles();      ///< Monotonic reference cycles (since system boot)
@@ -34,7 +34,6 @@ namespace ircd::prof
 
 	// Observe
 	system &hotsample(system &) noexcept;
-	system &sample(system &) noexcept;
 	system &operator+=(system &a, const system &b);
 	system &operator-=(system &a, const system &b);
 	system operator+(const system &a, const system &b);
@@ -65,7 +64,6 @@ struct ircd::prof::times
 	uint64_t kern {0};
 	uint64_t user {0};
 
-	IRCD_OVERLOAD(sample)
 	times(sample_t);
 	times() = default;
 };
@@ -87,6 +85,7 @@ struct ircd::prof::system
 	// 5: SWITCH_TASK,
 	// 6: SWITCH_CPU,
 
+	system(sample_t) noexcept;
 	system()
 	:array_type{{0}}
 	{}

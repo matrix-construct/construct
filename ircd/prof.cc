@@ -221,16 +221,6 @@ ircd::prof::operator+=(system &a,
 }
 
 ircd::prof::system &
-ircd::prof::sample(system &s)
-noexcept
-{
-	stop(system::group);
-	hotsample(s);
-	start(system::group);
-	return s;
-}
-
-ircd::prof::system &
 ircd::prof::hotsample(system &s)
 noexcept
 {
@@ -297,6 +287,14 @@ ircd::prof::for_each(const const_buffer &buf,
 		for(auto it(begin(event::list)); it != end(event::list); ++it)
 			if((*it)->id == body[i].id)
 				return closure(type(**it), body[i].val);
+}
+
+ircd::prof::system::system(sample_t)
+noexcept
+{
+	stop(group);
+	hotsample(*this);
+	start(group);
 }
 
 //
