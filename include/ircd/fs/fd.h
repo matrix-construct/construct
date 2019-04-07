@@ -71,6 +71,9 @@ struct ircd::fs::fd::opts
 	/// any implied O_CREAT from the open_mode ctor and in flags too.
 	bool nocreate {false};
 
+	/// (O_NONBLOCK) Non-blocking behavior.
+	bool blocking {true};
+
 	/// Construct options from an std::ios::open_mode bitmask.
 	opts(const std::ios::openmode &);
 	opts() = default;

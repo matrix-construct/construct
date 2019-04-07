@@ -1287,6 +1287,7 @@ ircd::fs::fd::fd(const string_view &path,
 	flags |= opts.direct? O_DIRECT : 0UL;
 	flags |= opts.cloexec? O_CLOEXEC : 0UL;
 	flags &= opts.nocreate? ~O_CREAT : flags;
+	flags |= !opts.blocking? O_NONBLOCK : 0UL;
 
 	const mode_t &mode(opts.mask);
 	assert((flags & ~O_CREAT) || mode != 0);
