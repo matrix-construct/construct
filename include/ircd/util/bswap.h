@@ -17,6 +17,8 @@ namespace ircd::util
 	template<class T> T bswap(T);
 
 	// Host <-> network endian
+	template<class T> T &hton(T *const &);
+	template<class T> T &ntoh(T *const &);
 	template<class T> T hton(T);
 	template<class T> T ntoh(T);
 
@@ -85,21 +87,37 @@ template<class T>
 T
 ircd::util::hton(T a)
 {
-	#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-		return bswap(&a);
-	#else
-		return a;
-	#endif
+	return hton<T>(&a);
 }
 
 template<class T>
 T
 ircd::util::ntoh(T a)
 {
+	return ntoh<T>(&a);
+}
+
+template<class T>
+T &
+ircd::util::hton(T *const &a)
+{
 	#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-		return bswap(&a);
+		return bswap(a);
 	#else
-		return a;
+		assert(a);
+		return *a;
+	#endif
+}
+
+template<class T>
+T &
+ircd::util::ntoh(T *const &a)
+{
+	#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+		return bswap(a);
+	#else
+		assert(a);
+		return *a;
 	#endif
 }
 
