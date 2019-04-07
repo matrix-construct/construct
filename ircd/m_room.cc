@@ -263,6 +263,24 @@ ircd::m::exists(const room &room)
 }
 
 bool
+ircd::m::operator==(const room &a, const room &b)
+{
+	return !(a != b);
+}
+
+bool
+ircd::m::operator!=(const room &a, const room &b)
+{
+	return a.room_id != b.room_id;
+}
+
+bool
+ircd::m::operator!(const room &a)
+{
+	return !a.room_id;
+}
+
+bool
 ircd::m::my(const room &room)
 {
 	return my(room.room_id);

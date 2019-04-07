@@ -29,6 +29,9 @@ namespace ircd::m
 
 	// Util
 	bool my(const room &);
+	bool operator!(const room &); // room_id empty
+	bool operator!=(const room &, const room &); // room_id inequality
+	bool operator==(const room &, const room &); // room_id equality
 
 	// [GET] Util
 	bool exists(const room &);
