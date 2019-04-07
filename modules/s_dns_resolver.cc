@@ -555,10 +555,10 @@ try
 		*reinterpret_cast<rfc1035::header *>(data(buf))
 	};
 
-	bswap(&header.qdcount);
-	bswap(&header.ancount);
-	bswap(&header.nscount);
-	bswap(&header.arcount);
+	ntoh(&header.qdcount);
+	ntoh(&header.ancount);
+	ntoh(&header.nscount);
+	ntoh(&header.arcount);
 
 	const const_buffer body
 	{
@@ -728,7 +728,6 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	assert(header.rcode != 3 || tag.opts.nxdomain_exceptions);
 	const auto eptr(std::current_exception());
 	const ctx::exception_handler eh;
 	callback(eptr, tag, answers{});

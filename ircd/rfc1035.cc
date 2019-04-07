@@ -24,7 +24,7 @@ ircd::rfc1035::make_query(const mutable_buffer &out,
 	header h{0};
 	h.id = id;
 	h.rd = true;
-	h.qdcount = bswap(uint16_t(questions.size()));
+	h.qdcount = hton(uint16_t(questions.size()));
 	return make_query(out, h, questions);
 }
 
@@ -33,7 +33,7 @@ ircd::rfc1035::make_query(const mutable_buffer &out,
                           const header &header,
                           const vector_view<const question> &questions)
 {
-	assert(bswap(header.qdcount) == questions.size());
+	assert(ntoh(header.qdcount) == questions.size());
 	window_buffer sb{out};
 
 	sb([&header](const mutable_buffer &buf)
@@ -89,8 +89,8 @@ ircd::rfc1035::question::parse(const const_buffer &in)
 			"Question input buffer is incomplete (%zu bytes)", size(in)
 		};
 
-	qtype = bswap(*(const uint16_t *)pos);     pos += 2;
-	qclass = bswap(*(const uint16_t *)pos);    pos += 2;
+	qtype = ntoh(*(const uint16_t *)pos);     pos += 2;
+	qclass = ntoh(*(const uint16_t *)pos);    pos += 2;
 
 	assert(size_t(pos - data(in)) <= size(in));
 	return { data(in), pos };
@@ -120,8 +120,8 @@ const
 
 	assert(pos > data(buf));
 	assert(*(pos - 1) == '\0');
-	*(uint16_t *)pos = bswap(qtype);   pos += 2;
-	*(uint16_t *)pos = bswap(qclass);  pos += 2;
+	*(uint16_t *)pos = hton(qtype);   pos += 2;
+	*(uint16_t *)pos = hton(qclass);  pos += 2;
 
 	assert(size_t(std::distance(data(buf), pos)) == required);
 	return mutable_buffer
@@ -149,10 +149,10 @@ ircd::rfc1035::answer::parse(const const_buffer &in)
 			"Answer input buffer is incomplete (%zu bytes)", size(in)
 		};
 
-	qtype = bswap(*(const uint16_t *)pos);     pos += 2;
-	qclass = bswap(*(const uint16_t *)pos);    pos += 2;
-	ttl = bswap(*(const uint32_t *)pos);       pos += 4;
-	rdlength = bswap(*(const uint16_t *)pos);  pos += 2;
+	qtype = ntoh(*(const uint16_t *)pos);     pos += 2;
+	qclass = ntoh(*(const uint16_t *)pos);    pos += 2;
+	ttl = ntoh(*(const uint32_t *)pos);       pos += 4;
+	rdlength = ntoh(*(const uint16_t *)pos);  pos += 2;
 
 	if(unlikely(qclass != 1))
 		throw error
@@ -214,7 +214,7 @@ ircd::rfc1035::record::A::A(const answer &answer)
 			"A record data underflow"
 		};
 
-	ip4 = bswap(*(const uint32_t *)data(rdata));
+	ip4 = ntoh(*(const uint32_t *)data(rdata));
 }
 
 void
@@ -264,7 +264,7 @@ ircd::rfc1035::record::AAAA::AAAA(const answer &answer)
 			"AAAA record data underflow"
 		};
 
-	ip6 = bswap(*(const uint128_t *)data(rdata));
+	ip6 = ntoh(*(const uint128_t *)data(rdata));
 }
 
 void
@@ -363,9 +363,9 @@ ircd::rfc1035::record::SRV::SRV(const answer &answer)
 		};
 
 	const char *pos(data(rdata));
-	priority = bswap(*(const uint16_t *)pos);   pos += 2;
-	weight = bswap(*(const uint16_t *)pos);     pos += 2;
-	port = bswap(*(const uint16_t *)pos);       pos += 2;
+	priority = ntoh(*(const uint16_t *)pos);   pos += 2;
+	weight = ntoh(*(const uint16_t *)pos);     pos += 2;
+	port = ntoh(*(const uint16_t *)pos);       pos += 2;
 
 	const const_buffer tgtbuf{pos, end(rdata)};
 	const auto len{parse_name(this->tgtbuf, tgtbuf)};
