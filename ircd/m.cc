@@ -1135,8 +1135,6 @@ ircd::m::vm::reflect(const enum fault &code)
 		case fault::ACCEPT:       return "ACCEPT";
 		case fault::EXISTS:       return "EXISTS";
 		case fault::INVALID:      return "INVALID";
-		case fault::DEBUGSTEP:    return "DEBUGSTEP";
-		case fault::BREAKPOINT:   return "BREAKPOINT";
 		case fault::GENERAL:      return "GENERAL";
 		case fault::EVENT:        return "EVENT";
 		case fault::STATE:        return "STATE";

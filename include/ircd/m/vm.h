@@ -126,12 +126,10 @@ enum ircd::m::vm::fault
 	ACCEPT        = 0x00,  ///< No fault.
 	EXISTS        = 0x01,  ///< Replaying existing event. (#ex)
 	INVALID       = 0x02,  ///< Non-conforming event format. (#ud)
-	DEBUGSTEP     = 0x04,  ///< Debug step. (#db)
-	BREAKPOINT    = 0x08,  ///< Debug breakpoint. (#bp)
-	GENERAL       = 0x10,  ///< General protection fault. (#gp)
+	GENERAL       = 0x04,  ///< General protection fault. (#gp)
+	STATE         = 0x10,  ///< Required state is missing (#st)
 	EVENT         = 0x20,  ///< Eval requires addl events in the ef register (#ef)
-	STATE         = 0x40,  ///< Required state is missing (#st)
-	INTERRUPT     = 0x80,  ///< ctx::interrupted (#nmi)
+	INTERRUPT     = 0x40,  ///< ctx::interrupted (#nmi)
 };
 
 /// Evaluation Options
@@ -236,17 +234,16 @@ struct ircd::m::vm::opts
 
 	/// Mask of faults that are not thrown as exceptions out of eval(). If
 	/// masked, the fault is returned from eval(). By default, the EXISTS
-	/// fault is masked which means existing events won't kill eval loops
-	/// as well as the debug related.
+	/// fault is masked which means existing events won't kill eval loops.
 	fault_t nothrows
 	{
-		EXISTS | DEBUGSTEP | BREAKPOINT
+		EXISTS
 	};
 
 	/// Mask of faults that are logged to the error facility in vm::log.
 	fault_t errorlog
 	{
-		~(EXISTS | DEBUGSTEP | BREAKPOINT)
+		~(EXISTS)
 	};
 
 	/// Mask of faults that are logged to the warning facility in vm::log
