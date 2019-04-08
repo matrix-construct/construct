@@ -731,15 +731,7 @@ try
 		return false;
 
 	// Skip the item for phased-sync ranges if it's not phased-sync aware.
-	if(!phased && data.phased && int64_t(data.range.first) < 0L)
-	{
-		assert(data.phased);
-		return false;
-	}
-
-	// Skip the item for the initial-sync pass if it's phased-sync aware;
-	// it will be called for the first time at the next phase.
-	if(phased && data.phased && data.range.first == 0UL)
+	if(!phased && data.phased)
 		return false;
 
 	#ifdef RB_DEBUG

@@ -133,18 +133,16 @@ ircd::m::sync::_rooms_polylog(data &data,
 	const user::rooms::closure_bool closure{[&data, &ret, &phase]
 	(const m::room &room, const string_view &membership_)
 	{
-		assert(!data.phased || int64_t(data.range.first) < 0L);
-
 		if(data.phased)
 		{
-			if(phase >= int64_t(data.range.first))
-			{
-				--phase;
-				return true;
-			}
-
 			if(phase < int64_t(data.range.first) && ret)
 				return false;
+
+			if(int64_t(data.range.first) < 0L)
+				--phase;
+
+			if(phase > int64_t(data.range.first))
+				return true;
 		}
 
 		#if defined(RB_DEBUG)
@@ -160,18 +158,17 @@ ircd::m::sync::_rooms_polylog(data &data,
 		#endif
 
 		{
+			const scope_restore phased
+			{
+				data.phased, int64_t(data.range.first) < 0? false : data.phased
+			};
+
 			const scope_restore range
 			{
-				data.range.first, data.phased? 0UL : data.range.first
+				data.range.first, phased.theirs? 0UL : data.range.first
 			};
 
 			ret |= _rooms_polylog_room(data, room);
-		}
-
-		if(data.phased && !ret)
-		{
-			--data.range.first;
-			return true;
 		}
 
 		#if defined(RB_DEBUG)

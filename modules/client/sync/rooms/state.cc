@@ -41,7 +41,10 @@ ircd::m::sync::room_state
 {
 	"rooms.state",
 	room_state_polylog,
-	room_state_linear
+	room_state_linear,
+	{
+		{ "phased", true },
+	}
 };
 
 decltype(ircd::m::sync::room_invite_state)
@@ -154,12 +157,37 @@ ircd::m::sync::room_state_polylog_events(data &data)
 {
 	const m::room &room{*data.room};
 	const m::room::state state{room};
+
 	json::stack::array array
 	{
 		*data.out, "events"
 	};
 
 	bool ret{false};
+	if(data.phased && data.range.first == 0)
+	{
+		data.room->get(std::nothrow, "m.room.create", "", [&]
+		(const m::event &event)
+		{
+			room_state_append(data, array, event, index(event));
+			ret = true;
+		});
+
+		data.room->get(std::nothrow, "m.room.canonical_alias", "", [&]
+		(const m::event &event)
+		{
+			room_state_append(data, array, event, index(event));
+		});
+
+		data.room->get(std::nothrow, "m.room.name", "", [&]
+		(const m::event &event)
+		{
+			room_state_append(data, array, event, index(event));
+		});
+
+		return ret;
+	}
+
 	ctx::mutex mutex;
 	const event::closure_idx each_idx{[&data, &array, &mutex, &ret]
 	(const m::event::idx event_idx)
