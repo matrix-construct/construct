@@ -49,6 +49,8 @@ struct ircd::m::sync::item
 	conf::item<bool> stats_debug;
 	handle _polylog;
 	handle _linear;
+	json::strung feature;
+	json::object opts;
 
   public:
 	string_view name() const;
@@ -59,8 +61,9 @@ struct ircd::m::sync::item
 	bool polylog(data &);
 
 	item(std::string name,
-	     handle polylog    = {},
-	     handle linear     = {});
+	     handle polylog         = {},
+	     handle linear          = {},
+	     const json::members &  = {});
 
 	item(item &&) = delete;
 	item(const item &) = delete;

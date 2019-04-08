@@ -660,7 +660,8 @@ ircd::m::sync::item::instance_multimap::map
 
 ircd::m::sync::item::item(std::string name,
                           handle polylog,
-                          handle linear)
+                          handle linear,
+                          const json::members &feature)
 :instance_multimap
 {
 	std::move(name)
@@ -688,12 +689,21 @@ ircd::m::sync::item::item(std::string name,
 {
 	std::move(linear)
 }
+,feature
+{
+	feature
+}
+,opts
+{
+	this->feature
+}
 {
 	log::debug
 	{
-		log, "Registered sync item(%p) '%s'",
+		log, "Registered sync item(%p) '%s' (%zu features)",
 		this,
-		this->name()
+		this->name(),
+		opts.size(),
 	};
 }
 
