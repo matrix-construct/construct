@@ -24,7 +24,6 @@ namespace ircd::m::rooms
 	extern "C" void _summary_chunk(const m::room &room, json::stack::object &obj);
 	extern "C" size_t _count_public(const string_view &server);
 	extern "C" bool _for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
-	extern "C" bool _for_each(const string_view &room_id_lb, const room::id::closure_bool &);
 	static void create_public_room(const m::event &, m::vm::eval &);
 
 	extern m::hookfn<vm::eval &> create_public_room_hook;
@@ -65,8 +64,9 @@ ircd::m::rooms::create_public_room(const m::event &,
 }
 
 bool
-ircd::m::rooms::_for_each(const string_view &room_id_lb,
-                          const room::id::closure_bool &closure)
+IRCD_MODULE_EXPORT
+ircd::m::rooms::for_each(const string_view &room_id_lb,
+                         const room::id::closure_bool &closure)
 {
 	const room::state state
 	{

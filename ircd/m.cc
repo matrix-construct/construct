@@ -2738,12 +2738,12 @@ ircd::m::rooms::for_each(const string_view &room_id_lb,
 {
 	using prototype = bool (const string_view &, const room::id::closure_bool &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"m_rooms", "_for_each"
+		"m_rooms", "ircd::m::rooms::for_each"
 	};
 
-	return function(room_id_lb, closure);
+	return call(room_id_lb, closure);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
