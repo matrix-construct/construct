@@ -102,7 +102,8 @@ decltype(ircd::m::sync::polylog_phased)
 ircd::m::sync::polylog_phased
 {
 	{ "name",     "ircd.client.sync.polylog.phased" },
-	{ "default",  true                              },
+	{ "default",  false                             },
+	{ "persist",  false                             },
 };
 
 decltype(ircd::m::sync::polylog_only)
