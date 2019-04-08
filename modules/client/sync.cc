@@ -98,6 +98,13 @@ ircd::m::sync::linear_delta_max
 	{ "help",     linear_delta_max_help                },
 };
 
+decltype(ircd::m::sync::polylog_phased)
+ircd::m::sync::polylog_phased
+{
+	{ "name",     "ircd.client.sync.polylog.phased" },
+	{ "default",  true                              },
+};
+
 decltype(ircd::m::sync::polylog_only)
 ircd::m::sync::polylog_only
 {
@@ -145,17 +152,33 @@ ircd::m::sync::handle_get(client &client,
 		args.since, std::min(args.next_batch, m::vm::sequence::retired + 1)
 	};
 
-	// When the range indexes are the same, the client is polling for the next
-	// event which doesn't exist yet. There is no reason for the since parameter
-	// to be greater than that.
-	if(range.first > range.second)
+	// The phased initial sync feature uses negative since tokens.
+	const bool phased_range
+	{
+		int64_t(range.first) < 0L
+	};
+
+	// Check if the admin disabled phased sync.
+	if(!polylog_phased && phased_range)
 		throw m::NOT_FOUND
 		{
-			"Since parameter '%lu' is too far in the future."
-			" Cannot be greater than '%lu'.",
+			"Since parameter '%ld' must be >= 0.",
 			range.first,
-			range.second
 		};
+
+	// When the range indexes are the same, the client is polling for the next
+	// event which doesn't exist yet. There is no reason for the since parameter
+	// to be greater than that, unless it's a negative integer and phased
+	// sync is enabled
+	if(!polylog_phased || !phased_range)
+		if(range.first > range.second)
+			throw m::NOT_FOUND
+			{
+				"Since parameter '%lu' is too far in the future."
+				" Cannot be greater than '%lu'.",
+				range.first,
+				range.second
+			};
 
 	// Keep state for statistics of this sync here on the stack.
 	stats stats;
@@ -167,6 +190,18 @@ ircd::m::sync::handle_get(client &client,
 		nullptr,
 		&stats,
 		args.filter_id
+	};
+
+	const bool initial_sync
+	{
+		range.first == 0UL
+	};
+
+	// Conditions for phased sync for this client
+	data.phased =
+	{
+		(polylog_phased && args.phased) &&
+		(phased_range || initial_sync)
 	};
 
 	// Start the chunked encoded response.
@@ -190,11 +225,13 @@ ircd::m::sync::handle_get(client &client,
 
 	const bool should_longpoll
 	{
+		!data.phased &&
 		range.first > vm::sequence::retired
 	};
 
 	const bool should_linear
 	{
+		!data.phased &&
 		!should_longpoll &&
 		!bool(polylog_only) &&
 		range.second - range.first <= size_t(linear_delta_max)
@@ -213,8 +250,9 @@ ircd::m::sync::handle_get(client &client,
 	if(shortpolled)
 		return {};
 
-	if(longpoll_enable && longpoll::poll(data, args))
-		return {};
+	if(longpoll_enable && (!data.phased || initial_sync))
+		if(longpoll::poll(data, args))
+			return {};
 
 	const auto &next_batch
 	{
@@ -335,23 +373,34 @@ try
 	});
 
 	if(ret)
+	{
+		const int64_t next_batch
+		{
+			data.phased?
+				int64_t(data.range.first) - 1L:
+				int64_t(data.range.second)
+		};
+
 		json::stack::member
 		{
 			*data.out, "next_batch", json::value
 			{
-				lex_cast(data.range.second), json::STRING
+				lex_cast(next_batch), json::STRING
 			}
 		};
+	}
 
 	if(!ret)
 		checkpoint.decommit();
 
-	if(stats_info) log::info
+	if(!data.phased && stats_info) log::info
 	{
-		log, "request %s polylog commit:%b complete @%lu",
+		log, "request %s polylog commit:%b complete @%ld",
 		loghead(data),
 		ret,
-		data.range.second
+		data.phased?
+			data.range.first:
+			data.range.second
 	};
 
 	return ret;

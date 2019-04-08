@@ -19,7 +19,7 @@ namespace ircd::m::sync
 	static bool should_ignore(const data &);
 
 	static bool _rooms_polylog_room(data &, const m::room &);
-	static bool _rooms_polylog(data &, const string_view &membership);
+	static bool _rooms_polylog(data &, const string_view &membership, int64_t &phase);
 	static bool rooms_polylog(data &);
 
 	static bool _rooms_linear(data &, const string_view &membership);
@@ -31,9 +31,10 @@ namespace ircd::m::sync
 decltype(ircd::m::sync::rooms)
 ircd::m::sync::rooms
 {
-	"rooms",
-	rooms_polylog,
-	rooms_linear
+	"rooms", rooms_polylog, rooms_linear,
+	{
+		{ "phased", true }
+	}
 };
 
 bool
@@ -92,16 +93,31 @@ bool
 ircd::m::sync::rooms_polylog(data &data)
 {
 	bool ret{false};
-	ret |= _rooms_polylog(data, "invite");
-	ret |= _rooms_polylog(data, "join");
-	ret |= _rooms_polylog(data, "leave");
-	ret |= _rooms_polylog(data, "ban");
+	int64_t phase(0);
+
+	ret |= _rooms_polylog(data, "join", phase);
+	if(data.phased && ret)
+		return ret;
+
+	ret |= _rooms_polylog(data, "invite", phase);
+	if(data.phased && ret)
+		return ret;
+
+	ret |= _rooms_polylog(data, "leave", phase);
+	if(data.phased && ret)
+		return ret;
+
+	ret |= _rooms_polylog(data, "ban", phase);
+	if(data.phased && ret)
+		return ret;
+
 	return ret;
 }
 
 bool
 ircd::m::sync::_rooms_polylog(data &data,
-                              const string_view &membership)
+                              const string_view &membership,
+                              int64_t &phase)
 {
 	const scope_restore theirs
 	{
@@ -114,9 +130,23 @@ ircd::m::sync::_rooms_polylog(data &data,
 	};
 
 	bool ret{false};
-	data.user_rooms.for_each(membership, [&data, &ret]
+	const user::rooms::closure_bool closure{[&data, &ret, &phase]
 	(const m::room &room, const string_view &membership_)
 	{
+		assert(!data.phased || int64_t(data.range.first) < 0L);
+
+		if(data.phased)
+		{
+			if(phase >= int64_t(data.range.first))
+			{
+				--phase;
+				return true;
+			}
+
+			if(phase < int64_t(data.range.first) && ret)
+				return false;
+		}
+
 		#if defined(RB_DEBUG)
 		sync::stats stats
 		{
@@ -129,7 +159,20 @@ ircd::m::sync::_rooms_polylog(data &data,
 			stats.timer = timer{};
 		#endif
 
-		ret |= _rooms_polylog_room(data, room);
+		{
+			const scope_restore range
+			{
+				data.range.first, data.phased? 0UL : data.range.first
+			};
+
+			ret |= _rooms_polylog_room(data, room);
+		}
+
+		if(data.phased && !ret)
+		{
+			--data.range.first;
+			return true;
+		}
 
 		#if defined(RB_DEBUG)
 		thread_local char tmbuf[32];
@@ -141,7 +184,14 @@ ircd::m::sync::_rooms_polylog(data &data,
 			ircd::pretty(tmbuf, stats.timer.at<milliseconds>(), true)
 		};
 		#endif
-	});
+
+		return true;
+	}};
+
+	const bool done
+	{
+		data.user_rooms.for_each(membership, closure)
+	};
 
 	return ret;
 }

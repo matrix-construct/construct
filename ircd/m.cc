@@ -569,7 +569,7 @@ ircd::m::sync::loghead(const data &data)
 
 	return fmt::sprintf
 	{
-		headbuf, "%s %s %lu:%lu|%lu chunk:%zu sent:%s of %s in %s",
+		headbuf, "%s %s %ld:%lu|%lu chunk:%zu sent:%s of %s in %s",
 		remstr,
 		string_view{data.user.user_id},
 		data.range.first,
@@ -697,6 +697,10 @@ ircd::m::sync::item::item(std::string name,
 {
 	this->feature
 }
+,phased
+{
+	opts.get<bool>("phased", false)
+}
 {
 	log::debug
 	{
@@ -722,7 +726,20 @@ bool
 ircd::m::sync::item::polylog(data &data)
 try
 {
+	// Skip the item if disabled by configuration
 	if(!enable)
+		return false;
+
+	// Skip the item for phased-sync ranges if it's not phased-sync aware.
+	if(!phased && data.phased && int64_t(data.range.first) < 0L)
+	{
+		assert(data.phased);
+		return false;
+	}
+
+	// Skip the item for the initial-sync pass if it's phased-sync aware;
+	// it will be called for the first time at the next phase.
+	if(phased && data.phased && data.range.first == 0UL)
 		return false;
 
 	#ifdef RB_DEBUG

@@ -24,6 +24,7 @@ namespace ircd::m::sync
 	extern conf::item<size_t> linear_buffer_size;
 	extern conf::item<size_t> linear_delta_max;
 	extern conf::item<bool> longpoll_enable;
+	extern conf::item<bool> polylog_phased;
 	extern conf::item<bool> polylog_only;
 
 	static const_buffer flush(data &, resource::response::chunked &, const const_buffer &);
@@ -141,6 +142,11 @@ struct ircd::m::sync::args
 		// uses this API. Otherwise if the parameter is set to "offline" then the client is not
 		// marked as being online when it uses this API. One of: ["offline"]
 		request.query.get("set_presence", true)
+	};
+
+	bool phased
+	{
+		request.query.get("phased", true)
 	};
 
 	args(const resource::request &request);

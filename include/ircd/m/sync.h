@@ -51,6 +51,7 @@ struct ircd::m::sync::item
 	handle _linear;
 	json::strung feature;
 	json::object opts;
+	bool phased;
 
   public:
 	string_view name() const;
@@ -76,6 +77,10 @@ struct ircd::m::sync::data
 	/// exclusive. Generally the starting index is a since token, and ending
 	/// index is one beyond the vm::current_sequence and used for next_batch.
 	m::events::range range;
+
+	/// Whether to enable phased sync mode. The range.first will be <= 0
+	/// in this case, and only handlers with the phased feature
+	bool phased {false};
 
 	/// Statistics tracking. If null, stats won't be accumulated for the sync.
 	sync::stats *stats {nullptr};
