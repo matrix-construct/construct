@@ -101,7 +101,7 @@ ircd::m::sync::linear_delta_max
 decltype(ircd::m::sync::polylog_only)
 ircd::m::sync::polylog_only
 {
-	{ "name",     "ircd.client.sync.polylog_only" },
+	{ "name",     "ircd.client.sync.polylog.only" },
 	{ "default",  false                           },
 };
 
