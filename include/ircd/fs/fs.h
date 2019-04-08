@@ -55,6 +55,7 @@ namespace ircd::fs
 #include "dev.h"
 #include "fd.h"
 #include "aio.h"
+#include "wait.h"
 #include "read.h"
 #include "write.h"
 #include "sync.h"

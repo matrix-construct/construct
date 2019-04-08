@@ -33,4 +33,5 @@ enum class ircd::fs::op
 	READ     = 1,
 	WRITE    = 2,
 	SYNC     = 3,
+	WAIT     = 4,
 };

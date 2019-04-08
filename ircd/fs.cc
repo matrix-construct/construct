@@ -1036,6 +1036,95 @@ ircd::fs::flags(const write_opts &opts)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// fs/wait.h
+//
+
+namespace ircd::fs
+{
+	static asio::posix::stream_descriptor::wait_type translate(const ready &);
+}
+
+decltype(ircd::fs::wait_opts_default)
+ircd::fs::wait_opts_default;
+
+void
+ircd::fs::wait(const fd &fd,
+               const wait_opts &opts)
+{
+	assert(opts.op == op::WAIT);
+
+	const auto &wait_type
+	{
+		translate(opts.ready)
+	};
+
+	boost::asio::posix::stream_descriptor sd
+	{
+		ios::get(), int(fd)
+	};
+
+	const unwind release{[&sd]
+	{
+		sd.release();
+	}};
+
+	const auto interruption{[&sd]
+	(ctx::ctx *const &interruptor)
+	{
+		sd.cancel();
+	}};
+
+	boost::system::error_code ec; continuation
+	{
+		continuation::asio_predicate, interruption, [&wait_type, &sd, &ec]
+		(auto &yield)
+		{
+			sd.async_wait(wait_type, yield[ec]);
+		}
+	};
+
+	if(unlikely(ec))
+		throw_system_error(ec);
+}
+
+boost::asio::posix::stream_descriptor::wait_type
+ircd::fs::translate(const ready &ready)
+{
+	using wait_type = boost::asio::posix::stream_descriptor::wait_type;
+
+	switch(ready)
+	{
+		case ready::ANY:
+			return wait_type::wait_read | wait_type::wait_write | wait_type::wait_error;
+
+		case ready::READ:
+			return wait_type::wait_read;
+
+		case ready::WRITE:
+			return wait_type::wait_write;
+
+		case ready::ERROR:
+		default:
+			return wait_type::wait_error;
+	}
+}
+
+ircd::string_view
+ircd::fs::reflect(const ready &ready)
+{
+	switch(ready)
+	{
+		case ready::ANY:      return "ANY";
+		case ready::READ:     return "READ";
+		case ready::WRITE:    return "WRITE";
+		case ready::ERROR:    return "ERROR";
+	}
+
+	return "?????";
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fs/aio.h
 //
 
@@ -1425,6 +1514,7 @@ ircd::fs::reflect(const op &op)
 		case op::READ:    return "READ";
 		case op::WRITE:   return "WRITE";
 		case op::SYNC:    return "SYNC";
+		case op::WAIT:    return "WAIT";
 	}
 
 	return "????";
