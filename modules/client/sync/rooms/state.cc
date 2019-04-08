@@ -12,6 +12,7 @@ namespace ircd::m::sync
 {
 	static void room_state_append(data &, json::stack::array &, const m::event &, const m::event::idx &);
 
+	static bool room_state_phased_events(data &);
 	static bool room_state_polylog_events(data &);
 	static bool _room_state_polylog(data &);
 	static bool room_state_polylog(data &);
@@ -155,39 +156,17 @@ ircd::m::sync::_room_state_polylog(data &data)
 bool
 ircd::m::sync::room_state_polylog_events(data &data)
 {
+	if(data.phased && data.range.first == 0)
+		return room_state_phased_events(data);
+
 	const m::room &room{*data.room};
 	const m::room::state state{room};
-
 	json::stack::array array
 	{
 		*data.out, "events"
 	};
 
 	bool ret{false};
-	if(data.phased && data.range.first == 0)
-	{
-		data.room->get(std::nothrow, "m.room.create", "", [&]
-		(const m::event &event)
-		{
-			room_state_append(data, array, event, index(event));
-			ret = true;
-		});
-
-		data.room->get(std::nothrow, "m.room.canonical_alias", "", [&]
-		(const m::event &event)
-		{
-			room_state_append(data, array, event, index(event));
-		});
-
-		data.room->get(std::nothrow, "m.room.name", "", [&]
-		(const m::event &event)
-		{
-			room_state_append(data, array, event, index(event));
-		});
-
-		return ret;
-	}
-
 	ctx::mutex mutex;
 	const event::closure_idx each_idx{[&data, &array, &mutex, &ret]
 	(const m::event::idx event_idx)
@@ -231,6 +210,43 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	});
 
 	parallel.wait_done();
+	return ret;
+}
+
+bool
+ircd::m::sync::room_state_phased_events(data &data)
+{
+	json::stack::array array
+	{
+		*data.out, "events"
+	};
+
+	bool ret{false};
+	data.room->get(std::nothrow, "m.room.create", "", [&]
+	(const m::event &event)
+	{
+		room_state_append(data, array, event, index(event));
+		ret = true;
+	});
+
+	data.room->get(std::nothrow, "m.room.canonical_alias", "", [&]
+	(const m::event &event)
+	{
+		room_state_append(data, array, event, index(event));
+	});
+
+	data.room->get(std::nothrow, "m.room.name", "", [&]
+	(const m::event &event)
+	{
+		room_state_append(data, array, event, index(event));
+	});
+
+	data.room->get(std::nothrow, "m.room.avatar", "", [&]
+	(const m::event &event)
+	{
+		room_state_append(data, array, event, index(event));
+	});
+
 	return ret;
 }
 
