@@ -57,11 +57,11 @@ union ircd::net::ipaddr
 
 	explicit operator bool() const;
 
-	ipaddr(const uint32_t &ip);
-	ipaddr(const uint128_t &ip);
-	ipaddr(const rfc1035::record::A &);
-	ipaddr(const rfc1035::record::AAAA &);
-	ipaddr(const boost::asio::ip::address &);
+	explicit ipaddr(const uint32_t &ip);
+	explicit ipaddr(const uint128_t &ip);
+	explicit ipaddr(const rfc1035::record::A &);
+	explicit ipaddr(const rfc1035::record::AAAA &);
+	explicit ipaddr(const boost::asio::ip::address &);
 	ipaddr(const string_view &ip);
 	ipaddr() = default;
 };
