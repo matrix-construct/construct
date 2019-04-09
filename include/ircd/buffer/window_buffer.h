@@ -32,9 +32,12 @@ struct ircd::buffer::window_buffer
 	size_t remaining() const;
 	size_t consumed() const;
 
+	const_buffer remains() const;
 	const_buffer completed() const;
-	explicit operator const_buffer() const;
+	mutable_buffer remains();
 	mutable_buffer completed();
+
+	explicit operator const_buffer() const;
 
 	const_buffer operator()(const closure &);
 	const_buffer operator()(const closure_cbuf &);
@@ -112,6 +115,15 @@ ircd::buffer::window_buffer::completed()
 	return { base.begin(), base.begin() + consumed() };
 }
 
+/// View the remaining portion of the stream
+inline ircd::buffer::mutable_buffer
+ircd::buffer::window_buffer::remains()
+{
+	assert(base.begin() <= begin());
+	assert(base.begin() + consumed() <= base.end());
+	return { base.begin() + consumed(), base.end() };
+}
+
 /// Convenience conversion to get the completed portion
 inline ircd::buffer::window_buffer::operator
 const_buffer()
@@ -128,6 +140,16 @@ const
 	assert(base.begin() <= begin());
 	assert(base.begin() + consumed() <= base.end());
 	return { base.begin(), base.begin() + consumed() };
+}
+
+/// View the remaining portion of the stream
+inline ircd::buffer::const_buffer
+ircd::buffer::window_buffer::remains()
+const
+{
+	assert(base.begin() <= begin());
+	assert(base.begin() + consumed() <= base.end());
+	return { base.begin() + consumed(), base.end() };
 }
 
 /// Bytes used by writes to the stream buffer
