@@ -440,7 +440,7 @@ CXXFLAGS+=" -O$optimize_level"
 AM_COND_IF([LTO],
 [
 	lto="yes"
-	CXXFLAGS+=" -flto"
+	CXXFLAGS+=" -flto=`nproc`"
 ], [
 	lto="no"
 ])
