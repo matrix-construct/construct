@@ -2013,11 +2013,13 @@ ircd::fs::debug_paths()
 const char *
 ircd::fs::path_str(const string_view &s)
 {
-	static const size_t buf_sz{PATH_MAX_LEN}, buf_cnt{4};
-	thread_local char buf[buf_cnt][buf_sz];
+	static const size_t sz{PATH_MAX_LEN}, cnt{8};
+	thread_local char buffer[cnt][sz];
 	thread_local size_t i{0};
-
-	return data(strlcpy(buf[i++ % buf_cnt], s));
+	auto &buf(buffer[i]);
+	++i %= cnt;
+	strlcpy(buf, s);
+	return buf;
 }
 
 uint
