@@ -41,6 +41,20 @@ ircd::mods::autoload
 };
 
 //
+// (internal) dlsym hooker
+//
+
+extern "C" void *
+__libc_dlsym(void *, const char *);
+
+extern "C" void *
+dlsym(void *const handle,
+      const char *const symbol)
+{
+	return __libc_dlsym(handle, symbol);
+}
+
+//
 // mods::mod
 //
 
