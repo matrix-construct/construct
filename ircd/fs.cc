@@ -387,7 +387,7 @@ ircd::fs::sync(const fd &fd,
                const sync_opts &opts)
 {
 	assert(opts.op == op::SYNC);
-	const ctx::slice_usage_warning message
+	const ctx::syscall_usage_warning message
 	{
 		"fs::sync(fd:%d)", int(fd)
 	};
@@ -413,7 +413,7 @@ ircd::fs::flush(const fd &fd,
                 const sync_opts &opts)
 {
 	assert(opts.op == op::SYNC);
-	const ctx::slice_usage_warning message
+	const ctx::syscall_usage_warning message
 	{
 		"fs::flush(fd:%d, {metadata:%b aio:%b:%b})",
 		int(fd),
@@ -1367,7 +1367,7 @@ ircd::fs::fd::fd(const string_view &path,
 :fdno{[&path, &opts]
 () -> int
 {
-	const ctx::slice_usage_warning message
+	const ctx::syscall_usage_warning message
 	{
 		"fs::fs::fd(): open(2): %s", path
 	};

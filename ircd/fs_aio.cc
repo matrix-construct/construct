@@ -786,7 +786,7 @@ size_t
 ircd::fs::aio::system::io_submit()
 try
 {
-	const ctx::slice_usage_warning message
+	const ctx::syscall_usage_warning message
 	{
 		"fs::aio::system::submit(in_flight:%zu qcount:%zu)",
 		in_flight,
