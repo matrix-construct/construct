@@ -732,6 +732,7 @@ ircd::net::open(socket &socket,
 // net/addrs.h
 //
 
+#ifdef HAVE_IFADDRS_H
 bool
 ircd::net::addrs::has_usable_ipv6_interface()
 try
@@ -764,36 +765,44 @@ catch(const std::exception &e)
 
 	return false;
 }
-
+#else
 bool
+ircd::net::addrs::has_usable_ipv6_interface()
+{
+	return false;
+}
+#endif
+
+#ifdef HAVE_IFADDRS_H
+bool
+__attribute__((optimize(0))) //XXX: trouble
 ircd::net::addrs::for_each(const closure &closure)
 {
-	return for_each([&closure]
-	(const struct ::ifaddrs &ifa)
+	return for_each(raw_closure{[&closure]
+	(const struct ::ifaddrs *const &ifa)
 	{
 		addr a;
-		a.name = ifa.ifa_name;
-		a.flags = ifa.ifa_flags;
-
-		if(ifa.ifa_addr) switch(ifa.ifa_addr->sa_family)
+		a.name = ifa->ifa_name;
+		a.flags = ifa->ifa_flags;
+		if(ifa->ifa_addr) switch(ifa->ifa_addr->sa_family)
 		{
 			case AF_INET6:
 			{
-				const auto &sin(reinterpret_cast<const struct sockaddr_in6 *>(ifa.ifa_addr));
+				const auto sin(reinterpret_cast<const struct ::sockaddr_in6 *>(ifa->ifa_addr));
+				const auto ip(reinterpret_cast<const uint128_t *>(sin->sin6_addr.s6_addr));
 				a.family = sin->sin6_family;
-				a.address =
-				{
-					ntoh(*reinterpret_cast<const uint128_t *>(sin->sin6_addr.s6_addr)),
-					sin->sin6_port
-				};
 				a.scope_id = sin->sin6_scope_id;
 				a.flowinfo = sin->sin6_flowinfo;
+				a.address =
+				{
+					ntoh(*ip), sin->sin6_port
+				};
 				break;
 			}
 
 			case AF_INET:
 			{
-				const auto &sin(reinterpret_cast<const struct sockaddr_in *>(ifa.ifa_addr));
+				const auto &sin(reinterpret_cast<const struct ::sockaddr_in *>(ifa->ifa_addr));
 				a.family = sin->sin_family;
 				a.address =
 				{
@@ -807,8 +816,15 @@ ircd::net::addrs::for_each(const closure &closure)
 		}
 
 		return closure(a);
-	});
+	}});
 }
+#else
+bool
+ircd::net::addrs::for_each(const closure &closure)
+{
+	return true;
+}
+#endif
 
 #ifdef HAVE_IFADDRS_H
 bool
@@ -822,7 +838,7 @@ ircd::net::addrs::for_each(const raw_closure &closure)
 	};
 
 	for(auto ifa(ifap.get()); ifa; ifa = ifa->ifa_next)
-		if(!closure(*ifa))
+		if(!closure(ifa))
 			return false;
 
 	return true;

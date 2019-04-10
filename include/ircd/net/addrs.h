@@ -20,7 +20,7 @@ namespace ircd::net::addrs
 {
 	struct addr;
 	using closure = std::function<bool (const addr &)>;
-	using raw_closure = std::function<bool (const struct ::ifaddrs &)>;
+	using raw_closure = std::function<bool (const struct ::ifaddrs *const &)>;
 
 	bool for_each(const raw_closure &);
 	bool for_each(const closure &);
