@@ -355,7 +355,6 @@ ircd::net::discard_all(socket &socket,
 			buffer, std::min(remain, sizeof(buffer))
 		};
 
-		__builtin_prefetch(data(mb), 1, 0);    // 1 = write, 0 = no cache
 		remain -= read_all(socket, mb);
 	}
 
@@ -373,23 +372,18 @@ ircd::net::discard_any(socket &socket,
 {
 	static char buffer[512] alignas(16);
 
-	size_t remain{len}; while(remain) try
+	size_t remain{len}; while(remain)
 	{
 		const mutable_buffer mb
 		{
 			buffer, std::min(remain, sizeof(buffer))
 		};
 
-		__builtin_prefetch(data(mb), 1, 0);    // 1 = write, 0 = no cache
-		remain -= read_one(socket, mb);
-	}
-	catch(const std::system_error &e)
-	{
-		if(e.code() == std::errc::resource_unavailable_try_again)
-			if(remain <= len)
-				break;
+		size_t read;
+		if(!(read = read_one(socket, mb)))
+			break;
 
-		throw;
+		remain -= read;
 	}
 
 	return len - remain;

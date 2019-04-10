@@ -1922,7 +1922,14 @@ try
 	{
 		overrun = process_read_next(overrun, tag, done);
 	}
-	while(!done);
+	while(!done && !empty(overrun));
+
+	if(!done)
+	{
+		// This branch represents a read of -EAGAIN.
+		assert(empty(overrun));
+		return false;
+	}
 
 	assert(peer);
 	peer->handle_tag_done(*this, tag);
@@ -1933,25 +1940,6 @@ try
 catch(const buffer_overrun &e)
 {
 	queue.pop_front();
-	throw;
-}
-catch(const std::system_error &e)
-{
-	using std::errc;
-
-	if(system_category(e.code())) switch(e.code().value())
-	{
-		case 0:
-			assert(0);
-			return true;
-
-		case int(errc::resource_unavailable_try_again):
-			return false;
-
-		default:
-			break;
-	}
-
 	throw;
 }
 
@@ -2009,7 +1997,6 @@ ircd::server::link::read(const mutable_buffer &buf)
 	assert(peer);
 	peer->read_bytes += received;
 
-	assert(received);
 	return const_buffer
 	{
 		data(buf), received
@@ -2565,6 +2552,9 @@ ircd::server::tag::read_buffer(const const_buffer &buffer,
                                link &link)
 {
 	assert(request);
+
+	if(empty(buffer))
+		return buffer;
 
 	if(state.status == (http::code)0)
 		return read_head(buffer, done, link);

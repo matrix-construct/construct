@@ -208,7 +208,6 @@ catch(const boost::system::system_error &e)
 template<class iov>
 size_t
 ircd::net::socket::read_any(iov&& bufs)
-try
 {
 	assert(!blocking(*this));
 	static const auto completion
@@ -216,39 +215,49 @@ try
 		asio::transfer_all()
 	};
 
+	boost::system::error_code ec;
 	const size_t ret
 	{
-		asio::read(ssl, std::forward<iov>(bufs), completion)
+		asio::read(ssl, std::forward<iov>(bufs), completion, ec)
 	};
 
 	in.bytes += ret;
 	++in.calls;
-	return ret;
-}
-catch(const boost::system::system_error &e)
-{
-	throw_system_error(e);
+
+	if(likely(!ec))
+		return ret;
+
+	if(ec == boost::system::errc::resource_unavailable_try_again)
+		return ret;
+
+	throw_system_error(ec);
+	__builtin_unreachable();
 }
 
 /// Non-blocking; One system call only; never throws eof;
 template<class iov>
 size_t
 ircd::net::socket::read_one(iov&& bufs)
-try
 {
 	assert(!blocking(*this));
+
+	boost::system::error_code ec;
 	const size_t ret
 	{
-		ssl.read_some(std::forward<iov>(bufs))
+		ssl.read_some(std::forward<iov>(bufs), ec)
 	};
 
 	in.bytes += ret;
 	++in.calls;
-	return ret;
-}
-catch(const boost::system::system_error &e)
-{
-	throw_system_error(e);
+
+	if(likely(!ec))
+		return ret;
+
+	if(ec == boost::system::errc::resource_unavailable_try_again)
+		return ret;
+
+	throw_system_error(ec);
+	__builtin_unreachable();
 }
 
 /// Yields ircd::ctx until all buffers are sent.
