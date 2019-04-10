@@ -59,6 +59,7 @@ namespace ircd
 #include "pretty.h"
 #include "hash.h"
 #include "fpe.h"
+#include "closure.h"
 
 // Unsorted section
 namespace ircd {
