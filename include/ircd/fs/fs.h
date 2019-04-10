@@ -54,11 +54,11 @@ namespace ircd::fs
 #include "opts.h"
 #include "dev.h"
 #include "fd.h"
-#include "aio.h"
 #include "wait.h"
 #include "read.h"
 #include "write.h"
 #include "sync.h"
+#include "aio.h"
 #include "stdin.h"
 #include "support.h"
 

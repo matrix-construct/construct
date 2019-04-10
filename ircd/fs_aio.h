@@ -17,7 +17,6 @@ namespace ircd::fs::aio
 	struct system;
 	struct request;
 
-	bool for_each_completed(const std::function<bool (const request &)> &);
 	size_t write(const fd &, const const_iovec_view &, const write_opts &);
 	size_t read(const fd &, const const_iovec_view &, const read_opts &);
 	void fdsync(const fd &, const sync_opts &);

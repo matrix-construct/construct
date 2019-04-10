@@ -38,6 +38,10 @@ namespace ircd::fs::aio
 
 	extern struct stats stats;
 	extern struct system *system;
+
+	bool for_each_completed(const std::function<bool (const request &)> &);
+	bool for_each_queued(const std::function<bool (const request &)> &);
+	size_t count_queued(const op &);
 }
 
 /// Statistics structure.

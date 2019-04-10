@@ -286,6 +286,30 @@ ircd::fs::aio::write(const fd &fd,
 	return bytes;
 }
 
+size_t
+ircd::fs::aio::count_queued(const op &type)
+{
+	assert(system);
+	const auto &qcount(system->qcount);
+	return std::count_if(begin(system->queue), begin(system->queue)+qcount, [&type]
+	(const iocb *const &iocb)
+	{
+		assert(iocb);
+		return aio::translate(iocb->aio_lio_opcode) == type;
+	});
+}
+
+bool
+ircd::fs::aio::for_each_queued(const std::function<bool (const request &)> &closure)
+{
+	assert(system);
+	for(size_t i(0); i < system->qcount; ++i)
+		if(!closure(*reinterpret_cast<const request *>(system->queue[i]->aio_data)))
+			return false;
+
+	return true;
+}
+
 bool
 ircd::fs::aio::for_each_completed(const std::function<bool (const request &)> &closure)
 {
@@ -788,9 +812,12 @@ try
 {
 	const ctx::syscall_usage_warning message
 	{
-		"fs::aio::system::submit(in_flight:%zu qcount:%zu)",
+		"fs::aio::system::submit(in_flight:%zu qcount:%zu r:%zd w:%zd s:%zd)",
 		in_flight,
-		qcount
+		qcount,
+		count_queued(op::READ),
+		count_queued(op::WRITE),
+		count_queued(op::SYNC),
 	};
 
 	return syscall<SYS_io_submit>(head.get(), qcount, queue.data());
