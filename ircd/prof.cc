@@ -31,6 +31,8 @@ namespace ircd::prof
 
 	event &leader(group &);
 	event *leader(group *const &);
+
+	extern conf::item<bool> enable;
 }
 
 struct ircd::prof::event
@@ -59,6 +61,14 @@ struct ircd::prof::event
 	~event() noexcept;
 };
 
+decltype(ircd::prof::enable)
+ircd::prof::enable
+{
+	{ "name",     "ircd.prof.enable" },
+	{ "default",  false              },
+	{ "persist",  false              },
+};
+
 //
 // init
 //
@@ -66,6 +76,9 @@ struct ircd::prof::event
 ircd::prof::init::init()
 try
 {
+	if(!enable)
+		return;
+
 	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK,          true,  false);
 	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK,          false,  true);
 	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK,         true,  false);
