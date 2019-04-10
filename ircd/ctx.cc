@@ -856,6 +856,47 @@ noexcept
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ctx/syscall_usage_warning.h
+//
+
+#ifndef NDEBUG
+ircd::ctx::this_ctx::syscall_usage_warning::~syscall_usage_warning()
+noexcept
+{
+	const uint64_t total
+	{
+		timer.stopped?
+			timer.at():
+			timer.stop()
+	};
+
+	if(likely(!total))
+		return;
+
+	thread_local char buf[512];
+	const string_view reason
+	{
+		fmt::vsprintf{buf, fmt, ap}
+	};
+
+	thread_local char tmbuf[64];
+	log::dwarning
+	{
+		log, "context '%s' id:%lu watchdog: system call took %s :%s",
+		current?
+			name(cur()):
+		ios::handler::current?
+			name(*ios::handler::current):
+			"*"_sv,
+		current? id(cur()) : 0,
+		pretty_nanoseconds(tmbuf, total, true),
+		reason
+	};
+}
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ctx/slice_usage_warning.h
 //
 
