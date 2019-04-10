@@ -19,6 +19,7 @@ namespace ircd::prof
 	struct times;
 	struct system;
 	struct resource;
+	struct syscall_timer;
 	enum dpl :uint8_t;
 	enum counter :uint8_t;
 	enum cacheop :uint8_t;
@@ -72,6 +73,35 @@ struct ircd::prof::times
 
 	times(sample_t);
 	times() = default;
+};
+
+/// This device intends to figure out when a system call is really slow
+/// or "blocking." The original use-case is for io_submit() in fs::aio.
+/// The sample is conducted with times(2) which is itself a system call,
+/// and the result has poor resolution meaning the result of at() is
+/// generally 0 unless the system call was actually slow.
+struct ircd::prof::syscall_timer
+{
+	uint64_t started
+	{
+		time_kern()
+	};
+
+	uint64_t stopped
+	{
+		0
+	};
+
+	uint64_t at() const
+	{
+		return stopped - started;
+	}
+
+	uint64_t stop()
+	{
+		stopped = time_kern();
+		return at();
+	}
 };
 
 struct ircd::prof::resource
