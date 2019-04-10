@@ -48,7 +48,6 @@ AM_LDFLAGS = \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
 	-Wl,--whole-archive \
-	-Wl,-z -Wl,initfirst \
 	-Wl,-z -Wl,nodelete \
 	-Wl,-z -Wl,nodlopen \
 	-Wl,-z -Wl,noexecstack \
