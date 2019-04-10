@@ -4667,6 +4667,12 @@ ircd::m::room_id(const mutable_buffer &out,
 		case id::ROOM:
 			return id::room{out, room_id_or_alias};
 
+		case id::USER:
+		{
+			const m::user::room user_room(room_id_or_alias);
+			return string_view{data(out), copy(out, user_room.room_id)};
+		}
+
 		default:
 			return room_id(out, id::room_alias{room_id_or_alias});
 	}
