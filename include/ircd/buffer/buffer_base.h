@@ -20,21 +20,21 @@ struct ircd::buffer::buffer
 	using iterator = it;
 	using value_type = typename std::remove_pointer<iterator>::type;
 
-	explicit operator const it &() const;
-	operator string_view() const;
-	explicit operator std::string_view() const;
-	explicit operator std::string() const;
-
 	auto &begin() const                { return std::get<0>(*this);            }
 	auto &begin()                      { return std::get<0>(*this);            }
 	auto &end() const                  { return std::get<1>(*this);            }
 	auto &end()                        { return std::get<1>(*this);            }
 
+	bool null() const;
+	bool empty() const;                // For boost::spirit conceptual compliance.
+
 	auto &operator[](const size_t &i) const;
 	auto &operator[](const size_t &i);
 
-	// For boost::spirit conceptual compliance.
-	auto empty() const                 { return ircd::buffer::empty(*this);    }
+	explicit operator const it &() const;
+	explicit operator std::string_view() const;
+	explicit operator std::string() const;
+	operator string_view() const;
 
 	buffer(const it &start, const it &stop);
 	buffer(const it &start, const size_t &size);
@@ -59,18 +59,10 @@ ircd::buffer::buffer<it>::buffer(const it &start,
 {}
 
 template<class it>
-auto &
-ircd::buffer::buffer<it>::operator[](const size_t &i)
+ircd::buffer::buffer<it>::operator string_view()
 const
 {
-	return *(begin() + i);
-}
-
-template<class it>
-auto &
-ircd::buffer::buffer<it>::operator[](const size_t &i)
-{
-	return *(begin() + i);
+	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
 }
 
 template<class it>
@@ -88,10 +80,36 @@ const
 }
 
 template<class it>
-ircd::buffer::buffer<it>::operator string_view()
+auto &
+ircd::buffer::buffer<it>::operator[](const size_t &i)
+{
+	assert(begin() + i < end());
+	return *(begin() + i);
+}
+
+template<class it>
+auto &
+ircd::buffer::buffer<it>::operator[](const size_t &i)
 const
 {
-	return { reinterpret_cast<const char *>(data(*this)), size(*this) };
+	assert(begin() + i < end());
+	return *(begin() + i);
+}
+
+template<class it>
+bool
+ircd::buffer::buffer<it>::empty()
+const
+{
+	return null() || std::distance(begin(), end()) == 0;
+}
+
+template<class it>
+bool
+ircd::buffer::buffer<it>::null()
+const
+{
+	return !begin();
 }
 
 template<class it>

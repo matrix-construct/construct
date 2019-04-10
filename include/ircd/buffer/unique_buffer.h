@@ -26,7 +26,7 @@ struct ircd::buffer::unique_buffer
 
 	unique_buffer(const size_t &size, const size_t &align = 0);
 	explicit unique_buffer(const buffer &);
-	unique_buffer();
+	unique_buffer() = default;
 	unique_buffer(unique_buffer &&) noexcept;
 	unique_buffer(const unique_buffer &) = delete;
 	unique_buffer &operator=(unique_buffer &&) noexcept;
@@ -35,23 +35,17 @@ struct ircd::buffer::unique_buffer
 };
 
 template<class buffer>
-ircd::buffer::unique_buffer<buffer>::unique_buffer()
-:buffer
-{
-	nullptr, nullptr
-}
-{}
-
-template<class buffer>
 ircd::buffer::unique_buffer<buffer>::unique_buffer(const buffer &src)
 :unique_buffer
 {
 	size(src)
 }
 {
+	assert(this->begin() != nullptr);
+	assert(size(src) == size(*this));
 	const mutable_buffer dst
 	{
-		const_cast<char *>(data(*this)), size(*this)
+		const_cast<char *>(this->begin()), size(src)
 	};
 
 	copy(dst, src);
@@ -72,10 +66,10 @@ ircd::buffer::unique_buffer<buffer>::unique_buffer(unique_buffer &&other)
 noexcept
 :buffer
 {
-	std::move(static_cast<buffer &>(other))
+	other.release()
 }
 {
-	get<0>(other) = nullptr;
+	assert(std::get<0>(other) == nullptr);
 }
 
 template<class buffer>
@@ -85,8 +79,8 @@ noexcept
 {
 	this->~unique_buffer();
 
-	static_cast<buffer &>(*this) = std::move(static_cast<buffer &>(other));
-	get<0>(other) = nullptr;
+	static_cast<buffer &>(*this) = other.release();
+	assert(std::get<0>(other) == nullptr);
 
 	return *this;
 }
@@ -95,15 +89,15 @@ template<class buffer>
 ircd::buffer::unique_buffer<buffer>::~unique_buffer()
 noexcept
 {
-	std::free(const_cast<char *>(data(*this)));
+	std::free(const_cast<char *>(this->begin()));
 }
 
 template<class buffer>
 buffer
 ircd::buffer::unique_buffer<buffer>::release()
 {
-	const buffer ret{static_cast<buffer>(*this)};
-	static_cast<buffer &>(*this) = buffer{};
+	const buffer ret{*this};
+	this->begin() = nullptr;
 	return ret;
 }
 
@@ -136,6 +130,6 @@ ircd::buffer::aligned_alloc(const size_t &align,
 
 	return std::unique_ptr<char, decltype(&std::free)>
 	{
-		reinterpret_cast<char *>(ret), std::free
+		reinterpret_cast<char *>(ret), &std::free
 	};
 }
