@@ -50,6 +50,9 @@ namespace ircd::ios
 	bool available();
 	asio::io_context &get();
 
+	const string_view &name(const descriptor &);
+	const string_view &name(const handler &);
+
 	void dispatch(descriptor &, std::function<void ()>);
 	void post(descriptor &, std::function<void ()>);
 	void dispatch(std::function<void ()>);
@@ -210,6 +213,19 @@ ircd::ios::asio_handler_deallocate(void *const ptr,
                                    handle<function> *const h)
 {
 	handler::deallocate(h, ptr, size);
+}
+
+inline const ircd::string_view &
+ircd::ios::name(const handler &handler)
+{
+	assert(handler.descriptor);
+	return name(*handler.descriptor);
+}
+
+inline const ircd::string_view &
+ircd::ios::name(const descriptor &descriptor)
+{
+	return descriptor.name;
 }
 
 inline void
