@@ -456,7 +456,7 @@ try
 {
 	[this]
 	{
-		aio_context *idp;
+		aio_context *idp {nullptr};
 		syscall<SYS_io_setup>(this->max_events(), &idp);
 		return idp;
 	}(),
