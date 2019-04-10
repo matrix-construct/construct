@@ -966,14 +966,8 @@ console_cmd__aio(opt &out, const string_view &line)
 	    << std::setw(9) << std::right << s.max_writes
 	    << std::endl;
 
-	out << std::setw(18) << std::left << "errors"
-	    << std::setw(9) << std::right << s.errors
-	    << "   " << pretty(iec(s.bytes_errors))
-	    << std::endl;
-
-	out << std::setw(18) << std::left << "cancel"
-	    << std::setw(9) << std::right << s.cancel
-	    << "   " << pretty(iec(s.bytes_cancel))
+	out << std::setw(18) << std::left << "submits"
+	    << std::setw(9) << std::right << s.submits
 	    << std::endl;
 
 	out << std::setw(18) << std::left << "handles"
@@ -984,8 +978,18 @@ console_cmd__aio(opt &out, const string_view &line)
 	    << std::setw(9) << std::right << s.events
 	    << std::endl;
 
-	out << std::setw(18) << std::left << "submits"
-	    << std::setw(9) << std::right << s.submits
+	out << std::setw(18) << std::left << "stalls"
+	    << std::setw(9) << std::right << s.stalls
+	    << std::endl;
+
+	out << std::setw(18) << std::left << "errors"
+	    << std::setw(9) << std::right << s.errors
+	    << "   " << pretty(iec(s.bytes_errors))
+	    << std::endl;
+
+	out << std::setw(18) << std::left << "cancel"
+	    << std::setw(9) << std::right << s.cancel
+	    << "   " << pretty(iec(s.bytes_cancel))
 	    << std::endl;
 
 	return true;

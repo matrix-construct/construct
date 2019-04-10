@@ -810,17 +810,35 @@ size_t
 ircd::fs::aio::system::io_submit()
 try
 {
-	const ctx::syscall_usage_warning message
+	#ifndef NDEBUG
+	const size_t count[3]
 	{
-		"fs::aio::system::submit(in_flight:%zu qcount:%zu r:%zd w:%zd s:%zd)",
-		in_flight,
-		qcount,
 		count_queued(op::READ),
 		count_queued(op::WRITE),
 		count_queued(op::SYNC),
 	};
 
-	return syscall<SYS_io_submit>(head.get(), qcount, queue.data());
+	ctx::syscall_usage_warning warning
+	{
+		"fs::aio::system::submit(in_flight:%zu qcount:%zu r:%zu w:%zu s:%zu)",
+		in_flight,
+		qcount,
+		count[0],
+		count[1],
+		count[2],
+	};
+	#endif
+
+	const auto ret
+	{
+		syscall<SYS_io_submit>(head.get(), qcount, queue.data())
+	};
+
+	#ifndef NDEBUG
+	stats.stalls += warning.timer.stop() > 0;
+	#endif
+
+	return ret;
 }
 catch(const std::system_error &e)
 {

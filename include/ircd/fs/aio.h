@@ -58,6 +58,7 @@ struct ircd::fs::aio::stats
 	uint64_t errors {0};               ///< count of response errcodes
 	uint64_t reads {0};                ///< count of read complete
 	uint64_t writes {0};               ///< count of write complete
+	uint64_t stalls {0};               ///< count of io_submit's blocking.
 
 	uint64_t bytes_requests {0};       ///< total bytes for requests created
 	uint64_t bytes_complete {0};       ///< total bytes for requests completed
