@@ -837,6 +837,7 @@ console_cmd__ios(opt &out, const string_view &line)
 	    << " " << std::right << std::setw(10) << "FREES"
 	    << " " << std::right << std::setw(26) << "ALLOCATED"
 	    << " " << std::right << std::setw(26) << "FREED"
+	    << " " << std::right << std::setw(8) << "QUEUED"
 	    << " " << std::right << std::setw(8) << "FAULTS"
 	    << std::endl
 	    ;
@@ -852,6 +853,7 @@ console_cmd__ios(opt &out, const string_view &line)
 		    << " " << std::right << std::setw(10) << s.frees
 		    << " " << std::right << std::setw(26) << pretty(iec(s.alloc_bytes))
 		    << " " << std::right << std::setw(26) << pretty(iec(s.free_bytes))
+		    << " " << std::right << std::setw(8) << s.queued
 		    << " " << std::right << std::setw(8) << s.faults
 		    ;
 	}};

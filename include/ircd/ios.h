@@ -97,6 +97,7 @@ struct ircd::ios::descriptor
 
 struct ircd::ios::descriptor::stats
 {
+	uint64_t queued {0};
 	uint64_t calls {0};
 	uint64_t faults {0};
 	uint64_t allocs {0};
@@ -160,7 +161,10 @@ ircd::ios::handle<function>::handle(ios::descriptor &d,
                                     function&& f)
 :handler{&d}
 ,f{std::forward<function>(f)}
-{}
+{
+	assert(d.stats);
+	d.stats->queued++;
+}
 
 template<class function>
 template<class... args>
@@ -168,6 +172,9 @@ void
 ircd::ios::handle<function>::operator()(args&&... a)
 const
 {
+	assert(descriptor && descriptor->stats);
+	assert(descriptor->stats->queued > 0);
+	descriptor->stats->queued--;
 	f(std::forward<args>(a)...);
 }
 

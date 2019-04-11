@@ -175,6 +175,7 @@ struct ircd::ios::descriptor::stats &
 ircd::ios::descriptor::stats::operator+=(const stats &o)
 &
 {
+	queued += o.queued;
 	calls += o.calls;
 	faults += o.faults;
 	allocs += o.allocs;
