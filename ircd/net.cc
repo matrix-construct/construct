@@ -2776,7 +2776,6 @@ try
 		{
 			static char buf[1] alignas(16);
 			static const ilist<mutable_buffer> bufs{buf};
-			__builtin_prefetch(buf, 1, 0); // 1 = write, 0 = no cache
 			static ios::descriptor desc
 			{
 				"ircd::net::socket::wait ready::READ"
