@@ -7630,6 +7630,82 @@ console_cmd__room__state(opt &out, const string_view &line)
 			string_view{}
 	};
 
+	state.for_each(type, [&out, &state]
+	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
+	{
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
+
+		out
+		    << std::right
+		    << std::setw(13) << json::get<"origin_server_ts"_>(event)
+		    << std::right << " "
+		    << std::setw(9) << json::get<"depth"_>(event)
+		    << std::right << " [ "
+		    << std::setw(30) << type
+		    << std::left << " ] [ "
+		    << std::setw(50) << state_key
+		    << std::left << " ] "
+		    << std::setw(72) << json::get<"event_id"_>(event);
+		    ;
+
+		size_t i(0);
+		auto prev_idx(event_idx);
+		for(; i < 4 && prev_idx; ++i, prev_idx = state.prev(prev_idx))
+			out << (i? " <-- " : "") << prev_idx;
+
+		out << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__room__state__events(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id_or_type"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto &event_id_or_type
+	{
+		param.at("event_id_or_type", string_view{})
+	};
+
+	const auto is_event_id
+	{
+		m::has_sigil(event_id_or_type) && valid(m::id::EVENT, event_id_or_type)
+	};
+
+	const m::room room
+	{
+		room_id, is_event_id? event_id_or_type : string_view{}
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	const string_view &type
+	{
+		!is_event_id?
+			event_id_or_type:
+			string_view{}
+	};
+
 	state.for_each(type, [&out](const m::event &event)
 	{
 		out << pretty_oneline(event) << std::endl;
