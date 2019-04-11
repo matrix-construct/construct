@@ -1544,26 +1544,26 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 	    << std::setw(7)
 	    << "STATE"
 	    << " "
+	    << std::setw(8)
+	    << "YIELDS"
+	    << " "
+	    << std::setw(5)
+	    << "NOTES"
+	    << " "
 	    << std::setw(15)
 	    << "CYCLE COUNT"
 	    << " "
 	    << std::setw(6)
 	    << "PCT"
 	    << " "
-	    << std::setw(7)
+	    << std::setw(25)
 	    << "STACK"
 	    << " "
-	    << std::setw(7)
+	    << std::setw(25)
 	    << "LIMIT"
 	    << " "
 	    << std::setw(6)
 	    << "PCT"
-	    << " "
-	    << std::setw(8)
-	    << "YIELDS"
-	    << " "
-	    << std::setw(5)
-	    << "NOTES"
 	    << " "
 	    << ":NAME"
 	    << std::endl;
@@ -1584,6 +1584,12 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    ;
 
 		out << " "
+		    << std::setw(8) << std::right << yields(ctx);
+
+		out << " "
+		    << std::setw(5) << std::right << notes(ctx);
+
+		out << " "
 		    << std::setw(15) << std::right << cycles(ctx);
 
 		const long double total_cyc(ctx::prof::get().cycles);
@@ -1596,11 +1602,12 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (tsc_pct * 100)
 		    << "%";
 
+		thread_local char pbuf[32];
 		out << " "
-		    << std::setw(7) << std::right << stack_at(ctx);
+		    << std::setw(25) << std::right << pretty(pbuf, iec(stack_at(ctx)));
 
 		out << " "
-		    << std::setw(7) << std::right << stack_max(ctx);
+		    << std::setw(25) << std::right << pretty(pbuf, iec(stack_max(ctx)));
 
 		const auto stack_pct
 		{
@@ -1610,12 +1617,6 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		out << " "
 		    << std::setw(5) << std::right << std::fixed << std::setprecision(2) << (stack_pct * 100)
 		    << "%";
-
-		out << " "
-		    << std::setw(8) << std::right << yields(ctx);
-
-		out << " "
-		    << std::setw(5) << std::right << notes(ctx);
 
 		out << " :"
 		    << name(ctx);
