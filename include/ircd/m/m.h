@@ -62,6 +62,7 @@ namespace ircd::m::vm
 #include "feds.h"
 #include "app.h"
 #include "sync.h"
+#include "fetch.h"
 
 struct ircd::m::init
 {

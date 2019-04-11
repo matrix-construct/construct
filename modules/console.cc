@@ -10599,7 +10599,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.prev_check_exists = false;
-	vmopts.head_must_exist = false;
+	vmopts.state_must_exist = false;
 	vmopts.history = false;
 	vmopts.verify = false;
 	vmopts.notify = false;
@@ -10708,7 +10708,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.prev_check_exists = false;
-	vmopts.head_must_exist = false;
+	vmopts.state_must_exist = false;
 	vmopts.verify = false;
 	vmopts.history = false;
 	vmopts.notify = false;
@@ -10867,7 +10867,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.prev_check_exists = false;
-	vmopts.head_must_exist = false;
+	vmopts.state_must_exist = false;
 	vmopts.history = false;
 	vmopts.verify = false;
 	vmopts.notify = false;
@@ -10982,6 +10982,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 
 	m::v1::event::opts opts;
 	opts.remote = remote;
+	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
 	{
 		96_KiB
@@ -11044,17 +11045,16 @@ console_cmd__fed__event(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.prev_check_exists = false;
-	vmopts.head_must_exist = false;
+	vmopts.prev_check_exists = true;
+	vmopts.state_must_exist = true;
 	vmopts.history = false;
 	vmopts.notify = false;
-	vmopts.verify = false;
+	//vmopts.verify = false;
 	m::vm::eval eval
 	{
-		vmopts
+		event, vmopts
 	};
 
-	eval(event);
 	return true;
 }
 
@@ -11979,5 +11979,35 @@ console_cmd__mc__register__available(opt &out, const string_view &line)
 	};
 
 	out << uint(code) << ": " << string_view{response} << std::endl;
+	return true;
+}
+
+//
+// fetch
+//
+
+bool
+console_cmd__fetch(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "remote"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const net::hostport hostport
+	{
+		param["remote"]?
+			param.at("remote"):
+			room_id.host()
+	};
+
+	m::fetch::state_ids(room_id, hostport);
+
+	out << "done" << std::endl;
 	return true;
 }

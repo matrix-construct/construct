@@ -16,6 +16,39 @@ IRCD_MODULE
     "Event Fetch Unit", ircd::m::fetch::init, ircd::m::fetch::fini
 };
 
+decltype(ircd::m::fetch::hook)
+ircd::m::fetch::hook
+{
+	hook_handler,
+	{
+		{ "_site",  "vm.fetch" }
+	}
+};
+
+decltype(ircd::m::fetch::request_context)
+ircd::m::fetch::request_context
+{
+	"m::fetch req", 512_KiB, &request_worker, context::POST
+};
+
+decltype(ircd::m::fetch::eval_context)
+ircd::m::fetch::eval_context
+{
+	"m::fetch eval", 512_KiB, &eval_worker, context::POST
+};
+
+decltype(ircd::m::fetch::complete)
+ircd::m::fetch::complete;
+
+decltype(ircd::m::fetch::rooms)
+ircd::m::fetch::rooms;
+
+decltype(ircd::m::fetch::requests)
+ircd::m::fetch::requests;
+
+decltype(ircd::m::fetch::dock)
+ircd::m::fetch::dock;
+
 //
 // init
 //
@@ -29,21 +62,15 @@ ircd::m::fetch::init()
 void
 ircd::m::fetch::fini()
 {
-
+	request_context.terminate();
+	eval_context.terminate();
+	request_context.join();
+	eval_context.join();
 }
 
 //
 // fetch_phase
 //
-
-decltype(ircd::m::fetch::hook)
-ircd::m::fetch::hook
-{
-	hook_handler,
-	{
-		{ "_site",  "vm.fetch" }
-	}
-};
 
 void
 ircd::m::fetch::hook_handler(const event &event,
@@ -69,19 +96,24 @@ ircd::m::fetch::hook_handler(const event &event,
 		at<"room_id"_>(event)
 	};
 
-	if(!exists(room_id))
+	if(opts.state_check_exists && !exists(room_id))
 	{
-		if((opts.head_must_exist || opts.history) && !opts.fetch_auth_chain)
+		// Don't pass event_id in ctor here or m::NOT_FOUND.
+		m::room room{room_id};
+		room.event_id = event_id;
+
+		if(opts.state_must_exist && !opts.state_wait && !opts.state_fetch)
 			throw vm::error
 			{
 				vm::fault::STATE, "Missing state for room %s",
 				string_view{room_id}
 			};
 
-		m::room room{room_id};
-		room.event_id = event_id;
-		const m::room::auth auth{room};
-		auth.chain_eval(auth, event_id.host());
+		if(opts.auth_chain_fetch)
+		{
+			const m::room::auth auth{room};
+			auth.chain_eval(auth, event_id.host());
+		}
 	}
 
 	const event::prev prev
@@ -94,6 +126,7 @@ ircd::m::fetch::hook_handler(const event &event,
 		size(json::get<"prev_events"_>(prev))
 	};
 
+	size_t prev_exists(0);
 	for(size_t i(0); i < prev_count; ++i)
 	{
 		const auto &prev_id
@@ -101,20 +134,108 @@ ircd::m::fetch::hook_handler(const event &event,
 			prev.prev_event(i)
 		};
 
-		if(!eval.opts->prev_check_exists)
+		if(!opts.prev_check_exists)
 			continue;
 
 		if(exists(prev_id))
-			continue;
-
-		throw vm::error
 		{
-			vm::fault::EVENT, "Missing prev %s in %s in %s",
-			string_view{prev_id},
-			json::get<"event_id"_>(*eval.event_),
-			json::get<"room_id"_>(*eval.event_)
-		};
+			++prev_exists;
+			continue;
+		}
+
+		if(!opts.prev_fetch || !opts.prev_wait)
+			if(opts.prev_must_all_exist)
+				throw vm::error
+				{
+					vm::fault::EVENT, "Missing prev %s in %s in %s",
+					string_view{prev_id},
+					json::get<"event_id"_>(*eval.event_),
+					json::get<"room_id"_>(*eval.event_)
+				};
 	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/fetch.h
+//
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::fetch::state_ids(const room &room)
+{
+	const m::room::origins origins{room};
+	origins.for_each([&room](const string_view &origin)
+	{
+		log::debug
+		{
+			log, "Requesting state_ids for %s from '%s'",
+			string_view{room.room_id},
+			string_view{origin},
+		};
+
+		try
+		{
+			state_ids(room, origin);
+		}
+		catch(const std::exception &e)
+		{
+			log::error
+			{
+				log, "Requesting state_ids for %s from '%s' :%s",
+				string_view{room.room_id},
+				origin,
+				e.what(),
+			};
+		}
+	});
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::fetch::state_ids(const room &room,
+                          const net::hostport &remote)
+{
+	m::v1::state::opts opts;
+	opts.remote = remote;
+	opts.event_id = room.event_id;
+	opts.ids_only = true;
+	opts.dynamic = true;
+	const unique_buffer<mutable_buffer> buf
+	{
+		8_KiB
+	};
+
+	m::v1::state request
+	{
+		room.room_id, buf, std::move(opts)
+	};
+
+	request.wait(seconds(20)); //TODO: conf
+	request.get();
+
+    const json::object &response
+    {
+        request
+    };
+
+	const json::array &auth_chain_ids
+	{
+		response["auth_chain_ids"]
+	};
+
+	const json::array &pdu_ids
+	{
+		response["pdu_ids"]
+	};
+
+	for(const json::string &event_id : auth_chain_ids)
+		if(!exists(m::event::id(event_id)))
+			start(event_id, room.room_id);
+
+	for(const json::string &event_id : pdu_ids)
+		if(!exists(m::event::id(event_id)))
+			start(event_id, room.room_id);
 }
 
 //
@@ -188,7 +309,214 @@ ircd::m::room::auth::chain_fetch(const auth &auth,
 }
 
 //
+// request worker
+//
+
+void
+ircd::m::fetch::request_worker()
+try
+{
+	while(1)
+	{
+		dock.wait([]
+		{
+			return std::any_of(begin(requests), end(requests), []
+			(const request &r)
+			{
+				return r.finished == 0;
+			});
+		});
+
+		request_handle();
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "fetch request worker :%s",
+		e.what()
+	};
+
+	throw;
+}
+
+void
+ircd::m::fetch::request_handle()
+{
+	auto next
+	{
+		ctx::when_any(requests.begin(), requests.end())
+	};
+
+	if(!next.wait(seconds(5), std::nothrow))
+	{
+		for(const auto &request_ : requests)
+		{
+			auto &request(const_cast<fetch::request &>(request_));
+			if(!request.finished)
+				request.retry();
+		}
+
+		return;
+	}
+
+	const auto it
+	{
+		next.get()
+	};
+
+	if(it == end(requests))
+		return;
+
+	request_handle(it);
+}
+
+void
+ircd::m::fetch::request_handle(const decltype(requests)::iterator &it)
+try
+{
+	auto &request
+	{
+		const_cast<fetch::request &>(*it)
+	};
+
+	if(request.finished)
+		return;
+
+	if(!request.handle())
+		return;
+
+	complete.emplace_back(it);
+	dock.notify_all();
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "fetch eval %s in %s :%s",
+		string_view{it->event_id},
+		string_view{it->room_id},
+		e.what()
+	};
+}
+
+//
+// eval worker
+//
+
+void
+ircd::m::fetch::eval_worker()
+try
+{
+	while(1)
+	{
+		dock.wait([]
+		{
+			return !complete.empty();
+		});
+
+		eval_handle();
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "fetch eval worker :%s",
+		e.what()
+	};
+
+	throw;
+}
+
+void
+ircd::m::fetch::eval_handle()
+{
+	const unwind pop{[]
+	{
+		complete.pop_front();
+	}};
+
+	const auto &it
+	{
+		complete.front()
+	};
+
+	const unwind erase{[&it]
+	{
+		requests.erase(it);
+	}};
+
+	eval_handle(it);
+}
+
+void
+ircd::m::fetch::eval_handle(const decltype(requests)::iterator &it)
+try
+{
+	auto &request
+	{
+		const_cast<fetch::request &>(*it)
+	};
+
+	if(request.eptr)
+		std::rethrow_exception(request.eptr);
+
+	const json::object &event
+	{
+		request
+	};
+
+	m::vm::opts opts;
+	opts.prev_check_exists = false;
+	opts.infolog_accept = true;
+	m::vm::eval
+	{
+		m::event{event}, opts
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "fetch eval %s in %s :%s",
+		string_view{it->event_id},
+		string_view{it->room_id},
+		e.what()
+	};
+}
+
+//
 // fetch::request
+//
+
+bool
+ircd::m::fetch::operator<(const request &a,
+                          const request &b)
+noexcept
+{
+	return a.event_id < b.event_id;
+}
+
+bool
+ircd::m::fetch::operator<(const request &a,
+                          const string_view &b)
+noexcept
+{
+	return a.event_id < b;
+}
+
+bool
+ircd::m::fetch::operator<(const string_view &a,
+                          const request &b)
+noexcept
+{
+	return a < b.event_id;
+}
+
+//
+// fetch::request::request
 //
 
 ircd::m::fetch::request::request(const m::room::id &room_id,
@@ -199,7 +527,7 @@ ircd::m::fetch::request::request(const m::room::id &room_id,
 ,_buf
 {
 	!buf?
-		unique_buffer<mutable_buffer>{96_KiB}:
+		unique_buffer<mutable_buffer>{8_KiB}:
 		unique_buffer<mutable_buffer>{}
 }
 ,buf
@@ -207,22 +535,21 @@ ircd::m::fetch::request::request(const m::room::id &room_id,
 	empty(buf)? _buf: buf
 }
 {
-	// Ensure buffer has enough room for a worst-case event, request
-	// headers and response headers.
-	assert(size(this->buf) >= 64_KiB + 8_KiB + 8_KiB);
+	//assert(size(this->buf) >= 64_KiB + 8_KiB + 8_KiB);
+	assert(size(this->buf) >= 8_KiB);
 }
 
 void
 ircd::m::fetch::request::start()
 {
 	m::v1::event::opts opts;
-	opts.dynamic = false;
+	opts.dynamic = true;
 	opts.remote = origin?: select_random_origin();
-	start(std::move(opts));
+	start(opts);
 }
 
 void
-ircd::m::fetch::request::start(m::v1::event::opts &&opts)
+ircd::m::fetch::request::start(m::v1::event::opts &opts)
 {
 	if(!started)
 		started = ircd::time();
@@ -231,6 +558,16 @@ ircd::m::fetch::request::start(m::v1::event::opts &&opts)
 	static_cast<m::v1::event &>(*this) =
 	{
 		this->event_id, this->buf, std::move(opts)
+	};
+
+	dock.notify_all();
+
+	log::debug
+	{
+		log, "Started request for %s in %s from '%s'",
+		string_view{event_id},
+		string_view{room_id},
+		string_view{origin},
 	};
 }
 
@@ -301,11 +638,33 @@ ircd::m::fetch::request::handle()
 
 	future.wait(); try
 	{
-		future.get();
+		const auto code
+		{
+			future.get()
+		};
+
+		log::debug
+		{
+			log, "%u %s for %s in %s from '%s'",
+			uint(code),
+			status(code),
+			string_view{event_id},
+			string_view{room_id},
+			string_view{origin}
+		};
 	}
 	catch(...)
 	{
 		eptr = std::current_exception();
+
+		log::derror
+		{
+			log, "Failure for %s in %s from '%s' :%s",
+			string_view{event_id},
+			string_view{room_id},
+			string_view{origin},
+			what(eptr),
+		};
 	}
 
 	if(!eptr)
@@ -320,6 +679,7 @@ void
 ircd::m::fetch::request::retry()
 try
 {
+	server::cancel(*this);
 	eptr = std::exception_ptr{};
 	origin = {};
 	start();
@@ -334,28 +694,5 @@ void
 ircd::m::fetch::request::finish()
 {
 	finished = ircd::time();
-}
-
-bool
-ircd::m::fetch::request::operator()(const request &a,
-                                    const request &b)
-const
-{
-	return a.event_id < b.event_id;
-}
-
-bool
-ircd::m::fetch::request::operator()(const request &a,
-                                    const string_view &b)
-const
-{
-	return a.event_id < b;
-}
-
-bool
-ircd::m::fetch::request::operator()(const string_view &a,
-                                    const request &b)
-const
-{
-	return a < b.event_id;
+	dock.notify_all();
 }

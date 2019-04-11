@@ -240,12 +240,8 @@ bootstrap(const string_view &host,
 	};
 
 	m::vm::copts opts;
-	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	opts.prev_check_exists = false;
-	opts.head_must_exist = false;
 	opts.history = false;
 	opts.infolog_accept = true;
-	opts.eval = false;
 	const m::event::id::buf event_id
 	{
 		m::vm::eval

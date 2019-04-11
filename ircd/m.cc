@@ -431,6 +431,44 @@ ircd::m::self::init::init(const string_view &origin,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/fetch.h
+//
+
+decltype(ircd::m::fetch::log)
+ircd::m::fetch::log
+{
+	"matrix.fetch"
+};
+
+void
+ircd::m::fetch::state_ids(const room &r)
+{
+	using prototype = void (const room &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::state_ids"
+	};
+
+	call(r);
+}
+
+void
+ircd::m::fetch::state_ids(const room &r,
+                          const net::hostport &hp)
+{
+	using prototype = void (const room &, const net::hostport &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::state_ids"
+	};
+
+	call(r, hp);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/sync.h
 //
 
