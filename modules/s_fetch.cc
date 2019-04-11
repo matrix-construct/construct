@@ -143,15 +143,14 @@ ircd::m::fetch::hook_handler(const event &event,
 			continue;
 		}
 
-		if(!opts.prev_fetch || !opts.prev_wait)
-			if(opts.prev_must_all_exist)
-				throw vm::error
-				{
-					vm::fault::EVENT, "Missing prev %s in %s in %s",
-					string_view{prev_id},
-					json::get<"event_id"_>(*eval.event_),
-					json::get<"room_id"_>(*eval.event_)
-				};
+		if((!opts.prev_fetch || !opts.prev_wait) && opts.prev_must_all_exist)
+			throw vm::error
+			{
+				vm::fault::EVENT, "Missing prev %s in %s in %s",
+				string_view{prev_id},
+				json::get<"event_id"_>(*eval.event_),
+				json::get<"room_id"_>(*eval.event_)
+			};
 
 		if(opts.prev_fetch)
 			start(prev_id, room_id);
@@ -520,7 +519,6 @@ try
 	};
 
 	m::vm::opts opts;
-	opts.prev_check_exists = false;
 	opts.infolog_accept = true;
 	m::vm::eval
 	{

@@ -11143,6 +11143,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.prev_check_exists = true;
+	vmopts.prev_wait = true;
 	vmopts.state_must_exist = true;
 	vmopts.history = false;
 	vmopts.notify = false;

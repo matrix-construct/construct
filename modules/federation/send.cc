@@ -72,7 +72,6 @@ handle_pdus(client &client,
 {
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.prev_check_exists = false;
 	vmopts.nothrows = -1U;
 	vmopts.infolog_accept = true;
 	vmopts.warnlog |= m::vm::fault::STATE;
