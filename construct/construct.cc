@@ -86,7 +86,10 @@ try
 	applyargs();
 
 	// cores are not dumped without consent of the user to maintain the privacy
-	// of cryptographic key material in memory at the time of the crash.
+	// of cryptographic key material in memory at the time of the crash. Note
+	// that on systems that support MADV_DONTDUMP such material will be excluded
+	// from the coredump. Nevertheless, other sensitive material such as user
+	// data may still be present in the core.
 	if(RB_DEBUG_LEVEL || ircd::debugmode)
 		enable_coredumps();
 
