@@ -1568,7 +1568,7 @@ try
 {
 	static ios::descriptor desc
 	{
-		"ircd::net::socket timer"
+		"ircd::net::acceptor accept"
 	};
 
 	assert(!handle_set);
