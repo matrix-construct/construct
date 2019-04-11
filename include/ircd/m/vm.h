@@ -211,15 +211,47 @@ struct ircd::m::vm::opts
 	// Verify the origin signature
 	bool verify {true};
 
-	/// TODO: Y
-	bool prev_check_exists {true};
+	/// Performs a query during the fetch stage to check if the room's state
+	/// exists locally. This query is required for any fetching to be
+	/// possible.
+	bool state_check_exists {true};
 
-	/// TODO: Y
-	bool head_must_exist {false};
+	/// Whether to automatically fetch the room state when there is no state
+	/// for the room found on the this server.
+	bool state_fetch {true};
+
+	/// Waits for a condition where fault::STATE would not be thrown, depending
+	/// on the below options. In other words, the context blocks until the
+	/// system has fetched and resolved the state from remote parties.
+	bool state_wait {true};
+
+	/// Throws fault::STATE if the room's state does not exist.
+	bool state_must_exist {true};
 
 	/// Whether to automatically fetch and evaluate the auth chain for the
 	/// event; effective when there is no state for this room on the server.
-	bool fetch_auth_chain {true};
+	bool auth_chain_fetch {true};
+
+	/// Performs a query during the fetch stage to check if the referenced
+	/// prev_events exist locally. This query is required for any fetching
+	/// to be possible.
+	bool prev_check_exists {true};
+
+	/// Dispatches a fetch operation when a prev_event does not exist locally.
+	bool prev_fetch {true};
+
+	/// Waits for a condition where fault::EVENT would not be thrown, depending
+	/// on the below options. In other words, the context blocks until one/all
+	/// prev_events has been evaluated. This is required for ordered evaluation.
+	bool prev_wait {false};
+
+	/// Throws fault::EVENT if *none* of the prev_events exist locally,
+	/// regardless of whether fetching was initiated for them.
+	bool prev_must_exist {false};
+
+	/// Throws fault::EVENT if *any* of the prev_events do not exist locally,
+	/// in contrast to prev_must_exist.
+	bool prev_must_all_exist {false};
 
 	/// Evaluators can set this value to optimize the creation of the database
 	/// transaction where the event will be stored. This value should be set
