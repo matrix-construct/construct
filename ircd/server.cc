@@ -278,6 +278,7 @@ ircd::server::request::opts_default
 /// request go out of scope at virtually any time without disrupting the
 /// pipeline and other requests.
 bool
+__attribute__((stack_protect))
 ircd::server::cancel(request &request)
 {
 	if(!request.tag)
@@ -321,6 +322,7 @@ ircd::server::cancel(request &request)
 }
 
 void
+__attribute__((stack_protect))
 ircd::server::submit(const hostport &hostport,
                      request &request)
 {
@@ -1647,6 +1649,7 @@ ircd::server::link::wait_writable()
 }
 
 void
+__attribute__((stack_protect))
 ircd::server::link::handle_writable(const error_code &ec)
 try
 {
@@ -1820,6 +1823,7 @@ ircd::server::link::wait_readable()
 }
 
 void
+__attribute__((stack_protect))
 ircd::server::link::handle_readable(const error_code &ec)
 try
 {
@@ -2547,6 +2551,7 @@ const
 /// through specific callbacks so the peer can learn information.
 ///
 ircd::const_buffer
+__attribute__((stack_protect))
 ircd::server::tag::read_buffer(const const_buffer &buffer,
                                bool &done,
                                link &link)
@@ -2830,6 +2835,7 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 }
 
 ircd::const_buffer
+__attribute__((stack_protect))
 ircd::server::tag::read_chunk_head(const const_buffer &buffer,
                                    bool &done,
                                    const uint8_t recursion_level)
@@ -3014,6 +3020,7 @@ ircd::server::tag::read_chunk_content(const const_buffer &buffer,
 }
 
 ircd::const_buffer
+__attribute__((stack_protect))
 ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
                                            bool &done,
                                            const uint8_t recursion_level)
@@ -3237,6 +3244,7 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 /// whether it receiving HTTP head data or whether it is in content mode.
 ///
 ircd::mutable_buffer
+__attribute__((stack_protect))
 ircd::server::tag::make_read_buffer()
 const
 {
