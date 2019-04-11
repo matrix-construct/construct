@@ -313,11 +313,9 @@ download(const mutable_buffer &head_buf,
 	};
 
 	//TODO: --- This should use the progress callback to build blocks
-	// Null content buffer will cause dynamic allocation internally.
-	const mutable_buffer in_content{};
 	server::request remote_request
 	{
-		remote, { out_head }, { in_head, in_content }, opts
+		remote, { out_head }, { in_head, {} }, opts
 	};
 
 	if(!remote_request.wait(seconds(media_download_timeout), std::nothrow))
