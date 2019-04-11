@@ -1542,6 +1542,8 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 	    << "    "
 	    << "STATE"
 	    << "   "
+	    << "NOTES"
+	    << "      "
 	    << "YIELDS"
 	    << "      "
 	    << "CYCLE COUNT"
@@ -1565,11 +1567,16 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << (started(ctx)? 'S' : '-')
 		    << (running(ctx)? 'R' : '-')
 		    << (waiting(ctx)? 'W' : '-')
+		    << (notes(ctx)? 'N' : '-')
 		    << (finished(ctx)? 'F' : '-')
 		    << (interruptible(ctx)? '-' : 'N')
 		    << (interruption(ctx)? 'I' : '-')
 		    << (termination(ctx)? 'T' : '-')
 		    ;
+
+		out << " "
+		    << std::setw(5) << std::right << notes(ctx)
+		    << " ";
 
 		out << " "
 		    << std::setw(8) << std::right << yields(ctx)
