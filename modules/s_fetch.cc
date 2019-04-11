@@ -327,6 +327,7 @@ try
 			});
 		});
 
+		request_cleanup();
 		request_handle();
 	}
 }
@@ -339,6 +340,19 @@ catch(const std::exception &e)
 	};
 
 	throw;
+}
+
+void
+ircd::m::fetch::request_cleanup()
+{
+	auto it(begin(requests));
+	while(it != end(requests))
+	{
+		if(it->finished && empty(it->buf))
+			it = requests.erase(it);
+		else
+			++it;
+	}
 }
 
 void
@@ -433,20 +447,17 @@ catch(const std::exception &e)
 void
 ircd::m::fetch::eval_handle()
 {
+	assert(!complete.empty());
 	const unwind pop{[]
 	{
+		assert(!complete.empty());
 		complete.pop_front();
 	}};
 
-	const auto &it
+	const auto it
 	{
 		complete.front()
 	};
-
-	const unwind erase{[&it]
-	{
-		requests.erase(it);
-	}};
 
 	eval_handle(it);
 }
@@ -460,8 +471,23 @@ try
 		const_cast<fetch::request &>(*it)
 	};
 
+	const unwind free{[&request]
+	{
+		request._buf = {};
+		request.buf = request._buf;
+	}};
+
 	if(request.eptr)
 		std::rethrow_exception(request.eptr);
+
+	log::debug
+	{
+		log, "eval handling %s in %s (r:%zu c:%zu)",
+		string_view{request.event_id},
+		string_view{request.room_id},
+		requests.size(),
+		complete.size(),
+	};
 
 	const json::object &event
 	{
@@ -551,6 +577,7 @@ ircd::m::fetch::request::start()
 void
 ircd::m::fetch::request::start(m::v1::event::opts &opts)
 {
+	assert(finished == 0);
 	if(!started)
 		started = ircd::time();
 
