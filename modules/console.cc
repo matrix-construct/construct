@@ -12096,15 +12096,19 @@ console_cmd__fetch(opt &out, const string_view &line)
 		m::room_id(param.at("room_id"))
 	};
 
+	if(!param["remote"])
+	{
+		m::fetch::state_ids(room_id);
+		out << "done" << std::endl;
+		return true;
+	}
+
 	const net::hostport hostport
 	{
-		param["remote"]?
-			param.at("remote"):
-			room_id.host()
+		param["remote"]
 	};
 
 	m::fetch::state_ids(room_id, hostport);
-
 	out << "done" << std::endl;
 	return true;
 }
