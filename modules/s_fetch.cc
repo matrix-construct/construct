@@ -152,6 +152,15 @@ ircd::m::fetch::hook_handler(const event &event,
 					json::get<"event_id"_>(*eval.event_),
 					json::get<"room_id"_>(*eval.event_)
 				};
+
+		if(opts.prev_fetch)
+			start(prev_id, room_id);
+
+		if(opts.prev_fetch && opts.prev_wait)
+			dock.wait([&prev_id]
+			{
+				return !requests.count(prev_id);
+			});
 	}
 }
 

@@ -10,7 +10,7 @@
 
 using namespace ircd;
 
-static resource::response
+static void
 get__initialsync_remote(client &client,
                         const resource::request &request,
                         const m::room &room);
@@ -56,12 +56,12 @@ get__initialsync(client &client,
 	if(!exists(room))
 	{
 		if(!my(room))
-			return get__initialsync_remote(client, request, room);
-
-		throw m::NOT_FOUND
-		{
-			"room_id '%s' does not exist.", string_view{room_id}
-		};
+			get__initialsync_remote(client, request, room);
+		else
+			throw m::NOT_FOUND
+			{
+				"room_id '%s' does not exist.", string_view{room_id}
+			};
 	}
 
 	resource::response::chunked response
@@ -240,13 +240,34 @@ get__initialsync_local(client &client,
 	}
 }
 
-resource::response
+void
 get__initialsync_remote(client &client,
                         const resource::request &request,
                         const m::room &room)
 {
-	throw m::UNSUPPORTED
+	const auto head
 	{
-		"Remote room initialSync not yet implemented."
+		m::v1::fetch_head(room, room.room_id.host(), request.user_id)
 	};
+
+	m::room room_{room};
+	room_.event_id = head;
+
+	const net::hostport remote
+	{
+		my_host(room_.event_id.host())?
+			room_.room_id.host():
+			room_.event_id.host()
+	};
+
+	m::room::auth auth{room_};
+	m::room::auth::chain_eval(auth, remote);
+
+	using prototype = void (const m::room &);
+	static mods::import<prototype> state_ids
+	{
+		"s_fetch", "ircd::m::fetch::state_ids"
+	};
+
+	state_ids(room_);
 }
