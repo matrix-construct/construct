@@ -41,6 +41,13 @@ webhook_url
 	{ "default", "/webhook" }
 };
 
+conf::item<bool>
+webhook_status_verbose
+{
+	{ "name",     "webhook.github.status.verbose" },
+	{ "default",  true                            },
+};
+
 resource
 webhook_resource
 {
@@ -174,8 +181,16 @@ github_handle(client &client,
 	};
 
 	if(type == "status")
+	{
 		if(unquote(request["state"]) == "pending")
 			return;
+
+		if(!webhook_status_verbose) switch(hash(unquote(request["state"])))
+		{
+			case "failure"_:  break;
+			default:          return;
+		}
+	}
 
 	const unique_buffer<mutable_buffer> buf
 	{
@@ -944,7 +959,6 @@ github_handle__status(std::ostream &out,
 	{
 		content["target_url"]
 	};
-
 
 	if(state == "success")
 		out << " "
