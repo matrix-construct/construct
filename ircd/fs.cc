@@ -338,7 +338,7 @@ try
 }
 catch(boost::system::system_error &e)
 {
-	throw_system_error(e);
+	throw_system_error(e.code());
 	__builtin_unreachable();
 }
 
