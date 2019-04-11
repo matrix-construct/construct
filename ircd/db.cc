@@ -1755,7 +1755,7 @@ ircd::db::database::column::column(database &d,
 	this->options.min_write_buffer_number_to_merge = 4;
 	this->options.max_write_buffer_number_to_maintain = 0;
 	this->options.level0_file_num_compaction_trigger = 2;
-	this->options.target_file_size_base = 24_MiB;
+	this->options.target_file_size_base = 48_MiB;
 	this->options.target_file_size_multiplier = 16;
 	this->options.max_bytes_for_level_base = 1_MiB;
 	this->options.max_bytes_for_level_multiplier = 2;
