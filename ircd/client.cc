@@ -202,10 +202,7 @@ ircd::client::close_all()
 	{
 		auto c(shared_from(*it->second)); ++it; try
 		{
-			c->close(net::dc::RST, [c](const auto &e)
-			{
-				dock.notify_all();
-			});
+			c->close(net::dc::RST, net::close_ignore);
 		}
 		catch(const std::exception &e)
 		{
@@ -632,6 +629,7 @@ ircd::client::client(std::shared_ptr<socket> sock)
 ircd::client::~client()
 noexcept try
 {
+	dock.notify_all();
 	//assert(!sock || !connected(*sock));
 }
 catch(const std::exception &e)
