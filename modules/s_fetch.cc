@@ -164,19 +164,33 @@ void
 IRCD_MODULE_EXPORT
 ircd::m::fetch::state_ids(const room &room)
 {
-	const m::room::origins origins{room};
-	origins.for_each([&room](const string_view &origin)
+	m::feds::opts opts;
+	opts.room_id = room.room_id;
+	opts.event_id = room.event_id;
+	opts.ids = true;
+	m::feds::state(opts, [&room](const auto &result)
 	{
-		log::debug
-		{
-			log, "Requesting state_ids for %s from '%s'",
-			string_view{room.room_id},
-			string_view{origin},
-		};
-
 		try
 		{
-			state_ids(room, origin);
+			if(result.eptr)
+				std::rethrow_exception(result.eptr);
+
+			const json::array &ids
+			{
+				result.object["pdu_ids"]
+			};
+
+			log::debug
+			{
+				log, "Got %zu state_ids for %s from '%s'",
+				ids.size(),
+				string_view{room.room_id},
+				string_view{result.origin},
+			};
+
+			for(const json::string &event_id : ids)
+				if(!exists(m::event::id(event_id)))
+					start(event_id, room.room_id);
 		}
 		catch(const std::exception &e)
 		{
@@ -184,10 +198,12 @@ ircd::m::fetch::state_ids(const room &room)
 			{
 				log, "Requesting state_ids for %s from '%s' :%s",
 				string_view{room.room_id},
-				origin,
+				result.origin,
 				e.what(),
 			};
 		}
+
+		return true;
 	});
 }
 

@@ -16,51 +16,60 @@ IRCD_MODULE
 	"Federation :General Library and Utils"
 };
 
-namespace ircd::m::feds::v1
+namespace ircd::m::feds
 {
-	struct version;
-	struct state;
-	struct head;
-	struct perspective;
+	template<class T> struct request;
 }
 
-struct ircd::m::feds::v1::version
-:m::v1::version
+template<class T>
+struct ircd::m::feds::request
+:T
 {
-	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
-
 	char origin[256];
-	char buf[16_KiB];
+	char buf[8_KiB];
 
-	version(const string_view &origin)
-	:m::v1::version{[&]
+	request(const std::function<T (request &)> &);
+	request(request &&) = delete;
+	request(const request &) = delete;
+};
+
+template<class T>
+ircd::m::feds::request<T>::request(const std::function<T (request &)> &closure)
+:T{closure(*this)}
+{}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::feds::version(const opts &opts,
+                       const closure &closure)
+{
+	static const auto make_request{[]
+	(auto &request, const auto &origin)
 	{
 		m::v1::version::opts opts;
 		opts.dynamic = false;
-		opts.remote = string_view{this->origin, strlcpy(this->origin, origin)};
-		return m::v1::version{mutable_buffer{buf}, std::move(opts)};
-	}()}
-	{}
-
-	version(version &&) = delete;
-	version(const version &) = delete;
-};
-
-std::list<m::feds::v1::version>
-feds__version(const m::room::id &room_id)
-{
-	std::list<m::feds::v1::version> reqs;
-	m::room::origins{room_id}.for_each([&reqs]
-	(const string_view &origin)
-	{
-		const auto emsg
+		opts.remote = string_view
 		{
-			ircd::server::errmsg(origin)
+			request.origin, strlcpy{request.origin, origin}
 		};
 
-		if(!emsg) try
+		return m::v1::version
 		{
-			reqs.emplace_back(origin);
+			request.buf, std::move(opts)
+		};
+	}};
+
+	std::list<m::feds::request<m::v1::version>> reqs;
+	m::room::origins{opts.room_id}.for_each([&reqs]
+	(const string_view &origin)
+	{
+		if(!server::errmsg(origin)) try
+		{
+			reqs.emplace_back([&origin]
+			(auto &request)
+			{
+				return make_request(request, origin);
+			});
 		}
 		catch(const std::exception &)
 		{
@@ -68,22 +77,9 @@ feds__version(const m::room::id &room_id)
 		}
 	});
 
-	return std::move(reqs);
-}
-
-extern "C" void
-feds__version(const m::room::id &room_id,
-              const milliseconds &timeout,
-              const m::feds::v1::version::closure &closure)
-{
-	auto reqs
+	const auto when
 	{
-		feds__version(room_id)
-	};
-
-	auto when
-	{
-		now<steady_point>() + timeout
+		now<steady_point>() + opts.timeout
 	};
 
 	while(!reqs.empty())
@@ -105,59 +101,56 @@ feds__version(const m::room::id &room_id,
 		{
 			const auto code{req.get()};
 			const json::object &response{req};
-			if(!closure(req.origin, {}, response))
-				break;
+			if(!closure({req.origin, {}, response}))
+				return false;
 		}
 		catch(const std::exception &)
 		{
-			if(!closure(req.origin, std::current_exception(), {}))
-				break;
+			const ctx::exception_handler eptr;
+			if(!closure({req.origin, eptr}))
+				return false;
 		}
 
 		reqs.erase(it);
 	}
+
+	return true;
 }
 
-struct ircd::m::feds::v1::state
-:m::v1::state
+bool
+IRCD_MODULE_EXPORT
+ircd::m::feds::state(const opts &opts,
+                     const closure &closure)
 {
-	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
-
-	char origin[256];
-	char buf[16_KiB];
-
-	state(const m::room::id &room_id, const m::event::id &event_id, const string_view &origin)
-	:m::v1::state{[&]
+	const auto make_request{[&opts]
+	(auto &request, const auto &origin)
 	{
-		m::v1::state::opts opts;
-		opts.dynamic = true;
-		opts.ids_only = true;
-		opts.event_id = event_id;
-		opts.remote = string_view{strlcpy{this->origin, origin}};
-		return m::v1::state{room_id, mutable_buffer{buf}, std::move(opts)};
-	}()}
-	{}
-
-	state(state &&) = delete;
-	state(const state &) = delete;
-};
-
-std::list<m::feds::v1::state>
-feds__state(const m::room::id &room_id,
-            const m::event::id &event_id)
-{
-	std::list<m::feds::v1::state> reqs;
-	m::room::origins{room_id}.for_each([&room_id, &event_id, &reqs]
-	(const string_view &origin)
-	{
-		const auto emsg
+		m::v1::state::opts v1opts;
+		v1opts.dynamic = true;
+		v1opts.ids_only = opts.ids;
+		v1opts.event_id = opts.event_id;
+		v1opts.remote = string_view
 		{
-			ircd::server::errmsg(origin)
+			strlcpy{request.origin, origin}
 		};
 
-		if(!emsg) try
+		return m::v1::state
 		{
-			reqs.emplace_back(room_id, event_id, origin);
+			opts.room_id, request.buf, std::move(v1opts)
+		};
+	}};
+
+	std::list<m::feds::request<m::v1::state>> reqs;
+	m::room::origins{opts.room_id}.for_each([&reqs, &make_request]
+	(const string_view &origin)
+	{
+		if(!server::errmsg(origin)) try
+		{
+			reqs.emplace_back([&origin, &make_request]
+			(auto &request)
+			{
+				return make_request(request, origin);
+			});
 		}
 		catch(const std::exception &)
 		{
@@ -165,23 +158,9 @@ feds__state(const m::room::id &room_id,
 		}
 	});
 
-	return std::move(reqs);
-}
-
-extern "C" void
-feds__state(const m::room::id &room_id,
-            const m::event::id &event_id,
-            const milliseconds &timeout,
-            const m::feds::v1::state::closure &closure)
-{
-	auto reqs
+	const auto when
 	{
-		feds__state(room_id, event_id)
-	};
-
-	auto when
-	{
-		now<steady_point>() + timeout
+		now<steady_point>() + opts.timeout
 	};
 
 	while(!reqs.empty())
@@ -203,17 +182,98 @@ feds__state(const m::room::id &room_id,
 		{
 			const auto code{req.get()};
 			const json::object &response{req};
-			if(!closure(req.origin, {}, response))
-				break;
+			if(!closure({req.origin, {}, response}))
+				return false;
 		}
 		catch(const std::exception &)
 		{
-			if(!closure(req.origin, std::current_exception(), {}))
-				break;
+			const ctx::exception_handler eptr;
+			if(!closure({req.origin, eptr}))
+				return false;
 		}
 
 		reqs.erase(it);
 	}
+
+	return true;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::feds::head(const opts &opts,
+                    const closure &closure)
+{
+	const auto make_request{[&opts]
+	(auto &request, const auto &origin)
+	{
+		m::v1::make_join::opts v1opts;
+		v1opts.remote = string_view
+		{
+			strlcpy{request.origin, origin}
+		};
+
+		return m::v1::make_join
+		{
+			opts.room_id, opts.user_id, request.buf, std::move(v1opts)
+		};
+	}};
+
+	std::list<m::feds::request<m::v1::make_join>> reqs;
+	m::room::origins{opts.room_id}.for_each([&reqs, &make_request]
+	(const string_view &origin)
+	{
+		if(!server::errmsg(origin)) try
+		{
+			reqs.emplace_back([&origin, &make_request]
+			(auto &request)
+			{
+				return make_request(request, origin);
+			});
+		}
+		catch(const std::exception &)
+		{
+			return;
+		}
+	});
+
+	const auto when
+	{
+		now<steady_point>() + opts.timeout
+	};
+
+	while(!reqs.empty())
+	{
+		auto next
+		{
+			ctx::when_any(begin(reqs), end(reqs))
+		};
+
+		if(!next.wait_until(when, std::nothrow))
+			break;
+
+		const auto it
+		{
+			next.get()
+		};
+
+		auto &req{*it}; try
+		{
+			const auto code{req.get()};
+			const json::object &response{req};
+			if(!closure({req.origin, {}, response}))
+				return false;
+		}
+		catch(const std::exception &)
+		{
+			const ctx::exception_handler eptr;
+			if(!closure({req.origin, eptr}))
+				return false;
+		}
+
+		reqs.erase(it);
+	}
+
+	return true;
 }
 
 extern "C" void
@@ -292,100 +352,6 @@ feds__event(const m::event::id &event_id, std::ostream &out)
 	catch(const std::exception &e)
 	{
 		out << "- " << req.origin << " " << e.what() << std::endl;
-	}
-}
-
-struct ircd::m::feds::v1::head
-:m::v1::make_join
-{
-	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
-
-	char origin[256];
-	char buf[16_KiB];
-
-	head(const m::room::id &room_id, const m::user::id &user_id, const string_view &origin)
-	:m::v1::make_join{[this, &room_id, &user_id, &origin]
-	{
-		m::v1::make_join::opts opts;
-		opts.dynamic = false;
-		opts.remote = string_view{this->origin, strlcpy(this->origin, origin)};
-		return m::v1::make_join{room_id, user_id, mutable_buffer{buf}, std::move(opts)};
-	}()}
-	{}
-};
-
-std::list<m::feds::v1::head>
-feds__head(const m::room::id &room_id,
-           const m::user::id &user_id)
-{
-	std::list<m::feds::v1::head> reqs;
-	m::room::origins{room_id}.for_each([&reqs, &room_id, &user_id]
-	(const string_view &origin)
-	{
-		const auto emsg
-		{
-			ircd::server::errmsg(origin)
-		};
-
-		if(!emsg) try
-		{
-			reqs.emplace_back(room_id, user_id, origin);
-		}
-		catch(const std::exception &)
-		{
-			return;
-		}
-	});
-
-	return std::move(reqs);
-}
-
-extern "C" void
-feds__head(const m::room::id &room_id,
-           const m::user::id &user_id,
-           const milliseconds &timeout,
-           const m::feds::v1::head::closure &closure)
-{
-	auto reqs
-	{
-		feds__head(room_id, user_id)
-	};
-
-	auto when
-	{
-		now<steady_point>() + timeout
-	};
-
-	while(!reqs.empty())
-	{
-		auto next
-		{
-			ctx::when_any(begin(reqs), end(reqs))
-		};
-
-		if(!next.wait_until(when, std::nothrow))
-			break;
-
-		const auto it
-		{
-			next.get()
-		};
-
-		auto &req{*it}; try
-		{
-			const auto code{req.get()};
-			const json::object &response{req};
-			const json::object &event{response.at("event")};
-			if(!closure(req.origin, {}, event))
-				break;
-		}
-		catch(const std::exception &)
-		{
-			if(!closure(req.origin, std::current_exception(), {}))
-				break;
-		}
-
-		reqs.erase(it);
 	}
 }
 
@@ -485,6 +451,11 @@ feds__backfill(const m::room::id &room_id,
 			out << "| " << (p.second.count(&req)? '+' : ' ') << " ";
 		out << "| " << req.origin << std::endl;
 	}
+}
+
+namespace ircd::m::feds::v1
+{
+	struct perspective;
 }
 
 struct ircd::m::feds::v1::perspective

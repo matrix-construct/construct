@@ -1045,79 +1045,46 @@ ircd::m::app::exists(const string_view &id)
 // m/feds.h
 //
 
-//
-// state
-//
-
-ircd::m::feds::state::state(const m::room::id &room_id,
-                            const m::event::id &event_id,
-                            const closure &view)
-:state
+bool
+ircd::m::feds::state(const opts &o,
+                     const closure &c)
 {
-	//TODO: conf
-	room_id, event_id, seconds(20), view
-}
-{
-}
+	using prototype = bool (const opts &, const closure &);
 
-ircd::m::feds::state::state(const m::room::id &room_id,
-                            const m::event::id &event_id,
-                            const milliseconds &to,
-                            const closure &view)
-{
-	using prototype = void (const m::room::id &,
-	                        const m::event::id &,
-	                        const milliseconds &,
-	                        const closure &);
-
-	static mods::import<prototype> feds__state
+	static mods::import<prototype> call
 	{
-		"federation_federation", "feds__state"
+		"federation_federation", "ircd::m::feds::state"
 	};
 
-	feds__state(room_id, event_id, to, view);
+	return call(o, c);
 }
 
-//
-// head
-//
+bool
+ircd::m::feds::version(const opts &o,
+                       const closure &c)
+{
+	using prototype = bool (const opts &, const closure &);
 
-ircd::m::feds::head::head(const m::room::id &room_id,
-                          const closure &view)
-:head
-{
-	room_id, m::me.user_id, view
-}
-{
-}
-
-ircd::m::feds::head::head(const m::room::id &room_id,
-                          const m::user::id &user_id,
-                          const closure &view)
-:head
-{
-	//TODO: conf
-	room_id, user_id, seconds(20), view
-}
-{
-}
-
-ircd::m::feds::head::head(const m::room::id &room_id,
-                          const m::user::id &user_id,
-                          const milliseconds &to,
-                          const closure &view)
-{
-	using prototype = void (const m::room::id &,
-	                        const m::user::id &,
-	                        const milliseconds &,
-	                        const closure &);
-
-	static mods::import<prototype> feds__head
+	static mods::import<prototype> call
 	{
-		"federation_federation", "feds__head"
+		"federation_federation", "ircd::m::feds::version"
 	};
 
-	feds__head(room_id, user_id, to, view);
+	return call(o, c);
+}
+
+bool
+ircd::m::feds::head(const opts &o,
+                    const closure &c)
+{
+	using prototype = bool (const opts &, const closure &);
+
+	static mods::import<prototype> call
+	{
+		"federation_federation", "ircd::m::feds::head"
+	};
+
+	return call(o, c);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

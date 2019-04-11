@@ -13,23 +13,28 @@
 
 namespace ircd::m::feds
 {
-	struct head;
-	struct state;
-}
+	struct opts;
+	struct result;
+	using closure = std::function<bool (const result &)>;
 
-struct ircd::m::feds::state
-{
-	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
-
-	state(const m::room::id &, const m::event::id &, const milliseconds &, const closure &);
-	state(const m::room::id &, const m::event::id &, const closure &);
+	bool head(const opts &, const closure &);
+	bool state(const opts &, const closure &);
+	bool version(const opts &, const closure &);
 };
 
-struct ircd::m::feds::head
+struct ircd::m::feds::result
 {
-	using closure = std::function<bool (const string_view &, std::exception_ptr, const json::object &)>;
+	string_view origin;
+	std::exception_ptr eptr;
+	json::object object;
+	json::array array;
+};
 
-	head(const m::room::id &, const m::user::id &, const milliseconds &, const closure &);
-	head(const m::room::id &, const m::user::id &, const closure &);
-	head(const m::room::id &, const closure &);
+struct ircd::m::feds::opts
+{
+	milliseconds timeout {20000L};
+	m::room::id room_id;
+	m::event::id event_id;
+	m::user::id user_id;
+	bool ids {false};
 };
