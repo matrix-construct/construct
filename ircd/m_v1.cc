@@ -723,7 +723,7 @@ ircd::m::v1::send_join::send_join(const room::id &room_id,
 //
 
 ircd::m::v1::make_join::make_join(const room::id &room_id,
-                                  const id::user &user_id,
+                                  const id::user &user_id_,
                                   const mutable_buffer &buf,
                                   opts opts)
 :server::request{[&]
@@ -742,6 +742,15 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 
 	if(!defined(json::get<"content"_>(opts.request)))
 		json::get<"content"_>(opts.request) = json::object{opts.out.content};
+
+	id::user::buf user_id_buf;
+	const id::user &user_id
+	{
+		user_id_?: id::user
+		{
+			user_id_buf, id::generate, json::get<"origin"_>(opts.request)
+		}
+	};
 
 	if(!defined(json::get<"uri"_>(opts.request)))
 	{
