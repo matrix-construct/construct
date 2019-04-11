@@ -1573,14 +1573,14 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		const auto &ctx{*ctxp};
 		out << std::setw(5) << std::right << id(ctx);
 		out << " "
-		    << (started(ctx)? 'S' : '-')
-		    << (running(ctx)? 'R' : '-')
-		    << (waiting(ctx)? 'W' : '-')
-		    << (notes(ctx)? 'N' : '-')
+		    << (started(ctx)? 'A' : '-')
 		    << (finished(ctx)? 'F' : '-')
-		    << (interruptible(ctx)? '-' : 'N')
-		    << (interruption(ctx)? 'I' : '-')
 		    << (termination(ctx)? 'T' : '-')
+		    << (interruptible(ctx)? '-' : 'N')
+		    << (waiting(ctx)? 'S' : '-')
+		    << (!running(ctx) && notes(ctx)? 'Q' : '-')
+		    << (interruption(ctx)? 'I' : '-')
+		    << (running(ctx)? 'R' : '-')
 		    ;
 
 		out << " "
