@@ -83,6 +83,7 @@ enum class ircd::ctx::prof::event
 	CONTINUE,      // Current context continuing
 	INTERRUPT,     // Current context detects interruption
 	TERMINATE,     // Current context detects termination
+	CYCLES,        // monotonic counter (rdtsc)
 
 	_NUM_
 };
@@ -90,9 +91,6 @@ enum class ircd::ctx::prof::event
 /// structure aggregating any profiling related state for a ctx
 struct ircd::ctx::prof::ticker
 {
-	// monotonic counter (rdtsc)
-	ulong cycles {0};
-
 	// monotonic counters for events
 	std::array<uint64_t, num_of<prof::event>()> event {{0}};
 };

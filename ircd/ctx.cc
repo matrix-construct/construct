@@ -509,7 +509,7 @@ noexcept
 const ulong &
 ircd::ctx::cycles(const ctx &ctx)
 {
-	return ctx.profile.cycles;
+	return prof::get(ctx, prof::event::CYCLES);
 }
 
 /// Returns the yield count for `ctx`
@@ -918,7 +918,7 @@ ircd::ctx::this_ctx::slice_usage_warning::slice_usage_warning(const string_view 
 	!current?
 		prof::cycles():
 	~cur().flags & context::SLICE_EXEMPT?
-		cur().profile.cycles + prof::cur_slice_cycles():
+		prof::get(cur(), prof::event::CYCLES) + prof::cur_slice_cycles():
 		0
 }
 {
@@ -941,7 +941,7 @@ noexcept
 	const auto stop
 	{
 		current?
-			cur().profile.cycles + prof::cur_slice_cycles():
+			prof::get(cur(), prof::event::CYCLES) + prof::cur_slice_cycles():
 			prof::cycles()
 	};
 
@@ -1717,10 +1717,19 @@ ircd::ctx::prof::slice_leave()
 
 	auto &c(cur());
 	assert(_slice_stop >= _slice_start);
-	const auto last_slice(_slice_stop - _slice_start);
+	const auto last_slice
+	{
+		_slice_stop - _slice_start
+	};
+
+	static constexpr auto pos
+	{
+		size_t(prof::event::CYCLES)
+	};
+
+	c.profile.event.at(pos) += last_slice;
+	_total.event.at(pos) += last_slice;
 	c.stack.at = stack_at_here();
-	c.profile.cycles += last_slice;
-	_total.cycles += last_slice;
 }
 
 #ifndef NDEBUG
@@ -1903,6 +1912,7 @@ ircd::ctx::prof::reflect(const event &e)
 		case event::CONTINUE:    return "CONTINUE";
 		case event::INTERRUPT:   return "INTERRUPT";
 		case event::TERMINATE:   return "TERMINATE";
+		case event::CYCLES:      return "CYCLES";
 		case event::_NUM_:       break;
 	}
 

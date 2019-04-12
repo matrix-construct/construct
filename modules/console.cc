@@ -1486,10 +1486,6 @@ console_cmd__ctx__prof(opt &out, const string_view &line)
 			    << " " << t.event.at(uint8_t(event))
 			    << std::endl;
 		});
-
-		out << std::left << std::setw(15) << std::setfill('_') << "cycles"
-		    << " " << t.cycles
-		    << std::endl;
 	}};
 
 	if(!param["id"])
@@ -1592,7 +1588,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		out << " "
 		    << std::setw(15) << std::right << cycles(ctx);
 
-		const long double total_cyc(ctx::prof::get().cycles);
+		const long double total_cyc(ctx::prof::get(ctx, ctx::prof::event::CYCLES));
 		const auto tsc_pct
 		{
 			total_cyc > 0.0? (cycles(ctx) / total_cyc) : 0.0L
