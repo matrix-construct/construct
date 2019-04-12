@@ -219,12 +219,8 @@ try
 		string_view{result.origin},
 	};
 
-	for(const json::string &event_id_ : prev_events)
-	{
-		const m::event::id &event_id{event_id_};
-		if(!m::exists(event_id))
-			start(room.room_id, event_id);
-	}
+	for(const json::string &event_id : prev_events)
+		fetch::prefetch(room.room_id, event_id);
 }
 catch(const std::exception &e)
 {
@@ -414,8 +410,7 @@ try
 	};
 
 	for(const json::string &event_id : ids)
-		if(!m::exists(m::event::id(event_id)))
-			start(room.room_id, event_id);
+		fetch::prefetch(room.room_id, event_id);
 }
 catch(const std::exception &e)
 {
@@ -467,12 +462,10 @@ ircd::m::fetch::state_ids(const room &room,
 	};
 
 	for(const json::string &event_id : auth_chain_ids)
-		if(!m::exists(m::event::id(event_id)))
-			start(room.room_id, event_id);
+		fetch::prefetch(room.room_id, event_id);
 
 	for(const json::string &event_id : pdu_ids)
-		if(!m::exists(m::event::id(event_id)))
-			start(room.room_id, event_id);
+		fetch::prefetch(room.room_id, event_id);
 }
 
 void
