@@ -71,6 +71,17 @@ ircd::ios::post(std::function<void ()> function)
 }
 
 void
+ircd::ios::defer(std::function<void ()> function)
+{
+	static descriptor descriptor
+	{
+		"ircd::ios defer"
+	};
+
+	defer(descriptor, std::move(function));
+}
+
+void
 ircd::ios::dispatch(std::function<void ()> function)
 {
 	static descriptor descriptor
@@ -82,17 +93,24 @@ ircd::ios::dispatch(std::function<void ()> function)
 }
 
 void
-ircd::ios::post(descriptor &descriptor,
-                std::function<void ()> function)
-{
-	boost::asio::post(get(), handle(descriptor, std::move(function)));
-}
-
-void
 ircd::ios::dispatch(descriptor &descriptor,
                     std::function<void ()> function)
 {
 	boost::asio::dispatch(get(), handle(descriptor, std::move(function)));
+}
+
+void
+ircd::ios::defer(descriptor &descriptor,
+                 std::function<void ()> function)
+{
+	boost::asio::defer(get(), handle(descriptor, std::move(function)));
+}
+
+void
+ircd::ios::post(descriptor &descriptor,
+                std::function<void ()> function)
+{
+	boost::asio::post(get(), handle(descriptor, std::move(function)));
 }
 
 boost::asio::io_context &

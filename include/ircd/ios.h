@@ -54,8 +54,10 @@ namespace ircd::ios
 	const string_view &name(const handler &);
 
 	void dispatch(descriptor &, std::function<void ()>);
+	void defer(descriptor &, std::function<void ()>);
 	void post(descriptor &, std::function<void ()>);
 	void dispatch(std::function<void ()>);
+	void defer(std::function<void ()>);
 	void post(std::function<void ()>);
 	void init(asio::io_context &user);
 }
@@ -65,6 +67,7 @@ namespace ircd
 	using ios::assert_main_thread;
 	using ios::is_main_thread;
 	using ios::dispatch;
+	using ios::defer;
 	using ios::post;
 }
 
