@@ -74,6 +74,11 @@ ircd::m::fetch::fini()
 	eval_context.terminate();
 	request_context.join();
 	eval_context.join();
+	requests.clear();
+	complete.clear();
+
+	assert(requests.empty());
+	assert(complete.empty());
 }
 
 //
