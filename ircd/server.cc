@@ -333,18 +333,15 @@ ircd::server::cancel(request &request)
 		*request.tag
 	};
 
-/*
 	log::debug
 	{
-		log, "cancel request(%p) tag(%p) commit:%d w:%zu hr:%zu cr:%zu",
-		&request,
-		&tag,
+		log, "cancel %s commit:%d w:%zu hr:%zu cr:%zu",
+		loghead(request),
 		tag.committed(),
 		tag.state.written,
 		tag.state.head_read,
 		tag.state.content_read
 	};
-*/
 
 	tag.set_exception<canceled>("Request canceled");
 
