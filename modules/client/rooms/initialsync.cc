@@ -260,14 +260,5 @@ get__initialsync_remote(client &client,
 			room_.event_id.host()
 	};
 
-	m::room::auth auth{room_};
-	m::room::auth::chain_eval(auth, remote);
-
-	using prototype = void (const m::room &);
-	static mods::import<prototype> state_ids
-	{
-		"s_fetch", "ircd::m::fetch::state_ids"
-	};
-
-	state_ids(room_);
+	m::fetch::state_ids(room_);
 }

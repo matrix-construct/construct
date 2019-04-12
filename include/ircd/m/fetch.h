@@ -19,10 +19,21 @@ namespace ircd::m::fetch
 {
 	struct request;
 
-	static bool for_each(const std::function<bool (request &)> &);
+	// Observers
+	bool for_each(const std::function<bool (request &)> &);
+	bool exists(const m::event::id &);
 
+	// Control panel
+	bool cancel(request &);
+	void start(const m::room::id &, const m::event::id &);
+	bool prefetch(const m::room::id &, const m::event::id &);
+
+	// Composed operations
+	void auth_chain(const room &, const net::hostport &);
 	void state_ids(const room &, const net::hostport &);
 	void state_ids(const room &);
+	void backfill(const room &, const net::hostport &);
+	void backfill(const room &);
 
 	extern log::log log;
 }
@@ -47,7 +58,4 @@ struct ircd::m::fetch::request
 	request(const m::room::id &, const m::event::id &, const size_t &bufsz = 8_KiB);
 	request(request &&) = delete;
 	request(const request &) = delete;
-
-	static void start(const m::room::id &, const m::event::id &);
-	static bool prefetch(const m::room::id &, const m::event::id &);
 };

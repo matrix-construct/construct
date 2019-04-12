@@ -22,10 +22,6 @@ struct ircd::m::room::auth
 	static bool for_each(const auth &, const closure_bool &);
 	static void make_refs(const auth &, json::stack::array &, const types &, const m::id::user & = {});
 
-	using fetch_closure = std::function<bool (const json::object &)>;
-	static bool chain_fetch(const auth &, const net::hostport &, const fetch_closure &);
-	static void chain_eval(const auth &, const net::hostport &);
-
 	m::room room;
 
   public:

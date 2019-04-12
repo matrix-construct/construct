@@ -12307,7 +12307,7 @@ console_cmd__fetch(opt &out, const string_view &line)
 		param.at("event_id")
 	};
 
-	m::fetch::request::start(room_id, event_id);
+	m::fetch::start(room_id, event_id);
 	out << "in work..." << std::endl;
 	return true;
 }

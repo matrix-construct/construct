@@ -104,7 +104,7 @@ ircd::m::fetch::hook_handler(const event &event,
 		at<"room_id"_>(event)
 	};
 
-	if(opts.state_check_exists && !exists(room_id))
+	if(opts.state_check_exists && !m::exists(room_id))
 	{
 		// Don't pass event_id in ctor here or m::NOT_FOUND.
 		m::room room{room_id};
@@ -118,10 +118,7 @@ ircd::m::fetch::hook_handler(const event &event,
 			};
 
 		if(opts.auth_chain_fetch)
-		{
-			const m::room::auth auth{room};
-			auth.chain_eval(auth, event_id.host());
-		}
+			fetch::auth_chain(room, room_id.host()); //TODO: XXX
 	}
 
 	const event::prev prev
@@ -145,7 +142,7 @@ ircd::m::fetch::hook_handler(const event &event,
 		if(!opts.prev_check_exists)
 			continue;
 
-		if(exists(prev_id))
+		if(m::exists(prev_id))
 		{
 			++prev_exists;
 			continue;
@@ -166,7 +163,7 @@ ircd::m::fetch::hook_handler(const event &event,
 			};
 
 		if(can_fetch)
-			start(prev_id, room_id);
+			start(room_id, prev_id);
 
 		if(can_fetch && opts.prev_wait)
 			dock.wait([&prev_id]
@@ -181,6 +178,144 @@ ircd::m::fetch::hook_handler(const event &event,
 // m/fetch.h
 //
 
+namespace ircd::m::fetch
+{
+	static void handle_backfill(const m::room &, const m::feds::result &);
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::fetch::backfill(const room &room)
+{
+	m::feds::opts opts;
+	opts.room_id = room.room_id;
+	opts.event_id = room.event_id;
+	opts.argi[0] = 4;
+
+	m::feds::backfill(opts, [&room]
+	(const auto &result)
+	{
+		handle_backfill(room, result);
+		return true;
+	});
+}
+
+void
+ircd::m::fetch::handle_backfill(const m::room &room,
+                                const m::feds::result &result)
+try
+{
+	if(result.eptr)
+		std::rethrow_exception(result.eptr);
+
+	const json::array &pdus
+	{
+		result.object["pdus"]
+	};
+
+	log::debug
+	{
+		log, "Got %zu events for %s off %s from '%s'",
+		pdus.size(),
+		string_view{room.room_id},
+		string_view{room.event_id},
+		string_view{result.origin},
+	};
+
+	for(const json::object &event : pdus)
+	{
+		const m::event::id &event_id
+		{
+			unquote(event.get("event_id"))
+		};
+
+		if(m::exists(event_id))
+			continue;
+
+		m::vm::opts vmopts;
+		vmopts.nothrows = -1;
+		m::vm::eval
+		{
+			m::event{event}, vmopts
+		};
+	}
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Requesting backfill for %s off %s from '%s' :%s",
+		string_view{room.room_id},
+		string_view{room.event_id},
+		result.origin,
+		e.what(),
+	};
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::fetch::backfill(const room &room,
+                         const net::hostport &remote)
+{
+	m::event::id::buf event_id;
+	if(!room.event_id)
+		event_id = m::v1::fetch_head(room.room_id, remote, room.any_user(my_host(), "join"));
+
+	m::v1::backfill::opts opts;
+	opts.remote = remote;
+	opts.event_id = room.event_id?: event_id;
+	opts.dynamic = true;
+	const unique_buffer<mutable_buffer> buf
+	{
+		8_KiB
+	};
+
+	m::v1::backfill request
+	{
+		room.room_id, buf, std::move(opts)
+	};
+
+	request.wait(seconds(20)); //TODO: conf
+	request.get();
+
+    const json::object &response
+    {
+        request
+    };
+
+	log::debug
+	{
+		log, "Got %zu events for %s off %s from '%s'",
+		json::array{response["pdus"]}.size(),
+		string_view{room.room_id},
+		string_view{room.event_id},
+		host(remote),
+	};
+
+	for(const json::object &event : json::array(response["pdus"]))
+	{
+		const m::event::id &event_id
+		{
+			unquote(event.get("event_id"))
+		};
+
+		if(m::exists(event_id))
+			continue;
+
+		m::vm::opts vmopts;
+		vmopts.nothrows = -1;
+		m::vm::eval
+		{
+			m::event{event}, vmopts
+		};
+	}
+}
+
+namespace ircd::m::fetch
+{
+	static void handle_state_ids(const m::room &, const m::feds::result &);
+}
+
 void
 IRCD_MODULE_EXPORT
 ircd::m::fetch::state_ids(const room &room)
@@ -189,43 +324,49 @@ ircd::m::fetch::state_ids(const room &room)
 	opts.room_id = room.room_id;
 	opts.event_id = room.event_id;
 	opts.arg[0] = "ids";
-	m::feds::state(opts, [&room](const auto &result)
+
+	m::feds::state(opts, [&room]
+	(const auto &result)
 	{
-		try
-		{
-			if(result.eptr)
-				std::rethrow_exception(result.eptr);
-
-			const json::array &ids
-			{
-				result.object["pdu_ids"]
-			};
-
-			log::debug
-			{
-				log, "Got %zu state_ids for %s from '%s'",
-				ids.size(),
-				string_view{room.room_id},
-				string_view{result.origin},
-			};
-
-			for(const json::string &event_id : ids)
-				if(!exists(m::event::id(event_id)))
-					start(event_id, room.room_id);
-		}
-		catch(const std::exception &e)
-		{
-			log::error
-			{
-				log, "Requesting state_ids for %s from '%s' :%s",
-				string_view{room.room_id},
-				result.origin,
-				e.what(),
-			};
-		}
-
+		handle_state_ids(room, result);
 		return true;
 	});
+}
+
+void
+ircd::m::fetch::handle_state_ids(const m::room &room,
+                                 const m::feds::result &result)
+try
+{
+	if(result.eptr)
+		std::rethrow_exception(result.eptr);
+
+	const json::array &ids
+	{
+		result.object["pdu_ids"]
+	};
+
+	log::debug
+	{
+		log, "Got %zu state_ids for %s from '%s'",
+		ids.size(),
+		string_view{room.room_id},
+		string_view{result.origin},
+	};
+
+	for(const json::string &event_id : ids)
+		if(!m::exists(m::event::id(event_id)))
+			start(room.room_id, event_id);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Requesting state_ids for %s from '%s' :%s",
+		string_view{room.room_id},
+		result.origin,
+		e.what(),
+	};
 }
 
 void
@@ -267,12 +408,79 @@ ircd::m::fetch::state_ids(const room &room,
 	};
 
 	for(const json::string &event_id : auth_chain_ids)
-		if(!exists(m::event::id(event_id)))
-			start(event_id, room.room_id);
+		if(!m::exists(m::event::id(event_id)))
+			start(room.room_id, event_id);
 
 	for(const json::string &event_id : pdu_ids)
-		if(!exists(m::event::id(event_id)))
-			start(event_id, room.room_id);
+		if(!m::exists(m::event::id(event_id)))
+			start(room.room_id, event_id);
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::fetch::auth_chain(const room &room,
+                           const net::hostport &remote)
+{
+	m::v1::event_auth::opts opts;
+	opts.remote = remote;
+	opts.dynamic = true;
+	const unique_buffer<mutable_buffer> buf
+	{
+		8_KiB
+	};
+
+	m::v1::event_auth request
+	{
+		room.room_id, room.event_id, buf, std::move(opts)
+	};
+
+	request.wait(seconds(20)); //TODO: conf
+	request.get();
+	const json::array &array
+	{
+		request
+	};
+
+	std::vector<json::object> events(array.count());
+	std::copy(begin(array), end(array), begin(events));
+	std::sort(begin(events), end(events), []
+	(const json::object &a, const json::object &b)
+	{
+		return a.at<uint64_t>("depth") < b.at<uint64_t>("depth");
+	});
+
+	m::vm::opts vmopts;
+	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.infolog_accept = true;
+	vmopts.prev_check_exists = false;
+	vmopts.warnlog |= m::vm::fault::STATE;
+	vmopts.warnlog &= ~m::vm::fault::EXISTS;
+	vmopts.errorlog &= ~m::vm::fault::STATE;
+	for(const auto &event : events)
+		m::vm::eval
+		{
+			m::event{event}, vmopts
+		};
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::fetch::prefetch(const m::room::id &room_id,
+                         const m::event::id &event_id)
+{
+	if(m::exists(event_id))
+		return false;
+
+	start(room_id, event_id);
+	return true;
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::fetch::start(const m::room::id &room_id,
+                      const m::event::id &event_id)
+{
+	submit(event_id, room_id);
 }
 
 bool
@@ -281,76 +489,6 @@ ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 {
 	for(auto &request : requests)
 		if(!closure(const_cast<fetch::request &>(request)))
-			return false;
-
-	return true;
-}
-
-//
-// auth chain fetch
-//
-
-void
-IRCD_MODULE_EXPORT
-ircd::m::room::auth::chain_eval(const auth &auth,
-                                const net::hostport &remote)
-{
-	m::vm::opts opts;
-	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	opts.infolog_accept = true;
-	opts.prev_check_exists = false;
-	opts.warnlog |= m::vm::fault::STATE;
-	opts.warnlog &= ~m::vm::fault::EXISTS;
-	opts.errorlog &= ~m::vm::fault::STATE;
-
-	chain_fetch(auth, remote, [&opts]
-	(const json::object &event)
-	{
-		m::vm::eval
-		{
-			m::event{event}, opts
-		};
-
-		return true;
-	});
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::room::auth::chain_fetch(const auth &auth,
-                                 const net::hostport &remote,
-                                 const fetch_closure &closure)
-{
-	m::v1::event_auth::opts opts;
-	opts.remote = remote;
-	opts.dynamic = true;
-	const unique_buffer<mutable_buffer> buf
-	{
-		16_KiB
-	};
-
-	m::v1::event_auth request
-	{
-		auth.room.room_id, auth.room.event_id, buf, std::move(opts)
-	};
-
-	request.wait(seconds(20)); //TODO: conf
-	request.get();
-    const json::array &auth_chain
-    {
-        request
-    };
-
-	std::vector<json::object> events(auth_chain.count());
-	std::copy(begin(auth_chain), end(auth_chain), begin(events));
-	std::sort(begin(events), end(events), []
-	(const json::object &a, const json::object &b)
-	{
-		return a.at<uint64_t>("depth") < b.at<uint64_t>("depth");
-	});
-
-	for(const auto &event : events)
-		if(!closure(event))
 			return false;
 
 	return true;
@@ -577,26 +715,6 @@ catch(const std::exception &e)
 //
 // fetch::request
 //
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::fetch::request::prefetch(const m::room::id &room_id,
-                                  const m::event::id &event_id)
-{
-	if(m::exists(event_id))
-		return false;
-
-	start(room_id, event_id);
-	return true;
-}
-
-void
-IRCD_MODULE_EXPORT
-ircd::m::fetch::request::start(const m::room::id &room_id,
-                               const m::event::id &event_id)
-{
-	fetch::start(event_id, room_id);
-}
 
 void
 ircd::m::fetch::start(request &request)

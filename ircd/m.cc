@@ -441,6 +441,33 @@ ircd::m::fetch::log
 };
 
 void
+ircd::m::fetch::backfill(const room &r)
+{
+	using prototype = void (const room &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::backfill"
+	};
+
+	call(r);
+}
+
+void
+ircd::m::fetch::backfill(const room &r,
+                         const net::hostport &hp)
+{
+	using prototype = void (const room &, const net::hostport &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::backfill"
+	};
+
+	call(r, hp);
+}
+
+void
 ircd::m::fetch::state_ids(const room &r)
 {
 	using prototype = void (const room &);
@@ -467,6 +494,74 @@ ircd::m::fetch::state_ids(const room &r,
 	call(r, hp);
 }
 
+void
+ircd::m::fetch::auth_chain(const room &r,
+                           const net::hostport &hp)
+{
+	using prototype = void (const room &, const net::hostport &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::auth_chain"
+	};
+
+	call(r, hp);
+}
+
+bool
+ircd::m::fetch::prefetch(const m::room::id &room_id,
+                         const m::event::id &event_id)
+{
+	using prototype = bool (const m::room::id &, const m::event::id &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::prefetch"
+	};
+
+	return call(room_id, event_id);
+}
+
+void
+ircd::m::fetch::start(const m::room::id &room_id,
+                      const m::event::id &event_id)
+{
+	using prototype = void (const m::room::id &, const m::event::id &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::start"
+	};
+
+	return call(room_id, event_id);
+}
+
+bool
+ircd::m::fetch::cancel(request &r)
+{
+	using prototype = bool (request &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::cancel"
+	};
+
+	return call(r);
+}
+
+bool
+ircd::m::fetch::exists(const m::event::id &event_id)
+{
+	using prototype = bool (const m::event::id &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::exists"
+	};
+
+	return call(event_id);
+}
+
 bool
 ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 {
@@ -478,38 +573,6 @@ ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 	};
 
 	return call(closure);
-}
-
-//
-// request
-//
-
-bool
-ircd::m::fetch::request::prefetch(const m::room::id &room_id,
-                                  const m::event::id &event_id)
-{
-	using prototype = bool (const m::room::id &, const m::event::id &);
-
-	static mods::import<prototype> call
-	{
-		"s_fetch", "ircd::m::fetch::request::prefetch"
-	};
-
-	return call(room_id, event_id);
-}
-
-void
-ircd::m::fetch::request::start(const m::room::id &room_id,
-                               const m::event::id &event_id)
-{
-	using prototype = void (const m::room::id &, const m::event::id &);
-
-	static mods::import<prototype> call
-	{
-		"s_fetch", "ircd::m::fetch::request::start"
-	};
-
-	return call(room_id, event_id);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
