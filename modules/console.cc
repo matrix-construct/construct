@@ -10093,7 +10093,7 @@ console_cmd__feds__state(opt &out, const string_view &line)
 	opts.timeout = out.timeout;
 	opts.event_id = event_id;
 	opts.room_id = room_id;
-	opts.ids = true;
+	opts.arg[0] = "ids";
 
 	m::feds::state(opts, closure);
 

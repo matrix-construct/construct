@@ -188,7 +188,7 @@ ircd::m::fetch::state_ids(const room &room)
 	m::feds::opts opts;
 	opts.room_id = room.room_id;
 	opts.event_id = room.event_id;
-	opts.ids = true;
+	opts.arg[0] = "ids";
 	m::feds::state(opts, [&room](const auto &result)
 	{
 		try

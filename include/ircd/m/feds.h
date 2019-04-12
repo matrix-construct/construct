@@ -50,5 +50,5 @@ struct ircd::m::feds::opts
 	m::room::id room_id;
 	m::event::id event_id;
 	m::user::id user_id;
-	bool ids {false};
+	string_view arg[4];  // misc argv
 };

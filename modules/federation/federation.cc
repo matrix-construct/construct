@@ -89,7 +89,7 @@ ircd::m::feds::state(const opts &opts,
 	{
 		m::v1::state::opts v1opts;
 		v1opts.dynamic = true;
-		v1opts.ids_only = opts.ids;
+		v1opts.ids_only = opts.arg[0] == "ids";
 		v1opts.event_id = opts.event_id;
 		v1opts.remote = string_view
 		{
