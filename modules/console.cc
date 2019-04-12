@@ -12264,13 +12264,14 @@ console_cmd__fetch__list(opt &out, const string_view &line)
 	(const m::fetch::request &request)
 	{
 		out
-		<< std::left << std::setw(48) << request.event_id << " "
-		<< std::left << std::setw(32) << request.room_id << " "
+		<< std::left << std::setw(64) << trunc(request.event_id, 64) << " "
+		<< std::left << std::setw(40) << trunc(request.room_id, 40) << " "
 		<< std::left << std::setw(32) << trunc(request.origin, 32) << " "
 		<< std::left << "S:" << request.started << " "
 		<< std::left << "A:" << request.attempted.size() << " "
 		<< std::left << "E:" << bool(request.eptr) << " "
 		<< std::left << "F:" << request.finished << " "
+		<< std::endl
 		;
 
 		return true;
