@@ -4292,6 +4292,18 @@ try
 		param["linkid"]
 	};
 
+	out
+	<< std::left   << std::setw(8)  << "PEER" << "  "
+	<< std::left   << std::setw(8)  << "LINK" << "  "
+	<< std::left   << std::setw(8)  << "TAG" << "  "
+	<< std::right  << std::setw(32) << "PEER NAME" << "  "
+	<< std::left   << std::setw(32) << "REMOTE ADDRESS" << "  "
+	<< std::right  << std::setw(7)  << "METHOD" << "  "
+	<< std::left   << std::setw(64) << "PATH" << "  "
+	<< std::left   << std::setw(4)  << "CODE" << "  "
+	<< std::endl
+	;
+
 	const auto each{[&out]
 	(const server::peer &peer, const server::link &link, const server::request &request)
 	{
@@ -4307,15 +4319,25 @@ try
 				"<no socket>"_sv
 		};
 
-		out << std::right  << std::setw(8)  << peer.id << " "
-		    << std::left   << std::setw(40) << peer.hostcanon << " "
-		    << std::right  << std::setw(8)  << link.id << " "
-		    << std::left   << std::setw(40) << remote << " "
-		    << std::right  << std::setw(8)  << id(request) << " "
-		    << std::left   << std::setw(8)  << out_head.method << " "
-		    << std::left   << std::setw(0)  << out_head.path << " "
-		    << std::endl;
+		out
+		<< std::left   << std::setw(8)  << peer.id << "  "
+		<< std::left   << std::setw(8)  << link.id << "  "
+		<< std::left   << std::setw(8)  << id(request) << "  "
+		<< std::right  << std::setw(32) << trunc(peer.hostcanon, 32) << "  "
+		<< std::left   << std::setw(32) << trunc(remote, 32) << "  "
+		<< std::right  << std::setw(7)  << out_head.method << "  "
+		<< std::left   << std::setw(64) << trunc(out_head.path, 64) << "  "
+		;
 
+		if(request.tag)
+			out << std::setw(4) << uint(request.tag->state.status) << " ";
+		else
+			out << std::setw(4) << "CNCL" << " ";
+
+		if(request.tag && request.tag->state.status)
+			out << http::status(request.tag->state.status) << " ";
+
+		out << std::endl;
 		return true;
 	}};
 
