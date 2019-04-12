@@ -2390,6 +2390,7 @@ noexcept
 	assert(!tag.canceled());
 	assert(request.tag == &tag);
 	assert(tag.request == &request);
+	assert(!tag.cancellation);
 
 	// Disassociate the user's request and add our dummy request in its place.
 	disassociate(request, tag);
@@ -2406,6 +2407,7 @@ noexcept
 		size(request.out) + size(request.in)
 	};
 
+	assert(!tag.cancellation);
 	tag.cancellation = std::make_unique<char[]>(cancellation_size);
 	char *ptr{tag.cancellation.get()};
 
