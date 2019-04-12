@@ -42,6 +42,11 @@ struct ircd::server::out
 	/// written so far. This is only invoked for content. At the first
 	/// invocation, the head has been fully written.
 	std::function<void (const_buffer, const_buffer)> progress;
+
+	/// Call server::out::gethead(request) to extract the details of the HTTP
+	/// request being sent by the request. This may not always be available,
+	/// like in some cases after the request was canceled.
+	static http::request::head gethead(const request &);
 };
 
 /// Request data and options related to the receive side of the request.
@@ -78,6 +83,11 @@ struct ircd::server::in
 	/// copied there; this vector is cleared and content points there instead.
 	/// An option can be set in request::opts to skip the last step.
 	std::vector<unique_buffer<mutable_buffer>> chunks;
+
+	/// Call server::in::gethead(request) to extract the details of the HTTP
+	/// response being received by the request. This may not always be
+	/// available if it has not been received or was discarded etc.
+	static http::response::head gethead(const request &);
 };
 
 /// This is a handle for being a client to another server. This handle will

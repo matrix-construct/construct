@@ -348,14 +348,11 @@ try
 	if(request.tag && request.tag->cancellation)
 		return "<canceled; out data is gone>";
 
-	parse::buffer pb{request.out.head};
-	parse::capstan pc{pb, [](char *&read, char *stop)
+	const http::request::head head
 	{
-		read = stop;
-	}};
+		request.out.gethead(request)
+	};
 
-	pc.read += size(request.out.head);
-	const http::request::head head{pc};
 	if(!head.method || !head.path)
 		return "<no head data>";
 
@@ -371,7 +368,7 @@ catch(const std::exception &e)
 		log, "server::loghead(): %s", e.what()
 	};
 
-	return "<loghead error>";
+	return "<critical error>";
 }
 
 ircd::string_view
@@ -379,6 +376,72 @@ ircd::server::loghead(const request &request)
 {
 	thread_local char buf[256];
 	return loghead(buf, request);
+}
+
+//
+// server::in
+//
+
+ircd::http::response::head
+ircd::server::in::gethead(const request &request)
+try
+{
+	if(empty(request.in.head))
+		return {};
+
+	if(request.tag && request.tag->cancellation)
+		return {};
+
+	parse::buffer pb{request.in.head};
+	parse::capstan pc{pb, [](char *&read, char *stop)
+	{
+		read = stop;
+	}};
+
+	pc.read += size(request.in.head);
+	return http::response::head{pc};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "server::in::gethead(): %s", e.what()
+	};
+
+	return {};
+}
+
+//
+// server::out
+//
+
+ircd::http::request::head
+ircd::server::out::gethead(const request &request)
+try
+{
+	if(empty(request.out.head))
+		return {};
+
+	if(request.tag && request.tag->cancellation)
+		return {};
+
+	parse::buffer pb{request.out.head};
+	parse::capstan pc{pb, [](char *&read, char *stop)
+	{
+		read = stop;
+	}};
+
+	pc.read += size(request.out.head);
+	return http::request::head{pc};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "server::out::gethead(): %s", e.what()
+	};
+
+	return {};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
