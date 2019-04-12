@@ -275,6 +275,17 @@ ircd::m::fetch::state_ids(const room &room,
 			start(event_id, room.room_id);
 }
 
+bool
+IRCD_MODULE_EXPORT
+ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
+{
+	for(auto &request : requests)
+		if(!closure(const_cast<fetch::request &>(request)))
+			return false;
+
+	return true;
+}
+
 //
 // auth chain fetch
 //
@@ -406,7 +417,7 @@ ircd::m::fetch::request_handle()
 		{
 			auto &request(const_cast<fetch::request &>(request_));
 			if(!request.finished)
-				request.retry();
+				retry(request);
 		}
 
 		return;
@@ -435,7 +446,7 @@ try
 	if(request.finished)
 		return;
 
-	if(!request.handle())
+	if(!handle(request))
 		return;
 
 	complete.emplace_back(it);
@@ -510,8 +521,7 @@ try
 
 	const unwind free{[&request]
 	{
-		request._buf = {};
-		request.buf = request._buf;
+		request.buf = {};
 	}};
 
 	if(request.eptr)
@@ -554,6 +564,182 @@ catch(const std::exception &e)
 //
 
 bool
+IRCD_MODULE_EXPORT
+ircd::m::fetch::request::prefetch(const m::room::id &room_id,
+                                  const m::event::id &event_id)
+{
+	if(m::exists(event_id))
+		return false;
+
+	start(room_id, event_id);
+	return true;
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::fetch::request::start(const m::room::id &room_id,
+                               const m::event::id &event_id)
+{
+	fetch::start(event_id, room_id);
+}
+
+void
+ircd::m::fetch::start(request &request)
+{
+	m::v1::event::opts opts;
+	opts.dynamic = true;
+	opts.remote = request.origin?: select_random_origin(request);
+	start(request, opts);
+}
+
+void
+ircd::m::fetch::start(request &request,
+                      m::v1::event::opts &opts)
+{
+	assert(request.finished == 0);
+	if(!request.started)
+		request.started = ircd::time();
+
+	request.last = ircd::time();
+	static_cast<m::v1::event &>(request) =
+	{
+		request.event_id, request.buf, std::move(opts)
+	};
+
+	log::debug
+	{
+		log, "Started request for %s in %s from '%s'",
+		string_view{request.event_id},
+		string_view{request.room_id},
+		string_view{request.origin},
+	};
+
+	dock.notify_all();
+}
+
+ircd::string_view
+ircd::m::fetch::select_random_origin(request &request)
+{
+	const m::room::origins origins
+	{
+		request.room_id
+	};
+
+	// copies randomly selected origin into the attempted set.
+	const auto closure{[&request]
+	(const string_view &origin)
+	{
+		select_origin(request, origin);
+	}};
+
+	// Tests if origin is potentially viable
+	const auto proffer{[&request]
+	(const string_view &origin)
+	{
+		// Don't want to request from myself.
+		if(my_host(origin))
+			return false;
+
+		// Don't want to use a peer we already tried and failed with.
+		if(request.attempted.count(origin))
+			return false;
+
+		// Don't want to use a peer marked with an error by ircd::server
+		if(ircd::server::errmsg(origin))
+			return false;
+
+		return true;
+	}};
+
+	if(!origins.random(closure, proffer))
+		throw m::NOT_FOUND
+		{
+			"Cannot find any server to fetch %s in %s",
+			string_view{request.event_id},
+			string_view{request.room_id},
+		};
+
+	return request.origin;
+}
+
+ircd::string_view
+ircd::m::fetch::select_origin(request &request,
+                              const string_view &origin)
+{
+	const auto iit
+	{
+		request.attempted.emplace(std::string{origin})
+	};
+
+	request.origin = *iit.first;
+	return request.origin;
+}
+
+bool
+ircd::m::fetch::handle(request &request)
+{
+	request.wait(); try
+	{
+		const auto code
+		{
+			request.get()
+		};
+
+		log::debug
+		{
+			log, "%u %s for %s in %s from '%s'",
+			uint(code),
+			status(code),
+			string_view{request.event_id},
+			string_view{request.room_id},
+			string_view{request.origin}
+		};
+	}
+	catch(...)
+	{
+		request.eptr = std::current_exception();
+
+		log::derror
+		{
+			log, "Failure for %s in %s from '%s' :%s",
+			string_view{request.event_id},
+			string_view{request.room_id},
+			string_view{request.origin},
+			what(request.eptr),
+		};
+	}
+
+	if(!request.eptr)
+		finish(request);
+	else
+		retry(request);
+
+	return request.finished;
+}
+
+void
+ircd::m::fetch::retry(request &request)
+try
+{
+	server::cancel(request);
+	request.eptr = std::exception_ptr{};
+	request.origin = {};
+	start(request);
+}
+catch(...)
+{
+	request.eptr = std::current_exception();
+	finish(request);
+}
+
+void
+ircd::m::fetch::finish(request &request)
+{
+	request.finished = ircd::time();
+	dock.notify_all();
+}
+
+bool
 ircd::m::fetch::operator<(const request &a,
                           const request &b)
 noexcept
@@ -578,184 +764,14 @@ noexcept
 }
 
 //
-// fetch::request::request
+// request::request
 //
 
 ircd::m::fetch::request::request(const m::room::id &room_id,
                                  const m::event::id &event_id,
-                                 const mutable_buffer &buf)
+                                 const size_t &bufsz)
 :room_id{room_id}
 ,event_id{event_id}
-,_buf
+,buf{bufsz}
 {
-	!buf?
-		unique_buffer<mutable_buffer>{8_KiB}:
-		unique_buffer<mutable_buffer>{}
-}
-,buf
-{
-	empty(buf)? _buf: buf
-}
-{
-	//assert(size(this->buf) >= 64_KiB + 8_KiB + 8_KiB);
-	assert(size(this->buf) >= 8_KiB);
-}
-
-void
-ircd::m::fetch::request::start()
-{
-	m::v1::event::opts opts;
-	opts.dynamic = true;
-	opts.remote = origin?: select_random_origin();
-	start(opts);
-}
-
-void
-ircd::m::fetch::request::start(m::v1::event::opts &opts)
-{
-	assert(finished == 0);
-	if(!started)
-		started = ircd::time();
-
-	last = ircd::time();
-	static_cast<m::v1::event &>(*this) =
-	{
-		this->event_id, this->buf, std::move(opts)
-	};
-
-	dock.notify_all();
-
-	log::debug
-	{
-		log, "Started request for %s in %s from '%s'",
-		string_view{event_id},
-		string_view{room_id},
-		string_view{origin},
-	};
-}
-
-ircd::string_view
-ircd::m::fetch::request::select_random_origin()
-{
-	const m::room::origins origins
-	{
-		room_id
-	};
-
-	// copies randomly selected origin into the attempted set.
-	const auto closure{[this]
-	(const string_view &origin)
-	{
-		this->select_origin(origin);
-	}};
-
-	// Tests if origin is potentially viable
-	const auto proffer{[this]
-	(const string_view &origin)
-	{
-		// Don't want to request from myself.
-		if(my_host(origin))
-			return false;
-
-		// Don't want to use a peer we already tried and failed with.
-		if(attempted.count(origin))
-			return false;
-
-		// Don't want to use a peer marked with an error by ircd::server
-		if(ircd::server::errmsg(origin))
-			return false;
-
-		return true;
-	}};
-
-	if(!origins.random(closure, proffer))
-		throw m::NOT_FOUND
-		{
-			"Cannot find any server to fetch %s in %s",
-			string_view{event_id},
-			string_view{room_id},
-		};
-
-	return this->origin;
-}
-
-ircd::string_view
-ircd::m::fetch::request::select_origin(const string_view &origin)
-{
-	const auto iit
-	{
-		attempted.emplace(std::string{origin})
-	};
-
-	this->origin = *iit.first;
-	return this->origin;
-}
-
-bool
-ircd::m::fetch::request::handle()
-{
-	auto &future
-	{
-		static_cast<m::v1::event &>(*this)
-	};
-
-	future.wait(); try
-	{
-		const auto code
-		{
-			future.get()
-		};
-
-		log::debug
-		{
-			log, "%u %s for %s in %s from '%s'",
-			uint(code),
-			status(code),
-			string_view{event_id},
-			string_view{room_id},
-			string_view{origin}
-		};
-	}
-	catch(...)
-	{
-		eptr = std::current_exception();
-
-		log::derror
-		{
-			log, "Failure for %s in %s from '%s' :%s",
-			string_view{event_id},
-			string_view{room_id},
-			string_view{origin},
-			what(eptr),
-		};
-	}
-
-	if(!eptr)
-		finish();
-	else
-		retry();
-
-	return finished;
-}
-
-void
-ircd::m::fetch::request::retry()
-try
-{
-	server::cancel(*this);
-	eptr = std::exception_ptr{};
-	origin = {};
-	start();
-}
-catch(...)
-{
-	eptr = std::current_exception();
-	finish();
-}
-
-void
-ircd::m::fetch::request::finish()
-{
-	finished = ircd::time();
-	dock.notify_all();
 }

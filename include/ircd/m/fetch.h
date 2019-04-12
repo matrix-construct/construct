@@ -19,8 +19,35 @@ namespace ircd::m::fetch
 {
 	struct request;
 
+	static bool for_each(const std::function<bool (request &)> &);
+
 	void state_ids(const room &, const net::hostport &);
 	void state_ids(const room &);
 
 	extern log::log log;
 }
+
+/// Fetch entity state. This is not meant for construction by users of this
+/// interface.
+struct ircd::m::fetch::request
+:m::v1::event
+{
+	using is_transparent = void;
+
+	m::room::id::buf room_id;
+	m::event::id::buf event_id;
+	unique_buffer<mutable_buffer> buf;
+	std::set<std::string, std::less<>> attempted;
+	string_view origin;
+	time_t started {0};
+	time_t last {0};
+	time_t finished {0};
+	std::exception_ptr eptr;
+
+	request(const m::room::id &, const m::event::id &, const size_t &bufsz = 8_KiB);
+	request(request &&) = delete;
+	request(const request &) = delete;
+
+	static void start(const m::room::id &, const m::event::id &);
+	static bool prefetch(const m::room::id &, const m::event::id &);
+};

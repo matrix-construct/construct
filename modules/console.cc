@@ -12258,31 +12258,56 @@ console_cmd__mc__register__available(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__fetch__list(opt &out, const string_view &line)
+{
+	m::fetch::for_each([&out]
+	(const m::fetch::request &request)
+	{
+		out
+		<< std::left << std::setw(48) << request.event_id << " "
+		<< std::left << std::setw(32) << request.room_id << " "
+		<< std::left << std::setw(32) << trunc(request.origin, 32) << " "
+		<< std::left << "S:" << request.started << " "
+		<< std::left << "A:" << request.attempted.size() << " "
+		<< std::left << "E:" << bool(request.eptr) << " "
+		<< std::left << "F:" << request.finished << " "
+		;
+
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__fetch(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "remote"
+		"room_id", "event_id"
 	}};
+
+	if(!param.count())
+		return console_cmd__fetch__list(out, line);
 
 	const auto room_id
 	{
 		m::room_id(param.at("room_id"))
 	};
 
-	if(!param["remote"])
+	if(!param["event_id"])
 	{
 		m::fetch::state_ids(room_id);
 		out << "done" << std::endl;
 		return true;
 	}
 
-	const net::hostport hostport
+	const m::event::id event_id
 	{
-		param["remote"]
+		param.at("event_id")
 	};
 
-	m::fetch::state_ids(room_id, hostport);
-	out << "done" << std::endl;
+	m::fetch::request::start(room_id, event_id);
+	out << "in work..." << std::endl;
 	return true;
 }

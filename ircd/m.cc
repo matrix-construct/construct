@@ -467,6 +467,51 @@ ircd::m::fetch::state_ids(const room &r,
 	call(r, hp);
 }
 
+bool
+ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
+{
+	using prototype = bool (const std::function<bool (request &)> &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::for_each"
+	};
+
+	return call(closure);
+}
+
+//
+// request
+//
+
+bool
+ircd::m::fetch::request::prefetch(const m::room::id &room_id,
+                                  const m::event::id &event_id)
+{
+	using prototype = bool (const m::room::id &, const m::event::id &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::request::prefetch"
+	};
+
+	return call(room_id, event_id);
+}
+
+void
+ircd::m::fetch::request::start(const m::room::id &room_id,
+                               const m::event::id &event_id)
+{
+	using prototype = void (const m::room::id &, const m::event::id &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::request::start"
+	};
+
+	return call(room_id, event_id);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/sync.h
