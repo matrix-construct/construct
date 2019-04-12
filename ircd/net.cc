@@ -1634,9 +1634,6 @@ noexcept try
 		return;
 	}
 
-	// Toggles the behavior of non-async functions; see func comment
-	blocking(*sock, false);
-
 	static const socket::handshake_type handshake_type
 	{
 		socket::handshake_type::server
@@ -1765,6 +1762,10 @@ noexcept try
 
 	check_handshake_error(ec, *sock);
 	sock->cancel_timeout();
+
+	// Toggles the behavior of non-async functions; see func comment
+	blocking(*sock, false);
+
 	assert(bool(cb));
 	cb(*listener_, sock);
 }
@@ -3056,9 +3057,6 @@ noexcept try
 	if(ec)
 		return call_user(callback, ec);
 
-	// Toggles the behavior of non-async functions; see func comment
-	blocking(*this, false);
-
 	// Try to set the user's socket options now; if something fails we can
 	// invoke their callback with the error from the exception handler.
 	if(opts.sopts)
@@ -3181,6 +3179,9 @@ noexcept try
 		string(ec)
 	};
 	#endif
+
+	// Toggles the behavior of non-async functions; see func comment
+	blocking(*this, false);
 
 	// This is the end of the asynchronous call chain; the user is called
 	// back with or without error here.
