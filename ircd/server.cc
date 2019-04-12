@@ -345,6 +345,9 @@ try
 	if(empty(request.out.head))
 		return "<no head>";
 
+	if(request.tag && request.tag->cancellation)
+		return "<canceled; out data is gone>";
+
 	parse::buffer pb{request.out.head};
 	parse::capstan pc{pb, [](char *&read, char *stop)
 	{
