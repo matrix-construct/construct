@@ -768,18 +768,19 @@ catch(const std::exception &e)
 // fetch::request
 //
 
-void
+bool
 ircd::m::fetch::start(request &request)
 {
 	m::v1::event::opts opts;
 	opts.dynamic = true;
 	opts.remote = request.origin?: select_random_origin(request);
-	start(request, opts);
+	return start(request, opts);
 }
 
-void
+bool
 ircd::m::fetch::start(request &request,
                       m::v1::event::opts &opts)
+try
 {
 	assert(request.finished == 0);
 	if(!request.started)
@@ -800,6 +801,21 @@ ircd::m::fetch::start(request &request,
 	};
 
 	dock.notify_all();
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to start request for %s in %s to '%s' :%s",
+		string_view{request.event_id},
+		string_view{request.room_id},
+		string_view{request.origin},
+		e.what()
+	};
+
+	request.origin = {};
+	return false;
 }
 
 ircd::string_view
@@ -836,7 +852,7 @@ ircd::m::fetch::select_random_origin(request &request)
 		return true;
 	}};
 
-	if(!origins.random(closure, proffer))
+	if(!origins.random(closure, proffer) || !request.origin)
 		throw m::NOT_FOUND
 		{
 			"Cannot find any server to fetch %s in %s",

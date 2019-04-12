@@ -30,8 +30,8 @@ namespace ircd::m::fetch
 	static string_view select_random_origin(request &);
 	static void finish(request &);
 	static void retry(request &);
-	static void start(request &, m::v1::event::opts &);
-	static void start(request &);
+	static bool start(request &, m::v1::event::opts &);
+	static bool start(request &);
 	static bool handle(request &);
 
 	template<class... args> static void submit(const event::id &, const room::id &, const size_t &bufsz = 8_KiB, args&&...);
@@ -62,13 +62,13 @@ ircd::m::fetch::submit(const m::event::id &event_id,
 	if(it == end(requests) || it->event_id != event_id) try
 	{
 		it = requests.emplace_hint(it, room_id, event_id, bufsz, std::forward<args>(a)...);
-		start(const_cast<request &>(*it));
+		while(!start(const_cast<request &>(*it)));
 	}
 	catch(const std::exception &e)
 	{
 		log::error
 		{
-			m::log, "Failed to start fetch for %s in %s :%s",
+			m::log, "Failed to start any fetch for %s in %s :%s",
 			string_view{event_id},
 			string_view{room_id},
 			e.what(),
