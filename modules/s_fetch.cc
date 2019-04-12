@@ -217,21 +217,26 @@ try
 	if(result.eptr)
 		std::rethrow_exception(result.eptr);
 
-	const json::array &prev_events
+	const m::event::prev prev
 	{
-		json::object(result.object["event"]).get("prev_events")
+		result.object["event"]
+	};
+
+	const size_t count
+	{
+		prev.prev_events_count()
 	};
 
 	log::debug
 	{
 		log, "Got %zu heads for %s from '%s'",
-		prev_events.size(),
+		count,
 		string_view{room.room_id},
 		string_view{result.origin},
 	};
 
-	for(const json::string &event_id : prev_events)
-		fetch::prefetch(room.room_id, event_id);
+	for(size_t i(0); i < count; ++i)
+		fetch::prefetch(room.room_id, prev.prev_event(i));
 }
 catch(const std::exception &e)
 {
