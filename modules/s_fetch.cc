@@ -548,6 +548,21 @@ IRCD_MODULE_EXPORT
 ircd::m::fetch::start(const m::room::id &room_id,
                       const m::event::id &event_id)
 {
+	ircd::run::changed::dock.wait([]
+	{
+		return run::level == run::level::RUN ||
+		       run::level == run::level::QUIT;
+	});
+
+	if(unlikely(run::level != run::level::RUN))
+		throw m::UNAVAILABLE
+		{
+			"Cannot fetch %s in %s in runlevel '%s'",
+			string_view{event_id},
+			string_view{room_id},
+			reflect(run::level)
+		};
+
 	submit(event_id, room_id);
 }
 
