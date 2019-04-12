@@ -10116,7 +10116,7 @@ console_cmd__feds__event(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"event_id"
+		"event_id", "room_id"
 	}};
 
 	const m::event::id event_id
@@ -10124,15 +10124,39 @@ console_cmd__feds__event(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	using prototype = void (const m::event::id &,
-	                        std::ostream &);
+	m::room::id::buf room_id;
+	if(param["room_id"])
+		room_id = param["room_id"];
 
-	static mods::import<prototype> feds__event
+	if(!room_id)
+		room_id = m::get(std::nothrow, event_id, "room_id", room_id);
+
+	if(!room_id)
 	{
-		"federation_federation", "feds__event"
-	};
+		out << "Cannot find the room_id for this event; supply it as a paramter."
+		    << std::endl;
 
-	feds__event(event_id, out);
+		return true;
+	}
+
+	m::feds::opts opts;
+	opts.room_id = room_id;
+	opts.event_id = event_id;
+	m::feds::event(opts, [&out](const auto &result)
+	{
+		out << (result.eptr? '-': empty(result.object)? '?': '+')
+		    << " "
+		    << std::setw(40) << std::left << result.origin
+		    << " "
+		    ;
+
+		if(result.eptr)
+			out << " :" << what(result.eptr);
+
+		out << std::endl;
+		return true;
+	});
+
 	return true;
 }
 
