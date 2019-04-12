@@ -376,6 +376,35 @@ ircd::server::submit(const hostport &hostport,
 }
 
 ircd::string_view
+ircd::server::loghead(const link &link,
+                      const request &request)
+{
+	thread_local char buf[256];
+	return loghead(buf, link, request);
+}
+
+ircd::string_view
+ircd::server::loghead(const mutable_buffer &buf,
+                      const link &link,
+                      const request &request)
+{
+	return fmt::sprintf
+	{
+		buf, "peer[%lu] link[%lu] %s",
+		link.peer? link.peer->id : 0UL,
+		link.id,
+		loghead(request)
+	};
+}
+
+ircd::string_view
+ircd::server::loghead(const request &request)
+{
+	thread_local char buf[256];
+	return loghead(buf, request);
+}
+
+ircd::string_view
 ircd::server::loghead(const mutable_buffer &buf,
                       const request &request)
 try
@@ -396,7 +425,10 @@ try
 
 	return fmt::sprintf
 	{
-		buf, "%s %s", head.method, head.path
+		buf, "tag[%lu] %s %s",
+		id(request),
+		head.method,
+		head.path
 	};
 }
 catch(const std::exception &e)

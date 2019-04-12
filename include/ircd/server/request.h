@@ -24,9 +24,13 @@ namespace ircd::server
 	// gets the unique tag number from request or 0 if no tag associated.
 	uint64_t id(const request &);
 
+	// convenience suite used to prefix log messages.
 	string_view loghead(const mutable_buffer &out, const request &);
 	string_view loghead(const request &);
+	string_view loghead(const mutable_buffer &out, const link &, const request &);
+	string_view loghead(const link &, const request &);
 
+	// control panel
 	void submit(const hostport &, request &);
 	bool cancel(request &);
 }
