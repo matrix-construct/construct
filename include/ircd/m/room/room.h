@@ -83,6 +83,7 @@ struct ircd::m::room
 	string_view membership(const mutable_buffer &out, const m::id::user &) const;
 	bool visible(const string_view &mxid, const m::event *const & = nullptr) const;
 	string_view join_rule(const mutable_buffer &out) const;
+	id::user::buf any_user(const string_view &host, const string_view &membership = "join") const;
 	bool join_rule(const string_view &rule) const;
 	bool lonly() const;
 

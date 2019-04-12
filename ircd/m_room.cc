@@ -325,6 +325,26 @@ ircd::m::room::index(const room::id &room_id,
 // room::room
 //
 
+ircd::m::id::user::buf
+ircd::m::room::any_user(const string_view &host,
+                        const string_view &membership)
+const
+{
+	user::id::buf ret;
+	const members members{*this};
+	members.for_each(membership, members::closure_bool{[&host, &ret]
+	(const id::user &user_id)
+	{
+		if(host && user_id.host() != host)
+			return true;
+
+		ret = user_id;
+		return false;
+	}});
+
+	return ret;
+}
+
 /// Test of the join_rule of the room is the argument.
 bool
 ircd::m::room::join_rule(const string_view &rule)
