@@ -180,6 +180,65 @@ ircd::m::fetch::hook_handler(const event &event,
 
 namespace ircd::m::fetch
 {
+	static void handle_headfill(const m::room &, const m::feds::result &);
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::fetch::headfill(const room &room)
+{
+	m::feds::opts opts;
+	opts.room_id = room.room_id;
+
+	m::feds::head(opts, [&room]
+	(const auto &result)
+	{
+		handle_headfill(room, result);
+		return true;
+	});
+}
+
+void
+ircd::m::fetch::handle_headfill(const m::room &room,
+                                const m::feds::result &result)
+try
+{
+	if(result.eptr)
+		std::rethrow_exception(result.eptr);
+
+	const json::array &prev_events
+	{
+		json::object(result.object["event"]).get("prev_events")
+	};
+
+	log::debug
+	{
+		log, "Got %zu heads for %s from '%s'",
+		prev_events.size(),
+		string_view{room.room_id},
+		string_view{result.origin},
+	};
+
+	for(const json::string &event_id_ : prev_events)
+	{
+		const m::event::id &event_id{event_id_};
+		if(!m::exists(event_id))
+			start(room.room_id, event_id);
+	}
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Requesting head events for %s from '%s' :%s",
+		string_view{room.room_id},
+		result.origin,
+		e.what(),
+	};
+}
+
+namespace ircd::m::fetch
+{
 	static void handle_backfill(const m::room &, const m::feds::result &);
 }
 

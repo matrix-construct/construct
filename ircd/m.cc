@@ -441,6 +441,19 @@ ircd::m::fetch::log
 };
 
 void
+ircd::m::fetch::headfill(const room &r)
+{
+	using prototype = void (const room &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::headfill"
+	};
+
+	call(r);
+}
+
+void
 ircd::m::fetch::backfill(const room &r)
 {
 	using prototype = void (const room &);

@@ -34,6 +34,7 @@ namespace ircd::m::fetch
 	void state_ids(const room &);
 	void backfill(const room &, const net::hostport &);
 	void backfill(const room &);
+	void headfill(const room &);
 
 	extern log::log log;
 }
