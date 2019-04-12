@@ -10451,17 +10451,58 @@ console_cmd__feds__backfill(opt &out, const string_view &line)
 		param.at(2, size_t(4))
 	};
 
-	using prototype = void (const m::room::id &,
-	                        const m::event::id &,
-	                        const size_t &,
-	                        std::ostream &);
+	std::map<std::string, std::set<std::string>, std::less<>> grid;
+	std::set<string_view> origins;
 
-	static mods::import<prototype> feds__backfill
+	m::feds::opts opts;
+	opts.room_id = room_id;
+	opts.event_id = event_id;
+	opts.argi[0] = limit;
+	m::feds::backfill(opts, [&grid, &origins]
+	(const auto &result)
 	{
-		"federation_federation", "feds__backfill"
-	};
+		if(result.eptr)
+			return true;
 
-	feds__backfill(room_id, event_id, limit, out);
+		const json::array &pdus
+		{
+			result.object["pdus"]
+		};
+
+		for(const json::object &pdu : pdus)
+		{
+			const auto &event_id
+			{
+				unquote(pdu.at("event_id"))
+			};
+
+			auto it(grid.lower_bound(event_id));
+			if(it == end(grid) || it->first != event_id)
+				it = grid.emplace_hint(it, event_id, std::set<std::string>{});
+
+			auto &set(it->second);
+			const auto iit(set.emplace(result.origin));
+			origins.emplace(*iit.first);
+		}
+
+		return true;
+	});
+
+	size_t i(0);
+	for(const auto &p : grid)
+		out << i++ << " " << p.first << std::endl;
+
+	for(size_t j(0); j < i; ++j)
+		out << "| " << std::left << std::setw(2) << j;
+	out << "|" << std::endl;
+
+	for(const auto &origin : origins)
+	{
+		for(const auto &p : grid)
+			out << "| " << (p.second.count(origin)? '+' : ' ') << " ";
+		out << "| " << origin << std::endl;
+	}
+
 	return true;
 }
 

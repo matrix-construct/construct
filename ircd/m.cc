@@ -1088,6 +1088,20 @@ ircd::m::feds::state(const opts &o,
 }
 
 bool
+ircd::m::feds::backfill(const opts &o,
+                        const closure &c)
+{
+	using prototype = bool (const opts &, const closure &);
+
+	static mods::import<prototype> call
+	{
+		"federation_federation", "ircd::m::feds::backfill"
+	};
+
+	return call(o, c);
+}
+
+bool
 ircd::m::feds::event(const opts &o,
                      const closure &c)
 {

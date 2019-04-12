@@ -33,6 +33,7 @@ namespace ircd::m::feds
 	bool head(const opts &, const closure &);
 	bool event(const opts &, const closure &);
 	bool state(const opts &, const closure &);
+	bool backfill(const opts &, const closure &);
 	bool version(const opts &, const closure &);
 	bool perspective(const opts &, const closure &);
 };
@@ -52,4 +53,5 @@ struct ircd::m::feds::opts
 	m::event::id event_id;
 	m::user::id user_id;
 	string_view arg[4];  // misc argv
+	uint64_t argi[4];    // misc integer argv
 };
