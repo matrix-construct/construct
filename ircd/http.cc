@@ -284,12 +284,18 @@ ircd::http::request::head::head(parse::capstan &pc,
 }
 ,headers{[this, &pc, &c]
 {
-	if(this->version != "HTTP/1.1")
+	const bool version_compatible
+	{
+		this->version == "HTTP/1.0" ||
+		this->version == "HTTP/1.1"
+	};
+
+	if(!version_compatible)
 		throw error
 		{
 			HTTP_VERSION_NOT_SUPPORTED, fmt::snstringf
 			{
-				128, "Sorry, I don't speak '%s' only HTTP/1.1 here.",
+				128, "Sorry, no speak '%s'. Try HTTP/1.1 here.",
 				this->version
 			}
 		};
