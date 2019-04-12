@@ -16,6 +16,14 @@ IRCD_MODULE
     "Event Fetch Unit", ircd::m::fetch::init, ircd::m::fetch::fini
 };
 
+decltype(ircd::m::fetch::enable)
+ircd::m::fetch::enable
+{
+	{ "name",     "ircd.m.fetch.enable" },
+	{ "default",  false                 },
+	{ "persist",  false                 },
+};
+
 decltype(ircd::m::fetch::hook)
 ircd::m::fetch::hook
 {
@@ -143,7 +151,12 @@ ircd::m::fetch::hook_handler(const event &event,
 			continue;
 		}
 
-		if((!opts.prev_fetch || !opts.prev_wait) && opts.prev_must_all_exist)
+		const bool can_fetch
+		{
+			opts.prev_fetch && bool(m::fetch::enable)
+		};
+
+		if((!can_fetch || !opts.prev_wait) && opts.prev_must_all_exist)
 			throw vm::error
 			{
 				vm::fault::EVENT, "Missing prev %s in %s in %s",
@@ -152,10 +165,10 @@ ircd::m::fetch::hook_handler(const event &event,
 				json::get<"room_id"_>(*eval.event_)
 			};
 
-		if(opts.prev_fetch)
+		if(can_fetch)
 			start(prev_id, room_id);
 
-		if(opts.prev_fetch && opts.prev_wait)
+		if(can_fetch && opts.prev_wait)
 			dock.wait([&prev_id]
 			{
 				return !requests.count(prev_id);

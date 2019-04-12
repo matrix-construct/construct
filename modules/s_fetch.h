@@ -24,6 +24,7 @@ namespace ircd::m::fetch
 	extern ctx::context eval_context;
 	extern ctx::context request_context;
 	extern hookfn<vm::eval &> hook;
+	extern conf::item<bool> enable;
 
 	template<class... args> static void start(const m::event::id &, const m::room::id &, args&&...);
 	static void eval_handle(const decltype(requests)::iterator &);
