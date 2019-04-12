@@ -371,7 +371,13 @@ try
 			return std::any_of(begin(requests), end(requests), []
 			(const request &r)
 			{
-				return r.finished == 0;
+				if(r.finished == 0)
+					return true;
+
+				if(r.finished && empty(r.buf))
+					return true;
+
+				return false;
 			});
 		});
 
@@ -500,6 +506,7 @@ ircd::m::fetch::eval_handle()
 	{
 		assert(!complete.empty());
 		complete.pop_front();
+		dock.notify_all();
 	}};
 
 	const auto it
@@ -550,11 +557,19 @@ try
 }
 catch(const std::exception &e)
 {
+	auto &request
+	{
+		const_cast<fetch::request &>(*it)
+	};
+
+	if(!request.eptr)
+		request.eptr = std::current_exception();
+
 	log::error
 	{
 		log, "fetch eval %s in %s :%s",
-		string_view{it->event_id},
-		string_view{it->room_id},
+		string_view{request.event_id},
+		string_view{request.room_id},
 		e.what()
 	};
 }
