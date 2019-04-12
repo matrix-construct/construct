@@ -1510,7 +1510,7 @@ ircd::m::v1::fetch_head(const id::room &room_id,
 	opts.remote = remote;
 	make_join request
 	{
-		room_id, user_id, buf, std::move(opts)
+		room_id, user_id?: m::me.user_id, buf, std::move(opts)
 	};
 
 	request.wait(milliseconds(fetch_head_timeout));
