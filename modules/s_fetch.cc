@@ -192,8 +192,14 @@ void
 IRCD_MODULE_EXPORT
 ircd::m::fetch::headfill(const room &room)
 {
+	const auto user_id
+	{
+		room.any_user(my_host(), "join")
+	};
+
 	m::feds::opts opts;
 	opts.room_id = room.room_id;
+	opts.user_id = user_id;
 
 	m::feds::head(opts, [&room]
 	(const auto &result)
