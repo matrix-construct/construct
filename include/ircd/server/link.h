@@ -17,7 +17,9 @@ struct ircd::server::link
 {
 	static conf::item<size_t> tag_max_default;
 	static conf::item<size_t> tag_commit_max_default;
+	static uint64_t ids;
 
+	uint64_t id {++ids};                         ///< unique identifier of link.
 	server::peer *peer;                          ///< backreference to peer
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::list<tag> queue;                        ///< link's work queue

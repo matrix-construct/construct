@@ -409,11 +409,12 @@ catch(const std::exception &e)
 	return "<critical error>";
 }
 
-ircd::string_view
-ircd::server::loghead(const request &request)
+uint64_t
+ircd::server::id(const request &request)
 {
-	thread_local char buf[256];
-	return loghead(buf, request);
+	return request.tag?
+		request.tag->state.id:
+		0UL;
 }
 
 //
@@ -511,6 +512,9 @@ ircd::server::peer::link_max_default
 	{ "name",     "ircd.server.peer.link_max" },
 	{ "default",  2L                          }
 };
+
+decltype(ircd::server::peer::ids)
+ircd::server::peer::ids;
 
 //
 // peer::peer
@@ -1567,6 +1571,9 @@ ircd::server::link::tag_commit_max_default
 	{ "default",  3L                                }
 };
 
+decltype(ircd::server::link::ids)
+ircd::server::link::ids;
+
 //
 // link::link
 //
@@ -2326,6 +2333,10 @@ const
 //
 // tag
 //
+
+/// Monotonic counter for tags.
+decltype(ircd::server::tag::state::ids)
+ircd::server::tag::state::ids;
 
 /// This is tricky. When a user cancels a request which has committed some
 /// writes to the remote we have to continue to service it through to

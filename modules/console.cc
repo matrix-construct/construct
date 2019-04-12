@@ -4307,10 +4307,13 @@ try
 				"<no socket>"_sv
 		};
 
-		out << std::setw(48) << peer.server_name << " "
-		    << std::setw(56) << remote << " "
-		    << std::setw(8)  << out_head.method << " "
-		    << std::setw(0)  << out_head.path << " "
+		out << std::right  << std::setw(8)  << peer.id << " "
+		    << std::left   << std::setw(40) << peer.hostcanon << " "
+		    << std::right  << std::setw(8)  << link.id << " "
+		    << std::left   << std::setw(40) << remote << " "
+		    << std::right  << std::setw(8)  << id(request) << " "
+		    << std::left   << std::setw(8)  << out_head.method << " "
+		    << std::left   << std::setw(0)  << out_head.path << " "
 		    << std::endl;
 
 		return true;

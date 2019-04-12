@@ -27,7 +27,9 @@ struct ircd::server::peer
 	static conf::item<size_t> link_min_default;
 	static conf::item<size_t> link_max_default;
 	static conf::item<seconds> error_clear_default;
+	static uint64_t ids;
 
+	uint64_t id {++ids};
 	net::ipport remote;
 	std::string hostcanon;
 	std::string service;

@@ -28,7 +28,10 @@ struct ircd::server::tag
 {
 	struct state
 	{
-		size_t written {0};
+		static uint64_t ids;
+
+		uint64_t id {++ids};           // monotonic tag identifier
+		size_t written {0};            // bytes transmitted to remote
 		size_t head_read {0};          // includes head terminator
 		size_t head_rem {0};           // how much of head buf wasn't used.
 		size_t content_read {0};       // total content read after head

@@ -21,6 +21,9 @@ namespace ircd::server
 	size_t size(const out &);
 	size_t size_chunks(const in &);
 
+	// gets the unique tag number from request or 0 if no tag associated.
+	uint64_t id(const request &);
+
 	string_view loghead(const mutable_buffer &out, const request &);
 	string_view loghead(const request &);
 
