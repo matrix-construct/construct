@@ -159,5 +159,8 @@ request_url(const string_view &urle)
 		return {};
 
 	assert(data(request.in.content) == data(request.in.dynamic));
-	return std::move(request.in.dynamic);
+	return unique_buffer<mutable_buffer>
+	{
+		std::move(request.in.dynamic)
+	};
 }

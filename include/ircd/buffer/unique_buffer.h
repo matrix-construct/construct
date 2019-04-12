@@ -24,12 +24,12 @@ struct ircd::buffer::unique_buffer
 {
 	buffer release();
 
+	unique_buffer() = default;
 	unique_buffer(const size_t &size, const size_t &align = 0);
 	explicit unique_buffer(const buffer &);
-	unique_buffer() = default;
-	unique_buffer(unique_buffer &&) noexcept;
+	explicit unique_buffer(unique_buffer &&) noexcept;
 	unique_buffer(const unique_buffer &) = delete;
-	unique_buffer &operator=(unique_buffer &&) noexcept;
+	unique_buffer &operator=(unique_buffer &&) & noexcept;
 	unique_buffer &operator=(const unique_buffer &) = delete;
 	~unique_buffer() noexcept;
 };
@@ -58,8 +58,7 @@ ircd::buffer::unique_buffer<buffer>::unique_buffer(const size_t &size,
 {
 	aligned_alloc(align, size).release(), size
 }
-{
-}
+{}
 
 template<class buffer>
 ircd::buffer::unique_buffer<buffer>::unique_buffer(unique_buffer &&other)
@@ -75,7 +74,7 @@ noexcept
 template<class buffer>
 ircd::buffer::unique_buffer<buffer> &
 ircd::buffer::unique_buffer<buffer>::operator=(unique_buffer &&other)
-noexcept
+& noexcept
 {
 	this->~unique_buffer();
 

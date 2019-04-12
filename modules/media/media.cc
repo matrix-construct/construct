@@ -339,9 +339,9 @@ download(const mutable_buffer &head_buf,
 	parse::buffer pb{remote_request.in.head};
 	parse::capstan pc{pb};
 	pc.read += size(remote_request.in.head);
-	return
+	return std::pair<http::response::head, unique_buffer<mutable_buffer>>
 	{
-		http::response::head{pc}, std::move(remote_request.in.dynamic)
+		pc, std::move(remote_request.in.dynamic)
 	};
 }
 
