@@ -40,7 +40,7 @@ namespace ircd::m::fetch
 	static void eval_worker();
 	static void request_handle(const decltype(requests)::iterator &);
 	static void request_handle();
-	static void request_cleanup();
+	static size_t request_cleanup();
 	static void request_worker();
 	static void hook_handler(const event &, vm::eval &);
 	static void init();

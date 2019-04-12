@@ -587,7 +587,9 @@ try
 			});
 		});
 
-		request_cleanup();
+		if(request_cleanup())
+			continue;
+
 		request_handle();
 	}
 }
@@ -602,17 +604,22 @@ catch(const std::exception &e)
 	throw;
 }
 
-void
+size_t
 ircd::m::fetch::request_cleanup()
 {
+	size_t ret(0);
 	auto it(begin(requests));
 	while(it != end(requests))
 	{
 		if(it->finished && empty(it->buf))
+		{
 			it = requests.erase(it);
-		else
-			++it;
+			++ret;
+		}
+		else ++it;
 	}
+
+	return ret;
 }
 
 void
