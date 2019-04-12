@@ -392,6 +392,30 @@ AM_COND_IF([GENERIC],
 	CXXFLAGS+=" -march=native"
 ])
 
+dnl
+dnl Untuned Mode compilation
+dnl
+
+AC_MSG_CHECKING(whether to enable fully untuned mode)
+AC_ARG_ENABLE(untuned, AC_HELP_STRING([--enable-untuned], [Emit no special feature instructions.]),
+[
+	enable_untuned="yes"
+	AC_MSG_RESULT([yes])
+	RB_DEFINE([UNTUNED], [1], [Building binary without extended-feature cpu instructions.])
+], [
+	enable_untuned="no"
+	AC_MSG_RESULT([no])
+])
+
+AM_CONDITIONAL([UNTUNED], [[[[ "$enable_untuned" = "yes" ]]]])
+
+AM_COND_IF([UNTUNED],
+[
+	CXXFLAGS+=" -mno-default"
+], [
+	CXXFLAGS+=""
+])
+
 dnl  !!! Experimental !!!
 dnl
 dnl  Allows a signal handler to throw a C++ exception if the signal is from
@@ -1650,6 +1674,7 @@ echo "Optimized build ................... $optimize"
 echo "Link-time optimized ............... $lto"
 echo "Optimization level ................ $optimize_level"
 echo "Generic binary .................... $enable_generic"
+echo "Untuned binary .................... $enable_untuned"
 echo "Logging level ..................... $LOG_LEVEL"
 echo "Installing into ................... $prefix"
 echo
