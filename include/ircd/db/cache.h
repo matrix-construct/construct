@@ -51,8 +51,8 @@ namespace ircd::db
 	void for_each(const rocksdb::Cache *const &, const cache_closure &);
 
 	// Manually cache a key/value directly
-	bool insert(rocksdb::Cache &, const string_view &key, unique_buffer<const_buffer>);
-	bool insert(rocksdb::Cache *const &, const string_view &key, unique_buffer<const_buffer>);
+	bool insert(rocksdb::Cache &, const string_view &key, unique_buffer<const_buffer> &&);
+	bool insert(rocksdb::Cache *const &, const string_view &key, unique_buffer<const_buffer> &&);
 
 	// Manually cache a copy of key/value
 	bool insert(rocksdb::Cache &, const string_view &key, const string_view &value);

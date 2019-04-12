@@ -6296,7 +6296,7 @@ ircd::db::insert(rocksdb::Cache &cache,
 bool
 ircd::db::insert(rocksdb::Cache *const &cache,
                  const string_view &key,
-                 unique_buffer<const_buffer> value)
+                 unique_buffer<const_buffer> &&value)
 {
 	return cache? insert(*cache, key, std::move(value)) : false;
 }
@@ -6304,7 +6304,7 @@ ircd::db::insert(rocksdb::Cache *const &cache,
 bool
 ircd::db::insert(rocksdb::Cache &cache,
                  const string_view &key,
-                 unique_buffer<const_buffer> value)
+                 unique_buffer<const_buffer> &&value)
 {
 	const size_t value_size
 	{
