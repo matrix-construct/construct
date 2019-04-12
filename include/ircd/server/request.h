@@ -100,6 +100,7 @@ struct ircd::server::request
 :ctx::future<http::code>
 {
 	struct opts;
+	using each_closure = std::function<bool (const peer &, const link &, const request &)>;
 
 	static const opts opts_default;
 

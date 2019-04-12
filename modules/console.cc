@@ -4273,6 +4273,87 @@ catch(const std::out_of_range &e)
 	};
 }
 
+bool
+console_cmd__peer__request(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"servername", "linkid"
+	}};
+
+	const auto &servername
+	{
+		param["servername"]
+	};
+
+	const auto &linkid
+	{
+		param["linkid"]
+	};
+
+	const auto each{[&out]
+	(const server::peer &peer, const server::link &link, const server::request &request)
+	{
+		const auto out_head(request.out.gethead(request));
+		if(!out_head.method || !out_head.path)
+			return true;
+
+		thread_local char rembuf[128];
+		const string_view &remote
+		{
+			link.socket?
+				string(rembuf, remote_ipport(*link.socket)):
+				"<no socket>"_sv
+		};
+
+		out << std::setw(48) << peer.server_name << " "
+		    << std::setw(56) << remote << " "
+		    << std::setw(8)  << out_head.method << " "
+		    << std::setw(0)  << out_head.path << " "
+		    << std::endl;
+
+		return true;
+	}};
+
+	if(servername && linkid)
+	{
+		auto &peer
+		{
+			server::find(servername)
+		};
+
+		throw m::UNSUPPORTED
+		{
+			"Link identifiers are not yet implemented;"
+			" cannot iterate request for one link."
+		};
+
+		return true;
+	}
+
+	if(servername)
+	{
+		auto &peer
+		{
+			server::find(servername)
+		};
+
+		server::for_each(peer, each);
+		return true;
+	}
+
+	server::for_each(each);
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	throw error
+	{
+		"Peer not found"
+	};
+}
+
 //
 // net
 //

@@ -196,6 +196,44 @@ ircd::server::errmsg(const net::hostport &hostport)
 	return it->second->err_msg();
 }
 
+bool
+ircd::server::for_each(const request::each_closure &closure)
+{
+	for(const auto &[name, peer] : peers)
+		if(!for_each(*peer, closure))
+			return false;
+
+	return true;
+}
+
+bool
+ircd::server::for_each(const peer &peer,
+                       const request::each_closure &closure)
+{
+	for(const auto &link : peer.links)
+		if(!for_each(link, closure))
+			return false;
+
+	return true;
+}
+
+bool
+ircd::server::for_each(const link &link,
+                       const request::each_closure &closure)
+{
+	for(const auto &tag : link.queue)
+	{
+		assert(link.peer);
+		if(!tag.request)
+			continue;
+
+		if(!closure(*link.peer, link, *tag.request))
+			return false;
+	}
+
+	return true;
+}
+
 size_t
 ircd::server::peer_unfinished()
 {

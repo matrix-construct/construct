@@ -36,17 +36,27 @@ namespace ircd::server
 
 namespace ircd::server
 {
+	// const utils
 	size_t tag_count();
 	size_t link_count();
 	size_t peer_count();
 	size_t peer_unfinished();
 
+	// iteration of all requests.
+	bool for_each(const link &, const request::each_closure &);
+	bool for_each(const peer &, const request::each_closure &);
+	bool for_each(const request::each_closure &);
+
+	// const utils
 	string_view errmsg(const net::hostport &);
-	bool errclear(const net::hostport &);
 	bool exists(const net::hostport &);
 	peer &find(const net::hostport &);
-	peer &get(const net::hostport &);
 
+	// mutable utils
+	bool errclear(const net::hostport &);
+	peer &get(const net::hostport &);     // creates the peer if not found.
+
+	// control panel
 	void interrupt_all();
 	void close_all();
 	void wait_all();
