@@ -1046,6 +1046,20 @@ ircd::m::app::exists(const string_view &id)
 //
 
 bool
+ircd::m::feds::perspective(const opts &o,
+                           const closure &c)
+{
+	using prototype = bool (const opts &, const closure &);
+
+	static mods::import<prototype> call
+	{
+		"federation_federation", "ircd::m::feds::perspective"
+	};
+
+	return call(o, c);
+}
+
+bool
 ircd::m::feds::version(const opts &o,
                        const closure &c)
 {

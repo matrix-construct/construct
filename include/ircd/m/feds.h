@@ -34,6 +34,7 @@ namespace ircd::m::feds
 	bool event(const opts &, const closure &);
 	bool state(const opts &, const closure &);
 	bool version(const opts &, const closure &);
+	bool perspective(const opts &, const closure &);
 };
 
 struct ircd::m::feds::result

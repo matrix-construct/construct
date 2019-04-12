@@ -10365,34 +10365,36 @@ console_cmd__feds__perspective(opt &out, const string_view &line)
 		param.at(2)
 	};
 
-	using closure_prototype = bool (const string_view &,
-	                                std::exception_ptr,
-	                                const json::array &);
-
-	using prototype = void (const m::room::id &,
-	                        const m::v1::key::server_key &,
-	                        const milliseconds &,
-	                        const std::function<closure_prototype> &);
-
-	static mods::import<prototype> feds__perspective
-	{
-		"federation_federation", "feds__perspective"
-	};
-
 	const m::v1::key::server_key server_key
 	{
 		server_name, key_id
 	};
 
-	feds__perspective(room_id, server_key, out.timeout, [&out]
-	(const string_view &origin, std::exception_ptr eptr, const json::array &keys)
+	m::feds::opts opts;
+	opts.timeout = out.timeout;
+	opts.room_id = room_id;
+	opts.arg[0] = server_key.first;
+	opts.arg[1] = server_key.second;
+	m::feds::perspective(opts, [&out](const auto &result)
 	{
-		if(eptr)
-			return true;
+		out << std::setw(32) << trunc(result.origin, 32) << " :";
 
-		for(const json::object &_key : keys)
+		if(result.eptr)
 		{
-			const m::keys &key{_key};
+			out << what(result.eptr)
+			    << std::endl;
+
+			return true;
+		}
+
+		const json::array &server_keys
+		{
+			result.object["server_keys"]
+		};
+
+		for(const json::object &server_key : server_keys)
+		{
+			const m::keys &key{server_key};
 			out << key << std::endl;
 		}
 
