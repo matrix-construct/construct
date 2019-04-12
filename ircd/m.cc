@@ -1074,6 +1074,20 @@ ircd::m::feds::version(const opts &o,
 }
 
 bool
+ircd::m::feds::event(const opts &o,
+                     const closure &c)
+{
+	using prototype = bool (const opts &, const closure &);
+
+	static mods::import<prototype> call
+	{
+		"federation_federation", "ircd::m::feds::event"
+	};
+
+	return call(o, c);
+}
+
+bool
 ircd::m::feds::head(const opts &o,
                     const closure &c)
 {
