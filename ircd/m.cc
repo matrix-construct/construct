@@ -1046,20 +1046,6 @@ ircd::m::app::exists(const string_view &id)
 //
 
 bool
-ircd::m::feds::state(const opts &o,
-                     const closure &c)
-{
-	using prototype = bool (const opts &, const closure &);
-
-	static mods::import<prototype> call
-	{
-		"federation_federation", "ircd::m::feds::state"
-	};
-
-	return call(o, c);
-}
-
-bool
 ircd::m::feds::version(const opts &o,
                        const closure &c)
 {
@@ -1068,6 +1054,20 @@ ircd::m::feds::version(const opts &o,
 	static mods::import<prototype> call
 	{
 		"federation_federation", "ircd::m::feds::version"
+	};
+
+	return call(o, c);
+}
+
+bool
+ircd::m::feds::state(const opts &o,
+                     const closure &c)
+{
+	using prototype = bool (const opts &, const closure &);
+
+	static mods::import<prototype> call
+	{
+		"federation_federation", "ircd::m::feds::state"
 	};
 
 	return call(o, c);

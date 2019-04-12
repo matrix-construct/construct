@@ -11,6 +11,19 @@
 #pragma once
 #define HAVE_IRCD_M_FEDS_H
 
+/// Concurrent federation request interface. This fronts several of the m::v1
+/// requests and conducts them to all servers in a room (e.g. m::room::origins)
+/// at the same time. The hybrid control flow of this interface is best suited
+/// to the real-world uses of these operations.
+///
+/// Each call in this interface is synchronous and will block the ircd::ctx
+/// until it returns. The return value is the for_each-protocol result based on your
+/// closure (if the closure ever returns false, the function also returns false).
+///
+/// The closure is invoke asynchronously as results come in. If the closure
+/// returns false, the interface function will return immediately and all
+/// pending requests will go out of scope and may be cancelled as per
+/// ircd::server decides.
 namespace ircd::m::feds
 {
 	struct opts;

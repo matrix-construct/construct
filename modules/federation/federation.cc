@@ -37,94 +37,18 @@ struct ircd::m::feds::request
 	char origin[256];
 	char buf[8_KiB];
 
-	request(const std::function<T (request &)> &);
+	request(const std::function<T (request &)> &closure)
+	:T(closure(*this))
+	{}
+
 	request(request &&) = delete;
 	request(const request &) = delete;
 };
 
-template<class T>
-ircd::m::feds::request<T>::request(const std::function<T (request &)> &closure)
-:T{closure(*this)}
-{}
-
-template<class T>
-std::list<m::feds::request<T>>
-ircd::m::feds::creator(const opts &opts,
-                       const std::function<T (request<T> &, const string_view &origin)> &closure)
-{
-	assert(opts.room_id);
-	const m::room::origins origins
-	{
-		opts.room_id
-	};
-
-	std::list<m::feds::request<T>> ret;
-	origins.for_each([&ret, &closure]
-	(const string_view &origin)
-	{
-		if(!server::errmsg(origin)) try
-		{
-			ret.emplace_back([&closure, &origin]
-			(auto &request)
-			{
-				return closure(request, origin);
-			});
-		}
-		catch(const std::exception &)
-		{
-			return;
-		}
-	});
-
-	return ret;
-}
-
-template<class T>
-bool
-ircd::m::feds::handler(const opts &opts,
-                       const closure &closure,
-                       std::list<request<T>> &reqs)
-{
-	const auto when
-	{
-		now<steady_point>() + opts.timeout
-	};
-
-	while(!reqs.empty())
-	{
-		auto next
-		{
-			ctx::when_any(begin(reqs), end(reqs))
-		};
-
-		if(!next.wait_until(when, std::nothrow))
-			break;
-
-		const auto it
-		{
-			next.get()
-		};
-
-		auto &req{*it}; try
-		{
-			const auto code{req.get()};
-			const json::array &array{req.in.content};
-			const json::object &object{req.in.content};
-			if(!closure({req.origin, {}, object, array}))
-				return false;
-		}
-		catch(const std::exception &)
-		{
-			const ctx::exception_handler eptr;
-			if(!closure({req.origin, eptr}))
-				return false;
-		}
-
-		reqs.erase(it);
-	}
-
-	return true;
-}
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/feds.h
+//
 
 bool
 IRCD_MODULE_EXPORT
@@ -241,6 +165,90 @@ ircd::m::feds::head(const opts &opts,
 	};
 
 	return handler(opts, closure, requests);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// (internal)
+//
+
+template<class T>
+std::list<m::feds::request<T>>
+ircd::m::feds::creator(const opts &opts,
+                       const std::function<T (request<T> &, const string_view &origin)> &closure)
+{
+	assert(opts.room_id);
+	const m::room::origins origins
+	{
+		opts.room_id
+	};
+
+	std::list<m::feds::request<T>> ret;
+	origins.for_each([&ret, &closure]
+	(const string_view &origin)
+	{
+		if(!server::errmsg(origin)) try
+		{
+			ret.emplace_back([&closure, &origin]
+			(auto &request)
+			{
+				return closure(request, origin);
+			});
+		}
+		catch(const std::exception &)
+		{
+			return;
+		}
+	});
+
+	return ret;
+}
+
+template<class T>
+bool
+ircd::m::feds::handler(const opts &opts,
+                       const closure &closure,
+                       std::list<request<T>> &reqs)
+{
+	const auto when
+	{
+		now<steady_point>() + opts.timeout
+	};
+
+	while(!reqs.empty())
+	{
+		auto next
+		{
+			ctx::when_any(begin(reqs), end(reqs))
+		};
+
+		if(!next.wait_until(when, std::nothrow))
+			break;
+
+		const auto it
+		{
+			next.get()
+		};
+
+		auto &req{*it}; try
+		{
+			const auto code{req.get()};
+			const json::array &array{req.in.content};
+			const json::object &object{req.in.content};
+			if(!closure({req.origin, {}, object, array}))
+				return false;
+		}
+		catch(const std::exception &)
+		{
+			const ctx::exception_handler eptr;
+			if(!closure({req.origin, eptr}))
+				return false;
+		}
+
+		reqs.erase(it);
+	}
+
+	return true;
 }
 
 //
