@@ -830,7 +830,7 @@ try
 		request.started = ircd::time();
 
 	request.last = ircd::time();
-	static_cast<m::v1::event &>(request) =
+	*static_cast<m::v1::event *>(&request) =
 	{
 		request.event_id, request.buf, std::move(opts)
 	};
@@ -864,6 +864,8 @@ catch(const std::exception &e)
 		e.what()
 	};
 
+	server::cancel(request);
+	static_cast<m::v1::event *>(&request)->~event();
 	request.origin = {};
 	return false;
 }
