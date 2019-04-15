@@ -62,7 +62,7 @@ ircd::m::feds::perspective(const opts &opts,
 		v1opts.dynamic = false;
 		v1opts.remote = string_view
 		{
-			request.origin, strlcpy{request.origin, origin}
+			strlcpy{request.origin, origin}
 		};
 
 		const m::v1::key::server_key server_key
@@ -96,7 +96,7 @@ ircd::m::feds::version(const opts &opts,
 		opts.dynamic = false;
 		opts.remote = string_view
 		{
-			request.origin, strlcpy{request.origin, origin}
+			strlcpy{request.origin, origin}
 		};
 
 		return m::v1::version
@@ -127,7 +127,7 @@ ircd::m::feds::backfill(const opts &opts,
 		v1opts.limit = opts.argi[0];
 		v1opts.remote = string_view
 		{
-			request.origin, strlcpy{request.origin, origin}
+			strlcpy{request.origin, origin}
 		};
 
 		return m::v1::backfill
@@ -187,7 +187,7 @@ ircd::m::feds::event(const opts &opts,
 		v1opts.dynamic = true;
 		v1opts.remote = string_view
 		{
-			request.origin, strlcpy{request.origin, origin}
+			strlcpy{request.origin, origin}
 		};
 
 		return m::v1::event
