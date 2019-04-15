@@ -313,9 +313,7 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 
 	if(!my_host(alias.host()) && ircd::time() - ts > seconds(alias_cache_ttl).count())
 	{
-		if(!fetch(std::nothrow, alias, alias.host()))
-			return false;
-
+		fetch(std::nothrow, alias, alias.host());
 		event_idx = alias_room.get(std::nothrow, "ircd.room.alias", key);
 	}
 
