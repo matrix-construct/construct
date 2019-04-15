@@ -71,7 +71,9 @@ ircd::m::sync::rooms_linear(data &data)
 
 	const auto room_head
 	{
-		m::head_idx(std::nothrow, room)
+		data.event_idx && room != data.user_room?
+			m::head_idx(std::nothrow, room):
+			0UL
 	};
 
 	const scope_restore their_head
@@ -81,7 +83,9 @@ ircd::m::sync::rooms_linear(data &data)
 
 	const auto room_depth
 	{
-		m::depth(std::nothrow, room)
+		data.event_idx && room != data.user_room?
+			m::depth(std::nothrow, room):
+			-1L
 	};
 
 	const scope_restore their_depth
