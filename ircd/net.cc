@@ -1728,6 +1728,7 @@ ircd::net::acceptor::check_accept_error(const error_code &ec,
 	}
 
 	throw_system_error(ec);
+	__builtin_unreachable();
 }
 
 void
@@ -1841,6 +1842,7 @@ ircd::net::acceptor::check_handshake_error(const error_code &ec,
 	}
 
 	throw_system_error(ec);
+	__builtin_unreachable();
 }
 
 bool
