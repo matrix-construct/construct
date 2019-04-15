@@ -59,4 +59,6 @@ struct ircd::m::fetch::request
 	request(const m::room::id &, const m::event::id &, const size_t &bufsz = 8_KiB);
 	request(request &&) = delete;
 	request(const request &) = delete;
+	request &operator=(request &&) = delete;
+	request &operator=(const request &) = delete;
 };
