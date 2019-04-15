@@ -567,10 +567,21 @@ ircd::server::peer::peer(const net::hostport &hostport,
 	std::move(open_opts)
 }
 {
-	const net::hostport canon{this->hostcanon};
-	this->open_opts.hostport.host = net::host(canon);
-	this->open_opts.hostport.port = net::port(canon);
-	this->open_opts.hostport.service = this->service;
+	const net::hostport &canon{this->hostcanon};
+
+	this->open_opts.hostport.host = this->hostcanon;      // Resolve SRV on this name.
+	this->open_opts.hostport.port = net::port(hostport);
+	this->open_opts.hostport.service = this->service;     // Resolve SRV on this protocol.
+
+	this->open_opts.server_name = this->hostcanon;        // Send SNI for this name.
+	this->open_opts.common_name = this->hostcanon;        // Cert verify this name.
+
+	if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_address, host(this->open_opts.hostport)))
+		this->remote =
+		{
+			host(this->open_opts.hostport), port(this->open_opts.hostport)
+		};
+
 	this->open_opts.ipport = this->remote;
 }
 
