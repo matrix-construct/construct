@@ -1024,15 +1024,15 @@ ircd::server::peer::handle_head_recv(const link &link,
 {
 	// Learn the software version of the remote peer so we can shape
 	// requests more effectively.
-	if(!server_name && head.server)
+	if(!server_version && head.server)
 	{
-		server_name = std::string{head.server};
+		server_version = std::string{head.server};
 		log::debug
 		{
 			log, "peer(%p) learned %s is '%s'",
 			this,
 			string(remote),
-			server_name
+			server_version,
 		};
 	}
 }

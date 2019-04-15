@@ -36,7 +36,7 @@ struct ircd::server::peer
 	net::open_opts open_opts;
 	std::list<link> links;
 	std::unique_ptr<err> e;
-	std::string server_name;
+	std::string server_version;
 	size_t write_bytes {0};
 	size_t read_bytes {0};
 	bool op_resolve {false};

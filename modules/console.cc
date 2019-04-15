@@ -4148,8 +4148,8 @@ console_cmd__peer__version(opt &out, const string_view &line)
 		else
 		    out << ' ' << setw(40) << left << " ";
 
-		if(!empty(peer.server_name))
-			out << " :" << peer.server_name;
+		if(!empty(peer.server_version))
+			out << " :" << peer.server_version;
 
 		out << std::endl;
 	}
