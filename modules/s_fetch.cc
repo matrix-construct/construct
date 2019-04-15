@@ -612,6 +612,9 @@ try
 		if(request_cleanup())
 			continue;
 
+		if(requests.empty())
+			continue;
+
 		request_handle();
 	}
 }
@@ -681,6 +684,9 @@ try
 	{
 		const_cast<fetch::request &>(*it)
 	};
+
+	if(!request.started || !request.last || !request.buf)
+		return;
 
 	if(request.finished)
 		return;
@@ -974,6 +980,8 @@ void
 ircd::m::fetch::retry(request &request)
 try
 {
+	assert(!request.finished);
+	assert(request.started && request.last);
 	server::cancel(request);
 	request.eptr = std::exception_ptr{};
 	request.origin = {};
