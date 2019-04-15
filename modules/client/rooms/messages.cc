@@ -26,7 +26,8 @@ static void
 _append(json::stack::array &chunk,
         const m::event &,
         const m::event::idx &,
-        const m::user::room &user_room);
+        const m::user::room &user_room,
+        const int64_t &room_depth);
 
 conf::item<size_t>
 max_filter_miss
@@ -106,6 +107,11 @@ get__messages(client &client,
 		room, page.from, &default_fetch_opts
 	};
 
+	const auto room_depth
+	{
+		m::depth(std::nothrow, room)
+	};
+
 	resource::response::chunked response
 	{
 		client, http::OK
@@ -160,7 +166,7 @@ get__messages(client &client,
 			continue;
 		}
 
-		_append(chunk, event, it.event_idx(), user_room);
+		_append(chunk, event, it.event_idx(), user_room, room_depth);
 		++hit;
 	}
 	chunk.~array();
@@ -184,12 +190,14 @@ void
 _append(json::stack::array &chunk,
         const m::event &event,
         const m::event::idx &event_idx,
-        const m::user::room &user_room)
+        const m::user::room &user_room,
+        const int64_t &room_depth)
 {
 	m::event_append_opts opts;
 	opts.event_idx = &event_idx;
 	opts.user_id = &user_room.user.user_id;
 	opts.user_room = &user_room;
+	opts.room_depth = &room_depth;
 	m::append(chunk, event, opts);
 }
 

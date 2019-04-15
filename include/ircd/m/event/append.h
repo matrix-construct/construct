@@ -19,6 +19,7 @@ namespace ircd::m
 		const string_view *client_txnid {nullptr};
 		const id::user *user_id {nullptr};
 		const room *user_room {nullptr};
+		const int64_t *room_depth {nullptr};
 		long age {std::numeric_limits<long>::min()};
 		bool query_txnid {true};
 	};

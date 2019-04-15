@@ -69,6 +69,26 @@ ircd::m::sync::rooms_linear(data &data)
 	if(should_ignore(data))
 		return false;
 
+	const auto room_head
+	{
+		m::head_idx(std::nothrow, room)
+	};
+
+	const scope_restore their_head
+	{
+		data.room_head, room_head
+	};
+
+	const auto room_depth
+	{
+		m::depth(std::nothrow, room)
+	};
+
+	const scope_restore their_depth
+	{
+		data.room_depth, room_depth
+	};
+
 	bool ret{false};
 	m::sync::for_each("rooms", [&data, &ret]
 	(item &item)
@@ -215,14 +235,19 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 		*data.out, room.room_id
 	};
 
-	const event::idx room_head
+	const auto top
 	{
-		head_idx(std::nothrow, room)
+		m::top(std::nothrow, room)
 	};
 
 	const scope_restore their_head
 	{
-		data.room_head, room_head
+		data.room_head, std::get<2>(top)
+	};
+
+	const scope_restore their_depth
+	{
+		data.room_depth, std::get<1>(top)
 	};
 
 	bool ret{false};

@@ -55,6 +55,7 @@ _append(json::stack::array &,
         const m::event &,
         const m::event::idx &,
         const m::user::room &,
+        const int64_t &,
         const bool &query_txnid = true);
 
 resource::response
@@ -100,6 +101,11 @@ get__context(client &client,
 		request.user_id
 	};
 
+	const auto room_depth
+	{
+		m::depth(std::nothrow, room_id)
+	};
+
 	resource::response::chunked response
 	{
 		client, http::OK
@@ -142,7 +148,7 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				continue;
 
-			_append(array, event, before.event_idx(), user_room);
+			_append(array, event, before.event_idx(), user_room, room_depth);
 		}
 
 		if(before && limit > 0)
@@ -182,7 +188,7 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				continue;
 
-			_append(array, event, after.event_idx(), user_room);
+			_append(array, event, after.event_idx(), user_room, room_depth);
 		}
 
 		if(after && limit > 0)
@@ -211,7 +217,7 @@ get__context(client &client,
 			room, &default_fetch_opts
 		};
 
-		state.for_each([&array, &request, &user_room]
+		state.for_each([&array, &request, &user_room, room_depth]
 		(const m::event::idx &event_idx)
 		{
 			const m::event::fetch event
@@ -225,7 +231,7 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				return;
 
-			_append(array, event, event_idx, user_room, false);
+			_append(array, event, event_idx, user_room, room_depth, false);
 		});
 	}
 
@@ -237,11 +243,13 @@ _append(json::stack::array &chunk,
         const m::event &event,
         const m::event::idx &event_idx,
         const m::user::room &user_room,
+        const int64_t &room_depth,
         const bool &query_txnid)
 {
 	m::event_append_opts opts;
 	opts.event_idx = &event_idx;
 	opts.user_id = &user_room.user.user_id;
 	opts.user_room = &user_room;
+	opts.room_depth = &room_depth;
 	m::append(chunk, event, opts);
 }

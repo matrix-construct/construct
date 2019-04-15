@@ -259,5 +259,6 @@ ircd::m::sync::_room_timeline_append(data &data,
 	opts.client_txnid = &data.client_txnid;
 	opts.user_id = &data.user.user_id;
 	opts.user_room = &data.user_room;
+	opts.room_depth = &data.room_depth;
 	m::append(events, event, opts);
 }

@@ -542,6 +542,8 @@ ircd::m::append(json::stack::object &object,
 		{
 			opts.age != std::numeric_limits<long>::min()?
 				opts.age:
+			json::get<"depth"_>(event) >= 0 && opts.room_depth && *opts.room_depth >= 0L?
+				*opts.room_depth - json::get<"depth"_>(event):
 			json::get<"origin_server_ts"_>(event)?
 				ircd::time<milliseconds>() - json::get<"origin_server_ts"_>(event):
 			0L

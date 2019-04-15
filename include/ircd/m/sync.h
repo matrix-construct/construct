@@ -103,6 +103,7 @@ struct ircd::m::sync::data
 	const m::event *event {nullptr};
 	const m::room *room {nullptr};
 	string_view membership;
+	int64_t room_depth {0}; // if *room
 	event::idx room_head {0}; // if *room
 	event::idx event_idx {0}; // if *event
 	string_view client_txnid;
