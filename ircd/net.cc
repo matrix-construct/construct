@@ -2532,7 +2532,7 @@ ircd::net::socket::handshake(const open_opts &opts,
 
 	set_timeout(opts.handshake_timeout);
 
-	if(opts.send_sni)
+	if(opts.send_sni && server_name(opts))
 		openssl::server_name(*this, server_name(opts));
 
 	ssl.set_verify_callback(std::move(verify_handler));
