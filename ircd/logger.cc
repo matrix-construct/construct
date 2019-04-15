@@ -109,6 +109,9 @@ ircd::log::init()
 	if(!ircd::debugmode)
 		console_disable(level::DEBUG);
 
+	if(ircd::write_avoid)
+		return;
+
 	mkdir();
 }
 

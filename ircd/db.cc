@@ -183,7 +183,12 @@ try
 		fs::path(fs::DB)
 	};
 
-	if(fs::mkdir(dbdir))
+	if(!fs::is_dir(dbdir) && (ircd::read_only || ircd::write_avoid))
+		log::warning
+		{
+			log, "Not creating database directory `%s' in read-only/write-avoid mode.", dbdir
+		};
+	else if(fs::mkdir(dbdir))
 		log::notice
 		{
 			log, "Created new database directory at `%s'", dbdir
@@ -964,7 +969,7 @@ try
 }
 ,read_only
 {
-	false
+	ircd::read_only
 }
 ,env
 {
@@ -1213,7 +1218,7 @@ try
 
 	// If the directory does not exist, though rocksdb will create it, we can
 	// avoid scaring the user with an error log message if we just do that..
-	if(opts->create_if_missing && !fs::is_dir(path))
+	if(opts->create_if_missing && !fs::is_dir(path) && !ircd::write_avoid)
 		fs::mkdir(path);
 
 	// Announce attempt before usual point where exceptions are thrown
@@ -1224,6 +1229,14 @@ try
 		path,
 		columns.size()
 	};
+
+	if(read_only)
+		log::warning
+		{
+			log, "Database \"%s\" @ `%s' will be opened in read-only mode.",
+			this->name,
+			path,
+		};
 
 	// Open DB into ptr
 	rocksdb::DB *ptr;
@@ -7285,14 +7298,14 @@ ircd::db::make_dbopts(std::string optstr,
 	// RocksDB doesn't parse a read_only option, so we allow that to be added
 	// to open the database as read_only and then remove that from the string.
 	if(read_only)
-		*read_only = optstr_find_and_remove(optstr, "read_only=true;"s);
+		*read_only |= optstr_find_and_remove(optstr, "read_only=true;"s);
 	else
 		optstr_find_and_remove(optstr, "read_only=true;"s);
 
 	// We also allow the user to specify fsck=true to run a repair operation on
 	// the db. This may be expensive to do by default every startup.
 	if(fsck)
-		*fsck = optstr_find_and_remove(optstr, "fsck=true;"s);
+		*fsck |= optstr_find_and_remove(optstr, "fsck=true;"s);
 	else
 		optstr_find_and_remove(optstr, "fsck=true;"s);
 

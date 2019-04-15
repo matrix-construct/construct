@@ -90,7 +90,7 @@ init_my_tls_crt()
 		fs::path_string(certificate_path_parts)
 	};
 
-	if(!fs::exists(private_key_file))
+	if(!fs::exists(private_key_file) && !ircd::write_avoid)
 	{
 		log::warning
 		{
@@ -121,7 +121,7 @@ init_my_tls_crt()
 */
 
 	const json::object config{};
-	if(!fs::exists(cert_file))
+	if(!fs::exists(cert_file) && !ircd::write_avoid)
 	{
 		const json::object &certificate
 		{
@@ -248,7 +248,7 @@ init_my_ed25519()
 		})
 	};
 
-	if(fs::exists(sk_file))
+	if(fs::exists(sk_file) || ircd::write_avoid)
 		log::info
 		{
 			m::log, "Using ed25519 secret key @ `%s'", sk_file

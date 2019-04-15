@@ -48,7 +48,8 @@ try
 	std::make_unique<modules>()
 }
 {
-	presence::set(me, "online", me_online_status_msg);
+	if(!ircd::write_avoid)
+		presence::set(me, "online", me_online_status_msg);
 
 	if(room::state::disable_history)
 		log::warning
@@ -83,7 +84,7 @@ noexcept try
 {
 	m::sync::pool.join();
 
-	if(!std::current_exception())
+	if(!std::uncaught_exceptions() && !ircd::write_avoid)
 		presence::set(me, "offline", me_offline_status_msg);
 }
 catch(const m::error &e)

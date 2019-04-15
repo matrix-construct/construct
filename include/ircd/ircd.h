@@ -74,4 +74,6 @@ namespace ircd
 
 	extern conf::item<bool> restart;
 	extern conf::item<bool> debugmode;
+	extern conf::item<bool> read_only;
+	extern conf::item<bool> write_avoid;
 }

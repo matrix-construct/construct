@@ -17,6 +17,22 @@ namespace ircd
 	void main() noexcept;
 }
 
+decltype(ircd::write_avoid)
+ircd::write_avoid
+{
+	{ "name",     "ircd.write_avoid"  },
+	{ "default",  false               },
+	{ "persist",  false               },
+};
+
+decltype(ircd::read_only)
+ircd::read_only
+{
+	{ "name",     "ircd.read_only"  },
+	{ "default",  false             },
+	{ "persist",  false             },
+};
+
 decltype(ircd::debugmode)
 ircd::debugmode
 {

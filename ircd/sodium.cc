@@ -121,7 +121,7 @@ try
 		reinterpret_cast<char *>(key.get()), SK_SZ
 	};
 
-	if(!fs::exists(filename))
+	if(!fs::exists(filename) && !ircd::write_avoid)
 	{
 		throw_on_error
 		{

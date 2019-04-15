@@ -34,6 +34,8 @@ bool nodirect;
 bool noaio;
 bool no6;
 bool norun;
+bool read_only;
+bool write_avoid;
 const char *execute;
 lgetopt opts[] =
 {
@@ -52,6 +54,8 @@ lgetopt opts[] =
 	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
 	{ "no6",        &no6,           lgetopt::BOOL,    "Disable IPv6 operations" },
 	{ "norun",      &norun,         lgetopt::BOOL,    "[debug & testing only] Initialize but never run the event loop." },
+	{ "ro",         &read_only,     lgetopt::BOOL,    "Read-only mode. No writes to database allowed." },
+	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered." },
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -257,6 +261,13 @@ enable_coredumps()
 void
 applyargs()
 {
+	if(read_only)
+		ircd::read_only.set("true");
+
+	// read_only implies write_avoid.
+	if(write_avoid || read_only)
+		ircd::write_avoid.set("true");
+
 	if(debugmode)
 		ircd::debugmode.set("true");
 	else
