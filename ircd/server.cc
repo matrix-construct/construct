@@ -349,7 +349,10 @@ ircd::server::cancel(request &request)
 	// request. All that has to be done is indicate a full cancellation
 	// immediately and the user will know nothing was revealed to the remote.
 	if(!tag.committed())
+	{
+		disassociate(request, tag);
 		return true;
+	}
 
 	// Now things aren't so easy. More complicated logic happens inside...
 	cancel(request, tag);
