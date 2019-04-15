@@ -24,6 +24,13 @@ ircd::m::fetch::enable
 	{ "persist",  false                 },
 };
 
+decltype(ircd::m::fetch::timeout)
+ircd::m::fetch::timeout
+{
+	{ "name",     "ircd.m.fetch.timeout" },
+	{ "default",  10L                    },
+};
+
 decltype(ircd::m::fetch::hook)
 ircd::m::fetch::hook
 {
@@ -645,14 +652,12 @@ ircd::m::fetch::request_handle()
 		ctx::when_any(requests.begin(), requests.end())
 	};
 
-	if(!next.wait(seconds(5), std::nothrow))
+	if(!next.wait(seconds(timeout), std::nothrow))
 	{
-		for(const auto &request_ : requests)
-		{
-			auto &request(const_cast<fetch::request &>(request_));
-			if(!request.finished)
-				retry(request);
-		}
+		const auto now(ircd::time());
+		for(const auto &request : requests)
+			if(timedout(request, now))
+				retry(const_cast<fetch::request &>(request));
 
 		return;
 	}
@@ -983,6 +988,16 @@ ircd::m::fetch::finish(request &request)
 {
 	request.finished = ircd::time();
 	dock.notify_all();
+}
+
+bool
+ircd::m::fetch::timedout(const request &request,
+                         const time_t &now)
+{
+	if(!request.started || request.finished)
+		return false;
+
+	return request.last + seconds(timeout).count() < now;
 }
 
 bool

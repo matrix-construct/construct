@@ -24,8 +24,10 @@ namespace ircd::m::fetch
 	extern ctx::context eval_context;
 	extern ctx::context request_context;
 	extern hookfn<vm::eval &> hook;
+	extern conf::item<seconds> timeout;
 	extern conf::item<bool> enable;
 
+	static bool timedout(const request &, const time_t &now);
 	static string_view select_origin(request &, const string_view &);
 	static string_view select_random_origin(request &);
 	static void finish(request &);
