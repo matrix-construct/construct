@@ -112,10 +112,10 @@ struct ircd::net::dns::resolver
 	void unqueue(tag &);
 	void remove(tag &);
 	decltype(tags)::iterator remove(tag &, const decltype(tags)::iterator &);
-	void error_one(tag &, const std::exception_ptr &);
-	void error_one(tag &, const std::system_error &);
-	void error_all(const std::error_code &);
-	void cancel_all();
+	void error_one(tag &, const std::exception_ptr &, const bool &remove = true);
+	void error_one(tag &, const std::system_error &, const bool &remove = true);
+	void error_all(const std::error_code &, const bool &remove = true);
+	void cancel_all(const bool &remove = true);
 
 	// reception
 	bool handle_error(const header &, tag &);

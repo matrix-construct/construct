@@ -366,7 +366,7 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 		make_error_code(std::errc::timed_out)
 	};
 
-	error_one(tag, ec);
+	error_one(tag, ec, false);
 	return true;
 }
 
@@ -760,18 +760,19 @@ ircd::net::dns::resolver::handle_error(const header &header,
 //
 
 void
-ircd::net::dns::resolver::cancel_all()
+ircd::net::dns::resolver::cancel_all(const bool &remove)
 {
 	static const std::error_code &ec
 	{
 		make_error_code(std::errc::operation_canceled)
 	};
 
-	error_all(ec);
+	error_all(ec, remove);
 }
 
 void
-ircd::net::dns::resolver::error_all(const std::error_code &ec)
+ircd::net::dns::resolver::error_all(const std::error_code &ec,
+                                    const bool &remove)
 {
 	if(tags.empty())
 		return;
@@ -787,19 +788,24 @@ ircd::net::dns::resolver::error_all(const std::error_code &ec)
 	};
 
 	for(auto &p : tags)
-		error_one(p.second, eptr);
+		error_one(p.second, eptr, false);
+
+	if(remove)
+		for(auto it(begin(tags)); it != end(tags); it = this->remove(it->second, it));
 }
 
 void
 ircd::net::dns::resolver::error_one(tag &tag,
-                                    const std::system_error &se)
+                                    const std::system_error &se,
+                                    const bool &remove)
 {
-	error_one(tag, std::make_exception_ptr(se));
+	error_one(tag, std::make_exception_ptr(se), remove);
 }
 
 void
 ircd::net::dns::resolver::error_one(tag &tag,
-                                    const std::exception_ptr &eptr)
+                                    const std::exception_ptr &eptr,
+                                    const bool &remove)
 {
 	thread_local char hpbuf[128];
 	log::error
@@ -812,7 +818,9 @@ ircd::net::dns::resolver::error_one(tag &tag,
 
 	static const answers empty;
 	callback(eptr, tag, empty);
-	remove(tag);
+
+	if(remove)
+		this->remove(tag);
 }
 
 void
