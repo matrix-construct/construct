@@ -20,6 +20,9 @@ namespace ircd::m::events
 	bool for_each_in_sender(const id::user &, const closure_sender_bool &);
 	bool for_each_in_origin(const string_view &, const closure_sender_bool &);
 
+	bool for_each(const range &, const event::closure_idx_bool &);
+	bool for_each(const range &, const event_filter &, const event::closure_idx_bool &);
+
 	bool for_each(const range &, const closure_bool &);
 	bool for_each(const range &, const event_filter &, const closure_bool &);
 }

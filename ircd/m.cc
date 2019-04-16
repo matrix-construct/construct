@@ -2541,6 +2541,95 @@ ircd::m::events::for_each(const range &range,
 	return true;
 }
 
+///TODO: This impl is temp. Need better dispatching based on filter before
+///TODO: fetching event.
+bool
+ircd::m::events::for_each(const range &range,
+                          const event_filter &filter,
+                          const event::closure_idx_bool &closure)
+{
+	auto limit
+	{
+		json::get<"limit"_>(filter)?: 32L
+	};
+
+	return for_each(range, event::closure_idx_bool{[&filter, &closure, &limit, &range]
+	(const event::idx &event_idx)
+	-> bool
+	{
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow, range.fopts? *range.fopts : event::fetch::default_opts
+		};
+
+		if(!event.valid)
+			return true;
+
+		if(!match(filter, event))
+			return true;
+
+		if(!closure(event_idx))
+			return false;
+
+		return --limit;
+	}});
+
+	return true;
+}
+
+bool
+ircd::m::events::for_each(const range &range,
+                          const event::closure_idx_bool &closure)
+{
+	const bool ascending
+	{
+		range.first <= range.second
+	};
+
+	auto start
+	{
+		ascending?
+			range.first:
+			std::min(range.first, vm::sequence::retired)
+	};
+
+	const auto stop
+	{
+		ascending?
+			std::min(range.second, vm::sequence::retired + 1):
+			range.second
+	};
+
+	auto &column
+	{
+		dbs::event_json
+	};
+
+	auto it
+	{
+		column.lower_bound(byte_view<string_view>(start))
+	};
+
+	for(; bool(it); ascending? ++it : --it)
+	{
+		const event::idx event_idx
+		{
+			byte_view<event::idx>(it->first)
+		};
+
+		if(ascending && event_idx >= stop)
+			break;
+
+		if(!ascending && event_idx <= stop)
+			break;
+
+		if(!closure(event_idx))
+			return false;
+	}
+
+	return true;
+}
+
 bool
 ircd::m::events::for_each_in_origin(const string_view &origin,
                                     const closure_sender_bool &closure)
