@@ -1478,6 +1478,7 @@ ircd::net::acceptor::open()
 	interrupting = false;
 	a.open(ep.protocol());
 	a.set_option(reuse_address);
+	a.non_blocking(true);
 	log::debug
 	{
 		log, "%s opened listener socket", string(logheadbuf, *this)
@@ -1770,11 +1771,11 @@ noexcept try
 
 	check_handshake_error(ec, *sock);
 	sock->cancel_timeout();
+	assert(bool(cb));
 
 	// Toggles the behavior of non-async functions; see func comment
 	blocking(*sock, false);
 
-	assert(bool(cb));
 	cb(*listener_, sock);
 }
 catch(const ctx::interrupted &e)
