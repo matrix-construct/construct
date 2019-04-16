@@ -39,6 +39,10 @@ namespace ircd::ios
 	struct descriptor;
 	template<class function> struct handle;
 
+	struct dispatch;
+	struct defer;
+	struct post;
+
 	extern const std::thread::id static_thread_id;
 	extern std::thread::id main_thread_id;
 	extern asio::io_context *user;
@@ -53,12 +57,6 @@ namespace ircd::ios
 	const string_view &name(const descriptor &);
 	const string_view &name(const handler &);
 
-	void dispatch(descriptor &, std::function<void ()>);
-	void defer(descriptor &, std::function<void ()>);
-	void post(descriptor &, std::function<void ()>);
-	void dispatch(std::function<void ()>);
-	void defer(std::function<void ()>);
-	void post(std::function<void ()>);
 	void init(asio::io_context &user);
 }
 
@@ -70,6 +68,24 @@ namespace ircd
 	using ios::defer;
 	using ios::post;
 }
+
+struct ircd::ios::dispatch
+{
+	dispatch(descriptor &, std::function<void ()>);
+	dispatch(std::function<void ()>);
+};
+
+struct ircd::ios::defer
+{
+	defer(descriptor &, std::function<void ()>);
+	defer(std::function<void ()>);
+};
+
+struct ircd::ios::post
+{
+	post(descriptor &, std::function<void ()>);
+	post(std::function<void ()>);
+};
 
 struct ircd::ios::descriptor
 :instance_list<descriptor>
