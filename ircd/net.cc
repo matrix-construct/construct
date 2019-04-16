@@ -1622,13 +1622,15 @@ noexcept try
 
 	handle_set = false;
 	--accepting;
+
+	thread_local char ecbuf[64];
 	log::debug
 	{
 		log, "%s: accepted(%zu) %s %s",
 		string(logheadbuf, *this),
 		accepting,
 		loghead(*sock),
-		string(ec)
+		string(ecbuf, ec)
 	};
 
 	if(!check_accept_error(ec, *sock))
@@ -1664,12 +1666,14 @@ noexcept try
 catch(const ctx::interrupted &e)
 {
 	assert(bool(sock));
+
+	thread_local char ecbuf[64];
 	log::debug
 	{
 		log, "%s: acceptor interrupted %s %s",
 		string(logheadbuf, *this),
 		loghead(*sock),
-		string(ec)
+		string(ecbuf, ec)
 	};
 
 	error_code ec_;
@@ -1757,6 +1761,7 @@ noexcept try
 		openssl::current_cipher(*sock)
 	};
 
+	thread_local char ecbuf[64];
 	log::debug
 	{
 		log, "%s handshook(%zu) cipher:%s %s",
@@ -1765,7 +1770,7 @@ noexcept try
 		current_cipher?
 			openssl::name(*current_cipher):
 			"<NO CIPHER>"_sv,
-		string(ec)
+		string(ecbuf, ec)
 	};
 	#endif
 
@@ -1781,12 +1786,13 @@ noexcept try
 catch(const ctx::interrupted &e)
 {
 	assert(bool(sock));
+	thread_local char ecbuf[64];
 	log::debug
 	{
 		log, "%s: SSL handshake interrupted %s %s",
 		string(logheadbuf, *this),
 		loghead(*sock),
-		string(ec)
+		string(ecbuf, ec)
 	};
 
 	net::close(*sock, dc::RST, close_ignore);
@@ -2676,11 +2682,12 @@ noexcept
 	if(likely(!ec))
 		return;
 
+	thread_local char ecbuf[64];
 	log::dwarning
 	{
 		log, "socket:%lu cancel :%s",
 		this->id,
-		string(ec)
+		string(ecbuf, ec)
 	};
 }
 
@@ -2936,12 +2943,13 @@ noexcept try
 	if(type == ready::READ && !ec && bytes == 0)
 		ec = error_code{asio::error::eof, asio::error::get_misc_category()};
 
+	thread_local char ecbuf[64];
 	log::debug
 	{
 		log, "%s ready %s %s avail:%zu:%zu:%d",
 		loghead(*this),
 		reflect(type),
-		string(ec),
+		string(ecbuf, ec),
 		type == ready::READ? bytes : 0UL,
 		type == ready::READ? available(*this) : 0UL,
 		SSL_pending(ssl.native_handle())
@@ -3077,11 +3085,12 @@ noexcept try
 	using std::errc;
 
 	const life_guard<socket> s{wp};
+	thread_local char ecbuf[64];
 	log::debug
 	{
 		log, "%s connect %s",
 		loghead(*this),
-		string(ec)
+		string(ecbuf, ec)
 	};
 
 	// The timer was set by socket::connect() and may need to be canceled.
@@ -3145,11 +3154,12 @@ noexcept try
 	if(timedout && ec == errc::operation_canceled)
 		ec = make_error_code(errc::timed_out);
 
+	thread_local char ecbuf[64];
 	log::debug
 	{
 		log, "%s disconnect %s",
 		loghead(*this),
-		string(ec)
+		string(ecbuf, ec)
 	};
 
 	// This ignores EOF and turns it into a success to alleviate user concern.
@@ -3207,6 +3217,7 @@ noexcept try
 		openssl::current_cipher(*this)
 	};
 
+	thread_local char ecbuf[64];
 	log::debug
 	{
 		log, "%s handshake cipher:%s %s",
@@ -3214,7 +3225,7 @@ noexcept try
 		current_cipher?
 			openssl::name(*current_cipher):
 			"<NO CIPHER>"_sv,
-		string(ec)
+		string(ecbuf, ec)
 	};
 	#endif
 
