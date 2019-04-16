@@ -191,6 +191,9 @@ ircd::net::ipport
 ircd::net::remote_ipport(const socket &socket)
 noexcept try
 {
+	if(!opened(socket))
+		return {};
+
 	const auto &ep(socket.remote());
 	return make_ipport(ep);
 }
@@ -203,6 +206,9 @@ ircd::net::ipport
 ircd::net::local_ipport(const socket &socket)
 noexcept try
 {
+	if(!opened(socket))
+		return {};
+
 	const auto &ep(socket.local());
 	return make_ipport(ep);
 }
@@ -3933,7 +3939,8 @@ ircd::net::string(const mutable_buffer &buf,
 	if(need_bracket)
 		consume(out, copy(out, "["_sv));
 
-	consume(out, size(string(out, std::get<ipp.IP>(ipp))));
+	if(ipp)
+		consume(out, size(string(out, std::get<ipp.IP>(ipp))));
 
 	if(need_bracket)
 		consume(out, copy(out, "]"_sv));
