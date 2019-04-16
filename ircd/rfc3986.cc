@@ -178,7 +178,7 @@ ircd::rfc3986::parser::ip6_remote
 decltype(ircd::rfc3986::parser::ip_address)
 ircd::rfc3986::parser::ip_address
 {
-	ip6_address | ip4_address
+	ip4_address | ip6_address
 	,"IP address"
 };
 
@@ -220,7 +220,7 @@ ircd::rfc3986::parser::hostport
 decltype(ircd::rfc3986::parser::host)
 ircd::rfc3986::parser::host
 {
-	ip6_address | ip4_address | domain
+	ip_address | domain
 	,"host"
 };
 
@@ -482,7 +482,7 @@ ircd::rfc3986::valid(std::nothrow_t,
                      const parser::rule<> &rule,
                      const string_view &str)
 {
-	static const parser::rule<> only_rule
+	const parser::rule<> only_rule
 	{
 		rule >> eoi
 	};
@@ -496,7 +496,7 @@ ircd::rfc3986::valid(const parser::rule<> &rule,
                      const string_view &str)
 try
 {
-	static const parser::rule<> only_rule
+	const parser::rule<> only_rule
 	{
 		rule >> eoi
 	};
