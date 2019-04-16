@@ -28,6 +28,7 @@ struct ircd::net::acceptor
 
 	static log::log log;
 	static conf::item<milliseconds> timeout;
+	static conf::item<std::string> ssl_curve_list;
 	static conf::item<std::string> ssl_cipher_list;
 	static conf::item<std::string> ssl_cipher_blacklist;
 

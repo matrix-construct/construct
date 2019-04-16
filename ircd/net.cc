@@ -1299,18 +1299,25 @@ ircd::net::acceptor::timeout
 	{ "default",  12000L                      },
 };
 
+decltype(ircd::net::acceptor::ssl_curve_list)
+ircd::net::acceptor::ssl_curve_list
+{
+	{ "name",     "ircd.net.acceptor.ssl.curve.list"     },
+	{ "default",  string_view{ircd::net::ssl_curve_list} },
+};
+
 decltype(ircd::net::acceptor::ssl_cipher_list)
 ircd::net::acceptor::ssl_cipher_list
 {
-	{ "name",     "ircd.net.acceptor.ssl.cipher.list" },
-	{ "default",  string_view{}                       },
+	{ "name",     "ircd.net.acceptor.ssl.cipher.list"     },
+	{ "default",  string_view{ircd::net::ssl_cipher_list} },
 };
 
 decltype(ircd::net::acceptor::ssl_cipher_blacklist)
 ircd::net::acceptor::ssl_cipher_blacklist
 {
-	{ "name",     "ircd.net.acceptor.ssl.cipher.blacklist" },
-	{ "default",  string_view{}                            },
+	{ "name",     "ircd.net.acceptor.ssl.cipher.blacklist"     },
+	{ "default",  string_view{ircd::net::ssl_cipher_blacklist} },
 };
 
 bool
@@ -1989,6 +1996,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		ircd::tokens(ciphers, ':', [&res, &blacklist]
 		(const string_view &cipher)
 		{
+			assert(cipher);
 			if(!has(blacklist, cipher))
 				res << cipher << ':';
 		});
@@ -2006,6 +2014,12 @@ ircd::net::acceptor::configure(const json::object &opts)
 			opts["ssl_curve_list"]
 		};
 
+		assert(ssl.native_handle());
+		openssl::set_curves(*ssl.native_handle(), list);
+	}
+	else if(!empty(string_view(ssl_curve_list)))
+	{
+		const string_view &list(ssl_curve_list);
 		assert(ssl.native_handle());
 		openssl::set_curves(*ssl.native_handle(), list);
 	}
@@ -2408,6 +2422,27 @@ ircd::net::scope_timeout::release()
 //
 // net/socket.h
 //
+
+decltype(ircd::net::ssl_curve_list)
+ircd::net::ssl_curve_list
+{
+	{ "name",     "ircd.net.ssl.curve.list" },
+	{ "default",  string_view{}             },
+};
+
+decltype(ircd::net::ssl_cipher_list)
+ircd::net::ssl_cipher_list
+{
+	{ "name",     "ircd.net.ssl.cipher.list" },
+	{ "default",  string_view{}              },
+};
+
+decltype(ircd::net::ssl_cipher_blacklist)
+ircd::net::ssl_cipher_blacklist
+{
+	{ "name",     "ircd.net.ssl.cipher.blacklist" },
+	{ "default",  string_view{}                   },
+};
 
 boost::asio::ssl::context
 ircd::net::sslv23_client

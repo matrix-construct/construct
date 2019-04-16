@@ -18,6 +18,9 @@
 
 namespace ircd::net
 {
+	extern conf::item<std::string> ssl_curve_list;
+	extern conf::item<std::string> ssl_cipher_list;
+	extern conf::item<std::string> ssl_cipher_blacklist;
 	extern asio::ssl::context sslv23_client;
 }
 
