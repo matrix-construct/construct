@@ -822,7 +822,10 @@ ircd::m::fetch::start(request &request)
 {
 	m::v1::event::opts opts;
 	opts.dynamic = true;
-	opts.remote = request.origin?: select_random_origin(request);
+	if(!request.origin)
+		select_random_origin(request);
+
+	opts.remote = request.origin;
 	return start(request, opts);
 }
 
