@@ -15,8 +15,10 @@ namespace ircd::m::events
 {
 	struct range;
 	using closure_bool = std::function<bool (const event::idx &, const event &)>;
+	using closure_type_bool = std::function<bool (const string_view &, const event::idx &)>;
 	using closure_sender_bool = std::function<bool (const id::user &, const event::idx &)>;
 
+	bool for_each_in_type(const string_view &, const closure_type_bool &);
 	bool for_each_in_sender(const id::user &, const closure_sender_bool &);
 	bool for_each_in_origin(const string_view &, const closure_sender_bool &);
 

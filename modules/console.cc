@@ -5766,11 +5766,45 @@ console_cmd__events__in__origin(opt &out, const string_view &line)
 
 	const string_view &origin
 	{
-		param.at("origin")
+		lstrip(param.at("origin"), ':')
 	};
 
 	m::events::for_each_in_origin(origin, [&out]
 	(const m::user::id &user_id, const m::event::idx &event_idx)
+	{
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+		{
+			out << event_idx << " " << "NOT FOUND" << std::endl;
+			return true;
+		}
+
+		out << event_idx << " " << pretty_oneline(event) << std::endl;;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__events__in__type(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"type"
+	}};
+
+	const string_view &type
+	{
+		param.at("type")
+	};
+
+	m::events::for_each_in_type(type, [&out]
+	(const string_view &type, const m::event::idx &event_idx)
 	{
 		const m::event::fetch event
 		{
@@ -5806,13 +5840,10 @@ console_cmd__events__in(opt &out, const string_view &line)
 	if(valid(m::id::USER, what))
 		return console_cmd__events__in__sender(out, line);
 
-	if(rfc3986::valid_host(std::nothrow, what))
+	if(startswith(what, ':') && rfc3986::valid_host(std::nothrow, lstrip(what, ':')))
 		return console_cmd__events__in__origin(out, line);
 
-	throw error
-	{
-		"Cannot interpret type of argument '%s'", what
-	};
+	return console_cmd__events__in__type(out, line);
 }
 
 conf::item<size_t>

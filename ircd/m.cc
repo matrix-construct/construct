@@ -2712,6 +2712,40 @@ ircd::m::events::for_each_in_sender(const id::user &user,
 	return true;
 }
 
+bool
+ircd::m::events::for_each_in_type(const string_view &type,
+                                  const closure_type_bool &closure)
+{
+	auto &column
+	{
+		dbs::event_type
+	};
+
+	char buf[dbs::EVENT_TYPE_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		dbs::event_type_key(buf, type)
+	};
+
+	auto it
+	{
+		column.begin(key)
+	};
+
+	for(; bool(it); ++it)
+	{
+		const auto &keyp
+		{
+			dbs::event_type_key(it->first)
+		};
+
+		if(!closure(type, std::get<0>(keyp)))
+			return false;
+	}
+
+	return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/filter.h
