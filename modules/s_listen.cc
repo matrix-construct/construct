@@ -201,6 +201,35 @@ load_listener(const m::event &event)
 	return load_listener(name, opts);
 }
 
+ctx::context
+_listener_allow
+{
+	"listener allow", 32_KiB, context::POST, []
+	{
+		while(1)
+		{
+			client::dock.wait([]
+			{
+				return !client::pool.avail();
+			});
+
+			client::dock.wait([]
+			{
+				if(!client::pool.avail())
+					return false;
+
+				if(client::map.size() >= size_t(client::settings::max_client))
+					return false;
+
+				return true;
+			});
+
+			for(auto &listener : listeners)
+				allow(listener);
+		}
+	}
+};
+
 static bool
 _listener_proffer(net::listener &listener,
                   const net::ipport &ipport)
@@ -218,10 +247,6 @@ _listener_proffer(net::listener &listener,
 		return false;
 	}
 
-	// Sets the asynchronous handler for the next accept. We can play with
-	// delaying this call under certain conditions to provide flow control.
-	allow(listener);
-
 	if(unlikely(client::map.size() >= size_t(client::settings::max_client)))
 	{
 		log::warning
@@ -233,6 +258,21 @@ _listener_proffer(net::listener &listener,
 
 		return false;
 	}
+
+	if(unlikely(!client::pool.avail()))
+	{
+		log::dwarning
+		{
+			"Refusing to add new client from %s because request pool exhausted.",
+			string(strbuf, ipport),
+		};
+
+		return false;
+	}
+
+	// Sets the asynchronous handler for the next accept. We can play with
+	// delaying this call under certain conditions to provide flow control.
+	allow(listener);
 
 	if(client::count(ipport) >= size_t(client::settings::max_client_per_peer))
 	{

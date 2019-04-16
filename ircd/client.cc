@@ -415,6 +415,8 @@ try
 		assert(client->reqctx);
 		assert(client->reqctx == ctx::current);
 		client->reqctx = nullptr;
+		if(client::pool.avail() <= 1)
+			client::dock.notify_all();
 	}};
 
 	#ifdef RB_DEBUG
