@@ -5790,6 +5790,31 @@ console_cmd__events__in__origin(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__events__in(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"what"
+	}};
+
+	const string_view &what
+	{
+		param.at("what")
+	};
+
+	if(valid(m::id::USER, what))
+		return console_cmd__events__in__sender(out, line);
+
+	if(rfc3986::valid_host(std::nothrow, what))
+		return console_cmd__events__in__origin(out, line);
+
+	throw error
+	{
+		"Cannot interpret type of argument '%s'", what
+	};
+}
+
 conf::item<size_t>
 events_dump_buffer_size
 {
