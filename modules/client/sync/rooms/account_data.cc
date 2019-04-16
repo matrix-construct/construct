@@ -33,7 +33,10 @@ ircd::m::sync::room_account_data
 {
 	"rooms.account_data",
 	room_account_data_polylog,
-	room_account_data_linear
+	room_account_data_linear,
+	{
+		{ "initial", true }
+	}
 };
 
 bool
@@ -202,7 +205,9 @@ ircd::m::sync::room_account_data_polylog(data &data)
 	};
 
 	bool ret{false};
-	ret |= room_account_data_polylog_events(data);
+	if(!data.phased || int64_t(data.range.first) > 0L)
+		ret |= room_account_data_polylog_events(data);
+
 	ret |= room_account_data_polylog_tags(data);
 	return ret;
 }
