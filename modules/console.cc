@@ -466,6 +466,13 @@ console_cmd__debug(opt &out, const string_view &line)
 	}
 }
 
+bool
+console_cmd__demangle(opt &out, const string_view &line)
+{
+	out << ircd::demangle(line) << std::endl;
+	return true;
+}
+
 //
 // main
 //
