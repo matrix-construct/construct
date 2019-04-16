@@ -835,9 +835,20 @@ ircd::net::dns::resolver::remove(tag &tag,
 		sendq.size()
 	};
 
-	unqueue(tag);
-	done.notify_all();
-	return it != end(tags)? tags.erase(it) : it;
+	if(it != end(tags))
+		unqueue(tag);
+
+	const auto ret
+	{
+		it != end(tags)?
+			tags.erase(it):
+			it
+	};
+
+	if(ret != end(tags))
+		done.notify_all();
+
+	return it;
 }
 
 void
