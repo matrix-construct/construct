@@ -2541,6 +2541,88 @@ ircd::m::events::for_each(const range &range,
 	return true;
 }
 
+bool
+ircd::m::events::for_each_in_origin(const string_view &origin,
+                                    const closure_sender_bool &closure)
+{
+	auto &column
+	{
+		dbs::event_sender
+	};
+
+	char buf[dbs::EVENT_SENDER_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		dbs::event_sender_key(buf, origin)
+	};
+
+	auto it
+	{
+		column.begin(key)
+	};
+
+	for(; bool(it); ++it)
+	{
+		const auto &keyp
+		{
+			dbs::event_sender_key(it->first)
+		};
+
+		char _buf[m::id::MAX_SIZE];
+		mutable_buffer buf{_buf};
+		consume(buf, copy(buf, std::get<0>(keyp)));
+		consume(buf, copy(buf, ":"_sv));
+		consume(buf, copy(buf, origin));
+		const string_view &user_id
+		{
+			_buf, data(buf)
+		};
+
+		assert(valid(id::USER, user_id));
+		if(!closure(user_id, std::get<1>(keyp)))
+			return false;
+	}
+
+	return true;
+}
+
+bool
+ircd::m::events::for_each_in_sender(const id::user &user,
+                                    const closure_sender_bool &closure)
+{
+	auto &column
+	{
+		dbs::event_sender
+	};
+
+	char buf[dbs::EVENT_SENDER_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		dbs::event_sender_key(buf, user, 0)
+	};
+
+	auto it
+	{
+		column.begin(key)
+	};
+
+	for(; bool(it); ++it)
+	{
+		const auto &keyp
+		{
+			dbs::event_sender_key(it->first)
+		};
+
+		if(std::get<0>(keyp) != user.local())
+			break;
+
+		if(!closure(user, std::get<1>(keyp)))
+			return false;
+	}
+
+	return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/filter.h

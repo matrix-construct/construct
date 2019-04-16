@@ -5722,6 +5722,74 @@ console_cmd__events__filter(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__events__in__sender(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	m::events::for_each_in_sender(user_id, [&out]
+	(const m::user::id &user_id, const m::event::idx &event_idx)
+	{
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+		{
+			out << event_idx << " " << "NOT FOUND" << std::endl;
+			return true;
+		}
+
+		out << event_idx << " " << pretty_oneline(event) << std::endl;;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__events__in__origin(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"origin"
+	}};
+
+	const string_view &origin
+	{
+		param.at("origin")
+	};
+
+	m::events::for_each_in_origin(origin, [&out]
+	(const m::user::id &user_id, const m::event::idx &event_idx)
+	{
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+		{
+			out << event_idx << " " << "NOT FOUND" << std::endl;
+			return true;
+		}
+
+		out << event_idx << " " << pretty_oneline(event) << std::endl;;
+		return true;
+	});
+
+	return true;
+}
+
 conf::item<size_t>
 events_dump_buffer_size
 {
