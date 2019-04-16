@@ -36,6 +36,11 @@ decltype(ircd::m::dbs::event_refs)
 ircd::m::dbs::event_refs
 {};
 
+/// Linkage for a reference to the event_sender column.
+decltype(ircd::m::dbs::event_sender)
+ircd::m::dbs::event_sender
+{};
+
 /// Linkage for a reference to the room_head column
 decltype(ircd::m::dbs::room_head)
 ircd::m::dbs::room_head
@@ -140,6 +145,7 @@ ircd::m::dbs::init::init(std::string dbopts)
 	event_idx = db::column{*events, desc::events__event_idx.name};
 	event_json = db::column{*events, desc::events__event_json.name};
 	event_refs = db::index{*events, desc::events__event_refs.name};
+	event_sender = db::index{*events, desc::events__event_sender.name};
 	room_head = db::index{*events, desc::events__room_head.name};
 	room_events = db::index{*events, desc::events__room_events.name};
 	room_joined = db::index{*events, desc::events__room_joined.name};
@@ -326,6 +332,9 @@ ircd::m::dbs::_index_event(db::txn &txn,
 
 	if(opts.event_refs.any())
 		_index_event_refs(txn, event, opts);
+
+	if(opts.event_sender)
+		_index_event_sender(txn, event, opts);
 }
 
 void
@@ -715,6 +724,30 @@ ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
 	db::txn::append
 	{
 		txn, dbs::event_refs,
+		{
+			opts.op, key, string_view{}
+		}
+	};
+}
+
+void
+ircd::m::dbs::_index_event_sender(db::txn &txn,
+                                  const event &event,
+                                  const write_opts &opts)
+{
+	assert(opts.event_sender);
+	assert(opts.event_idx);
+	assert(json::get<"sender"_>(event));
+
+	thread_local char buf[EVENT_SENDER_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		event_sender_key(buf, at<"sender"_>(event), opts.event_idx)
+	};
+
+	db::txn::append
+	{
+		txn, dbs::event_sender,
 		{
 			opts.op, key, string_view{}
 		}
@@ -1557,6 +1590,185 @@ ircd::m::dbs::desc::events__event_refs
 
 	// meta_block size
 	size_t(events__event_refs__meta_block__size),
+};
+
+//
+// event_sender
+//
+
+decltype(ircd::m::dbs::desc::events__event_sender__block__size)
+ircd::m::dbs::desc::events__event_sender__block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_sender.block.size" },
+	{ "default",  512L                                         },
+};
+
+decltype(ircd::m::dbs::desc::events__event_sender__meta_block__size)
+ircd::m::dbs::desc::events__event_sender__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_sender.meta_block.size" },
+	{ "default",  4096L                                             },
+};
+
+decltype(ircd::m::dbs::desc::events__event_sender__cache__size)
+ircd::m::dbs::desc::events__event_sender__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_sender.cache.size" },
+		{ "default",  long(16_MiB)                                 },
+	}, []
+	{
+		const size_t &value{events__event_sender__cache__size};
+		db::capacity(db::cache(event_sender), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_sender__cache_comp__size)
+ircd::m::dbs::desc::events__event_sender__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_sender.cache_comp.size" },
+		{ "default",  long(0_MiB)                                       },
+	}, []
+	{
+		const size_t &value{events__event_sender__cache_comp__size};
+		db::capacity(db::cache_compressed(event_sender), value);
+	}
+};
+
+ircd::string_view
+ircd::m::dbs::event_sender_key(const mutable_buffer &out,
+                               const user::id &user_id,
+                               const event::idx &event_idx)
+{
+	return event_sender_key(out, user_id.host(), user_id.local(), event_idx);
+}
+
+ircd::string_view
+ircd::m::dbs::event_sender_key(const mutable_buffer &out_,
+                               const string_view &origin,
+                               const string_view &localpart,
+                               const event::idx &event_idx)
+{
+	assert(size(out_) >= EVENT_SENDER_KEY_MAX_SIZE);
+	assert(!event_idx || localpart);
+	assert(!localpart || startswith(localpart, '@'));
+
+	mutable_buffer out{out_};
+	consume(out, copy(out, origin));
+	consume(out, copy(out, localpart));
+
+	if(localpart && event_idx)
+	{
+		consume(out, copy(out, "\0"_sv));
+		consume(out, copy(out, byte_view<string_view>(event_idx)));
+	}
+
+	return { data(out_), data(out) };
+}
+
+std::tuple<ircd::string_view, ircd::m::event::idx>
+ircd::m::dbs::event_sender_key(const string_view &amalgam)
+{
+	const auto &parts
+	{
+		split(amalgam, '\0')
+	};
+
+
+	assert(!empty(parts.first) && !empty(parts.second));
+	assert(startswith(parts.first, '@'));
+
+	return
+	{
+		parts.first,
+		byte_view<event::idx>(parts.second),
+	};
+}
+
+const ircd::db::prefix_transform
+ircd::m::dbs::desc::events__event_sender__pfx
+{
+	"_event_sender",
+	[](const string_view &key)
+	{
+		return has(key, '@');
+	},
+
+	[](const string_view &key)
+	{
+		const auto &parts
+		{
+			split(key, '@')
+		};
+
+		return parts.first;
+	}
+};
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events__event_sender
+{
+	// name
+	"_event_sender",
+
+	// explanation
+	R"(Index of senders to their events.
+
+	origin | localpart, event_idx => --
+
+	The senders of events are indexes by this column. This allows for all
+	events from a sender to be iterated. Additionally, all events from a
+	server and all known servers can be iterated from this column.
+
+	They key is made from a user mxid and an event_id, where the mxid is
+	part-swapped so the origin comes first, and the @localpart comes after.
+	Lookups can be performed for an origin or a full user_mxid.
+
+	The prefix transform is in effect; the prefix domain is the origin. We
+	can efficiently iterate all events from an origin. We can slightly less
+	efficiently iterate all users from an origin, as well as iterate all
+	origins known.
+
+	Note that the indexer of this column ignores the actual "origin" field
+	of an event. Only the "sender" data is used here.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	events__event_sender__pfx,
+
+	// drop column
+	false,
+
+	// cache size
+	bool(events_cache_enable)? -1 : 0, //uses conf item
+
+	// cache size for compressed assets
+	bool(events_cache_comp_enable)? -1 : 0,
+
+	// bloom filter bits
+	0,
+
+	// expect queries hit
+	false,
+
+	// block size
+	size_t(events__event_sender__block__size),
+
+	// meta_block size
+	size_t(events__event_sender__meta_block__size),
 };
 
 //
@@ -3745,6 +3957,10 @@ ircd::m::dbs::desc::events
 	// event_idx | event_idx
 	// Reverse mapping of the event reference graph.
 	events__event_refs,
+
+	// origin | sender, event_idx
+	// Mapping of senders to event_idx's they are the sender of.
+	events__event_sender,
 
 	// (room_id, (depth, event_idx)) => (state_root)
 	// Sequence of all events for a room, ever.

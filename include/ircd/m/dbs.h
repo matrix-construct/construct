@@ -35,6 +35,7 @@ namespace ircd::m::dbs
 	extern db::column event_idx;       // event_id => event_idx
 	extern db::column event_json;      // event_idx => full json
 	extern db::index event_refs;       // event_idx | ref_type, event_idx
+	extern db::index event_sender;     // host | local, event_idx
 	extern db::index room_head;        // room_id | event_id => event_idx
 	extern db::index room_events;      // room_id | depth, event_idx => node_id
 	extern db::index room_joined;      // room_id | origin, member => event_idx
@@ -49,6 +50,11 @@ namespace ircd::m::dbs
 	string_view event_refs_key(const mutable_buffer &out, const event::idx &tgt, const ref &type, const event::idx &referer);
 	std::tuple<ref, event::idx> event_refs_key(const string_view &amalgam);
 	string_view reflect(const ref &);
+
+	constexpr size_t EVENT_SENDER_KEY_MAX_SIZE {id::MAX_SIZE + 1 + 8};
+	string_view event_sender_key(const mutable_buffer &out, const string_view &origin, const string_view &localpart = {}, const event::idx & = 0);
+	string_view event_sender_key(const mutable_buffer &out, const id::user &, const event::idx &);
+	std::tuple<string_view, event::idx> event_sender_key(const string_view &amalgam);
 
 	constexpr size_t ROOM_HEAD_KEY_MAX_SIZE {id::MAX_SIZE + 1 + id::MAX_SIZE};
 	string_view room_head_key(const mutable_buffer &out, const id::room &, const id::event &);
@@ -135,6 +141,9 @@ struct ircd::m::dbs::write_opts
 	/// Whether the event removes the prev_events it references from the
 	/// room_head. This defaults to true and should almost always be true.
 	bool room_refs {true};
+
+	/// Whether to update the event_sender index.
+	bool event_sender {true};
 };
 
 /// Types of references indexed by event_refs. This is a single byte integer,
@@ -250,6 +259,14 @@ namespace ircd::m::dbs::desc
 	extern const db::comparator events__event_refs__cmp;
 	extern const db::descriptor events__event_refs;
 
+	// events sender
+	extern conf::item<size_t> events__event_sender__block__size;
+	extern conf::item<size_t> events__event_sender__meta_block__size;
+	extern conf::item<size_t> events__event_sender__cache__size;
+	extern conf::item<size_t> events__event_sender__cache_comp__size;
+	extern const db::prefix_transform events__event_sender__pfx;
+	extern const db::descriptor events__event_sender;
+
 	// room head mapping sequence
 	extern conf::item<size_t> events__room_head__block__size;
 	extern conf::item<size_t> events__room_head__meta_block__size;
@@ -304,6 +321,7 @@ namespace ircd::m::dbs
 	string_view _index_redact(db::txn &, const event &, const write_opts &);
 	string_view _index_other(db::txn &, const event &, const write_opts &);
 	string_view _index_room(db::txn &, const event &, const write_opts &);
+	void _index_event_sender(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &);
