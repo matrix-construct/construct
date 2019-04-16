@@ -205,12 +205,13 @@ static bool
 _listener_proffer(net::listener &listener,
                   const net::ipport &ipport)
 {
+	thread_local char strbuf[256];
 	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 	{
 		log::dwarning
 		{
 			"Refusing to add new client from %s in runlevel %s",
-			string(ipport),
+			string(strbuf, ipport),
 			reflect(ircd::run::level)
 		};
 
@@ -226,7 +227,7 @@ _listener_proffer(net::listener &listener,
 		log::warning
 		{
 			"Refusing to add new client from %s because maximum of %zu reached",
-			string(ipport),
+			string(strbuf, ipport),
 			size_t(client::settings::max_client)
 		};
 
