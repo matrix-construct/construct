@@ -1788,7 +1788,6 @@ noexcept try
 
 	// Toggles the behavior of non-async functions; see func comment
 	blocking(*sock, false);
-
 	cb(*listener_, sock);
 }
 catch(const ctx::interrupted &e)
@@ -2583,6 +2582,7 @@ ircd::net::socket::handshake(const open_opts &opts,
 		std::bind(&socket::handle_verify, this, ph::_1, ph::_2, opts)
 	};
 
+	assert(!fini);
 	set_timeout(opts.handshake_timeout);
 
 	if(opts.send_sni && server_name(opts))
@@ -3118,13 +3118,14 @@ noexcept try
 
 	// Try to set the user's socket options now; if something fails we can
 	// invoke their callback with the error from the exception handler.
-	if(opts.sopts)
+	if(opts.sopts && !fini)
 		set(*this, *opts.sopts);
 
 	// The user can opt out of performing the handshake here.
 	if(!opts.handshake)
 		return call_user(callback, ec);
 
+	assert(!fini);
 	handshake(opts, std::move(callback));
 }
 catch(const std::bad_weak_ptr &e)
@@ -3244,7 +3245,8 @@ noexcept try
 	#endif
 
 	// Toggles the behavior of non-async functions; see func comment
-	blocking(*this, false);
+	if(!ec)
+		blocking(*this, false);
 
 	// This is the end of the asynchronous call chain; the user is called
 	// back with or without error here.
