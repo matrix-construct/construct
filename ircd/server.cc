@@ -849,12 +849,13 @@ ircd::server::peer::handle_open(link &link,
 		if(links.size() == 1)
 			err_set(eptr);
 
+		thread_local char rembuf[64];
 		log::derror
 		{
 			log, "peer(%p) link(%p) [%s]: open: %s",
 			this,
 			&link,
-			string(remote),
+			string(rembuf, remote),
 			what(eptr)
 		};
 
@@ -875,13 +876,15 @@ void
 ircd::server::peer::handle_close(link &link,
                                  std::exception_ptr eptr)
 {
+	thread_local char rembuf[64];
+
 	if(eptr)
 		log::derror
 		{
 			log, "peer(%p) link(%p) [%s]: close: %s",
 			this,
 			&link,
-			string(remote),
+			string(rembuf, remote),
 			what(eptr)
 		};
 
@@ -912,6 +915,7 @@ ircd::server::peer::handle_error(link &link,
 {
 	using std::errc;
 	using boost::asio::error::get_misc_category;
+	thread_local char rembuf[64];
 
 	const auto &ec{e.code()};
 	if(system_category(ec)) switch(ec.value())
@@ -931,7 +935,7 @@ ircd::server::peer::handle_error(link &link,
 				log, "peer(%p) link(%p) [%s]: %s",
 				this,
 				&link,
-				string(remote),
+				string(rembuf, remote),
 				e.what()
 			};
 
@@ -947,7 +951,7 @@ ircd::server::peer::handle_error(link &link,
 		log, "peer(%p) link(%p) [%s]: %s",
 		this,
 		&link,
-		string(remote),
+		string(rembuf, remote),
 		e.what()
 	};
 
@@ -1037,12 +1041,13 @@ ircd::server::peer::handle_head_recv(const link &link,
 	// requests more effectively.
 	if(!server_version && head.server)
 	{
+		thread_local char rembuf[64];
 		server_version = std::string{head.server};
 		log::debug
 		{
 			log, "peer(%p) learned %s is '%s'",
 			this,
-			string(remote),
+			string(rembuf, remote),
 			server_version,
 		};
 	}
@@ -1107,6 +1112,7 @@ ircd::server::peer::del(link &link)
 	}));
 
 	assert(it != end(links));
+	thread_local char rembuf[64];
 	log::debug
 	{
 		log, "peer(%p) removing link(%p) %zu of %zu to %s",
@@ -1114,7 +1120,7 @@ ircd::server::peer::del(link &link)
 		&link,
 		std::distance(begin(links), it),
 		links.size(),
-		string(remote)
+		string(rembuf, remote)
 	};
 
 	links.erase(it);
@@ -2186,6 +2192,7 @@ ircd::server::link::discard_read()
 
 	// Shouldn't ever be hit because the read() within discard() throws
 	// the pending error like an eof.
+	thread_local char rembuf[64];
 	const fmt::snstringf msg
 	{
 		512, "peer(%p %s) link(%p q:%zu) socket(%s) discarded %zu of %zd unexpected bytes",
@@ -2196,10 +2203,10 @@ ircd::server::link::discard_read()
 		this,
 		queue.size(),
 		likely(peer)?
-			string(peer->remote):
+			string(rembuf, peer->remote):
 		socket?
-			string(remote_ipport(*socket)):
-			std::string{},
+			string(rembuf, remote_ipport(*socket)):
+			string_view{},
 		discarded,
 		discard
 	};
