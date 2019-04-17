@@ -2556,6 +2556,8 @@ void
 ircd::net::socket::handshake(const open_opts &opts,
                              eptr_handler callback)
 {
+	assert(!fini && sd.is_open());
+
 	log::debug
 	{
 		log, "%s handshaking to '%s' for '%s' to:%ld$ms",
@@ -3086,7 +3088,7 @@ catch(const std::exception &e)
 
 void
 ircd::net::socket::handle_connect(std::weak_ptr<socket> wp,
-                                  const open_opts opts,
+                                  const open_opts &opts,
                                   eptr_handler callback,
                                   error_code ec)
 noexcept try
