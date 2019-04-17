@@ -143,7 +143,7 @@ struct ircd::ios::handler
 	static void leave(handler *const &);
 	static bool fault(handler *const &);
 
-	ios::descriptor *descriptor;
+	ios::descriptor *descriptor {nullptr};
 	uint64_t slice_start {0};
 };
 
@@ -156,7 +156,7 @@ struct ircd::ios::handle
 	template<class... args>
 	void operator()(args&&... a) const;
 
-	handle(ios::descriptor &d, function&& f);
+	handle(ios::descriptor &, function);
 };
 
 namespace ircd::ios
@@ -177,9 +177,9 @@ namespace ircd::ios
 
 template<class function>
 ircd::ios::handle<function>::handle(ios::descriptor &d,
-                                    function&& f)
+                                    function f)
 :handler{&d}
-,f{std::forward<function>(f)}
+,f{std::move(f)}
 {
 	assert(d.stats);
 	d.stats->queued++;
