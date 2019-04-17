@@ -1762,9 +1762,11 @@ noexcept try
 	assert(bool(sock));
 
 	#ifdef RB_DEBUG
-	const auto &current_cipher
+	const auto *const current_cipher
 	{
-		openssl::current_cipher(*sock)
+		!ec?
+			openssl::current_cipher(*sock):
+			nullptr
 	};
 
 	thread_local char ecbuf[64];
@@ -3222,9 +3224,11 @@ noexcept try
 		ec = make_error_code(errc::timed_out);
 
 	#ifdef RB_DEBUG
-	const auto &current_cipher
+	const auto *const current_cipher
 	{
-		openssl::current_cipher(*this)
+		!ec?
+			openssl::current_cipher(*this):
+			nullptr
 	};
 
 	thread_local char ecbuf[64];
