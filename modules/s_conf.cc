@@ -88,6 +88,12 @@ set_conf_item(const m::user::id &sender,
               const string_view &key,
               const string_view &val)
 {
+	if(conf::exists(key) && !conf::persists(key))
+	{
+		conf::set(key, val);
+		return {};
+	}
+
 	return send(conf_room, sender, "ircd.conf.item", key,
 	{
 		{ "value", val }
