@@ -3325,7 +3325,7 @@ noexcept try
 
 	if(!valid)
 	{
-		thread_local char buf[4_KiB];
+		thread_local char buf[16_KiB];
 		const critical_assertion ca;
 		log::warning
 		{
@@ -3410,16 +3410,16 @@ noexcept try
 		}
 	}
 
+	#ifdef RB_DEBUG
+	thread_local char buf[16_KiB];
+	const critical_assertion ca;
+	log::debug
 	{
-		thread_local char buf[4_KiB];
-		const critical_assertion ca;
-		log::debug
-		{
-			log, "verify[%s]: %s",
-			common_name(opts),
-			openssl::print_subject(buf, cert)
-		};
-	}
+		log, "verify[%s]: %s",
+		common_name(opts),
+		openssl::print_subject(buf, cert)
+	};
+	#endif
 
 	return true;
 }
