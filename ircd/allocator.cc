@@ -9,6 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_MALLOC_H
+#include <RB_INC_VALGRIND_MEMCHECK_H
 
 // Uncomment or -D this #define to enable our own crude but simple ability to
 // profile dynamic memory usage. Global `new` and `delete` will be captured
@@ -65,6 +66,44 @@ ircd::allocator::trim(const size_t &pad)
 	return false;
 }
 #endif
+
+//
+// valgrind
+//
+
+void
+ircd::vg::mem::set_noaccess(const const_buffer &buf)
+{
+	#ifdef HAVE_VALGRIND_MEMCHECK_H
+	VALGRIND_MAKE_MEM_NOACCESS(data(buf), size(buf));
+	#endif
+}
+
+void
+ircd::vg::mem::set_undefined(const const_buffer &buf)
+{
+	#ifdef HAVE_VALGRIND_MEMCHECK_H
+	VALGRIND_MAKE_MEM_UNDEFINED(data(buf), size(buf));
+	#endif
+}
+
+void
+ircd::vg::mem::set_defined(const const_buffer &buf)
+{
+	#ifdef HAVE_VALGRIND_MEMCHECK_H
+	VALGRIND_MAKE_MEM_DEFINED(data(buf), size(buf));
+	#endif
+}
+
+bool
+ircd::vg::mem::defined(const const_buffer &buf)
+{
+	#ifdef HAVE_VALGRIND_MEMCHECK_H
+	return VALGRIND_CHECK_MEM_IS_DEFINED(data(buf), size(buf)) == 0;
+	#else
+	return true;
+	#endif
+}
 
 //
 // allocator::state

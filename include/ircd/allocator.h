@@ -37,6 +37,15 @@ namespace ircd::allocator
 	string_view info(const mutable_buffer &);
 };
 
+/// Valgrind memcheck hypercall suite
+namespace ircd::vg::mem
+{
+	bool defined(const const_buffer &);
+	void set_defined(const const_buffer &);
+	void set_undefined(const const_buffer &);
+	void set_noaccess(const const_buffer &);
+}
+
 /// Profiling counters. The purpose of this device is to gauge whether unwanted
 /// or non-obvious allocations are taking place for a specific section. This
 /// profiler has that very specific purpose and is not a replacement for
