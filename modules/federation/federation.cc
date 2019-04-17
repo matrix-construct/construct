@@ -43,6 +43,14 @@ struct ircd::m::feds::request
 
 	request(request &&) = delete;
 	request(const request &) = delete;
+	~request() noexcept
+	{
+		if(this->valid())
+		{
+			server::cancel(*this);
+			this->wait();
+		}
+	}
 };
 
 ///////////////////////////////////////////////////////////////////////////////
