@@ -3107,6 +3107,9 @@ noexcept try
 	if(timedout && is(ec, errc::operation_canceled))
 		ec = make_error_code(errc::timed_out);
 
+	if(!ec && opts.handshake && fini)
+		ec = make_error_code(errc::operation_canceled);
+
 	// A connect error; abort here by calling the user back with error.
 	if(ec)
 		return call_user(callback, ec);
