@@ -15,14 +15,25 @@
 /// it involves extremely expensive boost headers for creating formal spirit
 /// grammars. Include this in a definition file which defines such grammars.
 
+#pragma GCC visibility push(hidden)
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/fusion/include/std_pair.hpp>
 #include <boost/fusion/adapted/std_pair.hpp>
 #include <boost/fusion/adapted/std_tuple.hpp>
+#pragma GCC visibility pop
 
 namespace ircd::spirit
+{
+	template<class parent_error> struct expectation_failure;
+
+	extern thread_local char rulebuf[64]; // parse.cc
+}
+
+namespace ircd {
+namespace spirit
+__attribute__((visibility("hidden")))
 {
 	namespace spirit = boost::spirit;
 	namespace ascii = spirit::ascii;
@@ -87,11 +98,7 @@ namespace ircd::spirit
 	using _r1_type = phx::actor<spirit::attribute<1>>;
 	using _r2_type = phx::actor<spirit::attribute<2>>;
 	using _r3_type = phx::actor<spirit::attribute<3>>;
-
-	template<class parent_error> struct expectation_failure;
-
-	extern thread_local char rulebuf[64]; // parse.cc
-}
+}}
 
 namespace ircd::spirit::local
 {

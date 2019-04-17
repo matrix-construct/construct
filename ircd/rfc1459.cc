@@ -15,19 +15,21 @@ namespace ircd::rfc1459
 	using namespace ircd::spirit;
 }
 
-namespace ircd::rfc1459::parse
+namespace ircd { namespace rfc1459 { namespace parse
+__attribute__((visibility("hidden")))
 {
 	template<class it, class top> struct grammar;
 	struct capstan extern const capstan;
 	struct head extern const head;
-}
+}}}
 
-namespace ircd::rfc1459::gen
+namespace ircd { namespace rfc1459 { namespace gen
+__attribute__((visibility("hidden")))
 {
 	using ircd::spirit::buffer;
 
 	template<class it, class top> struct grammar;
-}
+}}}
 
 BOOST_FUSION_ADAPT_STRUCT
 (

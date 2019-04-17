@@ -20,8 +20,6 @@ namespace ircd::rfc3986
 	IRCD_EXCEPTION(coding_error, decoding_error)
 
 	struct parser;
-	struct encoder extern const encoder;
-	struct decoder extern const decoder;
 
 	constexpr size_t HOSTNAME_MAX {rfc1035::LABEL_MAX};
 	constexpr size_t DOMAIN_MAX {rfc1035::NAME_MAX};

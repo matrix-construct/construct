@@ -10,7 +10,8 @@
 
 #include <ircd/spirit.h>
 
-namespace ircd::http
+namespace ircd { namespace http
+__attribute__((visibility("hidden")))
 {
 	using namespace ircd::spirit;
 
@@ -20,7 +21,7 @@ namespace ircd::http
 	extern const std::unordered_map<ircd::http::code, ircd::string_view> reason;
 
 	[[noreturn]] void throw_error(const qi::expectation_failure<const char *> &, const bool &internal = false);
-}
+}}
 
 BOOST_FUSION_ADAPT_STRUCT
 (

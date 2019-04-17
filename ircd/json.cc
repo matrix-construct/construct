@@ -11,7 +11,8 @@
 #include <ircd/spirit.h>
 #include <boost/fusion/include/at.hpp>
 
-namespace ircd::json
+namespace ircd { namespace json
+__attribute__((visibility("hidden")))
 {
 	using namespace ircd::spirit;
 
@@ -23,7 +24,7 @@ namespace ircd::json
 	struct printer extern const printer;
 
 	const size_t &error_show_max {48};
-}
+}}
 
 BOOST_FUSION_ADAPT_STRUCT
 (

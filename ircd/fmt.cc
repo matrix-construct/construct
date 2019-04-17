@@ -10,7 +10,8 @@
 
 #include <ircd/spirit.h>
 
-namespace ircd::fmt
+namespace ircd { namespace fmt
+__attribute__((visibility("hidden")))
 {
 	using namespace ircd::spirit;
 
@@ -42,7 +43,7 @@ namespace ircd::fmt
 	void handle_specifier(mutable_buffer &out, const uint &idx, const spec &, const arg &);
 	template<class generator> bool generate_string(char *&out, const generator &gen, const arg &val);
 	template<class T, class lambda> bool visit_type(const arg &val, lambda&& closure);
-}
+}}
 
 /// Structural representation of a format specifier. The parse of each
 /// specifier in the format string creates one of these.

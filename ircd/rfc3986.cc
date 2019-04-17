@@ -10,10 +10,14 @@
 
 #include <ircd/spirit.h>
 
-namespace ircd::rfc3986
+namespace ircd { namespace rfc3986
+__attribute__((visibility("hidden")))
 {
 	using namespace ircd::spirit;
-}
+
+    struct encoder extern const encoder;
+    struct decoder extern const decoder;
+}}
 
 struct ircd::rfc3986::encoder
 :karma::grammar<char *, const string_view &>
