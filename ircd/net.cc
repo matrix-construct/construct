@@ -3288,13 +3288,12 @@ noexcept try
 	// `valid` indicates whether or not there's an anomaly with the
 	// certificate; if so, it is usually enumerated by the `switch()`
 	// statement below. If `valid` is false, this function can return
-	// true to continue but it appears this function will be called a
-	// second time with `valid=true`.
-	//
-	// TODO: XXX: This behavior must be confirmed since we return true
-	// TODO: XXX: early on recoverable errors and skip other checks
-	// TODO: XXX: expecting a second call..
-	//
+	// true to still continue.
+
+	// Socket ordered to shut down. We abort the verification here
+	// to allow the open_opts out of scope with the user.
+	if(fini || !sd.is_open())
+		return false;
 
 	// The user can set this option to bypass verification.
 	if(!opts.verify_certificate)
