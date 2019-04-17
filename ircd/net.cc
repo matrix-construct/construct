@@ -3340,7 +3340,7 @@ noexcept try
 
 		default:
 			reject();
-			break;
+			__builtin_unreachable();
 
 		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
 			assert(openssl::get_error_depth(stctx) == 0);
@@ -3348,7 +3348,7 @@ noexcept try
 				return true;
 
 			reject();
-			break;
+			__builtin_unreachable();
 
 		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
 		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
@@ -3358,14 +3358,14 @@ noexcept try
 				return true;
 
 			reject();
-			break;
+			__builtin_unreachable();
 
 		case X509_V_ERR_CERT_HAS_EXPIRED:
 			if(opts.allow_expired)
 				return true;
 
 			reject();
-			break;
+			__builtin_unreachable();
 	}
 
 	const bool verify_common_name
