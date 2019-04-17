@@ -10717,7 +10717,7 @@ console_cmd__fed__head(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "remote", "user_id"
+		"room_id", "remote", "user_id", "op"
 	}};
 
 	const auto &room_id
@@ -10750,6 +10750,12 @@ console_cmd__fed__head(opt &out, const string_view &line)
 	{
 		request.in.content
 	};
+
+	if(param["op"] == "raw")
+	{
+		out << proto << std::endl;
+		return true;
+	}
 
 	const json::object event
 	{
