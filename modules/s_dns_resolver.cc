@@ -224,7 +224,6 @@ ircd::net::dns::resolver::set_tag(A&&... args)
 		                       std::forward_as_tuple(id),
 		                       std::forward_as_tuple(std::forward<A>(args)...));
 		it->second.id = id;
-		dock.notify_one();
 		return it->second;
 	}
 
@@ -299,7 +298,7 @@ try
 			return !tags.empty();
 		});
 
-		ctx::sleep(milliseconds(timeout));
+		ctx::sleep(milliseconds(timeout) / 2);
 		check_timeouts(milliseconds(timeout));
 	}
 }
@@ -396,6 +395,8 @@ ircd::net::dns::resolver::submit(tag &tag)
 		send_query(tag);
 	else
 		queue_query(tag);
+
+	dock.notify_all();
 }
 
 void
@@ -440,7 +441,6 @@ ircd::net::dns::resolver::queue_query(tag &tag)
 		return;
 
 	sendq.emplace_back(tag.id);
-	dock.notify_one();
 
 	log::debug
 	{
