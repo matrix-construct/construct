@@ -1723,12 +1723,23 @@ ircd::server::link::open(const net::open_opts &open_opts)
 	};
 
 	op_init = true;
+	op_open = true;
 	const unwind::exceptional unhandled{[this]
 	{
 		op_init = false;
+		op_open = false;
 	}};
 
 	socket = net::open(open_opts, std::move(handler));
+	op_open = false;
+
+	if(finished())
+	{
+		assert(peer);
+		peer->handle_finished(*this);
+		return false;
+	}
+
 	return true;
 }
 
@@ -2351,7 +2362,7 @@ const
 	if(!bool(socket))
 		return true;
 
-	return !opened() && op_fini && !op_init && !op_write && !op_read;
+	return !opened() && op_fini && !op_init && !op_open && !op_write && !op_read;
 }
 
 size_t

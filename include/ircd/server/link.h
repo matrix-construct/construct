@@ -25,6 +25,7 @@ struct ircd::server::link
 	std::list<tag> queue;                        ///< link's work queue
 	bool op_init {false};                        ///< link is connecting
 	bool op_fini {false};                        ///< link is disconnecting
+	bool op_open {false};
 	bool op_write {false};                       ///< async operation state
 	bool op_read {false};                        ///< async operation state
 	bool exclude {false};                        ///< link is excluded
