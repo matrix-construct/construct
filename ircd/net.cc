@@ -3384,16 +3384,15 @@ noexcept try
 
 	if(verify_common_name)
 	{
-		if(unlikely(empty(common_name(opts))))
+		if(unlikely(!common_name(opts)))
 			throw inauthentic
 			{
 				"No common name specified in connection options"
 			};
 
-		//TODO: this object makes an std::string
 		boost::asio::ssl::rfc2818_verification verifier
 		{
-			std::string(common_name(opts))
+			common_name(opts)
 		};
 
 		if(!verifier(true, vc))
