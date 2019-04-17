@@ -760,7 +760,6 @@ RB_CHK_SYSHEADER(sys/ioctl.h, [SYS_IOCTL_H])
 RB_CHK_SYSHEADER(sys/mman.h, [SYS_MMAN_H])
 
 dnl linux platform
-RB_CHK_SYSHEADER(malloc.h, [MALLOC_H])
 RB_CHK_SYSHEADER(sys/auxv.h, [SYS_AUXV_H])
 RB_CHK_SYSHEADER(sys/eventfd.h, [SYS_EVENTFD_H])
 RB_CHK_SYSHEADER(sys/inotify.h, [SYS_INOTIFY_H])
@@ -779,6 +778,11 @@ RB_CHK_SYSHEADER(iphlpapi.h, [IPHLPAPI_H])
 dnl x86 platform
 RB_CHK_SYSHEADER(x86intrin.h, [X86INTRIN_H])
 RB_CHK_SYSHEADER(cpuid.h, [CPUID_H])
+
+dnl instrumentation
+RB_CHK_SYSHEADER(malloc.h, [MALLOC_H])
+RB_CHK_SYSHEADER(valgrind/valgrind.h, [VALGRIND_VALGRIND_H])
+RB_CHK_SYSHEADER(valgrind/memcheck.h, [VALGRIND_MEMCHECK_H])
 
 dnl experimental
 RB_CHK_SYSHEADER(experimental/string_view, [EXPERIMENTAL_STRING_VIEW])
