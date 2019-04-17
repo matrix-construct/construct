@@ -2390,6 +2390,7 @@ noexcept
 {
 	this->~scope_timeout();
 	s = std::move(other.s);
+	other.s = nullptr;
 	return *this;
 }
 
