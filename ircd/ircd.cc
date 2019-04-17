@@ -312,9 +312,16 @@ ircd::run::level
 //
 
 template<>
+decltype(ircd::run::changed::allocator)
+ircd::util::instance_list<ircd::run::changed>::allocator
+{};
+
+template<>
 decltype(ircd::run::changed::list)
 ircd::util::instance_list<ircd::run::changed>::list
-{};
+{
+	allocator
+};
 
 decltype(ircd::run::changed::dock)
 ircd::run::changed::dock;

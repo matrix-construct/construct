@@ -378,9 +378,16 @@ noexcept
 //
 
 template<>
+decltype(ircd::util::instance_list<ircd::prof::event>::allocator)
+ircd::util::instance_list<ircd::prof::event>::allocator
+{};
+
+template<>
 decltype(ircd::util::instance_list<ircd::prof::event>::list)
 ircd::util::instance_list<ircd::prof::event>::list
-{};
+{
+	allocator
+};
 
 //
 // event::event

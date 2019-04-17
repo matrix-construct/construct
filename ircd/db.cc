@@ -837,9 +837,16 @@ namespace ircd::db
 
 // Instance list linkage
 template<>
+decltype(ircd::util::instance_list<ircd::db::database>::allocator)
+ircd::util::instance_list<ircd::db::database>::allocator
+{};
+
+template<>
 decltype(ircd::util::instance_list<ircd::db::database>::list)
 ircd::util::instance_list<ircd::db::database>::list
-{};
+{
+	allocator
+};
 
 decltype(ircd::db::default_description)
 ircd::db::default_description

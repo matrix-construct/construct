@@ -29,15 +29,22 @@
 
 /// Instance list linkage for the list of all ctx instances.
 template<>
+decltype(ircd::util::instance_list<ircd::ctx::ctx>::allocator)
+ircd::util::instance_list<ircd::ctx::ctx>::allocator
+{};
+
+template<>
 decltype(ircd::util::instance_list<ircd::ctx::ctx>::list)
 ircd::util::instance_list<ircd::ctx::ctx>::list
-{};
+{
+	allocator
+};
 
 /// Public interface linkage for the list of all ctx instances
 decltype(ircd::ctx::ctxs)
 ircd::ctx::ctxs
 {
-	ctx::ctx::list
+	reinterpret_cast<const decltype(ircd::ctx::ctxs) &>(ctx::ctx::list)
 };
 
 decltype(ircd::ctx::log)

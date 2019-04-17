@@ -54,9 +54,16 @@ struct ircd::log::confs
 
 /// Linkage for list of named loggers.
 template<>
+decltype(ircd::instance_list<ircd::log::log>::allocator)
+ircd::instance_list<ircd::log::log>::allocator
+{};
+
+template<>
 decltype(ircd::instance_list<ircd::log::log>::list)
 ircd::instance_list<ircd::log::log>::list
-{};
+{
+	allocator
+};
 
 decltype(ircd::log::file)
 ircd::log::file;

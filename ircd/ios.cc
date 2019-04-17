@@ -125,9 +125,16 @@ ircd::ios::available()
 //
 
 template<>
+decltype(ircd::util::instance_list<ircd::ios::descriptor>::allocator)
+ircd::util::instance_list<ircd::ios::descriptor>::allocator
+{};
+
+template<>
 decltype(ircd::util::instance_list<ircd::ios::descriptor>::list)
 ircd::util::instance_list<ircd::ios::descriptor>::list
-{};
+{
+	allocator
+};
 
 decltype(ircd::ios::descriptor::ids)
 ircd::ios::descriptor::ids;

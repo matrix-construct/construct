@@ -1349,9 +1349,16 @@ ircd::m::vm::reflect(const enum fault &code)
 
 /// Instance list linkage for all of the evaluations.
 template<>
+decltype(ircd::util::instance_list<ircd::m::vm::eval>::allocator)
+ircd::util::instance_list<ircd::m::vm::eval>::allocator
+{};
+
+template<>
 decltype(ircd::util::instance_list<ircd::m::vm::eval>::list)
 ircd::util::instance_list<ircd::m::vm::eval>::list
-{};
+{
+	allocator
+};
 
 decltype(ircd::m::vm::eval::id_ctr)
 ircd::m::vm::eval::id_ctr;
@@ -5695,9 +5702,16 @@ const
 
 /// Instance list linkage for all hooks
 template<>
+decltype(ircd::util::instance_list<ircd::m::hook::base>::allocator)
+ircd::util::instance_list<ircd::m::hook::base>::allocator
+{};
+
+template<>
 decltype(ircd::util::instance_list<ircd::m::hook::base>::list)
 ircd::util::instance_list<ircd::m::hook::base>::list
-{};
+{
+	allocator
+};
 
 /// Primary hook ctor
 ircd::m::hook::base::base(const json::members &members)
@@ -5779,9 +5793,16 @@ catch(const std::out_of_range &e)
 
 /// Instance list linkage for all hook sites
 template<>
+decltype(ircd::util::instance_list<ircd::m::hook::base::site>::allocator)
+ircd::util::instance_list<ircd::m::hook::base::site>::allocator
+{};
+
+template<>
 decltype(ircd::util::instance_list<ircd::m::hook::base::site>::list)
 ircd::util::instance_list<ircd::m::hook::base::site>::list
-{};
+{
+	allocator
+};
 
 //
 // hook::site::site
