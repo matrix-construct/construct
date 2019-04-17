@@ -72,91 +72,107 @@ get__make_join(client &client,
 		room_id
 	};
 
+	if(!exists(room))
+		throw m::NOT_FOUND
+		{
+			"Room %s is not known here.",
+			string_view{room_id}
+		};
+
 	if(!room.visible(user_id))
 		throw m::ACCESS_DENIED
 		{
 			"You are not permitted to view the room at this event."
 		};
 
-	int64_t depth;
-	m::id::event::buf prev_event_id;
-	std::tie(prev_event_id, depth, std::ignore) = m::top(room_id);
-
-	const m::event::fetch evf
+	const unique_buffer<mutable_buffer> buf
 	{
-		prev_event_id, std::nothrow
+		8_KiB
 	};
 
-	const json::value prev[]
+	json::stack out{buf};
+	json::stack::object top{out};
+	json::stack::object event
 	{
-		{ string_view{prev_event_id}  },
-		{ json::get<"hashes"_>(evf) }
+		top, "event"
 	};
 
-	const json::value prevs[]
 	{
-		{ prev, 2 }
+		const m::room::auth auth{room};
+		json::stack::array auth_events
+		{
+			event, "auth_events"
+		};
+
+		static const string_view types[]
+		{
+			"m.room.create",
+			"m.room.join_rules",
+			"m.room.power_levels",
+			"m.room.member",
+		};
+
+		auth.make_refs(auth_events, types, user_id);
+	}
+
+	json::stack::member
+	{
+		event, "content", R"({"membership":"join"})"
 	};
 
-	const m::room::state state
+	json::stack::member
 	{
-		room_id
+		event, "depth", json::value(m::depth(room) + 1L)
 	};
 
-	auto auth_event_idx
+	json::stack::member
 	{
-		state.get(std::nothrow, "m.room.member", user_id)
+		event, "origin", request.origin
 	};
 
-	if(!auth_event_idx)
-		auth_event_idx = state.get("m.room.create");
-
-	const auto auth_event_id
+	json::stack::member
 	{
-		m::event_id(auth_event_idx)
+		event, "origin_server_ts", json::value(time<milliseconds>())
 	};
 
-	const m::event::fetch aevf
 	{
-		auth_event_idx, std::nothrow
+		const m::room::head head{room};
+		json::stack::array prev_events
+		{
+			event, "prev_events"
+		};
+
+		head.make_refs(prev_events, 32, true);
+	}
+
+	json::stack::member
+	{
+		event, "room_id", room.room_id
 	};
 
-	const json::value auth[]
+	json::stack::member
 	{
-		{ string_view{auth_event_id}  },
-		{ json::get<"hashes"_>(aevf) }
+		event, "sender", user_id
 	};
 
-	const json::value auths[]
+	json::stack::member
 	{
-		{ auth, 2 }
+		event, "state_key", user_id
 	};
 
-	thread_local char bufs[96_KiB];
-	mutable_buffer buf{bufs};
-
-	json::iov content, event, wrapper;
-	const json::iov::push push[]
+	json::stack::member
 	{
-		{ event,    { "origin",            request.origin            }},
-		{ event,    { "origin_server_ts",  time<milliseconds>()      }},
-		{ event,    { "room_id",           room_id                   }},
-		{ event,    { "type",              "m.room.member"           }},
-		{ event,    { "state_key",         user_id                   }},
-		{ event,    { "sender",            user_id                   }},
-		{ event,    { "depth",             depth + 1                 }},
-		{ event,    { "membership",        "join"                    }},
-		{ content,  { "membership",        "join"                    }},
-		{ event,    { "auth_events",       { auths, 1 }              }},
-		{ event,    { "prev_state",        "[]"                      }},
-		{ event,    { "prev_events",       { prevs, 1 }              }},
-		{ event,    { "content",           stringify(buf, content)   }},
-		{ wrapper,  { "event",             stringify(buf, event)     }},
+		event, "type", "m.room.member"
 	};
 
+	event.~object();
+	top.~object();
 	return resource::response
 	{
-		client, wrapper
+		client, json::object
+		{
+			out.completed()
+		}
 	};
 }
 
