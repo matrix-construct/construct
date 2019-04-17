@@ -61,6 +61,30 @@ get__make_leave(client &client,
 		url::decode(user_id, request.parv[1])
 	};
 
+	if(user_id.host() != request.node_id.host())
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted to spoof users on other hosts."
+		};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	char membuf[32];
+	const string_view membership
+	{
+		room.membership(membuf, user_id)
+	};
+
+	if(membership != "join" && membership != "invite")
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted to leave the room with membership '%s'",
+			membership
+		};
+
 	int64_t depth;
 	m::id::event::buf prev_event_id;
 	std::tie(prev_event_id, depth, std::ignore) = m::top(room_id);
