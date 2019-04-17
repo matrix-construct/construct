@@ -129,6 +129,6 @@ struct ircd::server::peer::err
 	std::exception_ptr eptr;
 	system_point etime;
 
-	err(std::exception_ptr);
+	err(const std::exception_ptr &);
 	~err() noexcept;
 };

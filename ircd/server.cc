@@ -1585,8 +1585,8 @@ const
 // peer::err
 //
 
-ircd::server::peer::err::err(std::exception_ptr eptr)
-:eptr{std::move(eptr)}
+ircd::server::peer::err::err(const std::exception_ptr &eptr)
+:eptr{eptr}
 ,etime{now<system_point>()}
 {
 }
