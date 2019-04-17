@@ -85,57 +85,94 @@ get__make_leave(client &client,
 			membership
 		};
 
-	int64_t depth;
-	m::id::event::buf prev_event_id;
-	std::tie(prev_event_id, depth, std::ignore) = m::top(room_id);
-
-	const m::event::fetch evf
+	const unique_buffer<mutable_buffer> buf
 	{
-		prev_event_id, std::nothrow
+		8_KiB
 	};
 
-	const auto &auth_events
+	json::stack out{buf};
+	json::stack::object top{out};
+	json::stack::object event
 	{
-		json::get<"auth_events"_>(evf)?
-			json::get<"auth_events"_>(evf) : json::array{"[]"}
+		top, "event"
 	};
 
-	const json::value prev[]
 	{
-		{ string_view{prev_event_id}  },
-		{ json::get<"hashes"_>(evf) }
+		const m::room::auth auth{room};
+		json::stack::array auth_events
+		{
+			event, "auth_events"
+		};
+
+		static const string_view types[]
+		{
+			"m.room.create",
+			"m.room.join_rules",
+			"m.room.power_levels",
+			"m.room.member",
+		};
+
+		auth.make_refs(auth_events, types, user_id);
+	}
+
+	json::stack::member
+	{
+		event, "content", R"({"membership":"leave"})"
 	};
 
-	const json::value prevs[]
+	json::stack::member
 	{
-		{ prev, 2 }
+		event, "depth", json::value(m::depth(room) + 1L)
 	};
 
-	thread_local char bufs[96_KiB];
-	mutable_buffer buf{bufs};
-
-	json::iov content, event, wrapper;
-	const json::iov::push push[]
+	json::stack::member
 	{
-		{ event,    { "origin",            request.origin            }},
-		{ event,    { "origin_server_ts",  time<milliseconds>()      }},
-		{ event,    { "room_id",           room_id                   }},
-		{ event,    { "type",              "m.room.member"           }},
-		{ event,    { "sender",            user_id                   }},
-		{ event,    { "state_key",         user_id                   }},
-		{ event,    { "depth",             depth + 1                 }},
-		{ event,    { "membership",        "leave"                   }},
-		{ content,  { "membership",        "leave"                   }},
-		{ event,    { "auth_events",       auth_events               }},
-		{ event,    { "prev_state",        "[]"                      }},
-		{ event,    { "prev_events",       { prevs, 1 }              }},
-		{ event,    { "content",           stringify(buf, content)   }},
-		{ wrapper,  { "event",             stringify(buf, event)     }},
+		event, "origin", request.origin
 	};
 
+	json::stack::member
+	{
+		event, "origin_server_ts", json::value(time<milliseconds>())
+	};
+
+	{
+		const m::room::head head{room};
+		json::stack::array prev_events
+		{
+			event, "prev_events"
+		};
+
+		head.make_refs(prev_events, 32, true);
+	}
+
+	json::stack::member
+	{
+		event, "room_id", room.room_id
+	};
+
+	json::stack::member
+	{
+		event, "sender", user_id
+	};
+
+	json::stack::member
+	{
+		event, "state_key", user_id
+	};
+
+	json::stack::member
+	{
+		event, "type", "m.room.member"
+	};
+
+	event.~object();
+	top.~object();
 	return resource::response
 	{
-		client, wrapper
+		client, json::object
+		{
+			out.completed()
+		}
 	};
 }
 
