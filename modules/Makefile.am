@@ -39,6 +39,10 @@ AM_LDFLAGS = \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
+	-Wl,-z -Wl,now \
+	-Wl,-z -Wl,noexecstack \
+	-Wl,-z -Wl,combreloc \
+	-Wl,-z -Wl,nocopyreloc \
 	-L$(top_srcdir)/ircd \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
