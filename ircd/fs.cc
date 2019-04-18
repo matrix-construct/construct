@@ -46,29 +46,45 @@ ircd::fs::support_pwritev2
 decltype(ircd::fs::support_sync)
 ircd::fs::support_sync
 {
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 7
+	#if defined(HAVE_PWRITEV2) && defined(RWF_SYNC)
+		info::kversion[0] >= 4 &&
+		info::kversion[1] >= 7
+	#else
+		false
+	#endif
 };
 
 decltype(ircd::fs::support_dsync)
 ircd::fs::support_dsync
 {
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 7
+	#if defined(HAVE_PWRITEV2) && defined(RWF_DSYNC)
+		info::kversion[0] >= 4 &&
+		info::kversion[1] >= 7
+	#else
+		false
+	#endif
 };
 
 decltype(ircd::fs::support_hipri)
 ircd::fs::support_hipri
 {
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 6
+	#if defined(HAVE_PWRITEV2) && defined(RWF_HIPRI)
+		info::kversion[0] >= 4 &&
+		info::kversion[1] >= 6
+	#else
+		false
+	#endif
 };
 
 decltype(ircd::fs::support_nowait)
 ircd::fs::support_nowait
 {
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 14
+	#if defined(HAVE_PWRITEV2) && defined(RWF_NOWAIT)
+		info::kversion[0] >= 4 &&
+		info::kversion[1] >= 14
+	#else
+		false
+	#endif
 };
 
 decltype(ircd::fs::support_append)
