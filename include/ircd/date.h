@@ -48,6 +48,10 @@ namespace ircd
 	string_view timef(const mutable_buffer &out, const char *const &fmt = rfc7231_fmt);
 	template<size_t max = 128, class... args> std::string timestr(args&&...);
 
+	// Other tools
+	string_view smalldate(const mutable_buffer &buf, const time_t &ltime);
+
+	// Interface conveniences.
 	std::ostream &operator<<(std::ostream &, const microtime_t &);
 	std::ostream &operator<<(std::ostream &, const system_point &);
 	template<class rep, class period> std::ostream &operator<<(std::ostream &, const duration<rep, period> &);
@@ -76,6 +80,28 @@ ircd::operator<<(std::ostream &s, const microtime_t &t)
 	char buf[64];
 	s << microtime(buf);
 	return s;
+}
+
+inline ircd::string_view
+ircd::smalldate(const mutable_buffer &buf,
+                const time_t &ltime)
+{
+	struct tm lt;
+	localtime_r(&ltime, &lt);
+	const auto len
+	{
+		::snprintf(data(buf), size(buf), "%d/%d/%d %02d.%02d",
+		           lt.tm_year + 1900,
+		           lt.tm_mon + 1,
+		           lt.tm_mday,
+		           lt.tm_hour,
+		           lt.tm_min)
+	};
+
+	return
+	{
+		data(buf), size_t(len)
+	};
 }
 
 /// timestr() is a passthru to timef() where you don't give the first argument

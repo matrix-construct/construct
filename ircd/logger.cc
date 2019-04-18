@@ -696,27 +696,6 @@ ircd::log::default_ansi
 	"\033[1;30;47m"_sv,       // DEBUG
 }};
 
-const char *
-ircd::smalldate(const time_t &ltime)
-{
-	static const size_t MAX_DATE_STRING
-	{
-		32 // maximum string length for a date string (ircd_defs.h)
-	};
-
-	struct tm lt;
-	localtime_r(&ltime, &lt);
-	thread_local char buf[MAX_DATE_STRING];
-	snprintf(buf, sizeof(buf), "%d/%d/%d %02d.%02d",
-	         lt.tm_year + 1900,
-	         lt.tm_mon + 1,
-	         lt.tm_mday,
-	         lt.tm_hour,
-	         lt.tm_min);
-
-	return buf;
-}
-
 bool
 ircd::log::is_conf_mask_console(const string_view &name)
 {

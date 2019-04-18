@@ -16,11 +16,6 @@
 #undef ERROR
 #endif
 
-namespace ircd
-{
-	const char *smalldate(const time_t &);
-}
-
 /// Logging system
 namespace ircd::log
 {
