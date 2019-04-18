@@ -13,7 +13,10 @@
 
 namespace ircd::ctx
 {
+	template<class it, class F> future<void> when_all(it first, const it &last, F&& closure);
 	template<class it> future<void> when_all(it first, const it &last);
+
+	template<class it, class F> future<it> when_any(it first, const it &last, F&& closure);
 	template<class it> future<it> when_any(it first, const it &last);
 }
 
@@ -22,9 +25,9 @@ namespace ircd::ctx::when
 {
 	template<class T> auto &state(const future<T> &);
 	void all_then(promise<void> &p);
-	template<class it> void any_then(promise<it> &p, it &f);
-	template<class it> void set_all_then(promise<void> &p, it &f);
-	template<class it> void set_any_then(promise<it> &p, it &f);
+	template<class it, class F> void any_then(promise<it> &, it &, F&&);
+	template<class it, class F> void set_all_then(promise<void> &, it &, F&&);
+	template<class it, class F> void set_any_then(promise<it> &, it &, F&&);
 }
 
 /// Returns a future which becomes ready when any of the futures in the
@@ -42,19 +45,38 @@ ircd::ctx::future<it>
 ircd::ctx::when_any(it first,
                     const it &last)
 {
+	return when_any(first, last, []
+	(auto &iterator) -> decltype(*iterator) &
+	{
+		return *iterator;
+	});
+}
+
+/// Implementation of when_any(); this requires a closure from the user which
+/// knows how to use the iterable being passed. The closure must return a
+/// a reference to the future. This allows for complex iterables which may
+/// have pointers to pointers, etc. The default non-closure when_any() overload
+/// supplies a closure that simply dereferences the argument (i.e `return *it;`)
+template<class it,
+         class F>
+ircd::ctx::future<it>
+ircd::ctx::when_any(it first,
+                    const it &last,
+                    F&& closure)
+{
 	promise<it> p;
 	future<it> ret(p);
 	for(auto f(first); f != last; ++f)
-		if(is(state(*f), future_state::READY))
+		if(is(state(closure(f)), future_state::READY))
 		{
-			set(when::state(*f), future_state::OBSERVED);
+			set(when::state(closure(f)), future_state::OBSERVED);
 			p.set_value(f);
 			return ret;
 		}
 
 	for(; first != last; ++first)
-		if(is(state(*first), future_state::PENDING))
-			when::set_any_then(p, first);
+		if(is(state(closure(first)), future_state::PENDING))
+			when::set_any_then(p, first, closure);
 
 	if(refcount(p.state()) <= 1)
 		p.set_value(first);
@@ -70,11 +92,27 @@ ircd::ctx::future<void>
 ircd::ctx::when_all(it first,
                     const it &last)
 {
+	return when_all(first, last, []
+	(auto &iterator) -> decltype(*iterator) &
+	{
+		return *iterator;
+	});
+}
+
+/// Implementation of when_all(); this requires a closure from the user which
+/// knows how to use the iterable being passed. See related when_any() docs.
+template<class it,
+         class F>
+ircd::ctx::future<void>
+ircd::ctx::when_all(it first,
+                    const it &last,
+                    F&& closure)
+{
 	promise<void> p;
 	future<void> ret(p);
 	for(; first != last; ++first)
-		if(is(state(*first), future_state::PENDING))
-			when::set_all_then(p, first);
+		if(is(state(closure(first)), future_state::PENDING))
+			when::set_all_then(p, first, closure);
 
 	if(refcount(p.state()) <= 1)
 		p.set_value();
@@ -82,25 +120,29 @@ ircd::ctx::when_all(it first,
 	return ret;
 }
 
-template<class it>
+template<class it,
+         class F>
 void
 ircd::ctx::when::set_any_then(promise<it> &p,
-                              it &f)
+                              it &f,
+                              F&& closure)
 {
-	when::state(*f).then = [p, f]          // TODO: quash this alloc
+	when::state(closure(f)).then = [p, f, closure]          // TODO: quash this alloc
 	(shared_state_base &sb) mutable
 	{
 		if(sb.then)
-			any_then(p, f);
+			any_then(p, f, closure);
 	};
 }
 
-template<class it>
+template<class it,
+         class F>
 void
 ircd::ctx::when::set_all_then(promise<void> &p,
-                              it &f)
+                              it &f,
+                              F&& closure)
 {
-	when::state(*f).then = [p]             // TODO: quash this alloc
+	when::state(closure(f)).then = [p]             // TODO: quash this alloc
 	(shared_state_base &sb) mutable
 	{
 		if(sb.then)
@@ -108,15 +150,17 @@ ircd::ctx::when::set_all_then(promise<void> &p,
 	};
 }
 
-template<class it>
+template<class it,
+         class F>
 void
 ircd::ctx::when::any_then(promise<it> &p,
-                          it &f)
+                          it &f,
+                          F&& closure)
 {
 	if(!p.valid())
 		return;
 
-	set(when::state(*f), future_state::OBSERVED);
+	set(when::state(closure(f)), future_state::OBSERVED);
 	p.set_value(f);
 }
 
