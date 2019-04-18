@@ -20,23 +20,22 @@
 /// until it returns. The return value is the for_each-protocol result based on your
 /// closure (if the closure ever returns false, the function also returns false).
 ///
-/// The closure is invoke asynchronously as results come in. If the closure
+/// The closure is invoked asynchronously as results come in. If the closure
 /// returns false, the interface function will return immediately and all
 /// pending requests will go out of scope and may be cancelled as per
 /// ircd::server decides.
 namespace ircd::m::feds
 {
+	enum class op :uint8_t;
 	struct opts;
 	struct result;
+	struct acquire;
 	using closure = std::function<bool (const result &)>;
+};
 
-	bool head(const opts &, const closure &);
-	bool auth(const opts &, const closure &);
-	bool event(const opts &, const closure &);
-	bool state(const opts &, const closure &);
-	bool backfill(const opts &, const closure &);
-	bool version(const opts &, const closure &);
-	bool perspective(const opts &, const closure &);
+struct ircd::m::feds::acquire
+{
+	acquire(const opts &, const closure &);
 };
 
 struct ircd::m::feds::result
@@ -50,10 +49,24 @@ struct ircd::m::feds::result
 
 struct ircd::m::feds::opts
 {
+	enum op op {(enum op)0};
 	milliseconds timeout {20000L};
 	m::room::id room_id;
 	m::event::id event_id;
 	m::user::id user_id;
 	string_view arg[4];  // misc argv
 	uint64_t argi[4];    // misc integer argv
+};
+
+enum class ircd::m::feds::op
+:uint8_t
+{
+	noop,
+	head,
+	auth ,
+	event,
+	state,
+	backfill,
+	version,
+	keys,
 };

@@ -28,6 +28,16 @@ namespace ircd::m::feds
 	template<class T>
 	static std::list<request<T>>
 	creator(const opts &, const std::function<T (request<T> &, const string_view &origin)> &);
+
+	static bool head(const opts &, const closure &);
+	static bool auth(const opts &, const closure &);
+	static bool event(const opts &, const closure &);
+	static bool state(const opts &, const closure &);
+	static bool backfill(const opts &, const closure &);
+	static bool version(const opts &, const closure &);
+	static bool keys(const opts &, const closure &);
+
+	bool execute(const opts &opts, const closure &closure);
 }
 
 template<class T>
@@ -60,8 +70,27 @@ struct ircd::m::feds::request
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::feds::perspective(const opts &opts,
-                           const closure &closure)
+ircd::m::feds::execute(const opts &opts,
+                       const closure &closure)
+{
+	switch(opts.op)
+	{
+		case op::head:         return head(opts, closure);
+		case op::auth:         return auth(opts, closure);
+		case op::event:        return event(opts, closure);
+		case op::state:        return state(opts, closure);
+		case op::backfill:     return backfill(opts, closure);
+		case op::version:      return version(opts, closure);
+		case op::keys:         return keys(opts, closure);
+		case op::noop:         break;
+	}
+
+	return true;
+}
+
+bool
+ircd::m::feds::keys(const opts &opts,
+                    const closure &closure)
 {
 	const auto make_request{[&opts]
 	(auto &request, const auto &origin)
@@ -93,7 +122,6 @@ ircd::m::feds::perspective(const opts &opts,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::feds::version(const opts &opts,
                        const closure &closure)
 {
@@ -122,7 +150,6 @@ ircd::m::feds::version(const opts &opts,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::feds::backfill(const opts &opts,
                         const closure &closure)
 {
@@ -153,7 +180,6 @@ ircd::m::feds::backfill(const opts &opts,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::feds::state(const opts &opts,
                      const closure &closure)
 {
@@ -184,7 +210,6 @@ ircd::m::feds::state(const opts &opts,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::feds::event(const opts &opts,
                      const closure &closure)
 {
@@ -213,7 +238,6 @@ ircd::m::feds::event(const opts &opts,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::feds::auth(const opts &opts,
                     const closure &closure)
 {
@@ -242,7 +266,6 @@ ircd::m::feds::auth(const opts &opts,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::feds::head(const opts &opts,
                     const closure &closure)
 {

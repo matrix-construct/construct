@@ -1175,102 +1175,17 @@ ircd::m::app::exists(const string_view &id)
 // m/feds.h
 //
 
-bool
-ircd::m::feds::perspective(const opts &o,
-                           const closure &c)
+ircd::m::feds::acquire::acquire(const opts &o,
+                                const closure &c)
 {
 	using prototype = bool (const opts &, const closure &);
 
 	static mods::import<prototype> call
 	{
-		"federation_federation", "ircd::m::feds::perspective"
+		"federation_federation", "ircd::m::feds::execute"
 	};
 
-	return call(o, c);
-}
-
-bool
-ircd::m::feds::version(const opts &o,
-                       const closure &c)
-{
-	using prototype = bool (const opts &, const closure &);
-
-	static mods::import<prototype> call
-	{
-		"federation_federation", "ircd::m::feds::version"
-	};
-
-	return call(o, c);
-}
-
-bool
-ircd::m::feds::state(const opts &o,
-                     const closure &c)
-{
-	using prototype = bool (const opts &, const closure &);
-
-	static mods::import<prototype> call
-	{
-		"federation_federation", "ircd::m::feds::state"
-	};
-
-	return call(o, c);
-}
-
-bool
-ircd::m::feds::backfill(const opts &o,
-                        const closure &c)
-{
-	using prototype = bool (const opts &, const closure &);
-
-	static mods::import<prototype> call
-	{
-		"federation_federation", "ircd::m::feds::backfill"
-	};
-
-	return call(o, c);
-}
-
-bool
-ircd::m::feds::event(const opts &o,
-                     const closure &c)
-{
-	using prototype = bool (const opts &, const closure &);
-
-	static mods::import<prototype> call
-	{
-		"federation_federation", "ircd::m::feds::event"
-	};
-
-	return call(o, c);
-}
-
-bool
-ircd::m::feds::auth(const opts &o,
-                    const closure &c)
-{
-	using prototype = bool (const opts &, const closure &);
-
-	static mods::import<prototype> call
-	{
-		"federation_federation", "ircd::m::feds::auth"
-	};
-
-	return call(o, c);
-}
-
-bool
-ircd::m::feds::head(const opts &o,
-                    const closure &c)
-{
-	using prototype = bool (const opts &, const closure &);
-
-	static mods::import<prototype> call
-	{
-		"federation_federation", "ircd::m::feds::head"
-	};
-
-	return call(o, c);
+	call(o, c);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

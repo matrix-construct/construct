@@ -205,10 +205,10 @@ ircd::m::fetch::headfill(const room &room)
 	};
 
 	m::feds::opts opts;
+	opts.op = m::feds::op::head;
 	opts.room_id = room.room_id;
 	opts.user_id = user_id;
-
-	m::feds::head(opts, [&room]
+	m::feds::acquire(opts, [&room]
 	(const auto &result)
 	{
 		handle_headfill(room, result);
@@ -266,11 +266,11 @@ IRCD_MODULE_EXPORT
 ircd::m::fetch::backfill(const room &room)
 {
 	m::feds::opts opts;
+	opts.op = m::feds::op::backfill;
 	opts.room_id = room.room_id;
 	opts.event_id = room.event_id;
 	opts.argi[0] = 4;
-
-	m::feds::backfill(opts, [&room]
+	m::feds::acquire(opts, [&room]
 	(const auto &result)
 	{
 		handle_backfill(room, result);

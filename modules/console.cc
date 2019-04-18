@@ -10149,8 +10149,10 @@ console_cmd__feds__version(opt &out, const string_view &line)
 	};
 
 	m::feds::opts opts;
+	opts.op = m::feds::op::version;
 	opts.room_id = room_id;
-	m::feds::version(opts, [&out](const auto &result)
+	m::feds::acquire(opts, [&out]
+	(const auto &result)
 	{
 		out << (result.eptr? '-' : '+')
 		    << " "
@@ -10223,12 +10225,13 @@ console_cmd__feds__state(opt &out, const string_view &line)
 	}};
 
 	m::feds::opts opts;
+	opts.op = m::feds::op::state;
 	opts.timeout = out.timeout;
 	opts.event_id = event_id;
 	opts.room_id = room_id;
 	opts.arg[0] = "ids";
 
-	m::feds::state(opts, closure);
+	m::feds::acquire(opts, closure);
 
 	for(auto &p : grid)
 	{
@@ -10273,9 +10276,10 @@ console_cmd__feds__event(opt &out, const string_view &line)
 	}
 
 	m::feds::opts opts;
+	opts.op = m::feds::op::event;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
-	m::feds::event(opts, [&out](const auto &result)
+	m::feds::acquire(opts, [&out](const auto &result)
 	{
 		out << (result.eptr? '-': empty(result.object)? '?': '+')
 		    << " "
@@ -10314,10 +10318,11 @@ console_cmd__feds__head(opt &out, const string_view &line)
 	};
 
 	m::feds::opts opts;
+	opts.op = m::feds::op::head;
 	opts.room_id = room_id;
 	opts.user_id = user_id;
 	opts.timeout = out.timeout;
-	m::feds::head(opts, [&out](const auto &result)
+	m::feds::acquire(opts, [&out](const auto &result)
 	{
 		if(result.eptr)
 		{
@@ -10376,9 +10381,10 @@ console_cmd__feds__auth(opt &out, const string_view &line)
 	};
 
 	m::feds::opts opts;
+	opts.op = m::feds::op::auth;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
-	m::feds::auth(opts, [&out](const auto &result)
+	m::feds::acquire(opts, [&out](const auto &result)
 	{
 		if(result.eptr)
 			return true;
@@ -10512,11 +10518,12 @@ console_cmd__feds__perspective(opt &out, const string_view &line)
 	};
 
 	m::feds::opts opts;
+	opts.op = m::feds::op::keys;
 	opts.timeout = out.timeout;
 	opts.room_id = room_id;
 	opts.arg[0] = server_key.first;
 	opts.arg[1] = server_key.second;
-	m::feds::perspective(opts, [&out](const auto &result)
+	m::feds::acquire(opts, [&out](const auto &result)
 	{
 		out << std::setw(32) << trunc(result.origin, 32) << " :";
 
@@ -10572,10 +10579,11 @@ console_cmd__feds__backfill(opt &out, const string_view &line)
 	std::set<string_view> origins;
 
 	m::feds::opts opts;
+	opts.op = m::feds::op::backfill;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
 	opts.argi[0] = limit;
-	m::feds::backfill(opts, [&grid, &origins]
+	m::feds::acquire(opts, [&grid, &origins]
 	(const auto &result)
 	{
 		if(result.eptr)
