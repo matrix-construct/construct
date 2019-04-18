@@ -192,6 +192,16 @@ try
 			"Unknown MAPI version [%u] expecting: [%u]", header->version, IRCD_MAPI_VERSION
 		};
 
+	if(header->serial < IRCD_MAPI_SERIAL)
+		throw error
+		{
+			"Module '%s' serial=%u is expired; expecting serial >= %u. This module was probably removed"
+			" from the project and you should delete it from the installation directory.",
+			name(),
+			header->serial,
+			IRCD_MAPI_SERIAL
+		};
+
 	// Tell the module where to find us.
 	header->self = this;
 

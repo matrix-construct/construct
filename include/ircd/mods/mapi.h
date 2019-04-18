@@ -30,7 +30,8 @@ namespace ircd::mapi
 	struct header;
 	struct metablock;
 	using magic_t = uint32_t;
-	using version_t = uint32_t;
+	using version_t = uint16_t;
+	using serial_t = uint16_t;
 	using meta_data = std::map<string_view, string_view, std::less<>>;
 	using init_func = std::function<void ()>;
 	using fini_func = std::function<void ()>;
@@ -63,6 +64,17 @@ IRCD_MAPI_VERSION
 	4
 };
 
+/// The serial number recorded by the module header. We increment this number
+/// after removing a module from the project because that module will still
+/// remain in the user's install directory. The removed module's serial nr
+/// will not be incremented anymore; libircd can ignore modules with serial
+/// numbers < this value.
+constexpr const ircd::mapi::serial_t
+IRCD_MAPI_SERIAL
+{
+	1
+};
+
 /// Module Header
 ///
 /// A static instance of this class must be included in an IRCd module with
@@ -74,6 +86,7 @@ struct ircd::mapi::header
 {
 	const magic_t magic {IRCD_MAPI_MAGIC};       // The magic must match
 	const version_t version {IRCD_MAPI_VERSION}; // Version indicator
+	const serial_t serial {IRCD_MAPI_SERIAL};    // Serial indicator
 	const int64_t timestamp {RB_DATECODE};       // Module's compile epoch
 	std::unique_ptr<metablock> meta;             // Non-standard-layout header data
 	mods::mod *self {nullptr};                   // Point to mod instance once loaded
