@@ -3742,6 +3742,7 @@ ircd::server::tag::set_value(args&&... a)
 	}
 
 	p.set_value(code);
+	assert(abandoned());
 }
 
 template<class E,
@@ -3770,6 +3771,7 @@ ircd::server::tag::set_exception(std::exception_ptr eptr)
 		return;
 
 	p.set_exception(std::move(eptr));
+	assert(abandoned());
 }
 
 bool
