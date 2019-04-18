@@ -420,8 +420,11 @@ ircd::m::rooms::summary_del(const m::room &room)
 	const m::room::state state{public_room_id};
 	const m::event::idx &event_idx
 	{
-		state.get("ircd.rooms", make_state_key(state_key_buf, room.room_id))
+		state.get(std::nothrow, "ircd.rooms", make_state_key(state_key_buf, room.room_id))
 	};
+
+	if(!event_idx)
+		return {};
 
 	const m::event::id::buf event_id
 	{
