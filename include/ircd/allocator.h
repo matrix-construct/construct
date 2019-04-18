@@ -28,6 +28,9 @@ namespace ircd::allocator
 	template<class T = char, size_t L0_SIZE = 512> struct twolevel;
 	template<class T> struct node;
 
+	std::unique_ptr<char, decltype(&std::free)>
+	aligned_alloc(const size_t &align, const size_t &size);
+
 	profile &operator+=(profile &, const profile &);
 	profile &operator-=(profile &, const profile &);
 	profile operator+(const profile &, const profile &);
@@ -44,6 +47,11 @@ namespace ircd::vg::mem
 	void set_defined(const const_buffer &);
 	void set_undefined(const const_buffer &);
 	void set_noaccess(const const_buffer &);
+}
+
+namespace ircd
+{
+	using allocator::aligned_alloc;
 }
 
 /// Profiling counters. The purpose of this device is to gauge whether unwanted

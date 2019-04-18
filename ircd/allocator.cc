@@ -470,6 +470,49 @@ ircd::allocator::operator+=(profile &a,
 	return a;
 }
 
+//
+// aligned_alloc
+//
+
+std::unique_ptr<char, decltype(&std::free)>
+ircd::allocator::aligned_alloc(const size_t &align,
+                               const size_t &size)
+{
+	static const size_t &align_default{16};
+	const size_t &alignment
+	{
+		align?: align_default
+	};
+
+	assert(alignment % 2UL == 0);
+	assert(alignment % sizeof(void *) == 0);
+	assert(size % alignment == 0);
+
+	void *ret;
+	switch(int errc(::posix_memalign(&ret, alignment, size)); errc)
+	{
+		case 0:
+			break;
+
+		case int(std::errc::not_enough_memory):
+			throw std::bad_alloc{};
+
+		default:
+			throw std::system_error
+			{
+				errc, std::system_category()
+			};
+	}
+
+	assert(ret != nullptr);
+	assert(uintptr_t(ret) % alignment == 0);
+
+	return
+	{
+		reinterpret_cast<char *>(ret), &std::free
+	};
+}
+
 #ifdef RB_PROF_ALLOC // --------------------------------------------------
 
 void *

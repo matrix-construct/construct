@@ -11,9 +11,11 @@
 #pragma once
 #define HAVE_IRCD_BUFFER_UNIQUE_BUFFER_H
 
-namespace ircd::buffer
+// Fwd decl; circ dep.
+namespace ircd::allocator
 {
-	std::unique_ptr<char, decltype(&std::free)> aligned_alloc(const size_t &align, const size_t &size);
+	std::unique_ptr<char, decltype(&std::free)>
+	aligned_alloc(const size_t &align, const size_t &size);
 }
 
 /// Like unique_ptr, this template holds ownership of an allocated buffer
@@ -98,43 +100,4 @@ ircd::buffer::unique_buffer<buffer>::release()
 	const buffer ret{*this};
 	this->begin() = nullptr;
 	return ret;
-}
-
-inline std::unique_ptr<char, decltype(&std::free)>
-ircd::buffer::aligned_alloc(const size_t &align,
-                            const size_t &size)
-{
-	static const size_t &align_default{16};
-	const size_t &alignment
-	{
-		align?: align_default
-	};
-
-	assert(alignment % 2UL == 0);
-	assert(alignment % sizeof(void *) == 0);
-	assert(size % alignment == 0);
-
-	void *ret;
-	switch(int errc(::posix_memalign(&ret, alignment, size)); errc)
-	{
-		case 0:
-			break;
-
-		case int(std::errc::not_enough_memory):
-			throw std::bad_alloc{};
-
-		default:
-			throw std::system_error
-			{
-				errc, std::system_category()
-			};
-	}
-
-	assert(ret != nullptr);
-	assert(uintptr_t(ret) % alignment == 0);
-
-	return std::unique_ptr<char, decltype(&std::free)>
-	{
-		reinterpret_cast<char *>(ret), &std::free
-	};
 }
