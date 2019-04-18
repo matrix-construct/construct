@@ -507,6 +507,12 @@ ircd::allocator::aligned_alloc(const size_t &align,
 	assert(ret != nullptr);
 	assert(uintptr_t(ret) % alignment == 0);
 
+	#ifdef RB_PROF_ALLOC
+	auto &this_thread(ircd::allocator::profile::this_thread);
+	this_thread.alloc_bytes += size;
+	this_thread.alloc_count++;
+	#endif
+
 	return
 	{
 		reinterpret_cast<char *>(ret), &std::free
