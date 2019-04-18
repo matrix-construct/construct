@@ -2447,7 +2447,20 @@ ircd::m::membership(const event &event)
 		json::get<"content"_>(event)
 	};
 
-	return unquote(content.get("membership", json::get<"membership"_>(event)));
+	const string_view &membership
+	{
+		json::get<"membership"_>(event)
+	};
+
+	if(membership)
+		return membership;
+
+	const json::string &content_membership
+	{
+		content.get("membership")
+	};
+
+	return content_membership;
 }
 
 size_t
