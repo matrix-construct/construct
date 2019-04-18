@@ -135,12 +135,12 @@ get__messages(client &client,
 
 	m::event::id::buf start
 	{
-		page.dir == 'b'? page.from : m::event::id::buf{}
+		page.from
 	};
 
 	m::event::id::buf end
 	{
-		page.dir == 'b'? page.to : m::event::id::buf{}
+		page.to
 	};
 
 	json::stack::array chunk
@@ -152,11 +152,7 @@ get__messages(client &client,
 	for(; it; page.dir == 'b'? --it : ++it)
 	{
 		const m::event &event{*it};
-		if(page.dir != 'b')
-			start = at<"event_id"_>(event);
-		else
-			end = at<"event_id"_>(event);
-
+		end = at<"event_id"_>(event);
 		if(hit > page.limit || miss >= size_t(max_filter_miss))
 			break;
 
