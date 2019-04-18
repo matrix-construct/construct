@@ -215,15 +215,10 @@ ircd::server::request::operator=(request &&o)
 noexcept
 {
 	this->~request();
-
-	ctx::future<http::code>::operator=(std::move(o));
-	out = std::move(o.out);
-	in = std::move(o.in);
-	tag = std::move(o.tag);
-	opt = std::move(o.opt);
-
-	if(tag)
-		associate(*this, *tag, std::move(o));
+	new (this) request
+	{
+		std::move(o)
+	};
 
 	assert(!o.tag);
 	return *this;
