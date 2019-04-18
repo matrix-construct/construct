@@ -18,15 +18,17 @@ IRCD_MODULE
 
 namespace ircd::m::feds
 {
+	struct request_base;
+
 	template<class T>
 	struct request;
 
 	template<class T>
 	static bool
-	handler(const opts &, const closure &, std::list<request<T>> &);
+	handler(const opts &, const closure &, std::list<std::unique_ptr<request_base>> &);
 
 	template<class T>
-	static std::list<request<T>>
+	static std::list<std::unique_ptr<request_base>>
 	creator(const opts &, const std::function<T (request<T> &, const string_view &origin)> &);
 
 	static bool head(const opts &, const closure &);
@@ -40,28 +42,60 @@ namespace ircd::m::feds
 	bool execute(const vector_view<const opts> &opts, const closure &closure);
 }
 
+//
+// request_base
+//
+
+/// Polymorphic non-template base
+struct ircd::m::feds::request_base
+{
+	const feds::opts *opts {nullptr};
+
+	request_base(const feds::opts &opts)
+	:opts{&opts}
+	{}
+
+	request_base() = default;
+	virtual ~request_base() noexcept;
+};
+
+ircd::m::feds::request_base::~request_base()
+noexcept
+{
+}
+
+//
+// request
+//
+
 template<class T>
 struct ircd::m::feds::request
-:T
+:request_base
+,T
 {
 	char origin[256];
 	char buf[8_KiB];
 
-	request(const std::function<T (request &)> &closure)
-	:T(closure(*this))
+	request(const feds::opts &opts, const std::function<T (request &)> &closure)
+	:request_base{opts}
+	,T(closure(*this))
 	{}
 
 	request(request &&) = delete;
 	request(const request &) = delete;
-	~request() noexcept
-	{
-		if(this->valid())
-		{
-			server::cancel(*this);
-			this->wait();
-		}
-	}
+	~request() noexcept;
 };
+
+template<class T>
+ircd::m::feds::request<T>::~request()
+noexcept
+{
+	if(this->valid())
+	{
+		server::cancel(*this);
+		this->wait();
+	}
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -118,7 +152,7 @@ ircd::m::feds::keys(const opts &opts,
 		creator<m::v1::key::query>(opts, make_request)
 	};
 
-	return handler(opts, closure, requests);
+	return handler<m::v1::key::query>(opts, closure, requests);
 }
 
 bool
@@ -146,7 +180,7 @@ ircd::m::feds::version(const opts &opts,
 		creator<m::v1::version>(opts, make_request)
 	};
 
-	return handler(opts, closure, requests);
+	return handler<m::v1::version>(opts, closure, requests);
 }
 
 bool
@@ -176,7 +210,7 @@ ircd::m::feds::backfill(const opts &opts,
 		creator<m::v1::backfill>(opts, make_request)
 	};
 
-	return handler(opts, closure, requests);
+	return handler<m::v1::backfill>(opts, closure, requests);
 }
 
 bool
@@ -206,7 +240,7 @@ ircd::m::feds::state(const opts &opts,
 		creator<m::v1::state>(opts, make_request)
 	};
 
-	return handler(opts, closure, requests);
+	return handler<m::v1::state>(opts, closure, requests);
 }
 
 bool
@@ -234,7 +268,7 @@ ircd::m::feds::event(const opts &opts,
 		creator<m::v1::event>(opts, make_request)
 	};
 
-	return handler(opts, closure, requests);
+	return handler<m::v1::event>(opts, closure, requests);
 }
 
 bool
@@ -262,7 +296,7 @@ ircd::m::feds::auth(const opts &opts,
 		creator<m::v1::event_auth>(opts, make_request)
 	};
 
-	return handler(opts, closure, requests);
+	return handler<m::v1::event_auth>(opts, closure, requests);
 }
 
 bool
@@ -289,7 +323,7 @@ ircd::m::feds::head(const opts &opts,
 		creator<m::v1::make_join>(opts, make_request)
 	};
 
-	return handler(opts, closure, requests);
+	return handler<m::v1::make_join>(opts, closure, requests);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -298,7 +332,7 @@ ircd::m::feds::head(const opts &opts,
 //
 
 template<class T>
-std::list<m::feds::request<T>>
+std::list<std::unique_ptr<m::feds::request_base>>
 ircd::m::feds::creator(const opts &opts,
                        const std::function<T (request<T> &, const string_view &origin)> &closure)
 {
@@ -308,17 +342,17 @@ ircd::m::feds::creator(const opts &opts,
 		opts.room_id
 	};
 
-	std::list<m::feds::request<T>> ret;
-	origins.for_each([&ret, &closure]
+	std::list<std::unique_ptr<request_base>> ret;
+	origins.for_each([&opts, &ret, &closure]
 	(const string_view &origin)
 	{
 		if(!server::errmsg(origin)) try
 		{
-			ret.emplace_back([&closure, &origin]
+			ret.emplace_back(std::make_unique<request<T>>(opts, [&closure, &origin]
 			(auto &request)
 			{
 				return closure(request, origin);
-			});
+			}));
 		}
 		catch(const std::exception &)
 		{
@@ -333,7 +367,7 @@ template<class T>
 bool
 ircd::m::feds::handler(const opts &opts,
                        const closure &closure,
-                       std::list<request<T>> &reqs)
+                       std::list<std::unique_ptr<request_base>> &reqs)
 {
 	const auto when
 	{
@@ -342,9 +376,15 @@ ircd::m::feds::handler(const opts &opts,
 
 	while(!reqs.empty())
 	{
+		static const auto dereferencer{[]
+		(auto &iterator) -> T &
+		{
+			return dynamic_cast<T &>(**iterator);
+		}};
+
 		auto next
 		{
-			ctx::when_any(begin(reqs), end(reqs))
+			ctx::when_any(begin(reqs), end(reqs), dereferencer)
 		};
 
 		if(!next.wait_until(when, std::nothrow))
@@ -356,7 +396,8 @@ ircd::m::feds::handler(const opts &opts,
 		};
 
 		assert(it != end(reqs));
-		auto &req{*it}; try
+
+		auto &req(dynamic_cast<feds::request<T> &>(**it)); try
 		{
 			const auto code{req.get()};
 			const json::array &array{req.in.content};
