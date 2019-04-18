@@ -214,6 +214,35 @@ ircd::m::feds::event(const opts &opts,
 
 bool
 IRCD_MODULE_EXPORT
+ircd::m::feds::auth(const opts &opts,
+                    const closure &closure)
+{
+	const auto make_request{[&opts]
+	(auto &request, const auto &origin)
+	{
+		m::v1::event_auth::opts v1opts;
+		v1opts.dynamic = true;
+		v1opts.remote = string_view
+		{
+			strlcpy{request.origin, origin}
+		};
+
+		return m::v1::event_auth
+		{
+			opts.room_id, opts.user_id, request.buf, std::move(v1opts)
+		};
+	}};
+
+	auto requests
+	{
+		creator<m::v1::event_auth>(opts, make_request)
+	};
+
+	return handler(opts, closure, requests);
+}
+
+bool
+IRCD_MODULE_EXPORT
 ircd::m::feds::head(const opts &opts,
                     const closure &closure)
 {

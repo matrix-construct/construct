@@ -31,6 +31,7 @@ namespace ircd::m::feds
 	using closure = std::function<bool (const result &)>;
 
 	bool head(const opts &, const closure &);
+	bool auth(const opts &, const closure &);
 	bool event(const opts &, const closure &);
 	bool state(const opts &, const closure &);
 	bool backfill(const opts &, const closure &);

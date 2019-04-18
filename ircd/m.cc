@@ -1246,6 +1246,20 @@ ircd::m::feds::event(const opts &o,
 }
 
 bool
+ircd::m::feds::auth(const opts &o,
+                    const closure &c)
+{
+	using prototype = bool (const opts &, const closure &);
+
+	static mods::import<prototype> call
+	{
+		"federation_federation", "ircd::m::feds::auth"
+	};
+
+	return call(o, c);
+}
+
+bool
 ircd::m::feds::head(const opts &o,
                     const closure &c)
 {

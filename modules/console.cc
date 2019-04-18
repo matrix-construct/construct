@@ -10358,58 +10358,42 @@ console_cmd__feds__head(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__feds__auth(opt &out, const string_view &line)
+console_cmd__feds__event_auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "[user_id]"
+		"room_id", "event_id"
 	}};
 
 	const auto &room_id
 	{
-		m::room_id(param.at(0))
+		m::room_id(param.at("room_id"))
 	};
 
-	const m::user::id &user_id
+	const m::event::id &event_id
 	{
-		param.at(1, m::me.user_id)
+		param.at("event_id")
 	};
 
-	using closure_prototype = bool (const string_view &,
-	                                std::exception_ptr,
-	                                const json::object &);
-
-	using prototype = void (const m::room::id &,
-	                        const m::user::id &,
-	                        const milliseconds &,
-	                        const std::function<closure_prototype> &);
-
-	static mods::import<prototype> feds__head
+	m::feds::opts opts;
+	opts.room_id = room_id;
+	opts.event_id = event_id;
+	m::feds::auth(opts, [&out](const auto &result)
 	{
-		"federation_federation", "feds__head"
-	};
-
-	feds__head(room_id, user_id, out.timeout, [&out]
-	(const string_view &origin, std::exception_ptr eptr, const json::object &event)
-	{
-		if(eptr)
+		if(result.eptr)
 			return true;
 
-		const json::array auth_events
+		const json::array auth_chain
 		{
-			event.at("auth_events")
+			result.object.at("auth_chain")
 		};
 
-		out << "+ " << std::setw(40) << std::left << origin;
-		for(const json::array auth_event : auth_events)
+		out << "+ " << std::setw(40) << std::left << result.origin;
+		for(const json::object &auth_event : auth_chain)
 		{
-			const auto &auth_event_id
-			{
-				unquote(auth_event.at(0))
-			};
-
-			out << " " << string_view{auth_event_id};
+			out << " " << unquote(auth_event.at("event_id"));
 		};
+
 		out << std::endl;
 		return true;
 	});
