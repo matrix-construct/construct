@@ -110,9 +110,12 @@ ircd::buffer::aligned_alloc(const size_t &align,
 		align?: align_default
 	};
 
-	int errc;
+	assert(alignment % 2UL == 0);
+	assert(alignment % sizeof(void *) == 0);
+	assert(size % alignment == 0);
+
 	void *ret;
-	switch((errc = ::posix_memalign(&ret, alignment, size)))
+	switch(int errc(::posix_memalign(&ret, alignment, size)); errc)
 	{
 		case 0:
 			break;
@@ -126,6 +129,9 @@ ircd::buffer::aligned_alloc(const size_t &align,
 				errc, std::system_category()
 			};
 	}
+
+	assert(ret != nullptr);
+	assert(uintptr_t(ret) % alignment == 0);
 
 	return std::unique_ptr<char, decltype(&std::free)>
 	{
