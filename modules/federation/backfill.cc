@@ -127,7 +127,7 @@ get__backfill(client &client,
 		pdus.append(event);
 	}
 
-	return {};
+	return response;
 }
 
 static size_t

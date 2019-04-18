@@ -72,7 +72,7 @@ handle_get(client &client,
 	};
 
 	pdus.append(event);
-	return {};
+	return response;
 }
 
 resource::method method_get

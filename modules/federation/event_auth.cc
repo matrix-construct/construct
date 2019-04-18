@@ -99,7 +99,7 @@ get__event_auth(client &client,
 			auth_chain.append(event);
 	});
 
-	return {};
+	return response;
 }
 
 resource::method

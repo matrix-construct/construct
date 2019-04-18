@@ -117,7 +117,7 @@ get__state(client &client,
 		});
 	}
 
-	return {};
+	return response;
 }
 
 resource::method

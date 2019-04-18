@@ -181,7 +181,7 @@ put__send_join(client &client,
 		});
 	}
 
-	return {};
+	return response;
 }
 
 resource::method

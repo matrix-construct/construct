@@ -112,7 +112,7 @@ get__state_ids(client &client,
 		});
 	}
 
-	return {};
+	return response;
 }
 
 resource::method

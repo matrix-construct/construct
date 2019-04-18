@@ -128,7 +128,7 @@ get__backfill_ids(client &client,
 		pdus.append(event_id);
 	}
 
-	return {};
+	return response;
 }
 
 resource::method
