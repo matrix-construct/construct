@@ -338,14 +338,14 @@ ircd::m::feds::handler(const opts &opts,
 			const auto code{req.get()};
 			const json::array &array{req.in.content};
 			const json::object &object{req.in.content};
-			if(!closure({req.origin, {}, object, array}))
+			if(!closure({&opts, req.origin, {}, object, array}))
 				return false;
 		}
 		catch(const std::exception &)
 		{
 			const ctx::exception_handler eptr;
 			const std::exception_ptr &eptr_(eptr);
-			if(!closure({req.origin, eptr_}))
+			if(!closure({&opts, req.origin, eptr_}))
 				return false;
 		}
 

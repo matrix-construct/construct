@@ -41,6 +41,7 @@ namespace ircd::m::feds
 
 struct ircd::m::feds::result
 {
+	const opts *request;
 	string_view origin;
 	std::exception_ptr eptr;
 	json::object object;
