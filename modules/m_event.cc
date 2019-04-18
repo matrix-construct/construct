@@ -943,10 +943,10 @@ ircd::m::event::auth::failed(const m::event &event,
 			// user's current membership state is invite or join.
 			if(json::get<"sender"_>(event) == json::get<"state_key"_>(event))
 			{
-				if(membership(*auth_member_target) == "join")
+				if(auth_member_target && membership(*auth_member_target) == "join")
 					return {};
 
-				if(membership(*auth_member_target) == "invite")
+				if(auth_member_target && membership(*auth_member_target) == "invite")
 					return {};
 
 				return "m.room.member membership=leave self-target must have membership=join|invite.";
