@@ -36,6 +36,12 @@ max_filter_miss
 	{ "default",   2048L                                        },
 };
 
+log::log
+messages_log
+{
+	"matrix.messages"
+};
+
 static const m::event::fetch::opts
 default_fetch_opts
 {
@@ -182,6 +188,21 @@ get__messages(client &client,
 		{
 			top, "end", json::value{end}
 		};
+
+	log::debug
+	{
+		messages_log, "%s in %s from:%s to:%s dir:%c limit:%zu start:%s end:%s hit:%zu miss:%zu",
+		client.loghead(),
+		string_view{room_id},
+		string_view{page.from},
+		string_view{page.to},
+		page.dir,
+		page.limit,
+		string_view{start},
+		string_view{end},
+		hit,
+		miss,
+	};
 
 	return {};
 }
