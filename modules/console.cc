@@ -10358,7 +10358,7 @@ console_cmd__feds__head(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__feds__event_auth(opt &out, const string_view &line)
+console_cmd__feds__auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -11531,7 +11531,7 @@ console_cmd__fed__public_rooms(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__fed__event_auth(opt &out, const string_view &line)
+console_cmd__fed__auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
