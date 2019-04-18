@@ -186,6 +186,12 @@ try
 			"Bad magic [%04x] need: [%04x]", header->magic, IRCD_MAPI_MAGIC
 		};
 
+	if(header->version != IRCD_MAPI_VERSION)
+		throw error
+		{
+			"Unknown MAPI version [%u] expecting: [%u]", header->version, IRCD_MAPI_VERSION
+		};
+
 	// Tell the module where to find us.
 	header->self = this;
 
