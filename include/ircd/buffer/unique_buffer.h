@@ -28,8 +28,8 @@ struct ircd::buffer::unique_buffer
 
 	unique_buffer() = default;
 	unique_buffer(const size_t &size, const size_t &align = 0);
-	explicit unique_buffer(const buffer &);
-	explicit unique_buffer(unique_buffer &&) noexcept;
+	explicit unique_buffer(const const_buffer &);
+	unique_buffer(unique_buffer &&) noexcept;
 	unique_buffer(const unique_buffer &) = delete;
 	unique_buffer &operator=(unique_buffer &&) & noexcept;
 	unique_buffer &operator=(const unique_buffer &) = delete;
@@ -37,12 +37,14 @@ struct ircd::buffer::unique_buffer
 };
 
 template<class buffer>
-ircd::buffer::unique_buffer<buffer>::unique_buffer(const buffer &src)
-:unique_buffer
+ircd::buffer::unique_buffer<buffer>::unique_buffer(const const_buffer &src)
+:buffer
 {
-	size(src)
+	allocator::aligned_alloc(0, ircd::buffer::size(src)).release(), ircd::buffer::size(src)
 }
 {
+	using ircd::buffer::size;
+
 	assert(this->begin() != nullptr);
 	assert(size(src) == size(*this));
 	const mutable_buffer dst
@@ -58,7 +60,7 @@ ircd::buffer::unique_buffer<buffer>::unique_buffer(const size_t &size,
                                                    const size_t &align)
 :buffer
 {
-	aligned_alloc(align, size).release(), size
+	allocator::aligned_alloc(align, size).release(), size
 }
 {}
 
@@ -98,6 +100,7 @@ buffer
 ircd::buffer::unique_buffer<buffer>::release()
 {
 	const buffer ret{*this};
-	this->begin() = nullptr;
+	std::get<0>(*this) = nullptr;
+	std::get<1>(*this) = nullptr;
 	return ret;
 }
