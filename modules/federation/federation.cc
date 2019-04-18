@@ -303,6 +303,7 @@ ircd::m::feds::handler(const opts &opts,
 			next.get()
 		};
 
+		assert(it != end(reqs));
 		auto &req{*it}; try
 		{
 			const auto code{req.get()};
@@ -314,7 +315,8 @@ ircd::m::feds::handler(const opts &opts,
 		catch(const std::exception &)
 		{
 			const ctx::exception_handler eptr;
-			if(!closure({req.origin, eptr}))
+			const std::exception_ptr &eptr_(eptr);
+			if(!closure({req.origin, eptr_}))
 				return false;
 		}
 
