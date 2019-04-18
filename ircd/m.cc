@@ -1204,8 +1204,17 @@ ircd::m::app::exists(const string_view &id)
 
 ircd::m::feds::acquire::acquire(const opts &o,
                                 const closure &c)
+:acquire
 {
-	using prototype = bool (const opts &, const closure &);
+	vector_view<const opts>{&o, 1}, c
+}
+{
+}
+
+ircd::m::feds::acquire::acquire(const vector_view<const opts> &o,
+                                const closure &c)
+{
+	using prototype = bool (const vector_view<const opts> &, const closure &);
 
 	static mods::import<prototype> call
 	{

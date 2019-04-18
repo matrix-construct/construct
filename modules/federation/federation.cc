@@ -37,7 +37,7 @@ namespace ircd::m::feds
 	static bool version(const opts &, const closure &);
 	static bool keys(const opts &, const closure &);
 
-	bool execute(const opts &opts, const closure &closure);
+	bool execute(const vector_view<const opts> &opts, const closure &closure);
 }
 
 template<class T>
@@ -70,10 +70,10 @@ struct ircd::m::feds::request
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::feds::execute(const opts &opts,
+ircd::m::feds::execute(const vector_view<const opts> &optsv,
                        const closure &closure)
 {
-	switch(opts.op)
+	for(const auto &opts : optsv) switch(opts.op)
 	{
 		case op::head:         return head(opts, closure);
 		case op::auth:         return auth(opts, closure);

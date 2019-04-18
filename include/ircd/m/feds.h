@@ -35,6 +35,7 @@ namespace ircd::m::feds
 
 struct ircd::m::feds::acquire
 {
+	acquire(const vector_view<const opts> &, const closure &);
 	acquire(const opts &, const closure &);
 };
 
