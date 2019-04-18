@@ -482,6 +482,33 @@ ircd::m::fetch::backfill(const room &r,
 }
 
 void
+ircd::m::fetch::frontfill(const room &r)
+{
+	using prototype = void (const room &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::frontfill"
+	};
+
+	call(r);
+}
+
+void
+ircd::m::fetch::frontfill(const room &r,
+                         const net::hostport &hp)
+{
+	using prototype = void (const room &, const net::hostport &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::frontfill"
+	};
+
+	call(r, hp);
+}
+
+void
 ircd::m::fetch::state_ids(const room &r)
 {
 	using prototype = void (const room &);

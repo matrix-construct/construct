@@ -32,6 +32,8 @@ namespace ircd::m::fetch
 	void auth_chain(const room &, const net::hostport &);
 	void state_ids(const room &, const net::hostport &);
 	void state_ids(const room &);
+	void frontfill(const room &, const net::hostport &);
+	void frontfill(const room &);
 	void backfill(const room &, const net::hostport &);
 	void backfill(const room &);
 	void headfill(const room &);

@@ -391,6 +391,89 @@ ircd::m::fetch::backfill(const room &room,
 
 namespace ircd::m::fetch
 {
+	static void handle_frontfill(const m::room &, const m::feds::result &);
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::fetch::frontfill(const room &room)
+{
+
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::fetch::frontfill(const room &room,
+                          const net::hostport &remote)
+{
+	const auto start_id
+	{
+		m::head(room)
+	};
+
+	const auto end_id
+	{
+		m::v1::fetch_head(room.room_id, remote, room.any_user(my_host(), "join"))
+	};
+
+	const std::pair<m::event::id, m::event::id> span
+	{
+		start_id, end_id
+	};
+
+	m::v1::frontfill::opts opts;
+	opts.remote = remote;
+	opts.dynamic = true;
+	const unique_buffer<mutable_buffer> buf
+	{
+		8_KiB
+	};
+
+	m::v1::frontfill request
+	{
+		room.room_id, span, buf, std::move(opts)
+	};
+
+	request.wait(seconds(15)); //TODO: conf
+	request.get();
+
+	const json::array &response
+	{
+		request
+	};
+
+	log::debug
+	{
+		log, "Got %zu events for %s off %s from '%s'",
+		response.size(),
+		string_view{room.room_id},
+		string_view{room.event_id},
+		host(remote),
+	};
+
+	for(const json::object &event : response)
+	{
+		const m::event::id &event_id
+		{
+			unquote(event.get("event_id"))
+		};
+
+		if(m::exists(event_id))
+			continue;
+
+		m::vm::opts vmopts;
+		vmopts.nothrows = -1;
+		m::vm::eval
+		{
+			m::event{event}, vmopts
+		};
+	}
+}
+
+namespace ircd::m::fetch
+{
+	static m::event::id::buf _head(const m::feds::opts &);
+	static std::map<std::string, size_t> _heads(const m::feds::opts &);
 	static void handle_state_ids(const m::room &, const m::feds::result &);
 }
 
@@ -401,14 +484,83 @@ ircd::m::fetch::state_ids(const room &room)
 	m::feds::opts opts;
 	opts.room_id = room.room_id;
 	opts.event_id = room.event_id;
-	opts.arg[0] = "ids";
+	opts.timeout = seconds(8);
 
-	m::feds::state(opts, [&room]
+	m::event::id::buf event_id_buf;
+	if(!opts.event_id)
+	{
+		log::debug
+		{
+			log, "No event_id supplied; fetching heads for %s...",
+			string_view{room.room_id},
+		};
+
+		event_id_buf = _head(opts);
+		opts.event_id = event_id_buf;
+	}
+
+	opts.arg[0] = "ids";
+	opts.op = m::feds::op::state;
+	m::feds::acquire(opts, [&room]
 	(const auto &result)
 	{
 		handle_state_ids(room, result);
 		return true;
 	});
+}
+
+ircd::m::event::id::buf
+ircd::m::fetch::_head(const m::feds::opts &opts)
+{
+	const auto heads
+	{
+		_heads(opts)
+	};
+
+	const auto it
+	{
+		std::max_element(begin(heads), end(heads), []
+		(const auto &a, const auto &b)
+		{
+			return a.second < b.second;
+		})
+	};
+
+	return it != end(heads)?
+		event::id::buf{it->first}:
+		event::id::buf{};
+
+}
+
+std::map<std::string, size_t>
+ircd::m::fetch::_heads(const m::feds::opts &opts_)
+{
+	auto opts(opts_);
+	opts.op = m::feds::op::head;
+	std::map<std::string, size_t> heads;
+	m::feds::acquire(opts, [&heads]
+	(const auto &result)
+	{
+		if(result.eptr)
+			return true;
+
+		const json::object &event{result.object["event"]};
+		const m::event::prev prev{event};
+		for(size_t i(0); i < prev.prev_events_count(); ++i)
+		{
+			// check for dups to prevent result bias.
+			const auto &prev_event_id(prev.prev_event(i));
+			for(size_t j(0); j < prev.prev_events_count(); ++j)
+				if(i != j && prev.prev_event(j) == prev_event_id)
+					return true;
+
+			++heads[prev_event_id];
+		}
+
+		return true;
+	});
+
+	return heads;
 }
 
 void
