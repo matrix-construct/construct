@@ -32,6 +32,17 @@ ircd::fs::log
 	"fs"
 };
 
+decltype(ircd::fs::support_pwritev2)
+ircd::fs::support_pwritev2
+{
+	#if defined(HAVE_PWRITEV2)
+		info::kversion[0] >= 4 &&
+		info::kversion[1] >= 6
+	#else
+		false
+	#endif
+};
+
 decltype(ircd::fs::support_sync)
 ircd::fs::support_sync
 {
@@ -934,10 +945,21 @@ ircd::fs::write(const string_view &path,
 	return write(fd, bufs, opts);
 }
 
+// Platform-specific write() implementations.
 namespace ircd::fs
 {
 	static int flags(const write_opts &opts);
-	static size_t _write(const fd &, const const_iovec_view &, const write_opts &);
+
+	static size_t _write__pwritev2(const fd &, const const_iovec_view &, const write_opts &);
+	static size_t _write__pwritev1(const fd &, const const_iovec_view &, const write_opts &);
+	extern "C" decltype(_write__pwritev1) *ircd_fs_write_pwritev__resolve();
+
+	extern size_t
+	_write_pwritev(const fd &,
+	               const const_iovec_view &,
+	               const write_opts &)
+	__attribute__((ifunc("ircd_fs_write_pwritev__resolve")));
+
 	static size_t write(const fd &, const const_iovec_view &, const write_opts &);
 }
 
@@ -998,14 +1020,43 @@ ircd::fs::write(const fd &fd,
 		return aio::write(fd, iov, opts);
 	#endif
 
-	return _write(fd, iov, opts);
+	return _write_pwritev(fd, iov, opts);
+}
+
+/// This function allows the linker to dynamically resolve the internal _write()
+/// definition we'll be using during this execution. We check for the pwritev2
+/// support flag which was initialized based on the kernel version.
+extern "C" decltype(ircd::fs::_write__pwritev1) *
+ircd::fs::ircd_fs_write_pwritev__resolve()
+{
+	log::logf
+	{
+		log, support_pwritev2? log::DEBUG : log::DWARNING,
+		"This host '%s %s' %s the pwritev2(2) system call.",
+		info::kname,
+		info::kversion_str,
+		support_pwritev2? "SUPPORTS"_sv : "DOES NOT SUPPORT"_sv
+	};
+
+	return support_pwritev2? _write__pwritev2 : _write__pwritev1;
+}
+
+size_t
+ircd::fs::_write__pwritev1(const fd &fd,
+                           const const_iovec_view &iov,
+                           const write_opts &opts)
+{
+	return
+		opts.interruptible?
+			syscall(::pwritev, fd, iov.data(), iov.size(), opts.offset):
+			syscall_nointr(::pwritev, fd, iov.data(), iov.size(), opts.offset);
 }
 
 #ifdef HAVE_PWRITEV2
 size_t
-ircd::fs::_write(const fd &fd,
-                 const const_iovec_view &iov,
-                 const write_opts &opts)
+ircd::fs::_write__pwritev2(const fd &fd,
+                           const const_iovec_view &iov,
+                           const write_opts &opts)
 {
 	// Manpages sez that when appending with RWF_APPEND, the offset has no
 	// effect on the write; but if the value of the offset is -1 then the
@@ -1027,14 +1078,16 @@ ircd::fs::_write(const fd &fd,
 }
 #else
 size_t
-ircd::fs::_write(const fd &fd,
-                 const const_iovec_view &iov,
-                 const write_opts &opts)
+[[noreturn]]
+ircd::fs::_write__pwritev2(const fd &fd,
+                           const const_iovec_view &iov,
+                           const write_opts &opts)
 {
-	return
-		opts.interruptible?
-			syscall(::pwritev, fd, iov.data(), iov.size(), opts.offset):
-			syscall_nointr(::pwritev, fd, iov.data(), iov.size(), opts.offset);
+	ircd::terminate(panic
+	{
+		"This build does not support pwritev2()."
+		" This function should not have been selected."
+	});
 }
 #endif
 
