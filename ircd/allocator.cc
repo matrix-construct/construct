@@ -475,18 +475,27 @@ ircd::allocator::operator+=(profile &a,
 //
 
 std::unique_ptr<char, decltype(&std::free)>
-ircd::allocator::aligned_alloc(const size_t &align,
-                               const size_t &size)
+ircd::allocator::aligned_alloc(const size_t &alignment_,
+                               const size_t &size_)
 {
-	static const size_t &align_default{16};
-	const size_t &alignment
+	static const size_t &align_default
 	{
-		align?: align_default
+		16
 	};
 
-	assert(alignment % 2UL == 0);
-	assert(alignment % sizeof(void *) == 0);
+	const size_t &alignment
+	{
+		alignment_?: align_default
+	};
+
+	const size_t &size
+	{
+		size_ % alignment == 0? size_: size_ + (alignment - (size_ % alignment))
+	};
+
 	assert(size % alignment == 0);
+	assert(size < size_ + alignment);
+	assert(alignment % sizeof(void *) == 0);
 
 	void *ret;
 	switch(int errc(::posix_memalign(&ret, alignment, size)); errc)
