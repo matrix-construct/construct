@@ -50,6 +50,12 @@ default_fetch_opts
 	},
 };
 
+log::log
+context_log
+{
+	"matrix.context"
+};
+
 static void
 _append(json::stack::array &,
         const m::event &,
@@ -126,6 +132,15 @@ get__context(client &client,
 		ret, "event", event
 	};
 
+	// Counters for debug messages
+	struct counts
+	{
+		size_t before {0};
+		size_t after {0};
+		size_t state {0};
+	}
+	counts;
+
 	m::event::id::buf start;
 	{
 		json::stack::array array
@@ -149,6 +164,7 @@ get__context(client &client,
 				continue;
 
 			_append(array, event, before.event_idx(), user_room, room_depth);
+			++counts.before;
 		}
 
 		if(before && limit > 0)
@@ -189,6 +205,7 @@ get__context(client &client,
 				continue;
 
 			_append(array, event, after.event_idx(), user_room, room_depth);
+			++counts.after;
 		}
 
 		if(after && limit > 0)
@@ -217,7 +234,7 @@ get__context(client &client,
 			room, &default_fetch_opts
 		};
 
-		state.for_each([&array, &request, &user_room, room_depth]
+		state.for_each([&array, &request, &user_room, &room_depth, &counts]
 		(const m::event::idx &event_idx)
 		{
 			const m::event::fetch event
@@ -232,8 +249,22 @@ get__context(client &client,
 				return;
 
 			_append(array, event, event_idx, user_room, room_depth, false);
+			++counts.state;
 		});
 	}
+
+	log::debug
+	{
+		context_log, "%s %s in %s before:%zu start:%s after:%zu end:%s state:%zu",
+		client.loghead(),
+		string_view{event_id},
+		string_view{room_id},
+		counts.before,
+		string_view{start},
+		counts.after,
+		string_view{end},
+		counts.state,
+	};
 
 	return response;
 }
