@@ -63,8 +63,12 @@ ircd::fs::support_nowait
 decltype(ircd::fs::support_append)
 ircd::fs::support_append
 {
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 16
+	#if defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
+		info::kversion[0] >= 4 &&
+		info::kversion[1] >= 16
+	#else
+		false
+	#endif
 };
 
 //
@@ -774,6 +778,10 @@ ircd::fs::overwrite(const fd &fd,
 	return write(fd, bufs, opts);
 }
 
+//
+// append
+//
+
 ircd::const_buffer
 ircd::fs::append(const string_view &path,
                  const const_buffer &buf,
@@ -819,29 +827,56 @@ ircd::fs::append(const string_view &path,
 	return append(fd, bufs, opts);
 }
 
-// When we have pwritev2() we can use RWF_APPEND indicated by
-// the -1. Otherwise, we don't keep flags in userspace and we
-// don't check the fd for whether it was opened with O_APPEND
-// so the user may just have to eat the cost of an extra lseek().
-#if defined(RWF_APPEND)
+// Platform-specific append() implementations.
+namespace ircd::fs
+{
+	static size_t _append__rwf(const fd &, const const_buffers &, const write_opts &);
+	static size_t _append__no_rwf(const fd &, const const_buffers &, const write_opts &);
+	extern "C" decltype(_append__rwf) *ircd_fs_append__resolve();
+}
+
 size_t
 ircd::fs::append(const fd &fd,
                  const const_buffers &bufs,
                  const write_opts &opts_)
+__attribute__((ifunc("ircd_fs_append__resolve")));
+
+/// This function allows the linker to dynamically resolve the append() definition
+/// we'll be using during this execution. We check for fs::support_append which was
+/// initialized based on the kernel version.
+extern "C" decltype(ircd::fs::_append__rwf) *
+ircd::fs::ircd_fs_append__resolve()
+{
+	log::logf
+	{
+		log, support_append? log::DEBUG : log::DWARNING,
+		"This host '%s %s' %s the RWF_APPEND flag to pwritev2(2).",
+		info::kname,
+		info::kversion_str,
+		support_append? "SUPPORTS"_sv : "DOES NOT SUPPORT"_sv
+	};
+
+	return support_append? _append__rwf : _append__no_rwf;
+}
+
+/// When we have RWF_APPEND. We unconditionally set the offset to the
+/// value -1.
+size_t
+ircd::fs::_append__rwf(const fd &fd,
+                       const const_buffers &bufs,
+                       const write_opts &opts_)
 {
 	auto opts(opts_);
-	if(support_append)
-		opts.offset = -1;
-	else if(!opts.offset || opts.offset == -1)
-		opts.offset = syscall(::lseek, fd, 0, SEEK_END);
-
+	opts.offset = -1;
 	return write(fd, bufs, opts);
 }
-#else
+
+/// When we don't have pwritev2() we have to eat the cost of an
+/// extra lseek() to the end of the file.
 size_t
-ircd::fs::append(const fd &fd,
-                 const const_buffers &bufs,
-                 const write_opts &opts_)
+ircd::fs::_append__no_rwf(const fd &fd,
+                          const const_buffers &bufs,
+                          const write_opts &opts_)
 {
 	auto opts(opts_);
 	if(!opts.offset || opts.offset == -1)
@@ -849,7 +884,10 @@ ircd::fs::append(const fd &fd,
 
 	return write(fd, bufs, opts);
 }
-#endif // RWF_APPEND
+
+//
+// write
+//
 
 ircd::const_buffer
 ircd::fs::write(const string_view &path,
