@@ -432,8 +432,19 @@ try
 		string_view{result.origin},
 	};
 
+	size_t count(0);
 	for(const json::string &event_id : ids)
-		fetch::prefetch(room.room_id, event_id);
+		count += fetch::prefetch(room.room_id, event_id);
+
+	if(count)
+		log::debug
+		{
+			log, "Prefetched %zu of %zu state_ids for %s from '%s'",
+			count,
+			ids.size(),
+			string_view{room.room_id},
+			string_view{result.origin},
+		};
 }
 catch(const std::exception &e)
 {
@@ -546,11 +557,10 @@ ircd::m::fetch::prefetch(const m::room::id &room_id,
 	if(m::exists(event_id))
 		return false;
 
-	start(room_id, event_id);
-	return true;
+	return start(room_id, event_id);
 }
 
-void
+bool
 IRCD_MODULE_EXPORT
 ircd::m::fetch::start(const m::room::id &room_id,
                       const m::event::id &event_id)
@@ -570,7 +580,7 @@ ircd::m::fetch::start(const m::room::id &room_id,
 			reflect(run::level)
 		};
 
-	submit(event_id, room_id);
+	return submit(event_id, room_id);
 }
 
 bool

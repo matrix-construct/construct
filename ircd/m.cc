@@ -536,11 +536,11 @@ ircd::m::fetch::prefetch(const m::room::id &room_id,
 	return call(room_id, event_id);
 }
 
-void
+bool
 ircd::m::fetch::start(const m::room::id &room_id,
                       const m::event::id &event_id)
 {
-	using prototype = void (const m::room::id &, const m::event::id &);
+	using prototype = bool (const m::room::id &, const m::event::id &);
 
 	static mods::import<prototype> call
 	{

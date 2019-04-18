@@ -25,8 +25,8 @@ namespace ircd::m::fetch
 
 	// Control panel
 	bool cancel(request &);
-	void start(const m::room::id &, const m::event::id &);
-	bool prefetch(const m::room::id &, const m::event::id &);
+	bool start(const m::room::id &, const m::event::id & = {});
+	bool prefetch(const m::room::id &, const m::event::id & = {});
 
 	// Composed operations
 	void auth_chain(const room &, const net::hostport &);

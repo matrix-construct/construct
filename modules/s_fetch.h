@@ -36,7 +36,7 @@ namespace ircd::m::fetch
 	static bool start(request &);
 	static bool handle(request &);
 
-	template<class... args> static void submit(const event::id &, const room::id &, const size_t &bufsz = 8_KiB, args&&...);
+	template<class... args> static bool submit(const event::id &, const room::id &, const size_t &bufsz = 8_KiB, args&&...);
 	static void eval_handle(const decltype(requests)::iterator &);
 	static void eval_handle();
 	static void eval_worker();
@@ -50,7 +50,7 @@ namespace ircd::m::fetch
 }
 
 template<class... args>
-void
+bool
 ircd::m::fetch::submit(const m::event::id &event_id,
                        const m::room::id &room_id,
                        const size_t &bufsz,
@@ -65,6 +65,7 @@ ircd::m::fetch::submit(const m::event::id &event_id,
 	{
 		it = requests.emplace_hint(it, room_id, event_id, bufsz, std::forward<args>(a)...);
 		while(!start(const_cast<request &>(*it)));
+		return true;
 	}
 	catch(const std::exception &e)
 	{
@@ -77,8 +78,9 @@ ircd::m::fetch::submit(const m::event::id &event_id,
 		};
 
 		requests.erase(it);
-		return;
+		return false;
 	};
 
 	assert(it->room_id == room_id);
+	return false;
 }
