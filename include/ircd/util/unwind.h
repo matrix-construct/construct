@@ -24,6 +24,7 @@ namespace ircd::util
 ///
 struct ircd::util::unwind
 {
+	struct defer;
 	struct nominal;
 	struct exceptional;
 
@@ -92,6 +93,22 @@ struct ircd::util::unwind::exceptional
 	}
 
 	exceptional(const exceptional &) = delete;
+};
+
+/// Posts function to the event loop at the unwind rather than executing it
+/// as with nominal/exceptional.
+///
+struct ircd::util::unwind::defer
+{
+	std::function<void ()> func;
+
+	template<class F>
+	defer(F&& func)
+	:func{std::forward<F>(func)}
+	{}
+
+	defer(const defer &) = delete;
+	~defer() noexcept;
 };
 
 /// Asserts that unwind is occurring without any exception. This allows some
