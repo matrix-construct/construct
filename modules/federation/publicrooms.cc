@@ -105,14 +105,18 @@ handle_get(client &client,
 			since?: my_host()
 		};
 
-		m::rooms::for_each_public(key, [&]
-		(const m::room::id &room_id)
+		m::rooms::each_opts opts;
+		opts.public_rooms = true;
+		opts.key = key;
+		opts.closure = [&](const m::room::id &room_id)
 		{
 			json::stack::object obj{chunk};
 			m::rooms::summary_chunk(room_id, obj);
 			next_batch_buf = room_id;
 			return ++count < limit;
-		});
+		};
+
+		m::rooms::for_each(opts);
 	}
 
 	json::stack::member

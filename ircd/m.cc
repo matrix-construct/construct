@@ -3020,38 +3020,17 @@ ircd::m::rooms::summary_chunk(const m::room &room,
 	return function(room, chunk);
 }
 
-void
-ircd::m::rooms::for_each(const user &user,
-                         const user::rooms::closure &closure)
-{
-	const m::user::rooms rooms{user};
-	rooms.for_each(closure);
-}
-
 bool
-ircd::m::rooms::for_each(const user &user,
-                         const user::rooms::closure_bool &closure)
+ircd::m::rooms::for_each(const each_opts &opts)
 {
-	const m::user::rooms rooms{user};
-	return rooms.for_each(closure);
-}
+	using prototype = bool (const each_opts &);
 
-void
-ircd::m::rooms::for_each(const user &user,
-                         const string_view &membership,
-                         const user::rooms::closure &closure)
-{
-	const m::user::rooms rooms{user};
-	rooms.for_each(membership, closure);
-}
+	static mods::import<prototype> call
+	{
+		"m_rooms", "ircd::m::rooms::for_each"
+	};
 
-bool
-ircd::m::rooms::for_each(const user &user,
-                         const string_view &membership,
-                         const user::rooms::closure_bool &closure)
-{
-	const m::user::rooms rooms{user};
-	return rooms.for_each(membership, closure);
+	return call(opts);
 }
 
 bool
@@ -3078,78 +3057,6 @@ ircd::m::rooms::count_public(const string_view &server)
 	};
 
 	return function(server);
-}
-
-bool
-ircd::m::rooms::for_each_public(const room::id::closure_bool &closure)
-{
-	return for_each_public(string_view{}, closure);
-}
-
-bool
-ircd::m::rooms::for_each_public(const string_view &key,
-                                const room::id::closure_bool &closure)
-{
-	using prototype = bool (const string_view &, const room::id::closure_bool &);
-
-	static mods::import<prototype> function
-	{
-		"m_rooms", "_for_each_public"
-	};
-
-	return function(key, closure);
-}
-
-void
-ircd::m::rooms::for_each(const room::closure &closure)
-{
-	for_each(room::closure_bool{[&closure]
-	(const room &room)
-	{
-		closure(room);
-		return true;
-	}});
-}
-
-bool
-ircd::m::rooms::for_each(const room::closure_bool &closure)
-{
-	return for_each(room::id::closure_bool{[&closure]
-	(const m::room::id &room_id)
-	{
-		return closure(room_id);
-	}});
-}
-
-void
-ircd::m::rooms::for_each(const room::id::closure &closure)
-{
-	for_each(string_view{}, [&closure]
-	(const m::room::id &room_id)
-	{
-		closure(room_id);
-		return true;
-	});
-}
-
-bool
-ircd::m::rooms::for_each(const room::id::closure_bool &closure)
-{
-	return for_each(string_view{}, closure);
-}
-
-bool
-ircd::m::rooms::for_each(const string_view &room_id_lb,
-                         const room::id::closure_bool &closure)
-{
-	using prototype = bool (const string_view &, const room::id::closure_bool &);
-
-	static mods::import<prototype> call
-	{
-		"m_rooms", "ircd::m::rooms::for_each"
-	};
-
-	return call(room_id_lb, closure);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

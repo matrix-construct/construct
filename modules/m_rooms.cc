@@ -65,21 +65,35 @@ ircd::m::rooms::create_public_room(const m::event &,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::rooms::for_each(const string_view &room_id_lb,
-                         const room::id::closure_bool &closure)
+ircd::m::rooms::for_each(const each_opts &opts)
 {
+	if(opts.user.user_id)
+	{
+		const m::user::rooms rooms{opts.user};
+		return rooms.for_each(opts.membership, m::user::rooms::closure_bool{[&opts]
+		(const m::room &room, const string_view &membership)
+		{
+			return opts.user_closure?
+				opts.user_closure(room, membership):
+				opts.closure(room.room_id);
+		}});
+	}
+
+	if(opts.public_rooms)
+		return _for_each_public(opts.key, opts.closure);
+
 	const room::state state
 	{
 		my_room
 	};
 
-	const room::state::keys_bool keys{[&closure]
+	const room::state::keys_bool keys{[&opts]
 	(const string_view &room_id) -> bool
 	{
-		return closure(room_id);
+		return opts.closure(room_id);
 	}};
 
-	return state.for_each("ircd.room", room_id_lb, keys);
+	return state.for_each("ircd.room", opts.key, keys);
 }
 
 bool
@@ -102,7 +116,7 @@ ircd::m::rooms::_count_public(const string_view &server)
 		return true;
 	}};
 
-	for_each_public(server, count);
+	_for_each_public(server, count);
 	return ret;
 }
 

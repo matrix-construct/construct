@@ -6913,11 +6913,12 @@ console_cmd__eval__file(opt &out, const string_view &line)
 bool
 console_cmd__rooms(opt &out, const string_view &line)
 {
-	m::rooms::for_each(m::room::id::closure{[&out]
+	m::rooms::for_each([&out]
 	(const m::room::id &room_id)
 	{
 		out << room_id << std::endl;
-	}});
+		return true;
+	});
 
 	return true;
 }
@@ -6940,13 +6941,17 @@ console_cmd__rooms__public(opt &out, const string_view &line)
 		param.at("limit", 32L)
 	};
 
-	m::rooms::for_each_public(key, [&limit, &out]
+	m::rooms::each_opts opts;
+	opts.public_rooms = true;
+	opts.key = key;
+	opts.closure = [&limit, &out]
 	(const m::room::id &room_id) -> bool
 	{
 		out << room_id << std::endl;
 		return --limit > 0;
-	});
+	};
 
+	m::rooms::for_each(opts);
 	return true;
 }
 
@@ -8146,7 +8151,7 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 
 	if(room_id == "*")
 	{
-		m::rooms::for_each(m::room::id::closure{[&out]
+		m::rooms::for_each([&out]
 		(const m::room::id &room_id)
 		{
 			const m::room room{room_id};
@@ -8157,7 +8162,8 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 			};
 
 			out << "done " << room_id << " " << count << std::endl;
-		}});
+			return true;
+		});
 
 		return true;
 	}
