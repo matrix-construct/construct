@@ -1218,7 +1218,7 @@ ircd::m::feds::acquire::acquire(const vector_view<const opts> &o,
 
 	static mods::import<prototype> call
 	{
-		"federation_federation", "ircd::m::feds::execute"
+		"s_feds", "ircd::m::feds::execute"
 	};
 
 	call(o, c);
