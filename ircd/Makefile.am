@@ -48,10 +48,10 @@ AM_LDFLAGS = \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
 	-Wl,--whole-archive \
+	-Wl,-z -Wl,lazy \
 	-Wl,-z -Wl,nodelete \
 	-Wl,-z -Wl,nodlopen \
 	-Wl,-z -Wl,noexecstack \
-	-Wl,-z -Wl,now \
 	-Wl,-z -Wl,combreloc \
 	-Wl,-z -Wl,nocopyreloc \
 	$(PLATFORM_LDFLAGS) \
