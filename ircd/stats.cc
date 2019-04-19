@@ -22,8 +22,7 @@ ircd::stats::item::NAME_MAX_LEN
 	127
 };
 
-ircd::stats::item::item(const json::members &opts,
-                        callback cb)
+ircd::stats::item::item(const json::members &opts)
 :feature_
 {
 	opts
@@ -36,9 +35,9 @@ ircd::stats::item::item(const json::members &opts,
 {
 	unquote(feature.at("name"))
 }
-,cb
+,val
 {
-	std::move(cb)
+	0UL
 }
 {
 	if(name.size() > NAME_MAX_LEN)
