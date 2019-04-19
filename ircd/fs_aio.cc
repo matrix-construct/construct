@@ -1039,6 +1039,7 @@ noexcept try
 	// Check that everything lines up.
 	assert(request && iocb);
 	assert(iocb == static_cast<struct ::iocb *>(request));
+	assert(request->aio_data);
 	assert(request->aio_data == event.data);
 	assert(request->aio_data == iocb->aio_data);
 	assert(request->aio_data == uintptr_t(request));
