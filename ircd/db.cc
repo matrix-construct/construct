@@ -6900,7 +6900,7 @@ ircd::db::commit(database &d,
                  rocksdb::WriteBatch &batch,
                  const rocksdb::WriteOptions &opts)
 {
-	#ifdef RB_DEBUG_DB_SEEK
+	#ifdef RB_DEBUG
 	ircd::timer timer;
 	#endif
 
@@ -6911,7 +6911,7 @@ ircd::db::commit(database &d,
 		d.d->Write(opts, &batch)
 	};
 
-	#ifdef RB_DEBUG_DB_SEEK
+	#ifdef RB_DEBUG
 	log::debug
 	{
 		log, "'%s' %lu COMMIT %s in %ld$us",
