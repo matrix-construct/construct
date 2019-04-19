@@ -504,7 +504,7 @@ ircd::info::max_align
 decltype(ircd::info::startup)
 ircd::info::startup
 {
-	ctime(&startup_time)
+	rstrip(ctime(&startup_time), '\n')
 };
 
 decltype(ircd::info::compiled)
@@ -516,7 +516,7 @@ ircd::info::compiled
 decltype(ircd::info::configured)
 ircd::info::configured
 {
-	ctime(&configured_time)
+	rstrip(ctime(&configured_time), '\n')
 };
 
 decltype(ircd::info::startup_time)
