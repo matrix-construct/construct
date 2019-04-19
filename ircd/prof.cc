@@ -13,6 +13,7 @@
 #include <RB_INC_SYS_MMAN_H
 #include <RB_INC_SYS_RESOURCE_H
 #include <linux/perf_event.h>
+#include <RB_INC_VALGRIND_CALLGRIND_H
 #include <boost/chrono/chrono.hpp>
 #include <boost/chrono/process_cpu_clocks.hpp>
 
@@ -770,6 +771,52 @@ uint64_t
 ircd::prof::time_user()
 {
 	return boost::chrono::process_user_cpu_clock::now().time_since_epoch().count();
+}
+
+//
+// prof::vg
+//
+
+void
+ircd::prof::vg::stop()
+noexcept
+{
+	#ifdef HAVE_VALGRIND_CALLGRIND_H
+	CALLGRIND_STOP_INSTRUMENTATION;
+	#endif
+}
+
+void
+ircd::prof::vg::start()
+noexcept
+{
+	#ifdef HAVE_VALGRIND_CALLGRIND_H
+	CALLGRIND_START_INSTRUMENTATION;
+	#endif
+}
+
+void
+ircd::prof::vg::reset()
+{
+	#ifdef HAVE_VALGRIND_CALLGRIND_H
+	CALLGRIND_ZERO_STATS;
+	#endif
+}
+
+void
+ircd::prof::vg::toggle()
+{
+	#ifdef HAVE_VALGRIND_CALLGRIND_H
+	CALLGRIND_TOGGLE_COLLECT;
+	#endif
+}
+
+void
+ircd::prof::vg::dump(const char *const reason)
+{
+	#ifdef HAVE_VALGRIND_CALLGRIND_H
+	CALLGRIND_DUMP_STATS_AT(reason);
+	#endif
 }
 
 //

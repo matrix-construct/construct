@@ -783,6 +783,7 @@ dnl instrumentation
 RB_CHK_SYSHEADER(malloc.h, [MALLOC_H])
 RB_CHK_SYSHEADER(valgrind/valgrind.h, [VALGRIND_VALGRIND_H])
 RB_CHK_SYSHEADER(valgrind/memcheck.h, [VALGRIND_MEMCHECK_H])
+RB_CHK_SYSHEADER(valgrind/callgrind.h, [VALGRIND_CALLGRIND_H])
 
 dnl experimental
 RB_CHK_SYSHEADER(experimental/string_view, [EXPERIMENTAL_STRING_VIEW])

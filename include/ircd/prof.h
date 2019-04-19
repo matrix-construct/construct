@@ -60,10 +60,35 @@ namespace ircd::prof::x86
 	unsigned long long rdtsc();
 }
 
+/// Callgrind hypercall suite
+namespace ircd::prof::vg
+{
+	struct enable;
+	struct disable;
+
+	void dump(const char *const reason = nullptr);
+	void toggle();
+	void reset();
+	void start() noexcept;
+	void stop() noexcept;
+}
+
 namespace ircd
 {
 	using prof::cycles;
 }
+
+struct ircd::prof::vg::enable
+{
+	enable() noexcept    { start(); }
+	~enable() noexcept   { stop();  }
+};
+
+struct ircd::prof::vg::disable
+{
+	disable() noexcept   { stop();  }
+	~disable() noexcept  { start(); }
+};
 
 struct ircd::prof::times
 {
