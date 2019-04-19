@@ -287,7 +287,7 @@ ircd::m::feds::auth(const opts &opts,
 
 		return m::v1::event_auth
 		{
-			opts.room_id, opts.user_id, request.buf, std::move(v1opts)
+			opts.room_id, opts.event_id, request.buf, std::move(v1opts)
 		};
 	}};
 
