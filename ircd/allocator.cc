@@ -72,7 +72,7 @@ ircd::allocator::trim(const size_t &pad)
 //
 
 void
-ircd::vg::mem::set_noaccess(const const_buffer &buf)
+ircd::allocator::vg::set_noaccess(const const_buffer &buf)
 {
 	#ifdef HAVE_VALGRIND_MEMCHECK_H
 	VALGRIND_MAKE_MEM_NOACCESS(data(buf), size(buf));
@@ -80,7 +80,7 @@ ircd::vg::mem::set_noaccess(const const_buffer &buf)
 }
 
 void
-ircd::vg::mem::set_undefined(const const_buffer &buf)
+ircd::allocator::vg::set_undefined(const const_buffer &buf)
 {
 	#ifdef HAVE_VALGRIND_MEMCHECK_H
 	VALGRIND_MAKE_MEM_UNDEFINED(data(buf), size(buf));
@@ -88,7 +88,7 @@ ircd::vg::mem::set_undefined(const const_buffer &buf)
 }
 
 void
-ircd::vg::mem::set_defined(const const_buffer &buf)
+ircd::allocator::vg::set_defined(const const_buffer &buf)
 {
 	#ifdef HAVE_VALGRIND_MEMCHECK_H
 	VALGRIND_MAKE_MEM_DEFINED(data(buf), size(buf));
@@ -96,7 +96,7 @@ ircd::vg::mem::set_defined(const const_buffer &buf)
 }
 
 bool
-ircd::vg::mem::defined(const const_buffer &buf)
+ircd::allocator::vg::defined(const const_buffer &buf)
 {
 	#ifdef HAVE_VALGRIND_MEMCHECK_H
 	return VALGRIND_CHECK_MEM_IS_DEFINED(data(buf), size(buf)) == 0;

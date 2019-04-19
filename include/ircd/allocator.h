@@ -41,7 +41,7 @@ namespace ircd::allocator
 };
 
 /// Valgrind memcheck hypercall suite
-namespace ircd::vg::mem
+namespace ircd::allocator::vg
 {
 	bool defined(const const_buffer &);
 	void set_defined(const const_buffer &);
