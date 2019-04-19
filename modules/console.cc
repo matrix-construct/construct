@@ -853,6 +853,46 @@ console_cmd__mem__trim(opt &out, const string_view &line)
 }
 
 //
+// prof
+//
+
+bool
+console_cmd__prof__vg__start(opt &out, const string_view &line)
+{
+	prof::vg::start();
+	return true;
+}
+
+bool
+console_cmd__prof__vg__stop(opt &out, const string_view &line)
+{
+	prof::vg::stop();
+	return true;
+}
+
+bool
+console_cmd__prof__vg__reset(opt &out, const string_view &line)
+{
+	prof::vg::reset();
+	return true;
+}
+
+bool
+console_cmd__prof__vg__toggle(opt &out, const string_view &line)
+{
+	prof::vg::toggle();
+	return true;
+}
+
+bool
+console_cmd__prof__vg__dump(opt &out, const string_view &line)
+{
+	char reason[128];
+	prof::vg::dump(data(strlcpy(reason, line)));
+	return true;
+}
+
+//
 // env
 //
 
