@@ -620,45 +620,58 @@ console_cmd__version(opt &out, const string_view &line)
 		return true;
 	}
 
-	out << "ircd_name              " << ircd_name << std::endl;
-	out << "ircd_version           " << ircd_version << std::endl;
+	out << "ircd_name                  " << ircd_name << std::endl;
+	out << "ircd_version               " << ircd_version << std::endl;
 	out << std::endl;
 
-	out << "info::name             " << info::name << std::endl;
-	out << "info::version          " << info::version << std::endl;
-	out << "info::tag              " << info::tag << std::endl;
-	out << "info::branch           " << info::branch << std::endl;
-	out << "info::commit           " << info::commit << std::endl;
-	out << "info::user_agent       " << info::user_agent << std::endl;
-	out << "info::server_agent     " << info::server_agent << std::endl;
+	out << "info::name                 " << info::name << std::endl;
+	out << "info::version              " << info::version << std::endl;
+	out << "info::tag                  " << info::tag << std::endl;
+	out << "info::branch               " << info::branch << std::endl;
+	out << "info::commit               " << info::commit << std::endl;
+	out << "info::user_agent           " << info::user_agent << std::endl;
+	out << "info::server_agent         " << info::server_agent << std::endl;
 	out << std::endl;
 
-	out << "VERSION                " << VERSION << std::endl;
+	out << "info::kname                " << info::kname << std::endl;
+	out << "info::kversion_str         " << info::kversion_str << std::endl;
+	out << "info::glibc_version_str    " << info::glibc_version_str << std::endl;
+	out << "ircd::boost_version_str    " << ircd::boost_version_str << std::endl;
+	out << "db::version_str            " << db::version_str << std::endl;
+	out << "nacl::version              " << nacl::version() << std::endl;
+	out << "openssl::version           " << openssl::version().second << std::endl;
+	out << "magic::version             " << magic::version() << std::endl;
 	out << std::endl;
 
-	out << "BRANDING_NAME          " << BRANDING_NAME << std::endl;
-	out << "BRANDING_VERSION       " << BRANDING_VERSION << std::endl;
+	out << "VERSION                    " << VERSION << std::endl;
 	out << std::endl;
 
-	out << "PACKAGE                " << PACKAGE_VERSION << std::endl;
-	out << "PACKAGE_VERSION        " << PACKAGE_VERSION << std::endl;
-	out << "PACKAGE_NAME           " << PACKAGE_NAME << std::endl;
-	out << "PACKAGE_STRING         " << PACKAGE_STRING << std::endl;
-	out << "PACKAGE_VERSION        " << PACKAGE_VERSION << std::endl;
-	out << "PACKAGE_TARNAME        " << PACKAGE_TARNAME << std::endl;
+	out << "BRANDING_NAME              " << BRANDING_NAME << std::endl;
+	out << "BRANDING_VERSION           " << BRANDING_VERSION << std::endl;
 	out << std::endl;
 
-	out << "RB_VERSION             " << RB_VERSION << std::endl;
-	out << "RB_VERSION_BRANCH      " << RB_VERSION_BRANCH << std::endl;
-	out << "RB_VERSION_COMMIT      " << RB_VERSION_COMMIT << std::endl;
-	out << "RB_VERSION_TAG         " << RB_VERSION_TAG << std::endl;
+	out << "PACKAGE                    " << PACKAGE_VERSION << std::endl;
+	out << "PACKAGE_VERSION            " << PACKAGE_VERSION << std::endl;
+	out << "PACKAGE_NAME               " << PACKAGE_NAME << std::endl;
+	out << "PACKAGE_STRING             " << PACKAGE_STRING << std::endl;
+	out << "PACKAGE_VERSION            " << PACKAGE_VERSION << std::endl;
+	out << "PACKAGE_TARNAME            " << PACKAGE_TARNAME << std::endl;
+	out << std::endl;
 
-	out << "RB_DATECODE            " << RB_DATECODE << std::endl;
-	out << "RB_DATESTR             " << RB_DATESTR << std::endl;
-	out << "RB_DATE_CONFIGURED     " << RB_DATE_CONFIGURED << std::endl;
+	out << "RB_VERSION                 " << RB_VERSION << std::endl;
+	out << "RB_VERSION_BRANCH          " << RB_VERSION_BRANCH << std::endl;
+	out << "RB_VERSION_COMMIT          " << RB_VERSION_COMMIT << std::endl;
+	out << "RB_VERSION_TAG             " << RB_VERSION_TAG << std::endl;
+	out << std::endl;
 
-	out << "RB_OS                  " << RB_OS << std::endl;
-	out << "RB_CXX                 " << RB_CXX << std::endl;
+	out << "info::configured           " << info::configured << std::endl;
+	out << "info::compiled             " << info::compiled << std::endl;
+	out << "info::startup              " << info::startup << std::endl;
+	out << std::endl;
+
+	out << "RB_DATECODE                " << RB_DATECODE << std::endl;
+	out << "RB_DATESTR                 " << RB_DATESTR << std::endl;
+	out << "RB_DATE_CONFIGURED         " << RB_DATE_CONFIGURED << std::endl;
 	out << std::endl;
 
 	return true;
