@@ -24,6 +24,8 @@ namespace ircd::m::feds
 	template<class T> using create_closure = std::function<T (request<T> &, const string_view &origin)>;
 
 	template<class T> static request_list creator(const opts &, const create_closure<T> &);
+
+	static bool call_user(const closure &closure, const result &result);
 	static bool handler(request_list &, const milliseconds &, const closure &);
 
 	static request_list head(const opts &, const closure &);
@@ -351,6 +353,10 @@ ircd::m::feds::handler(request_list &reqs,
 		};
 
 		assert(it != end(reqs));
+		const unwind remove{[&reqs, &it]
+		{
+			reqs.erase(it);
+		}};
 
 		request_base &req(**it);
 		server::request &sreq(dynamic_cast<server::request &>(req)); try
@@ -358,22 +364,53 @@ ircd::m::feds::handler(request_list &reqs,
 			const auto code{sreq.get()};
 			const json::array &array{sreq.in.content};
 			const json::object &object{sreq.in.content};
-			if(!closure({req.opts, req.origin, {}, object, array}))
+			const result result
+			{
+				req.opts, req.origin, {}, object, array
+			};
+
+			if(!call_user(closure, result))
 				return false;
 		}
 		catch(const std::exception &)
 		{
+			if(!req.opts->closure_errors && !req.opts->nothrow_closure_retval)
+				return false;
+
+			if(!req.opts->closure_errors)
+				continue;
+
 			const ctx::exception_handler eptr;
 			const std::exception_ptr &eptr_(eptr);
-			if(!closure({req.opts, req.origin, eptr_}))
+			const result result
+			{
+				req.opts, req.origin, eptr_
+			};
+
+			if(!call_user(closure, result))
 				return false;
 		}
-
-		reqs.erase(it);
 	}
 
 	return true;
 }
+
+bool
+ircd::m::feds::call_user(const closure &closure,
+                         const result &result)
+try
+{
+	return closure(result);
+}
+catch(const std::exception &)
+{
+	assert(result.request);
+	if(result.request->nothrow_closure)
+		return result.request->nothrow_closure_retval;
+
+	throw;
+}
+
 
 template<class T>
 ircd::m::feds::request_list
