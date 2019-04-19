@@ -5555,6 +5555,8 @@ noexcept
 
 	auto *const site(find_site());
 	assert(site != nullptr);
+	assert(site->calling == 0);
+	assert(calling == 0);
 	site->del(*this);
 }
 
@@ -5773,7 +5775,15 @@ ircd::m::hook::site<void>::call(hook<void> &hfn,
                                 const event &event)
 try
 {
+	// stats for site
+	++calls;
+	const scope_count site_calling{calling};
+
+	// stats for hook
 	++hfn.calls;
+	const scope_count hook_calling{hfn.calling};
+
+	// call hook
 	hfn.function(event);
 }
 catch(const std::exception &e)

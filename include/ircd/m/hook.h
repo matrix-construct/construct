@@ -41,6 +41,7 @@ struct ircd::m::hook::base
 	bool registered {false};
 	size_t matchers {0};
 	size_t calls {0};
+	size_t calling {0};
 
 	string_view site_name() const;
 	site *find_site() const;
@@ -62,6 +63,8 @@ struct ircd::m::hook::base::site
 	std::set<base *> hooks;
 	size_t matchers {0};
 	bool exceptions {true};
+	size_t calls {0};
+	size_t calling {0};
 
 	friend class base;
 	string_view name() const;
@@ -154,7 +157,15 @@ ircd::m::hook::site<data>::call(hook<data> &hfn,
                                 data d)
 try
 {
+	// stats for site
+	++calls;
+	const scope_count site_calling{calling};
+
+	// stats for hook
 	++hfn.calls;
+	const scope_count hook_calling{hfn.calling};
+
+	// call hook
 	hfn.function(event, d);
 }
 catch(const std::exception &e)
