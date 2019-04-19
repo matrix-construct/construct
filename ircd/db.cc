@@ -1072,7 +1072,7 @@ try
 	// These values prevent codepaths from being taken in rocksdb which may
 	// introduce issues for ircd::ctx. We should still fully investigate
 	// if any of these features can safely be used.
-	opts->allow_concurrent_memtable_write = false;
+	opts->allow_concurrent_memtable_write = true;
 	opts->enable_write_thread_adaptive_yield = false;
 	opts->enable_pipelined_write = false;
 	opts->write_thread_max_yield_usec = 0;
