@@ -25,18 +25,13 @@ namespace ircd::m::fetch
 
 	// Control panel
 	bool cancel(request &);
-	bool start(const m::room::id &, const m::event::id & = {});
-	bool prefetch(const m::room::id &, const m::event::id & = {});
+	bool start(const m::room::id &, const m::event::id &);
+	bool prefetch(const m::room::id &, const m::event::id &);
+	bool synchronize(const m::room::id &);
 
 	// Composed operations
 	void auth_chain(const room &, const net::hostport &);
-	void state_ids(const room &, const net::hostport &);
 	void state_ids(const room &);
-	void frontfill(const room &, const net::hostport &);
-	void frontfill(const room &);
-	void backfill(const room &, const net::hostport &);
-	void backfill(const room &);
-	void headfill(const room &);
 
 	extern log::log log;
 }

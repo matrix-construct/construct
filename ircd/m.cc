@@ -442,73 +442,6 @@ ircd::m::fetch::log
 };
 
 void
-ircd::m::fetch::headfill(const room &r)
-{
-	using prototype = void (const room &);
-
-	static mods::import<prototype> call
-	{
-		"s_fetch", "ircd::m::fetch::headfill"
-	};
-
-	call(r);
-}
-
-void
-ircd::m::fetch::backfill(const room &r)
-{
-	using prototype = void (const room &);
-
-	static mods::import<prototype> call
-	{
-		"s_fetch", "ircd::m::fetch::backfill"
-	};
-
-	call(r);
-}
-
-void
-ircd::m::fetch::backfill(const room &r,
-                         const net::hostport &hp)
-{
-	using prototype = void (const room &, const net::hostport &);
-
-	static mods::import<prototype> call
-	{
-		"s_fetch", "ircd::m::fetch::backfill"
-	};
-
-	call(r, hp);
-}
-
-void
-ircd::m::fetch::frontfill(const room &r)
-{
-	using prototype = void (const room &);
-
-	static mods::import<prototype> call
-	{
-		"s_fetch", "ircd::m::fetch::frontfill"
-	};
-
-	call(r);
-}
-
-void
-ircd::m::fetch::frontfill(const room &r,
-                         const net::hostport &hp)
-{
-	using prototype = void (const room &, const net::hostport &);
-
-	static mods::import<prototype> call
-	{
-		"s_fetch", "ircd::m::fetch::frontfill"
-	};
-
-	call(r, hp);
-}
-
-void
 ircd::m::fetch::state_ids(const room &r)
 {
 	using prototype = void (const room &);
@@ -519,20 +452,6 @@ ircd::m::fetch::state_ids(const room &r)
 	};
 
 	call(r);
-}
-
-void
-ircd::m::fetch::state_ids(const room &r,
-                          const net::hostport &hp)
-{
-	using prototype = void (const room &, const net::hostport &);
-
-	static mods::import<prototype> call
-	{
-		"s_fetch", "ircd::m::fetch::state_ids"
-	};
-
-	call(r, hp);
 }
 
 void
@@ -547,6 +466,19 @@ ircd::m::fetch::auth_chain(const room &r,
 	};
 
 	call(r, hp);
+}
+
+bool
+ircd::m::fetch::synchronize(const m::room::id &room_id)
+{
+	using prototype = bool (const m::room::id &);
+
+	static mods::import<prototype> call
+	{
+		"s_fetch", "ircd::m::fetch::synchronize"
+	};
+
+	return call(room_id);
 }
 
 bool

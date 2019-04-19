@@ -12500,7 +12500,7 @@ console_cmd__fetch(opt &out, const string_view &line)
 
 	if(!param["event_id"])
 	{
-		m::fetch::state_ids(room_id);
+		m::fetch::synchronize(room_id);
 		out << "done" << std::endl;
 		return true;
 	}
@@ -12511,42 +12511,6 @@ console_cmd__fetch(opt &out, const string_view &line)
 	};
 
 	m::fetch::start(room_id, event_id);
-	out << "in work..." << std::endl;
-	return true;
-}
-
-bool
-console_cmd__fetch__head(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"room_id"
-	}};
-
-	const auto room_id
-	{
-		m::room_id(param.at("room_id"))
-	};
-
-	m::fetch::headfill(room_id);
-	out << "in work..." << std::endl;
-	return true;
-}
-
-bool
-console_cmd__fetch__frontfill(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"room_id"
-	}};
-
-	const auto room_id
-	{
-		m::room_id(param.at("room_id"))
-	};
-
-	m::fetch::frontfill(room_id);
 	out << "in work..." << std::endl;
 	return true;
 }
