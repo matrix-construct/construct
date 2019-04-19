@@ -33,12 +33,17 @@ namespace ircd::util
 template<class T>
 struct ircd::util::instance_list
 {
-	static ircd::allocator::node<T *> allocator;
-	static std::list<T *, typename ircd::allocator::node<T *>::allocator> list;
+	using allocator_state = ircd::allocator::node<T *>;
+	using allocator_type = typename allocator_state::allocator;
+	using list_type = std::list<T *, allocator_type>;
+	using list_node = typename list_type::iterator::_Node;
+
+	static allocator_state allocator;
+	static list_type list;
 
   protected:
-	typename decltype(list)::iterator it;
-	uint8_t _node[56];
+	list_node node;
+	typename list_type::iterator it;
 
 	instance_list();
 	instance_list(instance_list &&) noexcept;
@@ -51,7 +56,8 @@ struct ircd::util::instance_list
 template<class T>
 ircd::util::instance_list<T>::instance_list()
 {
-	allocator.next = reinterpret_cast<T **>(_node);
+	const auto &address(reinterpret_cast<uint8_t *>(&node));
+	list.get_allocator().s->next = reinterpret_cast<T **>(address);
 	it = list.emplace(end(list), static_cast<T *>(this));
 }
 
@@ -59,14 +65,16 @@ template<class T>
 ircd::util::instance_list<T>::instance_list(instance_list &&other)
 noexcept
 {
-	allocator.next = reinterpret_cast<T **>(_node);
+	const auto &address(reinterpret_cast<uint8_t *>(&node));
+	list.get_allocator().s->next = reinterpret_cast<T **>(address);
 	it = list.emplace(end(list), static_cast<T *>(this));
 }
 
 template<class T>
 ircd::util::instance_list<T>::instance_list(const instance_list &other)
 {
-	allocator.next = reinterpret_cast<T **>(_node);
+	const auto &address(reinterpret_cast<uint8_t *>(&node));
+	list.get_allocator().s->next = reinterpret_cast<T **>(address);
 	it = list.emplace(end(list), static_cast<T *>(this));
 }
 
