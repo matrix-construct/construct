@@ -99,7 +99,7 @@ struct ircd::mapi::header
 	operator const mods::mod &() const;
 	operator mods::mod &();
 
-	header(const string_view &  = "<no description>",
+	header(const string_view &,
 	       init_func            = {},
 	       fini_func            = {});
 
@@ -113,6 +113,8 @@ struct ircd::mapi::metablock
 	init_func init;                    // Executed after dlopen()
 	fini_func fini;                    // Executed before dlclose()
 	meta_data meta;                    // Various key-value metadata
+
+	metablock(const string_view &, init_func &&, fini_func &&);
 };
 
 static_assert
@@ -127,3 +129,17 @@ static_assert
 	sizeof(ircd::mapi::header) == 4 + 4 + 8 + 8 + 8,
 	"The MAPI header size has changed on this platform."
 );
+
+inline
+__attribute__((always_inline))
+ircd::mapi::header::header(const string_view &description,
+                           init_func init,
+                           fini_func fini)
+:meta
+{
+	new metablock
+	{
+		description, std::move(init), std::move(fini)
+	}
+}
+{}

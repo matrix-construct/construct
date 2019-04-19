@@ -351,21 +351,25 @@ ircd::mods::handle_ebadf(const string_view &what)
 // mods/mapi.h
 //
 
-ircd::mapi::header::header(const string_view &description,
-                           init_func init,
-                           fini_func fini)
-:meta
+//
+// metablock
+//
+
+ircd::mapi::metablock::metablock(const string_view &description,
+                                 init_func &&init_func,
+                                 fini_func &&fini_func)
+:init{std::move(init_func)}
+,fini{std::move(fini_func)}
+,meta
 {
-	new metablock
-	{
-		std::move(init), std::move(fini), meta_data
-		{
-			{ "description", description }
-		}
-	}
+	{ "description", description }
 }
 {
 }
+
+//
+// header
+//
 
 ircd::mapi::header::~header()
 noexcept
