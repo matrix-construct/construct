@@ -370,7 +370,7 @@ ircd::m::vm::error::error(const http::code &httpcode,
                           args&&... a)
 :m::error
 {
-	child, httpcode, "M_VM_FAULT", fmt, std::forward<args>(a)...
+	child, httpcode, reflect(code), fmt, std::forward<args>(a)...
 }
 ,code
 {

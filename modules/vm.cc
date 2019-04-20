@@ -591,11 +591,8 @@ catch(const error &e) // VM FAULT CODE
 	return handle_error
 	(
 		*eval.opts, e.code,
-		"eval %s %s: %s %s :%s",
+		"eval %s :%s",
 		json::get<"event_id"_>(event)?: json::string{"<edu>"},
-		reflect(e.code),
-		e.what(),
-		unquote(json::object(e.content).get("errcode")),
 		unquote(json::object(e.content).get("error"))
 	);
 }
@@ -604,7 +601,7 @@ catch(const m::error &e) // GENERAL MATRIX ERROR
 	return handle_error
 	(
 		*eval.opts, fault::GENERAL,
-		"eval %s #GP (General Protection): %s %s :%s",
+		"eval %s (General Protection): %s %s :%s",
 		json::get<"event_id"_>(event)?: json::string{"<edu>"},
 		e.what(),
 		unquote(json::object(e.content).get("errcode")),
@@ -616,7 +613,7 @@ catch(const ctx::interrupted &e) // INTERRUPTION
 	return handle_error
 	(
 		*eval.opts, fault::INTERRUPT,
-		"eval %s #NMI: %s",
+		"eval %s :%s",
 		json::get<"event_id"_>(event)?: json::string{"<edu>"},
 		e.what()
 	);
@@ -626,7 +623,7 @@ catch(const std::exception &e) // ALL OTHER ERRORS
 	return handle_error
 	(
 		*eval.opts, fault::GENERAL,
-		"eval %s #GP (General Protection): %s",
+		"eval %s (General Protection): %s",
 		json::get<"event_id"_>(event)?: json::string{"<edu>"},
 		e.what()
 	);
