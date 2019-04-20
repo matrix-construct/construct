@@ -41,6 +41,12 @@ BUILT_SOURCES = \
 	###
 endif
 
+if GCC
+if LOWMEM_COMPILE
+LOWMEM_FLAGS= --param ggc-min-expand=1
+endif
+endif
+
 ircd.h.gch:
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o ircd.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) ircd.h
 
@@ -49,7 +55,7 @@ ircd.pic.h.gch:
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o ircd.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC ircd.pic.h
 
 spirit.h.gch:
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC -include ircd.pic.h spirit.h
+	$(CXX) $(CXXFLAGS) $(LOWMEM_FLAGS) $(AM_CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC -include ircd.pic.h spirit.h
 
 clean-local:
 	rm -f ircd.h.gch
