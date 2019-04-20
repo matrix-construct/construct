@@ -27,6 +27,9 @@ namespace ircd::fs
 	std::string read(const fd &, const read_opts & = read_opts_default);
 	std::string read(const string_view &path, const read_opts & = read_opts_default);
 
+	// Test whether bytes in the specified range are cached and should not block
+	bool fetched(const fd &, const size_t &, const read_opts & = read_opts_default);
+
 	// Prefetch bytes for subsequent read(); offset is given in opts.
 	size_t prefetch(const fd &, const size_t &, const read_opts & = read_opts_default);
 }

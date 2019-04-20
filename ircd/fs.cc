@@ -484,7 +484,6 @@ ircd::fs::prefetch(const fd &fd,
                    const size_t &count,
                    const read_opts &opts)
 {
-	assert(opts.op == op::READ);
 	static const size_t max_count
 	{
 		128_KiB
@@ -502,6 +501,44 @@ ircd::fs::prefetch(const fd &fd,
 	}
 	while(off + cnt < opts.offset + count);
 	return count;
+}
+
+bool
+ircd::fs::fetched(const fd &fd,
+                  const size_t &count,
+                  const read_opts &opts)
+{
+	assert(opts.offset % info::page_size == 0);
+	const size_t &map_size
+	{
+		count?: size(fd)
+	};
+
+	void *const &map
+	{
+		::mmap(nullptr, map_size, PROT_NONE, MAP_NONBLOCK | MAP_SHARED, int(fd), opts.offset)
+	};
+
+	if(unlikely(map == MAP_FAILED))
+		throw_system_error(errno);
+
+	const custom_ptr<void> map_ptr
+	{
+		map, [&map_size](void *const &map)
+		{
+			syscall(::munmap, map, map_size);
+		}
+	};
+
+	const size_t vec_size
+	{
+		std::max(((map_size + info::page_size - 1) / info::page_size) / 8, 1UL)
+	};
+	assert(vec_size > 0 && vec_size < map_size);
+
+	std::vector<uint64_t> vec(vec_size);
+	syscall(::mincore, map, map_size, reinterpret_cast<uint8_t *>(vec.data()));
+	return std::find(begin(vec), end(vec), 0UL) == end(vec);
 }
 
 std::string
