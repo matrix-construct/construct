@@ -40,13 +40,6 @@ ircd::util::instance_list<ircd::ctx::ctx>::list
 	allocator
 };
 
-/// Public interface linkage for the list of all ctx instances
-decltype(ircd::ctx::ctxs)
-ircd::ctx::ctxs
-{
-	reinterpret_cast<const decltype(ircd::ctx::ctxs) &>(ctx::ctx::list)
-};
-
 decltype(ircd::ctx::log)
 ircd::ctx::log
 {
@@ -349,6 +342,16 @@ const
 //
 // ctx/ctx.h
 //
+
+bool
+ircd::ctx::for_each(const std::function<bool (ctx &)> &closure)
+{
+	for(auto &ctx : ctx::list)
+		if(!closure(*ctx))
+			return false;
+
+	return true;
+}
 
 /// Yield to context `ctx`.
 ///

@@ -1575,13 +1575,17 @@ console_cmd__ctx__interrupt(opt &out, const string_view &line)
 		"id", "[id]..."
 	}};
 
-	for(size_t i(0); i < param.count(); ++i)
-		for(auto *const &ctx : ctx::ctxs)
-			if(id(*ctx) == param.at<uint64_t>(i))
+	bool cont{true};
+	for(size_t i(0); i < param.count() && cont; ++i)
+		cont = ctx::for_each([&](auto &ctx)
+		{
+			if(id(ctx) == param.at<uint64_t>(i))
 			{
-				interrupt(*ctx);
-				break;
+				interrupt(ctx);
+				return false;
 			}
+			else return true;
+		});
 
 	return true;
 }
@@ -1615,16 +1619,20 @@ console_cmd__ctx__prof(opt &out, const string_view &line)
 		return true;
 	}
 
-	for(size_t i(0); i < param.count(); ++i)
-		for(auto *const &ctx : ctx::ctxs)
-			if(id(*ctx) == param.at<uint64_t>(i))
+	bool cont{true};
+	for(size_t i(0); i < param.count() && cont; ++i)
+		cont = ctx::for_each([&](auto &ctx)
+		{
+			if(id(ctx) == param.at<uint64_t>(i))
 			{
-				out << "Profile for ctx:" << id(*ctx) << " '" << name(*ctx) << "':\n"
+				out << "Profile for ctx:" << id(ctx) << " '" << name(ctx) << "':\n"
 				    << std::endl;
 
-				display(ctx::prof::get(*ctx));
-				break;
+				display(ctx::prof::get(ctx));
+				return false;
 			}
+			else return true;
+		});
 
 	return true;
 }
@@ -1637,13 +1645,17 @@ console_cmd__ctx__term(opt &out, const string_view &line)
 		"id", "[id]..."
 	}};
 
-	for(size_t i(0); i < param.count(); ++i)
-		for(auto *const &ctx : ctx::ctxs)
-			if(id(*ctx) == param.at<uint64_t>(i))
+	bool cont {true};
+	for(size_t i(0); i < param.count() && cont; ++i)
+		cont = ctx::for_each([&](auto &ctx)
+		{
+			if(id(ctx) == param.at<uint64_t>(i))
 			{
-				ctx::terminate(*ctx);
-				break;
+				ctx::terminate(ctx);
+				return false;
 			}
+			else return true;
+		});
 
 	return true;
 }
@@ -1682,9 +1694,8 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 	    << ":NAME"
 	    << std::endl;
 
-	for(const auto *const &ctxp : ctx::ctxs)
+	ctx::for_each([&out](auto &ctx)
 	{
-		const auto &ctx{*ctxp};
 		out << std::setw(5) << std::right << id(ctx);
 		out << " "
 		    << (started(ctx)? 'A' : '-')
@@ -1736,7 +1747,8 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << name(ctx);
 
 		out << std::endl;
-	}
+		return true;
+	});
 
 	return true;
 }

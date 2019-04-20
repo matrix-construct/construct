@@ -44,7 +44,6 @@ namespace ircd::ctx
 	IRCD_OVERLOAD(threadsafe)
 
 	extern log::log log;
-	extern const std::list<ctx *> &ctxs;         // List of all ctx instances
 
 	const uint64_t &id(const ctx &);             // Unique ID for context
 	string_view name(const ctx &);               // User's optional label for context
@@ -68,6 +67,8 @@ namespace ircd::ctx
 	void notify(ctx &, threadsafe_t);            // Notify context with threadsafety.
 	bool notify(ctx &);                          // Queue a context switch to arg
 	void yield(ctx &);                           // Direct context switch to arg
+
+	bool for_each(const std::function<bool (ctx &)> &);
 }
 
 #include "prof.h"
