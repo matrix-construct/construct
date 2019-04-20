@@ -100,16 +100,20 @@ void
 ircd::openssl::set_ecdh_auto(SSL &ssl,
                              const bool &on)
 {
+	#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	long _on(on);
 	call(::SSL_ctrl, &ssl, SSL_CTRL_SET_ECDH_AUTO, _on, nullptr);
+	#endif
 }
 
 void
 ircd::openssl::set_ecdh_auto(SSL_CTX &ssl,
                              const bool &on)
 {
+	#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	long _on(on);
 	call(::SSL_CTX_ctrl, &ssl, SSL_CTRL_SET_ECDH_AUTO, _on, nullptr);
+	#endif
 }
 
 void
@@ -312,7 +316,7 @@ ircd::openssl::genX509_rsa(const mutable_buffer &out,
 
 	set(*pk, *priv);
 	genx509_readkeys(*pk, opts);
-	check(*pk->pkey.rsa);
+	check(*EVP_PKEY_get1_RSA(pk.get()));
 	return genX509(out, *pk, opts);
 }
 
@@ -332,7 +336,7 @@ ircd::openssl::genX509_ec(const mutable_buffer &out,
 
 	set(*pk, *priv);
 	genx509_readkeys(*pk, opts);
-	check(*pk->pkey.ec);
+	check(*EVP_PKEY_get1_EC_KEY(pk.get()));
 	return genX509(out, *pk, opts);
 }
 
@@ -818,11 +822,23 @@ ircd::openssl::gendh(DH &dh,
                      const uint &bits,
                      const uint &gen)
 {
-	BN_GENCB gencb{0};
-	void *const arg{nullptr}; // privdata passed to cb
-	BN_GENCB_set(&gencb, &ircd::openssl::genprime_cb, arg);
+	#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	const custom_ptr<BN_GENCB> gencb
+	{
+		BN_GENCB_new(), BN_GENCB_free
+	};
+	#else
+	const std::unique_ptr<BN_GENCB> gencb
+	{
+		std::make_unique<BN_GENCB>()
+	};
+	memset(gencb.get(), 0x0, sizeof(BN_GENCB));
+	#endif
 
-	call<error, 0>(::DH_generate_parameters_ex, &dh, bits, gen, &gencb);
+	void *const arg{nullptr}; // privdata passed to cb
+	BN_GENCB_set(gencb.get(), &ircd::openssl::genprime_cb, arg);
+
+	call<error, 0>(::DH_generate_parameters_ex, &dh, bits, gen, gencb.get());
 	return dh;
 }
 
@@ -888,7 +904,7 @@ ircd::openssl::genec(const string_view &skfile,
 	assert(EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE);
 	call(::EC_KEY_set_group, key.get(), group);
 	call(::EC_KEY_generate_key, key.get());
-	assert(EC_KEY_get0_public_key(key.get()));
+	assert(EC_KEY_get1_public_key(key.get()));
 	set(*pk, *key);
 	bio::write_file(skfile, write_priv);
 	bio::write_file(pkfile, write_pub);
@@ -971,12 +987,24 @@ ircd::openssl::genrsa(RSA &out,
                       const uint &bits,
                       const uint &exp)
 {
-	BN_GENCB gencb{0};
+	#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	const custom_ptr<BN_GENCB> gencb
+	{
+		BN_GENCB_new(), BN_GENCB_free
+	};
+	#else
+	const std::unique_ptr<BN_GENCB> gencb
+	{
+		std::make_unique<BN_GENCB>()
+	};
+	memset(gencb.get(), 0x0, sizeof(BN_GENCB));
+	#endif
+
 	void *const arg{nullptr}; // privdata passed to cb
-	BN_GENCB_set(&gencb, &ircd::openssl::genprime_cb, arg);
+	BN_GENCB_set(gencb.get(), &ircd::openssl::genprime_cb, arg);
 
 	bignum e{exp};
-	call(::RSA_generate_key_ex, &out, bits, e, &gencb);
+	call(::RSA_generate_key_ex, &out, bits, e, gencb.get());
 
 	return out;
 }
@@ -996,7 +1024,10 @@ ircd::openssl::print(const mutable_buffer &buf,
 size_t
 ircd::openssl::size(const RSA &key)
 {
+	#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	assert(key.n != nullptr);
+	#endif
+
 	return RSA_size(&key);
 }
 
@@ -1045,17 +1076,17 @@ ircd::openssl::write_pem_priv(const mutable_buffer &out,
 	void *const u{nullptr};
 
 	auto *const p{const_cast<EVP_PKEY *>(&evp)};
-	return bio::write(out, [&p, &enc, &kstr, &klen, &pwcb, &u]
+	return bio::write(out, [&evp, &p, &enc, &kstr, &klen, &pwcb, &u]
 	(BIO *const &bio)
 	{
-		switch(p->type)
+		switch(EVP_PKEY_type(EVP_PKEY_id(&evp)))
 		{
 			case EVP_PKEY_RSA:
-				call(::PEM_write_bio_RSAPrivateKey, bio, p->pkey.rsa, enc, kstr, klen, pwcb, u);
+				call(::PEM_write_bio_RSAPrivateKey, bio, EVP_PKEY_get1_RSA(p), enc, kstr, klen, pwcb, u);
 				break;
 
 			case EVP_PKEY_EC:
-				call(::PEM_write_bio_ECPrivateKey, bio, p->pkey.ec, enc, kstr, klen, pwcb, u);
+				call(::PEM_write_bio_ECPrivateKey, bio, EVP_PKEY_get1_EC_KEY(p), enc, kstr, klen, pwcb, u);
 				break;
 
 			default:
@@ -1070,17 +1101,17 @@ ircd::openssl::write_pem_pub(const mutable_buffer &out,
                              const EVP_PKEY &evp)
 {
 	auto *const p{const_cast<EVP_PKEY *>(&evp)};
-	return bio::write(out, [&p]
+	return bio::write(out, [&evp, &p]
 	(BIO *const &bio)
 	{
-		switch(p->type)
+		switch(EVP_PKEY_type(EVP_PKEY_id(&evp)))
 		{
 			case EVP_PKEY_RSA:
-				call(::PEM_write_bio_RSAPublicKey, bio, p->pkey.rsa);
+				call(::PEM_write_bio_RSAPublicKey, bio, EVP_PKEY_get1_RSA(p));
 				break;
 
 			case EVP_PKEY_EC:
-				call(::PEM_write_bio_EC_PUBKEY, bio, p->pkey.ec);
+				call(::PEM_write_bio_EC_PUBKEY, bio, EVP_PKEY_get1_EC_KEY(p));
 				break;
 
 			default:
@@ -1103,16 +1134,22 @@ ircd::openssl::read_pem_priv(EVP_PKEY &out_,
 	bio::read(pem, [&ret, &out, &pwcb, &u]
 	(BIO *const &bio)
 	{
-		switch(out->type)
+		switch(EVP_PKEY_type(EVP_PKEY_id(out)))
 		{
 			case EVP_PKEY_RSA:
-				ret = PEM_read_bio_RSAPrivateKey(bio, &out->pkey.rsa, pwcb, u);
+			{
+				RSA *rsa(EVP_PKEY_get1_RSA(out));
+				ret = PEM_read_bio_RSAPrivateKey(bio, &rsa, pwcb, u);
 				break;
+			}
 
 			case EVP_PKEY_EC:
-				ret = PEM_read_bio_ECPrivateKey(bio, &out->pkey.ec, pwcb, u);
-				EC_KEY_set_asn1_flag(out->pkey.ec, OPENSSL_EC_NAMED_CURVE);
+			{
+				EC_KEY *ec_key(EVP_PKEY_get1_EC_KEY(out));
+				ret = PEM_read_bio_ECPrivateKey(bio, &ec_key, pwcb, u);
+				EC_KEY_set_asn1_flag(EVP_PKEY_get1_EC_KEY(out), OPENSSL_EC_NAMED_CURVE);
 				break;
+			}
 
 			default:
 				ret = PEM_read_bio_PrivateKey(bio, &out, pwcb, u);
@@ -1142,16 +1179,22 @@ ircd::openssl::read_pem_pub(EVP_PKEY &out_,
 	bio::read(pem, [&ret, &out, &pwcb, &u]
 	(BIO *const &bio)
 	{
-		switch(out->type)
+		switch(EVP_PKEY_type(EVP_PKEY_id(out)))
 		{
 			case EVP_PKEY_RSA:
-				ret = PEM_read_bio_RSAPublicKey(bio, &out->pkey.rsa, pwcb, u);
+			{
+				RSA *rsa(EVP_PKEY_get1_RSA(out));
+				ret = PEM_read_bio_RSAPublicKey(bio, &rsa, pwcb, u);
 				break;
+			}
 
 			case EVP_PKEY_EC:
-				ret = PEM_read_bio_EC_PUBKEY(bio, &out->pkey.ec, pwcb, u);
-				EC_KEY_set_asn1_flag(out->pkey.ec, OPENSSL_EC_NAMED_CURVE);
+			{
+				EC_KEY *ec_key(EVP_PKEY_get1_EC_KEY(out));
+				ret = PEM_read_bio_EC_PUBKEY(bio, &ec_key, pwcb, u);
+				EC_KEY_set_asn1_flag(ec_key, OPENSSL_EC_NAMED_CURVE);
 				break;
+			}
 
 			default:
 				ret = PEM_read_bio_PUBKEY(bio, &out, pwcb, u);
@@ -1220,6 +1263,16 @@ ircd::openssl::bio::read_file(const string_view &path,
 		fs::size(path)
 	};
 
+	#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	const custom_ptr<void> buf
+	{
+		OPENSSL_secure_malloc(size), [&size]
+		(void *const buf)
+		{
+			OPENSSL_secure_free(buf);
+		}
+	};
+	#else
 	const custom_ptr<void> buf
 	{
 		OPENSSL_malloc_locked(size), [&size]
@@ -1229,6 +1282,7 @@ ircd::openssl::bio::read_file(const string_view &path,
 			OPENSSL_free_locked(buf);
 		}
 	};
+	#endif
 
 	const mutable_buffer mb
 	{
@@ -1243,6 +1297,16 @@ ircd::openssl::bio::write_file(const string_view &path,
                                const mb_closure &closure,
                                const size_t &size)
 {
+	#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	const custom_ptr<void> buf
+	{
+		OPENSSL_secure_malloc(size), [&size]
+		(void *const buf)
+		{
+			OPENSSL_secure_free(buf);
+		}
+	};
+	#else
 	const custom_ptr<void> buf
 	{
 		OPENSSL_malloc_locked(size), [&size]
@@ -1252,6 +1316,7 @@ ircd::openssl::bio::write_file(const string_view &path,
 			OPENSSL_free_locked(buf);
 		}
 	};
+	#endif
 
 	const mutable_buffer mb
 	{
