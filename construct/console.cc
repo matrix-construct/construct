@@ -302,7 +302,7 @@ construct::console::handle_line_bymodule()
 			// configured number of milliseconds. If these settings are too
 			// aggressive then the output heading to stdout won't appear in
 			// the terminal after the buffers are filled.
-			for(size_t off(0); off < str.size(); off += size_t(ratelimit_bytes))
+			size_t off(0); if(off < str.size()) do
 			{
 				const string_view substr
 				{
@@ -310,8 +310,13 @@ construct::console::handle_line_bymodule()
 				};
 
 				std::cout << substr << std::flush;
+				off += size_t(ratelimit_bytes);
+				if(off >= str.size())
+					break;
+
 				ctx::sleep(milliseconds(ratelimit_sleep));
 			}
+			while(1);
 
 			if(!endswith(str, '\n'))
 				std::cout << std::endl;
