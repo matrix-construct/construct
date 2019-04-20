@@ -674,8 +674,10 @@ try
 			break;
 
 		assert(data.client && data.client->sock);
-		check(*data.client->sock);
+		if(unlikely(!data.client || !data.client->sock))
+			break;
 
+		check(*data.client->sock);
 		if(queue.empty())
 			continue;
 
@@ -691,7 +693,7 @@ try
 		}};
 
 		if(polylog_only)
-			return false;
+			break;
 
 		if(handle(data, args, accepted, scratch))
 			return true;
