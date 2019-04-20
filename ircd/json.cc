@@ -8,9 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/spirit.h>
-#include <boost/fusion/include/at.hpp>
-
 namespace ircd { namespace json
 __attribute__((visibility("hidden")))
 {

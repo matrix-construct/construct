@@ -37,6 +37,7 @@ if BUILD_PCH
 BUILT_SOURCES = \
 	ircd.h.gch \
 	ircd.pic.h.gch \
+	spirit.h.gch \
 	###
 endif
 
@@ -47,7 +48,11 @@ ircd.pic.h.gch:
 	cp ircd.h ircd.pic.h
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o ircd.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC ircd.pic.h
 
+spirit.h.gch:
+	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC -include ircd.pic.h spirit.h
+
 clean-local:
 	rm -f ircd.h.gch
 	rm -f ircd.pic.h
 	rm -f ircd.pic.h.gch
+	rm -f spirit.h.gch

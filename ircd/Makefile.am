@@ -161,11 +161,24 @@ endif
 # This option reduces memory consumption at the cost of compilation speed.
 if GCC
 if LOWMEM_COMPILE
-json.lo:     CXXFLAGS += --param ggc-min-expand=1
-http.lo:     CXXFLAGS += --param ggc-min-expand=1
-fmt.lo:      CXXFLAGS += --param ggc-min-expand=1
-rfc3986.lo:  CXXFLAGS += --param ggc-min-expand=1
-rfc1459.lo:  CXXFLAGS += --param ggc-min-expand=1
-m_id.lo:     CXXFLAGS += --param ggc-min-expand=1
+LOWMEM_FLAGS= --param ggc-min-expand=1
 endif
 endif
+
+json.lo:       AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
+json.lo:       CXXFLAGS += ${LOWMEM_FLAGS}
+
+http.lo:       AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
+http.lo:       CXXFLAGS += ${LOWMEM_FLAGS}
+
+fmt.lo:        AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
+fmt.lo:        CXXFLAGS += ${LOWMEM_FLAGS}
+
+rfc3986.lo:    AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
+rfc3986.lo:    CXXFLAGS += ${LOWMEM_FLAGS}
+
+rfc1459.lo:    AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
+rfc1459.lo:    CXXFLAGS += ${LOWMEM_FLAGS}
+
+m_id.lo:       AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
+m_id.lo:       CXXFLAGS += ${LOWMEM_FLAGS}

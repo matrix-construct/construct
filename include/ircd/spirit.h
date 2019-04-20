@@ -8,14 +8,19 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#pragma once
+#ifndef HAVE_IRCD_SPIRIT_H
 #define HAVE_IRCD_SPIRIT_H
 
 /// This file is not part of the IRCd standard include list (stdinc.h) because
 /// it involves extremely expensive boost headers for creating formal spirit
 /// grammars. Include this in a definition file which defines such grammars.
 
+// ircd.h is included here so that it can be compiled into this header. Then
+// this becomes the single leading precompiled header.
+#include <ircd/ircd.h>
+
 #pragma GCC visibility push(hidden)
+#include <boost/fusion/include/at.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/phoenix.hpp>
@@ -149,3 +154,5 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 	string_view{e.first, e.first + std::min(std::distance(e.first, e.last), show_max)}
 }
 {}
+
+#endif // HAVE_IRCD_SPIRIT_H
