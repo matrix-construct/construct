@@ -80,7 +80,7 @@ struct ircd::m::feds::request
 
 	request(request &&) = delete;
 	request(const request &) = delete;
-	~request() noexcept;
+	~request() noexcept final;
 };
 
 template<class T>
