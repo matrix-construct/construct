@@ -50,10 +50,12 @@
 #include <rocksdb/sst_file_manager.h>
 #include <rocksdb/sst_dump_tool.h>
 #include <rocksdb/compaction_filter.h>
+#include <rocksdb/wal_filter.h>
 
 #include <ircd/db/database/comparator.h>
 #include <ircd/db/database/prefix_transform.h>
 #include <ircd/db/database/compaction_filter.h>
+#include <ircd/db/database/wal_filter.h>
 #include <ircd/db/database/mergeop.h>
 #include <ircd/db/database/events.h>
 #include <ircd/db/database/stats.h>

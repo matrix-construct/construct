@@ -998,6 +998,10 @@ try
 {
 	std::make_shared<struct mergeop>(this)
 }
+,wal_filter
+{
+	std::make_unique<struct wal_filter>(this)
+}
 ,ssts
 {
 	// note: the sst file manager cannot be used for now because it will spawn
@@ -1126,6 +1130,9 @@ try
 
 	// Setup env
 	opts->env = env.get();
+
+	// Setup WAL filter
+	opts->wal_filter = this->wal_filter.get();
 
 	// Setup SST file mgmt
 	opts->sst_file_manager = this->ssts;
@@ -3254,6 +3261,90 @@ const noexcept
 	assert(c);
 	return db::name(*c).c_str();
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// database::wal_filter
+//
+
+decltype(ircd::db::database::wal_filter::debug)
+ircd::db::database::wal_filter::debug
+{
+	{ "name",      "ircd.db.wal.debug" },
+	{ "default",   false               },
+	{ "persist",   false               },
+};
+
+ircd::db::database::wal_filter::wal_filter(database *const &d)
+:d{d}
+{
+}
+
+ircd::db::database::wal_filter::~wal_filter()
+noexcept
+{
+}
+
+void
+ircd::db::database::wal_filter::ColumnFamilyLogNumberMap(const log_number_map &log_number,
+                                                         const name_id_map &name_id)
+noexcept
+{
+	assert(d);
+
+	this->log_number = log_number;
+	this->name_id = name_id;
+
+	log::debug
+	{
+		log, "'%s': WAL recovery mapping update: log_number:%zu name_id:%zu",
+		db::name(*d),
+		log_number.size(),
+		name_id.size(),
+	};
+}
+
+rocksdb::WalFilter::WalProcessingOption
+ircd::db::database::wal_filter::LogRecordFound(unsigned long long log_nr,
+                                               const std::string &name,
+                                               const WriteBatch &wb,
+                                               WriteBatch *const replace,
+                                               bool *const replaced)
+noexcept
+{
+	assert(d && replace && replaced);
+
+	if(debug) log::debug
+	{
+		log, "'%s': WAL recovery record log:%lu '%s' wb[count:%zu size:%zu]",
+		db::name(*d),
+		log_nr,
+		name,
+		wb.Count(),
+		wb.GetDataSize(),
+	};
+
+	*replaced = false;
+	return WalProcessingOption::kContinueProcessing;
+}
+
+rocksdb::WalFilter::WalProcessingOption
+ircd::db::database::wal_filter::LogRecord(const WriteBatch &wb,
+                                          WriteBatch *const replace,
+                                          bool *const replaced)
+const noexcept
+{
+	return WalProcessingOption::kContinueProcessing;
+}
+
+const char *
+ircd::db::database::wal_filter::Name()
+const noexcept
+{
+	assert(d);
+	return db::name(*d).c_str();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //
