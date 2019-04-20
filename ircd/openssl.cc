@@ -904,7 +904,7 @@ ircd::openssl::genec(const string_view &skfile,
 	assert(EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE);
 	call(::EC_KEY_set_group, key.get(), group);
 	call(::EC_KEY_generate_key, key.get());
-	assert(EC_KEY_get1_public_key(key.get()));
+	assert(EC_KEY_get0_public_key(key.get()));
 	set(*pk, *key);
 	bio::write_file(skfile, write_priv);
 	bio::write_file(pkfile, write_pub);
