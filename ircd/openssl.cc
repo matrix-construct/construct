@@ -1640,6 +1640,7 @@ ircd::openssl::init::~init()
 // hmac
 //
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 struct ircd::crh::hmac::ctx
 :HMAC_CTX
 {
@@ -1652,6 +1653,20 @@ struct ircd::crh::hmac::ctx
 	ctx(const string_view &algorithm, const const_buffer &key);
 	~ctx() noexcept;
 };
+#else
+struct ircd::crh::hmac::ctx
+:custom_ptr<HMAC_CTX>
+{
+	static constexpr const size_t &MAX_CTXS {64};
+	static thread_local allocator::fixed<ctx, MAX_CTXS> ctxs;
+
+	static void *operator new(const size_t count);
+	static void operator delete(void *const ptr, const size_t count);
+
+	ctx(const string_view &algorithm, const const_buffer &key);
+	~ctx() noexcept;
+};
+#endif
 
 decltype(ircd::crh::hmac::ctx::ctxs)
 thread_local ircd::crh::hmac::ctx::ctxs
@@ -1682,7 +1697,14 @@ ircd::crh::hmac::ctx::operator delete(void *const ptr,
 
 ircd::crh::hmac::ctx::ctx(const string_view &algorithm,
                           const const_buffer &key)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 :HMAC_CTX{0}
+#else
+:custom_ptr<HMAC_CTX>
+{
+	HMAC_CTX_new(), HMAC_CTX_free
+}
+#endif
 {
 	const EVP_MD *const md
 	{
@@ -1699,14 +1721,20 @@ ircd::crh::hmac::ctx::ctx(const string_view &algorithm,
 			"Algorithm '%s' not supported for HMAC", algorithm
 		};
 
+	#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	HMAC_CTX_init(this);
 	openssl::call(::HMAC_Init_ex, this, data(key), size(key), md, nullptr);
+	#else
+	openssl::call(::HMAC_Init_ex, this->get(), data(key), size(key), md, nullptr);
+	#endif
 }
 
 ircd::crh::hmac::ctx::~ctx()
 noexcept
 {
+	#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	HMAC_CTX_cleanup(this);
+	#endif
 }
 
 //
@@ -1736,7 +1764,11 @@ ircd::crh::hmac::update(const const_buffer &buf)
 		reinterpret_cast<const uint8_t *>(data(buf))
 	};
 
+	#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	openssl::call(::HMAC_Update, ctx.get(), ptr, size(buf));
+	#else
+	openssl::call(::HMAC_Update, ctx->get(), ptr, size(buf));
+	#endif
 }
 
 ircd::const_buffer
@@ -1749,7 +1781,13 @@ ircd::crh::hmac::finalize(const mutable_buffer &buf)
 	};
 
 	uint len;
+
+	#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	openssl::call(::HMAC_Final, ctx.get(), ptr, &len);
+	#else
+	openssl::call(::HMAC_Final, ctx->get(), ptr, &len);
+	#endif
+
 	return {data(buf), len};
 }
 
@@ -1758,7 +1796,12 @@ ircd::crh::hmac::length()
 const
 {
 	assert(bool(ctx));
+
+	#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	return HMAC_size(ctx.get());
+	#else
+	return HMAC_size(ctx->get());
+	#endif
 }
 
 //
@@ -2174,7 +2217,11 @@ namespace ircd::openssl::locking
 	const int READ_UNLOCK   { CRYPTO_UNLOCK + CRYPTO_READ  };
 	const int WRITE_UNLOCK  { CRYPTO_UNLOCK + CRYPTO_WRITE };
 
-	std::shared_mutex mutex[CRYPTO_NUM_LOCKS];
+	std::vector<std::shared_mutex> mutex
+	{
+		CRYPTO_num_locks() >= 0?
+			size_t(CRYPTO_num_locks()): 0UL
+	};
 
 	static ircd::string_view reflect(const int &mode);
 	static std::string debug(const int, const int, const char *const, const int);
@@ -2293,7 +2340,13 @@ ircd::openssl::genprime_cb(const int stat,
 noexcept try
 {
 	assert(ctx != nullptr);
+
+	#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	auto &arg{ctx->arg};
+	#else
+	auto *const &arg(BN_GENCB_get_arg(ctx));
+	#endif
+
 	const auto yield_point{[]
 	{
 		if(ctx::current)
