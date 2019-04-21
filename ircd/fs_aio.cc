@@ -279,7 +279,7 @@ ircd::fs::aio::write(const fd &fd,
 	};
 
 	// Does linux ever not complete all bytes for an AIO?
-	assert(bytes == req_bytes);
+	assert(!opts.blocking || bytes == req_bytes);
 
 	stats.bytes_write += bytes;
 	stats.writes++;
@@ -410,6 +410,11 @@ ircd::fs::aio::request::operator()()
 
 	if(likely(retval != -1))
 		return size_t(retval);
+
+	assert(opts);
+	static_assert(EAGAIN == EWOULDBLOCK);
+	if(!opts->blocking && retval == -1 && errcode == EAGAIN)
+		return 0UL;
 
 	stats.errors++;
 	stats.bytes_errors += submitted_bytes;

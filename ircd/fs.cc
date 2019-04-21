@@ -702,14 +702,23 @@ ircd::fs::_read(const fd &fd,
 		flags(opts)
 	};
 
-	const auto ret
+	ssize_t ret; do
 	{
-		opts.interruptible?
-			syscall(::preadv2, fd, iov.data(), iov.size(), opts.offset, flags_):
-			syscall_nointr(::preadv2, fd, iov.data(), iov.size(), opts.offset, flags_)
-	};
+		ret = ::preadv2(int(fd), iov.data(), iov.size(), opts.offset, flags_);
+	}
+	while(!opts.interruptible && unlikely(ret == -1 && errno == EINTR));
 
-	return size_t(ret);
+	static_assert(EAGAIN == EWOULDBLOCK);
+	if(!opts.blocking && ret == -1 && errno == EAGAIN)
+		return 0UL;
+
+	if(unlikely(ret == -1))
+		throw std::system_error
+		{
+			errno, std::system_category()
+		};
+
+	return ret;
 }
 #else
 size_t
@@ -717,14 +726,23 @@ ircd::fs::_read(const fd &fd,
                 const const_iovec_view &iov,
                 const read_opts &opts)
 {
-	const auto ret
+	ssize_t ret; do
 	{
-		opts.interruptible?
-			syscall(::preadv, fd, iov.data(), iov.size(), opts.offset):
-			syscall_nointr(::preadv, fd, iov.data(), iov.size(), opts.offset)
-	};
+		ret = ::preadv(int(fd), iov.data(), iov.size(), opts.offset);
+	}
+	while(!opts.interruptible && unlikely(ret == -1 && errno == EINTR));
 
-	return size_t(ret);
+	static_assert(EAGAIN == EWOULDBLOCK);
+	if(unlikely(!opts.blocking && ret == -1 && errno == EAGAIN))
+		return 0UL;
+
+	if(unlikely(ret == -1))
+		throw std::system_error
+		{
+			errno, std::system_category()
+		};
+
+	return ret;
 }
 #endif // HAVE_PREADV2
 
@@ -1050,7 +1068,7 @@ ircd::fs::write(const fd &fd,
 	while(opts.all && opts_.offset >= 0 && off < buffers::size(bufs));
 	assert(opts.offset >= opts_.offset);
 	assert(ssize_t(off) == opts.offset - opts_.offset);
-	assert(!opts.all || off == buffers::size(bufs));
+	assert(!opts.all || !opts.blocking || off == buffers::size(bufs));
 	return off;
 }
 #pragma GCC diagnostic pop
@@ -1099,10 +1117,23 @@ ircd::fs::_write__pwritev1(const fd &fd,
                            const const_iovec_view &iov,
                            const write_opts &opts)
 {
-	return
-		opts.interruptible?
-			syscall(::pwritev, fd, iov.data(), iov.size(), opts.offset):
-			syscall_nointr(::pwritev, fd, iov.data(), iov.size(), opts.offset);
+	ssize_t ret; do
+	{
+		ret = ::pwritev(int(fd), iov.data(), iov.size(), opts.offset);
+	}
+	while(!opts.interruptible && unlikely(ret == -1 && errno == EINTR));
+
+	static_assert(EAGAIN == EWOULDBLOCK);
+	if(unlikely(!opts.blocking && ret == -1 && errno == EAGAIN))
+		return 0UL;
+
+	if(unlikely(ret == -1))
+		throw std::system_error
+		{
+			errno, std::system_category()
+		};
+
+	return ret;
 }
 
 #ifdef HAVE_PWRITEV2
@@ -1124,10 +1155,23 @@ ircd::fs::_write__pwritev2(const fd &fd,
 		flags(opts)
 	};
 
-	return
-		opts.interruptible?
-			syscall(::pwritev2, fd, iov.data(), iov.size(), offset, flags_):
-			syscall_nointr(::pwritev2, fd, iov.data(), iov.size(), offset, flags_);
+	ssize_t ret; do
+	{
+		ret = ::pwritev2(int(fd), iov.data(), iov.size(), opts.offset, flags_);
+	}
+	while(!opts.interruptible && unlikely(ret == -1 && errno == EINTR));
+
+	static_assert(EAGAIN == EWOULDBLOCK);
+	if(!opts.blocking && ret == -1 && errno == EAGAIN)
+		return 0UL;
+
+	if(unlikely(ret == -1))
+		throw std::system_error
+		{
+			errno, std::system_category()
+		};
+
+	return ret;
 }
 #else
 size_t
