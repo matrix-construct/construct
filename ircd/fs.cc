@@ -504,7 +504,7 @@ ircd::fs::prefetch(const fd &fd,
 }
 
 bool
-ircd::fs::fetched(const fd &fd,
+ircd::fs::fincore(const fd &fd,
                   const size_t &count,
                   const read_opts &opts)
 {
