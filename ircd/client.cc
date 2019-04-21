@@ -491,7 +491,9 @@ ircd::handle_ec(client &client,
 	}
 	else if(ec.category() == get_ssl_category()) switch(uint8_t(ec.value()))
 	{
+		#ifdef SSL_R_SHORT_READ
 		case SSL_R_SHORT_READ:               return handle_ec_short_read(client);
+		#endif
 		default:                             return handle_ec_default(client, ec);
 	}
 	else return handle_ec_default(client, ec);
