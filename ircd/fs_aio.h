@@ -114,14 +114,15 @@ struct ircd::fs::aio::request
 	struct fdsync;
 	struct fsync;
 
-	ctx::ctx *waiter {ctx::current};
-	ssize_t retval {std::numeric_limits<ssize_t>::min()};
-	ssize_t errcode {0};
+	ssize_t retval {-2L};
+	ssize_t errcode {0L};
 	const struct opts *opts {nullptr};
+	ctx::ctx *waiter {ctx::current};
 
   public:
 	const_iovec_view iovec() const;
 	bool completed() const;
+	bool queued() const;
 
 	size_t operator()();
 	bool cancel();

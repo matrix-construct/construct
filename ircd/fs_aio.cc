@@ -405,6 +405,8 @@ ircd::fs::aio::request::operator()()
 
 	// Wait for completion
 	system->wait(*this);
+
+	assert(completed());
 	assert(retval <= ssize_t(submitted_bytes));
 
 	// Update stats for completion phase.
@@ -439,10 +441,21 @@ ircd::fs::aio::request::operator()()
 }
 
 bool
+ircd::fs::aio::request::queued()
+const
+{
+	return !for_each_queued([this]
+	(const auto &request)
+	{
+		return &request != this; // true to continue and return true
+	});
+}
+
+bool
 ircd::fs::aio::request::completed()
 const
 {
-	return retval != std::numeric_limits<decltype(retval)>::min();
+	return retval >= -1L;
 }
 
 ircd::fs::const_iovec_view
@@ -607,36 +620,40 @@ ircd::fs::aio::system::wait()
 
 void
 ircd::fs::aio::system::wait(request &request)
-try
 {
 	assert(ctx::current == request.waiter);
-	while(request.retval == std::numeric_limits<ssize_t>::min())
+	while(!request.completed()) try
+	{
 		ctx::wait();
-}
-catch(const ctx::interrupted &e)
-{
-	// When the ctx is interrupted we're obligated to cancel the request.
-	// The handler callstack is invoked directly from here by cancel() for
-	// what it's worth but we rethrow the interrupt anyway.
-	if(!request.completed())
-		request.cancel();
+	}
+	catch(...)
+	{
+		// When the ctx is interrupted we're obliged to cancel the request
+		// if it has not reached a completed state.
+		if(request.completed())
+			throw;
 
-	throw;
-}
-catch(const ctx::terminated &)
-{
-	if(!request.completed())
-		request.cancel();
+		// The handler callstack is invoked synchronously on this stack for
+		// requests which are still in our userspace queue.
+		if(request.queued())
+		{
+			request.cancel();
+			throw;
+		}
 
-	throw;
+		// The handler callstack is invoked asynchronously for requests
+		// submitted to the kernel; we *must* wait for that by blocking
+		// ctx interrupts and terminations and continue to wait.
+		continue;
+	}
 }
 
 bool
 ircd::fs::aio::system::cancel(request &request)
 try
 {
-	assert(request.retval == std::numeric_limits<ssize_t>::min());
 	assert(request.aio_data == uintptr_t(&request));
+	assert(!request.completed() || request.queued());
 
 	iocb *const cb
 	{
@@ -681,6 +698,7 @@ try
 		result.res = -1;
 		result.res2 = ECANCELED;
 	} else {
+		assert(!request.queued());
 		syscall_nointr<SYS_io_cancel>(head.get(), cb, &result);
 		in_flight--;
 		stats.cur_submits--;
@@ -692,7 +710,8 @@ try
 }
 catch(const std::system_error &e)
 {
-	log::error
+	assert(request.aio_data == uintptr_t(&request));
+	log::critical
 	{
 		"AIO(%p) cancel(fd:%d size:%zu off:%zd op:%u pri:%u) #%lu :%s",
 		this,
@@ -715,10 +734,10 @@ ircd::fs::aio::system::submit(request &request)
 	assert(qcount < queue.size());
 	assert(qcount + in_flight < max_events());
 	assert(request.aio_data == uintptr_t(&request));
-
+	assert(!request.completed());
 	const ctx::critical_assertion ca;
-	queue.at(qcount++) = static_cast<iocb *>(&request);
 
+	queue.at(qcount++) = static_cast<iocb *>(&request);
 	stats.cur_queued++;
 	stats.max_queued = std::max(stats.max_queued, stats.cur_queued);
 	assert(stats.cur_queued == qcount);
@@ -754,7 +773,7 @@ ircd::fs::aio::system::submit(request &request)
 	}
 }
 
-/// The chaser is posted to the IRCd event loop after the first request is
+/// The chaser is posted to the IRCd event loop after the first request.
 /// Ideally more requests will queue up before the chaser reaches the front
 /// of the IRCd event queue and executes.
 void
@@ -780,7 +799,8 @@ catch(const std::exception &e)
 	};
 }
 
-/// The submitter submits all queued requests and resets the count.
+/// The submitter submits all queued requests and resets our userspace queue
+/// count down to zero.
 size_t
 ircd::fs::aio::system::submit()
 noexcept try
@@ -832,7 +852,7 @@ try
 {
 	assert(qcount > 0);
 
-	#ifndef NDEBUG
+	#ifdef RB_DEBUG
 	const size_t count[3]
 	{
 		count_queued(op::READ),
@@ -856,7 +876,7 @@ try
 		syscall<SYS_io_submit>(head.get(), qcount, queue.data())
 	};
 
-	#ifndef NDEBUG
+	#ifdef RB_DEBUG
 	stats.stalls += warning.timer.stop() > 0;
 	#endif
 
