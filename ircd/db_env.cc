@@ -3235,6 +3235,9 @@ noexcept try
 	};
 	#endif
 
+	// Note RocksDB does not call our prefetch() when using direct IO.
+	assert(!this->opts.direct);
+
 	fs::prefetch(fd, length, offset);
 	return Status::OK();
 }
