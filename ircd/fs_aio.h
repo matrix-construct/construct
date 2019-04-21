@@ -72,11 +72,11 @@ struct ircd::fs::aio::system
 	void dequeue_one(const std::error_code &);
 	void dequeue_all(const std::error_code &);
 	size_t io_submit();
-	size_t submit();
+	size_t submit() noexcept;
 	void chase() noexcept;
 
 	void submit(request &);
-	void cancel(request &);
+	bool cancel(request &);
 	void wait(request &);
 
 	// Control panel
@@ -124,7 +124,7 @@ struct ircd::fs::aio::request
 	bool completed() const;
 
 	size_t operator()();
-	void cancel();
+	bool cancel();
 
 	request(const int &fd, const struct opts *const &);
 	~request() noexcept;

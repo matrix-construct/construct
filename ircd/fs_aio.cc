@@ -361,13 +361,16 @@ noexcept
 /// Cancel a request. The handler callstack is invoked directly from here
 /// which means any callback will be invoked or ctx will be notified if
 /// appropriate.
-void
+bool
 ircd::fs::aio::request::cancel()
 {
 	assert(system);
-	system->cancel(*this);
+	if(!system->cancel(*this))
+		return false;
+
 	stats.bytes_cancel += bytes(iovec());
 	stats.cancel++;
+	return true;
 }
 
 /// Submit a request and properly yield the ircd::ctx. When this returns the
@@ -628,8 +631,9 @@ catch(const ctx::terminated &)
 	throw;
 }
 
-void
+bool
 ircd::fs::aio::system::cancel(request &request)
+try
 {
 	assert(request.retval == std::numeric_limits<ssize_t>::min());
 	assert(request.aio_data == uintptr_t(&request));
@@ -684,6 +688,24 @@ ircd::fs::aio::system::cancel(request &request)
 	}
 
 	handle_event(result);
+	return true;
+}
+catch(const std::system_error &e)
+{
+	log::error
+	{
+		"AIO(%p) cancel(fd:%d size:%zu off:%zd op:%u pri:%u) #%lu :%s",
+		this,
+		request.aio_fildes,
+		request.aio_nbytes,
+		request.aio_offset,
+		request.aio_lio_opcode,
+		request.aio_reqprio,
+		e.code().value(),
+		e.what()
+	};
+
+	return false;
 }
 
 void
@@ -761,7 +783,7 @@ catch(const std::exception &e)
 /// The submitter submits all queued requests and resets the count.
 size_t
 ircd::fs::aio::system::submit()
-try
+noexcept try
 {
 	assert(qcount > 0);
 	assert(in_flight + qcount <= MAX_EVENTS);
@@ -793,15 +815,8 @@ try
 
 	return submitted;
 }
-catch(const std::system_error &e)
+catch(const std::exception &e)
 {
-	switch(e.code().value())
-	{
-		// EAGAIN may be thrown to prevent blocking. TODO: handle
-		case int(std::errc::resource_unavailable_try_again):
-			break;
-	}
-
 	ircd::terminate{ircd::error
 	{
 		"AIO(%p) system::submit() qcount:%zu :%s",
@@ -815,6 +830,8 @@ size_t
 ircd::fs::aio::system::io_submit()
 try
 {
+	assert(qcount > 0);
+
 	#ifndef NDEBUG
 	const size_t count[3]
 	{
@@ -843,10 +860,20 @@ try
 	stats.stalls += warning.timer.stop() > 0;
 	#endif
 
+	assert(!qcount || ret > 0);
 	return ret;
 }
 catch(const std::system_error &e)
 {
+	log::error
+	{
+		log, "AIO(%p): io_submit() inflight:%zu qcount:%zu :%s",
+		this,
+		in_flight,
+		qcount,
+		e.what()
+	};
+
 	switch(e.code().value())
 	{
 		// Manpages sez that EBADF is thrown if the fd in the FIRST iocb has
@@ -855,11 +882,11 @@ catch(const std::system_error &e)
 			dequeue_one(e.code());
 			return 0;
 
-		// Do we have to kill all the requests just because one has EINVAL? Can
-		// we just find the one at issue?
 		case int(std::errc::invalid_argument):
+		{
 			dequeue_all(e.code());
 			return 0;
+		}
 	}
 
 	throw;
@@ -882,6 +909,7 @@ ircd::fs::aio::system::dequeue_one(const std::error_code &ec)
 	qcount--;
 
 	io_event result {0};
+	assert(cb->aio_data == uintptr_t(static_cast<request *>(cb)));
 	result.data = cb->aio_data;
 	result.obj = uintptr_t(cb);
 	result.res = -1;
