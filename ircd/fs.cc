@@ -654,7 +654,15 @@ ircd::fs::read(const fd &fd,
 			make_iov({iovbuf, bufs.size()}, bufs, ret)
 		};
 
-		ret += read(fd, iov, opts);
+		const size_t last
+		{
+			read(fd, iov, opts)
+		};
+
+		if(!opts_.blocking && !last)
+			break;
+
+		ret += last;
 		if(!opts_.all)
 			break;
 
@@ -1061,9 +1069,16 @@ ircd::fs::write(const fd &fd,
 			make_iov({iovbuf, bufs.size()}, bufs, off)
 		};
 
-		opts.offset += write(fd, iov, opts);
+		const size_t last
+		{
+			write(fd, iov, opts)
+		};
+
+		opts.offset += last;
 		assert(opts.offset >= opts_.offset);
 		off = opts.offset - opts_.offset;
+		if(!opts.blocking && !last)
+			break;
 	}
 	while(opts.all && opts_.offset >= 0 && off < buffers::size(bufs));
 	assert(opts.offset >= opts_.offset);
