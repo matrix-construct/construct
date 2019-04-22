@@ -896,7 +896,7 @@ ircd::m::vm::write_append(eval &eval,
 
 	const bool require_head
 	{
-		opts.state_must_exist || opts.history
+		opts.fetch_state_check || opts.history
 	};
 
 	const id::event::buf head

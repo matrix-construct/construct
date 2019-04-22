@@ -147,6 +147,7 @@ put__invite(client &client,
 	// already been made for this request.
 	const unwind::nominal::assertion na;
 	vmopts.nothrows = -1;
+	vmopts.fetch_prev_check = false;
 
 	m::vm::eval
 	{

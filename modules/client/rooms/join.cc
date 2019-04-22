@@ -240,7 +240,6 @@ bootstrap(const string_view &host,
 	};
 
 	m::vm::copts opts;
-	opts.history = false;
 	opts.infolog_accept = true;
 	const m::event::id::buf event_id
 	{

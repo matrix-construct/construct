@@ -6954,7 +6954,6 @@ console_cmd__eval__file(opt &out, const string_view &line)
 
 	m::vm::opts opts;
 	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	opts.prev_check_exists = false;
 	opts.notify = false;
 	opts.verify = false;
 	m::vm::eval eval
@@ -11122,11 +11121,6 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.prev_check_exists = false;
-	vmopts.state_must_exist = false;
-	vmopts.history = false;
-	vmopts.verify = false;
-	vmopts.notify = false;
 	vmopts.debuglog_accept = true;
 	vmopts.nothrows = -1;
 	m::vm::eval eval
@@ -11231,11 +11225,6 @@ console_cmd__fed__state(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.prev_check_exists = false;
-	vmopts.state_must_exist = false;
-	vmopts.verify = false;
-	vmopts.history = false;
-	vmopts.notify = false;
 	m::vm::eval eval
 	{
 		vmopts
@@ -11390,11 +11379,6 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.prev_check_exists = false;
-	vmopts.state_must_exist = false;
-	vmopts.history = false;
-	vmopts.verify = false;
-	vmopts.notify = false;
 	vmopts.room_head = false;
 	vmopts.room_refs = true;
 	m::vm::eval eval
@@ -11569,12 +11553,6 @@ console_cmd__fed__event(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
-	vmopts.prev_check_exists = true;
-	vmopts.prev_wait = true;
-	vmopts.state_must_exist = true;
-	vmopts.history = false;
-	vmopts.notify = false;
-	//vmopts.verify = false;
 	m::vm::eval eval
 	{
 		event, vmopts

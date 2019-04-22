@@ -127,8 +127,9 @@ enum ircd::m::vm::fault
 {
 	ACCEPT        = 0x00,  ///< No fault.
 	EXISTS        = 0x01,  ///< Replaying existing event. (#ex)
-	INVALID       = 0x02,  ///< Non-conforming event format. (#ud)
-	GENERAL       = 0x04,  ///< General protection fault. (#gp)
+	GENERAL       = 0x02,  ///< General protection fault. (#gp)
+	INVALID       = 0x04,  ///< Non-conforming event format. (#ud)
+	AUTH          = 0x08,  ///< Auth rules violation. (#av)
 	STATE         = 0x10,  ///< Required state is missing (#st)
 	EVENT         = 0x20,  ///< Eval requires addl events in the ef register (#ef)
 	INTERRUPT     = 0x40,  ///< ctx::interrupted (#nmi)
@@ -219,47 +220,48 @@ struct ircd::m::vm::opts
 	// Verify the origin signature
 	bool verify {true};
 
+	/// Performs a query during the fetch stage to check if the event's auth
+	/// exists locally. This query is required for any fetching to be
+	/// possible.
+	bool fetch_auth_check {true};
+
+	/// Whether to automatically fetch the auth events when they do not exist.
+	bool fetch_auth {true};
+
+	/// Waits for auth events to be processed before continuing. Without
+	/// waiting, if any auth events are missing fault::EVENT is thrown.
+	/// Note that fault::AUTH is only thrown for authentication failures
+	/// while fault::EVENT is when the data is missing.
+	bool fetch_auth_wait {true};
+
 	/// Performs a query during the fetch stage to check if the room's state
 	/// exists locally. This query is required for any fetching to be
 	/// possible.
-	bool state_check_exists {true};
+	bool fetch_state_check {true};
 
 	/// Whether to automatically fetch the room state when there is no state
-	/// for the room found on the this server.
-	bool state_fetch {true};
+	/// or incomplete state for the room found on the this server.
+	bool fetch_state {true};
 
-	/// Waits for a condition where fault::STATE would not be thrown, depending
-	/// on the below options. In other words, the context blocks until the
-	/// system has fetched and resolved the state from remote parties.
-	bool state_wait {true};
-
-	/// Throws fault::STATE if the room's state does not exist.
-	bool state_must_exist {true};
-
-	/// Whether to automatically fetch and evaluate the auth chain for the
-	/// event; effective when there is no state for this room on the server.
-	bool auth_chain_fetch {true};
+	/// Waits for a condition where fault::STATE would not be thrown before
+	/// continuing with the eval.
+	bool fetch_state_wait {true};
 
 	/// Performs a query during the fetch stage to check if the referenced
 	/// prev_events exist locally. This query is required for any fetching
 	/// to be possible.
-	bool prev_check_exists {true};
+	bool fetch_prev_check {true};
 
 	/// Dispatches a fetch operation when a prev_event does not exist locally.
-	bool prev_fetch {true};
+	bool fetch_prev {true};
 
-	/// Waits for a condition where fault::EVENT would not be thrown, depending
-	/// on the below options. In other words, the context blocks until one/all
-	/// prev_events has been evaluated. This is required for ordered evaluation.
-	bool prev_wait {false};
+	/// Waits for prev_events have been acquired before continuing with this
+	/// evaluation.
+	bool fetch_prev_wait {true};
 
-	/// Throws fault::EVENT if *none* of the prev_events exist locally,
-	/// regardless of whether fetching was initiated for them.
-	bool prev_must_exist {false};
-
-	/// Throws fault::EVENT if *any* of the prev_events do not exist locally,
-	/// in contrast to prev_must_exist.
-	bool prev_must_all_exist {false};
+	/// Throws fault::EVENT if *any* of the prev_events do not exist locally.
+	/// This is used to enforce that all references have been acquired.
+	bool fetch_prev_all {false};
 
 	/// Evaluators can set this value to optimize the creation of the database
 	/// transaction where the event will be stored. This value should be set

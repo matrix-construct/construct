@@ -244,10 +244,6 @@ ircd::m::fetch::auth_chain(const room &room,
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.infolog_accept = true;
-	vmopts.prev_check_exists = false;
-	vmopts.warnlog |= m::vm::fault::STATE;
-	vmopts.warnlog &= ~m::vm::fault::EXISTS;
-	vmopts.errorlog &= ~m::vm::fault::STATE;
 	for(const auto &event : events)
 		m::vm::eval
 		{
@@ -643,6 +639,10 @@ try
 
 	m::vm::opts opts;
 	opts.infolog_accept = true;
+	opts.fetch_prev_check = false;
+	opts.fetch_state_wait = false;
+	opts.fetch_auth_wait = false;
+	opts.fetch_prev_wait = false;
 	m::vm::eval
 	{
 		m::event{event}, opts
