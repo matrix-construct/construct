@@ -417,8 +417,17 @@ ircd::fs::aio::request::operator()()
 		return size_t(retval);
 
 	assert(opts);
+	const bool blocking
+	{
+		#if defined(RWF_NOWAIT)
+			~aio_rw_flags & RWF_NOWAIT
+		#else
+			opts->blocking
+		#endif
+	};
+
 	static_assert(EAGAIN == EWOULDBLOCK);
-	if(!opts->blocking && retval == -1 && errcode == EAGAIN)
+	if(!blocking && retval == -1 && errcode == EAGAIN)
 		return 0UL;
 
 	stats.errors++;
