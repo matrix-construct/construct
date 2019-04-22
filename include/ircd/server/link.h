@@ -11,6 +11,12 @@
 #pragma once
 #define HAVE_IRCD_SERVER_LINK_H
 
+namespace ircd::server
+{
+	string_view loghead(const mutable_buffer &out, const link &);
+	string_view loghead(const link &);
+}
+
 /// A single connection to a remote peer.
 ///
 struct ircd::server::link

@@ -379,7 +379,7 @@ ircd::string_view
 ircd::server::loghead(const link &link,
                       const request &request)
 {
-	thread_local char buf[256];
+	thread_local char buf[512];
 	return loghead(buf, link, request);
 }
 
@@ -390,9 +390,8 @@ ircd::server::loghead(const mutable_buffer &buf,
 {
 	return fmt::sprintf
 	{
-		buf, "peer[%lu] link[%lu] %s",
-		link.peer? link.peer->id : 0UL,
-		link.id,
+		buf, "%s %s",
+		loghead(link),
 		loghead(request)
 	};
 }
@@ -400,7 +399,7 @@ ircd::server::loghead(const mutable_buffer &buf,
 ircd::string_view
 ircd::server::loghead(const request &request)
 {
-	thread_local char buf[256];
+	thread_local char buf[512];
 	return loghead(buf, request);
 }
 
@@ -852,9 +851,8 @@ ircd::server::peer::handle_open(link &link,
 		thread_local char rembuf[64];
 		log::derror
 		{
-			log, "peer(%p) link(%p) [%s]: open: %s",
-			this,
-			&link,
+			log, "%s [%s]: open: %s",
+			loghead(link),
 			string(rembuf, remote),
 			what(eptr)
 		};
@@ -881,9 +879,8 @@ ircd::server::peer::handle_close(link &link,
 	if(eptr)
 		log::derror
 		{
-			log, "peer(%p) link(%p) [%s]: close: %s",
-			this,
-			&link,
+			log, "%s [%s]: close: %s",
+			loghead(link),
 			string(rembuf, remote),
 			what(eptr)
 		};
@@ -900,9 +897,8 @@ ircd::server::peer::handle_error(link &link,
 	link.cancel_committed(eptr);
 	log::derror
 	{
-		log, "peer(%p) link(%p): %s",
-		this,
-		&link,
+		log, "%s :%s",
+		loghead(link),
 		what(eptr)
 	};
 
@@ -932,9 +928,8 @@ ircd::server::peer::handle_error(link &link,
 		case asio::error::eof:
 			log::debug
 			{
-				log, "peer(%p) link(%p) [%s]: %s",
-				this,
-				&link,
+				log, "%s [%s]: %s",
+				loghead(link),
 				string(rembuf, remote),
 				e.what()
 			};
@@ -948,9 +943,8 @@ ircd::server::peer::handle_error(link &link,
 
 	log::derror
 	{
-		log, "peer(%p) link(%p) [%s]: %s",
-		this,
-		&link,
+		log, "%s [%s]: %s",
+		loghead(link),
 		string(rembuf, remote),
 		e.what()
 	};
@@ -981,10 +975,8 @@ noexcept try
 {
 	log::debug
 	{
-		log, "peer(%p) link(%p) tag(%p) [%s] => [%u] done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu; %zu more in queue",
-		this,
-		&link,
-		&tag,
+		log, "%s [%s] => [%u] done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu; %zu more in queue",
+		loghead(link),
 		tag.request?
 			loghead(*tag.request):
 			"<no request>"_sv,
@@ -1004,10 +996,9 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "peer(%p) link(%p) tag(%p) done; %s",
-		this,
-		&link,
-		&tag,
+		log, "%s tag:%lu done; %s",
+		loghead(link),
+		tag.state.id,
 		e.what()
 	};
 }
@@ -1045,8 +1036,8 @@ ircd::server::peer::handle_head_recv(const link &link,
 		server_version = std::string{head.server};
 		log::debug
 		{
-			log, "peer(%p) learned %s is '%s'",
-			this,
+			log, "%s learned %s is '%s'",
+			loghead(link),
 			string(rembuf, remote),
 			server_version,
 		};
@@ -1087,9 +1078,9 @@ ircd::server::peer::disperse_uncommitted(link &link)
 		const auto &tag{*it};
 		log::warning
 		{
-			log, "peer(%p) failed to resubmit tag(%p): %s",
-			this,
-			&tag,
+			log, "%s failed to resubmit tag:%lu :%s",
+			loghead(link),
+			tag.state.id,
 			e.what()
 		};
 
@@ -1115,9 +1106,9 @@ ircd::server::peer::del(link &link)
 	thread_local char rembuf[64];
 	log::debug
 	{
-		log, "peer(%p) removing link(%p) %zu of %zu to %s",
+		log, "%s removing from peer(%p) %zu of %zu to %s",
+		loghead(link),
 		this,
-		&link,
 		std::distance(begin(links), it),
 		links.size(),
 		string(rembuf, remote)
@@ -1623,6 +1614,33 @@ ircd::server::link::tag_commit_max_default
 decltype(ircd::server::link::ids)
 ircd::server::link::ids;
 
+ircd::string_view
+ircd::server::loghead(const link &link)
+{
+	thread_local char buf[512];
+	return loghead(buf, link);
+}
+
+ircd::string_view
+ircd::server::loghead(const mutable_buffer &buf,
+                      const link &link)
+{
+	thread_local char rembuf[2][64];
+	return fmt::sprintf
+	{
+		buf, "socket:%lu local[%s] remote[%s] link:%lu peer:%lu",
+		link.socket?
+			link.socket->id : 0UL,
+		link.socket?
+			string(rembuf[0], local_ipport(*link.socket)): string_view{},
+		link.socket?
+			string(rembuf[0], remote_ipport(*link.socket)): string_view{},
+		link.id,
+		link.peer?
+			link.peer->id: 0UL,
+	};
+}
+
 //
 // link::link
 //
@@ -1871,8 +1889,8 @@ ircd::server::link::handle_writable_success()
 		{
 			log::debug
 			{
-				log, "link(%p) discarding canceled:%d abandoned:%d uncommitted tag %zu of %zu",
-				this,
+				log, "%s discarding canceled:%d abandoned:%d uncommitted tag %zu of %zu",
+				loghead(*this),
 				tag.canceled(),
 				tag.abandoned(),
 				tag_committed(),
@@ -1887,9 +1905,9 @@ ircd::server::link::handle_writable_success()
 		{
 			log::debug
 			{
-				log, "link(%p) closing to interrupt canceled committed tag(%p) of %zu",
-				this,
-				&tag,
+				log, "%s closing to interrupt canceled committed tag:%lu of %zu",
+				loghead(*this),
+				tag.state.id,
 				tag_count()
 			};
 
@@ -1920,10 +1938,9 @@ ircd::server::link::process_write(tag &tag)
 	if(!tag.committed())
 		log::debug
 		{
-			log, "peer(%p) link(%p) starting on tag(%p) %zu of %zu: wt:%zu [%s]",
-			peer,
-			this,
-			&tag,
+			log, "%s starting on tag:%lu %zu of %zu: wt:%zu [%s]",
+			loghead(*this),
+			tag.state.id,
 			tag_committed(),
 			tag_count(),
 			tag.write_size(),
@@ -2083,9 +2100,9 @@ try
 	{
 		log::debug
 		{
-			log, "link(%p) closing to interrupt canceled committed tag(%p) of %zu",
-			this,
-			&tag,
+			log, "%s closing to interrupt canceled committed tag:%lu of %zu",
+			loghead(*this),
+			tag.state.id,
 			tag_count()
 		};
 
@@ -2224,7 +2241,9 @@ ircd::server::link::discard_read()
 
 	log::warning
 	{
-		log, "%s", string_view{msg}
+		log, "%s %s",
+		loghead(*this),
+		string_view{msg},
 	};
 
 	// just in case so this doesn't get loopy with discarding zero with
