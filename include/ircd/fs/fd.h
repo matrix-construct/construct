@@ -33,6 +33,7 @@ struct ircd::fs::fd
 	operator const int &() const;
 	operator bool() const;
 	bool operator!() const;
+	opts options() const;
 
 	int release() noexcept;
 

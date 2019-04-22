@@ -1630,6 +1630,29 @@ noexcept
 	return fdno;
 }
 
+ircd::fs::fd::opts
+ircd::fs::fd::options()
+const
+{
+	opts ret;
+	ret.flags = syscall(::fcntl, int(*this), F_GETFL, 0);
+
+	if((ret.flags & O_RDONLY) == O_RDONLY)
+		ret.mode = std::ios::in;
+
+	if((ret.flags & O_WRONLY) == O_WRONLY)
+		ret.mode = std::ios::out;
+
+	if((ret.flags & O_RDWR) == O_RDWR)
+		ret.mode = std::ios::in | std::ios::out;
+
+	ret.direct = ret.flags & O_DIRECT;
+	ret.cloexec = ret.flags & O_CLOEXEC;
+	ret.nocreate = ~ret.flags & O_CREAT;
+	ret.blocking = ret.flags & O_NONBLOCK;
+	return ret;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // fs/device.h
