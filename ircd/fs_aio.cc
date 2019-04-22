@@ -500,7 +500,7 @@ try
 }
 ,queue
 {
-	max_submit
+	max_submit?: max_events
 }
 ,resfd
 {
