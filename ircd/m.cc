@@ -4691,7 +4691,7 @@ ircd::m::send(const room &room,
 
 	static mods::import<prototype> function
 	{
-		"m_room", "ircd::m::send"
+		"client_rooms", "ircd::m::send"
 	};
 
 	return function(room, sender, type, state_key, content);
@@ -4741,7 +4741,7 @@ ircd::m::send(const room &room,
 
 	static mods::import<prototype> function
 	{
-		"m_room", "ircd::m::send"
+		"client_rooms", "ircd::m::send"
 	};
 
 	return function(room, sender, type, content);

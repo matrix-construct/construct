@@ -97,6 +97,23 @@ put__send(client &client,
 	};
 }
 
+ircd::m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::send(const m::room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const json::iov &content)
+{
+	json::iov event;
+	const json::iov::push push[]
+	{
+		{ event,    { "sender",  sender  }},
+		{ event,    { "type",    type    }},
+	};
+
+	return commit(room, event, content);
+}
+
 resource::response
 handle_command(client &client,
                const resource::request &request,

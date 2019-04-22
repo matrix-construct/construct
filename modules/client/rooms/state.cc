@@ -13,6 +13,11 @@
 using namespace ircd::m;
 using namespace ircd;
 
+static resource::response
+get__state(client &client,
+           const resource::request &request,
+           const m::room::state &state);
+
 resource::response
 put__state(client &client,
            const resource::request &request,
@@ -60,11 +65,6 @@ put__state(client &client,
 		}
 	};
 }
-
-static resource::response
-get__state(client &client,
-           const resource::request &request,
-           const m::room::state &state);
 
 resource::response
 get__state(client &client,
@@ -166,4 +166,23 @@ get__state(client &client,
 	});
 
 	return response;
+}
+
+m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::send(const m::room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const string_view &state_key,
+              const json::iov &content)
+{
+	json::iov event;
+	const json::iov::push push[]
+	{
+		{ event,    { "sender",     sender     }},
+		{ event,    { "type",       type       }},
+		{ event,    { "state_key",  state_key  }},
+	};
+
+	return commit(room, event, content);
 }
