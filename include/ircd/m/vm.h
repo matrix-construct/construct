@@ -98,6 +98,8 @@ struct ircd::m::vm::eval
 	eval() = default;
 	eval(eval &&) = delete;
 	eval(const eval &) = delete;
+	eval &operator=(eval &&) = delete;
+	eval &operator=(const eval &) = delete;
 	~eval() noexcept;
 
 	static bool for_each(const ctx::ctx *const &, const std::function<bool (eval &)> &);

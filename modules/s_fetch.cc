@@ -345,7 +345,12 @@ ircd::m::fetch::hook_handler(const event &event,
                              vm::eval &eval)
 {
 	assert(eval.opts);
-	const auto &opts{*eval.opts};
+	assert(eval.opts->fetch);
+	const auto &opts
+	{
+		*eval.opts
+	};
+
 	const auto &type
 	{
 		at<"type"_>(event)
