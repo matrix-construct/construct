@@ -25,10 +25,7 @@ post__leave(client &client,
 
 	const auto event_id
 	{
-		send(room, request.user_id, "m.room.member", request.user_id,
-		{
-			{ "membership", "leave" }
-		})
+		m::leave(room, request.user_id)
 	};
 
 	return resource::response
