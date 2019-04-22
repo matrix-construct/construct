@@ -137,6 +137,12 @@ enum ircd::m::vm::fault
 /// Evaluation Options
 struct ircd::m::vm::opts
 {
+	/// The remote server name which is conducting this eval.
+	string_view node_id;
+
+	/// The mxid of the user which is conducting this eval.
+	string_view user_id;
+
 	/// Call conform hooks (detailed behavior can be tweaked below)
 	bool conform {true};
 

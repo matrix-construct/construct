@@ -141,7 +141,7 @@ put__invite(client &client,
 	// also try to sync the room as best as possible. The invitee will then be
 	// presented with this invite request in their rooms list.
 	m::vm::opts vmopts;
-	vmopts.prev_check_exists = false;
+	vmopts.node_id = request.origin;
 
 	// We don't want this eval throwing an exception because the response has
 	// already been made for this request.

@@ -47,6 +47,7 @@ handle_edu(client &client,
 	json::get<"depth"_>(event) = json::undefined_number;
 
 	m::vm::opts vmopts;
+	vmopts.node_id = request.origin;
 	vmopts.notify_clients = false;
 	vmopts.notify_servers = false;
 	vmopts.non_conform.set(m::event::conforms::INVALID_OR_MISSING_EVENT_ID);
@@ -71,6 +72,7 @@ handle_pdus(client &client,
             const json::array &pdus)
 {
 	m::vm::opts vmopts;
+	vmopts.node_id = request.origin;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.nothrows = -1U;
 	vmopts.infolog_accept = true;
