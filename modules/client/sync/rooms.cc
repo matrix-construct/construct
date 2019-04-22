@@ -199,8 +199,9 @@ ircd::m::sync::_rooms_polylog(data &data,
 		thread_local char tmbuf[32];
 		if(data.stats && rooms.stats_debug) log::debug
 		{
-			log, "polylog %s %s in %s",
+			log, "polylog %s %s %s in %s",
 			loghead(data),
+			membership_,
 			string_view{room.room_id},
 			ircd::pretty(tmbuf, stats.timer.at<milliseconds>(), true)
 		};
