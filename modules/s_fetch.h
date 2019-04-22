@@ -44,7 +44,9 @@ namespace ircd::m::fetch
 	static void request_handle();
 	static size_t request_cleanup();
 	static void request_worker();
+
 	static void hook_handler(const event &, vm::eval &);
+
 	static void init();
 	static void fini();
 }

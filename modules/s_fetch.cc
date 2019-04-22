@@ -365,21 +365,23 @@ ircd::m::fetch::hook_handler(const event &event,
 		at<"room_id"_>(event)
 	};
 
-	if(opts.state_check_exists && !m::exists(room_id))
+	if(opts.fetch_state_check && !m::exists(room_id))
 	{
 		// Don't pass event_id in ctor here or m::NOT_FOUND.
 		m::room room{room_id};
 		room.event_id = event_id;
-
-		if(opts.state_must_exist && !opts.state_wait && !opts.state_fetch)
+		if(!opts.fetch_state_wait && !opts.fetch_state)
 			throw vm::error
 			{
 				vm::fault::STATE, "Missing state for room %s",
 				string_view{room_id}
 			};
 
-		if(opts.auth_chain_fetch)
-			fetch::auth_chain(room, room_id.host()); //TODO: XXX
+		if(opts.fetch_auth && bool(m::fetch::enable))
+		{
+			// Auth chain is acquired, validated, and saved by this call or throws.
+			auth_chain(room, eval.opts->node_id?: event_id.host());
+		}
 	}
 
 	const event::prev prev
@@ -387,12 +389,55 @@ ircd::m::fetch::hook_handler(const event &event,
 		*eval.event_
 	};
 
+	const size_t auth_count
+	{
+		size(json::get<"auth_events"_>(prev))
+	};
+
+	size_t auth_exists(0), auth_fetching(0);
+	for(size_t i(0); i < auth_count; ++i)
+	{
+		const auto &auth_id
+		{
+			prev.auth_event(i)
+		};
+
+		if(!opts.fetch_auth_check)
+			continue;
+
+		if(m::exists(auth_id))
+		{
+			++auth_exists;
+			continue;
+		}
+
+		const bool can_fetch
+		{
+			opts.fetch_auth && bool(m::fetch::enable)
+		};
+
+		const bool fetching
+		{
+			can_fetch && start(room_id, auth_id)
+		};
+
+		auth_fetching += fetching;
+		if(!fetching || !opts.fetch_auth_wait)
+			throw vm::error
+			{
+				vm::fault::EVENT, "Missing auth %s for %s in %s",
+				string_view{auth_id},
+				json::get<"event_id"_>(*eval.event_),
+				json::get<"room_id"_>(*eval.event_)
+			};
+	}
+
 	const size_t prev_count
 	{
 		size(json::get<"prev_events"_>(prev))
 	};
 
-	size_t prev_exists(0);
+	size_t prev_exists(0), prev_fetching(0);
 	for(size_t i(0); i < prev_count; ++i)
 	{
 		const auto &prev_id
@@ -400,7 +445,7 @@ ircd::m::fetch::hook_handler(const event &event,
 			prev.prev_event(i)
 		};
 
-		if(!opts.prev_check_exists)
+		if(!opts.fetch_prev_check)
 			continue;
 
 		if(m::exists(prev_id))
@@ -411,27 +456,78 @@ ircd::m::fetch::hook_handler(const event &event,
 
 		const bool can_fetch
 		{
-			opts.prev_fetch && bool(m::fetch::enable)
+			opts.fetch_prev && bool(m::fetch::enable)
 		};
 
-		if((!can_fetch || !opts.prev_wait) && opts.prev_must_all_exist)
+		const bool fetching
+		{
+			can_fetch && start(room_id, prev_id)
+		};
+
+		prev_fetching += fetching;
+		if(!fetching && !opts.fetch_prev_wait)
 			throw vm::error
 			{
-				vm::fault::EVENT, "Missing prev %s in %s in %s",
+				vm::fault::EVENT, "Missing prev %s for %s in %s",
 				string_view{prev_id},
 				json::get<"event_id"_>(*eval.event_),
 				json::get<"room_id"_>(*eval.event_)
 			};
-
-		if(can_fetch)
-			start(room_id, prev_id);
-
-		if(can_fetch && opts.prev_wait)
-			dock.wait([&prev_id]
-			{
-				return !requests.count(prev_id);
-			});
 	}
+
+	if(auth_fetching && opts.fetch_auth_wait) for(size_t i(0); i < auth_count; ++i)
+	{
+		const auto &auth_id
+		{
+			prev.auth_event(i)
+		};
+
+		dock.wait([&auth_id]
+		{
+			return !requests.count(auth_id);
+		});
+
+		if(!m::exists(auth_id))
+			throw vm::error
+			{
+				vm::fault::EVENT, "Failed to fetch auth %s for %s in %s",
+				string_view{auth_id},
+				json::get<"event_id"_>(*eval.event_),
+				json::get<"room_id"_>(*eval.event_)
+			};
+	}
+
+	size_t prev_fetched(0);
+	if(prev_fetching && opts.fetch_prev_wait) for(size_t i(0); i < prev_count; ++i)
+	{
+		const auto &prev_id
+		{
+			prev.prev_event(i)
+		};
+
+		dock.wait([&prev_id]
+		{
+			return !requests.count(prev_id);
+		});
+
+		prev_fetched += m::exists(prev_id);
+	}
+
+	if(opts.fetch_prev && opts.fetch_prev_wait && prev_fetching && !prev_fetched)
+		throw vm::error
+		{
+			vm::fault::EVENT, "Failed to fetch any prev_events for %s in %s",
+			json::get<"event_id"_>(*eval.event_),
+			json::get<"room_id"_>(*eval.event_)
+		};
+
+	if(opts.fetch_prev && opts.fetch_prev_wait && opts.fetch_prev_all && prev_fetched < prev_fetching)
+		throw vm::error
+		{
+			vm::fault::EVENT, "Failed to fetch all required prev_events for %s in %s",
+			json::get<"event_id"_>(*eval.event_),
+			json::get<"room_id"_>(*eval.event_)
+		};
 }
 
 //
