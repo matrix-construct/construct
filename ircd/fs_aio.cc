@@ -404,7 +404,7 @@ ircd::fs::aio::request::operator()()
 	system->submit(*this);
 
 	// Wait for completion
-	system->wait(*this);
+	while(!system->wait(*this));
 
 	assert(completed());
 	assert(retval <= ssize_t(submitted_bytes));
@@ -618,34 +618,44 @@ ircd::fs::aio::system::wait()
 	return true;
 }
 
-void
+/// Block the current context while waiting for results.
+///
+/// This function returns true when the request completes and it's safe to
+/// continue. This function intercepts all exceptions and cancels the request
+/// if it's appropriate before rethrowing; after which it is safe to continue.
+///
+/// If this function returns false it is not safe to continue; it *must* be
+/// called again until it no longer returns false.
+bool
 ircd::fs::aio::system::wait(request &request)
+try
 {
 	assert(ctx::current == request.waiter);
-	while(!request.completed()) try
-	{
+	while(!request.completed())
 		ctx::wait();
-	}
-	catch(...)
+
+	return true;
+}
+catch(...)
+{
+	// When the ctx is interrupted we're obliged to cancel the request
+	// if it has not reached a completed state.
+	if(request.completed())
+		throw;
+
+	// The handler callstack is invoked synchronously on this stack for
+	// requests which are still in our userspace queue.
+	if(request.queued())
 	{
-		// When the ctx is interrupted we're obliged to cancel the request
-		// if it has not reached a completed state.
-		if(request.completed())
-			throw;
-
-		// The handler callstack is invoked synchronously on this stack for
-		// requests which are still in our userspace queue.
-		if(request.queued())
-		{
-			request.cancel();
-			throw;
-		}
-
-		// The handler callstack is invoked asynchronously for requests
-		// submitted to the kernel; we *must* wait for that by blocking
-		// ctx interrupts and terminations and continue to wait.
-		continue;
+		request.cancel();
+		throw;
 	}
+
+	// The handler callstack is invoked asynchronously for requests
+	// submitted to the kernel; we *must* wait for that by blocking
+	// ctx interrupts and terminations and continue to wait. The caller
+	// must loop into this call again until it returns true or throws.
+	return false;
 }
 
 bool
@@ -727,7 +737,7 @@ catch(const std::system_error &e)
 	return false;
 }
 
-void
+bool
 ircd::fs::aio::system::submit(request &request)
 {
 	assert(request.opts);
@@ -771,6 +781,8 @@ ircd::fs::aio::system::submit(request &request)
 		auto handler(std::bind(&system::chase, this));
 		ircd::defer(descriptor, std::move(handler));
 	}
+
+	return true;
 }
 
 /// The chaser is posted to the IRCd event loop after the first request.

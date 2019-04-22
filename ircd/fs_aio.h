@@ -75,9 +75,9 @@ struct ircd::fs::aio::system
 	size_t submit() noexcept;
 	void chase() noexcept;
 
-	void submit(request &);
+	bool submit(request &);
 	bool cancel(request &);
-	void wait(request &);
+	bool wait(request &);
 
 	// Control panel
 	bool wait();
