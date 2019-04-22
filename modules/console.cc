@@ -12528,19 +12528,50 @@ console_cmd__fetch(opt &out, const string_view &line)
 		m::room_id(param.at("room_id"))
 	};
 
-	if(!param["event_id"])
-	{
-		m::fetch::synchronize(room_id);
-		out << "done" << std::endl;
-		return true;
-	}
-
 	const m::event::id event_id
 	{
 		param.at("event_id")
 	};
 
-	m::fetch::start(room_id, event_id);
-	out << "in work..." << std::endl;
+	if(!m::fetch::start(room_id, event_id))
+	{
+		out << "failed to start." << std::endl;
+		return true;
+	}
+
+	out << "starting..." << std::endl;
+	return true;
+}
+
+bool
+console_cmd__fetch__sync(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const string_view &event_id
+	{
+		param["event_id"]
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	if(!m::fetch::synchronize(room))
+	{
+		out << "failed to start." << std::endl;
+		return true;
+	}
+
+	out << "done." << std::endl;
 	return true;
 }

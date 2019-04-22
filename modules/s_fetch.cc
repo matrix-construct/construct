@@ -64,6 +64,29 @@ ircd::m::fetch::requests;
 decltype(ircd::m::fetch::dock)
 ircd::m::fetch::dock;
 
+//
+// init
+//
+
+void
+ircd::m::fetch::init()
+{
+}
+
+void
+ircd::m::fetch::fini()
+{
+	request_context.terminate();
+	eval_context.terminate();
+	request_context.join();
+	eval_context.join();
+	requests.clear();
+	complete.clear();
+
+	assert(requests.empty());
+	assert(complete.empty());
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/fetch.h
@@ -74,6 +97,20 @@ namespace ircd::m::fetch
 	static m::event::id::buf _head(const m::feds::opts &);
 	static std::map<std::string, size_t> _heads(const m::feds::opts &);
 	static void handle_state_ids(const m::room &, const m::feds::result &);
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::fetch::synchronize(const m::room &room)
+{
+	m::feds::opts opts;
+	opts.op = m::feds::op::head;
+	opts.room_id = room.room_id;
+	opts.event_id = room.event_id;
+	opts.nothrow_closure = true;
+	opts.closure_errors = false;
+
+	return true;
 }
 
 void
@@ -136,6 +173,7 @@ ircd::m::fetch::_heads(const m::feds::opts &opts_)
 {
 	auto opts(opts_);
 	opts.op = m::feds::op::head;
+
 	std::map<std::string, size_t> heads;
 	m::feds::acquire(opts, [&heads]
 	(const auto &result)
@@ -253,13 +291,6 @@ ircd::m::fetch::auth_chain(const room &room,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::fetch::synchronize(const m::room::id &room_id)
-{
-	return true;
-}
-
-bool
-IRCD_MODULE_EXPORT
 ircd::m::fetch::prefetch(const m::room::id &room_id,
                          const m::event::id &event_id)
 {
@@ -307,30 +338,6 @@ ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 //
 // s_fetch.h
 //
-
-//
-// init
-//
-
-void
-ircd::m::fetch::init()
-{
-
-}
-
-void
-ircd::m::fetch::fini()
-{
-	request_context.terminate();
-	eval_context.terminate();
-	request_context.join();
-	eval_context.join();
-	requests.clear();
-	complete.clear();
-
-	assert(requests.empty());
-	assert(complete.empty());
-}
 
 //
 // fetch_phase

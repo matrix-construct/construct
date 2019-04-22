@@ -469,16 +469,16 @@ ircd::m::fetch::auth_chain(const room &r,
 }
 
 bool
-ircd::m::fetch::synchronize(const m::room::id &room_id)
+ircd::m::fetch::synchronize(const m::room &room)
 {
-	using prototype = bool (const m::room::id &);
+	using prototype = bool (const m::room &);
 
 	static mods::import<prototype> call
 	{
 		"s_fetch", "ircd::m::fetch::synchronize"
 	};
 
-	return call(room_id);
+	return call(room);
 }
 
 bool
