@@ -34,6 +34,8 @@ struct ircd::fs::fd
 	operator bool() const;
 	bool operator!() const;
 
+	int release() noexcept;
+
 	explicit fd(const int &);
 	fd(const string_view &path, const opts &);
 	fd(const string_view &path);

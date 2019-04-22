@@ -1621,6 +1621,15 @@ noexcept(false)
 	syscall(::close, fdno);
 }
 
+int
+ircd::fs::fd::release()
+noexcept
+{
+	const int fdno(this->fdno);
+	this->fdno = -1;
+	return fdno;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // fs/device.h
