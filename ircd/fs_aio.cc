@@ -254,12 +254,10 @@ ircd::fs::aio::write(const fd &fd,
 		fd, bufs, opts
 	};
 
-	#ifndef _NDEBUG
 	const size_t req_bytes
 	{
 		fs::bytes(request.iovec())
 	};
-	#endif
 
 	// track current write count
 	const scope_count cur_writes{stats.cur_writes};
