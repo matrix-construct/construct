@@ -1613,12 +1613,21 @@ noexcept
 }
 
 ircd::fs::fd::~fd()
-noexcept(false)
+noexcept try
 {
 	if(fdno < 0)
 		return;
 
 	syscall(::close, fdno);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"Failed to close fd:%d :%s",
+		fdno,
+		e.what()
+	};
 }
 
 int

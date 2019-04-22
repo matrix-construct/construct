@@ -45,7 +45,7 @@ struct ircd::fs::fd
 	fd(const fd &) = delete;
 	fd &operator=(fd &&) noexcept;
 	fd &operator=(const fd &) = delete;
-	~fd() noexcept(false);
+	~fd() noexcept;
 };
 
 struct ircd::fs::fd::opts
