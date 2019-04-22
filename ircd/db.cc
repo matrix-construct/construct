@@ -86,6 +86,7 @@ ircd::db::write_mutex;
 namespace ircd::db
 {
 	static std::string direct_io_test_file_path();
+	static void init_test_hw_crc32();
 	static void init_test_direct_io();
 	static void init_compressions();
 	static void init_directory();
@@ -141,6 +142,7 @@ ircd::db::init::init()
 	init_compressions();
 	init_directory();
 	init_test_direct_io();
+	init_test_hw_crc32();
 	request.add(request_pool_size);
 }
 
@@ -252,6 +254,33 @@ ircd::db::direct_io_test_file_path()
 	};
 
 	return fs::path_string(fs::DB, test_file_name);
+}
+
+namespace rocksdb::crc32c
+{
+	extern std::string IsFastCrc32Supported();
+}
+
+void
+ircd::db::init_test_hw_crc32()
+{
+	const auto supported_str
+	{
+		rocksdb::crc32c::IsFastCrc32Supported()
+	};
+
+	const bool supported
+	{
+		startswith(supported_str, "Supported")
+	};
+
+	assert(supported || startswith(supported_str, "Not supported"));
+
+	if(!supported)
+		log::warning
+		{
+			log, "crc32c hardware acceleration is not available on this platform."
+		};
 }
 
 decltype(ircd::db::compressions)
