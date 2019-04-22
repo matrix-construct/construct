@@ -18,14 +18,6 @@ bootstrap(const string_view &host,
           const m::room::id &room_id,
           const m::user::id &user_id);
 
-extern "C" event::id::buf
-join__room_user(const room &room,
-                const id::user &user_id);
-
-extern "C" event::id::buf
-join__alias_user(const m::room::alias &room_alias,
-                 const m::user::id &user_id);
-
 resource::response
 post__join(client &client,
            const resource::request &request,
@@ -41,7 +33,12 @@ post__join(client &client,
 		unquote(request["server_name"])
 	};
 
-	join__room_user(room_id, request.user_id);
+	const m::room room
+	{
+		room_id
+	};
+
+	m::join(room, request.user_id);
 
 	return resource::response
 	{
@@ -53,8 +50,9 @@ post__join(client &client,
 }
 
 event::id::buf
-join__room_user(const room &room,
-                const id::user &user_id)
+IRCD_MODULE_EXPORT
+ircd::m::join(const room &room,
+              const id::user &user_id)
 {
 	if(!exists(room))
 	{
@@ -113,8 +111,9 @@ join__room_user(const room &room,
 }
 
 event::id::buf
-join__alias_user(const m::room::alias &room_alias,
-                 const m::user::id &user_id)
+IRCD_MODULE_EXPORT
+ircd::m::join(const m::room::alias &room_alias,
+              const m::user::id &user_id)
 {
 	const room::id::buf room_id
 	{
@@ -124,7 +123,12 @@ join__alias_user(const m::room::alias &room_alias,
 	if(!exists(room_id))
 		return bootstrap(room_alias.host(), room_id, user_id);
 
-	return join__room_user(room_id, user_id);
+	const m::room room
+	{
+		room_id
+	};
+
+	return m::join(room, user_id);
 }
 
 conf::item<seconds>

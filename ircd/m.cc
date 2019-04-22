@@ -4517,7 +4517,7 @@ ircd::m::join(const id::room_alias &room_alias,
 
 	static mods::import<prototype> function
 	{
-		"client_rooms", "join__alias_user"
+		"client_rooms", "ircd::m::join"
 	};
 
 	return function(room_alias, user_id);
@@ -4531,7 +4531,7 @@ ircd::m::join(const room &room,
 
 	static mods::import<prototype> function
 	{
-		"client_rooms", "join__room_user"
+		"client_rooms", "ircd::m::join"
 	};
 
 	return function(room, user_id);
