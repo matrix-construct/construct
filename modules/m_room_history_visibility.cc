@@ -23,7 +23,7 @@ _visible_(const m::event &event,
           const string_view &history_visibility)
 {
 	char membership_buf[32];
-	const string_view membership
+	string_view membership
 	{
 		room.membership(membership_buf, user_id)
 	};
@@ -38,13 +38,16 @@ _visible_(const m::event &event,
 		return membership == "invite";
 
 	assert(history_visibility == "shared");
+	if(membership == "invite")
+		return true;
 
 	// If the room is not at the present event then we have to run another
 	// test for membership here. Otherwise the "join" test already failed.
 	if(room.event_id)
 	{
 		const m::room present{room.room_id};
-		return present.membership(user_id, "join");
+		membership = present.membership(membership_buf, user_id);
+		return membership == "join" || membership == "invite";
 	}
 
 	return false;
