@@ -75,5 +75,4 @@ namespace ircd::info
 
 	// Util
 	void dump();
-	void init();
 }

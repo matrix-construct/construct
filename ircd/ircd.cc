@@ -81,7 +81,6 @@ try
 	log::mark("DEADSTART"); // 6600
 
 	// This starts off the log with library information.
-	info::init();
 	info::dump();
 
 	// Setup the main context, which is a new stack executing the function

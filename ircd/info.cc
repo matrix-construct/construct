@@ -12,11 +12,22 @@
 #include <RB_INC_UNISTD_H
 #include <RB_INC_CPUID_H
 
-void
-ircd::info::init()
+decltype(ircd::info::credits)
+ircd::info::credits
 {
-
-}
+	"Inspired by the original Internet Relay Chat daemon from Jarkko Oikarinen",
+	" ",
+	"This - is The Construct",
+	" ",
+	"Internet Relay Chat daemon: Matrix Construct",
+	" ",
+	"Copyright (C) 2016-2018 Matrix Construct Developers, Authors & Contributors",
+	"Permission to use, copy, modify, and/or distribute this software for any",
+	"purpose with or without fee is hereby granted, provided that the above",
+	"copyright notice and this permission notice is present in all copies.",
+	" ",
+	nullptr
+};
 
 void
 ircd::info::dump()
@@ -124,23 +135,6 @@ ircd::info::dump()
 	};
 	#endif
 }
-
-decltype(ircd::info::credits)
-ircd::info::credits
-{
-	"Inspired by the original Internet Relay Chat daemon from Jarkko Oikarinen",
-	" ",
-	"This - is The Construct",
-	" ",
-	"Internet Relay Chat daemon: Matrix Construct",
-	" ",
-	"Copyright (C) 2016-2018 Matrix Construct Developers, Authors & Contributors",
-	"Permission to use, copy, modify, and/or distribute this software for any",
-	"purpose with or without fee is hereby granted, provided that the above",
-	"copyright notice and this permission notice is present in all copies.",
-	" ",
-	nullptr
-};
 
 //
 // Primary information
