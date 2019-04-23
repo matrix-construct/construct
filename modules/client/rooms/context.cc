@@ -127,10 +127,21 @@ get__context(client &client,
 		out
 	};
 
-	json::stack::member
+	// Output the main event first.
 	{
-		ret, "event", event
-	};
+		json::stack::object _event
+		{
+			ret, "event"
+		};
+
+		// We use m::append() to modify/add/remove data for this client.
+		m::event_append_opts opts;
+		opts.event_idx = &event.event_idx;
+		opts.user_id = &user_room.user.user_id;
+		opts.user_room = &user_room;
+		opts.room_depth = &room_depth;
+		m::append(_event, event, opts);
+	}
 
 	// Counters for debug messages
 	struct counts
