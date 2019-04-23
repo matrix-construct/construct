@@ -134,21 +134,22 @@ noexcept
 	if(ns.is_open())
 		ns.close();
 
-	timeout_context.terminate();
-	sendq_context.terminate();
-	recv_context.terminate();
 	done.wait([this]
 	{
 		const bool ret(tags.empty());
-
 		if(!ret)
 			log::warning
 			{
-				log, "Waiting for %zu unfinished DNS resolutions", tags.size()
+				log, "Waiting for %zu unfinished DNS resolutions",
+				tags.size()
 			};
 
 		return ret;
 	});
+
+	timeout_context.terminate();
+	sendq_context.terminate();
+	recv_context.terminate();
 
 	assert(tags.empty());
 }
