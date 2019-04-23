@@ -481,48 +481,42 @@ std::pair<bool, int64_t>
 IRCD_MODULE_EXPORT
 ircd::m::is_complete(const room &room)
 {
-	static const event::keys::include fkeys
-	{
-		"depth"
-	};
-
-	static const event::fetch::opts fopts
-	{
-		fkeys, { db::get::NO_CACHE }
-	};
-
-	const room::state state
+	room::messages it
 	{
 		room
 	};
 
-	const auto create_idx
+	const auto head_depth
 	{
-		state.get("m.room.create")
+		int64_t(it.depth())
 	};
 
-	room::messages it
+	int64_t depth(head_depth), last(depth + 1);
+	for(;; --it)
 	{
-		room, create_idx, &fopts
-	};
+		if(!it || !m::get(it.event_idx(), "depth", depth))
+			break;
 
-	int64_t depth(-1);
-	if(!it)
-		return { false, depth };
+		if(depth == last)
+			continue;
 
-	for(; it; ++it)
-	{
-		const event &event{*it};
-		if(at<"depth"_>(event) == depth + 1)
-			++depth;
-		else if(depth < 0)
-			depth = at<"depth"_>(event);
+		if(depth + 1 != last)
+			break;
 
-		if(at<"depth"_>(event) != depth)
-			return { false, depth };
+		--last;
 	}
 
-	return { true, depth };
+	if(depth > 1)
+		return {false, depth};
+
+	int64_t create_depth(0);
+	const room::state state(room);
+	const auto create_idx(state.get("m.room.create"));
+	m::get(create_idx, "depth", create_depth);
+	return
+	{
+		last == create_depth + 1, depth
+	};
 }
 
 size_t
