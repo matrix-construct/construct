@@ -2630,53 +2630,10 @@ noexcept
 //
 
 void
-ircd::db::database::events::OnMemTableSealed(const rocksdb::MemTableInfo &info)
-noexcept
-{
-	log::debug
-	{
-		log, "'%s': memory table sealed '%s' entries:%lu deletes:%lu",
-		d->name,
-		info.cf_name,
-		info.num_entries,
-		info.num_deletes
-	};
-
-	const ctx::uninterruptible::nothrow ui;
-	write_mutex.lock();
-}
-
-void
-ircd::db::database::events::OnFlushBegin(rocksdb::DB *const db,
-                                         const rocksdb::FlushJobInfo &info)
-noexcept
-{
-	assert(info.thread_id == ctx::id(*ctx::current));
-
-	log::info
-	{
-		log, "'%s': job:%d ctx:%lu flush start writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s'",
-		d->name,
-		info.job_id,
-		info.thread_id,
-		info.triggered_writes_slowdown,
-		info.triggered_writes_stop,
-		info.smallest_seqno,
-		info.largest_seqno,
-		reflect(info.flush_reason),
-		info.cf_name,
-	};
-
-	const ctx::uninterruptible::nothrow ui;
-	write_mutex.unlock();
-}
-
-void
 ircd::db::database::events::OnFlushCompleted(rocksdb::DB *const db,
                                              const rocksdb::FlushJobInfo &info)
 noexcept
 {
-	assert(info.thread_id == ctx::id(*ctx::current));
 	log::info
 	{
 		log, "'%s': job:%d ctx:%lu flush ended writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s' `%s'",
@@ -2691,6 +2648,30 @@ noexcept
 		info.cf_name,
 		info.file_path,
 	};
+
+	assert(info.thread_id == ctx::id(*ctx::current));
+}
+
+void
+ircd::db::database::events::OnFlushBegin(rocksdb::DB *const db,
+                                         const rocksdb::FlushJobInfo &info)
+noexcept
+{
+	log::info
+	{
+		log, "'%s': job:%d ctx:%lu flush start writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s'",
+		d->name,
+		info.job_id,
+		info.thread_id,
+		info.triggered_writes_slowdown,
+		info.triggered_writes_stop,
+		info.smallest_seqno,
+		info.largest_seqno,
+		reflect(info.flush_reason),
+		info.cf_name,
+	};
+
+	assert(info.thread_id == ctx::id(*ctx::current));
 }
 
 void
@@ -2834,6 +2815,20 @@ noexcept
 		info.db_name,
 		lstrip(info.file_path, info.db_name),
 		info.cf_name,
+	};
+}
+
+void
+ircd::db::database::events::OnMemTableSealed(const rocksdb::MemTableInfo &info)
+noexcept
+{
+	log::debug
+	{
+		log, "'%s': memory table sealed '%s' entries:%lu deletes:%lu",
+		d->name,
+		info.cf_name,
+		info.num_entries,
+		info.num_deletes
 	};
 }
 
