@@ -348,6 +348,7 @@ ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 void
 ircd::m::fetch::hook_handler(const event &event,
                              vm::eval &eval)
+try
 {
 	assert(eval.opts);
 	assert(eval.opts->fetch);
@@ -538,6 +539,18 @@ ircd::m::fetch::hook_handler(const event &event,
 			json::get<"event_id"_>(*eval.event_),
 			json::get<"room_id"_>(*eval.event_)
 		};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "hook handle %s %s :%s",
+		loghead(eval),
+		json::get<"event_id"_>(event),
+		e.what(),
+	};
+
+	throw;
 }
 
 //
