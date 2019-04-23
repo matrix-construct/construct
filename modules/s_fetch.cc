@@ -120,7 +120,7 @@ ircd::m::fetch::state_ids(const room &room)
 	m::feds::opts opts;
 	opts.room_id = room.room_id;
 	opts.event_id = room.event_id;
-	opts.timeout = seconds(8);
+	opts.timeout = seconds(10); //TODO: conf
 
 	m::event::id::buf event_id_buf;
 	if(!opts.event_id)
@@ -137,6 +137,7 @@ ircd::m::fetch::state_ids(const room &room)
 
 	opts.arg[0] = "ids";
 	opts.op = m::feds::op::state;
+	opts.timeout = seconds(20); //TODO: conf
 	m::feds::acquire(opts, [&room]
 	(const auto &result)
 	{
@@ -388,11 +389,9 @@ ircd::m::fetch::hook_handler(const event &event,
 				string_view{room_id}
 			};
 
+		// Auth chain is acquired, validated, and saved by this call or throws.
 		if(opts.fetch_auth && bool(m::fetch::enable))
-		{
-			// Auth chain is acquired, validated, and saved by this call or throws.
 			auth_chain(room, eval.opts->node_id?: event_id.host());
-		}
 	}
 
 	const event::prev prev
@@ -433,7 +432,7 @@ ircd::m::fetch::hook_handler(const event &event,
 		};
 
 		auth_fetching += fetching;
-		if(!fetching || !opts.fetch_auth_wait)
+		if(!fetching && !opts.fetch_auth_wait)
 			throw vm::error
 			{
 				vm::fault::EVENT, "Missing auth %s for %s in %s",
@@ -746,7 +745,7 @@ try
 
 	m::vm::opts opts;
 	opts.infolog_accept = true;
-	opts.fetch_prev_check = false;
+	opts.fetch_prev = false;
 	opts.fetch_state_wait = false;
 	opts.fetch_auth_wait = false;
 	opts.fetch_prev_wait = false;

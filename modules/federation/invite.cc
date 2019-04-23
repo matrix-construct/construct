@@ -137,17 +137,23 @@ put__invite(client &client,
 		}
 	};
 
+	// Synapse needs time to process our response otherwise our eval below may
+	// complete before this response arrives for them and is processed.
+	ctx::sleep(3);
+
 	// Eval the dual-signed invite event. This will write it locally. This will
 	// also try to sync the room as best as possible. The invitee will then be
 	// presented with this invite request in their rooms list.
 	m::vm::opts vmopts;
 	vmopts.node_id = request.origin;
 
+	// Synapse may 403 a fetch of the prev_event of the invite event.
+	vmopts.fetch_prev = false;
+
 	// We don't want this eval throwing an exception because the response has
 	// already been made for this request.
 	const unwind::nominal::assertion na;
 	vmopts.nothrows = -1;
-	vmopts.fetch_prev_check = false;
 
 	m::vm::eval
 	{
