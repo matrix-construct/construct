@@ -1140,6 +1140,7 @@ ircd::openssl::read_pem_priv(EVP_PKEY &out_,
 			{
 				RSA *rsa(EVP_PKEY_get1_RSA(out));
 				ret = PEM_read_bio_RSAPrivateKey(bio, &rsa, pwcb, u);
+				call(::EVP_PKEY_set1_RSA, out, rsa);
 				break;
 			}
 
@@ -1148,6 +1149,7 @@ ircd::openssl::read_pem_priv(EVP_PKEY &out_,
 				EC_KEY *ec_key(EVP_PKEY_get1_EC_KEY(out));
 				ret = PEM_read_bio_ECPrivateKey(bio, &ec_key, pwcb, u);
 				EC_KEY_set_asn1_flag(EVP_PKEY_get1_EC_KEY(out), OPENSSL_EC_NAMED_CURVE);
+				call(::EVP_PKEY_set1_EC_KEY, out, ec_key);
 				break;
 			}
 
@@ -1185,6 +1187,7 @@ ircd::openssl::read_pem_pub(EVP_PKEY &out_,
 			{
 				RSA *rsa(EVP_PKEY_get1_RSA(out));
 				ret = PEM_read_bio_RSAPublicKey(bio, &rsa, pwcb, u);
+				call(::EVP_PKEY_set1_RSA, out, rsa);
 				break;
 			}
 
@@ -1193,6 +1196,7 @@ ircd::openssl::read_pem_pub(EVP_PKEY &out_,
 				EC_KEY *ec_key(EVP_PKEY_get1_EC_KEY(out));
 				ret = PEM_read_bio_EC_PUBKEY(bio, &ec_key, pwcb, u);
 				EC_KEY_set_asn1_flag(ec_key, OPENSSL_EC_NAMED_CURVE);
+				call(::EVP_PKEY_set1_EC_KEY, out, ec_key);
 				break;
 			}
 
