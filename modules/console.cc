@@ -11419,12 +11419,16 @@ console_cmd__fed__frontfill(opt &out, const string_view &line)
 
 	const m::event::id &earliest
 	{
-		param.at(2)
+		param["earliest"] == "*"?
+			m::event::id{}:
+			param.at(2, m::event::id{})
 	};
 
-	const m::event::id::buf &latest
+	const m::event::id &latest
 	{
-		param.at(3, m::head(std::nothrow, room_id))
+		param["latest"] == "*"?
+			m::event::id{}:
+			param.at(3, m::event::id{})
 	};
 
 	const auto &limit
