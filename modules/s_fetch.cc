@@ -20,8 +20,7 @@ decltype(ircd::m::fetch::enable)
 ircd::m::fetch::enable
 {
 	{ "name",     "ircd.m.fetch.enable" },
-	{ "default",  false                 },
-	{ "persist",  false                 },
+	{ "default",  true                  },
 };
 
 decltype(ircd::m::fetch::timeout)
