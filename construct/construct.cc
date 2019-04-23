@@ -224,6 +224,31 @@ bool
 startup_checks()
 try
 {
+	if(RB_VERSION != ircd::info::version)
+		ircd::log::warning
+		{
+			"Header version '%s' mismatch library '%s'",
+			RB_VERSION,
+			ircd::info::version,
+		};
+
+	if(RB_VERSION_TAG != ircd::info::tag)
+		ircd::log::warning
+		{
+			"Header version tag '%s' mismatch library '%s'",
+			RB_VERSION_TAG,
+			ircd::info::tag,
+		};
+
+	if(RB_DATECODE > ircd::info::configured_time || RB_DATECODE < ircd::info::configured_time)
+		ircd::log::warning
+		{
+			"Header configuration time:%ld %s than library configuration time:%ld.",
+			RB_VERSION_TAG,
+			RB_DATECODE > ircd::info::configured_time? "newer" : "older",
+			ircd::info::tag,
+		};
+
 	return true;
 }
 catch(const std::exception &e)
