@@ -8,7 +8,7 @@ services:
 - docker
 
 build_script:
-  - docker run -v `pwd`:/build mujx/construct-ci:18.04 /bin/bash -c "./autogen.sh && ./configure --enable-debug && make"
+  - docker run -v `pwd`:/build mujx/construct-ci:18.04 /bin/bash -c "./autogen.sh && ./configure && make"
 #  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; sh tools/appveyor-build.sh"
 #  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER/build/bin; ./charybdis -version"
 
