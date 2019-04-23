@@ -282,6 +282,7 @@ ircd::m::fetch::auth_chain(const room &room,
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.infolog_accept = true;
+	vmopts.fetch = false;
 	for(const auto &event : events)
 		m::vm::eval
 		{
@@ -360,6 +361,9 @@ ircd::m::fetch::hook_handler(const event &event,
 	};
 
 	if(type == "m.room.create")
+		return;
+
+	if(eval.copts && my(event))
 		return;
 
 	const m::event::id &event_id
