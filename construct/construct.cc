@@ -37,7 +37,7 @@ bool norun;
 bool read_only;
 bool write_avoid;
 const char *execute;
-lgetopt opts[] =
+lgetopt opts[]
 {
 	{ "help",       nullptr,        lgetopt::USAGE,   "Print this text" },
 	{ "version",    &printversion,  lgetopt::BOOL,    "Print version and exit" },
@@ -78,8 +78,9 @@ const char *const usererrstr
 %s
 )"};
 
-int main(int _argc, char *const *_argv, char *const *const _envp)
-try
+int
+main(int _argc, char *const *_argv, char *const *const _envp)
+noexcept try
 {
 	umask(077);       // better safe than sorry --SRB
 
