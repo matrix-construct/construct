@@ -148,6 +148,7 @@ put__invite(client &client,
 	vmopts.node_id = request.origin;
 
 	// Synapse may 403 a fetch of the prev_event of the invite event.
+	vmopts.fetch_prev_check = false;
 	vmopts.fetch_prev = false;
 
 	// We don't want this eval throwing an exception because the response has
