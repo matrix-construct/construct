@@ -251,11 +251,12 @@ noexcept try
 	// This call blocks until the main context is notified or interrupted etc.
 	// Waiting here will hold open this stack with all of the above objects
 	// living on it.
-	ctx::wait();
+	run::changed::dock.wait([]
+	{
+		return !main_context;
+	});
 
-	// Once this call completes this main stack unwinds from this point and
-	// shuts down IRCd.
-	run::set(run::level::QUIT);
+	ircd::run::set(run::level::QUIT);
 }
 catch(const http::error &e) // <-- m::error
 {
