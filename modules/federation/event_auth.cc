@@ -64,7 +64,30 @@ get__event_auth(client &client,
 		room_id, event_id
 	};
 
-	if(!room.visible(request.node_id))
+	bool visible
+	{
+		room.visible(request.node_id)
+	};
+
+	// make an exception to the visibility for invitee cases.
+	if(!visible)
+	{
+		static const m::event::fetch::opts fopts
+		{
+			m::event::keys::include {"type", "state_key", "content"}
+		};
+
+		const m::event::fetch event
+		{
+			event_id, fopts
+		};
+
+		if(at<"type"_>(event) == "m.room.member")
+			if(m::user::id(at<"state_key"_>(event)).host() == request.origin)
+				visible = true;
+	}
+
+	if(!visible)
 		throw m::ACCESS_DENIED
 		{
 			"You are not permitted to view the room at this event"
