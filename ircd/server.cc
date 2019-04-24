@@ -424,7 +424,7 @@ try
 
 	return fmt::sprintf
 	{
-		buf, "tag[%lu] %s %s",
+		buf, "tag:%lu %s %s",
 		id(request),
 		head.method,
 		head.path
@@ -975,7 +975,7 @@ noexcept try
 {
 	log::debug
 	{
-		log, "%s [%s] => [%u] done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu; %zu more in queue",
+		log, "%s [%s] => [%u] done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu chunks:%zu %zu more in queue",
 		loghead(link),
 		tag.request?
 			loghead(*tag.request):
@@ -986,6 +986,9 @@ noexcept try
 		tag.state.head_read,
 		tag.state.content_read,
 		tag.state.content_length,
+		tag.request?
+			tag.request->in.chunks.size():
+			0UL,
 		link.tag_count() - 1
 	};
 
