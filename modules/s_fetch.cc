@@ -827,8 +827,6 @@ catch(const std::exception &e)
 	};
 
 	server::cancel(request);
-	static_cast<m::v1::event *>(&request)->~event();
-	request.origin = {};
 	return false;
 }
 
