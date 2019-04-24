@@ -37,6 +37,8 @@ bool norun;
 bool read_only;
 bool write_avoid;
 const char *execute;
+std::array<bool, 6> smoketest;
+
 lgetopt opts[]
 {
 	{ "help",       nullptr,        lgetopt::USAGE,   "Print this text" },
@@ -56,6 +58,7 @@ lgetopt opts[]
 	{ "norun",      &norun,         lgetopt::BOOL,    "[debug & testing only] Initialize but never run the event loop." },
 	{ "ro",         &read_only,     lgetopt::BOOL,    "Read-only mode. No writes to database allowed." },
 	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered." },
+	{ "smoketest",  &smoketest[0],  lgetopt::BOOL,    "Starts and stops the daemon to return success."},
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -137,6 +140,17 @@ noexcept try
 			"Must specify the origin after any switched parameters."
 		};
 
+	// The smoketest uses this ircd::run::level callback to set a flag when
+	// each ircd::run::level is reached. All flags must be set to pass.
+	const ircd::run::changed smoketester{[](const auto &level)
+	{
+		smoketest.at(size_t(level) + 1) = true;
+		if(smoketest[0] && level == ircd::run::level::RUN) ircd::post{[]
+		{
+			ircd::quit();
+		}};
+	}};
+
 	// This is the sole io_context for Construct, and the ios.run() below is the
 	// the only place where the program actually blocks.
 	boost::asio::io_context ios;
@@ -174,6 +188,13 @@ noexcept try
 	// Execution.
 	// Blocks until a clean exit from a quit() or an exception comes out of it.
 	ios.run();
+
+	// The smoketest is enabled if the first value is true; then all of the
+	// values must be true for the smoketest to pass.
+	if(smoketest[0])
+		return std::count(begin(smoketest), end(smoketest), true) == smoketest.size()?
+			EXIT_SUCCESS:
+			EXIT_FAILURE;
 
 	// The restart flag can be set by the console command "restart" which
 	// calls ircd::quit() to clean break from the run() loop.
