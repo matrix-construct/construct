@@ -10850,10 +10850,19 @@ console_cmd__fed__head(opt &out, const string_view &line)
 		param.at(1, room_id.host())
 	};
 
-	const m::user::id &user_id
-	{
-		param.at(2, m::me.user_id)
-	};
+	/// Select a better user_id if possible
+	const m::room room{room_id};
+	m::user::id::buf user_id;
+	if(param["user_id"])
+		user_id = param["user_id"];
+
+	if(!user_id)
+		user_id = room.any_user(my_host(), "join");
+
+	// Make another attempt to find an invited user because that carries some
+	// value (this query is not as fast as querying join memberships).
+	if(!user_id)
+		user_id = room.any_user(my_host(), "invite");
 
 	thread_local char buf[16_KiB];
 	m::v1::make_join::opts opts;
@@ -11315,29 +11324,36 @@ console_cmd__fed__state_ids(opt &out, const string_view &line)
 bool
 console_cmd__fed__backfill(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"room_id", "remote", "count", "event_id", "op"
+	}};
+
 	const auto &room_id
 	{
-		m::room_id(token(line, ' ', 0))
+		m::room_id(param.at("room_id"))
 	};
 
 	const net::hostport remote
 	{
-		token(line, ' ', 1)
+		param["remote"]?
+			param["remote"]:
+			room_id.host()
 	};
 
 	const string_view &count
 	{
-		token(line, ' ', 2, "32")
+		param.at("count", "32"_sv)
 	};
 
 	string_view event_id
 	{
-		token(line, ' ', 3, {})
+		param["event_id"]
 	};
 
 	string_view op
 	{
-		token(line, ' ', 4, {})
+		param["op"]
 	};
 
 	if(!op && event_id == "eval")
@@ -11348,8 +11364,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	m::v1::backfill::opts opts;
 	opts.remote = remote;
 	opts.limit = lex_cast<size_t>(count);
-	if(event_id)
-		opts.event_id = event_id;
+	opts.event_id = event_id;
 
 	m::v1::backfill request
 	{
