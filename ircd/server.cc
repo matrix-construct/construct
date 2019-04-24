@@ -2757,6 +2757,10 @@ ircd::server::tag::read_buffer(const const_buffer &buffer,
                                link &link)
 {
 	assert(request);
+	const bool chunk_header_mode
+	{
+		state.chunk_length == size_t(-1)
+	};
 
 	if(empty(buffer))
 		return buffer;
@@ -2764,10 +2768,10 @@ ircd::server::tag::read_buffer(const const_buffer &buffer,
 	if(state.status == (http::code)0)
 		return read_head(buffer, done, link);
 
-	if(state.chunk_length == size_t(-1) && null(request->in.content))
+	if(chunk_header_mode && null(request->in.content))
 		return read_chunk_dynamic_head(buffer, done);
 
-	if(state.chunk_length == size_t(-1))
+	if(chunk_header_mode)
 		return read_chunk_head(buffer, done);
 
 	if(state.chunk_length && null(request->in.content))
@@ -3448,6 +3452,11 @@ __attribute__((stack_protect))
 ircd::server::tag::make_read_buffer()
 const
 {
+	const bool chunk_header_mode
+	{
+		state.chunk_length == size_t(-1)
+	};
+
 	assert(request);
 	assert(state.head_read <= size(request->in.head));
 	assert(state.content_read <= state.content_length);
@@ -3455,10 +3464,10 @@ const
 	if(state.status == (http::code)0)
 		return make_read_head_buffer();
 
-	if(state.chunk_length == size_t(-1) && null(request->in.content))
+	if(chunk_header_mode && null(request->in.content))
 		return make_read_chunk_dynamic_head_buffer();
 
-	if(state.chunk_length == size_t(-1))
+	if(chunk_header_mode)
 		return make_read_chunk_head_buffer();
 
 	if(state.chunk_length && null(request->in.content))
