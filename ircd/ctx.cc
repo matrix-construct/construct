@@ -251,9 +251,9 @@ try
 	alarm.cancel();
 	return true;
 }
-catch(const boost::system::system_error &e)
+catch(const std::exception &e)
 {
-	log::error
+	log::critical
 	{
 		log, "ctx::wake(%p): %s", this, e.what()
 	};
