@@ -401,7 +401,7 @@ try
 		"ircd::run::set"
 	};
 
-	if(changed::list.size())
+	if(changed::list.size() && ctx::current)
 		ircd::post(descriptor, call_users);
 	else
 		call_users();
