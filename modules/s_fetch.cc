@@ -782,6 +782,7 @@ catch(const http::error &e)
 	};
 
 	server::cancel(request);
+	request.origin = {};
 	return false;
 }
 catch(const std::exception &e)
@@ -797,6 +798,7 @@ catch(const std::exception &e)
 	};
 
 	server::cancel(request);
+	request.origin = {};
 	return false;
 }
 
