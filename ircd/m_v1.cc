@@ -1493,7 +1493,27 @@ ircd::m::event::id::buf
 ircd::m::v1::fetch_head(const id::room &room_id,
                         const net::hostport &remote)
 {
-	return fetch_head(room_id, remote, m::me.user_id);
+	const m::room room
+	{
+		room_id
+	};
+
+	// When no user_id is supplied and the room exists locally we attempt
+	// to find the user_id of one of our users with membership in the room.
+	// This satisfies synapse's requirements for whether we have access
+	// to the response. If user_id remains blank then make_join will later
+	// generate a random one from our host as well.
+	m::user::id::buf user_id
+	{
+		room.any_user(my_host(), "join")
+	};
+
+	// Make another attempt to find an invited user because that carries some
+	// value (this query is not as fast as querying join memberships).
+	if(!user_id)
+		user_id = room.any_user(my_host(), "invite");
+
+	return fetch_head(room_id, remote, user_id);
 }
 
 ircd::m::event::id::buf
@@ -1510,7 +1530,7 @@ ircd::m::v1::fetch_head(const id::room &room_id,
 	opts.remote = remote;
 	make_join request
 	{
-		room_id, user_id?: m::me.user_id, buf, std::move(opts)
+		room_id, user_id, buf, std::move(opts)
 	};
 
 	request.wait(milliseconds(fetch_head_timeout));
