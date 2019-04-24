@@ -2954,6 +2954,7 @@ noexcept try
 	if(type == ready::READ && !ec && bytes == 0)
 		ec = error_code{asio::error::eof, asio::error::get_misc_category()};
 
+	#ifdef IRCD_DEBUG_NET_SOCKET_READY
 	thread_local char ecbuf[64];
 	log::debug
 	{
@@ -2965,6 +2966,7 @@ noexcept try
 		type == ready::READ? available(*this) : 0UL,
 		SSL_pending(ssl.native_handle())
 	};
+	#endif
 
 	call_user(callback, ec);
 }
