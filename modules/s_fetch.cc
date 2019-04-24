@@ -543,7 +543,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "hook handle %s %s :%s",
+		log, "%s %s :%s",
 		loghead(eval),
 		json::get<"event_id"_>(event),
 		e.what(),
@@ -669,7 +669,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "fetch eval %s in %s :%s",
+		log, "eval %s in %s :%s",
 		string_view{it->event_id},
 		string_view{it->room_id},
 		e.what()

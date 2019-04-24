@@ -676,7 +676,7 @@ try
 	if(!err_check() || unlikely(ircd::run::level != ircd::run::level::RUN))
 		throw unavailable
 		{
-			"Peer is unable to take any requests: %s", err_msg()
+			"Peer is unable to take any requests :%s", err_msg()
 		};
 
 	link *const ret
