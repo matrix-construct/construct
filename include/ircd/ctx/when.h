@@ -79,7 +79,7 @@ ircd::ctx::when_any(it first,
 			when::set_any_then(p, first, closure);
 
 	if(refcount(p.state()) <= 1)
-		p.set_value(first);
+		p.set_value(last);
 
 	return ret;
 }
