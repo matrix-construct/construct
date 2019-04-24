@@ -851,7 +851,7 @@ ircd::server::peer::handle_open(link &link,
 		thread_local char rembuf[64];
 		log::derror
 		{
-			log, "%s [%s]: open: %s",
+			log, "%s [%s]: open :%s",
 			loghead(link),
 			string(rembuf, remote),
 			what(eptr)
@@ -879,7 +879,7 @@ ircd::server::peer::handle_close(link &link,
 	if(eptr)
 		log::derror
 		{
-			log, "%s [%s]: close: %s",
+			log, "%s [%s]: close :%s",
 			loghead(link),
 			string(rembuf, remote),
 			what(eptr)
@@ -1230,7 +1230,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) resolve SRV: %s",
+		log, "peer(%p) resolve SRV :%s",
 		this,
 		e.what()
 	};
@@ -1356,7 +1356,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) resolve A: %s",
+		log, "peer(%p) resolve A :%s",
 		this,
 		e.what()
 	};
@@ -1381,7 +1381,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) open links: %s",
+		log, "peer(%p) open links :%s",
 		this,
 		e.what()
 	};
