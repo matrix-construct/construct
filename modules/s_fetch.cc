@@ -808,18 +808,28 @@ try
 	dock.notify_all();
 	return true;
 }
-catch(const std::exception &e)
+catch(const http::error &e)
 {
-	const auto level
-	{
-		run::level == run::level::QUIT?
-			log::DERROR:
-			log::ERROR
-	};
-
 	log::logf
 	{
-		log, level, "Failed to start request for %s in %s to '%s' :%s",
+		log, run::level == run::level::QUIT? log::DERROR: log::ERROR,
+		"Failed to start request for %s in %s to '%s' :%s %s",
+		string_view{request.event_id},
+		string_view{request.room_id},
+		string_view{request.origin},
+		e.what(),
+		e.content,
+	};
+
+	server::cancel(request);
+	return false;
+}
+catch(const std::exception &e)
+{
+	log::logf
+	{
+		log, run::level == run::level::QUIT? log::DERROR: log::ERROR,
+		"Failed to start request for %s in %s to '%s' :%s",
 		string_view{request.event_id},
 		string_view{request.room_id},
 		string_view{request.origin},
