@@ -377,22 +377,8 @@ try
 		at<"room_id"_>(event)
 	};
 
-	if(opts.fetch_state_check && !m::exists(room_id))
-	{
-		// Don't pass event_id in ctor here or m::NOT_FOUND.
-		m::room room{room_id};
-		room.event_id = event_id;
-		if(!opts.fetch_state_wait && !opts.fetch_state)
-			throw vm::error
-			{
-				vm::fault::STATE, "Missing state for room %s",
-				string_view{room_id}
-			};
-
-		// Auth chain is acquired, validated, and saved by this call or throws.
-		if(opts.fetch_auth && bool(m::fetch::enable))
-			auth_chain(room, eval.opts->node_id?: event_id.host());
-	}
+	m::room room{room_id};
+	room.event_id = event_id;
 
 	const event::prev prev
 	{
@@ -404,7 +390,7 @@ try
 		size(json::get<"auth_events"_>(prev))
 	};
 
-	size_t auth_exists(0), auth_fetching(0);
+	size_t auth_exists(0);
 	if(opts.fetch_auth_check) for(size_t i(0); i < auth_count; ++i)
 	{
 		const auto &auth_id
@@ -413,22 +399,20 @@ try
 		};
 
 		if(m::exists(auth_id))
-		{
 			++auth_exists;
-			continue;
-		}
+	}
 
-		const bool can_fetch
-		{
-			opts.fetch_auth && bool(m::fetch::enable)
-		};
+	if(opts.fetch_auth_check && auth_exists < auth_count)
+	{
+		if(!opts.fetch_auth || !bool(m::fetch::enable) || !eval.opts->node_id)
+			throw vm::error
+			{
+				vm::fault::EVENT, "Failed to fetch auth_events for %s in %s",
+				json::get<"event_id"_>(*eval.event_),
+				json::get<"room_id"_>(*eval.event_)
+			};
 
-		const bool fetching
-		{
-			can_fetch && start(room_id, auth_id)
-		};
-
-		auth_fetching += fetching;
+		auth_chain(room, eval.opts->node_id);
 	}
 
 	const size_t prev_count
@@ -463,22 +447,6 @@ try
 		prev_fetching += fetching;
 	}
 
-	size_t auth_fetched(0);
-	if(auth_fetching && opts.fetch_auth_wait) for(size_t i(0); i < auth_count; ++i)
-	{
-		const auto &auth_id
-		{
-			prev.auth_event(i)
-		};
-
-		dock.wait([&auth_id]
-		{
-			return !requests.count(auth_id);
-		});
-
-		auth_fetched += m::exists(auth_id);
-	}
-
 	size_t prev_fetched(0);
 	if(prev_fetching && opts.fetch_prev_wait) for(size_t i(0); i < prev_count; ++i)
 	{
@@ -494,14 +462,6 @@ try
 
 		prev_fetched += m::exists(prev_id);
 	}
-
-	if(opts.fetch_auth_check && opts.fetch_auth_wait && auth_exists + auth_fetched < auth_count)
-		throw vm::error
-		{
-			vm::fault::EVENT, "Failed to fetch auth_events for %s in %s",
-			json::get<"event_id"_>(*eval.event_),
-			json::get<"room_id"_>(*eval.event_)
-		};
 
 	if(opts.fetch_prev_check && opts.fetch_prev_wait && prev_exists + prev_fetched == 0)
 		throw vm::error
