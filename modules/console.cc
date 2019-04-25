@@ -313,6 +313,13 @@ console_cmd__test(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__stringify(opt &out, const string_view &line)
+{
+	out << json::value{line} << std::endl;
+	return true;
+}
+
 //
 // Time cmd prefix (like /usr/bin/time)
 //
