@@ -11538,6 +11538,12 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		return true;
 	}
 
+	if(has(op, "parse"))
+	{
+		out << json::object{request.in.content} << std::endl;
+		return true;
+	}
+
 	const json::object &response
 	{
 		request
