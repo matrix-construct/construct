@@ -81,6 +81,7 @@ get__state_ids(client &client,
 	json::stack::object top{out};
 
 	// auth_chain
+	if(request.query.get<bool>("auth_chain", true))
 	{
 		json::stack::array auth_chain
 		{
@@ -99,6 +100,7 @@ get__state_ids(client &client,
 	}
 
 	// pdu_ids
+	if(request.query.get<bool>("pdu_ids", true))
 	{
 		json::stack::array pdu_ids
 		{
