@@ -3781,7 +3781,7 @@ const
 			                !bool(integer);
 
 		case STRING:
-			return string?  !len || string_view{*this} == empty_string:
+			return string?  !len || (serial && string_view{string, len} == empty_string):
 			                true;
 
 		case OBJECT:
@@ -3821,7 +3821,7 @@ const
 			               !bool(integer);
 
 		case STRING:
-			return !string || !len || (serial && string_view{*this} == empty_string);
+			return !string || !len || (serial && string_view{string, len} == empty_string);
 
 		case OBJECT:
 			return serial? !len || string_view{*this} == empty_object:

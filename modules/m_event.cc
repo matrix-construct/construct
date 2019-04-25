@@ -1410,49 +1410,49 @@ ircd::m::essential(m::event event,
 	{
 		content = json::stringify(essential, json::members
 		{
-			{ "aliases", unquote(content.at("aliases")) }
+			{ "aliases", content.at("aliases") }
 		});
 	}
 	else if(type == "m.room.create")
 	{
 		content = json::stringify(essential, json::members
 		{
-			{ "creator", unquote(content.at("creator")) }
+			{ "creator", content.at("creator") }
 		});
 	}
 	else if(type == "m.room.history_visibility")
 	{
 		content = json::stringify(essential, json::members
 		{
-			{ "history_visibility", unquote(content.at("history_visibility")) }
+			{ "history_visibility", content.at("history_visibility") }
 		});
 	}
 	else if(type == "m.room.join_rules")
 	{
 		content = json::stringify(essential, json::members
 		{
-			{ "join_rule", unquote(content.at("join_rule")) }
+			{ "join_rule", content.at("join_rule") }
 		});
 	}
 	else if(type == "m.room.member")
 	{
 		content = json::stringify(essential, json::members
 		{
-			{ "membership", unquote(content.at("membership")) }
+			{ "membership", content.at("membership") }
 		});
 	}
 	else if(type == "m.room.power_levels")
 	{
 		content = json::stringify(essential, json::members
 		{
-			{ "ban", unquote(content.at("ban"))                       },
-			{ "events", unquote(content.at("events"))                 },
-			{ "events_default", unquote(content.at("events_default")) },
-			{ "kick", unquote(content.at("kick"))                     },
-			{ "redact", unquote(content.at("redact"))                 },
-			{ "state_default", unquote(content.at("state_default"))   },
-			{ "users", unquote(content.at("users"))                   },
-			{ "users_default", unquote(content.at("users_default"))   },
+			{ "ban", content.at("ban")                       },
+			{ "events", content.at("events")                 },
+			{ "events_default", content.at("events_default") },
+			{ "kick", content.at("kick")                     },
+			{ "redact", content.at("redact")                 },
+			{ "state_default", content.at("state_default")   },
+			{ "users", content.at("users")                   },
+			{ "users_default", content.at("users_default")   },
 		});
 	}
 	else if(type == "m.room.redaction")
