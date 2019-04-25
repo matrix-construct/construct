@@ -404,7 +404,14 @@ try
 
 	if(opts.fetch_auth_check && auth_exists < auth_count)
 	{
-		if(!opts.fetch_auth || !bool(m::fetch::enable) || !eval.opts->node_id)
+		const net::hostport remote
+		{
+			eval.opts->node_id?
+				eval.opts->node_id:
+				json::get<"origin"_>(event)
+		};
+
+		if(!opts.fetch_auth || !bool(m::fetch::enable) || !remote || my_host(host(remote)))
 			throw vm::error
 			{
 				vm::fault::EVENT, "Failed to fetch auth_events for %s in %s",
@@ -412,7 +419,7 @@ try
 				json::get<"room_id"_>(*eval.event_)
 			};
 
-		auth_chain(room, eval.opts->node_id);
+		auth_chain(room, remote);
 	}
 
 	const size_t prev_count
