@@ -1635,9 +1635,9 @@ ircd::server::loghead(const mutable_buffer &buf,
 		link.socket?
 			link.socket->id : 0UL,
 		link.socket?
-			string(rembuf[0], local_ipport(*link.socket)): string_view{},
+			string(rembuf[0], local_ipport(*link.socket)): string_view{"0.0.0.0"},
 		link.socket?
-			string(rembuf[0], remote_ipport(*link.socket)): string_view{},
+			string(rembuf[0], remote_ipport(*link.socket)): string_view{"0.0.0.0"},
 		link.id,
 		link.peer?
 			link.peer->id: 0UL,
