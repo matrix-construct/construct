@@ -61,14 +61,14 @@ ircd::conf::item<ircd::seconds>
 ircd::client::conf::async_timeout_default
 {
 	{ "name",     "ircd.client.conf.async_timeout" },
-	{ "default",  60L                              },
+	{ "default",  305L                             },
 };
 
 ircd::conf::item<ircd::seconds>
 ircd::client::conf::request_timeout_default
 {
 	{ "name",     "ircd.client.conf.request_timeout" },
-	{ "default",  30L                                },
+	{ "default",  33L                                },
 };
 
 ircd::conf::item<size_t>
