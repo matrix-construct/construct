@@ -11663,7 +11663,7 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "event_id", "remote"
+		"room_id", "event_id", "remote", "ids_only"
 	}};
 
 	const auto room_id
@@ -11681,8 +11681,14 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 		param.at(2, event_id.host())
 	};
 
+	const string_view &ids_only
+	{
+		param["ids_only"]
+	};
+
 	m::v1::event_auth::opts opts;
 	opts.remote = remote;
+	opts.ids_only = ids_only == "ids";
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB
@@ -11698,8 +11704,18 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 
 	const json::array &auth_chain
 	{
-		request
+		opts.ids_only?
+			json::object(request.in.content).at("auth_chain_ids"):
+			json::array(request)
 	};
+
+	if(opts.ids_only)
+	{
+		for(const json::string &event_id : auth_chain)
+			out << event_id << std::endl;
+
+		return true;
+	}
 
 	std::vector<m::event> events(size(auth_chain));
 	std::transform(begin(auth_chain), end(auth_chain), begin(events), []
