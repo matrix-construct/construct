@@ -80,20 +80,6 @@ get__state_ids(client &client,
 
 	json::stack::object top{out};
 
-	// pdu_ids
-	{
-		json::stack::array pdu_ids
-		{
-			top, "pdu_ids"
-		};
-
-		state.for_each(m::event::id::closure{[&pdu_ids]
-		(const m::event::id &event_id)
-		{
-			pdu_ids.append(event_id);
-		}});
-	}
-
 	// auth_chain
 	{
 		json::stack::array auth_chain
@@ -110,6 +96,20 @@ get__state_ids(client &client,
 				auth_chain.append(event_id);
 			});
 		});
+	}
+
+	// pdu_ids
+	{
+		json::stack::array pdu_ids
+		{
+			top, "pdu_ids"
+		};
+
+		state.for_each(m::event::id::closure{[&pdu_ids]
+		(const m::event::id &event_id)
+		{
+			pdu_ids.append(event_id);
+		}});
 	}
 
 	return response;
