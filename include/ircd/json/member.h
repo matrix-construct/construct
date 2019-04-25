@@ -73,7 +73,7 @@ inline
 ircd::json::member::member(const object::member &m)
 :member
 {
-	m.first, value { m.second, type(m.second) }
+	m.first, value { m.second }
 }
 {}
 
