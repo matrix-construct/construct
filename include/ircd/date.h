@@ -90,12 +90,13 @@ ircd::smalldate(const mutable_buffer &buf,
 	localtime_r(&ltime, &lt);
 	const auto len
 	{
-		::snprintf(data(buf), size(buf), "%d/%d/%d %02d.%02d",
+		::snprintf(data(buf), size(buf), "%d/%d/%d_%02d:%02d:%02d",
 		           lt.tm_year + 1900,
 		           lt.tm_mon + 1,
 		           lt.tm_mday,
 		           lt.tm_hour,
-		           lt.tm_min)
+		           lt.tm_min,
+		           lt.tm_sec)
 	};
 
 	return
