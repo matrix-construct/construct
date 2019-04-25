@@ -786,7 +786,6 @@ catch(const http::error &e)
 		e.content,
 	};
 
-	request.origin = {};
 	return false;
 }
 catch(const std::exception &e)
@@ -801,7 +800,6 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	request.origin = {};
 	return false;
 }
 
@@ -839,6 +837,7 @@ ircd::m::fetch::select_random_origin(request &request)
 		return true;
 	}};
 
+	request.origin = {};
 	if(!origins.random(closure, proffer) || !request.origin)
 		throw m::NOT_FOUND
 		{

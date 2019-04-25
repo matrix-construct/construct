@@ -66,7 +66,10 @@ ircd::m::fetch::submit(const m::event::id &event_id,
 	if(it == end(requests) || it->event_id != event_id) try
 	{
 		it = requests.emplace_hint(it, room_id, event_id, bufsz, std::forward<args>(a)...);
-		while(!start(const_cast<request &>(*it)));
+		auto &request(const_cast<fetch::request &>(*it));
+		while(!start(request))
+			request.origin = {};
+
 		return true;
 	}
 	catch(const std::exception &e)
