@@ -81,20 +81,20 @@ get__state_ids(client &client,
 	json::stack::object top{out};
 
 	// auth_chain
-	if(request.query.get<bool>("auth_chain", true))
+	if(request.query.get<bool>("auth_chain_ids", true))
 	{
-		json::stack::array auth_chain
+		json::stack::array auth_chain_ids
 		{
-			top, "auth_chain"
+			top, "auth_chain_ids"
 		};
 
-		ac.for_each([&auth_chain]
+		ac.for_each([&auth_chain_ids]
 		(const m::event::idx &event_idx)
 		{
-			m::event_id(event_idx, std::nothrow, [&auth_chain]
+			m::event_id(event_idx, std::nothrow, [&auth_chain_ids]
 			(const auto &event_id)
 			{
-				auth_chain.append(event_id);
+				auth_chain_ids.append(event_id);
 			});
 		});
 	}
