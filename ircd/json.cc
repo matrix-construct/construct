@@ -3645,13 +3645,8 @@ ircd::json::value::operator=(value &&other)
 noexcept
 {
 	this->~value();
-	integer = other.integer;
-	len = other.len;
-	type = other.type;
-	serial = other.serial;
-	alloc = other.alloc;
-	other.alloc = false;
-	floats = other.floats;
+	new (this) value(std::move(other));
+	assert(other.alloc == false);
 	return *this;
 }
 
