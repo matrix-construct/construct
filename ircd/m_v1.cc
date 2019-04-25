@@ -409,10 +409,11 @@ ircd::m::v1::state::state(const room::id &room_id,
 		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/%s/%s/?event_id=%s",
+			urlbuf, "/_matrix/federation/v1/%s/%s/?event_id=%s%s",
 			opts.ids_only? "state_ids" : "state",
 			url::encode(ridbuf, room_id),
 			url::encode(eidbuf, opts.event_id),
+			opts.ids_only? "&auth_chain_ids=0"_sv : ""_sv,
 		};
 	}
 
@@ -524,12 +525,21 @@ ircd::m::v1::event_auth::event_auth(const m::room::id &room_id,
 	if(!defined(json::get<"uri"_>(opts.request)))
 	{
 		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
-		json::get<"uri"_>(opts.request) = fmt::sprintf
-		{
-			urlbuf, "/_matrix/federation/v1/event_auth/%s/%s",
-			url::encode(ridbuf, room_id),
-			url::encode(eidbuf, event_id),
-		};
+
+		if(opts.ids_only)
+			json::get<"uri"_>(opts.request) = fmt::sprintf
+			{
+				urlbuf, "/_matrix/federation/v1/state_ids/%s/?event_id=%s&pdu_ids=0",
+				url::encode(ridbuf, room_id),
+				url::encode(eidbuf, event_id),
+			};
+		else
+			json::get<"uri"_>(opts.request) = fmt::sprintf
+			{
+				urlbuf, "/_matrix/federation/v1/event_auth/%s/%s",
+				url::encode(ridbuf, room_id),
+				url::encode(eidbuf, event_id),
+			};
 	}
 
 	json::get<"method"_>(opts.request) = "GET";
