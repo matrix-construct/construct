@@ -515,13 +515,7 @@ try
 			return std::any_of(begin(requests), end(requests), []
 			(const request &r)
 			{
-				if(r.finished == 0)
-					return true;
-
-				if(r.finished && empty(r.buf))
-					return true;
-
-				return false;
+				return r.finished == 0;
 			});
 		});
 
@@ -548,11 +542,14 @@ catch(const std::exception &e)
 size_t
 ircd::m::fetch::request_cleanup()
 {
+	// assert that there is no race starting from here.
+	const ctx::critical_assertion ca;
+
 	size_t ret(0);
 	auto it(begin(requests));
 	while(it != end(requests))
 	{
-		if(it->finished && empty(it->buf))
+		if(it->finished && it->eptr)
 		{
 			it = requests.erase(it);
 			++ret;
@@ -575,7 +572,7 @@ ircd::m::fetch::request_handle()
 	{
 		const auto now(ircd::time());
 		for(const auto &request : requests)
-			if(timedout(request, now))
+			if(!request.finished && timedout(request, now))
 				retry(const_cast<fetch::request &>(request));
 
 		return;
@@ -601,13 +598,14 @@ try
 		const_cast<fetch::request &>(*it)
 	};
 
-	if(!request.started || !request.last || !request.buf)
-		return;
-
-	if(request.finished)
+	if(!request.started || !request.last || request.finished)
 		return;
 
 	if(!handle(request))
+		return;
+
+	assert(request.finished);
+	if(request.eptr)
 		return;
 
 	complete.emplace_back(it);
@@ -681,9 +679,9 @@ try
 		const_cast<fetch::request &>(*it)
 	};
 
-	const unwind free{[&request]
+	const unwind free{[&it]
 	{
-		request.buf = {};
+		requests.erase(it);
 	}};
 
 	if(request.eptr)
@@ -929,6 +927,7 @@ catch(...)
 void
 ircd::m::fetch::finish(request &request)
 {
+	assert(request.started);
 	request.finished = ircd::time();
 	dock.notify_all();
 }
@@ -937,9 +936,7 @@ bool
 ircd::m::fetch::timedout(const request &request,
                          const time_t &now)
 {
-	if(!request.started || request.finished)
-		return false;
-
+	assert(request.started && request.finished == 0 && request.last != 0);
 	return request.last + seconds(timeout).count() < now;
 }
 
