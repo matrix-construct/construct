@@ -2550,7 +2550,10 @@ ircd::json::stringify(mutable_buffer &buf,
                       const object::member &member)
 {
 	char *const start(begin(buf));
-	printer(buf, printer.name << printer.name_sep, member.first);
+	assert(!surrounds(member.first, '"'));
+	consume(buf, copy(buf, "\""_sv));
+	consume(buf, copy(buf, member.first));
+	consume(buf, copy(buf, "\":"_sv));
 	stringify(buf, member.second);
 	const string_view ret
 	{
@@ -2564,8 +2567,7 @@ ircd::json::stringify(mutable_buffer &buf,
 size_t
 ircd::json::serialized(const object::member &member)
 {
-	const json::value key{member.first, json::STRING};
-	return serialized(key) + 1 + serialized(member.second);
+	return 1 + size(member.first) + 1 + 1 + serialized(member.second);
 }
 
 ircd::string_view
@@ -3022,7 +3024,9 @@ try
 	{
 		[](mutable_buffer &buf, const member *const &m)
 		{
-			printer(buf, printer.name << printer.name_sep, m->first);
+			assert(type(m->first) == STRING);
+			stringify(buf, m->first);
+			printer(buf, printer.name_sep);
 			stringify(buf, m->second);
 		}
 	};
