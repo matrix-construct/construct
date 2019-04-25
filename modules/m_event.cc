@@ -233,8 +233,9 @@ ircd::m::pretty_oneline(std::ostream &s,
 	else
 		s << "* ";
 
+	thread_local char sdbuf[48];
 	if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
-		s << json::get<"origin_server_ts"_>(event) << " ";
+		s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << " ";
 	else
 		s << "* ";
 
