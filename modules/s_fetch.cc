@@ -298,9 +298,9 @@ ircd::m::fetch::auth_chain(const room &room,
 	};
 
 	m::vm::opts vmopts;
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.infolog_accept = true;
-	vmopts.fetch = false;
+	vmopts.fetch_prev_check = false;
+	vmopts.fetch_state_check = false;
 	for(const auto &event : events)
 		m::vm::eval
 		{
@@ -382,9 +382,6 @@ try
 	if(type == "m.room.create")
 		return;
 
-	if(eval.copts && my(event))
-		return;
-
 	const m::event::id &event_id
 	{
 		at<"event_id"_>(event)
@@ -409,6 +406,7 @@ try
 	};
 
 	size_t auth_exists(0);
+	m::event::id::buf auth_id_missing;
 	if(opts.fetch_auth_check) for(size_t i(0); i < auth_count; ++i)
 	{
 		const auto &auth_id
@@ -418,18 +416,25 @@ try
 
 		if(m::exists(auth_id))
 			++auth_exists;
+		else if(!auth_id_missing)
+			auth_id_missing = auth_id;
 	}
 
 	if(opts.fetch_auth_check && auth_exists < auth_count)
 	{
+		assert(bool(auth_id_missing));
 		const net::hostport remote
 		{
 			eval.opts->node_id?
 				eval.opts->node_id:
-				json::get<"origin"_>(event)
+			!my_host(json::get<"origin"_>(event))?
+				string_view(json::get<"origin"_>(event)):
+			!my_host(auth_id_missing.host())?
+				auth_id_missing.host():
+				string_view{}
 		};
 
-		if(!opts.fetch_auth || !bool(m::fetch::enable) || !remote || my_host(host(remote)))
+		if(!opts.fetch_auth || !bool(m::fetch::enable) || !remote)
 			throw vm::error
 			{
 				vm::fault::EVENT, "Failed to fetch auth_events for %s in %s",
@@ -437,7 +442,9 @@ try
 				json::get<"room_id"_>(*eval.event_)
 			};
 
+		const scope_restore auth_id{room.event_id, auth_id_missing};
 		auth_chain(room, remote);
+		auth_exists = auth_count;
 	}
 
 	const size_t prev_count
