@@ -462,18 +462,10 @@ ircd::m::fetch::auth_chain(const room &room,
 
 	request.wait(seconds(auth_timeout)); //TODO: conf
 	request.get();
-	const json::array &array
+	const json::array &events
 	{
 		request
 	};
-
-	std::vector<json::object> events(array.count());
-	std::copy(begin(array), end(array), begin(events));
-	std::sort(begin(events), end(events), []
-	(const json::object &a, const json::object &b)
-	{
-		return a.at<uint64_t>("depth") < b.at<uint64_t>("depth");
-	});
 
 	log::debug
 	{
@@ -488,11 +480,10 @@ ircd::m::fetch::auth_chain(const room &room,
 	vmopts.infolog_accept = true;
 	vmopts.fetch_prev_check = false;
 	vmopts.fetch_state_check = false;
-	for(const auto &event : events)
-		m::vm::eval
-		{
-			m::event{event}, vmopts
-		};
+	m::vm::eval
+	{
+		events, vmopts
+	};
 }
 
 bool
