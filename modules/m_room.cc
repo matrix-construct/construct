@@ -477,21 +477,38 @@ ircd::m::room::head::for_each(const head &head,
 	return true;
 }
 
-std::pair<bool, int64_t>
+std::pair<int64_t, ircd::m::event::idx>
 IRCD_MODULE_EXPORT
-ircd::m::is_complete(const room &room)
+ircd::m::sounding(const room &room)
 {
-	std::pair<bool, int64_t> ret {true, -1L};
-	for_each_depth_gap(room, [&ret]
-	(const auto &range)
+	std::pair<int64_t, m::event::idx> ret
 	{
-		ret.second = range.second - 1;
-		ret.first = false;
+		-1, 0
+	};
+
+	rfor_each_depth_gap(room, [&ret]
+	(const auto &range, const auto &event_idx)
+	{
+		ret.first = range.second;
+		ret.second = event_idx;
 		return false;
 	});
 
-	if(ret.second == -1L)
-		ret.first = false;
+	return ret;
+}
+
+std::pair<int64_t, ircd::m::event::idx>
+IRCD_MODULE_EXPORT
+ircd::m::first_missing(const room &room)
+{
+	std::pair<int64_t, m::event::idx> ret {0, 0};
+	for_each_depth_gap(room, [&ret]
+	(const auto &range, const auto &event_idx)
+	{
+		ret.first = range.first;
+		ret.second = event_idx;
+		return false;
+	});
 
 	return ret;
 }

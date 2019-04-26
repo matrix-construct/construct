@@ -4779,6 +4779,28 @@ ircd::m::commit(const room &room,
 	return eval.event_id;
 }
 
+std::pair<int64_t, ircd::m::event::idx>
+ircd::m::sounding(const room &r)
+{
+	static mods::import<decltype(sounding)> call
+	{
+		"m_room", "ircd::m::sounding"
+	};
+
+	return call(r);
+}
+
+std::pair<int64_t, ircd::m::event::idx>
+ircd::m::first_missing(const room &r)
+{
+	static mods::import<decltype(first_missing)> call
+	{
+		"m_room", "ircd::m::first_missing"
+	};
+
+	return call(r);
+}
+
 bool
 ircd::m::rfor_each_depth_gap(const room &r,
                              const depth_range_closure &c)
@@ -4805,19 +4827,6 @@ ircd::m::for_each_depth_gap(const room &r,
 	};
 
 	return call(r, c);
-}
-
-std::pair<bool, int64_t>
-ircd::m::is_complete(const room &r)
-{
-	using prototype = std::pair<bool, int64_t> (const room &);
-
-	static mods::import<prototype> call
-	{
-		"m_room", "ircd::m::is_complete"
-	};
-
-	return call(r);
 }
 
 size_t

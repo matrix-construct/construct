@@ -28,7 +28,9 @@ namespace ircd::m
 	using depth_range_closure = std::function<bool (const depth_range &, const event::idx &)>;
 	bool for_each_depth_gap(const room &, const depth_range_closure &);
 	bool rfor_each_depth_gap(const room &, const depth_range_closure &);
-	std::pair<bool, int64_t> is_complete(const room &);
+
+	std::pair<int64_t, event::idx> first_missing(const room &);
+	std::pair<int64_t, event::idx> sounding(const room &); // Last missing
 }
 
 /// Interface to room messages

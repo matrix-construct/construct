@@ -7371,7 +7371,7 @@ console_cmd__room__head__reset(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__room__complete(opt &out, const string_view &line)
+console_cmd__room__sounding(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -7390,12 +7390,12 @@ console_cmd__room__complete(opt &out, const string_view &line)
 
 	const auto res
 	{
-		m::is_complete(room)
+		m::sounding(room)
 	};
 
-	out << (res.first? "YES" : "NO")
-	    << " @ depth " << res.second
-	    << std::endl;
+	out << "depth:  " << res.first << std::endl
+	    << "event:  " << res.second << " " << m::event_id(res.second) << std::endl
+	    ;
 
 	return true;
 }
