@@ -251,6 +251,15 @@ IRCD_MODULE_EXPORT
 ircd::m::fetch::auth_chain(const room &room,
                            const net::hostport &remote)
 {
+	thread_local char rembuf[64];
+	log::debug
+	{
+		log, "Fetching auth chain for %s in %s from %s",
+		string_view{room.event_id},
+		string_view{room.room_id},
+		string(rembuf, remote),
+	};
+
 	m::v1::event_auth::opts opts;
 	opts.remote = remote;
 	opts.dynamic = true;
@@ -278,6 +287,15 @@ ircd::m::fetch::auth_chain(const room &room,
 	{
 		return a.at<uint64_t>("depth") < b.at<uint64_t>("depth");
 	});
+
+	log::debug
+	{
+		log, "Evaluating %zu auth events in chain for %s in %s from %s",
+		events.size(),
+		string_view{room.event_id},
+		string_view{room.room_id},
+		string(rembuf, remote),
+	};
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
@@ -470,6 +488,19 @@ try
 		prev_fetched += m::exists(prev_id);
 	}
 
+	log::debug
+	{
+		log, "%s %s %s ac:%zu ae:%zu pc:%zu pe:%zu pf:%zu",
+		loghead(eval),
+		json::get<"event_id"_>(*eval.event_),
+		json::get<"room_id"_>(*eval.event_),
+		auth_count,
+		auth_exists,
+		prev_count,
+		prev_exists,
+		prev_fetched,
+	};
+
 	if(opts.fetch_prev_check && opts.fetch_prev_wait && prev_exists + prev_fetched == 0)
 		throw vm::error
 		{
@@ -615,7 +646,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "eval %s in %s :%s",
+		log, "request %s in %s :%s",
 		string_view{it->event_id},
 		string_view{it->room_id},
 		e.what()
