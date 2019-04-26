@@ -192,18 +192,19 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		*data.out, "events"
 	};
 
-	bool ret{false};
 	ctx::mutex mutex;
-	const event::closure_idx each_idx{[&data, &array, &mutex, &ret]
+	std::array<event::idx, 64> md; //TODO: conf
+	std::vector<event::fetch> event(md.size() * 2);
+	for(auto &fetch : event)
+		fetch = event::fetch{_default_fopts};
+
+	size_t _i(0);
+	bool ret{false};
+	const event::closure_idx each_idx{[&data, &array, &mutex, &ret, &event, &_i]
 	(const m::event::idx event_idx)
 	{
-		const event::fetch event
-		{
-			event_idx, std::nothrow, _default_fopts
-		};
-
-		//assert(event.valid);
-		if(unlikely(!event.valid))
+		const size_t i{_i++ % event.size()};
+		if(unlikely(!seek(event.at(i), event_idx, std::nothrow)))
 		{
 			assert(data.room);
 			log::error
@@ -217,12 +218,10 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		}
 
 		const std::lock_guard lock{mutex};
-		room_state_append(data, array, event, event_idx);
+		room_state_append(data, array, event.at(i), event_idx);
 		ret = true;
 	}};
 
-	//TODO: conf
-	std::array<event::idx, 64> md;
 	ctx::parallel<event::idx> parallel
 	{
 		m::sync::pool, md, each_idx
