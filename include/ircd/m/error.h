@@ -43,6 +43,9 @@ class ircd::m::error
 	{}
 
   public:
+	string_view errcode() const noexcept;
+	string_view errstr() const noexcept;
+
 	template<class... args> error(const http::code &, const string_view &errcode, const string_view &fmt, args&&...);
 	template<class... args> error(const string_view &errcode, const string_view &fmt, args&&...);
 	error(const http::code &, const json::object &object);

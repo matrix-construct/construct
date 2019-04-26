@@ -5948,6 +5948,10 @@ decltype(ircd::m::error::fmtbuf)
 ircd::m::error::fmtbuf
 {};
 
+//
+// error::error
+//
+
 ircd::m::error::error()
 :http::error
 {
@@ -6001,3 +6005,27 @@ ircd::m::error::error(internal_t,
 	c, object, vector_view<const http::header>{_error_headers}
 }
 {}
+
+ircd::string_view
+ircd::m::error::errstr()
+const noexcept
+{
+	const json::object &content
+	{
+		this->http::error::content
+	};
+
+	return content.get("error");
+}
+
+ircd::string_view
+ircd::m::error::errcode()
+const noexcept
+{
+	const json::object &content
+	{
+		this->http::error::content
+	};
+
+	return content.get("errcode", "M_UNKNOWN"_sv);
+}
