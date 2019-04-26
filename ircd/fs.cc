@@ -444,14 +444,6 @@ ircd::fs::flush(const fd &fd,
                 const sync_opts &opts)
 {
 	assert(opts.op == op::SYNC);
-	const ctx::syscall_usage_warning message
-	{
-		"fs::flush(fd:%d, {metadata:%b aio:%b:%b})",
-		int(fd),
-		opts.metadata,
-		opts.aio,
-		opts.metadata? aio::support_fdsync : aio::support_fsync
-	};
 
 	#ifdef IRCD_USE_AIO
 	if(aio::system && opts.aio)
@@ -463,6 +455,15 @@ ircd::fs::flush(const fd &fd,
 			return aio::fsync(fd, opts);
 	}
 	#endif
+
+	const ctx::syscall_usage_warning message
+	{
+		"fs::flush(fd:%d, {metadata:%b aio:%b:%b})",
+		int(fd),
+		opts.metadata,
+		opts.aio,
+		opts.metadata? aio::support_fsync : aio::support_fdsync
+	};
 
 	if(!opts.metadata)
 		return void(syscall(::fdatasync, fd));
