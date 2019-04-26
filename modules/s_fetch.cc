@@ -594,7 +594,7 @@ ircd::m::fetch::request_cleanup()
 	auto it(begin(requests));
 	while(it != end(requests))
 	{
-		if(it->finished && it->eptr)
+		if(it->finished == -1)
 		{
 			it = requests.erase(it);
 			++ret;
@@ -651,7 +651,11 @@ try
 
 	assert(request.finished);
 	if(request.eptr)
-		return;
+	{
+		request.finished = -1;
+		std::rethrow_exception(request.eptr);
+		__builtin_unreachable();
+	}
 
 	complete.emplace_back(it);
 	dock.notify_all();
@@ -724,14 +728,12 @@ try
 		const_cast<fetch::request &>(*it)
 	};
 
-	const unwind free{[&it]
+	const unwind free{[&request]
 	{
-		requests.erase(it);
+		request.finished = -1;
 	}};
 
-	if(request.eptr)
-		std::rethrow_exception(request.eptr);
-
+	assert(!request.eptr);
 	log::debug
 	{
 		log, "eval handling %s in %s (r:%zu c:%zu)",
