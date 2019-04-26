@@ -316,6 +316,36 @@ const
 	return stopped - started;
 }
 
+//
+// syscall_timer::high_resolution
+//
+
+ircd::prof::syscall_timer::high_resolution::high_resolution()
+noexcept
+:started
+{
+	resource(prof::sample).at(resource::TIME_KERN)
+}
+,stopped
+{
+	0UL
+}
+{
+}
+
+uint64_t
+ircd::prof::syscall_timer::high_resolution::sample()
+{
+	stopped = resource(prof::sample).at(resource::TIME_KERN);
+	return at();
+}
+
+uint64_t
+ircd::prof::syscall_timer::high_resolution::at()
+const
+{
+	return stopped - started;
+}
 
 //
 // time_*() suite

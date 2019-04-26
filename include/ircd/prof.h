@@ -106,6 +106,8 @@ struct ircd::prof::vg::disable
 /// which returns the value of at() as well.
 struct ircd::prof::syscall_timer
 {
+	struct high_resolution;
+
 	uint64_t started, stopped;
 
   public:
@@ -113,6 +115,21 @@ struct ircd::prof::syscall_timer
 	uint64_t sample();
 
 	syscall_timer() noexcept;
+};
+
+/// This is a higher resolution alternative. The sample may be conducted
+/// with getrusage() or perf events; the exact method is TBD and may be
+/// expensive/intrusive. This device should be used temporarily by developers
+/// and not left in place in committed code.
+struct ircd::prof::syscall_timer::high_resolution
+{
+	uint64_t started, stopped;
+
+  public:
+	uint64_t at() const;
+	uint64_t sample();
+
+	high_resolution() noexcept;
 };
 
 /// Frontend to times(2). This has low resolution in practice, but it's
