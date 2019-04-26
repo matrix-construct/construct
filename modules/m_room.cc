@@ -479,6 +479,26 @@ ircd::m::room::head::for_each(const head &head,
 
 std::pair<int64_t, ircd::m::event::idx>
 IRCD_MODULE_EXPORT
+ircd::m::twain(const room &room)
+{
+	std::pair<int64_t, m::event::idx> ret
+	{
+		-1, 0
+	};
+
+	rfor_each_depth_gap(room, [&ret]
+	(const auto &range, const auto &event_idx)
+	{
+		ret.first = range.first - 1;
+		ret.second = event_idx;
+		return false;
+	});
+
+	return ret;
+}
+
+std::pair<int64_t, ircd::m::event::idx>
+IRCD_MODULE_EXPORT
 ircd::m::sounding(const room &room)
 {
 	std::pair<int64_t, m::event::idx> ret
@@ -499,7 +519,7 @@ ircd::m::sounding(const room &room)
 
 std::pair<int64_t, ircd::m::event::idx>
 IRCD_MODULE_EXPORT
-ircd::m::first_missing(const room &room)
+ircd::m::surface(const room &room)
 {
 	std::pair<int64_t, m::event::idx> ret {0, 0};
 	for_each_depth_gap(room, [&ret]
@@ -526,17 +546,24 @@ ircd::m::rfor_each_depth_gap(const room &room,
 	if(!it)
 		return true;
 
+	event::idx idx{0};
 	for(depth_range range{0L, it.depth()}; it; --it)
 	{
 		range.first = it.depth();
 		if(range.first == range.second)
+		{
+			idx = it.event_idx();
 			continue;
+		}
 
 		--range.second;
 		if(range.first == range.second)
+		{
+			idx = it.event_idx();
 			continue;
+		}
 
-		if(!closure({range.first+1, range.second+1}, it.event_idx()))
+		if(!closure({range.first+1, range.second+1}, idx))
 			return false;
 
 		range.second = range.first;

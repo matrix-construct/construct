@@ -7388,14 +7388,31 @@ console_cmd__room__sounding(opt &out, const string_view &line)
 		room_id
 	};
 
-	const auto res
+	const auto surface
+	{
+		m::surface(room)
+	};
+
+	const auto sound
 	{
 		m::sounding(room)
 	};
 
-	out << "depth:  " << res.first << std::endl
-	    << "event:  " << res.second << " " << m::event_id(res.second) << std::endl
-	    ;
+	const auto twain
+	{
+		m::twain(room)
+	};
+
+	out << "sounding:  " << std::setw(8) << sound.first
+	    << "   " << m::event_id(sound.second) << " (" << sound.second << ")"
+	    << std::endl;
+
+	out << "twain:     " << std::setw(8) << twain.first
+	    << std::endl;
+
+	out << "surface:   " << std::setw(8) << surface.first
+	    << "   " << m::event_id(surface.second) << " (" << surface.second << ")"
+	    << std::endl;
 
 	return true;
 }

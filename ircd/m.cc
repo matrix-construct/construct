@@ -4780,6 +4780,17 @@ ircd::m::commit(const room &room,
 }
 
 std::pair<int64_t, ircd::m::event::idx>
+ircd::m::twain(const room &r)
+{
+	static mods::import<decltype(twain)> call
+	{
+		"m_room", "ircd::m::twain"
+	};
+
+	return call(r);
+}
+
+std::pair<int64_t, ircd::m::event::idx>
 ircd::m::sounding(const room &r)
 {
 	static mods::import<decltype(sounding)> call
@@ -4791,11 +4802,11 @@ ircd::m::sounding(const room &r)
 }
 
 std::pair<int64_t, ircd::m::event::idx>
-ircd::m::first_missing(const room &r)
+ircd::m::surface(const room &r)
 {
-	static mods::import<decltype(first_missing)> call
+	static mods::import<decltype(surface)> call
 	{
-		"m_room", "ircd::m::first_missing"
+		"m_room", "ircd::m::surface"
 	};
 
 	return call(r);
