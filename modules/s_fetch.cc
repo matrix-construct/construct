@@ -27,7 +27,14 @@ decltype(ircd::m::fetch::timeout)
 ircd::m::fetch::timeout
 {
 	{ "name",     "ircd.m.fetch.timeout" },
-	{ "default",  10L                    },
+	{ "default",  5L                     },
+};
+
+decltype(ircd::m::fetch::auth_timeout)
+ircd::m::fetch::auth_timeout
+{
+	{ "name",     "ircd.m.fetch.auth.timeout" },
+	{ "default",  15L                         },
 };
 
 decltype(ircd::m::fetch::hook)
@@ -453,7 +460,7 @@ ircd::m::fetch::auth_chain(const room &room,
 		room.room_id, room.event_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(20)); //TODO: conf
+	request.wait(seconds(auth_timeout)); //TODO: conf
 	request.get();
 	const json::array &array
 	{
