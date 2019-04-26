@@ -10447,7 +10447,7 @@ console_cmd__feds__event(opt &out, const string_view &line)
 
 	m::room::id::buf room_id;
 	if(param["room_id"])
-		room_id = param["room_id"];
+		room_id = m::room_id(param["room_id"]);
 
 	if(!room_id)
 		room_id = m::get(std::nothrow, event_id, "room_id", room_id);
