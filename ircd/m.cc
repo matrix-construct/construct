@@ -4779,6 +4779,34 @@ ircd::m::commit(const room &room,
 	return eval.event_id;
 }
 
+bool
+ircd::m::rfor_each_depth_gap(const room &r,
+                             const depth_range_closure &c)
+{
+	using prototype = bool (const room &, const depth_range_closure &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::rfor_each_depth_gap"
+	};
+
+	return call(r, c);
+}
+
+bool
+ircd::m::for_each_depth_gap(const room &r,
+                            const depth_range_closure &c)
+{
+	using prototype = bool (const room &, const depth_range_closure &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::for_each_depth_gap"
+	};
+
+	return call(r, c);
+}
+
 std::pair<bool, int64_t>
 ircd::m::is_complete(const room &r)
 {

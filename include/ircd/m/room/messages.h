@@ -21,7 +21,13 @@ namespace ircd::m
 	size_t count_since(const m::event::idx &, const m::event::idx &);
 	size_t count_since(const m::event::id &, const m::event::id &);
 
-	// [GET] Check if fully acquired locally
+	// [GET] Find gaps in the room's event graph. A gap is where no events
+	// have been obtained at that depth. Each gap is reported to the closure
+	// with a separate invocation. The range is [inclusive, exclusive].
+	using depth_range = std::pair<int64_t, int64_t>;
+	using depth_range_closure = std::function<bool (const depth_range &)>;
+	bool for_each_depth_gap(const room &, const depth_range_closure &);
+	bool rfor_each_depth_gap(const room &, const depth_range_closure &);
 	std::pair<bool, int64_t> is_complete(const room &);
 }
 

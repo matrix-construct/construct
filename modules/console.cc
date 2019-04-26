@@ -7418,6 +7418,45 @@ console_cmd__room__depth(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__depth__gaps(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "reverse"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at(0))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto closure{[&out]
+	(const auto &range)
+	{
+		out << std::right << std::setw(8) << range.first
+		    << " : "
+		    << std::left << std::setw(8) << range.second
+		    << " "
+		    << m::event_id(event_idx)
+		    << std::endl;
+
+		return true;
+	}};
+
+	if(param["reverse"] == "reverse")
+		m::rfor_each_depth_gap(room, closure);
+	else
+		m::for_each_depth_gap(room, closure);
+
+	return true;
+}
+
+bool
 console_cmd__room__visible(opt &out, const string_view &line)
 {
 	const params param{line, " ",

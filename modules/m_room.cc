@@ -481,42 +481,80 @@ std::pair<bool, int64_t>
 IRCD_MODULE_EXPORT
 ircd::m::is_complete(const room &room)
 {
+	std::pair<bool, int64_t> ret {true, -1L};
+	for_each_depth_gap(room, [&ret]
+	(const auto &range)
+	{
+		ret.second = range.second - 1;
+		ret.first = false;
+		return false;
+	});
+
+	if(ret.second == -1L)
+		ret.first = false;
+
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::rfor_each_depth_gap(const room &room,
+                             const depth_range_closure &closure)
+{
 	room::messages it
 	{
 		room
 	};
 
-	const auto head_depth
-	{
-		int64_t(it.depth())
-	};
+	if(!it)
+		return true;
 
-	int64_t depth(head_depth), last(depth + 1);
-	for(;; --it)
+	for(depth_range range{0L, it.depth()}; it; --it)
 	{
-		if(!it || !m::get(it.event_idx(), "depth", depth))
-			break;
-
-		if(depth == last)
+		range.first = it.depth();
+		if(range.first == range.second)
 			continue;
 
-		if(depth + 1 != last)
-			break;
+		--range.second;
+		if(range.first == range.second)
+			continue;
 
-		--last;
+		if(!closure({range.first+1, range.second+1}))
+			return false;
+
+		range.second = range.first;
 	}
 
-	if(depth > 1)
-		return {false, depth};
+	return true;
+}
 
-	int64_t create_depth(0);
-	const room::state state(room);
-	const auto create_idx(state.get("m.room.create"));
-	m::get(create_idx, "depth", create_depth);
-	return
+bool
+IRCD_MODULE_EXPORT
+ircd::m::for_each_depth_gap(const room &room,
+                            const depth_range_closure &closure)
+{
+	room::messages it
 	{
-		last == create_depth + 1, depth
+		room, int64_t(0L)
 	};
+
+	for(depth_range range{0L, 0L}; it; ++it)
+	{
+		range.second = it.depth();
+		if(range.first == range.second)
+			continue;
+
+		++range.first;
+		if(range.first == range.second)
+			continue;
+
+		if(!closure(range))
+			return false;
+
+		range.first = range.second;
+	}
+
+	return true;
 }
 
 size_t
