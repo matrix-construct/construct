@@ -519,7 +519,7 @@ ircd::m::rfor_each_depth_gap(const room &room,
 		if(range.first == range.second)
 			continue;
 
-		if(!closure({range.first+1, range.second+1}))
+		if(!closure({range.first+1, range.second+1}, it.event_idx()))
 			return false;
 
 		range.second = range.first;
@@ -548,7 +548,7 @@ ircd::m::for_each_depth_gap(const room &room,
 		if(range.first == range.second)
 			continue;
 
-		if(!closure(range))
+		if(!closure(range, it.event_idx()))
 			return false;
 
 		range.first = range.second;

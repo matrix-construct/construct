@@ -7436,7 +7436,7 @@ console_cmd__room__depth__gaps(opt &out, const string_view &line)
 	};
 
 	const auto closure{[&out]
-	(const auto &range)
+	(const auto &range, const auto &event_idx)
 	{
 		out << std::right << std::setw(8) << range.first
 		    << " : "

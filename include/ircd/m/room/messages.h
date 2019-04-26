@@ -25,7 +25,7 @@ namespace ircd::m
 	// have been obtained at that depth. Each gap is reported to the closure
 	// with a separate invocation. The range is [inclusive, exclusive].
 	using depth_range = std::pair<int64_t, int64_t>;
-	using depth_range_closure = std::function<bool (const depth_range &)>;
+	using depth_range_closure = std::function<bool (const depth_range &, const event::idx &)>;
 	bool for_each_depth_gap(const room &, const depth_range_closure &);
 	bool rfor_each_depth_gap(const room &, const depth_range_closure &);
 	std::pair<bool, int64_t> is_complete(const room &);
