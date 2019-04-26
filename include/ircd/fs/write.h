@@ -52,7 +52,7 @@ struct ircd::fs::write_opts
 :opts
 {
 	/// for allocate()
-	bool keep_size {false};
+	bool keep_size {true};
 
 	/// Yields the ircd::ctx until the buffers are written. This performs
 	/// the unix incremental write loop internally. When this option is true,
