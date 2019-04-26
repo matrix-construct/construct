@@ -189,6 +189,201 @@ catch(const std::exception &e)
 }
 
 //
+// prof::vg
+//
+
+namespace ircd::prof::vg
+{
+	static bool _enabled;
+}
+
+//
+// prof::vg::enable 
+//
+
+ircd::prof::vg::enable::enable()
+noexcept
+{
+	start();
+}
+
+ircd::prof::vg::enable::~enable()
+noexcept
+{
+	stop();
+}
+
+//
+// prof::vg::disable 
+//
+
+ircd::prof::vg::disable::disable()
+noexcept
+{
+	stop();
+}
+
+ircd::prof::vg::disable::~disable()
+noexcept
+{
+	start();
+}
+
+//
+// prof::vg util
+//
+
+void
+ircd::prof::vg::stop()
+noexcept
+{
+	#ifdef HAVE_VALGRIND_CALLGRIND_H
+	CALLGRIND_STOP_INSTRUMENTATION;
+	assert(_enabled);
+	_enabled = false;
+	#endif
+}
+
+void
+ircd::prof::vg::start()
+noexcept
+{
+	#ifdef HAVE_VALGRIND_CALLGRIND_H
+	assert(!_enabled);
+	_enabled = true;
+	CALLGRIND_START_INSTRUMENTATION;
+	#endif
+}
+
+void
+ircd::prof::vg::reset()
+{
+	#ifdef HAVE_VALGRIND_CALLGRIND_H
+	CALLGRIND_ZERO_STATS;
+	#endif
+}
+
+void
+ircd::prof::vg::toggle()
+{
+	#ifdef HAVE_VALGRIND_CALLGRIND_H
+	CALLGRIND_TOGGLE_COLLECT;
+	#endif
+}
+
+void
+ircd::prof::vg::dump(const char *const reason)
+{
+	#ifdef HAVE_VALGRIND_CALLGRIND_H
+	CALLGRIND_DUMP_STATS_AT(reason);
+	#endif
+}
+
+bool
+ircd::prof::vg::enabled()
+{
+	return _enabled;
+}
+
+//
+// syscall_timer
+//
+
+ircd::prof::syscall_timer::syscall_timer()
+noexcept
+:started
+{
+	time_kern()
+}
+,stopped
+{
+	0UL
+}
+{
+}
+
+uint64_t
+ircd::prof::syscall_timer::sample()
+{
+	stopped = time_kern();
+	return at();
+}
+
+uint64_t
+ircd::prof::syscall_timer::at()
+const
+{
+	return stopped - started;
+}
+
+
+//
+// time_*() suite
+//
+
+uint64_t
+ircd::prof::time_thrd()
+{
+	struct ::timespec tv;
+	syscall(::clock_gettime, CLOCK_THREAD_CPUTIME_ID, &tv);
+	return ulong(tv.tv_sec) * 1000000000UL + tv.tv_nsec;
+}
+
+uint64_t
+ircd::prof::time_proc()
+{
+	struct ::timespec tv;
+	syscall(::clock_gettime, CLOCK_PROCESS_CPUTIME_ID, &tv);
+	return ulong(tv.tv_sec) * 1000000000UL + tv.tv_nsec;
+}
+
+//
+// Interface (cross-platform)
+//
+
+uint64_t
+ircd::prof::time_real()
+{
+	return boost::chrono::process_real_cpu_clock::now().time_since_epoch().count();
+}
+
+uint64_t
+ircd::prof::time_kern()
+{
+	return boost::chrono::process_system_cpu_clock::now().time_since_epoch().count();
+}
+
+uint64_t
+ircd::prof::time_user()
+{
+	return boost::chrono::process_user_cpu_clock::now().time_since_epoch().count();
+}
+
+//
+// times
+//
+
+ircd::prof::times::times(sample_t)
+:real{}
+,kern{}
+,user{}
+{
+	const auto tp
+	{
+		boost::chrono::process_cpu_clock::now()
+	};
+
+	const auto d
+	{
+		tp.time_since_epoch()
+	};
+
+	this->real = d.count().real;
+	this->kern = d.count().system;
+	this->user = d.count().user;
+}
+
+//
 // resource
 //
 
@@ -729,116 +924,4 @@ ircd::prof::debug(std::ostream &s,
 	s << "aux_size:              " << head.aux_size             << std::endl;
 
 	return s;
-}
-
-//
-// Interface
-//
-
-uint64_t
-ircd::prof::time_thrd()
-{
-	struct ::timespec tv;
-	syscall(::clock_gettime, CLOCK_THREAD_CPUTIME_ID, &tv);
-	return ulong(tv.tv_sec) * 1000000000UL + tv.tv_nsec;
-}
-
-uint64_t
-ircd::prof::time_proc()
-{
-	struct ::timespec tv;
-	syscall(::clock_gettime, CLOCK_PROCESS_CPUTIME_ID, &tv);
-	return ulong(tv.tv_sec) * 1000000000UL + tv.tv_nsec;
-}
-
-//
-// Interface (cross-platform)
-//
-
-uint64_t
-ircd::prof::time_real()
-{
-	return boost::chrono::process_real_cpu_clock::now().time_since_epoch().count();
-}
-
-uint64_t
-ircd::prof::time_kern()
-{
-	return boost::chrono::process_system_cpu_clock::now().time_since_epoch().count();
-}
-
-uint64_t
-ircd::prof::time_user()
-{
-	return boost::chrono::process_user_cpu_clock::now().time_since_epoch().count();
-}
-
-//
-// prof::vg
-//
-
-void
-ircd::prof::vg::stop()
-noexcept
-{
-	#ifdef HAVE_VALGRIND_CALLGRIND_H
-	CALLGRIND_STOP_INSTRUMENTATION;
-	#endif
-}
-
-void
-ircd::prof::vg::start()
-noexcept
-{
-	#ifdef HAVE_VALGRIND_CALLGRIND_H
-	CALLGRIND_START_INSTRUMENTATION;
-	#endif
-}
-
-void
-ircd::prof::vg::reset()
-{
-	#ifdef HAVE_VALGRIND_CALLGRIND_H
-	CALLGRIND_ZERO_STATS;
-	#endif
-}
-
-void
-ircd::prof::vg::toggle()
-{
-	#ifdef HAVE_VALGRIND_CALLGRIND_H
-	CALLGRIND_TOGGLE_COLLECT;
-	#endif
-}
-
-void
-ircd::prof::vg::dump(const char *const reason)
-{
-	#ifdef HAVE_VALGRIND_CALLGRIND_H
-	CALLGRIND_DUMP_STATS_AT(reason);
-	#endif
-}
-
-//
-// times
-//
-
-ircd::prof::times::times(sample_t)
-:real{}
-,kern{}
-,user{}
-{
-	const auto tp
-	{
-		boost::chrono::process_cpu_clock::now()
-	};
-
-	const auto d
-	{
-		tp.time_since_epoch()
-	};
-
-	this->real = d.count().real;
-	this->kern = d.count().system;
-	this->user = d.count().user;
 }

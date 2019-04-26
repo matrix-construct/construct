@@ -877,7 +877,7 @@ noexcept
 	{
 		timer.stopped?
 			timer.at():
-			timer.stop()
+			timer.sample()
 	};
 
 	if(likely(!total))

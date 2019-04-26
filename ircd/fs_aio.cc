@@ -896,7 +896,7 @@ try
 	};
 
 	#ifdef RB_DEBUG
-	stats.stalls += warning.timer.stop() > 0;
+	stats.stalls += warning.timer.sample() > 0;
 	#endif
 
 	assert(!qcount || ret > 0);

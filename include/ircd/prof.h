@@ -66,6 +66,7 @@ namespace ircd::prof::vg
 	struct enable;
 	struct disable;
 
+	bool enabled();
 	void dump(const char *const reason = nullptr);
 	void toggle();
 	void reset();
@@ -73,23 +74,50 @@ namespace ircd::prof::vg
 	void stop() noexcept;
 }
 
+// Exports to ircd::
 namespace ircd
 {
 	using prof::cycles;
 }
 
+/// Enable callgrind profiling for the scope
 struct ircd::prof::vg::enable
 {
-	enable() noexcept    { start(); }
-	~enable() noexcept   { stop();  }
+	enable() noexcept;
+	~enable() noexcept;
 };
 
+/// Disable any enabled callgrind profiling for the scope; then restore.
 struct ircd::prof::vg::disable
 {
-	disable() noexcept   { stop();  }
-	~disable() noexcept  { start(); }
+	disable() noexcept;
+	~disable() noexcept;
 };
 
+/// This suite of devices is intended to figure out when a system call is
+/// really slow or "blocking." The original use-case is for io_submit() in
+/// fs::aio.
+///
+/// The sample is conducted with times(2) which is itself a system call
+/// though reasonably fast, and the result has poor resolution meaning
+/// the result of at() is generally 0 unless the system call was very slow.
+///
+/// It is started on construction. The user must later call sample()
+/// which returns the value of at() as well.
+struct ircd::prof::syscall_timer
+{
+	uint64_t started, stopped;
+
+  public:
+	uint64_t at() const;
+	uint64_t sample();
+
+	syscall_timer() noexcept;
+};
+
+/// Frontend to times(2). This has low resolution in practice, but it's
+/// very cheap as far as syscalls go; x-platform implementation courtesy
+/// of boost::chrono.
 struct ircd::prof::times
 {
 	uint64_t real {0};
@@ -100,35 +128,8 @@ struct ircd::prof::times
 	times() = default;
 };
 
-/// This device intends to figure out when a system call is really slow
-/// or "blocking." The original use-case is for io_submit() in fs::aio.
-/// The sample is conducted with times(2) which is itself a system call,
-/// and the result has poor resolution meaning the result of at() is
-/// generally 0 unless the system call was actually slow.
-struct ircd::prof::syscall_timer
-{
-	uint64_t started
-	{
-		time_kern()
-	};
-
-	uint64_t stopped
-	{
-		0
-	};
-
-	uint64_t at() const
-	{
-		return stopped - started;
-	}
-
-	uint64_t stop()
-	{
-		stopped = time_kern();
-		return at();
-	}
-};
-
+/// Frontend to getrusage(2). This has higher resolution than prof::times
+/// in practice with slight added expense.
 struct ircd::prof::resource
 :std::array<uint64_t, 9>
 {
@@ -151,6 +152,7 @@ struct ircd::prof::resource
 	{}
 };
 
+/// Frontend to perf_event_open(2). This has the highest resolution.
 struct ircd::prof::system
 :std::array<std::array<uint64_t, 2>, 7>
 {
@@ -174,6 +176,10 @@ struct ircd::prof::system
 	{}
 };
 
+/// Type descriptor for prof events. This structure is used to aggregate
+/// information that describes a profiling event type, including whether
+/// the kernel or the user is being profiled (dpl), the principal counter
+/// type being profiled (counter) and any other contextual attributes.
 struct ircd::prof::type
 {
 	enum dpl dpl {0};
@@ -189,8 +195,8 @@ struct ircd::prof::type
 enum ircd::prof::dpl
 :std::underlying_type<ircd::prof::dpl>::type
 {
-	KERNEL,
-	USER
+	KERNEL  = 0,
+	USER    = 1,
 };
 
 enum ircd::prof::counter
