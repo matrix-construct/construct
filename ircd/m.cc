@@ -1192,7 +1192,7 @@ ircd::m::vm::loghead(const mutable_buffer &buf,
 {
 	return fmt::sprintf
 	{
-		buf, "vm:%lu:%lu:%lu eval:%lu seq:%lu share:%lu:%lu] %s",
+		buf, "vm:%lu:%lu:%lu eval:%lu seq:%lu share:%lu:%lu %s",
 		sequence::uncommitted,
 		sequence::committed,
 		sequence::retired,

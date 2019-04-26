@@ -13,7 +13,6 @@
 
 namespace ircd::m
 {
-	// event/event.h
 	struct event;
 
 	// General util
