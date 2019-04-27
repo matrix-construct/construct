@@ -27,6 +27,8 @@ struct ircd::util::timer
 	bool stopped() const;
 	template<class duration = std::chrono::seconds> duration get() const;
 	template<class duration = std::chrono::seconds> duration at() const;
+	string_view pretty(const mutable_buffer &out, const int &fmt = 0) const;
+	std::string pretty(const int &fmt = 0) const;
 	void cont();
 	void stop();
 

@@ -524,6 +524,21 @@ ircd::util::timer::cont()
 	start = clock::now();
 }
 
+std::string
+ircd::util::timer::pretty(const int &fmt)
+const
+{
+	return util::pretty(at(), fmt);
+}
+
+ircd::string_view
+ircd::util::timer::pretty(const mutable_buffer &out,
+                          const int &fmt)
+const
+{
+	return util::pretty(out, at(), fmt);
+}
+
 bool
 ircd::util::timer::stopped()
 const
