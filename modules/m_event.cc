@@ -1242,6 +1242,9 @@ bool
 IRCD_MODULE_EXPORT
 ircd::m::event::auth::is_power_event(const m::event &event)
 {
+	if(!json::get<"type"_>(event))
+		return false;
+
 	if(json::get<"type"_>(event) == "m.room.create")
 		return true;
 
@@ -1254,7 +1257,10 @@ ircd::m::event::auth::is_power_event(const m::event &event)
 	if(json::get<"type"_>(event) != "m.room.member")
 		return false;
 
-	if(at<"sender"_>(event) == at<"state_key"_>(event))
+	if(!json::get<"sender"_>(event) || !json::get<"state_key"_>(event))
+		return false;
+
+	if(json::get<"sender"_>(event) == json::get<"state_key"_>(event))
 		return false;
 
 	if(membership(event) == "leave" || membership(event) == "ban")
