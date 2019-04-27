@@ -74,7 +74,7 @@ get__event_auth(client &client,
 	{
 		static const m::event::fetch::opts fopts
 		{
-			m::event::keys::include {"type", "state_key", "content"}
+			m::event::keys::include {"room_id", "sender", "type", "state_key", "content"}
 		};
 
 		const m::event::fetch event
@@ -82,9 +82,7 @@ get__event_auth(client &client,
 			event_id, fopts
 		};
 
-		if(at<"type"_>(event) == "m.room.member")
-			if(m::user::id(at<"state_key"_>(event)).host() == request.origin)
-				visible = true;
+		visible = m::visible(event, request.node_id);
 	}
 
 	if(!visible)
