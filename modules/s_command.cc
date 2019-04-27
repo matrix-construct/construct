@@ -120,6 +120,12 @@ catch(const std::exception &e)
 }
 
 static std::pair<string_view, string_view>
+command__ping(const mutable_buffer &buf,
+              const m::user &user,
+              const m::room &room,
+              const string_view &cmd);
+
+static std::pair<string_view, string_view>
 command__dash(const mutable_buffer &buf,
               const m::user &user,
               const m::room &room,
@@ -154,6 +160,9 @@ try
 
 		case "dash"_:
 			return command__dash(buf, user, room, cmd);
+
+		case "ping"_:
+			return command__ping(buf, user, room, cmd);
 
 		default:
 			break;
@@ -329,6 +338,76 @@ command__read(const mutable_buffer &buf,
 
 	m::receipt::read(room, user, event_id, ms);
 	return {};
+}
+
+std::pair<string_view, string_view>
+command__ping(const mutable_buffer &buf,
+              const m::user &user,
+              const m::room &room,
+              const string_view &cmd)
+{
+	const params param{tokens_after(cmd, ' ', 0), " ",
+	{
+		"target"
+	}};
+
+	const string_view &target
+	{
+		param.at("target")
+	};
+
+	m::v1::version::opts opts;
+	if(m::valid(m::id::USER, target))
+		opts.remote = m::user::id(target).host();
+	else
+		opts.remote = target;
+
+	const unique_buffer<mutable_buffer> http_buf
+	{
+		8_KiB
+	};
+
+	util::timer timer;
+	m::v1::version request
+	{
+		http_buf, std::move(opts)
+	};
+
+	request.wait(seconds(10));
+	const auto code(request.get());
+	const auto time(timer.at<nanoseconds>());
+
+	const string_view fg {"#E8E8E8"};
+	const string_view bg {"#008000"};
+	const string_view sp {"&nbsp;"};
+
+	std::ostringstream out;
+	pubsetbuf(out, buf);
+	thread_local char tmbuf[32];
+	out
+	    << "<h5>"
+	    << "<font color=\"" << fg << "\" data-mx-bg-color=\"" << bg << "\">"
+	    << "<b>"
+	    << sp << sp << " ONLINE " << sp << sp
+	    << "</b>"
+	    << "</font> "
+	    << "</h5>"
+	    << "<pre>"
+	    << "response in " << pretty(tmbuf, time)
+	    << "</pre>"
+	    ;
+
+	const string_view rich
+	{
+		view(out, buf)
+	};
+
+	const string_view alt{fmt::sprintf
+	{
+		buf + size(rich), "response in %s", pretty(tmbuf, time)
+	}};
+
+	return { view(out, buf), alt };
 }
 
 std::pair<string_view, string_view>
