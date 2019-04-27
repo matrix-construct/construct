@@ -1761,7 +1761,7 @@ const
 	{
 		size_t ret{0};
 		const room::origins origins{room};
-		origins._for_each_([&ret](const string_view &)
+		origins._for_each(origins, [&ret](const string_view &)
 		{
 			++ret;
 			return true;
@@ -1916,7 +1916,7 @@ const
 	if(!room.event_id && membership == "join")
 	{
 		const room::origins origins{room};
-		return origins._for_each_([&closure, this]
+		return origins._for_each(origins, [&closure, this]
 		(const string_view &key)
 		{
 			const string_view &member
@@ -2078,7 +2078,7 @@ const
 {
 	string_view last;
 	char lastbuf[rfc1035::NAME_BUF_SIZE];
-	return _for_each_([&last, &lastbuf, &view]
+	return _for_each(*this, [&last, &lastbuf, &view]
 	(const string_view &key)
 	{
 		const string_view &origin
@@ -2098,8 +2098,8 @@ const
 }
 
 bool
-ircd::m::room::origins::_for_each_(const closure_bool &view)
-const
+ircd::m::room::origins::_for_each(const origins &origins,
+                                  const closure_bool &view)
 {
 	db::index &index
 	{
@@ -2108,7 +2108,7 @@ const
 
 	auto it
 	{
-		index.begin(room.room_id)
+		index.begin(origins.room.room_id)
 	};
 
 	for(; bool(it); ++it)

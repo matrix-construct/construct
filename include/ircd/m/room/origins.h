@@ -11,21 +11,20 @@
 #pragma once
 #define HAVE_IRCD_M_ROOM_ORIGINS_H
 
-/// Interface to the origins (autonomous systems) of a room
-///
-/// This interface focuses specifically on the origins (from the field in the
-/// event object) which are servers/networks/autonomous systems, or something.
-/// Messages have to be sent to them, and an efficient iteration of the
-/// origins as provided by this interface helps with that.
+/// Interface to the servers of a room. Messages have to be sent to them,
+/// and an efficient iteration of the origins as provided by this interface
+/// helps with that. This includes servers with joined members by default.
 ///
 struct ircd::m::room::origins
 {
 	using closure = std::function<void (const string_view &)>;
 	using closure_bool = std::function<bool (const string_view &)>;
 
+	static bool _for_each(const origins &, const closure_bool &view);
+
 	m::room room;
 
-	bool _for_each_(const closure_bool &view) const;
+  public:
 	bool for_each(const closure_bool &view) const;
 	void for_each(const closure &view) const;
 	bool has(const string_view &origin) const;
