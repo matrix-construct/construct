@@ -6063,7 +6063,7 @@ const noexcept
 		this->http::error::content
 	};
 
-	return content.get("error");
+	return unquote(content.get("error"));
 }
 
 ircd::string_view
@@ -6075,5 +6075,5 @@ const noexcept
 		this->http::error::content
 	};
 
-	return content.get("errcode", "M_UNKNOWN"_sv);
+	return unquote(content.get("errcode", "M_UNKNOWN"_sv));
 }
