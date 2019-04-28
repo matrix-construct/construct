@@ -11,6 +11,11 @@
 #pragma once
 #define HAVE_IRCD_M_ROOM_MEMBERS_H
 
+namespace ircd::m
+{
+	constexpr size_t MEMBERSHIP_MAX_SIZE {16};
+}
+
 /// Interface to the members of a room.
 ///
 /// This interface focuses specifically on room membership and its routines

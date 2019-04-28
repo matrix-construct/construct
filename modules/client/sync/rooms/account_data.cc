@@ -88,7 +88,7 @@ ircd::m::sync::room_account_data_linear_events(data &data,
 		lstrip(json::get<"type"_>(event), type.first)
 	};
 
-	char membuf[32];
+	char membuf[MEMBERSHIP_MAX_SIZE];
 	const auto membership
 	{
 		room.membership(membuf, data.user)
@@ -150,7 +150,7 @@ ircd::m::sync::room_account_data_linear_tags(data &data,
 		lstrip(json::get<"type"_>(event), type.first)
 	};
 
-	char membuf[32];
+	char membuf[MEMBERSHIP_MAX_SIZE];
 	const auto membership
 	{
 		room.membership(membuf, data.user)

@@ -90,7 +90,7 @@ get__initialsync_local(client &client,
                        const m::user &user,
                        json::stack::object &out)
 {
-	char membership_buf[32];
+	char membership_buf[m::MEMBERSHIP_MAX_SIZE];
 	json::stack::member
 	{
 		out, "membership", room.membership(membership_buf, request.user_id)

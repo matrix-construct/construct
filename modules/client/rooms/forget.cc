@@ -39,13 +39,13 @@ post__forget(client &client,
 			string_view{room_id}
 		};
 
-	char room_membuf[32];
+	char room_membuf[m::MEMBERSHIP_MAX_SIZE];
 	const string_view &room_membership
 	{
 		room.membership(room_membuf, request.user_id)
 	};
 
-	char user_membuf[32];
+	char user_membuf[m::MEMBERSHIP_MAX_SIZE];
 	string_view user_membership;
 	m::get(std::nothrow, event_idx, "content", [&user_membuf, &user_membership]
 	(const json::object &content)

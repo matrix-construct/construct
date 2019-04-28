@@ -72,7 +72,7 @@ get__make_leave(client &client,
 		room_id
 	};
 
-	char membuf[32];
+	char membuf[m::MEMBERSHIP_MAX_SIZE];
 	const string_view membership
 	{
 		room.membership(membuf, user_id)

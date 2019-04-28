@@ -22,7 +22,7 @@ _visible_(const m::event &event,
           const m::room &room,
           const string_view &history_visibility)
 {
-	char membership_buf[32];
+	char membership_buf[m::MEMBERSHIP_MAX_SIZE];
 	string_view membership
 	{
 		room.membership(membership_buf, user_id)
