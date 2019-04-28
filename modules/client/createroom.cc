@@ -351,11 +351,22 @@ try
 		const m::user::id &user_id{_user_id};
 		invite(room, user_id, creator, content);
 	}
+	catch(const m::error &e)
+	{
+		report_error
+		{
+			errors, room_id, creator, "Failed to invite user '%s' :%s :%s :%s",
+			_user_id,
+			e.what(),
+			e.errcode(),
+			e.errstr()
+		};
+	}
 	catch(const std::exception &e)
 	{
 		report_error
 		{
-			errors, room_id, creator, "Failed to invite user '%s': %s",
+			errors, room_id, creator, "Failed to invite user '%s' :%s",
 			_user_id,
 			e.what()
 		};
