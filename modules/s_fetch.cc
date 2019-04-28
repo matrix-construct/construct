@@ -177,7 +177,6 @@ try
 				json::get<"room_id"_>(*eval.event_)
 			};
 
-		const scope_restore auth_id{room.event_id, auth_id_missing};
 		auth_chain(room, remote);
 		auth_exists = auth_count;
 	}
