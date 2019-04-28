@@ -64,7 +64,21 @@ _visible_(const m::event &event,
 		room
 	};
 
-	return origins.has(node_id.host());
+	// Allow joined servers
+	if(origins.has(node_id.host()))
+		return true;
+
+	// Allow auth chain events XXX: this is too broad
+	if(m::event::auth::is_power_event(event))
+		return true;
+
+	// Allow any event where the state_key string is a user mxid and the server
+	// is the host of that user. Note that applies to any type of event.
+	if(m::valid(m::id::USER, json::get<"state_key"_>(event)))
+		if(m::user::id(at<"state_key"_>(event)).host() == node_id.host())
+			return true;
+
+	return false;
 }
 
 static bool
