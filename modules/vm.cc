@@ -717,12 +717,11 @@ ircd::m::vm::execute_pdu(eval &eval,
 			fault::EXISTS, "Event has already been evaluated."
 		};
 
-	if(opts.verify)
-		if(!verify(event))
-			throw m::BAD_SIGNATURE
-			{
-				"Signature verification failed"
-			};
+	if(opts.verify && !verify(event))
+		throw m::BAD_SIGNATURE
+		{
+			"Signature verification failed"
+		};
 
 	// Fetch dependencies
 	if(opts.fetch)
