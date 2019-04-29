@@ -42,8 +42,6 @@ struct ircd::m::event::prev
 	json::property<name::prev_events, json::array>
 >
 {
-	enum cond :int;
-
 	std::tuple<event::id, string_view> auth_events(const size_t &idx) const;
 	std::tuple<event::id, string_view> prev_states(const size_t &idx) const;
 	std::tuple<event::id, string_view> prev_events(const size_t &idx) const;
@@ -52,13 +50,17 @@ struct ircd::m::event::prev
 	event::id prev_state(const size_t &idx) const;
 	event::id prev_event(const size_t &idx) const;
 
-	size_t auth_events_count() const;
-	size_t prev_states_count() const;
-	size_t prev_events_count() const;
+	bool auth_event_exists(const size_t &idx) const;
+	bool prev_state_exists(const size_t &idx) const;
+	bool prev_event_exists(const size_t &idx) const;
 
 	bool auth_events_has(const event::id &) const;
 	bool prev_states_has(const event::id &) const;
 	bool prev_events_has(const event::id &) const;
+
+	size_t auth_events_count() const;
+	size_t prev_states_count() const;
+	size_t prev_events_count() const;
 
 	using super_type::tuple;
 	using super_type::operator=;

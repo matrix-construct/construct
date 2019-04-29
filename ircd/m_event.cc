@@ -1657,6 +1657,27 @@ const
 //
 
 bool
+ircd::m::event::prev::prev_event_exists(const size_t &idx)
+const
+{
+	return m::exists(prev_state(idx));
+}
+
+bool
+ircd::m::event::prev::prev_state_exists(const size_t &idx)
+const
+{
+	return m::exists(prev_state(idx));
+}
+
+bool
+ircd::m::event::prev::auth_event_exists(const size_t &idx)
+const
+{
+	return m::exists(auth_event(idx));
+}
+
+bool
 ircd::m::event::prev::prev_events_has(const event::id &event_id)
 const
 {
