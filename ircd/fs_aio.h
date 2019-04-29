@@ -12,6 +12,11 @@
 #define HAVE_FS_AIO_H
 #include <linux/aio_abi.h>
 
+/// Define this to try all read requests with RWF_NOWAIT first and indicate
+/// EAGAIN failure with a log dwarning. On EAGAIN the request is resubmitted
+/// without RWF_NOWAIT if the user expected blocking behavior.
+//#define RB_DEBUG_FS_AIO_READ_BLOCKING
+
 namespace ircd::fs::aio
 {
 	struct system;

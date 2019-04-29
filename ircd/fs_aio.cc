@@ -197,11 +197,45 @@ ircd::fs::aio::read(const fd &fd,
 	const scope_count cur_reads{stats.cur_reads};
 	stats.max_reads = std::max(stats.max_reads, stats.cur_reads);
 
-	// Make request; blocks ircd::ctx until completed or throw.
-	const size_t bytes
+	#if defined(RB_DEBUG_FS_AIO_READ_BLOCKING)
+	request.aio_rw_flags |= support_nowait? RWF_NOWAIT : 0;
+	#endif
+
+	size_t bytes
 	{
 		request()
 	};
+
+	#if defined(RB_DEBUG_FS_AIO_READ_BLOCKING)
+	const bool would_block
+	{
+		opts.blocking &&
+		request.aio_rw_flags & RWF_NOWAIT &&
+		request.retval == -1 &&
+		request.errcode == EAGAIN
+	};
+
+	if(would_block)
+	{
+		log::dwarning
+		{
+			log, "read blocks io_submit(): fd:%d size:%zu off:%zd op:%u pri:%u in_flight:%zu qcount:%zu",
+			request.aio_fildes,
+			request.aio_nbytes,
+			request.aio_offset,
+			request.aio_lio_opcode,
+			request.aio_reqprio,
+			system->in_flight,
+			system->qcount,
+		};
+
+		assert(bytes == 0);
+		request.aio_rw_flags &= ~RWF_NOWAIT;
+		request.retval = -2;
+		request.errcode = 0;
+		bytes = request();
+	}
+	#endif
 
 	stats.bytes_read += bytes;
 	stats.reads++;
