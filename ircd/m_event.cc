@@ -1711,28 +1711,28 @@ const
 }
 
 ircd::m::event::id
-ircd::m::event::prev::auth_event(const uint &idx)
+ircd::m::event::prev::auth_event(const size_t &idx)
 const
 {
 	return std::get<0>(auth_events(idx));
 }
 
 ircd::m::event::id
-ircd::m::event::prev::prev_state(const uint &idx)
+ircd::m::event::prev::prev_state(const size_t &idx)
 const
 {
 	return std::get<0>(prev_states(idx));
 }
 
 ircd::m::event::id
-ircd::m::event::prev::prev_event(const uint &idx)
+ircd::m::event::prev::prev_event(const size_t &idx)
 const
 {
 	return std::get<0>(prev_events(idx));
 }
 
 std::tuple<ircd::m::event::id, ircd::string_view>
-ircd::m::event::prev::auth_events(const uint &idx)
+ircd::m::event::prev::auth_events(const size_t &idx)
 const
 {
 	const json::array &auth_event
@@ -1747,7 +1747,7 @@ const
 }
 
 std::tuple<ircd::m::event::id, ircd::string_view>
-ircd::m::event::prev::prev_states(const uint &idx)
+ircd::m::event::prev::prev_states(const size_t &idx)
 const
 {
 	const json::array &state_event
@@ -1762,7 +1762,7 @@ const
 }
 
 std::tuple<ircd::m::event::id, ircd::string_view>
-ircd::m::event::prev::prev_events(const uint &idx)
+ircd::m::event::prev::prev_events(const size_t &idx)
 const
 {
 	const json::array &prev_event
