@@ -141,7 +141,6 @@ try
 	};
 
 	size_t auth_exists(0);
-	m::event::id::buf auth_id_missing;
 	if(opts.fetch_auth_check) for(size_t i(0); i < auth_count; ++i)
 	{
 		const auto &auth_id
@@ -150,22 +149,30 @@ try
 		};
 
 		if(m::exists(auth_id))
+		{
 			++auth_exists;
-		else if(!auth_id_missing)
-			auth_id_missing = auth_id;
+			continue;
+		}
 	}
 
 	if(opts.fetch_auth_check && auth_exists < auth_count)
 	{
-		assert(bool(auth_id_missing));
+		log::dwarning
+		{
+			log, "%s %s auth_events:%zu hit:%zu miss:%zu",
+			loghead(eval),
+			at<"event_id"_>(event),
+			auth_count,
+			auth_exists,
+			auth_count - auth_exists,
+		};
+
 		const net::hostport remote
 		{
 			eval.opts->node_id?
 				eval.opts->node_id:
 			!my_host(json::get<"origin"_>(event))?
 				string_view(json::get<"origin"_>(event)):
-			!my_host(auth_id_missing.host())?
-				auth_id_missing.host():
 				string_view{}
 		};
 

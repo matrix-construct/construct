@@ -11192,11 +11192,13 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 	events.erase(std::unique(begin(events), end(events)), end(events));
 
 	m::vm::opts vmopts;
+	vmopts.nothrows = -1;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.debuglog_accept = true;
 	vmopts.fetch_prev_check = false;
 	vmopts.fetch_state_check = false;
-	vmopts.nothrows = -1;
+	char rembuf[256];
+	vmopts.node_id = string(rembuf, remote);
 	m::vm::eval eval
 	{
 		vmopts
@@ -11463,6 +11465,8 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	vmopts.room_refs = true;
 	vmopts.fetch_prev_check = false;
 	vmopts.fetch_state_check = false;
+	char rembuf[256];
+	vmopts.node_id = string(rembuf, remote);
 	m::vm::eval eval
 	{
 		vmopts
