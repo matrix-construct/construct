@@ -16,6 +16,11 @@ namespace ircd::m::dbs
 	enum class ref :uint8_t;
 }
 
+/// Interface to the forward-references for an event. Forward-references are
+/// virtually constructed from prev-references made by other events. This
+/// interface queries the database which has pre-indexed the prev-references
+/// made by other events at their insertion (it does not conduct any expensive
+/// scan when using this interface, etc).
 struct ircd::m::event::refs
 {
 	event::idx idx;

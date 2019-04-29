@@ -25,6 +25,15 @@ namespace ircd::m
 	std::string pretty_oneline(const event::prev &);
 }
 
+/// Interface to the previous-references of an event. This interface overlays
+/// on the m::event tuple and adds functionality focused specifically on the
+/// various reference properties in the event data.
+///
+/// Instances of this class "overlay" on the event tuple, meaning one just
+/// passes an m::event (or a json::object which would be passed to an m::event)
+/// to the constructor of this class. This class only has the properties of
+/// the event which contain references, and a suite of functions to work with
+/// those references.
 struct ircd::m::event::prev
 :json::tuple
 <
