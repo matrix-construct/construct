@@ -12,6 +12,7 @@
 namespace ircd::m::fetch
 {
 	struct request; // m/fetch.h
+	struct evaltab;
 
 	static bool operator<(const request &a, const request &b) noexcept;
 	static bool operator<(const request &a, const string_view &b) noexcept;
@@ -46,11 +47,23 @@ namespace ircd::m::fetch
 	static size_t request_cleanup();
 	static void request_worker();
 
-	static void hook_handler(const event &, vm::eval &);
+	static void hook_handle_prev(const event &, vm::eval &, evaltab &, const room &);
+	static void hook_handle_auth(const event &, vm::eval &, evaltab &, const room &);
+	static void hook_handle(const event &, vm::eval &);
 
 	static void init();
 	static void fini();
 }
+
+struct ircd::m::fetch::evaltab
+{
+	size_t auth_count {0};
+	size_t auth_exists {0};
+	size_t prev_count {0};
+	size_t prev_exists {0};
+	size_t prev_fetching {0};
+	size_t prev_fetched {0};
+};
 
 template<class... args>
 bool

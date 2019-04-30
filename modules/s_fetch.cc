@@ -40,7 +40,7 @@ ircd::m::fetch::auth_timeout
 decltype(ircd::m::fetch::hook)
 ircd::m::fetch::hook
 {
-	hook_handler,
+	hook_handle,
 	{
 		{ "_site",  "vm.fetch" }
 	}
@@ -98,16 +98,13 @@ ircd::m::fetch::fini()
 //
 
 void
-ircd::m::fetch::hook_handler(const event &event,
-                             vm::eval &eval)
+ircd::m::fetch::hook_handle(const event &event,
+                            vm::eval &eval)
 try
 {
 	assert(eval.opts);
 	assert(eval.opts->fetch);
-	const auto &opts
-	{
-		*eval.opts
-	};
+	const auto &opts{*eval.opts};
 
 	const auto &type
 	{
@@ -130,141 +127,25 @@ try
 	m::room room{room_id};
 	room.event_id = event_id;
 
-	const event::prev prev
-	{
-		*eval.event_
-	};
+	evaltab tab;
+	if(opts.fetch_auth_check)
+		hook_handle_auth(event, eval, tab, room);
 
-	const size_t auth_count
-	{
-		size(json::get<"auth_events"_>(prev))
-	};
-
-	size_t auth_exists(0);
-	if(opts.fetch_auth_check) for(size_t i(0); i < auth_count; ++i)
-	{
-		const auto &auth_id
-		{
-			prev.auth_event(i)
-		};
-
-		if(m::exists(auth_id))
-		{
-			++auth_exists;
-			continue;
-		}
-	}
-
-	if(opts.fetch_auth_check && auth_exists < auth_count)
-	{
-		log::dwarning
-		{
-			log, "%s %s auth_events:%zu hit:%zu miss:%zu",
-			loghead(eval),
-			at<"event_id"_>(event),
-			auth_count,
-			auth_exists,
-			auth_count - auth_exists,
-		};
-
-		const net::hostport remote
-		{
-			eval.opts->node_id?
-				eval.opts->node_id:
-			!my_host(json::get<"origin"_>(event))?
-				string_view(json::get<"origin"_>(event)):
-				string_view{}
-		};
-
-		if(!opts.fetch_auth || !bool(m::fetch::enable) || !remote)
-			throw vm::error
-			{
-				vm::fault::EVENT, "Failed to fetch auth_events for %s in %s",
-				json::get<"event_id"_>(*eval.event_),
-				json::get<"room_id"_>(*eval.event_)
-			};
-
-		auth_chain(room, remote);
-		auth_exists = auth_count;
-	}
-
-	const size_t prev_count
-	{
-		size(json::get<"prev_events"_>(prev))
-	};
-
-	size_t prev_exists(0), prev_fetching(0);
-	if(opts.fetch_prev_check) for(size_t i(0); i < prev_count; ++i)
-	{
-		const auto &prev_id
-		{
-			prev.prev_event(i)
-		};
-
-		if(m::exists(prev_id))
-		{
-			++prev_exists;
-			continue;
-		}
-
-		const bool can_fetch
-		{
-			opts.fetch_prev && bool(m::fetch::enable)
-		};
-
-		const bool fetching
-		{
-			can_fetch && start(room_id, prev_id)
-		};
-
-		prev_fetching += fetching;
-	}
-
-	size_t prev_fetched(0);
-	if(prev_fetching && opts.fetch_prev_wait) for(size_t i(0); i < prev_count; ++i)
-	{
-		const auto &prev_id
-		{
-			prev.prev_event(i)
-		};
-
-		dock.wait([&prev_id]
-		{
-			return !requests.count(prev_id);
-		});
-
-		prev_fetched += m::exists(prev_id);
-	}
+	if(opts.fetch_prev_check)
+		hook_handle_prev(event, eval, tab, room);
 
 	log::debug
 	{
 		log, "%s %s %s ac:%zu ae:%zu pc:%zu pe:%zu pf:%zu",
 		loghead(eval),
-		json::get<"event_id"_>(*eval.event_),
-		json::get<"room_id"_>(*eval.event_),
-		auth_count,
-		auth_exists,
-		prev_count,
-		prev_exists,
-		prev_fetched,
+		json::get<"event_id"_>(event),
+		json::get<"room_id"_>(event),
+		tab.auth_count,
+		tab.auth_exists,
+		tab.prev_count,
+		tab.prev_exists,
+		tab.prev_fetched,
 	};
-
-	if(opts.fetch_prev_check && opts.fetch_prev_wait && prev_exists + prev_fetched == 0)
-		throw vm::error
-		{
-			vm::fault::EVENT, "Failed to fetch any prev_events for %s in %s",
-			json::get<"event_id"_>(*eval.event_),
-			json::get<"room_id"_>(*eval.event_)
-		};
-
-	if(opts.fetch_prev_check && opts.fetch_prev_wait && opts.fetch_prev_all && prev_exists + prev_fetched < prev_count)
-		throw vm::error
-		{
-			vm::fault::EVENT, "Failed to fetch all %zu required prev_events for %s in %s",
-			prev_count,
-			json::get<"event_id"_>(*eval.event_),
-			json::get<"room_id"_>(*eval.event_)
-		};
 }
 catch(const std::exception &e)
 {
@@ -277,6 +158,147 @@ catch(const std::exception &e)
 	};
 
 	throw;
+}
+
+void
+ircd::m::fetch::hook_handle_auth(const event &event,
+                                 vm::eval &eval,
+                                 evaltab &tab,
+                                 const room &room)
+
+{
+	const auto &opts{*eval.opts};
+	const event::prev prev{event};
+	tab.auth_count = size(json::get<"auth_events"_>(prev));
+	for(size_t i(0); i < tab.auth_count; ++i)
+	{
+		const auto &auth_id
+		{
+			prev.auth_event(i)
+		};
+
+		tab.auth_exists += bool(m::exists(auth_id));
+	}
+
+	assert(tab.auth_exists <= tab.auth_count);
+	if(tab.auth_exists == tab.auth_count)
+		return;
+
+	log::dwarning
+	{
+		log, "%s %s auth_events:%zu hit:%zu miss:%zu",
+		loghead(eval),
+		at<"event_id"_>(event),
+		tab.auth_count,
+		tab.auth_exists,
+		tab.auth_count - tab.auth_exists,
+	};
+
+	const net::hostport remote
+	{
+		opts.node_id?
+			opts.node_id:
+		!my_host(json::get<"origin"_>(event))?
+			string_view(json::get<"origin"_>(event)):
+			string_view{}
+	};
+
+	if(!opts.fetch_auth || !bool(m::fetch::enable) || !remote)
+		throw vm::error
+		{
+			vm::fault::EVENT, "Failed to fetch auth_events for %s in %s",
+			json::get<"event_id"_>(event),
+			json::get<"room_id"_>(event)
+		};
+
+	auth_chain(room, remote);
+	tab.auth_exists = tab.auth_count;
+}
+
+void
+ircd::m::fetch::hook_handle_prev(const event &event,
+                                 vm::eval &eval,
+                                 evaltab &tab,
+                                 const room &room)
+{
+	const auto &opts{*eval.opts};
+	const event::prev prev{event};
+	tab.prev_count = size(json::get<"prev_events"_>(prev));
+	for(size_t i(0); i < tab.prev_count; ++i)
+	{
+		const auto &prev_id
+		{
+			prev.prev_event(i)
+		};
+
+		if(m::exists(prev_id))
+		{
+			++tab.prev_exists;
+			continue;
+		}
+
+		const bool can_fetch
+		{
+			opts.fetch_prev && bool(m::fetch::enable)
+		};
+
+		const bool fetching
+		{
+			can_fetch && start(room.room_id, prev_id)
+		};
+
+		tab.prev_fetching += fetching;
+	}
+
+	assert(tab.prev_exists <= tab.prev_count);
+	if(tab.prev_exists == tab.prev_count)
+		return;
+
+	log::dwarning
+	{
+		log, "%s %s prev_events:%zu hit:%zu miss:%zu fetching:%zu",
+		loghead(eval),
+		at<"event_id"_>(event),
+		tab.prev_count,
+		tab.prev_exists,
+		tab.prev_count - tab.prev_exists,
+		tab.prev_fetching,
+	};
+
+	const bool &prev_wait{opts.fetch_prev_wait};
+	if(prev_wait && tab.prev_fetching) for(size_t i(0); i < tab.prev_count; ++i)
+	{
+		const auto &prev_id
+		{
+			prev.prev_event(i)
+		};
+
+		dock.wait([&prev_id]
+		{
+			return !requests.count(prev_id);
+		});
+
+		tab.prev_fetched += m::exists(prev_id);
+	}
+
+	const bool &prev_any{opts.fetch_prev_any};
+	if(prev_any && tab.prev_exists + tab.prev_fetched == 0)
+		throw vm::error
+		{
+			vm::fault::EVENT, "Failed to fetch any prev_events for %s in %s",
+			json::get<"event_id"_>(event),
+			json::get<"room_id"_>(event)
+		};
+
+	const bool &prev_all{opts.fetch_prev_all};
+	if(prev_all && tab.prev_exists + tab.prev_fetched < tab.prev_count)
+		throw vm::error
+		{
+			vm::fault::EVENT, "Failed to fetch all %zu required prev_events for %s in %s",
+			tab.prev_count,
+			json::get<"event_id"_>(event),
+			json::get<"room_id"_>(event)
+		};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
