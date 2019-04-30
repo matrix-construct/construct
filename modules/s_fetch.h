@@ -64,13 +64,16 @@ ircd::m::fetch::submit(const m::event::id &event_id,
 		requests.lower_bound(string_view(event_id))
 	};
 
-	if(it == end(requests) || it->event_id != event_id) try
+	if(it != end(requests) && it->event_id == event_id)
+	{
+		assert(it->room_id == room_id);
+		return false;
+	}
+	else try
 	{
 		it = requests.emplace_hint(it, room_id, event_id, bufsz, std::forward<args>(a)...);
 		auto &request(const_cast<fetch::request &>(*it));
-		while(!start(request))
-			request.origin = {};
-
+		while(!start(request)) request.origin = {};
 		return true;
 	}
 	catch(const std::exception &e)
@@ -86,7 +89,4 @@ ircd::m::fetch::submit(const m::event::id &event_id,
 		requests.erase(it);
 		return false;
 	};
-
-	assert(it->room_id == room_id);
-	return false;
 }
