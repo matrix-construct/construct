@@ -10,19 +10,16 @@
 
 namespace ircd::m::vm
 {
+	template<class... args> static fault handle_error(const opts &, const fault &, const string_view &fmt, args&&... a);
+	static size_t calc_txn_reserve(const opts &, const event &);
 	static void write_commit(eval &);
 	static void write_append(eval &, const event &);
 	static void write_prepare(eval &, const event &);
 	static fault execute_edu(eval &, const event &);
 	static fault execute_pdu(eval &, const event &);
-
-	template<class... args>
-	static fault handle_error(const opts &opts, const fault &code, const string_view &fmt, args&&... a);
-
 	fault execute(eval &, const event &);
 	fault inject(eval &, json::iov &, const json::iov &);
 	fault inject(eval &, const room &, json::iov &, const json::iov &);
-
 	static void init();
 	static void fini();
 
@@ -629,34 +626,6 @@ catch(const std::exception &e) // ALL OTHER ERRORS
 	);
 }
 
-template<class... args>
-ircd::m::vm::fault
-ircd::m::vm::handle_error(const vm::opts &opts,
-                          const vm::fault &code,
-                          const string_view &fmt,
-                          args&&... a)
-{
-	if(opts.errorlog & code)
-		log::error
-		{
-			log, fmt, std::forward<args>(a)...
-		};
-
-	if(opts.warnlog & code)
-		log::warning
-		{
-			log, fmt, std::forward<args>(a)...
-		};
-
-	if(~opts.nothrows & code)
-		throw error
-		{
-			code, fmt, std::forward<args>(a)...
-		};
-
-	return code;
-}
-
 enum ircd::m::vm::fault
 ircd::m::vm::execute_edu(eval &eval,
                           const event &event)
@@ -843,19 +812,12 @@ ircd::m::vm::write_prepare(eval &eval,
 	if(!eval.for_each(eval.ctx, get_other_txn))
 		return;
 
-	const size_t reserve_bytes
-	{
-		opts.reserve_bytes == size_t(-1)?
-			size_t(json::serialized(event) * 1.66):
-			opts.reserve_bytes
-	};
-
 	eval.txn = std::make_shared<db::txn>
 	(
 		*dbs::events, db::txn::opts
 		{
-			reserve_bytes + opts.reserve_index,   // reserve_bytes
-			0,                                    // max_bytes (no max)
+			calc_txn_reserve(opts, event),   // reserve_bytes
+			0,                               // max_bytes (no max)
 		}
 	);
 }
@@ -955,4 +917,46 @@ ircd::m::vm::write_commit(eval &eval)
 		txn.bytes()
 	};
 	#endif
+}
+
+size_t
+ircd::m::vm::calc_txn_reserve(const opts &opts,
+                              const event &event)
+{
+	const size_t reserve_event
+	{
+		opts.reserve_bytes == size_t(-1)?
+			size_t(json::serialized(event) * 1.66):
+			opts.reserve_bytes
+	};
+
+	return reserve_event + opts.reserve_index;
+}
+
+template<class... args>
+ircd::m::vm::fault
+ircd::m::vm::handle_error(const vm::opts &opts,
+                          const vm::fault &code,
+                          const string_view &fmt,
+                          args&&... a)
+{
+	if(opts.errorlog & code)
+		log::error
+		{
+			log, fmt, std::forward<args>(a)...
+		};
+
+	if(opts.warnlog & code)
+		log::warning
+		{
+			log, fmt, std::forward<args>(a)...
+		};
+
+	if(~opts.nothrows & code)
+		throw error
+		{
+			code, fmt, std::forward<args>(a)...
+		};
+
+	return code;
 }
