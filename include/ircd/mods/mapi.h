@@ -15,10 +15,12 @@
 #define IRCD_MODULE_EXPORT_DATA_SECTION "ircd.data"
 
 #define IRCD_MODULE_EXPORT_CODE \
-	__attribute__((section(IRCD_MODULE_EXPORT_CODE_SECTION)))
+	__attribute__((section(IRCD_MODULE_EXPORT_CODE_SECTION))) \
+	__attribute__((visibility("default")))
 
 #define IRCD_MODULE_EXPORT_DATA \
-	__attribute__((section(IRCD_MODULE_EXPORT_DATA_SECTION)))
+	__attribute__((section(IRCD_MODULE_EXPORT_DATA_SECTION))) \
+	__attribute__((visibility("default")))
 
 // Common convenience
 #define IRCD_MODULE_EXPORT \
@@ -82,7 +84,8 @@ IRCD_MAPI_SERIAL
 /// be externally visible. If this is not present or not visible, ircd::mods
 /// will not consider the file to be an IRCd module and it will be ignored.
 ///
-struct ircd::mapi::header
+struct __attribute__((visibility("default")))
+ircd::mapi::header
 {
 	const magic_t magic {IRCD_MAPI_MAGIC};       // The magic must match
 	const version_t version {IRCD_MAPI_VERSION}; // Version indicator
