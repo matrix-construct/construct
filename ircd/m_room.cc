@@ -8,6 +8,620 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+size_t
+ircd::m::room::purge(const room &room)
+{
+	using prototype = size_t (const m::room &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::purge"
+	};
+
+	return call(room);
+}
+
+size_t
+ircd::m::room::state::purge_replaced(const state &state)
+{
+	using prototype = size_t (const room::state &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::purge_replaced"
+	};
+
+	return call(state);
+}
+
+bool
+ircd::m::room::state::force_present(const event &event)
+{
+	using prototype = bool (const m::event &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::force_present"
+	};
+
+	return call(event);
+}
+
+size_t
+ircd::m::room::state::rebuild_present(const state &state)
+{
+	using prototype = bool (const room::state &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::rebuild_present"
+	};
+
+	return call(state);
+}
+
+size_t
+ircd::m::room::state::rebuild_history(const state &state)
+{
+	using prototype = bool (const room::state &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::rebuild_history"
+	};
+
+	return call(state);
+}
+
+size_t
+ircd::m::room::state::clear_history(const state &state)
+{
+	using prototype = bool (const room::state &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::clear_history"
+	};
+
+	return call(state);
+}
+
+size_t
+ircd::m::room::state::prefetch(const state &state,
+                               const string_view &type,
+                               const event::idx_range &range)
+{
+	using prototype = size_t (const room::state &, const string_view &, const event::idx_range &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::prefetch"
+	};
+
+	return call(state, type, range);
+}
+
+ircd::m::event::idx
+ircd::m::room::state::next(const event::idx &event_idx)
+{
+	using prototype = event::idx (const event::idx &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::next"
+	};
+
+	return call(event_idx);
+}
+
+ircd::m::event::idx
+ircd::m::room::state::prev(const event::idx &event_idx)
+{
+	using prototype = event::idx (const event::idx &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::prev"
+	};
+
+	return call(event_idx);
+}
+
+bool
+ircd::m::room::state::next(const event::idx &event_idx,
+                           const event::closure_idx_bool &closure)
+{
+	using prototype = bool (const event::idx &, const event::closure_idx_bool &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::next"
+	};
+
+	return call(event_idx, closure);
+}
+
+bool
+ircd::m::room::state::prev(const event::idx &event_idx,
+                           const event::closure_idx_bool &closure)
+{
+	using prototype = bool (const event::idx &, const event::closure_idx_bool &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::room::state::prev"
+	};
+
+	return call(event_idx, closure);
+}
+
+ircd::m::room
+ircd::m::create(const id::room &room_id,
+                const id::user &creator,
+                const string_view &preset)
+{
+	return create(createroom
+	{
+		{ "room_id",  room_id },
+		{ "creator",  creator },
+		{ "preset",   preset  },
+	});
+}
+
+ircd::m::room
+ircd::m::create(const createroom &c,
+                json::stack::array *const &errors)
+{
+	using prototype = room (const createroom &, json::stack::array *const &);
+
+	static mods::import<prototype> call
+	{
+		"client_createroom", "ircd::m::create"
+	};
+
+	return call(c, errors);
+}
+
+ircd::m::event::id::buf
+ircd::m::join(const id::room_alias &room_alias,
+              const id::user &user_id)
+{
+	using prototype = event::id::buf (const id::room_alias &, const id::user &);
+
+	static mods::import<prototype> function
+	{
+		"client_rooms", "ircd::m::join"
+	};
+
+	return function(room_alias, user_id);
+}
+
+ircd::m::event::id::buf
+ircd::m::join(const room &room,
+              const id::user &user_id)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &);
+
+	static mods::import<prototype> function
+	{
+		"client_rooms", "ircd::m::join"
+	};
+
+	return function(room, user_id);
+}
+
+ircd::m::event::id::buf
+ircd::m::leave(const room &room,
+               const id::user &user_id)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &);
+
+	static mods::import<prototype> function
+	{
+		"client_rooms", "ircd::m::leave"
+	};
+
+	return function(room, user_id);
+}
+
+ircd::m::event::id::buf
+ircd::m::invite(const room &room,
+                const id::user &target,
+                const id::user &sender)
+{
+	json::iov content;
+	return invite(room, target, sender, content);
+}
+
+ircd::m::event::id::buf
+ircd::m::invite(const room &room,
+                const id::user &target,
+                const id::user &sender,
+                json::iov &content)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &, const id::user &, json::iov &);
+
+	static mods::import<prototype> call
+	{
+		"client_rooms", "ircd::m::invite"
+	};
+
+	return call(room, target, sender, content);
+}
+
+ircd::m::event::id::buf
+ircd::m::redact(const room &room,
+                const id::user &sender,
+                const id::event &event_id,
+                const string_view &reason)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &, const id::event &, const string_view &);
+
+	static mods::import<prototype> function
+	{
+		"client_rooms", "redact__"
+	};
+
+	return function(room, sender, event_id, reason);
+}
+
+ircd::m::event::id::buf
+ircd::m::notice(const room &room,
+                const string_view &body)
+{
+	return message(room, me.user_id, body, "m.notice");
+}
+
+ircd::m::event::id::buf
+ircd::m::notice(const room &room,
+                const m::id::user &sender,
+                const string_view &body)
+{
+	return message(room, sender, body, "m.notice");
+}
+
+ircd::m::event::id::buf
+ircd::m::msghtml(const room &room,
+                 const m::id::user &sender,
+                 const string_view &html,
+                 const string_view &alt,
+                 const string_view &msgtype)
+{
+	return message(room, sender,
+	{
+		{ "msgtype",         msgtype                       },
+		{ "format",          "org.matrix.custom.html"      },
+		{ "body",            { alt?: html, json::STRING }  },
+		{ "formatted_body",  { html, json::STRING }        },
+	});
+}
+
+ircd::m::event::id::buf
+ircd::m::message(const room &room,
+                 const m::id::user &sender,
+                 const string_view &body,
+                 const string_view &msgtype)
+{
+	return message(room, sender,
+	{
+		{ "body",     { body,    json::STRING } },
+		{ "msgtype",  { msgtype, json::STRING } },
+	});
+}
+
+ircd::m::event::id::buf
+ircd::m::message(const room &room,
+                 const m::id::user &sender,
+                 const json::members &contents)
+{
+	return send(room, sender, "m.room.message", contents);
+}
+
+ircd::m::event::id::buf
+__attribute__((stack_protect))
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const string_view &state_key,
+              const json::members &contents)
+{
+	const size_t contents_count
+	{
+		std::min(contents.size(), json::object::max_sorted_members)
+	};
+
+	json::iov _content;
+	json::iov::push content[contents_count]; // 48B each
+	return send(room, sender, type, state_key, make_iov(_content, content, contents_count, contents));
+}
+
+ircd::m::event::id::buf
+__attribute__((stack_protect))
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const string_view &state_key,
+              const json::object &contents)
+{
+	const size_t contents_count
+	{
+		std::min(contents.size(), json::object::max_sorted_members)
+	};
+
+	json::iov _content;
+	json::iov::push content[contents_count]; // 48B each
+	return send(room, sender, type, state_key, make_iov(_content, content, contents_count, contents));
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const string_view &state_key,
+              const json::iov &content)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &, const string_view &, const string_view &, const json::iov &);
+
+	static mods::import<prototype> function
+	{
+		"client_rooms", "ircd::m::send"
+	};
+
+	return function(room, sender, type, state_key, content);
+}
+
+ircd::m::event::id::buf
+__attribute__((stack_protect))
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const json::members &contents)
+{
+	const size_t contents_count
+	{
+		std::min(contents.size(), json::object::max_sorted_members)
+	};
+
+	json::iov _content;
+	json::iov::push content[contents_count]; // 48B each
+	return send(room, sender, type, make_iov(_content, content, contents_count, contents));
+}
+
+ircd::m::event::id::buf
+__attribute__((stack_protect))
+ircd::m::send(const room &room,
+              const m::id::user &sender,
+              const string_view &type,
+              const json::object &contents)
+{
+	const size_t contents_count
+	{
+		std::min(contents.size(), json::object::max_sorted_members)
+	};
+
+	json::iov _content;
+	json::iov::push content[contents_count]; // 48B each
+	return send(room, sender, type, make_iov(_content, content, contents_count, contents));
+}
+
+ircd::m::event::id::buf
+ircd::m::send(const room &room,
+              const id::user &sender,
+              const string_view &type,
+              const json::iov &content)
+{
+	using prototype = event::id::buf (const m::room &, const id::user &, const string_view &, const json::iov &);
+
+	static mods::import<prototype> function
+	{
+		"client_rooms", "ircd::m::send"
+	};
+
+	return function(room, sender, type, content);
+}
+
+ircd::m::event::id::buf
+ircd::m::commit(const room &room,
+                json::iov &event,
+                const json::iov &contents)
+{
+	vm::copts opts
+	{
+		room.copts?
+			*room.copts:
+			vm::default_copts
+	};
+
+	// Some functionality on this server may create an event on behalf
+	// of remote users. It's safe for us to mask this here, but eval'ing
+	// this event in any replay later will require special casing.
+	opts.non_conform |= event::conforms::MISMATCH_ORIGIN_SENDER;
+
+	 // Stupid protocol workaround
+	opts.non_conform |= event::conforms::MISSING_PREV_STATE;
+
+	// Don't need this here
+	opts.verify = false;
+
+	vm::eval eval
+	{
+		opts
+	};
+
+	eval(room, event, contents);
+	return eval.event_id;
+}
+
+std::pair<int64_t, ircd::m::event::idx>
+ircd::m::twain(const room &r)
+{
+	static mods::import<decltype(twain)> call
+	{
+		"m_room", "ircd::m::twain"
+	};
+
+	return call(r);
+}
+
+std::pair<int64_t, ircd::m::event::idx>
+ircd::m::sounding(const room &r)
+{
+	static mods::import<decltype(sounding)> call
+	{
+		"m_room", "ircd::m::sounding"
+	};
+
+	return call(r);
+}
+
+std::pair<int64_t, ircd::m::event::idx>
+ircd::m::surface(const room &r)
+{
+	static mods::import<decltype(surface)> call
+	{
+		"m_room", "ircd::m::surface"
+	};
+
+	return call(r);
+}
+
+bool
+ircd::m::rfor_each_depth_gap(const room &r,
+                             const depth_range_closure &c)
+{
+	using prototype = bool (const room &, const depth_range_closure &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::rfor_each_depth_gap"
+	};
+
+	return call(r, c);
+}
+
+bool
+ircd::m::for_each_depth_gap(const room &r,
+                            const depth_range_closure &c)
+{
+	using prototype = bool (const room &, const depth_range_closure &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::for_each_depth_gap"
+	};
+
+	return call(r, c);
+}
+
+size_t
+ircd::m::count_since(const m::event::id &a,
+                     const m::event::id &b)
+{
+	return count_since(index(a), index(b));
+}
+
+size_t
+ircd::m::count_since(const m::event::idx &a,
+                     const m::event::idx &b)
+{
+	// Get the room_id from b here; a might not be in the same room but downstream
+	// the counter seeks to a in the given room and will properly fail there.
+	room::id::buf room_id
+	{
+		m::get(std::max(a, b), "room_id", room_id)
+	};
+
+	return count_since(room_id, a, b);
+}
+
+size_t
+ircd::m::count_since(const room &room,
+                     const m::event::id &a,
+                     const m::event::id &b)
+{
+	return count_since(room, index(a), index(b));
+}
+
+size_t
+ircd::m::count_since(const room &r,
+                     const event::idx &a,
+                     const event::idx &b)
+{
+	using prototype = size_t (const room &,
+	                          const event::idx &,
+	                          const event::idx &);
+
+	static mods::import<prototype> call
+	{
+		"m_room", "ircd::m::count_since"
+	};
+
+	return call(r, std::min(a, b), std::max(a, b));
+}
+
+ircd::m::id::room::buf
+ircd::m::room_id(const id::room_alias &room_alias)
+{
+	char buf[m::id::MAX_SIZE + 1];
+	static_assert(sizeof(buf) <= 256);
+	return room_id(buf, room_alias);
+}
+
+ircd::m::id::room::buf
+ircd::m::room_id(const string_view &room_id_or_alias)
+{
+	char buf[m::id::MAX_SIZE + 1];
+	static_assert(sizeof(buf) <= 256);
+	return room_id(buf, room_id_or_alias);
+}
+
+ircd::m::id::room
+ircd::m::room_id(const mutable_buffer &out,
+                 const string_view &room_id_or_alias)
+{
+	switch(m::sigil(room_id_or_alias))
+	{
+		case id::ROOM:
+			return id::room{out, room_id_or_alias};
+
+		case id::USER:
+		{
+			const m::user::room user_room(room_id_or_alias);
+			return string_view{data(out), copy(out, user_room.room_id)};
+		}
+
+		default:
+			return room_id(out, id::room_alias{room_id_or_alias});
+	}
+}
+
+ircd::m::id::room
+ircd::m::room_id(const mutable_buffer &out,
+                 const id::room_alias &room_alias)
+{
+	room::id ret;
+	room::aliases::cache::get(room_alias, [&out, &ret]
+	(const room::id &room_id)
+	{
+		ret = string_view { data(out), copy(out, room_id) };
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::exists(const id::room_alias &room_alias,
+                const bool &remote_query)
+{
+	if(room::aliases::cache::has(room_alias))
+		return true;
+
+	if(!remote_query)
+		return false;
+
+	return room::aliases::cache::get(std::nothrow, room_alias, [](const room::id &room_id) {});
+}
+
 int64_t
 ircd::m::depth(const id::room &room_id)
 {
