@@ -17,6 +17,11 @@
 /// without RWF_NOWAIT if the user expected blocking behavior.
 //#define RB_DEBUG_FS_AIO_READ_BLOCKING
 
+/// Define to time the io_submit() system call with a syscall_usage_warning.
+/// This emits a warning when the kernel spent a lot of time in io_submit().
+/// The resolution is very low at 10ms but it is not expensive to use.
+//#define RB_DEBUG_FS_AIO_SUBMIT_BLOCKING
+
 namespace ircd::fs::aio
 {
 	struct system;

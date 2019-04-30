@@ -903,9 +903,7 @@ size_t
 ircd::fs::aio::system::io_submit()
 try
 {
-	assert(qcount > 0);
-
-	#ifdef RB_DEBUG
+	#ifdef RB_DEBUG_FS_AIO_SUBMIT_BLOCKING
 	const size_t count[3]
 	{
 		count_queued(op::READ),
@@ -924,12 +922,13 @@ try
 	};
 	#endif
 
+	assert(qcount > 0);
 	const auto ret
 	{
 		syscall<SYS_io_submit>(head.get(), qcount, queue.data())
 	};
 
-	#ifdef RB_DEBUG
+	#ifdef RB_DEBUG_FS_AIO_SUBMIT_BLOCKING
 	stats.stalls += warning.timer.sample() > 0;
 	#endif
 
