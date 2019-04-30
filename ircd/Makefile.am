@@ -95,66 +95,59 @@ libircd_la_LIBADD = \
 # Add the most dependent units at the end and the least dependent units
 # at the beginning.
 #
-libircd_la_SOURCES =   \
-	assert.cc          \
-	info.cc            \
-	allocator.cc       \
-	exception.cc       \
-	util.cc            \
-	demangle.cc        \
-	locale.cc          \
-	lexical.cc         \
-	tokens.cc          \
-	parse.cc           \
-	rand.cc            \
-	base.cc            \
-	crh.cc             \
-	fmt.cc             \
-	json.cc            \
-	conf.cc            \
-	logger.cc          \
-	magic.cc           \
-	stats.cc           \
-	prof.cc            \
-	fs.cc              \
-	sodium.cc          \
-	openssl.cc         \
-	rfc1459.cc         \
-	rfc3986.cc         \
-	rfc1035.cc         \
-	http.cc            \
-	ios.cc             \
-	ctx.cc             \
-	mods.cc            \
-	db_port.cc         \
-	db_env.cc          \
-	db.cc              \
-	net.cc             \
-	server.cc          \
-	client.cc          \
-	resource.cc        \
-	m_name.cc          \
-	m_id.cc            \
-	m_event.cc         \
-	m_dbs.cc           \
-	m_state.cc         \
-	m_room.cc          \
-	m_v1.cc            \
-	m.cc               \
-	ircd.cc            \
-	###
-
+libircd_la_SOURCES =#
+libircd_la_SOURCES += assert.cc
+libircd_la_SOURCES += info.cc
+libircd_la_SOURCES += allocator.cc
+libircd_la_SOURCES += exception.cc
+libircd_la_SOURCES += util.cc
+libircd_la_SOURCES += demangle.cc
+libircd_la_SOURCES += locale.cc
+libircd_la_SOURCES += lexical.cc
+libircd_la_SOURCES += tokens.cc
+libircd_la_SOURCES += parse.cc
+libircd_la_SOURCES += rand.cc
+libircd_la_SOURCES += base.cc
+libircd_la_SOURCES += crh.cc
+libircd_la_SOURCES += fmt.cc
+libircd_la_SOURCES += json.cc
+libircd_la_SOURCES += conf.cc
+libircd_la_SOURCES += logger.cc
+libircd_la_SOURCES += magic.cc
+libircd_la_SOURCES += stats.cc
+libircd_la_SOURCES += prof.cc
+libircd_la_SOURCES += fs.cc
 if AIO
-libircd_la_SOURCES +=  \
-	fs_aio.cc          \
-	###
+libircd_la_SOURCES += fs_aio.cc
 endif
-
+libircd_la_SOURCES += sodium.cc
+libircd_la_SOURCES += openssl.cc
+libircd_la_SOURCES += rfc1459.cc
+libircd_la_SOURCES += rfc3986.cc
+libircd_la_SOURCES += rfc1035.cc
+libircd_la_SOURCES += http.cc
+libircd_la_SOURCES += ios.cc
+libircd_la_SOURCES += ctx.cc
+libircd_la_SOURCES += mods.cc
+libircd_la_SOURCES += db_port.cc
+libircd_la_SOURCES += db_env.cc
+libircd_la_SOURCES += db.cc
+libircd_la_SOURCES += net.cc
+libircd_la_SOURCES += server.cc
+libircd_la_SOURCES += client.cc
+libircd_la_SOURCES += resource.cc
 if JS
-libircd_la_SOURCES +=  \
-	js.cc              \
-	###
+libircd_la_SOURCES += js.cc
 endif
+libircd_la_SOURCES += m_name.cc
+libircd_la_SOURCES += m_id.cc
+libircd_la_SOURCES += m_event.cc
+libircd_la_SOURCES += m_dbs.cc
+libircd_la_SOURCES += m_state.cc
+libircd_la_SOURCES += m_room.cc
+libircd_la_SOURCES += m_v1.cc
+libircd_la_SOURCES += m.cc
+libircd_la_SOURCES += ircd.cc
 
 # The recursive grammars can consume a large amount of RAM when compiling
 # (>= 2 GiB) which can thrash small systems and even sometimes crash GCC.
