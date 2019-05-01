@@ -114,20 +114,20 @@ libircd_la_SOURCES += json.cc
 libircd_la_SOURCES += conf.cc
 libircd_la_SOURCES += logger.cc
 libircd_la_SOURCES += magic.cc
-libircd_la_SOURCES += stats.cc
-libircd_la_SOURCES += prof.cc
-libircd_la_SOURCES += fs.cc
-if AIO
-libircd_la_SOURCES += fs_aio.cc
-endif
 libircd_la_SOURCES += sodium.cc
 libircd_la_SOURCES += openssl.cc
 libircd_la_SOURCES += rfc1459.cc
 libircd_la_SOURCES += rfc3986.cc
 libircd_la_SOURCES += rfc1035.cc
 libircd_la_SOURCES += http.cc
+libircd_la_SOURCES += stats.cc
+libircd_la_SOURCES += prof.cc
+libircd_la_SOURCES += fs.cc
 libircd_la_SOURCES += ios.cc
 libircd_la_SOURCES += ctx.cc
+if AIO
+libircd_la_SOURCES += fs_aio.cc
+endif
 libircd_la_SOURCES += mods.cc
 libircd_la_SOURCES += db_port.cc
 libircd_la_SOURCES += db_env.cc
