@@ -337,12 +337,14 @@ ircd::mods::handle_ebadf(const string_view &what)
 	if(pos == std::string_view::npos)
 		return;
 
-	const string_view msg(what.substr(pos));
-	const std::string mangled(between(msg, ": ", ")"));
-	const std::string demangled(demangle(mangled));
+	const auto msg(what.substr(pos));
+	const auto mangled(between(msg, ": ", ")"));
+	const auto demangled(demangle(mangled));
 	throw undefined_symbol
 	{
-		"undefined symbol: '%s' (%s)", demangled, mangled
+		"undefined symbol '%s' (%s)",
+		demangled,
+		mangled
 	};
 }
 
@@ -910,7 +912,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "Failed to load '%s': %s",
+		log, "Failed to load '%s' :%s",
 		name,
 		e.what()
 	};
@@ -1184,7 +1186,9 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "Failed to add path: %s", e.what()
+		log, "Failed to add path `%s' :%s",
+		dir,
+		e.what()
 	};
 
 	return false;
