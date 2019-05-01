@@ -4135,7 +4135,7 @@ ircd::json::serialized(const string_view &v)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// json/json.h
+// json/type.h
 //
 
 enum ircd::json::type
