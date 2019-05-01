@@ -15,7 +15,8 @@ namespace ircd::m
 {
 	struct keys;
 
-	bool verify(const m::keys &);
+	bool verify(const m::keys &, std::nothrow_t) noexcept;
+	void verify(const m::keys &);
 }
 
 /// Contains the public keys and proof of identity for a remote server.

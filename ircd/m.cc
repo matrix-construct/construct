@@ -153,7 +153,7 @@ ircd::m::init::modules::init_keys()
 	mods::imports.emplace("s_keys"s, "s_keys"s);
 	mods::import<void ()> init_my_keys
 	{
-		"s_keys", "init_my_keys"
+		"s_keys", "ircd::m::init_my_keys"
 	};
 
 	init_my_keys();
@@ -1674,17 +1674,41 @@ ircd::m::vm::sequence::get(const eval &eval)
 // m/keys.h
 //
 
-bool
+void
 ircd::m::verify(const m::keys &keys)
 {
-	using prototype = bool (const m::keys &) noexcept;
+	using prototype = void (const m::keys &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"s_keys", "verify__keys"
+		"s_keys", "ircd::m::verify"
 	};
 
-	return function(keys);
+	return call(keys);
+}
+
+bool
+ircd::m::verify(const m::keys &keys,
+                std::nothrow_t)
+noexcept try
+{
+	using prototype = bool (const m::keys &, std::nothrow_t) noexcept;
+
+	static mods::import<prototype> call
+	{
+		"s_keys", "ircd::m::verify"
+	};
+
+	return call(keys, std::nothrow);
+}
+catch(const std::bad_function_call &e)
+{
+	log::error
+	{
+		log, "Key verification module is not loaded :%s", e.what()
+	};
+
+	return false;
 }
 
 //
@@ -1705,12 +1729,12 @@ ircd::m::keys::get(const string_view &server_name,
 {
 	using prototype = void (const string_view &, const string_view &, const closure &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"s_keys", "get__keys"
+		"s_keys", "ircd::m::keys::get"
 	};
 
-	return function(server_name, key_id, closure_);
+	return call(server_name, key_id, closure_);
 }
 
 bool
@@ -1720,12 +1744,12 @@ ircd::m::keys::query(const string_view &query_server,
 {
 	using prototype = bool (const string_view &, const queries &, const closure_bool &);
 
-	static mods::import<prototype> function
+	static mods::import<prototype> call
 	{
-		"s_keys", "query__keys"
+		"s_keys", "ircd::m::keys::query"
 	};
 
-	return function(query_server, queries_, closure);
+	return call(query_server, queries_, closure);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
