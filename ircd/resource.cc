@@ -1237,6 +1237,7 @@ ircd::resource::response::access_control_allow_origin
 	{ "default",   "*"                                         }
 };
 
+__attribute__((stack_protect))
 ircd::resource::response::response(client &client,
                                    const http::code &code,
                                    const string_view &content_type,
