@@ -672,3 +672,67 @@ cache_get(const string_view &server_name,
 		node_room.get(std::nothrow, "ircd.key", reclosure):
 		node_room.get(std::nothrow, "ircd.key", key_id, reclosure);
 }
+
+#ifdef RB_DEBUG
+__attribute__((constructor))
+#endif
+static void
+_test_ed25519_()
+noexcept
+{
+	using namespace ircd;
+
+	char seed_buf[ed25519::SEED_SZ + 10];
+	const auto seed
+	{
+		b64decode(seed_buf, "YJDBA9Xnr2sVqXD9Vj7XVUnmFZcZrlw8Md7kMW+3XA1")
+	};
+
+	ed25519::pk pk;
+	ed25519::sk sk{&pk, seed};
+
+	const auto SERVER_NAME {"domain"};
+	const auto KEY_ID {"ed25519:1"};
+
+	const auto test{[&]
+	(const std::string &object) -> bool
+	{
+		const auto sig
+		{
+			sk.sign(const_buffer{object})
+		};
+
+		char sigb64_buf[128];
+		const auto sigb64
+		{
+			b64encode_unpadded(sigb64_buf, sig)
+		};
+
+		ed25519::sig unsig; const auto unsigb64
+		{
+			b64decode(unsig, sigb64)
+		};
+
+		return pk.verify(const_buffer{object}, unsig);
+	}};
+
+	const bool tests[]
+	{
+		test(std::string{json::object
+		{
+			"{}"
+		}}),
+
+		test(json::strung(json::members
+		{
+			{ "one", 1L },
+			{ "two", "Two" }
+		})),
+	};
+
+	if(!std::all_of(begin(tests), end(tests), [](const bool &b) { return b; }))
+		throw ircd::panic
+		{
+			"Seeded ed25519 test failed"
+		};
+}
