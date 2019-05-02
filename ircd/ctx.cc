@@ -645,7 +645,7 @@ ircd::ctx::this_ctx::yield()
 	});
 
 	// All spurious notifications are ignored until `done`
-	ircd::post(descriptor, restore); do
+	ircd::defer(descriptor, restore); do
 	{
 		wait();
 	}
