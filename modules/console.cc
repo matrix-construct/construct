@@ -94,7 +94,7 @@ struct cmd
 	cmd(std::string name, std::string symbol)
 	:name{std::move(name)}
 	,symbol{std::move(symbol)}
-	,ptr{IRCD_MODULE, this->symbol}
+	,ptr{ircd_module, this->symbol}
 	{}
 
 	cmd() = default;
@@ -110,7 +110,7 @@ init_cmds()
 {
 	auto symbols
 	{
-		mods::symbols(mods::path(IRCD_MODULE))
+		mods::symbols(mods::path(ircd_module))
 	};
 
 	for(std::string &symbol : symbols)
@@ -195,6 +195,8 @@ _console_command(opt &out,
 	using prototype = bool (struct opt &, const string_view &);
 	return ptr.operator()<prototype>(out, args);
 }
+
+#pragma GCC visibility push(default)
 
 /// This function may be linked and called by those wishing to execute a
 /// command. Output from the command will be appended to the provided ostream.
