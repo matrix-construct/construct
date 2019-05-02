@@ -43,7 +43,6 @@ AM_LDFLAGS = \
 	-Wl,--no-undefined-version \
 	-Wl,--no-undefined \
 	-Wl,--no-gnu-unique \
-	-Wl,--export-dynamic \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \
 	-Wl,--rosegment \

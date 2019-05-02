@@ -33,7 +33,6 @@ AM_LDFLAGS = \
 	-Wl,--warn-common \
 	-Wl,--warn-execstack \
 	-Wl,--detect-odr-violations \
-	-Wl,--export-dynamic \
 	-Wl,--no-gnu-unique \
 	-Wl,--no-allow-shlib-undefined \
 	-Wl,--gc-sections \
