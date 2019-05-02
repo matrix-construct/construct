@@ -5150,12 +5150,27 @@ ircd::m::hook::base::site::add(base &hook)
 	hook.registered = true;
 	matchers += matched;
 	++count;
+
+	log::debug
+	{
+		log, "Registered hook %p to site %s",
+		&hook,
+		name()
+	};
+
 	return true;
 }
 
 bool
 ircd::m::hook::base::site::del(base &hook)
 {
+	log::debug
+	{
+		log, "Removing hook %p from site %s",
+		&hook,
+		name()
+	};
+
 	assert(hook.registered);
 	assert(hook.site_name() == name());
 
