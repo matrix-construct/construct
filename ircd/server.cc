@@ -1843,7 +1843,7 @@ ircd::server::link::wait_writable()
 void
 __attribute__((stack_protect))
 ircd::server::link::handle_writable(const error_code &ec)
-try
+noexcept try
 {
 	using std::errc;
 
@@ -2016,7 +2016,7 @@ ircd::server::link::wait_readable()
 void
 __attribute__((stack_protect))
 ircd::server::link::handle_readable(const error_code &ec)
-try
+noexcept try
 {
 	using std::errc;
 

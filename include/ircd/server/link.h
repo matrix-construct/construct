@@ -43,13 +43,13 @@ struct ircd::server::link
 	const_buffer process_read_next(const const_buffer &, tag &, bool &done);
 	bool process_read(const_buffer &);
 	void handle_readable_success();
-	void handle_readable(const error_code &);
+	void handle_readable(const error_code &) noexcept;
 	void wait_readable();
 
 	const_buffer process_write_next(const const_buffer &);
 	bool process_write(tag &);
 	void handle_writable_success();
-	void handle_writable(const error_code &);
+	void handle_writable(const error_code &) noexcept;
 	void wait_writable();
 
 	void handle_close(std::exception_ptr);
