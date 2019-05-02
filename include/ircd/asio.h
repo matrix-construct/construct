@@ -26,6 +26,7 @@
 
 #define BOOST_COROUTINES_NO_DEPRECATION_WARNING
 
+#pragma GCC visibility push(default)
 #include <boost/version.hpp>
 #include <boost/config.hpp>
 #include <boost/asio.hpp>
@@ -33,6 +34,7 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/io_service.hpp>
+#pragma GCC visibility pop
 
 ///
 /// The following IRCd headers are not included in the main stdinc.h list of

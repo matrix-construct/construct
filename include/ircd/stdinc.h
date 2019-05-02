@@ -20,6 +20,10 @@
 // pollution and risk of conflicts.
 //
 
+// It is advised that all standard library symbols are declared with default
+// visibility. This pragma overrides any -fvisibility option on any unit.
+#pragma GCC visibility push(default)
+
 extern "C"
 {
 	#include <RB_INC_ASSERT_H
@@ -191,3 +195,5 @@ namespace ircd
 
 	using std::error_code;
 }
+
+#pragma GCC visibility pop // default
