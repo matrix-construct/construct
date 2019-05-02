@@ -183,7 +183,7 @@ try
 	if(header->magic != IRCD_MAPI_MAGIC)
 		throw error
 		{
-			"Bad magic [%04x] need: [%04x]", header->magic, IRCD_MAPI_MAGIC
+			"Bad magic [%04X] need: [%04X]", header->magic, IRCD_MAPI_MAGIC
 		};
 
 	if(header->version != IRCD_MAPI_VERSION)
