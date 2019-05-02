@@ -1440,10 +1440,9 @@ noexcept try
 
 	bgcancel(*this, true);
 
-	flush(*this);
 	log::debug
 	{
-		log, "'%s': flushed; closing columns...",
+		log, "'%s': closing columns...",
 		name
 	};
 
@@ -1453,11 +1452,22 @@ noexcept try
 	this->columns.clear();
 	log::debug
 	{
-		log, "'%s': closed columns; synchronizing...",
+		log, "'%s': closed columns; flushing...",
 		name
 	};
 
-	sync(*this);
+	if(!read_only)
+		flush(*this);
+
+	log::debug
+	{
+		log, "'%s': flushed; synchronizing...",
+		name
+	};
+
+	if(!read_only)
+		sync(*this);
+
 	log::debug
 	{
 		log, "'%s': synchronized with hardware.",
