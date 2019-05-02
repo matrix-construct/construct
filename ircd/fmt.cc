@@ -33,6 +33,7 @@ __attribute__((visibility("hidden")))
 	struct signed_specifier extern const signed_specifier;
 	struct unsigned_specifier extern const unsigned_specifier;
 	struct float_specifier extern const float_specifier;
+	struct hex_uppercase_specifier extern const hex_uppercase_specifier;
 	struct hex_lowercase_specifier extern const hex_lowercase_specifier;
 	struct pointer_specifier extern const pointer_specifier;
 	struct string_specifier extern const string_specifier;
@@ -256,6 +257,31 @@ const ircd::fmt::hex_lowercase_specifier
 
 decltype(ircd::fmt::hex_lowercase_specifier::types)
 ircd::fmt::hex_lowercase_specifier::types;
+
+struct ircd::fmt::hex_uppercase_specifier
+:specifier
+{
+	static const std::tuple
+	<
+		bool,
+		char,       unsigned char,
+		short,      unsigned short,
+		int,        unsigned int,
+		long,       unsigned long,
+		long long,  unsigned long long
+	>
+	types;
+
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
+	using specifier::specifier;
+}
+const ircd::fmt::hex_uppercase_specifier
+{
+	{ "X"s, "lX"s }
+};
+
+decltype(ircd::fmt::hex_uppercase_specifier::types)
+ircd::fmt::hex_uppercase_specifier::types;
 
 decltype(ircd::fmt::unsigned_specifier::types)
 ircd::fmt::unsigned_specifier::types;
@@ -815,6 +841,77 @@ const
 			{
 				karma::lower[karma::hex]
 				,"unsigned lowercase hexadecimal"
+			};
+
+			_r1_type width;
+			_r2_type pad;
+			karma::rule<char *, ulong(ushort, char)> aligned_left
+			{
+				karma::left_align(width, pad)[rule]
+				,"left aligned"
+			};
+
+			karma::rule<char *, ulong(ushort, char)> aligned_right
+			{
+				karma::right_align(width, pad)[rule]
+				,"right aligned"
+			};
+
+			karma::rule<char *, ulong(ushort, char)> aligned_center
+			{
+				karma::center(width, pad)[rule]
+				,"center aligned"
+			};
+
+			generator(): generator::base_type{rule} {}
+		}
+		static const generator;
+
+		const auto &mw(maxwidth(max));
+		static const auto &ep(eps[throw_illegal]);
+
+		if(!spec.width)
+			return karma::generate(out, mw[generator] | ep, integer);
+
+		if(spec.sign == '-')
+		{
+			const auto &g(generator.aligned_left(spec.width, spec.pad));
+			return karma::generate(out, mw[g] | ep, integer);
+		}
+
+		const auto &g(generator.aligned_right(spec.width, spec.pad));
+		return karma::generate(out, mw[g] | ep, integer);
+	});
+
+	return !until(types, [&](auto type)
+	{
+		return !visit_type<decltype(type)>(val, closure);
+	});
+}
+
+bool
+ircd::fmt::hex_uppercase_specifier::operator()(char *&out,
+                                               const size_t &max,
+                                               const spec &spec,
+                                               const arg &val)
+const
+{
+	static const auto throw_illegal([]
+	{
+		throw illegal("Failed to print hexadecimal value");
+	});
+
+	const auto closure([&](const ulong &integer)
+	{
+		using karma::maxwidth;
+
+		struct generator
+		:karma::grammar<char *, ulong()>
+		{
+			karma::rule<char *, ulong()> rule
+			{
+				karma::upper[karma::hex]
+				,"unsigned uppercase hexadecimal"
 			};
 
 			_r1_type width;
