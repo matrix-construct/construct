@@ -41,7 +41,7 @@ AM_LDFLAGS = \
 	-Wl,--detect-odr-violations \
 	-Wl,--unresolved-symbols=report-all \
 	-Wl,--no-undefined-version \
-	-Wl,--no-undefined \
+	-Wl,--weak-unresolved-symbols \
 	-Wl,--no-gnu-unique \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \

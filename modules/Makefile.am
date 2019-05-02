@@ -38,7 +38,7 @@ AM_LDFLAGS = \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
-	-Wl,-z -Wl,now \
+	-Wl,-z -Wl,lazy \
 	-Wl,-z -Wl,noexecstack \
 	-Wl,-z -Wl,combreloc \
 	-Wl,-z -Wl,nocopyreloc \
