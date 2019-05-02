@@ -54,6 +54,8 @@ AM_LDFLAGS = \
 	-Wl,-z -Wl,noexecstack \
 	-Wl,-z -Wl,combreloc \
 	-Wl,-z -Wl,nocopyreloc \
+	-Wl,-z -Wl,keep-text-section-prefix \
+	-Wl,-z -Wl,text-unlikely-segment \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
 	###
