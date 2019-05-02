@@ -12,44 +12,32 @@
 #define HAVE_IRCD_MAPI_H
 
 #define IRCD_MODULE_HEADER_SYMBOL_NAME      "ircd_module"
-#define IRCD_MODULE_IMPL_VISIBILITY         "protected"
 #define IRCD_MODULE_EXPORT_CODE_SECTION     "ircd.code"
 #define IRCD_MODULE_EXPORT_CODE_VISIBILITY  "default"
 #define IRCD_MODULE_EXPORT_DATA_SECTION     "ircd.data"
 #define IRCD_MODULE_EXPORT_DATA_VISIBILITY  "default"
 
 /// Macro of decorations used on function definitions in modules which are
-/// loaded with RTLD_GLOBAL. These function definitions implement some decl
-/// in the include/ircd/* headers; the decl is a weak unresolved symbol.
-#define IRCD_MODULE_IMPL \
-	__attribute__((visibility(IRCD_MODULE_IMPL_VISIBILITY)))
-
-/// Macro of decorations used on function definitions in modules which are
-/// published for demangling and use by libircd. This is used in modules
-/// which are loaded with RTLD_LOCAL where the function is manually imported
-/// with the ircd::mods system.
+/// published for demangling and use by libircd.
 #define IRCD_MODULE_EXPORT_CODE \
 	__attribute__((section(IRCD_MODULE_EXPORT_CODE_SECTION))) \
 	__attribute__((visibility(IRCD_MODULE_EXPORT_CODE_VISIBILITY)))
 
 /// Macro of decorations used on object definitions in modules which are
-/// published for demangling and use by libircd. This is the object equivalent
-/// of IRCD_MODULE_EXPORT_CODE (see docs).
+/// published for demangling and use by libircd (object equivalent).
 #define IRCD_MODULE_EXPORT_DATA \
 	__attribute__((section(IRCD_MODULE_EXPORT_DATA_SECTION))) \
 	__attribute__((visibility(IRCD_MODULE_EXPORT_CODE_VISIBILITY))) \
 	__attribute__((externally_visible))
 
 // Common convenience aliases
-#define IRCD_MODULE_EXPORT             IRCD_MODULE_EXPORT_CODE
-#define IRCD_EXPORT                    IRCD_MODULE_EXPORT
-#define IRCD_IMPL                      IRCD_MODULE_IMPL
+#define IRCD_MODULE_EXPORT \
+	IRCD_MODULE_EXPORT_CODE
 
 /// Module declaration
 #define IRCD_MODULE \
 	__attribute__((visibility("default"))) \
 	__attribute__((externally_visible)) \
-	__attribute__((weak)) \
 	ircd_module
 
 /// Module API: Interface for module developers.
