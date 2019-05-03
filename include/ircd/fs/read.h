@@ -30,7 +30,7 @@ namespace ircd::fs
 	// Test whether bytes in the specified range are cached and should not block
 	bool fincore(const fd &, const size_t &, const read_opts & = read_opts_default);
 
-	// Prefetch bytes for subsequent read(); offset is given in opts.
+	// Prefetch data for subsequent read(); offset given in opts (WILLNEED).
 	size_t prefetch(const fd &, const size_t &, const read_opts & = read_opts_default);
 }
 

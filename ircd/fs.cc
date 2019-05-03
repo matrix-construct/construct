@@ -476,6 +476,11 @@ ircd::fs::flush(const fd &fd,
 // fs/read.h
 //
 
+namespace ircd::fs
+{
+	static size_t advise(const fd &, const size_t &, const read_opts &, const int &advice);
+}
+
 ircd::fs::read_opts
 const ircd::fs::read_opts_default
 {};
@@ -484,6 +489,15 @@ size_t
 ircd::fs::prefetch(const fd &fd,
                    const size_t &count,
                    const read_opts &opts)
+{
+	return advise(fd, count, opts, POSIX_FADV_WILLNEED);
+}
+
+size_t
+ircd::fs::advise(const fd &fd,
+                 const size_t &count,
+                 const read_opts &opts,
+                 const int &advice)
 {
 	static const size_t max_count
 	{
@@ -494,7 +508,7 @@ ircd::fs::prefetch(const fd &fd,
 	{
 		off = opts.offset + max_count * i++;
 		cnt = std::min(opts.offset + count - off, max_count);
-		switch(const auto r(::posix_fadvise(fd, off, cnt, POSIX_FADV_WILLNEED)); r)
+		switch(const auto r(::posix_fadvise(fd, off, cnt, advice)); r)
 		{
 			case 0:   break;
 			default:  throw_system_error(r);
