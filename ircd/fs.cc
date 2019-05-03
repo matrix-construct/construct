@@ -478,6 +478,7 @@ ircd::fs::flush(const fd &fd,
 
 namespace ircd::fs
 {
+	static bool fincore(void *const &map, const size_t &map_size, uint8_t *const &vec, const size_t &vec_size);
 	static size_t advise(const fd &, const size_t &, const read_opts &, const int &advice);
 }
 
@@ -545,15 +546,33 @@ ircd::fs::fincore(const fd &fd,
 		}
 	};
 
+	using word_t = unsigned long long;
+	thread_local std::array<word_t, 64> tls_vec;
+
 	const size_t vec_size
 	{
-		std::max(((map_size + info::page_size - 1) / info::page_size) / 8, 1UL)
+		std::max(((map_size + info::page_size - 1) / info::page_size) / sizeof(word_t), 1UL)
 	};
-	assert(vec_size > 0 && vec_size < map_size);
 
-	std::vector<uint64_t> vec(vec_size);
-	syscall(::mincore, map, map_size, reinterpret_cast<uint8_t *>(vec.data()));
-	return std::find(begin(vec), end(vec), 0UL) == end(vec);
+	assert(vec_size > 0 && vec_size < map_size);
+	const auto dynamic_vec_size
+	{
+		vec_size > tls_vec.size()? vec_size : 0UL
+	};
+
+	std::vector<word_t> dynamic_vec(dynamic_vec_size);
+	auto *const vec(dynamic_vec_size? dynamic_vec.data(): tls_vec.data());
+	return fincore(map, map_size, reinterpret_cast<uint8_t *>(vec), vec_size);
+}
+
+bool
+ircd::fs::fincore(void *const &map,
+                  const size_t &map_size,
+                  uint8_t *const &vec,
+                  const size_t &vec_size)
+{
+	syscall(::mincore, map, map_size, vec);
+	return std::find(vec, vec + vec_size, 0UL) == vec + vec_size;
 }
 
 std::string
