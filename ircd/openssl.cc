@@ -1438,11 +1438,22 @@ ircd::openssl::bignum::bignum(const const_buffer &bin)
 	// Our binary buffer is little endian.
 	thread_local char tmp[64_KiB];
 	const critical_assertion ca;
-	const mutable_buffer buf{tmp, size(bin)};
-	if(unlikely(size(buf) > sizeof(tmp)))
+	const size_t buf_size
+	{
+		#if defined(__HAVE_BUILTIN_SPECULATION_SAFE_VALUE)
+			__builtin_speculation_safe_value(size(bin))
+		#else
+			size(bin)
+		#endif
+	};
+
+	const mutable_buffer buf{tmp, buf_size};
+	if(unlikely(size(bin) > sizeof(tmp)))
 		throw buffer_error
 		{
-			"buffer input of %zu for bignum > tmp %zu", size(bin), sizeof(tmp)
+			"buffer input of %zu for bignum > tmp %zu",
+			size(bin),
+			sizeof(tmp)
 		};
 
 	reverse(buf, bin);
@@ -1450,7 +1461,10 @@ ircd::openssl::bignum::bignum(const const_buffer &bin)
 }()}
 {
 	if(unlikely(!a))
-		throw error{"Error creating bignum from binary buffer..."};
+		throw error
+		{
+			"Error creating bignum from binary buffer..."
+		};
 }
 
 ircd::openssl::bignum::bignum(const BIGNUM &a)
