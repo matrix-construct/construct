@@ -1622,10 +1622,7 @@ noexcept try
 	if(opts.direct)
 		return Status::OK();
 
-	#if defined(HAVE_POSIX_FADVISE) && defined(FADV_DONTNEED)
-	syscall(::posix_fadvise, fd, offset, length, FADV_DONTNEED);
-	#endif
-
+	fs::evict(fd, length, offset);
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -3082,10 +3079,7 @@ noexcept try
 	if(opts.direct)
 		return Status::OK();
 
-	#if defined(HAVE_POSIX_FADVISE) && defined(FADV_DONTNEED)
-	syscall(::posix_fadvise, fd, offset, length, FADV_DONTNEED);
-	#endif
-
+	fs::evict(fd, length, offset);
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -3356,10 +3350,7 @@ noexcept
 	if(opts.direct)
 		return Status::OK();
 
-	#if defined(HAVE_POSIX_FADVISE) && defined(FADV_DONTNEED)
-	syscall(::posix_fadvise, fd, offset, length, FADV_DONTNEED);
-	#endif
-
+	fs::evict(fd, length, offset);
 	return Status::OK();
 }
 
