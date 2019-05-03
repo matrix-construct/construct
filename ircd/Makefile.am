@@ -142,12 +142,12 @@ libircd_la_SOURCES += js.cc
 endif
 libircd_la_SOURCES += m_name.cc
 libircd_la_SOURCES += m_id.cc
-libircd_la_SOURCES += m_event.cc
 libircd_la_SOURCES += m_dbs.cc
 libircd_la_SOURCES += m_state.cc
 libircd_la_SOURCES += m_room.cc
 libircd_la_SOURCES += m_v1.cc
 libircd_la_SOURCES += m.cc
+libircd_la_SOURCES += m_event.cc
 libircd_la_SOURCES += ircd.cc
 
 # The recursive grammars can consume a large amount of RAM when compiling

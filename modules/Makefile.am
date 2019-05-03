@@ -113,7 +113,6 @@ m_moduledir = @moduledir@
 
 m_noop_la_SOURCES = m_noop.cc
 m_user_la_SOURCES = m_user.cc
-m_event_la_SOURCES = m_event.cc
 m_device_la_SOURCES = m_device.cc
 m_direct_la_SOURCES = m_direct.cc
 m_typing_la_SOURCES = m_typing.cc
@@ -137,7 +136,6 @@ m_room_power_levels_la_SOURCES = m_room_power_levels.cc
 m_module_LTLIBRARIES = \
 	m_noop.la \
 	m_user.la \
-	m_event.la \
 	m_device.la \
 	m_direct.la \
 	m_typing.la \
