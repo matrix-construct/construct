@@ -18,17 +18,14 @@
 ///
 namespace ircd::net::dns
 {
-	struct opts extern const opts_default;
-
+	struct opts;
 	using records = vector_view<const rfc1035::record *>;
 	using callback = std::function<void (const hostport &, const json::array &)>;
 	using callback_one = std::function<void (const hostport &, const json::object &)>;
 	using callback_ipport = std::function<void (std::exception_ptr, const hostport &, const ipport &)>;
 
-	// Callback-based interface
-	void resolve(const hostport &, const opts &, callback);
-	void resolve(const hostport &, const opts &, callback_one); // convenience
-	void resolve(const hostport &, const opts &, callback_ipport); // convenience
+	extern const struct opts opts_default;
+	extern log::log log;
 
 	// Utilities
 	bool is_error(const json::object &rr);
@@ -42,7 +39,10 @@ namespace ircd::net::dns
 	string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
 	string_view unmake_SRV_key(const string_view &);
 
-	extern log::log log;
+	// Callback-based interface
+	void resolve(const hostport &, const opts &, callback);
+	void resolve(const hostport &, const opts &, callback_one); // convenience
+	void resolve(const hostport &, const opts &, callback_ipport); // convenience
 }
 
 /// DNS resolution options
