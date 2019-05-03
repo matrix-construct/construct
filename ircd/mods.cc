@@ -850,8 +850,8 @@ try
 {
 	static const load_mode::type flags
 	{
-		load_mode::rtld_local |
-		load_mode::rtld_now
+		load_mode::rtld_global |
+		load_mode::rtld_deepbind
 	};
 
 	// Search for loaded module and increment the reference counter for this handle if loaded.
