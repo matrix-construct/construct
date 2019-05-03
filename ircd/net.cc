@@ -2929,6 +2929,251 @@ noexcept
 	return ret;
 }
 
+/// Yields ircd::ctx until buffers are full.
+template<class iov>
+size_t
+ircd::net::socket::read_all(iov&& bufs)
+try
+{
+	static const auto completion
+	{
+		asio::transfer_all()
+	};
+
+	const auto interruption{[this]
+	(ctx::ctx *const &)
+	{
+		this->cancel();
+	}};
+
+	size_t ret; continuation
+	{
+		continuation::asio_predicate, interruption, [this, &ret, &bufs]
+		(auto &yield)
+		{
+			ret = asio::async_read(ssl, std::forward<iov>(bufs), completion, yield);
+		}
+	};
+
+	if(!ret)
+		throw std::system_error
+		{
+			boost::asio::error::eof, boost::asio::error::get_misc_category()
+		};
+
+	in.bytes += ret;
+	++in.calls;
+	return ret;
+}
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
+
+/// Yields ircd::ctx until remote has sent at least some data.
+template<class iov>
+size_t
+ircd::net::socket::read_few(iov&& bufs)
+try
+{
+	const auto interruption{[this]
+	(ctx::ctx *const &)
+	{
+		this->cancel();
+	}};
+
+	size_t ret; continuation
+	{
+		continuation::asio_predicate, interruption, [this, &ret, &bufs]
+		(auto &yield)
+		{
+			ret = ssl.async_read_some(std::forward<iov>(bufs), yield);
+		}
+	};
+
+	if(!ret)
+		throw std::system_error
+		{
+			asio::error::eof, asio::error::get_misc_category()
+		};
+
+	in.bytes += ret;
+	++in.calls;
+	return ret;
+}
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
+
+/// Non-blocking; as much as possible without blocking
+template<class iov>
+size_t
+ircd::net::socket::read_any(iov&& bufs)
+{
+	assert(!blocking(*this));
+	static const auto completion
+	{
+		asio::transfer_all()
+	};
+
+	boost::system::error_code ec;
+	const size_t ret
+	{
+		asio::read(ssl, std::forward<iov>(bufs), completion, ec)
+	};
+
+	in.bytes += ret;
+	++in.calls;
+
+	if(likely(!ec))
+		return ret;
+
+	if(ec == boost::system::errc::resource_unavailable_try_again)
+		return ret;
+
+	throw_system_error(ec);
+	__builtin_unreachable();
+}
+
+/// Non-blocking; One system call only; never throws eof;
+template<class iov>
+size_t
+ircd::net::socket::read_one(iov&& bufs)
+{
+	assert(!blocking(*this));
+
+	boost::system::error_code ec;
+	const size_t ret
+	{
+		ssl.read_some(std::forward<iov>(bufs), ec)
+	};
+
+	in.bytes += ret;
+	++in.calls;
+
+	if(likely(!ec))
+		return ret;
+
+	if(ec == boost::system::errc::resource_unavailable_try_again)
+		return ret;
+
+	throw_system_error(ec);
+	__builtin_unreachable();
+}
+
+/// Yields ircd::ctx until all buffers are sent.
+template<class iov>
+size_t
+ircd::net::socket::write_all(iov&& bufs)
+try
+{
+	static const auto completion
+	{
+		asio::transfer_all()
+	};
+
+	const auto interruption{[this]
+	(ctx::ctx *const &)
+	{
+		this->cancel();
+	}};
+
+	size_t ret; continuation
+	{
+		continuation::asio_predicate, interruption, [this, &ret, &bufs]
+		(auto &yield)
+		{
+			ret = asio::async_write(ssl, std::forward<iov>(bufs), completion, yield);
+		}
+	};
+
+	out.bytes += ret;
+	++out.calls;
+	return ret;
+}
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
+
+/// Yields ircd::ctx until one or more bytes are sent.
+template<class iov>
+size_t
+ircd::net::socket::write_few(iov&& bufs)
+try
+{
+	const auto interruption{[this]
+	(ctx::ctx *const &)
+	{
+		this->cancel();
+	}};
+
+	size_t ret; continuation
+	{
+		continuation::asio_predicate, interruption, [this, &ret, &bufs]
+		(auto &yield)
+		{
+			ret = ssl.async_write_some(std::forward<iov>(bufs), yield);
+		}
+	};
+
+	out.bytes += ret;
+	++out.calls;
+	return ret;
+}
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
+
+/// Non-blocking; writes as much as possible without blocking
+template<class iov>
+size_t
+ircd::net::socket::write_any(iov&& bufs)
+try
+{
+	static const auto completion
+	{
+		asio::transfer_all()
+	};
+
+	assert(!blocking(*this));
+	const size_t ret
+	{
+		asio::write(ssl, std::forward<iov>(bufs), completion)
+	};
+
+	out.bytes += ret;
+	++out.calls;
+	return ret;
+}
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
+
+/// Non-blocking; Writes one "unit" of data or less; never more.
+template<class iov>
+size_t
+ircd::net::socket::write_one(iov&& bufs)
+try
+{
+	assert(!blocking(*this));
+	const size_t ret
+	{
+		ssl.write_some(std::forward<iov>(bufs))
+	};
+
+	out.bytes += ret;
+	++out.calls;
+	return ret;
+}
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+}
+
 void
 ircd::net::socket::handle_ready(const std::weak_ptr<socket> wp,
                                 const net::ready type,
