@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_FCNTL_H
 #include <RB_INC_SYS_STAT_H
 #include <RB_INC_SYS_STATFS_H
 #include <RB_INC_SYS_STATVFS_H
