@@ -487,13 +487,30 @@ const ircd::fs::read_opts_default
 {};
 
 size_t
+ircd::fs::evict(const fd &fd,
+                const size_t &count,
+                const read_opts &opts)
+{
+	#if defined(POSIX_FADV_DONTNEED)
+		return advise(fd, count, opts, POSIX_FADV_DONTNEED);
+	#else
+		return 0UL;
+	#endif
+}
+
+size_t
 ircd::fs::prefetch(const fd &fd,
                    const size_t &count,
                    const read_opts &opts)
 {
-	return advise(fd, count, opts, POSIX_FADV_WILLNEED);
+	#if defined(POSIX_FADV_WILLNEED)
+		return advise(fd, count, opts, POSIX_FADV_WILLNEED);
+	#else
+		return 0UL;
+	#endif
 }
 
+#if defined(HAVE_POSIX_FADVISE)
 size_t
 ircd::fs::advise(const fd &fd,
                  const size_t &count,
@@ -518,6 +535,16 @@ ircd::fs::advise(const fd &fd,
 	while(off + cnt < opts.offset + count);
 	return count;
 }
+#else
+size_t
+ircd::fs::advise(const fd &fd,
+                 const size_t &count,
+                 const read_opts &opts,
+                 const int &advice)
+{
+	return 0UL;
+}
+#endif
 
 bool
 ircd::fs::fincore(const fd &fd,

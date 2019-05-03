@@ -32,6 +32,9 @@ namespace ircd::fs
 
 	// Prefetch data for subsequent read(); offset given in opts (WILLNEED).
 	size_t prefetch(const fd &, const size_t &, const read_opts & = read_opts_default);
+
+	// Evict data which won't be read anymore (DONTNEED).
+	size_t evict(const fd &, const size_t &, const read_opts & = read_opts_default);
 }
 
 /// Options for a read operation
