@@ -4587,6 +4587,7 @@ console_cmd__net__host(opt &out, const string_view &line)
 	else
 		net::dns::resolve(hostport, opts, cbarr);
 
+	const ctx::uninterruptible ui;
 	while(!done)
 		dock.wait();
 

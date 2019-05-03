@@ -35,7 +35,11 @@ namespace ircd::net::dns::cache
 	struct waiter;
 
 	static bool call_waiter(const string_view &, const string_view &, const json::array &, waiter &);
+	static void call_waiters(const string_view &, const string_view &, const json::array &);
 	static void handle(const m::event &, m::vm::eval &);
+
+	static bool put(const string_view &type, const string_view &state_key, const records &rrs);
+	static bool put(const string_view &type, const string_view &state_key, const uint &code, const string_view &msg);
 
 	extern conf::item<seconds> min_ttl IRCD_MODULE_EXPORT_DATA;
 	extern conf::item<seconds> error_ttl IRCD_MODULE_EXPORT_DATA;

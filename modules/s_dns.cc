@@ -403,6 +403,44 @@ ircd::net::dns::cache::put(const hostport &hp,
 			host(hp)
 	};
 
+	return put(type, state_key, code, msg);
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::net::dns::cache::put(const hostport &hp,
+                           const opts &opts,
+                           const records &rrs)
+{
+	const auto &type_code
+	{
+		!rrs.empty()? rrs.at(0)->type : opts.qtype
+	};
+
+	char type_buf[48];
+	const string_view type
+	{
+		make_type(type_buf, type_code)
+	};
+
+	char state_key_buf[rfc1035::NAME_BUF_SIZE * 2];
+	const string_view &state_key
+	{
+		opts.qtype == 33?
+			make_SRV_key(state_key_buf, host(hp), opts):
+			host(hp)
+	};
+
+	return put(type, state_key, rrs);
+}
+
+bool
+ircd::net::dns::cache::put(const string_view &type,
+                           const string_view &state_key,
+                           const uint &code,
+                           const string_view &msg)
+try
+{
 	const unique_buffer<mutable_buffer> content_buf
 	{
 		1_KiB
@@ -446,32 +484,36 @@ ircd::net::dns::cache::put(const hostport &hp,
 	send(room_id, m::me, type, state_key, json::object(out.completed()));
 	return true;
 }
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "cache put (%s, %s) code:%u (%s) :%s",
+		type,
+		state_key,
+		code,
+		msg,
+		e.what()
+	};
+
+	const json::members error_object
+	{
+		{ "error", e.what() },
+	};
+
+	const json::value error_value{error_object};
+	const json::value error_records{&error_value, 1};
+	const json::strung error{error_records};
+	call_waiters(type, state_key, error);
+	return false;
+}
 
 bool
-IRCD_MODULE_EXPORT
-ircd::net::dns::cache::put(const hostport &hp,
-                           const opts &opts,
+ircd::net::dns::cache::put(const string_view &type,
+                           const string_view &state_key,
                            const records &rrs)
+try
 {
-	const auto &type_code
-	{
-		!rrs.empty()? rrs.at(0)->type : opts.qtype
-	};
-
-	char type_buf[48];
-	const string_view type
-	{
-		make_type(type_buf, type_code)
-	};
-
-	char state_key_buf[rfc1035::NAME_BUF_SIZE * 2];
-	const string_view &state_key
-	{
-		opts.qtype == 33?
-			make_SRV_key(state_key_buf, host(hp), opts):
-			host(hp)
-	};
-
 	const unique_buffer<mutable_buffer> buf
 	{
 		8_KiB
@@ -541,6 +583,28 @@ ircd::net::dns::cache::put(const hostport &hp,
 	content.~object();
 	send(room_id, m::me, type, state_key, json::object{out.completed()});
 	return true;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "cache put (%s, %s) rrs:%zu :%s",
+		type,
+		state_key,
+		rrs.size(),
+		e.what(),
+	};
+
+	const json::members error_object
+	{
+		{ "error", e.what() },
+	};
+
+	const json::value error_value{error_object};
+	const json::value error_records{&error_value, 1};
+	const json::strung error{error_records};
+	call_waiters(type, state_key, error);
+	return false;
 }
 
 bool
@@ -707,18 +771,13 @@ ircd::net::dns::cache::handle(const m::event &event,
                               m::vm::eval &eval)
 try
 {
-	const string_view &full_type
+	const string_view &type
 	{
 		json::get<"type"_>(event)
 	};
 
-	if(!startswith(full_type, "ircd.dns.rrs."))
+	if(!startswith(type, "ircd.dns.rrs."))
 		return;
-
-	const string_view &type
-	{
-		lstrip(full_type, "ircd.dns.rrs.")
-	};
 
 	const string_view &state_key
 	{
@@ -730,6 +789,21 @@ try
 		json::get<"content"_>(event).get("")
 	};
 
+	call_waiters(type, state_key, rrs);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "handle_cached() :%s", e.what()
+	};
+}
+
+void
+ircd::net::dns::cache::call_waiters(const string_view &type,
+                                    const string_view &state_key,
+                                    const json::array &rrs)
+{
 	auto it(begin(waiting));
 	while(it != end(waiting)) try
 	{
@@ -748,13 +822,6 @@ try
 		};
 	}
 }
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		log, "handle_cached() :%s", e.what()
-	};
-}
 
 bool
 ircd::net::dns::cache::call_waiter(const string_view &type,
@@ -765,7 +832,7 @@ ircd::net::dns::cache::call_waiter(const string_view &type,
 	if(state_key != waiter.key)
 		return false;
 
-	if(type != rfc1035::rqtype.at(waiter.opts.qtype))
+	if(lstrip(type, "ircd.dns.rrs.") != rfc1035::rqtype.at(waiter.opts.qtype))
 		return false;
 
 	const hostport &target
