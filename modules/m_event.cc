@@ -103,8 +103,20 @@ ircd::m::vm::conform_report
 	}
 };
 
-std::ostream &
 IRCD_MODULE_EXPORT
+std::string
+ircd::m::pretty(const event &event)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 4096);
+	pretty(s, event);
+	resizebuf(s, ret);
+	return ret;
+}
+
+IRCD_MODULE_EXPORT
+std::ostream &
 ircd::m::pretty(std::ostream &s,
                 const event &event)
 {
@@ -217,8 +229,21 @@ ircd::m::pretty(std::ostream &s,
 	return s;
 }
 
-std::ostream &
 IRCD_MODULE_EXPORT
+std::string
+ircd::m::pretty_oneline(const event &event,
+                        const bool &content_keys)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 4096);
+	pretty_oneline(s, event, content_keys);
+	resizebuf(s, ret);
+	return ret;
+}
+
+IRCD_MODULE_EXPORT
+std::ostream &
 ircd::m::pretty_oneline(std::ostream &s,
                         const event &event,
                         const bool &content_keys)
@@ -329,8 +354,20 @@ ircd::m::pretty_oneline(std::ostream &s,
 	return s;
 }
 
-std::ostream &
 IRCD_MODULE_EXPORT
+std::string
+ircd::m::pretty_msgline(const event &event)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 4096);
+	pretty_msgline(s, event);
+	resizebuf(s, ret);
+	return ret;
+}
+
+IRCD_MODULE_EXPORT
+std::ostream &
 ircd::m::pretty_msgline(std::ostream &s,
                         const event &event)
 {
@@ -371,8 +408,20 @@ ircd::m::pretty_msgline(std::ostream &s,
 	return s;
 }
 
-std::ostream &
 IRCD_MODULE_EXPORT
+std::string
+ircd::m::pretty(const event::prev &prev)
+{
+	std::string ret;
+	std::stringstream s;
+	pubsetbuf(s, ret, 4096);
+	pretty(s, prev);
+	resizebuf(s, ret);
+	return ret;
+}
+
+IRCD_MODULE_EXPORT
+std::ostream &
 ircd::m::pretty(std::ostream &s,
                 const event::prev &prev)
 {
@@ -425,8 +474,8 @@ ircd::m::pretty(std::ostream &s,
 	return s;
 }
 
-std::ostream &
 IRCD_MODULE_EXPORT
+std::ostream &
 ircd::m::pretty_oneline(std::ostream &s,
                         const event::prev &prev)
 {
@@ -451,8 +500,8 @@ ircd::m::pretty_oneline(std::ostream &s,
 	return s;
 }
 
-void
 IRCD_MODULE_EXPORT
+void
 ircd::m::append(json::stack::object &object,
                 const event &event,
                 const event_append_opts &opts)
@@ -568,8 +617,8 @@ ircd::m::append(json::stack::object &object,
 		});
 }
 
-bool
 IRCD_MODULE_EXPORT
+bool
 ircd::m::event::auth::chain::for_each(const auth::chain &c,
                                       const closure_bool &closure)
 {
@@ -610,8 +659,8 @@ ircd::m::event::auth::chain::for_each(const auth::chain &c,
 	return true;
 }
 
-void
 IRCD_MODULE_EXPORT
+void
 ircd::m::event::refs::rebuild()
 {
 	static const size_t pool_size{96};
@@ -680,8 +729,8 @@ ircd::m::event::refs::rebuild()
 	txn();
 }
 
-ircd::string_view
 IRCD_MODULE_EXPORT
+ircd::string_view
 ircd::m::event::auth::failed(const m::event &event)
 {
 	const m::event::prev refs(event);
@@ -706,8 +755,8 @@ ircd::m::event::auth::failed(const m::event &event)
 	return failed(event, {authv, j});
 }
 
-ircd::string_view
 IRCD_MODULE_EXPORT
+ircd::string_view
 ircd::m::event::auth::failed(const m::event &event,
                              const vector_view<const m::event *> &auth_events)
 {
@@ -1238,8 +1287,8 @@ ircd::m::event::auth::failed(const m::event &event,
 	return {};
 }
 
-bool
 IRCD_MODULE_EXPORT
+bool
 ircd::m::event::auth::is_power_event(const m::event &event)
 {
 	if(!json::get<"type"_>(event))
@@ -1269,8 +1318,8 @@ ircd::m::event::auth::is_power_event(const m::event &event)
 	return false;
 }
 
-void
 IRCD_MODULE_EXPORT
+void
 ircd::m::event::essential(json::iov &event,
                           const json::iov &contents,
                           const event::closure_iov_mutable &closure)
@@ -1393,8 +1442,8 @@ ircd::m::event::essential(json::iov &event,
 	}
 }
 
-ircd::m::event
 IRCD_MODULE_EXPORT
+ircd::m::event
 ircd::m::essential(m::event event,
                    const mutable_buffer &contentbuf)
 {
