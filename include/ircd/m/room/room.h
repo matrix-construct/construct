@@ -183,15 +183,15 @@ struct ircd::m::room
 	static size_t purge(const room &); // cuidado!
 };
 
-#include "room/messages.h"
-#include "room/state.h"
-#include "room/members.h"
-#include "room/origins.h"
-#include "room/head.h"
-#include "room/auth.h"
-#include "room/power.h"
-#include "room/aliases.h"
-#include "room/stats.h"
+#include "messages.h"
+#include "state.h"
+#include "members.h"
+#include "origins.h"
+#include "head.h"
+#include "auth.h"
+#include "power.h"
+#include "aliases.h"
+#include "stats.h"
 
 inline ircd::m::room::operator
 const ircd::m::room::id &()
