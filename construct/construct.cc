@@ -81,17 +81,8 @@ const char *const usererrstr
 %s
 )"};
 
-// This is the sole io_context for Construct, and the ios.run() below is the
-// the only place where the program actually blocks.
-// TODO: Global symbol linking issue triggered by loading module s_dns.so (which
-///TODO: involves asio.h) causes dangling references in ~io_context(). This has
-// TODO: to be dynamic and leak until fixed.
-boost::asio::io_context *const ios
-{
-	new boost::asio::io_context
-};
-
-int main(int _argc, char *const *_argv, char *const *const _envp)
+int
+main(int _argc, char *const *_argv, char *const *const _envp)
 noexcept try
 {
 	umask(077);       // better safe than sorry --SRB
@@ -160,10 +151,14 @@ noexcept try
 		}};
 	}};
 
+	// This is the sole io_context for Construct, and the ios.run() below is the
+	// the only place where the program actually blocks.
+	boost::asio::io_context ios;
+
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
 	// note: only supports service for one hostname/origin at this time.
-	ircd::init(*ios, origin, hostname);
+	ircd::init(ios, origin, hostname);
 
 	// libircd does no signal handling (or at least none that you ever have to
 	// care about); reaction to all signals happens out here instead. Handling
@@ -172,7 +167,7 @@ noexcept try
 	// event loop. This means we lose the true instant hardware-interrupt gratitude
 	// of signals but with the benefit of unconditional safety and cross-
 	// platformness with windows etc.
-	const construct::signals signals{*ios};
+	const construct::signals signals{ios};
 
 	// If the user wants to immediately drop to an interactive command line
 	// without having to send a ctrl-c for it, that is provided here. This does
@@ -192,7 +187,7 @@ noexcept try
 
 	// Execution.
 	// Blocks until a clean exit from a quit() or an exception comes out of it.
-	ios->run();
+	ios.run();
 
 	// The smoketest is enabled if the first value is true; then all of the
 	// values must be true for the smoketest to pass.

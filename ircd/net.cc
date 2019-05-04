@@ -70,6 +70,10 @@ ircd::net::init_ipv6()
 /// Network subsystem initialization
 ircd::net::init::init()
 {
+	//TODO: XXX this has to be instantiated in libircd before other loaded
+	//TODO: modules like s_dns.so; otherwise dynamic linker issues.
+	const asio::ip::udp::socket _dummy_udp_ {ios::get()};
+
 	init_ipv6();
 	sslv23_client.set_verify_mode(asio::ssl::verify_peer);
 	sslv23_client.set_default_verify_paths();
