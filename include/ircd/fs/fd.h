@@ -19,6 +19,8 @@ namespace ircd::fs
 	size_t block_size(const fd &);
 	ulong fstype(const fd &);
 	ulong device(const fd &);
+	uint64_t write_life(const fd &);
+	void write_life(const fd &, const uint64_t &);
 }
 
 /// File Desc++ptor. This is simply a native fd (i.e. integer) with c++ object

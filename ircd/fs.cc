@@ -1503,6 +1503,39 @@ ircd::fs::fd::opts::direct_io_enable
 	{ "persist",  false                          },
 };
 
+#if defined(HAVE_FCNTL_H) && defined(F_SET_FILE_RW_HINT)
+void
+ircd::fs::write_life(const fd &fd,
+                     const uint64_t &hint)
+{
+	syscall(::fcntl, int(fd), F_SET_FILE_RW_HINT, &hint);
+}
+#else
+#warning "F_SET_FILE_RW_HINT not supported on platform."
+void
+ircd::fs::write_life(const fd &fd,
+                     const uint64_t &hint)
+{
+}
+#endif
+
+#if defined(HAVE_FCNTL_H) && defined(F_GET_FILE_RW_HINT)
+uint64_t
+ircd::fs::write_life(const fd &fd)
+{
+	uint64_t ret;
+	syscall(::fcntl, int(fd), F_GET_FILE_RW_HINT, &ret);
+	return ret;
+}
+#else
+#warning "F_GET_FILE_RW_HINT not supported on platform."
+uint64_t
+ircd::fs::write_life(const fd &fd)
+{
+	return 0UL;
+}
+#endif
+
 #ifdef HAVE_SYS_STAT_H
 ulong
 ircd::fs::device(const fd &fd)

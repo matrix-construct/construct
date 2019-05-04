@@ -2067,7 +2067,7 @@ noexcept
 	#endif
 
 	this->hint = hint;
-	//TODO: fcntl F_SET_FILE_RW_HINT
+	fs::write_life(fd, this->hint);
 }
 
 rocksdb::Env::WriteLifeTimeHint
