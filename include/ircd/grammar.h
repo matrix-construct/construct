@@ -11,6 +11,13 @@
 #pragma once
 #define HAVE_IRCD_GRAMMAR_H
 
+// This header forward declares certain boost::spirit symbols in the ircd.h
+// standard include group because we do not include boost headers. This allows
+// our headers to make extern references between compilation units without
+// separate/internal headers. For example, one can create different grammars
+// in separate compilation units and share individual rules between them,
+// avoiding any DRY.
+
 namespace boost::spirit
 {
 	struct unused_type;

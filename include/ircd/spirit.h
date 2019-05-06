@@ -14,6 +14,9 @@
 /// This file is not part of the IRCd standard include list (stdinc.h) because
 /// it involves extremely expensive boost headers for creating formal spirit
 /// grammars. Include this in a definition file which defines such grammars.
+///
+/// Note that directly sharing elements of a grammar between two compilation
+/// units can be achieved with forward declarations in `ircd/grammar.h`.
 
 // ircd.h is included here so that it can be compiled into this header. Then
 // this becomes the single leading precompiled header.
