@@ -83,6 +83,12 @@ struct ircd::fs::write_opts
 	/// write with fsync(2)/fdsync(2) yourself.
 	bool metadata {false};
 
+	/// RWH_WRITE_LIFE integer representation (see fcntl(2) since Linux 4.13) if
+	/// supported; otherwise has no effect. As a write_opts option, this is only
+	/// meaningful if pwritev2(2) is available and the kernel recognizes the
+	/// RWF_WRITE_LIFE flag bits. See also fs::write_life(fd).
+	uint8_t write_life {0};
+
 	write_opts(const off_t & = 0);
 };
 

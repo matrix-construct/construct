@@ -276,6 +276,11 @@ ircd::fs::aio::request::write::write(const int &fd,
 	if(support_sync && opts.sync && opts.metadata)
 		aio_rw_flags |= RWF_SYNC;
 	#endif
+
+	#ifdef RWF_WRITE_LIFE_SHIFT
+	if(support_rwf_write_life && opts.write_life)
+		aio_rw_flags |= (opts.write_life << (RWF_WRITE_LIFE_SHIFT));
+	#endif
 }
 
 size_t

@@ -1317,6 +1317,11 @@ ircd::fs::flags(const write_opts &opts)
 		ret |= RWF_SYNC;
 	#endif
 
+	#ifdef RWF_WRITE_LIFE_SHIFT
+	if(support_rwf_write_life && opts.write_life)
+		ret |= (opts.write_life << (RWF_WRITE_LIFE_SHIFT));
+	#endif
+
 	return ret;
 }
 
