@@ -47,14 +47,16 @@ LOWMEM_FLAGS= --param ggc-min-expand=1
 endif
 endif
 
-ircd.h.gch:
+DEPS = *.h */*.h */*/*.h */*/*/*.h
+
+ircd.h.gch: $(DEPS)
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o ircd.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) ircd.h
 
-ircd.pic.h.gch:
+ircd.pic.h.gch: $(DEPS)
 	cp ircd.h ircd.pic.h
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o ircd.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC ircd.pic.h
 
-spirit.h.gch:
+spirit.h.gch: $(DEPS)
 	$(CXX) $(CXXFLAGS) $(LOWMEM_FLAGS) $(AM_CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC -include ircd.pic.h spirit.h
 
 clean-local:
