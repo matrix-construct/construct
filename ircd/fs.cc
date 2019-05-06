@@ -1883,12 +1883,13 @@ ircd::fs::reflect(const op &op)
 	return "????";
 }
 
+#ifndef IRCD_USE_AIO
 ircd::fs::op
-__attribute__((weak)) // overriden in fs_aio.cc
 ircd::fs::aio::translate(const int &val)
 {
 	return op::NOOP;
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
