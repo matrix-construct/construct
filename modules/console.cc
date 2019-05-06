@@ -7488,7 +7488,7 @@ console_cmd__room__depth__gaps(opt &out, const string_view &line)
 	(const auto &range, const auto &event_idx)
 	{
 		out << std::right << std::setw(8) << range.first
-		    << " : "
+		    << " -> "
 		    << std::left << std::setw(8) << range.second
 		    << " "
 		    << m::event_id(event_idx)
@@ -8096,9 +8096,9 @@ console_cmd__room__state(opt &out, const string_view &line)
 		if(!event.valid)
 			return true;
 
+		thread_local char smbuf[48];
 		out
-		    << std::right
-		    << std::setw(13) << json::get<"origin_server_ts"_>(event)
+		    << smalldate(smbuf, json::get<"origin_server_ts"_>(event) / 1000L)
 		    << std::right << " "
 		    << std::setw(9) << json::get<"depth"_>(event)
 		    << std::right << " [ "
@@ -8106,7 +8106,8 @@ console_cmd__room__state(opt &out, const string_view &line)
 		    << std::left << " ] [ "
 		    << std::setw(50) << state_key
 		    << std::left << " ] "
-		    << std::setw(72) << json::get<"event_id"_>(event);
+		    << std::setw(72) << json::get<"event_id"_>(event)
+		    << std::left << " "
 		    ;
 
 		size_t i(0);
