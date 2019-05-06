@@ -57,6 +57,8 @@ struct ircd::m::room::messages
 	uint64_t depth() const;            // Available from the iterator key.
 	string_view state_root() const;    // Available from the iterator value.
 
+	explicit operator event::idx() const;
+
 	const m::event &fetch(std::nothrow_t);
 	const m::event &fetch();
 

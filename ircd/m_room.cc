@@ -1781,6 +1781,13 @@ catch(const db::not_found &e)
 	return false;
 }
 
+ircd::m::room::messages::operator
+ircd::m::event::idx()
+const
+{
+	return event_idx();
+}
+
 ircd::m::event::id::buf
 ircd::m::room::messages::event_id()
 const
