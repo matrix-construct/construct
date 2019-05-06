@@ -49,6 +49,9 @@ endif
 
 DEPS = *.h */*.h */*/*.h */*/*/*.h
 
+nobase_include_HEADERS = $(DEPS)
+noinst_HEADERS = *.gch
+
 ircd.h.gch: $(DEPS)
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o ircd.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) ircd.h
 
