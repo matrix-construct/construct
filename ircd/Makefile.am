@@ -1,7 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
 
-libircddir	= @libdir@
-
 AM_CXXFLAGS = \
 	-ftls-model=initial-exec \
 	@EXTRA_CXXFLAGS@ \
@@ -59,6 +57,7 @@ AM_LDFLAGS = \
 	@EXTRA_LDFLAGS@ \
 	###
 
+libircddir = @libdir@
 libircd_LTLIBRARIES = libircd.la
 
 libircd_la_LDFLAGS = \
