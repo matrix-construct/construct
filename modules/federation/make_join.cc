@@ -61,7 +61,7 @@ get__make_join(client &client,
 		url::decode(user_id, request.parv[1])
 	};
 
-	if(user_id.host() != request.node_id.host())
+	if(user_id.host() != request.origin)
 		throw m::ACCESS_DENIED
 		{
 			"You are not permitted to spoof users on other hosts."

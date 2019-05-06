@@ -23,8 +23,9 @@ struct ircd::resource::request
 	string_view access_token;
 	vector_view<string_view> parv;
 	string_view param[8];
-	m::user::id::buf user_id;
-	m::node::id::buf node_id;
+	string_view node_id;
+	m::user::id user_id;
+	char user_id_buf[256];
 
 	request(const http::request::head &head,
 	        const string_view &content)

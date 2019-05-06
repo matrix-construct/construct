@@ -713,9 +713,9 @@ const
 	(const m::event &event)
 	{
 		// The user sent this access token to the tokens room
-		request.user_id = m::user::id
+		request.user_id = string_view
 		{
-			at<"sender"_>(event)
+			request.user_id_buf, copy(request.user_id_buf, at<"sender"_>(event))
 		};
 	});
 
@@ -798,8 +798,8 @@ const try
 			"The X-Matrix Authorization is invalid."
 		};
 
-	request.node_id = {m::node::id::origin, x_matrix.origin};
 	request.origin = x_matrix.origin;
+	request.node_id = request.origin; //TODO: remove request.node_id.
 	return request.origin;
 }
 catch(const m::error &)
