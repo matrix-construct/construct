@@ -43,6 +43,8 @@ namespace ircd::fs
 	extern const bool support_hipri;
 	extern const bool support_sync;
 	extern const bool support_dsync;
+	extern const bool support_rwh_write_life;
+	extern const bool support_rwf_write_life;
 
 	// Log facility for ircd::fs
 	extern log::log log;

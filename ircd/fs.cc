@@ -99,6 +99,27 @@ ircd::fs::support_append
 	#endif
 };
 
+decltype(ircd::fs::support_rwh_write_life)
+ircd::fs::support_rwh_write_life
+{
+	#if defined(HAVE_FCNTL_H) && defined(F_SET_FILE_RW_HINT)
+		info::kversion[0] >= 4 &&
+		info::kversion[1] >= 13
+	#else
+		false
+	#endif
+};
+
+decltype(ircd::fs::support_rwf_write_life)
+ircd::fs::support_rwf_write_life
+{
+	#if defined(RWF_WRITE_LIFE_SHIFT)
+		false //TODO: XXX
+	#else
+		false
+	#endif
+};
+
 //
 // init
 //
@@ -1508,6 +1529,9 @@ void
 ircd::fs::write_life(const fd &fd,
                      const uint64_t &hint)
 {
+	if(!support_rwh_write_life)
+		return;
+
 	syscall(::fcntl, int(fd), F_SET_FILE_RW_HINT, &hint);
 }
 #else
