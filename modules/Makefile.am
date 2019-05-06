@@ -123,7 +123,6 @@ m_device_list_update_la_SOURCES = m_device_list_update.cc
 m_ignored_user_list_la_SOURCES = m_ignored_user_list.cc
 m_state_la_SOURCES = m_state.cc
 m_rooms_la_SOURCES = m_rooms.cc
-m_room_la_SOURCES = m_room.cc
 m_room_create_la_SOURCES = m_room_create.cc
 m_room_member_la_SOURCES = m_room_member.cc
 m_room_join_rules_la_SOURCES = m_room_join_rules.cc
@@ -146,7 +145,6 @@ m_module_LTLIBRARIES = \
 	m_ignored_user_list.la \
 	m_state.la \
 	m_rooms.la \
-	m_room.la \
 	m_room_create.la \
 	m_room_member.la \
 	m_room_join_rules.la \

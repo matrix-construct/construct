@@ -88,7 +88,7 @@ IRCD_MAPI_VERSION
 constexpr const ircd::mapi::serial_t
 IRCD_MAPI_SERIAL
 {
-	1
+	2
 };
 
 /// Module Header

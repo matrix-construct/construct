@@ -11,148 +11,393 @@
 size_t
 ircd::m::room::purge(const room &room)
 {
-	using prototype = size_t (const m::room &);
-
-	static mods::import<prototype> call
+	size_t ret(0);
+	db::txn txn
 	{
-		"m_room", "ircd::m::room::purge"
+		*m::dbs::events
 	};
 
-	return call(room);
+	room.for_each([&txn, &ret]
+	(const m::event::idx &idx)
+	{
+		const m::event::fetch event
+		{
+			idx
+		};
+
+		m::dbs::write_opts opts;
+		opts.op = db::op::DELETE;
+		opts.event_idx = idx;
+		m::dbs::write(txn, event, opts);
+		++ret;
+	});
+
+	txn();
+	return ret;
 }
 
 size_t
 ircd::m::room::state::purge_replaced(const state &state)
 {
-	using prototype = size_t (const room::state &);
-
-	static mods::import<prototype> call
+	db::txn txn
 	{
-		"m_room", "ircd::m::room::state::purge_replaced"
+		*m::dbs::events
 	};
 
-	return call(state);
+	size_t ret(0);
+	m::room::messages it
+	{
+		state.room_id, uint64_t(0)
+	};
+
+	if(!it)
+		return ret;
+
+	for(; it; ++it)
+	{
+		const m::event::idx &event_idx(it.event_idx());
+		if(!m::get(std::nothrow, event_idx, "state_key", [](const auto &) {}))
+			continue;
+
+		if(!m::event::refs(event_idx).count(m::dbs::ref::STATE))
+			continue;
+
+		// TODO: erase event
+	}
+
+	return ret;
 }
 
 bool
-ircd::m::room::state::force_present(const event &event)
+ircd::m::room::state::force_present(const m::event &event)
 {
-	using prototype = bool (const m::event &);
-
-	static mods::import<prototype> call
+	db::txn txn
 	{
-		"m_room", "ircd::m::room::state::force_present"
+		*m::dbs::events
 	};
 
-	return call(event);
+	if(!defined(json::get<"room_id"_>(event)))
+		throw error
+		{
+			"event %s is not a room event (no room_id)",
+			json::get<"event_id"_>(event)
+		};
+
+	if(!defined(json::get<"state_key"_>(event)))
+		throw error
+		{
+			"event %s is not a state event (no state_key)",
+			json::get<"event_id"_>(event)
+		};
+
+	m::dbs::write_opts opts;
+	opts.event_idx = m::index(event);
+	opts.present = true;
+	opts.history = false;
+	opts.room_head = false;
+	opts.room_refs = false;
+
+	m::dbs::_index__room_state(txn, event, opts);
+	m::dbs::_index__room_joined(txn, event, opts);
+
+	txn();
+	return true;
 }
 
 size_t
 ircd::m::room::state::rebuild_present(const state &state)
 {
-	using prototype = bool (const room::state &);
-
-	static mods::import<prototype> call
+	size_t ret{0};
+	const auto create_idx
 	{
-		"m_room", "ircd::m::room::state::rebuild_present"
+		state.get("m.room.create")
 	};
 
-	return call(state);
+	static const m::event::fetch::opts fopts
+	{
+		{ db::get::NO_CACHE }
+	};
+
+	const m::room room
+	{
+		state.room_id, nullptr, state.fopts
+	};
+
+	m::room::messages it
+	{
+		room, create_idx, &fopts
+	};
+
+	if(!it)
+		return ret;
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	for(; it; ++it)
+	{
+		const m::event &event{*it};
+		if(!defined(json::get<"state_key"_>(event)))
+			continue;
+
+		m::dbs::write_opts opts;
+		opts.event_idx = it.event_idx();
+		opts.present = true;
+		opts.history = false;
+		opts.room_head = false;
+		opts.room_refs = false;
+
+		m::dbs::_index__room_state(txn, event, opts);
+		m::dbs::_index__room_joined(txn, event, opts);
+		++ret;
+	}
+
+	txn();
+	return ret;
 }
 
 size_t
 ircd::m::room::state::rebuild_history(const state &state)
 {
-	using prototype = bool (const room::state &);
-
-	static mods::import<prototype> call
+	size_t ret{0};
+	const auto create_idx
 	{
-		"m_room", "ircd::m::room::state::rebuild_history"
+		state.get("m.room.create")
 	};
 
-	return call(state);
+	static const m::event::fetch::opts fopts
+	{
+		{ db::get::NO_CACHE }
+	};
+
+	const m::room room
+	{
+		state.room_id, nullptr, state.fopts
+	};
+
+	m::room::messages it
+	{
+		room, create_idx, &fopts
+	};
+
+	if(!it)
+		return ret;
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	uint r(0);
+	char root[2][64] {0};
+	m::dbs::write_opts opts;
+	opts.root_in = root[++r % 2];
+	opts.root_out = root[++r % 2];
+	opts.present = false;
+	opts.history = true;
+	opts.room_head = false;
+	opts.room_refs = false;
+
+	int64_t depth{0};
+	for(; it; ++it)
+	{
+		const m::event &event{*it};
+		opts.event_idx = it.event_idx();
+		if(at<"depth"_>(event) == depth + 1)
+			++depth;
+
+		if(at<"depth"_>(event) != depth)
+			throw ircd::error
+			{
+				"Incomplete room history: gap between %ld and %ld [%s]",
+				depth,
+				at<"depth"_>(event),
+				string_view{at<"event_id"_>(event)}
+			};
+
+		if(at<"type"_>(event) == "m.room.redaction")
+		{
+			opts.root_in = m::dbs::_index_redact(txn, event, opts);
+			opts.root_out = root[++r % 2];
+			txn();
+			txn.clear();
+		}
+		else if(defined(json::get<"state_key"_>(event)))
+		{
+			opts.root_in = m::dbs::_index_state(txn, event, opts);
+			opts.root_out = root[++r % 2];
+			txn();
+			txn.clear();
+		}
+		else m::dbs::_index_other(txn, event, opts);
+
+		++ret;
+	}
+
+	txn();
+	return ret;
 }
 
+//TODO: state btree.
 size_t
 ircd::m::room::state::clear_history(const state &state)
 {
-	using prototype = bool (const room::state &);
-
-	static mods::import<prototype> call
+	static const db::gopts gopts
 	{
-		"m_room", "ircd::m::room::state::clear_history"
+		db::get::NO_CACHE
 	};
 
-	return call(state);
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	auto it
+	{
+		m::dbs::room_events.begin(state.room_id, gopts)
+	};
+
+	size_t ret{0};
+	for(; it; ++it, ret++)
+	{
+		const auto pair
+		{
+			m::dbs::room_events_key(it->first)
+		};
+
+		const auto &depth{std::get<0>(pair)};
+		const auto &event_idx{std::get<1>(pair)};
+		thread_local char buf[m::dbs::ROOM_EVENTS_KEY_MAX_SIZE];
+		const string_view key
+		{
+			m::dbs::room_events_key(buf, state.room_id, depth, event_idx)
+		};
+
+		db::txn::append
+		{
+			txn, m::dbs::room_events,
+			{
+				db::op::SET,
+				key
+			}
+		};
+	}
+
+	txn();
+	return ret;
 }
+
+namespace ircd::m
+{
+	extern conf::item<ulong> state__prefetch__yield_modulus;
+}
+
+decltype(ircd::m::state__prefetch__yield_modulus)
+ircd::m::state__prefetch__yield_modulus
+{
+	{ "name",     "ircd.m.room.state_prefetch.yield_modulus" },
+	{ "default",  256L                                       },
+};
 
 size_t
 ircd::m::room::state::prefetch(const state &state,
                                const string_view &type,
                                const event::idx_range &range)
 {
-	using prototype = size_t (const room::state &, const string_view &, const event::idx_range &);
-
-	static mods::import<prototype> call
+	const m::event::fetch::opts &fopts
 	{
-		"m_room", "ircd::m::room::state::prefetch"
+		state.fopts?
+			*state.fopts:
+			m::event::fetch::default_opts
 	};
 
-	return call(state, type, range);
-}
-
-ircd::m::event::idx
-ircd::m::room::state::next(const event::idx &event_idx)
-{
-	using prototype = event::idx (const event::idx &);
-
-	static mods::import<prototype> call
+	size_t ret{0};
+	state.for_each(type, m::event::closure_idx{[&ret, &fopts, &range]
+	(const m::event::idx &event_idx)
 	{
-		"m_room", "ircd::m::room::state::next"
-	};
+		if(event_idx < range.first)
+			return;
 
-	return call(event_idx);
+		if(range.second && event_idx > range.second)
+			return;
+
+		m::prefetch(event_idx, fopts);
+		++ret;
+
+		const ulong ym(state__prefetch__yield_modulus);
+		if(ym && ret % ym == 0)
+			ctx::yield();
+	}});
+
+	return ret;
 }
 
 ircd::m::event::idx
 ircd::m::room::state::prev(const event::idx &event_idx)
 {
-	using prototype = event::idx (const event::idx &);
-
-	static mods::import<prototype> call
+	event::idx ret{0};
+	prev(event_idx, [&ret]
+	(const event::idx &event_idx)
 	{
-		"m_room", "ircd::m::room::state::prev"
-	};
+		if(event_idx > ret)
+			ret = event_idx;
 
-	return call(event_idx);
+		return true;
+	});
+
+	return ret;
+}
+
+ircd::m::event::idx
+ircd::m::room::state::next(const event::idx &event_idx)
+{
+	event::idx ret{0};
+	next(event_idx, [&ret]
+	(const event::idx &event_idx)
+	{
+		if(event_idx > ret)
+			ret = event_idx;
+
+		return true;
+	});
+
+	return ret;
 }
 
 bool
 ircd::m::room::state::next(const event::idx &event_idx,
                            const event::closure_idx_bool &closure)
 {
-	using prototype = bool (const event::idx &, const event::closure_idx_bool &);
-
-	static mods::import<prototype> call
+	const m::event::refs refs
 	{
-		"m_room", "ircd::m::room::state::next"
+		event_idx
 	};
 
-	return call(event_idx, closure);
+	return refs.for_each(dbs::ref::STATE, [&closure]
+	(const event::idx &event_idx, const dbs::ref &ref)
+	{
+		assert(ref == dbs::ref::STATE);
+		return closure(event_idx);
+	});
 }
 
 bool
 ircd::m::room::state::prev(const event::idx &event_idx,
                            const event::closure_idx_bool &closure)
 {
-	using prototype = bool (const event::idx &, const event::closure_idx_bool &);
-
-	static mods::import<prototype> call
+	const m::event::refs refs
 	{
-		"m_room", "ircd::m::room::state::prev"
+		event_idx
 	};
 
-	return call(event_idx, closure);
+	return refs.for_each(dbs::ref::PREV_STATE, [&closure]
+	(const event::idx &event_idx, const dbs::ref &ref)
+	{
+		assert(ref == dbs::ref::PREV_STATE);
+		return closure(event_idx);
+	});
 }
 
 ircd::m::room
@@ -453,64 +698,122 @@ ircd::m::commit(const room &room,
 }
 
 std::pair<int64_t, ircd::m::event::idx>
-ircd::m::twain(const room &r)
+ircd::m::twain(const room &room)
 {
-	static mods::import<decltype(twain)> call
+	std::pair<int64_t, m::event::idx> ret
 	{
-		"m_room", "ircd::m::twain"
+		-1, 0
 	};
 
-	return call(r);
+	rfor_each_depth_gap(room, [&ret]
+	(const auto &range, const auto &event_idx)
+	{
+		ret.first = range.first - 1;
+		ret.second = event_idx;
+		return false;
+	});
+
+	return ret;
 }
 
 std::pair<int64_t, ircd::m::event::idx>
-ircd::m::sounding(const room &r)
+ircd::m::sounding(const room &room)
 {
-	static mods::import<decltype(sounding)> call
+	std::pair<int64_t, m::event::idx> ret
 	{
-		"m_room", "ircd::m::sounding"
+		-1, 0
 	};
 
-	return call(r);
+	rfor_each_depth_gap(room, [&ret]
+	(const auto &range, const auto &event_idx)
+	{
+		ret.first = range.second;
+		ret.second = event_idx;
+		return false;
+	});
+
+	return ret;
 }
 
 std::pair<int64_t, ircd::m::event::idx>
-ircd::m::surface(const room &r)
+ircd::m::surface(const room &room)
 {
-	static mods::import<decltype(surface)> call
+	std::pair<int64_t, m::event::idx> ret {0, 0};
+	for_each_depth_gap(room, [&ret]
+	(const auto &range, const auto &event_idx)
 	{
-		"m_room", "ircd::m::surface"
-	};
+		ret.first = range.first;
+		ret.second = event_idx;
+		return false;
+	});
 
-	return call(r);
+	return ret;
 }
 
 bool
-ircd::m::rfor_each_depth_gap(const room &r,
-                             const depth_range_closure &c)
+ircd::m::rfor_each_depth_gap(const room &room,
+                             const depth_range_closure &closure)
 {
-	using prototype = bool (const room &, const depth_range_closure &);
-
-	static mods::import<prototype> call
+	room::messages it
 	{
-		"m_room", "ircd::m::rfor_each_depth_gap"
+		room
 	};
 
-	return call(r, c);
+	if(!it)
+		return true;
+
+	event::idx idx{0};
+	for(depth_range range{0L, it.depth()}; it; --it)
+	{
+		range.first = it.depth();
+		if(range.first == range.second)
+		{
+			idx = it.event_idx();
+			continue;
+		}
+
+		--range.second;
+		if(range.first == range.second)
+		{
+			idx = it.event_idx();
+			continue;
+		}
+
+		if(!closure({range.first+1, range.second+1}, idx))
+			return false;
+
+		range.second = range.first;
+	}
+
+	return true;
 }
 
 bool
-ircd::m::for_each_depth_gap(const room &r,
-                            const depth_range_closure &c)
+ircd::m::for_each_depth_gap(const room &room,
+                            const depth_range_closure &closure)
 {
-	using prototype = bool (const room &, const depth_range_closure &);
-
-	static mods::import<prototype> call
+	room::messages it
 	{
-		"m_room", "ircd::m::for_each_depth_gap"
+		room, int64_t(0L)
 	};
 
-	return call(r, c);
+	for(depth_range range{0L, 0L}; it; ++it)
+	{
+		range.second = it.depth();
+		if(range.first == range.second)
+			continue;
+
+		++range.first;
+		if(range.first == range.second)
+			continue;
+
+		if(!closure(range, it.event_idx()))
+			return false;
+
+		range.first = range.second;
+	}
+
+	return true;
 }
 
 size_t
@@ -543,20 +846,38 @@ ircd::m::count_since(const room &room,
 }
 
 size_t
-ircd::m::count_since(const room &r,
-                     const event::idx &a,
-                     const event::idx &b)
+ircd::m::count_since(const m::room &room,
+                     const m::event::idx &a,
+                     const m::event::idx &b)
 {
-	using prototype = size_t (const room &,
-	                          const event::idx &,
-	                          const event::idx &);
-
-	static mods::import<prototype> call
+	m::room::messages it
 	{
-		"m_room", "ircd::m::count_since"
+		room
 	};
 
-	return call(r, std::min(a, b), std::max(a, b));
+	assert(a <= b);
+	it.seek_idx(a);
+
+	if(!it && !exists(room))
+		throw m::NOT_FOUND
+		{
+			"Cannot find room '%s' to count events in",
+			string_view{room.room_id}
+		};
+	else if(!it)
+		throw m::NOT_FOUND
+		{
+			"Event @ idx:%lu or idx:%lu not found in room '%s' or at all",
+			a,
+			b,
+			string_view{room.room_id}
+		};
+
+	size_t ret{0};
+	// Hit the iterator once first otherwise the count will always increment
+	// to `1` erroneously when it ought to show `0`.
+	for(++it; it && it.event_idx() < b; ++it, ++ret);
+	return ret;
 }
 
 ircd::m::id::room::buf
@@ -2589,18 +2910,56 @@ const
 }
 
 bool
-ircd::m::room::origins::random(const origins &o,
+ircd::m::room::origins::random(const origins &origins,
                                const closure &view,
                                const closure_bool &proffer)
 {
-	using prototype = bool (const origins &, const closure &, const closure_bool &);
-
-	static mods::import<prototype> call
+	bool ret{false};
+	const size_t max
 	{
-		"m_room", "ircd::m::room::origins::random"
+		origins.count()
 	};
 
-	return call(o, view, proffer);
+	if(unlikely(!max))
+		return ret;
+
+	auto select
+	{
+		ssize_t(rand::integer(0, max - 1))
+	};
+
+	const closure_bool closure{[&proffer, &view, &select]
+	(const string_view &origin)
+	{
+		if(select-- > 0)
+			return true;
+
+		// Test if this random selection is "ok" e.g. the callback allows the
+		// user to test a blacklist for this origin. Skip to next if not.
+		if(proffer && !proffer(origin))
+		{
+			++select;
+			return true;
+		}
+
+		view(origin);
+		return false;
+	}};
+
+	const auto iteration{[&origins, &closure, &ret]
+	{
+		ret = !origins.for_each(closure);
+	}};
+
+	// Attempt select on first iteration
+	iteration();
+
+	// If nothing was OK between the random int and the end of the iteration
+	// then start again and pick the first OK.
+	if(!ret && select >= 0)
+		iteration();
+
+	return ret;
 }
 
 size_t
@@ -2820,75 +3179,224 @@ const
 	return for_each(*this, closure);
 }
 
-bool
-ircd::m::room::head::for_each(const head &h,
-                              const closure_bool &c)
+size_t
+ircd::m::room::head::rebuild(const head &head)
 {
-	using prototype = bool (const head &, const closure_bool &);
-
-	static mods::import<prototype> call
+	size_t ret{0};
+	const auto &room{head.room};
+	const m::room::state state{room};
+	const auto create_idx
 	{
-		"m_room", "ircd::m::room::head::for_each"
+		state.get("m.room.create")
 	};
 
-	return call(h, c);
+	static const m::event::fetch::opts fopts
+	{
+		{ db::get::NO_CACHE }
+	};
+
+	m::room::messages it
+	{
+		room, create_idx, &fopts
+	};
+
+	if(!it)
+		return ret;
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	m::dbs::write_opts opts;
+	opts.op = db::op::SET;
+	opts.room_head = true;
+	opts.room_refs = true;
+	for(; it; ++it)
+	{
+		const m::event &event{*it};
+		opts.event_idx = it.event_idx();
+		m::dbs::_index__room_head(txn, event, opts);
+		++ret;
+	}
+
+	txn();
+	return ret;
 }
 
-int64_t
-ircd::m::room::head::make_refs(const head &h,
-                               json::stack::array &a,
-                               const size_t &limit,
-                               const bool &need_top)
+size_t
+ircd::m::room::head::reset(const head &head)
 {
-	using prototype = int64_t (const head &, json::stack::array &, const size_t &, const bool &);
+	size_t ret{0};
+	const auto &room{head.room};
+	m::room::messages it{room};
+	if(!it)
+		return ret;
 
-	static mods::import<prototype> call
+	// Replacement will be the single new head
+	const m::event replacement
 	{
-		"m_room", "ircd::m::room::head::make_refs"
+		*it
 	};
 
-	return call(h, a, limit, need_top);
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	// Iterate all of the existing heads with a delete operation
+	m::dbs::write_opts opts;
+	opts.op = db::op::DELETE;
+	opts.room_head = true;
+	m::room::head{room}.for_each([&room, &opts, &txn, &ret]
+	(const m::event::idx &event_idx, const m::event::id &event_id)
+	{
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+		{
+			log::derror
+			{
+				m::log, "Invalid event '%s' idx %lu in head for %s",
+				string_view{event_id},
+				event_idx,
+				string_view{room.room_id}
+			};
+
+			return;
+		}
+
+		opts.event_idx = event_idx;
+		m::dbs::_index__room_head(txn, event, opts);
+		++ret;
+	});
+
+	// Finally add the replacement to the txn
+	opts.op = db::op::SET;
+	opts.event_idx = it.event_idx();
+	m::dbs::_index__room_head(txn, replacement, opts);
+
+	// Commit txn
+	txn();
+	return ret;
 }
 
 void
-ircd::m::room::head::modify(const event::id &event_id,
+ircd::m::room::head::modify(const m::event::id &event_id,
                             const db::op &op,
                             const bool &refs)
 {
-	using prototype = void (const event::id &, const db::op &, const bool &);
-
-	static mods::import<prototype> call
+	const m::event::fetch event
 	{
-		"m_room", "ircd::m::room::head::modify"
+		event_id
 	};
 
-	return call(event_id, op, refs);
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	// Iterate all of the existing heads with a delete operation
+	m::dbs::write_opts opts;
+	opts.op = op;
+	opts.room_head = true;
+	opts.room_refs = refs;
+	opts.event_idx = event.event_idx;
+	m::dbs::_index__room_head(txn, event, opts);
+
+	// Commit txn
+	txn();
 }
 
-size_t
-ircd::m::room::head::rebuild(const head &h)
+int64_t
+ircd::m::room::head::make_refs(const head &head,
+                               json::stack::array &out,
+                               const size_t &_limit,
+                               const bool &_need_tophead)
 {
-	using prototype = size_t (const head &);
-
-	static mods::import<prototype> call
+	size_t limit{_limit};
+	bool need_tophead{_need_tophead};
+	const auto &room{head.room};
+	const auto top_head
 	{
-		"m_room", "ircd::m::room::head::rebuild"
+		need_tophead?
+			m::top(std::nothrow, room.room_id):
+			std::tuple<m::id::event::buf, int64_t, m::event::idx>{}
 	};
 
-	return call(h);
+	int64_t depth{-1};
+	m::event::fetch event;
+	head.for_each(m::room::head::closure_bool{[&]
+	(const m::event::idx &idx, const m::event::id &event_id)
+	{
+		seek(event, idx, std::nothrow);
+		if(!event.valid)
+			return true;
+
+		if(need_tophead)
+			if(json::get<"event_id"_>(event) == std::get<0>(top_head))
+				need_tophead = false;
+
+		depth = std::max(json::get<"depth"_>(event), depth);
+		json::stack::array prev{out};
+		prev.append(event_id);
+		{
+			json::stack::object hash{prev};
+			json::stack::member will
+			{
+				hash, "", ""
+			};
+		}
+
+		return --limit - need_tophead > 0;
+	}});
+
+	if(need_tophead)
+	{
+		depth = std::get<1>(top_head);
+		json::stack::array prev{out};
+		prev.append(std::get<0>(top_head));
+		{
+			json::stack::object hash{prev};
+			json::stack::member will
+			{
+				hash, "", ""
+			};
+		}
+	}
+
+	return depth;
 }
 
-size_t
-ircd::m::room::head::reset(const head &h)
+bool
+ircd::m::room::head::for_each(const head &head,
+                              const closure_bool &closure)
 {
-	using prototype = size_t (const head &);
-
-	static mods::import<prototype> call
+	auto it
 	{
-		"m_room", "ircd::m::room::head::reset"
+		dbs::room_head.begin(head.room.room_id)
 	};
 
-	return call(h);
+	for(; it; ++it)
+	{
+		const event::id &event_id
+		{
+			dbs::room_head_key(it->first)
+		};
+
+		const event::idx &event_idx
+		{
+			byte_view<event::idx>{it->second}
+		};
+
+		if(!closure(event_idx, event_id))
+			return false;
+	}
+
+	return true;
 }
 
 //
@@ -2938,32 +3446,50 @@ const
 
 bool
 ircd::m::room::auth::for_each(const auth &a,
-                              const closure_bool &c)
+                              const closure_bool &closure)
 {
-	using prototype = bool (const auth &, const closure_bool &);
+	const m::room &room{a.room};
+	const auto &event_id{room.event_id};
+	if(!event_id)
+		return false;
 
-	static mods::import<prototype> call
-	{
-		"m_room", "ircd::m::room::auth::for_each"
-	};
-
-	return call(a, c);
+	return true;
 }
 
 void
-ircd::m::room::auth::make_refs(const auth &a,
+ircd::m::room::auth::make_refs(const auth &auth,
                                json::stack::array &out,
-                               const types &t,
-                               const m::id::user &u)
+                               const types &types,
+                               const user::id &user_id)
 {
-	using prototype = void (const auth &, json::stack::array &, const types &, const m::id::user &);
-
-	static mods::import<prototype> call
+	const m::room::state state
 	{
-		"m_room", "ircd::m::room::auth::make_refs"
+		auth.room
 	};
 
-	return call(a, out, t, u);
+	const auto fetch{[&out, &state]
+	(const string_view &type, const string_view &state_key)
+	{
+		state.get(std::nothrow, type, state_key, m::event::id::closure{[&out]
+		(const auto &event_id)
+		{
+			json::stack::array auth{out};
+			auth.append(event_id);
+			{
+				json::stack::object hash{auth};
+				json::stack::member will
+				{
+					hash, "", ""
+				};
+			}
+		}});
+	}};
+
+	for(const auto &type : types)
+		fetch(type, "");
+
+	if(user_id)
+		fetch("m.room.member", user_id);
 }
 
 //
@@ -3229,17 +3755,82 @@ ircd::m::room::power::default_user_level
 };
 
 ircd::json::object
-ircd::m::room::power::default_content(const mutable_buffer &out,
-                                     const m::user::id &creator)
+ircd::m::room::power::default_content(const mutable_buffer &buf,
+                                      const m::user::id &creator)
 {
-	using prototype = json::object (const mutable_buffer &, const m::user::id &);
+	json::stack out{buf};
+	json::stack::object content{out};
 
-	static mods::import<prototype> call
+	assert(default_power_level == 50);
+	json::stack::member
 	{
-		"m_room", "ircd::m::room::power::default_content"
+		content, "ban", json::value(default_power_level)
 	};
 
-	return call(out, creator);
+	json::stack::object
+	{
+		content, "events"
+	};
+
+	assert(default_event_level == 0);
+	json::stack::member
+	{
+		content, "events_default", json::value(default_event_level)
+	};
+
+	json::stack::member
+	{
+		content, "invite", json::value(default_power_level)
+	};
+
+	json::stack::member
+	{
+		content, "kick", json::value(default_power_level)
+	};
+
+	{
+		json::stack::object notifications
+		{
+			content, "notifications"
+		};
+
+		json::stack::member
+		{
+			notifications, "room", json::value(default_power_level)
+		};
+	}
+
+	json::stack::member
+	{
+		content, "redact", json::value(default_power_level)
+	};
+
+	json::stack::member
+	{
+		content, "state_default", json::value(default_power_level)
+	};
+
+	{
+		json::stack::object users
+		{
+			content, "users"
+		};
+
+		assert(default_creator_level == 100);
+		json::stack::member
+		{
+			users, creator, json::value(default_creator_level)
+		};
+	}
+
+	assert(default_user_level == 0);
+	json::stack::member
+	{
+		content, "users_default", json::value(default_user_level)
+	};
+
+	content.~object();
+	return json::object{out.completed()};
 }
 
 //
@@ -3684,53 +4275,175 @@ const
 //
 
 size_t
-ircd::m::room::stats::bytes_json_compressed(const m::room &room)
+__attribute__((noreturn))
+ircd::m::room::stats::bytes_total(const m::room &room)
 {
-	using prototype = size_t (const m::room &);
-
-	static mods::import<prototype> call
+	throw m::UNSUPPORTED
 	{
-		"m_room", "ircd::m::room::stats::bytes_json_compressed"
+		"Not yet implemented."
 	};
+}
 
-	return call(room);
+size_t
+__attribute__((noreturn))
+ircd::m::room::stats::bytes_total_compressed(const m::room &room)
+{
+	throw m::UNSUPPORTED
+	{
+		"Not yet implemented."
+	};
 }
 
 size_t
 ircd::m::room::stats::bytes_json(const m::room &room)
 {
-	using prototype = size_t (const m::room &);
-
-	static mods::import<prototype> call
+	size_t ret(0);
+	for(m::room::messages it(room); it; --it)
 	{
-		"m_room", "ircd::m::room::stats::bytes_json"
-	};
+		const m::event::idx &event_idx
+		{
+			it.event_idx()
+		};
 
-	return call(room);
+		const byte_view<string_view> key
+		{
+			event_idx
+		};
+
+		static const db::gopts gopts
+		{
+			db::get::NO_CACHE
+		};
+
+		ret += db::bytes_value(m::dbs::event_json, key, gopts);
+	}
+
+	return ret;
 }
 
 size_t
-ircd::m::room::stats::bytes_total_compressed(const m::room &room)
+__attribute__((noreturn))
+ircd::m::room::stats::bytes_json_compressed(const m::room &room)
 {
-	using prototype = size_t (const m::room &);
-
-	static mods::import<prototype> call
+	throw m::UNSUPPORTED
 	{
-		"m_room", "ircd::m::room::stats::bytes_total_compressed"
+		"Not yet implemented."
+	};
+}
+
+//TODO: temp
+namespace ircd::m
+{
+	extern "C" void room_herd(const m::room &, const m::user &, const milliseconds &);
+	extern "C" size_t dagree_histogram(const m::room &, std::vector<size_t> &);
+}
+
+void
+ircd::m::room_herd(const m::room &room,
+                   const m::user &user,
+                   const milliseconds &timeout)
+{
+	using closure_prototype = bool (const string_view &,
+	                                std::exception_ptr,
+	                                const json::object &);
+
+	using prototype = void (const m::room::id &,
+	                        const m::user::id &,
+	                        const milliseconds &,
+	                        const std::function<closure_prototype> &);
+
+	static mods::import<prototype> feds__head
+	{
+		"federation_federation", "feds__head"
 	};
 
-	return call(room);
+	std::set<std::string> event_ids;
+	feds__head(room.room_id, user.user_id, timeout, [&event_ids]
+	(const string_view &origin, std::exception_ptr eptr, const json::object &event)
+	{
+		if(eptr)
+			return true;
+
+		const json::array prev_events
+		{
+			event.at("prev_events")
+		};
+
+		for(const json::array prev_event : prev_events)
+		{
+			const auto &prev_event_id
+			{
+				unquote(prev_event.at(0))
+			};
+
+			event_ids.emplace(prev_event_id);
+		};
+
+		return true;
+	});
+
+	size_t i(0);
+	for(const m::event::id &event_id : event_ids)
+		if(exists(event_id))
+		{
+			m::room::head::modify(event_id, db::op::SET, false);
+			++i;
+		}
+
+	const m::room::head head
+	{
+		room
+	};
+
+	for(; i + 1 >= 1 && head.count() > 1; --i)
+	{
+		const auto eid
+		{
+			send(room, user, "ircd.room.revelation", json::object{})
+		};
+
+		ctx::sleep(seconds(2));
+	}
 }
 
 size_t
-ircd::m::room::stats::bytes_total(const m::room &room)
+ircd::m::dagree_histogram(const m::room &room,
+                          std::vector<size_t> &vec)
 {
-	using prototype = size_t (const m::room &);
-
-	static mods::import<prototype> call
+	static const m::event::fetch::opts fopts
 	{
-		"m_room", "ircd::m::room::stats::bytes_total"
+		{ db::get::NO_CACHE },
+		m::event::keys::include
+		{
+			"event_id",
+			"prev_events",
+		}
 	};
 
-	return call(room);
+	m::room::messages it
+	{
+		room, &fopts
+	};
+
+	size_t ret{0};
+	for(; it; --it)
+	{
+		const m::event event{*it};
+		const size_t num{degree(event)};
+		if(unlikely(num >= vec.size()))
+		{
+			log::warning
+			{
+				m::log, "Event '%s' had %zu prev events (ignored)",
+				string_view(at<"event_id"_>(event))
+			};
+
+			continue;
+		}
+
+		++vec[num];
+		++ret;
+	}
+
+	return ret;
 }
