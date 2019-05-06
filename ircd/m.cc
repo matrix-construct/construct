@@ -4549,6 +4549,22 @@ ircd::m::request::request(const string_view &origin,
 	json::get<"method"_>(*this) = method;
 	json::get<"uri"_>(*this) = uri;
 	json::get<"content"_>(*this) = content;
+
+	if(unlikely(origin && !rfc3986::valid_remote(std::nothrow, origin)))
+		throw m::error
+		{
+			http::BAD_REQUEST, "M_REQUEST_INVALID_ORIGIN",
+			"This origin string '%s' is not a valid remote.",
+			origin
+		};
+
+	if(unlikely(destination && !rfc3986::valid_remote(std::nothrow, destination)))
+		throw m::error
+		{
+			http::BAD_REQUEST, "M_REQUEST_INVALID_DESTINATION",
+			"This destination string '%s' is not a valid remote.",
+			destination
+		};
 }
 
 decltype(ircd::m::request::headers_max)
