@@ -23,8 +23,6 @@
  *  USA
  */
 
-#include <ircd/spirit.h>
-
 decltype(ircd::spirit::rulebuf) thread_local
 ircd::spirit::rulebuf;
 

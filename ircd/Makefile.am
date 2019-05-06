@@ -159,6 +159,9 @@ LOWMEM_FLAGS= --param ggc-min-expand=1
 endif
 endif
 
+parse.lo:      AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
+parse.lo:      CXXFLAGS += ${LOWMEM_FLAGS}
+
 json.lo:       AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
 json.lo:       CXXFLAGS += ${LOWMEM_FLAGS}
 
