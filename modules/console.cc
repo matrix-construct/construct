@@ -949,6 +949,35 @@ console_cmd__env(opt &out, const string_view &line)
 }
 
 //
+// stats
+//
+
+bool
+console_cmd__stats(opt &out, const string_view &line)
+{
+	for(const auto &[name, item] : stats::items)
+	{
+		static constexpr size_t name_width {60};
+
+		assert(item);
+		const auto trunc_name(trunc(name, name_width));
+		out << std::left << std::setw(name_width) << trunc_name;
+
+		if(size(trunc_name) == name_width)
+			out << "...";
+		else
+			out << "   ";
+
+		out << "  "
+		    << std::left << (*item)
+		    << std::endl
+		    ;
+	}
+
+	return true;
+}
+
+//
 // ios
 //
 
