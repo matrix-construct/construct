@@ -59,6 +59,24 @@ ircd::ios::init(asio::io_context &user)
 	ios::user = &user;
 }
 
+void
+ircd::ios::forking()
+{
+	get().notify_fork(asio::execution_context::fork_prepare);
+}
+
+void
+ircd::ios::forked_child()
+{
+	get().notify_fork(asio::execution_context::fork_child);
+}
+
+void
+ircd::ios::forked_parent()
+{
+	get().notify_fork(asio::execution_context::fork_parent);
+}
+
 ircd::ios::post::post(std::function<void ()> function)
 {
 	static descriptor descriptor

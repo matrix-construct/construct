@@ -47,6 +47,9 @@ namespace ircd::ios
 	extern std::thread::id main_thread_id;
 	extern asio::io_context *user;
 
+	const string_view &name(const descriptor &);
+	const string_view &name(const handler &);
+
 	bool is_main_thread();
 	bool is_static_thread();
 	void assert_main_thread();
@@ -54,8 +57,9 @@ namespace ircd::ios
 	bool available();
 	asio::io_context &get();
 
-	const string_view &name(const descriptor &);
-	const string_view &name(const handler &);
+	void forked_parent();
+	void forked_child();
+	void forking();
 
 	void init(asio::io_context &user);
 }
