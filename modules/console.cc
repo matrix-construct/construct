@@ -7160,7 +7160,7 @@ console_cmd__rooms__fetch(opt &out, const string_view &line)
 
 	static mods::import<prototype> fetch_update
 	{
-		"m_rooms", "_fetch_update"
+		"m_rooms", "ircd::m::rooms::fetch_update"
 	};
 
 	const params param{line, " ",

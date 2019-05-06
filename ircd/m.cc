@@ -2908,7 +2908,7 @@ ircd::m::rooms::summary_set(const m::room::id &room_id,
 
 	static mods::import<prototype> function
 	{
-		"m_rooms", "_summary_set"
+		"m_rooms", "ircd::m::rooms::summary_set"
 	};
 
 	return function(room_id, summary);
@@ -2938,7 +2938,7 @@ ircd::m::rooms::summary_chunk(const m::room &room,
 
 	static mods::import<prototype> function
 	{
-		"m_rooms", "_summary_chunk"
+		"m_rooms", "ircd::m::rooms::summary_chunk"
 	};
 
 	return function(room, chunk);
@@ -2977,7 +2977,7 @@ ircd::m::rooms::count_public(const string_view &server)
 
 	static mods::import<prototype> function
 	{
-		"m_rooms", "_count_public"
+		"m_rooms", "ircd::m::rooms::count_public"
 	};
 
 	return function(server);

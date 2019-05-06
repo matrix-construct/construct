@@ -12,17 +12,14 @@ namespace ircd::m::rooms
 {
 	static string_view make_state_key(const mutable_buffer &out, const m::room::id &);
 	static m::room::id::buf unmake_state_key(const string_view &);
-	extern "C" event::id::buf _summary_set(const m::room::id &, const json::object &);
 
-	extern "C" std::pair<size_t, std::string> _fetch_update_(const net::hostport &, const string_view &since, const size_t &limit, const seconds &timeout);
-	extern "C" std::pair<size_t, std::string> _fetch_update(const net::hostport &, const string_view &since = {});
 	extern conf::item<size_t> fetch_limit;
 	extern conf::item<seconds> fetch_timeout;
+	std::pair<size_t, std::string> fetch_update(const net::hostport &, const string_view &since, const size_t &limit, const seconds &timeout);
+	std::pair<size_t, std::string> fetch_update(const net::hostport &, const string_view &since = {});
 
 	static void remote_summary_chunk(const m::room &room, json::stack::object &obj);
 	static void local_summary_chunk(const m::room &room, json::stack::object &obj);
-	extern "C" void _summary_chunk(const m::room &room, json::stack::object &obj);
-	extern "C" size_t _count_public(const string_view &server);
 	extern "C" bool _for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
 	static void create_public_room(const m::event &, m::vm::eval &);
 
@@ -106,7 +103,8 @@ ircd::m::rooms::is_public(const room::id &room_id)
 }
 
 size_t
-ircd::m::rooms::_count_public(const string_view &server)
+IRCD_MODULE_EXPORT
+ircd::m::rooms::count_public(const string_view &server)
 {
 	size_t ret{0};
 	const auto count{[&ret]
@@ -167,8 +165,9 @@ ircd::m::rooms::_for_each_public(const string_view &key,
 }
 
 void
-ircd::m::rooms::_summary_chunk(const m::room &room,
-                               json::stack::object &obj)
+IRCD_MODULE_EXPORT
+ircd::m::rooms::summary_chunk(const m::room &room,
+                              json::stack::object &obj)
 {
 	return exists(room)?
 		local_summary_chunk(room, obj):
@@ -350,17 +349,19 @@ ircd::m::rooms::fetch_limit
 };
 
 std::pair<size_t, std::string>
-ircd::m::rooms::_fetch_update(const net::hostport &hp,
-                              const string_view &since)
+IRCD_MODULE_EXPORT
+ircd::m::rooms::fetch_update(const net::hostport &hp,
+                             const string_view &since)
 {
-	return _fetch_update_(hp, since, size_t(fetch_limit), seconds(fetch_timeout));
+	return fetch_update(hp, since, size_t(fetch_limit), seconds(fetch_timeout));
 }
 
 std::pair<size_t, std::string>
-ircd::m::rooms::_fetch_update_(const net::hostport &hp,
-                               const string_view &since,
-                               const size_t &limit,
-                               const seconds &timeout)
+IRCD_MODULE_EXPORT
+ircd::m::rooms::fetch_update(const net::hostport &hp,
+                             const string_view &since,
+                             const size_t &limit,
+                             const seconds &timeout)
 {
 	m::v1::public_rooms::opts opts;
 	opts.limit = limit;
@@ -402,7 +403,7 @@ ircd::m::rooms::_fetch_update_(const net::hostport &hp,
 			unquote(summary.at("room_id"))
 		};
 
-		_summary_set(room_id, summary);
+		summary_set(room_id, summary);
 	}
 
 	return
@@ -435,8 +436,9 @@ ircd::m::rooms::summary_del(const m::room &room)
 }
 
 ircd::m::event::id::buf
-ircd::m::rooms::_summary_set(const m::room::id &room_id,
-                             const json::object &summary)
+IRCD_MODULE_EXPORT
+ircd::m::rooms::summary_set(const m::room::id &room_id,
+                            const json::object &summary)
 {
 	char state_key_buf[256];
 	const auto state_key
