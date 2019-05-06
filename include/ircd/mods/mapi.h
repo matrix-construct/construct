@@ -130,7 +130,8 @@ struct ircd::mapi::metablock
 	fini_func fini;                    // Executed before dlclose()
 	meta_data meta;                    // Various key-value metadata
 
-	metablock(const string_view &, init_func &&, fini_func &&);
+	metablock(const string_view &, init_func &&, fini_func &&)
+	__attribute__((noplt));
 };
 
 static_assert
