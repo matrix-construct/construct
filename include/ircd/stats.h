@@ -27,6 +27,8 @@ namespace ircd::stats
 	value_type &inc(item &, const value_type & = 1);
 	value_type &dec(item &, const value_type & = 1);
 	value_type &set(item &, const value_type & = 0);
+
+	std::ostream &operator<<(std::ostream &, const item &);
 }
 
 struct ircd::stats::item
@@ -39,15 +41,35 @@ struct ircd::stats::item
 	value_type val;
 
   public:
+	explicit operator const value_type &() const;
+	explicit operator value_type &();
+	bool operator!() const;
+
 	item &operator+=(const value_type &) &;
 	item &operator-=(const value_type &) &;
 	item &operator=(const value_type &) &;
+	item &operator++();
+	item &operator--();
 
 	item(const json::members &);
 	item(item &&) = delete;
 	item(const item &) = delete;
 	~item() noexcept;
 };
+
+inline ircd::stats::item &
+ircd::stats::item::operator--()
+{
+	--val;
+	return *this;
+}
+
+inline ircd::stats::item &
+ircd::stats::item::operator++()
+{
+	++val;
+	return *this;
+}
 
 inline ircd::stats::item &
 ircd::stats::item::operator=(const value_type &v)
@@ -71,6 +93,26 @@ ircd::stats::item::operator+=(const value_type &v)
 {
 	inc(*this, v);
 	return *this;
+}
+
+inline bool
+ircd::stats::item::operator!()
+const
+{
+	return !val;
+}
+
+inline ircd::stats::item::operator
+value_type &()
+{
+	return val;
+}
+
+inline ircd::stats::item::operator
+const value_type &()
+const
+{
+	return val;
 }
 
 inline ircd::stats::value_type &

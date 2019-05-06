@@ -12,6 +12,13 @@ decltype(ircd::stats::items)
 ircd::stats::items
 {};
 
+std::ostream &
+ircd::stats::operator<<(std::ostream &s, const item &item)
+{
+	s << static_cast<long long>(item.val);
+	return s;
+}
+
 //
 // item
 //
@@ -21,6 +28,10 @@ ircd::stats::item::NAME_MAX_LEN
 {
 	127
 };
+
+//
+// item::item
+//
 
 ircd::stats::item::item(const json::members &opts)
 :feature_
