@@ -6244,17 +6244,54 @@ console_cmd__event(opt &out, const string_view &line)
 	if(m::event::auth::is_power_event(event))
 		out << "+ POWER EVENT" << std::endl;
 
+	const m::event::prev &prev{event};
+	if(prev.auth_events_count() || prev.prev_events_count())
+		out << std::endl;
+
+	for(size_t i(0); i < prev.auth_events_count(); ++i)
+	{
+		const m::event::id &id{prev.auth_event(i)};
+		const m::event::fetch event{id, std::nothrow};
+		if(!event.valid)
+		{
+			out << "- AUTH " << id << std::endl;
+			continue;
+		}
+
+		out << "+ AUTH"
+		    << " " << std::setw(9) << event.event_idx
+		    << " " << pretty_oneline(event, false) << std::endl;
+	}
+
+	for(size_t i(0); i < prev.prev_events_count(); ++i)
+	{
+		const m::event::id &id{prev.prev_event(i)};
+		const m::event::fetch event{id, std::nothrow};
+		if(!event.valid)
+		{
+			out << "- PREV " << id << std::endl;
+			continue;
+		}
+
+		out << "+ PREV"
+		    << " " << std::setw(9) << event.event_idx
+		    << " " << pretty_oneline(event, false) << std::endl;
+	}
+
 	const m::event::refs &refs{event_idx};
 	const auto refcnt(refs.count());
 	if(refcnt)
 	{
 		out << std::endl;
-		out << "+ REFERENCED " << refs.count() << std::endl;
+		out << "+ REFERENCED BY " << refs.count() << std::endl;
 		refs.for_each([&out]
 		(const m::event::idx &idx, const auto &type)
 		{
 			const m::event::fetch event{idx};
-			out << "  " << reflect(type) << " " << idx << " " << pretty_oneline(event) << std::endl;
+			out << "  " << reflect(type)
+			    << " " << std::setw(9) << idx
+			    << " " << pretty_oneline(event, false) << std::endl;
+
 			return true;
 		});
 	}
