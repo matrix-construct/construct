@@ -6119,9 +6119,13 @@ console_cmd__event(opt &out, const string_view &line)
 		"event_id"
 	}};
 
+	m::event::id::buf event_id_buf;
+	if(try_lex_cast<ulong>(param.at("event_id")))
+		event_id_buf = m::event_id(param.at<ulong>("event_id"));
+
 	const m::event::id event_id
 	{
-		param.at(0)
+		event_id_buf?: param.at("event_id")
 	};
 
 	const auto args
