@@ -165,12 +165,13 @@ ircd::m::room::state::rebuild_present(const state &state)
 
 	for(; it; ++it)
 	{
-		const m::event &event{*it};
-		if(!defined(json::get<"state_key"_>(event)))
+		const m::event::idx &event_idx{it};
+		if(!state.is(std::nothrow, event_idx))
 			continue;
 
+		const m::event &event{*it};
 		m::dbs::write_opts opts;
-		opts.event_idx = it.event_idx();
+		opts.event_idx = event_idx;
 		opts.present = true;
 		opts.history = false;
 		opts.room_head = false;
