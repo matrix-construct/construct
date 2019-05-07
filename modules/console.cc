@@ -8776,6 +8776,90 @@ console_cmd__room__messages(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__timeline(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "x", "y"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::timeline timeline
+	{
+		room
+	};
+
+	int64_t last_depth(0);
+	const auto closure{[&out, &last_depth]
+	(const auto &coord, const auto &event_idx)
+	{
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(json::get<"depth"_>(event) > last_depth + 1)
+			out << std::endl;
+
+		last_depth = json::get<"depth"_>(event);
+
+		out << "("
+		    << std::left
+		    << std::setw(2) << coord.x
+		    << " "
+		    << std::right
+		    << std::setw(3) << coord.y
+		    << ") "
+		    << std::left
+		    << std::setw(11) << event_idx
+		    << " "
+		    << pretty_oneline(event, false)
+		    << std::endl;
+
+		return true;
+	}};
+
+	timeline.for_each(closure,
+	{
+		param.at<int64_t>("x", 0),
+		param.at<int64_t>("y", 0)
+	});
+	return true;
+}
+
+bool
+console_cmd__room__timeline__rebuild(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	m::room::timeline::rebuild(room);
+	out << "done" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__roots(opt &out, const string_view &line)
 {
 	assert(!out.special);

@@ -100,6 +100,7 @@ namespace ircd::m
 struct ircd::m::room
 {
 	struct messages;
+	struct timeline;
 	struct state;
 	struct members;
 	struct origins;
@@ -184,6 +185,7 @@ struct ircd::m::room
 };
 
 #include "messages.h"
+#include "timeline.h"
 #include "state.h"
 #include "members.h"
 #include "origins.h"

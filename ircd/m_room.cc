@@ -1686,6 +1686,117 @@ const
 }
 
 //
+// room::timeline
+//
+
+uint64_t
+ircd::m::latency(const room::timeline &a,
+                 const room::timeline &b)
+{
+	return 0UL;
+}
+
+//
+// room::timeline::timeline
+//
+
+ircd::m::room::timeline::timeline(const m::room &room)
+:room{room}
+{
+}
+
+bool
+ircd::m::room::timeline::for_each(const closure &closure,
+                                  const coord &branch)
+const
+{
+	m::event::refs refs
+	{
+		room.event_id?
+			index(room.event_id):
+			room::index(room)
+	};
+
+	if(!refs.idx)
+		return true;
+
+	timeline::coord coord;
+	if(!closure(coord, refs.idx))
+		return false;
+
+	for(++coord.y; coord.y <= branch.y; ++coord.y, coord.x = 0)
+	{
+		auto idx(0);
+		refs.for_each(dbs::ref::PREV, [&coord, &branch, &idx]
+		(const auto &event_idx, const auto &)
+		{
+			if(coord.x <= branch.x)
+				idx = event_idx;
+
+			if(coord.x < branch.x)
+			{
+				++coord.x;
+				return true;
+			}
+			else return false;
+		});
+
+		if(!idx)
+			return true;
+
+		if(!closure(coord, idx))
+			return false;
+
+		refs.idx = idx;
+	}
+
+	return true;
+}
+
+bool
+ircd::m::room::timeline::has_future(const event::id &event_id)
+const
+{
+	return true;
+}
+
+bool
+ircd::m::room::timeline::has_past(const event::id &event_id)
+const
+{
+
+	return true;
+}
+
+void
+ircd::m::room::timeline::rebuild(const m::room &room)
+{
+	m::room::messages it
+	{
+		room, 0UL
+	};
+
+	if(!it)
+		return;
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	for(; it; ++it)
+	{
+		const m::event &event{*it};
+
+		m::dbs::write_opts opts;
+		opts.event_idx = it.event_idx();
+		m::dbs::_index_event_refs_prev(txn, event, opts);
+	}
+
+	txn();
+}
+
+//
 // room::messages
 //
 
