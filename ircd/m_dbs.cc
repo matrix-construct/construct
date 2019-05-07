@@ -183,6 +183,17 @@ ircd::m::dbs::write_opts::event_refs_all{[]
 	};
 }()};
 
+decltype(ircd::m::dbs::write_opts::appendix_all)
+ircd::m::dbs::write_opts::appendix_all{[]
+{
+	char full[appendix_all.size()];
+	memset(full, '1', sizeof(full));
+	return decltype(appendix_all)
+	{
+		full, sizeof(full)
+	};
+}()};
+
 //
 // Basic write suite
 //
@@ -226,16 +237,12 @@ ircd::m::dbs::write(db::txn &txn,
 			"Cannot write to database: no index specified for event."
 		};
 
-	_index_event(txn, event, opts);
+	if(opts.appendix.test(appendix::EVENT))
+		_index_event(txn, event, opts);
 
-	// direct columns
-	_append_cols(txn, event, opts);
-
-	// full json
-	_append_json(txn, event, opts);
-
-	if(json::get<"room_id"_>(event))
-		return _index_room(txn, event, opts);
+	if(opts.appendix.test(appendix::ROOM))
+		if(json::get<"room_id"_>(event))
+			return _index_room(txn, event, opts);
 
 	return {};
 }
@@ -245,10 +252,55 @@ ircd::m::dbs::write(db::txn &txn,
 //
 
 void
-ircd::m::dbs::_append_cols(db::txn &txn,
+ircd::m::dbs::_index_event(db::txn &txn,
                            const event &event,
                            const write_opts &opts)
 {
+	if(opts.appendix.test(appendix::EVENT_ID))
+		_index_event_id(txn, event, opts);
+
+	if(opts.appendix.test(appendix::EVENT_COLS))
+		_index_event_cols(txn, event, opts);
+
+	if(opts.appendix.test(appendix::EVENT_JSON))
+		_index_event_json(txn, event, opts);
+
+	if(opts.appendix.test(appendix::EVENT_REFS) && opts.event_refs.any())
+		_index_event_refs(txn, event, opts);
+
+	if(opts.appendix.test(appendix::EVENT_SENDER))
+		_index_event_sender(txn, event, opts);
+
+	if(opts.appendix.test(appendix::EVENT_TYPE))
+		_index_event_type(txn, event, opts);
+}
+
+void
+ircd::m::dbs::_index_event_id(db::txn &txn,
+                              const event &event,
+                              const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_ID));
+	assert(opts.event_idx);
+
+	db::txn::append
+	{
+		txn, dbs::event_idx,
+		{
+			opts.op,
+			at<"event_id"_>(event),
+			byte_view<string_view>(opts.event_idx)
+		}
+	};
+}
+
+void
+ircd::m::dbs::_index_event_cols(db::txn &txn,
+                                const event &event,
+                                const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_COLS));
+	assert(opts.event_idx);
 	const byte_view<string_view> key
 	{
 		opts.event_idx
@@ -284,12 +336,14 @@ ircd::m::dbs::_append_cols(db::txn &txn,
 }
 
 void
-ircd::m::dbs::_append_json(db::txn &txn,
-                           const event &event,
-                           const write_opts &opts)
+ircd::m::dbs::_index_event_json(db::txn &txn,
+                                const event &event,
+                                const write_opts &opts)
 {
 	const ctx::critical_assertion ca;
 	thread_local char buf[m::event::MAX_SIZE];
+	assert(opts.appendix.test(appendix::EVENT_JSON));
+	assert(opts.event_idx);
 
 	const string_view &key
 	{
@@ -331,45 +385,12 @@ ircd::m::dbs::_append_json(db::txn &txn,
 }
 
 void
-ircd::m::dbs::_index_event(db::txn &txn,
-                           const event &event,
-                           const write_opts &opts)
-{
-	// event_id
-	if(opts.event_id)
-		_index_event_id(txn, event, opts);
-
-	if(opts.event_refs.any())
-		_index_event_refs(txn, event, opts);
-
-	if(opts.event_sender)
-		_index_event_sender(txn, event, opts);
-
-	if(opts.event_type)
-		_index_event_type(txn, event, opts);
-}
-
-void
-ircd::m::dbs::_index_event_id(db::txn &txn,
-                              const event &event,
-                              const write_opts &opts)
-{
-	db::txn::append
-	{
-		txn, dbs::event_idx,
-		{
-			opts.op,
-			at<"event_id"_>(event),
-			byte_view<string_view>(opts.event_idx)
-		}
-	};
-}
-
-void
 ircd::m::dbs::_index_event_refs(db::txn &txn,
                                 const event &event,
                                 const write_opts &opts)
 {
+	assert(opts.appendix.test(appendix::EVENT_REFS));
+
 	if(opts.event_refs.test(uint(ref::PREV)))
 		_index_event_refs_prev(txn, event, opts);
 
@@ -395,6 +416,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
                                      const event &event,
                                      const write_opts &opts)
 {
+	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::PREV)));
 
 	const event::prev &prev{event};
@@ -445,6 +467,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
                                      const event &event,
                                      const write_opts &opts)
 {
+	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::AUTH)));
 	if(!event::auth::is_power_event(event))
 		return;
@@ -497,6 +520,7 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
                                       const event &event,
                                       const write_opts &opts)
 {
+	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::STATE)) ||
 	       opts.event_refs.test(uint(ref::PREV_STATE)));
 
@@ -569,6 +593,7 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
                                                  const event &event,
                                                  const write_opts &opts)
 {
+	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_RECEIPT__M_READ)));
 
 	if(json::get<"type"_>(event) != "ircd.read")
@@ -622,6 +647,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
                                                   const event &event,
                                                   const write_opts &opts)
 {
+	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_RELATES__M_REPLY)));
 
 	if(json::get<"type"_>(event) != "m.room.message")
@@ -713,6 +739,7 @@ ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
                                                  const event &event,
                                                  const write_opts &opts)
 {
+	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::M_ROOM_REDACTION)));
 
 	if(json::get<"type"_>(event) != "m.room.redaction")
@@ -756,9 +783,9 @@ ircd::m::dbs::_index_event_sender(db::txn &txn,
                                   const event &event,
                                   const write_opts &opts)
 {
-	assert(opts.event_sender);
-	assert(opts.event_idx);
+	assert(opts.appendix.test(appendix::EVENT_SENDER));
 	assert(json::get<"sender"_>(event));
+	assert(opts.event_idx);
 
 	thread_local char buf[EVENT_SENDER_KEY_MAX_SIZE];
 	const string_view &key
@@ -780,9 +807,9 @@ ircd::m::dbs::_index_event_type(db::txn &txn,
                                 const event &event,
                                 const write_opts &opts)
 {
-	assert(opts.event_type);
-	assert(opts.event_idx);
+	assert(opts.appendix.test(appendix::EVENT_TYPE));
 	assert(json::get<"type"_>(event));
+	assert(opts.event_idx);
 
 	thread_local char buf[EVENT_TYPE_KEY_MAX_SIZE];
 	const string_view &key
@@ -804,16 +831,24 @@ ircd::m::dbs::_index_room(db::txn &txn,
                           const event &event,
                           const write_opts &opts)
 {
-	if(opts.room_head || opts.room_refs)
+	assert(opts.appendix.test(appendix::ROOM));
+
+	if(opts.appendix.test(appendix::ROOM_HEAD))
 		_index__room_head(txn, event, opts);
 
-	if(defined(json::get<"state_key"_>(event)))
+	if(opts.appendix.test(appendix::ROOM_HEAD_REFS))
+		_index__room_head_refs(txn, event, opts);
+
+	if(opts.appendix.test(appendix::STATE) && defined(json::get<"state_key"_>(event)))
 		return _index_state(txn, event, opts);
 
-	if(at<"type"_>(event) == "m.room.redaction")
+	if(opts.appendix.test(appendix::REDACT) && json::get<"type"_>(event) == "m.room.redaction")
 		return _index_redact(txn, event, opts);
 
-	return _index_other(txn, event, opts);
+	if(opts.appendix.test(appendix::OTHER))
+		return _index_other(txn, event, opts);
+
+	return {};
 }
 
 ircd::string_view
@@ -822,6 +857,8 @@ ircd::m::dbs::_index_state(db::txn &txn,
                            const write_opts &opts)
 try
 {
+	assert(opts.appendix.test(appendix::STATE));
+
 	const auto &type
 	{
 		at<"type"_>(event)
@@ -834,14 +871,20 @@ try
 
 	const string_view &new_root
 	{
-		opts.op == db::op::SET && opts.history?
+		opts.op == db::op::SET && opts.appendix.test(appendix::HISTORY)?
 			state::insert(txn, opts.root_out, opts.root_in, event):
 			strlcpy(opts.root_out, opts.root_in)
 	};
 
-	_index__room_events(txn, event, opts, new_root);
-	_index__room_joined(txn, event, opts);
-	_index__room_state(txn, event, opts);
+	if(opts.appendix.test(appendix::ROOM_EVENTS))
+		_index__room_events(txn, event, opts, new_root);
+
+	if(opts.appendix.test(appendix::ROOM_JOINED))
+		_index__room_joined(txn, event, opts);
+
+	if(opts.appendix.test(appendix::ROOM_STATE))
+		_index__room_state(txn, event, opts);
+
 	return new_root;
 }
 catch(const std::exception &e)
@@ -860,6 +903,8 @@ ircd::m::dbs::_index_redact(db::txn &txn,
                             const write_opts &opts)
 try
 {
+	assert(opts.appendix.test(appendix::REDACT));
+
 	const auto &target_id
 	{
 		at<"redacts"_>(event)
@@ -885,19 +930,24 @@ try
 
 	const string_view new_root
 	{
-		target.valid && defined(json::get<"state_key"_>(target))?
+		target.valid &&
+		defined(json::get<"state_key"_>(target)) &&
+		opts.appendix.test(appendix::HISTORY)?
 			//state::remove(txn, state_root_out, state_root_in, target):
 			strlcpy(opts.root_out, opts.root_in):
 			strlcpy(opts.root_out, opts.root_in)
 	};
 
-	_index__room_events(txn, event, opts, opts.root_in);
-	if(target.valid && defined(json::get<"state_key"_>(target)))
-	{
-		auto _opts(opts);
-		_opts.op = db::op::DELETE;
-		_index__room_state(txn, target, _opts);
-	}
+	if(opts.appendix.test(appendix::ROOM_EVENTS))
+		_index__room_events(txn, event, opts, opts.root_in);
+
+	if(opts.appendix.test(appendix::ROOM_STATE))
+		if(target.valid && defined(json::get<"state_key"_>(target)))
+		{
+			auto _opts(opts);
+			_opts.op = db::op::DELETE;
+			_index__room_state(txn, target, _opts);
+		}
 
 	return new_root;
 }
@@ -916,7 +966,11 @@ ircd::m::dbs::_index_other(db::txn &txn,
                            const event &event,
                            const write_opts &opts)
 {
-	_index__room_events(txn, event, opts, opts.root_in);
+	assert(opts.appendix.test(appendix::OTHER));
+
+	if(opts.appendix.test(appendix::ROOM_EVENTS))
+		_index__room_events(txn, event, opts, opts.root_in);
+
 	return strlcpy(opts.root_out, opts.root_in);
 }
 
@@ -925,55 +979,64 @@ ircd::m::dbs::_index__room_head(db::txn &txn,
                                 const event &event,
                                 const write_opts &opts)
 {
-	thread_local char buf[ROOM_HEAD_KEY_MAX_SIZE];
 	const ctx::critical_assertion ca;
+	thread_local char buf[ROOM_HEAD_KEY_MAX_SIZE];
+	assert(opts.appendix.test(appendix::ROOM_HEAD));
+	assert(opts.event_idx);
 
-	if(opts.room_head)
+	const string_view &key
 	{
+		room_head_key(buf, at<"room_id"_>(event), at<"event_id"_>(event))
+	};
+
+	db::txn::append
+	{
+		txn, room_head,
+		{
+			opts.op,
+			key,
+			byte_view<string_view>{opts.event_idx}
+		}
+	};
+}
+
+void
+ircd::m::dbs::_index__room_head_refs(db::txn &txn,
+                                     const event &event,
+                                     const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::ROOM_HEAD_REFS));
+
+	//TODO: If op is DELETE and we are deleting this event and thereby
+	//TODO: potentially creating a gap in the reference graph (just for us
+	//TODO: though) can we *re-add* the prev_events to the head?
+
+	if(opts.op != db::op::SET)
+		return;
+
+	const m::event::prev &prev{event};
+	for(const json::array &p : json::get<"prev_events"_>(prev))
+	{
+		const auto &event_id
+		{
+			unquote(p.at(0))
+		};
+
+		thread_local char buf[ROOM_HEAD_KEY_MAX_SIZE];
+		const ctx::critical_assertion ca;
 		const string_view &key
 		{
-			room_head_key(buf, at<"room_id"_>(event), at<"event_id"_>(event))
+			room_head_key(buf, at<"room_id"_>(event), event_id)
 		};
 
 		db::txn::append
 		{
 			txn, room_head,
 			{
-				opts.op,
+				db::op::DELETE,
 				key,
-				byte_view<string_view>{opts.event_idx}
 			}
 		};
-	}
-
-	//TODO: If op is DELETE and we are deleting this event and thereby
-	//TODO: potentially creating a gap in the reference graph (just for us
-	//TODO: though) can we *re-add* the prev_events to the head?
-
-	if(opts.room_refs && opts.op == db::op::SET)
-	{
-		const m::event::prev &prev{event};
-		for(const json::array &p : json::get<"prev_events"_>(prev))
-		{
-			const auto &event_id
-			{
-				unquote(p.at(0))
-			};
-
-			const string_view &key
-			{
-				room_head_key(buf, at<"room_id"_>(event), event_id)
-			};
-
-			db::txn::append
-			{
-				txn, room_head,
-				{
-					db::op::DELETE,
-					key,
-				}
-			};
-		}
 	}
 }
 
@@ -985,8 +1048,10 @@ ircd::m::dbs::_index__room_events(db::txn &txn,
                                   const write_opts &opts,
                                   const string_view &new_root)
 {
-	const ctx::critical_assertion ca;
+	assert(opts.appendix.test(appendix::ROOM_EVENTS));
+
 	thread_local char buf[ROOM_EVENTS_KEY_MAX_SIZE];
+	const ctx::critical_assertion ca;
 	const string_view &key
 	{
 		room_events_key(buf, at<"room_id"_>(event), at<"depth"_>(event), opts.event_idx)
@@ -1004,20 +1069,21 @@ ircd::m::dbs::_index__room_events(db::txn &txn,
 }
 
 /// Adds the entry for the room_joined column into the txn.
-/// This only is affected if opts.present=true
 void
 ircd::m::dbs::_index__room_joined(db::txn &txn,
                                    const event &event,
                                    const write_opts &opts)
 {
+	assert(opts.appendix.test(appendix::ROOM_JOINED));
+
 	if(!opts.present)
 		return;
 
 	if(at<"type"_>(event) != "m.room.member")
 		return;
 
-	const ctx::critical_assertion ca;
 	thread_local char buf[ROOM_JOINED_KEY_MAX_SIZE];
+	const ctx::critical_assertion ca;
 	const string_view &key
 	{
 		room_joined_key(buf, at<"room_id"_>(event), at<"origin"_>(event), at<"state_key"_>(event))
@@ -1067,6 +1133,8 @@ ircd::m::dbs::_index__room_state(db::txn &txn,
                                  const event &event,
                                  const write_opts &opts)
 {
+	assert(opts.appendix.test(appendix::ROOM_STATE));
+
 	if(!opts.present)
 		return;
 

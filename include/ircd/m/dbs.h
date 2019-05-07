@@ -94,10 +94,16 @@ namespace ircd::m::dbs
 	void blacklist(db::txn &, const event::id &, const write_opts &);
 }
 
+namespace ircd::m::dbs::appendix
+{
+	enum index :uint8_t;
+}
+
 /// Options that affect the dbs::write() of an event to the transaction.
 struct ircd::m::dbs::write_opts
 {
 	static const std::bitset<256> event_refs_all;
+	static const std::bitset<64> appendix_all;
 
 	/// Operation code
 	db::op op {db::op::SET};
@@ -105,8 +111,8 @@ struct ircd::m::dbs::write_opts
 	/// Principal's index number. Most codepaths do not permit zero; must set.
 	uint64_t event_idx {0};
 
-	/// Whether the event_id should be indexed in event_idx (you want yes).
-	bool event_id {true};
+	/// Fuse panel to toggle transaction elements.
+	std::bitset<64> appendix {appendix_all};
 
 	/// Whether the event.source can be used directly for event_json. Defaults
 	/// to false unless the caller wants to avoid a redundant re-stringify.
@@ -137,21 +143,71 @@ struct ircd::m::dbs::write_opts
 	/// After the update is performed, the new state btree root is returned
 	/// into this buffer.
 	mutable_buffer root_out;
+};
+
+enum ircd::m::dbs::appendix::index
+:std::underlying_type<ircd::m::dbs::appendix::index>::type
+{
+	/// This bit offers coarse control over all the EVENT_ appendices.
+	EVENT,
+
+	/// Involves the event_idx column; translates an event_id to our internal
+	/// index number. This bit can be dark during re-indexing operations.
+	EVENT_ID,
+
+	/// Involves the event_json column; writes a full JSON serialization
+	/// of the event. See the `json_source` write_opts option. This bit can be
+	/// dark during re-indexing operations to avoid rewriting the same data.
+	EVENT_JSON,
+
+	/// Involves any direct event columns; such columns are forward-indexed
+	/// values from the original event data but split into columns for each
+	/// property. Can be dark during re-indexing similar to EVENT_JSON.
+	EVENT_COLS,
+
+	/// Take branch to handle event reference graphing. A separate bitset is
+	/// offered in write_opts for fine-grained control over which reference
+	/// types are involved.
+	EVENT_REFS,
+
+	/// Involves the event_sender column (reverse index on the event sender).
+	EVENT_SENDER,
+
+	/// Involves the event_type column (reverse index on the event type).
+	EVENT_TYPE,
+
+	/// Take branch to handle events with a room_id
+	ROOM,
+
+	/// Take branch to handle room state events.
+	STATE,
+
+	/// Perform state btree manip for room history.
+	HISTORY,
+
+	/// Take branch to handle room redaction events.
+	REDACT,
+
+	/// Take branch to handle other types of events.
+	OTHER,
 
 	/// Whether the event should be added to the room_head, indicating that
 	/// it has not yet been referenced at the time of this write. Defaults
 	/// to true, but if this is an older event this opt should be rethought.
-	bool room_head {true};
+	ROOM_HEAD,
 
 	/// Whether the event removes the prev_events it references from the
 	/// room_head. This defaults to true and should almost always be true.
-	bool room_refs {true};
+	ROOM_HEAD_REFS,
 
-	/// Whether to update the event_sender index.
-	bool event_sender {true};
+	/// Involves room_events table.
+	ROOM_EVENTS,
 
-	/// Whether to update the event_type index.
-	bool event_type {true};
+	/// Involves room_joined table.
+	ROOM_JOINED,
+
+	/// Involves room_state (present state) table.
+	ROOM_STATE,
 };
 
 /// Types of references indexed by event_refs. This is a single byte integer,
@@ -332,6 +388,7 @@ namespace ircd::m::dbs
 	void _index__room_state(db::txn &,  const event &, const write_opts &);
 	void _index__room_events(db::txn &,  const event &, const write_opts &, const string_view &);
 	void _index__room_joined(db::txn &, const event &, const write_opts &);
+	void _index__room_head_refs(db::txn &, const event &, const write_opts &);
 	void _index__room_head(db::txn &, const event &, const write_opts &);
 	string_view _index_state(db::txn &, const event &, const write_opts &);
 	string_view _index_redact(db::txn &, const event &, const write_opts &);
@@ -346,10 +403,10 @@ namespace ircd::m::dbs
 	void _index_event_refs_auth(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_prev(db::txn &, const event &, const write_opts &);
 	void _index_event_refs(db::txn &, const event &, const write_opts &);
+	void _index_event_json(db::txn &, const event &, const write_opts &);
+	void _index_event_cols(db::txn &, const event &, const write_opts &);
 	void _index_event_id(db::txn &, const event &, const write_opts &);
 	void _index_event(db::txn &, const event &, const write_opts &);
-	void _append_json(db::txn &, const event &, const write_opts &);
-	void _append_cols(db::txn &, const event &, const write_opts &);
 }
 
 struct ircd::m::dbs::init
