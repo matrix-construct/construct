@@ -173,11 +173,14 @@ noexcept
 //
 
 decltype(ircd::m::dbs::write_opts::event_refs_all)
-ircd::m::dbs::write_opts::event_refs_all
-{[]{
-	char full[256];
+ircd::m::dbs::write_opts::event_refs_all{[]
+{
+	char full[event_refs_all.size()];
 	memset(full, '1', sizeof(full));
-	return std::bitset<256>(full, sizeof(full));
+	return decltype(event_refs_all)
+	{
+		full, sizeof(full)
+	};
 }()};
 
 //
