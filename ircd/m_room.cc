@@ -135,24 +135,9 @@ size_t
 ircd::m::room::state::rebuild_present(const state &state)
 {
 	size_t ret{0};
-	const auto create_idx
-	{
-		state.get("m.room.create")
-	};
-
-	static const m::event::fetch::opts fopts
-	{
-		{ db::get::NO_CACHE }
-	};
-
-	const m::room room
-	{
-		state.room_id, nullptr, state.fopts
-	};
-
 	m::room::messages it
 	{
-		room, create_idx, &fopts
+		state.room_id, uint64_t(0)
 	};
 
 	if(!it)
