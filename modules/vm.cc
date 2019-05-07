@@ -844,8 +844,8 @@ ircd::m::vm::write_append(eval &eval,
 	wopts.root_out = new_root_buf;
 	wopts.present = opts.present;
 	wopts.history = opts.history;
-	wopts.room_head = opts.room_head;
-	wopts.room_refs = opts.room_refs;
+	wopts.appendix.set(dbs::appendix::ROOM_HEAD, opts.room_head);
+	wopts.appendix.set(dbs::appendix::ROOM_HEAD_REFS, opts.room_refs);
 	wopts.json_source = opts.json_source;
 	wopts.event_idx = eval.sequence;
 

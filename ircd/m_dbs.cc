@@ -232,7 +232,7 @@ ircd::m::dbs::write(db::txn &txn,
                     const write_opts &opts)
 {
 	if(unlikely(opts.event_idx == 0))
-		throw ircd::error
+		throw panic
 		{
 			"Cannot write to database: no index specified for event."
 		};
@@ -871,7 +871,9 @@ try
 
 	const string_view &new_root
 	{
-		opts.op == db::op::SET && opts.appendix.test(appendix::HISTORY)?
+		opts.op == db::op::SET &&
+		opts.appendix.test(appendix::HISTORY) &&
+		opts.history?
 			state::insert(txn, opts.root_out, opts.root_in, event):
 			strlcpy(opts.root_out, opts.root_in)
 	};
@@ -932,7 +934,8 @@ try
 	{
 		target.valid &&
 		defined(json::get<"state_key"_>(target)) &&
-		opts.appendix.test(appendix::HISTORY)?
+		opts.appendix.test(appendix::HISTORY) &&
+		opts.history?
 			//state::remove(txn, state_root_out, state_root_in, target):
 			strlcpy(opts.root_out, opts.root_in):
 			strlcpy(opts.root_out, opts.root_in)

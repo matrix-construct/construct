@@ -121,8 +121,8 @@ ircd::m::room::state::force_present(const m::event &event)
 	opts.event_idx = m::index(event);
 	opts.present = true;
 	opts.history = false;
-	opts.room_head = false;
-	opts.room_refs = false;
+	opts.appendix.reset(dbs::appendix::ROOM_HEAD);
+	opts.appendix.reset(dbs::appendix::ROOM_HEAD_REFS);
 
 	m::dbs::_index__room_state(txn, event, opts);
 	m::dbs::_index__room_joined(txn, event, opts);
@@ -174,8 +174,8 @@ ircd::m::room::state::rebuild_present(const state &state)
 		opts.event_idx = event_idx;
 		opts.present = true;
 		opts.history = false;
-		opts.room_head = false;
-		opts.room_refs = false;
+		opts.appendix.reset(dbs::appendix::ROOM_HEAD);
+		opts.appendix.reset(dbs::appendix::ROOM_HEAD_REFS);
 
 		m::dbs::_index__room_state(txn, event, opts);
 		m::dbs::_index__room_joined(txn, event, opts);
@@ -225,8 +225,8 @@ ircd::m::room::state::rebuild_history(const state &state)
 	opts.root_out = root[++r % 2];
 	opts.present = false;
 	opts.history = true;
-	opts.room_head = false;
-	opts.room_refs = false;
+	opts.appendix.reset(dbs::appendix::ROOM_HEAD);
+	opts.appendix.reset(dbs::appendix::ROOM_HEAD_REFS);
 
 	int64_t depth{0};
 	for(; it; ++it)
@@ -3245,8 +3245,6 @@ ircd::m::room::head::rebuild(const head &head)
 
 	m::dbs::write_opts opts;
 	opts.op = db::op::SET;
-	opts.room_head = true;
-	opts.room_refs = true;
 	for(; it; ++it)
 	{
 		const m::event &event{*it};
@@ -3282,7 +3280,6 @@ ircd::m::room::head::reset(const head &head)
 	// Iterate all of the existing heads with a delete operation
 	m::dbs::write_opts opts;
 	opts.op = db::op::DELETE;
-	opts.room_head = true;
 	m::room::head{room}.for_each([&room, &opts, &txn, &ret]
 	(const m::event::idx &event_idx, const m::event::id &event_id)
 	{
@@ -3337,8 +3334,6 @@ ircd::m::room::head::modify(const m::event::id &event_id,
 	// Iterate all of the existing heads with a delete operation
 	m::dbs::write_opts opts;
 	opts.op = op;
-	opts.room_head = true;
-	opts.room_refs = refs;
 	opts.event_idx = event.event_idx;
 	m::dbs::_index__room_head(txn, event, opts);
 

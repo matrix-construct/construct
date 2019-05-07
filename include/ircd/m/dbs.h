@@ -105,37 +105,13 @@ struct ircd::m::dbs::write_opts
 	static const std::bitset<256> event_refs_all;
 	static const std::bitset<64> appendix_all;
 
-	/// Operation code
+	/// Operation code; usually SET or DELETE. Note that we interpret the
+	/// code internally and may set different codes for appendages of the
+	/// actual transaction.
 	db::op op {db::op::SET};
 
 	/// Principal's index number. Most codepaths do not permit zero; must set.
 	uint64_t event_idx {0};
-
-	/// Fuse panel to toggle transaction elements.
-	std::bitset<64> appendix {appendix_all};
-
-	/// Whether the event.source can be used directly for event_json. Defaults
-	/// to false unless the caller wants to avoid a redundant re-stringify.
-	bool json_source {false};
-
-	/// Selection of what reference types to manipulate in event_refs. Refs
-	/// will not be made if it is not appropriate for the event anyway, so
-	/// this defaults to all bits. User can disable one or more ref types
-	/// by clearing a bit.
-	std::bitset<256> event_refs {event_refs_all};
-
-	/// User can supply a view of already-generated keys with event_refs_key().
-	/// This vector will be checked first before generating that key, which
-	/// can avoid any index() queries internally to generate it.
-	vector_view<const string_view> event_refs_hint;
-
-	/// Whether the present state table `room_state` should be updated by
-	/// this operation if appropriate.
-	bool present {true};
-
-	/// Whether the history state btree `state_node` + `room_events` value
-	/// should be updated by this operation if appropriate.
-	bool history {true};
 
 	/// The state btree root to perform the update on.
 	string_view root_in;
@@ -143,6 +119,27 @@ struct ircd::m::dbs::write_opts
 	/// After the update is performed, the new state btree root is returned
 	/// into this buffer.
 	mutable_buffer root_out;
+
+	/// Fuse panel to toggle transaction elements.
+	std::bitset<64> appendix {appendix_all};
+
+	/// Selection of what reference types to manipulate in event_refs. Refs
+	/// will not be made if it is not appropriate for the event anyway, so
+	/// this defaults to all bits. User can disable one or more ref types
+	/// by clearing a bit.
+	std::bitset<256> event_refs {event_refs_all};
+
+	/// Whether the present state table `room_state` should be updated by
+	/// this operation if appropriate.
+	bool present {true};
+
+	/// Whether the history state btree `state_node` + `room_events` value
+	/// should be updated by this operation if appropriate.
+	bool history {false};
+
+	/// Whether the event.source can be used directly for event_json. Defaults
+	/// to false unless the caller wants to avoid a redundant re-stringify.
+	bool json_source {false};
 };
 
 enum ircd::m::dbs::appendix::index
