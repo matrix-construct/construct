@@ -109,4 +109,6 @@ struct ircd::m::room::state
 	static size_t rebuild_present(const state &);
 	static bool force_present(const event &);
 	static size_t purge_replaced(const state &);
+	static bool is(std::nothrow_t, const event::idx &);
+	static bool is(const event::idx &);
 };

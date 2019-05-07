@@ -36,6 +36,33 @@ ircd::m::room::purge(const room &room)
 	return ret;
 }
 
+bool
+ircd::m::room::state::is(const event::idx &event_idx)
+{
+	bool ret{false};
+	m::get(event_idx, "state_key", [&ret]
+	(const string_view &state_key)
+	{
+		ret = true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::room::state::is(std::nothrow_t,
+                         const event::idx &event_idx)
+{
+	bool ret{false};
+	m::get(std::nothrow, event_idx, "state_key", [&ret]
+	(const string_view &state_key)
+	{
+		ret = true;
+	});
+
+	return ret;
+}
+
 size_t
 ircd::m::room::state::purge_replaced(const state &state)
 {
