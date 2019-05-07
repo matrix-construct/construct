@@ -6512,6 +6512,40 @@ console_cmd__event__erase(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__event__rewrite(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	const m::event::fetch event
+	{
+		event_id
+	};
+
+	m::dbs::write_opts opts;
+	opts.op = db::op::SET;
+	opts.event_idx = event.event_idx;
+
+	db::txn txn{*m::dbs::events};
+	m::dbs::write(txn, event, opts);
+
+	out << "executing cells:" << txn.size()
+	    << " "
+	    << "size: " << pretty(iec(txn.bytes()))
+	    << " for " << event_id << std::endl;
+
+	txn();
+	return true;
+}
+
+bool
 console_cmd__event__fetch(opt &out, const string_view &line)
 {
 	const params param{line, " ",
