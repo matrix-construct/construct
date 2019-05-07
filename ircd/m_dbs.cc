@@ -421,6 +421,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 
 		thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 		assert(opts.event_idx != 0 && prev_idx != 0);
+		assert(opts.event_idx != prev_idx);
 		const string_view &key
 		{
 			event_refs_key(buf, prev_idx, ref::PREV, opts.event_idx)
@@ -472,6 +473,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 
 		thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 		assert(opts.event_idx != 0 && auth_idx != 0);
+		assert(opts.event_idx != auth_idx);
 		const string_view &key
 		{
 			event_refs_key(buf, auth_idx, ref::AUTH, opts.event_idx)
@@ -495,6 +497,9 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
 	assert(opts.event_refs.test(uint(ref::STATE)) ||
 	       opts.event_refs.test(uint(ref::PREV_STATE)));
 
+	if(!opts.present)
+		return;
+
 	if(!json::get<"room_id"_>(event))
 		return;
 
@@ -516,11 +521,12 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
 		state.get(std::nothrow, at<"type"_>(event), at<"state_key"_>(event)) // query
 	};
 
-	if(!prev_state_idx)
+	if(!prev_state_idx || prev_state_idx == opts.event_idx)
 		return;
 
 	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 	assert(opts.event_idx != 0 && prev_state_idx != 0);
+	assert(opts.event_idx != prev_state_idx);
 
 	if(opts.event_refs.test(uint(ref::STATE)))
 	{
@@ -593,6 +599,7 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 
 	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 	assert(opts.event_idx != 0 && event_idx != 0);
+	assert(opts.event_idx != event_idx);
 	const string_view &key
 	{
 		event_refs_key(buf, event_idx, ref::M_RECEIPT__M_READ, opts.event_idx)
@@ -683,6 +690,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 
 	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 	assert(opts.event_idx != 0 && event_idx != 0);
+	assert(opts.event_idx != event_idx);
 	const string_view &key
 	{
 		event_refs_key(buf, event_idx, ref::M_RELATES__M_REPLY, opts.event_idx)
@@ -725,6 +733,7 @@ ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
 
 	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
 	assert(opts.event_idx != 0 && event_idx != 0);
+	assert(opts.event_idx != event_idx);
 	const string_view &key
 	{
 		event_refs_key(buf, event_idx, ref::M_ROOM_REDACTION, opts.event_idx)
