@@ -100,7 +100,7 @@ struct ircd::prof::vg::disable
 struct ircd::prof::instructions
 {
 	prof::group group;
-	uint64_t val {0};
+	uint64_t retired {0};
 
   public:
 	const uint64_t &at() const;

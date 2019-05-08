@@ -27,8 +27,8 @@ namespace ircd::prof
 	       const uint64_t &,
 	       args&&...);
 
-	event &leader(group &);
-	event *leader(group *const &);
+	static event &leader(group &);
+	static event *leader(group *const &);
 
 	extern conf::item<bool> enable;
 }
@@ -116,18 +116,14 @@ noexcept
 void
 ircd::prof::reset(group &group)
 {
-	assert(!group.empty());
-	auto &leader(*group.front());
-	leader.reset(PERF_IOC_FLAG_GROUP);
+	leader(group).reset(PERF_IOC_FLAG_GROUP);
 }
 
 void
 __attribute__((optimize("s"), flatten))
 ircd::prof::start(group &group)
 {
-	assert(!group.empty());
-	auto &leader(*group.front());
-	leader.enable(PERF_IOC_FLAG_GROUP);
+	leader(group).enable(PERF_IOC_FLAG_GROUP);
 }
 
 void
@@ -140,10 +136,10 @@ ircd::prof::stop(group &group)
 }
 
 ircd::prof::event &
+__attribute__((optimize("s")))
 ircd::prof::leader(group &group)
 {
-	assert(!group.empty());
-	assert(group.front());
+	assert(!group.empty() && group.front());
 	return *group.front();
 }
 
@@ -308,46 +304,18 @@ noexcept
 }
 
 const uint64_t &
-__attribute__((optimize("s")))
+__attribute__((optimize("s"), flatten))
 ircd::prof::instructions::sample()
 {
-	stop(this->group);
-
-	auto &leader
-	{
-		prof::leader(group)
-	};
-
-	thread_local char buf[1024];
-	const const_buffer read
-	{
-		buf,  size_t(syscall(::read, int(leader.fd), buf, sizeof(buf)))
-	};
-
-	for_each(read, [this]
-	(const type &type, const uint64_t &val)
-	{
-		if(type.type_id == PERF_TYPE_HARDWARE)
-			if(type.counter == PERF_COUNT_HW_INSTRUCTIONS)
-				if(type.dpl == dpl::USER)
-					this->val += val;
-	});
-
-	const auto &ret
-	{
-		at()
-	};
-
-	start(this->group);
-
-	return ret;
+	retired = prof::leader(group).rdpmc();
+	return retired;
 }
 
 const uint64_t &
 ircd::prof::instructions::at()
 const
 {
-	return val;
+	return retired;
 }
 
 //
@@ -796,18 +764,20 @@ noexcept
 		syscall(::munmap, map, map_size);
 }
 
-void
+inline void
 __attribute__((optimize("s")))
 ircd::prof::event::disable(const long &arg)
 {
 	::ioctl(int(fd), PERF_EVENT_IOC_DISABLE, arg);
 }
 
-void
+inline void
 __attribute__((optimize("s")))
 ircd::prof::event::enable(const long &arg)
 {
 	const int &fd(this->fd);
+	__builtin_ia32_mfence();
+	__builtin_ia32_lfence();
 	::ioctl(fd, PERF_EVENT_IOC_ENABLE, arg);
 }
 
@@ -824,7 +794,8 @@ ircd::prof::event::ioctl(const ulong &req,
 	return syscall(::ioctl, int(fd), req, arg);
 }
 
-uint64_t
+inline uint64_t
+__attribute__((optimize("s")))
 ircd::prof::event::rdpmc()
 const
 {
@@ -836,16 +807,12 @@ const
 	{
 		seq = head->lock;
 		__sync_synchronize();
-
-		assert(head->time_enabled == head->time_running);
+		//assert(head->time_enabled == head->time_running);
 		ret = head->offset;
-		if(head->index)
-			ret += x86::rdpmc(head->index - 1);
-
+		ret += head->index? x86::rdpmc(head->index - 1) : 0UL;
 		__sync_synchronize();
 	}
 	while(head->lock != seq);
-
 	return ret;
 }
 
