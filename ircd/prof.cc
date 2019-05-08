@@ -121,6 +121,7 @@ ircd::prof::reset(group &group)
 }
 
 void
+__attribute__((optimize("s"), flatten))
 ircd::prof::start(group &group)
 {
 	assert(!group.empty());
@@ -129,11 +130,12 @@ ircd::prof::start(group &group)
 }
 
 void
+__attribute__((optimize("s"), flatten))
 ircd::prof::stop(group &group)
 {
-	assert(!group.empty());
 	auto &leader(*group.front());
 	leader.disable(PERF_IOC_FLAG_GROUP);
+	assert(!group.empty());
 }
 
 ircd::prof::event &
@@ -305,6 +307,7 @@ noexcept
 }
 
 const uint64_t &
+__attribute__((optimize("s")))
 ircd::prof::instructions::sample()
 {
 	stop(this->group);
@@ -792,15 +795,18 @@ noexcept
 }
 
 void
+__attribute__((optimize("s")))
 ircd::prof::event::disable(const long &arg)
 {
-	ioctl(PERF_EVENT_IOC_DISABLE, arg);
+	::ioctl(int(fd), PERF_EVENT_IOC_DISABLE, arg);
 }
 
 void
+__attribute__((optimize("s")))
 ircd::prof::event::enable(const long &arg)
 {
-	ioctl(PERF_EVENT_IOC_ENABLE, arg);
+	const int &fd(this->fd);
+	::ioctl(fd, PERF_EVENT_IOC_ENABLE, arg);
 }
 
 void
