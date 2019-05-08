@@ -287,6 +287,7 @@ ircd::buffer::copy(const mutable_buffer &dst,
 
 template<class it>
 it
+__attribute__((stack_protect))
 ircd::buffer::move(it &dest,
                    const it &stop,
                    const const_buffer &src)
@@ -307,6 +308,7 @@ ircd::buffer::move(it &dest,
 
 template<class it>
 it
+__attribute__((stack_protect))
 ircd::buffer::copy(it &dest,
                    const it &stop,
                    const const_buffer &src)
