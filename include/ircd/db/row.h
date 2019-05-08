@@ -64,8 +64,7 @@ struct ircd::db::row
 	    const string_view &key = {},
 	    const vector_view<const string_view> &columns = {},
 	    const vector_view<cell> &buf = {},
-	    gopts opts = {})
-	__attribute__((stack_protect));
+	    gopts opts = {});
 };
 
 namespace ircd::db

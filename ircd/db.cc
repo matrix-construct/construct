@@ -4474,6 +4474,7 @@ ircd::db::seek(row &r,
 //
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstack-usage="
+__attribute__((stack_protect))
 ircd::db::row::row(database &d,
                    const string_view &key,
                    const vector_view<const string_view> &colnames,
