@@ -36,6 +36,7 @@ struct ircd::buffer::mutable_buffer
 };
 
 inline
+__attribute__((always_inline))
 ircd::buffer::mutable_buffer::mutable_buffer(const buffer<char *> &b)
 :buffer<char *>{b}
 {}
@@ -43,22 +44,26 @@ ircd::buffer::mutable_buffer::mutable_buffer(const buffer<char *> &b)
 /// lvalue string reference offered to write through to a std::string as
 /// the buffer. should be hard to bind by accident...
 inline
+__attribute__((always_inline))
 ircd::buffer::mutable_buffer::mutable_buffer(std::string &buf)
 :mutable_buffer{const_cast<char *>(buf.data()), buf.size()}
 {}
 
 inline
+__attribute__((always_inline))
 ircd::buffer::mutable_buffer::mutable_buffer(const std::function<void (const mutable_buffer &)> &closure)
 {
 	closure(*this);
 }
 
 template<size_t SIZE>
+inline __attribute__((always_inline, gnu_inline))
 ircd::buffer::mutable_buffer::mutable_buffer(char (&buf)[SIZE])
 :buffer<char *>{buf, SIZE}
 {}
 
 template<size_t SIZE>
+inline __attribute__((always_inline))
 ircd::buffer::mutable_buffer::mutable_buffer(std::array<char, SIZE> &buf)
 :buffer<char *>{buf.data(), SIZE}
 {}

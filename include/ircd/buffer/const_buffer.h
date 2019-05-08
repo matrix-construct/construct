@@ -31,31 +31,37 @@ struct ircd::buffer::const_buffer
 };
 
 inline
+__attribute__((always_inline))
 ircd::buffer::const_buffer::const_buffer(const buffer<const char *> &b)
 :buffer<const char *>{b}
 {}
 
 inline
+__attribute__((always_inline))
 ircd::buffer::const_buffer::const_buffer(const buffer<char *> &b)
 :buffer<const char *>{data(b), size(b)}
 {}
 
 inline
+__attribute__((always_inline))
 ircd::buffer::const_buffer::const_buffer(const mutable_buffer &b)
 :buffer<const char *>{data(b), size(b)}
 {}
 
 inline
+__attribute__((always_inline))
 ircd::buffer::const_buffer::const_buffer(const string_view &s)
 :buffer<const char *>{data(s), size(s)}
 {}
 
 template<size_t SIZE>
+inline __attribute__((always_inline))
 ircd::buffer::const_buffer::const_buffer(const char (&buf)[SIZE])
 :buffer<const char *>{buf, SIZE}
 {}
 
 template<size_t SIZE>
+inline __attribute__((always_inline))
 ircd::buffer::const_buffer::const_buffer(const std::array<char, SIZE> &buf)
 :buffer<const char *>{reinterpret_cast<const char *>(buf.data()), SIZE}
 {}

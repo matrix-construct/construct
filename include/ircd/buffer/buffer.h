@@ -217,6 +217,7 @@ ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
 // to ensure cross-platform guarantees the zero'ing doesn't get optimized away.
 #ifndef HAVE_SODIUM_H
 inline size_t
+__attribute__((always_inline))
 ircd::buffer::zero(const mutable_buffer &buf)
 {
 	std::memset(data(buf), 0x0, size(buf));
@@ -225,12 +226,14 @@ ircd::buffer::zero(const mutable_buffer &buf)
 #endif
 
 inline void
+__attribute__((always_inline))
 ircd::buffer::reverse(const mutable_buffer &buf)
 {
 	std::reverse(data(buf), data(buf) + size(buf));
 }
 
 inline size_t
+__attribute__((always_inline))
 ircd::buffer::reverse(const mutable_buffer &dst,
                       const const_buffer &src)
 {
@@ -266,6 +269,7 @@ ircd::buffer::copy(const mutable_buffer &dst,
 }
 
 inline size_t
+__attribute__((always_inline))
 ircd::buffer::move(const mutable_buffer &dst,
                    const const_buffer &src)
 {
@@ -276,6 +280,7 @@ ircd::buffer::move(const mutable_buffer &dst,
 }
 
 inline size_t
+__attribute__((always_inline))
 ircd::buffer::copy(const mutable_buffer &dst,
                    const const_buffer &src)
 {
@@ -286,8 +291,8 @@ ircd::buffer::copy(const mutable_buffer &dst,
 }
 
 template<class it>
-it
-__attribute__((stack_protect))
+inline it
+__attribute__((always_inline))
 ircd::buffer::move(it &dest,
                    const it &stop,
                    const const_buffer &src)
@@ -307,8 +312,8 @@ ircd::buffer::move(it &dest,
 }
 
 template<class it>
-it
-__attribute__((stack_protect))
+inline it
+__attribute__((always_inline))
 ircd::buffer::copy(it &dest,
                    const it &stop,
                    const const_buffer &src)
@@ -328,7 +333,8 @@ ircd::buffer::copy(it &dest,
 }
 
 template<class it>
-ircd::buffer::buffer<it>
+inline ircd::buffer::buffer<it>
+__attribute__((always_inline))
 ircd::buffer::operator+(const buffer<it> &buffer,
                         const size_t &bytes)
 {
@@ -344,7 +350,8 @@ ircd::buffer::operator+(const buffer<it> &buffer,
 }
 
 template<class it>
-size_t
+inline size_t
+__attribute__((always_inline))
 ircd::buffer::consume(buffer<it> &buffer,
                       const size_t &bytes)
 {
@@ -366,14 +373,16 @@ ircd::buffer::aligned(const buffer<it> &buffer,
 }
 
 template<class it>
-const it &
+inline const it &
+__attribute__((always_inline))
 ircd::buffer::data(const buffer<it> &buffer)
 {
 	return get<0>(buffer);
 }
 
 template<class it>
-size_t
+inline size_t
+__attribute__((always_inline))
 ircd::buffer::size(const buffer<it> &buffer)
 {
 	assert(get<0>(buffer) <= get<1>(buffer));

@@ -15,7 +15,7 @@
 ///
 template<class it>
 struct ircd::buffer::buffer
-:std::tuple<it, it>
+:std::pair<it, it>
 {
 	using iterator = it;
 	using value_type = typename std::remove_pointer<iterator>::type;
@@ -42,23 +42,27 @@ struct ircd::buffer::buffer
 };
 
 template<class it>
+inline __attribute__((always_inline))
 ircd::buffer::buffer<it>::buffer()
 :buffer{nullptr, nullptr}
 {}
 
 template<class it>
+inline __attribute__((always_inline))
 ircd::buffer::buffer<it>::buffer(const it &start,
                                  const size_t &size)
 :buffer{start, start + size}
 {}
 
 template<class it>
+inline __attribute__((always_inline, flatten))
 ircd::buffer::buffer<it>::buffer(const it &start,
                                  const it &stop)
-:std::tuple<it, it>{start, stop}
+:std::pair<it, it>{start, stop}
 {}
 
 template<class it>
+inline __attribute__((always_inline, flatten))
 ircd::buffer::buffer<it>::operator string_view()
 const
 {
