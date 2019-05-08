@@ -20,6 +20,7 @@ namespace ircd::prof
 	struct system;
 	struct resource;
 	struct syscall_timer;
+	struct instructions;
 	enum dpl :uint8_t;
 	using group = std::vector<std::unique_ptr<event>>;
 	IRCD_OVERLOAD(sample)
@@ -92,6 +93,23 @@ struct ircd::prof::vg::disable
 {
 	disable() noexcept;
 	~disable() noexcept;
+};
+
+/// Gadget for hardware profiling of instructions for a scope.
+///
+struct ircd::prof::instructions
+{
+	prof::group group;
+	uint64_t val {0};
+
+  public:
+	const uint64_t &at() const;
+	const uint64_t &sample();
+
+	instructions() noexcept;
+	instructions(instructions &&) = delete;
+	instructions(const instructions &) = delete;
+	~instructions() noexcept;
 };
 
 /// This suite of devices is intended to figure out when a system call is

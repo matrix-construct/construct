@@ -283,6 +283,70 @@ ircd::prof::vg::enabled()
 }
 
 //
+// instructions
+//
+
+ircd::prof::instructions::instructions()
+noexcept
+{
+	if(!create(this->group, PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, true, false))
+		throw error
+		{
+			"Cannot sample instruction counter."
+		};
+
+	reset(this->group);
+	start(this->group);
+}
+
+ircd::prof::instructions::~instructions()
+noexcept
+{
+}
+
+const uint64_t &
+ircd::prof::instructions::sample()
+{
+	stop(this->group);
+
+	auto &leader
+	{
+		prof::leader(group)
+	};
+
+	thread_local char buf[1024];
+	const const_buffer read
+	{
+		buf,  size_t(syscall(::read, int(leader.fd), buf, sizeof(buf)))
+	};
+
+	for_each(read, [this]
+	(const type &type, const uint64_t &val)
+	{
+		if(type.type_id == PERF_TYPE_HARDWARE)
+			if(type.counter == PERF_COUNT_HW_INSTRUCTIONS)
+				if(type.dpl == dpl::USER)
+					this->val += val;
+	});
+
+	const auto &ret
+	{
+		at()
+	};
+
+	start(this->group);
+
+	return ret;
+}
+
+const uint64_t &
+ircd::prof::instructions::at()
+const
+{
+	return val;
+}
+
+//
 // syscall_timer
 //
 
