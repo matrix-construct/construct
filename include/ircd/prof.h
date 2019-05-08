@@ -21,8 +21,6 @@ namespace ircd::prof
 	struct resource;
 	struct syscall_timer;
 	enum dpl :uint8_t;
-	enum counter :uint8_t;
-	enum cacheop :uint8_t;
 	using group = std::vector<std::unique_ptr<event>>;
 	IRCD_OVERLOAD(sample)
 	IRCD_EXCEPTION(ircd::error, error)
@@ -34,7 +32,6 @@ namespace ircd::prof
 	uint64_t time_proc();   ///< Nanoseconds of CPU time for process.
 	uint64_t time_thrd();   ///< Nanoseconds of CPU time for thread.
 
-	// Observe
 	system &hotsample(system &) noexcept;
 	system &operator+=(system &a, const system &b);
 	system &operator-=(system &a, const system &b);
@@ -45,6 +42,9 @@ namespace ircd::prof
 	resource &operator-=(resource &a, const resource &b);
 	resource operator+(const resource &a, const resource &b);
 	resource operator-(const resource &a, const resource &b);
+
+	using read_closure = std::function<void (const type &, const uint64_t &val)>;
+	void for_each(const const_buffer &read, const read_closure &);
 
 	// Control
 	void stop(group &);
@@ -200,13 +200,17 @@ struct ircd::prof::system
 struct ircd::prof::type
 {
 	enum dpl dpl {0};
-	enum counter counter {0};
-	enum cacheop cacheop {0};
+	uint8_t type_id {0};
+	uint8_t counter {0};
+	uint8_t cacheop {0};
+	uint8_t cacheres {0};
 
 	type(const event &);
 	type(const enum dpl & = (enum dpl)0,
-	     const enum counter & = (enum counter)0,
-	     const enum cacheop & = (enum cacheop)0);
+	     const uint8_t &attr_type = 0,
+	     const uint8_t &counter = 0,
+	     const uint8_t &cacheop = 0,
+	     const uint8_t &cacheres = 0);
 };
 
 enum ircd::prof::dpl
@@ -214,48 +218,6 @@ enum ircd::prof::dpl
 {
 	KERNEL  = 0,
 	USER    = 1,
-};
-
-enum ircd::prof::counter
-:std::underlying_type<ircd::prof::counter>::type
-{
-	TIME_PROF,
-	TIME_CPU,
-	TIME_TASK,
-	PF_MINOR,
-	PF_MAJOR,
-	SWITCH_TASK,
-	SWITCH_CPU,
-
-	CYCLES,
-	RETIRES,
-	BRANCHES,
-	BRANCHES_MISS,
-	CACHES,
-	CACHES_MISS,
-	STALLS_READ,
-	STALLS_RETIRE,
-
-	CACHE_L1D,
-	CACHE_L1I,
-	CACHE_LL,
-	CACHE_TLBD,
-	CACHE_TLBI,
-	CACHE_BPU,
-	CACHE_NODE,
-
-	_NUM
-};
-
-enum ircd::prof::cacheop
-:std::underlying_type<ircd::prof::cacheop>::type
-{
-	READ_ACCESS,
-	READ_MISS,
-	WRITE_ACCESS,
-	WRITE_MISS,
-	PREFETCH_ACCESS,
-	PREFETCH_MISS,
 };
 
 struct ircd::prof::init

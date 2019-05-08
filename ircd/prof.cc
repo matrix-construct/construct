@@ -21,9 +21,6 @@ namespace ircd::prof
 {
 	std::ostream &debug(std::ostream &, const ::perf_event_mmap_page &);
 
-	using read_closure = std::function<void (const type &, const uint64_t &val)>;
-	void for_each(const const_buffer &read, const read_closure &);
-
 	template<class... args> event *
 	create(group &,
 	       const uint32_t &,
@@ -579,10 +576,10 @@ ircd::prof::for_each(const const_buffer &buf,
 		reinterpret_cast<const struct body *>(data(buf) + sizeof(struct head))
 	};
 
-	// Start with the pseudo-results under TIME_PROF type, these should
-	// always be the same for non-hw profiling, so the DPL is meaningless.
-	closure(type{dpl::KERNEL, counter::TIME_PROF}, head->te);
-	closure(type{dpl::USER, counter::TIME_PROF}, head->tr);
+	// Start with the pseudo-results; these should always be the same for
+	// non-hw profiling, so the DPL is meaningless.
+	closure(type{dpl::KERNEL, uint8_t(-1)}, head->te);
+	closure(type{dpl::USER, uint8_t(-1)}, head->tr);
 
 	// Iterate the result list
 	for(size_t i(0); i < head->nr; ++i)
@@ -785,141 +782,40 @@ const
 //
 
 ircd::prof::type::type(const enum dpl &dpl,
-                       const enum counter &counter,
-                       const enum cacheop &cacheop)
+                       const uint8_t &type_id,
+                       const uint8_t &counter,
+                       const uint8_t &cacheop,
+                       const uint8_t &cacheres)
 :dpl{dpl}
+,type_id{type_id}
 ,counter{counter}
 ,cacheop{cacheop}
+,cacheres{cacheres}
 {
 }
 
 ircd::prof::type::type(const event &event)
-:type{}
+:dpl
 {
-	this->dpl = event.attr.exclude_kernel? dpl::USER : dpl::KERNEL;
-	if(event.attr.type == PERF_TYPE_SOFTWARE) switch(event.attr.config)
-	{
-		case PERF_COUNT_SW_CPU_CLOCK:
-			this->counter = counter::TIME_CPU;
-			break;
-
-		case PERF_COUNT_SW_TASK_CLOCK:
-			this->counter = counter::TIME_TASK;
-			break;
-
-		case PERF_COUNT_SW_PAGE_FAULTS_MIN:
-			this->counter = counter::PF_MINOR;
-			break;
-
-		case PERF_COUNT_SW_PAGE_FAULTS_MAJ:
-			this->counter = counter::PF_MAJOR;
-			break;
-
-		case PERF_COUNT_SW_CONTEXT_SWITCHES:
-			this->counter = counter::SWITCH_TASK;
-			break;
-
-		case PERF_COUNT_SW_CPU_MIGRATIONS:
-			this->counter = counter::SWITCH_CPU;
-			break;
-
-		default:
-			break;
-	}
-	else if(event.attr.type == PERF_TYPE_HARDWARE) switch(event.attr.config)
-	{
-		case PERF_COUNT_HW_CPU_CYCLES:
-			this->counter = counter::CYCLES;
-			break;
-
-		case PERF_COUNT_HW_INSTRUCTIONS:
-			this->counter = counter::RETIRES;
-			break;
-
-		case PERF_COUNT_HW_CACHE_REFERENCES:
-			this->counter = counter::CACHES;
-			break;
-
-		case PERF_COUNT_HW_CACHE_MISSES:
-			this->counter = counter::CACHES_MISS;
-			break;
-
-		case PERF_COUNT_HW_BRANCH_INSTRUCTIONS:
-			this->counter = counter::BRANCHES;
-			break;
-
-		case PERF_COUNT_HW_BRANCH_MISSES:
-			this->counter = counter::BRANCHES_MISS;
-			break;
-
-		case PERF_COUNT_HW_STALLED_CYCLES_FRONTEND:
-			this->counter = counter::STALLS_READ;
-			break;
-
-		case PERF_COUNT_HW_STALLED_CYCLES_BACKEND:
-			this->counter = counter::STALLS_RETIRE;
-			break;
-
-		default:
-			break;
-	}
-	else if(event.attr.type == PERF_TYPE_HW_CACHE)
-	{
-		const uint8_t counter(event.attr.config);
-		const uint8_t op(event.attr.config >> 8);
-		const uint8_t res(event.attr.config >> 16);
-		switch(counter)
-		{
-			case PERF_COUNT_HW_CACHE_L1D:
-				this->counter = counter::CACHE_L1D;
-				break;
-
-			case PERF_COUNT_HW_CACHE_L1I:
-				this->counter = counter::CACHE_L1I;
-				break;
-
-			case PERF_COUNT_HW_CACHE_LL:
-				this->counter = counter::CACHE_LL;
-				break;
-
-			case PERF_COUNT_HW_CACHE_DTLB:
-				this->counter = counter::CACHE_TLBD;
-				break;
-
-			case PERF_COUNT_HW_CACHE_ITLB:
-				this->counter = counter::CACHE_TLBI;
-				break;
-
-			case PERF_COUNT_HW_CACHE_BPU:
-				this->counter = counter::CACHE_BPU;
-				break;
-
-			case PERF_COUNT_HW_CACHE_NODE:
-				this->counter = counter::CACHE_NODE;
-				break;
-		}
-
-		switch(op)
-		{
-			case PERF_COUNT_HW_CACHE_OP_READ:
-				this->cacheop = res == PERF_COUNT_HW_CACHE_RESULT_ACCESS?
-					cacheop::READ_ACCESS:
-					cacheop::READ_MISS;
-				break;
-
-			case PERF_COUNT_HW_CACHE_OP_WRITE:
-				this->cacheop = res == PERF_COUNT_HW_CACHE_RESULT_ACCESS?
-					cacheop::WRITE_ACCESS:
-					cacheop::WRITE_MISS;
-				break;
-
-			case PERF_COUNT_HW_CACHE_OP_PREFETCH:
-				this->cacheop = res == PERF_COUNT_HW_CACHE_RESULT_ACCESS?
-					cacheop::PREFETCH_ACCESS:
-					cacheop::PREFETCH_MISS;
-				break;
-		}
-	}
+	event.attr.exclude_kernel? dpl::USER : dpl::KERNEL
+}
+,type_id
+{
+	uint8_t(event.attr.type)
+}
+,counter
+{
+	uint8_t(event.attr.config)
+}
+,cacheop
+{
+	uint8_t(event.attr.config >> 8)
+}
+,cacheres
+{
+	uint8_t(event.attr.config >> 16)
+}
+{
 }
 
 //
