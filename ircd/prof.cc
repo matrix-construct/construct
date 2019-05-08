@@ -54,7 +54,8 @@ struct ircd::prof::event
 	      const uint32_t &type,
 	      const uint64_t &config,
 	      const bool &user,
-	      const bool &kernel);
+	      const bool &kernel,
+	      const bool &use_map = true);
 
 	~event() noexcept;
 };
@@ -687,7 +688,8 @@ ircd::prof::event::event(const int &group,
                          const uint32_t &type,
                          const uint64_t &config,
                          const bool &user,
-                         const bool &kernel)
+                         const bool &kernel,
+                         const bool &use_map)
 :attr{[&]
 {
 	struct ::perf_event_attr ret {0};
@@ -730,7 +732,7 @@ ircd::prof::event::event(const int &group,
 }()}
 ,map_size
 {
-	type == PERF_TYPE_HARDWARE?
+	use_map && type == PERF_TYPE_HARDWARE?
 		size_t(1UL + 0UL) * info::page_size:
 		0UL
 }
