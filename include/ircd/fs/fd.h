@@ -19,7 +19,7 @@ namespace ircd::fs
 	size_t block_size(const fd &);
 	ulong fstype(const fd &);
 	ulong device(const fd &);
-	uint64_t write_life(const fd &);
+	uint64_t write_life(const fd &) noexcept;
 	void write_life(const fd &, const uint64_t &);
 }
 

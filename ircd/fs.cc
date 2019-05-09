@@ -1551,10 +1551,22 @@ ircd::fs::write_life(const fd &fd,
 #if defined(HAVE_FCNTL_H) && defined(F_GET_FILE_RW_HINT)
 uint64_t
 ircd::fs::write_life(const fd &fd)
+noexcept try
 {
 	uint64_t ret;
 	syscall(::fcntl, int(fd), F_GET_FILE_RW_HINT, &ret);
 	return ret;
+}
+catch(const std::system_error &e)
+{
+	log::derror
+	{
+		log, "fcntl(F_GET_FILE_RW_HINT) fd:%d :%s",
+		int(fd),
+		e.what()
+	};
+
+	return 0;
 }
 #else
 #warning "F_GET_FILE_RW_HINT not supported on platform."
