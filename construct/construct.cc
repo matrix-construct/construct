@@ -204,6 +204,8 @@ noexcept try
 	// calls ircd::quit() to clean break from the run() loop.
 	if(ircd::restart)
 		ircd::syscall(::execve, _argv[0], _argv, _envp);
+
+	return EXIT_SUCCESS;
 }
 catch(const ircd::user_error &e)
 {
