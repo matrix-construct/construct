@@ -217,7 +217,7 @@ ircd::m::vm::inject(eval &eval,
 	const scope_count injecting_room{eval::injecting_room};
 	const scope_notify notify{vm::dock};
 
-	// This eval entry point is only used for commits. We try to find the
+	// This eval entry point is only used for injections. We try to find the
 	// commit opts the user supplied directly to this eval or with the room.
 	if(!eval.copts)
 		eval.copts = room.copts;
