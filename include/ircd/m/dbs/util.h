@@ -20,6 +20,10 @@ namespace ircd::m::dbs
 	std::tuple<ref, event::idx> event_refs_key(const string_view &amalgam);
 	string_view reflect(const ref &);
 
+	constexpr size_t EVENT_HORIZON_KEY_MAX_SIZE {id::MAX_SIZE + 1 + 8};
+	string_view event_horizon_key(const mutable_buffer &out, const id::event &, const event::idx &);
+	std::tuple<event::idx> event_horizon_key(const string_view &amalgam);
+
 	constexpr size_t EVENT_SENDER_KEY_MAX_SIZE {id::MAX_SIZE + 1 + 8};
 	string_view event_sender_key(const mutable_buffer &out, const string_view &origin, const string_view &localpart = {}, const event::idx & = 0);
 	string_view event_sender_key(const mutable_buffer &out, const id::user &, const event::idx &);

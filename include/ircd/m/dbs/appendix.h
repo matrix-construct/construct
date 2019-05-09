@@ -47,6 +47,13 @@ enum ircd::m::dbs::appendix::index
 	/// types are involved.
 	EVENT_REFS,
 
+	/// Involves the event_horizon column which saves the event_id of any
+	/// unresolved event_refs at the time of the transaction. This is important
+	/// for out-of-order writes to the database. When the unresolved prev_event
+	/// is encountered later and finds its event_id in event_horizon it can
+	/// properly complete the event_refs graph to all the referencing events.
+	EVENT_HORIZON,
+
 	/// Involves the event_sender column (reverse index on the event sender).
 	EVENT_SENDER,
 
@@ -101,6 +108,7 @@ namespace ircd::m::dbs
 	string_view _index_room(db::txn &, const event &, const write_opts &);
 	void _index_event_type(db::txn &, const event &, const write_opts &);
 	void _index_event_sender(db::txn &, const event &, const write_opts &);
+	void _index_event_horizon(db::txn &, const event &, const write_opts &, const id::event &);
 	void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &);

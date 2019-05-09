@@ -101,6 +101,14 @@ namespace ircd::m::dbs::desc
 	extern const db::comparator events__event_refs__cmp;
 	extern const db::descriptor events__event_refs;
 
+	// event horizon
+	extern conf::item<size_t> events__event_horizon__block__size;
+	extern conf::item<size_t> events__event_horizon__meta_block__size;
+	extern conf::item<size_t> events__event_horizon__cache__size;
+	extern conf::item<size_t> events__event_horizon__cache_comp__size;
+	extern const db::prefix_transform events__event_horizon__pfx;
+	extern const db::descriptor events__event_horizon;
+
 	// events sender
 	extern conf::item<size_t> events__event_sender__block__size;
 	extern conf::item<size_t> events__event_sender__meta_block__size;

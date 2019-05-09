@@ -36,6 +36,7 @@ namespace ircd::m::dbs
 	extern db::column event_idx;       // event_id => event_idx
 	extern db::column event_json;      // event_idx => full json
 	extern db::index event_refs;       // event_idx | ref_type, event_idx
+	extern db::index event_horizon;    // event_id | event_idx
 	extern db::index event_type;       // type | event_idx
 	extern db::index event_sender;     // host | local, event_idx
 	extern db::index room_head;        // room_id | event_id => event_idx
