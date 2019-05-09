@@ -3784,7 +3784,7 @@ ircd::db::debug(const txn &t)
 
 void
 ircd::db::for_each(const txn &t,
-                   const std::function<void (const delta &)> &closure)
+                   const delta_closure &closure)
 {
 	const auto re{[&closure]
 	(const delta &delta)
@@ -3801,7 +3801,7 @@ ircd::db::for_each(const txn &t,
 
 bool
 ircd::db::for_each(const txn &t,
-                   const std::function<bool (const delta &)> &closure)
+                   const delta_closure_bool &closure)
 {
 	const database &d(t);
 	const rocksdb::WriteBatch &wb{t};

@@ -15,35 +15,33 @@ namespace ircd::db
 {
 	struct txn;
 
-	bool for_each(const txn &, const std::function<bool (const delta &)> &);
-	void for_each(const txn &, const std::function<void (const delta &)> &);
-	std::string debug(const txn &);
-
-	using seq_closure_bool = std::function<bool (txn &, const uint64_t &)>;
+	using delta_closure = std::function<void (const delta &)>;
+	using delta_closure_bool = std::function<bool (const delta &)>;
 	using seq_closure = std::function<void (txn &, const uint64_t &)>;
+	using seq_closure_bool = std::function<bool (txn &, const uint64_t &)>;
+
+	bool for_each(const txn &, const delta_closure_bool &);
+	void for_each(const txn &, const delta_closure &);
 	bool for_each(database &d, const uint64_t &seq, const seq_closure_bool &);
 	void for_each(database &d, const uint64_t &seq, const seq_closure &);
 	void get(database &d, const uint64_t &seq, const seq_closure &);
+	std::string debug(const txn &);
 }
 
 struct ircd::db::txn
 {
+	struct opts;
+	struct checkpoint;
+	struct append;
+	struct handler;
 	enum state :uint8_t;
+	using value_closure = std::function<void (const string_view &)>;
 
 	database *d {nullptr};
 	std::unique_ptr<rocksdb::WriteBatch> wb;
 	enum state state {0};
 
   public:
-	struct opts;
-	struct checkpoint;
-	struct append;
-	struct handler;
-
-	using delta_closure = std::function<void (const delta &)>;
-	using delta_closure_bool = std::function<bool (const delta &)>;
-	using value_closure = std::function<void (const string_view &)>;
-
 	explicit operator const rocksdb::WriteBatch &() const;
 	explicit operator const database &() const;
 	explicit operator rocksdb::WriteBatch &();
