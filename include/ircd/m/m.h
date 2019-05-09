@@ -33,7 +33,7 @@ namespace ircd::m::vm
 #include "self.h"
 #include "id.h"
 #include "event/event.h"
-#include "dbs.h"
+#include "dbs/dbs.h"
 #include "state.h"
 #include "vm.h"
 #include "invite_3pid.h"
