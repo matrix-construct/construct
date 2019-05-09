@@ -2054,20 +2054,34 @@ noexcept
 
 void
 ircd::db::database::env::writable_file::SetWriteLifeTimeHint(WriteLifeTimeHint hint)
-noexcept
+noexcept try
 {
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p hint %s",
+		log, "'%s': wfile:%p hint:%d %s",
 		d.name,
 		this,
-		reflect(hint)
+		int(hint),
+		reflect(hint),
 	};
 	#endif
 
 	this->hint = hint;
 	fs::write_life(fd, this->hint);
+}
+catch(const std::system_error &e)
+{
+	log::derror
+	{
+		log, "'%s': wfile:%p fd:%d setting write lifetime hint:%d %s :%s",
+		d.name,
+		this,
+		int(fd),
+		int(hint),
+		reflect(hint),
+		e.what(),
+	};
 }
 
 rocksdb::Env::WriteLifeTimeHint
