@@ -1428,23 +1428,35 @@ ircd::m::v1::_make_server_keys(const vector_view<const key::server_key> &keys,
                                const mutable_buffer &buf)
 {
 	json::stack out{buf};
+	json::stack::object top{out};
+	json::stack::object server_keys
 	{
-		json::stack::object top{out};
-		json::stack::member server_keys{top, "server_keys"};
-		json::stack::object keys_object{server_keys};
-		for(const auto &sk : keys)
+		top, "server_keys"
+	};
+
+	for(const auto &[server_name, key_id] : keys)
+	{
+		json::stack::object server_object
 		{
-			json::stack::member server_name{keys_object, sk.first};
-			json::stack::object server_object{server_name};
-			json::stack::member key_name{server_object, sk.second};
-			json::stack::object key_object{key_name};
-			json::stack::member mvut
+			server_keys, server_name
+		};
+
+		if(key_id)
+		{
+			json::stack::object key_object
 			{
-				key_object, "minimum_valid_until_ts", json::value{0L}
+				server_object, key_id
 			};
+
+			//json::stack::member mvut
+			//{
+			//	key_object, "minimum_valid_until_ts", json::value(0L)
+			//};
 		}
 	}
 
+	server_keys.~object();
+	top.~object();
 	return out.completed();
 }
 
