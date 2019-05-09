@@ -6417,6 +6417,48 @@ console_cmd__event__bad(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__event__horizon(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id",
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	char buf[m::dbs::EVENT_HORIZON_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		m::dbs::event_horizon_key(buf, event_id, 0UL)
+	};
+
+	for(auto it(m::dbs::event_horizon.begin(key)); it; ++it)
+	{
+		const auto &event_idx
+		{
+			std::get<0>(m::dbs::event_horizon_key(it->first))
+		};
+
+		const auto _event_id
+		{
+			m::event_id(event_idx, std::nothrow)
+		};
+
+		out << event_id
+		    << " -> "
+		    << event_idx
+		    << " "
+		    << _event_id
+		    << std::endl;
+	}
+
+	return true;
+}
+
+bool
 console_cmd__event__cached(opt &out, const string_view &line)
 {
 	const params param{line, " ",

@@ -41,6 +41,10 @@ struct ircd::m::dbs::write_opts
 	/// by clearing a bit.
 	std::bitset<256> event_refs {event_refs_all};
 
+	/// Selection of what reference types to resolve and delete from the
+	/// event_horizon for this event.
+	std::bitset<256> horizon_resolve {event_refs_all};
+
 	/// Whether the present state table `room_state` should be updated by
 	/// this operation if appropriate.
 	bool present {true};

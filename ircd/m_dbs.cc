@@ -271,6 +271,9 @@ ircd::m::dbs::_index_event(db::txn &txn,
 	if(opts.appendix.test(appendix::EVENT_JSON))
 		_index_event_json(txn, event, opts);
 
+	if(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE) && opts.horizon_resolve.any())
+		_index_event_horizon_resolve(txn, event, opts);
+
 	if(opts.appendix.test(appendix::EVENT_REFS) && opts.event_refs.any())
 		_index_event_refs(txn, event, opts);
 
@@ -827,6 +830,7 @@ ircd::m::dbs::_index_event_horizon(db::txn &txn,
                                    const m::event::id &unresolved_id)
 {
 	thread_local char buf[EVENT_HORIZON_KEY_MAX_SIZE];
+	assert(opts.appendix.test(appendix::EVENT_HORIZON));
 	assert(opts.event_idx != 0 && unresolved_id);
 	const string_view &key
 	{
@@ -840,6 +844,75 @@ ircd::m::dbs::_index_event_horizon(db::txn &txn,
 			opts.op, key, string_view{}
 		}
 	};
+}
+
+void
+ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
+                                           const event &event,
+                                           const write_opts &opts)
+{
+	thread_local char buf[EVENT_HORIZON_KEY_MAX_SIZE];
+	assert(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE));
+	assert(opts.event_idx != 0);
+	const string_view &key
+	{
+		event_horizon_key(buf, at<"event_id"_>(event), 0UL)
+	};
+
+	auto it
+	{
+		dbs::event_horizon.begin(key)
+	};
+
+	for(; it; ++it)
+	{
+		const auto parts
+		{
+			event_horizon_key(it->first)
+		};
+
+		const auto &event_idx
+		{
+			std::get<0>(parts)
+		};
+
+		assert(event_idx != opts.event_idx);
+		const event::fetch _event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!_event.valid)
+			continue;
+
+		// Make the references on behalf of the future event
+		write_opts _opts;
+		_opts.op = opts.op;
+		_opts.event_idx = event_idx;
+		_opts.appendix.reset();
+		_opts.appendix.set(appendix::EVENT);
+		_opts.appendix.set(appendix::EVENT_REFS);
+		_opts.event_refs = opts.horizon_resolve;
+		write(txn, _event, _opts);
+
+		// Delete the event_horizon entry after resolving.
+		thread_local char buf[EVENT_HORIZON_KEY_MAX_SIZE];
+		const string_view &key
+		{
+			event_horizon_key(buf, at<"event_id"_>(event), event_idx)
+		};
+
+		db::txn::append
+		{
+			txn, dbs::event_horizon,
+			{
+				opts.op == db::op::SET?
+					db::op::DELETE:
+					db::op::SET,
+				key
+			}
+		};
+	}
 }
 
 void

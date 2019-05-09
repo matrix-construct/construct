@@ -54,6 +54,9 @@ enum ircd::m::dbs::appendix::index
 	/// properly complete the event_refs graph to all the referencing events.
 	EVENT_HORIZON,
 
+	/// Resolves unresolved references for this event left in event_horizon.
+	EVENT_HORIZON_RESOLVE,
+
 	/// Involves the event_sender column (reverse index on the event sender).
 	EVENT_SENDER,
 
@@ -108,6 +111,7 @@ namespace ircd::m::dbs
 	string_view _index_room(db::txn &, const event &, const write_opts &);
 	void _index_event_type(db::txn &, const event &, const write_opts &);
 	void _index_event_sender(db::txn &, const event &, const write_opts &);
+	void _index_event_horizon_resolve(db::txn &, const event &, const write_opts &);
 	void _index_event_horizon(db::txn &, const event &, const write_opts &, const id::event &);
 	void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &);
 	void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &);
