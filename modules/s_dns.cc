@@ -801,21 +801,13 @@ ircd::net::dns::cache::call_waiters(const string_view &type,
                                     const json::array &rrs)
 {
 	auto it(begin(waiting));
-	while(it != end(waiting)) try
+	while(it != end(waiting))
 	{
 		auto &waiter(*it);
 		if(call_waiter(type, state_key, rrs, waiter))
 			it = waiting.erase(it);
 		else
 			++it;
-	}
-	catch(const std::exception &e)
-	{
-		++it;
-		log::error
-		{
-			log, "proffer :%s", e.what()
-		};
 	}
 }
 
@@ -824,6 +816,7 @@ ircd::net::dns::cache::call_waiter(const string_view &type,
                                    const string_view &state_key,
                                    const json::array &rrs,
                                    waiter &waiter)
+try
 {
 	if(state_key != waiter.key)
 		return false;
@@ -842,6 +835,19 @@ ircd::net::dns::cache::call_waiter(const string_view &type,
 
 	assert(waiter.callback);
 	waiter.callback(target, rrs);
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "callback:%p %s,%s :%s",
+		(const void *)&waiter,
+		type,
+		state_key,
+		e.what(),
+	};
+
 	return true;
 }
 
