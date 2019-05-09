@@ -12,7 +12,8 @@ namespace ircd::m
 {
 	static bool keys_cache_get(const string_view &server, const string_view &key_id, const keys::closure &);
 	static size_t keys_cache_set(const json::object &);
-	static void create_my_key(const m::event &, m::vm::eval &);
+	void create_my_key();
+	static void create_my_key_hookfn(const m::event &, m::vm::eval &);
 	static void init_my_ed25519();
 	static void init_my_tls_crt();
 	void init_my_keys();
@@ -557,7 +558,7 @@ ircd::m::init_my_ed25519()
 decltype(ircd::m::create_my_key_hook)
 ircd::m::create_my_key_hook
 {
-	create_my_key,
+	create_my_key_hookfn,
 	{
 		{ "_site",     "vm.effect"           },
 		{ "room_id",   m::my_node.room_id()  },
@@ -566,8 +567,15 @@ ircd::m::create_my_key_hook
 };
 
 void
-ircd::m::create_my_key(const m::event &,
-                       m::vm::eval &)
+ircd::m::create_my_key_hookfn(const m::event &,
+                              m::vm::eval &)
+{
+	create_my_key();
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::create_my_key()
 {
 	const json::members verify_keys_
 	{{
