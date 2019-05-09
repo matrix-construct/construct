@@ -64,17 +64,33 @@ ircd::init(boost::asio::io_context &user_ios,
            const string_view &servername)
 try
 {
+	// This function must only be called from a HALT state.
 	if(run::level != run::level::HALT)
 		throw error
 		{
 			"Cannot init() IRCd from runlevel %s", reflect(run::level)
 		};
 
-	ios::init(user_ios);
+	// Check that the supplied origin string is properly formatted.
+	if(!rfc3986::valid_remote(std::nothrow, origin))
+		throw user_error
+		{
+			"The 'origin' argument \"%s\" is not a valid hostname.", origin
+		};
+
+	// Check that the supplied servername string is properly formatted.
+	if(!rfc3986::valid_remote(std::nothrow, servername))
+		throw user_error
+		{
+			"The 'servername' argument \"%s\" is not a valid hostname.", servername
+		};
 
 	// Save the params used for m::init later.
 	_origin = std::string{origin};
 	_servername = std::string{servername};
+
+	// Setup the core event loop system starting with the user's supplied ios.
+	ios::init(user_ios);
 
 	// The log is available. but it is console-only until conf opens files.
 	log::init();

@@ -402,6 +402,12 @@ extern ircd::m::room::id::buf nodes_room_id;
 ircd::m::self::init::init(const string_view &origin,
                           const string_view &servername)
 {
+	// Sanity check that these are valid hostname strings. This was likely
+	// already checked, so these validators will simply throw without very
+	// useful error messages if invalid strings ever make it this far.
+	rfc3986::valid_host(origin);
+	rfc3986::valid_host(servername);
+
 	self::origin = origin;
 	self::servername = servername;
 
