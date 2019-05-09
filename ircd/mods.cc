@@ -136,7 +136,7 @@ try
 	const auto ours{[]
 	{
 		// Immediately go back to their terminate so if our terminate
-		// actually itself terminates it won't loop.
+		// handler stack calls terminate it won't loop.
 		std::set_terminate(their_terminate);
 		log::critical
 		{
@@ -145,7 +145,10 @@ try
 		};
 	}};
 
-	// Reference this instance at the top of the loading stack.
+	// Reference this instance at the top of the loading stack. When this
+	// scope unwinds the module is loaded and static initialization has
+	// taken place; note that our user's init function is not executed
+	// until later after mods::mod constructs.
 	loading.emplace_front(this);
 	const unwind pop_loading{[this]
 	{

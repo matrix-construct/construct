@@ -18,7 +18,17 @@ namespace ircd::mods
 	void handle_ebadf(const string_view &what);
 }
 
-/// Internal module representation
+/// Internal module representation. This object closely wraps the dlopen()
+/// handle and only one instance exists for a DSO when it's loaded. Loading
+/// and unloading of the module is represented by construction and destruction
+/// of this class, that involves static initialization and destruction of the
+/// the module's assets, but not invocation of our user's supplied init. The
+/// user's init is invoked after construction of this class which allows use of
+/// the shared_ptr semantics from within the init.
+///
+/// It is a critical error if static initialization and destruction is not
+/// congruent with the lifetime of this instance.
+///
 struct ircd::mods::mod
 :std::enable_shared_from_this<mod>
 {
