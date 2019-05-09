@@ -16,11 +16,6 @@
 #include "signals.h"
 #include "console.h"
 
-static bool startup_checks();
-static void applyargs();
-static void enable_coredumps();
-static int print_version();
-
 bool printversion;
 bool cmdline;
 bool quietmode;
@@ -75,11 +70,20 @@ const char *const fatalerrstr
 const char *const usererrstr
 {R"(
 ***
-*** A fatal startup error has occurred. Please fix the problem to continue. ***
+*** A fatal startup error has occurred:
 ***
 
 %s
+
+***
+*** Please fix the problem to continue.
+***
 )"};
+
+static bool startup_checks();
+static void applyargs();
+static void enable_coredumps();
+static int print_version();
 
 int
 main(int _argc, char *const *_argv, char *const *const _envp)
