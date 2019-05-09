@@ -441,11 +441,7 @@ ircd::net::dns::cache::put(const string_view &type,
                            const string_view &msg)
 try
 {
-	const unique_buffer<mutable_buffer> content_buf
-	{
-		1_KiB
-	};
-
+	char content_buf[1024];
 	json::stack out{content_buf};
 	json::stack::object content{out};
 	json::stack::array array
