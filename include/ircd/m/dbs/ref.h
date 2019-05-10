@@ -15,21 +15,30 @@
 /// which should be plenty of namespace. Internally event_refs_key() and
 /// event_refs store this in a high order byte of an event::idx integer. This
 /// is an alternative to having separate columns for each type of reference.
+///
+/// NOTE: These values are written to the database and cannot be changed.
 enum class ircd::m::dbs::ref
 :uint8_t
 {
-	// DAG
-	PREV                = 0x00,
-	AUTH                = 0x01,
-	STATE               = 0x02,
+	/// All events which reference this event in their `prev_events`.
+	NEXT                = 0x00,
+
+	/// All power events which reference this event in their `auth_events`.
+	/// Non-auth/non-power events are not involved in this graph at all.
+	NEXT_AUTH           = 0x01,
+
+	/// The next states in the transitions for a (type,state_key) cell.
+	NEXT_STATE          = 0x02,
+
+	/// The previous states in the transitions for a (type,state_key) cell.
 	PREV_STATE          = 0x04,
 
-	// m.receipt
+	/// All m.receipt's which target this event.
 	M_RECEIPT__M_READ   = 0x10,
 
-	// m.relates_to
+	/// All m.relates_to's which target this event.
 	M_RELATES__M_REPLY  = 0x20,
 
-	// m.room.redaction
+	/// All m.room.redaction's which target this event.
 	M_ROOM_REDACTION    = 0x40,
 };

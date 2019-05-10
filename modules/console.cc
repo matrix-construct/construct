@@ -6756,7 +6756,7 @@ console_cmd__event__refs(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__event__refs__prev(opt &out, const string_view &line)
+console_cmd__event__refs__next(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -6773,7 +6773,7 @@ console_cmd__event__refs__prev(opt &out, const string_view &line)
 		index(event_id)
 	};
 
-	refs.for_each(m::dbs::ref::PREV, [&out]
+	refs.for_each(m::dbs::ref::NEXT, [&out]
 	(const auto &idx, const auto &type)
 	{
 		const m::event::fetch event

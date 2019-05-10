@@ -2429,7 +2429,7 @@ const
 		idx
 	};
 
-	return erefs.for_each(dbs::ref::AUTH, [this, &type, &closure]
+	return erefs.for_each(dbs::ref::NEXT_AUTH, [this, &type, &closure]
 	(const event::idx &ref, const dbs::ref &)
 	{
 		bool match;
@@ -2690,8 +2690,8 @@ const
 	// the iteration at type value 0 and then ignoring the
 	// type as a loop continue condition.
 	const bool all_type(type == dbs::ref(uint8_t(-1)));
-	const auto &_type{all_type? dbs::ref::PREV : type};
-	assert(uint8_t(dbs::ref::PREV) == 0);
+	const auto &_type{all_type? dbs::ref::NEXT : type};
+	assert(uint8_t(dbs::ref::NEXT) == 0);
 	const string_view key
 	{
 		dbs::event_refs_key(buf, idx, _type, 0)

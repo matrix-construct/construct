@@ -405,13 +405,13 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 
-	if(opts.event_refs.test(uint(ref::PREV)))
+	if(opts.event_refs.test(uint(ref::NEXT)))
 		_index_event_refs_prev(txn, event, opts);
 
-	if(opts.event_refs.test(uint(ref::AUTH)))
+	if(opts.event_refs.test(uint(ref::NEXT_AUTH)))
 		_index_event_refs_auth(txn, event, opts);
 
-	if(opts.event_refs.test(uint(ref::STATE)) ||
+	if(opts.event_refs.test(uint(ref::NEXT_STATE)) ||
 	   opts.event_refs.test(uint(ref::PREV_STATE)))
 		_index_event_refs_state(txn, event, opts);
 
@@ -431,7 +431,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
                                      const write_opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
-	assert(opts.event_refs.test(uint(ref::PREV)));
+	assert(opts.event_refs.test(uint(ref::NEXT)));
 
 	const event::prev &prev{event};
 	for(size_t i(0); i < prev.prev_events_count(); ++i)
@@ -468,7 +468,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 		assert(opts.event_idx != prev_idx);
 		const string_view &key
 		{
-			event_refs_key(buf, prev_idx, ref::PREV, opts.event_idx)
+			event_refs_key(buf, prev_idx, ref::NEXT, opts.event_idx)
 		};
 
 		db::txn::append
@@ -487,7 +487,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
                                      const write_opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
-	assert(opts.event_refs.test(uint(ref::AUTH)));
+	assert(opts.event_refs.test(uint(ref::NEXT_AUTH)));
 	if(!event::auth::is_power_event(event))
 		return;
 
@@ -524,7 +524,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 		assert(opts.event_idx != auth_idx);
 		const string_view &key
 		{
-			event_refs_key(buf, auth_idx, ref::AUTH, opts.event_idx)
+			event_refs_key(buf, auth_idx, ref::NEXT_AUTH, opts.event_idx)
 		};
 
 		db::txn::append
@@ -543,7 +543,7 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
                                       const write_opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
-	assert(opts.event_refs.test(uint(ref::STATE)) ||
+	assert(opts.event_refs.test(uint(ref::NEXT_STATE)) ||
 	       opts.event_refs.test(uint(ref::PREV_STATE)));
 
 	if(!opts.present)
@@ -586,11 +586,11 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
 	assert(opts.event_idx != 0 && prev_state_idx != 0);
 	assert(opts.event_idx != prev_state_idx);
 
-	if(opts.event_refs.test(uint(ref::STATE)))
+	if(opts.event_refs.test(uint(ref::NEXT_STATE)))
 	{
 		const string_view &key
 		{
-			event_refs_key(buf, prev_state_idx, ref::STATE, opts.event_idx)
+			event_refs_key(buf, prev_state_idx, ref::NEXT_STATE, opts.event_idx)
 		};
 
 		db::txn::append
@@ -1691,26 +1691,13 @@ ircd::m::dbs::reflect(const ref &type)
 {
 	switch(type)
 	{
-		case ref::PREV:
-			return "PREV";
-
-		case ref::AUTH:
-			return "AUTH";
-
-		case ref::STATE:
-			return "STATE";
-
-		case ref::PREV_STATE:
-			return "PREV_STATE";
-
-		case ref::M_RECEIPT__M_READ:
-			return "M_RECEIPT__M_READ";
-
-		case ref::M_RELATES__M_REPLY:
-			return "M_RELATES__M_REPLY";
-
-		case ref::M_ROOM_REDACTION:
-			return "M_ROOM_REDACTION";
+		case ref::NEXT:                  return "NEXT";
+		case ref::NEXT_AUTH:             return "NEXT_AUTH";
+		case ref::NEXT_STATE:            return "NEXT_STATE";
+		case ref::PREV_STATE:            return "PREV_STATE";
+		case ref::M_RECEIPT__M_READ:     return "M_RECEIPT__M_READ";
+		case ref::M_RELATES__M_REPLY:    return "M_RELATES__M_REPLY";
+		case ref::M_ROOM_REDACTION:      return "M_ROOM_REDACTION";
 	}
 
 	return "????";

@@ -86,7 +86,7 @@ ircd::m::room::state::purge_replaced(const state &state)
 		if(!m::get(std::nothrow, event_idx, "state_key", [](const auto &) {}))
 			continue;
 
-		if(!m::event::refs(event_idx).count(m::dbs::ref::STATE))
+		if(!m::event::refs(event_idx).count(m::dbs::ref::NEXT_STATE))
 			continue;
 
 		// TODO: erase event
@@ -388,10 +388,10 @@ ircd::m::room::state::next(const event::idx &event_idx,
 		event_idx
 	};
 
-	return refs.for_each(dbs::ref::STATE, [&closure]
+	return refs.for_each(dbs::ref::NEXT_STATE, [&closure]
 	(const event::idx &event_idx, const dbs::ref &ref)
 	{
-		assert(ref == dbs::ref::STATE);
+		assert(ref == dbs::ref::NEXT_STATE);
 		return closure(event_idx);
 	});
 }
@@ -1712,7 +1712,7 @@ const
 	for(++coord.y; coord.y <= branch.y; ++coord.y, coord.x = 0)
 	{
 		auto idx(0);
-		refs.for_each(dbs::ref::PREV, [&coord, &branch, &idx]
+		refs.for_each(dbs::ref::NEXT, [&coord, &branch, &idx]
 		(const auto &event_idx, const auto &)
 		{
 			if(coord.x <= branch.x)
