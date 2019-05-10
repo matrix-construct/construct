@@ -168,9 +168,6 @@ struct ircd::db::column
 /// no reference to the column in its tuple. This is why these deltas are executed
 /// through the member column::operator() and not an overload of db::write().
 ///
-/// It is unlikely you will need to work with column deltas directly because
-/// you may decohere one column from the others participating in a row.
-///
 struct ircd::db::column::delta
 :std::tuple<op, string_view, string_view>
 {
