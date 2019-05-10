@@ -92,15 +92,6 @@ namespace ircd::m::dbs::desc
 	extern conf::item<size_t> events__event_json__bloom__bits;
 	extern const db::descriptor events__event_json;
 
-	// events graphing
-	extern conf::item<size_t> events__event_refs__block__size;
-	extern conf::item<size_t> events__event_refs__meta_block__size;
-	extern conf::item<size_t> events__event_refs__cache__size;
-	extern conf::item<size_t> events__event_refs__cache_comp__size;
-	extern const db::prefix_transform events__event_refs__pfx;
-	extern const db::comparator events__event_refs__cmp;
-	extern const db::descriptor events__event_refs;
-
 	// event horizon
 	extern conf::item<size_t> events__event_horizon__block__size;
 	extern conf::item<size_t> events__event_horizon__meta_block__size;

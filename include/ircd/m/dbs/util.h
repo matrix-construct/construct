@@ -13,13 +13,6 @@
 
 namespace ircd::m::dbs
 {
-	constexpr size_t EVENT_REFS_KEY_MAX_SIZE {sizeof(event::idx) + sizeof(event::idx)};
-	constexpr size_t ref_shift {8 * (sizeof(event::idx) - sizeof(ref))};
-	constexpr event::idx ref_mask {0xFFUL << ref_shift};
-	string_view event_refs_key(const mutable_buffer &out, const event::idx &tgt, const ref &type, const event::idx &referer);
-	std::tuple<ref, event::idx> event_refs_key(const string_view &amalgam);
-	string_view reflect(const ref &);
-
 	constexpr size_t EVENT_HORIZON_KEY_MAX_SIZE {id::MAX_SIZE + 1 + 8};
 	string_view event_horizon_key(const mutable_buffer &out, const id::event &, const event::idx &);
 	string_view event_horizon_key(const mutable_buffer &out, const id::event &);

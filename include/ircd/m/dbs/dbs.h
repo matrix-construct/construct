@@ -50,7 +50,7 @@ namespace ircd::m::dbs
 	void blacklist(db::txn &, const event::id &, const write_opts &);
 }
 
-#include "ref.h"
+#include "event_refs.h"
 #include "appendix.h"
 #include "write_opts.h"
 #include "util.h"
