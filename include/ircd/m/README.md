@@ -173,47 +173,65 @@ distributed internet system.
 
 The DAG is a tool which aids with the presentation of a coherent conversation
 for the room in lieu of the relaxed write consistency as previously mentioned.
-This tool is not very difficult to comprehend, it only becomes complicated in
-the most academically contrived corner-cases -- most of which are born out of
-malice.
-
-In the following diagrams each box represents a message and their reference
-connections in the timeline, which begins at the top and flows down. For the
-sake of simplicity one can consider each message to always be sent by a
-different server in the room.
+In this section we will analyze various examples of DAG's and how certain
+cases are approached by our implementation.
 
 ```
-Over the lifetime of the average room, for an overwhelming majority of that
-time, the DAG is linear.
+          [M00]
+            |
+          [M01]
+```
+Above: a very simple DAG: message M01 references M00; this means M00 is in the
+light-cone of M01. In other words, when one obtains M01 one obtains M00 along
+with it (M01 *brings* M00 and everything behind it at that point). This is the
+theoretical causality offered by the DAG, which is considered one of the stronger
+types of orderings in the various schemes known to distributed system academics.
 
+```
             [M00]
               |
             [M01]
               |
             [M02]
-              |
-            [M03]
-              |
-            [M04]
-              |
 ```
-
-Based on data collected for the Matrix chatroom workload, conflicts
-occur about 3.5% of the time, and more than a simple conflict occurs
-about 0.1% of the time. We will refer to these as periods of "turbulence."
+Above: The normal addition of M02. Now M01 and M00 are "brought by" M02.
 
 ```
-1: 6848
-2: 248
-3: 7
-4: 1
-5: 1
-6: 0
-7: 0
+            [M00]--o
+              |    |
+            [M01]  |
+              |    |
+            [M02]--o
 ```
-Here is some data from #matrix-architecture:matrix.org. The number of
-references an event makes is the key, and the count of events which has
-made that number of references is the value.
+Above: Example of a redundant reference. Note that this is a valid
+configuration in the matrix protocol and implementations; we do not reject M02
+as ill-formed though our implementation prefers to avoid generating such
+references if possible, it may still do so legitimately. We consider this
+redundant because:
+
+1. M00 is already reachable through the reference to M01; the reference around
+M01 reveals no new information in the light-cone which wasn't already known.
+
+2. Since M02 absolutely happens-after M01 and the same holds true for M01 and
+M00: distinguishing which is the legitimate reference and which is unnecessary
+is clear.
+
+Redundant references may still be produced for legitimate reasons:
+
+1. Voluntary DAG gaps: For huge rooms as well as long periods of downtime an
+implementation may not have a complete message graph. In this case it may
+not know (or care) why there is a gap in the room's DAG, and it simply
+"bridges" the gap for its own satisfaction to create a unified graph even
+though such an action is gratuitious to others.
+
+2. Involuntary DAG gaps: In a federated system comprised of many
+implementations there is a non-zero proability that eventually some message
+will be accepted or rejected differently. That is a problem for an essentially
+linked-list data format: the inability to traverse through one event relegates
+everything on the other side of it inaccessible. A redundant reference may be
+used to "route around" a malformed event which is considered essential for some
+and redundant by others.
+
 
 ```
 
@@ -221,17 +239,27 @@ made that number of references is the value.
               |
             [M01]
            /     \
-
       [M02]       [M02]
 
+```
+Above: When two servers transmit at the same time. This is where the DAG shines
+by relaxing write-consistency for a large scale distributed system: two actors
+can issue messages at the same time without explicit synchronization. There is
+no magic here (yet), and as one would assume, two simultaneous messages as
+illustrated may still be conflicting.
+
+```
+
+            [M00]
+              |
+            [M01]
+           /     \
+     [M02A]       [M02B]
            \     /
             [M03]
-              |
-            [M04]
-              |
 ```
-Above: when two servers transmit at the same time.
-Below: when three servers transmit at the same time:
+Above: The M03 message "sees" both M02 messages and makes two references.
+
 
 ```
             [M00]
@@ -266,6 +294,7 @@ having only received two out of the three transmissions in the previous round.
             [M05]
               |
 ```
+
 
 
 ```
