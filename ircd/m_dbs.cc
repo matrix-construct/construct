@@ -572,10 +572,14 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
 			0UL
 	};
 
+	// No previous state; nothing to do.
 	if(!prev_state_idx)
 		return;
 
-	if(prev_state_idx >= opts.event_idx)
+	// If the previous state's event_idx is greater than the event_idx of the
+	// event we're transacting this is almost surely a replay/rewrite. Bail
+	// out for now rather than corrupting the graph.
+	if(unlikely(prev_state_idx >= opts.event_idx))
 		return;
 
 	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
