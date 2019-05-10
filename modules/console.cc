@@ -7541,19 +7541,20 @@ console_cmd__room__sounding(opt &out, const string_view &line)
 		m::surface(room)
 	};
 
-	const auto sound
-	{
-		m::sounding(room)
-	};
-
 	const auto twain
 	{
 		m::twain(room)
 	};
 
-	out << "sounding:  " << std::setw(8) << sound.first
-	    << "   " << m::event_id(sound.second) << " (" << sound.second << ")"
-	    << std::endl;
+	m::sounding(room, [&out]
+	(const auto &range, const auto &event_idx)
+	{
+		out << "sounding:  " << std::setw(8) << range.second
+		    << "   " << m::event_id(event_idx) << " (" << event_idx << ")"
+		    << std::endl;
+
+		return true;
+	});
 
 	out << "twain:     " << std::setw(8) << twain.first
 	    << std::endl;

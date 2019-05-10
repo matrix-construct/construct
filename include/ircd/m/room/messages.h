@@ -29,8 +29,10 @@ namespace ircd::m
 	bool for_each_depth_gap(const room &, const depth_range_closure &);
 	bool rfor_each_depth_gap(const room &, const depth_range_closure &);
 
-	std::pair<int64_t, event::idx> surface(const room &); // First missing
-	std::pair<int64_t, event::idx> sounding(const room &); // Last missing
+	bool sounding(const room &, const depth_range_closure &); // Last missing (all)
+
+	std::pair<int64_t, event::idx> surface(const room &); // First missing (one)
+	std::pair<int64_t, event::idx> sounding(const room &); // Last missing (one)
 	std::pair<int64_t, event::idx> twain(const room &);
 }
 

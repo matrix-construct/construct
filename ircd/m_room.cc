@@ -764,6 +764,28 @@ ircd::m::surface(const room &room)
 }
 
 bool
+ircd::m::sounding(const room &room,
+                  const depth_range_closure &closure)
+{
+	bool ret(true);
+	int64_t depth(-1);
+	rfor_each_depth_gap(room, [&depth, &ret, &closure]
+	(const auto &range, const auto &event_idx)
+	{
+		if(depth != -1 && depth != range.second)
+			return false;
+
+		depth = range.second;
+		if(!closure(range, event_idx))
+			return false;
+
+		return true;
+	});
+
+	return ret;
+}
+
+bool
 ircd::m::rfor_each_depth_gap(const room &room,
                              const depth_range_closure &closure)
 {
