@@ -22,6 +22,7 @@ namespace ircd::m::dbs
 
 	constexpr size_t EVENT_HORIZON_KEY_MAX_SIZE {id::MAX_SIZE + 1 + 8};
 	string_view event_horizon_key(const mutable_buffer &out, const id::event &, const event::idx &);
+	string_view event_horizon_key(const mutable_buffer &out, const id::event &);
 	std::tuple<event::idx> event_horizon_key(const string_view &amalgam);
 
 	constexpr size_t EVENT_SENDER_KEY_MAX_SIZE {id::MAX_SIZE + 1 + 8};

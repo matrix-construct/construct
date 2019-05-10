@@ -856,7 +856,7 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 	assert(opts.event_idx != 0);
 	const string_view &key
 	{
-		event_horizon_key(buf, at<"event_id"_>(event), 0UL)
+		event_horizon_key(buf, at<"event_id"_>(event))
 	};
 
 	auto it
@@ -1889,6 +1889,18 @@ ircd::m::dbs::desc::events__event_horizon__cache_comp__size
 		db::capacity(db::cache_compressed(event_horizon), value);
 	}
 };
+
+ircd::string_view
+ircd::m::dbs::event_horizon_key(const mutable_buffer &out,
+                                const event::id &event_id)
+{
+	mutable_buffer buf(out);
+	consume(buf, copy(buf, event_id));
+	return
+	{
+		data(out), data(buf)
+	};
+}
 
 ircd::string_view
 ircd::m::dbs::event_horizon_key(const mutable_buffer &out,
