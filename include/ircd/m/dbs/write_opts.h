@@ -56,4 +56,17 @@ struct ircd::m::dbs::write_opts
 	/// Whether the event.source can be used directly for event_json. Defaults
 	/// to false unless the caller wants to avoid a redundant re-stringify.
 	bool json_source {false};
+
+	/// Data in this db::txn is used as a primary source in some cases where
+	/// indexers make a database query. This is useful when the sought data
+	/// has not even been written to the database, and this may even point to
+	/// the same db::txn as the result being composed in the first place. By
+	/// default a database query is made as a fallback after using this.
+	const db::txn *interpose {nullptr};
+
+	/// Whether indexers are allowed to make database queries when composing
+	/// the transaction. note: database queries may yield the ircd::ctx and
+	/// made indepdently; this is slow and requires external synchronization
+	/// to not introduce inconsistent data into the txn.
+	bool allow_queries {true};
 };

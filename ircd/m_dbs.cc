@@ -257,6 +257,11 @@ ircd::m::dbs::write(db::txn &txn,
 // Internal interface
 //
 
+namespace ircd::m::dbs
+{
+	static event::idx find_event_idx(const event::id &, const write_opts &);
+}
+
 void
 ircd::m::dbs::_index_event(db::txn &txn,
                            const event &event,
@@ -438,7 +443,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 
 		const event::idx &prev_idx
 		{
-			m::index(prev_id, std::nothrow)  // query
+			find_event_idx(prev_id, opts)
 		};
 
 		if(opts.appendix.test(appendix::EVENT_HORIZON) && !prev_idx)
@@ -496,7 +501,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 
 		const event::idx &auth_idx
 		{
-			m::index(auth_id, std::nothrow)  // query
+			find_event_idx(auth_id, opts)
 		};
 
 		if(unlikely(!auth_idx))
@@ -562,7 +567,9 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
 
 	const event::idx &prev_state_idx
 	{
-		state.get(std::nothrow, at<"type"_>(event), at<"state_key"_>(event)) // query
+		opts.allow_queries?
+			state.get(std::nothrow, at<"type"_>(event), at<"state_key"_>(event)): // query
+			0UL
 	};
 
 	if(!prev_state_idx)
@@ -631,7 +638,7 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 
 	const event::idx &event_idx
 	{
-		m::index(event_id, std::nothrow) // query
+		find_event_idx(event_id, opts)
 	};
 
 	if(opts.appendix.test(appendix::EVENT_HORIZON) && !event_idx)
@@ -728,7 +735,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 
 	const event::idx &event_idx
 	{
-		m::index(event_id, std::nothrow) // query
+		find_event_idx(event_id, opts)
 	};
 
 	if(opts.appendix.test(appendix::EVENT_HORIZON) && !event_idx)
@@ -786,7 +793,7 @@ ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
 
 	const event::idx &event_idx
 	{
-		m::index(event_id, std::nothrow) // query
+		find_event_idx(event_id, opts)
 	};
 
 	if(opts.appendix.test(appendix::EVENT_HORIZON) && !event_idx)
@@ -1052,7 +1059,7 @@ try
 
 	const m::event::idx target_idx
 	{
-		m::index(target_id, std::nothrow)
+		find_event_idx(target_id, opts)
 	};
 
 	if(unlikely(!target_idx))
@@ -1300,6 +1307,20 @@ ircd::m::dbs::_index__room_state(db::txn &txn,
 			value_required(opts.op)? val : string_view{},
 		}
 	};
+}
+
+ircd::m::event::idx
+ircd::m::dbs::find_event_idx(const event::id &event_id,
+                             const write_opts &wopts)
+{
+	event::idx ret{0};
+	if(wopts.interpose)
+		ret = wopts.interpose->val(db::op::SET, "_event_idx", event_id, 0UL);
+
+	if(wopts.allow_queries && !ret)
+		ret = m::index(event_id, std::nothrow); // query
+
+	return ret;
 }
 
 ircd::string_view
