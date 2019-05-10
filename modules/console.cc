@@ -7546,6 +7546,20 @@ console_cmd__room__sounding(opt &out, const string_view &line)
 		m::twain(room)
 	};
 
+	const auto head
+	{
+		m::head_idx(room)
+	};
+
+	const auto create
+	{
+		m::room::index(room)
+	};
+
+	out << "head:      " << std::setw(8) << surface.first
+	    << "   " << m::event_id(head) << " (" << head << ")"
+	    << std::endl;
+
 	m::sounding(room, [&out]
 	(const auto &range, const auto &event_idx)
 	{
@@ -7561,6 +7575,10 @@ console_cmd__room__sounding(opt &out, const string_view &line)
 
 	out << "surface:   " << std::setw(8) << surface.first
 	    << "   " << m::event_id(surface.second) << " (" << surface.second << ")"
+	    << std::endl;
+
+	out << "create:    " << std::setw(8) << create
+	    << "   " << m::event_id(create) << " (" << create << ")"
 	    << std::endl;
 
 	return true;
