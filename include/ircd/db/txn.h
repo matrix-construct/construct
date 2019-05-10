@@ -47,6 +47,8 @@ struct ircd::db::txn
 	explicit operator rocksdb::WriteBatch &();
 	explicit operator database &();
 
+	template<class T = string_view> T val(const op &, const string_view &col, const string_view &key, T def = {}) const;
+	template<class T = string_view> T at(const op &, const string_view &col, const string_view &key) const;
 	bool get(const op &, const string_view &col, const string_view &key, const value_closure &) const;
 	void at(const op &, const string_view &col, const string_view &key, const value_closure &) const;
 	bool has(const op &, const string_view &col, const string_view &key) const;
@@ -104,3 +106,35 @@ struct ircd::db::txn::opts
 	size_t reserve_bytes = 0;
 	size_t max_bytes = 0;
 };
+
+template<class T>
+T
+ircd::db::txn::at(const op &op,
+                  const string_view &col,
+                  const string_view &key)
+const
+{
+	T ret;
+	at(op, col, key, [&ret](const string_view &val)
+	{
+		ret = byte_view<T>(val);
+	});
+
+	return ret;
+}
+
+template<class T>
+T
+ircd::db::txn::val(const op &op,
+                   const string_view &col,
+                   const string_view &key,
+                   T ret)
+const
+{
+	get(op, col, key, value_closure{[&ret](const string_view &val)
+	{
+		ret = byte_view<T>(val);
+	}});
+
+	return ret;
+}

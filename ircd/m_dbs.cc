@@ -893,6 +893,7 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 		_opts.appendix.set(appendix::EVENT);
 		_opts.appendix.set(appendix::EVENT_REFS);
 		_opts.event_refs = opts.horizon_resolve;
+		_opts.interpose = &txn;
 		write(txn, _event, _opts);
 
 		// Delete the event_horizon entry after resolving.
