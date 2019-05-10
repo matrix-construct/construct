@@ -749,7 +749,7 @@ ircd::m::sounding(const room &room)
 }
 
 std::pair<int64_t, ircd::m::event::idx>
-ircd::m::surface(const room &room)
+ircd::m::hazard(const room &room)
 {
 	std::pair<int64_t, m::event::idx> ret {0, 0};
 	for_each_depth_gap(room, [&ret]

@@ -7536,9 +7536,9 @@ console_cmd__room__sounding(opt &out, const string_view &line)
 		room_id
 	};
 
-	const auto surface
+	const auto hazard
 	{
-		m::surface(room)
+		m::hazard(room)
 	};
 
 	const auto twain
@@ -7556,7 +7556,7 @@ console_cmd__room__sounding(opt &out, const string_view &line)
 		m::room::index(room)
 	};
 
-	out << "head:      " << std::setw(8) << surface.first
+	out << "head:      " << std::setw(8) << m::depth(room)
 	    << "   " << m::event_id(head) << " (" << head << ")"
 	    << std::endl;
 
@@ -7573,11 +7573,11 @@ console_cmd__room__sounding(opt &out, const string_view &line)
 	out << "twain:     " << std::setw(8) << twain.first
 	    << std::endl;
 
-	out << "surface:   " << std::setw(8) << surface.first
-	    << "   " << m::event_id(surface.second) << " (" << surface.second << ")"
+	out << "hazard:    " << std::setw(8) << hazard.first
+	    << "   " << m::event_id(hazard.second) << " (" << hazard.second << ")"
 	    << std::endl;
 
-	out << "create:    " << std::setw(8) << create
+	out << "create:    " << std::setw(8) << m::get<uint64_t>(create, "depth")
 	    << "   " << m::event_id(create) << " (" << create << ")"
 	    << std::endl;
 
