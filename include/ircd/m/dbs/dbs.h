@@ -28,33 +28,32 @@ namespace ircd::m::dbs
 	// Database instance
 	extern std::shared_ptr<db::database> events;
 
-	// Event property columns
-	constexpr const auto event_columns{event::size()};
-	extern std::array<db::column, event_columns> event_column;
-
-	// Event metadata columns
-	extern db::column event_idx;       // event_id => event_idx
-	extern db::column event_json;      // event_idx => full json
-	extern db::index event_refs;       // event_idx | ref_type, event_idx
-	extern db::index event_horizon;    // event_id | event_idx
-	extern db::index event_type;       // type | event_idx
-	extern db::index event_sender;     // host | local, event_idx
-	extern db::index room_head;        // room_id | event_id => event_idx
-	extern db::index room_events;      // room_id | depth, event_idx => node_id
-	extern db::index room_joined;      // room_id | origin, member => event_idx
-	extern db::index room_state;       // room_id | type, state_key => event_idx
-	extern db::column state_node;      // node_id => state::node
-
 	// [SET (txn)] Basic write suite
 	string_view write(db::txn &, const event &, const write_opts &);
 	void blacklist(db::txn &, const event::id &, const write_opts &);
 }
 
-#include "event_refs.h"
+/// Database description
+///
+namespace ircd::m::dbs::desc
+{
+	extern const db::description events;
+}
+
 #include "appendix.h"
 #include "write_opts.h"
-#include "util.h"
-#include "desc.h"
+#include "event_column.h"
+#include "event_idx.h"
+#include "event_json.h"
+#include "event_refs.h"
+#include "event_horizon.h"
+#include "event_type.h"
+#include "event_sender.h"
+#include "room_head.h"
+#include "room_events.h"
+#include "room_joined.h"
+#include "room_state.h"
+#include "state_node.h"
 
 struct ircd::m::dbs::init
 {
