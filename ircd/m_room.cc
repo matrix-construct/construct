@@ -122,7 +122,7 @@ ircd::m::room::state::force_present(const m::event &event)
 	opts.present = true;
 	opts.history = false;
 	opts.appendix.reset(dbs::appendix::ROOM_HEAD);
-	opts.appendix.reset(dbs::appendix::ROOM_HEAD_REFS);
+	opts.appendix.reset(dbs::appendix::ROOM_HEAD_RESOLVE);
 
 	m::dbs::_index__room_state(txn, event, opts);
 	m::dbs::_index__room_joined(txn, event, opts);
@@ -160,7 +160,7 @@ ircd::m::room::state::rebuild_present(const state &state)
 		opts.present = true;
 		opts.history = false;
 		opts.appendix.reset(dbs::appendix::ROOM_HEAD);
-		opts.appendix.reset(dbs::appendix::ROOM_HEAD_REFS);
+		opts.appendix.reset(dbs::appendix::ROOM_HEAD_RESOLVE);
 
 		m::dbs::_index__room_state(txn, event, opts);
 		m::dbs::_index__room_joined(txn, event, opts);
@@ -211,7 +211,7 @@ ircd::m::room::state::rebuild_history(const state &state)
 	opts.present = false;
 	opts.history = true;
 	opts.appendix.reset(dbs::appendix::ROOM_HEAD);
-	opts.appendix.reset(dbs::appendix::ROOM_HEAD_REFS);
+	opts.appendix.reset(dbs::appendix::ROOM_HEAD_RESOLVE);
 
 	int64_t depth{0};
 	for(; it; ++it)

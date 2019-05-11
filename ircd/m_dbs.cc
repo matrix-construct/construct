@@ -996,8 +996,8 @@ ircd::m::dbs::_index_room(db::txn &txn,
 	if(opts.appendix.test(appendix::ROOM_HEAD))
 		_index__room_head(txn, event, opts);
 
-	if(opts.appendix.test(appendix::ROOM_HEAD_REFS))
-		_index__room_head_refs(txn, event, opts);
+	if(opts.appendix.test(appendix::ROOM_HEAD_RESOLVE))
+		_index__room_head_resolve(txn, event, opts);
 
 	if(opts.appendix.test(appendix::STATE) && defined(json::get<"state_key"_>(event)))
 		return _index_state(txn, event, opts);
@@ -1164,11 +1164,11 @@ ircd::m::dbs::_index__room_head(db::txn &txn,
 }
 
 void
-ircd::m::dbs::_index__room_head_refs(db::txn &txn,
-                                     const event &event,
-                                     const write_opts &opts)
+ircd::m::dbs::_index__room_head_resolve(db::txn &txn,
+                                        const event &event,
+                                        const write_opts &opts)
 {
-	assert(opts.appendix.test(appendix::ROOM_HEAD_REFS));
+	assert(opts.appendix.test(appendix::ROOM_HEAD_RESOLVE));
 
 	//TODO: If op is DELETE and we are deleting this event and thereby
 	//TODO: potentially creating a gap in the reference graph (just for us

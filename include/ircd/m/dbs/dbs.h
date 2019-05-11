@@ -195,7 +195,7 @@ enum ircd::m::dbs::appendix::index
 
 	/// Whether the event removes the prev_events it references from the
 	/// room_head. This defaults to true and should almost always be true.
-	ROOM_HEAD_REFS,
+	ROOM_HEAD_RESOLVE,
 
 	/// Involves room_events table.
 	ROOM_EVENTS,
@@ -219,7 +219,7 @@ namespace ircd::m::dbs
 	void _index__room_state(db::txn &,  const event &, const write_opts &);
 	void _index__room_events(db::txn &,  const event &, const write_opts &, const string_view &);
 	void _index__room_joined(db::txn &, const event &, const write_opts &);
-	void _index__room_head_refs(db::txn &, const event &, const write_opts &);
+	void _index__room_head_resolve(db::txn &, const event &, const write_opts &);
 	void _index__room_head(db::txn &, const event &, const write_opts &);
 	string_view _index_state(db::txn &, const event &, const write_opts &);
 	string_view _index_redact(db::txn &, const event &, const write_opts &);

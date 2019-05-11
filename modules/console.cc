@@ -11728,7 +11728,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.room_head = false;
-	vmopts.room_refs = true;
+	vmopts.room_head_resolve = true;
 	vmopts.fetch_prev_check = false;
 	vmopts.fetch_state_check = false;
 	char rembuf[256];
