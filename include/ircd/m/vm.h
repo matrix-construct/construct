@@ -156,6 +156,9 @@ struct ircd::m::vm::opts
 	/// Make writes to database
 	bool write {true};
 
+	/// Custom write_opts to use during write.
+	dbs::write_opts wopts;
+
 	/// Call post hooks or false to bypass post-write / pre-notify effects.
 	bool post {true};
 

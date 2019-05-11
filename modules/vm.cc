@@ -839,7 +839,7 @@ ircd::m::vm::write_append(eval &eval,
 	};
 
 	// Preliminary write_opts
-	m::dbs::write_opts wopts;
+	m::dbs::write_opts wopts(opts.wopts);
 	m::state::id_buffer new_root_buf;
 	wopts.root_out = new_root_buf;
 	wopts.present = opts.present;
