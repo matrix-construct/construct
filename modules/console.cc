@@ -3576,6 +3576,14 @@ try
 		std::max(seqnum - limit * ssize_t(database.columns.size()), 0L)
 	};
 
+	out << std::setw(12) << std::left << "SEQUENCE"
+	    << "  "
+	    << std::setw(6) << std::left << "DELTAS"
+	    << "  "
+	    << std::setw(18) << std::left << "SIZE"
+	    << " : "
+	    << std::endl;
+
 	for_each(database, start, db::seq_closure_bool{[&out, &seqnum]
 	(db::txn &txn, const int64_t &_seqnum) -> bool
 	{
@@ -3592,7 +3600,13 @@ try
 		if(!event_id)
 			return true;
 
-		out << std::setw(12) << std::right << _seqnum << " : "
+		thread_local char iecbuf[48];
+		out << std::setw(12) << std::left << _seqnum
+		    << "  "
+		    << std::setw(6) << std::left << txn.size()
+		    << "  "
+		    << std::setw(18) << std::left << pretty(iecbuf, iec(txn.bytes()))
+		    << " : "
 		    << string_view{event_id}
 		    << std::endl;
 
