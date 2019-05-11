@@ -22,7 +22,8 @@ struct ircd::m::dbs::write_opts
 	/// actual transaction.
 	db::op op {db::op::SET};
 
-	/// Principal's index number. Most codepaths do not permit zero; must set.
+	/// Principal's index number. Most codepaths do not permit zero. This may
+	/// be zero for blacklisting, but the blacklist option must be set.
 	uint64_t event_idx {0};
 
 	/// The state btree root to perform the update on.
@@ -69,4 +70,15 @@ struct ircd::m::dbs::write_opts
 	/// made indepdently; this is slow and requires external synchronization
 	/// to not introduce inconsistent data into the txn.
 	bool allow_queries {true};
+
+	/// Setting to true allows the event_idx to be 0 which allows the insertion
+	/// of the event_id into a "blacklist" to mark it as unprocessable; this
+	/// prevents the server from repeatedly trying to process an event.
+	///
+	/// Note for now this just creates an entry in _event_idx of 0 for the
+	/// event_id which also means "not found" for most codepaths, a reasonable
+	/// default. But for codepaths that must distinguish between "not found"
+	/// and "blacklist" they must know that `event_id => 0` was *found* to be
+	/// zero.
+	bool blacklist {false};
 };

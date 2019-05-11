@@ -204,6 +204,38 @@ ircd::m::dbs::write_opts::appendix_all{[]
 // Basic write suite
 //
 
+namespace ircd::m::dbs
+{
+	static void blacklist(db::txn &txn, const event::id &, const write_opts &);
+}
+
+ircd::string_view
+ircd::m::dbs::write(db::txn &txn,
+                    const event &event,
+                    const write_opts &opts)
+{
+	if(opts.event_idx == 0 && opts.blacklist)
+	{
+		blacklist(txn, at<"event_id"_>(event), opts);
+		return {};
+	}
+
+	if(unlikely(opts.event_idx == 0))
+		throw panic
+		{
+			"Cannot write to database: no index specified for event."
+		};
+
+	if(opts.appendix.test(appendix::EVENT))
+		_index_event(txn, event, opts);
+
+	if(opts.appendix.test(appendix::ROOM))
+		if(json::get<"room_id"_>(event))
+			return _index_room(txn, event, opts);
+
+	return {};
+}
+
 void
 ircd::m::dbs::blacklist(db::txn &txn,
                         const event::id &event_id,
@@ -230,27 +262,6 @@ ircd::m::dbs::blacklist(db::txn &txn,
 			zero_value
 		}
 	};
-}
-
-ircd::string_view
-ircd::m::dbs::write(db::txn &txn,
-                    const event &event,
-                    const write_opts &opts)
-{
-	if(unlikely(opts.event_idx == 0))
-		throw panic
-		{
-			"Cannot write to database: no index specified for event."
-		};
-
-	if(opts.appendix.test(appendix::EVENT))
-		_index_event(txn, event, opts);
-
-	if(opts.appendix.test(appendix::ROOM))
-		if(json::get<"room_id"_>(event))
-			return _index_room(txn, event, opts);
-
-	return {};
 }
 
 //
