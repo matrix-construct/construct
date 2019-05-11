@@ -2973,8 +2973,11 @@ try
 	for(const auto &m : event)
 	{
 		if(m.first == "signatures" ||
+		   m.first == "hashes" ||
 		   m.first == "unsigned" ||
-		   m.first == "hashes")
+		   m.first == "age_ts" ||
+		   m.first == "outlier" ||
+		   m.first == "destinations")
 			continue;
 
 		member.at(i++) = m;
