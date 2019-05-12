@@ -71,6 +71,11 @@ decltype(ircd::m::dbs::room_state)
 ircd::m::dbs::room_state
 {};
 
+/// Linkage for a reference to the room_space column
+decltype(ircd::m::dbs::room_space)
+ircd::m::dbs::room_space
+{};
+
 /// Linkage for a reference to the state_node column.
 decltype(ircd::m::dbs::state_node)
 ircd::m::dbs::state_node
@@ -162,6 +167,7 @@ ircd::m::dbs::init::init(std::string dbopts)
 	room_events = db::index{*events, desc::events__room_events.name};
 	room_joined = db::index{*events, desc::events__room_joined.name};
 	room_state = db::index{*events, desc::events__room_state.name};
+	room_space = db::index{*events, desc::events__room_space.name};
 	state_node = db::column{*events, desc::events__state_node.name};
 }
 
@@ -1047,6 +1053,9 @@ try
 	if(opts.appendix.test(appendix::ROOM_STATE))
 		_index__room_state(txn, event, opts);
 
+	if(opts.appendix.test(appendix::ROOM_SPACE))
+		_index__room_space(txn, event, opts);
+
 	return new_root;
 }
 catch(const std::exception &e)
@@ -1289,8 +1298,6 @@ ircd::m::dbs::_index__room_joined(db::txn &txn,
 	};
 }
 
-/// Adds the entry for the room_joined column into the txn.
-/// This only is affected if opts.present=true
 void
 ircd::m::dbs::_index__room_state(db::txn &txn,
                                  const event &event,
@@ -1320,6 +1327,29 @@ ircd::m::dbs::_index__room_state(db::txn &txn,
 			opts.op,
 			key,
 			value_required(opts.op)? val : string_view{},
+		}
+	};
+}
+
+void
+ircd::m::dbs::_index__room_space(db::txn &txn,
+                                 const event &event,
+                                 const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::ROOM_SPACE));
+
+	const ctx::critical_assertion ca;
+	thread_local char buf[ROOM_SPACE_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		room_space_key(buf, at<"room_id"_>(event), at<"type"_>(event), at<"state_key"_>(event), at<"depth"_>(event), opts.event_idx)
+	};
+
+	db::txn::append
+	{
+		txn, room_space,
+		{
+			opts.op, key, string_view{}
 		}
 	};
 }
@@ -2933,7 +2963,7 @@ ircd::m::dbs::desc::events__room_joined
 };
 
 //
-// state sequential
+// room present state sequential
 //
 
 decltype(ircd::m::dbs::desc::events__room_state__block__size)
@@ -3107,6 +3137,264 @@ ircd::m::dbs::desc::events__room_state
 
 	// meta_block size
 	size_t(events__room_state__meta_block__size),
+};
+
+//
+// room all states sequential
+//
+
+decltype(ircd::m::dbs::desc::events__room_space__block__size)
+ircd::m::dbs::desc::events__room_space__block__size
+{
+	{ "name",     "ircd.m.dbs.events._room_space.block.size" },
+	{ "default",  512L                                       },
+};
+
+decltype(ircd::m::dbs::desc::events__room_space__meta_block__size)
+ircd::m::dbs::desc::events__room_space__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._room_space.meta_block.size" },
+	{ "default",  8192L                                           },
+};
+
+decltype(ircd::m::dbs::desc::events__room_space__cache__size)
+ircd::m::dbs::desc::events__room_space__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._room_space.cache.size"  },
+		{ "default",  long(16_MiB)                                },
+	}, []
+	{
+		const size_t &value{events__room_space__cache__size};
+		db::capacity(db::cache(room_space), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__room_space__cache_comp__size)
+ircd::m::dbs::desc::events__room_space__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._room_space.cache_comp.size"  },
+		{ "default",  long(8_MiB)                                      },
+	}, []
+	{
+		const size_t &value{events__room_space__cache_comp__size};
+		db::capacity(db::cache_compressed(room_space), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__room_space__bloom__bits)
+ircd::m::dbs::desc::events__room_space__bloom__bits
+{
+	{ "name",     "ircd.m.dbs.events._room_space.bloom.bits" },
+	{ "default",  10L                                        },
+};
+
+ircd::string_view
+ircd::m::dbs::room_space_key(const mutable_buffer &out_,
+                             const id::room &room_id,
+                             const string_view &type)
+{
+	return room_space_key(out_, room_id, type, string_view{}, 0L);
+}
+
+ircd::string_view
+ircd::m::dbs::room_space_key(const mutable_buffer &out_,
+                             const id::room &room_id,
+                             const string_view &type,
+                             const string_view &state_key)
+{
+	return room_space_key(out_, room_id, type, string_view{}, 0L);
+}
+
+ircd::string_view
+ircd::m::dbs::room_space_key(const mutable_buffer &out_,
+                             const id::room &room_id,
+                             const string_view &type,
+                             const string_view &state_key,
+                             const int64_t &depth,
+                             const event::idx &event_idx)
+{
+	mutable_buffer out{out_};
+	consume(out, copy(out, room_id));
+
+	if(!defined(type))
+		return { data(out_), data(out) };
+
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, type));
+
+	if(!defined(state_key))
+		return { data(out_), data(out) };
+
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, state_key));
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, byte_view<string_view>(depth)));
+	consume(out, copy(out, byte_view<string_view>(event_idx)));
+	return { data(out_), data(out) };
+}
+
+std::tuple<ircd::string_view, ircd::string_view, int64_t, ircd::m::event::idx>
+ircd::m::dbs::room_space_key(const string_view &amalgam)
+{
+	const auto &key
+	{
+		lstrip(amalgam, "\0"_sv)
+	};
+
+	const auto &type_split
+	{
+		split(key, "\0"_sv)
+	};
+
+	const auto &state_key_split
+	{
+		split(type_split.second, "\0"_sv)
+	};
+
+	const auto &type
+	{
+		type_split.first
+	};
+
+	const auto &state_key
+	{
+		state_key_split.first
+	};
+
+	const int64_t &depth
+	{
+		size(state_key_split.second) >= 8?
+			int64_t(byte_view<int64_t>(state_key_split.second.substr(0, 8))):
+			0L
+	};
+
+	const event::idx &event_idx
+	{
+		size(state_key_split.second) >= 16?
+			event::idx(byte_view<event::idx>(state_key_split.second.substr(8, 8))):
+			0L
+	};
+
+	return
+	{
+		type, state_key, depth, event_idx
+	};
+}
+
+const ircd::db::prefix_transform
+ircd::m::dbs::desc::events__room_space__pfx
+{
+	"_room_space",
+	[](const string_view &key)
+	{
+		return has(key, "\0"_sv);
+	},
+
+	[](const string_view &key)
+	{
+		return split(key, "\0"_sv).first;
+	}
+};
+
+const ircd::db::comparator
+ircd::m::dbs::desc::events__room_space__cmp
+{
+	"_room_space",
+
+	// less
+	[](const string_view &a, const string_view &b)
+	{
+		static const auto &pt
+		{
+			events__room_space__pfx
+		};
+
+		const string_view pre[2]
+		{
+			pt.get(a),
+			pt.get(b),
+		};
+
+		if(size(pre[0]) != size(pre[1]))
+			return size(pre[0]) < size(pre[1]);
+
+		if(pre[0] != pre[1])
+			return pre[0] < pre[1];
+
+		const string_view post[2]
+		{
+			a.substr(size(pre[0])),
+			b.substr(size(pre[1])),
+		};
+
+		// These conditions are matched on some queries when the user only
+		// supplies a room_id.
+		if(empty(post[0]))
+			return true;
+
+		if(empty(post[1]))
+			return false;
+
+		// Perform standard comparison over the typed tuple.
+		const auto _a(room_space_key(post[0]));
+		const auto _b(room_space_key(post[1]));
+		return _a < _b;
+	},
+
+	// equal
+	[](const string_view &a, const string_view &b)
+	{
+		return a == b;
+	}
+};
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events__room_space
+{
+	// name
+	"_room_space",
+
+	// explanation
+	R"(All states of the room.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(uint64_t)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	events__room_space__pfx,
+
+	// drop column
+	false,
+
+	// cache size
+	bool(events_cache_enable)? -1 : 0,
+
+	// cache size for compressed assets
+	bool(events_cache_comp_enable)? -1 : 0,
+
+	// bloom filter bits
+	size_t(events__room_space__bloom__bits),
+
+	// expect queries hit
+	false,
+
+	// block size
+	size_t(events__room_space__block__size),
+
+	// meta_block size
+	size_t(events__room_space__meta_block__size),
 };
 
 //
@@ -4559,9 +4847,13 @@ ircd::m::dbs::desc::events
 	// Sequence of all PRESENTLY JOINED joined for a room.
 	events__room_joined,
 
-	// (room_id, (type, state_key)) => (event_id)
+	// (room_id, (type, state_key)) => (event_idx)
 	// Sequence of the PRESENT STATE of the room.
 	events__room_state,
+
+	// (room_id, (type, state_key, depth, event_idx))
+	// Sequence of all states of the room.
+	events__room_space,
 
 	// (state tree node id) => (state tree node)
 	// Mapping of state tree node id to node data.
