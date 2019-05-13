@@ -157,7 +157,7 @@ noexcept try
 
 	// This is the sole io_context for Construct, and the ios.run() below is the
 	// the only place where the program actually blocks.
-	boost::asio::io_context ios;
+	boost::asio::io_context ios(1);
 
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
