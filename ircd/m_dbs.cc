@@ -3225,17 +3225,31 @@ ircd::m::dbs::room_space_key(const mutable_buffer &out_,
 	consume(out, copy(out, type));
 
 	if(!defined(state_key))
+	{
+		assert(depth < 0L && !event_idx);
 		return { data(out_), data(out) };
+	}
 
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, state_key));
 	consume(out, copy(out, "\0"_sv));
+
+	if(depth < 0)
+	{
+		assert(!event_idx);
+		return { data(out_), data(out) };
+	}
+
 	consume(out, copy(out, byte_view<string_view>(depth)));
+
+	if(!event_idx)
+		return { data(out_), data(out) };
+
 	consume(out, copy(out, byte_view<string_view>(event_idx)));
 	return { data(out_), data(out) };
 }
 
-std::tuple<ircd::string_view, ircd::string_view, int64_t, ircd::m::event::idx>
+ircd::m::dbs::room_space_key_parts
 ircd::m::dbs::room_space_key(const string_view &amalgam)
 {
 	const auto &key
