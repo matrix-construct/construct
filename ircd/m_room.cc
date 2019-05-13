@@ -2978,12 +2978,18 @@ const
 
 ircd::m::room::state::space::rebuild::rebuild()
 {
+	static const size_t interval
+	{
+		500000UL
+	};
+
 	auto &column
 	{
 		dbs::event_column.at(json::indexof<m::event>("state_key"_sv))
 	};
 
-	size_t ret(0);
+	size_t total(0);
+	size_t current(0);
 	db::txn txn
 	{
 		*m::dbs::events
@@ -3006,16 +3012,24 @@ ircd::m::room::state::space::rebuild::rebuild()
 		seek(event, event_idx);
 		wopts.event_idx = event_idx;
 		dbs::write(txn, event, wopts);
-		++ret;
 
-		if(unlikely(ret % 250000UL == 0))
+		++total;
+		++current;
+		if(current >= interval)
+		{
 			log::info
 			{
-				log, "room::state::space::rebuild building events:%zu elems:%zu size:%s",
-				ret,
+				log, "room::state::space::rebuild total:%zu committing events:%zu elems:%zu size:%s",
+				total,
+				current,
 				txn.size(),
 				pretty(iec(txn.bytes()))
 			};
+
+			txn();
+			txn.clear();
+			current = 0;
+		}
 	}
 	catch(const ctx::interrupted &)
 	{
@@ -3032,8 +3046,9 @@ ircd::m::room::state::space::rebuild::rebuild()
 
 	log::info
 	{
-		log, "room::state::space::rebuild committing transaction events:%zu elems:%zu size:%s",
-		ret,
+		log, "room::state::space::rebuild total:%zu final transaction events:%zu elems:%zu size:%s",
+		total,
+		current,
 		txn.size(),
 		pretty(iec(txn.bytes()))
 	};
