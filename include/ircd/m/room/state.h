@@ -23,6 +23,7 @@
 struct ircd::m::room::state
 {
 	struct opts;
+	struct space;
 
 	using keys = std::function<void (const string_view &)>;
 	using keys_bool = std::function<bool (const string_view &)>;

@@ -2820,6 +2820,228 @@ const
 }
 
 //
+// room::state::space
+//
+
+ircd::m::room::state::space::space(const m::room &room)
+:room
+{
+	room
+}
+{
+}
+
+bool
+ircd::m::room::state::space::has(const string_view &type)
+const
+{
+	return has(type, string_view{});
+}
+
+bool
+ircd::m::room::state::space::has(const string_view &type,
+                                 const string_view &state_key)
+const
+{
+	return has(type, state_key, -1);
+}
+
+bool
+ircd::m::room::state::space::has(const string_view &type,
+                                 const string_view &state_key,
+                                 const int64_t &depth)
+const
+{
+	return !for_each(type, state_key, depth, []
+	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+	{
+		return false;
+	});
+}
+
+size_t
+ircd::m::room::state::space::count(const string_view &type)
+const
+{
+	return count(type, string_view{});
+}
+
+size_t
+ircd::m::room::state::space::count(const string_view &type,
+                                   const string_view &state_key)
+const
+{
+	return count(type, state_key, -1L);
+}
+
+size_t
+ircd::m::room::state::space::count(const string_view &type,
+                                   const string_view &state_key,
+                                   const int64_t &depth)
+const
+{
+	size_t ret(0);
+	for_each(type, state_key, depth, [&ret]
+	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::room::state::space::for_each(const closure &closure)
+const
+{
+	auto it
+	{
+		dbs::room_space.begin(room.room_id)
+	};
+
+	for(; it; ++it)
+	{
+		const auto &key
+		{
+			dbs::room_space_key(it->first)
+		};
+
+		if(!closure(std::get<0>(key), std::get<1>(key), std::get<2>(key), std::get<3>(key)))
+			return false;
+	}
+
+	return true;
+}
+
+bool
+ircd::m::room::state::space::for_each(const string_view &type,
+                                      const closure &closure)
+const
+{
+	return for_each(type, string_view{}, -1L, closure);
+}
+
+bool
+ircd::m::room::state::space::for_each(const string_view &type,
+                                      const string_view &state_key,
+                                      const closure &closure)
+const
+{
+	return for_each(type, state_key, -1L, closure);
+}
+
+bool
+ircd::m::room::state::space::for_each(const string_view &type,
+                                      const string_view &state_key,
+                                      const int64_t &depth,
+                                      const closure &closure)
+const
+{
+	char buf[dbs::ROOM_SPACE_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		dbs::room_space_key(buf, room.room_id, type, state_key, depth)
+	};
+
+	auto it
+	{
+		dbs::room_space.begin(key)
+	};
+
+	for(; it; ++it)
+	{
+		const auto &key
+		{
+			dbs::room_space_key(it->first)
+		};
+
+		if(type && std::get<0>(key) != type)
+			break;
+
+		if(state_key && std::get<1>(key) != state_key)
+			break;
+
+		if(depth > -1 && std::get<2>(key) != depth)
+			break;
+
+		if(!closure(std::get<0>(key), std::get<1>(key), std::get<2>(key), std::get<3>(key)))
+			return false;
+	}
+
+	return true;
+}
+
+//
+// room::state::space::rebuild
+//
+
+ircd::m::room::state::space::rebuild::rebuild()
+{
+	auto &column
+	{
+		dbs::event_column.at(json::indexof<m::event>("state_key"_sv))
+	};
+
+	size_t ret(0);
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	dbs::write_opts wopts;
+	wopts.appendix.reset();
+	wopts.appendix.set(dbs::appendix::ROOM);
+	wopts.appendix.set(dbs::appendix::STATE);
+	wopts.appendix.set(dbs::appendix::ROOM_SPACE);
+
+	event::fetch event;
+	for(auto it(column.begin()); it; ++it) try
+	{
+		const event::idx &event_idx
+		{
+			byte_view<event::idx>(it->first)
+		};
+
+		seek(event, event_idx);
+		wopts.event_idx = event_idx;
+		dbs::write(txn, event, wopts);
+		++ret;
+
+		if(unlikely(ret % 250000UL == 0))
+			log::info
+			{
+				log, "room::state::space::rebuild building events:%zu elems:%zu size:%s",
+				ret,
+				txn.size(),
+				pretty(iec(txn.bytes()))
+			};
+	}
+	catch(const ctx::interrupted &)
+	{
+		break;
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			log, "room::state::space::rebuild :%s",
+			e.what()
+		};
+	}
+
+	log::info
+	{
+		log, "room::state::space::rebuild committing transaction events:%zu elems:%zu size:%s",
+		ret,
+		txn.size(),
+		pretty(iec(txn.bytes()))
+	};
+
+	txn();
+}
+
+//
 // room::members
 //
 

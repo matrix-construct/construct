@@ -187,6 +187,7 @@ struct ircd::m::room
 #include "messages.h"
 #include "timeline.h"
 #include "state.h"
+#include "state_space.h"
 #include "members.h"
 #include "origins.h"
 #include "head.h"

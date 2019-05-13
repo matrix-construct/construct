@@ -8448,6 +8448,60 @@ console_cmd__room__state__keys(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__state__space(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "type", "state_key", "depth"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const string_view &type
+	{
+		param["type"]
+	};
+
+	const string_view &state_key
+	{
+		param["state_key"]
+	};
+
+	const auto depth
+	{
+		param.at("depth", -1L)
+	};
+
+	const m::room::state::space space
+	{
+		room_id
+	};
+
+	space.for_each(type, state_key, depth, [&out]
+	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+	{
+		out << std::setw(11) << std::left << event_idx;
+		out << " " << std::setw(9) << std::left << depth;
+		out << " " << std::setw(32) << std::left << type;
+		out << " " << std::setw(64) << std::left << state_key;
+		out << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__room__state__space__rebuild(opt &out, const string_view &line)
+{
+	m::room::state::space::rebuild{};
+	return true;
+}
+
+bool
 console_cmd__room__state__force(opt &out, const string_view &line)
 {
 	const params param{line, " ",
