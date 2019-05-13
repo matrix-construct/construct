@@ -54,7 +54,7 @@ namespace ircd::m::dbs::appendix
 #include "room_events.h"            // room_id | depth, event_idx => node_id
 #include "room_joined.h"            // room_id | origin, member => event_idx
 #include "room_state.h"             // room_id | type, state_key => event_idx
-#include "room_space.h"             // room_id | type, state_key, depth, event_idx
+#include "room_state_space.h"       // room_id | type, state_key, depth, event_idx
 #include "state_node.h"             // node_id => (m::state::node JSON)
 
 /// Options that affect the dbs::write() of an event to the transaction.
@@ -208,7 +208,7 @@ enum ircd::m::dbs::appendix::index
 	ROOM_STATE,
 
 	/// Involves room_space (all states) table.
-	ROOM_SPACE,
+	ROOM_STATE_SPACE,
 };
 
 struct ircd::m::dbs::init
@@ -220,7 +220,7 @@ struct ircd::m::dbs::init
 // Internal interface; not for public. (TODO: renamespace)
 namespace ircd::m::dbs
 {
-	void _index__room_space(db::txn &,  const event &, const write_opts &);
+	void _index__room_state_space(db::txn &,  const event &, const write_opts &);
 	void _index__room_state(db::txn &,  const event &, const write_opts &);
 	void _index__room_events(db::txn &,  const event &, const write_opts &, const string_view &);
 	void _index__room_joined(db::txn &, const event &, const write_opts &);

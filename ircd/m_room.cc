@@ -2897,14 +2897,14 @@ const
 {
 	auto it
 	{
-		dbs::room_space.begin(room.room_id)
+		dbs::room_state_space.begin(room.room_id)
 	};
 
 	for(; it; ++it)
 	{
 		const auto &key
 		{
-			dbs::room_space_key(it->first)
+			dbs::room_state_space_key(it->first)
 		};
 
 		if(!closure(std::get<0>(key), std::get<1>(key), std::get<2>(key), std::get<3>(key)))
@@ -2938,22 +2938,22 @@ ircd::m::room::state::space::for_each(const string_view &type,
                                       const closure &closure)
 const
 {
-	char buf[dbs::ROOM_SPACE_KEY_MAX_SIZE];
+	char buf[dbs::ROOM_STATE_SPACE_KEY_MAX_SIZE];
 	const string_view &key
 	{
-		dbs::room_space_key(buf, room.room_id, type, state_key, depth)
+		dbs::room_state_space_key(buf, room.room_id, type, state_key, depth)
 	};
 
 	auto it
 	{
-		dbs::room_space.begin(key)
+		dbs::room_state_space.begin(key)
 	};
 
 	for(; it; ++it)
 	{
 		const auto &key
 		{
-			dbs::room_space_key(it->first)
+			dbs::room_state_space_key(it->first)
 		};
 
 		if(type && std::get<0>(key) != type)
@@ -2993,7 +2993,7 @@ ircd::m::room::state::space::rebuild::rebuild()
 	wopts.appendix.reset();
 	wopts.appendix.set(dbs::appendix::ROOM);
 	wopts.appendix.set(dbs::appendix::STATE);
-	wopts.appendix.set(dbs::appendix::ROOM_SPACE);
+	wopts.appendix.set(dbs::appendix::ROOM_STATE_SPACE);
 
 	event::fetch event;
 	for(auto it(column.begin()); it; ++it) try
