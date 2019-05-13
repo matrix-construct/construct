@@ -945,6 +945,11 @@ ircd::m::vm::handle_error(const vm::opts &opts,
 		{
 			log, fmt, std::forward<args>(a)...
 		};
+	else if(~opts.warnlog & code)
+		log::derror
+		{
+			log, fmt, std::forward<args>(a)...
+		};
 
 	if(opts.warnlog & code)
 		log::warning
