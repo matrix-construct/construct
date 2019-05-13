@@ -28,7 +28,7 @@ namespace ircd::m::dbs
 	extern std::shared_ptr<db::database> events;
 
 	// [SET (txn)] Basic write suite
-	string_view write(db::txn &, const event &, const write_opts &);
+	void write(db::txn &, const event &, const write_opts &);
 }
 
 /// Database description
@@ -51,7 +51,7 @@ namespace ircd::m::dbs::appendix
 #include "event_type.h"             // type | event_idx
 #include "event_sender.h"           // hostpart | localpart, event_idx
 #include "room_head.h"              // room_id | event_id => event_idx
-#include "room_events.h"            // room_id | depth, event_idx => node_id
+#include "room_events.h"            // room_id | depth, event_idx
 #include "room_joined.h"            // room_id | origin, member => event_idx
 #include "room_state.h"             // room_id | type, state_key => event_idx
 #include "room_state_space.h"       // room_id | type, state_key, depth, event_idx
@@ -72,13 +72,6 @@ struct ircd::m::dbs::write_opts
 	/// be zero for blacklisting, but the blacklist option must be set.
 	uint64_t event_idx {0};
 
-	/// The state btree root to perform the update on.
-	string_view root_in;
-
-	/// After the update is performed, the new state btree root is returned
-	/// into this buffer.
-	mutable_buffer root_out;
-
 	/// Fuse panel to toggle transaction elements.
 	std::bitset<64> appendix {appendix_all};
 
@@ -91,14 +84,6 @@ struct ircd::m::dbs::write_opts
 	/// Selection of what reference types to resolve and delete from the
 	/// event_horizon for this event.
 	std::bitset<256> horizon_resolve {event_refs_all};
-
-	/// Whether the present state table `room_state` should be updated by
-	/// this operation if appropriate.
-	bool present {true};
-
-	/// Whether the history state btree `state_node` + `room_events` value
-	/// should be updated by this operation if appropriate.
-	bool history {false};
 
 	/// Whether the event.source can be used directly for event_json. Defaults
 	/// to false unless the caller wants to avoid a redundant re-stringify.
@@ -136,9 +121,6 @@ struct ircd::m::dbs::write_opts
 enum ircd::m::dbs::appendix::index
 :std::underlying_type<ircd::m::dbs::appendix::index>::type
 {
-	/// This bit offers coarse control over all the EVENT_ appendices.
-	EVENT,
-
 	/// Involves the event_idx column; translates an event_id to our internal
 	/// index number. This bit can be dark during re-indexing operations.
 	EVENT_ID,
@@ -174,20 +156,8 @@ enum ircd::m::dbs::appendix::index
 	/// Involves the event_type column (reverse index on the event type).
 	EVENT_TYPE,
 
-	/// Take branch to handle events with a room_id
-	ROOM,
-
-	/// Take branch to handle room state events.
-	STATE,
-
-	/// Perform state btree manip for room history.
-	HISTORY,
-
-	/// Take branch to handle room redaction events.
-	REDACT,
-
-	/// Take branch to handle other types of events.
-	OTHER,
+	/// Involves room_events table.
+	ROOM_EVENTS,
 
 	/// Whether the event should be added to the room_head, indicating that
 	/// it has not yet been referenced at the time of this write. Defaults
@@ -198,17 +168,17 @@ enum ircd::m::dbs::appendix::index
 	/// room_head. This defaults to true and should almost always be true.
 	ROOM_HEAD_RESOLVE,
 
-	/// Involves room_events table.
-	ROOM_EVENTS,
-
-	/// Involves room_joined table.
-	ROOM_JOINED,
-
 	/// Involves room_state (present state) table.
 	ROOM_STATE,
 
 	/// Involves room_space (all states) table.
 	ROOM_STATE_SPACE,
+
+	/// Involves room_joined table.
+	ROOM_JOINED,
+
+	/// Take branch to handle room redaction events.
+	ROOM_REDACT,
 };
 
 struct ircd::m::dbs::init
@@ -220,16 +190,14 @@ struct ircd::m::dbs::init
 // Internal interface; not for public. (TODO: renamespace)
 namespace ircd::m::dbs
 {
-	void _index__room_state_space(db::txn &,  const event &, const write_opts &);
-	void _index__room_state(db::txn &,  const event &, const write_opts &);
-	void _index__room_events(db::txn &,  const event &, const write_opts &, const string_view &);
-	void _index__room_joined(db::txn &, const event &, const write_opts &);
-	void _index__room_head_resolve(db::txn &, const event &, const write_opts &);
-	void _index__room_head(db::txn &, const event &, const write_opts &);
-	string_view _index_state(db::txn &, const event &, const write_opts &);
-	string_view _index_redact(db::txn &, const event &, const write_opts &);
-	string_view _index_other(db::txn &, const event &, const write_opts &);
-	string_view _index_room(db::txn &, const event &, const write_opts &);
+	void _index_room_joined(db::txn &, const event &, const write_opts &);
+	void _index_room_redact(db::txn &, const event &, const write_opts &);
+	void _index_room_state_space(db::txn &,  const event &, const write_opts &);
+	void _index_room_state(db::txn &, const event &, const write_opts &);
+	void _index_room_head_resolve(db::txn &, const event &, const write_opts &);
+	void _index_room_head(db::txn &, const event &, const write_opts &);
+	void _index_room_events(db::txn &,  const event &, const write_opts &);
+	void _index_room(db::txn &, const event &, const write_opts &);
 	void _index_event_type(db::txn &, const event &, const write_opts &);
 	void _index_event_sender(db::txn &, const event &, const write_opts &);
 	void _index_event_horizon_resolve(db::txn &, const event &, const write_opts &);

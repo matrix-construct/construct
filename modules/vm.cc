@@ -840,51 +840,13 @@ ircd::m::vm::write_append(eval &eval,
 
 	// Preliminary write_opts
 	m::dbs::write_opts wopts(opts.wopts);
-	m::state::id_buffer new_root_buf;
-	wopts.root_out = new_root_buf;
-	wopts.present = opts.present;
-	wopts.history = opts.history;
+	wopts.appendix.set(dbs::appendix::ROOM_STATE, opts.present);
+	wopts.appendix.set(dbs::appendix::ROOM_JOINED, opts.present);
+	wopts.appendix.set(dbs::appendix::ROOM_STATE_SPACE, opts.history);
 	wopts.appendix.set(dbs::appendix::ROOM_HEAD, opts.room_head);
 	wopts.appendix.set(dbs::appendix::ROOM_HEAD_RESOLVE, opts.room_head_resolve);
 	wopts.json_source = opts.json_source;
 	wopts.event_idx = eval.sequence;
-
-	if(at<"type"_>(event) == "m.room.create")
-	{
-		dbs::write(*eval.txn, event, wopts);
-		return;
-	}
-
-	const bool require_head
-	{
-		opts.fetch_state_check || opts.history
-	};
-
-	const id::event::buf head
-	{
-		require_head?
-			m::head(std::nothrow, at<"room_id"_>(event)):
-			id::event::buf{}
-	};
-
-	if(unlikely(require_head && !head))
-		throw error
-		{
-			fault::STATE, "Required head for room %s not found.",
-			string_view{at<"room_id"_>(event)}
-		};
-
-	const m::room room
-	{
-		at<"room_id"_>(event), head
-	};
-
-	const m::room::state state
-	{
-		room
-	};
-
-	wopts.root_in = state.root_id;
 	dbs::write(*eval.txn, event, wopts);
 }
 

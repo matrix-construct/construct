@@ -117,15 +117,12 @@ ircd::m::room::state::force_present(const m::event &event)
 			json::get<"event_id"_>(event)
 		};
 
-	m::dbs::write_opts opts;
+	dbs::write_opts opts;
 	opts.event_idx = m::index(event);
-	opts.present = true;
-	opts.history = false;
-	opts.appendix.reset(dbs::appendix::ROOM_HEAD);
-	opts.appendix.reset(dbs::appendix::ROOM_HEAD_RESOLVE);
-
-	m::dbs::_index__room_state(txn, event, opts);
-	m::dbs::_index__room_joined(txn, event, opts);
+	opts.appendix.reset();
+	opts.appendix.set(dbs::appendix::ROOM_STATE);
+	opts.appendix.reset(dbs::appendix::ROOM_JOINED);
+	dbs::write(txn, event, opts);
 
 	txn();
 	return true;
@@ -157,13 +154,10 @@ ircd::m::room::state::rebuild_present(const state &state)
 		const m::event &event{*it};
 		m::dbs::write_opts opts;
 		opts.event_idx = event_idx;
-		opts.present = true;
-		opts.history = false;
-		opts.appendix.reset(dbs::appendix::ROOM_HEAD);
-		opts.appendix.reset(dbs::appendix::ROOM_HEAD_RESOLVE);
-
-		m::dbs::_index__room_state(txn, event, opts);
-		m::dbs::_index__room_joined(txn, event, opts);
+		opts.appendix.reset();
+		opts.appendix.set(dbs::appendix::ROOM_STATE);
+		opts.appendix.set(dbs::appendix::ROOM_JOINED);
+		dbs::write(txn, event, opts);
 		++ret;
 	}
 
@@ -174,132 +168,13 @@ ircd::m::room::state::rebuild_present(const state &state)
 size_t
 ircd::m::room::state::rebuild_history(const state &state)
 {
-	size_t ret{0};
-	const auto create_idx
-	{
-		state.get("m.room.create")
-	};
-
-	static const m::event::fetch::opts fopts
-	{
-		{ db::get::NO_CACHE }
-	};
-
-	const m::room room
-	{
-		state.room_id, nullptr, state.fopts
-	};
-
-	m::room::messages it
-	{
-		room, create_idx, &fopts
-	};
-
-	if(!it)
-		return ret;
-
-	db::txn txn
-	{
-		*m::dbs::events
-	};
-
-	uint r(0);
-	char root[2][64] {0};
-	m::dbs::write_opts opts;
-	opts.root_in = root[++r % 2];
-	opts.root_out = root[++r % 2];
-	opts.present = false;
-	opts.history = true;
-	opts.appendix.reset(dbs::appendix::ROOM_HEAD);
-	opts.appendix.reset(dbs::appendix::ROOM_HEAD_RESOLVE);
-
-	int64_t depth{0};
-	for(; it; ++it)
-	{
-		const m::event &event{*it};
-		opts.event_idx = it.event_idx();
-		if(at<"depth"_>(event) == depth + 1)
-			++depth;
-
-		if(at<"depth"_>(event) != depth)
-			throw ircd::error
-			{
-				"Incomplete room history: gap between %ld and %ld [%s]",
-				depth,
-				at<"depth"_>(event),
-				string_view{at<"event_id"_>(event)}
-			};
-
-		if(at<"type"_>(event) == "m.room.redaction")
-		{
-			opts.root_in = m::dbs::_index_redact(txn, event, opts);
-			opts.root_out = root[++r % 2];
-			txn();
-			txn.clear();
-		}
-		else if(defined(json::get<"state_key"_>(event)))
-		{
-			opts.root_in = m::dbs::_index_state(txn, event, opts);
-			opts.root_out = root[++r % 2];
-			txn();
-			txn.clear();
-		}
-		else m::dbs::_index_other(txn, event, opts);
-
-		++ret;
-	}
-
-	txn();
-	return ret;
+	return 0;
 }
 
-//TODO: state btree.
 size_t
 ircd::m::room::state::clear_history(const state &state)
 {
-	static const db::gopts gopts
-	{
-		db::get::NO_CACHE
-	};
-
-	db::txn txn
-	{
-		*m::dbs::events
-	};
-
-	auto it
-	{
-		m::dbs::room_events.begin(state.room_id, gopts)
-	};
-
-	size_t ret{0};
-	for(; it; ++it, ret++)
-	{
-		const auto pair
-		{
-			m::dbs::room_events_key(it->first)
-		};
-
-		const auto &depth{std::get<0>(pair)};
-		const auto &event_idx{std::get<1>(pair)};
-		thread_local char buf[m::dbs::ROOM_EVENTS_KEY_MAX_SIZE];
-		const string_view key
-		{
-			m::dbs::room_events_key(buf, state.room_id, depth, event_idx)
-		};
-
-		db::txn::append
-		{
-			txn, m::dbs::room_events,
-			{
-				db::op::SET,
-				key
-			}
-		};
-	}
-
-	txn();
-	return ret;
+	return 0;
 }
 
 namespace ircd::m
@@ -2997,8 +2872,6 @@ ircd::m::room::state::space::rebuild::rebuild()
 
 	dbs::write_opts wopts;
 	wopts.appendix.reset();
-	wopts.appendix.set(dbs::appendix::ROOM);
-	wopts.appendix.set(dbs::appendix::STATE);
 	wopts.appendix.set(dbs::appendix::ROOM_STATE_SPACE);
 
 	event::fetch event;
@@ -3604,7 +3477,7 @@ ircd::m::room::head::rebuild(const head &head)
 	{
 		const m::event &event{*it};
 		opts.event_idx = it.event_idx();
-		m::dbs::_index__room_head(txn, event, opts);
+		m::dbs::_index_room_head(txn, event, opts);
 		++ret;
 	}
 
@@ -3657,14 +3530,14 @@ ircd::m::room::head::reset(const head &head)
 		}
 
 		opts.event_idx = event_idx;
-		m::dbs::_index__room_head(txn, event, opts);
+		m::dbs::_index_room_head(txn, event, opts);
 		++ret;
 	});
 
 	// Finally add the replacement to the txn
 	opts.op = db::op::SET;
 	opts.event_idx = it.event_idx();
-	m::dbs::_index__room_head(txn, replacement, opts);
+	m::dbs::_index_room_head(txn, replacement, opts);
 
 	// Commit txn
 	txn();
@@ -3690,7 +3563,7 @@ ircd::m::room::head::modify(const m::event::id &event_id,
 	m::dbs::write_opts opts;
 	opts.op = op;
 	opts.event_idx = event.event_idx;
-	m::dbs::_index__room_head(txn, event, opts);
+	m::dbs::_index_room_head(txn, event, opts);
 
 	// Commit txn
 	txn();
