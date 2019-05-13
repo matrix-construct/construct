@@ -219,6 +219,7 @@ void
 ircd::m::dbs::write(db::txn &txn,
                     const event &event,
                     const write_opts &opts)
+try
 {
 	if(opts.event_idx == 0 && opts.blacklist)
 		return blacklist(txn, at<"event_id"_>(event), opts);
@@ -232,6 +233,17 @@ ircd::m::dbs::write(db::txn &txn,
 	_index_event(txn, event, opts);
 	if(json::get<"room_id"_>(event))
 		_index_room(txn, event, opts);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Event %s txn building error :%s",
+		json::get<"event_id"_>(event),
+		e.what()
+	};
+
+	throw;
 }
 
 void
