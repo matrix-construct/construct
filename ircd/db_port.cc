@@ -278,8 +278,7 @@ __attribute__((externally_visible, noinline))
 rocksdb::port::CondVar::Wait()
 noexcept
 {
-	if(unlikely(!ctx::current))
-		return;
+	assert(ctx::current);
 
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
@@ -324,9 +323,6 @@ __attribute__((externally_visible, noinline))
 rocksdb::port::CondVar::Signal()
 noexcept
 {
-	if(unlikely(!ctx::current))
-		return;
-
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
 	{
@@ -335,7 +331,6 @@ noexcept
 	#endif
 
 	assert_main_thread();
-	const ctx::uninterruptible::nothrow ui;
 	cv.notify_one();
 }
 
@@ -344,9 +339,6 @@ __attribute__((externally_visible, noinline))
 rocksdb::port::CondVar::SignalAll()
 noexcept
 {
-	if(unlikely(!ctx::current))
-		return;
-
 	#ifdef RB_DEBUG_DB_PORT
 	log::debug
 	{
@@ -355,6 +347,5 @@ noexcept
 	#endif
 
 	assert_main_thread();
-	const ctx::uninterruptible::nothrow ui;
 	cv.notify_all();
 }
