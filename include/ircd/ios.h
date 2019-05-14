@@ -259,18 +259,21 @@ ircd::ios::name(const descriptor &descriptor)
 }
 
 inline void
+__attribute__((always_inline))
 ircd::ios::assert_main_thread()
 {
 	assert(is_main_thread());
 }
 
 inline bool
+__attribute__((always_inline))
 ircd::ios::is_main_thread()
 {
 	return std::this_thread::get_id() == main_thread_id;
 }
 
 inline bool
+__attribute__((always_inline))
 ircd::ios::is_static_thread()
 {
 	return std::this_thread::get_id() == static_thread_id;
