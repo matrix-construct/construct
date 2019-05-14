@@ -1319,7 +1319,7 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 		AC_MSG_ERROR([Failed to build included boost.])
 	])
 
-	AC_DEFINE(HAVE_LIB_BOOST_SYSTEM, 1, [Define if you have boost_system])
+	AC_DEFINE(RB_INCLUDED_BOOST, 1, [Defined if configured with included boost])
 	AC_MSG_NOTICE([Bootstrapping boost: done])
 ],[
 	AC_MSG_RESULT([no])
