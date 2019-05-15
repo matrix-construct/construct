@@ -2602,8 +2602,9 @@ ircd::m::event::refs::rebuild()
 		{
 			m::dbs::write_opts wopts;
 			wopts.event_idx = event_idx;
-
-			m::dbs::_index_event_refs(txn, json::object{event}, wopts);
+			wopts.appendix.reset();
+			wopts.appendix.set(dbs::appendix::EVENT_REFS);
+			m::dbs::write(txn, json::object{event}, wopts);
 
 			if(++j % log_interval == 0) log::info
 			{

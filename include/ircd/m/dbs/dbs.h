@@ -186,31 +186,3 @@ struct ircd::m::dbs::init
 	init(std::string dbopts = {});
 	~init() noexcept;
 };
-
-// Internal interface; not for public. (TODO: renamespace)
-namespace ircd::m::dbs
-{
-	void _index_room_joined(db::txn &, const event &, const write_opts &);
-	void _index_room_redact(db::txn &, const event &, const write_opts &);
-	void _index_room_state_space(db::txn &,  const event &, const write_opts &);
-	void _index_room_state(db::txn &, const event &, const write_opts &);
-	void _index_room_head_resolve(db::txn &, const event &, const write_opts &);
-	void _index_room_head(db::txn &, const event &, const write_opts &);
-	void _index_room_events(db::txn &,  const event &, const write_opts &);
-	void _index_room(db::txn &, const event &, const write_opts &);
-	void _index_event_type(db::txn &, const event &, const write_opts &);
-	void _index_event_sender(db::txn &, const event &, const write_opts &);
-	void _index_event_horizon_resolve(db::txn &, const event &, const write_opts &);
-	void _index_event_horizon(db::txn &, const event &, const write_opts &, const id::event &);
-	void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &);
-	void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &);
-	void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &);
-	void _index_event_refs_state(db::txn &, const event &, const write_opts &);
-	void _index_event_refs_auth(db::txn &, const event &, const write_opts &);
-	void _index_event_refs_prev(db::txn &, const event &, const write_opts &);
-	void _index_event_refs(db::txn &, const event &, const write_opts &);
-	void _index_event_json(db::txn &, const event &, const write_opts &);
-	void _index_event_cols(db::txn &, const event &, const write_opts &);
-	void _index_event_id(db::txn &, const event &, const write_opts &);
-	void _index_event(db::txn &, const event &, const write_opts &);
-}

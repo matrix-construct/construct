@@ -1669,10 +1669,13 @@ ircd::m::room::timeline::rebuild(const m::room &room)
 	for(; it; ++it)
 	{
 		const m::event &event{*it};
-
 		m::dbs::write_opts opts;
 		opts.event_idx = it.event_idx();
-		m::dbs::_index_event_refs_prev(txn, event, opts);
+		opts.appendix.reset();
+		opts.appendix.set(dbs::appendix::EVENT_REFS);
+		opts.event_refs.reset();
+		opts.event_refs.set(uint(dbs::ref::NEXT));
+		m::dbs::write(txn, event, opts);
 	}
 
 	txn();
@@ -3477,7 +3480,9 @@ ircd::m::room::head::rebuild(const head &head)
 	{
 		const m::event &event{*it};
 		opts.event_idx = it.event_idx();
-		m::dbs::_index_room_head(txn, event, opts);
+		opts.appendix.reset();
+		opts.appendix.set(dbs::appendix::ROOM_HEAD);
+		m::dbs::write(txn, event, opts);
 		++ret;
 	}
 
@@ -3508,6 +3513,8 @@ ircd::m::room::head::reset(const head &head)
 	// Iterate all of the existing heads with a delete operation
 	m::dbs::write_opts opts;
 	opts.op = db::op::DELETE;
+	opts.appendix.reset();
+	opts.appendix.set(dbs::appendix::ROOM_HEAD);
 	m::room::head{room}.for_each([&room, &opts, &txn, &ret]
 	(const m::event::idx &event_idx, const m::event::id &event_id)
 	{
@@ -3530,14 +3537,14 @@ ircd::m::room::head::reset(const head &head)
 		}
 
 		opts.event_idx = event_idx;
-		m::dbs::_index_room_head(txn, event, opts);
+		m::dbs::write(txn, event, opts);
 		++ret;
 	});
 
 	// Finally add the replacement to the txn
 	opts.op = db::op::SET;
 	opts.event_idx = it.event_idx();
-	m::dbs::_index_room_head(txn, replacement, opts);
+	m::dbs::write(txn, replacement, opts);
 
 	// Commit txn
 	txn();
@@ -3563,7 +3570,9 @@ ircd::m::room::head::modify(const m::event::id &event_id,
 	m::dbs::write_opts opts;
 	opts.op = op;
 	opts.event_idx = event.event_idx;
-	m::dbs::_index_room_head(txn, event, opts);
+	opts.appendix.reset();
+	opts.appendix.set(dbs::appendix::ROOM_HEAD);
+	m::dbs::write(txn, event, opts);
 
 	// Commit txn
 	txn();
