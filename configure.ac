@@ -493,7 +493,6 @@ AM_COND_IF([OPTIMIZE],
 	optimize="no"
 	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
-	CXXFLAGS+=" -gdwarf-4"
 	CXXFLAGS+=" -fvar-tracking"
 	CXXFLAGS+=" -fvar-tracking-assignments"
 ])
