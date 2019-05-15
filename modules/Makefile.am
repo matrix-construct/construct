@@ -26,29 +26,22 @@ AM_CPPFLAGS = \
 	###
 
 AM_LDFLAGS = \
-	-avoid-version \
 	-module \
+	-avoid-version \
 	-Wl,-fuse-ld=gold \
-	-Wl,--shared \
 	-Wl,--warn-common \
 	-Wl,--warn-execstack \
 	-Wl,--detect-odr-violations \
-	-Wl,--no-gnu-unique \
-	-Wl,--no-allow-shlib-undefined \
+	-Wl,--allow-shlib-undefined \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \
 	-Wl,-z -Wl,lazy \
 	-Wl,-z -Wl,noexecstack \
 	-Wl,-z -Wl,combreloc \
-	-Wl,-z -Wl,nocopyreloc \
 	-Wl,-z -Wl,text-unlikely-segment \
-	-Wl,-z -Wl,keep-text-section-prefix \
 	-L$(top_srcdir)/ircd \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
-	# -Wl,--no-undefined \
-	# -export-symbols-regex IRCD_MODULE* \
-	# -export-symbols-regex * \
 	###
 
 ###############################################################################

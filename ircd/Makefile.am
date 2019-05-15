@@ -40,8 +40,7 @@ AM_LDFLAGS = \
 	-Wl,--unresolved-symbols=report-all \
 	-Wl,--no-undefined-version \
 	-Wl,--weak-unresolved-symbols \
-	-Wl,--no-gnu-unique \
-	-Wl,--gc-sections \
+	-Wl,--no-gc-sections \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
 	-Wl,--whole-archive \
@@ -50,8 +49,6 @@ AM_LDFLAGS = \
 	-Wl,-z -Wl,nodlopen \
 	-Wl,-z -Wl,noexecstack \
 	-Wl,-z -Wl,combreloc \
-	-Wl,-z -Wl,nocopyreloc \
-	-Wl,-z -Wl,keep-text-section-prefix \
 	-Wl,-z -Wl,text-unlikely-segment \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
