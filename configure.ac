@@ -495,6 +495,7 @@ AM_COND_IF([OPTIMIZE],
 	CXXFLAGS+=" -ggdb"
 	CXXFLAGS+=" -fvar-tracking"
 	CXXFLAGS+=" -fvar-tracking-assignments"
+	CXXFLAGS+=" -falign-functions"
 ])
 
 dnl
