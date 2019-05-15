@@ -515,6 +515,9 @@ dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
 dnl  functions won't be the same between translation units
 CXXFLAGS+=" -fvisibility-inlines-hidden"
 
+dnl see gcc(1)
+CXXFLAGS+=" -fnothrow-opt"
+
 dnl
 dnl Compiler warnings
 dnl
