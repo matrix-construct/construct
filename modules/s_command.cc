@@ -373,29 +373,53 @@ command__ping(const mutable_buffer &buf,
 		http_buf, std::move(opts)
 	};
 
-	request.wait(seconds(10));
-	const auto code(request.get());
-	const auto time(timer.at<nanoseconds>());
+	std::exception_ptr eptr; try
+	{
+		request.wait(seconds(10));
+		const auto code(request.get());
+	}
+	catch(const std::exception &e)
+	{
+		eptr = std::current_exception();
+	}
 
-	const string_view fg {"#E8E8E8"};
-	const string_view bg {"#008000"};
-	const string_view sp {"&nbsp;"};
+	const auto time
+	{
+		timer.at<nanoseconds>()
+	};
+
+	const string_view sp{"&nbsp;"};
+	const string_view fg{"#e8e8e8"};
+	const string_view host_bg{"#181b21"};
+	const string_view online_bg{"#008000"};
+	const string_view offline_bg{"#A01810"};
+	const auto bg{eptr? offline_bg : online_bg};
+	const auto status{eptr? "FAILED" : "ONLINE"};
 
 	std::ostringstream out;
 	pubsetbuf(out, buf);
 	thread_local char tmbuf[32];
 	out
-	    << "<h5>"
-	    << "<font color=\"" << fg << "\" data-mx-bg-color=\"" << bg << "\">"
-	    << "<b>"
-	    << sp << sp << " ONLINE " << sp << sp
-	    << "</b>"
-	    << "</font> "
-	    << "</h5>"
-	    << "<pre>"
-	    << "response in " << pretty(tmbuf, time)
-	    << "</pre>"
+	    << " <font color=\"" << fg << "\" data-mx-bg-color=\"" << bg << "\">"
+	    << " <b>"
+	    << sp << sp << status << sp << sp
+	    << " </b>"
+	    << " </font>"
+	    << " <font color=\"" << fg << "\" data-mx-bg-color=\"" << host_bg << "\">"
+	    << sp << sp << " " << target << " " << sp
+	    << " </font> "
 	    ;
+
+	if(!eptr)
+		out << " <b>"
+		    << pretty(tmbuf, time)
+		    << " </b>"
+		    << " application layer round-trip time.";
+
+	if(eptr)
+		out << "<pre>"
+		     << what(eptr)
+		     << "</pre>";
 
 	const string_view rich
 	{
@@ -419,8 +443,8 @@ command__dash(const mutable_buffer &buf,
 	std::ostringstream out;
 	pubsetbuf(out, buf);
 
-	const string_view fg[] {"#E8E8E8", "#FFFFFF"};
-	const string_view bg[] {"#303030", "#008000"};
+	const string_view fg[] {"#3EA6FF", "#FFFFFF"};
+	const string_view bg[] {"#000000", "#008000"};
 	const string_view sp {"&nbsp;"};
 	out
 	    << "<h5>"
