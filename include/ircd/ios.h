@@ -39,6 +39,7 @@ namespace ircd::ios
 	struct descriptor;
 	template<class function> struct handle;
 
+	IRCD_OVERLOAD(synchronous)
 	struct dispatch;
 	struct defer;
 	struct post;
@@ -76,19 +77,25 @@ namespace ircd
 struct ircd::ios::dispatch
 {
 	dispatch(descriptor &, std::function<void ()>);
+	dispatch(descriptor &, synchronous_t, const std::function<void ()> &);
 	dispatch(std::function<void ()>);
+	dispatch(synchronous_t, const std::function<void ()> &);
 };
 
 struct ircd::ios::defer
 {
 	defer(descriptor &, std::function<void ()>);
+	defer(descriptor &, synchronous_t, const std::function<void ()> &);
 	defer(std::function<void ()>);
+	defer(synchronous_t, const std::function<void ()> &);
 };
 
 struct ircd::ios::post
 {
 	post(descriptor &, std::function<void ()>);
+	post(descriptor &, synchronous_t, const std::function<void ()> &);
 	post(std::function<void ()>);
+	post(synchronous_t, const std::function<void ()> &);
 };
 
 struct ircd::ios::descriptor

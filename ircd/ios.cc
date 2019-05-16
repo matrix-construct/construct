@@ -59,85 +59,6 @@ ircd::ios::init(asio::io_context &user)
 	ios::user = &user;
 }
 
-void
-ircd::ios::forking()
-{
-	get().notify_fork(asio::execution_context::fork_prepare);
-}
-
-void
-ircd::ios::forked_child()
-{
-	get().notify_fork(asio::execution_context::fork_child);
-}
-
-void
-ircd::ios::forked_parent()
-{
-	get().notify_fork(asio::execution_context::fork_parent);
-}
-
-ircd::ios::post::post(std::function<void ()> function)
-{
-	static descriptor descriptor
-	{
-		"ircd::ios post"
-	};
-
-	post(descriptor, std::move(function));
-}
-
-ircd::ios::defer::defer(std::function<void ()> function)
-{
-	static descriptor descriptor
-	{
-		"ircd::ios defer"
-	};
-
-	defer(descriptor, std::move(function));
-}
-
-ircd::ios::dispatch::dispatch(std::function<void ()> function)
-{
-	static descriptor descriptor
-	{
-		"ircd::ios dispatch"
-	};
-
-	dispatch(descriptor, std::move(function));
-}
-
-ircd::ios::dispatch::dispatch(descriptor &descriptor,
-                              std::function<void ()> function)
-{
-	boost::asio::dispatch(get(), handle(descriptor, std::move(function)));
-}
-
-ircd::ios::defer::defer(descriptor &descriptor,
-                        std::function<void ()> function)
-{
-	boost::asio::defer(get(), handle(descriptor, std::move(function)));
-}
-
-ircd::ios::post::post(descriptor &descriptor,
-                      std::function<void ()> function)
-{
-	boost::asio::post(get(), handle(descriptor, std::move(function)));
-}
-
-boost::asio::io_context &
-ircd::ios::get()
-{
-	assert(user);
-	return *user;
-}
-
-bool
-ircd::ios::available()
-{
-	return bool(user);
-}
-
 //
 // descriptor
 //
@@ -323,4 +244,187 @@ ircd::ios::handler::allocate(handler *const &handler,
 	++stats.allocs;
 
 	return descriptor.allocator(*handler, size);
+}
+
+//
+// ios.h
+//
+
+namespace ircd::ios
+{
+	extern descriptor post_desc;
+	extern descriptor defer_desc;
+	extern descriptor dispatch_desc;
+}
+
+void
+ircd::ios::forking()
+{
+	get().notify_fork(asio::execution_context::fork_prepare);
+}
+
+void
+ircd::ios::forked_child()
+{
+	get().notify_fork(asio::execution_context::fork_child);
+}
+
+void
+ircd::ios::forked_parent()
+{
+	get().notify_fork(asio::execution_context::fork_parent);
+}
+
+//
+// dispatch
+//
+
+decltype(ircd::ios::dispatch_desc)
+ircd::ios::dispatch_desc
+{
+	"ircd::ios dispatch"
+};
+
+ircd::ios::dispatch::dispatch(std::function<void ()> function)
+{
+	dispatch(dispatch_desc, std::move(function));
+}
+
+ircd::ios::dispatch::dispatch(synchronous_t,
+                              const std::function<void ()> &function)
+{
+	dispatch(dispatch_desc, synchronous, std::move(function));
+}
+
+ircd::ios::dispatch::dispatch(descriptor &descriptor,
+                              synchronous_t,
+                              const std::function<void ()> &function)
+{
+	const ctx::uninterruptible::nothrow ui;
+
+	ctx::latch latch(1);
+	dispatch(descriptor, [&function, &latch]
+	{
+		const unwind uw{[&latch]
+		{
+			latch.count_down();
+		}};
+
+		function();
+	});
+
+	latch.wait();
+}
+
+ircd::ios::dispatch::dispatch(descriptor &descriptor,
+                              std::function<void ()> function)
+{
+	boost::asio::dispatch(get(), handle(descriptor, std::move(function)));
+}
+
+//
+// defer
+//
+
+decltype(ircd::ios::defer_desc)
+ircd::ios::defer_desc
+{
+	"ircd::ios defer"
+};
+
+ircd::ios::defer::defer(std::function<void ()> function)
+{
+	defer(defer_desc, std::move(function));
+}
+
+ircd::ios::defer::defer(synchronous_t,
+                        const std::function<void ()> &function)
+{
+	defer(defer_desc, synchronous, function);
+}
+
+ircd::ios::defer::defer(descriptor &descriptor,
+                        synchronous_t,
+                        const std::function<void ()> &function)
+{
+	const ctx::uninterruptible::nothrow ui;
+
+	ctx::latch latch(1);
+	defer(descriptor, [&function, &latch]
+	{
+		const unwind uw{[&latch]
+		{
+			latch.count_down();
+		}};
+
+		function();
+	});
+
+	latch.wait();
+}
+
+ircd::ios::defer::defer(descriptor &descriptor,
+                        std::function<void ()> function)
+{
+	boost::asio::defer(get(), handle(descriptor, std::move(function)));
+}
+
+//
+// post
+//
+
+decltype(ircd::ios::post_desc)
+ircd::ios::post_desc
+{
+	"ircd::ios post"
+};
+
+ircd::ios::post::post(std::function<void ()> function)
+{
+	post(post_desc, std::move(function));
+}
+
+ircd::ios::post::post(synchronous_t,
+                      const std::function<void ()> &function)
+{
+	post(post_desc, synchronous, function);
+}
+
+ircd::ios::post::post(descriptor &descriptor,
+                      synchronous_t,
+                      const std::function<void ()> &function)
+{
+	const ctx::uninterruptible::nothrow ui;
+
+	ctx::latch latch(1);
+	post(descriptor, [&function, &latch]
+	{
+		const unwind uw{[&latch]
+		{
+			latch.count_down();
+		}};
+
+		function();
+	});
+
+	latch.wait();
+}
+
+ircd::ios::post::post(descriptor &descriptor,
+                      std::function<void ()> function)
+{
+	boost::asio::post(get(), handle(descriptor, std::move(function)));
+}
+
+boost::asio::io_context &
+ircd::ios::get()
+{
+	assert(user);
+	return *user;
+}
+
+bool
+ircd::ios::available()
+{
+	return bool(user);
 }
