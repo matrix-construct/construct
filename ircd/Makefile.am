@@ -146,32 +146,43 @@ libircd_la_SOURCES += m.cc
 libircd_la_SOURCES += m_event.cc
 libircd_la_SOURCES += ircd.cc
 
+# Units containing a spirit grammar have some special needs to mitigate
+# larger-than-normal compile time, compile memory, and output objects.
+# A composite of CXXFLAGS is used specifically on units with grammars.
+GUNIT_CXXFLAGS = ###
+
+# Grammar templates can generate a huge number of individual debug symbols
+# for each template instantiation deep within spirit; we try to reduce...
+GUNIT_CXXFLAGS += -fno-var-tracking
+GUNIT_CXXFLAGS += -fno-var-tracking-assignments
+GUNIT_CXXFLAGS += -femit-struct-debug-baseonly
+
 # The recursive grammars can consume a large amount of RAM when compiling
 # (>= 2 GiB) which can thrash small systems and even sometimes crash GCC.
 # This option reduces memory consumption at the cost of compilation speed.
 if GCC
 if LOWMEM_COMPILE
-LOWMEM_FLAGS= --param ggc-min-expand=1
+GUNIT_CXXFLAGS += --param ggc-min-expand=1
 endif
 endif
 
 parse.lo:      AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-parse.lo:      CXXFLAGS += ${LOWMEM_FLAGS}
+parse.lo:      CXXFLAGS += ${GUNIT_CXXFLAGS}
 
 json.lo:       AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-json.lo:       CXXFLAGS += ${LOWMEM_FLAGS}
+json.lo:       CXXFLAGS += ${GUNIT_CXXFLAGS}
 
 http.lo:       AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-http.lo:       CXXFLAGS += ${LOWMEM_FLAGS}
+http.lo:       CXXFLAGS += ${GUNIT_CXXFLAGS}
 
 fmt.lo:        AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-fmt.lo:        CXXFLAGS += ${LOWMEM_FLAGS}
+fmt.lo:        CXXFLAGS += ${GUNIT_CXXFLAGS}
 
 rfc3986.lo:    AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-rfc3986.lo:    CXXFLAGS += ${LOWMEM_FLAGS}
+rfc3986.lo:    CXXFLAGS += ${GUNIT_CXXFLAGS}
 
 rfc1459.lo:    AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-rfc1459.lo:    CXXFLAGS += ${LOWMEM_FLAGS}
+rfc1459.lo:    CXXFLAGS += ${GUNIT_CXXFLAGS}
 
 m_id.lo:       AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-m_id.lo:       CXXFLAGS += ${LOWMEM_FLAGS}
+m_id.lo:       CXXFLAGS += ${GUNIT_CXXFLAGS}
