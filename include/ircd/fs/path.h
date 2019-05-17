@@ -90,7 +90,7 @@ template<class... A>
 std::string
 ircd::fs::path_string(A&&... a)
 {
-	static const size_t size
+	const size_t &size
 	{
 		PATH_MAX_LEN | SHRINK_TO_FIT
 	};
