@@ -579,7 +579,7 @@ try
 			return std::any_of(begin(requests), end(requests), []
 			(const request &r)
 			{
-				return r.finished == 0;
+				return r.finished <= 0;
 			});
 		});
 

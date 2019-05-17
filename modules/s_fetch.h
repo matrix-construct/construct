@@ -77,6 +77,7 @@ ircd::m::fetch::submit(const m::event::id &event_id,
 		requests.lower_bound(string_view(event_id))
 	};
 
+	assert(room_id && event_id);
 	if(it != end(requests) && it->event_id == event_id)
 	{
 		assert(it->room_id == room_id);
@@ -99,7 +100,10 @@ ircd::m::fetch::submit(const m::event::id &event_id,
 			e.what(),
 		};
 
-		requests.erase(it);
+		auto &request(const_cast<fetch::request &>(*it));
+		assert(request.event_id == event_id);
+		assert(request.room_id == room_id);
+		request.eptr = std::current_exception();
 		return false;
 	};
 }
