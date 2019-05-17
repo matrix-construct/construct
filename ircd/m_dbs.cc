@@ -929,6 +929,7 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 			std::get<0>(parts)
 		};
 
+		assert(event_idx != 0);
 		assert(event_idx != opts.event_idx);
 		const event::fetch _event
 		{
@@ -1899,12 +1900,7 @@ ircd::string_view
 ircd::m::dbs::event_horizon_key(const mutable_buffer &out,
                                 const event::id &event_id)
 {
-	mutable_buffer buf(out);
-	consume(buf, copy(buf, event_id));
-	return
-	{
-		data(out), data(buf)
-	};
+	return event_horizon_key(out, event_id, 0UL);
 }
 
 ircd::string_view
@@ -1914,8 +1910,13 @@ ircd::m::dbs::event_horizon_key(const mutable_buffer &out,
 {
 	mutable_buffer buf(out);
 	consume(buf, copy(buf, event_id));
-	consume(buf, copy(buf, "\0"_sv));
-	consume(buf, copy(buf, byte_view<string_view>(event_idx)));
+
+	if(event_idx)
+	{
+		consume(buf, copy(buf, "\0"_sv));
+		consume(buf, copy(buf, byte_view<string_view>(event_idx)));
+	}
+
 	return
 	{
 		data(out), data(buf)
