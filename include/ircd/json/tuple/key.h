@@ -16,7 +16,7 @@ namespace json {
 
 template<class tuple,
          size_t i>
-constexpr enable_if_tuple<tuple, const char *const &>
+constexpr enable_if_tuple<tuple, const char *>
 key()
 {
 	return tuple_element<tuple, i>::key;
@@ -42,7 +42,7 @@ key(const size_t &j)
 
 template<size_t i,
          class tuple>
-enable_if_tuple<tuple, const char *const &>
+enable_if_tuple<tuple, const char *>
 key(const tuple &t)
 {
 	return std::get<i>(t).key;
