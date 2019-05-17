@@ -485,22 +485,26 @@ AM_COND_IF([OPTIMIZE],
 	CXXFLAGS+=" -fbranch-target-load-optimize"
 	CXXFLAGS+=" -frerun-loop-opt"
 	CXXFLAGS+=" -fdevirtualize-at-ltrans"
-
-	dnl Note these flags are unreliable with LTO
-	CXXFLAGS+=" -g"
-	CXXFLAGS+=" -ggdb"
 ], [
 	optimize="no"
-	CXXFLAGS+=" -g"
-	CXXFLAGS+=" -ggdb"
-	CXXFLAGS+=" -fvar-tracking"
-	CXXFLAGS+=" -fvar-tracking-assignments"
 	CXXFLAGS+=" -falign-functions"
 ])
 
 dnl
 dnl Compiler intrumentation
 dnl
+
+AM_COND_IF([DEBUG],
+[
+	CXXFLAGS+=" -g"
+	CXXFLAGS+=" -ggdb"
+	CXXFLAGS+=" -fvar-tracking"
+	CXXFLAGS+=" -fvar-tracking-assignments"
+], [
+	dnl Note these flags are unreliable with LTO
+	CXXFLAGS+=" -g"
+	CXXFLAGS+=" -ggdb"
+])
 
 dnl  Creates an ELF section in the output which contains a list of
 dnl  the command line arguments used for compilation.
