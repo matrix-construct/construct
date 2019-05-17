@@ -35,6 +35,7 @@ AM_LDFLAGS = \
 	-Wl,--allow-shlib-undefined \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \
+	-Wl,--gdb-index \
 	-Wl,-z -Wl,lazy \
 	-Wl,-z -Wl,noexecstack \
 	-Wl,-z -Wl,combreloc \

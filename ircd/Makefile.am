@@ -43,7 +43,7 @@ AM_LDFLAGS = \
 	-Wl,--no-gc-sections \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
-	-Wl,--whole-archive \
+	-Wl,--gdb-index \
 	-Wl,-z -Wl,lazy \
 	-Wl,-z -Wl,nodelete \
 	-Wl,-z -Wl,nodlopen \

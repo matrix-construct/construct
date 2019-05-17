@@ -34,6 +34,7 @@ AM_LDFLAGS = \
 	-Wl,--dynamic-list-cpp-typeinfo \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
+	-Wl,--gdb-index \
 	-Wl,-z -Wl,noexecstack \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
