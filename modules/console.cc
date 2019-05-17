@@ -6454,19 +6454,14 @@ console_cmd__event__horizon(opt &out, const string_view &line)
 		return true;
 	}
 
-	char buf[m::dbs::EVENT_HORIZON_KEY_MAX_SIZE];
-	const string_view &key
+	const m::event::horizon horizon
 	{
-		m::dbs::event_horizon_key(buf, event_id, 0UL)
+		event_id
 	};
 
-	for(auto it(m::dbs::event_horizon.begin(key)); it; ++it)
+	horizon.for_each([&out, &event_id]
+	(const auto &event_idx)
 	{
-		const auto &event_idx
-		{
-			std::get<0>(m::dbs::event_horizon_key(it->first))
-		};
-
 		const auto _event_id
 		{
 			m::event_id(event_idx, std::nothrow)
@@ -6478,7 +6473,9 @@ console_cmd__event__horizon(opt &out, const string_view &line)
 		    << " "
 		    << _event_id
 		    << std::endl;
-	}
+
+		return true;
+	});
 
 	return true;
 }

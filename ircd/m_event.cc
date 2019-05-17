@@ -2557,6 +2557,89 @@ ircd::m::event::auth::chain::for_each(const auth::chain &c,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// event/horizon.h
+//
+
+size_t
+ircd::m::event::horizon::rebuild()
+{
+	throw not_implemented{};
+}
+
+bool
+ircd::m::event::horizon::has(const event::id &event_id)
+{
+	char buf[m::dbs::EVENT_HORIZON_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		m::dbs::event_horizon_key(buf, event_id, 0UL)
+	};
+
+	auto it
+	{
+		m::dbs::event_horizon.begin(key)
+	};
+
+	return bool(it);
+}
+
+size_t
+ircd::m::event::horizon::count()
+const
+{
+	size_t ret(0);
+	for_each([&ret](const auto &)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::event::horizon::has(const event::idx &event_idx)
+const
+{
+	return !for_each([&event_idx]
+	(const auto &_event_idx)
+	{
+		// false to break; true to continue.
+		return _event_idx == event_idx? false : true;
+	});
+}
+
+bool
+ircd::m::event::horizon::for_each(const closure_bool &closure)
+const
+{
+	char buf[m::dbs::EVENT_HORIZON_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		m::dbs::event_horizon_key(buf, event_id, 0UL)
+	};
+
+	auto it
+	{
+		m::dbs::event_horizon.begin(key)
+	};
+
+	for(; it; ++it)
+	{
+		const auto &event_idx
+		{
+			std::get<0>(m::dbs::event_horizon_key(it->first))
+		};
+
+		if(!closure(event_idx))
+			return false;
+	}
+
+	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // event/refs.h
 //
 
