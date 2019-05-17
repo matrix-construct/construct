@@ -194,7 +194,7 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 		tab.auth_count - tab.auth_exists,
 	};
 
-	const net::hostport remote
+	const string_view &remote
 	{
 		opts.node_id?
 			opts.node_id:
