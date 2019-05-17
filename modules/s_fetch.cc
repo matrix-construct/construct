@@ -200,6 +200,8 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 			opts.node_id:
 		!my_host(json::get<"origin"_>(event))?
 			string_view(json::get<"origin"_>(event)):
+		!my_host(room.room_id.host())?                  //TODO: XXX
+			room.room_id.host():
 			string_view{}
 	};
 
@@ -211,8 +213,26 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 			json::get<"room_id"_>(event)
 		};
 
-	auth_chain(room, remote);
-	tab.auth_exists = tab.auth_count;
+	if(exists(room))
+	{
+		auth_chain(room, remote);
+		tab.auth_exists = tab.auth_count;
+		return;
+	}
+
+	for(size_t i(0); i < tab.auth_count; ++i)
+	{
+		if(m::exists(prev.auth_event(i)))
+			continue;
+
+		const m::room branch
+		{
+			room.room_id, prev.auth_event(i)
+		};
+
+		auth_chain(branch, remote);
+		++tab.auth_exists;
+	}
 }
 
 void
