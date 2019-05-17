@@ -564,6 +564,49 @@ ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 // s_fetch.h
 //
 
+template<class... args>
+bool
+ircd::m::fetch::submit(const m::event::id &event_id,
+                       const m::room::id &room_id,
+                       const size_t &bufsz,
+                       args&&... a)
+try
+{
+	assert(room_id && event_id);
+	auto it(requests.lower_bound(string_view(event_id)));
+	if(it != end(requests) && it->event_id == event_id)
+	{
+		assert(it->room_id == room_id);
+		return false;
+	}
+
+	it = requests.emplace_hint(it, room_id, event_id, bufsz, std::forward<args>(a)...);
+	auto &request(const_cast<fetch::request &>(*it)); try
+	{
+		while(!start(request))
+			request.origin = {};
+	}
+	catch(const std::exception &e)
+	{
+		requests.erase(it);
+		throw;
+	}
+
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Failed to start any fetch for %s in %s :%s",
+		string_view{event_id},
+		string_view{room_id},
+		e.what(),
+	};
+
+	return false;
+}
+
 //
 // request worker
 //
