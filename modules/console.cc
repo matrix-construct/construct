@@ -6438,10 +6438,21 @@ console_cmd__event__horizon(opt &out, const string_view &line)
 		"event_id",
 	}};
 
-	const m::event::id &event_id
+	const string_view &event_id
 	{
-		param.at("event_id")
+		param["event_id"]
 	};
+
+	if(!event_id)
+	{
+		const auto &num_keys
+		{
+			db::property<db::prop_int>(m::dbs::event_horizon, "rocksdb.estimate-num-keys")
+		};
+
+		out << "Estimated event_id's unresolved: " << num_keys << '.' << std::endl;
+		return true;
+	}
 
 	char buf[m::dbs::EVENT_HORIZON_KEY_MAX_SIZE];
 	const string_view &key
