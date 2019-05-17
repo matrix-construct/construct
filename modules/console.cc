@@ -6460,7 +6460,7 @@ console_cmd__event__horizon(opt &out, const string_view &line)
 	};
 
 	horizon.for_each([&out, &event_id]
-	(const auto &event_idx)
+	(const auto &, const auto &event_idx)
 	{
 		const auto _event_id
 		{
