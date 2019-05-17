@@ -6481,6 +6481,43 @@ console_cmd__event__horizon(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__event__horizon__flush(opt &out, const string_view &line)
+{
+	size_t count(0);
+	const m::event::horizon horizon;
+	horizon.for_each([&out, &count]
+	(const auto &event_id, const auto &event_idx)
+	{
+		m::room::id::buf room_id_buf;
+		const string_view &room_id
+		{
+			m::get(std::nothrow, event_idx, "room_id", room_id_buf)
+		};
+
+		if(!room_id)
+		{
+			out << "- failed to find room_id for " << event_id
+			    << " from " << event_idx
+			    << std::endl;
+
+			return true;
+		}
+
+		m::fetch::start(room_id, event_id);
+		out << room_id << " : "
+		    << event_id
+		    << " via " << event_idx
+		    << std::endl;
+
+		++count;
+		return true;
+	});
+
+	out << "started " << count << std::endl;
+	return true;
+}
+
+bool
 console_cmd__event__cached(opt &out, const string_view &line)
 {
 	const params param{line, " ",
