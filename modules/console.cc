@@ -11628,6 +11628,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	}
 
 	m::vm::opts vmopts;
+	vmopts.nothrows = -1;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	m::vm::eval eval
 	{
@@ -11789,6 +11790,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.nothrows = -1;
 	vmopts.room_head = false;
 	vmopts.room_head_resolve = true;
 	vmopts.fetch_prev_check = false;
@@ -11977,6 +11979,9 @@ console_cmd__fed__event(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
+	vmopts.fetch_prev = false;
+	vmopts.fetch_prev_any = false;
+	vmopts.fetch_prev_wait = false;
 	m::vm::eval eval
 	{
 		event, vmopts
