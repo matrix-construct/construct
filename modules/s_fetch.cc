@@ -149,7 +149,7 @@ try
 }
 catch(const std::exception &e)
 {
-	log::error
+	log::derror
 	{
 		log, "%s %s :%s",
 		loghead(eval),
