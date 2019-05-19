@@ -60,7 +60,11 @@ namespace ircd::m::dbs::desc
 /// event_refs store this in a high order byte of an event::idx integer. This
 /// is an alternative to having separate columns for each type of reference.
 ///
-/// NOTE: These values are written to the database and cannot be changed.
+/// NOTE: These values are written to the database and cannot be changed to
+/// maintain ABI stability.
+///
+/// NOTE: These values not bit-flags and the entire integer space is in use.
+///
 enum class ircd::m::dbs::ref
 :uint8_t
 {
