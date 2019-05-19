@@ -260,12 +260,12 @@ struct ircd::m::vm::opts
 
 	/// Waits for prev_events have been acquired before continuing with this
 	/// evaluation.
-	bool fetch_prev_wait {true};
+	bool fetch_prev_wait {false};
 
 	/// Throws fault::EVENT if *all* of the prev_events do not exist locally.
 	/// This is used to enforce that at least one path is traversable. This
 	/// test is conducted after waiting if fetch_prev and fetch_prev_wait.
-	bool fetch_prev_any {true};
+	bool fetch_prev_any {false};
 
 	/// Throws fault::EVENT if *any* of the prev_events do not exist locally.
 	/// This is used to enforce that all references have been acquired; other
