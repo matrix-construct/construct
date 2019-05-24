@@ -904,7 +904,7 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
                                            const event &event,
                                            const write_opts &opts)
 {
-	thread_local char buf[EVENT_HORIZON_KEY_MAX_SIZE];
+	char buf[EVENT_HORIZON_KEY_MAX_SIZE];
 	assert(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE));
 	assert(opts.event_idx != 0);
 	const string_view &key
