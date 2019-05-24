@@ -138,12 +138,23 @@ ircd::db::abi_version_str
 //
 
 ircd::db::init::init()
+try
 {
 	init_compressions();
 	init_directory();
 	init_test_direct_io();
 	init_test_hw_crc32();
 	request.add(request_pool_size);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Cannot start database system :%s",
+		e.what()
+	};
+
+	throw;
 }
 
 ircd::db::init::~init()
@@ -203,9 +214,9 @@ try
 }
 catch(const fs::error &e)
 {
-	log::critical
+	log::error
 	{
-		log, "Cannot start database system: %s", e.what()
+		log, "Database directory error: %s", e.what()
 	};
 
 	throw;
@@ -263,6 +274,7 @@ namespace rocksdb::crc32c
 
 void
 ircd::db::init_test_hw_crc32()
+try
 {
 	const auto supported_str
 	{
@@ -282,24 +294,42 @@ ircd::db::init_test_hw_crc32()
 			log, "crc32c hardware acceleration is not available on this platform."
 		};
 }
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to test crc32c hardware acceleration support :%s",
+		e.what()
+	};
+}
 
 decltype(ircd::db::compressions)
 ircd::db::compressions;
 
 void
 ircd::db::init_compressions()
+try
 {
 	auto supported
 	{
 		rocksdb::GetSupportedCompressions()
 	};
 
-	for(const rocksdb::CompressionType &type : supported)
+	for(const rocksdb::CompressionType &type : supported) try
 	{
 		auto &string(compressions.at(uint(type)));
 		throw_on_error
 		{
 			rocksdb::GetStringFromCompressionType(&string, type)
+		};
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			log, "Failed to identify compression type:%u :%s",
+			uint(type),
+			e.what()
 		};
 	}
 
@@ -309,6 +339,16 @@ ircd::db::init_compressions()
 			"No compression libraries have been linked with the DB."
 			" This is probably not what you want."
 		};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to initialize database compressions :%s",
+		e.what()
+	};
+
+	throw;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
