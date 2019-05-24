@@ -1917,18 +1917,29 @@ ircd::m::dbs::event_horizon_key(const mutable_buffer &out,
 		consume(buf, copy(buf, byte_view<string_view>(event_idx)));
 	}
 
-	return
+	const string_view ret
 	{
 		data(out), data(buf)
 	};
+
+	assert(size(ret) == size(event_id) || size(ret) == size(event_id) + sizeof(event::idx) + 1);
+	return ret;
 }
 
 std::tuple<ircd::m::event::idx>
 ircd::m::dbs::event_horizon_key(const string_view &amalgam)
 {
+	assert(size(amalgam) == 1 + sizeof(event::idx));
+	assert(amalgam[0] == '\0');
+
+	const byte_view<event::idx> &event_idx
+	{
+		amalgam.substr(1)
+	};
+
 	return
 	{
-		byte_view<event::idx>(lstrip(amalgam, "\0"_sv))
+		static_cast<event::idx>(event_idx)
 	};
 }
 
@@ -1936,15 +1947,16 @@ const ircd::db::prefix_transform
 ircd::m::dbs::desc::events__event_horizon__pfx
 {
 	"_event_horizon",
+
 	[](const string_view &key)
 	{
-		return has(key, "\0"_sv);
+		return has(key, '\0');
 	},
 
 	[](const string_view &key)
 	{
 		assert(size(key) >= sizeof(event::idx));
-		return split(key, "\0"_sv).first;
+		return split(key, '\0').first;
 	}
 };
 
