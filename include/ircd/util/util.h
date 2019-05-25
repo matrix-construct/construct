@@ -60,6 +60,7 @@ namespace ircd
 #include "hash.h"
 #include "fpe.h"
 #include "closure.h"
+#include "test.h"
 
 // Unsorted section
 namespace ircd {

@@ -312,6 +312,7 @@ console_cmd__help(opt &out, const string_view &line)
 bool
 console_cmd__test(opt &out, const string_view &line)
 {
+	ircd::test();
 	return true;
 }
 
