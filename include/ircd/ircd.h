@@ -67,8 +67,6 @@
 ///
 namespace ircd
 {
-	struct init;
-
 	seconds uptime();
 	void init(boost::asio::io_context &ios, const string_view &origin, const string_view &hostname);
 	bool quit() noexcept;

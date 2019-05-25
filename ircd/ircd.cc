@@ -14,7 +14,7 @@ namespace ircd
 	std::string _servername;                     // user's supplied param
 	ctx::ctx *main_context;                      // Main program loop
 
-	void main() noexcept;
+	static void main() noexcept;
 }
 
 decltype(ircd::write_avoid)
