@@ -18,8 +18,10 @@ namespace ircd::util
 
 ///TODO: This is a WIP that is meant to replace the pattern of having two
 ///TODO: for_each() overloads in every interface where one takes a closure
-///TODO: which returns a bool, and the other takes a void closure. In practice
-///TODO: the void overload simply calls the bool overload and returns true.
+///TODO: which returns a bool, and the other takes a void closure. In the
+///TODO: majority case, the void overload simply calls the bool overload and
+// TODO: returns true. In the minority case, the overloads are optimized. This
+///TODO: device should be useful in the majority case.
 template<class function>
 struct ircd::util::closure
 {
