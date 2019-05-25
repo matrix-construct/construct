@@ -508,12 +508,25 @@ ircd::m::append(json::stack::object &object,
 	{
 		unsigned_, "age", json::value
 		{
+			// When the opts give an explicit age, use it.
 			opts.age != std::numeric_limits<long>::min()?
 				opts.age:
+
+			// If we have depth information, craft a value based on the
+			// distance to the head depth; if this is 0 in riot the event will
+			// "stick" at the bottom of the timeline. This may be advantageous
+			// in the future but for now we make sure the result is non-zero.
 			json::get<"depth"_>(event) >= 0 && opts.room_depth && *opts.room_depth >= 0L?
 				((*opts.room_depth + 1) - json::get<"depth"_>(event)) + 100:
+
+			// We don't have depth information, so we use the origin_server_ts.
+			// It is bad if it conflicts with other appends in the room which
+			// did have depth information.
 			!opts.room_depth && json::get<"origin_server_ts"_>(event)?
 				ircd::time<milliseconds>() - json::get<"origin_server_ts"_>(event):
+
+			// Finally, this special value will eliminate the age altogether
+			// during serialization.
 			json::undefined_number
 		}
 	};
