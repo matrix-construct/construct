@@ -14,15 +14,17 @@
 /// Universal Resource Indicator (URI) grammars & tools
 namespace ircd::rfc3986
 {
+	struct parser;
+
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, coding_error)
 	IRCD_EXCEPTION(coding_error, encoding_error)
 	IRCD_EXCEPTION(coding_error, decoding_error)
 
-	struct parser;
-
-	constexpr size_t HOSTNAME_MAX {rfc1035::LABEL_MAX};
-	constexpr size_t DOMAIN_MAX {rfc1035::NAME_MAX};
+	constexpr size_t HOSTNAME_MAX      { rfc1035::LABEL_MAX  };
+	constexpr size_t HOSTNAME_BUFSIZE  { HOSTNAME_MAX + 1    };
+	constexpr size_t DOMAIN_MAX        { rfc1035::NAME_MAX   };
+	constexpr size_t DOMAIN_BUFSIZE    { DOMAIN_MAX + 1      };
 
 	// urlencoding suite
 	string_view encode(const mutable_buffer &, const string_view &url);

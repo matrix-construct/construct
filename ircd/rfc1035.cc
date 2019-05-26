@@ -456,12 +456,12 @@ size_t
 ircd::rfc1035::parse_name(const mutable_buffer &out,
                           const const_buffer &in)
 {
-	if(unlikely(size(out) < NAME_BUF_SIZE))
+	if(unlikely(size(out) < NAME_BUFSIZE))
 		throw error
 		{
 			"Name output buffer is %zu but RFC1035 requires %zu",
 			size(out),
-			NAME_BUF_SIZE
+			NAME_BUFSIZE
 		};
 
 	if(unlikely(empty(in)))

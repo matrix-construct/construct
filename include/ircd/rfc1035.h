@@ -28,8 +28,8 @@ namespace ircd::rfc1035
 	constexpr size_t NAME_MAX {255};
 	constexpr size_t TTL_MAX {std::numeric_limits<int32_t>::max()};
 
-	constexpr size_t LABEL_BUF_SIZE {LABEL_MAX + 1};
-	constexpr size_t NAME_BUF_SIZE {NAME_MAX + 1};
+	constexpr size_t LABEL_BUFSIZE {LABEL_MAX + 1};
+	constexpr size_t NAME_BUFSIZE {NAME_MAX + 1};
 
 	extern const std::array<string_view, 25> rcode;
 	extern const std::unordered_map<string_view, uint16_t> qtype;
@@ -107,7 +107,7 @@ struct ircd::rfc1035::question
 	uint16_t qtype {0};
 	uint16_t qclass {0x01};
 	string_view name;
-	char namebuf[NAME_BUF_SIZE];
+	char namebuf[NAME_BUFSIZE];
 
 	/// Composes the question into buffer, returns used portion
 	mutable_buffer print(const mutable_buffer &) const;
@@ -139,7 +139,7 @@ struct ircd::rfc1035::answer
 	uint16_t rdlength {0};
 	const_buffer rdata;
 	string_view name;
-	char namebuf[NAME_BUF_SIZE];
+	char namebuf[NAME_BUFSIZE];
 
 	const_buffer parse(const const_buffer &);
 
@@ -233,7 +233,7 @@ struct ircd::rfc1035::record::CNAME
 :record
 {
 	string_view name;
-	char namebuf[NAME_BUF_SIZE];
+	char namebuf[NAME_BUFSIZE];
 
 	void append(json::stack::object &) const;
 
@@ -250,7 +250,7 @@ struct ircd::rfc1035::record::SRV
 	uint16_t weight {0};
 	uint16_t port {0};
 	string_view tgt;
-	char tgtbuf[NAME_BUF_SIZE];
+	char tgtbuf[NAME_BUFSIZE];
 
 	void append(json::stack::object &) const;
 

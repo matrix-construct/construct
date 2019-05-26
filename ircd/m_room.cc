@@ -3316,7 +3316,7 @@ ircd::m::room::origins::for_each(const closure_bool &view)
 const
 {
 	string_view last;
-	char lastbuf[rfc1035::NAME_BUF_SIZE];
+	char lastbuf[rfc1035::NAME_BUFSIZE];
 	return _for_each(*this, [&last, &lastbuf, &view]
 	(const string_view &key)
 	{

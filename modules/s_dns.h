@@ -57,7 +57,7 @@ struct ircd::net::dns::cache::waiter
 	dns::opts opts;
 	uint16_t port {0};
 	string_view key;
-	char keybuf[rfc1035::NAME_BUF_SIZE*2];
+	char keybuf[rfc1035::NAME_BUFSIZE*2];
 
 	waiter(const hostport &hp, const dns::opts &opts, dns::callback &&callback)
 	:callback{std::move(callback)}
@@ -166,7 +166,7 @@ struct ircd::net::dns::tag
 	uint8_t tries {0};
 	uint rcode {0};
 	ipport server;
-	char hostbuf[rfc1035::NAME_BUF_SIZE];
+	char hostbuf[rfc1035::NAME_BUFSIZE];
 	char qbuf[512];
 
 	tag(const hostport &hp, const dns::opts &opts)

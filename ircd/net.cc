@@ -3650,7 +3650,7 @@ noexcept try
 
 		if(!verifier(true, vc))
 		{
-			thread_local char buf[rfc1035::NAME_BUF_SIZE];
+			thread_local char buf[rfc1035::NAME_BUFSIZE];
 			const critical_assertion ca;
 			throw inauthentic
 			{
