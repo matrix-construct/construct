@@ -7949,13 +7949,40 @@ console_cmd__room__server_acl(opt &out, const string_view &line)
 		room_id
 	};
 
-	const bool allowed
+	if(param["server"])
 	{
-		server_acl(param.at("server"))
-	};
+		const bool allowed
+		{
+			server_acl(param.at("server"))
+		};
 
-	out << (allowed? "ALLOWED"_sv : "DENIED"_sv)
-	    << std::endl;
+		out << (allowed? "allow"_sv : "deny"_sv)
+		    << std::endl;
+
+		return true;
+	}
+
+	server_acl.for_each("allow", [&out]
+	(const string_view &expression)
+	{
+		out << "allow         " << expression << std::endl;
+		return true;
+	});
+
+	out << std::endl;
+	server_acl.for_each("deny", [&out]
+	(const string_view &expression)
+	{
+		out << "deny          " << expression << std::endl;
+		return true;
+	});
+
+	out << std::endl;
+	out << "IP literals   ";
+	if(server_acl.getbool("allow_ip_literals") != false)
+		out << "allow." << std::endl;
+	else
+		out << "deny." << std::endl;
 
 	return true;
 }
