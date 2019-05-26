@@ -5,6 +5,12 @@ AM_CXXFLAGS = \
 	@EXTRA_CXXFLAGS@ \
 	###
 
+if DEBUG
+if GCC
+AM_CXXFLAGS += -fmax-errors=2
+endif
+endif
+
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@ROCKSDB_CPPFLAGS@ \
@@ -20,16 +26,6 @@ AM_CPPFLAGS = \
 	-include ircd/ircd.pic.h \
 	@EXTRA_CPPFLAGS@ \
 	###
-
-if MINGW
-PLATFORM_LDFLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
-endif
-
-if DEBUG
-if GCC
-AM_CXXFLAGS += -fmax-errors=2
-endif
-endif
 
 AM_LDFLAGS = \
 	-version-info 3:1:0 \
@@ -50,9 +46,15 @@ AM_LDFLAGS = \
 	-Wl,-z -Wl,noexecstack \
 	-Wl,-z -Wl,combreloc \
 	-Wl,-z -Wl,text-unlikely-segment \
-	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
 	###
+
+if MINGW
+AM_LDFLAGS += \
+	-Wl,--enable-runtime-pseudo-reloc \
+	-export-symbols-regex '*' \
+	###
+endif
 
 libircddir = @libdir@
 libircd_LTLIBRARIES = libircd.la
