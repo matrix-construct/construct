@@ -20,8 +20,8 @@ namespace ircd::m::vm
 	fault execute(eval &, const event &);
 	fault inject(eval &, json::iov &, const json::iov &);
 	fault inject(eval &, const room &, json::iov &, const json::iov &);
-	static void init();
 	static void fini();
+	static void init();
 
 	extern hook::site<eval &> issue_hook;    ///< Called when this server is issuing event
 	extern hook::site<eval &> conform_hook;  ///< Called for static evaluations of event
@@ -500,8 +500,7 @@ try
 	const scope_notify notify{vm::dock};
 
 	// Set a member pointer to the event currently being evaluated. This
-	// allows other parallel evals to have deep access to exactly what this
-	// eval is working on.
+	// allows other parallel evals to have deep access to this eval.
 	assert(!eval.event_);
 	const scope_restore eval_event
 	{
@@ -523,7 +522,6 @@ try
 	if(opts.conform)
 		conform_hook(event, eval);
 
-	// A conforming (with lots of masks) event without an event_id is an EDU.
 	const fault ret
 	{
 		json::get<"event_id"_>(event)?

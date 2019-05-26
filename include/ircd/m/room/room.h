@@ -11,21 +11,13 @@
 #pragma once
 #define HAVE_IRCD_M_ROOM_H
 
-// Matrix Room interface.
-//
-// This header is the index for the Room interface suite. The `class room`
-// itself is available in room/room.h.
-//
-// See room/README.md for more information.
-//
-
 namespace ircd::m
 {
 	IRCD_M_EXCEPTION(m::error, CONFLICT, http::CONFLICT);
 	IRCD_M_EXCEPTION(m::error, NOT_MODIFIED, http::NOT_MODIFIED);
 	IRCD_M_EXCEPTION(CONFLICT, ALREADY_MEMBER, http::CONFLICT);
 
-	struct room; // see: room/room.h
+	struct room;
 
 	// Util
 	bool my(const room &);
