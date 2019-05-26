@@ -34,10 +34,6 @@ namespace ircd::m::vm
 	extern conf::item<bool> log_commit_debug;
 	extern conf::item<bool> log_accept_debug;
 	extern conf::item<bool> log_accept_info;
-
-	extern conf::item<size_t> pool_size;
-	extern const ctx::pool::opts pool_opts;
-	extern ctx::pool pool;
 }
 
 ircd::mapi::header
@@ -110,28 +106,6 @@ ircd::m::vm::effect_hook
 	{ "name", "vm.effect" }
 };
 
-decltype(ircd::m::vm::pool_size)
-ircd::m::vm::pool_size
-{
-	{ "name",     "ircd.m.vm.pool.size" },
-	{ "default",  16L                   },
-};
-
-decltype(ircd::m::vm::pool_opts)
-ircd::m::vm::pool_opts
-{
-	ctx::DEFAULT_STACK_SIZE,
-	0,
-	-1,
-	0
-};
-
-decltype(ircd::m::vm::pool)
-ircd::m::vm::pool
-{
-	"vm", pool_opts
-};
-
 //
 // init
 //
@@ -144,7 +118,6 @@ ircd::m::vm::init()
 	sequence::committed = sequence::retired;
 	sequence::uncommitted = sequence::committed;
 
-	//pool.min(size_t(pool_size));
 	vm::ready = true;
 	vm::dock.notify_all();
 
@@ -161,7 +134,6 @@ void
 ircd::m::vm::fini()
 {
 	vm::ready = false;
-	pool.terminate();
 
 	if(!eval::list.empty())
 		log::warning
@@ -179,7 +151,6 @@ ircd::m::vm::fini()
 		return !eval::executing && !eval::injecting && !eval::injecting_room;
 	});
 
-	pool.join();
 	assert(!sequence::pending);
 
 	event::id::buf event_id;
