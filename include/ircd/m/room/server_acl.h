@@ -17,14 +17,15 @@
 /// `m.room.server_acl` which allows for access control at server scope. This
 /// is necessary because access controls via `m.room.member` operate at the
 /// scope of individual `state_key` cells in the room state, thus lacking the
-/// ability to assert control over cells which do not yet exist. In other
-/// words, for example, this prevent a server from generating new users to
-/// evade bans set on other users.
+/// ability to assert control over multiple cells and those which do not yet
+/// exist.
 ///
-/// Our implementation is keyed on the `origin` field of an event as well as
-/// the `origin` field of an m::request depending on the callsite and options.
-/// If the `origin` field is not available (it is possibly slated to be phased
-/// out) expect this interface to fall back to the `sender` hostpart.
+/// Primary use of this interface is with operator() which returns true if
+/// the server is permitted by the room's ACL and false if denied. This is
+/// determined by the ACL event content only. Exceptions are not intended to be
+/// thrown. The conf items resident in this class do not actually affect the
+/// results of the member functions; they are for users to determine how/if
+/// to invoke this interface.
 ///
 struct ircd::m::room::server_acl
 {
@@ -41,7 +42,7 @@ struct ircd::m::room::server_acl
 	mutable json::object content;
 
 	bool view(const view_closure &) const;
-	bool pass(const string_view &server) const;
+	bool check(const net::hostport &server) const;
 
   public:
 	bool exists() const;
@@ -57,17 +58,23 @@ struct ircd::m::room::server_acl
 	// Test if *exact string* is listed in property list; not expr match.
 	bool has(const string_view &prop, const string_view &expr) const;
 
-	// Test if string is expression-matched in property list.
-	bool match(const string_view &prop, const string_view &server) const;
+	// Test if host is expression-matched in property list.
+	bool match(const string_view &prop, const net::hostport &server) const;
 
 	// Test if server passes or fails the ACL; this factors matching in
 	// "allow", "deny" and "allow_ip_literals" per the input with any default.
-	bool operator()(const string_view &server) const;
+	bool operator()(const net::hostport &server) const;
 
-	server_acl(const m::room &, const event::idx &acl_event_idx = 0);
+	server_acl(const m::room &, const event::idx &acl_event_idx);
 	server_acl(const m::room &, const json::object &content);
+	server_acl(const m::room &);
 	server_acl() = default;
 };
+
+inline
+ircd::m::room::server_acl::server_acl(const m::room &room)
+:server_acl{room, event::idx{0}}
+{}
 
 inline
 ircd::m::room::server_acl::server_acl(const m::room &room,

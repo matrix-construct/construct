@@ -153,7 +153,7 @@ ircd::m::room::server_acl::server_acl(const m::room &room,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::room::server_acl::operator()(const string_view &server)
+ircd::m::room::server_acl::operator()(const net::hostport &server)
 const
 {
 	bool ret;
@@ -167,7 +167,7 @@ const
 			this->content, content
 		};
 
-		ret = this->pass(server);
+		ret = this->check(server);
 	}};
 
 	return !view(closure) || ret;
@@ -176,9 +176,16 @@ const
 bool
 IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::match(const string_view &prop,
-                                 const string_view &server)
+                                 const net::hostport &remote)
 const
 {
+	// Spec sez when comparing against the server ACLs, the suspect server's
+	// port number must not be considered.
+	const string_view &server
+	{
+		net::host(remote)
+	};
+
 	return !for_each(prop, [&server]
 	(const string_view &expression)
 	{
@@ -301,7 +308,7 @@ const
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::room::server_acl::pass(const string_view &server)
+ircd::m::room::server_acl::check(const net::hostport &server)
 const
 {
 	// c2s 13.29.1 rules
@@ -313,7 +320,7 @@ const
 	// 2. If the server name is an IP address (v4 or v6) literal, and
 	// allow_ip_literals is present and false, deny.
 	if(getbool("allow_ip_literals") == false)
-		if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_remote, server))
+		if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_address, net::host(server)))
 			return false;
 
 	// 3. If the server name matches an entry in the deny list, deny.
