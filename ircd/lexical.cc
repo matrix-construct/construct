@@ -496,7 +496,7 @@ const
 	if(bp < b.size() && !a.empty() && a.back() == '*')
 		return true;
 
-	return std::equal(a.begin() + ap, a.end(), b.begin() + bp, b.end());
+	return iequals(a.substr(ap), b.substr(bp));
 }
 
 //
