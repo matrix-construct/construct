@@ -12,11 +12,6 @@
 #include <ircd/asio.h>
 #include "ctx.h"
 
-/// Toggle for whether profile counting is enabled based on RB_DEBUG or manual.
-#if defined(RB_DEBUG) && !defined(IRCD_CTX_PROF_MARK)
-	#define IRCD_CTX_PROF_MARK
-#endif
-
 /// We make a special use of the stack-protector canary in certain places as
 /// another tool to detect corruption of a context's stack, specifically
 /// during yield and resume. This use is not really to provide security; just
@@ -1652,7 +1647,6 @@ ircd::ctx::prof::settings::slice_assertion
 	{ "persist",  false                           },
 };
 
-#ifdef IRCD_CTX_PROF_MARK
 void
 ircd::ctx::prof::mark(const event &e)
 {
@@ -1667,12 +1661,6 @@ ircd::ctx::prof::mark(const event &e)
 		default:                                         break;
 	}
 }
-#else
-void
-ircd::ctx::prof::mark(const event &)
-{
-}
-#endif
 
 void
 ircd::ctx::prof::inc_ticker(const event &e)

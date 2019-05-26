@@ -16,6 +16,11 @@ namespace ircd::ctx
 	void spawn(ctx *const c, context::function func);
 }
 
+namespace ircd::ctx::prof
+{
+	void mark(const event &);
+}
+
 /// Internal structure aggregating any stack related state for the ctx
 struct ircd::ctx::stack
 {
