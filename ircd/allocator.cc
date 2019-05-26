@@ -566,3 +566,36 @@ operator delete(void *const ptr,
 }
 
 #endif // RB_PROF_ALLOC --------------------------------------------------
+
+//
+// Linker symbol wrapping hook
+//
+
+extern "C" void *__real_malloc(size_t size);
+extern "C" void *__real_calloc(size_t nmemb, size_t size);
+extern "C" void *__real_realloc(void *ptr, size_t size);
+extern "C" void __real_free(void *ptr);
+
+extern "C" void *
+__wrap_malloc(size_t size)
+{
+	return __real_malloc(size);
+}
+
+extern "C" void *
+__wrap_calloc(size_t nmemb, size_t size)
+{
+	return __real_calloc(nmemb, size);
+}
+
+extern "C" void *
+__wrap_realloc(void *ptr, size_t size)
+{
+	return __real_realloc(ptr, size);
+}
+
+extern "C" void
+__wrap_free(void *ptr)
+{
+	return __real_free(ptr);
+}
