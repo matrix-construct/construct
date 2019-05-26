@@ -37,10 +37,11 @@ struct ircd::m::room::server_acl
 	static conf::item<bool> enable_send;   // request destination
 
 	m::room room;
-	json::object content;
 	event::idx event_idx {0};
+	mutable json::object content;
 
 	bool view(const view_closure &) const;
+	bool pass(const string_view &server) const;
 
   public:
 	bool exists() const;

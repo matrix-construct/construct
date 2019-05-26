@@ -156,28 +156,21 @@ IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::operator()(const string_view &server)
 const
 {
-	// c2s 13.29.1 rules:
+	bool ret;
+	const auto closure{[this, &server, &ret]
+	(const json::object &content)
+	{
+		// Set the content reference here so only one actual IO is made to
+		// fetch the m.room.server_acl content for all queries.
+		const scope_restore this_content
+		{
+			this->content, content
+		};
 
-	// 1. If there is no m.room.server_acl event in the room state, allow.
-	if(!exists())
-		return true;
+		ret = this->pass(server);
+	}};
 
-	// 2. If the server name is an IP address (v4 or v6) literal, and
-	// allow_ip_literals is present and false, deny.
-	if(getbool("allow_ip_literals") == false)
-		if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_remote, server))
-			return false;
-
-	// 3. If the server name matches an entry in the deny list, deny.
-	if(match("deny", server))
-		return false;
-
-	// 4. If the server name matches an entry in the allow list, allow.
-	if(match("allow", server))
-		return true;
-
-	// 5. Otherwise, deny.
-	return false;
+	return !view(closure) || ret;
 }
 
 bool
@@ -304,6 +297,35 @@ ircd::m::room::server_acl::exists()
 const
 {
 	return content || event_idx;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::server_acl::pass(const string_view &server)
+const
+{
+	// c2s 13.29.1 rules
+
+	// 1. If there is no m.room.server_acl event in the room state, allow.
+	if(!exists())
+		return true;
+
+	// 2. If the server name is an IP address (v4 or v6) literal, and
+	// allow_ip_literals is present and false, deny.
+	if(getbool("allow_ip_literals") == false)
+		if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_remote, server))
+			return false;
+
+	// 3. If the server name matches an entry in the deny list, deny.
+	if(match("deny", server))
+		return false;
+
+	// 4. If the server name matches an entry in the allow list, allow.
+	if(match("allow", server))
+		return true;
+
+	// 5. Otherwise, deny.
+	return false;
 }
 
 bool
