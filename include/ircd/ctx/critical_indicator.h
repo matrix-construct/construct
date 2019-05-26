@@ -29,10 +29,10 @@ class ircd::ctx::this_ctx::critical_indicator
 	uint64_t state;
 
   public:
-	uint64_t count() const             { return yields(cur()) - state;         }
-	operator bool() const              { return yields(cur()) == state;        }
+	uint64_t count() const             { return epoch(cur()) - state;          }
+	operator bool() const              { return epoch(cur()) == state;         }
 
 	critical_indicator()
-	:state{yields(cur())}
+	:state(epoch(cur()))
 	{}
 };

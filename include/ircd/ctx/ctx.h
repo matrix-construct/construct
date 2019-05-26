@@ -43,14 +43,12 @@ namespace ircd::ctx
 
 	IRCD_OVERLOAD(threadsafe)
 
-	extern log::log log;
-
 	const uint64_t &id(const ctx &);             // Unique ID for context
 	string_view name(const ctx &);               // User's optional label for context
 	const size_t &stack_max(const ctx &);        // Returns stack size allocated for ctx
 	const size_t &stack_at(const ctx &);         // Stack at last sleep (also see this_ctx.h)
 	const int32_t &notes(const ctx &);           // Peeks at internal semaphore count
-	const uint64_t &yields(const ctx &);         // Context switching counter
+	const uint64_t &epoch(const ctx &);          // Context switching counter
 	const ulong &cycles(const ctx &);            // Accumulated tsc (not counting cur slice)
 	bool interruptible(const ctx &) noexcept;    // Context can throw at interruption point
 	bool interruption(const ctx &) noexcept;     // Context was marked for interruption
@@ -69,6 +67,9 @@ namespace ircd::ctx
 	void yield(ctx &);                           // Direct context switch to arg
 
 	bool for_each(const std::function<bool (ctx &)> &);
+	const uint64_t &epoch();
+
+	extern log::log log;
 }
 
 #include "prof.h"

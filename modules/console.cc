@@ -1748,7 +1748,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    ;
 
 		out << " "
-		    << std::setw(8) << std::right << yields(ctx);
+		    << std::setw(8) << std::right << epoch(ctx);
 
 		out << " "
 		    << std::setw(5) << std::right << notes(ctx);

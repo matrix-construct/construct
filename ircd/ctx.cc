@@ -338,6 +338,12 @@ const
 // ctx/ctx.h
 //
 
+const uint64_t &
+ircd::ctx::epoch()
+{
+	return prof::get(prof::event::YIELD);
+}
+
 bool
 ircd::ctx::for_each(const std::function<bool (ctx &)> &closure)
 {
@@ -519,7 +525,7 @@ ircd::ctx::cycles(const ctx &ctx)
 
 /// Returns the yield count for `ctx`
 const uint64_t &
-ircd::ctx::yields(const ctx &ctx)
+ircd::ctx::epoch(const ctx &ctx)
 {
 	return prof::get(ctx, prof::event::YIELD);
 }
