@@ -124,6 +124,7 @@ m_room_canonical_alias_la_SOURCES = m_room_canonical_alias.cc
 m_room_aliases_la_SOURCES = m_room_aliases.cc
 m_room_message_la_SOURCES = m_room_message.cc
 m_room_power_levels_la_SOURCES = m_room_power_levels.cc
+m_room_server_acl_la_SOURCES = m_room_server_acl.cc
 
 m_module_LTLIBRARIES = \
 	m_noop.la \
@@ -146,6 +147,7 @@ m_module_LTLIBRARIES = \
 	m_room_aliases.la \
 	m_room_message.la \
 	m_room_power_levels.la \
+	m_room_server_acl.la \
 	###
 
 ###############################################################################

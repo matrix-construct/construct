@@ -7932,6 +7932,35 @@ console_cmd__room__alias__cache__del(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__server_acl(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "server"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::room::server_acl server_acl
+	{
+		room_id
+	};
+
+	const bool allowed
+	{
+		server_acl(param.at("server"))
+	};
+
+	out << (allowed? "ALLOWED"_sv : "DENIED"_sv)
+	    << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__room__members(opt &out, const string_view &line)
 {
 	const params param{line, " ",

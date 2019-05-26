@@ -109,6 +109,7 @@ struct ircd::m::room
 	struct power;
 	struct aliases;
 	struct stats;
+	struct server_acl;
 
 	using id = m::id::room;
 	using alias = m::id::room_alias;
@@ -195,6 +196,7 @@ struct ircd::m::room
 #include "power.h"
 #include "aliases.h"
 #include "stats.h"
+#include "server_acl.h"
 
 inline ircd::m::room::operator
 const ircd::m::room::id &()
