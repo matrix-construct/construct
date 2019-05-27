@@ -29,6 +29,7 @@ AM_CPPFLAGS = \
 
 AM_LDFLAGS = \
 	-version-info 3:1:0 \
+	-Wl,-shared-libgcc \
 	-Wl,-fuse-ld=gold \
 	-Wl,--warn-common \
 	-Wl,--warn-execstack \

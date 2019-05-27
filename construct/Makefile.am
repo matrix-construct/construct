@@ -22,6 +22,7 @@ AM_CPPFLAGS = \
 
 AM_LDFLAGS = \
 	-dlopen self \
+	-Wl,-shared-libgcc \
 	-Wl,-fuse-ld=gold \
 	-Wl,--warn-execstack \
 	-Wl,--warn-common \
