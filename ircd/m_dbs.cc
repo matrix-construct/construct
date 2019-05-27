@@ -767,7 +767,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 		m_in_reply_to.get("event_id")
 	};
 
-	if(!valid(m::id::USER, event_id))
+	if(!valid(m::id::EVENT, event_id))
 	{
 		log::derror
 		{
