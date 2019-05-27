@@ -353,6 +353,7 @@ int console_command_numeric(opt &, const string_view &line);
 bool console_id__user(opt &, const m::user::id &id, const string_view &line);
 bool console_id__room(opt &, const m::room::id &id, const string_view &line);
 bool console_id__event(opt &, const m::event::id &id, const string_view &line);
+bool console_id__device(opt &, const m::device::id &id, const string_view &line);
 bool console_json(const json::object &);
 
 int
@@ -379,6 +380,9 @@ console_command_derived(opt &out, const string_view &line)
 
 		case m::id::USER:
 			return console_id__user(out, id, line);
+
+		case m::id::DEVICE:
+			return console_id__device(out, id, line);
 
 		case m::id::ROOM_ALIAS:
 		{
@@ -10616,6 +10620,14 @@ console_cmd__user__devices(opt &out, const string_view &line)
 		return true;
 	});
 
+	return true;
+}
+
+bool
+console_id__device(opt &out,
+                   const m::device::id &id,
+                   const string_view &line)
+{
 	return true;
 }
 
