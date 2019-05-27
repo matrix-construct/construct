@@ -25,6 +25,7 @@ namespace ircd::m::vm
 
 	extern hook::site<eval &> issue_hook;    ///< Called when this server is issuing event
 	extern hook::site<eval &> conform_hook;  ///< Called for static evaluations of event
+	extern hook::site<eval &> access_hook;   ///< Called for access control checking
 	extern hook::site<eval &> fetch_hook;    ///< Called to resolve dependencies
 	extern hook::site<eval &> eval_hook;     ///< Called for final event evaluation
 	extern hook::site<eval &> post_hook;     ///< Called to apply effects pre-notify
@@ -74,6 +75,12 @@ decltype(ircd::m::vm::conform_hook)
 ircd::m::vm::conform_hook
 {
 	{ "name", "vm.conform" }
+};
+
+decltype(ircd::m::vm::access_hook)
+ircd::m::vm::access_hook
+{
+	{ "name", "vm.access" }
 };
 
 decltype(ircd::m::vm::fetch_hook)
@@ -638,11 +645,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 		at<"room_id"_>(event)
 	};
 
-	const string_view &origin
-	{
-		at<"origin"_>(event)
-	};
-
 	const string_view &type
 	{
 		at<"type"_>(event)
@@ -660,13 +662,8 @@ ircd::m::vm::execute_pdu(eval &eval,
 			fault::EXISTS, "Event has already been evaluated."
 		};
 
-	if(m::room::server_acl::enable_write && !m::room::server_acl::check(room_id, origin))
-		throw m::ACCESS_DENIED
-		{
-			"Execution denied for '%s' by room %s server access control list.",
-			origin,
-			string_view{room_id}
-		};
+	if(opts.access)
+		access_hook(event, eval);
 
 	if(opts.verify && !verify(event))
 		throw m::BAD_SIGNATURE

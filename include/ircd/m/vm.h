@@ -147,6 +147,9 @@ struct ircd::m::vm::opts
 	/// Call conform hooks (detailed behavior can be tweaked below)
 	bool conform {true};
 
+	/// Check various access controls before processing event further.
+	bool access {true};
+
 	/// Make fetches or false to bypass fetch stage.
 	bool fetch {true};
 

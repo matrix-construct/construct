@@ -15,13 +15,41 @@ IRCD_MODULE
 };
 
 //
-// Notify hook
+// vm hookfn's
 //
 
 namespace ircd::m
 {
 	static void on_changed_room_server_acl(const m::event &, m::vm::eval &);
+	static void on_check_room_server_acl(const m::event &, m::vm::eval &);
+
 	extern m::hookfn<m::vm::eval &> changed_room_server_acl;
+	extern m::hookfn<m::vm::eval &> check_room_server_acl;
+}
+
+decltype(ircd::m::check_room_server_acl)
+ircd::m::check_room_server_acl
+{
+	on_check_room_server_acl,
+	{
+		{ "_site", "vm.access" },
+	}
+};
+
+void
+ircd::m::on_check_room_server_acl(const event &event,
+                                  vm::eval &)
+{
+	if(!m::room::server_acl::enable_write)
+		return;
+
+	if(!m::room::server_acl::check(at<"room_id"_>(event), at<"origin"_>(event)))
+		throw m::ACCESS_DENIED
+		{
+			"Server '%s' denied by room %s access control list.",
+			at<"origin"_>(event),
+			at<"room_id"_>(event),
+		};
 }
 
 decltype(ircd::m::changed_room_server_acl)
