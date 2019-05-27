@@ -351,7 +351,6 @@ console_cmd__time(opt &out, const string_view &line)
 
 int console_command_numeric(opt &, const string_view &line);
 bool console_id__user(opt &, const m::user::id &id, const string_view &line);
-bool console_id__node(opt &, const m::node::id &id, const string_view &line);
 bool console_id__room(opt &, const m::room::id &id, const string_view &line);
 bool console_id__event(opt &, const m::event::id &id, const string_view &line);
 bool console_json(const json::object &);
@@ -377,9 +376,6 @@ console_command_derived(opt &out, const string_view &line)
 
 		case m::id::ROOM:
 			return console_id__room(out, id, line);
-
-		case m::id::NODE:
-			return console_id__node(out, id, line);
 
 		case m::id::USER:
 			return console_id__user(out, id, line);
@@ -9481,18 +9477,19 @@ console_cmd__room__id(opt &out, const string_view &id)
 	{
 		case m::id::USER:
 			out << m::user{id}.room_id() << std::endl;
-			break;
-
-		case m::id::NODE:
-			out << m::node{id}.room_id() << std::endl;
-			break;
+			return true;
 
 		case m::id::ROOM_ALIAS:
 			out << m::room_id(m::room::alias(id)) << std::endl;
-			break;
+			return true;
 
 		default:
-			break;
+			return true;
+	}
+	else if(rfc3986::valid_remote(std::nothrow, id))
+	{
+		out << m::node{id}.room_id() << std::endl;
+		return true;
 	}
 
 	return true;
@@ -10651,15 +10648,6 @@ console_cmd__typing(opt &out, const string_view &line)
 // node
 //
 
-//TODO: XXX
-bool
-console_id__node(opt &out,
-                 const m::node::id &id,
-                 const string_view &args)
-{
-	return true;
-}
-
 bool
 console_cmd__node__keys(opt &out, const string_view &line)
 {
@@ -10668,14 +10656,9 @@ console_cmd__node__keys(opt &out, const string_view &line)
 		"node_id", "[limit]"
 	}};
 
-	const m::node::id::buf node_id
-	{
-		m::node::id::origin, param.at(0)
-	};
-
 	const m::node &node
 	{
-		node_id
+		param.at("node_id")
 	};
 
 	auto limit
@@ -10708,14 +10691,9 @@ console_cmd__node__key(opt &out, const string_view &line)
 		"node_id", "key_id"
 	}};
 
-	const m::node::id::buf node_id
-	{
-		m::node::id::origin, param.at(0)
-	};
-
 	const m::node &node
 	{
-		node_id
+		param.at("node_id")
 	};
 
 	const auto &key_id
@@ -11279,7 +11257,7 @@ console_cmd__feds__resend(opt &out, const string_view &line)
 bool
 console_cmd__fed__groups(opt &out, const string_view &line)
 {
-	const m::id::node &node
+	const string_view node
 	{
 		token(line, ' ', 0)
 	};

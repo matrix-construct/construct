@@ -23,14 +23,10 @@ nodes_room
 };
 
 extern "C" m::node
-create_node(const m::node::id &node_id,
+create_node(const m::node &node,
             const json::members &args)
 {
-	const m::node node
-	{
-		node_id
-	};
-
+	assert(node.node_id);
 	const m::room::id::buf room_id
 	{
 		node.room_id()
@@ -38,12 +34,12 @@ create_node(const m::node::id &node_id,
 
 	//TODO: ABA
 	create(room_id, m::me.user_id);
-	send(nodes_room, m::me.user_id, "ircd.node", node_id, args);
+	send(nodes_room, m::me.user_id, "ircd.node", node.node_id, args);
 	return node;
 }
 
 extern "C" bool
-exists__nodeid(const m::node::id &node_id)
+exists__nodeid(const string_view &node_id)
 {
 	return nodes_room.has("ircd.node", node_id);
 }

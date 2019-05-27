@@ -26,7 +26,7 @@ struct ircd::m::v1::groups::publicised
 		return json::object{in.content};
 	}
 
-	publicised(const id::node &, const vector_view<const id::user> &, const mutable_buffer &, opts);
+	publicised(const string_view &, const vector_view<const id::user> &, const mutable_buffer &, opts);
 	publicised() = default;
 };
 

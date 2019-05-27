@@ -13,20 +13,20 @@
 // v1/groups.h
 //
 
-ircd::m::v1::groups::publicised::publicised(const id::node &node,
+ircd::m::v1::groups::publicised::publicised(const string_view &node,
                                             const vector_view<const id::user> &user_ids,
                                             const mutable_buffer &buf_,
                                             opts opts)
 :server::request{[&]
 {
 	if(!opts.remote)
-		opts.remote = node.host();
+		opts.remote = node;
 
 	if(!defined(json::get<"origin"_>(opts.request)))
 		json::get<"origin"_>(opts.request) = my_host();
 
 	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = node.host();
+		json::get<"destination"_>(opts.request) = node;
 
 	if(!defined(json::get<"uri"_>(opts.request)))
 		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/get_groups_publicised";

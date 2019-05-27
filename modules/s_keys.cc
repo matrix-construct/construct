@@ -639,19 +639,14 @@ ircd::m::create_my_key()
 size_t
 ircd::m::keys_cache_set(const json::object &keys)
 {
-	const auto &server_name
+	const json::string &server_name
 	{
-		unquote(keys.at("server_name"))
-	};
-
-	const m::node::id::buf node_id
-	{
-		m::node::id::origin, server_name
+		keys.at("server_name")
 	};
 
 	const m::node::room node_room
 	{
-		node_id
+		server_name
 	};
 
 	if(!exists(node_room.room_id))
@@ -681,14 +676,9 @@ ircd::m::keys_cache_get(const string_view &server_name,
                         const string_view &key_id,
                         const keys::closure &closure)
 {
-	const m::node::id::buf node_id
-	{
-		m::node::id::origin, server_name
-	};
-
 	const m::node::room node_room
 	{
-		node_id
+		server_name
 	};
 
 	const auto reclosure{[&closure]

@@ -45,7 +45,6 @@ struct ircd::m::id
 	struct room;
 	struct room_alias;
 	struct group;
-	struct node;
 	struct device;
 
 	enum sigil :char;
@@ -119,7 +118,6 @@ enum ircd::m::id::sigil
 	ROOM_ALIAS  = '#',     ///< Room alias (4.2.3)
 	GROUP       = '+',     ///< Group ID (experimental)
 	DEVICE      = '%',     ///< Device ID (experimental)
-	NODE        = ':',     ///< Node ID (experimental)
 };
 
 /// (Appendix 4.2.1) User Identifiers
@@ -244,30 +242,6 @@ struct ircd::m::id::device
 	{}
 
 	device() = default;
-};
-
-/// Node ID (EXPERIMENTAL)
-///
-struct ircd::m::id::node
-:ircd::m::id
-{
-	using buf = m::id::buf<node>;
-
-	IRCD_OVERLOAD(domain)
-	node(const mutable_buffer &mb, domain_t, const string_view &domain_, const string_view &origin_)
-	:m::id{NODE, mb, domain_, origin_}
-	{}
-
-	IRCD_OVERLOAD(origin)
-	node(const mutable_buffer &mb, origin_t, const string_view &origin_)
-	:m::id{NODE, mb, string_view{}, origin_}
-	{}
-
-	node(const string_view &id)
-	:m::id{NODE, id}
-	{}
-
-	node() = default;
 };
 
 /// ID object backed by an internal buffer of default worst-case size.

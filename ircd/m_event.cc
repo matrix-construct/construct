@@ -3389,14 +3389,9 @@ ircd::m::verify(const event &event,
                 const string_view &keyid)
 try
 {
-	const m::node::id::buf node_id
-	{
-		m::node::id::origin, origin
-	};
-
 	const m::node node
 	{
-		node_id
+		origin
 	};
 
 	bool ret{false};

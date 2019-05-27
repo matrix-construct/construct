@@ -74,23 +74,19 @@ struct txndata
 struct node
 {
 	std::deque<std::shared_ptr<unit>> q;
-	m::node::id::buf id;
+	std::array<char, rfc3986::DOMAIN_BUFSIZE> rembuf;
+	string_view remote;
 	m::node::room room;
 	server::request::opts sopts;
 	txn *curtxn {nullptr};
 	bool err {false};
 
-	string_view origin() const
-	{
-		return id.host();
-	};
-
 	bool flush();
 	void push(std::shared_ptr<unit>);
 
-	node(const string_view &origin)
-	:id{m::node::id::origin, origin}
-	,room{id}
+	node(const string_view &remote)
+	:remote{strlcpy{rembuf, remote}}
+	,room{this->remote}
 	{}
 };
 

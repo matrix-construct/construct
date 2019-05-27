@@ -245,7 +245,7 @@ try
 	}
 
 	m::v1::send::opts opts;
-	opts.remote = origin();
+	opts.remote = remote;
 	opts.sopts = &sopts;
 
 	const vector_view<const json::value> pduv
@@ -274,7 +274,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"flush error to %s :%s", string_view{id}, e.what()
+		"flush error to %s :%s", remote, e.what()
 	};
 
 	err = true;
@@ -372,7 +372,7 @@ try
 		"%u %s from %s for %s",
 		ushort(code),
 		http::status(code),
-		string_view{node.id},
+		node.remote,
 		txn.txnid
 	};
 
@@ -385,7 +385,7 @@ try
 		log::derror
 		{
 			"Error from %s in %s for %s :%s",
-			string_view{node.id},
+			node.remote,
 			txn.txnid,
 			string_view{event_id},
 			string_view{error}
@@ -401,7 +401,7 @@ catch(const http::error &e)
 		"%u %s from %s for %s :%s",
 		ushort(e.code),
 		http::status(e.code),
-		string_view{node.id},
+		node.remote,
 		txn.txnid,
 		e.what()
 	};
@@ -414,7 +414,7 @@ catch(const std::exception &e)
 	log::derror
 	{
 		"Error from %s for %s :%s",
-		string_view{node.id},
+		node.remote,
 		txn.txnid,
 		e.what()
 	};
@@ -451,7 +451,7 @@ recv_timeout(txn &txn,
 	log::dwarning
 	{
 		"Timeout to %s for txn %s",
-		string_view{node.id},
+		node.remote,
 		txn.txnid
 	};
 
@@ -464,7 +464,7 @@ remove_node(const node &node)
 {
 	const auto it
 	{
-		nodes.find(node.origin())
+		nodes.find(node.remote)
 	};
 
 	assert(it != end(nodes));

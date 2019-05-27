@@ -335,10 +335,10 @@ ircd::m::my_room
 // my node
 //
 
-ircd::m::node::id::buf
+std::array<char, ircd::rfc3986::DOMAIN_BUFSIZE>
 ircd_node_id
 {
-	ircd::m::node::id::origin, "localhost" // replaced after conf init
+	"localhost"  // replaced after conf init
 };
 
 ircd::m::node
@@ -402,14 +402,16 @@ ircd::m::self::init::init(const string_view &origin,
 	self::origin = origin;
 	self::servername = servername;
 
+	m::my_node = string_view{strlcpy
+	{
+		ircd_node_id, origin
+	}};
+
 	ircd_user_id = {"ircd", origin};
 	m::me = {ircd_user_id};
 
 	ircd_room_id = {"ircd", origin};
 	m::my_room = {ircd_room_id};
-
-	ircd_node_id = {node::id::origin, origin};
-	m::my_node = {ircd_node_id};
 
 	users_room_id = {"users", origin};
 	m::user::users = {users_room_id};
@@ -2270,37 +2272,36 @@ ircd::m::nodes
 };
 
 ircd::m::node
-ircd::m::create(const id::node &node_id,
+ircd::m::create(const node &node,
                 const json::members &args)
 {
-	using prototype = node (const id::node &, const json::members &);
+	using prototype = m::node (const m::node &, const json::members &);
 
 	static mods::import<prototype> function
 	{
 		"s_node", "create_node"
 	};
 
-	assert(node_id);
-	return function(node_id, args);
+	return function(node, args);
 }
 
 bool
-ircd::m::exists(const node::id &node_id)
+ircd::m::exists(const node &node)
 {
-	using prototype = bool (const node::id &);
+	using prototype = bool (const string_view &);
 
 	static mods::import<prototype> function
 	{
 		"s_node", "exists__nodeid"
 	};
 
-	return function(node_id);
+	return function(node.node_id);
 }
 
 bool
 ircd::m::my(const node &node)
 {
-	return my(node.node_id);
+	return my_host(node.node_id);
 }
 
 //
@@ -2332,12 +2333,7 @@ ircd::m::node::key(const string_view &key_id,
                    const key_closure &closure)
 const
 {
-	const auto &server_name
-	{
-		node_id.hostname()
-	};
-
-	m::keys::get(server_name, key_id, [&closure, &key_id]
+	m::keys::get(node_id, key_id, [&closure, &key_id]
 	(const json::object &keys)
 	{
 		const json::object &vks
@@ -2376,16 +2372,32 @@ ircd::m::id::room
 ircd::m::node::room_id(const mutable_buffer &buf)
 const
 {
-	assert(!empty(node_id));
+	assert(!empty(this->node_id));
+
+	// for compatibility with hashing legacy node_id's
+	thread_local char node_id_buf[m::id::MAX_SIZE];
+	mutable_buffer mb{node_id_buf};
+	consume(mb, copy(mb, "::"_sv));
+	consume(mb, copy(mb, this->node_id));
+	const string_view &node_id
+	{
+		node_id_buf, data(mb)
+	};
+
 	const sha256::buf hash
 	{
 		sha256{node_id}
 	};
 
-	char b58[size(hash) * 2];
-	return
+	thread_local char b58_buf[b58encode_size(size(hash))];
+	const string_view b58
 	{
-		buf, b58encode(b58, hash), my_host()
+		b58encode(b58_buf, hash)
+	};
+
+	return id::room
+	{
+		buf, b58, my_host()
 	};
 }
 
@@ -2393,7 +2405,7 @@ const
 // node::room
 //
 
-ircd::m::node::room::room(const m::node::id &node_id)
+ircd::m::node::room::room(const string_view &node_id)
 :room{m::node{node_id}}
 {}
 
@@ -4690,14 +4702,14 @@ const
 		}
 	};
 
-	const m::node::id::buf node_id
+	const json::string &origin
 	{
-		m::node::id::origin, unquote(at<"origin"_>(*this))
+		at<"origin"_>(*this)
 	};
 
 	const m::node node
 	{
-		node_id
+		origin
 	};
 
 	bool verified{false};

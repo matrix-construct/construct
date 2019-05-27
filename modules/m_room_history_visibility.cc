@@ -17,10 +17,10 @@ IRCD_MODULE
 };
 
 static bool
-_visible_(const m::event &event,
-          const m::user::id &user_id,
-          const m::room &room,
-          const string_view &history_visibility)
+_visible_to_user(const m::event &event,
+                 const m::user::id &user_id,
+                 const m::room &room,
+                 const string_view &history_visibility)
 {
 	char membership_buf[m::MEMBERSHIP_MAX_SIZE];
 	string_view membership
@@ -54,10 +54,10 @@ _visible_(const m::event &event,
 }
 
 static bool
-_visible_(const m::event &event,
-          const m::node::id &node_id,
-          const m::room &room,
-          const string_view &history_visibility)
+_visible_to_node(const m::event &event,
+                 const string_view &node_id,
+                 const m::room &room,
+                 const string_view &history_visibility)
 {
 	const m::room::origins origins
 	{
@@ -65,7 +65,7 @@ _visible_(const m::event &event,
 	};
 
 	// Allow joined servers
-	if(origins.has(node_id.host()))
+	if(origins.has(node_id))
 		return true;
 
 	// Allow auth chain events XXX: this is too broad
@@ -75,7 +75,7 @@ _visible_(const m::event &event,
 	// Allow any event where the state_key string is a user mxid and the server
 	// is the host of that user. Note that applies to any type of event.
 	if(m::valid(m::id::USER, json::get<"state_key"_>(event)))
-		if(m::user::id(at<"state_key"_>(event)).host() == node_id.host())
+		if(m::user::id(at<"state_key"_>(event)).host() == node_id)
 			return true;
 
 	return false;
@@ -93,20 +93,16 @@ _visible(const m::event &event,
 	if(empty(mxid))
 		return false;
 
-	switch(m::sigil(mxid))
+	if(m::valid(m::id::USER, mxid))
+		return _visible_to_user(event, mxid, room, history_visibility);
+
+	if(rfc3986::valid_remote(std::nothrow, mxid))
+		return _visible_to_node(event, mxid, room, history_visibility);
+
+	throw m::UNSUPPORTED
 	{
-		case m::id::USER:
-			return _visible_(event, m::user::id{mxid}, room, history_visibility);
-
-		case m::id::NODE:
-			return _visible_(event, m::node::id{mxid}, room, history_visibility);
-
-		default: throw m::UNSUPPORTED
-		{
-			"Cannot determine visibility for '%s' mxids",
-			reflect(m::sigil(mxid))
-		};
-	}
+		"Cannot determine visibility for '%s'", mxid
+	};
 }
 
 bool
