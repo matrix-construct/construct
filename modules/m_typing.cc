@@ -179,7 +179,7 @@ _handle_edu_m_typing(const m::event &event,
 	{
 		log::dwarning
 		{
-			typing_log, "Ignoring %s from %s for user %s",
+			typing_log, "Ignoring %s from %s for alien %s",
 			at<"type"_>(event),
 			at<"origin"_>(event),
 			string_view{user_id}

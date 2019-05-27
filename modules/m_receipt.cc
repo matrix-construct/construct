@@ -18,8 +18,8 @@ extern const m::hookfn<m::vm::eval &> _implicit_receipt;
 
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::event::id &, const time_t &);
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::edu::m_receipt::m_read &);
-static void handle_m_receipt_m_read(const m::room::id &, const json::object &);
-static void handle_m_receipt(const m::room::id &, const json::object &);
+static void handle_m_receipt_m_read(const m::event &, const m::room::id &, const json::object &);
+static void handle_m_receipt(const m::event &, const m::room::id &, const json::object &);
 static void handle_edu_m_receipt(const m::event &, m::vm::eval &);
 extern const m::hookfn<m::vm::eval &> _m_receipt_eval;
 
@@ -52,7 +52,12 @@ handle_edu_m_receipt(const m::event &event,
 	if(json::get<"room_id"_>(event))
 		return;
 
-	if(my_host(json::get<"origin"_>(event)))
+	const auto &origin
+	{
+		json::get<"origin"_>(event)
+	};
+
+	if(my_host(origin))
 		return;
 
 	const json::object &content
@@ -67,12 +72,13 @@ handle_edu_m_receipt(const m::event &event,
 			unquote(member.first)
 		};
 
-		handle_m_receipt(room_id, member.second);
+		handle_m_receipt(event, room_id, member.second);
 	}
 }
 
 void
-handle_m_receipt(const m::room::id &room_id,
+handle_m_receipt(const m::event &event,
+                 const m::room::id &room_id,
                  const json::object &content)
 {
 	for(const auto &member : content)
@@ -84,7 +90,7 @@ handle_m_receipt(const m::room::id &room_id,
 
 		if(type == "m.read")
 		{
-			handle_m_receipt_m_read(room_id, member.second);
+			handle_m_receipt_m_read(event, room_id, member.second);
 			continue;
 		}
 
@@ -98,7 +104,8 @@ handle_m_receipt(const m::room::id &room_id,
 }
 
 void
-handle_m_receipt_m_read(const m::room::id &room_id,
+handle_m_receipt_m_read(const m::event &event,
+                        const m::room::id &room_id,
                         const json::object &content)
 {
 	for(const auto &member : content)
@@ -107,6 +114,19 @@ handle_m_receipt_m_read(const m::room::id &room_id,
 		{
 			unquote(member.first)
 		};
+
+		if(user_id.host() != json::get<"origin"_>(event))
+		{
+			log::dwarning
+			{
+				receipt_log, "ignoring m.receipt m.read from '%s' in %s for alien %s.",
+				json::get<"origin"_>(event),
+				string_view{room_id},
+				string_view{user_id},
+			};
+
+			continue;
+		}
 
 		const json::object &content
 		{
