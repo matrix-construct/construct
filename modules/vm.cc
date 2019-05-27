@@ -638,6 +638,11 @@ ircd::m::vm::execute_pdu(eval &eval,
 		at<"room_id"_>(event)
 	};
 
+	const string_view &origin
+	{
+		at<"origin"_>(event)
+	};
+
 	const string_view &type
 	{
 		at<"type"_>(event)
@@ -653,6 +658,14 @@ ircd::m::vm::execute_pdu(eval &eval,
 		throw error
 		{
 			fault::EXISTS, "Event has already been evaluated."
+		};
+
+	if(m::room::server_acl::enable_write && !m::room::server_acl::check(room_id, origin))
+		throw m::ACCESS_DENIED
+		{
+			"Execution denied for '%s' by room %s server access control list.",
+			origin,
+			string_view{room_id}
 		};
 
 	if(opts.verify && !verify(event))

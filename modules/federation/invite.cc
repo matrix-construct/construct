@@ -96,6 +96,12 @@ put__invite(client &client,
 			"ID of room in request body does not match the path parameter."
 		};
 
+	if(m::room::server_acl::enable_write && !m::room::server_acl::check(room_id, request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted by the room's server access control list."
+		};
+
 	check_event(request, event);
 
 	thread_local char sigs[4_KiB];

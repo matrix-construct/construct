@@ -78,6 +78,12 @@ get__backfill(client &client,
 		url::decode(room_id, request.parv[0])
 	};
 
+	if(m::room::server_acl::enable_read && !m::room::server_acl::check(room_id, request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted by the room's server access control list."
+		};
+
 	m::event::id::buf event_id
 	{
 		request.query["v"]?

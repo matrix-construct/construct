@@ -67,6 +67,12 @@ get__make_leave(client &client,
 			"You are not permitted to spoof users on other hosts."
 		};
 
+	if(m::room::server_acl::enable_read && !m::room::server_acl::check(room_id, request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted by the room's server access control list."
+		};
+
 	const m::room room
 	{
 		room_id

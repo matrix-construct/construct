@@ -72,6 +72,18 @@ handle_edu_m_receipt(const m::event &event,
 			unquote(member.first)
 		};
 
+		if(m::room::server_acl::enable_write && !m::room::server_acl::check(room_id, origin))
+		{
+			log::dwarning
+			{
+				receipt_log, "Ignoring m.receipt from '%s' in %s :denied by m.room.server_acl.",
+				json::get<"origin"_>(event),
+				string_view{room_id},
+			};
+
+			continue;
+		}
+
 		handle_m_receipt(event, room_id, member.second);
 	}
 }

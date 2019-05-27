@@ -79,6 +79,12 @@ get__make_join(client &client,
 			string_view{room_id}
 		};
 
+	if(m::room::server_acl::enable_read && !m::room::server_acl::check(room_id, request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted by the room's server access control list."
+		};
+
 	if(!room.visible(user_id))
 		throw m::ACCESS_DENIED
 		{

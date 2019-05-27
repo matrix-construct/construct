@@ -101,6 +101,12 @@ put__send_join(client &client,
 			"Event origin must be you."
 		};
 
+	if(m::room::server_acl::enable_write && !m::room::server_acl::check(room_id, request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted by the room's server access control list."
+		};
+
 	m::vm::opts vmopts;
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	m::vm::eval eval

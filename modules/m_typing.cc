@@ -173,25 +173,46 @@ _handle_edu_m_typing(const m::event &event,
 		at<"user_id"_>(edu)
 	};
 
+	const auto &origin
+	{
+		at<"origin"_>(event)
+	};
+
 	// Check if this server can send an edu for this user. We make an exception
 	// for our server to allow the timeout worker to use this codepath.
-	if(!my_host(at<"origin"_>(event)) && user_id.host() != at<"origin"_>(event))
-	{
-		log::dwarning
+	if(!my_host(origin))
+		if(user_id.host() != origin)
 		{
-			typing_log, "Ignoring %s from %s for alien %s",
-			at<"type"_>(event),
-			at<"origin"_>(event),
-			string_view{user_id}
-		};
+			log::dwarning
+			{
+				typing_log, "Ignoring %s from %s for alien %s",
+				at<"type"_>(event),
+				origin,
+				string_view{user_id}
+			};
 
-		return;
-	}
+			return;
+		}
+
+	// Check if this server can write to the room based on the m.room.server_acl.
+	if(!my_host(origin))
+		if(m::room::server_acl::enable_write && !m::room::server_acl::check(room_id, origin))
+		{
+			log::dwarning
+			{
+				typing_log, "Ignoring %s from '%s' in %s :denied by m.room.server_acl.",
+				at<"type"_>(event),
+				origin,
+				string_view{room_id},
+			};
+
+			return;
+		}
 
 	// Update the typing state map for edu's from other servers only; the
 	// state map was already updated for our clients in the committer. Also
 	// condition for skipping redundant updates here too based on the state.
-	if(!my_host(at<"origin"_>(event)))
+	if(!my_host(origin))
 	{
 		// Check if the user is actually in the room. The check is in this
 		// branch for remote servers only because our committer above did this
@@ -203,7 +224,7 @@ _handle_edu_m_typing(const m::event &event,
 			{
 				typing_log, "Ignoring %s from %s for user %s because not in room '%s'",
 				at<"type"_>(event),
-				at<"origin"_>(event),
+				origin,
 				string_view{user_id},
 				string_view{room_id},
 			};
@@ -223,7 +244,7 @@ _handle_edu_m_typing(const m::event &event,
 	log::info
 	{
 		typing_log, "%s %s %s typing in %s",
-		at<"origin"_>(event),
+		origin,
 		string_view{user_id},
 		json::get<"typing"_>(edu)? "started"_sv : "stopped"_sv,
 		string_view{room_id}
