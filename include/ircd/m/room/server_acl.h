@@ -69,6 +69,8 @@ struct ircd::m::room::server_acl
 	server_acl(const m::room &, const json::object &content);
 	server_acl(const m::room &);
 	server_acl() = default;
+
+	static bool check(const m::id::room &, const net::hostport &server) noexcept;
 };
 
 inline

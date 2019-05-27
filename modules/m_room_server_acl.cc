@@ -131,6 +131,31 @@ ircd::m::room::server_acl::enable_send
 	{ "default",  true                                 },
 };
 
+bool
+ircd::m::room::server_acl::check(const m::room::id &room_id,
+                                 const net::hostport &server)
+noexcept try
+{
+	const server_acl server_acl
+	{
+		room_id
+	};
+
+	return server_acl(server);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Failed to check server_acl for '%s' in %s :%s",
+		string(server),
+		string_view{room_id},
+		e.what()
+	};
+
+	return false;
+}
+
 //
 // server_acl::server_acl
 //
