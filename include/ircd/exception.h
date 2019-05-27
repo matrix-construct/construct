@@ -98,10 +98,7 @@ struct ircd::exception
 	ssize_t generate(const string_view &fmt, const va_rtti &ap) noexcept;
 
   public:
-	const char *what() const noexcept override
-	{
-		return buf;
-	}
+	const char *what() const noexcept override;
 
 	exception(generate_skip_t = {}) noexcept
 	{

@@ -268,6 +268,13 @@ noexcept
 	return size;
 }
 
+const char *
+ircd::exception::what()
+const noexcept
+{
+	return buf;
+}
+
 //
 // terminate
 //
