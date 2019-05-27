@@ -50,8 +50,8 @@ run cd deps/rocksdb
 run git fetch --tags
 run git checkout $BRANCH
 NJOBS=`nproc`
-export CFLAGS="$CFLAGS -DROCKSDB_USE_RTTI"
-export CFLAGS="$CFLAGS -frtti"
+# export CFLAGS="$CFLAGS -DROCKSDB_USE_RTTI"
+# export CFLAGS="$CFLAGS -frtti"
 export CFLAGS="$CFLAGS -fPIC"
 export CFLAGS="$CFLAGS -ftls-model=initial-exec"
 export DISABLE_JEMALLOC=1
