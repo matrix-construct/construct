@@ -17,6 +17,16 @@ namespace ircd::m::events
 	using closure_bool = std::function<bool (const event::idx &, const event &)>;
 	using closure_type_bool = std::function<bool (const string_view &, const event::idx &)>;
 	using closure_sender_bool = std::function<bool (const id::user &, const event::idx &)>;
+	using closure_type_name_bool = std::function<bool (const string_view &)>;
+	using closure_sender_name_bool = std::function<bool (const id::user &)>;
+	using closure_origin_name_bool = std::function<bool (const string_view &)>;
+
+	bool for_each_type(const closure_type_name_bool &);
+	bool for_each_type(const string_view &prefix, const closure_type_name_bool &);
+	bool for_each_sender(const closure_sender_name_bool &);
+	bool for_each_sender(const string_view &hostlb, const closure_sender_name_bool &);
+	bool for_each_origin(const closure_origin_name_bool &);
+	bool for_each_origin(const string_view &prefix, const closure_origin_name_bool &);
 
 	bool for_each_in_type(const string_view &, const closure_type_bool &);
 	bool for_each_in_sender(const id::user &, const closure_sender_bool &);

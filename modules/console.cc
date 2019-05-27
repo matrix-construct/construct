@@ -6025,6 +6025,75 @@ console_cmd__events__in(opt &out, const string_view &line)
 	return console_cmd__events__in__type(out, line);
 }
 
+bool
+console_cmd__events__type(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"prefix"
+	}};
+
+	const string_view &prefix
+	{
+		param["prefix"]
+	};
+
+	m::events::for_each_type(prefix, [&out]
+	(const string_view &type)
+	{
+		out << type << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__events__sender(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"prefix"
+	}};
+
+	const string_view &prefix
+	{
+		param["prefix"]
+	};
+
+	m::events::for_each_sender(prefix, [&out]
+	(const m::user::id &user_id)
+	{
+		out << user_id << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__events__origin(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"prefix"
+	}};
+
+	const string_view &prefix
+	{
+		param["prefix"]
+	};
+
+	m::events::for_each_origin(prefix, [&out]
+	(const string_view &origin)
+	{
+		out << origin << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
 conf::item<size_t>
 events_dump_buffer_size
 {

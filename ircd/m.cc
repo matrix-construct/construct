@@ -2686,6 +2686,143 @@ ircd::m::events::for_each_in_type(const string_view &type,
 	return true;
 }
 
+bool
+ircd::m::events::for_each_type(const closure_type_name_bool &closure)
+{
+	return for_each_type(string_view{}, closure);
+}
+
+bool
+ircd::m::events::for_each_type(const string_view &prefix,
+                               const closure_type_name_bool &closure)
+{
+	db::column &column
+	{
+		dbs::event_type
+	};
+
+	const auto &prefixer
+	{
+		dbs::desc::events__event_type__pfx
+	};
+
+	string_view last;
+	char lastbuf[event::TYPE_MAX_SIZE];
+	for(auto it(column.lower_bound(prefix)); bool(it); ++it)
+	{
+		const auto &type
+		{
+			prefixer.get(it->first)
+		};
+
+		if(type == last)
+			continue;
+
+		if(!startswith(type, prefix))
+			break;
+
+		last = { lastbuf, copy(lastbuf, type) };
+		if(!closure(type))
+			return false;
+	}
+
+	return true;
+}
+
+bool
+ircd::m::events::for_each_sender(const closure_sender_name_bool &closure)
+{
+	return for_each_sender(string_view{}, closure);
+}
+
+bool
+ircd::m::events::for_each_sender(const string_view &hostlb,
+                                 const closure_sender_name_bool &closure)
+{
+	db::column &column
+	{
+		dbs::event_sender
+	};
+
+	const auto &prefixer
+	{
+		dbs::desc::events__event_sender__pfx
+	};
+
+	user::id::buf last;
+	for(auto it(column.lower_bound(hostlb)); bool(it); ++it)
+	{
+		const string_view &host
+		{
+			prefixer.get(it->first)
+		};
+
+		if(!startswith(host, hostlb))
+			break;
+
+		const auto &[localpart, event_idx]
+		{
+			dbs::event_sender_key(it->first.substr(size(host)))
+		};
+
+		if(last && host == last.host() && localpart == last.local())
+			continue;
+
+		last = m::user::id::buf
+		{
+			localpart, host
+		};
+
+		if(!closure(last))
+			return false;
+	}
+
+	return true;
+}
+
+bool
+ircd::m::events::for_each_origin(const closure_origin_name_bool &closure)
+{
+	return for_each_origin(string_view{}, closure);
+}
+
+bool
+ircd::m::events::for_each_origin(const string_view &prefix,
+                                 const closure_origin_name_bool &closure)
+{
+	db::column &column
+	{
+		dbs::event_sender
+	};
+
+	const auto &prefixer
+	{
+		dbs::desc::events__event_sender__pfx
+	};
+
+	string_view last;
+	char buf[rfc3986::DOMAIN_BUFSIZE];
+	for(auto it(column.lower_bound(prefix)); bool(it); ++it)
+	{
+		const string_view &host
+		{
+			prefixer.get(it->first)
+		};
+
+		if(host == last)
+			continue;
+
+		if(!startswith(host, prefix))
+			break;
+
+		last = { buf, copy(buf, host) };
+		if(!closure(host))
+			return false;
+	}
+
+	return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/filter.h
