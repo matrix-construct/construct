@@ -3,6 +3,10 @@
 # IRCd Modules
 #
 
+DEFS += \
+	-DIRCD_UNIT \
+	###
+
 AM_CXXFLAGS = \
 	-ftls-model=global-dynamic \
 	@EXTRA_CXXFLAGS@ \

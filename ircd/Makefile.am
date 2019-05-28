@@ -1,5 +1,9 @@
 AUTOMAKE_OPTIONS = foreign
 
+DEFS += \
+	-DIRCD_UNIT \
+	###
+
 AM_CXXFLAGS = \
 	-ftls-model=initial-exec \
 	@EXTRA_CXXFLAGS@ \
