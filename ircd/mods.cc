@@ -41,31 +41,6 @@ ircd::mods::autoload
 };
 
 //
-// (internal) dlsym hooker
-//
-
-extern "C" void *
-__libc_dlsym(void *, const char *);
-
-#ifdef IRCD_MODS_HOOK_DLSYM
-extern "C" void *
-dlsym(void *const handle,
-      const char *const symbol)
-{
-	#ifdef RB_DEBUG_MODS_HOOK_DLSYM
-	ircd::log::debug
-	{
-		ircd::mods::log, "handle:%p symbol lookup '%s'",
-		handle,
-		symbol
-	};
-	#endif
-
-	return __libc_dlsym(handle, symbol);
-}
-#endif
-
-//
 // mods::mod
 //
 
