@@ -8,6 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+// This file is platform specific. It is conditionally compiled and included
+// in libircd glibc+ELF supporting environments. Do not rely on these
+// definitions being available on all platforms.
+
 #include <RB_INC_LINK_H
 
 ///////////////////////////////////////////////////////////////////////////////

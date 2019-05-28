@@ -135,7 +135,7 @@ libircd_la_SOURCES += fs_aio.cc
 endif
 libircd_la_SOURCES += mods.cc
 if LINUX
-libircd_la_SOURCES += mods_dl.cc
+libircd_la_SOURCES += mods_ldso.cc
 endif
 libircd_la_SOURCES += db_port.cc
 libircd_la_SOURCES += db_env.cc
