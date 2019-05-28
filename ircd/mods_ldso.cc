@@ -12,7 +12,44 @@
 // in libircd glibc+ELF supporting environments. Do not rely on these
 // definitions being available on all platforms.
 
+#include <RB_INC_DLFCN_H
 #include <RB_INC_LINK_H
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// mods/ldso.h
+//
+
+bool
+ircd::mods::ldso::for_each(const link_name_closure &closure)
+{
+	return !for_each(link_map_closure{[&closure]
+	(struct link_map &map)
+	{
+		return closure(map.l_name);
+	}});
+}
+
+bool
+ircd::mods::ldso::for_each(const link_map_closure &closure)
+{
+	auto *map
+	{
+		reinterpret_cast<struct link_map *>(::dlopen(NULL, RTLD_NOLOAD|RTLD_LAZY))
+	};
+
+	if(unlikely(!map))
+		throw error
+		{
+			::dlerror()
+		};
+
+	for(; map; map = map->l_next)
+		if(!closure(*map))
+			return false;
+
+	return true;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //

@@ -67,6 +67,7 @@ namespace ircd::mods
 #include "sym_ptr.h"
 #include "import.h"
 #include "import_shared.h"
+#include "ldso.h"
 
 // Exports down into ircd::
 namespace ircd

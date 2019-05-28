@@ -1602,6 +1602,23 @@ console_cmd__mod__unload(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__mod__link_map(opt &out, const string_view &line)
+{
+	size_t i(0);
+	mods::ldso::for_each([&out, &i]
+	(const string_view &name)
+	{
+		out << std::setw(2) << (i++)
+		    << " " << name
+		    << std::endl;
+
+		return true;
+	});
+
+	return true;
+}
+
 //
 // ctx
 //
