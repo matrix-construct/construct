@@ -292,14 +292,15 @@ ircd::mods::mod::unload()
 	loaded.erase(name());
 	unloading.remove(this);
 	if(!mapi::static_destruction)
-	{
-		log.critical("Module \"%s\" is stuck and failing to unload.", name());
-		log.critical("Module \"%s\" may result in undefined behavior if not fixed.", name());
-	}
-	else log::info
-	{
-		log, "Unloaded '%s'", name()
-	};
+		log::critical
+		{
+			"Module \"%s\" is stuck and failing to unload.", name()
+		};
+	else
+		log::info
+		{
+			log, "Unloaded '%s'", name()
+		};
 
 	return true;
 }
