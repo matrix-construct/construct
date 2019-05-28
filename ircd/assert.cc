@@ -8,9 +8,22 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#if !defined(NDEBUG) && defined(RB_ASSERT)
 #include <RB_INC_SIGNAL_H
-#endif
+
+void
+__attribute__((visibility("default")))
+ircd::debugtrap()
+{
+	#if defined(__clang__)
+		__builtin_debugtrap();
+	#elif defined(__x86_64__)
+		__asm__ volatile ("int $3");
+	#elif defined(HAVE_SIGNAL_H)
+		raise(SIGTRAP);
+	#else
+		__builtin_trap();
+	#endif
+}
 
 #if !defined(NDEBUG) && defined(RB_ASSERT)
 void
@@ -29,10 +42,8 @@ __assert_fail(const char *__assertion,
 	if(strcmp(RB_ASSERT, "quit") == 0)
 		ircd::quit();
 
-	#if defined(__x86_64__)
 	else if(strcmp(RB_ASSERT, "trap") == 0)
-		__asm__ volatile ("int $3");
-	#endif
+		ircd::debugtrap();
 
 	#if defined(HAVE_EXCEPTION)
 	else if(strcmp(RB_ASSERT, "term") == 0)

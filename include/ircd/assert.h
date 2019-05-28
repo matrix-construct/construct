@@ -16,6 +16,18 @@
 // that. Alternative definitions to the standard library also exist in
 // ircd/assert.cc
 
+#pragma once
+#define HAVE_IRCD_ASSERT_H
+
+namespace ircd
+{
+	void debugtrap();
+}
+
+#if defined(RB_ASSERT) && defined(_ASSERT_H_DECLS)
+	#error "Do not include <assert.h> or <cassert> first."
+#endif
+
 #if defined(RB_ASSERT) && !defined(NDEBUG)
 #define _ASSERT_H_DECLS
 

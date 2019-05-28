@@ -199,6 +199,12 @@ try
 	if(line == "EXIT")
 		exit(0);
 
+	if(line == "TRAP")
+	{
+		ircd::debugtrap();
+		return true;
+	}
+
 	if(startswith(line, "record"))
 		return cmd__record();
 
