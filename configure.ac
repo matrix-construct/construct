@@ -607,7 +607,7 @@ dnl This warning is disabled to allow preprocessor statements like #endif to
 dnl contain text on the same line. This is used for example to write the
 dnl identifier in the matching prior #ifdef, which has no actual effect except
 dnl clarity.
-CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-extra-tokens], charybdis_cv_c_gcc_w_extra_tokens)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-endif-labels], charybdis_cv_c_gcc_w_endif_labels)
 
 dnl
 dnl List of compiler-specific / incompatible warning options
