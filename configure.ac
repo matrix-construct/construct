@@ -603,6 +603,12 @@ dnl rather than the rethrow. Unless throwing into a noexcept that way has UB in 
 dnl optimized build I really don't care and just want to type `throw;` thx.
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-terminate], charybdis_cv_c_gcc_w_terminate)
 
+dnl This warning is disabled to allow preprocessor statements like #endif to
+dnl contain text on the same line. This is used for example to write the
+dnl identifier in the matching prior #ifdef, which has no actual effect except
+dnl clarity.
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-extra-tokens], charybdis_cv_c_gcc_w_extra_tokens)
+
 dnl
 dnl List of compiler-specific / incompatible warning options
 dnl
