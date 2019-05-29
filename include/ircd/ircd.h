@@ -62,6 +62,7 @@
 #include "m/m.h"
 #include "resource/resource.h"
 #include "client.h"
+#include "magick.h"
 
 /// \brief Internet Relay Chat daemon. This is the principal namespace for IRCd.
 ///
