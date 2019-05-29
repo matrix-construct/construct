@@ -20,18 +20,32 @@
 // mods/ldso.h
 //
 
-bool
-ircd::mods::ldso::for_each(const link_name_closure &closure)
+size_t
+ircd::mods::ldso::count()
 {
-	return !for_each(link_map_closure{[&closure]
-	(struct link_map &map)
+	size_t ret(0);
+	for_each([&ret](const struct link_map &)
 	{
-		return closure(map.l_name);
-	}});
+		++ret;
+		return true;
+	});
+
+	return ret;
 }
 
 bool
-ircd::mods::ldso::for_each(const link_map_closure &closure)
+ircd::mods::ldso::has(const string_view &name)
+{
+	return !for_each([&name]
+	(const auto &link)
+	{
+		// false to break
+		return name == ldso::name(link)? false : true;
+	});
+}
+
+bool
+ircd::mods::ldso::for_each(const link_closure &closure)
 {
 	auto *map
 	{
@@ -49,6 +63,12 @@ ircd::mods::ldso::for_each(const link_map_closure &closure)
 			return false;
 
 	return true;
+}
+
+ircd::string_view
+ircd::mods::ldso::name(const struct link_map &map)
+{
+	return map.l_name;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -1603,14 +1603,14 @@ console_cmd__mod__unload(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__mod__link_map(opt &out, const string_view &line)
+console_cmd__mod__links(opt &out, const string_view &line)
 {
 	size_t i(0);
 	mods::ldso::for_each([&out, &i]
-	(const string_view &name)
+	(const auto &link)
 	{
 		out << std::setw(2) << (i++)
-		    << " " << name
+		    << " " << mods::ldso::name(link)
 		    << std::endl;
 
 		return true;

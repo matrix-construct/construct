@@ -24,9 +24,11 @@ extern "C"
 /// Platform-dependent interface on ELF+ld.so supporting compilations.
 namespace ircd::mods::ldso
 {
-	using link_map_closure = std::function<bool (struct link_map &)>;
-	using link_name_closure = std::function<bool (const string_view &)>;
+	using link_closure = std::function<bool (struct link_map &)>;
 
-	bool for_each(const link_map_closure &);
-	bool for_each(const link_name_closure &);
+	string_view name(const struct link_map &);
+
+	bool for_each(const link_closure &);
+	bool has(const string_view &name);
+	size_t count();
 }
