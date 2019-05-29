@@ -16,5 +16,15 @@ namespace ircd::magick
 {
 	IRCD_EXCEPTION(ircd::error, error)
 
+	struct thumbnail;
+
 	std::tuple<ulong, string_view> version();
 }
+
+struct ircd::magick::thumbnail
+:const_buffer
+{
+	thumbnail(const const_buffer &in,
+	          const mutable_buffer &out,
+	          const std::pair<size_t, size_t> &xy);
+};

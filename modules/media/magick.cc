@@ -99,6 +99,54 @@ ircd::magick::version()
 }
 
 //
+// thumbnail
+//
+
+ircd::magick::thumbnail::thumbnail(const const_buffer &in,
+                                   const mutable_buffer &out,
+                                   const std::pair<size_t, size_t> &xy)
+:const_buffer{[&in, &out, &xy]
+{
+	const custom_ptr<::ImageInfo> input_info
+	{
+		::CloneImageInfo(nullptr), ::DestroyImageInfo
+	};
+
+	const custom_ptr<::ImageInfo> output_info
+	{
+		::CloneImageInfo(nullptr), ::DestroyImageInfo
+	};
+
+	const custom_ptr<::Image> input
+	{
+		callex<::Image *>(::BlobToImage, input_info.get(), data(in), size(in)), ::DestroyImage // pollock
+	};
+
+	const custom_ptr<::Image> output
+	{
+		callex<::Image *>(::ThumbnailImage, input.get(), xy.first, xy.second), ::DestroyImage
+	};
+
+	size_t output_size(0);
+	const auto output_data
+	{
+		callex<void *>(::ImageToBlob, output_info.get(), output.get(), &output_size)
+	};
+
+	const const_buffer result
+	{
+		reinterpret_cast<char *>(output_data), output_size
+	};
+
+	return const_buffer
+	{
+		data(out), copy(out, result)
+	};
+}()}
+{
+}
+
+//
 // util
 //
 
