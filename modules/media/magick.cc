@@ -17,6 +17,7 @@ namespace ircd::magick
 	static void handle_error(const ::ExceptionType, const char *, const char *) noexcept;
 	static void handle_warning(const ::ExceptionType, const char *, const char *) noexcept;
 	static void handle_log(const ::ExceptionType, const char *) noexcept;
+	static uint handle_monitor(const char *, const int64_t, const uint64_t, ExceptionInfo *) noexcept;
 
 	template<class R, class F, class... A> static R call(F&&, A&&...);
 	template<class R, class F, class... A> static R callex(F&&, A&&...);
@@ -76,6 +77,7 @@ ircd::magick::init()
 	::SetWarningHandler(handle_warning);
 	::SetErrorHandler(handle_error);
 	::SetFatalErrorHandler(handle_fatal);
+	::SetMonitorHandler(handle_monitor);
 	::SetMagickResourceLimit(ThreadsResource, 1UL);
 
 	log::debug
@@ -220,6 +222,24 @@ ircd::magick::call(function&& f,
                    args&&... a)
 {
 	return f(std::forward<args>(a)...);
+}
+
+uint
+ircd::magick::handle_monitor(const char *text,
+                             const int64_t quantum,
+                             const uint64_t span,
+                             ExceptionInfo *ei)
+noexcept
+{
+	log::debug
+	{
+		log, "progress [%s] %ld:%ld",
+		text,
+		quantum,
+		span
+	};
+
+	return true; // return false to interrupt
 }
 
 void
