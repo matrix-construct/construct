@@ -105,7 +105,7 @@ catch(const m::error &e)
 	const std::string what(e.what());
 	const std::string content(e.content);
 	const ctx::exception_handler eh;
-	log::critical
+	log::error
 	{
 		log, "%s %s", what, content
 	};
@@ -120,7 +120,7 @@ catch(const std::exception &e)
 {
 	const std::string what(e.what());
 	const ctx::exception_handler eh;
-	log::critical
+	log::error
 	{
 		log, "%s", what
 	};
