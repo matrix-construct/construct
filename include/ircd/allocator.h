@@ -49,6 +49,13 @@ namespace ircd::allocator::vg
 	void set_noaccess(const const_buffer &);
 }
 
+/// Valgrind hypercall suite
+namespace ircd::vg
+{
+	size_t errors();
+	bool active();
+}
+
 namespace ircd
 {
 	using allocator::aligned_alloc;

@@ -9,6 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_MALLOC_H
+#include <RB_INC_VALGRIND_VALGRIND_H
 #include <RB_INC_VALGRIND_MEMCHECK_H
 
 // Uncomment or -D this #define to enable our own crude but simple ability to
@@ -69,6 +70,30 @@ ircd::allocator::trim(const size_t &pad)
 
 //
 // valgrind
+//
+
+bool
+ircd::vg::active()
+{
+	#ifdef HAVE_VALGRIND_VALGRIND_H
+	return RUNNING_ON_VALGRIND;
+	#else
+	return false;
+	#endif
+}
+
+size_t
+ircd::vg::errors()
+{
+	#ifdef HAVE_VALGRIND_VALGRIND_H
+	return VALGRIND_COUNT_ERRORS;
+	#else
+	return 0;
+	#endif
+}
+
+//
+// valgrind memcheck
 //
 
 void
