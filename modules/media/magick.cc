@@ -56,7 +56,7 @@ ircd::magick::init()
 
 	log::debug
 	{
-		"Initializing Magick Library include:%lu [%s] library:%lu [%s]",
+		log, "Initializing Magick Library version inc:%lu [%s] lib:%lu [%s]",
 		ulong(MagickLibVersion),
 		MagickLibVersionText,
 		std::get<0>(version),
@@ -66,7 +66,7 @@ ircd::magick::init()
 	if(std::get<0>(version) != ulong(MagickLibVersion))
 		log::warning
 		{
-			"Magick Library version mismatch headers:%lu library:%lu",
+			log, "Magick Library version mismatch headers:%lu library:%lu",
 			ulong(MagickLibVersion),
 			std::get<0>(version),
 		};
