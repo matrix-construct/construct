@@ -1261,6 +1261,69 @@ AC_SUBST(GMP_LIBS, ["-lgmp"])
 
 dnl
 dnl
+dnl ImageMagick support
+dnl
+dnl
+
+AC_SUBST(IMAGEMAGICK_CPPFLAGS, [])
+AC_SUBST(IMAGEMAGICK_LDFLAGS, [])
+AC_SUBST(IMAGEMAGICK_LIBS, [])
+
+AC_ARG_WITH(imagemagick-includes,
+AC_HELP_STRING([--with-imagemagick-includes=[[[DIR]]]], [Path to imagemagick include directory]),
+[
+	IMAGEMAGICK_CPPFLAGS+="-I$withval"
+], [
+	IMAGEMAGICK_CPPFLAGS+="-isystem /usr/include/GraphicsMagick/"
+])
+
+AC_ARG_WITH(imagemagick-libs,
+AC_HELP_STRING([--with-imagemagick-libs=[[[DIR]]]], [Path to imagemagick library directory]),
+[
+	IMAGEMAGICK_LDFLAGS+="-L$withval"
+], [])
+
+dnl push
+restore_cppflags=$CPPFLAGS
+restore_ldflags=$LDFLAGS
+CPPFLAGS+="${IMAGEMAGICK_CPPFLAGS}"
+LDFLAGS+="${IMAGEMAGICK_LDFLAGS}"
+
+RB_CHK_SYSHEADER([Magick++.h], [MAGICKPP_H])
+PKG_CHECK_MODULES(GraphicsMagickPP, [GraphicsMagick++],
+[
+	IMAGEMAGICK_LIBS+=" -lGraphicsMagick++"
+	have_imagemagickpp="yes"
+], [
+	have_imagemagickpp="no"
+])
+
+RB_CHK_SYSHEADER([wand/wand_api.h], [MAGICK_WAND_API_H])
+PKG_CHECK_MODULES(GraphicsMagickWand, [GraphicsMagickWand],
+[
+	IMAGEMAGICK_LIBS+=" -lGraphicsMagickWand"
+	have_imagemagickwand="yes"
+], [
+	have_imagemagickwand="no"
+])
+
+RB_CHK_SYSHEADER([magick/api.h], [MAGICK_API_H])
+PKG_CHECK_MODULES(GraphicsMagick, [GraphicsMagick],
+[
+	IMAGEMAGICK_LIBS+=" -lGraphicsMagick"
+	have_imagemagick="yes"
+], [
+	have_imagemagick="no"
+])
+
+dnl pop
+CPPFLAGS=$restore_cppflags
+LDFLAGS=$restore_ldflags
+
+AM_CONDITIONAL([IMAGEMAGICK], [test "x$have_imagemagick" = "xyes"])
+
+dnl
+dnl
 dnl boost support
 dnl
 dnl
@@ -1686,6 +1749,7 @@ echo "Sodium support .................... $have_sodium"
 echo "SSL support ....................... $have_ssl"
 echo "Crypto support .................... $have_crypto"
 echo "Magic support ..................... $have_magic"
+echo "ImageMagick support ............... $have_imagemagick"
 echo "Linux AIO support ................. $aio"
 echo "IPv6 support ...................... $ipv6"
 echo "Precompiled headers ............... $build_pch"
