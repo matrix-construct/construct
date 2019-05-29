@@ -72,7 +72,24 @@ ircd::magick::init()
 		};
 
 	::InitializeMagick(nullptr);
-	::SetLogMethod(handle_log);   //XXX assuming global
+	::SetLogMethod(handle_log);
+	::SetWarningHandler(handle_warning);
+	::SetErrorHandler(handle_error);
+	::SetFatalErrorHandler(handle_fatal);
+	::SetMagickResourceLimit(ThreadsResource, 1UL);
+
+	log::debug
+	{
+		log, "resource settings: pixel max:%lu:%lu height:%lu:%lu width:%lu:%lu; threads:%lu:%lu",
+		::GetMagickResource(PixelsResource),
+		::GetMagickResourceLimit(PixelsResource),
+		::GetMagickResource(HeightResource),
+		::GetMagickResourceLimit(HeightResource),
+		::GetMagickResource(WidthResource),
+		::GetMagickResourceLimit(WidthResource),
+		::GetMagickResource(ThreadsResource),
+		::GetMagickResourceLimit(ThreadsResource),
+	};
 }
 
 void
@@ -157,14 +174,14 @@ return_t
 ircd::magick::callex(function&& f,
                      args&&... a)
 {
-	const auto warning_handler(::SetWarningHandler(handle_warning));
-	const auto fatal_handler(::SetFatalErrorHandler(handle_fatal));
-	const auto error_handler(::SetErrorHandler(handle_exception));
+	const auto error_handler
+	{
+		::SetErrorHandler(handle_exception)
+	};
+
 	const unwind reset{[&]
 	{
-		::SetFatalErrorHandler(fatal_handler);
 		::SetErrorHandler(error_handler);
-		::SetWarningHandler(warning_handler);
 	}};
 
 	::ExceptionInfo ei;
@@ -191,16 +208,6 @@ void
 ircd::magick::callpf(function&& f,
                      args&&... a)
 {
-	const auto warning_handler(::SetWarningHandler(handle_warning));
-	const auto fatal_handler(::SetFatalErrorHandler(handle_fatal));
-	const auto error_handler(::SetErrorHandler(handle_error));
-	const unwind reset{[&]
-	{
-		::SetFatalErrorHandler(fatal_handler);
-		::SetErrorHandler(error_handler);
-		::SetWarningHandler(warning_handler);
-	}};
-
 	if(!call(f, std::forward<args>(a)...))
 		throw error{};
 }
@@ -212,16 +219,6 @@ return_t
 ircd::magick::call(function&& f,
                    args&&... a)
 {
-	const auto warning_handler(::SetWarningHandler(handle_warning));
-	const auto fatal_handler(::SetFatalErrorHandler(handle_fatal));
-	const auto error_handler(::SetErrorHandler(handle_error));
-	const unwind reset{[&]
-	{
-		::SetFatalErrorHandler(fatal_handler);
-		::SetErrorHandler(error_handler);
-		::SetWarningHandler(warning_handler);
-	}};
-
 	return f(std::forward<args>(a)...);
 }
 
