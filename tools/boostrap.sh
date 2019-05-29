@@ -175,8 +175,6 @@ run git submodule update --init --recursive --checkout libs/algorithm
 
 run git submodule update --init --recursive --checkout libs/locale
 
-run git submodule update --init --recursive --checkout libs/gil
-
 B2FLAGS="threading=$BTHREADING"
 B2FLAGS+=" variant=$BVARIANT"
 B2FLAGS+=" link=$BLINK"
