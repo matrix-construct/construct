@@ -34,6 +34,7 @@ struct ircd::magick::thumbnail
 	          const result_closure &);
 };
 
+/// Basic resize (library selected algorithm)
 struct ircd::magick::scale
 {
 	using dimensions = std::pair<size_t, size_t>; // x, y
@@ -44,6 +45,7 @@ struct ircd::magick::scale
 	      const result_closure &);
 };
 
+/// Shave off sides (center-crop to dimensions)
 struct ircd::magick::shave
 {
 	using offset = std::pair<ssize_t, ssize_t>; // x, y
@@ -56,6 +58,7 @@ struct ircd::magick::shave
 	      const result_closure &);
 };
 
+/// Crop to dimensions at offset
 struct ircd::magick::crop
 {
 	using offset = std::pair<ssize_t, ssize_t>; // x, y
