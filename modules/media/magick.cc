@@ -97,6 +97,7 @@ ircd::magick::init()
 	::SetWarningHandler(handle_warning);
 	::InitializeMagick(nullptr);
 	::SetLogMethod(handle_log);
+	//::SetLogEventMask("all"); // Pollutes stderr :/ can't fix
 	::SetMonitorHandler(handle_progress);
 	::SetMagickResourceLimit(ThreadsResource, 1UL);
 
@@ -205,16 +206,6 @@ ircd::magick::callex(function&& f,
 		call_mutex
 	};
 
-	const auto error_handler
-	{
-		::SetErrorHandler(handle_exception)
-	};
-
-	const unwind reset{[&]
-	{
-		::SetErrorHandler(error_handler);
-	}};
-
 	::ExceptionInfo ei;
 	GetExceptionInfo(&ei); // initializer
 	const unwind destroy{[&ei]
@@ -226,6 +217,16 @@ ircd::magick::callex(function&& f,
 	{
 		f(std::forward<args>(a)..., &ei)
 	};
+
+	const auto their_handler
+	{
+		::SetErrorHandler(handle_exception)
+	};
+
+	const unwind reset{[&their_handler]
+	{
+		::SetErrorHandler(their_handler);
+	}};
 
 	// exception comes out of here; if this is not safe we'll have to
 	// convey with a global or inspect ExceptionInfo manually.
@@ -270,7 +271,7 @@ ircd::magick::handle_progress(const char *text,
                               const int64_t quantum,
                               const uint64_t span,
                               ExceptionInfo *ei)
-noexcept
+noexcept try
 {
 	// This is a new job; reset any global state here
 	if(quantum == 0)
@@ -305,7 +306,40 @@ noexcept
 	last_quantum = quantum;
 
 	// return false to interrupt the job; set the exception saying why.
+	//
+	// If MonitorEvent (or any *Event) is the code the interruption is
+	// not an error and the operation will silently complete, possibly with
+	// incomplete or corrupt results (i guess? this might be ok for raster
+	// or optimization operations maybe which can go on indefinitely)
+	//
+	// If MonitorError (or any *Error) is the code we propagate the exception
+	// all the way back through our user.
+	//
 	return true;
+}
+catch(const ctx::interrupted &e)
+{
+	::ThrowException(ei, MonitorError, "interrupted", e.what());
+	ei->signature = MagickSignature; // ???
+	return false;
+}
+catch(const ctx::terminated &)
+{
+	::ThrowException(ei, MonitorError, "terminated", nullptr);
+	ei->signature = MagickSignature; // ???
+	return false;
+}
+catch(const std::exception &e)
+{
+	::ThrowLoggedException(ei, MonitorError, "error", e.what(), __FILE__, __FUNCTION__, __LINE__);
+	ei->signature = MagickSignature; // ???
+	return false;
+}
+catch(...)
+{
+	::ThrowLoggedException(ei, MonitorFatalError, "unknown", nullptr, __FILE__, __FUNCTION__, __LINE__);
+	ei->signature = MagickSignature; // ???
+	return false;
 }
 
 void
@@ -337,9 +371,10 @@ noexcept
 {
 	log::debug
 	{
-		log, "%s :%s",
-		::GetLocaleExceptionMessage(type, nullptr),
-		message
+		log, "(%d) %s :%s",
+		int(type),
+		::GetLocaleExceptionMessage(type, ""),
+		message,
 	};
 }
 
@@ -351,10 +386,11 @@ noexcept
 {
 	log::warning
 	{
-		log, "%s %s :%s",
-		::GetLocaleExceptionMessage(type, nullptr),
+		log, "(#%d) %s :%s :%s",
+		int(type),
+		::GetLocaleExceptionMessage(type, ""),
 		reason,
-		description
+		description,
 	};
 }
 
@@ -366,10 +402,11 @@ noexcept
 {
 	log::error
 	{
-		log, "%s %s :%s",
-		::GetLocaleExceptionMessage(type, nullptr),
+		log, "(#%d) %s :%s :%s",
+		int(type),
+		::GetLocaleExceptionMessage(type, ""),
 		reason,
-		description
+		description,
 	};
 }
 
@@ -381,10 +418,11 @@ noexcept
 {
 	log::critical
 	{
-		log, "%s %s :%s",
-		::GetLocaleExceptionMessage(type, nullptr),
+		log, "(#%d) %s :%s :%s",
+		int(type),
+		::GetLocaleExceptionMessage(type, ""),
 		reason,
-		description
+		description,
 	};
 
 	ircd::terminate();
@@ -395,11 +433,37 @@ ircd::magick::handle_exception(const ::ExceptionType type,
                                const char *const reason,
                                const char *const description)
 {
+	const auto &message
+	{
+		::GetLocaleExceptionMessage(type, "")?: "???"
+	};
+
+	thread_local char buf[exception::BUFSIZE];
+	const string_view what{fmt::sprintf
+	{
+		buf, "(#%d) %s :%s :%s",
+		int(type),
+		message,
+		reason,
+		description,
+	}};
+
+	log::derror
+	{
+		log, "%s", what
+	};
+
+	if(reason == "terminated"_sv)
+		throw ctx::terminated{};
+
+	if(reason == "interrupted"_sv)
+		throw ctx::interrupted
+		{
+			"%s", what
+		};
+
 	throw error
 	{
-		"%s %s :%s",
-		::GetLocaleExceptionMessage(type, nullptr),
-		reason,
-		description
+		"%s", what
 	};
 }
