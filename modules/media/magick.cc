@@ -385,7 +385,7 @@ namespace ircd::magick
 	// simultaneously. This race is possible if the progress callback yields
 	// and another context starts an operation. It is highly unlikely the lib
 	// can handle reentrancy on the same thread. Hitting thread mutexes within
-	// magick will also be catestrophic to ircd::ctx.
+	// magick will also be catastrophic to ircd::ctx.
 	ctx::mutex call_mutex;
 }
 

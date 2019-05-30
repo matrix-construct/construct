@@ -64,12 +64,12 @@ for its day to aid the virility of implementations. A vibrant and growing ecosys
 - **RocksDB** library 5.16.6.
 - **Sodium** library for curve ed25519.
 - **OpenSSL** library for HTTPS TLS / X.509.
-- **magic** library for MIME type recognition.
+- **Magic** library for MIME type recognition.
 
 ##### Optional
 
 - **zlib** or **lz4** or **snappy** database compressions.
-- **GraphicsMagick** media thumbnails.
+- **GraphicsMagick** for media thumbnails.
 
 ##### Build tools
 
