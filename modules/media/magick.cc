@@ -12,6 +12,8 @@
 
 namespace ircd::magick
 {
+	struct transform;
+
 	static void handle_exception(const ::ExceptionType, const char *, const char *);
 	static void handle_fatal(const ::ExceptionType, const char *, const char *) noexcept;
 	static void handle_error(const ::ExceptionType, const char *, const char *) noexcept;
@@ -33,6 +35,15 @@ namespace ircd::magick
 	extern conf::item<uint64_t> yield_interval;
 	extern log::log log;
 }
+
+struct ircd::magick::transform
+{
+	using input = std::tuple<const ::ImageInfo &, const ::Image *>;
+	using output = std::function<void (const const_buffer &)>;
+	using transformer = std::function<::Image *(const input &)>;
+
+	transform(const const_buffer &, const output &, const transformer &);
+};
 
 ircd::mapi::header
 IRCD_MODULE
@@ -143,41 +154,16 @@ ircd::magick::version()
 //
 
 ircd::magick::thumbnail::thumbnail(const const_buffer &in,
-                                   const dimensions &xy,
-                                   const result_closure &closure)
+                                   const dimensions &dim,
+                                   const result_closure &out)
 {
-	const custom_ptr<::ImageInfo> input_info
+	transform
 	{
-		::CloneImageInfo(nullptr), ::DestroyImageInfo
+		in, out, [&dim](const auto &image)
+		{
+			return callex<::Image *>(::ThumbnailImage, std::get<const ::Image *>(image), dim.first, dim.second);
+		}
 	};
-
-	const custom_ptr<::ImageInfo> output_info
-	{
-		::CloneImageInfo(nullptr), ::DestroyImageInfo
-	};
-
-	const custom_ptr<::Image> input
-	{
-		callex<::Image *>(::BlobToImage, input_info.get(), data(in), size(in)), ::DestroyImage // pollock
-	};
-
-	const custom_ptr<::Image> output
-	{
-		callex<::Image *>(::ThumbnailImage, input.get(), xy.first, xy.second), ::DestroyImage
-	};
-
-	size_t output_size(0);
-	const auto output_data
-	{
-		callex<void *>(::ImageToBlob, output_info.get(), output.get(), &output_size)
-	};
-
-	const const_buffer result
-	{
-		reinterpret_cast<char *>(output_data), output_size
-	};
-
-	closure(result);
 }
 
 //
@@ -186,40 +172,15 @@ ircd::magick::thumbnail::thumbnail(const const_buffer &in,
 
 ircd::magick::scale::scale(const const_buffer &in,
                            const dimensions &dim,
-                           const result_closure &closure)
+                           const result_closure &out)
 {
-	const custom_ptr<::ImageInfo> input_info
+	transform
 	{
-		::CloneImageInfo(nullptr), ::DestroyImageInfo
+		in, out, [&dim](const auto &image)
+		{
+			return callex<::Image *>(::ScaleImage, std::get<const ::Image *>(image), dim.first, dim.second);
+		}
 	};
-
-	const custom_ptr<::ImageInfo> output_info
-	{
-		::CloneImageInfo(nullptr), ::DestroyImageInfo
-	};
-
-	const custom_ptr<::Image> input
-	{
-		callex<::Image *>(::BlobToImage, input_info.get(), data(in), size(in)), ::DestroyImage
-	};
-
-	const custom_ptr<::Image> output
-	{
-		callex<::Image *>(::ScaleImage, input.get(), dim.first, dim.second), ::DestroyImage
-	};
-
-	size_t output_size(0);
-	const auto output_data
-	{
-		callex<void *>(::ImageToBlob, output_info.get(), output.get(), &output_size)
-	};
-
-	const const_buffer result
-	{
-		reinterpret_cast<char *>(output_data), output_size
-	};
-
-	closure(result);
 }
 
 //
@@ -229,23 +190,8 @@ ircd::magick::scale::scale(const const_buffer &in,
 ircd::magick::shave::shave(const const_buffer &in,
                            const dimensions &dim,
                            const offset &off,
-                           const result_closure &closure)
+                           const result_closure &out)
 {
-	const custom_ptr<::ImageInfo> input_info
-	{
-		::CloneImageInfo(nullptr), ::DestroyImageInfo
-	};
-
-	const custom_ptr<::ImageInfo> output_info
-	{
-		::CloneImageInfo(nullptr), ::DestroyImageInfo
-	};
-
-	const custom_ptr<::Image> input
-	{
-		callex<::Image *>(::BlobToImage, input_info.get(), data(in), size(in)), ::DestroyImage
-	};
-
 	const ::RectangleInfo geometry
 	{
 		dim.first,   // width
@@ -254,23 +200,13 @@ ircd::magick::shave::shave(const const_buffer &in,
 		off.second,  // y
 	};
 
-	const custom_ptr<::Image> output
+	transform
 	{
-		callex<::Image *>(::ShaveImage, input.get(), &geometry), ::DestroyImage
+		in, out, [&geometry](const auto &image)
+		{
+			return callex<::Image *>(::ShaveImage, std::get<const ::Image *>(image), &geometry);
+		}
 	};
-
-	size_t output_size(0);
-	const auto output_data
-	{
-		callex<void *>(::ImageToBlob, output_info.get(), output.get(), &output_size)
-	};
-
-	const const_buffer result
-	{
-		reinterpret_cast<char *>(output_data), output_size
-	};
-
-	closure(result);
 }
 
 //
@@ -280,24 +216,8 @@ ircd::magick::shave::shave(const const_buffer &in,
 ircd::magick::crop::crop(const const_buffer &in,
                          const dimensions &dim,
                          const offset &off,
-                         const result_closure &closure)
+                         const result_closure &out)
 {
-	const custom_ptr<::ImageInfo> input_info
-	{
-		::CloneImageInfo(nullptr), ::DestroyImageInfo
-	};
-
-	const custom_ptr<::ImageInfo> output_info
-	{
-		::CloneImageInfo(nullptr), ::DestroyImageInfo
-	};
-
-	const custom_ptr<::Image> input
-	{
-		callex<::Image *>(::BlobToImage, input_info.get(), data(in), size(in)), ::DestroyImage
-	};
-
-	// Note: negative offsets appear to just reduce the dimension in my limited test
 	const ::RectangleInfo geometry
 	{
 		dim.first,   // width
@@ -306,15 +226,51 @@ ircd::magick::crop::crop(const const_buffer &in,
 		off.second,  // y
 	};
 
-	const custom_ptr<::Image> output
+	transform
 	{
-		callex<::Image *>(::CropImage, input.get(), &geometry), ::DestroyImage
+		in, out, [&geometry](const auto &image)
+		{
+			return callex<::Image *>(::CropImage, std::get<const ::Image *>(image), &geometry);
+		}
+	};
+}
+
+//
+// transform (internal)
+//
+
+ircd::magick::transform::transform(const const_buffer &input,
+                                   const output &output,
+                                   const transformer &transformer)
+{
+	const custom_ptr<::ImageInfo> input_info
+	{
+		::CloneImageInfo(nullptr),
+		::DestroyImageInfo
+	};
+
+	const custom_ptr<::ImageInfo> output_info
+	{
+		::CloneImageInfo(nullptr),
+		::DestroyImageInfo
+	};
+
+	const custom_ptr<::Image> input_image
+	{
+		callex<::Image *>(::BlobToImage, input_info.get(), data(input), size(input)),
+		::DestroyImage // pollock
+	};
+
+	const custom_ptr<::Image> output_image
+	{
+		transformer({*input_info, input_image.get()}),
+		::DestroyImage
 	};
 
 	size_t output_size(0);
 	const auto output_data
 	{
-		callex<void *>(::ImageToBlob, output_info.get(), output.get(), &output_size)
+		callex<void *>(::ImageToBlob, output_info.get(), output_image.get(), &output_size)
 	};
 
 	const const_buffer result
@@ -322,11 +278,11 @@ ircd::magick::crop::crop(const const_buffer &in,
 		reinterpret_cast<char *>(output_data), output_size
 	};
 
-	closure(result);
+	output(result);
 }
 
 //
-// util
+// util (internal)
 //
 
 namespace ircd::magick
