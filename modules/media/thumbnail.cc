@@ -32,7 +32,7 @@ decltype(ircd::m::media::thumbnail::width_min)
 ircd::m::media::thumbnail::width_min
 {
 	{ "name",     "ircd.m.media.thumbnail.width.min" },
-	{ "default",  128L                               },
+	{ "default",  16L                                },
 };
 
 decltype(ircd::m::media::thumbnail::width_max)
@@ -46,7 +46,7 @@ decltype(ircd::m::media::thumbnail::height_min)
 ircd::m::media::thumbnail::height_min
 {
 	{ "name",     "ircd.m.media.thumbnail.height.min" },
-	{ "default",  128L                                },
+	{ "default",  16L                                 },
 };
 
 decltype(ircd::m::media::thumbnail::height_max)
