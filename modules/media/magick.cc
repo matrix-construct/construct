@@ -26,6 +26,8 @@ namespace ircd::magick
 	static void init();
 	static void fini();
 
+	extern conf::item<uint64_t> yield_threshold;
+	extern conf::item<uint64_t> yield_interval;
 	extern log::log log;
 }
 
@@ -41,6 +43,20 @@ decltype(ircd::magick::log)
 ircd::magick::log
 {
 	"magick"
+};
+
+decltype(ircd::magick::yield_threshold)
+ircd::magick::yield_threshold
+{
+	{ "name",    "ircd.magick.yield.threshold" },
+	{ "default", 1000L                         },
+};
+
+decltype(ircd::magick::yield_interval)
+ircd::magick::yield_interval
+{
+	{ "name",    "ircd.magick.yield.interval" },
+	{ "default", 768L                         },
 };
 
 //
@@ -238,6 +254,13 @@ ircd::magick::call(function&& f,
 	return f(std::forward<args>(a)...);
 }
 
+namespace ircd::magick
+{
+	static thread_local uint64_t job_ctr;
+	static thread_local int64_t last_quantum;
+	static thread_local uint64_t last_yield;
+}
+
 uint
 ircd::magick::handle_progress(const char *text,
                               const int64_t quantum,
@@ -245,36 +268,40 @@ ircd::magick::handle_progress(const char *text,
                               ExceptionInfo *ei)
 noexcept
 {
+	// This is a new job; reset any global state here
+	if(quantum == 0)
+	{
+		++job_ctr;
+		last_quantum = 0;
+		last_yield = 0;
+	}
+
 	#ifdef IRCD_MAGICK_DEBUG_PROGRESS
 	log::debug
 	{
-		log, "progress %ld/%ld :%s",
+		log, "job:%lu progress %2.2lf pct (%ld/%ld) :%s",
+		job_ctr,
+		(quantum / double(span) * 100.0),
 		quantum,
 		span,
 		text,
 	};
 	#endif
 
-	// Global state between calls.
-	thread_local size_t last[2];
-
-	// This is a new job; reset any global state here
-	if(quantum == 0)
+	// This is a larger job; we yield this ircd::ctx at interval
+	if(span > uint64_t(yield_threshold))
 	{
-		last[0] = 0;
-		last[1] = 0;
+		if(quantum - last_yield > uint64_t(yield_interval))
+		{
+			last_yield = quantum;
+			ctx::yield();
+		}
 	}
 
-	//TODO: conf
-	// This is a larger job; we yield this ircd::ctx every 250 quanta.
-	if(span > 768 && quantum - last[1] > 500)
-	{
-		last[1] = quantum;
-		ctx::yield();
-	}
+	last_quantum = quantum;
 
-	last[0] = quantum;
-	return true; // return false to interrupt
+	// return false to interrupt the job; set the exception saying why.
+	return true;
 }
 
 void
