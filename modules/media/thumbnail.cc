@@ -138,17 +138,16 @@ get__thumbnail_local(client &client,
 		};
 	});
 
-	// Send HTTP head to client
-	const resource::response response
+	const unique_buffer<mutable_buffer> buf
 	{
-		client, http::OK, content_type, file_size
+		file_size
 	};
 
-	size_t sent_size{0};
-	const auto sink{[&client, &sent_size]
+	size_t copied(0);
+	const auto sink{[&buf, &copied]
 	(const const_buffer &block)
 	{
-		sent_size += client.write_all(block);
+		copied += copy(buf + copied, block);
 	}};
 
 	const size_t read_size
@@ -156,20 +155,45 @@ get__thumbnail_local(client &client,
 		read_each_block(room, sink)
 	};
 
-	if(unlikely(read_size != file_size)) log::error
+	if(unlikely(read_size != file_size || file_size != copied))
+		throw ircd::error
+		{
+			"File %s/%s [%s] size mismatch: expected %zu got %zu copied %zu",
+			hostname,
+			mediaid,
+			string_view{room.room_id},
+			file_size,
+			read_size,
+			copied
+		};
+
+	const auto width
 	{
-		media_log, "File %s/%s [%s] size mismatch: expected %zu got %zu",
-		hostname,
-		mediaid,
-		string_view{room.room_id},
-		file_size,
-		read_size
+		request.query.get<size_t>("width", 0)
 	};
 
-	// Have to kill client here after failing content length expectation.
-	if(unlikely(read_size != file_size))
-		client.close(net::dc::RST, net::close_ignore);
+	const auto height
+	{
+		request.query.get<size_t>("height", 0)
+	};
 
-	assert(read_size == sent_size);
-	return response;
+	if(!width || !height || width > 1536 || height > 1536) // TODO: confs..
+		return resource::response
+		{
+			client, buf, content_type
+		};
+
+	magick::thumbnail
+	{
+		buf, {width, height}, [&client, &content_type]
+		(const const_buffer &buf)
+		{
+			resource::response
+			{
+				client, buf, content_type
+			};
+		}
+	};
+
+	return {};
 }
