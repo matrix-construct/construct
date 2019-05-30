@@ -18,6 +18,7 @@ namespace ircd::magick
 
 	struct crop;
 	struct shave;
+	struct scale;
 	struct thumbnail;
 
 	std::tuple<ulong, string_view> version();
@@ -31,6 +32,16 @@ struct ircd::magick::thumbnail
 	thumbnail(const const_buffer &in,
 	          const dimensions &,
 	          const result_closure &);
+};
+
+struct ircd::magick::scale
+{
+	using dimensions = std::pair<size_t, size_t>; // x, y
+	using result_closure = std::function<void (const const_buffer &)>;
+
+	scale(const const_buffer &in,
+	      const dimensions &,
+	      const result_closure &);
 };
 
 struct ircd::magick::shave

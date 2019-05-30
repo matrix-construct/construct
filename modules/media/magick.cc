@@ -181,6 +181,48 @@ ircd::magick::thumbnail::thumbnail(const const_buffer &in,
 }
 
 //
+// scale
+//
+
+ircd::magick::scale::scale(const const_buffer &in,
+                           const dimensions &dim,
+                           const result_closure &closure)
+{
+	const custom_ptr<::ImageInfo> input_info
+	{
+		::CloneImageInfo(nullptr), ::DestroyImageInfo
+	};
+
+	const custom_ptr<::ImageInfo> output_info
+	{
+		::CloneImageInfo(nullptr), ::DestroyImageInfo
+	};
+
+	const custom_ptr<::Image> input
+	{
+		callex<::Image *>(::BlobToImage, input_info.get(), data(in), size(in)), ::DestroyImage
+	};
+
+	const custom_ptr<::Image> output
+	{
+		callex<::Image *>(::ScaleImage, input.get(), dim.first, dim.second), ::DestroyImage
+	};
+
+	size_t output_size(0);
+	const auto output_data
+	{
+		callex<void *>(::ImageToBlob, output_info.get(), output.get(), &output_size)
+	};
+
+	const const_buffer result
+	{
+		reinterpret_cast<char *>(output_data), output_size
+	};
+
+	closure(result);
+}
+
+//
 // shave
 //
 
