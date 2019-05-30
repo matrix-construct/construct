@@ -17,7 +17,7 @@ namespace ircd::magick
 	static void handle_error(const ::ExceptionType, const char *, const char *) noexcept;
 	static void handle_warning(const ::ExceptionType, const char *, const char *) noexcept;
 	static void handle_log(const ::ExceptionType, const char *) noexcept;
-	static uint handle_monitor(const char *, const int64_t, const uint64_t, ExceptionInfo *) noexcept;
+	static uint handle_progress(const char *, const int64_t, const uint64_t, ExceptionInfo *) noexcept;
 
 	template<class R, class F, class... A> static R call(F&&, A&&...);
 	template<class R, class F, class... A> static R callex(F&&, A&&...);
@@ -77,7 +77,7 @@ ircd::magick::init()
 	::SetWarningHandler(handle_warning);
 	::SetErrorHandler(handle_error);
 	::SetFatalErrorHandler(handle_fatal);
-	::SetMonitorHandler(handle_monitor);
+	::SetMonitorHandler(handle_progress);
 	::SetMagickResourceLimit(ThreadsResource, 1UL);
 
 	log::debug
@@ -163,6 +163,16 @@ ircd::magick::thumbnail::thumbnail(const const_buffer &in,
 // util
 //
 
+namespace ircd::magick
+{
+	// It is likely that we can't have two contexts enter libmagick
+	// simultaneously. This race is possible if the progress callback yields
+	// and another context starts an operation. It is highly unlikely the lib
+	// can handle reentrancy on the same thread. Hitting thread mutexes within
+	// magick will also be catestrophic to ircd::ctx.
+	ctx::mutex call_mutex;
+}
+
 template<class return_t,
          class function,
          class... args>
@@ -170,6 +180,11 @@ return_t
 ircd::magick::callex(function&& f,
                      args&&... a)
 {
+	const std::lock_guard lock
+	{
+		call_mutex
+	};
+
 	const auto error_handler
 	{
 		::SetErrorHandler(handle_exception)
@@ -215,24 +230,50 @@ return_t
 ircd::magick::call(function&& f,
                    args&&... a)
 {
+	const std::lock_guard lock
+	{
+		call_mutex
+	};
+
 	return f(std::forward<args>(a)...);
 }
 
 uint
-ircd::magick::handle_monitor(const char *text,
-                             const int64_t quantum,
-                             const uint64_t span,
-                             ExceptionInfo *ei)
+ircd::magick::handle_progress(const char *text,
+                              const int64_t quantum,
+                              const uint64_t span,
+                              ExceptionInfo *ei)
 noexcept
 {
+	#ifdef IRCD_MAGICK_DEBUG_PROGRESS
 	log::debug
 	{
-		log, "progress [%s] %ld:%ld",
-		text,
+		log, "progress %ld/%ld :%s",
 		quantum,
-		span
+		span,
+		text,
 	};
+	#endif
 
+	// Global state between calls.
+	thread_local size_t last[2];
+
+	// This is a new job; reset any global state here
+	if(quantum == 0)
+	{
+		last[0] = 0;
+		last[1] = 0;
+	}
+
+	//TODO: conf
+	// This is a larger job; we yield this ircd::ctx every 250 quanta.
+	if(span > 768 && quantum - last[1] > 500)
+	{
+		last[1] = quantum;
+		ctx::yield();
+	}
+
+	last[0] = quantum;
 	return true; // return false to interrupt
 }
 
