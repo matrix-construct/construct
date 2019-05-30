@@ -20,10 +20,24 @@ namespace ircd::magick
 	struct shave;
 	struct scale;
 	struct thumbnail;
+	struct thumbcrop;
 
 	std::tuple<ulong, string_view> version();
 }
 
+/// Composite thumbnailer to resize close to the requested dimension but
+/// preserving original aspect ratio; then crop to requested dimension.
+struct ircd::magick::thumbcrop
+{
+	using dimensions = std::pair<size_t, size_t>; // x, y
+	using result_closure = std::function<void (const const_buffer &)>;
+
+	thumbcrop(const const_buffer &in,
+	          const dimensions &,
+	          const result_closure &);
+};
+
+/// Fast thumbnailer
 struct ircd::magick::thumbnail
 {
 	using dimensions = std::pair<size_t, size_t>; // x, y

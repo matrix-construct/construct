@@ -157,6 +157,63 @@ ircd::magick::version()
 }
 
 //
+// thumbcrop
+//
+
+ircd::magick::thumbcrop::thumbcrop(const const_buffer &in,
+                                   const dimensions &req,
+                                   const result_closure &out)
+{
+	crop::offset offset;
+	const auto scaler{[&req, &offset]
+	(const auto &image)
+	{
+		const auto &img_p
+		{
+			std::get<const ::Image *>(image)
+		};
+
+		const auto &req_x(req.first);
+		const auto &req_y(req.second);
+		const auto &img_x(img_p->columns);
+		const auto &img_y(img_p->rows);
+
+		const bool aspect
+		{
+			req_x * img_y < req_y * img_x
+		};
+
+		const dimensions scaled
+		{
+			aspect? req_y * img_x / img_y : req_x,
+			aspect? req_y : req_x * img_y / img_x,
+		};
+
+		offset =
+		{
+			aspect? (scaled.first - req_x) / 2.0 : 0,
+			aspect? 0 : (scaled.second - req_y) / 2.0,
+		};
+
+		return callex<::Image *>(::ThumbnailImage, img_p, scaled.first, scaled.second);
+	}};
+
+	const auto cropper{[&req, &out, &offset]
+	(const const_buffer &in)
+	{
+		crop
+		{
+			in, req, offset, out
+		};
+	}};
+
+	transform
+	{
+		in, cropper, scaler
+	};
+}
+
+//
 // thumbnail
 //
 
