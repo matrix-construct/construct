@@ -81,8 +81,7 @@ get__thumbnail_local(client &client,
                      const resource::request &request,
                      const string_view &server,
                      const string_view &file,
-                     const m::room &room,
-                     const std::pair<size_t, size_t> &dimension);
+                     const m::room &room);
 
 resource::response
 get__thumbnail(client &client,
@@ -124,25 +123,7 @@ get__thumbnail(client &client,
 		download(server, file, user_id)
 	};
 
-	std::pair<size_t, size_t> dimension
-	{
-		request.query.get<size_t>("width", 0),
-		request.query.get<size_t>("height", 0)
-	};
-
-	if(dimension.first)
-	{
-		dimension.first = std::max(dimension.first, size_t(width_min));
-		dimension.first = std::min(dimension.first, size_t(width_max));
-	}
-
-	if(dimension.second)
-	{
-		dimension.second = std::max(dimension.second, size_t(height_min));
-		dimension.second = std::min(dimension.second, size_t(height_max));
-	}
-
-	return get__thumbnail_local(client, request, server, file, room_id, dimension);
+	return get__thumbnail_local(client, request, server, file, room_id);
 }
 
 static resource::method
@@ -162,9 +143,31 @@ get__thumbnail_local(client &client,
                      const resource::request &request,
                      const string_view &hostname,
                      const string_view &mediaid,
-                     const m::room &room,
-                     const std::pair<size_t, size_t> &dimension)
+                     const m::room &room)
 {
+	const auto &method
+	{
+		request.query.get("method", "scale"_sv)
+	};
+
+	std::pair<size_t, size_t> dimension
+	{
+		request.query.get<size_t>("width", 0),
+		request.query.get<size_t>("height", 0)
+	};
+
+	if(dimension.first)
+	{
+		dimension.first = std::max(dimension.first, size_t(width_min));
+		dimension.first = std::min(dimension.first, size_t(width_max));
+	}
+
+	if(dimension.second)
+	{
+		dimension.second = std::max(dimension.second, size_t(height_min));
+		dimension.second = std::min(dimension.second, size_t(height_max));
+	}
+
 	static const m::event::fetch::opts fopts
 	{
 		m::event::keys::include {"content"}
@@ -233,24 +236,40 @@ get__thumbnail_local(client &client,
 			copied
 		};
 
-	//TODO: condition if magick available
-	if(!enable || !dimension.first || !dimension.second)
+	const bool fallback // Reasons to just send the original image
+	{
+		!enable ||
+		!dimension.first ||
+		!dimension.second ||
+		(method != "scale" && method != "crop")
+		//TODO: condition if magick is actually loaded
+	};
+
+	if(fallback)
 		return resource::response
 		{
 			client, buf, content_type
 		};
 
-	magick::thumbnail
+	const auto closure{[&client, &content_type]
+	(const const_buffer &buf)
 	{
-		buf, dimension, [&client, &content_type]
-		(const const_buffer &buf)
+		resource::response
 		{
-			resource::response
-			{
-				client, buf, content_type
-			};
-		}
-	};
+			client, buf, content_type
+		};
+	}};
+
+	if(method == "crop")
+		magick::thumbcrop
+		{
+			buf, dimension, closure
+		};
+	else
+		magick::thumbnail
+		{
+			buf, dimension, closure
+		};
 
 	return {}; // responded from closure.
 }
