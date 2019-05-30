@@ -126,14 +126,11 @@ forget to `export CXX=g++-7` before running `./configure` on that system.
 
 - Boost: The required version is available through `apt` as `boost-all-dev` on
 Ubuntu Cosmic (18.10). All earlier releases (including 18.04 LTS) can configure
-with `--with-included-boost` as instructed below (or obtain that package instead).
+with `--with-included-boost` as instructed below.
 
-- OpenSSL: We use 1.0.x for now. Systems that default to 1.1.x will need to
-`./configure` with options that find 1.0.x files. Arch Linux users can use
-`./configure --with-ssl-includes=/usr/include/openssl-1.0`
-
-- RocksDB: All users should configure with `--with-included-rocksdb` as
-instructed below.
+- RocksDB: The required version is available through `apt` as `librocksdb-dev` on
+Ubuntu Disco (19.04). All earlier releases (including 18.04 LTS) can configure
+with `--with-included-rocksdb` as instructed below.
 
 #### STANDALONE BUILD PROCEDURE
 
