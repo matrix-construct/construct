@@ -22,9 +22,11 @@ namespace ircd::magick
 }
 
 struct ircd::magick::thumbnail
-:const_buffer
 {
+	using dimensions = std::pair<size_t, size_t>; // x, y
+	using result_closure = std::function<void (const const_buffer &)>;
+
 	thumbnail(const const_buffer &in,
-	          const mutable_buffer &out,
-	          const std::pair<size_t, size_t> &xy);
+	          const dimensions &,
+	          const result_closure &);
 };

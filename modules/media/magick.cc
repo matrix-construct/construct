@@ -122,9 +122,8 @@ ircd::magick::version()
 //
 
 ircd::magick::thumbnail::thumbnail(const const_buffer &in,
-                                   const mutable_buffer &out,
-                                   const std::pair<size_t, size_t> &xy)
-:const_buffer{[&in, &out, &xy]
+                                   const dimensions &xy,
+                                   const result_closure &closure)
 {
 	const custom_ptr<::ImageInfo> input_info
 	{
@@ -157,12 +156,7 @@ ircd::magick::thumbnail::thumbnail(const const_buffer &in,
 		reinterpret_cast<char *>(output_data), output_size
 	};
 
-	return const_buffer
-	{
-		data(out), copy(out, result)
-	};
-}()}
-{
+	closure(result);
 }
 
 //
