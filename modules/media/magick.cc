@@ -17,6 +17,9 @@ namespace ircd::magick
 	static void handle_error(const ::ExceptionType, const char *, const char *) noexcept;
 	static void handle_warning(const ::ExceptionType, const char *, const char *) noexcept;
 	static void handle_log(const ::ExceptionType, const char *) noexcept;
+	static void *handle_realloc(void *, size_t) noexcept;
+	static void *handle_malloc(size_t) noexcept;
+	static void handle_free(void *) noexcept;
 	static uint handle_progress(const char *, const int64_t, const uint64_t, ExceptionInfo *) noexcept;
 
 	template<class R, class F, class... A> static R call(F&&, A&&...);
@@ -88,11 +91,12 @@ ircd::magick::init()
 			std::get<0>(version),
 		};
 
+	::MagickAllocFunctions(handle_free, handle_malloc, handle_realloc);
+	::SetFatalErrorHandler(handle_fatal);
+	::SetErrorHandler(handle_error);
+	::SetWarningHandler(handle_warning);
 	::InitializeMagick(nullptr);
 	::SetLogMethod(handle_log);
-	::SetWarningHandler(handle_warning);
-	::SetErrorHandler(handle_error);
-	::SetFatalErrorHandler(handle_fatal);
 	::SetMonitorHandler(handle_progress);
 	::SetMagickResourceLimit(ThreadsResource, 1UL);
 
@@ -302,6 +306,28 @@ noexcept
 
 	// return false to interrupt the job; set the exception saying why.
 	return true;
+}
+
+void
+ircd::magick::handle_free(void *const ptr)
+noexcept
+{
+	std::free(ptr);
+}
+
+void *
+ircd::magick::handle_malloc(size_t size)
+noexcept
+{
+	return std::malloc(size);
+}
+
+void *
+ircd::magick::handle_realloc(void *const ptr,
+                             size_t size)
+noexcept
+{
+	return std::realloc(ptr, size);
 }
 
 void
