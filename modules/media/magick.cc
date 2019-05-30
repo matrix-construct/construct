@@ -12,6 +12,7 @@
 
 namespace ircd::magick
 {
+	struct display;
 	struct transform;
 
 	static void handle_exception(const ::ExceptionType, const char *, const char *);
@@ -35,6 +36,12 @@ namespace ircd::magick
 	extern conf::item<uint64_t> yield_interval;
 	extern log::log log;
 }
+
+struct ircd::magick::display
+{
+	display(const ::ImageInfo &, ::Image &);
+	display(const const_buffer &);
+};
 
 struct ircd::magick::transform
 {
@@ -279,6 +286,36 @@ ircd::magick::transform::transform(const const_buffer &input,
 	};
 
 	output(result);
+}
+
+//
+// display (internal)
+//
+
+ircd::magick::display::display(const const_buffer &input)
+{
+	const custom_ptr<::ImageInfo> input_info
+	{
+		::CloneImageInfo(nullptr),
+		::DestroyImageInfo
+	};
+
+	const custom_ptr<::Image> input_image
+	{
+		callex<::Image *>(::BlobToImage, input_info.get(), data(input), size(input)),
+		::DestroyImage // pollock
+	};
+
+	display
+	{
+		*input_info, *input_image
+	};
+}
+
+ircd::magick::display::display(const ::ImageInfo &info,
+                               ::Image &image)
+{
+	callpf(::DisplayImages, &info, &image);
 }
 
 //
