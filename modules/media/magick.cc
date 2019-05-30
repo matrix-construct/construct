@@ -341,7 +341,7 @@ void
 ircd::magick::callpf(function&& f,
                      args&&... a)
 {
-	if(!call(f, std::forward<args>(a)...))
+	if(!call<MagickPassFail>(f, std::forward<args>(a)...))
 		throw error{};
 }
 
