@@ -10,6 +10,52 @@
 
 #include "media.h"
 
+namespace ircd::m::media::thumbnail
+{
+	extern conf::item<bool> enable;
+	extern conf::item<size_t> width_min;
+	extern conf::item<size_t> width_max;
+	extern conf::item<size_t> height_min;
+	extern conf::item<size_t> height_max;
+}
+
+using namespace ircd::m::media::thumbnail; //TODO: XXX
+
+decltype(ircd::m::media::thumbnail::enable)
+ircd::m::media::thumbnail::enable
+{
+	{ "name",    "ircd.m.media.thumbnail.enable" },
+	{ "default", true                            },
+};
+
+decltype(ircd::m::media::thumbnail::width_min)
+ircd::m::media::thumbnail::width_min
+{
+	{ "name",     "ircd.m.media.thumbnail.width.min" },
+	{ "default",  128L                               },
+};
+
+decltype(ircd::m::media::thumbnail::width_max)
+ircd::m::media::thumbnail::width_max
+{
+	{ "name",     "ircd.m.media.thumbnail.width.max" },
+	{ "default",  1536L                              },
+};
+
+decltype(ircd::m::media::thumbnail::height_min)
+ircd::m::media::thumbnail::height_min
+{
+	{ "name",     "ircd.m.media.thumbnail.height.min" },
+	{ "default",  128L                                },
+};
+
+decltype(ircd::m::media::thumbnail::height_max)
+ircd::m::media::thumbnail::height_max
+{
+	{ "name",     "ircd.m.media.thumbnail.height.max" },
+	{ "default",  1536L                               },
+};
+
 resource
 thumbnail_resource__legacy
 {
@@ -35,7 +81,8 @@ get__thumbnail_local(client &client,
                      const resource::request &request,
                      const string_view &server,
                      const string_view &file,
-                     const m::room &room);
+                     const m::room &room,
+                     const std::pair<size_t, size_t> &dimension);
 
 resource::response
 get__thumbnail(client &client,
@@ -77,7 +124,25 @@ get__thumbnail(client &client,
 		download(server, file, user_id)
 	};
 
-	return get__thumbnail_local(client, request, server, file, room_id);
+	std::pair<size_t, size_t> dimension
+	{
+		request.query.get<size_t>("width", 0),
+		request.query.get<size_t>("height", 0)
+	};
+
+	if(dimension.first)
+	{
+		dimension.first = std::max(dimension.first, size_t(width_min));
+		dimension.first = std::min(dimension.first, size_t(width_max));
+	}
+
+	if(dimension.second)
+	{
+		dimension.second = std::max(dimension.second, size_t(height_min));
+		dimension.second = std::min(dimension.second, size_t(height_max));
+	}
+
+	return get__thumbnail_local(client, request, server, file, room_id, dimension);
 }
 
 static resource::method
@@ -97,7 +162,8 @@ get__thumbnail_local(client &client,
                      const resource::request &request,
                      const string_view &hostname,
                      const string_view &mediaid,
-                     const m::room &room)
+                     const m::room &room,
+                     const std::pair<size_t, size_t> &dimension)
 {
 	static const m::event::fetch::opts fopts
 	{
@@ -167,17 +233,8 @@ get__thumbnail_local(client &client,
 			copied
 		};
 
-	const auto width
-	{
-		request.query.get<size_t>("width", 0)
-	};
-
-	const auto height
-	{
-		request.query.get<size_t>("height", 0)
-	};
-
-	if(!width || !height || width > 1536 || height > 1536) // TODO: confs..
+	//TODO: condition if magick available
+	if(!enable || !dimension.first || !dimension.second)
 		return resource::response
 		{
 			client, buf, content_type
@@ -185,7 +242,7 @@ get__thumbnail_local(client &client,
 
 	magick::thumbnail
 	{
-		buf, {width, height}, [&client, &content_type]
+		buf, dimension, [&client, &content_type]
 		(const const_buffer &buf)
 		{
 			resource::response
@@ -195,5 +252,5 @@ get__thumbnail_local(client &client,
 		}
 	};
 
-	return {};
+	return {}; // responded from closure.
 }
