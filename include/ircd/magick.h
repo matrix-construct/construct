@@ -16,6 +16,7 @@ namespace ircd::magick
 {
 	IRCD_EXCEPTION(ircd::error, error)
 
+	struct crop;
 	struct thumbnail;
 
 	std::tuple<ulong, string_view> version();
@@ -29,4 +30,16 @@ struct ircd::magick::thumbnail
 	thumbnail(const const_buffer &in,
 	          const dimensions &,
 	          const result_closure &);
+};
+
+struct ircd::magick::crop
+{
+	using offset = std::pair<ssize_t, ssize_t>; // x, y
+	using dimensions = std::pair<size_t, size_t>; // x, y
+	using result_closure = std::function<void (const const_buffer &)>;
+
+	crop(const const_buffer &in,
+	     const dimensions &,
+	     const offset &,
+	     const result_closure &);
 };

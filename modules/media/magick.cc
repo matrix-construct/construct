@@ -181,6 +181,58 @@ ircd::magick::thumbnail::thumbnail(const const_buffer &in,
 }
 
 //
+// crop
+//
+
+ircd::magick::crop::crop(const const_buffer &in,
+                         const dimensions &dim,
+                         const offset &off,
+                         const result_closure &closure)
+{
+	const custom_ptr<::ImageInfo> input_info
+	{
+		::CloneImageInfo(nullptr), ::DestroyImageInfo
+	};
+
+	const custom_ptr<::ImageInfo> output_info
+	{
+		::CloneImageInfo(nullptr), ::DestroyImageInfo
+	};
+
+	const custom_ptr<::Image> input
+	{
+		callex<::Image *>(::BlobToImage, input_info.get(), data(in), size(in)), ::DestroyImage
+	};
+
+	// Note: negative offsets appear to just reduce the dimension in my limited test
+	const ::RectangleInfo geometry
+	{
+		dim.first,   // width
+		dim.second,  // height
+		off.first,   // x
+		off.second,  // y
+	};
+
+	const custom_ptr<::Image> output
+	{
+		callex<::Image *>(::CropImage, input.get(), &geometry), ::DestroyImage
+	};
+
+	size_t output_size(0);
+	const auto output_data
+	{
+		callex<void *>(::ImageToBlob, output_info.get(), output.get(), &output_size)
+	};
+
+	const const_buffer result
+	{
+		reinterpret_cast<char *>(output_data), output_size
+	};
+
+	closure(result);
+}
+
+//
 // util
 //
 
