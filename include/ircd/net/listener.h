@@ -16,9 +16,6 @@ namespace ircd::net
 	struct listener;
 	struct acceptor;
 
-	std::ostream &operator<<(std::ostream &s, const listener &);
-	std::ostream &operator<<(std::ostream &s, const acceptor &);
-
 	extern conf::item<bool> listen;
 
 	std::string cipher_list(const acceptor &);
@@ -26,6 +23,10 @@ namespace ircd::net
 	string_view name(const acceptor &);
 	ipport binder(const acceptor &);
 	ipport local(const acceptor &);
+	string_view loghead(const mutable_buffer &, const acceptor &);
+	string_view loghead(const acceptor &);
+	std::ostream &operator<<(std::ostream &s, const acceptor &);
+	std::ostream &operator<<(std::ostream &s, const listener &);
 
 	bool allow(acceptor &);
 	bool start(acceptor &);

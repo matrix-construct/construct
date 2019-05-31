@@ -1287,11 +1287,6 @@ const
 // net/acceptor.h
 //
 
-namespace ircd::net
-{
-	thread_local char logheadbuf[512];
-}
-
 //
 // acceptor
 //
@@ -1360,6 +1355,34 @@ ircd::net::allow(acceptor &a)
 	return true;
 }
 
+std::ostream &
+ircd::net::operator<<(std::ostream &s, const acceptor &a)
+{
+	s << loghead(a);
+	return s;
+}
+
+ircd::string_view
+ircd::net::loghead(const acceptor &a)
+{
+	thread_local char buf[512];
+	return loghead(buf, a);
+}
+
+ircd::string_view
+ircd::net::loghead(const mutable_buffer &out,
+                   const acceptor &a)
+{
+	thread_local char addrbuf[128];
+	return fmt::sprintf
+	{
+		out, "'%s' @ [%s]:%u",
+		name(a),
+		string(addrbuf, a.ep.address()),
+		a.ep.port(),
+	};
+}
+
 ircd::net::ipport
 ircd::net::local(const acceptor &a)
 {
@@ -1382,14 +1405,6 @@ ircd::json::object
 ircd::net::config(const acceptor &a)
 {
 	return a.opts;
-}
-
-std::ostream &
-ircd::net::operator<<(std::ostream &s, const acceptor &a)
-{
-	thread_local char addrbuf[128];
-	s << "'" << a.name << "' @ [" << string(addrbuf, a.ep.address()) << "]:" << a.ep.port();
-	return s;
 }
 
 //
@@ -1446,7 +1461,7 @@ try
 
 	log::debug
 	{
-		log, "%s configured listener SSL", string(logheadbuf, *this)
+		log, "%s configured listener SSL", loghead(*this)
 	};
 
 	open();
@@ -1491,20 +1506,20 @@ ircd::net::acceptor::open()
 	a.non_blocking(true);
 	log::debug
 	{
-		log, "%s opened listener socket", string(logheadbuf, *this)
+		log, "%s opened listener socket", loghead(*this)
 	};
 
 	a.bind(ep);
 	log::debug
 	{
-		log, "%s bound listener socket", string(logheadbuf, *this)
+		log, "%s bound listener socket", loghead(*this)
 	};
 
 	a.listen(backlog);
 	log::debug
 	{
 		log, "%s listening (backlog: %lu, max connections: %zu)",
-		string(logheadbuf, *this),
+		loghead(*this),
 		backlog,
 		max_connections
 	};
@@ -1522,7 +1537,7 @@ ircd::net::acceptor::close()
 	join();
 	log::debug
 	{
-		log, "%s listener finished", string(logheadbuf, *this)
+		log, "%s listener finished", loghead(*this)
 	};
 }
 
@@ -1610,7 +1625,7 @@ catch(const std::exception &e)
 {
 	throw panic
 	{
-		"%s: %s", string(logheadbuf, *this), e.what()
+		"%s: %s", loghead(*this), e.what()
 	};
 }
 
@@ -1637,7 +1652,7 @@ noexcept try
 	log::debug
 	{
 		log, "%s: accepted(%zu) %s %s",
-		string(logheadbuf, *this),
+		loghead(*this),
 		accepting,
 		loghead(*sock),
 		string(ecbuf, ec)
@@ -1681,7 +1696,7 @@ catch(const ctx::interrupted &e)
 	log::debug
 	{
 		log, "%s: acceptor interrupted %s %s",
-		string(logheadbuf, *this),
+		loghead(*this),
 		loghead(*sock),
 		string(ecbuf, ec)
 	};
@@ -1697,7 +1712,7 @@ catch(const std::system_error &e)
 	log::derror
 	{
 		log, "%s: %s in accept(): %s",
-		string(logheadbuf, *this),
+		loghead(*this),
 		loghead(*sock),
 		e.what()
 	};
@@ -1713,7 +1728,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "%s: %s in accept(): %s",
-		string(logheadbuf, *this),
+		loghead(*this),
 		loghead(*sock),
 		e.what()
 	};
@@ -1801,7 +1816,7 @@ catch(const ctx::interrupted &e)
 	log::debug
 	{
 		log, "%s: SSL handshake interrupted %s %s",
-		string(logheadbuf, *this),
+		loghead(*this),
 		loghead(*sock),
 		string(ecbuf, ec)
 	};
@@ -1815,7 +1830,7 @@ catch(const std::system_error &e)
 	log::derror
 	{
 		log, "%s: %s in handshake(): %s",
-		string(logheadbuf, *this),
+		loghead(*this),
 		loghead(*sock),
 		e.what()
 	};
@@ -1829,7 +1844,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "%s: %s in handshake(): %s",
-		string(logheadbuf, *this),
+		loghead(*this),
 		loghead(*sock),
 		e.what()
 	};
@@ -1880,7 +1895,7 @@ ircd::net::acceptor::handle_alpn(SSL &ssl,
 	log::debug
 	{
 		log, "%s offered %zu ALPN protocols",
-		string(logheadbuf, *this),
+		loghead(*this),
 		size(in),
 	};
 
@@ -1890,7 +1905,7 @@ ircd::net::acceptor::handle_alpn(SSL &ssl,
 		log::debug
 		{
 			log, "%s ALPN protocol %zu of %zu: '%s'",
-			string(logheadbuf, *this),
+			loghead(*this),
 			i,
 			size(in),
 			in[i],
@@ -1984,7 +1999,7 @@ try
 	log::debug
 	{
 		log, "%s offered SNI '%s'",
-		string(logheadbuf, *this),
+		loghead(*this),
 		name
 	};
 
@@ -1995,7 +2010,7 @@ catch(const sni_warning &e)
 	log::warning
 	{
 		log, "%s during SNI :%s",
-		string(logheadbuf, *this),
+		loghead(*this),
 		e.what()
 	};
 
@@ -2006,7 +2021,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "%s during SNI :%s",
-		string(logheadbuf, *this),
+		loghead(*this),
 		e.what()
 	};
 
@@ -2058,7 +2073,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 {
 	log::debug
 	{
-		log, "%s preparing listener socket configuration...", string(logheadbuf, *this)
+		log, "%s preparing listener socket configuration...", loghead(*this)
 	};
 
 	ulong flags(0);
@@ -2151,7 +2166,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL certificate chain file @ `%s' not found",
-				string(logheadbuf, *this),
+				loghead(*this),
 				filename
 			};
 
@@ -2159,7 +2174,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using certificate chain file '%s'",
-			string(logheadbuf, *this),
+			loghead(*this),
 			filename
 		};
 	}
@@ -2175,7 +2190,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL certificate pem file @ `%s' not found",
-				string(logheadbuf, *this),
+				loghead(*this),
 				filename
 			};
 
@@ -2183,7 +2198,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using certificate file '%s'",
-			string(logheadbuf, *this),
+			loghead(*this),
 			filename
 		};
 	}
@@ -2199,7 +2214,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL private key file @ `%s' not found",
-				string(logheadbuf, *this),
+				loghead(*this),
 				filename
 			};
 
@@ -2207,7 +2222,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using private key file '%s'",
-			string(logheadbuf, *this),
+			loghead(*this),
 			filename
 		};
 	}
@@ -2223,7 +2238,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 			throw error
 			{
 				"%s: SSL tmp dh file @ `%s' not found",
-				string(logheadbuf, *this),
+				loghead(*this),
 				filename
 			};
 
@@ -2231,7 +2246,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using tmp dh file '%s'",
-			string(logheadbuf, *this),
+			loghead(*this),
 			filename
 		};
 	}
@@ -2246,7 +2261,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		log::info
 		{
 			log, "%s using DH params supplied in options (%zu bytes)",
-			string(logheadbuf, *this),
+			loghead(*this),
 			size(buf)
 		};
 	}
@@ -2263,7 +2278,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		log::notice
 		{
 			log, "%s asking for password with purpose '%s' (size: %zu)",
-			string(logheadbuf, *this),
+			loghead(*this),
 			purpose,
 			size
 		};
@@ -2285,8 +2300,29 @@ ircd::net::acceptor::configure(const json::object &opts)
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const acceptor_udp &a)
 {
-	s << "'" << a.name << "' @ [" << string(a.ep.address()) << "]:" << a.ep.port();
+	s << loghead(a);
 	return s;
+}
+
+ircd::string_view
+ircd::net::loghead(const acceptor_udp &a)
+{
+	thread_local char buf[512];
+	return loghead(buf, a);
+}
+
+ircd::string_view
+ircd::net::loghead(const mutable_buffer &out,
+                   const acceptor_udp &a)
+{
+	thread_local char addrbuf[128];
+	return fmt::sprintf
+	{
+		out, "'%s' @ [%s]:%u",
+		a.name,
+		string(addrbuf, a.ep.address()),
+		a.ep.port(),
+	};
 }
 
 //
@@ -2323,13 +2359,13 @@ try
 	a.set_option(reuse_address);
 	log::debug
 	{
-		log, "%s opened listener socket", string(logheadbuf, *this)
+		log, "%s opened listener socket", loghead(*this)
 	};
 
 	a.bind(ep);
 	log::debug
 	{
-		log, "%s bound listener socket", string(logheadbuf, *this)
+		log, "%s bound listener socket", loghead(*this)
 	};
 }
 catch(const boost::system::system_error &e)
