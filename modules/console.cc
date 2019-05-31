@@ -695,7 +695,9 @@ console_cmd__versions(opt &out, const string_view &line)
 	<< " "
 	<< std::left << std::setw(12)  << "TYPE"
 	<< " "
-	<< std::left << std::setw(16) << "VERSION"
+	<< std::left << std::setw(16) << "MONOTONIC"
+	<< " "
+	<< std::left << std::setw(16) << "SEMANTIC"
 	<< " "
 	<< std::left << std::setw(16) << ":STRING"
 	<< " "
@@ -714,15 +716,17 @@ console_cmd__versions(opt &out, const string_view &line)
 		const string_view semantic{fmt::sprintf
 		{
 			buf, "%ld.%ld.%ld",
-			version->number[0],
-			version->number[1],
-			version->number[2],
+			version->semantic[0],
+			version->semantic[1],
+			version->semantic[2],
 		}};
 
 		out
 		<< std::left << std::setw(12) << version->name
 		<< " "
-		<< std::left << std::setw(12)  << type
+		<< std::left << std::setw(12) << type
+		<< " "
+		<< std::left << std::setw(16) << version->monotonic
 		<< " "
 		<< std::left << std::setw(16) << semantic
 		<< " :"

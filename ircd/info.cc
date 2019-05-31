@@ -152,15 +152,34 @@ ircd::util::instance_list<ircd::info::versions>::list
     allocator
 };
 
+/// Straightforward construction of versions members; string is copied
+/// into member buffer with null termination.
 ircd::info::versions::versions(const string_view &name,
                                const enum type &type,
-                               const std::array<long, 3> &number,
+                               const long &monotonic,
+                               const std::array<long, 3> &semantic,
                                const string_view &string)
 :name{name}
 ,type{type}
-,number{number}
+,monotonic{monotonic}
+,semantic{semantic}
 {
 	strlcpy(this->string, string);
+}
+
+/// Construction of versions members with closure for custom string generation.
+/// The version string must be stored into buffer with null termination.
+ircd::info::versions::versions(const string_view &name,
+                               const enum type &type,
+                               const long &monotonic,
+                               const std::array<long, 3> &semantic,
+                               const std::function<void (versions &, const mutable_buffer &)> &closure)
+:name{name}
+,type{type}
+,monotonic{monotonic}
+,semantic{semantic}
+{
+	closure(*this, this->string);
 }
 
 //
