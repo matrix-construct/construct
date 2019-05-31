@@ -643,16 +643,6 @@ console_cmd__version(opt &out, const string_view &line)
 	out << "info::server_agent         " << info::server_agent << std::endl;
 	out << std::endl;
 
-	out << "info::kname                " << info::kname << std::endl;
-	out << "info::kversion_str         " << info::kversion_str << std::endl;
-	out << "info::glibc_version_str    " << info::glibc_version_str << std::endl;
-	out << "ircd::boost_version_str    " << ircd::boost_version_str << std::endl;
-	out << "db::version_str            " << db::version_str << std::endl;
-	out << "nacl::version              " << nacl::version() << std::endl;
-	out << "openssl::version           " << openssl::version().second << std::endl;
-	out << "magic::version             " << magic::version() << std::endl;
-	out << std::endl;
-
 	out << "VERSION                    " << VERSION << std::endl;
 	out << std::endl;
 

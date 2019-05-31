@@ -24,7 +24,7 @@ namespace ircd::magic
 	string_view extensions(const mutable_buffer &out, const const_buffer &);
 	string_view description(const mutable_buffer &out, const const_buffer &);
 
-	int version();
+	extern const info::versions version_api, version_abi;
 }
 
 struct ircd::magic::init

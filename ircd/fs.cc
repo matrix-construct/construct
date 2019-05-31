@@ -37,8 +37,8 @@ decltype(ircd::fs::support_pwritev2)
 ircd::fs::support_pwritev2
 {
 	#if defined(HAVE_PWRITEV2)
-		info::kversion[0] >= 4 &&
-		info::kversion[1] >= 6
+		info::kernel_version[0] >= 4 &&
+		info::kernel_version[1] >= 6
 	#else
 		false
 	#endif
@@ -48,8 +48,8 @@ decltype(ircd::fs::support_sync)
 ircd::fs::support_sync
 {
 	#if defined(HAVE_PWRITEV2) && defined(RWF_SYNC)
-		info::kversion[0] >= 4 &&
-		info::kversion[1] >= 7
+		info::kernel_version[0] >= 4 &&
+		info::kernel_version[1] >= 7
 	#else
 		false
 	#endif
@@ -59,8 +59,8 @@ decltype(ircd::fs::support_dsync)
 ircd::fs::support_dsync
 {
 	#if defined(HAVE_PWRITEV2) && defined(RWF_DSYNC)
-		info::kversion[0] >= 4 &&
-		info::kversion[1] >= 7
+		info::kernel_version[0] >= 4 &&
+		info::kernel_version[1] >= 7
 	#else
 		false
 	#endif
@@ -70,8 +70,8 @@ decltype(ircd::fs::support_hipri)
 ircd::fs::support_hipri
 {
 	#if defined(HAVE_PWRITEV2) && defined(RWF_HIPRI)
-		info::kversion[0] >= 4 &&
-		info::kversion[1] >= 6
+		info::kernel_version[0] >= 4 &&
+		info::kernel_version[1] >= 6
 	#else
 		false
 	#endif
@@ -81,8 +81,8 @@ decltype(ircd::fs::support_nowait)
 ircd::fs::support_nowait
 {
 	#if defined(HAVE_PWRITEV2) && defined(RWF_NOWAIT)
-		info::kversion[0] >= 4 &&
-		info::kversion[1] >= 14
+		info::kernel_version[0] >= 4 &&
+		info::kernel_version[1] >= 14
 	#else
 		false
 	#endif
@@ -92,8 +92,8 @@ decltype(ircd::fs::support_append)
 ircd::fs::support_append
 {
 	#if defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
-		info::kversion[0] >= 4 &&
-		info::kversion[1] >= 16
+		info::kernel_version[0] >= 4 &&
+		info::kernel_version[1] >= 16
 	#else
 		false
 	#endif
@@ -103,8 +103,8 @@ decltype(ircd::fs::support_rwh_write_life)
 ircd::fs::support_rwh_write_life
 {
 	#if defined(HAVE_FCNTL_H) && defined(F_SET_FILE_RW_HINT)
-		info::kversion[0] >= 4 &&
-		info::kversion[1] >= 13
+		info::kernel_version[0] >= 4 &&
+		info::kernel_version[1] >= 13
 	#else
 		false
 	#endif
@@ -1024,9 +1024,9 @@ ircd::fs::ircd_fs_append__resolve()
 	{
 		log, support_append? log::DEBUG : log::DWARNING,
 		"This host '%s %s' %s the RWF_APPEND flag to pwritev2(2).",
-		info::kname,
-		info::kversion_str,
-		support_append? "SUPPORTS"_sv : "DOES NOT SUPPORT"_sv
+		info::kernel_name,
+		string_view{info::kernel_version},
+		support_append? "SUPPORTS"_sv : "DOES NOT SUPPORT"_sv,
 	};
 
 	return support_append? _append__rwf : _append__no_rwf;
@@ -1202,8 +1202,8 @@ ircd::fs::ircd_fs_write_pwritev__resolve()
 	{
 		log, support_pwritev2? log::DEBUG : log::DWARNING,
 		"This host '%s %s' %s the pwritev2(2) system call.",
-		info::kname,
-		info::kversion_str,
+		info::kernel_name,
+		string_view{info::kernel_version},
 		support_pwritev2? "SUPPORTS"_sv : "DOES NOT SUPPORT"_sv
 	};
 
@@ -1432,16 +1432,16 @@ decltype(ircd::fs::aio::support_fsync)
 extern __attribute__((weak))
 ircd::fs::aio::support_fsync
 {
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 18
+	info::kernel_version[0] >= 4 &&
+	info::kernel_version[1] >= 18
 };
 
 decltype(ircd::fs::aio::support_fdsync)
 extern __attribute__((weak))
 ircd::fs::aio::support_fdsync
 {
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 18
+	info::kernel_version[0] >= 4 &&
+	info::kernel_version[1] >= 18
 };
 
 decltype(ircd::fs::aio::MAX_EVENTS)

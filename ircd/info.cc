@@ -45,19 +45,28 @@ ircd::info::dump()
 		RB_DEBUG_LEVEL? "(DEBUG MODE)" : ""
 	};
 
-	// This message flashes information about our dependencies which are being
-	// assumed for this execution.
+	// This message flashes information about our API dependencies from compile time.
 	log::info
 	{
-		"%s. glibc %s. boost %s. RocksDB %s. SpiderMonkey %s. sodium %s. %s. libmagic %d.",
-		PACKAGE_STRING,
-		glibc_version_str,
-		boost_version_str,
-		db::version_str,
-		js::version(js::ver::IMPLEMENTATION),
-		nacl::version(),
-		openssl::version().second,
-		magic::version()
+		"API: glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		string_view{glibc_version_api},
+		string_view{boost_version_api},
+		string_view{db::version_api},
+		string_view{nacl::version_api},
+		string_view{openssl::version_api},
+		long(magic::version_api),
+	};
+
+	// This message flashes information about our ABI dependencies on this system.
+	log::debug
+	{
+		"ABI: glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		string_view{glibc_version_abi},
+		string_view{boost_version_abi},
+		string_view{db::version_abi},
+		string_view{nacl::version_abi},
+		string_view{openssl::version_abi},
+		long(magic::version_abi),
 	};
 
 	// This message flashes posix information about the system and platform IRCd
@@ -226,26 +235,6 @@ ircd_name
 // Third party dependency information
 //
 
-decltype(ircd::info::glibc_version)
-ircd::info::glibc_version
-{
-	__GNU_LIBRARY__,
-	__GLIBC__,
-	__GLIBC_MINOR__,
-};
-
-char ircd_info_glibc_version_str_buf[32];
-decltype(ircd::info::glibc_version_str)
-ircd::info::glibc_version_str
-(
-	ircd_info_glibc_version_str_buf,
-    ::snprintf(ircd_info_glibc_version_str_buf, sizeof(ircd_info_glibc_version_str_buf),
-               "%d.%d.%d",
-               glibc_version[0],
-               glibc_version[1],
-               glibc_version[2])
-);
-
 //
 // Host information
 //
@@ -260,44 +249,77 @@ ircd::info::utsname{[]
 }()};
 #endif
 
-decltype(ircd::info::kname)
-ircd::info::kname
+// kernel
+
+decltype(ircd::info::kernel_name)
+ircd::info::kernel_name
 {
 	#ifdef HAVE_SYS_UTSNAME_H
 	utsname.sysname
 	#endif
 };
 
-decltype(ircd::info::kversion_str)
-ircd::info::kversion_str
+decltype(ircd::info::kernel_release)
+ircd::info::kernel_release
 {
 	#ifdef HAVE_SYS_UTSNAME_H
 	utsname.release
 	#endif
 };
 
-decltype(ircd::info::kversion)
-ircd::info::kversion
+decltype(ircd::info::kernel_version)
+ircd::info::kernel_version
 {
-	[] // major
+	"kernel", versions::ABI, 0,
 	{
-		const auto str(split(kversion_str, '.').first);
-		return try_lex_cast<int>(str)?
-			lex_cast<int>(str):
-			0;
-	}(),
+		[] // major
+		{
+			const auto str(split(kernel_release, '.').first);
+			return try_lex_cast<int>(str)?
+				lex_cast<int>(str):
+				0;
+		}(),
 
-	[] // minor
+		[] // minor
+		{
+			auto str(split(kernel_release, '.').second);
+			str = split(str, '.').first;
+			return try_lex_cast<int>(str)?
+				lex_cast<int>(str):
+				0;
+		}(),
+
+		0 // patch
+	},
+
+	utsname.release
+};
+
+// libc
+
+decltype(ircd::info::glibc_version_api)
+ircd::info::glibc_version_api
+{
+	"glibc", versions::API, 0,
 	{
-		auto str(split(kversion_str, '.').second);
-		str = split(str, '.').first;
-		return try_lex_cast<int>(str)?
-			lex_cast<int>(str):
-			0;
-	}(),
+		__GNU_LIBRARY__,
+		__GLIBC__,
+		__GLIBC_MINOR__,
+	},
 
-	// patch
-	0
+	[](auto &that, const auto &buf)
+	{
+	    ::snprintf(data(buf), size(buf), "%ld.%ld.%ld",
+	               that.semantic[0],
+	               that.semantic[1],
+	               that.semantic[2]);
+	}
+};
+
+decltype(ircd::info::glibc_version_abi)
+ircd::info::glibc_version_abi
+{
+	"glibc", versions::ABI, 0, {0}, "<unknown>" //TODO: get this.
 };
 
 //

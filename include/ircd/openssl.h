@@ -55,9 +55,6 @@ namespace ircd::openssl
 	using EC_KEY = ::ec_key_st;
 	using DH = ::dh_st;
 
-	// Header version; library version
-	std::pair<string_view, string_view> version();
-
 	// Observers
 	string_view error_string(const mutable_buffer &buf, const ulong &);
 	ulong peek_error();
@@ -141,6 +138,9 @@ namespace ircd::openssl
 	// SNI suite
 	string_view server_name(const SSL &); // provided by client
 	void server_name(SSL &, const string_view &); // set by client
+
+	// Header version; library version
+	extern const info::versions version_api, version_abi;
 }
 
 /// OpenSSL BIO convenience utils and wraps; also secure file IO closures

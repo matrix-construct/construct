@@ -48,6 +48,18 @@ namespace ircd::openssl
 // openssl.h
 //
 
+decltype(ircd::openssl::version_api)
+ircd::openssl::version_api
+{
+	"OpenSSL", info::versions::API, OPENSSL_VERSION_NUMBER, {0}, OPENSSL_VERSION_TEXT
+};
+
+decltype(ircd::openssl::version_abi)
+ircd::openssl::version_abi
+{
+	"OpenSSL", info::versions::ABI, long(::SSLeay()), {0}, ::SSLeay_version(SSLEAY_VERSION)
+};
+
 //
 // SNI
 //
@@ -1245,15 +1257,6 @@ ircd::openssl::error_string(const mutable_buffer &buf,
 	return { data(buf), strnlen(data(buf), size(buf)) };
 }
 
-std::pair<ircd::string_view, ircd::string_view>
-ircd::openssl::version()
-{
-	return
-	{
-		OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION)
-	};
-}
-
 //
 // bio
 //
@@ -1601,13 +1604,12 @@ const
 
 ircd::openssl::init::init()
 {
-	const auto v(version());
-	if(v.first != v.second)
+	if(long(version_api) != long(version_abi))
 		log::warning
 		{
 			"Linked OpenSSL version '%s' is not the compiled OpenSSL version '%s'",
-			v.first,
-			v.second
+			string_view{version_api},
+			string_view{version_abi},
 		};
 
 	OPENSSL_init();

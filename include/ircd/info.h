@@ -52,17 +52,17 @@ namespace ircd::info
 	extern const size_t rlimit_nofile;
 	extern const size_t rlimit_rttime;
 
-	// Host information
+	// Host & third-party information
 	#ifdef HAVE_SYS_UTSNAME_H
 	extern const ::utsname utsname;
 	#endif
-	extern const string_view kname;
-	extern const string_view kversion_str;
-	extern const int kversion[3];
 
-	// Third-party information
-	extern const int glibc_version[3];
-	extern const string_view glibc_version_str;
+	extern const string_view kernel_name;
+	extern const string_view kernel_release;
+	extern const versions kernel_version;
+
+	extern const versions glibc_version_api;
+	extern const versions glibc_version_abi;
 
 	// Primary information
 	extern const string_view name;

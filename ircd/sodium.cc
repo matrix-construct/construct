@@ -29,11 +29,33 @@ struct throw_on_error
 // ircd/nacl.h
 //
 
-ircd::string_view
-ircd::nacl::version()
+decltype(ircd::nacl::version_api)
+ircd::nacl::version_api
 {
-	return ::sodium_version_string();
-}
+	"sodium", info::versions::API, 0,
+	{
+		SODIUM_LIBRARY_VERSION_MAJOR,
+		SODIUM_LIBRARY_VERSION_MINOR,
+		0
+	},
+	SODIUM_VERSION_STRING,
+};
+
+decltype(ircd::nacl::version_abi)
+ircd::nacl::version_abi
+{
+	"sodium", info::versions::ABI, 0,
+	{
+		::sodium_library_version_major(),
+		::sodium_library_version_minor(),
+		0
+	},
+	::sodium_version_string(),
+};
+
+//
+// init
+//
 
 ircd::nacl::init::init()
 {

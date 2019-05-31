@@ -10,27 +10,6 @@
 
 #include <ircd/asio.h>
 
-/// Boost version indicator for compiled header files.
-decltype(ircd::boost_version)
-ircd::boost_version
-{
-	BOOST_VERSION / 100000,
-	BOOST_VERSION / 100 % 1000,
-	BOOST_VERSION % 100,
-};
-
-char ircd_boost_version_str_buf[32];
-decltype(ircd::boost_version_str)
-ircd::boost_version_str
-(
-	ircd_boost_version_str_buf,
-	::snprintf(ircd_boost_version_str_buf, sizeof(ircd_boost_version_str_buf),
-	           "%u.%u.%u",
-	           boost_version[0],
-	           boost_version[1],
-	           boost_version[2])
-);
-
 /// Record of the ID of the thread static initialization took place on.
 decltype(ircd::ios::static_thread_id)
 ircd::ios::static_thread_id
@@ -44,6 +23,36 @@ ircd::ios::main_thread_id;
 
 decltype(ircd::ios::user)
 ircd::ios::user;
+
+decltype(ircd::boost_version_api)
+ircd::boost_version_api
+{
+	"boost", info::versions::API, BOOST_VERSION,
+	{
+		BOOST_VERSION / 100000,
+		BOOST_VERSION / 100 % 1000,
+		BOOST_VERSION % 100,
+	},
+
+	// Version string generator since boost doesn't provide any strings.
+	[](auto &version, const auto &buf)
+	{
+		::snprintf(data(buf), size(buf), "%ld.%ld.%ld",
+		           version[0],
+		           version[1],
+		           version[2]);
+	}
+};
+
+decltype(ircd::boost_version_abi)
+ircd::boost_version_abi
+{
+	"boost", info::versions::ABI, 0, {0}, "<unknown>" //TODO: get this
+};
+
+//
+// init
+//
 
 void
 ircd::ios::init(asio::io_context &user)

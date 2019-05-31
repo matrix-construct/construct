@@ -28,13 +28,8 @@ namespace ircd::db
 	// db subsystem has its own logging facility
 	extern struct log::log log;
 
-	// Version information from rocksdb headers (when building ircd).
-	extern const uint version[3];
-	extern const string_view version_str;
-
-	// Version of the RocksDB shared library (when running ircd).
-	extern const uint abi_version[3];
-	extern const string_view abi_version_str;
+	// Version information from rocksdb headers and library
+	extern const info::versions version_api, version_abi;
 
 	// Supported compressions (detected when running ircd)
 	extern std::array<std::string, 16> compressions;

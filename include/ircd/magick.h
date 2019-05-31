@@ -22,7 +22,7 @@ namespace ircd::magick
 	struct thumbnail;
 	struct thumbcrop;
 
-	std::tuple<ulong, string_view> version();
+	extern const info::versions version_api, version_abi;
 }
 
 /// Composite thumbnailer to resize close to the requested dimension but

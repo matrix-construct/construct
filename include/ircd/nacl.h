@@ -18,7 +18,7 @@ namespace ircd::nacl
 
 	struct init;
 
-	string_view version();
+	extern const info::versions version_api, version_abi;
 }
 
 struct ircd::nacl::init

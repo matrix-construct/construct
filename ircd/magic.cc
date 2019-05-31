@@ -26,6 +26,18 @@ namespace ircd::magic
 	static void version_check();
 }
 
+decltype(ircd::magic::version_api)
+ircd::magic::version_api
+{
+	"magic", info::versions::API, MAGIC_VERSION
+};
+
+decltype(ircd::magic::version_abi)
+ircd::magic::version_abi
+{
+	"magic", info::versions::ABI, ::magic_version()
+};
+
 ircd::magic::init::init()
 {
 	version_check();
@@ -158,22 +170,16 @@ ircd::magic::throw_on_error(const magic_t &cookie)
 	assert(magic_errno(cookie) == 0);
 }
 
-int
-ircd::magic::version()
-{
-	return ::magic_version();
-}
-
 void
 ircd::magic::version_check()
 {
-	if(likely(MAGIC_VERSION == version()))
+	if(likely(MAGIC_VERSION == ::magic_version()))
 		return;
 
 	log::warning
 	{
 		"Linked libmagic version %d is not the compiled magic.h version %d.\n",
-		version(),
+		::magic_version(),
 		MAGIC_VERSION
 	};
 }

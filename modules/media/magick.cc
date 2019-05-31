@@ -80,6 +80,24 @@ ircd::magick::yield_interval
 	{ "default", 768L                         },
 };
 
+decltype(ircd::magick::version_api)
+ircd::magick::version_api
+{
+	"magick", info::versions::API, MagickLibVersion, {0}, MagickLibVersionText
+};
+
+decltype(ircd::magick::version_abi)
+ircd::magick::version_abi
+{
+	"magick", info::versions::ABI, 0, {0}, []
+	(auto &version, const auto &buf)
+	{
+		ulong monotonic(0);
+		strlcpy(buf, ::GetMagickVersion(&monotonic));
+		version.monotonic = monotonic;
+	}
+};
+
 //
 // init
 //
@@ -87,26 +105,21 @@ ircd::magick::yield_interval
 void
 ircd::magick::init()
 {
-	const auto version
+	log::info
 	{
-		magick::version()
+		log, "Initializing Magick Library version API:%lu [%s] ABI:%lu [%s]",
+		long(version_api),
+		string_view{version_api},
+		long(version_abi),
+		string_view{version_abi},
 	};
 
-	log::debug
-	{
-		log, "Initializing Magick Library version inc:%lu [%s] lib:%lu [%s]",
-		ulong(MagickLibVersion),
-		MagickLibVersionText,
-		std::get<0>(version),
-		std::get<1>(version),
-	};
-
-	if(std::get<0>(version) != ulong(MagickLibVersion))
+	if(long(version_api) != long(version_abi))
 		log::warning
 		{
 			log, "Magick Library version mismatch headers:%lu library:%lu",
-			ulong(MagickLibVersion),
-			std::get<0>(version),
+			long(version_api),
+			long(version_abi),
 		};
 
 	::MagickAllocFunctions(handle_free, handle_malloc, handle_realloc);
@@ -142,18 +155,6 @@ ircd::magick::fini()
 	};
 
 	::DestroyMagick();
-}
-
-std::tuple<ulong, ircd::string_view>
-ircd::magick::version()
-{
-	ulong number(0);
-	const char *const string
-	{
-		::GetMagickVersion(&number)
-	};
-
-	return { number, string };
 }
 
 //

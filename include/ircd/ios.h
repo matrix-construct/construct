@@ -29,8 +29,7 @@ namespace ircd
 {
 	namespace asio = boost::asio;      ///< Alias so that asio:: can be used.
 
-	extern const uint boost_version[3];
-	extern const string_view boost_version_str;
+	extern const info::versions boost_version_api, boost_version_abi;
 }
 
 namespace ircd::ios

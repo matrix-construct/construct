@@ -92,46 +92,29 @@ namespace ircd::db
 	static void init_directory();
 }
 
-decltype(ircd::db::version)
-ircd::db::version
+decltype(ircd::db::version_api)
+ircd::db::version_api
 {
-	ROCKSDB_MAJOR,
-	ROCKSDB_MINOR,
-	ROCKSDB_PATCH
+	"RocksDB", info::versions::API, 0,
+	{
+		ROCKSDB_MAJOR, ROCKSDB_MINOR, ROCKSDB_PATCH,
+	},
+
+	// version string generator
+	[](auto &version, const auto &buf)
+	{
+		::snprintf(data(buf), size(buf), "%ld.%ld.%ld",
+		           version[0],
+		           version[1],
+		           version[2]);
+	}
 };
 
-char ircd_db_version_str_buf[64];
-decltype(ircd::db::version_str)
-ircd::db::version_str
-(
-	ircd_db_version_str_buf,
-	::snprintf(ircd_db_version_str_buf, sizeof(ircd_db_version_str_buf),
-	           "%u.%u.%u",
-	           version[0],
-	           version[1],
-	           version[2])
-);
-
-decltype(ircd::db::abi_version)
-ircd::db::abi_version
+decltype(ircd::db::version_abi)
+ircd::db::version_abi
 {
-	//TODO: Get lib version.
-	0,
-	0,
-	0,
+	"RocksDB", info::versions::ABI, 0, {0}, "<unknown>" //TODO: get this
 };
-
-char ircd_db_abi_version_str_buf[64];
-decltype(ircd::db::abi_version_str)
-ircd::db::abi_version_str
-(
-	ircd_db_abi_version_str_buf,
-	::snprintf(ircd_db_abi_version_str_buf, sizeof(ircd_db_abi_version_str_buf),
-	           "%u.%u.%u",
-	           abi_version[0],
-	           abi_version[1],
-	           abi_version[2])
-);
 
 //
 // init::init

@@ -33,8 +33,8 @@ ircd::fs::aio::support
 decltype(ircd::fs::aio::support_fsync)
 ircd::fs::aio::support_fsync
 {
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 18
+	info::kernel_version[0] >= 4 &&
+	info::kernel_version[1] >= 18
 };
 
 /// True if IOCB_CMD_FDSYNC is supported by AIO. If this is false then
@@ -42,8 +42,8 @@ ircd::fs::aio::support_fsync
 decltype(ircd::fs::aio::support_fdsync)
 ircd::fs::aio::support_fdsync
 {
-	info::kversion[0] >= 4 &&
-	info::kversion[1] >= 18
+	info::kernel_version[0] >= 4 &&
+	info::kernel_version[1] >= 18
 };
 
 decltype(ircd::fs::aio::MAX_EVENTS)
