@@ -10,16 +10,32 @@
 
 #include "rooms.h"
 
-using namespace ircd;
-
-extern "C" m::event::id::buf
-invite__foreign(const m::event &);
-
-resource::response
-post__invite(client &client,
-             const resource::request &request,
-             const m::room::id &room_id)
+namespace ircd::m
 {
+	static event::id::buf invite_foreign(const event &);
+	static void on_invite_foreign(const event &, vm::eval &);
+
+	extern const hookfn<vm::eval &> invite_foreign_hook;
+}
+
+decltype(ircd::m::invite_foreign_hook)
+ircd::m::invite_foreign_hook
+{
+	on_invite_foreign,
+	{
+		{ "_site",          "vm.issue"      },
+		{ "type",           "m.room.member" },
+		{ "membership",     "invite"        },
+	}
+};
+
+ircd::resource::response
+post__invite(ircd::client &client,
+             const ircd::resource::request &request,
+             const ircd::m::room::id &room_id)
+{
+	using namespace ircd;
+
 	const m::user::id &target
 	{
 		unquote(request.at("user_id"))
@@ -41,7 +57,7 @@ post__invite(client &client,
 	};
 }
 
-m::event::id::buf
+ircd::m::event::id::buf
 IRCD_MODULE_EXPORT
 ircd::m::invite(const m::room &room,
                 const m::user::id &target,
@@ -67,8 +83,44 @@ ircd::m::invite(const m::room &room,
 	return commit(room, event, content);
 }
 
-extern "C" m::event::id::buf
-invite__foreign(const m::event &event)
+void
+ircd::m::on_invite_foreign(const event &event,
+                           vm::eval &eval)
+{
+	const m::room::id &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
+	const m::user::id &target
+	{
+		at<"state_key"_>(event)
+	};
+
+	const auto target_host
+	{
+		target.host()
+	};
+
+	if(m::my_host(target_host))
+		return;
+
+	const m::room::origins origins
+	{
+		room_id
+	};
+
+	if(origins.has(target_host))
+		return;
+
+	const auto eid
+	{
+		invite_foreign(event)
+	};
+}
+
+ircd::m::event::id::buf
+ircd::m::invite_foreign(const event &event)
 {
 	const auto &event_id
 	{
