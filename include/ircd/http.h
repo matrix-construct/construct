@@ -229,6 +229,7 @@ struct ircd::http::request::head
 	string_view connection;
 	string_view content_type;
 	string_view user_agent;
+	string_view upgrade;
 	size_t content_length {0};
 
 	string_view uri;       // full view of (path, query, fragmet)

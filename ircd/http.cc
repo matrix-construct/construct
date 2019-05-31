@@ -317,6 +317,8 @@ ircd::http::request::head::head(parse::capstan &pc,
 			this->content_type = h.second;
 		else if(iequals(h.first, "user-agent"_sv))
 			this->user_agent = h.second;
+		else if(iequals(h.first, "upgrade"_sv))
+			this->upgrade = h.second;
 
 		if(c)
 			c(h);
