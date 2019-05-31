@@ -105,6 +105,16 @@ struct ircd::info::versions
 	/// Version string buffer. Copy any provided version string here.
 	char string[128] {0};
 
+	/// Convenience access to read the semantic version numbers.
+	auto &operator[](const int &idx) const;
+
+	/// Convenience access to read the monotonic integer; note that if zero
+	/// the semantic major number is read instead.
+	explicit operator const long &() const;
+
+	/// Convenience access to read the string
+	explicit operator string_view() const;
+
 	versions(const string_view &name,
 	         const enum type &type                = type::INCLUDE,
 	         const long &monotonic                = 0,
@@ -121,3 +131,24 @@ struct ircd::info::versions
 	versions(versions &&) = delete;
 	versions(const versions &) = delete;
 };
+
+inline ircd::info::versions::operator
+const long &()
+const
+{
+	return monotonic?: semantic[0];
+}
+
+inline ircd::info::versions::operator
+ircd::string_view()
+const
+{
+	return string;
+}
+
+inline auto &
+ircd::info::versions::operator[](const int &idx)
+const
+{
+	return semantic.at(idx);
+}
