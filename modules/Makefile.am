@@ -5,6 +5,7 @@
 
 DEFS += \
 	-DIRCD_UNIT \
+	-DIRCD_UNIT_MODULE \
 	###
 
 AM_CXXFLAGS = \
