@@ -21,6 +21,7 @@ namespace ircd::info
 {
 	struct line;
 	struct tc_version;
+	struct versions;
 
 	// Build information
 	extern const string_view tag;
@@ -76,3 +77,39 @@ namespace ircd::info
 	// Util
 	void dump();
 }
+
+/// Instances of `versions` create a dynamic version registry identifying
+/// third-party dependencies throughout the project and its loaded modules.
+///
+/// Create a static instance of this class in a definition file or module
+/// which has access to the version information of the dependency. Often there
+/// can be two version identifiers for a dependency, one for headers and the
+/// other for dynamically loaded shared object. In that case, create two
+/// instances of this class with the same name.
+///
+struct ircd::info::versions
+:instance_list<versions>
+{
+	/// Our own name for the dependency.
+	string_view name;
+
+	/// Set the type to either INCLUDE or LIBRARY to indicate where this version
+	/// information has been sourced. Defaults to INCLUDE.
+	enum type {INCLUDE, LIBRARY} type {INCLUDE};
+
+	/// Semantic version number. If the version number is a single (likely
+	/// monotonic) integer, use the major number (i.e [0]).
+	std::array<long, 3> number {0};
+
+	/// Version string buffer. Copy any provided version string here.
+	char string[128] {0};
+
+	versions(const string_view &name,
+	         const enum type &type,
+	         const std::array<long, 3> &number  = {0L},
+	         const string_view &string          = {});
+
+	versions() = default;
+	versions(versions &&) = delete;
+	versions(const versions &) = delete;
+};

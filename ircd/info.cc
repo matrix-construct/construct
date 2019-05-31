@@ -137,6 +137,33 @@ ircd::info::dump()
 }
 
 //
+// Version registry
+//
+
+template<>
+decltype(ircd::util::instance_list<ircd::info::versions>::allocator)
+ircd::util::instance_list<ircd::info::versions>::allocator
+{};
+
+template<>
+decltype(ircd::util::instance_list<ircd::info::versions>::list)
+ircd::util::instance_list<ircd::info::versions>::list
+{
+    allocator
+};
+
+ircd::info::versions::versions(const string_view &name,
+                               const enum type &type,
+                               const std::array<long, 3> &number,
+                               const string_view &string)
+:name{name}
+,type{type}
+,number{number}
+{
+	strlcpy(this->string, string);
+}
+
+//
 // Primary information
 //
 

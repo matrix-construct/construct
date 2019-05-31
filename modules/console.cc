@@ -688,6 +688,53 @@ console_cmd__version(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__versions(opt &out, const string_view &line)
+{
+	out
+	<< std::left << std::setw(12) << "NAME"
+	<< " "
+	<< std::left << std::setw(12)  << "TYPE"
+	<< " "
+	<< std::left << std::setw(16) << "VERSION"
+	<< " "
+	<< std::left << std::setw(16) << ":STRING"
+	<< " "
+	<< std::endl;
+
+	for(const auto &version : info::versions::list)
+	{
+		const auto &type
+		{
+			version->type == version->INCLUDE? "include":
+			version->type == version->LIBRARY? "library":
+			                                   "???"
+		};
+
+		char buf[32];
+		const string_view semantic{fmt::sprintf
+		{
+			buf, "%ld.%ld.%ld",
+			version->number[0],
+			version->number[1],
+			version->number[2],
+		}};
+
+		out
+		<< std::left << std::setw(12) << version->name
+		<< " "
+		<< std::left << std::setw(12)  << type
+		<< " "
+		<< std::left << std::setw(16) << semantic
+		<< " :"
+		<< std::left << std::setw(16) << version->string
+		<< " "
+		<< std::endl;
+	}
+
+	return true;
+}
+
+bool
 console_cmd__info(opt &out, const string_view &line)
 {
 	info::dump();
