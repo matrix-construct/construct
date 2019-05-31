@@ -691,13 +691,13 @@ bool
 console_cmd__versions(opt &out, const string_view &line)
 {
 	out
-	<< std::left << std::setw(12) << "NAME"
+	<< std::left << std::setw(6)  << "TYPE"
 	<< " "
-	<< std::left << std::setw(12)  << "TYPE"
+	<< std::left << std::setw(16) << "NAME"
 	<< " "
-	<< std::left << std::setw(16) << "MONOTONIC"
+	<< std::left << std::setw(14) << "MONOTONIC"
 	<< " "
-	<< std::left << std::setw(16) << "SEMANTIC"
+	<< std::left << std::setw(14) << "SEMANTIC"
 	<< " "
 	<< std::left << std::setw(16) << ":STRING"
 	<< " "
@@ -707,9 +707,9 @@ console_cmd__versions(opt &out, const string_view &line)
 	{
 		const auto &type
 		{
-			version->type == version->INCLUDE? "include":
-			version->type == version->LIBRARY? "library":
-			                                   "???"
+			version->type == version->API? "API":
+			version->type == version->ABI? "ABI":
+			                               "???"
 		};
 
 		char buf[32];
@@ -722,13 +722,13 @@ console_cmd__versions(opt &out, const string_view &line)
 		}};
 
 		out
-		<< std::left << std::setw(12) << version->name
+		<< std::left << std::setw(6) << type
 		<< " "
-		<< std::left << std::setw(12) << type
+		<< std::left << std::setw(16) << version->name
 		<< " "
-		<< std::left << std::setw(16) << version->monotonic
+		<< std::left << std::setw(14) << version->monotonic
 		<< " "
-		<< std::left << std::setw(16) << semantic
+		<< std::left << std::setw(14) << semantic
 		<< " :"
 		<< std::left << std::setw(16) << version->string
 		<< " "

@@ -92,9 +92,9 @@ struct ircd::info::versions
 	/// Our own name for the dependency.
 	string_view name;
 
-	/// Set the type to either INCLUDE or LIBRARY to indicate where this version
-	/// information has been sourced. Defaults to INCLUDE.
-	enum type {INCLUDE, LIBRARY} type {INCLUDE};
+	/// Set the type to either API or ABI to indicate where this version
+	/// information has been sourced. Defaults to API.
+	enum type {API, ABI} type {API};
 
 	/// If the version number is a single (likely monotonic) integer.
 	long monotonic {0};
@@ -116,7 +116,7 @@ struct ircd::info::versions
 	explicit operator string_view() const;
 
 	versions(const string_view &name,
-	         const enum type &type                = type::INCLUDE,
+	         const enum type &type                = type::API,
 	         const long &monotonic                = 0,
 	         const std::array<long, 3> &semantic  = {0L},
 	         const string_view &string            = {});
