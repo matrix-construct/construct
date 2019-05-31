@@ -226,22 +226,6 @@ ircd_name
 // Third party dependency information
 //
 
-/// Provides tcmalloc version information if tcmalloc is linked in to IRCd.
-struct ircd::info::tc_version
-{
-	int major{0}, minor{0};
-	char patch[64] {0};
-	std::string version {"unavailable"};
-}
-const ircd::info::tc_version;
-
-/*
-const char* tc_version(int* major, int* minor, const char** patch);
-ircd::tc_version::tc_version()
-:version{::tc_version(&major, &minor, reinterpret_cast<const char **>(&patch))}
-{}
-*/
-
 decltype(ircd::info::glibc_version)
 ircd::info::glibc_version
 {

@@ -20,7 +20,6 @@ extern "C" const char *const ircd_version;
 namespace ircd::info
 {
 	struct line;
-	struct tc_version;
 	struct versions;
 
 	// Build information
