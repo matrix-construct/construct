@@ -51,6 +51,7 @@ struct ircd::net::acceptor
 
 	// Handshake stack
 	bool handle_sni(SSL &, int &ad);
+	string_view handle_alpn(SSL &, const vector_view<const string_view> &in);
 	void check_handshake_error(const error_code &ec, socket &);
 	void handshake(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
 

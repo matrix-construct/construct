@@ -1870,6 +1870,104 @@ ircd::net::acceptor::check_handshake_error(const error_code &ec,
 	__builtin_unreachable();
 }
 
+ircd::string_view
+ircd::net::acceptor::handle_alpn(SSL &ssl,
+                                 const vector_view<const string_view> &in)
+{
+	if(empty(in))
+		return {};
+
+	log::debug
+	{
+		log, "%s offered %zu ALPN protocols",
+		string(logheadbuf, *this),
+		size(in),
+	};
+
+	#ifdef IRCD_NET_ACCEPTOR_DEBUG_ALPN
+	for(size_t i(0); i < size(in); ++i)
+	{
+		log::debug
+		{
+			log, "%s ALPN protocol %zu of %zu: '%s'",
+			string(logheadbuf, *this),
+			i,
+			size(in),
+			in[i],
+		};
+	}
+	#endif IRCD_NET_ACCEPTOR_DEBUG_ALPN
+
+	return {};
+}
+
+static int
+ircd_net_acceptor_handle_alpn(SSL *const s,
+                              const unsigned char **out,
+                              unsigned char *const outlen,
+                              const unsigned char *const in,
+                              unsigned int inlen,
+                              void *const arg)
+noexcept try
+{
+	static const size_t PROTOS_MAX
+	{
+		8
+	};
+
+	auto &acceptor
+	{
+		*reinterpret_cast<ircd::net::acceptor *>(arg)
+	};
+
+	size_t p(0), i(0);
+	ircd::string_view protos[PROTOS_MAX];
+	while(i < inlen && p < PROTOS_MAX)
+	{
+		const uint8_t &len(in[i++]);
+		if(unlikely(!len || i + len >= inlen))
+			break;
+
+		protos[p++] = ircd::string_view
+		{
+			reinterpret_cast<const char *>(in + i), len
+		};
+
+		i += len;
+	}
+
+	const ircd::vector_view<const ircd::string_view> vec
+	{
+		protos, p
+	};
+
+	const ircd::string_view sel
+	{
+		acceptor.handle_alpn(*s, vec)
+	};
+
+	if(!sel)
+		return SSL_TLSEXT_ERR_NOACK;
+
+	*out = reinterpret_cast<const unsigned char *>(data(sel));
+	*outlen = size(sel);
+	return SSL_TLSEXT_ERR_OK;
+}
+catch(const std::exception &)
+{
+	return SSL_TLSEXT_ERR_ALERT_FATAL;
+}
+catch(...)
+{
+	ircd::log::critical
+	{
+		ircd::net::acceptor::log,
+		"Acceptor ALPN callback unhandled."
+	};
+
+	throw;
+}
+
 bool
 ircd::net::acceptor::handle_sni(SSL &ssl,
                                 int &client_server)
@@ -2175,6 +2273,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		return "foobar";
 	});
 
+	SSL_CTX_set_alpn_select_cb(ssl.native_handle(), ircd_net_acceptor_handle_alpn, this);
 	SSL_CTX_set_tlsext_servername_callback(ssl.native_handle(), ircd_net_acceptor_handle_sni);
 	SSL_CTX_set_tlsext_servername_arg(ssl.native_handle(), this);
 }
