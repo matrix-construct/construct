@@ -55,8 +55,8 @@ struct ircd::net::ipport
 	explicit operator bool() const;
 	bool operator!() const             { return !static_cast<bool>(*this);     }
 
-	explicit operator const ipaddr &() const;
-	explicit operator ipaddr &();
+	operator const ipaddr &() const;
+	operator ipaddr &();
 
 	template<class iparg> ipport(iparg&&, const uint16_t &port);
 	template<class iparg> ipport(iparg&&, const string_view &port);

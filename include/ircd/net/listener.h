@@ -33,6 +33,17 @@ namespace ircd::net
 	bool stop(acceptor &);
 }
 
+/// This object is a wrapper interface to the internal net::acceptor object
+/// which contains boost assets which we cannot forward declare here. It
+/// implicitly converts as a reference to the internal acceptor. Users wishing
+/// to listen on a network interface for incoming connections create and hold
+/// an instance of this object.
+///
+/// The configuration is provided in JSON. The operations are asynchronous on
+/// the main stack and connected sockets are called back in callback. There is
+/// also a proffer callback which is made as early as possible (before the SSL
+/// handshake, and ideally if the platform supports it before a SYN-ACK) to
+/// reject connections by returning false.
 struct ircd::net::listener
 {
 	using callback = std::function<void (listener &, const std::shared_ptr<socket> &)>;

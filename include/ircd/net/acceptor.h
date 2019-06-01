@@ -16,6 +16,7 @@
 // is part of the <ircd/asio.h> stack which can be included in your
 // definition file if you need low level access to this acceptor API.
 
+/// Implementation to net::listener. See listener.h for additional interface.
 struct ircd::net::acceptor
 :std::enable_shared_from_this<struct ircd::net::acceptor>
 {
