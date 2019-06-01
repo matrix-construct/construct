@@ -29,7 +29,6 @@ struct ircd::net::acceptor
 	IRCD_EXCEPTION(error, sni_warning)
 
 	static log::log log;
-	static conf::item<size_t> accepting_max;
 	static conf::item<size_t> handshaking_max;
 	static conf::item<size_t> handshaking_max_per_peer;
 	static conf::item<milliseconds> timeout;
@@ -46,7 +45,7 @@ struct ircd::net::acceptor
 	asio::ssl::context ssl;
 	ip::tcp::endpoint ep;
 	ip::tcp::acceptor a;
-	sockets accepting;
+	size_t accepting {0};
 	sockets handshaking;
 	bool interrupting {false};
 	ctx::dock joining;
@@ -61,11 +60,10 @@ struct ircd::net::acceptor
 
 	// Acceptance stack
 	bool check_accept_error(const error_code &ec, socket &);
-	void accept(const error_code &, const std::shared_ptr<socket>, const decltype(accepting)::const_iterator) noexcept;
+	void accept(const error_code &, const std::shared_ptr<socket>) noexcept;
 
 	// Accept next
 	bool set_handle();
-	size_t set_handles();
 
 	// Acceptor shutdown
 	bool interrupt() noexcept;

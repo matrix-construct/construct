@@ -1304,14 +1304,6 @@ ircd::net::acceptor::timeout
 	{ "default",  12000L                      },
 };
 
-/// The number of sockets we precreate and set accept handles for.
-decltype(ircd::net::acceptor::accepting_max)
-ircd::net::acceptor::accepting_max
-{
-	{ "name",     "ircd.net.acceptor.accepting.max" },
-	{ "default",  1L                                },
-};
-
 /// The number of simultaneous handshakes we conduct across all clients.
 decltype(ircd::net::acceptor::handshaking_max)
 ircd::net::acceptor::handshaking_max
@@ -1374,7 +1366,10 @@ ircd::net::allow(acceptor &a)
 	if(unlikely(!a.a.is_open()))
 		return false;
 
-	a.set_handles();
+	if(a.accepting > 0)
+		return false;
+
+	a.set_handle();
 	return true;
 }
 
@@ -1433,7 +1428,7 @@ ircd::net::config(const acceptor &a)
 size_t
 ircd::net::accepting_count(const acceptor &a)
 {
-	return a.accepting.size();
+	return a.accepting;
 }
 
 size_t
@@ -1521,12 +1516,12 @@ catch(const boost::system::system_error &e)
 ircd::net::acceptor::~acceptor()
 noexcept
 {
-	if(!accepting.empty() || handshaking.empty())
+	if(accepting || !handshaking.empty())
 		log::critical
 		{
 			"The acceptor must not have clients during destruction!"
 			" (accepting:%zu handshaking:%zu)",
-			accepting.size(),
+			accepting,
 			handshaking.size(),
 		};
 }
@@ -1606,7 +1601,7 @@ noexcept try
 
 	joining.wait([this]
 	{
-		return accepting.empty() && handshaking.empty();
+		return !accepting && handshaking.empty();
 	});
 
 	interrupting = false;
@@ -1644,16 +1639,6 @@ catch(const boost::system::system_error &e)
 	return false;
 }
 
-size_t
-ircd::net::acceptor::set_handles()
-{
-	size_t ret(0);
-	while(set_handle())
-		++ret;
-
-	return ret;
-}
-
 /// Sets the next asynchronous handler to start the next accept sequence.
 /// Each call to next() sets one handler which handles the connect for one
 /// socket. After the connect, an asynchronous SSL handshake handler is set
@@ -1667,26 +1652,19 @@ try
 		"ircd::net::acceptor accept"
 	};
 
-	if(accepting.size() >= size_t(accepting_max))
-		return false;
-
-	const auto it
-	{
-		accepting.emplace(end(accepting), std::make_shared<ircd::socket>(ssl))
-	};
-
 	const auto &sock
 	{
-		*it
+		std::make_shared<ircd::socket>(ssl)
 	};
 
 	auto handler
 	{
-		std::bind(&acceptor::accept, this, ph::_1, sock, it)
+		std::bind(&acceptor::accept, this, ph::_1, sock)
 	};
 
 	ip::tcp::socket &sd(*sock);
 	a.async_accept(sd, ios::handle(desc, std::move(handler)));
+	++accepting;
 	return true;
 }
 catch(const std::exception &e)
@@ -1702,25 +1680,23 @@ catch(const std::exception &e)
 ///
 void
 ircd::net::acceptor::accept(const error_code &ec,
-                            const std::shared_ptr<socket> sock,
-                            const decltype(accepting)::const_iterator it)
+                            const std::shared_ptr<socket> sock)
 noexcept try
 {
 	assert(bool(sock));
-	assert(!accepting.empty());
-	assert(it != end(accepting));
+	assert(accepting > 0);
+	assert(accepting == 1); // for now
 	thread_local char ecbuf[64];
 	log::debug
 	{
-		log, "%s: %s accepted(%zd:%zu) %s",
+		log, "%s: %s accepted(%zu) %s",
 		loghead(*this),
 		loghead(*sock),
-		std::distance(cbegin(accepting), it),
-		accepting.size(),
+		accepting,
 		string(ecbuf, ec)
 	};
 
-	accepting.erase(it);
+	--accepting;
 	if(!check_accept_error(ec, *sock))
 		return;
 
