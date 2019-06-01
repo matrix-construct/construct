@@ -480,7 +480,7 @@ noexcept try
 	#ifdef IRCD_MAGICK_DEBUG_PROGRESS
 	log::debug
 	{
-		log, "job:%lu progress %2.2lf pct (%ld/%ld) :%s",
+		log, "job:%lu progress %2.2lf%% (%ld/%ld) :%s",
 		job_ctr,
 		(quantum / double(span) * 100.0),
 		quantum,

@@ -125,12 +125,14 @@ struct ircd::fmt::parser
 		});
 
 		spec %= specsym
+		     >> !specsym
 		     >> -(char_('+') | char_('-'))
 		     >> (-char_('0') | attr(' '))
 		     >> -ushort_
 		     >> -(lit('.') >> ushort_)
 		     >> name[is_valid]
-		     >> -specterm;
+		     >> -specterm
+		     ;
 	}
 }
 const ircd::fmt::parser;
@@ -398,8 +400,21 @@ ircd::fmt::snprintf::argument(const arg &val)
 	if(qi::parse(start, stop, parser, spec))
 		handle_specifier(this->out, idx++, spec, val);
 
-	const string_view fmt(start, stop);
-	const auto nextpos(fmt.find(SPECIFIER));
+	string_view fmt
+	{
+		start, stop
+	};
+
+	if(size(fmt) >= 2 && fmt[0] == SPECIFIER && fmt[1] == SPECIFIER)
+	{
+		append({&SPECIFIER, 1});
+		fmt = string_view
+		{
+			start + 2, stop
+		};
+	}
+
+	auto nextpos(fmt.find(SPECIFIER));
 	append(fmt.substr(0, nextpos));
 	this->fmt = const_buffer
 	{

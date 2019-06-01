@@ -69,10 +69,9 @@ ircd::m::events::dump__file(const string_view &filename)
 
 			log::info
 			{
-				"dump[%s] %0.2lf$%c @ seq %zu of %zu; %zu events; %zu bytes; %zu writes; %zu errors",
+				"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %zu bytes; %zu writes; %zu errors",
 				filename,
 				pct,
-				'%', //TODO: fix gram
 				seq,
 				m::vm::sequence::retired,
 				ecount,
