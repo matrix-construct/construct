@@ -12,19 +12,26 @@
 
 #if !defined(NDEBUG) && defined(RB_ASSERT)
 void
-__attribute__((visibility("default")))
-ircd::debugtrap()
+__assert(const char *__assertion,
+         const char *__file,
+         int __line)
 {
-	#if defined(__clang__)
-		__builtin_debugtrap();
-	#elif defined(__x86_64__)
-		__asm__ volatile ("int $3");
-	#elif defined(HAVE_SIGNAL_H)
-		raise(SIGTRAP);
-	#else
-		__builtin_trap();
-	#endif
+	__assert_fail(__assertion, __file, __line, "<no function>");
 }
+#endif
+
+#if !defined(NDEBUG) && defined(RB_ASSERT)
+void
+__assert_perror_fail(int __errnum,
+                     const char *__file,
+                     unsigned int __line,
+                     const char *__function)
+{
+	char buf[32];
+	snprintf(buf, sizeof(buf), "perror #%d: ", __errnum);
+	__assert_fail(buf, __file, __line, __function);
+}
+#endif
 
 #if !defined(NDEBUG) && defined(RB_ASSERT)
 void
@@ -84,25 +91,17 @@ __assert_fail(const char *__assertion,
 }
 #endif
 
-#if !defined(NDEBUG) && defined(RB_ASSERT)
 void
-__assert_perror_fail(int __errnum,
-                     const char *__file,
-                     unsigned int __line,
-                     const char *__function)
+__attribute__((visibility("default")))
+ircd::debugtrap()
 {
-	char buf[32];
-	snprintf(buf, sizeof(buf), "perror #%d: ", __errnum);
-	__assert_fail(buf, __file, __line, __function);
+	#if defined(__clang__)
+		__builtin_debugtrap();
+	#elif defined(__x86_64__)
+		__asm__ volatile ("int $3");
+	#elif defined(HAVE_SIGNAL_H)
+		raise(SIGTRAP);
+	#else
+		__builtin_trap();
+	#endif
 }
-#endif
-
-#if !defined(NDEBUG) && defined(RB_ASSERT)
-void
-__assert(const char *__assertion,
-         const char *__file,
-         int __line)
-{
-	__assert_fail(__assertion, __file, __line, "<no function>");
-}
-#endif
