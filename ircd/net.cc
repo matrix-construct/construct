@@ -1507,7 +1507,8 @@ try
 
 	log::debug
 	{
-		log, "%s configured listener SSL", loghead(*this)
+		log, "%s: configured listener SSL",
+		loghead(*this)
 	};
 
 	open();
@@ -1552,19 +1553,21 @@ ircd::net::acceptor::open()
 	a.non_blocking(true);
 	log::debug
 	{
-		log, "%s opened listener socket", loghead(*this)
+		log, "%s: opened listener socket",
+		loghead(*this)
 	};
 
 	a.bind(ep);
 	log::debug
 	{
-		log, "%s bound listener socket", loghead(*this)
+		log, "%s: bound listener socket",
+		loghead(*this)
 	};
 
 	a.listen(backlog);
 	log::debug
 	{
-		log, "%s listening (backlog: %lu, max connections: %zu)",
+		log, "%s: listening (backlog: %lu, max connections: %zu)",
 		loghead(*this),
 		backlog,
 		max_connections
@@ -1586,7 +1589,8 @@ ircd::net::acceptor::close()
 	join();
 	log::debug
 	{
-		log, "%s listener finished", loghead(*this)
+		log, "%s: listener finished",
+		loghead(*this)
 	};
 }
 
@@ -1991,7 +1995,7 @@ ircd::net::acceptor::handle_alpn(SSL &ssl,
 
 	log::debug
 	{
-		log, "%s offered %zu ALPN protocols",
+		log, "%s: offered %zu ALPN protocols",
 		loghead(*this),
 		size(in),
 	};
@@ -2001,7 +2005,7 @@ ircd::net::acceptor::handle_alpn(SSL &ssl,
 	{
 		log::debug
 		{
-			log, "%s ALPN protocol %zu of %zu: '%s'",
+			log, "%s: ALPN protocol %zu of %zu: '%s'",
 			loghead(*this),
 			i,
 			size(in),
@@ -2095,7 +2099,7 @@ try
 
 	log::debug
 	{
-		log, "%s offered SNI '%s'",
+		log, "%s: offered SNI '%s'",
 		loghead(*this),
 		name
 	};
@@ -2106,7 +2110,7 @@ catch(const sni_warning &e)
 {
 	log::warning
 	{
-		log, "%s during SNI :%s",
+		log, "%s: during SNI :%s",
 		loghead(*this),
 		e.what()
 	};
@@ -2117,7 +2121,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "%s during SNI :%s",
+		log, "%s: during SNI :%s",
 		loghead(*this),
 		e.what()
 	};
@@ -2342,7 +2346,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		ssl.use_tmp_dh_file(filename);
 		log::info
 		{
-			log, "%s using tmp dh file '%s'",
+			log, "%s: using tmp dh file '%s'",
 			loghead(*this),
 			filename
 		};
@@ -2357,7 +2361,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		ssl.use_tmp_dh(buf);
 		log::info
 		{
-			log, "%s using DH params supplied in options (%zu bytes)",
+			log, "%s: using DH params supplied in options (%zu bytes)",
 			loghead(*this),
 			size(buf)
 		};
@@ -2374,7 +2378,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 	{
 		log::notice
 		{
-			log, "%s asking for password with purpose '%s' (size: %zu)",
+			log, "%s: asking for password with purpose '%s' (size: %zu)",
 			loghead(*this),
 			purpose,
 			size
@@ -2456,13 +2460,13 @@ try
 	a.set_option(reuse_address);
 	log::debug
 	{
-		log, "%s opened listener socket", loghead(*this)
+		log, "%s: opened listener socket", loghead(*this)
 	};
 
 	a.bind(ep);
 	log::debug
 	{
-		log, "%s bound listener socket", loghead(*this)
+		log, "%s: bound listener socket", loghead(*this)
 	};
 }
 catch(const boost::system::system_error &e)
