@@ -109,43 +109,43 @@ github_find_issue_number(const json::object &content);
 static std::pair<string_view, string_view>
 github_find_party(const json::object &content);
 
-static std::ostream &
+static bool
 github_handle__push(std::ostream &,
                     const json::object &content);
 
-static std::ostream &
+static bool
 github_handle__pull_request(std::ostream &,
                             const json::object &content);
 
-static std::ostream &
+static bool
 github_handle__issue_comment(std::ostream &,
                              const json::object &content);
 
-static std::ostream &
+static bool
 github_handle__issues(std::ostream &,
                       const json::object &content);
 
-static std::ostream &
+static bool
 github_handle__watch(std::ostream &,
                      const json::object &content);
 
-static std::ostream &
+static bool
 github_handle__star(std::ostream &,
                     const json::object &content);
 
-static std::ostream &
+static bool
 github_handle__label(std::ostream &,
                      const json::object &content);
 
-static std::ostream &
+static bool
 github_handle__organization(std::ostream &,
                             const json::object &content);
 
-static std::ostream &
+static bool
 github_handle__status(std::ostream &,
                       const json::object &content);
 
-static std::ostream &
+static bool
 github_handle__ping(std::ostream &,
                     const json::object &content);
 
@@ -158,6 +158,12 @@ void
 github_handle(client &client,
               const resource::request &request)
 {
+	if(!string_view(webhook_room))
+		return;
+
+	if(!string_view(webhook_user))
+		return;
+
 	const http::headers &headers
 	{
 		request.head.headers
@@ -184,18 +190,6 @@ github_handle(client &client,
 		headers.at("X-GitHub-Delivery")
 	};
 
-	if(type == "status")
-	{
-		if(unquote(request["state"]) == "pending")
-			return;
-
-		if(!webhook_status_verbose) switch(hash(unquote(request["state"])))
-		{
-			case "failure"_:  break;
-			default:          return;
-		}
-	}
-
 	const unique_buffer<mutable_buffer> buf
 	{
 		48_KiB
@@ -206,37 +200,39 @@ github_handle(client &client,
 
 	github_heading(out, type, request.content);
 
-	if(type == "ping")
-		github_handle__ping(out, request.content);
-	else if(type == "push")
-		github_handle__push(out, request.content);
-	else if(type == "pull_request")
-		github_handle__pull_request(out, request.content);
-	else if(type == "issues")
-		github_handle__issues(out, request.content);
-	else if(type == "issue_comment")
-		github_handle__issue_comment(out, request.content);
-	else if(type == "watch")
-		github_handle__watch(out, request.content);
-	else if(type == "star")
-		github_handle__star(out, request.content);
-	else if(type == "label")
-		github_handle__label(out, request.content);
-	else if(type == "organization")
-		github_handle__organization(out, request.content);
-	else if(type == "status")
-		github_handle__status(out, request.content);
+	const bool ok
+	{
+		type == "ping"?
+			github_handle__ping(out, request.content):
+		type == "push"?
+			github_handle__push(out, request.content):
+		type == "pull_request"?
+			github_handle__pull_request(out, request.content):
+		type == "issues"?
+			github_handle__issues(out, request.content):
+		type == "issue_comment"?
+			github_handle__issue_comment(out, request.content):
+		type == "watch"?
+			github_handle__watch(out, request.content):
+		type == "star"?
+			github_handle__star(out, request.content):
+		type == "label"?
+			github_handle__label(out, request.content):
+		type == "organization"?
+			github_handle__organization(out, request.content):
+		type == "status"?
+			github_handle__status(out, request.content):
 
-	if(!string_view(webhook_room))
+		true // unhandled will just show heading
+	};
+
+	if(!ok)
 		return;
 
 	const auto room_id
 	{
 		m::room_id(string_view(webhook_room))
 	};
-
-	if(!string_view(webhook_user))
-		return;
 
 	const m::user::id::buf user_id
 	{
@@ -330,7 +326,7 @@ github_heading(std::ostream &out,
 	return out;
 }
 
-std::ostream &
+bool
 github_handle__push(std::ostream &out,
                     const json::object &content)
 {
@@ -351,7 +347,7 @@ github_handle__push(std::ostream &out,
 			out << " " << unquote(content["ref"]);
 
 		out << " deleted</font>";
-		return out;
+		return true;
 	}
 
 	if(content["ref"])
@@ -407,10 +403,10 @@ github_handle__push(std::ostream &out,
 	}
 
 	out << "</code></pre>";
-	return out;
+	return true;
 }
 
-static std::ostream &
+bool
 github_handle__pull_request(std::ostream &out,
                             const json::object &content)
 {
@@ -600,10 +596,10 @@ github_handle__pull_request(std::ostream &out,
 			break;
 	}
 
-	return out;
+	return true;
 }
 
-static std::ostream &
+bool
 github_handle__issues(std::ostream &out,
                       const json::object &content)
 {
@@ -745,10 +741,10 @@ github_handle__issues(std::ostream &out,
 		out << "</ul>";
 	}
 
-	return out;
+	return true;
 }
 
-static std::ostream &
+bool
 github_handle__issue_comment(std::ostream &out,
                              const json::object &content)
 {
@@ -815,10 +811,10 @@ github_handle__issue_comment(std::ostream &out,
 		    ;
 	}
 
-	return out;
+	return true;
 }
 
-std::ostream &
+bool
 github_handle__label(std::ostream &out,
                      const json::object &content)
 {
@@ -903,10 +899,10 @@ github_handle__label(std::ostream &out,
 		out << "</ul>";
 	}
 
-	return out;
+	return true;
 }
 
-std::ostream &
+bool
 github_handle__organization(std::ostream &out,
                             const json::object &content)
 {
@@ -944,10 +940,10 @@ github_handle__organization(std::ostream &out,
 		    ;
 	}
 
-	return out;
+	return true;
 }
 
-std::ostream &
+bool
 github_handle__status(std::ostream &out,
                       const json::object &content)
 {
@@ -955,6 +951,18 @@ github_handle__status(std::ostream &out,
 	{
 		content["state"]
 	};
+
+	if(state == "pending")
+		return false;
+
+	if(!webhook_status_verbose) switch(hash(state))
+	{
+		case "failure"_:
+			break;
+
+		default:
+			return false;
+	}
 
 	const json::string &description
 	{
@@ -997,34 +1005,40 @@ github_handle__status(std::ostream &out,
 	    << "</font>"
 	    ;
 
-	return out;
+	return true;
 }
 
-std::ostream &
+bool
 github_handle__watch(std::ostream &out,
                      const json::object &content)
 {
-	const string_view action
+	const json::string &action
 	{
-		unquote(content["action"])
+		content["action"]
 	};
 
-	return out;
+	if(action != "started")
+		return false;
+
+	return true;
 }
 
-std::ostream &
+bool
 github_handle__star(std::ostream &out,
                     const json::object &content)
 {
-	const string_view action
+	const json::string &action
 	{
-		unquote(content["action"])
+		content["action"]
 	};
 
-	return out;
+	if(action != "created")
+		return false;
+
+	return true;
 }
 
-std::ostream &
+bool
 github_handle__ping(std::ostream &out,
                     const json::object &content)
 {
@@ -1032,7 +1046,7 @@ github_handle__ping(std::ostream &out,
 	    << unquote(content["zen"])
 	    << "</code></pre>";
 
-	return out;
+	return true;
 }
 
 /// Researched from yestifico bot
