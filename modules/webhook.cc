@@ -130,6 +130,10 @@ github_handle__watch(std::ostream &,
                      const json::object &content);
 
 static std::ostream &
+github_handle__star(std::ostream &,
+                    const json::object &content);
+
+static std::ostream &
 github_handle__label(std::ostream &,
                      const json::object &content);
 
@@ -214,6 +218,8 @@ github_handle(client &client,
 		github_handle__issue_comment(out, request.content);
 	else if(type == "watch")
 		github_handle__watch(out, request.content);
+	else if(type == "star")
+		github_handle__star(out, request.content);
 	else if(type == "label")
 		github_handle__label(out, request.content);
 	else if(type == "organization")
@@ -1003,11 +1009,17 @@ github_handle__watch(std::ostream &out,
 		unquote(content["action"])
 	};
 
-	if(action == "started")
+	return out;
+}
+
+std::ostream &
+github_handle__star(std::ostream &out,
+                    const json::object &content)
+{
+	const string_view action
 	{
-		out << " with a star";
-		return out;
-	}
+		unquote(content["action"])
+	};
 
 	return out;
 }
