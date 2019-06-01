@@ -10,6 +10,7 @@
 
 #include <RB_INC_SIGNAL_H
 
+#if !defined(NDEBUG) && defined(RB_ASSERT)
 void
 __attribute__((visibility("default")))
 ircd::debugtrap()
@@ -38,6 +39,9 @@ __assert_fail(const char *__assertion,
 		        __line,
 		        __function,
 		        __assertion);
+
+	if(ircd::soft_assert)
+		return;
 
 	if(strcmp(RB_ASSERT, "quit") == 0)
 		ircd::quit();

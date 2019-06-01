@@ -17,6 +17,14 @@ namespace ircd
 	static void main() noexcept;
 }
 
+decltype(ircd::soft_assert)
+ircd::soft_assert
+{
+	{ "name",     "ircd.soft_assert"  },
+	{ "default",  false               },
+	{ "persist",  false               },
+};
+
 decltype(ircd::write_avoid)
 ircd::write_avoid
 {

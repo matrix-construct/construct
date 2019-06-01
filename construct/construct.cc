@@ -31,6 +31,7 @@ bool no6;
 bool norun;
 bool read_only;
 bool write_avoid;
+bool soft_assert;
 const char *execute;
 std::array<bool, 6> smoketest;
 
@@ -54,6 +55,7 @@ lgetopt opts[]
 	{ "ro",         &read_only,     lgetopt::BOOL,    "Read-only mode. No writes to database allowed." },
 	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered." },
 	{ "smoketest",  &smoketest[0],  lgetopt::BOOL,    "Starts and stops the daemon to return success."},
+	{ "sassert",    &soft_assert,   lgetopt::BOOL,    "Softens assertion effects in debug mode."},
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -358,4 +360,7 @@ applyargs()
 
 	if(no6)
 		ircd::net::enable_ipv6.set("false");
+
+	if(soft_assert)
+		ircd::soft_assert.set("true");
 }

@@ -76,6 +76,7 @@ namespace ircd
 	extern conf::item<bool> debugmode;
 	extern conf::item<bool> read_only;
 	extern conf::item<bool> write_avoid;
+	extern conf::item<bool> soft_assert;
 }
 
 #endif // HAVE_IRCD_IRCD_H
