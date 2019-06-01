@@ -1304,6 +1304,32 @@ ircd::net::acceptor::timeout
 	{ "default",  12000L                      },
 };
 
+/// The number of sockets we precreate and set accept handles for.
+decltype(ircd::net::acceptor::accepting_max)
+ircd::net::acceptor::accepting_max
+{
+	{ "name",     "ircd.net.acceptor.accepting.max" },
+	{ "default",  1L                                },
+};
+
+/// The number of simultaneous handshakes we conduct across all clients.
+decltype(ircd::net::acceptor::handshaking_max)
+ircd::net::acceptor::handshaking_max
+{
+	{ "name",     "ircd.net.acceptor.handshaking.max" },
+	{ "default",  64L                                 },
+};
+
+/// The number of simultaneous handshakes we conduct for a single peer (which
+/// is an IP without a port in this context). This prevents a peer from
+/// reaching the handshaking.max limit to DoS out other peers.
+decltype(ircd::net::acceptor::handshaking_max_per_peer)
+ircd::net::acceptor::handshaking_max_per_peer
+{
+	{ "name",     "ircd.net.acceptor.handshaking.max_per_peer" },
+	{ "default",  16L                                          },
+};
+
 decltype(ircd::net::acceptor::ssl_curve_list)
 ircd::net::acceptor::ssl_curve_list
 {
@@ -1348,10 +1374,7 @@ ircd::net::allow(acceptor &a)
 	if(unlikely(!a.a.is_open()))
 		return false;
 
-	if(unlikely(a.handle_set))
-		return false;
-
-	a.set_handle();
+	a.set_handles();
 	return true;
 }
 
@@ -1405,6 +1428,29 @@ ircd::json::object
 ircd::net::config(const acceptor &a)
 {
 	return a.opts;
+}
+
+size_t
+ircd::net::accepting_count(const acceptor &a)
+{
+	return a.accepting.size();
+}
+
+size_t
+ircd::net::handshaking_count(const acceptor &a)
+{
+	return a.handshaking.size();
+}
+
+size_t
+ircd::net::handshaking_count(const acceptor &a,
+                             const ipaddr &ipaddr)
+{
+	return std::count_if(begin(a.handshaking), end(a.handshaking), [&ipaddr]
+	(const auto &socket_p)
+	{
+		return remote_ipport(*socket_p) == ipaddr;
+	});
 }
 
 //
@@ -1474,13 +1520,13 @@ catch(const boost::system::system_error &e)
 ircd::net::acceptor::~acceptor()
 noexcept
 {
-	if(accepting || handshaking)
+	if(!accepting.empty() || handshaking.empty())
 		log::critical
 		{
 			"The acceptor must not have clients during destruction!"
 			" (accepting:%zu handshaking:%zu)",
-			accepting,
-			handshaking
+			accepting.size(),
+			handshaking.size(),
 		};
 }
 
@@ -1534,6 +1580,9 @@ ircd::net::acceptor::close()
 	if(a.is_open())
 		a.close();
 
+	for(const auto &sock : handshaking)
+		sock->cancel();
+
 	join();
 	log::debug
 	{
@@ -1553,7 +1602,7 @@ noexcept try
 
 	joining.wait([this]
 	{
-		return !accepting && !handshaking;
+		return accepting.empty() && handshaking.empty();
 	});
 
 	interrupting = false;
@@ -1591,6 +1640,16 @@ catch(const boost::system::system_error &e)
 	return false;
 }
 
+size_t
+ircd::net::acceptor::set_handles()
+{
+	size_t ret(0);
+	while(set_handle())
+		++ret;
+
+	return ret;
+}
+
 /// Sets the next asynchronous handler to start the next accept sequence.
 /// Each call to next() sets one handler which handles the connect for one
 /// socket. After the connect, an asynchronous SSL handshake handler is set
@@ -1604,20 +1663,25 @@ try
 		"ircd::net::acceptor accept"
 	};
 
-	assert(!handle_set);
-	handle_set = true;
-	auto sock
+	if(accepting.size() >= size_t(accepting_max))
+		return false;
+
+	const auto it
 	{
-		std::make_shared<ircd::socket>(ssl)
+		accepting.emplace(end(accepting), std::make_shared<ircd::socket>(ssl))
 	};
 
-	++accepting;
-	ip::tcp::socket &sd(*sock);
+	const auto &sock
+	{
+		*it
+	};
+
 	auto handler
 	{
-		std::bind(&acceptor::accept, this, ph::_1, sock, weak_from(*this))
+		std::bind(&acceptor::accept, this, ph::_1, sock, it)
 	};
 
+	ip::tcp::socket &sd(*sock);
 	a.async_accept(sd, ios::handle(desc, std::move(handler)));
 	return true;
 }
@@ -1635,36 +1699,64 @@ catch(const std::exception &e)
 void
 ircd::net::acceptor::accept(const error_code &ec,
                             const std::shared_ptr<socket> sock,
-                            const std::weak_ptr<acceptor> a)
+                            const decltype(accepting)::const_iterator it)
 noexcept try
 {
-	if(unlikely(a.expired()))
-		return;
-
 	assert(bool(sock));
-	assert(handle_set);
-	assert(accepting > 0);
-
-	handle_set = false;
-	--accepting;
-
+	assert(!accepting.empty());
+	assert(it != end(accepting));
 	thread_local char ecbuf[64];
 	log::debug
 	{
-		log, "%s: accepted(%zu) %s %s",
+		log, "%s: %s accepted(%zd:%zu) %s",
 		loghead(*this),
-		accepting,
 		loghead(*sock),
+		std::distance(cbegin(accepting), it),
+		accepting.size(),
 		string(ecbuf, ec)
 	};
 
+	accepting.erase(it);
 	if(!check_accept_error(ec, *sock))
 		return;
 
+	const auto &remote
+	{
+		remote_ipport(*sock)
+	};
+
 	// Call the proffer-callback if available. This allows the application
 	// to check whether to allow or deny this remote before the handshake.
-	if(pcb && !pcb(*listener_, remote_ipport(*sock)))
+	if(pcb && !pcb(*listener_, remote))
 	{
+		net::close(*sock, dc::RST, close_ignore);
+		return;
+	}
+
+	if(unlikely(handshaking_count(*this) >= size_t(handshaking_max)))
+	{
+		log::dwarning
+		{
+			log, "%s: refusing to handshake %s; exceeds maximum of %zu handshakes.",
+			loghead(*this),
+			loghead(*sock),
+			size_t(handshaking_max),
+		};
+
+		net::close(*sock, dc::RST, close_ignore);
+		return;
+	}
+
+	if(unlikely(handshaking_count(*this, remote) >= size_t(handshaking_max_per_peer)))
+	{
+		log::dwarning
+		{
+			log, "%s: refusing to handshake %s; exceeds maximum of %zu handshakes to them.",
+			loghead(*this),
+			loghead(*sock),
+			size_t(handshaking_max_per_peer),
+		};
+
 		net::close(*sock, dc::RST, close_ignore);
 		return;
 	}
@@ -1679,12 +1771,16 @@ noexcept try
 		"ircd::net::acceptor async_handshake"
 	};
 
-	auto handshake
+	const auto it
 	{
-		std::bind(&acceptor::handshake, this, ph::_1, sock, a)
+		handshaking.emplace(end(handshaking), sock)
 	};
 
-	++handshaking;
+	auto handshake
+	{
+		std::bind(&acceptor::handshake, this, ph::_1, sock, it)
+	};
+
 	sock->set_timeout(milliseconds(timeout));
 	sock->ssl.async_handshake(handshake_type, ios::handle(desc, std::move(handshake)));
 }
@@ -1771,14 +1867,12 @@ ircd::net::acceptor::check_accept_error(const error_code &ec,
 void
 ircd::net::acceptor::handshake(const error_code &ec,
                                const std::shared_ptr<socket> sock,
-                               const std::weak_ptr<acceptor> a)
+                               const decltype(handshaking)::const_iterator it)
 noexcept try
 {
-	if(unlikely(a.expired()))
-		return;
-
-	--handshaking;
 	assert(bool(sock));
+	assert(!handshaking.empty());
+	assert(it != end(handshaking));
 
 	#ifdef RB_DEBUG
 	const auto *const current_cipher
@@ -1791,9 +1885,11 @@ noexcept try
 	thread_local char ecbuf[64];
 	log::debug
 	{
-		log, "%s handshook(%zu) cipher:%s %s",
+		log, "%s: %s handshook(%zd:%zu) cipher:%s %s",
+		loghead(*this),
 		loghead(*sock),
-		handshaking,
+		std::distance(cbegin(handshaking), it),
+		handshaking.size(),
 		current_cipher?
 			openssl::name(*current_cipher):
 			"<NO CIPHER>"_sv,
@@ -1801,6 +1897,7 @@ noexcept try
 	};
 	#endif
 
+	handshaking.erase(it);
 	check_handshake_error(ec, *sock);
 	sock->cancel_timeout();
 	assert(bool(cb));

@@ -23,6 +23,11 @@ namespace ircd::net
 	string_view name(const acceptor &);
 	ipport binder(const acceptor &);
 	ipport local(const acceptor &);
+
+	size_t handshaking_count(const acceptor &, const ipaddr &);
+	size_t handshaking_count(const acceptor &);
+	size_t accepting_count(const acceptor &);
+
 	string_view loghead(const mutable_buffer &, const acceptor &);
 	string_view loghead(const acceptor &);
 	std::ostream &operator<<(std::ostream &s, const acceptor &);

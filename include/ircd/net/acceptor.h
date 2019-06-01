@@ -23,11 +23,15 @@ struct ircd::net::acceptor
 	using error_code = boost::system::error_code;
 	using callback = listener::callback;
 	using proffer = listener::proffer;
+	using sockets = std::list<std::shared_ptr<socket>>;
 
 	IRCD_EXCEPTION(listener::error, error)
 	IRCD_EXCEPTION(error, sni_warning)
 
 	static log::log log;
+	static conf::item<size_t> accepting_max;
+	static conf::item<size_t> handshaking_max;
+	static conf::item<size_t> handshaking_max_per_peer;
 	static conf::item<milliseconds> timeout;
 	static conf::item<std::string> ssl_curve_list;
 	static conf::item<std::string> ssl_cipher_list;
@@ -42,10 +46,9 @@ struct ircd::net::acceptor
 	asio::ssl::context ssl;
 	ip::tcp::endpoint ep;
 	ip::tcp::acceptor a;
-	size_t accepting {0};
-	size_t handshaking {0};
+	sockets accepting;
+	sockets handshaking;
 	bool interrupting {false};
-	bool handle_set {false};
 	ctx::dock joining;
 
 	void configure(const json::object &opts);
@@ -54,14 +57,15 @@ struct ircd::net::acceptor
 	bool handle_sni(SSL &, int &ad);
 	string_view handle_alpn(SSL &, const vector_view<const string_view> &in);
 	void check_handshake_error(const error_code &ec, socket &);
-	void handshake(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
+	void handshake(const error_code &, const std::shared_ptr<socket>, const decltype(handshaking)::const_iterator) noexcept;
 
 	// Acceptance stack
 	bool check_accept_error(const error_code &ec, socket &);
-	void accept(const error_code &ec, std::shared_ptr<socket>, std::weak_ptr<acceptor>) noexcept;
+	void accept(const error_code &, const std::shared_ptr<socket>, const decltype(accepting)::const_iterator) noexcept;
 
 	// Accept next
 	bool set_handle();
+	size_t set_handles();
 
 	// Acceptor shutdown
 	bool interrupt() noexcept;
