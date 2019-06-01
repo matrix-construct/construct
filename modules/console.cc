@@ -6176,75 +6176,7 @@ console_cmd__events__dump(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	const fs::fd file
-	{
-		filename, std::ios::out | std::ios::app
-	};
-
-	const unique_buffer<mutable_buffer> buf
-	{
-		size_t(events_dump_buffer_size)
-	};
-
-	char *pos{data(buf)};
-	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
-	m::events::for_each(m::event::idx{0}, [&]
-	(const m::event::idx &seq, const m::event &event)
-	{
-		const auto remain
-		{
-			size_t(data(buf) + size(buf) - pos)
-		};
-
-		assert(remain >= m::event::MAX_SIZE && remain <= size(buf));
-		const mutable_buffer mb{pos, remain};
-		pos += json::print(mb, event);
-		++ecount;
-
-		if(pos + m::event::MAX_SIZE > data(buf) + size(buf))
-		{
-			const const_buffer cb{data(buf), pos};
-			foff += size(fs::append(file, cb));
-			pos = data(buf);
-			++acount;
-
-			const double pct
-			{
-				(seq / double(m::vm::sequence::retired)) * 100.0
-			};
-
-			log::info
-			{
-				"dump[%s] %lf$%c @ seq %zu of %zu; %zu events; %zu bytes; %zu writes; %zu errors",
-				filename,
-				pct,
-				'%', //TODO: fix gram
-				seq,
-				m::vm::sequence::retired,
-				ecount,
-				foff,
-				acount,
-				errcount
-			};
-		}
-
-		return true;
-	});
-
-	if(pos > data(buf))
-	{
-		const const_buffer cb{data(buf), pos};
-		foff += size(fs::append(file, cb));
-		++acount;
-	}
-
-	out << "Dumped " << ecount << " events"
-	    << " using " << foff << " bytes"
-	    << " in " << acount << " writes"
-	    << " to " << filename
-	    << " with " << errcount << " errors"
-	    << std::endl;
-
+	m::events::dump__file(filename);
 	return true;
 }
 

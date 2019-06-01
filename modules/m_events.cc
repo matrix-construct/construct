@@ -8,11 +8,100 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m::events
+{
+	extern conf::item<size_t> dump_buffer_size;
+}
+
 ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix events library"
 };
+
+decltype(ircd::m::events::dump_buffer_size)
+ircd::m::events::dump_buffer_size
+{
+	{ "name",     "ircd.m.events.dump.buffer_size" },
+	{ "default",  int64_t(4_MiB)                   },
+};
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::events::dump__file(const string_view &filename)
+{
+	const fs::fd file
+	{
+		filename, std::ios::out | std::ios::app
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		size_t(dump_buffer_size)
+	};
+
+	char *pos{data(buf)};
+	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
+	for_each(m::event::idx{0}, [&]
+	(const event::idx &seq, const m::event &event)
+	{
+		const auto remain
+		{
+			size_t(data(buf) + size(buf) - pos)
+		};
+
+		assert(remain >= event::MAX_SIZE && remain <= size(buf));
+		const mutable_buffer mb{pos, remain};
+		pos += copy(mb, event.source);
+		++ecount;
+
+		if(pos + event::MAX_SIZE > data(buf) + size(buf))
+		{
+			const const_buffer cb{data(buf), pos};
+			foff += size(fs::append(file, cb));
+			pos = data(buf);
+			++acount;
+
+			const double pct
+			{
+				(seq / double(m::vm::sequence::retired)) * 100.0
+			};
+
+			log::info
+			{
+				"dump[%s] %0.2lf$%c @ seq %zu of %zu; %zu events; %zu bytes; %zu writes; %zu errors",
+				filename,
+				pct,
+				'%', //TODO: fix gram
+				seq,
+				m::vm::sequence::retired,
+				ecount,
+				foff,
+				acount,
+				errcount
+			};
+		}
+
+		return true;
+	});
+
+	if(pos > data(buf))
+	{
+		const const_buffer cb{data(buf), pos};
+		foff += size(fs::append(file, cb));
+		++acount;
+	}
+
+	log::notice
+	{
+		log, "dump[%s] complete events:%zu using %s in writes:%zu errors:%zu",
+		filename,
+		ecount,
+		pretty(iec(foff)),
+		acount,
+		errcount,
+	};
+}
 
 bool
 IRCD_MODULE_EXPORT

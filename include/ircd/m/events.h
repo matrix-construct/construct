@@ -37,6 +37,9 @@ namespace ircd::m::events
 
 	bool for_each(const range &, const closure_bool &);
 	bool for_each(const range &, const event_filter &, const closure_bool &);
+
+	// util
+	void dump__file(const string_view &filename);
 }
 
 /// Range to start (inclusive) and stop (exclusive). If start is greater than
