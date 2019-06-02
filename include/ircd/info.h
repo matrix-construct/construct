@@ -63,9 +63,12 @@ namespace ircd::info
 	extern const versions kernel_version;
 
 	// Toolchain and library information
-	extern const versions gnuc_version_api;
+	extern const versions gnuc_version;
+	extern const versions clang_version;
 	extern const versions glibc_version_api;
 	extern const versions glibc_version_abi;
+	extern const versions glibcxx_version_api;
+	extern const versions sd6_version;
 
 	// Primary information
 	extern const string_view name;

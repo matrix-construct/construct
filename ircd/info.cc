@@ -36,10 +36,8 @@ ircd::info::dump()
 	// This message flashes information about IRCd itself for this execution.
 	log::info
 	{
-		"%s %ld %s. configured: %s; compiled: %s; executed: %s; %s",
+		"%s configured: %s; compiled: %s; executed: %s; %s",
 		BRANDING_VERSION,
-		__cplusplus,
-		__VERSION__,
 		configured,
 		compiled,
 		startup,
@@ -49,7 +47,9 @@ ircd::info::dump()
 	// This message flashes information about our API dependencies from compile time.
 	log::info
 	{
-		"API: glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		"SD-6 %s. glibcxx %s. glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		string_view{sd6_version},
+		string_view{glibcxx_version_api},
 		string_view{glibc_version_api},
 		string_view{boost_version_api},
 		string_view{db::version_api},
@@ -59,9 +59,9 @@ ircd::info::dump()
 	};
 
 	// This message flashes information about our ABI dependencies on this system.
-	log::debug
+	log::info
 	{
-		"ABI: glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		"Linked: glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
 		string_view{glibc_version_abi},
 		string_view{boost_version_abi},
 		string_view{db::version_abi},
@@ -191,6 +191,7 @@ ircd::info::versions::versions(const string_view &name,
 ,type{type}
 ,monotonic{monotonic}
 ,semantic{semantic}
+,string{'\0'}
 {
 	closure(*this, this->string);
 
@@ -200,16 +201,14 @@ ircd::info::versions::versions(const string_view &name,
 
 	// Generate a string from the semantic version number or if all zeroes
 	// from the monotonic version number instead.
-	if(monotonic && !semantic[0] && !semantic[1] && !semantic[2])
+	if(!this->semantic[0] && !this->semantic[1] && !this->semantic[2])
 		::snprintf(this->string, sizeof(this->string), "%ld",
-		           monotonic);
-	else if(!monotonic)
-		::snprintf(this->string, sizeof(this->string), "%ld.%ld.%ld",
-		           semantic[0],
-		           semantic[1],
-		           semantic[2]);
+		           this->monotonic);
 	else
-		::snprintf(this->string, sizeof(this->string), "<unknown>");
+		::snprintf(this->string, sizeof(this->string), "%ld.%ld.%ld",
+		           this->semantic[0],
+		           this->semantic[1],
+		           this->semantic[2]);
 }
 
 //
@@ -257,7 +256,7 @@ ircd_name
 //
 
 //
-// Host information
+// System information
 //
 
 #ifdef HAVE_SYS_UTSNAME_H
@@ -270,7 +269,9 @@ ircd::info::utsname{[]
 }()};
 #endif
 
+//
 // kernel
+//
 
 decltype(ircd::info::kernel_name)
 ircd::info::kernel_name
@@ -313,67 +314,124 @@ ircd::info::kernel_version
 		0 // patch
 	},
 
-	utsname.release
+	[](auto &that, const auto &buf)
+	{
+		::snprintf(data(buf), size(buf), "%s %s",
+		           utsname.sysname,
+		           utsname.release);
+	}
 };
 
 //
 // gnuc
 //
-#if defined(__GNUC__) && defined(__GLIBC__)
 
-decltype(ircd::info::gnuc_version_api)
-ircd::info::gnuc_version_api
+decltype(ircd::info::gnuc_version)
+ircd::info::gnuc_version
 {
 	"gnuc", versions::API, 0,
 	{
-		__GNUC__,
-		__GNUC_MINOR__,
-		__GNUC_PATCHLEVEL__,
+		#if defined(__GNUC__)
+			__GNUC__,
+		#endif
+
+		#if defined(__GNUC_MINOR__)
+			__GNUC_MINOR__,
+		#endif
+
+		#if defined(__GNUC_PATCHLEVEL__)
+			__GNUC_PATCHLEVEL__,
+		#endif
 	},
 
-	// version string
 	#if defined(__VERSION__)
-	__VERSION__
-	#else
-	"<__VERSION__ undefined>"
+		__VERSION__
 	#endif
 };
 
-#endif defined(__GNUC__) && defined(__GLIBC__)
+//
+// clang
+//
+
+decltype(ircd::info::clang_version)
+ircd::info::clang_version
+{
+	"clang", versions::API, 0,
+	{
+		#if defined(__clang_major__)
+			__clang_major__,
+		#endif
+
+		#if defined(__clang_minor__)
+			__clang_minor__,
+		#endif
+
+		#if defined(__clang_patchlevel__)
+			__clang_patchlevel__,
+		#endif
+	},
+
+	#if defined(__clang_version__)
+		__clang_version__
+	#endif
+};
 
 //
 // glibc
 //
-#if defined(__GNU_LIBRARY__) && defined(__GLIBC__) && defined(__GLIBC_MINOR__)
 
 decltype(ircd::info::glibc_version_api)
 ircd::info::glibc_version_api
 {
 	"glibc", versions::API, 0,
 	{
-		__GNU_LIBRARY__,
-		__GLIBC__,
-		__GLIBC_MINOR__,
-	},
+		#if defined(__GNU_LIBRARY__)
+			__GNU_LIBRARY__,
+		#endif
 
-	[](auto &that, const auto &buf)
-	{
-	    ::snprintf(data(buf), size(buf), "%ld.%ld.%ld",
-	               that.semantic[0],
-	               that.semantic[1],
-	               that.semantic[2]);
-	}
+		#if defined(__GLIBC__)
+			__GLIBC__,
+		#endif
+
+		#if defined(__GLIBC_MINOR__)
+			__GLIBC_MINOR__,
+		#endif
+	},
 };
 
-#ifdef HAVE_GNU_LIBC_VERSION_H
 decltype(ircd::info::glibc_version_abi)
 ircd::info::glibc_version_abi
 {
-	"glibc", versions::ABI, 0, {0}, ::gnu_get_libc_version()
-};
-#endif HAVE_GNU_LIBC_VERSION_H
+	"glibc", versions::ABI, 0, {0},
 
-#endif defined(__GNU_LIBRARY__) && defined(__GLIBC__) && defined(__GLIBC_MINOR__)
+	#if defined(HAVE_GNU_LIBC_VERSION_H)
+		::gnu_get_libc_version()
+	#endif
+};
+
+//
+// glibcxx
+//
+
+decltype(ircd::info::glibcxx_version_api)
+ircd::info::glibcxx_version_api
+{
+	"glibcxx", versions::API,
+
+	#if defined(__GLIBCXX__)
+		__GLIBCXX__
+	#endif
+};
+
+//
+// sd6
+//
+
+decltype(ircd::info::sd6_version)
+ircd::info::sd6_version
+{
+	"SD-6", versions::API, __cplusplus
+};
 
 //
 // System information
