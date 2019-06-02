@@ -245,8 +245,10 @@ bootstrap(const string_view &host,
 
 	m::vm::copts opts;
 	opts.infolog_accept = true;
-	opts.fetch_prev_check = false;
+	opts.fetch_auth_check = false;
 	opts.fetch_state_check = false;
+	opts.fetch_prev_check = false;
+	opts.eval = false;
 	const m::event::id::buf event_id
 	{
 		m::vm::eval
