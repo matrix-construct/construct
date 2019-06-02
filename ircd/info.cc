@@ -11,6 +11,7 @@
 #include <RB_INC_SYS_RESOURCE_H
 #include <RB_INC_UNISTD_H
 #include <RB_INC_CPUID_H
+#include <RB_INC_GNU_LIBC_VERSION_H
 
 decltype(ircd::info::credits)
 ircd::info::credits
@@ -344,11 +345,13 @@ ircd::info::glibc_version_api
 	}
 };
 
+#ifdef HAVE_GNU_LIBC_VERSION_H
 decltype(ircd::info::glibc_version_abi)
 ircd::info::glibc_version_abi
 {
-	"glibc", versions::ABI, 0, {0}, "<unknown>" //TODO: get this.
+	"glibc", versions::ABI, 0, {0}, ::gnu_get_libc_version()
 };
+#endif HAVE_GNU_LIBC_VERSION_H
 
 #endif defined(__GNU_LIBRARY__) && defined(__GLIBC__) && defined(__GLIBC_MINOR__)
 
