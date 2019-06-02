@@ -32,22 +32,13 @@ ircd::boost_version_api
 		BOOST_VERSION / 100000,
 		BOOST_VERSION / 100 % 1000,
 		BOOST_VERSION % 100,
-	},
-
-	// Version string generator since boost doesn't provide any strings.
-	[](auto &version, const auto &buf)
-	{
-		::snprintf(data(buf), size(buf), "%ld.%ld.%ld",
-		           version[0],
-		           version[1],
-		           version[2]);
 	}
 };
 
 decltype(ircd::boost_version_abi)
 ircd::boost_version_abi
 {
-	"boost", info::versions::ABI, 0, {0}, "<unknown>" //TODO: get this
+	"boost", info::versions::ABI //TODO: get this
 };
 
 //

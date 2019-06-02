@@ -98,22 +98,13 @@ ircd::db::version_api
 	"RocksDB", info::versions::API, 0,
 	{
 		ROCKSDB_MAJOR, ROCKSDB_MINOR, ROCKSDB_PATCH,
-	},
-
-	// version string generator
-	[](auto &version, const auto &buf)
-	{
-		::snprintf(data(buf), size(buf), "%ld.%ld.%ld",
-		           version[0],
-		           version[1],
-		           version[2]);
 	}
 };
 
 decltype(ircd::db::version_abi)
 ircd::db::version_abi
 {
-	"RocksDB", info::versions::ABI, 0, {0}, "<unknown>" //TODO: get this
+	"RocksDB", info::versions::ABI //TODO: get this
 };
 
 //

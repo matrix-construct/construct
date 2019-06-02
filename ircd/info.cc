@@ -169,12 +169,15 @@ ircd::info::versions::versions(const string_view &name,
                                const long &monotonic,
                                const std::array<long, 3> &semantic,
                                const string_view &string)
-:name{name}
-,type{type}
-,monotonic{monotonic}
-,semantic{semantic}
+:versions
 {
-	strlcpy(this->string, string);
+	name, type, monotonic, semantic, [&string]
+	(auto &that, const mutable_buffer &buf)
+	{
+		strlcpy(buf, string);
+	}
+}
+{
 }
 
 /// Construction of versions members with closure for custom string generation.
@@ -190,6 +193,23 @@ ircd::info::versions::versions(const string_view &name,
 ,semantic{semantic}
 {
 	closure(*this, this->string);
+
+	// User provided a string already; nothing else to do
+	if(strnlen(this->string, sizeof(this->string)) != 0)
+		return;
+
+	// Generate a string from the semantic version number or if all zeroes
+	// from the monotonic version number instead.
+	if(monotonic && !semantic[0] && !semantic[1] && !semantic[2])
+		::snprintf(this->string, sizeof(this->string), "%ld",
+		           monotonic);
+	else if(!monotonic)
+		::snprintf(this->string, sizeof(this->string), "%ld.%ld.%ld",
+		           semantic[0],
+		           semantic[1],
+		           semantic[2]);
+	else
+		::snprintf(this->string, sizeof(this->string), "<unknown>");
 }
 
 //
