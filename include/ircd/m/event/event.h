@@ -131,6 +131,8 @@ struct ircd::m::event
 
 	json::object source; // Contextual availability only.
 
+	explicit operator id() const;
+
 	using super_type::tuple;
 	event(const json::object &);
 	event(const json::object &, const keys &);
@@ -150,3 +152,12 @@ struct ircd::m::event
 #include "conforms.h"
 #include "append.h"
 #include "pretty.h"
+
+inline ircd::m::event::operator
+id()
+const
+{
+	return json::get<"event_id"_>(*this)?
+		id{json::get<"event_id"_>(*this)}:
+		id{};
+}
