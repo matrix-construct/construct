@@ -1526,7 +1526,7 @@ console_cmd__mod__mangles(opt &out, const string_view &line)
 
 	const string_view section
 	{
-		param.at("path", string_view{})
+		param.at("section", string_view{})
 	};
 
 	const auto mangles
