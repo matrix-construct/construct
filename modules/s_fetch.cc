@@ -491,6 +491,7 @@ void
 IRCD_MODULE_EXPORT
 ircd::m::fetch::auth_chain(const room &room,
                            const net::hostport &remote)
+try
 {
 	thread_local char rembuf[64];
 	log::debug
@@ -514,7 +515,7 @@ ircd::m::fetch::auth_chain(const room &room,
 		room.room_id, room.event_id, buf, std::move(opts)
 	};
 
-	request.wait(seconds(auth_timeout)); //TODO: conf
+	request.wait(seconds(auth_timeout));
 	request.get();
 	const json::array &events
 	{
@@ -534,10 +535,25 @@ ircd::m::fetch::auth_chain(const room &room,
 	vmopts.infolog_accept = true;
 	vmopts.fetch_prev_check = false;
 	vmopts.fetch_state_check = false;
+	vmopts.warnlog &= ~vm::fault::EXISTS;
 	m::vm::eval
 	{
 		events, vmopts
 	};
+}
+catch(const std::exception &e)
+{
+	thread_local char rembuf[64];
+	log::error
+	{
+		log, "Fetching auth chain for %s in %s from %s :%s",
+		string_view{room.event_id},
+		string_view{room.room_id},
+		string(rembuf, remote),
+		e.what(),
+	};
+
+	throw;
 }
 
 bool
