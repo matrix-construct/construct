@@ -295,7 +295,10 @@ ircd::info::kernel_version
 	utsname.release
 };
 
-// libc
+//
+// glibc
+//
+#if defined(__GNU_LIBRARY__) && defined(__GLIBC__) && defined(__GLIBC_MINOR__)
 
 decltype(ircd::info::glibc_version_api)
 ircd::info::glibc_version_api
@@ -321,6 +324,8 @@ ircd::info::glibc_version_abi
 {
 	"glibc", versions::ABI, 0, {0}, "<unknown>" //TODO: get this.
 };
+
+#endif defined(__GNU_LIBRARY__) && defined(__GLIBC__) && defined(__GLIBC_MINOR__)
 
 //
 // System information
