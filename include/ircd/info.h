@@ -57,10 +57,13 @@ namespace ircd::info
 	extern const ::utsname utsname;
 	#endif
 
+	// Kernel information
 	extern const string_view kernel_name;
 	extern const string_view kernel_release;
 	extern const versions kernel_version;
 
+	// Toolchain and library information
+	extern const versions gnuc_version_api;
 	extern const versions glibc_version_api;
 	extern const versions glibc_version_abi;
 

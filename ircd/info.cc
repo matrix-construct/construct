@@ -296,6 +296,31 @@ ircd::info::kernel_version
 };
 
 //
+// gnuc
+//
+#if defined(__GNUC__) && defined(__GLIBC__)
+
+decltype(ircd::info::gnuc_version_api)
+ircd::info::gnuc_version_api
+{
+	"gnuc", versions::API, 0,
+	{
+		__GNUC__,
+		__GNUC_MINOR__,
+		__GNUC_PATCHLEVEL__,
+	},
+
+	// version string
+	#if defined(__VERSION__)
+	__VERSION__
+	#else
+	"<__VERSION__ undefined>"
+	#endif
+};
+
+#endif defined(__GNUC__) && defined(__GLIBC__)
+
+//
 // glibc
 //
 #if defined(__GNU_LIBRARY__) && defined(__GLIBC__) && defined(__GLIBC_MINOR__)
