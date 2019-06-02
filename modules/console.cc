@@ -1651,7 +1651,7 @@ console_cmd__mod__links(opt &out, const string_view &line)
 	(const auto &link)
 	{
 		out << std::setw(2) << (i++)
-		    << " " << mods::ldso::name(link)
+		    << " " << mods::ldso::fullname(link)
 		    << std::endl;
 
 		return true;

@@ -45,6 +45,28 @@ ircd::mods::ldso::has(const string_view &name)
 }
 
 bool
+ircd::mods::ldso::has_soname(const string_view &name)
+{
+	return !for_each([&name]
+	(const auto &link)
+	{
+		// false to break
+		return name == soname(link)? false : true;
+	});
+}
+
+bool
+ircd::mods::ldso::has_fullname(const string_view &name)
+{
+	return !for_each([&name]
+	(const auto &link)
+	{
+		// false to break
+		return name == fullname(link)? false : true;
+	});
+}
+
+bool
 ircd::mods::ldso::for_each(const link_closure &closure)
 {
 	auto *map
@@ -65,8 +87,59 @@ ircd::mods::ldso::for_each(const link_closure &closure)
 	return true;
 }
 
+ircd::mods::ldso::semantic_version
+ircd::mods::ldso::version(const struct link_map &map)
+{
+	return version(soname(map));
+}
+
+ircd::mods::ldso::semantic_version
+ircd::mods::ldso::version(const string_view &soname)
+{
+	const auto str
+	{
+		split(soname, ".so.").second
+	};
+
+	string_view val[3];
+	const size_t num
+	{
+		tokens(str, '.', val)
+	};
+
+	semantic_version ret {0};
+	for(size_t i(0); i < num && i < 3; ++i)
+		ret[i] = lex_cast<long>(val[i]);
+
+	return ret;
+}
+
 ircd::string_view
 ircd::mods::ldso::name(const struct link_map &map)
+{
+	return name(soname(map));
+}
+
+ircd::string_view
+ircd::mods::ldso::name(const string_view &soname)
+{
+	return lstrip(split(soname, '.').first, "lib");
+}
+
+ircd::string_view
+ircd::mods::ldso::soname(const struct link_map &map)
+{
+	return soname(fullname(map));
+}
+
+ircd::string_view
+ircd::mods::ldso::soname(const string_view &fullname)
+{
+	return token_last(fullname, '/');
+}
+
+ircd::string_view
+ircd::mods::ldso::fullname(const struct link_map &map)
 {
 	return map.l_name;
 }
