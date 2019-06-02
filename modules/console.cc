@@ -1477,6 +1477,36 @@ console_cmd__mod__path(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__mod__sections(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"path"
+	}};
+
+	const string_view path
+	{
+		param.at("path")
+	};
+
+	auto sections(mods::sections(path));
+	std::sort(begin(sections), end(sections));
+	for(const auto &name : sections)
+	{
+		out << name;
+
+		const auto &symbols(mods::symbols(path, name));
+		if(!symbols.empty())
+			out << " (" << symbols.size() << ")";
+
+		out << std::endl;
+	}
+
+	out << std::endl;
+	return true;
+}
+
+bool
 console_cmd__mod__symbols(opt &out, const string_view &line)
 {
 	const params param{line, " ",
