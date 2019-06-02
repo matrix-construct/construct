@@ -124,6 +124,9 @@ try
 		at<"room_id"_>(event)
 	};
 
+	// Can't construct m::room with the event_id argument because it
+	// won't be found (we're evaluating that event here!) so we just set
+	// the member manually to make further use of the room struct.
 	m::room room{room_id};
 	room.event_id = event_id;
 
@@ -167,6 +170,7 @@ ircd::m::fetch::hook_handle_auth(const event &event,
                                  const room &room)
 
 {
+	// Count how many of the auth_events provided exist locally.
 	const auto &opts{*eval.opts};
 	const event::prev prev{event};
 	tab.auth_count = size(json::get<"auth_events"_>(prev));
@@ -180,10 +184,13 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 		tab.auth_exists += bool(m::exists(auth_id));
 	}
 
+	// We are satisfied at this point if all auth_events for this event exist,
+	// as those events have themselves been successfully evaluated and so forth.
 	assert(tab.auth_exists <= tab.auth_count);
 	if(tab.auth_exists == tab.auth_count)
 		return;
 
+	// At this point we are missing one or more auth_events for this event.
 	log::dwarning
 	{
 		log, "%s %s auth_events:%zu hit:%zu miss:%zu",
@@ -194,6 +201,9 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 		tab.auth_count - tab.auth_exists,
 	};
 
+	// We need to figure out where best to sling a request to fetch these
+	// missing auth_events. We prefer the remote client conducting this eval
+	// with their /federation/send/ request which we stored in the opts.
 	const string_view &remote
 	{
 		opts.node_id?
@@ -205,6 +215,7 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 			string_view{}
 	};
 
+	// Bail out here if we can't or won't attempt fetching auth_events.
 	if(!opts.fetch_auth || !bool(m::fetch::enable) || !remote)
 		throw vm::error
 		{
@@ -233,6 +244,9 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 		auth_chain(branch, remote);
 		++tab.auth_exists;
 	}
+	// This is a blocking call to recursively fetch and evaluate the auth_chain
+	// for this event. Upon return all of the auth_events for this event will
+	// have themselves been fetched and auth'ed recursively or throws.
 }
 
 void
@@ -270,10 +284,13 @@ ircd::m::fetch::hook_handle_prev(const event &event,
 		tab.prev_fetching += fetching;
 	}
 
+	// If we have all of the referenced prev_events we are satisfied here.
 	assert(tab.prev_exists <= tab.prev_count);
 	if(tab.prev_exists == tab.prev_count)
 		return;
 
+	// At this point one or more prev_events are missing; the fetches were
+	// launched asynchronously if the options allowed for it.
 	log::dwarning
 	{
 		log, "%s %s prev_events:%zu hit:%zu miss:%zu fetching:%zu",
@@ -285,6 +302,8 @@ ircd::m::fetch::hook_handle_prev(const event &event,
 		tab.prev_fetching,
 	};
 
+	// If the options want to wait for the fetch+evals of the prev_events to occur
+	// before we continue processing this event further, we block in here.
 	const bool &prev_wait{opts.fetch_prev_wait};
 	if(prev_wait && tab.prev_fetching) for(size_t i(0); i < tab.prev_count; ++i)
 	{
@@ -301,6 +320,9 @@ ircd::m::fetch::hook_handle_prev(const event &event,
 		tab.prev_fetched += m::exists(prev_id);
 	}
 
+	// Aborts this event if the options want us to guarantee at least one
+	// prev_event was fetched and evaluated for this event. This is generally
+	// used in conjunction with the fetch_prev_wait option to be effective.
 	const bool &prev_any{opts.fetch_prev_any};
 	if(prev_any && tab.prev_exists + tab.prev_fetched == 0)
 		throw vm::error
@@ -310,6 +332,8 @@ ircd::m::fetch::hook_handle_prev(const event &event,
 			json::get<"room_id"_>(event)
 		};
 
+	// Aborts this event if the options want us to guarantee ALL of the
+	// prev_events were fetched and evaluated for this event.
 	const bool &prev_all{opts.fetch_prev_all};
 	if(prev_all && tab.prev_exists + tab.prev_fetched < tab.prev_count)
 		throw vm::error
