@@ -74,13 +74,13 @@ struct ircd::m::vm::eval
 
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};
-	json::array pdus;
+	vector_view<m::event> pdus;
 
 	string_view room_id;
 	event::id::buf event_id;
 	event::conforms report;
 
-	static bool for_each_pdu(const std::function<bool (const json::object &)> &);
+	static bool for_each_pdu(const std::function<bool (const event &)> &);
 
   public:
 	operator const event::id::buf &() const;

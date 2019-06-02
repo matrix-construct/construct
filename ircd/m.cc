@@ -1464,13 +1464,43 @@ ircd::m::vm::eval::eval(const event &event,
 	operator()(event);
 }
 
-ircd::m::vm::eval::eval(const json::array &event,
+ircd::m::vm::eval::eval(const json::array &pdus,
                         const vm::opts &opts)
 :opts{&opts}
-,pdus{event}
 {
-	for(const json::object &pdu : this->pdus)
-		operator()(pdu);
+	if(pdus.size() == 1)
+	{
+		operator()(m::event(pdus.at(0)));
+		return;
+	}
+
+	// Sort the events first to avoid complicating the evals; the events might
+	// be from different rooms but it doesn't matter.
+	std::vector<m::event> events(begin(pdus), end(pdus));
+	std::sort(begin(events), end(events));
+	this->pdus = events;
+
+	// Conduct each eval without letting any one exception ruin things for the
+	// others, including an interrupt. The only exception is a termination.
+	for(const m::event &event : this->pdus) try
+	{
+		// When a fault::EXISTS would not actually be revealed to the user in
+		// any way we can elide a lot of grief by checking this here first and
+		// skipping the event. The query path will be adequately cached anyway.
+		if(~(opts.warnlog | opts.errorlog) & fault::EXISTS)
+			if(m::exists(m::event::id(at<"event_id"_>(event))))
+				continue;
+
+		operator()(event);
+	}
+	catch(const std::exception &e)
+	{
+		continue;
+	}
+	catch(const ctx::terminated &)
+	{
+		throw;
+	}
 }
 
 ircd::m::vm::eval::eval(const vm::copts &opts)
@@ -1497,13 +1527,21 @@ const
 }
 
 bool
-ircd::m::vm::eval::for_each_pdu(const std::function<bool (const json::object &)> &closure)
+ircd::m::vm::eval::for_each_pdu(const std::function<bool (const event &)> &closure)
 {
 	return for_each([&closure](eval &e)
 	{
-		for(const json::object &pdu : e.pdus)
-			if(!closure(pdu))
+		if(!empty(e.pdus))
+		{
+			for(const auto &pdu : e.pdus)
+				if(!closure(pdu))
+					return false;
+		}
+		else if(e.event_)
+		{
+			if(!closure(*e.event_))
 				return false;
+		}
 
 		return true;
 	});

@@ -679,6 +679,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 	const auto *const &top(eval::seqmax());
 	eval.sequence_shared[0] = 0;
 	eval.sequence_shared[1] = 0;
+	eval.sequence = 0;
 	eval.sequence =
 	{
 		top?
