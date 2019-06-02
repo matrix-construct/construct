@@ -1026,7 +1026,7 @@ ircd::fs::ircd_fs_append__resolve()
 		"This host '%s %s' %s the RWF_APPEND flag to pwritev2(2).",
 		info::kernel_name,
 		string_view{info::kernel_version},
-		support_append? "SUPPORTS"_sv : "DOES NOT SUPPORT"_sv,
+		support_append? "supports"_sv : "does not support"_sv,
 	};
 
 	return support_append? _append__rwf : _append__no_rwf;
@@ -1204,7 +1204,7 @@ ircd::fs::ircd_fs_write_pwritev__resolve()
 		"This host '%s %s' %s the pwritev2(2) system call.",
 		info::kernel_name,
 		string_view{info::kernel_version},
-		support_pwritev2? "SUPPORTS"_sv : "DOES NOT SUPPORT"_sv
+		support_pwritev2? "supports"_sv : "does not support"_sv
 	};
 
 	return support_pwritev2? _write__pwritev2 : _write__pwritev1;
