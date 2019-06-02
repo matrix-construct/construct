@@ -3776,7 +3776,7 @@ ircd::m::count(const event::prev &prev)
 bool
 ircd::m::good(const id::event &event_id)
 {
-	return index(event_id, std::nothrow) != 0;
+	return bool(event_id) && index(event_id, std::nothrow) != 0;
 }
 
 bool
@@ -3796,7 +3796,7 @@ ircd::m::exists(const id::event &event_id)
 		dbs::event_idx
 	};
 
-	return has(column, event_id);
+	return bool(event_id) && has(column, event_id);
 }
 
 ircd::string_view
