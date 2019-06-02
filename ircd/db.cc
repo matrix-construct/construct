@@ -298,12 +298,26 @@ try
 		rocksdb::GetSupportedCompressions()
 	};
 
-	for(const rocksdb::CompressionType &type : supported) try
+	size_t i(0);
+	for(const rocksdb::CompressionType &type_ : supported) try
 	{
-		auto &string(compressions.at(uint(type)));
+		auto &[string, type]
+		{
+			compressions.at(i++)
+		};
+
+		type = type_;
 		throw_on_error
 		{
-			rocksdb::GetStringFromCompressionType(&string, type)
+			rocksdb::GetStringFromCompressionType(&string, type_)
+		};
+
+		log::debug
+		{
+			log, "Detected supported compression #%zu type:%lu :%s",
+			i,
+			type,
+			string,
 		};
 	}
 	catch(const std::exception &e)
@@ -311,7 +325,7 @@ try
 		log::error
 		{
 			log, "Failed to identify compression type:%u :%s",
-			uint(type),
+			uint(type_),
 			e.what()
 		};
 	}
@@ -7433,18 +7447,17 @@ ircd::db::find_supported_compression(const std::string &list)
 	};
 
 	tokens(list, ';', [&ret]
-	(const string_view &name)
+	(const string_view &requested)
 	{
 		if(ret != rocksdb::kNoCompression)
 			return;
 
-		for(size_t i(0); i < db::compressions.size(); ++i)
-			if(!db::compressions.at(i).empty())
-				if(name == db::compressions.at(i))
-				{
-					ret = rocksdb::CompressionType(i);
-					break;
-				}
+		for(const auto &[name, type] : db::compressions)
+			if(type != 0L && name == requested)
+			{
+				ret = rocksdb::CompressionType(type);
+				break;
+			}
 	});
 
 	return ret;

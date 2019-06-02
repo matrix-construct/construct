@@ -32,7 +32,7 @@ namespace ircd::db
 	extern const info::versions version_api, version_abi;
 
 	// Supported compressions (detected when running ircd)
-	extern std::array<std::string, 16> compressions;
+	extern std::array<std::tuple<std::string, ulong>, 16> compressions;
 }
 
 #include "pos.h"

@@ -1870,7 +1870,7 @@ console_cmd__db__compressions(opt &out, const string_view &line)
 	    << std::endl
 	    << std::endl;
 
-	for(const auto &name : db::compressions)
+	for(const auto &[name, type] : db::compressions)
 		if(!name.empty())
 			out << name << std::endl;
 
