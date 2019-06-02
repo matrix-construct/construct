@@ -224,29 +224,11 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 			json::get<"room_id"_>(event)
 		};
 
-	if(exists(room))
-	{
-		auth_chain(room, remote);
-		tab.auth_exists = tab.auth_count;
-		return;
-	}
-
-	for(size_t i(0); i < tab.auth_count; ++i)
-	{
-		if(m::exists(prev.auth_event(i)))
-			continue;
-
-		const m::room branch
-		{
-			room.room_id, prev.auth_event(i)
-		};
-
-		auth_chain(branch, remote);
-		++tab.auth_exists;
-	}
 	// This is a blocking call to recursively fetch and evaluate the auth_chain
 	// for this event. Upon return all of the auth_events for this event will
 	// have themselves been fetched and auth'ed recursively or throws.
+	auth_chain(room, remote);
+	tab.auth_exists = tab.auth_count;
 }
 
 void
