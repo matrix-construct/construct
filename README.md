@@ -38,14 +38,14 @@ real-time communication for free and open source software: a *federation of netw
 fast and highly scalable, and to be developed by volunteer contributors over
 the internet. This mission strives to make the software easy to understand, modify, audit,
 and extend. It remains true to its roots with its modular design and having minimal
-requirements.
-
-Even though all of the old code has been rewritten, the same spirit and
+requirements. Even though all of the old code has been rewritten, the same spirit and
 _philosophy of its predecessors_ is still obvious throughout.
 
-Similar to the legacy IRC protocol's origins, Matrix wisely leverages technologies in vogue
-for its day to aid the virility of implementations. A vibrant and growing ecosystem
-[already exists](https://matrix.org/docs/projects/try-matrix-now.html).
+Matrix is about giving you control over your communication; Construct is about
+giving you control over Matrix. We are liberal with what we accept for ideas and
+contributions. Whether you are optimizing the entire protocol or just filling a
+need only a few others might share: please support the project by contributing
+back.
 
 <h3 align="right">
 	Join us in <a href="https://matrix.to/#/#test:zemos.net">#test:zemos.net</a>
