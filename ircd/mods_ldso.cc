@@ -12,6 +12,7 @@
 // in libircd glibc+ELF supporting environments. Do not rely on these
 // definitions being available on all platforms.
 
+#include <RB_INC_ELF_H
 #include <RB_INC_DLFCN_H
 #include <RB_INC_LINK_H
 
@@ -19,6 +20,30 @@
 //
 // mods/ldso.h
 //
+
+ircd::string_view
+ircd::mods::ldso::string(const struct link_map &map,
+                         const size_t &idx)
+{
+	const char *str {nullptr};
+	for(auto d(map.l_ld); d->d_tag != DT_NULL; ++d)
+		if(d->d_tag == DT_STRTAB)
+		{
+			str = reinterpret_cast<const char *>(d->d_un.d_ptr);
+			break;
+		}
+
+	if(!str)
+		return {};
+
+	size_t i(1);
+	for(++str; *str && i < idx; str += strlen(str) + 1)
+		++i;
+
+	return i == idx?
+		string_view{str}:
+		string_view{};
+}
 
 struct link_map &
 ircd::mods::ldso::get(const string_view &name)

@@ -30,6 +30,7 @@ namespace ircd::mods::ldso
 	using link_closure = std::function<bool (struct link_map &)>;
 	using semantic_version = std::array<long, 3>;
 
+	// Util
 	string_view fullname(const struct link_map &);          // /lib/x86_64-linux-gnu/libz.so.1
 	string_view soname(const string_view &fullname);        // libz.so.1
 	string_view soname(const struct link_map &);            // libz.so.1
@@ -38,12 +39,17 @@ namespace ircd::mods::ldso
 	semantic_version version(const string_view &soname);    // 1.0.0
 	semantic_version version(const struct link_map &map);   // 1.0.0
 
+	// Iteration
 	bool for_each(const link_closure &);
 	bool has_fullname(const string_view &path);
 	bool has_soname(const string_view &name);
 	bool has(const string_view &name);
 	size_t count();
 
+	// Get link
 	struct link_map *get(std::nothrow_t, const string_view &name);
 	struct link_map &get(const string_view &name);
+
+	// Query link
+	string_view string(const struct link_map &, const size_t &idx);
 }
