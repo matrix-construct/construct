@@ -20,6 +20,42 @@
 // mods/ldso.h
 //
 
+struct link_map &
+ircd::mods::ldso::get(const string_view &name)
+{
+	struct link_map *const ret
+	{
+		get(std::nothrow, name)
+	};
+
+	if(unlikely(!ret))
+		throw not_found
+		{
+			"No library '%s' is currently mapped.", name
+		};
+
+	return *ret;
+}
+
+struct link_map *
+ircd::mods::ldso::get(std::nothrow_t,
+                      const string_view &name)
+{
+	struct link_map *ret{nullptr};
+	for_each([&name, &ret]
+	(struct link_map &link)
+	{
+		if(ldso::name(link) == name)
+		{
+			ret = &link;
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
+}
+
 size_t
 ircd::mods::ldso::count()
 {

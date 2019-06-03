@@ -24,6 +24,9 @@ extern "C"
 /// Platform-dependent interface on ELF+ld.so supporting compilations.
 namespace ircd::mods::ldso
 {
+	IRCD_EXCEPTION(mods::error, error)
+	IRCD_EXCEPTION(error, not_found);
+
 	using link_closure = std::function<bool (struct link_map &)>;
 	using semantic_version = std::array<long, 3>;
 
@@ -40,4 +43,7 @@ namespace ircd::mods::ldso
 	bool has_soname(const string_view &name);
 	bool has(const string_view &name);
 	size_t count();
+
+	struct link_map *get(std::nothrow_t, const string_view &name);
+	struct link_map &get(const string_view &name);
 }
