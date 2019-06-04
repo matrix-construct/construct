@@ -21,6 +21,33 @@
 // mods/ldso.h
 //
 
+bool
+ircd::mods::ldso::for_each_needed(const struct link_map &map,
+                                  const string_closure &closure)
+{
+	const char *strtab {nullptr};
+	for(auto d(map.l_ld); d->d_tag != DT_NULL; ++d)
+		if(d->d_tag == DT_STRTAB)
+		{
+			strtab = reinterpret_cast<const char *>(d->d_un.d_ptr);
+			break;
+		}
+
+	if(!strtab)
+		return true;
+
+	for(auto d(map.l_ld); d->d_tag != DT_NULL; ++d)
+	{
+		if(d->d_tag != DT_NEEDED)
+			continue;
+
+		if(!closure(strtab + d->d_un.d_val))
+			return false;
+	}
+
+	return true;
+}
+
 ircd::string_view
 ircd::mods::ldso::string(const struct link_map &map,
                          const size_t &idx)

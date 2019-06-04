@@ -28,6 +28,7 @@ namespace ircd::mods::ldso
 	IRCD_EXCEPTION(error, not_found);
 
 	using link_closure = std::function<bool (struct link_map &)>;
+	using string_closure = std::function<bool (const string_view &)>;
 	using semantic_version = std::array<long, 3>;
 
 	// Util
@@ -52,4 +53,5 @@ namespace ircd::mods::ldso
 
 	// Query link
 	string_view string(const struct link_map &, const size_t &idx);
+	bool for_each_needed(const struct link_map &, const string_closure &);
 }

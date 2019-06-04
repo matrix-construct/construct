@@ -1690,6 +1690,33 @@ console_cmd__mod__links(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__mod__needed(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"name"
+	}};
+
+	const string_view name
+	{
+		param.at("name")
+	};
+
+	size_t i(0);
+	mods::ldso::for_each_needed(mods::ldso::get(name), [&out, &i]
+	(const string_view &name)
+	{
+		out << std::setw(2) << (i++)
+		    << " " << name
+		    << std::endl;
+
+		return true;
+	});
+
+	return true;
+}
+
 //
 // ctx
 //
