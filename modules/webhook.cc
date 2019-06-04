@@ -1020,7 +1020,10 @@ github_handle__watch(std::ostream &out,
 	if(action != "started")
 		return false;
 
-	return true;
+	// There appears to be no way to distinguish between a genuine watch
+	// button click and just a star; the watch event is sent for both.
+	// Returning false just disables this event so there's no double-message.
+	return false;
 }
 
 bool
