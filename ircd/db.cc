@@ -3423,22 +3423,22 @@ ircd::db::database::sst::tool(const vector_view<const string_view> &args)
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	static const size_t ARG_MAX {16};
-	static const size_t ARG_MAX_LEN {256};
-	thread_local char arg[ARG_MAX][ARG_MAX_LEN]
+	static const size_t arg_max {16};
+	static const size_t arg_max_len {256};
+	thread_local char arg[arg_max][arg_max_len]
 	{
 		"./sst_dump"
 	};
 
 	size_t i(0);
-	char *argv[ARG_MAX] { arg[i++] };
-	for(; i < ARG_MAX - 1 && i - 1 < args.size(); ++i)
+	char *argv[arg_max] { arg[i++] };
+	for(; i < arg_max - 1 && i - 1 < args.size(); ++i)
 	{
 		strlcpy(arg[i], args.at(i - 1));
 		argv[i] = arg[i];
 	}
 	argv[i++] = nullptr;
-	assert(i <= ARG_MAX);
+	assert(i <= arg_max);
 
 	rocksdb::SSTDumpTool tool;
 	const int ret
