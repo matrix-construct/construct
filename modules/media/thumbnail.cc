@@ -236,13 +236,24 @@ get__thumbnail_local(client &client,
 			copied
 		};
 
+	static const bool available
+	{
+		mods::loaded("media_magick")
+	};
+
 	const bool fallback // Reasons to just send the original image
 	{
+		// Disabled by configuration
 		!enable ||
-		!dimension.first ||
-		!dimension.second ||
-		(method != "scale" && method != "crop")
-		//TODO: condition if magick is actually loaded
+
+		// Unknown thumbnailing method in query string
+		(method != "scale" && method != "crop") ||
+
+		// No dimension parameters given in query string
+		(!dimension.first || !dimension.second) ||
+
+		// The thumbnailer is not loaded or available on this system.
+		!available
 	};
 
 	if(fallback)
