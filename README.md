@@ -114,8 +114,6 @@ make
 sudo make install
 ```
 
-Additional documentation for building can be found in [doc/BUILD.md](doc/BUILD.md)
-
 ### BUILD (standalone)
 
 This section is intended to allow building with dependencies that have not
@@ -139,97 +137,31 @@ with `--with-included-rocksdb` as instructed below.
 mkdir build
 ```
 
-- The install directory may be this or another place of your choosing.
-- If you decide elsewhere, make sure to change the `--prefix` in the `./configure`
-statement below.
+> The install directory may be this or another place of your choosing. If you decide
+elsewhere, make sure to change the `--prefix` in the `./configure` statement below.
 
 ```
 ./configure --prefix=$PWD/build --with-included-boost --with-included-rocksdb
 ```
-- The `--with-included-*` will fetch, configure **and build** the dependencies included
+
+> The `--with-included-*` will fetch, configure **and build** the dependencies included
 as submodules.
 
 ```
 make install
 ```
 
+Additional documentation for building can be found in the [BUILD](doc/BUILD.md)
+addendum.
+
 ### SETUP
 
-- For standalone builds you will need to add the included lib directories
-in your git repo to the library path:
-`export LD_LIBRARY_PATH=/path/to/src/deps/boost/lib:$LD_LIBRARY_PATH`
-`export LD_LIBRARY_PATH=/path/to/src/deps/rocksdb:$LD_LIBRARY_PATH`
+See the [SETUP](doc/SETUP.md) instructions to run Construct for the first time.
 
-- We will refer to your server as `host.tld`. For those familiar with matrix:
-this is your _origin_ and mxid `@user:host.tld` hostpart. If you delegate
-your server's location to something like `matrix.host.tld:1234` we refer to
-this as your _servername_.
+### TROUBLESHOOTING
 
-> Construct clusters all share the same _origin_ but each individual instance
-of the daemon has a unique _servername_.
-
-
-1. Execute
-
-	There are two arguments: `<origin> [servername]`. If the _servername_
-	argument is missing, the _origin_ will be used for it instead.
-
-	```
-	bin/construct host.tld
-	````
-	> There is no configuration file.
-
-	> Log messages will appear in terminal concluding with notice `IRCd RUN`.
-
-
-2. Strike ctrl-c on keyboard
-	> The command-line console will appear.
-
-
-3. Create a general listener socket by entering the following command:
-
-	```
-	net listen matrix * 8448 privkey.pem cert.pem chain.pem
-	```
-	- `matrix` is your name for this listener; you can use any name.
-	- `*` and `8448` is the local address and port to bind.
-	- `privkey.pem` and `cert.pem` and `chain.pem` are paths (ideally
-	absolute paths) to PEM-format files for the listener's TLS.
-
-	> The Matrix Federation Tester should now pass. Browse to
-	https://matrix.org/federationtester/api/report?server_name=host.tld and
-	verify `"AllChecksOK": true`
-
-4. To use a web-based client like Riot, configure the "webroot" directory
-to point at Riot's `webapp/` directory by entering the following:
-	```
-	conf set ircd.webroot.path /path/to/riot-web/webapp/
-	mod reload webroot
-	```
-
-6. Browse to `https://host.tld:8448/` and register a user.
-
-#### Additional Notes
-
-##### Recovering from broken configurations
-
-If your server ever fails to start from an errant conf item: you can override
-any item using an environmental variable before starting the program. To do
-this simply replace the '.' characters with '_' in the name of the item when
-setting it in the environment. The name is otherwise the same, including its
-lower case.
-
-##### Recovering from database corruption
-
-In very rare cases after a hard crash the journal cannot completely restore
-data before the crash. Due to the design of rocksdb and the way we apply it
-for Matrix, data is lost in chronological order starting from the most recent
-transaction (matrix event). The database is consistent for all events up until
-the first corrupt event, called the point-in-time.
-
-When any loss has occurred the daemon will fail to start normally. To enable
-point-in-time recovery use the command-line option `-pitrecdb` at the next
-invocation.
+See the [TROUBLESHOOTING](doc/TROUBLESHOOTING.md) guide for solutions to possible
+problems.
 
 ## Developers
 
