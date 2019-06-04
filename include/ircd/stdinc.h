@@ -29,6 +29,7 @@ extern "C"
 	#include <RB_INC_ASSERT_H
 	#include <RB_INC_STDARG_H
 	#include <RB_INC_UNISTD_H
+	#include <RB_INC_SYS_TYPES_H
 	#include <RB_INC_SYS_TIME_H
 	#include <RB_INC_SYS_UTSNAME_H
 }
@@ -93,6 +94,12 @@ extern "C"
 
 #include <RB_INC_EXPERIMENTAL_STRING_VIEW
 #include <RB_INC_EXPERIMENTAL_OPTIONAL
+
+// These are #defined in stdio.h. If the system includes it indirectly we have
+// to undef those here or there will be trouble.
+#undef stdin
+#undef stdout
+#undef stderr
 
 //////////////////////////////////////////////////////////////////////////////>
 //
