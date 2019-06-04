@@ -21,6 +21,14 @@
 #include <RB_INC_OPENSSL_DH_H
 #include <RB_INC_OPENSSL_TLS1_H
 
+// Metaconditions for which OpenSSL API to use. This produces a single #define
+// to simplify further #ifdef's throught this definition file.
+#if defined(LIBRESSL_VERSION_NUMBER) || OPENSSL_VERSION_NUMBER < 0x10100000L
+	#define IRCD_OPENSSL_API_1_0_X
+#else
+	#define IRCD_OPENSSL_API_1_1_X
+#endif
+
 #if defined(LIBRESSL_VERSION_NUMBER)
 static time_t ASN1_TIME_seconds(const ASN1_TIME *);
 static int ASN1_TIME_diff(int *, int *, const ASN1_TIME *, const ASN1_TIME *);
@@ -120,7 +128,7 @@ void
 ircd::openssl::set_ecdh_auto(SSL &ssl,
                              const bool &on)
 {
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_0_X
 	long _on(on);
 	call(::SSL_ctrl, &ssl, SSL_CTRL_SET_ECDH_AUTO, _on, nullptr);
 	#endif
@@ -130,7 +138,7 @@ void
 ircd::openssl::set_ecdh_auto(SSL_CTX &ssl,
                              const bool &on)
 {
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_0_X
 	long _on(on);
 	call(::SSL_CTX_ctrl, &ssl, SSL_CTRL_SET_ECDH_AUTO, _on, nullptr);
 	#endif
@@ -842,7 +850,7 @@ ircd::openssl::gendh(DH &dh,
                      const uint &bits,
                      const uint &gen)
 {
-	#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_1_X
 	const custom_ptr<BN_GENCB> gencb
 	{
 		BN_GENCB_new(), BN_GENCB_free
@@ -1007,7 +1015,7 @@ ircd::openssl::genrsa(RSA &out,
                       const uint &bits,
                       const uint &exp)
 {
-	#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_1_X
 	const custom_ptr<BN_GENCB> gencb
 	{
 		BN_GENCB_new(), BN_GENCB_free
@@ -1044,7 +1052,7 @@ ircd::openssl::print(const mutable_buffer &buf,
 size_t
 ircd::openssl::size(const RSA &key)
 {
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_0_X
 	assert(key.n != nullptr);
 	#endif
 
@@ -1278,7 +1286,7 @@ ircd::openssl::bio::read_file(const string_view &path,
 		fs::size(path)
 	};
 
-	#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_1_X
 	const custom_ptr<void> buf
 	{
 		OPENSSL_secure_malloc(size), [&size]
@@ -1312,7 +1320,7 @@ ircd::openssl::bio::write_file(const string_view &path,
                                const mb_closure &closure,
                                const size_t &size)
 {
-	#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_1_X
 	const custom_ptr<void> buf
 	{
 		OPENSSL_secure_malloc(size), [&size]
@@ -1668,7 +1676,7 @@ ircd::openssl::init::~init()
 // hmac
 //
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#ifdef IRCD_OPENSSL_API_1_0_X
 struct ircd::crh::hmac::ctx
 :HMAC_CTX
 {
@@ -1725,7 +1733,7 @@ ircd::crh::hmac::ctx::operator delete(void *const ptr,
 
 ircd::crh::hmac::ctx::ctx(const string_view &algorithm,
                           const const_buffer &key)
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#ifdef IRCD_OPENSSL_API_1_0_X
 :HMAC_CTX{0}
 #else
 :custom_ptr<HMAC_CTX>
@@ -1749,7 +1757,7 @@ ircd::crh::hmac::ctx::ctx(const string_view &algorithm,
 			"Algorithm '%s' not supported for HMAC", algorithm
 		};
 
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_0_X
 	HMAC_CTX_init(this);
 	openssl::call(::HMAC_Init_ex, this, data(key), size(key), md, nullptr);
 	#else
@@ -1760,7 +1768,7 @@ ircd::crh::hmac::ctx::ctx(const string_view &algorithm,
 ircd::crh::hmac::ctx::~ctx()
 noexcept
 {
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_0_X
 	HMAC_CTX_cleanup(this);
 	#endif
 }
@@ -1792,7 +1800,7 @@ ircd::crh::hmac::update(const const_buffer &buf)
 		reinterpret_cast<const uint8_t *>(data(buf))
 	};
 
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_0_X
 	openssl::call(::HMAC_Update, ctx.get(), ptr, size(buf));
 	#else
 	openssl::call(::HMAC_Update, ctx->get(), ptr, size(buf));
@@ -1810,7 +1818,7 @@ ircd::crh::hmac::finalize(const mutable_buffer &buf)
 
 	uint len;
 
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_0_X
 	openssl::call(::HMAC_Final, ctx.get(), ptr, &len);
 	#else
 	openssl::call(::HMAC_Final, ctx->get(), ptr, &len);
@@ -1825,7 +1833,7 @@ const
 {
 	assert(bool(ctx));
 
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_0_X
 	return HMAC_size(ctx.get());
 	#else
 	return HMAC_size(ctx->get());
@@ -2369,7 +2377,7 @@ noexcept try
 {
 	assert(ctx != nullptr);
 
-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	#ifdef IRCD_OPENSSL_API_1_0_X
 	auto &arg{ctx->arg};
 	#else
 	auto *const &arg(BN_GENCB_get_arg(ctx));
