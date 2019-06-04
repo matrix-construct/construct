@@ -1853,7 +1853,7 @@ ircd::fs::dev::sysfs_id(const mutable_buffer &out,
 ulong
 ircd::fs::dev::id(const major_minor &id)
 {
-	return gnu_dev_makedev(id.first, id.second);
+	return makedev(id.first, id.second);
 }
 
 ircd::fs::dev::major_minor
@@ -1861,7 +1861,7 @@ ircd::fs::dev::id(const ulong &id)
 {
 	return
 	{
-		gnu_dev_major(id), gnu_dev_minor(id)
+		major(id), minor(id)
 	};
 }
 
