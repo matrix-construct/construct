@@ -60,6 +60,14 @@ ircd::openssl::version_abi
 	"OpenSSL", info::versions::ABI, long(::SSLeay()), {0}, ::SSLeay_version(SSLEAY_VERSION)
 };
 
+#ifdef LIBRESSL_VERSION_NUMBER
+decltype(ircd::openssl::libressl_version_api)
+ircd::openssl::libressl_version_api
+{
+	"LibreSSL", info::versions::API, LIBRESSL_VERSION_NUMBER, {0}, LIBRESSL_VERSION_TEXT
+};
+#endif LIBRESSL_VERSION_NUMBER
+
 //
 // SNI
 //

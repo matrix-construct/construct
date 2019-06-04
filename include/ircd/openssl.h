@@ -141,6 +141,7 @@ namespace ircd::openssl
 
 	// Header version; library version
 	extern const info::versions version_api, version_abi;
+	extern const info::versions libressl_version_api;
 }
 
 /// OpenSSL BIO convenience utils and wraps; also secure file IO closures
