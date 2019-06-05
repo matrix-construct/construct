@@ -94,6 +94,7 @@ get__state(client &client,
 	json::stack::object top{out};
 
 	// pdus
+	if(request.query.get<bool>("pdus", true))
 	{
 		json::stack::array pdus
 		{
@@ -108,6 +109,7 @@ get__state(client &client,
 	}
 
 	// auth_chain
+	if(request.query.get<bool>("auth_chain", true))
 	{
 		json::stack::array auth_chain
 		{
