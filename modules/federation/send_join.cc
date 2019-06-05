@@ -174,6 +174,29 @@ put__send_join(client &client,
 		}});
 	}
 
+	// auth_chain_ids (non-spec)
+	if(request.query.get<bool>("auth_chain_ids", false))
+	{
+		json::stack::array auth_chain_a
+		{
+			data, "auth_chain_ids"
+		};
+
+		auth_chain.for_each(m::event::closure_idx_bool{[&auth_chain_a]
+		(const m::event::idx &event_idx)
+		{
+			const auto &event_id
+			{
+				m::event_id(event_idx, std::nothrow)
+			};
+
+			if(event_id)
+				auth_chain_a.append(event_id);
+
+			return true;
+		}});
+	}
+
 	// state
 	if(request.query.get<bool>("state", true))
 	{
@@ -187,6 +210,21 @@ put__send_join(client &client,
 		{
 			state_a.append(event);
 		});
+	}
+
+	// state_ids (non-spec)
+	if(request.query.get<bool>("state_ids", false))
+	{
+		json::stack::array state_ids
+		{
+			data, "state_ids"
+		};
+
+		state.for_each(m::event::id::closure{[&state_ids]
+		(const m::event::id &event_id)
+		{
+			state_ids.append(event_id);
+		}});
 	}
 
 	return response;
