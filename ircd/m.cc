@@ -150,6 +150,12 @@ ircd::m::init::modules::init_keys()
 	init_my_keys();
 }
 
+namespace ircd::m
+{
+	extern const string_view module_names;
+	extern const std::vector<string_view> module_name_list;
+}
+
 void
 ircd::m::init::modules::init_imports()
 {
@@ -164,25 +170,8 @@ ircd::m::init::modules::init_imports()
 		return;
 	}
 
-	// Manually load first modules
-	mods::imports.emplace("vm"s, "vm"s);
-
-	// The order of these prefixes will be the loading order. Order of
-	// specific modules within a prefix is not determined here.
-	static const string_view prefixes[]
-	{
-		"s_", "m_", "key_", "media_", "client_", "federation_"
-	};
-
-	// Load modules by prefix.
-	for(const auto &prefix : prefixes)
-		for(const auto &name : mods::available())
-			if(startswith(name, prefix))
-				mods::imports.emplace(name, name);
-
-	// Manually load last modules
-	mods::imports.emplace("well_known"s, "well_known"s);
-	mods::imports.emplace("webroot"s, "webroot"s);
+	for(const auto &name : module_name_list)
+		mods::imports.emplace(name, name);
 
 	if(db::sequence(*dbs::events) == 0)
 		bootstrap();
@@ -191,8 +180,147 @@ ircd::m::init::modules::init_imports()
 ircd::m::init::modules::~modules()
 noexcept
 {
-	mods::imports.clear();
+	for(auto it(module_name_list.rbegin()); it != module_name_list.rend(); ++it)
+		mods::imports.erase(*it);
 }
+
+/// This is an ordered list for loading and unloading modules. This is not the
+/// solution I really want at all so consider it temporary. Modules are loaded
+/// in the order of the lines and unloaded in reverse order.
+decltype(ircd::m::module_names)
+ircd::m::module_names
+{R"(
+
+vm
+
+s_conf
+s_dns
+s_fetch
+s_keys
+s_command
+s_control
+s_listen
+s_feds
+s_node
+
+m_events
+m_state
+m_rooms
+m_user
+m_room_aliases
+m_room_canonical_alias
+m_room_create
+m_room_history_visibility
+m_room_join_rules
+m_room_member
+m_room_message
+m_room_power_levels
+m_room_server_acl
+m_presence
+m_receipt
+m_typing
+m_device_list_update
+m_device
+m_direct
+m_direct_to_device
+m_ignored_user_list
+m_noop
+
+key_query
+key_server
+
+media_magick
+media_media
+
+client_account
+client_capabilities
+client_createroom
+client_delete_devices
+client_devices
+client_directory_list_appservice
+client_directory_list_room
+client_directory_room
+client_directory_user
+client_events
+client_initialsync
+client_joined_groups
+client_join
+client_keys_changes
+client_keys_claim
+client_keys_query
+client_keys_upload
+client_login
+client_logout
+client_notifications
+client_presence
+client_profile
+client_publicised_groups
+client_publicrooms
+client_pushers
+client_pushrules
+client_register_available
+client_register
+client_rooms
+client_search
+client_send_to_device
+client_sync_account_data
+client_sync_device_lists
+client_sync_device_one_time_keys_count
+client_sync_presence
+client_sync_rooms_account_data
+client_sync_rooms_ephemeral_receipt
+client_sync_rooms_ephemeral
+client_sync_rooms_ephemeral_typing
+client_sync_rooms
+client_sync_rooms_state
+client_sync_rooms_timeline
+client_sync_rooms_unread_notifications
+client_sync
+client_sync_to_device
+client_thirdparty_protocols
+client_user
+client_versions
+client_voip_turnserver
+
+federation_backfill_ids
+federation_backfill
+federation_event_auth
+federation_event
+federation_get_groups_publicised
+federation_get_missing_events
+federation_invite
+federation_make_join
+federation_make_leave
+federation_publicrooms
+federation_query_auth
+federation_query
+federation_sender
+federation_send_join
+federation_send_leave
+federation_send
+federation_state_ids
+federation_state
+federation_user_devices
+federation_user_keys_claim
+federation_user_keys_query
+federation_version
+
+identity_pubkey
+identity_v1
+
+app_app
+
+well_known
+metrics
+webhook
+webroot
+)"};
+
+decltype(ircd::m::module_name_list)
+ircd::m::module_name_list
+{
+	ircd::tokens<std::vector, ircd::string_view>(module_names, '\n')
+};
 
 void
 ircd::m::init::bootstrap()
