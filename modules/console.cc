@@ -6612,25 +6612,18 @@ console_cmd__event__horizon__flush(opt &out, const string_view &line)
 		};
 
 		if(!room_id)
-		{
-			out << "- failed to find room_id for " << event_id
-			    << " from " << event_idx
-			    << std::endl;
-
 			return true;
-		}
 
 		m::fetch::start(room_id, event_id);
-		out << room_id << " : "
-		    << event_id
-		    << " via " << event_idx
-		    << std::endl;
-
 		++count;
+
+		//TODO: XXX
+		while(m::fetch::count() > 64)
+			ctx::sleep(seconds(1));
+
 		return true;
 	});
 
-	out << "started " << count << std::endl;
 	return true;
 }
 
