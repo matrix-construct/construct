@@ -51,6 +51,13 @@ method_put
 	}
 };
 
+conf::item<milliseconds>
+stream_cross_sleeptime
+{
+	{ "name",    "ircd.federation.invite.stream_cross_sleeptime" },
+	{ "default", 3000L                                           },
+};
+
 resource::response
 put__invite(client &client,
             const resource::request &request)
@@ -117,11 +124,7 @@ put__invite(client &client,
 
 	const json::value array[2]
 	{
-		json::value
-		{
-			200L
-		},
-		json::members
+		json::value{200L}, json::members
 		{
 			{ "event", revent }
 		}
@@ -145,7 +148,7 @@ put__invite(client &client,
 
 	// Synapse needs time to process our response otherwise our eval below may
 	// complete before this response arrives for them and is processed.
-	ctx::sleep(3);
+	ctx::sleep(milliseconds(stream_cross_sleeptime));
 
 	// Eval the dual-signed invite event. This will write it locally. This will
 	// also try to sync the room as best as possible. The invitee will then be
