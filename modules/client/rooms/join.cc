@@ -291,10 +291,63 @@ bootstrap(const string_view &host,
 
 	sj.wait(seconds(send_join_timeout));
 
-	const auto sjcode
+	const auto sj_code
 	{
 		sj.get()
 	};
+
+	const json::array &sj_response
+	{
+		sj
+	};
+
+	const uint more_sj_code
+	{
+		sj_response.at<uint>(0)
+	};
+
+	const json::object &sj_response_content
+	{
+		sj_response[1]
+	};
+
+	const json::string &their_origin
+	{
+		sj_response_content["origin"]
+	};
+
+	// Process auth_chain
+	{
+		m::vm::opts opts;
+		opts.infolog_accept = true;
+		opts.fetch = false;
+
+		const json::array &auth_chain
+		{
+			sj_response_content["auth_chain"]
+		};
+
+		m::vm::eval
+		{
+			auth_chain, opts
+		};
+	}
+
+	// Process state
+	{
+		m::vm::opts opts;
+		opts.fetch = false;
+
+		const json::array &state
+		{
+			sj_response_content["state"]
+		};
+
+		m::vm::eval
+		{
+			state, opts
+		};
+	}
 
 	return event_id;
 }
