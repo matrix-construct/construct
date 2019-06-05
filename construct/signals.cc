@@ -18,6 +18,7 @@ namespace construct
 {
 	namespace ph = std::placeholders;
 
+	static void handle_cont();
 	static void handle_usr1();
 	static void handle_quit();
 	static void handle_interrupt();
@@ -40,6 +41,7 @@ construct::signals::signals(boost::asio::io_context &ios)
 	signal_set->add(SIGQUIT);
 	signal_set->add(SIGTERM);
 	signal_set->add(SIGUSR1);
+	signal_set->add(SIGCONT);
 	set_handle();
 }
 
@@ -115,31 +117,18 @@ construct::handle_signal(const int &signum)
 {
 	switch(signum)
 	{
-		case SIGINT:   return handle_interrupt();
 		case SIGHUP:   return handle_hangup();
+		case SIGINT:   return handle_interrupt();
 		case SIGQUIT:  return handle_quit();
 		case SIGTERM:  return handle_quit();
 		case SIGUSR1:  return handle_usr1();
+		case SIGCONT:  return handle_cont();
 		default:       break;
 	}
 
 	ircd::log::error
 	{
 		"Caught unhandled signal %d", signum
-	};
-}
-
-void
-construct::handle_quit()
-try
-{
-	ircd::quit();
-}
-catch(const std::exception &e)
-{
-	ircd::log::error
-	{
-		"SIGQUIT handler: %s", e.what()
 	};
 }
 
@@ -182,6 +171,20 @@ catch(const std::exception &e)
 }
 
 void
+construct::handle_quit()
+try
+{
+	ircd::quit();
+}
+catch(const std::exception &e)
+{
+	ircd::log::error
+	{
+		"SIGQUIT handler: %s", e.what()
+	};
+}
+
+void
 construct::handle_usr1()
 try
 {
@@ -217,5 +220,19 @@ catch(const std::exception &e)
 	ircd::log::error
 	{
 		"SIGUSR1 handler: %s", e.what()
+	};
+}
+
+void
+construct::handle_cont()
+try
+{
+	ircd::cont();
+}
+catch(const std::exception &e)
+{
+	ircd::log::error
+	{
+		"SIGCONT handler: %s", e.what()
 	};
 }

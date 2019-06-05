@@ -69,8 +69,10 @@
 namespace ircd
 {
 	seconds uptime();
-	void init(boost::asio::io_context &ios, const string_view &origin, const string_view &hostname);
+
+	void cont() noexcept;
 	bool quit() noexcept;
+	void init(boost::asio::io_context &ios, const string_view &origin, const string_view &hostname);
 
 	extern conf::item<bool> restart;
 	extern conf::item<bool> debugmode;

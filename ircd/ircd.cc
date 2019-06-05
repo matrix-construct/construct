@@ -201,6 +201,44 @@ noexcept
 	return false;
 }
 
+/// Notifies IRCd that execution is being resumed after a significant gap.
+/// Basically this is connected to a SIGCONT handler and beneficial after
+/// user stops, debugging and ACPI suspensions, etc. It is not required at
+/// this time, but its connection is advised for best behavior.
+void
+ircd::cont()
+noexcept
+{
+	log::debug
+	{
+		"IRCd cont requested from runlevel:%s ctx:%p main_context:%p",
+		reflect(run::level),
+		(const void *)ctx::current,
+		(const void *)main_context
+	};
+
+	switch(run::level)
+	{
+		case run::level::HALT:
+		case run::level::READY:
+		case run::level::FAULT:
+			return;
+
+		case run::level::START:
+		case run::level::QUIT:
+			return;
+
+		case run::level::RUN:
+			break;
+	}
+
+	log::notice
+	{
+		"IRCd resuming service in runlevel:%s.",
+		reflect(run::level),
+	};
+}
+
 /// Main context; Main program. Do not call this function directly.
 ///
 /// This function manages the lifetime for all resources and subsystems

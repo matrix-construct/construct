@@ -46,3 +46,10 @@ server configuration et al is moved to `SIGUSR1`.
 
 This signal commands the server to reload and refresh various aspects of its
 configuration and running state.
+
+##### SIGCONT
+
+This signal is used to notify the server that execution has resumed after an
+unexpected gap. We call `ircd::cont()` after receiving this signal. Examples
+for when the server benefits from calling `ircd::cont()` are: after a previous
+stop signal, debugging, or ACPI suspend and resume, etc.
