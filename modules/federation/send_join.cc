@@ -152,6 +152,7 @@ put__send_join(client &client,
 	};
 
 	// auth_chain
+	if(request.query.get<bool>("auth_chain", true))
 	{
 		json::stack::array auth_chain_a
 		{
@@ -174,6 +175,7 @@ put__send_join(client &client,
 	}
 
 	// state
+	if(request.query.get<bool>("state", true))
 	{
 		json::stack::array state_a
 		{
