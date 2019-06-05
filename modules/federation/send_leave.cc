@@ -116,7 +116,7 @@ put__send_leave(client &client,
 
 	static const json::array &response
 	{
-		"[200, {}]"
+		"[200,{}]"
 	};
 
 	return resource::response
