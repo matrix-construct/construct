@@ -6598,6 +6598,31 @@ console_cmd__event__horizon(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__event__horizon__list(opt &out, const string_view &line)
+{
+	const m::event::horizon horizon;
+	horizon.for_each([&out]
+	(const auto &event_id, const auto &event_idx)
+	{
+		const auto _event_id
+		{
+			m::event_id(event_idx, std::nothrow)
+		};
+
+		out << event_id
+		    << " -> "
+		    << event_idx
+		    << " "
+		    << _event_id
+		    << std::endl;
+
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__event__horizon__flush(opt &out, const string_view &line)
 {
 	size_t count(0);
