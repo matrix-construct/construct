@@ -14,7 +14,7 @@ using namespace ircd::m;
 using namespace ircd;
 
 static event::id::buf
-bootstrap(const string_view &host,
+bootstrap(const net::hostport &host,
           const m::room::id &room_id,
           const m::user::id &user_id);
 
@@ -131,6 +131,31 @@ ircd::m::join(const m::room::alias &room_alias,
 	return m::join(room, user_id);
 }
 
+//
+// bootstrap
+//
+
+static event::id::buf
+bootstrap_make_join(const net::hostport &host,
+                    const m::room::id &,
+                    const m::user::id &);
+
+static std::tuple<json::object, unique_buffer<mutable_buffer>>
+bootstrap_send_join(const net::hostport &host,
+                    const m::room::id &,
+                    const m::event::id &);
+
+static void
+bootstrap_eval_auth_chain(const json::array &state);
+
+static void
+bootstrap_eval_state(const json::array &state);
+
+static void
+bootstrap_backfill(const net::hostport &host,
+                   const m::room::id &,
+                   const m::event::id &);
+
 conf::item<seconds>
 make_join_timeout
 {
@@ -141,28 +166,249 @@ make_join_timeout
 conf::item<seconds>
 send_join_timeout
 {
-	{ "name",     "ircd.client.rooms.join_send_join.timeout" },
+	{ "name",     "ircd.client.rooms.join.send_join.timeout" },
 	{ "default",  45L  /* spinappse */                       },
 };
 
-static event::id::buf
-bootstrap(const string_view &host,
+conf::item<seconds>
+backfill_timeout
+{
+	{ "name",     "ircd.client.rooms.join.backfill.timeout" },
+	{ "default",  15L                                       },
+};
+
+event::id::buf
+bootstrap(const net::hostport &host,
           const m::room::id &room_id,
           const m::user::id &user_id)
 {
+	thread_local char rembuf[512];
+	log::debug
+	{
+		m::log, "join bootstrap starting in %s for %s to '%s'",
+		string_view{room_id},
+		string_view{user_id},
+		string(rembuf, host),
+	};
+
+	const auto event_id
+	{
+		bootstrap_make_join(host, room_id, user_id)
+	};
+
+	log::debug
+	{
+		m::log, "join bootstrap sending in %s for %s at %s to '%s'",
+		string_view{room_id},
+		string_view{user_id},
+		string_view{event_id},
+		string(rembuf, host),
+	};
+
+	const auto &[response, buf]
+	{
+		bootstrap_send_join(host, room_id, event_id)
+	};
+
+	const json::string &origin
+	{
+		response["origin"]
+	};
+
+	log::debug
+	{
+		m::log, "join bootstrap joined to %s for %s at %s to '%s' reporting '%s'",
+		string_view{room_id},
+		string_view{user_id},
+		string_view{event_id},
+		string(rembuf, host),
+		string_view{origin},
+	};
+
+	bootstrap_eval_auth_chain(response["auth_chain"]);
+	bootstrap_eval_state(response["state"]);
+	bootstrap_backfill(host, room_id, event_id);
+
+	log::debug
+	{
+		m::log, "join bootstrap joined to %s for %s at %s complete",
+		string_view{room_id},
+		string_view{user_id},
+		string_view{event_id},
+	};
+
+	return event_id;
+}
+
+void
+bootstrap_backfill(const net::hostport &host,
+                   const m::room::id &room_id,
+                   const m::event::id &event_id)
+try
+{
 	const unique_buffer<mutable_buffer> buf
 	{
-		16_KiB
+		16_KiB // headers in and out
 	};
 
-	m::v1::make_join::opts mjopts
+	m::v1::backfill::opts opts{host};
+	opts.dynamic = true;
+	opts.event_id = event_id;
+	m::v1::backfill request
 	{
-		net::hostport{host}
+		room_id, buf, std::move(opts)
 	};
 
+	request.wait(seconds(backfill_timeout));
+
+	const auto code
+	{
+		request.get()
+	};
+
+	const json::object &response
+	{
+		request.in.content
+	};
+
+	const json::array &pdus
+	{
+		response["pdus"]
+	};
+
+	// eval
+	{
+		m::vm::opts opts;
+		opts.fetch_state_check = false;
+		m::vm::eval
+		{
+			pdus, opts
+		};
+	}
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Bootstrap %s backfill @ %s from %s :%s",
+		string_view{room_id},
+		string_view{event_id},
+		string(host),
+		e.what(),
+	};
+}
+
+void
+bootstrap_eval_state(const json::array &state)
+{
+	m::vm::opts opts;
+	opts.fetch_prev_check = false;
+	opts.fetch_state_check = false;
+	m::vm::eval
+	{
+		state, opts
+	};
+}
+
+void
+bootstrap_eval_auth_chain(const json::array &auth_chain)
+{
+	m::vm::opts opts;
+	opts.infolog_accept = true;
+	opts.fetch = false;
+	m::vm::eval
+	{
+		auth_chain, opts
+	};
+}
+
+std::tuple<json::object, unique_buffer<mutable_buffer>>
+bootstrap_send_join(const net::hostport &host,
+                    const m::room::id &room_id,
+                    const m::event::id &event_id)
+try
+{
+	const m::event::fetch event
+	{
+		event_id
+	};
+
+	if(unlikely(!event.source))
+		throw panic
+		{
+			"Missing event.source JSON in event::fetch"
+		};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB // headers in and out
+	};
+
+	m::v1::send_join::opts opts{host};
+	opts.dynamic = true;
+	m::v1::send_join send_join
+	{
+		room_id, event_id, event.source, buf, std::move(opts)
+	};
+
+	send_join.wait(seconds(send_join_timeout));
+
+	const auto send_join_code
+	{
+		send_join.get()
+	};
+
+	const json::array &send_join_response
+	{
+		send_join
+	};
+
+	const uint more_send_join_code
+	{
+		send_join_response.at<uint>(0)
+	};
+
+	const json::object &send_join_response_data
+	{
+		send_join_response[1]
+	};
+
+	assert(!!send_join.in.dynamic);
+	return
+	{
+		send_join_response_data,
+		std::move(send_join.in.dynamic)
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Bootstrap %s @ %s send_join to %s :%s",
+		string_view{room_id},
+		string_view{event_id},
+		string(host),
+		e.what(),
+	};
+
+	throw;
+}
+
+event::id::buf
+bootstrap_make_join(const net::hostport &host,
+                    const m::room::id &room_id,
+                    const m::user::id &user_id)
+try
+{
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB // headers in and out
+	};
+
+	m::v1::make_join::opts opts{host};
 	m::v1::make_join request
 	{
-		room_id, user_id, buf, std::move(mjopts)
+		room_id, user_id, buf, std::move(opts)
 	};
 
 	request.wait(seconds(make_join_timeout));
@@ -181,14 +427,14 @@ bootstrap(const string_view &host,
 		response.at("event")
 	};
 
-	const auto auth_events
+	const json::array &auth_events
 	{
-		replace(std::string{proto.get("auth_events")}, "\\/", "/")
+		proto.get("auth_events")
     };
 
-	const auto prev_events
+	const json::array &prev_events
 	{
-		replace(std::string{proto.get("prev_events")}, "\\/", "/")
+		proto.get("prev_events")
     };
 
 	json::iov event;
@@ -243,111 +489,35 @@ bootstrap(const string_view &host,
 		}
 	};
 
-	m::vm::copts opts;
-	opts.infolog_accept = true;
-	opts.fetch_auth_check = false;
-	opts.fetch_state_check = false;
-	opts.fetch_prev_check = false;
-	opts.eval = false;
-	const m::event::id::buf event_id
+	// eval
 	{
-		m::vm::eval
-		{
-			event, content, opts
-		}
-	};
-
-	const unique_buffer<mutable_buffer> ebuf
-	{
-		64_KiB
-	};
-
-	const m::event::fetch mevent
-	{
-		event_id
-	};
-
-	const string_view strung
-	{
-		mevent.source?
-			string_view{mevent.source}:
-			string_view{data(ebuf), serialized(mevent)}
-	};
-
-	const unique_buffer<mutable_buffer> buf2
-	{
-		16_KiB
-	};
-
-	m::v1::send_join::opts sjopts
-	{
-		net::hostport{host}
-	};
-
-	m::v1::send_join sj
-	{
-		room_id, event_id, strung, buf2, std::move(sjopts)
-	};
-
-	sj.wait(seconds(send_join_timeout));
-
-	const auto sj_code
-	{
-		sj.get()
-	};
-
-	const json::array &sj_response
-	{
-		sj
-	};
-
-	const uint more_sj_code
-	{
-		sj_response.at<uint>(0)
-	};
-
-	const json::object &sj_response_content
-	{
-		sj_response[1]
-	};
-
-	const json::string &their_origin
-	{
-		sj_response_content["origin"]
-	};
-
-	// Process auth_chain
-	{
-		m::vm::opts opts;
+		m::vm::copts opts;
 		opts.infolog_accept = true;
-		opts.fetch = false;
-
-		const json::array &auth_chain
+		opts.fetch_auth_check = false;
+		opts.fetch_state_check = false;
+		opts.fetch_prev_check = false;
+		opts.eval = false;
+		const m::event::id::buf event_id
 		{
-			sj_response_content["auth_chain"]
+			m::vm::eval
+			{
+				event, content, opts
+			}
 		};
 
-		m::vm::eval
-		{
-			auth_chain, opts
-		};
+		return event_id;
 	}
-
-	// Process state
+}
+catch(const std::exception &e)
+{
+	log::error
 	{
-		m::vm::opts opts;
-		opts.fetch = false;
+		m::log, "Bootstrap %s for %s make_join to %s :%s",
+		string_view{room_id},
+		string_view{user_id},
+		string(host),
+		e.what(),
+	};
 
-		const json::array &state
-		{
-			sj_response_content["state"]
-		};
-
-		m::vm::eval
-		{
-			state, opts
-		};
-	}
-
-	return event_id;
+	throw;
 }
