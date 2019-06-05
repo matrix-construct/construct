@@ -590,6 +590,20 @@ ircd::m::fetch::start(const m::room::id &room_id,
 	return submit(event_id, room_id);
 }
 
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::fetch::count()
+{
+	size_t ret(0);
+	for_each([&ret](const auto &request)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)

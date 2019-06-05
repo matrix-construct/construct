@@ -22,6 +22,7 @@ namespace ircd::m::fetch
 	// Observers
 	bool for_each(const std::function<bool (request &)> &);
 	bool exists(const m::event::id &);
+	size_t count();
 
 	// Control panel
 	bool cancel(request &);
