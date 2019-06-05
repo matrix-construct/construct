@@ -37,7 +37,7 @@ namespace ircd::info
 	extern const size_t hardware_concurrency;
 	extern const size_t destructive_interference;
 	extern const size_t constructive_interference;
-	extern const uint128_t cpuid[8];
+	extern const std::array<uint128_t, 8> cpuid;
 	extern const string_view cpuvendor;
 
 	// System information

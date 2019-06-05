@@ -13,6 +13,11 @@
 #include <RB_INC_CPUID_H
 #include <RB_INC_GNU_LIBC_VERSION_H
 
+namespace ircd::info
+{
+	static void dump_cpu_info();
+}
+
 decltype(ircd::info::credits)
 ircd::info::credits
 {
@@ -100,50 +105,7 @@ ircd::info::dump()
 		aio_reqprio_max,
 	};
 
-	// This message flashes standard information about the system and platform
-	// IRCd is compiled for and running on.
-	log::debug
-	{
-		"cpu[%s] max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
-		cpuvendor,
-		max_align,
-		hardware_concurrency,
-		destructive_interference,
-		constructive_interference,
-	};
-
-	// This message flashes standard hardware feature information
-	#ifdef __x86_64__
-	log::debug
-	{
-		"0..01 [%08x|%08x|%08x|%08x] "
-		"0..07 [%08x|%08x|%08x|%08x]",
-		uint32_t(cpuid[1]),
-		uint32_t(cpuid[1] >> 32),
-		uint32_t(cpuid[1] >> 64),
-		uint32_t(cpuid[1] >> 96),
-		uint32_t(cpuid[3]),
-		uint32_t(cpuid[3] >> 32),
-		uint32_t(cpuid[3] >> 64),
-		uint32_t(cpuid[3] >> 96),
-	};
-	#endif
-
-	#ifdef __x86_64__
-	log::debug
-	{
-		"8..01 [%08x|%08x|%08x|%08x] "
-		"8..1c [%08x|%08x|%08x|%08x]",
-		uint32_t(cpuid[5]),
-		uint32_t(cpuid[5] >> 32),
-		uint32_t(cpuid[5] >> 64),
-		uint32_t(cpuid[5] >> 96),
-		uint32_t(cpuid[6]),
-		uint32_t(cpuid[6] >> 32),
-		uint32_t(cpuid[6] >> 64),
-		uint32_t(cpuid[6] >> 96),
-	};
-	#endif
+	dump_cpu_info();
 }
 
 //
@@ -543,6 +505,38 @@ ircd::info::page_size
 // Platform information
 //
 
+decltype(ircd::info::constructive_interference)
+ircd::info::constructive_interference
+{
+	#ifdef __cpp_lib_hardware_interference_size
+		std::hardware_constructive_interference_size
+	#else
+		0
+	#endif
+};
+
+decltype(ircd::info::destructive_interference)
+ircd::info::destructive_interference
+{
+	#ifdef __cpp_lib_hardware_interference_size
+		std::hardware_destructive_interference_size
+	#else
+		0
+	#endif
+};
+
+decltype(ircd::info::hardware_concurrency)
+ircd::info::hardware_concurrency
+{
+	std::thread::hardware_concurrency()
+};
+
+decltype(ircd::info::max_align)
+ircd::info::max_align
+{
+	alignof(std::max_align_t)
+};
+
 #ifdef __x86_64__
 static ircd::uint128_t
 get_cpuid(const uint &leaf,
@@ -584,15 +578,15 @@ ircd::info::cpuid
 {
 	get_cpuid(0x00000000U, 0),
 	get_cpuid(0x00000001U, 0),
+	get_cpuid(0x00000007U, 0),
 	0UL,
-	get_cpuid(0x00000007U, 0U),
 	get_cpuid(0x80000000U, 0),
 	get_cpuid(0x80000001U, 0),
-	get_cpuid(0x8000001CU, 0), //AMD Vol.2 13.4.3.3 (LWP)
-	0UL,
+	get_cpuid(0x80000007U, 0), // ACPI
+	get_cpuid(0x8000001CU, 0), // AMD Vol.2 13.4.3.3 (LWP)
 };
 
-char
+static char
 _cpuvendor_[12];
 
 decltype(ircd::info::cpuvendor)
@@ -600,7 +594,7 @@ ircd::info::cpuvendor{[&]
 {
 	const auto b
 	{
-		reinterpret_cast<const uint8_t *>(cpuid + 0)
+		reinterpret_cast<const uint8_t *>(cpuid.data())
 	};
 
 	_cpuvendor_[0] = b[4];
@@ -622,37 +616,77 @@ ircd::info::cpuvendor{[&]
 	};
 }()};
 
-decltype(ircd::info::constructive_interference)
-ircd::info::constructive_interference
+void
+ircd::info::dump_cpu_info()
 {
-	#ifdef __cpp_lib_hardware_interference_size
-		std::hardware_constructive_interference_size
-	#else
-		0
-	#endif
-};
+	// This message flashes standard information about the system and platform
+	// IRCd is compiled for and running on.
+	log::debug
+	{
+		"cpu[%s] max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
+		cpuvendor,
+		max_align,
+		hardware_concurrency,
+		destructive_interference,
+		constructive_interference,
+	};
 
-decltype(ircd::info::destructive_interference)
-ircd::info::destructive_interference
-{
-	#ifdef __cpp_lib_hardware_interference_size
-		std::hardware_destructive_interference_size
-	#else
-		0
-	#endif
-};
+	log::debug
+	{
+		"0..00 [%08x|%08x|%08x|%08x] "
+		"0..01 [%08x|%08x|%08x|%08x]",
+		uint32_t(cpuid[0]),
+		uint32_t(cpuid[0] >> 32),
+		uint32_t(cpuid[0] >> 64),
+		uint32_t(cpuid[0] >> 96),
+		uint32_t(cpuid[1]),
+		uint32_t(cpuid[1] >> 32),
+		uint32_t(cpuid[1] >> 64),
+		uint32_t(cpuid[1] >> 96),
+	};
 
-decltype(ircd::info::hardware_concurrency)
-ircd::info::hardware_concurrency
-{
-	std::thread::hardware_concurrency()
-};
+	log::debug
+	{
+		"0..07 [%08x|%08x|%08x|%08x] "
+		"0..00 [%08x|%08x|%08x|%08x]",
+		uint32_t(cpuid[2]),
+		uint32_t(cpuid[2] >> 32),
+		uint32_t(cpuid[2] >> 64),
+		uint32_t(cpuid[2] >> 96),
+		uint32_t(cpuid[3]),
+		uint32_t(cpuid[3] >> 32),
+		uint32_t(cpuid[3] >> 64),
+		uint32_t(cpuid[3] >> 96),
+	};
 
-decltype(ircd::info::max_align)
-ircd::info::max_align
-{
-	alignof(std::max_align_t)
-};
+	log::debug
+	{
+		"8..00 [%08x|%08x|%08x|%08x] "
+		"8..01 [%08x|%08x|%08x|%08x]",
+		uint32_t(cpuid[4]),
+		uint32_t(cpuid[4] >> 32),
+		uint32_t(cpuid[4] >> 64),
+		uint32_t(cpuid[4] >> 96),
+		uint32_t(cpuid[5]),
+		uint32_t(cpuid[5] >> 32),
+		uint32_t(cpuid[5] >> 64),
+		uint32_t(cpuid[5] >> 96),
+	};
+
+	log::debug
+	{
+		"8..07 [%08x|%08x|%08x|%08x] "
+		"8..1C [%08x|%08x|%08x|%08x]",
+		uint32_t(cpuid[6]),
+		uint32_t(cpuid[6] >> 32),
+		uint32_t(cpuid[6] >> 64),
+		uint32_t(cpuid[6] >> 96),
+		uint32_t(cpuid[7]),
+		uint32_t(cpuid[7] >> 32),
+		uint32_t(cpuid[7] >> 64),
+		uint32_t(cpuid[7] >> 96),
+	};
+}
 
 //
 // Build information
