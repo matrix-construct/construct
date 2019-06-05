@@ -29,6 +29,7 @@ class ircd::m::event::horizon
   public:
 	using closure_bool = std::function<bool (const event::id &, const event::idx &)>;
 
+	static bool for_every(const closure_bool &);
 	bool for_each(const closure_bool &) const;
 	bool has(const event::idx &) const;
 	size_t count() const;
