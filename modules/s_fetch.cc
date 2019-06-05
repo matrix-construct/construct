@@ -734,10 +734,26 @@ ircd::m::fetch::request_handle()
 	if(!next.wait(seconds(timeout), std::nothrow))
 	{
 		const auto now(ircd::time());
-		for(const auto &request : requests)
-			if(!request.finished && timedout(request, now))
-				retry(const_cast<fetch::request &>(request));
+		for(auto it(begin(requests)); it != end(requests); ++it)
+		{
+			auto &request(const_cast<fetch::request &>(*it));
+			if(request.finished < 0 || request.last == std::numeric_limits<time_t>::max())
+				continue;
 
+			if(request.finished == 0 && timedout(request, now))
+			{
+				retry(request);
+				continue;
+			}
+
+			if(request.finished > 0 && timedout(request, now))
+			{
+				request.finished = -1;
+				continue;
+			}
+		}
+
+		request_cleanup();
 		return;
 	}
 
@@ -750,6 +766,7 @@ ircd::m::fetch::request_handle()
 		return;
 
 	request_handle(it);
+	dock.notify_all();
 }
 
 void
@@ -761,10 +778,10 @@ try
 		const_cast<fetch::request &>(*it)
 	};
 
-	if(!request.started || !request.last || request.finished)
+	if(!request.started || !request.last || request.finished < 0)
 		return;
 
-	if(!handle(request))
+	if(!request.finished && !handle(request))
 		return;
 
 	assert(request.finished);
@@ -775,8 +792,9 @@ try
 		__builtin_unreachable();
 	}
 
+	assert(!request.eptr);
+	request.last = std::numeric_limits<time_t>::max();
 	complete.emplace_back(it);
-	dock.notify_all();
 }
 catch(const std::exception &e)
 {
@@ -826,7 +844,6 @@ ircd::m::fetch::eval_handle()
 	{
 		assert(!complete.empty());
 		complete.pop_front();
-		dock.notify_all();
 	}};
 
 	const auto it
@@ -849,6 +866,7 @@ try
 	const unwind free{[&request]
 	{
 		request.finished = -1;
+		dock.notify_all();
 	}};
 
 	assert(!request.eptr);
@@ -1091,7 +1109,6 @@ ircd::m::fetch::finish(request &request)
 {
 	assert(request.started);
 	request.finished = ircd::time();
-	dock.notify_all();
 }
 
 bool
