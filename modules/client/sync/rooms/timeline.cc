@@ -23,6 +23,8 @@ namespace ircd::m::sync
 	static bool _room_timeline_linear_command(data &);
 	static bool room_timeline_linear(data &);
 
+	extern const string_view exposure_depth_description;
+	extern conf::item<int64_t> exposure_depth;
 	extern conf::item<size_t> limit_default;
 	extern const event::keys::include default_keys;
 	extern item room_timeline;
@@ -58,6 +60,23 @@ ircd::m::sync::limit_default
 	{ "default",  10L                                             },
 };
 
+decltype(ircd::m::sync::exposure_depth)
+ircd::m::sync::exposure_depth
+{
+	{ "name",         "ircd.client.sync.rooms.timeline.exposure.depth" },
+	{ "default",      20L                                              },
+	{ "description",  exposure_depth_description                       },
+};
+
+decltype(ircd::m::sync::exposure_depth_description)
+ircd::m::sync::exposure_depth_description
+{R"(
+	Does not linear-sync timeline events whose distance from the room head
+	is greater than this value. This prevents past events from appearing at
+	the bottom of the timeline in clients which do not sort their timeline to
+	prevent an incoherent conversation when the server obtains past events.
+)"};
+
 bool
 ircd::m::sync::room_timeline_linear(data &data)
 {
@@ -70,11 +89,6 @@ ircd::m::sync::room_timeline_linear(data &data)
 	if(!data.membership && *data.room != data.user_room)
 		return false;
 
-	json::stack::object rooms
-	{
-		*data.out, "rooms"
-	};
-
 	assert(data.event);
 	const bool command
 	{
@@ -84,8 +98,28 @@ ircd::m::sync::room_timeline_linear(data &data)
 		 json::get<"sender"_>(*data.event) == data.user.user_id)
 	};
 
+	json::stack::object rooms
+	{
+		*data.out, "rooms"
+	};
+
 	if(command)
 		return _room_timeline_linear_command(data);
+
+	if(int64_t(exposure_depth) > -1)
+	{
+		const bool belated
+		{
+			// Don't apply this condition to state events for now
+			!defined(json::get<"state_key"_>(*data.event)) &&
+
+			// Check if the depth is too far in the past relative to the room head
+			json::get<"depth"_>(*data.event) + int64_t(exposure_depth) < data.room_depth
+		};
+
+		if(belated)
+			return false;
+	}
 
 	json::stack::object membership_
 	{
