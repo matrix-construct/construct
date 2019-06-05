@@ -110,7 +110,7 @@ catch(const m::error &e)
 		log, "%s %s", what, content
 	};
 
-	mods::imports.clear();
+	this->~modules();
 	throw m::error
 	{
 		"M_INIT_ERROR", "Failed to start :%s :%s", what, content
@@ -125,7 +125,7 @@ catch(const std::exception &e)
 		log, "%s", what
 	};
 
-	mods::imports.clear();
+	this->~modules();
 	throw m::error
 	{
 		"M_INIT_ERROR", "Failed to start :%s", what
@@ -134,7 +134,7 @@ catch(const std::exception &e)
 catch(const ctx::terminated &)
 {
 	const ctx::exception_handler eh;
-	mods::imports.clear();
+	this->~modules();
 	throw ctx::terminated{};
 }
 
