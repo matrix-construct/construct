@@ -321,17 +321,17 @@ ircd::m::dbs::_index_event(db::txn &txn,
 	if(opts.appendix.test(appendix::EVENT_JSON))
 		_index_event_json(txn, event, opts);
 
-	if(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE) && opts.horizon_resolve.any())
-		_index_event_horizon_resolve(txn, event, opts);
-
-	if(opts.appendix.test(appendix::EVENT_REFS) && opts.event_refs.any())
-		_index_event_refs(txn, event, opts);
-
 	if(opts.appendix.test(appendix::EVENT_SENDER))
 		_index_event_sender(txn, event, opts);
 
 	if(opts.appendix.test(appendix::EVENT_TYPE))
 		_index_event_type(txn, event, opts);
+
+	if(opts.appendix.test(appendix::EVENT_REFS) && opts.event_refs.any())
+		_index_event_refs(txn, event, opts);
+
+	if(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE) && opts.horizon_resolve.any())
+		_index_event_horizon_resolve(txn, event, opts);
 }
 
 void
