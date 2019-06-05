@@ -1712,6 +1712,7 @@ void
 ircd::ctx::prof::slice_enter()
 {
 	_slice_start = cycles();
+	assert(_slice_start >= _slice_stop);
 }
 
 void
