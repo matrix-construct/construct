@@ -151,7 +151,7 @@ struct ircd::strlcpy
 	{}
 
 	strlcpy(const mutable_buffer &dst, const string_view &src)
-	:strlcpy(data(dst), src, size(dst))
+	:strlcpy{data(dst), src, size(dst)}
 	{}
 };
 
@@ -185,11 +185,11 @@ struct ircd::strlcat
 	{}
 
 	strlcat(char *const &dst, const char *const &src, const size_t &max)
-	:strlcat(dst, string_view{src, ::strnlen(src, max)}, max)
+	:strlcat{dst, string_view{src, ::strnlen(src, max)}, max}
 	{}
 
 	strlcat(const mutable_buffer &dst, const string_view &src)
-	:strlcat(data(dst), src, size(dst))
+	:strlcat{data(dst), src, size(dst)}
 	{}
 };
 
