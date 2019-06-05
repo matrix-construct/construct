@@ -522,6 +522,15 @@ CXXFLAGS+=" -fvisibility-inlines-hidden"
 dnl see gcc(1)
 CXXFLAGS+=" -fnothrow-opt"
 
+dnl This disables thread-safety for static variable initialization
+dnl (specifically local static variables inside functions) which reduces
+dnl generated code size and complexity. This is alright since construct is
+dnl primarily single threaded. Even if other threads are spawned for special
+dnl tasks we consider the likelyhood of a static initialization race to either
+dnl be sufficiently low or simply immaterial for our uses of them.
+dnl
+CXXFLAGS+=" -fno-threadsafe-statics"
+
 dnl
 dnl Compiler warnings
 dnl
