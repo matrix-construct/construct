@@ -191,6 +191,26 @@ backfill_limit
 	)"}
 };
 
+conf::item<bool>
+backfill_first
+{
+	{ "name",         "ircd.client.rooms.join.backfill.first" },
+	{ "default",      true                                    },
+	{ "description",
+
+	R"(
+	During the room join bootstrap process, this controls whether backfilling
+	recent timeline events occurs before processing the room state. If true,
+	user experience may be improved because their client's timeline is
+	immediately populated with recent messages. Otherwise, the backfill will be
+	delayed until after all state events have been processed first. Setting
+	this to false is safer, as some clients may be confused by timeline events
+	which are missing related state events. Note that fundamental state events
+	for the room are still processed first regardless of this setting. Also
+	known as the Hackfill optimization.
+	)"}
+};
+
 event::id::buf
 bootstrap(const net::hostport &host,
           const m::room::id &room_id,
@@ -239,9 +259,17 @@ bootstrap(const net::hostport &host,
 		string_view{origin},
 	};
 
+	// Always eval the auth_chain before anything else
 	bootstrap_eval_auth_chain(response["auth_chain"]);
-	bootstrap_eval_state(response["state"]);
-	bootstrap_backfill(host, room_id, event_id);
+
+	if(backfill_first)
+	{
+		bootstrap_backfill(host, room_id, event_id);
+		bootstrap_eval_state(response["state"]);
+	} else {
+		bootstrap_eval_state(response["state"]);
+		bootstrap_backfill(host, room_id, event_id);
+	}
 
 	log::info
 	{
