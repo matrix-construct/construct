@@ -156,6 +156,22 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite fo
 AM_CONDITIONAL([DEBUG], [[[[ "$DEBUG" = "1" ]]]])
 
 dnl
+dnl Compactness
+dnl
+
+AC_MSG_CHECKING(Optimize for size; strip symbols; force no debugging)
+AC_ARG_ENABLE(compact, AC_HELP_STRING([--enable-compact], [Optimize for size and compactness]),
+[
+	AC_MSG_RESULT([yes])
+	AC_SUBST(COMPACT, 1)
+	RB_DEFINE_UNQUOTED([COMPACT], [1], [Not configured for compactness when lit.])
+], [
+	AC_MSG_RESULT([no])
+])
+
+AM_CONDITIONAL([COMPACT], [[[[ "$COMPACT" = "1" ]]]])
+
+dnl
 dnl Explicit assert switch for still using assert() without --enable-debug
 dnl
 
@@ -267,10 +283,18 @@ AC_ARG_WITH(optimize-level, AC_HELP_STRING([--with-optimize-level[[[=3]]]], [Exp
 ], [
 	AM_COND_IF(OPTIMIZE,
 	[
-		optimize_level="3"
-		AC_MSG_RESULT([no, but --enable-optimize has implied level -O$optimize_level])
-		AC_SUBST(OPTIMIZE_LEVEL, $optimize_level)
-		RB_DEFINE_UNQUOTED([OPTIMIZE_LEVEL], [$optimize_level], [Explicitly set release mode optimization])
+		AM_COND_IF(COMPACT,
+		[
+			optimize_level="s"
+			AC_MSG_RESULT([no, but --enable-optimize and --enable-compact means -O$optimize_level])
+			AC_SUBST(OPTIMIZE_LEVEL, $optimize_level)
+			RB_DEFINE_UNQUOTED([OPTIMIZE_LEVEL], [$optimize_level], [Implicitly set release mode optimization])
+		], [
+			optimize_level="3"
+			AC_MSG_RESULT([no, but --enable-optimize has implied level -O$optimize_level])
+			AC_SUBST(OPTIMIZE_LEVEL, $optimize_level)
+			RB_DEFINE_UNQUOTED([OPTIMIZE_LEVEL], [$optimize_level], [Explicitly set release mode optimization])
+		])
 	], [
 		AM_COND_IF(DEBUG,
 		[
@@ -501,9 +525,14 @@ AM_COND_IF([DEBUG],
 	CXXFLAGS+=" -fvar-tracking"
 	CXXFLAGS+=" -fvar-tracking-assignments"
 ], [
-	dnl Note these flags are unreliable with LTO
-	CXXFLAGS+=" -g"
-	CXXFLAGS+=" -ggdb"
+	AM_COND_IF([COMPACT],
+	[
+
+	], [
+		dnl Note these flags are unreliable with LTO
+		CXXFLAGS+=" -g"
+		CXXFLAGS+=" -ggdb"
+	])
 ])
 
 dnl  Creates an ELF section in the output which contains a list of
@@ -1624,6 +1653,12 @@ AC_SUBST(EXTRA_CPPFLAGS)
 AC_SUBST(EXTRA_CXXFLAGS)
 AC_SUBST(EXTRA_LDFLAGS)
 AC_SUBST(EXTRA_LIBS)
+
+AM_COND_IF([COMPACT],
+[
+	EXTRA_LDFLAGS+=" -Wl,--strip-all"
+	EXTRA_LDFLAGS+=" -Wl,--gc-sections"
+])
 
 AM_COND_IF([MINGW],
 [

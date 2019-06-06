@@ -28,7 +28,6 @@ AM_LDFLAGS = \
 	-Wl,--detect-odr-violations \
 	-Wl,--unresolved-symbols=report-all \
 	-Wl,--allow-shlib-undefined \
-	-Wl,--gc-sections \
 	-Wl,--dynamic-list-data \
 	-Wl,--dynamic-list-cpp-new\
 	-Wl,--dynamic-list-cpp-typeinfo \

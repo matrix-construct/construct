@@ -40,7 +40,6 @@ AM_LDFLAGS = \
 	-Wl,--unresolved-symbols=report-all \
 	-Wl,--no-undefined-version \
 	-Wl,--weak-unresolved-symbols \
-	-Wl,--no-gc-sections \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
 	-Wl,--gdb-index \

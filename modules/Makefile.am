@@ -38,7 +38,6 @@ AM_LDFLAGS = \
 	-Wl,--warn-execstack \
 	-Wl,--detect-odr-violations \
 	-Wl,--allow-shlib-undefined \
-	-Wl,--gc-sections \
 	-Wl,--icf=all \
 	-Wl,--gdb-index \
 	-Wl,-z,lazy \
