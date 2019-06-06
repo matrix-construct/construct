@@ -211,6 +211,22 @@ backfill_first
 	)"}
 };
 
+conf::item<bool>
+lazychain
+{
+	{ "name",         "ircd.client.rooms.join.lazychain" },
+	{ "default",      true                               },
+	{ "description",
+
+	R"(
+	During the room join bootstrap process, this controls whether the
+	auth_chain in the response is only selectively processed. This is a
+	safe optimization that allows the bootstrap to progress to the next
+	phase. The skipped events are eventually processed during the state
+	evaluation phase.
+	)"}
+};
+
 event::id::buf
 bootstrap(const net::hostport &host,
           const m::room::id &room_id,
@@ -323,6 +339,8 @@ try
 	{
 		m::vm::opts opts;
 		opts.fetch_state_check = false;
+		opts.fetch_prev_check = false;
+		opts.infolog_accept = false;
 		m::vm::eval
 		{
 			pdus, opts
@@ -347,6 +365,7 @@ bootstrap_eval_state(const json::array &state)
 	m::vm::opts opts;
 	opts.fetch_prev_check = false;
 	opts.fetch_state_check = false;
+	opts.infolog_accept = false;
 	m::vm::eval
 	{
 		state, opts
@@ -356,13 +375,41 @@ bootstrap_eval_state(const json::array &state)
 void
 bootstrap_eval_auth_chain(const json::array &auth_chain)
 {
+	log::info
+	{
+		m::log, "Auth chain %zu events",
+		auth_chain.size()
+	};
+
 	m::vm::opts opts;
 	opts.infolog_accept = true;
 	opts.fetch = false;
-	m::vm::eval
+
+	if(!lazychain)
 	{
-		auth_chain, opts
-	};
+		m::vm::eval
+		{
+			auth_chain, opts
+		};
+
+		return;
+	}
+
+	std::vector<m::event> auth_events(begin(auth_chain), end(auth_chain));
+	std::sort(begin(auth_events), end(auth_events));
+	for(const auto &event : auth_events)
+	{
+		// Skip all events which aren't power events. We don't need them
+		// here yet. They can wait until state evaluation later.
+		if(json::get<"depth"_>(event) >= 4)
+			if(!m::event::auth::is_power_event(event))
+				continue;
+
+		m::vm::eval
+		{
+			event, opts
+		};
+	}
 }
 
 std::tuple<json::object, unique_buffer<mutable_buffer>>
