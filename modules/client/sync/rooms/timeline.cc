@@ -107,19 +107,8 @@ ircd::m::sync::room_timeline_linear(data &data)
 		return _room_timeline_linear_command(data);
 
 	if(int64_t(exposure_depth) > -1)
-	{
-		const bool belated
-		{
-			// Don't apply this condition to state events for now
-			!defined(json::get<"state_key"_>(*data.event)) &&
-
-			// Check if the depth is too far in the past relative to the room head
-			json::get<"depth"_>(*data.event) + int64_t(exposure_depth) < data.room_depth
-		};
-
-		if(belated)
+		if(json::get<"depth"_>(*data.event) + int64_t(exposure_depth) < data.room_depth)
 			return false;
-	}
 
 	json::stack::object membership_
 	{
