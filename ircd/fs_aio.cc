@@ -33,8 +33,12 @@ ircd::fs::aio::support
 decltype(ircd::fs::aio::support_fsync)
 ircd::fs::aio::support_fsync
 {
-	info::kernel_version[0] >= 4 &&
-	info::kernel_version[1] >= 18
+	#if defined(RWF_SYNC)
+		info::kernel_version[0] >= 4 &&
+		info::kernel_version[1] >= 18
+	#else
+		false
+	#endif
 };
 
 /// True if IOCB_CMD_FDSYNC is supported by AIO. If this is false then
@@ -42,8 +46,12 @@ ircd::fs::aio::support_fsync
 decltype(ircd::fs::aio::support_fdsync)
 ircd::fs::aio::support_fdsync
 {
-	info::kernel_version[0] >= 4 &&
-	info::kernel_version[1] >= 18
+	#if defined(RWF_DSYNC)
+		info::kernel_version[0] >= 4 &&
+		info::kernel_version[1] >= 18
+	#else
+		false
+	#endif
 };
 
 decltype(ircd::fs::aio::MAX_EVENTS)
@@ -197,7 +205,7 @@ ircd::fs::aio::read(const fd &fd,
 	const scope_count cur_reads{stats.cur_reads};
 	stats.max_reads = std::max(stats.max_reads, stats.cur_reads);
 
-	#if defined(RB_DEBUG_FS_AIO_READ_BLOCKING)
+	#if defined(RWF_NOWAIT) && defined(RB_DEBUG_FS_AIO_READ_BLOCKING)
 	request.aio_rw_flags |= support_nowait? RWF_NOWAIT : 0;
 	#endif
 
@@ -206,7 +214,7 @@ ircd::fs::aio::read(const fd &fd,
 		request()
 	};
 
-	#if defined(RB_DEBUG_FS_AIO_READ_BLOCKING)
+	#if defined(RWF_NOWAIT) && defined(RB_DEBUG_FS_AIO_READ_BLOCKING)
 	const bool would_block
 	{
 		opts.blocking &&

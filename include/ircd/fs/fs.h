@@ -38,6 +38,7 @@ namespace ircd::fs
 
 	// Runtime-detected support lights.
 	extern const bool support_pwritev2;
+	extern const bool support_preadv2;
 	extern const bool support_append;
 	extern const bool support_nowait;
 	extern const bool support_hipri;

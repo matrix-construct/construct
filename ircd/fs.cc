@@ -44,6 +44,17 @@ ircd::fs::support_pwritev2
 	#endif
 };
 
+decltype(ircd::fs::support_preadv2)
+ircd::fs::support_preadv2
+{
+	#if defined(HAVE_PREADV2)
+		info::kernel_version[0] >= 4 &&
+		info::kernel_version[1] >= 6
+	#else
+		false
+	#endif
+};
+
 decltype(ircd::fs::support_sync)
 ircd::fs::support_sync
 {
@@ -695,7 +706,8 @@ ircd::fs::read(const string_view &path,
 namespace ircd::fs
 {
 	static int flags(const read_opts &opts);
-	static size_t _read(const fd &, const const_iovec_view &, const read_opts &);
+	static size_t _read_preadv2(const fd &, const const_iovec_view &, const read_opts &);
+	static size_t _read_preadv(const fd &, const const_iovec_view &, const read_opts &);
 	static size_t read(const fd &, const const_iovec_view &, const read_opts &);
 }
 
@@ -779,14 +791,44 @@ ircd::fs::read(const fd &fd,
 		return aio::read(fd, iov, opts);
 	#endif
 
-	return _read(fd, iov, opts);
+	#ifdef HAVE_PREADV2
+	return support_preadv2?
+		_read_preadv2(fd, iov, opts):
+		_read_preadv(fd, iov, opts);
+	#else
+	return _read_preadv(fd, iov, opts);
+	#endif
+}
+
+size_t
+ircd::fs::_read_preadv(const fd &fd,
+                       const const_iovec_view &iov,
+                       const read_opts &opts)
+{
+	ssize_t ret; do
+	{
+		ret = ::preadv(int(fd), iov.data(), iov.size(), opts.offset);
+	}
+	while(!opts.interruptible && unlikely(ret == -1 && errno == EINTR));
+
+	static_assert(EAGAIN == EWOULDBLOCK);
+	if(unlikely(!opts.blocking && ret == -1 && errno == EAGAIN))
+		return 0UL;
+
+	if(unlikely(ret == -1))
+		throw std::system_error
+		{
+			errno, std::system_category()
+		};
+
+	return ret;
 }
 
 #ifdef HAVE_PREADV2
 size_t
-ircd::fs::_read(const fd &fd,
-                const const_iovec_view &iov,
-                const read_opts &opts)
+ircd::fs::_read_preadv2(const fd &fd,
+                        const const_iovec_view &iov,
+                        const read_opts &opts)
 {
 	const auto &flags_
 	{
@@ -811,31 +853,7 @@ ircd::fs::_read(const fd &fd,
 
 	return ret;
 }
-#else
-size_t
-ircd::fs::_read(const fd &fd,
-                const const_iovec_view &iov,
-                const read_opts &opts)
-{
-	ssize_t ret; do
-	{
-		ret = ::preadv(int(fd), iov.data(), iov.size(), opts.offset);
-	}
-	while(!opts.interruptible && unlikely(ret == -1 && errno == EINTR));
-
-	static_assert(EAGAIN == EWOULDBLOCK);
-	if(unlikely(!opts.blocking && ret == -1 && errno == EAGAIN))
-		return 0UL;
-
-	if(unlikely(ret == -1))
-		throw std::system_error
-		{
-			errno, std::system_category()
-		};
-
-	return ret;
-}
-#endif // HAVE_PREADV2
+#endif HAVE_PREADV2
 
 int
 ircd::fs::flags(const read_opts &opts)
@@ -1000,31 +1018,19 @@ ircd::fs::append(const string_view &path,
 	return append(fd, bufs, opts);
 }
 
-#if defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
 size_t
 ircd::fs::append(const fd &fd,
                  const const_buffers &bufs,
                  const write_opts &opts_)
 {
 	auto opts(opts_);
-	opts.offset = -1;
-	return write(fd, bufs, opts);
-}
-#else
-/// When we don't have pwritev2() we have to eat the cost of an
-/// extra lseek() to the end of the file.
-size_t
-ircd::fs::append(const fd &fd,
-                 const const_buffers &bufs,
-                 const write_opts &opts_)
-{
-	auto opts(opts_);
-	if(!opts.offset || opts.offset == -1)
+	if(support_pwritev2 && support_append)
+		opts.offset = -1;
+	else if(!opts.offset || opts.offset == -1)
 		opts.offset = syscall(::lseek, fd, 0, SEEK_END);
 
 	return write(fd, bufs, opts);
 }
-#endif defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
 
 //
 // write
@@ -1078,7 +1084,8 @@ ircd::fs::write(const string_view &path,
 namespace ircd::fs
 {
 	static int flags(const write_opts &opts);
-	static size_t _write(const fd &, const const_iovec_view &, const write_opts &);
+	static size_t _write_pwritev2(const fd &, const const_iovec_view &, const write_opts &);
+	static size_t _write_pwritev(const fd &, const const_iovec_view &, const write_opts &);
 	static size_t write(const fd &, const const_iovec_view &, const write_opts &);
 }
 
@@ -1144,16 +1151,46 @@ ircd::fs::write(const fd &fd,
 	#ifdef IRCD_USE_AIO
 	if(likely(aio::system) && opts.aio)
 		return aio::write(fd, iov, opts);
-	#endif IRCD_USE_AIO
+	#endif
 
-	return _write(fd, iov, opts);
+	#ifdef HAVE_PWRITEV2
+	return support_pwritev2?
+		_write_pwritev2(fd, iov, opts):
+		_write_pwritev(fd, iov, opts);
+	#else
+	return _write_pwritev(fd, iov, opts);
+	#endif
+}
+
+size_t
+ircd::fs::_write_pwritev(const fd &fd,
+                         const const_iovec_view &iov,
+                         const write_opts &opts)
+{
+	ssize_t ret; do
+	{
+		ret = ::pwritev(int(fd), iov.data(), iov.size(), opts.offset);
+	}
+	while(!opts.interruptible && unlikely(ret == -1 && errno == EINTR));
+
+	static_assert(EAGAIN == EWOULDBLOCK);
+	if(unlikely(!opts.blocking && ret == -1 && errno == EAGAIN))
+		return 0UL;
+
+	if(unlikely(ret == -1))
+		throw std::system_error
+		{
+			errno, std::system_category()
+		};
+
+	return ret;
 }
 
 #ifdef HAVE_PWRITEV2
 size_t
-ircd::fs::_write(const fd &fd,
-                 const const_iovec_view &iov,
-                 const write_opts &opts)
+ircd::fs::_write_pwritev2(const fd &fd,
+                          const const_iovec_view &iov,
+                          const write_opts &opts)
 {
 	// Manpages sez that when appending with RWF_APPEND, the offset has no
 	// effect on the write; but if the value of the offset is -1 then the
@@ -1186,31 +1223,7 @@ ircd::fs::_write(const fd &fd,
 
 	return ret;
 }
-#else
-size_t
-ircd::fs::_write(const fd &fd,
-                 const const_iovec_view &iov,
-                 const write_opts &opts)
-{
-	ssize_t ret; do
-	{
-		ret = ::pwritev(int(fd), iov.data(), iov.size(), opts.offset);
-	}
-	while(!opts.interruptible && unlikely(ret == -1 && errno == EINTR));
-
-	static_assert(EAGAIN == EWOULDBLOCK);
-	if(unlikely(!opts.blocking && ret == -1 && errno == EAGAIN))
-		return 0UL;
-
-	if(unlikely(ret == -1))
-		throw std::system_error
-		{
-			errno, std::system_category()
-		};
-
-	return ret;
-}
-#endif
+#endif HAVE_PWRITEV2
 
 int
 ircd::fs::flags(const write_opts &opts)
