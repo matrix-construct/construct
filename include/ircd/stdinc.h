@@ -95,6 +95,11 @@ extern "C"
 #include <RB_INC_EXPERIMENTAL_STRING_VIEW
 #include <RB_INC_EXPERIMENTAL_OPTIONAL
 
+// FreeBSD unsigned long ctype
+#if defined(__FreeBSD__) && !defined(ulong)
+	typedef u_long ulong;
+#endif
+
 // These are #defined in stdio.h. If the system includes it indirectly we have
 // to undef those here or there will be trouble.
 #undef stdin
