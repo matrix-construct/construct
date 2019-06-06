@@ -41,10 +41,10 @@ AM_LDFLAGS = \
 	-Wl,--gc-sections \
 	-Wl,--icf=all \
 	-Wl,--gdb-index \
-	-Wl,-z -Wl,lazy \
-	-Wl,-z -Wl,noexecstack \
-	-Wl,-z -Wl,combreloc \
-	-Wl,-z -Wl,text-unlikely-segment \
+	-Wl,-z,lazy \
+	-Wl,-z,noexecstack \
+	-Wl,-z,combreloc \
+	-Wl,-z,text-unlikely-segment \
 	-L$(top_srcdir)/ircd \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \

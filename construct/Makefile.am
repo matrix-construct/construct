@@ -35,7 +35,7 @@ AM_LDFLAGS = \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
 	-Wl,--gdb-index \
-	-Wl,-z -Wl,noexecstack \
+	-Wl,-z,noexecstack \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
 	$(PLATFORM_LDFLAGS) \

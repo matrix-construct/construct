@@ -44,12 +44,12 @@ AM_LDFLAGS = \
 	-Wl,--icf=all \
 	-Wl,--rosegment \
 	-Wl,--gdb-index \
-	-Wl,-z -Wl,lazy \
-	-Wl,-z -Wl,nodelete \
-	-Wl,-z -Wl,nodlopen \
-	-Wl,-z -Wl,noexecstack \
-	-Wl,-z -Wl,combreloc \
-	-Wl,-z -Wl,text-unlikely-segment \
+	-Wl,-z,lazy \
+	-Wl,-z,nodelete \
+	-Wl,-z,nodlopen \
+	-Wl,-z,noexecstack \
+	-Wl,-z,combreloc \
+	-Wl,-z,text-unlikely-segment \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
 	###
