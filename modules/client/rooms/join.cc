@@ -196,7 +196,7 @@ bootstrap(const net::hostport &host,
 		bootstrap_make_join(host, room_id, user_id)
 	};
 
-	log::debug
+	log::info
 	{
 		m::log, "join bootstrap sending in %s for %s at %s to '%s'",
 		string_view{room_id},
@@ -215,7 +215,7 @@ bootstrap(const net::hostport &host,
 		response["origin"]
 	};
 
-	log::debug
+	log::info
 	{
 		m::log, "join bootstrap joined to %s for %s at %s to '%s' reporting '%s'",
 		string_view{room_id},
@@ -229,7 +229,7 @@ bootstrap(const net::hostport &host,
 	bootstrap_eval_state(response["state"]);
 	bootstrap_backfill(host, room_id, event_id);
 
-	log::debug
+	log::info
 	{
 		m::log, "join bootstrap joined to %s for %s at %s complete",
 		string_view{room_id},
