@@ -37,6 +37,13 @@ ircd::m::fetch::auth_timeout
 	{ "default",  15L                         },
 };
 
+decltype(ircd::m::fetch::requests_max)
+ircd::m::fetch::requests_max
+{
+	{ "name",     "ircd.m.fetch.requests.max" },
+	{ "default",  256L                        },
+};
+
 decltype(ircd::m::fetch::hook)
 ircd::m::fetch::hook
 {
@@ -586,6 +593,9 @@ ircd::m::fetch::start(const m::room::id &room_id,
 			string_view{room_id},
 			reflect(run::level)
 		};
+
+	if(count() > size_t(requests_max))
+		return false;
 
 	return submit(event_id, room_id);
 }

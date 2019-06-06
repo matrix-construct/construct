@@ -25,6 +25,7 @@ namespace ircd::m::fetch
 	extern ctx::context eval_context;
 	extern ctx::context request_context;
 	extern hookfn<vm::eval &> hook;
+	extern conf::item<size_t> requests_max;
 	extern conf::item<seconds> auth_timeout;
 	extern conf::item<seconds> timeout;
 	extern conf::item<bool> enable;
