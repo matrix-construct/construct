@@ -25,6 +25,7 @@ namespace ircd::fs
 	static uint posix_flags(const std::ios::openmode &mode);
 	static const char *path_str(const string_view &);
 	static void debug_paths();
+	static void debug_support();
 }
 
 decltype(ircd::fs::log)
@@ -138,6 +139,7 @@ ircd::fs::support_rwf_write_life
 ircd::fs::init::init()
 :_aio_{}
 {
+	debug_support();
 	debug_paths();
 }
 
@@ -2309,6 +2311,24 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &e)
 //
 // Internal utils
 //
+
+void
+ircd::fs::debug_support()
+{
+	log::debug
+	{
+		log, "support preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",
+		support_preadv2,
+		support_pwritev2,
+		support_sync,
+		support_dsync,
+		support_hipri,
+		support_nowait,
+		support_append,
+		support_rwh_write_life,
+		support_rwf_write_life,
+	};
+}
 
 void
 ircd::fs::debug_paths()
