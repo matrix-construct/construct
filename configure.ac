@@ -1078,6 +1078,8 @@ PKG_CHECK_MODULES(SODIUM, libsodium,
 	have_sodium="yes"
 	AC_DEFINE([HAVE_SODIUM], [1], [Have libsodium])
 ], [
+	dnl NOTE that PKG_CHECK_MODULES is preferred, but on some systems it gives
+	dnl a false negative and we end up here with an AC_CHECK_LIB fallback.
 	RB_CHK_SYSHEADER(sodium.h, [SODIUM_H])
 	AC_CHECK_LIB([sodium], sodium_init,
 	[
