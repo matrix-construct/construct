@@ -27,6 +27,19 @@ don't need anything here.
 Sets `-mtune=generic` as `native` is otherwise the default.
 
 
+##### Compact mode
+
+```
+--enable-compact
+```
+Create the smallest possible resulting output. This will optimize for size
+(if optimization is enabled), remove all debugging, strip symbols, and apply
+any toolchain-feature or #ifdef in code that optimizes the output size.
+
+_This feature is experimental. It may not build or execute on all platforms
+reliably. Please report bugs._
+
+
 ##### Manually enable assertions
 
 ```
