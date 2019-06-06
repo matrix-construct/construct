@@ -1044,11 +1044,9 @@ AC_HELP_STRING([--with-sodium-libs=[[[DIR]]]], [Path to sodium library directory
 	SODIUM_LDFLAGS="-L$withval"
 ], [])
 
-RB_CHK_SYSHEADER(sodium.h, [SODIUM_H])
-AC_CHECK_LIB([sodium], sodium_init,
+PKG_CHECK_MODULES(SODIUM, libsodium,
 [
 	have_sodium="yes"
-	SODIUM_LIBS="-lsodium"
 ], [
 	have_sodium="no"
 	AC_MSG_ERROR([libsodium is required but not found. Try apt-get install libsodium-dev])
