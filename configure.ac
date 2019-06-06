@@ -1049,8 +1049,15 @@ PKG_CHECK_MODULES(SODIUM, libsodium,
 	have_sodium="yes"
 	AC_DEFINE([HAVE_SODIUM], [1], [Have libsodium])
 ], [
-	have_sodium="no"
-	AC_MSG_ERROR([libsodium is required but not found. Try apt-get install libsodium-dev])
+	RB_CHK_SYSHEADER(sodium.h, [SODIUM_H])
+	AC_CHECK_LIB([sodium], sodium_init,
+	[
+		have_sodium="yes"
+		AC_DEFINE([HAVE_SODIUM], [1], [Have libsodium])
+	], [
+		have_sodium="no"
+		AC_MSG_ERROR([libsodium is required but not found. Try apt-get install libsodium-dev])
+	])
 ])
 
 AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
