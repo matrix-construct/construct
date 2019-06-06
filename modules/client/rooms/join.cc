@@ -177,6 +177,20 @@ backfill_timeout
 	{ "default",  15L                                       },
 };
 
+conf::item<size_t>
+backfill_limit
+{
+	{ "name",         "ircd.client.rooms.join.backfill.limit" },
+	{ "default",      64L                                     },
+	{ "description",
+
+	R"(
+	The number of events to request on initial backfill. Specapse may limit
+	this to 50, but it also may not. Either way, a good choice is enough to
+	fill a client's timeline quickly with a little headroom.
+	)"}
+};
+
 event::id::buf
 bootstrap(const net::hostport &host,
           const m::room::id &room_id,
@@ -254,6 +268,7 @@ try
 	m::v1::backfill::opts opts{host};
 	opts.dynamic = true;
 	opts.event_id = event_id;
+	opts.limit = size_t(backfill_limit);
 	m::v1::backfill request
 	{
 		room_id, buf, std::move(opts)
