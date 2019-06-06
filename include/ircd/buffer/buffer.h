@@ -215,7 +215,7 @@ ircd::buffer::operator<<(std::ostream &s, const buffer<it> &buffer)
 
 // We use the sodium_memzero() from libsodium in ircd/sodium.cc if available
 // to ensure cross-platform guarantees the zero'ing doesn't get optimized away.
-#ifndef HAVE_SODIUM_H
+#ifndef HAVE_SODIUM
 inline size_t
 __attribute__((always_inline))
 ircd::buffer::zero(const mutable_buffer &buf)

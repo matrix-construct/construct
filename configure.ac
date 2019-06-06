@@ -1047,6 +1047,7 @@ AC_HELP_STRING([--with-sodium-libs=[[[DIR]]]], [Path to sodium library directory
 PKG_CHECK_MODULES(SODIUM, libsodium,
 [
 	have_sodium="yes"
+	AC_DEFINE([HAVE_SODIUM], [1], [Have libsodium])
 ], [
 	have_sodium="no"
 	AC_MSG_ERROR([libsodium is required but not found. Try apt-get install libsodium-dev])
