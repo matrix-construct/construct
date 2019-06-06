@@ -146,9 +146,11 @@ struct ircd::strlcpy
 	}()}
 	{}
 
+	#ifndef HAVE_STRLCPY
 	strlcpy(char *const &dst, const char *const &src, const size_t &max)
 	:strlcpy{dst, string_view{src, strnlen(src, max)}, max}
 	{}
+	#endif
 
 	strlcpy(const mutable_buffer &dst, const string_view &src)
 	:strlcpy{data(dst), src, size(dst)}
@@ -184,9 +186,11 @@ struct ircd::strlcat
 	}()}
 	{}
 
+	#ifndef HAVE_STRLCAT
 	strlcat(char *const &dst, const char *const &src, const size_t &max)
 	:strlcat{dst, string_view{src, ::strnlen(src, max)}, max}
 	{}
+	#endif
 
 	strlcat(const mutable_buffer &dst, const string_view &src)
 	:strlcat{data(dst), src, size(dst)}
