@@ -45,7 +45,7 @@ post__search(client &client,
 	const string_view &query
 	{
 		!startswith(search_term, '@')?
-			string_view{strlcat{qbuf, search_term}}:
+			string_view{ircd::strlcat{qbuf, search_term}}:
 			string_view{search_term}
 	};
 

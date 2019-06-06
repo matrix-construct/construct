@@ -85,7 +85,7 @@ struct node
 	void push(std::shared_ptr<unit>);
 
 	node(const string_view &remote)
-	:remote{strlcpy{rembuf, remote}}
+	:remote{ircd::strlcpy{mutable_buffer{rembuf}, remote}}
 	,room{this->remote}
 	{}
 };

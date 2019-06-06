@@ -939,7 +939,7 @@ bool
 console_cmd__prof__vg__dump(opt &out, const string_view &line)
 {
 	char reason[128];
-	prof::vg::dump(data(strlcpy(reason, line)));
+	prof::vg::dump(data(ircd::strlcpy(reason, line)));
 	return true;
 }
 
