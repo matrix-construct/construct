@@ -3721,35 +3721,35 @@ bool
 ircd::m::operator>=(const event &a, const event &b)
 {
 	//assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"depth"_>(a) >= at<"depth"_>(b);
+	return json::get<"depth"_>(a) >= json::get<"depth"_>(b);
 }
 
 bool
 ircd::m::operator<=(const event &a, const event &b)
 {
 	//assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"depth"_>(a) <= at<"depth"_>(b);
+	return json::get<"depth"_>(a) <= json::get<"depth"_>(b);
 }
 
 bool
 ircd::m::operator>(const event &a, const event &b)
 {
 	//assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"depth"_>(a) > at<"depth"_>(b);
+	return json::get<"depth"_>(a) > json::get<"depth"_>(b);
 }
 
 bool
 ircd::m::operator<(const event &a, const event &b)
 {
 	//assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"depth"_>(a) < at<"depth"_>(b);
+	return json::get<"depth"_>(a) < json::get<"depth"_>(b);
 }
 
 bool
 ircd::m::operator==(const event &a, const event &b)
 {
 	//assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return at<"event_id"_>(a) == at<"event_id"_>(b);
+	return json::get<"event_id"_>(a) == json::get<"event_id"_>(b);
 }
 
 bool
