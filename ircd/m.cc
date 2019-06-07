@@ -1607,6 +1607,13 @@ ircd::m::vm::eval::eval(const json::array &pdus,
 
 		operator()(event);
 	}
+	catch(const ctx::interrupted &e)
+	{
+		if(opts.nothrows & fault::INTERRUPT)
+			continue;
+		else
+			throw;
+	}
 	catch(const std::exception &e)
 	{
 		continue;
