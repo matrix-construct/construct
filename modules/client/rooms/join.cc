@@ -14,7 +14,7 @@ using namespace ircd::m;
 using namespace ircd;
 
 static event::id::buf
-bootstrap(const net::hostport &host,
+bootstrap(std::string host,
           const m::room::id &room_id,
           const m::user::id &user_id);
 
@@ -136,25 +136,33 @@ ircd::m::join(const m::room::alias &room_alias,
 //
 
 static event::id::buf
-bootstrap_make_join(const net::hostport &host,
+bootstrap_make_join(const string_view &host,
                     const m::room::id &,
                     const m::user::id &);
 
 static std::tuple<json::object, unique_buffer<mutable_buffer>>
-bootstrap_send_join(const net::hostport &host,
+bootstrap_send_join(const string_view &host,
                     const m::room::id &,
-                    const m::event::id &);
+                    const m::event::id &,
+                    const json::object &event);
 
 static void
-bootstrap_eval_auth_chain(const json::array &state);
+bootstrap_eval_lazy_chain(const json::array &auth_chain);
+
+static void
+bootstrap_eval_auth_chain(const json::array &auth_chain);
 
 static void
 bootstrap_eval_state(const json::array &state);
 
 static void
-bootstrap_backfill(const net::hostport &host,
+bootstrap_backfill(const string_view &host,
                    const m::room::id &,
                    const m::event::id &);
+
+static void
+bootstrap_worker(const string_view &host,
+                 const m::event::id &);
 
 conf::item<seconds>
 make_join_timeout
@@ -228,22 +236,54 @@ lazychain_enable
 };
 
 event::id::buf
-bootstrap(const net::hostport &host,
+bootstrap(std::string host,
           const m::room::id &room_id,
           const m::user::id &user_id)
 {
-	thread_local char rembuf[512];
 	log::debug
 	{
 		m::log, "join bootstrap starting in %s for %s to '%s'",
 		string_view{room_id},
 		string_view{user_id},
-		string(rembuf, host),
+		host
 	};
 
 	const auto event_id
 	{
 		bootstrap_make_join(host, room_id, user_id)
+	};
+
+	context
+	{
+		"joinstrap", 128_KiB,
+		context::POST | context::DETACH,
+		[host(std::move(host)), event_id(std::string(event_id))]
+		{
+			bootstrap_worker(host, event_id);
+		}
+	};
+
+	return event_id;
+}
+
+void
+bootstrap_worker(const string_view &host,
+                 const m::event::id &event_id)
+try
+{
+	const m::event::fetch event
+	{
+		event_id
+	};
+
+	const m::room::id &room_id
+	{
+		at<"room_id"_>(event)
+	};
+
+	const m::user::id &user_id
+	{
+		at<"sender"_>(event)
 	};
 
 	log::info
@@ -252,12 +292,13 @@ bootstrap(const net::hostport &host,
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
-		string(rembuf, host),
+		host
 	};
 
+	assert(event.source);
 	const auto &[response, buf]
 	{
-		bootstrap_send_join(host, room_id, event_id)
+		bootstrap_send_join(host, room_id, event_id, event.source)
 	};
 
 	log::info
@@ -266,18 +307,30 @@ bootstrap(const net::hostport &host,
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
-		string(rembuf, host),
+		host
 	};
 
-	// Always eval the auth_chain before anything else
-	bootstrap_eval_auth_chain(response["auth_chain"]);
+	const json::array &auth_chain
+	{
+		response["auth_chain"]
+	};
+
+	const json::array &state
+	{
+		response["state"]
+	};
+
+	if(lazychain_enable)
+		bootstrap_eval_lazy_chain(auth_chain);
+	else
+		bootstrap_eval_auth_chain(auth_chain);
 
 	if(backfill_first)
 	{
 		bootstrap_backfill(host, room_id, event_id);
-		bootstrap_eval_state(response["state"]);
+		bootstrap_eval_state(state);
 	} else {
-		bootstrap_eval_state(response["state"]);
+		bootstrap_eval_state(state);
 		bootstrap_backfill(host, room_id, event_id);
 	}
 
@@ -288,12 +341,20 @@ bootstrap(const net::hostport &host,
 		string_view{user_id},
 		string_view{event_id},
 	};
-
-	return event_id;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "join bootstrap for %s to %s :%s",
+		string_view{event_id},
+		string(host),
+		e.what()
+	};
 }
 
 void
-bootstrap_backfill(const net::hostport &host,
+bootstrap_backfill(const string_view &host,
                    const m::room::id &room_id,
                    const m::event::id &event_id)
 try
@@ -329,17 +390,14 @@ try
 		response["pdus"]
 	};
 
-	// eval
+	m::vm::opts vmopts;
+	vmopts.fetch_state_check = false;
+	vmopts.fetch_prev_check = false;
+	vmopts.infolog_accept = false;
+	m::vm::eval
 	{
-		m::vm::opts opts;
-		opts.fetch_state_check = false;
-		opts.fetch_prev_check = false;
-		opts.infolog_accept = false;
-		m::vm::eval
-		{
-			pdus, opts
-		};
-	}
+		pdus, vmopts
+	};
 }
 catch(const std::exception &e)
 {
@@ -372,16 +430,18 @@ bootstrap_eval_auth_chain(const json::array &auth_chain)
 	m::vm::opts opts;
 	opts.infolog_accept = true;
 	opts.fetch = false;
-
-	if(!lazychain_enable)
+	m::vm::eval
 	{
-		m::vm::eval
-		{
-			auth_chain, opts
-		};
+		auth_chain, opts
+	};
+}
 
-		return;
-	}
+void
+bootstrap_eval_lazy_chain(const json::array &auth_chain)
+{
+	m::vm::opts opts;
+	opts.infolog_accept = true;
+	opts.fetch = false;
 
 	// Parse and sort the auth_chain first so we don't have to keep scanning
 	// the JSON to do the various operations that follow.
@@ -442,22 +502,12 @@ bootstrap_eval_auth_chain(const json::array &auth_chain)
 }
 
 std::tuple<json::object, unique_buffer<mutable_buffer>>
-bootstrap_send_join(const net::hostport &host,
+bootstrap_send_join(const string_view &host,
                     const m::room::id &room_id,
-                    const m::event::id &event_id)
+                    const m::event::id &event_id,
+                    const json::object &event)
 try
 {
-	const m::event::fetch event
-	{
-		event_id
-	};
-
-	if(unlikely(!event.source))
-		throw panic
-		{
-			"Missing event.source JSON in event::fetch"
-		};
-
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB // headers in and out
@@ -467,7 +517,7 @@ try
 	opts.dynamic = true;
 	m::v1::send_join send_join
 	{
-		room_id, event_id, event.source, buf, std::move(opts)
+		room_id, event_id, event, buf, std::move(opts)
 	};
 
 	send_join.wait(seconds(send_join_timeout));
@@ -514,7 +564,7 @@ catch(const std::exception &e)
 }
 
 event::id::buf
-bootstrap_make_join(const net::hostport &host,
+bootstrap_make_join(const string_view &host,
                     const m::room::id &room_id,
                     const m::user::id &user_id)
 try
@@ -608,24 +658,21 @@ try
 		}
 	};
 
-	// eval
+	m::vm::copts vmopts;
+	vmopts.infolog_accept = true;
+	vmopts.fetch_auth_check = false;
+	vmopts.fetch_state_check = false;
+	vmopts.fetch_prev_check = false;
+	vmopts.eval = false;
+	const m::event::id::buf event_id
 	{
-		m::vm::copts opts;
-		opts.infolog_accept = true;
-		opts.fetch_auth_check = false;
-		opts.fetch_state_check = false;
-		opts.fetch_prev_check = false;
-		opts.eval = false;
-		const m::event::id::buf event_id
+		m::vm::eval
 		{
-			m::vm::eval
-			{
-				event, content, opts
-			}
-		};
+			event, content, vmopts
+		}
+	};
 
-		return event_id;
-	}
+	return event_id;
 }
 catch(const std::exception &e)
 {
