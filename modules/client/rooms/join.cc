@@ -260,19 +260,13 @@ bootstrap(const net::hostport &host,
 		bootstrap_send_join(host, room_id, event_id)
 	};
 
-	const json::string &origin
-	{
-		response["origin"]
-	};
-
 	log::info
 	{
-		m::log, "join bootstrap joined to %s for %s at %s to '%s' reporting '%s'",
+		m::log, "join bootstrap joined to %s for %s at %s to '%s'",
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
 		string(rembuf, host),
-		string_view{origin},
 	};
 
 	// Always eval the auth_chain before anything else
