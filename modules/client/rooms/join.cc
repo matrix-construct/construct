@@ -212,10 +212,10 @@ backfill_first
 };
 
 conf::item<bool>
-lazychain
+lazychain_enable
 {
-	{ "name",         "ircd.client.rooms.join.lazychain" },
-	{ "default",      true                               },
+	{ "name",         "ircd.client.rooms.join.lazychain.enable" },
+	{ "default",      true                                      },
 	{ "description",
 
 	R"(
@@ -385,7 +385,7 @@ bootstrap_eval_auth_chain(const json::array &auth_chain)
 	opts.infolog_accept = true;
 	opts.fetch = false;
 
-	if(!lazychain)
+	if(!lazychain_enable)
 	{
 		m::vm::eval
 		{
