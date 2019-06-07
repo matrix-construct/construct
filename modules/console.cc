@@ -11850,22 +11850,8 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	m::vm::eval eval
 	{
-		vmopts
+		pdus, vmopts
 	};
-
-	std::vector<m::event> events;
-	events.reserve(size(pdus) + size(auth_chain));
-
-	for(const json::object &event : auth_chain)
-		events.emplace_back(event);
-
-	for(const json::object &event : pdus)
-		events.emplace_back(event);
-
-	std::sort(begin(events), end(events));
-	events.erase(std::unique(begin(events), end(events)), end(events));
-	for(const auto &event : events)
-		eval(event);
 
 	return true;
 }
@@ -12017,18 +12003,8 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	vmopts.node_id = string(rembuf, remote);
 	m::vm::eval eval
 	{
-		vmopts
+		pdus, vmopts
 	};
-
-	std::vector<m::event> events;
-	events.reserve(lex_cast<size_t>(count));
-	for(const json::object &event : pdus)
-		events.emplace_back(event);
-
-	std::sort(begin(events), end(events));
-	events.erase(std::unique(begin(events), end(events)), end(events));
-	for(const auto &event : events)
-		eval(event);
 
 	return true;
 }
