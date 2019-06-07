@@ -4090,7 +4090,7 @@ const
 	get(std::nothrow, id, [&ret]
 	(const string_view &id, const json::object &val)
 	{
-		ret.assign(data(val), size(val));
+		ret = val;
 	});
 
 	return ret;
