@@ -2225,7 +2225,7 @@ catch(const filesystem::filesystem_error &e)
 
 namespace ircd::fs
 {
-	extern const std::array<basepath, num_of<base>()> basepaths;
+	extern std::array<basepath, num_of<base>()> basepaths;
 }
 
 decltype(ircd::fs::basepaths)
@@ -2239,6 +2239,24 @@ ircd::fs::basepaths
 	{ "log directory",            RB_LOG_DIR     },
 	{ "module directory",         RB_MODULE_DIR  },
 }};
+
+ircd::string_view
+ircd::fs::basepath::set(const base &base,
+                        const string_view &path)
+{
+	log::debug
+	{
+		log, "Updating base path #%u '%s' from `%' to `%s'",
+		uint(base),
+		basepaths.at(base).name,
+		basepaths.at(base).path,
+		path,
+	};
+
+	const string_view ret(basepaths.at(base).path);
+	basepaths.at(base).path = path;
+	return ret;
+}
 
 const ircd::fs::basepath &
 ircd::fs::basepath::get(const base &base)

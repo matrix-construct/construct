@@ -62,12 +62,15 @@ namespace ircd::fs
 
 /// A compile-time installation base-path. We have several of these in an
 /// internal array accessible with get(enum base) or make_path(enum base).
+/// These can still be modified at runtime by setting a new platform-dependent
+/// string with set(enum base); do so with care.
 struct ircd::fs::basepath
 {
 	string_view name;
 	string_view path;
 
 	static const basepath &get(const base &) noexcept;
+	static string_view set(const base &, const string_view &); // (returns old value)
 };
 
 /// Index of default paths. Must be aligned with the internal array in fs.cc.
