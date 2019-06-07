@@ -174,6 +174,10 @@ struct ircd::m::room
 	static event::idx index(const id &, std::nothrow_t);
 	static event::idx index(const id &);
 
+	static void bootstrap(const event &, const string_view &host);
+	static void bootstrap(const event::id &, const string_view &host);
+	static event::id::buf bootstrap(const id &, const id::user &, const string_view &host);
+
 	static size_t purge(const room &); // cuidado!
 };
 

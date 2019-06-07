@@ -57,7 +57,7 @@ ircd::m::join(const room &room,
 	if(!exists(room))
 	{
 		const auto &room_id(room.room_id);
-		return bootstrap(room_id.host(), room_id, user_id); //TODO: host
+		return bootstrap(room_id, user_id, room_id.host()); //TODO: host
 	}
 
 	json::iov event;
@@ -121,7 +121,7 @@ ircd::m::join(const m::room::alias &room_alias,
 	};
 
 	if(!exists(room_id))
-		return bootstrap(room_alias.host(), room_id, user_id);
+		return bootstrap(room_id, user_id, room_alias.host());
 
 	const m::room room
 	{
@@ -159,10 +159,6 @@ static void
 bootstrap_backfill(const string_view &host,
                    const m::room::id &,
                    const m::event::id &);
-
-static void
-bootstrap_worker(const string_view &host,
-                 const m::event::id &);
 
 conf::item<seconds>
 make_join_timeout
@@ -236,9 +232,10 @@ lazychain_enable
 };
 
 event::id::buf
-bootstrap(std::string host,
-          const m::room::id &room_id,
-          const m::user::id &user_id)
+IRCD_MODULE_EXPORT
+ircd::m::room::bootstrap(const m::room::id &room_id,
+                         const m::user::id &user_id,
+                         const string_view &host)
 {
 	log::debug
 	{
@@ -253,27 +250,49 @@ bootstrap(std::string host,
 		bootstrap_make_join(host, room_id, user_id)
 	};
 
-	context
-	{
-		"joinstrap", 128_KiB,
-		context::POST | context::DETACH,
-		[host(std::move(host)), event_id(std::string(event_id))]
-		{
-			bootstrap_worker(host, event_id);
-		}
-	};
+	bootstrap(event_id, host); // asynchronous; returns quickly
 
 	return event_id;
 }
 
 void
-bootstrap_worker(const string_view &host,
-                 const m::event::id &event_id)
+IRCD_MODULE_EXPORT
+ircd::m::room::bootstrap(const m::event::id &event_id,
+                         const string_view &host)
 try
 {
-	const m::event::fetch event
+	const m::event::fetch event{event_id};
+	assert(event.source);
+	context
 	{
-		event_id
+		"joinstrap", 128_KiB,
+		context::POST | context::DETACH,
+		[host(std::string(host)), event(std::string(event.source))]
+		{
+			bootstrap(m::event{event}, host);
+		}
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "join bootstrap for %s to %s :%s",
+		string_view{event_id},
+		string(host),
+		e.what()
+	};
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::room::bootstrap(const m::event &event,
+                         const string_view &host)
+try
+{
+	const m::event::id &event_id
+	{
+		at<"event_id"_>(event)
 	};
 
 	const m::room::id &room_id
@@ -347,7 +366,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		m::log, "join bootstrap for %s to %s :%s",
-		string_view{event_id},
+		string_view{at<"event_id"_>(event)},
 		string(host),
 		e.what()
 	};

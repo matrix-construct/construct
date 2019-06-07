@@ -9835,6 +9835,33 @@ console_cmd__room__stats(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__room__restrap(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id", "host"
+	}};
+
+	const m::event::id &event_id
+	{
+		param.at("event_id")
+	};
+
+	const net::hostport &host_
+	{
+		param.at("host")
+	};
+
+	const string_view &host
+	{
+		param.at("host")
+	};
+
+	m::room::bootstrap(event_id, host);
+	return true;
+}
+
 //
 // user
 //
