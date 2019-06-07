@@ -55,18 +55,22 @@ try
 	if(!ircd::write_avoid)
 		presence::set(me, "online", me_online_status_msg);
 }
-catch(const http::error &e)
+catch(const m::error &e)
 {
-	log::critical
+	log::error
 	{
-		log, "Failed to start matrix :%s %s", e.what(), e.content
+		log, "Failed to start matrix (%u) %s :%s :%s",
+		uint(e.code),
+		http::status(e.code),
+		e.errcode(),
+		e.errstr(),
 	};
 
 	throw;
 }
 catch(const std::exception &e)
 {
-	log::critical
+	log::error
 	{
 		log, "Failed to start matrix :%s", e.what()
 	};
@@ -77,7 +81,8 @@ catch(const std::exception &e)
 ircd::m::init::~init()
 noexcept try
 {
-	m::sync::pool.join();
+	if(m::sync::pool.size())
+		m::sync::pool.join();
 
 	if(!std::uncaught_exceptions() && !ircd::write_avoid)
 		presence::set(me, "offline", me_offline_status_msg);
@@ -98,48 +103,32 @@ ircd::m::init::close()
 	mods::imports.erase("s_listen"s);
 }
 
-ircd::m::init::modules::modules()
-try
+//
+// init::modules
+//
+
+namespace ircd::m
 {
+	extern const string_view module_names;
+	extern const std::vector<string_view> module_name_list;
+}
+
+
+ircd::m::init::modules::modules()
+{
+	const unwind::exceptional unload{[this]
+	{
+		this->fini_imports();
+	}};
+
 	init_keys();
 	init_imports();
 }
-catch(const m::error &e)
-{
-	const std::string what(e.what());
-	const std::string content(e.content);
-	const ctx::exception_handler eh;
-	log::error
-	{
-		log, "%s %s", what, content
-	};
 
-	this->~modules();
-	throw m::error
-	{
-		"M_INIT_ERROR", "Failed to start :%s :%s", what, content
-	};
-}
-catch(const std::exception &e)
+ircd::m::init::modules::~modules()
+noexcept
 {
-	const std::string what(e.what());
-	const ctx::exception_handler eh;
-	log::error
-	{
-		log, "%s", what
-	};
-
-	this->~modules();
-	throw m::error
-	{
-		"M_INIT_ERROR", "Failed to start :%s", what
-	};
-}
-catch(const ctx::terminated &)
-{
-	const ctx::exception_handler eh;
-	this->~modules();
-	throw ctx::terminated{};
+	fini_imports();
 }
 
 void
@@ -152,12 +141,6 @@ ircd::m::init::modules::init_keys()
 	};
 
 	init_my_keys();
-}
-
-namespace ircd::m
-{
-	extern const string_view module_names;
-	extern const std::vector<string_view> module_name_list;
 }
 
 void
@@ -181,7 +164,8 @@ ircd::m::init::modules::init_imports()
 		bootstrap();
 }
 
-ircd::m::init::modules::~modules()
+void
+ircd::m::init::modules::fini_imports()
 noexcept
 {
 	for(auto it(module_name_list.rbegin()); it != module_name_list.rend(); ++it)

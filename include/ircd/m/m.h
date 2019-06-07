@@ -82,9 +82,11 @@ struct ircd::m::init
 
 struct ircd::m::init::modules
 {
+	void fini_imports() noexcept;
 	void init_imports();
 	void init_keys();
 
+  public:
 	modules();
 	~modules() noexcept;
 };
