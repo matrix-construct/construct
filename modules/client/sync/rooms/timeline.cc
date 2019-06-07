@@ -25,6 +25,7 @@ namespace ircd::m::sync
 
 	extern const string_view exposure_depth_description;
 	extern conf::item<int64_t> exposure_depth;
+	extern conf::item<bool> exposure_state;
 	extern conf::item<size_t> limit_default;
 	extern const event::keys::include default_keys;
 	extern item room_timeline;
@@ -58,6 +59,13 @@ ircd::m::sync::limit_default
 {
 	{ "name",     "ircd.client.sync.rooms.timeline.limit.default" },
 	{ "default",  10L                                             },
+};
+
+decltype(ircd::m::sync::exposure_state)
+ircd::m::sync::exposure_state
+{
+	{ "name",         "ircd.client.sync.rooms.timeline.exposure.state" },
+	{ "default",      true                                             },
 };
 
 decltype(ircd::m::sync::exposure_depth)
@@ -108,7 +116,13 @@ ircd::m::sync::room_timeline_linear(data &data)
 
 	if(int64_t(exposure_depth) > -1)
 		if(json::get<"depth"_>(*data.event) + int64_t(exposure_depth) < data.room_depth)
-			return false;
+		{
+			if(!json::get<"state_key"_>(*data.event))
+				return false;
+
+			if(!bool(exposure_state))
+				return false;
+		}
 
 	json::stack::object membership_
 	{
