@@ -485,16 +485,17 @@ bootstrap_eval_lazy_chain(const json::array &auth_chain)
 	// the vm certain member events first to avoid complications; this
 	// subroutine will find them.
 	const auto find_member{[&events]
-	(const m::user::id &user_id)
+	(const m::user::id &user_id, const int64_t &depth)
 	{
-		const auto it(std::find_if(begin(events), end(events), [&user_id]
+		const auto it(std::find_if(rbegin(events), rend(events), [&user_id, &depth]
 		(const m::event &event)
 		{
-			return json::get<"type"_>(event) == "m.room.member" &&
+			return json::get<"depth"_>(event) < depth &&
+			       json::get<"type"_>(event) == "m.room.member" &&
 			       json::get<"state_key"_>(event) == user_id;
 		}));
 
-		if(unlikely(it == end(events)))
+		if(unlikely(it == rend(events)))
 			throw m::NOT_FOUND
 			{
 				"No m.room.member event for %s found in auth chain.",
@@ -518,7 +519,7 @@ bootstrap_eval_lazy_chain(const json::array &auth_chain)
 		{
 			const auto &member_event
 			{
-				find_member(at<"sender"_>(event))
+				find_member(at<"sender"_>(event), at<"depth"_>(event))
 			};
 
 			m::vm::eval
