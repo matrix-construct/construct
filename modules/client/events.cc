@@ -16,12 +16,19 @@ IRCD_MODULE
 	"Client 14.17.1.1 :Room Previews"
 };
 
+static void
+append_event(json::stack::array &out,
+             const m::event &event,
+             const m::event::idx &event_idx,
+             const int64_t &room_depth);
+
 static bool
 get_events_from(client &client,
                 const resource::request &request,
                 const m::room::id &room_id,
                 const m::event::id &event_id,
                 const m::event::id &room_head,
+                const int64_t &room_depth,
                 json::stack::object &out);
 
 static resource::response
@@ -144,9 +151,19 @@ get__events(client &client,
 		out
 	};
 
-	const m::event::id::buf room_head
+	const auto &room_top
 	{
-		m::head(room_id)
+		m::top(room_id)
+	};
+
+	const auto &room_depth
+	{
+		std::get<int64_t>(room_top)
+	};
+
+	const m::event::id &room_head
+	{
+		std::get<m::event::id::buf>(room_top)
 	};
 
 	json::stack::member
@@ -161,7 +178,7 @@ get__events(client &client,
 			out
 		};
 
-		if(get_events_from(client, request, room_id, event_id, room_head, top))
+		if(get_events_from(client, request, room_id, event_id, room_head, room_depth, top))
 			return response;
 
 		checkpoint.rollback();
@@ -190,26 +207,27 @@ get__events(client &client,
 
 	if(!event.empty())
 	{
+		const m::event &event_
+		{
+			event
+		};
+
+		const auto &event_idx
+		{
+			m::index(event_)
+		};
+
+		const auto &room_depth
+		{
+			m::depth(room_id)
+		};
+
 		json::stack::array chunk
 		{
 			top, "chunk"
 		};
 
-		json::stack::object object
-		{
-			chunk
-		};
-
-		object.append(json::object(event));
-		json::stack::object unsigned_
-		{
-			object, "unsigned"
-		};
-
-		json::stack::member
-		{
-			unsigned_, "age", json::value{0L}
-		};
+		append_event(chunk, event_, event_idx, room_depth);
 	}
 	else json::stack::array
 	{
@@ -277,6 +295,7 @@ get_events_from(client &client,
                 const m::room::id &room_id,
                 const m::event::id &event_id,
                 const m::event::id &room_head,
+                const int64_t &room_depth,
                 json::stack::object &out)
 {
 	m::room::messages it
@@ -297,27 +316,9 @@ get_events_from(client &client,
 	{
 		if(!visible(it.event_id(), request.user_id))
 			continue;
-		else
-			++j;
 
-		json::stack::object object
-		{
-			chunk
-		};
-
-		object.append(*it);
-		json::stack::object unsigned_
-		{
-			object, "unsigned"
-		};
-
-		json::stack::member
-		{
-			unsigned_, "age", json::value
-			{
-				 long(m::vm::sequence::retired - it.event_idx())
-			}
-		};
+		append_event(chunk, *it, it.event_idx(), room_depth);
+		++j;
 	}
 
 	if(!j)
@@ -330,4 +331,16 @@ get_events_from(client &client,
 	};
 
 	return j;
+}
+
+void
+append_event(json::stack::array &out,
+             const m::event &event,
+             const m::event::idx &event_idx,
+             const int64_t &room_depth)
+{
+	m::event_append_opts opts;
+	opts.event_idx = &event_idx;
+	opts.room_depth = &room_depth;
+	m::append(out, event, opts);
 }
