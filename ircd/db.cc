@@ -86,10 +86,6 @@ ircd::db::write_mutex;
 namespace ircd::db
 {
 	static std::string direct_io_test_file_path();
-	static void init_test_hw_crc32();
-	static void init_test_direct_io();
-	static void init_compressions();
-	static void init_directory();
 }
 
 decltype(ircd::db::version_api)
@@ -114,10 +110,10 @@ ircd::db::version_abi
 ircd::db::init::init()
 try
 {
-	init_compressions();
-	init_directory();
-	init_test_direct_io();
-	init_test_hw_crc32();
+	compressions();
+	directory();
+	test_direct_io();
+	test_hw_crc32();
 	request.add(request_pool_size);
 }
 catch(const std::exception &e)
@@ -162,7 +158,7 @@ noexcept
 }
 
 void
-ircd::db::init_directory()
+ircd::db::init::directory()
 try
 {
 	const auto dbdir
@@ -197,7 +193,7 @@ catch(const fs::error &e)
 }
 
 void
-ircd::db::init_test_direct_io()
+ircd::db::init::test_direct_io()
 try
 {
 	const auto test_file_path
@@ -247,7 +243,7 @@ namespace rocksdb::crc32c
 }
 
 void
-ircd::db::init_test_hw_crc32()
+ircd::db::init::test_hw_crc32()
 try
 {
 	const auto supported_str
@@ -281,7 +277,7 @@ decltype(ircd::db::compressions)
 ircd::db::compressions;
 
 void
-ircd::db::init_compressions()
+ircd::db::init::compressions()
 try
 {
 	auto supported
@@ -294,7 +290,7 @@ try
 	{
 		auto &[string, type]
 		{
-			compressions.at(i++)
+			db::compressions.at(i++)
 		};
 
 		type = type_;
