@@ -138,10 +138,36 @@ ircd::m::dbs::events_mem_write_buffer_size
 /// Initializes the m::dbs subsystem; sets up the events database. Held/called
 /// by m::init. Most of the extern variables in m::dbs are not ready until
 /// this call completes.
-ircd::m::dbs::init::init(std::string dbopts)
+///
+/// We also update the fs::basepath for the database directory to include our
+/// servername in the path component. The fs::base::DB setting was generated
+/// during the build and install process, and is unaware of our servername
+/// at runtime. This change deconflicts multiple instances of IRCd running in
+/// the same installation prefix using different servernames (i.e clustering
+/// on the same machine).
+///
+ircd::m::dbs::init::init(const string_view &servername,
+                         std::string dbopts)
+:our_dbpath
 {
+	ircd::string(fs::PATH_MAX_LEN | SHRINK_TO_FIT, [&servername]
+	(const mutable_buffer &buf)
+	{
+		return fs::path(buf, fs::base::DB, servername);
+	})
+}
+,their_dbpath
+{
+	// NOTE that this is a global change that leaks outside of ircd::m. The
+	// database directory for the entire process is being changed here.
+	fs::basepath::set(fs::base::DB, our_dbpath)
+}
+{
+	// Recall the db directory init manually with the now-updated basepath
+	db::init::directory();
+
 	// Open the events database
-	static const auto dbname{"events"};
+	static const string_view &dbname{"events"};
 	events = std::make_shared<database>(dbname, std::move(dbopts), desc::events);
 
 	// Cache the columns for the event tuple in order for constant time lookup
@@ -178,6 +204,9 @@ noexcept
 {
 	// Unref DB (should close)
 	events = {};
+
+	// restore the fs::base::DB path the way we found it.
+	fs::basepath::set(fs::base::DB, their_dbpath);
 }
 
 //

@@ -43,6 +43,10 @@ try
 {
 	origin, servername
 }
+,_dbs
+{
+	self::servername, std::string{}
+}
 ,_modules
 {
 	std::make_unique<modules>()

@@ -183,6 +183,10 @@ enum ircd::m::dbs::appendix::index
 
 struct ircd::m::dbs::init
 {
-	init(std::string dbopts = {});
+	std::string our_dbpath;
+	string_view their_dbpath;
+
+  public:
+	init(const string_view &servername, std::string dbopts = {});
 	~init() noexcept;
 };
