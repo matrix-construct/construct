@@ -59,6 +59,16 @@ struct ircd::vector_view
 		return operator[](pos);
 	}
 
+	value_type &back() const
+	{
+		return at(size() - 1);
+	}
+
+	value_type &front() const
+	{
+		return at(0);
+	}
+
 	vector_view(value_type *const &start, value_type *const &stop)
 	:_data{start}
 	,_stop{stop}
