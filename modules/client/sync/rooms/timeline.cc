@@ -65,7 +65,7 @@ decltype(ircd::m::sync::exposure_state)
 ircd::m::sync::exposure_state
 {
 	{ "name",         "ircd.client.sync.rooms.timeline.exposure.state" },
-	{ "default",      true                                             },
+	{ "default",      false                                            },
 };
 
 decltype(ircd::m::sync::exposure_depth)

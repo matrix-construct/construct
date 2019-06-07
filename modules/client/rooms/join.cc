@@ -13,11 +13,6 @@
 using namespace ircd::m;
 using namespace ircd;
 
-static event::id::buf
-bootstrap(std::string host,
-          const m::room::id &room_id,
-          const m::user::id &user_id);
-
 resource::response
 post__join(client &client,
            const resource::request &request,
@@ -57,7 +52,7 @@ ircd::m::join(const room &room,
 	if(!exists(room))
 	{
 		const auto &room_id(room.room_id);
-		return bootstrap(room_id, user_id, room_id.host()); //TODO: host
+		return m::room::bootstrap(room_id, user_id, room_id.host()); //TODO: host
 	}
 
 	json::iov event;
@@ -121,7 +116,7 @@ ircd::m::join(const m::room::alias &room_alias,
 	};
 
 	if(!exists(room_id))
-		return bootstrap(room_id, user_id, room_alias.host());
+		return m::room::bootstrap(room_id, user_id, room_alias.host());
 
 	const m::room room
 	{
@@ -171,7 +166,7 @@ conf::item<seconds>
 send_join_timeout
 {
 	{ "name",     "ircd.client.rooms.join.send_join.timeout" },
-	{ "default",  45L  /* spinappse */                       },
+	{ "default",  90L  /* spinappse */                       },
 };
 
 conf::item<seconds>
@@ -219,7 +214,7 @@ conf::item<bool>
 lazychain_enable
 {
 	{ "name",         "ircd.client.rooms.join.lazychain.enable" },
-	{ "default",      true                                      },
+	{ "default",      false                                     },
 	{ "description",
 
 	R"(
@@ -265,7 +260,7 @@ try
 	assert(event.source);
 	context
 	{
-		"joinstrap", 128_KiB,
+		"roomjoin", 128_KiB,
 		context::POST | context::DETACH,
 		[host(std::string(host)), event(std::string(event.source))]
 		{
@@ -320,15 +315,6 @@ try
 		bootstrap_send_join(host, room_id, event_id, event.source)
 	};
 
-	log::info
-	{
-		m::log, "join bootstrap joined to %s for %s at %s to '%s'",
-		string_view{room_id},
-		string_view{user_id},
-		string_view{event_id},
-		host
-	};
-
 	const json::array &auth_chain
 	{
 		response["auth_chain"]
@@ -337,6 +323,17 @@ try
 	const json::array &state
 	{
 		response["state"]
+	};
+
+	log::info
+	{
+		m::log, "join bootstrap joined to %s for %s at %s to '%s' state:%zu auth_chain:%zu",
+		string_view{room_id},
+		string_view{user_id},
+		string_view{event_id},
+		host,
+		state.size(),
+		auth_chain.size(),
 	};
 
 	if(lazychain_enable)
@@ -409,7 +406,17 @@ try
 		response["pdus"]
 	};
 
+	log::info
+	{
+		m::log, "join bootstrap processing backfill for %s from %s at %s events:%zu",
+		string_view{room_id},
+		host,
+		string_view{event_id},
+		pdus.size(),
+	};
+
 	m::vm::opts vmopts;
+	vmopts.nothrows = -1;
 	vmopts.fetch_state_check = false;
 	vmopts.fetch_prev_check = false;
 	vmopts.infolog_accept = false;
@@ -434,6 +441,7 @@ void
 bootstrap_eval_state(const json::array &state)
 {
 	m::vm::opts opts;
+	opts.nothrows = -1;
 	opts.fetch_prev_check = false;
 	opts.fetch_state_check = false;
 	opts.infolog_accept = false;
