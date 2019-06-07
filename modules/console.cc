@@ -1409,6 +1409,56 @@ console_cmd__conf__reset(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__conf__diff(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"key"
+	}};
+
+	const auto &key
+	{
+		param[0]
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		4_KiB
+	};
+
+	out << std::setw(48) << std::left << "NAME"
+	    << " | " << std::setw(36) << "DEFAULT"
+	    << " | " << std::setw(36) << "CURRENT"
+	    << std::endl;
+
+	for(const auto &item : conf::items)
+	{
+		if(!startswith(item.first, key))
+			continue;
+
+		const json::string &default_
+		{
+			item.second->feature.get("default")
+		};
+
+		const auto &val
+		{
+			item.second->get(buf)
+		};
+
+		if(val == default_)
+			continue;
+
+		out << std::setw(48) << std::left << item.first
+		    << " | " << std::setw(36) << default_
+		    << " | " << std::setw(36) << val
+		    << std::endl;
+	}
+
+	return true;
+}
+
 //
 // hook
 //
