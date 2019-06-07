@@ -2127,14 +2127,14 @@ ircd::fs::path(const mutable_buffer &buf,
 
 ircd::string_view
 ircd::fs::path(const mutable_buffer &buf,
-               const vector_view<const std::string> &list)
+               const path_strings &list)
 {
 	return strlcpy(buf, _path(list).c_str());
 }
 
 ircd::string_view
 ircd::fs::path(const mutable_buffer &buf,
-               const vector_view<const string_view> &list)
+               const path_view &list)
 {
 	return strlcpy(buf, _path(list).c_str());
 }
@@ -2168,7 +2168,7 @@ noexcept
 //
 
 boost::filesystem::path
-ircd::fs::_path(const vector_view<const std::string> &list)
+ircd::fs::_path(const path_strings &list)
 try
 {
 	filesystem::path ret;
@@ -2183,7 +2183,7 @@ catch(const filesystem::filesystem_error &e)
 }
 
 boost::filesystem::path
-ircd::fs::_path(const vector_view<const string_view> &list)
+ircd::fs::_path(const path_view &list)
 try
 {
 	filesystem::path ret;
