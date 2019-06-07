@@ -517,7 +517,7 @@ ircd::m::append(json::stack::object &object,
 			// "stick" at the bottom of the timeline. This may be advantageous
 			// in the future but for now we make sure the result is non-zero.
 			json::get<"depth"_>(event) >= 0 && opts.room_depth && *opts.room_depth >= 0L?
-				((*opts.room_depth + 1) - json::get<"depth"_>(event)) + 100:
+				(*opts.room_depth + 1 - json::get<"depth"_>(event)) + 1:
 
 			// We don't have depth information, so we use the origin_server_ts.
 			// It is bad if it conflicts with other appends in the room which
