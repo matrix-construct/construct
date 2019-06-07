@@ -296,8 +296,6 @@ federation_version
 identity_pubkey
 identity_v1
 
-app_app
-
 well_known
 metrics
 webhook
