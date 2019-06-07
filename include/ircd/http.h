@@ -338,6 +338,7 @@ enum ircd::http::code
 	GATEWAY_TIMEOUT                         = 504,
 	HTTP_VERSION_NOT_SUPPORTED              = 505,
 	INSUFFICIENT_STORAGE                    = 507,
+	WEB_SERVER_IS_DOWN                      = 521, // cloudflare
 	A_TIMEOUT_OCCURRED                      = 524, // cloudflare
 };
 

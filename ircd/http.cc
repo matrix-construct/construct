@@ -102,6 +102,7 @@ ircd::http::reason
 	{ code::GATEWAY_TIMEOUT,                     "Gateway Timeout"                                 },
 	{ code::HTTP_VERSION_NOT_SUPPORTED,          "HTTP Version Not Supported"                      },
 	{ code::INSUFFICIENT_STORAGE,                "Insufficient Storage"                            },
+	{ code::WEB_SERVER_IS_DOWN,                  "Web Server Is Down"                              },
 	{ code::A_TIMEOUT_OCCURRED,                  "A Timeout Occurred"                              },
 };
 
