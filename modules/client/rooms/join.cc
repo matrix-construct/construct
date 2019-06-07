@@ -13,6 +13,12 @@
 using namespace ircd::m;
 using namespace ircd;
 
+ircd::log::log
+join_log
+{
+	"matrix.join"
+};
+
 resource::response
 post__join(client &client,
            const resource::request &request,
@@ -234,7 +240,7 @@ ircd::m::room::bootstrap(const m::room::id &room_id,
 {
 	log::debug
 	{
-		m::log, "join bootstrap starting in %s for %s to '%s'",
+		join_log, "join bootstrap starting in %s for %s to '%s'",
 		string_view{room_id},
 		string_view{user_id},
 		host
@@ -272,7 +278,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "join bootstrap for %s to %s :%s",
+		join_log, "join bootstrap for %s to %s :%s",
 		string_view{event_id},
 		string(host),
 		e.what()
@@ -302,7 +308,7 @@ try
 
 	log::info
 	{
-		m::log, "join bootstrap sending in %s for %s at %s to '%s'",
+		join_log, "join bootstrap sending in %s for %s at %s to '%s'",
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
@@ -327,7 +333,7 @@ try
 
 	log::info
 	{
-		m::log, "join bootstrap joined to %s for %s at %s to '%s' state:%zu auth_chain:%zu",
+		join_log, "join bootstrap joined to %s for %s at %s to '%s' state:%zu auth_chain:%zu",
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
@@ -352,7 +358,7 @@ try
 
 	log::info
 	{
-		m::log, "join bootstrap joined to %s for %s at %s complete",
+		join_log, "join bootstrap joined to %s for %s at %s complete",
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
@@ -362,7 +368,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "join bootstrap for %s to %s :%s",
+		join_log, "join bootstrap for %s to %s :%s",
 		string_view{at<"event_id"_>(event)},
 		string(host),
 		e.what()
@@ -408,7 +414,7 @@ try
 
 	log::info
 	{
-		m::log, "join bootstrap processing backfill for %s from %s at %s events:%zu",
+		join_log, "join bootstrap processing backfill for %s from %s at %s events:%zu",
 		string_view{room_id},
 		host,
 		string_view{event_id},
@@ -429,7 +435,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "Bootstrap %s backfill @ %s from %s :%s",
+		join_log, "Bootstrap %s backfill @ %s from %s :%s",
 		string_view{room_id},
 		string_view{event_id},
 		string(host),
@@ -580,7 +586,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "Bootstrap %s @ %s send_join to %s :%s",
+		join_log, "Bootstrap %s @ %s send_join to %s :%s",
 		string_view{room_id},
 		string_view{event_id},
 		string(host),
@@ -705,7 +711,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "Bootstrap %s for %s make_join to %s :%s",
+		join_log, "Bootstrap %s for %s make_join to %s :%s",
 		string_view{room_id},
 		string_view{user_id},
 		string(host),
