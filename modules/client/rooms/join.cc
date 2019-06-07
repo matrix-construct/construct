@@ -375,12 +375,6 @@ bootstrap_eval_state(const json::array &state)
 void
 bootstrap_eval_auth_chain(const json::array &auth_chain)
 {
-	log::info
-	{
-		m::log, "Auth chain %zu events",
-		auth_chain.size()
-	};
-
 	m::vm::opts opts;
 	opts.infolog_accept = true;
 	opts.fetch = false;
@@ -395,15 +389,56 @@ bootstrap_eval_auth_chain(const json::array &auth_chain)
 		return;
 	}
 
-	std::vector<m::event> auth_events(begin(auth_chain), end(auth_chain));
-	std::sort(begin(auth_events), end(auth_events));
-	for(const auto &event : auth_events)
+	// Parse and sort the auth_chain first so we don't have to keep scanning
+	// the JSON to do the various operations that follow.
+	std::vector<m::event> events(begin(auth_chain), end(auth_chain));
+	std::sort(begin(events), end(events));
+
+	// When we selectively evaluate the auth_chain below we may need to feed
+	// the vm certain member events first to avoid complications; this
+	// subroutine will find them.
+	const auto find_member{[&events]
+	(const m::user::id &user_id)
+	{
+		const auto it(std::find_if(begin(events), end(events), [&user_id]
+		(const m::event &event)
+		{
+			return json::get<"type"_>(event) == "m.room.member" &&
+			       json::get<"state_key"_>(event) == user_id;
+		}));
+
+		if(unlikely(it == end(events)))
+			throw m::NOT_FOUND
+			{
+				"No m.room.member event for %s found in auth chain.",
+				string_view{user_id}
+			};
+
+		return *it;
+	}};
+
+	for(const auto &event : events)
 	{
 		// Skip all events which aren't power events. We don't need them
 		// here yet. They can wait until state evaluation later.
-		if(json::get<"depth"_>(event) >= 4)
-			if(!m::event::auth::is_power_event(event))
-				continue;
+		if(!m::event::auth::is_power_event(event))
+			continue;
+
+		// Find the member event for the sender of this power event so the
+		// system is aware of their identity first; this isn't done for the
+		// create event because the vm expects that first regardless.
+		if(json::get<"type"_>(event) != "m.room.create")
+		{
+			const auto &member_event
+			{
+				find_member(at<"sender"_>(event))
+			};
+
+			m::vm::eval
+			{
+				member_event, opts
+			};
+		}
 
 		m::vm::eval
 		{
