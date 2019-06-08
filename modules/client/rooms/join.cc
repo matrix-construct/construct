@@ -306,6 +306,11 @@ try
 		at<"sender"_>(event)
 	};
 
+	const m::room room
+	{
+		room_id, event_id
+	};
+
 	log::info
 	{
 		join_log, "join bootstrap sending in %s for %s at %s to '%s'",
@@ -356,12 +361,25 @@ try
 		bootstrap_backfill(host, room_id, event_id);
 	}
 
+	// After we just received and processed all of this state with only a
+	// recent backfill our system doesn't know if state events which are
+	// unreferenced are simply referenced by events we just don't have. They
+	// will all be added to the room::head and each future event we transmit
+	// to the room will drain that list little by little. But the cost of all
+	// these references is too high. We take the easy route here and simply
+	// clear the head of every event except our own join event.
+	const size_t num_reset
+	{
+		m::room::head::reset(room)
+	};
+
 	log::info
 	{
-		join_log, "join bootstrap joined to %s for %s at %s complete",
+		join_log, "join bootstrap joined to %s for %s at %s reset:%zu complete",
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
+		num_reset,
 	};
 }
 catch(const std::exception &e)
