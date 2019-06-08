@@ -962,7 +962,7 @@ catch(const std::system_error &e)
 	switch(e.code().value())
 	{
 		// Manpages sez that EBADF is thrown if the fd in the FIRST iocb has
-		// an issue. TODO: handle this by tossing the first iocb and continue.
+		// an issue.
 		case int(std::errc::bad_file_descriptor):
 			dequeue_one(e.code());
 			return 0;
