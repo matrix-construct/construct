@@ -1428,8 +1428,8 @@ console_cmd__conf__diff(opt &out, const string_view &line)
 	};
 
 	out << std::setw(48) << std::left << "NAME"
-	    << " | " << std::setw(36) << "DEFAULT"
 	    << " | " << std::setw(36) << "CURRENT"
+	    << " | " << std::setw(36) << "DEFAULT"
 	    << std::endl;
 
 	for(const auto &item : conf::items)
@@ -1451,8 +1451,8 @@ console_cmd__conf__diff(opt &out, const string_view &line)
 			continue;
 
 		out << std::setw(48) << std::left << item.first
-		    << " | " << std::setw(36) << default_
 		    << " | " << std::setw(36) << val
+		    << " | " << std::setw(36) << default_
 		    << std::endl;
 	}
 
