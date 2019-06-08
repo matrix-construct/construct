@@ -1866,7 +1866,7 @@ ircd::db::database::column::column(database &d,
 	// TwoLevelIndex + partition_filters configuration on RocksDB v5.15 it's
 	// better to use pre-read except in the case of a massive database.
 	table_opts.cache_index_and_filter_blocks = true;
-	table_opts.cache_index_and_filter_blocks_with_high_priority = false;
+	table_opts.cache_index_and_filter_blocks_with_high_priority = true;
 	table_opts.pin_top_level_index_and_filter = false;
 	table_opts.pin_l0_filter_and_index_blocks_in_cache = false;
 	table_opts.enable_index_compression = false;
@@ -2984,7 +2984,7 @@ ircd::db::database::cache::DEFAULT_STRICT
 decltype(ircd::db::database::cache::DEFAULT_HI_PRIO)
 ircd::db::database::cache::DEFAULT_HI_PRIO
 {
-	0.10
+	0.25
 };
 
 //
