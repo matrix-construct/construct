@@ -22,6 +22,7 @@ namespace ircd::m::sync
 	static bool room_invite_state_linear(data &);
 	static bool room_state_linear(data &);
 
+	extern conf::item<int64_t> state_exposure_depth; //TODO: XXX
 	extern const event::keys::include _default_keys;
 	extern event::fetch::opts _default_fopts;
 
@@ -95,26 +96,39 @@ ircd::m::sync::room_invite_state_linear(data &data)
 	return room_state_linear_events(data);
 }
 
+//TODO: This has to be merged into the timeline conf items
+decltype(ircd::m::sync::state_exposure_depth)
+ircd::m::sync::state_exposure_depth
+{
+	{ "name",         "ircd.client.sync.rooms.state.exposure.depth" },
+	{ "default",      20L                                           },
+};
+
 bool
 ircd::m::sync::room_state_linear_events(data &data)
 {
-	// if since token is non-zero, any events in the range are
-	// included in the timeline array and not the state array.
-	if(data.range.first)
-		return false;
-
 	if(!data.event_idx)
-		return false;
-
-	if(!data.membership)
 		return false;
 
 	if(!data.room)
 		return false;
 
+	if(!data.membership)
+		return false;
+
 	assert(data.event);
 	if(!json::get<"state_key"_>(*data.event))
 		return false;
+
+	// Figure out whether the event was included in the timeline or whether
+	// to include it here in the state, which comes before the timeline.
+	// Since linear-sync is already distinct from polylog-sync, the
+	// overwhelming majority of state events coming through linear-sync will
+	// use the timeline. We make an exception for past state events the server
+	// only recently obtained, to hide them from the timeline.
+	if(int64_t(state_exposure_depth) > -1)
+		if(json::get<"depth"_>(*data.event) + int64_t(state_exposure_depth) >= data.room_depth)
+			return false;
 
 	json::stack::object rooms
 	{
