@@ -185,6 +185,11 @@ struct ircd::conf::item<bool>
 :conf::item<>
 ,conf::value<bool>
 {
+	bool operator!() const
+	{
+		return !static_cast<const bool &>(*this);
+	}
+
 	string_view on_get(const mutable_buffer &out) const override;
 	bool on_set(const string_view &s) override;
 	size_t size() const override;
