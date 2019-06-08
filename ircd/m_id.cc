@@ -57,7 +57,7 @@ struct ircd::m::id::input
 	// character of a non-historical user_id localpart
 	const rule<> user_id_char
 	{
-		char_(rfc1459::character::charset(rfc1459::character::NICK) + "./=")
+		char_('\x21', '\x39') | char_('\x3B', '\x7E')
 		,"user_id character"
 	};
 
