@@ -39,7 +39,7 @@ namespace ircd::db
 #include "delta.h"
 #include "comparator.h"
 #include "compactor.h"
-#include "prefix.h"
+#include "prefix_transform.h"
 #include "merge.h"
 #include "descriptor.h"
 #include "database/rocksdb.h"
