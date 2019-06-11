@@ -136,6 +136,7 @@ libircd_la_SOURCES += mods.cc
 if LINUX
 libircd_la_SOURCES += mods_ldso.cc
 endif
+libircd_la_SOURCES += db_write_thread.cc
 libircd_la_SOURCES += db_port.cc
 libircd_la_SOURCES += db_env.cc
 libircd_la_SOURCES += db.cc
@@ -155,6 +156,9 @@ libircd_la_SOURCES += m_v1.cc
 libircd_la_SOURCES += m.cc
 libircd_la_SOURCES += m_event.cc
 libircd_la_SOURCES += ircd.cc
+
+db_write_thread.lo:    AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb/include
+db_write_thread.lo:    AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb
 
 # Units containing a spirit grammar have some special needs to mitigate
 # larger-than-normal compile time, compile memory, and output objects.
