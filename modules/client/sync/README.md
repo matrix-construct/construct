@@ -32,17 +32,18 @@ again without any server-side state describing that token.
 When a `/sync` request is made, the `since` token is compared with the
 server's current sequence number. One of three branches is then taken:
 
-- **Longpoll**: When the since token is 1 greater than the current sequence
-number, the client enters _longpoll sync_: It waits for the next appropriate
-event which is then sent immediately. The `next_batch` will then be 1 greater
-than the sequence number of that event.
-
 - **Linear**: When the since token's "delta" from the current sequence number
 ranges from 0 to some configurable limit (i.e 1024 or 4096), the client enters
 _linear sync_: an iteration of events between the `since` token and the current
 sequence is made where each event is tested for relevance to the client and
 a response is then made. If nothing was found for the client in this iteration,
 it falls back to _longpoll sync_ until an event comes through or timeout.
+
+- **Longpoll**: When the since token is 1 greater than the current sequence
+number, the client enters _longpoll sync_: It waits for the next appropriate
+event which is then sent immediately. The `next_batch` will then be 1 greater
+than the sequence number of that event. The implementation of _longpoll sync_
+is a specialization of _linear sync_, using the same handlers.
 
 - **Polylog**: When the since token's "delta" exceeds the threshold for a
 _linear sync_ the client enters _polylog sync_. This is common when no
@@ -61,9 +62,14 @@ events on the server.
 
 Each `/sync` module implements two primary functions:
 
-- A simple boolean test of an event which determines if the client should
-receive that event. This is intended to be invoked for the _longpoll_ and
-_linear_ modes.
-
 - A complex composer for a response in _polylog_ mode. This requires the
-function itself to find all the events to include for a satisfying response.
+handler itself to find all the events to include for a satisfying response.
+This handler is invoked once for a `since` token during the single pass and
+is responsible for building JSON inside the object the handler is responsible
+for in the larger `/sync` tree.
+
+- A simple composer for a response in _linear_ mode. This requires the handler
+to evaluate the event argument being passed. If the event is to be included
+in the `/sync` response, the _linear_ handler builds a complete `/sync` JSON
+object tree around this event, which indicates where it is placed in the `/sync`
+tree.
