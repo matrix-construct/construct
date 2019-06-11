@@ -22,7 +22,7 @@ namespace ircd::m::dbs
 	std::tuple<event::idx> event_type_key(const string_view &amalgam);
 
 	// type | event_idx => -
-	extern db::index event_type;
+	extern db::domain event_type;
 }
 
 namespace ircd::m::dbs::desc

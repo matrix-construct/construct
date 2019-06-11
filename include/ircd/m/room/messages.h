@@ -46,7 +46,7 @@ namespace ircd::m
 struct ircd::m::room::messages
 {
 	m::room room;
-	db::index::const_iterator it;
+	db::domain::const_iterator it;
 	event::fetch _event;
 
   public:

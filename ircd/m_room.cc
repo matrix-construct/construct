@@ -3267,7 +3267,7 @@ bool
 ircd::m::room::origins::has(const string_view &origin)
 const
 {
-	db::index &index
+	db::domain &index
 	{
 		dbs::room_joined
 	};
@@ -3340,7 +3340,7 @@ bool
 ircd::m::room::origins::_for_each(const origins &origins,
                                   const closure_bool &view)
 {
-	db::index &index
+	db::domain &index
 	{
 		dbs::room_joined
 	};

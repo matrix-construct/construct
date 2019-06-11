@@ -30,7 +30,7 @@ namespace ircd::m::dbs
 	room_state_space_key_parts room_state_space_key(const string_view &amalgam);
 
 	// room_id | type, state_key, depth, event_idx => --
-	extern db::index room_state_space;
+	extern db::domain room_state_space;
 }
 
 namespace ircd::m::dbs::desc

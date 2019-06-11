@@ -185,15 +185,15 @@ ircd::m::dbs::init::init(const string_view &servername,
 	// Construct global convenience references for the metadata columns
 	event_idx = db::column{*events, desc::events__event_idx.name};
 	event_json = db::column{*events, desc::events__event_json.name};
-	event_refs = db::index{*events, desc::events__event_refs.name};
-	event_horizon = db::index{*events, desc::events__event_horizon.name};
-	event_sender = db::index{*events, desc::events__event_sender.name};
-	event_type = db::index{*events, desc::events__event_type.name};
-	room_head = db::index{*events, desc::events__room_head.name};
-	room_events = db::index{*events, desc::events__room_events.name};
-	room_joined = db::index{*events, desc::events__room_joined.name};
-	room_state = db::index{*events, desc::events__room_state.name};
-	room_state_space = db::index{*events, desc::events__room_state_space.name};
+	event_refs = db::domain{*events, desc::events__event_refs.name};
+	event_horizon = db::domain{*events, desc::events__event_horizon.name};
+	event_sender = db::domain{*events, desc::events__event_sender.name};
+	event_type = db::domain{*events, desc::events__event_type.name};
+	room_head = db::domain{*events, desc::events__room_head.name};
+	room_events = db::domain{*events, desc::events__room_events.name};
+	room_joined = db::domain{*events, desc::events__room_joined.name};
+	room_state = db::domain{*events, desc::events__room_state.name};
+	room_state_space = db::domain{*events, desc::events__room_state_space.name};
 	state_node = db::column{*events, desc::events__state_node.name};
 }
 

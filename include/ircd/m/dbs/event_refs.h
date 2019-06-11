@@ -29,7 +29,7 @@ namespace ircd::m::dbs
 	};
 
 	// event_idx | ref_type, event_idx
-	extern db::index event_refs;
+	extern db::domain event_refs;
 
 	string_view
 	event_refs_key(const mutable_buffer &out,

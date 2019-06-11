@@ -23,7 +23,7 @@ namespace ircd::m::dbs
 	std::pair<string_view, string_view> room_state_key(const string_view &amalgam);
 
 	// room_id | type, state_key => event_idx
-	extern db::index room_state;
+	extern db::domain room_state;
 }
 
 namespace ircd::m::dbs::desc

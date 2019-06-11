@@ -4995,13 +4995,13 @@ const
 //
 
 const ircd::db::gopts
-ircd::db::index::applied_opts
+ircd::db::domain::applied_opts
 {
 	{ get::PREFIX }
 };
 
 bool
-ircd::db::seek(index::const_iterator_base &it,
+ircd::db::seek(domain::const_iterator_base &it,
                const pos &p)
 {
 	switch(p)
@@ -5021,21 +5021,21 @@ ircd::db::seek(index::const_iterator_base &it,
 			break;
 	}
 
-	it.opts |= index::applied_opts;
+	it.opts |= domain::applied_opts;
 	return seek(static_cast<column::const_iterator_base &>(it), p);
 }
 
 bool
-ircd::db::seek(index::const_iterator_base &it,
+ircd::db::seek(domain::const_iterator_base &it,
                const string_view &p)
 {
-	it.opts |= index::applied_opts;
+	it.opts |= domain::applied_opts;
 	return seek(static_cast<column::const_iterator_base &>(it), p);
 }
 
-ircd::db::index::const_iterator
-ircd::db::index::begin(const string_view &key,
-                       gopts opts)
+ircd::db::domain::const_iterator
+ircd::db::domain::begin(const string_view &key,
+                        gopts opts)
 {
 	const_iterator ret
 	{
@@ -5046,9 +5046,9 @@ ircd::db::index::begin(const string_view &key,
 	return ret;
 }
 
-ircd::db::index::const_iterator
-ircd::db::index::end(const string_view &key,
-                     gopts opts)
+ircd::db::domain::const_iterator
+ircd::db::domain::end(const string_view &key,
+                      gopts opts)
 {
 	const_iterator ret
 	{
@@ -5063,13 +5063,13 @@ ircd::db::index::end(const string_view &key,
 
 /// NOTE: RocksDB says they don't support reverse iteration over a prefix range
 /// This means we have to forward scan to the end and then walk back! Reverse
-/// iterations of an index shoud only be used for debugging and statistics! The
-/// index should be ordered the way it will be primarily accessed using the
+/// iterations of a domain should only be used for debugging and statistics! The
+/// domain should be ordered the way it will be primarily accessed using the
 /// comparator. If it will be accessed in different directions, make another
-/// index column.
-ircd::db::index::const_reverse_iterator
-ircd::db::index::rbegin(const string_view &key,
-                        gopts opts)
+/// domain column.
+ircd::db::domain::const_reverse_iterator
+ircd::db::domain::rbegin(const string_view &key,
+                         gopts opts)
 {
 	const_reverse_iterator ret
 	{
@@ -5082,9 +5082,9 @@ ircd::db::index::rbegin(const string_view &key,
 	return ret;
 }
 
-ircd::db::index::const_reverse_iterator
-ircd::db::index::rend(const string_view &key,
-                      gopts opts)
+ircd::db::domain::const_reverse_iterator
+ircd::db::domain::rend(const string_view &key,
+                       gopts opts)
 {
 	const_reverse_iterator ret
 	{
@@ -5101,8 +5101,8 @@ ircd::db::index::rend(const string_view &key,
 // const_iterator
 //
 
-ircd::db::index::const_iterator &
-ircd::db::index::const_iterator::operator--()
+ircd::db::domain::const_iterator &
+ircd::db::domain::const_iterator::operator--()
 {
 	if(likely(bool(*this)))
 		seek(*this, pos::PREV);
@@ -5112,8 +5112,8 @@ ircd::db::index::const_iterator::operator--()
 	return *this;
 }
 
-ircd::db::index::const_iterator &
-ircd::db::index::const_iterator::operator++()
+ircd::db::domain::const_iterator &
+ircd::db::domain::const_iterator::operator++()
 {
 	if(likely(bool(*this)))
 		seek(*this, pos::NEXT);
@@ -5123,8 +5123,8 @@ ircd::db::index::const_iterator::operator++()
 	return *this;
 }
 
-ircd::db::index::const_reverse_iterator &
-ircd::db::index::const_reverse_iterator::operator--()
+ircd::db::domain::const_reverse_iterator &
+ircd::db::domain::const_reverse_iterator::operator--()
 {
 	if(likely(bool(*this)))
 		seek(*this, pos::NEXT);
@@ -5134,8 +5134,8 @@ ircd::db::index::const_reverse_iterator::operator--()
 	return *this;
 }
 
-ircd::db::index::const_reverse_iterator &
-ircd::db::index::const_reverse_iterator::operator++()
+ircd::db::domain::const_reverse_iterator &
+ircd::db::domain::const_reverse_iterator::operator++()
 {
 	if(likely(bool(*this)))
 		seek(*this, pos::PREV);
@@ -5145,8 +5145,8 @@ ircd::db::index::const_reverse_iterator::operator++()
 	return *this;
 }
 
-const ircd::db::index::const_iterator_base::value_type &
-ircd::db::index::const_iterator_base::operator*()
+const ircd::db::domain::const_iterator_base::value_type &
+ircd::db::domain::const_iterator_base::operator*()
 const
 {
 	const auto &prefix
@@ -5158,7 +5158,7 @@ const
 	column::const_iterator_base::operator*();
 	string_view &key{val.first};
 
-	// When there's no prefixing this index column is just
+	// When there's no prefixing this domain column is just
 	// like a normal column. Otherwise, we remove the prefix
 	// from the key the user will end up seeing.
 	if(prefix.has && prefix.has(key))
@@ -5171,8 +5171,8 @@ const
 	return val;
 }
 
-const ircd::db::index::const_iterator_base::value_type *
-ircd::db::index::const_iterator_base::operator->()
+const ircd::db::domain::const_iterator_base::value_type *
+ircd::db::domain::const_iterator_base::operator->()
 const
 {
 	return &this->operator*();

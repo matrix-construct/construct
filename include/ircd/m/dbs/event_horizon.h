@@ -23,7 +23,7 @@ namespace ircd::m::dbs
 	std::tuple<event::idx> event_horizon_key(const string_view &amalgam);
 
 	// event_id | event_idx
-	extern db::index event_horizon;
+	extern db::domain event_horizon;
 }
 
 namespace ircd::m::dbs::desc

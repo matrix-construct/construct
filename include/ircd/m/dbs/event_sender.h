@@ -23,7 +23,7 @@ namespace ircd::m::dbs
 	std::tuple<string_view, event::idx> event_sender_key(const string_view &amalgam);
 
 	// host | local, event_idx
-	extern db::index event_sender;
+	extern db::domain event_sender;
 }
 
 namespace ircd::m::dbs::desc

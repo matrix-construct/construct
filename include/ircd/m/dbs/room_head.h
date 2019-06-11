@@ -22,7 +22,7 @@ namespace ircd::m::dbs
 	string_view room_head_key(const string_view &amalgam);
 
 	// room_id | event_id => event_idx
-	extern db::index room_head;
+	extern db::domain room_head;
 }
 
 namespace ircd::m::dbs::desc
