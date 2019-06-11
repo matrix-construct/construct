@@ -851,6 +851,45 @@ console_cmd__proc(opt &out, const string_view &line)
 	return true;
 }
 
+// Specialized command, strips lines which have 0 values for shorter output.
+bool
+console_cmd__proc__smaps(opt &out, const string_view &line)
+{
+	fs::fd fd
+	{
+		"/proc/self/smaps", std::ios::in //TODO: XXX windows
+	};
+
+	fs::read_opts opts;
+	opts.aio = false;
+	opts.offset = 0;
+	const unique_buffer<mutable_buffer> buf
+	{
+		4_MiB
+	};
+
+	const string_view read
+	{
+		fs::read(fd, buf, opts)
+	};
+
+	ircd::tokens(read, '\n', [&out]
+	(const string_view &line)
+	{
+		const auto &[key, val]
+		{
+			split(line, ':')
+		};
+
+		if(lstrip(val, ' ') == "0 kB")
+			return;
+
+		out << line << std::endl;
+	});
+
+	return true;
+}
+
 //
 // mem
 //
