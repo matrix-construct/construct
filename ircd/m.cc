@@ -109,10 +109,8 @@ ircd::m::init::close()
 
 namespace ircd::m
 {
-	extern const string_view module_names;
-	extern const std::vector<string_view> module_name_list;
+	extern const std::vector<string_view> module_names;
 }
-
 
 ircd::m::init::modules::modules()
 {
@@ -168,7 +166,7 @@ void
 ircd::m::init::modules::fini_imports()
 noexcept
 {
-	for(auto it(module_name_list.rbegin()); it != module_name_list.rend(); ++it)
+	for(auto it(module_names.rbegin()); it != module_names.rend(); ++it)
 		mods::imports.erase(*it);
 }
 
@@ -177,135 +175,120 @@ noexcept
 /// in the order of the lines and unloaded in reverse order.
 decltype(ircd::m::module_names)
 ircd::m::module_names
-{R"(
-
-vm
-
-s_conf
-s_dns
-s_fetch
-s_keys
-s_command
-s_control
-s_listen
-s_feds
-s_node
-
-m_events
-m_state
-m_rooms
-m_user
-m_room_aliases
-m_room_canonical_alias
-m_room_create
-m_room_history_visibility
-m_room_join_rules
-m_room_member
-m_room_message
-m_room_power_levels
-m_room_server_acl
-m_presence
-m_receipt
-m_typing
-m_device_list_update
-m_device
-m_direct
-m_direct_to_device
-m_ignored_user_list
-m_noop
-
-key_query
-key_server
-
-media_magick
-media_media
-
-client_account
-client_capabilities
-client_createroom
-client_delete_devices
-client_devices
-client_directory_list_appservice
-client_directory_list_room
-client_directory_room
-client_directory_user
-client_events
-client_initialsync
-client_joined_groups
-client_join
-client_keys_changes
-client_keys_claim
-client_keys_query
-client_keys_upload
-client_login
-client_logout
-client_notifications
-client_presence
-client_profile
-client_publicised_groups
-client_publicrooms
-client_pushers
-client_pushrules
-client_register_available
-client_register
-client_rooms
-client_search
-client_send_to_device
-client_sync_account_data
-client_sync_device_lists
-client_sync_device_one_time_keys_count
-client_sync_presence
-client_sync_rooms_account_data
-client_sync_rooms_ephemeral_receipt
-client_sync_rooms_ephemeral
-client_sync_rooms_ephemeral_typing
-client_sync_rooms
-client_sync_rooms_state
-client_sync_rooms_timeline
-client_sync_rooms_unread_notifications
-client_sync
-client_sync_to_device
-client_thirdparty_protocols
-client_user
-client_versions
-client_voip_turnserver
-
-federation_backfill_ids
-federation_backfill
-federation_event_auth
-federation_event
-federation_get_groups_publicised
-federation_get_missing_events
-federation_invite
-federation_make_join
-federation_make_leave
-federation_publicrooms
-federation_query_auth
-federation_query
-federation_sender
-federation_send_join
-federation_send_leave
-federation_send
-federation_state_ids
-federation_state
-federation_user_devices
-federation_user_keys_claim
-federation_user_keys_query
-federation_version
-
-identity_pubkey
-identity_v1
-
-well_known
-metrics
-webhook
-webroot
-)"};
-
-decltype(ircd::m::module_name_list)
-ircd::m::module_name_list
 {
-	ircd::tokens<std::vector, ircd::string_view>(module_names, '\n')
+	"vm",
+	"s_conf",
+	"s_dns",
+	"s_fetch",
+	"s_keys",
+	"s_command",
+	"s_control",
+	"s_listen",
+	"s_feds",
+	"s_node",
+	"m_events",
+	"m_state",
+	"m_rooms",
+	"m_user",
+	"m_room_aliases",
+	"m_room_canonical_alias",
+	"m_room_create",
+	"m_room_history_visibility",
+	"m_room_join_rules",
+	"m_room_member",
+	"m_room_message",
+	"m_room_power_levels",
+	"m_room_server_acl",
+	"m_presence",
+	"m_receipt",
+	"m_typing",
+	"m_device_list_update",
+	"m_device",
+	"m_direct",
+	"m_direct_to_device",
+	"m_ignored_user_list",
+	"m_noop",
+	"key_query",
+	"key_server",
+	"media_magick",
+	"media_media",
+	"client_account",
+	"client_capabilities",
+	"client_createroom",
+	"client_delete_devices",
+	"client_devices",
+	"client_directory_list_appservice",
+	"client_directory_list_room",
+	"client_directory_room",
+	"client_directory_user",
+	"client_events",
+	"client_initialsync",
+	"client_joined_groups",
+	"client_join",
+	"client_keys_changes",
+	"client_keys_claim",
+	"client_keys_query",
+	"client_keys_upload",
+	"client_login",
+	"client_logout",
+	"client_notifications",
+	"client_presence",
+	"client_profile",
+	"client_publicised_groups",
+	"client_publicrooms",
+	"client_pushers",
+	"client_pushrules",
+	"client_register_available",
+	"client_register",
+	"client_rooms",
+	"client_search",
+	"client_send_to_device",
+	"client_sync_account_data",
+	"client_sync_device_lists",
+	"client_sync_device_one_time_keys_count",
+	"client_sync_presence",
+	"client_sync_rooms_account_data",
+	"client_sync_rooms_ephemeral_receipt",
+	"client_sync_rooms_ephemeral",
+	"client_sync_rooms_ephemeral_typing",
+	"client_sync_rooms",
+	"client_sync_rooms_state",
+	"client_sync_rooms_timeline",
+	"client_sync_rooms_unread_notifications",
+	"client_sync",
+	"client_sync_to_device",
+	"client_thirdparty_protocols",
+	"client_user",
+	"client_versions",
+	"client_voip_turnserver",
+	"federation_backfill_ids",
+	"federation_backfill",
+	"federation_event_auth",
+	"federation_event",
+	"federation_get_groups_publicised",
+	"federation_get_missing_events",
+	"federation_invite",
+	"federation_make_join",
+	"federation_make_leave",
+	"federation_publicrooms",
+	"federation_query_auth",
+	"federation_query",
+	"federation_sender",
+	"federation_send_join",
+	"federation_send_leave",
+	"federation_send",
+	"federation_state_ids",
+	"federation_state",
+	"federation_user_devices",
+	"federation_user_keys_claim",
+	"federation_user_keys_query",
+	"federation_version",
+	"identity_pubkey",
+	"identity_v1",
+	"well_known",
+	"metrics",
+	"webhook",
+	"webroot",
 };
 
 void
