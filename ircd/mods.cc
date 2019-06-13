@@ -451,9 +451,9 @@ ircd::mods::fullpath(const string_view &name)
 		return path;
 
 	for(const auto &str : why)
-		log::error
+		log::warning
 		{
-			log, "candidate for module '%s' failed: %s",
+			log, "Candidate for module '%s' failed :%s",
 			name,
 			str
 		};
@@ -503,7 +503,7 @@ ircd::mods::search(const string_view &name,
 			fs::path_string(parts)
 		};
 
-		why.resize(why.size() + 1);
+		why.resize(why.size() + 1, std::string{});
 		if(is_module(full, why.back()))
 			return full;
 	}
@@ -538,6 +538,7 @@ catch(const std::exception &e)
 bool
 ircd::mods::is_module(const string_view &path,
                       std::string &why)
+try
 {
 	static const auto &header_name
 	{
@@ -562,6 +563,11 @@ ircd::mods::is_module(const string_view &path,
 		256, "`%s': has no MAPI header (%s)", path, header_name
 	};
 
+	return false;
+}
+catch(const std::exception &e)
+{
+	why = e.what();
 	return false;
 }
 
@@ -1062,6 +1068,11 @@ catch(const filesystem::filesystem_error &e)
 	{
 		e, "%s", p
 	};
+}
+catch(const boost::system::system_error &e)
+{
+	throw_system_error(e);
+	__builtin_unreachable();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
