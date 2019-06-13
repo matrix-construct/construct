@@ -1064,13 +1064,13 @@ AC_SUBST(SODIUM_LIBS, [])
 AC_ARG_WITH(sodium-includes,
 AC_HELP_STRING([--with-sodium-includes=[[[DIR]]]], [Path to sodium include directory]),
 [
-	SODIUM_CPPFLAGS+="-I$withval"
+	SODIUM_CPPFLAGS+=" -I$withval"
 ], [])
 
 AC_ARG_WITH(sodium-libs,
 AC_HELP_STRING([--with-sodium-libs=[[[DIR]]]], [Path to sodium library directory]),
 [
-	SODIUM_LDFLAGS+="-L$withval"
+	SODIUM_LDFLAGS+=" -L$withval"
 ], [])
 
 PKG_CHECK_MODULES(SODIUM, libsodium,
@@ -1083,6 +1083,7 @@ PKG_CHECK_MODULES(SODIUM, libsodium,
 	AC_CHECK_LIB([sodium], sodium_init,
 	[
 		have_sodium="yes"
+		SODIUM_LIBS+=" -lsodium"
 	], [
 		have_sodium="no"
 	])
@@ -1093,7 +1094,6 @@ AM_CONDITIONAL([SODIUM], [test "x$have_sodium" = "xyes"])
 AM_COND_IF([SODIUM],
 [
 	AC_DEFINE([HAVE_SODIUM], [1], [Have libsodium])
-	SODIUM_LIBS+="-lsodium"
 ], [
 	AC_MSG_ERROR([libsodium is required but not found. Try apt-get install libsodium-dev])
 ])
