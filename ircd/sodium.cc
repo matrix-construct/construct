@@ -10,18 +10,16 @@
 
 #include <sodium.h>
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// Internal
-//
-
-struct throw_on_error
+namespace ircd::nacl
 {
-	throw_on_error(const int &val)
-	{
-		if(unlikely(val != 0))
-			throw ircd::nacl::error("sodium error");
-	}
+	struct throw_on_error;
+
+	static void init() __attribute__((constructor));
+}
+
+struct ircd::nacl::throw_on_error
+{
+	throw_on_error(const int &val);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -52,21 +50,6 @@ ircd::nacl::version_abi
 	},
 	::sodium_version_string(),
 };
-
-//
-// init
-//
-
-ircd::nacl::init::init()
-{
-	if(::sodium_init() < 0)
-		throw std::runtime_error("sodium_init(): error");
-}
-
-ircd::nacl::init::~init()
-noexcept
-{
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -113,7 +96,7 @@ ircd::ed25519::sk::sk(pk *const &pk_arg,
 		reinterpret_cast<const uint8_t *>(data(seed))
 	};
 
-	throw_on_error
+	nacl::throw_on_error
 	{
 		::crypto_sign_ed25519_seed_keypair(pk_data, key.get(), seed_data)
 	};
@@ -145,7 +128,7 @@ try
 
 	if(!fs::exists(filename) && !ircd::write_avoid)
 	{
-		throw_on_error
+		nacl::throw_on_error
 		{
 			::crypto_sign_ed25519_keypair(pk_data, key.get())
 		};
@@ -154,7 +137,7 @@ try
 	}
 	else fs::read(filename, key_data);
 
-	throw_on_error
+	nacl::throw_on_error
 	{
 		::crypto_sign_ed25519_sk_to_pk(pk_data, key.get())
 	};
@@ -186,7 +169,7 @@ const
 		reinterpret_cast<const uint8_t *>(buffer::data(msg))
 	};
 
-	throw_on_error
+	nacl::throw_on_error
 	{
 		::crypto_sign_ed25519_detached(sig_data,
 		                               &sig_sz,
@@ -229,7 +212,38 @@ const
 		                                      key_data)
 	};
 
-	return ret == 0?   true:
-	       ret == -1?  false:
-	                   throw nacl::error("verify failed: %d", ret);
+	if(likely(ret == 0))
+		return true;
+
+	if(likely(ret == -1))
+		return false;
+
+	throw nacl::error
+	{
+		"verify failed: %d", ret
+	};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Internal
+//
+
+void
+ircd::nacl::init()
+{
+	if(::sodium_init() < 0)
+		throw std::runtime_error
+		{
+			"sodium_init(): error"
+		};
+}
+
+ircd::nacl::throw_on_error::throw_on_error(const int &val)
+{
+	if(unlikely(val != 0))
+		throw ircd::nacl::error
+		{
+			"sodium error"
+		};
 }

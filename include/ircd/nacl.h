@@ -16,13 +16,5 @@ namespace ircd::nacl
 {
 	IRCD_EXCEPTION(ircd::error, error)
 
-	struct init;
-
 	extern const info::versions version_api, version_abi;
 }
-
-struct ircd::nacl::init
-{
-	init();
-	~init() noexcept;
-};

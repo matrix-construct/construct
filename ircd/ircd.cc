@@ -282,7 +282,6 @@ noexcept try
 	fs::init _fs_;           // Local filesystem
 	magic::init _magic_;     // libmagic
 	ctx::ole::init _ole_;    // Thread OffLoad Engine
-	nacl::init _nacl_;       // nacl crypto
 	openssl::init _ossl_;    // openssl crypto
 	net::init _net_;         // Networking
 	db::init _db_;           // RocksDB
