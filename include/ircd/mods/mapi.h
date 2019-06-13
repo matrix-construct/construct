@@ -100,12 +100,12 @@ IRCD_MAPI_SERIAL
 ///
 struct ircd::mapi::header
 {
-	const magic_t magic {IRCD_MAPI_MAGIC};       // The magic must match
-	const version_t version {IRCD_MAPI_VERSION}; // Version indicator
-	const serial_t serial {IRCD_MAPI_SERIAL};    // Serial indicator
-	const int64_t timestamp {RB_DATECODE};       // Module's compile epoch
-	std::unique_ptr<metablock> meta;             // Non-standard-layout header data
-	mods::mod *self {nullptr};                   // Point to mod instance once loaded
+	const magic_t magic {IRCD_MAPI_MAGIC};         // The magic must match
+	const version_t version {IRCD_MAPI_VERSION};   // Version indicator
+	const serial_t serial {IRCD_MAPI_SERIAL};      // Serial indicator
+	const int64_t timestamp {RB_TIME_CONFIGURED};  // Module's compile epoch (TODO: XXX)
+	std::unique_ptr<metablock> meta;               // Non-standard-layout header data
+	mods::mod *self {nullptr};                     // Point to mod instance once loaded
 
 	// get and set metadata
 	const string_view &operator[](const string_view &s) const;

@@ -270,12 +270,12 @@ try
 			ircd::info::tag,
 		};
 
-	if(RB_DATECODE > ircd::info::configured_time || RB_DATECODE < ircd::info::configured_time)
+	if(RB_TIME_CONFIGURED > ircd::info::configured_time || RB_TIME_CONFIGURED < ircd::info::configured_time)
 		ircd::log::warning
 		{
 			"Header configuration time:%ld %s than library configuration time:%ld.",
 			RB_VERSION_TAG,
-			RB_DATECODE > ircd::info::configured_time? "newer" : "older",
+			RB_TIME_CONFIGURED > ircd::info::configured_time? "newer" : "older",
 			ircd::info::tag,
 		};
 

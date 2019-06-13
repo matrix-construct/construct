@@ -669,8 +669,8 @@ console_cmd__version(opt &out, const string_view &line)
 	out << "info::startup              " << info::startup << std::endl;
 	out << std::endl;
 
-	out << "RB_DATECODE                " << RB_DATECODE << std::endl;
 	out << "RB_DATESTR                 " << RB_DATESTR << std::endl;
+	out << "RB_TIME_CONFIGURED         " << RB_TIME_CONFIGURED << std::endl;
 	out << "RB_DATE_CONFIGURED         " << RB_DATE_CONFIGURED << std::endl;
 	out << std::endl;
 

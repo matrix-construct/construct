@@ -1735,11 +1735,8 @@ RB_DEFINE_UNQUOTED([DATESTR], ["$RB_DATESTR"], [Readable date string of configur
 
 DATECODE_CMD="date +%s"
 RB_DATECODE=`$DATECODE_CMD`
-RB_DEFINE_UNQUOTED([DATECODE], [$RB_DATECODE], [UNIX epoch time at configuration time.])
-
-dnl TODO: XXX: These have better names than the above, rm previous eventually.
+RB_DEFINE_UNQUOTED([TIME_CONFIGURED], [$RB_DATECODE], [UNIX epoch time at configuration time.])
 RB_DEFINE_UNQUOTED([DATE_CONFIGURED], ["$RB_DATESTR"], [Convenience string of RB_TIME_CONFIGURED])
-CPPDEFINE([RB_TIME_CONFIGURED], [$(date +%s)])
 
 dnl
 dnl --with-custom-branding
