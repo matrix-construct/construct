@@ -2246,7 +2246,7 @@ ircd::fs::basepath::set(const base &base,
 {
 	log::debug
 	{
-		log, "Updating base path #%u '%s' from `%' to `%s'",
+		log, "Updating base path #%u '%s' from `%s' to `%s'",
 		uint(base),
 		basepaths.at(base).name,
 		basepaths.at(base).path,
