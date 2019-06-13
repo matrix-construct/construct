@@ -110,6 +110,7 @@ ircd::m::init::close()
 namespace ircd::m
 {
 	extern const std::vector<string_view> module_names;
+	extern const std::vector<string_view> module_names_optional;
 }
 
 ircd::m::init::modules::modules()
@@ -155,8 +156,18 @@ ircd::m::init::modules::init_imports()
 		return;
 	}
 
-	for(const auto &name : module_name_list)
+	for(const auto &name : module_names) try
+	{
 		mods::imports.emplace(name, name);
+	}
+	catch(...)
+	{
+		const auto &optional(module_names_optional);
+		if(std::count(begin(optional), end(optional), name))
+			continue;
+
+		throw;
+	}
 
 	if(db::sequence(*dbs::events) == 0)
 		bootstrap();
@@ -289,6 +300,14 @@ ircd::m::module_names
 	"metrics",
 	"webhook",
 	"webroot",
+};
+
+/// This is a list of modules that are considered "optional" and any loading
+/// error for them will not propagate and interrupt m::init.
+decltype(ircd::m::module_names_optional)
+ircd::m::module_names_optional
+{
+	"media_magick",
 };
 
 void
