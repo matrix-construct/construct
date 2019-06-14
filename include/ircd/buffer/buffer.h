@@ -34,10 +34,12 @@ namespace boost::asio
 namespace ircd::buffer
 {
 	template<class it> struct buffer;
+
 	struct const_buffer;
 	struct mutable_buffer;
 	struct window_buffer;
 	struct parse_buffer;
+
 	template<class buffer, size_t SIZE> struct fixed_buffer;
 	template<class buffer> struct unique_buffer;
 	template<class buffer> struct shared_buffer;
@@ -46,6 +48,11 @@ namespace ircd::buffer
 	template<size_t SIZE> using fixed_mutable_buffer = fixed_buffer<mutable_buffer, SIZE>;
 	template<template<class> class I> using const_buffers = I<const_buffer>;
 	template<template<class> class I> using mutable_buffers = I<mutable_buffer>;
+
+	using unique_const_buffer = unique_buffer<const_buffer>;
+	using unique_mutable_buffer = unique_buffer<mutable_buffer>;
+	using shared_const_buffer = shared_buffer<const_buffer>;
+	using shared_mutable_buffer = shared_buffer<mutable_buffer>;
 
 	// Preconstructed null buffers
 	extern const mutable_buffer null_buffer;
@@ -115,6 +122,10 @@ namespace ircd
 	using buffer::window_buffer;
 	using buffer::fixed_const_buffer;
 	using buffer::fixed_mutable_buffer;
+	using buffer::unique_const_buffer;
+	using buffer::unique_mutable_buffer;
+	using buffer::shared_const_buffer;
+	using buffer::shared_mutable_buffer;
 
 	using buffer::const_buffers;
 	using buffer::mutable_buffers;
