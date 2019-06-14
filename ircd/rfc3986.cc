@@ -427,6 +427,42 @@ ircd::rfc3986::parser::uri_ref
 };
 
 //
+// uri decompose
+//
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+    ircd::rfc3986::uri,
+    ( decltype(ircd::rfc3986::uri::scheme),    scheme    )
+    ( decltype(ircd::rfc3986::uri::user),      user      )
+    ( decltype(ircd::rfc3986::uri::remote),    remote    )
+    ( decltype(ircd::rfc3986::uri::path),      path      )
+    ( decltype(ircd::rfc3986::uri::query),     query     )
+    ( decltype(ircd::rfc3986::uri::fragment),  fragment  )
+)
+
+ircd::rfc3986::uri::uri(const string_view &input)
+{
+	static const parser::rule<rfc3986::uri> rule
+	{
+		raw[parser::scheme] >> lit("://")
+		>> -raw[parser::userinfo >> lit('@')]
+		>> raw[parser::remote]
+		>> raw[parser::path_abempty]
+		>> -raw[lit('?') >> parser::query]
+		>> -raw[lit('#') >> parser::fragment]
+	};
+
+	const char *start(begin(input)), *const stop(end(input));
+	qi::parse(start, stop, eps > rule, *this);
+
+	//TODO: XXX Can this go?
+	this->user = rstrip(this->user, '@');
+	this->query = lstrip(this->query, '?');
+	this->fragment = lstrip(this->fragment, '#');
+}
+
+//
 // general interface
 //
 

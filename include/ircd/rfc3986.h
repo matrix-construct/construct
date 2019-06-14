@@ -14,6 +14,7 @@
 /// Universal Resource Indicator (URI) grammars & tools
 namespace ircd::rfc3986
 {
+	struct uri;
 	struct parser;
 
 	IRCD_EXCEPTION(ircd::error, error)
@@ -40,6 +41,19 @@ namespace ircd
 {
 	namespace url = rfc3986;
 }
+
+struct ircd::rfc3986::uri
+{
+	string_view scheme;
+	string_view user;
+	string_view remote;
+	string_view path;
+	string_view query;
+	string_view fragment;
+
+	uri(const string_view &);
+	uri() = default;
+};
 
 struct ircd::rfc3986::parser
 {
