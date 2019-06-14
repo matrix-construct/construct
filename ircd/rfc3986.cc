@@ -68,6 +68,136 @@ struct ircd::rfc3986::decoder
 }
 const ircd::rfc3986::decoder;
 
+decltype(ircd::rfc3986::parser::sub_delims)
+ircd::rfc3986::parser::sub_delims
+{
+	lit('!') | lit('$') | lit('&') | lit('\'') |
+	lit('(') | lit(')') | lit('*') | lit('+') |
+	lit(',') | lit(';') | lit('=')
+	,"sub-delims"
+};
+
+decltype(ircd::rfc3986::parser::gen_delims)
+ircd::rfc3986::parser::gen_delims
+{
+	lit(':') | lit('/') | lit('?') | lit('#') |
+	lit('[') | lit(']') | lit('@')
+	,"gen-delims"
+};
+
+decltype(ircd::rfc3986::parser::unreserved)
+ircd::rfc3986::parser::unreserved
+{
+	ascii::alpha | ascii::digit |
+	lit('-') | lit('.') | lit('_') | lit('~')
+	,"reserved"
+};
+
+decltype(ircd::rfc3986::parser::reserved)
+ircd::rfc3986::parser::reserved
+{
+	gen_delims | sub_delims
+	,"reserved"
+};
+
+decltype(ircd::rfc3986::parser::pct_encoded)
+ircd::rfc3986::parser::pct_encoded
+{
+	lit('%') >> repeat(2)[ascii::xdigit]
+	,"pct-encoded"
+};
+
+decltype(ircd::rfc3986::parser::pchar)
+ircd::rfc3986::parser::pchar
+{
+	unreserved | pct_encoded | sub_delims | lit(':') | lit('@')
+	,"pchar"
+};
+
+decltype(ircd::rfc3986::parser::query)
+ircd::rfc3986::parser::query
+{
+	*(pchar | lit('/') | lit('?'))
+	,"query"
+};
+
+decltype(ircd::rfc3986::parser::fragment)
+ircd::rfc3986::parser::fragment
+{
+	*(pchar | lit('/') | lit('?'))
+	,"fragment"
+};
+
+decltype(ircd::rfc3986::parser::segment_nz_nc)
+ircd::rfc3986::parser::segment_nz_nc
+{
+	+(unreserved | pct_encoded | sub_delims | lit('@'))
+	,"segment-nz-nc"
+};
+
+decltype(ircd::rfc3986::parser::segment_nz)
+ircd::rfc3986::parser::segment_nz
+{
+	+pchar
+	,"segment-nz"
+};
+
+decltype(ircd::rfc3986::parser::segment)
+ircd::rfc3986::parser::segment
+{
+	*pchar
+	,"segment"
+};
+
+decltype(ircd::rfc3986::parser::path_abempty)
+ircd::rfc3986::parser::path_abempty
+{
+	*(lit('/') >> segment)
+	,"path-abempty"
+};
+
+decltype(ircd::rfc3986::parser::path_noscheme)
+ircd::rfc3986::parser::path_noscheme
+{
+	segment_nz_nc >> *(lit('/') >> segment)
+	,"path-noscheme"
+};
+
+decltype(ircd::rfc3986::parser::path_rootless)
+ircd::rfc3986::parser::path_rootless
+{
+	segment_nz >> *(lit('/') >> segment)
+	,"path-rootless"
+};
+
+decltype(ircd::rfc3986::parser::path_absolute)
+ircd::rfc3986::parser::path_absolute
+{
+	lit('/') >> -(path_rootless)
+	,"path-absolute"
+};
+
+decltype(ircd::rfc3986::parser::path)
+ircd::rfc3986::parser::path
+{
+	-(path_abempty | path_absolute | path_noscheme | path_rootless)
+	,"path"
+};
+
+decltype(ircd::rfc3986::parser::reg_name)
+ircd::rfc3986::parser::reg_name
+{
+	*(unreserved | pct_encoded | sub_delims)
+	,"reg-name"
+};
+
+decltype(ircd::rfc3986::parser::userinfo)
+ircd::rfc3986::parser::userinfo
+{
+	*(unreserved | pct_encoded | sub_delims | lit(':'))
+	,"userinfo"
+};
+
 decltype(ircd::rfc3986::parser::port)
 ircd::rfc3986::parser::port
 {
@@ -240,6 +370,66 @@ ircd::rfc3986::parser::remote
 	,"remote"
 };
 
+decltype(ircd::rfc3986::parser::authority)
+ircd::rfc3986::parser::authority
+{
+	-(userinfo >> lit('@')) >> remote
+	,"authority"
+};
+
+decltype(ircd::rfc3986::parser::scheme)
+ircd::rfc3986::parser::scheme
+{
+	ascii::alpha >> *(ascii::alnum | lit('+') | lit('-') | lit('.'))
+	,"scheme"
+};
+
+decltype(ircd::rfc3986::parser::hier_part)
+ircd::rfc3986::parser::hier_part
+{
+	-((lit("//") >> authority >> path_abempty) | path_absolute | path_rootless)
+	,"hier_part"
+};
+
+decltype(ircd::rfc3986::parser::relative_part)
+ircd::rfc3986::parser::relative_part
+{
+	-((lit("//") >> authority >> path_abempty) | path_absolute | path_noscheme)
+	,"relative-part"
+};
+
+decltype(ircd::rfc3986::parser::relative_ref)
+ircd::rfc3986::parser::relative_ref
+{
+	relative_part >> -(lit('?') >> query) >> -(lit('#') >> fragment)
+	,"relative-ref"
+};
+
+decltype(ircd::rfc3986::parser::absolute_uri)
+ircd::rfc3986::parser::absolute_uri
+{
+	scheme >> lit(':') >> hier_part >> -(lit('?') >> query)
+	,"absolute-URI"
+};
+
+decltype(ircd::rfc3986::parser::uri)
+ircd::rfc3986::parser::uri
+{
+	scheme >> lit(':') >> hier_part >> -(lit('?') >> query) >> -(lit('#') >> fragment)
+	,"URI"
+};
+
+decltype(ircd::rfc3986::parser::uri_ref)
+ircd::rfc3986::parser::uri_ref
+{
+	uri | relative_ref
+	,"URI-reference"
+};
+
+//
+// general interface
+//
+
 ircd::string_view
 ircd::rfc3986::encode(const mutable_buffer &out,
                       const json::members &members)
@@ -382,6 +572,10 @@ catch(const qi::expectation_failure<const char *> &e)
 {
 	throw expectation_failure<error>{e};
 }
+
+//
+// validators
+//
 
 bool
 ircd::rfc3986::valid_remote(std::nothrow_t,

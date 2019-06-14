@@ -49,8 +49,26 @@ struct ircd::rfc3986::parser
 	template<class R = unused>
 	using rule = boost::spirit::qi::rule<it, R, unused, unused, unused>;
 
-	// note in all examples that portnums are always optional
-	static const rule<uint16_t> port;
+	static const rule<> sub_delims;
+	static const rule<> gen_delims;
+	static const rule<> reserved;
+	static const rule<> unreserved;
+	static const rule<> pct_encoded;
+	static const rule<> pchar;
+	static const rule<> query;
+	static const rule<> fragment;
+	static const rule<> segment;
+	static const rule<> segment_nz;
+	static const rule<> segment_nz_nc;
+	static const rule<> path_rootless;
+	static const rule<> path_noscheme;
+	static const rule<> path_absolute;
+	static const rule<> path_abempty;
+	static const rule<> path;
+	static const rule<> reg_name;
+	static const rule<> userinfo;
+
+	static const rule<uint16_t> port; // note in examples portnums are optional
 
 	static const rule<> ip4_octet;
 	static const rule<> ip4_address;  // 1.2.3.4
@@ -79,6 +97,15 @@ struct ircd::rfc3986::parser
 	static const rule<> host_literal; // 1.2.3.4 | [::1] | foo.com
 
 	static const rule<> remote;       // 1.2.3.4:12345 | [::1]:12345 | foo.com:12345
+
+	static const rule<> authority;
+	static const rule<> scheme;
+	static const rule<> hier_part;
+	static const rule<> relative_part;
+	static const rule<> relative_ref;
+	static const rule<> absolute_uri;
+	static const rule<> uri;
+	static const rule<> uri_ref;     // uri | relative_ref
 };
 
 // Validator suite
