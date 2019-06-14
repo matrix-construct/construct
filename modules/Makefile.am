@@ -118,7 +118,6 @@ m_presence_la_SOURCES = m_presence.cc
 m_direct_to_device_la_SOURCES = m_direct_to_device.cc
 m_device_list_update_la_SOURCES = m_device_list_update.cc
 m_ignored_user_list_la_SOURCES = m_ignored_user_list.cc
-m_state_la_SOURCES = m_state.cc
 m_events_la_SOURCES = m_events.cc
 m_rooms_la_SOURCES = m_rooms.cc
 m_room_create_la_SOURCES = m_room_create.cc
@@ -142,7 +141,6 @@ m_module_LTLIBRARIES = \
 	m_direct_to_device.la \
 	m_device_list_update.la \
 	m_ignored_user_list.la \
-	m_state.la \
 	m_events.la \
 	m_rooms.la \
 	m_room_create.la \

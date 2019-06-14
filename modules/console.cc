@@ -7123,161 +7123,6 @@ console_cmd__event__refs__auth(opt &out, const string_view &line)
 }
 
 //
-// state
-//
-
-bool
-console_cmd__state__count(opt &out, const string_view &line)
-{
-	const string_view arg
-	{
-		token(line, ' ', 0)
-	};
-
-	const string_view root
-	{
-		arg
-	};
-
-	out << m::state::count(root) << std::endl;
-	return true;
-}
-
-bool
-console_cmd__state__each(opt &out, const string_view &line)
-{
-	const string_view arg
-	{
-		token(line, ' ', 0)
-	};
-
-	const string_view type
-	{
-		token(line, ' ', 1)
-	};
-
-	const string_view root
-	{
-		arg
-	};
-
-	m::state::for_each(root, type, [&out]
-	(const string_view &key, const string_view &val)
-	{
-		out << key << " => " << val << std::endl;
-	});
-
-	return true;
-}
-
-bool
-console_cmd__state__get(opt &out, const string_view &line)
-{
-	const string_view root
-	{
-		token(line, ' ', 0)
-	};
-
-	const string_view type
-	{
-		token(line, ' ', 1)
-	};
-
-	const string_view state_key
-	{
-		token(line, ' ', 2)
-	};
-
-	m::state::get(root, type, state_key, [&out]
-	(const auto &value)
-	{
-		out << "got: " << value << std::endl;
-	});
-
-	return true;
-}
-
-bool
-console_cmd__state__find(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"root", "[type]" "[state_key]"
-	}};
-
-	const string_view &root
-	{
-		param.at(0)
-	};
-
-	const string_view &type
-	{
-		param[1]
-	};
-
-	const string_view &state_key
-	{
-		param[2]
-	};
-
-	const auto closure{[&out]
-	(const auto &key, const string_view &val)
-	{
-		out << key << " => " << val << std::endl;
-		return true;
-	}};
-
-	m::state::for_each(root, type, state_key, closure);
-	return true;
-}
-
-bool
-console_cmd__state__root(opt &out, const string_view &line)
-{
-	const m::event::id event_id
-	{
-		token(line, ' ', 0)
-	};
-
-	char buf[m::state::ID_MAX_SZ];
-	out << m::dbs::state_root(buf, event_id) << std::endl;
-	return true;
-}
-
-bool
-console_cmd__state__gc(opt &out, const string_view &line)
-{
-	using prototype = size_t ();
-	static mods::import<prototype> gc
-	{
-		"m_state", "ircd__m__state__gc"
-	};
-
-	const size_t count
-	{
-		gc()
-	};
-
-	out << "done: " << count << std::endl;
-	return true;
-}
-
-bool
-console_cmd__state__CLEAR__CLEAR__CLEAR(opt &out, const string_view &line)
-{
-	using prototype = void ();
-	static mods::import<prototype> clear
-	{
-		"m_state", "ircd__m__state__clear"
-	};
-
-	clear();
-
-	out << "done" << std::endl;
-	return true;
-}
-
-//
 // commit
 //
 
@@ -8926,66 +8771,6 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__room__state__rebuild__history(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"room_id"
-	}};
-
-	const auto &room_id
-	{
-		m::room_id(param.at(0))
-	};
-
-	const m::room::state state
-	{
-		room_id
-	};
-
-	const size_t count
-	{
-		state.rebuild_history(state)
-	};
-
-	out << "done " << count << std::endl;
-	return true;
-}
-
-bool
-console_cmd__room__state__history__clear(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"room_id"
-	}};
-
-	const auto &room_id
-	{
-		m::room_id(param.at(0))
-	};
-
-	const m::room::state state
-	{
-		room_id
-	};
-
-	using prototype = size_t (const m::room &);
-	static mods::import<prototype> state__clear_history
-	{
-		"m_room", "state__clear_history"
-	};
-
-	const size_t count
-	{
-		state.clear_history(state)
-	};
-
-	out << "done " << count << std::endl;
-	return true;
-}
-
-bool
 console_cmd__room__state__prefetch(opt &out, const string_view &line)
 {
 	const params param{line, " ",
@@ -9186,11 +8971,6 @@ console_cmd__room__events(opt &out, const string_view &line)
 			param.at(3, ssize_t(32))
 	};
 
-	const bool roots
-	{
-		has(out.special, "roots")
-	};
-
 	const m::room room
 	{
 		room_id
@@ -9202,16 +8982,9 @@ console_cmd__room__events(opt &out, const string_view &line)
 	};
 
 	for(; it && limit >= 0; order == 'b'? --it : ++it, --limit)
-		if(roots)
-			out << std::setw(48) << std::left << it.state_root()
-			    << " " << std::setw(8) << std::right << it.event_idx()
-			    << " " << std::setw(8) << std::right << it.depth()
-			    << " " << it.event_id()
-			    << std::endl;
-		else
-			out << std::left << std::setw(10) << it.event_idx() << " "
-			    << pretty_oneline(*it)
-			    << std::endl;
+		out << std::left << std::setw(10) << it.event_idx() << " "
+		    << pretty_oneline(*it)
+		    << std::endl;
 
 	return true;
 }
@@ -9344,14 +9117,6 @@ console_cmd__room__timeline__rebuild(opt &out, const string_view &line)
 	m::room::timeline::rebuild(room);
 	out << "done" << std::endl;
 	return true;
-}
-
-bool
-console_cmd__room__roots(opt &out, const string_view &line)
-{
-	assert(!out.special);
-	out.special = "roots";
-	return console_cmd__room__events(out, line);
 }
 
 bool

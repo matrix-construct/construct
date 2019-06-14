@@ -165,18 +165,6 @@ ircd::m::room::state::rebuild_present(const state &state)
 	return ret;
 }
 
-size_t
-ircd::m::room::state::rebuild_history(const state &state)
-{
-	return 0;
-}
-
-size_t
-ircd::m::room::state::clear_history(const state &state)
-{
-	return 0;
-}
-
 namespace ircd::m
 {
 	extern conf::item<ulong> state__prefetch__yield_modulus;
@@ -1826,14 +1814,6 @@ const
 	return ret;
 }
 
-ircd::string_view
-ircd::m::room::messages::state_root()
-const
-{
-	assert(bool(*this));
-	return it->second;
-}
-
 uint64_t
 ircd::m::room::messages::depth()
 const
@@ -1878,13 +1858,6 @@ ircd::m::room::messages::fetch(std::nothrow_t)
 // room::state
 //
 
-decltype(ircd::m::room::state::disable_history)
-ircd::m::room::state::disable_history
-{
-	{ "name",     "ircd.m.room.state.disable_history" },
-	{ "default",  true                                },
-};
-
 decltype(ircd::m::room::state::readahead_size)
 ircd::m::room::state::readahead_size
 {
@@ -1907,12 +1880,6 @@ ircd::m::room::state::state(const m::room &room,
 	room.event_id?
 		event::id::buf{room.event_id}:
 		event::id::buf{}
-}
-,root_id
-{
-	event_id && !bool(disable_history)?
-		dbs::state_root(root_id_buf, room_id, event_id):
-		m::state::id{}
 }
 ,fopts
 {
@@ -1993,31 +1960,13 @@ void
 ircd::m::room::state::get(const string_view &type,
                           const string_view &state_key,
                           const event::id::closure &closure)
-const try
+const
 {
-	if(!present())
-		return m::state::get(root_id, type, state_key, [&closure]
-		(const string_view &event_id)
-		{
-			closure(unquote(event_id));
-		});
-
 	get(type, state_key, event::closure_idx{[&closure]
 	(const event::idx &idx)
 	{
 		event::fetch::event_id(idx, closure);
 	}});
-}
-catch(const db::not_found &e)
-{
-	throw m::NOT_FOUND
-	{
-		"(%s,%s) in %s :%s",
-		type,
-		state_key,
-		string_view{room_id},
-		e.what()
-	};
 }
 
 void
@@ -2027,11 +1976,10 @@ ircd::m::room::state::get(const string_view &type,
 const try
 {
 	if(!present())
-		m::state::get(root_id, type, state_key, [&closure]
-		(const string_view &event_id)
-		{
-			closure(index(m::event::id(unquote(event_id))));
-		});
+	{
+		assert(0);
+		return;
+	}
 
 	auto &column{dbs::room_state};
 	char key[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -2079,13 +2027,6 @@ ircd::m::room::state::get(std::nothrow_t,
                           const event::id::closure &closure)
 const
 {
-	if(!present())
-		return m::state::get(std::nothrow, root_id, type, state_key, [&closure]
-		(const string_view &event_id)
-		{
-			closure(unquote(event_id));
-		});
-
 	return get(std::nothrow, type, state_key, event::closure_idx{[&closure]
 	(const event::idx &idx)
 	{
@@ -2101,11 +2042,10 @@ ircd::m::room::state::get(std::nothrow_t,
 const
 {
 	if(!present())
-		return m::state::get(std::nothrow, root_id, type, state_key, [&closure]
-		(const string_view &event_id)
-		{
-			return closure(index(m::event::id(unquote(event_id)), std::nothrow));
-		});
+	{
+		assert(0);
+		return false;
+	}
 
 	auto &column{dbs::room_state};
 	char key[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -2132,9 +2072,10 @@ ircd::m::room::state::has(const string_view &type,
 const
 {
 	if(!present())
-		return m::state::get(std::nothrow, root_id, type, state_key, []
-		(const string_view &event_id)
-		{});
+	{
+		assert(0);
+		return false;
+	}
 
 	auto &column{dbs::room_state};
 	char key[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -2152,9 +2093,6 @@ size_t
 ircd::m::room::state::count(const string_view &type)
 const
 {
-	if(!present())
-		return m::state::count(root_id, type);
-
 	size_t ret{0};
 	for_each(type, event::closure_idx{[&ret]
 	(const event::idx &event_idx)
@@ -2213,13 +2151,6 @@ bool
 ircd::m::room::state::for_each(const event::id::closure_bool &closure)
 const
 {
-	if(!present())
-		return m::state::for_each(root_id, m::state::iter_bool_closure{[&closure]
-		(const json::array &key, const string_view &event_id)
-		{
-			return closure(unquote(event_id));
-		}});
-
 	return for_each(event::closure_idx_bool{[&closure]
 	(const event::idx &idx)
 	{
@@ -2262,12 +2193,10 @@ ircd::m::room::state::for_each(const closure_bool &closure)
 const
 {
 	if(!present())
-		return m::state::for_each(root_id, m::state::iter_bool_closure{[&closure]
-		(const json::array &key, const string_view &event_id)
-		{
-			const auto idx(index(m::event::id(unquote(event_id)), std::nothrow));
-			return closure(key.at(0), key.at(1), idx);
-		}});
+	{
+		assert(0);
+		return true;
+	}
 
 	db::gopts opts
 	{
@@ -2396,13 +2325,6 @@ ircd::m::room::state::for_each(const string_view &type,
                                const event::id::closure_bool &closure)
 const
 {
-	if(!present())
-		return m::state::for_each(root_id, type, state_key_lb, [&closure]
-		(const json::array &key, const string_view &event_id)
-		{
-			return closure(unquote(event_id));
-		});
-
 	return for_each(type, state_key_lb, event::closure_idx_bool{[&closure]
 	(const event::idx &idx)
 	{
@@ -2437,12 +2359,10 @@ ircd::m::room::state::for_each(const string_view &type,
 const
 {
 	if(!present())
-		return m::state::for_each(root_id, type, state_key_lb, [&closure]
-		(const json::array &key, const string_view &event_id)
-		{
-			const auto idx(index(m::event::id(unquote(event_id)), std::nothrow));
-			return closure(key.at(0), key.at(1), idx);
-		});
+	{
+		assert(0);
+		return true;
+	}
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	const auto &key
@@ -2505,12 +2425,10 @@ ircd::m::room::state::for_each(const string_view &type,
 const
 {
 	if(!present())
-		return m::state::for_each(root_id, type, state_key_lb, [&closure]
-		(const json::array &key, const string_view &event_id)
-		{
-			assert(size(key) >= 2);
-			return closure(unquote(key.at(1)));
-		});
+	{
+		assert(0);
+		return true;
+	}
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
 	const auto &key
@@ -2582,24 +2500,10 @@ const
 {
 	string_view last;
 	char lastbuf[m::event::TYPE_MAX_SIZE];
+
 	if(!present())
 	{
-		m::state::for_each(root_id, m::state::iter_bool_closure{[&closure, &last, &lastbuf]
-		(const json::array &key, const string_view &)
-		{
-			assert(size(key) >= 2);
-			const auto type
-			{
-				unquote(key.at(0))
-			};
-
-			if(type == last)
-				return true;
-
-			last = strlcpy(lastbuf, type);
-			return closure(type);
-		}});
-
+		assert(0);
 		return true;
 	}
 
@@ -2653,15 +2557,6 @@ const
 	if(!event_id)
 		return true;
 
-	// When an event_id is passed but no state btree root_id was found
-	// that means there is no state btree generated for this room or at
-	// this event_id. Right now we fall back to using the present state
-	// of the room, which may be confusing behavior. In production this
-	// shouldn't happen; if it does, the ctor should probably throw rather
-	// than this. We just fallback to considering present state here.
-	if(!root_id)
-		return true;
-
 	// Check the cached value from a previous false result of this function
 	// before doing any real work/IO below. If this function ever returned
 	// false it will never return true after.
@@ -2676,17 +2571,6 @@ const
 	// If the event_id passed is exactly the latest event we can obviously
 	// consider this the present state.
 	if(!head_id || head_id == event_id)
-		return true;
-
-	m::state::id_buffer root_id_buf;
-	const auto head_root
-	{
-		dbs::state_root(root_id_buf, room_id, head_id)
-	};
-
-	// If the room's state has not changed between the event_id desired
-	// here and the latest event we can also consider this the present state.
-	if(head_root && head_root == root_id)
 		return true;
 
 	// This result is cacheable because once it's no longer the present

@@ -198,7 +198,6 @@ ircd::m::module_names
 	"s_feds",
 	"s_node",
 	"m_events",
-	"m_state",
 	"m_rooms",
 	"m_user",
 	"m_room_aliases",

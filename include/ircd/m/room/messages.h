@@ -56,7 +56,6 @@ struct ircd::m::room::messages
 	event::id::buf event_id() const;   // deprecated; will remove
 	event::idx event_idx() const;      // Available from the iterator key.
 	uint64_t depth() const;            // Available from the iterator key.
-	string_view state_root() const;    // Available from the iterator value.
 
 	explicit operator event::idx() const;
 

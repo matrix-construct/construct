@@ -55,7 +55,6 @@ namespace ircd::m::dbs::appendix
 #include "room_joined.h"            // room_id | origin, member => event_idx
 #include "room_state.h"             // room_id | type, state_key => event_idx
 #include "room_state_space.h"       // room_id | type, state_key, depth, event_idx
-#include "state_node.h"             // node_id => (m::state::node JSON)
 
 /// Options that affect the dbs::write() of an event to the transaction.
 struct ircd::m::dbs::write_opts

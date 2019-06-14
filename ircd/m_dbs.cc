@@ -76,11 +76,6 @@ decltype(ircd::m::dbs::room_state_space)
 ircd::m::dbs::room_state_space
 {};
 
-/// Linkage for a reference to the state_node column.
-decltype(ircd::m::dbs::state_node)
-ircd::m::dbs::state_node
-{};
-
 /// Coarse variable for enabling the uncompressed cache on the events database;
 /// note this conf item is only effective by setting an environmental variable
 /// before daemon startup. It has no effect in any other regard.
@@ -194,7 +189,6 @@ ircd::m::dbs::init::init(const string_view &servername,
 	room_joined = db::domain{*events, desc::events__room_joined.name};
 	room_state = db::domain{*events, desc::events__room_state.name};
 	room_state_space = db::domain{*events, desc::events__room_state_space.name};
-	state_node = db::column{*events, desc::events__state_node.name};
 }
 
 /// Shuts down the m::dbs subsystem; closes the events database. The extern
@@ -1346,106 +1340,6 @@ ircd::m::dbs::find_event_idx(const event::id &event_id,
 
 	if(wopts.allow_queries && !ret)
 		ret = m::index(event_id, std::nothrow); // query
-
-	return ret;
-}
-
-ircd::string_view
-ircd::m::dbs::state_root(const mutable_buffer &out,
-                         const event &event)
-{
-	return state_root(out, at<"room_id"_>(event), at<"event_id"_>(event), at<"depth"_>(event));
-}
-
-ircd::string_view
-ircd::m::dbs::state_root(const mutable_buffer &out,
-                         const id::event &event_id)
-{
-	return state_root(out, index(event_id));
-}
-
-ircd::string_view
-ircd::m::dbs::state_root(const mutable_buffer &out,
-                         const event::idx &event_idx)
-{
-	static constexpr auto idx
-	{
-		json::indexof<event, "room_id"_>()
-	};
-
-	auto &column
-	{
-		event_column.at(idx)
-	};
-
-	id::room::buf room_id;
-	column(byte_view<string_view>(event_idx), [&room_id]
-	(const string_view &val)
-	{
-		room_id = val;
-	});
-
-	return state_root(out, room_id, event_idx);
-}
-
-ircd::string_view
-ircd::m::dbs::state_root(const mutable_buffer &out,
-                         const id::room &room_id,
-                         const id::event &event_id)
-{
-	return state_root(out, room_id, index(event_id));
-}
-
-ircd::string_view
-ircd::m::dbs::state_root(const mutable_buffer &out,
-                         const id::room &room_id,
-                         const event::idx &event_idx)
-{
-	static constexpr auto idx
-	{
-		json::indexof<event, "depth"_>()
-	};
-
-	auto &column
-	{
-		event_column.at(idx)
-	};
-
-	uint64_t depth;
-	column(byte_view<string_view>(event_idx), [&depth]
-	(const string_view &binary)
-	{
-		depth = byte_view<uint64_t>(binary);
-	});
-
-	return state_root(out, room_id, event_idx, depth);
-}
-
-ircd::string_view
-ircd::m::dbs::state_root(const mutable_buffer &out,
-                         const id::room &room_id,
-                         const id::event &event_id,
-                         const uint64_t &depth)
-{
-	return state_root(out, room_id, index(event_id), depth);
-}
-
-ircd::string_view
-ircd::m::dbs::state_root(const mutable_buffer &out,
-                         const id::room &room_id,
-                         const event::idx &event_idx,
-                         const uint64_t &depth)
-{
-	char keybuf[ROOM_EVENTS_KEY_MAX_SIZE]; const auto key
-	{
-		room_events_key(keybuf, room_id, depth, event_idx)
-	};
-
-	string_view ret;
-	room_events(key, [&out, &ret](const string_view &val)
-	{
-		ret = { data(out), copy(out, val) };
-	});
 
 	return ret;
 }
@@ -2713,7 +2607,7 @@ ircd::m::dbs::room_events_key(const string_view &amalgam)
 
 /// This column stores events in sequence in a room. Consider the following:
 ///
-/// [room_id | depth + event_idx => state_root]
+/// [room_id | depth + event_idx]
 ///
 /// The key is composed from three parts:
 ///
@@ -2730,17 +2624,6 @@ ircd::m::dbs::room_events_key(const string_view &amalgam)
 /// prefixing but the event_idx suffix gives the key total uniqueness.
 /// NOTE: event_idx is a fixed 8 byte binary integer.
 ///
-/// The value is then used to store the node ID of the state tree root at this
-/// event. Nodes of the state tree are stored in the state_node column. From
-/// that root node the state of the room at the time of this event_id can be
-/// queried.
-///
-/// There is one caveat here: we can't directly take a room_id and an event_idx
-/// and make a trivial query to find the state root, since the depth number
-/// gets in the way. Rather than creating yet another column without the depth,
-/// for the time being, we pay the cost of an extra query to events_depth and
-/// find that missing piece to make the exact query with all three key parts.
-///
 const ircd::db::descriptor
 ircd::m::dbs::desc::events__room_events
 {
@@ -2748,9 +2631,9 @@ ircd::m::dbs::desc::events__room_events
 	"_room_events",
 
 	// explanation
-	R"(Indexes events in timeline sequence for a room; maps to m::state root.
+	R"(Indexes events in timeline sequence for a room
 
-	[room_id | depth + event_idx => state_root]
+	[room_id | depth + event_idx]
 
 	)",
 
@@ -3403,111 +3286,6 @@ ircd::m::dbs::desc::events__room_state_space
 
 	// meta_block size
 	size_t(events__room_state_space__meta_block__size),
-};
-
-//
-// state node
-//
-
-decltype(ircd::m::dbs::desc::events__state_node__block__size)
-ircd::m::dbs::desc::events__state_node__block__size
-{
-	{ "name",     "ircd.m.dbs.events._state_node.block.size" },
-	{ "default",  1024L                                      },
-};
-
-decltype(ircd::m::dbs::desc::events__state_node__meta_block__size)
-ircd::m::dbs::desc::events__state_node__meta_block__size
-{
-	{ "name",     "ircd.m.dbs.events._state_node.meta_block.size" },
-	{ "default",  1024L                                           },
-};
-
-decltype(ircd::m::dbs::desc::events__state_node__cache__size)
-ircd::m::dbs::desc::events__state_node__cache__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events._state_node.cache.size"  },
-		{ "default",  long(64_MiB)                                },
-	}, []
-	{
-		const size_t &value{events__state_node__cache__size};
-		db::capacity(db::cache(state_node), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__state_node__cache_comp__size)
-ircd::m::dbs::desc::events__state_node__cache_comp__size
-{
-	{
-		{ "name",     "ircd.m.dbs.events._state_node.cache_comp.size"  },
-		{ "default",  long(32_MiB)                                     },
-	}, []
-	{
-		const size_t &value{events__state_node__cache_comp__size};
-		db::capacity(db::cache_compressed(state_node), value);
-	}
-};
-
-decltype(ircd::m::dbs::desc::events__state_node__bloom__bits)
-ircd::m::dbs::desc::events__state_node__bloom__bits
-{
-	{ "name",     "ircd.m.dbs.events._state_node.bloom.bits" },
-	{ "default",  0L                                         },
-};
-
-/// State nodes are pieces of the m::state:: b-tree. The key is the hash
-/// of the value, which serves as the ID of the node when referenced in
-/// the tree. see: m/state.h for details.
-///
-const ircd::db::descriptor
-ircd::m::dbs::desc::events__state_node
-{
-	// name
-	"_state_node",
-
-	// explanation
-	R"(Node data in the m::state b-tree.
-
-	The key is the node_id (a hash of the node's value). The value is JSON.
-	See the m::state system for more information.
-
-	)",
-
-	// typing (key, value)
-	{
-		typeid(ircd::string_view), typeid(ircd::string_view)
-	},
-
-	// options
-	{},
-
-	// comparator
-	{},
-
-	// prefix transform
-	{},
-
-	// drop column
-	false,
-
-	// cache size
-	bool(events_cache_enable)? -1 : 0,
-
-	// cache size for compressed assets
-	bool(events_cache_comp_enable)? -1 : 0,
-
-	// bloom filter bits
-	size_t(events__state_node__bloom__bits),
-
-	// expect queries hit
-	true,
-
-	// block size
-	size_t(events__state_node__block__size),
-
-	// meta_block size
-	size_t(events__state_node__meta_block__size),
 };
 
 //
@@ -4355,6 +4133,7 @@ namespace ircd::m::dbs::desc
 	extern const ircd::db::comparator events__event_auth__cmp;
 	extern const ircd::db::prefix_transform events__event_auth__pfx;
 	extern const ircd::db::descriptor events__event_bad;
+	extern const ircd::db::descriptor events__state_node;
 
 	//
 	// Required by RocksDB
@@ -4753,6 +4532,38 @@ ircd::m::dbs::desc::events_signatures
 };
 
 const ircd::db::descriptor
+ircd::m::dbs::desc::events__state_node
+{
+	// name
+	"_state_node",
+
+	// explanation
+	R"(
+
+	This column is deprecated and has been dropped from the schema. This
+	descriptor will erase its presence in the database upon next open.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(ircd::string_view), typeid(ircd::string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	{},
+
+	// prefix transform
+	{},
+
+	// drop column
+	true,
+};
+
+const ircd::db::descriptor
 ircd::m::dbs::desc::events__default
 {
 	// name
@@ -4847,11 +4658,11 @@ ircd::m::dbs::desc::events
 	// Mapping of type strings to event_idx's of that type.
 	events__event_type,
 
-	// (room_id, (depth, event_idx)) => (state_root)
+	// (room_id, (depth, event_idx))
 	// Sequence of all events for a room, ever.
 	events__room_events,
 
-	// (room_id, (origin, user_id)) => ()
+	// (room_id, (origin, user_id))
 	// Sequence of all PRESENTLY JOINED joined for a room.
 	events__room_joined,
 
@@ -4862,10 +4673,6 @@ ircd::m::dbs::desc::events
 	// (room_id, (type, state_key, depth, event_idx))
 	// Sequence of all states of the room.
 	events__room_state_space,
-
-	// (state tree node id) => (state tree node)
-	// Mapping of state tree node id to node data.
-	events__state_node,
 
 	// (room_id, event_id) => (event_idx)
 	// Mapping of all current head events for a room.
@@ -4884,4 +4691,5 @@ ircd::m::dbs::desc::events
 	events_signatures,
 	events__event_auth,
 	events__event_bad,
+	events__state_node,
 };

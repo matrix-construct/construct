@@ -150,7 +150,6 @@ endif
 libircd_la_SOURCES += m_name.cc
 libircd_la_SOURCES += m_id.cc
 libircd_la_SOURCES += m_dbs.cc
-libircd_la_SOURCES += m_state.cc
 libircd_la_SOURCES += m_room.cc
 libircd_la_SOURCES += m_v1.cc
 libircd_la_SOURCES += m.cc

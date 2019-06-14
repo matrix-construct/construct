@@ -33,13 +33,10 @@ struct ircd::m::room::state
 	using closure_bool = std::function<bool (const string_view &, const string_view &, const event::idx &)>;
 	IRCD_STRONG_TYPEDEF(string_view, type_prefix)
 
-	static conf::item<bool> disable_history;
 	static conf::item<size_t> readahead_size;
 
 	room::id room_id;
 	event::id::buf event_id;
-	m::state::id_buffer root_id_buf;
-	m::state::id root_id;
 	const event::fetch::opts *fopts {nullptr};
 	mutable bool _not_present {false}; // cached result of !present()
 
@@ -105,8 +102,6 @@ struct ircd::m::room::state
 	static event::idx next(const event::idx &);
 
 	static size_t prefetch(const state &, const string_view &, const event::idx_range &);
-	static size_t clear_history(const state &);
-	static size_t rebuild_history(const state &);
 	static size_t rebuild_present(const state &);
 	static bool force_present(const event &);
 	static size_t purge_replaced(const state &);
