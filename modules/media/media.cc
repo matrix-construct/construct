@@ -248,6 +248,10 @@ try
 	};
 
 	create(room, user_id, "file");
+	const unwind::exceptional purge{[&room]
+	{
+		m::room::purge(room);
+	}};
 
 	const size_t written
 	{
