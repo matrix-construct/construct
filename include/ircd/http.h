@@ -328,6 +328,7 @@ enum ircd::http::code
 	PAYLOAD_TOO_LARGE                       = 413,
 	REQUEST_URI_TOO_LONG                    = 414,
 	UNSUPPORTED_MEDIA_TYPE                  = 415,
+	RANGE_NOT_SATISFIABLE                   = 416,
 	EXPECTATION_FAILED                      = 417,
 	IM_A_TEAPOT                             = 418,
 	UNPROCESSABLE_ENTITY                    = 422,

@@ -88,6 +88,7 @@ ircd::http::reason
 	{ code::PAYLOAD_TOO_LARGE,                   "Payload Too Large"                               },
 	{ code::REQUEST_URI_TOO_LONG,                "Request URI Too Long"                            },
 	{ code::UNSUPPORTED_MEDIA_TYPE,              "Unsupported Media Type"                          },
+	{ code::RANGE_NOT_SATISFIABLE,               "Range Not Satisfiable"                           },
 	{ code::EXPECTATION_FAILED,                  "Expectation Failed"                              },
 	{ code::IM_A_TEAPOT,                         "Negative, I Am A Meat Popsicle"                  },
 	{ code::UNPROCESSABLE_ENTITY,                "Unprocessable Entity"                            },
