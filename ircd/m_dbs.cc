@@ -3235,10 +3235,38 @@ ircd::m::dbs::desc::events__room_state_space__cmp
 		if(empty(post[1]))
 			return false;
 
-		// Perform standard comparison over the typed tuple.
-		const auto _a(room_state_space_key(post[0]));
-		const auto _b(room_state_space_key(post[1]));
-		return _a < _b;
+		// Decompose the postfix of the key for granular sorting
+		const room_state_space_key_parts k[2]
+		{
+			room_state_space_key(post[0]),
+			room_state_space_key(post[1])
+		};
+
+		// type
+		if(std::get<0>(k[0]) < std::get<0>(k[1]))
+			return true;
+		else if(std::get<0>(k[0]) > std::get<0>(k[1]))
+			return false;
+
+		// state_key
+		if(std::get<1>(k[0]) < std::get<1>(k[1]))
+			return true;
+		else if(std::get<1>(k[0]) > std::get<1>(k[1]))
+			return false;
+
+		// depth (ORDER IS DESCENDING!)
+		if(std::get<2>(k[0]) > std::get<2>(k[1]))
+			return true;
+		else if(std::get<2>(k[0]) < std::get<2>(k[1]))
+			return false;
+
+		// event_idx (ORDER IS DESCENDING!)
+		if(std::get<3>(k[0]) > std::get<3>(k[1]))
+			return true;
+		else if(std::get<3>(k[0]) < std::get<3>(k[1]))
+			return false;
+
+		return false;
 	},
 
 	// equal
@@ -3268,7 +3296,7 @@ ircd::m::dbs::desc::events__room_state_space
 	{},
 
 	// comparator
-	{},
+	events__room_state_space__cmp,
 
 	// prefix transform
 	events__room_state_space__pfx,
