@@ -88,15 +88,15 @@ get__thumbnail(client &client,
                const resource::request &request)
 {
 	if(request.parv.size() < 1)
-		throw http::error
+		throw m::NEED_MORE_PARAMS
 		{
-			http::MULTIPLE_CHOICES, "Server name parameter required"
+			"Server name parameter required"
 		};
 
 	if(request.parv.size() < 2)
-		throw http::error
+		throw m::NEED_MORE_PARAMS
 		{
-			http::MULTIPLE_CHOICES, "Media ID parameter required"
+			"Media ID parameter required"
 		};
 
 	auto &server
