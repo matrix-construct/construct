@@ -27,6 +27,7 @@ namespace ircd::m::dbs
 	string_view room_state_space_key(const mutable_buffer &out, const id::room &, const string_view &type, const string_view &state_key, const int64_t &depth, const event::idx & = 0);
 	string_view room_state_space_key(const mutable_buffer &out, const id::room &, const string_view &type, const string_view &state_key);
 	string_view room_state_space_key(const mutable_buffer &out, const id::room &, const string_view &type);
+	string_view room_state_space_key(const mutable_buffer &out, const id::room &);
 	room_state_space_key_parts room_state_space_key(const string_view &amalgam);
 
 	// room_id | type, state_key, depth, event_idx => --

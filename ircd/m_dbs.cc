@@ -3069,10 +3069,17 @@ ircd::m::dbs::desc::events__room_state_space__bloom__bits
 
 ircd::string_view
 ircd::m::dbs::room_state_space_key(const mutable_buffer &out_,
+                                   const id::room &room_id)
+{
+	return room_state_space_key(out_, room_id, string_view{}, string_view{}, -1L, 0L);
+}
+
+ircd::string_view
+ircd::m::dbs::room_state_space_key(const mutable_buffer &out_,
                                    const id::room &room_id,
                                    const string_view &type)
 {
-	return room_state_space_key(out_, room_id, type, string_view{});
+	return room_state_space_key(out_, room_id, type, string_view{}, -1L, 0L);
 }
 
 ircd::string_view
@@ -3081,7 +3088,7 @@ ircd::m::dbs::room_state_space_key(const mutable_buffer &out_,
                                    const string_view &type,
                                    const string_view &state_key)
 {
-	return room_state_space_key(out_, room_id, type, state_key, -1L);
+	return room_state_space_key(out_, room_id, type, state_key, -1L, 0L);
 }
 
 ircd::string_view
