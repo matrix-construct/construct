@@ -694,6 +694,10 @@ github_handle__issues(std::ostream &out,
 	}
 	else if(action == "labeled")
 	{
+		// quiet these messages for now until we can figure out how to reduce
+		// noise around issue opens.
+		return false;
+
 		const json::object label
 		{
 			content["label"]
@@ -718,6 +722,10 @@ github_handle__issues(std::ostream &out,
 	}
 	else if(action == "unlabeled")
 	{
+		// quiet these messages for now until we can figure out how to reduce
+		// noise around issue opens.
+		return false;
+
 		const json::object label
 		{
 			content["label"]
