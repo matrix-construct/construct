@@ -230,6 +230,8 @@ struct ircd::http::request::head
 	string_view content_type;
 	string_view user_agent;
 	string_view upgrade;
+	string_view range;
+	string_view if_range;
 	size_t content_length {0};
 
 	string_view uri;       // full view of (path, query, fragmet)
@@ -266,8 +268,10 @@ struct ircd::http::response
 struct ircd::http::response::head
 :line::response
 {
-	size_t content_length {0};
 	string_view content_type;
+	size_t content_length {0};
+	string_view content_range;
+	string_view accept_range;
 	string_view transfer_encoding;
 	string_view server;
 

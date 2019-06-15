@@ -304,22 +304,36 @@ ircd::http::request::head::head(parse::capstan &pc,
 	{
 		if(iequals(h.first, "host"_sv))
 			this->host = h.second;
+
 		else if(iequals(h.first, "expect"_sv))
 			this->expect = h.second;
+
 		else if(iequals(h.first, "te"_sv))
 			this->te = h.second;
-		else if(iequals(h.first, "content-length"_sv))
-			this->content_length = parser.content_length(h.second);
+
 		else if(iequals(h.first, "authorization"_sv))
 			this->authorization = h.second;
+
 		else if(iequals(h.first, "connection"_sv))
 			this->connection = h.second;
+
 		else if(iequals(h.first, "content-type"_sv))
 			this->content_type = h.second;
+
 		else if(iequals(h.first, "user-agent"_sv))
 			this->user_agent = h.second;
+
 		else if(iequals(h.first, "upgrade"_sv))
 			this->upgrade = h.second;
+
+		else if(iequals(h.first, "range"_sv))
+			this->range = h.second;
+
+		else if(iequals(h.first, "if-range"_sv))
+			this->if_range = h.second;
+
+		else if(iequals(h.first, "content-length"_sv))
+			this->content_length = parser.content_length(h.second);
 
 		if(c)
 			c(h);
@@ -463,11 +477,17 @@ ircd::http::response::head::head(parse::capstan &pc,
 {
 	http::headers{pc, [this, &c](const auto &h)
 	{
-		if(iequals(h.first, "content-length"s))
+		if(iequals(h.first, "content-type"s))
+			this->content_type = h.second;
+
+		else if(iequals(h.first, "content-length"s))
 			this->content_length = parser.content_length(h.second);
 
-		else if(iequals(h.first, "content-type"s))
-			this->content_type = h.second;
+		else if(iequals(h.first, "content-range"s))
+			this->content_range = h.second;
+
+		else if(iequals(h.first, "accept-range"s))
+			this->content_range = h.second;
 
 		else if(iequals(h.first, "transfer-encoding"s))
 			this->transfer_encoding = h.second;
