@@ -185,6 +185,7 @@ struct ircd::m::room
 #include "timeline.h"
 #include "state.h"
 #include "state_space.h"
+#include "state_history.h"
 #include "members.h"
 #include "origins.h"
 #include "head.h"

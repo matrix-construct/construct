@@ -8618,6 +8618,72 @@ console_cmd__room__state__keys(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__state__history(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "event_id|depth", "type", "state_key"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto point
+	{
+		param.at("event_id|depth")
+	};
+
+	const string_view &type
+	{
+		param["type"]
+	};
+
+	const string_view &state_key
+	{
+		param["state_key"]
+	};
+
+	const m::event::id &event_id
+	{
+		!try_lex_cast<int64_t>(point)?
+			m::event::id{point}:
+			m::event::id{}
+	};
+
+	const int64_t bound
+	{
+		try_lex_cast<int64_t>(point)?
+			lex_cast<int64_t>(point):
+			-1L
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const m::room::state::history history
+	{
+		room, bound
+	};
+
+	history.for_each(type, state_key, [&out]
+	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+	{
+		out << std::setw(11) << std::left << event_idx;
+		out << " " << std::setw(9) << std::left << depth;
+		out << " " << std::setw(32) << std::left << type;
+		out << " " << std::setw(64) << std::left << state_key;
+		out << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__room__state__space(opt &out, const string_view &line)
 {
 	const params param{line, " ",
