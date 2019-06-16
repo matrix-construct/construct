@@ -1858,6 +1858,13 @@ ircd::m::room::messages::fetch(std::nothrow_t)
 // room::state
 //
 
+decltype(ircd::m::room::state::enable_history)
+ircd::m::room::state::enable_history
+{
+	{ "name",     "ircd.m.room.state.enable_history" },
+	{ "default",  true                               },
+};
+
 decltype(ircd::m::room::state::readahead_size)
 ircd::m::room::state::readahead_size
 {
@@ -1977,7 +1984,12 @@ const try
 {
 	if(!present())
 	{
-		assert(0);
+		const history history
+		{
+			room_id, event_id
+		};
+
+		closure(history.get(type, state_key));
 		return;
 	}
 
@@ -2043,8 +2055,22 @@ const
 {
 	if(!present())
 	{
-		assert(0);
-		return false;
+		const history history
+		{
+			room_id, event_id
+		};
+
+		const auto event_idx
+		{
+			history.get(std::nothrow, type, state_key)
+		};
+
+		if(event_idx)
+		{
+			closure(event_idx);
+			return true;
+		}
+		else return false;
 	}
 
 	auto &column{dbs::room_state};
@@ -2073,8 +2099,12 @@ const
 {
 	if(!present())
 	{
-		assert(0);
-		return false;
+		const history history
+		{
+			room_id, event_id
+		};
+
+		return history.has(type, state_key);
 	}
 
 	auto &column{dbs::room_state};
@@ -2194,8 +2224,16 @@ const
 {
 	if(!present())
 	{
-		assert(0);
-		return true;
+		const history history
+		{
+			room_id, event_id
+		};
+
+		return history.for_each([&closure]
+		(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+		{
+			return closure(type, state_key, event_idx);
+		});
 	}
 
 	db::gopts opts
@@ -2360,8 +2398,16 @@ const
 {
 	if(!present())
 	{
-		assert(0);
-		return true;
+		const history history
+		{
+			room_id, event_id
+		};
+
+		return history.for_each(type, state_key_lb, [&closure]
+		(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
+		{
+			return closure(type, state_key, event_idx);
+		});
 	}
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -2426,8 +2472,16 @@ const
 {
 	if(!present())
 	{
-		assert(0);
-		return true;
+		const history history
+		{
+			room_id, event_id
+		};
+
+		return history.for_each(type, state_key_lb, [&closure]
+		(const auto &, const auto &state_key, const auto &, const auto &)
+		{
+			return closure(state_key);
+		});
 	}
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -2503,8 +2557,16 @@ const
 
 	if(!present())
 	{
-		assert(0);
-		return true;
+		const history history
+		{
+			room_id, event_id
+		};
+
+		return history.for_each([&closure]
+		(const auto &type, const auto &, const auto &, const auto &)
+		{
+			return closure(type);
+		});
 	}
 
 	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
@@ -2555,6 +2617,12 @@ const
 	// When no event_id is passed to the state constructor that immediately
 	// indicates the present state of the room is sought.
 	if(!event_id)
+		return true;
+
+	// When the global configuration disables history, always consider the
+	// present state. (disabling may yield unexpected incorrect results by
+	// returning the present state without error).
+	if(!enable_history)
 		return true;
 
 	// Check the cached value from a previous false result of this function

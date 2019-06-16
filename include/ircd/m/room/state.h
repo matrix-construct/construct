@@ -34,6 +34,7 @@ struct ircd::m::room::state
 	using closure_bool = std::function<bool (const string_view &, const string_view &, const event::idx &)>;
 	IRCD_STRONG_TYPEDEF(string_view, type_prefix)
 
+	static conf::item<bool> enable_history;
 	static conf::item<size_t> readahead_size;
 
 	room::id room_id;
