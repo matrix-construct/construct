@@ -3101,34 +3101,12 @@ ircd::m::dbs::room_state_space_key(const mutable_buffer &out_,
 {
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
-
-	if(!defined(type))
-		return { data(out_), data(out) };
-
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, type));
-
-	if(!defined(state_key))
-	{
-		assert(depth < 0L && !event_idx);
-		return { data(out_), data(out) };
-	}
-
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, state_key));
-
-	if(depth < 0)
-	{
-		assert(!event_idx);
-		return { data(out_), data(out) };
-	}
-
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, byte_view<string_view>(depth)));
-
-	if(!event_idx)
-		return { data(out_), data(out) };
-
 	consume(out, copy(out, byte_view<string_view>(event_idx)));
 	return { data(out_), data(out) };
 }
@@ -3165,14 +3143,14 @@ ircd::m::dbs::room_state_space_key(const string_view &amalgam)
 	{
 		size(state_key_split.second) >= 8?
 			int64_t(byte_view<int64_t>(state_key_split.second.substr(0, 8))):
-			0L
+			-1L
 	};
 
 	const event::idx &event_idx
 	{
 		size(state_key_split.second) >= 16?
 			event::idx(byte_view<event::idx>(state_key_split.second.substr(8, 8))):
-			0L
+			0UL
 	};
 
 	return
@@ -3255,9 +3233,9 @@ ircd::m::dbs::desc::events__room_state_space__cmp
 			return false;
 
 		// depth (ORDER IS DESCENDING!)
-		if(std::get<2>(k[0]) > std::get<2>(k[1]))
+		if(uint64_t(std::get<2>(k[0])) > uint64_t(std::get<2>(k[1])))
 			return true;
-		else if(std::get<2>(k[0]) < std::get<2>(k[1]))
+		else if(uint64_t(std::get<2>(k[0])) < uint64_t(std::get<2>(k[1])))
 			return false;
 
 		// event_idx (ORDER IS DESCENDING!)
