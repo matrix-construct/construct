@@ -3116,7 +3116,6 @@ ircd::m::dbs::room_state_space_key(const mutable_buffer &out_,
 
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, state_key));
-	consume(out, copy(out, "\0"_sv));
 
 	if(depth < 0)
 	{
@@ -3124,6 +3123,7 @@ ircd::m::dbs::room_state_space_key(const mutable_buffer &out_,
 		return { data(out_), data(out) };
 	}
 
+	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, byte_view<string_view>(depth)));
 
 	if(!event_idx)

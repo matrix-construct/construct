@@ -11,7 +11,11 @@
 #pragma once
 #define HAVE_IRCD_M_ROOM_STATE_SPACE_H
 
-/// Interface to all room states.
+/// Interface to all room states. This is a super-dimension of m::room::state.
+/// This contains all state events without overwriting them; we refer to this
+/// as the state-space. We use this interface as a tool to reconstruct the
+/// state of the room at the point of an event in the past; or efficiently
+/// rebuild the present state table after inconsistencies, etc.
 ///
 struct ircd::m::room::state::space
 {
@@ -20,6 +24,7 @@ struct ircd::m::room::state::space
 
 	m::room room;
 
+  public:
 	bool for_each(const string_view &type, const string_view &state_key, const int64_t &depth, const closure &) const;
 	bool for_each(const string_view &type, const string_view &state_key, const closure &) const;
 	bool for_each(const string_view &type, const closure &) const;

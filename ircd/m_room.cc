@@ -2657,23 +2657,7 @@ bool
 ircd::m::room::state::space::for_each(const closure &closure)
 const
 {
-	auto it
-	{
-		dbs::room_state_space.begin(room.room_id)
-	};
-
-	for(; it; ++it)
-	{
-		const auto &key
-		{
-			dbs::room_state_space_key(it->first)
-		};
-
-		if(!closure(std::get<0>(key), std::get<1>(key), std::get<2>(key), std::get<3>(key)))
-			return false;
-	}
-
-	return true;
+	return for_each(string_view{}, string_view{}, -1L, closure);
 }
 
 bool
@@ -2703,7 +2687,7 @@ const
 	char buf[dbs::ROOM_STATE_SPACE_KEY_MAX_SIZE];
 	const string_view &key
 	{
-		dbs::room_state_space_key(buf, room.room_id, type, state_key, depth)
+		dbs::room_state_space_key(buf, room.room_id, type, state_key, depth, -1UL)
 	};
 
 	auto it
