@@ -38,13 +38,6 @@ namespace ircd::m::rooms
 /// the only options patterns.
 struct ircd::m::rooms::each_opts
 {
-	/// If set: select rooms for this user.
-	m::user user;
-
-	/// If user is set, and this is set: select the membership that user
-	/// has in the room.
-	string_view membership;
-
 	/// If set, seek to this room_id or lower-bound to the closest room_id.
 	string_view key;
 
@@ -58,13 +51,8 @@ struct ircd::m::rooms::each_opts
 	/// for-each protocol: return true to continue, false to break.
 	room::id::closure_bool closure;
 
-	/// Alternative closure when selecting a user.
-	user::rooms::closure_bool user_closure;
-
 	each_opts(room::id::closure_bool);
 	each_opts(const string_view &key, room::id::closure_bool);
-	each_opts(const m::user &user, user::rooms::closure_bool);
-	each_opts(const m::user &user, const string_view &membership, user::rooms::closure_bool);
 	each_opts() = default;
 };
 
@@ -78,22 +66,6 @@ ircd::m::rooms::each_opts::each_opts(const string_view &key,
                                      room::id::closure_bool closure)
 :key{key}
 ,closure{std::move(closure)}
-{}
-
-inline
-ircd::m::rooms::each_opts::each_opts(const m::user &user,
-                                     user::rooms::closure_bool user_closure)
-:user{user}
-,user_closure{std::move(user_closure)}
-{}
-
-inline
-ircd::m::rooms::each_opts::each_opts(const m::user &user,
-	                                 const string_view &membership,
-	                                 user::rooms::closure_bool user_closure)
-:user{user}
-,membership{membership}
-,user_closure{std::move(user_closure)}
 {}
 
 template<class... args>

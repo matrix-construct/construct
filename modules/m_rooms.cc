@@ -60,18 +60,6 @@ bool
 IRCD_MODULE_EXPORT
 ircd::m::rooms::for_each(const each_opts &opts)
 {
-	if(opts.user.user_id)
-	{
-		const m::user::rooms rooms{opts.user};
-		return rooms.for_each(opts.membership, m::user::rooms::closure_bool{[&opts]
-		(const m::room &room, const string_view &membership)
-		{
-			return opts.user_closure?
-				opts.user_closure(room, membership):
-				opts.closure(room.room_id);
-		}});
-	}
-
 	if(opts.public_rooms)
 		return _for_each_public(opts.key, opts.closure);
 
