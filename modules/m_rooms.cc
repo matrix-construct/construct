@@ -21,9 +21,8 @@ namespace ircd::m::rooms
 	static void remote_summary_chunk(const m::room &room, json::stack::object &obj);
 	static void local_summary_chunk(const m::room &room, json::stack::object &obj);
 	extern "C" bool _for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
-	static void create_public_room(const m::event &, m::vm::eval &);
 
-	extern m::hookfn<vm::eval &> create_public_room_hook;
+	extern m::hookfn<vm::eval &> create_public_room;
 	extern const room::id::buf public_room_id;
 }
 
@@ -42,23 +41,20 @@ ircd::m::rooms::public_room_id
 /// Create the public rooms room during initial database bootstrap.
 /// This hooks the creation of the !ircd room which is a fundamental
 /// event indicating the database has just been created.
-decltype(ircd::m::rooms::create_public_room_hook)
-ircd::m::rooms::create_public_room_hook
+decltype(ircd::m::rooms::create_public_room)
+ircd::m::rooms::create_public_room
 {
-	create_public_room,
 	{
 		{ "_site",       "vm.effect"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
+	},
+
+	[](const m::event &, m::vm::eval &)
+	{
+		m::create(public_room_id, m::me.user_id);
 	}
 };
-
-void
-ircd::m::rooms::create_public_room(const m::event &,
-                                   m::vm::eval &)
-{
-	m::create(public_room_id, m::me.user_id);
-}
 
 bool
 IRCD_MODULE_EXPORT
