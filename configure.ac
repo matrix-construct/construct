@@ -844,6 +844,7 @@ RB_CHK_SYSHEADER(valgrind/callgrind.h, [VALGRIND_CALLGRIND_H])
 dnl experimental
 RB_CHK_SYSHEADER(experimental/string_view, [EXPERIMENTAL_STRING_VIEW])
 RB_CHK_SYSHEADER(experimental/optional, [EXPERIMENTAL_OPTIONAL])
+RB_CHK_SYSHEADER(experimental/memory_resource, [EXPERIMENTAL_MEMORY_RESOURCE])
 
 dnl
 dnl Specific function checks
