@@ -13,15 +13,12 @@ namespace ircd::m::rooms
 	static string_view make_state_key(const mutable_buffer &out, const m::room::id &);
 	static m::room::id::buf unmake_state_key(const string_view &);
 
-	extern conf::item<size_t> fetch_limit;
-	extern conf::item<seconds> fetch_timeout;
-	std::pair<size_t, std::string> fetch_update(const net::hostport &, const string_view &since, const size_t &limit, const seconds &timeout);
-	std::pair<size_t, std::string> fetch_update(const net::hostport &, const string_view &since = {});
-
 	static void remote_summary_chunk(const m::room &room, json::stack::object &obj);
 	static void local_summary_chunk(const m::room &room, json::stack::object &obj);
-	extern "C" bool _for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
+	static bool for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
 
+	extern conf::item<size_t> fetch_limit;
+	extern conf::item<seconds> fetch_timeout;
 	extern m::hookfn<vm::eval &> create_public_room;
 	extern const room::id::buf public_room_id;
 }
@@ -61,7 +58,7 @@ IRCD_MODULE_EXPORT
 ircd::m::rooms::for_each(const each_opts &opts)
 {
 	if(opts.public_rooms)
-		return _for_each_public(opts.key, opts.closure);
+		return for_each_public(opts.key, opts.closure);
 
 	const room::state state
 	{
@@ -98,13 +95,13 @@ ircd::m::rooms::count_public(const string_view &server)
 		return true;
 	}};
 
-	_for_each_public(server, count);
+	for_each_public(server, count);
 	return ret;
 }
 
 bool
-ircd::m::rooms::_for_each_public(const string_view &key,
-                                 const room::id::closure_bool &closure)
+ircd::m::rooms::for_each_public(const string_view &key,
+                                const room::id::closure_bool &closure)
 {
 	const room::state state
 	{
@@ -335,17 +332,8 @@ ircd::m::rooms::fetch_limit
 std::pair<size_t, std::string>
 IRCD_MODULE_EXPORT
 ircd::m::rooms::fetch_update(const net::hostport &hp,
-                             const string_view &since)
-{
-	return fetch_update(hp, since, size_t(fetch_limit), seconds(fetch_timeout));
-}
-
-std::pair<size_t, std::string>
-IRCD_MODULE_EXPORT
-ircd::m::rooms::fetch_update(const net::hostport &hp,
                              const string_view &since,
-                             const size_t &limit,
-                             const seconds &timeout)
+                             const size_t &limit)
 {
 	m::v1::public_rooms::opts opts;
 	opts.limit = limit;
@@ -364,7 +352,8 @@ ircd::m::rooms::fetch_update(const net::hostport &hp,
 		hp, buf, std::move(opts)
 	};
 
-	request.wait(timeout);
+	request.wait(seconds(fetch_timeout));
+
 	const auto code
 	{
 		request.get()

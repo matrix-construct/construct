@@ -30,6 +30,7 @@ namespace ircd::m::rooms
 	event::id::buf summary_set(const m::room::id &, const json::object &summary);
 	event::id::buf summary_set(const m::room &);
 	event::id::buf summary_del(const m::room &);
+	std::pair<size_t, std::string> fetch_update(const net::hostport &, const string_view &since = {}, const size_t &limit = 64);
 }
 
 /// Arguments structure to rooms::for_each(). This reduces the API surface to

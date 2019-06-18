@@ -7363,13 +7363,6 @@ console_cmd__rooms__public(opt &out, const string_view &line)
 bool
 console_cmd__rooms__fetch(opt &out, const string_view &line)
 {
-	using prototype = std::pair<size_t, std::string> (const net::hostport &, const string_view &);
-
-	static mods::import<prototype> fetch_update
-	{
-		"m_rooms", "ircd::m::rooms::fetch_update"
-	};
-
 	const params param{line, " ",
 	{
 		"server", "since"
@@ -7387,7 +7380,7 @@ console_cmd__rooms__fetch(opt &out, const string_view &line)
 
 	const auto pair
 	{
-		fetch_update(server, since)
+		m::rooms::fetch_update(server, since)
 	};
 
 	out << "done" << std::endl
