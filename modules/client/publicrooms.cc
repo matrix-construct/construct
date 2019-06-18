@@ -92,6 +92,20 @@ get__publicrooms(client &client,
 		request.get<bool>("include_all_networks", false)
 	};
 
+	if(server && !my_host(server)) try
+	{
+		m::rooms::fetch_update(server, since, limit);
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			m::log, "Failed to fetch public rooms from '%s' :%s",
+			server,
+			e.what()
+		};
+	}
+
 	resource::response::chunked response
 	{
 		client, http::OK
