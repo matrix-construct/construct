@@ -52,11 +52,12 @@ resource::response
 get__publicrooms(client &client,
                  const resource::request &request)
 {
+	char since_buf[256];
 	const string_view &since
 	{
 		request.has("since")?
 			unquote(request["since"]):
-			request.query["since"]
+			url::decode(since_buf, request.query["since"])
 	};
 
 	if(since && !valid(m::id::ROOM, since))
@@ -65,9 +66,10 @@ get__publicrooms(client &client,
 			"Invalid since token for this server."
 		};
 
+	char server_buf[256];
 	const auto &server
 	{
-		request.query["server"]
+		url::decode(server_buf, request.query["server"])
 	};
 
 	const json::object &filter
