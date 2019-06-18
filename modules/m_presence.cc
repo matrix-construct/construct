@@ -165,7 +165,7 @@ try
 
 	if(!useful)
 	{
-		log::debug
+		log::dwarning
 		{
 			presence_log, "presence spam from %s %s is %s and %s %zd seconds ago",
 			at<"origin"_>(event),
