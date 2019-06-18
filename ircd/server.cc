@@ -3457,10 +3457,15 @@ const
 		state.chunk_length == size_t(-1)
 	};
 
+	const bool chunk_dynamic_header_mode
+	{
+		chunk_header_mode && null(request->in.content)
+	};
+
 	assert(request);
 	assert(state.head_read <= size(request->in.head));
 	assert(state.content_read <= state.content_length + state.chunk_read);
-	assert(state.content_read <= state.content_length || !chunk_header_mode);
+	assert(state.content_read <= state.content_length || chunk_dynamic_header_mode);
 
 	if(state.status == (http::code)0)
 		return make_read_head_buffer();
