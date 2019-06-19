@@ -273,9 +273,11 @@ try
 	if(RB_TIME_CONFIGURED > ircd::info::configured_time || RB_TIME_CONFIGURED < ircd::info::configured_time)
 		ircd::log::warning
 		{
-			"Header configuration time:%ld %s than library configuration time:%ld.",
+			"Header configuration time:%ld (%s) %s than library configuration time:%ld (%s).",
+			RB_TIME_CONFIGURED,
 			RB_VERSION_TAG,
 			RB_TIME_CONFIGURED > ircd::info::configured_time? "newer" : "older",
+			ircd::info::configured,
 			ircd::info::tag,
 		};
 
