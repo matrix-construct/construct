@@ -233,7 +233,7 @@ catch(const bad_lex_cast &e)
 
 template<ircd::json::name_hash_t key,
          class T>
-ircd::string_view
+T
 ircd::json::get(const object &object,
                 const T &def)
 try
