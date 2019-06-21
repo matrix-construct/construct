@@ -85,7 +85,7 @@ enum class ircd::m::dbs::ref
 	M_RECEIPT__M_READ   = 0x10,
 
 	/// All m.relates_to's which target this event.
-	M_RELATES__M_REPLY  = 0x20,
+	M_RELATES           = 0x20,
 
 	/// All m.room.redaction's which target this event.
 	M_ROOM_REDACTION    = 0x40,

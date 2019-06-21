@@ -486,7 +486,7 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 	if(opts.event_refs.test(uint(ref::M_RECEIPT__M_READ)))
 		_index_event_refs_m_receipt_m_read(txn, event, opts);
 
-	if(opts.event_refs.test(uint(ref::M_RELATES__M_REPLY)))
+	if(opts.event_refs.test(uint(ref::M_RELATES)))
 		_index_event_refs_m_relates_m_reply(txn, event, opts);
 
 	if(opts.event_refs.test(uint(ref::M_ROOM_REDACTION)))
@@ -750,7 +750,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
                                                   const write_opts &opts)
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
-	assert(opts.event_refs.test(uint(ref::M_RELATES__M_REPLY)));
+	assert(opts.event_refs.test(uint(ref::M_RELATES)));
 
 	if(json::get<"type"_>(event) != "m.room.message")
 		return;
@@ -829,7 +829,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	assert(opts.event_idx != event_idx);
 	const string_view &key
 	{
-		event_refs_key(buf, event_idx, ref::M_RELATES__M_REPLY, opts.event_idx)
+		event_refs_key(buf, event_idx, ref::M_RELATES, opts.event_idx)
 	};
 
 	db::txn::append
@@ -1613,7 +1613,7 @@ ircd::m::dbs::reflect(const ref &type)
 		case ref::NEXT_STATE:            return "NEXT_STATE";
 		case ref::PREV_STATE:            return "PREV_STATE";
 		case ref::M_RECEIPT__M_READ:     return "M_RECEIPT__M_READ";
-		case ref::M_RELATES__M_REPLY:    return "M_RELATES__M_REPLY";
+		case ref::M_RELATES:             return "M_RELATES";
 		case ref::M_ROOM_REDACTION:      return "M_ROOM_REDACTION";
 	}
 
