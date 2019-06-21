@@ -23,6 +23,15 @@ post__leave(client &client,
 		room_id
 	};
 
+	if(!room.has("m.room.member", request.user_id))
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_TARGET_NOT_IN_ROOM",
+			"The user %s has no membership state in %s",
+			string_view{request.user_id},
+			string_view{room_id},
+		};
+
 	const auto event_id
 	{
 		m::leave(room, request.user_id)

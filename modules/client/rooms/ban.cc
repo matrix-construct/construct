@@ -40,6 +40,18 @@ post__ban(client &client,
 			power.level("ban")
 		};
 
+	// Check if the target user has any membership state at all. We don't
+	// yet care *what* that state is, and whatever that is may also change,
+	// but we can filter out clearly mistaken requests and typo'ed inputs.
+	if(!room.has("m.room.member", user_id))
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_TARGET_NOT_IN_ROOM",
+			"The user %s has no membership state in %s",
+			string_view{user_id},
+			string_view{room_id},
+		};
+
 	const auto event_id
 	{
 		send(room, request.user_id, "m.room.member", user_id,
