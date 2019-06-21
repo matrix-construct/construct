@@ -45,6 +45,7 @@
 #include "openssl.h"
 #include "fmt.h"
 #include "http.h"
+#include "http2/http2.h"
 #include "magics.h"
 #include "conf.h"
 #include "stats.h"

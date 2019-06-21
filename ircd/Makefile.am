@@ -124,6 +124,7 @@ libircd_la_SOURCES += rfc1459.cc
 libircd_la_SOURCES += rfc3986.cc
 libircd_la_SOURCES += rfc1035.cc
 libircd_la_SOURCES += http.cc
+libircd_la_SOURCES += http2.cc
 libircd_la_SOURCES += stats.cc
 libircd_la_SOURCES += prof.cc
 libircd_la_SOURCES += fs.cc
