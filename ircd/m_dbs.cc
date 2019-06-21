@@ -250,6 +250,7 @@ namespace ircd::m::dbs
 	static void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &);
+	static void _index_event_refs_m_relates(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_state(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_auth(db::txn &, const event &, const write_opts &);
 	static void _index_event_refs_prev(db::txn &, const event &, const write_opts &);
@@ -485,6 +486,9 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 
 	if(opts.event_refs.test(uint(ref::M_RECEIPT__M_READ)))
 		_index_event_refs_m_receipt_m_read(txn, event, opts);
+
+	if(opts.event_refs.test(uint(ref::M_RELATES)))
+		_index_event_refs_m_relates(txn, event, opts);
 
 	if(opts.event_refs.test(uint(ref::M_RELATES)))
 		_index_event_refs_m_relates_m_reply(txn, event, opts);
@@ -733,6 +737,86 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 	const string_view &key
 	{
 		event_refs_key(buf, event_idx, ref::M_RECEIPT__M_READ, opts.event_idx)
+	};
+
+	db::txn::append
+	{
+		txn, dbs::event_refs,
+		{
+			opts.op, key
+		}
+	};
+}
+
+void
+ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
+                                          const event &event,
+                                          const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_REFS));
+	assert(opts.event_refs.test(uint(ref::M_RELATES)));
+
+	if(!json::get<"content"_>(event).has("m.relates_to"))
+		return;
+
+	if(json::type(json::get<"content"_>(event).get("m.relates_to")) != json::OBJECT)
+		return;
+
+	const json::object &m_relates_to
+	{
+		json::get<"content"_>(event).get("m.relates_to")
+	};
+
+	const json::string &event_id
+	{
+		m_relates_to.get("event_id")
+	};
+
+	if(!event_id)
+		return;
+
+	if(!valid(m::id::EVENT, event_id))
+	{
+		log::derror
+		{
+			log, "Cannot index m.relates_to in %s; '%s' is not an event_id.",
+			json::get<"event_id"_>(event),
+			string_view{event_id}
+		};
+
+		return;
+	}
+
+	const event::idx &event_idx
+	{
+		find_event_idx(event_id, opts)
+	};
+
+	if(opts.appendix.test(appendix::EVENT_HORIZON) && !event_idx)
+	{
+		// If we don't have the event being related to yet, place a marker in
+		// the event_horizon indicating need for re-evaluation later.
+		_index_event_horizon(txn, event, opts, event_id);
+		return;
+	}
+	else if(!event_idx)
+	{
+		log::derror
+		{
+			log, "Cannot index m.relates_to in %s; referenced %s not found.",
+			json::get<"event_id"_>(event),
+			string_view{event_id}
+		};
+
+		return;
+	}
+
+	thread_local char buf[EVENT_REFS_KEY_MAX_SIZE];
+	assert(opts.event_idx != 0 && event_idx != 0);
+	assert(opts.event_idx != event_idx);
+	const string_view &key
+	{
+		event_refs_key(buf, event_idx, ref::M_RELATES, opts.event_idx)
 	};
 
 	db::txn::append
