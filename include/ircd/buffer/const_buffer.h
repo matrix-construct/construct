@@ -74,4 +74,5 @@ ircd::buffer::const_buffer::insert(const char *const &,
                                    const char &)
 {
 	assert(0);
+	__builtin_unreachable();
 }
