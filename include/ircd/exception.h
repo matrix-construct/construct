@@ -155,17 +155,24 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    name(const string_view &fmt = " ", args&&... ap) noexcept                 \
+    name(const string_view &fmt, args&&... ap) noexcept                       \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(#name, fmt, ircd::va_rtti{std::forward<args>(ap)...});       \
+    }                                                                         \
+                                                                              \
+    template<class... args>                                                   \
+    name(const string_view &fmt = " ") noexcept                               \
+    :parent{generate_skip}                                                    \
+    {                                                                         \
+        generate(#name, fmt, ircd::va_rtti{});                                \
     }                                                                         \
                                                                               \
     name(generate_skip_t) noexcept                                            \
     :parent{generate_skip}                                                    \
     {                                                                         \
     }                                                                         \
-};                                                                            \
+};
 
 /// Hides the name of the exception when generating a string
 #define IRCD_EXCEPTION_HIDENAME(parent, name)                                 \
@@ -173,10 +180,17 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    name(const string_view &fmt = " ", args&&... ap) noexcept                 \
+    name(const string_view &fmt, args&&... ap) noexcept                       \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(fmt, ircd::va_rtti{std::forward<args>(ap)...});              \
+    }                                                                         \
+                                                                              \
+    template<class... args>                                                   \
+    name(const string_view &fmt = " ") noexcept                               \
+    :parent{generate_skip}                                                    \
+    {                                                                         \
+        generate(fmt, ircd::va_rtti{});                                       \
     }                                                                         \
                                                                               \
     name(generate_skip_t = {}) noexcept                                       \
@@ -197,10 +211,18 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     template<class... args>                                                   \
-    name(const string_view &fmt = " ", args&&... ap) noexcept                 \
+    name(const string_view &fmt, args&&... ap) noexcept                       \
     :parent{generate_skip}                                                    \
     {                                                                         \
         generate(#name, fmt, ircd::va_rtti{std::forward<args>(ap)...});       \
+        ircd::panicking(*this);                                               \
+    }                                                                         \
+                                                                              \
+    template<class... args>                                                   \
+    name(const string_view &fmt = " ") noexcept                               \
+    :parent{generate_skip}                                                    \
+    {                                                                         \
+        generate(#name, fmt, ircd::va_rtti{});                                \
         ircd::panicking(*this);                                               \
     }                                                                         \
                                                                               \
@@ -208,7 +230,7 @@ struct name                                                                   \
     :parent{generate_skip}                                                    \
     {                                                                         \
     }                                                                         \
-};                                                                            \
+};
 
 namespace ircd
 {
