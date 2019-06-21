@@ -19,8 +19,8 @@ namespace ircd::json
 	string_view stringify(mutable_buffer &, const iov &);
 	std::ostream &operator<<(std::ostream &, const iov &);
 
-	template<class node, size_t SIZE, class T> iov make_iov(node (&)[SIZE], T&& t);
-	template<class node, class T> iov make_iov(node *const &, const size_t &, T&& t);
+	template<class node, size_t SIZE, class T> iov &make_iov(iov &, node (&)[SIZE], T&& t);
+	template<class node, class T> iov &make_iov(iov &, node *const, const size_t &, T&& t);
 }
 
 /// A forward list to compose JSON efficiently on the stack.
