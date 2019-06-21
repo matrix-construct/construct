@@ -26,20 +26,20 @@ namespace ircd::ctx
 	using future_value = typename std::enable_if<!is_void_result<F, A...>(),
 	                     future<typename std::result_of<F (A...)>::type>>::type;
 
-	template<size_t stack_size = DEFAULT_STACK_SIZE,
+	template<size_t stack_size = 0,
 	         context::flags flags = context::flags(0),
 	         class F,
 	         class... A>
 	future_value<F, A...> async(F&& f, A&&... a);
 
-	template<size_t stack_size = DEFAULT_STACK_SIZE,
+	template<size_t stack_size = 0,
 	         context::flags flags = context::flags(0),
 	         class F,
 	         class... A>
 	future_void<F, A...> async(F&& f, A&&... a);
 }
 
-template<size_t stack_size,
+template<size_t stack_size_,
          ircd::ctx::context::flags flags,
          class F,
          class... A>
@@ -60,12 +60,17 @@ ircd::ctx::async(F&& f,
 		}
 	};
 
+	const auto &stack_size
+	{
+		stack_size_?: DEFAULT_STACK_SIZE
+	};
+
 	//TODO: DEFER_POST?
 	context(stack_size, std::move(wrapper), context::DETACH | context::POST | flags);
 	return ret;
 }
 
-template<size_t stack_size,
+template<size_t stack_size_,
          ircd::ctx::context::flags flags,
          class F,
          class... A>
@@ -90,6 +95,11 @@ ircd::ctx::async(F&& f,
 			func();
 			p.set_value();
 		}
+	};
+
+	const auto &stack_size
+	{
+		stack_size_?: DEFAULT_STACK_SIZE
 	};
 
 	//TODO: DEFER_POST?
