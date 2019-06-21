@@ -522,8 +522,11 @@ AM_COND_IF([DEBUG],
 [
 	CXXFLAGS+=" -g"
 	CXXFLAGS+=" -ggdb"
-	CXXFLAGS+=" -fvar-tracking"
-	CXXFLAGS+=" -fvar-tracking-assignments"
+	AM_COND_IF([GCC],
+	[
+		CXXFLAGS+=" -fvar-tracking"
+		CXXFLAGS+=" -fvar-tracking-assignments"
+	])
 ], [
 	AM_COND_IF([COMPACT],
 	[
@@ -537,19 +540,33 @@ AM_COND_IF([DEBUG],
 
 dnl  Creates an ELF section in the output which contains a list of
 dnl  the command line arguments used for compilation.
-CXXFLAGS+=" -frecord-gcc-switches"
+AM_COND_IF([GCC],
+[
+	CXXFLAGS+=" -frecord-gcc-switches"
+])
+
+AM_COND_IF([CLANG],
+[
+	CXXFLAGS+=" -grecord-gcc-switches"
+])
 
 dnl CXXFLAGS+=" -mmpx"
 dnl CXXFLAGS+=" -fcheck-pointer-bounds"
-CXXFLAGS+=" -fchkp-instrument-marked-only"
-CXXFLAGS+=" -fstack-protector-explicit"
+AM_COND_IF([GCC],
+[
+	CXXFLAGS+=" -fchkp-instrument-marked-only"
+	CXXFLAGS+=" -fstack-protector-explicit"
+])
 
 dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
 dnl  functions won't be the same between translation units
 CXXFLAGS+=" -fvisibility-inlines-hidden"
 
 dnl see gcc(1)
-CXXFLAGS+=" -fnothrow-opt"
+AM_COND_IF([GCC],
+[
+	CXXFLAGS+=" -fnothrow-opt"
+])
 
 dnl This disables thread-safety for static variable initialization
 dnl (specifically local static variables inside functions) which reduces
