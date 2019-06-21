@@ -120,7 +120,6 @@ ircd::m::init::modules::modules()
 		this->fini_imports();
 	}};
 
-	init_keys();
 	init_imports();
 }
 
@@ -128,18 +127,6 @@ ircd::m::init::modules::~modules()
 noexcept
 {
 	fini_imports();
-}
-
-void
-ircd::m::init::modules::init_keys()
-{
-	mods::imports.emplace("s_keys"s, "s_keys"s);
-	mods::import<void ()> init_my_keys
-	{
-		"s_keys", "ircd::m::init_my_keys"
-	};
-
-	init_my_keys();
 }
 
 void
@@ -542,6 +529,10 @@ ircd::m::self::init::init(const string_view &origin,
 		{
 			"The origin is configured or has defaulted to 'localhost'"
 		};
+
+	mods::imports.emplace("s_keys"s, "s_keys"s);
+	federation_ed25519();
+	tls_certificate();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1825,90 +1816,6 @@ const uint64_t &
 ircd::m::vm::sequence::get(const eval &eval)
 {
 	return eval.sequence;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/keys.h
-//
-
-void
-ircd::m::verify(const m::keys &keys)
-{
-	using prototype = void (const m::keys &);
-
-	static mods::import<prototype> call
-	{
-		"s_keys", "ircd::m::verify"
-	};
-
-	return call(keys);
-}
-
-bool
-ircd::m::verify(const m::keys &keys,
-                std::nothrow_t)
-noexcept try
-{
-	using prototype = bool (const m::keys &, std::nothrow_t) noexcept;
-
-	static mods::import<prototype> call
-	{
-		"s_keys", "ircd::m::verify"
-	};
-
-	return call(keys, std::nothrow);
-}
-catch(const std::bad_function_call &e)
-{
-	log::error
-	{
-		log, "Key verification module is not loaded :%s", e.what()
-	};
-
-	return false;
-}
-
-//
-// keys
-//
-
-void
-ircd::m::keys::get(const string_view &server_name,
-                   const closure &closure)
-{
-	return get(server_name, "", closure);
-}
-
-void
-ircd::m::keys::get(const string_view &server_name,
-                   const string_view &key_id,
-                   const closure &closure_)
-{
-	using prototype = void (const string_view &, const string_view &, const closure &);
-
-	static mods::import<prototype> call
-	{
-		"s_keys", "ircd::m::keys::get"
-	};
-
-	return call(server_name, key_id, closure_);
-}
-
-bool
-ircd::m::keys::query(const string_view &query_server,
-                     const queries &queries_,
-                     const closure_bool &closure)
-{
-	using prototype = bool (const string_view &, const queries &, const closure_bool &);
-
-	static mods::import<prototype> call
-	{
-		"s_keys", "ircd::m::keys::query"
-	};
-
-	return call(query_server, queries_, closure);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

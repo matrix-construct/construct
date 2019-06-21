@@ -26,6 +26,8 @@ namespace ircd::m::self
 
 	string_view host();
 	bool host(const string_view &);
+
+	void create_my_key();
 }
 
 namespace ircd::m
@@ -45,6 +47,9 @@ namespace ircd
 
 struct ircd::m::self::init
 {
+	static void federation_ed25519();
+	static void tls_certificate();
+
 	init(const string_view &origin, const string_view &servername);
 };
 

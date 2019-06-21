@@ -5420,13 +5420,7 @@ console_cmd__key(opt &out, const string_view &line)
 bool
 console_cmd__key__create(opt &out, const string_view &line)
 {
-	using prototype = void ();
-	static mods::import<prototype> create_my_key
-	{
-		"s_keys", "ircd::m::create_my_key"
-	};
-
-	create_my_key();
+	m::self::create_my_key();
 	out << "done" << std::endl;
 	return true;
 }

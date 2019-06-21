@@ -8,32 +8,11 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::m
-{
-	static bool keys_cache_get(const string_view &server, const string_view &key_id, const keys::closure &);
-	static size_t keys_cache_set(const json::object &);
-	void create_my_key();
-	static void create_my_key_hookfn(const m::event &, m::vm::eval &);
-	static void init_my_ed25519();
-	static void init_my_tls_crt();
-	void init_my_keys();
-
-	extern conf::item<milliseconds> keys_get_timeout;
-	extern conf::item<milliseconds> keys_query_timeout;
-	extern conf::item<std::string> ed25519_key_dir;
-	extern conf::item<std::string> tls_key_dir;
-	extern m::hookfn<m::vm::eval &> create_my_key_hook;
-}
-
 ircd::mapi::header
 IRCD_MODULE
 {
 	"Server keys"
 };
-
-//
-// ircd/m/keys.h
-//
 
 bool
 IRCD_MODULE_EXPORT
@@ -132,10 +111,15 @@ ircd::m::verify(const m::keys &keys)
 }
 
 //
-// ircd::m::keys
+// query
 //
 
-decltype(ircd::m::keys_get_timeout)
+namespace ircd::m
+{
+	extern conf::item<milliseconds> keys_query_timeout;
+}
+
+decltype(ircd::m::keys_query_timeout)
 ircd::m::keys_query_timeout
 {
 	{ "name",     "ircd.keys.query.timeout" },
@@ -212,6 +196,15 @@ catch(const ctx::timeout &e)
 	};
 }
 
+//
+// get
+//
+
+namespace ircd::m
+{
+	extern conf::item<milliseconds> keys_get_timeout;
+}
+
 decltype(ircd::m::keys_get_timeout)
 ircd::m::keys_get_timeout
 {
@@ -222,13 +215,21 @@ ircd::m::keys_get_timeout
 void
 IRCD_MODULE_EXPORT
 ircd::m::keys::get(const string_view &server_name,
+                   const closure &closure)
+{
+	return get(server_name, string_view{}, closure);
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::keys::get(const string_view &server_name,
                    const string_view &key_id,
                    const closure &closure)
 try
 {
 	assert(!server_name.empty());
 
-	if(keys_cache_get(server_name, key_id, closure))
+	if(cache::get(server_name, key_id, closure))
 		return;
 
 	if(server_name == my_host())
@@ -272,7 +273,7 @@ try
 		m::log, "Verified keys from '%s'", server_name
 	};
 
-	keys_cache_set(keys);
+	cache::set(keys);
 	closure(keys);
 }
 catch(const ctx::timeout &e)
@@ -286,358 +287,12 @@ catch(const ctx::timeout &e)
 }
 
 //
-// init
-//
-
-void
-IRCD_MODULE_EXPORT
-ircd::m::init_my_keys()
-{
-	init_my_ed25519();
-	init_my_tls_crt();
-}
-
-decltype(ircd::m::tls_key_dir)
-ircd::m::tls_key_dir
-{
-	{ "name",     "ircd.keys.tls_key_dir"  },
-	{ "default",  fs::cwd()                }
-};
-
-void
-ircd::m::init_my_tls_crt()
-{
-	if(empty(m::self::origin))
-		throw error
-		{
-			"The m::self::origin must be set to init my ed25519 key."
-		};
-
-	const std::string private_key_path_parts[]
-	{
-		std::string{tls_key_dir},
-		m::self::origin + ".crt.key",
-	};
-
-	const std::string public_key_path_parts[]
-	{
-		std::string{tls_key_dir},
-		m::self::origin + ".crt.key.pub",
-	};
-
-	const std::string dhparam_path_parts[]
-	{
-		std::string{tls_key_dir},
-		m::self::origin + ".crt.dh",
-	};
-
-	const std::string certificate_path_parts[]
-	{
-		std::string{tls_key_dir},
-		m::self::origin + ".crt",
-	};
-
-	const std::string private_key_file
-	{
-		fs::path_string(private_key_path_parts)
-	};
-
-	const std::string public_key_file
-	{
-		fs::path_string(public_key_path_parts)
-	};
-
-	const std::string cert_file
-	{
-		fs::path_string(certificate_path_parts)
-	};
-
-	if(!fs::exists(private_key_file) && !ircd::write_avoid)
-	{
-		log::warning
-		{
-			"Failed to find certificate private key @ `%s'; creating...",
-			private_key_file
-		};
-
-		openssl::genrsa(private_key_file, public_key_file);
-	}
-
-/*
-	const std::string dhparam_file
-	{
-		fs::path(dhparam_path_parts)
-	};
-
-	if(!fs::exists(dhparam_file))
-	{
-		log::warning
-		{
-			"Failed to find dhparam file @ `%s'; creating; "
-			"this will take about 2 to 5 minutes...",
-			dhparam_file
-		};
-
-		openssl::gendh(dhparam_file);
-	}
-*/
-
-	const json::object config{};
-	if(!fs::exists(cert_file) && !ircd::write_avoid)
-	{
-		const json::object &certificate
-		{
-			config.get("certificate")
-		};
-
-		const json::object &self_
-		{
-			certificate.get(m::self::origin)
-		};
-
-		std::string subject
-		{
-			self_.get("subject")
-		};
-
-		if(empty(subject))
-			subject = json::strung{json::members
-			{
-				{ "CN", m::self::origin }
-			}};
-
-		log::warning
-		{
-			"Failed to find SSL certificate @ `%s'; creating for '%s'...",
-			cert_file,
-			m::self::origin
-		};
-
-		const unique_buffer<mutable_buffer> buf
-		{
-			1_MiB
-		};
-
-		const json::strung opts{json::members
-		{
-			{ "private_key_pem_path",  private_key_file  },
-			{ "public_key_pem_path",   public_key_file   },
-			{ "subject",               subject           },
-		}};
-
-		const auto cert
-		{
-			openssl::genX509_rsa(buf, opts)
-		};
-
-		fs::overwrite(cert_file, cert);
-	}
-
-	const auto cert_pem
-	{
-		fs::read(cert_file)
-	};
-
-	const unique_buffer<mutable_buffer> der_buf
-	{
-		8_KiB
-	};
-
-	const auto cert_der
-	{
-		openssl::cert2d(der_buf, cert_pem)
-	};
-
-	const fixed_buffer<const_buffer, crh::sha256::digest_size> hash
-	{
-		sha256{cert_der}
-	};
-
-	m::self::tls_cert_der_sha256_b64 =
-	{
-		b64encode_unpadded(hash)
-	};
-
-	log::info
-	{
-		m::log, "Certificate `%s' :PEM %zu bytes; DER %zu bytes; sha256b64 %s",
-		cert_file,
-		cert_pem.size(),
-		ircd::size(cert_der),
-		m::self::tls_cert_der_sha256_b64
-	};
-
-	const unique_buffer<mutable_buffer> print_buf
-	{
-		8_KiB
-	};
-
-	log::info
-	{
-		m::log, "Certificate `%s' :%s",
-		cert_file,
-		openssl::print_subject(print_buf, cert_pem)
-	};
-}
-
-decltype(ircd::m::ed25519_key_dir)
-ircd::m::ed25519_key_dir
-{
-	{ "name",     "ircd.keys.ed25519_key_dir"  },
-	{ "default",  fs::cwd()                    }
-};
-
-void
-ircd::m::init_my_ed25519()
-{
-	if(empty(m::self::origin))
-		throw error
-		{
-			"The m::self::origin must be set to init my ed25519 key."
-		};
-
-	const std::string path_parts[]
-	{
-		std::string{ed25519_key_dir},
-		m::self::origin + ".ed25519",
-	};
-
-	const std::string sk_file
-	{
-		ircd::string(fs::PATH_MAX_LEN, [&](const mutable_buffer &buf)
-		{
-			return fs::path(buf, path_parts);
-		})
-	};
-
-	if(fs::exists(sk_file) || ircd::write_avoid)
-		log::info
-		{
-			m::log, "Using ed25519 secret key @ `%s'", sk_file
-		};
-	else
-		log::notice
-		{
-			m::log, "Creating ed25519 secret key @ `%s'", sk_file
-		};
-
-	m::self::secret_key = ed25519::sk
-	{
-		sk_file, &m::self::public_key
-	};
-
-	m::self::public_key_b64 = b64encode_unpadded(m::self::public_key);
-	const fixed_buffer<const_buffer, sha256::digest_size> hash
-	{
-		sha256{m::self::public_key}
-	};
-
-	const auto public_key_hash_b58
-	{
-		b58encode(hash)
-	};
-
-	static const auto trunc_size{8};
-	m::self::public_key_id = fmt::snstringf
-	{
-		32, "ed25519:%s", trunc(public_key_hash_b58, trunc_size)
-	};
-
-	log::info
-	{
-		m::log, "Current key is '%s' and the public key is: %s",
-		m::self::public_key_id,
-		m::self::public_key_b64
-	};
-}
-
-//
-// create_my_key
-//
-
-decltype(ircd::m::create_my_key_hook)
-ircd::m::create_my_key_hook
-{
-	create_my_key_hookfn,
-	{
-		{ "_site",     "vm.effect"           },
-		{ "room_id",   m::my_node.room_id()  },
-		{ "type",      "m.room.create"       },
-	}
-};
-
-void
-ircd::m::create_my_key_hookfn(const m::event &,
-                              m::vm::eval &)
-{
-	create_my_key();
-}
-
-void
-IRCD_MODULE_EXPORT
-ircd::m::create_my_key()
-{
-	const json::members verify_keys_
-	{{
-		string_view{m::self::public_key_id},
-		{
-			{ "key", m::self::public_key_b64 }
-		}
-	}};
-
-	const json::members tlsfps
-	{
-		{ "sha256", m::self::tls_cert_der_sha256_b64 }
-	};
-
-	const json::value tlsfp[1]
-	{
-		{ tlsfps }
-	};
-
-	m::keys my_key;
-	json::get<"server_name"_>(my_key) = my_host();
-	json::get<"old_verify_keys"_>(my_key) = "{}";
-
-	//TODO: conf
-	json::get<"valid_until_ts"_>(my_key) =
-		ircd::time<milliseconds>() + milliseconds(1000UL * 60 * 60 * 24 * 180).count();
-
-	const json::strung verify_keys{verify_keys_}; // must be on stack until my_keys serialized.
-	json::get<"verify_keys"_>(my_key) = verify_keys;
-
-	const json::strung tls_fingerprints{json::value{tlsfp, 1}}; // must be on stack until my_keys serialized.
-	json::get<"tls_fingerprints"_>(my_key) = tls_fingerprints;
-
-	const json::strung presig
-	{
-		my_key
-	};
-
-	const ed25519::sig sig
-	{
-		m::self::secret_key.sign(const_buffer{presig})
-	};
-
-	char signature[256];
-	const json::strung signatures{json::members
-	{
-		{ my_host(),
-		{
-			{ string_view{m::self::public_key_id}, b64encode_unpadded(signature, sig) }
-		}}
-	}};
-
-	json::get<"signatures"_>(my_key) = signatures;
-	keys_cache_set(json::strung{my_key});
-}
-
-//
-// cache
+// m::keys::cache
 //
 
 size_t
-ircd::m::keys_cache_set(const json::object &keys)
+IRCD_MODULE_EXPORT
+ircd::m::keys::cache::set(const json::object &keys)
 {
 	const json::string &server_name
 	{
@@ -672,9 +327,10 @@ ircd::m::keys_cache_set(const json::object &keys)
 }
 
 bool
-ircd::m::keys_cache_get(const string_view &server_name,
-                        const string_view &key_id,
-                        const keys::closure &closure)
+IRCD_MODULE_EXPORT
+ircd::m::keys::cache::get(const string_view &server_name,
+                          const string_view &key_id,
+                          const keys::closure &closure)
 {
 	const m::node::room node_room
 	{
@@ -768,4 +424,346 @@ noexcept
 		{
 			"Seeded ed25519 test failed"
 		};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/self.h
+//
+
+namespace ircd::m::self
+{
+	extern conf::item<std::string> tls_key_dir;
+}
+
+//
+// self::init
+//
+
+decltype(ircd::m::self::tls_key_dir)
+ircd::m::self::tls_key_dir
+{
+	{ "name",     "ircd.keys.tls_key_dir"  },
+	{ "default",  fs::cwd()                }
+};
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::self::init::tls_certificate()
+{
+	if(empty(self::origin))
+		throw error
+		{
+			"The m::self::origin must be set to init my ed25519 key."
+		};
+
+	const std::string private_key_path_parts[]
+	{
+		std::string{tls_key_dir},
+		self::origin + ".crt.key",
+	};
+
+	const std::string public_key_path_parts[]
+	{
+		std::string{tls_key_dir},
+		self::origin + ".crt.key.pub",
+	};
+
+	const std::string dhparam_path_parts[]
+	{
+		std::string{tls_key_dir},
+		self::origin + ".crt.dh",
+	};
+
+	const std::string certificate_path_parts[]
+	{
+		std::string{tls_key_dir},
+		self::origin + ".crt",
+	};
+
+	const std::string private_key_file
+	{
+		fs::path_string(private_key_path_parts)
+	};
+
+	const std::string public_key_file
+	{
+		fs::path_string(public_key_path_parts)
+	};
+
+	const std::string cert_file
+	{
+		fs::path_string(certificate_path_parts)
+	};
+
+	if(!fs::exists(private_key_file) && !ircd::write_avoid)
+	{
+		log::warning
+		{
+			"Failed to find certificate private key @ `%s'; creating...",
+			private_key_file
+		};
+
+		openssl::genrsa(private_key_file, public_key_file);
+	}
+
+	const json::object config{};
+	if(!fs::exists(cert_file) && !ircd::write_avoid)
+	{
+		const json::object &certificate
+		{
+			config.get("certificate")
+		};
+
+		const json::object &self_
+		{
+			certificate.get(self::origin)
+		};
+
+		std::string subject
+		{
+			self_.get("subject")
+		};
+
+		if(empty(subject))
+			subject = json::strung{json::members
+			{
+				{ "CN", self::origin }
+			}};
+
+		log::warning
+		{
+			"Failed to find SSL certificate @ `%s'; creating for '%s'...",
+			cert_file,
+			self::origin
+		};
+
+		const unique_buffer<mutable_buffer> buf
+		{
+			1_MiB
+		};
+
+		const json::strung opts{json::members
+		{
+			{ "private_key_pem_path",  private_key_file  },
+			{ "public_key_pem_path",   public_key_file   },
+			{ "subject",               subject           },
+		}};
+
+		const auto cert
+		{
+			openssl::genX509_rsa(buf, opts)
+		};
+
+		fs::overwrite(cert_file, cert);
+	}
+
+	const auto cert_pem
+	{
+		fs::read(cert_file)
+	};
+
+	const unique_buffer<mutable_buffer> der_buf
+	{
+		8_KiB
+	};
+
+	const auto cert_der
+	{
+		openssl::cert2d(der_buf, cert_pem)
+	};
+
+	const fixed_buffer<const_buffer, crh::sha256::digest_size> hash
+	{
+		sha256{cert_der}
+	};
+
+	m::self::tls_cert_der_sha256_b64 =
+	{
+		b64encode_unpadded(hash)
+	};
+
+	log::info
+	{
+		m::log, "Certificate `%s' :PEM %zu bytes; DER %zu bytes; sha256b64 %s",
+		cert_file,
+		cert_pem.size(),
+		ircd::size(cert_der),
+		m::self::tls_cert_der_sha256_b64
+	};
+
+	const unique_buffer<mutable_buffer> print_buf
+	{
+		8_KiB
+	};
+
+	log::info
+	{
+		m::log, "Certificate `%s' :%s",
+		cert_file,
+		openssl::print_subject(print_buf, cert_pem)
+	};
+}
+
+//
+// federation_ed25519
+//
+
+namespace ircd::m::self
+{
+	extern conf::item<std::string> ed25519_key_dir;
+}
+
+decltype(ircd::m::self::ed25519_key_dir)
+ircd::m::self::ed25519_key_dir
+{
+	{ "name",     "ircd.keys.ed25519_key_dir"  },
+	{ "default",  fs::cwd()                    }
+};
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::self::init::federation_ed25519()
+{
+	if(empty(m::self::origin))
+		throw error
+		{
+			"The m::self::origin must be set to init my ed25519 key."
+		};
+
+	const std::string path_parts[]
+	{
+		std::string{ed25519_key_dir},
+		m::self::origin + ".ed25519",
+	};
+
+	const std::string sk_file
+	{
+		ircd::string(fs::PATH_MAX_LEN, [&](const mutable_buffer &buf)
+		{
+			return fs::path(buf, path_parts);
+		})
+	};
+
+	if(fs::exists(sk_file) || ircd::write_avoid)
+		log::info
+		{
+			m::log, "Using ed25519 secret key @ `%s'", sk_file
+		};
+	else
+		log::notice
+		{
+			m::log, "Creating ed25519 secret key @ `%s'", sk_file
+		};
+
+	m::self::secret_key = ed25519::sk
+	{
+		sk_file, &m::self::public_key
+	};
+
+	m::self::public_key_b64 = b64encode_unpadded(m::self::public_key);
+	const fixed_buffer<const_buffer, sha256::digest_size> hash
+	{
+		sha256{m::self::public_key}
+	};
+
+	const auto public_key_hash_b58
+	{
+		b58encode(hash)
+	};
+
+	static const auto trunc_size{8};
+	m::self::public_key_id = fmt::snstringf
+	{
+		32, "ed25519:%s", trunc(public_key_hash_b58, trunc_size)
+	};
+
+	log::info
+	{
+		m::log, "Current key is '%s' and the public key is: %s",
+		m::self::public_key_id,
+		m::self::public_key_b64
+	};
+}
+
+//
+// create_my_key
+//
+
+namespace ircd::m::self
+{
+	extern m::hookfn<m::vm::eval &> create_my_key_hook;
+}
+
+decltype(ircd::m::self::create_my_key_hook)
+ircd::m::self::create_my_key_hook
+{
+	{
+		{ "_site",     "vm.effect"           },
+		{ "room_id",   m::my_node.room_id()  },
+		{ "type",      "m.room.create"       },
+	},
+	[](const m::event &, m::vm::eval &)
+	{
+		create_my_key();
+	}
+};
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::self::create_my_key()
+{
+	const json::members verify_keys_
+	{{
+		string_view{m::self::public_key_id},
+		{
+			{ "key", m::self::public_key_b64 }
+		}
+	}};
+
+	const json::members tlsfps
+	{
+		{ "sha256", m::self::tls_cert_der_sha256_b64 }
+	};
+
+	const json::value tlsfp[1]
+	{
+		{ tlsfps }
+	};
+
+	m::keys my_key;
+	json::get<"server_name"_>(my_key) = my_host();
+	json::get<"old_verify_keys"_>(my_key) = "{}";
+
+	//TODO: conf
+	json::get<"valid_until_ts"_>(my_key) =
+		ircd::time<milliseconds>() + milliseconds(1000UL * 60 * 60 * 24 * 180).count();
+
+	const json::strung verify_keys{verify_keys_}; // must be on stack until my_keys serialized.
+	json::get<"verify_keys"_>(my_key) = verify_keys;
+
+	const json::strung tls_fingerprints{json::value{tlsfp, 1}}; // must be on stack until my_keys serialized.
+	json::get<"tls_fingerprints"_>(my_key) = tls_fingerprints;
+
+	const json::strung presig
+	{
+		my_key
+	};
+
+	const ed25519::sig sig
+	{
+		m::self::secret_key.sign(const_buffer{presig})
+	};
+
+	char signature[256];
+	const json::strung signatures{json::members
+	{
+		{ my_host(),
+		{
+			{ string_view{m::self::public_key_id}, b64encode_unpadded(signature, sig) }
+		}}
+	}};
+
+	json::get<"signatures"_>(my_key) = signatures;
+	keys::cache::set(json::strung{my_key});
 }

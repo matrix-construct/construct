@@ -50,6 +50,8 @@ struct ircd::m::keys
 	json::property<name::verify_keys, json::object>
 >
 {
+	struct cache;
+
 	using queries = vector_view<const m::v1::key::server_key>; // <server, key_id>
 	using closure = std::function<void (const json::object &)>;
 	using closure_bool = std::function<bool (const json::object &)>;
@@ -60,4 +62,10 @@ struct ircd::m::keys
 
 	using super_type::tuple;
 	using super_type::operator=;
+};
+
+struct ircd::m::keys::cache
+{
+	static bool get(const string_view &server, const string_view &key_id, const closure &);
+	static size_t set(const json::object &keys);
 };
