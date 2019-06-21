@@ -17,6 +17,27 @@ namespace ircd
 	template<> struct byte_view<string_view>;
 }
 
+/// bytes -> string_view. A byte_view<string_view> is raw data of byte_view<T>.
+///
+/// This is an important specialization to take note of. When you see
+/// byte_view<string_view> know that another type's bytes are being represented
+/// by the string_view if that type is not string_view family itself.
+template<>
+struct ircd::byte_view<ircd::string_view>
+:string_view
+{
+	template<class T,
+	         typename std::enable_if<!std::is_base_of<std::string_view, T>::value, int *>::type = nullptr>
+	byte_view(const T &t)
+	:string_view{reinterpret_cast<const char *>(&t), sizeof(T)}
+	{}
+
+	/// string_view -> string_view (completeness)
+	byte_view(const string_view &t = {})
+	:string_view{t}
+	{}
+};
+
 /// string_view -> bytes
 template<class T>
 struct ircd::byte_view
@@ -39,26 +60,5 @@ struct ircd::byte_view
 	// bytes -> bytes (completeness)
 	byte_view(const T &t)
 	:s{byte_view<string_view>{t}}
-	{}
-};
-
-/// bytes -> string_view. A byte_view<string_view> is raw data of byte_view<T>.
-///
-/// This is an important specialization to take note of. When you see
-/// byte_view<string_view> know that another type's bytes are being represented
-/// by the string_view if that type is not string_view family itself.
-template<>
-struct ircd::byte_view<ircd::string_view>
-:string_view
-{
-	template<class T,
-	         typename std::enable_if<!std::is_base_of<std::string_view, T>::value, int *>::type = nullptr>
-	byte_view(const T &t)
-	:string_view{reinterpret_cast<const char *>(&t), sizeof(T)}
-	{}
-
-	/// string_view -> string_view (completeness)
-	byte_view(const string_view &t = {})
-	:string_view{t}
 	{}
 };
