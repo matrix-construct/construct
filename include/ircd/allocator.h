@@ -485,7 +485,7 @@ struct ircd::allocator::dynamic<T>::allocator
 	}
 
 	template<class U>
-	allocator(const typename dynamic<U>::allocator &) noexcept
+	allocator(const typename dynamic<U>::allocator &s) noexcept
 	:s{reinterpret_cast<dynamic *>(s.s)}
 	{}
 
