@@ -1118,7 +1118,7 @@ ircd::mods::unpostfixed(std::string path)
 	if(fs::extension(fs::path_scratch, path) == suffix)
 		return fs::extension(fs::path_scratch, path, string_view{});
 
-	return std::move(path);
+	return path;
 }
 
 std::string
@@ -1133,7 +1133,7 @@ std::string
 ircd::mods::prefix_if_relative(std::string path)
 {
 	if(!fs::is_relative(path))
-		return std::move(path);
+		return path;
 
 	const string_view parts[2]
 	{

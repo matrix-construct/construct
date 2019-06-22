@@ -2072,7 +2072,7 @@ ircd::ctx::ole::pop()
 
 	auto c(std::move(queue.front()));
 	queue.pop_front();
-	return std::move(c);
+	return c;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

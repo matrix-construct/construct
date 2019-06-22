@@ -319,5 +319,5 @@ parse_user_request(const json::object &one_time_keys)
 		}
 	}
 
-	return std::move(ret);
+	return ret;
 }

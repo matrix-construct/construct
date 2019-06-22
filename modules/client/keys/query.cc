@@ -360,5 +360,5 @@ parse_user_request(const json::object &device_keys)
 		}
 	}
 
-	return std::move(ret);
+	return ret;
 }

@@ -7141,7 +7141,7 @@ ircd::db::seek(column &column,
 
 	std::unique_ptr<rocksdb::Iterator> ret;
 	seek(c, key, opts, ret);
-	return std::move(ret);
+	return ret;
 }
 
 template<class pos>
