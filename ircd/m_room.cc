@@ -438,6 +438,8 @@ ircd::m::message(const room &room,
 	return send(room, sender, "m.room.message", contents);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstack-usage="
 ircd::m::event::id::buf
 __attribute__((stack_protect))
 ircd::m::send(const room &room,
@@ -455,7 +457,10 @@ ircd::m::send(const room &room,
 	json::iov::push content[contents_count]; // 48B each
 	return send(room, sender, type, state_key, make_iov(_content, content, contents_count, contents));
 }
+#pragma GCC diagnostic pop
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstack-usage="
 ircd::m::event::id::buf
 __attribute__((stack_protect))
 ircd::m::send(const room &room,
@@ -473,6 +478,7 @@ ircd::m::send(const room &room,
 	json::iov::push content[contents_count]; // 48B each
 	return send(room, sender, type, state_key, make_iov(_content, content, contents_count, contents));
 }
+#pragma GCC diagnostic pop
 
 ircd::m::event::id::buf
 ircd::m::send(const room &room,
@@ -491,6 +497,8 @@ ircd::m::send(const room &room,
 	return function(room, sender, type, state_key, content);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstack-usage="
 ircd::m::event::id::buf
 __attribute__((stack_protect))
 ircd::m::send(const room &room,
@@ -507,7 +515,10 @@ ircd::m::send(const room &room,
 	json::iov::push content[contents_count]; // 48B each
 	return send(room, sender, type, make_iov(_content, content, contents_count, contents));
 }
+#pragma GCC diagnostic pop
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstack-usage="
 ircd::m::event::id::buf
 __attribute__((stack_protect))
 ircd::m::send(const room &room,
@@ -524,6 +535,7 @@ ircd::m::send(const room &room,
 	json::iov::push content[contents_count]; // 48B each
 	return send(room, sender, type, make_iov(_content, content, contents_count, contents));
 }
+#pragma GCC diagnostic pop
 
 ircd::m::event::id::buf
 ircd::m::send(const room &room,
