@@ -1,3 +1,56 @@
+## BUILD
+
+*Most users will need follow the standalone build instructions in the next section.*
+
+```
+./autogen.sh
+./configure
+make
+sudo make install
+```
+
+### BUILD (standalone)
+
+This section is intended to allow building with dependencies that have not
+made their way to mainstream systems. Important notes that may affect you:
+
+- GCC: Ubuntu Xenial (16.04) users must use a PPA to obtain GCC-7 or greater; don't
+forget to `export CXX=g++-7` before running `./configure` on that system.
+
+- Boost: The required version is available through `apt` as `boost-all-dev` on
+Ubuntu Cosmic (18.10). All earlier releases (including 18.04 LTS) can configure
+with `--with-included-boost` as instructed below.
+
+- ~~RocksDB: The required version is available through `apt` as `librocksdb-dev` on
+Ubuntu Disco (19.04). All earlier releases (including 18.04 LTS) can configure
+with `--with-included-rocksdb` as instructed below.~~
+
+- RocksDB: At this time we advise **all users** including those on 19.04 to
+configure with `--with-included-rocksdb` until regressions in your RocksDB
+package have been fixed.
+
+
+#### STANDALONE BUILD PROCEDURE
+
+```
+./autogen.sh
+mkdir build
+```
+
+> The install directory may be this or another place of your choosing. If you decide
+elsewhere, make sure to change the `--prefix` in the `./configure` statement below.
+
+```
+./configure --prefix=$PWD/build --with-included-boost --with-included-rocksdb
+```
+
+> The `--with-included-*` will fetch, configure **and build** the dependencies included
+as submodules.
+
+```
+make install
+```
+
 ## Installation Addendum
 
 #### Additional build options
