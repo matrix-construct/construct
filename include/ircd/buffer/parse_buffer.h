@@ -25,9 +25,7 @@ struct ircd::buffer::parse_buffer
 
 	size_t remaining() const;
 	size_t consumed() const;
-
 	const_buffer completed() const;
-	explicit operator const_buffer() const;
 
 	const_buffer operator()(const closure &);
 	const_buffer operator()(const closure_cbuf &);
@@ -90,13 +88,6 @@ inline ircd::buffer::const_buffer
 ircd::buffer::parse_buffer::operator()(const closure &closure)
 {
 	consume(*this, closure(*this));
-	return completed();
-}
-
-inline ircd::buffer::parse_buffer::operator
-const_buffer()
-const
-{
 	return completed();
 }
 
