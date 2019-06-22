@@ -1742,7 +1742,7 @@ void
 ircd::ctx::prof::check_slice()
 {
 	auto &c(cur());
-	const bool slice_exempt
+	const auto &slice_exempt
 	{
 		c.flags & context::SLICE_EXEMPT
 	};
@@ -1792,7 +1792,7 @@ void
 ircd::ctx::prof::check_stack()
 {
 	auto &c(cur());
-	const bool stack_exempt
+	const auto &stack_exempt
 	{
 		c.flags & context::STACK_EXEMPT
 	};

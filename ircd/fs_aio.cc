@@ -462,7 +462,7 @@ ircd::fs::aio::request::operator()()
 		return size_t(retval);
 
 	assert(opts);
-	const bool blocking
+	const auto blocking
 	{
 		#if defined(RWF_NOWAIT)
 			~aio_rw_flags & RWF_NOWAIT

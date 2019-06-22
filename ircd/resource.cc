@@ -685,7 +685,7 @@ const
 			request.access_token = authorization.second;
 	}
 
-	const bool requires_auth
+	const auto requires_auth
 	{
 		opts->flags & REQUIRES_AUTH
 	};
@@ -748,7 +748,7 @@ ircd::resource::method::verify_origin(client &client,
                                       request &request)
 const try
 {
-	const bool required
+	const auto required
 	{
 		opts->flags & VERIFY_ORIGIN
 	};
