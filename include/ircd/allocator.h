@@ -577,7 +577,7 @@ struct ircd::allocator::node<T>::allocator
 	auto address(const_reference x) const        { return &x;                                      }
 
 	template<class U, class... args>
-	void construct(U *p, args&&... a)
+	void construct(U *p, args&&... a) noexcept
 	{
 		new (p) U(std::forward<args>(a)...);
 	}

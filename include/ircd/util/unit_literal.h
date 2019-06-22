@@ -23,6 +23,7 @@
 #define IRCD_UNIT_LITERAL_UL(name, morphism)        \
 constexpr auto                                      \
 operator"" _ ## name(const unsigned long long val)  \
+noexcept                                            \
 {                                                   \
     return (morphism);                              \
 }
@@ -32,6 +33,7 @@ operator"" _ ## name(const unsigned long long val)  \
 #define IRCD_UNIT_LITERAL_LL(name, morphism)        \
 constexpr auto                                      \
 operator"" _ ## name(const long long val)           \
+noexcept                                            \
 {                                                   \
     return (morphism);                              \
 }
@@ -41,6 +43,7 @@ operator"" _ ## name(const long long val)           \
 #define IRCD_UNIT_LITERAL_LD(name, morphism)        \
 constexpr auto                                      \
 operator"" _ ## name(const long double val)         \
+noexcept                                            \
 {                                                   \
     return (morphism);                              \
 }

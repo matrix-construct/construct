@@ -488,8 +488,8 @@ noexcept
 // net/wait.h
 //
 
-ircd::net::wait_opts
-const ircd::net::wait_opts_default;
+decltype(ircd::net::wait_opts_default)
+ircd::net::wait_opts_default;
 
 /// Wait for socket to become "ready" using a ctx::future.
 ircd::ctx::future<void>

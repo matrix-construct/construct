@@ -28,7 +28,9 @@ struct ircd::db::database::prefix_transform final
 	bool InRange(const Slice &key) const noexcept override;
 	Slice Transform(const Slice &key) const noexcept override;
 
-	prefix_transform(database *const &d, db::prefix_transform user)
+	prefix_transform(database *const &d,
+	                 db::prefix_transform user)
+	noexcept
 	:d{d}
 	,user{std::move(user)}
 	{}

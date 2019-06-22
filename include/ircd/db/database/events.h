@@ -34,6 +34,7 @@ struct ircd::db::database::events final
 	void OnStallConditionsChanged(const rocksdb::WriteStallInfo &) noexcept override;
 
 	events(database *const &d)
+	noexcept
 	:d{d}
 	{}
 };

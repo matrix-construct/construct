@@ -182,6 +182,7 @@ struct ircd::string_view
 	{}
 
 	string_view(const std::string &string)
+	noexcept
 	:string_view{string.data(), string.size()}
 	{}
 
