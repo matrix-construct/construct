@@ -5374,7 +5374,7 @@ console_cmd__crt(opt &out, const string_view &line)
 		if(listener.name() != targ)
 			continue;
 
-		const json::object &config
+		const json::object config
 		{
 			listener
 		};
@@ -6461,7 +6461,7 @@ console_cmd__event(opt &out, const string_view &line)
 	if(m::event::auth::is_power_event(event))
 		out << "+ POWER EVENT" << std::endl;
 
-	const m::event::prev &prev{event};
+	const m::event::prev prev{event};
 	if(prev.auth_events_count() || prev.prev_events_count())
 		out << std::endl;
 
@@ -10302,7 +10302,7 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 			at<"state_key"_>(event)
 		};
 
-		const milliseconds &ost
+		const milliseconds ost
 		{
 			at<"origin_server_ts"_>(event)
 		};
@@ -11744,7 +11744,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	request.wait(out.timeout);
 	request.get();
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -11827,7 +11827,7 @@ console_cmd__fed__state_ids(opt &out, const string_view &line)
 	request.wait(out.timeout);
 	request.get();
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -11908,7 +11908,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	request.wait(out.timeout);
 	request.get();
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -12002,7 +12002,7 @@ console_cmd__fed__frontfill(opt &out, const string_view &line)
 	request.wait(out.timeout);
 	request.get();
 
-	const json::array &response
+	const json::array response
 	{
 		request
 	};
@@ -12066,7 +12066,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		return true;
 	}
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -12161,7 +12161,7 @@ console_cmd__fed__public_rooms(opt &out, const string_view &line)
 	request.wait(out.timeout);
 	request.get();
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -12393,7 +12393,7 @@ console_cmd__fed__query__profile(opt &out, const string_view &line)
 		request.get()
 	};
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -12430,7 +12430,7 @@ console_cmd__fed__query__directory(opt &out, const string_view &line)
 		request.get()
 	};
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -12476,7 +12476,7 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 		request.get()
 	};
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -12540,7 +12540,7 @@ console_cmd__fed__user__keys__query(opt &out, const string_view &line)
 		request.get()
 	};
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -12626,7 +12626,7 @@ console_cmd__fed__user__keys__claim(opt &out, const string_view &line)
 		request.get()
 	};
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -12671,7 +12671,7 @@ console_cmd__fed__key(opt &out, const string_view &line)
 		request.get()
 	};
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};
@@ -12757,7 +12757,7 @@ console_cmd__fed__version(opt &out, const string_view &line)
 		request.get()
 	};
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};

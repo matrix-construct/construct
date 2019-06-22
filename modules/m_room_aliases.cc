@@ -369,7 +369,7 @@ try
 		request.get()
 	};
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};

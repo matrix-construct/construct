@@ -420,7 +420,7 @@ ircd::m::user::profile::fetch(const m::user &user,
 
 	federation_request.wait(seconds(remote_request_timeout));
 	const http::code &code{federation_request.get()};
-	const json::object &response
+	const json::object response
 	{
 		federation_request
 	};

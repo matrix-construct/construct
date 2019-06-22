@@ -151,7 +151,7 @@ try
 
 	request.wait(milliseconds(keys_query_timeout));
 	const auto &code(request.get());
-	const json::array &response
+	const json::array response
 	{
 		request
 	};
@@ -257,7 +257,7 @@ try
 
 	request.wait(milliseconds(keys_get_timeout));
 	const auto &status(request.get());
-	const json::object &response
+	const json::object response
 	{
 		request
 	};

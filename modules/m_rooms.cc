@@ -359,7 +359,7 @@ ircd::m::rooms::fetch_update(const net::hostport &hp,
 		request.get()
 	};
 
-	const json::object &response
+	const json::object response
 	{
 		request
 	};

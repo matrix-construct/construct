@@ -254,7 +254,11 @@ try
 		request.get()
 	};
 
-	const json::object &response{request};
+	const json::object response
+	{
+		request
+	};
+
 	const json::object &device_keys
 	{
 		response["device_keys"]

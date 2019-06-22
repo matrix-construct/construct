@@ -221,7 +221,11 @@ try
 		request.get()
 	};
 
-	const json::object &response{request};
+	const json::object response
+	{
+		request
+	};
+
 	const json::object &one_time_keys
 	{
 		response["one_time_keys"]

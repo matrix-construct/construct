@@ -105,7 +105,7 @@ void
 ircd::db::_assign_invalid(tuple &t,
                           const cell &cell)
 {
-	const column &c{cell};
+	const column &c(cell);
 	if(!c)
 		return;
 
@@ -143,7 +143,7 @@ void
 ircd::db::_assign_valid(tuple &t,
                         const cell &cell)
 {
-	const column &c{cell};
+	const column &c(cell);
 	const auto &descriptor
 	{
 		describe(c)

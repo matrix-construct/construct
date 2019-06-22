@@ -524,7 +524,7 @@ try
 
 	request.wait(seconds(auth_timeout));
 	request.get();
-	const json::array &events
+	const json::array events
 	{
 		request
 	};
@@ -889,7 +889,7 @@ try
 		complete.size(),
 	};
 
-	const json::object &event
+	const json::object event
 	{
 		request
 	};

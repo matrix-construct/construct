@@ -3818,7 +3818,7 @@ ircd::db::for_each(const txn &t,
 	}};
 
 	const database &d(t);
-	const rocksdb::WriteBatch &wb{t};
+	const rocksdb::WriteBatch &wb(t);
 	txn::handler h{d, re};
 	wb.Iterate(&h);
 }
@@ -3828,7 +3828,7 @@ ircd::db::for_each(const txn &t,
                    const delta_closure_bool &closure)
 {
 	const database &d(t);
-	const rocksdb::WriteBatch &wb{t};
+	const rocksdb::WriteBatch &wb(t);
 	txn::handler h{d, closure};
 	wb.Iterate(&h);
 	return h._continue;

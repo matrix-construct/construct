@@ -75,7 +75,7 @@ webroot_path
 void
 init_files()
 {
-	const std::string &path
+	const std::string path
 	{
 		webroot_path
 	};

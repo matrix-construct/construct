@@ -505,7 +505,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::NEXT)));
 
-	const event::prev &prev{event};
+	const event::prev prev{event};
 	for(size_t i(0); i < prev.prev_events_count(); ++i)
 	{
 		const event::id &prev_id
@@ -563,7 +563,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 	if(!event::auth::is_power_event(event))
 		return;
 
-	const event::prev &prev{event};
+	const event::prev prev{event};
 	for(size_t i(0); i < prev.auth_events_count(); ++i)
 	{
 		const event::id &auth_id
@@ -1221,7 +1221,7 @@ ircd::m::dbs::_index_room_head_resolve(db::txn &txn,
 	if(opts.op != db::op::SET)
 		return;
 
-	const m::event::prev &prev{event};
+	const event::prev prev{event};
 	for(const json::array &p : json::get<"prev_events"_>(prev))
 	{
 		const auto &event_id
