@@ -8,23 +8,54 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m
+{
+	extern hookfn<vm::eval &> create_my_node_hook;
+	extern hookfn<vm::eval &> create_nodes_hook;
+}
 
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Server Nodes"
 };
 
-m::room
-nodes_room
+decltype(ircd::m::create_my_node_hook)
+ircd::m::create_my_node_hook
 {
-	m::nodes.room_id
+	{
+		{ "_site",       "vm.effect"      },
+		{ "room_id",     "!nodes"         },
+		{ "type",        "m.room.create"  },
+	},
+	[](const m::event &, m::vm::eval &)
+	{
+		create(m::my_node.room_id(), m::me.user_id);
+	}
 };
 
-extern "C" m::node
-create_node(const m::node &node,
-            const json::members &args)
+decltype(ircd::m::create_nodes_hook)
+ircd::m::create_nodes_hook
+{
+	{
+		{ "_site",       "vm.effect"      },
+		{ "room_id",     "!ircd"          },
+		{ "type",        "m.room.create"  },
+	},
+	[](const m::event &, m::vm::eval &)
+	{
+		create(m::nodes, m::me.user_id);
+	}
+};
+
+//
+// node
+//
+
+ircd::m::node
+IRCD_MODULE_EXPORT
+ircd::m::create(const node &node,
+                const json::members &args)
 {
 	assert(node.node_id);
 	const m::room::id::buf room_id
@@ -34,48 +65,73 @@ create_node(const m::node &node,
 
 	//TODO: ABA
 	create(room_id, m::me.user_id);
-	send(nodes_room, m::me.user_id, "ircd.node", node.node_id, args);
+	send(nodes, m::me.user_id, "ircd.node", node.node_id, args);
 	return node;
 }
 
-extern "C" bool
-exists__nodeid(const string_view &node_id)
+bool
+IRCD_MODULE_EXPORT
+ircd::m::exists(const node &node)
 {
-	return nodes_room.has("ircd.node", node_id);
+	return nodes.has("ircd.node", node.node_id);
 }
 
-static void
-create_my_node_room(const m::event &,
-                    m::vm::eval &)
+bool
+IRCD_MODULE_EXPORT
+ircd::m::my(const node &node)
 {
-	create(m::my_node.room_id(), m::me.user_id);
+	return my_host(node.node_id);
 }
 
-const m::hookfn<m::vm::eval &>
-create_my_node_hook
+//
+// node::node
+//
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::node::key(const string_view &key_id,
+                   const ed25519_closure &closure)
+const
 {
-	create_my_node_room,
+	key(key_id, key_closure{[&closure]
+	(const string_view &keyb64)
 	{
-		{ "_site",       "vm.effect"      },
-		{ "room_id",     "!nodes"         },
-		{ "type",        "m.room.create"  },
-	}
-};
+		const ed25519::pk pk
+		{
+			[&keyb64](auto &buf)
+			{
+				b64decode(buf, unquote(keyb64));
+			}
+		};
 
-static void
-create_nodes_room(const m::event &,
-                  m::vm::eval &)
-{
-	create(nodes_room, m::me.user_id);
+		closure(pk);
+	}});
 }
 
-const m::hookfn<m::vm::eval &>
-create_nodes_hook
+void
+IRCD_MODULE_EXPORT
+ircd::m::node::key(const string_view &key_id,
+                   const key_closure &closure)
+const
 {
-	create_nodes_room,
+	m::keys::get(node_id, key_id, [&closure, &key_id]
+	(const json::object &keys)
 	{
-		{ "_site",       "vm.effect"      },
-		{ "room_id",     "!ircd"          },
-		{ "type",        "m.room.create"  },
-	}
-};
+		const json::object &vks
+		{
+			keys.at("verify_keys")
+		};
+
+		const json::object &vkk
+		{
+			vks.at(key_id)
+		};
+
+		const string_view &key
+		{
+			vkk.at("key")
+		};
+
+		closure(key);
+	});
+}

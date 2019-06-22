@@ -2340,88 +2340,14 @@ ircd::m::nodes
 	nodes_room_id
 };
 
-ircd::m::node
-ircd::m::create(const node &node,
-                const json::members &args)
-{
-	using prototype = m::node (const m::node &, const json::members &);
-
-	static mods::import<prototype> function
-	{
-		"s_node", "create_node"
-	};
-
-	return function(node, args);
-}
-
-bool
-ircd::m::exists(const node &node)
-{
-	using prototype = bool (const string_view &);
-
-	static mods::import<prototype> function
-	{
-		"s_node", "exists__nodeid"
-	};
-
-	return function(node.node_id);
-}
-
-bool
-ircd::m::my(const node &node)
-{
-	return my_host(node.node_id);
-}
-
 //
 // node
 //
 
-void
-ircd::m::node::key(const string_view &key_id,
-                   const ed25519_closure &closure)
-const
+ircd::m::node::node(const string_view &node_id)
+:node_id{node_id}
 {
-	key(key_id, key_closure{[&closure]
-	(const string_view &keyb64)
-	{
-		const ed25519::pk pk
-		{
-			[&keyb64](auto &buf)
-			{
-				b64decode(buf, unquote(keyb64));
-			}
-		};
-
-		closure(pk);
-	}});
-}
-
-void
-ircd::m::node::key(const string_view &key_id,
-                   const key_closure &closure)
-const
-{
-	m::keys::get(node_id, key_id, [&closure, &key_id]
-	(const json::object &keys)
-	{
-		const json::object &vks
-		{
-			keys.at("verify_keys")
-		};
-
-		const json::object &vkk
-		{
-			vks.at(key_id)
-		};
-
-		const string_view &key
-		{
-			vkk.at("key")
-		};
-
-		closure(key);
-	});
+	rfc3986::valid_remote(node_id);
 }
 
 /// Generates a node-room ID into buffer; see room_id() overload.

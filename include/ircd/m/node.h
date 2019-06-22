@@ -48,12 +48,7 @@ struct ircd::m::node
 	void key(const string_view &key_id, const ed25519_closure &) const;
 	void key(const string_view &key_id, const key_closure &) const;
 
-	node(const string_view &node_id)
-	:node_id{node_id}
-	{
-		rfc3986::valid_remote(node_id);
-	}
-
+	node(const string_view &node_id);
 	node() = default;
 };
 
