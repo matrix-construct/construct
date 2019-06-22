@@ -590,7 +590,7 @@ static char
 _cpuvendor_[12];
 
 decltype(ircd::info::cpuvendor)
-ircd::info::cpuvendor{[&]
+ircd::info::cpuvendor{[]
 {
 	const auto b
 	{
