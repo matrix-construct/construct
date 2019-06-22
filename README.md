@@ -14,21 +14,15 @@
 	<img align="right" src="https://i.imgur.com/TIf8kEC.png" />
 </a>
 
-**Fast. Secure. Feature Rich. Community Lead.**
-
-IRCd was a free and open source server which facilitated real-time communication over the
-internet. It was started by Jarkko Oikarinen in 1988 at the University of Oulu and [its
-derivatives](https://upload.wikimedia.org/wikipedia/commons/d/d8/IRCd_software_implementations.png)
-underpinned the major IRC networks for decades.
+It all started in 1988 when Jarkko Oikarinen developed a free and open source server
+at the University of Oulu which facilitated real-time communication over the internet.
+Its [derivatives](https://upload.wikimedia.org/wikipedia/commons/d/d8/IRCd_software_implementations.png)
+have underpinned the major IRC networks for decades ever since.
 
 Due to its age and stagnation since the mid-2000's, a growing number of proprietary cloud services
-are now filling the vacuum of innovation. In 2014 a new approach was proposed to reinvigorate
-real-time communication for free and open source software: a *federation of networks* known as
-*the matrix*.
-
-<h4 align="right">
-	IRCd has been rewritten for the global federation of networks &nbsp;&nbsp&nbsp;
-</h4>
+have filled the vacuum of innovation. In 2014 a new approach was proposed to reinvigorate
+real-time communication for free and open source software: a *federation of networks*
+known as *the matrix*.
 
 <a href="https://github.com/vector-im/riot-web/">
 	<img align="right" src="https://i.imgur.com/DUuGSrH.png" />
@@ -42,10 +36,9 @@ requirements. Even though all of the old code has been rewritten, the same spiri
 _philosophy of its predecessors_ is still obvious throughout.
 
 Matrix is about giving you control over your communication; Construct is about
-giving you control over Matrix. We are liberal with what we accept for ideas and
-contributions. Whether you are optimizing the entire protocol or just filling a
-need only a few others might share: please support the project by contributing
-back.
+giving you control over Matrix. Whether you are optimizing the entire protocol or
+just filling a need only a few others might share: please support the project by
+contributing back.
 
 <h3 align="right">
 	Join us in <a href="https://matrix.to/#/#test:zemos.net">#test:zemos.net</a>
