@@ -49,6 +49,7 @@ struct ircd::m::self::init
 {
 	static void federation_ed25519();
 	static void tls_certificate();
+	static void keys();
 
 	init(const string_view &origin, const string_view &servername);
 };

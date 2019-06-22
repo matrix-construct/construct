@@ -530,9 +530,11 @@ ircd::m::self::init::init(const string_view &origin,
 			"The origin is configured or has defaulted to 'localhost'"
 		};
 
+	// Loading the keys module in runlevel::START will do further
+	// inits of m::self::globals. Calling the inits directly from
+	// here makes the module dependent on libircd and unloadable.
+	assert(ircd::run::level == run::level::START);
 	mods::imports.emplace("s_keys"s, "s_keys"s);
-	federation_ed25519();
-	tls_certificate();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

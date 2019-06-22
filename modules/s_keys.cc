@@ -12,6 +12,7 @@ ircd::mapi::header
 IRCD_MODULE
 {
 	"Server keys"
+	,ircd::m::self::init::keys
 };
 
 bool
@@ -431,14 +432,22 @@ noexcept
 // m/self.h
 //
 
+//
+// self::init
+//
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::self::init::keys()
+{
+	tls_certificate();
+	federation_ed25519();
+}
+
 namespace ircd::m::self
 {
 	extern conf::item<std::string> tls_key_dir;
 }
-
-//
-// self::init
-//
 
 decltype(ircd::m::self::tls_key_dir)
 ircd::m::self::tls_key_dir
