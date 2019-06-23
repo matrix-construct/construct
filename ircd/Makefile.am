@@ -168,8 +168,10 @@ GUNIT_CXXFLAGS = ###
 # Grammar templates can generate a huge number of individual debug symbols
 # for each template instantiation deep within spirit; we try to reduce...
 GUNIT_CXXFLAGS += -fno-var-tracking
+if GCC
 GUNIT_CXXFLAGS += -fno-var-tracking-assignments
 GUNIT_CXXFLAGS += -femit-struct-debug-baseonly
+endif
 
 # The recursive grammars can consume a large amount of RAM when compiling
 # (>= 2 GiB) which can thrash small systems and even sometimes crash GCC.
