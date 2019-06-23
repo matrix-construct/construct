@@ -176,14 +176,14 @@ ircd::m::module_names
 {
 	"vm",
 	"s_conf",
+	"s_node",
+	"s_keys",
 	"s_dns",
 	"s_fetch",
-	"s_keys",
 	"s_command",
 	"s_control",
 	"s_listen",
 	"s_feds",
-	"s_node",
 	"m_events",
 	"m_rooms",
 	"m_user",
@@ -2348,6 +2348,53 @@ ircd::m::node::node(const string_view &node_id)
 :node_id{node_id}
 {
 	rfc3986::valid_remote(node_id);
+}
+
+void
+ircd::m::node::key(const string_view &key_id,
+                   const ed25519_closure &closure)
+const
+{
+	key(key_id, key_closure{[&closure]
+	(const string_view &keyb64)
+	{
+		const ed25519::pk pk
+		{
+			[&keyb64](auto &buf)
+			{
+				b64decode(buf, unquote(keyb64));
+			}
+		};
+
+		closure(pk);
+	}});
+}
+
+void
+ircd::m::node::key(const string_view &key_id,
+                   const key_closure &closure)
+const
+{
+	m::keys::get(node_id, key_id, [&closure, &key_id]
+	(const json::object &keys)
+	{
+		const json::object &vks
+		{
+			keys.at("verify_keys")
+		};
+
+		const json::object &vkk
+		{
+			vks.at(key_id)
+		};
+
+		const string_view &key
+		{
+			vkk.at("key")
+		};
+
+		closure(key);
+	});
 }
 
 /// Generates a node-room ID into buffer; see room_id() overload.
