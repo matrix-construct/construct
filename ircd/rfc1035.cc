@@ -89,8 +89,8 @@ ircd::rfc1035::question::parse(const const_buffer &in)
 			"Question input buffer is incomplete (%zu bytes)", size(in)
 		};
 
-	qtype = ntoh(*(const uint16_t *)pos);     pos += 2;
-	qclass = ntoh(*(const uint16_t *)pos);    pos += 2;
+	qtype = ntoh(*reinterpret_cast<const uint16_t *>(pos));     pos += 2;
+	qclass = ntoh(*reinterpret_cast<const uint16_t *>(pos));    pos += 2;
 
 	assert(size_t(pos - data(in)) <= size(in));
 	return { data(in), pos };
@@ -120,8 +120,8 @@ const
 
 	assert(pos > data(buf));
 	assert(*(pos - 1) == '\0');
-	*(uint16_t *)pos = hton(qtype);   pos += 2;
-	*(uint16_t *)pos = hton(qclass);  pos += 2;
+	*reinterpret_cast<uint16_t *>(pos) = hton(qtype);   pos += 2;
+	*reinterpret_cast<uint16_t *>(pos) = hton(qclass);  pos += 2;
 
 	assert(size_t(std::distance(data(buf), pos)) == required);
 	return mutable_buffer
@@ -149,10 +149,10 @@ ircd::rfc1035::answer::parse(const const_buffer &in)
 			"Answer input buffer is incomplete (%zu bytes)", size(in)
 		};
 
-	qtype = ntoh(*(const uint16_t *)pos);     pos += 2;
-	qclass = ntoh(*(const uint16_t *)pos);    pos += 2;
-	ttl = ntoh(*(const uint32_t *)pos);       pos += 4;
-	rdlength = ntoh(*(const uint16_t *)pos);  pos += 2;
+	qtype = ntoh(*reinterpret_cast<const uint16_t *>(pos));     pos += 2;
+	qclass = ntoh(*reinterpret_cast<const uint16_t *>(pos));    pos += 2;
+	ttl = ntoh(*reinterpret_cast<const uint32_t *>(pos));       pos += 4;
+	rdlength = ntoh(*reinterpret_cast<const uint16_t *>(pos));  pos += 2;
 
 	if(unlikely(qclass != 1))
 		throw error
@@ -214,7 +214,7 @@ ircd::rfc1035::record::A::A(const answer &answer)
 			"A record data underflow"
 		};
 
-	ip4 = ntoh(*(const uint32_t *)data(rdata));
+	ip4 = ntoh(*reinterpret_cast<const uint32_t *>(data(rdata)));
 }
 
 void
@@ -264,7 +264,7 @@ ircd::rfc1035::record::AAAA::AAAA(const answer &answer)
 			"AAAA record data underflow"
 		};
 
-	ip6 = ntoh(*(const uint128_t *)data(rdata));
+	ip6 = ntoh(*reinterpret_cast<const uint128_t *>(data(rdata)));
 }
 
 void
@@ -363,9 +363,9 @@ ircd::rfc1035::record::SRV::SRV(const answer &answer)
 		};
 
 	const char *pos(data(rdata));
-	priority = ntoh(*(const uint16_t *)pos);   pos += 2;
-	weight = ntoh(*(const uint16_t *)pos);     pos += 2;
-	port = ntoh(*(const uint16_t *)pos);       pos += 2;
+	priority = ntoh(*reinterpret_cast<const uint16_t *>(pos));   pos += 2;
+	weight = ntoh(*reinterpret_cast<const uint16_t *>(pos));     pos += 2;
+	port = ntoh(*reinterpret_cast<const uint16_t *>(pos));       pos += 2;
 
 	const const_buffer tgtbuf{pos, end(rdata)};
 	const auto len{parse_name(this->tgtbuf, tgtbuf)};
