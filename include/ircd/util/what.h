@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_WHAT_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	string_view what(const std::exception_ptr eptr = std::current_exception()) noexcept;
-}
+}}

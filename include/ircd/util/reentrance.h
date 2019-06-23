@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_REENTRANCE_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	template<bool &entered> struct reentrance_assertion;
-}
+}}
 
 /// Simple assert for reentrancy; useful when static variables are in play.
 /// You have to place `entered` and give it the proper linkage you want.

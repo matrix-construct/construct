@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_CALLBACKS_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	/// The purpose of callbacks is simply explained with an analogy out of
 	/// browser-javascript land: it is window.onload.addEventListener() in lieu
@@ -22,7 +23,7 @@ namespace ircd::util
 	/// The template provides an option for whether exceptions should propagate
 	/// to the caller. If they propagate, all listeners after the exception won't
 	/// be invoked.
-	/// 
+	///
 	template<class prototype,
 	         bool exceptions = true>
 	struct callbacks;
@@ -32,7 +33,7 @@ namespace ircd::util
 
 	template<class prototype>
 	struct callbacks<prototype, false>;
-}
+}}
 
 template<class prototype>
 struct ircd::util::callbacks<prototype, true>

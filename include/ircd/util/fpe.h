@@ -11,7 +11,9 @@
 #pragma once
 #define HAVE_IRCD_UTIL_FPE_H
 
-namespace ircd::util::fpe
+namespace ircd {
+inline namespace util {
+namespace fpe
 {
 	struct errors_handle;
 
@@ -21,7 +23,7 @@ namespace ircd::util::fpe
 
 	void throw_errors(const ushort &flags);
 	std::fexcept_t set(const ushort &flag);
-}
+}}}
 
 /// Perform a single floating point operation at a time within the scope
 /// of fpe::errors_handle. After each operation check the floating point

@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_CUSTOM_PTR_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	template<class T> struct custom_ptr;
-}
+}}
 
 template<class T>
 struct ircd::util::custom_ptr

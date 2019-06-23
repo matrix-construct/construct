@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_SCOPE_RESTORE_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	template<class T> struct scope_restore;
-};
+}}
 
 template<class T>
 struct ircd::util::scope_restore

@@ -15,7 +15,8 @@
 // String generating patterns
 //
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	using string_closure_size = std::function<size_t (const mutable_buffer &)>;
 	using string_closure_view = std::function<string_view (const mutable_buffer &)>;
@@ -42,7 +43,7 @@ namespace ircd::util
 	template<class T> std::string string(const T &s);
 
 	template<class F, class... A> std::string string_buffer(const size_t &, F&&, A&&...);
-}
+}}
 
 /// Convenience template for working with various functions throughout IRCd
 /// with the pattern `size_t func(mutable_buffer, ...)`. This function closes

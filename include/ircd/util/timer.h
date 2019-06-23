@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_TIMER_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	struct timer;
-}
+}}
 
 struct ircd::util::timer
 {

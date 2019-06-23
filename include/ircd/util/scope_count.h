@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_SCOPE_COUNT_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	template<class T> struct scope_count;
-};
+}};
 
 /// A simple boiler-plate for incrementing a counter when constructed and
 /// decrementing it to its previous value when destructed. This takes a runtime

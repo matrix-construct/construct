@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_U2A_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	// Binary <-> Hex conversion suite
 	const_buffer a2u(const mutable_buffer &out, const const_buffer &in);
 	string_view u2a(const mutable_buffer &out, const const_buffer &in);
 	std::string u2a(const const_buffer &in);
-}
+}}

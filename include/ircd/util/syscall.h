@@ -11,14 +11,15 @@
 #pragma once
 #define HAVE_IRCD_UTIL_SYSCALL_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	template<class function, class... args> long syscall(function&& f, args&&... a);
 	template<long number, class... args> long syscall(args&&... a);
 
 	template<class function, class... args> long syscall_nointr(function&& f, args&&... a);
 	template<long number, class... args> long syscall_nointr(args&&... a);
-}
+}}
 
 /// Posix system call template to check for returned error value and throw the
 /// approps errno in the proper std::system_error exception. Note the usage

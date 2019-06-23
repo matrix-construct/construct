@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_LIFE_GUARD_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	// Convenience functions for types shared_from_this
 	template<class T> std::shared_ptr<const T> shared_from(const T &t);
@@ -20,7 +21,7 @@ namespace ircd::util
 	template<class T> std::weak_ptr<T> weak_from(T &t);
 
 	template<class T> struct life_guard;
-}
+}}
 
 /// life_guard is a convenience which takes advantage of std::enable_shared_from_this<T>.
 /// The life_guard glorifies the constructor of an std::shared_ptr<T> by accepting

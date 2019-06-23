@@ -49,7 +49,7 @@ noexcept                                            \
 }
 
 namespace ircd {
-namespace util {
+inline namespace util {
 
 // IEC unit literals
 IRCD_UNIT_LITERAL_UL( B,    val                                                              )

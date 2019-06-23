@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_VA_RTTI_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	struct va_rtti;
 
@@ -19,7 +20,7 @@ namespace ircd::util
 	{
 		12
 	};
-}
+}}
 
 //
 // Similar to a va_list, but conveying std-c++ type data acquired from a variadic template

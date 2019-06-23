@@ -16,7 +16,7 @@
 //
 
 namespace ircd {
-namespace util {
+inline namespace util {
 
 template<class stringstream>
 stringstream &

@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_INSTANCE_MULTIMAP_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	template<class K, class T, class C = std::less<K>> struct instance_multimap;
-}
+}}
 
 /// See instance_list for purpose and overview.
 template<class K,

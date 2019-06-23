@@ -12,7 +12,7 @@
 #define HAVE_IRCD_UTIL_TYPOGRAPHY_H
 
 namespace ircd {
-namespace util {
+inline namespace util {
 
 //
 // Overloading macros

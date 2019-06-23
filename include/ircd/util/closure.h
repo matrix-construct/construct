@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_CLOSURE_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	template<class function> struct closure;
-}
+}}
 
 ///TODO: This is a WIP that is meant to replace the pattern of having two
 ///TODO: for_each() overloads in every interface where one takes a closure

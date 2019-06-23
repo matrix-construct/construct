@@ -14,10 +14,11 @@
 // This file is not part of the standard include stack. It is included
 // manually as needed.
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	struct params;
-}
+}}
 
 struct ircd::util::params
 {

@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_INSTANCE_LIST_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	template<class T> struct instance_list;
-}
+}}
 
 /// The instance_list pattern is where every instance of a class registers
 /// itself in a static list of all instances and removes itself on dtor.

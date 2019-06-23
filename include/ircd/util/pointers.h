@@ -16,7 +16,7 @@
 //
 
 namespace ircd {
-namespace util {
+inline namespace util {
 
 /// Transform input sequence values to pointers in the output sequence
 /// using two input iterators [begin, end] and one output iterator [begin]

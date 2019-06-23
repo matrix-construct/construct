@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_BSWAP_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	template<class T> T &bswap(T *const &);
 	template<class T> T bswap(T);
@@ -33,7 +34,7 @@ namespace ircd::util
 	uint16_t ntohs(const uint16_t &);
 	double ntohd(const double &);
 	float ntohf(const float &);
-}
+}}
 
 inline float
 ircd::util::ntohf(const float &a)

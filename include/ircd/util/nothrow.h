@@ -16,7 +16,7 @@
 //
 
 namespace ircd {
-namespace util {
+inline namespace util {
 
 /// Test for template geworfenheit
 ///

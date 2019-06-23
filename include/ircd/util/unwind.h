@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_UTIL_UNWIND_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	struct unwind;
-};
+}}
 
 //
 // Fundamental scope-unwind utilities establishing actions during destruction

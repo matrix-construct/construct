@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_PRETTY_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	// Human readable space suite
 	using human_readable_size = std::tuple<uint64_t, long double, const string_view &>;
@@ -40,7 +41,7 @@ namespace ircd::util
 	string_view pretty_nanoseconds(const mutable_buffer &out, const long double &, const uint &fmt = 0);
 	template<class r, class p> string_view pretty(const mutable_buffer &out, const duration<r, p> &, const uint &fmt = 0);
 	template<class r, class p> std::string pretty(const duration<r, p> &, const uint &fmt = 0);
-}
+}}
 
 template<class rep,
          class period>

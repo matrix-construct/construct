@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_ENV_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	string_view getenv(const string_view &);
-}
+}}

@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_ENUM_H
 
-namespace ircd::util {
+namespace ircd {
+inline namespace util {
 
 // For conforming enums include a _NUM_ as the last element,
 // then num_of<my_enum>() works
@@ -144,4 +145,5 @@ combine_flags(const std::initializer_list<Enum> &list)
 	return combine_flags<Enum>(begin(list), end(list));
 }
 
-} // namespace ircd::util
+} // namespace util
+} // namespace ircd

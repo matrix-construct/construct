@@ -12,7 +12,7 @@
 #define HAVE_IRCD_UTIL_ITERATOR_H
 
 namespace ircd {
-namespace util {
+inline namespace util {
 
 //
 // To collapse pairs of iterators down to a single type

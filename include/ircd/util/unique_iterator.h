@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_UNIQUE_ITERATOR_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	template<class container,
 	         class iterator = typename container::iterator>
@@ -19,7 +20,7 @@ namespace ircd::util
 
 	template<class container>
 	struct unique_const_iterator;
-}
+}}
 
 //
 // For objects using the pattern of adding their own instance to a container

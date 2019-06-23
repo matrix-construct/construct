@@ -11,7 +11,8 @@
 #pragma once
 #define HAVE_IRCD_UTIL_HASH_H
 
-namespace ircd::util
+namespace ircd {
+inline namespace util
 {
 	// constexpr bernstein string hasher suite; these functions will hash the
 	// string at compile time leaving an integer residue at runtime. Decent
@@ -22,7 +23,7 @@ namespace ircd::util
 	// Note that at runtime this hash uses multiplication on every character
 	// which can consume many cycles...
 	template<size_t PRIME = 7681> size_t hash(const std::u16string &str, const size_t i = 0);
-}
+}}
 
 /// Runtime hashing of a std::u16string (for js). Non-cryptographic.
 template<size_t PRIME>

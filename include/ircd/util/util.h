@@ -64,7 +64,7 @@ namespace ircd
 
 // Unsorted section
 namespace ircd {
-namespace util {
+inline namespace util {
 
 //
 // Misc size() participants.
