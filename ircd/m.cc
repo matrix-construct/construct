@@ -2378,7 +2378,15 @@ ircd::m::node::key(const string_view &key_id,
                    const key_closure &closure)
 const
 {
-	m::keys::get(node_id, key_id, [&closure, &key_id]
+	using prototype = void (const string_view &, const string_view &, const keys::closure &);
+
+	//TODO: Remove this import once this callsite is outside of libircd.
+	static mods::import<prototype> call
+	{
+		"s_keys", "ircd::m::keys::get"
+	};
+
+	call(node_id, key_id, [&closure, &key_id]
 	(const json::object &keys)
 	{
 		const json::object &vks
