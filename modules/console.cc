@@ -4004,7 +4004,7 @@ console_cmd__db__list(opt &out, const string_view &line)
 	{
 		const auto name
 		{
-			replace(lstrip(lstrip(path, fs::path(fs::DB)), '/'), "/", ":")
+			replace(lstrip(lstrip(path, fs::path(fs::base::DB)), '/'), "/", ":")
 		};
 
 		const auto &d

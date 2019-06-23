@@ -163,7 +163,7 @@ try
 {
 	const auto dbdir
 	{
-		fs::path(fs::DB)
+		fs::path(fs::base::DB)
 	};
 
 	if(!fs::is_dir(dbdir) && (ircd::read_only || ircd::write_avoid))
@@ -212,7 +212,7 @@ try
 		{
 			log, "Direct-IO is not supported in the database directory `%s'"
 			"; Concurrent database queries will not be possible.",
-			fs::basepath::get(fs::DB)
+			fs::basepath::get(fs::base::DB)
 		};
 }
 catch(const std::exception &e)
@@ -234,7 +234,7 @@ ircd::db::direct_io_test_file_path()
 		"SUPPORTS_DIRECT_IO"_sv
 	};
 
-	return fs::path_string(fs::DB, test_file_name);
+	return fs::path_string(fs::base::DB, test_file_name);
 }
 
 namespace rocksdb::crc32c
@@ -3468,7 +3468,7 @@ ircd::db::database::sst::dump::dump(db::column column,
 	{
 		const string_view path_parts[]
 		{
-			fs::path(fs::DB), db::name(d), db::name(c)
+			fs::path(fs::base::DB), db::name(d), db::name(c)
 		};
 
 		path = fs::path_string(path_parts);
@@ -7579,7 +7579,7 @@ ircd::db::available()
 {
 	const auto &prefix
 	{
-		fs::path(fs::DB)
+		fs::path(fs::base::DB)
 	};
 
 	const auto dirs
@@ -7643,7 +7643,7 @@ ircd::db::path(const string_view &name,
 {
 	const auto &prefix
 	{
-		fs::path(fs::DB)
+		fs::path(fs::base::DB)
 	};
 
 	const string_view parts[]

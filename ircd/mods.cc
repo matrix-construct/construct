@@ -1095,7 +1095,7 @@ catch(const boost::system::system_error &e)
 decltype(ircd::mods::prefix)
 ircd::mods::prefix
 {
-	fs::path(fs::MODULES)
+	fs::path(fs::base::MODULES)
 };
 
 decltype(ircd::mods::suffix)

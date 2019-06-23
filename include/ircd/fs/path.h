@@ -19,7 +19,7 @@ namespace boost::filesystem
 
 namespace ircd::fs
 {
-	enum base :uint;
+	enum class base :uint;
 	struct basepath;
 	using path_view = vector_view<const string_view>;
 	using path_strings = vector_view<const std::string>;
@@ -77,7 +77,7 @@ struct ircd::fs::basepath
 /// Note that even though the PREFIX is accessible here, custom installations
 /// may use entirely different paths for other components; most installations
 /// use the package-target name as a path component.
-enum ircd::fs::base
+enum class ircd::fs::base
 :uint
 {
 	PREFIX,     ///< Installation prefix (from ./configure --prefix)
