@@ -140,7 +140,7 @@ ircd::m::keys_query_timeout
 	{ "default",  20000L                    }
 };
 
-bool
+void
 IRCD_MODULE_EXPORT
 ircd::m::keys::query(const string_view &query_server,
                      const queries &queries,
@@ -169,36 +169,24 @@ try
 		request
 	};
 
-	for(const json::object &key_ : response) try
+	for(const json::object &key : response) try
 	{
-		const m::keys &key
-		{
-			key_
-		};
+		verify(m::keys{key});
+		if(!closure(key))
+			continue;
 
-		verify(key);
-		log::debug
-		{
-			m::log, "Verified keys for '%s' from '%s'",
-			at<"server_name"_>(key),
-			query_server
-		};
-
-		if(!closure(key_))
-			return false;
+		cache::set(key);
 	}
 	catch(const std::exception &e)
 	{
 		log::derror
 		{
 			"Failed to verify keys for '%s' from '%s' :%s",
-			key_.get("server_name"),
+			key.get("server_name"),
 			query_server,
 			e.what()
 		};
 	}
-
-	return true;
 }
 catch(const ctx::timeout &e)
 {
