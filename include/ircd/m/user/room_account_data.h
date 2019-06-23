@@ -23,7 +23,7 @@ struct ircd::m::user::room_account_data
 
 	static constexpr const size_t &typebuf_size
 	{
-		m::room::id::MAX_SIZE + size(type_prefix)
+		m::room::id::MAX_SIZE + 24
 	};
 
 	m::user user;
