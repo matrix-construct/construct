@@ -152,7 +152,7 @@ noexcept
 {
 	return ec == std::system_category() ||
 	       ec == std::generic_category() ||
-	       ec == boost::system::system_category();
+	       ec == boost::system::system_category() ||
 	       ec == boost::system::generic_category();
 }
 
