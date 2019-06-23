@@ -106,6 +106,11 @@ extern "C"
 #undef stdout
 #undef stderr
 
+// Trouble. clang++-8
+#ifndef assert
+	#define assert(expr) (static_cast<void>(0))
+#endif
+
 //////////////////////////////////////////////////////////////////////////////>
 //
 // Pollution
