@@ -58,7 +58,7 @@ ircd::b64decode_size(const string_view &in)
 constexpr size_t
 ircd::b64decode_size(const size_t &in)
 {
-	return ceil(in * 0.75);
+	return (in * 0.75) + 1; //XXX: constexpr ceil()
 }
 
 inline size_t
@@ -70,7 +70,7 @@ ircd::b64encode_unpadded_size(const const_buffer &in)
 constexpr size_t
 ircd::b64encode_unpadded_size(const size_t &in)
 {
-	return ceil(in * (4.0 / 3.0));
+	return (in * (4.0 / 3.0)) + 1; //XXX: constexpr ceil()
 }
 
 inline size_t
@@ -82,7 +82,7 @@ ircd::b64encode_size(const const_buffer &in)
 constexpr size_t
 ircd::b64encode_size(const size_t &in)
 {
-	return ceil(in * (4.0 / 3.0)) + (3 - in % 3) % 3;
+	return ((in * (4.0 / 3.0)) + 1) + (3 - in % 3) % 3; //XXX: constexpr ceil
 }
 
 inline size_t
