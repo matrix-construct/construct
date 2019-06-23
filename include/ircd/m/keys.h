@@ -15,6 +15,7 @@ namespace ircd::m
 {
 	struct keys;
 
+	bool expired(const m::keys &);
 	bool verify(const m::keys &, std::nothrow_t) noexcept;
 	void verify(const m::keys &);
 }

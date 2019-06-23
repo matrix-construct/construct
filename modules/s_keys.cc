@@ -39,17 +39,6 @@ void
 IRCD_MODULE_EXPORT
 ircd::m::verify(const m::keys &keys)
 {
-	const auto &valid_until_ts
-	{
-		at<"valid_until_ts"_>(keys)
-	};
-
-	if(valid_until_ts < ircd::time<milliseconds>())
-		throw ircd::error
-		{
-			"Key was valid until %s", timestr(valid_until_ts / 1000L)
-		};
-
 	const json::object &verify_keys
 	{
 		at<"verify_keys"_>(keys)
@@ -88,15 +77,18 @@ ircd::m::verify(const m::keys &keys)
 		signatures.at(server_name)
 	};
 
-	const ed25519::sig sig{[&server_signatures, &key_id](auto &sig)
+	const ed25519::sig sig
 	{
-		b64decode(sig, unquote(server_signatures.at(key_id)));
-	}};
+		[&server_signatures, &key_id](auto &sig)
+		{
+			b64decode(sig, unquote(server_signatures.at(key_id)));
+		}
+	};
 
 	m::keys copy{keys};
 	at<"signatures"_>(copy) = string_view{};
 
-	thread_local char buf[4096];
+	thread_local char buf[16_KiB];
 	const const_buffer preimage
 	{
 		json::stringify(mutable_buffer{buf}, copy)
@@ -109,6 +101,27 @@ ircd::m::verify(const m::keys &keys)
 			"Failed to verify signature for public key of '%s'",
 			server_name
 		};
+
+	if(expired(keys))
+		log::warning
+		{
+			m::log, "key '%s' for '%s' expired on %s.",
+			key_id,
+			json::get<"server_name"_>(keys, "<no server name>"_sv),
+			timestr(at<"valid_until_ts"_>(keys) / 1000L),
+		};
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::expired(const m::keys &keys)
+{
+	const auto &valid_until_ts
+	{
+		at<"valid_until_ts"_>(keys)
+	};
+
+	return valid_until_ts > ircd::time<milliseconds>();
 }
 
 //
