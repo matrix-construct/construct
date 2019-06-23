@@ -11297,7 +11297,7 @@ console_cmd__feds__backfill(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__feds__resend(opt &out, const string_view &line)
+console_cmd__feds__send(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -11314,18 +11314,48 @@ console_cmd__feds__resend(opt &out, const string_view &line)
 		event_id
 	};
 
-	m::vm::opts opts;
-	opts.replays = true;
-	opts.conforming = false;
-	opts.fetch = false;
-	opts.eval = false;
-	opts.write = false;
-	opts.effects = false;
-	opts.notify = true;
-	m::vm::eval
+	const json::value event_json
 	{
-		m::event{event}, opts
+		event.source
 	};
+
+	const m::txn::array pduv
+	{
+		&event_json, 1
+	};
+
+	const std::string content
+	{
+		m::txn::create(pduv)
+	};
+
+	char txnidbuf[64];
+	const auto txnid
+	{
+		m::txn::create_id(txnidbuf, content)
+	};
+
+	m::feds::opts opts;
+	opts.op = m::feds::op::send;
+	opts.room_id = at<"room_id"_>(event);
+	opts.arg[0] = txnid;
+	opts.arg[1] = content;
+	m::feds::acquire(opts, [&out]
+	(const auto &result)
+	{
+		out << (result.eptr? '-' : '+')
+		    << " "
+		    << std::setw(40) << std::left << result.origin
+		    << " ";
+
+		if(result.eptr)
+			out << what(result.eptr);
+		else
+			out << string_view{result.object};
+
+		out << std::endl;
+		return true;
+	});
 
 	return true;
 }

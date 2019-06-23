@@ -100,4 +100,5 @@ enum class ircd::m::feds::op
 	backfill,
 	version,
 	keys,
+	send,
 };

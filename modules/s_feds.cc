@@ -35,6 +35,7 @@ namespace ircd::m::feds
 	static request_list backfill(const opts &, const closure &);
 	static request_list version(const opts &, const closure &);
 	static request_list keys(const opts &, const closure &);
+	static request_list send(const opts &, const closure &);
 
 	bool execute(const vector_view<const opts> &opts, const closure &closure);
 }
@@ -135,6 +136,10 @@ ircd::m::feds::execute(const vector_view<const opts> &optsv,
 			list.splice(list.end(), keys(opts, closure));
 			continue;
 
+		case op::send:
+			list.splice(list.end(), send(opts, closure));
+			continue;
+
 		case op::noop:
 			continue;
 	}
@@ -145,6 +150,28 @@ ircd::m::feds::execute(const vector_view<const opts> &optsv,
 			timeout = opts.timeout;
 
 	return handler(list, timeout, closure);
+}
+
+ircd::m::feds::request_list
+ircd::m::feds::send(const opts &opts,
+                    const closure &closure)
+{
+	const auto make_request{[&opts]
+	(auto &request, const auto &origin)
+	{
+		m::v1::send::opts v1opts;
+		v1opts.remote = string_view
+		{
+			strlcpy{request.origin, origin}
+		};
+
+		return m::v1::send
+		{
+			opts.arg[0], opts.arg[1], request.buf, std::move(v1opts)
+		};
+	}};
+
+	return creator<m::v1::send>(opts, make_request);
 }
 
 ircd::m::feds::request_list
