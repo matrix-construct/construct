@@ -144,7 +144,11 @@ typename std::enable_if
 	!std::is_assignable<dst, src>() &&
 	!std::is_constructible<dst, src>(),
 void>::type
+#ifdef __clang__
+__attribute__((unavailable("Unhandled assignment to json::tuple property")))
+#else
 __attribute__((error("Unhandled assignment to json::tuple property")))
+#endif
 _assign(dst &d,
         src&& s)
 {

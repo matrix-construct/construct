@@ -17,6 +17,12 @@
 #include <boost/chrono/chrono.hpp>
 #include <boost/chrono/process_cpu_clocks.hpp>
 
+#ifndef __clang__
+	#define IRCD_PROF_ALWAYS_OPTIMIZE __attribute__((optimize("s"), flatten))
+#else
+	#define IRCD_PROF_ALWAYS_OPTIMIZE
+#endif
+
 namespace ircd::prof
 {
 	std::ostream &debug(std::ostream &, const ::perf_event_mmap_page &);
@@ -120,14 +126,14 @@ ircd::prof::reset(group &group)
 }
 
 void
-__attribute__((optimize("s"), flatten))
+IRCD_PROF_ALWAYS_OPTIMIZE
 ircd::prof::start(group &group)
 {
 	leader(group).enable(PERF_IOC_FLAG_GROUP);
 }
 
 void
-__attribute__((optimize("s"), flatten))
+IRCD_PROF_ALWAYS_OPTIMIZE
 ircd::prof::stop(group &group)
 {
 	auto &leader(*group.front());
@@ -136,7 +142,7 @@ ircd::prof::stop(group &group)
 }
 
 ircd::prof::event &
-__attribute__((optimize("s")))
+IRCD_PROF_ALWAYS_OPTIMIZE
 ircd::prof::leader(group &group)
 {
 	assert(!group.empty() && group.front());
@@ -304,7 +310,7 @@ noexcept
 }
 
 const uint64_t &
-__attribute__((optimize("s"), flatten))
+IRCD_PROF_ALWAYS_OPTIMIZE
 ircd::prof::instructions::sample()
 {
 	retired = prof::leader(group).rdpmc();
@@ -765,14 +771,14 @@ noexcept
 }
 
 inline void
-__attribute__((optimize("s")))
+IRCD_PROF_ALWAYS_OPTIMIZE
 ircd::prof::event::disable(const long &arg)
 {
 	::ioctl(int(fd), PERF_EVENT_IOC_DISABLE, arg);
 }
 
 inline void
-__attribute__((optimize("s")))
+IRCD_PROF_ALWAYS_OPTIMIZE
 ircd::prof::event::enable(const long &arg)
 {
 	const int &fd(this->fd);
@@ -795,7 +801,7 @@ ircd::prof::event::ioctl(const ulong &req,
 }
 
 inline uint64_t
-__attribute__((optimize("s")))
+IRCD_PROF_ALWAYS_OPTIMIZE
 ircd::prof::event::rdpmc()
 const
 {

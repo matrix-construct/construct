@@ -20,9 +20,12 @@ __attribute__((visibility("hidden")))
 struct ircd::rfc3986::encoder
 :karma::grammar<char *, const string_view &>
 {
-	void throw_illegal()
+	[[noreturn]] void throw_illegal()
 	{
-		throw encoding_error("Generator Protection: urlencode");
+		throw encoding_error
+		{
+			"Generator Protection: urlencode"
+		};
 	}
 
 	karma::rule<char *, const string_view &> url_encoding

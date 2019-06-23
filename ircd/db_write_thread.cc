@@ -64,7 +64,6 @@
 
 #ifdef STORAGE_ROCKSDB_INCLUDE_DB_H_
 uint8_t
-__attribute__((externally_visible))
 rocksdb::WriteThread::BlockingAwaitState(Writer *const w,
                                          uint8_t goal_mask)
 {

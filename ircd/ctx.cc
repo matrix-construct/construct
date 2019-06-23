@@ -16,7 +16,7 @@
 /// another tool to detect corruption of a context's stack, specifically
 /// during yield and resume. This use is not really to provide security; just
 /// a kind of extra assertion, so we eliminate its emission during release.
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__clang__)
 	#define IRCD_CTX_STACK_PROTECT __attribute__((stack_protect))
 #else
 	#define IRCD_CTX_STACK_PROTECT

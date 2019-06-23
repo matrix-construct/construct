@@ -2587,8 +2587,8 @@ noexcept
 {
 }
 
-[[noreturn]]
 rocksdb::Status
+__attribute__((noreturn))
 ircd::db::database::stats::passthru::Reset()
 noexcept
 {
@@ -2624,16 +2624,16 @@ const noexcept
 	});
 }
 
-[[noreturn]]
 uint64_t
+__attribute__((noreturn))
 ircd::db::database::stats::passthru::getTickerCount(const uint32_t tickerType)
 const noexcept
 {
 	throw panic {"Unavailable for passthru"};
 }
 
-[[noreturn]]
 void
+__attribute__((noreturn))
 ircd::db::database::stats::passthru::setTickerCount(const uint32_t tickerType,
                                                     const uint64_t count)
 noexcept
@@ -2641,8 +2641,8 @@ noexcept
 	throw panic {"Unavailable for passthru"};
 }
 
-[[noreturn]]
 void
+__attribute__((noreturn))
 ircd::db::database::stats::passthru::histogramData(const uint32_t type,
                                                    rocksdb::HistogramData *const data)
 const noexcept
@@ -2650,8 +2650,8 @@ const noexcept
 	throw panic {"Unavailable for passthru"};
 }
 
-[[noreturn]]
 uint64_t
+__attribute__((noreturn))
 ircd::db::database::stats::passthru::getAndResetTickerCount(const uint32_t tickerType)
 noexcept
 {

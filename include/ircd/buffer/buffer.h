@@ -254,7 +254,11 @@ ircd::buffer::reverse(const mutable_buffer &dst,
 }
 
 template<size_t SIZE>
+#ifndef __clang__
 __attribute__((error
+#else
+__attribute__((unavailable
+#endif
 (
 	"Move source is an array. Is this a string literal? Do you want to move the \\0?"
 	" Disambiguate this by typing the source string_view or const_buffer."
@@ -267,7 +271,11 @@ ircd::buffer::move(const mutable_buffer &dst,
 }
 
 template<size_t SIZE>
+#ifndef __clang__
 __attribute__((error
+#else
+__attribute__((unavailable
+#endif
 (
 	"Copy source is an array. Is this a string literal? Do you want to copy the \\0?"
 	" Disambiguate this by typing the source string_view or const_buffer."

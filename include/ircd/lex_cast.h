@@ -95,6 +95,14 @@ namespace ircd
 	template<> string_view lex_cast(bool, const mutable_buffer &buf);
 }
 
+#ifdef __clang__
+	#define IRCD_LEX_CAST_UNNECESSARY \
+		__attribute__((deprecated("unnecessary lexical cast")))
+#else
+	#define IRCD_LEX_CAST_UNNECESSARY \
+		__attribute__((warning("unnecessary lexical cast")))
+#endif
+
 /// Convert a native number to a string. The returned value is a view of the
 /// string in a static ring buffer. There are LEX_CAST_BUFS number of buffers
 /// so you should not hold on to the returned view for very long.
@@ -136,7 +144,7 @@ ircd::lex_cast<std::string_view>(const std::string_view &s)
 /// because the conversion has to copy the string while no numerical conversion
 /// has taken place. The developer should remove the offending lex_cast.
 template<>
-__attribute__((warning("unnecessary lexical cast")))
+IRCD_LEX_CAST_UNNECESSARY
 inline std::string
 ircd::lex_cast<std::string>(const std::string &s)
 {
@@ -174,7 +182,7 @@ ircd::lex_cast(std::string &s)
 /// marked as unnecessary because no numerical conversion takes place yet
 /// data is still copied. (note: warning may be removed; may be intentional)
 template<>
-__attribute__((warning("unnecessary lexical cast")))
+IRCD_LEX_CAST_UNNECESSARY
 inline ircd::string_view
 ircd::lex_cast(const string_view &s,
                const mutable_buffer &buf)
@@ -187,7 +195,7 @@ ircd::lex_cast(const string_view &s,
 /// marked as unnecessary because no numerical conversion takes place yet
 /// data is still copied. (note: warning may be removed; may be intentional)
 template<>
-__attribute__((warning("unnecessary lexical cast")))
+IRCD_LEX_CAST_UNNECESSARY
 inline ircd::string_view
 ircd::lex_cast(const std::string_view &s,
                const mutable_buffer &buf)
@@ -200,7 +208,7 @@ ircd::lex_cast(const std::string_view &s,
 /// marked as unnecessary because no numerical conversion takes place yet
 /// data is still copied. (note: warning may be removed; may be intentional)
 template<>
-__attribute__((warning("unnecessary lexical cast")))
+IRCD_LEX_CAST_UNNECESSARY
 inline ircd::string_view
 ircd::lex_cast(const std::string &s,
                const mutable_buffer &buf)
@@ -211,7 +219,7 @@ ircd::lex_cast(const std::string &s,
 
 /// Template basis; if no specialization is matched there is no fallback here
 template<class T>
-__attribute__((error("unsupported lexical cast")))
+IRCD_LEX_CAST_UNNECESSARY
 ircd::string_view
 ircd::lex_cast(T t,
                const mutable_buffer &buf)
@@ -222,7 +230,7 @@ ircd::lex_cast(T t,
 
 /// Template basis; if no specialization is matched there is no fallback here
 template<class T>
-__attribute__((error("unsupported lexical cast")))
+IRCD_LEX_CAST_UNNECESSARY
 bool
 ircd::try_lex_cast(const string_view &s)
 {
