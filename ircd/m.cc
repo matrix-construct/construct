@@ -164,6 +164,9 @@ void
 ircd::m::init::modules::fini_imports()
 noexcept
 {
+	// Stop the vm (unload) this first even though it loads first.
+	mods::imports.erase("vm");
+
 	for(auto it(module_names.rbegin()); it != module_names.rend(); ++it)
 		mods::imports.erase(*it);
 }
