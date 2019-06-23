@@ -67,3 +67,4 @@ clean-local:
 	rm -f ircd.pic.h
 	rm -f ircd.pic.h.gch
 	rm -f spirit.h.gch
+	rm -f *.gch.tmp

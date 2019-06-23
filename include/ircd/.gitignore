@@ -3,3 +3,4 @@ serno.h
 ircd.pic*
 config.h
 config.h.in
+*.gch.tmp
