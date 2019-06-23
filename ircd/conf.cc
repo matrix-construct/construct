@@ -377,7 +377,7 @@ ircd::conf::call_env(item<void> &item)
 noexcept try
 {
 	assert(size(item.name) <= item.NAME_MAX_LEN);
-	thread_local char key[item.NAME_MAX_LEN];
+	thread_local char key[conf::item<void>::NAME_MAX_LEN];
 	const string_view name
 	{
 		key,

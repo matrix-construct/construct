@@ -137,53 +137,53 @@ const
 inline ircd::uint128_t &
 ircd::net::host6(ipport &ipp)
 {
-	return host6(std::get<ipp.IP>(ipp));
+	return host6(std::get<ipport::IP>(ipp));
 }
 
 inline const ircd::uint128_t &
 ircd::net::host6(const ipport &ipp)
 {
-	return host6(std::get<ipp.IP>(ipp));
+	return host6(std::get<ipport::IP>(ipp));
 }
 
 inline bool
 ircd::net::is_v6(const ipport &ipp)
 {
-	return is_v6(std::get<ipp.IP>(ipp));
+	return is_v6(std::get<ipport::IP>(ipp));
 }
 
 inline uint32_t &
 ircd::net::host4(ipport &ipp)
 {
-	return host4(std::get<ipp.IP>(ipp));
+	return host4(std::get<ipport::IP>(ipp));
 }
 
 inline const uint32_t &
 ircd::net::host4(const ipport &ipp)
 {
-	return host4(std::get<ipp.IP>(ipp));
+	return host4(std::get<ipport::IP>(ipp));
 }
 
 inline bool
 ircd::net::is_v4(const ipport &ipp)
 {
-	return is_v4(std::get<ipp.IP>(ipp));
+	return is_v4(std::get<ipport::IP>(ipp));
 }
 
 inline uint16_t &
 ircd::net::port(ipport &ipp)
 {
-	return std::get<ipp.PORT>(ipp);
+	return std::get<ipport::PORT>(ipp);
 }
 
 inline const uint16_t &
 ircd::net::port(const ipport &ipp)
 {
-	return std::get<ipp.PORT>(ipp);
+	return std::get<ipport::PORT>(ipp);
 }
 
 inline bool
 ircd::net::is_loop(const ipport &ipp)
 {
-	return is_loop(std::get<ipp.IP>(ipp));
+	return is_loop(std::get<ipport::IP>(ipp));
 }

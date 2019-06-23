@@ -2248,13 +2248,13 @@ ircd::fs::basepath::set(const base &base,
 	{
 		log, "Updating base path #%u '%s' from `%s' to `%s'",
 		uint(base),
-		basepaths.at(base).name,
-		basepaths.at(base).path,
+		basepaths.at(uint(base)).name,
+		basepaths.at(uint(base)).path,
 		path,
 	};
 
-	const string_view ret(basepaths.at(base).path);
-	basepaths.at(base).path = path;
+	const string_view ret(basepaths.at(uint(base)).path);
+	basepaths.at(uint(base)).path = path;
 	return ret;
 }
 
@@ -2262,7 +2262,7 @@ const ircd::fs::basepath &
 ircd::fs::basepath::get(const base &base)
 noexcept
 {
-	return basepaths.at(base);
+	return basepaths.at(uint(base));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

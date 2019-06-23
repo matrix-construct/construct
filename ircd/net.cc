@@ -4413,7 +4413,7 @@ ircd::net::string(const mutable_buffer &buf,
 		consume(out, copy(out, "["_sv));
 
 	if(ipp)
-		consume(out, size(string(out, std::get<ipp.IP>(ipp))));
+		consume(out, size(string(out, std::get<ipport::IP>(ipp))));
 
 	if(need_bracket)
 		consume(out, copy(out, "]"_sv));
@@ -4453,7 +4453,7 @@ ircd::net::make_endpoint_udp(const ipport &ipport)
 {
 	return
 	{
-		make_address(std::get<ipport.IP>(ipport)), port(ipport)
+		make_address(std::get<ipport::IP>(ipport)), port(ipport)
 	};
 }
 
@@ -4462,7 +4462,7 @@ ircd::net::make_endpoint(const ipport &ipport)
 {
 	return
 	{
-		make_address(std::get<ipport.IP>(ipport)), port(ipport)
+		make_address(std::get<ipport::IP>(ipport)), port(ipport)
 	};
 }
 
@@ -4474,14 +4474,14 @@ bool
 ircd::net::ipport::cmp_ip::operator()(const ipport &a, const ipport &b)
 const
 {
-	return ipaddr::cmp()(std::get<a.IP>(a), std::get<b.IP>(b));
+	return ipaddr::cmp()(std::get<ipport::IP>(a), std::get<ipport::IP>(b));
 }
 
 bool
 ircd::net::ipport::cmp_port::operator()(const ipport &a, const ipport &b)
 const
 {
-	return std::get<a.PORT>(a) < std::get<b.PORT>(b);
+	return std::get<ipport::PORT>(a) < std::get<ipport::PORT>(b);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

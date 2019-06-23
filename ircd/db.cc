@@ -4061,8 +4061,8 @@ const
 	return !for_each(*this, delta_closure_bool{[&op, &col]
 	(const auto &delta)
 	{
-		return std::get<delta.OP>(delta) == op &&
-		       std::get<delta.COL>(delta) == col;
+		return std::get<delta::OP>(delta) == op &&
+		       std::get<delta::COL>(delta) == col;
 	}});
 }
 
@@ -4090,8 +4090,8 @@ const
 	return !for_each(*this, delta_closure_bool{[&op, &col, &closure]
 	(const delta &delta)
 	{
-		if(std::get<delta.OP>(delta) == op &&
-		   std::get<delta.COL>(delta) == col)
+		if(std::get<delta::OP>(delta) == op &&
+		   std::get<delta::COL>(delta) == col)
 		{
 			closure(delta);
 			return false;
@@ -4109,9 +4109,9 @@ const
 	return !for_each(*this, delta_closure_bool{[&op, &col, &key]
 	(const auto &delta)
 	{
-		return std::get<delta.OP>(delta) == op &&
-		       std::get<delta.COL>(delta) == col &&
-		       std::get<delta.KEY>(delta) == key;
+		return std::get<delta::OP>(delta) == op &&
+		       std::get<delta::COL>(delta) == col &&
+		       std::get<delta::KEY>(delta) == key;
 	}});
 }
 
@@ -4142,11 +4142,11 @@ const
 	return !for_each(*this, delta_closure_bool{[&op, &col, &key, &closure]
 	(const delta &delta)
 	{
-		if(std::get<delta.OP>(delta) == op &&
-		   std::get<delta.COL>(delta) == col &&
-		   std::get<delta.KEY>(delta) == key)
+		if(std::get<delta::OP>(delta) == op &&
+		   std::get<delta::COL>(delta) == col &&
+		   std::get<delta::KEY>(delta) == key)
 		{
-			closure(std::get<delta.VAL>(delta));
+			closure(std::get<delta::VAL>(delta));
 			return false;
 		}
 		else return true;

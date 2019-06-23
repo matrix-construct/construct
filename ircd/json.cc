@@ -1731,7 +1731,7 @@ ircd::json::stringify(mutable_buffer &buf,
                       const iov &iov)
 {
 	const ctx::critical_assertion ca;
-	thread_local const member *m[iov.max_size];
+	thread_local const member *m[iov::max_size];
 	if(unlikely(size_t(iov.size()) > iov.max_size))
 		throw iov::oversize
 		{
