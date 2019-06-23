@@ -1029,7 +1029,6 @@ struct __cxxabiv1::__cxa_eh_globals
 ircd::ctx::continuation::continuation(const predicate &pred,
                                       const interruptor &intr,
                                       const yield_closure &closure)
-try
 :self
 {
 	ircd::ctx::current
@@ -1085,21 +1084,28 @@ try
 	assert(!uncaught_exceptions);
 	#endif
 
+	// Check that we saved a valid context reference to this object for later.
+	assert(self->yc);
+
 	// Null the fundamental current context register as the last operation
 	// during execution before yielding. When a context resumes it will
 	// restore this register; otherwise it remains null for executions on
 	// the program's main stack.
-	ircd::ctx::current = nullptr;
+	ircd::ctx::current = nullptr; try
+	{
+		// Run the provided routine which performs the actual context switch.
+		// Everything happening in this closure is no longer considered part
+		// of this context, but it is technically operating on this stack.
+		closure(*self->yc);
 
-	assert(self->yc);
-	closure(*self->yc);
-
-	// Check here if the context was interrupted while it was sleeping.
-	self->interruption_point();
-}
-catch(...)
-{
-	this->~continuation();
+		// Check for an interrupt that was sent while asleep. This will throw.
+		self->interruption_point();
+	}
+	catch(...)
+	{
+		this->~continuation();
+		throw;
+	}
 }
 
 ircd::ctx::continuation::~continuation()
