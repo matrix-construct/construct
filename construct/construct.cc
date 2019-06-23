@@ -28,6 +28,7 @@ bool nojs;
 bool nodirect;
 bool noaio;
 bool no6;
+bool yes6;
 bool norun;
 bool read_only;
 bool write_avoid;
@@ -50,7 +51,8 @@ lgetopt opts[]
 	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
 	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
 	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
-	{ "no6",        &no6,           lgetopt::BOOL,    "Disable IPv6 operations" },
+	{ "no6",        &no6,           lgetopt::BOOL,    "Disable IPv6 operations (default)" },
+	{ "6",          &yes6,          lgetopt::BOOL,    "Enable IPv6 operations" },
 	{ "norun",      &norun,         lgetopt::BOOL,    "[debug & testing only] Initialize but never run the event loop." },
 	{ "ro",         &read_only,     lgetopt::BOOL,    "Read-only mode. No writes to database allowed." },
 	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered." },
@@ -360,7 +362,11 @@ applyargs()
 	else
 		ircd::fs::aio::enable.set("true");
 
-	if(no6)
+	if(yes6)
+		ircd::net::enable_ipv6.set("true");
+	else if(no6)
+		ircd::net::enable_ipv6.set("false");
+	else
 		ircd::net::enable_ipv6.set("false");
 
 	if(soft_assert)
