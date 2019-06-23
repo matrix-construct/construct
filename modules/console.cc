@@ -5470,6 +5470,33 @@ console_cmd__key__get(opt &out, const string_view &line)
 }
 
 //
+// keys
+//
+
+bool
+console_cmd__keys(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"server_name"
+	}};
+
+	const auto &server_name
+	{
+		param.at("server_name")
+	};
+
+	m::keys::cache::for_each(server_name, [&out]
+	(const json::object &object)
+	{
+		out << object << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+//
 // stage
 //
 

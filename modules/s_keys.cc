@@ -352,6 +352,35 @@ ircd::m::keys::cache::get(const string_view &server_name,
 		node_room.get(std::nothrow, "ircd.key", key_id, reclosure);
 }
 
+bool
+IRCD_MODULE_EXPORT
+ircd::m::keys::cache::for_each(const string_view &server_name,
+                               const keys::closure_bool &closure)
+{
+	const m::node::room node_room
+	{
+		server_name
+	};
+
+	const m::room::state state
+	{
+		node_room
+	};
+
+	return state.for_each("ircd.key", [&closure]
+	(const auto &type, const auto &key_id, const auto event_idx)
+	{
+		bool ret{true};
+		m::get(std::nothrow, event_idx, "content", [&closure, &ret]
+		(const json::object &content)
+		{
+			ret = closure(content);
+		});
+
+		return ret;
+	});
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // (internal) ed25519 support sanity test

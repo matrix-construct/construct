@@ -66,6 +66,7 @@ struct ircd::m::keys
 
 struct ircd::m::keys::cache
 {
+	static bool for_each(const string_view &server, const closure_bool &);
 	static bool get(const string_view &server, const string_view &key_id, const closure &);
 	static size_t set(const json::object &keys);
 };
