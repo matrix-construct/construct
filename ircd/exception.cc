@@ -285,6 +285,16 @@ noexcept
 	terminate(std::current_exception());
 }
 
+ircd::terminate::terminate(const string_view &str)
+noexcept
+{
+	static char buf[512];
+	strlcpy(buf, str);
+	fprintf(stderr, "\nIRCd Terminated :%s\n", buf);
+	::fflush(stderr);
+	std::terminate();
+}
+
 ircd::terminate::terminate(std::exception_ptr eptr)
 noexcept
 {

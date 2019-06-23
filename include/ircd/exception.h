@@ -116,6 +116,7 @@ struct ircd::terminate
 {
 	[[noreturn]] terminate(const std::exception &) noexcept;
 	[[noreturn]] terminate(std::exception_ptr) noexcept;
+	[[noreturn]] terminate(const string_view &) noexcept;
 	[[noreturn]] terminate() noexcept;
 };
 
