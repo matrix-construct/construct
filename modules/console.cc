@@ -5409,19 +5409,34 @@ console_cmd__crt(opt &out, const string_view &line)
 bool
 console_cmd__key(opt &out, const string_view &line)
 {
-	out << "origin:                  " << m::my_host() << std::endl;
-	out << "public key ID:           " << m::self::public_key_id << std::endl;
-	out << "public key base64:       " << m::self::public_key_b64 << std::endl;
-	out << "TLS cert sha256 base64:  " << m::self::tls_cert_der_sha256_b64 << std::endl;
+	const params param{line, " ",
+	{
+		"server_name"
+	}};
 
-	return true;
-}
+	const auto &server_name
+	{
+		param["server_name"]
+	};
 
-bool
-console_cmd__key__create(opt &out, const string_view &line)
-{
-	m::self::create_my_key();
-	out << "done" << std::endl;
+	// information on my current key
+	if(!server_name)
+	{
+		out << "origin:                  " << m::my_host() << std::endl;
+		out << "public key ID:           " << m::self::public_key_id << std::endl;
+		out << "public key base64:       " << m::self::public_key_b64 << std::endl;
+		out << "TLS cert sha256 base64:  " << m::self::tls_cert_der_sha256_b64 << std::endl;
+		return true;
+	}
+
+	// keys cached for server by param.
+	m::keys::cache::for_each(server_name, [&out]
+	(const json::object &object)
+	{
+		out << object << std::endl;
+		return true;
+	});
+
 	return true;
 }
 
@@ -5469,30 +5484,11 @@ console_cmd__key__get(opt &out, const string_view &line)
 	return true;
 }
 
-//
-// keys
-//
-
 bool
-console_cmd__keys(opt &out, const string_view &line)
+console_cmd__key__create(opt &out, const string_view &line)
 {
-	const params param{line, " ",
-	{
-		"server_name"
-	}};
-
-	const auto &server_name
-	{
-		param.at("server_name")
-	};
-
-	m::keys::cache::for_each(server_name, [&out]
-	(const json::object &object)
-	{
-		out << object << std::endl;
-		return true;
-	});
-
+	m::self::create_my_key();
+	out << "done" << std::endl;
 	return true;
 }
 
