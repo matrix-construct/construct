@@ -106,7 +106,7 @@ struct ircd::prof::instructions
 	const uint64_t &at() const;
 	const uint64_t &sample();
 
-	instructions() noexcept;
+	instructions();
 	instructions(instructions &&) = delete;
 	instructions(const instructions &) = delete;
 	~instructions() noexcept;
@@ -207,7 +207,7 @@ struct ircd::prof::system
 
 	system(sample_t) noexcept;
 	system()
-	:array_type{{0}}
+	:array_type{{{0}}}
 	{}
 };
 

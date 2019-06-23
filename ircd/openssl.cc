@@ -1658,6 +1658,7 @@ ircd::openssl::init::init()
 }
 
 ircd::openssl::init::~init()
+noexcept
 {
 	ec_fini();
 

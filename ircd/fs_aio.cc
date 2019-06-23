@@ -910,6 +910,8 @@ catch(const std::exception &e)
 		qcount,
 		e.what()
 	}};
+
+	__builtin_unreachable();
 }
 
 size_t

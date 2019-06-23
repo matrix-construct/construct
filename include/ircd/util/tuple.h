@@ -409,7 +409,7 @@ template<size_t index,
 off_t
 tuple_offset(const tuple &t)
 {
-	return
+	return off_t
 	{
 	      reinterpret_cast<const uint8_t *>(std::addressof(std::get<index>(t))) -
 	      reinterpret_cast<const uint8_t *>(std::addressof(t))

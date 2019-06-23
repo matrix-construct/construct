@@ -3353,14 +3353,14 @@ ircd::json::serialized(const value &v)
 size_t
 ircd::json::serialized(const bool &b)
 {
-	constexpr const size_t t
+	static constexpr const size_t t
 	{
-		strlen("true")
+		_constexpr_strlen("true")
 	};
 
-	constexpr const size_t f
+	static constexpr const size_t f
 	{
-		strlen("false")
+		_constexpr_strlen("false")
 	};
 
 	return b? t : f;

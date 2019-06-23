@@ -59,6 +59,7 @@ ircd::js::init::init()
 
 inline
 ircd::js::init::~init()
+noexcept
 {
 }
 

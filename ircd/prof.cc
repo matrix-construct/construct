@@ -66,6 +66,18 @@ struct ircd::prof::event
 	~event() noexcept;
 };
 
+template<>
+decltype(ircd::util::instance_list<ircd::prof::event>::allocator)
+ircd::util::instance_list<ircd::prof::event>::allocator
+{};
+
+template<>
+decltype(ircd::util::instance_list<ircd::prof::event>::list)
+ircd::util::instance_list<ircd::prof::event>::list
+{
+	allocator
+};
+
 decltype(ircd::prof::enable)
 ircd::prof::enable
 {
@@ -105,7 +117,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	this->~init();
+	system::group.clear();
 	throw;
 }
 
@@ -200,7 +212,7 @@ namespace ircd::prof::vg
 }
 
 //
-// prof::vg::enable 
+// prof::vg::enable
 //
 
 ircd::prof::vg::enable::enable()
@@ -216,7 +228,7 @@ noexcept
 }
 
 //
-// prof::vg::disable 
+// prof::vg::disable
 //
 
 ircd::prof::vg::disable::disable()
@@ -292,7 +304,6 @@ ircd::prof::vg::enabled()
 //
 
 ircd::prof::instructions::instructions()
-noexcept
 {
 	if(!create(this->group, PERF_TYPE_HARDWARE, PERF_COUNT_HW_INSTRUCTIONS, true, false))
 		throw error
@@ -641,18 +652,6 @@ noexcept
 //
 // event
 //
-
-template<>
-decltype(ircd::util::instance_list<ircd::prof::event>::allocator)
-ircd::util::instance_list<ircd::prof::event>::allocator
-{};
-
-template<>
-decltype(ircd::util::instance_list<ircd::prof::event>::list)
-ircd::util::instance_list<ircd::prof::event>::list
-{
-	allocator
-};
 
 //
 // event::event

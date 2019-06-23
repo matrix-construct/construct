@@ -3170,7 +3170,7 @@ bool
 ircd::m::verify_hash(const event &event,
                      const sha256::buf &hash)
 {
-	static const size_t hashb64sz
+	static constexpr size_t hashb64sz
 	{
 		size_t(hash.size() * 1.34) + 1
 	};

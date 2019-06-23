@@ -158,7 +158,7 @@ at(It &&start,
 {
 	for(; start != stop; --i, std::advance(start, 1))
 		if(!i)
-			return start;
+			return std::move(start);
 
 	throw std::out_of_range
 	{

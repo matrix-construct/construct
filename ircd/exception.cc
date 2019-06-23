@@ -282,7 +282,12 @@ const noexcept
 ircd::terminate::terminate()
 noexcept
 {
-	terminate(std::current_exception());
+	ircd::terminate
+	{
+		std::current_exception()
+	};
+
+	__builtin_unreachable();
 }
 
 ircd::terminate::terminate(const string_view &str)

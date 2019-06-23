@@ -690,6 +690,11 @@ ircd::m::sync::stats_info
 	{ "default",  false                    },
 };
 
+template<>
+decltype(ircd::m::sync::item::instance_multimap::map)
+ircd::m::sync::item::instance_multimap::map
+{};
+
 bool
 ircd::m::sync::for_each(const item_closure_bool &closure)
 {
@@ -874,11 +879,6 @@ noexcept
 //
 // item
 //
-
-template<>
-decltype(ircd::m::sync::item::instance_multimap::map)
-ircd::m::sync::item::instance_multimap::map
-{};
 
 //
 // item::item
@@ -4598,6 +4598,32 @@ namespace ircd::m
 	static json::strung _hook_make_feature(const json::members &);
 }
 
+/// Instance list linkage for all hook sites
+template<>
+decltype(ircd::util::instance_list<ircd::m::hook::base::site>::allocator)
+ircd::util::instance_list<ircd::m::hook::base::site>::allocator
+{};
+
+template<>
+decltype(ircd::util::instance_list<ircd::m::hook::base::site>::list)
+ircd::util::instance_list<ircd::m::hook::base::site>::list
+{
+	allocator
+};
+
+/// Instance list linkage for all hooks
+template<>
+decltype(ircd::util::instance_list<ircd::m::hook::base>::allocator)
+ircd::util::instance_list<ircd::m::hook::base>::allocator
+{};
+
+template<>
+decltype(ircd::util::instance_list<ircd::m::hook::base>::list)
+ircd::util::instance_list<ircd::m::hook::base>::list
+{
+	allocator
+};
+
 //
 // hook::maps
 //
@@ -4757,19 +4783,6 @@ const
 // hook::base
 //
 
-/// Instance list linkage for all hooks
-template<>
-decltype(ircd::util::instance_list<ircd::m::hook::base>::allocator)
-ircd::util::instance_list<ircd::m::hook::base>::allocator
-{};
-
-template<>
-decltype(ircd::util::instance_list<ircd::m::hook::base>::list)
-ircd::util::instance_list<ircd::m::hook::base>::list
-{
-	allocator
-};
-
 /// Primary hook ctor
 ircd::m::hook::base::base(const json::members &members)
 try
@@ -4849,19 +4862,6 @@ catch(const std::out_of_range &e)
 //
 // hook::site
 //
-
-/// Instance list linkage for all hook sites
-template<>
-decltype(ircd::util::instance_list<ircd::m::hook::base::site>::allocator)
-ircd::util::instance_list<ircd::m::hook::base::site>::allocator
-{};
-
-template<>
-decltype(ircd::util::instance_list<ircd::m::hook::base::site>::list)
-ircd::util::instance_list<ircd::m::hook::base::site>::list
-{
-	allocator
-};
 
 //
 // hook::site::site

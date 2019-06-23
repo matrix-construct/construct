@@ -1243,11 +1243,11 @@ try
 		existing.erase(descriptor.name);
 	}
 
-	for(const auto &remain : existing)
+	if(!existing.empty())
 		throw error
 		{
 			"Failed to describe existing column '%s' (and %zd others...)",
-			remain,
+			*begin(existing),
 			existing.size() - 1
 		};
 
@@ -1427,7 +1427,7 @@ catch(const error &e)
 	log::error
 	{
 		"Error opening db '%s': %s",
-		this->name,
+		name,
 		e.what()
 	};
 
@@ -1438,14 +1438,14 @@ catch(const std::exception &e)
 	log::error
 	{
 		"Error opening db '%s': %s",
-		this->name,
+		name,
 		e.what()
 	};
 
 	throw error
 	{
 		"Failed to open db '%s': %s",
-		this->name,
+		name,
 		e.what()
 	};
 }
@@ -1522,8 +1522,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': Error closing database(%p) :%s",
-		name,
+		log, "Error closing database(%p) :%s",
 		this,
 		e.what()
 	};
@@ -1534,8 +1533,7 @@ catch(...)
 {
 	log::critical
 	{
-		log, "'%s': Unknown error closing database(%p)",
-		name,
+		log, "Unknown error closing database(%p)",
 		this
 	};
 
@@ -2191,6 +2189,8 @@ noexcept
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsuggest-attribute=format"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-nonliteral"
 void
 ircd::db::database::logger::Logv(const rocksdb::InfoLogLevel level_,
                                  const char *const fmt,
@@ -2225,6 +2225,7 @@ noexcept
 
 	rog(level, "'%s': %s", d->name, str);
 }
+#pragma clang diagnostic pop
 #pragma GCC diagnostic pop
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3955,6 +3956,7 @@ catch(const std::exception &e)
 	};
 
 	ircd::terminate();
+	__builtin_unreachable();
 }
 
 rocksdb::Status

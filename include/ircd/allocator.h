@@ -119,7 +119,7 @@ struct ircd::allocator::scope
 	scope(alloc_closure = {}, realloc_closure = {}, free_closure = {});
 	scope(const scope &) = delete;
 	scope(scope &&) = delete;
-	~scope();
+	~scope() noexcept;
 };
 
 /// Internal state structure for some of these tools. This is a very small and
@@ -290,8 +290,12 @@ struct ircd::allocator::fixed
 	operator allocator();
 
 	fixed()
-	:state{MAX, avail.data()}
-	{}
+	{
+		static_cast<state &>(*this) =
+		{
+			MAX, avail.data()
+		};
+	}
 };
 
 /// The actual allocator template as used by the container.
@@ -342,7 +346,7 @@ struct ircd::allocator::fixed<T, SIZE>::allocator
 	allocate(std::nothrow_t, const size_type &n, const const_pointer &hint = nullptr)
 	{
 		const auto base(reinterpret_cast<pointer>(s->buf.data()));
-		const uint hintpos(hint? uintptr_t(hint - base) : uintptr_t(-1));
+		const uint hintpos(hint? uint(hint - base) : uint(-1));
 		const pointer ret(base + s->state::allocate(std::nothrow, n, hintpos));
 		return s->in_range(ret)? ret : nullptr;
 	}
@@ -352,7 +356,7 @@ struct ircd::allocator::fixed<T, SIZE>::allocator
 	allocate(const size_type &n, const const_pointer &hint = nullptr)
 	{
 		const auto base(reinterpret_cast<pointer>(s->buf.data()));
-		const uint hintpos(hint? uintptr_t(hint - base) : uintptr_t(-1));
+		const uint hintpos(hint? uint(hint - base) : uint(-1));
 		return base + s->state::allocate(n, hintpos);
 	}
 

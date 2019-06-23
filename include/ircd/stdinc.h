@@ -203,8 +203,11 @@ namespace ircd
 	using std::chrono::high_resolution_clock;
 	using std::chrono::time_point;
 
-	using namespace std::literals::chrono_literals;
 	using namespace std::string_literals;
+	using namespace std::chrono_literals;
+	using namespace std::literals::chrono_literals;
+	using std::string_literals::operator""s;
+	using std::chrono_literals::operator""s;
 
 	namespace ph = std::placeholders;
 

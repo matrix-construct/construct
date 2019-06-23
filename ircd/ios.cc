@@ -106,7 +106,11 @@ ircd::ios::descriptor::default_deallocator(handler &handler,
                                            void *const &ptr,
                                            const size_t &size)
 {
+	#ifdef __clang__
+	::operator delete(ptr);
+	#else
 	::operator delete(ptr, size);
+	#endif
 }
 
 void *

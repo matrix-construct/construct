@@ -795,7 +795,7 @@ ircd::mods::make_target_name(const string_view &name,
 	}};
 
 	ret.shrink_to_fit();
-	return ret;
+	return std::move(ret);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

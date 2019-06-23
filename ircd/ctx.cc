@@ -789,7 +789,7 @@ noexcept
 	assert(bool(*this));
 
 	#ifdef HAVE_CXXABI_H
-	__cxa_end_catch();
+	__cxxabiv1::__cxa_end_catch();
 	#endif
 
 	// We don't yet support more levels of exceptions; after ending this
@@ -1533,7 +1533,7 @@ try
 {
 	const auto func
 	{
-		std::move(q.pop())
+		q.pop()
 	};
 
 	const scope_count working
@@ -2146,20 +2146,15 @@ noexcept
 }
 
 ircd::ctx::promise_base::~promise_base()
-noexcept try
+noexcept
 {
 	if(!valid())
 		return;
 
 	if(refcount(state()) == 1)
-		throw broken_promise{};
+		set_exception(make_exception_ptr<broken_promise>());
 	else
 		remove(state(), *this);
-}
-catch(const std::exception &e)
-{
-	set_exception(std::current_exception());
-	return;
 }
 
 void

@@ -74,7 +74,7 @@ struct ircd::net::listener_udp::datagram
 	datagram(const mutable_buffer &buf,
 	         const enum flag &flag = (enum flag)0);
 
-	datagram() = default;
+	datagram() {}
 };
 
 enum ircd::net::listener_udp::flag

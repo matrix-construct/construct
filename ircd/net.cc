@@ -356,7 +356,7 @@ size_t
 ircd::net::discard_all(socket &socket,
                        const size_t &len)
 {
-	static char buffer[512] alignas(16);
+	static char buffer[512];
 
 	size_t remain{len}; while(remain)
 	{
@@ -380,7 +380,7 @@ size_t
 ircd::net::discard_any(socket &socket,
                        const size_t &len)
 {
-	static char buffer[512] alignas(16);
+	static char buffer[512];
 
 	size_t remain{len}; while(remain)
 	{
@@ -3047,7 +3047,7 @@ try
 
 		case ready::READ:
 		{
-			static char buf[1] alignas(16);
+			static char buf[1];
 			static const ilist<mutable_buffer> bufs{buf};
 			static ios::descriptor desc
 			{
@@ -3112,7 +3112,7 @@ noexcept
 {
 	assert(type == ready::ERROR);
 
-	static char buf[1] alignas(16);
+	static char buf[1];
 	static const ilist<mutable_buffer> bufs{buf};
 	static const std::error_code eof
 	{
