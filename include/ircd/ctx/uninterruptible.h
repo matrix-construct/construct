@@ -11,14 +11,15 @@
 #pragma once
 #define HAVE_IRCD_CTX_UNINTERRUPTIBLE_H
 
-namespace ircd::ctx::this_ctx
+namespace ircd::ctx {
+inline namespace this_ctx
 {
 	struct uninterruptible;
 
 	bool interruptible() noexcept;
 	void interruptible(const bool &);
 	void interruptible(const bool &, std::nothrow_t) noexcept;
-}
+}}
 
 /// An instance of uninterruptible will suppress interrupts sent to the
 /// context for the scope. Suppression does not discard any interrupt,

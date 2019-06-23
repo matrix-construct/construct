@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_CTX_SYSCALL_USAGE_WARNING_H
 
-namespace ircd::ctx::this_ctx
+namespace ircd::ctx {
+inline namespace this_ctx
 {
 	struct syscall_usage_warning;
-}
+}}
 
 #ifndef NDEBUG
 struct ircd::ctx::this_ctx::syscall_usage_warning

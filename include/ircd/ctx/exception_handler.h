@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_CTX_EXCEPTION_HANDLER_H
 
-namespace ircd::ctx::this_ctx
+namespace ircd::ctx {
+inline namespace this_ctx
 {
 	struct exception_handler;
-}
+}}
 
 /// An instance of exception_handler must be present to allow a context
 /// switch inside a catch block. This is due to ABI limitations that stack

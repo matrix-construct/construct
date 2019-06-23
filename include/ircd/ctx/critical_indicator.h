@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_CTX_CRITICAL_INDICATOR_H
 
-namespace ircd::ctx::this_ctx
+namespace ircd::ctx {
+inline namespace this_ctx
 {
 	struct critical_indicator;         // Indicates if yielding happened for a section
-}
+}}
 
 /// An instance of critical_indicator reports if context switching happened.
 ///

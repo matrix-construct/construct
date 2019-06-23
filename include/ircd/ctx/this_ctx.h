@@ -11,8 +11,8 @@
 #pragma once
 #define HAVE_IRCD_CTX_THIS_CTX_H
 
-namespace ircd::ctx {
 /// Interface to the currently running context
+namespace ircd::ctx {
 inline namespace this_ctx
 {
 	struct ctx &cur();                           ///< Assumptional reference to *current

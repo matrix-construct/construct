@@ -11,12 +11,13 @@
 #pragma once
 #define HAVE_IRCD_CTX_STACK_USAGE_ASSERTION_H
 
-namespace ircd::ctx::this_ctx
+namespace ircd::ctx {
+inline namespace this_ctx
 {
 	struct stack_usage_assertion;
 
 	size_t stack_at_here() __attribute__((noinline));
-}
+}}
 
 /// An instance of stack_usage_assertion is placed on a ctx stack where one
 /// wants to test the stack usage at both construction and destruction points

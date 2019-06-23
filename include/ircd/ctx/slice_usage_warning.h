@@ -11,10 +11,11 @@
 #pragma once
 #define HAVE_IRCD_CTX_SLICE_USAGE_WARNING_H
 
-namespace ircd::ctx::this_ctx
+namespace ircd::ctx {
+inline namespace this_ctx
 {
 	struct slice_usage_warning;
-}
+}}
 
 #ifndef NDEBUG
 struct ircd::ctx::this_ctx::slice_usage_warning
