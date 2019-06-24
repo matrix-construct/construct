@@ -43,81 +43,81 @@ struct ircd::json::input
 	using it = const char *;
 	template<class T = unused_type, class... A> using rule = qi::rule<it, T, A...>;
 
-	rule<> NUL                         { lit('\0')                                          ,"nul" };
+	const rule<> NUL                   { lit('\0')                                          ,"nul" };
 
 	// insignificant whitespaces
-	rule<> SP                          { lit('\x20')                                      ,"space" };
-	rule<> HT                          { lit('\x09')                             ,"horizontal tab" };
-	rule<> CR                          { lit('\x0D')                            ,"carriage return" };
-	rule<> LF                          { lit('\x0A')                                  ,"line feed" };
+	const rule<> SP                    { lit('\x20')                                      ,"space" };
+	const rule<> HT                    { lit('\x09')                             ,"horizontal tab" };
+	const rule<> CR                    { lit('\x0D')                            ,"carriage return" };
+	const rule<> LF                    { lit('\x0A')                                  ,"line feed" };
 
 	// whitespace skipping
-	rule<> WS                          { SP | HT | CR | LF                           ,"whitespace" };
-	rule<> ws                          { *(WS)                                ,"whitespace monoid" };
-	rule<> wsp                         { +(WS)                             ,"whitespace semigroup" };
+	const rule<> WS                    { SP | HT | CR | LF                           ,"whitespace" };
+	const rule<> ws                    { *(WS)                                ,"whitespace monoid" };
+	const rule<> wsp                   { +(WS)                             ,"whitespace semigroup" };
 
 	// structural
-	rule<> object_begin                { lit('{')                                  ,"object begin" };
-	rule<> object_end                  { lit('}')                                    ,"object end" };
-	rule<> array_begin                 { lit('[')                                   ,"array begin" };
-	rule<> array_end                   { lit(']')                                     ,"array end" };
-	rule<> name_sep                    { lit(':')                                      ,"name sep" };
-	rule<> value_sep                   { lit(',')                                     ,"value sep" };
-	rule<> escape                      { lit('\\')                                       ,"escape" };
-	rule<> quote                       { lit('"')                                         ,"quote" };
+	const rule<> object_begin          { lit('{')                                  ,"object begin" };
+	const rule<> object_end            { lit('}')                                    ,"object end" };
+	const rule<> array_begin           { lit('[')                                   ,"array begin" };
+	const rule<> array_end             { lit(']')                                     ,"array end" };
+	const rule<> name_sep              { lit(':')                                      ,"name sep" };
+	const rule<> value_sep             { lit(',')                                     ,"value sep" };
+	const rule<> escape                { lit('\\')                                       ,"escape" };
+	const rule<> quote                 { lit('"')                                         ,"quote" };
 
 	// literal
-	rule<> lit_false                   { lit("false")                             ,"literal false" };
-	rule<> lit_true                    { lit("true")                               ,"literal true" };
-	rule<> lit_null                    { lit("null")                                       ,"null" };
-	rule<> boolean                     { lit_true | lit_false                           ,"boolean" };
-	rule<> literal                     { lit_true | lit_false | lit_null                ,"literal" };
+	const rule<> lit_false             { lit("false")                             ,"literal false" };
+	const rule<> lit_true              { lit("true")                               ,"literal true" };
+	const rule<> lit_null              { lit("null")                                       ,"null" };
+	const rule<> boolean               { lit_true | lit_false                           ,"boolean" };
+	const rule<> literal               { lit_true | lit_false | lit_null                ,"literal" };
 
 	// numerical (TODO: exponent)
-	rule<> number
+	const rule<> number
 	{
 		double_ | long_
 		,"number"
 	};
 
 	// string
-	rule<> unicode
+	const rule<> unicode
 	{
 		lit('u') >> qi::uint_parser<uint64_t, 16, 1, 12>{}
 		,"escaped unicode"
 	};
 
-	rule<> escaped
+	const rule<> escaped
 	{
 		lit('"') | lit('\\') | lit('\b') | lit('\f') | lit('\n') | lit('\r') | lit('\t') | lit('\0')
 		,"escaped"
 	};
 
-	rule<> escaper
+	const rule<> escaper
 	{
 		lit('"') | lit('\\') | lit('b') | lit('f') | lit('n') | lit('r') | lit('t') | lit('0') | unicode
 		,"escaped"
 	};
 
-	rule<> escaper_nc
+	const rule<> escaper_nc
 	{
 		escaper | lit('/')
 	};
 
-	rule<string_view> chars
+	const rule<string_view> chars
 	{
 		raw[*((char_ - escaped) | (escape >> escaper_nc))]
 		,"characters"
 	};
 
-	rule<string_view> string
+	const rule<string_view> string
 	{
 		quote >> chars >> (!escape >> quote)
 		,"string"
 	};
 
 	// container
-	rule<string_view> name
+	const rule<string_view> name
 	{
 		string
 		,"name"
@@ -127,6 +127,7 @@ struct ircd::json::input
 	_r1_type depth;
 	[[noreturn]] static void throws_exceeded();
 
+	// primary recursive
 	const rule<unused_type(uint)> member
 	{
 		name >> -ws >> name_sep >> -ws >> value(depth)
@@ -155,7 +156,8 @@ struct ircd::json::input
 		,"value"
 	};
 
-	rule<enum json::type> type
+	// type checkers
+	const rule<enum json::type> type
 	{
 		(omit[quote]           >> attr(json::STRING))  |
 		(omit[object_begin]    >> attr(json::OBJECT))  |
@@ -165,7 +167,7 @@ struct ircd::json::input
 		,"type"
 	};
 
-	rule<enum json::type> type_strict
+	const rule<enum json::type> type_strict
 	{
 		(omit[string]     >> attr(json::STRING))  |
 		(omit[object(0)]  >> attr(json::OBJECT))  |
@@ -176,7 +178,7 @@ struct ircd::json::input
 	};
 
 	input()
-	:input::base_type{rule<>{}}
+	:input::base_type{rule<>{}} // required by spirit
 	{}
 };
 
@@ -186,45 +188,45 @@ struct ircd::json::output
 	using it = char *;
 	template<class T = unused_type, class... A> using rule = karma::rule<it, T, A...>;
 
-	rule<> NUL                         { lit('\0')                                          ,"nul" };
+	const rule<> NUL                   { lit('\0')                                          ,"nul" };
 
 	// insignificant whitespaces
-	rule<> SP                          { lit('\x20')                                      ,"space" };
-	rule<> HT                          { lit('\x09')                             ,"horizontal tab" };
-	rule<> CR                          { lit('\x0D')                            ,"carriage return" };
-	rule<> LF                          { lit('\x0A')                                  ,"line feed" };
+	const rule<> SP                    { lit('\x20')                                      ,"space" };
+	const rule<> HT                    { lit('\x09')                             ,"horizontal tab" };
+	const rule<> CR                    { lit('\x0D')                            ,"carriage return" };
+	const rule<> LF                    { lit('\x0A')                                  ,"line feed" };
 
 	// whitespace skipping
-	rule<> WS                          { SP | HT | CR | LF                           ,"whitespace" };
-	rule<> ws                          { *(WS)                                ,"whitespace monoid" };
-	rule<> wsp                         { +(WS)                             ,"whitespace semigroup" };
+	const rule<> WS                    { SP | HT | CR | LF                           ,"whitespace" };
+	const rule<> ws                    { *(WS)                                ,"whitespace monoid" };
+	const rule<> wsp                   { +(WS)                             ,"whitespace semigroup" };
 
 	// structural
-	rule<> object_begin                { lit('{')                                  ,"object begin" };
-	rule<> object_end                  { lit('}')                                    ,"object end" };
-	rule<> array_begin                 { lit('[')                                   ,"array begin" };
-	rule<> array_end                   { lit(']')                                     ,"array end" };
-	rule<> name_sep                    { lit(':')                                ,"name separator" };
-	rule<> value_sep                   { lit(',')                               ,"value separator" };
-	rule<> quote                       { lit('"')                                         ,"quote" };
-	rule<> escape                      { lit('\\')                                       ,"escape" };
+	const rule<> object_begin          { lit('{')                                  ,"object begin" };
+	const rule<> object_end            { lit('}')                                    ,"object end" };
+	const rule<> array_begin           { lit('[')                                   ,"array begin" };
+	const rule<> array_end             { lit(']')                                     ,"array end" };
+	const rule<> name_sep              { lit(':')                                ,"name separator" };
+	const rule<> value_sep             { lit(',')                               ,"value separator" };
+	const rule<> quote                 { lit('"')                                         ,"quote" };
+	const rule<> escape                { lit('\\')                                       ,"escape" };
 
 	// literal
-	rule<string_view> lit_true         { karma::string("true")                     ,"literal true" };
-	rule<string_view> lit_false        { karma::string("false")                   ,"literal false" };
-	rule<string_view> lit_null         { karma::string("null")                     ,"literal null" };
-	rule<string_view> boolean          { lit_true | lit_false                           ,"boolean" };
-	rule<string_view> literal          { lit_true | lit_false | lit_null                ,"literal" };
+	const rule<string_view> lit_true   { karma::string("true")                     ,"literal true" };
+	const rule<string_view> lit_false  { karma::string("false")                   ,"literal false" };
+	const rule<string_view> lit_null   { karma::string("null")                     ,"literal null" };
+	const rule<string_view> boolean    { lit_true | lit_false                           ,"boolean" };
+	const rule<string_view> literal    { lit_true | lit_false | lit_null                ,"literal" };
 
 	// number
-	rule<string_view> number
+	const rule<string_view> number
 	{
 		double_
 		,"number"
 	};
 
 	// string
-	std::map<char, const char *> escapes
+	const std::map<char, const char *> escapes
 	{
 		{ '"',    "\\\""  },
 		{ '\\',   "\\\\"  },
