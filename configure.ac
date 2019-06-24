@@ -1687,8 +1687,11 @@ AM_COND_IF([MINGW],
 [
 
 ], [
-	EXTRA_CXXFLAGS+=" -pthread"
 	EXTRA_LIBS+="-lpthread -latomic"
+	AM_COND_IF([GCC],
+	[
+		EXTRA_CXXFLAGS+=" -pthread"
+	])
 ])
 
 dnl ***************************************************************************
