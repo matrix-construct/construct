@@ -127,7 +127,13 @@ struct ircd::json::input
 	_r1_type depth;
 	[[noreturn]] static void throws_exceeded();
 
-	// primary recursive
+	// primary recursive rule
+	const rule<unused_type(uint)> value
+	{
+		lit_false | lit_null | lit_true | string | number | object(depth + 1) | array(depth + 1)
+		,"value"
+	};
+
 	const rule<unused_type(uint)> member
 	{
 		name >> -ws >> name_sep >> -ws >> value(depth)
@@ -148,12 +154,6 @@ struct ircd::json::input
 
 		array_begin >> -((-ws >> value(depth)) % (-ws >> value_sep)) >> -ws >> array_end
 		,"array"
-	};
-
-	const rule<unused_type(uint)> value
-	{
-		lit_false | lit_null | lit_true | string | number | object(depth + 1) | array(depth + 1)
-		,"value"
 	};
 
 	// type checkers
@@ -179,7 +179,17 @@ struct ircd::json::input
 
 	input()
 	:input::base_type{rule<>{}} // required by spirit
-	{}
+	{
+		// synthesized repropagation of recursive rules
+		value %= lit_false
+		       | lit_null
+		       | lit_true
+		       | string
+		       | number
+		       | object(depth + 1)
+		       | array(depth + 1)
+		       ;
+	}
 };
 
 struct ircd::json::output
@@ -238,54 +248,55 @@ struct ircd::json::output
 		{ '\0',   "\\0"   },
 	};
 
-	karma::symbols<char, const char *> escaped
+	const karma::symbols<char, const char *> escaped
 	{
 		"escaped"
 	};
 
-	rule<char()> character
+	const rule<char()> character
 	{
 		escaped | char_
 	};
 
-	rule<string_view> string
+	const rule<string_view> string
 	{
 		quote << *(character) << quote
 		,"string"
 	};
 
-	rule<string_view> name
+	const rule<string_view> name
 	{
 		string
 		,"name"
 	};
 
-	rule<json::object> object
+	// primary recursive rule
+	const rule<string_view> value
 	{
-		object_begin << -(member % value_sep) << object_end
-		,"object"
+		   (&object << object)
+		 | (&array << array)
+		 | (&literal << literal)
+		 | (&number << number)
+		 | string
+		,"value"
 	};
 
-	rule<json::array> array
-	{
-		array_begin << -(value % value_sep) << array_end
-		,"array"
-	};
-
-	rule<json::object::member> member
+	const rule<json::object::member> member
 	{
 		name << name_sep << value
 		,"member"
 	};
 
-	rule<string_view> value
+	const rule<json::object> object
 	{
-		  (&object << object)
-		| (&array << array)
-		| (&literal << literal)
-		| (&number << number)
-		| string
-		,"value"
+		object_begin << -(member % value_sep) << object_end
+		,"object"
+	};
+
+	const rule<json::array> array
+	{
+		array_begin << -(value % value_sep) << array_end
+		,"array"
 	};
 
 	output()
@@ -293,6 +304,14 @@ struct ircd::json::output
 	{
 		for(const auto &p : escapes)
 			escaped.add(p.first, p.second);
+
+		// synthesized repropagation of recursive rules
+		value %= (&object << object)
+		       | (&array << array)
+		       | (&literal << literal)
+		       | (&number << number)
+		       | string
+		       ;
 	}
 };
 
