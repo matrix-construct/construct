@@ -33,7 +33,6 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = \
 	-module \
 	-avoid-version \
-	-Wl,-fuse-ld=gold \
 	-Wl,--warn-common \
 	-Wl,--warn-execstack \
 	-Wl,--detect-odr-violations \
@@ -48,6 +47,18 @@ AM_LDFLAGS = \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
 	###
+
+if GCC
+AM_LDFLAGS += \
+	-Wl,-fuse-ld=gold \
+	###
+endif
+
+if CLANG
+AM_LDFLAGS += \
+	-fuse-ld=gold \
+	###
+endif
 
 ###############################################################################
 #

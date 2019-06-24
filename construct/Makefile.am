@@ -22,7 +22,6 @@ AM_CPPFLAGS = \
 
 AM_LDFLAGS = \
 	-dlopen self \
-	-Wl,-fuse-ld=gold \
 	-Wl,--warn-execstack \
 	-Wl,--warn-common \
 	-Wl,--detect-odr-violations \
@@ -40,6 +39,18 @@ AM_LDFLAGS = \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
 	###
+
+if GCC
+AM_LDFLAGS += \
+	-Wl,-fuse-ld=gold \
+	###
+endif
+
+if CLANG
+AM_LDFLAGS += \
+	-fuse-ld=gold \
+	###
+endif
 
 bin_PROGRAMS = construct
 
