@@ -85,6 +85,7 @@ handle_notify(const m::event &event,
 }
 
 void
+__attribute__((noreturn))
 send_worker()
 {
 	while(1) try
@@ -282,6 +283,7 @@ catch(const std::exception &e)
 }
 
 void
+__attribute__((noreturn))
 recv_worker()
 {
 	while(1)

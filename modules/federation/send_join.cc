@@ -227,7 +227,7 @@ put__send_join(client &client,
 		}});
 	}
 
-	return response;
+	return std::move(response);
 }
 
 resource::method

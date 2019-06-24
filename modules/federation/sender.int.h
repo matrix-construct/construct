@@ -106,6 +106,4 @@ struct txn
 	,node{&node}
 	,timeout{now<steady_point>()} //TODO: conf
 	{}
-
-	txn() = default;
 };

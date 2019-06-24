@@ -299,7 +299,12 @@ string_view
 stringify(mutable_buffer &buf,
           const tuple<T...> &tuple)
 {
-	std::array<member, tuple.size()> members;
+	static constexpr const size_t member_count
+	{
+		json::tuple_size<json::tuple<T...>>()
+	};
+
+	std::array<member, member_count> members;
 	const auto e{_member_transform_if(tuple, begin(members), end(members), []
 	(auto &ret, const string_view &key, auto&& val)
 	{

@@ -125,7 +125,7 @@ get__state(client &client,
 		});
 	}
 
-	return response;
+	return std::move(response);
 }
 
 resource::method

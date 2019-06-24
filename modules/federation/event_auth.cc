@@ -126,7 +126,7 @@ get__event_auth(client &client,
 			auth_chain.append(event);
 	});
 
-	return response;
+	return std::move(response);
 }
 
 resource::method

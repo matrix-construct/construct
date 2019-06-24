@@ -15,7 +15,7 @@ static void _rejoin_rooms(const m::user::id &user_id);
 static void handle_my_profile_changed__displayname(const m::event &event);
 static void handle_my_profile_changed__avatar_url(const m::event &event);
 static void handle_my_profile_changed(const m::event &, m::vm::eval &);
-static void rethrow(const std::exception_ptr &, const m::user &, const string_view &);
+[[noreturn]] static void rethrow(const std::exception_ptr &, const m::user &, const string_view &);
 static std::exception_ptr fetch_profile_remote(const m::user &, const string_view &);
 static resource::response get__profile(client &, const resource::request &);
 static resource::response put__profile(client &, const resource::request &);

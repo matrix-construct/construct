@@ -214,7 +214,7 @@ noexcept try
 catch(const ircd::user_error &e)
 {
 	if(ircd::debugmode)
-		throw;
+		ircd::terminate{e};
 
 	fprintf(stderr, usererrstr, e.what());
 	return EXIT_FAILURE;
@@ -222,7 +222,7 @@ catch(const ircd::user_error &e)
 catch(const std::exception &e)
 {
 	if(ircd::debugmode)
-		throw;
+		ircd::terminate{e};
 
 	/*
 	* Why EXIT_FAILURE here?

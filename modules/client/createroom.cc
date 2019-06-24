@@ -419,6 +419,8 @@ catch(const db::not_found &e)
 	{
 		http::CONFLICT, "M_ROOM_ALIAS_IN_USE", "An alias of the desired room is in use."
 	};
+
+	//XXX: clearly a conflict
 }
 
 ircd::m::room

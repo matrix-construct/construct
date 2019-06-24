@@ -171,5 +171,5 @@ get__missing_events(client &client,
 				break;
 	}
 
-	return response;
+	return std::move(response);
 }

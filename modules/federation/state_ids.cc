@@ -120,7 +120,7 @@ get__state_ids(client &client,
 		}});
 	}
 
-	return response;
+	return std::move(response);
 }
 
 resource::method

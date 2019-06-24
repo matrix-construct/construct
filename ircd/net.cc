@@ -2544,18 +2544,26 @@ ircd::net::acceptor_udp::flags(const flag &flag)
 ircd::net::listener_udp::datagram::datagram(const const_buffer &buf,
                                             const ipport &remote,
                                             const enum flag &flag)
-:cbuf{buf}
-,cbufs{&cbuf, 1}
-,remote{remote}
+:remote{remote}
 ,flag{flag}
-{}
+{
+	cbuf = buf;
+	cbufs =
+	{
+		&this->cbuf, 1
+	};
+}
 
 ircd::net::listener_udp::datagram::datagram(const mutable_buffer &buf,
                                             const enum flag &flag)
-:mbuf{buf}
-,mbufs{&mbuf, 1}
-,flag{flag}
-{}
+:flag{flag}
+{
+	mbuf = buf;
+	mbufs =
+	{
+		&this->mbuf, 1
+	};
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //

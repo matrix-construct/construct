@@ -67,7 +67,7 @@ get__members(client &client,
 		chunk.append(event);
 	});
 
-	return response;
+	return std::move(response);
 }
 
 resource::response
@@ -146,5 +146,5 @@ get__joined_members(client &client,
 		});
 	}});
 
-	return response;
+	return std::move(response);
 }

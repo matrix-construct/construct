@@ -91,7 +91,7 @@ post__user_keys_query(client &client,
 				_query_user_device(client, request, user_id, device_id, response_keys_user);
 	}
 
-	return response;
+	return std::move(response);
 }
 
 void

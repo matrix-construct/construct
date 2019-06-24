@@ -27,8 +27,7 @@
 /// published for demangling and use by libircd (object equivalent).
 #define IRCD_MODULE_EXPORT_DATA \
 	__attribute__((section(IRCD_MODULE_EXPORT_DATA_SECTION))) \
-	__attribute__((visibility(IRCD_MODULE_EXPORT_CODE_VISIBILITY))) \
-	__attribute__((externally_visible))
+	__attribute__((visibility(IRCD_MODULE_EXPORT_CODE_VISIBILITY)))
 
 // Common convenience aliases
 #define IRCD_MODULE_EXPORT \
@@ -37,7 +36,6 @@
 /// Module declaration
 #define IRCD_MODULE \
 	__attribute__((visibility("default"))) \
-	__attribute__((externally_visible)) \
 	ircd_module
 
 /// Module API: Interface for module developers.
@@ -130,8 +128,7 @@ struct ircd::mapi::metablock
 	fini_func fini;                    // Executed before dlclose()
 	meta_data meta;                    // Various key-value metadata
 
-	metablock(const string_view &, init_func &&, fini_func &&)
-	__attribute__((noplt));
+	metablock(const string_view &, init_func &&, fini_func &&);
 };
 
 static_assert

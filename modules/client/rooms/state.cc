@@ -165,7 +165,7 @@ get__state(client &client,
 		top.append(event);
 	});
 
-	return response;
+	return std::move(response);
 }
 
 m::event::id::buf

@@ -176,5 +176,5 @@ get__publicrooms(client &client,
 			top, "next_batch", next_batch_buf
 		};
 
-	return response;
+	return std::move(response);
 }

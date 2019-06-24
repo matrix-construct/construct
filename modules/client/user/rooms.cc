@@ -230,7 +230,7 @@ get__tags(client &client,
 		return true;
 	});
 
-	return response;
+	return std::move(response);
 }
 
 resource::response

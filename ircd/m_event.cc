@@ -744,7 +744,7 @@ ircd::m::event::conforms::conforms(const event &e)
 		set(MISSING_ORIGIN);
 
 	//TODO: XXX
-	if(false)
+	if((false))
 		set(INVALID_ORIGIN);
 
 	if(empty(json::get<"signatures"_>(e)))
@@ -3172,7 +3172,7 @@ ircd::m::verify_hash(const event &event,
 {
 	static constexpr size_t hashb64sz
 	{
-		size_t(hash.size() * 1.34) + 1
+		size_t(sha256::digest_size * 1.34) + 1
 	};
 
 	thread_local char b64buf[hashb64sz];

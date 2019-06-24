@@ -4261,6 +4261,7 @@ ircd::db::txn::append::append(txn &t,
 	append(t, *t.d, delta);
 }
 
+__attribute__((noreturn))
 ircd::db::txn::append::append(txn &t,
                               const row::delta &delta)
 {
@@ -5024,7 +5025,7 @@ const
 const ircd::db::gopts
 ircd::db::domain::applied_opts
 {
-	{ get::PREFIX }
+	get::PREFIX
 };
 
 bool
@@ -5834,7 +5835,7 @@ ircd::db::has(column &column,
 	// NOTE disabled for rocksdb >= v5.15 due to a regression
 	// where rocksdb does not init SuperVersion data in the column
 	// family handle and this codepath triggers null derefs and ub.
-	if(0 && c.table_opts.filter_policy)
+	if((false) && c.table_opts.filter_policy)
 	{
 		const auto k(slice(key));
 		auto opts(make_opts(gopts));
