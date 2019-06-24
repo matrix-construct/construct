@@ -275,7 +275,8 @@ inline bool
 __attribute__((always_inline))
 ircd::ios::is_main_thread()
 {
-	return std::this_thread::get_id() == main_thread_id;
+	return std::this_thread::get_id() == main_thread_id ||
+	       main_thread_id == std::thread::id();
 }
 
 inline bool
