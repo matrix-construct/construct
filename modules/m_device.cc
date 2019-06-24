@@ -43,7 +43,7 @@ ircd::m::device::set(const m::user &user,
 			buf, "ircd.device.%s", prop
 		}};
 
-		m::send(user_room, user, type, device_id,
+		m::send(user_room, user, type, device_id, json::members
 		{
 			{ "", val }
 		});
@@ -66,7 +66,7 @@ ircd::m::device::set(const m::user &user,
 	}};
 
 	const user::room user_room{user};
-	m::send(user_room, user, type, id,
+	m::send(user_room, user, type, id, json::members
 	{
 		{ "", val }
 	});

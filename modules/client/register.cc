@@ -297,7 +297,7 @@ register_user(const m::registar &request,
 
 	// Store the options from registration.
 	m::user::room user_room{user};
-	send(user_room, user.user_id, "ircd.account.options", "registration",
+	send(user_room, user.user_id, "ircd.account.options", "registration", json::members
 	{
 		{ "bind_email", bind_email },
 	});
@@ -327,7 +327,7 @@ register_user(const m::registar &request,
 
 		const m::event::id::buf access_token_id
 		{
-			m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
+			m::send(m::user::tokens, user_id, "ircd.access_token", access_token, json::members
 			{
 				{ "ip",         last_seen_ip },
 				{ "device_id",  device_id    },

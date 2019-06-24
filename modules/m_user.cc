@@ -95,14 +95,14 @@ highlighted_count__between(const user &user,
 	it.seek_idx(a);
 
 	if(!it && !exists(room))
-		throw NOT_FOUND
+		throw m::NOT_FOUND
 		{
 			"Cannot find room '%s' to count highlights for '%s'",
 			string_view{room.room_id},
 			string_view{user.user_id}
 		};
 	else if(!it)
-		throw NOT_FOUND
+		throw m::NOT_FOUND
 		{
 			"Event @ idx:%lu or idx:%lu not found in '%s' to count highlights for '%s'",
 			a,

@@ -69,7 +69,7 @@ deactivate__user(const m::user &user,
 		user
 	};
 
-	return send(user_room, m::me.user_id, "ircd.account", "active",
+	return send(user_room, m::me.user_id, "ircd.account", "active", json::members
 	{
 		{ "value", false }
 	});

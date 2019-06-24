@@ -356,13 +356,13 @@ write_file(const m::room &room,
            const string_view &content_type)
 {
 	//TODO: TXN
-	send(room, user_id, "ircd.file.stat", "size",
+	send(room, user_id, "ircd.file.stat", "size", json::members
 	{
 		{ "value", long(size(content)) }
 	});
 
 	//TODO: TXN
-	send(room, user_id, "ircd.file.stat", "type",
+	send(room, user_id, "ircd.file.stat", "type", json::members
 	{
 		{ "value", content_type }
 	});
@@ -476,7 +476,7 @@ block_set(const m::room &room,
 		block_set(mutable_buffer{b58buf}, block)
 	};
 
-	return send(room, user_id, "ircd.file.block",
+	return send(room, user_id, "ircd.file.block", json::members
 	{
 		{ "size",  long(size(block))  },
 		{ "hash",  hash               }

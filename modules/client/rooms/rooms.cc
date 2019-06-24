@@ -34,7 +34,7 @@ get_rooms(client &client,
           const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw NEED_MORE_PARAMS
+		throw m::NEED_MORE_PARAMS
 		{
 			"/rooms command required"
 		};
@@ -70,7 +70,7 @@ get_rooms(client &client,
 	if(cmd == "initialSync")
 		return get__initialsync(client, request, room_id);
 
-	throw NOT_FOUND
+	throw m::NOT_FOUND
 	{
 		"/rooms command not found"
 	};
@@ -87,7 +87,7 @@ put_rooms(client &client,
           const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw NEED_MORE_PARAMS
+		throw m::NEED_MORE_PARAMS
 		{
 			"/rooms command required"
 		};
@@ -114,7 +114,7 @@ put_rooms(client &client,
 	if(cmd == "redact")
 		return put__redact(client, request, room_id);
 
-	throw NOT_FOUND
+	throw m::NOT_FOUND
 	{
 		"/rooms command not found"
 	};
@@ -134,7 +134,7 @@ post_rooms(client &client,
            const resource::request &request)
 {
 	if(request.parv.size() < 2)
-		throw NEED_MORE_PARAMS
+		throw m::NEED_MORE_PARAMS
 		{
 			"/rooms command required"
 		};
@@ -182,7 +182,7 @@ post_rooms(client &client,
 	if(cmd == "report")
 		return post__report(client, request, room_id);
 
-	throw NOT_FOUND
+	throw m::NOT_FOUND
 	{
 		"/rooms command not found"
 	};
