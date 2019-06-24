@@ -2597,6 +2597,8 @@ noexcept
 	{
 		"Unavailable for passthru"
 	};
+
+	__builtin_unreachable();
 }
 
 void
@@ -2637,6 +2639,8 @@ const noexcept
 	{
 		"Unavailable for passthru"
 	};
+
+	__builtin_unreachable();
 }
 
 void
@@ -2649,6 +2653,8 @@ noexcept
 	{
 		"Unavailable for passthru"
 	};
+
+	__builtin_unreachable();
 }
 
 void
@@ -2661,6 +2667,8 @@ const noexcept
 	{
 		"Unavailable for passthru"
 	};
+
+	__builtin_unreachable();
 }
 
 uint64_t
@@ -2672,6 +2680,8 @@ noexcept
 	{
 		"Unavailable for passthru"
 	};
+
+	__builtin_unreachable();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
