@@ -173,6 +173,12 @@ ircd::info::versions::versions(const string_view &name,
 		           this->semantic[2]);
 }
 
+// Required for instance_list template instantiation.
+ircd::info::versions::~versions()
+noexcept
+{
+}
+
 //
 // Primary information
 //

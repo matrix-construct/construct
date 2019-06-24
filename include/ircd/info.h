@@ -136,6 +136,7 @@ struct ircd::info::versions
 	versions() = default;
 	versions(versions &&) = delete;
 	versions(const versions &) = delete;
+	~versions() noexcept;
 };
 
 inline ircd::info::versions::operator

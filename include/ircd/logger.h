@@ -148,6 +148,7 @@ struct ircd::log::log
 	log(const string_view &name, const char &snote = '\0');
 	log(log &&) = delete;
 	log(const log &) = delete;
+	~log() noexcept;
 
 	static bool exists(const log *const &ptr);
 	static log *find(const string_view &name);

@@ -416,6 +416,12 @@ ircd::log::log::log(const string_view &name,
 	}
 }
 
+// required for instance_list template instantiation.
+ircd::log::log::~log()
+noexcept
+{
+}
+
 //
 // vlog
 //
