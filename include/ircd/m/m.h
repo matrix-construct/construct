@@ -11,21 +11,34 @@
 #pragma once
 #define HAVE_IRCD_M_H
 
-/// Matrix Protocol System
+// required for clang to consider string_view operators inherited by
+// m::id among other import disambiguations.
+#ifdef __clang__
+namespace ircd::m
+{
+    using std::operator==;
+    using std::operator!=;
+    using std::operator<;
+    using ircd::operator!;
+    using ircd::json::at;
+    using ircd::json::get;
+}
+#endif
+
+// explicit imports required for GCC or clang
 namespace ircd::m
 {
 	using ircd::hash;
+}
 
+/// Matrix Protocol System
+namespace ircd::m
+{
 	struct init;
 
 	IRCD_OVERLOAD(generate)
 
 	extern struct log::log log;
-}
-
-namespace ircd::m::vm
-{
-	struct opts;
 }
 
 #include "name.h"

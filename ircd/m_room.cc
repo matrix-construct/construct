@@ -1114,9 +1114,10 @@ ircd::m::operator==(const room &a, const room &b)
 }
 
 bool
-ircd::m::operator!=(const room &a, const room &b)
+ircd::m::operator!=(const room &a_, const room &b_)
 {
-	return a.room_id != b.room_id;
+	const string_view &a{a_.room_id}, &b{b_.room_id};
+	return a != b;
 }
 
 bool
