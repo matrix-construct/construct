@@ -1690,21 +1690,21 @@ noexcept
 }
 
 ircd::fs::fd::~fd()
-noexcept try
+noexcept
 {
-	if(fdno < 0)
-		return;
-
-	syscall(::close, fdno);
-}
-catch(const std::exception &e)
-{
-	log::critical
+	if(likely(fdno >= 0)) try
 	{
-		"Failed to close fd:%d :%s",
-		fdno,
-		e.what()
-	};
+		syscall(::close, fdno);
+	}
+	catch(const std::exception &e)
+	{
+		log::critical
+		{
+			"Failed to close fd:%d :%s",
+			fdno,
+			e.what()
+		};
+	}
 }
 
 int

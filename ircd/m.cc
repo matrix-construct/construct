@@ -4796,7 +4796,6 @@ const
 
 /// Primary hook ctor
 ircd::m::hook::base::base(const json::members &members)
-try
 :_feature
 {
 	_hook_make_feature(members)
@@ -4810,18 +4809,20 @@ try
 	feature
 }
 {
-	site *site;
-	if((site = find_site()))
-		site->add(*this);
-}
-catch(...)
-{
-	if(!registered)
-		throw;
-
-	auto *const site(find_site());
-	assert(site != nullptr);
-	site->del(*this);
+	site *site; try
+	{
+		if((site = find_site()))
+			site->add(*this);
+	}
+	catch(...)
+	{
+		if(registered)
+		{
+			auto *const site(find_site());
+			assert(site != nullptr);
+			site->del(*this);
+		}
+	}
 }
 
 ircd::m::hook::base::~base()

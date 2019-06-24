@@ -640,8 +640,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "socket(%p) ~client(%p): %s",
-		sock.get(),
+		log, "~client(%p): %s",
 		this,
 		e.what()
 	};
