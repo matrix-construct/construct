@@ -92,7 +92,7 @@ struct ircd::ctx::prof::ticker
 	std::array<uint64_t, num_of<prof::event>()> event {{0}};
 };
 
-inline uint64_t
+extern inline uint64_t
 __attribute__((flatten, always_inline, gnu_inline, artificial))
 ircd::ctx::prof::cycles()
 {

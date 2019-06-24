@@ -245,7 +245,7 @@ struct ircd::prof::init
 };
 
 #if defined(__x86_64__) || defined(__i386__)
-inline uint64_t
+extern inline uint64_t
 __attribute__((flatten, always_inline, gnu_inline, artificial))
 ircd::prof::cycles()
 {
@@ -260,7 +260,7 @@ ircd::prof::cycles()
 #endif
 
 #if defined(__x86_64__) || defined(__i386__)
-inline unsigned long long
+extern inline unsigned long long
 __attribute__((always_inline, gnu_inline, artificial))
 ircd::prof::x86::rdtsc()
 {
@@ -275,7 +275,7 @@ ircd::prof::x86::rdtsc()
 #endif
 
 #if defined(__x86_64__) || defined(__i386__)
-inline unsigned long long
+extern inline unsigned long long
 __attribute__((always_inline, gnu_inline, artificial))
 ircd::prof::x86::rdtscp()
 {
@@ -291,7 +291,7 @@ ircd::prof::x86::rdtscp()
 #endif
 
 #if defined(__x86_64__) || defined(__i386__)
-inline unsigned long long
+extern inline unsigned long long
 __attribute__((always_inline, gnu_inline, artificial))
 ircd::prof::x86::rdpmc(const uint &c)
 {
