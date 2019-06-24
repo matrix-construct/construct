@@ -21,7 +21,8 @@ ircd::m::verify(const m::keys &keys,
                 std::nothrow_t)
 noexcept try
 {
-	return verify(keys, std::nothrow);
+	verify(keys);
+	return true;
 }
 catch(const std::exception &e)
 {

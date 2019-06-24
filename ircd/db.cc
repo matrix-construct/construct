@@ -7407,7 +7407,12 @@ std::vector<std::string>
 ircd::db::column_names(const std::string &path,
                        const std::string &options)
 {
-	return column_names(path, db::options{options});
+	const rocksdb::DBOptions opts
+	{
+		db::options(options)
+	};
+
+	return column_names(path, opts);
 }
 
 /// Note that if there is no database found at path we still return a
