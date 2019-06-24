@@ -682,6 +682,7 @@ AM_COND_IF([CLANG],
 [
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-mismatched-tags], charybdis_cv_c_gcc_w_mismatched_tags)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-format-security], charybdis_cv_c_gcc_w_format_security)
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unknown-warning-option], charybdis_cv_c_gcc_w_unknown_warning_option)
 ],[])
 
 ])
