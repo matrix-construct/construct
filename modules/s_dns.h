@@ -79,7 +79,7 @@ struct ircd::net::dns::cache::waiter
 namespace ircd::net::dns
 {
 	// Resolver instance
-	struct resolver extern *resolver;
+	struct resolver extern *resolver_instance;
 
 	uint16_t resolver_call(const hostport &, const opts &);
 	void resolver_init(answers_callback);

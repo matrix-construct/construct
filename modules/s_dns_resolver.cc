@@ -10,8 +10,8 @@
 
 #include "s_dns.h"
 
-decltype(ircd::net::dns::resolver)
-ircd::net::dns::resolver;
+decltype(ircd::net::dns::resolver_instance)
+ircd::net::dns::resolver_instance;
 
 decltype(ircd::net::dns::resolver::servers)
 ircd::net::dns::resolver::servers
@@ -21,8 +21,8 @@ ircd::net::dns::resolver::servers
 		{ "default",   "4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4 4.2.2.5 4.2.2.6" },
 	}, []
 	{
-		if(bool(ircd::net::dns::resolver))
-			ircd::net::dns::resolver->set_servers();
+		if(bool(ircd::net::dns::resolver_instance))
+			ircd::net::dns::resolver_instance->set_servers();
 	}
 };
 
@@ -61,8 +61,9 @@ ircd::net::dns::resolver::retry_max
 void
 ircd::net::dns::resolver_init(answers_callback callback)
 {
-	assert(!ircd::net::dns::resolver);
-	ircd::net::dns::resolver = new typename ircd::net::dns::resolver
+	assert(!ircd::net::dns::resolver_instance);
+
+	ircd::net::dns::resolver_instance = new resolver
 	{
 		std::move(callback)
 	};
@@ -71,22 +72,22 @@ ircd::net::dns::resolver_init(answers_callback callback)
 void
 ircd::net::dns::resolver_fini()
 {
-	delete ircd::net::dns::resolver;
-	ircd::net::dns::resolver = nullptr;
+	delete ircd::net::dns::resolver_instance;
+	ircd::net::dns::resolver_instance = nullptr;
 }
 
 uint16_t
 ircd::net::dns::resolver_call(const hostport &hp,
                               const opts &opts)
 {
-	if(unlikely(!resolver))
+	if(unlikely(!resolver_instance))
 		throw error
 		{
 			"Cannot resolve '%s': resolver unavailable.",
 			host(hp)
 		};
 
-	auto &resolver{*dns::resolver};
+	auto &resolver{*dns::resolver_instance};
 	if(unlikely(!resolver.ns.is_open()))
 		throw error
 		{
@@ -893,7 +894,7 @@ catch(const std::exception &e)
 	};
 
 	resolver::servers.fault();
-	if(!ircd::net::dns::resolver)
+	if(!ircd::net::dns::resolver_instance)
 		set_servers();
 }
 
