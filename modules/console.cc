@@ -3798,7 +3798,7 @@ try
 		{
 			event_id = m::event::id
 			{
-				std::get<delta.VAL>(delta)
+				std::get<db::delta::VAL>(delta)
 			};
 		});
 
@@ -3859,7 +3859,7 @@ try
 		{
 			const string_view &dkey
 			{
-				std::get<delta.KEY>(delta)
+				std::get<db::delta::KEY>(delta)
 			};
 
 			// !!! Assumption based on the events database schema. If the
@@ -3877,8 +3877,8 @@ try
 			};
 
 			out << std::setw(12)  << std::right  << seqnum << " : "
-			    << std::setw(8)   << std::left   << reflect(std::get<delta.OP>(delta)) << " "
-			    << std::setw(18)  << std::right  << std::get<delta.COL>(delta) << " "
+			    << std::setw(8)   << std::left   << reflect(std::get<db::delta::OP>(delta)) << " "
+			    << std::setw(18)  << std::right  << std::get<db::delta::COL>(delta) << " "
 			    << key
 			    << std::endl;
 		});
