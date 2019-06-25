@@ -122,7 +122,7 @@ ircd::m::expired(const m::keys &keys)
 		at<"valid_until_ts"_>(keys)
 	};
 
-	return valid_until_ts > ircd::time<milliseconds>();
+	return valid_until_ts < ircd::time<milliseconds>();
 }
 
 //
