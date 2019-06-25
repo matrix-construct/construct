@@ -146,6 +146,10 @@ github_handle__status(std::ostream &,
                       const json::object &content);
 
 static bool
+github_handle__repository(std::ostream &,
+                          const json::object &content);
+
+static bool
 github_handle__ping(std::ostream &,
                     const json::object &content);
 
@@ -222,6 +226,8 @@ github_handle(client &client,
 			github_handle__organization(out, request.content):
 		type == "status"?
 			github_handle__status(out, request.content):
+		type == "repository"?
+			github_handle__repository(out, request.content):
 
 		true // unhandled will just show heading
 	};
@@ -1045,6 +1051,23 @@ github_handle__star(std::ostream &out,
 
 	if(action != "created")
 		return false;
+
+	return true;
+}
+
+bool
+github_handle__repository(std::ostream &out,
+                          const json::object &content)
+{
+	const json::string &action
+	{
+		content["action"]
+	};
+
+	out << ' ' << action;
+	out << "<pre><code>"
+	    << unquote(content["description"])
+	    << "</code></pre>";
 
 	return true;
 }
