@@ -5431,9 +5431,9 @@ console_cmd__key(opt &out, const string_view &line)
 
 	// keys cached for server by param.
 	m::keys::cache::for_each(server_name, [&out]
-	(const json::object &object)
+	(const m::keys &keys)
 	{
-		out << object << std::endl;
+		pretty_oneline(out, keys) << std::endl;
 		return true;
 	});
 
@@ -5461,9 +5461,9 @@ console_cmd__key__get(opt &out, const string_view &line)
 	if(!query_server)
 	{
 		m::keys::get(server_name, [&out]
-		(const auto &keys)
+		(const m::keys &keys)
 		{
-			out << keys << std::endl;
+			pretty(out, keys) << std::endl;
 		});
 	}
 	else
@@ -5474,9 +5474,9 @@ console_cmd__key__get(opt &out, const string_view &line)
 		};
 
 		m::keys::query(query_server, queries, [&out]
-		(const auto &keys)
+		(const m::keys &keys)
 		{
-			out << keys << std::endl;
+			pretty_oneline(out, keys) << std::endl;
 			return true;
 		});
 	}

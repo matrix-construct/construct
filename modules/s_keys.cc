@@ -15,6 +15,91 @@ IRCD_MODULE
 	,ircd::m::self::init::keys
 };
 
+std::ostream &
+IRCD_MODULE_EXPORT
+ircd::m::pretty_oneline(std::ostream &s,
+                        const m::keys &keys)
+{
+	s << json::get<"server_name"_>(keys)
+	  << ' ';
+
+	char smbuf[32];
+	s << smalldate(smbuf, json::get<"valid_until_ts"_>(keys) / 1000L)
+	  << " (" << json::get<"valid_until_ts"_>(keys) << ")"
+	  << ' ';
+
+	for(const json::object &fp : json::get<"tls_fingerprints"_>(keys))
+	{
+		s << "tls[ ";
+		for(const auto &[digest, fingerprint] : fp)
+			s << digest << ' ';
+		s << "] ";
+	}
+
+	for(const auto &[domain, signature_] : json::get<"signatures"_>(keys))
+	{
+		s << "sig[ " << domain << ' ';
+		for(const auto &[key_id, signature] : json::object(signature_))
+			s << key_id << ' ';
+		s << "] ";
+	}
+
+	for(const auto &[domain, verify_key_] : json::get<"verify_keys"_>(keys))
+	{
+		s << "key[ " << domain << ' ';
+		for(const auto &[key_id, verify_key] : json::object(verify_key_))
+			s << key_id << ' ';
+		s << "] ";
+	}
+
+	return s;
+}
+
+std::ostream &
+IRCD_MODULE_EXPORT
+ircd::m::pretty(std::ostream &s,
+                const m::keys &keys)
+{
+	s << std::setw(16) << std::right << "server name  "
+	  << json::get<"server_name"_>(keys)
+	  << '\n';
+
+	char tmbuf[64];
+	s << std::setw(16) << std::right << "valid until  "
+	  << timef(tmbuf, json::get<"valid_until_ts"_>(keys) / 1000, ircd::localtime)
+	  << " (" << json::get<"valid_until_ts"_>(keys) << ")"
+	  << '\n';
+
+	for(const json::object &fp : json::get<"tls_fingerprints"_>(keys))
+		for(const auto &[digest, fingerprint] : fp)
+			s << std::setw(16) << std::right << "[fingerprint]  "
+			  << digest << ' ' << unquote(fingerprint)
+			  << '\n';
+
+	for(const auto &[domain, signature_] : json::get<"signatures"_>(keys))
+		for(const auto &[key_id, signature] : json::object(signature_))
+			s << std::setw(16) << std::right << "[signature]  "
+			  << domain << ' '
+			  << key_id << ' '
+			  << unquote(signature) << '\n';
+
+	for(const auto &[domain, verify_key_] : json::get<"verify_keys"_>(keys))
+		for(const auto &[key_id, verify_key] : json::object(verify_key_))
+			s << std::setw(16) << std::right << "[verify_key]  "
+			  << domain << ' '
+			  << key_id << ' '
+			  << unquote(verify_key) << '\n';
+
+	for(const auto &[domain, old_verify_key_] : json::get<"old_verify_keys"_>(keys))
+		for(const auto &[key_id, old_verify_key] : json::object(old_verify_key_))
+			s << std::setw(16) << std::right << "[old_verify_key]  "
+			  << domain << ' '
+			  << key_id << ' '
+			  << unquote(old_verify_key) << '\n';
+
+	return s;
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::verify(const m::keys &keys,
