@@ -676,6 +676,79 @@ const
 }
 
 //
+// id::event::v3
+//
+
+ircd::m::id::event::v3::v3(const string_view &id)
+:id::event{id}
+{
+	if(unlikely(version() != "3"))
+		throw m::INVALID_MXID
+		{
+			"Not a version 3 event mxid"
+		};
+}
+
+ircd::m::id::event::v3::v3(const mutable_buffer &out,
+                           const json::object &event)
+:v3{[&out, event]
+{
+	if(unlikely(buffer::size(out) < 44))
+		throw std::out_of_range
+		{
+			"Output buffer insufficient for v3 event_id"
+		};
+
+	const sha256::buf hash
+	{
+		sha256{event}
+	};
+
+	out[0] = '$';
+	return b64encode_unpadded(out + 1, hash);
+}()}
+{
+}
+
+//
+// id::event::v4
+//
+
+ircd::m::id::event::v4::v4(const string_view &id)
+:id::event{id}
+{
+	if(unlikely(version() != "4"))
+		throw m::INVALID_MXID
+		{
+			"Not a version 4 event mxid"
+		};
+}
+
+ircd::m::id::event::v4::v4(const mutable_buffer &out,
+                           const json::object &event)
+:v4{[&out, event]
+{
+	if(unlikely(buffer::size(out) < 44))
+		throw std::out_of_range
+		{
+			"Output buffer insufficient for v4 event_id"
+		};
+
+	const sha256::buf hash
+	{
+		sha256{event}
+	};
+
+	out[0] = '$';
+	string_view ret;
+	ret = b64encode_unpadded(out + 1, hash);
+	ret = b64tob64url(out + 1, ret);
+	return ret;
+}()}
+{
+}
+
+//
 // util
 //
 

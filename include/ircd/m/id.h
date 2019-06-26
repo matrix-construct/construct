@@ -157,6 +157,9 @@ struct ircd::m::id::user
 struct ircd::m::id::event
 :ircd::m::id
 {
+	struct v3;
+	struct v4;
+
 	using buf = m::id::buf<event>;
 	using closure = std::function<void (const id::event &)>;
 	using closure_bool = std::function<bool (const id::event &)>;
@@ -169,6 +172,24 @@ struct ircd::m::id::event
 	{}
 
 	event() = default;
+};
+
+/// Version 3 event_id
+struct ircd::m::id::event::v3
+:ircd::m::id::event
+{
+	v3(const mutable_buffer &out, const json::object &);
+	v3(const string_view &id);
+	v3() = default;
+};
+
+/// Version 4 event_id
+struct ircd::m::id::event::v4
+:ircd::m::id::event
+{
+	v4(const mutable_buffer &out, const json::object &);
+	v4(const string_view &id);
+	v4() = default;
 };
 
 /// (Appendix 4.2.2) Room IDs and Event IDs
