@@ -12,6 +12,11 @@
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 
+namespace __attribute__((visibility("internal"))) ircd
+{
+	thread_local char base_conv_tmp_buf[64_KiB];
+}
+
 ircd::string_view
 ircd::b64urltob64(const mutable_buffer &out,
                   const string_view &in)
@@ -38,42 +43,39 @@ ircd::string_view
 ircd::b58tob64_unpadded(const mutable_buffer &out,
                         const string_view &in)
 {
-	thread_local char tmp[64_KiB];
-	if(unlikely(b58decode_size(in) > size(tmp)))
+	if(unlikely(b58decode_size(in) > size(base_conv_tmp_buf)))
 		throw error
 		{
 			"String too large for conversion at this time."
 		};
 
-	return b64encode_unpadded(out, b58decode(tmp, in));
+	return b64encode_unpadded(out, b58decode(base_conv_tmp_buf, in));
 }
 
 ircd::string_view
 ircd::b58tob64(const mutable_buffer &out,
                const string_view &in)
 {
-	thread_local char tmp[64_KiB];
-	if(unlikely(b58decode_size(in) > size(tmp)))
+	if(unlikely(b58decode_size(in) > size(base_conv_tmp_buf)))
 		throw error
 		{
 			"String too large for conversion at this time."
 		};
 
-	return b64encode(out, b58decode(tmp, in));
+	return b64encode(out, b58decode(base_conv_tmp_buf, in));
 }
 
 ircd::string_view
 ircd::b64tob58(const mutable_buffer &out,
                const string_view &in)
 {
-	thread_local char tmp[64_KiB];
-	if(unlikely(b64decode_size(in) > size(tmp)))
+	if(unlikely(b64decode_size(in) > size(base_conv_tmp_buf)))
 		throw error
 		{
 			"String too large for conversion at this time."
 		};
 
-	return b58encode(out, b64decode(tmp, in));
+	return b58encode(out, b64decode(base_conv_tmp_buf, in));
 }
 
 namespace ircd
