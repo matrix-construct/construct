@@ -3014,28 +3014,38 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 	if(req.in.progress)
 		req.in.progress(buffer, const_buffer{data(content), state.content_read});
 
-	if(state.content_read == size(content) + content_overflow())
-	{
-		assert(!done);
-		done = true;
+	// Not finished with content
+	if(likely(state.content_read != size(content) + content_overflow()))
+		return {};
 
-		assert(req.opt);
-		assert(state.content_read == state.content_length);
-		if(content_overflow() && !req.opt->truncate_content)
-		{
-			assert(state.content_read > size(content));
-			set_exception<buffer_overrun>
-			(
-				"buffer of %zu bytes too small for content-length %zu bytes by %zu bytes",
-				size(content),
-				state.content_length,
-				content_overflow()
-			);
-		}
-		else set_value(state.status);
+	assert(!done);
+	done = true;
+
+	assert(req.opt);
+	assert(state.content_read == state.content_length);
+	if(content_overflow() && !req.opt->truncate_content)
+	{
+		assert(state.content_read > size(content));
+		set_exception<buffer_overrun>
+		(
+			"buffer of %zu bytes too small for content-length %zu bytes by %zu bytes",
+			size(content),
+			state.content_length,
+			content_overflow()
+		);
 	}
+	else set_value(state.status);
 
 	return {};
+}
+
+//
+// chunked encoding into fixed-size buffers
+//
+
+namespace ircd::server
+{
+	static void chunk_content_completed(tag &, bool &done);
 }
 
 ircd::const_buffer
@@ -3182,45 +3192,64 @@ ircd::server::tag::read_chunk_content(const const_buffer &buffer,
 	state.content_read += addl_content_read;
 	assert(state.chunk_read <= state.content_read);
 
+	// This branch is taken at the completion of a chunk. The size
+	// all the buffers is rolled back to hide the terminator so it's
+	// either ignored or overwritten so it doesn't leak to the user.
 	if(state.content_read == state.content_length)
-	{
-		// This branch is taken at the completion of a chunk. The size
-		// all the buffers is rolled back to hide the terminator so it's
-		// either ignored or overwritten so it doesn't leak to the user.
-		static const string_view terminator{"\r\n"};
-		assert(state.content_length >= size(terminator));
-		state.content_length -= size(terminator);
-		state.content_read -= size(terminator);
-
-		assert(state.chunk_length >= 2);
-		assert(state.chunk_read == state.chunk_length);
-		state.chunk_length -= size(terminator);
-		state.chunk_read -= size(terminator);
-
-		if(state.chunk_length == 0)
-		{
-			assert(state.chunk_read == 0);
-			assert(!done);
-			done = true;
-			req.in.content = mutable_buffer{data(req.in.content), state.content_length};
-			set_value(state.status);
-		}
-	}
+		chunk_content_completed(*this, done);
 
 	// Invoke the user's optional progress callback; this function
 	// should be marked noexcept for the time being.
 	if(req.in.progress && !done)
 		req.in.progress(buffer, const_buffer{data(content), state.content_read});
 
-	if(state.content_read == state.content_length)
-	{
-		assert(state.chunk_read == state.chunk_length);
-		assert(state.chunk_read <= state.content_read);
-		state.chunk_length = size_t(-1);
-		state.chunk_read = 0;
-	}
+	// Not finished
+	if(likely(state.content_read != state.content_length))
+		return {};
 
+	assert(state.chunk_read == state.chunk_length);
+	assert(state.chunk_read <= state.content_read);
+	state.chunk_length = size_t(-1);
+	state.chunk_read = 0;
 	return {};
+}
+
+void
+ircd::server::chunk_content_completed(tag &tag,
+                                      bool &done)
+{
+	assert(tag.request);
+	auto &req{*tag.request};
+	auto &state{tag.state};
+
+	static const string_view terminator{"\r\n"};
+	assert(state.content_length >= size(terminator));
+	state.content_length -= size(terminator);
+	state.content_read -= size(terminator);
+
+	assert(state.chunk_length >= 2);
+	assert(state.chunk_read == state.chunk_length);
+	state.chunk_length -= size(terminator);
+	state.chunk_read -= size(terminator);
+
+	if(state.chunk_length != 0)
+		return;
+
+	assert(state.chunk_read == 0);
+	assert(!done);
+	done = true;
+	req.in.content = mutable_buffer{data(req.in.content), state.content_length};
+	tag.set_value(state.status);
+}
+
+//
+// chunked encoding into dynamic memories
+//
+
+namespace ircd::server
+{
+	static void chunk_dynamic_contiguous_copy(struct tag::state &, request &);
+	static void chunk_dynamic_content_completed(tag &, bool &done);
 }
 
 ircd::const_buffer
@@ -3372,60 +3401,7 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	assert(state.chunk_read <= state.content_read);
 
 	if(state.chunk_read == state.chunk_length)
-	{
-		static const string_view terminator{"\r\n"};
-		state.content_length -= size(terminator);
-		state.content_read -= size(terminator);
-
-		assert(state.chunk_length >= 2);
-		assert(state.chunk_read == state.chunk_length);
-		state.chunk_length -= size(terminator);
-		state.chunk_read -= size(terminator);
-
-		auto &chunk{req.in.chunks.back()};
-		std::get<1>(chunk) -= size(terminator);
-		assert(size(chunk) == state.chunk_length);
-		assert(std::get<0>(chunk) <= std::get<1>(chunk));
-
-		if(state.chunk_length == 0)
-		{
-			assert(state.chunk_read == 0);
-			assert(!done);
-			done = true;
-
-			assert(req.opt);
-			if(req.opt->contiguous_content)
-			{
-				assert(state.content_length == size_chunks(req.in));
-				assert(req.in.chunks.size() >= 1);
-				assert(empty(req.in.chunks.back()));
-				req.in.chunks.pop_back();
-
-				if(req.in.chunks.size() > 1)
-				{
-					req.in.dynamic = size_chunks(req.in);
-					req.in.content = req.in.dynamic;
-
-					size_t copied{0};
-					for(const auto &buffer : req.in.chunks)
-						copied += copy(req.in.content + copied, buffer);
-
-					assert(copied == size(req.in.content));
-					assert(copied == state.content_length);
-				}
-				else if(req.in.chunks.size() == 1)
-				{
-					req.in.dynamic = std::move(req.in.chunks.front());
-					req.in.content = req.in.dynamic;
-					assert(size(req.in.content) == state.content_length);
-				}
-
-				req.in.chunks.clear();
-			}
-
-			set_value(state.status);
-		}
-	}
+		chunk_dynamic_content_completed(*this, done);
 
 	// Invoke the user's optional progress callback; this function
 	// should be marked noexcept for the time being.
@@ -3441,6 +3417,72 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	}
 
 	return {};
+}
+
+void
+ircd::server::chunk_dynamic_content_completed(tag &tag,
+                                              bool &done)
+{
+	assert(tag.request);
+	auto &req{*tag.request};
+	auto &state{tag.state};
+
+	static const string_view terminator{"\r\n"};
+	state.content_length -= size(terminator);
+	state.content_read -= size(terminator);
+
+	assert(state.chunk_length >= 2);
+	assert(state.chunk_read == state.chunk_length);
+	state.chunk_length -= size(terminator);
+	state.chunk_read -= size(terminator);
+
+	auto &chunk{req.in.chunks.back()};
+	std::get<1>(chunk) -= size(terminator);
+	assert(size(chunk) == state.chunk_length);
+	assert(std::get<0>(chunk) <= std::get<1>(chunk));
+	if(state.chunk_length != 0)
+		return;
+
+	assert(state.chunk_read == 0);
+	assert(!done);
+	done = true;
+
+	assert(req.opt);
+	if(req.opt->contiguous_content && !req.in.chunks.empty())
+		chunk_dynamic_contiguous_copy(state, req);
+
+	tag.set_value(state.status);
+}
+
+void
+ircd::server::chunk_dynamic_contiguous_copy(struct tag::state &state,
+                                            request &req)
+{
+	assert(state.content_length == size_chunks(req.in));
+	assert(req.in.chunks.size() >= 1);
+	assert(empty(req.in.chunks.back()));
+	req.in.chunks.pop_back();
+
+	if(req.in.chunks.size() > 1)
+	{
+		req.in.dynamic = size_chunks(req.in);
+		req.in.content = req.in.dynamic;
+
+		size_t copied{0};
+		for(const auto &buffer : req.in.chunks)
+			copied += copy(req.in.content + copied, buffer);
+
+		assert(copied == size(req.in.content));
+		assert(copied == state.content_length);
+	}
+	else if(req.in.chunks.size() == 1)
+	{
+		req.in.dynamic = std::move(req.in.chunks.front());
+		req.in.content = req.in.dynamic;
+		assert(size(req.in.content) == state.content_length);
+	}
+
+	req.in.chunks.clear();
 }
 
 /// An idempotent operation that provides the location of where the socket
