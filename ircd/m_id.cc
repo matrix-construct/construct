@@ -648,6 +648,38 @@ const
 	return ret;
 }
 
+//
+// id::event
+//
+
+ircd::string_view
+ircd::m::id::event::version()
+const
+{
+	static const parser::rule<> &is_v4
+	{
+		parser.event_id_v4
+	};
+
+	static const parser::rule<> &is_v3
+	{
+		parser.event_id_v3
+	};
+
+	const auto &local(this->local());
+	auto *start(std::begin(local));
+	auto *const stop(std::end(local));
+
+	return
+		qi::parse(start, stop, is_v4)? "4":
+		qi::parse(start, stop, is_v3)? "3":
+		                               "1";
+}
+
+//
+// util
+//
+
 bool
 ircd::m::my(const id &id)
 {

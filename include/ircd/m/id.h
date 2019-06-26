@@ -161,6 +161,8 @@ struct ircd::m::id::event
 	using closure = std::function<void (const id::event &)>;
 	using closure_bool = std::function<bool (const id::event &)>;
 
+	string_view version() const; // static view
+
 	template<class... args>
 	event(args&&... a)
 	:m::id{EVENT, std::forward<args>(a)...}
