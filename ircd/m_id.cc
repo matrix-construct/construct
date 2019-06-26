@@ -89,6 +89,34 @@ struct ircd::m::id::input
 		,"prefix"
 	};
 
+	// character of a v3 event_id
+	const rule<> event_id_v3_char
+	{
+		char_("A-Za-z0-9+/") // base64 alphabet
+		,"event_id version 3 character"
+	};
+
+	// fully qualified v3 event_id
+	const rule<> event_id_v3
+	{
+		event_id_sigil >> repeat(43)[event_id_v3_char]
+		,"event_id version 3"
+	};
+
+	// character of a v4 event_id
+	const rule<> event_id_v4_char
+	{
+		char_("A-Za-z0-9_-") // base64 url-safe alphabet
+		,"event_id version 4 character"
+	};
+
+	// fully qualified v4 event_id
+	const rule<> event_id_v4
+	{
+		event_id_sigil >> repeat(43)[event_id_v4_char]
+		,"event_id version 4"
+	};
+
 	/// (Appendix 4.1) Server Name
 	/// A homeserver is uniquely identified by its server name. This value
 	/// is used in a number of identifiers, as described below. The server
@@ -113,7 +141,9 @@ struct ircd::m::id::input
 
 	const rule<> mxid
 	{
-		prefix >> ':' >> server_name
+		(prefix >> ':' >> server_name)
+		| event_id_v4
+		| event_id_v3
 		,"mxid"
 	};
 
@@ -652,9 +682,11 @@ ircd::m::valid_local_only(const id::sigil &sigil,
                           const string_view &id)
 noexcept try
 {
-	static const auto &test
+	static const id::parser::rule<> test
 	{
-		m::id::parser.prefix
+		id::parser.event_id_v4 |
+		id::parser.event_id_v3 |
+		id::parser.prefix
 	};
 
 	const char *start(data(id)), *const &stop
@@ -677,9 +709,11 @@ ircd::m::valid_local(const id::sigil &sigil,
                      const string_view &id)
 noexcept try
 {
-	static const auto &test
+	static const id::parser::rule<> test
 	{
-		m::id::parser.prefix
+		id::parser.event_id_v4 |
+		id::parser.event_id_v3 |
+		id::parser.prefix
 	};
 
 	const char *start(data(id)), *const &stop
