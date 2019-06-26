@@ -3221,18 +3221,27 @@ ircd::server::chunk_content_completed(tag &tag,
 	assert(tag.request);
 	auto &req{*tag.request};
 	auto &state{tag.state};
-
 	static const string_view terminator{"\r\n"};
+
+	// Remove the terminator from the total length state.
 	assert(state.content_length >= size(terminator));
 	state.content_length -= size(terminator);
 	state.content_read -= size(terminator);
 
+	// Remove the terminator from the chunk length state.
 	assert(state.chunk_length >= 2);
 	assert(state.chunk_read == state.chunk_length);
 	state.chunk_length -= size(terminator);
 	state.chunk_read -= size(terminator);
 
-	if(state.chunk_length != 0)
+	// State sanity tests
+	assert(state.content_length >= state.content_read);
+	assert(state.content_length >= state.chunk_length);
+	assert(state.content_length >= state.chunk_read);
+	assert(state.content_read >= state.chunk_length);
+	assert(state.content_read >= state.chunk_read);
+	assert(state.chunk_length >= state.chunk_read);
+	if(state.chunk_length > 0)
 		return;
 
 	assert(state.chunk_read == 0);
@@ -3399,7 +3408,7 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	state.chunk_read += addl_content_read;
 	state.content_read += addl_content_read;
 	assert(state.chunk_read <= state.content_read);
-
+	assert(state.chunk_read <= state.chunk_length);
 	if(state.chunk_read == state.chunk_length)
 		chunk_dynamic_content_completed(*this, done);
 
@@ -3408,14 +3417,13 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	if(req.in.progress && !done)
 		req.in.progress(buffer, const_buffer{data(chunk), state.chunk_read});
 
-	if(state.chunk_read == state.chunk_length)
-	{
-		assert(state.chunk_read == state.chunk_length);
-		assert(state.chunk_read <= state.content_read);
-		state.chunk_length = size_t(-1);
-		state.chunk_read = 0;
-	}
+	assert(state.chunk_read <= state.chunk_length);
+	if(likely(state.chunk_read != state.chunk_length))
+		return {};
 
+	assert(state.chunk_read <= state.content_read);
+	state.chunk_length = size_t(-1);
+	state.chunk_read = 0;
 	return {};
 }
 
@@ -3426,21 +3434,36 @@ ircd::server::chunk_dynamic_content_completed(tag &tag,
 	assert(tag.request);
 	auto &req{*tag.request};
 	auto &state{tag.state};
-
+	assert(!req.in.chunks.empty());
+	auto &chunk{req.in.chunks.back()};
 	static const string_view terminator{"\r\n"};
+
+	// Remove the terminator from the total length state.
+	assert(state.content_length >= size(terminator));
+	assert(state.content_read >= size(terminator));
 	state.content_length -= size(terminator);
 	state.content_read -= size(terminator);
 
-	assert(state.chunk_length >= 2);
+	// Remove the terminator from the chunk length state.
+	assert(state.chunk_length >= size(terminator));
+	assert(state.chunk_read >= size(terminator));
 	assert(state.chunk_read == state.chunk_length);
 	state.chunk_length -= size(terminator);
 	state.chunk_read -= size(terminator);
 
-	auto &chunk{req.in.chunks.back()};
+	// Remove the terminator from the end of the chunk
 	std::get<1>(chunk) -= size(terminator);
 	assert(size(chunk) == state.chunk_length);
 	assert(std::get<0>(chunk) <= std::get<1>(chunk));
-	if(state.chunk_length != 0)
+
+	// State sanity tests
+	assert(state.content_length >= state.content_read);
+	assert(state.content_length >= state.chunk_length);
+	assert(state.content_length >= state.chunk_read);
+	assert(state.content_read >= state.chunk_length);
+	assert(state.content_read >= state.chunk_read);
+	assert(state.chunk_length >= state.chunk_read);
+	if(state.chunk_length > 0)
 		return;
 
 	assert(state.chunk_read == 0);
