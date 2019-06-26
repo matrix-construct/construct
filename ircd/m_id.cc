@@ -453,7 +453,6 @@ ircd::m::id::id(const enum sigil &sigil,
 		case sigil::ROOM:
 		{
 			mutable_buffer buf{namebuf, 16};
-			consume(buf, buffer::copy(buf, "AAAA"_sv)); //TODO: cluster euid
 			rand::string(rand::dict::alnum, buf);
 			name = {namebuf, 16};
 			break;
