@@ -13,6 +13,28 @@
 #include <boost/archive/iterators/transform_width.hpp>
 
 ircd::string_view
+ircd::b64urltob64(const mutable_buffer &out,
+                  const string_view &in)
+{
+	//TODO: optimize with single pass
+	string_view ret(in);
+	ret = replace(out, ret, '-', '+');
+	ret = replace(out, ret, '_', '/');
+	return ret;
+}
+
+ircd::string_view
+ircd::b64tob64url(const mutable_buffer &out,
+                  const string_view &in)
+{
+	//TODO: optimize with single pass
+	string_view ret(in);
+	ret = replace(out, ret, '+', '-');
+	ret = replace(out, ret, '/', '_');
+	return ret;
+}
+
+ircd::string_view
 ircd::b58tob64_unpadded(const mutable_buffer &out,
                         const string_view &in)
 {
