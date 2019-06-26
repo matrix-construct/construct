@@ -366,10 +366,12 @@ const
 // id::id
 //
 
-ircd::m::id::id(const string_view &id)
-:string_view{id}
+ircd::m::id::id(const string_view &str)
+:id
 {
-	validate(m::sigil(id), id);
+	m::sigil(str), str
+}
+{
 }
 
 ircd::m::id::id(const id::sigil &sigil,
