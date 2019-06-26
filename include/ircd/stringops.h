@@ -101,6 +101,7 @@ namespace ircd
 	std::string replace(std::string, const string_view &before, const string_view &after);
 	std::string replace(const string_view &, const char &before, const string_view &after);
 	std::string replace(const string_view &, const string_view &before, const string_view &after);
+	string_view replace(const mutable_buffer &, const char &before, const char &after);
 
 	// Truncate view at maximum length
 	string_view trunc(const string_view &, const size_t &max);
@@ -363,6 +364,33 @@ ircd::trunc(const string_view &s,
             const size_t &max)
 {
 	return { s.data(), std::min(s.size(), max) };
+}
+
+inline ircd::string_view
+ircd::replace(const mutable_buffer &out,
+              const string_view &in,
+              const char &before,
+              const char &after)
+{
+	const auto &end_in
+	{
+		std::(begin(in), std::min(size(in), size(out)))
+	};
+
+	return
+	{
+		begin(out),
+		std::replace_copy(begin(in), end_in, begin(out), before, after)
+	};
+}
+
+inline ircd::string_view
+ircd::replace(const mutable_buffer &s,
+              const char &before,
+              const char &after)
+{
+	std::replace(begin(s), end(s), before, after);
+	return { data(s), size(s) };
 }
 
 inline std::string
