@@ -892,9 +892,8 @@ try
 
 	log::info
 	{
-		log, "Loaded module %s v%u \"%s\"",
+		log, "Loaded module %s :%s",
 		ret->name(),
-		ret->header->version,
 		!ret->description().empty()?
 			ret->description():
 			"<no description>"_sv
