@@ -146,17 +146,20 @@ ircd::m::sync::_notification_count(const room &room,
 }
 
 long
-ircd::m::sync::_highlight_count(const room &r,
-                                const user &u,
+ircd::m::sync::_highlight_count(const room &room,
+                                const user &user,
                                 const event::idx &a,
                                 const event::idx &b)
 {
-	using proto = size_t (const user &, const room &, const event::idx &, const event::idx &);
-
-	static mods::import<proto> count
+	const m::user::highlight highlight
 	{
-		"m_user", "highlighted_count__between"
+		user
 	};
 
-	return count(u, r, a, a < b? b : a);
+	const m::event::idx_range range
+	{
+		a, a < b? b : a
+	};
+
+	return highlight.count_between(room, range);
 }

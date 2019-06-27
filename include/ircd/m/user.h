@@ -33,3 +33,4 @@ namespace ircd::m
 #include "user/room_tags.h"
 #include "user/filter.h"
 #include "user/ignores.h"
+#include "user/highlight.h"
