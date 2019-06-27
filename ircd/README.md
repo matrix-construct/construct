@@ -7,11 +7,6 @@ handles requests from end-users. The library hosts a set of pluggable modules
 which may introduce the actual application features (or the "business logic")
 of the server.
 
-> The executable linking and invoking `libircd` may be referred to as the
-"embedding" or "user" or "executable" interchangably in this documentation.
-
-## Organization
-
 ##### Implied #include <ircd.h>
 
 The `ircd.h` [standard include group](../include/ircd#what-to-include)
@@ -26,10 +21,15 @@ namespaces (see: [Project Namespaces](../include/ircd#project-namespaces)).
 
 ##### Dependency Isolation
 
-Compilation units are primarily oriented around the inclusion of a specific
-dependency which is not involved in the [ircd.h include group](../include/ircd#what-to-include).
+Compilation units are primarily divided around the inclusion of a specific
+header or third-party dependency which is not involved in the
+[ircd.h include group](../include/ircd#what-to-include). Second to that, units
+tend to be divided by namespace and the subsystem they're implementing. Units
+can further be divided if they become unwieldy, but we bias toward large aggregate
+units. Within these large units, there are divisions which group the definitions
+by the `include/ircd/` header which declares them.
 
-For example, the `magic.cc` unit was created to include `<magic.h>`
-internally and then provide definitions to our own interfaces in `ircd.h`. We
-don't include `<magic.h>` from `ircd.h` nor do we include it from
-any other compilation unit. This simply isolates `libmagic` as a dependency.
+We do not included third-party headers in our own [headers](../include/ircd)
+which are included by others. A developer of an `ircd::` interface can choose
+to either forward declare third-party symbols in our headers, or wrap more
+complicated functionality.
