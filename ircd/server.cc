@@ -1132,6 +1132,7 @@ ircd::server::peer::resolve(const hostport &hostport)
 void
 ircd::server::peer::resolve(const hostport &hostport,
                             const net::dns::opts &opts)
+try
 {
 	if(op_resolve || op_fini)
 		return;
@@ -1163,6 +1164,22 @@ ircd::server::peer::resolve(const hostport &hostport,
 	op_resolve = true;
 	assert(ctx::current); // sorry, ircd::ctx required for now.
 	net::dns::resolve(hostport, opts, std::move(handler));
+}
+catch(const std::exception &e)
+{
+	thread_local char buf[256];
+	log::error
+	{
+		log, "peer(%p) DNS resolution for '%s' :%s",
+		this,
+		string(buf, hostport),
+		e.what()
+	};
+
+	op_resolve = false;
+	err_set(std::current_exception());
+	if(unlikely(ircd::run::level != ircd::run::level::RUN))
+		op_fini = true;
 }
 
 void
