@@ -49,6 +49,34 @@ user_create(const m::user::id &user_id,
 // m/user/highlight.h
 //
 
+decltype(ircd::m::user::highlight::enable_count)
+ircd::m::user::highlight::enable_count
+{
+	{ "name",    "ircd.m.user.highlight.enable.count" },
+	{ "default", true                                 },
+};
+
+decltype(ircd::m::user::highlight::match_mxid_full)
+ircd::m::user::highlight::match_mxid_full
+{
+	{ "name",    "ircd.m.user.highlight.match.mxid.full" },
+	{ "default", true                                    },
+};
+
+decltype(ircd::m::user::highlight::match_mxid_local_cs)
+ircd::m::user::highlight::match_mxid_local_cs
+{
+	{ "name",    "ircd.m.user.highlight.match.mxid.local.cs" },
+	{ "default", true                                        },
+};
+
+decltype(ircd::m::user::highlight::match_mxid_local_cs)
+ircd::m::user::highlight::match_mxid_local_ci
+{
+	{ "name",    "ircd.m.user.highlight.match.mxid.local.ci" },
+	{ "default", false                                       },
+};
+
 size_t
 IRCD_MODULE_EXPORT
 ircd::m::user::highlight::count()
@@ -199,7 +227,7 @@ const
 		content.get("formatted_body")
 	};
 
-	if(ircd::has(formatted_body, user.user_id))
+	if(match(formatted_body))
 		return true;
 
 	const string_view &body
@@ -207,5 +235,33 @@ const
 		content.get("body")
 	};
 
-	return ircd::has(body, user.user_id);
+	if(match(body))
+		return true;
+
+	return false;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::highlight::match(const string_view &text)
+const
+{
+	// Case insensitive and case-sensitive are exlusive; if both
+	// are true only one branch is taken.
+	if(match_mxid_local_ci)
+	{
+		if(ircd::ihas(text, user.user_id.localname()))
+			return true;
+	}
+	else if(match_mxid_local_cs)
+	{
+		if(ircd::has(text, user.user_id.localname()))
+			return true;
+	}
+
+	if(match_mxid_full)
+		if(ircd::has(text, user.user_id))
+			return true;
+
+	return false;
 }

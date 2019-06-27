@@ -116,15 +116,6 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	if(!apropos(data, start_idx))
 		return false;
 
-	// highlight_count
-	json::stack::member
-	{
-		*data.out, "highlight_count", json::value
-		{
-			_highlight_count(room, data.user, start_idx, data.range.second)
-		}
-	};
-
 	// notification_count
 	json::stack::member
 	{
@@ -133,6 +124,16 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 			_notification_count(room, start_idx, data.range.second)
 		}
 	};
+
+	// highlight_count
+	if(m::user::highlight::enable_count)
+		json::stack::member
+		{
+			*data.out, "highlight_count", json::value
+			{
+				_highlight_count(room, data.user, start_idx, data.range.second)
+			}
+		};
 
 	return true;
 }
