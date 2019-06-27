@@ -15,16 +15,6 @@ AM_CXXFLAGS = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	@ROCKSDB_CPPFLAGS@ \
-	@JS_CPPFLAGS@ \
-	@BOOST_CPPFLAGS@ \
-	@SSL_CPPFLAGS@ \
-	@CRYPTO_CPPFLAGS@ \
-	@SODIUM_CPPFLAGS@ \
-	@MAGIC_CPPFLAGS@ \
-	@SNAPPY_CPPFLAGS@ \
-	@LZ4_CPPFLAGS@ \
-	@Z_CPPFLAGS@ \
 	-include $(top_srcdir)/include/ircd/ircd.pic.h \
 	-include $(top_srcdir)/include/ircd/mods/mapi.h \
 	@EXTRA_CPPFLAGS@ \
@@ -70,6 +60,9 @@ moduledir = @moduledir@
 conf_la_SOURCES = conf.cc
 stats_la_SOURCES = stats.cc
 net_dns_la_SOURCES =  net_dns.cc net_dns_resolver.cc
+net_dns_la_CPPFLAGS = $(AM_CPPFLAGS) @BOOST_CPPFLAGS@
+net_dns_la_LDFLAGS = $(AM_LDFLAGS) @BOOST_LDFLAGS@
+net_dns_la_LIBADD = $(AM_LIBS) @BOOST_LIBS@
 net_listener_la_SOURCES = net_listener.cc
 console_la_SOURCES = console.cc
 index_la_SOURCES = index.cc
