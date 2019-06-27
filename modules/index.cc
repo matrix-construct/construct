@@ -65,6 +65,7 @@ root_delete
 	root_resource, "DELETE", non_get_root
 };
 
+/// legacy; will be removed
 conf::item<std::string>
 webroot_path
 {
@@ -72,12 +73,19 @@ webroot_path
 	{ "default",    ""                  },
 };
 
+conf::item<std::string>
+index_path
+{
+	{ "name",       "ircd.index.path"         },
+	{ "default",    string_view{webroot_path} },
+};
+
 void
 init_files()
 {
-	const std::string path
+	const string_view &path
 	{
-		webroot_path
+		index_path
 	};
 
 	if(empty(path))
