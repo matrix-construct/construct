@@ -8,7 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include "s_dns.h"
+#include "net_dns.h"
 
 ircd::mapi::header
 IRCD_MODULE

@@ -1296,7 +1296,7 @@ console_cmd__conf__set(opt &out, const string_view &line)
 
 	static mods::import<prototype> set_conf_item
 	{
-		"s_conf", "set_conf_item"
+		"m_conf", "set_conf_item"
 	};
 
 	const auto event_id
@@ -1351,7 +1351,7 @@ console_cmd__conf__rehash(opt &out, const string_view &line)
 	using prototype = void (const string_view &, const bool &);
 	static mods::import<prototype> rehash_conf
 	{
-		"s_conf", "rehash_conf"
+		"m_conf", "rehash_conf"
 	};
 
 	string_view prefix
@@ -1389,7 +1389,7 @@ console_cmd__conf__default(opt &out, const string_view &line)
 	using prototype = void (const string_view &);
 	static mods::import<prototype> default_conf
 	{
-		"s_conf", "default_conf"
+		"m_conf", "default_conf"
 	};
 
 	string_view prefix
@@ -1420,7 +1420,7 @@ console_cmd__conf__reload(opt &out, const string_view &line)
 	using prototype = void ();
 	static mods::import<prototype> reload_conf
 	{
-		"s_conf", "reload_conf"
+		"m_conf", "reload_conf"
 	};
 
 	reload_conf();
@@ -1437,7 +1437,7 @@ console_cmd__conf__reset(opt &out, const string_view &line)
 	using prototype = void ();
 	static mods::import<prototype> refresh_conf
 	{
-		"s_conf", "refresh_conf"
+		"m_conf", "refresh_conf"
 	};
 
 	refresh_conf();
@@ -4946,7 +4946,7 @@ console_cmd__net__listen__list(opt &out, const string_view &line)
 
 	static mods::import<list> listeners
 	{
-		"s_listen", "listeners"
+		"m_listen", "listeners"
 	};
 
 	const list &l(listeners);
@@ -4979,7 +4979,7 @@ console_cmd__net__listen__ciphers(opt &out, const string_view &line)
 
 	static mods::import<list> listeners
 	{
-		"s_listen", "listeners"
+		"m_listen", "listeners"
 	};
 
 	const list &l(listeners);
@@ -5078,7 +5078,7 @@ console_cmd__net__listen__load(opt &out, const string_view &line)
 
 	static mods::import<prototype> load_listener
 	{
-		"s_listen", "load_listener"
+		"m_listen", "load_listener"
 	};
 
 	const params params{line, " ",
@@ -5101,7 +5101,7 @@ console_cmd__net__listen__unload(opt &out, const string_view &line)
 
 	static mods::import<prototype> unload_listener
 	{
-		"s_listen", "unload_listener"
+		"m_listen", "unload_listener"
 	};
 
 	const params params{line, " ",
@@ -5365,7 +5365,7 @@ console_cmd__crt(opt &out, const string_view &line)
 
 	static mods::import<std::list<net::listener>> listeners
 	{
-		"s_listen", "listeners"
+		"m_listen", "listeners"
 	};
 
 	const auto &list{*listeners};

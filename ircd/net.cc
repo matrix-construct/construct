@@ -4066,7 +4066,7 @@ ircd::net::dns::resolve(const hostport &hp,
 
 	static mods::import<prototype> call
 	{
-		"s_dns", "ircd::net::dns::resolve"
+		"net_dns", "ircd::net::dns::resolve"
 	};
 
 	call(hp, op, std::move(cb));
@@ -4081,7 +4081,7 @@ ircd::net::dns::resolve(const hostport &hp,
 
 	static mods::import<prototype> call
 	{
-		"s_dns", "ircd::net::dns::resolve"
+		"net_dns", "ircd::net::dns::resolve"
 	};
 
 	call(hp, op, std::move(cb));
@@ -4096,7 +4096,7 @@ ircd::net::dns::resolve(const hostport &hp,
 
 	static mods::import<prototype> call
 	{
-		"s_dns", "ircd::net::dns::resolve"
+		"net_dns", "ircd::net::dns::resolve"
 	};
 
 	call(hp, op, std::move(cb));
@@ -4169,12 +4169,12 @@ ircd::net::dns::expired(const json::object &rr,
 {
 	static mods::import<conf::item<seconds>> min_ttl
 	{
-		"s_dns", "ircd::net::dns::cache::min_ttl"
+		"net_dns", "ircd::net::dns::cache::min_ttl"
 	};
 
 	static mods::import<conf::item<seconds>> error_ttl
 	{
-		"s_dns", "ircd::net::dns::cache::error_ttl"
+		"net_dns", "ircd::net::dns::cache::error_ttl"
 	};
 
 	const conf::item<seconds> &min_ttl_item
@@ -4261,7 +4261,7 @@ try
 
 	static mods::import<prototype> call
 	{
-		"s_dns", "ircd::net::dns::cache::put"
+		"net_dns", "ircd::net::dns::cache::put"
 	};
 
 	return call(h, o, r, m);
@@ -4289,7 +4289,7 @@ try
 
 	static mods::import<prototype> call
 	{
-		"s_dns", "ircd::net::dns::cache::put"
+		"net_dns", "ircd::net::dns::cache::put"
 	};
 
 	return call(h, o, r);
@@ -4323,7 +4323,7 @@ try
 
 	static mods::import<prototype> call
 	{
-		"s_dns", "ircd::net::dns::cache::get"
+		"net_dns", "ircd::net::dns::cache::get"
 	};
 
 	return call(h, o, c);
@@ -4350,7 +4350,7 @@ ircd::net::dns::cache::for_each(const hostport &h,
 
 	static mods::import<prototype> call
 	{
-		"s_dns", "ircd::net::dns::cache::for_each"
+		"net_dns", "ircd::net::dns::cache::for_each"
 	};
 
 	return call(h, o, c);
@@ -4364,7 +4364,7 @@ ircd::net::dns::cache::for_each(const string_view &type,
 
 	static mods::import<prototype> call
 	{
-		"s_dns", "ircd::net::dns::cache::for_each"
+		"net_dns", "ircd::net::dns::cache::for_each"
 	};
 
 	return call(type, c);

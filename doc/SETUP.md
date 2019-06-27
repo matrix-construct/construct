@@ -50,7 +50,7 @@ of the daemon has a unique _servername_.
 to point at Riot's `webapp/` directory by entering the following:
 	```
 	conf set ircd.webroot.path /path/to/riot-web/webapp/
-	mod reload webroot
+	mod reload index
 	```
 
 6. Browse to `https://host.tld:8448/` and register a user.

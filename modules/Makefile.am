@@ -67,49 +67,24 @@ endif
 
 moduledir = @moduledir@
 
-webroot_la_SOURCES = webroot.cc
-webhook_la_SOURCES = webhook.cc
+conf_la_SOURCES = conf.cc
+stats_la_SOURCES = stats.cc
+net_dns_la_SOURCES =  net_dns.cc net_dns_resolver.cc
+net_listener_la_SOURCES = net_listener.cc
 console_la_SOURCES = console.cc
-vm_la_SOURCES = vm.cc
-metrics_la_SOURCES = metrics.cc
+index_la_SOURCES = index.cc
+webhook_la_SOURCES = webhook.cc
 well_known_la_SOURCES = well_known.cc
 
 module_LTLIBRARIES = \
-	webroot.la \
-	webhook.la \
+	conf.la \
+	stats.la \
+	net_dns.la \
+	net_listener.la \
 	console.la \
-	vm.la \
-	metrics.la \
+	index.la \
+	webhook.la \
 	well_known.la \
-	###
-
-###############################################################################
-#
-# Server modules
-#
-
-s_moduledir = @moduledir@
-
-s_conf_la_SOURCES = s_conf.cc
-s_control_la_SOURCES = s_control.cc
-s_command_la_SOURCES = s_command.cc
-s_dns_la_SOURCES =  s_dns.cc s_dns_resolver.cc
-s_node_la_SOURCES = s_node.cc
-s_listen_la_SOURCES = s_listen.cc
-s_keys_la_SOURCES = s_keys.cc
-s_feds_la_SOURCES = s_feds.cc
-s_fetch_la_SOURCES = s_fetch.cc
-
-s_module_LTLIBRARIES = \
-	s_conf.la \
-	s_control.la \
-	s_command.la \
-	s_dns.la \
-	s_node.la \
-	s_listen.la \
-	s_keys.la \
-	s_feds.la \
-	s_fetch.la \
 	###
 
 ###############################################################################
@@ -119,8 +94,15 @@ s_module_LTLIBRARIES = \
 
 m_moduledir = @moduledir@
 
+m_vm_la_SOURCES = m_vm.cc
 m_noop_la_SOURCES = m_noop.cc
 m_user_la_SOURCES = m_user.cc
+m_node_la_SOURCES = m_node.cc
+m_keys_la_SOURCES = m_keys.cc
+m_feds_la_SOURCES = m_feds.cc
+m_fetch_la_SOURCES = m_fetch.cc
+m_command_la_SOURCES = m_command.cc
+m_control_la_SOURCES = m_control.cc
 m_device_la_SOURCES = m_device.cc
 m_direct_la_SOURCES = m_direct.cc
 m_typing_la_SOURCES = m_typing.cc
@@ -142,8 +124,15 @@ m_room_power_levels_la_SOURCES = m_room_power_levels.cc
 m_room_server_acl_la_SOURCES = m_room_server_acl.cc
 
 m_module_LTLIBRARIES = \
+	m_vm.la \
 	m_noop.la \
 	m_user.la \
+	m_node.la \
+	m_keys.la \
+	m_feds.la \
+	m_fetch.la \
+	m_command.la \
+	m_control.la \
 	m_device.la \
 	m_direct.la \
 	m_typing.la \

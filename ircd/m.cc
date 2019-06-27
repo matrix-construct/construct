@@ -100,7 +100,7 @@ catch(const m::error &e)
 void
 ircd::m::init::close()
 {
-	mods::imports.erase("s_listen"s);
+	mods::imports.erase("net_listener"s);
 }
 
 //
@@ -165,7 +165,7 @@ ircd::m::init::modules::fini_imports()
 noexcept
 {
 	// Stop the vm (unload) this first even though it loads first.
-	mods::imports.erase("vm");
+	mods::imports.erase("m_vm");
 
 	for(auto it(module_names.rbegin()); it != module_names.rend(); ++it)
 		mods::imports.erase(*it);
@@ -177,16 +177,16 @@ noexcept
 decltype(ircd::m::module_names)
 ircd::m::module_names
 {
-	"vm",
-	"s_conf",
-	"s_node",
-	"s_keys",
-	"s_dns",
-	"s_fetch",
-	"s_command",
-	"s_control",
-	"s_listen",
-	"s_feds",
+	"m_vm",
+	"conf",
+	"m_node",
+	"m_keys",
+	"net_dns",
+	"m_fetch",
+	"m_command",
+	"m_control",
+	"net_listener",
+	"m_feds",
 	"m_events",
 	"m_rooms",
 	"m_user",
@@ -286,9 +286,9 @@ ircd::m::module_names
 	"identity_pubkey",
 	"identity_v1",
 	"well_known",
-	"metrics",
+	"stats",
 	"webhook",
-	"webroot",
+	"index",
 };
 
 /// This is a list of modules that are considered "optional" and any loading
@@ -537,7 +537,7 @@ ircd::m::self::init::init(const string_view &origin,
 	// inits of m::self::globals. Calling the inits directly from
 	// here makes the module dependent on libircd and unloadable.
 	assert(ircd::run::level == run::level::START);
-	mods::imports.emplace("s_keys"s, "s_keys"s);
+	mods::imports.emplace("m_keys"s, "m_keys"s);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -558,7 +558,7 @@ ircd::m::fetch::state_ids(const room &r)
 
 	static mods::import<prototype> call
 	{
-		"s_fetch", "ircd::m::fetch::state_ids"
+		"m_fetch", "ircd::m::fetch::state_ids"
 	};
 
 	call(r);
@@ -572,7 +572,7 @@ ircd::m::fetch::auth_chain(const room &r,
 
 	static mods::import<prototype> call
 	{
-		"s_fetch", "ircd::m::fetch::auth_chain"
+		"m_fetch", "ircd::m::fetch::auth_chain"
 	};
 
 	call(r, hp);
@@ -585,7 +585,7 @@ ircd::m::fetch::synchronize(const m::room &room)
 
 	static mods::import<prototype> call
 	{
-		"s_fetch", "ircd::m::fetch::synchronize"
+		"m_fetch", "ircd::m::fetch::synchronize"
 	};
 
 	return call(room);
@@ -599,7 +599,7 @@ ircd::m::fetch::prefetch(const m::room::id &room_id,
 
 	static mods::import<prototype> call
 	{
-		"s_fetch", "ircd::m::fetch::prefetch"
+		"m_fetch", "ircd::m::fetch::prefetch"
 	};
 
 	return call(room_id, event_id);
@@ -613,7 +613,7 @@ ircd::m::fetch::start(const m::room::id &room_id,
 
 	static mods::import<prototype> call
 	{
-		"s_fetch", "ircd::m::fetch::start"
+		"m_fetch", "ircd::m::fetch::start"
 	};
 
 	return call(room_id, event_id);
@@ -626,7 +626,7 @@ ircd::m::fetch::cancel(request &r)
 
 	static mods::import<prototype> call
 	{
-		"s_fetch", "ircd::m::fetch::cancel"
+		"m_fetch", "ircd::m::fetch::cancel"
 	};
 
 	return call(r);
@@ -639,7 +639,7 @@ ircd::m::fetch::exists(const m::event::id &event_id)
 
 	static mods::import<prototype> call
 	{
-		"s_fetch", "ircd::m::fetch::exists"
+		"m_fetch", "ircd::m::fetch::exists"
 	};
 
 	return call(event_id);
@@ -652,7 +652,7 @@ ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 
 	static mods::import<prototype> call
 	{
-		"s_fetch", "ircd::m::fetch::for_each"
+		"m_fetch", "ircd::m::fetch::for_each"
 	};
 
 	return call(closure);
@@ -1260,7 +1260,7 @@ ircd::m::feds::acquire::acquire(const vector_view<const opts> &o,
 
 	static mods::import<prototype> call
 	{
-		"s_feds", "ircd::m::feds::execute"
+		"m_feds", "ircd::m::feds::execute"
 	};
 
 	call(o, c);
@@ -1694,7 +1694,7 @@ ircd::m::vm::eval::operator()(const room &room,
 
 	static mods::import<prototype> call
 	{
-		"vm", "ircd::m::vm::inject"
+		"m_vm", "ircd::m::vm::inject"
 	};
 
 	vm::dock.wait([]
@@ -1715,7 +1715,7 @@ ircd::m::vm::eval::operator()(json::iov &event,
 
 	static mods::import<prototype> call
 	{
-		"vm", "ircd::m::vm::inject"
+		"m_vm", "ircd::m::vm::inject"
 	};
 
 	vm::dock.wait([]
@@ -1733,7 +1733,7 @@ ircd::m::vm::eval::operator()(const event &event)
 
 	static mods::import<prototype> call
 	{
-		"vm", "ircd::m::vm::execute"
+		"m_vm", "ircd::m::vm::execute"
 	};
 
 	vm::dock.wait([]
@@ -2383,7 +2383,7 @@ const
 	//TODO: Remove this import once this callsite is outside of libircd.
 	static mods::import<prototype> call
 	{
-		"s_keys", "ircd::m::keys::get"
+		"m_keys", "ircd::m::keys::get"
 	};
 
 	call(node_id, key_id, [&closure, &key_id]
