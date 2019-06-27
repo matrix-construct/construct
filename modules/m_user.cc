@@ -119,7 +119,7 @@ const
 {
 	static const event::fetch::opts fopts
 	{
-		event::keys::include { "type", "content" },
+		event::keys::include {"type", "content"},
 	};
 
 	m::room::messages it
@@ -148,11 +148,8 @@ const
 		};
 
 	size_t ret{0};
-	for(++it; it && it.event_idx() < b; ++it)
-	{
-		const event &event{*it};
-		ret += has(event);
-	}
+	for(++it; it && it.event_idx() < range.second; ++it)
+		ret += has(*it);
 
 	return ret;
 }
@@ -162,14 +159,26 @@ IRCD_MODULE_EXPORT
 ircd::m::user::highlight::has(const event::idx &event_idx)
 const
 {
-	const event::fetch event
+	char typebuf[event::TYPE_MAX_SIZE];
+	const string_view type
 	{
-		event_idx, std::nothrow
+		m::get(std::nothrow, event_idx, "type", typebuf)
 	};
 
-	return event.valid?
-		has(event):
-		false;
+	bool ret{false};
+	if(type != "m.room.message")
+		return ret;
+
+	m::get(std::nothrow, event_idx, "content", [this, &type, &ret]
+	(const json::object &content)
+	{
+		m::event event;
+		json::get<"content"_>(event) = content;
+		json::get<"type"_>(event) = type;
+		ret = has(event);
+	});
+
+	return ret;
 }
 
 bool
