@@ -692,7 +692,7 @@ ircd::m::id::event::v3::v3(const string_view &id)
 }
 
 ircd::m::id::event::v3::v3(const mutable_buffer &out,
-                           const json::object &event)
+                           const m::event &event)
 :v3{[&out, event]
 {
 	if(unlikely(buffer::size(out) < 44))
@@ -701,9 +701,21 @@ ircd::m::id::event::v3::v3(const mutable_buffer &out,
 			"Output buffer insufficient for v3 event_id"
 		};
 
+	thread_local char content_buffer[m::event::MAX_SIZE];
+	const m::event essential
+	{
+		m::essential(event, content_buffer)
+	};
+
+	thread_local char preimage_buffer[m::event::MAX_SIZE];
+	const json::object &preimage
+	{
+		json::stringify(preimage_buffer, essential)
+	};
+
 	const sha256::buf hash
 	{
-		sha256{event}
+		sha256{preimage}
 	};
 
 	out[0] = '$';
@@ -735,7 +747,7 @@ ircd::m::id::event::v4::v4(const string_view &id)
 }
 
 ircd::m::id::event::v4::v4(const mutable_buffer &out,
-                           const json::object &event)
+                           const m::event &event)
 :v4{[&out, event]
 {
 	if(unlikely(buffer::size(out) < 44))
@@ -744,9 +756,21 @@ ircd::m::id::event::v4::v4(const mutable_buffer &out,
 			"Output buffer insufficient for v4 event_id"
 		};
 
+	thread_local char content_buffer[m::event::MAX_SIZE];
+	const m::event essential
+	{
+		m::essential(event, content_buffer)
+	};
+
+	thread_local char preimage_buffer[m::event::MAX_SIZE];
+	const json::object &preimage
+	{
+		json::stringify(preimage_buffer, essential)
+	};
+
 	const sha256::buf hash
 	{
-		sha256{event}
+		sha256{preimage}
 	};
 
 	out[0] = '$';

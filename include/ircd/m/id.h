@@ -14,6 +14,7 @@
 namespace ircd::m
 {
 	struct id;
+	struct event; // forward declaration for id::event ctors
 
 	IRCD_M_EXCEPTION(error, INVALID_MXID, http::BAD_REQUEST)
 	IRCD_M_EXCEPTION(INVALID_MXID, BAD_SIGIL, http::BAD_REQUEST)
@@ -178,7 +179,7 @@ struct ircd::m::id::event
 struct ircd::m::id::event::v3
 :ircd::m::id::event
 {
-	v3(const mutable_buffer &out, const json::object &);
+	v3(const mutable_buffer &out, const m::event &);
 	v3(const string_view &id);
 	v3() = default;
 };
@@ -187,7 +188,7 @@ struct ircd::m::id::event::v3
 struct ircd::m::id::event::v4
 :ircd::m::id::event
 {
-	v4(const mutable_buffer &out, const json::object &);
+	v4(const mutable_buffer &out, const m::event &);
 	v4(const string_view &id);
 	v4() = default;
 };
