@@ -179,6 +179,8 @@ struct ircd::m::id::event
 struct ircd::m::id::event::v3
 :ircd::m::id::event
 {
+	static bool is(const string_view &) noexcept;
+
 	v3(const mutable_buffer &out, const m::event &);
 	v3(const string_view &id);
 	v3() = default;
@@ -188,6 +190,8 @@ struct ircd::m::id::event::v3
 struct ircd::m::id::event::v4
 :ircd::m::id::event
 {
+	static bool is(const string_view &) noexcept;
+
 	v4(const mutable_buffer &out, const m::event &);
 	v4(const string_view &id);
 	v4() = default;

@@ -732,6 +732,20 @@ ircd::m::id::event::v3::v3(const mutable_buffer &out,
 {
 }
 
+bool
+ircd::m::id::event::v3::is(const string_view &id)
+noexcept
+{
+	static const parser::rule<> &valid
+	{
+		parser.event_id_v3
+	};
+
+	auto *start(std::begin(id));
+	auto *const stop(std::end(id));
+	return qi::parse(start, stop, valid);
+}
+
 //
 // id::event::v4
 //
@@ -783,6 +797,20 @@ ircd::m::id::event::v4::v4(const mutable_buffer &out,
 	};
 }()}
 {
+}
+
+bool
+ircd::m::id::event::v4::is(const string_view &id)
+noexcept
+{
+	static const parser::rule<> &valid
+	{
+		parser.event_id_v4
+	};
+
+	auto *start(std::begin(id));
+	auto *const stop(std::end(id));
+	return qi::parse(start, stop, valid);
 }
 
 //
