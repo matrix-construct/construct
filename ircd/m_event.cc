@@ -2884,8 +2884,8 @@ bool
 ircd::m::event::prev::prev_events_has(const event::id &event_id)
 const
 {
-	for(const json::array &p : json::get<"prev_events"_>(*this))
-		if(unquote(p.at(0)) == event_id)
+	for(size_t i(0); i < prev_events_count(); ++i)
+		if(prev_event(i) == event_id)
 			return true;
 
 	return false;
@@ -2895,8 +2895,8 @@ bool
 ircd::m::event::prev::prev_states_has(const event::id &event_id)
 const
 {
-	for(const json::array &p : json::get<"prev_state"_>(*this))
-		if(unquote(p.at(0)) == event_id)
+	for(size_t i(0); i < prev_states_count(); ++i)
+		if(prev_state(i) == event_id)
 			return true;
 
 	return false;
@@ -2906,8 +2906,8 @@ bool
 ircd::m::event::prev::auth_events_has(const event::id &event_id)
 const
 {
-	for(const json::array &p : json::get<"auth_events"_>(*this))
-		if(unquote(p.at(0)) == event_id)
+	for(size_t i(0); i < auth_events_count(); ++i)
+		if(auth_event(i) == event_id)
 			return true;
 
 	return false;
@@ -2959,45 +2959,97 @@ std::tuple<ircd::m::event::id, ircd::string_view>
 ircd::m::event::prev::auth_events(const size_t &idx)
 const
 {
-	const json::array &auth_event
+	const string_view &prev_
 	{
 		at<"auth_events"_>(*this).at(idx)
 	};
 
-	return
+	switch(json::type(prev_))
 	{
-		unquote(auth_event.at(0)), unquote(auth_event[1])
-	};
+		// v1 event format
+		case json::ARRAY:
+		{
+			const json::array &prev(prev_);
+			const json::string &prev_id(prev.at(0));
+			return {prev_id, unquote(prev[1])};
+		}
+
+		// v3/v4 event format
+		case json::STRING:
+		{
+			const json::string &prev_id(prev_);
+			return {prev_id, string_view{}};
+		}
+
+		default: throw m::INVALID_MXID
+		{
+			"auth_events[%zu] is invalid", idx
+		};
+	}
 }
 
 std::tuple<ircd::m::event::id, ircd::string_view>
 ircd::m::event::prev::prev_states(const size_t &idx)
 const
 {
-	const json::array &state_event
+	const string_view &prev_
 	{
 		at<"prev_state"_>(*this).at(idx)
 	};
 
-	return
+	switch(json::type(prev_))
 	{
-		unquote(state_event.at(0)), unquote(state_event[1])
-	};
+		case json::ARRAY:
+		{
+			const json::array &prev(prev_);
+			const json::string &prev_id(prev.at(0));
+			return {prev_id, unquote(prev[1])};
+		}
+
+		case json::STRING:
+		{
+			const json::string &prev_id(prev_);
+			return {prev_id, string_view{}};
+		}
+
+		default: throw m::INVALID_MXID
+		{
+			"prev_state[%zu] is invalid", idx
+		};
+	}
 }
 
 std::tuple<ircd::m::event::id, ircd::string_view>
 ircd::m::event::prev::prev_events(const size_t &idx)
 const
 {
-	const json::array &prev_event
+	const string_view &prev_
 	{
 		at<"prev_events"_>(*this).at(idx)
 	};
 
-	return
+	switch(json::type(prev_))
 	{
-		unquote(prev_event.at(0)), unquote(prev_event[1])
-	};
+		// v1 event format
+		case json::ARRAY:
+		{
+			const json::array &prev(prev_);
+			const json::string &prev_id(prev.at(0));
+			return {prev_id, unquote(prev[1])};
+		}
+
+		// v3/v4 event format
+		case json::STRING:
+		{
+			const json::string &prev_id(prev_);
+			return {prev_id, string_view{}};
+		}
+
+		default: throw m::INVALID_MXID
+		{
+			"prev_events[%zu] is invalid", idx
+		};
+	}
 }
 
 void
@@ -3019,9 +3071,35 @@ ircd::m::for_each(const event::prev &prev,
 	return json::until(prev, [&closure]
 	(const auto &key, const json::array &prevs)
 	{
-		for(const json::array &prev : prevs)
-			if(!closure(event::id(unquote(prev.at(0)))))
-				return false;
+		for(const string_view &prev_ : prevs)
+		{
+			switch(json::type(prev_))
+			{
+				// v1 event format
+				case json::ARRAY:
+				{
+					const json::array &prev(prev_);
+					const json::string &prev_id(prev.at(0));
+					if(!closure(prev_id))
+						return false;
+
+					continue;
+				}
+
+				// v3/v4 event format
+				case json::STRING:
+				{
+					const json::string &prev(prev_);
+					if(!closure(prev))
+						return false;
+
+					continue;
+				}
+
+				default:
+					continue;
+			}
+		}
 
 		return true;
 	});
