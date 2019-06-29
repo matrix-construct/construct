@@ -250,6 +250,7 @@ content_type(const mutable_buffer &out,
 	{
 		case hash("css"):    content_type = "text/css; charset=utf-8";  break;
 		case hash("js"):     content_type = "application/javascript; charset=utf-8";  break;
+		case hash("wasm"):   content_type = "application/wasm"; break;
 		case hash("html"):   content_type = "text/html; charset=utf-8"; break;
 		case hash("ico"):    content_type = "image/x-icon"; break;
 		case hash("svg"):    content_type = "image/svg+xml"; break;
