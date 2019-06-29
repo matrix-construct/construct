@@ -3170,7 +3170,7 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	assert(state.chunk_length >= 2);
 	read_chunk_content(partial_chunk, done);
 
-	if(done)
+	if(done || empty(overrun))
 		return overrun;
 
 	// Prevent stack overflow from lots of tiny chunks nagled together.
@@ -3384,7 +3384,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	assert(state.chunk_length >= 2);
 	read_chunk_dynamic_content(partial_chunk, done);
 
-	if(done)
+	if(done || empty(overrun))
 		return overrun;
 
 	// Prevent stack overflow from lots of tiny chunks nagled together.
