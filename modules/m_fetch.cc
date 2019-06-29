@@ -654,7 +654,6 @@ try
 	}
 	catch(const std::exception &e)
 	{
-		requests.erase(it);
 		throw;
 	}
 
