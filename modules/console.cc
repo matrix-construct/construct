@@ -1296,7 +1296,7 @@ console_cmd__conf__set(opt &out, const string_view &line)
 
 	static mods::import<prototype> set_conf_item
 	{
-		"m_conf", "set_conf_item"
+		"conf", "set_conf_item"
 	};
 
 	const auto event_id
@@ -1351,7 +1351,7 @@ console_cmd__conf__rehash(opt &out, const string_view &line)
 	using prototype = void (const string_view &, const bool &);
 	static mods::import<prototype> rehash_conf
 	{
-		"m_conf", "rehash_conf"
+		"conf", "rehash_conf"
 	};
 
 	string_view prefix
@@ -1389,7 +1389,7 @@ console_cmd__conf__default(opt &out, const string_view &line)
 	using prototype = void (const string_view &);
 	static mods::import<prototype> default_conf
 	{
-		"m_conf", "default_conf"
+		"conf", "default_conf"
 	};
 
 	string_view prefix
@@ -1420,7 +1420,7 @@ console_cmd__conf__reload(opt &out, const string_view &line)
 	using prototype = void ();
 	static mods::import<prototype> reload_conf
 	{
-		"m_conf", "reload_conf"
+		"conf", "reload_conf"
 	};
 
 	reload_conf();
@@ -1437,7 +1437,7 @@ console_cmd__conf__reset(opt &out, const string_view &line)
 	using prototype = void ();
 	static mods::import<prototype> refresh_conf
 	{
-		"m_conf", "refresh_conf"
+		"conf", "refresh_conf"
 	};
 
 	refresh_conf();
