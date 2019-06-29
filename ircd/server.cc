@@ -2566,6 +2566,7 @@ noexcept
 	// head so far so the grammar can parse a coherent head to continue.
 	if(tag.state.chunk_length == size_t(-1) && !null(request.in.content))
 	{
+		assert(tag.state.content_read >= tag.state.content_length);
 		const const_buffer src
 		{
 			data(request.in.content) + tag.state.content_length,
@@ -2831,7 +2832,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	};
 
 	// The received buffer may go past the end of the head.
-	assert(addl_head_bytes <= size(buffer));
+	assert(size(buffer) >= addl_head_bytes);
 	const size_t beyond_head_len
 	{
 		size(buffer) - addl_head_bytes
@@ -3283,6 +3284,8 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 {
 	assert(request);
 	auto &req{*request};
+	assert(null(req.in.content)); // dynamic chunk mode
+	assert(state.chunk_length == size_t(-1)); // chunk head mode
 
 	// informal search for head terminator
 	const auto pos
@@ -3294,6 +3297,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	{
 		state.chunk_read += size(buffer);
 		state.content_read += size(buffer);
+		assert(state.content_read == state.content_length + state.chunk_read);
 		return {};
 	}
 
@@ -3312,6 +3316,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 
 	state.chunk_read += addl_head_bytes;
 	const auto head_length{state.chunk_read};
+	assert(state.content_read + head_length == state.content_length + state.chunk_read);
 	state.chunk_read = 0;
 
 	// Window on any data in the buffer after the head.
@@ -3338,14 +3343,17 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 
 	// Increment the content_length to now include this chunk
 	state.content_length += state.chunk_length;
+	assert(state.content_length == state.content_read + state.chunk_length);
 
 	// Allocate the chunk content on the vector.
 	//TODO: maxalloc
 	req.in.chunks.emplace_back(state.chunk_length);
+	assert(size_chunks(req.in) == state.content_length);
 
 	// Now we check how much chunk was received beyond the head
-	// state.chunk_head is still 0 here because that's only incremented
+	// state.chunk_read is still 0 here because that's only incremented
 	// in the content read function.
+	assert(state.chunk_read == 0);
 	const auto &chunk_read
 	{
 		std::min(state.chunk_length, beyond_head_length)
@@ -3396,8 +3404,8 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	assert(request);
 	auto &req{*request};
 
-	assert(state.chunk_length != size_t(-1));
-	assert(null(req.in.content));
+	assert(state.chunk_length != size_t(-1)); // content mode
+	assert(null(req.in.content)); // dynamic chunk mode
 	assert(!req.in.chunks.empty());
 	const auto &chunk
 	{
@@ -3405,7 +3413,7 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	};
 
 	// The amount of remaining content for the response sequence
-	assert(state.chunk_read <= size(chunk));
+	assert(size(chunk) >= state.chunk_read);
 	const size_t remaining
 	{
 		size(chunk) - state.chunk_read
@@ -3470,6 +3478,7 @@ ircd::server::chunk_dynamic_content_completed(tag &tag,
 	assert(std::get<0>(chunk) <= std::get<1>(chunk));
 
 	// State sanity tests
+	assert(state.content_length == size_chunks(req.in));
 	assert(state.content_length >= state.content_read);
 	assert(state.content_length >= state.chunk_length);
 	assert(state.content_length >= state.chunk_read);
