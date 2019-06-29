@@ -145,10 +145,13 @@ ircd::m::user::highlight::count_between(const m::room &room,
                                         const event::idx_range &range)
 const
 {
-	static const event::fetch::opts fopts
+	static const event::fetch::opts fopts{[]
 	{
-		event::keys::include {"type", "content"},
-	};
+		event::fetch::opts ret;
+		ret.keys = event::keys::include {"type", "content"};
+		ret.query_json_force = true;
+		return ret;
+	}()};
 
 	m::room::messages it
 	{
@@ -177,7 +180,9 @@ const
 
 	size_t ret{0};
 	for(++it; it && it.event_idx() < range.second; ++it)
-		ret += has(*it);
+		ret += cached(it.event_idx(), fopts)?
+			has(*it):
+			has(it.event_idx());
 
 	return ret;
 }
