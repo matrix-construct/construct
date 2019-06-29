@@ -49,7 +49,7 @@ of the daemon has a unique _servername_.
 4. To use a web-based client like Riot, configure the "webroot" directory
 to point at Riot's `webapp/` directory by entering the following:
 	```
-	conf set ircd.webroot.path /path/to/riot-web/webapp/
+	conf set ircd.index.path /path/to/riot-web/webapp/
 	mod reload index
 	```
 
