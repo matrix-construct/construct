@@ -3209,16 +3209,16 @@ ircd::server::tag::read_chunk_content(const const_buffer &buffer,
 	state.content_read += addl_content_read;
 	assert(state.chunk_read <= state.content_read);
 
+	// Invoke the user's optional progress callback; this function
+	// should be marked noexcept for the time being.
+	if(req.in.progress && !done)
+		req.in.progress(buffer, const_buffer{data(content), state.content_read});
+
 	// This branch is taken at the completion of a chunk. The size
 	// all the buffers is rolled back to hide the terminator so it's
 	// either ignored or overwritten so it doesn't leak to the user.
 	if(state.content_read == state.content_length)
 		chunk_content_completed(*this, done);
-
-	// Invoke the user's optional progress callback; this function
-	// should be marked noexcept for the time being.
-	if(req.in.progress && !done)
-		req.in.progress(buffer, const_buffer{data(content), state.content_read});
 
 	// Not finished
 	if(likely(state.content_read != state.content_length))
@@ -3426,13 +3426,14 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	state.content_read += addl_content_read;
 	assert(state.chunk_read <= state.content_read);
 	assert(state.chunk_read <= state.chunk_length);
-	if(state.chunk_read == state.chunk_length)
-		chunk_dynamic_content_completed(*this, done);
 
 	// Invoke the user's optional progress callback; this function
 	// should be marked noexcept for the time being.
 	if(req.in.progress && !done)
 		req.in.progress(buffer, const_buffer{data(chunk), state.chunk_read});
+
+	if(state.chunk_read == state.chunk_length)
+		chunk_dynamic_content_completed(*this, done);
 
 	assert(state.chunk_read <= state.chunk_length);
 	if(likely(state.chunk_read != state.chunk_length))
