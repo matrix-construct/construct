@@ -98,6 +98,7 @@ noexcept try
 	// '-' switched arguments come first; this function incs argv and decs argc
 	auto argc(_argc);
 	auto argv(_argv), envp(_envp);
+	const char *const progname(_argv[0]);
 	parseargs(&argc, &argv, opts);
 	applyargs();
 
@@ -145,7 +146,7 @@ noexcept try
 	if(!hostname)
 		throw ircd::user_error
 		{
-			"Must specify the origin after any switched parameters."
+			"usage :%s <origin> [servername]", progname
 		};
 
 	// The smoketest uses this ircd::run::level callback to set a flag when
