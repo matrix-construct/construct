@@ -552,6 +552,12 @@ ircd::http::has(const headers &headers,
 // headers::headers
 //
 
+decltype(ircd::http::headers::terminator)
+ircd::http::headers::terminator
+{
+	"\r\n\r\n"
+};
+
 ircd::http::headers::headers(parse::capstan &pc,
                              const closure &c)
 :headers
@@ -713,6 +719,16 @@ const
 		method.begin(), version.end()
 	};
 }
+
+//
+// http::line
+//
+
+decltype(ircd::http::line::terminator)
+ircd::http::line::terminator
+{
+	"\r\n"
+};
 
 ircd::http::line::line(parse::capstan &pc)
 :string_view{[&pc]
@@ -978,7 +994,7 @@ ircd::http::writeline(window_buffer &write,
 	{
 		const auto newline{[](const mutable_buffer &out)
 		{
-			return copy(out, "\r\n"_sv);
+			return copy(out, line::terminator);
 		}};
 
 		write(closure);

@@ -67,6 +67,8 @@ struct ircd::http::line
 	struct request;
 	struct response;
 
+	static const string_view terminator; // "\r\n"
+
 	using string_view::string_view;
 	line(parse::capstan &);
 };
@@ -185,6 +187,8 @@ struct ircd::http::headers
 {
 	using closure = std::function<void (const header &)>;
 	using closure_bool = std::function<bool (const header &)>;
+
+	static const string_view terminator; // "\r\n\r\n"
 
 	bool for_each(const closure_bool &) const;
 	string_view operator[](const string_view &key) const;

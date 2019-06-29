@@ -2809,10 +2809,9 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	auto &req{*request};
 
 	// informal search for head terminator
-	static const string_view terminator{"\r\n\r\n"};
 	const auto pos
 	{
-		string_view{buffer}.find(terminator)
+		string_view{buffer}.find(http::headers::terminator)
 	};
 
 	// No terminator found; account for what was received in this buffer
@@ -2828,7 +2827,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// including the terminator which is considered part of the dome.
 	const size_t addl_head_bytes
 	{
-		pos + size(terminator)
+		pos + size(http::headers::terminator)
 	};
 
 	// The received buffer may go past the end of the head.
@@ -3076,10 +3075,9 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	const auto &content{req.in.content};
 
 	// informal search for head terminator
-	static const string_view terminator{"\r\n"};
 	const auto pos
 	{
-		string_view{buffer}.find(terminator)
+		string_view{buffer}.find(http::line::terminator)
 	};
 
 	if(pos == string_view::npos)
@@ -3091,7 +3089,7 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	// This indicates how much head was just received from this buffer only.
 	const size_t addl_head_bytes
 	{
-		pos + size(terminator)
+		pos + size(http::line::terminator)
 	};
 
 	// The received buffer may go past the end of the head.
@@ -3128,7 +3126,7 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 
 	// Play the tape through the formal grammar.
 	const http::response::chunk chunk{pc};
-	state.chunk_length = chunk.size + size(terminator);
+	state.chunk_length = chunk.size + size(http::line::terminator);
 
 	// Now we check how much chunk was received beyond the head
 	const auto &chunk_read
@@ -3238,18 +3236,17 @@ ircd::server::chunk_content_completed(tag &tag,
 	assert(tag.request);
 	auto &req{*tag.request};
 	auto &state{tag.state};
-	static const string_view terminator{"\r\n"};
 
 	// Remove the terminator from the total length state.
-	assert(state.content_length >= size(terminator));
-	state.content_length -= size(terminator);
-	state.content_read -= size(terminator);
+	assert(state.content_length >= size(http::line::terminator));
+	state.content_length -= size(http::line::terminator);
+	state.content_read -= size(http::line::terminator);
 
 	// Remove the terminator from the chunk length state.
 	assert(state.chunk_length >= 2);
 	assert(state.chunk_read == state.chunk_length);
-	state.chunk_length -= size(terminator);
-	state.chunk_read -= size(terminator);
+	state.chunk_length -= size(http::line::terminator);
+	state.chunk_read -= size(http::line::terminator);
 
 	// State sanity tests
 	assert(state.content_length >= state.content_read);
@@ -3288,10 +3285,9 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	auto &req{*request};
 
 	// informal search for head terminator
-	static const string_view terminator{"\r\n"};
 	const auto pos
 	{
-		string_view{buffer}.find(terminator)
+		string_view{buffer}.find(http::line::terminator)
 	};
 
 	if(pos == string_view::npos)
@@ -3304,7 +3300,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	// This indicates how much head was just received from this buffer only.
 	const size_t addl_head_bytes
 	{
-		pos + size(terminator)
+		pos + size(http::line::terminator)
 	};
 
 	// The received buffer may go past the end of the head.
@@ -3338,7 +3334,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	// Play the tape through the formal grammar.
 	const http::response::chunk chunk{pc};
 	assert(state.chunk_length == size_t(-1));
-	state.chunk_length = chunk.size + size(terminator);
+	state.chunk_length = chunk.size + size(http::line::terminator);
 
 	// Increment the content_length to now include this chunk
 	state.content_length += state.chunk_length;
@@ -3454,23 +3450,22 @@ ircd::server::chunk_dynamic_content_completed(tag &tag,
 	auto &state{tag.state};
 	assert(!req.in.chunks.empty());
 	auto &chunk{req.in.chunks.back()};
-	static const string_view terminator{"\r\n"};
 
 	// Remove the terminator from the total length state.
-	assert(state.content_length >= size(terminator));
-	assert(state.content_read >= size(terminator));
-	state.content_length -= size(terminator);
-	state.content_read -= size(terminator);
+	assert(state.content_length >= size(http::line::terminator));
+	assert(state.content_read >= size(http::line::terminator));
+	state.content_length -= size(http::line::terminator);
+	state.content_read -= size(http::line::terminator);
 
 	// Remove the terminator from the chunk length state.
-	assert(state.chunk_length >= size(terminator));
-	assert(state.chunk_read >= size(terminator));
+	assert(state.chunk_length >= size(http::line::terminator));
+	assert(state.chunk_read >= size(http::line::terminator));
 	assert(state.chunk_read == state.chunk_length);
-	state.chunk_length -= size(terminator);
-	state.chunk_read -= size(terminator);
+	state.chunk_length -= size(http::line::terminator);
+	state.chunk_read -= size(http::line::terminator);
 
 	// Remove the terminator from the end of the chunk
-	std::get<1>(chunk) -= size(terminator);
+	std::get<1>(chunk) -= size(http::line::terminator);
 	assert(size(chunk) == state.chunk_length);
 	assert(std::get<0>(chunk) <= std::get<1>(chunk));
 
