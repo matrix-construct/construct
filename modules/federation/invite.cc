@@ -236,4 +236,10 @@ check_event(const resource::request &request,
 			"Proffered event has the following problems: %s",
 			string(report)
 		};
+
+	if(!verify(event, request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"Invite event fails verification for %s", request.node_id
+		};
 }
