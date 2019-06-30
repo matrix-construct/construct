@@ -90,6 +90,16 @@ get__initialsync_local(client &client,
                        const m::user &user,
                        json::stack::object &out)
 {
+	const m::user::room user_room
+	{
+		user
+	};
+
+	const auto room_depth
+	{
+		m::depth(std::nothrow, room)
+	};
+
 	char membership_buf[m::MEMBERSHIP_MAX_SIZE];
 	json::stack::member
 	{
@@ -179,7 +189,7 @@ get__initialsync_local(client &client,
 	};
 
 	const m::room::state room_state{room};
-	room_state.for_each(m::event::id::closure_bool{[&state, &room, &user]
+	room_state.for_each(m::event::id::closure_bool{[&]
 	(const m::event::id &event_id)
 	{
 		if(!visible(event_id, user.user_id))
@@ -195,6 +205,10 @@ get__initialsync_local(client &client,
 
 		m::event_append_opts opts;
 		opts.event_idx = &event.event_idx;
+		opts.user_id = &user.user_id;
+		opts.user_room = &user_room;
+		opts.room_depth = &room_depth;
+		opts.query_txnid = false;
 		m::append(state, event, opts);
 		return true;
 	}});
@@ -236,6 +250,10 @@ get__initialsync_local(client &client,
 
 		m::event_append_opts opts;
 		opts.event_idx = &event_idx;
+		opts.user_id = &user.user_id;
+		opts.user_room = &user_room;
+		opts.room_depth = &room_depth;
+		opts.query_txnid = true;
 		m::append(chunk, event, opts);
 	}
 }
