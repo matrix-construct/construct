@@ -587,8 +587,8 @@ const
 		qi::parse(start, end(), rule, ret)
 	};
 
-	assert(res == true);
-	assert(!ret.empty());
+	assert(res || event::v4::is(*this) || event::v3::is(*this));
+	assert(!res || !ret.empty());
 	return ret;
 }
 
@@ -623,8 +623,8 @@ const
 		qi::parse(start, end(), rule, ret)
 	};
 
-	assert(res == true);
-	assert(!ret.empty());
+	assert(res || event::v4::is(*this) || event::v3::is(*this));
+	assert(!res || !ret.empty());
 	return ret;
 }
 
