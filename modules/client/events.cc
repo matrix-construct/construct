@@ -20,7 +20,8 @@ static void
 append_event(json::stack::array &out,
              const m::event &event,
              const m::event::idx &event_idx,
-             const int64_t &room_depth);
+             const int64_t &room_depth,
+             const m::user::room &);
 
 static bool
 get_events_from(client &client,
@@ -222,12 +223,17 @@ get__events(client &client,
 			m::depth(room_id)
 		};
 
+		const m::user::room user_room
+		{
+			request.user_id
+		};
+
 		json::stack::array chunk
 		{
 			top, "chunk"
 		};
 
-		append_event(chunk, event_, event_idx, room_depth);
+		append_event(chunk, event_, event_idx, room_depth, user_room);
 	}
 	else json::stack::array
 	{
@@ -298,6 +304,11 @@ get_events_from(client &client,
                 const int64_t &room_depth,
                 json::stack::object &out)
 {
+	const m::user::room user_room
+	{
+		request.user_id
+	};
+
 	m::room::messages it
 	{
 		room_id, event_id
@@ -317,7 +328,7 @@ get_events_from(client &client,
 		if(!visible(it.event_id(), request.user_id))
 			continue;
 
-		append_event(chunk, *it, it.event_idx(), room_depth);
+		append_event(chunk, *it, it.event_idx(), room_depth, user_room);
 		++j;
 	}
 
@@ -337,10 +348,13 @@ void
 append_event(json::stack::array &out,
              const m::event &event,
              const m::event::idx &event_idx,
-             const int64_t &room_depth)
+             const int64_t &room_depth,
+             const m::user::room &user_room)
 {
 	m::event_append_opts opts;
 	opts.event_idx = &event_idx;
 	opts.room_depth = &room_depth;
+	opts.user_room = &user_room;
+	opts.user_id = &user_room.user.user_id;
 	m::append(out, event, opts);
 }
