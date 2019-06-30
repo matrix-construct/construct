@@ -33,6 +33,7 @@ namespace ircd::magick
 	static void fini();
 
 	extern conf::item<uint64_t> limit_span;
+	extern conf::item<uint64_t> limit_cycles;
 	extern conf::item<uint64_t> yield_threshold;
 	extern conf::item<uint64_t> yield_interval;
 	extern log::log log;
@@ -72,6 +73,13 @@ ircd::magick::limit_span
 {
 	{ "name",    "ircd.magick.limit.span" },
 	{ "default", 10000L                   },
+};
+
+decltype(ircd::magick::limit_cycles)
+ircd::magick::limit_cycles
+{
+	{ "name",    "ircd.magick.limit.cycles" },
+	{ "default", 0L                         },
 };
 
 decltype(ircd::magick::yield_threshold)
@@ -466,6 +474,8 @@ ircd::magick::call(function&& f,
 namespace ircd::magick
 {
 	static thread_local uint64_t job_ctr;
+	static thread_local uint64_t job_cycles;
+	static thread_local uint64_t last_cycles;
 	static thread_local int64_t last_quantum;
 	static thread_local uint64_t last_yield;
 }
@@ -477,12 +487,23 @@ ircd::magick::handle_progress(const char *text,
                               ExceptionInfo *ei)
 noexcept try
 {
+	// Sample the current reference cycle count first and once. This is an
+	// accumulated cycle count for only this ircd::ctx and the current slice,
+	// (all other cycles are not accumulated here) which is non-zero by now
+	// and monotonically increases across jobs as well.
+	const auto cur_cycles
+	{
+		cycles(ctx::cur()) + ctx::prof::cur_slice_cycles()
+	};
+
 	// This is a new job; reset any global state here
 	if(quantum == 0)
 	{
 		++job_ctr;
 		last_quantum = 0;
 		last_yield = 0;
+		job_cycles = 0;
+		last_cycles = cur_cycles;
 
 		// This job is too large based on the span measurement. This is an ad hoc
 		// measurement of the job size created internally by ImageMagick.
@@ -496,17 +517,36 @@ noexcept try
 			};
 	}
 
+	// Update the cycle counters first so the log::debug has better info.
+	assert(cur_cycles >= last_cycles);
+	job_cycles += cur_cycles - last_cycles;
+	last_cycles = cur_cycles;
+
 	#ifdef IRCD_MAGICK_DEBUG_PROGRESS
 	log::debug
 	{
-		log, "job:%lu progress %2.2lf%% (%ld/%ld) :%s",
+		log, "job:%lu progress %2.2lf%% (%ld/%ld) cycles:%lu :%s",
 		job_ctr,
 		(quantum / double(span) * 100.0),
 		quantum,
 		span,
+		job_cycles,
 		text,
 	};
 	#endif
+
+	// Check if job exceeded its reference cycle limit if enabled.
+	if(unlikely(uint64_t(limit_cycles) && job_cycles > uint64_t(limit_cycles)))
+		throw error
+		{
+			"job:%lu CPU cycles:%lu exceeded server limit:%lu (progress %2.2lf%% (%ld/%ld))",
+			job_ctr,
+			job_cycles,
+			uint64_t(limit_cycles),
+			(quantum / double(span) * 100.0),
+			quantum,
+			span,
+		};
 
 	// This is a larger job; we yield this ircd::ctx at interval
 	if(span > uint64_t(yield_threshold))
