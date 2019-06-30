@@ -657,14 +657,14 @@ ircd::string_view
 ircd::m::id::event::version()
 const
 {
-	static const parser::rule<> &is_v4
+	static const parser::rule<> is_v4
 	{
-		parser.event_id_v4
+		parser.event_id_v4 >> eoi
 	};
 
-	static const parser::rule<> &is_v3
+	static const parser::rule<> is_v3
 	{
-		parser.event_id_v3
+		parser.event_id_v3 >> eoi
 	};
 
 	const auto &local(this->local());
@@ -736,9 +736,9 @@ bool
 ircd::m::id::event::v3::is(const string_view &id)
 noexcept
 {
-	static const parser::rule<> &valid
+	static const parser::rule<> valid
 	{
-		parser.event_id_v3
+		parser.event_id_v3 >> eoi
 	};
 
 	auto *start(std::begin(id));
@@ -803,9 +803,9 @@ bool
 ircd::m::id::event::v4::is(const string_view &id)
 noexcept
 {
-	static const parser::rule<> &valid
+	static const parser::rule<> valid
 	{
-		parser.event_id_v4
+		parser.event_id_v4 >> eoi
 	};
 
 	auto *start(std::begin(id));
@@ -851,11 +851,16 @@ ircd::m::valid_local_only(const id::sigil &sigil,
                           const string_view &id)
 noexcept try
 {
+	static const id::parser::rule<> rule
+	{
+		id::parser.prefix
+		| id::parser.event_id_v4
+		| id::parser.event_id_v3
+	};
+
 	static const id::parser::rule<> test
 	{
-		id::parser.event_id_v4 |
-		id::parser.event_id_v3 |
-		id::parser.prefix
+		rule >> eoi
 	};
 
 	const char *start(data(id)), *const &stop
@@ -865,8 +870,7 @@ noexcept try
 
 	return !empty(id) &&
 	       id.at(0) == sigil &&
-	       qi::parse(start, stop, test) &&
-	       start == stop;
+	       qi::parse(start, stop, test);
 }
 catch(...)
 {
@@ -880,9 +884,9 @@ noexcept try
 {
 	static const id::parser::rule<> test
 	{
-		id::parser.event_id_v4 |
-		id::parser.event_id_v3 |
 		id::parser.prefix
+		| id::parser.event_id_v4
+		| id::parser.event_id_v3
 	};
 
 	const char *start(data(id)), *const &stop
