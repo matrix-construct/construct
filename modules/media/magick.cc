@@ -32,6 +32,7 @@ namespace ircd::magick
 	static void init();
 	static void fini();
 
+	extern conf::item<uint64_t> limit_span;
 	extern conf::item<uint64_t> yield_threshold;
 	extern conf::item<uint64_t> yield_interval;
 	extern log::log log;
@@ -64,6 +65,13 @@ decltype(ircd::magick::log)
 ircd::magick::log
 {
 	"magick"
+};
+
+decltype(ircd::magick::limit_span)
+ircd::magick::limit_span
+{
+	{ "name",    "ircd.magick.limit.span" },
+	{ "default", 10000L                   },
 };
 
 decltype(ircd::magick::yield_threshold)
@@ -475,6 +483,17 @@ noexcept try
 		++job_ctr;
 		last_quantum = 0;
 		last_yield = 0;
+
+		// This job is too large based on the span measurement. This is an ad hoc
+		// measurement of the job size created internally by ImageMagick.
+		if(span > uint64_t(limit_span))
+			throw error
+			{
+				"job:%lu computation span:%lu exceeds server limit:%lu",
+				job_ctr,
+				span,
+				uint64_t(limit_span),
+			};
 	}
 
 	#ifdef IRCD_MAGICK_DEBUG_PROGRESS
