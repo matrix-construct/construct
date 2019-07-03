@@ -440,6 +440,22 @@ AM_COND_IF([UNTUNED],
 	CXXFLAGS+=""
 ])
 
+dnl
+dnl Disable third-party allocators
+dnl
+
+AC_MSG_CHECKING(whether to prevent available third-party allocator libraries from being used)
+AC_ARG_ENABLE(allocators, AC_HELP_STRING([--disable-alloc-libs], [Disable third-party dynamic memory libraries (jemalloc/tcmalloc/etc)]),
+[
+	use_alloc_libs="no"
+	AC_MSG_RESULT([yes])
+], [
+	use_alloc_libs="yes"
+	AC_MSG_RESULT([no])
+])
+
+AM_CONDITIONAL([ALLOC_LIBS], [[[[ "$use_alloc_libs" = "yes" ]]]])
+
 dnl  !!! Experimental !!!
 dnl
 dnl  Allows a signal handler to throw a C++ exception if the signal is from
@@ -1665,9 +1681,48 @@ dnl
 RB_CHK_SYSHEADER(jemalloc/jemalloc.h, [JEMALLOC_H])
 AC_CHECK_LIB(jemalloc, malloc,
 [
-	jemalloc="yes"
+	have_jemalloc="yes"
 ], [
-	jemalloc="no"
+	have_jemalloc="no"
+])
+
+AC_MSG_CHECKING(whether to enable use of jemalloc)
+AC_ARG_ENABLE(jemalloc, AC_HELP_STRING([--enable-jemalloc], [Use jemalloc as third-party dynamic memory manager.]),
+[
+	use_jemalloc="yes"
+	AC_MSG_RESULT([yes])
+], [
+	use_jemalloc="no"
+	AC_MSG_RESULT([no])
+])
+
+AM_CONDITIONAL([JEMALLOC], [test "x$have_jemalloc" = "xyes" && test "x$use_jemalloc" = "xyes" ])
+
+dnl
+dnl
+dnl Select a third-party allocator
+dnl
+dnl
+
+AC_SUBST(MALLOC_CPPFLAGS)
+AC_SUBST(MALLOC_CXXFLAGS)
+AC_SUBST(MALLOC_LDFLAGS)
+AC_SUBST(MALLOC_LIBS)
+alloc_lib="standard"
+
+dnl ALLOC_LIBS true unless --disable-alloc-libs configured
+AM_COND_IF([ALLOC_LIBS],
+[
+	AM_COND_IF([JEMALLOC],
+	[
+		alloc_lib="jemalloc"
+		MALLOC_LIBS+=" -ljemalloc"
+		AC_DEFINE(IRCD_ALLOCATOR_USE_JEMALLOC, 1, [Use jemalloc as the allocator])
+	], [
+		AC_DEFINE(IRCD_ALLOCATOR_USE_DEFAULT, 1, [Use the default allocator])
+	])
+], [
+	AC_DEFINE(IRCD_ALLOCATOR_USE_DEFAULT, 1, [Use the default allocator])
 ])
 
 dnl
@@ -1839,6 +1894,7 @@ echo "Link-time optimized ............... $lto"
 echo "Optimization level ................ $optimize_level"
 echo "Generic binary .................... $enable_generic"
 echo "Untuned binary .................... $enable_untuned"
+echo "Memory allocator .................. $alloc_lib"
 echo "Logging level ..................... $LOG_LEVEL"
 echo "Installing into ................... $prefix"
 echo

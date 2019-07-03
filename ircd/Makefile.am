@@ -27,6 +27,7 @@ AM_CPPFLAGS = \
 	@SNAPPY_CPPFLAGS@ \
 	@LZ4_CPPFLAGS@ \
 	@Z_CPPFLAGS@ \
+	@MALLOC_CPPFLAGS@ \
 	-include ircd/ircd.pic.h \
 	@EXTRA_CPPFLAGS@ \
 	###
@@ -86,6 +87,7 @@ libircd_la_LDFLAGS = \
 	@SNAPPY_LDFLAGS@ \
 	@LZ4_LDFLAGS@ \
 	@Z_LDFLAGS@ \
+	@MALLOC_LDFLAGS@ \
 	###
 
 libircd_la_LIBADD = \
@@ -99,6 +101,7 @@ libircd_la_LIBADD = \
 	@SNAPPY_LIBS@ \
 	@LZ4_LIBS@ \
 	@Z_LIBS@ \
+	@MALLOC_LIBS@ \
 	@EXTRA_LIBS@ \
 	###
 

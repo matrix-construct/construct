@@ -111,6 +111,17 @@ This manually applies full release-mode optimizations even when using
 `--enable-debug`. Implied when not in debug mode.
 
 
+##### Disable third-party dynamic allocator libraries
+
+```
+--disable-alloc-libs
+```
+`./configure` will detect alternative `malloc()` implementations found in
+libraries installed on the system (jemalloc/tcmalloc/etc). Construct developers
+may enable these to be configured by default, if detected. To always prevent
+any alternative to the default standard library allocator specify this option.
+
+
 ##### Logging level
 
 ```

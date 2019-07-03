@@ -17,6 +17,7 @@ AM_CPPFLAGS = \
 	@SNAPPY_CPPFLAGS@ \
 	@LZ4_CPPFLAGS@ \
 	@Z_CPPFLAGS@ \
+	@MALLOC_CPPFLAGS@ \
 	@EXTRA_CPPFLAGS@ \
 	###
 
@@ -66,6 +67,7 @@ construct_LDFLAGS = \
 	@SNAPPY_LDFLAGS@ \
 	@LZ4_LDFLAGS@ \
 	@Z_LDFLAGS@ \
+	@MALLOC_LDFLAGS@ \
 	###
 
 construct_LDADD = \
@@ -80,6 +82,7 @@ construct_LDADD = \
 	@SNAPPY_LIBS@ \
 	@LZ4_LIBS@ \
 	@Z_LIBS@ \
+	@MALLOC_LIBS@ \
 	@EXTRA_LIBS@ \
 	###
 
