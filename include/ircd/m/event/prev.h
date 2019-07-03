@@ -42,9 +42,9 @@ struct ircd::m::event::prev
 	json::property<name::prev_events, json::array>
 >
 {
-	std::tuple<event::id, string_view> auth_events(const size_t &idx) const;
-	std::tuple<event::id, string_view> prev_states(const size_t &idx) const;
-	std::tuple<event::id, string_view> prev_events(const size_t &idx) const;
+	std::tuple<event::id, json::object> auth_events(const size_t &idx) const;
+	std::tuple<event::id, json::object> prev_states(const size_t &idx) const;
+	std::tuple<event::id, json::object> prev_events(const size_t &idx) const;
 
 	event::id auth_event(const size_t &idx) const;
 	event::id prev_state(const size_t &idx) const;

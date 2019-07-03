@@ -2955,7 +2955,7 @@ const
 	return std::get<0>(prev_events(idx));
 }
 
-std::tuple<ircd::m::event::id, ircd::string_view>
+std::tuple<ircd::m::event::id, ircd::json::object>
 ircd::m::event::prev::auth_events(const size_t &idx)
 const
 {
@@ -2971,7 +2971,7 @@ const
 		{
 			const json::array &prev(prev_);
 			const json::string &prev_id(prev.at(0));
-			return {prev_id, unquote(prev[1])};
+			return {prev_id, prev[1]};
 		}
 
 		// v3/v4 event format
@@ -2988,7 +2988,7 @@ const
 	}
 }
 
-std::tuple<ircd::m::event::id, ircd::string_view>
+std::tuple<ircd::m::event::id, ircd::json::object>
 ircd::m::event::prev::prev_states(const size_t &idx)
 const
 {
@@ -3003,7 +3003,7 @@ const
 		{
 			const json::array &prev(prev_);
 			const json::string &prev_id(prev.at(0));
-			return {prev_id, unquote(prev[1])};
+			return {prev_id, prev[1]};
 		}
 
 		case json::STRING:
@@ -3019,7 +3019,7 @@ const
 	}
 }
 
-std::tuple<ircd::m::event::id, ircd::string_view>
+std::tuple<ircd::m::event::id, ircd::json::object>
 ircd::m::event::prev::prev_events(const size_t &idx)
 const
 {
@@ -3035,7 +3035,7 @@ const
 		{
 			const json::array &prev(prev_);
 			const json::string &prev_id(prev.at(0));
-			return {prev_id, unquote(prev[1])};
+			return {prev_id, prev[1]};
 		}
 
 		// v3/v4 event format
