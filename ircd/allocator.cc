@@ -32,16 +32,17 @@ ircd::allocator::info(const mutable_buffer &buf)
 		::mallinfo()
 	};
 
-	out << "arena:       " << pretty(iec(ma.arena)) << std::endl
+	char pbuf[96];
+	out << "arena:       " << pretty(pbuf, iec(ma.arena)) << std::endl
 	    << "ordblks:     " << ma.ordblks << std::endl
 	    << "smblks:      " << ma.smblks << std::endl
 	    << "hblks:       " << ma.hblks << std::endl
-	    << "hblkhd:      " << pretty(iec(ma.hblkhd)) << std::endl
-	    << "usmblks:     " << pretty(iec(ma.usmblks)) << std::endl
-	    << "fsmblks:     " << pretty(iec(ma.fsmblks)) << std::endl
-	    << "uordblks:    " << pretty(iec(ma.uordblks)) << std::endl
-	    << "fordblks:    " << pretty(iec(ma.fordblks)) << std::endl
-	    << "keepcost:    " << pretty(iec(ma.keepcost)) << std::endl
+	    << "hblkhd:      " << pretty(pbuf, iec(ma.hblkhd)) << std::endl
+	    << "usmblks:     " << pretty(pbuf, iec(ma.usmblks)) << std::endl
+	    << "fsmblks:     " << pretty(pbuf, iec(ma.fsmblks)) << std::endl
+	    << "uordblks:    " << pretty(pbuf, iec(ma.uordblks)) << std::endl
+	    << "fordblks:    " << pretty(pbuf, iec(ma.fordblks)) << std::endl
+	    << "keepcost:    " << pretty(pbuf, iec(ma.keepcost)) << std::endl
 	    ;
 
 	return view(out, buf);
