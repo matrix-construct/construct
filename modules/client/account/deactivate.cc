@@ -25,14 +25,19 @@ resource::response
 post__deactivate(client &client,
                  const resource::request &request)
 {
-	const string_view &type
+	const json::object &auth
 	{
-		request.at({"auth", "type"})
+		request["auth"]
 	};
 
-	const string_view &session
+	const json::string &type
 	{
-		request[{"auth", "session"}]
+		auth.at("type")
+	};
+
+	const json::string &session
+	{
+		auth["session"]
 	};
 
 	m::user user

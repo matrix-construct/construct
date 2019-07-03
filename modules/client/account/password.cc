@@ -26,14 +26,19 @@ post__password(client &client,
                const resource::request &request)
 try
 {
-	const string_view &new_password
+	const json::string &new_password
 	{
-		unquote(request.at("new_password"))
+		request.at("new_password")
 	};
 
-	const string_view &type
+	const json::object &auth
 	{
-		unquote(request.at({"auth", "type"}))
+		request["auth"]
+	};
+
+	const json::string &type
+	{
+		auth.at("type")
 	};
 
 	if(type != "m.login.password")
@@ -42,9 +47,9 @@ try
 			"M_UNSUPPORTED", "Login type is not supported."
 		};
 
-	const string_view &session
+	const json::string &session
 	{
-		request[{"auth", "session"}]
+		auth["session"]
 	};
 
 	m::user user
