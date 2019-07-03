@@ -205,11 +205,7 @@ catch(const std::exception &e)
 //
 // prof::vg
 //
-
-namespace ircd::prof::vg
-{
-	static bool _enabled;
-}
+// note: further definitions calling valgrind isolated to ircd/vg.cc
 
 //
 // prof::vg::enable
@@ -241,62 +237,6 @@ ircd::prof::vg::disable::~disable()
 noexcept
 {
 	start();
-}
-
-//
-// prof::vg util
-//
-
-void
-ircd::prof::vg::stop()
-noexcept
-{
-	#ifdef HAVE_VALGRIND_CALLGRIND_H
-	CALLGRIND_STOP_INSTRUMENTATION;
-	assert(_enabled);
-	_enabled = false;
-	#endif
-}
-
-void
-ircd::prof::vg::start()
-noexcept
-{
-	#ifdef HAVE_VALGRIND_CALLGRIND_H
-	assert(!_enabled);
-	_enabled = true;
-	CALLGRIND_START_INSTRUMENTATION;
-	#endif
-}
-
-void
-ircd::prof::vg::reset()
-{
-	#ifdef HAVE_VALGRIND_CALLGRIND_H
-	CALLGRIND_ZERO_STATS;
-	#endif
-}
-
-void
-ircd::prof::vg::toggle()
-{
-	#ifdef HAVE_VALGRIND_CALLGRIND_H
-	CALLGRIND_TOGGLE_COLLECT;
-	#endif
-}
-
-void
-ircd::prof::vg::dump(const char *const reason)
-{
-	#ifdef HAVE_VALGRIND_CALLGRIND_H
-	CALLGRIND_DUMP_STATS_AT(reason);
-	#endif
-}
-
-bool
-ircd::prof::vg::enabled()
-{
-	return _enabled;
 }
 
 //

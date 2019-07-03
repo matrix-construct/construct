@@ -41,6 +41,7 @@ namespace ircd::allocator
 };
 
 /// Valgrind memcheck hypercall suite
+/// note: definitions located in ircd/vg.cc
 namespace ircd::allocator::vg
 {
 	bool defined(const const_buffer &);
@@ -50,6 +51,7 @@ namespace ircd::allocator::vg
 }
 
 /// Valgrind hypercall suite
+/// note: definitions located in ircd/vg.cc
 namespace ircd::vg
 {
 	size_t errors();
