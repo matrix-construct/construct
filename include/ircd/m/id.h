@@ -14,7 +14,6 @@
 namespace ircd::m
 {
 	struct id;
-	struct event; // forward declaration for id::event ctors
 
 	IRCD_M_EXCEPTION(error, INVALID_MXID, http::BAD_REQUEST)
 	IRCD_M_EXCEPTION(INVALID_MXID, BAD_SIGIL, http::BAD_REQUEST)
@@ -175,7 +174,21 @@ struct ircd::m::id::event
 	event() = default;
 };
 
+// Forward declaration for m::id::event::v3/v4 ctors which hash an m::event
+// to compute its event_id. The m::id::event::v3/v4 objects could be placed
+// elsewhere below event.h to avoid circularity, but it is probably more
+// intuitive for developers to to find these objects filed here instead.
+namespace ircd::m
+{
+	struct event;
+}
+
 /// Version 3 event_id
+///
+/// This object is constructed on either a fully qualified existing event_id
+/// to which it validates and maintains a string_view similar to other m::id
+/// constructions, or the event data itself from which it creates a version 3
+/// event_id into the buffer to maintain a string_view like the former.
 struct ircd::m::id::event::v3
 :ircd::m::id::event
 {
@@ -187,6 +200,10 @@ struct ircd::m::id::event::v3
 };
 
 /// Version 4 event_id
+///
+/// The version 4 event_id is similar to the version 3 event_id except for
+/// being RFC4648 (base64 URL-safe) encoded. The v3 event_id is deprecated
+/// by Matrix-spec. See v3 notes.
 struct ircd::m::id::event::v4
 :ircd::m::id::event
 {
