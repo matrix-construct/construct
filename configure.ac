@@ -1696,7 +1696,10 @@ AC_ARG_ENABLE(jemalloc, AC_HELP_STRING([--enable-jemalloc], [Use jemalloc as thi
 	AC_MSG_RESULT([no])
 ])
 
-AM_CONDITIONAL([JEMALLOC], [test "x$have_jemalloc" = "xyes" && test "x$use_jemalloc" = "xyes" ])
+dnl jemalloc by default if available
+dnl
+AM_CONDITIONAL([JEMALLOC], [test "x$have_jemalloc" = "xyes"])
+dnl AM_CONDITIONAL([JEMALLOC], [test "x$have_jemalloc" = "xyes" && test "x$use_jemalloc" = "xyes" ])
 
 dnl
 dnl
