@@ -16,19 +16,29 @@
 //
 // #define RB_PROF_ALLOC
 
-ircd::string_view
-__attribute__((weak))
-ircd::allocator::info(const mutable_buffer &buf)
-{
-	return {};
-}
-
 bool
 __attribute__((weak))
 ircd::allocator::trim(const size_t &pad)
 noexcept
 {
 	return false;
+}
+
+ircd::string_view
+__attribute__((weak))
+ircd::allocator::get(const string_view &key,
+                     const mutable_buffer &buf)
+{
+	return {};
+}
+
+ircd::string_view
+__attribute__((weak))
+ircd::allocator::set(const string_view &key,
+                     const string_view &val,
+                     const mutable_buffer &cur)
+{
+	return {};
 }
 
 //

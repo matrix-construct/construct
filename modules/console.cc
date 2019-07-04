@@ -943,6 +943,139 @@ console_cmd__mem__trim(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__mem__set(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"key", "type", "val"
+	}};
+
+	const string_view &key
+	{
+		param.at("key")
+	};
+
+	const string_view &type
+	{
+		param.at("type", "string"_sv)
+	};
+
+	string_view set;
+	thread_local char buf[2][4_KiB];
+	switch(hash(type))
+	{
+		case "void"_:
+			set = {};
+			break;
+
+		case "bool"_:
+			*reinterpret_cast<bool *>(buf[0]) = lex_cast<bool>(param.at("val"));
+			set = { buf[0], sizeof(bool) };
+			break;
+
+		case "size_t"_:
+			*reinterpret_cast<size_t *>(buf[0]) = lex_cast<size_t>(param.at("val"));
+			set = { buf[0], sizeof(size_t) };
+			break;
+
+		case "ssize_t"_:
+			*reinterpret_cast<ssize_t *>(buf[0]) = lex_cast<ssize_t>(param.at("val"));
+			set = { buf[0], sizeof(ssize_t) };
+			break;
+
+		case "unsigned"_:
+			*reinterpret_cast<unsigned *>(buf[0]) = lex_cast<unsigned>(param.at("val"));
+			set = { buf[0], sizeof(unsigned) };
+			break;
+
+		case "uint64_t"_:
+			*reinterpret_cast<uint64_t *>(buf[0]) = lex_cast<uint64_t>(param.at("val"));
+			set = { buf[0], sizeof(uint64_t) };
+			break;
+
+		case "uint64_t*"_:
+			*reinterpret_cast<uintptr_t *>(buf[0]) = lex_cast<uintptr_t>(param.at("val"));
+			set = { buf[0], sizeof(uintptr_t) };
+			break;
+
+		default:
+		case "string"_:
+			set = param.at("val");
+			break;
+	}
+
+	const string_view &get
+	{
+		allocator::set(key, set, buf[1])
+	};
+
+	return true;
+}
+
+bool
+console_cmd__mem__get(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"key", "type"
+	}};
+
+	const string_view &key
+	{
+		param.at("key")
+	};
+
+	const string_view &type
+	{
+		param.at("type", "string"_sv)
+	};
+
+	thread_local char buf[4_KiB];
+	const string_view &val
+	{
+		allocator::get(key, buf)
+	};
+
+	switch(hash(type))
+	{
+		case "void"_:
+			out << std::endl;
+			break;
+
+		case "bool"_:
+			out << lex_cast(*reinterpret_cast<const bool *>(data(val))) << std::endl;
+			break;
+
+		case "size_t"_:
+			out << lex_cast(*reinterpret_cast<const size_t *>(data(val))) << std::endl;
+			break;
+
+		case "ssize_t"_:
+			out << lex_cast(*reinterpret_cast<const ssize_t *>(data(val))) << std::endl;
+			break;
+
+		case "unsigned"_:
+			out << lex_cast(*reinterpret_cast<const unsigned *>(data(val))) << std::endl;
+			break;
+
+		case "uint64_t"_:
+			out << lex_cast(*reinterpret_cast<const uint64_t *>(data(val))) << std::endl;
+			break;
+
+		case "uint64_t*"_:
+			out << lex_cast(*reinterpret_cast<const uintptr_t *>(data(val))) << std::endl;
+			break;
+
+		default:
+		case "string"_:
+			out << val << std::endl;
+			break;
+	}
+
+	return true;
+}
+
 //
 // prof
 //

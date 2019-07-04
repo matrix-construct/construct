@@ -36,9 +36,11 @@ namespace ircd::allocator
 	profile operator+(const profile &, const profile &);
 	profile operator-(const profile &, const profile &);
 
-	bool trim(const size_t &pad = 0) noexcept; // malloc_trim(3)
 	string_view info(const mutable_buffer &);
-};
+	string_view get(const string_view &var, const mutable_buffer &val);
+	string_view set(const string_view &var, const string_view &val, const mutable_buffer &cur = {});
+	bool trim(const size_t &pad = 0) noexcept; // malloc_trim(3)
+}
 
 /// Valgrind memcheck hypercall suite
 /// note: definitions located in ircd/vg.cc

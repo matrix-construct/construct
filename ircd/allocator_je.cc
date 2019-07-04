@@ -39,6 +39,50 @@ ircd::allocator::je_malloc_version_abi
 	"jemalloc", info::versions::ABI, //TODO: get this
 };
 
+#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+bool
+ircd::allocator::trim(const size_t &pad)
+noexcept
+{
+	return false;
+}
+#endif
+
+#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+ircd::string_view
+ircd::allocator::get(const string_view &key_,
+                     const mutable_buffer &buf)
+{
+	thread_local char key[128];
+	strlcpy(key, key_);
+
+	size_t len(size(buf));
+	syscall(::mallctl, key, data(buf), &len, nullptr, 0UL);
+	return string_view
+	{
+		data(buf), len
+	};
+}
+#endif
+
+#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+ircd::string_view
+ircd::allocator::set(const string_view &key_,
+                     const string_view &val,
+                     const mutable_buffer &cur)
+{
+	thread_local char key[128];
+	strlcpy(key, key_);
+
+	size_t curlen(size(cur));
+	syscall(::mallctl, key, data(cur), &curlen, const_cast<char *>(data(val)), size(val));
+	return string_view
+	{
+		data(cur), curlen
+	};
+}
+#endif
+
 void
 ircd::allocator::je_stats_handler(void *const ptr,
                                   const char *const msg)
@@ -78,15 +122,6 @@ ircd::allocator::info(const mutable_buffer &buf)
 	malloc_stats_print(je_stats_handler, &out, opts);
 	out << std::endl;
 	return view(out, buf);
-}
-#endif
-
-#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
-bool
-ircd::allocator::trim(const size_t &pad)
-noexcept
-{
-	return false;
 }
 #endif
 
