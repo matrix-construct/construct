@@ -27,6 +27,7 @@ namespace ircd::m::sync
 	extern conf::item<int64_t> exposure_depth;
 	extern conf::item<bool> exposure_state;
 	extern conf::item<size_t> limit_default;
+	extern conf::item<size_t> limit_initial_default;
 	extern const event::keys::include default_keys;
 	extern item room_timeline;
 }
@@ -62,6 +63,13 @@ ircd::m::sync::limit_default
 {
 	{ "name",     "ircd.client.sync.rooms.timeline.limit.default" },
 	{ "default",  10L                                             },
+};
+
+decltype(ircd::m::sync::limit_initial_default)
+ircd::m::sync::limit_initial_default
+{
+	{ "name",     "ircd.client.sync.rooms.timeline.limit_initial.default" },
+	{ "default",  1L                                                      },
 };
 
 decltype(ircd::m::sync::exposure_state)
@@ -259,7 +267,13 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	};
 
 	ssize_t i(0);
-	const ssize_t limit(limit_default);
+	const ssize_t limit
+	{
+		data.phased && data.range.first == 0?
+			ssize_t(limit_initial_default): // phased + initial=true
+			ssize_t(limit_default)
+	};
+
 	for(; it && i <= limit; --it)
 	{
 		if(!i && it.event_idx() >= data.range.second)
