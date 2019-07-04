@@ -286,6 +286,12 @@ ircd::m::sync::room_state_phased_events(data &data)
 		room_state_append(data, array, event, index(event));
 	});
 
+	data.room->get(std::nothrow, "m.room.member", data.user.user_id, [&]
+	(const m::event &event)
+	{
+		room_state_append(data, array, event, index(event));
+	});
+
 	return ret;
 }
 
