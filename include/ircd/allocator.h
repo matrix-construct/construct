@@ -36,7 +36,7 @@ namespace ircd::allocator
 	profile operator+(const profile &, const profile &);
 	profile operator-(const profile &, const profile &);
 
-	bool trim(const size_t &pad = 0); // malloc_trim(3)
+	bool trim(const size_t &pad = 0) noexcept; // malloc_trim(3)
 	string_view info(const mutable_buffer &);
 };
 
@@ -110,6 +110,9 @@ struct ircd::allocator::scope
 	using alloc_closure = std::function<void *(const size_t &)>;
 	using realloc_closure = std::function<void *(void *const &ptr, const size_t &)>;
 	using free_closure = std::function<void (void *const &ptr)>;
+
+	static void hook_init() noexcept;
+	static void hook_fini() noexcept;
 
 	static scope *current;
 	scope *theirs;

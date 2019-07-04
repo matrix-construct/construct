@@ -116,6 +116,7 @@ libircd_la_SOURCES =#
 libircd_la_SOURCES += assert.cc
 libircd_la_SOURCES += info.cc
 libircd_la_SOURCES += allocator.cc
+libircd_la_SOURCES += allocator_gnu.cc
 libircd_la_SOURCES += vg.cc
 libircd_la_SOURCES += exception.cc
 libircd_la_SOURCES += util.cc
