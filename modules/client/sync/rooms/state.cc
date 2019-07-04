@@ -264,8 +264,14 @@ ircd::m::sync::room_state_phased_events(data &data)
 	data.room->get(std::nothrow, "m.room.create", "", [&]
 	(const m::event &event)
 	{
-		room_state_append(data, array, event, index(event));
 		ret = true;
+		room_state_append(data, array, event, index(event));
+
+		data.room->get(std::nothrow, "m.room.member", at<"sender"_>(event), [&]
+		(const m::event &event)
+		{
+			room_state_append(data, array, event, index(event));
+		});
 	});
 
 	data.room->get(std::nothrow, "m.room.canonical_alias", "", [&]
