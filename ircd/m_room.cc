@@ -2129,7 +2129,20 @@ size_t
 ircd::m::room::state::count()
 const
 {
-	return count(string_view{});
+	if(!present())
+		return count(string_view{});
+
+	const db::gopts &opts
+	{
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	size_t ret(0);
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(room_id, opts)}; bool(it); ++it)
+		++ret;
+
+	return ret;
 }
 
 size_t
