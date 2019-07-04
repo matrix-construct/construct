@@ -788,50 +788,74 @@ ircd::m::event::conforms::conforms(const event &e)
 		if(json::get<"depth"_>(e) == 0)
 			set(DEPTH_ZERO);
 
-	const prev p{e};
-	size_t i{0}, j{0};
-	for(const json::array &pe : json::get<"prev_events"_>(p))
+	const event::prev prev{e};
+	if(json::get<"event_id"_>(e))
 	{
-		if(unquote(pe.at(0)) == json::get<"event_id"_>(e))
-			set(SELF_PREV_EVENT);
+		size_t i{0};
+		for(const json::array &pe : json::get<"prev_events"_>(prev))
+		{
+			if(unquote(pe.at(0)) == json::get<"event_id"_>(e))
+				set(SELF_PREV_EVENT);
 
-		j = 0;
-		for(const json::array &pe_ : json::get<"prev_events"_>(p))
-			if(i != j++)
-				if(pe_.at(0) == pe.at(0))
-					set(DUP_PREV_EVENT);
+			++i;
+		}
 
-		++i;
+		i = 0;
+		for(const json::array &ps : json::get<"prev_state"_>(prev))
+		{
+			if(unquote(ps.at(0)) == json::get<"event_id"_>(e))
+				set(SELF_PREV_STATE);
+
+			++i;
+		}
+
+		i = 0;
+		for(const json::array &ps : json::get<"auth_events"_>(prev))
+		{
+			if(unquote(ps.at(0)) == json::get<"event_id"_>(e))
+				set(SELF_AUTH_EVENT);
+
+			++i;
+		}
 	}
 
-	i = 0;
-	for(const json::array &ps : json::get<"prev_state"_>(p))
+	for(size_t i(0); i < prev.auth_events_count(); ++i)
 	{
-		if(unquote(ps.at(0)) == json::get<"event_id"_>(e))
-			set(SELF_PREV_STATE);
+		const auto &[event_id, ref_hash]
+		{
+			prev.auth_events(i)
+		};
 
-		j = 0;
-		for(const json::array &ps_ : json::get<"prev_state"_>(p))
-			if(i != j++)
-				if(ps_.at(0) == ps.at(0))
-					set(DUP_PREV_STATE);
-
-		++i;
-	}
-
-	i = 0;
-	for(const json::array &ps : json::get<"auth_events"_>(p))
-	{
-		if(unquote(ps.at(0)) == json::get<"event_id"_>(e))
-			set(SELF_AUTH_EVENT);
-
-		j = 0;
-		for(const json::array &ps_ : json::get<"auth_events"_>(p))
-			if(i != j++)
-				if(ps_.at(0) == ps.at(0))
+		for(size_t j(0); j < prev.auth_events_count(); ++j)
+			if(i != j)
+				if(event_id == prev.auth_event(j))
 					set(DUP_AUTH_EVENT);
+	}
 
-		++i;
+	for(size_t i(0); i < prev.prev_states_count(); ++i)
+	{
+		const auto &[event_id, ref_hash]
+		{
+			prev.prev_states(i)
+		};
+
+		for(size_t j(0); j < prev.prev_states_count(); ++j)
+			if(i != j)
+				if(event_id == prev.prev_state(j))
+					set(DUP_PREV_STATE);
+	}
+
+	for(size_t i(0); i < prev.prev_events_count(); ++i)
+	{
+		const auto &[event_id, ref_hash]
+		{
+			prev.prev_events(i)
+		};
+
+		for(size_t j(0); j < prev.prev_events_count(); ++j)
+			if(i != j)
+				if(event_id == prev.prev_event(j))
+					set(DUP_PREV_EVENT);
 	}
 }
 
