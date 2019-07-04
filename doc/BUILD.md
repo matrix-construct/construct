@@ -114,7 +114,7 @@ This manually applies full release-mode optimizations even when using
 ##### Disable third-party dynamic allocator libraries
 
 ```
---disable-alloc-libs
+--disable-malloc-libs
 ```
 `./configure` will detect alternative `malloc()` implementations found in
 libraries installed on the system (jemalloc/tcmalloc/etc). Construct developers

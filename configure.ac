@@ -445,16 +445,16 @@ dnl Disable third-party allocators
 dnl
 
 AC_MSG_CHECKING(whether to prevent available third-party allocator libraries from being used)
-AC_ARG_ENABLE(allocators, AC_HELP_STRING([--disable-alloc-libs], [Disable third-party dynamic memory libraries (jemalloc/tcmalloc/etc)]),
+AC_ARG_ENABLE(malloc-libs, AC_HELP_STRING([--disable-malloc-libs], [Disable third-party dynamic memory libraries (jemalloc/tcmalloc/etc)]),
 [
-	use_alloc_libs="no"
+	use_malloc_libs="no"
 	AC_MSG_RESULT([yes])
 ], [
-	use_alloc_libs="yes"
+	use_malloc_libs="yes"
 	AC_MSG_RESULT([no])
 ])
 
-AM_CONDITIONAL([ALLOC_LIBS], [[[[ "$use_alloc_libs" = "yes" ]]]])
+AM_CONDITIONAL([MALLOC_LIBS], [[[[ "$use_malloc_libs" = "yes" ]]]])
 
 dnl  !!! Experimental !!!
 dnl
@@ -1714,7 +1714,7 @@ AC_SUBST(MALLOC_LIBS)
 alloc_lib="standard"
 
 dnl ALLOC_LIBS true unless --disable-alloc-libs configured
-AM_COND_IF([ALLOC_LIBS],
+AM_COND_IF([MALLOC_LIBS],
 [
 	AM_COND_IF([JEMALLOC],
 	[
