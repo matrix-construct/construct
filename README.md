@@ -53,6 +53,7 @@ contributing back.
 
 - **zlib** or **lz4** or **snappy** database compressions.
 - **GraphicsMagick** for media thumbnails.
+- **jemalloc** for dynamic memory.
 
 ##### Build tools
 
