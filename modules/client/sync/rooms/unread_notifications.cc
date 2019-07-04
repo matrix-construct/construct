@@ -28,7 +28,10 @@ ircd::m::sync::room_unread_notifications
 {
 	"rooms.unread_notifications",
 	room_unread_notifications_polylog,
-	room_unread_notifications_linear
+	room_unread_notifications_linear,
+	{
+		{ "initial",  true },
+	}
 };
 
 bool
