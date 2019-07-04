@@ -1687,19 +1687,16 @@ AC_CHECK_LIB(jemalloc, malloc,
 ])
 
 AC_MSG_CHECKING(whether to enable use of jemalloc)
-AC_ARG_ENABLE(jemalloc, AC_HELP_STRING([--enable-jemalloc], [Use jemalloc as third-party dynamic memory manager.]),
+AC_ARG_ENABLE(jemalloc, AC_HELP_STRING([--disable-jemalloc], [Use jemalloc as third-party dynamic memory manager.]),
 [
-	use_jemalloc="yes"
-	AC_MSG_RESULT([yes])
-], [
 	use_jemalloc="no"
 	AC_MSG_RESULT([no])
+], [
+	use_jemalloc="yes"
+	AC_MSG_RESULT([yes])
 ])
 
-dnl jemalloc by default if available
-dnl
-AM_CONDITIONAL([JEMALLOC], [test "x$have_jemalloc" = "xyes"])
-dnl AM_CONDITIONAL([JEMALLOC], [test "x$have_jemalloc" = "xyes" && test "x$use_jemalloc" = "xyes" ])
+AM_CONDITIONAL([JEMALLOC], [test "x$have_jemalloc" = "xyes" && test "x$use_jemalloc" = "xyes" ])
 
 dnl
 dnl
