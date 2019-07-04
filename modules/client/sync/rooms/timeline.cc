@@ -37,6 +37,9 @@ ircd::m::sync::room_timeline
 	"rooms.timeline",
 	room_timeline_polylog,
 	room_timeline_linear,
+	{
+		{ "initial", true },
+	}
 };
 
 decltype(ircd::m::sync::default_keys)
