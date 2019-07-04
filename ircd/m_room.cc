@@ -2149,12 +2149,21 @@ size_t
 ircd::m::room::state::count(const string_view &type)
 const
 {
-	size_t ret{0};
-	for_each(type, event::closure_idx{[&ret]
-	(const event::idx &event_idx)
+	if(!present())
+		return count(type);
+
+	const db::gopts &opts
 	{
-		++ret;
-	}});
+		this->fopts? this->fopts->gopts : db::gopts{}
+	};
+
+	size_t ret(0);
+	auto &column{dbs::room_state};
+	for(auto it{column.begin(room_id, opts)}; bool(it); ++it)
+	{
+		const auto key(dbs::room_state_key(it->first));
+		ret += std::get<0>(key) == type;
+	}
 
 	return ret;
 }
