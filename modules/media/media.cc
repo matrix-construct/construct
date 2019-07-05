@@ -188,11 +188,11 @@ try
 
 	if(!iit.second)
 	{
-		do
+		downloading_dock.wait([&room_id]
 		{
-			downloading_dock.wait();
-		}
-		while(downloading.count(room_id));
+			return !downloading.count(room_id);
+		});
+
 		return room_id;
 	}
 
@@ -420,9 +420,9 @@ read_each_block(const m::room &room,
 		if(at<"type"_>(event) != "ircd.file.block")
 			continue;
 
-		const auto &hash
+		const json::string &hash
 		{
-			unquote(at<"content"_>(event).at("hash"))
+			at<"content"_>(event).at("hash")
 		};
 
 		const auto &blksz
