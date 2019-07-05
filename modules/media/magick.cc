@@ -477,6 +477,7 @@ namespace ircd::magick
 	static thread_local uint64_t job_cycles;
 	static thread_local uint64_t last_cycles;
 	static thread_local int64_t last_quantum;
+	static thread_local uint64_t last_span;
 	static thread_local uint64_t last_yield;
 }
 
@@ -496,11 +497,25 @@ noexcept try
 		cycles(ctx::cur()) + ctx::prof::cur_slice_cycles()
 	};
 
-	// This is a new job; reset any global state here
-	if(quantum == 0)
+	// Detect if this is a new job. Quantum is usually zero for a new job, but for
+	// large jobs it may start after 0. Quantum always appears monotonic for a job.
+	// The span appears constant for a job, though could be the same for different
+	// jobs. We don't know of any succinct way to test for a new job, so we use all
+	// of the above information.
+	const bool new_job
+	{
+		quantum == 0
+		|| quantum < last_quantum
+		|| span != last_span
+	};
+
+	assert(new_job || span == last_span); // the span is always constant same for a job
+	assert(new_job || quantum >= last_quantum); // quantum is monotonic for the same job
+	if(new_job)
 	{
 		++job_ctr;
-		last_quantum = 0;
+		last_quantum = quantum;
+		last_span = span;
 		last_yield = 0;
 		job_cycles = 0;
 		last_cycles = cur_cycles;
