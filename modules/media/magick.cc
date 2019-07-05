@@ -32,7 +32,7 @@ namespace ircd::magick
 	static void init();
 	static void fini();
 
-	extern conf::item<uint64_t> limit_span;
+	extern conf::item<uint64_t> limit_ticks;
 	extern conf::item<uint64_t> limit_cycles;
 	extern conf::item<uint64_t> yield_threshold;
 	extern conf::item<uint64_t> yield_interval;
@@ -68,11 +68,11 @@ ircd::magick::log
 	"magick"
 };
 
-decltype(ircd::magick::limit_span)
-ircd::magick::limit_span
+decltype(ircd::magick::limit_ticks)
+ircd::magick::limit_ticks
 {
-	{ "name",    "ircd.magick.limit.span" },
-	{ "default", 10000L                   },
+	{ "name",    "ircd.magick.limit.ticks" },
+	{ "default", 10000L                    },
 };
 
 decltype(ircd::magick::limit_cycles)
@@ -471,20 +471,36 @@ ircd::magick::call(function&& f,
 	return f(std::forward<args>(a)...);
 }
 
+//
+// ircd::magick::job
+//
+
 namespace ircd::magick
 {
-	static thread_local uint64_t job_ctr;
-	static thread_local uint64_t job_cycles;
-	static thread_local uint64_t last_cycles;
-	static thread_local int64_t last_quantum;
-	static thread_local uint64_t last_span;
-	static thread_local uint64_t last_yield;
+	static void job_init(const string_view &, const int64_t &, const uint64_t &, const uint64_t &);
+	static void finished(job &);
+	static bool check_yield(job &);
+	static void check_cycles(job &);
 }
 
+struct ircd::magick::job::state
+{
+	uint64_t cycles {0};
+	uint64_t yield {0};
+	char description[1024];
+}
+thread_local ircd::magick::job::state;
+
+decltype(ircd::magick::job::cur) thread_local
+ircd::magick::job::cur;
+
+decltype(ircd::magick::job::tot) thread_local
+ircd::magick::job::tot;
+
 uint
-ircd::magick::handle_progress(const char *text,
-                              const int64_t quantum,
-                              const uint64_t span,
+ircd::magick::handle_progress(const char *const text,
+                              const int64_t tick,
+                              const uint64_t ticks,
                               ExceptionInfo *ei)
 noexcept try
 {
@@ -492,125 +508,204 @@ noexcept try
 	// accumulated cycle count for only this ircd::ctx and the current slice,
 	// (all other cycles are not accumulated here) which is non-zero by now
 	// and monotonically increases across jobs as well.
-	const auto cur_cycles
+	const auto cycles_sample
 	{
 		cycles(ctx::cur()) + ctx::prof::cur_slice_cycles()
 	};
 
-	// Detect if this is a new job. Quantum is usually zero for a new job, but for
-	// large jobs it may start after 0. Quantum always appears monotonic for a job.
-	// The span appears constant for a job, though could be the same for different
+	// Detect if this is a new job. Tick is usually zero for a new job, but for
+	// large jobs it may start after 0. Tick always appears monotonic for a job.
+	// The ticks appears constant for a job, though could be the same for different
 	// jobs. We don't know of any succinct way to test for a new job, so we use all
 	// of the above information.
 	const bool new_job
 	{
-		quantum == 0
-		|| quantum < last_quantum
-		|| span != last_span
+		tick == 0
+		|| tick < job::cur.tick
+		|| ticks != job::cur.ticks
 	};
 
-	assert(new_job || span == last_span); // the span is always constant same for a job
-	assert(new_job || quantum >= last_quantum); // quantum is monotonic for the same job
+	// Assert general assumptions about invocations of this callback.
+	assert(new_job || tick >= job::cur.tick);
+	assert(new_job || ticks == job::cur.ticks);
+
+	// Branch after detecting this callback is unrelated to the last job.
 	if(new_job)
 	{
-		++job_ctr;
-		last_quantum = quantum;
-		last_span = span;
-		last_yield = 0;
-		job_cycles = 0;
-		last_cycles = cur_cycles;
-
-		// This job is too large based on the span measurement. This is an ad hoc
-		// measurement of the job size created internally by ImageMagick.
-		if(span > uint64_t(limit_span))
-			throw error
-			{
-				"job:%lu computation span:%lu exceeds server limit:%lu",
-				job_ctr,
-				span,
-				uint64_t(limit_span),
-			};
+		finished(job::cur);
+		job_init(text, tick, ticks, cycles_sample);
 	}
 
-	// Update the cycle counters first so the log::debug has better info.
-	assert(cur_cycles >= last_cycles);
-	job_cycles += cur_cycles - last_cycles;
-	last_cycles = cur_cycles;
+	// Unconditional bookkeeping updates for this invocation. These statements
+	// behave properly regardless of whether this is the same or a new job.
+	assert(cycles_sample >= job::state.cycles);
+	job::cur.cycles += cycles_sample - job::state.cycles;
+	job::state.cycles = cycles_sample;
+	job::cur.tick = tick;
 
+	// This debug message is very noisy, even for debug mode. Developer can
+	// enable it at their discretion.
 	#ifdef IRCD_MAGICK_DEBUG_PROGRESS
 	log::debug
 	{
 		log, "job:%lu progress %2.2lf%% (%ld/%ld) cycles:%lu :%s",
-		job_ctr,
-		(quantum / double(span) * 100.0),
-		quantum,
-		span,
-		job_cycles,
-		text,
+		job::cur.id,
+		(job::cur.tick / double(job::cur.ticks) * 100.0),
+		job::cur.tick,
+		job::cur.ticks,
+		job::cur.cycles,
+		job::cur.text,
 	};
 	#endif
 
-	// Check if job exceeded its reference cycle limit if enabled.
-	if(unlikely(uint64_t(limit_cycles) && job_cycles > uint64_t(limit_cycles)))
-		throw error
-		{
-			"job:%lu CPU cycles:%lu exceeded server limit:%lu (progress %2.2lf%% (%ld/%ld))",
-			job_ctr,
-			job_cycles,
-			uint64_t(limit_cycles),
-			(quantum / double(span) * 100.0),
-			quantum,
-			span,
-		};
+	check_cycles(job::cur);
+	check_yield(job::cur);
 
-	// This is a larger job; we yield this ircd::ctx at interval
-	if(span > uint64_t(yield_threshold))
-	{
-		if(quantum - last_yield > uint64_t(yield_interval))
-		{
-			last_yield = quantum;
-			ctx::yield();
-		}
-	}
-
-	last_quantum = quantum;
-
-	// return false to interrupt the job; set the exception saying why.
-	//
-	// If MonitorEvent (or any *Event) is the code the interruption is
-	// not an error and the operation will silently complete, possibly with
-	// incomplete or corrupt results (i guess? this might be ok for raster
-	// or optimization operations maybe which can go on indefinitely)
-	//
-	// If MonitorError (or any *Error) is the code we propagate the exception
-	// all the way back through our user.
-	//
 	return true;
 }
 catch(const ctx::interrupted &e)
 {
+	++job::cur.intrs;
+	job::cur.eptr = std::current_exception();
 	::ThrowException(ei, MonitorError, "interrupted", e.what());
 	ei->signature = MagickSignature; // ???
 	return false;
 }
 catch(const ctx::terminated &)
 {
+	++job::cur.intrs;
+	job::cur.eptr = std::current_exception();
 	::ThrowException(ei, MonitorError, "terminated", nullptr);
 	ei->signature = MagickSignature; // ???
 	return false;
 }
 catch(const std::exception &e)
 {
+	++job::cur.errors;
+	job::cur.eptr = std::current_exception();
 	::ThrowLoggedException(ei, MonitorError, "error", e.what(), __FILE__, __FUNCTION__, __LINE__);
 	ei->signature = MagickSignature; // ???
 	return false;
 }
 catch(...)
 {
+	++job::cur.errors;
+	job::cur.eptr = std::current_exception();
 	::ThrowLoggedException(ei, MonitorFatalError, "unknown", nullptr, __FILE__, __FUNCTION__, __LINE__);
 	ei->signature = MagickSignature; // ???
 	return false;
 }
+
+void
+ircd::magick::check_cycles(job &job)
+{
+	const uint64_t &limit_cycles
+	{
+		magick::limit_cycles
+	};
+
+	// Check if job exceeded its reference cycle limit if enabled.
+	if(unlikely(limit_cycles && job.cycles > limit_cycles))
+		throw error
+		{
+			"job:%lu CPU cycles:%lu exceeded server limit:%lu (progress %2.2lf%% (%ld/%ld))",
+			job.id,
+			job.cycles,
+			limit_cycles,
+			(job.tick / double(job.ticks) * 100.0),
+			job.tick,
+			job.ticks,
+		};
+}
+
+bool
+ircd::magick::check_yield(job &job)
+{
+	const uint64_t &yield_threshold
+	{
+		magick::yield_threshold
+	};
+
+	// This job is too small to conduct any yields.
+	if(likely(job.ticks < yield_threshold))
+		return false;
+
+	const uint64_t &yield_interval
+	{
+		magick::yield_interval
+	};
+
+	// Haven't reached the yield interval yet.
+	if(likely(job.tick - job::state.yield <= yield_interval))
+		return false;
+
+	job::state.yield = job.tick;
+	ctx::yield();
+	return true;
+}
+
+void
+ircd::magick::finished(job &job)
+{
+	// Update total state from last job
+	assert(job.id == job::tot.id + 1 || (job.id == job::tot.id && !job.id));
+	job::tot.id = job.id;
+	job::tot.tick += job.tick;
+	job::tot.ticks += job.ticks;
+	job::tot.cycles += job.cycles;
+	job::tot.yields += job.yields;
+	job::tot.intrs += job.intrs;
+	job::tot.errors += job.errors;
+}
+
+void
+ircd::magick::job_init(const string_view &text,
+                       const int64_t &tick,
+                       const uint64_t &ticks,
+                       const uint64_t &cycles_sample)
+{
+	// Reset the current job structure
+	job::cur =
+	{
+		job::tot.id + 1,   // id
+		tick,              // tick
+		ticks,             // ticks
+	};
+
+	// Update internal state
+	job::state.cycles = cycles_sample;
+
+	// The description text may have this annoying empty "[]" on this
+	// message so we'll strip that here.
+	job::cur.description = strlcpy
+	{
+		job::state.description, lstrip(text, "[] ")
+	};
+
+	log::debug
+	{
+		log, "job:%lu started; ticks:%lu :%s",
+		job::cur.id,
+		job::cur.ticks,
+		job::cur.description,
+	};
+
+	// This job is too large based on the ticks measurement. This is an ad hoc
+	// measurement of the job size created internally by ImageMagick.
+	if(job::cur.ticks > uint64_t(limit_ticks))
+		throw error
+		{
+			"job:%lu computation ticks:%lu exceeds server limit:%lu :%s",
+			job::cur.id,
+			job::cur.ticks,
+			uint64_t(limit_ticks),
+			job::cur.description,
+		};
+}
+
+//
+// (Internal) patch panels
+//
 
 void
 ircd::magick::handle_free(void *const ptr)

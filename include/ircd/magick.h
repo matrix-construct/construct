@@ -16,6 +16,7 @@ namespace ircd::magick
 {
 	IRCD_EXCEPTION(ircd::error, error)
 
+	struct job;
 	struct crop;
 	struct shave;
 	struct scale;
@@ -83,4 +84,22 @@ struct ircd::magick::crop
 	     const dimensions &,
 	     const offset &,
 	     const result_closure &);
+};
+
+struct ircd::magick::job
+{
+	struct state;
+
+	static thread_local struct job cur, tot;  // current job, total for all jobs
+	static thread_local struct state state;   // internal state
+
+	uint64_t id {0};           // monotonic
+	int64_t tick {0};          // quantum
+	uint64_t ticks {0};        // span
+	uint64_t cycles {0};       // rdtsc reference
+	uint64_t yields {0};       // ircd::ctx relinquish count for large jobs
+	uint64_t intrs {0};        // ircd::ctx interrupt count
+	uint64_t errors {0};       // exception/error count
+	string_view description;   // only valid for current job duration
+	std::exception_ptr eptr;   // apropos exception reference
 };
