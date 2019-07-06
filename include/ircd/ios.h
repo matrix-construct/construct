@@ -77,6 +77,7 @@ struct ircd::ios::dispatch
 {
 	dispatch(descriptor &, std::function<void ()>);
 	dispatch(descriptor &, synchronous_t, const std::function<void ()> &);
+	dispatch(descriptor &, synchronous_t);
 	dispatch(std::function<void ()>);
 	dispatch(synchronous_t, const std::function<void ()> &);
 };
@@ -85,6 +86,7 @@ struct ircd::ios::defer
 {
 	defer(descriptor &, std::function<void ()>);
 	defer(descriptor &, synchronous_t, const std::function<void ()> &);
+	defer(descriptor &, synchronous_t);
 	defer(std::function<void ()>);
 	defer(synchronous_t, const std::function<void ()> &);
 };
@@ -93,6 +95,7 @@ struct ircd::ios::post
 {
 	post(descriptor &, std::function<void ()>);
 	post(descriptor &, synchronous_t, const std::function<void ()> &);
+	post(descriptor &, synchronous_t);
 	post(std::function<void ()>);
 	post(synchronous_t, const std::function<void ()> &);
 };

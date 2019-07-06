@@ -638,19 +638,10 @@ ircd::ctx::this_ctx::yield()
 		"ircd::ctx courtesy yield"
 	};
 
-	bool done(false);
-	const auto restore([&done, &me(cur())]
+	ircd::defer
 	{
-		done = true;
-		notify(me);
-	});
-
-	// All spurious notifications are ignored until `done`
-	ircd::defer(descriptor, restore); do
-	{
-		wait();
-	}
-	while(!done);
+		descriptor, ios::synchronous
+	};
 }
 
 ulong

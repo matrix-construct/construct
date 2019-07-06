@@ -290,14 +290,31 @@ ircd::ios::dispatch_desc
 };
 
 ircd::ios::dispatch::dispatch(std::function<void ()> function)
+:dispatch
 {
-	dispatch(dispatch_desc, std::move(function));
+	dispatch_desc, std::move(function)
+}
+{
 }
 
 ircd::ios::dispatch::dispatch(synchronous_t,
                               const std::function<void ()> &function)
+:dispatch
 {
-	dispatch(dispatch_desc, synchronous, std::move(function));
+	dispatch_desc, synchronous, std::move(function)
+}
+{
+}
+
+ircd::ios::dispatch::dispatch(descriptor &descriptor,
+                              synchronous_t)
+:dispatch
+{
+	dispatch_desc, synchronous, []
+	{
+	}
+}
+{
 }
 
 ircd::ios::dispatch::dispatch(descriptor &descriptor,
@@ -337,14 +354,31 @@ ircd::ios::defer_desc
 };
 
 ircd::ios::defer::defer(std::function<void ()> function)
+:defer
 {
-	defer(defer_desc, std::move(function));
+	defer_desc, std::move(function)
+}
+{
 }
 
 ircd::ios::defer::defer(synchronous_t,
                         const std::function<void ()> &function)
+:defer
 {
-	defer(defer_desc, synchronous, function);
+	defer_desc, synchronous, function
+}
+{
+}
+
+ircd::ios::defer::defer(descriptor &descriptor,
+                        synchronous_t)
+:defer
+{
+	defer_desc, synchronous, []
+	{
+	}
+}
+{
 }
 
 ircd::ios::defer::defer(descriptor &descriptor,
@@ -384,14 +418,31 @@ ircd::ios::post_desc
 };
 
 ircd::ios::post::post(std::function<void ()> function)
+:post
 {
-	post(post_desc, std::move(function));
+	post_desc, std::move(function)
+}
+{
 }
 
 ircd::ios::post::post(synchronous_t,
                       const std::function<void ()> &function)
+:post
 {
-	post(post_desc, synchronous, function);
+	post_desc, synchronous, function
+}
+{
+}
+
+ircd::ios::post::post(descriptor &descriptor,
+                      synchronous_t)
+:post
+{
+	descriptor, synchronous, []
+	{
+	}
+}
+{
 }
 
 ircd::ios::post::post(descriptor &descriptor,
