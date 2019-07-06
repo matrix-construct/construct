@@ -11,6 +11,7 @@
 namespace ircd::m::vm
 {
 	template<class... args> static fault handle_error(const opts &, const fault &, const string_view &fmt, args&&... a);
+	template<class T> static void call_hook(hook::site<T> &, eval &, const event &, T&& data);
 	static size_t calc_txn_reserve(const opts &, const event &);
 	static void write_commit(eval &);
 	static void write_append(eval &, const event &);
@@ -524,10 +525,10 @@ try
 	};
 
 	if(eval.copts && eval.copts->issue)
-		issue_hook(event, eval);
+		call_hook(issue_hook, eval, event, eval);
 
 	if(opts.conform)
-		conform_hook(event, eval);
+		call_hook(conform_hook, eval, event, eval);
 
 	if(json::get<"event_id"_>(event))
 		if(event.event_id != json::get<"event_id"_>(event))
@@ -547,10 +548,10 @@ try
 		return ret;
 
 	if(opts.notify)
-		notify_hook(event, eval);
+		call_hook(notify_hook, eval, event, eval);
 
 	if(opts.effects)
-		effect_hook(event, eval);
+		call_hook(effect_hook, eval, event, eval);
 
 	if(opts.debuglog_accept || bool(log_accept_debug))
 		log::debug
@@ -611,13 +612,13 @@ catch(const std::exception &e) // ALL OTHER ERRORS
 
 enum ircd::m::vm::fault
 ircd::m::vm::execute_edu(eval &eval,
-                          const event &event)
+                         const event &event)
 {
 	if(eval.opts->eval)
-		eval_hook(event, eval);
+		call_hook(eval_hook, eval, event, eval);
 
 	if(eval.opts->post)
-		post_hook(event, eval);
+		call_hook(post_hook, eval, event, eval);
 
 	return fault::ACCEPT;
 }
@@ -670,7 +671,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 		};
 
 	if(opts.access)
-		access_hook(event, eval);
+		call_hook(access_hook, eval, event, eval);
 
 	if(opts.verify && !verify(event))
 		throw m::BAD_SIGNATURE
@@ -680,7 +681,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	// Fetch dependencies
 	if(opts.fetch)
-		fetch_hook(event, eval);
+		call_hook(fetch_hook, eval, event, eval);
 
 	// Obtain sequence number here.
 	const auto *const &top(eval::seqmax());
@@ -708,7 +709,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	// Evaluation by module hooks
 	if(opts.eval)
-		eval_hook(event, eval);
+		call_hook(eval_hook, eval, event, eval);
 
 	// Wait until this is the lowest sequence number
 	sequence::dock.wait([&eval]
@@ -735,7 +736,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 	// Generate post-eval/pre-notify effects. This function may conduct
 	// an entire eval of several more events recursively before returning.
 	if(opts.post)
-		post_hook(event, eval);
+		call_hook(post_hook, eval, event, eval);
 
 	// Commit the transaction to database iff this eval is at the stack base.
 	if(opts.write && !eval.sequence_shared[0])
@@ -880,6 +881,29 @@ ircd::m::vm::calc_txn_reserve(const opts &opts,
 	};
 
 	return reserve_event + opts.reserve_index;
+}
+
+template<class T>
+void
+ircd::m::vm::call_hook(hook::site<T> &hook,
+                       eval &eval,
+                       const event &event,
+                       T&& data)
+try
+{
+	hook(event, std::forward<T>(data));
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		"%s | phase:%s :%s",
+		loghead(eval),
+		unquote(hook.feature.get("name")),
+		e.what(),
+	};
+
+	throw;
 }
 
 template<class... args>
