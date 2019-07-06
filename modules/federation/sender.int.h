@@ -37,7 +37,7 @@ unit::unit(std::string s, const enum type &type)
 }
 
 unit::unit(const m::event &event)
-:type{json::get<"event_id"_>(event)? PDU : EDU}
+:type{event.event_id? PDU : EDU}
 ,s{[this, &event]() -> std::string
 {
 	switch(this->type)

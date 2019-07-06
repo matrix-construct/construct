@@ -154,7 +154,7 @@ _changed_aliases(const m::event &event,
 			m::log, "Updated aliases of %s by %s in %s with %s",
 			string_view{room_id},
 			json::get<"sender"_>(event),
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			string_view{alias},
 		};
 	}
@@ -165,7 +165,7 @@ _changed_aliases(const m::event &event,
 			m::log, "Updating aliases of %s by %s in %s with %s :%s",
 			string_view{room_id},
 			json::get<"sender"_>(event),
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			string_view{alias},
 			e.what(),
 		};

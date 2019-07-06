@@ -112,7 +112,7 @@ ircd::m::visible(const m::event &event,
 {
 	const m::room room
 	{
-		at<"room_id"_>(event), json::get<"event_id"_>(event)
+		at<"room_id"_>(event), event.event_id
 	};
 
 	static const m::event::fetch::opts fopts
@@ -160,7 +160,7 @@ _changed_visibility(const m::event &event,
 		json::get<"room_id"_>(event),
 		json::get<"content"_>(event).get("history_visibility"),
 		json::get<"sender"_>(event),
-		json::get<"event_id"_>(event)
+		string_view{event.event_id}
 	};
 }
 

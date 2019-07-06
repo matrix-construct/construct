@@ -418,7 +418,7 @@ handle_implicit_receipt(const m::event &event,
                         m::vm::eval &eval)
 try
 {
-	if(!json::get<"event_id"_>(event))
+	if(!event.event_id)
 		return;
 
 	const m::user::id &user_id
@@ -455,7 +455,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		receipt_log, "Implicit receipt hook for %s :%s",
-		json::get<"event_id"_>(event),
+		string_view{event.event_id},
 		e.what(),
 	};
 }
@@ -576,7 +576,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		receipt_log, "ircd.read hook on %s for federation broadcast :%s",
-		json::get<"event_id"_>(event),
+		string_view{event.event_id},
 		e.what(),
 	};
 }

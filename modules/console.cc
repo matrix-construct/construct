@@ -7421,7 +7421,7 @@ console_cmd__eval__file(opt &out, const string_view &line)
 			if(room_id && json::get<"room_id"_>(event) != room_id)
 				continue;
 
-			if(event_id && json::get<"event_id"_>(event) != event_id)
+			if(event_id && event.event_id != event_id)
 				continue;
 
 			if(sender && json::get<"sender"_>(event) != sender)
@@ -8569,7 +8569,7 @@ console_cmd__room__state(opt &out, const string_view &line)
 		    << std::left << " ] [ "
 		    << std::setw(50) << state_key
 		    << std::left << " ] "
-		    << std::setw(72) << json::get<"event_id"_>(event)
+		    << std::setw(72) << string_view{event.event_id}
 		    << std::left << " "
 		    ;
 
@@ -10475,7 +10475,7 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 		    << " "
 		    << pretty(now - ost) << " ago"
 		    << " "
-		    << json::get<"event_id"_>(event);
+		    << string_view{event.event_id};
 
 
 		if(clear)

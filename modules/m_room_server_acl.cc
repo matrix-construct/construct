@@ -71,7 +71,7 @@ ircd::m::on_changed_room_server_acl(const event &event,
 		m::log, "%s changed server access control list in %s [%s]",
 		json::get<"sender"_>(event),
 		json::get<"room_id"_>(event),
-		json::get<"event_id"_>(event)
+		string_view{event.event_id},
     };
 }
 

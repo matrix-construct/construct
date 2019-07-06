@@ -53,7 +53,7 @@ _changed_canonical_alias(const m::event &event,
 		string_view{room_id},
 		string_view{alias},
 		json::get<"sender"_>(event),
-		json::get<"event_id"_>(event),
+		string_view{event.event_id},
 		string_view{event_id}
 	};
 }

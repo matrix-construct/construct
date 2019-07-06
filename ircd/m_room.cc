@@ -970,7 +970,7 @@ ircd::m::top(std::nothrow_t,
 		event::id::buf{}, depth, event_idx
 	};
 
-	event::fetch::event_id(event_idx, std::nothrow, [&ret]
+	m::event_id(event_idx, std::nothrow, [&ret]
 	(const event::id &event_id)
 	{
 		std::get<event::id::buf>(ret) = event_id;
@@ -1505,7 +1505,7 @@ const
 	(const event::idx &idx)
 	{
 		bool ret{true};
-		event::fetch::event_id(idx, std::nothrow, [&ret, &closure]
+		m::event_id(idx, std::nothrow, [&ret, &closure]
 		(const event::id &event_id)
 		{
 			ret = closure(event_id);
@@ -1820,14 +1820,7 @@ ircd::m::event::id::buf
 ircd::m::room::messages::event_id()
 const
 {
-	event::id::buf ret;
-	event::fetch::event_id(this->event_idx(), [&ret]
-	(const event::id &event_id)
-	{
-		ret = event_id;
-	});
-
-	return ret;
+	return m::event_id(this->event_idx(), std::nothrow);
 }
 
 uint64_t
@@ -1985,10 +1978,18 @@ ircd::m::room::state::get(const string_view &type,
                           const event::id::closure &closure)
 const
 {
-	get(type, state_key, event::closure_idx{[&closure]
+	get(type, state_key, event::closure_idx{[&]
 	(const event::idx &idx)
 	{
-		event::fetch::event_id(idx, closure);
+		if(!m::event_id(idx, std::nothrow, closure))
+			throw m::NOT_FOUND
+			{
+				"(%s,%s) in %s idx:%lu event_id :not found",
+				type,
+				state_key,
+				string_view{room_id},
+				idx,
+			};
 	}});
 }
 
@@ -2058,7 +2059,7 @@ const
 	return get(std::nothrow, type, state_key, event::closure_idx{[&closure]
 	(const event::idx &idx)
 	{
-		event::fetch::event_id(idx, std::nothrow, closure);
+		m::event_id(idx, std::nothrow, closure);
 	}});
 }
 
@@ -2223,7 +2224,7 @@ const
 	(const event::idx &idx)
 	{
 		bool ret{true};
-		event::fetch::event_id(idx, std::nothrow, [&ret, &closure]
+		m::event_id(idx, std::nothrow, [&ret, &closure]
 		(const event::id &id)
 		{
 			ret = closure(id);
@@ -2405,7 +2406,7 @@ const
 	(const event::idx &idx)
 	{
 		bool ret{true};
-		event::fetch::event_id(idx, std::nothrow, [&ret, &closure]
+		m::event_id(idx, std::nothrow, [&ret, &closure]
 		(const event::id &id)
 		{
 			ret = closure(id);

@@ -154,7 +154,7 @@ save_transaction_id(const m::event &event,
 	if(!eval.copts->client_txnid)
 		return;
 
-	if(!json::get<"event_id"_>(event))
+	if(!event.event_id)
 		return;
 
 	assert(my_host(at<"origin"_>(event)));

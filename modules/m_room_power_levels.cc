@@ -27,7 +27,7 @@ _has_power(const m::event &event,
 
 	const auto &event_id
 	{
-		json::get<"event_id"_>(event)
+		event.event_id
 	};
 
 	if(!room_id || !event_id) // Not evaluated here
@@ -113,7 +113,7 @@ _changed_levels(const m::event &event,
 		m::log, "%s changed power_levels in %s [%s]",
 		json::get<"sender"_>(event),
 		json::get<"room_id"_>(event),
-		json::get<"event_id"_>(event)
+		string_view{event.event_id}
     };
 }
 

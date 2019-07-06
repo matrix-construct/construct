@@ -57,9 +57,6 @@ struct ircd::m::event::fetch
 	fetch(const id &, const opts & = default_opts);
 	fetch(const idx &, const opts & = default_opts);
 	fetch(const opts & = default_opts);
-
-	static bool event_id(const idx &, std::nothrow_t, const id::closure &);
-	static void event_id(const idx &, const id::closure &);
 };
 
 namespace ircd::m

@@ -1382,25 +1382,6 @@ decltype(ircd::m::event::fetch::default_opts)
 ircd::m::event::fetch::default_opts
 {};
 
-void
-ircd::m::event::fetch::event_id(const idx &idx,
-                                const id::closure &closure)
-{
-	if(!get(std::nothrow, idx, "event_id", closure))
-		throw m::NOT_FOUND
-		{
-			"%lu not found in database", idx
-		};
-}
-
-bool
-ircd::m::event::fetch::event_id(const idx &idx,
-                                std::nothrow_t,
-                                const id::closure &closure)
-{
-	return get(std::nothrow, idx, "event_id", closure);
-}
-
 //
 // event::fetch::fetch
 //

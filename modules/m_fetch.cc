@@ -123,7 +123,7 @@ try
 
 	const m::event::id &event_id
 	{
-		at<"event_id"_>(event)
+		event.event_id
 	};
 
 	const m::room::id &room_id
@@ -148,7 +148,7 @@ try
 	{
 		log, "%s %s %s ac:%zu ae:%zu pc:%zu pe:%zu pf:%zu",
 		loghead(eval),
-		json::get<"event_id"_>(event),
+		string_view{event.event_id},
 		json::get<"room_id"_>(event),
 		tab.auth_count,
 		tab.auth_exists,
@@ -163,7 +163,7 @@ catch(const std::exception &e)
 	{
 		log, "%s %s :%s",
 		loghead(eval),
-		json::get<"event_id"_>(event),
+		string_view{event.event_id},
 		e.what(),
 	};
 
@@ -202,7 +202,7 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 	{
 		log, "%s %s auth_events:%zu hit:%zu miss:%zu",
 		loghead(eval),
-		at<"event_id"_>(event),
+		string_view{event.event_id},
 		tab.auth_count,
 		tab.auth_exists,
 		tab.auth_count - tab.auth_exists,
@@ -227,7 +227,7 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 		throw vm::error
 		{
 			vm::fault::EVENT, "Failed to fetch auth_events for %s in %s",
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			json::get<"room_id"_>(event)
 		};
 
@@ -284,7 +284,7 @@ ircd::m::fetch::hook_handle_prev(const event &event,
 	{
 		log, "%s %s prev_events:%zu hit:%zu miss:%zu fetching:%zu",
 		loghead(eval),
-		at<"event_id"_>(event),
+		string_view{event.event_id},
 		tab.prev_count,
 		tab.prev_exists,
 		tab.prev_count - tab.prev_exists,
@@ -317,7 +317,7 @@ ircd::m::fetch::hook_handle_prev(const event &event,
 		throw vm::error
 		{
 			vm::fault::EVENT, "Failed to fetch any prev_events for %s in %s",
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			json::get<"room_id"_>(event)
 		};
 
@@ -329,7 +329,7 @@ ircd::m::fetch::hook_handle_prev(const event &event,
 		{
 			vm::fault::EVENT, "Failed to fetch all %zu required prev_events for %s in %s",
 			tab.prev_count,
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			json::get<"room_id"_>(event)
 		};
 }
