@@ -1312,7 +1312,7 @@ ircd::m::vm::loghead(const mutable_buffer &buf,
 		eval.sequence_shared[0],
 		eval.sequence_shared[1],
 		eval.event_?
-			string_view{json::get<"event_id"_>(*eval.event_)}:
+			string_view{eval.event_->event_id}:
 			"<unidentified>"_sv,
 	};
 }

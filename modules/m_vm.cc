@@ -417,11 +417,11 @@ ircd::m::vm::inject(eval &eval,
 		};
 	}
 
-	const string_view event_id
+	const event::id &event_id
 	{
 		opts.add_event_id?
-			make_id(event, eval.event_id, event_id_hash):
-			string_view{}
+			make_id(m::event{event}, eval.event_id, event_id_hash):
+			event::id{}
 	};
 
 	const json::iov::add event_id_
@@ -529,9 +529,16 @@ try
 	if(opts.conform)
 		conform_hook(event, eval);
 
+	if(json::get<"event_id"_>(event))
+		if(event.event_id != json::get<"event_id"_>(event))
+			throw error
+			{
+				fault::INVALID, "event.event_id not set."
+			};
+
 	const fault ret
 	{
-		json::get<"event_id"_>(event)?
+		event.event_id?
 			execute_pdu(eval, event):
 			execute_edu(eval, event)
 	};
@@ -565,7 +572,7 @@ catch(const error &e) // VM FAULT CODE
 	(
 		*eval.opts, e.code,
 		"eval %s :%s",
-		json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		event.event_id? string_view{event.event_id}: "<edu>"_sv,
 		unquote(json::object(e.content).get("error"))
 	);
 }
@@ -575,7 +582,7 @@ catch(const m::error &e) // GENERAL MATRIX ERROR
 	(
 		*eval.opts, fault::GENERAL,
 		"eval %s (General Protection): %s %s :%s",
-		json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		event.event_id? string_view{event.event_id}: "<edu>"_sv,
 		e.what(),
 		unquote(json::object(e.content).get("errcode")),
 		unquote(json::object(e.content).get("error"))
@@ -587,7 +594,7 @@ catch(const ctx::interrupted &e) // INTERRUPTION
 	(
 		*eval.opts, fault::INTERRUPT,
 		"eval %s :%s",
-		json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		event.event_id? string_view{event.event_id}: "<edu>"_sv,
 		e.what()
 	);
 }
@@ -597,7 +604,7 @@ catch(const std::exception &e) // ALL OTHER ERRORS
 	(
 		*eval.opts, fault::GENERAL,
 		"eval %s (General Protection): %s",
-		json::get<"event_id"_>(event)?: json::string{"<edu>"},
+		event.event_id? string_view{event.event_id}: "<edu>"_sv,
 		e.what()
 	);
 }
@@ -637,7 +644,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	const m::event::id &event_id
 	{
-		at<"event_id"_>(event)
+		event.event_id
 	};
 
 	const m::room::id &room_id
