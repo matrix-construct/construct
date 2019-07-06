@@ -340,6 +340,7 @@ client_client_sync_rooms_ephemeral_la_SOURCES = client/sync/rooms/ephemeral.cc
 client_client_sync_rooms_state_la_SOURCES = client/sync/rooms/state.cc
 client_client_sync_rooms_timeline_la_SOURCES = client/sync/rooms/timeline.cc
 client_client_sync_rooms_unread_notifications_la_SOURCES = client/sync/rooms/unread_notifications.cc
+client_client_sync_rooms_summary_la_SOURCES = client/sync/rooms/summary.cc
 
 client_module_LTLIBRARIES += \
 	client/client_sync_rooms_account_data.la \
@@ -347,6 +348,7 @@ client_module_LTLIBRARIES += \
 	client/client_sync_rooms_state.la \
 	client/client_sync_rooms_timeline.la \
 	client/client_sync_rooms_unread_notifications.la \
+	client/client_sync_rooms_summary.la \
 	###
 
 # client/sync/rooms/ephemeral/
