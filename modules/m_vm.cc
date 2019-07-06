@@ -484,7 +484,7 @@ ircd::m::vm::inject(eval &eval,
 
 	const m::event event_tuple
 	{
-		event
+		event, m::event::id{event_id}
 	};
 
 	if(opts.debuglog_precommit)

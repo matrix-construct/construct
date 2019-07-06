@@ -1840,8 +1840,11 @@ ircd::m::visible(const event::id &event_id,
 
 	const m::event event
 	{
-		{ "event_id",  event_id  },
-		{ "room_id",   room_id   }
+		json::members
+		{
+			{ "event_id",  event_id  },
+			{ "room_id",   room_id   },
+		}
 	};
 
 	return visible(event, mxid);

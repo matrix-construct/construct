@@ -5678,7 +5678,7 @@ console_cmd__stage(opt &out, const string_view &line)
 
 	if(stage.size() == id)
 	{
-		m::event base_event
+		m::event base_event{json::members
 		{
 			{ "depth",             json::undefined_number  },
 			{ "origin",            my_host()               },
@@ -5687,7 +5687,7 @@ console_cmd__stage(opt &out, const string_view &line)
 			{ "room_id",           m::my_room.room_id      },
 			{ "type",              "m.room.message"        },
 			{ "prev_state",        "[]"                    },
-		};
+		}};
 
 		const json::strung content{json::members
 		{

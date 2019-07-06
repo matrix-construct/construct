@@ -129,13 +129,19 @@ struct ircd::m::event
 	static sha256::buf hash(const json::object &);
 	static json::object hashes(const mutable_buffer &, json::iov &event, const string_view &content);
 
+	m::event::id event_id;
 	json::object source; // Contextual availability only.
 
 	explicit operator id() const;
 
-	using super_type::tuple;
-	event(const json::object &);
+	event(const json::object &, const id &, const keys &);
+	event(const json::object &, const id &);
+	event(id::buf &, const json::object &, const string_view &version = "1");
 	event(const json::object &, const keys &);
+	event(const json::object &);
+	explicit event(const json::members &);
+	explicit event(const json::iov &, const id &);
+	explicit event(const json::iov &);
 	event() = default;
 };
 

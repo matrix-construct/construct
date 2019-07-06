@@ -1532,7 +1532,7 @@ ircd::m::event::fetch::assign_from_json(const string_view &key)
 	assert(fopts);
 	event =
 	{
-		source, fopts->keys
+		source, event::keys{fopts->keys}
 	};
 
 	assert(!empty(source));
@@ -3208,7 +3208,7 @@ ircd::m::event::hash(json::iov &event,
 		event, { "content", content }
 	};
 
-	return m::hash(event);
+	return m::hash(m::event{event});
 }
 
 ircd::sha256::buf
@@ -3368,7 +3368,7 @@ ircd::m::event::sign(json::iov &event,
 	essential(event, contents, [&sk, &sig]
 	(json::iov &event)
 	{
-		sig = m::sign(event, sk);
+		sig = m::sign(m::event{event}, sk);
 	});
 
 	return sig;
@@ -3944,10 +3944,54 @@ ircd::m::my(const id::event &event_id)
 // event::event
 //
 
+ircd::m::event::event(const json::members &members)
+:super_type
+{
+	members
+}
+,event_id
+{
+	defined(json::get<"event_id"_>(*this))?
+		id{json::get<"event_id"_>(*this)}:
+		id{},
+}
+{
+}
+
+ircd::m::event::event(const json::iov &members)
+:event
+{
+	members,
+	members.has("event_id")?
+		id{members.at("event_id")}:
+		id{}
+}
+{
+}
+
+ircd::m::event::event(const json::iov &members,
+                      const id &id)
+:super_type
+{
+	members
+}
+,event_id
+{
+	id
+}
+{
+}
+
 ircd::m::event::event(const json::object &source)
 :super_type
 {
 	source
+}
+,event_id
+{
+	defined(json::get<"event_id"_>(*this))?
+		id{json::get<"event_id"_>(*this)}:
+		id{},
 }
 ,source
 {
@@ -3961,6 +4005,66 @@ ircd::m::event::event(const json::object &source,
 :super_type
 {
 	source, keys
+}
+,event_id
+{
+	defined(json::get<"event_id"_>(*this))?
+		id{json::get<"event_id"_>(*this)}:
+		id{},
+}
+,source
+{
+	source
+}
+{
+}
+
+ircd::m::event::event(id::buf &buf,
+                      const json::object &source,
+                      const string_view &version)
+:event
+{
+	source,
+	version == "1"?
+		id{unquote(source.get("event_id"))}:
+	version == "2"?
+		id{unquote(source.get("event_id"))}:
+	version == "3"?
+		id{id::v3{buf, source}}:
+	version == "4"?
+		id{id::v4{buf, source}}:
+		id{id::v4{buf, source}},
+}
+{
+}
+
+ircd::m::event::event(const json::object &source,
+                      const id &event_id)
+:super_type
+{
+	source
+}
+,event_id
+{
+	event_id
+}
+,source
+{
+	source
+}
+{
+}
+
+ircd::m::event::event(const json::object &source,
+                      const id &event_id,
+                      const keys &keys)
+:super_type
+{
+	source, keys
+}
+,event_id
+{
+	event_id
 }
 ,source
 {

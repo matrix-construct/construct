@@ -83,7 +83,7 @@ put__invite(client &client,
 
 	const m::event event
 	{
-		request["event"]
+		request["event"], event_id
 	};
 
 	char check_buf[48];

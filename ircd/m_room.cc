@@ -1278,8 +1278,11 @@ const
 
 	const m::event event_
 	{
-		{ "event_id",  event_id  },
-		{ "room_id",   room_id   },
+		json::members
+		{
+			{ "event_id",  event_id  },
+			{ "room_id",   room_id   },
+		}
 	};
 
 	return m::visible(event_, mxid);
