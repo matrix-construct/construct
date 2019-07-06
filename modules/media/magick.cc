@@ -477,6 +477,7 @@ ircd::magick::call(function&& f,
 
 namespace ircd::magick
 {
+	static string_view loghead(const job &);
 	static void job_init(const string_view &, const int64_t &, const uint64_t &, const uint64_t &);
 	static void finished(job &);
 	static bool check_yield(job &);
@@ -703,6 +704,20 @@ ircd::magick::job_init(const string_view &text,
 		};
 }
 
+ircd::string_view
+ircd::magick::loghead(const job &job)
+{
+	thread_local char buf[256];
+	return fmt::sprintf
+	{
+		buf, "job:%lu %ld/%lu [%s]",
+		job.id,
+		job.tick,
+		job.ticks,
+		job.description,
+	};
+}
+
 //
 // (Internal) patch panels
 //
@@ -736,7 +751,8 @@ noexcept
 {
 	log::debug
 	{
-		log, "(%d) %s :%s",
+		log, "%s (%d) %s :%s",
+		loghead(job::cur),
 		int(type),
 		::GetLocaleExceptionMessage(type, ""),
 		message,
@@ -751,7 +767,8 @@ noexcept
 {
 	log::warning
 	{
-		log, "(#%d) %s :%s :%s",
+		log, "%s (#%d) %s :%s :%s",
+		loghead(job::cur),
 		int(type),
 		::GetLocaleExceptionMessage(type, ""),
 		reason,
@@ -767,7 +784,8 @@ noexcept
 {
 	log::error
 	{
-		log, "(#%d) %s :%s :%s",
+		log, "%s (#%d) %s :%s :%s",
+		loghead(job::cur),
 		int(type),
 		::GetLocaleExceptionMessage(type, ""),
 		reason,
@@ -783,7 +801,8 @@ noexcept
 {
 	log::critical
 	{
-		log, "(#%d) %s :%s :%s",
+		log, "%s (#%d) %s :%s :%s",
+		loghead(job::cur),
 		int(type),
 		::GetLocaleExceptionMessage(type, ""),
 		reason,
@@ -815,7 +834,9 @@ ircd::magick::handle_exception(const ::ExceptionType type,
 
 	log::derror
 	{
-		log, "%s", what
+		log, "%s %s",
+		loghead(job::cur),
+		what,
 	};
 
 	if(reason == "terminated"_sv)
