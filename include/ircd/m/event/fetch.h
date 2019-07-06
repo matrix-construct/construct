@@ -45,6 +45,7 @@ struct ircd::m::event::fetch
 	db::cell _json;
 	db::row row;
 	bool valid;
+	id::buf event_id_buf;
 
 	static string_view key(const event::idx *const &);
 	static bool should_seek_json(const opts &);
@@ -61,9 +62,9 @@ struct ircd::m::event::fetch
 
 namespace ircd::m
 {
+	bool seek(event::fetch &, const event::idx &, const event::id &, std::nothrow_t);
 	bool seek(event::fetch &, const event::idx &, std::nothrow_t);
 	void seek(event::fetch &, const event::idx &);
-
 	bool seek(event::fetch &, const event::id &, std::nothrow_t);
 	void seek(event::fetch &, const event::id &);
 }

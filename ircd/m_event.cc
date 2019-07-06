@@ -1331,7 +1331,7 @@ ircd::m::seek(event::fetch &fetch,
 		return fetch.valid;
 	}
 
-	return seek(fetch, event_idx, std::nothrow);
+	return seek(fetch, event_idx, event_id, std::nothrow);
 }
 
 void
@@ -1350,7 +1350,26 @@ ircd::m::seek(event::fetch &fetch,
               const event::idx &event_idx,
               std::nothrow_t)
 {
+	const auto &event_id
+	{
+		m::event_id(event_idx, fetch.event_id_buf, std::nothrow)
+	};
+
+	return seek(fetch, event_idx, event_id, std::nothrow);
+}
+
+bool
+ircd::m::seek(event::fetch &fetch,
+              const event::idx &event_idx,
+              const event::id &event_id,
+              std::nothrow_t)
+{
+	if(fetch.event_id_buf != event_id)
+		fetch.event_id_buf = event_id;
+
+	fetch.event_id = fetch.event_id_buf;
 	fetch.event_idx = event_idx;
+
 	const string_view &key
 	{
 		byte_view<string_view>(event_idx)
@@ -1510,14 +1529,26 @@ ircd::m::event::fetch::assign_from_json(const string_view &key)
 		_json.val()
 	};
 
+	const bool source_event_id
+	{
+		!event_id_buf && source.has("event_id")
+	};
+
 	assert(fopts);
 	event =
 	{
-		source, event::keys{fopts->keys}
+		source,
+		source_event_id?
+			id(unquote(source.at("event_id"))):
+			m::event_id(event_idx, event_id_buf, std::nothrow),
+		event::keys{fopts->keys}
 	};
 
 	assert(!empty(source));
 	assert(data(event.source) == data(source));
+	if(unlikely(!event.event_id))
+		return false;
+
 	return true;
 }
 
@@ -1534,6 +1565,13 @@ ircd::m::event::fetch::assign_from_row(const string_view &key)
 
 	assign(event, row, key);
 	event.source = {};
+	event.event_id = !event_id_buf && defined(json::get<"event_id"_>(*this))?
+		id{json::get<"event_id"_>(*this)}:
+		m::event_id(event_idx, event_id_buf, std::nothrow);
+
+	if(unlikely(!event.event_id))
+		return false;
+
 	return true;
 }
 
