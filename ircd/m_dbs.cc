@@ -270,7 +270,7 @@ ircd::m::dbs::write(db::txn &txn,
 try
 {
 	if(opts.event_idx == 0 && opts.blacklist)
-		return blacklist(txn, at<"event_id"_>(event), opts);
+		return blacklist(txn, event.event_id, opts);
 
 	if(unlikely(opts.event_idx == 0))
 		throw panic
@@ -287,7 +287,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "Event %s txn building error :%s",
-		json::get<"event_id"_>(event),
+		string_view{event.event_id},
 		e.what()
 	};
 
@@ -365,13 +365,14 @@ ircd::m::dbs::_index_event_id(db::txn &txn,
 {
 	assert(opts.appendix.test(appendix::EVENT_ID));
 	assert(opts.event_idx);
+	assert(event.event_id);
 
 	db::txn::append
 	{
 		txn, dbs::event_idx,
 		{
 			opts.op,
-			at<"event_id"_>(event),
+			string_view{event.event_id},
 			byte_view<string_view>(opts.event_idx)
 		}
 	};
@@ -529,7 +530,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 			{
 				log, "No index found to ref %s PREV of %s",
 				string_view{prev_id},
-				json::get<"event_id"_>(event),
+				string_view{event.event_id},
 			};
 
 			continue;
@@ -585,7 +586,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 			{
 				log, "No index found to ref %s AUTH of %s",
 				string_view{auth_id},
-				json::get<"event_id"_>(event)
+				string_view{event.event_id}
 			};
 
 			continue;
@@ -725,7 +726,7 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 		{
 			log, "No index found to ref %s M_RECEIPT__M_READ of %s",
 			string_view{event_id},
-			json::get<"event_id"_>(event)
+			string_view{event.event_id}
 		};
 
 		return;
@@ -780,7 +781,7 @@ ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
 		log::derror
 		{
 			log, "Cannot index m.relates_to in %s; '%s' is not an event_id.",
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			string_view{event_id}
 		};
 
@@ -804,7 +805,7 @@ ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
 		log::derror
 		{
 			log, "Cannot index m.relates_to in %s; referenced %s not found.",
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			string_view{event_id}
 		};
 
@@ -858,7 +859,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 		log::derror
 		{
 			log, "Cannot index m.in_reply_to in %s; not an OBJECT.",
-			json::get<"event_id"_>(event)
+			string_view{event.event_id}
 		};
 
 		return;
@@ -879,7 +880,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 		log::derror
 		{
 			log, "Cannot index m.in_reply_to in %s; '%s' is not an event_id.",
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			string_view{event_id}
 		};
 
@@ -901,7 +902,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 		log::derror
 		{
 			log, "Cannot index m.in_reply_to in %s; referenced %s not found.",
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			string_view{event_id}
 		};
 
@@ -959,7 +960,7 @@ ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
 		log::derror
 		{
 			log, "Cannot index m.room.redaction in %s; referenced %s not found.",
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			string_view{event_id}
 		};
 
@@ -1014,9 +1015,10 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 	char buf[EVENT_HORIZON_KEY_MAX_SIZE];
 	assert(opts.appendix.test(appendix::EVENT_HORIZON_RESOLVE));
 	assert(opts.event_idx != 0);
+	assert(event.event_id);
 	const string_view &key
 	{
-		event_horizon_key(buf, at<"event_id"_>(event))
+		event_horizon_key(buf, event.event_id)
 	};
 
 	auto it
@@ -1060,7 +1062,7 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 		thread_local char buf[EVENT_HORIZON_KEY_MAX_SIZE];
 		const string_view &key
 		{
-			event_horizon_key(buf, at<"event_id"_>(event), event_idx)
+			event_horizon_key(buf, event.event_id, event_idx)
 		};
 
 		db::txn::append
@@ -1186,14 +1188,15 @@ ircd::m::dbs::_index_room_head(db::txn &txn,
                                const event &event,
                                const write_opts &opts)
 {
-	const ctx::critical_assertion ca;
-	thread_local char buf[ROOM_HEAD_KEY_MAX_SIZE];
 	assert(opts.appendix.test(appendix::ROOM_HEAD));
 	assert(opts.event_idx);
+	assert(event.event_id);
 
+	const ctx::critical_assertion ca;
+	thread_local char buf[ROOM_HEAD_KEY_MAX_SIZE];
 	const string_view &key
 	{
-		room_head_key(buf, at<"room_id"_>(event), at<"event_id"_>(event))
+		room_head_key(buf, at<"room_id"_>(event), event.event_id)
 	};
 
 	db::txn::append
@@ -1324,7 +1327,7 @@ ircd::m::dbs::_index_room_redact(db::txn &txn,
 		log::error
 		{
 			"Redaction from '%s' missing redaction target '%s'",
-			at<"event_id"_>(event),
+			string_view{event.event_id},
 			target_id
 		};
 
