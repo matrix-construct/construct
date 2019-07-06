@@ -266,7 +266,6 @@ ircd::m::sync::room_state_phased_events(data &data)
 	{
 		ret = true;
 		room_state_append(data, array, event, index(event));
-
 		data.room->get(std::nothrow, "m.room.member", at<"sender"_>(event), [&]
 		(const m::event &event)
 		{
@@ -293,24 +292,6 @@ ircd::m::sync::room_state_phased_events(data &data)
 	});
 
 	data.room->get(std::nothrow, "m.room.avatar", "", [&]
-	(const m::event &event)
-	{
-		room_state_append(data, array, event, index(event));
-	});
-
-	data.room->get(std::nothrow, "m.room.join_rules", "", [&]
-	(const m::event &event)
-	{
-		room_state_append(data, array, event, index(event));
-	});
-
-	data.room->get(std::nothrow, "m.room.history_visibility", "", [&]
-	(const m::event &event)
-	{
-		room_state_append(data, array, event, index(event));
-	});
-
-	data.room->get(std::nothrow, "m.room.power_levels", "", [&]
 	(const m::event &event)
 	{
 		room_state_append(data, array, event, index(event));
