@@ -10,10 +10,6 @@
 
 using namespace ircd;
 
-static void
-check_event(const resource::request &request,
-            const m::event &event);
-
 static resource::response
 put__invite(client &client,
             const resource::request &request);
@@ -126,6 +122,68 @@ put__invite(client &client,
 			string_view{room_id},
 		};
 
+	if(at<"type"_>(event) != "m.room.member")
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_INVALID_TYPE",
+			"event.type must be m.room.member"
+		};
+
+	if(unquote(at<"content"_>(event).at("membership")) != "invite")
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_INVALID_CONTENT_MEMBERSHIP",
+			"event.content.membership must be invite."
+		};
+
+	if(at<"origin"_>(event) != request.origin)
+		throw m::error
+		{
+			http::FORBIDDEN, "M_INVALID_ORIGIN",
+			"event.origin must be you."
+		};
+
+	const m::user::id &sender
+	{
+		at<"sender"_>(event)
+	};
+
+	if(sender.host() != request.origin)
+		throw m::error
+		{
+			http::FORBIDDEN, "M_INVALID_ORIGIN",
+			"event.sender must be your user."
+		};
+
+	const m::user::id &target
+	{
+		at<"state_key"_>(event)
+	};
+
+	if(!my_host(target.host()))
+		throw m::error
+		{
+			http::FORBIDDEN, "M_INVALID_STATE_KEY",
+			"event.state_key must be my user."
+		};
+
+	m::event::conforms non_conforms;
+	non_conforms |= non_conforms.MISSING_PREV_STATE;
+	non_conforms |= non_conforms.INVALID_OR_MISSING_EVENT_ID;
+	const m::event::conforms report
+	{
+		event, non_conforms.report
+	};
+
+	if(!report.clean())
+		throw m::error
+		{
+			http::NOT_MODIFIED, "M_INVALID_EVENT",
+			"Proffered event has the following problems: %s",
+			string(report)
+		};
+
+	// May conduct disk IO to check ACL
 	if(m::room::server_acl::enable_write)
 		if(!m::room::server_acl::check(room_id, request.node_id))
 			throw m::ACCESS_DENIED
@@ -133,7 +191,13 @@ put__invite(client &client,
 				"You are not permitted by the room's server access control list."
 			};
 
-	check_event(request, event);
+	// May conduct network IO to fetch node's key; disk IO to fetch node's key
+	if(!verify(event, request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"Invite event fails verification for %s",
+			string_view{request.node_id},
+		};
 
 	thread_local char sigs[4_KiB];
 	m::event signed_event
@@ -194,59 +258,4 @@ put__invite(client &client,
 	// note: returning a resource response is a symbolic/indicator action to
 	// the caller and has no real effect at the point of return.
 	return response;
-}
-
-void
-check_event(const resource::request &request,
-            const m::event &event)
-{
-	if(at<"type"_>(event) != "m.room.member")
-		throw m::error
-		{
-			http::NOT_MODIFIED, "M_INVALID_TYPE",
-			"event.type must be m.room.member"
-		};
-
-	if(unquote(at<"content"_>(event).at("membership")) != "invite")
-		throw m::error
-		{
-			http::NOT_MODIFIED, "M_INVALID_CONTENT_MEMBERSHIP",
-			"event.content.membership must be invite."
-		};
-
-	if(at<"origin"_>(event) != request.origin)
-		throw m::error
-		{
-			http::FORBIDDEN, "M_INVALID_ORIGIN",
-			"event.origin must be you."
-		};
-
-	if(!my_host(m::user::id(at<"state_key"_>(event)).host()))
-		throw m::error
-		{
-			http::FORBIDDEN, "M_INVALID_STATE_KEY",
-			"event.state_key must be my user."
-		};
-
-	m::event::conforms non_conforms;
-	non_conforms |= non_conforms.MISSING_PREV_STATE;
-	non_conforms |= non_conforms.INVALID_OR_MISSING_EVENT_ID;
-	const m::event::conforms report
-	{
-		event, non_conforms.report
-	};
-
-	if(!report.clean())
-		throw m::error
-		{
-			http::NOT_MODIFIED, "M_INVALID_EVENT",
-			"Proffered event has the following problems: %s",
-			string(report)
-		};
-
-	if(!verify(event, request.node_id))
-		throw m::ACCESS_DENIED
-		{
-			"Invite event fails verification for %s", request.node_id
-		};
 }
