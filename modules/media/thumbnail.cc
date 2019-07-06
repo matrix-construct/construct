@@ -17,6 +17,8 @@ namespace ircd::m::media::thumbnail
 	extern conf::item<size_t> width_max;
 	extern conf::item<size_t> height_min;
 	extern conf::item<size_t> height_max;
+	extern conf::item<std::string> mime_whitelist;
+	extern conf::item<std::string> mime_blacklist;
 }
 
 using namespace ircd::m::media::thumbnail; //TODO: XXX
@@ -54,6 +56,20 @@ ircd::m::media::thumbnail::height_max
 {
 	{ "name",     "ircd.m.media.thumbnail.height.max" },
 	{ "default",  1536L                               },
+};
+
+decltype(ircd::m::media::thumbnail::mime_whitelist)
+ircd::m::media::thumbnail::mime_whitelist
+{
+	{ "name",     "ircd.m.media.thumbnail.mime.whitelist" },
+	{ "default",  "image/jpeg image/png image/webp"       },
+};
+
+decltype(ircd::m::media::thumbnail::mime_blacklist)
+ircd::m::media::thumbnail::mime_blacklist
+{
+	{ "name",     "ircd.m.media.thumbnail.mime.blacklist" },
+	{ "default",  ""                                      },
 };
 
 resource
@@ -241,20 +257,59 @@ get__thumbnail_local(client &client,
 		mods::loaded("media_magick")
 	};
 
+	const auto mime_type
+	{
+		split(content_type, ';').first
+	};
+
+	const bool permitted
+	{
+		// If there's a blacklist, mime type must not in the blacklist.
+		(!mime_blacklist || !has(mime_blacklist, mime_type))
+
+		// If there's a whitelist, mime type must be in the whitelist.
+		&& (!mime_whitelist || has(mime_whitelist, mime_type))
+	};
+
+	const bool valid_args
+	{
+		// Both dimension parameters given in query string
+		(dimension.first && dimension.second)
+
+		// Known thumbnailing method in query string
+		&& (method == "scale" || method == "crop")
+	};
+
 	const bool fallback // Reasons to just send the original image
 	{
 		// Disabled by configuration
-		!enable ||
+		!enable
 
-		// Unknown thumbnailing method in query string
-		(method != "scale" && method != "crop") ||
-
-		// No dimension parameters given in query string
-		(!dimension.first || !dimension.second) ||
+		// Access denied for this operation
+		|| !permitted
 
 		// The thumbnailer is not loaded or available on this system.
-		!available
+		|| !available
+
+		//  Arguments invalid.
+		|| !valid_args
 	};
+
+	if(fallback && available && enable)
+		log::dwarning
+		{
+			"Not thumbnailing %s/%s [%s] '%s' bytes:%zu :%s",
+			hostname,
+			mediaid,
+			string_view{room.room_id},
+			content_type,
+			file_size,
+			!permitted?
+				"Not permitted":
+			!valid_args?
+				"Invalid arguments":
+				"Unknown reason",
+		};
 
 	if(fallback)
 		return resource::response
