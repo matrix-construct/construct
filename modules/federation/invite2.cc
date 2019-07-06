@@ -10,6 +10,11 @@
 
 using namespace ircd;
 
+static void
+process(client &,
+        const resource::request &,
+        const m::event &);
+
 static resource::response
 put__invite(client &client,
             const resource::request &request);
@@ -76,12 +81,7 @@ put__invite(client &client,
 		request.get("room_version", "1")
 	};
 
-	const json::array &invite_room_state
-	{
-		request["invite_room_version"]
-	};
-
-	m::event event
+	const m::event event
 	{
 		request["event"]
 	};
@@ -200,12 +200,12 @@ put__invite(client &client,
 		};
 
 	thread_local char sigs[4_KiB];
-	m::event signed_event
+	const m::event signed_event
 	{
 		signatures(sigs, event)
 	};
 
-	const json::strung revent
+	const json::strung signed_json
 	{
 		signed_event
 	};
@@ -220,13 +220,27 @@ put__invite(client &client,
 	// lose the invite but that may not be such a bad thing.
 	resource::response response
 	{
-		client, json::object{revent}
+		client, json::object{signed_json}
 	};
 
 	// Synapse needs time to process our response otherwise our eval below may
 	// complete before this response arrives for them and is processed.
 	ctx::sleep(milliseconds(*stream_cross_sleeptime));
 
+	// Post processing, does not throw.
+	process(client, request, signed_event);
+
+	// note: returning a resource response is a symbolic/indicator action to
+	// the caller and has no real effect at the point of return.
+	return response;
+}
+
+void
+process(client &client,
+        const resource::request &request,
+        const m::event &event)
+try
+{
 	// Eval the dual-signed invite event. This will write it locally. This will
 	// also try to sync the room as best as possible. The invitee will then be
 	// presented with this invite request in their rooms list.
@@ -244,7 +258,12 @@ put__invite(client &client,
 
 	m::vm::eval
 	{
-		signed_event, vmopts
+		event, vmopts
+	};
+
+	const json::array &invite_room_state
+	{
+		request["invite_room_state"]
 	};
 
 	if(!empty(invite_room_state))
@@ -254,8 +273,16 @@ put__invite(client &client,
 			invite_room_state, vmopts
 		};
 	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Processing invite from:%s to:%s :%s",
+		json::get<"sender"_>(event),
+		json::get<"state_key"_>(event),
+		e.what(),
+	};
 
-	// note: returning a resource response is a symbolic/indicator action to
-	// the caller and has no real effect at the point of return.
-	return response;
+	return;
 }
