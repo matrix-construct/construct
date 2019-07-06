@@ -81,7 +81,7 @@ put__invite(client &client,
 		request.get("room_version", "1")
 	};
 
-	const m::event event
+	m::event event
 	{
 		request["event"], event_id
 	};
@@ -91,7 +91,13 @@ put__invite(client &client,
 	{
 		case "1"_:
 		case "2"_:
-			check_id = at<"event_id"_>(event);
+			check_id = json::get<"event_id"_>(event)?
+				m::event::id{json::get<"event_id"_>(event)}:
+				event_id;
+
+			// put back the event_id that synapse stripped
+			json::get<"event_id"_>(event) = check_id;
+			assert(json::get<"event_id"_>(event) == check_id);
 			break;
 
 		case "3"_:
@@ -200,11 +206,12 @@ put__invite(client &client,
 		};
 
 	thread_local char sigs[4_KiB];
-	const m::event signed_event
+	m::event signed_event
 	{
 		signatures(sigs, event)
 	};
 
+	signed_event.event_id = event_id;
 	const json::strung signed_json
 	{
 		signed_event
@@ -220,7 +227,10 @@ put__invite(client &client,
 	// lose the invite but that may not be such a bad thing.
 	resource::response response
 	{
-		client, json::object{signed_json}
+		client, json::members
+		{
+			{ "event", json::object{signed_json} }
+		}
 	};
 
 	// Synapse needs time to process our response otherwise our eval below may
@@ -228,7 +238,7 @@ put__invite(client &client,
 	ctx::sleep(milliseconds(*stream_cross_sleeptime));
 
 	// Post processing, does not throw.
-	process(client, request, signed_event);
+	process(client, request, event);
 
 	// note: returning a resource response is a symbolic/indicator action to
 	// the caller and has no real effect at the point of return.
@@ -251,27 +261,12 @@ try
 	vmopts.fetch_prev_check = false;
 	vmopts.fetch_prev = false;
 
-	// We don't want this eval throwing an exception because the response has
-	// already been made for this request.
-	const unwind::nominal::assertion na;
-	vmopts.nothrows = -1;
+	vmopts.non_conform |= m::event::conforms::INVALID_OR_MISSING_EVENT_ID;
+	vmopts.nothrows |= m::vm::fault::EXISTS;
 
 	m::vm::eval
 	{
 		event, vmopts
-	};
-
-	const json::array &invite_room_state
-	{
-		request["invite_room_state"]
-	};
-
-	if(!empty(invite_room_state))
-	{
-		m::vm::eval
-		{
-			invite_room_state, vmopts
-		};
 	};
 }
 catch(const std::exception &e)
