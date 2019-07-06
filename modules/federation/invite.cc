@@ -55,7 +55,7 @@ conf::item<milliseconds>
 stream_cross_sleeptime
 {
 	{ "name",    "ircd.federation.invite.stream_cross_sleeptime" },
-	{ "default", 3000L                                           },
+	{ "default", 5000L                                           },
 };
 
 resource::response
