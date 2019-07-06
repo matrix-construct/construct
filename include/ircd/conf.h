@@ -168,6 +168,16 @@ struct ircd::conf::item<std::string>
 		return _value;
 	}
 
+	explicit operator bool() const
+	{
+		return !empty(_value);
+	}
+
+	bool operator!() const
+	{
+		return !static_cast<bool>(*this);
+	}
+
 	operator string_view() const
 	{
 		return _value;
