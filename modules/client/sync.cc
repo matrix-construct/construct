@@ -732,8 +732,7 @@ try
 
 		const unwind pop{[]
 		{
-			if(longpoll::polling <= 1)
-				queue.pop_front();
+			queue.pop_front();
 		}};
 
 		if(polylog_only)
