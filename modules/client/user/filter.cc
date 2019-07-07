@@ -147,7 +147,7 @@ ircd::m::user::filter::set(const mutable_buffer &idbuf,
 
 	const string_view filter_id
 	{
-		b64encode_unpadded(idbuf, hash)
+		b64tob64url(idbuf, b64encode_unpadded(idbuf, hash))
 	};
 
 	//TODO: ABA
