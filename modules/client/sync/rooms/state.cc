@@ -12,6 +12,7 @@ namespace ircd::m::sync
 {
 	static void room_state_append(data &, json::stack::array &, const m::event &, const m::event::idx &);
 
+	static bool room_state_phased_member_events(data &, json::stack::array &);
 	static bool room_state_phased_events(data &);
 	static bool room_state_polylog_events(data &);
 	static bool _room_state_polylog(data &);
@@ -297,6 +298,53 @@ ircd::m::sync::room_state_phased_events(data &data)
 	{
 		room_state_append(data, array, event, index(event));
 	});
+
+	ret |= room_state_phased_member_events(data, array);
+	return ret;
+}
+
+bool
+ircd::m::sync::room_state_phased_member_events(data &data,
+                                               json::stack::array &array)
+{
+	static const auto count{10}, bufsz{48}, limit{10};
+	std::array<char[bufsz], count> buf;
+	std::array<string_view, count> last;
+	size_t i(0), ret(0);
+	m::room::messages it
+	{
+		*data.room
+	};
+
+	const auto already{[&last, &ret]
+	(const string_view &sender) -> bool
+	{
+		return std::any_of(begin(last), begin(last)+ret, [&sender]
+		(const auto &last)
+		{
+			return startswith(last, sender);
+		});
+	}};
+
+	m::event::fetch event;
+	for(; it && ret < count && i < limit; --it, ++i)
+	{
+		const auto &event_idx(it.event_idx());
+		m::get(std::nothrow, event_idx, "sender", [&]
+		(const auto &sender)
+		{
+			if(already(sender))
+				return;
+
+			last.at(ret) = strlcpy(buf.at(ret), sender);
+			++ret;
+
+			if(!seek(event, event_idx, std::nothrow))
+				return;
+
+			room_state_append(data, array, event, event_idx);
+		});
+	};
 
 	return ret;
 }
