@@ -67,9 +67,9 @@ ircd::m::client_versions::get(client &client,
 decltype(ircd::m::client_versions::versions)
 ircd::m::client_versions::versions
 {
-	{ "name",     "ircd.m.client.versions.versions" },
-	{ "default",  "r0.3.0 r0.4.0 r0.5.0"            },
-	{ "persist",  false                             },
+	{ "name",     "ircd.m.client.versions.versions"    },
+	{ "default",  "r0.1.0 r0.2.0 r0.3.0 r0.4.0 r0.5.0" },
+	{ "persist",  false                                },
 };
 
 void
