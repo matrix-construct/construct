@@ -1070,6 +1070,21 @@ catch(const std::bad_function_call &e)
 	return false;
 }
 
+size_t
+ircd::m::sync::item::children()
+const
+{
+	size_t ret(0);
+	sync::for_each(this->name(), [&ret]
+	(auto &item)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
 ircd::string_view
 ircd::m::sync::item::member_name()
 const
