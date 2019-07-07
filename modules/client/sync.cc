@@ -442,11 +442,32 @@ try
 				int64_t(data.range.second)
 		};
 
+		char buf[48];
+		const string_view &next_batch_token
+		{
+			// The polylog phased since token. We pack two numbers separted by a '_'
+			// character which cannot be urlencoded atm. The first is the usual
+			// since token integer, which is negative for phased initial sync. The
+			// second part is the next_batch upper-bound integer which is a snapshot
+			// of the server's sequence number when the phased sync started.
+			data.phased?
+				fmt::sprintf
+				{
+					buf, "%ld_%lu", next_batch, data.range.second
+				}:
+
+			// The normal integer since token.
+				fmt::sprintf
+				{
+					buf, "%ld", next_batch
+				}
+		};
+
 		json::stack::member
 		{
 			*data.out, "next_batch", json::value
 			{
-				lex_cast(next_batch), json::STRING
+				next_batch_token ,json::STRING
 			}
 		};
 	}

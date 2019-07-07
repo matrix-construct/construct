@@ -26,10 +26,15 @@ struct ircd::m::sync::args
 		request.query["filter"]
 	};
 
+	std::pair<string_view, string_view> since_token
+	{
+		split(request.query.get("since", "0"_sv), '_')
+	};
+
 	uint64_t since
 	{
 		// 6.2.1 A point in time to continue a sync from.
-		request.query.get<uint64_t>("since", 0)
+		lex_cast<uint64_t>(since_token.first)
 	};
 
 	uint64_t next_batch
@@ -41,7 +46,7 @@ struct ircd::m::sync::args
 		// time. But that would be nice. Many sync modules do not support this
 		// because the results of repeated calls for range may become empty
 		// after a while.
-		request.query.get<uint64_t>("next_batch", -1)
+		uint64_t(lex_cast<int64_t>(request.query.get("next_batch", since_token.second?: "-1"_sv)))
 	};
 
 	steady_point timesout{[this]
