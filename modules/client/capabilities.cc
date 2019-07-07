@@ -8,16 +8,22 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m::client_capabilities
+{
+	static resource::response get(client &, const resource::request &);
 
-mapi::header
+	extern resource::method method_get;
+	extern ircd::resource resource;
+}
+
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Client 6 :Capabilities Negotiation"
 };
 
-resource
-capabilities_resource
+decltype(ircd::m::client_capabilities::resource)
+ircd::m::client_capabilities::resource
 {
 	"/_matrix/client/r0/capabilities",
 	{
@@ -26,8 +32,19 @@ capabilities_resource
 	}
 };
 
-resource::response
-get__capabilities(client &client, const resource::request &request)
+decltype(ircd::m::client_capabilities::method_get)
+ircd::m::client_capabilities::method_get
+{
+	resource, "GET", get,
+	{
+		method_get.REQUIRES_AUTH
+		| method_get.RATE_LIMITED
+	}
+};
+
+ircd::resource::response
+ircd::m::client_capabilities::get(client &client,
+                                  const resource::request &request)
 {
 	const bool m_change_password__enabled
 	{
@@ -58,13 +75,3 @@ get__capabilities(client &client, const resource::request &request)
 		},
 	};
 }
-
-resource::method
-get_method
-{
-	capabilities_resource, "GET", get__capabilities,
-	{
-		get_method.REQUIRES_AUTH |
-		get_method.RATE_LIMITED
-	}
-};
