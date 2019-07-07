@@ -16,6 +16,9 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
+	static bool room_summary_append_counts(data &);
+	static bool room_summary_append_heroes(data &);
+
 	static bool room_summary_polylog(data &);
 	static bool room_summary_linear(data &);
 	extern item room_summary;
@@ -74,50 +77,103 @@ ircd::m::sync::room_summary_linear(data &data)
 		*data.out, "summary"
 	};
 
-	json::stack::member
-	{
-		*data.out, "m.joined_member_count", json::value
-		{
-			long(members.count("join"))
-		}
-	};
-
-	/*
-	json::stack::member
-	{
-		*data.out, "m.invited_member_count", json::value
-		{
-			long(members.count("invite"))
-		}
-	};
-	*/
-
-	return true;
+	bool ret{false};
+	ret |= room_summary_append_counts(data);
+	ret |= room_summary_append_heroes(data);
+	return ret;
 }
 
 bool
 ircd::m::sync::room_summary_polylog(data &data)
 {
-	const auto &room{*data.room};
-	const m::room::members members{room};
+	bool ret{false};
+	ret |= room_summary_append_counts(data);
+	ret |= room_summary_append_heroes(data);
+	return ret;
+}
+
+bool
+ircd::m::sync::room_summary_append_heroes(data &data)
+{
+	json::stack::array m_heroes
+	{
+		*data.out, "m.heroes"
+	};
+
+	static const auto count{6}, bufsz{48}, limit{12};
+	std::array<char[bufsz], count> buf;
+	std::array<string_view, count> last;
+	size_t ret(0), i(0);
+	m::room::messages it
+	{
+		*data.room
+	};
+
+	const auto already{[&last, &ret]
+	(const string_view &sender) -> bool
+	{
+		return std::any_of(begin(last), begin(last)+ret, [&sender]
+		(const auto &last)
+		{
+			return startswith(last, sender);
+		});
+	}};
+
+	for(; it && ret < count && i < limit; --it, ++i)
+	{
+		const auto &event_idx(it.event_idx());
+		m::get(std::nothrow, event_idx, "sender", [&]
+		(const auto &sender)
+		{
+			if(already(sender))
+				return;
+
+			m_heroes.append(sender);
+			last.at(ret) = strlcpy(buf.at(ret), sender);
+			++ret;
+		});
+	};
+
+	return ret;
+}
+
+bool
+ircd::m::sync::room_summary_append_counts(data &data)
+{
+	const m::room::members members
+	{
+		*data.room
+	};
+
+	const auto joined_members_count
+	{
+		members.count("join")
+	};
 
 	json::stack::member
 	{
 		*data.out, "m.joined_member_count", json::value
 		{
-			long(members.count("join"))
+			long(joined_members_count)
 		}
 	};
 
-	/*
-	json::stack::member
+	// TODO: XXX
+	// Invited member count is omitted for now. We don't yet enjoy an
+	// optimized query for the invited member count like we do with the
+	// joined member count.
+	const long invited_members_count
 	{
-		*data.out, "m.invited_member_count", json::value
-		{
-			long(members.count("invite"))
-		}
+		0UL
 	};
-	*/
 
-	return true;
+//	json::stack::member
+//	{
+//		*data.out, "m.invited_member_count", json::value
+//		{
+//			long(members.count("invite"))
+//		}
+//	};
+
+	return joined_members_count || invited_members_count;
 }
