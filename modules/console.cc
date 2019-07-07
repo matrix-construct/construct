@@ -5413,7 +5413,7 @@ console_cmd__client__sync(opt &out, const string_view &line)
 	{
 		const auto *const &client(data_p->client);
 		if(client)
-			out << client->loghead() << " < ";
+			out << client->loghead() << " | ";
 
 		out << m::sync::loghead(*data_p) << " | ";
 		out << std::endl;

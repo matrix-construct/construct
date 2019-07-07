@@ -816,12 +816,14 @@ ircd::m::sync::loghead(const data &data)
 
 	return fmt::sprintf
 	{
-		headbuf, "%s %s %ld:%lu|%lu chunk:%zu sent:%s of %s in %s",
+		headbuf, "%s %s %ld:%lu|%lu%s chunk:%zu sent:%s of %s in %s",
 		remstr,
 		string_view{data.user.user_id},
 		data.range.first,
 		data.range.second,
 		vm::sequence::retired,
+		data.phased?
+			"|P"_sv : ""_sv,
 		flush_count,
 		ircd::pretty(iecbuf[1], iec(flush_bytes)),
 		data.out?
