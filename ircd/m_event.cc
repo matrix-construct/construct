@@ -1672,7 +1672,7 @@ ircd::m::event_id(const event::idx &event_idx,
 		buf = eid;
 	});
 
-	return buf;
+	return buf? event::id{buf} : event::id{};
 }
 
 bool
