@@ -3219,12 +3219,10 @@ const
 	// putting them back when we're finished. This requires a const_cast which
 	// should be okay here.
 	auto &room(const_cast<m::room &>(this->room));
-	const auto theirs{room.fopts};
-	room.fopts = &fopts;
-	const unwind reset{[&room, &theirs]
+	const scope_restore theirs
 	{
-		room.fopts = theirs;
-	}};
+		room.fopts, &fopts
+	};
 
 	return for_each(membership, event::closure_bool{[&closure]
 	(const event &event)
