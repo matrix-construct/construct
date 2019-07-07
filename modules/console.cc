@@ -11605,14 +11605,14 @@ console_cmd__fed__head(opt &out, const string_view &line)
 	request.wait(out.timeout);
 	request.get();
 
-	const json::object proto
+	const json::object &proto
 	{
 		request.in.content
 	};
 
 	if(param["op"] == "raw")
 	{
-		out << proto << std::endl;
+		out << string_view{proto} << std::endl;
 		return true;
 	}
 
@@ -11936,6 +11936,12 @@ console_cmd__fed__state(opt &out, const string_view &line)
 		request
 	};
 
+	if(op == "raw")
+	{
+		out << string_view{response} << std::endl;
+		return true;
+	}
+
 	const json::array &auth_chain
 	{
 		response["auth_chain"]
@@ -12099,6 +12105,12 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	{
 		request
 	};
+
+	if(op == "raw")
+	{
+		out << string_view{response} << std::endl;
+		return true;
+	}
 
 	const json::array &pdus
 	{
