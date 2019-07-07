@@ -16,6 +16,8 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
+	extern conf::item<int64_t> receipt_scan_depth;
+
 	static bool _handle_message_receipt(data &, const m::event &);
 	static bool _handle_message(data &, const m::event::idx &);
 	static bool room_ephemeral_m_receipt_m_read_polylog(data &);
@@ -29,6 +31,13 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read
 	"rooms.ephemeral.m_receipt",
 	room_ephemeral_m_receipt_m_read_polylog,
 	room_ephemeral_m_receipt_m_read_linear
+};
+
+decltype(ircd::m::sync::receipt_scan_depth)
+ircd::m::sync::receipt_scan_depth
+{
+	{ "name",     "ircd.client.sync.rooms.ephemeral.receipt_scan_depth" },
+	{ "default",  10L                                                   },
 };
 
 bool
@@ -89,7 +98,7 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 
 	ssize_t i(0);
 	event::idx idx(0);
-	for(; it && i < 10; --it)
+	for(; it && i < receipt_scan_depth; --it)
 	{
 		if(apropos(data, it.event_idx()))
 		{
