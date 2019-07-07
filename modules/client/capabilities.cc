@@ -51,6 +51,11 @@ ircd::m::client_capabilities::get(client &client,
 		mods::loaded("client_account")
 	};
 
+	const json::value default_room_version
+	{
+		"1", json::STRING
+	};
+
 	return resource::response
 	{
 		client, json::members
@@ -63,12 +68,14 @@ ircd::m::client_capabilities::get(client &client,
 				}},
 				{ "m.room_version", json::members
 				{
-					{ "default", "1" },
+					{ "default", default_room_version },
 					{ "available", json::members
 					{
 						{ "1", "stable"    },
 						{ "2", "unstable"  },
 						{ "3", "unstable"  },
+						{ "4", "unstable"  },
+						{ "5", "unstable"  },
 					}},
 				}},
 			}},
