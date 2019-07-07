@@ -73,6 +73,7 @@ struct ircd::m::sync::item
 };
 
 struct ircd::m::sync::data
+:instance_list<ircd::m::sync::data>
 {
 	/// Range to synchronize. Starting index is inclusive, ending index is
 	/// exclusive. Generally the starting index is a since token, and ending

@@ -145,26 +145,6 @@ ircd::m::sync::args::timeout_default
 };
 
 //
-// args::args
-//
-
-ircd::m::sync::args::args(const resource::request &request)
-try
-:request
-{
-    request
-}
-{
-}
-catch(const bad_lex_cast &e)
-{
-    throw m::BAD_REQUEST
-    {
-        "Since parameter invalid :%s", e.what()
-    };
-}
-
-//
 // GET sync
 //
 
@@ -836,4 +816,24 @@ ircd::m::sync::longpoll::handle(data &data,
 	};
 
 	return true;
+}
+
+//
+// args::args
+//
+
+ircd::m::sync::args::args(const resource::request &request)
+try
+:request
+{
+    request
+}
+{
+}
+catch(const bad_lex_cast &e)
+{
+    throw m::BAD_REQUEST
+    {
+        "Since parameter invalid :%s", e.what()
+    };
 }

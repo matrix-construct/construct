@@ -5406,6 +5406,45 @@ console_cmd__client__spawn(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__client__sync(opt &out, const string_view &line)
+{
+	for(auto *const &data_p : m::sync::data::list)
+	{
+		const auto *const &client(data_p->client);
+		if(client)
+			out << client->loghead() << " < ";
+
+		out << m::sync::loghead(*data_p) << " | ";
+		out << std::endl;
+	}
+
+	return true;
+}
+
+bool
+console_cmd__client__sync__item(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"prefix"
+	}};
+
+	const auto prefix
+	{
+		param.at("prefix", ""_sv)
+	};
+
+	ircd::m::sync::for_each(prefix, [&out]
+	(const auto &item)
+	{
+		out << item.name() << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
 //
 // resource
 //

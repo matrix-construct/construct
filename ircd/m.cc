@@ -695,9 +695,21 @@ ircd::m::sync::stats_info
 };
 
 template<>
-decltype(ircd::m::sync::item::instance_multimap::map)
-ircd::m::sync::item::instance_multimap::map
+decltype(ircd::util::instance_multimap<std::string, ircd::m::sync::item, std::less<>>::map)
+ircd::util::instance_multimap<std::string, ircd::m::sync::item, std::less<>>::map
 {};
+
+template<>
+decltype(ircd::util::instance_list<ircd::m::sync::data>::allocator)
+ircd::util::instance_list<ircd::m::sync::data>::allocator
+{};
+
+template<>
+decltype(ircd::util::instance_list<ircd::m::sync::data>::list)
+ircd::util::instance_list<ircd::m::sync::data>::list
+{
+	allocator
+};
 
 bool
 ircd::m::sync::for_each(const item_closure_bool &closure)
@@ -817,67 +829,6 @@ ircd::m::sync::loghead(const data &data)
 			string_view{},
 		tmstr
 	};
-}
-
-//
-// data
-//
-
-ircd::m::sync::data::data
-(
-	const m::user &user,
-	const m::events::range &range,
-	ircd::client *const &client,
-	json::stack *const &out,
-	sync::stats *const &stats,
-	const string_view &filter_id
-)
-:range
-{
-	range
-}
-,stats
-{
-	stats
-}
-,client
-{
-	client
-}
-,user
-{
-	user
-}
-,user_room
-{
-	user
-}
-,user_state
-{
-	user_room
-}
-,user_rooms
-{
-	user
-}
-,filter_buf
-{
-	m::filter::get(filter_id, user)
-}
-,filter
-{
-	json::object{filter_buf}
-}
-,out
-{
-	out
-}
-{
-}
-
-ircd::m::sync::data::~data()
-noexcept
-{
 }
 
 //
@@ -1131,6 +1082,64 @@ ircd::m::sync::item::name()
 const
 {
 	return this->instance_multimap::it->first;
+}
+
+//
+// data
+//
+
+ircd::m::sync::data::data(const m::user &user,
+                          const m::events::range &range,
+                          ircd::client *const &client,
+                          json::stack *const &out,
+                          sync::stats *const &stats,
+                          const string_view &filter_id)
+:range
+{
+	range
+}
+,stats
+{
+	stats
+}
+,client
+{
+	client
+}
+,user
+{
+	user
+}
+,user_room
+{
+	user
+}
+,user_state
+{
+	user_room
+}
+,user_rooms
+{
+	user
+}
+,filter_buf
+{
+	m::filter::get(filter_id, user)
+}
+,filter
+{
+	json::object{filter_buf}
+}
+,out
+{
+	out
+}
+{
+}
+
+ircd::m::sync::data::~data()
+noexcept
+{
 }
 
 ///////////////////////////////////////////////////////////////////////////////
