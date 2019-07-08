@@ -46,6 +46,73 @@ user_create(const m::user::id &user_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/user/breadcrumb_rooms.h
+//
+
+ircd::m::event::id::buf
+ircd::m::user::breadcrumb_rooms::set(const json::array &rooms)
+const
+{
+	const json::strung object
+	{
+		json::members
+		{
+			{ "rooms", rooms }
+		}
+	};
+
+	return account_data.set("im.vector.riot.breadcrumb_rooms", object);
+}
+
+bool
+ircd::m::user::breadcrumb_rooms::for_each(const closure_bool &closure)
+const
+{
+	bool ret{true};
+	get(std::nothrow, [&closure, &ret]
+	(const json::array &rooms)
+	{
+		for(const json::string &room : rooms)
+			if(!closure(room))
+			{
+				ret = false;
+				break;
+			}
+	});
+
+	return ret;
+}
+
+void
+ircd::m::user::breadcrumb_rooms::get(const closure &closure)
+const
+{
+	if(!get(std::nothrow, closure))
+		throw m::NOT_FOUND
+		{
+			"User has no breadcrumb_rooms set in their account_data."
+		};
+}
+
+bool
+ircd::m::user::breadcrumb_rooms::get(std::nothrow_t,
+                                     const closure &closure)
+const
+{
+	return account_data.get(std::nothrow, "im.vector.riot.breadcrumb_rooms", [&closure]
+	(const string_view &key, const json::object &object)
+	{
+		const json::array &rooms
+		{
+			object["rooms"]
+		};
+
+		closure(rooms);
+	});
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/user/highlight.h
 //
 

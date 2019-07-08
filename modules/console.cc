@@ -10852,6 +10852,34 @@ console_cmd__user__ignores(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__breadcrumb_rooms(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const m::user::breadcrumb_rooms breadcrumb_rooms
+	{
+		user_id
+	};
+
+	breadcrumb_rooms.for_each([&out]
+	(const string_view &room_id)
+	{
+		out << room_id << std::endl;
+		return true;
+	});
+
+	return true;
+}
+
 //
 // users
 //

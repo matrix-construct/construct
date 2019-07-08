@@ -24,6 +24,7 @@ struct ircd::m::user
 	struct filter;
 	struct ignores;
 	struct highlight;
+	struct breadcrumb_rooms;
 
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;

@@ -34,3 +34,4 @@ namespace ircd::m
 #include "user/filter.h"
 #include "user/ignores.h"
 #include "user/highlight.h"
+#include "user/breadcrumb_rooms.h"
