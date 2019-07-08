@@ -97,6 +97,12 @@ get__context(client &client,
 			"You are not permitted to view the room at this event"
 		};
 
+	// Non-spec param to allow preventing any state from being returned.
+	const bool include_state
+	{
+		request.query.get("state", true)
+	};
+
 	// The standard ?filter= is parsed here. m::filter::get() handles
 	// whether this is a filter_id and conducts a fetch into this buffer;
 	// or inline JSON, and performs URL decoding into this buffer.
@@ -247,6 +253,7 @@ get__context(client &client,
 			ret, "end", json::value{end}
 		};
 
+	if(include_state)
 	{
 		json::stack::array array
 		{
