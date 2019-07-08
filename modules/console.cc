@@ -228,8 +228,109 @@ catch(const bad_command &e)
 }
 
 //
-// Help
+// Derived commands
 //
+
+int console_command_numeric(opt &, const string_view &line);
+bool console_id__user(opt &, const m::user::id &id, const string_view &line);
+bool console_id__room(opt &, const m::room::id &id, const string_view &line);
+bool console_id__event(opt &, const m::event::id &id, const string_view &line);
+bool console_id__device(opt &, const m::device::id &id, const string_view &line);
+bool console_json(const json::object &);
+
+int
+console_command_derived(opt &out, const string_view &line)
+{
+	const string_view id
+	{
+		token(line, ' ', 0)
+	};
+
+	// First check if the line starts with a number, this is a special case
+	// sent to a custom dispatcher (which right now is specifically for the
+	// event stager suite).
+	if(try_lex_cast<int>(id))
+		return console_command_numeric(out, line);
+
+	if(m::has_sigil(id)) switch(m::sigil(id))
+	{
+		case m::id::EVENT:
+			return console_id__event(out, id, line);
+
+		case m::id::ROOM:
+			return console_id__room(out, id, line);
+
+		case m::id::USER:
+			return console_id__user(out, id, line);
+
+		case m::id::DEVICE:
+			return console_id__device(out, id, line);
+
+		case m::id::ROOM_ALIAS:
+		{
+			const auto room_id{m::room_id(id)};
+			return console_id__room(out, room_id, line);
+		}
+
+		default:
+			break;
+	}
+
+	return -1;
+}
+
+//
+// Command by JSON
+//
+
+bool
+console_json(const json::object &object)
+{
+	if(!object.has("type"))
+		return true;
+
+	//return console_cmd__exec__event(object);
+	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Console commands
+//
+// Function names take the format of `console_cmd__%s` where the command
+// starts at %s. The handler that matches the beginning of the command is
+// called. To match spaces, a `__` double-underscore is used in the function
+// name.
+//
+// The remainder of the command after the match becomes the `line` arg
+// to the handler.
+//
+// The `opt &out` argument is an arbitrary state structure for general use and
+// also serves as an output stream for the response of a command. Note that the
+// output of a command may be a tty or the event content in a local matrix room.
+//
+
+// Time cmd prefix (like /usr/bin/time)
+
+bool
+console_cmd__time(opt &out, const string_view &line)
+{
+	ircd::timer timer;
+
+	const auto ret
+	{
+		_console_command(out, line)
+	};
+
+	thread_local char buf[32];
+	out << std::endl
+	    << pretty(buf, timer.at<microseconds>())
+	    << std::endl;
+
+	return ret;
+}
+
+// Help
 
 bool
 console_cmd__help(opt &out, const string_view &line)
@@ -306,13 +407,19 @@ console_cmd__help(opt &out, const string_view &line)
 }
 
 //
-// Test trigger stub
+// util 
 //
+
+bool
+console_cmd__exit(opt &out, const string_view &line)
+{
+	return false;
+}
 
 bool
 console_cmd__test(opt &out, const string_view &line)
 {
-	ircd::test();
+	ircd::test(); // Test trigger stub
 	return true;
 }
 
@@ -321,108 +428,6 @@ console_cmd__stringify(opt &out, const string_view &line)
 {
 	out << json::value{line} << std::endl;
 	return true;
-}
-
-//
-// Time cmd prefix (like /usr/bin/time)
-//
-
-bool
-console_cmd__time(opt &out, const string_view &line)
-{
-	ircd::timer timer;
-
-	const auto ret
-	{
-		_console_command(out, line)
-	};
-
-	thread_local char buf[32];
-	out << std::endl
-	    << pretty(buf, timer.at<microseconds>())
-	    << std::endl;
-
-	return ret;
-}
-
-//
-// Derived commands
-//
-
-int console_command_numeric(opt &, const string_view &line);
-bool console_id__user(opt &, const m::user::id &id, const string_view &line);
-bool console_id__room(opt &, const m::room::id &id, const string_view &line);
-bool console_id__event(opt &, const m::event::id &id, const string_view &line);
-bool console_id__device(opt &, const m::device::id &id, const string_view &line);
-bool console_json(const json::object &);
-
-int
-console_command_derived(opt &out, const string_view &line)
-{
-	const string_view id
-	{
-		token(line, ' ', 0)
-	};
-
-	// First check if the line starts with a number, this is a special case
-	// sent to a custom dispatcher (which right now is specifically for the
-	// event stager suite).
-	if(try_lex_cast<int>(id))
-		return console_command_numeric(out, line);
-
-	if(m::has_sigil(id)) switch(m::sigil(id))
-	{
-		case m::id::EVENT:
-			return console_id__event(out, id, line);
-
-		case m::id::ROOM:
-			return console_id__room(out, id, line);
-
-		case m::id::USER:
-			return console_id__user(out, id, line);
-
-		case m::id::DEVICE:
-			return console_id__device(out, id, line);
-
-		case m::id::ROOM_ALIAS:
-		{
-			const auto room_id{m::room_id(id)};
-			return console_id__room(out, room_id, line);
-		}
-
-		default:
-			break;
-	}
-
-	return -1;
-}
-
-//
-// Command by JSON
-//
-
-bool
-console_json(const json::object &object)
-{
-	if(!object.has("type"))
-		return true;
-
-	//return console_cmd__exec__event(object);
-	return true;
-}
-
-//
-// Command by ID
-//
-
-//
-// misc
-//
-
-bool
-console_cmd__exit(opt &out, const string_view &line)
-{
-	return false;
 }
 
 bool
