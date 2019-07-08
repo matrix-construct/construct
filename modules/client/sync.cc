@@ -71,14 +71,14 @@ decltype(ircd::m::sync::flush_hiwat)
 ircd::m::sync::flush_hiwat
 {
 	{ "name",     "ircd.client.sync.flush.hiwat" },
-	{ "default",  long(48_KiB)                   },
+	{ "default",  long(256_KiB)                  },
 };
 
 decltype(ircd::m::sync::buffer_size)
 ircd::m::sync::buffer_size
 {
 	{ "name",     "ircd.client.sync.buffer_size" },
-	{ "default",  long(128_KiB)                  },
+	{ "default",  long(512_KiB)                  },
 	{ "help",     "Response chunk buffer size"   },
 };
 
