@@ -968,7 +968,7 @@ ircd::json::stack::object::object(stack &s)
 
 	assert(s.clean());
 	s.co = this;
-	s.append("{"_sv);
+	s.append('{');
 }
 
 ircd::json::stack::object::object(stack &s,
@@ -989,7 +989,7 @@ ircd::json::stack::object::object(object &po,
 	assert(pm->co == nullptr);
 	assert(pm->ca == nullptr);
 	pm->co = this;
-	s->append("{"_sv);
+	s->append('{');
 	pm->vc |= true;
 }
 
@@ -1003,7 +1003,7 @@ ircd::json::stack::object::object(member &pm)
 	assert(pm.co == nullptr);
 	assert(pm.ca == nullptr);
 	pm.co = this;
-	s->append("{"_sv);
+	s->append('{');
 	pm.vc |= true;
 }
 
@@ -1019,9 +1019,9 @@ ircd::json::stack::object::object(array &pa)
 	pa.co = this;
 
 	if(pa.vc)
-		s->append(","_sv);
+		s->append(',');
 
-	s->append("{"_sv);
+	s->append('{');
 }
 
 void
@@ -1047,7 +1047,7 @@ noexcept
 	}};
 
 	assert(cm == nullptr);
-	s->append("}"_sv);
+	s->append('}');
 
 	if(pm) // branch taken if member of object
 	{
@@ -1178,7 +1178,7 @@ ircd::json::stack::array::array(stack &s)
 
 	assert(s.clean());
 	s.ca = this;
-	s.append("["_sv);
+	s.append('[');
 }
 
 ircd::json::stack::array::array(stack &s,
@@ -1199,7 +1199,7 @@ ircd::json::stack::array::array(object &po,
 	assert(pm->co == nullptr);
 	assert(pm->ca == nullptr);
 	pm->ca = this;
-	s->append("["_sv);
+	s->append('[');
 	pm->vc |= true;
 }
 
@@ -1215,9 +1215,9 @@ ircd::json::stack::array::array(array &pa)
 	pa.ca = this;
 
 	if(pa.vc)
-		s->append(","_sv);
+		s->append(',');
 
-	s->append("["_sv);
+	s->append('[');
 }
 
 ircd::json::stack::array::array(member &pm)
@@ -1230,7 +1230,7 @@ ircd::json::stack::array::array(member &pm)
 	assert(pm.co == nullptr);
 	assert(pm.ca == nullptr);
 	pm.ca = this;
-	s->append("["_sv);
+	s->append('[');
 	pm.vc |= true;
 }
 
@@ -1248,7 +1248,7 @@ noexcept
 
 	assert(co == nullptr);
 	assert(ca == nullptr);
-	s->append("]"_sv);
+	s->append(']');
 
 	if(pm) // branch taken if member of object
 	{
@@ -1298,7 +1298,7 @@ void
 ircd::json::stack::array::_pre_append()
 {
 	if(vc)
-		s->append(","_sv);
+		s->append(',');
 
 	s->rethrow_exception();
 }
@@ -1398,7 +1398,7 @@ ircd::json::stack::member::member(object &po,
 	po.cm = this;
 
 	if(po.mc)
-		s->append(","_sv);
+		s->append(',');
 
 	thread_local char tmp[2048];
 	static const json::printer::rule<string_view> rule
