@@ -568,7 +568,7 @@ github_handle__pull_request(std::ostream &out,
 	if(pr["merged"] == "false") switch(hash(pr["mergeable"]))
 	{
 		default:
-		case hash("null"):
+		case "null"_:
 			out << " / "
 			    << "<font color=\"#000000\""
 			    << "data-mx-bg-color=\"#EEBB00\">"
@@ -581,7 +581,7 @@ github_handle__pull_request(std::ostream &out,
 			    ;
 			break;
 
-		case hash("true"):
+		case "true"_:
 			out << " / "
 			    << "<font color=\"#FFFFFF\""
 			    << "data-mx-bg-color=\"#03B381\">"
@@ -594,7 +594,7 @@ github_handle__pull_request(std::ostream &out,
 			    ;
 			break;
 
-		case hash("false"):
+		case "false"_:
 			out << " / "
 			    << "<font color=\"#FFFFFF\""
 			    << "data-mx-bg-color=\"#CC0000\">"
