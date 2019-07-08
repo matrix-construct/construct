@@ -1364,12 +1364,8 @@ ircd::m::seek(event::fetch &fetch,
               const event::id &event_id,
               std::nothrow_t)
 {
-	if(fetch.event_id_buf != event_id)
-		fetch.event_id_buf = event_id;
-
-	fetch.event_id = fetch.event_id_buf;
 	fetch.event_idx = event_idx;
-
+	fetch.event_id_buf = event_id;
 	const string_view &key
 	{
 		byte_view<string_view>(event_idx)
@@ -1411,9 +1407,14 @@ ircd::m::event::fetch::fetch(const event::id &event_id,
                              const opts &opts)
 :fetch
 {
-	index(event_id), opts
+	index(event_id), event_id, std::nothrow, opts
 }
 {
+	if(!valid)
+		throw m::NOT_FOUND
+		{
+			"%s not found in database", string_view{event_id}
+		};
 }
 
 /// Seek to event_id and populate this event from database.
@@ -1423,7 +1424,7 @@ ircd::m::event::fetch::fetch(const event::id &event_id,
                              const opts &opts)
 :fetch
 {
-	index(event_id, std::nothrow), std::nothrow, opts
+	index(event_id, std::nothrow), event_id, std::nothrow, opts
 }
 {
 }
@@ -1444,9 +1445,20 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 		};
 }
 
+ircd::m::event::fetch::fetch(const event::idx &event_idx,
+                             std::nothrow_t,
+                             const opts &opts)
+:fetch
+{
+	event_idx, m::event::id{}, std::nothrow, opts
+}
+{
+}
+
 /// Seek to event_idx and populate this event from database.
 /// Event is not populated if not found in database.
 ircd::m::event::fetch::fetch(const event::idx &event_idx,
+                             const event::id &event_id,
                              std::nothrow_t,
                              const opts &opts)
 :fopts
@@ -1479,11 +1491,21 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
 }
 ,valid
 {
-	event_idx && _json.valid(key(&event_idx))?
-		assign_from_json(key(&event_idx)):
-		assign_from_row(key(&event_idx))
+	false
+}
+,event_id_buf
+{
+	event_id?
+		event::id::buf{event_id}:
+		event::id::buf{}
 }
 {
+	valid =
+		event_idx && _json.valid(key(&event_idx))?
+			assign_from_json(key(&event_idx)):
+		event_idx?
+			assign_from_row(key(&event_idx)):
+			false;
 }
 
 /// Seekless constructor.
@@ -1529,26 +1551,30 @@ ircd::m::event::fetch::assign_from_json(const string_view &key)
 		_json.val()
 	};
 
+	assert(!empty(source));
 	const bool source_event_id
 	{
-		!event_id_buf && source.has("event_id")
+		!event_id_buf || source.has("event_id")
+	};
+
+	const auto event_id
+	{
+		source_event_id?
+			id(unquote(source.at("event_id"))):
+		event_id_buf?
+			id(event_id_buf):
+			m::event_id(event_idx, event_id_buf, std::nothrow)
 	};
 
 	assert(fopts);
+	assert(event_id);
 	event =
 	{
-		source,
-		source_event_id?
-			id(unquote(source.at("event_id"))):
-			m::event_id(event_idx, event_id_buf, std::nothrow),
-		event::keys{fopts->keys}
+		source, event_id, event::keys{fopts->keys}
 	};
 
-	assert(!empty(source));
 	assert(data(event.source) == data(source));
-	if(unlikely(!event.event_id))
-		return false;
-
+	assert(event.event_id == event_id);
 	return true;
 }
 
@@ -1563,15 +1589,19 @@ ircd::m::event::fetch::assign_from_row(const string_view &key)
 	if(!row.valid(key))
 		return false;
 
-	assign(event, row, key);
 	event.source = {};
-	event.event_id = !event_id_buf && defined(json::get<"event_id"_>(*this))?
-		id{json::get<"event_id"_>(*this)}:
-		m::event_id(event_idx, event_id_buf, std::nothrow);
+	assign(event, row, key);
+	const auto event_id
+	{
+		defined(json::get<"event_id"_>(*this))?
+			id{json::get<"event_id"_>(*this)}:
+		event_id_buf?
+			id{event_id_buf}:
+			m::event_id(event_idx, event_id_buf, std::nothrow)
+	};
 
-	if(unlikely(!event.event_id))
-		return false;
-
+	assert(event_id);
+	event.event_id = event_id;
 	return true;
 }
 

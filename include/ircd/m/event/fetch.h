@@ -53,6 +53,7 @@ struct ircd::m::event::fetch
 	bool assign_from_json(const string_view &key);
 
   public:
+	explicit fetch(const idx &, const id &, std::nothrow_t, const opts & = default_opts);
 	fetch(const idx &, std::nothrow_t, const opts & = default_opts);
 	fetch(const id &, std::nothrow_t, const opts & = default_opts);
 	fetch(const id &, const opts & = default_opts);
