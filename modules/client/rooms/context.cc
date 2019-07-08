@@ -97,6 +97,19 @@ get__context(client &client,
 			"You are not permitted to view the room at this event"
 		};
 
+	// The standard ?filter= is parsed here. m::filter::get() handles
+	// whether this is a filter_id and conducts a fetch into this buffer;
+	// or inline JSON, and performs URL decoding into this buffer.
+	const std::string filter_json
+	{
+		m::filter::get(request.query["filter"], request.user_id)
+	};
+
+	const m::room_event_filter filter
+	{
+		filter_json
+	};
+
 	const m::event::fetch event
 	{
 		event_id
@@ -245,22 +258,37 @@ get__context(client &client,
 			room, &default_fetch_opts
 		};
 
-		state.for_each([&array, &request, &user_room, &room_depth, &counts]
-		(const m::event::idx &event_idx)
+		// Setup the event::fetch instance outside of the closure to avoid
+		// underlying reconstruction costs for now.
+		m::event::fetch event;
+
+		// Iterate the state.
+		state.for_each([&]
+		(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
 		{
-			const m::event::fetch event
+			// Conditions to decide if we should skip this state event based
+			// on the lazy-loading spec.
+			const bool lazy_loaded
 			{
-				event_idx, std::nothrow
+				// The user supplied a filter enabling lazy-loading.
+				json::get<"lazy_load_members"_>(filter) &&
+
+				// The type of this state event is a m.room.member type
+				type == "m.room.member"
 			};
 
-			if(!event.valid)
-				return;
+			if(lazy_loaded)
+				return true;
+
+			if(!seek(event, event_idx, std::nothrow))
+				return true;
 
 			if(!visible(event, request.user_id))
-				return;
+				return true;
 
 			_append(array, event, event_idx, user_room, room_depth, false);
 			++counts.state;
+			return true;
 		});
 	}
 
