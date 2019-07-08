@@ -306,7 +306,7 @@ ircd::m::sync::handle_get(client &client,
 	const bool complete
 	{
 		should_longpoll?
-			longpoll::poll(data, args):
+			longpoll_handle(data):
 		should_linear?
 			linear_handle(data):
 			polylog_handle(data)
@@ -712,6 +712,19 @@ ircd::m::sync::linear_proffer_event_one(data &data)
 // longpoll
 //
 
+namespace ircd::m::sync::longpoll
+{
+	static bool polled(data &, const args &);
+	static int poll(data &);
+	static void handle_notify(const m::event &, m::vm::eval &);
+
+	extern m::hookfn<m::vm::eval &> notified;
+	extern ctx::dock dock;
+}
+
+decltype(ircd::m::sync::longpoll::dock)
+ircd::m::sync::longpoll::dock;
+
 decltype(ircd::m::sync::longpoll::notified)
 ircd::m::sync::longpoll::notified
 {
@@ -729,58 +742,16 @@ ircd::m::sync::longpoll::handle_notify(const m::event &event,
 	if(!eval.opts->notify_clients)
 		return;
 
-	if(!polling)
-	{
-		queue.clear();
-		return;
-	}
-
-	queue.emplace_back(eval);
 	dock.notify_all();
 }
 
 bool
-ircd::m::sync::longpoll::poll(data &data,
-                              const args &args)
+ircd::m::sync::longpoll_handle(data &data)
 try
 {
-	const unique_buffer<mutable_buffer> scratch
-	{
-		96_KiB
-	};
-
-	const scope_count polling{longpoll::polling}; do
-	{
-		if(!dock.wait_until(args.timesout))
-			break;
-
-		assert(data.client && data.client->sock);
-		if(unlikely(!data.client || !data.client->sock))
-			break;
-
-		check(*data.client->sock);
-		if(queue.empty())
-			continue;
-
-		const auto &accepted
-		{
-			queue.front()
-		};
-
-		const unwind pop{[]
-		{
-			queue.pop_front();
-		}};
-
-		if(polylog_only)
-			break;
-
-		if(handle(data, args, accepted, scratch))
-			return true;
-	}
-	while(1);
-
-	return false;
+	int ret;
+	for(ret = -1; ret == -1; ret = longpoll::poll(data));
+	return ret;
 }
 catch(const std::system_error &e)
 {
@@ -805,12 +776,53 @@ catch(const std::exception &e)
 	throw;
 }
 
-bool
-ircd::m::sync::longpoll::handle(data &data,
-                                const args &args,
-                                const accepted &event,
-                                const mutable_buffer &scratch)
+int
+ircd::m::sync::longpoll::poll(data &data)
 {
+
+	assert(data.args);
+	if(!dock.wait_until(data.args->timesout))
+		return false;
+
+	// Check if client went away while we were sleeping,
+	// if so, just returning true is the easiest way out w/o throwing
+	assert(data.client && data.client->sock);
+	if(unlikely(!data.client || !data.client->sock))
+		return true;
+
+	// slightly more involved check of the socket before
+	// we waste resources on the operation; throws.
+	check(*data.client->sock);
+
+	// Keep in mind if the handler returns true that means
+	// it made a hit and we can return true to exit longpoll
+	// and end the request cleanly.
+	if(polled(data, *data.args))
+		return true;
+
+	// When the client explicitly gives a next_batch token we have to
+	// adhere to it and return an empty response before going past.
+	if(data.args->next_batch_token && m::vm::sequence::retired >= data.range.second)
+		return false;
+
+	if(data.range.second <= m::vm::sequence::retired)
+		++data.range.second;
+
+	return -1;
+}
+
+bool
+ircd::m::sync::longpoll::polled(data &data,
+                                const args &args)
+{
+	const m::event::fetch event
+	{
+		data.range.second, std::nothrow
+	};
+
+	if(!event.valid)
+		return false;
+
 	const scope_restore their_event
 	{
 		data.event, &event
@@ -821,9 +833,9 @@ ircd::m::sync::longpoll::handle(data &data,
 		data.event_idx, event.event_idx
 	};
 
-	const scope_restore client_txnid
+	const unique_buffer<mutable_buffer> scratch
 	{
-		data.client_txnid, event.client_txnid
+		96_KiB
 	};
 
 	const size_t consumed
@@ -866,9 +878,10 @@ ircd::m::sync::longpoll::handle(data &data,
 
 	log::debug
 	{
-		log, "request %s longpoll hit:%lu complete @%lu",
+		log, "request %s longpoll hit:%lu consumed:%zu complete @%lu",
 		loghead(data),
 		event.event_idx,
+		consumed,
 		next
 	};
 

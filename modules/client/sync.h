@@ -31,8 +31,8 @@ namespace ircd::m::sync
 	static void empty_response(data &, const uint64_t &next_batch);
 	static bool linear_handle(data &);
 	static bool polylog_handle(data &);
+	static bool longpoll_handle(data &);
 	static resource::response handle_get(client &, const resource::request &);
 }
 
-#include "sync/longpoll.h"
 #include "sync/args.h"
