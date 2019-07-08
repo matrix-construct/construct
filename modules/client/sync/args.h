@@ -28,6 +28,10 @@ struct ircd::m::sync::args
 
 	std::pair<string_view, string_view> since_token
 	{
+		// parse the since token string; this may be two numbers separated by '_'
+		// or it may be one number, or none. defaults to '0' for initial_sync.
+		// The second number is used as a next_batch value cookie we gave to
+		// the client (used during phased polylog sync)
 		split(request.query.get("since", "0"_sv), '_')
 	};
 
@@ -37,6 +41,21 @@ struct ircd::m::sync::args
 		lex_cast<uint64_t>(since_token.first)
 	};
 
+	// This is the raw (non-spec) next_batch token which can be supplied by
+	// the client as an upper-bound on the window of this sync operation.
+	// If this is non-empty, the value takes precedence and will be strictly
+	// adhered to. Otherwise, the next_batch below may be computed by the
+	// server and may be violated on longpolls.
+	string_view next_batch_token
+	{
+		request.query.get("next_batch", since_token.second)
+	};
+
+	// This is named the same as the next_batch response value passed to the
+	// client at the conclusion of the sync operation because it will literally
+	// pass through this value. The next sync operation will then start at this
+	// value. This token is an event_idx, like the since token. Note it may point
+	// to an event that does not yet exist past-the-end.
 	uint64_t next_batch
 	{
 		// [experimental] A upper bound to stop this sync at. This is used in
@@ -46,7 +65,7 @@ struct ircd::m::sync::args
 		// time. But that would be nice. Many sync modules do not support this
 		// because the results of repeated calls for range may become empty
 		// after a while.
-		uint64_t(lex_cast<int64_t>(request.query.get("next_batch", since_token.second?: "-1"_sv)))
+		uint64_t(lex_cast<int64_t>(next_batch_token?: "-1"_sv))
 	};
 
 	steady_point timesout{[this]
