@@ -875,9 +875,7 @@ try
 		std::make_shared<mod>(std::move(path), flags)
 	};
 
-	assert(ret);
-	assert(ret->header);
-	assert(ret->header->meta);
+	assert(ret != nullptr && ret->header && ret->header->meta);
 	if(!ret || !ret->header)
 		throw panic
 		{
