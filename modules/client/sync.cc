@@ -876,6 +876,70 @@ ircd::m::sync::longpoll::handle(data &data,
 }
 
 //
+// data
+//
+
+ircd::m::sync::data::data(const m::user &user,
+                          const m::events::range &range,
+                          ircd::client *const &client,
+                          json::stack *const &out,
+                          sync::stats *const &stats,
+                          const sync::args *const &args)
+:range
+{
+    range
+}
+,stats
+{
+    stats
+}
+,client
+{
+    client
+}
+,args
+{
+    args
+}
+,user
+{
+    user
+}
+,user_room
+{
+    user
+}
+,user_state
+{
+    user_room
+}
+,user_rooms
+{
+    user
+}
+,filter_buf
+{
+    this->args?
+        m::filter::get(this->args->filter_id, user):
+        std::string{}
+}
+,filter
+{
+    json::object{filter_buf}
+}
+,out
+{
+    out
+}
+{
+}
+
+ircd::m::sync::data::~data()
+noexcept
+{
+}
+
+//
 // args::args
 //
 
