@@ -149,8 +149,8 @@ ircd::m::sync::room_state_linear_events(data &data)
 	const auto &state_member_name
 	{
 		data.membership == "invite"?
-			"invite_state"_sv: // "invite_state"_sv:
-			"state"_sv
+			"invite_state": // "invite_state"_sv:
+			"state"
 	};
 
 	json::stack::object state
