@@ -46,6 +46,7 @@ namespace ircd::m
 #include "self.h"
 #include "id.h"
 #include "event/event.h"
+#include "get.h"
 #include "query.h"
 #include "dbs/dbs.h"
 #include "vm.h"

@@ -152,7 +152,6 @@ struct ircd::m::event
 #include "index.h"
 #include "event_id.h"
 #include "fetch.h"
-#include "get.h"
 #include "cached.h"
 #include "prefetch.h"
 #include "conforms.h"
