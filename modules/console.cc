@@ -514,6 +514,18 @@ console_cmd__die__hard(opt &out, const string_view &line)
 	__builtin_unreachable();
 }
 
+bool
+console_cmd__sync(opt &out, const string_view &line)
+{
+	for(const auto &db : db::database::list)
+	{
+		sync(*db);
+		out << "synchronized " << name(*db) << '.' << std::endl;
+	}
+
+	return true;
+}
+
 //
 // log
 //
