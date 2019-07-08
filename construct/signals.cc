@@ -157,6 +157,12 @@ void
 construct::handle_interrupt()
 try
 {
+	if(ircd::run::level != ircd::run::level::RUN)
+	{
+		ircd::quit();
+		return;
+	}
+
 	if(!console::active())
 		console::spawn();
 	else
