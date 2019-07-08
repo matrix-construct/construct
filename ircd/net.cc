@@ -2697,6 +2697,12 @@ decltype(ircd::net::socket::instances)
 ircd::net::socket::instances
 {};
 
+decltype(ircd::net::socket::in_total)
+ircd::net::socket::in_total;
+
+decltype(ircd::net::socket::out_total)
+ircd::net::socket::out_total;
+
 //
 // socket
 //
@@ -3185,8 +3191,10 @@ try
 			boost::asio::error::eof, boost::asio::error::get_misc_category()
 		};
 
-	in.bytes += ret;
 	++in.calls;
+	in.bytes += ret;
+	++in_total.calls;
+	in_total.bytes += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
@@ -3221,8 +3229,10 @@ try
 			asio::error::eof, asio::error::get_misc_category()
 		};
 
-	in.bytes += ret;
 	++in.calls;
+	in.bytes += ret;
+	++in_total.calls;
+	in_total.bytes += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
@@ -3247,8 +3257,10 @@ ircd::net::socket::read_any(iov&& bufs)
 		asio::read(ssl, std::forward<iov>(bufs), completion, ec)
 	};
 
-	in.bytes += ret;
 	++in.calls;
+	in.bytes += ret;
+	++in_total.calls;
+	in_total.bytes += ret;
 
 	if(likely(!ec))
 		return ret;
@@ -3273,8 +3285,10 @@ ircd::net::socket::read_one(iov&& bufs)
 		ssl.read_some(std::forward<iov>(bufs), ec)
 	};
 
-	in.bytes += ret;
 	++in.calls;
+	in.bytes += ret;
+	++in_total.calls;
+	in_total.bytes += ret;
 
 	if(likely(!ec))
 		return ret;
@@ -3312,8 +3326,10 @@ try
 		}
 	};
 
-	out.bytes += ret;
 	++out.calls;
+	out.bytes += ret;
+	++out_total.calls;
+	out_total.bytes += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
@@ -3342,8 +3358,10 @@ try
 		}
 	};
 
-	out.bytes += ret;
 	++out.calls;
+	out.bytes += ret;
+	++out_total.calls;
+	out_total.bytes += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
@@ -3368,8 +3386,10 @@ try
 		asio::write(ssl, std::forward<iov>(bufs), completion)
 	};
 
-	out.bytes += ret;
 	++out.calls;
+	out.bytes += ret;
+	++out_total.calls;
+	out_total.bytes += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
@@ -3389,8 +3409,10 @@ try
 		ssl.write_some(std::forward<iov>(bufs))
 	};
 
-	out.bytes += ret;
 	++out.calls;
+	out.bytes += ret;
+	++out_total.calls;
+	out_total.bytes += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
