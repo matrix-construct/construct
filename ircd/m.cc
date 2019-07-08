@@ -1110,7 +1110,7 @@ ircd::m::sync::data::data(const m::user &user,
                           ircd::client *const &client,
                           json::stack *const &out,
                           sync::stats *const &stats,
-                          const string_view &filter_id)
+                          const sync::args *const &args)
 :range
 {
 	range
@@ -1122,6 +1122,10 @@ ircd::m::sync::data::data(const m::user &user,
 ,client
 {
 	client
+}
+,args
+{
+	args
 }
 ,user
 {
@@ -1141,7 +1145,9 @@ ircd::m::sync::data::data(const m::user &user,
 }
 ,filter_buf
 {
-	m::filter::get(filter_id, user)
+	this->args?
+		m::filter::get(this->args->filter_id, user):
+		{}
 }
 ,filter
 {

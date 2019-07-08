@@ -218,7 +218,7 @@ ircd::m::sync::handle_get(client &client,
 		&client,
 		nullptr,
 		&stats,
-		args.filter_id
+		&args,
 	};
 
 	// Determine if this is an initial-sync request.

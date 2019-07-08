@@ -90,6 +90,7 @@ struct ircd::m::sync::data
 
 	/// The client. This may be null if sync is being called internally.
 	ircd::client *client {nullptr};
+	const sync::args *args {nullptr};
 
 	// User related
 	const m::user user;
@@ -116,7 +117,7 @@ struct ircd::m::sync::data
 	     ircd::client *const &client = nullptr,
 	     json::stack *const &out = nullptr,
 	     sync::stats *const &stats = nullptr,
-	     const string_view &filter_id = {});
+	     const sync::args *const &args = nullptr);
 
 	data(data &&) = delete;
 	data(const data &) = delete;
