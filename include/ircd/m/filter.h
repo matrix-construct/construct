@@ -51,7 +51,9 @@ struct ircd::m::room_event_filter
 	json::property<name::not_types, json::array>,
 	json::property<name::not_rooms, json::array>,
 	json::property<name::not_senders, json::array>,
-	json::property<name::contains_url, bool>
+	json::property<name::contains_url, bool>,
+	json::property<name::lazy_load_members, bool>,
+	json::property<name::include_redundant_members, bool>
 >
 {
 	using super_type::tuple;
