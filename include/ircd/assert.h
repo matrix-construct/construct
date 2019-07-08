@@ -24,7 +24,7 @@ namespace ircd
 	void debugtrap();
 }
 
-#if defined(RB_ASSERT) && defined(_ASSERT_H_DECLS)
+#if defined(RB_ASSERT) && defined(_ASSERT_H_DECLS) && defined(RB_DEBUG)
 	#error "Do not include <assert.h> or <cassert> first."
 #endif
 
