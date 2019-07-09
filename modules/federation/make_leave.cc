@@ -105,20 +105,25 @@ get__make_leave(client &client,
 
 	{
 		const m::room::auth auth{room};
+		json::stack::checkpoint cp{out};
 		json::stack::array auth_events
 		{
 			event, "auth_events"
 		};
 
-		static const string_view types[]
+		const json::members args
 		{
-			"m.room.create",
-			"m.room.join_rules",
-			"m.room.power_levels",
-			"m.room.member",
+			{ "type",       "m.room.member"   },
+			{ "state_key",  user_id           },
+			{ "sender",     user_id           },
+			{ "content",    json::members
+			{
+				{ "membership", "leave" }
+			}}
 		};
 
-		auth.make_refs(auth_events, types, user_id);
+		if(!auth.make_refs(auth_events, m::event{args}))
+			cp.decommit();
 	}
 
 	json::stack::member

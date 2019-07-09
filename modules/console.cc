@@ -5837,38 +5837,6 @@ console_cmd__stage__make_auth(opt &out, const string_view &line)
 		stage.at(id)
 	};
 
-	static const string_view types_general[]
-	{
-		"m.room.create",
-		"m.room.power_levels",
-	};
-
-	static const string_view types_membership[]
-	{
-		"m.room.create",
-		"m.room.join_rules",
-		"m.room.power_levels",
-	};
-
-	const auto is_membership
-	{
-		at<"type"_>(event) == "m.room.member"
-	};
-
-	const auto &types
-	{
-		is_membership?
-			vector_view<const string_view>(types_membership):
-			vector_view<const string_view>(types_general)
-	};
-
-	const auto member
-	{
-		!is_membership?
-			at<"sender"_>(event):
-			string_view{}
-	};
-
 	const m::room room
 	{
 		at<"room_id"_>(event)
@@ -5880,7 +5848,7 @@ console_cmd__stage__make_auth(opt &out, const string_view &line)
 	};
 
 	thread_local char buf[1024];
-	json::get<"auth_events"_>(event) = auth.make_refs(buf, types, member);
+	json::get<"auth_events"_>(event) = auth.make_refs(buf, event);
 
 	stage.at(id) = json::strung
 	{
@@ -9828,15 +9796,6 @@ console_cmd__room__auth(opt &out, const string_view &line)
 	{
 		room
 	};
-
-	auth.for_each([&out]
-	(const m::event::idx &idx)
-	{
-		const m::event::fetch event{idx};
-		out << idx
-		    << " " << pretty_oneline(event)
-		    << std::endl;
-	});
 
 	return true;
 }

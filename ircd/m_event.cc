@@ -2010,7 +2010,7 @@ ircd::m::event::auth::failed(const m::event &event,
 			// i. If the only previous event is an m.room.create and the
 			// state_key is the creator, allow.
 			if(refs.prev_events_count() == 1 && refs.auth_events_count() == 1)
-				if(auth_create && at<"event_id"_>(*auth_create) == refs.prev_event(0))
+				if(auth_create && auth_create->event_id == refs.prev_event(0))
 					return {};
 
 			// ii. If the sender does not match state_key, reject.

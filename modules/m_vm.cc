@@ -275,23 +275,7 @@ ircd::m::vm::inject(eval &eval,
 	char ae_buf[1024];
 	json::array auth_events{json::empty_array};
 	if(depth != -1 && event.at("type") != "m.room.create" && opts.add_auth_events)
-	{
-		static const string_view types[]
-		{
-			"m.room.create",
-			"m.room.join_rules",
-			"m.room.power_levels",
-		};
-
-		const m::user::id &member
-		{
-			event.at("type") != "m.room.member"?
-				m::user::id{event.at("sender")}:
-				m::user::id{}
-		};
-
-		auth_events = auth.make_refs(ae_buf, types, member);
-	}
+		auth_events = auth.make_refs(ae_buf, m::event{event});
 
 	const json::iov::add auth_events_
 	{

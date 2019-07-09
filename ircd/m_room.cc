@@ -3817,91 +3817,101 @@ ircd::m::room::head::for_each(const head &head,
 
 ircd::json::array
 ircd::m::room::auth::make_refs(const mutable_buffer &buf,
-                               const types &types,
-                               const m::id::user &user)
+                               const m::event &event)
 const
 {
 	json::stack out{buf};
-	json::stack::array array{out};
-	make_refs(array, types, user);
-	array.~array();
+	json::stack::checkpoint cp{out};
+	{
+		json::stack::array array{out};
+		if(!make_refs(array, event))
+			cp.decommit();
+	}
+
 	return json::array{out.completed()};
 }
 
-void
+bool
 ircd::m::room::auth::make_refs(json::stack::array &out,
-                               const types &types,
-                               const m::id::user &user)
+                               const m::event &event)
 const
 {
-	make_refs(*this, out, types, user);
-}
-
-void
-ircd::m::room::auth::for_each(const closure &c)
-const
-{
-	for_each(closure_bool{[this, &c]
-	(const auto &event_idx)
+	const m::event::id::closure &v1_ref{[&out]
+	(const auto &event_id)
 	{
-		c(event_idx);
-		return true;
-	}});
-}
-
-bool
-ircd::m::room::auth::for_each(const closure_bool &c)
-const
-{
-	return for_each(*this, c);
-}
-
-bool
-ircd::m::room::auth::for_each(const auth &a,
-                              const closure_bool &closure)
-{
-	const m::room &room{a.room};
-	const auto &event_id{room.event_id};
-	if(!event_id)
-		return false;
-
-	return true;
-}
-
-void
-ircd::m::room::auth::make_refs(const auth &auth,
-                               json::stack::array &out,
-                               const types &types,
-                               const user::id &user_id)
-{
-	const m::room::state state
-	{
-		auth.room
-	};
-
-	const auto fetch{[&out, &state]
-	(const string_view &type, const string_view &state_key)
-	{
-		state.get(std::nothrow, type, state_key, m::event::id::closure{[&out]
-		(const auto &event_id)
+		json::stack::array auth{out};
+		auth.append(event_id);
 		{
-			json::stack::array auth{out};
-			auth.append(event_id);
+			json::stack::object nilly{auth};
+			json::stack::member willy
 			{
-				json::stack::object hash{auth};
-				json::stack::member will
-				{
-					hash, "", ""
-				};
-			}
-		}});
+				nilly, "", ""
+			};
+		}
 	}};
 
-	for(const auto &type : types)
-		fetch(type, "");
+	const m::event::id::closure &v3_ref{[&out]
+	(const auto &event_id)
+	{
+		json::stack::array auth{out};
+		auth.append(event_id);
+	}};
 
-	if(user_id)
-		fetch("m.room.member", user_id);
+	char versionbuf[64];
+	const auto version
+	{
+		m::version(versionbuf, room, std::nothrow)
+	};
+
+	assert(version);
+	const auto &fetch_append
+	{
+		version == "1" || version == "2"? v1_ref : v3_ref
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	const auto &type
+	{
+		json::get<"type"_>(event)
+	};
+
+	if(!type)
+		return false;
+
+	if(type == "m.room.create")
+		return false;
+
+	state.get(std::nothrow, "m.room.create", "", fetch_append);
+	state.get(std::nothrow, "m.room.power_levels", "", fetch_append);
+
+	if(type == "m.room.member")
+		if(!m::membership(event) || m::membership(event) == "join")
+			state.get(std::nothrow, "m.room.join_rules", "", fetch_append);
+
+	const string_view member_sender
+	{
+		defined(json::get<"sender"_>(event))?
+			m::user::id{at<"sender"_>(event)}:
+			m::user::id{}
+	};
+
+	if(member_sender)
+		state.get(std::nothrow, "m.room.member", member_sender, fetch_append);
+
+	m::user::id member_target;
+	if(json::get<"sender"_>(event) && json::get<"state_key"_>(event))
+		if(at<"sender"_>(event) != at<"state_key"_>(event))
+			if(valid(m::id::USER, at<"state_key"_>(event)))
+				member_target = at<"state_key"_>(event);
+
+	if(member_target)
+		state.get(std::nothrow, "m.room.member", member_target, fetch_append);
+
+	return true;
 }
 
 //
