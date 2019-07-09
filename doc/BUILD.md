@@ -1,6 +1,6 @@
 ## BUILD
 
-*Most users will need follow the standalone build instructions in the next section.*
+*Most users will need to follow the standalone build instructions in the next section.*
 
 ```
 ./autogen.sh
