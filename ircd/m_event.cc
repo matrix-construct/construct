@@ -701,8 +701,12 @@ ircd::m::event::conforms::conforms(const event &e,
 ircd::m::event::conforms::conforms(const event &e)
 :report{0}
 {
-	if(!valid(m::id::EVENT, json::get<"event_id"_>(e)))
+	if(!e.event_id)
 		set(INVALID_OR_MISSING_EVENT_ID);
+
+	if(defined(json::get<"event_id"_>(e)))
+		if(!valid(m::id::EVENT, json::get<"event_id"_>(e)))
+			set(INVALID_OR_MISSING_EVENT_ID);
 
 	if(!valid(m::id::ROOM, json::get<"room_id"_>(e)))
 		set(INVALID_OR_MISSING_ROOM_ID);
