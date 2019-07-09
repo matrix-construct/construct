@@ -480,6 +480,29 @@ try
 	send(room_id, m::me, type, state_key, json::object(out.completed()));
 	return true;
 }
+catch(const http::error &e)
+{
+	log::error
+	{
+		log, "cache put (%s, %s) code:%u (%s) :%s %s",
+		type,
+		state_key,
+		code,
+		msg,
+		e.what(),
+		e.content,
+	};
+
+	const json::value error_value
+	{
+		json::object{e.content}
+	};
+
+	const json::value error_records{&error_value, 1};
+	const json::strung error{error_records};
+	call_waiters(type, state_key, error);
+	return false;
+}
 catch(const std::exception &e)
 {
 	log::error
@@ -579,6 +602,28 @@ try
 	content.~object();
 	send(room_id, m::me, type, state_key, json::object{out.completed()});
 	return true;
+}
+catch(const http::error &e)
+{
+	log::error
+	{
+		log, "cache put (%s, %s) rrs:%zu :%s %s",
+		type,
+		state_key,
+		rrs.size(),
+		e.what(),
+		e.content,
+	};
+
+	const json::value error_value
+	{
+		json::object{e.content}
+	};
+
+	const json::value error_records{&error_value, 1};
+	const json::strung error{error_records};
+	call_waiters(type, state_key, error);
+	return false;
 }
 catch(const std::exception &e)
 {
