@@ -57,7 +57,6 @@ handle_edu(client &client,
 	vmopts.non_conform.set(m::event::conforms::MISSING_SIGNATURES);
 	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_EVENTS);
 	vmopts.non_conform.set(m::event::conforms::MISSING_AUTH_EVENTS);
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.non_conform.set(m::event::conforms::DEPTH_ZERO);
 	m::vm::eval eval
 	{
@@ -73,7 +72,6 @@ handle_pdus(client &client,
 {
 	m::vm::opts vmopts;
 	vmopts.node_id = request.origin;
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.nothrows = -1U;
 	vmopts.infolog_accept = true;
 	m::vm::eval eval

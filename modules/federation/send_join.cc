@@ -108,7 +108,6 @@ put__send_join(client &client,
 		};
 
 	m::vm::opts vmopts;
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	m::vm::eval eval
 	{
 		event, vmopts

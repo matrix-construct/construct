@@ -69,7 +69,6 @@ enum ircd::m::event::conforms::code
 	MISSING_MEMBER_STATE_KEY,          ///< for m.room.member, !empty(state_key)
 	INVALID_MEMBER_STATE_KEY,          ///< for m.room.member, !user::id(state_key)
 	MISSING_PREV_EVENTS,               ///< for non-m.room.create, empty prev_events
-	MISSING_PREV_STATE,                ///< for state_key'ed, empty prev_state
 	MISSING_AUTH_EVENTS,               ///< for non-m.room.create, empty auth_events
 	DEPTH_NEGATIVE,                    ///< depth < 0
 	DEPTH_ZERO,                        ///< for non-m.room.create, depth=0
@@ -81,10 +80,8 @@ enum ircd::m::event::conforms::code
 	MISMATCH_ALIASES_STATE_KEY,        ///< m.room.aliases has no state_key
 	SELF_REDACTS,                      ///< event redacts itself
 	SELF_PREV_EVENT,                   ///< event_id self-referenced in prev_events
-	SELF_PREV_STATE,                   ///< event_id self-referenced in prev_state
 	SELF_AUTH_EVENT,                   ///< event_id self-referenced in auth_events
 	DUP_PREV_EVENT,                    ///< duplicate references in prev_events
-	DUP_PREV_STATE,                    ///< duplicate references in prev_state
 	DUP_AUTH_EVENT,                    ///< duplicate references in auth_events
 
 	_NUM_

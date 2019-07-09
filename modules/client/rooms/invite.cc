@@ -201,7 +201,6 @@ ircd::m::invite_foreign(const event &event)
 		};
 
 	m::vm::opts vmopts;
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.infolog_accept = true;
 
 	m::vm::eval(revent, vmopts);

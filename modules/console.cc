@@ -7304,7 +7304,6 @@ console_cmd__eval(opt &out, const string_view &line)
 	opts.errorlog = 0;
 	opts.warnlog = 0;
 	opts.nothrows = 0;
-	opts.non_conform |= m::event::conforms::MISSING_PREV_STATE;
 
 	tokens(args, ' ', [&opts](const auto &arg)
 	{
@@ -7372,7 +7371,6 @@ console_cmd__eval__file(opt &out, const string_view &line)
 	};
 
 	m::vm::opts opts;
-	opts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	opts.notify = false;
 	opts.verify = false;
 	m::vm::eval eval
@@ -11864,7 +11862,6 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1;
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.debuglog_accept = true;
 	vmopts.fetch_prev_check = false;
 	vmopts.fetch_state_check = false;
@@ -11978,7 +11975,6 @@ console_cmd__fed__state(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1;
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	m::vm::eval eval
 	{
 		pdus, vmopts
@@ -12130,7 +12126,6 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 	}
 
 	m::vm::opts vmopts;
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.nothrows = -1;
 	vmopts.room_head = false;
 	vmopts.room_head_resolve = true;
@@ -12309,7 +12304,6 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		return true;
 
 	m::vm::opts vmopts;
-	vmopts.non_conform.set(m::event::conforms::MISSING_PREV_STATE);
 	vmopts.fetch_prev = false;
 	m::vm::eval eval
 	{

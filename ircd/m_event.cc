@@ -156,9 +156,6 @@ ircd::m::pretty_oneline(std::ostream &s,
 	const auto &auth_events{json::get<"auth_events"_>(event)};
 	s << "A:" << auth_events.count() << " ";
 
-	const auto &prev_states{json::get<"prev_state"_>(event)};
-	s << "S:" << prev_states.count() << " ";
-
 	const auto &prev_events{json::get<"prev_events"_>(event)};
 	s << "E:" << prev_events.count() << " ";
 
@@ -312,23 +309,6 @@ ircd::m::pretty(std::ostream &s,
 		s << std::endl;
 	}
 
-	for(size_t i(0); i < prev.prev_states_count(); ++i)
-	{
-		const auto &[event_id, ref_hash]
-		{
-			prev.prev_states(i)
-		};
-
-		s << std::setw(16) << std::right << "[prev_state]"
-		  << " :" << event_id;
-
-		for(const auto &[algorithm, digest] : ref_hash)
-			s << " " << unquote(algorithm)
-			  << ": " << unquote(digest);
-
-		s << std::endl;
-	}
-
 	for(size_t i(0); i < prev.prev_events_count(); ++i)
 	{
 		const auto &[event_id, ref_hash]
@@ -357,12 +337,6 @@ ircd::m::pretty_oneline(std::ostream &s,
 	s << "A[ ";
 	for(const json::array auth_event : auth_events)
 		s << unquote(auth_event[0]) << " ";
-	s << "] ";
-
-	const auto &prev_states{json::get<"prev_state"_>(prev)};
-	s << "S[ ";
-	for(const json::array prev_state : prev_states)
-		s << unquote(prev_state[0]) << " ";
 	s << "] ";
 
 	const auto &prev_events{json::get<"prev_events"_>(prev)};
@@ -636,7 +610,6 @@ ircd::m::event_conforms_reflects
 	"MISSING_MEMBER_STATE_KEY",
 	"INVALID_MEMBER_STATE_KEY",
 	"MISSING_PREV_EVENTS",
-	"MISSING_PREV_STATE",
 	"MISSING_AUTH_EVENTS",
 	"DEPTH_NEGATIVE",
 	"DEPTH_ZERO",
@@ -648,10 +621,8 @@ ircd::m::event_conforms_reflects
 	"MISMATCH_ALIASES_STATE_KEY",
 	"SELF_REDACTS",
 	"SELF_PREV_EVENT",
-	"SELF_PREV_STATE",
 	"SELF_AUTH_EVENT",
 	"DUP_PREV_EVENT",
-	"DUP_PREV_STATE",
 	"DUP_AUTH_EVENT",
 };
 
@@ -774,13 +745,6 @@ ircd::m::event::conforms::conforms(const event &e)
 		if(empty(json::get<"prev_events"_>(e)))
 			set(MISSING_PREV_EVENTS);
 
-	/*
-	if(json::get<"type"_>(e) != "m.room.create")
-		if(!empty(json::get<"state_key"_>(e)))
-			if(empty(json::get<"prev_state"_>(e)))
-				set(MISSING_PREV_STATE);
-	*/
-
 	if(json::get<"type"_>(e) != "m.room.create")
 		if(empty(json::get<"auth_events"_>(e)))
 			set(MISSING_AUTH_EVENTS);
@@ -800,15 +764,6 @@ ircd::m::event::conforms::conforms(const event &e)
 		{
 			if(unquote(pe.at(0)) == json::get<"event_id"_>(e))
 				set(SELF_PREV_EVENT);
-
-			++i;
-		}
-
-		i = 0;
-		for(const json::array &ps : json::get<"prev_state"_>(prev))
-		{
-			if(unquote(ps.at(0)) == json::get<"event_id"_>(e))
-				set(SELF_PREV_STATE);
 
 			++i;
 		}
@@ -834,19 +789,6 @@ ircd::m::event::conforms::conforms(const event &e)
 			if(i != j)
 				if(event_id == prev.auth_event(j))
 					set(DUP_AUTH_EVENT);
-	}
-
-	for(size_t i(0); i < prev.prev_states_count(); ++i)
-	{
-		const auto &[event_id, ref_hash]
-		{
-			prev.prev_states(i)
-		};
-
-		for(size_t j(0); j < prev.prev_states_count(); ++j)
-			if(i != j)
-				if(event_id == prev.prev_state(j))
-					set(DUP_PREV_STATE);
 	}
 
 	for(size_t i(0); i < prev.prev_events_count(); ++i)
@@ -2913,14 +2855,7 @@ bool
 ircd::m::event::prev::prev_event_exists(const size_t &idx)
 const
 {
-	return m::exists(prev_state(idx));
-}
-
-bool
-ircd::m::event::prev::prev_state_exists(const size_t &idx)
-const
-{
-	return m::exists(prev_state(idx));
+	return m::exists(prev_event(idx));
 }
 
 bool
@@ -2936,17 +2871,6 @@ const
 {
 	for(size_t i(0); i < prev_events_count(); ++i)
 		if(prev_event(i) == event_id)
-			return true;
-
-	return false;
-}
-
-bool
-ircd::m::event::prev::prev_states_has(const event::id &event_id)
-const
-{
-	for(size_t i(0); i < prev_states_count(); ++i)
-		if(prev_state(i) == event_id)
 			return true;
 
 	return false;
@@ -2971,13 +2895,6 @@ const
 }
 
 size_t
-ircd::m::event::prev::prev_states_count()
-const
-{
-	return json::get<"prev_state"_>(*this).count();
-}
-
-size_t
 ircd::m::event::prev::auth_events_count()
 const
 {
@@ -2989,13 +2906,6 @@ ircd::m::event::prev::auth_event(const size_t &idx)
 const
 {
 	return std::get<0>(auth_events(idx));
-}
-
-ircd::m::event::id
-ircd::m::event::prev::prev_state(const size_t &idx)
-const
-{
-	return std::get<0>(prev_states(idx));
 }
 
 ircd::m::event::id
@@ -3034,37 +2944,6 @@ const
 		default: throw m::INVALID_MXID
 		{
 			"auth_events[%zu] is invalid", idx
-		};
-	}
-}
-
-std::tuple<ircd::m::event::id, ircd::json::object>
-ircd::m::event::prev::prev_states(const size_t &idx)
-const
-{
-	const string_view &prev_
-	{
-		at<"prev_state"_>(*this).at(idx)
-	};
-
-	switch(json::type(prev_))
-	{
-		case json::ARRAY:
-		{
-			const json::array &prev(prev_);
-			const json::string &prev_id(prev.at(0));
-			return {prev_id, prev[1]};
-		}
-
-		case json::STRING:
-		{
-			const json::string &prev_id(prev_);
-			return {prev_id, string_view{}};
-		}
-
-		default: throw m::INVALID_MXID
-		{
-			"prev_state[%zu] is invalid", idx
 		};
 	}
 }

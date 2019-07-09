@@ -570,9 +570,6 @@ ircd::m::commit(const room &room,
 	// this event in any replay later will require special casing.
 	opts.non_conform |= event::conforms::MISMATCH_ORIGIN_SENDER;
 
-	 // Stupid protocol workaround
-	opts.non_conform |= event::conforms::MISSING_PREV_STATE;
-
 	// Don't need this here
 	opts.verify = false;
 

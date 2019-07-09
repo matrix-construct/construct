@@ -174,7 +174,6 @@ put__invite(client &client,
 		};
 
 	m::event::conforms non_conforms;
-	non_conforms |= non_conforms.MISSING_PREV_STATE;
 	const m::event::conforms report
 	{
 		event, non_conforms.report
