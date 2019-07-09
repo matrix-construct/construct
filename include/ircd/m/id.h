@@ -53,11 +53,11 @@ struct ircd::m::id
 	struct output;
 	struct parser;
 	struct printer;
-	struct validator;
+	struct valid;
 
 	struct parser static const parser;
 	struct printer static const printer;
-	struct validator static const validator;
+	struct valid static const valid;
 
 	static constexpr const size_t &MAX_SIZE
 	{
@@ -102,11 +102,20 @@ namespace ircd::m
 	string_view reflect(const id::sigil &);
 
 	// Full ID checks
+	void validate(const id::sigil &, const string_view &);    // valid() | throws
 	bool valid(const id::sigil &, const string_view &) noexcept;
 	bool valid_local(const id::sigil &, const string_view &) noexcept;  // Local part is valid
 	bool valid_local_only(const id::sigil &, const string_view &) noexcept;  // No :host
-	void validate(const id::sigil &, const string_view &);    // valid() | throws
 }
+
+/// Singleton in m::id
+struct ircd::m::id::valid
+{
+	bool operator()(std::nothrow_t, const id::sigil &sigil, const string_view &id) const noexcept;
+	void operator()(const id::sigil &sigil, const string_view &id) const;
+	bool operator()(std::nothrow_t, const string_view &id) const noexcept;
+	void operator()(const string_view &id) const;
+};
 
 /// (4.2) The sigil characters
 enum ircd::m::id::sigil

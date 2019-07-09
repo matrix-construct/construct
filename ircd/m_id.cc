@@ -228,16 +228,16 @@ catch(const qi::expectation_failure<const char *> &e)
 	failure(e, "mxid");
 }
 
-struct ircd::m::id::validator
-:input
-{
-	void operator()(const id::sigil &sigil, const string_view &id) const;
-	void operator()(const string_view &id) const;
-}
-const ircd::m::id::validator;
+//
+// valid
+//
+
+decltype(ircd::m::id::valid)
+ircd::m::id::valid
+{};
 
 void
-ircd::m::id::validator::operator()(const string_view &id)
+ircd::m::id::valid::operator()(const string_view &id)
 const try
 {
 	const char *start{id.begin()};
@@ -246,7 +246,7 @@ const try
 		std::min(id.end(), start + MAX_SIZE)
 	};
 
-	const bool ret(qi::parse(start, stop, eps > mxid));
+	const bool ret(qi::parse(start, stop, eps > parser.mxid));
 	assert(ret == true);
 }
 catch(const qi::expectation_failure<const char *> &e)
@@ -254,20 +254,34 @@ catch(const qi::expectation_failure<const char *> &e)
 	failure(e, "mxid");
 }
 
+bool
+ircd::m::id::valid::operator()(std::nothrow_t,
+                               const string_view &id)
+const noexcept
+{
+	const char *start{id.begin()};
+	const char *const stop
+	{
+		std::min(id.end(), start + MAX_SIZE)
+	};
+
+	return qi::parse(start, stop, parser.mxid >> eoi);
+}
+
 void
-ircd::m::id::validator::operator()(const id::sigil &sigil,
-                                   const string_view &id)
+ircd::m::id::valid::operator()(const id::sigil &sigil,
+                               const string_view &id)
 const try
 {
-	const rule<> sigil_type
+	const parser::rule<> sigil_type
 	{
 		&lit(char(sigil))
 		,"sigil type"
 	};
 
-	const rule<> valid_mxid
+	const parser::rule<> valid_mxid
 	{
-		eps > (sigil_type > mxid)
+		eps > (sigil_type > parser.mxid)
 	};
 
 	const char *start{id.begin()};
@@ -283,6 +297,40 @@ catch(const qi::expectation_failure<const char *> &e)
 {
 	failure(e, reflect(sigil));
 }
+
+bool
+ircd::m::id::valid::operator()(std::nothrow_t,
+                               const id::sigil &sigil,
+                               const string_view &id)
+const noexcept try
+{
+	const parser::rule<> sigil_type
+	{
+		&lit(char(sigil))
+		,"sigil type"
+	};
+
+	const parser::rule<> valid_mxid
+	{
+		(sigil_type > parser.mxid) >> eoi
+	};
+
+	const char *start{id.begin()};
+	const char *const stop
+	{
+		std::min(id.end(), start + MAX_SIZE)
+	};
+
+	return qi::parse(start, stop, valid_mxid);
+}
+catch(...)
+{
+	return false;
+}
+
+//
+// printer
+//
 
 //TODO: abstract this pattern with ircd::json::printer in ircd/spirit.h
 struct ircd::m::id::printer
@@ -378,7 +426,7 @@ ircd::m::id::id(const id::sigil &sigil,
                 const string_view &id)
 :string_view{id}
 {
-	validate(sigil, id);
+	valid(sigil, id);
 }
 
 ircd::m::id::id(const enum sigil &sigil,
@@ -827,23 +875,15 @@ void
 ircd::m::validate(const id::sigil &sigil,
                   const string_view &id)
 {
-	id::validator(sigil, id);
+	id::valid(sigil, id);
 }
 
 bool
 ircd::m::valid(const id::sigil &sigil,
                const string_view &id)
-noexcept try
+noexcept
 {
-	if(empty(id))
-		return false;
-
-	validate(sigil, id);
-	return true;
-}
-catch(...)
-{
-	return false;
+	return !empty(id) && id::valid(std::nothrow, sigil, id);
 }
 
 bool
