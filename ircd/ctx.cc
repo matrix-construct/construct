@@ -780,13 +780,14 @@ noexcept
 	assert(bool(*this));
 
 	#ifdef HAVE_CXXABI_H
-	__cxxabiv1::__cxa_end_catch();
+	if(current)
+		__cxxabiv1::__cxa_end_catch();
 	#endif
 
 	// We don't yet support more levels of exceptions; after ending this
 	// catch we can't still be in another one. This doesn't apply if we're
 	// not on any ctx currently.
-	assert(!current || !std::current_exception());
+	assert(!current || !std::uncaught_exceptions());
 }
 
 //
