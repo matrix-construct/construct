@@ -440,11 +440,18 @@ ircd::m::id::id(const enum sigil &sigil,
 		startswith(local, sigil)?
 			fmt::sprintf
 			{
-				buf, "%s:%s", local, host
+				buf, "%s%s%s",
+				local,
+				host? ":" : "",
+				host,
 			}:
 			fmt::sprintf
 			{
-				buf, "%c%s:%s", char(sigil), local, host
+				buf, "%c%s%s%s",
+				char(sigil),
+				local,
+				host? ":" : "",
+				host,
 			}
 	};
 
