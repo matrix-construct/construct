@@ -63,14 +63,14 @@ put__send_leave(client &client,
 
 	const m::event event
 	{
-		request
+		request, event_id
 	};
 
-	if(at<"event_id"_>(event) != event_id)
-		throw m::error
+	if(!check_id(event))
+		throw m::BAD_REQUEST
 		{
-			http::NOT_MODIFIED, "M_MISMATCH_EVENT_ID",
-			"ID of event in request body does not match path parameter."
+			"ID of event in request does not match path parameter %s",
+			string_view{event_id},
 		};
 
 	if(at<"room_id"_>(event) != room_id)

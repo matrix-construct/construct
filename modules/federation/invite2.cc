@@ -86,37 +86,15 @@ put__invite(client &client,
 		request["event"], event_id
 	};
 
-	char check_buf[48];
-	m::event::id check_id; switch(hash(room_version))
-	{
-		case "1"_:
-		case "2"_:
-			check_id = json::get<"event_id"_>(event)?
-				m::event::id{json::get<"event_id"_>(event)}:
-				event_id;
+	if(!json::get<"event_id"_>(event))
+		if(room_version == "1" || room_version == "2")
+			json::get<"event_id"_>(event) = event_id;
 
-			// put back the event_id that synapse stripped
-			json::get<"event_id"_>(event) = check_id;
-			assert(json::get<"event_id"_>(event) == check_id);
-			break;
-
-		case "3"_:
-			check_id = m::event::id::v3{check_buf, event};
-			break;
-
-		case "4"_:
-		case "5"_:
-		default:
-			check_id = m::event::id::v4{check_buf, event};
-			break;
-	}
-
-	if(!check_id || event_id != check_id)
+	if(!check_id(event, room_version))
 		throw m::BAD_REQUEST
 		{
-			"Claimed event_id %s does not match %s",
+			"Claimed event_id %s is incorrect.",
 			string_view{event_id},
-			string_view{check_id},
 		};
 
 	if(at<"room_id"_>(event) != room_id)
