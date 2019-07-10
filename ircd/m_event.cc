@@ -1500,7 +1500,7 @@ ircd::m::event::fetch::assign_from_json(const string_view &key)
 	assert(!empty(source));
 	const bool source_event_id
 	{
-		!event_id_buf || source.has("event_id")
+		!event_id_buf && source.has("event_id")
 	};
 
 	const auto event_id
