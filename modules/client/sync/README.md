@@ -3,20 +3,24 @@
 #### Organization
 
 This directory contains modules which compose the `/sync` endpoint content.
-First note that even though this is a directory of modules, the `/sync`
-resource itself is a single endpoint and not a directory. The `sync.cc`
-module alone services the `/sync` resource and invokes the functionality
-offered by the modules in this directory.
 
 Each module in this directory creates content within some property of the
-`/sync` JSON response to fulfill a certain feature (refer to the matrix
-c2s spec). Some modules have child modules attached to them in the same way the
-response JSON has objects with child objects and arrays, etc; forming a tree.
+`/sync` JSON response to fulfill a certain feature (refer to the [matrix
+c2s spec](https://matrix.org/docs/spec/client_server/r0.5.0#get-matrix-client-r0-sync)).
 
-There are at least two ways to organize these modules, and this directory
-represents one of those ways. Another way is to disperse them throughout
-`/client/` near the endpoints related to their feature suite. That still
-remains a viable option for debate as this system further matures.
+`sync::item`'s register themselves at different locations of the `/sync`
+response tree and provide two handler functions. The `/sync/` `GET` handler
+facilitates an iteration over these modules to build the response.
+
+>  First note that even though this is a directory of modules, the `/sync`
+resource itself is a single endpoint and not a directory. The `../sync.cc`
+module alone services the `/sync` resource and invokes the modular
+functionality in this directory.
+
+> There are at least two ways to organize these modules, and this
+directory represents one of those ways. Another way is to disperse them
+throughout `/client/` near the endpoints related to their feature suite.
+That still remains a viable option for debate as this system further matures.
 
 ### Methodology
 

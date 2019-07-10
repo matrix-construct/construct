@@ -745,6 +745,8 @@ ircd::m::sync::longpoll::handle_notify(const m::event &event,
 	dock.notify_all();
 }
 
+/// Longpolling blocks the client's request until a relevant event is processed
+/// by the m::vm. If no event is processed by a timeout this returns false.
 bool
 ircd::m::sync::longpoll_handle(data &data)
 try
@@ -776,6 +778,28 @@ catch(const std::exception &e)
 	throw;
 }
 
+/// When the vm's sequence number is incremented our dock is notified and the
+/// event at that next sequence number is fetched. That event gets proffered
+/// around the linear sync handlers for whether it's relevant to the user
+/// making the request on this stack.
+///
+/// If relevant, we respond immediately with that one event and finish the
+/// request right there, providing them the next since token of one-past the
+/// event_idx that was just synchronized.
+///
+/// If not relevant, we send nothing and continue checking events that come
+/// through until the timeout. This will be an empty response providing the
+/// client with the next since token of one past where we left off (vm's
+/// current sequence number) to start the next /sync.
+///
+/// @returns
+/// - true if a relevant event was hit and output to the client. If so, this
+/// request is finished and nothing else can be sent to the client.
+/// - false if a timeout occurred. Nothing was sent to the client so the
+/// request must be finished upstack, or an exception may be thrown, etc.
+/// - -1 to continue the polling loop when no relevant event was hit. Nothing
+/// has been sent to the client yet here either.
+///
 int
 ircd::m::sync::longpoll::poll(data &data)
 {
@@ -811,6 +835,9 @@ ircd::m::sync::longpoll::poll(data &data)
 	return -1;
 }
 
+/// Evaluate the event indexed by data.range.second (the upper-bound). The
+/// sync system sees a data.range window of [since, U] where U is a counter
+/// that starts at the `vm::sequence::retired` event_idx
 bool
 ircd::m::sync::longpoll::polled(data &data,
                                 const args &args)
