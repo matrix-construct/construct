@@ -376,6 +376,24 @@ ircd::m::dbs::_index_event_id(db::txn &txn,
 			byte_view<string_view>(opts.event_idx)
 		}
 	};
+
+	// For a v1 event, the "event_id" property will be saved into the `event_id`
+	// column by the direct property->column indexer.
+	if(json::get<"event_id"_>(event))
+		return;
+
+	// For v3+ events, the direct column indexer won't see any "event_id"
+	// property. In this case we insert the `event.event_id` manually into
+	// that column here.
+	db::txn::append
+	{
+		txn, event_column.at(json::indexof<m::event, "event_id"_>()),
+		{
+			opts.op,
+			byte_view<string_view>(opts.event_idx),
+			string_view{event.event_id},
+		}
+	};
 }
 
 void
