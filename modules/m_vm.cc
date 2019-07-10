@@ -374,41 +374,6 @@ ircd::m::vm::inject(eval &eval,
 		contents
 	};
 
-	// event_id
-
-	sha256::buf event_id_hash;
-	if(opts.add_event_id)
-	{
-		const json::iov::push _content
-		{
-			event, { "content", content },
-		};
-
-		thread_local char preimage_buf[64_KiB];
-		event_id_hash = sha256
-		{
-			stringify(mutable_buffer{preimage_buf}, event)
-		};
-	}
-
-	const event::id &event_id
-	{
-		opts.add_event_id?
-			make_id(m::event{event}, eval.event_id, event_id_hash):
-			event::id{}
-	};
-
-	const json::iov::add event_id_
-	{
-		event, opts.add_event_id,
-		{
-			"event_id", [&event_id]() -> json::value
-			{
-				return event_id;
-			}
-		}
-	};
-
 	// hashes
 
 	char hashes_buf[128];
@@ -426,6 +391,35 @@ ircd::m::vm::inject(eval &eval,
 			"hashes", [&hashes]() -> json::value
 			{
 				return hashes;
+			}
+		}
+	};
+
+	// event_id
+
+	char room_version_buf[32];
+	const scope_restore eval_room_version
+	{
+		eval.room_version,
+		eval.opts->room_version?:
+			m::version(room_version_buf, room{eval.room_id}, std::nothrow)
+	};
+
+	assert(eval.room_version);
+	const event::id &event_id_v1
+	{
+		opts.add_event_id && (eval.room_version == "1" || eval.room_version == "2")?
+			make_id(m::event{event}, eval.room_version, eval.event_id):
+			event::id{}
+	};
+
+	const json::iov::add event_id_
+	{
+		event, !empty(event_id_v1),
+		{
+			"event_id", [&event_id_v1]() -> json::value
+			{
+				return event_id_v1;
 			}
 		}
 	};
@@ -456,9 +450,18 @@ ircd::m::vm::inject(eval &eval,
 		event, { "content", content },
 	};
 
+	const event::id &event_id
+	{
+		event_id_v1?
+			event_id_v1:
+		opts.add_event_id?
+			make_id(m::event{event}, eval.room_version, eval.event_id):
+			event::id{}
+	};
+
 	const m::event event_tuple
 	{
-		event, m::event::id{event_id}
+		event, event_id
 	};
 
 	if(opts.debuglog_precommit)
@@ -486,6 +489,25 @@ try
 	const scope_restore eval_event
 	{
 		eval.event_, &event
+	};
+
+	const scope_restore eval_room_id
+	{
+		eval.room_id,
+		eval.room_id?
+			eval.room_id:
+			string_view(json::get<"room_id"_>(event))
+	};
+
+	char room_version_buf[32];
+	const scope_restore eval_room_version
+	{
+		eval.room_version,
+		eval.opts->room_version?
+			eval.opts->room_version:
+		eval.room_id?
+			m::version(room_version_buf, room{eval.room_id}, std::nothrow):
+		string_view{}
 	};
 
 	assert(eval.opts);

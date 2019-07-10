@@ -79,6 +79,7 @@ struct ircd::m::vm::eval
 	string_view room_id;
 	event::id::buf event_id;
 	event::conforms report;
+	string_view room_version;
 
 	static bool for_each_pdu(const std::function<bool (const event &)> &);
 
@@ -192,6 +193,9 @@ struct ircd::m::vm::opts
 	/// one during the eval. This is useful if a conformity check was already
 	/// done before eval.
 	event::conforms report;
+
+	/// Supply the room version; overrides/avoids any internal query.
+	string_view room_version;
 
 	/// Toggles whether event may be considered a "present event" and may
 	/// update the optimized present state table of the room if it is proper.

@@ -239,6 +239,7 @@ try
 
 	// Don't throw an exception for a re-evaluation; this will just be a no-op
 	vmopts.nothrows |= m::vm::fault::EXISTS;
+	vmopts.room_version = request.get("room_version", "1");
 
 	m::vm::eval
 	{
