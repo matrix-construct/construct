@@ -623,6 +623,7 @@ ircd::m::event_conforms_reflects
 	"SELF_AUTH_EVENT",
 	"DUP_PREV_EVENT",
 	"DUP_AUTH_EVENT",
+	"MISMATCH_EVENT_ID",
 };
 
 std::ostream &
@@ -677,6 +678,10 @@ ircd::m::event::conforms::conforms(const event &e)
 	if(defined(json::get<"event_id"_>(e)))
 		if(!valid(m::id::EVENT, json::get<"event_id"_>(e)))
 			set(INVALID_OR_MISSING_EVENT_ID);
+
+	if(!has(INVALID_OR_MISSING_EVENT_ID))
+		if(!m::check_id(e))
+			set(MISMATCH_EVENT_ID);
 
 	if(!valid(m::id::ROOM, json::get<"room_id"_>(e)))
 		set(INVALID_OR_MISSING_ROOM_ID);

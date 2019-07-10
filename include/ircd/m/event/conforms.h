@@ -82,6 +82,7 @@ enum ircd::m::event::conforms::code
 	SELF_AUTH_EVENT,                   ///< event_id self-referenced in auth_events
 	DUP_PREV_EVENT,                    ///< duplicate references in prev_events
 	DUP_AUTH_EVENT,                    ///< duplicate references in auth_events
+	MISMATCH_EVENT_ID,                 ///< event.event_id isn't the right hash.
 
 	_NUM_
 };
