@@ -299,17 +299,6 @@ ircd::m::vm::inject(eval &eval,
 		}
 	};
 
-	const json::iov::add prev_state_
-	{
-		event, opts.add_prev_state,
-		{
-			"prev_state", []
-			{
-				return json::empty_array;
-			}
-		}
-	};
-
 	return inject(eval, event, contents);
 }
 
