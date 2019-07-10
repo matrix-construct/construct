@@ -303,8 +303,11 @@ ircd::m::pretty(std::ostream &s,
 		  << " :" << event_id;
 
 		for(const auto &[algorithm, digest] : ref_hash)
-			s << " " << unquote(algorithm)
-			  << ": " << unquote(digest);
+		{
+			s << " " << unquote(algorithm);
+			if(digest)
+				s << ": " << unquote(digest);
+		}
 
 		s << std::endl;
 	}
@@ -320,8 +323,11 @@ ircd::m::pretty(std::ostream &s,
 		  << " :" << event_id;
 
 		for(const auto &[algorithm, digest] : ref_hash)
-			s << " " << unquote(algorithm)
-			  << ": " << unquote(digest);
+		{
+			s << " " << unquote(algorithm);
+			if(digest)
+				s << ": " << unquote(digest);
+		}
 
 		s << std::endl;
 	}
