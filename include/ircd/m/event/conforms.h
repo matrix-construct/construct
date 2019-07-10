@@ -75,7 +75,6 @@ enum ircd::m::event::conforms::code
 	MISSING_SIGNATURES,                ///< no signatures
 	MISSING_ORIGIN_SIGNATURE,          ///< no signature for origin
 	MISMATCH_ORIGIN_SENDER,            ///< sender mxid host not from origin
-	MISMATCH_ORIGIN_EVENT_ID,          ///< event_id mxid host not from origin
 	MISMATCH_CREATE_SENDER,            ///< m.room.create room_id host != sender host
 	MISMATCH_ALIASES_STATE_KEY,        ///< m.room.aliases has no state_key
 	SELF_REDACTS,                      ///< event redacts itself
