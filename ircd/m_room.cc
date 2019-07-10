@@ -3736,55 +3736,67 @@ ircd::m::room::head::make_refs(const head &head,
                                const size_t &_limit,
                                const bool &_need_tophead)
 {
-	size_t limit{_limit};
+	const m::event::id::closure &v1_ref{[&out]
+	(const auto &event_id)
+	{
+		json::stack::array prev{out};
+		prev.append(event_id);
+		{
+			json::stack::object nilly{prev};
+			json::stack::member willy
+			{
+				nilly, "", ""
+			};
+		}
+	}};
+
+	const m::event::id::closure &v3_ref{[&out]
+	(const auto &event_id)
+	{
+		out.append(event_id);
+	}};
+
+	char versionbuf[32];
+	const auto version
+	{
+		m::version(versionbuf, head.room, std::nothrow)
+	};
+
+	const auto &append
+	{
+		version == "1" || version == "2"? v1_ref : v3_ref
+	};
+
 	bool need_tophead{_need_tophead};
-	const auto &room{head.room};
 	const auto top_head
 	{
 		need_tophead?
-			m::top(std::nothrow, room.room_id):
+			m::top(std::nothrow, head.room.room_id):
 			std::tuple<m::id::event::buf, int64_t, m::event::idx>{}
 	};
 
+	size_t limit{_limit};
 	int64_t depth{-1};
 	m::event::fetch event;
 	head.for_each(m::room::head::closure_bool{[&]
 	(const m::event::idx &idx, const m::event::id &event_id)
 	{
-		seek(event, idx, std::nothrow);
-		if(!event.valid)
+		if(!seek(event, idx, event_id, std::nothrow))
 			return true;
 
 		if(need_tophead)
 			if(event.event_id == std::get<0>(top_head))
 				need_tophead = false;
 
+		append(event_id);
 		depth = std::max(json::get<"depth"_>(event), depth);
-		json::stack::array prev{out};
-		prev.append(event_id);
-		{
-			json::stack::object hash{prev};
-			json::stack::member will
-			{
-				hash, "", ""
-			};
-		}
-
 		return --limit - need_tophead > 0;
 	}});
 
 	if(need_tophead)
 	{
+		append(std::get<0>(top_head));
 		depth = std::get<1>(top_head);
-		json::stack::array prev{out};
-		prev.append(std::get<0>(top_head));
-		{
-			json::stack::object hash{prev};
-			json::stack::member will
-			{
-				hash, "", ""
-			};
-		}
 	}
 
 	return depth;
