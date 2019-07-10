@@ -722,9 +722,8 @@ const
 		parser.event_id_v3 >> eoi
 	};
 
-	const auto &local(this->local());
-	auto *start(std::begin(local));
-	auto *const stop(std::end(local));
+	auto *start(std::begin(*this));
+	auto *const stop(std::end(*this));
 
 	return
 		qi::parse(start, stop, is_v4)? "4":
