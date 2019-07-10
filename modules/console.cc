@@ -11623,45 +11623,30 @@ console_cmd__fed__head(opt &out, const string_view &line)
 		proto["event"]
 	};
 
+	const m::event::prev prev{event};
+	for(size_t i(0); i < prev.auth_events_count(); ++i)
+	{
+		const m::event::id &id
+		{
+			prev.auth_event(i)
+		};
+
+		out << "AUTH " << id << " " << std::endl;
+	}
+
+	for(size_t i(0); i < prev.prev_events_count(); ++i)
+	{
+		const m::event::id &id
+		{
+			prev.prev_event(i)
+		};
+
+		out << "PREV " << id << " " << std::endl;
+	}
+
 	out << "DEPTH "
 	    << event["depth"]
 	    << std::endl;
-
-	const json::array &prev_events
-	{
-		event["prev_events"]
-	};
-
-	for(const json::array &prev_event : prev_events)
-	{
-		const m::event::id &id
-		{
-			unquote(prev_event.at(0))
-		};
-
-		out << "PREV "
-		    << id << " "
-		    << string_view{prev_event.at(1)}
-		    << std::endl;
-	}
-
-	const json::array &auth_events
-	{
-		event["auth_events"]
-	};
-
-	for(const json::array &auth_event : auth_events)
-	{
-		const m::event::id &id
-		{
-			unquote(auth_event.at(0))
-		};
-
-		out << "AUTH "
-		    << id << " "
-		    << string_view{auth_event.at(1)}
-		    << std::endl;
-	}
 
 	return true;
 }

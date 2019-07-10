@@ -1569,20 +1569,15 @@ ircd::m::v1::fetch_head(const id::room &room_id,
 		proto.at("event")
 	};
 
-	const json::array prev_events
+	const m::event::prev prev
 	{
-		event.at("prev_events")
-	};
-
-	const json::array prev_event
-	{
-		prev_events.at(0)
+		event
 	};
 
 	const auto &prev_event_id
 	{
-		prev_event.at(0)
+		prev.prev_event(0)
 	};
 
-	return unquote(prev_event_id);
+	return prev_event_id;
 }
