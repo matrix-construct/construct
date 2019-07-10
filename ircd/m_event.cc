@@ -3695,21 +3695,59 @@ ircd::m::essential(m::event event,
 
 ircd::m::id::event
 ircd::m::make_id(const event &event,
+                 const string_view &version,
                  id::event::buf &buf)
 {
-	const crh::sha256::buf hash{event};
-	return make_id(event, buf, hash);
+	if(version == "1" || version == "2")
+	{
+		const crh::sha256::buf hash{event};
+		return make_id(event, version, buf, hash);
+	}
+
+	if(version == "3")
+		return event::id::v3
+		{
+			buf, event
+		};
+
+	return event::id::v4
+	{
+		buf, event
+	};
 }
 
 ircd::m::id::event
 ircd::m::make_id(const event &event,
+                 const string_view &version,
                  id::event::buf &buf,
                  const const_buffer &hash)
 {
-	char readable[b58encode_size(sha256::digest_size)];
+	char readable[b64encode_size(sha256::digest_size)];
+
+	if(version == "1" || version == "2")
+	{
+		const id::event ret
+		{
+			buf, b64tob64url(readable, b64encode_unpadded(readable, hash)), my_host()
+		};
+
+		buf.assigned(ret);
+		return ret;
+	}
+	else if(version == "3")
+	{
+		const id::event ret
+		{
+			buf, b64encode_unpadded(readable, hash), string_view{}
+		};
+
+		buf.assigned(ret);
+		return ret;
+	}
+
 	const id::event ret
 	{
-		buf, b58encode(readable, hash), my_host()
+		buf, b64tob64url(readable, b64encode_unpadded(readable, hash)), string_view{}
 	};
 
 	buf.assigned(ret);

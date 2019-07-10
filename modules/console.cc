@@ -5886,7 +5886,7 @@ console_cmd__stage__final(opt &out, const string_view &line)
 
 	m::event::id::buf event_id_buf;
 	if(!has(opts, "no_event_id"))
-		json::get<"event_id"_>(event) = make_id(event, event_id_buf);
+		json::get<"event_id"_>(event) = make_id(event, "1", event_id_buf);
 
 	thread_local char hashes_buf[512];
 	if(!has(opts, "no_hashes"))
@@ -5931,7 +5931,7 @@ console_cmd__stage__make_vector(opt &out, const string_view &line)
 		}
 		json::get<"depth"_>(event) = depth + 1;
 		json::get<"prev_events"_>(event) = json::array{st.completed()};
-		json::get<"event_id"_>(event) = make_id(event, prev_);
+		json::get<"event_id"_>(event) = make_id(event, "1", prev_);
 		json::get<"hashes"_>(event) = m::hashes(hb, event);
 		event = signatures(sb, event);
 		stage.at(i) = json::strung{event};

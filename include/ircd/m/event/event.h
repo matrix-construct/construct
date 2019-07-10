@@ -42,8 +42,8 @@ namespace ircd::m
 
 	bool check_id(const event &) noexcept;
 	bool check_id(const event &, const string_view &room_version) noexcept;
-	id::event make_id(const event &, id::event::buf &buf, const const_buffer &hash);
-	id::event make_id(const event &, id::event::buf &buf);
+	id::event make_id(const event &, const string_view &version, id::event::buf &buf, const const_buffer &hash);
+	id::event make_id(const event &, const string_view &version, id::event::buf &buf);
 
 	json::object hashes(const mutable_buffer &, const event &);
 	event signatures(const mutable_buffer &, const m::event &);
