@@ -98,6 +98,7 @@ struct waiter
 	m::user::id user_id;
 	m::room::id room_id;
 	std::string *event;
+	m::event::id::buf *event_id;
 	ctx::dock *dock;
 };
 
@@ -187,9 +188,10 @@ get__events(client &client,
 
 	ctx::dock dock;
 	std::string event;
+	m::event::id::buf eid;
 	const unique_iterator it
 	{
-		clients, clients.emplace(end(clients), waiter{request.user_id, room_id, &event, &dock})
+		clients, clients.emplace(end(clients), waiter{request.user_id, room_id, &event, &eid, &dock})
 	};
 
 	const milliseconds timeout{[&request]
@@ -240,10 +242,10 @@ get__events(client &client,
 		top, "chunk"
 	};
 
-	if(json::object(event).has("event_id"))
+	if(eid)
 		json::stack::member
 		{
-			top, "end", unquote(json::object(event).get("event_id"))
+			top, "end", eid
 		};
 	else
 		json::stack::member
@@ -289,6 +291,9 @@ handle_notify(const m::event &event,
 
 		assert(waiter.event);
 		*waiter.event = json::strung{event};
+
+		assert(waiter.event_id);
+		*waiter.event_id = event.event_id;
 
 		assert(waiter.dock);
 		waiter.dock->notify_one();
