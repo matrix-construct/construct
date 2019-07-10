@@ -767,7 +767,8 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 		thread_local char urlbuf[2048], ridbuf[768], uidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/make_join/%s/%s",
+			urlbuf, "/_matrix/federation/v1/make_join/%s/%s"
+			"?ver=1&ver=2&ver=3&ver=4&ver=5",
 			url::encode(ridbuf, room_id),
 			url::encode(uidbuf, user_id)
 		};
