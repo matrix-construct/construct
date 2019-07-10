@@ -1016,7 +1016,7 @@ ircd::m::version(const mutable_buffer &buf,
 		{
 			const json::string &version
 			{
-				content.get("version", "1")
+				content.get("room_version", "1")
 			};
 
 			ret = strlcpy
