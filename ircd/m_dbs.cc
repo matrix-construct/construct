@@ -1243,11 +1243,11 @@ ircd::m::dbs::_index_room_head_resolve(db::txn &txn,
 		return;
 
 	const event::prev prev{event};
-	for(const json::array &p : json::get<"prev_events"_>(prev))
+	for(size_t i(0); i < prev.prev_events_count(); ++i)
 	{
 		const auto &event_id
 		{
-			unquote(p.at(0))
+			prev.prev_event(i)
 		};
 
 		thread_local char buf[ROOM_HEAD_KEY_MAX_SIZE];
