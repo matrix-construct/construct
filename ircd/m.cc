@@ -1562,8 +1562,15 @@ ircd::m::vm::eval::eval(const json::array &pdus,
 
 	// Conduct each eval without letting any one exception ruin things for the
 	// others, including an interrupt. The only exception is a termination.
-	for(const m::event &event : this->pdus) try
+	for(auto it(begin(events)); it != end(events); ++it) try
 	{
+		auto &event{*it};
+		if(!json::get<"event_id"_>(event))
+			event.event_id = event::id::v4
+			{
+				this->event_id, event
+			};
+
 		// When a fault::EXISTS would not actually be revealed to the user in
 		// any way we can elide a lot of grief by checking this here first and
 		// skipping the event. The query path will be adequately cached anyway.
