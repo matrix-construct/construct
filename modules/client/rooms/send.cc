@@ -170,7 +170,7 @@ save_transaction_id(const m::event &event,
 
 	const auto &state_key
 	{
-		at<"event_id"_>(event)
+		event.event_id
 	};
 
 	send(user_room, at<"sender"_>(event), type, state_key,

@@ -124,7 +124,7 @@ ircd::m::invite_foreign(const event &event)
 {
 	const auto &event_id
 	{
-		at<"event_id"_>(event)
+		event.event_id
 	};
 
 	const auto &room_id

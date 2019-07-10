@@ -152,7 +152,7 @@ get__messages(client &client,
 	for(; it; page.dir == 'b'? --it : ++it)
 	{
 		const m::event &event{*it};
-		end = at<"event_id"_>(event);
+		end = event.event_id;
 		if(hit > page.limit || miss >= size_t(max_filter_miss))
 			break;
 

@@ -293,7 +293,7 @@ try
 {
 	const m::event::id &event_id
 	{
-		at<"event_id"_>(event)
+		event.event_id
 	};
 
 	const m::room::id &room_id
@@ -387,7 +387,7 @@ catch(const std::exception &e)
 	log::error
 	{
 		join_log, "join bootstrap for %s to %s :%s",
-		string_view{at<"event_id"_>(event)},
+		string_view{event.event_id},
 		string(host),
 		e.what()
 	};

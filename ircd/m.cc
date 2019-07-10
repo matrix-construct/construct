@@ -1467,7 +1467,7 @@ ircd::m::vm::eval::find(const event::id &event_id)
 	{
 		if(e.event_)
 		{
-			if(json::get<"event_id"_>(*e.event_) == event_id)
+			if(e.event_->event_id == event_id)
 				ret = &e;
 		}
 		else if(e.issue)
@@ -1568,7 +1568,7 @@ ircd::m::vm::eval::eval(const json::array &pdus,
 		// any way we can elide a lot of grief by checking this here first and
 		// skipping the event. The query path will be adequately cached anyway.
 		if(~(opts.warnlog | opts.errorlog) & fault::EXISTS)
-			if(m::exists(m::event::id(at<"event_id"_>(event))))
+			if(m::exists(event.event_id))
 				continue;
 
 		operator()(event);

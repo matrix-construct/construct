@@ -8377,7 +8377,7 @@ console_cmd__room__members__read(opt &out, const string_view &line)
 		out << timestr(at<"origin_server_ts"_>(event) / 1000)
 		    << " " << at<"sender"_>(event)
 		    << " " << at<"content"_>(event)
-		    << " " << at<"event_id"_>(event)
+		    << " " << event.event_id
 		    << std::endl;
 	}};
 
@@ -10046,7 +10046,7 @@ console_cmd__user__presence(opt &out, const string_view &line)
 	{
 		out << timestr(at<"origin_server_ts"_>(event) / 1000)
 		    << " " << at<"content"_>(event)
-		    << " " << at<"event_id"_>(event)
+		    << " " << event.event_id
 		    << std::endl;
 
 		return --limit > 0;
@@ -10142,7 +10142,7 @@ console_cmd__user__read(opt &out, const string_view &line)
 		out << timestr(at<"origin_server_ts"_>(event) / 1000)
 		    << " " << at<"state_key"_>(event)
 		    << " " << at<"content"_>(event)
-		    << " " << at<"event_id"_>(event)
+		    << " " << event.event_id
 		    << std::endl;
 	}});
 
@@ -10456,7 +10456,7 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 		{
 			const auto eid
 			{
-				m::redact(m::user::tokens, user.user_id, at<"event_id"_>(event), "cleared")
+				m::redact(m::user::tokens, user.user_id, event.event_id, "cleared")
 			};
 
 			out << " - cleared by " << eid;

@@ -148,8 +148,8 @@ ircd::m::pretty_oneline(std::ostream &s,
 	else
 		s << "* ";
 
-	if(defined(json::get<"event_id"_>(event)))
-		s << json::get<"event_id"_>(event) << " ";
+	if(event.event_id)
+		s << event.event_id << " ";
 	else
 		s << "* ";
 
@@ -243,7 +243,7 @@ ircd::m::pretty_msgline(std::ostream &s,
 	s << json::get<"depth"_>(event) << " :";
 	s << json::get<"type"_>(event) << " ";
 	s << json::get<"sender"_>(event) << " ";
-	s << json::get<"event_id"_>(event) << " ";
+	s << event.event_id << " ";
 
 	const auto &state_key
 	{
@@ -394,7 +394,7 @@ ircd::m::append(json::stack::object &object,
 	const auto txnid_idx
 	{
 		!has_client_txnid && sender_is_user && opts.query_txnid?
-			opts.user_room->get(std::nothrow, "ircd.client.txnid", at<"event_id"_>(event)):
+			opts.user_room->get(std::nothrow, "ircd.client.txnid", event.event_id):
 			0UL
 	};
 
@@ -403,7 +403,7 @@ ircd::m::append(json::stack::object &object,
 		log::dwarning
 		{
 			log, "Could not find transaction_id for %s from %s in %s",
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			json::get<"sender"_>(event),
 			json::get<"room_id"_>(event)
 		};
@@ -417,7 +417,7 @@ ircd::m::append(json::stack::object &object,
 			log::debug
 			{
 				log, "Not sending event '%s' because '%s' is ignored by '%s'",
-				json::get<"event_id"_>(event),
+				string_view{event.event_id},
 				json::get<"sender"_>(event),
 				string_view{*opts.user_id}
 			};
@@ -717,7 +717,7 @@ ircd::m::event::conforms::conforms(const event &e)
 			set(INVALID_OR_MISSING_REDACTS_ID);
 
 	if(json::get<"redacts"_>(e))
-		if(json::get<"redacts"_>(e) == json::get<"event_id"_>(e))
+		if(json::get<"redacts"_>(e) == e.event_id)
 			set(SELF_REDACTS);
 
 	if(json::get<"type"_>(e) == "m.room.member")
@@ -1663,7 +1663,7 @@ ircd::m::event::idx
 ircd::m::index(const event &event)
 try
 {
-	return index(at<"event_id"_>(event));
+	return index(event.event_id);
 }
 catch(const json::not_found &)
 {
@@ -1678,7 +1678,7 @@ ircd::m::index(const event &event,
                std::nothrow_t)
 try
 {
-	return index(at<"event_id"_>(event), std::nothrow);
+	return index(event.event_id, std::nothrow);
 }
 catch(const json::not_found &)
 {
@@ -1764,7 +1764,7 @@ ircd::m::event::auth::check(const event &event)
 		throw m::ACCESS_DENIED
 		{
 			"Authorization of %s failed against its auth_events :%s",
-			json::get<"event_id"_>(event),
+			string_view{event.event_id},
 			reason
 		};
 }
@@ -2321,7 +2321,7 @@ ircd::m::event::auth::failed(const m::event &event,
 
 		// b. If the domain of the event_id of the event being redacted is the
 		// same as the domain of the event_id of the m.room.redaction, allow.
-		if(event::id(json::get<"redacts"_>(event)).host() == event::id(at<"event_id"_>(event)).host())
+		if(event::id(json::get<"redacts"_>(event)).host() == user::id(at<"sender"_>(event)).host())
 			return {};
 
 		// c. Otherwise, reject.
@@ -3414,7 +3414,7 @@ catch(const m::NOT_FOUND &e)
 	log::derror
 	{
 		"Failed to verify %s because key %s for %s :%s",
-		string_view{json::get<"event_id"_>(event)},
+		string_view{event.event_id},
 		keyid,
 		origin,
 		e.what()
@@ -3768,7 +3768,7 @@ ircd::m::before(const event &a,
                 const event &b)
 {
 	const event::prev prev{b};
-	return prev.prev_events_has(at<"event_id"_>(a));
+	return prev.prev_events_has(a.event_id);
 }
 
 bool
@@ -3803,7 +3803,7 @@ bool
 ircd::m::operator==(const event &a, const event &b)
 {
 	//assert(json::get<"room_id"_>(a) == json::get<"room_id"_>(b));
-	return json::get<"event_id"_>(a) == json::get<"event_id"_>(b);
+	return a.event_id == b.event_id;
 }
 
 bool
@@ -3896,7 +3896,7 @@ bool
 ircd::m::my(const event &event)
 {
 	const auto &origin(json::get<"origin"_>(event));
-	const auto &eid(json::get<"event_id"_>(event));
+	const auto &eid(event.event_id);
 	return
 		origin?
 			my_host(origin):

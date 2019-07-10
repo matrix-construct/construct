@@ -503,13 +503,6 @@ try
 	if(opts.conform)
 		call_hook(conform_hook, eval, event, eval);
 
-	if(json::get<"event_id"_>(event))
-		if(event.event_id != json::get<"event_id"_>(event))
-			throw error
-			{
-				fault::INVALID, "event.event_id not set."
-			};
-
 	const fault ret
 	{
 		event.event_id?

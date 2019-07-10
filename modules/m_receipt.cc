@@ -437,7 +437,7 @@ try
 
 	const m::event::id &event_id
 	{
-		at<"event_id"_>(event)
+		event.event_id
 	};
 
 	const time_t &ms

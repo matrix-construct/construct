@@ -22,7 +22,7 @@ _can_create_room(const m::event &event,
 {
 	const m::event::id &event_id
 	{
-		at<"event_id"_>(event)
+		event.event_id
 	};
 
 	const m::room::id &room_id
@@ -43,12 +43,12 @@ _can_create_room(const m::event &event,
 			sender.host()
 		};
 
-	if(room_id.host() != event_id.host())
+	if(room_id.host() != sender.host())
 		throw m::ACCESS_DENIED
 		{
 			"Room on '%s' cannot be created by event from '%s'",
 			room_id.host(),
-			event_id.host()
+			sender.host()
 		};
 
 	if(room_id.host() != at<"origin"_>(event))
@@ -111,7 +111,7 @@ _created_room(const m::event &event,
 		m::log, "Creation of room %s by %s (%s)",
 		string_view{room_id},
 		at<"sender"_>(event),
-		at<"event_id"_>(event)
+		string_view{event.event_id},
 	};
 }
 

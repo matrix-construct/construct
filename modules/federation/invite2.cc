@@ -237,7 +237,7 @@ try
 	vmopts.fetch_prev_check = false;
 	vmopts.fetch_prev = false;
 
-	vmopts.non_conform |= m::event::conforms::INVALID_OR_MISSING_EVENT_ID;
+	// Don't throw an exception for a re-evaluation; this will just be a no-op
 	vmopts.nothrows |= m::vm::fault::EXISTS;
 
 	m::vm::eval

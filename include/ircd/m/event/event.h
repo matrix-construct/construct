@@ -163,7 +163,5 @@ inline ircd::m::event::operator
 id()
 const
 {
-	return json::get<"event_id"_>(*this)?
-		id{json::get<"event_id"_>(*this)}:
-		id{};
+	return event_id;
 }

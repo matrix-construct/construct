@@ -107,14 +107,14 @@ ircd::m::room::state::force_present(const m::event &event)
 		throw error
 		{
 			"event %s is not a room event (no room_id)",
-			json::get<"event_id"_>(event)
+			string_view{event.event_id}
 		};
 
 	if(!defined(json::get<"state_key"_>(event)))
 		throw error
 		{
 			"event %s is not a state event (no state_key)",
-			json::get<"event_id"_>(event)
+			string_view{event.event_id}
 		};
 
 	dbs::write_opts opts;
@@ -3746,7 +3746,7 @@ ircd::m::room::head::make_refs(const head &head,
 			return true;
 
 		if(need_tophead)
-			if(json::get<"event_id"_>(event) == std::get<0>(top_head))
+			if(event.event_id == std::get<0>(top_head))
 				need_tophead = false;
 
 		depth = std::max(json::get<"depth"_>(event), depth);
@@ -4854,7 +4854,7 @@ ircd::m::dagree_histogram(const m::room &room,
 			log::warning
 			{
 				m::log, "Event '%s' had %zu prev events (ignored)",
-				string_view(at<"event_id"_>(event))
+				string_view{event.event_id},
 			};
 
 			continue;

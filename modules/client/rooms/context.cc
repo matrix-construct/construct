@@ -189,7 +189,7 @@ get__context(client &client,
 		for(size_t i(0); i < limit && before; --before, ++i)
 		{
 			const m::event &event{*before};
-			start = at<"event_id"_>(event);
+			start = event.event_id;
 			if(!visible(event, request.user_id))
 				continue;
 
@@ -230,7 +230,7 @@ get__context(client &client,
 		for(size_t i(0); i < limit && after; ++after, ++i)
 		{
 			const m::event &event{*after};
-			end = at<"event_id"_>(event);
+			end = event.event_id;
 			if(!visible(event, request.user_id))
 				continue;
 
