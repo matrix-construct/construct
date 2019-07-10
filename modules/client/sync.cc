@@ -298,6 +298,12 @@ ircd::m::sync::handle_get(client &client,
 		range.second - range.first <= size_t(linear_delta_max)
 	};
 
+	// Logical convenience boolean
+	const bool should_polylog
+	{
+		!should_longpoll && !should_linear
+	};
+
 	// Determine if an empty sync response should be returned to the user.
 	// This is done by actually performing the sync operation based on the
 	// mode decided. The return value from the operation will be false if
@@ -305,14 +311,17 @@ ircd::m::sync::handle_get(client &client,
 	// finally send an empty response.
 	const bool complete
 	{
-		should_longpoll?
-			longpoll_handle(data):
 		should_linear?
 			linear_handle(data):
-			polylog_handle(data)
+		should_polylog?
+			polylog_handle(data):
+			false
 	};
 
 	if(complete)
+		return response;
+
+	if(longpoll_handle(data))
 		return response;
 
 	const auto &next_batch
@@ -576,11 +585,12 @@ try
 
 	log::debug
 	{
-		log, "request %s linear last:%lu %s@%lu",
+		log, "request %s linear last:%lu %s@%lu events:%zu",
 		loghead(data),
 		last,
 		completed? "complete "_sv : string_view{},
-		next
+		next,
+		vector.size(),
 	};
 
 	return last;
@@ -752,7 +762,19 @@ ircd::m::sync::longpoll_handle(data &data)
 try
 {
 	int ret;
-	for(ret = -1; ret == -1; ret = longpoll::poll(data));
+	while((ret = longpoll::poll(data)) == -1)
+	{
+		// When the client explicitly gives a next_batch token we have to
+		// adhere to it and return an empty response before going past their
+		// desired upper-bound for this /sync.
+		if(data.args->next_batch_token)
+			if(data.range.first >= data.range.second || data.range.second >= vm::sequence::retired)
+				return false;
+
+		++data.range.second;
+		assert(data.range.first <= data.range.second);
+	}
+
 	return ret;
 }
 catch(const std::system_error &e)
@@ -803,9 +825,14 @@ catch(const std::exception &e)
 int
 ircd::m::sync::longpoll::poll(data &data)
 {
+	const auto ready{[&data]
+	{
+		assert(data.range.second <= m::vm::sequence::retired + 1);
+		return data.range.second <= m::vm::sequence::retired;
+	}};
 
 	assert(data.args);
-	if(!dock.wait_until(data.args->timesout))
+	if(!dock.wait_until(data.args->timesout, ready))
 		return false;
 
 	// Check if client went away while we were sleeping,
@@ -823,14 +850,6 @@ ircd::m::sync::longpoll::poll(data &data)
 	// and end the request cleanly.
 	if(polled(data, *data.args))
 		return true;
-
-	// When the client explicitly gives a next_batch token we have to
-	// adhere to it and return an empty response before going past.
-	if(data.args->next_batch_token && m::vm::sequence::retired >= data.range.second)
-		return false;
-
-	if(data.range.second <= m::vm::sequence::retired)
-		++data.range.second;
 
 	return -1;
 }
@@ -892,7 +911,7 @@ ircd::m::sync::longpoll::polled(data &data,
 	{
 		data.event_idx?
 			std::min(data.event_idx + 1, vm::sequence::retired + 1):
-			data.range.first
+			std::min(data.range.second + 1, vm::sequence::retired + 1)
 	};
 
 	json::stack::member
