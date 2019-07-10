@@ -3712,6 +3712,58 @@ ircd::m::make_id(const event &event,
 }
 
 bool
+ircd::m::check_id(const event &event)
+noexcept
+{
+	if(!event.event_id)
+		return false;
+
+	const string_view &version
+	{
+		event.event_id.version()
+	};
+
+	return check_id(event, version);
+}
+
+bool
+ircd::m::check_id(const event &event,
+                  const string_view &room_version)
+noexcept try
+{
+	const auto &version
+	{
+		room_version?: json::get<"event_id"_>(event)? "1": "4"
+	};
+
+	thread_local char buf[64];
+	m::event::id check_id; switch(hash(version))
+	{
+		case "1"_:
+		case "2"_:
+			check_id = m::event::id{json::get<"event_id"_>(event)};
+			break;
+
+		case "3"_:
+			check_id = m::event::id::v3{buf, event};
+			break;
+
+		case "4"_:
+		case "5"_:
+		default:
+			check_id = m::event::id::v4{buf, event};
+			break;
+	}
+
+	return event.event_id == check_id;
+}
+catch(...)
+{
+	assert(0);
+	return false;
+}
+
+bool
 ircd::m::before(const event &a,
                 const event &b)
 {

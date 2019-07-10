@@ -40,6 +40,8 @@ namespace ircd::m
 	// Topological comparison
 	bool before(const event &a, const event &b);
 
+	bool check_id(const event &) noexcept;
+	bool check_id(const event &, const string_view &room_version) noexcept;
 	id::event make_id(const event &, id::event::buf &buf, const const_buffer &hash);
 	id::event make_id(const event &, id::event::buf &buf);
 
