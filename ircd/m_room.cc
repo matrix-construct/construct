@@ -1000,20 +1000,30 @@ ircd::m::version(const mutable_buffer &buf,
                  const room &room,
                  std::nothrow_t)
 {
-	string_view ret;
 	const auto event_idx
 	{
 		room.get(std::nothrow, "m.room.create", "")
 	};
 
-	if(!event_idx)
-		return ret;
-
-	m::get(std::nothrow, event_idx, "content", [&ret]
-	(const json::object &content)
+	string_view ret
 	{
-		ret = unquote(content.get("version", "1"));
-	});
+		strlcpy{buf, "1"_sv}
+	};
+
+	if(event_idx)
+		m::get(std::nothrow, event_idx, "content", [&buf, &ret]
+		(const json::object &content)
+		{
+			const json::string &version
+			{
+				content.get("version", "1")
+			};
+
+			ret = strlcpy
+			{
+				buf, version
+			};
+		});
 
 	return ret;
 }
