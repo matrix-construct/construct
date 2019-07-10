@@ -432,7 +432,13 @@ ircd::m::append(json::stack::object &object,
 		}
 	}
 
-	object.append(event);
+	if(!json::get<"event_id"_>(event))
+	{
+		auto _event(event);
+		json::get<"event_id"_>(_event) = event.event_id;
+		object.append(_event);
+	}
+	else object.append(event);
 
 	if(json::get<"state_key"_>(event) && has_event_idx)
 	{
