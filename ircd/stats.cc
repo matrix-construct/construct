@@ -48,7 +48,7 @@ ircd::stats::item::item(const json::members &opts)
 }
 ,val
 {
-	0UL
+	feature.get<long>("default", 0L)
 }
 {
 	if(name.size() > NAME_MAX_LEN)
@@ -63,7 +63,7 @@ ircd::stats::item::item(const json::members &opts)
 	if(!items.emplace(name, this).second)
 		throw error
 		{
-			"Conf item named '%s' already exists", name
+			"Stats item named '%s' already exists", name
 		};
 }
 
