@@ -44,11 +44,11 @@ ircd::replace(const string_view &s,
 }
 
 //
-// gequals
+// globular_equals
 //
 
 bool
-ircd::gequals::operator()(const string_view &a, const string_view &b)
+ircd::globular_equals::operator()(const string_view &a, const string_view &b)
 const
 {
 	size_t ap(0), bp(0);
@@ -90,14 +90,14 @@ const
 }
 
 //
-// gmatch
+// globular_match
 //
 
 bool
-ircd::gmatch::operator()(const string_view &a)
+ircd::globular_match::operator()(const string_view &a)
 const
 {
 	//TODO: optimize.
-	const gequals gequals(expr, a);
-	return bool(gequals);
+	const globular_equals globular_equals(expr, a);
+	return bool(globular_equals);
 }

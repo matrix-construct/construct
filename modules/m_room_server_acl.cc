@@ -243,7 +243,7 @@ const
 	return !for_each(prop, [&server]
 	(const string_view &expression)
 	{
-		const gmatch match
+		const globular_match match
 		{
 			expression
 		};
