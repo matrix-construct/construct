@@ -125,6 +125,7 @@ libircd_la_SOURCES += demangle.cc
 libircd_la_SOURCES += locale.cc
 libircd_la_SOURCES += lex_cast.cc
 libircd_la_SOURCES += stringops.cc
+libircd_la_SOURCES += globular.cc
 libircd_la_SOURCES += tokens.cc
 libircd_la_SOURCES += parse.cc
 libircd_la_SOURCES += rand.cc
