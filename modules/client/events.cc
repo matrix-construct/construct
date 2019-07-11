@@ -210,9 +210,10 @@ get__events(client &client,
 
 	if(!event.empty())
 	{
+		assert(!empty(eid));
 		const m::event &event_
 		{
-			event
+			event, eid
 		};
 
 		const auto &event_idx
