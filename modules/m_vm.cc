@@ -376,17 +376,17 @@ ircd::m::vm::inject(eval &eval,
 
 	// hashes
 
-	char hashes_buf[128];
+	char hashes_buf[384];
 	const string_view hashes
 	{
-		opts.add_hash?
+		opts.add_hash && eval.room_version != "1"?
 			m::event::hashes(hashes_buf, event, content):
 			string_view{}
 	};
 
 	const json::iov::add hashes_
 	{
-		event, opts.add_hash,
+		event, opts.add_hash && eval.room_version != "1",
 		{
 			"hashes", [&hashes]() -> json::value
 			{
@@ -420,6 +420,26 @@ ircd::m::vm::inject(eval &eval,
 			"event_id", [&event_id_v1]() -> json::value
 			{
 				return event_id_v1;
+			}
+		}
+	};
+
+	// hashes
+
+	const string_view hashes__
+	{
+		opts.add_hash && eval.room_version == "1"?
+			m::event::hashes(hashes_buf, event, content):
+			string_view{}
+	};
+
+	const json::iov::set hashes___
+	{
+		event, opts.add_hash && eval.room_version == "1",
+		{
+			"hashes", [&hashes__]() -> json::value
+			{
+				return hashes__;
 			}
 		}
 	};
