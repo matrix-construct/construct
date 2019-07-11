@@ -11182,11 +11182,12 @@ console_cmd__feds__head(opt &out, const string_view &line)
 
 		out << "+ " << std::setw(40) << std::left << result.origin;
 		out << " " << event["depth"];
-		for(const json::array prev_event : prev_events)
+		const m::event::prev prev(prev_events);
+		for(size_t i(0); i < prev.prev_events_count(); ++i)
 		{
 			const auto &prev_event_id
 			{
-				unquote(prev_event.at(0))
+				prev.prev_event(i)
 			};
 
 			out << " " << string_view{prev_event_id};
@@ -11290,11 +11291,12 @@ console_cmd__feds__heads(opt &out, const string_view &line)
 			event.at("prev_events")
 		};
 
-		for(const json::array &prev_event : prev_events)
+		const m::event::prev prev(prev_events);
+		for(size_t i(0); i < prev.prev_events_count(); ++i)
 		{
 			const auto &event_id
 			{
-				unquote(prev_event.at(0))
+				prev.prev_event(i)
 			};
 
 			auto it
