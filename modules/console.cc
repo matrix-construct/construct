@@ -7359,7 +7359,7 @@ console_cmd__eval__file(opt &out, const string_view &line)
 
 	const auto limit
 	{
-		token.at<size_t>(1)
+		token.at<size_t>(1, 0)
 	};
 
 	const auto start
@@ -7402,7 +7402,7 @@ console_cmd__eval__file(opt &out, const string_view &line)
 		size_t boff(0);
 		json::object object;
 		json::vector vector{read};
-		for(; boff < size(read) && i < limit; ) try
+		for(; boff < size(read) && (!limit || i < limit); ) try
 		{
 			object = *begin(vector);
 			boff += size(string_view{object});
@@ -7445,6 +7445,8 @@ console_cmd__eval__file(opt &out, const string_view &line)
 		}
 
 		foff += boff;
+		if(foff > 0 && boff == 0)
+			break;
 	}
 
 	out << "Executed " << i
