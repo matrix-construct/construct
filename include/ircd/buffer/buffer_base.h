@@ -70,6 +70,7 @@ const
 }
 
 template<class it>
+__attribute__((always_inline))
 ircd::buffer::buffer<it>::operator std::string()
 const
 {
@@ -77,6 +78,7 @@ const
 }
 
 template<class it>
+__attribute__((always_inline))
 ircd::buffer::buffer<it>::operator std::string_view()
 const
 {
@@ -84,7 +86,8 @@ const
 }
 
 template<class it>
-auto &
+inline auto &
+__attribute__((always_inline))
 ircd::buffer::buffer<it>::operator[](const size_t &i)
 {
 	assert(begin() + i < end());
@@ -92,7 +95,8 @@ ircd::buffer::buffer<it>::operator[](const size_t &i)
 }
 
 template<class it>
-auto &
+inline auto &
+__attribute__((always_inline))
 ircd::buffer::buffer<it>::operator[](const size_t &i)
 const
 {
@@ -101,7 +105,8 @@ const
 }
 
 template<class it>
-bool
+inline bool
+__attribute__((always_inline))
 ircd::buffer::buffer<it>::empty()
 const
 {
@@ -109,7 +114,8 @@ const
 }
 
 template<class it>
-bool
+inline bool
+__attribute__((always_inline))
 ircd::buffer::buffer<it>::null()
 const
 {
@@ -117,6 +123,7 @@ const
 }
 
 template<class it>
+inline __attribute__((always_inline))
 ircd::buffer::buffer<it>::operator
 const it &()
 const

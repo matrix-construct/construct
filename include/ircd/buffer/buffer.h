@@ -66,7 +66,7 @@ namespace ircd::buffer
 	template<class it> std::reverse_iterator<it> rbegin(const buffer<it> &buffer);
 	template<class it> std::reverse_iterator<it> rend(const buffer<it> &buffer);
 
-	// Single buffer tools
+	// Single buffer observers
 	template<class it> bool null(const buffer<it> &buffer);
 	template<class it> bool full(const buffer<it> &buffer);
 	template<class it> bool empty(const buffer<it> &buffer);
@@ -74,10 +74,14 @@ namespace ircd::buffer
 	template<class it> size_t size(const buffer<it> &buffer);
 	template<class it> const it &data(const buffer<it> &buffer);
 	template<class it> bool aligned(const buffer<it> &buffer, const size_t &alignment);
-	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
 	template<class it> buffer<it> operator+(const buffer<it> &buffer, const size_t &bytes);
-	template<class it> it copy(it &dest, const it &stop, const const_buffer &);
-	template<class it> it move(it &dest, const it &stop, const const_buffer &);
+	bool overlap(const const_buffer &, const const_buffer &);
+
+	// Single buffer mutators
+	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
+	template<class it> buffer<it> &operator+=(buffer<it> &buffer, const size_t &bytes);
+	char *&copy(char *&dest, char *const &stop, const const_buffer &);
+	char *&move(char *&dest, char *const &stop, const const_buffer &);
 	template<size_t SIZE> size_t copy(const mutable_buffer &dst, const char (&buf)[SIZE]);
 	template<size_t SIZE> size_t move(const mutable_buffer &dst, const char (&buf)[SIZE]);
 	size_t copy(const mutable_buffer &dst, const const_buffer &src);
@@ -194,7 +198,7 @@ ircd::buffer::buffers::copy(const mutable_buffer &dest,
 
 	size_t ret(0);
 	for(const buffer<it> &b : b)
-		ret += copy(data(dest) + ret, size(dest) - ret, b);
+		ret += copy(dest + ret, b);
 
 	return ret;
 }
@@ -288,84 +292,67 @@ ircd::buffer::copy(const mutable_buffer &dst,
 }
 
 inline size_t
-__attribute__((always_inline))
 ircd::buffer::move(const mutable_buffer &dst,
                    const const_buffer &src)
 {
-	auto e{begin(dst)};
-	move(e, end(dst), src);
-	assert(std::distance(begin(dst), e) >= 0);
-	return std::distance(begin(dst), e);
+	char *const &s(begin(dst)), *e(s);
+	e = move(e, end(dst), src);
+	assert(std::distance(s, e) >= 0);
+	return std::distance(s, e);
 }
 
 inline size_t
-__attribute__((always_inline))
 ircd::buffer::copy(const mutable_buffer &dst,
                    const const_buffer &src)
 {
-	auto e{begin(dst)};
-	copy(e, end(dst), src);
-	assert(std::distance(begin(dst), e) >= 0);
-	return std::distance(begin(dst), e);
+	char *const &s(begin(dst)), *e(s);
+	e = copy(e, end(dst), src);
+	assert(std::distance(s, e) >= 0);
+	return std::distance(s, e);
 }
 
-template<class it>
-inline it
-__attribute__((always_inline))
-ircd::buffer::move(it &dest,
-                   const it &stop,
+inline char *&
+ircd::buffer::move(char *&dest,
+                   char *const &stop,
                    const const_buffer &src)
 {
 	assert(dest <= stop);
-	const it ret(dest);
-	const size_t &srcsz(size(src));
-	const size_t &remain(std::distance(ret, stop));
-	const size_t &mvsz(std::min(srcsz, remain));
-	dest += mvsz;
-	assert(dest <= stop);
-	assert(mvsz <= srcsz);
-	assert(mvsz <= remain);
-	assert(remain >= 0);
-	memmove(ret, data(src), mvsz);
-	return ret;
-}
-
-template<class it>
-inline it
-__attribute__((always_inline))
-ircd::buffer::copy(it &dest,
-                   const it &stop,
-                   const const_buffer &src)
-{
-	assert(dest <= stop);
-	const it ret(dest);
-	const size_t &srcsz(size(src));
-	const size_t &remain(std::distance(ret, stop));
-	const size_t &cpsz(std::min(srcsz, remain));
+	const size_t remain(std::distance(dest, stop));
+	const size_t cpsz(std::min(size(src), remain));
+	assert(cpsz <= size(src));
+	assert(cpsz <= remain);
+	__builtin_memmove(dest, data(src), cpsz);
 	dest += cpsz;
 	assert(dest <= stop);
-	assert(cpsz <= srcsz);
+	return dest;
+}
+
+inline char *&
+ircd::buffer::copy(char *&dest,
+                   char *const &stop,
+                   const const_buffer &src)
+{
+	assert(dest <= stop);
+	const size_t remain(std::distance(dest, stop));
+	const size_t cpsz(std::min(size(src), remain));
+	assert(!overlap(const_buffer(dest, cpsz), src));
+	assert(cpsz <= size(src));
 	assert(cpsz <= remain);
-	assert(remain >= 0);
-	memcpy(ret, data(src), cpsz);
-	return ret;
+	__builtin_memcpy(dest, data(src), cpsz);
+	dest += cpsz;
+	assert(dest <= stop);
+	return dest;
 }
 
 template<class it>
-inline ircd::buffer::buffer<it>
+inline ircd::buffer::buffer<it> &
 __attribute__((always_inline))
-ircd::buffer::operator+(const buffer<it> &buffer,
-                        const size_t &bytes)
+ircd::buffer::operator+=(buffer<it> &buffer,
+                         const size_t &bytes)
 {
-	const size_t advance
-	{
-		std::min(bytes, size(buffer))
-	};
-
-	return
-	{
-		begin(buffer) + advance, size(buffer) - advance
-	};
+	const size_t &advance(std::min(bytes, size(buffer)));
+	consume(buffer, advance);
+	return buffer;
 }
 
 template<class it>
@@ -381,8 +368,28 @@ ircd::buffer::consume(buffer<it> &buffer,
 	return size(buffer);
 }
 
+inline bool
+__attribute__((always_inline))
+ircd::buffer::overlap(const const_buffer &a,
+                      const const_buffer &b)
+{
+	return data(a) + size(a) > data(b) &&
+	       data(a) + size(a) < data(b) + size(b);
+}
+
 template<class it>
-bool
+inline ircd::buffer::buffer<it>
+__attribute__((always_inline))
+ircd::buffer::operator+(const buffer<it> &buffer,
+                        const size_t &bytes)
+{
+	const size_t advance{std::min(bytes, size(buffer))};
+	return { begin(buffer) + advance, size(buffer) - advance };
+}
+
+template<class it>
+inline bool
+__attribute__((always_inline))
 ircd::buffer::aligned(const buffer<it> &buffer,
                       const size_t &a)
 {
@@ -410,70 +417,80 @@ ircd::buffer::size(const buffer<it> &buffer)
 }
 
 template<class it>
-bool
+inline bool
+__attribute__((always_inline))
 ircd::buffer::operator!(const buffer<it> &buffer)
 {
 	return empty(buffer);
 }
 
 template<class it>
-bool
+inline bool
+__attribute__((always_inline))
 ircd::buffer::empty(const buffer<it> &buffer)
 {
 	return null(buffer) || std::distance(get<0>(buffer), get<1>(buffer)) == 0;
 }
 
 template<class it>
-bool
+inline bool
+__attribute__((always_inline))
 ircd::buffer::full(const buffer<it> &buffer)
 {
 	return std::distance(get<0>(buffer), get<1>(buffer)) == 0;
 }
 
 template<class it>
-bool
+inline bool
+__attribute__((always_inline))
 ircd::buffer::null(const buffer<it> &buffer)
 {
 	return get<0>(buffer) == nullptr;
 }
 
 template<class it>
-std::reverse_iterator<it>
+inline std::reverse_iterator<it>
+__attribute__((always_inline))
 ircd::buffer::rend(const buffer<it> &buffer)
 {
 	return std::reverse_iterator<it>(get<0>(buffer));
 }
 
 template<class it>
-std::reverse_iterator<it>
+inline std::reverse_iterator<it>
+__attribute__((always_inline))
 ircd::buffer::rbegin(const buffer<it> &buffer)
 {
 	return std::reverse_iterator<it>(get<0>(buffer) + size(buffer));
 }
 
 template<class it>
-it &
+inline it &
+__attribute__((always_inline))
 ircd::buffer::end(buffer<it> &buffer)
 {
 	return get<1>(buffer);
 }
 
 template<class it>
-it &
+inline it &
+__attribute__((always_inline))
 ircd::buffer::begin(buffer<it> &buffer)
 {
 	return get<0>(buffer);
 }
 
 template<class it>
-const it &
+inline const it &
+__attribute__((always_inline))
 ircd::buffer::end(const buffer<it> &buffer)
 {
 	return get<1>(buffer);
 }
 
 template<class it>
-const it &
+inline const it &
+__attribute__((always_inline))
 ircd::buffer::begin(const buffer<it> &buffer)
 {
 	return get<0>(buffer);
