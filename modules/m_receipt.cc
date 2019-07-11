@@ -508,7 +508,7 @@ try
 
 	const json::string &event_id
 	{
-		at<"content"_>(event).get("event_id")
+		at<"content"_>(event).at("event_id")
 	};
 
 	// Lastly, we elide broadcasts of receipts for a user's own message.
