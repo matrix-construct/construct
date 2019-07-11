@@ -166,8 +166,9 @@ get__missing_events(client &client,
 			continue;
 
 		events.append(event);
-		for(const json::array &prev : json::get<"prev_events"_>(event))
-			if(!add_queue(unquote(prev.at(0))))
+		const m::event::prev prev(event);
+		for(size_t i(0); i < prev.prev_events_count(); ++i)
+			if(!add_queue(prev.prev_event(i)))
 				break;
 	}
 
