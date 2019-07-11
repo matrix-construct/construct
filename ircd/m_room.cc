@@ -3872,8 +3872,7 @@ const
 	const m::event::id::closure &v3_ref{[&out]
 	(const auto &event_id)
 	{
-		json::stack::array auth{out};
-		auth.append(event_id);
+		out.append(event_id);
 	}};
 
 	char versionbuf[64];
