@@ -1548,12 +1548,6 @@ ircd::m::vm::eval::eval(const json::array &pdus,
                         const vm::opts &opts)
 :opts{&opts}
 {
-	if(pdus.size() == 1)
-	{
-		operator()(m::event(pdus.at(0)));
-		return;
-	}
-
 	// Sort the events first to avoid complicating the evals; the events might
 	// be from different rooms but it doesn't matter.
 	std::vector<m::event> events(begin(pdus), end(pdus));
