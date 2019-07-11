@@ -9,9 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_USER_BREADCRUMB_ROOMS_H
+#define HAVE_IRCD_M_BREADCRUMB_ROOMS_H
 
-struct ircd::m::user::breadcrumb_rooms
+namespace ircd::m
+{
+	struct breadcrumb_rooms;
+}
+
+struct ircd::m::breadcrumb_rooms
 {
 	using closure = std::function<void (const string_view &)>;
 	using closure_bool = std::function<bool (const string_view &)>;

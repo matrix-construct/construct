@@ -7285,12 +7285,18 @@ console_cmd__commit(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__eval__file(opt &out, const string_view &line);
+
+bool
 console_cmd__eval(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
 		"event_id", "opts",
 	}};
+
+	if(!valid(m::id::EVENT, param.at(0)))
+		return console_cmd__eval__file(out, line);
 
 	const m::event::id &event_id
 	{
@@ -7378,8 +7384,6 @@ console_cmd__eval__file(opt &out, const string_view &line)
 	};
 
 	m::vm::opts opts;
-	opts.notify = false;
-	opts.verify = false;
 	m::vm::eval eval
 	{
 		opts
@@ -10829,7 +10833,7 @@ console_cmd__user__breadcrumb_rooms(opt &out, const string_view &line)
 		param.at("user_id")
 	};
 
-	const m::user::breadcrumb_rooms breadcrumb_rooms
+	const m::breadcrumb_rooms breadcrumb_rooms
 	{
 		user_id
 	};

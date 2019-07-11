@@ -77,6 +77,7 @@ namespace ircd::m
 #include "app.h"
 #include "sync.h"
 #include "fetch.h"
+#include "breadcrumb_rooms.h"
 
 struct ircd::m::init
 {
