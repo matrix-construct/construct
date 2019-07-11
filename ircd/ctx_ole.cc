@@ -13,8 +13,6 @@
 
 namespace ircd::ctx::ole
 {
-	using closure = std::function<void ()>;
-
 	extern conf::item<size_t> thread_max;
 
 	std::mutex mutex;
@@ -54,8 +52,11 @@ noexcept
 }
 
 void
-ircd::ctx::ole::offload(const std::function<void ()> &func)
+ircd::ctx::ole::offload(const opts &opts,
+                        const closure &func)
 {
+	assert(opts.concurrency == 1); // not yet implemented
+
 	bool done(false);
 	auto *const context(current);
 	const auto kick([&context, &done]
@@ -85,6 +86,10 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 	// to another thread. This context must stay right here and not disappear
 	// until the other thread signals back. Note that the destructor is
 	// capable of throwing an interrupt that was received during this scope.
+	//
+	// Don't throw any exception if there is a pending interrupt for this ctx.
+	// Two exceptions will be thrown in that case and if there's an interrupt
+	// we don't care about eptr anyway.
 	const uninterruptible uninterruptible;
 
 	push(std::move(closure)); do
@@ -93,13 +98,12 @@ ircd::ctx::ole::offload(const std::function<void ()> &func)
 	}
 	while(!done);
 
-	// Don't throw any exception if there is a pending interrupt for this ctx.
-	// Two exceptions will be thrown in that case and if there's an interrupt
-	// we don't care about eptr anyway.
-	if(eptr && likely(!interruption_requested()))
+	if(unlikely(interruption_requested()))
+		return;
+
+	if(eptr)
 		std::rethrow_exception(eptr);
 }
-
 void
 ircd::ctx::ole::push(closure &&func)
 {

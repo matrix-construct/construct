@@ -20,14 +20,29 @@
 namespace ircd::ctx::ole
 {
 	struct init;
+	struct opts;
+	struct control;
+	using closure = std::function<void ()>;
 
-	void offload(const std::function<void ()> &);
+	void offload(const opts &, const closure &);
 }
 
 namespace ircd::ctx
 {
 	using ole::offload;
 }
+
+struct ircd::ctx::ole::opts
+{
+	/// Optionally give this offload task a name for any tasklist.
+	string_view name;
+
+	/// The function will be executed on each thread.
+	size_t concurrency {1};
+
+	/// Queuing priority; in the form of a nice value.
+	int8_t prio {0};
+};
 
 struct ircd::ctx::ole::init
 {
