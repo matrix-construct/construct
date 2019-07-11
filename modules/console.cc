@@ -416,10 +416,17 @@ console_cmd__exit(opt &out, const string_view &line)
 	return false;
 }
 
+//
+// Test trigger stub
+//
 bool
 console_cmd__test(opt &out, const string_view &line)
 {
-	ircd::test(); // Test trigger stub
+	const bool result
+	{
+		ircd_test(line)
+	};
+
 	return true;
 }
 

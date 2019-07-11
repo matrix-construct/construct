@@ -11,8 +11,7 @@
 #pragma once
 #define HAVE_IRCD_UTIL_TEST_H
 
-namespace ircd {
-inline namespace util
+namespace ircd
 {
-	void test();
-}}
+	extern "C" bool ircd_test(const string_view & = {});
+}
