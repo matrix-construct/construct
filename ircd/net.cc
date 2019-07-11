@@ -2697,11 +2697,33 @@ decltype(ircd::net::socket::instances)
 ircd::net::socket::instances
 {};
 
-decltype(ircd::net::socket::in_total)
-ircd::net::socket::in_total;
+decltype(ircd::net::socket::total_bytes_in)
+ircd::net::socket::total_bytes_in
+{
+	{ "name", "ircd.net.socket.in.total.bytes"                      },
+	{ "desc", "The total number of bytes received by all sockets"   },
+};
 
-decltype(ircd::net::socket::out_total)
-ircd::net::socket::out_total;
+decltype(ircd::net::socket::total_bytes_out)
+ircd::net::socket::total_bytes_out
+{
+	{ "name", "ircd.net.socket.out.total.bytes"                     },
+	{ "desc", "The total number of bytes received by all sockets"   },
+};
+
+decltype(ircd::net::socket::total_calls_in)
+ircd::net::socket::total_calls_in
+{
+	{ "name", "ircd.net.socket.in.total.calls"                      },
+	{ "desc", "The total number of read operations on all sockets"  },
+};
+
+decltype(ircd::net::socket::total_calls_out)
+ircd::net::socket::total_calls_out
+{
+	{ "name", "ircd.net.socket.out.total.calls"                      },
+	{ "desc", "The total number of write operations on all sockets"  },
+};
 
 //
 // socket
@@ -3193,8 +3215,8 @@ try
 
 	++in.calls;
 	in.bytes += ret;
-	++in_total.calls;
-	in_total.bytes += ret;
+	++total_calls_in;
+	total_bytes_in += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
@@ -3231,8 +3253,8 @@ try
 
 	++in.calls;
 	in.bytes += ret;
-	++in_total.calls;
-	in_total.bytes += ret;
+	++total_calls_in;
+	total_bytes_in += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
@@ -3259,8 +3281,8 @@ ircd::net::socket::read_any(iov&& bufs)
 
 	++in.calls;
 	in.bytes += ret;
-	++in_total.calls;
-	in_total.bytes += ret;
+	++total_calls_in;
+	total_bytes_in += ret;
 
 	if(likely(!ec))
 		return ret;
@@ -3287,8 +3309,8 @@ ircd::net::socket::read_one(iov&& bufs)
 
 	++in.calls;
 	in.bytes += ret;
-	++in_total.calls;
-	in_total.bytes += ret;
+	++total_calls_in;
+	total_bytes_in += ret;
 
 	if(likely(!ec))
 		return ret;
@@ -3328,8 +3350,8 @@ try
 
 	++out.calls;
 	out.bytes += ret;
-	++out_total.calls;
-	out_total.bytes += ret;
+	++total_calls_out;
+	total_bytes_out += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
@@ -3360,8 +3382,8 @@ try
 
 	++out.calls;
 	out.bytes += ret;
-	++out_total.calls;
-	out_total.bytes += ret;
+	++total_calls_out;
+	total_bytes_out += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
@@ -3388,8 +3410,8 @@ try
 
 	++out.calls;
 	out.bytes += ret;
-	++out_total.calls;
-	out_total.bytes += ret;
+	++total_calls_out;
+	total_bytes_out += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)
@@ -3411,8 +3433,8 @@ try
 
 	++out.calls;
 	out.bytes += ret;
-	++out_total.calls;
-	out_total.bytes += ret;
+	++total_calls_out;
+	total_bytes_out += ret;
 	return ret;
 }
 catch(const boost::system::system_error &e)

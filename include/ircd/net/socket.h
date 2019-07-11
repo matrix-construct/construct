@@ -48,7 +48,10 @@ struct ircd::net::socket
 
 	static uint64_t count;                       // monotonic
 	static uint64_t instances;                   // current socket count
-	static stat in_total, out_total;
+	static stats::item total_bytes_in;
+	static stats::item total_bytes_out;
+	static stats::item total_calls_in;
+	static stats::item total_calls_out;
 
 	uint64_t id {++count};
 	ip::tcp::socket sd;
