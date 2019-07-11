@@ -53,7 +53,7 @@ namespace ircd::m
 #include "invite_3pid.h"
 #include "createroom.h"
 #include "room/room.h"
-#include "user.h"
+#include "user/user.h"
 #include "users.h"
 #include "rooms.h"
 #include "filter.h"

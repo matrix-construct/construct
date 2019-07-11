@@ -11,6 +11,23 @@
 #pragma once
 #define HAVE_IRCD_M_USER_USER_H
 
+namespace ircd::m
+{
+	struct user;
+
+	bool my(const user &);
+	bool exists(const user &);
+	bool exists(const id::user &);
+
+	user create(const id::user &, const json::members &args = {});
+}
+
+/// This lightweight object is the strong type for a user.
+///
+/// Instances of this object are used as an argument in many places. The
+/// sub-objects form special interfaces for the core tools and features
+/// related to users. Not all user-related features are nested here,
+/// only fundamentals which are generally used further by other features.
 struct ircd::m::user
 {
 	struct room;
@@ -62,3 +79,15 @@ const
 {
 	return user_id;
 }
+
+#include "room.h"
+#include "rooms.h"
+#include "mitsein.h"
+#include "events.h"
+#include "profile.h"
+#include "account_data.h"
+#include "room_account_data.h"
+#include "room_tags.h"
+#include "filter.h"
+#include "ignores.h"
+#include "highlight.h"
