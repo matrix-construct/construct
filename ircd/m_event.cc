@@ -1693,18 +1693,14 @@ catch(const json::not_found &)
 ircd::m::event::idx
 ircd::m::index(const event &event,
                std::nothrow_t)
-try
 {
 	return index(event.event_id, std::nothrow);
-}
-catch(const json::not_found &)
-{
-	return 0;
 }
 
 ircd::m::event::idx
 ircd::m::index(const event::id &event_id)
 {
+	assert(event_id);
 	const auto ret
 	{
 		index(event_id, std::nothrow)
