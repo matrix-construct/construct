@@ -148,6 +148,7 @@ libircd_la_SOURCES += prof.cc
 libircd_la_SOURCES += fs.cc
 libircd_la_SOURCES += ios.cc
 libircd_la_SOURCES += ctx.cc
+libircd_la_SOURCES += ctx_ole.cc
 if AIO
 libircd_la_SOURCES += fs_aio.cc
 endif
