@@ -244,5 +244,16 @@ is_powerof2(const long long v)
 	return v && !(v & (v - 1LL));
 }
 
+template<class T>
+T
+minmax(T ret,
+       const T &min,
+       const T &max)
+{
+	ret = std::max(ret, min);
+	ret = std::min(ret, max);
+	return ret;
+}
+
 } // namespace util
 } // namespace ircd
