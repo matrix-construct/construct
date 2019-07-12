@@ -361,6 +361,11 @@ try
 			e.errcode(),
 			e.errstr()
 		};
+
+		// For DM's if we can't invite the counter-party there's no point in
+		// creating the room, we can just abort instead.
+		if(json::get<"is_direct"_>(c))
+			throw;
 	}
 	catch(const std::exception &e)
 	{
