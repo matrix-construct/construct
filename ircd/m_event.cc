@@ -4055,6 +4055,8 @@ ircd::m::event::event(id::buf &buf,
 		id{id::v3{buf, source}}:
 	version == "4"?
 		id{id::v4{buf, source}}:
+	source.has("event_id")?
+		id{unquote(source.at("event_id"))}:
 		id{id::v4{buf, source}},
 }
 {

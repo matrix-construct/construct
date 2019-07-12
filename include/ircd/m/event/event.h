@@ -137,7 +137,7 @@ struct ircd::m::event
 
 	event(const json::object &, const id &, const keys &);
 	event(const json::object &, const id &);
-	event(id::buf &, const json::object &, const string_view &version = "1");
+	event(id::buf &, const json::object &, const string_view &version = {});
 	event(const json::object &, const keys &);
 	event(const json::object &);
 	explicit event(const json::members &);
