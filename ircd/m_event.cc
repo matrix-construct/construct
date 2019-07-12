@@ -4070,7 +4070,11 @@ ircd::m::event::event(const json::object &source,
 }
 ,event_id
 {
-	event_id
+	event_id?
+		event_id:
+	defined(json::get<"event_id"_>(*this))?
+		id{json::get<"event_id"_>(*this)}:
+		id{},
 }
 ,source
 {
@@ -4088,7 +4092,11 @@ ircd::m::event::event(const json::object &source,
 }
 ,event_id
 {
-	event_id
+	event_id?
+		event_id:
+	defined(json::get<"event_id"_>(*this))?
+		id{json::get<"event_id"_>(*this)}:
+		id{},
 }
 ,source
 {
