@@ -25,6 +25,7 @@ namespace ircd::m::v1
 #include "make_join.h"
 #include "send_join.h"
 #include "invite.h"
+#include "invite2.h"
 #include "event.h"
 #include "event_auth.h"
 #include "query_auth.h"
