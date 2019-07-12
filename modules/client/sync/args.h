@@ -97,6 +97,9 @@ struct ircd::m::sync::args
 		request.query.get("set_presence", true)
 	};
 
+	/// (non-spec) Controls whether to enable phased-polylog-initial-sync, also
+	/// known as Crazy-Loading. This is enabled by default, but a query string
+	/// of `?phased=0` will disable it for synapse-like behavior.
 	bool phased
 	{
 		request.query.get("phased", true)
