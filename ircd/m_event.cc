@@ -123,46 +123,46 @@ ircd::m::pretty_oneline(std::ostream &s,
                         const bool &content_keys)
 {
 	if(defined(json::get<"room_id"_>(event)))
-		s << json::get<"room_id"_>(event) << " ";
+		s << json::get<"room_id"_>(event) << ' ';
 	else
 		s << "* ";
 
 	if(json::get<"depth"_>(event) != json::undefined_number)
-		s << json::get<"depth"_>(event) << " ";
+		s << json::get<"depth"_>(event) << ' ';
 	else
 		s << "* ";
 
 	thread_local char sdbuf[48];
 	if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
-		s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << " ";
+		s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << ' ';
 	else
 		s << "* ";
 
 	if(defined(json::get<"origin"_>(event)))
-		s << ':' << json::get<"origin"_>(event) << " ";
+		s << ':' << json::get<"origin"_>(event) << ' ';
 	else
 		s << ":* ";
 
 	if(defined(json::get<"sender"_>(event)))
-		s << json::get<"sender"_>(event) << " ";
+		s << json::get<"sender"_>(event) << ' ';
 	else
 		s << "* ";
 
 	if(event.event_id)
-		s << event.event_id << " ";
+		s << event.event_id << ' ';
 	else
 		s << m::event::id::v4{sdbuf, event} << ' ';
 
 	const auto &auth_events{json::get<"auth_events"_>(event)};
-	s << "A:" << auth_events.count() << " ";
+	s << "A:" << auth_events.count() << ' ';
 
 	const auto &prev_events{json::get<"prev_events"_>(event)};
-	s << "E:" << prev_events.count() << " ";
+	s << "E:" << prev_events.count() << ' ';
 
 	const auto &hashes{json::get<"hashes"_>(event)};
 	s << "[ ";
 	for(const auto &hash : hashes)
-		s << hash.first << " ";
+		s << hash.first << ' ';
 	s << "] ";
 
 	const auto &signatures{json::get<"signatures"_>(event)};
@@ -171,14 +171,14 @@ ircd::m::pretty_oneline(std::ostream &s,
 	{
 		s << signature.first << "[ ";
 		for(const auto &key : json::object{signature.second})
-			s << key.first << " ";
+			s << key.first << ' ';
 
 		s << "] ";
 	}
 	s << "] ";
 
 	if(defined(json::get<"type"_>(event)))
-		s << json::get<"type"_>(event) << " ";
+		s << json::get<"type"_>(event) << ' ';
 	else
 		s << "* ";
 
@@ -188,11 +188,11 @@ ircd::m::pretty_oneline(std::ostream &s,
 	};
 
 	if(defined(state_key) && empty(state_key))
-		s << "\"\"" << " ";
+		s << "\"\"" << ' ';
 	else if(defined(state_key))
-		s << state_key << " ";
+		s << state_key << ' ';
 	else
-		s << "*" << " ";
+		s << "*" << ' ';
 
 	const string_view &membership
 	{
@@ -201,10 +201,10 @@ ircd::m::pretty_oneline(std::ostream &s,
 			"*"_sv
 	};
 
-	s << membership << " ";
+	s << membership << ' ';
 
 	if(defined(json::get<"redacts"_>(event)))
-		s << json::get<"redacts"_>(event) << " ";
+		s << json::get<"redacts"_>(event) << ' ';
 	else
 		s << "* ";
 
@@ -219,7 +219,7 @@ ircd::m::pretty_oneline(std::ostream &s,
 	{
 		s << "+" << string_view{contents}.size() << " bytes :";
 		for(const auto &content : contents)
-			s << content.first << " ";
+			s << content.first << ' ';
 	}
 
 	return s;
@@ -241,9 +241,9 @@ ircd::m::pretty_msgline(std::ostream &s,
                         const event &event)
 {
 	s << json::get<"depth"_>(event) << " :";
-	s << json::get<"type"_>(event) << " ";
-	s << json::get<"sender"_>(event) << " ";
-	s << event.event_id << " ";
+	s << json::get<"type"_>(event) << ' ';
+	s << json::get<"sender"_>(event) << ' ';
+	s << event.event_id << ' ';
 
 	const auto &state_key
 	{
@@ -251,11 +251,11 @@ ircd::m::pretty_msgline(std::ostream &s,
 	};
 
 	if(defined(state_key) && empty(state_key))
-		s << "\"\"" << " ";
+		s << "\"\"" << ' ';
 	else if(defined(state_key))
-		s << state_key << " ";
+		s << state_key << ' ';
 	else
-		s << "*" << " ";
+		s << "*" << ' ';
 
 	const json::object &content
 	{
@@ -265,8 +265,8 @@ ircd::m::pretty_msgline(std::ostream &s,
 	switch(hash(json::get<"type"_>(event)))
 	{
 		case "m.room.message"_:
-			s << unquote(content.get("msgtype")) << " ";
-			s << unquote(content.get("body")) << " ";
+			s << unquote(content.get("msgtype")) << ' ';
+			s << unquote(content.get("body")) << ' ';
 			break;
 
 		default:
@@ -304,7 +304,7 @@ ircd::m::pretty(std::ostream &s,
 
 		for(const auto &[algorithm, digest] : ref_hash)
 		{
-			s << " " << unquote(algorithm);
+			s << ' ' << unquote(algorithm);
 			if(digest)
 				s << ": " << unquote(digest);
 		}
@@ -324,7 +324,7 @@ ircd::m::pretty(std::ostream &s,
 
 		for(const auto &[algorithm, digest] : ref_hash)
 		{
-			s << " " << unquote(algorithm);
+			s << ' ' << unquote(algorithm);
 			if(digest)
 				s << ": " << unquote(digest);
 		}
@@ -342,13 +342,13 @@ ircd::m::pretty_oneline(std::ostream &s,
 	const auto &auth_events{json::get<"auth_events"_>(prev)};
 	s << "A[ ";
 	for(const json::array auth_event : auth_events)
-		s << unquote(auth_event[0]) << " ";
+		s << unquote(auth_event[0]) << ' ';
 	s << "] ";
 
 	const auto &prev_events{json::get<"prev_events"_>(prev)};
 	s << "E[ ";
 	for(const json::array prev_event : prev_events)
-		s << unquote(prev_event[0]) << " ";
+		s << unquote(prev_event[0]) << ' ';
 	s << "] ";
 
 	return s;
