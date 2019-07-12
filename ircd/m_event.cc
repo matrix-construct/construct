@@ -151,7 +151,7 @@ ircd::m::pretty_oneline(std::ostream &s,
 	if(event.event_id)
 		s << event.event_id << " ";
 	else
-		s << "* ";
+		s << m::event::id::v4{sdbuf, event} << ' ';
 
 	const auto &auth_events{json::get<"auth_events"_>(event)};
 	s << "A:" << auth_events.count() << " ";
