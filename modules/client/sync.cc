@@ -266,17 +266,17 @@ ircd::m::sync::handle_get(client &client,
 	const bool should_longpoll
 	{
 		// longpoll can be disabled by a conf item (for developers).
-		longpoll_enable &&
+		longpoll_enable
 
 		// polylog-phased sync and longpoll are totally exclusive.
-		!data.phased &&
+		&& !data.phased
 
 		// initial_sync cannot hang on a longpoll otherwise bad things clients
-		!initial_sync &&
+		&& !initial_sync
 
 		// When the since token is in advance of the vm sequence number
 		// there's no events to consider for a sync.
-		range.first > vm::sequence::retired
+		&& range.first > vm::sequence::retired
 	};
 
 	// Determine if linear sync mode should be used. If this is not used, and
@@ -284,23 +284,25 @@ ircd::m::sync::handle_get(client &client,
 	const bool should_linear
 	{
 		// There is a conf item (for developers) to force polylog mode.
-		!polylog_only &&
+		!polylog_only
 
 		// polylog-phased sync and linear are totally exclusive.
-		!data.phased &&
+		&& !data.phased
 
 		// If longpoll was already determined there's no need for linear
-		!should_longpoll &&
+		&& !should_longpoll
 
 		// The primary condition for a linear sync is the number of events
 		// in the range being considered by the sync. That threshold is
 		// supplied by a conf item.
-		range.second - range.first <= size_t(linear_delta_max)
+		&& range.second - range.first <= size_t(linear_delta_max)
 	};
 
-	// Logical convenience boolean
+	// Determine if polylog sync mode should be used.
 	const bool should_polylog
 	{
+		// Polylog mode is only used when neither of the other two modes
+		// are determined.
 		!should_longpoll && !should_linear
 	};
 
