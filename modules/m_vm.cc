@@ -233,11 +233,6 @@ ircd::m::vm::inject(eval &eval,
 		*eval.copts
 	};
 
-	const json::iov::push room_id
-	{
-		event, { "room_id", room.room_id }
-	};
-
 	const m::room::head head
 	{
 		room
@@ -337,14 +332,28 @@ ircd::m::vm::inject(eval &eval,
 			eval.issue = nullptr;
 	}};
 
+	const scope_restore eval_room_id
+	{
+		eval.room_id,
+		!eval.room_id &&
+		event.has("room_id")?
+			string_view{event.at("room_id")}:
+			string_view{eval.room_id}
+	};
+
 	assert(eval.issue);
 	assert(eval.copts);
 	assert(eval.opts);
 	assert(eval.copts);
-
 	const auto &opts
 	{
 		*eval.copts
+	};
+
+	assert(eval.room_id);
+	const json::iov::push room_id
+	{
+		event, { "room_id", eval.room_id }
 	};
 
 	const json::iov::add origin_
