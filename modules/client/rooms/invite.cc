@@ -145,46 +145,43 @@ try
 	};
 
 	mutable_buffer buf{bufs};
-	const auto proto
+	const auto &invite_room_state
 	{
-		json::stringify(buf, event)
+		json::empty_array
 	};
 
-	m::v1::invite::opts opts;
+	const auto proto
+	{
+		json::stringify(buf, json::members
+		{
+			{ "room_version",       json::value { "4", json::STRING } }, //TODO: conf
+			{ "event",              event                             },
+			{ "invite_room_state",  invite_room_state                 },
+		})
+	};
+
+	m::v2::invite::opts opts;
 	opts.remote = target.host();
-	m::v1::invite request
+	m::v2::invite request
 	{
 		room_id, event_id, proto, buf, std::move(opts)
 	};
 
 	request.wait(seconds(10)); //TODO: conf
-	request.get();
-
-	const json::array &response
-	{
-		request.in.content
-	};
-
 	const http::code &rcode
 	{
-		http::code(lex_cast<ushort>(response.at(0)))
+		request.get()
 	};
 
-	if(rcode != http::OK)
-		throw http::error
-		{
-			rcode
-		};
-
-	const json::object &robject
+	const json::object &response
 	{
-		response.at(1)
+		request
 	};
 
 	m::event::id::buf revent_id;
 	const m::event &revent
 	{
-		revent_id, robject.at("event")
+		revent_id, response.at("event")
 	};
 
 	if(!verify(revent, target.host()))
