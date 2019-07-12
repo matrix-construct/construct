@@ -12269,9 +12269,10 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		request
 	};
 
+	m::event::id::buf _event_id;
 	const m::event event
 	{
-		response
+		_event_id, response
 	};
 
 	out << pretty(event) << std::endl;
