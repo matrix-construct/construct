@@ -425,18 +425,20 @@ ircd::m::keys::cache::get(const string_view &server_name,
 		server_name
 	};
 
-	const auto reclosure{[&closure]
-	(const m::event &event)
-	{
-		closure(json::get<"content"_>(event));
-	}};
-
 	// Without a key_id we search for the most recent key; note this is not
 	// the same as making a state_key="" query, as that would be an actual
 	// ircd.key entry without an id (which shouldn't exist).
-	return !key_id?
-		node_room.get(std::nothrow, "ircd.key", reclosure):
-		node_room.get(std::nothrow, "ircd.key", key_id, reclosure);
+	const event::idx &event_idx
+	{
+		key_id?
+			node_room.get(std::nothrow, "ircd.key", key_id):
+			node_room.get(std::nothrow, "ircd.key")
+	};
+
+	if(!event_idx)
+		return false;
+
+	return m::get(std::nothrow, event_idx, "content", closure);
 }
 
 bool
