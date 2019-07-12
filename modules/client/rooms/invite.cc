@@ -180,9 +180,10 @@ ircd::m::invite_foreign(const event &event)
 		response.at(1)
 	};
 
+	m::event::id::buf revent_id;
 	const m::event &revent
 	{
-		robject.at("event")
+		revent_id, robject.at("event")
 	};
 
 	if(!verify(revent, target.host()))
