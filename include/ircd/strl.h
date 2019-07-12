@@ -51,8 +51,8 @@ struct ircd::strlcpy
 		if(!max)
 			return {};
 
-		const auto len{std::min(src.size(), max - 1)};
-		memcpy(dst, src.data(), len);
+		const auto len(std::min(src.size(), max - 1));
+		buffer::copy(mutable_buffer(dst, len), src);
 		dst[len] = '\0';
 		return { dst, len };
 	}()}
