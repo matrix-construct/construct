@@ -63,7 +63,7 @@ namespace ircd::m
 #include "register.h"
 #include "device.h"
 #include "request.h"
-#include "v1/v1.h"
+#include "fed/fed.h"
 #include "keys.h"
 #include "edu.h"
 #include "presence.h"

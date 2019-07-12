@@ -121,6 +121,7 @@ ircd::m::on_invite_foreign(const event &event,
 
 ircd::m::event::id::buf
 ircd::m::invite_foreign(const event &event)
+try
 {
 	const auto &event_id
 	{
@@ -205,5 +206,17 @@ ircd::m::invite_foreign(const event &event)
 	vmopts.infolog_accept = true;
 
 	m::vm::eval(revent, vmopts);
-	return at<"event_id"_>(revent);
+	return revent.event_id;
+}
+catch(const http::error &e)
+{
+	log::error
+	{
+		"Contacting remote for invite %s :%s :%s",
+		string_view{event.event_id},
+		e.what(),
+		e.content,
+	};
+
+	throw;
 }
