@@ -34,7 +34,7 @@ class ircd::m::error
 	static thread_local char fmtbuf[4_KiB];
 
 	IRCD_OVERLOAD(internal)
-	error(internal_t, const http::code &, const json::strung &object);
+	error(internal_t, const http::code &, std::string object);
 
   protected:
 	IRCD_OVERLOAD(child)

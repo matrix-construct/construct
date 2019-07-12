@@ -5203,23 +5203,23 @@ ircd::m::error::fmtbuf
 //
 
 ircd::m::error::error()
-:http::error
+:error
 {
-	http::INTERNAL_SERVER_ERROR
+	internal, http::INTERNAL_SERVER_ERROR, std::string{},
 }
 {}
 
 ircd::m::error::error(std::string c)
-:http::error
+:error
 {
-	http::INTERNAL_SERVER_ERROR, std::move(c)
+	internal, http::INTERNAL_SERVER_ERROR, std::move(c),
 }
 {}
 
 ircd::m::error::error(const http::code &c)
-:http::error
+:error
 {
-	c, std::string{}
+	internal, c, std::string{},
 }
 {}
 
@@ -5227,7 +5227,7 @@ ircd::m::error::error(const http::code &c,
                       const json::members &members)
 :error
 {
-	internal, c, json::strung{members}
+	internal, c, json::strung{members},
 }
 {}
 
@@ -5235,24 +5235,24 @@ ircd::m::error::error(const http::code &c,
                       const json::iov &iov)
 :error
 {
-	internal, c, json::strung{iov}
+	internal, c, json::strung{iov},
 }
 {}
 
 ircd::m::error::error(const http::code &c,
                       const json::object &object)
-:http::error
+:error
 {
-	c, std::string{object}, vector_view<const http::header>{_error_headers}
+	internal, c, json::strung{object},
 }
 {}
 
 ircd::m::error::error(internal_t,
                       const http::code &c,
-                      const json::strung &object)
+                      std::string object)
 :http::error
 {
-	c, object, vector_view<const http::header>{_error_headers}
+	c, std::move(object), vector_view<const http::header>{_error_headers}
 }
 {}
 
