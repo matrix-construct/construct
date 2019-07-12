@@ -5254,7 +5254,20 @@ ircd::m::error::error(internal_t,
 {
 	c, std::move(object), vector_view<const http::header>{_error_headers}
 }
-{}
+{
+	if(!object.empty())
+	{
+		const json::string &_errcode(json::object(object).get("errcode"));
+		const json::string &_error(json::object(object).get("error"));
+
+		if(!strnlen(ircd::exception::buf, sizeof(ircd::exception::buf)))
+			strlcat(ircd::exception::buf, " ");
+
+		strlcat(ircd::exception::buf, _errcode);
+		strlcat(ircd::exception::buf, " :");
+		strlcat(ircd::exception::buf, _error);
+	}
+}
 
 ircd::string_view
 ircd::m::error::errstr()
