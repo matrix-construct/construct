@@ -218,7 +218,9 @@ get__events(client &client,
 
 		const auto &event_idx
 		{
-			m::index(event_)
+			event_.event_id?
+				m::index(event_):
+				0UL
 		};
 
 		const auto &room_depth
