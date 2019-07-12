@@ -140,6 +140,8 @@ struct ircd::m::room
 	bool has(const string_view &type) const;
 	bool get(std::nothrow_t, const string_view &type, const event::closure &) const;
 	void get(const string_view &type, const event::closure &) const;
+	event::idx get(std::nothrow_t, const string_view &type) const;
+	event::idx get(const string_view &type) const;
 
 	// misc / convenience utils
 	bool membership(const m::id::user &, const string_view &membership = "join") const;

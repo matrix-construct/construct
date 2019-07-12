@@ -1369,6 +1369,42 @@ const
 }
 
 ircd::m::event::idx
+ircd::m::room::get(const string_view &type)
+const
+{
+	const event::idx ret
+	{
+		get(std::nothrow, type)
+	};
+
+	if(unlikely(!ret))
+		throw m::NOT_FOUND
+		{
+			"No events of type '%s' found in '%s'",
+			type,
+			room_id
+		};
+
+	return ret;
+}
+
+ircd::m::event::idx
+ircd::m::room::get(std::nothrow_t,
+                   const string_view &type)
+const
+{
+	event::idx ret{0};
+	for_each(type, event::closure_idx_bool{[&ret]
+	(const event::idx &event_idx)
+	{
+		ret = event_idx;
+		return false;
+	}});
+
+	return ret;
+}
+
+ircd::m::event::idx
 ircd::m::room::get(const string_view &type,
                    const string_view &state_key)
 const
