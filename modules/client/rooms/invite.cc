@@ -167,11 +167,24 @@ try
 		room_id, event_id, proto, buf, std::move(opts)
 	};
 
-	request.wait(seconds(10)); //TODO: conf
-	const http::code &rcode
+	http::code rcode; try
 	{
-		request.get()
-	};
+		request.wait(seconds(10)); //TODO: conf
+		rcode = request.get();
+	}
+	catch(const http::error &e)
+	{
+		log::error
+		{
+			"Invite %s to %s :%s :%s",
+			string_view{event.event_id},
+			string(opts.remote),
+			e.what(),
+			e.content,
+		};
+
+		throw;
+	}
 
 	const json::object &response
 	{
@@ -205,14 +218,13 @@ try
 	m::vm::eval(revent, vmopts);
 	return revent.event_id;
 }
-catch(const http::error &e)
+catch(const std::exception &e)
 {
 	log::error
 	{
-		"Contacting remote for invite %s :%s :%s",
+		"Invite remote %s :%s",
 		string_view{event.event_id},
 		e.what(),
-		e.content,
 	};
 
 	throw;
