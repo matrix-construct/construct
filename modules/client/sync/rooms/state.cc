@@ -208,8 +208,8 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	};
 
 	ctx::mutex mutex;
-	std::array<event::idx, 64> md; //TODO: conf
-	std::vector<event::fetch> event(md.size() * 2);
+	std::array<event::idx, 64> md;
+	std::vector<event::fetch> event(md.size() * 3);
 	for(auto &fetch : event)
 		fetch = event::fetch{_default_fopts};
 
@@ -237,19 +237,21 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		ret = true;
 	}};
 
-	ctx::parallel<event::idx> parallel
+	ctx::concurrent<event::idx> concurrent
 	{
 		m::sync::pool, md, each_idx
 	};
 
-	state.for_each([&data, &parallel]
+	state.for_each([&data, &concurrent, &each_idx]
 	(const m::event::idx &event_idx)
 	{
-		if(apropos(data, event_idx))
-			parallel(event_idx);
+		if(!apropos(data, event_idx))
+			return;
+
+		concurrent(event_idx);
 	});
 
-	parallel.wait_done();
+	concurrent.wait_done();
 	return ret;
 }
 

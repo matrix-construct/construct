@@ -101,7 +101,7 @@ namespace ircd::ctx
 #include "pool.h"
 #include "ole.h"
 #include "fault.h"
-#include "parallel.h"
+#include "concurrent.h"
 
 // Exports to ircd::
 namespace ircd

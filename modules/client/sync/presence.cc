@@ -123,12 +123,12 @@ ircd::m::sync::presence_polylog(data &data)
 		};
 	}};
 
-	// Setup for parallelization.
+	// Setup for concurrentization.
 	static const size_t fibers(64); //TODO: conf
 	using buffer = std::array<char[m::id::MAX_SIZE+1], fibers>;
 	const auto buf(std::make_unique<buffer>());
 	std::array<string_view, fibers> q;
-	ctx::parallel<string_view> parallel
+	ctx::concurrent<string_view> concurrent
 	{
 		m::sync::pool, q, [&data, &append_event]
 		(const m::user::id user_id)
@@ -145,19 +145,18 @@ ircd::m::sync::presence_polylog(data &data)
 
 	// Iterate all of the users visible to our user in joined rooms.
 	const m::user::mitsein mitsein{data.user};
-	mitsein.for_each("join", [&parallel, &q, &buf]
+	mitsein.for_each("join", [&concurrent, &q, &buf]
 	(const m::user &user)
 	{
 		// Manual copy of the user_id string to the buffer and assignment
-		// of q at the next position. parallel.snd is the position in q
-		// which ctx::parallel wants us to store the next data at. The
-		// parallel() call doesn't return (blocks this context) until there's
+		// of q at the next position. concurrent.snd is the position in q
+		// which ctx::concurrent wants us to store the next data at. The
+		// concurrent() call doesn't return (blocks this context) until there's
 		// a next position available; propagating flow-control for the iter.
-		const auto pos(parallel.nextpos());
-		q[pos] = strlcpy(buf->at(pos), user.user_id);
-		parallel();
+		const auto pos(concurrent.nextpos());
+		concurrent(strlcpy(buf->at(pos), user.user_id));
 	});
 
-	parallel.wait_done();
+	concurrent.wait_done();
 	return ret;
 }
