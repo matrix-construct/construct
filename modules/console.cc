@@ -11175,14 +11175,9 @@ console_cmd__feds__head(opt &out, const string_view &line)
 			result.object.at("event")
 		};
 
-		const json::array prev_events
-		{
-			event["prev_events"]
-		};
-
 		out << "+ " << std::setw(40) << std::left << result.origin;
 		out << " " << event["depth"];
-		const m::event::prev prev(prev_events);
+		const m::event::prev prev(event);
 		for(size_t i(0); i < prev.prev_events_count(); ++i)
 		{
 			const auto &prev_event_id
