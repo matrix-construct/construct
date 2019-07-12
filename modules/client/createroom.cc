@@ -486,6 +486,14 @@ ircd::m::_create_event(const createroom &c)
 		}
 	};
 
+	const json::iov::push _room_version
+	{
+		content,
+		{
+			"room_version", json::value { "4", json::STRING }
+		}
+	};
+
 	room room
 	{
 		at<"room_id"_>(c)
