@@ -514,7 +514,6 @@ ircd::fs::flush(const fd &fd,
 namespace ircd::fs
 {
 	static bool fincore(void *const &map, const size_t &map_size, uint8_t *const &vec, const size_t &vec_size);
-	static size_t advise(const fd &, const size_t &, const read_opts &, const int &advice);
 }
 
 ircd::fs::read_opts
@@ -522,64 +521,16 @@ const ircd::fs::read_opts_default
 {};
 
 size_t
-ircd::fs::evict(const fd &fd,
-                const size_t &count,
-                const read_opts &opts)
-{
-	#if defined(POSIX_FADV_DONTNEED)
-		return advise(fd, count, opts, POSIX_FADV_DONTNEED);
-	#else
-		return 0UL;
-	#endif
-}
-
-size_t
 ircd::fs::prefetch(const fd &fd,
                    const size_t &count,
                    const read_opts &opts)
 {
 	#if defined(POSIX_FADV_WILLNEED)
-		return advise(fd, count, opts, POSIX_FADV_WILLNEED);
+		return advise(fd, POSIX_FADV_WILLNEED, count, opts);
 	#else
 		return 0UL;
 	#endif
 }
-
-#if defined(HAVE_POSIX_FADVISE)
-size_t
-ircd::fs::advise(const fd &fd,
-                 const size_t &count,
-                 const read_opts &opts,
-                 const int &advice)
-{
-	static const size_t max_count
-	{
-		128_KiB
-	};
-
-	size_t i(0), off, cnt; do
-	{
-		off = opts.offset + max_count * i++;
-		cnt = std::min(opts.offset + count - off, max_count);
-		switch(const auto r(::posix_fadvise(fd, off, cnt, advice)); r)
-		{
-			case 0:   break;
-			default:  throw_system_error(r);
-		}
-	}
-	while(off + cnt < opts.offset + count);
-	return count;
-}
-#else
-size_t
-ircd::fs::advise(const fd &fd,
-                 const size_t &count,
-                 const read_opts &opts,
-                 const int &advice)
-{
-	return 0UL;
-}
-#endif
 
 bool
 ircd::fs::fincore(const fd &fd,
@@ -1469,6 +1420,61 @@ ircd::fs::fd::opts::direct_io_enable
 	{ "default",  true                           },
 	{ "persist",  false                          },
 };
+
+#if defined(POSIX_FADV_DONTNEED)
+size_t
+ircd::fs::evict(const fd &fd,
+                const size_t &count,
+                const opts &opts)
+{
+	return advise(fd, POSIX_FADV_DONTNEED, count, opts);
+}
+#else
+#warning "POSIX_FADV_DONTNEED not available on this platform."
+size_t
+ircd::fs::evict(const fd &fd,
+                const size_t &count,
+                const opts &opts)
+{
+	return 0UL;
+}
+#endif
+
+#if defined(HAVE_POSIX_FADVISE)
+size_t
+ircd::fs::advise(const fd &fd,
+                 const int &advice,
+                 const size_t &count,
+                 const opts &opts)
+{
+	static const size_t max_count
+	{
+		128_KiB
+	};
+
+	size_t i(0), off, cnt; do
+	{
+		off = opts.offset + max_count * i++;
+		cnt = std::min(opts.offset + count - off, max_count);
+		switch(const auto r(::posix_fadvise(fd, off, cnt, advice)); r)
+		{
+			case 0:   break;
+			default:  throw_system_error(r);
+		}
+	}
+	while(off + cnt < opts.offset + count);
+	return count;
+}
+#else
+#warning "posix_fadvise(2) not available for this compilation."
+size_t
+ircd::fs::advise(const fd &fd,
+                 const int &advice,
+                 const size_t &count,
+                 const opts &opts)
+{
+}
+#endif
 
 #if defined(HAVE_FCNTL_H) && defined(F_SET_FILE_RW_HINT)
 void
