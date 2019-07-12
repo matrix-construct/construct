@@ -50,6 +50,8 @@ endif
 
 DEPS = *.h */*.h */*/*.h */*/*/*.h
 
+# includedir = @includedir@/$(PACKAGE_TARNAME)
+includedir = @includedir@/ircd
 nobase_include_HEADERS = $(DEPS)
 noinst_HEADERS = *.gch
 
@@ -69,3 +71,18 @@ clean-local:
 	rm -f ircd.pic.h.gch
 	rm -f spirit.h.gch
 	rm -f *.gch.tmp
+
+install-mkdirs: $(DEPS) spirit.h.gch ircd.pic.h.gch ircd.h.gch
+	-@if test ! -d $(DESTDIR)$(includedir); then \
+		echo "mkdir -p $(DESTDIR)$(includedir)"; \
+		mkdir -p $(DESTDIR)$(includedir); \
+	fi
+
+install: install-mkdirs
+	@echo "ircd: installing headers"
+	@for i in $(srcdir)/*; do \
+		if [[ "$$i" != "./Makefile"* ]] && [[ "$$i" != *.h.gch ]]; then \
+			echo "installing $$i to $(DESTDIR)$(includedir)"; \
+			cp -r $$i $(DESTDIR)$(includedir); \
+		fi \
+	done

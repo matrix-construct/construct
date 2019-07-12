@@ -985,6 +985,13 @@ AC_SUBST_DIR([bindir])
 RB_DEFINE_UNQUOTED([BIN_DIR], ["$bindir"], [Directory where binary executables are to be found.])
 
 dnl
+dnl includedir
+dnl
+
+AC_SUBST_DIR([includedir])
+RB_DEFINE_UNQUOTED([INCLUDE_DIR], ["$includedir"], [Prefix where headers are installed.])
+
+dnl
 dnl libdir
 dnl
 
