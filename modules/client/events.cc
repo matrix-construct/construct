@@ -194,26 +194,26 @@ get__events(client &client,
 		clients, clients.emplace(end(clients), waiter{request.user_id, room_id, &event, &eid, &dock})
 	};
 
-	const milliseconds timeout{[&request]
+	const milliseconds timeout
 	{
-		const milliseconds _default(timeout_default);
-		milliseconds ret(request.query.get("timeout", _default));
-		ret = std::max(ret, milliseconds(timeout_min));
-		ret = std::min(ret, milliseconds(timeout_max));
-		return ret;
-	}()};
+		minmax
+		(
+			request.query.get("timeout", milliseconds(timeout_default)),
+			milliseconds(timeout_min),
+			milliseconds(timeout_max)
+		)
+	};
 
-	dock.wait_for(timeout, [&event]
+	dock.wait_for(timeout, [&event, &eid]
 	{
-		return !empty(event);
+		return !empty(event) && !empty(eid);
 	});
 
 	if(!event.empty())
 	{
-		assert(!empty(eid));
 		const m::event &event_
 		{
-			event, eid
+			json::object(event), eid
 		};
 
 		const auto &event_idx
