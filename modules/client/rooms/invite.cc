@@ -128,7 +128,7 @@ try
 		event.event_id
 	};
 
-	const auto &room_id
+	const m::room::id &room_id
 	{
 		at<"room_id"_>(event)
 	};
@@ -144,20 +144,44 @@ try
 		148_KiB
 	};
 
-	mutable_buffer buf{bufs};
-	const auto &invite_room_state
+	json::stack out{bufs};
+	json::stack::object top{out};
 	{
-		json::empty_array
+		char versionbuf[32];
+		json::stack::member room_version
+		{
+			top, "room_version", json::value
+			{
+				m::version(versionbuf, room_id, std::nothrow), json::STRING
+			}
+		};
+	}
+	{
+		json::stack::array invite_room_state
+		{
+			top, "invite_room_state"
+		};
+
+		const m::room::state state
+		{
+			room_id
+		};
+	}
+
+	json::stack::member
+	{
+		top, "event", json::value{event}
 	};
 
-	const auto proto
+	top.~object();
+	const string_view &proto
 	{
-		json::stringify(buf, json::members
-		{
-			{ "room_version",       json::value { "4", json::STRING } }, //TODO: conf
-			{ "event",              event                             },
-			{ "invite_room_state",  invite_room_state                 },
-		})
+		out.completed()
+	};
+
+	const mutable_buffer buf
+	{
+		bufs + size(proto)
 	};
 
 	m::v2::invite::opts opts;
