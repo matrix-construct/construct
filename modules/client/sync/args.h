@@ -105,5 +105,14 @@ struct ircd::m::sync::args
 		request.query.get("phased", true)
 	};
 
+	/// (non-spec) If this is set to true, the only response content from /sync
+	/// will be a `next_batch` token. This is useful for clients that only want
+	/// to use /sync as a semaphore notifying about new activity, but will
+	/// retrieve the actual data another way.
+	bool semaphore
+	{
+		request.query.get("semaphore", false)
+	};
+
 	args(const resource::request &request);
 };

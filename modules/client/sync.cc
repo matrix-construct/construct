@@ -296,6 +296,9 @@ ircd::m::sync::handle_get(client &client,
 		// in the range being considered by the sync. That threshold is
 		// supplied by a conf item.
 		&& range.second - range.first <= size_t(linear_delta_max)
+
+		// When the semaphore query param is set we don't need linear mode.
+		&& !args.semaphore
 	};
 
 	// Determine if polylog sync mode should be used.
@@ -304,6 +307,9 @@ ircd::m::sync::handle_get(client &client,
 		// Polylog mode is only used when neither of the other two modes
 		// are determined.
 		!should_longpoll && !should_linear
+
+		// When the semaphore query param is set we don't need polylog mode.
+		&& !args.semaphore
 	};
 
 	// Determine if an empty sync response should be returned to the user.
@@ -892,6 +898,11 @@ ircd::m::sync::longpoll::polled(data &data,
 	};
 
 	if(!consumed)
+		return false;
+
+	// In semaphore-mode we're just here to ride the longpoll's blocking
+	// behavior. We want the client to get an empty response.
+	if(args.semaphore)
 		return false;
 
 	const json::vector vector
