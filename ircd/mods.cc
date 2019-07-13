@@ -56,12 +56,6 @@ decltype(ircd::mods::mod::loaded)
 ircd::mods::mod::loaded
 {};
 
-// Allows module to communicate static destruction is taking place when mapi::header
-// destructs. If dlclose() returns without this being set, dlclose() lied about really
-// unloading the module. That is considered a "stuck" module.
-bool
-ircd::mapi::static_destruction;
-
 const char *const
 ircd::mapi::import_section_names[]
 {
@@ -69,6 +63,104 @@ ircd::mapi::import_section_names[]
 	IRCD_MODULE_EXPORT_DATA_SECTION,
 	nullptr
 };
+
+// Allows module to communicate static destruction is taking place when mapi::header
+// destructs. If dlclose() returns without this being set, dlclose() lied about really
+// unloading the module. That is considered a "stuck" module.
+bool
+ircd::mapi::static_destruction;
+
+bool
+ircd::mods::unload(mod &mod)
+{
+	if(!mod.handle.is_loaded())
+		return false;
+
+	if(mods::unloading(mod.name()))
+		return false;
+
+	// Mark this module in the unloading state.
+	mod.unloading.emplace_front(&mod);
+
+	log::debug
+	{
+		log, "Attempting unload module '%s' @ `%s'",
+		mod.name(),
+		mod.location()
+	};
+
+	// Call the user's unloading function here.
+	assert(mod.header);
+	assert(mod.header->meta);
+	if(mod.header->meta->fini)
+		mod.header->meta->fini();
+
+	// Save the children! dlclose() does not like to be called recursively during static
+	// destruction of a module. The mod ctor recorded all of the modules loaded while this
+	// module was loading so we can reverse the record and unload them here.
+	// Note: If the user loaded more modules from inside their module they will have to dtor them
+	// before 'static destruction' does. They can also do that by adding them to this vector.
+	std::for_each(rbegin(mod.children), rend(mod.children), []
+	(auto *const &ptr)
+	{
+		// Only trigger an unload if there is one reference remaining to the module,
+		// in addition to the reference created by invoking shared_from() right here.
+		if(shared_from(*ptr).use_count() <= 2)
+			unload(*ptr);
+	});
+
+	log::debug
+	{
+		log, "Attempting static unload for '%s' @ `%s'",
+		mod.name(),
+		mod.location()
+	};
+
+	mapi::static_destruction = false;
+	mod.handle.unload();
+	assert(!mod.handle.is_loaded());
+	mod.loaded.erase(mod.name());
+	mod.unloading.remove(&mod);
+	if(!mapi::static_destruction)
+	{
+		handle_stuck(mod);
+		return false;
+	}
+	else log::info
+	{
+		log, "Unloaded '%s'", mod.name()
+	};
+
+	return true;
+}
+
+void
+ircd::mods::handle_stuck(mod &mod)
+{
+	log::critical
+	{
+		log, "Module \"%s\" is stuck and failing to unload.",
+		mod.name()
+	};
+}
+
+void
+ircd::mods::handle_ebadf(const string_view &what)
+{
+	const auto pos(what.find("undefined symbol: "));
+	if(pos == std::string_view::npos)
+		return;
+
+	const auto msg(what.substr(pos));
+	const auto mangled(between(msg, ": ", ")"));
+	const auto demangled(demangle(mangled));
+	throw undefined_symbol
+	{
+		"undefined symbol '%s' (%s)",
+		demangled,
+		mangled
+	};
+}
 
 //
 // mods::mod::mod
@@ -225,7 +317,7 @@ catch(const boost::system::system_error &e)
 ircd::mods::mod::~mod()
 noexcept try
 {
-	unload();
+	unload(*this);
 }
 catch(const std::exception &e)
 {
@@ -238,71 +330,6 @@ catch(const std::exception &e)
 
 	if(!ircd::debugmode)
 		return;
-}
-
-bool
-ircd::mods::mod::unload()
-{
-	if(!handle.is_loaded())
-		return false;
-
-	if(mods::unloading(name()))
-		return false;
-
-	// Mark this module in the unloading state.
-	unloading.emplace_front(this);
-
-	log::debug
-	{
-		log, "Attempting unload module '%s' @ `%s'",
-		name(),
-		location()
-	};
-
-	// Call the user's unloading function here.
-	assert(header);
-	assert(header->meta);
-	if(header->meta->fini)
-		header->meta->fini();
-
-	// Save the children! dlclose() does not like to be called recursively during static
-	// destruction of a module. The mod ctor recorded all of the modules loaded while this
-	// module was loading so we can reverse the record and unload them here.
-	// Note: If the user loaded more modules from inside their module they will have to dtor them
-	// before 'static destruction' does. They can also do that by adding them to this vector.
-	std::for_each(rbegin(this->children), rend(this->children), []
-	(mod *const &ptr)
-	{
-		// Only trigger an unload if there is one reference remaining to the module,
-		// in addition to the reference created by invoking shared_from() right here.
-		if(shared_from(*ptr).use_count() <= 2)
-			ptr->unload();
-	});
-
-	log::debug
-	{
-		log, "Attempting static unload for '%s' @ `%s'",
-		name(),
-		location()
-	};
-
-	mapi::static_destruction = false;
-	handle.unload();
-	assert(!handle.is_loaded());
-	loaded.erase(name());
-	unloading.remove(this);
-	if(!mapi::static_destruction)
-		log::critical
-		{
-			"Module \"%s\" is stuck and failing to unload.", name()
-		};
-	else
-		log::info
-		{
-			log, "Unloaded '%s'", name()
-		};
-
-	return true;
 }
 
 ircd::string_view &
@@ -318,24 +345,6 @@ const
 {
 	assert(header);
 	return header->operator[](key);
-}
-
-void
-ircd::mods::handle_ebadf(const string_view &what)
-{
-	const auto pos(what.find("undefined symbol: "));
-	if(pos == std::string_view::npos)
-		return;
-
-	const auto msg(what.substr(pos));
-	const auto mangled(between(msg, ": ", ")"));
-	const auto demangled(demangle(mangled));
-	throw undefined_symbol
-	{
-		"undefined symbol '%s' (%s)",
-		demangled,
-		mangled
-	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////

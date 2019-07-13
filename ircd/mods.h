@@ -10,12 +10,16 @@
 
 namespace ircd::mods
 {
-	extern const std::string prefix;
-	extern const std::string suffix;
+	struct mod;
 
 	template<class R, class F> R info(const string_view &, F&& closure);
 
 	void handle_ebadf(const string_view &what);
+	void handle_stuck(mod &);
+	bool unload(mod &);
+
+	extern const std::string prefix;
+	extern const std::string suffix;
 }
 
 /// Internal module representation. This object closely wraps the dlopen()
@@ -45,6 +49,7 @@ struct ircd::mods::mod
 	const std::string _location;
 	mapi::header *header;
 
+  public:
 	// Metadata
 	const string_view &operator[](const string_view &s) const;
 	string_view &operator[](const string_view &s);
@@ -54,8 +59,6 @@ struct ircd::mods::mod
 	auto &location() const                       { return _location;                               }
 	auto &version() const                        { return header->version;                         }
 	auto &description() const                    { return (*this)["description"];                  }
-
-	bool unload();
 
 	explicit mod(std::string path, const load_mode::type &);
 
