@@ -18,11 +18,11 @@ namespace ircd::ctx::ole
 	std::mutex mutex;
 	std::condition_variable cond;
 	bool termination;
-	std::deque<closure> queue;
+	std::deque<offload::closure> queue;
 	std::vector<std::thread> threads;
 
-	closure pop();
-	void push(closure &&);
+	offload::closure pop();
+	void push(offload::closure &&);
 	void worker() noexcept;
 }
 
@@ -51,9 +51,8 @@ noexcept
 	});
 }
 
-void
-ircd::ctx::ole::offload(const opts &opts,
-                        const closure &func)
+ircd::ctx::ole::offload::offload(const opts &opts,
+                                 const closure &func)
 {
 	assert(opts.concurrency == 1); // not yet implemented
 
@@ -105,7 +104,7 @@ ircd::ctx::ole::offload(const opts &opts,
 		std::rethrow_exception(eptr);
 }
 void
-ircd::ctx::ole::push(closure &&func)
+ircd::ctx::ole::push(offload::closure &&func)
 {
 	if(unlikely(threads.size() < size_t(thread_max)))
 		threads.emplace_back(&worker);
@@ -141,7 +140,7 @@ catch(const interrupted &)
 	cond.notify_all();
 }
 
-ircd::ctx::ole::closure
+ircd::ctx::ole::offload::closure
 ircd::ctx::ole::pop()
 {
 	std::unique_lock lock(mutex);
