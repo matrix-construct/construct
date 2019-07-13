@@ -72,7 +72,7 @@ clean-local:
 	rm -f spirit.h.gch
 	rm -f *.gch.tmp
 
-install-mkdirs: $(DEPS) spirit.h.gch ircd.pic.h.gch ircd.h.gch
+install-mkdirs: $(DEPS) ircd.h.gch ircd.pic.h.gch spirit.h.gch
 	-@if test ! -d $(DESTDIR)$(includedir); then \
 		echo "mkdir -p $(DESTDIR)$(includedir)"; \
 		mkdir -p $(DESTDIR)$(includedir); \
