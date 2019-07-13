@@ -332,9 +332,9 @@ catch(const server::error &e)
 
 m::event::id::buf
 IRCD_MODULE_EXPORT
-ircd::m::user::profile::set(const m::user &user,
-                            const string_view &key,
+ircd::m::user::profile::set(const string_view &key,
                             const string_view &val)
+const
 {
 	const m::user::room user_room
 	{
@@ -347,12 +347,43 @@ ircd::m::user::profile::set(const m::user &user,
 	});
 }
 
+ircd::string_view
+IRCD_MODULE_EXPORT
+ircd::m::user::profile::get(const mutable_buffer &out,
+                            const string_view &key)
+const
+{
+	string_view ret;
+	get(std::nothrow, key, [&out, &ret]
+	(const string_view &key, const string_view &val)
+	{
+		ret = { data(out), copy(out, val) };
+	});
+
+	return ret;
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::user::profile::get(const string_view &key,
+                            const closure &closure)
+const
+{
+	if(!get(std::nothrow, key, closure))
+		throw m::NOT_FOUND
+		{
+			"Property %s in profile for %s not found",
+			key,
+			string_view{user.user_id}
+		};
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::user::profile::get(std::nothrow_t,
-                            const m::user &user,
                             const string_view &key,
                             const closure &closure)
+const
 {
 	const user::room user_room{user};
 	const room::state state{user_room};
@@ -375,8 +406,8 @@ ircd::m::user::profile::get(std::nothrow_t,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::user::profile::for_each(const m::user &user,
-                                 const closure_bool &closure)
+ircd::m::user::profile::for_each(const closure_bool &closure)
+const
 {
 	const user::room user_room{user};
 	const room::state state{user_room};
@@ -439,7 +470,7 @@ ircd::m::user::profile::fetch(const m::user &user,
 		});
 
 		if(!exists)
-			profile.set(user, member.first, member.second);
+			profile.set(member.first, member.second);
 	}
 }
 

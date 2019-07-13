@@ -18,10 +18,6 @@ struct ircd::m::user::account_data
 
 	m::user user;
 
-	static bool for_each(const m::user &, const closure_bool &);
-	static bool get(std::nothrow_t, const m::user &, const string_view &type, const closure &);
-	static event::id::buf set(const m::user &, const string_view &type, const json::object &value);
-
   public:
 	bool for_each(const closure_bool &) const;
 	bool get(std::nothrow_t, const string_view &type, const closure &) const;

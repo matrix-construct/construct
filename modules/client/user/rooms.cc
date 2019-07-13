@@ -270,9 +270,8 @@ delete__tags(client &client,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::user::room_tags::del(const m::user &user,
-                              const m::room &room,
-                              const string_view &user_type)
+ircd::m::user::room_tags::del(const string_view &user_type)
+const
 {
 	char typebuf[typebuf_size];
 	const string_view type
@@ -304,10 +303,9 @@ ircd::m::user::room_tags::del(const m::user &user,
 
 m::event::id::buf
 IRCD_MODULE_EXPORT
-ircd::m::user::room_tags::set(const m::user &user,
-                              const m::room &room,
-                              const string_view &user_type,
+ircd::m::user::room_tags::set(const string_view &user_type,
                               const json::object &value)
+const
 {
 	char typebuf[typebuf_size];
 	const string_view type
@@ -323,13 +321,44 @@ ircd::m::user::room_tags::set(const m::user &user,
 	return send(user_room, user, type, user_type, value);
 }
 
+ircd::json::object
+IRCD_MODULE_EXPORT
+ircd::m::user::room_tags::get(const mutable_buffer &out,
+                              const string_view &type)
+const
+{
+	json::object ret;
+	get(std::nothrow, type, [&out, &ret]
+	(const string_view &type, const json::object &val)
+	{
+		ret = string_view { data(out), copy(out, val) };
+	});
+
+	return ret;
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::user::room_tags::get(const string_view &type,
+                              const closure &closure)
+const
+{
+	if(!get(std::nothrow, type, closure))
+		throw m::NOT_FOUND
+		{
+			"account data type '%s' for user %s in room %s not found",
+			type,
+			string_view{user.user_id},
+			string_view{room.room_id}
+		};
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::user::room_tags::get(std::nothrow_t,
-                              const m::user &user,
-                              const m::room &room,
                               const string_view &user_type,
                               const closure &closure)
+const
 {
 	char typebuf[typebuf_size];
 	const string_view type
@@ -356,9 +385,8 @@ ircd::m::user::room_tags::get(std::nothrow_t,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::user::room_tags::for_each(const m::user &user,
-                                   const m::room &room,
-                                   const closure_bool &closure)
+ircd::m::user::room_tags::for_each(const closure_bool &closure)
+const
 {
 	char typebuf[typebuf_size];
 	const string_view type
@@ -474,10 +502,9 @@ get__account_data(client &client,
 
 m::event::id::buf
 IRCD_MODULE_EXPORT
-ircd::m::user::room_account_data::set(const m::user &user,
-                                      const m::room &room,
-                                      const string_view &user_type,
+ircd::m::user::room_account_data::set(const string_view &user_type,
                                       const json::object &value)
+const
 {
 	char typebuf[typebuf_size];
 	const string_view type
@@ -493,13 +520,44 @@ ircd::m::user::room_account_data::set(const m::user &user,
 	return send(user_room, user, type, user_type, value);
 }
 
+ircd::json::object
+IRCD_MODULE_EXPORT
+ircd::m::user::room_account_data::get(const mutable_buffer &out,
+                                      const string_view &type)
+const
+{
+	json::object ret;
+	get(std::nothrow, type, [&out, &ret]
+	(const string_view &type, const json::object &val)
+	{
+		ret = string_view { data(out), copy(out, val) };
+	});
+
+	return ret;
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::user::room_account_data::get(const string_view &type,
+                                      const closure &closure)
+const
+{
+	if(!get(std::nothrow, type, closure))
+		throw m::NOT_FOUND
+		{
+			"account data type '%s' for user %s in room %s not found",
+			type,
+			string_view{user.user_id},
+			string_view{room.room_id}
+	};
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::user::room_account_data::get(std::nothrow_t,
-                                      const m::user &user,
-                                      const m::room &room,
                                       const string_view &user_type,
                                       const closure &closure)
+const
 {
 	char typebuf[typebuf_size];
 	const string_view type
@@ -523,9 +581,8 @@ ircd::m::user::room_account_data::get(std::nothrow_t,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::user::room_account_data::for_each(const m::user &user,
-                                           const m::room &room,
-                                           const closure_bool &closure)
+ircd::m::user::room_account_data::for_each(const closure_bool &closure)
+const
 {
 	char typebuf[typebuf_size];
 	const string_view type

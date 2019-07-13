@@ -19,8 +19,6 @@ struct ircd::m::user::ignores
 	m::user user;
 
 	static bool enforce(const string_view &type);
-	static bool for_each(const m::user &, const closure_bool &);
-	static bool has(const m::user &, const m::user::id &other);
 
   public:
 	bool for_each(const closure_bool &) const;

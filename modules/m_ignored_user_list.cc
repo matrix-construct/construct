@@ -99,10 +99,10 @@ handle_m_ignored_user(const m::event &event,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::user::ignores::has(const m::user &user,
-                            const m::user::id &other)
+ircd::m::user::ignores::has(const m::user::id &other)
+const
 {
-	return !for_each(user, [&other]
+	return !for_each([&other]
 	(const m::user::id &user_id, const json::object &)
 	{
 		return user_id != other;
@@ -111,9 +111,8 @@ ircd::m::user::ignores::has(const m::user &user,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::user::ignores::for_each(const m::user &user,
-                                 const closure_bool &closure)
-try
+ircd::m::user::ignores::for_each(const closure_bool &closure)
+const try
 {
 	const m::user::account_data account_data
 	{

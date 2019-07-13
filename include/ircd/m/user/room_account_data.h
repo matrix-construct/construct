@@ -30,9 +30,6 @@ struct ircd::m::user::room_account_data
 	m::room room;
 
 	static string_view _type(const mutable_buffer &out, const m::room::id &);
-	static bool for_each(const m::user &, const m::room &, const closure_bool &);
-	static bool get(std::nothrow_t, const m::user &, const m::room &, const string_view &type, const closure &);
-	static event::id::buf set(const m::user &, const m::room &, const string_view &type, const json::object &value);
 
   public:
 	bool for_each(const closure_bool &) const;
