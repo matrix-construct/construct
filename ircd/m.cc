@@ -177,6 +177,7 @@ noexcept
 decltype(ircd::m::module_names)
 ircd::m::module_names
 {
+	"m_noop",
 	"m_vm",
 	"conf",
 	"m_node",
@@ -190,6 +191,7 @@ ircd::m::module_names
 	"m_events",
 	"m_rooms",
 	"m_user",
+	"m_ignored_user_list",
 	"m_room_aliases",
 	"m_room_canonical_alias",
 	"m_room_create",
@@ -206,13 +208,12 @@ ircd::m::module_names
 	"m_device",
 	"m_direct",
 	"m_direct_to_device",
-	"m_ignored_user_list",
-	"m_noop",
 	"key_query",
 	"key_server",
 	"media_magick",
 	"media_media",
 	"client_account",
+	"client_user",
 	"client_capabilities",
 	"client_createroom",
 	"client_delete_devices",
@@ -258,7 +259,6 @@ ircd::m::module_names
 	"client_sync",
 	"client_sync_to_device",
 	"client_thirdparty_protocols",
-	"client_user",
 	"client_versions",
 	"client_voip_turnserver",
 	"federation_backfill_ids",
