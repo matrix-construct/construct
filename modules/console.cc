@@ -10685,7 +10685,9 @@ console_cmd__user__room_tags(opt &out, const string_view &line)
 
 	const auto &room_id
 	{
-		m::room_id(param.at("room_id"))
+		param["room_id"]?
+			m::room_id(param.at("room_id")):
+			m::room::id::buf{}
 	};
 
 	const string_view &tag
@@ -10693,28 +10695,48 @@ console_cmd__user__room_tags(opt &out, const string_view &line)
 		param["tag"]
 	};
 
-	const m::user::room_tags room_tags
+	const auto output
 	{
-		user_id, room_id
+		[&out, &room_id](const string_view &key, const json::object &val)
+		{
+			out << room_id << " " << key << ": " << val << std::endl;
+			return true;
+		}
 	};
 
-	if(tag)
+	if(room_id)
 	{
-		room_tags.get(tag, [&out]
-		(const string_view &key, const json::object &val)
+		const m::user::room_tags room_tags
 		{
-			out << val << std::endl;
-		});
+			user_id, room_id
+		};
+
+		if(tag)
+			room_tags.get(tag, output);
+		else
+			room_tags.for_each(output);
 
 		return true;
 	}
 
-	room_tags.for_each([&out]
-	(const string_view &key, const json::object &val)
+	const m::user::rooms rooms
 	{
-		out << key << ": " << val << std::endl;
-		return true;
-	});
+		user_id
+	};
+
+	rooms.for_each(m::user::rooms::closure{[&user_id, &tag, &output]
+	(const m::room &room, const string_view &membership)
+	{
+		const m::user::room_tags room_tags
+		{
+			user_id, room
+		};
+
+		if(tag)
+			room_tags.get(tag, output);
+		else
+			room_tags.for_each(output);
+	}});
 
 	return true;
 }
