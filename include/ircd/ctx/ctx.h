@@ -102,6 +102,7 @@ namespace ircd::ctx
 #include "ole.h"
 #include "fault.h"
 #include "concurrent.h"
+#include "concurrent_for_each.h"
 
 // Exports to ircd::
 namespace ircd
