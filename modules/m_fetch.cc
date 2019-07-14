@@ -888,9 +888,9 @@ try
 		complete.size(),
 	};
 
-	const json::object event
+	const m::event event
 	{
-		request
+		json::object{request}, request.event_id
 	};
 
 	m::vm::opts opts;
@@ -901,7 +901,7 @@ try
 	opts.fetch_prev_wait = false;
 	m::vm::eval
 	{
-		m::event{event}, opts
+		event, opts
 	};
 }
 catch(const std::exception &e)
