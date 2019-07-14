@@ -137,6 +137,24 @@ ircd::mods::unload(mod &mod)
 void
 ircd::mods::handle_stuck(mod &mod)
 {
+	size_t ctr{0};
+	auto log_level{log::level::DERROR};
+	mods::ldso::for_each([&ctr, &mod, &log_level]
+	(const auto &link)
+	{
+		if(ldso::name(link) == mod.name())
+			log_level = log::level::ERROR;
+
+		log::logf
+		{
+			log, log_level, "Current link:%2lu module '%s'",
+			ctr++,
+			ldso::fullname(link),
+		};
+
+		return true;
+	});
+
 	log::critical
 	{
 		log, "Module \"%s\" is stuck and failing to unload.",
