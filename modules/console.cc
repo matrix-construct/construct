@@ -7572,6 +7572,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "top index:     " << std::get<m::event::idx>(top) << std::endl;
 	out << "top depth:     " << std::get<int64_t>(top) << std::endl;
 	out << "top event:     " << std::get<m::event::id::buf>(top) << std::endl;
+	out << "joined:        " << m::room::members{room_id}.count("join") << std::endl;
 	out << std::endl;
 
 	state.for_each(m::room::state::types{[&out, &state]
