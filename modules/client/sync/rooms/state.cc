@@ -255,48 +255,40 @@ ircd::m::sync::room_state_polylog_events(data &data)
 bool
 ircd::m::sync::room_state_phased_events(data &data)
 {
+	bool ret{false};
+	ctx::mutex mutex;
 	json::stack::array array
 	{
 		*data.out, "events"
 	};
 
-	bool ret{false};
-	data.room->get(std::nothrow, "m.room.create", "", [&]
-	(const m::event &event)
+	static const std::pair<string_view, string_view> keys[]
 	{
-		ret = true;
-		room_state_append(data, array, event, index(event));
-	});
+		{ "m.room.create",           ""                        },
+		{ "m.room.canonical_alias",  ""                        },
+		{ "m.room.name",             ""                        },
+		{ "m.room.avatar",           ""                        },
+		{ "m.room.aliases",          data.user.user_id.host()  },
+		{ "m.room.member",           data.user.user_id         },
+	};
 
-	data.room->get(std::nothrow, "m.room.canonical_alias", "", [&]
-	(const m::event &event)
+	const auto append
 	{
-		room_state_append(data, array, event, index(event));
-	});
+		[&data, &array, &ret, &mutex](const m::event &event)
+		{
+			ret |= true;
+			const std::lock_guard lock{mutex};
+			room_state_append(data, array, event, index(event));
+		}
+	};
 
-	data.room->get(std::nothrow, "m.room.aliases", data.user.user_id.host(), [&]
-	(const m::event &event)
+	ctx::concurrent_for_each<const std::pair<string_view, string_view>>
 	{
-		room_state_append(data, array, event, index(event));
-	});
-
-	data.room->get(std::nothrow, "m.room.name", "", [&]
-	(const m::event &event)
-	{
-		room_state_append(data, array, event, index(event));
-	});
-
-	data.room->get(std::nothrow, "m.room.avatar", "", [&]
-	(const m::event &event)
-	{
-		room_state_append(data, array, event, index(event));
-	});
-
-	data.room->get(std::nothrow, "m.room.member", data.user.user_id, [&]
-	(const m::event &event)
-	{
-		room_state_append(data, array, event, index(event));
-	});
+		sync::pool, keys, [&data, &append](const auto &key)
+		{
+			data.room->get(std::nothrow, key.first, key.second, append);
+		}
+	};
 
 	ret |= room_state_phased_member_events(data, array);
 	return ret;
