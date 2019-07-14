@@ -2334,7 +2334,32 @@ ircd::m::event::auth::failed(const m::event &event,
 
 		// b. If the domain of the event_id of the event being redacted is the
 		// same as the domain of the event_id of the m.room.redaction, allow.
-		if(event::id(json::get<"redacts"_>(event)).host() == user::id(at<"sender"_>(event)).host())
+		//
+		//if(event::id(json::get<"redacts"_>(event)).host() == user::id(at<"sender"_>(event)).host())
+		//	return {};
+		//
+		// In past room versions, redactions were only permitted to enter the
+		// DAG if the sender's domain matched the domain in the event ID
+		// being redacted, or the sender had appropriate permissions per the
+		// power levels. Due to servers now not being able to determine where
+		// an event came from during event authorization, redaction events
+		// are always accepted (provided the event is allowed by events and
+		// events_default in the power levels). However, servers should not
+		// apply or send redactions to clients until both the redaction event
+		// and original event have been seen, and are valid. Servers should
+		// only apply redactions to events where the sender's domains match,
+		// or the sender of the redaction has the appropriate permissions per
+		// the power levels.
+		const auto redact_target_idx(m::index(at<"redacts"_>(event), std::nothrow));
+		const auto sender_domain_match{[&event](const string_view &tgt)
+		{
+			return tgt? user::id(tgt).host() == user::id(at<"sender"_>(event)).host(): false;
+		}};
+
+		if(!redact_target_idx)
+			return "m.room.redaction redacts target is unknown.";
+
+		if(m::query(std::nothrow, redact_target_idx, "redacts", sender_domain_match))
 			return {};
 
 		// c. Otherwise, reject.
