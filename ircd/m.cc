@@ -195,8 +195,8 @@ noexcept
 decltype(ircd::m::module_names)
 ircd::m::module_names
 {
-	"m_noop",
 	"m_vm",
+	"m_noop",
 	"conf",
 	"m_node",
 	"m_keys",
@@ -232,6 +232,7 @@ ircd::m::module_names
 	"media_media",
 	"client_account",
 	"client_user",
+	"client_profile",
 	"client_capabilities",
 	"client_createroom",
 	"client_delete_devices",
@@ -252,7 +253,6 @@ ircd::m::module_names
 	"client_logout",
 	"client_notifications",
 	"client_presence",
-	"client_profile",
 	"client_publicised_groups",
 	"client_publicrooms",
 	"client_pushers",
