@@ -874,6 +874,7 @@ noexcept
 bool
 ircd::m::my(const id &id)
 {
+	assert(id.host());
 	return my_host(id.host());
 }
 

@@ -3959,6 +3959,7 @@ ircd::m::my(const event &event)
 bool
 ircd::m::my(const id::event &event_id)
 {
+	assert(event_id.host());
 	return self::host(event_id.host());
 }
 
