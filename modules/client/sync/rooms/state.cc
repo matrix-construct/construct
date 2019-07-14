@@ -82,9 +82,6 @@ ircd::m::sync::_default_fopts
 bool
 ircd::m::sync::room_state_linear(data &data)
 {
-	if(data.membership == "invite")
-		return false;
-
 	return room_state_linear_events(data);
 }
 
