@@ -29,6 +29,7 @@ struct ircd::server::link
 	server::peer *peer;                          ///< backreference to peer
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::list<tag> queue;                        ///< link's work queue
+	time_t synack_ts {0L};                       ///< time socket was estab
 	bool op_init {false};                        ///< link is connecting
 	bool op_fini {false};                        ///< link is disconnecting
 	bool op_open {false};

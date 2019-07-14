@@ -1786,6 +1786,7 @@ ircd::server::link::handle_open(std::exception_ptr eptr)
 {
 	assert(op_init);
 	op_init = false;
+	synack_ts = time<seconds>();
 
 	if(!eptr && !op_fini)
 		wait_writable();
