@@ -170,6 +170,7 @@ ircd::magick::fini()
 		"Shutting down Magick Library..."
 	};
 
+	::DestroyMagickResources();
 	::DestroyMagick();
 }
 
