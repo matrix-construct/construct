@@ -99,20 +99,20 @@ inline bool
 ircd::stats::item::operator!()
 const
 {
-	return !val;
+	return !get(*this);
 }
 
 inline ircd::stats::item::operator
 value_type &()
 {
-	return val;
+	return get(*this);
 }
 
 inline ircd::stats::item::operator
 const value_type &()
 const
 {
-	return val;
+	return get(*this);
 }
 
 inline ircd::stats::value_type &
