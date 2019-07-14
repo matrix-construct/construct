@@ -1836,8 +1836,31 @@ ircd::m::event::auth::failed(const m::event &event,
 		// c. If content.room_version is present and is not a recognised
 		// version, reject.
 		if(json::get<"content"_>(event).has("room_version"))
-			if(unquote(json::get<"content"_>(event).get("room_version")) != "1")
-				return "m.room.create room_version is not recognized.";
+		{
+			const json::string &claim_version(json::get<"content"_>(event).get("room_version", "1"));
+			const string_view &id_version(event.event_id.version());
+			if(claim_version == "3")
+			{
+				if(id_version != "3")
+					return "m.room.create room_version not 3";
+			}
+			else if(claim_version == "4")
+			{
+				if(id_version != "4")
+					return "m.room.create room_version not 4";
+			}
+			else if(claim_version == "1" || claim_version == "2")
+			{
+				//if(id_version != "1")
+				//	return "m.room.create room_version not 1";
+			}
+			else if(claim_version != "1" && claim_version != "2")
+			{
+				if(id_version != "4")
+					return "m.room.create room_version not 4";
+			}
+			else assert(0);
+		}
 
 		// d. If content has no creator field, reject.
 		assert(!empty(json::get<"content"_>(event).get("creator")));
