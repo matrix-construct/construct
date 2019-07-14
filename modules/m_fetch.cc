@@ -600,6 +600,13 @@ ircd::m::fetch::start(const m::room::id &room_id,
 	return submit(event_id, room_id);
 }
 
+bool
+IRCD_MODULE_EXPORT
+ircd::m::fetch::cancel(request &request)
+{
+	return false;
+}
+
 size_t
 IRCD_MODULE_EXPORT
 ircd::m::fetch::count()
@@ -957,7 +964,7 @@ try
 	}
 	catch(...)
 	{
-		cancel(request);
+		server::cancel(request);
 		throw;
 	}
 
