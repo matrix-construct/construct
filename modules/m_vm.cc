@@ -599,7 +599,7 @@ catch(const m::error &e) // GENERAL MATRIX ERROR
 	return handle_error
 	(
 		*eval.opts, fault::GENERAL,
-		"eval %s (General Protection): %s %s :%s",
+		"eval %s (General Protection) :%s %s :%s",
 		event.event_id? string_view{event.event_id}: "<edu>"_sv,
 		e.what(),
 		unquote(json::object(e.content).get("errcode")),
@@ -621,7 +621,7 @@ catch(const std::exception &e) // ALL OTHER ERRORS
 	return handle_error
 	(
 		*eval.opts, fault::GENERAL,
-		"eval %s (General Protection): %s",
+		"eval %s (General Protection) :%s",
 		event.event_id? string_view{event.event_id}: "<edu>"_sv,
 		e.what()
 	);
