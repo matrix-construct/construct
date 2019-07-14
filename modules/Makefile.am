@@ -90,6 +90,7 @@ m_moduledir = @moduledir@
 m_vm_la_SOURCES = m_vm.cc
 m_noop_la_SOURCES = m_noop.cc
 m_user_la_SOURCES = m_user.cc
+m_user_profile_la_SOURCES = m_user_profile.cc
 m_node_la_SOURCES = m_node.cc
 m_keys_la_SOURCES = m_keys.cc
 m_feds_la_SOURCES = m_feds.cc
@@ -122,6 +123,7 @@ m_module_LTLIBRARIES = \
 	m_vm.la \
 	m_noop.la \
 	m_user.la \
+	m_user_profile.la \
 	m_node.la \
 	m_keys.la \
 	m_feds.la \
