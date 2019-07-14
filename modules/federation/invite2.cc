@@ -214,7 +214,7 @@ put__invite(client &client,
 	ctx::sleep(milliseconds(*stream_cross_sleeptime));
 
 	// Post processing, does not throw.
-	process(client, request, event);
+	process(client, request, signed_event);
 
 	// note: returning a resource response is a symbolic/indicator action to
 	// the caller and has no real effect at the point of return.
