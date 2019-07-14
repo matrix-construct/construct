@@ -80,7 +80,7 @@ __assert_fail(const char *__assertion,
 	#endif
 
 	#if defined(HAVE_SIGNAL_H)
-	else if(strcmp(RB_ASSERT, "SIGQUIT") == 0)
+	else if(strcmp(RB_ASSERT, "SIGSTOP") == 0)
 		raise(SIGSTOP);
 	#endif
 
