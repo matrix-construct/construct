@@ -52,7 +52,7 @@ try
 	std::make_unique<modules>()
 }
 {
-	if(!ircd::write_avoid)
+	if(!ircd::write_avoid && vm::sequence::retired != 0)
 		presence::set(me, "online", me_online_status_msg);
 }
 catch(const m::error &e)
@@ -156,8 +156,26 @@ ircd::m::init::modules::init_imports()
 		throw;
 	}
 
-	if(db::sequence(*dbs::events) == 0)
+	if(vm::sequence::retired == 0)
+	{
+		log::notice
+		{
+			log, "This appears to be your first time running IRCd because the events "
+			"database is empty. I will be bootstrapping it with initial events now..."
+		};
+
+		const module m_init_bootstrap
+		{
+			"m_init_bootstrap"
+		};
+
+		const mods::import<void ()> bootstrap
+		{
+			m_init_bootstrap, "ircd::m::init::bootstrap"
+		};
+
 		bootstrap();
+	}
 }
 
 void
@@ -299,82 +317,6 @@ ircd::m::module_names_optional
 {
 	"media_magick",
 };
-
-void
-ircd::m::init::bootstrap()
-try
-{
-	assert(dbs::events);
-	assert(db::sequence(*dbs::events) == 0);
-
-	log::notice
-	{
-		log, "This appears to be your first time running IRCd because the events "
-		"database is empty. I will be bootstrapping it with initial events now..."
-	};
-
-	if(me.user_id.hostname() == "localhost")
-		log::warning
-		{
-			"The ircd.origin is configured to localhost. This is probably not"
-			" what you want. To fix this now, you will have to remove the "
-			" database and start over."
-		};
-
-	if(!exists(user::users))
-		create(user::users, me.user_id, "internal");
-
-	if(!exists(my_room))
-		create(my_room, me.user_id, "internal");
-
-	if(!exists(me))
-	{
-		create(me.user_id);
-		me.activate();
-	}
-
-	if(!my_room.membership(me.user_id, "join"))
-		join(my_room, me.user_id);
-
-	if(!my_room.has("m.room.name", ""))
-		send(my_room, me.user_id, "m.room.name", "",
-		{
-			{ "name", "IRCd's Room" }
-		});
-
-	if(!my_room.has("m.room.topic", ""))
-		send(my_room, me.user_id, "m.room.topic", "",
-		{
-			{ "topic", "The daemon's den." }
-		});
-
-	if(!user::users.has("m.room.name", ""))
-		send(user::users, me.user_id, "m.room.name", "",
-		{
-			{ "name", "Users" }
-		});
-
-	if(!exists(user::tokens))
-		create(user::tokens, me.user_id);
-
-	if(!user::tokens.has("m.room.name",""))
-		send(user::tokens, me.user_id, "m.room.name", "",
-		{
-			{ "name", "User Tokens" }
-		});
-
-	log::info
-	{
-		log, "Bootstrap event generation completed nominally."
-	};
-}
-catch(const std::exception &e)
-{
-	throw ircd::panic
-	{
-		"bootstrap error :%s", e.what()
-	};
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
