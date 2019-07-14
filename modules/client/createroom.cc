@@ -491,11 +491,17 @@ ircd::m::_create_event(const createroom &c)
 		}
 	};
 
+	static conf::item<std::string> default_version
+	{
+		{ "name",     "ircd.m.room.create.version_default"  },
+		{ "default",  "4"                                   },
+	};
+
 	const json::iov::push _room_version
 	{
 		content,
 		{
-			"room_version", json::value { "4", json::STRING }
+			"room_version", json::value { default_version, json::STRING }
 		}
 	};
 
@@ -504,7 +510,14 @@ ircd::m::_create_event(const createroom &c)
 		at<"room_id"_>(c)
 	};
 
-	commit(room, event, content);
+	m::vm::copts opts;
+	opts.room_version = default_version;
+	m::vm::eval eval
+	{
+		opts
+	};
+
+	eval(room, event, content);
 	return room;
 }
 
