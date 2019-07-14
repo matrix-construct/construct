@@ -948,11 +948,18 @@ try
 	if(!request.started)
 		request.started = ircd::time();
 
-	request.last = ircd::time();
-	*static_cast<m::v1::event *>(&request) =
+	request.last = ircd::time(); try
 	{
-		request.event_id, request.buf, std::move(opts)
-	};
+		*static_cast<m::v1::event *>(&request) =
+		{
+			request.event_id, request.buf, std::move(opts)
+		};
+	}
+	catch(...)
+	{
+		cancel(request);
+		throw;
+	}
 
 	log::debug
 	{
