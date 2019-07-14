@@ -20,6 +20,7 @@
 //
 // mods/ldso.h
 //
+#if defined(HAVE_LINK_H)
 
 bool
 ircd::mods::ldso::for_each_needed(const struct link_map &map,
@@ -48,6 +49,7 @@ ircd::mods::ldso::for_each_needed(const struct link_map &map,
 	return true;
 }
 
+#if defined(HAVE_ELF_H)
 ircd::string_view
 ircd::mods::ldso::string(const struct link_map &map,
                          const size_t &idx)
@@ -71,6 +73,7 @@ ircd::mods::ldso::string(const struct link_map &map,
 		string_view{str}:
 		string_view{};
 }
+#endif
 
 struct link_map &
 ircd::mods::ldso::get(const string_view &name)
@@ -232,6 +235,8 @@ ircd::mods::ldso::fullname(const struct link_map &map)
 	return map.l_name;
 }
 
+#endif // defined(HAVE_LINK_H)
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Symbolic dl-error redefinition to throw our C++ exception for the symbol
@@ -242,6 +247,7 @@ ircd::mods::ldso::fullname(const struct link_map &map)
 // transit from here through libdl and out of a random PLT slot. non-call-
 // exceptions does not appear to be necessary, at least for FUNC symbols.
 //
+#if defined(HAVE_DLFCN_H)
 
 // glibc/sysdeps/generic/ldsodefs.h
 struct dl_exception
@@ -285,10 +291,13 @@ _dl_signal_exception(int errcode,
 	};
 }
 
+#endif // defined(HAVE_DLFCN_H
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // symbolic dlsym hook
 //
+#ifdef HAVE_DLFCN_H
 #ifdef IRCD_MODS_HOOK_DLSYM
 
 extern "C" void *
@@ -311,3 +320,4 @@ dlsym(void *const handle,
 }
 
 #endif IRCD_MODS_HOOK_DLSYM
+#endif HAVE_DLFCN_H
