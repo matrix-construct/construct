@@ -71,6 +71,7 @@ notified
 void
 handle_notify(const m::event &event,
               m::vm::eval &eval)
+try
 {
 	if(!my(event))
 		return;
@@ -88,6 +89,18 @@ handle_notify(const m::event &event,
 
 	notified_queue.emplace_back(json::strung{event}, event_id);
 	notified_dock.notify_all();
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		m::log, "Federation sender notify handler :%s",
+		e.what()
+	};
 }
 
 void

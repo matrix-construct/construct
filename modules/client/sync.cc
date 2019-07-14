@@ -755,12 +755,26 @@ ircd::m::sync::longpoll::notified
 void
 ircd::m::sync::longpoll::handle_notify(const m::event &event,
                                        m::vm::eval &eval)
+try
 {
 	assert(eval.opts);
 	if(!eval.opts->notify_clients)
 		return;
 
 	dock.notify_all();
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "request %s longpoll notify :%s",
+		loghead(eval),
+		e.what(),
+	};
 }
 
 /// Longpolling blocks the client's request until a relevant event is processed
