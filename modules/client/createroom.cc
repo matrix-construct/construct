@@ -512,6 +512,7 @@ ircd::m::_create_event(const createroom &c)
 
 	m::vm::copts opts;
 	opts.room_version = default_version;
+	opts.verify = false;
 	m::vm::eval eval
 	{
 		opts
