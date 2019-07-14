@@ -257,6 +257,14 @@ try
 			"Invite event no longer verified by our signature."
 		};
 
+	log::info
+	{
+		m::log, "Invite %s in %s accepted by '%s'",
+		string_view{event.event_id},
+		string_view{room_id},
+		string_view{target.host()},
+	};
+
 	m::vm::opts vmopts;
 	vmopts.infolog_accept = true;
 
