@@ -3947,10 +3947,13 @@ bool
 ircd::m::my(const event &event)
 {
 	const auto &origin(json::get<"origin"_>(event));
+	const auto &sender(json::get<"sender"_>(event));
 	const auto &eid(event.event_id);
 	return
 		origin?
 			my_host(origin):
+		sender?
+			my_host(user::id(sender).host()):
 		eid?
 			my(event::id(eid)):
 		false;
