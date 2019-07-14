@@ -300,7 +300,7 @@ try
 			return !tags.empty();
 		});
 
-		ctx::sleep(milliseconds(timeout) / 2);
+		ctx::sleep(1500ms);
 		check_timeouts(milliseconds(timeout));
 	}
 }
