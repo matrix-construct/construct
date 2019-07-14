@@ -10,7 +10,6 @@
 
 #include "sender.int.h"
 
-
 std::list<txn> txns;
 std::map<std::string, node, std::less<>> nodes;
 
@@ -54,7 +53,7 @@ IRCD_MODULE
 	}
 };
 
-std::deque<std::string>
+std::deque<std::pair<std::string, m::event::id::buf>>
 notified_queue;
 
 ctx::dock
@@ -80,7 +79,14 @@ handle_notify(const m::event &event,
 	if(!eval.opts->notify_servers)
 		return;
 
-	notified_queue.emplace_back(json::strung{event});
+	const m::event::id::buf &event_id
+	{
+		event.event_id?
+			m::event::id::buf{event.event_id}:
+			m::event::id::buf{}
+	};
+
+	notified_queue.emplace_back(json::strung{event}, event_id);
 	notified_dock.notify_all();
 }
 
@@ -101,9 +107,14 @@ send_worker()
 			notified_queue.pop_front();
 		}};
 
+		const auto &[event_, event_id]
+		{
+			notified_queue.front()
+		};
+
 		const m::event event
 		{
-			json::object{notified_queue.front()}
+			json::object{event_}, event_id
 		};
 
 		send(event);
@@ -268,6 +279,15 @@ try
 	const unwind::nominal::assertion na;
 	curtxn = &txns.back();
 	q.clear();
+	log::debug
+	{
+		m::log, "sending txn %s pdus:%zu edus:%zu to '%s'",
+		curtxn->txnid,
+		pdus,
+		edus,
+		this->remote,
+	};
+
 	recv_action.notify_one();
 	return true;
 }
