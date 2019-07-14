@@ -277,11 +277,13 @@ ircd::m::sync::room_state_phased_events(data &data)
 		[&data, &array, &ret, &mutex](const m::event &event)
 		{
 			ret |= true;
+			const auto event_idx(m::index(event));
 			const std::lock_guard lock{mutex};
-			room_state_append(data, array, event, index(event));
+			room_state_append(data, array, event, event_idx);
 		}
 	};
 
+	sync::pool.min(6);
 	ctx::concurrent_for_each<const std::pair<string_view, string_view>>
 	{
 		sync::pool, keys, [&data, &append](const auto &key)
