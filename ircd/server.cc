@@ -3316,7 +3316,6 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 
 	state.chunk_read += addl_head_bytes;
 	const auto head_length{state.chunk_read};
-	assert(state.content_read + head_length == state.content_length + state.chunk_read);
 	state.chunk_read = 0;
 
 	// Window on any data in the buffer after the head.
@@ -3343,7 +3342,6 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 
 	// Increment the content_length to now include this chunk
 	state.content_length += state.chunk_length;
-	assert(state.content_length == state.content_read + state.chunk_length);
 
 	// Allocate the chunk content on the vector.
 	//TODO: maxalloc
@@ -3430,6 +3428,7 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	state.content_read += addl_content_read;
 	assert(state.chunk_read <= state.content_read);
 	assert(state.chunk_read <= state.chunk_length);
+	assert(state.content_length >= state.content_read);
 
 	// Invoke the user's optional progress callback; this function
 	// should be marked noexcept for the time being.
