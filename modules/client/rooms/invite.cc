@@ -156,22 +156,43 @@ try
 			}
 		};
 	}
+
+	{
+		json::stack::object _event
+		{
+			top, "event"
+		};
+
+		_event.append(event);
+	}
+
 	{
 		json::stack::array invite_room_state
 		{
 			top, "invite_room_state"
 		};
 
+		const auto append
+		{
+			[&invite_room_state](const m::event &event)
+			{
+				invite_room_state.append(event);
+			}
+		};
+
 		const m::room::state state
 		{
 			room_id
 		};
-	}
 
-	json::stack::member
-	{
-		top, "event", json::value{event}
-	};
+		state.get(std::nothrow, "m.room.create", "", append);
+		state.get(std::nothrow, "m.room.power_levels", "", append);
+		state.get(std::nothrow, "m.room.join_rules", "", append);
+		state.get(std::nothrow, "m.room.aliases", my_host(), append);
+		state.get(std::nothrow, "m.room.canonical_alias", "", append);
+		state.get(std::nothrow, "m.room.avatar", "", append);
+		state.get(std::nothrow, "m.room.name", "", append);
+	}
 
 	top.~object();
 	const string_view &proto
