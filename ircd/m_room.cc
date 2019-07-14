@@ -3161,11 +3161,9 @@ const
 		return ret;
 	}
 
-	// The list of event fields to fetch for the closure
 	static const event::keys::include keys
 	{
-		"event_id",    // Added for any upstack usage (but may be unnecessary).
-		"content",     // Required because synapse events randomly have no event.membership
+		"content",
 	};
 
 	const m::event::fetch::opts fopts
@@ -3246,9 +3244,7 @@ const
 	// Setup the list of event fields to fetch for the closure
 	static const event::keys::include keys
 	{
-		"event_id",
-		"state_key",
-		"content",
+		"state_key", "content",
 	};
 
 	// In this case the fetch opts isn't static so it can maintain the
