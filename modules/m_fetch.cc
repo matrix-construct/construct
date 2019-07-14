@@ -180,7 +180,7 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 	// Count how many of the auth_events provided exist locally.
 	const auto &opts{*eval.opts};
 	const event::prev prev{event};
-	tab.auth_count = size(json::get<"auth_events"_>(prev));
+	tab.auth_count = prev.auth_events_count();
 	for(size_t i(0); i < tab.auth_count; ++i)
 	{
 		const auto &auth_id
@@ -246,7 +246,7 @@ ircd::m::fetch::hook_handle_prev(const event &event,
 {
 	const auto &opts{*eval.opts};
 	const event::prev prev{event};
-	tab.prev_count = size(json::get<"prev_events"_>(prev));
+	tab.prev_count = prev.prev_events_count();
 	for(size_t i(0); i < tab.prev_count; ++i)
 	{
 		const auto &prev_id
