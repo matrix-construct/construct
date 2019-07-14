@@ -302,6 +302,7 @@ ircd::m::module_names_optional
 
 void
 ircd::m::init::bootstrap()
+try
 {
 	assert(dbs::events);
 	assert(db::sequence(*dbs::events) == 0);
@@ -365,6 +366,13 @@ ircd::m::init::bootstrap()
 	log::info
 	{
 		log, "Bootstrap event generation completed nominally."
+	};
+}
+catch(const std::exception &e)
+{
+	throw ircd::panic
+	{
+		"bootstrap error :%s", e.what()
 	};
 }
 
