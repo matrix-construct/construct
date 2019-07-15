@@ -525,15 +525,20 @@ noexcept
 	  << (string_view{conf.console_ansi}? "\033[0m " : " ")
 //	  << (log.snote? log.snote : '-')
 	  << std::setw(LOG_NAME_TRUNC)
-	  << std::right
+	  << std::left
 	  << trunc(log.name, LOG_NAME_TRUNC)
-	  << ' '
-	  << std::setw(CTX_NAME_TRUNC)
-	  << trunc(ctx::name(), CTX_NAME_TRUNC)
 	  << ' '
 	  << std::setw(5)
 	  << std::right
 	  << ctx::id()
+	  << ' '
+	  << std::setw(CTX_NAME_TRUNC)
+	  << std::left
+	  << trunc(ctx::name(), CTX_NAME_TRUNC)
+	  << ' '
+	  << std::setw(5)
+	  << std::right
+	  << ctx::epoch()
 	  << " :";
 
 	// Compose the user message after prefix
