@@ -453,7 +453,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		join_log, "Bootstrap %s backfill @ %s from %s :%s",
+		join_log, "join bootstrap %s backfill @ %s from %s :%s",
 		string_view{room_id},
 		string_view{event_id},
 		string(host),
@@ -463,6 +463,7 @@ catch(const std::exception &e)
 
 void
 bootstrap_eval_state(const json::array &state)
+try
 {
 	m::vm::opts opts;
 	opts.nothrows = -1;
@@ -474,9 +475,17 @@ bootstrap_eval_state(const json::array &state)
 		state, opts
 	};
 }
+catch(const std::exception &e)
+{
+	log::error
+	{
+		join_log, "join bootstrap eval state :%s", e.what(),
+	};
+}
 
 void
 bootstrap_eval_auth_chain(const json::array &auth_chain)
+try
 {
 	m::vm::opts opts;
 	opts.infolog_accept = true;
@@ -485,6 +494,15 @@ bootstrap_eval_auth_chain(const json::array &auth_chain)
 	{
 		auth_chain, opts
 	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		join_log, "join bootstrap eval auth_chain :%s", e.what(),
+	};
+
+	throw;
 }
 
 void
