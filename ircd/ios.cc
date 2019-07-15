@@ -153,8 +153,13 @@ ircd::ios::descriptor::stats::operator+=(const stats &o)
 // handler
 //
 
-decltype(ircd::ios::handler::current) thread_local
+decltype(ircd::ios::handler::current)
+thread_local
 ircd::ios::handler::current;
+
+decltype(ircd::ios::handler::epoch)
+thread_local
+ircd::ios::handler::epoch;
 
 bool
 ircd::ios::handler::fault(handler *const &handler)
@@ -208,7 +213,7 @@ noexcept
 	assert(descriptor.stats);
 	auto &stats(*descriptor.stats);
 	++stats.calls;
-
+	++handler::epoch;
 	assert(!handler::current);
 	handler::current = handler;
 	handler->slice_start = cycles();

@@ -148,6 +148,7 @@ struct ircd::ios::descriptor::stats
 struct ircd::ios::handler
 {
 	static thread_local handler *current;
+	static thread_local uint64_t epoch;
 
 	static void *allocate(handler *const &, const size_t &);
 	static void deallocate(handler *const &, void *const &, const size_t &) noexcept;
