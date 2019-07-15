@@ -3403,114 +3403,6 @@ ircd::json::type(const value &a)
 // value::value
 //
 
-ircd::json::value::value(const nullptr_t &)
-:value
-{
-	literal_null, type::LITERAL
-}
-{
-}
-
-ircd::json::value::value(const json::object &sv)
-:value{sv, OBJECT}
-{
-}
-
-ircd::json::value::value(const json::array &sv)
-:value{sv, ARRAY}
-{
-}
-
-ircd::json::value::value(const bool &boolean)
-:value
-{
-	boolean? literal_true : literal_false, type::LITERAL
-}
-{
-}
-
-ircd::json::value::value(const uint8_t &integer)
-:value{int64_t{integer}}
-{
-}
-
-ircd::json::value::value(const int8_t &integer)
-:value{int64_t{integer}}
-{
-}
-
-ircd::json::value::value(const uint16_t &integer)
-:value{int64_t{integer}}
-{
-}
-
-ircd::json::value::value(const int16_t &integer)
-:value{int64_t{integer}}
-{
-}
-
-ircd::json::value::value(const uint32_t &integer)
-:value{int64_t{integer}}
-{
-}
-
-ircd::json::value::value(const int32_t &integer)
-:value{int64_t{integer}}
-{
-}
-
-ircd::json::value::value(const int64_t &integer)
-:integer{integer}
-,len{0}
-,type{NUMBER}
-,serial{false}
-,alloc{false}
-,floats{false}
-{
-}
-
-ircd::json::value::value(const double &floating)
-:floating{floating}
-,len{0}
-,type{NUMBER}
-,serial{false}
-,alloc{false}
-,floats{true}
-{
-}
-
-ircd::json::value::value(const char *const &str)
-:value{string_view{str}}
-{
-}
-
-ircd::json::value::value(const char *const &str,
-                         const enum type &type)
-:value{string_view{str}, type}
-{
-}
-
-ircd::json::value::value(const string_view &sv)
-:value{sv, json::type(sv, strict, std::nothrow)}
-{
-}
-
-ircd::json::value::value(const string_view &sv,
-                         const enum type &type)
-:string{sv.data()}
-,len{sv.size()}
-,type{type}
-,serial{type == STRING? surrounds(sv, '"') : true}
-,alloc{false}
-,floats{false}
-{
-}
-
-ircd::json::value::value(const std::string &s)
-:value{s, json::type(s, strict, std::nothrow)}
-{
-}
-
 ircd::json::value::value(const std::string &s,
                          const enum type &type)
 :string{nullptr}
@@ -3526,51 +3418,6 @@ ircd::json::value::value(const std::string &s,
 	{
 		json::stringify(buf, sv);
 	});
-}
-
-ircd::json::value::value(const struct value *const &array,
-                         const size_t &len)
-:array{array}
-,len{len}
-,type{ARRAY}
-,serial{false}
-,alloc{false}
-,floats{false}
-{
-}
-
-ircd::json::value::value(std::unique_ptr<const struct value[]> &&array,
-                         const size_t &len)
-:array{array.get()}
-,len{len}
-,type{ARRAY}
-,serial{false}
-,alloc{true}
-,floats{false}
-{
-	array.release();
-}
-
-ircd::json::value::value(const struct member *const &object,
-                         const size_t &len)
-:object{object}
-,len{len}
-,type{OBJECT}
-,serial{false}
-,alloc{false}
-,floats{false}
-{}
-
-ircd::json::value::value(std::unique_ptr<const struct member[]> &&object,
-                         const size_t &len)
-:object{object.get()}
-,len{len}
-,type{OBJECT}
-,serial{false}
-,alloc{true}
-,floats{false}
-{
-	object.release();
 }
 
 ircd::json::value::value(const json::members &members)
@@ -3651,18 +3498,6 @@ ircd::json::value::value(const value &other)
 		case NUMBER:
 			break;
 	}
-}
-
-ircd::json::value::value(value &&other)
-noexcept
-:integer{other.integer}
-,len{other.len}
-,type{other.type}
-,serial{other.serial}
-,alloc{other.alloc}
-,floats{other.floats}
-{
-	other.alloc = false;
 }
 
 ircd::json::value &

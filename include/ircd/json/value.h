@@ -145,6 +145,193 @@ ircd::json::value::value()
 ,floats{false}
 {}
 
+inline
+ircd::json::value::value(const nullptr_t &)
+:value
+{
+	literal_null, type::LITERAL
+}
+{
+}
+
+inline
+ircd::json::value::value(const json::object &sv)
+:value{sv, OBJECT}
+{
+}
+
+inline
+ircd::json::value::value(const json::array &sv)
+:value{sv, ARRAY}
+{
+}
+
+inline
+ircd::json::value::value(const bool &boolean)
+:value
+{
+	boolean? literal_true : literal_false, type::LITERAL
+}
+{
+}
+
+inline
+ircd::json::value::value(const uint8_t &integer)
+:value{int64_t{integer}}
+{
+}
+
+inline
+ircd::json::value::value(const int8_t &integer)
+:value{int64_t{integer}}
+{
+}
+
+inline
+ircd::json::value::value(const uint16_t &integer)
+:value{int64_t{integer}}
+{
+}
+
+inline
+ircd::json::value::value(const int16_t &integer)
+:value{int64_t{integer}}
+{
+}
+
+inline
+ircd::json::value::value(const uint32_t &integer)
+:value{int64_t{integer}}
+{
+}
+
+inline
+ircd::json::value::value(const int32_t &integer)
+:value{int64_t{integer}}
+{
+}
+
+inline
+ircd::json::value::value(const int64_t &integer)
+:integer{integer}
+,len{0}
+,type{NUMBER}
+,serial{false}
+,alloc{false}
+,floats{false}
+{
+}
+
+inline
+ircd::json::value::value(const double &floating)
+:floating{floating}
+,len{0}
+,type{NUMBER}
+,serial{false}
+,alloc{false}
+,floats{true}
+{
+}
+
+inline
+ircd::json::value::value(const char *const &str)
+:value{string_view{str}}
+{
+}
+
+inline
+ircd::json::value::value(const char *const &str,
+                         const enum type &type)
+:value{string_view{str}, type}
+{
+}
+
+inline
+ircd::json::value::value(const string_view &sv)
+:value{sv, json::type(sv, strict, std::nothrow)}
+{
+}
+
+inline
+ircd::json::value::value(const string_view &sv,
+                         const enum type &type)
+:string{sv.data()}
+,len{sv.size()}
+,type{type}
+,serial{type == STRING? surrounds(sv, '"') : true}
+,alloc{false}
+,floats{false}
+{
+}
+
+inline
+ircd::json::value::value(const std::string &s)
+:value{s, json::type(s, strict, std::nothrow)}
+{
+}
+
+inline
+ircd::json::value::value(const struct value *const &array,
+                         const size_t &len)
+:array{array}
+,len{len}
+,type{ARRAY}
+,serial{false}
+,alloc{false}
+,floats{false}
+{
+}
+
+inline
+ircd::json::value::value(std::unique_ptr<const struct value[]> &&array,
+                         const size_t &len)
+:array{array.get()}
+,len{len}
+,type{ARRAY}
+,serial{false}
+,alloc{true}
+,floats{false}
+{
+	array.release();
+}
+
+inline
+ircd::json::value::value(const struct member *const &object,
+                         const size_t &len)
+:object{object}
+,len{len}
+,type{OBJECT}
+,serial{false}
+,alloc{false}
+,floats{false}
+{}
+
+inline
+ircd::json::value::value(std::unique_ptr<const struct member[]> &&object,
+                         const size_t &len)
+:object{object.get()}
+,len{len}
+,type{OBJECT}
+,serial{false}
+,alloc{true}
+,floats{false}
+{
+	object.release();
+}
+
+inline
+ircd::json::value::value(value &&other)
+noexcept
+:integer{other.integer}
+,len{other.len}
+,type{other.type}
+,serial{other.serial}
+,alloc{other.alloc}
+,floats{other.floats}
+{
+	other.alloc = false;
+}
+
 template<size_t N>
 ircd::json::value::value(const char (&str)[N])
 :value{string_view{str, strnlen(str, N)}}

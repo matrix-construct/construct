@@ -61,6 +61,7 @@ ircd::json::member::member(const string_view &key,
 {}
 
 template<class V>
+inline __attribute__((always_inline))
 ircd::json::member::member(const string_view &key,
                            V&& v)
 :member
