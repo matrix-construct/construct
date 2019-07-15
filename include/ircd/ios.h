@@ -150,11 +150,11 @@ struct ircd::ios::handler
 	static thread_local handler *current;
 
 	static void *allocate(handler *const &, const size_t &);
-	static void deallocate(handler *const &, void *const &, const size_t &);
-	static bool continuation(handler *const &);
-	static void enter(handler *const &);
-	static void leave(handler *const &);
-	static bool fault(handler *const &);
+	static void deallocate(handler *const &, void *const &, const size_t &) noexcept;
+	static bool continuation(handler *const &) noexcept;
+	static void enter(handler *const &) noexcept;
+	static void leave(handler *const &) noexcept;
+	static bool fault(handler *const &) noexcept;
 
 	ios::descriptor *descriptor {nullptr};
 	uint64_t slice_start {0};

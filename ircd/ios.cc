@@ -158,6 +158,7 @@ ircd::ios::handler::current;
 
 bool
 ircd::ios::handler::fault(handler *const &handler)
+noexcept
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
@@ -183,6 +184,7 @@ ircd::ios::handler::fault(handler *const &handler)
 
 void
 ircd::ios::handler::leave(handler *const &handler)
+noexcept
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
@@ -198,6 +200,7 @@ ircd::ios::handler::leave(handler *const &handler)
 
 void
 ircd::ios::handler::enter(handler *const &handler)
+noexcept
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
@@ -213,6 +216,7 @@ ircd::ios::handler::enter(handler *const &handler)
 
 bool
 ircd::ios::handler::continuation(handler *const &handler)
+noexcept
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
@@ -223,6 +227,7 @@ void
 ircd::ios::handler::deallocate(handler *const &handler,
                                void *const &ptr,
                                const size_t &size)
+noexcept
 {
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
