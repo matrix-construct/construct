@@ -123,6 +123,7 @@ libircd_la_SOURCES += exception.cc
 libircd_la_SOURCES += util.cc
 libircd_la_SOURCES += demangle.cc
 libircd_la_SOURCES += locale.cc
+libircd_la_SOURCES += timedate.cc
 libircd_la_SOURCES += lex_cast.cc
 libircd_la_SOURCES += stringops.cc
 libircd_la_SOURCES += globular.cc
