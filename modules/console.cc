@@ -11656,6 +11656,14 @@ console_cmd__fed__head(opt &out, const string_view &line)
 		proto["event"]
 	};
 
+	out << "VERSION "
+	    << proto["room_version"]
+	    << std::endl;
+
+	out << "DEPTH   "
+	    << event["depth"]
+	    << std::endl;
+
 	const m::event::prev prev{event};
 	for(size_t i(0); i < prev.auth_events_count(); ++i)
 	{
@@ -11664,7 +11672,7 @@ console_cmd__fed__head(opt &out, const string_view &line)
 			prev.auth_event(i)
 		};
 
-		out << "AUTH " << id << " " << std::endl;
+		out << "AUTH    " << id << " " << std::endl;
 	}
 
 	for(size_t i(0); i < prev.prev_events_count(); ++i)
@@ -11674,12 +11682,8 @@ console_cmd__fed__head(opt &out, const string_view &line)
 			prev.prev_event(i)
 		};
 
-		out << "PREV " << id << " " << std::endl;
+		out << "PREV    " << id << " " << std::endl;
 	}
-
-	out << "DEPTH "
-	    << event["depth"]
-	    << std::endl;
 
 	return true;
 }
