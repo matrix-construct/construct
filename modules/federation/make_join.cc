@@ -98,6 +98,16 @@ get__make_join(client &client,
 
 	json::stack out{buf};
 	json::stack::object top{out};
+
+	char room_version_buf[32];
+	json::stack::member
+	{
+		top, "room_version", json::value
+		{
+			m::version(room_version_buf, room, std::nothrow), json::STRING
+		}
+	};
+
 	json::stack::object event
 	{
 		top, "event"
