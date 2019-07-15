@@ -9,9 +9,7 @@ tree.
 #### Layout
 
 The `modules/` directory tree is primarily shaped the same as the HTTP resource
-tree in which most of its modules register themselves in. This is **not**
-automatic and the mere inclusion of files/directories in `modules/` does not
-automatically expose them over HTTP.
+tree in which most of its modules register themselves in.
 
 Note that the installation layout is not the same as the development source
 layout (i.e in git). Upon installation, the module tree is collapsed into a
