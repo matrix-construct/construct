@@ -351,9 +351,15 @@ ircd::m::vm::inject(eval &eval,
 	};
 
 	assert(eval.room_id);
-	const json::iov::push room_id
+	const json::iov::add room_id_
 	{
-		event, { "room_id", eval.room_id }
+		event, eval.room_id && !event.has("room_id"),
+		{
+			"room_id", [&eval]() -> json::value
+			{
+				return eval.room_id;
+			}
+		}
 	};
 
 	const json::iov::add origin_
