@@ -251,8 +251,8 @@ ircd::m::room::bootstrap(const m::room::id &room_id,
 		bootstrap_make_join(host, room_id, user_id)
 	};
 
+	assert(event_id);
 	bootstrap(event_id, host); // asynchronous; returns quickly
-
 	return event_id;
 }
 
@@ -643,6 +643,11 @@ try
 		request.in.content
 	};
 
+	const json::string &room_version
+	{
+		response.get("room_version", "1")
+	};
+
 	const json::object &proto
 	{
 		response.at("event")
@@ -712,19 +717,21 @@ try
 
 	m::vm::copts vmopts;
 	vmopts.infolog_accept = true;
-	vmopts.fetch_auth_check = false;
-	vmopts.fetch_state_check = false;
-	vmopts.fetch_prev_check = false;
+	vmopts.fetch = false;
 	vmopts.eval = false;
-	const m::event::id::buf event_id
+	vmopts.room_version = room_version;
+	const m::event::id::buf ret{vm::eval
 	{
-		m::vm::eval
-		{
-			event, content, vmopts
-		}
-	};
+		event, content, vmopts
+	}};
 
-	return event_id;
+	if(unlikely(!ret))
+		throw m::UNAVAILABLE
+		{
+			"Unknown error"
+		};
+
+	return ret;
 }
 catch(const std::exception &e)
 {
