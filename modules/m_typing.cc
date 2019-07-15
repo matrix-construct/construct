@@ -386,6 +386,7 @@ ircd::m::typing::for_each(const m::typing::closure_bool &closure)
 
 bool
 update_state(const m::typing &object)
+try
 {
 	const auto &user_id
 	{
@@ -452,6 +453,16 @@ update_state(const m::typing &object)
 	};
 
 	return transmit;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		typing_log, "Failed to update state :%s",
+		e.what(),
+	};
+
+	throw;
 }
 
 system_point
