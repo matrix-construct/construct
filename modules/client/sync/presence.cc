@@ -124,39 +124,32 @@ ircd::m::sync::presence_polylog(data &data)
 	}};
 
 	// Setup for concurrentization.
-	static const size_t fibers(64); //TODO: conf
-	using buffer = std::array<char[m::id::MAX_SIZE+1], fibers>;
-	const auto buf(std::make_unique<buffer>());
-	std::array<string_view, fibers> q;
-	ctx::concurrent<string_view> concurrent
+	static const size_t fibers(64);
+	sync::pool.min(fibers);
+	ctx::concurrent<std::string> concurrent
 	{
-		m::sync::pool, q, [&data, &append_event]
-		(const m::user::id user_id)
+		sync::pool, [&data, &append_event](std::string user_id)
 		{
 			const event::idx event_idx
 			{
-				m::presence::get(std::nothrow, user_id)
+				m::presence::get(std::nothrow, m::user::id{user_id})
 			};
 
-			if(apropos(data, event_idx))
-				m::get(std::nothrow, event_idx, "content", append_event);
+			if(!apropos(data, event_idx))
+				return;
+
+			m::get(std::nothrow, event_idx, "content", append_event);
 		}
 	};
 
 	// Iterate all of the users visible to our user in joined rooms.
 	const m::user::mitsein mitsein{data.user};
-	mitsein.for_each("join", [&concurrent, &q, &buf]
+	mitsein.for_each("join", [&concurrent]
 	(const m::user &user)
 	{
-		// Manual copy of the user_id string to the buffer and assignment
-		// of q at the next position. concurrent.snd is the position in q
-		// which ctx::concurrent wants us to store the next data at. The
-		// concurrent() call doesn't return (blocks this context) until there's
-		// a next position available; propagating flow-control for the iter.
-		const auto pos(concurrent.nextpos());
-		concurrent(strlcpy(buf->at(pos), user.user_id));
+		concurrent(std::string(user.user_id));
 	});
 
-	concurrent.wait_done();
+	concurrent.wait();
 	return ret;
 }

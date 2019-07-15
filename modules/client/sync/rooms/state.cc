@@ -197,50 +197,44 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	if(data.phased && data.range.first == 0)
 		return room_state_phased_events(data);
 
-	const m::room &room{*data.room};
-	const m::room::state state{room};
+	bool ret{false};
+	ctx::mutex mutex;
 	json::stack::array array
 	{
 		*data.out, "events"
 	};
 
-	ctx::mutex mutex;
-	std::array<event::idx, 64> md;
-	std::vector<event::fetch> event(md.size() * 3);
-	for(auto &fetch : event)
-		fetch = event::fetch{_default_fopts};
-
-	size_t _i(0);
-	bool ret{false};
-	const event::closure_idx each_idx{[&data, &array, &mutex, &ret, &event, &_i]
-	(const m::event::idx event_idx)
-	{
-		const size_t i{_i++ % event.size()};
-		if(unlikely(!seek(event.at(i), event_idx, std::nothrow)))
-		{
-			assert(data.room);
-			log::error
-			{
-				log, "Failed to fetch event idx:%lu in room %s state.",
-				event_idx,
-				string_view{data.room->room_id}
-			};
-
-			return;
-		}
-
-		const std::lock_guard lock{mutex};
-		room_state_append(data, array, event.at(i), event_idx);
-		ret = true;
-	}};
-
+	sync::pool.min(64); //TODO: XXX
 	ctx::concurrent<event::idx> concurrent
 	{
-		m::sync::pool, md, each_idx
+		sync::pool, [&](const event::idx &event_idx)
+		{
+			const m::event::fetch event
+			{
+				event_idx, std::nothrow, _default_fopts
+			};
+
+			if(unlikely(!event.valid))
+			{
+				log::error
+				{
+					log, "Failed to fetch event idx:%lu in room %s state.",
+					event_idx,
+					string_view{data.room->room_id},
+				};
+
+				return;
+			}
+
+			const std::lock_guard lock{mutex};
+			room_state_append(data, array, event, event_idx);
+			ret |= true;
+		}
 	};
 
-	state.for_each([&data, &concurrent, &each_idx]
-	(const m::event::idx &event_idx)
+	const room::state state{*data.room};
+	state.for_each([&data, &concurrent]
+	(const event::idx &event_idx)
 	{
 		if(!apropos(data, event_idx))
 			return;
@@ -248,7 +242,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		concurrent(event_idx);
 	});
 
-	concurrent.wait_done();
+	concurrent.wait();
 	return ret;
 }
 
