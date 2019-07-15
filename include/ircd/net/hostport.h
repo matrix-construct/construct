@@ -161,8 +161,7 @@ ircd::net::hostport::operator
 bool()
 const
 {
-	static const hostport defaults{};
-	return net::host(*this) != net::host(defaults);
+	return net::host(*this) != net::host(hostport{});
 }
 
 inline bool
