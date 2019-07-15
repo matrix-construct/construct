@@ -209,6 +209,7 @@ ircd::m::module_names
 	"m_events",
 	"m_rooms",
 	"m_user",
+	"m_user_highlight",
 	"m_user_profile",
 	"m_ignored_user_list",
 	"m_room_aliases",
