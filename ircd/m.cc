@@ -2786,20 +2786,6 @@ ircd::m::user::tokens
 	tokens_room_id
 };
 
-ircd::m::user
-ircd::m::create(const id::user &user_id,
-                const json::members &contents)
-{
-	using prototype = user (const id::user &, const json::members &);
-
-	static mods::import<prototype> function
-	{
-		"m_user", "user_create"
-	};
-
-	return function(user_id, contents);
-}
-
 bool
 ircd::m::exists(const user::id &user_id)
 {

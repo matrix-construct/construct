@@ -8,18 +8,15 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd::m;
-using namespace ircd;
-
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix user library; modular components."
 };
 
-extern "C" m::user
-user_create(const m::user::id &user_id,
-            const json::members &contents)
+ircd::m::user
+ircd::m::create(const m::user::id &user_id,
+                const json::members &contents)
 {
 	const m::user user
 	{
