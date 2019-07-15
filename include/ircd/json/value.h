@@ -342,3 +342,27 @@ ircd::json::value::value(const char (&str)[N],
                          const enum type &type)
 :value{string_view{str, strnlen(str, N)}, type}
 {}
+
+inline bool
+ircd::json::operator>(const value &a, const value &b)
+{
+	return !operator<=(a, b);
+}
+
+inline bool
+ircd::json::operator>=(const value &a, const value &b)
+{
+	return operator>(a, b) || operator==(a, b);
+}
+
+inline bool
+ircd::json::operator<=(const value &a, const value &b)
+{
+	return operator<(a, b) || operator==(a, b);
+}
+
+inline bool
+ircd::json::operator!=(const value &a, const value &b)
+{
+	return !operator==(a, b);
+}

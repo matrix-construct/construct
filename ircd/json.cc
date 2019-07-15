@@ -3796,57 +3796,62 @@ ircd::json::value::create_string(const size_t &len,
 }
 
 bool
-ircd::json::operator>(const value &a, const value &b)
-{
-	if(unlikely(type(a) != STRING || type(b) != STRING))
-		throw type_error("cannot compare values");
-
-	return static_cast<string_view>(a) > static_cast<string_view>(b);
-}
-
-bool
 ircd::json::operator<(const value &a, const value &b)
 {
-	if(unlikely(type(a) != STRING || type(b) != STRING))
-		throw type_error("cannot compare values");
+	if(type(a) == type(b)) switch(type(b))
+	{
+		case NUMBER:
+			assert(!a.serial && !b.serial);
+			assert(a.floats == b.floats);
+			return b.floats?
+				a.floating < b.floating:
+				a.integer < b.integer;
 
-	return static_cast<string_view>(a) < static_cast<string_view>(b);
-}
+		case STRING:
+			return static_cast<string_view>(a) < static_cast<string_view>(b);
 
-bool
-ircd::json::operator>=(const value &a, const value &b)
-{
-	if(unlikely(type(a) != STRING || type(b) != STRING))
-		throw type_error("cannot compare values");
+		default:
+			break;
+	}
 
-	return static_cast<string_view>(a) >= static_cast<string_view>(b);
-}
-
-bool
-ircd::json::operator<=(const value &a, const value &b)
-{
-	if(unlikely(type(a) != STRING || type(b) != STRING))
-		throw type_error("cannot compare values");
-
-	return static_cast<string_view>(a) <= static_cast<string_view>(b);
-}
-
-bool
-ircd::json::operator!=(const value &a, const value &b)
-{
-	if(unlikely(type(a) != STRING || type(b) != STRING))
-		throw type_error("cannot compare values");
-
-	return static_cast<string_view>(a) != static_cast<string_view>(b);
+	throw type_error
+	{
+		"Cannot compare type[%u] %s to type[%u] %s",
+		uint(type(a)),
+		reflect(type(a)),
+		uint(type(b)),
+		reflect(type(b)),
+	};
 }
 
 bool
 ircd::json::operator==(const value &a, const value &b)
 {
-	if(unlikely(type(a) != STRING || type(b) != STRING))
-		throw type_error("cannot compare values");
+	if(type(a) == type(b)) switch(type(b))
+	{
+		case NUMBER:
+			assert(!a.serial && !b.serial);
+			assert(!a.floats && !b.floats);
+			if(unlikely(a.floats || b.floats))
+				break;
 
-	return static_cast<string_view>(a) == static_cast<string_view>(b);
+			return a.integer == b.integer;
+
+		case STRING:
+			return static_cast<string_view>(a) == static_cast<string_view>(b);
+
+		default:
+			break;
+	}
+
+	throw type_error
+	{
+		"Cannot compare type[%u] %s to type[%u] %s",
+		uint(type(a)),
+		reflect(type(a)),
+		uint(type(b)),
+		reflect(type(b)),
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
