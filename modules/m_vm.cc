@@ -605,7 +605,7 @@ catch(const m::error &e) // GENERAL MATRIX ERROR
 	return handle_error
 	(
 		*eval.opts, fault::GENERAL,
-		"eval %s (General Protection) :%s %s :%s",
+		"eval %s (General Protection) :%s :%s :%s",
 		event.event_id? string_view{event.event_id}: "<edu>"_sv,
 		e.what(),
 		unquote(json::object(e.content).get("errcode")),
@@ -915,6 +915,33 @@ ircd::m::vm::call_hook(hook::site<T> &hook,
 try
 {
 	hook(event, std::forward<T>(data));
+}
+catch(const m::error &e)
+{
+	log::derror
+	{
+		"%s | phase:%s :%s :%s :%s",
+		loghead(eval),
+		unquote(hook.feature.get("name")),
+		e.what(),
+		e.errcode(),
+		e.errstr(),
+	};
+
+	throw;
+}
+catch(const http::error &e)
+{
+	log::derror
+	{
+		"%s | phase:%s :%s :%s",
+		loghead(eval),
+		unquote(hook.feature.get("name")),
+		e.what(),
+		e.content,
+	};
+
+	throw;
 }
 catch(const std::exception &e)
 {
