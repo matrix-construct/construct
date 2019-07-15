@@ -3415,39 +3415,6 @@ const
 }
 
 //
-// user::profile
-//
-
-ircd::string_view
-ircd::m::user::profile::get(const mutable_buffer &out,
-                            const string_view &key)
-const
-{
-	string_view ret;
-	get(std::nothrow, key, [&out, &ret]
-	(const string_view &key, const string_view &val)
-	{
-		ret = { data(out), copy(out, val) };
-	});
-
-	return ret;
-}
-
-void
-ircd::m::user::profile::get(const string_view &key,
-                            const closure &closure)
-const
-{
-	if(!get(std::nothrow, key, closure))
-		throw m::NOT_FOUND
-		{
-			"Property %s in profile for %s not found",
-			key,
-			string_view{user.user_id}
-		};
-}
-
-//
 // user::filter
 //
 
