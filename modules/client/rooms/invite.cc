@@ -188,10 +188,12 @@ try
 		state.get(std::nothrow, "m.room.create", "", append);
 		state.get(std::nothrow, "m.room.power_levels", "", append);
 		state.get(std::nothrow, "m.room.join_rules", "", append);
+		state.get(std::nothrow, "m.room.history_visibility", "", append);
 		state.get(std::nothrow, "m.room.aliases", my_host(), append);
 		state.get(std::nothrow, "m.room.canonical_alias", "", append);
 		state.get(std::nothrow, "m.room.avatar", "", append);
 		state.get(std::nothrow, "m.room.name", "", append);
+		state.get(std::nothrow, "m.room.member", at<"sender"_>(event), append);
 	}
 
 	top.~object();

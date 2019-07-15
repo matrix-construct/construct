@@ -82,6 +82,9 @@ ircd::m::sync::_default_fopts
 bool
 ircd::m::sync::room_state_linear(data &data)
 {
+	if(data.membership == "invite")
+		return false;
+
 	return room_state_linear_events(data);
 }
 
@@ -125,8 +128,9 @@ ircd::m::sync::room_state_linear_events(data &data)
 	// use the timeline. We make an exception for past state events the server
 	// only recently obtained, to hide them from the timeline.
 	if(int64_t(state_exposure_depth) > -1)
-		if(json::get<"depth"_>(*data.event) + int64_t(state_exposure_depth) >= data.room_depth)
-			return false;
+		if(data.membership != "invite")
+			if(json::get<"depth"_>(*data.event) + int64_t(state_exposure_depth) >= data.room_depth)
+				return false;
 
 	json::stack::object rooms
 	{
@@ -159,6 +163,28 @@ ircd::m::sync::room_state_linear_events(data &data)
 	{
 		*data.out, "events"
 	};
+
+	// Branch for supplying state to the client after its user's invite
+	// is processed. At this point the client has not received prior room
+	// state in /sync.
+	if(data.membership == "invite" &&
+	   json::get<"type"_>(*data.event) == "m.room.member" &&
+	   json::get<"state_key"_>(*data.event) == data.user.user_id)
+	{
+		const auto append{[&]
+		(const m::event &event)
+		{
+			room_state_append(data, array, event, index(event));
+		}};
+
+		const m::room::state state{*data.room};
+		state.get(std::nothrow, "m.room.create", "", append);
+		state.get(std::nothrow, "m.room.join_rules", "", append);
+		state.get(std::nothrow, "m.room.history_visibility", "", append);
+
+		const auto &sender(json::get<"sender"_>(*data.event));
+		state.get(std::nothrow, "m.room.member", sender, append);
+	}
 
 	room_state_append(data, array, *data.event, data.event_idx);
 	return true;
