@@ -415,6 +415,29 @@ ircd::m::append(json::stack::object &object,
 		};
 	#endif
 
+	if(opts.user_id && !visible(event, *opts.user_id))
+	{
+		log::debug
+		{
+			log, "Not sending event '%s' because not visible by '%s'",
+			string_view{event.event_id},
+			string_view{*opts.user_id}
+		};
+
+		return;
+	}
+
+	if(!json::get<"state_key"_>(event) && has_event_idx && m::redacted(*opts.event_idx))
+	{
+		log::debug
+		{
+			log, "Not sending event '%s' because redacted.",
+			string_view{event.event_id},
+		};
+
+		return;
+	}
+
 	if(!json::get<"state_key"_>(event) && has_user)
 	{
 		const m::user::ignores ignores{*opts.user_id};
