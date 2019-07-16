@@ -5104,7 +5104,7 @@ console_cmd__net__listen__list(opt &out, const string_view &line)
 
 	static mods::import<list> listeners
 	{
-		"m_listen", "listeners"
+		"net_listener", "listeners"
 	};
 
 	const list &l(listeners);
@@ -5137,7 +5137,7 @@ console_cmd__net__listen__ciphers(opt &out, const string_view &line)
 
 	static mods::import<list> listeners
 	{
-		"m_listen", "listeners"
+		"net_listener", "listeners"
 	};
 
 	const list &l(listeners);
@@ -5236,7 +5236,7 @@ console_cmd__net__listen__load(opt &out, const string_view &line)
 
 	static mods::import<prototype> load_listener
 	{
-		"m_listen", "load_listener"
+		"net_listener", "load_listener"
 	};
 
 	const params params{line, " ",
@@ -5259,7 +5259,7 @@ console_cmd__net__listen__unload(opt &out, const string_view &line)
 
 	static mods::import<prototype> unload_listener
 	{
-		"m_listen", "unload_listener"
+		"net_listener", "unload_listener"
 	};
 
 	const params params{line, " ",
@@ -5523,7 +5523,7 @@ console_cmd__crt(opt &out, const string_view &line)
 
 	static mods::import<std::list<net::listener>> listeners
 	{
-		"m_listen", "listeners"
+		"net_listener", "listeners"
 	};
 
 	const auto &list{*listeners};
