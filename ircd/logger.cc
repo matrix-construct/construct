@@ -516,30 +516,31 @@ noexcept
 	// Compose the prefix sequence into the buffer through stringstream
 	std::stringstream s;
 	pubsetbuf(s, buf);
-	s << microtime(date)
-	  << ' '
-	  << string_view{conf.console_ansi}
-	  << std::setw(8)
-	  << std::right
-	  << reflect(lev)
-	  << (string_view{conf.console_ansi}? "\033[0m " : " ")
-//	  << (log.snote? log.snote : '-')
-	  << std::setw(LOG_NAME_TRUNC)
-	  << std::left
-	  << trunc(log.name, LOG_NAME_TRUNC)
-	  << ' '
-	  << std::setw(5)
-	  << std::right
-	  << ctx::id()
-	  << ' '
-	  << std::setw(CTX_NAME_TRUNC)
-	  << std::left
-	  << trunc(ctx::name(), CTX_NAME_TRUNC)
-	  << ' '
-	  << std::setw(5)
-	  << std::right
-	  << ctx::epoch()
-	  << " :";
+	s
+	<< microtime(date)
+	<< ' '
+	<< std::setw(5)
+	<< std::right
+	<< ctx::epoch()
+	<< ' '
+	<< string_view{conf.console_ansi}
+	<< std::setw(8)
+	<< std::right
+	<< reflect(lev)
+	<< (string_view{conf.console_ansi}? "\033[0m " : " ")
+//	<< (log.snote? log.snote : '-')
+	<< std::setw(LOG_NAME_TRUNC)
+	<< std::left
+	<< trunc(log.name, LOG_NAME_TRUNC)
+	<< ' '
+	<< std::setw(5)
+	<< std::right
+	<< ctx::id()
+	<< ' '
+	<< std::setw(CTX_NAME_TRUNC)
+	<< std::left
+	<< trunc(ctx::name(), CTX_NAME_TRUNC)
+	<< " :";
 
 	// Compose the user message after prefix
 	const size_t pos(s.tellp());
