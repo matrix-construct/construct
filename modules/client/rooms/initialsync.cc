@@ -263,20 +263,28 @@ get__initialsync_remote(client &client,
                         const resource::request &request,
                         const m::room &room)
 {
+	const m::room::origins origins{room};
+
+	char server_buf[384];
+	const string_view server
+	{
+		origins.random(server_buf, [](const string_view &origin)
+		{
+			return !my_host(origin);
+		})
+	};
+
+	const net::hostport remote
+	{
+		server?: room.room_id.host()
+	};
+
 	const auto head
 	{
-		m::v1::fetch_head(room, room.room_id.host(), request.user_id)
+		m::v1::fetch_head(room, remote, request.user_id)
 	};
 
 	m::room room_{room};
 	room_.event_id = head;
-
-	const net::hostport remote
-	{
-		my_host(room_.event_id.host())?
-			room_.room_id.host():
-			room_.event_id.host()
-	};
-
 	m::fetch::state_ids(room_);
 }
