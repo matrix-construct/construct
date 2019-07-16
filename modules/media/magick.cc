@@ -32,6 +32,9 @@ namespace ircd::magick
 	static void init();
 	static void fini();
 
+	extern bool call_ready;
+	extern ctx::dock call_dock;
+	extern ctx::mutex call_mutex;
 	extern conf::item<uint64_t> limit_ticks;
 	extern conf::item<uint64_t> limit_cycles;
 	extern conf::item<uint64_t> yield_threshold;
@@ -96,6 +99,20 @@ ircd::magick::yield_interval
 	{ "default", 768L                         },
 };
 
+// It is likely that we can't have two contexts enter libmagick
+// simultaneously. This race is possible if the progress callback yields
+// and another context starts an operation. It is highly unlikely the lib
+// can handle reentrancy on the same thread. Hitting thread mutexes within
+// magick will also be catastrophic to ircd::ctx.
+decltype(ircd::magick::call_mutex)
+ircd::magick::call_mutex;
+
+decltype(ircd::magick::call_dock)
+ircd::magick::call_dock;
+
+decltype(ircd::magick::call_ready)
+ircd::magick::call_ready;
+
 decltype(ircd::magick::version_api)
 ircd::magick::version_api
 {
@@ -148,6 +165,9 @@ ircd::magick::init()
 	::SetMonitorHandler(handle_progress);
 	::SetMagickResourceLimit(ThreadsResource, 1UL);
 
+	call_ready = true;
+	call_dock.notify_all();
+
 	log::debug
 	{
 		log, "resource settings: pixel max:%lu:%lu height:%lu:%lu width:%lu:%lu; threads:%lu:%lu",
@@ -169,6 +189,12 @@ ircd::magick::fini()
 	{
 		"Shutting down Magick Library..."
 	};
+
+	call_ready = false;
+	call_dock.wait([]
+	{
+		return !call_mutex.locked();
+	});
 
 	::DestroyMagickResources();
 	::DestroyMagick();
@@ -399,12 +425,6 @@ ircd::magick::display::display(const ::ImageInfo &info,
 
 namespace ircd::magick
 {
-	// It is likely that we can't have two contexts enter libmagick
-	// simultaneously. This race is possible if the progress callback yields
-	// and another context starts an operation. It is highly unlikely the lib
-	// can handle reentrancy on the same thread. Hitting thread mutexes within
-	// magick will also be catastrophic to ircd::ctx.
-	ctx::mutex call_mutex;
 }
 
 template<class return_t,
@@ -414,6 +434,12 @@ return_t
 ircd::magick::callex(function&& f,
                      args&&... a)
 {
+	if(unlikely(!call_ready))
+		throw error
+		{
+			"Graphics library not ready."
+		};
+
 	const std::lock_guard lock
 	{
 		call_mutex
@@ -426,6 +452,7 @@ ircd::magick::callex(function&& f,
 		::DestroyExceptionInfo(&ei);
 	}};
 
+	assert(call_ready);
 	const auto ret
 	{
 		f(std::forward<args>(a)..., &ei)
@@ -464,11 +491,18 @@ return_t
 ircd::magick::call(function&& f,
                    args&&... a)
 {
+	if(unlikely(!call_ready))
+		throw error
+		{
+			"Graphics library not ready."
+		};
+
 	const std::lock_guard lock
 	{
 		call_mutex
 	};
 
+	assert(call_ready);
 	return f(std::forward<args>(a)...);
 }
 
