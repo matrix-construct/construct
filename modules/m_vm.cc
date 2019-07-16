@@ -416,7 +416,10 @@ ircd::m::vm::inject(eval &eval,
 	const scope_restore eval_room_version
 	{
 		eval.room_version,
-		eval.opts->room_version?:
+		eval.opts->room_version?
+			eval.opts->room_version:
+		event.at("type") == "m.room.create" && contents.has("room_version")?
+			string_view{contents.at("room_version")}:
 			m::version(room_version_buf, room{eval.room_id}, std::nothrow)
 	};
 
