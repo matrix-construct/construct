@@ -2815,13 +2815,25 @@ const noexcept
 	assert(idx);
 	size_t ret(0);
 	for_each(type, [&ret]
-	(const event::idx &ref, const dbs::ref &)
+	(const event::idx &, const dbs::ref &)
 	{
 		++ret;
 		return true;
 	});
 
 	return ret;
+}
+
+bool
+ircd::m::event::refs::has(const dbs::ref &type)
+const noexcept
+{
+	return !for_each(type, [&type]
+	(const event::idx &, const dbs::ref &ref)
+	{
+		assert(ref == type);
+		return false;
+	});
 }
 
 bool

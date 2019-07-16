@@ -33,6 +33,7 @@ struct ircd::m::event::refs
 
 	bool has(const dbs::ref &type, const event::idx &) const noexcept;
 	bool has(const event::idx &) const noexcept;
+	bool has(const dbs::ref &) const noexcept;
 
 	size_t count(const dbs::ref &type) const noexcept;
 	size_t count() const noexcept;
