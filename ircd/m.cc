@@ -276,6 +276,7 @@ ircd::m::module_names
 	"client_sync_rooms_state",
 	"client_sync_rooms_timeline",
 	"client_sync_rooms_unread_notifications",
+	"client_sync_rooms_summary",
 	"client_sync",
 	"client_sync_to_device",
 	"client_thirdparty_protocols",
