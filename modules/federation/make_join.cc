@@ -91,6 +91,30 @@ get__make_join(client &client,
 			"You are not permitted to view the room at this event."
 		};
 
+	char room_version_buf[32];
+	const string_view &room_version
+	{
+		m::version(room_version_buf, room, std::nothrow)
+	};
+
+	const bool version_mismatch
+	{
+		request.query.for_each("ver", [&room_version]
+		(const auto &val)
+		{
+			return val.second != room_version;
+		})
+	};
+
+	if(version_mismatch)
+		throw m::error
+		{
+			http::NOT_IMPLEMENTED, "M_INCOMPATIBLE_ROOM_VERSION",
+			"Your homeserver does not support the room version %s.",
+			room_version?
+				room_version : "?????",
+		};
+
 	const unique_buffer<mutable_buffer> buf
 	{
 		8_KiB
@@ -99,12 +123,11 @@ get__make_join(client &client,
 	json::stack out{buf};
 	json::stack::object top{out};
 
-	char room_version_buf[32];
 	json::stack::member
 	{
 		top, "room_version", json::value
 		{
-			m::version(room_version_buf, room, std::nothrow), json::STRING
+			room_version, json::STRING
 		}
 	};
 
