@@ -73,6 +73,7 @@ namespace ircd::m
 #include "txn.h"
 #include "hook.h"
 #include "visible.h"
+#include "redacted.h"
 #include "feds.h"
 #include "app.h"
 #include "sync.h"
