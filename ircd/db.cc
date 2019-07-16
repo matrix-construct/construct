@@ -7113,18 +7113,18 @@ ircd::db::debug(const rocksdb::WriteBatch &batch)
 	(const mutable_buffer &ret)
 	{
 		return snprintf(data(ret), size(ret)+1,
-		                "%d deltas; size: %zuB :%s%s%s%s%s%s%s%s%s",
+		                "%d deltas; size:%zuB %s+%s+%s+%s+%s+%s+%s+%s+%s",
 		                batch.Count(),
 		                batch.GetDataSize(),
-		                batch.HasPut()? " PUT" : "",
-		                batch.HasDelete()? " DELETE" : "",
-		                batch.HasSingleDelete()? " SINGLE_DELETE" : "",
-		                batch.HasDeleteRange()? " DELETE_RANGE" : "",
-		                batch.HasMerge()? " MERGE" : "",
-		                batch.HasBeginPrepare()? " BEGIN_PREPARE" : "",
-		                batch.HasEndPrepare()? " END_PREPARE" : "",
-		                batch.HasCommit()? " COMMIT" : "",
-		                batch.HasRollback()? " ROLLBACK" : "");
+		                batch.HasPut()? "PUT" : "",
+		                batch.HasDelete()? "DEL" : "",
+		                batch.HasSingleDelete()? "SDL" : "",
+		                batch.HasDeleteRange()? "DRG" : "",
+		                batch.HasMerge()? "MRG" : "",
+		                batch.HasBeginPrepare()? "BEG" : "",
+		                batch.HasEndPrepare()? "END" : "",
+		                batch.HasCommit()? "COM-" : "",
+		                batch.HasRollback()? "RB^" : "");
 	});
 }
 
