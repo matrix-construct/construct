@@ -56,7 +56,7 @@ context_log
 	"matrix.context"
 };
 
-static void
+static bool
 _append(json::stack::array &,
         const m::event &,
         const m::event::idx &,
@@ -193,8 +193,7 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				continue;
 
-			_append(array, event, before.event_idx(), user_room, room_depth);
-			++counts.before;
+			counts.before += _append(array, event, before.event_idx(), user_room, room_depth);
 		}
 
 		if(before && limit > 0)
@@ -234,8 +233,7 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				continue;
 
-			_append(array, event, after.event_idx(), user_room, room_depth);
-			++counts.after;
+			counts.after += _append(array, event, after.event_idx(), user_room, room_depth);
 		}
 
 		if(after && limit > 0)
@@ -293,8 +291,7 @@ get__context(client &client,
 			if(!visible(event, request.user_id))
 				return true;
 
-			_append(array, event, event_idx, user_room, room_depth, false);
-			++counts.state;
+			counts.state += _append(array, event, event_idx, user_room, room_depth, false);
 			return true;
 		});
 	}
@@ -315,7 +312,7 @@ get__context(client &client,
 	return std::move(response);
 }
 
-void
+bool
 _append(json::stack::array &chunk,
         const m::event &event,
         const m::event::idx &event_idx,
@@ -328,5 +325,5 @@ _append(json::stack::array &chunk,
 	opts.user_id = &user_room.user.user_id;
 	opts.user_room = &user_room;
 	opts.room_depth = &room_depth;
-	m::append(chunk, event, opts);
+	return m::append(chunk, event, opts);
 }

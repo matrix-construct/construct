@@ -16,7 +16,7 @@ IRCD_MODULE
 
 namespace ircd::m::sync
 {
-	static void _room_timeline_append(data &, json::stack::array &, const m::event::idx &, const m::event &);
+	static bool _room_timeline_append(data &, json::stack::array &, const m::event::idx &, const m::event &);
 	static event::id::buf _room_timeline_polylog_events(data &, const m::room &, bool &, bool &);
 	static bool room_timeline_polylog(data &);
 
@@ -155,8 +155,7 @@ ircd::m::sync::room_timeline_linear(data &data)
 		*data.out, "events"
 	};
 
-	_room_timeline_append(data, array, data.event_idx, *data.event);
-	return true;
+	return _room_timeline_append(data, array, data.event_idx, *data.event);
 }
 
 bool
@@ -205,8 +204,7 @@ ircd::m::sync::_room_timeline_linear_command(data &data)
 		data.event, &event
 	};
 
-	_room_timeline_append(data, array, data.event_idx, event);
-	return true;
+	return _room_timeline_append(data, array, data.event_idx, event);
 }
 
 bool
@@ -295,14 +293,13 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 		{
 			const m::event &event(*it);
 			const m::event::idx &event_idx(it.event_idx());
-			_room_timeline_append(data, array, event_idx, event);
-			ret = true;
+			ret |= _room_timeline_append(data, array, event_idx, event);
 		}
 
 	return event_id;
 }
 
-void
+bool
 ircd::m::sync::_room_timeline_append(data &data,
                                      json::stack::array &events,
                                      const m::event::idx &event_idx,
@@ -314,5 +311,5 @@ ircd::m::sync::_room_timeline_append(data &data,
 	opts.user_id = &data.user.user_id;
 	opts.user_room = &data.user_room;
 	opts.room_depth = &data.room_depth;
-	m::append(events, event, opts);
+	return m::append(events, event, opts);
 }

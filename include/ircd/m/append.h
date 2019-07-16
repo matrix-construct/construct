@@ -24,6 +24,6 @@ namespace ircd::m
 		bool query_txnid {true};
 	};
 
-	void append(json::stack::object &, const event &, const event_append_opts & = {});
-	void append(json::stack::array &, const event &, const event_append_opts & = {});
+	bool append(json::stack::object &, const event &, const event_append_opts & = {});
+	bool append(json::stack::array &, const event &, const event_append_opts & = {});
 }

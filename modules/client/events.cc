@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Client 14.17.1.1 :Room Previews"
 };
 
-static void
+static bool
 append_event(json::stack::array &out,
              const m::event &event,
              const m::event::idx &event_idx,
@@ -336,8 +336,7 @@ get_events_from(client &client,
 		if(!visible(it.event_id(), request.user_id))
 			continue;
 
-		append_event(chunk, *it, it.event_idx(), room_depth, user_room);
-		++j;
+		j += append_event(chunk, *it, it.event_idx(), room_depth, user_room);
 	}
 
 	if(!j)
@@ -352,7 +351,7 @@ get_events_from(client &client,
 	return j;
 }
 
-void
+bool
 append_event(json::stack::array &out,
              const m::event &event,
              const m::event::idx &event_idx,
@@ -364,5 +363,5 @@ append_event(json::stack::array &out,
 	opts.room_depth = &room_depth;
 	opts.user_room = &user_room;
 	opts.user_id = &user_room.user.user_id;
-	m::append(out, event, opts);
+	return m::append(out, event, opts);
 }

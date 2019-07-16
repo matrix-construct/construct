@@ -22,7 +22,7 @@ struct pagination_tokens
 	pagination_tokens(const resource::request &);
 };
 
-static void
+static bool
 _append(json::stack::array &chunk,
         const m::event &,
         const m::event::idx &,
@@ -168,8 +168,10 @@ get__messages(client &client,
 			continue;
 		}
 
-		_append(chunk, event, it.event_idx(), user_room, room_depth);
-		++hit;
+		if(_append(chunk, event, it.event_idx(), user_room, room_depth))
+			++hit;
+		else
+			++miss;
 	}
 	chunk.~array();
 
@@ -203,7 +205,7 @@ get__messages(client &client,
 	return {};
 }
 
-void
+bool
 _append(json::stack::array &chunk,
         const m::event &event,
         const m::event::idx &event_idx,
@@ -215,7 +217,7 @@ _append(json::stack::array &chunk,
 	opts.user_id = &user_room.user.user_id;
 	opts.user_room = &user_room;
 	opts.room_depth = &room_depth;
-	m::append(chunk, event, opts);
+	return m::append(chunk, event, opts);
 }
 
 // Client-Server 6.3.6 query parameters

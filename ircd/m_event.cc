@@ -356,10 +356,10 @@ ircd::m::pretty_oneline(std::ostream &s,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// event/append.h
+// m/append.h
 //
 
-void
+bool
 ircd::m::append(json::stack::array &array,
                 const event &event_,
                 const event_append_opts &opts)
@@ -369,10 +369,10 @@ ircd::m::append(json::stack::array &array,
 		array
 	};
 
-	append(object, event_, opts);
+	return append(object, event_, opts);
 }
 
-void
+bool
 ircd::m::append(json::stack::object &object,
                 const event &event,
                 const event_append_opts &opts)
@@ -415,19 +415,7 @@ ircd::m::append(json::stack::object &object,
 		};
 	#endif
 
-	if(opts.user_id && !visible(event, *opts.user_id))
-	{
-		log::debug
-		{
-			log, "Not sending event '%s' because not visible by '%s'",
-			string_view{event.event_id},
-			string_view{*opts.user_id}
-		};
-
-		return;
-	}
-
-	if(!json::get<"state_key"_>(event) && has_event_idx && m::redacted(*opts.event_idx))
+	if(has_event_idx && !defined(json::get<"state_key"_>(event)) && m::redacted(*opts.event_idx))
 	{
 		log::debug
 		{
@@ -435,7 +423,7 @@ ircd::m::append(json::stack::object &object,
 			string_view{event.event_id},
 		};
 
-		return;
+		return false;
 	}
 
 	if(!json::get<"state_key"_>(event) && has_user)
@@ -451,7 +439,7 @@ ircd::m::append(json::stack::object &object,
 				string_view{*opts.user_id}
 			};
 
-			return;
+			return false;
 		}
 	}
 
@@ -528,6 +516,8 @@ ircd::m::append(json::stack::object &object,
 				unsigned_, "transaction_id", unquote(content.get("transaction_id"))
 			};
 		});
+
+	return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

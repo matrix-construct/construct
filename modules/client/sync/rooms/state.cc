@@ -10,7 +10,7 @@
 
 namespace ircd::m::sync
 {
-	static void room_state_append(data &, json::stack::array &, const m::event &, const m::event::idx &);
+	static bool room_state_append(data &, json::stack::array &, const m::event &, const m::event::idx &);
 
 	static bool room_state_phased_member_events(data &, json::stack::array &);
 	static bool room_state_phased_events(data &);
@@ -253,8 +253,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 			}
 
 			const std::lock_guard lock{mutex};
-			room_state_append(data, array, event, event_idx);
-			ret |= true;
+			ret |= room_state_append(data, array, event, event_idx);
 		}
 	};
 
@@ -296,10 +295,9 @@ ircd::m::sync::room_state_phased_events(data &data)
 	{
 		[&data, &array, &ret, &mutex](const m::event &event)
 		{
-			ret |= true;
 			const auto event_idx(m::index(event));
 			const std::lock_guard lock{mutex};
-			room_state_append(data, array, event, event_idx);
+			ret |= room_state_append(data, array, event, event_idx);
 		}
 	};
 
@@ -362,7 +360,7 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 	return ret;
 }
 
-void
+bool
 ircd::m::sync::room_state_append(data &data,
                                  json::stack::array &events,
                                  const m::event &event,
@@ -374,5 +372,5 @@ ircd::m::sync::room_state_append(data &data,
 	opts.user_room = &data.user_room;
 	opts.query_txnid = false;
 	opts.room_depth = &data.room_depth;
-	m::append(events, event, opts);
+	return m::append(events, event, opts);
 }
