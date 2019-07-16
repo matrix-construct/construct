@@ -863,10 +863,12 @@ bool
 ircd::http::query::string::for_each(const closure &view)
 const
 {
-	const auto action{[&view]
+	bool ret{true};
+	const auto action{[&view, &ret]
 	(const auto &attribute, const auto &context, auto &continue_)
 	{
-		continue_ = view(attribute);
+		ret = view(attribute);
+		continue_ = ret;
 	}};
 
 	const parser::rule<unused_type> grammar
@@ -876,7 +878,8 @@ const
 
 	const string_view &s(*this);
 	const char *start(s.begin()), *const stop(s.end());
-	return qi::parse(start, stop, grammar);
+	qi::parse(start, stop, grammar);
+	return ret;
 }
 
 //
