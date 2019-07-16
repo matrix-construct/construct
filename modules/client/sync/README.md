@@ -9,8 +9,9 @@ Each module in this directory creates content within some property of the
 c2s spec](https://matrix.org/docs/spec/client_server/r0.5.0#get-matrix-client-r0-sync)).
 
 `sync::item`'s register themselves at different locations of the `/sync`
-response tree and provide two handler functions. The `/sync/` `GET` handler
-facilitates an iteration over these modules to build the response.
+response tree. Items then implement two functions to provide the data at
+that location in the `/sync` tree. The `/sync/` `GET` handler will iterate
+all of the items and call one of these functions to build the response.
 
 >  First note that even though this is a directory of modules, the `/sync`
 resource itself is a single endpoint and not a directory. The `../sync.cc`
@@ -21,6 +22,7 @@ functionality in this directory.
 directory represents one of those ways. Another way is to disperse them
 throughout `/client/` near the endpoints related to their feature suite.
 That still remains a viable option for debate as this system further matures.
+
 
 ### Methodology
 
@@ -34,20 +36,19 @@ information to fulfill a `/sync` request without hidden server-side state.
 again without any server-side state describing that token.
 
 When a `/sync` request is made, the `since` token is compared with the
-server's current sequence number. One of three branches is then taken:
+server's current sequence number. The `since` token can be between 0
+and 1 greater than the server's sequence number. The `since` token and
+the server's sequence number form the "range" to be sync'ed. Adding 1
+to the server's sequence number becomes the `next_batch` field returned
+to the client.
 
-- **Linear**: When the since token's "delta" from the current sequence number
-ranges from 0 to some configurable limit (i.e 1024 or 4096), the client enters
-_linear sync_: an iteration of events between the `since` token and the current
-sequence is made where each event is tested for relevance to the client and
-a response is then made. If nothing was found for the client in this iteration,
-it falls back to _longpoll sync_ until an event comes through or timeout.
+The properties of the sync range determine what happens next as there
+are large ranges, small ranges, a null ranges. For large ranges, a
+_polylog_ sync is conducted; for small ranges a _linear_ sync is used
+instead, and for null ranges a _longpoll_ sync.
 
-- **Longpoll**: When the since token is 1 greater than the current sequence
-number, the client enters _longpoll sync_: It waits for the next appropriate
-event which is then sent immediately. The `next_batch` will then be 1 greater
-than the sequence number of that event. The implementation of _longpoll sync_
-is a specialization of _linear sync_, using the same handlers.
+
+#### Sync Modes
 
 - **Polylog**: When the since token's "delta" exceeds the threshold for a
 _linear sync_ the client enters _polylog sync_. This is common when no
@@ -61,6 +62,22 @@ of _polylog sync_. The goal for the threshold between polylog and linear
 is to invoke the cheaper mode: Even though polylog usually involves a
 minimum of many queries, it is more efficient than a linear iteration of all
 events on the server.
+
+
+- **Linear**: When the since token's "delta" from the current sequence number
+ranges from 0 to some configurable limit (i.e 1024 or 4096), the client enters
+_linear sync_: an iteration of events between the `since` token and the current
+sequence is made where each event is tested for relevance to the client and
+a response is then made. If nothing was found for the client in this iteration,
+it falls back to _longpoll sync_ until an event comes through or timeout.
+
+
+- **Longpoll**: When the since token is 1 greater than the current sequence
+number, the client enters _longpoll sync_: It waits for the next appropriate
+event which is then sent immediately. The `next_batch` will then be 1 greater
+than the sequence number of that event. The implementation of _longpoll sync_
+is a specialization of _linear sync_, using the same handlers.
+
 
 ### Implementation
 
