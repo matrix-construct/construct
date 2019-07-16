@@ -737,11 +737,17 @@ try
 	vmopts.infolog_accept = true;
 	vmopts.fetch = false;
 	vmopts.eval = false;
+	vmopts.user_id = user_id;
 	vmopts.room_version = room_version;
-	const m::event::id::buf ret{vm::eval
+	const vm::eval eval
 	{
 		event, content, vmopts
-	}};
+	};
+
+	const m::event::id::buf &ret
+	{
+		eval.event_id
+	};
 
 	if(unlikely(!ret))
 		throw m::UNAVAILABLE
