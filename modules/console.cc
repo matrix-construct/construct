@@ -10752,6 +10752,45 @@ console_cmd__user__room_tags(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__room_tags__set(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "room_id", "tag", "content"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const string_view &tag
+	{
+		param.at("tag")
+	};
+
+	const json::object &content
+	{
+		param.at("content")
+	};
+
+	const m::user::room_tags room_tags
+	{
+		user_id, room_id
+	};
+
+	out << room_tags.set(tag, content)
+	    << std::endl;
+
+	return true;
+}
+
+bool
 console_cmd__user__devices(opt &out, const string_view &line)
 {
 	const params param{line, " ",
