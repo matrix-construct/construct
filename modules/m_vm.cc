@@ -226,11 +226,48 @@ ircd::m::vm::inject(eval &eval,
 	assert(eval.room_id);
 	assert(eval.copts);
 	assert(eval.opts);
-	assert(room.room_id);
-
+	assert(eval.room_id);
 	const auto &opts
 	{
 		*eval.copts
+	};
+
+	const bool is_room_create
+	{
+		event.at("type") == "m.room.create"
+	};
+
+	char room_version_buf[32];
+	const scope_restore eval_room_version
+	{
+		eval.room_version,
+		eval.opts->room_version?
+			eval.opts->room_version:
+		is_room_create && contents.has("room_version")?
+			string_view{contents.at("room_version")}:
+			m::version(room_version_buf, m::room{eval.room_id}, std::nothrow)
+	};
+
+	static conf::item<size_t> prev_buf_sz
+	{
+		{ "name",     "ircd.m.vm.inject.prev.buf.size" },
+		{ "default",  long(8_KiB)                      },
+	};
+
+	const unique_buffer<mutable_buffer> prev_buf
+	{
+		size_t(prev_buf_sz)
+	};
+
+	static conf::item<size_t> prev_limit
+	{
+		{ "name",     "ircd.m.vm.inject.prev.limit" },
+		{ "default",  16L                           },
+	};
+
+	const bool need_tophead
+	{
+		is_room_create
 	};
 
 	const m::room::head head
@@ -238,39 +275,42 @@ ircd::m::vm::inject(eval &eval,
 		room
 	};
 
-	const bool need_tophead{event.at("type") != "m.room.create"};
-	const unique_buffer<mutable_buffer> prev_buf{8192};
-	static const size_t prev_limit{16};
-	const auto prev
+	const auto &[prev_events, depth]
 	{
-		head.make_refs(prev_buf, prev_limit, need_tophead)
+		!is_room_create?
+			head.make_refs(prev_buf, size_t(prev_limit), need_tophead):
+			std::pair<json::array, int64_t>{{}, -1}
 	};
 
-	const auto &prev_events{prev.first};
-	const auto &depth{prev.second};
+	assert(depth >= 0);
+	assert(depth > 0 || is_room_create);
 	const json::iov::set depth_
 	{
 		event, !event.has("depth"),
 		{
 			"depth", [&depth]
 			{
-				return json::value
-				{
-					depth == std::numeric_limits<int64_t>::max()? depth : depth + 1
-				};
+				return
+				depth == std::numeric_limits<int64_t>::max() ||
+				depth == json::undefined_number?
+					json::value{depth}:
+					json::value{depth + 1};
 			}
 		}
 	};
 
-	const m::room::auth auth
+	const size_t ae_buf_sz{m::id::MAX_SIZE * 4};
+	char ae_buf[ae_buf_sz];
+	json::array auth_events
 	{
-		room
+		json::empty_array
 	};
 
-	char ae_buf[1024];
-	json::array auth_events{json::empty_array};
-	if(depth != -1 && event.at("type") != "m.room.create" && opts.add_auth_events)
+	if(depth != json::undefined_number && !is_room_create && opts.add_auth_events)
+	{
+		const m::room::auth auth{room};
 		auth_events = auth.make_refs(ae_buf, m::event{event});
+	}
 
 	const json::iov::add auth_events_
 	{
