@@ -10696,17 +10696,17 @@ console_cmd__user__room_tags(opt &out, const string_view &line)
 		param["tag"]
 	};
 
-	const auto output
-	{
-		[&out, &room_id](const string_view &key, const json::object &val)
-		{
-			out << room_id << " " << key << ": " << val << std::endl;
-			return true;
-		}
-	};
-
 	if(room_id)
 	{
+		const auto output
+		{
+			[&out, &room_id](const string_view &key, const json::object &val)
+			{
+				out << room_id << " " << key << ": " << val << std::endl;
+				return true;
+			}
+		};
+
 		const m::user::room_tags room_tags
 		{
 			user_id, room_id
@@ -10725,9 +10725,18 @@ console_cmd__user__room_tags(opt &out, const string_view &line)
 		user_id
 	};
 
-	rooms.for_each(m::user::rooms::closure{[&user_id, &tag, &output]
+	rooms.for_each(m::user::rooms::closure{[&user_id, &tag, &out]
 	(const m::room &room, const string_view &membership)
 	{
+		const auto output
+		{
+			[&out, &room](const string_view &key, const json::object &val)
+			{
+				out << room.room_id << " " << key << ": " << val << std::endl;
+				return true;
+			}
+		};
+
 		const m::user::room_tags room_tags
 		{
 			user_id, room
