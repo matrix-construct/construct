@@ -1064,7 +1064,26 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 		};
 
 		if(!_event.valid)
+		{
+			log::dwarning
+			{
+				log, "Horizon resolve for %s @%lu not possible @%lu",
+				string_view{event.event_id},
+				opts.event_idx,
+				event_idx,
+			};
+
 			continue;
+		}
+
+		log::debug
+		{
+			log, "Horizon resolve for %s @%lu; remisé %s @%lu",
+			string_view{event.event_id},
+			opts.event_idx,
+			string_view{_event.event_id},
+			event_idx,
+		};
 
 		// Make the references on behalf of the future event
 		write_opts _opts;
