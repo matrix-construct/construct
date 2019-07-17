@@ -456,12 +456,18 @@ ircd::m::_create_event(const createroom &c)
 		std::min(size(user_content), 16UL) // cap the number of keys
 	};
 
+	const room room
+	{
+		at<"room_id"_>(c)
+	};
+
 	json::iov event;
 	json::iov content;
 	json::iov::push _user_content[user_content_count];
 	make_iov(content, _user_content, user_content_count, user_content);
 	const json::iov::push push[]
 	{
+		{ event,     { "room_id",     room.room_id     }},
 		{ event,     { "depth",       0L               }},
 		{ event,     { "sender",      creator          }},
 		{ event,     { "state_key",   ""               }},
@@ -505,20 +511,14 @@ ircd::m::_create_event(const createroom &c)
 		}
 	};
 
-	room room
-	{
-		at<"room_id"_>(c)
-	};
-
 	m::vm::copts opts;
 	opts.room_version = default_version;
 	opts.verify = false;
-	m::vm::eval eval
+	m::vm::eval
 	{
-		opts
+		event, content, opts
 	};
 
-	eval(room, event, content);
 	return room;
 }
 

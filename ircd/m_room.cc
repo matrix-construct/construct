@@ -558,6 +558,12 @@ ircd::m::commit(const room &room,
                 json::iov &event,
                 const json::iov &contents)
 {
+	// Set the room_id on the iov
+	json::iov::push room_id
+	{
+		event, { "room_id", room.room_id }
+	};
+
 	vm::copts opts
 	{
 		room.copts?
@@ -573,13 +579,10 @@ ircd::m::commit(const room &room,
 	// Don't need this here
 	opts.verify = false;
 
-	vm::eval eval
+	return vm::eval
 	{
-		opts
+		event, contents, opts
 	};
-
-	eval(room, event, contents);
-	return eval.event_id;
 }
 
 std::pair<int64_t, ircd::m::event::idx>

@@ -62,7 +62,6 @@ struct ircd::m::vm::eval
 	static uint64_t id_ctr;
 	static uint executing;
 	static uint injecting;
-	static uint injecting_room;
 
 	const vm::opts *opts {&default_opts};
 	const vm::copts *copts {nullptr};
@@ -88,14 +87,12 @@ struct ircd::m::vm::eval
 
 	fault operator()(const event &);
 	fault operator()(json::iov &event, const json::iov &content);
-	fault operator()(const room &, json::iov &event, const json::iov &content);
 
 	eval(const vm::opts &);
 	eval(const vm::copts &);
 	eval(const event &, const vm::opts & = default_opts);
 	eval(const json::array &event, const vm::opts & = default_opts);
 	eval(json::iov &event, const json::iov &content, const vm::copts & = default_copts);
-	eval(const room &, json::iov &event, const json::iov &content);
 	eval() = default;
 	eval(eval &&) = delete;
 	eval(const eval &) = delete;
@@ -343,6 +340,9 @@ struct ircd::m::vm::copts
 
 	/// Add prev_events
 	bool add_prev_events {true};
+
+	/// Add depth
+	bool add_depth {true};
 
 	/// Add prev_state
 	bool add_prev_state {true};

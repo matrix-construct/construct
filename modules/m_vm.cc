@@ -19,8 +19,9 @@ namespace ircd::m::vm
 	static fault execute_edu(eval &, const event &);
 	static fault execute_pdu(eval &, const event &);
 	fault execute(eval &, const event &);
+	static fault inject3(eval &, json::iov &, const json::iov &);
+	static fault inject1(eval &, json::iov &, const json::iov &);
 	fault inject(eval &, json::iov &, const json::iov &);
-	fault inject(eval &, const room &, json::iov &, const json::iov &);
 	static void fini();
 	static void init();
 
@@ -146,17 +147,16 @@ ircd::m::vm::fini()
 	if(!eval::list.empty())
 		log::warning
 		{
-			log, "Waiting for %zu evals (exec:%zu inject:%zu room:%zu pending:%zu)",
+			log, "Waiting for %zu evals (exec:%zu inject:%zu pending:%zu)",
 			eval::list.size(),
 			eval::executing,
 			eval::injecting,
-			eval::injecting_room,
 			sequence::pending,
 		};
 
 	vm::dock.wait([]
 	{
-		return !eval::executing && !eval::injecting && !eval::injecting_room;
+		return !eval::executing && !eval::injecting;
 	});
 
 	assert(!sequence::pending);
@@ -188,26 +188,41 @@ ircd::m::vm::fini()
 enum ircd::m::vm::fault
 IRCD_MODULE_EXPORT
 ircd::m::vm::inject(eval &eval,
-                    const room &room,
                     json::iov &event,
                     const json::iov &contents)
 {
-	// m::vm bookkeeping that someone entered this function
-	const scope_count injecting_room{eval::injecting_room};
-	const scope_notify notify{vm::dock};
-
-	// This eval entry point is only used for injections. We try to find the
-	// commit opts the user supplied directly to this eval or with the room.
-	if(!eval.copts)
-		eval.copts = room.copts;
-
-	if(!eval.copts)
-		eval.copts = &vm::default_copts;
+	// We need a copts structure in addition to the opts structure in order
+	// to inject a new event. If one isn't supplied a default is referenced.
+	eval.copts = !eval.copts?
+		&vm::default_copts:
+		eval.copts;
 
 	// Note that the regular opts is unconditionally overridden because the
 	// user should have provided copts instead.
 	assert(!eval.opts || eval.opts == eval.copts);
 	eval.opts = eval.copts;
+
+	// copts inherits from opts; for the purpose of this frame we consider
+	// the options structure to be all of it.
+	assert(eval.opts);
+	assert(eval.copts);
+	const auto &opts
+	{
+		*eval.copts
+	};
+
+	// This semaphore gets unconditionally pinged when this scope ends.
+	const scope_notify notify
+	{
+		vm::dock
+	};
+
+	// The count of contexts currently conducting an event injection is
+	// incremented here and decremented at unwind.
+	const scope_count eval_injecting
+	{
+		eval::injecting
+	};
 
 	// Set a member pointer to the json::iov currently being composed. This
 	// allows other parallel evals to have deep access to exactly what this
@@ -217,179 +232,58 @@ ircd::m::vm::inject(eval &eval,
 		eval.issue, &event
 	};
 
-	const scope_restore eval_room_id
-	{
-		eval.room_id, room.room_id
-	};
-
-	assert(eval.issue);
-	assert(eval.room_id);
-	assert(eval.copts);
-	assert(eval.opts);
-	assert(eval.room_id);
-	const auto &opts
-	{
-		*eval.copts
-	};
-
+	// Common indicator which will determine if several branches are taken as
+	// a room create event has several special cases.
 	const bool is_room_create
 	{
 		event.at("type") == "m.room.create"
 	};
 
-	char room_version_buf[32];
-	const scope_restore eval_room_version
-	{
-		eval.room_version,
-		eval.opts->room_version?
-			eval.opts->room_version:
-		is_room_create && contents.has("room_version")?
-			string_view{contents.at("room_version")}:
-			m::version(room_version_buf, m::room{eval.room_id}, std::nothrow)
-	};
-
-	static conf::item<size_t> prev_buf_sz
-	{
-		{ "name",     "ircd.m.vm.inject.prev.buf.size" },
-		{ "default",  long(8_KiB)                      },
-	};
-
-	const unique_buffer<mutable_buffer> prev_buf
-	{
-		size_t(prev_buf_sz)
-	};
-
-	static conf::item<size_t> prev_limit
-	{
-		{ "name",     "ircd.m.vm.inject.prev.limit" },
-		{ "default",  16L                           },
-	};
-
-	const bool need_tophead
-	{
-		is_room_create
-	};
-
-	const m::room::head head
-	{
-		room
-	};
-
-	const auto &[prev_events, depth]
-	{
-		!is_room_create?
-			head.make_refs(prev_buf, size_t(prev_limit), need_tophead):
-			std::pair<json::array, int64_t>{{}, -1}
-	};
-
-	assert(depth >= 0);
-	assert(depth > 0 || is_room_create);
-	const json::iov::set depth_
-	{
-		event, !event.has("depth"),
-		{
-			"depth", [&depth]
-			{
-				return
-				depth == std::numeric_limits<int64_t>::max() ||
-				depth == json::undefined_number?
-					json::value{depth}:
-					json::value{depth + 1};
-			}
-		}
-	};
-
-	const size_t ae_buf_sz{m::id::MAX_SIZE * 4};
-	char ae_buf[ae_buf_sz];
-	json::array auth_events
-	{
-		json::empty_array
-	};
-
-	if(depth != json::undefined_number && !is_room_create && opts.add_auth_events)
-	{
-		const m::room::auth auth{room};
-		auth_events = auth.make_refs(ae_buf, m::event{event});
-	}
-
-	const json::iov::add auth_events_
-	{
-		event, opts.add_auth_events,
-		{
-			"auth_events", [&auth_events]() -> json::value
-			{
-				return auth_events;
-			}
-		}
-	};
-
-	const json::iov::add prev_events_
-	{
-		event, opts.add_prev_events,
-		{
-			"prev_events", [&prev_events]() -> json::value
-			{
-				return prev_events;
-			}
-		}
-	};
-
-	return inject(eval, event, contents);
-}
-
-enum ircd::m::vm::fault
-IRCD_MODULE_EXPORT
-ircd::m::vm::inject(eval &eval,
-                    json::iov &event,
-                    const json::iov &contents)
-{
-	// m::vm bookkeeping that someone entered this function
-	const scope_count injecting{eval::injecting};
-	const scope_notify notify{vm::dock};
-
-	// This eval entry point is only used for commits. If the user did not
-	// supply commit opts we supply the default ones here.
-	if(!eval.copts)
-		eval.copts = &vm::default_copts;
-
-	// Note that the regular opts is unconditionally overridden because the
-	// user should have provided copts instead.
-	assert(!eval.opts || eval.opts == eval.copts);
-	eval.opts = eval.copts;
-
-	// Set a member pointer to the json::iov currently being composed. This
-	// allows other parallel evals to have deep access to exactly what this
-	// eval is attempting to do.
-	assert(!eval.room_id || eval.issue == &event);
-	if(!eval.room_id)
-		eval.issue = &event;
-
-	const unwind deissue{[&eval]
-	{
-		// issue is untouched when room_id is set; that indicates it was set
-		// and will be unset by another eval function (i.e above).
-		if(!eval.room_id)
-			eval.issue = nullptr;
-	}};
-
+	// The eval structure has a direct room::id reference for interface
+	// convenience so people don't have to figure out what room (if any)
+	// this injection is targeting. That reference might already be set
+	// by the user as a hint; if not, we attempt to set it here and tie
+	// it to the duration of this frame.
 	const scope_restore eval_room_id
 	{
 		eval.room_id,
-		!eval.room_id &&
-		event.has("room_id")?
+		!eval.room_id && event.has("room_id")?
 			string_view{event.at("room_id")}:
 			string_view{eval.room_id}
 	};
 
-	assert(eval.issue);
-	assert(eval.copts);
-	assert(eval.opts);
-	assert(eval.copts);
-	const auto &opts
+	// Attempt to resolve the room version at this point for interface
+	// exposure at vm::eval::room_version.
+	char room_version_buf[32];
+	const scope_restore eval_room_version
 	{
-		*eval.copts
+		eval.room_version,
+
+		// If the eval.room_version interface reference is already set to
+		// something we assume the room_version has alreandy been resolved
+		eval.room_version?
+			eval.room_version:
+
+		// If the options had a room_version set, consider that the room
+		// version. The user has already resolved the room version and is
+		// hinting us as an optimization.
+		eval.opts->room_version?
+			eval.opts->room_version:
+
+		// If this is an m.room.create event then we're lucky that the best
+		// room version information is in the spec location.
+		is_room_create && contents.has("room_version")?
+			string_view{contents.at("room_version")}:
+
+		// Make a query to find the version. The version string will be hosted
+		// by the stack buffer.
+			m::version(room_version_buf, room{eval.room_id}, std::nothrow)
 	};
 
+	// Conditionally add the room_id from the eval structure to the actual
+	// event iov being injected. This is the inverse of the above satisfying
+	// the case where the room_id is supplied via the reference, not the iov;
+	// in the end we want that reference in both places.
 	assert(eval.room_id);
 	const json::iov::add room_id_
 	{
@@ -402,6 +296,126 @@ ircd::m::vm::inject(eval &eval,
 		}
 	};
 
+	// XXX: should move outside if lazy static initialization is problem.
+	static conf::item<size_t> prev_limit
+	{
+		{ "name",         "ircd.m.vm.inject.prev.limit" },
+		{ "default",      16L                           },
+		{
+			"description",
+			"Events created by this server will only"
+			" reference a maximum of this many prev_events."
+		},
+	};
+
+	// Ad hoc number of bytes we'll need for each prev_events reference in
+	// a v1 event. We don't use the hashes in prev_events, so we just need
+	// space for one worst-case event_id and some JSON.
+	static const size_t prev_scalar_v1
+	{
+		(id::MAX_SIZE + 1) * 2
+	};
+
+	// Ad hoc number of bytes we'll need for each prev_events reference in
+	// a sha256-b64 event_id format.
+	static const size_t prev_scalar_v3
+	{
+		// "   $   XX   "   ,
+		   1 + 1 + 43 + 1 + 1 + 1
+	};
+
+	const auto &prev_scalar
+	{
+		eval.room_version == "1" || eval.room_version == "2"?
+			prev_scalar_v1:
+			prev_scalar_v3
+	};
+
+	// The buffer we'll be composing the prev_events JSON array into.
+	const unique_buffer<mutable_buffer> prev_buf
+	{
+		!is_room_create && opts.add_prev_events?
+			std::min(size_t(prev_limit) * prev_scalar, event::MAX_SIZE):
+			0UL
+	};
+
+	// Conduct the prev_events composition into our buffer. This sub returns
+	// a finished json::array in our buffer as well as a depth integer for
+	// the event which will be using the references.
+	const room::head head{room{eval.room_id}};
+	const auto &[prev_events, depth]
+	{
+		!is_room_create && opts.add_prev_events?
+			head.make_refs(prev_buf, size_t(prev_limit), true):
+			std::pair<json::array, int64_t>{{}, -1}
+	};
+
+	// Add the prev_events
+	const json::iov::add prev_events_
+	{
+		event, opts.add_prev_events && !empty(prev_events),
+		{
+			"prev_events", [&prev_events]() -> json::value
+			{
+				return prev_events;
+			}
+		}
+	};
+
+	// Conditionally add the depth property to the event iov.
+	assert(depth >= -1);
+	const json::iov::set depth_
+	{
+		event, opts.add_depth && !event.has("depth"),
+		{
+			"depth", [&depth]
+			{
+				// When the depth value is undefined_number it was intended
+				// that no depth should appear in the event JSON so that value
+				// is preserved; we also don't overflow the integer, so if the
+				// depth is at max value that is preserved too.
+				return
+					depth == std::numeric_limits<int64_t>::max() ||
+					depth == json::undefined_number?
+						json::value{depth}:
+						json::value{depth + 1};
+			}
+		}
+	};
+
+	// The auth_events have more deterministic properties.
+	static const size_t auth_buf_sz{m::id::MAX_SIZE * 4};
+	const unique_buffer<mutable_buffer> auth_buf
+	{
+		!is_room_create && opts.add_auth_events? auth_buf_sz : 0UL
+	};
+
+	// Default to an empty array.
+	json::array auth_events
+	{
+		json::empty_array
+	};
+
+	// Conditionally compose the auth events.
+	if(!is_room_create && opts.add_auth_events)
+	{
+		const room::auth auth{room{eval.room_id}};
+		auth_events = auth.make_refs(auth_buf, m::event{event});
+	}
+
+	// Conditionally add the auth_events to the event iov.
+	const json::iov::add auth_events_
+	{
+		event, opts.add_auth_events,
+		{
+			"auth_events", [&auth_events]() -> json::value
+			{
+				return auth_events;
+			}
+		}
+	};
+
+	// Add our network name.
 	const json::iov::add origin_
 	{
 		event, opts.add_origin,
@@ -413,6 +427,7 @@ ircd::m::vm::inject(eval &eval,
 		}
 	};
 
+	// Add the current time.
 	const json::iov::add origin_server_ts_
 	{
 		event, opts.add_origin_server_ts,
@@ -424,6 +439,45 @@ ircd::m::vm::inject(eval &eval,
 		}
 	};
 
+	return eval.room_version == "1" || eval.room_version == "2"?
+		inject1(eval, event, contents):
+		inject3(eval, event, contents);
+}
+
+/// Old event branch
+enum ircd::m::vm::fault
+ircd::m::vm::inject1(eval &eval,
+                     json::iov &event,
+                     const json::iov &contents)
+{
+	assert(eval.copts);
+	const auto &opts
+	{
+		*eval.copts
+	};
+
+	// event_id
+
+	assert(eval.room_version);
+	const event::id &event_id
+	{
+		opts.add_event_id?
+			make_id(m::event{event}, eval.room_version, eval.event_id):
+			event::id{}
+	};
+
+	const json::iov::add event_id_
+	{
+		event, !empty(event_id),
+		{
+			"event_id", [&event_id]() -> json::value
+			{
+				return event_id;
+			}
+		}
+	};
+
+	// Stringify the event content into buffer
 	const json::strung content
 	{
 		contents
@@ -434,70 +488,18 @@ ircd::m::vm::inject(eval &eval,
 	char hashes_buf[384];
 	const string_view hashes
 	{
-		opts.add_hash && eval.room_version != "1"?
+		opts.add_hash?
 			m::event::hashes(hashes_buf, event, content):
 			string_view{}
 	};
 
 	const json::iov::add hashes_
 	{
-		event, opts.add_hash && eval.room_version != "1",
+		event, opts.add_hash && !empty(hashes),
 		{
 			"hashes", [&hashes]() -> json::value
 			{
 				return hashes;
-			}
-		}
-	};
-
-	// event_id
-
-	char room_version_buf[32];
-	const scope_restore eval_room_version
-	{
-		eval.room_version,
-		eval.opts->room_version?
-			eval.opts->room_version:
-		event.at("type") == "m.room.create" && contents.has("room_version")?
-			string_view{contents.at("room_version")}:
-			m::version(room_version_buf, room{eval.room_id}, std::nothrow)
-	};
-
-	assert(eval.room_version);
-	const event::id &event_id_v1
-	{
-		opts.add_event_id && (eval.room_version == "1" || eval.room_version == "2")?
-			make_id(m::event{event}, eval.room_version, eval.event_id):
-			event::id{}
-	};
-
-	const json::iov::add event_id_
-	{
-		event, !empty(event_id_v1),
-		{
-			"event_id", [&event_id_v1]() -> json::value
-			{
-				return event_id_v1;
-			}
-		}
-	};
-
-	// hashes
-
-	const string_view hashes__
-	{
-		opts.add_hash && eval.room_version == "1"?
-			m::event::hashes(hashes_buf, event, content):
-			string_view{}
-	};
-
-	const json::iov::set hashes___
-	{
-		event, opts.add_hash && eval.room_version == "1",
-		{
-			"hashes", [&hashes__]() -> json::value
-			{
-				return hashes__;
 			}
 		}
 	};
@@ -528,15 +530,96 @@ ircd::m::vm::inject(eval &eval,
 		event, { "content", content },
 	};
 
+	const m::event event_tuple
+	{
+		event, event_id
+	};
+
+	if(opts.debuglog_precommit)
+		log::debug
+		{
+			log, "Issuing: %s", pretty_oneline(event_tuple)
+		};
+
+	return execute(eval, event_tuple);
+}
+
+/// New event branch
+enum ircd::m::vm::fault
+ircd::m::vm::inject3(eval &eval,
+                     json::iov &event,
+                     const json::iov &contents)
+{
+	assert(eval.copts);
+	const auto &opts
+	{
+		*eval.copts
+	};
+
+	// Stringify the event content into buffer
+	const json::strung content
+	{
+		contents
+	};
+
+	// Compute the content hash into buffer.
+	char hashes_buf[384];
+	const string_view hashes
+	{
+		opts.add_hash?
+			m::event::hashes(hashes_buf, event, content):
+			string_view{}
+	};
+
+	// Add the content hash to the event iov.
+	const json::iov::add hashes_
+	{
+		event, opts.add_hash && !empty(hashes),
+		{
+			"hashes", [&hashes]() -> json::value
+			{
+				return hashes;
+			}
+		}
+	};
+
+	// Compute the signature into buffer.
+	char sigs_buf[384];
+	const string_view sigs
+	{
+		opts.add_sig?
+			m::event::signatures(sigs_buf, event, contents):
+			string_view{}
+	};
+
+	// Add the signature to the event iov.
+	const json::iov::add sigs_
+	{
+		event, opts.add_sig,
+		{
+			"signatures", [&sigs]() -> json::value
+			{
+				return sigs;
+			}
+		}
+	};
+
+	// Add the content to the event iov
+	const json::iov::push content_
+	{
+		event, { "content", content },
+	};
+
+	// Compute the event_id (reference hash) into the buffer
+	// in the eval interface so it persists longer than this stack.
 	const event::id &event_id
 	{
-		event_id_v1?
-			event_id_v1:
 		opts.add_event_id?
 			make_id(m::event{event}, eval.room_version, eval.event_id):
 			event::id{}
 	};
 
+	// Transform the json iov into a json tuple
 	const m::event event_tuple
 	{
 		event, event_id
@@ -569,6 +652,8 @@ try
 		eval.event_, &event
 	};
 
+	// Set a member to the room_id for convenient access, without stepping on
+	// any room_id reference that exists there for whatever reason.
 	const scope_restore eval_room_id
 	{
 		eval.room_id,
@@ -577,15 +662,27 @@ try
 			string_view(json::get<"room_id"_>(event))
 	};
 
+	// Procure the room version.
 	char room_version_buf[32];
 	const scope_restore eval_room_version
 	{
 		eval.room_version,
+
+		// The room version was supplied by the user in the options structure
+		// because they know better.
 		eval.opts->room_version?
 			eval.opts->room_version:
-		eval.room_id?
-			m::version(room_version_buf, room{eval.room_id}, std::nothrow):
-		string_view{}
+
+		// The room version was already computed; probably by vm::inject().
+		eval.room_version?
+			eval.room_version:
+
+		// There's no room version because there's no room!
+		!eval.room_id?
+			string_view{}:
+
+		// Make a query for the room version into the stack buffer.
+		m::version(room_version_buf, room{eval.room_id}, std::nothrow)
 	};
 
 	assert(eval.opts);
@@ -597,12 +694,20 @@ try
 		*eval.opts
 	};
 
+	// The issue hook is only called when this server is injecting a newly
+	// created event.
 	if(eval.copts && eval.copts->issue)
 		call_hook(issue_hook, eval, event, eval);
 
+	// The conform hook runs static checks on an event's formatting and
+	// composure; these checks only require the event data itself.
 	if(opts.conform)
+	{
+		const ctx::critical_assertion ca;
 		call_hook(conform_hook, eval, event, eval);
+	}
 
+	// Branch on whether the event is an EDU or a PDU
 	const fault ret
 	{
 		event.event_id?
@@ -610,12 +715,20 @@ try
 			execute_edu(eval, event)
 	};
 
+	// ret can be a fault code if the user masked the exception from being
+	// thrown. If there's an error code here nothing further is done.
 	if(ret != fault::ACCEPT)
 		return ret;
 
+	// The event was executed; now we broadcast the good news. This will
+	// include notifying client `/sync` and the federation sender.
 	if(opts.notify)
 		call_hook(notify_hook, eval, event, eval);
 
+	// The "effects" of the event are created by listeners on the effect hook.
+	// These can include the creation of even more events, such as creating a
+	// PDU out of an EDU, etc. Unlike the post_hook in execute_pdu(), the
+	// notify for the event at issue here has already been made.
 	if(opts.effects)
 		call_hook(effect_hook, eval, event, eval);
 

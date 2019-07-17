@@ -1301,9 +1301,6 @@ ircd::m::vm::eval::executing;
 decltype(ircd::m::vm::eval::injecting)
 ircd::m::vm::eval::injecting;
 
-decltype(ircd::m::vm::eval::injecting_room)
-ircd::m::vm::eval::injecting_room;
-
 void
 ircd::m::vm::eval::seqsort()
 {
@@ -1474,14 +1471,6 @@ ircd::m::vm::eval::for_each(const ctx::ctx *const &c,
 // eval::eval
 //
 
-ircd::m::vm::eval::eval(const room &room,
-                        json::iov &event,
-                        const json::iov &content)
-:eval{}
-{
-	operator()(room, event, content);
-}
-
 ircd::m::vm::eval::eval(json::iov &event,
                         const json::iov &content,
                         const vm::copts &opts)
@@ -1605,28 +1594,6 @@ ircd::m::vm::eval::for_each_pdu(const std::function<bool (const event &)> &closu
 ///  _/|/|/|/|\|\|\|\_
 ///         out
 ///
-
-/// Inject a new event in a room originating from this server.
-///
-enum ircd::m::vm::fault
-ircd::m::vm::eval::operator()(const room &room,
-                              json::iov &event,
-                              const json::iov &contents)
-{
-	using prototype = fault (eval &, const m::room &, json::iov &, const json::iov &);
-
-	static mods::import<prototype> call
-	{
-		"m_vm", "ircd::m::vm::inject"
-	};
-
-	vm::dock.wait([]
-	{
-		return vm::ready;
-	});
-
-	return call(*this, room, event, contents);
-}
 
 /// Inject a new event originating from this server.
 ///
