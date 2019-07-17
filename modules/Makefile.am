@@ -90,6 +90,8 @@ m_moduledir = @moduledir@
 m_vm_la_SOURCES = m_vm.cc
 m_noop_la_SOURCES = m_noop.cc
 m_user_la_SOURCES = m_user.cc
+m_user_events_la_SOURCES = m_user_events.cc
+m_user_rooms_la_SOURCES = m_user_rooms.cc
 m_user_highlight_la_SOURCES = m_user_highlight.cc
 m_user_profile_la_SOURCES = m_user_profile.cc
 m_node_la_SOURCES = m_node.cc
@@ -124,6 +126,8 @@ m_module_LTLIBRARIES = \
 	m_vm.la \
 	m_noop.la \
 	m_user.la \
+	m_user_events.la \
+	m_user_rooms.la \
 	m_user_highlight.la \
 	m_user_profile.la \
 	m_node.la \
