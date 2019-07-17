@@ -150,10 +150,6 @@ namespace std
 	extern ostream cerr;
 }
 
-// OpenSSL
-// Additional forward declarations in the extern namespace are introduced
-// by ircd/openssl.h
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // libircd API
