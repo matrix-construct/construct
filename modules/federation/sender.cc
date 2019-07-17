@@ -417,7 +417,7 @@ try
 		if(empty(error))
 			return;
 
-		log::derror
+		log::error
 		{
 			"Error from %s in %s for %s :%s",
 			node.remote,
