@@ -149,7 +149,7 @@ ircd::mods::import<T>::operator->()
 
 template<class T>
 template<class... args>
-decltype(auto)
+inline decltype(auto)
 ircd::mods::import<T>::operator()(args&&... a)
 {
 	if(unlikely(!*this))
@@ -184,7 +184,8 @@ const
 
 template<class T>
 template<class... args>
-decltype(auto)
+__attribute__((artificial))
+inline decltype(auto)
 ircd::mods::import<T>::operator()(args&&... a)
 const
 {

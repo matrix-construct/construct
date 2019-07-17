@@ -90,7 +90,8 @@ ircd::mods::sym_ptr::get()
 
 template<class T,
          class... args>
-decltype(auto)
+__attribute__((always_inline, artificial))
+inline decltype(auto)
 ircd::mods::sym_ptr::operator()(args&&... a)
 const
 {
@@ -146,7 +147,8 @@ template<class F,
          class O,
          class... args,
          typename std::enable_if<std::is_member_pointer<F>::value>::type *>
-decltype(auto)
+__attribute__((always_inline, gnu_inline, artificial))
+inline extern decltype(auto)
 ircd::mods::invoke(F *const &f,
                    O *const &o,
                    args&&... a)
@@ -160,7 +162,8 @@ ircd::mods::invoke(F *const &f,
 template<class F,
          class... args,
          typename std::enable_if<!std::is_member_pointer<F>::value>::type *>
-decltype(auto)
+__attribute__((always_inline, gnu_inline, artificial))
+inline extern decltype(auto)
 ircd::mods::invoke(F *const &f,
                    args&&... a)
 {
