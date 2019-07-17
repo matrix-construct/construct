@@ -14,10 +14,6 @@ namespace ircd::m::fetch
 	struct request; // m/fetch.h
 	struct evaltab;
 
-	static bool operator<(const request &a, const request &b) noexcept;
-	static bool operator<(const request &a, const string_view &b) noexcept;
-	static bool operator<(const string_view &a, const request &b) noexcept;
-
 	extern ctx::dock dock;
 	extern std::set<request, std::less<>> requests;
 	extern std::multimap<room::id, request *> rooms;
@@ -29,6 +25,10 @@ namespace ircd::m::fetch
 	extern conf::item<seconds> auth_timeout;
 	extern conf::item<seconds> timeout;
 	extern conf::item<bool> enable;
+
+	static bool operator<(const request &a, const request &b) noexcept;
+	static bool operator<(const request &a, const string_view &b) noexcept;
+	static bool operator<(const string_view &a, const request &b) noexcept;
 
 	static bool timedout(const request &, const time_t &now);
 	static string_view select_origin(request &, const string_view &);

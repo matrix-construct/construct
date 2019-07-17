@@ -604,7 +604,18 @@ bool
 IRCD_MODULE_EXPORT
 ircd::m::fetch::cancel(request &request)
 {
-	return false;
+	bool ret{false};
+	if(request.finished == -1)
+		return ret;
+
+	if(request.finished == 0)
+	{
+		assert(request.started);
+		ret |= server::cancel(request);
+	}
+
+	request.finished = -1;
+	return ret;
 }
 
 size_t
@@ -661,6 +672,7 @@ try
 	}
 	catch(const std::exception &e)
 	{
+		fetch::cancel(request);
 		throw;
 	}
 
@@ -694,7 +706,7 @@ try
 			return std::any_of(begin(requests), end(requests), []
 			(const request &r)
 			{
-				return r.finished <= 0;
+				return r.finished == -1 || r.finished == 0;
 			});
 		});
 
