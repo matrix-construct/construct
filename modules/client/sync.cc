@@ -71,7 +71,7 @@ decltype(ircd::m::sync::flush_hiwat)
 ircd::m::sync::flush_hiwat
 {
 	{ "name",     "ircd.client.sync.flush.hiwat" },
-	{ "default",  long(256_KiB)                  },
+	{ "default",  long(64_KiB)                   },
 };
 
 decltype(ircd::m::sync::buffer_size)
