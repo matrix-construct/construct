@@ -64,6 +64,8 @@ ircd::ctx::when_any(it first,
                     const it &last,
                     F&& closure)
 {
+	const critical_assertion ca;
+
 	promise<it> p;
 	future<it> ret(p);
 	for(auto f(first); f != last; ++f)
@@ -108,6 +110,8 @@ ircd::ctx::when_all(it first,
                     const it &last,
                     F&& closure)
 {
+	const critical_assertion ca;
+
 	promise<void> p;
 	future<void> ret(p);
 	for(; first != last; ++first)
