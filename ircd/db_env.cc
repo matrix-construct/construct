@@ -730,6 +730,13 @@ catch(const std::exception &e)
 	};
 }
 
+uint64_t
+ircd::db::database::env::NowNanos()
+noexcept
+{
+	return duration_cast<nanoseconds>(ircd::now<steady_point>().time_since_epoch()).count();
+}
+
 rocksdb::Status
 ircd::db::database::env::GetCurrentTime(int64_t *const unix_time)
 noexcept try

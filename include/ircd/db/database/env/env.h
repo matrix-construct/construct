@@ -76,6 +76,7 @@ struct ircd::db::database::env final
 	unsigned int GetThreadPoolQueueLen(Priority pri = LOW) const noexcept override;
 	Status GetTestDirectory(std::string* path) noexcept override;
 	Status NewLogger(const std::string& fname, std::shared_ptr<Logger>* result) noexcept override;
+	uint64_t NowNanos() noexcept override;
 	uint64_t NowMicros() noexcept override;
 	void SleepForMicroseconds(int micros) noexcept override;
 	Status GetHostName(char* name, uint64_t len) noexcept override;
