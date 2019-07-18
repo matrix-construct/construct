@@ -1774,6 +1774,18 @@ ircd::m::index(const event::id &event_id,
 // event/auth.h
 //
 
+namespace ircd::m
+{
+	extern hook::site<event::auth::hookdata &> event_auth_hook;
+}
+
+decltype(ircd::m::event_auth_hook)
+ircd::m::event_auth_hook
+{
+	{ "name",          "event.auth" },
+	{ "exceptions",    true         },
+};
+
 //
 // event::auth
 //
@@ -1781,34 +1793,38 @@ ircd::m::index(const event::id &event_id,
 void
 ircd::m::event::auth::check(const event &event)
 {
-	const auto reason
+	const auto &[pass, fail]
 	{
-		failed(event)
+		check(std::nothrow, event)
 	};
 
-	if(reason)
-		throw m::ACCESS_DENIED
-		{
-			"Authorization of %s failed against its auth_events :%s",
-			string_view{event.event_id},
-			reason
-		};
+	if(!pass)
+	{
+		assert(bool(fail));
+		std::rethrow_exception(fail);
+		__builtin_unreachable();
+	}
 }
 
-bool
+ircd::m::event::auth::passfail
 ircd::m::event::auth::check(std::nothrow_t,
                             const event &event)
 {
-	return !failed(event);
-}
+	const m::event::prev refs{event};
+	const auto count
+	{
+		refs.auth_events_count()
+	};
 
-ircd::string_view
-ircd::m::event::auth::failed(const m::event &event)
-{
-	const m::event::prev refs(event);
-	const auto count(refs.auth_events_count());
 	if(count > 4)
-		return "Too many auth_events references.";
+	{
+		log::dwarning
+		{
+			"Event %s has an unexpected %zu auth_events references",
+			string_view{event.event_id},
+			count,
+		};
+	}
 
 	const m::event *authv[4];
 	const m::event::fetch auth[4]
@@ -1824,65 +1840,80 @@ ircd::m::event::auth::failed(const m::event &event)
 		if(auth[i].valid)
 			authv[j++] = &auth[i];
 
-	return failed(event, {authv, j});
+	hookdata data
+	{
+		event, {authv, j}
+	};
+
+	try
+	{
+		event_auth_hook(event, data);
+	}
+	catch(const FAIL &e)
+	{
+		data.allow = false;
+		data.fail = std::current_exception();
+	}
+
+	return
+	{
+		data.allow, data.fail
+	};
 }
 
+ircd::m::event::auth::hookdata::hookdata(const m::event &event,
+                                         const vector_view<const m::event *> &auth_events)
+:prev
+{
+	event
+}
+,auth_events
+{
+	auth_events
+}
+{
+	for(size_t i(0); i < auth_events.size(); ++i)
+	{
+		const m::event &a(*auth_events.at(i));
+		const auto &type(json::get<"type"_>(a));
+		if(type == "m.room.create")
+		{
+			assert(!auth_create);
+			auth_create = &a;
+		}
+		else if(type == "m.room.power_levels")
+		{
+			assert(!auth_power);
+			auth_power = &a;
+		}
+		else if(type == "m.room.join_rules")
+		{
+			assert(!auth_join_rules);
+			auth_join_rules = &a;
+		}
+		else if(type == "m.room.member")
+		{
+			if(json::get<"sender"_>(event) == json::get<"state_key"_>(a))
+			{
+				assert(!auth_member_sender);
+				auth_member_sender = &a;
+			}
+
+			if(json::get<"state_key"_>(event) == json::get<"state_key"_>(a))
+			{
+				assert(!auth_member_target);
+				auth_member_target = &a;
+			}
+		}
+	}
+}
+
+/*
 ircd::string_view
 ircd::m::event::auth::failed(const m::event &event,
                              const vector_view<const m::event *> &auth_events)
 {
 	const m::event::prev refs{event};
-
-	// 1. If type is m.room.create
-	if(json::get<"type"_>(event) == "m.room.create")
-	{
-		// a. If it has any previous events, reject.
-		if(count(refs) || !empty(auth_events))
-			return "m.room.create has previous events.";
-
-		// b. If the domain of the room_id does not match the domain of the
-		// sender, reject.
-		assert(!conforms(event).has(conforms::MISMATCH_CREATE_SENDER));
-		if(conforms(event).has(conforms::MISMATCH_CREATE_SENDER))
-			return "m.room.create room_id domain does not match sender domain.";
-
-		// c. If content.room_version is present and is not a recognised
-		// version, reject.
-		if(json::get<"content"_>(event).has("room_version"))
-		{
-			const json::string &claim_version(json::get<"content"_>(event).get("room_version", "1"));
-			const string_view &id_version(event.event_id.version());
-			if(claim_version == "3")
-			{
-				if(id_version != "3")
-					return "m.room.create room_version not 3";
-			}
-			else if(claim_version == "4")
-			{
-				if(id_version != "4")
-					return "m.room.create room_version not 4";
-			}
-			else if(claim_version == "1" || claim_version == "2")
-			{
-				//if(id_version != "1")
-				//	return "m.room.create room_version not 1";
-			}
-			else if(claim_version != "1" && claim_version != "2")
-			{
-				if(id_version != "4")
-					return "m.room.create room_version not 4";
-			}
-			else assert(0);
-		}
-
-		// d. If content has no creator field, reject.
-		assert(!empty(json::get<"content"_>(event).get("creator")));
-		if(empty(json::get<"content"_>(event).get("creator")))
-			return "m.room.create content.creator is missing.";
-
-		// e. Otherwise, allow.
-		return {};
-	}
 
 	// 2. Reject if event has auth_events that:
 	const m::event *auth_create{nullptr};
@@ -2405,6 +2436,7 @@ ircd::m::event::auth::failed(const m::event &event,
 	// 12. Otherwise, allow.
 	return {};
 }
+*/
 
 bool
 ircd::m::event::auth::is_power_event(const m::event &event)

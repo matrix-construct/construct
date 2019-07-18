@@ -6603,9 +6603,9 @@ console_cmd__event(opt &out, const string_view &line)
 	if(!verify_hash(event))
 		out << "- HASH MISMATCH: " << b64encode_unpadded(hash(event)) << std::endl;
 
-	const auto failmsg(m::event::auth::failed(event));
-	if(failmsg)
-		out << "- UNAUTHORIZED: " << failmsg << std::endl;
+	const auto &[authed, failmsg](m::event::auth::check(std::nothrow, event));
+	if(!authed)
+		out << "- UNAUTHORIZED: " << what(failmsg) << std::endl;
 
 	if(m::event::auth::is_power_event(event))
 		out << "+ POWER EVENT" << std::endl;

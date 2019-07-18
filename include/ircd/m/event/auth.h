@@ -15,12 +15,29 @@ struct ircd::m::event::auth
 {
 	struct refs;
 	struct chain;
+	struct hookdata;
+	using passfail = std::tuple<bool, std::exception_ptr>;
+	IRCD_M_EXCEPTION(error, FAIL, http::UNAUTHORIZED)
 
 	static bool is_power_event(const event &);
-	static string_view failed(const event &, const vector_view<const event *> &auth_events);
-	static string_view failed(const event &);
-	static bool check(std::nothrow_t, const event &);
+	static passfail check(std::nothrow_t, const event &);
 	static void check(const event &);
+};
+
+struct ircd::m::event::auth::hookdata
+{
+	event::prev prev;
+	vector_view<const event *> auth_events;
+	const event *auth_create {nullptr};
+	const event *auth_power {nullptr};
+	const event *auth_join_rules {nullptr};
+	const event *auth_member_target {nullptr};
+	const event *auth_member_sender {nullptr};
+
+	bool allow {false};
+	std::exception_ptr fail;
+
+	hookdata(const event &, const vector_view<const event *> &auth_events);
 };
 
 /// Interface to the references made by other power events to this power
