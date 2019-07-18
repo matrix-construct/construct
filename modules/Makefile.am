@@ -63,7 +63,6 @@ net_dns_la_SOURCES =  net_dns.cc net_dns_resolver.cc
 net_dns_la_CPPFLAGS = $(AM_CPPFLAGS) @BOOST_CPPFLAGS@
 net_dns_la_LDFLAGS = $(AM_LDFLAGS) @BOOST_LDFLAGS@
 net_dns_la_LIBADD = $(AM_LIBS) @BOOST_LIBS@
-net_listener_la_SOURCES = net_listener.cc
 console_la_SOURCES = console.cc
 index_la_SOURCES = index.cc
 webhook_la_SOURCES = webhook.cc
@@ -73,7 +72,6 @@ module_LTLIBRARIES = \
 	conf.la \
 	stats.la \
 	net_dns.la \
-	net_listener.la \
 	console.la \
 	index.la \
 	webhook.la \
@@ -121,6 +119,7 @@ m_room_message_la_SOURCES = m_room_message.cc
 m_room_power_levels_la_SOURCES = m_room_power_levels.cc
 m_room_server_acl_la_SOURCES = m_room_server_acl.cc
 m_init_bootstrap_la_SOURCES = m_init_bootstrap.cc
+m_listen_la_SOURCES = m_listen.cc
 
 m_module_LTLIBRARIES = \
 	m_vm.la \
@@ -157,6 +156,7 @@ m_module_LTLIBRARIES = \
 	m_room_power_levels.la \
 	m_room_server_acl.la \
 	m_init_bootstrap.la \
+	m_listen.la \
 	###
 
 ###############################################################################

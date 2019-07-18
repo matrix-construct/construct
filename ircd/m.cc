@@ -196,7 +196,6 @@ decltype(ircd::m::module_names)
 ircd::m::module_names
 {
 	"net_dns",
-	"net_listener",
 	"conf",
 	"m_noop",
 	"m_node",
@@ -312,6 +311,7 @@ ircd::m::module_names
 	"stats",
 	"webhook",
 	"index",
+	"m_listen",
 	"m_vm",
 };
 
