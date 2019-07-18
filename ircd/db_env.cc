@@ -716,18 +716,9 @@ catch(const std::exception &e)
 
 uint64_t
 ircd::db::database::env::NowMicros()
-noexcept try
+noexcept
 {
-	return defaults.NowMicros();
-}
-catch(const std::exception &e)
-{
-	throw panic
-	{
-		"'%s': now micros :%s",
-		d.name,
-		e.what()
-	};
+	return ircd::time<microseconds>();
 }
 
 uint64_t
