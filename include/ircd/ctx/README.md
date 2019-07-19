@@ -53,6 +53,13 @@ among others.
 * The primary user object is `ircd::context` (or `ircd::ctx::context`) which has
 an `std::thread` interface.
 
+* There is no preemptive interleaving of contexts. This makes every sequence
+of instructions executed a natural transaction requiring no other method of
+exclusion. It also allows for introspective conditions, i.e: if context switch
+occurred: refresh value, else the old value is good. This is impossible in a
+preemptive environment as the result may have changed at every step during and
+after the process.
+
 ### Context Switching
 
 A context switch has the overhead of a heavy function call -- a function with
@@ -76,6 +83,16 @@ computation is analogous to a function posted to the `io_service` in the
 asynchronous pattern. Context `A` can enqueue context `B` if it knows about `B`
 and then choose whether to yield or not to yield. In any case the `io_service`
 queue will simply continue to the next task which isn't guaranteed to be `B`.
+
+The most common context switching encountered and wielded by developers is the
+`ctx::dock`, a non-locking condition variable. The power of the dock is in its:
+
+1. Lightweight. It's just a ctx::list; two pointers for a list head, where the
+nodes are the contexts themselves participating in the list.
+
+2. Cooperative-condition optimized. When a context is waiting on a condition
+it provides, the ctx system can run the function itself to test the condition
+without waking up the context.
 
 ### When does Context Switching (yielding) occur?
 
