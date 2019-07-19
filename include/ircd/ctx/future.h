@@ -351,18 +351,10 @@ ircd::ctx::_wait_until(const future<T> &f,
 	if(unlikely(is(state, future_state::INVALID)))
 		throw no_state{};
 
-	const auto wfun
+	return state.cond.wait_until(tp, [&state]
 	{
-		[&state]
-		{
-			return !is(state, future_state::PENDING);
-		}
-	};
-
-	if(unlikely(!state.cond.wait_until(tp, wfun)))
-		return false;
-
-	return wfun();
+		return !is(state, future_state::PENDING);
+	});
 }
 
 template<class T>
