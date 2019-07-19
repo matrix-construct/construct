@@ -1003,7 +1003,7 @@ const
 	thread_local char locbuf[128];
 	return fmt::sprintf
 	{
-		buf, "socket:%lu local[%s] remote[%s] client:%lu req:%lu:%lu",
+		buf, "socket:%lu local:%s remote:%s client:%lu req:%lu:%lu",
 		sock? net::id(*sock) : -1UL,
 		string(locbuf, ircd::local(*this)),
 		string(rembuf, ircd::remote(*this)),

@@ -184,7 +184,7 @@ ircd::net::loghead(const mutable_buffer &out,
 	thread_local char buf[2][128];
 	return fmt::sprintf
 	{
-		out, "socket:%lu local[%s] remote[%s]",
+		out, "socket:%lu local:%s remote:%s",
 		id(socket),
 		string(buf[0], local_ipport(socket)),
 		string(buf[1], remote_ipport(socket)),
@@ -1689,9 +1689,9 @@ noexcept try
 	thread_local char ecbuf[64];
 	log::debug
 	{
-		log, "%s: %s accepted(%zu) %s",
-		loghead(*this),
+		log, "%s %s accepted(%zu) %s",
 		loghead(*sock),
+		loghead(*this),
 		accepting,
 		string(ecbuf, ec)
 	};
@@ -1717,9 +1717,9 @@ noexcept try
 	{
 		log::dwarning
 		{
-			log, "%s: refusing to handshake %s; exceeds maximum of %zu handshakes.",
-			loghead(*this),
+			log, "%s refusing to handshake %s; exceeds maximum of %zu handshakes.",
 			loghead(*sock),
+			loghead(*this),
 			size_t(handshaking_max),
 		};
 
@@ -1731,9 +1731,9 @@ noexcept try
 	{
 		log::dwarning
 		{
-			log, "%s: refusing to handshake %s; exceeds maximum of %zu handshakes to them.",
-			loghead(*this),
+			log, "%s refusing to handshake %s; exceeds maximum of %zu handshakes to them.",
 			loghead(*sock),
+			loghead(*this),
 			size_t(handshaking_max_per_peer),
 		};
 
@@ -1771,9 +1771,9 @@ catch(const ctx::interrupted &e)
 	thread_local char ecbuf[64];
 	log::debug
 	{
-		log, "%s: acceptor interrupted %s %s",
-		loghead(*this),
+		log, "%s acceptor interrupted %s %s",
 		loghead(*sock),
+		loghead(*this),
 		string(ecbuf, ec)
 	};
 
@@ -1787,9 +1787,9 @@ catch(const std::system_error &e)
 	assert(bool(sock));
 	log::derror
 	{
-		log, "%s: %s in accept(): %s",
-		loghead(*this),
+		log, "%s %s in accept(): %s",
 		loghead(*sock),
+		loghead(*this),
 		e.what()
 	};
 
@@ -1803,9 +1803,9 @@ catch(const std::exception &e)
 	assert(bool(sock));
 	log::error
 	{
-		log, "%s: %s in accept(): %s",
-		loghead(*this),
+		log, "%s %s in accept(): %s",
 		loghead(*sock),
+		loghead(*this),
 		e.what()
 	};
 
@@ -1865,9 +1865,9 @@ noexcept try
 	thread_local char ecbuf[64];
 	log::debug
 	{
-		log, "%s: %s handshook(%zd:%zu) cipher:%s %s",
-		loghead(*this),
+		log, "%s %s handshook(%zd:%zu) cipher:%s %s",
 		loghead(*sock),
+		loghead(*this),
 		std::distance(cbegin(handshaking), it),
 		handshaking.size(),
 		current_cipher?
@@ -1892,9 +1892,9 @@ catch(const ctx::interrupted &e)
 	thread_local char ecbuf[64];
 	log::debug
 	{
-		log, "%s: SSL handshake interrupted %s %s",
-		loghead(*this),
+		log, "%s SSL handshake interrupted %s %s",
 		loghead(*sock),
+		loghead(*this),
 		string(ecbuf, ec)
 	};
 
@@ -1906,9 +1906,9 @@ catch(const std::system_error &e)
 	assert(bool(sock));
 	log::derror
 	{
-		log, "%s: %s in handshake(): %s",
-		loghead(*this),
+		log, "%s %s in handshake(): %s",
 		loghead(*sock),
+		loghead(*this),
 		e.what()
 	};
 
@@ -1920,9 +1920,9 @@ catch(const std::exception &e)
 	assert(bool(sock));
 	log::error
 	{
-		log, "%s: %s in handshake(): %s",
-		loghead(*this),
+		log, "%s %s in handshake(): %s",
 		loghead(*sock),
+		loghead(*this),
 		e.what()
 	};
 
