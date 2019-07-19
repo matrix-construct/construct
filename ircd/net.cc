@@ -2073,6 +2073,19 @@ try
 	if(!name)
 		return true;
 
+	//TODO: XXX
+	if(!m::my_host(name))
+	{
+		log::dwarning
+		{
+			log, "%s: unrecognized SNI '%s' offered.",
+			loghead(*this),
+			name,
+		};
+
+		return false;
+	}
+
 	log::debug
 	{
 		log, "%s: offered SNI '%s'",
