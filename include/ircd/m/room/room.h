@@ -29,6 +29,7 @@ namespace ircd::m
 	bool exists(const room &);
 	bool exists(const id::room &);
 	bool exists(const id::room_alias &, const bool &remote = false);
+	bool internal(const id::room &);
 	bool federate(const id::room &);
 	id::user::buf creator(const id::room &);
 	bool creator(const id::room &, const id::user &);

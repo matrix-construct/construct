@@ -1128,6 +1128,27 @@ ircd::m::federate(const id::room &room_id)
 	return ret;
 }
 
+/// Determine if this is an internal room. The following must be satisfied:
+///
+/// - The room was created by this origin.
+/// - The creator was the server itself, not any other user.
+bool
+ircd::m::internal(const id::room &room_id)
+{
+	const m::room room
+	{
+		room_id
+	};
+
+	if(!my(room))
+		return false;
+
+	if(!creator(room, m::me))
+		return false;
+
+	return true;
+}
+
 bool
 ircd::m::exists(const id::room &room_id)
 {
