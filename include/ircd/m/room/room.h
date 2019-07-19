@@ -32,6 +32,7 @@ namespace ircd::m
 	bool federate(const id::room &);
 	id::user::buf creator(const id::room &);
 	bool creator(const id::room &, const id::user &);
+	string_view type(const mutable_buffer &, const room &);
 	string_view version(const mutable_buffer &, const room &, std::nothrow_t);
 	string_view version(const mutable_buffer &, const room &);
 

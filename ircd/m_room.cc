@@ -1031,6 +1031,34 @@ ircd::m::version(const mutable_buffer &buf,
 	return ret;
 }
 
+ircd::string_view
+ircd::m::type(const mutable_buffer &buf,
+              const room &room)
+{
+	string_view ret;
+	const auto event_idx
+	{
+		room.get(std::nothrow, "m.room.create", "")
+	};
+
+	if(event_idx)
+		m::get(std::nothrow, event_idx, "content", [&buf, &ret]
+		(const json::object &content)
+		{
+			const json::string &type
+			{
+				content.get("type")
+			};
+
+			ret = strlcpy
+			{
+				buf, type
+			};
+		});
+
+	return ret;
+}
+
 bool
 ircd::m::creator(const id::room &room_id,
                  const id::user &user_id)
