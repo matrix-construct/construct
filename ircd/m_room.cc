@@ -3129,6 +3129,64 @@ ircd::m::room::state::space::rebuild::rebuild()
 // room::members
 //
 
+bool
+ircd::m::room::members::empty()
+const
+{
+	const room::state state
+	{
+		room
+	};
+
+	// for_each() returns true when it reaches the end of the iteration.
+	return state.for_each("m.room.member", state::closure_bool{[]
+	(const auto &type, const auto &state_key, const auto &event_idx)
+	{
+		return false;
+	}});
+}
+
+bool
+ircd::m::room::members::empty(const string_view &membership)
+const
+{
+	const room::state state
+	{
+		room
+	};
+
+	// joined members optimization. Only possible when seeking
+	// membership="join" on the present state of the room.
+	if(membership == "join" && state.present())
+	{
+		// _for_each() returns true when it reaches the end of the iteration.
+		const room::origins origins{room};
+		return origins._for_each(origins, []
+		(const string_view &)
+		{
+			// closure returns false to break causing _for_each() to return false.
+			return false;
+		});
+	}
+
+	// for_each() returns true when it reaches the end of the iteration.
+	return state.for_each("m.room.member", state::closure_bool{[&membership]
+	(const auto &type, const auto &state_key, const auto &event_idx)
+	{
+		// return false if the query succeeds, breaking the iteration.
+		return !m::query(std::nothrow, event_idx, "content", [&membership]
+		(const json::object &content)
+		{
+			const json::string &content_membership
+			{
+				content["membership"]
+			};
+
+			return !membership || content_membership == membership;
+		});
+	}});
+}
+
 size_t
 ircd::m::room::members::count()
 const

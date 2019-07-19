@@ -37,6 +37,9 @@ struct ircd::m::room::members
 	bool for_each(const closure_bool &) const;
 	void for_each(const closure &) const;
 
+	bool empty(const string_view &membership) const;
+	bool empty() const;
+
 	size_t count(const string_view &membership) const;
 	size_t count() const;
 
