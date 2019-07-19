@@ -26,11 +26,11 @@ namespace ircd::ctx
 
 	template<class T,
 	         class time_point>
-	bool wait_until(const future<T> &, const time_point &, std::nothrow_t);
+	bool _wait_until(const future<T> &, const time_point &, std::nothrow_t);
 
 	template<class T,
 	         class time_point>
-	void wait_until(const future<T> &, const time_point &);
+	void _wait_until(const future<T> &, const time_point &);
 }
 
 template<class T>
@@ -282,7 +282,7 @@ void
 ircd::ctx::future<T>::wait_until(const time_point &tp)
 const
 {
-	ircd::ctx::wait_until(*this, tp);
+	_wait_until(*this, tp);
 }
 
 template<class time_point>
@@ -301,7 +301,7 @@ ircd::ctx::future<T>::wait_until(const time_point &tp,
                                  std::nothrow_t)
 const
 {
-	return ircd::ctx::wait_until(*this, tp, std::nothrow);
+	return _wait_until(*this, tp, std::nothrow);
 }
 
 template<class time_point>
@@ -310,7 +310,7 @@ ircd::ctx::future<void>::wait_until(const time_point &tp,
                                     std::nothrow_t)
 const
 {
-	if(ircd::ctx::wait_until(*this, tp, std::nothrow))
+	if(_wait_until(*this, tp, std::nothrow))
 	{
 		auto &state
 		{
@@ -332,29 +332,32 @@ void
 ircd::ctx::wait_until(const future<T> &f,
                       const time_point &tp)
 {
-	if(!wait_until(f, tp, std::nothrow))
+	if(!_wait_until(f, tp, std::nothrow))
 		throw timeout{};
 }
 
 template<class T,
          class time_point>
 bool
-ircd::ctx::wait_until(const future<T> &f,
-                      const time_point &tp,
-                      std::nothrow_t)
+ircd::ctx::_wait_until(const future<T> &f,
+                       const time_point &tp,
+                       std::nothrow_t)
 {
 	auto &state
 	{
 		const_cast<future<T> &>(f).state()
 	};
 
-	const auto wfun([&state]() -> bool
-	{
-		return !is(state, future_state::PENDING);
-	});
-
 	if(unlikely(is(state, future_state::INVALID)))
 		throw no_state{};
+
+	const auto wfun
+	{
+		[&state]
+		{
+			return !is(state, future_state::PENDING);
+		}
+	};
 
 	if(unlikely(!state.cond.wait_until(tp, wfun)))
 		return false;
