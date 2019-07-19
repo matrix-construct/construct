@@ -512,19 +512,23 @@ AM_COND_IF([LTO],
 AM_COND_IF([OPTIMIZE],
 [
 	optimize="yes"
-	CXXFLAGS+=" -fweb"
 	CXXFLAGS+=" -fdata-sections"
 	CXXFLAGS+=" -ffunction-sections"
 	CXXFLAGS+=" -ftree-vectorize"
-	CXXFLAGS+=" -fgcse-sm"
-	CXXFLAGS+=" -fgcse-las"
-	CXXFLAGS+=" -fgcse-after-reload"
-	CXXFLAGS+=" -fsched-stalled-insns=0"
-	CXXFLAGS+=" -frename-registers"
-	CXXFLAGS+=" -fira-hoist-pressure"
-	CXXFLAGS+=" -fbranch-target-load-optimize"
-	CXXFLAGS+=" -frerun-loop-opt"
-	CXXFLAGS+=" -fdevirtualize-at-ltrans"
+
+	AM_COND_IF([GCC],
+	[
+		CXXFLAGS+=" -fweb"
+		CXXFLAGS+=" -fgcse-sm"
+		CXXFLAGS+=" -fgcse-las"
+		CXXFLAGS+=" -fgcse-after-reload"
+		CXXFLAGS+=" -frename-registers"
+		CXXFLAGS+=" -fsched-stalled-insns=0"
+		CXXFLAGS+=" -fira-hoist-pressure"
+		CXXFLAGS+=" -fbranch-target-load-optimize"
+		CXXFLAGS+=" -frerun-loop-opt"
+		CXXFLAGS+=" -fdevirtualize-at-ltrans"
+	])
 ], [
 	optimize="no"
 	CXXFLAGS+=" -falign-functions"
