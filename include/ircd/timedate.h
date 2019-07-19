@@ -19,21 +19,21 @@ namespace ircd
 	using microtime_t = std::pair<time_t, int32_t>;
 	IRCD_OVERLOAD(localtime)
 
-	// Standard time_point samples
+	// Standard time_point samples (monotonic/steady_clock)
 	template<class unit = seconds> unit now();
 	template<> steady_point now();
-	template<> system_point now();
 
-	// Standard time_point (system_clock only) directly into long integer.
+	// Standard time_point samples (system_clock)
+	template<> system_point now();
 	template<class unit = seconds> time_t &time(time_t &ref);
 	template<class unit = seconds> time_t time();
 	template<class unit = seconds> time_t time(time_t *const &ptr);
 
-	// System vdso microtime suite
+	// System microtime suite
 	microtime_t microtime();
 	string_view microtime(const mutable_buffer &);
 
-	// System vdso formatted time suite
+	// System formatted time suite
 	extern const char *const rfc7231_fmt;
 	string_view timef(const mutable_buffer &out, const struct tm &tm, const char *const &fmt = rfc7231_fmt);
 	string_view timef(const mutable_buffer &out, const time_t &epoch, const char *const &fmt = rfc7231_fmt);
@@ -102,27 +102,13 @@ ircd::time(time_t &ref)
 	return ref;
 }
 
-template<>
-inline ircd::system_point
-ircd::now()
-{
-	return system_clock::now();
-}
-
-template<>
-inline ircd::steady_point
-ircd::now()
-{
-	return steady_clock::now();
-}
-
 template<class unit>
 unit
 ircd::now()
 {
 	const auto now
 	{
-		steady_clock::now()
+		ircd::now<steady_point>()
 	};
 
 	const auto tse

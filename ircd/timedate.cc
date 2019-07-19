@@ -173,3 +173,17 @@ ircd::microtime()
 		tv.tv_sec, tv.tv_usec
 	};
 }
+
+template<>
+ircd::system_point
+ircd::now<ircd::system_point>()
+{
+	return system_clock::now();
+}
+
+template<>
+ircd::steady_point
+ircd::now<ircd::steady_point>()
+{
+	return steady_clock::now();
+}

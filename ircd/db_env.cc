@@ -721,11 +721,13 @@ noexcept
 	return ircd::time<microseconds>();
 }
 
+/// Bug in rocksdb causes this to not be called all the time, specifically
+/// for perf events.
 uint64_t
 ircd::db::database::env::NowNanos()
 noexcept
 {
-	return duration_cast<nanoseconds>(ircd::now<steady_point>().time_since_epoch()).count();
+	return ircd::now<nanoseconds>().count();
 }
 
 rocksdb::Status
