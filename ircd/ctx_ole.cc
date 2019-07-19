@@ -91,7 +91,8 @@ ircd::ctx::ole::offload::offload(const opts &opts,
 	// we don't care about eptr anyway.
 	const uninterruptible uninterruptible;
 
-	push(std::move(closure)); do
+	// scope address required for clang-7
+	ole::push(std::move(closure)); do
 	{
 		wait();
 	}

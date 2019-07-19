@@ -12,7 +12,7 @@
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 
-namespace __attribute__((visibility("internal"))) ircd
+namespace [[gnu::visibility("hidden")]] ircd
 {
 	thread_local char base_conv_tmp_buf[64_KiB];
 }

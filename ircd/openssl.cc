@@ -2288,9 +2288,12 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::critical("OpenSSL thread id callback (tid=%p): %s",
-	              (const void *)tid,
-	              e.what());
+	log::critical
+	{
+		"OpenSSL thread id callback (tid=%p): %s",
+		(const void *)tid,
+		e.what()
+	};
 
 	ircd::terminate();
 }
@@ -2302,7 +2305,11 @@ ircd::openssl::locking::callback(const int mode,
                                  const int line)
 noexcept try
 {
-	log::debug("OpenSSL: %s", debug(mode, num, file, line));
+	log::debug
+	{
+		"OpenSSL: %s",
+		debug(mode, num, file, line)
+	};
 
 	auto &mutex
 	{
@@ -2321,9 +2328,12 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::critical("OpenSSL locking callback (%s): %s",
-	              debug(mode, num, file, line),
-	              e.what());
+	log::critical
+	{
+		"OpenSSL locking callback (%s): %s",
+		debug(mode, num, file, line),
+		e.what()
+	};
 
 	ircd::terminate();
 }
