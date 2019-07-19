@@ -3151,7 +3151,7 @@ const
 
 	// joined members optimization. Only possible when seeking
 	// membership="join" on the present state of the room.
-	if(!room.event_id && membership == "join")
+	if(membership == "join" && state{room}.present())
 	{
 		size_t ret{0};
 		const room::origins origins{room};
