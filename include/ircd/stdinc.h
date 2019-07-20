@@ -30,7 +30,6 @@ extern "C"
 	#include <RB_INC_STDARG_H
 	#include <RB_INC_UNISTD_H
 	#include <RB_INC_SYS_TYPES_H
-	#include <RB_INC_SYS_TIME_H
 	#include <RB_INC_SYS_UTSNAME_H
 }
 
