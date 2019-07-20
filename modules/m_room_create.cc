@@ -10,11 +10,11 @@
 
 namespace ircd::m
 {
-	static void created_room(const event &, vm::eval &);
-	extern hookfn<vm::eval &> created_room_hookfn;
-
 	static void auth_room_create(const event &, event::auth::hookdata &);
 	extern hookfn<event::auth::hookdata &> auth_room_create_hookfn;
+
+	static void created_room(const event &, vm::eval &);
+	extern hookfn<vm::eval &> created_room_hookfn;
 }
 
 ircd::mapi::header
@@ -22,6 +22,10 @@ IRCD_MODULE
 {
 	"Matrix m.room.create"
 };
+
+//
+// an effect of room created
+//
 
 decltype(ircd::m::created_room_hookfn)
 ircd::m::created_room_hookfn
@@ -59,6 +63,10 @@ ircd::m::created_room(const m::event &event,
 	};
 }
 
+//
+// auth handler
+//
+
 decltype(ircd::m::auth_room_create_hookfn)
 ircd::m::auth_room_create_hookfn
 {
@@ -75,6 +83,8 @@ ircd::m::auth_room_create(const event &event,
 {
 	using FAIL = m::event::auth::FAIL;
 	using conforms = m::event::conforms;
+
+	// 1. If type is m.room.create:
 	assert(json::get<"type"_>(event) == "m.room.create");
 
 	// a. If it has any previous events, reject.
