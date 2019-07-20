@@ -8,31 +8,48 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m
+{
+	static void changed_canonical_alias(const event &, vm::eval &);
 
-mapi::header
+	extern const room alias_room;
+	extern const room::id::buf alias_room_id;
+	extern const hookfn<vm::eval &> changed_canonical_alias_hookfn;
+}
+
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix m.room.canonical_alias"
 };
 
-const m::room::id::buf
-alias_room_id
+decltype(ircd::m::alias_room_id)
+ircd::m::alias_room_id
 {
 	"alias", ircd::my_host()
 };
 
-const m::room
-alias_room
+decltype(ircd::m::alias_room)
+ircd::m::alias_room
 {
 	alias_room_id
 };
 
-void
-_changed_canonical_alias(const m::event &event,
-                         m::vm::eval &)
+decltype(ircd::m::changed_canonical_alias_hookfn)
+ircd::m::changed_canonical_alias_hookfn
 {
-	const m::room::id &room_id
+	changed_canonical_alias,
+	{
+		{ "_site",    "vm.effect"               },
+		{ "type",     "m.room.canonical_alias"  },
+	}
+};
+
+void
+ircd::m::changed_canonical_alias(const event &event,
+                                 vm::eval &)
+{
+	const room::id &room_id
 	{
 		at<"room_id"_>(event)
 	};
@@ -47,10 +64,15 @@ _changed_canonical_alias(const m::event &event,
 		at<"content"_>(event)
 	};
 
-	const m::room::alias &alias
+	const json::string &content_alias
 	{
-		content.has("alias")?
-			m::room::alias{unquote(content.get("alias"))}:
+		content.get("alias")
+	};
+
+	const room::alias &alias
+	{
+		!empty(content_alias)?
+			m::room::alias{content_alias}:
 			m::room::alias{}
 	};
 
@@ -72,15 +94,20 @@ _changed_canonical_alias(const m::event &event,
 		return;
 	}
 
-	const auto event_idx
+	const auto present_event_idx
 	{
 		room.get(std::nothrow, "m.room.canonical_alias", "")
 	};
 
-	if(!event_idx)
+	if(!present_event_idx)
 		return;
 
-	m::get(std::nothrow, event_idx, "content", []
+	const auto prev_state_idx
+	{
+		m::room::state::prev(present_event_idx)
+	};
+
+	m::get(std::nothrow, prev_state_idx, "content", []
 	(const json::object &content)
 	{
 		const json::string &alias
@@ -91,13 +118,3 @@ _changed_canonical_alias(const m::event &event,
 		m::room::aliases::cache::del(alias);
 	});
 }
-
-const m::hookfn<m::vm::eval &>
-_changed_canonical_alias_hookfn
-{
-	_changed_canonical_alias,
-	{
-		{ "_site",    "vm.effect"               },
-		{ "type",     "m.room.canonical_alias"  },
-	}
-};
