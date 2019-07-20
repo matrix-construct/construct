@@ -196,6 +196,19 @@ struct ircd::log::debug
 		vlog(general, level::DEBUG, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
+#elif defined(__clang__)
+struct ircd::log::debug
+{
+	template<class... args>
+	debug(const log &log, const string_view &fmt, args&&... a)
+	{
+	}
+
+	template<class... args>
+	debug(const string_view &fmt, args&&... a)
+	{
+	}
+};
 #else
 struct ircd::log::debug
 {
@@ -224,6 +237,19 @@ struct ircd::log::dwarning
 	dwarning(const string_view &fmt, args&&... a)
 	{
 		vlog(general, level::DWARNING, fmt, va_rtti{std::forward<args>(a)...});
+	}
+};
+#elif defined(__clang__)
+struct ircd::log::dwarning
+{
+	template<class... args>
+	dwarning(const log &log, const string_view &fmt, args&&... a)
+	{
+	}
+
+	template<class... args>
+	dwarning(const string_view &fmt, args&&... a)
+	{
 	}
 };
 #else
@@ -256,6 +282,19 @@ struct ircd::log::derror
 		vlog(general, level::DERROR, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
+#elif defined(__clang__)
+struct ircd::log::derror
+{
+	template<class... args>
+	derror(const log &log, const string_view &fmt, args&&... a)
+	{
+	}
+
+	template<class... args>
+	derror(const string_view &fmt, args&&... a)
+	{
+	}
+};
 #else
 struct ircd::log::derror
 {
@@ -284,6 +323,19 @@ struct ircd::log::info
 	info(const string_view &fmt, args&&... a)
 	{
 		vlog(general, level::INFO, fmt, va_rtti{std::forward<args>(a)...});
+	}
+};
+#elif defined(__clang__)
+struct ircd::log::info
+{
+	template<class... args>
+	info(const log &log, const string_view &fmt, args&&... a)
+	{
+	}
+
+	template<class... args>
+	info(const string_view &fmt, args&&... a)
+	{
 	}
 };
 #else
@@ -316,6 +368,16 @@ struct ircd::log::notice
 		vlog(general, level::NOTICE, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
+#elif defined(__clang__)
+	template<class... args>
+	notice(const log &log, const string_view &fmt, args&&... a)
+	{
+	}
+
+	template<class... args>
+	notice(const string_view &fmt, args&&... a)
+	{
+	}
 #else
 struct ircd::log::notice
 {
@@ -346,6 +408,19 @@ struct ircd::log::warning
 		vlog(general, level::WARNING, fmt, va_rtti{std::forward<args>(a)...});
 	}
 };
+#elif defined(__clang__)
+struct ircd::log::warning
+{
+	template<class... args>
+	warning(const log &log, const string_view &fmt, args&&... a)
+	{
+	}
+
+	template<class... args>
+	warning(const string_view &fmt, args&&... a)
+	{
+	}
+};
 #else
 struct ircd::log::warning
 {
@@ -374,6 +449,19 @@ struct ircd::log::error
 	error(const string_view &fmt, args&&... a)
 	{
 		vlog(general, level::ERROR, fmt, va_rtti{std::forward<args>(a)...});
+	}
+};
+#elif defined(__clang__)
+struct ircd::log::error
+{
+	template<class... args>
+	error(const log &log, const string_view &fmt, args&&... a)
+	{
+	}
+
+	template<class... args>
+	error(const string_view &fmt, args&&... a)
+	{
 	}
 };
 #else
@@ -433,6 +521,19 @@ struct ircd::log::critical
 	critical(const string_view &fmt, args&&... a)
 	{
 		vlog(general, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
+	}
+};
+#elif defined(__clang__)
+struct ircd::log::critical
+{
+	template<class... args>
+	critical(const log &log, const string_view &fmt, args&&... a)
+	{
+	}
+
+	template<class... args>
+	critical(const string_view &fmt, args&&... a)
+	{
 	}
 };
 #else
