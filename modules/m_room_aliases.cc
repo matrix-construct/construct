@@ -10,14 +10,19 @@
 
 namespace ircd::m
 {
+	extern conf::item<seconds> alias_fetch_timeout;
+	extern conf::item<seconds> alias_cache_ttl;
+	extern const room::id::buf alias_room_id;
+	extern const room alias_room;
+
 	static void auth_room_aliases(const event &, event::auth::hookdata &);
 	extern hookfn<event::auth::hookdata &> auth_room_aliases_hookfn;
 
 	static void changed_room_aliases(const event &, vm::eval &);
 	extern hookfn<vm::eval &> changed_room_aliases_hookfn;
-}
 
-using namespace ircd;
+	extern hookfn<m::vm::eval &> create_alias_room_hookfn;
+}
 
 ircd::mapi::header
 IRCD_MODULE
@@ -25,27 +30,27 @@ IRCD_MODULE
 	"Matrix m.room.aliases"
 };
 
-const m::room::id::buf
-alias_room_id
+decltype(ircd::m::alias_room_id)
+ircd::m::alias_room_id
 {
 	"alias", ircd::my_host()
 };
 
-const m::room
-alias_room
+decltype(ircd::m::alias_room)
+ircd::m::alias_room
 {
 	alias_room_id
 };
 
-conf::item<seconds>
-alias_cache_ttl
+decltype(ircd::m::alias_cache_ttl)
+ircd::m::alias_cache_ttl
 {
 	{ "name",    "ircd.m.room.aliases.cache.ttl" },
 	{ "default", 604800L                         },
 };
 
-conf::item<seconds>
-alias_fetch_timeout
+decltype(ircd::m::alias_fetch_timeout)
+ircd::m::alias_fetch_timeout
 {
 	{ "name",    "ircd.m.room.aliases.fetch.timeout" },
 	{ "default", 10L                                 },
@@ -55,17 +60,18 @@ alias_fetch_timeout
 // create the alias room as an effect of !ircd created on bootstrap
 //
 
-const m::hookfn<m::vm::eval &>
-_create_alias_room
+decltype(ircd::m::create_alias_room_hookfn)
+ircd::m::create_alias_room_hookfn
 {
 	{
 		{ "_site",       "vm.effect"      },
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	},
+
 	[](const m::event &, m::vm::eval &)
 	{
-		m::create(alias_room_id, m::me.user_id);
+		create(alias_room_id, m::me.user_id);
 	}
 };
 
