@@ -54,18 +54,15 @@ noexcept
 ircd::ctx::ole::offload::offload(const opts &opts,
                                  const closure &func)
 {
+	assert(current);
 	assert(opts.concurrency == 1); // not yet implemented
 
-	bool done(false);
-	auto *const context(current);
-	const auto kick([&context, &done]
-	{
-		done = true;
-		notify(*context);
-	});
-
+	// Prepare the offload package on our stack here. These objects will
+	// remain here for the duration of the offload.
+	latch latch{1};
 	std::exception_ptr eptr;
-	auto closure([&func, &eptr, &context, &kick]
+	auto *const context(current);
+	auto closure([&func, &latch, &eptr, &context]
 	() noexcept
 	{
 		try
@@ -74,35 +71,38 @@ ircd::ctx::ole::offload::offload(const opts &opts,
 		}
 		catch(...)
 		{
+			// Note that the write to eptr is taking place on a different
+			// thread from where we created the eptr.
 			eptr = std::current_exception();
 		}
 
-		// To wake the context on the IRCd thread we give it the kick
-		signal(*context, kick);
+		// The ctx::signal() is a special device which executes the closure
+		// as soon as the target context is not currently running on any
+		// thread. This has the ability to provide the cross-thread
+		// synchronization we need to hit the latch from this thread.
+		assert(context);
+		signal(*context, [&latch]
+		{
+			assert(!latch.is_ready());
+			latch.count_down();
+		});
 	});
 
 	// interrupt(ctx) is suppressed while this context has offloaded some work
 	// to another thread. This context must stay right here and not disappear
 	// until the other thread signals back. Note that the destructor is
 	// capable of throwing an interrupt that was received during this scope.
-	//
+	const uninterruptible uninterruptible;
+
+	ole::push(std::move(closure));       // scope address required for clang-7
+	latch.wait();
+
 	// Don't throw any exception if there is a pending interrupt for this ctx.
 	// Two exceptions will be thrown in that case and if there's an interrupt
 	// we don't care about eptr anyway.
-	const uninterruptible uninterruptible;
-
-	// scope address required for clang-7
-	ole::push(std::move(closure)); do
-	{
-		wait();
-	}
-	while(!done);
-
-	if(unlikely(interruption_requested()))
-		return;
-
-	if(eptr)
-		std::rethrow_exception(eptr);
+	if(likely(!interruption_requested()))
+		if(unlikely(eptr))
+			std::rethrow_exception(eptr);
 }
 void
 ircd::ctx::ole::push(offload::closure &&func)
