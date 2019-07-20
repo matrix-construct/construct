@@ -106,13 +106,15 @@ ircd::m::vm::post_hook
 decltype(ircd::m::vm::notify_hook)
 ircd::m::vm::notify_hook
 {
-	{ "name", "vm.notify" }
+	{ "name",        "vm.notify"  },
+	{ "exceptions",  false        },
 };
 
 decltype(ircd::m::vm::effect_hook)
 ircd::m::vm::effect_hook
 {
-	{ "name", "vm.effect" }
+	{ "name",        "vm.effect"  },
+	{ "exceptions",  false        },
 };
 
 //
