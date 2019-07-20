@@ -61,60 +61,6 @@ _create_alias_room
 };
 
 static void
-_can_change_aliases(const m::event &event,
-                    m::vm::eval &);
-
-const m::hookfn<m::vm::eval &>
-_can_change_aliases_hookfn
-{
-	_can_change_aliases,
-	{
-		{ "_site",    "vm.eval"         },
-		{ "type",     "m.room.aliases"  },
-	}
-};
-
-void
-_can_change_aliases(const m::event &event,
-                    m::vm::eval &eval)
-{
-	const m::room::id &room_id
-	{
-		at<"room_id"_>(event)
-	};
-
-	const string_view &state_key
-	{
-		at<"state_key"_>(event)
-	};
-
-	if(state_key != at<"origin"_>(event))
-		throw m::ACCESS_DENIED
-		{
-			"Cannot set aliases for host '%s' from origin '%s'",
-			state_key,
-			at<"origin"_>(event)
-		};
-
-	const json::array &aliases
-	{
-		at<"content"_>(event).get("aliases")
-	};
-
-	for(const json::string &alias_ : aliases)
-	{
-		const m::room::alias &alias{alias_};
-		if(at<"origin"_>(event) != alias.host())
-			throw m::ACCESS_DENIED
-			{
-				"Cannot set alias for host '%s' from origin '%s'",
-				alias.host(),
-				at<"origin"_>(event)
-			};
-	}
-}
-
-static void
 _changed_aliases(const m::event &event,
                  m::vm::eval &);
 
