@@ -2005,22 +2005,6 @@ ircd::m::event::auth::failed(const m::event &event,
 		auth_power? *auth_power : m::event{}, *auth_create
 	};
 
-	// 4. If type is m.room.aliases:
-	if(json::get<"type"_>(event) == "m.room.aliases")
-	{
-		// a. If event has no state_key, reject.
-		assert(!conforms(event).has(conforms::MISMATCH_ALIASES_STATE_KEY));
-		if(empty(json::get<"state_key"_>(event)))
-			return "m.room.aliases event is missing a state_key.";
-
-		// b. If sender's domain doesn't matches state_key, reject.
-		if(json::get<"state_key"_>(event) != m::user::id(json::get<"sender"_>(event)).host())
-			return "m.room.aliases event state_key is not the sender's domain.";
-
-		// c. Otherwise, allow
-		return {};
-	}
-
 	// 5. If type is m.room.member:
 	if(json::get<"type"_>(event) == "m.room.member")
 	{

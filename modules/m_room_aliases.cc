@@ -8,9 +8,18 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m
+{
+	static void auth_room_aliases(const event &, event::auth::hookdata &);
+	extern hookfn<event::auth::hookdata &> auth_room_aliases_hookfn;
+
+	static void changed_room_aliases(const event &, vm::eval &);
+	extern hookfn<vm::eval &> changed_room_aliases_hookfn;
+}
+
 using namespace ircd;
 
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix m.room.aliases"
@@ -43,7 +52,7 @@ alias_fetch_timeout
 };
 
 //
-// hook handlers
+// create the alias room as an effect of !ircd created on bootstrap
 //
 
 const m::hookfn<m::vm::eval &>
@@ -60,14 +69,14 @@ _create_alias_room
 	}
 };
 
-static void
-_changed_aliases(const m::event &event,
-                 m::vm::eval &);
+//
+// an effect of room aliases changed
+//
 
-const m::hookfn<m::vm::eval &>
-_changed_aliases_hookfn
+decltype(ircd::m::changed_room_aliases_hookfn)
+ircd::m::changed_room_aliases_hookfn
 {
-	_changed_aliases,
+	changed_room_aliases,
 	{
 		{ "_site",    "vm.effect"       },
 		{ "type",     "m.room.aliases"  },
@@ -75,8 +84,8 @@ _changed_aliases_hookfn
 };
 
 void
-_changed_aliases(const m::event &event,
-                 m::vm::eval &)
+ircd::m::changed_room_aliases(const m::event &event,
+                              m::vm::eval &)
 {
 	const m::room::id &room_id
 	{
@@ -113,6 +122,48 @@ _changed_aliases(const m::event &event,
 			e.what(),
 		};
 	}
+}
+
+//
+// auth handler
+//
+
+decltype(ircd::m::auth_room_aliases_hookfn)
+ircd::m::auth_room_aliases_hookfn
+{
+	auth_room_aliases,
+	{
+		{ "_site",    "event.auth"      },
+		{ "type",     "m.room.aliases"  },
+	}
+};
+
+void
+ircd::m::auth_room_aliases(const event &event,
+                           event::auth::hookdata &data)
+{
+	using FAIL = m::event::auth::FAIL;
+	using conforms = m::event::conforms;
+
+	// 4. If type is m.room.aliases:
+	assert(json::get<"type"_>(event) == "m.room.aliases");
+
+	// a. If event has no state_key, reject.
+	if(empty(json::get<"state_key"_>(event)))
+		throw FAIL
+		{
+			"m.room.aliases event is missing a state_key."
+		};
+
+	// b. If sender's domain doesn't matches state_key, reject.
+	if(json::get<"state_key"_>(event) != m::user::id(json::get<"sender"_>(event)).host())
+		throw FAIL
+		{
+			"m.room.aliases event state_key is not the sender's domain."
+		};
+
+	// c. Otherwise, allow
+	data.allow = true;
 }
 
 //
