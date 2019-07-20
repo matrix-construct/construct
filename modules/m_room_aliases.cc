@@ -90,9 +90,6 @@ _changed_aliases(const m::event &event,
 
 	for(const json::string &alias : aliases) try
 	{
-		if(m::room::aliases::cache::has(alias))
-			continue;
-
 		m::room::aliases::cache::set(alias, room_id);
 
 		log::info
