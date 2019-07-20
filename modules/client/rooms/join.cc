@@ -739,14 +739,14 @@ try
 	vmopts.eval = false;
 	vmopts.user_id = user_id;
 	vmopts.room_version = room_version;
-	const vm::eval eval
+	vm::eval eval
 	{
 		event, content, vmopts
 	};
 
 	const m::event::id::buf &ret
 	{
-		eval.event_id
+		eval
 	};
 
 	if(unlikely(!ret))
