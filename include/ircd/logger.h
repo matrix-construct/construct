@@ -19,7 +19,7 @@
 /// Logging system
 namespace ircd::log
 {
-	enum level :int;
+	enum level :uint;
 	struct log;
 	struct vlog;
 	struct logf;
@@ -65,8 +65,9 @@ namespace ircd::log
 	extern log general;  // "ircd", 'G'
 }
 
+/// Severity level; zero is the most severe. Severity decreases as level increases.
 enum ircd::log::level
-:int
+:uint
 {
 	CRITICAL  = 0,  ///< Catastrophic/unrecoverable; program is in a compromised state.
 	ERROR     = 1,  ///< Things that shouldn't happen; user impacted and should know.

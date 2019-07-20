@@ -561,7 +561,7 @@ console_cmd__log__level(opt &out, const string_view &line)
 
 	if(!param.count())
 	{
-		for(int i(0); i < num_of<log::level>(); ++i)
+		for(auto i(0U); i < num_of<log::level>(); ++i)
 			if(i > RB_LOG_LEVEL)
 				out << "[\033[1;40m-\033[0m] " << reflect(log::level(i)) << std::endl;
 			else if(console_enabled(log::level(i)))
@@ -572,12 +572,12 @@ console_cmd__log__level(opt &out, const string_view &line)
 		return true;
 	}
 
-	const int level
+	const auto level
 	{
-		param.at<int>(0)
+		param.at<uint>(0)
 	};
 
-	for(int i(0); i < num_of<log::level>(); ++i)
+	for(auto i(0U); i < num_of<log::level>(); ++i)
 		if(i > RB_LOG_LEVEL)
 		{
 			out << "[\033[1;40m-\033[0m] " << reflect(log::level(i)) << std::endl;
