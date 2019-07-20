@@ -25,6 +25,8 @@ struct ircd::db::database::env::state
 	std::array<std::unique_ptr<pool>, POOLS> pool;
 
 	state(database *const &);
+	state(state &&) = delete;
+	state(const state &) = delete;
 	~state() noexcept;
 };
 
@@ -53,6 +55,8 @@ struct ircd::db::database::env::state::pool
 	void join();
 
 	pool(database &, const Priority &);
+	pool(pool &&) = delete;
+	pool(const pool &) = delete;
 	~pool() noexcept;
 };
 
