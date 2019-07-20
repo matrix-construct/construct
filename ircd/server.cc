@@ -1646,15 +1646,30 @@ ircd::server::loghead(const mutable_buffer &buf,
                       const link &link)
 {
 	thread_local char rembuf[2][64];
+
+	const auto local
+	{
+		link.socket?
+			string(rembuf[0], local_ipport(*link.socket)):
+			string_view{}
+	};
+
+	const auto remote
+	{
+		link.socket?
+			string(rembuf[1], remote_ipport(*link.socket)):
+			string_view{}
+	};
+
 	return fmt::sprintf
 	{
-		buf, "socket:%lu local[%s] remote[%s] link:%lu peer:%lu",
+		buf, "socket:%lu local:%s remote:%s link:%lu peer:%lu",
 		link.socket?
 			link.socket->id : 0UL,
-		link.socket?
-			string(rembuf[0], local_ipport(*link.socket)): string_view{"0.0.0.0"},
-		link.socket?
-			string(rembuf[0], remote_ipport(*link.socket)): string_view{"0.0.0.0"},
+		local?
+			local : "0.0.0.0"_sv,
+		remote?
+			remote : "0.0.0.0"_sv,
 		link.id,
 		link.peer?
 			link.peer->id: 0UL,
