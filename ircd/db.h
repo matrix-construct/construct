@@ -52,20 +52,6 @@
 #include <rocksdb/compaction_filter.h>
 #include <rocksdb/wal_filter.h>
 
-#include <ircd/db/database/comparator.h>
-#include <ircd/db/database/prefix_transform.h>
-#include <ircd/db/database/compaction_filter.h>
-#include <ircd/db/database/wal_filter.h>
-#include <ircd/db/database/mergeop.h>
-#include <ircd/db/database/events.h>
-#include <ircd/db/database/stats.h>
-#include <ircd/db/database/logger.h>
-#include <ircd/db/database/column.h>
-#include <ircd/db/database/txn.h>
-#include <ircd/db/database/cache.h>
-#include <ircd/db/database/env.h>
-#include <ircd/db/database/env/port.h>
-
 namespace ircd::db
 {
 	struct throw_on_error;
@@ -142,6 +128,11 @@ namespace ircd::db
 	void append(rocksdb::WriteBatch &, const cell::delta &delta);
 }
 
+#include "db_port.h"
+#include "db_env.h"
+#include "db_env_state.h"
+#include "db_database.h"
+
 struct ircd::db::throw_on_error
 {
 	throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
@@ -153,4 +144,36 @@ struct ircd::db::error_to_status
 	error_to_status(const std::error_code &);
 	error_to_status(const std::system_error &);
 	error_to_status(const std::exception &);
+};
+
+struct ircd::db::txn::handler
+:rocksdb::WriteBatch::Handler
+{
+	using Status = rocksdb::Status;
+	using Slice = rocksdb::Slice;
+
+	const database &d;
+	const std::function<bool (const delta &)> &cb;
+	bool _continue {true};
+
+	Status callback(const delta &) noexcept;
+	Status callback(const uint32_t &, const op &, const Slice &a, const Slice &b) noexcept;
+
+	bool Continue() noexcept override;
+	Status MarkRollback(const Slice &xid) noexcept override;
+	Status MarkCommit(const Slice &xid) noexcept override;
+	Status MarkEndPrepare(const Slice &xid) noexcept override;
+	Status MarkBeginPrepare(bool = false) noexcept override;
+
+	Status MergeCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
+	Status SingleDeleteCF(const uint32_t cfid, const Slice &) noexcept override;
+	Status DeleteRangeCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
+	Status DeleteCF(const uint32_t cfid, const Slice &) noexcept override;
+	Status PutCF(const uint32_t cfid, const Slice &, const Slice &) noexcept override;
+
+	handler(const database &d,
+	        const std::function<bool (const delta &)> &cb)
+	:d{d}
+	,cb{cb}
+	{}
 };

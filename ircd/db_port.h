@@ -1,7 +1,7 @@
 // Matrix Construct
 //
 // Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) 2016-2019 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -9,11 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_DB_DATABASE_ENV_PORT_H
-
-// This file is not part of the standard include stack because it requires
-// RocksDB symbols which we cannot forward declare. It is used internally
-// and does not need to be included by general users of IRCd.
+#define HAVE_IRCD_DB_PORT_H
 
 // !!! EXPERIMENTAL !!!
 //

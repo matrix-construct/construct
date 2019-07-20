@@ -48,7 +48,7 @@ LOWMEM_FLAGS= --param ggc-min-expand=1
 endif
 endif
 
-DEPS = *.h */*.h */*/*.h */*/*/*.h
+DEPS = *.h */*.h */*/*.h
 
 # includedir = @includedir@/$(PACKAGE_TARNAME)
 includedir = @includedir@/ircd
