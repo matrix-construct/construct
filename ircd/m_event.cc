@@ -1845,20 +1845,23 @@ ircd::m::event::auth::check(std::nothrow_t,
 		event, {authv, j}
 	};
 
-	try
-	{
-		event_auth_hook(event, data);
-	}
-	catch(const FAIL &e)
-	{
-		data.allow = false;
-		data.fail = std::current_exception();
-	}
+	return check(std::nothrow, event, data);
+}
 
-	return
-	{
-		data.allow, data.fail
-	};
+ircd::m::event::auth::passfail
+ircd::m::event::auth::check(std::nothrow_t,
+                            const event &event,
+                            hookdata &data)
+try
+{
+	event_auth_hook(event, data);
+	return {data.allow, data.fail};
+}
+catch(const FAIL &e)
+{
+	data.allow = false;
+	data.fail = std::current_exception();
+	return {data.allow, data.fail};
 }
 
 ircd::m::event::auth::hookdata::hookdata(const m::event &event,
@@ -1871,41 +1874,55 @@ ircd::m::event::auth::hookdata::hookdata(const m::event &event,
 {
 	auth_events
 }
+,auth_create
 {
-	for(size_t i(0); i < auth_events.size(); ++i)
+	find([](const auto &event)
 	{
-		const m::event &a(*auth_events.at(i));
-		const auto &type(json::get<"type"_>(a));
-		if(type == "m.room.create")
-		{
-			assert(!auth_create);
-			auth_create = &a;
-		}
-		else if(type == "m.room.power_levels")
-		{
-			assert(!auth_power);
-			auth_power = &a;
-		}
-		else if(type == "m.room.join_rules")
-		{
-			assert(!auth_join_rules);
-			auth_join_rules = &a;
-		}
-		else if(type == "m.room.member")
-		{
-			if(json::get<"sender"_>(event) == json::get<"state_key"_>(a))
-			{
-				assert(!auth_member_sender);
-				auth_member_sender = &a;
-			}
+		return json::get<"type"_>(event) == "m.room.create";
+	})
+}
+,auth_power
+{
+	find([](const auto &event)
+	{
+		return json::get<"type"_>(event) == "m.room.power_levels";
+	})
+}
+,auth_join_rules
+{
+	find([](const auto &event)
+	{
+		return json::get<"type"_>(event) == "m.room.join_rules";
+	})
+}
+,auth_member_target
+{
+	find([&event](const auto &auth_event)
+	{
+		return json::get<"type"_>(auth_event) == "m.room.member" &&
+		       json::get<"state_key"_>(auth_event) == json::get<"state_key"_>(event);
+	})
+}
+,auth_member_sender
+{
+	find([&event](const auto &auth_event)
+	{
+		return json::get<"type"_>(auth_event) == "m.room.member" &&
+		       json::get<"state_key"_>(auth_event) == json::get<"sender"_>(event);
+	})
+}
+{
+}
 
-			if(json::get<"state_key"_>(event) == json::get<"state_key"_>(a))
-			{
-				assert(!auth_member_target);
-				auth_member_target = &a;
-			}
-		}
-	}
+const ircd::m::event *
+ircd::m::event::auth::hookdata::find(const event::closure_bool &closure)
+const
+{
+	for(const auto *const &event : auth_events)
+		if(likely(event) && closure(*event))
+			return event;
+
+	return nullptr;
 }
 
 /*
