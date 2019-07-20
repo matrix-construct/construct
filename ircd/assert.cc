@@ -34,8 +34,10 @@ __assert_perror_fail(int __errnum,
 #endif
 
 #if !defined(NDEBUG) && defined(RB_ASSERT)
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunreachable-code"
+#endif __clang__
 void
 __assert_fail(const char *__assertion,
               const char *__file,
@@ -91,7 +93,9 @@ __assert_fail(const char *__assertion,
 
 	else __builtin_trap();
 }
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif __clang__
 #endif
 
 void

@@ -2189,8 +2189,10 @@ noexcept
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsuggest-attribute=format"
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-nonliteral"
+#endif __clang__
 void
 ircd::db::database::logger::Logv(const rocksdb::InfoLogLevel level_,
                                  const char *const fmt,
@@ -2225,7 +2227,9 @@ noexcept
 
 	rog(level, "'%s': %s", d->name, str);
 }
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif __clang__
 #pragma GCC diagnostic pop
 
 ///////////////////////////////////////////////////////////////////////////////
