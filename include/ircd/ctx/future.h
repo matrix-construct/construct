@@ -282,7 +282,8 @@ void
 ircd::ctx::future<T>::wait_until(const time_point &tp)
 const
 {
-	_wait_until(*this, tp);
+	if(!this->wait_until(tp, std::nothrow))
+		throw timeout{};
 }
 
 template<class time_point>
