@@ -2292,12 +2292,20 @@ const noexcept try
 }
 catch(const std::bad_function_call &e)
 {
-	log.critical("merge: missing merge operator (%s)", e);
+	log::critical
+	{
+		log, "merge: missing merge operator (%s)", e
+	};
+
 	return false;
 }
 catch(const std::exception &e)
 {
-	log.error("merge: %s", e);
+	log::error
+	{
+		log, "merge: %s", e
+	};
+
 	return false;
 }
 
