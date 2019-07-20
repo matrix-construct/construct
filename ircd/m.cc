@@ -639,7 +639,7 @@ namespace ircd::m::sync
 decltype(ircd::m::sync::pool)
 ircd::m::sync::pool
 {
-	"sync", pool_opts
+	"m.sync", pool_opts
 };
 
 decltype(ircd::m::sync::stats_info)

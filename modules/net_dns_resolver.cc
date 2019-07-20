@@ -113,15 +113,15 @@ ircd::net::dns::resolver::resolver(answers_callback callback)
 }
 ,recv_context
 {
-	"dnsres R", 1_MiB, std::bind(&resolver::recv_worker, this), context::POST
+	"net.dns.R", 1_MiB, std::bind(&resolver::recv_worker, this), context::POST
 }
 ,timeout_context
 {
-	"dnsres T", 64_KiB, std::bind(&resolver::timeout_worker, this), context::POST
+	"net.dns.T", 64_KiB, std::bind(&resolver::timeout_worker, this), context::POST
 }
 ,sendq_context
 {
-	"dnsres S", 64_KiB, std::bind(&resolver::sendq_worker, this), context::POST
+	"net.dns.S", 64_KiB, std::bind(&resolver::sendq_worker, this), context::POST
 }
 {
 	ns.open(ip::udp::v4());

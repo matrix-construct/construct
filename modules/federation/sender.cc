@@ -31,13 +31,13 @@ static void handle_notify(const m::event &, m::vm::eval &);
 context
 sender
 {
-	"fedsnd S", 1_MiB, &send_worker, context::POST,
+	"m.fedsnd.S", 1_MiB, &send_worker, context::POST,
 };
 
 context
 receiver
 {
-	"fedsnd R", 1_MiB, &recv_worker, context::POST,
+	"m.fedsnd.R", 1_MiB, &recv_worker, context::POST,
 };
 
 mapi::header

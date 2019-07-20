@@ -56,13 +56,13 @@ ircd::m::fetch::hook
 decltype(ircd::m::fetch::request_context)
 ircd::m::fetch::request_context
 {
-	"m::fetch req", 512_KiB, &request_worker, context::POST
+	"m.fetch.req", 512_KiB, &request_worker, context::POST
 };
 
 decltype(ircd::m::fetch::eval_context)
 ircd::m::fetch::eval_context
 {
-	"m::fetch eval", 512_KiB, &eval_worker, context::POST
+	"m.fetch.eval", 512_KiB, &eval_worker, context::POST
 };
 
 decltype(ircd::m::fetch::complete)

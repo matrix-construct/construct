@@ -89,7 +89,7 @@ ircd::log::LOG_NAME_TRUNC
 decltype(ircd::log::CTX_NAME_TRUNC)
 ircd::log::CTX_NAME_TRUNC
 {
-	8
+	10
 };
 
 /// The '*' logger is for log::mark()'s which do not target any specific named

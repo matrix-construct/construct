@@ -3975,6 +3975,13 @@ ircd::db::database::env::state::pool::pool(database &d,
 		IOPriority::IO_HIGH:
 		IOPriority::IO_LOW
 }
+,name
+{
+	fmt::sprintf
+	{
+		namebuf, "db.%s", reflect(pri)
+	}
+}
 ,popts
 {
 	size_t(stack_size),    // stack size of worker
@@ -3984,7 +3991,7 @@ ircd::db::database::env::state::pool::pool(database &d,
 }
 ,p
 {
-	reflect(pri),  // name of pool
+	this->name,    // name of pool
 	this->popts    // pool options
 }
 {

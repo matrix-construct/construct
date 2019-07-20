@@ -38,6 +38,8 @@ struct ircd::db::database::env::state::pool
 	database &d;
 	Priority pri;
 	IOPriority iopri;
+	char namebuf[16];
+	string_view name;
 	ctx::dock dock;
 	uint64_t taskctr {0};
 	std::deque<task> tasks;
