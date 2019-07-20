@@ -76,21 +76,20 @@ ircd::m::changed_canonical_alias(const event &event,
 			m::room::alias{}
 	};
 
-	log::info
-	{
-		m::log, "Changed canonical alias of %s to %s by %s with %s",
-		string_view{room_id},
-		string_view{alias},
-		json::get<"sender"_>(event),
-		string_view{event.event_id},
-	};
-
 	if(alias)
 	{
 		if(m::room::aliases::cache::has(alias))
 			return;
 
 		m::room::aliases::cache::set(alias, room_id);
+		log::info
+		{
+			m::log, "Canonical alias %s for %s added by %s",
+			string_view{alias},
+			string_view{room_id},
+			json::get<"sender"_>(event),
+		};
+
 		return;
 	}
 
@@ -107,7 +106,7 @@ ircd::m::changed_canonical_alias(const event &event,
 		m::room::state::prev(present_event_idx)
 	};
 
-	m::get(std::nothrow, prev_state_idx, "content", []
+	m::get(std::nothrow, prev_state_idx, "content", [&room_id, &event]
 	(const json::object &content)
 	{
 		const json::string &alias
@@ -116,5 +115,12 @@ ircd::m::changed_canonical_alias(const event &event,
 		};
 
 		m::room::aliases::cache::del(alias);
+		log::info
+		{
+			m::log, "Canonical alias of %s removed by %s was %s",
+			string_view{room_id},
+			json::get<"sender"_>(event),
+			string_view{alias},
+		};
 	});
 }
