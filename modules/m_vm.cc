@@ -333,10 +333,17 @@ ircd::m::vm::inject(eval &eval,
 			prev_scalar_v3
 	};
 
+	const bool add_prev_events
+	{
+		!is_room_create
+		&& opts.add_prev_events
+		&& !event.has("prev_events")
+	};
+
 	// The buffer we'll be composing the prev_events JSON array into.
 	const unique_buffer<mutable_buffer> prev_buf
 	{
-		!is_room_create && opts.add_prev_events?
+		add_prev_events?
 			std::min(size_t(prev_limit) * prev_scalar, event::MAX_SIZE):
 			0UL
 	};
@@ -347,7 +354,7 @@ ircd::m::vm::inject(eval &eval,
 	const room::head head{room{eval.room_id}};
 	const auto &[prev_events, depth]
 	{
-		!is_room_create && opts.add_prev_events?
+		add_prev_events?
 			head.make_refs(prev_buf, size_t(prev_limit), true):
 			std::pair<json::array, int64_t>{{}, -1}
 	};
@@ -355,7 +362,7 @@ ircd::m::vm::inject(eval &eval,
 	// Add the prev_events
 	const json::iov::add prev_events_
 	{
-		event, opts.add_prev_events && !empty(prev_events),
+		event, add_prev_events && !empty(prev_events),
 		{
 			"prev_events", [&prev_events]() -> json::value
 			{
@@ -385,11 +392,18 @@ ircd::m::vm::inject(eval &eval,
 		}
 	};
 
+	const bool add_auth_events
+	{
+		!is_room_create
+		&& opts.add_auth_events
+		&& !event.has("auth_events")
+	};
+
 	// The auth_events have more deterministic properties.
 	static const size_t auth_buf_sz{m::id::MAX_SIZE * 4};
 	const unique_buffer<mutable_buffer> auth_buf
 	{
-		!is_room_create && opts.add_auth_events? auth_buf_sz : 0UL
+		add_auth_events? auth_buf_sz : 0UL
 	};
 
 	// Default to an empty array.
@@ -399,7 +413,7 @@ ircd::m::vm::inject(eval &eval,
 	};
 
 	// Conditionally compose the auth events.
-	if(!is_room_create && opts.add_auth_events)
+	if(add_auth_events)
 	{
 		const room::auth auth{room{eval.room_id}};
 		auth_events = auth.make_refs(auth_buf, m::event{event});
@@ -408,7 +422,7 @@ ircd::m::vm::inject(eval &eval,
 	// Conditionally add the auth_events to the event iov.
 	const json::iov::add auth_events_
 	{
-		event, opts.add_auth_events,
+		event, add_auth_events,
 		{
 			"auth_events", [&auth_events]() -> json::value
 			{
