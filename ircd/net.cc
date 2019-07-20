@@ -2770,7 +2770,7 @@ noexcept try
 	if(unlikely(--instances == 0))
 		net::dock.notify_all();
 
-	if(unlikely(RB_DEBUG_LEVEL && opened(*this)))
+	if((RB_DEBUG_LEVEL) && unlikely(opened(*this)))
 		throw panic
 		{
 			"Failed to ensure socket(%p) is disconnected from %s before dtor.",
