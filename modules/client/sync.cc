@@ -865,7 +865,8 @@ ircd::m::sync::longpoll::poll(data &data)
 
 	// slightly more involved check of the socket before
 	// we waste resources on the operation; throws.
-	check(*data.client->sock);
+	const auto &client(*data.client);
+	net::check(*client.sock);
 
 	// Keep in mind if the handler returns true that means
 	// it made a hit and we can return true to exit longpoll
