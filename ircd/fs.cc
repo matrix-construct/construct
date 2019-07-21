@@ -2326,7 +2326,7 @@ ircd::fs::error::buf;
 ircd::fs::error::error(const boost::filesystem::filesystem_error &e)
 :std::system_error
 {
-	make_error_code(e), e.what()
+	make_system_error(e)
 }
 {
 }
