@@ -7109,7 +7109,7 @@ ircd::db::commit(database &d,
 	#ifdef RB_DEBUG
 	log::debug
 	{
-		log, "'%s' %lu COMMIT %s in %ld$us",
+		log, "'%s': %lu COMMIT %s in %ld$us",
 		d.name,
 		sequence(d),
 		debug(batch),
@@ -7236,10 +7236,11 @@ ircd::db::_seek(database::column &c,
 	#ifdef RB_DEBUG_DB_SEEK
 	log::debug
 	{
-		log, "'%s' %lu:%lu SEEK %s in %ld$us '%s'",
+		log, "'%s': %lu:%lu SEEK %s %s in %ld$us '%s'",
 		name(d),
 		sequence(d),
 		sequence(opts.snapshot),
+		valid(it)? "VALID" : "INVALID",
 		it.status().ToString(),
 		timer.at<microseconds>().count(),
 		name(c)
@@ -7269,7 +7270,7 @@ ircd::db::_seek(database::column &c,
 	#ifdef RB_DEBUG_DB_SEEK
 	log::debug
 	{
-		log, "'%s' %lu:%lu SEEK[%s] %s -> %s in %ld$us '%s'",
+		log, "'%s': %lu:%lu SEEK[%s] %s -> %s in %ld$us '%s'",
 		name(d),
 		sequence(d),
 		sequence(opts.snapshot),

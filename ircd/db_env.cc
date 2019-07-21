@@ -1402,9 +1402,10 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p sync",
+		log, "'%s': wfile:%p fd:%d sync",
 		d.name,
-		this
+		this,
+		int(fd),
 	};
 	#endif
 
@@ -1416,10 +1417,11 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p sync :%s",
+		log, "'%s': wfile:%p fd:%d sync :%s",
 		d.name,
 		this,
-		e.what()
+		int(fd),
+		e.what(),
 	};
 
 	return error_to_status{e};
@@ -1428,10 +1430,11 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p sync :%s",
+		log, "'%s': wfile:%p fd:%d sync :%s",
 		d.name,
 		this,
-		e.what()
+		int(fd),
+		e.what(),
 	};
 
 	return error_to_status{e};
@@ -1447,9 +1450,10 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p fsync",
+		log, "'%s': wfile:%p fd:%d fsync",
 		d.name,
-		this
+		this,
+		int(fd),
 	};
 	#endif
 
@@ -1461,10 +1465,11 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fsync :%s",
+		log, "'%s': wfile:%p fd:%d fsync :%s",
 		d.name,
 		this,
-		e.what()
+		int(fd),
+		e.what(),
 	};
 
 	return error_to_status{e};
@@ -1473,10 +1478,11 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fsync :%s",
+		log, "'%s': wfile:%p fd:%d fsync :%s",
 		d.name,
 		this,
-		e.what()
+		int(fd),
+		e.what(),
 	};
 
 	return error_to_status{e};
