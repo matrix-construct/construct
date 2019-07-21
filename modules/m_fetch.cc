@@ -622,14 +622,14 @@ size_t
 IRCD_MODULE_EXPORT
 ircd::m::fetch::count()
 {
-	size_t ret(0);
-	for_each([&ret](const auto &request)
-	{
-		++ret;
-		return true;
-	});
+	return requests.size();
+}
 
-	return ret;
+bool
+IRCD_MODULE_EXPORT
+ircd::m::fetch::exists(const m::event::id &event_id)
+{
+	return requests.count(string_view{event_id});
 }
 
 bool
