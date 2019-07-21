@@ -37,12 +37,12 @@ ircd::m::pretty(std::ostream &s,
 
 	const string_view top_keys[]
 	{
-		"origin",
 		"event_id",
 		"room_id",
 		"sender",
-		"type",
+		"origin",
 		"depth",
+		"type",
 		"state_key",
 		"redacts",
 	};
