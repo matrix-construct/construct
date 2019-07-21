@@ -11,11 +11,10 @@
 #pragma once
 #define HAVE_IRCD_CTX_EXCEPTION_HANDLER_H
 
-namespace ircd::ctx {
-inline namespace this_ctx
+namespace ircd::ctx
 {
 	struct exception_handler;
-}}
+}
 
 /// An instance of exception_handler must be present to allow a context
 /// switch inside a catch block. This is due to ABI limitations that stack
@@ -28,9 +27,14 @@ inline namespace this_ctx
 ///
 /// The exception cannot then be rethrown. DO NOT RETHROW THE EXCEPTION.
 ///
-struct ircd::ctx::this_ctx::exception_handler
+struct ircd::ctx::exception_handler
 :std::exception_ptr
 {
+	static uint uncaught_exceptions(const uint &) noexcept;
+	static uint uncaught_exceptions() noexcept;
+	static void end_catch() noexcept;
+
+  public:
 	exception_handler() noexcept;
 	exception_handler(exception_handler &&) = delete;
 	exception_handler(const exception_handler &) = delete;

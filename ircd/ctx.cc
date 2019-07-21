@@ -8,7 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <cxxabi.h>
 #include <ircd/asio.h>
 #include "ctx.h"
 
@@ -757,30 +756,6 @@ noexcept
 }
 
 //
-// exception_handler
-//
-
-ircd::ctx::this_ctx::exception_handler::exception_handler()
-noexcept
-:std::exception_ptr
-{
-	std::current_exception()
-}
-{
-	assert(bool(*this));
-
-	#ifdef HAVE_CXXABI_H
-	if(current)
-		__cxxabiv1::__cxa_end_catch();
-	#endif
-
-	// We don't yet support more levels of exceptions; after ending this
-	// catch we can't still be in another one. This doesn't apply if we're
-	// not on any ctx currently.
-	assert(!current || !std::uncaught_exceptions());
-}
-
-//
 // critical_assertion
 //
 
@@ -996,14 +971,6 @@ ircd::ctx::continuation::noop_interruptor{[]
 	return;
 }};
 
-#ifdef HAVE_CXXABI_H
-struct __cxxabiv1::__cxa_eh_globals
-{
-	__cxa_exception *caughtExceptions;
-	unsigned int uncaughtExceptions;
-};
-#endif
-
 //
 // continuation
 //
@@ -1025,7 +992,7 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 }
 ,uncaught_exceptions
 {
-	uint(std::uncaught_exceptions())
+	exception_handler::uncaught_exceptions(0)
 }
 {
 	assert(self != nullptr);
@@ -1035,6 +1002,10 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	// but this yield is still occuring under its scope. That's bad.
 	assert_critical();
 	assert(!critical_asserted);
+
+	// Confirming the uncaught exception count was saved and set to zero in the
+	// initializer list.
+	assert(!std::uncaught_exceptions());
 
 	// Note: Construct an instance of ctx::exception_handler to enable yielding
 	// in your catch block.
@@ -1056,15 +1027,6 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	// Tell the profiler this is the point where the context has concluded
 	// its execution run and is now yielding.
 	mark(prof::event::YIELD);
-
-	#ifdef HAVE_CXXABI_H
-	using __cxxabiv1::__cxa_get_globals_fast;
-	assert(__cxa_get_globals_fast());
-	assert(__cxa_get_globals_fast()->uncaughtExceptions == uncaught_exceptions);
-	__cxa_get_globals_fast()->uncaughtExceptions = 0;
-	#else
-	assert(!uncaught_exceptions);
-	#endif
 
 	// Check that we saved a valid context reference to this object for later.
 	assert(self->yc);
@@ -1097,16 +1059,9 @@ noexcept
 	// upon resuming execution.
 	ircd::ctx::current = self;
 
-	#ifdef HAVE_CXXABI_H
-	using __cxxabiv1::__cxa_get_globals_fast;
-	assert(__cxa_get_globals_fast());
-	assert(__cxa_get_globals_fast()->uncaughtExceptions == 0);
-	__cxa_get_globals_fast()->uncaughtExceptions = uncaught_exceptions;
-	assert(uint(std::uncaught_exceptions()) == uncaught_exceptions);
-	#else
+	// Restore the uncaught exception count for this context to the cxxabi
 	assert(std::uncaught_exceptions() == 0);
-	assert(uncaught_exceptions == 0);
-	#endif
+	exception_handler::uncaught_exceptions(uncaught_exceptions);
 
 	// Tell the profiler this is the point where the context is now resuming.
 	// On some optimized builds this might lead nowhere.
