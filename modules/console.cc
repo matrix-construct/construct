@@ -7581,10 +7581,10 @@ console_cmd__room__top(opt &out, const string_view &line)
 		if(!startswith(type, "m."))
 			return true;
 
-		state.for_each(type, m::event::closure{[&out]
+		state.for_each(type, m::event::closure{[&out, &type]
 		(const m::event &event)
 		{
-			if(json::get<"state_key"_>(event) != "")
+			if(json::get<"state_key"_>(event) != "" && type != "m.room.aliases")
 				return;
 
 			out << json::get<"type"_>(event) << ':' << std::endl;
