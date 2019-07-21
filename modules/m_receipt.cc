@@ -91,18 +91,13 @@ handle_edu_m_receipt(const m::event &event,
 void
 handle_m_receipt(const m::event &event,
                  const m::room::id &room_id,
-                 const json::object &content)
+                 const json::object &content_)
 {
-	for(const auto &member : content)
+	for(const auto &[type, content] : content_)
 	{
-		const string_view &type
-		{
-			unquote(member.first)
-		};
-
 		if(type == "m.read")
 		{
-			handle_m_receipt_m_read(event, room_id, member.second);
+			handle_m_receipt_m_read(event, room_id, content);
 			continue;
 		}
 
@@ -118,20 +113,16 @@ handle_m_receipt(const m::event &event,
 void
 handle_m_receipt_m_read(const m::event &event,
                         const m::room::id &room_id,
-                        const json::object &content)
+                        const json::object &content_)
 {
-	for(const auto &member : content)
+	for(const auto &[user_id_, content] : content_)
 	{
-		const m::user::id user_id
-		{
-			unquote(member.first)
-		};
-
+		const m::user::id user_id{user_id_};
 		if(user_id.host() != json::get<"origin"_>(event))
 		{
 			log::dwarning
 			{
-				receipt_log, "ignoring m.receipt m.read from '%s' in %s for alien %s.",
+				receipt_log, "Ignoring m.receipt m.read from '%s' in %s for alien %s.",
 				json::get<"origin"_>(event),
 				string_view{room_id},
 				string_view{user_id},
@@ -140,12 +131,7 @@ handle_m_receipt_m_read(const m::event &event,
 			continue;
 		}
 
-		const json::object &content
-		{
-			member.second
-		};
-
-		handle_m_receipt_m_read(room_id, user_id, content);
+		handle_m_receipt_m_read(room_id, user_id, json::object{content});
 	}
 }
 
@@ -189,11 +175,13 @@ try
 	if(my(user))
 		return;
 
+	// If the user isn't known to us yet we drop that here; in the future
+	// we might be able to use this to trigger a resynchronization of the room.
 	if(!exists(user))
 	{
 		log::dwarning
 		{
-			receipt_log, "ignoring m.receipt m.read for unknown %s in %s for %s",
+			receipt_log, "Ignoring m.receipt m.read for unknown %s in %s for %s",
 			string_view{user_id},
 			string_view{room_id},
 			string_view{event_id}
@@ -211,7 +199,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		receipt_log, "failed to save m.receipt m.read for %s in %s for %s :%s",
+		receipt_log, "Failed to save m.receipt m.read for %s in %s for %s :%s",
 		string_view{user_id},
 		string_view{room_id},
 		string_view{event_id},
