@@ -1558,6 +1558,40 @@ const
 	return event_id;
 }
 
+const ircd::m::event *
+ircd::m::vm::eval::find_pdu(const event::id &event_id)
+{
+	const m::event *ret{nullptr};
+	for_each_pdu([&ret, &event_id]
+	(const m::event &event)
+	{
+		if(event.event_id != event_id)
+			return true;
+
+		ret = std::addressof(event);
+		return false;
+	});
+
+	return ret;
+}
+
+const ircd::m::event *
+ircd::m::vm::eval::find_pdu(const eval &eval,
+                            const event::id &event_id)
+{
+	const m::event *ret{nullptr};
+	for(const auto &event : eval.pdus)
+	{
+		if(event.event_id != event_id)
+			continue;
+
+		ret = std::addressof(event);
+		break;
+	}
+
+	return ret;
+}
+
 bool
 ircd::m::vm::eval::for_each_pdu(const std::function<bool (const event &)> &closure)
 {

@@ -81,6 +81,8 @@ struct ircd::m::vm::eval
 	string_view room_version;
 
 	static bool for_each_pdu(const std::function<bool (const event &)> &);
+	static const event *find_pdu(const eval &, const event::id &);
+	static const event *find_pdu(const event::id &);
 
   public:
 	operator const event::id::buf &() const;
