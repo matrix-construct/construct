@@ -155,8 +155,21 @@ handle_m_receipt_m_read(const m::room::id &room_id,
 		data.get<time_t>("ts")
 	};
 
-	for(const string_view &event_id : event_ids)
-		handle_m_receipt_m_read(room_id, user_id, unquote(event_id), ts);
+	for(const json::string &event_id : event_ids) try
+	{
+		handle_m_receipt_m_read(room_id, user_id, event_id, ts);
+	}
+	catch(const std::exception &e)
+	{
+		log::derror
+		{
+			receipt_log, "Failed to handle m.receipt m.read for %s in %s for '%s' :%s",
+			string_view{user_id},
+			string_view{room_id},
+			string_view{event_id},
+			e.what()
+		};
+	}
 }
 
 void
