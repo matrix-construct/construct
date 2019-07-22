@@ -1321,12 +1321,7 @@ ircd::m::seek(event::fetch &fetch,
               const event::idx &event_idx,
               std::nothrow_t)
 {
-	const auto &event_id
-	{
-		m::event_id(event_idx, fetch.event_id_buf, std::nothrow)
-	};
-
-	return seek(fetch, event_idx, event_id, std::nothrow);
+	return seek(fetch, event_idx, m::event::id{}, std::nothrow);
 }
 
 bool
