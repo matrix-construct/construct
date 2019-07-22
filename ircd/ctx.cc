@@ -38,6 +38,12 @@ ircd::ctx::ctx::id_ctr
 	0
 };
 
+decltype(ircd::ctx::ctx::ios_desc)
+ircd::ctx::ctx::ios_desc
+{
+	"ircd::ctx::ctx"
+};
+
 /// Spawn (internal)
 void
 IRCD_CTX_STACK_PROTECT
@@ -1654,6 +1660,8 @@ ircd::ctx::prof::handle_cur_continue()
 void
 ircd::ctx::prof::slice_enter()
 {
+	assert(ctx::ios_desc.stats);
+	++ctx::ios_desc.stats->calls;
 	_slice_start = cycles();
 	assert(_slice_start >= _slice_stop);
 }
@@ -1675,8 +1683,11 @@ ircd::ctx::prof::slice_leave()
 		size_t(prof::event::CYCLES)
 	};
 
-	c.profile.event.at(pos) += last_slice;
 	_total.event.at(pos) += last_slice;
+	c.profile.event.at(pos) += last_slice;
+	assert(c.ios_desc.stats);
+	c.ios_desc.stats->slice_total += last_slice;
+	c.ios_desc.stats->slice_last = last_slice;
 	c.stack.at = stack_at_here();
 }
 
