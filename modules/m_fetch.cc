@@ -89,6 +89,7 @@ ircd::m::fetch::init()
 void
 ircd::m::fetch::fini()
 {
+	clear();
 	request_context.terminate();
 	eval_context.terminate();
 	request_context.join();
