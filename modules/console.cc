@@ -13388,6 +13388,18 @@ console_cmd__fetch(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__fetch__clear(opt &out, const string_view &line)
+{
+	const size_t cleared
+	{
+		m::fetch::clear()
+	};
+
+	out << "Cleared " << cleared << std::endl;
+	return true;
+}
+
 //
 // synchron
 //

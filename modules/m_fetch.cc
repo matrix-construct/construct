@@ -553,6 +553,20 @@ catch(const std::exception &e)
 	throw;
 }
 
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::fetch::clear()
+{
+	size_t ret{0};
+	for_each([&ret](auto &request)
+	{
+		ret += cancel(request);
+		return true;
+	});
+
+	return ret;
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::fetch::prefetch(const m::room::id &room_id,
