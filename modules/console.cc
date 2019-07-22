@@ -2104,7 +2104,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		    << (termination(ctx)? 'T' : '-')
 		    << (interruptible(ctx)? '-' : 'N')
 		    << (waiting(ctx)? 'S' : '-')
-		    << (!running(ctx) && notes(ctx)? 'Q' : '-')
+		    << (queued(ctx)? 'Q' : '-')
 		    << (interruption(ctx)? 'I' : '-')
 		    << (running(ctx)? 'R' : '-')
 		    ;

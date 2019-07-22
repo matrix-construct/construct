@@ -459,6 +459,13 @@ ircd::ctx::interruptible(ctx &ctx,
 		ctx.flags |= context::NOINTERRUPT;
 }
 
+/// !running() && notes > 0
+bool
+ircd::ctx::queued(const ctx &ctx)
+{
+	return !running(ctx) && notes(ctx) > 0;
+}
+
 /// started() && !finished() && !running
 bool
 ircd::ctx::waiting(const ctx &ctx)

@@ -57,6 +57,7 @@ namespace ircd::ctx
 	bool started(const ctx &);                   // Context was ever entered.
 	bool running(const ctx &);                   // Context is the currently running ctx.
 	bool waiting(const ctx &);                   // started() && !finished() && !running()
+	bool queued(const ctx &);                    // !running() && notes() > 0
 
 	void interruptible(ctx &, const bool &);     // False for interrupt suppression.
 	void interrupt(ctx &);                       // Interrupt the context.
