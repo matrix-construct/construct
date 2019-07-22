@@ -3535,6 +3535,37 @@ const
 	return ret;
 }
 
+size_t
+ircd::m::room::origins::count_error()
+const
+{
+	size_t ret{0};
+	for_each([&ret](const string_view &server)
+	{
+		ret += !empty(server::errmsg(server));
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::room::origins::count_online()
+const
+{
+	ssize_t ret
+	{
+		0 - ssize_t(count_error())
+	};
+
+	for_each([&ret](const string_view &hostport)
+	{
+		ret += bool(server::exists(hostport));
+	});
+
+	assert(ret >= 0L);
+	return std::max(ret, 0L);
+}
+
 /// Tests if argument is the only origin in the room.
 /// If a zero or more than one origins exist, returns false. If the only origin
 /// in the room is the argument origin, returns true.

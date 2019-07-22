@@ -29,6 +29,8 @@ struct ircd::m::room::origins
 	void for_each(const closure &view) const;
 	bool has(const string_view &origin) const;
 	bool only(const string_view &origin) const;
+	size_t count_online() const;
+	size_t count_error() const;
 	size_t count() const;
 
 	// select an origin in the room at random; use proffer to refuse and try another.
