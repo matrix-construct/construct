@@ -1336,7 +1336,10 @@ ircd::m::seek(event::fetch &fetch,
               std::nothrow_t)
 {
 	fetch.event_idx = event_idx;
-	fetch.event_id_buf = event_id;
+	fetch.event_id_buf = event_id?
+		event::id::buf{event_id}:
+		event::id::buf{};
+
 	const string_view &key
 	{
 		byte_view<string_view>(event_idx)
@@ -1564,8 +1567,8 @@ ircd::m::event::fetch::assign_from_row(const string_view &key)
 	assign(event, row, key);
 	const auto event_id
 	{
-		defined(json::get<"event_id"_>(*this))?
-			id{json::get<"event_id"_>(*this)}:
+		!empty(json::get<"event_id"_>(event))?
+			id{json::get<"event_id"_>(event)}:
 		event_id_buf?
 			id{event_id_buf}:
 			m::event_id(event_idx, event_id_buf, std::nothrow)
