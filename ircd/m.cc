@@ -210,6 +210,7 @@ ircd::m::module_names
 	"m_user_highlight",
 	"m_user_profile",
 	"m_ignored_user_list",
+	"m_room_timeline",
 	"m_room_aliases",
 	"m_room_canonical_alias",
 	"m_room_create",
