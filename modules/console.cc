@@ -9273,19 +9273,29 @@ console_cmd__room__timeline(opt &out, const string_view &line)
 		room
 	};
 
-	int64_t last_depth(0);
-	const auto closure{[&out, &last_depth]
-	(const auto &coord, const auto &event_idx)
+	const auto closure{[&out, &room]
+	(auto &coord, const auto &event_idx)
+	-> m::room::timeline::coord &
 	{
+		if(coord.y > m::depth(std::nothrow, room))
+			return coord;
+
+		if(!event_idx)
+		{
+			++coord.y;
+			return coord;
+		}
+
 		const m::event::fetch event
 		{
 			event_idx, std::nothrow
 		};
 
-		if(json::get<"depth"_>(event) > last_depth + 1)
-			out << std::endl;
-
-		last_depth = json::get<"depth"_>(event);
+		if(!event.valid)
+		{
+			++coord.x;
+			return coord;
+		}
 
 		out << "("
 		    << std::left
@@ -9300,14 +9310,17 @@ console_cmd__room__timeline(opt &out, const string_view &line)
 		    << pretty_oneline(event, false)
 		    << std::endl;
 
-		return true;
+		++coord.x;
+		return coord;
 	}};
 
-	timeline.for_each(closure,
+	m::room::timeline::coord coord
 	{
-		param.at<int64_t>("x", 0),
-		param.at<int64_t>("y", 0)
-	});
+		param.at<long>("x", 0L),
+		param.at<long>("y", 0L),
+	};
+
+	timeline.for_each(coord, closure);
 	return true;
 }
 

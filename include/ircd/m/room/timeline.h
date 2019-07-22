@@ -21,15 +21,18 @@ namespace ircd::m
 struct ircd::m::room::timeline
 {
 	struct coord;
-	using closure = std::function<bool (const coord &, const event::idx &)>;
+	using closure = std::function<coord &(coord &, const event::idx &)>;
 
 	m::room room;
 
   public:
+	static event::idx next(const event::idx &, const int64_t &x = 0);
+
 	bool has_past(const event::id &) const;
 	bool has_future(const event::id &) const;
 
-	bool for_each(const closure &, const coord &branch) const;
+	bool for_each(coord &, const closure &) const;
+	bool for_each(const closure &) const;
 
 	timeline(const m::room &);
 	timeline() = default;

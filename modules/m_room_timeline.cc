@@ -31,49 +31,48 @@ ircd::m::room::timeline::timeline(const m::room &room)
 }
 
 bool
-ircd::m::room::timeline::for_each(const closure &closure,
-                                  const coord &branch)
+ircd::m::room::timeline::for_each(const closure &closure)
 const
 {
-	m::event::refs refs
+	struct coord coord;
+	return for_each(coord, closure);
+}
+
+bool
+ircd::m::room::timeline::for_each(coord &coord,
+                                  const closure &closure)
+const
+{
+	messages it
 	{
-		room.event_id?
-			index(room.event_id):
-			room::index(room)
+		this->room, uint64_t(coord.y)
 	};
 
-	if(!refs.idx)
+	if(!it)
 		return true;
 
-	timeline::coord coord;
-	if(!closure(coord, refs.idx))
-		return false;
-
-	for(++coord.y; coord.y <= branch.y; ++coord.y, coord.x = 0)
+	event::idx next(it.event_idx()); do
 	{
-		auto idx(0);
-		refs.for_each(dbs::ref::NEXT, [&coord, &branch, &idx]
-		(const auto &event_idx, const auto &)
-		{
-			if(coord.x <= branch.x)
-				idx = event_idx;
-
-			if(coord.x < branch.x)
-			{
-				++coord.x;
-				return true;
-			}
-			else return false;
-		});
-
-		if(!idx)
+		const auto last(coord);
+		coord = closure(coord, next);
+		if(coord.x == last.x && coord.y == last.y)
 			return true;
 
-		if(!closure(coord, idx))
+		if(coord.y != last.y)
+			if(!it.seek(coord.y))
+				return true;
+
+		next = timeline::next(it.event_idx(), coord.x);
+		if(next == 0 && coord.x == 0)
+			continue;
+
+		if(next == it.event_idx())
 			return false;
 
-		refs.idx = idx;
+		if(next == 0)
+			coord.x = 0;
 	}
+	while(1);
 
 	return true;
 }
@@ -92,6 +91,10 @@ const
 
 	return true;
 }
+
+//
+// static util
+//
 
 void
 ircd::m::room::timeline::rebuild(const m::room &room)
@@ -122,4 +125,28 @@ ircd::m::room::timeline::rebuild(const m::room &room)
 	}
 
 	txn();
+}
+
+ircd::m::event::idx
+ircd::m::room::timeline::next(const event::idx &event_idx,
+                              const int64_t &x)
+{
+	const m::event::refs refs
+	{
+		event_idx
+	};
+
+	int64_t _x(0);
+	event::idx ret(0);
+	refs.for_each(dbs::ref::NEXT, [&_x, &x, &ret]
+	(const auto &event_idx, const auto &)
+	{
+		if(_x++ < x)
+			return true;
+
+		ret = event_idx;
+		return false;
+	});
+
+	return ret;
 }
