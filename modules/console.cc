@@ -6610,6 +6610,10 @@ console_cmd__event(opt &out, const string_view &line)
 	if(m::event::auth::is_power_event(event))
 		out << "+ POWER EVENT" << std::endl;
 
+	const m::event::refs &refs{event_idx};
+	if(refs.count())
+		out << "+ REFERENCED BY " << refs.count() << std::endl;
+
 	const m::event::prev prev{event};
 	if(prev.auth_events_count() || prev.prev_events_count())
 		out << std::endl;
@@ -6644,7 +6648,6 @@ console_cmd__event(opt &out, const string_view &line)
 		    << " " << pretty_oneline(event, false) << std::endl;
 	}
 
-	const m::event::refs &refs{event_idx};
 	const auto refcnt(refs.count());
 	if(refcnt)
 	{
@@ -6659,8 +6662,6 @@ console_cmd__event(opt &out, const string_view &line)
 			return true;
 		});
 	}
-	out << std::endl;
-	out << "+ REFERENCED BY " << refs.count() << std::endl;
 
 	return true;
 }
@@ -7574,6 +7575,8 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "top event:     " << std::get<m::event::id::buf>(top) << std::endl;
 	out << "joined:        " << m::room::members{room_id}.count("join") << std::endl;
 	out << "servers:       " << m::room::origins{room_id}.count() << std::endl;
+	out << "servers up:    " << m::room::origins{room_id}.count_online() << std::endl;
+	out << "servers err:   " << m::room::origins{room_id}.count_error() << std::endl;
 	out << std::endl;
 
 	state.for_each(m::room::state::types{[&out, &state]
