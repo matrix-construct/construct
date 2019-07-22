@@ -429,7 +429,11 @@ ircd::m::fetch::_heads(const m::feds::opts &opts_)
 		if(result.eptr)
 			return true;
 
-		const json::object &event{result.object["event"]};
+		const json::object &event
+		{
+			result.object["event"]
+		};
+
 		const m::event::prev prev{event};
 		for(size_t i(0); i < prev.prev_events_count(); ++i)
 		{

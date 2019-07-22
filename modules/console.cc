@@ -6648,8 +6648,6 @@ console_cmd__event(opt &out, const string_view &line)
 	const auto refcnt(refs.count());
 	if(refcnt)
 	{
-		out << std::endl;
-		out << "+ REFERENCED BY " << refs.count() << std::endl;
 		refs.for_each([&out]
 		(const m::event::idx &idx, const auto &type)
 		{
@@ -6661,6 +6659,8 @@ console_cmd__event(opt &out, const string_view &line)
 			return true;
 		});
 	}
+	out << std::endl;
+	out << "+ REFERENCED BY " << refs.count() << std::endl;
 
 	return true;
 }
@@ -7573,6 +7573,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "top depth:     " << std::get<int64_t>(top) << std::endl;
 	out << "top event:     " << std::get<m::event::id::buf>(top) << std::endl;
 	out << "joined:        " << m::room::members{room_id}.count("join") << std::endl;
+	out << "servers:       " << m::room::origins{room_id}.count() << std::endl;
 	out << std::endl;
 
 	state.for_each(m::room::state::types{[&out, &state]
@@ -7581,16 +7582,18 @@ console_cmd__room__top(opt &out, const string_view &line)
 		if(!startswith(type, "m."))
 			return true;
 
+		if(type == "m.room.member")
+			return true;
+
 		state.for_each(type, m::event::closure{[&out, &type]
 		(const m::event &event)
 		{
 			if(json::get<"state_key"_>(event) != "" && type != "m.room.aliases")
 				return;
 
-			out << json::get<"type"_>(event) << ':' << std::endl;
-			for(const auto &member : json::get<"content"_>(event))
-				out << '\t' << member.first << ": " << member.second << std::endl;
-			out << std::endl;
+			for(const auto &[prop, val] : json::get<"content"_>(event))
+				out << json::get<"type"_>(event)
+				    << ": " << prop << ": " << val << std::endl;
 		}});
 
 		return true;
