@@ -13388,39 +13388,6 @@ console_cmd__fetch(opt &out, const string_view &line)
 	return true;
 }
 
-bool
-console_cmd__fetch__sync(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"room_id", "event_id"
-	}};
-
-	const auto room_id
-	{
-		m::room_id(param.at("room_id"))
-	};
-
-	const string_view &event_id
-	{
-		param["event_id"]
-	};
-
-	const m::room room
-	{
-		room_id, event_id
-	};
-
-	if(!m::fetch::synchronize(room))
-	{
-		out << "failed to start." << std::endl;
-		return true;
-	}
-
-	out << "done." << std::endl;
-	return true;
-}
-
 //
 // synchron
 //

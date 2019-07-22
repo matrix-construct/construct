@@ -346,20 +346,6 @@ namespace ircd::m::fetch
 	static void handle_state_ids(const m::room &, const m::feds::result &);
 }
 
-bool
-IRCD_MODULE_EXPORT
-ircd::m::fetch::synchronize(const m::room &room)
-{
-	m::feds::opts opts;
-	opts.op = m::feds::op::head;
-	opts.room_id = room.room_id;
-	opts.event_id = room.event_id;
-	opts.nothrow_closure = true;
-	opts.closure_errors = false;
-
-	return true;
-}
-
 void
 IRCD_MODULE_EXPORT
 ircd::m::fetch::state_ids(const room &room)

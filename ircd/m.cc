@@ -535,19 +535,6 @@ ircd::m::fetch::auth_chain(const room &r,
 }
 
 bool
-ircd::m::fetch::synchronize(const m::room &room)
-{
-	using prototype = bool (const m::room &);
-
-	static mods::import<prototype> call
-	{
-		"m_fetch", "ircd::m::fetch::synchronize"
-	};
-
-	return call(room);
-}
-
-bool
 ircd::m::fetch::prefetch(const m::room::id &room_id,
                          const m::event::id &event_id)
 {
