@@ -7901,6 +7901,8 @@ console_cmd__room__depth__gaps(opt &out, const string_view &line)
 		    << " -> "
 		    << std::left << std::setw(8) << range.second
 		    << " "
+		    << (m::room::state::is(std::nothrow, event_idx)? "S" : " ")
+		    << " "
 		    << m::event_id(event_idx)
 		    << std::endl;
 
@@ -13335,27 +13337,7 @@ console_cmd__mc__register__available(opt &out, const string_view &line)
 //
 
 bool
-console_cmd__fetch__list(opt &out, const string_view &line)
-{
-	m::fetch::for_each([&out]
-	(const m::fetch::request &request)
-	{
-		out
-		<< std::left << std::setw(64) << trunc(request.event_id, 64) << " "
-		<< std::left << std::setw(40) << trunc(request.room_id, 40) << " "
-		<< std::left << std::setw(32) << trunc(request.origin, 32) << " "
-		<< std::left << "S:" << request.started << " "
-		<< std::left << "A:" << request.attempted.size() << " "
-		<< std::left << "E:" << bool(request.eptr) << " "
-		<< std::left << "F:" << request.finished << " "
-		<< std::endl
-		;
-
-		return true;
-	});
-
-	return true;
-}
+console_cmd__fetch__list(opt &out, const string_view &line);
 
 bool
 console_cmd__fetch(opt &out, const string_view &line)
@@ -13385,6 +13367,29 @@ console_cmd__fetch(opt &out, const string_view &line)
 	}
 
 	out << "starting..." << std::endl;
+	return true;
+}
+
+bool
+console_cmd__fetch__list(opt &out, const string_view &line)
+{
+	m::fetch::for_each([&out]
+	(const m::fetch::request &request)
+	{
+		out
+		<< std::left << std::setw(64) << trunc(request.event_id, 64) << " "
+		<< std::left << std::setw(40) << trunc(request.room_id, 40) << " "
+		<< std::left << std::setw(32) << trunc(request.origin, 32) << " "
+		<< std::left << "S:" << request.started << " "
+		<< std::left << "A:" << request.attempted.size() << " "
+		<< std::left << "E:" << bool(request.eptr) << " "
+		<< std::left << "F:" << request.finished << " "
+		<< std::endl
+		;
+
+		return true;
+	});
+
 	return true;
 }
 
