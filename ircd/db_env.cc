@@ -4069,12 +4069,6 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 		if(tasks.empty())
 			return;
 
-		// Don't start a background task before RUN.
-		run::changed::dock.wait([]
-		{
-			return run::level != run::level::START;
-		});
-
 		const ctx::uninterruptible::nothrow ui;
 		const auto task{std::move(tasks.front())};
 		tasks.pop_front();
