@@ -19,7 +19,7 @@ inline namespace this_ctx
 	const uint64_t &id();                        // Unique ID for cur ctx
 	string_view name();                          // Optional label for cur ctx
 
-	ulong cycles_here();                         // misc profiling related
+	ulong cycles();                              // misc profiling related
 
 	bool interruption_requested();               // interruption(cur())
 	void interruption_point();                   // throws if interruption_requested()
@@ -124,6 +124,12 @@ ircd::ctx::this_ctx::wait(const duration &d)
 	};
 
 	return duration_cast<duration>(ret);
+}
+
+inline ulong
+ircd::ctx::this_ctx::cycles()
+{
+	return cycles(cur()) + prof::cur_slice_cycles();
 }
 
 /// Reference to the currently running context. Call if you expect to be in a

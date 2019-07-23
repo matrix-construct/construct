@@ -646,13 +646,6 @@ ircd::ctx::this_ctx::yield()
 	};
 }
 
-ulong
-ircd::ctx::this_ctx::cycles_here()
-{
-	assert(current);
-	return cycles(cur()) + prof::cur_slice_cycles();
-}
-
 size_t
 ircd::ctx::this_ctx::stack_at_here()
 {
@@ -1825,12 +1818,6 @@ ircd::ctx::prof::slice_exceeded_warning(const ulong &cycles)
 {
 	const ulong &threshold(settings::slice_warning);
 	return threshold > 0 && cycles >= threshold;
-}
-
-ulong
-ircd::ctx::prof::cur_slice_cycles()
-{
-	return cycles() - cur_slice_start();
 }
 
 const ulong &

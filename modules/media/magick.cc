@@ -546,7 +546,7 @@ noexcept try
 	// and monotonically increases across jobs as well.
 	const auto cycles_sample
 	{
-		cycles(ctx::cur()) + ctx::prof::cur_slice_cycles()
+		ctx::this_ctx::cycles()
 	};
 
 	// Detect if this is a new job. Tick is usually zero for a new job, but for
