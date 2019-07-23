@@ -374,6 +374,89 @@ catch(const ctx::timeout &e)
 	};
 }
 
+bool
+IRCD_MODULE_EXPORT
+ircd::m::keys::get(const queries &queries,
+                   const closure_bool &closure)
+{
+	bool ret{true};
+	std::vector<m::feds::opts> opts;
+	opts.reserve(queries.size());
+	for(const auto &[server_name, key_id] : queries)
+	{
+		const bool cached
+		{
+			cache::get(server_name, key_id, [&ret, &closure]
+			(const auto &object)
+			{
+				ret = closure(object);
+			})
+		};
+
+		if(!ret)
+			return ret;
+
+		if(cached)
+			continue;
+
+		if(server_name == my_host())
+		{
+			log::derror
+			{
+				m::log, "key '%s' for '%s' (that's myself) not found.",
+				key_id,
+				server_name,
+			};
+
+			continue;
+		}
+
+		log::debug
+		{
+			m::log, "Key '%s' for %s not cached; querying network...",
+			key_id,
+			server_name,
+		};
+
+		opts.emplace_back();
+		opts.back().op = feds::op::keys;
+		opts.back().arg[0] = server_name;
+		opts.back().arg[1] = key_id;
+	}
+
+	assert(opts.size() <= queries.size());
+	m::feds::acquire(opts, [&ret, &closure]
+	(const auto &result)
+	{
+		if(empty(result.object))
+			return true;
+
+		const m::keys keys
+		{
+			result.object
+		};
+
+		if(!verify(keys, std::nothrow))
+		{
+			log::derror
+			{
+				m::log, "Failed to verify key '%s' for '%s' from '%s'",
+				result.request->arg[0],
+				result.request->arg[1],
+				result.origin,
+			};
+
+			return true;
+		}
+
+		cache::set(result.object);
+		ret = closure(result.object);
+		return ret;
+	});
+
+	return ret;
+}
+
 //
 // m::keys::cache
 //
