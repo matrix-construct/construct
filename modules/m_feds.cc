@@ -23,6 +23,7 @@ namespace ircd::m::feds
 	using request_list = std::list<std::unique_ptr<request_base>>;
 	template<class T> using create_closure = std::function<T (request<T> &, const string_view &origin)>;
 
+	template<class T> static request_list for_one(const string_view &origin, const opts &, const create_closure<T> &);
 	template<class T> static request_list for_each_in_room(const opts &, const create_closure<T> &);
 
 	static bool call_user(const closure &closure, const result &result);
@@ -178,7 +179,7 @@ ircd::m::feds::request_list
 ircd::m::feds::keys(const opts &opts,
                     const closure &closure)
 {
-	const auto make_request_to_room{[&opts]
+	const auto make_request{[&opts]
 	(auto &request, const auto &origin)
 	{
 		m::v1::key::query::opts v1opts;
@@ -199,7 +200,9 @@ ircd::m::feds::keys(const opts &opts,
 		};
 	}};
 
-	return for_each_in_room<m::v1::key::query>(opts, make_request_to_room);
+	return opts.room_id?
+		for_each_in_room<m::v1::key::query>(opts, make_request):
+		for_one<m::v1::key::query>(opts.arg[0], opts, make_request);
 }
 
 ircd::m::feds::request_list
@@ -469,6 +472,29 @@ ircd::m::feds::for_each_in_room(const opts &opts,
 			return;
 		}
 	});
+
+	return ret;
+}
+
+template<class T>
+ircd::m::feds::request_list
+ircd::m::feds::for_one(const string_view &origin,
+                       const opts &opts,
+                       const std::function<T (request<T> &, const string_view &origin)> &closure)
+{
+	request_list ret;
+	if(!server::errmsg(origin)) try
+	{
+		ret.emplace_back(std::make_unique<request<T>>(opts, [&closure, &origin]
+		(auto &request)
+		{
+			return closure(request, origin);
+		}));
+	}
+	catch(const std::exception &e)
+	{
+
+	}
 
 	return ret;
 }
