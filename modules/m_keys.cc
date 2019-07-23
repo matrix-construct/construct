@@ -413,7 +413,7 @@ ircd::m::keys::get(const queries &queries,
 		if(cached)
 			continue;
 
-		if(server_name == my_host())
+		if(my_host(server_name))
 		{
 			log::derror
 			{

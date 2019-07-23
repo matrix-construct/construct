@@ -148,6 +148,9 @@ bootstrap_send_join(const string_view &host,
                     const json::object &event);
 
 static void
+bootstrap_fetch_keys(const json::array &events);
+
+static void
 bootstrap_eval_lazy_chain(const json::array &auth_chain);
 
 static void
@@ -487,6 +490,8 @@ void
 bootstrap_eval_auth_chain(const json::array &auth_chain)
 try
 {
+	bootstrap_fetch_keys(auth_chain);
+
 	m::vm::opts opts;
 	opts.infolog_accept = true;
 	opts.fetch = false;
@@ -569,6 +574,50 @@ bootstrap_eval_lazy_chain(const json::array &auth_chain)
 			event, opts
 		};
 	}
+}
+
+void
+bootstrap_fetch_keys(const json::array &events)
+try
+{
+	std::vector<m::v1::key::server_key> queries;
+	queries.reserve(events.size());
+
+	for(const json::object &event : events)
+		for(const auto &[server_name, signatures] : json::object(event["signatures"]))
+			for(const auto &[key_id, signature] : json::object(signatures))
+				queries.emplace_back(unquote(event.at("origin")), key_id);
+
+	std::sort(begin(queries), end(queries));
+	queries.erase(std::unique(begin(queries), end(queries)), end(queries));
+
+	log::info
+	{
+		join_log, "Fetching %zu keys for %zu events...",
+		queries.size(),
+		events.size(),
+	};
+
+	const size_t fetched
+	{
+		m::keys::fetch(queries)
+	};
+
+	log::info
+	{
+		join_log, "Fetched %zu of %zu keys for %zu events",
+		fetched,
+		queries.size(),
+		events.size(),
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		join_log, "Error when fetching keys for %zu events :%s",
+		events.size(),
+	};
 }
 
 std::tuple<json::object, unique_buffer<mutable_buffer>>
