@@ -23,7 +23,7 @@ namespace ircd::m::feds
 	using request_list = std::list<std::unique_ptr<request_base>>;
 	template<class T> using create_closure = std::function<T (request<T> &, const string_view &origin)>;
 
-	template<class T> static request_list creator(const opts &, const create_closure<T> &);
+	template<class T> static request_list for_each_in_room(const opts &, const create_closure<T> &);
 
 	static bool call_user(const closure &closure, const result &result);
 	static bool handler(request_list &, const milliseconds &, const closure &);
@@ -171,14 +171,14 @@ ircd::m::feds::send(const opts &opts,
 		};
 	}};
 
-	return creator<m::v1::send>(opts, make_request);
+	return for_each_in_room<m::v1::send>(opts, make_request);
 }
 
 ircd::m::feds::request_list
 ircd::m::feds::keys(const opts &opts,
                     const closure &closure)
 {
-	const auto make_request{[&opts]
+	const auto make_request_to_room{[&opts]
 	(auto &request, const auto &origin)
 	{
 		m::v1::key::query::opts v1opts;
@@ -199,7 +199,7 @@ ircd::m::feds::keys(const opts &opts,
 		};
 	}};
 
-	return creator<m::v1::key::query>(opts, make_request);
+	return for_each_in_room<m::v1::key::query>(opts, make_request_to_room);
 }
 
 ircd::m::feds::request_list
@@ -222,7 +222,7 @@ ircd::m::feds::version(const opts &opts,
 		};
 	}};
 
-	return creator<m::v1::version>(opts, make_request);
+	return for_each_in_room<m::v1::version>(opts, make_request);
 }
 
 ircd::m::feds::request_list
@@ -247,7 +247,7 @@ ircd::m::feds::backfill(const opts &opts,
 		};
 	}};
 
-	return creator<m::v1::backfill>(opts, make_request);
+	return for_each_in_room<m::v1::backfill>(opts, make_request);
 }
 
 ircd::m::feds::request_list
@@ -272,7 +272,7 @@ ircd::m::feds::state(const opts &opts,
 		};
 	}};
 
-	return creator<m::v1::state>(opts, make_request);
+	return for_each_in_room<m::v1::state>(opts, make_request);
 }
 
 ircd::m::feds::request_list
@@ -295,7 +295,7 @@ ircd::m::feds::event(const opts &opts,
 		};
 	}};
 
-	return creator<m::v1::event>(opts, make_request);
+	return for_each_in_room<m::v1::event>(opts, make_request);
 }
 
 ircd::m::feds::request_list
@@ -318,7 +318,7 @@ ircd::m::feds::auth(const opts &opts,
 		};
 	}};
 
-	return creator<m::v1::event_auth>(opts, make_request);
+	return for_each_in_room<m::v1::event_auth>(opts, make_request);
 }
 
 ircd::m::feds::request_list
@@ -340,7 +340,7 @@ ircd::m::feds::head(const opts &opts,
 		};
 	}};
 
-	return creator<m::v1::make_join>(opts, make_request);
+	return for_each_in_room<m::v1::make_join>(opts, make_request);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -441,16 +441,18 @@ catch(const std::exception &)
 
 template<class T>
 ircd::m::feds::request_list
-ircd::m::feds::creator(const opts &opts,
-                       const std::function<T (request<T> &, const string_view &origin)> &closure)
+ircd::m::feds::for_each_in_room(const opts &opts,
+                                const std::function<T (request<T> &, const string_view &origin)> &closure)
 {
-	assert(opts.room_id);
+	request_list ret;
+	if(!opts.room_id)
+		return ret;
+
 	const m::room::origins origins
 	{
 		opts.room_id
 	};
 
-	request_list ret;
 	origins.for_each([&opts, &ret, &closure]
 	(const string_view &origin)
 	{
