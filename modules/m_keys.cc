@@ -300,6 +300,20 @@ ircd::m::keys_get_timeout
 	{ "default",  20000L                  }
 };
 
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::keys::fetch(const queries &queries)
+{
+	size_t ret(0);
+	get(queries, [&ret](const auto &)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
 void
 IRCD_MODULE_EXPORT
 ircd::m::keys::get(const string_view &server_name,

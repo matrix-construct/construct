@@ -64,6 +64,7 @@ struct ircd::m::keys
 	static void get(const string_view &server_name, const closure &);
 	static void get(const string_view &server_name, const string_view &key_id, const closure &);
 	static void query(const string_view &query_server, const queries &, const closure_bool &);
+	static size_t fetch(const queries &);
 
 	using super_type::tuple;
 	using super_type::operator=;
