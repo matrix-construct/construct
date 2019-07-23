@@ -45,6 +45,17 @@ addition to the core `ircd.h`. Both of these are included automatically
 via the compiler's command-line and the developer does not have to `#include`
 either in the module.
 
-Every loadable module requires a static `ircd::mapi::header` with the explicit
+1. Every loadable module requires a static `ircd::mapi::header` with the explicit
 name of `IRCD_MODULE`. This is an object which will be sought by the module
-loader in libircd. Nothing else is required.
+loader in libircd.
+
+2. Add an `_la_SOURCES` entry for your module in the appropriate place in
+Makefile.am.
+
+3. Add the module `.la` name to the appropriate LTLIBRARIES list
+in Makefile.am.
+
+4. At this time, most modules are listed explicitly in `ircd/m.cc` to
+provide a strict load and unload ordering based on dependency. Note that
+if the module is not `m::` related there may be similar lists for other
+subsystems.
