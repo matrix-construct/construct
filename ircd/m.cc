@@ -220,6 +220,7 @@ ircd::m::module_names
 	"m_room_message",
 	"m_room_power_levels",
 	"m_room_server_acl",
+	"m_room_bootstrap",
 	"m_presence",
 	"m_receipt",
 	"m_typing",

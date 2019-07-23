@@ -119,6 +119,7 @@ m_room_aliases_la_SOURCES = m_room_aliases.cc
 m_room_message_la_SOURCES = m_room_message.cc
 m_room_power_levels_la_SOURCES = m_room_power_levels.cc
 m_room_server_acl_la_SOURCES = m_room_server_acl.cc
+m_room_bootstrap_la_SOURCES = m_room_bootstrap.cc
 m_init_bootstrap_la_SOURCES = m_init_bootstrap.cc
 m_listen_la_SOURCES = m_listen.cc
 
@@ -157,6 +158,7 @@ m_module_LTLIBRARIES = \
 	m_room_message.la \
 	m_room_power_levels.la \
 	m_room_server_acl.la \
+	m_room_bootstrap.la \
 	m_init_bootstrap.la \
 	m_listen.la \
 	###

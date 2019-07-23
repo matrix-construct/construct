@@ -104,6 +104,7 @@ struct ircd::m::room
 	struct aliases;
 	struct stats;
 	struct server_acl;
+	struct bootstrap;
 
 	using id = m::id::room;
 	using alias = m::id::room_alias;
@@ -178,10 +179,6 @@ struct ircd::m::room
 	static event::idx index(const id &, std::nothrow_t);
 	static event::idx index(const id &);
 
-	static void bootstrap(const event &, const string_view &host);
-	static void bootstrap(const event::id &, const string_view &host);
-	static event::id::buf bootstrap(const id &, const id::user &, const string_view &host);
-
 	static size_t purge(const room &); // cuidado!
 };
 
@@ -198,6 +195,7 @@ struct ircd::m::room
 #include "aliases.h"
 #include "stats.h"
 #include "server_acl.h"
+#include "bootstrap.h"
 
 inline ircd::m::room::operator
 const ircd::m::room::id &()

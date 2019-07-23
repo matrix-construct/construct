@@ -9881,7 +9881,11 @@ console_cmd__room__restrap(opt &out, const string_view &line)
 		param.at("host")
 	};
 
-	m::room::bootstrap(event_id, host);
+	m::room::bootstrap
+	{
+		event_id, host
+	};
+
 	return true;
 }
 
