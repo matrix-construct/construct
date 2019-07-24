@@ -181,6 +181,7 @@ ircd::m::sync::room_state_linear_events(data &data)
 		state.get(std::nothrow, "m.room.create", "", append);
 		state.get(std::nothrow, "m.room.join_rules", "", append);
 		state.get(std::nothrow, "m.room.history_visibility", "", append);
+		state.get(std::nothrow, "m.room.avatar", "", append);
 
 		const auto &sender(json::get<"sender"_>(*data.event));
 		state.get(std::nothrow, "m.room.member", sender, append);
@@ -337,7 +338,6 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 		});
 	}};
 
-	m::event::fetch event;
 	for(; it && ret < count && i < limit; --it, ++i)
 	{
 		const auto &event_idx(it.event_idx());
@@ -347,13 +347,17 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 			if(already(sender))
 				return;
 
-			last.at(ret) = strlcpy(buf.at(ret), sender);
-			++ret;
+			const m::event::fetch event
+			{
+				event_idx, std::nothrow
+			};
 
-			if(!seek(event, event_idx, std::nothrow))
+			if(!event.valid)
 				return;
 
+			last.at(ret) = strlcpy(buf.at(ret), sender);
 			room_state_append(data, array, event, event_idx);
+			++ret;
 		});
 	};
 
