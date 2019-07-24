@@ -67,7 +67,7 @@ ircd::server::wait_all()
 {
 	while(peer_unfinished())
 	{
-		if(dock.wait_for(seconds(2)))
+		if(dock.wait_for(seconds(4)))
 			continue;
 
 		log::warning
