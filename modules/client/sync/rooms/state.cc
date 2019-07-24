@@ -57,6 +57,9 @@ ircd::m::sync::room_invite_state
 	"rooms.invite_state",
 	room_invite_state_polylog,
 	room_invite_state_linear,
+	{
+		{ "phased", true },
+	}
 };
 
 decltype(ircd::m::sync::_default_keys)
