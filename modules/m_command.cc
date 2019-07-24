@@ -340,6 +340,12 @@ command__read(const mutable_buffer &buf,
 	return {};
 }
 
+static std::pair<string_view, string_view>
+command__ping__room(const mutable_buffer &buf,
+                    const m::user &user,
+                    const m::room &room,
+                    const string_view &cmd);
+
 std::pair<string_view, string_view>
 command__ping(const mutable_buffer &buf,
               const m::user &user,
@@ -353,8 +359,18 @@ command__ping(const mutable_buffer &buf,
 
 	const string_view &target
 	{
-		param.at("target")
+		param["target"]
 	};
+
+	const bool room_ping
+	{
+		!target
+		|| m::valid(m::id::ROOM, target)
+		|| m::valid(m::id::ROOM_ALIAS, target)
+	};
+
+	if(room_ping)
+		return command__ping__room(buf, user, room, cmd);
 
 	m::v1::version::opts opts;
 	if(m::valid(m::id::USER, target))
@@ -429,6 +445,92 @@ command__ping(const mutable_buffer &buf,
 	const string_view alt{fmt::sprintf
 	{
 		buf + size(rich), "response in %s", pretty(tmbuf, time)
+	}};
+
+	return { view(out, buf), alt };
+}
+
+std::pair<string_view, string_view>
+command__ping__room(const mutable_buffer &buf,
+                    const m::user &user,
+                    const m::room &room,
+                    const string_view &cmd)
+{
+	const params param{tokens_after(cmd, ' ', 0), " ",
+	{
+		"target"
+	}};
+
+	const string_view &target
+	{
+		param["target"]
+	};
+
+	m::feds::opts opts;
+	opts.op = m::feds::op::version;
+	opts.room_id = room.room_id;
+
+	thread_local char tmbuf[32];
+	std::ostringstream out;
+	pubsetbuf(out, buf);
+
+	util::timer timer;
+	size_t responses{0};
+	m::feds::acquire(opts, [&timer, &responses, &buf, &out]
+	(const auto &result)
+	{
+		++responses;
+		const auto time
+		{
+			timer.at<nanoseconds>()
+		};
+
+		const string_view sp{"&nbsp;"};
+		const string_view fg{"#e8e8e8"};
+		const string_view host_bg{"#181b21"};
+		const string_view online_bg{"#008000"};
+		const string_view offline_bg{"#A01810"};
+		const auto bg{result.eptr? offline_bg : online_bg};
+		const auto status{result.eptr? "FAILED " : "ONLINE"};
+
+		thread_local char tmbuf[32];
+		out
+		    << " <font color=\"" << fg << "\" data-mx-bg-color=\"" << bg << "\">"
+		    << " <b>"
+		    << sp << sp << status << sp << sp
+		    << " </b>"
+		    << " </font>"
+		    << " <font color=\"" << fg << "\" data-mx-bg-color=\"" << host_bg << "\">"
+		    << sp << sp << " " << result.origin << " " << sp
+		    << " </font> "
+		    ;
+
+		if(!result.eptr)
+			out << " <b>"
+			    << pretty(tmbuf, time)
+			    << " </b>"
+			    << " application layer round-trip time."
+			    << "<br />";
+
+		if(result.eptr)
+			out << "<code>"
+			    << what(result.eptr)
+			    << "</code>"
+			    << "<br />";
+
+		return true;
+	});
+
+	const string_view rich
+	{
+		view(out, buf)
+	};
+
+	const string_view alt{fmt::sprintf
+	{
+		buf + size(rich), "%zu responses in %s",
+		responses,
+		pretty(tmbuf, timer.at<nanoseconds>())
 	}};
 
 	return { view(out, buf), alt };
