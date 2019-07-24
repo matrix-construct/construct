@@ -355,7 +355,6 @@ ircd::net::dns::resolver::check_timeout(const uint16_t &id,
 		host(tag.hp)
 	};
 
-	tag.last = steady_point::min();
 	if(tag.tries < size_t(retry_max))
 	{
 		submit(tag);
@@ -442,6 +441,7 @@ ircd::net::dns::resolver::queue_query(tag &tag)
 	if(std::find(begin(sendq), end(sendq), tag.id) != end(sendq))
 		return;
 
+	tag.last = steady_point::min(); // tag to be ignored by the timeout worker
 	sendq.emplace_back(tag.id);
 
 	log::debug
@@ -642,7 +642,6 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 		};
 
 		assert(tag.tries > 0);
-		tag.last = steady_point::min();
 		submit(tag);
 		return;
 	}
@@ -655,7 +654,7 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 	}};
 
 	assert(tag.tries > 0);
-	tag.last = steady_point::min();
+	tag.last = steady_point::min(); // tag ignored by the timeout worker during handling.
 	tag.rcode = header.rcode;
 	handle_reply(header, body, tag);
 }
@@ -817,6 +816,9 @@ ircd::net::dns::resolver::error_one(tag &tag,
 		string(hpbuf, tag.hp),
 		what(eptr)
 	};
+
+	// value causes tag to be ignored by the timeout worker
+	tag.last = steady_point::min();
 
 	static const answers empty;
 	callback(eptr, tag, empty);
