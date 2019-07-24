@@ -1394,7 +1394,7 @@ ircd::net::loghead(const mutable_buffer &out,
 	thread_local char addrbuf[128];
 	return fmt::sprintf
 	{
-		out, "'%s' @ [%s]:%u",
+		out, "[%s] @ [%s]:%u",
 		name(a),
 		string(addrbuf, a.ep.address()),
 		a.ep.port(),
@@ -1502,7 +1502,7 @@ try
 
 	log::debug
 	{
-		log, "%s: configured listener SSL",
+		log, "%s configured listener SSL",
 		loghead(*this)
 	};
 
@@ -1548,21 +1548,21 @@ ircd::net::acceptor::open()
 	a.non_blocking(true);
 	log::debug
 	{
-		log, "%s: opened listener socket",
+		log, "%s opened listener socket",
 		loghead(*this)
 	};
 
 	a.bind(ep);
 	log::debug
 	{
-		log, "%s: bound listener socket",
+		log, "%s bound listener socket",
 		loghead(*this)
 	};
 
 	a.listen(backlog);
 	log::debug
 	{
-		log, "%s: listening (backlog: %lu, max connections: %zu)",
+		log, "%s listening (backlog: %lu, max connections: %zu)",
 		loghead(*this),
 		backlog,
 		max_connections
@@ -1584,7 +1584,7 @@ ircd::net::acceptor::close()
 	join();
 	log::debug
 	{
-		log, "%s: listener finished",
+		log, "%s listener finished",
 		loghead(*this)
 	};
 }
@@ -1671,7 +1671,7 @@ catch(const std::exception &e)
 {
 	throw panic
 	{
-		"%s: %s", loghead(*this), e.what()
+		"%s :%s", loghead(*this), e.what()
 	};
 }
 
@@ -1971,7 +1971,7 @@ ircd::net::acceptor::handle_alpn(SSL &ssl,
 
 	log::debug
 	{
-		log, "%s: offered %zu ALPN protocols",
+		log, "%s offered %zu ALPN protocols",
 		loghead(*this),
 		size(in),
 	};
@@ -1981,7 +1981,7 @@ ircd::net::acceptor::handle_alpn(SSL &ssl,
 	{
 		log::debug
 		{
-			log, "%s: ALPN protocol %zu of %zu: '%s'",
+			log, "%s ALPN protocol %zu of %zu: '%s'",
 			loghead(*this),
 			i,
 			size(in),
@@ -2078,7 +2078,7 @@ try
 	{
 		log::dwarning
 		{
-			log, "%s: unrecognized SNI '%s' offered.",
+			log, "%s unrecognized SNI '%s' offered.",
 			loghead(*this),
 			name,
 		};
@@ -2088,7 +2088,7 @@ try
 
 	log::debug
 	{
-		log, "%s: offered SNI '%s'",
+		log, "%s offered SNI '%s'",
 		loghead(*this),
 		name
 	};
@@ -2099,7 +2099,7 @@ catch(const sni_warning &e)
 {
 	log::warning
 	{
-		log, "%s: during SNI :%s",
+		log, "%s during SNI :%s",
 		loghead(*this),
 		e.what()
 	};
@@ -2110,7 +2110,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "%s: during SNI :%s",
+		log, "%s during SNI :%s",
 		loghead(*this),
 		e.what()
 	};
@@ -2255,7 +2255,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		if(!fs::exists(filename))
 			throw error
 			{
-				"%s: SSL certificate chain file @ `%s' not found",
+				"%s SSL certificate chain file @ `%s' not found",
 				loghead(*this),
 				filename
 			};
@@ -2279,7 +2279,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		if(!fs::exists(filename))
 			throw error
 			{
-				"%s: SSL certificate pem file @ `%s' not found",
+				"%s SSL certificate pem file @ `%s' not found",
 				loghead(*this),
 				filename
 			};
@@ -2303,7 +2303,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		if(!fs::exists(filename))
 			throw error
 			{
-				"%s: SSL private key file @ `%s' not found",
+				"%s SSL private key file @ `%s' not found",
 				loghead(*this),
 				filename
 			};
@@ -2327,7 +2327,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		if(!fs::exists(filename))
 			throw error
 			{
-				"%s: SSL tmp dh file @ `%s' not found",
+				"%s SSL tmp dh file @ `%s' not found",
 				loghead(*this),
 				filename
 			};
@@ -2335,7 +2335,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		ssl.use_tmp_dh_file(filename);
 		log::info
 		{
-			log, "%s: using tmp dh file '%s'",
+			log, "%s using tmp dh file '%s'",
 			loghead(*this),
 			filename
 		};
@@ -2350,7 +2350,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 		ssl.use_tmp_dh(buf);
 		log::info
 		{
-			log, "%s: using DH params supplied in options (%zu bytes)",
+			log, "%s using DH params supplied in options (%zu bytes)",
 			loghead(*this),
 			size(buf)
 		};
@@ -2367,7 +2367,7 @@ ircd::net::acceptor::configure(const json::object &opts)
 	{
 		log::notice
 		{
-			log, "%s: asking for password with purpose '%s' (size: %zu)",
+			log, "%s asking for password with purpose '%s' (size: %zu)",
 			loghead(*this),
 			purpose,
 			size
@@ -2408,7 +2408,7 @@ ircd::net::loghead(const mutable_buffer &out,
 	thread_local char addrbuf[128];
 	return fmt::sprintf
 	{
-		out, "'%s' @ [%s]:%u",
+		out, "[%s] @ [%s]:%u",
 		a.name,
 		string(addrbuf, a.ep.address()),
 		a.ep.port(),
@@ -2449,13 +2449,13 @@ try
 	a.set_option(reuse_address);
 	log::debug
 	{
-		log, "%s: opened listener socket", loghead(*this)
+		log, "%s opened listener socket", loghead(*this)
 	};
 
 	a.bind(ep);
 	log::debug
 	{
-		log, "%s: bound listener socket", loghead(*this)
+		log, "%s bound listener socket", loghead(*this)
 	};
 }
 catch(const boost::system::system_error &e)

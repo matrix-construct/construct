@@ -43,7 +43,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': new sequential file '%s' options:%p [mm:%b direct:%b bufsz:%zu readahead:%zu]",
+		log, "[%s] new sequential file '%s' options:%p [mm:%b direct:%b bufsz:%zu readahead:%zu]",
 		d.name,
 		name,
 		&options,
@@ -77,7 +77,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': new random access file '%s' options:%p [mm:%b direct:%b bufsz:%zu readahead:%zu]",
+		log, "[%s] new random access file '%s' options:%p [mm:%b direct:%b bufsz:%zu readahead:%zu]",
 		d.name,
 		name,
 		&options,
@@ -111,7 +111,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': new writable file '%s' options:%p [mm:%b direct:%b rl:%p bufsz:%zu syncsz:%zu]",
+		log, "[%s] new writable file '%s' options:%p [mm:%b direct:%b rl:%p bufsz:%zu syncsz:%zu]",
 		d.name,
 		name,
 		&options,
@@ -150,7 +150,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': reopen writable file '%s' options:%p",
+		log, "[%s] reopen writable file '%s' options:%p",
 		d.name,
 		name,
 		&options
@@ -186,7 +186,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': reuse writable file '%s' old '%s' options:%p",
+		log, "[%s] reuse writable file '%s' old '%s' options:%p",
 		d.name,
 		name,
 		old_name,
@@ -196,7 +196,7 @@ noexcept try
 
 	throw ircd::not_implemented
 	{
-		"'%s': ReuseWritableFile(name:'%s' old:'%s')",
+		"[%s] ReuseWritableFile(name:'%s' old:'%s')",
 		d.name,
 		name,
 		old_name
@@ -225,7 +225,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': new random read/write file '%s' options:%p",
+		log, "[%s] new random read/write file '%s' options:%p",
 		d.name,
 		name,
 		&options
@@ -254,7 +254,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': new directory '%s'",
+		log, "[%s] new directory '%s'",
 		d.name,
 		name
 	};
@@ -287,7 +287,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': file exists '%s'",
+		log, "[%s] file exists '%s'",
 		d.name,
 		f
 	};
@@ -314,7 +314,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get children of directory '%s'",
+		log, "[%s] get children of directory '%s'",
 		d.name,
 		dir
 	};
@@ -341,7 +341,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get children file attributes of directory '%s'",
+		log, "[%s] get children file attributes of directory '%s'",
 		d.name,
 		dir
 	};
@@ -367,7 +367,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': delete file '%s'",
+		log, "[%s] delete file '%s'",
 		d.name,
 		name
 	};
@@ -393,7 +393,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': create directory '%s'",
+		log, "[%s] create directory '%s'",
 		d.name,
 		name
 	};
@@ -419,7 +419,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': create directory if missing '%s'",
+		log, "[%s] create directory if missing '%s'",
 		d.name,
 		name
 	};
@@ -445,7 +445,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': delete directory '%s'",
+		log, "[%s] delete directory '%s'",
 		d.name,
 		name
 	};
@@ -472,7 +472,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get file size '%s'",
+		log, "[%s] get file size '%s'",
 		d.name,
 		name
 	};
@@ -501,7 +501,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get file mtime '%s'",
+		log, "[%s] get file mtime '%s'",
 		d.name,
 		name
 	};
@@ -528,7 +528,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rename file '%s' to '%s'",
+		log, "[%s] rename file '%s' to '%s'",
 		d.name,
 		s,
 		t
@@ -556,7 +556,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': link file '%s' to '%s'",
+		log, "[%s] link file '%s' to '%s'",
 		d.name,
 		s,
 		t
@@ -584,7 +584,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': lock file '%s'",
+		log, "[%s] lock file '%s'",
 		d.name,
 		name
 	};
@@ -610,7 +610,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': unlock file lock:%p",
+		log, "[%s] unlock file lock:%p",
 		d.name,
 		l
 	};
@@ -654,7 +654,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get absolute path from '%s' ret:%p",
+		log, "[%s] get absolute path from '%s' ret:%p",
 		d.name,
 		db_path,
 		output_path
@@ -682,7 +682,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': new logger '%s' result:%p",
+		log, "[%s] new logger '%s' result:%p",
 		d.name,
 		name,
 		(const void *)result
@@ -706,7 +706,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get host name name:%p len:%lu",
+		log, "[%s] get host name name:%p len:%lu",
 		d.name,
 		name,
 		len
@@ -757,7 +757,7 @@ catch(const std::exception &e)
 {
 	throw panic
 	{
-		"'%s': time to string :%s",
+		"[%s] time to string :%s",
 		d.name,
 		e.what()
 	};
@@ -772,7 +772,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		"'%s': sleep for %d microseconds",
+		"[%s] sleep for %d microseconds",
 		d.name,
 		micros
 	};
@@ -784,7 +784,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': sleep micros:%d :%s",
+		log, "[%s] sleep micros:%d :%s",
 		d.name,
 		micros,
 		e.what()
@@ -804,7 +804,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': schedule func:%p a:%p tag:%p u:%p prio:%s",
+		log, "[%s] schedule func:%p a:%p tag:%p u:%p prio:%s",
 		d.name,
 		f,
 		a,
@@ -829,7 +829,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': schedule func:%p a:%p tag:%p u:%p prio:%s",
+		log, "[%s] schedule func:%p a:%p tag:%p u:%p prio:%s",
 		d.name,
 		f,
 		a,
@@ -849,7 +849,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': unschedule tag:%p prio:%s",
+		log, "[%s] unschedule tag:%p prio:%s",
 		d.name,
 		tag,
 		reflect(prio)
@@ -868,7 +868,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': unschedule tag:%p prio:%s :%s",
+		log, "[%s] unschedule tag:%p prio:%s :%s",
 		d.name,
 		tag,
 		reflect(prio),
@@ -888,7 +888,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': start thread func:%p a:%p",
+		log, "[%s] start thread func:%p a:%p",
 		d.name,
 		f,
 		a
@@ -904,7 +904,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': start thread :%s",
+		log, "[%s] start thread :%s",
 		d.name,
 		e.what()
 	};
@@ -919,7 +919,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wait for all ctx to join",
+		log, "[%s] wait for all ctx to join",
 		d.name
 	};
 	#endif
@@ -933,7 +933,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wait for join :%s",
+		log, "[%s] wait for join :%s",
 		d.name,
 		e.what()
 	};
@@ -948,7 +948,7 @@ const noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get thread pool queue len prio:%s",
+		log, "[%s] get thread pool queue len prio:%s",
 		d.name,
 		reflect(prio)
 	};
@@ -966,7 +966,7 @@ catch(const std::exception &e)
 {
 	throw panic
 	{
-		"'%s': set background threads :%s",
+		"[%s] set background threads :%s",
 		d.name,
 		e.what()
 	};
@@ -982,7 +982,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': set background threads prio:%s num:%d",
+		log, "[%s] set background threads prio:%s num:%d",
 		d.name,
 		reflect(prio),
 		num
@@ -1001,7 +1001,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': set background threads prio:%s num:%d :%s",
+		log, "[%s] set background threads prio:%s num:%d :%s",
 		d.name,
 		reflect(prio),
 		num,
@@ -1019,7 +1019,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': increase background threads num:%d prio:%s",
+		log, "[%s] increase background threads num:%d prio:%s",
 		d.name,
 		num,
 		reflect(prio)
@@ -1038,7 +1038,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': inc background threads num:%d prio:%s :%s",
+		log, "[%s] inc background threads num:%d prio:%s :%s",
 		d.name,
 		num,
 		reflect(prio),
@@ -1055,7 +1055,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': lower thread pool priority prio:%s",
+		log, "[%s] lower thread pool priority prio:%s",
 		d.name,
 		reflect(prio)
 	};
@@ -1081,7 +1081,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': lower thread pool IO priority pool:%s :%s",
+		log, "[%s] lower thread pool IO priority pool:%s :%s",
 		d.name,
 		reflect(prio),
 		e.what()
@@ -1097,7 +1097,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get thread list %p (%zu)",
+		log, "[%s] get thread list %p (%zu)",
 		d.name,
 		list,
 		list? list->size() : 0UL
@@ -1106,7 +1106,7 @@ noexcept try
 
 	throw ircd::not_implemented
 	{
-		"'%s': GetThreadList()", d.name
+		"[%s] GetThreadList()", d.name
 	};
 
 	return defaults.GetThreadList(list);
@@ -1115,7 +1115,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': get thread list:%p :%s",
+		log, "[%s] get thread list:%p :%s",
 		d.name,
 		list,
 		e.what()
@@ -1133,7 +1133,7 @@ const noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get thread status updater",
+		log, "[%s] get thread status updater",
 		d.name,
 	};
 	#endif
@@ -1144,7 +1144,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': get thread status updater :%s",
+		log, "[%s] get thread status updater :%s",
 		d.name,
 		e.what()
 	};
@@ -1162,7 +1162,7 @@ const noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get thread ID",
+		log, "[%s] get thread ID",
 		d.name,
 	};
 	#endif
@@ -1173,7 +1173,7 @@ catch(const std::exception &e)
 {
 	throw panic
 	{
-		"'%s': get thread id :%s",
+		"[%s] get thread id :%s",
 		d.name,
 		e.what()
 	};
@@ -1188,7 +1188,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': get background threads prio:%s",
+		log, "[%s] get background threads prio:%s",
 		d.name,
 		reflect(prio)
 	};
@@ -1206,7 +1206,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': get background threads prio:%s :%s",
+		log, "[%s] get background threads prio:%s :%s",
 		d.name,
 		reflect(prio),
 		e.what()
@@ -1256,7 +1256,7 @@ try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': opened wfile:%p fd:%d '%s'",
+		log, "[%s] opened wfile:%p fd:%d '%s'",
 		d->name,
 		this,
 		int(fd),
@@ -1277,7 +1277,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': opening wfile:%p `%s' :%s",
+		log, "[%s] opening wfile:%p `%s' :%s",
 		d->name,
 		this,
 		name,
@@ -1293,7 +1293,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': closed wfile:%p fd:%d",
+		log, "[%s] closed wfile:%p fd:%d",
 		d.name,
 		this,
 		int(fd)
@@ -1314,7 +1314,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p fd:%d close",
+		log, "[%s] wfile:%p fd:%d close",
 		d.name,
 		this,
 		int(fd)
@@ -1328,7 +1328,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p close :%s",
+		log, "[%s] wfile:%p close :%s",
 		d.name,
 		this,
 		e.what()
@@ -1340,7 +1340,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p close :%s",
+		log, "[%s] wfile:%p close :%s",
 		d.name,
 		this,
 		e.what()
@@ -1359,7 +1359,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p fd:%d flush",
+		log, "[%s] wfile:%p fd:%d flush",
 		d.name,
 		this,
 		int(fd),
@@ -1375,7 +1375,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d flush :%s",
+		log, "[%s] wfile:%p fd:%d flush :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1388,7 +1388,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d flush :%s",
+		log, "[%s] wfile:%p fd:%d flush :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1408,7 +1408,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p fd:%d sync",
+		log, "[%s] wfile:%p fd:%d sync",
 		d.name,
 		this,
 		int(fd),
@@ -1423,7 +1423,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d sync :%s",
+		log, "[%s] wfile:%p fd:%d sync :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1436,7 +1436,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d sync :%s",
+		log, "[%s] wfile:%p fd:%d sync :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1456,7 +1456,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p fd:%d fsync",
+		log, "[%s] wfile:%p fd:%d fsync",
 		d.name,
 		this,
 		int(fd),
@@ -1471,7 +1471,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d fsync :%s",
+		log, "[%s] wfile:%p fd:%d fsync :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1484,7 +1484,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d fsync :%s",
+		log, "[%s] wfile:%p fd:%d fsync :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1505,7 +1505,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		"'%s': wfile:%p fd:%d range sync offset:%lu length:%lu",
+		"[%s] wfile:%p fd:%d range sync offset:%lu length:%lu",
 		d.name,
 		this,
 		int(fd),
@@ -1532,7 +1532,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d range sync offset:%zu length:%zu :%s",
+		log, "[%s] wfile:%p fd:%d range sync offset:%zu length:%zu :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1547,7 +1547,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p fd:%d range sync offset:%zu length:%zu :%s",
+		log, "[%s] wfile:%p fd:%d range sync offset:%zu length:%zu :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1569,7 +1569,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		"'%s': wfile:%p fd:%d truncate to %lu bytes",
+		"[%s] wfile:%p fd:%d truncate to %lu bytes",
 		d.name,
 		this,
 		int(fd),
@@ -1587,7 +1587,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d truncate to %lu bytes :%s",
+		log, "[%s] wfile:%p fd:%d truncate to %lu bytes :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1601,7 +1601,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p fd:%d truncate to %lu bytes :%s",
+		log, "[%s] wfile:%p fd:%d truncate to %lu bytes :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1623,7 +1623,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
+		log, "[%s] wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
 		d.name,
 		this,
 		int(fd),
@@ -1642,7 +1642,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
+		log, "[%s] wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
 		d.name,
 		this,
 		int(fd),
@@ -1656,7 +1656,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
+		log, "[%s] wfile:%p fd:%d invalidate cache offset:%zu length:%zu",
 		d.name,
 		this,
 		int(fd),
@@ -1678,7 +1678,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p fd:%d append:%p bytes:%zu",
+		log, "[%s] wfile:%p fd:%d append:%p bytes:%zu",
 		d.name,
 		this,
 		int(fd),
@@ -1702,7 +1702,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d append:%p size:%zu :%s",
+		log, "[%s] wfile:%p fd:%d append:%p size:%zu :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1717,7 +1717,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p fd:%d append:%p size:%zu :%s",
+		log, "[%s] wfile:%p fd:%d append:%p size:%zu :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1741,7 +1741,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		"'%s': wfile:%p fd:%d append:%p bytes:%zu offset:%lu",
+		"[%s] wfile:%p fd:%d append:%p bytes:%zu offset:%lu",
 		d.name,
 		this,
 		int(fd),
@@ -1767,7 +1767,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d append:%p size:%zu offset:%zu :%s",
+		log, "[%s] wfile:%p fd:%d append:%p size:%zu offset:%zu :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1783,7 +1783,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p fd:%d append:%p size:%zu offset:%lu :%s",
+		log, "[%s] wfile:%p fd:%d append:%p size:%zu offset:%lu :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1807,7 +1807,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p fd:%d allocate offset:%lu length:%lu%s%s",
+		log, "[%s] wfile:%p fd:%d allocate offset:%lu length:%lu%s%s",
 		d.name,
 		this,
 		int(fd),
@@ -1828,7 +1828,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p fd:%d allocate offset:%zu length:%zu :%s",
+		log, "[%s] wfile:%p fd:%d allocate offset:%zu length:%zu :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1843,7 +1843,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p fd:%d allocate offset:%zu length:%zu :%s",
+		log, "[%s] wfile:%p fd:%d allocate offset:%zu length:%zu :%s",
 		d.name,
 		this,
 		int(fd),
@@ -1866,7 +1866,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p prepare write offset:%zu length:%zu",
+		log, "[%s] wfile:%p prepare write offset:%zu length:%zu",
 		d.name,
 		this,
 		offset,
@@ -1929,7 +1929,7 @@ ircd::db::database::env::writable_file::_allocate(const size_t &offset,
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p fd:%d allocating %zd blocks after block:%zu offset:%lu length:%lu%s",
+		log, "[%s] wfile:%p fd:%d allocating %zd blocks after block:%zu offset:%lu length:%lu%s",
 		d.name,
 		this,
 		int(fd),
@@ -1963,7 +1963,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p get preallocation block_size(%p):%zu last_block(%p):%zu",
+		log, "[%s] wfile:%p get preallocation block_size(%p):%zu last_block(%p):%zu",
 		d.name,
 		this,
 		block_size,
@@ -1984,7 +1984,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p set preallocation block size:%zu",
+		log, "[%s] wfile:%p set preallocation block size:%zu",
 		d.name,
 		this,
 		size
@@ -2004,7 +2004,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p fd:%d get file size",
+		log, "[%s] wfile:%p fd:%d get file size",
 		d.name,
 		this,
 		int(fd)
@@ -2017,7 +2017,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p fd:%d get file size :%s",
+		log, "[%s] wfile:%p fd:%d get file size :%s",
 		d.name,
 		this,
 		int(fd),
@@ -2034,7 +2034,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p IO priority %s",
+		log, "[%s] wfile:%p IO priority %s",
 		d.name,
 		this,
 		reflect(prio)
@@ -2071,7 +2071,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p hint:%d %s",
+		log, "[%s] wfile:%p hint:%d %s",
 		d.name,
 		this,
 		int(hint),
@@ -2086,7 +2086,7 @@ catch(const std::system_error &e)
 {
 	log::derror
 	{
-		log, "'%s': wfile:%p fd:%d setting write lifetime hint:%d %s :%s",
+		log, "[%s] wfile:%p fd:%d setting write lifetime hint:%d %s :%s",
 		d.name,
 		this,
 		int(fd),
@@ -2113,7 +2113,7 @@ const noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		"'%s': wfile:%p get unique id:%p max_size:%zu",
+		"[%s] wfile:%p get unique id:%p max_size:%zu",
 		d.name,
 		this,
 		id,
@@ -2133,7 +2133,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p get unique id :%s",
+		log, "[%s] wfile:%p get unique id :%s",
 		d.name,
 		this,
 		e.what()
@@ -2201,7 +2201,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p DIRECT fd:%d close",
+		log, "[%s] wfile:%p DIRECT fd:%d close",
 		d.name,
 		this,
 		int(fd)
@@ -2223,7 +2223,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p DIRECT close :%s",
+		log, "[%s] wfile:%p DIRECT close :%s",
 		d.name,
 		this,
 		e.what()
@@ -2235,7 +2235,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p DIRECT close :%s",
+		log, "[%s] wfile:%p DIRECT close :%s",
 		d.name,
 		this,
 		e.what()
@@ -2254,7 +2254,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		"'%s': wfile:%p DIRECT fd:%d truncate to %lu bytes",
+		"[%s] wfile:%p DIRECT fd:%d truncate to %lu bytes",
 		d.name,
 		this,
 		int(fd),
@@ -2273,7 +2273,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p DIRECT fd:%d truncate to %lu bytes :%s",
+		log, "[%s] wfile:%p DIRECT fd:%d truncate to %lu bytes :%s",
 		d.name,
 		this,
 		int(fd),
@@ -2287,7 +2287,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p DIRECT fd:%d truncate to %lu bytes :%s",
+		log, "[%s] wfile:%p DIRECT fd:%d truncate to %lu bytes :%s",
 		d.name,
 		this,
 		int(fd),
@@ -2308,7 +2308,7 @@ noexcept try
 	if(!aligned(logical_offset) || !aligned(data(s)))
 		log::dwarning
 		{
-			log, "'%s': ALIGNMENT CHECK fd:%d append:%p%s bytes:%zu%s logical_offset:%zu%s",
+			log, "[%s] ALIGNMENT CHECK fd:%d append:%p%s bytes:%zu%s logical_offset:%zu%s",
 			d.name,
 			int(fd),
 			data(s),
@@ -2322,7 +2322,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p DIRECT fd:%d append:%p%s bytes:%zu%s logical_offset:%zu%s",
+		log, "[%s] wfile:%p DIRECT fd:%d append:%p%s bytes:%zu%s logical_offset:%zu%s",
 		d.name,
 		this,
 		int(fd),
@@ -2355,7 +2355,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': wfile:%p DIRECT fd:%d append:%p size:%zu :%s",
+		log, "[%s] wfile:%p DIRECT fd:%d append:%p size:%zu :%s",
 		d.name,
 		this,
 		int(fd),
@@ -2370,7 +2370,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p DIRECT fd:%d append:%p size:%zu :%s",
+		log, "[%s] wfile:%p DIRECT fd:%d append:%p size:%zu :%s",
 		d.name,
 		this,
 		int(fd),
@@ -2393,7 +2393,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p DIRECT fd:%d append:%p%s bytes:%zu%s offset:%zu%s",
+		log, "[%s] wfile:%p DIRECT fd:%d append:%p%s bytes:%zu%s offset:%zu%s",
 		d.name,
 		this,
 		int(fd),
@@ -2419,7 +2419,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p DIRECT fd:%d get file size",
+		log, "[%s] wfile:%p DIRECT fd:%d get file size",
 		d.name,
 		this,
 		int(fd)
@@ -2438,7 +2438,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': wfile:%p DIRECT fd:%d get file size :%s",
+		log, "[%s] wfile:%p DIRECT fd:%d get file size :%s",
 		d.name,
 		this,
 		int(fd),
@@ -2679,7 +2679,7 @@ ircd::db::database::env::writable_file_direct::_write__aligned(const const_buffe
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': wfile:%p DIRECT fd:%d write:%p%s bytes:%zu%s offset:%zu%s (logical:%zu)",
+		log, "[%s] wfile:%p DIRECT fd:%d write:%p%s bytes:%zu%s offset:%zu%s (logical:%zu)",
 		d.name,
 		this,
 		int(fd),
@@ -2818,7 +2818,7 @@ try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': opened seqfile:%p fd:%d bs:%zu '%s'",
+		log, "[%s] opened seqfile:%p fd:%d bs:%zu '%s'",
 		d->name,
 		this,
 		int(fd),
@@ -2845,7 +2845,7 @@ catch(const std::system_error &e)
 
 	log::logf
 	{
-		log, level, "'%s': opening seqfile:%p `%s' (%d) :%s",
+		log, level, "[%s] opening seqfile:%p `%s' (%d) :%s",
 		d->name,
 		this,
 		name,
@@ -2857,7 +2857,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': opening seqfile:%p `%s' :%s",
+		log, "[%s] opening seqfile:%p `%s' :%s",
 		d->name,
 		this,
 		name,
@@ -2871,7 +2871,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': close seqfile:%p fd:%d",
+		log, "[%s] close seqfile:%p fd:%d",
 		d.name,
 		this,
 		int(fd)
@@ -2896,7 +2896,7 @@ noexcept try
 	if(unlikely(!bool(lock)))
 		throw panic
 		{
-			"'%s': Unexpected concurrent access to seqfile %p",
+			"[%s] Unexpected concurrent access to seqfile %p",
 			d.name,
 			this
 		};
@@ -2906,7 +2906,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': seqfile:%p read:%p offset:%zu length:%zu scratch:%p",
+		log, "[%s] seqfile:%p read:%p offset:%zu length:%zu scratch:%p",
 		d.name,
 		this,
 		result,
@@ -2938,7 +2938,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': seqfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		log, "[%s] seqfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
 		d.name,
 		this,
 		result,
@@ -2954,7 +2954,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': seqfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		log, "[%s] seqfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
 		d.name,
 		this,
 		result,
@@ -2983,7 +2983,7 @@ noexcept try
 	if(unlikely(!bool(lock)))
 		throw panic
 		{
-			"'%s': Unexpected concurrent access to seqfile %p",
+			"[%s] Unexpected concurrent access to seqfile %p",
 			d.name,
 			this
 		};
@@ -2993,7 +2993,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': seqfile:%p offset:%zu positioned read:%p offset:%zu length:%zu scratch:%p",
+		log, "[%s] seqfile:%p offset:%zu positioned read:%p offset:%zu length:%zu scratch:%p",
 		d.name,
 		this,
 		this->offset,
@@ -3026,7 +3026,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': seqfile:%p positioned read:%p offset:%zu length:%zu scratch:%p :%s",
+		log, "[%s] seqfile:%p positioned read:%p offset:%zu length:%zu scratch:%p :%s",
 		d.name,
 		this,
 		result,
@@ -3042,7 +3042,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': seqfile:%p positioned read:%p offset:%zu length:%zu scratch:%p :%s",
+		log, "[%s] seqfile:%p positioned read:%p offset:%zu length:%zu scratch:%p :%s",
 		d.name,
 		this,
 		result,
@@ -3070,7 +3070,7 @@ noexcept
 	if(unlikely(!bool(lock)))
 		throw panic
 		{
-			"'%s': Unexpected concurrent access to seqfile %p",
+			"[%s] Unexpected concurrent access to seqfile %p",
 			d.name,
 			this
 		};
@@ -3078,7 +3078,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		"'%s': seqfile:%p offset:zu skip:%zu",
+		"[%s] seqfile:%p offset:zu skip:%zu",
 		d.name,
 		this,
 		offset,
@@ -3100,7 +3100,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		"'%s': seqfile:%p invalidate cache offset:%zu length:%zu",
+		"[%s] seqfile:%p invalidate cache offset:%zu length:%zu",
 		d.name,
 		this,
 		offset,
@@ -3118,7 +3118,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		"'%s': seqfile:%p invalidate cache offset:%zu length:%zu :%s",
+		"[%s] seqfile:%p invalidate cache offset:%zu length:%zu :%s",
 		d.name,
 		this,
 		offset,
@@ -3132,7 +3132,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"'%s': seqfile:%p invalidate cache offset:%zu length:%zu :%s",
+		"[%s] seqfile:%p invalidate cache offset:%zu length:%zu :%s",
 		d.name,
 		this,
 		offset,
@@ -3208,7 +3208,7 @@ try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': opened rfile:%p fd:%d bs:%zu '%s'",
+		log, "[%s] opened rfile:%p fd:%d bs:%zu '%s'",
 		d->name,
 		this,
 		int(fd),
@@ -3221,7 +3221,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': opening rfile:%p `%s' :%s",
+		log, "[%s] opening rfile:%p `%s' :%s",
 		d->name,
 		this,
 		name,
@@ -3235,7 +3235,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': close rfile:%p fd:%d",
+		log, "[%s] close rfile:%p fd:%d",
 		d.name,
 		this,
 		int(fd)
@@ -3253,7 +3253,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rfile:%p prefetch offset:%zu length:%zu",
+		log, "[%s] rfile:%p prefetch offset:%zu length:%zu",
 		d.name,
 		this,
 		offset,
@@ -3275,7 +3275,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': rfile:%p prefetch offset:%zu length:%zu :%s",
+		log, "[%s] rfile:%p prefetch offset:%zu length:%zu :%s",
 		d.name,
 		this,
 		offset,
@@ -3300,7 +3300,7 @@ const noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p",
+		log, "[%s] rfile:%p read:%p offset:%zu length:%zu scratch:%p",
 		d.name,
 		this,
 		result,
@@ -3332,7 +3332,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		log, "[%s] rfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
 		d.name,
 		this,
 		result,
@@ -3348,7 +3348,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': rfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		log, "[%s] rfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
 		d.name,
 		this,
 		result,
@@ -3371,7 +3371,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rfile:%p invalidate cache offset:%zu length:%zu",
+		log, "[%s] rfile:%p invalidate cache offset:%zu length:%zu",
 		d.name,
 		this,
 		offset,
@@ -3396,7 +3396,7 @@ const noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rfile:%p get unique id:%p max_size:%zu",
+		log, "[%s] rfile:%p get unique id:%p max_size:%zu",
 		d.name,
 		this,
 		id,
@@ -3416,7 +3416,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': rfile:%p GetUniqueId id:%p max_size:%zu :%s",
+		log, "[%s] rfile:%p GetUniqueId id:%p max_size:%zu :%s",
 		d.name,
 		this,
 		id,
@@ -3436,7 +3436,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rfile:%p hint %s",
+		log, "[%s] rfile:%p hint %s",
 		d.name,
 		this,
 		reflect(pattern)
@@ -3510,7 +3510,7 @@ try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': opened rwfile:%p fd:%d bs:%zu '%s'",
+		log, "[%s] opened rwfile:%p fd:%d bs:%zu '%s'",
 		d->name,
 		this,
 		int(fd),
@@ -3523,7 +3523,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "'%s': opening rwfile:%p `%s' :%s",
+		log, "[%s] opening rwfile:%p `%s' :%s",
 		d->name,
 		this,
 		name,
@@ -3537,7 +3537,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': close rwfile:%p fd:%d '%s'",
+		log, "[%s] close rwfile:%p fd:%d '%s'",
 		d.name,
 		this,
 		int(fd)
@@ -3554,7 +3554,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': close rwfile:%p fd:%d '%s'",
+		log, "[%s] close rwfile:%p fd:%d '%s'",
 		d.name,
 		this,
 		int(fd)
@@ -3568,7 +3568,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		"'%s': rwfile:%p close :%s",
+		"[%s] rwfile:%p close :%s",
 		d.name,
 		this,
 		e.what()
@@ -3580,7 +3580,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"'%s': rwfile:%p close :%s",
+		"[%s] rwfile:%p close :%s",
 		d.name,
 		this,
 		e.what()
@@ -3598,7 +3598,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rwfile:%p fd:%d fsync",
+		log, "[%s] rwfile:%p fd:%d fsync",
 		d.name,
 		int(fd),
 		this
@@ -3613,7 +3613,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		"'%s': rwfile:%p fd:%d fsync :%s",
+		"[%s] rwfile:%p fd:%d fsync :%s",
 		d.name,
 		this,
 		int(fd),
@@ -3626,7 +3626,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"'%s': rwfile:%p fd:%d fsync :%s",
+		"[%s] rwfile:%p fd:%d fsync :%s",
 		d.name,
 		this,
 		int(fd),
@@ -3645,7 +3645,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rwfile:%p fd:%d sync",
+		log, "[%s] rwfile:%p fd:%d sync",
 		d.name,
 		int(fd),
 		this
@@ -3660,7 +3660,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		"'%s': rwfile:%p fd:%d sync :%s",
+		"[%s] rwfile:%p fd:%d sync :%s",
 		d.name,
 		this,
 		int(fd),
@@ -3673,7 +3673,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"'%s': rwfile:%p fd:%d sync :%s",
+		"[%s] rwfile:%p fd:%d sync :%s",
 		d.name,
 		this,
 		int(fd),
@@ -3692,7 +3692,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rwfile:%p fd:%d flush",
+		log, "[%s] rwfile:%p fd:%d flush",
 		d.name,
 		int(fd),
 		this
@@ -3708,7 +3708,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		"'%s': rwfile:%p fd:%d flush :%s",
+		"[%s] rwfile:%p fd:%d flush :%s",
 		d.name,
 		this,
 		int(fd),
@@ -3721,7 +3721,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		"'%s': rwfile:%p fd:%d flush :%s",
+		"[%s] rwfile:%p fd:%d flush :%s",
 		d.name,
 		this,
 		int(fd),
@@ -3745,7 +3745,7 @@ const noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rwfile:%p read:%p offset:%zu length:%zu scratch:%p",
+		log, "[%s] rwfile:%p read:%p offset:%zu length:%zu scratch:%p",
 		d.name,
 		this,
 		result,
@@ -3776,7 +3776,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': rwfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		log, "[%s] rwfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
 		d.name,
 		this,
 		result,
@@ -3792,7 +3792,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': rwfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
+		log, "[%s] rwfile:%p read:%p offset:%zu length:%zu scratch:%p :%s",
 		d.name,
 		this,
 		result,
@@ -3815,7 +3815,7 @@ noexcept try
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': rwfile:%p fd:%d write:%p length:%zu offset:%zu",
+		log, "[%s] rwfile:%p fd:%d write:%p length:%zu offset:%zu",
 		d.name,
 		this,
 		int(fd),
@@ -3841,7 +3841,7 @@ catch(const std::system_error &e)
 {
 	log::error
 	{
-		log, "'%s': rwfile:%p fd:%d write:%p length:%zu offset:%zu",
+		log, "[%s] rwfile:%p fd:%d write:%p length:%zu offset:%zu",
 		d.name,
 		this,
 		int(fd),
@@ -3856,7 +3856,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': rwfile:%p fd:%d write:%p length:%zu offset:%zu",
+		log, "[%s] rwfile:%p fd:%d write:%p length:%zu offset:%zu",
 		d.name,
 		this,
 		int(fd),
@@ -3913,7 +3913,7 @@ noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s': directory:%p fsync",
+		log, "[%s] directory:%p fsync",
 		d.name,
 		this
 	};
@@ -3957,7 +3957,7 @@ noexcept
 {
 	log::debug
 	{
-		log, "'%s': Shutting down environment...",
+		log, "[%s] Shutting down environment...",
 		d.name
 	};
 }
@@ -4022,7 +4022,7 @@ try
 	if(!tasks.empty() || p.pending())
 		log::warning
 		{
-			log, "'%s': Waiting for tasks:%zu queued:%zu active:%zu in pool '%s'",
+			log, "[%s] Waiting for tasks:%zu queued:%zu active:%zu in pool '%s'",
 			d.name,
 			tasks.size(),
 			p.queued(),
@@ -4037,7 +4037,7 @@ try
 
 	log::debug
 	{
-		log, "'%s': Terminated pool '%s'.",
+		log, "[%s] Terminated pool '%s'.",
 		d.name,
 		ctx::name(p)
 	};
@@ -4046,7 +4046,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "'%s': Environment pool '%s' join :%s",
+		log, "[%s] Environment pool '%s' join :%s",
 		d.name,
 		ctx::name(p),
 		e.what()
@@ -4073,7 +4073,7 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 
 	log::debug
 	{
-		log, "'%s': pool:%s queue:%zu QUEUE task:%lu func:%p arg:%p",
+		log, "[%s] pool:%s queue:%zu QUEUE task:%lu func:%p arg:%p",
 		this->d.name,
 		ctx::name(p),
 		tasks.size(),
@@ -4093,7 +4093,7 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 
 		log::debug
 		{
-			log, "'%s': pool:%s queue:%zu ENTER task:%lu func:%p arg:%p",
+			log, "[%s] pool:%s queue:%zu ENTER task:%lu func:%p arg:%p",
 			this->d.name,
 			ctx::name(p),
 			tasks.size(),
@@ -4104,7 +4104,7 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 
 		const ctx::slice_usage_warning message
 		{
-			"'%s': pool:%s task:%p",
+			"[%s] pool:%s task:%p",
 			this->d.name,
 			ctx::name(p),
 			task.func
@@ -4115,7 +4115,7 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 
 		log::debug
 		{
-			log, "'%s': pool:%s queue:%zu LEAVE task:%zu func:%p arg:%p",
+			log, "[%s] pool:%s queue:%zu LEAVE task:%zu func:%p arg:%p",
 			this->d.name,
 			ctx::name(p),
 			tasks.size(),
@@ -4138,7 +4138,7 @@ ircd::db::database::env::state::pool::cancel(void *const &tag)
 		auto &task(*it);
 		log::debug
 		{
-			log, "'%s': pool:%s tasks:%zu cancel#%zu task:%lu func:%p cancel:%p arg:%p tag:%p",
+			log, "[%s] pool:%s tasks:%zu cancel#%zu task:%lu func:%p cancel:%p arg:%p tag:%p",
 			d.name,
 			ctx::name(p),
 			tasks.size(),

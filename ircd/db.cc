@@ -385,7 +385,7 @@ ircd::db::sync(database &d)
 {
 	log::debug
 	{
-		log, "'%s': @%lu SYNC WAL",
+		log, "[%s] @%lu SYNC WAL",
 		name(d),
 		sequence(d)
 	};
@@ -404,7 +404,7 @@ ircd::db::flush(database &d,
 {
 	log::debug
 	{
-		log, "'%s': @%lu FLUSH WAL",
+		log, "[%s] @%lu FLUSH WAL",
 		name(d),
 		sequence(d)
 	};
@@ -482,7 +482,7 @@ ircd::db::resume(database &d)
 
 	log::debug
 	{
-		log, "'%s': Attempting to resume from %zu errors @%lu",
+		log, "[%s] Attempting to resume from %zu errors @%lu",
 		name(d),
 		errors.size(),
 		sequence(d)
@@ -497,7 +497,7 @@ ircd::db::resume(database &d)
 
 	log::info
 	{
-		log, "'%s': Resumed normal operation at sequence number %lu; cleared %zu errors",
+		log, "[%s] Resumed normal operation at sequence number %lu; cleared %zu errors",
 		name(d),
 		sequence(d),
 		errors.size()
@@ -516,7 +516,7 @@ ircd::db::bgpause(database &d)
 
 	log::debug
 	{
-		log, "'%s': Paused all background work",
+		log, "[%s] Paused all background work",
 		name(d)
 	};
 }
@@ -528,7 +528,7 @@ ircd::db::bgcontinue(database &d)
 
 	log::debug
 	{
-		log, "'%s': Continuing background work",
+		log, "[%s] Continuing background work",
 		name(d)
 	};
 
@@ -545,7 +545,7 @@ ircd::db::bgcancel(database &d,
 	assert(d.d);
 	log::debug
 	{
-		log, "'%s': Canceling all background work...",
+		log, "[%s] Canceling all background work...",
 		name(d)
 	};
 
@@ -560,7 +560,7 @@ ircd::db::bgcancel(database &d,
 	{
 		log::debug
 		{
-			log, "'%s': Waiting for tasks:%zu queued:%zu active:%zu in pool '%s'",
+			log, "[%s] Waiting for tasks:%zu queued:%zu active:%zu in pool '%s'",
 			name(d),
 			pool->tasks.size(),
 			pool->p.pending(),
@@ -584,7 +584,7 @@ ircd::db::bgcancel(database &d,
 	log::logf
 	{
 		log, level,
-		"'%s': Canceled all background work; errors:%lu",
+		"[%s] Canceled all background work; errors:%lu",
 		name(d),
 		errors
 	};
@@ -626,7 +626,7 @@ ircd::db::checkpoint(database &d)
 
 	log::debug
 	{
-		log, "'%s': Checkpoint at sequence %lu in `%s' complete",
+		log, "[%s] Checkpoint at sequence %lu in `%s' complete",
 		name(d),
 		seqnum,
 		dir
@@ -1332,7 +1332,7 @@ try
 	{
 		log::critical
 		{
-			"'%s': Error finding described handle '%s' which RocksDB opened :%s",
+			"[%s] Error finding described handle '%s' which RocksDB opened :%s",
 			this->name,
 			handle->GetName(),
 			e.what()
@@ -1406,7 +1406,7 @@ try
 	{
 		log::notice
 		{
-			log, "'%s': Verifying database integrity. This may take several minutes...",
+			log, "[%s] Verifying database integrity. This may take several minutes...",
 			this->name
 		};
 
@@ -1415,7 +1415,7 @@ try
 
 	log::info
 	{
-		log, "'%s': Opened database @ `%s' with %zu columns at sequence number %lu.",
+		log, "[%s] Opened database @ `%s' with %zu columns at sequence number %lu.",
 		this->name,
 		path,
 		columns.size(),
@@ -1426,7 +1426,7 @@ catch(const error &e)
 {
 	log::error
 	{
-		"Error opening db '%s': %s",
+		"Error opening db [%s] %s",
 		name,
 		e.what()
 	};
@@ -1437,14 +1437,14 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"Error opening db '%s': %s",
+		"Error opening db [%s] %s",
 		name,
 		e.what()
 	};
 
 	throw error
 	{
-		"Failed to open db '%s': %s",
+		"Failed to open db [%s] %s",
 		name,
 		e.what()
 	};
@@ -1457,7 +1457,7 @@ noexcept try
 	const std::unique_lock lock{write_mutex};
 	log::info
 	{
-		log, "'%s': closing database @ `%s'...",
+		log, "[%s] closing database @ `%s'...",
 		name,
 		path
 	};
@@ -1466,7 +1466,7 @@ noexcept try
 
 	log::debug
 	{
-		log, "'%s': closing columns...",
+		log, "[%s] closing columns...",
 		name
 	};
 
@@ -1476,7 +1476,7 @@ noexcept try
 	this->columns.clear();
 	log::debug
 	{
-		log, "'%s': closed columns; flushing...",
+		log, "[%s] closed columns; flushing...",
 		name
 	};
 
@@ -1485,7 +1485,7 @@ noexcept try
 
 	log::debug
 	{
-		log, "'%s': flushed; synchronizing...",
+		log, "[%s] flushed; synchronizing...",
 		name
 	};
 
@@ -1494,7 +1494,7 @@ noexcept try
 
 	log::debug
 	{
-		log, "'%s': synchronized with hardware.",
+		log, "[%s] synchronized with hardware.",
 		name
 	};
 
@@ -1512,7 +1512,7 @@ noexcept try
 
 	log::info
 	{
-		log, "'%s': closed database @ `%s' at sequence number %lu.",
+		log, "[%s] closed database @ `%s' at sequence number %lu.",
 		name,
 		path,
 		sequence
@@ -1616,7 +1616,7 @@ catch(const std::out_of_range &e)
 {
 	throw not_found
 	{
-		"'%s': column id[%u] is not available or specified in schema",
+		"[%s] column id[%u] is not available or specified in schema",
 		this->name,
 		id
 	};
@@ -1641,7 +1641,7 @@ catch(const std::out_of_range &e)
 {
 	throw not_found
 	{
-		"'%s': column id[%u] is not available or specified in schema",
+		"[%s] column id[%u] is not available or specified in schema",
 		this->name,
 		id
 	};
@@ -1659,7 +1659,7 @@ const
 	if(id < 0)
 		throw not_found
 		{
-			"'%s': column '%s' is not available or specified in schema",
+			"[%s] column '%s' is not available or specified in schema",
 			this->name,
 			name
 		};
@@ -1692,7 +1692,7 @@ ircd::db::drop(database::column &c)
 	database &d(c);
 	log::debug
 	{
-		log, "'%s':'%s' @%lu DROPPING COLUMN",
+		log, "[%s]'%s' @%lu DROPPING COLUMN",
 		name(d),
 		name(c),
 		sequence(d)
@@ -1705,7 +1705,7 @@ ircd::db::drop(database::column &c)
 
 	log::notice
 	{
-		log, "'%s':'%s' @%lu DROPPED COLUMN",
+		log, "[%s]'%s' @%lu DROPPED COLUMN",
 		name(d),
 		name(c),
 		sequence(d)
@@ -2225,7 +2225,7 @@ noexcept
 	if(startswith(str, "Options"))
 		return;
 
-	rog(level, "'%s': %s", d->name, str);
+	rog(level, "[%s] %s", d->name, str);
 }
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -2708,7 +2708,7 @@ noexcept
 {
 	log::info
 	{
-		log, "'%s': job:%d ctx:%lu flush ended writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s' `%s'",
+		log, "[%s] job:%d ctx:%lu flush ended writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s' `%s'",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -2731,7 +2731,7 @@ noexcept
 {
 	log::info
 	{
-		log, "'%s': job:%d ctx:%lu flush start writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s'",
+		log, "[%s] job:%d ctx:%lu flush start writes[slow:%d stop:%d] seq[%zu -> %zu] %s '%s'",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -2761,7 +2761,7 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s': job:%d ctx:%lu compacted level[%d -> %d] files[%zu -> %zu] %s '%s' (%d): %s",
+		"[%s] job:%d ctx:%lu compacted level[%d -> %d] files[%zu -> %zu] %s '%s' (%d): %s",
 		d->name,
 		info.job_id,
 		info.thread_id,
@@ -2782,7 +2782,7 @@ noexcept
 
 	log::debug
 	{
-		log, "'%s': job:%d keys[in:%zu out:%zu upd:%zu] bytes[%s -> %s] falloc:%s write:%s rsync:%s fsync:%s total:%s",
+		log, "[%s] job:%d keys[in:%zu out:%zu upd:%zu] bytes[%s -> %s] falloc:%s write:%s rsync:%s fsync:%s total:%s",
 		d->name,
 		info.job_id,
 		info.stats.num_input_records,
@@ -2800,7 +2800,7 @@ noexcept
 	if(info.stats.num_corrupt_keys > 0)
 		log::error
 		{
-			log, "'%s': job:%d reported %lu corrupt keys.",
+			log, "[%s] job:%d reported %lu corrupt keys.",
 			d->name,
 			info.job_id,
 			info.stats.num_corrupt_keys
@@ -2823,7 +2823,7 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s': job:%d table file delete [%s][%s] (%d): %s",
+		"[%s] job:%d table file delete [%s][%s] (%d): %s",
 		d->name,
 		info.job_id,
 		info.db_name,
@@ -2847,7 +2847,7 @@ noexcept
 	log::logf
 	{
 		log, level,
-		"'%s': job:%d table file closed [%s][%s] size:%s '%s' (%d): %s",
+		"[%s] job:%d table file closed [%s][%s] size:%s '%s' (%d): %s",
 		d->name,
 		info.job_id,
 		info.db_name,
@@ -2860,7 +2860,7 @@ noexcept
 
 	log::debug
 	{
-		log, "'%s': job:%d head[%s] index[%s] filter[%s] data[%lu %s] keys[%lu %s] vals[%s] %s",
+		log, "[%s] job:%d head[%s] index[%s] filter[%s] data[%lu %s] keys[%lu %s] vals[%s] %s",
 		d->name,
 		info.job_id,
 		pretty(iec(info.table_properties.top_level_index_size)),
@@ -2881,7 +2881,7 @@ noexcept
 {
 	log::debug
 	{
-		log, "'%s': job:%d table file opened [%s][%s] '%s'",
+		log, "[%s] job:%d table file opened [%s][%s] '%s'",
 		d->name,
 		info.job_id,
 		info.db_name,
@@ -2896,7 +2896,7 @@ noexcept
 {
 	log::debug
 	{
-		log, "'%s': memory table sealed '%s' entries:%lu deletes:%lu",
+		log, "[%s] memory table sealed '%s' entries:%lu deletes:%lu",
 		d->name,
 		info.cf_name,
 		info.num_entries,
@@ -2910,7 +2910,7 @@ noexcept
 {
 	log::debug
 	{
-		log, "'%s': column[%s] handle closing @ %p",
+		log, "[%s] column[%s] handle closing @ %p",
 		d->name,
 		h->GetName(),
 		h
@@ -2924,7 +2924,7 @@ noexcept
 {
 	log::notice
 	{
-		log, "'%s': external file ingested column[%s] external[%s] internal[%s] sequence:%lu",
+		log, "[%s] external file ingested column[%s] external[%s] internal[%s] sequence:%lu",
 		this->d->name,
 		info.cf_name,
 		info.external_file_path,
@@ -2967,7 +2967,7 @@ noexcept
 
 	log::logf
 	{
-		log, fac, "'%s': %s", d->name, str
+		log, fac, "[%s] %s", d->name, str
 	};
 
 	if(ignore)
@@ -3319,7 +3319,7 @@ const noexcept
 	#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
-		log, "'%s':'%s': compaction level:%d key:%zu@%p type:%s old:%zu@%p new:%p skip:%p",
+		log, "[%s]'%s': compaction level:%d key:%zu@%p type:%s old:%zu@%p new:%p skip:%p",
 		d->name,
 		c->name,
 		level,
@@ -3398,7 +3398,7 @@ noexcept
 
 	log::debug
 	{
-		log, "'%s': WAL recovery mapping update: log_number:%zu name_id:%zu",
+		log, "[%s] WAL recovery mapping update: log_number:%zu name_id:%zu",
 		db::name(*d),
 		log_number.size(),
 		name_id.size(),
@@ -3417,7 +3417,7 @@ noexcept
 
 	if(debug) log::debug
 	{
-		log, "'%s': WAL recovery record log:%lu '%s' wb[count:%zu size:%zu]",
+		log, "[%s] WAL recovery record log:%lu '%s' wb[count:%zu size:%zu]",
 		db::name(*d),
 		log_nr,
 		name,
@@ -5472,7 +5472,7 @@ ircd::db::sort(column &column,
 	const std::lock_guard lock{write_mutex};
 	log::debug
 	{
-		log, "'%s':'%s' @%lu FLUSH (sort) %s %s",
+		log, "[%s]'%s' @%lu FLUSH (sort) %s %s",
 		name(d),
 		name(c),
 		sequence(d),
@@ -5547,7 +5547,7 @@ ircd::db::compact(column &column,
 
 		log::debug
 		{
-			log, "'%s':'%s' COMPACT L%d -> L%d files:%zu size:%zu",
+			log, "[%s]'%s' COMPACT L%d -> L%d files:%zu size:%zu",
 			name(d),
 			name(c),
 			level.level,
@@ -5606,7 +5606,7 @@ ircd::db::compact(column &column,
 
 	log::debug
 	{
-		log, "'%s':'%s' @%lu COMPACT [%s, %s] -> L:%d (Lmax:%d Lbase:%d)",
+		log, "[%s]'%s' @%lu COMPACT [%s, %s] -> L:%d (Lmax:%d Lbase:%d)",
 		name(d),
 		name(c),
 		sequence(d),
@@ -7109,7 +7109,7 @@ ircd::db::commit(database &d,
 	#ifdef RB_DEBUG
 	log::debug
 	{
-		log, "'%s': %lu COMMIT %s in %ld$us",
+		log, "[%s] %lu COMMIT %s in %ld$us",
 		d.name,
 		sequence(d),
 		debug(batch),
@@ -7236,7 +7236,7 @@ ircd::db::_seek(database::column &c,
 	#ifdef RB_DEBUG_DB_SEEK
 	log::debug
 	{
-		log, "'%s': %lu:%lu SEEK %s %s in %ld$us '%s'",
+		log, "[%s] %lu:%lu SEEK %s %s in %ld$us '%s'",
 		name(d),
 		sequence(d),
 		sequence(opts.snapshot),
@@ -7270,7 +7270,7 @@ ircd::db::_seek(database::column &c,
 	#ifdef RB_DEBUG_DB_SEEK
 	log::debug
 	{
-		log, "'%s': %lu:%lu SEEK[%s] %s -> %s in %ld$us '%s'",
+		log, "[%s] %lu:%lu SEEK[%s] %s -> %s in %ld$us '%s'",
 		name(d),
 		sequence(d),
 		sequence(opts.snapshot),

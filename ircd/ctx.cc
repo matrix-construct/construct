@@ -856,7 +856,7 @@ noexcept
 	thread_local char tmbuf[64];
 	log::dwarning
 	{
-		log, "context '%s' id:%lu watchdog: system call took %s :%s",
+		log, "[%s] context id:%lu watchdog :system call took %s :%s",
 		current?
 			name(cur()):
 		ios::handler::current?
@@ -933,7 +933,7 @@ noexcept
 	const ulong &threshold{prof::settings::slice_warning};
 	log::dwarning
 	{
-		log, "context '%s' id:%lu watchdog: timeslice excessive; lim:%lu this:%lu pct:%.2lf :%s",
+		log, "[%s] context id:%lu watchdog :timeslice excessive; lim:%lu this:%lu pct:%.2lf :%s",
 		current? name(cur()) : ""_sv,
 		current? id(cur()) : 0,
 		threshold,
@@ -1711,7 +1711,7 @@ ircd::ctx::prof::check_slice()
 	if(unlikely(slice_exceeded_warning(last_slice) && !slice_exempt))
 		log::dwarning
 		{
-			log, "context '%s' id:%lu watchdog: timeslice excessive; lim:%lu last:%lu pct:%.2lf",
+			log, "[%s] context id:%lu watchdog :timeslice excessive; lim:%lu last:%lu pct:%.2lf",
 			name(c),
 			id(c),
 			ulong(settings::slice_warning),
@@ -1726,7 +1726,7 @@ ircd::ctx::prof::check_slice()
 	if(unlikely(slice_exceeded_interrupt(last_slice) && !slice_exempt))
 		throw interrupted
 		{
-			"context '%s' id:%lu watchdog interrupt; lim:%lu last:%lu total:%lu",
+			"[%s] context id:%lu watchdog interrupt; lim:%lu last:%lu total:%lu",
 			name(c),
 			id(c),
 			ulong(settings::slice_interrupt),
@@ -1760,7 +1760,7 @@ ircd::ctx::prof::check_stack()
 	if(unlikely(!stack_exempt && stack_exceeded_warning(stack_at)))
 		log::dwarning
 		{
-			log, "context '%s' id:%lu watchdog: stack used %zu of %zu bytes",
+			log, "[%s] id:%lu watchdog :stack used %zu of %zu bytes",
 			name(c),
 			id(c),
 			stack_at,
