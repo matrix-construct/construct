@@ -275,6 +275,7 @@ notified
 void
 handle_notify(const m::event &event,
               m::vm::eval &)
+try
 {
 	const auto &room_id
 	{
@@ -301,6 +302,14 @@ handle_notify(const m::event &event,
 		assert(waiter.dock);
 		waiter.dock->notify_one();
 	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		m::log, "client/events vm.notify hook :%s",
+		e.what()
+	};
 }
 
 bool
