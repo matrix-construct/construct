@@ -11,6 +11,12 @@
 #include <RB_INC_FCNTL_H
 #include "db.h"
 
+decltype(ircd::db::database::env::log)
+ircd::db::database::env::log
+{
+	"db.env"
+};
+
 //
 // env::env
 //
@@ -4064,6 +4070,18 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 	assert(task._id == 0);
 	task._id = ++taskctr;
 	tasks.emplace_back(std::move(task));
+
+	log::debug
+	{
+		log, "'%s': pool:%s queue:%zu QUEUE task:%lu func:%p arg:%p",
+		this->d.name,
+		ctx::name(p),
+		tasks.size(),
+		tasks.back()._id,
+		tasks.back().func,
+		tasks.back().arg,
+	};
+
 	p([this]
 	{
 		if(tasks.empty())
@@ -4075,7 +4093,7 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 
 		log::debug
 		{
-			log, "'%s': pool:%s queue:%zu starting task:%lu func:%p arg:%p",
+			log, "'%s': pool:%s queue:%zu ENTER task:%lu func:%p arg:%p",
 			this->d.name,
 			ctx::name(p),
 			tasks.size(),
@@ -4097,7 +4115,7 @@ ircd::db::database::env::state::pool::operator()(task &&task)
 
 		log::debug
 		{
-			log, "'%s': pool:%s queue:%zu finished task:%zu func:%p arg:%p",
+			log, "'%s': pool:%s queue:%zu LEAVE task:%zu func:%p arg:%p",
 			this->d.name,
 			ctx::name(p),
 			tasks.size(),

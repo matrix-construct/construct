@@ -34,6 +34,8 @@ struct ircd::db::database::env final
 	using ThreadStatus = rocksdb::ThreadStatus;
 	using ThreadStatusUpdater = rocksdb::ThreadStatusUpdater;
 
+	static ircd::log::log log;
+
 	database &d;
 	Env &defaults
 	{
