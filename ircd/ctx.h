@@ -22,8 +22,6 @@ namespace ircd::ctx
 {
 	struct stack;
 	struct profile;
-
-	void spawn(ctx *const c, context::function func);
 }
 
 namespace ircd::ctx::prof
@@ -77,6 +75,7 @@ struct ircd::ctx::ctx
 	void jump();                                 // jump to context directly (returns on your resume)
 
 	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
+	void spawn(context::function func);
 
 	ctx(const string_view &name                  = "<noname>"_sv,
 	    const size_t &stack_max                  = DEFAULT_STACK_SIZE,

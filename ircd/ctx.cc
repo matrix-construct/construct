@@ -11,23 +11,32 @@
 #include <ircd/asio.h>
 #include "ctx.h"
 
-/// Instance list linkage for the list of all ctx instances.
+/// Dedicated log facility for the ircd::ctx subsystem.
+decltype(ircd::ctx::log)
+ircd::ctx::log
+{
+	"ctx"
+};
+
+//
+// ctx::ctx (internal)
+//
+
+/// Allocator instance for the ctx instance_list. This allocator will place
+/// the std::list nodes in the ctx struct itself.
 template<>
 decltype(ircd::util::instance_list<ircd::ctx::ctx>::allocator)
 ircd::util::instance_list<ircd::ctx::ctx>::allocator
 {};
 
+/// Instance list linkage for the list of all ctx instances. All ctxs can be
+/// iterated through this list. The allocator makes the overhead of this list
+/// negligible.
 template<>
 decltype(ircd::util::instance_list<ircd::ctx::ctx>::list)
 ircd::util::instance_list<ircd::ctx::ctx>::list
 {
 	allocator
-};
-
-decltype(ircd::ctx::log)
-ircd::ctx::log
-{
-	"ctx"
 };
 
 /// Monotonic ctx id counter state. This counter is incremented for each
@@ -38,22 +47,31 @@ ircd::ctx::ctx::id_ctr
 	0
 };
 
+/// This is a pseudo ircd::ios descriptor. We want to account for a ctx's
+/// execution slice in the ircd::ios handler list. This posits the entire
+/// ircd::ctx system as one ircd::ios handler type among all the others.
+/// At this time it is unclear how to hook a context's execution slice in the ircd::ios system.
 decltype(ircd::ctx::ctx::ios_desc)
 ircd::ctx::ctx::ios_desc
 {
 	"ircd::ctx::ctx"
 };
 
-/// Spawn (internal)
+// linkage for dtor
+ircd::ctx::ctx::~ctx()
+noexcept
+{
+	assert(yc == nullptr); // Check that the context isn't active.
+}
+
 void
 IRCD_CTX_STACK_PROTECT
-ircd::ctx::spawn(ctx *const c,
-                 context::function func)
+ircd::ctx::ctx::spawn(context::function func)
 {
 	const boost::coroutines::attributes attrs
 	{
 		// Pass the requested stack size
-		c->stack.max,
+		stack.max,
 
 		// We ensure stack unwinding and cleanup out here instead.
 		boost::coroutines::no_stack_unwind,
@@ -61,17 +79,10 @@ ircd::ctx::spawn(ctx *const c,
 
 	auto bound
 	{
-		std::bind(&ctx::operator(), c, ph::_1, std::move(func))
+		std::bind(&ctx::operator(), this, ph::_1, std::move(func))
 	};
 
-	boost::asio::spawn(c->strand, std::move(bound), attrs);
-}
-
-// linkage for dtor
-ircd::ctx::ctx::~ctx()
-noexcept
-{
-	assert(yc == nullptr); // Check that the context isn't active.
+	boost::asio::spawn(strand, std::move(bound), attrs);
 }
 
 /// Base frame for a context.
@@ -1125,7 +1136,7 @@ ircd::ctx::context::context(const string_view &name,
 {
 	auto spawn
 	{
-		std::bind(&ircd::ctx::spawn, c.get(), std::move(func))
+		std::bind(&ctx::spawn, c.get(), std::move(func))
 	};
 
 	// The profiler is told about the spawn request here, not inside the closure
