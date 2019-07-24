@@ -152,6 +152,7 @@ noexcept
 	sendq_context.terminate();
 	recv_context.terminate();
 
+	assert(sendq.empty());
 	assert(tags.empty());
 }
 
@@ -417,12 +418,12 @@ try
 	thread_local char buf[128];
 	log::debug
 	{
-		log, "dns %s send tag:%u t:%u qtype:%u `%s'",
-		string(buf, make_ipport(ep)),
+		log, "send tag:%u qtype:%u t:%u `%s' to %s",
 		tag.id,
-		tag.tries,
 		tag.opts.qtype,
-		host(tag.hp)
+		tag.tries,
+		host(tag.hp),
+		string(buf, make_ipport(ep)),
 	};
 	#endif
 }
@@ -446,10 +447,10 @@ ircd::net::dns::resolver::queue_query(tag &tag)
 
 	log::debug
 	{
-		log, "dns tag:%u t:%u qtype:%u added to sendq (tags:%zu sendq:%zu)",
+		log, "queu tag:%u qtype:%u t:%u (tags:%zu sendq:%zu)",
 		tag.id,
-		tag.tries,
 		tag.opts.qtype,
+		tag.tries,
 		tags.size(),
 		sendq.size()
 	};
@@ -582,7 +583,7 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
                                        const header &header,
                                        const const_buffer &body)
 {
-	thread_local char addr_strbuf[2][128];
+	thread_local char strbuf[2][128];
 	const std::lock_guard lock
 	{
 		// The primary mutex is locked here while this result is
@@ -599,7 +600,7 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 		throw error
 		{
 			"DNS reply from %s for unrecognized tag id:%u",
-			string(addr_strbuf[0], from),
+			string(strbuf[0], from),
 			header.id
 		};
 
@@ -608,18 +609,19 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 		throw error
 		{
 			"DNS reply from %s for tag:%u which we sent to %s",
-			string(addr_strbuf[0], from),
+			string(strbuf[0], from),
 			header.id,
-			string(addr_strbuf[1], tag.server)
+			string(strbuf[1], tag.server)
 		};
 
 	log::debug
 	{
-		log, "dns %s recv tag:%u t:%u qtype:%u qd:%u an:%u ns:%u ar:%u",
-		string(addr_strbuf[0], from),
+		log, "recv tag:%u qtype:%u t:%u from %s in %s qd:%u an:%u ns:%u ar:%u",
 		tag.id,
-		tag.tries,
 		tag.opts.qtype,
+		tag.tries,
+		string(strbuf[0], from),
+		pretty(strbuf[1], nanoseconds(now<steady_point>() - tag.last), 1),
 		header.qdcount,
 		header.ancount,
 		header.nscount,
@@ -632,11 +634,11 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 	{
 		log::error
 		{
-			log, "dns %s recv tag:%u t:%u qtype:%u protocol error #%u :%s",
-			string(addr_strbuf[0], from),
+			log, "recv tag:%u qtype:%u t:%u from %s protocol error #%u :%s",
 			tag.id,
-			tag.tries,
 			tag.opts.qtype,
+			tag.tries,
+			string(strbuf[0], from),
 			header.rcode,
 			rfc1035::rcode.at(header.rcode)
 		};
@@ -839,10 +841,10 @@ ircd::net::dns::resolver::remove(tag &tag,
 {
 	log::debug
 	{
-		log, "dns tag:%u t:%u qtype:%u removing (tags:%zu sendq:%zu)",
+		log, "fini tag:%u qtype:%u t:%u (tags:%zu sendq:%zu)",
 		tag.id,
-		tag.tries,
 		tag.opts.qtype,
+		tag.tries,
 		tags.size(),
 		sendq.size()
 	};
