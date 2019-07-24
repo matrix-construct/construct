@@ -8219,7 +8219,7 @@ console_cmd__room__members(opt &out, const string_view &line)
 
 	const string_view membership
 	{
-		param[1]
+		param.at(1, "join"_sv)
 	};
 
 	const m::room room
@@ -8232,10 +8232,11 @@ console_cmd__room__members(opt &out, const string_view &line)
 		room
 	};
 
-	const m::room::members::closure closure{[&out]
+	const m::room::members::closure closure{[&out, &membership]
 	(const m::user::id &user_id)
 	{
-		out << user_id << std::endl;
+		out << std::setw(8) << std::left << membership
+		    << " " << user_id << std::endl;
 	}};
 
 	members.for_each(membership, closure);
