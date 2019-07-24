@@ -99,15 +99,23 @@ get__members(client &client,
 		room
 	};
 
-	members.for_each(membership, m::event::closure_bool{[&request, &chunk, &not_membership]
-	(const m::event &event)
+	members.for_each(membership, [&request, &chunk, &not_membership]
+	(const m::user::id &member, const m::event::idx &event_idx)
 	{
-		if(m::membership(event) == not_membership)
+		if(m::room::members::membership(event_idx, not_membership))
+			return true;
+
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
 			return true;
 
 		chunk.append(event);
 		return true;
-	}});
+	});
 
 	return std::move(response);
 }
@@ -161,17 +169,9 @@ get__joined_members(client &client,
 		room
 	};
 
-	members.for_each("join", m::room::members::closure{[&joined, &room]
-	(const m::user::id &user_id)
+	members.for_each("join", [&joined, &room]
+	(const m::user::id &user_id, const m::event::idx &event_idx)
 	{
-		const m::event::idx &event_idx
-		{
-			room.get(std::nothrow, "m.room.member", user_id)
-		};
-
-		if(!event_idx)
-			return;
-
 		json::stack::object room_member
 		{
 			joined, user_id
@@ -186,7 +186,9 @@ get__joined_members(client &client,
 					room_member, key, val
 				};
 		});
-	}});
+
+		return true;
+	});
 
 	return std::move(response);
 }

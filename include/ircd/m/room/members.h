@@ -23,19 +23,18 @@ namespace ircd::m
 ///
 struct ircd::m::room::members
 {
-	using closure = std::function<void (const id::user &)>;
-	using closure_bool = std::function<bool (const id::user &)>;
+	using closure_idx = std::function<bool (const id::user &, const event::idx &)>;
+	using closure = std::function<bool (const id::user &)>;
+
+	static string_view membership(const mutable_buffer &out, const event::idx &);
+	static bool membership(const event::idx &, const string_view &);
 
 	m::room room;
 
-	bool for_each(const string_view &membership, const event::closure_bool &) const;
-	void for_each(const string_view &membership, const event::closure &) const;
-	bool for_each(const string_view &membership, const closure_bool &) const;
-	void for_each(const string_view &membership, const closure &) const;
-	bool for_each(const event::closure_bool &) const;
-	void for_each(const event::closure &) const;
-	bool for_each(const closure_bool &) const;
-	void for_each(const closure &) const;
+	bool for_each(const string_view &membership, const closure &) const;
+	bool for_each(const string_view &membership, const closure_idx &) const;
+	bool for_each(const closure &) const;
+	bool for_each(const closure_idx &) const;
 
 	bool empty(const string_view &membership) const;
 	bool empty() const;

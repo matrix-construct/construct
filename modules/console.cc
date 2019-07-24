@@ -8217,9 +8217,9 @@ console_cmd__room__members(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const string_view membership
+	const string_view &membership
 	{
-		param.at(1, "join"_sv)
+		param[1]
 	};
 
 	const m::room room
@@ -8232,14 +8232,30 @@ console_cmd__room__members(opt &out, const string_view &line)
 		room
 	};
 
-	const m::room::members::closure closure{[&out, &membership]
-	(const m::user::id &user_id)
+	if(membership)
 	{
-		out << std::setw(8) << std::left << membership
-		    << " " << user_id << std::endl;
-	}};
+		members.for_each(membership, [&out, &membership]
+		(const m::user::id &user_id)
+		{
+			out << std::setw(8) << std::left << membership
+			    << " " << user_id << std::endl;
 
-	members.for_each(membership, closure);
+			return true;
+		});
+
+		return true;
+	}
+
+	members.for_each(membership, [&out]
+	(const m::user::id &user_id, const m::event::idx &event_idx)
+	{
+		char buf[32];
+		out << std::setw(8) << std::left << m::room::members::membership(buf, event_idx)
+		    << " " << user_id << std::endl;
+
+		return true;
+	});
+
 	return true;
 }
 
@@ -8271,9 +8287,18 @@ console_cmd__room__members__events(opt &out, const string_view &line)
 		room
 	};
 
-	const auto closure{[&out](const m::event &event)
+	const auto closure{[&out](const auto &user_id, const auto &event_idx)
 	{
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
+
 		out << pretty_oneline(event) << std::endl;
+		return true;
 	}};
 
 	members.for_each(membership, closure);
@@ -8346,12 +8371,30 @@ console_cmd__room__members__origin(opt &out, const string_view &line)
 	};
 
 	members.for_each(membership, [&out, &origin]
-	(const m::event &event)
+	(const auto &user_id, const auto &event_idx)
 	{
-		if(json::get<"origin"_>(event) != origin)
-			return;
+		const bool same_origin
+		{
+			m::query(std::nothrow, event_idx, "origin", [&origin]
+			(const auto &_origin)
+			{
+				return _origin == origin;
+			})
+		};
+
+		if(!same_origin)
+			return true;
+
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
 
 		out << pretty_oneline(event) << std::endl;
+		return true;
 	});
 
 	return true;
@@ -8404,12 +8447,12 @@ console_cmd__room__members__read(opt &out, const string_view &line)
 		    << std::endl;
 	}};
 
-	const auto member_closure{[&room_id, event_closure]
-	(const m::event &event)
+	members.for_each(membership, [&room_id, &event_closure]
+	(const m::user::id &user_id, const m::event::idx &event_idx)
 	{
 		const m::user user
 		{
-			at<"state_key"_>(event)
+			user_id
 		};
 
 		static const m::event::fetch::opts fopts
@@ -8429,9 +8472,9 @@ console_cmd__room__members__read(opt &out, const string_view &line)
 		};
 
 		user_room.get(std::nothrow, "ircd.read", room_id, event_closure);
-	}};
+		return true;
+	});
 
-	members.for_each(membership, member_closure);
 	return true;
 }
 

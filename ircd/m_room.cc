@@ -1237,15 +1237,15 @@ const
 {
 	user::id::buf ret;
 	const members members{*this};
-	members.for_each(membership, members::closure_bool{[&host, &ret]
-	(const id::user &user_id)
+	members.for_each(membership, [&host, &ret]
+	(const auto &user_id, const auto &event_idx)
 	{
 		if(host && user_id.host() != host)
 			return true;
 
 		ret = user_id;
 		return false;
-	}});
+	});
 
 	return ret;
 }
@@ -3068,57 +3068,16 @@ bool
 ircd::m::room::members::empty()
 const
 {
-	const room::state state
-	{
-		room
-	};
-
-	// for_each() returns true when it reaches the end of the iteration.
-	return state.for_each("m.room.member", state::closure_bool{[]
-	(const auto &type, const auto &state_key, const auto &event_idx)
-	{
-		return false;
-	}});
+	return empty(string_view{});
 }
 
 bool
 ircd::m::room::members::empty(const string_view &membership)
 const
 {
-	const room::state state
+	return for_each(membership, closure{[](const auto &)
 	{
-		room
-	};
-
-	// joined members optimization. Only possible when seeking
-	// membership="join" on the present state of the room.
-	if(membership == "join" && state.present())
-	{
-		// _for_each() returns true when it reaches the end of the iteration.
-		const room::origins origins{room};
-		return origins._for_each(origins, []
-		(const string_view &)
-		{
-			// closure returns false to break causing _for_each() to return false.
-			return false;
-		});
-	}
-
-	// for_each() returns true when it reaches the end of the iteration.
-	return state.for_each("m.room.member", state::closure_bool{[&membership]
-	(const auto &type, const auto &state_key, const auto &event_idx)
-	{
-		// return false if the query succeeds, breaking the iteration.
-		return !m::query(std::nothrow, event_idx, "content", [&membership]
-		(const json::object &content)
-		{
-			const json::string &content_membership
-			{
-				content["membership"]
-			};
-
-			return !membership || content_membership == membership;
-		});
+		return false;
 	}});
 }
 
@@ -3126,178 +3085,98 @@ size_t
 ircd::m::room::members::count()
 const
 {
-	const room::state state
-	{
-		room
-	};
-
-	return state.count("m.room.member");
+	return count(string_view{});
 }
 
 size_t
 ircd::m::room::members::count(const string_view &membership)
 const
 {
-	// Allow empty membership string to count all memberships
-	if(!membership)
-		return count();
-
-	// joined members optimization. Only possible when seeking
-	// membership="join" on the present state of the room.
-	if(membership == "join" && state{room}.present())
-	{
-		size_t ret{0};
-		const room::origins origins{room};
-		origins._for_each(origins, [&ret](const string_view &)
-		{
-			++ret;
-			return true;
-		});
-
-		return ret;
-	}
-
-	static const event::keys::include keys
-	{
-		"content",
-	};
-
-	const m::event::fetch::opts fopts
-	{
-		keys, room.fopts? room.fopts->gopts : db::gopts{}
-	};
-
-	const room::state state
-	{
-		room, &fopts
-	};
-
 	size_t ret{0};
-	state.for_each("m.room.member", event::closure{[&ret, &membership]
-	(const m::event &event)
+	this->for_each(membership, room::members::closure{[&ret]
+	(const id::user &)
 	{
-		ret += m::membership(event) == membership;
+		++ret;
+		return true;
 	}});
 
 	return ret;
 }
 
-void
-ircd::m::room::members::for_each(const closure &closure)
-const
-{
-	for_each(string_view{}, closure);
-}
-
 bool
-ircd::m::room::members::for_each(const closure_bool &closure)
+ircd::m::room::members::for_each(const closure &closure)
 const
 {
 	return for_each(string_view{}, closure);
 }
 
-void
-ircd::m::room::members::for_each(const event::closure &closure)
+bool
+ircd::m::room::members::for_each(const closure_idx &closure)
 const
 {
-	for_each(string_view{}, closure);
+	return for_each(string_view{}, closure);
 }
 
 bool
-ircd::m::room::members::for_each(const event::closure_bool &closure)
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const closure_idx &closure)
 const
 {
-	const room::state state{room};
-	return state.for_each("m.room.member", event::closure_bool{[&closure]
-	(const m::event &event)
+	const m::room::state state
 	{
-		return closure(event);
-	}});
+		room
+	};
+
+	const bool present
+	{
+		state.present()
+	};
+
+	// joined members optimization. Only possible when seeking
+	// membership="join" on the present state of the room.
+	if(membership == "join" && present)
+		return this->for_each(membership, [&closure, &state, this]
+		(const id::user &member)
+		{
+			const auto event_idx
+			{
+				state.get(std::nothrow, "m.room.member", member)
+			};
+
+			assert(event_idx);
+			return event_idx?
+				closure(member, event_idx):
+				true;
+		});
+
+	return state.for_each("m.room.member", [this, &membership, &closure]
+	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
+	{
+		return !membership || this->membership(event_idx, membership)?
+			closure(state_key, event_idx):
+			true;
+	});
 }
 
-void
+bool
 ircd::m::room::members::for_each(const string_view &membership,
                                  const closure &closure)
 const
 {
-	for_each(membership, closure_bool{[&closure]
-	(const user::id &user_id)
+	const m::room::state state
 	{
-		closure(user_id);
-		return true;
-	}});
-}
-
-/// Iterate the mxid's of the users in the room, optionally with a specific
-/// membership state. This query contains internal optimizations as the closure
-/// only requires a user::id. The db::gopts set in the room.fopts pointer is
-/// still used if provided.
-bool
-ircd::m::room::members::for_each(const string_view &membership,
-                                 const closure_bool &closure)
-const
-{
-	// Setup the list of event fields to fetch for the closure
-	static const event::keys::include keys
-	{
-		"state_key", "content",
+		room
 	};
 
-	// In this case the fetch opts isn't static so it can maintain the
-	// previously given db::gopts, but it will use our keys list.
-	const m::event::fetch::opts fopts
+	const bool present
 	{
-		keys, room.fopts? room.fopts->gopts : db::gopts{}
+		state.present()
 	};
-
-	// Stack-over the the current fetch opts with our new opts for this query,
-	// putting them back when we're finished. This requires a const_cast which
-	// should be okay here.
-	auto &room(const_cast<m::room &>(this->room));
-	const scope_restore theirs
-	{
-		room.fopts, &fopts
-	};
-
-	return for_each(membership, event::closure_bool{[&closure]
-	(const event &event)
-	{
-		const user::id &user_id
-		{
-			at<"state_key"_>(event)
-		};
-
-		return closure(user_id);
-	}});
-}
-
-void
-ircd::m::room::members::for_each(const string_view &membership,
-                                 const event::closure &closure)
-const
-{
-	for_each(membership, event::closure_bool{[&closure]
-	(const m::event &event)
-	{
-		closure(event);
-		return true;
-	}});
-}
-
-bool
-ircd::m::room::members::for_each(const string_view &membership,
-                                 const event::closure_bool &closure)
-const
-{
-	if(empty(membership))
-		return for_each(closure);
 
 	// joined members optimization. Only possible when seeking
 	// membership="join" on the present state of the room.
-	if(!room.event_id && membership == "join")
-	{
-		const room::origins origins{room};
-		return origins._for_each(origins, [&closure, this]
+	if(membership == "join" && present)
+		return room::origins::_for_each(room, [this, &closure]
 		(const string_view &key)
 		{
 			const string_view &member
@@ -3305,26 +3184,49 @@ const
 				std::get<1>(dbs::room_joined_key(key))
 			};
 
-			bool ret{true};
-			room.get(std::nothrow, "m.room.member", member, event::closure{[&closure, &ret]
-			(const event &event)
-			{
-				ret = closure(event);
-			}});
-
-			return ret;
+			return closure(member);
 		});
-	}
 
-	return for_each(event::closure_bool{[&membership, &closure]
-	(const event &event)
+	return this->for_each(membership, [&closure]
+	(const auto &user_id, const auto &event_idx)
 	{
-		if(m::membership(event) == membership)
-			if(!closure(event))
-				return false;
+		return closure(user_id);
+	});
+}
 
-		return true;
-	}});
+bool
+ircd::m::room::members::membership(const event::idx &event_idx,
+                                   const string_view &membership)
+{
+	return m::query(std::nothrow, event_idx, "content", [&membership]
+	(const json::object &content)
+	{
+		const json::string &content_membership
+		{
+			content["membership"]
+		};
+
+		return content_membership && content_membership == membership;
+	});
+}
+
+ircd::string_view
+ircd::m::room::members::membership(const mutable_buffer &out,
+                                   const event::idx &event_idx)
+{
+	return m::query(std::nothrow, event_idx, "content", [&out]
+	(const json::object &content) -> string_view
+	{
+		const json::string &content_membership
+		{
+			content["membership"]
+		};
+
+		return strlcpy
+		{
+			out, content_membership
+		};
+	});
 }
 
 //

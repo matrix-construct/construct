@@ -596,7 +596,7 @@ initialsync_room_ephemeral_events(client &client,
 	//TODO: We're skipping receipts from members who left so we enjoy the
 	//TODO: joined members optimizations. Need to figure out if anyone
 	//TODO: left in the synced timeline and include them manually.
-	members.for_each("join", m::room::members::closure{[&events, &room]
+	members.for_each("join", [&events, &room]
 	(const m::user &user)
 	{
 		const m::user::room user_room{user};
@@ -644,7 +644,9 @@ initialsync_room_ephemeral_events(client &client,
 				};
 			}
 		});
-	}});
+
+		return true;
+	});
 }
 
 void

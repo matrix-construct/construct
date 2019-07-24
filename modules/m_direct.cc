@@ -75,7 +75,7 @@ _join_room__m_direct(const m::event &event,
 
 	m::user::id::buf other_person;
 	const m::room::members members{room};
-	members.for_each(m::room::members::closure_bool{[&user_id, &other_person]
+	members.for_each([&user_id, &other_person]
 	(const auto &other_id)
 	{
 		if(other_id == user_id)
@@ -83,7 +83,7 @@ _join_room__m_direct(const m::event &event,
 
 		other_person = other_id;
 		return false;
-	}});
+	});
 
 	if(!other_person)
 		return;

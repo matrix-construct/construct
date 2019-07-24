@@ -3082,15 +3082,14 @@ const
 		};
 
 		room.fopts = &fopts;
-		const m::room::members members{room};
-		return members.for_each(membership, event::closure_bool{[&seen, &closure]
-		(const m::event &event)
+		const m::room::members members
 		{
-			const auto &other
-			{
-				at<"state_key"_>(event)
-			};
+			room
+		};
 
+		return members.for_each(membership, [&seen, &closure]
+		(const user::id &other)
+		{
 			const auto it
 			{
 				seen.lower_bound(other)
@@ -3101,7 +3100,7 @@ const
 
 			seen.emplace_hint(it, std::string{other});
 			return closure(m::user{other});
-		}});
+		});
 	}});
 }
 
