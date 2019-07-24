@@ -311,8 +311,31 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 	if(!m::get(event_idx, "origin_server_ts", ts))
 		return false;
 
-	if(!my_host(alias.host()) && ircd::time() - ts > seconds(alias_cache_ttl).count())
+	const seconds &elapsed
 	{
+		(ircd::time<milliseconds>() - ts) / 1000L
+	};
+
+	const seconds &ttl
+	{
+		alias_cache_ttl
+	};
+
+	const bool expired
+	{
+		!my_host(alias.host()) && elapsed > ttl
+	};
+
+	if(expired)
+	{
+		log::dwarning
+		{
+			log, "Cached alias %s expired elapsed:%ld ttl:%ld",
+			string_view{alias},
+			elapsed.count(),
+			ttl.count(),
+		};
+
 		fetch(std::nothrow, alias, alias.host());
 		event_idx = alias_room.get(std::nothrow, "ircd.room.alias", key);
 	}
