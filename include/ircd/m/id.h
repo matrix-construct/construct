@@ -370,15 +370,4 @@ struct ircd::m::id::buf
 
 		return *this;
 	}
-
-	buf &operator=(buf &&other) noexcept
-	{
-		this->~buf();
-		static_cast<string_view &>(*this) =
-		{
-			b.data(), buffer::copy(b, string_view{other})
-		};
-
-		return *this;
-	}
 };
