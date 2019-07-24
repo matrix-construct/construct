@@ -404,13 +404,13 @@ command__ping(const mutable_buffer &buf,
 		timer.at<nanoseconds>()
 	};
 
-	const string_view sp{"&nbsp;"};
-	const string_view fg{"#e8e8e8"};
-	const string_view host_bg{"#181b21"};
-	const string_view online_bg{"#008000"};
-	const string_view offline_bg{"#A01810"};
-	const auto bg{eptr? offline_bg : online_bg};
-	const auto status{eptr? "FAILED" : "ONLINE"};
+	static const string_view
+	sp{"&nbsp;"}, fg{"#e8e8e8"}, host_bg{"#181b21"},
+	online_bg{"#008000"}, offline_bg{"#A01810"};
+
+	const string_view
+	bg{eptr? offline_bg : online_bg},
+	status{eptr? "FAILED " : "ONLINE"};
 
 	std::ostringstream out;
 	pubsetbuf(out, buf);
@@ -482,20 +482,15 @@ command__ping__room(const mutable_buffer &buf,
 	(const auto &result)
 	{
 		++responses;
-		const auto time
-		{
-			timer.at<nanoseconds>()
-		};
 
-		const string_view sp{"&nbsp;"};
-		const string_view fg{"#e8e8e8"};
-		const string_view host_bg{"#181b21"};
-		const string_view online_bg{"#008000"};
-		const string_view offline_bg{"#A01810"};
-		const auto bg{result.eptr? offline_bg : online_bg};
-		const auto status{result.eptr? "FAILED " : "ONLINE"};
+		static const string_view
+		sp{"&nbsp;"}, fg{"#e8e8e8"}, host_bg{"#181b21"},
+		online_bg{"#008000"}, offline_bg{"#A01810"};
 
-		thread_local char tmbuf[32];
+		const string_view
+		bg{result.eptr? offline_bg : online_bg},
+		status{result.eptr? "FAILED " : "ONLINE"};
+
 		out
 		    << " <font color=\"" << fg << "\" data-mx-bg-color=\"" << bg << "\">"
 		    << " <b>"
@@ -509,7 +504,7 @@ command__ping__room(const mutable_buffer &buf,
 
 		if(!result.eptr)
 			out << " <b>"
-			    << pretty(tmbuf, time)
+			    << pretty(tmbuf, timer.at<nanoseconds>())
 			    << " </b>"
 			    << " application layer round-trip time."
 			    << "<br />";
