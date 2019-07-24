@@ -23,8 +23,8 @@ namespace ircd::m::feds
 	using request_list = std::list<std::unique_ptr<request_base>>;
 	template<class T> using create_closure = std::function<T (request<T> &, const string_view &origin)>;
 
-	template<class T> static request_list for_one(const string_view &origin, const opts &, const create_closure<T> &);
-	template<class T> static request_list for_each_in_room(const opts &, const create_closure<T> &);
+	template<class T> static request_list for_one(const string_view &origin, const opts &, const closure &, const create_closure<T> &);
+	template<class T> static request_list for_each_in_room(const opts &, const closure &, const create_closure<T> &);
 
 	static bool call_user(const closure &closure, const result &result);
 	static bool handler(request_list &, const milliseconds &, const closure &);
@@ -172,7 +172,7 @@ ircd::m::feds::send(const opts &opts,
 		};
 	}};
 
-	return for_each_in_room<m::v1::send>(opts, make_request);
+	return for_each_in_room<m::v1::send>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -201,8 +201,8 @@ ircd::m::feds::keys(const opts &opts,
 	}};
 
 	return opts.room_id?
-		for_each_in_room<m::v1::key::query>(opts, make_request):
-		for_one<m::v1::key::query>(opts.arg[0], opts, make_request);
+		for_each_in_room<m::v1::key::query>(opts, closure, make_request):
+		for_one<m::v1::key::query>(opts.arg[0], opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -225,7 +225,7 @@ ircd::m::feds::version(const opts &opts,
 		};
 	}};
 
-	return for_each_in_room<m::v1::version>(opts, make_request);
+	return for_each_in_room<m::v1::version>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -250,7 +250,7 @@ ircd::m::feds::backfill(const opts &opts,
 		};
 	}};
 
-	return for_each_in_room<m::v1::backfill>(opts, make_request);
+	return for_each_in_room<m::v1::backfill>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -275,7 +275,7 @@ ircd::m::feds::state(const opts &opts,
 		};
 	}};
 
-	return for_each_in_room<m::v1::state>(opts, make_request);
+	return for_each_in_room<m::v1::state>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -298,7 +298,7 @@ ircd::m::feds::event(const opts &opts,
 		};
 	}};
 
-	return for_each_in_room<m::v1::event>(opts, make_request);
+	return for_each_in_room<m::v1::event>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -321,7 +321,7 @@ ircd::m::feds::auth(const opts &opts,
 		};
 	}};
 
-	return for_each_in_room<m::v1::event_auth>(opts, make_request);
+	return for_each_in_room<m::v1::event_auth>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -343,7 +343,7 @@ ircd::m::feds::head(const opts &opts,
 		};
 	}};
 
-	return for_each_in_room<m::v1::make_join>(opts, make_request);
+	return for_each_in_room<m::v1::make_join>(opts, closure, make_request);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -445,7 +445,8 @@ catch(const std::exception &)
 template<class T>
 ircd::m::feds::request_list
 ircd::m::feds::for_each_in_room(const opts &opts,
-                                const std::function<T (request<T> &, const string_view &origin)> &closure)
+                                const feds::closure &closure,
+                                const std::function<T (request<T> &, const string_view &origin)> &create_closure)
 {
 	request_list ret;
 	if(!opts.room_id)
@@ -456,20 +457,33 @@ ircd::m::feds::for_each_in_room(const opts &opts,
 		opts.room_id
 	};
 
-	origins.for_each([&opts, &ret, &closure]
+	origins.for_each([&opts, &ret, &closure, &create_closure]
 	(const string_view &origin)
 	{
-		if(!server::errmsg(origin)) try
+		const auto errmsg
 		{
-			ret.emplace_back(std::make_unique<request<T>>(opts, [&closure, &origin]
+			server::errmsg(origin)
+		};
+
+		if(opts.closure_cached_errors || !errmsg) try
+		{
+			ret.emplace_back(std::make_unique<request<T>>(opts, [&create_closure, &origin]
 			(auto &request)
 			{
-				return closure(request, origin);
+				return create_closure(request, origin);
 			}));
 		}
 		catch(const std::exception &)
 		{
-			return;
+			if(!opts.closure_cached_errors)
+				return;
+
+			feds::result result;
+			result.request = &opts;
+			result.origin = origin;
+			result.eptr = std::current_exception();
+			const ctx::exception_handler eh;
+			m::feds::call_user(closure, result);
 		}
 	});
 
@@ -480,20 +494,34 @@ template<class T>
 ircd::m::feds::request_list
 ircd::m::feds::for_one(const string_view &origin,
                        const opts &opts,
-                       const std::function<T (request<T> &, const string_view &origin)> &closure)
+                       const feds::closure &closure,
+                       const std::function<T (request<T> &, const string_view &origin)> &create_closure)
 {
 	request_list ret;
-	if(!server::errmsg(origin)) try
+	const auto errmsg
 	{
-		ret.emplace_back(std::make_unique<request<T>>(opts, [&closure, &origin]
+		server::errmsg(origin)
+	};
+
+	if(opts.closure_cached_errors || !errmsg) try
+	{
+		ret.emplace_back(std::make_unique<request<T>>(opts, [&create_closure, &origin]
 		(auto &request)
 		{
-			return closure(request, origin);
+			return create_closure(request, origin);
 		}));
 	}
 	catch(const std::exception &e)
 	{
+		if(!opts.closure_cached_errors)
+			return ret;
 
+		feds::result result;
+		result.request = &opts;
+		result.origin = origin;
+		result.eptr = std::current_exception();
+		const ctx::exception_handler eh;
+		m::feds::call_user(closure, result);
 	}
 
 	return ret;

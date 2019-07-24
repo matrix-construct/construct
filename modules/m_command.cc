@@ -469,6 +469,8 @@ command__ping__room(const mutable_buffer &buf,
 	m::feds::opts opts;
 	opts.op = m::feds::op::version;
 	opts.room_id = room.room_id;
+	opts.closure_cached_errors = true;
+	opts.timeout = seconds(10); //TODO: conf
 
 	thread_local char tmbuf[32];
 	std::ostringstream out;

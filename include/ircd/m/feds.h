@@ -87,6 +87,12 @@ struct ircd::m::feds::opts
 	/// would have the eptr set. When this is false, the closure is never
 	/// invoked with eptr set and nothrow_closure_retval is used to continue.
 	bool closure_errors {true};
+
+	/// Whether to call the user's result closure with a cached error result
+	/// before the request is even made to the remote. If false (the default)
+	/// the user's closure is never invoked and no request is made if a remote
+	/// has a cached error.
+	bool closure_cached_errors {false};
 };
 
 enum class ircd::m::feds::op
