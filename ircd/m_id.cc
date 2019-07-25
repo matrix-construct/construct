@@ -509,16 +509,15 @@ ircd::m::id::id(const enum sigil &sigil,
 
 		case sigil::ROOM:
 		{
-			mutable_buffer buf{namebuf, 16};
-			rand::string(rand::dict::alnum, buf);
-			name = {namebuf, 16};
+			static const auto &dict{rand::dict::alnum};
+			name = rand::string(dict, mutable_buffer{namebuf, 18});
 			break;
 		}
 
 		case sigil::DEVICE:
 		{
-			static const auto &dict{rand::dict::alpha};
-			name = rand::string(dict, mutable_buffer{namebuf, 16});
+			static const auto &dict{rand::dict::alnum};
+			name = rand::string(dict, mutable_buffer{namebuf, 10});
 			break;
 		}
 
