@@ -196,7 +196,7 @@ ircd::m::sync::_rooms_polylog(data &data,
 		}
 
 		#if defined(RB_DEBUG)
-		thread_local char tmbuf[MEMBERSHIP_MAX_SIZE];
+		thread_local char tmbuf[32];
 		if(data.stats && rooms.stats_debug) log::debug
 		{
 			log, "polylog %s %s %s in %s",
