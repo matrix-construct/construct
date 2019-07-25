@@ -293,11 +293,13 @@ try
 		if(waiter.room_id != room_id)
 			continue;
 
+		assert(waiter.event_id);
+		*waiter.event_id = event.event_id?
+			m::event::id::buf{event.event_id}:
+			m::event::id::buf{};
+
 		assert(waiter.event);
 		*waiter.event = json::strung{event};
-
-		assert(waiter.event_id);
-		*waiter.event_id = event.event_id;
 
 		assert(waiter.dock);
 		waiter.dock->notify_one();
