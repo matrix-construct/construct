@@ -6553,15 +6553,12 @@ console_cmd__event(opt &out, const string_view &line)
 		}
 	}
 
-	out << event_idx
-	    << std::endl;
-
 	out << pretty(event)
 	    << std::endl;
 
 	if(cached || cached_keys.count())
 	{
-		out << "+ CACHED";
+		out << std::setw(16) << std::right << "CACHED" << "  ";
 
 		if(cached)
 			out << " _json";
@@ -6572,64 +6569,46 @@ console_cmd__event(opt &out, const string_view &line)
 		out << std::endl;
 	}
 
-	if(!full_json)
-		out << "- JSON NOT FOUND" << std::endl;
-
 	if(event.source)
-		out << "+ JSON SOURCE " << size(string_view{event.source}) << " bytes."
+	{
+		char pbuf[64];
+		out << std::setw(16) << std::right << "JSON SIZE" << "  "
+		    << pretty(pbuf, iec(size(string_view{event.source})))
 		    << std::endl;
-
-	if(event.source && !json::valid(event.source, std::nothrow))
-		out << "- JSON SOURCE INVALID" << std::endl;
-
-	const m::event::conforms conforms
-	{
-		event
-	};
-
-	if(!conforms.clean())
-		out << "- " << conforms << std::endl;
-
-	try
-	{
-		if(!verify(event))
-			out << "- SIGNATURE FAILED" << std::endl;
 	}
-	catch(const std::exception &e)
-	{
-		out << "- SIGNATURE FAILED: " << e.what() << std::endl;
-	}
-
-	if(!verify_hash(event))
-		out << "- HASH MISMATCH: " << b64encode_unpadded(hash(event)) << std::endl;
-
-	const auto &[authed, failmsg](m::event::auth::check(std::nothrow, event));
-	if(!authed)
-		out << "- UNAUTHORIZED: " << what(failmsg) << std::endl;
 
 	if(m::event::auth::is_power_event(event))
-		out << "+ POWER EVENT" << std::endl;
-
-	const m::event::refs &refs{event_idx};
-	if(refs.count())
-		out << "+ REFERENCED BY " << refs.count() << std::endl;
+		out << std::setw(16) << std::right << "POWER EVENT" << "  "
+		    << std::endl;
 
 	const m::event::prev prev{event};
 	if(prev.auth_events_count() || prev.prev_events_count())
-		out << std::endl;
+		out << std::setw(16) << std::right << "REFERENCES" << "  "
+		    << (prev.auth_events_count() + prev.prev_events_count())
+		    << std::endl;
 
+	const m::event::refs &refs{event_idx};
+	if(refs.count())
+		out << std::setw(16) << std::right << "REFERENCED BY" << "  "
+		    << refs.count()
+		    << std::endl;
+
+	out << std::endl;
 	for(size_t i(0); i < prev.auth_events_count(); ++i)
 	{
 		const m::event::id &id{prev.auth_event(i)};
 		const m::event::fetch event{id, std::nothrow};
 		if(!event.valid)
 		{
-			out << "- AUTH " << id << std::endl;
+			out << "x-> AUTH        "
+			    << id
+			    << std::endl;
+
 			continue;
 		}
 
-		out << "+ AUTH"
-		    << " " << std::setw(9) << event.event_idx
+		out << "--> AUTH        "
+		    << " " << std::setw(9) << std::right << event.event_idx
 		    << " " << pretty_oneline(event, false) << std::endl;
 	}
 
@@ -6639,14 +6618,18 @@ console_cmd__event(opt &out, const string_view &line)
 		const m::event::fetch event{id, std::nothrow};
 		if(!event.valid)
 		{
-			out << "- PREV " << id << std::endl;
+			out << "x-> PREV        " << id << std::endl;
 			continue;
 		}
 
-		out << "+ PREV"
-		    << " " << std::setw(9) << event.event_idx
+		out << "--> PREV        "
+		    << " " << std::setw(9) << std::right << event.event_idx
 		    << " " << pretty_oneline(event, false) << std::endl;
 	}
+
+	out << std::setw(16) << std::left << "---"
+	    << " " << std::setw(9) << std::right << event_idx
+	    << " " << pretty_oneline(event, false) << std::endl;
 
 	const auto refcnt(refs.count());
 	if(refcnt)
@@ -6655,12 +6638,53 @@ console_cmd__event(opt &out, const string_view &line)
 		(const m::event::idx &idx, const auto &type)
 		{
 			const m::event::fetch event{idx};
-			out << "  " << reflect(type)
-			    << " " << std::setw(9) << idx
+			out << "<-- " << std::setw(12) << std::left << trunc(reflect(type), 12)
+			    << " " << std::setw(9) << std::right << idx
 			    << " " << pretty_oneline(event, false) << std::endl;
 
 			return true;
 		});
+	}
+
+	out << std::endl;
+	if(event.source && !json::valid(event.source, std::nothrow))
+		out << std::setw(9) << std::left << "!!! ERROR" << "  "
+		    << "JSON SOURCE INVALID"
+		    << std::endl;
+
+	const m::event::conforms conforms
+	{
+		event
+	};
+
+	if(!conforms.clean())
+		out << std::setw(9) << std::left << "!!! ERROR" << "  "
+		    << conforms
+		    << std::endl;
+
+	if(!verify_hash(event))
+		out << std::setw(9) << std::left << "!!! ERROR" << "  "
+		    << "HASH MISMATCH :" << b64encode_unpadded(hash(event))
+		    << std::endl;
+
+	const auto &[authed, failmsg](m::event::auth::check(std::nothrow, event));
+	if(!authed)
+		out << std::setw(9) << std::left << "!!! ERROR" << "  "
+		    << "UNAUTHORIZED :" << what(failmsg)
+		    << std::endl;
+
+	try
+	{
+		if(!verify(event))
+			out << std::setw(9) << std::left << "!!! ERROR" << "  "
+			    << "SIGNATURE FAILED"
+			    << std::endl;
+	}
+	catch(const std::exception &e)
+	{
+			out << std::setw(9) << std::left << "!!! ERROR" << "  "
+			    << "SIGNATURE FAILED :" << e.what()
+			    << std::endl;
 	}
 
 	return true;
