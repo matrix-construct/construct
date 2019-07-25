@@ -230,14 +230,14 @@ void
 ircd::ctx::future<T>::wait()
 const
 {
-	this->wait_until(steady_clock::time_point::max());
+	this->wait_until(steady_point::max());
 }
 
 inline void
 ircd::ctx::future<void>::wait()
 const
 {
-	this->wait_until(steady_clock::time_point::max());
+	this->wait_until(steady_point::max());
 }
 
 template<class T>
@@ -246,7 +246,7 @@ void
 ircd::ctx::future<T>::wait(const duration &d)
 const
 {
-	this->wait_until(steady_clock::now() + d);
+	this->wait_until(now<steady_point>() + d);
 }
 
 template<class duration>
@@ -254,7 +254,7 @@ void
 ircd::ctx::future<void>::wait(const duration &d)
 const
 {
-	this->wait_until(steady_clock::now() + d);
+	this->wait_until(now<steady_point>() + d);
 }
 
 template<class T>
@@ -264,7 +264,7 @@ ircd::ctx::future<T>::wait(const duration &d,
                            std::nothrow_t)
 const
 {
-	return this->wait_until(steady_clock::now() + d, std::nothrow);
+	return this->wait_until(now<steady_point>() + d, std::nothrow);
 }
 
 template<class duration>
@@ -273,7 +273,7 @@ ircd::ctx::future<void>::wait(const duration &d,
                               std::nothrow_t)
 const
 {
-	return this->wait_until(steady_clock::now() + d, std::nothrow);
+	return this->wait_until(now<steady_point>() + d, std::nothrow);
 }
 
 template<class T>
