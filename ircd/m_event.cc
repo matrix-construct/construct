@@ -122,29 +122,10 @@ ircd::m::pretty_oneline(std::ostream &s,
                         const event &event,
                         const int &fmt)
 {
+	thread_local char sdbuf[48];
+
 	if(defined(json::get<"room_id"_>(event)))
 		s << json::get<"room_id"_>(event) << ' ';
-	else
-		s << "* ";
-
-	if(json::get<"depth"_>(event) != json::undefined_number)
-		s << json::get<"depth"_>(event) << ' ';
-	else
-		s << "* ";
-
-	thread_local char sdbuf[48];
-	if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
-		s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << ' ';
-	else
-		s << "* ";
-
-	if(defined(json::get<"origin"_>(event)))
-		s << ':' << json::get<"origin"_>(event) << ' ';
-	else
-		s << ":* ";
-
-	if(defined(json::get<"sender"_>(event)))
-		s << json::get<"sender"_>(event) << ' ';
 	else
 		s << "* ";
 
@@ -153,11 +134,25 @@ ircd::m::pretty_oneline(std::ostream &s,
 	else
 		s << m::event::id::v4{sdbuf, event} << ' ';
 
-	const auto &auth_events{json::get<"auth_events"_>(event)};
-	s << "A:" << auth_events.count() << ' ';
+	if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
+		s << smalldate(sdbuf, json::get<"origin_server_ts"_>(event) / 1000L) << ' ';
+	else
+		s << "* ";
 
-	const auto &prev_events{json::get<"prev_events"_>(event)};
-	s << "E:" << prev_events.count() << ' ';
+	if(json::get<"depth"_>(event) != json::undefined_number)
+		s << json::get<"depth"_>(event) << ' ';
+	else
+		s << "* ";
+
+	const m::event::prev prev(event);
+	for(size_t i(0); i < prev.auth_events_count(); ++i)
+		s << 'A';
+
+	for(size_t i(0); i < prev.prev_events_count(); ++i)
+		s << 'P';
+
+	if(prev.auth_events_count() || prev.prev_events_count())
+		s << ' ';
 
 	if(fmt >= 2)
 	{
@@ -210,6 +205,15 @@ ircd::m::pretty_oneline(std::ostream &s,
 		s << json::get<"redacts"_>(event) << ' ';
 	else
 		s << "* ";
+
+	if(defined(json::get<"origin"_>(event)) && defined(json::get<"sender"_>(event)))
+		if(at<"origin"_>(event) != user::id(at<"sender"_>(event)).host())
+			s << ':' << json::get<"origin"_>(event) << ' ';
+
+	if(defined(json::get<"sender"_>(event)))
+		s << json::get<"sender"_>(event) << ' ';
+	else
+		s << "@*:* ";
 
 	const json::object &contents
 	{
