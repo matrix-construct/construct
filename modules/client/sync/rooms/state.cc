@@ -216,7 +216,8 @@ bool
 ircd::m::sync::_room_state_polylog(data &data)
 {
 	if(!apropos(data, data.room_head))
-		return false;
+		if(!data.phased || int64_t(data.range.first) > 0)
+			return false;
 
 	return room_state_polylog_events(data);
 }
