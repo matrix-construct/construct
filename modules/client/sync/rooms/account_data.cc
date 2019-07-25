@@ -225,8 +225,9 @@ ircd::m::sync::room_account_data_polylog_events(data &data)
 	data.user_state.for_each(type, [&data, &ret]
 	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
 	{
-		if(!apropos(data, event_idx))
-			return true;
+		// We have to ignore the since range here or Riot will forget or overwrite data.
+		//if(!apropos(data, event_idx))
+		//	return true;
 
 		static const event::fetch::opts fopts
 		{
