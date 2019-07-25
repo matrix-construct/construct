@@ -130,10 +130,21 @@ struct ircd::m::event
 	static sha256::buf hash(const json::object &);
 	static json::object hashes(const mutable_buffer &, json::iov &event, const string_view &content);
 
-	m::event::id event_id;
-	json::object source; // Contextual availability only.
+	/// For json::object constructions, the source JSON (string_view) is
+	/// carried with the m::event instance. This is important to convey
+	/// additional keys not enumerated in the m::event tuple. This will be
+	/// default-initialized for other constructions when no source JSON buffer
+	/// is available.
+	json::object source;
 
-	explicit operator id() const;
+	/// Always set for PDU's, not set for EDU's. The reference to the event_id
+	/// for this event. For v1 events, this may point to somewhere inside the
+	/// source; otherwise the event source may have been hashed into a buffer
+	/// near the construction site, or retrieved from db, etc.
+	id event_id;
+
+	/// Convenience morphism
+	explicit operator const id &() const;
 
 	event(const json::object &, const id &, const keys &);
 	event(const json::object &, const id &);
@@ -159,7 +170,7 @@ struct ircd::m::event
 #include "pretty.h"
 
 inline ircd::m::event::operator
-id()
+const id &()
 const
 {
 	return event_id;
