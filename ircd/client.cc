@@ -169,12 +169,26 @@ ircd::client::wait_all()
 			pool.queued()
 		};
 
-	while(!client::map.empty())
-		if(!dock.wait_for(seconds(2)) && !client::map.empty())
-			log::warning
+	static const auto is_empty
+	{
+		[] { return client::map.empty(); }
+	};
+
+	while(!dock.wait_for(seconds(3), is_empty))
+	{
+		for(const auto &[remote, client] : client::map)
+			log::dwarning
 			{
-				log, "Waiting for %zu clients to close...", client::map.size()
+				log, "Waiting for client %s",
+				client->loghead(),
 			};
+
+		log::warning
+		{
+			log, "Waiting for %zu clients to close...",
+			client::map.size(),
+		};
+	}
 
 	log::debug
 	{

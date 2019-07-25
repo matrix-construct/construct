@@ -65,10 +65,24 @@ noexcept
 void
 ircd::server::wait_all()
 {
-	while(peer_unfinished())
+	static const auto finished
 	{
-		if(dock.wait_for(seconds(4)))
-			continue;
+		[] { return !peer_unfinished(); }
+	};
+
+	while(!dock.wait_for(seconds(4), finished))
+	{
+		for(const auto &[name, peer] : peers)
+			log::dwarning
+			{
+				log, "Waiting for peer %s tags:%zu links:%zu err:%b op[r:%b f:%b] %s",
+				name,
+				peer->tag_count(),
+				peer->link_count(),
+				peer->err_has(),
+				peer->op_resolve,
+				peer->op_fini,
+			};
 
 		log::warning
 		{
