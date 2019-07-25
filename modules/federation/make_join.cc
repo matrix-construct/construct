@@ -91,7 +91,7 @@ get__make_join(client &client,
 			"You are not permitted to view the room at this event."
 		};
 
-	char room_version_buf[32];
+	char room_version_buf[m::room::VERSION_MAX_SIZE];
 	const string_view &room_version
 	{
 		m::version(room_version_buf, room, std::nothrow)

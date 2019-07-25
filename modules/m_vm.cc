@@ -256,7 +256,7 @@ ircd::m::vm::inject(eval &eval,
 
 	// Attempt to resolve the room version at this point for interface
 	// exposure at vm::eval::room_version.
-	char room_version_buf[32];
+	char room_version_buf[room::VERSION_MAX_SIZE];
 	const scope_restore eval_room_version
 	{
 		eval.room_version,
@@ -679,7 +679,7 @@ try
 	};
 
 	// Procure the room version.
-	char room_version_buf[32];
+	char room_version_buf[room::VERSION_MAX_SIZE];
 	const scope_restore eval_room_version
 	{
 		eval.room_version,

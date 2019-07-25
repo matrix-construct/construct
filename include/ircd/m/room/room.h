@@ -111,6 +111,9 @@ struct ircd::m::room
 	using closure = std::function<void (const room &)>;
 	using closure_bool = std::function<bool (const room &)>;
 
+	static constexpr const size_t &VERSION_MAX_SIZE {32};
+	static constexpr const size_t &MEMBERSHIP_MAX_SIZE {16};
+
 	id room_id;
 	event::id event_id;
 	const vm::copts *copts {nullptr};

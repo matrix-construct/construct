@@ -53,7 +53,7 @@ ircd::m::sync::rooms_linear(data &data)
 		data.room, &room
 	};
 
-	char membuf[MEMBERSHIP_MAX_SIZE];
+	char membuf[room::MEMBERSHIP_MAX_SIZE];
 	const string_view &membership
 	{
 		data.room?
