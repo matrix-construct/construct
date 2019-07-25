@@ -14,8 +14,11 @@
 namespace ircd::m
 {
 	// Informational pretty string condensed to single line.
-	std::ostream &pretty_oneline(std::ostream &, const event &, const bool &content_keys = true);
-	std::string pretty_oneline(const event &, const bool &content_keys = true);
+	// fmt = 0: w/o content keys, w/ hashes/sigs
+	// fmt = 1: w/ content keys w/ hashes/sigs
+	// fmt = 2: w/o content keys w/o hashes/sigs
+	std::ostream &pretty_oneline(std::ostream &, const event &, const int &fmt = 1);
+	std::string pretty_oneline(const event &, const int &fmt = 1);
 
 	// Informational pretty string on multiple lines.
 	std::ostream &pretty(std::ostream &, const event &);

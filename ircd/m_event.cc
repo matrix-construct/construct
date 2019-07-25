@@ -107,12 +107,12 @@ ircd::m::pretty(std::ostream &s,
 
 std::string
 ircd::m::pretty_oneline(const event &event,
-                        const bool &content_keys)
+                        const int &fmt)
 {
 	std::string ret;
 	std::stringstream s;
 	pubsetbuf(s, ret, 4096);
-	pretty_oneline(s, event, content_keys);
+	pretty_oneline(s, event, fmt);
 	resizebuf(s, ret);
 	return ret;
 }
@@ -120,7 +120,7 @@ ircd::m::pretty_oneline(const event &event,
 std::ostream &
 ircd::m::pretty_oneline(std::ostream &s,
                         const event &event,
-                        const bool &content_keys)
+                        const int &fmt)
 {
 	if(defined(json::get<"room_id"_>(event)))
 		s << json::get<"room_id"_>(event) << ' ';
@@ -159,23 +159,26 @@ ircd::m::pretty_oneline(std::ostream &s,
 	const auto &prev_events{json::get<"prev_events"_>(event)};
 	s << "E:" << prev_events.count() << ' ';
 
-	const auto &hashes{json::get<"hashes"_>(event)};
-	s << "[ ";
-	for(const auto &hash : hashes)
-		s << hash.first << ' ';
-	s << "] ";
-
-	const auto &signatures{json::get<"signatures"_>(event)};
-	s << "[ ";
-	for(const auto &signature : signatures)
+	if(fmt >= 2)
 	{
-		s << signature.first << "[ ";
-		for(const auto &key : json::object{signature.second})
-			s << key.first << ' ';
+		const auto &hashes{json::get<"hashes"_>(event)};
+		s << "[ ";
+		for(const auto &hash : hashes)
+			s << hash.first << ' ';
+		s << "] ";
 
+		const auto &signatures{json::get<"signatures"_>(event)};
+		s << "[ ";
+		for(const auto &signature : signatures)
+		{
+			s << signature.first << "[ ";
+			for(const auto &key : json::object{signature.second})
+				s << key.first << ' ';
+
+			s << "] ";
+		}
 		s << "] ";
 	}
-	s << "] ";
 
 	if(defined(json::get<"type"_>(event)))
 		s << json::get<"type"_>(event) << ' ';
@@ -210,7 +213,7 @@ ircd::m::pretty_oneline(std::ostream &s,
 
 	const json::object &contents
 	{
-		content_keys?
+		fmt >= 1?
 			json::get<"content"_>(event):
 			json::object{}
 	};
