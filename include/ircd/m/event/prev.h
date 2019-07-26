@@ -14,7 +14,6 @@
 namespace ircd::m
 {
 	bool for_each(const event::prev &, const event::id::closure_bool &);
-	void for_each(const event::prev &, const event::id::closure &);
 	size_t degree(const event::prev &);
 	size_t count(const event::prev &);
 

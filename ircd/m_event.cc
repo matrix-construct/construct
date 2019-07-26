@@ -2788,18 +2788,6 @@ const
 	}
 }
 
-void
-ircd::m::for_each(const event::prev &prev,
-                  const event::id::closure &closure)
-{
-	m::for_each(prev, event::id::closure_bool{[&closure]
-	(const event::id &event_id)
-	{
-		closure(event_id);
-		return true;
-	}});
-}
-
 bool
 ircd::m::for_each(const event::prev &prev,
                   const event::id::closure_bool &closure)
@@ -3676,6 +3664,7 @@ ircd::m::count(const event::prev &prev)
 	m::for_each(prev, [&ret](const event::id &event_id)
 	{
 		++ret;
+		return true;
 	});
 
 	return ret;
