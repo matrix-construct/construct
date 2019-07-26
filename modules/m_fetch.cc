@@ -687,7 +687,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "Failed to start any fetch for %s in %s :%s",
+		log, "Failed to start any fetch for %s in %s :%s",
 		string_view{event_id},
 		string_view{room_id},
 		e.what(),
