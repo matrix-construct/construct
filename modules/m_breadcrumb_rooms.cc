@@ -8,10 +8,11 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/breadcrumb_rooms.h
-//
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Matrix Breadcrumb Rooms"
+};
 
 ircd::m::event::id::buf
 ircd::m::breadcrumb_rooms::set(const json::array &rooms)
