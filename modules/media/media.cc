@@ -24,9 +24,13 @@ IRCD_MODULE
 		// the database was just loaded to set the cache size.
 		conf::reset("ircd.media.blocks.cache.size");
 		conf::reset("ircd.media.blocks.cache_comp.size");
+
+		magick_support.reset(new module{"magick"});
 	},
 	[] // fini
 	{
+		magick_support.reset();
+
 		// The database close contains pthread_join()'s within RocksDB which
 		// deadlock under certain conditions when called during a dlclose()
 		// (i.e static destruction of this module). Therefor we must manually
@@ -144,6 +148,9 @@ media;
 
 decltype(blocks)
 blocks;
+
+decltype(magick)
+magick;
 
 std::set<m::room::id>
 downloading;

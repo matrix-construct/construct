@@ -20,6 +20,7 @@ extern const db::descriptor media_blocks_descriptor;
 extern const db::description media_description;
 extern std::shared_ptr<db::database> media;
 extern db::column blocks;
+extern std::unique_ptr<module> magick_support;
 
 extern "C" m::room::id
 file_room_id(m::room::id::buf &out,

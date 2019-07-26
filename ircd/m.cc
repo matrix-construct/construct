@@ -234,7 +234,6 @@ ircd::m::module_names
 	"key_server",
 	"identity_pubkey",
 	"identity_v1",
-	"media_magick",
 	"media_media",
 	"m_command",
 	"m_control",

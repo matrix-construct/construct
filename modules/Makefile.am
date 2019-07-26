@@ -78,6 +78,19 @@ module_LTLIBRARIES = \
 	well_known.la \
 	###
 
+#
+# {Image|Graphics}Magick Support
+#
+if IMAGEMAGICK
+
+magick_la_SOURCES = magick.cc
+magick_la_CPPFLAGS = $(AM_CPPFLAGS) @IMAGEMAGICK_CPPFLAGS@
+magick_la_LDFLAGS = $(AM_LDFLAGS) @IMAGEMAGICK_LDFLAGS@
+magick_la_LIBADD = $(AM_LIBS) @IMAGEMAGICK_LIBS@
+module_LTLIBRARIES += magick.la
+
+endif IMAGEMAGICK
+
 ###############################################################################
 #
 # Messages / protocol
@@ -487,24 +500,6 @@ media_media_media_la_SOURCES = \
 media_module_LTLIBRARIES = \
 	media/media_media.la \
 	###
-
-#
-# {Image|Graphics}Magick Support
-#
-if IMAGEMAGICK
-
-media_media_magick_la_SOURCES = \
-	media/magick.cc \
-	###
-
-media_media_magick_la_CPPFLAGS = $(AM_CPPFLAGS) @IMAGEMAGICK_CPPFLAGS@
-media_media_magick_la_LDFLAGS = $(AM_LDFLAGS) @IMAGEMAGICK_LDFLAGS@
-media_media_magick_la_LIBADD = $(AM_LIBS) @IMAGEMAGICK_LIBS@
-media_module_LTLIBRARIES += \
-	media/media_magick.la \
-	###
-
-endif IMAGEMAGICK
 
 ###############################################################################
 #
