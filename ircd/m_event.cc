@@ -129,9 +129,9 @@ ircd::m::pretty_oneline(std::ostream &s,
 	else
 		s << "* ";
 
-	if(event.event_id)
+	if(event.event_id && event.event_id.version() != "1")
 		s << event.event_id << ' ';
-	else
+	else if(!event.event_id)
 		s << m::event::id::v4{sdbuf, event} << ' ';
 
 	if(json::get<"origin_server_ts"_>(event) != json::undefined_number)
@@ -153,6 +153,9 @@ ircd::m::pretty_oneline(std::ostream &s,
 
 	if(prev.auth_events_count() || prev.prev_events_count())
 		s << ' ';
+
+	if(event.event_id && event.event_id.version() == "1")
+		s << event.event_id << ' ';
 
 	if(fmt >= 2)
 	{
