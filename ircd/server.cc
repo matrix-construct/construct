@@ -349,7 +349,7 @@ ircd::server::cancel(request &request)
 
 	log::debug
 	{
-		log, "cancel %s commit:%d w:%zu hr:%zu cr:%zu",
+		request::log, "%s cancel commit:%d w:%zu hr:%zu cr:%zu",
 		loghead(request),
 		tag.committed(),
 		tag.state.written,
@@ -989,7 +989,7 @@ noexcept try
 {
 	log::debug
 	{
-		log, "%s [%s] => [%u] done wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu chunks:%zu %zu more in queue",
+		log, "%s [%s] => [%u] done wt:%zu rt:%zu %zu more in queue",
 		loghead(link),
 		tag.request?
 			loghead(*tag.request):
@@ -997,14 +997,22 @@ noexcept try
 		uint(tag.state.status),
 		tag.write_size(),
 		tag.read_size(),
-		tag.state.head_read,
-		tag.state.content_read,
-		tag.state.content_length,
-		tag.request?
-			tag.request->in.chunks.size():
-			0UL,
 		link.tag_count() - 1
 	};
+
+	if(tag.request)
+		log::debug
+		{
+			request::log, "%s [%u] wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu chunks:%zu",
+			loghead(*tag.request),
+			uint(tag.state.status),
+			tag.write_size(),
+			tag.read_size(),
+			tag.state.head_read,
+			tag.state.content_read,
+			tag.state.content_length,
+			tag.request->in.chunks.size(),
+		};
 
 	if(link.tag_committed() >= link.tag_commit_max())
 		link.wait_writable();
@@ -1986,6 +1994,7 @@ bool
 ircd::server::link::process_write(tag &tag)
 {
 	if(!tag.committed())
+	{
 		log::debug
 		{
 			log, "%s starting on tag:%lu %zu of %zu: wt:%zu [%s]",
@@ -1998,6 +2007,16 @@ ircd::server::link::process_write(tag &tag)
 				loghead(*tag.request):
 				"<no attached request>"_sv
 		};
+
+		if(tag.request)
+			log::debug
+			{
+				request::log, "%s wt:%zu on %s",
+				loghead(*tag.request),
+				tag.write_size(),
+				loghead(*this),
+			};
+	}
 
 	while(tag.write_remaining())
 	{
@@ -2459,6 +2478,16 @@ const
 		return ret += closure(tag);
 	});
 }
+
+//
+// request
+//
+
+decltype(ircd::server::request::log)
+ircd::server::request::log
+{
+	"server.request"
+};
 
 //
 // tag
