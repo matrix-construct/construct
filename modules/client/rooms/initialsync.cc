@@ -286,5 +286,5 @@ get__initialsync_remote(client &client,
 
 	m::room room_{room};
 	room_.event_id = head;
-	m::fetch::state_ids(room_);
+	//m::fetch::state_ids(room_);
 }

@@ -25,16 +25,12 @@ namespace ircd::m::fetch
 	size_t count();
 
 	// Control panel
-	bool cancel(request &);
 	bool start(const m::room::id &, const m::event::id &);
-	bool prefetch(const m::room::id &, const m::event::id &);
+	bool cancel(request &);
 	size_t clear();
 
 	// Composed operations
 	void auth_chain(const room &, const net::hostport &);
-	void state_ids(const room &);
-
-	extern log::log log;
 }
 
 /// Fetch entity state. This is not meant for construction by users of this

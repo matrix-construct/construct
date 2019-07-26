@@ -16,6 +16,12 @@ IRCD_MODULE
     "Event Fetch Unit", ircd::m::fetch::init, ircd::m::fetch::fini
 };
 
+decltype(ircd::m::fetch::log)
+ircd::m::fetch::log
+{
+	"matrix.fetch"
+};
+
 decltype(ircd::m::fetch::enable)
 ircd::m::fetch::enable
 {
@@ -340,151 +346,6 @@ ircd::m::fetch::hook_handle_prev(const event &event,
 // m/fetch.h
 //
 
-namespace ircd::m::fetch
-{
-	static m::event::id::buf _head(const m::feds::opts &);
-	static std::map<std::string, size_t> _heads(const m::feds::opts &);
-	static void handle_state_ids(const m::room &, const m::feds::result &);
-}
-
-void
-IRCD_MODULE_EXPORT
-ircd::m::fetch::state_ids(const room &room)
-{
-	m::feds::opts opts;
-	opts.room_id = room.room_id;
-	opts.event_id = room.event_id;
-	opts.timeout = seconds(10); //TODO: conf
-
-	m::event::id::buf event_id_buf;
-	if(!opts.event_id)
-	{
-		log::debug
-		{
-			log, "No event_id supplied; fetching heads for %s...",
-			string_view{room.room_id},
-		};
-
-		event_id_buf = _head(opts);
-		opts.event_id = event_id_buf;
-	}
-
-	opts.arg[0] = "ids";
-	opts.op = m::feds::op::state;
-	opts.timeout = seconds(20); //TODO: conf
-	m::feds::acquire(opts, [&room]
-	(const auto &result)
-	{
-		handle_state_ids(room, result);
-		return true;
-	});
-}
-
-ircd::m::event::id::buf
-ircd::m::fetch::_head(const m::feds::opts &opts)
-{
-	const auto heads
-	{
-		_heads(opts)
-	};
-
-	const auto it
-	{
-		std::max_element(begin(heads), end(heads), []
-		(const auto &a, const auto &b)
-		{
-			return a.second < b.second;
-		})
-	};
-
-	return it != end(heads)?
-		event::id::buf{it->first}:
-		event::id::buf{};
-
-}
-
-std::map<std::string, size_t>
-ircd::m::fetch::_heads(const m::feds::opts &opts_)
-{
-	auto opts(opts_);
-	opts.op = m::feds::op::head;
-
-	std::map<std::string, size_t> heads;
-	m::feds::acquire(opts, [&heads]
-	(const auto &result)
-	{
-		if(result.eptr)
-			return true;
-
-		const json::object &event
-		{
-			result.object["event"]
-		};
-
-		const m::event::prev prev{event};
-		for(size_t i(0); i < prev.prev_events_count(); ++i)
-		{
-			// check for dups to prevent result bias.
-			const auto &prev_event_id(prev.prev_event(i));
-			for(size_t j(0); j < prev.prev_events_count(); ++j)
-				if(i != j && prev.prev_event(j) == prev_event_id)
-					return true;
-
-			++heads[prev_event_id];
-		}
-
-		return true;
-	});
-
-	return heads;
-}
-
-void
-ircd::m::fetch::handle_state_ids(const m::room &room,
-                                 const m::feds::result &result)
-try
-{
-	if(result.eptr)
-		std::rethrow_exception(result.eptr);
-
-	const json::array &ids
-	{
-		result.object["pdu_ids"]
-	};
-
-	log::debug
-	{
-		log, "Got %zu state_ids for %s from '%s'",
-		ids.size(),
-		string_view{room.room_id},
-		string_view{result.origin},
-	};
-
-	size_t count(0);
-	for(const json::string &event_id : ids)
-		count += fetch::prefetch(room.room_id, event_id);
-
-	if(count)
-		log::debug
-		{
-			log, "Prefetched %zu of %zu state_ids for %s from '%s'",
-			count,
-			ids.size(),
-			string_view{room.room_id},
-			string_view{result.origin},
-		};
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "Requesting state_ids for %s from '%s' :%s",
-		string_view{room.room_id},
-		result.origin,
-		e.what(),
-	};
-}
-
 void
 IRCD_MODULE_EXPORT
 ircd::m::fetch::auth_chain(const room &room,
@@ -570,13 +431,20 @@ ircd::m::fetch::clear()
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::fetch::prefetch(const m::room::id &room_id,
-                         const m::event::id &event_id)
+ircd::m::fetch::cancel(request &request)
 {
-	if(m::exists(event_id))
-		return false;
+	bool ret{false};
+	if(request.finished == -1)
+		return ret;
 
-	return start(room_id, event_id);
+	if(request.finished == 0)
+	{
+		assert(request.started);
+		ret |= server::cancel(request);
+	}
+
+	request.finished = -1;
+	return ret;
 }
 
 bool
@@ -603,24 +471,6 @@ ircd::m::fetch::start(const m::room::id &room_id,
 		return false;
 
 	return submit(event_id, room_id);
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::fetch::cancel(request &request)
-{
-	bool ret{false};
-	if(request.finished == -1)
-		return ret;
-
-	if(request.finished == 0)
-	{
-		assert(request.started);
-		ret |= server::cancel(request);
-	}
-
-	request.finished = -1;
-	return ret;
 }
 
 size_t
@@ -711,7 +561,7 @@ try
 			return std::any_of(begin(requests), end(requests), []
 			(const request &r)
 			{
-				return r.finished == -1 || r.finished == 0;
+				return r.finished <= 0;
 			});
 		});
 

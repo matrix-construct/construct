@@ -25,6 +25,7 @@ namespace ircd::m::fetch
 	extern conf::item<seconds> auth_timeout;
 	extern conf::item<seconds> timeout;
 	extern conf::item<bool> enable;
+	extern log::log log;
 
 	static bool operator<(const request &a, const request &b) noexcept;
 	static bool operator<(const request &a, const string_view &b) noexcept;
