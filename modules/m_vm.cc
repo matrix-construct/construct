@@ -1088,18 +1088,6 @@ try
 {
 	hook(event, std::forward<T>(data));
 }
-catch(const ctx::interrupted &e)
-{
-	log::derror
-	{
-		"%s | phase:%s :%s",
-		loghead(eval),
-		unquote(hook.feature.get("name")),
-		e.what(),
-	};
-
-	throw;
-}
 catch(const m::error &e)
 {
 	log::derror

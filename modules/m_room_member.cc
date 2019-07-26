@@ -48,6 +48,7 @@ ircd::m::affect_user_room_hookfn
 void
 ircd::m::affect_user_room(const m::event &event,
                           m::vm::eval &eval)
+try
 {
 	const auto &room_id
 	{
@@ -69,8 +70,23 @@ ircd::m::affect_user_room(const m::event &event,
 		create(subject);
 
 	//TODO: ABA / TXN
-	m::user::room user_room{subject};
+	m::user::room user_room
+	{
+		subject
+	};
+
 	send(user_room, sender, "ircd.member", room_id, at<"content"_>(event));
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to update user %s room for membership change in %s by %s :%s",
+		json::get<"state_key"_>(event),
+		json::get<"room_id"_>(event),
+		json::get<"sender"_>(event),
+		e.what()
+	};
 }
 
 decltype(ircd::m::auth_room_member_hookfn)

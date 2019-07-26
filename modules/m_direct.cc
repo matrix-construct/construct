@@ -35,6 +35,7 @@ _join_room__m_direct_hookfn
 void
 _join_room__m_direct(const m::event &event,
                      m::vm::eval &eval)
+try
 {
 	const m::user::id &user_id
 	{
@@ -124,4 +125,14 @@ _join_room__m_direct(const m::event &event,
 
 	top.~object();
 	account_data.set("m.direct", json::object(out.completed()));
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Failure while setting m.direct account_data for %s in %s :%s",
+		json::get<"sender"_>(event),
+		json::get<"room_id"_>(event),
+		e.what()
+	};
 }
