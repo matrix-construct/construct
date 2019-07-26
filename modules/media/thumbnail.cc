@@ -13,6 +13,7 @@
 namespace ircd::m::media::thumbnail
 {
 	extern conf::item<bool> enable;
+	extern conf::item<bool> enable_remote;
 	extern conf::item<size_t> width_min;
 	extern conf::item<size_t> width_max;
 	extern conf::item<size_t> height_min;
@@ -28,6 +29,13 @@ ircd::m::media::thumbnail::enable
 {
 	{ "name",    "ircd.m.media.thumbnail.enable" },
 	{ "default", true                            },
+};
+
+decltype(ircd::m::media::thumbnail::enable_remote)
+ircd::m::media::thumbnail::enable_remote
+{
+	{ "name",    "ircd.m.media.thumbnail.enable_remote" },
+	{ "default", true                                   },
 };
 
 decltype(ircd::m::media::thumbnail::width_min)
@@ -133,6 +141,20 @@ get__thumbnail(client &client,
 			m::user::id{request.user_id}:
 			m::me.user_id
 	};
+
+	if(!m::media::thumbnail::enable_remote)
+	{
+		const m::room::id::buf room_id
+		{
+			file_room_id(server, file)
+		};
+
+		if(!exists(room_id))
+			return resource::response
+			{
+				client, http::NOT_FOUND
+			};
+	}
 
 	const m::room::id::buf room_id
 	{
