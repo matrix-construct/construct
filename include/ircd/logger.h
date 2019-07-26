@@ -65,7 +65,8 @@ namespace ircd::log
 	extern log general;  // "ircd", 'G'
 }
 
-/// Severity level; zero is the most severe. Severity decreases as level increases.
+/// Severity level; zero is the most severe. Frequency and verbosity also tends
+/// to increase as the log level increases.
 enum ircd::log::level
 :uint
 {
@@ -442,7 +443,9 @@ struct ircd::log::critical
 		vlog(log, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 
 		#ifndef NDEBUG
-		__assert_fail("critical", "", 0, "");
+		__assert_fail("critical",
+		              "critical log level", 0,
+		              "CRITICAL messages trap for debugging when assertions are enabled");
 		#endif
 	}
 
@@ -455,7 +458,9 @@ struct ircd::log::critical
 		vlog(general, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
 
 		#ifndef NDEBUG
-		__assert_fail("critical", "", 0, "");
+		__assert_fail("critical",
+		              "critical log level", 0,
+		              "CRITICAL messages trap for debugging when assertions are enabled");
 		#endif
 	}
 };
