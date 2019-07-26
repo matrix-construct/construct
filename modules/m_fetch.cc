@@ -153,9 +153,8 @@ try
 
 	log::debug
 	{
-		log, "%s %s %s ac:%zu ae:%zu pc:%zu pe:%zu pf:%zu",
+		log, "%s %s ac:%zu ae:%zu pc:%zu pe:%zu pf:%zu",
 		loghead(eval),
-		string_view{event.event_id},
 		json::get<"room_id"_>(event),
 		tab.auth_count,
 		tab.auth_exists,
@@ -168,9 +167,8 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "%s %s :%s",
+		log, "%s :%s",
 		loghead(eval),
-		string_view{event.event_id},
 		e.what(),
 	};
 
@@ -207,9 +205,8 @@ ircd::m::fetch::hook_handle_auth(const event &event,
 	// At this point we are missing one or more auth_events for this event.
 	log::dwarning
 	{
-		log, "%s %s auth_events:%zu hit:%zu miss:%zu",
+		log, "%s auth_events:%zu hit:%zu miss:%zu",
 		loghead(eval),
-		string_view{event.event_id},
 		tab.auth_count,
 		tab.auth_exists,
 		tab.auth_count - tab.auth_exists,
@@ -289,9 +286,8 @@ ircd::m::fetch::hook_handle_prev(const event &event,
 	// launched asynchronously if the options allowed for it.
 	log::dwarning
 	{
-		log, "%s %s prev_events:%zu hit:%zu miss:%zu fetching:%zu",
+		log, "%s prev_events:%zu hit:%zu miss:%zu fetching:%zu",
 		loghead(eval),
-		string_view{event.event_id},
 		tab.prev_count,
 		tab.prev_exists,
 		tab.prev_count - tab.prev_exists,
