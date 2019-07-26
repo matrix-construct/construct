@@ -15,11 +15,11 @@ namespace ircd::magick
 	struct display;
 	struct transform;
 
-	static void handle_exception(const ::ExceptionType, const char *, const char *);
-	static void handle_fatal(const ::ExceptionType, const char *, const char *) noexcept;
-	static void handle_error(const ::ExceptionType, const char *, const char *) noexcept;
-	static void handle_warning(const ::ExceptionType, const char *, const char *) noexcept;
-	static void handle_log(const ::ExceptionType, const char *) noexcept;
+	static void handle_exception(const ExceptionType, const char *, const char *);
+	static void handle_fatal(const ExceptionType, const char *, const char *) noexcept;
+	static void handle_error(const ExceptionType, const char *, const char *) noexcept;
+	static void handle_warning(const ExceptionType, const char *, const char *) noexcept;
+	static void handle_log(const ExceptionType, const char *) noexcept;
 	static void *handle_realloc(void *, size_t) noexcept;
 	static void *handle_malloc(size_t) noexcept;
 	static void handle_free(void *) noexcept;
@@ -44,15 +44,15 @@ namespace ircd::magick
 
 struct ircd::magick::display
 {
-	display(const ::ImageInfo &, ::Image &);
+	display(const ImageInfo &, Image &);
 	display(const const_buffer &);
 };
 
 struct ircd::magick::transform
 {
-	using input = std::tuple<const ::ImageInfo &, const ::Image *>;
+	using input = std::tuple<const ImageInfo &, const Image *>;
 	using output = std::function<void (const const_buffer &)>;
-	using transformer = std::function<::Image *(const input &)>;
+	using transformer = std::function<Image *(const input &)>;
 
 	transform(const const_buffer &, const output &, const transformer &);
 };
@@ -126,7 +126,7 @@ ircd::magick::version_abi
 	(auto &version, const auto &buf)
 	{
 		ulong monotonic(0);
-		strlcpy(buf, ::GetMagickVersion(&monotonic));
+		strlcpy(buf, GetMagickVersion(&monotonic));
 		version.monotonic = monotonic;
 	}
 };
@@ -155,15 +155,15 @@ ircd::magick::init()
 			long(version_abi),
 		};
 
-	::MagickAllocFunctions(handle_free, handle_malloc, handle_realloc);
-	::SetFatalErrorHandler(handle_fatal);
-	::SetErrorHandler(handle_error);
-	::SetWarningHandler(handle_warning);
-	::InitializeMagick(nullptr);
-	::SetLogMethod(handle_log);
-	//::SetLogEventMask("all"); // Pollutes stderr :/ can't fix
-	::SetMonitorHandler(handle_progress);
-	::SetMagickResourceLimit(ThreadsResource, 1UL);
+	MagickAllocFunctions(handle_free, handle_malloc, handle_realloc);
+	SetFatalErrorHandler(handle_fatal);
+	SetErrorHandler(handle_error);
+	SetWarningHandler(handle_warning);
+	InitializeMagick(nullptr);
+	SetLogMethod(handle_log);
+	//SetLogEventMask("all"); // Pollutes stderr :/ can't fix
+	SetMonitorHandler(handle_progress);
+	SetMagickResourceLimit(ThreadsResource, 1UL);
 
 	call_ready = true;
 	call_dock.notify_all();
@@ -171,14 +171,14 @@ ircd::magick::init()
 	log::debug
 	{
 		log, "resource settings: pixel max:%lu:%lu height:%lu:%lu width:%lu:%lu; threads:%lu:%lu",
-		::GetMagickResource(PixelsResource),
-		::GetMagickResourceLimit(PixelsResource),
-		::GetMagickResource(HeightResource),
-		::GetMagickResourceLimit(HeightResource),
-		::GetMagickResource(WidthResource),
-		::GetMagickResourceLimit(WidthResource),
-		::GetMagickResource(ThreadsResource),
-		::GetMagickResourceLimit(ThreadsResource),
+		GetMagickResource(PixelsResource),
+		GetMagickResourceLimit(PixelsResource),
+		GetMagickResource(HeightResource),
+		GetMagickResourceLimit(HeightResource),
+		GetMagickResource(WidthResource),
+		GetMagickResourceLimit(WidthResource),
+		GetMagickResource(ThreadsResource),
+		GetMagickResourceLimit(ThreadsResource),
 	};
 }
 
@@ -196,8 +196,8 @@ ircd::magick::fini()
 		return !call_mutex.locked();
 	});
 
-	::DestroyMagickResources();
-	::DestroyMagick();
+	DestroyMagickResources();
+	DestroyMagick();
 }
 
 //
@@ -214,7 +214,7 @@ ircd::magick::thumbcrop::thumbcrop(const const_buffer &in,
 	{
 		const auto &img_p
 		{
-			std::get<const ::Image *>(image)
+			std::get<const Image *>(image)
 		};
 
 		const auto &req_x(req.first);
@@ -239,7 +239,7 @@ ircd::magick::thumbcrop::thumbcrop(const const_buffer &in,
 			aspect? 0 : (scaled.second - req_y) / 2.0,
 		};
 
-		return callex<::Image *>(::ThumbnailImage, img_p, scaled.first, scaled.second);
+		return callex<Image *>(ThumbnailImage, img_p, scaled.first, scaled.second);
 	}};
 
 	const auto cropper{[&req, &out, &offset]
@@ -269,7 +269,7 @@ ircd::magick::thumbnail::thumbnail(const const_buffer &in,
 	{
 		in, out, [&dim](const auto &image)
 		{
-			return callex<::Image *>(::ThumbnailImage, std::get<const ::Image *>(image), dim.first, dim.second);
+			return callex<Image *>(ThumbnailImage, std::get<const Image *>(image), dim.first, dim.second);
 		}
 	};
 }
@@ -286,7 +286,7 @@ ircd::magick::scale::scale(const const_buffer &in,
 	{
 		in, out, [&dim](const auto &image)
 		{
-			return callex<::Image *>(::ScaleImage, std::get<const ::Image *>(image), dim.first, dim.second);
+			return callex<Image *>(ScaleImage, std::get<const Image *>(image), dim.first, dim.second);
 		}
 	};
 }
@@ -300,7 +300,7 @@ ircd::magick::shave::shave(const const_buffer &in,
                            const offset &off,
                            const result_closure &out)
 {
-	const ::RectangleInfo geometry
+	const RectangleInfo geometry
 	{
 		dim.first,   // width
 		dim.second,  // height
@@ -312,7 +312,7 @@ ircd::magick::shave::shave(const const_buffer &in,
 	{
 		in, out, [&geometry](const auto &image)
 		{
-			return callex<::Image *>(::ShaveImage, std::get<const ::Image *>(image), &geometry);
+			return callex<Image *>(ShaveImage, std::get<const Image *>(image), &geometry);
 		}
 	};
 }
@@ -326,7 +326,7 @@ ircd::magick::crop::crop(const const_buffer &in,
                          const offset &off,
                          const result_closure &out)
 {
-	const ::RectangleInfo geometry
+	const RectangleInfo geometry
 	{
 		dim.first,   // width
 		dim.second,  // height
@@ -338,7 +338,7 @@ ircd::magick::crop::crop(const const_buffer &in,
 	{
 		in, out, [&geometry](const auto &image)
 		{
-			return callex<::Image *>(::CropImage, std::get<const ::Image *>(image), &geometry);
+			return callex<Image *>(CropImage, std::get<const Image *>(image), &geometry);
 		}
 	};
 }
@@ -351,34 +351,34 @@ ircd::magick::transform::transform(const const_buffer &input,
                                    const output &output,
                                    const transformer &transformer)
 {
-	const custom_ptr<::ImageInfo> input_info
+	const custom_ptr<ImageInfo> input_info
 	{
-		::CloneImageInfo(nullptr),
-		::DestroyImageInfo
+		CloneImageInfo(nullptr),
+		DestroyImageInfo
 	};
 
-	const custom_ptr<::ImageInfo> output_info
+	const custom_ptr<ImageInfo> output_info
 	{
-		::CloneImageInfo(nullptr),
-		::DestroyImageInfo
+		CloneImageInfo(nullptr),
+		DestroyImageInfo
 	};
 
-	const custom_ptr<::Image> input_image
+	const custom_ptr<Image> input_image
 	{
-		callex<::Image *>(::BlobToImage, input_info.get(), data(input), size(input)),
-		::DestroyImage // pollock
+		callex<Image *>(BlobToImage, input_info.get(), data(input), size(input)),
+		DestroyImage // pollock
 	};
 
-	const custom_ptr<::Image> output_image
+	const custom_ptr<Image> output_image
 	{
 		transformer({*input_info, input_image.get()}),
-		::DestroyImage
+		DestroyImage
 	};
 
 	size_t output_size(0);
 	const auto output_data
 	{
-		callex<void *>(::ImageToBlob, output_info.get(), output_image.get(), &output_size)
+		callex<void *>(ImageToBlob, output_info.get(), output_image.get(), &output_size)
 	};
 
 	const const_buffer result
@@ -395,16 +395,16 @@ ircd::magick::transform::transform(const const_buffer &input,
 
 ircd::magick::display::display(const const_buffer &input)
 {
-	const custom_ptr<::ImageInfo> input_info
+	const custom_ptr<ImageInfo> input_info
 	{
-		::CloneImageInfo(nullptr),
-		::DestroyImageInfo
+		CloneImageInfo(nullptr),
+		DestroyImageInfo
 	};
 
-	const custom_ptr<::Image> input_image
+	const custom_ptr<Image> input_image
 	{
-		callex<::Image *>(::BlobToImage, input_info.get(), data(input), size(input)),
-		::DestroyImage // pollock
+		callex<Image *>(BlobToImage, input_info.get(), data(input), size(input)),
+		DestroyImage // pollock
 	};
 
 	display
@@ -413,10 +413,10 @@ ircd::magick::display::display(const const_buffer &input)
 	};
 }
 
-ircd::magick::display::display(const ::ImageInfo &info,
-                               ::Image &image)
+ircd::magick::display::display(const ImageInfo &info,
+                               Image &image)
 {
-	callpf(::DisplayImages, &info, &image);
+	callpf(DisplayImages, &info, &image);
 }
 
 //
@@ -445,11 +445,11 @@ ircd::magick::callex(function&& f,
 		call_mutex
 	};
 
-	::ExceptionInfo ei;
+	ExceptionInfo ei;
 	GetExceptionInfo(&ei); // initializer
 	const unwind destroy{[&ei]
 	{
-		::DestroyExceptionInfo(&ei);
+		DestroyExceptionInfo(&ei);
 	}};
 
 	assert(call_ready);
@@ -460,17 +460,17 @@ ircd::magick::callex(function&& f,
 
 	const auto their_handler
 	{
-		::SetErrorHandler(handle_exception)
+		SetErrorHandler(handle_exception)
 	};
 
 	const unwind reset{[&their_handler]
 	{
-		::SetErrorHandler(their_handler);
+		SetErrorHandler(their_handler);
 	}};
 
 	// exception comes out of here; if this is not safe we'll have to
 	// convey with a global or inspect ExceptionInfo manually.
-	::CatchException(&ei);
+	CatchException(&ei);
 	return ret;
 }
 
@@ -603,7 +603,7 @@ catch(const ctx::interrupted &e)
 {
 	++job::cur.intrs;
 	job::cur.eptr = std::current_exception();
-	::ThrowException(ei, MonitorError, "interrupted", e.what());
+	ThrowException(ei, MonitorError, "interrupted", e.what());
 	ei->signature = MagickSignature; // ???
 	return false;
 }
@@ -611,7 +611,7 @@ catch(const ctx::terminated &)
 {
 	++job::cur.intrs;
 	job::cur.eptr = std::current_exception();
-	::ThrowException(ei, MonitorError, "terminated", nullptr);
+	ThrowException(ei, MonitorError, "terminated", nullptr);
 	ei->signature = MagickSignature; // ???
 	return false;
 }
@@ -619,7 +619,7 @@ catch(const std::exception &e)
 {
 	++job::cur.errors;
 	job::cur.eptr = std::current_exception();
-	::ThrowLoggedException(ei, MonitorError, "error", e.what(), __FILE__, __FUNCTION__, __LINE__);
+	ThrowLoggedException(ei, MonitorError, "error", e.what(), __FILE__, __FUNCTION__, __LINE__);
 	ei->signature = MagickSignature; // ???
 	return false;
 }
@@ -627,7 +627,7 @@ catch(...)
 {
 	++job::cur.errors;
 	job::cur.eptr = std::current_exception();
-	::ThrowLoggedException(ei, MonitorFatalError, "unknown", nullptr, __FILE__, __FUNCTION__, __LINE__);
+	ThrowLoggedException(ei, MonitorFatalError, "unknown", nullptr, __FILE__, __FUNCTION__, __LINE__);
 	ei->signature = MagickSignature; // ???
 	return false;
 }
@@ -780,7 +780,7 @@ noexcept
 }
 
 void
-ircd::magick::handle_log(const ::ExceptionType type,
+ircd::magick::handle_log(const ExceptionType type,
                          const char *const message)
 noexcept
 {
@@ -789,13 +789,13 @@ noexcept
 		log, "%s (%d) %s :%s",
 		loghead(job::cur),
 		int(type),
-		::GetLocaleExceptionMessage(type, ""),
+		GetLocaleExceptionMessage(type, ""),
 		message,
 	};
 }
 
 void
-ircd::magick::handle_warning(const ::ExceptionType type,
+ircd::magick::handle_warning(const ExceptionType type,
                              const char *const reason,
                              const char *const description)
 noexcept
@@ -805,14 +805,14 @@ noexcept
 		log, "%s (#%d) %s :%s :%s",
 		loghead(job::cur),
 		int(type),
-		::GetLocaleExceptionMessage(type, ""),
+		GetLocaleExceptionMessage(type, ""),
 		reason,
 		description,
 	};
 }
 
 void
-ircd::magick::handle_error(const ::ExceptionType type,
+ircd::magick::handle_error(const ExceptionType type,
                            const char *const reason,
                            const char *const description)
 noexcept
@@ -822,14 +822,14 @@ noexcept
 		log, "%s (#%d) %s :%s :%s",
 		loghead(job::cur),
 		int(type),
-		::GetLocaleExceptionMessage(type, ""),
+		GetLocaleExceptionMessage(type, ""),
 		reason,
 		description,
 	};
 }
 
 [[noreturn]] void
-ircd::magick::handle_fatal(const ::ExceptionType type,
+ircd::magick::handle_fatal(const ExceptionType type,
                            const char *const reason,
                            const char *const description)
 noexcept
@@ -839,7 +839,7 @@ noexcept
 		log, "%s (#%d) %s :%s :%s",
 		loghead(job::cur),
 		int(type),
-		::GetLocaleExceptionMessage(type, ""),
+		GetLocaleExceptionMessage(type, ""),
 		reason,
 		description,
 	};
@@ -848,13 +848,13 @@ noexcept
 }
 
 [[noreturn]] void
-ircd::magick::handle_exception(const ::ExceptionType type,
+ircd::magick::handle_exception(const ExceptionType type,
                                const char *const reason,
                                const char *const description)
 {
 	const auto &message
 	{
-		::GetLocaleExceptionMessage(type, "")?: "???"
+		GetLocaleExceptionMessage(type, "")?: "???"
 	};
 
 	thread_local char buf[exception::BUFSIZE];
