@@ -1781,6 +1781,12 @@ ircd::m::index(const event::id &event_id,
 
 namespace ircd::m
 {
+	static void check_event_auth_rule_9(const m::event &, event::auth::hookdata &);
+	static void check_event_auth_rule_8(const m::event &, event::auth::hookdata &);
+	static void check_event_auth_rule_6(const m::event &, event::auth::hookdata &);
+	static void check_event_auth_rule_3(const m::event &, event::auth::hookdata &);
+	static void check_event_auth_rule_2(const m::event &, event::auth::hookdata &);
+
 	extern hook::site<event::auth::hookdata &> event_auth_hook;
 }
 
@@ -1859,7 +1865,68 @@ ircd::m::event::auth::check(std::nothrow_t,
                             hookdata &data)
 try
 {
-	event_auth_hook(event, data);
+	// 1. If type is m.room.create:
+	if(json::get<"type"_>(event) == "m.room.create")
+	{
+		event_auth_hook(event, data);
+		return {data.allow, data.fail};
+	}
+
+	// 2. Reject if event has auth_events that:
+	check_event_auth_rule_2(event, data);
+
+	// 3. If event does not have a m.room.create in its auth_events, reject.
+	check_event_auth_rule_3(event, data);
+
+	// 4. If type is m.room.aliases
+	if(json::get<"type"_>(event) == "m.room.aliases")
+	{
+		event_auth_hook(event, data);
+		return {data.allow, data.fail};
+	}
+
+	// 5. If type is m.room.member
+	if(json::get<"type"_>(event) == "m.room.member")
+	{
+		event_auth_hook(event, data);
+		return {data.allow, data.fail};
+	}
+
+	// 6. If the sender's current membership state is not join, reject.
+	check_event_auth_rule_6(event, data);
+
+	// 7. If type is m.room.third_party_invite:
+	if(json::get<"type"_>(event) == "m.room.third_party_invite")
+	{
+		event_auth_hook(event, data);
+		return {data.allow, data.fail};
+	}
+
+	// 8. If the event type's required power level is greater than the
+	// sender's power level, reject.
+	check_event_auth_rule_8(event, data);
+
+	// 9. If the event has a state_key that starts with an @ and does not
+	// match the sender, reject.
+	check_event_auth_rule_9(event, data);
+
+	// 10. If type is m.room.power_levels:
+	if(json::get<"type"_>(event) == "m.room.power_levels")
+	{
+		event_auth_hook(event, data);
+		return {data.allow, data.fail};
+	}
+
+	// 11. If type is m.room.redaction:
+	if(json::get<"type"_>(event) == "m.room.redaction")
+	{
+		event_auth_hook(event, data);
+		return {data.allow, data.fail};
+	}
+
+	// 12. Otherwise, allow.
+	data.allow = true;
+	assert(!data.fail);
 	return {data.allow, data.fail};
 }
 catch(const FAIL &e)
@@ -1868,6 +1935,171 @@ catch(const FAIL &e)
 	data.fail = std::current_exception();
 	return {data.allow, data.fail};
 }
+
+bool
+ircd::m::event::auth::is_power_event(const m::event &event)
+{
+	if(!json::get<"type"_>(event))
+		return false;
+
+	if(json::get<"type"_>(event) == "m.room.create")
+		return true;
+
+	if(json::get<"type"_>(event) == "m.room.power_levels")
+		return true;
+
+	if(json::get<"type"_>(event) == "m.room.join_rules")
+		return true;
+
+	if(json::get<"type"_>(event) != "m.room.member")
+		return false;
+
+	if(!json::get<"sender"_>(event) || !json::get<"state_key"_>(event))
+		return false;
+
+	if(json::get<"sender"_>(event) == json::get<"state_key"_>(event))
+		return false;
+
+	if(membership(event) == "leave" || membership(event) == "ban")
+		return true;
+
+	return false;
+}
+
+//
+// m::event::auth internal
+//
+
+void
+ircd::m::check_event_auth_rule_2(const m::event &event,
+                                 event::auth::hookdata &data)
+{
+	using FAIL = event::auth::FAIL;
+
+	// 2. Reject if event has auth_events that:
+	for(size_t i(0); i < data.auth_events.size(); ++i)
+	{
+		// a. have duplicate entries for a given type and state_key pair
+		const m::event &a
+		{
+			*data.auth_events.at(i)
+		};
+
+		for(size_t j(0); j < data.auth_events.size(); ++j) if(i != j)
+		{
+			const m::event &b
+			{
+				*data.auth_events.at(j)
+			};
+
+			if(json::get<"type"_>(a) == json::get<"type"_>(b))
+				if(json::get<"state_key"_>(a) == json::get<"state_key"_>(b))
+					throw FAIL
+					{
+						"Duplicate (type,state_key) in auth_events."
+					};
+		}
+
+		// b. have entries whose type and state_key don't match those specified by
+		// the auth events selection algorithm described in the server...
+		const string_view &type
+		{
+			json::get<"type"_>(a)
+		};
+
+		if(type == "m.room.create")
+			continue;
+
+		if(type == "m.room.power_levels")
+			continue;
+
+		if(type == "m.room.join_rules")
+			continue;
+
+		if(type == "m.room.member")
+		{
+			if(json::get<"sender"_>(event) == json::get<"state_key"_>(a))
+				continue;
+
+			if(json::get<"state_key"_>(event) == json::get<"state_key"_>(a))
+				continue;
+		}
+
+		throw FAIL
+		{
+			"Reference in auth_events is not an auth_event."
+		};
+	}
+}
+
+void
+ircd::m::check_event_auth_rule_3(const m::event &event,
+                                 event::auth::hookdata &data)
+{
+	using FAIL = event::auth::FAIL;
+
+	// 3. If event does not have a m.room.create in its auth_events, reject.
+	if(!data.auth_create)
+		throw FAIL
+		{
+			"Missing m.room.create in auth_events."
+		};
+}
+
+void
+ircd::m::check_event_auth_rule_6(const m::event &event,
+                                 event::auth::hookdata &data)
+{
+	using FAIL = event::auth::FAIL;
+
+	// 6. If the sender's current membership state is not join, reject.
+	if(data.auth_member_sender)
+		if(membership(*data.auth_member_sender) != "join")
+			throw FAIL
+			{
+				"sender is not joined to room."
+			};
+}
+
+void
+ircd::m::check_event_auth_rule_8(const m::event &event,
+                                 event::auth::hookdata &data)
+{
+	using FAIL = event::auth::FAIL;
+
+	const m::room::power power
+	{
+		data.auth_power? *data.auth_power : m::event{}, *data.auth_create
+	};
+
+	// 8. If the event type's required power level is greater than the
+	// sender's power level, reject.
+	if(!power(at<"sender"_>(event), "events", at<"type"_>(event)))
+		throw FAIL
+		{
+			"sender has insufficient power for event type."
+		};
+}
+
+void
+ircd::m::check_event_auth_rule_9(const m::event &event,
+                                 event::auth::hookdata &data)
+{
+	using FAIL = event::auth::FAIL;
+
+	// 9. If the event has a state_key that starts with an @ and does not
+	// match the sender, reject.
+	if(startswith(json::get<"state_key"_>(event), '@'))
+		if(at<"state_key"_>(event) != at<"sender"_>(event))
+			throw FAIL
+			{
+				"sender cannot set another user's mxid in a state_key."
+			};
+}
+
+//
+// event::auth::hookdata
+//
 
 ircd::m::event::auth::hookdata::hookdata(const m::event &event,
                                          const vector_view<const m::event *> &auth_events)
@@ -1928,550 +2160,6 @@ const
 			return event;
 
 	return nullptr;
-}
-
-/*
-ircd::string_view
-ircd::m::event::auth::failed(const m::event &event,
-                             const vector_view<const m::event *> &auth_events)
-{
-	const m::event::prev refs{event};
-
-	// 2. Reject if event has auth_events that:
-	const m::event *auth_create{nullptr};
-	const m::event *auth_power{nullptr};
-	const m::event *auth_join_rules{nullptr};
-	const m::event *auth_member_target{nullptr};
-	const m::event *auth_member_sender{nullptr};
-	for(size_t i(0); i < auth_events.size(); ++i)
-	{
-		// a. have duplicate entries for a given type and state_key pair
-		assert(auth_events.at(i));
-		const m::event &a(*auth_events.at(i));
-		for(size_t j(0); j < auth_events.size(); ++j) if(i != j)
-		{
-			assert(auth_events.at(j));
-			const auto &b(*auth_events.at(j));
-			if(json::get<"type"_>(a) == json::get<"type"_>(b))
-				if(json::get<"state_key"_>(a) == json::get<"state_key"_>(b))
-					return "Duplicate (type,state_key) in auth_events.";
-		}
-
-		// b. have entries whose type and state_key don't match those specified by
-		// the auth events selection algorithm described in the server...
-		const auto &type(json::get<"type"_>(a));
-		if(type == "m.room.create")
-		{
-			assert(!auth_create);
-			auth_create = &a;
-			continue;
-		}
-
-		if(type == "m.room.power_levels")
-		{
-			assert(!auth_power);
-			auth_power = &a;
-			continue;
-		}
-
-		if(type == "m.room.join_rules")
-		{
-			assert(!auth_join_rules);
-			auth_join_rules = &a;
-			continue;
-		}
-
-		if(type == "m.room.member")
-		{
-			if(json::get<"sender"_>(event) == json::get<"state_key"_>(a))
-			{
-				assert(!auth_member_sender);
-				auth_member_sender = &a;
-			}
-
-			if(json::get<"state_key"_>(event) == json::get<"state_key"_>(a))
-			{
-				assert(!auth_member_target);
-				auth_member_target = &a;
-			}
-
-			continue;
-		}
-
-		return "Reference in auth_events is not an auth_event.";
-	}
-
-	// 3. If event does not have a m.room.create in its auth_events, reject.
-	if(!auth_create)
-		return "Missing m.room.create in auth_events";
-
-	const m::room::power power
-	{
-		auth_power? *auth_power : m::event{}, *auth_create
-	};
-
-	// 5. If type is m.room.member:
-	if(json::get<"type"_>(event) == "m.room.member")
-	{
-		// a. If no state_key key ...
-		assert(!conforms(event).has(conforms::MISSING_MEMBER_STATE_KEY));
-		if(empty(json::get<"state_key"_>(event)))
-			return "m.room.member event is missing a state_key.";
-
-		// a. ... or membership key in content, reject.
-		assert(!conforms(event).has(conforms::MISSING_CONTENT_MEMBERSHIP));
-		if(empty(unquote(json::get<"content"_>(event).get("membership"))))
-			return "m.room.member event is missing a content.membership.";
-
-		assert(!conforms(event).has(conforms::INVALID_MEMBER_STATE_KEY));
-		if(!valid(m::id::USER, json::get<"state_key"_>(event)))
-			return "m.room.member event state_key is not a valid user mxid.";
-
-		// b. If membership is join
-		if(membership(event) == "join")
-		{
-			// i. If the only previous event is an m.room.create and the
-			// state_key is the creator, allow.
-			if(refs.prev_events_count() == 1 && refs.auth_events_count() == 1)
-				if(auth_create && auth_create->event_id == refs.prev_event(0))
-					return {};
-
-			// ii. If the sender does not match state_key, reject.
-			if(json::get<"sender"_>(event) != json::get<"state_key"_>(event))
-				return "m.room.member membership=join sender does not match state_key.";
-
-			// iii. If the sender is banned, reject.
-			if(auth_member_target)
-				if(membership(*auth_member_target) == "ban")
-					return "m.room.member membership=join references membership=ban auth_event.";
-
-			if(auth_member_sender)
-				if(membership(*auth_member_sender) == "ban")
-					return "m.room.member membership=join references membership=ban auth_event.";
-
-			if(auth_join_rules)
-			{
-				// iv. If the join_rule is invite then allow if membership state
-				// is invite or join.
-				if(unquote(json::get<"content"_>(*auth_join_rules).get("join_rule")) == "invite")
-					if(auth_member_target)
-					{
-						if(membership(*auth_member_target) == "invite")
-							return {};
-
-						if(membership(*auth_member_target) == "join")
-							return {};
-					}
-
-				// v. If the join_rule is public, allow.
-				if(unquote(json::get<"content"_>(*auth_join_rules).get("join_rule")) == "public")
-					return {};
-
-			}
-
-			// vi. Otherwise, reject.
-			return "m.room.member membership=join fails authorization.";
-		}
-
-		// c. If membership is invite
-		if(membership(event) == "invite")
-		{
-			// i. If content has third_party_invite key
-			if(json::get<"content"_>(event).has("third_party_invite"))
-			{
-				//TODO: XXX
-				// 1. If target user is banned, reject.
-				// 2. If content.third_party_invite does not have a signed key, reject.
-				// 3. If signed does not have mxid and token keys, reject.
-				// 4. If mxid does not match state_key, reject.
-				// 5. If there is no m.room.third_party_invite event in the current room state with state_key matching token, reject.
-				// 6. If sender does not match sender of the m.room.third_party_invite, reject.
-				// 7. If any signature in signed matches any public key in the m.room.third_party_invite event, allow. The public keys are in content of m.room.third_party_invite as:
-				// 7.1. A single public key in the public_key field.
-				// 7.2. A list of public keys in the public_keys field.
-				// 8. Otherwise, reject.
-				return "third_party_invite fails authorization.";
-			}
-
-			// ii. If the sender's current membership state is not join, reject.
-			if(auth_member_sender)
-				if(membership(*auth_member_sender) != "join")
-					return "m.room.member membership=invite sender must have membership=join.";
-
-			// iii. If target user's current membership state is join or ban, reject.
-			if(auth_member_target)
-			{
-				if(membership(*auth_member_target) == "join")
-					return "m.room.member membership=invite target cannot have membership=join.";
-
-				if(membership(*auth_member_target) == "ban")
-					return "m.room.member membership=invite target cannot have membership=ban.";
-			}
-
-			// iv. If the sender's power level is greater than or equal to the invite level,
-			// allow.
-			if(power(at<"sender"_>(event), "invite"))
-				return {};
-
-			// v. Otherwise, reject.
-			return "m.room.member membership=invite fails authorization.";
-		}
-
-		// d. If membership is leave
-		if(membership(event) == "leave")
-		{
-			// i. If the sender matches state_key, allow if and only if that
-			// user's current membership state is invite or join.
-			if(json::get<"sender"_>(event) == json::get<"state_key"_>(event))
-			{
-				if(auth_member_target && membership(*auth_member_target) == "join")
-					return {};
-
-				if(auth_member_target && membership(*auth_member_target) == "invite")
-					return {};
-
-				return "m.room.member membership=leave self-target must have membership=join|invite.";
-			}
-
-			// ii. If the sender's current membership state is not join, reject.
-			if(auth_member_sender)
-				if(membership(*auth_member_sender) != "join")
-					return "m.room.member membership=leave sender must have membership=join.";
-
-			// iii. If the target user's current membership state is ban, and the sender's
-			// power level is less than the ban level, reject.
-			if(auth_member_target)
-				if(membership(*auth_member_target) == "ban")
-					if(!power(at<"sender"_>(event), "ban"))
-						return "m.room.member membership=ban->leave sender must have ban power to unban.";
-
-			// iv. If the sender's power level is greater than or equal to the
-			// kick level, and the target user's power level is less than the
-			// sender's power level, allow.
-			if(power(at<"sender"_>(event), "kick"))
-				if(power.level_user(at<"state_key"_>(event)) < power.level_user(at<"sender"_>(event)))
-					return {};
-
-			// v. Otherwise, reject.
-			return "m.room.member membership=leave fails authorization.";
-		}
-
-		// e. If membership is ban
-		if(membership(event) == "ban")
-		{
-			// i. If the sender's current membership state is not join, reject.
-			if(auth_member_sender)
-				if(membership(*auth_member_sender) != "join")
-					return "m.room.member membership=ban sender must have membership=join.";
-
-			// ii. If the sender's power level is greater than or equal to the
-			// ban level, and the target user's power level is less than the
-			// sender's power level, allow.
-			if(power(at<"sender"_>(event), "ban"))
-				if(power.level_user(at<"state_key"_>(event)) < power.level_user(at<"sender"_>(event)))
-					return {};
-
-			// iii. Otherwise, reject.
-			return "m.room.member membership=ban fails authorization.";
-		}
-
-		// f. Otherwise, the membership is unknown. Reject.
-		return "m.room.member membership=unknown.";
-	}
-
-	// 6. If the sender's current membership state is not join, reject.
-	if(auth_member_sender)
-		if(membership(*auth_member_sender) != "join")
-			return "sender is not joined to room.";
-
-	// 7. If type is m.room.third_party_invite:
-	if(json::get<"type"_>(event) == "m.room.third_party_invite")
-	{
-		// a. Allow if and only if sender's current power level is greater
-		// than or equal to the invite level.
-		if(power(at<"sender"_>(event), "invite"))
-			return {};
-
-		return "sender has power level less than required for invite.";
-	}
-
-	// 8. If the event type's required power level is greater than the
-	// sender's power level, reject.
-	if(!power(at<"sender"_>(event), "events", at<"type"_>(event)))
-		return "sender has insufficient power for event type.";
-
-	// 9. If the event has a state_key that starts with an @ and does not
-	// match the sender, reject.
-	if(startswith(json::get<"state_key"_>(event), '@'))
-		if(at<"state_key"_>(event) != at<"sender"_>(event))
-			return "sender cannot set another user's mxid in a state_key.";
-
-	// 10. If type is m.room.power_levels:
-	if(json::get<"type"_>(event) == "m.room.power_levels")
-	{
-		// a. If users key in content is not a dictionary with keys that are
-		// valid user IDs with values that are integers (or a string that is
-		// an integer), reject.
-		if(json::type(json::get<"content"_>(event).get("users")) != json::OBJECT)
-			return "m.room.power_levels content.users is not a json object.";
-
-		for(const auto &member : json::object(at<"content"_>(event).at("users")))
-		{
-			if(!m::valid(m::id::USER, member.first))
-				return "m.room.power_levels content.users key is not a user mxid";
-
-			if(!try_lex_cast<int64_t>(unquote(member.second)))
-				return "m.room.power_levels content.users value is not an integer.";
-		}
-
-		// b. If there is no previous m.room.power_levels event in the room, allow.
-		if(!auth_power)
-			return {};
-
-		const m::room::power old_power{*auth_power, *auth_create};
-		const m::room::power new_power{event, *auth_create};
-		const int64_t current_level
-		{
-			old_power.level_user(at<"sender"_>(event))
-		};
-
-		// c. For each of the keys users_default, events_default,
-		// state_default, ban, redact, kick, invite, as well as each entry
-		// being changed under the events or users keys:
-		static const string_view keys[]
-		{
-			"users_default",
-			"events_default",
-			"state_default",
-			"ban",
-			"redact",
-			"kick",
-			"invite",
-		};
-
-		for(const auto &key : keys)
-		{
-			const int64_t old_level(old_power.level(key));
-			const int64_t new_level(new_power.level(key));
-			if(old_level == new_level)
-				continue;
-
-			// i. If the current value is higher than the sender's current
-			// power level, reject.
-			if(old_level > current_level)
-				return "m.room.power_levels property denied to sender's power level.";
-
-			// ii. If the new value is higher than the sender's current power
-			// level, reject.
-			if(new_level > current_level)
-				return "m.room.power_levels property exceeds sender's power level.";
-		}
-
-		string_view ret;
-		using closure = m::room::power::closure_bool;
-		old_power.for_each("users", closure{[&ret, &new_power, &current_level]
-		(const string_view &user_id, const int64_t &old_level)
-		{
-			if(new_power.has_user(user_id))
-				if(new_power.level_user(user_id) == old_level)
-					return true;
-
-			// i. If the current value is higher than the sender's current
-			// power level, reject.
-			if(old_level > current_level)
-			{
-				ret = "m.room.power_levels user property denied to sender's power level.";
-				return false;
-			};
-
-			// ii. If the new value is higher than the sender's current power
-			// level, reject.
-			if(new_power.level_user(user_id) > current_level)
-			{
-				ret = "m.room.power_levels user property exceeds sender's power level.";
-				return false;
-			};
-
-			return true;
-		}});
-
-		if(ret)
-			return ret;
-
-		new_power.for_each("users", closure{[&ret, &old_power, &current_level]
-		(const string_view &user_id, const int64_t &new_level)
-		{
-			if(old_power.has_user(user_id))
-				if(old_power.level_user(user_id) == new_level)
-					return true;
-
-			// i. If the current value is higher than the sender's current
-			// power level, reject.
-			if(new_level > current_level)
-			{
-				ret = "m.room.power_levels user property exceeds sender's power level.";
-				return false;
-			};
-
-			return true;
-		}});
-
-		if(ret)
-			return ret;
-
-		old_power.for_each("events", closure{[&ret, &new_power, &current_level]
-		(const string_view &type, const int64_t &old_level)
-		{
-			if(new_power.has_event(type))
-				if(new_power.level_event(type) == old_level)
-					return true;
-
-			// i. If the current value is higher than the sender's current
-			// power level, reject.
-			if(old_level > current_level)
-			{
-				ret = "m.room.power_levels event property denied to sender's power level.";
-				return false;
-			};
-
-			// ii. If the new value is higher than the sender's current power
-			// level, reject.
-			if(new_power.level_event(type) > current_level)
-			{
-				ret = "m.room.power_levels event property exceeds sender's power level.";
-				return false;
-			};
-
-			return true;
-		}});
-
-		if(ret)
-			return ret;
-
-		new_power.for_each("events", closure{[&ret, &old_power, &current_level]
-		(const string_view &type, const int64_t &new_level)
-		{
-			if(old_power.has_event(type))
-				if(old_power.level_event(type) == new_level)
-					return true;
-
-			// i. If the current value is higher than the sender's current
-			// power level, reject.
-			if(new_level > current_level)
-			{
-				ret = "m.room.power_levels event property exceeds sender's power level.";
-				return false;
-			};
-
-			return true;
-		}});
-
-		// d. For each entry being changed under the users key...
-		old_power.for_each("users", closure{[&ret, &event, &new_power, &current_level]
-		(const string_view &user_id, const int64_t &old_level)
-		{
-			// ...other than the sender's own entry:
-			if(user_id == at<"sender"_>(event))
-				return true;
-
-			if(new_power.has_user(user_id))
-				if(new_power.level_user(user_id) == old_level)
-					return true;
-
-			// i. If the current value is equal to the sender's current power
-			// level, reject.
-			if(old_level == current_level)
-			{
-				ret = "m.room.power_levels user property denied to sender's power level.";
-				return false;
-			};
-
-			return true;
-		}});
-
-		if(ret)
-			return ret;
-
-		// e. Otherwise, allow.
-		assert(!ret);
-		return ret;
-	}
-
-	// 11. If type is m.room.redaction:
-	if(json::get<"type"_>(event) == "m.room.redaction")
-	{
-		// a. If the sender's power level is greater than or equal to the
-		// redact level, allow.
-		if(power(at<"sender"_>(event), "redact"))
-			return {};
-
-		// b. If the domain of the event_id of the event being redacted is the
-		// same as the domain of the event_id of the m.room.redaction, allow.
-		//
-		//if(event::id(json::get<"redacts"_>(event)).host() == user::id(at<"sender"_>(event)).host())
-		//	return {};
-		//
-		// In past room versions, redactions were only permitted to enter the
-		// DAG if the sender's domain matched the domain in the event ID
-		// being redacted, or the sender had appropriate permissions per the
-		// power levels. Due to servers now not being able to determine where
-		// an event came from during event authorization, redaction events
-		// are always accepted (provided the event is allowed by events and
-		// events_default in the power levels). However, servers should not
-		// apply or send redactions to clients until both the redaction event
-		// and original event have been seen, and are valid. Servers should
-		// only apply redactions to events where the sender's domains match,
-		// or the sender of the redaction has the appropriate permissions per
-		// the power levels.
-		const auto redact_target_idx(m::index(at<"redacts"_>(event), std::nothrow));
-		const auto sender_domain_match{[&event](const string_view &tgt)
-		{
-			return tgt? user::id(tgt).host() == user::id(at<"sender"_>(event)).host(): false;
-		}};
-
-		if(!redact_target_idx)
-			return "m.room.redaction redacts target is unknown.";
-
-		if(m::query(std::nothrow, redact_target_idx, "redacts", sender_domain_match))
-			return {};
-
-		// c. Otherwise, reject.
-		return "m.room.redaction fails authorization.";
-	}
-
-	// 12. Otherwise, allow.
-	return {};
-}
-*/
-
-bool
-ircd::m::event::auth::is_power_event(const m::event &event)
-{
-	if(!json::get<"type"_>(event))
-		return false;
-
-	if(json::get<"type"_>(event) == "m.room.create")
-		return true;
-
-	if(json::get<"type"_>(event) == "m.room.power_levels")
-		return true;
-
-	if(json::get<"type"_>(event) == "m.room.join_rules")
-		return true;
-
-	if(json::get<"type"_>(event) != "m.room.member")
-		return false;
-
-	if(!json::get<"sender"_>(event) || !json::get<"state_key"_>(event))
-		return false;
-
-	if(json::get<"sender"_>(event) == json::get<"state_key"_>(event))
-		return false;
-
-	if(membership(event) == "leave" || membership(event) == "ban")
-		return true;
-
-	return false;
 }
 
 //

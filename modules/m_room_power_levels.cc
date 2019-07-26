@@ -8,17 +8,34 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m
+{
+    static void auth_room_power_levels(const event &, event::auth::hookdata &);
+    extern hookfn<event::auth::hookdata &> auth_room_power_levels_hookfn;
 
-mapi::header
+    static void changed_room_power_levels(const event &, vm::eval &);
+	extern m::hookfn<m::vm::eval &> changed_room_power_levels_hookfn;
+}
+
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix m.room.power_levels"
 };
 
-static void
-_changed_levels(const m::event &event,
-                m::vm::eval &)
+decltype(ircd::m::changed_room_power_levels_hookfn)
+ircd::m::changed_room_power_levels_hookfn
+{
+	changed_room_power_levels,
+	{
+		{ "_site",    "vm.notify"            },
+		{ "type",     "m.room.power_levels"  },
+	}
+};
+
+void
+ircd::m::changed_room_power_levels(const m::event &event,
+                                   m::vm::eval &)
 {
 	log::info
 	{
@@ -29,12 +46,247 @@ _changed_levels(const m::event &event,
     };
 }
 
-const m::hookfn<m::vm::eval &>
-_changed_levels_hookfn
+decltype(ircd::m::auth_room_power_levels_hookfn)
+ircd::m::auth_room_power_levels_hookfn
 {
-	_changed_levels,
+	auth_room_power_levels,
 	{
-		{ "_site",    "vm.notify"            },
+		{ "_site",    "event.auth"           },
 		{ "type",     "m.room.power_levels"  },
 	}
 };
+
+void
+ircd::m::auth_room_power_levels(const m::event &event,
+                                event::auth::hookdata &data)
+{
+	using FAIL = event::auth::FAIL;
+
+	// 10. If type is m.room.power_levels:
+	assert(json::get<"type"_>(event) == "m.room.power_levels");
+
+	// a. If users key in content is not a dictionary with keys that are
+	// valid user IDs with values that are integers (or a string that is
+	// an integer), reject.
+	if(json::type(json::get<"content"_>(event).get("users")) != json::OBJECT)
+		throw FAIL
+		{
+			"m.room.power_levels content.users is not a json object."
+		};
+
+	for(const auto &member : json::object(at<"content"_>(event).at("users")))
+	{
+		if(!m::valid(m::id::USER, member.first))
+			throw FAIL
+			{
+				"m.room.power_levels content.users key is not a user mxid"
+			};
+
+		if(!try_lex_cast<int64_t>(unquote(member.second)))
+			throw FAIL
+			{
+				"m.room.power_levels content.users value is not an integer."
+			};
+	}
+
+	// b. If there is no previous m.room.power_levels event in the room, allow.
+	if(!data.auth_power)
+	{
+		data.allow = true;
+		return;
+	};
+
+	const m::room::power old_power
+	{
+		*data.auth_power, *data.auth_create
+	};
+
+	const m::room::power new_power
+	{
+		event, *data.auth_create
+	};
+
+	const int64_t current_level
+	{
+		old_power.level_user(at<"sender"_>(event))
+	};
+
+	// c. For each of the keys users_default, events_default,
+	// state_default, ban, redact, kick, invite, as well as each entry
+	// being changed under the events or users keys:
+	static const string_view keys[]
+	{
+		"users_default",
+		"events_default",
+		"state_default",
+		"ban",
+		"redact",
+		"kick",
+		"invite",
+	};
+
+	for(const auto &key : keys)
+	{
+		const int64_t old_level(old_power.level(key));
+		const int64_t new_level(new_power.level(key));
+		if(old_level == new_level)
+			continue;
+
+		// i. If the current value is higher than the sender's current
+		// power level, reject.
+		if(old_level > current_level)
+			throw FAIL
+			{
+				"m.room.power_levels property denied to sender's power level."
+			};
+
+		// ii. If the new value is higher than the sender's current power
+		// level, reject.
+		if(new_level > current_level)
+			throw FAIL
+			{
+				"m.room.power_levels property exceeds sender's power level."
+			};
+	}
+
+	string_view ret;
+	using closure = m::room::power::closure_bool;
+	old_power.for_each("users", closure{[&ret, &new_power, &current_level]
+	(const string_view &user_id, const int64_t &old_level)
+	{
+		if(new_power.has_user(user_id))
+			if(new_power.level_user(user_id) == old_level)
+				return true;
+
+		// i. If the current value is higher than the sender's current
+		// power level, reject.
+		if(old_level > current_level)
+		{
+			ret = "m.room.power_levels user property denied to sender's power level.";
+			return false;
+		};
+
+		// ii. If the new value is higher than the sender's current power
+		// level, reject.
+		if(new_power.level_user(user_id) > current_level)
+		{
+			ret = "m.room.power_levels user property exceeds sender's power level.";
+			return false;
+		};
+
+		return true;
+	}});
+
+	if(ret)
+		throw FAIL
+		{
+			"%s", ret
+		};
+
+	new_power.for_each("users", closure{[&ret, &old_power, &current_level]
+	(const string_view &user_id, const int64_t &new_level)
+	{
+		if(old_power.has_user(user_id))
+			if(old_power.level_user(user_id) == new_level)
+				return true;
+
+		// i. If the current value is higher than the sender's current
+		// power level, reject.
+		if(new_level > current_level)
+		{
+			ret = "m.room.power_levels user property exceeds sender's power level.";
+			return false;
+		};
+
+		return true;
+	}});
+
+	if(ret)
+		throw FAIL
+		{
+			"%s", ret
+		};
+
+	old_power.for_each("events", closure{[&ret, &new_power, &current_level]
+	(const string_view &type, const int64_t &old_level)
+	{
+		if(new_power.has_event(type))
+			if(new_power.level_event(type) == old_level)
+				return true;
+
+		// i. If the current value is higher than the sender's current
+		// power level, reject.
+		if(old_level > current_level)
+		{
+			ret = "m.room.power_levels event property denied to sender's power level.";
+			return false;
+		};
+
+		// ii. If the new value is higher than the sender's current power
+		// level, reject.
+		if(new_power.level_event(type) > current_level)
+		{
+			ret = "m.room.power_levels event property exceeds sender's power level.";
+			return false;
+		};
+
+		return true;
+	}});
+
+	if(ret)
+		throw FAIL
+		{
+			"%s", ret
+		};
+
+	new_power.for_each("events", closure{[&ret, &old_power, &current_level]
+	(const string_view &type, const int64_t &new_level)
+	{
+		if(old_power.has_event(type))
+			if(old_power.level_event(type) == new_level)
+				return true;
+
+		// i. If the current value is higher than the sender's current
+		// power level, reject.
+		if(new_level > current_level)
+		{
+			ret = "m.room.power_levels event property exceeds sender's power level.";
+			return false;
+		};
+
+		return true;
+	}});
+
+	// d. For each entry being changed under the users key...
+	old_power.for_each("users", closure{[&ret, &event, &new_power, &current_level]
+	(const string_view &user_id, const int64_t &old_level)
+	{
+		// ...other than the sender's own entry:
+		if(user_id == at<"sender"_>(event))
+			return true;
+
+		if(new_power.has_user(user_id))
+			if(new_power.level_user(user_id) == old_level)
+				return true;
+
+		// i. If the current value is equal to the sender's current power
+		// level, reject.
+		if(old_level == current_level)
+		{
+			ret = "m.room.power_levels user property denied to sender's power level.";
+			return false;
+		};
+
+		return true;
+	}});
+
+	if(ret)
+		throw FAIL
+		{
+			"%s", ret
+		};
+
+	// e. Otherwise, allow.
+	assert(!ret);
+	data.allow = true;
+}
