@@ -26,6 +26,7 @@ namespace ircd::m::fetch
 
 	// Control panel
 	bool start(const m::room::id &, const m::event::id &);
+	bool start(const room &);
 	bool cancel(request &);
 	size_t clear();
 

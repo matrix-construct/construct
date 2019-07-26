@@ -13440,14 +13440,31 @@ console_cmd__fetch(opt &out, const string_view &line)
 		m::room_id(param.at("room_id"))
 	};
 
-	const m::event::id event_id
+	const m::event::id &event_id
 	{
-		param.at("event_id")
+		param["event_id"]?
+			m::event::id{param["event_id"]}:
+			m::event::id{}
 	};
 
-	if(!m::fetch::start(room_id, event_id))
+	if(!event_id)
 	{
-		out << "failed to start." << std::endl;
+		if(!m::fetch::start(room_id))
+		{
+			out << "failed to start for "
+			    << room_id
+			    << std::endl;
+
+			return true;
+		}
+	}
+	else if(!m::fetch::start(room_id, event_id))
+	{
+		out << "failed to start for "
+		    << event_id << " in "
+		    << room_id
+		    << std::endl;
+
 		return true;
 	}
 

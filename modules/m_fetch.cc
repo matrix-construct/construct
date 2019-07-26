@@ -449,6 +449,38 @@ ircd::m::fetch::cancel(request &request)
 
 bool
 IRCD_MODULE_EXPORT
+ircd::m::fetch::start(const m::room &room)
+{
+	if(room.event_id)
+		return start(room.room_id, room.event_id);
+
+	feds::opts opts;
+	opts.op = feds::op::head;
+	opts.room_id = room.room_id;
+	opts.closure_errors = false;
+	feds::acquire
+	{
+		opts, [](const auto &result)
+		{
+			const json::object &event
+			{
+				result.object["event"]
+			};
+
+			return m::for_each(event::prev(event), [&result]
+			(const event::id &event_id)
+			{
+				start(result.request->room_id, event_id);
+				return true;
+			});
+		}
+	};
+
+	return true;
+}
+
+bool
+IRCD_MODULE_EXPORT
 ircd::m::fetch::start(const m::room::id &room_id,
                       const m::event::id &event_id)
 {
