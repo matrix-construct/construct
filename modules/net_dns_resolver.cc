@@ -810,12 +810,10 @@ ircd::net::dns::resolver::error_one(tag &tag,
                                     const std::exception_ptr &eptr,
                                     const bool &remove)
 {
-	thread_local char hpbuf[128];
 	log::error
 	{
-		log, "DNS error id:%u for '%s' :%s",
+		log, "DNS error id:%u :%s",
 		tag.id,
-		string(hpbuf, tag.hp),
 		what(eptr)
 	};
 
