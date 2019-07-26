@@ -252,9 +252,9 @@ get__thumbnail_local(client &client,
 			copied
 		};
 
-	static const bool available
+	const bool available
 	{
-		mods::loaded("media_magick")
+		magick_support
 	};
 
 	const auto mime_type

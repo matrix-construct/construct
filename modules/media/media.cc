@@ -10,34 +10,51 @@
 
 #include "media.h"
 
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"11.7 :Content respository",
-	[] // init
-	{
-		static const std::string dbopts;
-		media = std::make_shared<database>("media", dbopts, media_description);
-		blocks = db::column{*media, "blocks"};
-
-		// The conf setter callbacks must be manually executed after
-		// the database was just loaded to set the cache size.
-		conf::reset("ircd.media.blocks.cache.size");
-		conf::reset("ircd.media.blocks.cache_comp.size");
-
-		magick_support.reset(new module{"magick"});
-	},
-	[] // fini
-	{
-		magick_support.reset();
-
-		// The database close contains pthread_join()'s within RocksDB which
-		// deadlock under certain conditions when called during a dlclose()
-		// (i.e static destruction of this module). Therefor we must manually
-		// close the db here first.
-		media = std::shared_ptr<database>{};
-	}
+	ircd::m::media::init,
+	ircd::m::media::fini
 };
+
+void
+ircd::m::media::init()
+{
+	static const std::string dbopts;
+	::media = std::make_shared<database>("media", dbopts, media_description);
+	::blocks = db::column{*::media, "blocks"};
+
+	// The conf setter callbacks must be manually executed after
+	// the database was just loaded to set the cache size.
+	conf::reset("ircd.media.blocks.cache.size");
+	conf::reset("ircd.media.blocks.cache_comp.size");
+
+	try
+	{
+		::magick_support.reset(new module{"magick"});
+	}
+	catch(std::exception &e)
+	{
+		log::warning
+		{
+			media_log, "Failed to load GraphicsMagick support :%s",
+			e.what()
+		};
+	}
+}
+
+void
+ircd::m::media::fini()
+{
+	::magick_support.reset();
+
+	// The database close contains pthread_join()'s within RocksDB which
+	// deadlock under certain conditions when called during a dlclose()
+	// (i.e static destruction of this module). Therefor we must manually
+	// close the db here first.
+	::media = std::shared_ptr<database>{};
+}
 
 decltype(media_log)
 media_log
@@ -149,8 +166,8 @@ media;
 decltype(blocks)
 blocks;
 
-decltype(magick)
-magick;
+decltype(magick_support)
+magick_support;
 
 std::set<m::room::id>
 downloading;

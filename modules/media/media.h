@@ -8,6 +8,12 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m::media
+{
+	void init();
+	void fini();
+}
+
 using namespace ircd;
 
 extern mapi::header IRCD_MODULE;

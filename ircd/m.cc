@@ -323,7 +323,7 @@ ircd::m::module_names
 decltype(ircd::m::module_names_optional)
 ircd::m::module_names_optional
 {
-	"media_magick",
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
