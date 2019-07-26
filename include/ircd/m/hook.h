@@ -159,11 +159,17 @@ try
 {
 	// stats for site
 	++calls;
-	const scope_count site_calling{calling};
+	const scope_count site_calling
+	{
+		calling
+	};
 
 	// stats for hook
 	++hfn.calls;
-	const scope_count hook_calling{hfn.calling};
+	const scope_count hook_calling
+	{
+		hfn.calling
+	};
 
 	// call hook
 	hfn.function(event, d);
@@ -175,7 +181,7 @@ catch(const std::exception &e)
 
 	log::critical
 	{
-		"Unhandled hookfn(%p) %s error :%s",
+		log, "Unhandled hookfn(%p) %s error :%s",
 		&hfn,
 		string_view{hfn.feature},
 		e.what()
