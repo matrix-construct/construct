@@ -3168,6 +3168,9 @@ noexcept
 		})
 	};
 
+	if(unlikely(!sd.is_open()))
+		return make_error_code(std::errc::bad_file_descriptor);
+
 	std::error_code ret;
 	if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) >= ssize_t(sizeof(buf)))
 		return ret;
