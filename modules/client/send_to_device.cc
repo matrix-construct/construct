@@ -14,6 +14,7 @@ static void
 send_to_device(const string_view &txnid,
                const m::user::id &sender,
                const m::user::id &target,
+               const string_view &device_id,
                const string_view &type,
                const json::object &message);
 
@@ -93,19 +94,14 @@ put__send_to_device(client &client,
 		url::decode(txnidbuf, request.parv[1])
 	};
 
-	const json::object &messages
+	const json::object &targets
 	{
 		request["messages"]
 	};
 
-	if(size(messages) > 1)
-		throw m::UNSUPPORTED
-		{
-			"Multiple user targets is not yet supported."
-		};
-
-	for(const auto &[user_id, message] : messages)
-		send_to_device(txnid, request.user_id, user_id, type, messages);
+	for(const auto &[user_id, messages] : targets)
+		for(const auto &[device_id, message] : json::object(messages))
+			send_to_device(txnid, request.user_id, user_id, device_id, type, message);
 
 	return resource::response
 	{
@@ -117,21 +113,48 @@ void
 send_to_device(const string_view &txnid,
                const m::user::id &sender,
                const m::user::id &target,
+               const string_view &device_id,
                const string_view &type,
                const json::object &message)
+try
 {
+	const unique_buffer<mutable_buffer> buf
+	{
+		48_KiB
+	};
+
+	json::stack out{buf};
+	{
+		json::stack::object _messages
+		{
+			out, "messages"
+		};
+
+		json::stack::object _target
+		{
+			_messages, target
+		};
+
+		json::stack::object _device
+		{
+			_target, device_id
+		};
+
+		_device.append(message);
+	}
+
 	json::iov event, content;
 	const json::iov::push push[]
 	{
 		// The federation sender considers the room_id property of an event
 		// as the "destination" and knows what to do if it's actually some
 		// some other string like the user::id we're targeting here.
-		{ event,   { "room_id",      target              } },
-		{ event,   { "type",        "m.direct_to_device" } },
-		{ content, { "type",         type                } },
-		{ content, { "sender",       sender              } },
-		{ content, { "message_id",   txnid               } },
-		{ content, { "messages",     message             } },
+		{ event,   { "room_id",      target                } },
+		{ event,   { "type",        "m.direct_to_device"   } },
+		{ content, { "type",         type                  } },
+		{ content, { "sender",       sender                } },
+		{ content, { "message_id",   txnid                 } },
+		{ content, { "messages",     out.completed()       } },
 	};
 
 	m::vm::copts opts;
@@ -145,5 +168,17 @@ send_to_device(const string_view &txnid,
 	m::vm::eval
 	{
 		event, content, opts
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Send %s '%s' by %s to device '%s' belonging to %s",
+		type,
+		txnid,
+		string_view{sender},
+		device_id,
+		string_view{target},
 	};
 }
