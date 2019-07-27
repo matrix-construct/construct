@@ -471,7 +471,16 @@ void
 ircd::net::check(socket &socket,
                  const ready &type)
 {
-	socket.check(type);
+	const error_code ec
+	{
+		check(std::nothrow, socket, type)
+	};
+
+	if(likely(!ec))
+		return;
+
+	throw_system_error(ec);
+	__builtin_unreachable();
 }
 
 std::error_code
@@ -3140,18 +3149,6 @@ try
 catch(const boost::system::system_error &e)
 {
 	throw_system_error(e);
-}
-
-void
-ircd::net::socket::check(const ready &type)
-{
-	const error_code ec
-	{
-		check(std::nothrow, type)
-	};
-
-	if(ec.value())
-		throw_system_error(ec);
 }
 
 std::error_code

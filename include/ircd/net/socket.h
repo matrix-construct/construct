@@ -100,7 +100,6 @@ struct ircd::net::socket
 
 	// low level check suite
 	error_code check(std::nothrow_t, const ready &) noexcept;
-	void check(const ready &);
 
 	// low level wait suite
 	void wait(const wait_opts &);
