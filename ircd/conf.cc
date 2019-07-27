@@ -194,12 +194,6 @@ ircd::conf::exists(const string_view &key)
 // item
 //
 
-decltype(ircd::conf::item<void>::NAME_MAX_LEN)
-ircd::conf::item<void>::NAME_MAX_LEN
-{
-	127
-};
-
 /// Conf item abstract constructor.
 ircd::conf::item<void>::item(const json::members &opts,
                              conf::set_cb set_cb)
@@ -376,8 +370,8 @@ void
 ircd::conf::call_env(item<void> &item)
 noexcept try
 {
-	assert(size(item.name) <= item.NAME_MAX_LEN);
-	thread_local char key[conf::item<void>::NAME_MAX_LEN];
+	assert(size(item.name) <= conf::NAME_MAX_LEN);
+	thread_local char key[conf::NAME_MAX_LEN];
 	const string_view name
 	{
 		key,

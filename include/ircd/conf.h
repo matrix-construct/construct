@@ -55,6 +55,9 @@ namespace ircd::conf
 
 	using set_cb = std::function<void ()>;
 
+	const size_t NAME_MAX_LEN {127};
+	const size_t VALUE_MAX_LEN {48_KiB};
+
 	extern std::map<string_view, item<> *> items;
 	extern callbacks<void (item<> &)> on_init;
 
@@ -76,8 +79,6 @@ namespace ircd::conf
 template<>
 struct ircd::conf::item<void>
 {
-	static const size_t NAME_MAX_LEN;
-
 	json::strung feature_;
 	json::object feature;
 	string_view name;
