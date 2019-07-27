@@ -519,7 +519,7 @@ noexcept
 	s
 	<< microtime(date)
 	<< ' '
-	<< std::setw(5)
+	<< std::setw(6)
 	<< std::right
 	<< ctx::epoch()
 	<< ' '
