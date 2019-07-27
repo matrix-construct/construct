@@ -3135,7 +3135,7 @@ const
 	// joined members optimization. Only possible when seeking
 	// membership="join" on the present state of the room.
 	if(membership == "join" && present)
-		return this->for_each(membership, [&closure, &state, this]
+		return this->for_each(membership, [this, &closure, &state]
 		(const id::user &member)
 		{
 			const auto event_idx
@@ -3143,10 +3143,18 @@ const
 				state.get(std::nothrow, "m.room.member", member)
 			};
 
-			assert(event_idx);
-			return event_idx?
-				closure(member, event_idx):
-				true;
+			if(likely(event_idx))
+				return closure(member, event_idx);
+
+			log::error
+			{
+				log, "Failed to find member event_idx:%zu for %s in present state of %s",
+				event_idx,
+				string_view{member},
+				string_view{room.room_id},
+			};
+
+			return true;
 		});
 
 	return state.for_each("m.room.member", [this, &membership, &closure]
