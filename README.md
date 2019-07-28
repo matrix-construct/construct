@@ -106,7 +106,7 @@ problems.
 
 #### Roadmap for service
 
-- [x] **Phase One**: Matrix clients using HTTPS.
+- [x] **Phase One**: Matrix clients using HTTPS. [Endpoint API Implementation Status](Status.md)
 - [ ] **Phase Two**: Legacy IRC network TS6 protocol.
 - [ ] **Phase Three**: Legacy IRC clients using RFC1459 / RFC2812 legacy grammars.
 
