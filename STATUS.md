@@ -4,7 +4,7 @@ The following chart shows the status of support for the endpoints in the [client
 
 Legend:
 
-:white_check_mark: Supported :construction: Partially supported :no_entry_sign: Not supported
+:heavy_check_mark: Supported :construction: Partially supported :no_entry_sign: Not supported
 
 <table>
   <tr>
