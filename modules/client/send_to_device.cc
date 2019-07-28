@@ -174,11 +174,12 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "Send %s '%s' by %s to device '%s' belonging to %s",
+		m::log, "Send %s '%s' by %s to device '%s' belonging to %s :%s",
 		type,
 		txnid,
 		string_view{sender},
 		device_id,
 		string_view{target},
+		e.what(),
 	};
 }
