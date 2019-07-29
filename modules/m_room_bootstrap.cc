@@ -230,7 +230,7 @@ try
 
 	log::info
 	{
-		log, "join bootstrap sending in %s for %s at %s to '%s'",
+		log, "Sending in %s for %s at %s to '%s'",
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
@@ -255,7 +255,7 @@ try
 
 	log::info
 	{
-		log, "join bootstrap joined to %s for %s at %s to '%s' state:%zu auth_chain:%zu",
+		log, "Joined to %s for %s at %s to '%s' state:%zu auth_chain:%zu",
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
@@ -292,7 +292,7 @@ try
 
 	log::info
 	{
-		log, "join bootstrap joined to %s for %s at %s reset:%zu complete",
+		log, "Joined to %s for %s at %s reset:%zu complete",
 		string_view{room_id},
 		string_view{user_id},
 		string_view{event_id},
@@ -303,7 +303,8 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "join bootstrap for %s to %s :%s",
+		log, "Join %s with %s to %s :%s",
+		json::get<"room_id"_>(event),
 		string_view{event.event_id},
 		string(host),
 		e.what()
@@ -349,7 +350,7 @@ try
 
 	log::info
 	{
-		log, "join bootstrap processing backfill for %s from %s at %s events:%zu",
+		log, "Processing backfill for %s from %s at %s events:%zu",
 		string_view{room_id},
 		host,
 		string_view{event_id},
@@ -370,12 +371,17 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "join bootstrap %s backfill @ %s from %s :%s",
+		log, "%s backfill @ %s from %s :%s",
 		string_view{room_id},
 		string_view{event_id},
 		string(host),
 		e.what(),
 	};
+
+	// Backfill errors are not propagated further, thus they won't stop the
+	// bootstrap process. The timeline won't have any readable messages, but
+	// we can remedy that later.
+	//throw;
 }
 
 void
@@ -396,8 +402,13 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "join bootstrap eval state :%s", e.what(),
+		log, "eval state :%s", e.what(),
 	};
+
+	// State errors are not propagated further, thus they won't stop the
+	// bootstrap process. The room state will be incomplete, but we can
+	// remedy that later.
+	//throw;
 }
 
 void
@@ -418,9 +429,11 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "join bootstrap eval auth_chain :%s", e.what(),
+		log, "eval auth_chain :%s", e.what(),
 	};
 
+	// This needs to rethrow because any failure coming out of vm::eval to
+	// process the auth_chain is a showstopper.
 	throw;
 }
 
@@ -532,6 +545,12 @@ catch(const std::exception &e)
 		log, "Error when fetching keys for %zu events :%s",
 		events.size(),
 	};
+
+	// All errors for the parallel key fetch are logged and then suppressed
+	// here. This operation is an optimization; if there's an unexpected
+	// failure here keys will just be fetched in the eval loop and bootstrap
+	// will just be really slow.
+	//throw;
 }
 
 ircd::m::bootstrap::send_join1_response
@@ -593,6 +612,9 @@ catch(const std::exception &e)
 		e.what(),
 	};
 
+	// This needs to rethrow because if there's any error in the send_join
+	// request we won't have the response data for the rest of the bootstrap
+	// process.
 	throw;
 }
 
@@ -731,5 +753,8 @@ catch(const std::exception &e)
 		e.what(),
 	};
 
+	// This needs to rethrow because if the make_join doesn't complete we
+	// won't have enough information about the room to further continue the
+	// bootstrap process.
 	throw;
 }
