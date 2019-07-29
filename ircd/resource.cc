@@ -309,7 +309,7 @@ const
 			if(!closure(*it->second))
 				continue;
 
-			len = strlcat(buf, " ");
+			len = strlcat(buf, ", ");
 			len = strlcat(buf, it->first);
 		}
 	}
