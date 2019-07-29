@@ -3827,6 +3827,9 @@ ircd::json::operator<(const value &a, const value &b)
 bool
 ircd::json::operator==(const value &a, const value &b)
 {
+	if(a.serial && b.serial)
+		return string_view(a) == string_view(b);
+
 	if(type(a) == type(b)) switch(type(b))
 	{
 		case NUMBER:
