@@ -20,6 +20,7 @@ template<class Enum>
 constexpr
 typename std::underlying_type<Enum>::type
 num_of()
+noexcept
 {
     return static_cast<typename std::underlying_type<Enum>::type>(Enum::_NUM_);
 }
@@ -47,6 +48,7 @@ template<class Enum>
 constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
 operator~(const Enum &a)
+noexcept
 {
 	using enum_t = typename std::underlying_type<Enum>::type;
 
@@ -57,6 +59,7 @@ template<class Enum>
 constexpr
 typename std::enable_if<std::is_enum<Enum>::value, bool>::type
 operator!(const Enum &a)
+noexcept
 {
 	using enum_t = typename std::underlying_type<Enum>::type;
 
@@ -67,6 +70,7 @@ template<class Enum>
 constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
 operator|(const Enum &a, const Enum &b)
+noexcept
 {
 	using enum_t = typename std::underlying_type<Enum>::type;
 
@@ -77,6 +81,7 @@ template<class Enum>
 constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
 operator&(const Enum &a, const Enum &b)
+noexcept
 {
 	using enum_t = typename std::underlying_type<Enum>::type;
 
@@ -87,6 +92,7 @@ template<class Enum>
 constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
 operator^(const Enum &a, const Enum &b)
+noexcept
 {
 	using enum_t = typename std::underlying_type<Enum>::type;
 
@@ -97,6 +103,7 @@ template<class Enum>
 constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum &>::type
 operator|=(Enum &a, const Enum &b)
+noexcept
 {
 	using enum_t = typename std::underlying_type<Enum>::type;
 
@@ -107,6 +114,7 @@ template<class Enum>
 constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum &>::type
 operator&=(Enum &a, const Enum &b)
+noexcept
 {
 	using enum_t = typename std::underlying_type<Enum>::type;
 
@@ -117,6 +125,7 @@ template<class Enum>
 constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum &>::type
 operator^=(Enum &a, const Enum &b)
+noexcept
 {
 	using enum_t = typename std::underlying_type<Enum>::type;
 
@@ -128,6 +137,7 @@ template<class Enum,
 typename std::enable_if<std::is_enum<Enum>::value, typename std::underlying_type<Enum>::type>::type
 combine_flags(const it &begin,
               const it &end)
+noexcept
 {
 	using type = typename std::underlying_type<Enum>::type;
 
@@ -141,6 +151,7 @@ combine_flags(const it &begin,
 template<class Enum>
 typename std::enable_if<std::is_enum<Enum>::value, typename std::underlying_type<Enum>::type>::type
 combine_flags(const std::initializer_list<Enum> &list)
+noexcept
 {
 	return combine_flags<Enum>(begin(list), end(list));
 }
