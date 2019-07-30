@@ -826,7 +826,7 @@ ircd::json::stack::rewind(const size_t &bytes)
 	return amount;
 }
 
-ircd::const_buffer
+ircd::string_view
 ircd::json::stack::completed()
 const
 {

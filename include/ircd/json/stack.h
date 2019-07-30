@@ -72,7 +72,7 @@ struct ircd::json::stack
 	bool clean() const;                ///< Never opened.
 	bool done() const;                 ///< Opened and closed.
 	size_t remaining() const;
-	const_buffer completed() const;
+	string_view completed() const;
 
 	size_t invalidate_checkpoints();
 	bool flush(const bool &force = false) noexcept;
