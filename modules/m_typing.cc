@@ -123,7 +123,6 @@ commit(const m::typing &edu)
 //
 
 static void _handle_edu_m_typing(const m::event &, const m::typing &edu);
-static void _handle_edu_m_typing(const m::event &, const m::typing &edu);
 static void handle_edu_m_typing(const m::event &, m::vm::eval &);
 
 /// Hooks all federation typing edus from remote servers as well as
@@ -163,6 +162,11 @@ _handle_edu_m_typing(const m::event &event,
 	if(!json::get<"room_id"_>(edu))
 		return;
 
+	const auto &origin
+	{
+		at<"origin"_>(event)
+	};
+
 	const m::room::id &room_id
 	{
 		at<"room_id"_>(edu)
@@ -171,11 +175,6 @@ _handle_edu_m_typing(const m::event &event,
 	const m::user::id &user_id
 	{
 		at<"user_id"_>(edu)
-	};
-
-	const auto &origin
-	{
-		at<"origin"_>(event)
 	};
 
 	// Check if this server can send an edu for this user. We make an exception
@@ -241,37 +240,39 @@ _handle_edu_m_typing(const m::event &event,
 			return;
 	}
 
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	const auto &timeout
+	{
+		json::get<"timeout"_>(edu)?
+			json::get<"timeout"_>(edu):
+		json::get<"typing"_>(edu)?
+			milliseconds(timeout_max).count():
+			0L
+	};
+
+	const auto evid
+	{
+		send(user_room, user_id, "ircd.typing",
+		{
+			{ "room_id",  json::get<"room_id"_>(edu)  },
+			{ "typing",   json::get<"typing"_>(edu)   },
+			{ "timeout",  timeout                     },
+		})
+	};
+
+	char pbuf[32];
 	log::info
 	{
-		typing_log, "%s %s %s typing in %s",
+		typing_log, "%s %s %s typing in %s timeout:%s",
 		origin,
 		string_view{user_id},
 		json::get<"typing"_>(edu)? "started"_sv : "stopped"_sv,
-		string_view{room_id}
-	};
-
-	m::event typing{event};
-	json::get<"room_id"_>(typing) = room_id;
-	json::get<"type"_>(typing) = "m.typing"_sv;
-
-	// Buffer has to hold user mxid and then some JSON overhead (see below)
-	char buf[m::id::MAX_SIZE + 65];
-	const json::value user_ids[]
-	{
-		{ user_id }
-	};
-
-	json::get<"content"_>(typing) = json::stringify(mutable_buffer{buf}, json::members
-	{
-		{ "user_ids", { user_ids, size_t(bool(json::get<"typing"_>(edu))) } }
-	});
-
-	m::vm::opts vmopts;
-	vmopts.notify_servers = false;
-	vmopts.conforming = false;
-	m::vm::eval eval
-	{
-		typing, vmopts
+		string_view{room_id},
+		pretty(pbuf, milliseconds(long(timeout)), 1),
 	};
 }
 

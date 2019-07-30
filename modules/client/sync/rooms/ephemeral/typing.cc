@@ -32,19 +32,31 @@ ircd::m::sync::room_ephemeral_m_typing
 bool
 ircd::m::sync::room_ephemeral_m_typing_linear(data &data)
 {
-	if(data.event_idx)
+	if(json::get<"type"_>(*data.event) != "ircd.typing")
 		return false;
 
-	assert(data.event);
-	if(json::get<"type"_>(*data.event) != "m.typing")
-		return false;
-
-	const m::room room
+	const m::room target_room
 	{
-		json::get<"room_id"_>(*data.event)
+		unquote(json::get<"content"_>(*data.event).get("room_id"))
 	};
 
-	if(!room.membership(data.user, "join"))
+	// Check if our user is a member of the room targetted by the typing notif
+	if(!target_room.membership(data.user, "join"))
+		return false;
+
+	const m::user::id &sender
+	{
+		json::get<"sender"_>(*data.event)
+	};
+
+	const m::user::room user_room
+	{
+		sender
+	};
+
+	// Check if the ircd.typing event was sent to the user's user room,
+	// and not just to any room.
+	if(json::get<"room_id"_>(*data.event) != user_room.room_id)
 		return false;
 
 	json::stack::object rooms
@@ -59,7 +71,7 @@ ircd::m::sync::room_ephemeral_m_typing_linear(data &data)
 
 	json::stack::object room_
 	{
-		*data.out, room.room_id
+		*data.out, target_room.room_id
 	};
 
 	json::stack::object ephemeral
@@ -82,10 +94,24 @@ ircd::m::sync::room_ephemeral_m_typing_linear(data &data)
 		object, "type", "m.typing"
 	};
 
-	json::stack::member
+	json::stack::object content
 	{
-		object, "content", json::get<"content"_>(*data.event)
+		object, "content"
 	};
+
+	json::stack::array user_ids
+	{
+		content, "user_ids"
+	};
+
+	m::typing::for_each([&user_ids, &target_room]
+	(const auto &typing)
+	{
+		if(json::get<"room_id"_>(typing) != target_room)
+			return;
+
+		user_ids.append(json::get<"user_id"_>(typing));
+	});
 
 	return true;
 }
