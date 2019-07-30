@@ -10,6 +10,7 @@ Makefile
 *.sw?
 *.gch
 *.cache
+*.tmp
 .deps
 .dirstamp
 .libs
