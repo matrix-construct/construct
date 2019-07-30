@@ -311,7 +311,7 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 	if(!m::get(event_idx, "origin_server_ts", ts))
 		return false;
 
-	const seconds &elapsed
+	const seconds elapsed
 	{
 		(ircd::time<milliseconds>() - ts) / 1000L
 	};
