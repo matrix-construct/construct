@@ -108,9 +108,10 @@ ircd::m::sync::room_ephemeral_m_typing_linear(data &data)
 	(const auto &typing)
 	{
 		if(json::get<"room_id"_>(typing) != target_room)
-			return;
+			return true;
 
 		user_ids.append(json::get<"user_id"_>(typing));
+		return true;
 	});
 
 	return true;

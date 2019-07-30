@@ -357,7 +357,8 @@ timeout_timeout(const typist &t)
 //
 
 bool
-ircd::m::typing::for_each(const m::typing::closure_bool &closure)
+IRCD_MODULE_EXPORT
+ircd::m::typing::for_each(const closure &closure)
 {
 	// User cannot yield in their closure because the iteration
 	// may be invalidated by the timeout worker during their yield.

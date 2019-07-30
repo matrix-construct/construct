@@ -11055,6 +11055,7 @@ console_cmd__typing(opt &out, const string_view &line)
 	(const m::typing &event)
 	{
 		out << event << std::endl;
+		return true;
 	});
 
 	return true;
