@@ -8,9 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
-
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Federation 2.3.1.2 :Querying Keys Through Another Server"
