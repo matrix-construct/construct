@@ -10,6 +10,7 @@
 
 namespace ircd::m::bootstrap
 {
+	struct pkg;
 	using send_join1_response = std::tuple<json::object, unique_buffer<mutable_buffer>>;
 
 	static event::id::buf make_join(const string_view &host, const room::id &, const user::id &);
@@ -19,6 +20,7 @@ namespace ircd::m::bootstrap
 	static void eval_auth_chain(const json::array &auth_chain);
 	static void eval_state(const json::array &state);
 	static void backfill(const string_view &host, const room::id &, const event::id &);
+	static void worker(pkg);
 
 	extern conf::item<seconds> make_join_timeout;
 	extern conf::item<seconds> send_join_timeout;
@@ -28,6 +30,13 @@ namespace ircd::m::bootstrap
 	extern conf::item<bool> lazychain_enable;
 	extern log::log log;
 }
+
+struct ircd::m::bootstrap::pkg
+{
+	std::string event;
+	std::string event_id;
+	std::string host;
+};
 
 ircd::mapi::header
 IRCD_MODULE
@@ -146,13 +155,6 @@ ircd::m::room::bootstrap::bootstrap(const m::event::id &event_id,
                                     const string_view &host)
 try
 {
-	struct pkg
-	{
-		std::string event;
-		std::string event_id;
-		std::string host;
-	};
-
 	static const context::flags flags
 	{
 		context::POST | context::DETACH
@@ -170,26 +172,19 @@ try
 	assert(event.valid);
 	assert(event.source);
 
+	m::bootstrap::pkg pkg
+	{
+		std::string(event.source),
+		event.event_id,
+		host,
+	};
+
 	context
 	{
 		"bootstrap",
 		stack_sz,
 		flags,
-		[p(pkg{std::string(event.source), event.event_id, host})]
-		{
-			assert(!empty(p.event));
-			assert(!empty(p.event_id));
-			const m::event event
-			{
-				p.event, p.event_id
-			};
-
-			assert(!empty(p.host));
-			room::bootstrap
-			{
-				event, p.host
-			};
-		}
+		std::bind(&ircd::m::bootstrap::worker, std::move(pkg))
 	};
 }
 catch(const std::exception &e)
@@ -308,6 +303,38 @@ catch(const std::exception &e)
 		string_view{event.event_id},
 		string(host),
 		e.what()
+	};
+}
+
+//
+// m::bootstrap
+//
+
+void
+ircd::m::bootstrap::worker(pkg pkg)
+try
+{
+	assert(!empty(pkg.event));
+	assert(!empty(pkg.event_id));
+	const m::event event
+	{
+		pkg.event, pkg.event_id
+	};
+
+	assert(!empty(pkg.host));
+	room::bootstrap
+	{
+		event, pkg.host
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "(worker) Failed to bootstrap for %s to %s :%s",
+		pkg.event_id,
+		pkg.host,
+		e.what(),
 	};
 }
 
