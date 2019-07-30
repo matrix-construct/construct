@@ -908,6 +908,7 @@ ircd::m::v1::user::keys::query::query(const user_devices &v,
 ircd::m::v1::user::keys::query::query(const vector_view<const user_devices> &v,
                                       const mutable_buffer &buf,
                                       opts opts)
+:query{[&v, &buf, &opts]
 {
 	json::stack out{buf};
 	{
@@ -935,15 +936,18 @@ ircd::m::v1::user::keys::query::query(const vector_view<const user_devices> &v,
 		out.completed()
 	};
 
-	new (this) query
+	return query
 	{
 		content, buf + size(string_view(content)), std::move(opts)
 	};
+}()}
+{
 }
 
 ircd::m::v1::user::keys::query::query(const user_devices_map &map,
                                       const mutable_buffer &buf,
                                       opts opts)
+:query{[&map, &buf, &opts]
 {
 	json::stack out{buf};
 	{
@@ -965,10 +969,12 @@ ircd::m::v1::user::keys::query::query(const user_devices_map &map,
 		out.completed()
 	};
 
-	new (this) query
+	return query
 	{
 		content, buf + size(string_view(content)), std::move(opts)
 	};
+}()}
+{
 }
 
 ircd::m::v1::user::keys::query::query(const json::object &content,
@@ -1068,6 +1074,7 @@ ircd::m::v1::user::keys::claim::claim(const user_devices &ud,
 ircd::m::v1::user::keys::claim::claim(const vector_view<const user_devices> &v,
                                       const mutable_buffer &buf,
                                       opts opts)
+:claim{[&v, &buf, &opts]
 {
 	json::stack out{buf};
 	{
@@ -1101,15 +1108,18 @@ ircd::m::v1::user::keys::claim::claim(const vector_view<const user_devices> &v,
 		out.completed()
 	};
 
-	new (this) claim
+	return claim
 	{
 		content, buf + size(string_view(content)), std::move(opts)
 	};
+}()}
+{
 }
 
 ircd::m::v1::user::keys::claim::claim(const user_devices_map &map,
                                       const mutable_buffer &buf,
                                       opts opts)
+:claim{[&map, &buf, &opts]
 {
 	json::stack out{buf};
 	{
@@ -1135,10 +1145,12 @@ ircd::m::v1::user::keys::claim::claim(const user_devices_map &map,
 		out.completed()
 	};
 
-	new (this) claim
+	return claim
 	{
 		content, buf + size(string_view(content)), std::move(opts)
 	};
+}()}
+{
 }
 
 ircd::m::v1::user::keys::claim::claim(const json::object &content,
