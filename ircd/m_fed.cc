@@ -905,35 +905,14 @@ ircd::m::v1::user::keys::query::query(const user_devices &v,
 {
 }
 
-ircd::m::v1::user::keys::query::query(const vector_view<const user_devices> &v,
+ircd::m::v1::user::keys::query::query(const users_devices &v,
                                       const mutable_buffer &buf,
                                       opts opts)
 :query{[&v, &buf, &opts]
 {
-	json::stack out{buf};
-	{
-		json::stack::object top{out};
-		json::stack::object device_keys
-		{
-			top, "device_keys"
-		};
-
-		for(const user_devices &ud : v)
-		{
-			json::stack::member user
-			{
-				device_keys, ud.first
-			};
-
-			json::stack::array devices{user};
-			for(const string_view &device_id : ud.second)
-				devices.append(device_id);
-		}
-	}
-
 	const json::object &content
 	{
-		out.completed()
+		make_content(buf, v)
 	};
 
 	return query
@@ -944,29 +923,14 @@ ircd::m::v1::user::keys::query::query(const vector_view<const user_devices> &v,
 {
 }
 
-ircd::m::v1::user::keys::query::query(const user_devices_map &map,
+ircd::m::v1::user::keys::query::query(const users_devices_map &m,
                                       const mutable_buffer &buf,
                                       opts opts)
-:query{[&map, &buf, &opts]
+:query{[&m, &buf, &opts]
 {
-	json::stack out{buf};
-	{
-		json::stack::object top{out};
-		json::stack::object device_keys
-		{
-			top, "device_keys"
-		};
-
-		for(const auto &p : map)
-			json::stack::member user
-			{
-				device_keys, p.first, p.second
-			};
-	}
-
 	const json::object &content
 	{
-		out.completed()
+		make_content(buf, m)
 	};
 
 	return query
@@ -1016,6 +980,55 @@ ircd::m::v1::user::keys::query::query(const json::object &content,
 	};
 }()}
 {
+}
+
+ircd::json::object
+ircd::m::v1::user::keys::query::make_content(const mutable_buffer &buf,
+                                             const users_devices &v)
+{
+	json::stack out{buf};
+	{
+		json::stack::object top{out};
+		json::stack::object device_keys
+		{
+			top, "device_keys"
+		};
+
+		for(const auto &[user_id, devices] : v)
+		{
+			json::stack::array array
+			{
+				device_keys, user_id
+			};
+
+			for(const auto &device_id : devices)
+				array.append(device_id);
+		}
+	}
+
+	return out.completed();
+}
+
+ircd::json::object
+ircd::m::v1::user::keys::query::make_content(const mutable_buffer &buf,
+                                             const users_devices_map &m)
+{
+	json::stack out{buf};
+	{
+		json::stack::object top{out};
+		json::stack::object device_keys
+		{
+			top, "device_keys"
+		};
+
+		for(const auto &[user_id, devices] : m)
+			json::stack::member
+			{
+				device_keys, user_id, devices
+			};
+	}
+
+	return out.completed();
 }
 
 //
@@ -1071,41 +1084,14 @@ ircd::m::v1::user::keys::claim::claim(const user_devices &ud,
 {
 }
 
-ircd::m::v1::user::keys::claim::claim(const vector_view<const user_devices> &v,
+ircd::m::v1::user::keys::claim::claim(const users_devices &v,
                                       const mutable_buffer &buf,
                                       opts opts)
 :claim{[&v, &buf, &opts]
 {
-	json::stack out{buf};
-	{
-		json::stack::object top{out};
-		json::stack::object one_time_keys
-		{
-			top, "one_time_keys"
-		};
-
-		for(const auto &ud : v)
-		{
-			json::stack::object user
-			{
-				one_time_keys, ud.first
-			};
-
-			for(const auto &device : ud.second)
-			{
-				const auto &device_id(device.first);
-				const auto &algorithm_name(device.second);
-				json::stack::member
-				{
-					user, device_id, algorithm_name
-				};
-			}
-		}
-	}
-
 	const json::object &content
 	{
-		out.completed()
+		make_content(buf, v)
 	};
 
 	return claim
@@ -1116,33 +1102,14 @@ ircd::m::v1::user::keys::claim::claim(const vector_view<const user_devices> &v,
 {
 }
 
-ircd::m::v1::user::keys::claim::claim(const user_devices_map &map,
+ircd::m::v1::user::keys::claim::claim(const users_devices_map &m,
                                       const mutable_buffer &buf,
                                       opts opts)
-:claim{[&map, &buf, &opts]
+:claim{[&m, &buf, &opts]
 {
-	json::stack out{buf};
-	{
-		json::stack::object top{out};
-		json::stack::object one_time_keys
-		{
-			top, "one_time_keys"
-		};
-
-		for(const auto &p : map)
-		{
-			const m::user::id &user_id(p.first);
-			const json::object &devices(p.second);
-			json::stack::member user
-			{
-				one_time_keys, user_id, devices
-			};
-		}
-	}
-
 	const json::object &content
 	{
-		out.completed()
+		make_content(buf, m)
 	};
 
 	return claim
@@ -1192,6 +1159,66 @@ ircd::m::v1::user::keys::claim::claim(const json::object &content,
 	};
 }()}
 {
+}
+
+ircd::json::object
+ircd::m::v1::user::keys::claim::make_content(const mutable_buffer &buf,
+                                             const users_devices &v)
+{
+	json::stack out{buf};
+	{
+		json::stack::object top{out};
+		json::stack::object one_time_keys
+		{
+			top, "one_time_keys"
+		};
+
+		for(const auto &[user_id, devices] : v)
+		{
+			json::stack::object user
+			{
+				one_time_keys, user_id
+			};
+
+			for(const auto &[device_id, algorithm_name] : devices)
+				json::stack::member
+				{
+					user, device_id, algorithm_name
+				};
+		}
+	}
+
+	return out.completed();
+}
+
+ircd::json::object
+ircd::m::v1::user::keys::claim::make_content(const mutable_buffer &buf,
+                                             const users_devices_map &v)
+{
+	json::stack out{buf};
+	{
+		json::stack::object top{out};
+		json::stack::object one_time_keys
+		{
+			top, "one_time_keys"
+		};
+
+		for(const auto &[user_id, devices] : v)
+		{
+			json::stack::object user
+			{
+				one_time_keys, user_id
+			};
+
+			for(const auto &[device_id, algorithm_name] : devices)
+				json::stack::member
+				{
+					user, device_id, algorithm_name
+				};
+		}
+	}
+
+	return out.completed();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
