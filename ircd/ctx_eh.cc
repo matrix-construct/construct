@@ -53,6 +53,10 @@ void
 ircd::ctx::exception_handler::end_catch()
 noexcept
 {
+	// Only close the catch block if we're actually on an ircd::ctx. This
+	// allows the same codepath with a ctx::exception_handler to be used
+	// outside of the ircd::ctx system to not incur any unexpected or
+	// potential issues with ending the catch manually.
 	if(likely(current))
 		__cxxabiv1::__cxa_end_catch();
 }
@@ -66,6 +70,7 @@ noexcept
 #endif
 
 #ifdef HAVE_CXXABI_H
+/// Get the uncaught exception count
 uint
 ircd::ctx::exception_handler::uncaught_exceptions()
 noexcept
@@ -89,6 +94,7 @@ noexcept
 #endif
 
 #ifdef HAVE_CXXABI_H
+/// Set the uncaught exception count and return the previous value.
 uint
 ircd::ctx::exception_handler::uncaught_exceptions(const uint &val)
 noexcept
