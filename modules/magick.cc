@@ -155,11 +155,11 @@ ircd::magick::init()
 			long(version_abi),
 		};
 
+	InitializeMagick(nullptr);
 	MagickAllocFunctions(handle_free, handle_malloc, handle_realloc);
 	SetFatalErrorHandler(handle_fatal);
 	SetErrorHandler(handle_error);
 	SetWarningHandler(handle_warning);
-	InitializeMagick(nullptr);
 	SetLogMethod(handle_log);
 	//SetLogEventMask("all"); // Pollutes stderr :/ can't fix
 	SetMonitorHandler(handle_progress);
@@ -196,7 +196,6 @@ ircd::magick::fini()
 		return !call_mutex.locked();
 	});
 
-	DestroyMagickResources();
 	DestroyMagick();
 }
 
