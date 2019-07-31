@@ -801,7 +801,7 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
+	//#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
 		log, "[%s] schedule func:%p a:%p tag:%p u:%p prio:%s",
@@ -812,7 +812,7 @@ noexcept try
 		u,
 		reflect(prio)
 	};
-	#endif
+	//#endif
 
 	assert(st);
 	auto &pool
@@ -846,7 +846,7 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
+	//#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
 		log, "[%s] unschedule tag:%p prio:%s",
@@ -854,7 +854,7 @@ noexcept try
 		tag,
 		reflect(prio)
 	};
-	#endif
+	//#endif
 
 	assert(st);
 	auto &pool
@@ -885,7 +885,7 @@ noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 
-	#ifdef RB_DEBUG_DB_ENV
+	//#ifdef RB_DEBUG_DB_ENV
 	log::debug
 	{
 		log, "[%s] start thread func:%p a:%p",
@@ -893,7 +893,7 @@ noexcept try
 		f,
 		a
 	};
-	#endif
+	//#endif
 
 	throw ircd::not_implemented
 	{
