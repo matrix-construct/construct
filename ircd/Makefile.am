@@ -146,6 +146,9 @@ libircd_la_SOURCES += rfc1035.cc
 libircd_la_SOURCES += http.cc
 libircd_la_SOURCES += http2.cc
 libircd_la_SOURCES += prof.cc
+if LINUX
+libircd_la_SOURCES += prof_linux.cc
+endif
 libircd_la_SOURCES += fs.cc
 libircd_la_SOURCES += ios.cc
 libircd_la_SOURCES += ctx.cc

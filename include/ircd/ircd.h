@@ -52,7 +52,7 @@
 #include "magics.h"
 #include "conf.h"
 #include "stats.h"
-#include "prof.h"
+#include "prof/prof.h"
 #include "fs/fs.h"
 #include "ios.h"
 #include "ctx/ctx.h"
