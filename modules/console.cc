@@ -6556,6 +6556,18 @@ console_cmd__event(opt &out, const string_view &line)
 	out << pretty(event)
 	    << std::endl;
 
+	out << std::setw(16) << std::right << "SEQUENCE" << "  "
+	    << event_idx
+	    << std::endl;
+
+	if(event.source)
+	{
+		char pbuf[64];
+		out << std::setw(16) << std::right << "JSON SIZE" << "  "
+		    << pretty(pbuf, iec(size(string_view{event.source})))
+		    << std::endl;
+	}
+
 	if(cached || cached_keys.count())
 	{
 		out << std::setw(16) << std::right << "CACHED" << "  ";
@@ -6567,14 +6579,6 @@ console_cmd__event(opt &out, const string_view &line)
 			out << " " << key;
 
 		out << std::endl;
-	}
-
-	if(event.source)
-	{
-		char pbuf[64];
-		out << std::setw(16) << std::right << "JSON SIZE" << "  "
-		    << pretty(pbuf, iec(size(string_view{event.source})))
-		    << std::endl;
 	}
 
 	if(m::event::auth::is_power_event(event))
