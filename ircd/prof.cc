@@ -13,7 +13,6 @@
 #include <RB_INC_SYS_MMAN_H
 #include <RB_INC_SYS_RESOURCE_H
 #include <linux/perf_event.h>
-#include <RB_INC_VALGRIND_CALLGRIND_H
 #include <boost/chrono/chrono.hpp>
 #include <boost/chrono/process_cpu_clocks.hpp>
 
