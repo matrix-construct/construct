@@ -95,10 +95,6 @@ noexcept try
 		out.str().substr(0, 32_KiB)
 	};
 
-	//TODO: XXXX
-	str = replace(std::move(str), '\n', "<br />");
-	str = replace(std::move(str), '"', "\\\"");
-
 	const string_view alt //TODO: X
 	{
 		"no alt text"
