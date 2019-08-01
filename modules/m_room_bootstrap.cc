@@ -327,6 +327,17 @@ try
 		event, pkg.host
 	};
 }
+catch(const http::error &e)
+{
+	log::error
+	{
+		log, "(worker) Failed to bootstrap for %s to %s :%s :%s",
+		pkg.event_id,
+		pkg.host,
+		e.what(),
+		e.content,
+	};
+}
 catch(const std::exception &e)
 {
 	log::error
