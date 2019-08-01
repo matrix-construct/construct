@@ -762,23 +762,18 @@ try
 	vmopts.eval = false;
 	vmopts.user_id = user_id;
 	vmopts.room_version = room_version;
-	vm::eval eval
+	const vm::eval eval
 	{
 		event, content, vmopts
 	};
 
-	const m::event::id::buf &ret
-	{
-		eval
-	};
-
-	if(unlikely(!ret))
+	if(unlikely(!eval.event_id))
 		throw m::UNAVAILABLE
 		{
 			"Unknown error"
 		};
 
-	return ret;
+	return eval.event_id;
 }
 catch(const std::exception &e)
 {
