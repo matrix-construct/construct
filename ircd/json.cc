@@ -80,10 +80,21 @@ struct ircd::json::input
 		,"number"
 	};
 
-	// string
+	const rule<> utf16_surrogate
+	{
+		qi::uint_parser
+		<
+			uint16_t,     // 16 bit width
+			16U,          // base-16 (hex)
+			4U,           // minimum digits
+			4U            // maximum digits
+		>{}
+		,"UTF-16 surrogate"
+	};
+
 	const rule<> unicode
 	{
-		lit('u') >> qi::uint_parser<uint64_t, 16, 1, 12>{}
+		lit('u') >> utf16_surrogate
 		,"escaped unicode"
 	};
 
