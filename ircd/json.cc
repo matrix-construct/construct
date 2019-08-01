@@ -98,21 +98,33 @@ struct ircd::json::input
 		,"escaped unicode"
 	};
 
+	const rule<> control
+	{
+		char_('\x00', '\x1F')
+		,"control character"
+	};
+
+	// characters that must be escaped
 	const rule<> escaped
 	{
-		lit('"') | lit('\\') | lit('\b') | lit('\f') | lit('\n') | lit('\r') | lit('\t') | lit('\0')
-		,"escaped"
+		quote | escape | control
+		,"escaped character"
 	};
 
+	// characters that should appear after an escaping solidus
 	const rule<> escaper
 	{
-		lit('"') | lit('\\') | lit('b') | lit('f') | lit('n') | lit('r') | lit('t') | lit('0') | unicode
-		,"escaped"
+		quote | escape | unicode
+		| lit('b') | lit('f') | lit('n')
+		| lit('r') | lit('t') | lit('0')
+		,"escaper"
 	};
 
+	// cscapers supersetting the rule above with addl non-canonical chars
 	const rule<> escaper_nc
 	{
 		escaper | lit('/')
+		,"escaper"
 	};
 
 	const rule<string_view> chars
