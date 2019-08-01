@@ -19,7 +19,7 @@ IRCD_MODULE
 decltype(ircd::m::fetch::log)
 ircd::m::fetch::log
 {
-	"matrix.fetch"
+	"m.fetch"
 };
 
 decltype(ircd::m::fetch::enable)

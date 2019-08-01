@@ -53,7 +53,7 @@ default_fetch_opts
 log::log
 context_log
 {
-	"matrix.context"
+	"m.context"
 };
 
 static bool

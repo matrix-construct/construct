@@ -32,7 +32,7 @@ IRCD_MODULE
 log::log
 receipt_log
 {
-	"matrix.receipt"
+	"m.receipt"
 };
 
 decltype(_m_receipt_eval)

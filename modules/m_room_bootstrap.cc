@@ -47,7 +47,7 @@ IRCD_MODULE
 decltype(ircd::m::bootstrap::log)
 ircd::m::bootstrap::log
 {
-	"m.bootstrap"
+	"m.room.bootstrap"
 };
 
 decltype(ircd::m::bootstrap::lazychain_enable)

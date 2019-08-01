@@ -39,7 +39,7 @@ max_filter_miss
 log::log
 messages_log
 {
-	"matrix.messages"
+	"m.messages"
 };
 
 static const m::event::fetch::opts
