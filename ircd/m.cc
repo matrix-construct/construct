@@ -231,6 +231,7 @@ ircd::m::module_names
 	"m_direct_to_device",
 	"m_breadcrumb_rooms",
 	"m_ignored_user_list",
+	"m_event_append",
 	"key_query",
 	"key_server",
 	"identity_pubkey",

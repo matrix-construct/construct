@@ -100,6 +100,7 @@ m_moduledir = @moduledir@
 
 m_vm_la_SOURCES = m_vm.cc
 m_noop_la_SOURCES = m_noop.cc
+m_event_append_la_SOURCES = m_event_append.cc
 m_user_la_SOURCES = m_user.cc
 m_user_events_la_SOURCES = m_user_events.cc
 m_user_rooms_la_SOURCES = m_user_rooms.cc
@@ -141,6 +142,7 @@ m_listen_la_SOURCES = m_listen.cc
 m_module_LTLIBRARIES = \
 	m_vm.la \
 	m_noop.la \
+	m_event_append.la \
 	m_user.la \
 	m_user_events.la \
 	m_user_rooms.la \

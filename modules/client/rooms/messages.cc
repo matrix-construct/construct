@@ -212,12 +212,12 @@ _append(json::stack::array &chunk,
         const m::user::room &user_room,
         const int64_t &room_depth)
 {
-	m::event_append_opts opts;
+	m::event::append::opts opts;
 	opts.event_idx = &event_idx;
 	opts.user_id = &user_room.user.user_id;
 	opts.user_room = &user_room;
 	opts.room_depth = &room_depth;
-	return m::append(chunk, event, opts);
+	return m::event::append(chunk, event, opts);
 }
 
 // Client-Server 6.3.6 query parameters

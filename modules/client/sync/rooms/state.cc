@@ -382,11 +382,11 @@ ircd::m::sync::room_state_append(data &data,
                                  const m::event &event,
                                  const m::event::idx &event_idx)
 {
-	m::event_append_opts opts;
+	m::event::append::opts opts;
 	opts.event_idx = &event_idx;
 	opts.user_id = &data.user.user_id;
 	opts.user_room = &data.user_room;
 	opts.query_txnid = false;
 	opts.room_depth = &data.room_depth;
-	return m::append(events, event, opts);
+	return m::event::append(events, event, opts);
 }

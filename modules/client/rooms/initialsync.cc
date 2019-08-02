@@ -203,13 +203,13 @@ get__initialsync_local(client &client,
 		if(!event.valid)
 			return true;
 
-		m::event_append_opts opts;
+		m::event::append::opts opts;
 		opts.event_idx = &event.event_idx;
 		opts.user_id = &user.user_id;
 		opts.user_room = &user_room;
 		opts.room_depth = &room_depth;
 		opts.query_txnid = false;
-		m::append(state, event, opts);
+		m::event::append(state, event, opts);
 		return true;
 	}});
 	state.~array();
@@ -248,13 +248,13 @@ get__initialsync_local(client &client,
 		const m::event &event(*it);
 		const auto &event_idx(it.event_idx());
 
-		m::event_append_opts opts;
+		m::event::append::opts opts;
 		opts.event_idx = &event_idx;
 		opts.user_id = &user.user_id;
 		opts.user_room = &user_room;
 		opts.room_depth = &room_depth;
 		opts.query_txnid = true;
-		m::append(chunk, event, opts);
+		m::event::append(chunk, event, opts);
 	}
 }
 
