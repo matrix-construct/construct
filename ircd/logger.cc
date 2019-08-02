@@ -29,7 +29,7 @@ namespace ircd::log
 	extern const size_t CTX_NAME_TRUNC;
 	extern const size_t LOG_NAME_TRUNC;
 	extern const size_t LOG_BUFSIZE;
-	extern const std::array<string_view, num_of<level>()> default_ansi;
+	extern const std::array<string_view, num_of<level>()> console_ansi;
 	extern std::array<confs, num_of<level>()> confs;
 	extern conf::item<std::string> unmask_file;
 	extern conf::item<std::string> unmask_console;
@@ -49,7 +49,6 @@ struct ircd::log::confs
 	conf::item<bool> console_stdout;
 	conf::item<bool> console_stderr;
 	conf::item<bool> console_flush;
-	conf::item<std::string> console_ansi;
 };
 
 /// Linkage for list of named loggers.
@@ -491,7 +490,6 @@ ircd::log::slog(const log &log,
                 const window_buffer::closure &closure)
 noexcept
 {
-	const auto &conf(confs.at(lev));
 	if(can_skip(log, lev))
 		return;
 
@@ -513,6 +511,17 @@ noexcept
 	// Maximum size of log line leaving 2 characters for \r\n
 	const size_t max(sizeof(buf) - 2);
 
+	// Get the configuration object for this log level
+	const auto &conf
+	{
+		confs.at(lev)
+	};
+
+	const string_view &console_ansi
+	{
+		ircd::log::console_ansi.at(lev)
+	};
+
 	// Compose the prefix sequence into the buffer through stringstream
 	std::stringstream s;
 	pubsetbuf(s, buf);
@@ -523,11 +532,11 @@ noexcept
 	<< std::right
 	<< ctx::epoch()
 	<< ' '
-	<< string_view{conf.console_ansi}
+	<< console_ansi
 	<< std::setw(8)
 	<< std::right
 	<< reflect(lev)
-	<< (string_view{conf.console_ansi}? "\033[0m " : " ")
+	<< (console_ansi? "\033[0m " : " ")
 //	<< (log.snote? log.snote : '-')
 	<< std::setw(LOG_NAME_TRUNC)
 	<< std::left
@@ -695,8 +704,8 @@ ircd::log::reflect(const level &f)
 	};
 }
 
-decltype(ircd::log::default_ansi)
-ircd::log::default_ansi
+decltype(ircd::log::console_ansi)
+ircd::log::console_ansi
 {{
 	"\033[1;5;37;45m"_sv,     // CRITICAL
 	"\033[1;37;41m"_sv,       // ERROR
@@ -820,12 +829,6 @@ ircd::log::confs
 			{ "name",     "ircd.log.critical.console.flush" },
 			{ "default",  true                              },
 		},
-
-		// console ansi
-		{
-			{ "name",     "ircd.log.critical.console.ansi" },
-			{ "default",  default_ansi.at(level::CRITICAL) },
-		}
 	},
 
 	// ERROR
@@ -859,12 +862,6 @@ ircd::log::confs
 			{ "name",     "ircd.log.error.console.flush" },
 			{ "default",  true                           },
 		},
-
-		// console ansi
-		{
-			{ "name",     "ircd.log.error.console.ansi" },
-			{ "default",  default_ansi.at(level::ERROR) },
-		}
 	},
 
 	// WARNING
@@ -898,12 +895,6 @@ ircd::log::confs
 			{ "name",     "ircd.log.warning.console.flush" },
 			{ "default",  true                             },
 		},
-
-		// console ansi
-		{
-			{ "name",     "ircd.log.warning.console.ansi" },
-			{ "default",  default_ansi.at(level::WARNING) },
-		}
 	},
 
 	// NOTICE
@@ -937,12 +928,6 @@ ircd::log::confs
 			{ "name",     "ircd.log.notice.console.flush" },
 			{ "default",  true                            },
 		},
-
-		// console ansi
-		{
-			{ "name",     "ircd.log.notice.console.ansi" },
-			{ "default",  default_ansi.at(level::NOTICE) },
-		}
 	},
 
 	// INFO
@@ -976,12 +961,6 @@ ircd::log::confs
 			{ "name",     "ircd.log.info.console.flush" },
 			{ "default",  true                          },
 		},
-
-		// console ansi
-		{
-			{ "name",     "ircd.log.info.console.ansi" },
-			{ "default",  default_ansi.at(level::INFO) },
-		}
 	},
 
 	// DERROR
@@ -1015,12 +994,6 @@ ircd::log::confs
 			{ "name",     "ircd.log.derror.console.flush" },
 			{ "default",  true                            },
 		},
-
-		// console ansi
-		{
-			{ "name",     "ircd.log.derror.console.ansi" },
-			{ "default",  default_ansi.at(level::DERROR) },
-		}
 	},
 
 	// DWARNING
@@ -1054,12 +1027,6 @@ ircd::log::confs
 			{ "name",     "ircd.log.dwarning.console.flush" },
 			{ "default",  false                             },
 		},
-
-		// console ansi
-		{
-			{ "name",     "ircd.log.dwarning.console.ansi" },
-			{ "default",  default_ansi.at(level::DWARNING) },
-		}
 	},
 
 	// DEBUG
@@ -1093,11 +1060,5 @@ ircd::log::confs
 			{ "name",     "ircd.log.debug.console.flush" },
 			{ "default",  false                          },
 		},
-
-		// console ansi
-		{
-			{ "name",     "ircd.log.debug.console.ansi" },
-			{ "default",  default_ansi.at(level::DEBUG) },
-		}
 	}
 }};
