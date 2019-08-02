@@ -380,6 +380,7 @@ try
 
 	m::v1::query::opts opts;
 	opts.remote = hp;
+	opts.dynamic = true;
 
 	m::v1::query::directory request
 	{
