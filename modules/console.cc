@@ -8047,10 +8047,32 @@ console_cmd__room__alias__cache(opt &out, const string_view &line)
 		param["server"]
 	};
 
+	out
+	<< std::left << std::setw(40) << "EXPIRES"
+	<< " " << std::left << std::setw(48) << "ROOM ALIAS"
+	<< " " << std::left << std::setw(48) << "ROOM ID"
+	<< std::endl;
+
 	m::room::aliases::cache::for_each(server, [&out]
 	(const m::room::alias &alias, const m::room::id &room_id)
 	{
-		out << std::left << std::setw(40) << alias << " " << room_id << std::endl;
+		const auto expire_point
+		{
+			m::room::aliases::cache::expires(alias)
+		};
+
+		char buf[48];
+		const auto expires
+		{
+			timef(buf, expire_point, ircd::localtime)
+		};
+
+		out
+		<< std::left << std::setw(40) << expires
+		<< " " << std::left << std::setw(48) << alias
+		<< " " << std::left << std::setw(48) << room_id
+		<< std::endl;
+
 		return true;
 	});
 
