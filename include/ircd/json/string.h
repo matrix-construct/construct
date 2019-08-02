@@ -14,6 +14,13 @@
 namespace ircd::json
 {
 	struct string;
+
+	// note: in is not a json::string; all characters viewed are candidate
+	string escape(const mutable_buffer &out, const string_view &in);
+
+	// note: in is a json::string and return is a const_buffer to force
+	// explicit conversions because this operation generates binary data.
+	const_buffer unescape(const mutable_buffer &out, const string &in);
 }
 
 /// Strong type representing quoted strings in JSON (which may be unquoted

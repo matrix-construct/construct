@@ -3178,6 +3178,35 @@ ircd::json::operator==(const member &a, const string_view &b)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// json/string.h
+//
+
+ircd::const_buffer
+ircd::json::unescape(const mutable_buffer &buf,
+                     const string &in)
+{
+	throw ircd::not_implemented{};
+}
+
+ircd::json::string
+ircd::json::escape(const mutable_buffer &buf,
+                   const string_view &in)
+{
+	static const printer::rule<string_view> characters
+	{
+		*(printer.character)
+	};
+
+	mutable_buffer out{buf};
+	printer(out, characters, in);
+	return string_view
+	{
+		data(buf), data(out)
+	};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // json/value.h
 //
 
@@ -3912,23 +3941,6 @@ static_assert
 (
 	ircd::json::undefined_number != 0
 );
-
-ircd::string_view
-ircd::json::escape(const mutable_buffer &buf,
-                   const string_view &in)
-{
-	static const printer::rule<string_view> characters
-	{
-		*(printer.character)
-	};
-
-	mutable_buffer out{buf};
-	printer(out, characters, in);
-	return string_view
-	{
-		data(buf), data(out)
-	};
-}
 
 std::string
 ircd::json::why(const string_view &s)
