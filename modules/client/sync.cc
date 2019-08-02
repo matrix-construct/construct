@@ -252,6 +252,10 @@ ircd::m::sync::handle_get(client &client,
 		// When the since token is in advance of the vm sequence number
 		// there's no events to consider for a sync.
 		&& range.first > vm::sequence::retired
+
+		// Spec sez that when ?full_state=1 to return immediately, so
+		// that rules out longpoll
+		&& !args.full_state
 	};
 
 	// Determine if linear sync mode should be used. If this is not used, and
@@ -274,6 +278,10 @@ ircd::m::sync::handle_get(client &client,
 
 		// When the semaphore query param is set we don't need linear mode.
 		&& !args.semaphore
+
+		// When full_state is requested we skip to polylog sync because those
+		// handlers are best suited for syncing a full room state.
+		&& !args.full_state
 	};
 
 	// Determine if polylog sync mode should be used.

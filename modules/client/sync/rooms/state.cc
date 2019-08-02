@@ -8,6 +8,8 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include "../args.h"
+
 namespace ircd::m::sync
 {
 	static bool room_state_append(data &, json::stack::array &, const m::event &, const m::event::idx &);
@@ -215,9 +217,11 @@ ircd::m::sync::room_invite_state_polylog(data &data)
 bool
 ircd::m::sync::_room_state_polylog(data &data)
 {
-	if(!apropos(data, data.room_head))
-		if(!data.phased || int64_t(data.range.first) > 0)
-			return false;
+	assert(data.args);
+	if(likely(!data.args->full_state))
+		if(!apropos(data, data.room_head))
+			if(!data.phased || int64_t(data.range.first) > 0)
+				return false;
 
 	return room_state_polylog_events(data);
 }
@@ -266,8 +270,12 @@ ircd::m::sync::room_state_polylog_events(data &data)
 	state.for_each([&data, &concurrent]
 	(const event::idx &event_idx)
 	{
-		if(!apropos(data, event_idx))
-			return;
+		// Skip this event if it's not in the sync range, except
+		// when the request came with a `?full_state=true`
+		assert(data.args);
+		if(likely(!data.args->full_state))
+			if(!apropos(data, event_idx))
+				return;
 
 		concurrent(event_idx);
 	});
