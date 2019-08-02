@@ -19,12 +19,12 @@ namespace ircd
 	using microtime_t = std::pair<time_t, int32_t>;
 	IRCD_OVERLOAD(localtime)
 
-	// Standard time_point samples (monotonic/steady_clock)
-	template<class unit = seconds> unit now();
-	template<> steady_point now();
+	// Standard time_point samples
+	template<class unit = seconds> unit now();   // monotonic/steady_clock
+	template<> steady_point now();               // monotonic/steady_clock
+	template<> system_point now();               // system_clock
 
-	// Standard time_point samples (system_clock)
-	template<> system_point now();
+	// system_clock
 	template<class unit = seconds> time_t &time(time_t &ref);
 	template<class unit = seconds> time_t time();
 	template<class unit = seconds> time_t time(time_t *const &ptr);
