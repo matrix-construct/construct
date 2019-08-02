@@ -120,31 +120,6 @@ ircd::m::sync::longpoll_enable
 };
 
 //
-// sync/args.h
-//
-
-ircd::conf::item<ircd::milliseconds>
-ircd::m::sync::args::timeout_max
-{
-	{ "name",     "ircd.client.sync.timeout.max"  },
-	{ "default",  180 * 1000L                     },
-};
-
-ircd::conf::item<ircd::milliseconds>
-ircd::m::sync::args::timeout_min
-{
-	{ "name",     "ircd.client.sync.timeout.min"  },
-	{ "default",  15 * 1000L                      },
-};
-
-ircd::conf::item<ircd::milliseconds>
-ircd::m::sync::args::timeout_default
-{
-	{ "name",     "ircd.client.sync.timeout.default"  },
-	{ "default",  90 * 1000L                          },
-};
-
-//
 // GET sync
 //
 
@@ -1027,21 +1002,89 @@ noexcept
 }
 
 //
+// sync/args.h
+//
+
+ircd::conf::item<ircd::milliseconds>
+ircd::m::sync::args::timeout_max
+{
+	{ "name",     "ircd.client.sync.timeout.max"  },
+	{ "default",  180 * 1000L                     },
+};
+
+ircd::conf::item<ircd::milliseconds>
+ircd::m::sync::args::timeout_min
+{
+	{ "name",     "ircd.client.sync.timeout.min"  },
+	{ "default",  15 * 1000L                      },
+};
+
+ircd::conf::item<ircd::milliseconds>
+ircd::m::sync::args::timeout_default
+{
+	{ "name",     "ircd.client.sync.timeout.default"  },
+	{ "default",  90 * 1000L                          },
+};
+
+//
 // args::args
 //
 
 ircd::m::sync::args::args(const resource::request &request)
 try
-:request
+:filter_id
 {
-    request
+	request.query["filter"]
+}
+,since_token
+{
+	split(request.query.get("since", "0"_sv), '_')
+}
+,since
+{
+	lex_cast<uint64_t>(since_token.first)
+}
+,next_batch_token
+{
+	request.query.get("next_batch", since_token.second)
+}
+,next_batch
+{
+	uint64_t(lex_cast<int64_t>(next_batch_token?: "-1"_sv))
+}
+,timesout{[&request]
+{
+	auto ret
+	{
+		request.query.get("timeout", milliseconds(timeout_default))
+	};
+
+	ret = std::min(ret, milliseconds(timeout_max));
+	ret = std::max(ret, milliseconds(timeout_min));
+	return now<steady_point>() + ret;
+}()}
+,full_state
+{
+	request.query.get("full_state", false)
+}
+,set_presence
+{
+	request.query.get("set_presence", true)
+}
+,phased
+{
+	request.query.get("phased", true)
+}
+,semaphore
+{
+	request.query.get("semaphore", false)
 }
 {
 }
 catch(const bad_lex_cast &e)
 {
-    throw m::BAD_REQUEST
-    {
-        "Since parameter invalid :%s", e.what()
-    };
+	throw m::BAD_REQUEST
+	{
+		"Since parameter invalid :%s", e.what()
+	};
 }
