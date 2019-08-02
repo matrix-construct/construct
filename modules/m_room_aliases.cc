@@ -285,15 +285,9 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
                                    const alias &alias,
                                    const id::closure &closure)
 {
-	char swapbuf[m::id::room_alias::buf::SIZE];
-	const string_view &key
-	{
-		alias.swap(swapbuf)
-	};
-
 	m::event::idx event_idx
 	{
-		alias_room.get(std::nothrow, "ircd.room.alias", key)
+		getidx(alias)
 	};
 
 	if(!event_idx)
@@ -304,40 +298,26 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 		if(!fetch(std::nothrow, alias, alias.host()))
 			return false;
 
-		event_idx = alias_room.get(std::nothrow, "ircd.room.alias", key);
+		event_idx = getidx(alias);
 	}
-
-	time_t ts;
-	if(!m::get(event_idx, "origin_server_ts", ts))
-		return false;
-
-	const seconds elapsed
-	{
-		(ircd::time<milliseconds>() - ts) / 1000L
-	};
-
-	const seconds &ttl
-	{
-		alias_cache_ttl
-	};
 
 	const bool expired
 	{
-		!my_host(alias.host()) && elapsed > ttl
+		!my_host(alias.host()) && cache::expired(event_idx)
 	};
 
 	if(expired)
 	{
 		log::dwarning
 		{
-			log, "Cached alias %s expired elapsed:%ld ttl:%ld",
+			log, "Cached alias %s expired age:%ld ttl:%ld",
 			string_view{alias},
-			elapsed.count(),
-			ttl.count(),
+			cache::age(event_idx).count(),
+			milliseconds(seconds(alias_cache_ttl)).count(),
 		};
 
 		fetch(std::nothrow, alias, alias.host());
-		event_idx = alias_room.get(std::nothrow, "ircd.room.alias", key);
+		event_idx = getidx(alias);
 	}
 
 	if(!event_idx)
@@ -436,46 +416,6 @@ catch(const server::unavailable &e)
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::room::aliases::cache::has(const alias &alias)
-{
-	char swapbuf[m::id::room_alias::buf::SIZE];
-	const string_view &key
-	{
-		alias.swap(swapbuf)
-	};
-
-	const auto &event_idx
-	{
-		alias_room.get(std::nothrow, "ircd.room.alias", key)
-	};
-
-	if(!event_idx)
-		return false;
-
-	time_t ts;
-	if(!m::get(event_idx, "origin_server_ts", ts))
-		return false;
-
-	if(ircd::time() - ts > seconds(alias_cache_ttl).count())
-		return false;
-
-	bool ret{false};
-	m::get(std::nothrow, event_idx, "content", [&ret]
-	(const json::object &content)
-	{
-		const json::string &room_id
-		{
-			content.get("room_id")
-		};
-
-		ret = !empty(room_id);
-	});
-
-	return ret;
-}
-
-bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::for_each(const string_view &server,
                                         const closure_bool &closure)
 {
@@ -497,11 +437,7 @@ ircd::m::room::aliases::cache::for_each(const string_view &server,
 		if(server && alias.host() != server)
 			return false;
 
-		time_t ts;
-		if(!m::get(event_idx, "origin_server_ts", ts))
-			return true;
-
-		if(ircd::time() - ts > seconds(alias_cache_ttl).count())
+		if(expired(event_idx))
 			return true;
 
 		m::get(std::nothrow, event_idx, "content", [&closure, &ret, &alias]
@@ -521,4 +457,113 @@ ircd::m::room::aliases::cache::for_each(const string_view &server,
 
 	state.for_each("ircd.room.alias", server, reclosure);
 	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::has(const alias &alias)
+{
+	const auto &event_idx
+	{
+		getidx(alias)
+	};
+
+	if(!event_idx)
+		return false;
+
+	if(expired(event_idx))
+		return false;
+
+	bool ret{false};
+	m::get(std::nothrow, event_idx, "content", [&ret]
+	(const json::object &content)
+	{
+		const json::string &room_id
+		{
+			content.get("room_id")
+		};
+
+		ret = !empty(room_id);
+	});
+
+	return ret;
+}
+
+ircd::system_point
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::expires(const alias &alias)
+{
+	const auto event_idx
+	{
+		getidx(alias)
+	};
+
+	if(!event_idx)
+		return system_point::min();
+
+	const milliseconds age
+	{
+		cache::age(event_idx)
+	};
+
+	const seconds ttl
+	{
+		alias_cache_ttl
+	};
+
+	return now<system_point>() + (ttl - age);
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::expired(const event::idx &event_idx)
+{
+	const milliseconds age
+	{
+		cache::age(event_idx)
+	};
+
+	const seconds ttl
+	{
+		alias_cache_ttl
+	};
+
+	return age > ttl;
+}
+
+ircd::milliseconds
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::age(const event::idx &event_idx)
+{
+	time_t ts;
+	if(!m::get(event_idx, "origin_server_ts", ts))
+		return milliseconds::max();
+
+	const time_t now
+	{
+		ircd::time<milliseconds>()
+	};
+
+	return milliseconds
+	{
+		now - ts
+	};
+}
+
+ircd::m::event::idx
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::getidx(const alias &alias)
+{
+	char swapbuf[m::id::room_alias::buf::SIZE];
+	const string_view &key
+	{
+		alias.swap(swapbuf)
+	};
+
+	const auto &event_idx
+	{
+		alias_room.get(std::nothrow, "ircd.room.alias", key)
+	};
+
+	return event_idx;
 }
