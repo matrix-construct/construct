@@ -2545,14 +2545,14 @@ ircd::m::event::refs::rebuild()
 
 size_t
 ircd::m::event::refs::count()
-const noexcept
+const
 {
 	return count(dbs::ref(-1));
 }
 
 size_t
 ircd::m::event::refs::count(const dbs::ref &type)
-const noexcept
+const
 {
 	assert(idx);
 	size_t ret(0);
@@ -2567,8 +2567,15 @@ const noexcept
 }
 
 bool
+ircd::m::event::refs::has(const event::idx &idx)
+const
+{
+	return has(dbs::ref(-1), idx);
+}
+
+bool
 ircd::m::event::refs::has(const dbs::ref &type)
-const noexcept
+const
 {
 	return !for_each(type, [&type]
 	(const event::idx &, const dbs::ref &ref)
@@ -2579,16 +2586,9 @@ const noexcept
 }
 
 bool
-ircd::m::event::refs::has(const event::idx &idx)
-const noexcept
-{
-	return has(dbs::ref(-1), idx);
-}
-
-bool
 ircd::m::event::refs::has(const dbs::ref &type,
                           const event::idx &idx)
-const noexcept
+const
 {
 	return !for_each(type, [&idx]
 	(const event::idx &ref, const dbs::ref &)
