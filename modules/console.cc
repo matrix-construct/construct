@@ -1417,7 +1417,7 @@ console_cmd__conf__list(opt &out, const string_view &line)
 
 		out
 		<< std::setw(64) << std::left << std::setfill('_') << item.first
-		<< " " << item.second->get(val) << "\033[0m"
+		<< " " << item.second->get(val)
 		<< std::endl;
 	}
 
