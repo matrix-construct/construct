@@ -10,18 +10,6 @@
 
 #include "media.h"
 
-namespace ircd::m::media::thumbnail
-{
-	extern conf::item<bool> enable;
-	extern conf::item<bool> enable_remote;
-	extern conf::item<size_t> width_min;
-	extern conf::item<size_t> width_max;
-	extern conf::item<size_t> height_min;
-	extern conf::item<size_t> height_max;
-	extern conf::item<std::string> mime_whitelist;
-	extern conf::item<std::string> mime_blacklist;
-}
-
 using namespace ircd::m::media::thumbnail; //TODO: XXX
 
 decltype(ircd::m::media::thumbnail::enable)

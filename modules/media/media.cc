@@ -18,6 +18,14 @@ IRCD_MODULE
 	ircd::m::media::fini
 };
 
+struct ircd::m::media::magick
+{
+	module modules
+	{
+		"magick"
+	};
+};
+
 void
 ircd::m::media::init()
 {
@@ -30,24 +38,29 @@ ircd::m::media::init()
 	conf::reset("ircd.media.blocks.cache.size");
 	conf::reset("ircd.media.blocks.cache_comp.size");
 
-	try
+	// conditions to load the magick.so module
+	const bool enable_magick
 	{
-		::magick_support.reset(new module{"magick"});
-	}
-	catch(std::exception &e)
-	{
+		// used by the thumbnailer
+		thumbnail::enable
+
+		// support is available
+		&& mods::available("magick")
+	};
+
+	if(enable_magick)
+		magick_support.reset(new media::magick{});
+	else
 		log::warning
 		{
-			media_log, "Failed to load GraphicsMagick support :%s",
-			e.what()
+			media_log, "GraphicsMagick support is disabled or unavailable."
 		};
-	}
 }
 
 void
 ircd::m::media::fini()
 {
-	::magick_support.reset();
+	magick_support.reset();
 
 	// The database close contains pthread_join()'s within RocksDB which
 	// deadlock under certain conditions when called during a dlclose()

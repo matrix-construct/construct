@@ -10,8 +10,22 @@
 
 namespace ircd::m::media
 {
+	struct magick;
+
 	void init();
 	void fini();
+}
+
+namespace ircd::m::media::thumbnail
+{
+	extern conf::item<bool> enable;
+	extern conf::item<bool> enable_remote;
+	extern conf::item<size_t> width_min;
+	extern conf::item<size_t> width_max;
+	extern conf::item<size_t> height_min;
+	extern conf::item<size_t> height_max;
+	extern conf::item<std::string> mime_whitelist;
+	extern conf::item<std::string> mime_blacklist;
 }
 
 using namespace ircd;
@@ -26,7 +40,7 @@ extern const db::descriptor media_blocks_descriptor;
 extern const db::description media_description;
 extern std::shared_ptr<db::database> media;
 extern db::column blocks;
-extern std::unique_ptr<module> magick_support;
+extern std::unique_ptr<m::media::magick> magick_support;
 
 extern "C" m::room::id
 file_room_id(m::room::id::buf &out,
