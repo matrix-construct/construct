@@ -4333,7 +4333,7 @@ try
 }
 catch(const mods::unavailable &e)
 {
-	thread_local char buf[128];
+	thread_local char buf[rfc1035::NAME_BUFSIZE];
 	log::dwarning
 	{
 		log, "Failed to put error for '%s' in DNS cache :%s",
@@ -4361,7 +4361,7 @@ try
 }
 catch(const mods::unavailable &e)
 {
-	thread_local char buf[128];
+	thread_local char buf[rfc1035::NAME_BUFSIZE];
 	log::dwarning
 	{
 		log, "Failed to put '%s' in DNS cache :%s",
@@ -4395,7 +4395,7 @@ try
 }
 catch(const mods::unavailable &e)
 {
-	thread_local char buf[128];
+	thread_local char buf[rfc1035::NAME_BUFSIZE];
 	log::dwarning
 	{
 		log, "Failed to get '%s' from DNS cache :%s",
