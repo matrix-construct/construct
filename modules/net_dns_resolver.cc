@@ -193,7 +193,7 @@ ircd::net::dns::resolver::make_query(const mutable_buffer &buf,
 			break;
 
 		default:
-			hoststr = host(tag.hp);
+			hoststr = tolower(hostbuf, host(tag.hp));
 			break;
 	}
 
