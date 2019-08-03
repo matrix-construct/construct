@@ -39,6 +39,8 @@ template<class prototype>
 struct ircd::util::callbacks<prototype, true>
 :std::list<std::function<prototype>>
 {
+	using proto_type = prototype;
+
 	template<class... args>
 	void operator()(args&&... a) const
 	{
@@ -57,6 +59,8 @@ template<class prototype>
 struct ircd::util::callbacks<prototype, false>
 :std::list<std::function<prototype>>
 {
+	using proto_type = prototype;
+
 	template<class... args>
 	void operator()(args&&... a) const
 	{
