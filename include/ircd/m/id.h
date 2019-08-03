@@ -306,14 +306,14 @@ struct ircd::m::id::buf
 {
 	static constexpr const size_t SIZE
 	{
-		m::id::MAX_SIZE
+		m::id::MAX_SIZE + 1
 	};
 
   private:
-	fixed_buffer<mutable_buffer, SIZE + 1> b;
+	fixed_buffer<mutable_buffer, SIZE> b;
 
   public:
-	operator const fixed_buffer<mutable_buffer, SIZE + 1> &() const
+	operator const fixed_buffer<mutable_buffer, SIZE> &() const
 	{
 		return b;
 	}
