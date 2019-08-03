@@ -64,8 +64,8 @@ net_dns_la_CPPFLAGS = $(AM_CPPFLAGS) @BOOST_CPPFLAGS@
 net_dns_la_LDFLAGS = $(AM_LDFLAGS) @BOOST_LDFLAGS@
 net_dns_la_LIBADD = $(AM_LIBS) @BOOST_LIBS@
 console_la_SOURCES = console.cc
-index_la_SOURCES = index.cc
-webhook_la_SOURCES = webhook.cc
+web_root_la_SOURCES = web_root.cc
+web_hook_la_SOURCES = web_hook.cc
 well_known_la_SOURCES = well_known.cc
 
 module_LTLIBRARIES = \
@@ -73,8 +73,8 @@ module_LTLIBRARIES = \
 	stats.la \
 	net_dns.la \
 	console.la \
-	index.la \
-	webhook.la \
+	web_root.la \
+	web_hook.la \
 	well_known.la \
 	###
 

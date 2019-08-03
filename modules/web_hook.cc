@@ -13,7 +13,7 @@ using namespace ircd;
 mapi::header
 IRCD_MODULE
 {
-	"Webhook Handler"
+	"Web hook Handler"
 };
 
 conf::item<std::string>

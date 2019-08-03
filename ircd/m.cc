@@ -240,8 +240,6 @@ ircd::m::module_names
 	"m_command",
 	"m_control",
 	"well_known",
-	"webhook",
-	"stats",
 	"federation_backfill_ids",
 	"federation_backfill",
 	"federation_event_auth",
@@ -315,9 +313,11 @@ ircd::m::module_names
 	"client_thirdparty_protocols",
 	"client_versions",
 	"client_voip_turnserver",
-	"index",
+	"web_root",
+	"web_hook",
 	"m_listen",
 	"m_vm",
+	"stats",
 };
 
 /// This is a list of modules that are considered "optional" and any loading
@@ -325,7 +325,7 @@ ircd::m::module_names
 decltype(ircd::m::module_names_optional)
 ircd::m::module_names_optional
 {
-
+	"web_hook",
 };
 
 ///////////////////////////////////////////////////////////////////////////////
