@@ -89,7 +89,14 @@ init_files()
 	};
 
 	if(empty(path))
+	{
+		log::warning
+		{
+			"Conf item 'ircd.web.root.path' is empty; not serving static assets."
+		};
+
 		return;
+	}
 
 	if(!fs::exists(path))
 	{
@@ -103,9 +110,30 @@ init_files()
 
 	for(const auto &file : fs::ls_r(path))
 	{
-		const auto name(lstrip(file, path));
+		const auto name
+		{
+			lstrip(file, path)
+		};
+
 		files.emplace(std::string(name), file);
 	}
+
+	if(files.empty())
+	{
+		log::dwarning
+		{
+			"No files or directories found at `%s'; not serving any static assets."
+		};
+
+		return;
+	}
+
+	log::info
+	{
+		"Web root loaded %zu file and directory resources for service under `%s'",
+		files.size(),
+		path,
+	};
 }
 
 /// This handler exists because the root resource on path "/" catches
