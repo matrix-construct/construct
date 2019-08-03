@@ -813,6 +813,61 @@ console_cmd__date(opt &out, const string_view &line)
 }
 
 //
+// filesystem
+//
+
+bool
+console_cmd__fs__ls(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"path_or_option", "[path]"
+	}};
+
+	const string_view option
+	{
+		startswith(param["path_or_option"], '-')?
+			param["path_or_option"]:
+			string_view{}
+	};
+
+	string_view path
+	{
+		option?
+			param["[path]"]:
+			param["path_or_option"]
+	};
+
+	const std::string cwd
+	{
+		!path?
+			fs::cwd():
+			std::string{}
+	};
+
+	if(!path)
+		path = cwd;
+
+	const auto list
+	{
+		option == "-r" || option == "-R"?
+			fs::ls_r(path):
+			fs::ls(path)
+	};
+
+	for(const auto &file : list)
+		out << file << std::endl;
+
+	return true;
+}
+
+bool
+console_cmd__ls(opt &out, const string_view &line)
+{
+	return console_cmd__fs__ls(out, line);
+}
+
+//
 // proc
 //
 
