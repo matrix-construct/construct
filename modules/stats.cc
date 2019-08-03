@@ -17,27 +17,27 @@ IRCD_MODULE
 };
 
 resource
-metrics_resource
+stats_resource
 {
-	"/metrics",
+	"/stats",
 	{
 		"Prometheus Metrics"
 	}
 };
 
 static resource::response
-get__metrics(client &,
-             const resource::request &);
+get__stats(client &,
+           const resource::request &);
 
 resource::method
-metrics_get
+stats_get
 {
-	metrics_resource, "GET", get__metrics
+	stats_resource, "GET", get__stats
 };
 
 resource::response
-get__metrics(client &client,
-             const resource::request &request)
+get__stats(client &client,
+           const resource::request &request)
 {
 	static const size_t buf_max
 	{
