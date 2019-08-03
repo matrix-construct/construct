@@ -108,14 +108,24 @@ init_files()
 		return;
 	}
 
-	for(const auto &file : fs::ls_r(path))
+	for(const auto &absolute : fs::ls_r(path))
 	{
-		const auto name
+		// fs::ls_r() gives us full absolute paths on the system, but we need
+		// to locate resources relative to webroot. The system path below
+		// the configured webroot is stripped here.
+		auto relative
 		{
-			lstrip(file, path)
+			lstrip(absolute, path)
 		};
 
-		files.emplace(std::string(name), file);
+		// The configured webroot is a directory string entered by the admin, it
+		// may or may not contain a trailing slash. This the strip above may have
+		// left a leading slash on this name; which is bad.
+		relative = lstrip(relative, '/');
+
+		// Add the mapping of the relative resource path to the absolute path
+		// on the system.
+		files.emplace(relative, absolute);
 	}
 
 	if(files.empty())
