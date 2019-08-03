@@ -49,6 +49,20 @@ either in the module.
 name of `IRCD_MODULE`. This is an object which will be sought by the module
 loader in libircd.
 
+```
+// Example of a trivial module
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"My Module", []
+	{
+		puts("hi\n");
+	}
+};
+
+```
+
 2. Add an `_la_SOURCES` entry for your module in the appropriate place in
 Makefile.am.
 
