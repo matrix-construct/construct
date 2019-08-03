@@ -757,7 +757,7 @@ console_cmd__info(opt &out, const string_view &line)
 {
 	info::dump();
 
-	out << "Daemon information was written to the log."
+	out << "Library information was written to the INFO and DEBUG logs."
 	    << std::endl;
 
 	return true;
