@@ -433,6 +433,7 @@ ircd::rfc1035::make_name(const mutable_buffer &out,
 	*pos = '\0';
 	ircd::tokens(fqdn, '.', [&pos, &out](const string_view &label)
 	{
+		thread_local char labelbuf[LABEL_MAX+1];
 		if(unlikely(size(label) > LABEL_MAX))
 			throw error
 			{
@@ -442,7 +443,12 @@ ircd::rfc1035::make_name(const mutable_buffer &out,
 
 		*pos++ = size(label);
 		*pos = '\0';
-		pos += strlcpy(pos, label, std::distance(pos, end(out)));
+		pos += strlcpy
+		{
+			pos,
+			tolower(labelbuf, label),
+			std::distance(pos, end(out))
+		};
 	});
 
 	// The null terminator is included in the returned buffer view
