@@ -3624,11 +3624,12 @@ noexcept try
 	using std::errc;
 
 	const life_guard<socket> s{wp};
-	thread_local char ecbuf[64];
+	thread_local char ecbuf[64], epbuf[128];
 	log::debug
 	{
-		log, "%s connect %s",
+		log, "%s connect to %s :%s",
 		loghead(*this),
+		string(epbuf, opts.ipport),
 		string(ecbuf, ec)
 	};
 
