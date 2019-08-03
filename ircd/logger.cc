@@ -109,6 +109,10 @@ ircd::log::general
 	"ircd", 'G'
 };
 
+//
+// init
+//
+
 void
 ircd::log::init()
 {

@@ -107,11 +107,14 @@ struct ircd::log::log
 	static log *find(const char &snote);
 };
 
+/// Lower level interface; this is not a template and defined in the unit.
 struct ircd::log::vlog
 {
 	vlog(const log &log, const level &, const string_view &fmt, const va_rtti &ap);
 };
 
+/// Lower level interface; allows log facility and level to be specified at
+/// runtime, without shedding the vararg format string generation like vlog.
 struct ircd::log::logf
 {
 	template<class... args>
@@ -121,12 +124,19 @@ struct ircd::log::logf
 	}
 };
 
+/// Manually insert a special message to the log which can be used later
+/// during analysis. This can be used by administrators at the console by
+/// simply typing the 'mark' command.
 struct ircd::log::mark
 {
 	mark(const level &, const string_view &msg = {});
 	mark(const string_view &msg = {});
 };
 
+/// Scope device to turn off all messages to stdout/stderr; only CRITICAL
+/// messages can still get through. This is primarily used by the console.
+/// The `showmsg` argument means that a NOTICE will indicate that a suppression
+/// has ended on ~console_quiet; false will skip that.
 struct ircd::log::console_quiet
 {
 	console_quiet(const bool &showmsg = true);
