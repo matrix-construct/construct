@@ -49,8 +49,18 @@ IRCD_MODULE_EXPORT
 ircd::m::join(const room &room,
               const id::user &user_id)
 {
+	if(unlikely(!my(user_id)))
+		throw panic
+		{
+			"Can only join my users."
+		};
+
+	// Branch for when nothing is known about the room.
 	if(!exists(room))
 	{
+		// The bootstrap condcts a blocking make_join and issues a join
+		// event, returning the event_id; afterward asynchronously it will
+		// attempt a send_join, and then process the room events.
 		m::event::id::buf ret;
 		m::room::bootstrap
 		{
@@ -115,6 +125,12 @@ IRCD_MODULE_EXPORT
 ircd::m::join(const m::room::alias &room_alias,
               const m::user::id &user_id)
 {
+	if(unlikely(!my(user_id)))
+		throw panic
+		{
+			"Can only join my users."
+		};
+
 	const room::id::buf room_id
 	{
 		m::room_id(room_alias)
