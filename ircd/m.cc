@@ -11,7 +11,7 @@
 decltype(ircd::m::log)
 ircd::m::log
 {
-	"matrix", 'm'
+	"m", 'm'
 };
 
 //
