@@ -4183,15 +4183,22 @@ ircd::net::dns::make_SRV_key(const mutable_buffer &out,
                              const hostport &hp,
                              const opts &opts)
 {
+	thread_local char tlbuf[2][rfc1035::NAME_BUFSIZE];
+
 	if(!opts.srv)
 		return fmt::sprintf
 		{
-			out, "_%s._%s.%s", service(hp), opts.proto, host(hp)
+			out, "_%s._%s.%s",
+			tolower(tlbuf[0], service(hp)),
+			opts.proto,
+			tolower(tlbuf[1], host(hp)),
 		};
 	else
 		return fmt::sprintf
 		{
-			out, "%s%s", opts.srv, host(hp)
+			out, "%s%s",
+			opts.srv,
+			tolower(tlbuf[1], host(hp))
 		};
 }
 
@@ -4770,15 +4777,20 @@ ircd::net::canonize(const mutable_buffer &buf,
                     const hostport &hp,
                     const uint16_t &port)
 {
+	thread_local char tlbuf[256];
+
 	if(net::port(hp) == 0 || net::port(hp) == port)
 		return fmt::sprintf
 		{
-			buf, "%s", host(hp)
+			buf, "%s",
+			tolower(tlbuf, host(hp)),
 		};
 
 	return fmt::sprintf
 	{
-		buf, "%s:%u", host(hp), net::port(hp)
+		buf, "%s:%u",
+		tolower(tlbuf, host(hp)),
+		net::port(hp)
 	};
 }
 
@@ -4786,27 +4798,37 @@ ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
                   const hostport &hp)
 {
+	thread_local char tlbuf[2][256];
+
 	if(empty(service(hp)) && port(hp) == 0)
 		return fmt::sprintf
 		{
-			buf, "%s", host(hp)
+			buf, "%s",
+			tolower(tlbuf[0], host(hp)),
 		};
 
 	if(!empty(service(hp)))
 		return fmt::sprintf
 		{
-			buf, "%s:%s", host(hp), service(hp)
+			buf, "%s:%s",
+			tolower(tlbuf[0], host(hp)),
+			tolower(tlbuf[1], service(hp)),
 		};
 
 	if(empty(service(hp)) && port(hp) != 0)
 		return fmt::sprintf
 		{
-			buf, "%s:%u", host(hp), port(hp)
+			buf, "%s:%u",
+			tolower(tlbuf[0], host(hp)),
+			port(hp)
 		};
 
 	return fmt::sprintf
 	{
-		buf, "%s:%u (%s)", host(hp), port(hp), service(hp)
+		buf, "%s:%u (%s)",
+		tolower(tlbuf[0], host(hp)),
+		port(hp),
+		tolower(tlbuf[1], service(hp)),
 	};
 }
 
