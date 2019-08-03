@@ -70,6 +70,24 @@ ircd::m::join(const room &room,
 		return ret;
 	}
 
+	if(room.membership(user_id, "join"))
+	{
+		const auto &event_idx
+		{
+			room.get(std::nothrow, "m.room.member", user_id)
+		};
+
+		const event::id::buf event_id
+		{
+			event_idx?
+				m::event_id(event_idx, std::nothrow):
+				event::id::buf{}
+		};
+
+		if(event_id)
+			return event_id;
+	}
+
 	json::iov event;
 	json::iov content;
 	const json::iov::push push[]
