@@ -227,10 +227,10 @@ bool
 IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::del(const alias &alias)
 {
-	char swapbuf[m::id::room_alias::buf::SIZE];
+	char buf[m::id::room_alias::buf::SIZE];
 	const string_view &key
 	{
-		alias.swap(swapbuf)
+		make_key(buf, alias)
 	};
 
 	const auto &event_idx
@@ -262,10 +262,10 @@ IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::set(const alias &alias,
                                    const id &id)
 {
-	char swapbuf[m::id::room_alias::buf::SIZE];
+	char buf[m::id::room_alias::buf::SIZE];
 	const string_view &key
 	{
-		alias.swap(swapbuf)
+		make_key(buf, alias)
 	};
 
 	const auto ret
@@ -554,10 +554,16 @@ ircd::m::event::idx
 IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::getidx(const alias &alias)
 {
-	char swapbuf[m::id::room_alias::buf::SIZE];
-	const string_view &key
+	thread_local char swapbuf[m::id::room_alias::buf::SIZE];
+	const string_view &swapped
 	{
 		alias.swap(swapbuf)
+	};
+
+	char buf[m::id::room_alias::buf::SIZE];
+	const string_view &key
+	{
+		tolower(buf, swapped)
 	};
 
 	const auto &event_idx
@@ -566,4 +572,24 @@ ircd::m::room::aliases::cache::getidx(const alias &alias)
 	};
 
 	return event_idx;
+}
+
+ircd::string_view
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::make_key(const mutable_buffer &out,
+                                        const alias &alias)
+{
+
+	thread_local char swapbuf[m::id::room_alias::buf::SIZE] alignas(16);
+	const string_view &swapped
+	{
+		alias.swap(swapbuf)
+	};
+
+	const string_view &key
+	{
+		tolower(out, swapped)
+	};
+
+	return key;
 }

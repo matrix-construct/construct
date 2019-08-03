@@ -44,6 +44,7 @@ struct ircd::m::room::aliases::cache
 	struct entity;
 	using closure_bool = std::function<bool (const alias &, const id &)>;
 
+	static string_view make_key(const mutable_buffer &, const alias &);
 	static event::idx getidx(const alias &); // nothrow
 	static milliseconds age(const event::idx &); // nothrow
 	static bool expired(const event::idx &); // nothrow
