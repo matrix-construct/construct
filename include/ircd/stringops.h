@@ -91,6 +91,14 @@ namespace ircd
 	string_view replace(const mutable_buffer &, const char &before, const char &after);
 	string_view replace(const mutable_buffer &out, const string_view &in, const char &before, const char &after);
 
+	// Change a single character's case
+	using std::tolower;
+	using std::toupper;
+
+	// Change case for all characters.
+	string_view tolower(const mutable_buffer &out, const string_view &in) noexcept;
+	string_view toupper(const mutable_buffer &out, const string_view &in) noexcept;
+
 	// Truncate view at maximum length
 	string_view trunc(const string_view &, const size_t &max);
 }
