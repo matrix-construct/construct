@@ -200,12 +200,12 @@ ircd::m::event::append::append(json::stack::object &object,
 	#ifdef IRCD_M_EVENT_APPEND_DEBUG
 	log::debug
 	{
-		event_append_log, "%s %s idx:%lu in %s room_depth:%ld txnid:%s idx:%lu age:%ld %s,%s",
+		event_append_log, "%s %s idx:%lu in %s depth:%ld txnid:%s idx:%lu age:%ld %s,%s",
 		opts.user_id? string_view{*opts.user_id} : string_view{},
 		string_view{event.event_id},
 		opts.event_idx? *opts.event_idx : 0UL,
 		json::get<"room_id"_>(event),
-		opts.room_depth? *opts.room_depth : 0L,
+		json::get<"depth"_>(event),
 		has_client_txnid? *opts.client_txnid : string_view{},
 		txnid_idx,
 		int64_t(age),
