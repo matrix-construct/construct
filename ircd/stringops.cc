@@ -27,9 +27,10 @@ noexcept
 		})
 	};
 
+	assert(intptr_t(begin(out)) <= intptr_t(end));
 	return string_view
 	{
-		data(out), std::distance(begin(out), end)
+		data(out), size_t(std::distance(begin(out), end))
 	};
 }
 
@@ -52,9 +53,10 @@ noexcept
 		})
 	};
 
+	assert(intptr_t(begin(out)) <= intptr_t(end));
 	return string_view
 	{
-		data(out), std::distance(begin(out), end)
+		data(out), size_t(std::distance(begin(out), end))
 	};
 }
 
