@@ -371,10 +371,10 @@ ircd::m::pretty_oneline(std::ostream &s,
 
 namespace ircd::m::vm
 {
-	extern const m::hookfn<eval &> issue_missing_auth;
-	extern const m::hookfn<eval &> conform_check_origin;
-	extern const m::hookfn<eval &> conform_check_size;
-	extern const m::hookfn<eval &> conform_report;
+	extern m::hookfn<eval &> issue_missing_auth;
+	extern m::hookfn<eval &> conform_check_origin;
+	extern m::hookfn<eval &> conform_check_size;
+	extern m::hookfn<eval &> conform_report;
 }
 
 /// Check if an eval with a copts structure (indicating this server is
