@@ -533,7 +533,7 @@ noexcept
 	std::stringstream s;
 	pubsetbuf(s, buf);
 	s
-	<< microtime(date)
+	<< microdate(date)
 	<< ' '
 	<< std::setw(6)
 	<< std::right
