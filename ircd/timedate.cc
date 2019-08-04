@@ -55,6 +55,34 @@ ircd::smalldate(const mutable_buffer &buf,
 }
 
 ircd::string_view
+ircd::microdate(const mutable_buffer &buf)
+{
+	auto mt
+	{
+		microtime()
+	};
+
+	struct tm lt;
+	localtime_r(&mt.first, &lt);
+	const auto length
+	{
+		::snprintf(data(buf), size(buf), "%04d/%02d/%02d %02d:%02d:%02d.%06d",
+		           lt.tm_year + 1900,
+		           lt.tm_mon + 1,
+		           lt.tm_mday,
+		           lt.tm_hour,
+		           lt.tm_min,
+		           lt.tm_sec,
+		           mt.second)
+	};
+
+	return string_view
+	{
+		data(buf), size_t(length)
+	};
+}
+
+ircd::string_view
 ircd::timef(const mutable_buffer &out,
             const char *const &fmt)
 {

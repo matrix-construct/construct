@@ -46,6 +46,7 @@ namespace ircd
 
 	// Other tools
 	string_view smalldate(const mutable_buffer &buf, const time_t &ltime);
+	string_view microdate(const mutable_buffer &buf);
 
 	// Interface conveniences.
 	std::ostream &operator<<(std::ostream &, const microtime_t &);
