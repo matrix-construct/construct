@@ -14,6 +14,17 @@ IRCD_MODULE
 	"Matrix Event Library :Streaming tools"
 };
 
+namespace ircd::m
+{
+	extern log::log event_append_log;
+}
+
+decltype(ircd::m::event_append_log)
+ircd::m::event_append_log
+{
+	"m.event.append"
+};
+
 IRCD_MODULE_EXPORT
 ircd::m::event::append::append(json::stack::array &array,
                                const event &event_,
@@ -141,31 +152,33 @@ ircd::m::event::append::append(json::stack::object &object,
 		object, "unsigned"
 	};
 
+	const json::value age
+	{
+		// When the opts give an explicit age, use it.
+		opts.age != std::numeric_limits<long>::min()?
+			opts.age:
+
+		// If we have depth information, craft a value based on the
+		// distance to the head depth; if this is 0 in riot the event will
+		// "stick" at the bottom of the timeline. This may be advantageous
+		// in the future but for now we make sure the result is non-zero.
+		json::get<"depth"_>(event) >= 0 && opts.room_depth && *opts.room_depth >= 0L?
+			(*opts.room_depth + 1 - json::get<"depth"_>(event)) + 1:
+
+		// We don't have depth information, so we use the origin_server_ts.
+		// It is bad if it conflicts with other appends in the room which
+		// did have depth information.
+		!opts.room_depth && json::get<"origin_server_ts"_>(event)?
+			ircd::time<milliseconds>() - json::get<"origin_server_ts"_>(event):
+
+		// Finally, this special value will eliminate the age altogether
+		// during serialization.
+		json::undefined_number
+	};
+
 	json::stack::member
 	{
-		unsigned_, "age", json::value
-		{
-			// When the opts give an explicit age, use it.
-			opts.age != std::numeric_limits<long>::min()?
-				opts.age:
-
-			// If we have depth information, craft a value based on the
-			// distance to the head depth; if this is 0 in riot the event will
-			// "stick" at the bottom of the timeline. This may be advantageous
-			// in the future but for now we make sure the result is non-zero.
-			json::get<"depth"_>(event) >= 0 && opts.room_depth && *opts.room_depth >= 0L?
-				(*opts.room_depth + 1 - json::get<"depth"_>(event)) + 1:
-
-			// We don't have depth information, so we use the origin_server_ts.
-			// It is bad if it conflicts with other appends in the room which
-			// did have depth information.
-			!opts.room_depth && json::get<"origin_server_ts"_>(event)?
-				ircd::time<milliseconds>() - json::get<"origin_server_ts"_>(event):
-
-			// Finally, this special value will eliminate the age altogether
-			// during serialization.
-			json::undefined_number
-		}
+		unsigned_, "age", age
 	};
 
 	if(has_client_txnid)
@@ -183,6 +196,23 @@ ircd::m::event::append::append(json::stack::object &object,
 				unsigned_, "transaction_id", unquote(content.get("transaction_id"))
 			};
 		});
+
+	#ifdef IRCD_M_EVENT_APPEND_DEBUG
+	log::debug
+	{
+		event_append_log, "%s %s idx:%lu in %s room_depth:%ld txnid:%s idx:%lu age:%ld %s,%s",
+		opts.user_id? string_view{*opts.user_id} : string_view{},
+		string_view{event.event_id},
+		opts.event_idx? *opts.event_idx : 0UL,
+		json::get<"room_id"_>(event),
+		opts.room_depth? *opts.room_depth : 0L,
+		has_client_txnid? *opts.client_txnid : string_view{},
+		txnid_idx,
+		int64_t(age),
+		json::get<"type"_>(event),
+		json::get<"state_key"_>(event),
+	};
+	#endif
 
 	return true;
 }}
