@@ -306,9 +306,9 @@ ircd::m::sync::room_state_phased_events(data &data)
 
 	const auto append
 	{
-		[&data, &array, &ret, &mutex](const m::event &event)
+		[&data, &array, &ret, &mutex]
+		(const m::event::idx &event_idx, const m::event &event)
 		{
-			const auto event_idx(m::index(event));
 			const std::lock_guard lock{mutex};
 			ret |= room_state_append(data, array, event, event_idx);
 		}
@@ -319,7 +319,20 @@ ircd::m::sync::room_state_phased_events(data &data)
 	{
 		sync::pool, keys, [&data, &append](const auto &key)
 		{
-			data.room->get(std::nothrow, key.first, key.second, append);
+			const auto &event_idx
+			{
+				data.room->get(std::nothrow, key.first, key.second)
+			};
+
+			const m::event::fetch event
+			{
+				event_idx, std::nothrow
+			};
+
+			if(unlikely(!event.valid))
+				return;
+
+			append(event_idx, event);
 		}
 	};
 
