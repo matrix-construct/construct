@@ -25,6 +25,7 @@ namespace ircd::m::sync
 	static bool room_invite_state_linear(data &);
 	static bool room_state_linear(data &);
 
+	extern conf::item<bool> crazyload_historical_members;
 	extern conf::item<int64_t> state_exposure_depth; //TODO: XXX
 	extern const event::keys::include _default_keys;
 	extern event::fetch::opts _default_fopts;
@@ -226,6 +227,13 @@ ircd::m::sync::_room_state_polylog(data &data)
 	return room_state_polylog_events(data);
 }
 
+decltype(ircd::m::sync::crazyload_historical_members)
+ircd::m::sync::crazyload_historical_members
+{
+	{ "name",         "ircd.client.sync.rooms.state.historical.members" },
+	{ "default",      false                                             },
+};
+
 bool
 ircd::m::sync::room_state_polylog_events(data &data)
 {
@@ -268,16 +276,23 @@ ircd::m::sync::room_state_polylog_events(data &data)
 
 	const room::state state{*data.room};
 	state.for_each([&data, &concurrent]
-	(const event::idx &event_idx)
+	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 	{
 		// Skip this event if it's not in the sync range, except
 		// when the request came with a `?full_state=true`
 		assert(data.args);
 		if(likely(!data.args->full_state))
 			if(!apropos(data, event_idx))
-				return;
+				return true;
+
+		// For crazyloading, skip membership events in rooms the user is not
+		// presently joined.
+		if(!crazyload_historical_members && !data.args->full_state && data.phased)
+			if(data.membership != "join" && type == "m.room.member")
+				return true;
 
 		concurrent(event_idx);
+		return true;
 	});
 
 	concurrent.wait();
