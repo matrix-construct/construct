@@ -294,7 +294,7 @@ ircd::m::sync::room_state_phased_events(data &data)
 		*data.out, "events"
 	};
 
-	static const std::pair<string_view, string_view> keys[]
+	const std::pair<string_view, string_view> keys[]
 	{
 		{ "m.room.create",           ""                        },
 		{ "m.room.canonical_alias",  ""                        },
@@ -344,47 +344,59 @@ bool
 ircd::m::sync::room_state_phased_member_events(data &data,
                                                json::stack::array &array)
 {
-	static const auto count{10}, bufsz{48}, limit{10};
+	static const auto count{20}, bufsz{32}, limit{20};
+
+	size_t i(0), ret(0);
 	std::array<char[bufsz], count> buf;
 	std::array<string_view, count> last;
-	size_t i(0), ret(0);
+	const auto already
+	{
+		[&last, &ret](const string_view &sender) -> bool
+		{
+			return std::any_of(begin(last), begin(last)+ret, [&sender]
+			(const auto &last)
+			{
+				return startswith(last, sender);
+			});
+		}
+	};
+
 	m::room::messages it
 	{
 		*data.room
 	};
 
-	const auto already{[&last, &ret]
-	(const string_view &sender) -> bool
-	{
-		return std::any_of(begin(last), begin(last)+ret, [&sender]
-		(const auto &last)
-		{
-			return startswith(last, sender);
-		});
-	}};
-
 	for(; it && ret < count && i < limit; --it, ++i)
-	{
-		const auto &event_idx(it.event_idx());
-		m::get(std::nothrow, event_idx, "sender", [&]
+		m::get(std::nothrow, it.event_idx(), "sender", [&]
 		(const auto &sender)
 		{
 			if(already(sender))
 				return;
 
+			const auto sender_idx
+			{
+				data.room->get(std::nothrow, "m.room.member", sender)
+			};
+
+			if(!sender_idx)
+				return;
+
+			// check if this is an m.room.member event in the timeline.
+			if(sender_idx == it.event_idx())
+				return;
+
 			const m::event::fetch event
 			{
-				event_idx, std::nothrow
+				sender_idx, std::nothrow
 			};
 
 			if(!event.valid)
 				return;
 
 			last.at(ret) = strlcpy(buf.at(ret), sender);
-			room_state_append(data, array, event, event_idx);
+			room_state_append(data, array, event, sender_idx);
 			++ret;
 		});
-	};
 
 	return ret;
 }
