@@ -100,7 +100,7 @@ catch(const m::error &e)
 void
 ircd::m::init::close()
 {
-	mods::imports.erase("net_listener"s);
+	mods::imports.erase("m_listen"s);
 }
 
 //
