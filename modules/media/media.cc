@@ -72,7 +72,7 @@ ircd::m::media::fini()
 decltype(media_log)
 media_log
 {
-	"matrix.media"
+	"m.media"
 };
 
 decltype(media_blocks_cache_enable)
