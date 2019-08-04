@@ -39,7 +39,9 @@ template<class prototype>
 struct ircd::util::callbacks<prototype, true>
 :std::list<std::function<prototype>>
 {
+	struct callback;
 	using proto_type = prototype;
+	using list_type = std::list<std::function<prototype>>;
 
 	template<class... args>
 	void operator()(args&&... a) const
@@ -59,7 +61,9 @@ template<class prototype>
 struct ircd::util::callbacks<prototype, false>
 :std::list<std::function<prototype>>
 {
+	struct callback;
 	using proto_type = prototype;
+	using list_type = std::list<std::function<prototype>>;
 
 	template<class... args>
 	void operator()(args&&... a) const
@@ -80,4 +84,30 @@ struct ircd::util::callbacks<prototype, false>
 	callbacks(const callbacks &) = delete;
 	callbacks &operator=(callbacks &&) = default;
 	callbacks &operator=(const callbacks &) = delete;
+};
+
+template<class prototype>
+struct ircd::util::callbacks<prototype, true>::callback
+:util::unique_iterator<list_type>
+{
+	template<class function>
+	callback(callbacks &c, function&& f)
+	:util::unique_iterator<list_type>
+	{
+		c, c.emplace(end(c), std::forward<function>(f))
+	}
+	{}
+};
+
+template<class prototype>
+struct ircd::util::callbacks<prototype, false>::callback
+:util::unique_iterator<list_type>
+{
+	template<class function>
+	callback(callbacks &c, function&& f)
+	:util::unique_iterator<list_type>
+	{
+		c, c.emplace(end(c), std::forward<function>(f))
+	}
+	{}
 };
