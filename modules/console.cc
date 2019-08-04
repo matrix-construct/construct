@@ -2173,7 +2173,7 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		out << " "
 		    << std::setw(15) << std::right << cycles(ctx);
 
-		const long double total_cyc(ctx::prof::get(ctx, ctx::prof::event::CYCLES));
+		const long double total_cyc(ctx::prof::get(ctx::prof::event::CYCLES));
 		const auto tsc_pct
 		{
 			total_cyc > 0.0? (cycles(ctx) / total_cyc) : 0.0L
