@@ -23,6 +23,7 @@ namespace ircd::net
 	const uint16_t &port(const ipport &);
 	uint16_t &port(ipport &);
 
+	bool is_null(const ipport &);
 	bool is_loop(const ipport &);
 	bool is_v6(const ipport &);
 	bool is_v4(const ipport &);
@@ -186,4 +187,10 @@ inline bool
 ircd::net::is_loop(const ipport &ipp)
 {
 	return is_loop(std::get<ipport::IP>(ipp));
+}
+
+inline bool
+ircd::net::is_null(const ipport &ipp)
+{
+	return is_null(std::get<ipport::IP>(ipp));
 }

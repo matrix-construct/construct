@@ -4480,7 +4480,10 @@ ircd::net::string(const mutable_buffer &buf,
 {
 	mutable_buffer out{buf};
 	const bool has_port(port(ipp));
-	const bool need_bracket(has_port && is_v6(ipp));
+	const bool need_bracket
+	{
+		has_port && is_v6(ipp) && !is_null(ipp)
+	};
 
 	if(need_bracket)
 		consume(out, copy(out, "["_sv));
@@ -4565,9 +4568,9 @@ const
 boost::asio::ip::address
 ircd::net::make_address(const ipaddr &ipaddr)
 {
-	return is_v6(ipaddr)?
-		ip::address(make_address(ipaddr.v6)):
-		ip::address(make_address(ipaddr.v4));
+	return is_v4(ipaddr)?
+		ip::address(make_address(ipaddr.v4)):
+		ip::address(make_address(ipaddr.v6));
 }
 
 boost::asio::ip::address
@@ -4622,9 +4625,9 @@ ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
                   const ipaddr &ipaddr)
 {
-	return is_v6(ipaddr)?
-		string_ip6(buf, ipaddr.v6):
-		string_ip4(buf, ipaddr.v4);
+	return is_v4(ipaddr)?
+		string_ip4(buf, ipaddr.v4):
+		string_ip6(buf, ipaddr.v6);
 }
 
 ircd::string_view
@@ -4644,28 +4647,33 @@ ircd::net::string_ip6(const mutable_buffer &buf,
 bool
 ircd::net::is_loop(const ipaddr &ipaddr)
 {
-	return is_v6(ipaddr)?
-		make_address(ipaddr.v6).is_loopback():
-		make_address(ipaddr.v4).is_loopback();
-}
-
-bool
-ircd::net::is_v4(const ipaddr &ipaddr)
-{
-	return ipaddr.v6 == 0 ||
-	       (ipaddr.byte[4] == 0xff && ipaddr.byte[5] == 0xff);
-}
-
-bool
-ircd::net::is_v6(const ipaddr &ipaddr)
-{
-	return ipaddr.v6 == 0 ||
-	       !(ipaddr.byte[4] == 0xff && ipaddr.byte[5] == 0xff);
+	return is_v4(ipaddr)?
+		make_address(ipaddr.v4).is_loopback():
+		make_address(ipaddr.v6).is_loopback();
 }
 
 //
 // ipaddr::ipaddr
 //
+
+static_assert
+(
+	SIZEOF_LONG_LONG >= 8,
+	"8 byte integer literals are required."
+);
+
+decltype(ircd::net::ipaddr::v4_max)
+ircd::net::ipaddr::v4_min
+{
+	0x0000ffff00000000ULL
+};
+
+decltype(ircd::net::ipaddr::v4_max)
+ircd::net::ipaddr::v4_max
+{
+	v4_min +
+	0x00000000ffffffffULL
+};
 
 ircd::net::ipaddr::ipaddr(const string_view &ip)
 :ipaddr

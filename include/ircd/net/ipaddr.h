@@ -28,6 +28,7 @@ namespace ircd::net
 	uint128_t &host6(ipaddr &);
 	uint32_t &host4(ipaddr &);
 
+	bool is_null(const ipaddr &);
 	bool is_loop(const ipaddr &);
 	bool is_v6(const ipaddr &);
 	bool is_v4(const ipaddr &);
@@ -50,6 +51,8 @@ namespace ircd::net
 union ircd::net::ipaddr
 {
 	struct cmp;
+
+	static const uint128_t v4_min, v4_max;
 
 	uint32_t v4;
 	uint128_t v6 {0};
@@ -94,7 +97,25 @@ ircd::net::operator<(const ipaddr &a, const ipaddr &b)
 inline bool
 ircd::net::operator!(const ipaddr &a)
 {
-	return !a.v6;
+	return is_null(a);
+}
+
+inline bool
+ircd::net::is_v4(const ipaddr &ipaddr)
+{
+	return !ipaddr.v6 || !is_v6(ipaddr);
+}
+
+inline bool
+ircd::net::is_v6(const ipaddr &ipaddr)
+{
+	return ipaddr.v6 > ipaddr::v4_max || ipaddr.v6 < ipaddr::v4_min;
+}
+
+inline bool
+ircd::net::is_null(const ipaddr &ipaddr)
+{
+	return is_v4(ipaddr)? ipaddr.v4 == 0 : ipaddr.v6 == 0;
 }
 
 inline uint32_t &
