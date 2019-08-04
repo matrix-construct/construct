@@ -16,8 +16,6 @@ namespace ircd::log
 {
 	struct confs;
 
-	static void check(std::ostream &) noexcept;
-	static bool can_skip(const log &, const level &);
 	static bool is_conf_mask_file(const string_view &name);
 	static bool is_conf_mask_console(const string_view &name);
 	static void slog(const log &, const level &, const window_buffer::closure &) noexcept;
@@ -109,6 +107,9 @@ ircd::log::general
 	"ircd", 'G'
 };
 
+decltype(ircd::log::hook)
+ircd::log::hook;
+
 //
 // init
 //
@@ -145,6 +146,10 @@ ircd::log::mkdir()
 
 	fs::mkdir(dir);
 }
+
+//
+// interface
+//
 
 void
 ircd::log::open()
@@ -486,9 +491,12 @@ ircd::log::vlog::vlog(const log &log,
 namespace ircd::log
 {
 	bool entered;
+
+	static bool can_skip(const log &, const level &);
 }
 
 void
+__attribute__((optimize("3")))
 ircd::log::slog(const log &log,
                 const level &lev,
                 const window_buffer::closure &closure)
@@ -515,12 +523,7 @@ noexcept
 	// Maximum size of log line leaving 2 characters for \r\n
 	const size_t max(sizeof(buf) - 2);
 
-	// Get the configuration object for this log level
-	const auto &conf
-	{
-		confs.at(lev)
-	};
-
+	// Get the ANSI color for the level.
 	const string_view &console_ansi
 	{
 		ircd::log::console_ansi.at(lev)
@@ -567,14 +570,101 @@ noexcept
 	buf[len++] = '\r';
 	buf[len++] = '\n';
 
-	// Closure to copy the message to various places
+	// The final message
 	assert(len <= sizeof(buf));
 	const string_view msg{buf, len};
-	const auto write{[&msg](std::ostream &s)
+
+	// Call the hooks listening for log messages. The return value in
+	// `used` indicates at least one function was called, which we expect
+	// after calling can_skip() above.
+	bool used {false};
+	hook(used, log, lev, msg);
+	assert(used);
+}
+
+bool
+__attribute__((optimize("3")))
+ircd::log::can_skip(const log &log,
+                    const level &lev)
+{
+	// Nobody is listening.
+	if(hook.empty())
+		return true;
+
+	// If used remains false, we can skip generating this log message; none
+	// of the listeners will be making use of it.
+	bool used {false};
+	hook(used, log, lev, string_view{});
+	return !used;
+}
+
+//
+// Primary internal log hooks. This will likely be moved out to
+// `$(topdir)/construct` at some point.
+//
+
+namespace ircd::log
+{
+	static void check(std::ostream &) noexcept;
+	static void handle_to_stdout(bool &, const log &, const level &, const string_view &) noexcept;
+	static void handle_to_file(bool &, const log &, const level &, const string_view &) noexcept;
+
+	extern hook::callback log_to_stdout;
+	extern hook::callback log_to_file;
+}
+
+decltype(ircd::log::log_to_file)
+ircd::log::log_to_file
+{
+	hook, handle_to_file
+};
+
+void
+ircd::log::handle_to_file(bool &ret,
+                          const log &log,
+                          const level &lev,
+                          const string_view &msg)
+noexcept
+{
+	const auto &conf
 	{
-		check(s);
-		s.write(data(msg), size(msg));
-	}};
+		confs.at(lev)
+	};
+
+	const bool copy_to_file
+	{
+		file[lev].is_open()
+		&& (log.fmasked || lev == level::CRITICAL)
+	};
+
+	ret |= copy_to_file;
+	if(!copy_to_file || !msg)
+		return;
+
+	file[lev].clear();
+	check(file[lev]);
+	file[lev].write(data(msg), size(msg));
+	if(conf.file_flush)
+		std::flush(file[lev]);
+}
+
+decltype(ircd::log::log_to_stdout)
+ircd::log::log_to_stdout
+{
+	hook, handle_to_stdout
+};
+
+void
+ircd::log::handle_to_stdout(bool &ret,
+                            const log &log,
+                            const level &lev,
+                            const string_view &msg)
+noexcept
+{
+	const auto &conf
+	{
+		confs.at(lev)
+	};
 
 	const bool copy_to_stderr
 	{
@@ -588,55 +678,30 @@ noexcept
 		&& (!console_quiet_stdout[lev] && log.cmasked)
 	};
 
-	const bool copy_to_file
-	{
-		file[lev].is_open()
-		&& (log.fmasked || lev == level::CRITICAL)
-	};
+	ret |= copy_to_stdout | copy_to_stderr;
+	if((!copy_to_stdout && !copy_to_stderr) || !msg)
+		return;
 
-	if(copy_to_stderr)
+	if(unlikely(copy_to_stderr))
 	{
 		err_console.clear();
-		write(err_console);
+		check(err_console);
+		err_console.write(data(msg), size(msg));
 	}
 
-	if(copy_to_stdout)
+	if(likely(copy_to_stdout))
 	{
 		out_console.clear();
-		write(out_console);
+		check(out_console);
+		out_console.write(data(msg), size(msg));
 		if(conf.console_flush)
 			std::flush(out_console);
 	}
-
-	if(copy_to_file)
-	{
-		file[lev].clear();
-		write(file[lev]);
-		if(conf.file_flush)
-			std::flush(file[lev]);
-	}
 }
 
-bool
-ircd::log::can_skip(const log &log,
-                    const level &lev)
-{
-	if(unlikely(lev == level::CRITICAL))
-		return false;
-
-	const auto &conf(confs.at(lev));
-
-	// When all of these conditions are true there is no possible log output
-	// so we can bail real quick.
-	if(!file[lev].is_open() && !bool(conf.console_stdout) && !bool(conf.console_stderr))
-		return true;
-
-	// Same for this set of conditions...
-	if((!file[lev].is_open() || !log.fmasked) && (!log.cmasked || !console_enabled(lev)))
-		return true;
-
-	return false;
-}
+//
+// ircd::log util
+//
 
 void
 ircd::log::check(std::ostream &s)

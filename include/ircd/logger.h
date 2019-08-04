@@ -25,6 +25,7 @@ namespace ircd::log
 	struct logf;
 	struct mark;
 	struct console_quiet;
+	struct hook;
 
 	struct critical;
 	struct error;
@@ -63,6 +64,7 @@ namespace ircd::log
 
 	extern log star;     // "*", '*'
 	extern log general;  // "ircd", 'G'
+	extern hook hook;
 }
 
 /// Severity level; zero is the most severe. Frequency and verbosity also tends
@@ -106,6 +108,18 @@ struct ircd::log::log
 	static log *find(const string_view &name);
 	static log *find(const char &snote);
 };
+
+/// log::hook is used by the receivers of messages; this is a extern singleton.
+/// Examples of hooks are stdout/stderr, and file logging. This hook does not
+/// propagate exceptions and silently drops them. Listeners should not yield
+/// the caller's context, or even expect a current context.
+struct ircd::log::hook
+:callbacks
+<
+	void (bool &, const log &, const level &, const string_view &),
+	false
+>
+{};
 
 /// Lower level interface; this is not a template and defined in the unit.
 struct ircd::log::vlog
