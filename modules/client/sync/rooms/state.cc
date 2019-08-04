@@ -336,7 +336,9 @@ ircd::m::sync::room_state_phased_events(data &data)
 		}
 	};
 
-	ret |= room_state_phased_member_events(data, array);
+	if(data.membership == "join")
+		ret |= room_state_phased_member_events(data, array);
+
 	return ret;
 }
 
