@@ -459,6 +459,7 @@ ircd::net::dns::resolver::queue_query(tag &tag)
 void
 ircd::net::dns::resolver::send_query(const ip::udp::endpoint &ep,
                                      tag &tag)
+try
 {
 	assert(ns.is_open());
 	assert(ns.non_blocking());
@@ -473,6 +474,22 @@ ircd::net::dns::resolver::send_query(const ip::udp::endpoint &ep,
 	tag.last = send_last;
 	tag.server = make_ipport(ep);
 	tag.tries++;
+}
+catch(const std::exception &e)
+{
+	thread_local char buf[128];
+	log::error
+	{
+		log, "send tag:%u qtype:%u t:%u `%s' to %s :%s",
+		tag.id,
+		tag.opts.qtype,
+		tag.tries,
+		host(tag.hp),
+		string(buf, make_ipport(ep)),
+		e.what(),
+	};
+
+	throw;
 }
 
 //
