@@ -447,7 +447,7 @@ ircd::rfc1035::make_name(const mutable_buffer &out,
 		{
 			pos,
 			tolower(labelbuf, label),
-			std::distance(pos, end(out))
+			size_t(std::max(std::distance(pos, end(out)), 0L)),
 		};
 	});
 
