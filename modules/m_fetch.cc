@@ -362,7 +362,7 @@ try
 	opts.dynamic = true;
 	const unique_buffer<mutable_buffer> buf
 	{
-		8_KiB
+		16_KiB
 	};
 
 	m::v1::event_auth request
