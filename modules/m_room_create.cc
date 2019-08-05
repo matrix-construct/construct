@@ -40,6 +40,7 @@ ircd::m::created_room_hookfn
 void
 ircd::m::created_room(const m::event &event,
                       m::vm::eval &)
+try
 {
 	const m::room::id &room_id
 	{
@@ -60,6 +61,17 @@ ircd::m::created_room(const m::event &event,
 		string_view{room_id},
 		at<"sender"_>(event),
 		string_view{event.event_id},
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Effect of creating room %s with %s by %s :%s",
+		json::get<"room_id"_>(event),
+		string_view{event.event_id},
+		json::get<"sender"_>(event),
+		e.what()
 	};
 }
 
