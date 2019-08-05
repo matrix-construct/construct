@@ -13,6 +13,27 @@
 using namespace ircd::m;
 using namespace ircd;
 
+const event::keys::include
+default_keys
+{
+	"content",
+	"depth",
+	"event_id",
+	"origin_server_ts",
+	"prev_events",
+	"redacts",
+	"room_id",
+	"sender",
+	"state_key",
+	"type",
+};
+
+const event::fetch::opts
+default_fopts
+{
+	default_keys
+};
+
 static resource::response
 get__state(client &client,
            const resource::request &request,
@@ -110,17 +131,15 @@ get__state(client &client,
 
 	const m::room::state state
 	{
-		room
+		room, &default_fopts
 	};
 
 	if(!type)
 		return get__state(client, request, state);
 
-	m::event::fetch::opts fopts;
-	fopts.query_json_force = true;
 	const m::event::fetch event
 	{
-		state.get(type, state_key), fopts
+		state.get(type, state_key), default_fopts
 	};
 
 	if(!visible(event, request.user_id))
