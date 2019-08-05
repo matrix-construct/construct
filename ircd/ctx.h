@@ -62,15 +62,15 @@ struct ircd::ctx::ctx
 	prof::ticker profile;                        // prof related structure
 	dock adjoindre;                              // contexts waiting for this to join()
 
-	bool started() const;                        // context was ever entered
-	bool finished() const;                       // context will not be further entered.
+	bool started() const noexcept;               // context was ever entered
+	bool finished() const noexcept;              // context will not be further entered.
 
-	bool interruption_point(std::nothrow_t);     // Check for interrupt (and clear flag)
-	bool termination_point(std::nothrow_t);      // Check for terminate
-	void interruption_point();                   // throws interrupted or terminated
+	bool interruption_point(std::nothrow_t) noexcept;
+	bool termination_point(std::nothrow_t) noexcept;
+	void interruption_point();
 
-	bool wake();                                 // jump to context by queueing with ios (use note())
-	bool note();                                 // properly request wake()
+	bool wake() noexcept;                        // jump to context by queueing with ios (use note())
+	bool note() noexcept;                        // properly request wake()
 	bool wait();                                 // yield context to ios queue (returns on this resume)
 	void jump();                                 // jump to context directly (returns on your resume)
 

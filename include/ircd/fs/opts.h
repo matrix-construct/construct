@@ -15,7 +15,7 @@ namespace ircd::fs
 {
 	struct opts extern const opts_default;
 
-	int reqprio(int);
+	int reqprio(int) noexcept __attribute__((const));
 }
 
 /// Options common to all operations

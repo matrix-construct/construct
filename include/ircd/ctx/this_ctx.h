@@ -15,13 +15,13 @@
 namespace ircd::ctx {
 inline namespace this_ctx
 {
-	struct ctx &cur();                           ///< Assumptional reference to *current
+	struct ctx &cur() noexcept;                  ///< Assumptional reference to *current
 	const uint64_t &id();                        // Unique ID for cur ctx
 	string_view name();                          // Optional label for cur ctx
 
-	ulong cycles();                              // misc profiling related
+	ulong cycles() noexcept;                     // misc profiling related
 
-	bool interruption_requested();               // interruption(cur())
+	bool interruption_requested() noexcept;      // interruption(cur())
 	void interruption_point();                   // throws if interruption_requested()
 
 	void wait();                                 // Returns when context is woken up.
@@ -128,6 +128,7 @@ ircd::ctx::this_ctx::wait(const duration &d)
 
 inline ulong
 ircd::ctx::this_ctx::cycles()
+noexcept
 {
 	return cycles(cur()) + prof::cur_slice_cycles();
 }
@@ -136,6 +137,7 @@ ircd::ctx::this_ctx::cycles()
 /// context. Otherwise use the ctx::current pointer.
 inline ircd::ctx::ctx &
 ircd::ctx::this_ctx::cur()
+noexcept
 {
 	assert(current);
 	return *current;

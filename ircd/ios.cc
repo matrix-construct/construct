@@ -483,6 +483,7 @@ ircd::ios::post::post(descriptor &descriptor,
 
 boost::asio::io_context &
 ircd::ios::get()
+noexcept
 {
 	assert(user);
 	return *user;
@@ -490,6 +491,7 @@ ircd::ios::get()
 
 bool
 ircd::ios::available()
+noexcept
 {
 	return bool(user);
 }

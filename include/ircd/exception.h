@@ -31,11 +31,11 @@ namespace ircd
 	bool system_category(const boost::system::error_code &) noexcept;
 	bool is(const std::error_code &, const std::errc &) noexcept;
 	bool is(const boost::system::error_code &, const std::errc &) noexcept;
-	std::error_code make_error_code(const int &code = errno);
-	std::error_code make_error_code(const std::error_code &);
-	std::error_code make_error_code(const std::system_error &);
-	std::error_code make_error_code(const boost::system::error_code &);
-	std::error_code make_error_code(const boost::system::system_error &);
+	std::error_code make_error_code(const int &code = errno) noexcept;
+	std::error_code make_error_code(const std::error_code &) noexcept;
+	std::error_code make_error_code(const std::system_error &) noexcept;
+	std::error_code make_error_code(const boost::system::error_code &) noexcept;
+	std::error_code make_error_code(const boost::system::system_error &) noexcept;
 	std::system_error make_system_error(const int &code = errno);
 	std::system_error make_system_error(const std::errc &);
 	std::system_error make_system_error(const std::error_code &);

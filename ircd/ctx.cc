@@ -234,6 +234,7 @@ ircd::ctx::ctx::wait()
 /// while it's been suspended or false if it's already been notified.
 bool
 ircd::ctx::ctx::note()
+noexcept
 {
 	if(notes++ > 0)
 		return false;
@@ -247,7 +248,7 @@ ircd::ctx::ctx::note()
 /// Wakes a context without a note (internal)
 bool
 ircd::ctx::ctx::wake()
-try
+noexcept try
 {
 	alarm.cancel();
 	return true;
@@ -299,6 +300,7 @@ ircd::ctx::ctx::interruption_point()
 // interrupted which simplifies the termination process.
 bool
 ircd::ctx::ctx::termination_point(std::nothrow_t)
+noexcept
 {
 	if(flags & context::TERMINATED)
 	{
@@ -314,6 +316,7 @@ ircd::ctx::ctx::termination_point(std::nothrow_t)
 /// clears the flag.
 bool
 ircd::ctx::ctx::interruption_point(std::nothrow_t)
+noexcept
 {
 	if(flags & context::INTERRUPTED)
 	{
@@ -327,14 +330,14 @@ ircd::ctx::ctx::interruption_point(std::nothrow_t)
 
 bool
 ircd::ctx::ctx::started()
-const
+const noexcept
 {
 	return stack.base != 0;
 }
 
 bool
 ircd::ctx::ctx::finished()
-const
+const noexcept
 {
 	return started() && yc == nullptr;
 }
@@ -346,6 +349,7 @@ const
 
 const uint64_t &
 ircd::ctx::epoch()
+noexcept
 {
 	return prof::get(prof::event::YIELD);
 }
@@ -397,6 +401,7 @@ ircd::ctx::notify(ctx &ctx,
 /// directly to `ctx`.
 bool
 ircd::ctx::notify(ctx &ctx)
+noexcept
 {
 	return ctx.note();
 }
@@ -473,6 +478,7 @@ ircd::ctx::interruptible(ctx &ctx,
 /// !running() && notes > 0
 bool
 ircd::ctx::queued(const ctx &ctx)
+noexcept
 {
 	return !running(ctx) && notes(ctx) > 0;
 }
@@ -480,6 +486,7 @@ ircd::ctx::queued(const ctx &ctx)
 /// started() && !finished() && !running
 bool
 ircd::ctx::waiting(const ctx &ctx)
+noexcept
 {
 	return started(ctx) && !finished(ctx) && !running(ctx);
 }
@@ -487,6 +494,7 @@ ircd::ctx::waiting(const ctx &ctx)
 /// Indicates if `ctx` is the current ctx
 bool
 ircd::ctx::running(const ctx &ctx)
+noexcept
 {
 	return &ctx == current;
 }
@@ -494,6 +502,7 @@ ircd::ctx::running(const ctx &ctx)
 /// Indicates if `ctx` was ever jumped to
 bool
 ircd::ctx::started(const ctx &ctx)
+noexcept
 {
 	return ctx.started();
 }
@@ -501,6 +510,7 @@ ircd::ctx::started(const ctx &ctx)
 /// Indicates if the base frame for `ctx` returned
 bool
 ircd::ctx::finished(const ctx &ctx)
+noexcept
 {
 	return ctx.finished();
 }
@@ -532,6 +542,7 @@ noexcept
 /// Returns the cycle count for `ctx`
 const ulong &
 ircd::ctx::cycles(const ctx &ctx)
+noexcept
 {
 	return prof::get(ctx, prof::event::CYCLES);
 }
@@ -539,6 +550,7 @@ ircd::ctx::cycles(const ctx &ctx)
 /// Returns the yield count for `ctx`
 const uint64_t &
 ircd::ctx::epoch(const ctx &ctx)
+noexcept
 {
 	return prof::get(ctx, prof::event::YIELD);
 }
@@ -546,6 +558,7 @@ ircd::ctx::epoch(const ctx &ctx)
 /// Returns the notification count for `ctx`
 const int32_t &
 ircd::ctx::notes(const ctx &ctx)
+noexcept
 {
 	return ctx.notes;
 }
@@ -553,6 +566,7 @@ ircd::ctx::notes(const ctx &ctx)
 /// Returns the notification count for `ctx`
 const size_t &
 ircd::ctx::stack_at(const ctx &ctx)
+noexcept
 {
 	return ctx.stack.at;
 }
@@ -560,6 +574,7 @@ ircd::ctx::stack_at(const ctx &ctx)
 /// Returns the notification count for `ctx`
 const size_t &
 ircd::ctx::stack_max(const ctx &ctx)
+noexcept
 {
 	return ctx.stack.max;
 }
@@ -567,6 +582,7 @@ ircd::ctx::stack_max(const ctx &ctx)
 /// Returns the developer's optional name literal for `ctx`
 ircd::string_view
 ircd::ctx::name(const ctx &ctx)
+noexcept
 {
 	return ctx.name;
 }
@@ -574,6 +590,7 @@ ircd::ctx::name(const ctx &ctx)
 /// Returns a reference to unique ID for `ctx` (which will go away with `ctx`)
 const uint64_t &
 ircd::ctx::id(const ctx &ctx)
+noexcept
 {
 	return ctx.id;
 }
@@ -713,6 +730,7 @@ ircd::ctx::this_ctx::interruption_point()
 /// the interrupt flag.
 bool
 ircd::ctx::this_ctx::interruption_requested()
+noexcept
 {
 	return interruption(cur()) || termination(cur());
 }
@@ -1560,15 +1578,15 @@ namespace ircd::ctx::prof
 
 	static void check_stack();
 	static void check_slice();
-	static void slice_enter();
-	static void slice_leave();
+	static void slice_enter() noexcept;
+	static void slice_leave() noexcept;
 
 	static void handle_cur_continue();
 	static void handle_cur_yield();
 	static void handle_cur_leave();
 	static void handle_cur_enter();
 
-	static void inc_ticker(const event &e);
+	static void inc_ticker(const event &e) noexcept;
 }
 
 // stack_usage_warning at 1/3 engineering tolerance
@@ -1630,6 +1648,7 @@ ircd::ctx::prof::mark(const event &e)
 
 void
 ircd::ctx::prof::inc_ticker(const event &e)
+noexcept
 {
 	assert(uint8_t(e) < num_of<event>());
 
@@ -1670,6 +1689,7 @@ ircd::ctx::prof::handle_cur_continue()
 
 void
 ircd::ctx::prof::slice_enter()
+noexcept
 {
 	assert(ctx::ios_desc.stats);
 	++ctx::ios_desc.stats->calls;
@@ -1679,6 +1699,7 @@ ircd::ctx::prof::slice_enter()
 
 void
 ircd::ctx::prof::slice_leave()
+noexcept
 {
 	_slice_stop = cycles();
 
@@ -1790,6 +1811,7 @@ ircd::ctx::prof::check_stack()
 
 bool
 ircd::ctx::prof::stack_exceeded_assertion(const size_t &stack_at)
+noexcept
 {
 	const auto &c(cur());
 	const auto &stack_max(c.stack.max);
@@ -1801,6 +1823,7 @@ ircd::ctx::prof::stack_exceeded_assertion(const size_t &stack_at)
 
 bool
 ircd::ctx::prof::stack_exceeded_warning(const size_t &stack_at)
+noexcept
 {
 	const auto &c(cur());
 	const auto &stack_max(c.stack.max);
@@ -1812,6 +1835,7 @@ ircd::ctx::prof::stack_exceeded_warning(const size_t &stack_at)
 
 bool
 ircd::ctx::prof::slice_exceeded_interrupt(const ulong &cycles)
+noexcept
 {
 	const ulong &threshold(settings::slice_interrupt);
 	return threshold > 0 && cycles >= threshold;
@@ -1819,6 +1843,7 @@ ircd::ctx::prof::slice_exceeded_interrupt(const ulong &cycles)
 
 bool
 ircd::ctx::prof::slice_exceeded_assertion(const ulong &cycles)
+noexcept
 {
 	const ulong &threshold(settings::slice_assertion);
 	return threshold > 0 && cycles >= threshold;
@@ -1826,6 +1851,7 @@ ircd::ctx::prof::slice_exceeded_assertion(const ulong &cycles)
 
 bool
 ircd::ctx::prof::slice_exceeded_warning(const ulong &cycles)
+noexcept
 {
 	const ulong &threshold(settings::slice_warning);
 	return threshold > 0 && cycles >= threshold;
@@ -1833,6 +1859,7 @@ ircd::ctx::prof::slice_exceeded_warning(const ulong &cycles)
 
 const ulong &
 ircd::ctx::prof::cur_slice_start()
+noexcept
 {
 	return _slice_start;
 }
@@ -1846,6 +1873,7 @@ ircd::ctx::prof::get(const ctx &c,
 
 const ircd::ctx::prof::ticker &
 ircd::ctx::prof::get(const ctx &c)
+noexcept
 {
 	return c.profile;
 }
@@ -1858,6 +1886,7 @@ ircd::ctx::prof::get(const event &e)
 
 const ircd::ctx::prof::ticker &
 ircd::ctx::prof::get()
+noexcept
 {
 	return _total;
 }

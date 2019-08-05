@@ -26,18 +26,21 @@ ircd::prof::enable
 
 uint64_t
 ircd::prof::time_real()
+noexcept
 {
 	return boost::chrono::process_real_cpu_clock::now().time_since_epoch().count();
 }
 
 uint64_t
 ircd::prof::time_kern()
+noexcept
 {
 	return boost::chrono::process_system_cpu_clock::now().time_since_epoch().count();
 }
 
 uint64_t
 ircd::prof::time_user()
+noexcept
 {
 	return boost::chrono::process_user_cpu_clock::now().time_since_epoch().count();
 }

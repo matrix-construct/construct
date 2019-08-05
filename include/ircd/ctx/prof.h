@@ -32,27 +32,27 @@ namespace ircd::ctx::prof
 	enum class event :uint8_t;
 	struct ticker;
 
-	uint64_t cycles();
+	uint64_t cycles() noexcept;
 	string_view reflect(const event &);
 
 	// totals
-	const ticker &get();
+	const ticker &get() noexcept;
 	const uint64_t &get(const event &);
 
 	// specific context
-	const ticker &get(const ctx &c);
+	const ticker &get(const ctx &c) noexcept;
 	const uint64_t &get(const ctx &c, const event &);
 
 	// current slice state
-	const ulong &cur_slice_start();
-	ulong cur_slice_cycles();
+	const ulong &cur_slice_start() noexcept;
+	ulong cur_slice_cycles() noexcept;
 
 	// test accessors
-	bool slice_exceeded_warning(const ulong &cycles);
-	bool slice_exceeded_assertion(const ulong &cycles);
-	bool slice_exceeded_interrupt(const ulong &cycles);
-	bool stack_exceeded_warning(const size_t &size);
-	bool stack_exceeded_assertion(const size_t &size);
+	bool slice_exceeded_warning(const ulong &cycles) noexcept;
+	bool slice_exceeded_assertion(const ulong &cycles) noexcept;
+	bool slice_exceeded_interrupt(const ulong &cycles) noexcept;
+	bool stack_exceeded_warning(const size_t &size) noexcept;
+	bool stack_exceeded_assertion(const size_t &size) noexcept;
 }
 
 namespace ircd::ctx::prof::settings
@@ -94,6 +94,7 @@ struct ircd::ctx::prof::ticker
 
 inline uint64_t
 ircd::ctx::prof::cur_slice_cycles()
+noexcept
 {
     return cycles() - cur_slice_start();
 }
@@ -101,6 +102,7 @@ ircd::ctx::prof::cur_slice_cycles()
 extern inline uint64_t
 __attribute__((flatten, always_inline, gnu_inline, artificial))
 ircd::ctx::prof::cycles()
+noexcept
 {
 	return ircd::prof::cycles();
 }

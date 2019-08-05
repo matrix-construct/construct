@@ -1224,7 +1224,8 @@ ircd::fs::flags(const write_opts &opts)
 
 namespace ircd::fs
 {
-	static asio::posix::stream_descriptor::wait_type translate(const ready &);
+	static constexpr asio::posix::stream_descriptor::wait_type translate(const ready &) noexcept
+	__attribute__((const));
 }
 
 decltype(ircd::fs::wait_opts_default)
@@ -1270,8 +1271,10 @@ ircd::fs::wait(const fd &fd,
 		throw_system_error(ec);
 }
 
+constexpr
 boost::asio::posix::stream_descriptor::wait_type
 ircd::fs::translate(const ready &ready)
+noexcept
 {
 	using wait_type = boost::asio::posix::stream_descriptor::wait_type;
 
@@ -2415,6 +2418,7 @@ ircd::fs::posix_flags(const std::ios::openmode &mode)
 /// shifts it to the AIO value.
 int
 ircd::fs::reqprio(int input)
+noexcept
 {
 	const auto &max_reqprio
 	{

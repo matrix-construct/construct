@@ -39,36 +39,36 @@ namespace ircd::ctx
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, interrupted)
 	IRCD_EXCEPTION(error, timeout)
-	struct terminated {};                        // Special exception
+	struct terminated {};                           // Special exception
 
 	IRCD_OVERLOAD(threadsafe)
 
-	const uint64_t &id(const ctx &);             // Unique ID for context
-	string_view name(const ctx &);               // User's optional label for context
-	const size_t &stack_max(const ctx &);        // Returns stack size allocated for ctx
-	const size_t &stack_at(const ctx &);         // Stack at last sleep (also see this_ctx.h)
-	const int32_t &notes(const ctx &);           // Peeks at internal semaphore count
-	const uint64_t &epoch(const ctx &);          // Context switching counter
-	const ulong &cycles(const ctx &);            // Accumulated tsc (not counting cur slice)
-	bool interruptible(const ctx &) noexcept;    // Context can throw at interruption point
-	bool interruption(const ctx &) noexcept;     // Context was marked for interruption
-	bool termination(const ctx &) noexcept;      // Context was marked for termination
-	bool finished(const ctx &);                  // Context function returned (or exception).
-	bool started(const ctx &);                   // Context was ever entered.
-	bool running(const ctx &);                   // Context is the currently running ctx.
-	bool waiting(const ctx &);                   // started() && !finished() && !running()
-	bool queued(const ctx &);                    // !running() && notes() > 0
+	const uint64_t &id(const ctx &) noexcept;       // Unique ID for context
+	string_view name(const ctx &) noexcept;         // User's optional label for context
+	const size_t &stack_max(const ctx &) noexcept;  // Returns stack size allocated for ctx
+	const size_t &stack_at(const ctx &) noexcept;   // Stack at last sleep (also see this_ctx.h)
+	const int32_t &notes(const ctx &) noexcept;     // Peeks at internal semaphore count
+	const uint64_t &epoch(const ctx &) noexcept;    // Context switching counter
+	const ulong &cycles(const ctx &) noexcept;      // Accumulated tsc (not counting cur slice)
+	bool interruptible(const ctx &) noexcept;       // Context can throw at interruption point
+	bool interruption(const ctx &) noexcept;        // Context was marked for interruption
+	bool termination(const ctx &) noexcept;         // Context was marked for termination
+	bool finished(const ctx &) noexcept;            // Context function returned (or exception).
+	bool started(const ctx &) noexcept;             // Context was ever entered.
+	bool running(const ctx &) noexcept;             // Context is the currently running ctx.
+	bool waiting(const ctx &) noexcept;             // started() && !finished() && !running()
+	bool queued(const ctx &) noexcept;              // !running() && notes() > 0
 
-	void interruptible(ctx &, const bool &);     // False for interrupt suppression.
-	void interrupt(ctx &);                       // Interrupt the context.
-	void terminate(ctx &);                       // Interrupt for termination.
-	void signal(ctx &, std::function<void ()>);  // Post function to context strand
-	void notify(ctx &, threadsafe_t);            // Notify context with threadsafety.
-	bool notify(ctx &);                          // Queue a context switch to arg
-	void yield(ctx &);                           // Direct context switch to arg
+	void interruptible(ctx &, const bool &);        // False for interrupt suppression.
+	void interrupt(ctx &);                          // Interrupt the context.
+	void terminate(ctx &);                          // Interrupt for termination.
+	void signal(ctx &, std::function<void ()>);     // Post function to context strand
+	void notify(ctx &, threadsafe_t);               // Notify context with threadsafety.
+	bool notify(ctx &) noexcept;                    // Queue a context switch to arg
+	void yield(ctx &);                              // Direct context switch to arg
 
 	bool for_each(const std::function<bool (ctx &)> &);
-	const uint64_t &epoch();
+	const uint64_t &epoch() noexcept;
 
 	extern log::log log;
 }

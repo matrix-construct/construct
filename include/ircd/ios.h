@@ -54,8 +54,8 @@ namespace ircd::ios
 	bool is_static_thread();
 	void assert_main_thread();
 
-	bool available();
-	asio::io_context &get();
+	bool available() noexcept;
+	asio::io_context &get() noexcept;
 
 	void forked_parent();
 	void forked_child();

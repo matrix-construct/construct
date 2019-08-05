@@ -203,6 +203,7 @@ ircd::make_system_error(const int &code)
 
 std::error_code
 ircd::make_error_code(const boost::system::system_error &e)
+noexcept
 {
 	return std::error_code
 	{
@@ -212,6 +213,7 @@ ircd::make_error_code(const boost::system::system_error &e)
 
 std::error_code
 ircd::make_error_code(const boost::system::error_code &ec)
+noexcept
 {
 	return std::error_code
 	{
@@ -221,12 +223,14 @@ ircd::make_error_code(const boost::system::error_code &ec)
 
 std::error_code
 ircd::make_error_code(const std::system_error &e)
+noexcept
 {
 	return e.code();
 }
 
 std::error_code
 ircd::make_error_code(const int &code)
+noexcept
 {
 	return std::error_code
 	{
@@ -236,6 +240,7 @@ ircd::make_error_code(const int &code)
 
 std::error_code
 ircd::make_error_code(const std::error_code &ec)
+noexcept
 {
 	return ec;
 }

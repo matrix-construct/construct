@@ -22,12 +22,12 @@ namespace ircd::prof
 	IRCD_OVERLOAD(sample)
 
 	// Samples
-	uint64_t cycles();      ///< Monotonic reference cycles (since system boot)
-	uint64_t time_user();   ///< Nanoseconds of CPU time in userspace.
-	uint64_t time_kern();   ///< Nanoseconds of CPU time in kernelland.
-	uint64_t time_real();   ///< Nanoseconds of CPU time real.
-	uint64_t time_proc();   ///< Nanoseconds of CPU time for process.
-	uint64_t time_thrd();   ///< Nanoseconds of CPU time for thread.
+	uint64_t cycles() noexcept;     ///< Monotonic reference cycles (since system boot)
+	uint64_t time_user() noexcept;  ///< Nanoseconds of CPU time in userspace.
+	uint64_t time_kern() noexcept;  ///< Nanoseconds of CPU time in kernelland.
+	uint64_t time_real() noexcept;  ///< Nanoseconds of CPU time real.
+	uint64_t time_proc();           ///< Nanoseconds of CPU time for process.
+	uint64_t time_thrd();           ///< Nanoseconds of CPU time for thread.
 
 	// Control panel
 	void stop(group &);
@@ -89,11 +89,13 @@ struct ircd::prof::init
 extern inline uint64_t
 __attribute__((flatten, always_inline, gnu_inline, artificial))
 ircd::prof::cycles()
+noexcept
 {
 	return x86::rdtsc();
 }
 #else
 ircd::prof::cycles()
+noexcept
 {
 	static_assert(false, "Select reference cycle counter for platform.");
 	return 0;
