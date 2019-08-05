@@ -16,7 +16,7 @@ IRCD_MODULE
 
 namespace ircd::m
 {
-	extern conf::item<bool> event_append_debug;
+	extern conf::item<bool> event_append_info;
 	extern log::log event_append_log;
 }
 
@@ -26,11 +26,12 @@ ircd::m::event_append_log
 	"m.event.append"
 };
 
-decltype(ircd::m::event_append_debug)
-ircd::m::event_append_debug
+decltype(ircd::m::event_append_info)
+ircd::m::event_append_info
 {
-	{ "name",     "ircd.m.event.append.debug" },
-	{ "default",  false                       },
+	{ "name",     "ircd.m.event.append.info" },
+	{ "default",  false                      },
+	{ "persist",  false                      },
 };
 
 IRCD_MODULE_EXPORT
@@ -205,8 +206,8 @@ ircd::m::event::append::append(json::stack::object &object,
 			};
 		});
 
-	if(unlikely(event_append_debug))
-		log::debug
+	if(unlikely(event_append_info))
+		log::info
 		{
 			event_append_log, "%s %s idx:%lu in %s depth:%ld txnid:%s idx:%lu age:%ld %s,%s",
 			opts.user_id? string_view{*opts.user_id} : string_view{},
