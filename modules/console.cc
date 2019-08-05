@@ -7626,6 +7626,8 @@ console_cmd__rooms__fetch(opt &out, const string_view &line)
 // room
 //
 
+bool console_cmd__room__events(opt &out, const string_view &line);
+
 bool
 console_cmd__room__top(opt &out, const string_view &line)
 {
@@ -7684,6 +7686,18 @@ console_cmd__room__top(opt &out, const string_view &line)
 
 		return true;
 	}});
+
+	out << "\nrecent events:"
+	    << std::endl;
+
+	char linebuf[256];
+	static const size_t last_count(4);
+	console_cmd__room__events(out, fmt::sprintf
+	{
+		linebuf, "%s -%ld",
+		string_view{room_id},
+		last_count,
+	});
 
 	return true;
 }
