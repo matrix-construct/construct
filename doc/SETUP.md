@@ -46,11 +46,11 @@ of the daemon has a unique _servername_.
 	https://matrix.org/federationtester/api/report?server_name=host.tld and
 	verify `"AllChecksOK": true`
 
-4. To use a web-based client like Riot, configure the "webroot" directory
+4. To use a web-based client like Riot, configure the "web root" directory
 to point at Riot's `webapp/` directory by entering the following:
 	```
-	conf set ircd.index.path /path/to/riot-web/webapp/
-	mod reload index
+	conf set ircd.web.root.path /path/to/riot-web/webapp/
+	mod reload web_root
 	```
 
 6. Browse to `https://host.tld:8448/` and register a user.
