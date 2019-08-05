@@ -127,6 +127,18 @@ ircd::m::sync::room_state_linear_events(data &data)
 	if(!json::get<"state_key"_>(*data.event))
 		return false;
 
+	const bool is_own_membership
+	{
+		json::get<"type"_>(*data.event) == "m.room.member"
+		&& json::get<"state_key"_>(*data.event) == data.user.user_id
+	};
+
+	const bool is_own_join
+	{
+		is_own_membership
+		&& m::membership(*data.event) == "join"
+	};
+
 	// Figure out whether the event was included in the timeline or whether
 	// to include it here in the state, which comes before the timeline.
 	// Since linear-sync is already distinct from polylog-sync, the
@@ -134,7 +146,7 @@ ircd::m::sync::room_state_linear_events(data &data)
 	// use the timeline. We make an exception for past state events the server
 	// only recently obtained, to hide them from the timeline.
 	if(int64_t(state_exposure_depth) > -1)
-		if(data.membership != "invite")
+		if(data.membership != "invite" && !is_own_join)
 			if(json::get<"depth"_>(*data.event) + int64_t(state_exposure_depth) >= data.room_depth)
 				return false;
 
@@ -170,26 +182,46 @@ ircd::m::sync::room_state_linear_events(data &data)
 		*data.out, "events"
 	};
 
-	// Branch for supplying state to the client after its user's invite
-	// is processed. At this point the client has not received prior room
-	// state in /sync.
-	if(data.membership == "invite" &&
-	   json::get<"type"_>(*data.event) == "m.room.member" &&
-	   json::get<"state_key"_>(*data.event) == data.user.user_id)
+	const auto append
 	{
-		const auto append{[&]
-		(const m::event &event)
+		[&data, &array](const event::idx &event_idx)
 		{
-			room_state_append(data, array, event, index(event));
-		}};
+			const event::fetch event
+			{
+				event_idx, std::nothrow
+			};
 
+			if(event.valid)
+				room_state_append(data, array, event, event_idx);
+
+			return true;
+		}
+	};
+
+	if(is_own_membership && (data.membership == "invite" || data.membership == "join"))
+	{
 		const m::room::state state{*data.room};
 		state.get(std::nothrow, "m.room.create", "", append);
 		state.get(std::nothrow, "m.room.join_rules", "", append);
+		state.get(std::nothrow, "m.room.power_levels", "", append);
 		state.get(std::nothrow, "m.room.history_visibility", "", append);
 		state.get(std::nothrow, "m.room.avatar", "", append);
+		state.get(std::nothrow, "m.room.name", "", append);
+		state.get(std::nothrow, "m.room.canonical_alias", "", append);
+		state.get(std::nothrow, "m.room.aliases", my_host(), append);
+	}
 
-		const auto &sender(json::get<"sender"_>(*data.event));
+	// Branch for supplying state to the client after its user's invite
+	// is processed. At this point the client has not received prior room
+	// state in /sync.
+	if(is_own_membership && data.membership == "invite")
+	{
+		const m::room::state state{*data.room};
+		const auto &sender
+		{
+			json::get<"sender"_>(*data.event)
+		};
+
 		state.get(std::nothrow, "m.room.member", sender, append);
 	}
 
