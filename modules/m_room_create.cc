@@ -42,24 +42,23 @@ ircd::m::created_room(const m::event &event,
                       m::vm::eval &)
 try
 {
-	const m::room::id &room_id
+	const m::user::id &sender
 	{
-		at<"room_id"_>(event)
+		at<"sender"_>(event)
 	};
 
-	const string_view &local
+	const auto &level
 	{
-		room_id.localname()
+		my(sender) && sender != m::me?
+			log::INFO:
+			log::DEBUG
 	};
 
-	if(local != "users") //TODO: circ dep
-		send(m::my_room, at<"sender"_>(event), "ircd.room", room_id, json::object{});
-
-	log::debug
+	log::logf
 	{
-		m::log, "Creation of room %s by %s (%s)",
-		string_view{room_id},
-		at<"sender"_>(event),
+		m::log, level, "Created room %s with %s by %s",
+		json::get<"room_id"_>(event),
+		json::get<"sender"_>(event),
 		string_view{event.event_id},
 	};
 }
