@@ -263,11 +263,14 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	throw panic
+	terminate
 	{
-		"Conf item '%s' failed to set its default value (double-fault) :%s",
-		name,
-		e.what()
+		panic
+		{
+			"Conf item '%s' failed to set its default value (double-fault) :%s",
+			name,
+			e.what()
+		}
 	};
 }
 

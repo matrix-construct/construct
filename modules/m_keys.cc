@@ -585,7 +585,7 @@ namespace ircd
 
 void
 ircd::_test_ed25519()
-noexcept
+noexcept try
 {
 	char seed_buf[ed25519::SEED_SZ + 10];
 	const auto seed
@@ -640,6 +640,13 @@ noexcept
 		{
 			"Seeded ed25519 test failed"
 		};
+}
+catch(...)
+{
+	ircd::terminate
+	{
+		std::current_exception()
+	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////

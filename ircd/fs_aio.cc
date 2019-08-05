@@ -859,9 +859,12 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	throw panic
+	terminate
 	{
-		"AIO(%p) system::chase() qcount:%zu :%s", this, qcount, e.what()
+		panic
+		{
+			"AIO(%p) system::chase() qcount:%zu :%s", this, qcount, e.what()
+		}
 	};
 }
 
