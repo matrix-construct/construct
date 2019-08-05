@@ -16,6 +16,7 @@ IRCD_MODULE
 
 namespace ircd::m
 {
+	extern conf::item<bool> event_append_debug;
 	extern log::log event_append_log;
 }
 
@@ -23,6 +24,13 @@ decltype(ircd::m::event_append_log)
 ircd::m::event_append_log
 {
 	"m.event.append"
+};
+
+decltype(ircd::m::event_append_debug)
+ircd::m::event_append_debug
+{
+	{ "name",     "ircd.m.event.append.debug" },
+	{ "default",  false                       },
 };
 
 IRCD_MODULE_EXPORT
@@ -197,22 +205,21 @@ ircd::m::event::append::append(json::stack::object &object,
 			};
 		});
 
-	#ifdef IRCD_M_EVENT_APPEND_DEBUG
-	log::debug
-	{
-		event_append_log, "%s %s idx:%lu in %s depth:%ld txnid:%s idx:%lu age:%ld %s,%s",
-		opts.user_id? string_view{*opts.user_id} : string_view{},
-		string_view{event.event_id},
-		opts.event_idx? *opts.event_idx : 0UL,
-		json::get<"room_id"_>(event),
-		json::get<"depth"_>(event),
-		has_client_txnid? *opts.client_txnid : string_view{},
-		txnid_idx,
-		int64_t(age),
-		json::get<"type"_>(event),
-		json::get<"state_key"_>(event),
-	};
-	#endif
+	if(unlikely(event_append_debug))
+		log::debug
+		{
+			event_append_log, "%s %s idx:%lu in %s depth:%ld txnid:%s idx:%lu age:%ld %s,%s",
+			opts.user_id? string_view{*opts.user_id} : string_view{},
+			string_view{event.event_id},
+			opts.event_idx? *opts.event_idx : 0UL,
+			json::get<"room_id"_>(event),
+			json::get<"depth"_>(event),
+			has_client_txnid? *opts.client_txnid : string_view{},
+			txnid_idx,
+			int64_t(age),
+			json::get<"type"_>(event),
+			json::get<"state_key"_>(event),
+		};
 
 	return true;
 }}
