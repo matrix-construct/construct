@@ -267,6 +267,7 @@ ircd::data(const string_view &str)
 	return str.data();
 }
 
+[[gnu::pure]]
 constexpr size_t
 ircd::_constexpr_strlen(const char *const s)
 {

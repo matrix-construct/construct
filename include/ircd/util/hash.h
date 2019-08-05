@@ -27,6 +27,7 @@ inline namespace util
 
 /// Runtime hashing of a std::u16string (for js). Non-cryptographic.
 template<size_t PRIME>
+[[gnu::pure]]
 size_t
 ircd::util::hash(const std::u16string &str,
                  const size_t i)
@@ -36,6 +37,7 @@ ircd::util::hash(const std::u16string &str,
 
 /// Runtime hashing of a string_view. Non-cryptographic.
 template<size_t PRIME>
+[[gnu::pure]]
 constexpr size_t
 ircd::util::hash(const string_view str,
                  const size_t i)
@@ -45,6 +47,7 @@ ircd::util::hash(const string_view str,
 
 /// Compile-time hashing of a wider string literal (for js). Non-cryptographic.
 template<size_t PRIME>
+[[gnu::pure]]
 constexpr size_t
 ircd::util::hash(const char16_t *const str,
                  const size_t i)
