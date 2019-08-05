@@ -688,9 +688,15 @@ AM_COND_IF([GCC],
 [
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wlogical-op], charybdis_cv_c_gcc_w_logical_op)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wformat-security], charybdis_cv_c_gcc_w_format_security)
-	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wstack-usage=$STACK_USAGE_WARNING], charybdis_cv_c_gcc_w_stack_usage)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wframe-larger-than=$FRAME_SIZE_WARNING], charybdis_cv_c_gcc_w_frame_larger_than)
+
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=pure], charybdis_cv_c_gcc_w_suggest_attribute_pure)
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=const], charybdis_cv_c_gcc_w_suggest_attribute_const)
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=noreturn], charybdis_cv_c_gcc_w_suggest_attribute_noreturn)
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=malloc], charybdis_cv_c_gcc_w_suggest_attribute_malloc)
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=cold], charybdis_cv_c_gcc_w_suggest_attribute_cold)
 ],[])
 
 AM_COND_IF([CLANG],
