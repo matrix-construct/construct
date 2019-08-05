@@ -118,7 +118,7 @@ get__context(client &client,
 
 	const m::event::fetch event
 	{
-		event_id
+		event_id, default_fetch_opts
 	};
 
 	const m::user::room &user_room
