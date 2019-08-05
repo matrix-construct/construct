@@ -674,12 +674,6 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unused-value], charybdis_cv_c_gcc_w_unused_value
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unused-variable], charybdis_cv_c_gcc_w_unused_variable)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unused-parameter], charybdis_cv_c_gcc_w_unused_parameter)
 
-dnl This warns when the compiler sees a statement that 'throws into a noexcept' which
-dnl which will certainly terminate the program; it wants us to use std::terminate()
-dnl rather than the rethrow. Unless throwing into a noexcept that way has UB in an
-dnl optimized build I really don't care and just want to type `throw;` thx.
-CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-terminate], charybdis_cv_c_gcc_w_terminate)
-
 dnl This warning is disabled to allow preprocessor statements like #endif to
 dnl contain text on the same line. This is used for example to write the
 dnl identifier in the matching prior #ifdef, which has no actual effect except
