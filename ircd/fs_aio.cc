@@ -34,8 +34,8 @@ decltype(ircd::fs::aio::support_fsync)
 ircd::fs::aio::support_fsync
 {
 	#if defined(RWF_SYNC)
-		info::kernel_version[0] >= 4 &&
-		info::kernel_version[1] >= 18
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 18)
 	#else
 		false
 	#endif
@@ -47,8 +47,8 @@ decltype(ircd::fs::aio::support_fdsync)
 ircd::fs::aio::support_fdsync
 {
 	#if defined(RWF_DSYNC)
-		info::kernel_version[0] >= 4 &&
-		info::kernel_version[1] >= 18
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 18)
 	#else
 		false
 	#endif

@@ -38,8 +38,8 @@ decltype(ircd::fs::support_pwritev2)
 ircd::fs::support_pwritev2
 {
 	#if defined(HAVE_PWRITEV2)
-		info::kernel_version[0] >= 4 &&
-		info::kernel_version[1] >= 6
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 6)
 	#else
 		false
 	#endif
@@ -49,8 +49,8 @@ decltype(ircd::fs::support_preadv2)
 ircd::fs::support_preadv2
 {
 	#if defined(HAVE_PREADV2)
-		info::kernel_version[0] >= 4 &&
-		info::kernel_version[1] >= 6
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 6)
 	#else
 		false
 	#endif
@@ -60,8 +60,8 @@ decltype(ircd::fs::support_sync)
 ircd::fs::support_sync
 {
 	#if defined(HAVE_PWRITEV2) && defined(RWF_SYNC)
-		info::kernel_version[0] >= 4 &&
-		info::kernel_version[1] >= 7
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 7)
 	#else
 		false
 	#endif
@@ -71,8 +71,8 @@ decltype(ircd::fs::support_dsync)
 ircd::fs::support_dsync
 {
 	#if defined(HAVE_PWRITEV2) && defined(RWF_DSYNC)
-		info::kernel_version[0] >= 4 &&
-		info::kernel_version[1] >= 7
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 7)
 	#else
 		false
 	#endif
@@ -82,8 +82,8 @@ decltype(ircd::fs::support_hipri)
 ircd::fs::support_hipri
 {
 	#if defined(HAVE_PWRITEV2) && defined(RWF_HIPRI)
-		info::kernel_version[0] >= 4 &&
-		info::kernel_version[1] >= 6
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 6)
 	#else
 		false
 	#endif
@@ -93,8 +93,8 @@ decltype(ircd::fs::support_nowait)
 ircd::fs::support_nowait
 {
 	#if defined(HAVE_PWRITEV2) && defined(RWF_NOWAIT)
-		info::kernel_version[0] >= 4 &&
-		info::kernel_version[1] >= 14
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 14)
 	#else
 		false
 	#endif
@@ -104,8 +104,8 @@ decltype(ircd::fs::support_append)
 ircd::fs::support_append
 {
 	#if defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
-		info::kernel_version[0] >= 4 &&
-		info::kernel_version[1] >= 16
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 16)
 	#else
 		false
 	#endif
@@ -115,8 +115,8 @@ decltype(ircd::fs::support_rwh_write_life)
 ircd::fs::support_rwh_write_life
 {
 	#if defined(HAVE_FCNTL_H) && defined(F_SET_FILE_RW_HINT)
-		info::kernel_version[0] >= 4 &&
-		info::kernel_version[1] >= 13
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 13)
 	#else
 		false
 	#endif
@@ -1327,16 +1327,16 @@ decltype(ircd::fs::aio::support_fsync)
 extern __attribute__((weak))
 ircd::fs::aio::support_fsync
 {
-	info::kernel_version[0] >= 4 &&
-	info::kernel_version[1] >= 18
+	info::kernel_version[0] > 4 ||
+	(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 18)
 };
 
 decltype(ircd::fs::aio::support_fdsync)
 extern __attribute__((weak))
 ircd::fs::aio::support_fdsync
 {
-	info::kernel_version[0] >= 4 &&
-	info::kernel_version[1] >= 18
+	info::kernel_version[0] > 4 ||
+	(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 18)
 };
 
 decltype(ircd::fs::aio::MAX_EVENTS)
