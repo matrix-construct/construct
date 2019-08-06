@@ -32,14 +32,6 @@ namespace ircd::info
 	extern const string_view compiled;
 	extern const string_view startup;
 
-	// Platform information
-	extern const size_t max_align;
-	extern const size_t hardware_concurrency;
-	extern const size_t destructive_interference;
-	extern const size_t constructive_interference;
-	extern const std::array<uint128_t, 8> cpuid;
-	extern const string_view cpuvendor;
-
 	// System information
 	extern const size_t page_size;
 	extern const size_t iov_max;
@@ -82,6 +74,32 @@ namespace ircd::info
 	// Util
 	void dump();
 }
+
+namespace ircd::info::hardware
+{
+	extern const size_t max_align;
+	extern const size_t hardware_concurrency;
+	extern const size_t destructive_interference;
+	extern const size_t constructive_interference;
+}
+
+namespace ircd::info::hardware::x86
+{
+	uint128_t cpuid(const uint &leaf, const uint &subleaf);
+
+	extern const uint128_t manufact;
+	extern const uint128_t features;
+	extern const uint128_t extended_features;
+	extern const uint128_t _manufact;
+	extern const uint128_t _features;
+	extern const uint128_t _apmi;
+	extern const uint128_t _lwp;
+
+	extern const string_view vendor;
+	extern const bool mmx, sse, sse2;
+	extern const bool sse3, ssse3, sse4_1, sse4_2;
+	extern const bool avx, avx2;
+};
 
 /// Instances of `versions` create a dynamic version registry identifying
 /// third-party dependencies throughout the project and its loaded modules.

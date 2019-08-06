@@ -508,21 +508,23 @@ ircd::info::page_size
 };
 
 //
-// Platform information
+// Hardware
 //
 
-decltype(ircd::info::constructive_interference)
-ircd::info::constructive_interference
+decltype(ircd::info::hardware::max_align)
+ircd::info::hardware::max_align
 {
-	#ifdef __cpp_lib_hardware_interference_size
-		std::hardware_constructive_interference_size
-	#else
-		0
-	#endif
+	alignof(std::max_align_t)
 };
 
-decltype(ircd::info::destructive_interference)
-ircd::info::destructive_interference
+decltype(ircd::info::hardware::hardware_concurrency)
+ircd::info::hardware::hardware_concurrency
+{
+	std::thread::hardware_concurrency()
+};
+
+decltype(ircd::info::hardware::destructive_interference)
+ircd::info::hardware::destructive_interference
 {
 	#ifdef __cpp_lib_hardware_interference_size
 		std::hardware_destructive_interference_size
@@ -531,25 +533,140 @@ ircd::info::destructive_interference
 	#endif
 };
 
-decltype(ircd::info::hardware_concurrency)
-ircd::info::hardware_concurrency
+decltype(ircd::info::hardware::constructive_interference)
+ircd::info::hardware::constructive_interference
 {
-	std::thread::hardware_concurrency()
+	#ifdef __cpp_lib_hardware_interference_size
+		std::hardware_constructive_interference_size
+	#else
+		0
+	#endif
 };
 
-decltype(ircd::info::max_align)
-ircd::info::max_align
+//
+// x86::x86
+//
+
+decltype(ircd::info::hardware::x86::manufact)
+ircd::info::hardware::x86::manufact
 {
-	alignof(std::max_align_t)
+	cpuid(0x00000000U, 0),
+};
+
+decltype(ircd::info::hardware::x86::features)
+ircd::info::hardware::x86::features
+{
+	cpuid(0x00000001U, 0)
+};
+
+decltype(ircd::info::hardware::x86::extended_features)
+ircd::info::hardware::x86::extended_features
+{
+	cpuid(0x00000007U, 0)
+};
+
+decltype(ircd::info::hardware::x86::_manufact)
+ircd::info::hardware::x86::_manufact
+{
+	cpuid(0x80000000U, 0),
+};
+
+decltype(ircd::info::hardware::x86::_features)
+ircd::info::hardware::x86::_features
+{
+	cpuid(0x80000001U, 0)
+};
+
+decltype(ircd::info::hardware::x86::_apmi)
+ircd::info::hardware::x86::_apmi
+{
+	cpuid(0x80000007U, 0)
+};
+
+decltype(ircd::info::hardware::x86::_lwp)
+ircd::info::hardware::x86::_lwp
+{
+	cpuid(0x8000001CU, 0)
+};
+
+static char
+ircd_info_hardware_x86_vendor[16];
+
+decltype(ircd::info::hardware::x86::vendor)
+ircd::info::hardware::x86::vendor{[]
+{
+	char *const out{ircd_info_hardware_x86_vendor};
+	const auto in{reinterpret_cast<const uint8_t *>(&manufact)};
+
+	out[0] = in[4];  out[1] = in[5];  out[2] = in[6];   out[3] = in[7];
+	out[4] = in[12]; out[5] = in[13]; out[6] = in[14];  out[7] = in[15];
+	out[8] = in[8];  out[9] = in[9];  out[10] = in[10]; out[11] = in[11];
+
+	return string_view
+	{
+		ircd_info_hardware_x86_vendor
+	};
+}()};
+
+decltype(ircd::info::hardware::x86::mmx)
+ircd::info::hardware::x86::mmx
+{
+	bool(features & (uint128_t(1) << (96 + 23)))
+};
+
+decltype(ircd::info::hardware::x86::sse)
+ircd::info::hardware::x86::sse
+{
+	bool(features & (uint128_t(1) << (96 + 26)))
+};
+
+decltype(ircd::info::hardware::x86::sse2)
+ircd::info::hardware::x86::sse2
+{
+	bool(features & (uint128_t(1) << (96 + 0)))
+};
+
+decltype(ircd::info::hardware::x86::sse3)
+ircd::info::hardware::x86::sse3
+{
+	bool(features & (uint128_t(1) << (64 + 0)))
+};
+
+decltype(ircd::info::hardware::x86::ssse3)
+ircd::info::hardware::x86::ssse3
+{
+	bool(features & (uint128_t(1) << (64 + 9)))
+};
+
+decltype(ircd::info::hardware::x86::sse4_1)
+ircd::info::hardware::x86::sse4_1
+{
+	bool(features & (uint128_t(1) << (64 + 19)))
+};
+
+decltype(ircd::info::hardware::x86::sse4_2)
+ircd::info::hardware::x86::sse4_2
+{
+	bool(features & (uint128_t(1) << (64 + 20)))
+};
+
+decltype(ircd::info::hardware::x86::avx)
+ircd::info::hardware::x86::avx
+{
+	bool(features & (uint128_t(1) << (64 + 28)))
+};
+
+decltype(ircd::info::hardware::x86::avx2)
+ircd::info::hardware::x86::avx2
+{
+	bool(features & (uint128_t(1) << (32 + 5)))
 };
 
 #ifdef __x86_64__
-static ircd::uint128_t
-get_cpuid(const uint &leaf,
-          const uint &subleaf)
+ircd::uint128_t
+ircd::info::hardware::x86::cpuid(const uint &leaf,
+                                 const uint &subleaf)
 {
-	using ircd::uint128_t;
-
 	uint32_t reg[4];
 	asm volatile
 	(
@@ -571,126 +688,84 @@ get_cpuid(const uint &leaf,
 	};
 }
 #else
-static ircd::uint128_t
-get_cpuid(const uint &leaf,
-          const uint &subleaf)
+ircd::uint128_t
+ircd::info::hardware::x86::cpuid(const uint &leaf,
+                                 const uint &subleaf)
 {
 	return 0;
 }
 #endif
 
-decltype(ircd::info::cpuid)
-ircd::info::cpuid
-{
-	get_cpuid(0x00000000U, 0),
-	get_cpuid(0x00000001U, 0),
-	get_cpuid(0x00000007U, 0),
-	0UL,
-	get_cpuid(0x80000000U, 0),
-	get_cpuid(0x80000001U, 0),
-	get_cpuid(0x80000007U, 0), // ACPI
-	get_cpuid(0x8000001CU, 0), // AMD Vol.2 13.4.3.3 (LWP)
-};
-
-static char
-_cpuvendor_[12];
-
-decltype(ircd::info::cpuvendor)
-ircd::info::cpuvendor{[]
-{
-	const auto b
-	{
-		reinterpret_cast<const uint8_t *>(cpuid.data())
-	};
-
-	_cpuvendor_[0] = b[4];
-	_cpuvendor_[1] = b[5];
-	_cpuvendor_[2] = b[6];
-	_cpuvendor_[3] = b[7];
-	_cpuvendor_[4] = b[12];
-	_cpuvendor_[5] = b[13];
-	_cpuvendor_[6] = b[14];
-	_cpuvendor_[7] = b[15];
-	_cpuvendor_[8] = b[8];
-	_cpuvendor_[9] = b[9];
-	_cpuvendor_[10] = b[10];
-	_cpuvendor_[11] = b[11];
-
-	return string_view
-	{
-		_cpuvendor_, sizeof(_cpuvendor_)
-	};
-}()};
-
 void
 ircd::info::dump_cpu_info()
 {
-	// This message flashes standard information about the system and platform
-	// IRCd is compiled for and running on.
+	// This message flashes hardware standard information about this platform
+	#if defined(__i386__) or defined(__x86_64__)
+	log::info
+	{
+		"%s mmx:%b sse:%b sse2:%b sse3:%b sse4.1:%b avx:%b avx2:%b",
+		hardware::x86::vendor,
+		hardware::x86::mmx,
+		hardware::x86::sse,
+		hardware::x86::sse2,
+		hardware::x86::sse3,
+		hardware::x86::sse4_1,
+		hardware::x86::sse4_2,
+		hardware::x86::avx,
+		hardware::x86::avx2,
+	};
+	#endif
+
+	// This message flashes language standard information about this platform
 	log::debug
 	{
-		"cpu[%s] max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
-		cpuvendor,
-		max_align,
-		hardware_concurrency,
-		destructive_interference,
-		constructive_interference,
+		"max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
+		hardware::max_align,
+		hardware::hardware_concurrency,
+		hardware::destructive_interference,
+		hardware::constructive_interference,
 	};
 
 	log::debug
 	{
-		"0..00 [%08x|%08x|%08x|%08x] "
-		"0..01 [%08x|%08x|%08x|%08x]",
-		uint32_t(cpuid[0]),
-		uint32_t(cpuid[0] >> 32),
-		uint32_t(cpuid[0] >> 64),
-		uint32_t(cpuid[0] >> 96),
-		uint32_t(cpuid[1]),
-		uint32_t(cpuid[1] >> 32),
-		uint32_t(cpuid[1] >> 64),
-		uint32_t(cpuid[1] >> 96),
+		"0..00 STD MANUFAC [%08x|%08x|%08x|%08x] "
+		"0..01 STD FEATURE [%08x|%08x|%08x|%08x]",
+		uint32_t(hardware::x86::manufact >> 0),
+		uint32_t(hardware::x86::manufact >> 32),
+		uint32_t(hardware::x86::manufact >> 64),
+		uint32_t(hardware::x86::manufact >> 96),
+		uint32_t(hardware::x86::features >> 0),
+		uint32_t(hardware::x86::features >> 32),
+		uint32_t(hardware::x86::features >> 64),
+		uint32_t(hardware::x86::features >> 96),
 	};
 
 	log::debug
 	{
-		"0..07 [%08x|%08x|%08x|%08x] "
-		"0..00 [%08x|%08x|%08x|%08x]",
-		uint32_t(cpuid[2]),
-		uint32_t(cpuid[2] >> 32),
-		uint32_t(cpuid[2] >> 64),
-		uint32_t(cpuid[2] >> 96),
-		uint32_t(cpuid[3]),
-		uint32_t(cpuid[3] >> 32),
-		uint32_t(cpuid[3] >> 64),
-		uint32_t(cpuid[3] >> 96),
+		"8..00 EXT MANUFAC [%08x|%08x|%08x|%08x] "
+		"8..01 EXT FEATURE [%08x|%08x|%08x|%08x]",
+		uint32_t(hardware::x86::_manufact >> 0),
+		uint32_t(hardware::x86::_manufact >> 32),
+		uint32_t(hardware::x86::_manufact >> 64),
+		uint32_t(hardware::x86::_manufact >> 96),
+		uint32_t(hardware::x86::_features >> 0),
+		uint32_t(hardware::x86::_features >> 32),
+		uint32_t(hardware::x86::_features >> 64),
+		uint32_t(hardware::x86::_features >> 96),
 	};
 
 	log::debug
 	{
-		"8..00 [%08x|%08x|%08x|%08x] "
-		"8..01 [%08x|%08x|%08x|%08x]",
-		uint32_t(cpuid[4]),
-		uint32_t(cpuid[4] >> 32),
-		uint32_t(cpuid[4] >> 64),
-		uint32_t(cpuid[4] >> 96),
-		uint32_t(cpuid[5]),
-		uint32_t(cpuid[5] >> 32),
-		uint32_t(cpuid[5] >> 64),
-		uint32_t(cpuid[5] >> 96),
-	};
-
-	log::debug
-	{
-		"8..07 [%08x|%08x|%08x|%08x] "
-		"8..1C [%08x|%08x|%08x|%08x]",
-		uint32_t(cpuid[6]),
-		uint32_t(cpuid[6] >> 32),
-		uint32_t(cpuid[6] >> 64),
-		uint32_t(cpuid[6] >> 96),
-		uint32_t(cpuid[7]),
-		uint32_t(cpuid[7] >> 32),
-		uint32_t(cpuid[7] >> 64),
-		uint32_t(cpuid[7] >> 96),
+		"8..07 EXT APMI    [%08x|%08x|%08x|%08x] "
+		"8..1C EXT LWPROF  [%08x|%08x|%08x|%08x]",
+		uint32_t(hardware::x86::_apmi >> 0),
+		uint32_t(hardware::x86::_apmi >> 32),
+		uint32_t(hardware::x86::_apmi >> 64),
+		uint32_t(hardware::x86::_apmi >> 96),
+		uint32_t(hardware::x86::_lwp >> 0),
+		uint32_t(hardware::x86::_lwp >> 32),
+		uint32_t(hardware::x86::_lwp >> 64),
+		uint32_t(hardware::x86::_lwp >> 96),
 	};
 }
 
