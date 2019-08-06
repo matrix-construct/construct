@@ -435,23 +435,33 @@ ircd::m::id::id(const enum sigil &sigil,
                 const string_view &host)
 :string_view{[&sigil, &buf, &local, &host]
 {
+	thread_local char tmp[2][MAX_SIZE] alignas(16);
 	const string_view src
 	{
 		startswith(local, sigil)?
 			fmt::sprintf
 			{
 				buf, "%s%s%s",
-				local,
-				host? ":" : "",
-				host,
-			}:
+				sigil == sigil::ROOM_ALIAS?
+					tolower(tmp[0], local):
+					local,
+				host?
+					":"_sv:
+					string_view{},
+				tolower(tmp[1], host),
+			}
+		:
 			fmt::sprintf
 			{
 				buf, "%c%s%s%s",
 				char(sigil),
-				local,
-				host? ":" : "",
-				host,
+				sigil == sigil::ROOM_ALIAS?
+					tolower(tmp[0], local):
+					local,
+				host?
+					":"_sv:
+					string_view{},
+				tolower(tmp[1], host),
 			}
 	};
 
@@ -465,16 +475,13 @@ ircd::m::id::id(const id::sigil &sigil,
                 const string_view &id)
 :string_view{[&sigil, &buf, &id]
 {
-	const auto len
-	{
-		buffer::data(buf) != id.data()?
-			strlcpy(buffer::data(buf), id, buffer::size(buf)):
-			id.size()
-	};
-
 	const string_view src
 	{
-		buffer::data(buf), len
+		sigil == sigil::ROOM_ALIAS?
+			tolower(buf, id):               //XXX no null here
+		buffer::data(buf) != id.data()?
+			strlcpy(buf, id):
+			id
 	};
 
 	return parser(sigil, src);
