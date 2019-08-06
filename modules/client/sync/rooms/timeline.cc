@@ -28,7 +28,6 @@ namespace ircd::m::sync
 	extern conf::item<bool> exposure_state;
 	extern conf::item<size_t> limit_default;
 	extern conf::item<size_t> limit_initial_default;
-	extern const event::keys::include default_keys;
 	extern item room_timeline;
 }
 
@@ -41,21 +40,6 @@ ircd::m::sync::room_timeline
 	{
 		{ "initial", true },
 	}
-};
-
-decltype(ircd::m::sync::default_keys)
-ircd::m::sync::default_keys
-{
-	"content",
-	"depth",
-	"event_id",
-	"origin_server_ts",
-	"prev_events",
-	"redacts",
-	"room_id",
-	"sender",
-	"state_key",
-	"type",
 };
 
 decltype(ircd::m::sync::limit_default)
@@ -242,11 +226,6 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
                                              bool &limited,
                                              bool &ret)
 {
-	static const event::fetch::opts fopts
-	{
-		default_keys
-	};
-
 	json::stack::array array
 	{
 		*data.out, "events"
@@ -261,7 +240,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	m::event::id::buf event_id;
 	m::room::messages it
 	{
-		room, &fopts
+		room
 	};
 
 	ssize_t i(0);

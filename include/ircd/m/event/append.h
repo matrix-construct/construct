@@ -29,6 +29,7 @@ struct ircd::m::event::append::opts
 	const id::user *user_id {nullptr};
 	const room *user_room {nullptr};
 	const int64_t *room_depth {nullptr};
+	const event::keys *keys {nullptr};
 	long age {std::numeric_limits<long>::min()};
 	bool query_txnid {true};
 };

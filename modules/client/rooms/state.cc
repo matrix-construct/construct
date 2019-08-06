@@ -13,27 +13,6 @@
 using namespace ircd::m;
 using namespace ircd;
 
-const event::keys::include
-default_keys
-{
-	"content",
-	"depth",
-	"event_id",
-	"origin_server_ts",
-	"prev_events",
-	"redacts",
-	"room_id",
-	"sender",
-	"state_key",
-	"type",
-};
-
-const event::fetch::opts
-default_fopts
-{
-	default_keys
-};
-
 static resource::response
 get__state(client &client,
            const resource::request &request,
@@ -131,7 +110,7 @@ get__state(client &client,
 
 	const m::room::state state
 	{
-		room, &default_fopts
+		room
 	};
 
 	if(!type)
@@ -139,7 +118,7 @@ get__state(client &client,
 
 	const m::event::fetch event
 	{
-		state.get(type, state_key), default_fopts
+		state.get(type, state_key)
 	};
 
 	if(!visible(event, request.user_id))

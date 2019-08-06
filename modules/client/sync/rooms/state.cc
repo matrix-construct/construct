@@ -27,8 +27,6 @@ namespace ircd::m::sync
 
 	extern conf::item<bool> crazyload_historical_members;
 	extern conf::item<int64_t> state_exposure_depth; //TODO: XXX
-	extern const event::keys::include _default_keys;
-	extern event::fetch::opts _default_fopts;
 
 	extern item room_invite_state;
 	extern item room_state;
@@ -37,10 +35,7 @@ namespace ircd::m::sync
 ircd::mapi::header
 IRCD_MODULE
 {
-	"Client Sync :Room State", []
-	{
-		ircd::m::sync::_default_fopts.query_json_force = true;
-	}
+	"Client Sync :Room State"
 };
 
 decltype(ircd::m::sync::room_state)
@@ -63,26 +58,6 @@ ircd::m::sync::room_invite_state
 	{
 		{ "phased", true },
 	}
-};
-
-decltype(ircd::m::sync::_default_keys)
-ircd::m::sync::_default_keys
-{
-	"content",
-	"depth",
-	"event_id",
-	"origin_server_ts",
-	"redacts",
-	"room_id",
-	"sender",
-	"state_key",
-	"type",
-};
-
-decltype(ircd::m::sync::_default_fopts)
-ircd::m::sync::_default_fopts
-{
-	_default_keys
 };
 
 bool
@@ -286,7 +261,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		{
 			const m::event::fetch event
 			{
-				event_idx, std::nothrow, _default_fopts
+				event_idx, std::nothrow
 			};
 
 			if(unlikely(!event.valid))

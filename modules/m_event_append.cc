@@ -16,6 +16,8 @@ IRCD_MODULE
 
 namespace ircd::m
 {
+	extern const event::keys::exclude event_append_exclude_keys;
+	extern const event::keys event_append_default_keys;
 	extern conf::item<bool> event_append_info;
 	extern log::log event_append_log;
 }
@@ -32,6 +34,27 @@ ircd::m::event_append_info
 	{ "name",     "ircd.m.event.append.info" },
 	{ "default",  false                      },
 	{ "persist",  false                      },
+};
+
+/// Default event property mask of keys which we strip from the event sent
+/// to the client. This mask is applied only if the caller of event::append{}
+/// did not supply their mask to apply. It is also inferior to the user's
+/// filter if supplied.
+decltype(ircd::m::event_append_exclude_keys)
+ircd::m::event_append_exclude_keys
+{
+	"auth_events",
+	"hashes",
+	"membership",
+	"origin",
+	"prev_state",
+	"signatures",
+};
+
+decltype(ircd::m::event_append_default_keys)
+ircd::m::event_append_default_keys
+{
+	event_append_exclude_keys
 };
 
 IRCD_MODULE_EXPORT
@@ -131,12 +154,43 @@ ircd::m::event::append::append(json::stack::object &object,
 	}
 
 	if(!json::get<"event_id"_>(event))
+		json::stack::member
+		{
+			object, "event_id", event.event_id
+		};
+
+	// Get the list of properties to send to the client so we can strip
+	// the remaining and save b/w
+	// TODO: m::filter
+	const event::keys &keys
 	{
-		auto _event(event);
-		json::get<"event_id"_>(_event) = event.event_id;
-		object.append(_event);
-	}
-	else object.append(event);
+		opts.keys?
+			*opts.keys:
+			event_append_default_keys
+	};
+
+	// Append the event members
+	for_each(event, [&keys, &object]
+	(const auto &key, const auto &val_)
+	{
+		if(!keys.has(key))
+			return true;
+
+		const json::value val
+		{
+			val_
+		};
+
+		if(!defined(val))
+			return true;
+
+		json::stack::member
+		{
+			object, key, val
+		};
+
+		return true;
+	});
 
 	if(json::get<"state_key"_>(event) && has_event_idx)
 	{

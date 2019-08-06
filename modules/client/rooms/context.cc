@@ -33,23 +33,6 @@ flush_hiwat
 	{ "default",  16384L                                  },
 };
 
-const m::event::fetch::opts
-default_fetch_opts
-{
-	m::event::keys::include
-	{
-		"content",
-		"depth",
-		"event_id",
-		"origin_server_ts",
-		"redacts",
-		"room_id",
-		"sender",
-		"state_key",
-		"type",
-	},
-};
-
 log::log
 context_log
 {
@@ -118,7 +101,7 @@ get__context(client &client,
 
 	const m::event::fetch event
 	{
-		event_id, default_fetch_opts
+		event_id
 	};
 
 	const m::user::room &user_room
@@ -180,7 +163,7 @@ get__context(client &client,
 
 		m::room::messages before
 		{
-			room, event_id, &default_fetch_opts
+			room, event_id
 		};
 
 		if(before)
@@ -220,7 +203,7 @@ get__context(client &client,
 
 		m::room::messages after
 		{
-			room, event_id, &default_fetch_opts
+			room, event_id
 		};
 
 		if(after)
@@ -260,7 +243,7 @@ get__context(client &client,
 
 		const m::room::state state
 		{
-			room, &default_fetch_opts
+			room
 		};
 
 		// Setup the event::fetch instance outside of the closure to avoid

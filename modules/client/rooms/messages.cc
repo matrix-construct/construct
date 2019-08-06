@@ -42,24 +42,6 @@ messages_log
 	"m.messages"
 };
 
-static const m::event::fetch::opts
-default_fetch_opts
-{
-	m::event::keys::include
-	{
-		"content",
-		"depth",
-		"event_id",
-		"origin_server_ts",
-		"prev_events",
-		"redacts",
-		"room_id",
-		"sender",
-		"state_key",
-		"type",
-	},
-};
-
 resource::response
 get__messages(client &client,
               const resource::request &request,
@@ -110,7 +92,7 @@ get__messages(client &client,
 
 	m::room::messages it
 	{
-		room, page.from, &default_fetch_opts
+		room, page.from
 	};
 
 	const auto room_depth
