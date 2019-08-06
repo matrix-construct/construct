@@ -51,9 +51,6 @@ namespace ircd::fs
 struct ircd::fs::write_opts
 :opts
 {
-	/// for allocate()
-	bool keep_size {true};
-
 	/// Yields the ircd::ctx until the buffers are written. This performs
 	/// the unix incremental write loop internally. When this option is true,
 	/// any return value from a function in the write() suite will not be a
@@ -88,6 +85,12 @@ struct ircd::fs::write_opts
 	/// meaningful if pwritev2(2) is available and the kernel recognizes the
 	/// RWF_WRITE_LIFE flag bits. See also fs::write_life(fd).
 	uint8_t write_life {0};
+
+	/// for allocate()
+	bool keep_size {true};
+
+	/// for allocate()
+	bool punch_hole {false};
 
 	write_opts(const off_t & = 0);
 };

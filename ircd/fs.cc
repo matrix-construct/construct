@@ -843,7 +843,21 @@ ircd::fs::allocate(const fd &fd,
 	assert(opts.op == op::WRITE);
 
 	int mode{0};
+
+	#ifdef FALLOC_FL_KEEP_SIZE
 	mode |= opts.keep_size? FALLOC_FL_KEEP_SIZE : 0;
+	#else
+	if(opts.keep_size)
+		throw_system_error(std::errc::invalid_argument);
+	#endif
+
+	#ifdef FALLOC_FL_PUNCH_HOLE
+	mode |= opts.punch_hole? FALLOC_FL_PUNCH_HOLE : 0;
+	#else
+	if(opts.punch_hole)
+		throw_system_error(std::errc::invalid_argument);
+	#endif
+
 	syscall(::fallocate, fd, mode, opts.offset, size);
 }
 
