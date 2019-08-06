@@ -2342,9 +2342,9 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &e)
 void
 ircd::fs::debug_support()
 {
-	log::debug
+	log::info
 	{
-		log, "support preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",
+		log, "Supports preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",
 		support_preadv2,
 		support_pwritev2,
 		support_sync,
