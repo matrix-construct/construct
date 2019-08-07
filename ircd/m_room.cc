@@ -4641,7 +4641,8 @@ const
 			prop? json::object{content.get(prop)} : content
 		};
 
-		if(prop && json::type(string_view{collection}) != json::OBJECT)
+		const string_view _collection{collection};
+		if(prop && (!_collection || json::type(_collection) != json::OBJECT))
 			return;
 
 		for(auto it(begin(collection)); it != end(collection) && ret; ++it)
