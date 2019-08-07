@@ -180,6 +180,13 @@ ircd::m::sync::handle_get(client &client,
 				range.second
 			};
 
+	// Query and cache the device ID for the access token of this request on
+	// the stack here for this sync.
+	const device::id::buf device_id
+	{
+		device::access_token_to_id(request.access_token)
+	};
+
 	// Keep state for statistics of this sync here on the stack.
 	stats stats;
 
@@ -194,6 +201,7 @@ ircd::m::sync::handle_get(client &client,
 		nullptr,
 		&stats,
 		&args,
+		device_id,
 	};
 
 	// Determine if this is an initial-sync request.
@@ -954,7 +962,8 @@ ircd::m::sync::data::data(const m::user &user,
                           ircd::client *const &client,
                           json::stack *const &out,
                           sync::stats *const &stats,
-                          const sync::args *const &args)
+                          const sync::args *const &args,
+                          const device::id &device_id)
 :range
 {
     range
@@ -996,6 +1005,10 @@ ircd::m::sync::data::data(const m::user &user,
 ,filter
 {
     json::object{filter_buf}
+}
+,device_id
+{
+	device_id
 }
 ,out
 {

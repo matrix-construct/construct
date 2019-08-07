@@ -99,6 +99,7 @@ struct ircd::m::sync::data
 	const m::user::rooms user_rooms;
 	const std::string filter_buf;
 	const m::filter filter;
+	const device::id device_id;
 
 	/// The json::stack master object
 	json::stack *out {nullptr};
@@ -117,7 +118,8 @@ struct ircd::m::sync::data
 	     ircd::client *const &client = nullptr,
 	     json::stack *const &out = nullptr,
 	     sync::stats *const &stats = nullptr,
-	     const sync::args *const &args = nullptr);
+	     const sync::args *const &args = nullptr,
+	     const device::id &device_id = {});
 
 	data(data &&) = delete;
 	data(const data &) = delete;
