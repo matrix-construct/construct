@@ -1761,6 +1761,11 @@ try
 		return {data.allow, data.fail};
 	}
 
+	// (non-spec) Call the hook for any types without a branch enumerated
+	// here. The handler will throw on a failure, otherwise fallthrough to
+	// the next rule.
+	event_auth_hook(event, data);
+
 	// 12. Otherwise, allow.
 	data.allow = true;
 	assert(!data.fail);
