@@ -381,7 +381,7 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 			return std::any_of(begin(last), begin(last)+ret, [&sender]
 			(const auto &last)
 			{
-				return startswith(last, sender);
+				return startswith(sender, last);
 			});
 		}
 	};
@@ -393,7 +393,7 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 
 	for(; it && ret < count && i < limit; --it, ++i)
 		m::get(std::nothrow, it.event_idx(), "sender", [&]
-		(const auto &sender)
+		(const string_view &sender)
 		{
 			if(already(sender))
 				return;
