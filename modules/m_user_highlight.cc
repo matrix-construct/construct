@@ -42,6 +42,13 @@ ircd::m::user::highlight::match_mxid_local_ci
 	{ "default", false                                       },
 };
 
+decltype(ircd::m::user::highlight::match_at_room)
+ircd::m::user::highlight::match_at_room
+{
+	{ "name",    "ircd.m.user.highlight.match.at.room" },
+	{ "default", true                                  },
+};
+
 size_t
 IRCD_MODULE_EXPORT
 ircd::m::user::highlight::count()
@@ -216,6 +223,10 @@ IRCD_MODULE_EXPORT
 ircd::m::user::highlight::match(const string_view &text)
 const
 {
+	if(likely(match_at_room))
+		if(startswith(text, "@room"))
+			return true;
+
 	// Case insensitive and case-sensitive are exlusive; if both
 	// are true only one branch is taken.
 	if(match_mxid_local_ci)

@@ -20,6 +20,7 @@ struct ircd::m::user::highlight
 	static conf::item<bool> match_mxid_full;
 	static conf::item<bool> match_mxid_local_cs;
 	static conf::item<bool> match_mxid_local_ci;
+	static conf::item<bool> match_at_room;
 
 	bool match(const string_view &text) const;
 	bool has(const event &) const;
