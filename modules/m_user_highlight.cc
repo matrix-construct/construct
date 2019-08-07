@@ -199,23 +199,12 @@ const
 		json::get<"content"_>(event)
 	};
 
-	const string_view &formatted_body
-	{
-		content.get("formatted_body")
-	};
-
-	if(match(formatted_body))
-		return true;
-
-	const string_view &body
+	const json::string &body
 	{
 		content.get("body")
 	};
 
-	if(match(body))
-		return true;
-
-	return false;
+	return match(body);
 }
 
 bool
@@ -223,7 +212,7 @@ IRCD_MODULE_EXPORT
 ircd::m::user::highlight::match(const string_view &text)
 const
 {
-	if(likely(match_at_room))
+	if(match_at_room)
 		if(startswith(text, "@room"))
 			return true;
 
