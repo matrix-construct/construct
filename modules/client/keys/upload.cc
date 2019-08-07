@@ -91,15 +91,31 @@ post__keys_upload(client &client,
 		request["one_time_keys"]
 	};
 
-	//m::device::set(request.user_id, device_id, "one_time_keys", one_time_keys);
+	if(request["one_time_keys"] && size(one_time_keys))
+		m::device::set(request.user_id, device_id, "one_time_keys", one_time_keys);
 
-	size_t buf_est{64};
+	size_t buf_est(64);
 	std::map<string_view, long, std::less<>> counts;
-	for(const auto &one_time_key : one_time_keys)
+	for(const auto &[ident_, object] : one_time_keys)
 	{
-		const auto name(split(one_time_key.first, ':'));
-		const string_view &data(one_time_key.second);
-		const string_view &algorithm(name.first);
+		const auto &[algorithm, ident]
+		{
+			split(ident_, ':')
+		};
+
+		if(empty(algorithm) || empty(ident))
+			continue;
+
+		const json::string &key
+		{
+			json::object(object).get("key")
+		};
+
+		const json::object &signatures
+		{
+			json::object(object).get("signatures")
+		};
+
 		auto it(counts.lower_bound(algorithm));
 		if(it == end(counts) || it->first != algorithm)
 		{
@@ -108,8 +124,7 @@ post__keys_upload(client &client,
 		}
 
 		auto &count(it->second);
-		// 0 or riot infinite-loops
-		//++count;
+		++count;
 	}
 
 	const unique_buffer<mutable_buffer> buf
@@ -126,10 +141,15 @@ post__keys_upload(client &client,
 		};
 
 		for(const auto &[algorithm, count] : counts)
+		{
 			json::stack::member
 			{
-				one_time_key_counts, algorithm, json::value{count}
+				one_time_key_counts, algorithm, json::value
+				{
+					0L //count TODO: XXX
+				}
 			};
+		}
 	}
 
 	return resource::response
