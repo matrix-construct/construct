@@ -14,14 +14,18 @@
 /// Interface to user highlighting and counting.
 struct ircd::m::user::highlight
 {
-	m::user user;
-
 	static conf::item<bool> enable_count;
 	static conf::item<bool> match_mxid_full;
 	static conf::item<bool> match_mxid_local_cs;
 	static conf::item<bool> match_mxid_local_ci;
 	static conf::item<bool> match_at_room;
 
+	static bool imatch(const string_view &text, const string_view &arg);
+	static bool match(const string_view &text, const string_view &arg);
+
+	m::user user;
+
+  public:
 	bool match(const string_view &text) const;
 	bool has(const event &) const;
 	bool has(const event::idx &) const;

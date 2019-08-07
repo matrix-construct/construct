@@ -220,18 +220,82 @@ const
 	// are true only one branch is taken.
 	if(match_mxid_local_ci)
 	{
-		if(ircd::ihas(text, user.user_id.localname()))
+		if(imatch(text, user.user_id.localname()))
 			return true;
 	}
 	else if(match_mxid_local_cs)
 	{
-		if(ircd::has(text, user.user_id.localname()))
+		if(match(text, user.user_id.localname()))
 			return true;
 	}
 
 	if(match_mxid_full)
-		if(ircd::has(text, user.user_id))
+		if(match(text, user.user_id))
 			return true;
 
 	return false;
+}
+
+namespace ircd::m
+{
+	static bool user_highlight_match(const string_view &text, const string_view &arg, const size_t &pos);
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::highlight::match(const string_view &text,
+                                const string_view &arg)
+{
+	const auto pos
+	{
+		text.find(arg)
+	};
+
+	return user_highlight_match(text, arg, pos);
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::highlight::imatch(const string_view &text,
+                                 const string_view &arg)
+{
+	const auto pos
+	{
+		ifind(text, arg)
+	};
+
+	return user_highlight_match(text, arg, pos);
+}
+
+bool
+ircd::m::user_highlight_match(const string_view &text,
+                              const string_view &arg,
+                              const size_t &pos)
+{
+	static constexpr char sp {'\x20'}, colon {':'};
+
+	// no match
+	if(likely(pos == string_view::npos))
+		return false;
+
+	if(pos == 0)
+	{
+		// match is at the beginning of the string
+		assert(pos + size(arg) <= size(text));
+		if(pos + size(arg) == size(text))
+			return true;
+
+		return text[pos + size(arg)] == sp || text[pos + size(arg)] == colon;
+	}
+
+	if(pos + size(arg) == size(text))
+	{
+		// match is at the end of the string
+		assert(size(arg) < size(text));
+		return text[pos - 1] == sp;
+	}
+
+	// test if match surrounded by spaces
+	assert(size(text) >= size(arg) + 2);
+	return text[pos - 1] == sp && text[pos] == sp;
 }
