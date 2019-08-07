@@ -120,6 +120,9 @@ struct ircd::m::device
 	using closure = std::function<void (const string_view &)>;
 	using closure_bool = std::function<bool (const string_view &)>;
 
+	static bool access_token_to_id(const string_view &token, const closure &); //nothrow
+	static id::buf access_token_to_id(const string_view &token);
+
 	static bool for_each(const user &, const closure_bool &); // each device_id
 	static bool for_each(const user &, const string_view &id, const closure_bool &); // each property
 	static bool get(std::nothrow_t, const user &, const string_view &id, const string_view &prop, const closure &);
