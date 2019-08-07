@@ -110,9 +110,9 @@ ircd::m::sync::room_state_linear_events(data &data)
 
 	const bool is_own_join
 	{
-		is_own_membership
-		&& m::membership(*data.event) == "join"
+		is_own_membership && data.membership == "join"
 	};
+	assert(!is_own_join || m::membership(*data.event) == "join");
 
 	// Figure out whether the event was included in the timeline or whether
 	// to include it here in the state, which comes before the timeline.
@@ -157,9 +157,10 @@ ircd::m::sync::room_state_linear_events(data &data)
 		*data.out, "events"
 	};
 
+	bool ret{false};
 	const auto append
 	{
-		[&data, &array](const event::idx &event_idx)
+		[&data, &array, &ret](const event::idx &event_idx)
 		{
 			const event::fetch event
 			{
@@ -167,7 +168,7 @@ ircd::m::sync::room_state_linear_events(data &data)
 			};
 
 			if(event.valid)
-				room_state_append(data, array, event, event_idx);
+				ret |= room_state_append(data, array, event, event_idx);
 
 			return true;
 		}
@@ -200,8 +201,8 @@ ircd::m::sync::room_state_linear_events(data &data)
 		state.get(std::nothrow, "m.room.member", sender, append);
 	}
 
-	room_state_append(data, array, *data.event, data.event_idx);
-	return true;
+	ret |= room_state_append(data, array, *data.event, data.event_idx);
+	return ret;
 }
 
 bool
