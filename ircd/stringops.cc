@@ -42,6 +42,11 @@ ircd::tolower(const mutable_buffer &out,
               const string_view &in)
 noexcept
 {
+	const auto stop
+	{
+		std::next(begin(in), std::min(size(in), size(out)))
+	};
+
 	const __m128i *src_
 	{
 		reinterpret_cast<const __m128i *>(begin(in))
@@ -52,12 +57,7 @@ noexcept
 		reinterpret_cast<__m128i *>(begin(out))
 	};
 
-	const auto stop
-	{
-		std::next(begin(in), std::min(size(in), size(out)))
-	};
-
-	while(reinterpret_cast<const char *>(src_) + sizeof(__m128i)  < stop)
+	while(reinterpret_cast<const char *>(src_) + sizeof(__m128i) < stop)
 	{
 		const __m128i lit_A1      { _mm_set1_epi8('A' - 1)          };
 		const __m128i lit_Z1      { _mm_set1_epi8('Z' + 1)          };
@@ -68,8 +68,7 @@ noexcept
 		const __m128i mask        { _mm_and_si128(gte_A, lte_Z)     };
 		const __m128i ctrl_mask   { _mm_and_si128(mask, addend)     };
 		const __m128i result      { _mm_add_epi8(src, ctrl_mask)    };
-
-		_mm_storeu_si128(dst++, result);
+		                            _mm_storeu_si128(dst++, result);
 	}
 
 	const auto end{std::transform

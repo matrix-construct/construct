@@ -702,10 +702,7 @@ const
 
 	static const m::event::fetch::opts fopts
 	{
-		m::event::keys::include
-		{
-			"sender"
-		}
+		m::event::keys::include {"sender"}
 	};
 
 	const m::room::state tokens{m::user::tokens, &fopts};

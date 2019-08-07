@@ -703,12 +703,13 @@ ircd::info::dump_cpu_info()
 	#if defined(__i386__) or defined(__x86_64__)
 	log::info
 	{
-		"%s mmx:%b sse:%b sse2:%b sse3:%b sse4.1:%b avx:%b avx2:%b",
+		"%s mmx:%b sse:%b sse2:%b sse3:%b ssse3:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b",
 		hardware::x86::vendor,
 		hardware::x86::mmx,
 		hardware::x86::sse,
 		hardware::x86::sse2,
 		hardware::x86::sse3,
+		hardware::x86::ssse3,
 		hardware::x86::sse4_1,
 		hardware::x86::sse4_2,
 		hardware::x86::avx,
