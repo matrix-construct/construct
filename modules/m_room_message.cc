@@ -8,21 +8,47 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m
+{
+	static void message_notify(const event &, vm::eval &);
 
-mapi::header
+	static void room_message_notify(const event &, vm::eval &);
+	extern hookfn<vm::eval &> room_message_notify_hook;
+}
+
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix m.room.message"
 };
 
-static void
-_message_notify(const m::event &event,
-                m::vm::eval &eval)
+decltype(ircd::m::room_message_notify_hook)
+ircd::m::room_message_notify_hook
 {
-	const auto &body
+	room_message_notify,
 	{
-		unquote(json::get<"content"_>(event).get("body"))
+		{ "_site",  "vm.notify"       },
+		{ "type",   "m.room.message"  },
+	}
+};
+
+void
+ircd::m::room_message_notify(const event &event,
+                             vm::eval &eval)
+{
+	const auto &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	const json::string &body
+	{
+		content.get("body")
+	};
+
+	const json::string &msgtype
+	{
+		content.get("msgtype")
 	};
 
 	log::info
@@ -31,18 +57,8 @@ _message_notify(const m::event &event,
 		json::get<"sender"_>(event),
 		string_view{event.event_id},
 		json::get<"room_id"_>(event),
-		json::get<"content"_>(event).get("msgtype"),
+		msgtype,
 		trunc(body, 128),
 		size(body) > 128? "..."_sv : string_view{}
 	};
 }
-
-const m::hookfn<m::vm::eval &>
-_message_notify_hookfn
-{
-	{
-		{ "_site",  "vm.notify"       },
-		{ "type",   "m.room.message"  },
-	},
-	_message_notify
-};
