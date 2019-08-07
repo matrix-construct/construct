@@ -66,6 +66,11 @@ get__download(client &client,
 			m::me.user_id
 	};
 
+	const bool allow_remote
+	{
+		request.query.get<bool>("allow_remote", true)
+	};
+
 	const m::room::id::buf room_id
 	{
 		download(server, file, user_id)
