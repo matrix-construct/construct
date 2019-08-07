@@ -598,6 +598,11 @@ bool
 console_cmd__log__mask(opt &out, const string_view &line)
 {
 	log::console_mask(tokens<std::vector>(line, ' '));
+
+	out << std::endl;
+	console_cmd__log(out, {});
+	out << std::endl;
+	console_cmd__log__level(out, {});
 	return true;
 }
 
@@ -605,6 +610,11 @@ bool
 console_cmd__log__unmask(opt &out, const string_view &line)
 {
 	log::console_unmask(tokens<std::vector>(line, ' '));
+
+	out << std::endl;
+	console_cmd__log(out, {});
+	out << std::endl;
+	console_cmd__log__level(out, {});
 	return true;
 }
 
