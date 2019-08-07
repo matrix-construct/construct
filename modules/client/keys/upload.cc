@@ -144,13 +144,14 @@ post__keys_upload(client &client,
 		{
 			json::stack::member
 			{
-				one_time_key_counts, algorithm, json::value
-				{
-					0L //count TODO: XXX
-				}
+				one_time_key_counts, algorithm, json::value{count}
 			};
 		}
 	}
+
+	// Prevents an infinite loop due to a race in riot
+	if(!counts.empty())
+		sleep(seconds(2));
 
 	return resource::response
 	{
