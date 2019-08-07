@@ -291,6 +291,7 @@ ircd::m::module_names
 	"client_pushers",
 	"client_pushrules",
 	"client_register_available",
+	"client_register_email",
 	"client_register",
 	"client_rooms",
 	"client_search",
