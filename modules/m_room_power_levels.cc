@@ -74,15 +74,15 @@ ircd::m::auth_room_power_levels(const m::event &event,
 			"m.room.power_levels content.users is not a json object."
 		};
 
-	for(const auto &member : json::object(at<"content"_>(event).at("users")))
+	for(const auto &[user_id, value] : json::object(at<"content"_>(event).at("users")))
 	{
-		if(!m::valid(m::id::USER, member.first))
+		if(!m::valid(m::id::USER, user_id))
 			throw FAIL
 			{
 				"m.room.power_levels content.users key is not a user mxid"
 			};
 
-		if(!try_lex_cast<int64_t>(unquote(member.second)))
+		if(!try_lex_cast<int64_t>(unquote(value)))
 			throw FAIL
 			{
 				"m.room.power_levels content.users value is not an integer."
