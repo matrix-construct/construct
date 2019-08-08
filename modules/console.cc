@@ -811,8 +811,9 @@ console_cmd__uptime(opt &out, const string_view &line)
 bool
 console_cmd__date(opt &out, const string_view &line)
 {
-	out << ircd::time() << std::endl;
-	out << ircd::time<milliseconds>() << std::endl;
+	out << ircd::time() << " sec" << std::endl;
+	out << ircd::time<milliseconds>() << " ms" << std::endl;
+	out << ircd::time<microseconds>() << " us" << std::endl;
 
 	thread_local char buf[128];
 	const auto now{ircd::now<system_point>()};

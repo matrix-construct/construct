@@ -26,12 +26,11 @@ namespace ircd
 
 	// system_clock
 	template<class unit = seconds> time_t &time(time_t &ref);
-	template<class unit = seconds> time_t time();
 	template<class unit = seconds> time_t time(time_t *const &ptr);
+	template<class unit = seconds> time_t time();
 
 	// System microtime suite
 	microtime_t microtime();
-	string_view microtime(const mutable_buffer &);
 
 	// System formatted time suite
 	extern const char *const rfc7231_fmt;
@@ -47,6 +46,7 @@ namespace ircd
 	// Other tools
 	string_view smalldate(const mutable_buffer &buf, const time_t &ltime);
 	string_view microdate(const mutable_buffer &buf);
+	string_view microtime(const mutable_buffer &);
 
 	// Interface conveniences.
 	std::ostream &operator<<(std::ostream &, const microtime_t &);
@@ -79,16 +79,13 @@ ircd::timestr(args&&... a)
 	});
 }
 
-template<class unit>
-time_t
-ircd::time(time_t *const &ptr)
-{
-	time_t buf, &ret{ptr? *ptr : buf};
-	return time<unit>(ret);
-}
+//
+// system_clock
+//
 
 template<class unit>
-time_t
+extern inline time_t
+__attribute__((always_inline, gnu_inline, artificial, flatten))
 ircd::time()
 {
 	time_t ret;
@@ -96,26 +93,41 @@ ircd::time()
 }
 
 template<class unit>
-time_t &
-ircd::time(time_t &ref)
+extern inline time_t
+__attribute__((always_inline, gnu_inline, artificial, flatten))
+ircd::time(time_t *const &ptr)
 {
-	ref = duration_cast<unit>(system_clock::now().time_since_epoch()).count();
-	return ref;
+	time_t buf, &ret{ptr? *ptr : buf};
+	return time<unit>(ret);
 }
 
 template<class unit>
-unit
+extern inline time_t &
+__attribute__((always_inline, gnu_inline, artificial, flatten))
+ircd::time(time_t &ref)
+{
+	const auto now
+	{
+		ircd::now<system_point>().time_since_epoch()
+	};
+
+	ref = duration_cast<unit>(now).count();
+	return ref;
+}
+
+//
+// steady_clock
+//
+
+template<class unit>
+extern inline unit
+__attribute__((always_inline, gnu_inline, artificial, flatten))
 ircd::now()
 {
 	const auto now
 	{
-		ircd::now<steady_point>()
+		ircd::now<steady_point>().time_since_epoch()
 	};
 
-	const auto tse
-	{
-		now.time_since_epoch()
-	};
-
-	return std::chrono::duration_cast<unit>(tse);
+	return std::chrono::duration_cast<unit>(now);
 }

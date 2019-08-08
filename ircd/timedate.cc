@@ -174,6 +174,10 @@ ircd::timef(const mutable_buffer &out,
 }
 #pragma GCC diagnostic pop
 
+//
+// microtime suite
+//
+
 ircd::string_view
 ircd::microtime(const mutable_buffer &buf)
 {
@@ -193,16 +197,46 @@ ircd::microtime(const mutable_buffer &buf)
 	};
 }
 
+#if defined(HAVE_GETTIMEOFDAY)
 ircd::microtime_t
 ircd::microtime()
 {
 	struct timeval tv;
-	syscall(&::gettimeofday, &tv, nullptr);
+	if(unlikely(gettimeofday(&tv, nullptr) == -1))
+	{
+		throw_system_error(errno);
+		__builtin_unreachable();
+	}
+
 	return
 	{
 		tv.tv_sec, tv.tv_usec
 	};
 }
+#else
+ircd::microtime_t
+ircd::microtime()
+{
+	const time_t time
+	{
+		ircd::time<microseconds>()
+	};
+
+	const time_t remain
+	{
+		time % 1'000'000L,
+	};
+
+	return
+	{
+		(time - remain) / 1'000'000, remain
+	};
+}
+#endif
+
+//
+// system clock
+//
 
 template<>
 ircd::system_point
@@ -210,6 +244,10 @@ ircd::now<ircd::system_point>()
 {
 	return system_clock::now();
 }
+
+//
+// steady clock
+//
 
 template<>
 ircd::steady_point
