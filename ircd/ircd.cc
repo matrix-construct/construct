@@ -451,8 +451,20 @@ try
 		else
 			log::flush();
 
-		for(const auto &handler : changed::list)
+		for(const auto &handler : changed::list) try
+		{
 			(*handler)(new_level);
+		}
+		catch(const std::exception &e)
+		{
+			log::critical
+			{
+				"Runlevel change to %s handler(%p) :%s",
+				reflect(new_level),
+				handler,
+				e.what()
+			};
+		}
 
 		if(latching)
 			latch.count_down();
