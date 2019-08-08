@@ -255,17 +255,24 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		*data.out, "events"
 	};
 
-	sync::pool.min(64); //TODO: XXX
+	static const auto num(64); //TODO: XXX
+	sync::pool.min(num);
+
+	unsigned long long a_mask[2] {0};
+	allocator::state a(num, a_mask);
+	std::vector<m::event::fetch> events(num);
 	ctx::concurrent<event::idx> concurrent
 	{
-		sync::pool, [&](const event::idx &event_idx)
+		sync::pool, [&data, &ret, &mutex, &array, &events, &a](const auto &event_idx)
 		{
-			const m::event::fetch event
+			const auto i(a.allocate(1)); const unwind i_{[&a, &i]
 			{
-				event_idx, std::nothrow
-			};
+				a.deallocate(i, 1);
+			}};
 
-			if(unlikely(!event.valid))
+			assert(i < events.size());
+			auto &event(events.at(i));
+			if(!m::seek(event, event_idx, std::nothrow))
 			{
 				log::error
 				{
@@ -274,9 +281,11 @@ ircd::m::sync::room_state_polylog_events(data &data)
 					string_view{data.room->room_id},
 				};
 
+				assert(!event.valid);
 				return;
 			}
 
+			assert(event.valid);
 			const std::lock_guard lock{mutex};
 			ret |= room_state_append(data, array, event, event_idx);
 		}
