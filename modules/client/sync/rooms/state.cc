@@ -312,6 +312,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 		return true;
 	});
 
+	const ctx::uninterruptible::nothrow ui;
 	concurrent.wait();
 	return ret;
 }
