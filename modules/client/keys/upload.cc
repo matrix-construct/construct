@@ -150,9 +150,7 @@ post__keys_upload(client &client,
 	}
 
 	// Prevents an infinite loop due to a race in riot
-	if(!counts.empty())
-		sleep(seconds(2));
-
+	sleep(seconds(5));
 	return resource::response
 	{
 		client, json::object(out.completed())
