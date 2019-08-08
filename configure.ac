@@ -892,14 +892,15 @@ dnl Specific function checks
 dnl
 
 AC_CHECK_FUNCS([        \
-	strlcpy             \
-	strlcat             \
-	strnlen             \
-	snprintf            \
-	vsnprintf           \
+	gettimeofday        \
 	posix_fadvise       \
-	pwritev2            \
 	preadv2             \
+	pwritev2            \
+	snprintf            \
+	strlcat             \
+	strlcpy             \
+	strnlen             \
+	vsnprintf           \
 ])
 
 AC_SEARCH_LIBS(dlinfo, dl, AC_DEFINE(HAVE_DLINFO, 1, [Define if you have dlinfo]))
