@@ -52,3 +52,17 @@ __assert(const char *__assertion,
          int __line);
 
 #endif
+
+extern inline void
+__attribute__((always_inline, gnu_inline, artificial))
+ircd::debugtrap()
+{
+	#if defined(__clang__)
+		static_assert(__has_builtin(__builtin_debugtrap));
+		__builtin_debugtrap();
+	#elif defined(__x86_64__)
+		__asm__ volatile ("int $3");
+	#else
+		__builtin_trap();
+	#endif
+}

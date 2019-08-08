@@ -97,19 +97,3 @@ __assert_fail(const char *__assertion,
 #pragma clang diagnostic pop
 #endif __clang__
 #endif
-
-void
-__attribute__((visibility("default")))
-ircd::debugtrap()
-{
-	#if defined(__clang__)
-		static_assert(__has_builtin(__builtin_debugtrap));
-		__builtin_debugtrap();
-	#elif defined(__x86_64__)
-		__asm__ volatile ("int $3");
-	#elif defined(HAVE_SIGNAL_H)
-		raise(SIGTRAP);
-	#else
-		__builtin_trap();
-	#endif
-}
