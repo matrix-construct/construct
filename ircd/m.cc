@@ -281,7 +281,7 @@ ircd::m::module_names
 	"client_keys_changes",
 	"client_keys_claim",
 	"client_keys_query",
-	"client_keys_upload",
+	//"client_keys_upload",
 	"client_login",
 	"client_logout",
 	"client_notifications",
