@@ -3374,8 +3374,15 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	};
 
 	state.chunk_read += addl_head_bytes;
-	const auto head_length{state.chunk_read};
+	state.content_read += addl_head_bytes;
+	const auto head_length
+	{
+		state.chunk_read
+	};
+
 	state.chunk_read = 0;
+	assert(state.content_read >= head_length);
+	state.content_read -= head_length;
 
 	// Window on any data in the buffer after the head.
 	const const_buffer beyond_head
