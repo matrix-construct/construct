@@ -1112,9 +1112,6 @@ try
 	// other ircd::ctx's. Too small a buffer will be inefficient.
 	opts->writable_file_max_buffer_size = 4_MiB; //TODO: conf
 
-	// For the read-side of the compaction process.
-	opts->compaction_readahead_size = 128_KiB; //TODO: conf
-
 	// MUST be 1 (no subcompactions) or rocksdb spawns internal std::thread.
 	opts->max_subcompactions = 1;
 
@@ -1141,6 +1138,11 @@ try
 	opts->use_direct_reads = bool(fs::fd::opts::direct_io_enable)?
 		fs::exists(direct_io_test_file_path()):
 		false;
+
+	// For the read-side of the compaction process.
+	opts->compaction_readahead_size = !opts->use_direct_reads?
+		512_KiB: //TODO: conf
+		0;
 
 	// Use the determined direct io value for writes as well.
 	//opts->use_direct_io_for_flush_and_compaction = opts->use_direct_reads;
