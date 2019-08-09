@@ -1033,7 +1033,7 @@ bool
 ircd::m::fetch::timedout(const request &request,
                          const time_t &now)
 {
-	assert(request.started && request.finished == 0 && request.last != 0);
+	assert(request.started && request.finished >= 0 && request.last != 0);
 	return request.last + seconds(timeout).count() < now;
 }
 
