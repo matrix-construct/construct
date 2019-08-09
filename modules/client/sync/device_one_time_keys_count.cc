@@ -14,8 +14,15 @@ IRCD_MODULE
 	"Client Sync :Device One Time Keys Count"
 };
 
+namespace ircd::m
+{
+	std::map<std::string, long>
+	count_one_time_keys(const m::user::id &, const m::device::id &);
+}
+
 namespace ircd::m::sync
 {
+	static bool _device_one_time_keys_count(data &);
 	static bool device_one_time_keys_count_polylog(data &);
 	static bool device_one_time_keys_count_linear(data &);
 
@@ -36,7 +43,24 @@ ircd::m::sync::device_one_time_keys_count_linear(data &data)
 	if(!data.device_id)
 		return false;
 
-	return device_one_time_keys_count_polylog(data);
+	if(!data.event || !data.event->event_id)
+		return false;
+
+	if(!startswith(json::get<"type"_>(*data.event), "ircd.device.one_time_key"))
+		return false;
+
+	if(json::get<"state_key"_>(*data.event) != data.device_id)
+		return false;
+
+	if(json::get<"room_id"_>(*data.event) != data.user_room);
+		return false;
+
+	const json::object &one_time_keys
+	{
+		json::get<"content"_>(*data.event)
+	};
+
+	return _device_one_time_keys_count(data);
 }
 
 bool
@@ -45,40 +69,20 @@ ircd::m::sync::device_one_time_keys_count_polylog(data &data)
 	if(!data.device_id)
 		return false;
 
-	const auto event_idx
-	{
-		data.user_room.get(std::nothrow, "ircd.device_one_time_keys", data.device_id)
-	};
+	return _device_one_time_keys_count(data);
+}
 
-	if(!apropos(data, event_idx))
-		return false;
-
-	std::map<string_view, long, std::less<>> counts;
-	m::device::get(data.user, data.device_id, "one_time_keys", [&counts]
-	(const string_view &one_time_keys)
-	{
-		if(json::type(one_time_keys) != json::OBJECT)
-			return;
-
-		for(const auto &[ident_, object] : json::object(one_time_keys))
-		{
-			const auto &[algorithm, ident]
-			{
-				split(ident_, ':')
-			};
-
-			auto it(counts.lower_bound(algorithm));
-			if(it == end(counts) || it->first != algorithm)
-				it = counts.emplace_hint(it, algorithm, 0L);
-
-			auto &count(it->second);
-			++count;
-		}
-	});
-
+bool
+ircd::m::sync::_device_one_time_keys_count(data &data)
+{
 	json::stack::object one_time_keys_count
 	{
 		*data.out, "device_one_time_keys_count"
+	};
+
+	const auto counts
+	{
+		m::device::count_one_time_keys(data.user, data.device_id)
 	};
 
 	for(const auto &[algorithm, count] : counts)

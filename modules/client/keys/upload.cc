@@ -16,6 +16,12 @@ upload_device_keys(client &,
                    const m::device::id &,
                    const m::device_keys &);
 
+static void
+upload_one_time_keys(client &,
+                     const resource::request &,
+                     const m::device::id &,
+                     const json::object &);
+
 static resource::response
 post__keys_upload(client &client,
                   const resource::request &request);
@@ -91,70 +97,79 @@ post__keys_upload(client &client,
 		request["one_time_keys"]
 	};
 
-	if(request["one_time_keys"] && size(one_time_keys))
-		m::device::set(request.user_id, device_id, "one_time_keys", one_time_keys);
-
-	size_t buf_est(64);
-	std::map<string_view, long, std::less<>> counts;
-	for(const auto &[ident_, object] : one_time_keys)
-	{
-		const auto &[algorithm, ident]
-		{
-			split(ident_, ':')
-		};
-
-		if(empty(algorithm) || empty(ident))
-			continue;
-
-		const json::string &key
-		{
-			json::object(object).get("key")
-		};
-
-		const json::object &signatures
-		{
-			json::object(object).get("signatures")
-		};
-
-		auto it(counts.lower_bound(algorithm));
-		if(it == end(counts) || it->first != algorithm)
-		{
-			it = counts.emplace_hint(it, algorithm, 0L);
-			buf_est += size(algorithm) + 32;
-		}
-
-		auto &count(it->second);
-		++count;
-	}
+	if(!empty(one_time_keys))
+		upload_one_time_keys(client, request, device_id, one_time_keys);
 
 	const unique_buffer<mutable_buffer> buf
 	{
-		buf_est * 2
+		32_KiB
 	};
 
 	json::stack out{buf};
+	json::stack::object top{out};
+	json::stack::object one_time_key_counts
 	{
-		json::stack::object top{out};
-		json::stack::object one_time_key_counts
+		top, "one_time_key_counts"
+	};
+
+	const auto counts
+	{
+		m::device::count_one_time_keys(request.user_id, device_id)
+	};
+
+	for(const auto &[algorithm, count] : counts)
+		json::stack::member
 		{
-			top, "one_time_key_counts"
+			one_time_key_counts, algorithm, json::value{count}
 		};
 
-		for(const auto &[algorithm, count] : counts)
-		{
-			json::stack::member
-			{
-				one_time_key_counts, algorithm, json::value{count}
-			};
-		}
-	}
-
-	// Prevents an infinite loop due to a race in riot
-	sleep(seconds(5));
+	one_time_key_counts.~object();
+	top.~object();
 	return resource::response
 	{
-		client, json::object(out.completed())
+		client, json::object
+		{
+			out.completed()
+		}
 	};
+}
+
+void
+upload_one_time_keys(client &client,
+                     const resource::request &request,
+                     const m::device::id &device_id,
+                     const json::object &one_time_keys)
+{
+	for(const auto &[ident, object] : one_time_keys)
+	{
+		const auto &[algorithm, name]
+		{
+			split(ident, ':')
+		};
+
+		if(empty(algorithm) || empty(name))
+			continue;
+
+		char state_key_buf[128]
+		{
+			"one_time_key|"
+		};
+
+		const string_view state_key
+		{
+			strlcat(state_key_buf, ident)
+		};
+
+		m::device::set(request.user_id, device_id, state_key, object);
+
+		log::debug
+		{
+			m::log, "Received one_time_key:%s for %s on %s",
+			ident,
+			string_view{device_id},
+			string_view{request.user_id},
+		};
+	}
 }
 
 void

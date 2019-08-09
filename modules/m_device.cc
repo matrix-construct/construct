@@ -20,6 +20,45 @@ IRCD_MODULE
 	"Matrix device library; modular components."
 };
 
+std::map<std::string, long>
+IRCD_MODULE_EXPORT
+ircd::m::device::count_one_time_keys(const user &user,
+                                     const string_view &device_id)
+{
+	std::map<std::string, long> ret;
+	for_each(user, device_id, [&ret]
+	(const string_view &type)
+	{
+		if(!startswith(type, "one_time_key|"))
+			return true;
+
+		const auto &[prefix, ident]
+		{
+			split(type, '|')
+		};
+
+		const auto &[algorithm, name]
+		{
+			split(ident, ':')
+		};
+
+		assert(prefix == "one_time_key");
+		assert(!empty(algorithm));
+		assert(!empty(ident));
+		assert(!empty(name));
+
+		auto it(ret.lower_bound(algorithm));
+		if(it == end(ret) || it->first != algorithm)
+			it = ret.emplace_hint(it, algorithm, 0L);
+
+		auto &count(it->second);
+		++count;
+		return true;
+	});
+
+	return ret;
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::device::set(const m::user &user,
