@@ -3788,10 +3788,16 @@ try
 
 	if(colname == "*")
 	{
-		const auto fileinfos
+		auto fileinfos
 		{
 			db::database::sst::info::vector(database)
 		};
+
+		std::sort(begin(fileinfos), end(fileinfos), []
+		(const auto &a, const auto &b)
+		{
+			return a.name < b.name;
+		});
 
 		_print_sst_info_header(out);
 		for(const auto &fileinfo : fileinfos)
