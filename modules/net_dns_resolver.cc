@@ -263,7 +263,9 @@ ircd::net::dns::resolver::sendq_work()
 		mutex
 	};
 
-	assert(!sendq.empty());
+	if(unlikely(sendq.empty()))
+		return;
+
 	assert(sendq.size() < 65535);
 	assert(sendq.size() <= tags.size());
 	const uint16_t next(sendq.front());
