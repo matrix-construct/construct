@@ -100,13 +100,13 @@ github_validate(const string_view &sig,
 static std::string
 github_url(const json::string &url);
 
-static string_view
+static json::string
 github_find_commit_hash(const json::object &content);
 
-static string_view
+static json::string
 github_find_issue_number(const json::object &content);
 
-static std::pair<string_view, string_view>
+static std::pair<json::string, json::string>
 github_find_party(const json::object &content);
 
 static bool
@@ -289,15 +289,15 @@ github_heading(std::ostream &out,
 		};
 
 		out << "<a href=\"" << url << "\">"
-		    << unquote(organization["login"])
+		    << json::string(organization["login"])
 		    << "</a>";
 	}
 	else
 		out << "<a href=" << repository["html_url"] << ">"
-		    << unquote(repository["full_name"])
+		    << json::string(repository["full_name"])
 		    << "</a>";
 
-	const string_view commit_hash
+	const auto commit_hash
 	{
 		github_find_commit_hash(content)
 	};
@@ -356,7 +356,7 @@ github_handle__push(std::ostream &out,
 	{
 		out << " <font color=\"#FF0000\">";
 		if(content["ref"])
-			out << " " << unquote(content["ref"]);
+			out << " " << json::string(content["ref"]);
 
 		out << " deleted</font>";
 		return true;
@@ -364,13 +364,13 @@ github_handle__push(std::ostream &out,
 
 	if(content["ref"])
 	{
-		const auto ref(unquote(content["ref"]));
+		const json::string ref(content["ref"]);
 		out << " "
 		    << " "
 		    << token_last(ref, '/');
 	}
 
-	out << " <a href=\"" << unquote(content["compare"]) << "\">"
+	out << " <a href=\"" << json::string(content["compare"]) << "\">"
 	    << "<b>" << count << " commits</b>"
 	    << "</a>";
 
@@ -381,8 +381,8 @@ github_handle__push(std::ostream &out,
 	for(ssize_t i(count - 1); i >= 0; --i)
 	{
 		const json::object &commit(commits.at(i));
-		const auto url(unquote(commit["url"]));
-		const auto id(unquote(commit["id"]));
+		const json::string url(commit["url"]);
+		const json::string id(commit["id"]);
 		const auto sid(id.substr(0, 8));
 		out << " <a href=\"" << url << "\">"
 		    << "<b>" << sid << "</b>"
@@ -390,18 +390,18 @@ github_handle__push(std::ostream &out,
 
 		const json::object author(commit["author"]);
 		out << " <b>"
-		    << unquote(author["name"])
+		    << author["name"]
 		    << "</b>"
 		    ;
 
 		const json::object committer(commit["committer"]);
 		if(committer["email"] != author["email"])
 			out << " via <b>"
-			    << unquote(committer["name"])
+			    << committer["name"]
 			    << "</b>"
 			    ;
 
-		const auto message(unquote(commit["message"]));
+		const json::string message(commit["message"]);
 		const auto summary
 		{
 			split(message, "\\n").first
@@ -430,7 +430,7 @@ github_handle__pull_request(std::ostream &out,
 	if(pr["merged"] != "true")
 		out << " "
 		    << "<b>"
-		    << unquote(content["action"])
+		    << json::string(content["action"])
 		    << "</b>"
 		    ;
 
@@ -439,7 +439,7 @@ github_handle__pull_request(std::ostream &out,
 		    << "<a href="
 		    << pr["html_url"]
 		    << ">"
-		    << unquote(pr["title"])
+		    << json::string(pr["title"])
 		    << "</a>"
 		    ;
 
@@ -458,12 +458,12 @@ github_handle__pull_request(std::ostream &out,
 		out << "&nbsp;";
 		out << "<font color=\"#FFFFFF\""
 		    << "data-mx-bg-color=\"#"
-		    << unquote(label["color"])
+		    << json::string(label["color"])
 		    << "\">";
 
 		out << "<b>";
 		out << "&nbsp;";
-			out << unquote(label["name"]);
+			out << json::string(label["name"]);
 		out << "&nbsp;";
 		out << "</b>";
 
@@ -486,9 +486,9 @@ github_handle__pull_request(std::ostream &out,
 		out << " "
 		    << "by "
 		    << "<a href=\""
-		    << unquote(merged_by["html_url"])
+		    << json::string(merged_by["html_url"])
 		    << "\">"
-		    << unquote(merged_by["login"])
+		    << json::string(merged_by["login"])
 		    << "</a>"
 		    ;
 	}
@@ -537,7 +537,7 @@ github_handle__pull_request(std::ostream &out,
 		    << pr["changed_files"]
 		    << ' '
 		    << "<a href=\""
-		    << unquote(pr["html_url"])
+		    << json::string(pr["html_url"])
 		    << "/files"
 		    << "\">"
 		    << "files"
@@ -643,9 +643,9 @@ github_handle__issues(std::ostream &out,
 
 			out << " "
 			    << "<a href=\""
-			    << unquote(assignee["html_url"])
+			    << json::string(assignee["html_url"])
 			    << "\">"
-			    << unquote(assignee["login"])
+			    << json::string(assignee["login"])
 			    << "</a>"
 			    ;
 
@@ -655,10 +655,10 @@ github_handle__issues(std::ostream &out,
 
 	out << " "
 	    << "<a href=\""
-	    << unquote(issue["html_url"])
+	    << json::string(issue["html_url"])
 	    << "\">"
 	    << "<b><u>"
-	    << unquote(issue["title"])
+	    << json::string(issue["title"])
 	    << "</u></b>"
 	    << "</a>"
 	    ;
@@ -668,12 +668,12 @@ github_handle__issues(std::ostream &out,
 		out << "&nbsp;";
 		out << "<font color=\"#FFFFFF\""
 		    << "data-mx-bg-color=\"#"
-		    << unquote(label["color"])
+		    << json::string(label["color"])
 		    << "\">";
 
 		out << "<b>";
 		out << "&nbsp;";
-			out << unquote(label["name"]);
+			out << json::string(label["name"]);
 		out << "&nbsp;";
 		out << "</b>";
 
@@ -688,7 +688,7 @@ github_handle__issues(std::ostream &out,
 		    ;
 
 		static const auto delim("\\r\\n");
-		const auto body(unquote(issue["body"]));
+		const json::string body(issue["body"]);
 		auto lines(split(body, delim)); do
 		{
 			out << lines.first
@@ -719,12 +719,12 @@ github_handle__issues(std::ostream &out,
 		out << "<li>added: ";
 		out << "<font color=\"#FFFFFF\""
 		    << "data-mx-bg-color=\"#"
-		    << unquote(label["color"])
+		    << json::string(label["color"])
 		    << "\">";
 
 		out << "<b>";
 		out << "&nbsp;";
-		out << unquote(label["name"]);
+		out << json::string(label["name"]);
 		out << "&nbsp;";
 		out << "</b>";
 
@@ -747,12 +747,12 @@ github_handle__issues(std::ostream &out,
 		out << "<li>removed: ";
 		out << "<font color=\"#FFFFFF\""
 		    << "data-mx-bg-color=\"#"
-		    << unquote(label["color"])
+		    << json::string(label["color"])
 		    << "\">";
 
 		out << "<b>";
 		out << "&nbsp;";
-		out << unquote(label["name"]);
+		out << json::string(label["name"]);
 		out << "&nbsp;";
 		out << "</b>";
 
@@ -798,10 +798,10 @@ github_handle__issue_comment(std::ostream &out,
 
 	out << " "
 	    << "<a href=\""
-	    << unquote(issue["html_url"])
+	    << json::string(issue["html_url"])
 	    << "\">"
 	    << "<b><u>"
-	    << unquote(issue["title"])
+	    << json::string(issue["title"])
 	    << "</u></b>"
 	    << "</a>"
 	    ;
@@ -814,7 +814,7 @@ github_handle__issue_comment(std::ostream &out,
 		    ;
 
 		static const auto delim("\\r\\n");
-		const auto body(unquote(comment["body"]));
+		const json::string body(comment["body"]);
 		auto lines(split(body, delim)); do
 		{
 			out << lines.first
@@ -858,12 +858,12 @@ github_handle__label(std::ostream &out,
 	out << "<li>";
 	out << "<font color=\"#FFFFFF\""
 	    << "data-mx-bg-color=\"#"
-	    << unquote(label["color"])
+	    << json::string(label["color"])
 	    << "\">";
 
 	out << "<b>";
 	out << " &nbsp; ";
-	out << unquote(label["name"]);
+	out << json::string(label["name"]);
 	out << " &nbsp; ";
 	out << "</b>";
 	out << "</font>";
@@ -951,12 +951,12 @@ github_handle__organization(std::ostream &out,
 
 		out << " "
 		    << "<a href=" << user["html_url"] << ">"
-		    << unquote(user["login"])
+		    << json::string(user["login"])
 		    << "</a>"
 		    ;
 
 		out << " with role "
-		    << unquote(membership["role"])
+		    << json::string(membership["role"])
 		    ;
 	}
 
@@ -1072,7 +1072,7 @@ github_handle__repository(std::ostream &out,
 
 	out << ' ' << action;
 	out << "<pre><code>"
-	    << unquote(content["description"])
+	    << json::string(content["description"])
 	    << "</code></pre>";
 
 	return true;
@@ -1106,14 +1106,14 @@ github_handle__ping(std::ostream &out,
                     const json::object &content)
 {
 	out << "<pre><code>"
-	    << unquote(content["zen"])
+	    << json::string(content["zen"])
 	    << "</code></pre>";
 
 	return true;
 }
 
 /// Researched from yestifico bot
-std::pair<string_view, string_view>
+std::pair<json::string, json::string>
 github_find_party(const json::object &content)
 {
 	const json::object pull_request
@@ -1129,8 +1129,7 @@ github_find_party(const json::object &content)
 	if(!empty(user))
 		return
 		{
-			unquote(user["login"]),
-			unquote(user["html_url"])
+			user["login"], user["html_url"]
 		};
 
 	const json::object sender
@@ -1140,55 +1139,54 @@ github_find_party(const json::object &content)
 
 	return
 	{
-		unquote(sender["login"]),
-		unquote(sender["html_url"])
+		sender["login"], sender["html_url"]
 	};
 }
 
 /// Researched from yestifico bot
-ircd::string_view
+json::string
 github_find_issue_number(const json::object &content)
 {
 	const json::object issue(content["issue"]);
 	if(!empty(issue))
-		return unquote(issue["number"]);
+		return issue["number"];
 
 	if(content["number"])
-		return unquote(content["number"]);
+		return content["number"];
 
 	return {};
 }
 
 /// Researched from yestifico bot
-ircd::string_view
+json::string
 github_find_commit_hash(const json::object &content)
 {
 	if(content["sha"])
-		return unquote(content["sha"]);
+		return content["sha"];
 
 	const json::object commit(content["commit"]);
 	if(!empty(commit))
-		return unquote(commit["sha"]);
+		return commit["sha"];
 
 	const json::object head(content["head"]);
 	if(!empty(head))
-		return unquote(head["commit"]);
+		return head["commit"];
 
 	const json::object head_commit(content["head_commit"]);
 	if(!empty(head_commit))
-		return unquote(head_commit["id"]);
+		return head_commit["id"];
 
 	const json::object comment(content["comment"]);
 	if(!empty(comment))
-		return unquote(comment["commit_id"]);
+		return comment["commit_id"];
 
 	if(content["commit"])
-		return unquote(content["commit"]);
+		return content["commit"];
 
 	const json::object pr{content["pull_request"]};
 	const json::object prhead{pr["head"]};
 	if(prhead["sha"])
-		return unquote(prhead["sha"]);
+		return prhead["sha"];
 
 	return {};
 }
