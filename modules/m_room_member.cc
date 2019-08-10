@@ -197,46 +197,58 @@ ircd::m::auth_room_member_join(const m::event &event,
 		};
 
 	// iii. If the sender is banned, reject.
-	if(data.auth_member_target)
-		if(membership(*data.auth_member_target) == "ban")
-			throw FAIL
-			{
-				"m.room.member membership=join references membership=ban auth_event."
-			};
+	if(!data.auth_member_sender)
+		throw FAIL
+		{
+			"m.room.member membership=join missing sender member auth event."
+		};
 
-	if(data.auth_member_sender)
-		if(membership(*data.auth_member_sender) == "ban")
-			throw FAIL
-			{
-				"m.room.member membership=join references membership=ban auth_event."
-			};
+	if(membership(*data.auth_member_sender) == "ban")
+		throw FAIL
+		{
+			"m.room.member membership=join references membership=ban auth_event."
+		};
 
-	if(data.auth_join_rules)
+	const json::string &join_rule
 	{
-		// iv. If the join_rule is invite then allow if membership state
-		// is invite or join.
-		if(unquote(json::get<"content"_>(*data.auth_join_rules).get("join_rule")) == "invite")
-			if(data.auth_member_target)
+		data.auth_join_rules?
+			json::get<"content"_>(*data.auth_join_rules).get("join_rule"):
+			"invite"_sv
+	};
+
+	// iv. If the join_rule is invite then allow if membership state
+	// is invite or join.
+	if(join_rule == "invite")
+	{
+		if(!data.auth_member_target)
+			throw FAIL
 			{
-				if(membership(*data.auth_member_target) == "invite")
-				{
-					data.allow = true;
-					return;
-				}
+				"m.room.member membership=join missing target member auth event."
+			};
 
-				if(membership(*data.auth_member_target) == "join")
-				{
-					data.allow = true;
-					return;
-				}
-			}
+		const auto membership_state
+		{
+			membership(*data.auth_member_target)
+		};
 
-		// v. If the join_rule is public, allow.
-		if(unquote(json::get<"content"_>(*data.auth_join_rules).get("join_rule")) == "public")
+		if(membership_state == "invite")
 		{
 			data.allow = true;
 			return;
 		}
+
+		if(membership_state == "join")
+		{
+			data.allow = true;
+			return;
+		}
+	}
+
+	// v. If the join_rule is public, allow.
+	if(join_rule == "public")
+	{
+		data.allow = true;
+		return;
 	}
 
 	// vi. Otherwise, reject.
@@ -289,29 +301,37 @@ ircd::m::auth_room_member_invite(const m::event &event,
 		};
 	}
 
+	if(!data.auth_member_sender)
+		throw FAIL
+		{
+			"m.room.member membership=invite missing sender member auth event."
+		};
+
 	// ii. If the sender's current membership state is not join, reject.
-	if(data.auth_member_sender)
-		if(membership(*data.auth_member_sender) != "join")
-			throw FAIL
-			{
-				"m.room.member membership=invite sender must have membership=join."
-			};
+	if(membership(*data.auth_member_sender) != "join")
+		throw FAIL
+		{
+			"m.room.member membership=invite sender must have membership=join."
+		};
+
+	if(!data.auth_member_target)
+		throw FAIL
+		{
+			"m.room.member membership=invite missing target member auth event."
+		};
 
 	// iii. If target user's current membership state is join or ban, reject.
-	if(data.auth_member_target)
-	{
-		if(membership(*data.auth_member_target) == "join")
-			throw FAIL
-			{
-				"m.room.member membership=invite target cannot have membership=join."
-			};
+	if(membership(*data.auth_member_target) == "join")
+		throw FAIL
+		{
+			"m.room.member membership=invite target cannot have membership=join."
+		};
 
-		if(membership(*data.auth_member_target) == "ban")
-			throw FAIL
-			{
-				"m.room.member membership=invite target cannot have membership=ban."
-			};
-	}
+	if(membership(*data.auth_member_target) == "ban")
+		throw FAIL
+		{
+			"m.room.member membership=invite target cannot have membership=ban."
+		};
 
 	// iv. If the sender's power level is greater than or equal to the invite level,
 	// allow.
@@ -378,28 +398,38 @@ ircd::m::auth_room_member_leave(const m::event &event,
 		};
 	}
 
+	if(!data.auth_member_sender)
+		throw FAIL
+		{
+			"m.room.member membership=leave missing sender member auth event."
+		};
+
 	// ii. If the sender's current membership state is not join, reject.
-	if(data.auth_member_sender)
-		if(membership(*data.auth_member_sender) != "join")
-			throw FAIL
-			{
-				"m.room.member membership=leave sender must have membership=join."
-			};
+	if(membership(*data.auth_member_sender) != "join")
+		throw FAIL
+		{
+			"m.room.member membership=leave sender must have membership=join."
+		};
 
 	const m::room::power power
 	{
 		data.auth_power? *data.auth_power : m::event{}, *data.auth_create
 	};
 
+	if(!data.auth_member_target)
+		throw FAIL
+		{
+			"m.room.member membership=leave missing target member auth event."
+		};
+
 	// iii. If the target user's current membership state is ban, and the sender's
 	// power level is less than the ban level, reject.
-	if(data.auth_member_target)
-		if(membership(*data.auth_member_target) == "ban")
-			if(!power(at<"sender"_>(event), "ban"))
-				throw FAIL
-				{
-					"m.room.member membership=ban->leave sender must have ban power to unban."
-				};
+	if(membership(*data.auth_member_target) == "ban")
+		if(!power(at<"sender"_>(event), "ban"))
+			throw FAIL
+			{
+				"m.room.member membership=ban->leave sender must have ban power to unban."
+			};
 
 	// iv. If the sender's power level is greater than or equal to the
 	// kick level, and the target user's power level is less than the
@@ -442,13 +472,18 @@ ircd::m::auth_room_member_ban(const m::event &event,
 	// e. If membership is ban
 	assert(membership(event) == "ban");
 
+	if(!data.auth_member_sender)
+		throw FAIL
+		{
+			"m.room.member membership=ban missing sender member auth event."
+		};
+
 	// i. If the sender's current membership state is not join, reject.
-	if(data.auth_member_sender)
-		if(membership(*data.auth_member_sender) != "join")
-			throw FAIL
-			{
-				"m.room.member membership=ban sender must have membership=join."
-			};
+	if(membership(*data.auth_member_sender) != "join")
+		throw FAIL
+		{
+			"m.room.member membership=ban sender must have membership=join."
+		};
 
 	const m::room::power power
 	{
