@@ -45,7 +45,7 @@ _changed_rules(const m::event &event,
 	m::rooms::summary_set(room_id, json::object{});
 }
 
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 _changed_rules_hookfn
 {
 	_changed_rules,
@@ -69,7 +69,7 @@ _changed_rules_notify(const m::event &event,
 	};
 }
 
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 _changed_rules_notify_hookfn
 {
 	_changed_rules_notify,

@@ -34,7 +34,7 @@ enforce_events
 };
 
 /*
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 _m_ignored_user_list
 {
 	handle_m_ignored_user_list,

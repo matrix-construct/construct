@@ -130,7 +130,7 @@ static void handle_edu_m_typing(const m::event &, m::vm::eval &);
 /// a new event formatted for client /sync and then runs that through eval
 /// so our clients can receive the typing events.
 ///
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 _m_typing_eval
 {
 	handle_edu_m_typing,

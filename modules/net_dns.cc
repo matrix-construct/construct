@@ -905,7 +905,7 @@ namespace ircd::net::dns::cache
 	static void create_room();
 
 	extern bool room_exists;
-	extern const m::hookfn<m::vm::eval &> create_room_hook;
+	extern m::hookfn<m::vm::eval &> create_room_hook;
 	extern const ircd::run::changed create_room_hook_alt;
 }
 

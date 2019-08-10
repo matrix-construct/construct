@@ -28,7 +28,7 @@ static void
 handle_command(const m::event &event,
                m::vm::eval &eval);
 
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 command_hook
 {
 	handle_command,

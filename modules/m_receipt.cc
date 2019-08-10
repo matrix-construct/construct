@@ -11,17 +11,17 @@
 using namespace ircd;
 
 static void handle_ircd_m_read(const m::event &, m::vm::eval &);
-extern const m::hookfn<m::vm::eval &> _ircd_read_eval;
+extern m::hookfn<m::vm::eval &> _ircd_read_eval;
 
 static void handle_implicit_receipt(const m::event &, m::vm::eval &);
-extern const m::hookfn<m::vm::eval &> _implicit_receipt;
+extern m::hookfn<m::vm::eval &> _implicit_receipt;
 
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::event::id &, const time_t &);
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::edu::m_receipt::m_read &);
 static void handle_m_receipt_m_read(const m::event &, const m::room::id &, const json::object &);
 static void handle_m_receipt(const m::event &, const m::room::id &, const json::object &);
 static void handle_edu_m_receipt(const m::event &, m::vm::eval &);
-extern const m::hookfn<m::vm::eval &> _m_receipt_eval;
+extern m::hookfn<m::vm::eval &> _m_receipt_eval;
 
 mapi::header
 IRCD_MODULE

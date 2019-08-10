@@ -164,7 +164,7 @@ _changed_visibility(const m::event &event,
 	};
 }
 
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 _changed_visibility_hookfn
 {
 	_changed_visibility,

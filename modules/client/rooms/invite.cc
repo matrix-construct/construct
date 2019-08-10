@@ -15,7 +15,7 @@ namespace ircd::m
 	static event::id::buf invite_foreign(const event &);
 	static void on_invite_foreign(const event &, vm::eval &);
 
-	extern const hookfn<vm::eval &> invite_foreign_hook;
+	extern hookfn<vm::eval &> invite_foreign_hook;
 }
 
 decltype(ircd::m::invite_foreign_hook)

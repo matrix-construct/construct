@@ -22,7 +22,7 @@ IRCD_MODULE
 	"Matrix user profiles."
 };
 
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 my_profile_changed
 {
 	handle_my_profile_changed,

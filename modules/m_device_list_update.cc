@@ -20,7 +20,7 @@ static void
 handle_edu_m_device_list_update(const m::event &,
                                 m::vm::eval &);
 
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 _m_device_list_update_eval
 {
 	handle_edu_m_device_list_update,

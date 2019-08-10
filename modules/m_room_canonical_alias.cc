@@ -14,7 +14,7 @@ namespace ircd::m
 
 	extern const room alias_room;
 	extern const room::id::buf alias_room_id;
-	extern const hookfn<vm::eval &> changed_canonical_alias_hookfn;
+	extern hookfn<vm::eval &> changed_canonical_alias_hookfn;
 }
 
 ircd::mapi::header

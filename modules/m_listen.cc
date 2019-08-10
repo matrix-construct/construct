@@ -130,7 +130,7 @@ create_listener(const m::event &event,
 }
 
 /// Hook for a new listener description being sent.
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 create_listener_hook
 {
 	create_listener,

@@ -180,7 +180,7 @@ handle_conf_updated(const m::event &event,
 	conf_updated(event);
 }
 
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 conf_updated_hook
 {
 	handle_conf_updated,
@@ -244,7 +244,7 @@ handle_init_conf_items(const m::event &,
 	init_conf_items();
 }
 
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 init_conf_items_hook
 {
 	handle_init_conf_items,
@@ -290,7 +290,7 @@ create_conf_room(const m::event &,
 	rehash_conf({}, true);
 }
 
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 create_conf_room_hook
 {
 	create_conf_room,

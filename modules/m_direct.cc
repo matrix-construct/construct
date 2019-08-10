@@ -20,7 +20,7 @@ static void
 _join_room__m_direct(const m::event &event,
                      m::vm::eval &eval);
 
-const m::hookfn<m::vm::eval &>
+m::hookfn<m::vm::eval &>
 _join_room__m_direct_hookfn
 {
 	{
