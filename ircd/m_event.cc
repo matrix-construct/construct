@@ -371,11 +371,56 @@ ircd::m::pretty_oneline(std::ostream &s,
 
 namespace ircd::m::vm
 {
-	extern m::hookfn<eval &> issue_missing_auth;
+	extern m::hookfn<eval &> conform_check_event_id;
 	extern m::hookfn<eval &> conform_check_origin;
 	extern m::hookfn<eval &> conform_check_size;
 	extern m::hookfn<eval &> conform_report;
 }
+
+/// Check if event_id is sufficient for the room version.
+decltype(ircd::m::vm::conform_check_event_id)
+ircd::m::vm::conform_check_event_id
+{
+	{
+		{ "_site", "vm.conform" }
+	},
+	[](const m::event &event, eval &eval)
+	{
+		// Don't care about EDU's on this hook
+		if(!event.event_id)
+			return;
+
+		// Conditions for when we don't care if the event_id conforms. This
+		// hook only cares if the event_id is sufficient for the version, and
+		// we don't care about the early matrix versions with mxids here.
+		const bool unaffected
+		{
+			!eval.room_version
+			|| eval.room_version == "0"
+			|| eval.room_version == "1"
+			|| eval.room_version == "2"
+		};
+
+		if(unaffected)
+			return;
+
+		if(eval.room_version == "3")
+			if(!event::id::v3::is(event.event_id))
+				throw error
+				{
+					fault::GENERAL, "Event ID %s is not sufficient for version 3 room.",
+					string_view{event.event_id}
+				};
+
+		if(!event::id::v4::is(event.event_id))
+			throw error
+			{
+				fault::GENERAL, "Event ID %s is not sufficient for version %s room",
+				string_view{event.event_id},
+				eval.room_version,
+			};
+	}
+};
 
 /// Check if an eval with a copts structure (indicating this server is
 /// creating the event) has an origin set to !my_host().
