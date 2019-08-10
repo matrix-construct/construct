@@ -628,23 +628,13 @@ ircd::m::event::conforms::conforms(const event &e)
 	const event::prev prev{e};
 	if(json::get<"event_id"_>(e))
 	{
-		size_t i{0};
-		for(const json::array &pe : json::get<"prev_events"_>(prev))
-		{
-			if(unquote(pe.at(0)) == json::get<"event_id"_>(e))
-				set(SELF_PREV_EVENT);
-
-			++i;
-		}
-
-		i = 0;
-		for(const json::array &ps : json::get<"auth_events"_>(prev))
-		{
-			if(unquote(ps.at(0)) == json::get<"event_id"_>(e))
+		for(size_t i(0); i < prev.auth_events_count(); ++i)
+			if(prev.auth_event(i) == json::get<"event_id"_>(e))
 				set(SELF_AUTH_EVENT);
 
-			++i;
-		}
+		for(size_t i(0); i < prev.prev_events_count(); ++i)
+			if(prev.prev_event(i) == json::get<"event_id"_>(e))
+				set(SELF_PREV_EVENT);
 	}
 
 	for(size_t i(0); i < prev.auth_events_count(); ++i)
