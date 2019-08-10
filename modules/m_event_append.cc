@@ -125,6 +125,14 @@ ircd::m::event::append::append(json::stack::object &object,
 		};
 	#endif
 
+	// Assertions that the event being appended has some required fields. This
+	// is a central butt-end test of data coming through the system to here.
+	assert(event.event_id);
+	assert(defined(json::get<"type"_>(event)));
+	assert(defined(json::get<"sender"_>(event)));
+	//assert(json::get<"origin_server_ts"_>(event));
+	//assert(json::get<"origin_server_ts"_>(event) != json::undefined_number);
+
 	if(has_event_idx && !defined(json::get<"state_key"_>(event)) && m::redacted(*opts.event_idx))
 	{
 		log::debug
