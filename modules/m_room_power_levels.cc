@@ -89,12 +89,40 @@ ircd::m::auth_room_power_levels(const m::event &event,
 			};
 	}
 
-	// b. If there is no previous m.room.power_levels event in the room, allow.
-	if(!data.auth_power)
+//	// b. If there is no previous m.room.power_levels event in the room, allow.
+//	if(!data.auth_power)
+//	{
+//		data.allow = true;
+//		return;
+//	};
+
+	// b'. If there is no previous m.room.power_levels event in the room,
+	// allow if the sender is the room creator.
+	if(!data.auth_power && data.auth_create && data.auth_member_sender)
 	{
-		data.allow = true;
-		return;
-	};
+		const json::string &creator
+		{
+			json::get<"content"_>(*data.auth_create).get("creator")
+		};
+
+		if(creator == json::get<"state_key"_>(*data.auth_member_sender))
+		{
+			data.allow = true;
+			return;
+		}
+	}
+
+	if(!data.auth_power)
+		throw FAIL
+		{
+			"Cannot create the m.room.power_levels event."
+		};
+
+	if(!data.auth_create)
+		throw FAIL
+		{
+			"Missing m.room.create in auth_events."
+		};
 
 	const m::room::power old_power
 	{
