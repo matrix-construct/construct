@@ -747,7 +747,9 @@ ircd::m::id::event::v3::v3(const string_view &id)
 	if(unlikely(version() != "3"))
 		throw m::INVALID_MXID
 		{
-			"Not a version 3 event mxid"
+			"'%s' is not a version 3 event mxid; maybe version %s?",
+			id,
+			version(),
 		};
 }
 
@@ -816,7 +818,9 @@ ircd::m::id::event::v4::v4(const string_view &id)
 	if(unlikely(version() != "4"))
 		throw m::INVALID_MXID
 		{
-			"Not a version 4 event mxid"
+			"'%s' is not a version 4 event mxid; maybe version %s?",
+			id,
+			version(),
 		};
 }
 
