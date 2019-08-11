@@ -112,7 +112,6 @@ ircd::m::sync::room_state_linear_events(data &data)
 	{
 		is_own_membership && data.membership == "join"
 	};
-	assert(!is_own_join || m::membership(*data.event) == "join");
 
 	// Figure out whether the event was included in the timeline or whether
 	// to include it here in the state, which comes before the timeline.
