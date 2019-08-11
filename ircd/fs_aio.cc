@@ -128,7 +128,7 @@ ircd::fs::aio::request::fsync::fsync(const int &fd,
 :request{fd, &opts}
 {
 	assert(opts.op == op::SYNC);
-	aio_lio_opcode = IOCB_CMD_FSYNC;
+	aio_lio_opcode = opts.metadata? IOCB_CMD_FSYNC : IOCB_CMD_FDSYNC;
 
 	aio_buf = 0;
 	aio_nbytes = 0;
@@ -140,34 +140,6 @@ ircd::fs::aio::fsync(const fd &fd,
                      const sync_opts &opts)
 {
 	aio::request::fsync request
-	{
-		fd, opts
-	};
-
-	request();
-}
-
-//
-// request::fdsync
-//
-
-ircd::fs::aio::request::fdsync::fdsync(const int &fd,
-                                       const sync_opts &opts)
-:request{fd, &opts}
-{
-	assert(opts.op == op::SYNC);
-	aio_lio_opcode = IOCB_CMD_FDSYNC;
-
-	aio_buf = 0;
-	aio_nbytes = 0;
-	aio_offset = 0;
-}
-
-void
-ircd::fs::aio::fdsync(const fd &fd,
-                      const sync_opts &opts)
-{
-	aio::request::fdsync request
 	{
 		fd, opts
 	};

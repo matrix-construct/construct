@@ -137,7 +137,6 @@ ircd::fs::support_rwf_write_life
 //
 
 ircd::fs::init::init()
-:_aio_{}
 {
 	debug_support();
 	debug_paths();
@@ -483,10 +482,10 @@ ircd::fs::flush(const fd &fd,
 	#ifdef IRCD_USE_AIO
 	if(aio::system && opts.aio)
 	{
-		if(!opts.metadata && aio::support_fdsync)
-			return aio::fdsync(fd, opts);
+		if(aio::support_fdsync && !opts.metadata)
+			return aio::fsync(fd, opts);
 
-		if(aio::support_fsync)
+		if(aio::support_fsync && opts.metadata)
 			return aio::fsync(fd, opts);
 	}
 	#endif
@@ -1116,7 +1115,7 @@ ircd::fs::write(const fd &fd,
 	assert(opts.op == op::WRITE);
 
 	#ifdef IRCD_USE_AIO
-	if(likely(aio::system) && opts.aio)
+	if(aio::system && opts.aio)
 		return aio::write(fd, iov, opts);
 	#endif
 
@@ -1335,7 +1334,10 @@ ircd::fs::reflect(const ready &ready)
 
 decltype(ircd::fs::aio::support)
 extern __attribute__((weak))
-ircd::fs::aio::support;
+ircd::fs::aio::support
+{
+	false
+};
 
 decltype(ircd::fs::aio::support_fsync)
 extern __attribute__((weak))
@@ -1355,7 +1357,10 @@ ircd::fs::aio::support_fdsync
 
 decltype(ircd::fs::aio::MAX_EVENTS)
 extern __attribute__((weak))
-ircd::fs::aio::MAX_EVENTS;
+ircd::fs::aio::MAX_EVENTS
+{
+	0
+};
 
 decltype(ircd::fs::aio::MAX_REQPRIO)
 extern __attribute__((weak))
@@ -1404,10 +1409,10 @@ ircd::fs::aio::system;
 #ifndef IRCD_USE_AIO
 ircd::fs::aio::init::init()
 {
-	assert(!context);
+	assert(!system);
 	log::warning
 	{
-		log, "No support for asynchronous local filesystem IO..."
+		log, "No support for asynchronous local filesystem IO with AIO..."
 	};
 }
 #endif
@@ -1416,7 +1421,7 @@ ircd::fs::aio::init::init()
 ircd::fs::aio::init::~init()
 noexcept
 {
-	assert(!context);
+	assert(!system);
 }
 #endif
 

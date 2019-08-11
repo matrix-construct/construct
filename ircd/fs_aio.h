@@ -29,7 +29,6 @@ namespace ircd::fs::aio
 
 	size_t write(const fd &, const const_iovec_view &, const write_opts &);
 	size_t read(const fd &, const const_iovec_view &, const read_opts &);
-	void fdsync(const fd &, const sync_opts &);
 	void fsync(const fd &, const sync_opts &);
 }
 
@@ -121,7 +120,6 @@ struct ircd::fs::aio::request
 {
 	struct read;
 	struct write;
-	struct fdsync;
 	struct fsync;
 
 	ssize_t retval {-2L};
@@ -153,13 +151,6 @@ struct ircd::fs::aio::request::write
 :request
 {
 	write(const int &fd, const const_iovec_view &, const write_opts &);
-};
-
-/// fdsync request control block
-struct ircd::fs::aio::request::fdsync
-:request
-{
-	fdsync(const int &fd, const sync_opts &);
 };
 
 /// fsync request control block
