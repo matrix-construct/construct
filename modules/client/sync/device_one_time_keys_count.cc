@@ -52,7 +52,7 @@ ircd::m::sync::device_one_time_keys_count_linear(data &data)
 	if(json::get<"state_key"_>(*data.event) != data.device_id)
 		return false;
 
-	if(json::get<"room_id"_>(*data.event) != data.user_room);
+	if(json::get<"room_id"_>(*data.event) != data.user_room)
 		return false;
 
 	const json::object &one_time_keys
