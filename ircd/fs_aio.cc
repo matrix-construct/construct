@@ -16,17 +16,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/fs/aio.h
-//
-// The contents of this section override weak symbols in ircd/fs.cc when this
-// unit is conditionally compiled and linked on AIO-supporting platforms. On
-// non-supporting platforms, or for items not listed here, the definitions in
-// ircd/fs.cc are the default.
-
-decltype(ircd::fs::aio::support)
-ircd::fs::aio::support
-{
-	true
-};
 
 /// True if IOCB_CMD_FSYNC is supported by AIO. If this is false then
 /// fs::fsync_opts::async=true flag is ignored.
@@ -60,10 +49,20 @@ ircd::fs::aio::MAX_EVENTS
 	128L //TODO: get this info
 };
 
-decltype(ircd::fs::aio::MAX_REQPRIO)
-ircd::fs::aio::MAX_REQPRIO
+decltype(ircd::fs::aio::max_events)
+ircd::fs::aio::max_events
 {
-	info::aio_reqprio_max
+	{ "name",     "ircd.fs.aio.max_events"  },
+	{ "default",  long(aio::MAX_EVENTS)     },
+	{ "persist",  false                     },
+};
+
+decltype(ircd::fs::aio::max_submit)
+ircd::fs::aio::max_submit
+{
+	{ "name",     "ircd.fs.aio.max_submit"  },
+	{ "default",  0L                        },
+	{ "persist",  false                     },
 };
 
 //
@@ -73,8 +72,16 @@ ircd::fs::aio::MAX_REQPRIO
 ircd::fs::aio::init::init()
 {
 	assert(!system);
-	if(!bool(aio::enable))
+	if(!aio::enable)
 		return;
+
+	// Don't init AIO if the io_uring is established. If it is, that means it
+	// was supported by the build, this kernel, and didn't encounter an error
+	// to construct. In all other cases AIO can serve as a fallback.
+	#if defined(IRCD_USE_IOU)
+	if(iou::system)
+		return;
+	#endif
 
 	system = new struct aio::system
 	(

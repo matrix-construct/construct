@@ -27,6 +27,7 @@ bool pitrecdb;
 bool nojs;
 bool nodirect;
 bool noaio;
+bool noiou;
 bool no6;
 bool yes6;
 bool norun;
@@ -51,6 +52,7 @@ lgetopt opts[]
 	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
 	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
 	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
+	{ "noiou",      &noiou,         lgetopt::BOOL,    "Disable the io_uring interface and fallback to AIO or system calls. " },
 	{ "no6",        &no6,           lgetopt::BOOL,    "Disable IPv6 operations (default)" },
 	{ "6",          &yes6,          lgetopt::BOOL,    "Enable IPv6 operations" },
 	{ "norun",      &norun,         lgetopt::BOOL,    "[debug & testing only] Initialize but never run the event loop." },
@@ -360,8 +362,9 @@ applyargs()
 
 	if(noaio)
 		ircd::fs::aio::enable.set("false");
-	else
-		ircd::fs::aio::enable.set("true");
+
+	if(noiou)
+		ircd::fs::iou::enable.set("false");
 
 	if(yes6)
 		ircd::net::enable_ipv6.set("true");

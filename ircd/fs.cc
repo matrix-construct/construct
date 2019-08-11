@@ -20,6 +20,10 @@
 	#include "fs_aio.h"
 #endif
 
+#ifdef IRCD_USE_IOU
+	#include "fs_iou.h"
+#endif
+
 namespace ircd::fs
 {
 	static uint posix_flags(const std::ios::openmode &mode);
@@ -479,6 +483,11 @@ ircd::fs::flush(const fd &fd,
 {
 	assert(opts.op == op::SYNC);
 
+	#ifdef IRCD_USE_IOU
+	if(iou::system && opts.aio)
+		return iou::fsync(fd, opts);
+	#endif
+
 	#ifdef IRCD_USE_AIO
 	if(aio::system && opts.aio)
 	{
@@ -737,6 +746,11 @@ ircd::fs::read(const fd &fd,
                const read_opts &opts)
 {
 	assert(opts.op == op::READ);
+
+	#ifdef IRCD_USE_IOU
+	if(iou::system && opts.aio)
+		return iou::read(fd, iov, opts);
+	#endif
 
 	#ifdef IRCD_USE_AIO
 	if(aio::system && opts.aio)
@@ -1114,6 +1128,11 @@ ircd::fs::write(const fd &fd,
 {
 	assert(opts.op == op::WRITE);
 
+	#ifdef IRCD_USE_IOU
+	if(iou::system && opts.aio)
+		return iou::write(fd, iov, opts);
+	#endif
+
 	#ifdef IRCD_USE_AIO
 	if(aio::system && opts.aio)
 		return aio::write(fd, iov, opts);
@@ -1327,71 +1346,29 @@ ircd::fs::reflect(const ready &ready)
 // fs/aio.h
 //
 
-//
-// These symbols can be overriden by ircd/aio.cc if it is compiled and linked;
-// otherwise on non-supporting platforms these will be the defaults here.
-//
-
 decltype(ircd::fs::aio::support)
-extern __attribute__((weak))
 ircd::fs::aio::support
 {
-	false
-};
-
-decltype(ircd::fs::aio::support_fsync)
-extern __attribute__((weak))
-ircd::fs::aio::support_fsync
-{
-	info::kernel_version[0] > 4 ||
-	(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 18)
-};
-
-decltype(ircd::fs::aio::support_fdsync)
-extern __attribute__((weak))
-ircd::fs::aio::support_fdsync
-{
-	info::kernel_version[0] > 4 ||
-	(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 18)
-};
-
-decltype(ircd::fs::aio::MAX_EVENTS)
-extern __attribute__((weak))
-ircd::fs::aio::MAX_EVENTS
-{
-	0
+	#ifdef IRCD_USE_AIO
+		true
+	#else
+		false
+	#endif
 };
 
 decltype(ircd::fs::aio::MAX_REQPRIO)
-extern __attribute__((weak))
 ircd::fs::aio::MAX_REQPRIO
 {
-	20
+	info::aio_reqprio_max
 };
 
-/// Conf item to control whether AIO is enabled or bypassed.
+/// Conf item to control whether aio is enabled or bypassed.
 decltype(ircd::fs::aio::enable)
 ircd::fs::aio::enable
 {
 	{ "name",     "ircd.fs.aio.enable"  },
 	{ "default",  true                  },
 	{ "persist",  false                 },
-};
-
-decltype(ircd::fs::aio::max_events)
-ircd::fs::aio::max_events
-{
-	{ "name",     "ircd.fs.aio.max_events"  },
-	{ "default",  long(aio::MAX_EVENTS)     },
-	{ "persist",  false                     },
-};
-
-decltype(ircd::fs::aio::max_submit)
-ircd::fs::aio::max_submit
-{
-	{ "name",     "ircd.fs.aio.max_submit"  },
-	{ "default",  0L                        },
-	{ "persist",  false                     },
 };
 
 /// Global stats structure
@@ -1406,24 +1383,68 @@ ircd::fs::aio::system;
 // init
 //
 
-#ifndef IRCD_USE_AIO
+__attribute__((weak))
 ircd::fs::aio::init::init()
 {
 	assert(!system);
-	log::warning
-	{
-		log, "No support for asynchronous local filesystem IO with AIO..."
-	};
 }
-#endif
 
-#ifndef IRCD_USE_AIO
+__attribute__((weak))
 ircd::fs::aio::init::~init()
 noexcept
 {
 	assert(!system);
 }
-#endif
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// fs/iou.h
+//
+
+decltype(ircd::fs::iou::support)
+ircd::fs::iou::support
+{
+	#ifdef IRCD_USE_IOU
+		info::kernel_version[0] > 5 ||
+		(info::kernel_version[0] >= 5 && info::kernel_version[1] >= 1)
+	#else
+		false
+	#endif
+};
+
+/// Conf item to control whether iou is enabled or bypassed.
+decltype(ircd::fs::iou::enable)
+ircd::fs::iou::enable
+{
+	{ "name",     "ircd.fs.iou.enable"  },
+	{ "default",  false                 },
+	{ "persist",  false                 },
+};
+
+/// Global stats structure
+decltype(ircd::fs::iou::stats)
+ircd::fs::iou::stats;
+
+/// Non-null when iou is available for use
+decltype(ircd::fs::iou::system)
+ircd::fs::iou::system;
+
+//
+// init
+//
+
+__attribute__((weak))
+ircd::fs::iou::init::init()
+{
+	assert(!system);
+}
+
+__attribute__((weak))
+ircd::fs::iou::init::~init()
+noexcept
+{
+	assert(!system);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1872,6 +1893,14 @@ ircd::fs::reflect(const op &op)
 #ifndef IRCD_USE_AIO
 ircd::fs::op
 ircd::fs::aio::translate(const int &val)
+{
+	return op::NOOP;
+}
+#endif
+
+#ifndef IRCD_USE_IOU
+ircd::fs::op
+ircd::fs::iou::translate(const int &val)
 {
 	return op::NOOP;
 }
@@ -2361,9 +2390,17 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &e)
 void
 ircd::fs::debug_support()
 {
+	const bool support_async
+	{
+		false
+		|| iou::support
+		|| aio::support
+	};
+
 	log::info
 	{
-		log, "Supports preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",
+		log, "Supports async:%b preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",
+		support_async,
 		support_preadv2,
 		support_pwritev2,
 		support_sync,
@@ -2374,6 +2411,24 @@ ircd::fs::debug_support()
 		support_rwh_write_life,
 		support_rwf_write_life,
 	};
+
+	if(support_async)
+		log::info
+		{
+			log, "Asynchronous filesystem IO provided by %s %s.",
+			"Linux",
+			iou::support?
+				"io_uring":
+			aio::support?
+				"AIO":
+			"?????",
+		};
+	else
+		log::warning
+		{
+			log, "Support for asynchronous filesystem IO has not been"
+			" established. Filesystem IO is degraded to synchronous system calls."
+		};
 }
 
 void

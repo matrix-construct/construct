@@ -23,6 +23,11 @@ namespace ircd::fs::aio
 	op translate(const int &);
 }
 
+namespace ircd::fs::iou
+{
+	op translate(const int &);
+}
+
 /// The enumerated operation code to identify the type of request being
 /// made at runtime from any abstract list of requests.
 ///

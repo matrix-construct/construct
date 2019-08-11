@@ -966,6 +966,27 @@ fi
 
 AM_CONDITIONAL([AIO], [[[[ $aio = yes ]]]])
 
+dnl
+dnl Linux io_uring support
+dnl
+
+AM_COND_IF(LINUX,
+[
+	AC_ARG_ENABLE(io_uring, AC_HELP_STRING([--disable-io_uring], [Disable kernel io_uring support]),
+	[
+		io_uring=$enableval
+	], [
+		io_uring="$ac_cv_header_linux_io_uring_h"
+	])
+])
+
+AM_CONDITIONAL([IOU], [[[[ $io_uring = yes ]]]])
+
+AM_COND_IF([IOU],
+[
+	IRCD_DEFINE(USE_IOU, [1], [Linux io_uring is supported and may be used])
+])
+
 
 dnl ***************************************************************************
 dnl
@@ -1900,6 +1921,7 @@ echo "Crypto support .................... $have_crypto"
 echo "Magic support ..................... $have_magic"
 echo "ImageMagick support ............... $have_imagemagick"
 echo "Linux AIO support ................. $aio"
+echo "Linux io_uring support ............ $io_uring"
 echo "IPv6 support ...................... $ipv6"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"

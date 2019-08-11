@@ -44,11 +44,13 @@ struct ircd::fs::opts
 	/// file is ineffective for regular files.
 	bool blocking {true};
 
-	/// Determines whether this operation is conducted via AIO. If not, a
-	/// direct syscall is made. Using AIO will only block one ircd::ctx while
-	/// a direct syscall will block the thread (all contexts). If AIO is not
-	/// available or not enabled, or doesn't support this operation, setting
-	/// this has no effect.
+	/// Determines whether this operation is conducted via AIO/io_uring. If
+	/// not, a direct syscall is made. Using AIO will only block one ircd::ctx
+	/// while a direct syscall will block the thread (all contexts). If AIO is
+	/// not available or not enabled, or doesn't support this operation,
+	/// setting this has no effect. If this system supports io_uring this
+	/// option is reused to indicate use of io_uring (as AIO and io_uring are
+	/// not used simultaneously).
 	bool aio {true};
 
 	/// The enumerated operation code to identify the type of request being

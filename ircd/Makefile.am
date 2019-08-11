@@ -157,6 +157,9 @@ libircd_la_SOURCES += ctx_ole.cc
 if AIO
 libircd_la_SOURCES += fs_aio.cc
 endif
+if IOU
+libircd_la_SOURCES += fs_iou.cc
+endif
 libircd_la_SOURCES += mods.cc
 if LINUX
 libircd_la_SOURCES += mods_ldso.cc

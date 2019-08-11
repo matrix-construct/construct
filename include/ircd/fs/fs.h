@@ -63,6 +63,7 @@ namespace ircd::fs
 #include "write.h"
 #include "sync.h"
 #include "aio.h"
+#include "iou.h"
 #include "stdin.h"
 #include "support.h"
 
@@ -87,6 +88,7 @@ namespace ircd::fs
 /// Filesystem interface init / fini held by ircd::main().
 struct ircd::fs::init
 {
+	iou::init _iou_;
 	aio::init _aio_;
 
 	init();
