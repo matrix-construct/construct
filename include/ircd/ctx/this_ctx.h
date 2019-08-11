@@ -49,6 +49,11 @@ namespace ircd::ctx
 	extern __thread ctx *current;
 }
 
+namespace ircd
+{
+	namespace this_ctx = ctx::this_ctx;
+}
+
 /// This overload matches ::sleep() and acts as a drop-in for ircd contexts.
 /// interruption point.
 inline void
