@@ -250,14 +250,7 @@ ircd::m::presence::get(const std::nothrow_t,
 		user_room
 	};
 
-	m::event::idx ret{0};
-	state.get(std::nothrow, "ircd.presence", "", [&ret]
-	(const m::event::idx &event_idx)
-	{
-		ret = event_idx;
-	});
-
-	return ret;
+	return state.get(std::nothrow, "ircd.presence", "");
 }
 
 m::event::id::buf
@@ -274,7 +267,6 @@ ircd::m::presence::set(const m::presence &content)
 		create(user.user_id);
 
 	m::vm::copts copts;
-	copts.history = false;
 	const m::user::room user_room
 	{
 		user, &copts
