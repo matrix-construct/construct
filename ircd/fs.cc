@@ -2393,8 +2393,8 @@ ircd::fs::debug_support()
 	const bool support_async
 	{
 		false
-		|| iou::support
-		|| aio::support
+		|| iou::system
+		|| aio::system
 	};
 
 	log::info
@@ -2417,9 +2417,9 @@ ircd::fs::debug_support()
 		{
 			log, "Asynchronous filesystem IO provided by %s %s.",
 			"Linux",
-			iou::support?
+			iou::system?
 				"io_uring":
-			aio::support?
+			aio::system?
 				"AIO":
 			"?????",
 		};
