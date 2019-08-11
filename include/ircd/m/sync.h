@@ -59,7 +59,6 @@ struct ircd::m::sync::item
 	string_view member_name() const;
 	size_t children() const;
 
-	bool poll(data &, const m::event &);
 	bool linear(data &);
 	bool polylog(data &);
 

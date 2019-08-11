@@ -889,32 +889,6 @@ catch(const std::exception &e)
 	throw;
 }
 
-bool
-ircd::m::sync::item::poll(data &data,
-                          const m::event &event)
-try
-{
-	const scope_restore theirs
-	{
-		data.event, &event
-	};
-
-	return _linear(data);
-}
-catch(const std::bad_function_call &e)
-{
-	thread_local char rembuf[128];
-	log::dwarning
-	{
-		log, "poll %s '%s' missing handler :%s",
-		loghead(data),
-		name(),
-		e.what()
-	};
-
-	return false;
-}
-
 size_t
 ircd::m::sync::item::children()
 const
