@@ -801,6 +801,7 @@ try
 	}
 	#endif
 
+	this_ctx::interruption_point();
 	return ret;
 }
 catch(const std::bad_function_call &e)

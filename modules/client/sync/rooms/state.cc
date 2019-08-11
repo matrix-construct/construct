@@ -307,6 +307,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 			if(data.membership != "join" && type == "m.room.member")
 				return true;
 
+		this_ctx::interruption_point();
 		concurrent(event_idx);
 		return true;
 	});
