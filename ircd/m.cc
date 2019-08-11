@@ -760,12 +760,12 @@ try
 	if(!enable)
 		return false;
 
-	// Skip the item for phased-sync ranges if it's not phased-sync aware.
-	if(data.phased && !phased && !initial)
-		return false;
-
 	// Skip the item for phased-sync ranges after initial sync if it has initial=true
 	if(data.phased && initial && int64_t(data.range.first) < 0L)
+		return false;
+
+	// Skip the item for phased-sync ranges if it's not phased-sync aware.
+	if(data.phased && !phased && int64_t(data.range.first) < 0L)
 		return false;
 
 	#ifdef RB_DEBUG

@@ -213,8 +213,11 @@ ircd::m::sync::handle_get(client &client,
 	// Conditions for phased sync for this client
 	data.phased =
 	{
-		(polylog_phased && args.phased) &&
-		(phased_range || initial_sync)
+		polylog_phased && args.phased &&
+		(
+			phased_range ||
+			(initial_sync && empty(args.since_token.second))
+		)
 	};
 
 	// Start the chunked encoded response.
