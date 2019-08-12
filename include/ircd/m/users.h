@@ -13,7 +13,35 @@
 
 namespace ircd::m::users
 {
-	bool for_each(const string_view &id_lower_bound, const user::closure_bool &);
+	struct opts extern const default_opts;
+
+	// Iterate the users
+	bool for_each(const opts &, const user::closure_bool &);
 	bool for_each(const user::closure_bool &);
-	void for_each(const user::closure &);
+
+	size_t count(const opts & = default_opts);
+	bool exists(const opts & = default_opts);
 }
+
+/// Shape the query by matching users based on the options filled in.
+struct ircd::m::users::opts
+{
+	/// Fill this in to match the localpart of an mxid. If this is empty then
+	/// all localparts can be matched.
+	string_view localpart;
+
+	/// The results match if their localpart startswith the specified localpart.
+	bool localpart_prefix {false};
+
+	/// Fill this in to match the hostpart of an mxid, i.e the origin. If this
+	/// is empty then all servers can be matched.
+	string_view hostpart;
+
+	/// The results match if their hostpart startswith the specified  hostpart
+	bool hostpart_prefix {false};
+
+	/// Construction from a single string; decomposes into the options
+	/// based on ad hoc rules, see definition or use default ctor.
+	opts(const string_view &query);
+	opts() = default;
+};

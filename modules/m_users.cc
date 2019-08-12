@@ -8,49 +8,147 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m::users
+{
+	static bool for_each_host(const opts &, const user::closure_bool &);
+	static bool for_each_in_host(const opts &, const user::closure_bool &);
+}
+
 ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix users interface"
 };
 
-void
+decltype(ircd::m::users::default_opts)
+ircd::m::users::default_opts;
+
+bool
 IRCD_MODULE_EXPORT
-ircd::m::users::for_each(const user::closure &closure)
+ircd::m::users::exists(const opts &opts)
 {
-	for_each(user::closure_bool{[&closure]
-	(const m::user &user)
+	return !for_each(opts, []
+	(const auto &)
 	{
-		closure(user);
+		// return false to break and have for_each() returns false
+		return false;
+	});
+}
+
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::users::count(const opts &opts)
+{
+	size_t ret(0);
+	for_each(opts, [&ret](const auto &)
+	{
+		++ret;
 		return true;
-	}});
+	});
+
+	return ret;
 }
 
 bool
 IRCD_MODULE_EXPORT
 ircd::m::users::for_each(const user::closure_bool &closure)
 {
-	return for_each(string_view{}, closure);
+	return for_each(default_opts, closure);
 }
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::users::for_each(const string_view &lower_bound,
+ircd::m::users::for_each(const opts &opts,
                          const user::closure_bool &closure)
 {
-	const m::room::state state
-	{
-		user::users
-	};
+	// Note: if opts.hostpart is given then for_each_host() will close over
+	// that host, so no branch is needed here.
+	return for_each_host(opts, closure);
+}
 
-	return state.for_each("ircd.user", lower_bound, m::room::state::keys_bool{[&closure]
-	(const string_view &user_id)
+bool
+ircd::m::users::for_each_host(const opts &opts,
+                              const user::closure_bool &closure)
+{
+	bool ret{true};
+	events::for_each_origin(opts.hostpart, [&ret, &opts, &closure]
+	(const string_view &origin)
 	{
-		const m::user &user
-		{
-			user_id
-		};
+		// The events:: iteration interface works with prefixes; if our
+		// user wants to iterate users on exactly a single server, we test
+		// for an exact match here and can break from the loop if no match.
+		if(opts.hostpart && !opts.hostpart_prefix)
+			if(origin != opts.hostpart)
+				return false;
 
-		return closure(user);
-	}});
+		auto _opts(opts);
+		_opts.hostpart = origin;
+		ret = for_each_in_host(_opts, closure);
+		return ret;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::users::for_each_in_host(const opts &opts,
+                                 const user::closure_bool &closure)
+{
+	assert(opts.hostpart);
+
+	bool ret{true};
+	events::for_each_sender(opts.hostpart, [&opts, &ret, &closure]
+	(const id::user &sender)
+	{
+		// The events:: iteration interface only tests if the sender's
+		// hostpart startswith our queried hostpart; we want an exact
+		// match here, otherwise our loop can finish.
+		if(sender.host() != opts.hostpart)
+			return false;
+
+		// Skip this entry if the user wants a prefix match on the localpart
+		// and this mxid doesn't match.
+		if(opts.localpart && opts.localpart_prefix)
+			if(!startswith(sender.local(), opts.localpart))
+				return true;
+
+		// Skip this entry if the user wants an exact match on the localpart
+		// and this mxid doesn't match.
+		if(opts.localpart && !opts.localpart_prefix)
+			if(sender.local() != opts.localpart)
+				return true;
+
+		// Call the user with match.
+		ret = closure(sender);
+		return ret;
+	});
+
+	return ret;
+}
+
+IRCD_MODULE_EXPORT
+ircd::m::users::opts::opts(const string_view &query)
+{
+	if(startswith(query, '@') && has(query, ':'))
+	{
+		localpart = split(query, ':').first;
+		hostpart = split(query, ':').second;
+		return;
+	}
+
+	if(startswith(query, '@'))
+	{
+		localpart = query;
+		localpart_prefix = true;
+		return;
+	}
+
+	if(startswith(query, ':'))
+	{
+		hostpart = lstrip(query, ':');
+		return;
+	}
+
+	hostpart = query;
+	hostpart_prefix = true;
 }

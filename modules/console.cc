@@ -11152,23 +11152,25 @@ console_cmd__users(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"prefix"
+		"query"
 	}};
 
-	const auto prefix
+	const auto query
 	{
-		param.at("prefix", string_view{})
+		param.at("query", string_view{})
 	};
 
-	m::users::for_each(prefix, m::user::closure_bool{[&out, &prefix]
+	const m::users::opts opts
+	{
+		query
+	};
+
+	m::users::for_each(opts, [&out]
 	(const m::user &user)
 	{
-		if(prefix && !startswith(user.user_id, prefix))
-			return false;
-
 		out << user.user_id << std::endl;
 		return true;
-	}});
+	});
 
 	return true;
 }
