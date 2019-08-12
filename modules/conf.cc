@@ -46,31 +46,6 @@ item_error_log
 	true
 };
 
-static void
-on_run()
-{
-	// Suppress errors for this scope.
-	const unwind uw{[] { item_error_log = true; }};
-	item_error_log = false;
-	rehash_conf({}, false);
-}
-
-/// Waits for the daemon to transition to the RUN state so we can gather all
-/// of the registered conf items and save any new ones to the !conf room.
-/// We can't do that on this module init for two reason:
-/// - More conf items will load in other modules after this module.
-/// - Events can't be safely sent to the !conf room until the RUN state.
-const ircd::run::changed
-rehash_on_run{[]
-(const auto &level)
-{
-	if(level == ircd::run::level::RUN)
-		ctx::context
-		{
-			"confhash", 256_KiB, on_run, ctx::context::POST
-		};
-}};
-
 const m::room::id::buf
 conf_room_id
 {
@@ -287,7 +262,7 @@ create_conf_room(const m::event &,
                  m::vm::eval &)
 {
 	m::create(conf_room_id, m::me.user_id);
-	rehash_conf({}, true);
+	//rehash_conf({}, true);
 }
 
 m::hookfn<m::vm::eval &>
