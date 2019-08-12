@@ -86,7 +86,7 @@ decltype(ircd::m::sync::linear_buffer_size)
 ircd::m::sync::linear_buffer_size
 {
 	{ "name",     "ircd.client.sync.linear.buffer_size" },
-	{ "default",  long(96_KiB)                          },
+	{ "default",  long(256_KiB)                         },
 	{ "help",     linear_buffer_size_help               },
 };
 
