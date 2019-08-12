@@ -390,7 +390,7 @@ github_handle__push(std::ostream &out,
 
 		const json::object author(commit["author"]);
 		out << " <b>"
-		    << author["name"]
+		    << json::string(author["name"])
 		    << "</b>"
 		    ;
 
