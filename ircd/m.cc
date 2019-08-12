@@ -456,7 +456,6 @@ ircd::m::self::host()
 //TODO: XXX
 extern ircd::m::room::id::buf users_room_id;
 extern ircd::m::room::id::buf tokens_room_id;
-extern ircd::m::room::id::buf nodes_room_id;
 
 ircd::m::self::init::init(const string_view &origin,
                           const string_view &servername)
@@ -483,9 +482,6 @@ ircd::m::self::init::init(const string_view &origin,
 
 	tokens_room_id = {"tokens", origin};
 	m::user::tokens = {tokens_room_id};
-
-	nodes_room_id = {"nodes", origin};
-	m::nodes = {nodes_room_id};
 
 	if(origin == "localhost")
 		log::warning
@@ -2102,23 +2098,6 @@ ircd::m::device::for_each(const m::user &user,
 //
 // m/node.h
 //
-
-/// ID of the room which indexes all nodes (an instance of the room is
-/// provided below).
-ircd::m::room::id::buf
-nodes_room_id
-{
-	"nodes", ircd::my_host()
-};
-
-/// The nodes room is the database of all nodes. It primarily serves as an
-/// indexing mechanism and for top-level node related keys.
-///
-ircd::m::room
-ircd::m::nodes
-{
-	nodes_room_id
-};
 
 //
 // node

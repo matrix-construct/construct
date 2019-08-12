@@ -35,6 +35,9 @@ try
 		me.activate();
 	}
 
+	if(!exists(my_node))
+		create(my_node);
+
 	if(!exists(my_room))
 		create(my_room, me.user_id, "internal");
 
