@@ -51,10 +51,37 @@ get__notifications(client &client,
 		request.query.get<ushort>("limit", size_t(limit_default))
 	};
 
-	return resource::response
+	resource::response::chunked response
 	{
 		client, http::OK
 	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	string_view next_token;
+	{
+		json::stack::array notifications
+		{
+			top, "notifications"
+		};
+	}
+
+	if(next_token)
+		json::stack::member
+		{
+			top, "next_token", next_token
+		};
+
+	top.~object();
+	return response;
 }
 
 resource::method
