@@ -2601,7 +2601,13 @@ ircd::m::user::tokens
 bool
 ircd::m::exists(const user::id &user_id)
 {
-	return user::users.has("ircd.user", user_id);
+	// The way we know a user exists is testing if their room exists.
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	return m::exists(user_room);
 }
 
 bool
