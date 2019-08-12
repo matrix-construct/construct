@@ -821,6 +821,12 @@ ircd::m::room_id(const mutable_buffer &out,
 			return string_view{data(out), copy(out, user_room.room_id)};
 		}
 
+		case id::NODE:
+		{
+			const m::node node(lstrip(room_id_or_alias, ':'));
+			return node.room_id(out);
+		}
+
 		default:
 			return room_id(out, id::room_alias{room_id_or_alias});
 	}

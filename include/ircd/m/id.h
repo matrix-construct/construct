@@ -127,6 +127,7 @@ enum ircd::m::id::sigil
 	ROOM_ALIAS  = '#',     ///< Room alias (4.2.3)
 	GROUP       = '+',     ///< Group ID (experimental)
 	DEVICE      = '%',     ///< Device ID (experimental)
+	NODE        = ':',     ///< Node ID (experimental)
 };
 
 /// (Appendix 4.2.1) User Identifiers
