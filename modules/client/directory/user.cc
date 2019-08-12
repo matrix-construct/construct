@@ -36,7 +36,7 @@ post__search(client &client,
 
 	const ushort &limit
 	{
-		request.get<ushort>("limit", 10)
+		request.get<ushort>("limit", 16)
 	};
 
 	// Search term in this endpoint comes in as-is from Riot. Our query
@@ -53,7 +53,7 @@ post__search(client &client,
 
 	const unique_buffer<mutable_buffer> buf
 	{
-		4_KiB
+		16_KiB
 	};
 
 	json::stack out{buf};
@@ -61,31 +61,54 @@ post__search(client &client,
 
 	size_t count(0);
 	bool limited{false};
+	json::stack::array results
 	{
-		json::stack::array results
+		top, "results"
+	};
+
+	const m::users::opts opts{query};
+	m::users::for_each(opts, [&results, &limit, &limited, &count]
+	(const m::user::id &user_id)
+	{
+		json::stack::object result
 		{
-			top, "results"
+			results
 		};
 
-		const m::users::opts opts{query};
-		m::users::for_each(opts, [&results, &limit, &limited, &count]
-		(const m::user::id &user_id)
+		json::stack::member
 		{
-			json::stack::object result
-			{
-				results
-			};
+			result, "user_id", user_id
+		};
 
+		const m::user::profile profile
+		{
+			user_id
+		};
+
+		profile.get(std::nothrow, "avatar_url", [&result]
+		(const string_view &key, const string_view &val)
+		{
 			json::stack::member
 			{
-				result, "user_id", user_id
+				result, key, val
 			};
-
-			limited = ++count >= limit;
-			return !limited;
 		});
-	}
 
+		// spec inconsistent
+		profile.get(std::nothrow, "displayname", [&result]
+		(const string_view &key, const string_view &val)
+		{
+			json::stack::member
+			{
+				result, "display_name", val
+			};
+		});
+
+		limited = ++count >= limit;
+		return !limited;
+	});
+
+	results.~array();
 	json::stack::member
 	{
 		top, "limited", json::value{limited}
