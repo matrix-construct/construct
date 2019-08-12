@@ -78,16 +78,23 @@ try
 	if(!startswith(input, "\\\\"))
 		return;
 
-	const string_view &cmd
-	{
-		lstrip(input, "\\\\")
-	};
+	// View of the command string without prefix
+	string_view cmd{input};
+	cmd = lstrip(cmd, "\\\\");
+
+	// Determine if there's a bang after the prefix; if so the response's
+	// sender will be the user, and will be broadcast publicly to the room.
+	// Otherwise the response comes from the server and is only visible in
+	// the user's timeline.
+	const bool public_response(startswith(cmd, '!'));
+	cmd = lstrip(cmd, '!');
 
 	log::debug
 	{
-		m::log, "Server command from %s in %s :%s",
+		m::log, "Server command from %s in %s public:%b :%s",
 		string_view{room_id},
 		string_view{user.user_id},
+		public_response,
 		cmd
 	};
 
@@ -104,7 +111,22 @@ try
 	if(!html && !alt)
 		return;
 
-	m::send(user_room, m::me, "ircd.cmd.result",
+	const auto &response_sender
+	{
+		public_response? user : m::me
+	};
+
+	const auto &response_room
+	{
+		public_response? room_id : user_room
+	};
+
+	const auto &response_type
+	{
+		public_response? "m.room.message" : "ircd.cmd.result"
+	};
+
+	m::send(response_room, response_sender, response_type,
 	{
 		{ "msgtype",         "m.text"                  },
 		{ "format",          "org.matrix.custom.html"  },
