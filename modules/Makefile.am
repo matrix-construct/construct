@@ -138,6 +138,7 @@ m_room_redaction_la_SOURCES = m_room_redaction.cc
 m_room_bootstrap_la_SOURCES = m_room_bootstrap.cc
 m_init_bootstrap_la_SOURCES = m_init_bootstrap.cc
 m_listen_la_SOURCES = m_listen.cc
+m_users_la_SOURCES = m_users.cc
 
 m_module_LTLIBRARIES = \
 	m_vm.la \
@@ -180,6 +181,7 @@ m_module_LTLIBRARIES = \
 	m_room_bootstrap.la \
 	m_init_bootstrap.la \
 	m_listen.la \
+	m_users.la \
 	###
 
 ###############################################################################

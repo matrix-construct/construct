@@ -204,6 +204,7 @@ ircd::m::module_names
 	"m_feds",
 	"m_events",
 	"m_rooms",
+	"m_users",
 	"m_user",
 	"m_user_rooms",
 	"m_user_events",
@@ -2552,49 +2553,6 @@ ircd::m::rooms::count_public(const string_view &server)
 	};
 
 	return function(server);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/users.h
-//
-
-void
-ircd::m::users::for_each(const user::closure &closure)
-{
-	for_each(user::closure_bool{[&closure]
-	(const m::user &user)
-	{
-		closure(user);
-		return true;
-	}});
-}
-
-bool
-ircd::m::users::for_each(const user::closure_bool &closure)
-{
-	return for_each(string_view{}, closure);
-}
-
-bool
-ircd::m::users::for_each(const string_view &lower_bound,
-                         const user::closure_bool &closure)
-{
-	const m::room::state state
-	{
-		user::users
-	};
-
-	return state.for_each("ircd.user", lower_bound, m::room::state::keys_bool{[&closure]
-	(const string_view &user_id)
-	{
-		const m::user &user
-		{
-			user_id
-		};
-
-		return closure(user);
-	}});
 }
 
 ///////////////////////////////////////////////////////////////////////////////
