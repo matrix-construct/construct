@@ -442,6 +442,7 @@ ircd::m::events::for_each_sender(const string_view &hostlb,
 	};
 
 	user::id::buf last;
+	string_view last_local, last_host;
 	for(auto it(column.lower_bound(hostlb)); bool(it); ++it)
 	{
 		const string_view &host
@@ -457,7 +458,7 @@ ircd::m::events::for_each_sender(const string_view &hostlb,
 			dbs::event_sender_key(it->first.substr(size(host)))
 		};
 
-		if(last && host == last.host() && localpart == last.local())
+		if(last && host == last_host && localpart == last_local)
 			continue;
 
 		last = m::user::id::buf
@@ -467,6 +468,9 @@ ircd::m::events::for_each_sender(const string_view &hostlb,
 
 		if(!closure(last))
 			return false;
+
+		last_local = last.local();
+		last_host = last.host();
 	}
 
 	return true;
