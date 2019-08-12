@@ -8745,18 +8745,35 @@ console_cmd__room__state(opt &out, const string_view &line)
 			return true;
 
 		thread_local char smbuf[48];
-		out
-		    << smalldate(smbuf, json::get<"origin_server_ts"_>(event) / 1000L)
-		    << std::right << " "
-		    << std::setw(9) << json::get<"depth"_>(event)
-		    << std::right << " [ "
-		    << std::setw(30) << type
-		    << std::left << " ] [ "
-		    << std::setw(50) << state_key
-		    << std::left << " ] "
-		    << std::setw(72) << string_view{event.event_id}
-		    << std::left << " "
-		    ;
+		if(event.event_id.version() == "1")
+		{
+			out
+			<< smalldate(smbuf, json::get<"origin_server_ts"_>(event) / 1000L)
+			<< std::right << " "
+			<< std::setw(9) << json::get<"depth"_>(event)
+			<< std::right << " [ "
+			<< std::setw(30) << type
+			<< std::left << " ] [ "
+			<< std::setw(50) << state_key
+			<< std::left << " ] "
+			<< std::setw(72) << string_view{event.event_id}
+			<< std::left << " "
+			;
+		} else {
+			out
+			<< std::left
+			<< smalldate(smbuf, json::get<"origin_server_ts"_>(event) / 1000L)
+			<< ' '
+			<< string_view{event.event_id}
+			<< std::right << " [ "
+			<< std::setw(40) << type
+			<< std::left << " | "
+			<< std::setw(56) << state_key
+			<< " ] "
+			<< std::setw(9) << json::get<"depth"_>(event)
+			<< ' '
+			;
+		}
 
 		size_t i(0);
 		auto prev_idx(event_idx);
