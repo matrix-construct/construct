@@ -2947,7 +2947,7 @@ const
 	char buf[dbs::ROOM_STATE_SPACE_KEY_MAX_SIZE];
 	const string_view &key
 	{
-		dbs::room_state_space_key(buf, room.room_id, type, state_key, depth, -1UL)
+		dbs::room_state_space_key(buf, room.room_id, type, state_key, depth, 0UL)
 	};
 
 	auto it
