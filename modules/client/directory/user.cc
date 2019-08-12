@@ -41,35 +41,62 @@ post__search(client &client,
 
 	// Search term in this endpoint comes in as-is from Riot. Our query
 	// is a lower_bound of a user_id, so we have to prefix the '@'.
-	char qbuf[256] {'@', '\0'};
+	char qbuf[256] {"@"};
 	const string_view &query
 	{
+		startswith(search_term, ':')?
+			string_view{search_term}:
 		!startswith(search_term, '@')?
 			string_view{ircd::strlcat{qbuf, search_term}}:
 			string_view{search_term}
 	};
 
-	bool limited{true};
-	std::vector<json::value> results;
-	const m::room::state &users{m::user::users};
-	users.for_each("ircd.user", query, [&results, &limit, &limited]
-	(const m::event &event)
+	const unique_buffer<mutable_buffer> buf
 	{
-		results.emplace_back(json::members
+		4_KiB
+	};
+
+	json::stack out{buf};
+	json::stack::object top{out};
+
+	size_t count(0);
+	bool limited{false};
+	{
+		json::stack::array results
 		{
-			{ "user_id", at<"state_key"_>(event) },
+			top, "results"
+		};
+
+		const m::users::opts opts{query};
+		m::users::for_each(opts, [&results, &limit, &limited, &count]
+		(const m::user::id &user_id)
+		{
+			json::stack::object result
+			{
+				results
+			};
+
+			json::stack::member
+			{
+				result, "user_id", user_id
+			};
+
+			limited = ++count >= limit;
+			return !limited;
 		});
+	}
 
-		limited = results.size() >= limit;
-		return !limited; // returns true to continue
-	});
+	json::stack::member
+	{
+		top, "limited", json::value{limited}
+	};
 
+	top.~object();
 	return resource::response
 	{
-		client, json::members
+		client, json::object
 		{
-			{ "limited", limited },
-			{ "results", { results.data(), results.size() } },
+			out.completed()
 		}
 	};
 }
