@@ -3035,8 +3035,14 @@ ircd::m::room::state::space::rebuild::rebuild()
 			current = 0;
 		}
 	}
-	catch(const ctx::interrupted &)
+	catch(const ctx::interrupted &e)
 	{
+		log::dwarning
+		{
+			log, "room::state::space::rebuild :%s",
+			e.what()
+		};
+
 		break;
 	}
 	catch(const std::exception &e)
