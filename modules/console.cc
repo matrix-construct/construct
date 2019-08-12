@@ -9890,24 +9890,8 @@ console_cmd__room__create(opt &out, const string_view &line)
 bool
 console_cmd__room__id(opt &out, const string_view &id)
 {
-	if(m::has_sigil(id)) switch(m::sigil(id))
-	{
-		case m::id::USER:
-			out << m::user{id}.room_id() << std::endl;
-			return true;
-
-		case m::id::ROOM_ALIAS:
-			out << m::room_id(m::room::alias(id)) << std::endl;
-			return true;
-
-		default:
-			return true;
-	}
-	else if(rfc3986::valid_remote(std::nothrow, id))
-	{
-		out << m::node{id}.room_id() << std::endl;
-		return true;
-	}
+	out << m::room_id(id)
+	    << std::endl;
 
 	return true;
 }
