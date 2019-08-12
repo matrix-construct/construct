@@ -544,7 +544,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 		}
 		else if(!prev_idx)
 		{
-			log::derror
+			log::dwarning
 			{
 				log, "No index found to ref %s PREV of %s",
 				string_view{prev_id},
@@ -740,7 +740,7 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 	}
 	else if(!event_idx)
 	{
-		log::derror
+		log::dwarning
 		{
 			log, "No index found to ref %s M_RECEIPT__M_READ of %s",
 			string_view{event_id},
@@ -917,7 +917,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	}
 	else if(!event_idx)
 	{
-		log::derror
+		log::dwarning
 		{
 			log, "Cannot index m.in_reply_to in %s; referenced %s not found.",
 			string_view{event.event_id},
@@ -975,7 +975,7 @@ ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
 	}
 	else if(!event_idx)
 	{
-		log::derror
+		log::dwarning
 		{
 			log, "Cannot index m.room.redaction in %s; referenced %s not found.",
 			string_view{event.event_id},
@@ -1361,7 +1361,7 @@ ircd::m::dbs::_index_room_redact(db::txn &txn,
 	};
 
 	if(unlikely(!target_idx))
-		log::error
+		log::dwarning
 		{
 			"Redaction from '%s' missing redaction target '%s'",
 			string_view{event.event_id},
