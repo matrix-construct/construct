@@ -29,17 +29,14 @@ try
 			" database and start over."
 		};
 
-	if(!exists(user::users))
-		create(user::users, me.user_id, "internal");
-
-	if(!exists(my_room))
-		create(my_room, me.user_id, "internal");
-
 	if(!exists(me))
 	{
 		create(me.user_id);
 		me.activate();
 	}
+
+	if(!exists(my_room))
+		create(my_room, me.user_id, "internal");
 
 	if(!my_room.membership(me.user_id, "join"))
 		join(my_room, me.user_id);
@@ -54,12 +51,6 @@ try
 		send(my_room, me.user_id, "m.room.topic", "",
 		{
 			{ "topic", "The daemon's den." }
-		});
-
-	if(!user::users.has("m.room.name", ""))
-		send(user::users, me.user_id, "m.room.name", "",
-		{
-			{ "name", "Users" }
 		});
 
 	if(!exists(user::tokens))

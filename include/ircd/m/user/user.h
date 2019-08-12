@@ -46,7 +46,6 @@ struct ircd::m::user
 	using closure = std::function<void (const user &)>;
 	using closure_bool = std::function<bool (const user &)>;
 
-	static m::room users;
 	static m::room tokens;
 
 	id user_id;

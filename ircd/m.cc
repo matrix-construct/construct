@@ -481,9 +481,6 @@ ircd::m::self::init::init(const string_view &origin,
 	ircd_room_id = {"ircd", origin};
 	m::my_room = {ircd_room_id};
 
-	users_room_id = {"users", origin};
-	m::user::users = {users_room_id};
-
 	tokens_room_id = {"tokens", origin};
 	m::user::tokens = {tokens_room_id};
 
@@ -2559,25 +2556,6 @@ ircd::m::rooms::count_public(const string_view &server)
 //
 // m/user.h
 //
-
-/// ID of the room which indexes all users (an instance of the room is
-/// provided below).
-ircd::m::room::id::buf
-users_room_id
-{
-	"users", ircd::my_host()
-};
-
-/// The users room is the database of all users. It primarily serves as an
-/// indexing mechanism and for top-level user related keys. Accounts
-/// registered on this server will be among state events in this room.
-/// Users do not have access to this room, it is used internally.
-///
-ircd::m::room
-ircd::m::user::users
-{
-	users_room_id
-};
 
 /// ID of the room which stores ephemeral tokens (an instance of the room is
 /// provided below).
