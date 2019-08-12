@@ -10096,6 +10096,18 @@ console_id__user(opt &out,
                  const m::user::id &id,
                  const string_view &args)
 {
+	const bool exists
+	{
+		m::exists(id)
+	};
+
+	if(!exists)
+		throw m::NOT_FOUND
+		{
+			"User %s is not known to this server.",
+			string_view{id},
+		};
+
 	return true;
 }
 
