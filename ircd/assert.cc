@@ -10,30 +10,7 @@
 
 #include <RB_INC_SIGNAL_H
 
-#if !defined(NDEBUG) && defined(RB_ASSERT)
-void
-__assert(const char *__assertion,
-         const char *__file,
-         int __line)
-{
-	__assert_fail(__assertion, __file, __line, "<no function>");
-}
-#endif
-
-#if !defined(NDEBUG) && defined(RB_ASSERT)
-void
-__assert_perror_fail(int __errnum,
-                     const char *__file,
-                     unsigned int __line,
-                     const char *__function)
-{
-	char buf[32];
-	snprintf(buf, sizeof(buf), "perror #%d: ", __errnum);
-	__assert_fail(buf, __file, __line, __function);
-}
-#endif
-
-#if !defined(NDEBUG) && defined(RB_ASSERT)
+#ifdef IRCD_ASSERT_OVERRIDE
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunreachable-code"
@@ -44,12 +21,7 @@ __assert_fail(const char *__assertion,
               unsigned int __line,
               const char *__function)
 {
-	if(strcmp(__assertion, "critical") != 0)
-		fprintf(stderr, "\nassertion failed [%s +%u] %s :%s\n",
-		        __file,
-		        __line,
-		        __function,
-		        __assertion);
+	ircd::print_assertion(__assertion, __file, __line, __function);
 
 	if(ircd::soft_assert)
 		return;
@@ -97,3 +69,20 @@ __assert_fail(const char *__assertion,
 #pragma clang diagnostic pop
 #endif __clang__
 #endif
+
+void
+ircd::print_assertion(const char *const &__assertion,
+                      const char *const &__file,
+                      const unsigned &__line,
+                      const char *const &__function)
+noexcept
+{
+	if(strcmp(__assertion, "critical") == 0)
+		return;
+
+	fprintf(stderr, "\nassertion failed [%s +%u] %s :%s\n",
+	        __file,
+	        __line,
+	        __function,
+	        __assertion);
+}

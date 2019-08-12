@@ -227,6 +227,10 @@ AM_COND_IF(ASSERT,
 	if [[ ! -z "$assert_type" ]]; then
 		RB_DEFINE_UNQUOTED([ASSERT], ["$assert_type"], [Assertion behavior])
 	fi
+
+	if [ "$assert_type" == "trap" ]; then
+		RB_DEFINE([ASSERT_INTRINSIC], [1], [Intrinsic assertion behavior])
+	fi
 ])
 
 dnl

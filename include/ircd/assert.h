@@ -19,43 +19,61 @@
 #pragma once
 #define HAVE_IRCD_ASSERT_H
 
-namespace ircd
-{
-	void debugtrap();
-}
-
+/// This file has to be included prior to the standard library assert headers
 #if defined(RB_ASSERT) && defined(_ASSERT_H_DECLS) && defined(RB_DEBUG)
 	#error "Do not include <assert.h> or <cassert> first."
 #endif
 
+/// Define an indicator for whether we override standard assert() behavior in
+/// this build if the conditions are appropriate.
 #if defined(RB_ASSERT) && !defined(NDEBUG)
-#define _ASSERT_H_DECLS
+	#define IRCD_ASSERT_OVERRIDE
+	#define _ASSERT_H_DECLS
+#endif
 
+// Our utils
+namespace ircd
+{
+	void print_assertion(const char *const &, const char *const &, const unsigned &, const char *const &) noexcept;
+	void debugtrap() noexcept;
+}
+
+/// Override the standard assert behavior, if enabled, to trap into the
+/// debugger as close as possible to the offending site.
+///
+#if defined(IRCD_ASSERT_OVERRIDE) && defined(RB_ASSERT_INTRINSIC)
+extern "C" inline void
+__attribute__((flatten, always_inline, gnu_inline, artificial))
+__assert_fail(const char *__assertion,
+              const char *__file,
+              unsigned int __line,
+              const char *__function)
+{
+	ircd::print_assertion(__assertion, __file, __line, __function);
+	ircd::debugtrap();
+}
+#endif
+
+/// Override the standard assert behavior to take one of several different
+/// actions as defined in our internal assert.cc unit. When trapping assert
+/// is disabled this path will be used instead.
+///
+#if defined(IRCD_ASSERT_OVERRIDE) && !defined(RB_ASSERT_INTRINSIC)
 extern "C" void
 __attribute__((visibility("default")))
 __assert_fail(const char *__assertion,
               const char *__file,
               unsigned int __line,
               const char *__function);
-
-extern "C" void
-__attribute__((visibility("default")))
-__assert_perror_fail(int __errnum,
-                     const char *__file,
-                     unsigned int __line,
-                     const char *__function);
-
-extern "C" void
-__attribute__((visibility("default")))
-__assert(const char *__assertion,
-         const char *__file,
-         int __line);
-
 #endif
 
+/// Intrinsic to halt execution for examination by a tracing debugger without
+/// aborting the program.
+///
 extern inline void
 __attribute__((always_inline, gnu_inline, artificial))
 ircd::debugtrap()
+noexcept
 {
 	#if defined(__clang__)
 		static_assert(__has_builtin(__builtin_debugtrap));
