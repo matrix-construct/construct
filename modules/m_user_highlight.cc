@@ -117,17 +117,27 @@ ircd::m::user::highlight::count_between(const m::room &room,
                                         const event::idx_range &range)
 const
 {
-	static const event::fetch::opts fopts{[]
+	size_t ret(0);
+	for_each(room, range, [this, &ret]
+	(const m::event::idx &event_idx)
 	{
-		event::fetch::opts ret;
-		ret.keys = event::keys::include {"type", "content"};
-		ret.query_json_force = true;
-		return ret;
-	}()};
+		ret += has(event_idx);
+		return true;
+	});
 
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::user::highlight::for_each(const m::room &room,
+                                   const event::idx_range &range,
+                                   const event::closure_idx_bool &closure)
+const
+{
 	m::room::messages it
 	{
-		room, &fopts
+		room
 	};
 
 	assert(range.first <= range.second);
@@ -150,13 +160,11 @@ const
 			string_view{user.user_id},
 		};
 
-	size_t ret{0};
 	for(++it; it && it.event_idx() < range.second; ++it)
-		ret += cached(it.event_idx(), fopts)?
-			has(*it):
-			has(it.event_idx());
+		if(!closure(it.event_idx()))
+			return false;
 
-	return ret;
+	return true;
 }
 
 bool

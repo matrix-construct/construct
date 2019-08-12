@@ -30,6 +30,7 @@ struct ircd::m::user::highlight
 	bool has(const event &) const;
 	bool has(const event::idx &) const;
 
+	bool for_each(const m::room &, const event::idx_range &, const event::closure_idx_bool &) const;
 	size_t count_between(const m::room &, const event::idx_range &) const;
 	size_t count_to(const m::room &, const event::idx &) const;
 	size_t count(const m::room &) const;
