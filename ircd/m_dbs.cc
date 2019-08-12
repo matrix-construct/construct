@@ -1091,6 +1091,7 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 		_opts.event_idx = event_idx;
 		_opts.appendix.reset();
 		_opts.appendix.set(appendix::EVENT_REFS);
+		_opts.appendix.set(appendix::ROOM_REDACT);
 		_opts.event_refs = opts.horizon_resolve;
 		_opts.interpose = &txn;
 		write(txn, _event, _opts);
@@ -1361,12 +1362,19 @@ ircd::m::dbs::_index_room_redact(db::txn &txn,
 	};
 
 	if(unlikely(!target_idx))
+	{
 		log::dwarning
 		{
 			"Redaction from '%s' missing redaction target '%s'",
 			string_view{event.event_id},
 			target_id
 		};
+
+		if(opts.appendix.test(appendix::EVENT_HORIZON))
+			_index_event_horizon(txn, event, opts, target_id);
+
+		return;
+	}
 
 	char state_key_buf[event::STATE_KEY_MAX_SIZE];
 	const string_view &state_key
