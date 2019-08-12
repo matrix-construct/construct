@@ -3243,37 +3243,27 @@ ircd::m::dbs::room_state_space_key(const string_view &amalgam)
 		lstrip(amalgam, "\0"_sv)
 	};
 
-	const auto &type_split
+	const auto &[type, after_type]
 	{
 		split(key, "\0"_sv)
 	};
 
-	const auto &state_key_split
+	const auto &[state_key, after_state_key]
 	{
-		split(type_split.second, "\0"_sv)
-	};
-
-	const auto &type
-	{
-		type_split.first
-	};
-
-	const auto &state_key
-	{
-		state_key_split.first
+		split(after_type, "\0"_sv)
 	};
 
 	const int64_t &depth
 	{
-		size(state_key_split.second) >= 8?
-			int64_t(byte_view<int64_t>(state_key_split.second.substr(0, 8))):
+		size(after_state_key) >= 8?
+			int64_t(byte_view<int64_t>(after_state_key.substr(0, 8))):
 			-1L
 	};
 
 	const event::idx &event_idx
 	{
-		size(state_key_split.second) >= 16?
-			event::idx(byte_view<event::idx>(state_key_split.second.substr(8, 8))):
+		size(after_state_key) >= 16?
+			event::idx(byte_view<event::idx>(after_state_key.substr(8, 8))):
 			0UL
 	};
 
