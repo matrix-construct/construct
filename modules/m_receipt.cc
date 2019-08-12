@@ -498,6 +498,10 @@ try
 	if(!my(user))
 		return;
 
+	// Only broadcast if the user is joined to the room.
+	if(!m::room(room_id).membership(user, "join"))
+		return;
+
 	const m::user::room user_room
 	{
 		at<"sender"_>(event)
