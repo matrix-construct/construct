@@ -303,9 +303,10 @@ ircd::m::sync::room_state_polylog_events(data &data)
 
 		// For crazyloading, skip membership events in rooms the user is not
 		// presently joined.
-		if(!crazyload_historical_members && !data.args->full_state && data.phased)
-			if(data.membership != "join" && type == "m.room.member")
-				return true;
+		if(!crazyload_historical_members)
+			if(!data.args->full_state && type == "m.room.member")
+				if(data.membership == "leave" || data.membership == "ban")
+					return true;
 
 		this_ctx::interruption_point();
 		concurrent(event_idx);
