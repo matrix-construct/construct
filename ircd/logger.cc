@@ -675,7 +675,7 @@ noexcept
 	const bool copy_to_stdout
 	{
 		bool(conf.console_stdout)
-		&& (!console_quiet_stdout[lev] && log.cmasked)
+		&& ((!console_quiet_stdout[lev] && log.cmasked) || log.snote == '*')
 	};
 
 	ret |= copy_to_stdout | copy_to_stderr;
