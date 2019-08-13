@@ -13,14 +13,14 @@
 
 namespace ircd::m::users
 {
-	struct opts extern const default_opts;
+	struct opts extern const opts_default;
 
 	// Iterate the users
 	bool for_each(const opts &, const user::closure_bool &);
 	bool for_each(const user::closure_bool &);
 
-	size_t count(const opts & = default_opts);
-	bool exists(const opts & = default_opts);
+	size_t count(const opts & = opts_default);
+	bool exists(const opts & = opts_default);
 }
 
 /// Shape the query by matching users based on the options filled in.

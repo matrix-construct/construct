@@ -20,8 +20,8 @@ IRCD_MODULE
 	"Matrix users interface"
 };
 
-decltype(ircd::m::users::default_opts)
-ircd::m::users::default_opts;
+decltype(ircd::m::users::opts_default)
+ircd::m::users::opts_default;
 
 bool
 IRCD_MODULE_EXPORT
@@ -53,7 +53,7 @@ bool
 IRCD_MODULE_EXPORT
 ircd::m::users::for_each(const user::closure_bool &closure)
 {
-	return for_each(default_opts, closure);
+	return for_each(opts_default, closure);
 }
 
 bool
