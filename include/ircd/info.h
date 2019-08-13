@@ -43,6 +43,7 @@ namespace ircd::info
 	extern const size_t rlimit_rss;
 	extern const size_t rlimit_nofile;
 	extern const size_t rlimit_rttime;
+	extern const size_t rlimit_memlock;
 
 	// Host & third-party information
 	#ifdef HAVE_SYS_UTSNAME_H

@@ -41,7 +41,8 @@ ircd::info::dump()
 	// This message flashes information about IRCd itself for this execution.
 	log::info
 	{
-		"%s configured: %s; compiled: %s; executed: %s; %s",
+		log::star, "%s %s configured: %s; compiled: %s; executed: %s; %s",
+		BRANDING_NAME,
 		BRANDING_VERSION,
 		configured,
 		compiled,
@@ -52,7 +53,7 @@ ircd::info::dump()
 	// This message flashes information about our API dependencies from compile time.
 	log::info
 	{
-		"SD-6 %s. glibcxx %s. glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		log::star, "SD-6 %s. glibcxx %s. glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
 		string_view{sd6_version},
 		string_view{glibcxx_version_api},
 		string_view{glibc_version_api},
@@ -66,7 +67,7 @@ ircd::info::dump()
 	// This message flashes information about our ABI dependencies on this system.
 	log::info
 	{
-		"Linked: glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		log::star, "Linked: glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
 		string_view{glibc_version_abi},
 		string_view{boost_version_abi},
 		string_view{db::version_abi},
@@ -75,12 +76,24 @@ ircd::info::dump()
 		long(magic::version_abi),
 	};
 
+	#ifdef RB_DEBUG
+	log::logf
+	{
+		log::star, log::DEBUG,
+		"page_size=%zu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu",
+		page_size,
+		iov_max,
+		aio_max,
+		aio_reqprio_max,
+	};
+	#endif
+
 	// This message flashes posix information about the system and platform IRCd
 	// is running on when ::uname() is available
 	#ifdef HAVE_SYS_UTSNAME_H
 	log::info
 	{
-		"%s %s %s %s %s",
+		log::star, "%s %s %s %s %s",
 		utsname.sysname,
 		utsname.nodename,
 		utsname.release,
@@ -90,22 +103,22 @@ ircd::info::dump()
 	#endif
 
 	// This message flashes posix information about the resource limits
-	log::debug
+	#ifdef RB_DEBUG
+	log::logf
 	{
-		"AS=%lu DATA=%lu RSS=%lu NOFILE=%lu; RTTIME=%lu"
-		" page_size=%zu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu",
+		log::star, log::DEBUG,
+		"rlimit AS=%lu DATA=%lu RSS=%lu NOFILE=%lu RTTIME=%lu MEMLOCK=%lu",
 		rlimit_as,
 		rlimit_data,
 		rlimit_rss,
 		rlimit_nofile,
 		rlimit_rttime,
-		page_size,
-		iov_max,
-		aio_max,
-		aio_reqprio_max,
+		rlimit_memlock,
 	};
+	#endif
 
 	dump_cpu_info();
+
 }
 
 //
@@ -421,6 +434,14 @@ _get_rlimit(const int &resource)
 }
 #endif
 
+decltype(ircd::info::rlimit_memlock)
+ircd::info::rlimit_memlock
+{
+	#ifdef RLIMIT_MEMLOCK
+	_get_rlimit(RLIMIT_MEMLOCK)
+	#endif
+};
+
 decltype(ircd::info::rlimit_rttime)
 ircd::info::rlimit_rttime
 {
@@ -703,7 +724,7 @@ ircd::info::dump_cpu_info()
 	#if defined(__i386__) or defined(__x86_64__)
 	log::info
 	{
-		"%s mmx:%b sse:%b sse2:%b sse3:%b ssse3:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b",
+		log::star, "%s mmx:%b sse:%b sse2:%b sse3:%b ssse3:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b",
 		hardware::x86::vendor,
 		hardware::x86::mmx,
 		hardware::x86::sse,
@@ -718,17 +739,24 @@ ircd::info::dump_cpu_info()
 	#endif
 
 	// This message flashes language standard information about this platform
-	log::debug
+	#ifdef RB_DEBUG
+	log::logf
 	{
+		log::star, log::DEBUG,
 		"max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
 		hardware::max_align,
 		hardware::hardware_concurrency,
 		hardware::destructive_interference,
 		hardware::constructive_interference,
 	};
+	#endif
+
+	if(!ircd::debugmode)
+		return;
 
 	log::debug
 	{
+		log::star,
 		"0..00 STD MANUFAC [%08x|%08x|%08x|%08x] "
 		"0..01 STD FEATURE [%08x|%08x|%08x|%08x]",
 		uint32_t(hardware::x86::manufact >> 0),
@@ -743,6 +771,7 @@ ircd::info::dump_cpu_info()
 
 	log::debug
 	{
+		log::star,
 		"8..00 EXT MANUFAC [%08x|%08x|%08x|%08x] "
 		"8..01 EXT FEATURE [%08x|%08x|%08x|%08x]",
 		uint32_t(hardware::x86::_manufact >> 0),
@@ -757,6 +786,7 @@ ircd::info::dump_cpu_info()
 
 	log::debug
 	{
+		log::star,
 		"8..07 EXT APMI    [%08x|%08x|%08x|%08x] "
 		"8..1C EXT LWPROF  [%08x|%08x|%08x|%08x]",
 		uint32_t(hardware::x86::_apmi >> 0),
