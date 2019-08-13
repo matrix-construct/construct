@@ -1039,7 +1039,7 @@ ircd::m::get(std::nothrow_t,
              const string_view &key,
              const mutable_buffer &buf)
 {
-	return get(std::nothrow, index(event_id), key, buf);
+	return get(std::nothrow, index(event_id, std::nothrow), key, buf);
 }
 
 ircd::const_buffer
@@ -1092,7 +1092,7 @@ ircd::m::get(std::nothrow_t,
              const string_view &key,
              const event::fetch::view_closure &closure)
 {
-	return get(std::nothrow, index(event_id), key, closure);
+	return get(std::nothrow, index(event_id, std::nothrow), key, closure);
 }
 
 bool
