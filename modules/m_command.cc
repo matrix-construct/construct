@@ -128,7 +128,7 @@ try
 
 	m::send(response_room, response_sender, response_type,
 	{
-		{ "msgtype",         "m.text"                  },
+		{ "msgtype",         "m.notice"                },
 		{ "format",          "org.matrix.custom.html"  },
 		{ "body",            { alt,  json::STRING }    },
 		{ "formatted_body",  { html, json::STRING }    },

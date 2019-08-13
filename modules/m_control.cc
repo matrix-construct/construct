@@ -100,7 +100,7 @@ noexcept try
 		"no alt text"
 	};
 
-	msghtml(control_room, m::me.user_id, str, alt);
+	msghtml(control_room, m::me.user_id, str, alt, "m.notice");
 }
 catch(const std::exception &e)
 {

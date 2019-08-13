@@ -253,7 +253,7 @@ github_handle(client &client,
 
 	const auto evid
 	{
-		m::msghtml(room_id, user_id, view(out, buf), "No alt text")
+		m::msghtml(room_id, user_id, view(out, buf), "No alt text", "m.notice")
 	};
 
 	log::info
