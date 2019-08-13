@@ -21,20 +21,28 @@ namespace ircd::m::events
 	using closure_sender_name_bool = std::function<bool (const id::user &)>;
 	using closure_origin_name_bool = std::function<bool (const string_view &)>;
 
+	// Iterate types starting with some prefix, or all types.
 	bool for_each_type(const closure_type_name_bool &);
 	bool for_each_type(const string_view &prefix, const closure_type_name_bool &);
-	bool for_each_sender(const closure_sender_name_bool &);
-	bool for_each_sender(const string_view &hostlb, const closure_sender_name_bool &);
-	bool for_each_origin(const closure_origin_name_bool &);
-	bool for_each_origin(const string_view &prefix, const closure_origin_name_bool &);
 
+	// Iterate servers starting at the hostname equal to or greater than provided
+	bool for_each_origin(const closure_origin_name_bool &);
+	bool for_each_origin(const string_view &hostlb, const closure_origin_name_bool &);
+
+	// Iterate senders of events (users).
+	bool for_each_sender(const closure_sender_name_bool &);
+	bool for_each_sender(const string_view &key, const closure_sender_name_bool &);
+
+	// Iterate event indexes matching the argument
 	bool for_each_in_type(const string_view &, const closure_type_bool &);
 	bool for_each_in_sender(const id::user &, const closure_sender_bool &);
 	bool for_each_in_origin(const string_view &, const closure_sender_bool &);
 
+	// Iterate viable event indexes in a range
 	bool for_each(const range &, const event::closure_idx_bool &);
 	bool for_each(const range &, const event_filter &, const event::closure_idx_bool &);
 
+	// Iterate events in an index range
 	bool for_each(const range &, const closure_bool &);
 	bool for_each(const range &, const event_filter &, const closure_bool &);
 

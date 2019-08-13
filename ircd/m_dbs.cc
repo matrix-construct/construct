@@ -2202,11 +2202,11 @@ ircd::m::dbs::desc::events__event_sender
 
 	origin | localpart, event_idx => --
 
-	The senders of events are indexes by this column. This allows for all
+	The senders of events are indexed by this column. This allows for all
 	events from a sender to be iterated. Additionally, all events from a
 	server and all known servers can be iterated from this column.
 
-	They key is made from a user mxid and an event_id, where the mxid is
+	The key is made from a user mxid and an event_id, where the mxid is
 	part-swapped so the origin comes first, and the @localpart comes after.
 	Lookups can be performed for an origin or a full user_mxid.
 
