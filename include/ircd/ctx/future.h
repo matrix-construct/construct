@@ -57,6 +57,8 @@ struct ircd::ctx::future
 	void wait() const;
 
 	T get();
+	template<class duration> T get(const duration &d);
+	template<class time_point> T get_until(const time_point &);
 
 	future() = default;
 	future(promise<T> &promise);
@@ -207,6 +209,24 @@ ircd::ctx::future<void>::~future()
 noexcept
 {
 	invalidate(state());
+}
+
+template<class T>
+template<class time_point>
+T
+ircd::ctx::future<T>::get_until(const time_point &tp)
+{
+	this->wait_until(tp);
+	return this->get();
+}
+
+template<class T>
+template<class duration>
+T
+ircd::ctx::future<T>::get(const duration &d)
+{
+	this->wait(d);
+	return this->get();
 }
 
 template<class T>
