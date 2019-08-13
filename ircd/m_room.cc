@@ -3330,6 +3330,18 @@ ircd::m::room::origins::random(const origins &origins,
 	return ret;
 }
 
+bool
+ircd::m::room::origins::empty()
+const
+{
+	return for_each(closure_bool{[]
+	(const string_view &)
+	{
+		// return false to break and return false.
+		return false;
+	}});
+}
+
 size_t
 ircd::m::room::origins::count()
 const
@@ -3350,7 +3362,7 @@ const
 	size_t ret{0};
 	for_each([&ret](const string_view &server)
 	{
-		ret += !empty(server::errmsg(server));
+		ret += !ircd::empty(server::errmsg(server));
 	});
 
 	return ret;

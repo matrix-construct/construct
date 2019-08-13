@@ -32,6 +32,7 @@ struct ircd::m::room::origins
 	size_t count_online() const;
 	size_t count_error() const;
 	size_t count() const;
+	bool empty() const;
 
 	// select an origin in the room at random; use proffer to refuse and try another.
 	static bool random(const origins &, const closure &, const closure_bool &);
