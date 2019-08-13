@@ -19,7 +19,7 @@ IRCD_MODULE
 resource
 protocols_resource
 {
-	"/_matrix/client/unstable/thirdparty/protocols",
+	"/_matrix/client/r0/thirdparty/protocols",
 	{
 		"(no-section) Unstable thirdparty protocols support"
 	}
