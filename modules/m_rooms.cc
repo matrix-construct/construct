@@ -70,6 +70,14 @@ ircd::m::rooms::for_each(const opts &opts,
 			if(room_id < opts.room_id)
 				return;
 
+		if(opts.remote_joined_only)
+			if(room(room_id).lonly())
+				return;
+
+		if(opts.local_only)
+			if(!room(room_id).lonly())
+				return;
+
 		if(opts.server && !opts.summary)
 			if(opts.server != room_id.host())
 				return;

@@ -87,4 +87,12 @@ struct ircd::m::rooms::opts
 	/// at the same or next key, and continue indefinitely. By false default,
 	/// when a room_id is given a for_each() will have 0 or 1 iterations.
 	bool lower_bound {false};
+
+	/// Local-only (see room/room.h). If set to true, results are limited to
+	/// rooms where no other server is joined to the room.
+	bool local_only {false};
+
+	/// Non-lonly (see room/room.h). If set to true, rooms where no
+	/// other server is joined to the room are filtered from the results.
+	bool remote_joined_only {false};
 };
