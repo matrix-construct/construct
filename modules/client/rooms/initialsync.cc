@@ -108,7 +108,7 @@ get__initialsync_local(client &client,
 
 	json::stack::member
 	{
-		out, "visibility", m::rooms::is_public(room)? "public"_sv: "private"_sv
+		out, "visibility", m::rooms::summary::has(room)? "public"_sv: "private"_sv
 	};
 
 	const m::user::room_account_data room_account_data

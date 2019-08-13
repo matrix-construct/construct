@@ -8,443 +8,110 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::m::rooms
-{
-	static string_view make_state_key(const mutable_buffer &out, const m::room::id &);
-	static m::room::id::buf unmake_state_key(const string_view &);
-
-	static void remote_summary_chunk(const m::room &room, json::stack::object &obj);
-	static void local_summary_chunk(const m::room &room, json::stack::object &obj);
-	static bool for_each_public(const string_view &room_id_lb, const room::id::closure_bool &);
-
-	extern conf::item<size_t> fetch_limit;
-	extern conf::item<seconds> fetch_timeout;
-	extern m::hookfn<vm::eval &> create_public_room;
-	extern const room::id::buf public_room_id;
-}
-
 ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix rooms interface; modular components"
 };
 
-decltype(ircd::m::rooms::public_room_id)
-ircd::m::rooms::public_room_id
-{
-    "public", ircd::my_host()
-};
-
-/// Create the public rooms room during initial database bootstrap.
-/// This hooks the creation of the !ircd room which is a fundamental
-/// event indicating the database has just been created.
-decltype(ircd::m::rooms::create_public_room)
-ircd::m::rooms::create_public_room
-{
-	{
-		{ "_site",       "vm.effect"      },
-		{ "room_id",     "!ircd"          },
-		{ "type",        "m.room.create"  },
-	},
-
-	[](const m::event &, m::vm::eval &)
-	{
-		m::create(public_room_id, m::me.user_id);
-	}
-};
+decltype(ircd::m::rooms::opts_default)
+ircd::m::rooms::opts_default;
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::rooms::for_each(const each_opts &opts)
+ircd::m::rooms::has(const opts &opts)
 {
-	if(opts.public_rooms)
-		return for_each_public(opts.key, opts.closure);
-
-	const room::state state
+	return !for_each(opts, []
+	(const m::room::id &)
 	{
-		my_room
-	};
-
-	const room::state::keys_bool keys{[&opts]
-	(const string_view &room_id) -> bool
-	{
-		return opts.closure(room_id);
-	}};
-
-	return state.for_each("ircd.room", opts.key, keys);
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::rooms::is_public(const room::id &room_id)
-{
-	const m::room room{public_room_id};
-	const m::room::state state{room};
-	return state.has("ircd.room", room_id);
+		// false to break; for_each() returns false
+		return false;
+	});
 }
 
 size_t
 IRCD_MODULE_EXPORT
-ircd::m::rooms::count_public(const string_view &server)
+ircd::m::rooms::count(const opts &opts)
 {
 	size_t ret{0};
-	const auto count{[&ret]
-	(const m::room::id &room_id)
+	for_each(opts, [&ret]
+	(const m::room::id &)
 	{
 		++ret;
 		return true;
-	}};
+	});
 
-	for_each_public(server, count);
 	return ret;
 }
 
 bool
-ircd::m::rooms::for_each_public(const string_view &key,
-                                const room::id::closure_bool &closure)
-{
-	const room::state state
-	{
-		public_room_id
-	};
-
-	const bool is_room_id
-	{
-		m::valid(m::id::ROOM, key)
-	};
-
-	char state_key_buf[256];
-	const auto state_key
-	{
-		is_room_id?
-			make_state_key(state_key_buf, key):
-			key
-	};
-
-	const string_view &server
-	{
-		is_room_id?
-			room::id(key).host():
-			key
-	};
-
-	const room::state::keys_bool keys{[&closure, &server]
-	(const string_view &state_key) -> bool
-	{
-		const auto room_id
-		{
-			unmake_state_key(state_key)
-		};
-
-		if(server && room_id.host() != server)
-			return false;
-
-		return closure(room_id);
-	}};
-
-	return state.for_each("ircd.rooms", state_key, keys);
-}
-
-void
 IRCD_MODULE_EXPORT
-ircd::m::rooms::summary_chunk(const m::room &room,
-                              json::stack::object &obj)
+ircd::m::rooms::for_each(const room::id::closure_bool &closure)
 {
-	return exists(room)?
-		local_summary_chunk(room, obj):
-		remote_summary_chunk(room, obj);
+	return for_each(opts_default, closure);
 }
 
-void
-ircd::m::rooms::remote_summary_chunk(const m::room &room,
-                                     json::stack::object &obj)
+bool
+IRCD_MODULE_EXPORT
+ircd::m::rooms::for_each(const opts &opts,
+                         const room::id::closure_bool &closure)
 {
-	const m::room publix
+	bool ret{true};
+	const auto proffer{[&opts, &closure, &ret]
+	(const m::room::id &room_id)
 	{
-		public_room_id
-	};
-
-	char state_key_buf[256];
-	const auto state_key
-	{
-		make_state_key(state_key_buf, room.room_id)
-	};
-
-	publix.get("ircd.rooms", state_key, [&obj]
-	(const m::event &event)
-	{
-		const json::object &summary
+		if(opts.room_id && !opts.lower_bound)
 		{
-			json::at<"content"_>(event)
-		};
+			ret = false;
+			return;
+		}
 
-		for(const auto &member : summary)
-			json::stack::member m{obj, member.first, member.second};
-	});
-}
+		if(opts.room_id)
+			if(room_id < opts.room_id)
+				return;
 
-void
-ircd::m::rooms::local_summary_chunk(const m::room &room,
-                                    json::stack::object &obj)
-{
-	static const event::keys::include keys
-	{
-		"content",
-	};
+		if(opts.server && !opts.summary)
+			if(opts.server != room_id.host())
+				return;
 
-	const m::event::fetch::opts fopts
-	{
-		keys, room.fopts? room.fopts->gopts : db::gopts{}
-	};
+		if(opts.summary)
+			if(!summary::has(room_id))
+				return;
 
-	const m::room::state state
-	{
-		room, &fopts
-	};
+		if(opts.server && opts.summary)
+			if(!room::aliases(room_id).count(opts.server))
+				return;
 
-	// Closure over boilerplate primary room state queries; i.e matrix
-	// m.room.$type events with state key "" where the content is directly
-	// presented to the closure.
-	const auto query{[&state]
-	(const string_view &type, const string_view &content_key, const auto &closure)
-	{
-		state.get(std::nothrow, type, "", [&content_key, &closure]
-		(const m::event &event)
-		{
-			const auto &content(json::get<"content"_>(event));
-			const auto &value(unquote(content.get(content_key)));
-			closure(value);
-		});
+		if(opts.join_rule)
+			if(!room(room_id).join_rule(opts.join_rule))
+				return;
+
+		ret = closure(room_id);
 	}};
 
-	// Aliases array
+	// branch for optimized public rooms searches.
+	if(opts.summary)
 	{
-		json::stack::member aliases_m{obj, "aliases"};
-		json::stack::array array{aliases_m};
-		state.for_each("m.room.aliases", [&array]
-		(const m::event &event)
+		const room::id::buf public_room_id
 		{
-			const json::array aliases
-			{
-				json::get<"content"_>(event).get("aliases")
-			};
+			"!public", my_host()
+		};
 
-			for(const string_view &alias : aliases)
-				array.append(unquote(alias));
+		const room::state state{public_room_id};
+		return state.for_each("ircd.rooms", opts.server, [&proffer, &ret]
+		(const string_view &type, const string_view &state_key, const event::idx &event_idx)
+		{
+			room::id::buf buf;
+			proffer(room::id::unswap(state_key, buf));
+			return ret;
 		});
 	}
 
-	query("m.room.avatar_url", "url", [&obj]
-	(const string_view &value)
+	return events::for_each_in_type("m.room.create", [&proffer, &ret]
+	(const string_view &type, const event::idx &event_idx)
 	{
-		json::stack::member
-		{
-			obj, "avatar_url", value
-		};
+		assert(type == "m.room.create");
+		m::get(std::nothrow, event_idx, "room_id", proffer);
+		return ret;
 	});
-
-	query("m.room.canonical_alias", "alias", [&obj]
-	(const string_view &value)
-	{
-		json::stack::member
-		{
-			obj, "canonical_alias", value
-		};
-	});
-
-	query("m.room.guest_access", "guest_access", [&obj]
-	(const string_view &value)
-	{
-		json::stack::member
-		{
-			obj, "guest_can_join", json::value
-			{
-				value == "can_join"
-			}
-		};
-	});
-
-	query("m.room.name", "name", [&obj]
-	(const string_view &value)
-	{
-		json::stack::member
-		{
-			obj, "name", value
-		};
-	});
-
-	// num_join_members
-	{
-		const m::room::members members{room};
-		json::stack::member
-		{
-			obj, "num_joined_members", json::value
-			{
-				long(members.count("join"))
-			}
-		};
-	}
-
-	// room_id
-	{
-		json::stack::member
-		{
-			obj, "room_id", room.room_id
-		};
-	}
-
-	query("m.room.topic", "topic", [&obj]
-	(const string_view &value)
-	{
-		json::stack::member
-		{
-			obj, "topic", value
-		};
-	});
-
-	query("m.room.history_visibility", "history_visibility", [&obj]
-	(const string_view &value)
-	{
-		json::stack::member
-		{
-			obj, "world_readable", json::value
-			{
-				value == "world_readable"
-			}
-		};
-	});
-}
-
-decltype(ircd::m::rooms::fetch_timeout)
-ircd::m::rooms::fetch_timeout
-{
-	{ "name",     "ircd.m.rooms.fetch.timeout" },
-	{ "default",  45L /*  matrix.org :-/    */ },
-};
-
-decltype(ircd::m::rooms::fetch_limit)
-ircd::m::rooms::fetch_limit
-{
-	{ "name",     "ircd.m.rooms.fetch.limit" },
-	{ "default",  64L                        },
-};
-
-std::pair<size_t, std::string>
-IRCD_MODULE_EXPORT
-ircd::m::rooms::fetch_update(const net::hostport &hp,
-                             const string_view &since,
-                             const size_t &limit)
-{
-	m::v1::public_rooms::opts opts;
-	opts.limit = limit;
-	opts.since = since;
-	opts.include_all_networks = true;
-	opts.dynamic = true;
-
-	// Buffer for headers and send content only; received content is dynamic
-	const unique_buffer<mutable_buffer> buf
-	{
-		16_KiB
-	};
-
-	m::v1::public_rooms request
-	{
-		hp, buf, std::move(opts)
-	};
-
-	request.wait(seconds(fetch_timeout));
-
-	const auto code
-	{
-		request.get()
-	};
-
-	const json::object response
-	{
-		request
-	};
-
-	const json::array &chunk
-	{
-		response.get("chunk")
-	};
-
-	for(const json::object &summary : chunk)
-	{
-		const m::room::id &room_id
-		{
-			unquote(summary.at("room_id"))
-		};
-
-		summary_set(room_id, summary);
-	}
-
-	return
-	{
-		response.get("total_room_count_estimate", 0UL),
-		unquote(response.get("next_batch", string_view{}))
-	};
-}
-
-ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
-ircd::m::rooms::summary_del(const m::room &room)
-{
-	char state_key_buf[m::event::STATE_KEY_MAX_SIZE];
-	const m::room::state state{public_room_id};
-	const m::event::idx &event_idx
-	{
-		state.get(std::nothrow, "ircd.rooms", make_state_key(state_key_buf, room.room_id))
-	};
-
-	if(!event_idx)
-		return {};
-
-	const m::event::id::buf event_id
-	{
-		m::event_id(event_idx)
-	};
-
-	return redact(public_room_id, m::me, event_id, "delisted");
-}
-
-ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
-ircd::m::rooms::summary_set(const m::room::id &room_id,
-                            const json::object &summary)
-{
-	char state_key_buf[256];
-	const auto state_key
-	{
-		make_state_key(state_key_buf, room_id)
-	};
-
-	return send(public_room_id, m::me, "ircd.rooms", state_key, summary);
-}
-
-ircd::m::room::id::buf
-ircd::m::rooms::unmake_state_key(const string_view &key)
-{
-	const auto s
-	{
-		split(key, '!')
-	};
-
-	return m::room::id::buf
-	{
-		s.second, s.first
-	};
-}
-
-ircd::string_view
-ircd::m::rooms::make_state_key(const mutable_buffer &buf,
-                               const m::room::id &room_id)
-{
-	mutable_buffer out{buf};
-	consume(out, copy(out, room_id.host()));
-	consume(out, copy(out, room_id.local()));
-	return string_view
-	{
-		data(buf), data(out)
-	};
 }

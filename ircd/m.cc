@@ -204,6 +204,7 @@ ircd::m::module_names
 	"m_feds",
 	"m_events",
 	"m_rooms",
+	"m_rooms_summary",
 	"m_users",
 	"m_user",
 	"m_user_rooms",
@@ -2405,130 +2406,6 @@ ircd::m::event_filter::event_filter(const mutable_buffer &buf,
 	json::stringify(mutable_buffer{buf}, members)
 }
 {
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/rooms.h
-//
-
-ircd::m::event::id::buf
-ircd::m::rooms::summary_del(const m::room &r)
-{
-	using prototype = event::id::buf (const m::room &);
-
-	static mods::import<prototype> call
-	{
-		"m_rooms", "ircd::m::rooms::summary_del"
-	};
-
-	return call(r);
-}
-
-ircd::m::event::id::buf
-ircd::m::rooms::summary_set(const m::room &room)
-{
-	if(!exists(room))
-		throw m::NOT_FOUND
-		{
-			"Cannot set a summary for room '%s' which I have no state for",
-			string_view{room.room_id}
-		};
-
-	const unique_buffer<mutable_buffer> buf
-	{
-		48_KiB
-	};
-
-	const json::object summary
-	{
-		summary_chunk(room, buf)
-	};
-
-	return summary_set(room.room_id, summary);
-}
-
-ircd::m::event::id::buf
-ircd::m::rooms::summary_set(const m::room::id &room_id,
-                            const json::object &summary)
-{
-	using prototype = event::id::buf (const m::room::id &, const json::object &);
-
-	static mods::import<prototype> function
-	{
-		"m_rooms", "ircd::m::rooms::summary_set"
-	};
-
-	return function(room_id, summary);
-}
-
-ircd::json::object
-ircd::m::rooms::summary_chunk(const m::room &room,
-                              const mutable_buffer &buf)
-{
-	json::stack out{buf};
-	{
-		json::stack::object obj{out};
-		summary_chunk(room, obj);
-	}
-
-	return json::object
-	{
-		out.completed()
-	};
-}
-
-void
-ircd::m::rooms::summary_chunk(const m::room &room,
-                              json::stack::object &chunk)
-{
-	using prototype = void (const m::room &, json::stack::object &);
-
-	static mods::import<prototype> function
-	{
-		"m_rooms", "ircd::m::rooms::summary_chunk"
-	};
-
-	return function(room, chunk);
-}
-
-bool
-ircd::m::rooms::for_each(const each_opts &opts)
-{
-	using prototype = bool (const each_opts &);
-
-	static mods::import<prototype> call
-	{
-		"m_rooms", "ircd::m::rooms::for_each"
-	};
-
-	return call(opts);
-}
-
-bool
-ircd::m::rooms::is_public(const room::id &room_id)
-{
-	using prototype = bool (const room::id &);
-
-	static mods::import<prototype> call
-	{
-		"m_rooms", "ircd::m::rooms::is_public"
-	};
-
-	return call(room_id);
-}
-
-size_t
-ircd::m::rooms::count_public(const string_view &server)
-{
-	using prototype = size_t (const string_view &);
-
-	static mods::import<prototype> function
-	{
-		"m_rooms", "ircd::m::rooms::count_public"
-	};
-
-	return function(server);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

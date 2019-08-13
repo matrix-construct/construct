@@ -51,9 +51,10 @@ resource::response
 handle_get(client &client,
            const resource::request &request)
 {
+	char sincebuf[m::room::id::buf::SIZE];
 	const string_view &since
 	{
-		request.query["since"]
+		url::decode(sincebuf, request.query["since"])
 	};
 
 	if(since && !valid(m::id::ROOM, since))
@@ -90,6 +91,13 @@ handle_get(client &client,
 		response.buf, response.flusher(), size_t(flush_hiwat)
 	};
 
+	m::rooms::opts opts;
+	opts.summary = true;
+	opts.join_rule = "public";
+	opts.server = my_host();
+	opts.lower_bound = true;
+	opts.room_id = since;
+
 	size_t count{0};
 	m::room::id::buf prev_batch_buf;
 	m::room::id::buf next_batch_buf;
@@ -100,30 +108,25 @@ handle_get(client &client,
 			top, "chunk"
 		};
 
-		const string_view &key
+		m::rooms::for_each(opts, [&]
+		(const m::room::id &room_id)
 		{
-			since?: my_host()
-		};
+			json::stack::object obj
+			{
+				chunk
+			};
 
-		m::rooms::each_opts opts;
-		opts.public_rooms = true;
-		opts.key = key;
-		opts.closure = [&](const m::room::id &room_id)
-		{
-			json::stack::object obj{chunk};
-			m::rooms::summary_chunk(room_id, obj);
+			m::rooms::summary::chunk(room_id, obj);
 			next_batch_buf = room_id;
 			return ++count < limit;
-		};
-
-		m::rooms::for_each(opts);
+		});
 	}
 
 	json::stack::member
 	{
 		top, "total_room_count_estimate", json::value
 		{
-			ssize_t(m::rooms::count_public(my_host()))
+			ssize_t(m::rooms::count(opts))
 		}
 	};
 

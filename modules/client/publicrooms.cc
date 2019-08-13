@@ -52,7 +52,7 @@ resource::response
 get__publicrooms(client &client,
                  const resource::request &request)
 {
-	char since_buf[256];
+	char since_buf[m::room::id::buf::SIZE];
 	const string_view &since
 	{
 		request.has("since")?
@@ -96,7 +96,10 @@ get__publicrooms(client &client,
 
 	if(server && !my_host(server)) try
 	{
-		m::rooms::fetch_update(server, since, limit);
+		m::rooms::summary::fetch
+		{
+			server, since, limit
+		};
 	}
 	catch(const std::exception &e)
 	{
@@ -118,6 +121,14 @@ get__publicrooms(client &client,
 		response.buf, response.flusher(), size_t(flush_hiwat)
 	};
 
+	m::rooms::opts opts;
+	opts.join_rule = "public";
+	opts.summary = true;
+	opts.search_term = search_term;
+	opts.server = server?: my_host();
+	opts.lower_bound = true;
+	opts.room_id = since;
+
 	size_t count{0};
 	m::room::id::buf prev_batch_buf;
 	m::room::id::buf next_batch_buf;
@@ -125,42 +136,26 @@ get__publicrooms(client &client,
 	{
 		json::stack::member chunk_m{top, "chunk"};
 		json::stack::array chunk{chunk_m};
-
-		//TODO: better keying for search terms
-		const string_view &key
-		{
-			since?
-				since:
-			server?
-				server:
-			search_term?
-				search_term:
-			my_host()
-		};
-
-		m::rooms::each_opts opts;
-		opts.public_rooms = true;
-		opts.key = key;
-		opts.closure = [&](const m::room::id &room_id)
+		m::rooms::for_each(opts, [&](const m::room::id &room_id)
 		{
 			json::stack::object obj{chunk};
-			m::rooms::summary_chunk(room_id, obj);
-
+			m::rooms::summary::chunk(room_id, obj);
 			if(!count && !empty(since))
 				prev_batch_buf = room_id; //TODO: ???
 
 			next_batch_buf = room_id;
 			return ++count < limit;
-		};
-
-		m::rooms::for_each(opts);
+		});
 	}
 
+	// To count the total we clear the since token, otherwise the count
+	// will be the remainder.
+	opts.room_id = {};
 	json::stack::member
 	{
 		top, "total_room_count_estimate", json::value
 		{
-			ssize_t(m::rooms::count_public(server))
+			ssize_t(m::rooms::count(opts))
 		}
 	};
 

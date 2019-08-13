@@ -100,11 +100,11 @@ put__list_appservice(client &client,
 		case "public"_:
 			// We set an empty summary for this room because
 			// we already have its state on this server;
-			m::rooms::summary_set(room.room_id, json::object{});
+			m::rooms::summary::set(room.room_id, json::object{});
 			break;
 
 		case "private"_:
-			m::rooms::summary_del(room.room_id);
+			m::rooms::summary::del(room.room_id);
 			break;
 
 		default: throw m::UNSUPPORTED

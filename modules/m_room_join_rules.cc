@@ -42,7 +42,7 @@ _changed_rules(const m::event &event,
 	// public rooms list. We set an empty summary for this room because we
 	// already have its state on this server; saving a summary object in the
 	// event sent to !public is only for rooms whose state is not synced.
-	m::rooms::summary_set(room_id, json::object{});
+	m::rooms::summary::set(room_id, json::object{});
 }
 
 m::hookfn<m::vm::eval &>

@@ -16,67 +16,75 @@
 ///
 namespace ircd::m::rooms
 {
-	struct each_opts;
+	struct opts extern const opts_default;
 
-	bool is_public(const room::id &);
-	size_t count_public(const string_view &server = {});
+	// Iterate the rooms
+	bool for_each(const opts &, const room::id::closure_bool &);
+	bool for_each(const room::id::closure_bool &);
 
-	bool for_each(const each_opts &);
-	template<class... args> bool for_each(args&&...);
-
-	// Linkage to utils that build a publicrooms summary from room state.
-	void summary_chunk(const m::room &, json::stack::object &chunk);
-	json::object summary_chunk(const m::room &, const mutable_buffer &out);
-	event::id::buf summary_set(const m::room::id &, const json::object &summary);
-	event::id::buf summary_set(const m::room &);
-	event::id::buf summary_del(const m::room &);
-	std::pair<size_t, std::string> fetch_update(const net::hostport &, const string_view &since = {}, const size_t &limit = 64);
+	// tools
+	size_t count(const opts & = opts_default);
+	bool has(const opts & = opts_default);
 }
 
-/// Arguments structure to rooms::for_each(). This reduces the API surface to
-/// handle a rich set of ways to iterate over the rooms. Several convenience
-/// constructors based on common usage are provided; note that these are not
-/// the only options patterns.
-struct ircd::m::rooms::each_opts
+/// Interface to tools that build a publicrooms summary from room state.
+namespace ircd::m::rooms::summary
 {
-	/// If set, seek to this room_id or lower-bound to the closest room_id.
-	string_view key;
+	struct fetch;
 
-	/// All public rooms only; key may be a server hostname or room_id.
-	/// - for server hostname: iterates known rooms from that server.
-	/// - for room_id: starts iteration from that (or closest) room_id
-	///   which can be used as a since/pagination token.
-	bool public_rooms {false};
+	// observers
+	bool has(const room::id &);
+	void chunk(const room &, json::stack::object &chunk);
+	json::object chunk(const room &, const mutable_buffer &out);
 
-	/// Principal closure for results; invoked synchronously during the call;
-	/// for-each protocol: return true to continue, false to break.
-	room::id::closure_bool closure;
+	// mutators
+	event::id::buf set(const room::id &, const json::object &summary);
+	event::id::buf set(const room &);
+	event::id::buf del(const room &);
+}
 
-	each_opts(room::id::closure_bool);
-	each_opts(const string_view &key, room::id::closure_bool);
-	each_opts() = default;
+struct ircd::m::rooms::summary::fetch
+{
+	// conf
+	static conf::item<size_t> limit;
+	static conf::item<seconds> timeout;
+
+	// result
+	size_t total_room_count_estimate {0};
+	std::string next_batch;
+
+	// request
+	fetch(const net::hostport &hp,
+	      const string_view &since   =  {},
+	      const size_t &limit        = 64);
+
+	fetch() = default;
 };
 
-inline
-ircd::m::rooms::each_opts::each_opts(room::id::closure_bool closure)
-:closure{std::move(closure)}
-{}
-
-inline
-ircd::m::rooms::each_opts::each_opts(const string_view &key,
-                                     room::id::closure_bool closure)
-:key{key}
-,closure{std::move(closure)}
-{}
-
-template<class... args>
-bool
-ircd::m::rooms::for_each(args&&... a)
+/// Arguments structure to rooms::for_each(). This reduces the API surface to
+/// handle a rich set of ways to iterate over the rooms.
+struct ircd::m::rooms::opts
 {
-	const each_opts opts
-	{
-		std::forward<args>(a)...
-	};
+	/// A full or partial room_id can be defined; partial is only valid if
+	/// lower_bound is true.
+	string_view room_id;
 
-	return for_each(opts);
-}
+	/// Set a string for the join_rule; undefined matches all. For example,
+	/// if set to "join" then the iteration can list public rooms.
+	string_view join_rule;
+
+	/// Set a string to localize query to a single server
+	string_view server;
+
+	/// Spec search term
+	string_view search_term;
+
+	/// Filters results to those that have a public rooms list summary
+	bool summary {false};
+
+	/// Indicates if the interface treats the room_id specified as a lower
+	/// bound rather than exact match. This means an iteration will start
+	/// at the same or next key, and continue indefinitely. By false default,
+	/// when a room_id is given a for_each() will have 0 or 1 iterations.
+	bool lower_bound {false};
+};

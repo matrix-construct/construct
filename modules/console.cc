@@ -7566,11 +7566,45 @@ console_cmd__eval__file(opt &out, const string_view &line)
 bool
 console_cmd__rooms(opt &out, const string_view &line)
 {
-	m::rooms::for_each([&out]
-	(const m::room::id &room_id)
+	const params param{line, " ",
+	{
+		"server", "search_term", "limit"
+	}};
+
+	const string_view &server
+	{
+		param["server"] != "*"?
+			param["server"]:
+			string_view{}
+	};
+
+	const string_view &search_term
+	{
+		param["server"] && startswith(param["server"], ':') && param["search_term"] != "*"?
+			param["search_term"]:
+
+		param["server"] && startswith(param["server"], ':')?
+			string_view{}:
+
+		param["server"] != "*"?
+			param["server"]:
+
+		string_view{}
+	};
+
+	auto limit
+	{
+		param.at("limit", 32L)
+	};
+
+	m::rooms::opts opts;
+	opts.server = server;
+	opts.search_term = search_term;
+	m::rooms::for_each(opts, [&limit, &out]
+	(const m::room::id &room_id) -> bool
 	{
 		out << room_id << std::endl;
-		return true;
+		return --limit > 0;
 	});
 
 	return true;
@@ -7581,12 +7615,26 @@ console_cmd__rooms__public(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"server|room_id_lb", "limit"
+		"server", "search_term", "limit"
 	}};
 
-	const string_view &key
+	const string_view &server
 	{
-		param.at("server|room_id_lb", string_view{})
+		param.at("server", string_view{})
+	};
+
+	const string_view &search_term
+	{
+		param["server"] && startswith(param["server"], ':') && param["search_term"] != "*"?
+			param["search_term"]:
+
+		param["server"] && startswith(param["server"], ':')?
+			string_view{}:
+
+		param["server"] != "*"?
+			param["server"]:
+
+		string_view{}
 	};
 
 	auto limit
@@ -7594,17 +7642,18 @@ console_cmd__rooms__public(opt &out, const string_view &line)
 		param.at("limit", 32L)
 	};
 
-	m::rooms::each_opts opts;
-	opts.public_rooms = true;
-	opts.key = key;
-	opts.closure = [&limit, &out]
+	m::rooms::opts opts;
+	opts.server = server;
+	opts.search_term = search_term;
+	opts.summary = true;
+	opts.join_rule = "public";
+	m::rooms::for_each(opts, [&limit, &out]
 	(const m::room::id &room_id) -> bool
 	{
 		out << room_id << std::endl;
 		return --limit > 0;
-	};
+	});
 
-	m::rooms::for_each(opts);
 	return true;
 }
 
@@ -7626,14 +7675,14 @@ console_cmd__rooms__fetch(opt &out, const string_view &line)
 		param.at("since", string_view{})
 	};
 
-	const auto pair
+	const m::rooms::summary::fetch fetch
 	{
-		m::rooms::fetch_update(server, since)
+		server, since
 	};
 
 	out << "done" << std::endl
-	    << "total room count estimate: " << pair.first << std::endl
-	    << "next batch: " << pair.second << std::endl
+	    << "total room count estimate: " << fetch.total_room_count_estimate << std::endl
+	    << "next batch: " << fetch.next_batch << std::endl
 	    ;
 
 	return true;

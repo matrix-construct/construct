@@ -98,11 +98,11 @@ put__list_room(client &client,
 		case "public"_:
 			// We set an empty summary for this room because
 			// we already have its state on this server;
-			m::rooms::summary_set(room.room_id, json::object{});
+			m::rooms::summary::set(room.room_id, json::object{});
 			break;
 
 		case "private"_:
-			m::rooms::summary_del(room.room_id);
+			m::rooms::summary::del(room.room_id);
 			break;
 
 		default: throw m::UNSUPPORTED
@@ -153,7 +153,7 @@ get__list_room(client &client,
 
 	const string_view &visibility
 	{
-		m::rooms::is_public(room)? "public" : "private"
+		m::rooms::summary::has(room_id)? "public" : "private"
 	};
 
 	return resource::response
