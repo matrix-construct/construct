@@ -1330,7 +1330,7 @@ ircd::m::room::lonly()
 const
 {
 	const origins origins(*this);
-	return origins.only(my_host());
+	return origins.empty() || origins.only(my_host());
 }
 
 bool
