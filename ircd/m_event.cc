@@ -1101,11 +1101,6 @@ ircd::m::get(std::nothrow_t,
              const string_view &key,
              const event::fetch::view_closure &closure)
 {
-	const string_view &column_key
-	{
-		byte_view<string_view>{event_idx}
-	};
-
 	const auto &column_idx
 	{
 		json::indexof<event>(key)
@@ -1114,6 +1109,14 @@ ircd::m::get(std::nothrow_t,
 	auto &column
 	{
 		dbs::event_column.at(column_idx)
+	};
+
+	if(!event_idx)
+		return false;
+
+	const string_view &column_key
+	{
+		byte_view<string_view>{event_idx}
 	};
 
 	if(column)
@@ -1175,12 +1178,6 @@ ircd::m::seek(event::fetch &fetch,
 		index(event_id, std::nothrow)
 	};
 
-	if(!event_idx)
-	{
-		fetch.valid = false;
-		return fetch.valid;
-	}
-
 	return seek(fetch, event_idx, event_id, std::nothrow);
 }
 
@@ -1213,6 +1210,12 @@ ircd::m::seek(event::fetch &fetch,
 	fetch.event_id_buf = event_id?
 		event::id::buf{event_id}:
 		event::id::buf{};
+
+	if(!event_idx)
+	{
+		fetch.valid = false;
+		return fetch.valid;
+	}
 
 	const string_view &key
 	{
