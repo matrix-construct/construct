@@ -738,17 +738,10 @@ noexcept
 /// Returns unique ID of currently running context
 const uint64_t &
 ircd::ctx::this_ctx::id()
+noexcept
 {
 	static const uint64_t zero{0};
 	return current? id(cur()) : zero;
-}
-
-/// Returns optional developer-given name for currently running context
-ircd::string_view
-ircd::ctx::this_ctx::name()
-{
-	static const string_view nada{"*"};
-	return current? name(cur()) : nada;
 }
 
 //

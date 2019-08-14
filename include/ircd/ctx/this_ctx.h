@@ -16,14 +16,12 @@ namespace ircd::ctx {
 inline namespace this_ctx
 {
 	struct ctx &cur() noexcept;                  ///< Assumptional reference to *current
-	const uint64_t &id();                        // Unique ID for cur ctx
-	string_view name();                          // Optional label for cur ctx
-
+	const uint64_t &id() noexcept;               // Unique ID for cur ctx
+	string_view name() noexcept;                 // Optional label for cur ctx
 	ulong cycles() noexcept;                     // misc profiling related
-
 	bool interruption_requested() noexcept;      // interruption(cur())
-	void interruption_point();                   // throws if interruption_requested()
 
+	void interruption_point();                   // throws if interruption_requested()
 	void wait();                                 // Returns when context is woken up.
 	void yield();                                // Allow other contexts to run before returning.
 
@@ -131,16 +129,35 @@ ircd::ctx::this_ctx::wait(const duration &d)
 	return duration_cast<duration>(ret);
 }
 
-inline ulong
+/// View the name of the currently running context, or "*" if no context is
+/// currently running.
+inline ircd::string_view
+ircd::ctx::this_ctx::name()
+noexcept
+{
+	return current? name(cur()) : "*"_sv;
+}
+
+/// Calculate the current TSC (reference cycle count) accumulated for this
+/// context only. This is done by first calculating a cycle count for the
+/// current slice/epoch (see: ctx/prof.h) which is where the RDTSC sample
+/// occurs. This count is added to an accumulator value saved in the ctx
+/// structure. The accumulator value is updated at the end of each execution
+/// slice, thus giving us the cycle count for this ctx only, up to this point.
+extern inline ulong
+__attribute__((flatten, always_inline, gnu_inline, artificial))
 ircd::ctx::this_ctx::cycles()
 noexcept
 {
-	return cycles(cur()) + prof::cur_slice_cycles();
+	const auto slice(prof::cur_slice_cycles());
+	const auto accumulated(cycles(cur()));
+	return accumulated + slice;
 }
 
 /// Reference to the currently running context. Call if you expect to be in a
 /// context. Otherwise use the ctx::current pointer.
 inline ircd::ctx::ctx &
+__attribute__((always_inline))
 ircd::ctx::this_ctx::cur()
 noexcept
 {

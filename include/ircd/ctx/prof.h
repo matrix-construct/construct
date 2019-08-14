@@ -32,7 +32,7 @@ namespace ircd::ctx::prof
 	enum class event :uint8_t;
 	struct ticker;
 
-	uint64_t cycles() noexcept;
+	ulong cycles() noexcept;
 	string_view reflect(const event &);
 
 	// totals
@@ -92,14 +92,28 @@ struct ircd::ctx::prof::ticker
 	std::array<uint64_t, num_of<prof::event>()> event {{0}};
 };
 
-inline uint64_t
+/// Calculate the current reference cycle count (TSC) for the current
+/// execution epoch/slice. This involves one RDTSC sample which is provided
+/// by ircd::prof/ircd::prof::x86 (or for some other platform), and then
+/// subtracting away the prior RDTSC sample which the context system makes
+/// at the start of each execution slice.
+extern inline ulong
+__attribute__((flatten, always_inline, gnu_inline, artificial))
 ircd::ctx::prof::cur_slice_cycles()
 noexcept
 {
-    return cycles() - cur_slice_start();
+	const auto stop(cycles());
+	const auto start(cur_slice_start());
+    return stop - start;
 }
 
-extern inline uint64_t
+/// Sample the current TSC directly with an rdtsc; this is a convenience
+/// wrapper leading to the ircd::prof interface which contains the platform
+/// specific methods to efficiently sample a cycle count.
+///
+/// Developers are advised to obtain cycle counts from this_ctx::cycles()
+/// which accumulates the cycle count for a specific ctx's execution only.
+extern inline ulong
 __attribute__((flatten, always_inline, gnu_inline, artificial))
 ircd::ctx::prof::cycles()
 noexcept
