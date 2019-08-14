@@ -56,6 +56,7 @@ namespace ircd::ios
 
 	bool available() noexcept;
 	asio::io_context &get() noexcept;
+	const uint64_t &epoch() noexcept;
 
 	void forked_parent();
 	void forked_child();
@@ -266,6 +267,14 @@ inline const ircd::string_view &
 ircd::ios::name(const descriptor &descriptor)
 {
 	return descriptor.name;
+}
+
+inline const uint64_t &
+__attribute__((always_inline))
+ircd::ios::epoch()
+noexcept
+{
+	return handler::epoch;
 }
 
 inline void
