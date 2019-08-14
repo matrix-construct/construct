@@ -110,7 +110,7 @@ put__directory_room(client &client,
 		{
 			http::CONFLICT, "M_EXISTS",
 			"Room alias %s already exists",
-			room_alias
+			string_view{room_alias},
 		};
 
 	const unique_buffer<mutable_buffer> buf
