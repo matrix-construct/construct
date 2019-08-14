@@ -320,6 +320,7 @@ ircd::m::module_names
 	"web_hook",
 	"m_listen",
 	"m_vm",
+	"m_init_backfill",
 	"stats",
 };
 

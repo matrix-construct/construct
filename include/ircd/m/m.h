@@ -83,6 +83,7 @@ namespace ircd::m
 struct ircd::m::init
 {
 	struct modules;
+	struct backfill;
 
 	self::init _self;
 	dbs::init _dbs;
