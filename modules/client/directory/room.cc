@@ -66,7 +66,10 @@ put__directory_room(client &client,
 resource::method
 directory_room_put
 {
-	directory_room_resource, "PUT", put__directory_room
+	directory_room_resource, "PUT", put__directory_room,
+	{
+		directory_room_put.REQUIRES_AUTH
+	}
 };
 
 resource::response
