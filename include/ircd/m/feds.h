@@ -93,6 +93,11 @@ struct ircd::m::feds::opts
 	/// the user's closure is never invoked and no request is made if a remote
 	/// has a cached error.
 	bool closure_cached_errors {false};
+
+	/// Whether to skip any loopback queries to my own host. This is false by
+	/// default, and loopback queries are made for result completeness in the
+	/// typical use case.
+	bool exclude_myself {false};
 };
 
 enum class ircd::m::feds::op

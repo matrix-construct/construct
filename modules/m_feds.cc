@@ -460,6 +460,9 @@ ircd::m::feds::for_each_in_room(const opts &opts,
 	origins.for_each([&opts, &ret, &closure, &create_closure]
 	(const string_view &origin)
 	{
+		if(opts.exclude_myself && my_host(origin))
+			return;
+
 		const auto errmsg
 		{
 			server::errmsg(origin)
@@ -498,6 +501,9 @@ ircd::m::feds::for_one(const string_view &origin,
                        const std::function<T (request<T> &, const string_view &origin)> &create_closure)
 {
 	request_list ret;
+	if(opts.exclude_myself && my_host(origin))
+		return ret;
+
 	const auto errmsg
 	{
 		server::errmsg(origin)
