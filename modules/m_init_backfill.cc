@@ -42,8 +42,9 @@ ircd::m::init::backfill::worker_context;
 decltype(ircd::m::init::backfill::enable)
 ircd::m::init::backfill::enable
 {
-	{ "name",     "m.init.backfill.enable" },
-	{ "default",  true                     },
+	{ "name",     "ircd.m.init.backfill.enable" },
+	{ "default",  false                         },
+	{ "persist",  false                         },
 };
 
 void
