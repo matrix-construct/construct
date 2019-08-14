@@ -529,15 +529,35 @@ noexcept
 		ircd::log::console_ansi.at(lev)
 	};
 
+	// Get one of the two primary slice epoch counters. If this is being
+	// invoked on an ircd::ctx, we grab the ctx slice counter; otherwise we
+	// grab the ios slice counter.
+	const auto &epoch
+	{
+		ctx::current? ctx::epoch() : ios::epoch()
+	};
+
+	// With two possible slice epoch counters, the number of characters
+	// required for the epoch column might be different between two adjacent
+	// log messages. To maintain alignment we use this monotonic counter which
+	// gets bumped the first time either epoch value requires more columns. To
+	// minimize overhead here we simply settle for 3 different widths.
+	static size_t epoch_width{6}; epoch_width =
+		epoch < 1'000'000UL?
+			std::max(epoch_width, 6UL):
+		epoch < 100'000'000UL?
+			std::max(epoch_width, 8UL):
+			std::max(epoch_width, 12UL);
+
 	// Compose the prefix sequence into the buffer through stringstream
 	std::stringstream s;
 	pubsetbuf(s, buf);
 	s
 	<< microdate(date)
 	<< ' '
-	<< std::setw(6)
+	<< std::setw(epoch_width)
 	<< std::right
-	<< ctx::epoch()
+	<< epoch
 	<< ' '
 	<< console_ansi
 	<< std::setw(8)
