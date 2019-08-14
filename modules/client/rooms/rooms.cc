@@ -29,6 +29,16 @@ rooms_resource
 	}
 };
 
+resource
+rooms_resource_unstable
+{
+	"/_matrix/client/unstable/rooms/",
+	{
+		"(10.0) Rooms (unstable)",
+		resource::DIRECTORY,
+	}
+};
+
 resource::response
 get_rooms(client &client,
           const resource::request &request)
@@ -70,6 +80,9 @@ get_rooms(client &client,
 	if(cmd == "initialSync")
 		return get__initialsync(client, request, room_id);
 
+	if(cmd == "relations")
+		return get__relations(client, request, room_id);
+
 	throw m::NOT_FOUND
 	{
 		"/rooms command not found"
@@ -80,6 +93,12 @@ resource::method
 method_get
 {
 	rooms_resource, "GET", get_rooms
+};
+
+resource::method
+method_get_unstable
+{
+	rooms_resource_unstable, "GET", get_rooms
 };
 
 resource::response

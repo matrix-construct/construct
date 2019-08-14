@@ -273,6 +273,7 @@ client_client_rooms_la_SOURCES = \
 	client/rooms/read_markers.cc \
 	client/rooms/initialsync.cc \
 	client/rooms/report.cc \
+	client/rooms/relations.cc \
 	client/rooms/rooms.cc \
 	###
 

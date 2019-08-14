@@ -214,3 +214,13 @@ ircd::resource::response
 post__report(ircd::client &,
              const ircd::resource::request &,
              const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// relations.cc
+//
+
+ircd::resource::response
+get__relations(ircd::client &,
+               const ircd::resource::request &,
+               const ircd::m::room::id &);
