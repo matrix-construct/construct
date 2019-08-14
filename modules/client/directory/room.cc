@@ -96,16 +96,6 @@ put__directory_room(client &client,
 			string_view{room_id}
 		};
 
-	// Preliminary check
-	const m::room::power power{room_id};
-	if(!power(request.user_id, "", "m.room.aliases", room_alias.host()))
-		throw m::ACCESS_DENIED
-		{
-			"Insufficient power in %s to set alias %s",
-			string_view{room_id},
-			string_view{room_alias}
-		};
-
 	const unique_mutable_buffer buf
 	{
 		48_KiB
