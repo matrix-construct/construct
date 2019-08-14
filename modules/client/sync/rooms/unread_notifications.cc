@@ -20,6 +20,8 @@ namespace ircd::m::sync
 	static long _highlight_count(const room &, const user &u, const event::idx &a, const event::idx &b);
 	static bool room_unread_notifications_polylog(data &);
 	static bool room_unread_notifications_linear(data &);
+
+	extern conf::item<int64_t> exposure_depth;
 	extern item room_unread_notifications;
 }
 
@@ -34,6 +36,13 @@ ircd::m::sync::room_unread_notifications
 	}
 };
 
+decltype(ircd::m::sync::exposure_depth)
+ircd::m::sync::exposure_depth
+{
+	{ "name",         "ircd.client.sync.rooms.unread_notifications.exposure.depth" },
+	{ "default",      20L                                                          },
+};
+
 bool
 ircd::m::sync::room_unread_notifications_linear(data &data)
 {
@@ -46,7 +55,16 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 	if(!data.room)
 		return false;
 
+	// skips state events only until a non-state event is seen.
 	assert(data.event);
+	if(defined(json::get<"state_key"_>(*data.event)))
+		return false;
+
+	// skips old events the server has backfilled in the background.
+	if(int64_t(exposure_depth) > -1)
+		if(json::get<"depth"_>(*data.event) + int64_t(exposure_depth) < data.room_depth)
+			return false;
+
 	const auto &room{*data.room};
 	m::event::id::buf last_read;
 	if(!m::receipt::read(last_read, room.room_id, data.user))
