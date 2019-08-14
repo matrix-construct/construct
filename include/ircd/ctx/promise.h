@@ -47,18 +47,18 @@ struct ircd::ctx::promise_base
 	shared_state_base *st {nullptr};
 	mutable promise_base *next {nullptr};
 
-	template<class T> const shared_state<T> &state() const;
-	template<class T> shared_state<T> &state();
-	const shared_state_base &state() const;
-	shared_state_base &state();
+	template<class T> const shared_state<T> &state() const noexcept;
+	template<class T> shared_state<T> &state() noexcept;
+	const shared_state_base &state() const noexcept;
+	shared_state_base &state() noexcept;
 
 	void check_pending() const;
 	void make_ready();
 
   public:
-	bool valid() const;
-	operator bool() const;
-	bool operator!() const;
+	bool valid() const noexcept;
+	bool operator!() const noexcept;
+	explicit operator bool() const noexcept;
 
 	void set_exception(std::exception_ptr eptr);
 
@@ -172,9 +172,31 @@ const
 // promise_base
 //
 
+inline bool
+ircd::ctx::promise_base::operator!()
+const noexcept
+{
+	return !valid();
+}
+
+inline ircd::ctx::promise_base::operator
+bool()
+const noexcept
+{
+	return valid();
+}
+
+inline bool
+ircd::ctx::promise_base::valid()
+const noexcept
+{
+	return bool(st);
+}
+
 template<class T>
 ircd::ctx::shared_state<T> &
 ircd::ctx::promise_base::state()
+noexcept
 {
 	return static_cast<shared_state<T> &>(state());
 }
@@ -182,7 +204,23 @@ ircd::ctx::promise_base::state()
 template<class T>
 const ircd::ctx::shared_state<T> &
 ircd::ctx::promise_base::state()
-const
+const noexcept
 {
 	return static_cast<const shared_state<T> &>(state());
+}
+
+inline ircd::ctx::shared_state_base &
+ircd::ctx::promise_base::state()
+noexcept
+{
+	assert(valid());
+	return *st;
+}
+
+inline const ircd::ctx::shared_state_base &
+ircd::ctx::promise_base::state()
+const noexcept
+{
+	assert(valid());
+	return *st;
 }

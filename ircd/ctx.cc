@@ -2035,41 +2035,6 @@ const
 		throw promise_already_satisfied{};
 }
 
-bool
-ircd::ctx::promise_base::operator!()
-const
-{
-	return !valid();
-}
-
-ircd::ctx::promise_base::operator bool()
-const
-{
-	return valid();
-}
-
-bool
-ircd::ctx::promise_base::valid()
-const
-{
-	return bool(st);
-}
-
-ircd::ctx::shared_state_base &
-ircd::ctx::promise_base::state()
-{
-	assert(valid());
-	return *st;
-}
-
-const ircd::ctx::shared_state_base &
-ircd::ctx::promise_base::state()
-const
-{
-	assert(valid());
-	return *st;
-}
-
 /// Internal semantics; chases the linked list of promises and adds a reference
 /// to a new copy at the end (for copy semantic).
 void

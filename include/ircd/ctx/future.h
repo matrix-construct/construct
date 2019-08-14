@@ -80,7 +80,6 @@ struct ircd::ctx::future<void>
 
 	bool valid() const                           { return !is(state(), future_state::INVALID);     }
 	bool operator!() const                       { return !valid();                                }
-	operator bool() const                        { return valid();                                 }
 
 	template<class U, class time_point> friend bool wait_until(const future<U> &, const time_point &, std::nothrow_t);
 	template<class U, class time_point> friend void wait_until(const future<U> &, const time_point &);
