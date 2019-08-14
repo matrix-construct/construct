@@ -17,6 +17,7 @@ struct ircd::m::init::backfill
 	static void fini();
 	static void init();
 
+	static conf::item<bool> enable;
 	static std::unique_ptr<context> worker_context;
 	static log::log log;
 };
@@ -38,9 +39,27 @@ ircd::m::init::backfill::log
 decltype(ircd::m::init::backfill::worker_context)
 ircd::m::init::backfill::worker_context;
 
+decltype(ircd::m::init::backfill::enable)
+ircd::m::init::backfill::enable
+{
+	{ "name",     "m.init.backfill.enable" },
+	{ "default",  true                     },
+};
+
 void
 ircd::m::init::backfill::init()
 {
+	if(!enable)
+	{
+		log::warning
+		{
+			log, "Initial synchronization of rooms from remote servers has"
+			" been disabled by the configuration. Not fetching latest events."
+		};
+
+		return;
+	}
+
 	assert(!worker_context);
 	worker_context.reset(new context
 	{
