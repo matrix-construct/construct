@@ -3451,27 +3451,23 @@ noexcept try
 {
 	const auto &version
 	{
-		room_version?: json::get<"event_id"_>(event)? "1": "4"
+		room_version?: json::get<"event_id"_>(event)? "1"_sv: "4"_sv
 	};
 
 	thread_local char buf[64];
-	m::event::id check_id; switch(hash(version))
+	const event::id &check_id
 	{
-		case "1"_:
-		case "2"_:
-			check_id = m::event::id{json::get<"event_id"_>(event)};
-			break;
+		version == "1" || version == "2"?
+			event::id{json::get<"event_id"_>(event)}:
 
-		case "3"_:
-			check_id = m::event::id::v3{buf, event};
-			break;
+		version == "3"?
+			event::id{event::id::v3{buf, event}}:
 
-		case "4"_:
-		case "5"_:
-		default:
-			check_id = m::event::id::v4{buf, event};
-			break;
-	}
+		version == "4" || version == "5"?
+			event::id{event::id::v4{buf, event}}:
+
+		event::id{event::id::v4{buf, event}}
+	};
 
 	return event.event_id == check_id;
 }
