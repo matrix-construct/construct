@@ -41,7 +41,7 @@ try
 	if(!exists(my_room))
 		create(my_room, me.user_id, "internal");
 
-	if(!my_room.membership(me.user_id, "join"))
+	if(!membership(my_room, me, "join"))
 		join(my_room, me.user_id);
 
 	if(!my_room.has("m.room.name", ""))

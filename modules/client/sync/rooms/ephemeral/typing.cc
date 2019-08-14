@@ -41,7 +41,7 @@ ircd::m::sync::room_ephemeral_m_typing_linear(data &data)
 	};
 
 	// Check if our user is a member of the room targetted by the typing notif
-	if(!target_room.membership(data.user, "join"))
+	if(!membership(target_room, data.user, "join"))
 		return false;
 
 	const m::user::id &sender

@@ -101,7 +101,7 @@ get__state(client &client,
 			string_view{room_id}
 		};
 
-	if(!room.visible(request.user_id))
+	if(!visible(room, request.user_id))
 		throw m::ACCESS_DENIED
 		{
 			"You are not permitted to view %s",

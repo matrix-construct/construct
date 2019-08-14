@@ -25,19 +25,27 @@ namespace ircd::m
 	bool operator!=(const room &, const room &); // room_id inequality
 	bool operator==(const room &, const room &); // room_id equality
 
-	// [GET] Util
+	// [GET] Convenience boolean suite
 	bool exists(const room &);
 	bool exists(const id::room &);
 	bool exists(const id::room_alias &, const bool &remote = false);
 	bool internal(const id::room &);
-	bool federate(const id::room &);
-	id::user::buf creator(const id::room &);
+	bool federated(const id::room &);
 	bool creator(const id::room &, const id::user &);
+	bool membership(const room &, const id::user &, const string_view & = "join");
+	bool join_rule(const room &, const string_view &rule);
+	bool visible(const room &, const string_view &mxid, const m::event *const & = nullptr);
+	bool local_only(const room &);
+
+	// [GET] Convenience and tools
+	id::user::buf creator(const id::room &);
 	string_view type(const mutable_buffer &, const room &);
 	string_view version(const mutable_buffer &, const room &, std::nothrow_t);
 	string_view version(const mutable_buffer &, const room &);
+	string_view join_rule(const mutable_buffer &out, const room &);
+	string_view membership(const mutable_buffer &out, const room &, const m::id::user &);
+	id::user::buf any_user(const room &, const string_view &host, const string_view &memshp = "join");
 
-	// [GET]
 	id::room room_id(const mutable_buffer &, const id::room_alias &);
 	id::room room_id(const mutable_buffer &, const string_view &id_or_alias);
 	id::room::buf room_id(const id::room_alias &);
@@ -148,15 +156,6 @@ struct ircd::m::room
 	void get(const string_view &type, const event::closure &) const;
 	event::idx get(std::nothrow_t, const string_view &type) const;
 	event::idx get(const string_view &type) const;
-
-	// misc / convenience utils
-	bool membership(const m::id::user &, const string_view &membership = "join") const;
-	string_view membership(const mutable_buffer &out, const m::id::user &) const;
-	bool visible(const string_view &mxid, const m::event *const & = nullptr) const;
-	string_view join_rule(const mutable_buffer &out) const;
-	id::user::buf any_user(const string_view &host, const string_view &membership = "join") const;
-	bool join_rule(const string_view &rule) const;
-	bool lonly() const;
 
 	room(const id &room_id,
 	     const string_view &event_id,

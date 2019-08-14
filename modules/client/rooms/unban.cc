@@ -46,7 +46,7 @@ post__unban(client &client,
 			power.level("ban")
 		};
 
-	if(!room.membership(user_id, "ban"))
+	if(!membership(room, user_id, "ban"))
 		throw m::error
 		{
 			http::OK, "M_BAD_STATE",

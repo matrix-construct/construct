@@ -499,7 +499,7 @@ try
 		return;
 
 	// Only broadcast if the user is joined to the room.
-	if(!m::room(room_id).membership(user, "join"))
+	if(!membership(m::room(room_id), user, "join"))
 		return;
 
 	const m::user::room user_room

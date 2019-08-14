@@ -57,7 +57,7 @@ ircd::m::sync::rooms_linear(data &data)
 	const string_view &membership
 	{
 		data.room?
-			room.membership(membuf, data.user):
+			m::membership(membuf, room, data.user):
 			string_view{}
 	};
 

@@ -72,7 +72,7 @@ get__event_auth(client &client,
 
 	bool visible
 	{
-		room.visible(request.node_id)
+		m::visible(room, request.node_id)
 	};
 
 	// make an exception to the visibility for invitee cases.

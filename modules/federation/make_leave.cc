@@ -81,7 +81,7 @@ get__make_leave(client &client,
 	char membuf[m::room::MEMBERSHIP_MAX_SIZE];
 	const string_view membership
 	{
-		room.membership(membuf, user_id)
+		m::membership(membuf, room, user_id)
 	};
 
 	if(membership != "join" && membership != "invite")

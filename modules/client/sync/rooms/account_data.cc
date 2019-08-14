@@ -91,7 +91,7 @@ ircd::m::sync::room_account_data_linear_events(data &data,
 	char membuf[room::MEMBERSHIP_MAX_SIZE];
 	const auto membership
 	{
-		room.membership(membuf, data.user)
+		m::membership(membuf, room, data.user)
 	};
 
 	if(!membership)
@@ -153,7 +153,7 @@ ircd::m::sync::room_account_data_linear_tags(data &data,
 	char membuf[room::MEMBERSHIP_MAX_SIZE];
 	const auto membership
 	{
-		room.membership(membuf, data.user)
+		m::membership(membuf, room, data.user)
 	};
 
 	if(!membership)

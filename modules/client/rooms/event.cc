@@ -33,7 +33,7 @@ get__event(client &client,
 		room_id, event_id
 	};
 
-	if(!room.visible(request.user_id))
+	if(!visible(room, request.user_id))
 		throw m::ACCESS_DENIED
 		{
 			"You are not permitted to view the room at this event"

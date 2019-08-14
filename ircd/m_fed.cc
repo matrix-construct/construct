@@ -1623,13 +1623,13 @@ ircd::m::v1::fetch_head(const id::room &room_id,
 	// generate a random one from our host as well.
 	m::user::id::buf user_id
 	{
-		room.any_user(my_host(), "join")
+		any_user(room, my_host(), "join")
 	};
 
 	// Make another attempt to find an invited user because that carries some
 	// value (this query is not as fast as querying join memberships).
 	if(!user_id)
-		user_id = room.any_user(my_host(), "invite");
+		user_id = any_user(room, my_host(), "invite");
 
 	return fetch_head(room_id, remote, user_id);
 }

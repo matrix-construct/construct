@@ -75,7 +75,7 @@ commit(const m::typing &edu)
 {
 	// Check if the user is actually in the room.
 	const m::room room{at<"room_id"_>(edu)};
-	if(!room.membership(at<"user_id"_>(edu), "join"))
+	if(!membership(room, at<"user_id"_>(edu), "join"))
 		throw m::FORBIDDEN
 		{
 			"Cannot type in a room %s to which you are not joined",
@@ -217,7 +217,7 @@ _handle_edu_m_typing(const m::event &event,
 		// branch for remote servers only because our committer above did this
 		// already for our client.
 		const m::room room{room_id};
-		if(!room.membership(user_id, "join"))
+		if(!membership(room, user_id, "join"))
 		{
 			log::dwarning
 			{

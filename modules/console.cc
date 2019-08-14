@@ -7729,7 +7729,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 	char version_buf[32];
 	out << "index:         " << m::room::index(room_id) << std::endl;
 	out << "version:       " << m::version(version_buf, room_id) << std::endl;
-	out << "federate:      " << std::boolalpha << m::federate(room_id) << std::endl;
+	out << "federated:     " << std::boolalpha << m::federated(room_id) << std::endl;
 	out << "top index:     " << std::get<m::event::idx>(top) << std::endl;
 	out << "top depth:     " << std::get<int64_t>(top) << std::endl;
 	out << "top event:     " << std::get<m::event::id::buf>(top) << std::endl;
@@ -8123,7 +8123,7 @@ console_cmd__room__visible(opt &out, const string_view &line)
 
 	const bool visible
 	{
-		room.visible(mxid)
+		m::visible(room, mxid)
 	};
 
 	out << room_id << " is "
@@ -11949,12 +11949,12 @@ console_cmd__fed__head(opt &out, const string_view &line)
 		user_id = param["user_id"];
 
 	if(!user_id)
-		user_id = room.any_user(my_host(), "join");
+		user_id = any_user(room, my_host(), "join");
 
 	// Make another attempt to find an invited user because that carries some
 	// value (this query is not as fast as querying join memberships).
 	if(!user_id)
-		user_id = room.any_user(my_host(), "invite");
+		user_id = any_user(room, my_host(), "invite");
 
 	thread_local char buf[16_KiB];
 	m::v1::make_join::opts opts;

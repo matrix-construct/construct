@@ -71,11 +71,11 @@ ircd::m::rooms::for_each(const opts &opts,
 				return;
 
 		if(opts.remote_joined_only)
-			if(room(room_id).lonly())
+			if(local_only(room(room_id)))
 				return;
 
 		if(opts.local_only)
-			if(!room(room_id).lonly())
+			if(!local_only(room(room_id)))
 				return;
 
 		if(opts.server && !opts.summary)
@@ -91,7 +91,7 @@ ircd::m::rooms::for_each(const opts &opts,
 				return;
 
 		if(opts.join_rule)
-			if(!room(room_id).join_rule(opts.join_rule))
+			if(!join_rule(room(room_id), opts.join_rule))
 				return;
 
 		ret = closure(room_id);

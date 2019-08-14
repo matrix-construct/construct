@@ -25,7 +25,7 @@ _visible_to_user(const m::event &event,
 	char membership_buf[m::room::MEMBERSHIP_MAX_SIZE];
 	string_view membership
 	{
-		room.membership(membership_buf, user_id)
+		m::membership(membership_buf, room, user_id)
 	};
 
 	if(membership == "join")
@@ -46,7 +46,7 @@ _visible_to_user(const m::event &event,
 	if(room.event_id)
 	{
 		const m::room present{room.room_id};
-		membership = present.membership(membership_buf, user_id);
+		membership = m::membership(membership_buf, present, user_id);
 		return membership == "join" || membership == "invite";
 	}
 

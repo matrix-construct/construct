@@ -70,7 +70,7 @@ ircd::m::join(const room &room,
 		return ret;
 	}
 
-	if(room.membership(user_id, "join"))
+	if(membership(room, user_id, "join"))
 	{
 		const auto &event_idx
 		{

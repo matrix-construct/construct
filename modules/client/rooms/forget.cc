@@ -42,7 +42,7 @@ post__forget(client &client,
 	char room_membuf[m::room::MEMBERSHIP_MAX_SIZE];
 	const string_view &room_membership
 	{
-		room.membership(room_membuf, request.user_id)
+		membership(room_membuf, room, request.user_id)
 	};
 
 	char user_membuf[m::room::MEMBERSHIP_MAX_SIZE];

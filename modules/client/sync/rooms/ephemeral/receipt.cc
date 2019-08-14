@@ -55,7 +55,7 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_linear(data &data)
 		json::get<"state_key"_>(*data.event)
 	};
 
-	if(!room.membership(data.user, "join"))
+	if(!membership(room, data.user, "join"))
 		return false;
 
 	json::stack::object rooms

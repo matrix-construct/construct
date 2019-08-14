@@ -985,6 +985,99 @@ ircd::m::top(std::nothrow_t,
 	return ret;
 }
 
+ircd::m::id::user::buf
+ircd::m::any_user(const room &room,
+                  const string_view &host,
+                  const string_view &membership)
+{
+	user::id::buf ret;
+	const room::members members{room};
+	members.for_each(membership, [&host, &ret]
+	(const auto &user_id, const auto &event_idx)
+	{
+		if(host && user_id.host() != host)
+			return true;
+
+		ret = user_id;
+		return false;
+	});
+
+	return ret;
+}
+
+ircd::string_view
+ircd::m::membership(const mutable_buffer &out,
+                    const room &room,
+                    const user::id &user_id)
+{
+	const room::state state
+	{
+		room
+	};
+
+	const auto event_idx
+	{
+		state.get(std::nothrow, "m.room.member", user_id)
+	};
+
+	return room::members::membership(out, event_idx);
+}
+
+/// Receive the join_rule of the room into buffer of sufficient size.
+/// The protocol does not specify a join_rule string longer than 7
+/// characters but do be considerate of the future. This function
+/// properly defaults the string as per the protocol spec.
+ircd::string_view
+ircd::m::join_rule(const mutable_buffer &out,
+                   const room &room)
+{
+	static const string_view default_join_rule
+	{
+		"invite"
+	};
+
+	string_view ret
+	{
+		default_join_rule
+	};
+
+	const event::keys::include keys
+	{
+		"content"
+	};
+
+	const m::event::fetch::opts fopts
+	{
+		keys, room.fopts? room.fopts->gopts : db::gopts{}
+	};
+
+	const room::state state
+	{
+		room, &fopts
+	};
+
+	state.get(std::nothrow, "m.room.join_rules", "", [&ret, &out]
+	(const m::event &event)
+	{
+		const auto &content
+		{
+			json::get<"content"_>(event)
+		};
+
+		const json::string &rule
+		{
+			content.get("join_rule", default_join_rule)
+		};
+
+		ret = string_view
+		{
+			data(out), copy(out, rule)
+		};
+	});
+
+	return ret;
+}
+
 ircd::string_view
 ircd::m::version(const mutable_buffer &buf,
                  const room &room)
@@ -1019,20 +1112,19 @@ ircd::m::version(const mutable_buffer &buf,
 		strlcpy{buf, "1"_sv}
 	};
 
-	if(event_idx)
-		m::get(std::nothrow, event_idx, "content", [&buf, &ret]
-		(const json::object &content)
+	m::get(std::nothrow, event_idx, "content", [&buf, &ret]
+	(const json::object &content)
+	{
+		const json::string &version
 		{
-			const json::string &version
-			{
-				content.get("room_version", "1")
-			};
+			content.get("room_version", "1")
+		};
 
-			ret = strlcpy
-			{
-				buf, version
-			};
-		});
+		ret = strlcpy
+		{
+			buf, version
+		};
+	});
 
 	return ret;
 }
@@ -1047,34 +1139,21 @@ ircd::m::type(const mutable_buffer &buf,
 		room.get(std::nothrow, "m.room.create", "")
 	};
 
-	if(event_idx)
-		m::get(std::nothrow, event_idx, "content", [&buf, &ret]
-		(const json::object &content)
+	m::get(std::nothrow, event_idx, "content", [&buf, &ret]
+	(const json::object &content)
+	{
+		const json::string &type
 		{
-			const json::string &type
-			{
-				content.get("type")
-			};
+			content.get("type")
+		};
 
-			ret = strlcpy
-			{
-				buf, type
-			};
-		});
+		ret = strlcpy
+		{
+			buf, type
+		};
+	});
 
 	return ret;
-}
-
-bool
-ircd::m::creator(const id::room &room_id,
-                 const id::user &user_id)
-{
-	const auto creator_user_id
-	{
-		creator(room_id)
-	};
-
-	return creator_user_id == user_id;
 }
 
 ircd::m::id::user::buf
@@ -1084,10 +1163,7 @@ ircd::m::creator(const id::room &room_id)
 	// future compatibility if the content.creator field gets eliminated.
 	static const event::fetch::opts fopts
 	{
-		event::keys::include
-		{
-			"sender",
-		}
+		event::keys::include {"sender"}
 	};
 
 	const room::state state
@@ -1108,15 +1184,91 @@ ircd::m::creator(const id::room &room_id)
 	return ret;
 }
 
+//
+// boolean suite
+//
+
+/// The only joined members are from our origin (local only). This indicates
+/// we won't have any other federation servers to query for room data, nor do
+/// we need to broadcast events to the federation. This is not an authority
+/// about a room's type or ability to federate. Returned value changes to false
+/// when another origin joins.
 bool
-ircd::m::federate(const id::room &room_id)
+ircd::m::local_only(const room &room)
+{
+	const room::origins origins
+	{
+		room
+	};
+
+	return origins.empty() || origins.only(my_host());
+}
+
+bool
+ircd::m::visible(const room &room,
+                 const string_view &mxid,
+                 const event *const &event)
+{
+	if(event)
+		return m::visible(*event, mxid);
+
+	const m::event event_
+	{
+		json::members
+		{
+			{ "event_id",  room.event_id  },
+			{ "room_id",   room.room_id   },
+		}
+	};
+
+	return m::visible(event_, mxid);
+}
+
+/// Test of the join_rule of the room is the argument.
+bool
+ircd::m::join_rule(const room &room,
+                   const string_view &rule)
+{
+	char buf[32];
+	return join_rule(buf, room) == rule;
+}
+
+bool
+ircd::m::membership(const room &room,
+                    const user::id &user_id,
+                    const string_view &membership)
+{
+	const room::state state
+	{
+		room
+	};
+
+	const auto event_idx
+	{
+		state.get(std::nothrow, "m.room.member", user_id)
+	};
+
+	return room::members::membership(event_idx, membership);
+}
+
+bool
+ircd::m::creator(const room::id &room_id,
+                 const user::id &user_id)
+{
+	const auto creator_user_id
+	{
+		creator(room_id)
+	};
+
+	return creator_user_id == user_id;
+}
+
+bool
+ircd::m::federated(const id::room &room_id)
 {
 	static const m::event::fetch::opts fopts
 	{
-		event::keys::include
-		{
-			"content",
-		}
+		event::keys::include { "content" },
 	};
 
 	const m::room::state state
@@ -1171,6 +1323,10 @@ ircd::m::exists(const room &room)
 {
 	return exists(room.room_id);
 }
+
+//
+// util
+//
 
 bool
 ircd::m::operator==(const room &a, const room &b)
@@ -1235,155 +1391,6 @@ ircd::m::room::index(const room::id &room_id,
 //
 // room::room
 //
-
-ircd::m::id::user::buf
-ircd::m::room::any_user(const string_view &host,
-                        const string_view &membership)
-const
-{
-	user::id::buf ret;
-	const members members{*this};
-	members.for_each(membership, [&host, &ret]
-	(const auto &user_id, const auto &event_idx)
-	{
-		if(host && user_id.host() != host)
-			return true;
-
-		ret = user_id;
-		return false;
-	});
-
-	return ret;
-}
-
-/// Test of the join_rule of the room is the argument.
-bool
-ircd::m::room::join_rule(const string_view &rule)
-const
-{
-	char buf[32];
-	return join_rule(mutable_buffer{buf}) == rule;
-}
-
-/// Receive the join_rule of the room into buffer of sufficient size.
-/// The protocol does not specify a join_rule string longer than 7
-/// characters but do be considerate of the future. This function
-/// properly defaults the string as per the protocol spec.
-ircd::string_view
-ircd::m::room::join_rule(const mutable_buffer &out)
-const
-{
-	static const string_view default_join_rule
-	{
-		"invite"
-	};
-
-	string_view ret
-	{
-		default_join_rule
-	};
-
-	const event::keys::include keys
-	{
-		"content"
-	};
-
-	const m::event::fetch::opts fopts
-	{
-		keys, this->fopts? this->fopts->gopts : db::gopts{}
-	};
-
-	const room::state state
-	{
-		*this, &fopts
-	};
-
-	state.get(std::nothrow, "m.room.join_rules", "", [&ret, &out]
-	(const m::event &event)
-	{
-		const auto &content
-		{
-			json::get<"content"_>(event)
-		};
-
-		const string_view &rule
-		{
-			content.get("join_rule", default_join_rule)
-		};
-
-		ret = string_view
-		{
-			data(out), copy(out, unquote(rule))
-		};
-	});
-
-	return ret;
-}
-
-/// The only joined members are from our origin (local only). This indicates
-/// we won't have any other federation servers to query for room data, nor do
-/// we need to broadcast events to the federation. This is not an authority
-/// about a room's type or ability to federate. Returned value changes to false
-/// when another origin joins.
-bool
-ircd::m::room::lonly()
-const
-{
-	const origins origins(*this);
-	return origins.empty() || origins.only(my_host());
-}
-
-bool
-ircd::m::room::visible(const string_view &mxid,
-                       const event *const &event)
-const
-{
-	if(event)
-		return m::visible(*event, mxid);
-
-	const m::event event_
-	{
-		json::members
-		{
-			{ "event_id",  event_id  },
-			{ "room_id",   room_id   },
-		}
-	};
-
-	return m::visible(event_, mxid);
-}
-
-bool
-ircd::m::room::membership(const m::id::user &user_id,
-                          const string_view &membership)
-const
-{
-	char buf[64];
-	return this->membership(buf, user_id) == membership;
-}
-
-ircd::string_view
-ircd::m::room::membership(const mutable_buffer &out,
-                          const m::id::user &user_id)
-const
-{
-	string_view ret;
-	const room::state state{*this};
-	state.get(std::nothrow, "m.room.member", user_id, [&out, &ret]
-	(const event::idx &event_idx)
-	{
-		m::get(std::nothrow, event_idx, "content", [&out, &ret]
-		(const json::object &content)
-		{
-			ret =
-			{
-				data(out), copy(out, unquote(content.get("membership")))
-			};
-		});
-	});
-
-	return ret;
-}
 
 bool
 ircd::m::room::has(const string_view &type)
