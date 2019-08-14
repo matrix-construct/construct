@@ -96,6 +96,7 @@ put__directory_room(client &client,
 			string_view{room_id}
 		};
 
+	// Preliminary check
 	const m::room::power power{room_id};
 	if(!power(request.user_id, "", "m.room.aliases", room_alias.host()))
 		throw m::ACCESS_DENIED
@@ -105,38 +106,49 @@ put__directory_room(client &client,
 			string_view{room_alias}
 		};
 
-	if(m::room::aliases::cache::has(room_alias))
-		throw m::error
+	const unique_mutable_buffer buf
+	{
+		48_KiB
+	};
+
+	// Generate the new content of the m.room.aliases
+	json::stack out{buf};
+	{
+		json::stack::object content
 		{
-			http::CONFLICT, "M_EXISTS",
-			"Room alias %s already exists",
-			string_view{room_alias},
+			out
 		};
 
-	const unique_buffer<mutable_buffer> buf
-	{
-		4_KiB //TODO: conf
-	};
+		json::stack::array array
+		{
+			content, "aliases"
+		};
 
-	json::stack out{buf};
-	json::stack::object content{out};
-	json::stack::array array
-	{
-		content, "aliases"
-	};
+		// Iterate existing aliases for host
+		const m::room::aliases aliases{room_id};
+		aliases.for_each(room_alias.host(), [&room_alias, &array]
+		(const m::room::alias &existing_alias)
+		{
+			// Check for duplicate
+			if(iequals(existing_alias, room_alias))
+				throw m::error
+				{
+					http::CONFLICT, "M_EXISTS",
+					"Room alias %s already exists",
+					string_view{room_alias},
+				};
 
-	const m::room::aliases aliases{room_id};
-	aliases.for_each(room_alias.host(), [&array]
-	(const m::room::alias &alias)
-	{
-		array.append(alias);
-		return true;
-	});
+			// Add existing alias
+			array.append(existing_alias);
+			return true;
+		});
 
-	array.append(room_alias);
-	array.~array();
-	content.~object();
+		//Add new alias
+		array.append(room_alias);
+	}
 
+	// Commit the new event
+	// TODO: ABA with another aliases event.
 	const auto eid
 	{
 		m::send(room_id, request.user_id, "m.room.aliases", room_alias.host(), json::object
