@@ -3475,6 +3475,15 @@ noexcept try
 
 	return event.event_id == check_id;
 }
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		"m::check_id() unexpected :%s", e.what()
+	};
+
+	return false;
+}
 catch(...)
 {
 	assert(0);
