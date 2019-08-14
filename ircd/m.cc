@@ -195,8 +195,8 @@ noexcept
 decltype(ircd::m::module_names)
 ircd::m::module_names
 {
-	"net_dns",
 	"conf",
+	"net_dns",
 	"m_noop",
 	"m_node",
 	"m_keys",
