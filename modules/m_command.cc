@@ -500,7 +500,7 @@ command__ping__room(const mutable_buffer &buf,
 
 	util::timer timer;
 	size_t responses{0};
-	m::feds::acquire(opts, [&timer, &responses, &buf, &out]
+	m::feds::execute(opts, [&timer, &responses, &buf, &out]
 	(const auto &result)
 	{
 		++responses;

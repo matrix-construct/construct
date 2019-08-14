@@ -1027,16 +1027,16 @@ ircd::m::app::exists(const string_view &id)
 // m/feds.h
 //
 
-ircd::m::feds::acquire::acquire(const opts &o,
+ircd::m::feds::execute::execute(const opts &o,
                                 const closure &c)
-:acquire
+:execute
 {
 	vector_view<const opts>{&o, 1}, c
 }
 {
 }
 
-ircd::m::feds::acquire::acquire(const vector_view<const opts> &o,
+ircd::m::feds::execute::execute(const vector_view<const opts> &o,
                                 const closure &c)
 {
 	using prototype = bool (const vector_view<const opts> &, const closure &);

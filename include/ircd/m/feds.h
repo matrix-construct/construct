@@ -29,14 +29,14 @@ namespace ircd::m::feds
 	enum class op :uint8_t;
 	struct opts;
 	struct result;
-	struct acquire;
+	struct execute;
 	using closure = std::function<bool (const result &)>;
 };
 
-struct ircd::m::feds::acquire
+struct ircd::m::feds::execute
 {
-	acquire(const vector_view<const opts> &, const closure &);
-	acquire(const opts &, const closure &);
+	execute(const vector_view<const opts> &, const closure &);
+	execute(const opts &, const closure &);
 };
 
 struct ircd::m::feds::result

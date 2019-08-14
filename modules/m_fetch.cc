@@ -454,7 +454,7 @@ ircd::m::fetch::start(const m::room &room)
 	opts.op = feds::op::head;
 	opts.room_id = room.room_id;
 	opts.closure_errors = false;
-	feds::acquire
+	feds::execute
 	{
 		opts, [](const auto &result)
 		{

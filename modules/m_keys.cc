@@ -439,7 +439,7 @@ ircd::m::keys::get(const queries &queries,
 	}
 
 	assert(opts.size() <= queries.size());
-	m::feds::acquire(opts, [&ret, &closure]
+	m::feds::execute(opts, [&ret, &closure]
 	(const auto &result)
 	{
 		if(empty(result.object))

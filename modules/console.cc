@@ -11338,7 +11338,7 @@ console_cmd__feds__version(opt &out, const string_view &line)
 	m::feds::opts opts;
 	opts.op = m::feds::op::version;
 	opts.room_id = room_id;
-	m::feds::acquire(opts, [&out]
+	m::feds::execute(opts, [&out]
 	(const auto &result)
 	{
 		out << (result.eptr? '-' : '+')
@@ -11418,7 +11418,7 @@ console_cmd__feds__state(opt &out, const string_view &line)
 	opts.room_id = room_id;
 	opts.arg[0] = "ids";
 
-	m::feds::acquire(opts, closure);
+	m::feds::execute(opts, closure);
 
 	for(auto &p : grid)
 	{
@@ -11466,7 +11466,7 @@ console_cmd__feds__event(opt &out, const string_view &line)
 	opts.op = m::feds::op::event;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
-	m::feds::acquire(opts, [&out](const auto &result)
+	m::feds::execute(opts, [&out](const auto &result)
 	{
 		out << (result.eptr? '-': empty(result.object)? '?': '+')
 		    << " "
@@ -11509,7 +11509,7 @@ console_cmd__feds__head(opt &out, const string_view &line)
 	opts.room_id = room_id;
 	opts.user_id = user_id;
 	opts.timeout = out.timeout;
-	m::feds::acquire(opts, [&out](const auto &result)
+	m::feds::execute(opts, [&out](const auto &result)
 	{
 		if(result.eptr)
 		{
@@ -11567,7 +11567,7 @@ console_cmd__feds__auth(opt &out, const string_view &line)
 	opts.op = m::feds::op::auth;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
-	m::feds::acquire(opts, [&out](const auto &result)
+	m::feds::execute(opts, [&out](const auto &result)
 	{
 		if(result.eptr)
 			return true;
@@ -11707,7 +11707,7 @@ console_cmd__feds__perspective(opt &out, const string_view &line)
 	opts.room_id = room_id;
 	opts.arg[0] = server_key.first;
 	opts.arg[1] = server_key.second;
-	m::feds::acquire(opts, [&out](const auto &result)
+	m::feds::execute(opts, [&out](const auto &result)
 	{
 		out << std::setw(32) << trunc(result.origin, 32) << " :";
 
@@ -11767,7 +11767,7 @@ console_cmd__feds__backfill(opt &out, const string_view &line)
 	opts.room_id = room_id;
 	opts.event_id = event_id;
 	opts.argi[0] = limit;
-	m::feds::acquire(opts, [&grid, &origins]
+	m::feds::execute(opts, [&grid, &origins]
 	(const auto &result)
 	{
 		if(result.eptr)
@@ -11859,7 +11859,7 @@ console_cmd__feds__send(opt &out, const string_view &line)
 	opts.room_id = at<"room_id"_>(event);
 	opts.arg[0] = txnid;
 	opts.arg[1] = content;
-	m::feds::acquire(opts, [&out]
+	m::feds::execute(opts, [&out]
 	(const auto &result)
 	{
 		out << (result.eptr? '-' : '+')
