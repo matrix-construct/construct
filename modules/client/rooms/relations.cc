@@ -12,6 +12,15 @@
 
 using namespace ircd;
 
+static void
+relations_chunk(client &client,
+                const resource::request &request,
+                const m::room::id &room_id,
+                const m::event::id &event_id,
+                const string_view &rel_type,
+                const string_view &type,
+                json::stack::array &chunk);
+
 resource::response
 get__relations(client &client,
                const resource::request &request,
@@ -20,7 +29,7 @@ get__relations(client &client,
 	if(!m::exists(room_id))
 		throw m::NOT_FOUND
 		{
-			"Cannot take a report about %s which is not found.",
+			"Cannot find relations in %s which is not found.",
 			string_view{room_id}
 		};
 
@@ -42,39 +51,48 @@ get__relations(client &client,
 			string_view{event_id}
 		};
 
-	if(request.parv.size() < 4)
+	// Get the rel_type path parameter.
+	// Note: Not requiring path parameter; empty will mean all types.
+	char rel_type_buf[m::event::TYPE_MAX_SIZE];
+	if((false) && request.parv.size() < 4)
 		throw m::NEED_MORE_PARAMS
 		{
-			"relation first path parameter required"
+			"relation rel_type path parameter required"
 		};
 
-	if(request.parv.size() < 5)
+	const string_view &rel_type
+	{
+		url::decode(rel_type_buf, request.parv[3])
+	};
+
+	// Get the alleged type path parameter.
+	// Note: Not requiring this path parameter either; it is not clear yet
+	// what this parameter actually means.
+	char type_buf[m::event::TYPE_MAX_SIZE];
+	if((false) && request.parv.size() < 5)
 		throw m::NEED_MORE_PARAMS
 		{
-			"relation second path parameter required"
+			"relation ?type? path parameter required"
 		};
 
-	char rbuf[2][256];
-	const string_view r[2]
+	const string_view &type
 	{
-		url::decode(rbuf[0], request.parv[3]),
-		url::decode(rbuf[1], request.parv[4]),
+		url::decode(type_buf, request.parv[4])
 	};
 
-	const unique_buffer<mutable_buffer> buf
+	resource::response::chunked response
 	{
-		96_KiB
+		client, http::OK
 	};
 
-	json::stack out{buf};
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
 	json::stack::object top
 	{
 		out
-	};
-
-	m::event::idx next_idx
-	{
-		index(event_id, std::nothrow)
 	};
 
 	json::stack::array chunk
@@ -82,74 +100,92 @@ get__relations(client &client,
 		top, "chunk"
 	};
 
-	const m::event::fetch event
+	relations_chunk(client, request, room_id, event_id, rel_type, type, chunk);
+	return response;
+}
+
+void
+relations_chunk(client &client,
+                const resource::request &request,
+                const m::room::id &room_id,
+                const m::event::id &event_id,
+                const string_view &rel_type,
+                const string_view &type,
+                json::stack::array &chunk)
+try
+{
+	const auto append{[&chunk, &request]
+	(const auto &event_idx, const m::event &event)
 	{
-		next_idx, std::nothrow
+		m::event::append::opts opts;
+		opts.event_idx = &event_idx;
+		opts.user_id = &request.user_id;
+		opts.query_txnid = false;
+		m::event::append
+		{
+			chunk, event, opts
+		};
+	}};
+
+	m::event::idx event_idx
+	{
+		index(event_id, std::nothrow)
 	};
 
-	if(event.valid)
-		chunk.append(event);
+	m::event::fetch event
+	{
+		event_idx, std::nothrow
+	};
 
-	const auto each_ref{[&r, &next_idx, &chunk]
+	const auto each_ref{[&event, &append, &rel_type, &request]
 	(const m::event::idx &event_idx, const m::dbs::ref &)
 	{
-		const m::event::fetch event
-		{
-			event_idx, std::nothrow
-		};
-
-		if(!event.valid)
+		if(!seek(event, event_idx, std::nothrow))
 			return true;
 
 		const json::object &m_relates_to
 		{
-			json::get<"content"_>(event).get("m.relates_to")
+			at<"content"_>(event).get("m.relates_to")
 		};
 
-		const json::string &rel_type
+		const json::string &_rel_type
 		{
 			m_relates_to.get("rel_type")
 		};
 
-		if(rel_type != r[0])
+		if(_rel_type != rel_type)
 			return true;
 
-		chunk.append(event);
-		next_idx = event_idx;
-		return false;
+		if(!visible(event, request.user_id))
+			return true;
+
+		append(event_idx, event);
+		return true;
 	}};
 
-	while(next_idx) try
+	if(!event.valid)
+		return;
+
+	if(!visible(event, request.user_id))
+		return;
+
+	// Send the original event
+	append(event_idx, event);
+
+	// Send all the referencees
+	const m::event::refs refs{event_idx};
+	refs.for_each(m::dbs::ref::M_RELATES, each_ref);
+}
+catch(const std::exception &e)
+{
+	log::error
 	{
-		const m::event::refs refs
-		{
-			next_idx
-		};
-
-		if(refs.for_each(m::dbs::ref::M_RELATES, each_ref))
-			break;
-	}
-	catch(const std::exception &e)
-	{
-		log::error
-		{
-			m::log, "relation trace from %s on %ld :%s",
-			string_view{event_id},
-			next_idx,
-			e.what()
-		};
-
-		break;
-	}
-
-	chunk.~array();
-	top.~object();
-
-	return resource::response
-	{
-		client, json::object
-		{
-			out.completed()
-		}
+		m::log, "relations in %s for %s rel_type:%s type:%s by %s :%s",
+		string_view{room_id},
+		string_view{event_id},
+		rel_type,
+		type,
+		string_view{request.user_id},
+		e.what(),
 	};
 }
