@@ -11,6 +11,27 @@
 #pragma once
 #define HAVE_IRCD_RESOURCE_RESPONSE_H
 
+/// Construction of a resource::response transmits result data to the client.
+///
+/// A resource::response is required for every request, which is why the
+/// return value of every resource method handler is a resource::response type.
+/// This return value requirement has no other significance, and the response
+/// object has no useful semantics.
+///
+/// The construction of a response object will send the response head and
+/// content to the client. The call will probably yield the ircd::ctx. When the
+/// construction is complete the response has been sent to the client (or copied
+/// entirely to the kernel).
+///
+/// The lowest level ctors without a content argument allow for sending just the
+/// response HTTP head to the client. The developer has the option to manually
+/// write the content to the client's socket following the transmission of the
+/// head. It is still advised for semantic reasons that the resource::response
+/// object which transmitted the head still be returned from the handler.
+///
+/// Note that handlers can always throw an exception, and the resource
+/// framework will facilitate the response there.
+///
 struct ircd::resource::response
 {
 	struct chunked;
@@ -33,6 +54,33 @@ struct ircd::resource::response
 	response() = default;
 };
 
+/// This device streams a chunked encoded response to a request. This is
+/// preferred rather than conducting chunked encoding manually with the above
+/// resource::response (that's what this is for).
+///
+/// Basic usage of this device involves construction of a named instance,
+/// upon which headers are immediately sent to the client opening the chunked
+/// encoding session. First know that if a handler throws an exception
+/// during a chunked encoding session, the client connection is immediately
+/// terminated as hard as possible (disrupting any pipelining, etc).
+///
+/// Once the instance is constructed the developer calls write() to write a
+/// chunk to the socket. Each call to write() directly sends a chunk and
+/// yields the ctx until it is transmitted.
+///
+/// The direct use of this object is rare, instead it is generally paired with
+/// something like json::stack, which streams chunks of JSON. To facilitate
+/// this type of pairing and real world use, instances of this object contain
+/// a simple buffered flush-callback system.
+//
+/// By default this object allocates a buffer to facilitate the chunked
+/// response and to satisfy the majority pattern of allocating this same
+/// buffer immediately preceding construction. A function pointer can also
+/// be passed on construction to act as a "flusher." These features are
+/// best suited for use by json::stack. A developer wishing to conduct chunked
+/// encoding with some other content has the option of setting a zero buffer
+/// size on construction.
+///
 struct ircd::resource::response::chunked
 :resource::response
 {
