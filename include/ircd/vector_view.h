@@ -46,15 +46,21 @@ struct ircd::vector_view
 	iterator begin()                             { return data();                                  }
 	iterator end()                               { return _stop;                                   }
 
+	// Bounds check in debug only.
 	value_type &operator[](const size_t &pos) const
 	{
+		assert(pos < size());
 		return *(data() + pos);
 	}
 
+	// Bounds check at runtime.
 	value_type &at(const size_t &pos) const
 	{
 		if(unlikely(pos >= size()))
-			throw std::out_of_range("vector_view::range_check");
+			throw std::out_of_range
+			{
+				"vector_view::range_check"
+			};
 
 		return operator[](pos);
 	}
