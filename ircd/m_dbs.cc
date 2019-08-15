@@ -236,7 +236,7 @@ ircd::m::dbs::write_opts::appendix_all{[]
 namespace ircd::m::dbs
 {
 	static void _index_room_joined(db::txn &, const event &, const write_opts &);
-	static void _index_room_redact(db::txn &, const event &, const write_opts &);
+	static void _index_room_redact(db::txn &, const event &, const write_opts &); //query
 	static void _index_room_state_space(db::txn &,  const event &, const write_opts &);
 	static void _index_room_state(db::txn &, const event &, const write_opts &);
 	static void _index_room_head_resolve(db::txn &, const event &, const write_opts &);
@@ -245,15 +245,15 @@ namespace ircd::m::dbs
 	static void _index_room(db::txn &, const event &, const write_opts &);
 	static void _index_event_type(db::txn &, const event &, const write_opts &);
 	static void _index_event_sender(db::txn &, const event &, const write_opts &);
-	static void _index_event_horizon_resolve(db::txn &, const event &, const write_opts &);
+	static void _index_event_horizon_resolve(db::txn &, const event &, const write_opts &); //query
 	static void _index_event_horizon(db::txn &, const event &, const write_opts &, const id::event &);
-	static void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &);
-	static void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &);
-	static void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &);
-	static void _index_event_refs_m_relates(db::txn &, const event &, const write_opts &);
-	static void _index_event_refs_state(db::txn &, const event &, const write_opts &);
-	static void _index_event_refs_auth(db::txn &, const event &, const write_opts &);
-	static void _index_event_refs_prev(db::txn &, const event &, const write_opts &);
+	static void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &); //query
+	static void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &); //query
+	static void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &); //query
+	static void _index_event_refs_m_relates(db::txn &, const event &, const write_opts &); //query
+	static void _index_event_refs_state(db::txn &, const event &, const write_opts &); // query
+	static void _index_event_refs_auth(db::txn &, const event &, const write_opts &); //query
+	static void _index_event_refs_prev(db::txn &, const event &, const write_opts &); //query
 	static void _index_event_refs(db::txn &, const event &, const write_opts &);
 	static void _index_event_json(db::txn &, const event &, const write_opts &);
 	static void _index_event_cols(db::txn &, const event &, const write_opts &);
@@ -516,6 +516,7 @@ ircd::m::dbs::_index_event_refs(db::txn &txn,
 		_index_event_refs_m_room_redaction(txn, event, opts);
 }
 
+// NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
                                      const event &event,
@@ -572,6 +573,7 @@ ircd::m::dbs::_index_event_refs_prev(db::txn &txn,
 	}
 }
 
+// NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
                                      const event &event,
@@ -628,6 +630,7 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 	}
 }
 
+// NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_state(db::txn &txn,
                                       const event &event,
@@ -707,6 +710,7 @@ ircd::m::dbs::_index_event_refs_state(db::txn &txn,
 	}
 }
 
+// NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
                                                  const event &event,
@@ -767,6 +771,7 @@ ircd::m::dbs::_index_event_refs_m_receipt_m_read(db::txn &txn,
 	};
 }
 
+// NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
                                           const event &event,
@@ -847,6 +852,7 @@ ircd::m::dbs::_index_event_refs_m_relates(db::txn &txn,
 	};
 }
 
+// NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
                                                   const event &event,
@@ -944,6 +950,7 @@ ircd::m::dbs::_index_event_refs_m_relates_m_reply(db::txn &txn,
 	};
 }
 
+// NOTE: QUERY
 void
 ircd::m::dbs::_index_event_refs_m_room_redaction(db::txn &txn,
                                                  const event &event,
@@ -1025,6 +1032,7 @@ ircd::m::dbs::_index_event_horizon(db::txn &txn,
 	};
 }
 
+// NOTE: QUERY
 void
 ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
                                            const event &event,
@@ -1342,7 +1350,7 @@ ircd::m::dbs::_index_room_state_space(db::txn &txn,
 	};
 }
 
-
+// NOTE: QUERY
 void
 ircd::m::dbs::_index_room_redact(db::txn &txn,
                                  const event &event,
@@ -1462,6 +1470,7 @@ ircd::m::dbs::_index_room_joined(db::txn &txn,
 	};
 }
 
+// NOTE: QUERY
 ircd::m::event::idx
 ircd::m::dbs::find_event_idx(const event::id &event_id,
                              const write_opts &wopts)
