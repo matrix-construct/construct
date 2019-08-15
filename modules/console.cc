@@ -9205,24 +9205,35 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 
 	const auto &room_id
 	{
-		param.at("room_id") != "*"?
+		param.at("room_id") != "*" && param.at("room_id") != "remote_joined_only"?
 			m::room_id(param.at(0)):
-			"*"_sv
+			param["room_id"]
 	};
 
-	if(room_id == "*")
+	if(room_id == "*" || room_id == "remote_joined_only")
 	{
-		m::rooms::for_each([&out]
+		m::rooms::opts opts;
+		opts.remote_joined_only = room_id == "remote_joined_only";
+		m::rooms::for_each(opts, [&out]
 		(const m::room::id &room_id)
 		{
-			const m::room room{room_id};
-			const m::room::state state{room};
+			const m::room::state state
+			{
+				room_id
+			};
+
 			const size_t count
 			{
 				m::room::state::rebuild_present(state)
 			};
 
-			out << "done " << room_id << " " << count << std::endl;
+			log::info
+			{
+				"Rebuild of %s complete with %zu present state events.",
+				string_view{room_id},
+				count,
+			};
+
 			return true;
 		});
 
