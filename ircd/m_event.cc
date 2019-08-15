@@ -2608,7 +2608,7 @@ const
 {
 	const string_view &prev_
 	{
-		at<"auth_events"_>(*this).at(idx)
+		json::at<"auth_events"_>(*this).at(idx)
 	};
 
 	switch(json::type(prev_))
@@ -2641,7 +2641,7 @@ const
 {
 	const string_view &prev_
 	{
-		at<"prev_events"_>(*this).at(idx)
+		json::at<"prev_events"_>(*this).at(idx)
 	};
 
 	switch(json::type(prev_))

@@ -259,7 +259,7 @@ ircd::m::presence::set(const m::presence &content)
 {
 	const m::user user
 	{
-		at<"user_id"_>(content)
+		json::at<"user_id"_>(content)
 	};
 
 	//TODO: ABA

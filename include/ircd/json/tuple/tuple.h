@@ -62,6 +62,11 @@ struct tuple
 	operator json::value() const;
 	operator crh::sha256::buf() const;
 
+	template<class name> constexpr decltype(auto) get(name&&) const;
+	template<class name> constexpr decltype(auto) get(name&&);
+	template<class name> constexpr decltype(auto) at(name&&) const;
+	template<class name> constexpr decltype(auto) at(name&&);
+
 	template<class... U> explicit tuple(const tuple<U...> &);
 	template<class U> explicit tuple(const json::object &, const json::keys<U> &);
 	template<class U> explicit tuple(const tuple &, const json::keys<U> &);
@@ -234,6 +239,60 @@ tuple<T...>::tuple(const tuple<U...> &t)
 }
 
 template<class... T>
+template<class name>
+constexpr decltype(auto)
+tuple<T...>::at(name&& n)
+{
+	constexpr const size_t hash
+	{
+		name_hash(n)
+	};
+
+	return json::at<hash>(*this);
+}
+
+template<class... T>
+template<class name>
+constexpr decltype(auto)
+tuple<T...>::at(name&& n)
+const
+{
+	constexpr const size_t hash
+	{
+		name_hash(n)
+	};
+
+	return json::at<hash>(*this);
+}
+
+template<class... T>
+template<class name>
+constexpr decltype(auto)
+tuple<T...>::get(name&& n)
+{
+	constexpr const size_t hash
+	{
+		name_hash(n)
+	};
+
+	return json::get<hash>(*this);
+}
+
+template<class... T>
+template<class name>
+constexpr decltype(auto)
+tuple<T...>::get(name&& n)
+const
+{
+	constexpr const size_t hash
+	{
+		name_hash(n)
+	};
+
+	return json::get<hash>(*this);
+}
+
+template<class... T>
 constexpr size_t
 tuple<T...>::size()
 {
@@ -246,110 +305,10 @@ tuple<T...>::size()
 #include "_key_transform.h"
 #include "keys.h"
 #include "_member_transform.h"
-
-namespace ircd {
-namespace json {
+#include "tool.h"
 
 template<class... T>
-size_t
-serialized(const tuple<T...> &t)
-{
-	constexpr const size_t member_count
-	{
-		tuple<T...>::size()
-	};
-
-	std::array<size_t, member_count> sizes {0};
-	const auto e{_member_transform_if(t, begin(sizes), end(sizes), []
-	(auto &ret, const string_view &key, auto&& val)
-	{
-		const json::value value(val);
-		if(!defined(value))
-			return false;
-
-		ret = 1 + key.size() + 1 + 1 + serialized(value) + 1;
-		return true;
-	})};
-
-	// Subtract one to get the final size when an extra comma is
-	// accumulated on non-empty objects.
-	const auto overhead
-	{
-		1 + std::all_of(begin(sizes), e, is_zero{})
-	};
-
-	return std::accumulate(begin(sizes), e, size_t(overhead));
-}
-
-template<class... T>
-size_t
-serialized(const tuple<T...> *const &b,
-           const tuple<T...> *const &e)
-{
-	size_t ret(1 + (b == e));
-	return std::accumulate(b, e, ret, []
-	(size_t ret, const tuple<T...> &t)
-	{
-		return ret += serialized(t) + 1;
-	});
-}
-
-template<class... T>
-string_view
-stringify(mutable_buffer &buf,
-          const tuple<T...> &tuple)
-{
-	static constexpr const size_t member_count
-	{
-		json::tuple_size<json::tuple<T...>>()
-	};
-
-	std::array<member, member_count> members;
-	const auto e{_member_transform_if(tuple, begin(members), end(members), []
-	(auto &ret, const string_view &key, auto&& val)
-	{
-		json::value value(val);
-		if(!defined(value))
-			return false;
-
-		ret = member { key, std::move(value) };
-		return true;
-	})};
-
-	return stringify(buf, begin(members), e);
-}
-
-template<class... T>
-string_view
-stringify(mutable_buffer &buf,
-          const tuple<T...> *b,
-          const tuple<T...> *e)
-{
-	const auto start(begin(buf));
-	consume(buf, copy(buf, "["_sv));
-	if(b != e)
-	{
-		stringify(buf, *b);
-		for(++b; b != e; ++b)
-		{
-			consume(buf, copy(buf, ","_sv));
-			stringify(buf, *b);
-		}
-	}
-	consume(buf, copy(buf, "]"_sv));
-	return { start, begin(buf) };
-}
-
-template<class... T>
-std::ostream &
-operator<<(std::ostream &s, const tuple<T...> &t)
-{
-    s << json::strung(t);
-    return s;
-}
-
-template<class... T>
-tuple<T...>::operator
+ircd::json::tuple<T...>::operator
 crh::sha256::buf()
 const
 {
@@ -369,7 +328,7 @@ const
 }
 
 template<class... T>
-tuple<T...>::operator
+ircd::json::tuple<T...>::operator
 json::value()
 const
 {
@@ -383,6 +342,3 @@ const
 
 	return ret;
 }
-
-} // namespace json
-} // namespace ircd

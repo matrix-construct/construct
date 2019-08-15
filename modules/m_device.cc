@@ -67,7 +67,7 @@ ircd::m::device::set(const m::user &user,
 	const user::room user_room{user};
 	const string_view &device_id
 	{
-		at<"device_id"_>(device)
+		json::at<"device_id"_>(device)
 	};
 
 	json::for_each(device, [&user, &user_room, &device_id]
