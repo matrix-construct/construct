@@ -18,6 +18,7 @@ template<size_t hash,
          class tuple>
 enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, hash>()> &>
 get(const tuple &t)
+noexcept
 {
 	constexpr size_t idx
 	{
@@ -37,6 +38,7 @@ template<size_t hash,
 enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()>>
 get(const tuple &t,
     const tuple_value_type<tuple, indexof<tuple, hash>()> &def)
+noexcept
 {
 	constexpr size_t idx
 	{
@@ -55,6 +57,7 @@ template<size_t hash,
          class tuple>
 enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
 get(tuple &t)
+noexcept
 {
 	constexpr size_t idx
 	{
@@ -74,6 +77,7 @@ template<size_t hash,
 enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
 get(tuple &t,
     tuple_value_type<tuple, indexof<tuple, hash>()> &def)
+noexcept
 {
 	auto &ret
 	{
@@ -87,6 +91,7 @@ template<const char *const &name,
          class tuple>
 enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, name>()> &>
 get(const tuple &t)
+noexcept
 {
 	return get<name_hash(name), tuple>(t);
 }
@@ -96,6 +101,7 @@ template<const char *const &name,
 enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
 get(const tuple &t,
     const tuple_value_type<tuple, indexof<tuple, name>()> &def)
+noexcept
 {
 	return get<name_hash(name), tuple>(t, def);
 }
@@ -104,6 +110,7 @@ template<const char *const &name,
          class tuple>
 enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
 get(tuple &t)
+noexcept
 {
 	return get<name_hash(name), tuple>(t);
 }
@@ -113,6 +120,7 @@ template<const char *const &name,
 enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
 get(tuple &t,
     tuple_value_type<tuple, indexof<tuple, hash>()> &def)
+noexcept
 {
 	return get<name_hash(name), tuple>(t, def);
 }

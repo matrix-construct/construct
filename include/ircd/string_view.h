@@ -15,9 +15,9 @@ namespace ircd
 {
 	struct string_view;
 
-	constexpr size_t _constexpr_strlen(const char *);
-	constexpr const char *data(const string_view &);
-	constexpr size_t size(const string_view &);
+	constexpr size_t _constexpr_strlen(const char *) noexcept;
+	constexpr const char *data(const string_view &) noexcept;
+	constexpr size_t size(const string_view &) noexcept;
 	bool empty(const string_view &);
 	bool operator!(const string_view &);
 	bool defined(const string_view &);
@@ -144,7 +144,7 @@ struct ircd::string_view
 	}
 
 	// (non-standard) our iterator-based constructor
-	constexpr string_view(const char *const &begin, const char *const &end)
+	constexpr string_view(const char *const &begin, const char *const &end) noexcept
 	:string_view{begin, size_t(end - begin)}
 	{
 		assert(begin <= end);
@@ -158,7 +158,7 @@ struct ircd::string_view
 	// (non-standard) our array based constructor
 	template<size_t SIZE> constexpr
 	__attribute__((always_inline))
-	string_view(const std::array<char, SIZE> &array)
+	string_view(const std::array<char, SIZE> &array) noexcept
 	:string_view
 	{
 		array.data(), std::find(array.begin(), array.end(), '\0')
@@ -167,22 +167,21 @@ struct ircd::string_view
 	// (non-standard) our buffer based constructor
 	template<size_t SIZE> constexpr
 	__attribute__((always_inline))
-	string_view(const char (&buf)[SIZE])
+	string_view(const char (&buf)[SIZE]) noexcept
 	:string_view
 	{
 		buf, std::find(buf, buf + SIZE, '\0')
 	}{}
 
-	constexpr string_view(const char *const &start, const size_t &size)
+	constexpr string_view(const char *const &start, const size_t &size) noexcept
 	:std::string_view{start, size}
 	{}
 
-	constexpr string_view(const char *const &start)
+	constexpr string_view(const char *const &start) noexcept
 	:std::string_view{start, _constexpr_strlen(start)}
 	{}
 
-	string_view(const std::string &string)
-	noexcept
+	string_view(const std::string &string) noexcept
 	:string_view{string.data(), string.size()}
 	{}
 
@@ -257,12 +256,14 @@ ircd::defined(const string_view &str)
 
 constexpr size_t
 ircd::size(const string_view &str)
+noexcept
 {
 	return str.size();
 }
 
 constexpr const char *
 ircd::data(const string_view &str)
+noexcept
 {
 	return str.data();
 }
@@ -270,6 +271,7 @@ ircd::data(const string_view &str)
 [[gnu::pure]]
 constexpr size_t
 ircd::_constexpr_strlen(const char *const s)
+noexcept
 {
 	const char *e(s);
 	if(e) for(; *e; ++e);

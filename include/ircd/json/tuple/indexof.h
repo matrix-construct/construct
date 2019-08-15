@@ -19,6 +19,7 @@ template<class tuple,
          size_t i>
 constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
 indexof()
+noexcept
 {
 	return size<tuple>();
 }
@@ -28,6 +29,7 @@ template<class tuple,
          size_t i = 0>
 constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
 indexof()
+noexcept
 {
 	constexpr auto equal
 	{
@@ -42,6 +44,7 @@ template<class tuple,
          size_t i>
 constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
 indexof()
+noexcept
 {
 	return size<tuple>();
 }
@@ -51,6 +54,7 @@ template<class tuple,
          size_t i = 0>
 constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
 indexof()
+noexcept
 {
 	return indexof<tuple, name_hash(name)>();
 }
@@ -59,6 +63,7 @@ template<class tuple,
          size_t i>
 constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
 indexof(const char *const &name)
+noexcept
 {
 	return size<tuple>();
 }
@@ -67,6 +72,7 @@ template<class tuple,
          size_t i = 0>
 constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
 indexof(const char *const &name)
+noexcept
 {
 	constexpr auto equal
 	{
@@ -80,6 +86,7 @@ template<class tuple,
          size_t i>
 constexpr typename std::enable_if<i == size<tuple>(), size_t>::type
 indexof(const string_view &name)
+noexcept
 {
 	return size<tuple>();
 }
@@ -88,6 +95,7 @@ template<class tuple,
          size_t i = 0>
 constexpr typename std::enable_if<i < size<tuple>(), size_t>::type
 indexof(const string_view &name)
+noexcept
 {
 	const auto equal
 	{

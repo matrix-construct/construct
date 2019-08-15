@@ -21,8 +21,8 @@ namespace ircd::json
 	template<size_t SIZE> struct buffer;
 
 	using name_hash_t = size_t;
-	constexpr name_hash_t name_hash(const string_view name);
-	constexpr name_hash_t operator ""_(const char *const name, const size_t len);
+	constexpr name_hash_t name_hash(const string_view name) noexcept;
+	constexpr name_hash_t operator ""_(const char *const name, const size_t len) noexcept;
 
 	size_t serialized(const string_view &);
 	string_view stringify(mutable_buffer &, const string_view &);
@@ -79,12 +79,14 @@ ircd::json::print(const mutable_buffer &buf,
 
 constexpr ircd::json::name_hash_t
 ircd::json::operator ""_(const char *const text, const size_t len)
+noexcept
 {
 	return name_hash(string_view(text, len));
 }
 
 constexpr ircd::json::name_hash_t
 ircd::json::name_hash(const string_view name)
+noexcept
 {
 	return ircd::hash(name);
 }

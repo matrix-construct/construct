@@ -57,13 +57,13 @@ struct tuple
 	using tuple_type = std::tuple<T...>;
 	using super_type = tuple<T...>;
 
-	static constexpr size_t size();
+	static constexpr size_t size() noexcept;
 
 	operator json::value() const;
 	operator crh::sha256::buf() const;
 
-	template<class name> constexpr decltype(auto) get(name&&) const;
-	template<class name> constexpr decltype(auto) get(name&&);
+	template<class name> constexpr decltype(auto) get(name&&) const noexcept;
+	template<class name> constexpr decltype(auto) get(name&&) noexcept;
 	template<class name> constexpr decltype(auto) at(name&&) const;
 	template<class name> constexpr decltype(auto) at(name&&);
 
@@ -79,6 +79,7 @@ struct tuple
 template<class tuple>
 constexpr bool
 is_tuple()
+noexcept
 {
 	return std::is_base_of<tuple_base, tuple>::value;
 }
@@ -123,6 +124,7 @@ stdcast(tuple &o)
 template<class tuple>
 constexpr enable_if_tuple<tuple, size_t>
 size()
+noexcept
 {
 	return tuple_size<tuple>::value;
 }
@@ -140,6 +142,7 @@ template<size_t i,
          class tuple>
 enable_if_tuple<tuple, tuple_value_type<tuple, i> &>
 val(tuple &t)
+noexcept
 {
 	return static_cast<tuple_value_type<tuple, i> &>(std::get<i>(t));
 }
@@ -148,6 +151,7 @@ template<size_t i,
          class tuple>
 enable_if_tuple<tuple, const tuple_value_type<tuple, i> &>
 val(const tuple &t)
+noexcept
 {
 	return static_cast<const tuple_value_type<tuple, i> &>(std::get<i>(t));
 }
@@ -269,6 +273,7 @@ template<class... T>
 template<class name>
 constexpr decltype(auto)
 tuple<T...>::get(name&& n)
+noexcept
 {
 	constexpr const size_t hash
 	{
@@ -282,7 +287,7 @@ template<class... T>
 template<class name>
 constexpr decltype(auto)
 tuple<T...>::get(name&& n)
-const
+const noexcept
 {
 	constexpr const size_t hash
 	{
@@ -295,6 +300,7 @@ const
 template<class... T>
 constexpr size_t
 tuple<T...>::size()
+noexcept
 {
 	return std::tuple_size<tuple_type>();
 }
