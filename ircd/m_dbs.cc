@@ -3068,6 +3068,7 @@ ircd::m::dbs::room_state_key(const mutable_buffer &out_,
 {
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
+	assert(room_id);
 
 	if(likely(defined(type)))
 	{

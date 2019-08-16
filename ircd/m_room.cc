@@ -1695,6 +1695,8 @@ ircd::m::room::messages::messages(const m::room &room,
 		event::fetch::default_opts
 }
 {
+	assert(room.room_id);
+
 	if(room.event_id)
 		seek(room.event_id);
 	else
@@ -1714,6 +1716,8 @@ ircd::m::room::messages::messages(const m::room &room,
 		event::fetch::default_opts
 }
 {
+	assert(room.room_id);
+
 	seek(event_id);
 }
 
@@ -1730,6 +1734,8 @@ ircd::m::room::messages::messages(const m::room &room,
 		event::fetch::default_opts
 }
 {
+	assert(room.room_id);
+
 	// As a special convenience for the ctor only, if the depth=0 and
 	// nothing is found another attempt is made for depth=1 for synapse
 	// rooms which start at depth=1.
