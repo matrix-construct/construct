@@ -323,7 +323,7 @@ ircd::m::sync::room_account_data_polylog_tags(data &data)
 		if(!event.valid)
 			return true;
 
-		json::stack::member tag
+		json::stack::member
 		{
 			tags, state_key, json::get<"content"_>(event)
 		};

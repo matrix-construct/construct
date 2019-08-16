@@ -50,7 +50,7 @@ struct ircd::m::room::messages
 	event::fetch _event;
 
   public:
-	operator bool() const              { return bool(it);                      }
+	explicit operator bool() const     { return bool(it);                      }
 	bool operator!() const             { return !it;                           }
 
 	event::id::buf event_id() const;   // deprecated; will remove

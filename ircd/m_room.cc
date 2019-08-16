@@ -82,7 +82,7 @@ ircd::m::room::state::purge_replaced(const room::id &room_id)
 
 	for(; it; ++it)
 	{
-		const m::event::idx &event_idx(it);
+		const m::event::idx &event_idx(it.event_idx());
 		if(!m::get(std::nothrow, event_idx, "state_key", [](const auto &) {}))
 			continue;
 
@@ -152,7 +152,7 @@ ircd::m::room::state::rebuild_present(const room::id &room_id)
 
 	for(; it; ++it)
 	{
-		const m::event::idx &event_idx{it};
+		const m::event::idx &event_idx{it.event_idx()};
 		if(!state.is(std::nothrow, event_idx))
 			continue;
 

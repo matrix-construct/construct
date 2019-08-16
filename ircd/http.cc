@@ -896,7 +896,11 @@ ircd::http::parser::content_length(const string_view &str)
 
 	long ret;
 	const char *start(str.data());
-	const bool parsed(qi::parse(start, start + str.size(), grammar, ret));
+	const bool parsed
+	{
+		qi::parse(start, start + str.size(), grammar, ret)
+	};
+
 	if(!parsed || ret < 0)
 		throw error
 		{

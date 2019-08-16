@@ -57,7 +57,7 @@ noexcept
 		reinterpret_cast<__m128i *>(begin(out))
 	};
 
-	while(reinterpret_cast<const char *>(src_) + sizeof(__m128i) < stop)
+	while(intptr_t(src_) < intptr_t(stop) - ssize_t(sizeof(__m128i)))
 	{
 		const __m128i lit_A1      { _mm_set1_epi8('A' - 1)          };
 		const __m128i lit_Z1      { _mm_set1_epi8('Z' + 1)          };
