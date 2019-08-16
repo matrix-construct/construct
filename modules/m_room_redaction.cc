@@ -76,6 +76,26 @@ ircd::m::auth_room_redaction(const m::event &event,
 		m::index(at<"redacts"_>(event), std::nothrow)
 	};
 
+	if(!redact_target_idx)
+		throw FAIL
+		{
+			"m.room.redaction redacts target is unknown."
+		};
+
+	const auto target_in_room
+	{
+		[&event](const string_view &room_id)
+		{
+			return room_id == at<"room_id"_>(event);
+		}
+	};
+
+	if(!m::query(std::nothrow, redact_target_idx, "room_id", target_in_room))
+		throw FAIL
+		{
+			"m.room.redaction redacts target is not in room."
+		};
+
 	const auto sender_domain_match
 	{
 		[&event](const string_view &tgt)
@@ -83,12 +103,6 @@ ircd::m::auth_room_redaction(const m::event &event,
 			return tgt? user::id(tgt).host() == user::id(at<"sender"_>(event)).host(): false;
 		}
 	};
-
-	if(!redact_target_idx)
-		throw FAIL
-		{
-			"m.room.redaction redacts target is unknown."
-		};
 
 	if(m::query(std::nothrow, redact_target_idx, "redacts", sender_domain_match))
 	{
