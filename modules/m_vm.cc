@@ -134,10 +134,13 @@ ircd::m::vm::init()
 
 	log::info
 	{
-		log, "BOOT %s @%lu [%s]",
+		log, "BOOT %s @%lu [%s] db:%lu",
 		string_view{m::my_node.node_id},
 		sequence::retired,
-		sequence::retired? string_view{event_id} : "NO EVENTS"_sv
+		sequence::retired?
+			string_view{event_id} : "NO EVENTS"_sv,
+		m::dbs::events?
+			db::sequence(*m::dbs::events) : 0UL,
 	};
 }
 
@@ -171,13 +174,16 @@ ircd::m::vm::fini()
 
 	log::info
 	{
-		log, "HLT '%s' @%lu [%s] %lu:%lu:%lu",
+		log, "HALT '%s' @%lu [%s] vm:%lu:%lu:%lu db:%lu",
 		string_view{m::my_node.node_id},
 		retired,
-		retired? string_view{event_id} : "NO EVENTS"_sv,
+		retired?
+			string_view{event_id} : "NO EVENTS"_sv,
 		sequence::retired,
 		sequence::committed,
-		sequence::uncommitted
+		sequence::uncommitted,
+		m::dbs::events?
+			db::sequence(*m::dbs::events) : 0UL,
 	};
 
 	assert(retired == sequence::retired);
