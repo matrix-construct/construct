@@ -7739,12 +7739,10 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "servers err:   " << m::room::origins{room_id}.count_error() << std::endl;
 	out << std::endl;
 
-	state.for_each(m::room::state::types{[&out, &state]
+	state.for_each("m.", m::room::state::types_bool{[&out, &state]
 	(const string_view &type)
 	{
-		if(!startswith(type, "m."))
-			return true;
-
+		assert(startswith(type, "m."));
 		if(type == "m.room.member")
 			return true;
 
