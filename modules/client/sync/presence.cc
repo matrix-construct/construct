@@ -93,6 +93,18 @@ ircd::m::sync::presence_polylog(data &data)
 	const auto append_event{[&data, &array, &mutex, &ret]
 	(const json::object &event)
 	{
+		// Conditions to not send; we don't send for offline users
+		// on initial sync, unless they have a message set.
+		const bool skip
+		{
+			data.range.first == 0
+			&& unquote(event.get("presence")) == "offline"
+			&& !event.has("status_msg")
+		};
+
+		if(skip)
+			return;
+
 		// Lock the json::stack for the append operations. This mutex will only be
 		// contended during a json::stack flush to the client; not during database
 		// queries leading to this.
