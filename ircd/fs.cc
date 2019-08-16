@@ -1185,14 +1185,9 @@ ircd::fs::_write_pwritev2(const fd &fd,
 		opts.offset == -1 && !opts.update_offset? 0 : opts.offset
 	};
 
-	const auto &flags_
-	{
-		flags(opts)
-	};
-
 	ssize_t ret; do
 	{
-		ret = ::pwritev2(int(fd), iov.data(), iov.size(), opts.offset, flags_);
+		ret = ::pwritev2(int(fd), iov.data(), iov.size(), opts.offset, flags(opts));
 	}
 	while(!opts.interruptible && unlikely(ret == -1 && errno == EINTR));
 
