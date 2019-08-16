@@ -191,7 +191,7 @@ get__profile(client &client,
 	{
 		// If there was a problem querying locally for this param and the
 		// user is remote, eptr will have a better error for the client.
-		if(!my(user))
+		if(eptr && !my(user))
 			rethrow(eptr, user, param);
 
 		throw;
