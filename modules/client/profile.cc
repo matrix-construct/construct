@@ -270,9 +270,16 @@ try
 {
 	std::rethrow_exception(eptr);
 }
-catch(const http::error &)
+catch(const http::error &e)
 {
-	throw;
+	throw m::error
+	{
+		e.code, "M_UNKNOWN",
+		"Server '%s' responded to profile request for %s with :%s",
+		user.user_id.host(),
+		string_view{user.user_id},
+		e.content
+	};
 }
 catch(const ctx::timeout &)
 {
