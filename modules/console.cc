@@ -9183,14 +9183,9 @@ console_cmd__room__state__purge__replaced(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const m::room::state state
-	{
-		room_id
-	};
-
 	const size_t ret
 	{
-		m::room::state::purge_replaced(state)
+		m::room::state::purge_replaced(room_id)
 	};
 
 	out << "erased " << ret << std::endl;
@@ -9219,14 +9214,9 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 		m::rooms::for_each(opts, [&out]
 		(const m::room::id &room_id)
 		{
-			const m::room::state state
-			{
-				room_id
-			};
-
 			const size_t count
 			{
-				m::room::state::rebuild_present(state)
+				m::room::state::rebuild_present(room_id)
 			};
 
 			log::info
@@ -9242,11 +9232,9 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 		return true;
 	}
 
-	const m::room room{room_id};
-	const m::room::state state{room};
 	const size_t count
 	{
-		state.rebuild_present(state)
+		m::room::state::rebuild_present(room_id)
 	};
 
 	out << "done " << room_id << " " << count << std::endl;

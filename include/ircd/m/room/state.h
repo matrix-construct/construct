@@ -95,9 +95,9 @@ struct ircd::m::room::state
 	static event::idx next(const event::idx &);
 
 	static size_t prefetch(const state &, const string_view &, const event::idx_range &);
-	static size_t rebuild_present(const state &);
+	static size_t rebuild_present(const room::id &);
 	static bool force_present(const event &);
-	static size_t purge_replaced(const state &);
+	static size_t purge_replaced(const room::id &);
 	static bool is(std::nothrow_t, const event::idx &);
 	static bool is(const event::idx &);
 };

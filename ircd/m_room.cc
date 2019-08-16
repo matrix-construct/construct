@@ -64,7 +64,7 @@ ircd::m::room::state::is(std::nothrow_t,
 }
 
 size_t
-ircd::m::room::state::purge_replaced(const state &state)
+ircd::m::room::state::purge_replaced(const room::id &room_id)
 {
 	db::txn txn
 	{
@@ -74,7 +74,7 @@ ircd::m::room::state::purge_replaced(const state &state)
 	size_t ret(0);
 	m::room::messages it
 	{
-		state.room_id, uint64_t(0)
+		room_id, uint64_t(0)
 	};
 
 	if(!it)
@@ -82,7 +82,7 @@ ircd::m::room::state::purge_replaced(const state &state)
 
 	for(; it; ++it)
 	{
-		const m::event::idx &event_idx(it.event_idx());
+		const m::event::idx &event_idx(it);
 		if(!m::get(std::nothrow, event_idx, "state_key", [](const auto &) {}))
 			continue;
 
@@ -129,16 +129,21 @@ ircd::m::room::state::force_present(const m::event &event)
 }
 
 size_t
-ircd::m::room::state::rebuild_present(const state &state)
+ircd::m::room::state::rebuild_present(const room::id &room_id)
 {
 	size_t ret{0};
 	m::room::messages it
 	{
-		state.room_id, uint64_t(0)
+		room_id, uint64_t(0)
 	};
 
 	if(!it)
 		return ret;
+
+	const m::room::state state
+	{
+		room_id
+	};
 
 	db::txn txn
 	{
