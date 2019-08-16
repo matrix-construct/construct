@@ -119,7 +119,7 @@ ircd::m::auth_room_create(const event &event,
 	{
 		const json::string &claim_version
 		{
-			json::get<"content"_>(event).get("room_version", "1")
+			json::get<"content"_>(event).get("room_version", "1"_sv)
 		};
 
 		const string_view &id_version

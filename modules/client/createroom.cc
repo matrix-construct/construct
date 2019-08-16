@@ -20,12 +20,6 @@ IRCD_MODULE
 	"Client 7.1.1 :Create Room"
 };
 
-const m::room::id::buf
-init_room_id
-{
-	"init", ircd::my_host()
-};
-
 resource
 createroom_resource
 {
@@ -93,8 +87,10 @@ post__createroom(client &client,
 		m::createroom::version_default
 	};
 
+	// unconditionally set the creator
 	json::get<"creator"_>(c) = request.user_id;
 
+	// unconditionally  generate a room_id
 	const m::id::room::buf room_id
 	{
 		m::id::generate, my_host()
@@ -102,9 +98,13 @@ post__createroom(client &client,
 
 	json::get<"room_id"_>(c) = room_id;
 
+	// conditionally override any preset string that isn't
+	// allowed from this client.
 	if(!spec_preset(json::get<"preset"_>(c)))
 		json::get<"preset"_>(c) = string_view{};
 
+	// the response only contains a room mxid, but we leave some extra buffer
+	// to collect any non-fatal error messages accumulated during the process
 	const unique_buffer<mutable_buffer> buf
 	{
 		4_KiB
@@ -116,6 +116,8 @@ post__createroom(client &client,
 		out
 	};
 
+	// note the room_id is already known (and output buffered) before the
+	// room creation process has even started
 	json::stack::member
 	{
 		top, "room_id", room_id
@@ -135,7 +137,10 @@ post__createroom(client &client,
 	top.~object();
 	return resource::response
 	{
-		client, http::CREATED, json::object{out.completed()}
+		client, http::CREATED, json::object
+		{
+			out.completed()
+		}
 	};
 
 	return {};
@@ -157,8 +162,12 @@ try
 		at<"creator"_>(c)
 	};
 
-	// initial create event
-
+	// Initial create event is committed here first; note that this means the
+	// room is officially created and known to the system when this object
+	// constructs. Since this overall process including the rest of this scope
+	// is not naturally atomic, we shouldn't throw and abort after this point
+	// otherwise the full multi-event creation will not be completed. After
+	// this point we should report all errors to the errors array.
 	const room room
 	{
 		_create_event(c)
@@ -168,6 +177,7 @@ try
 	{
 		room.room_id
 	};
+	assert(room_id == json::get<"room_id"_>(c));
 
 	const json::string preset
 	{

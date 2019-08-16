@@ -686,7 +686,7 @@ try
 
 	const json::string &room_version
 	{
-		response.get("room_version", "1")
+		response.get("room_version", "1"_sv)
 	};
 
 	const json::object &proto
