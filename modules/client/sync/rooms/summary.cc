@@ -30,9 +30,6 @@ ircd::m::sync::room_summary
 	"rooms.summary",
 	room_summary_polylog,
 	room_summary_linear,
-	{
-		{ "initial",  true },
-	}
 };
 
 bool

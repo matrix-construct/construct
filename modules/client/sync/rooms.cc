@@ -181,19 +181,7 @@ ircd::m::sync::_rooms_polylog(data &data,
 			stats.timer = timer{};
 		#endif
 
-		{
-			const scope_restore phased
-			{
-				data.phased, int64_t(data.range.first) < 0? false : data.phased
-			};
-
-			const scope_restore range
-			{
-				data.range.first, phased.theirs? 0UL : data.range.first
-			};
-
-			ret |= _rooms_polylog_room(data, room);
-		}
+		ret |= _rooms_polylog_room(data, room);
 
 		#if defined(RB_DEBUG)
 		thread_local char tmbuf[32];

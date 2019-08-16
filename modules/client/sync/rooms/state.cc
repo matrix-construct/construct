@@ -227,8 +227,8 @@ ircd::m::sync::_room_state_polylog(data &data)
 {
 	assert(data.args);
 	if(likely(!data.args->full_state))
-		if(!apropos(data, data.room_head))
-			if(!data.phased || int64_t(data.range.first) > 0)
+		if(!data.phased && int64_t(data.range.first) > 0)
+			if(!apropos(data, data.room_head))
 				return false;
 
 	return room_state_polylog_events(data);

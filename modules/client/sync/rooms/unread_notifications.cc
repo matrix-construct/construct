@@ -31,9 +31,6 @@ ircd::m::sync::room_unread_notifications
 	"rooms.unread_notifications",
 	room_unread_notifications_polylog,
 	room_unread_notifications_linear,
-	{
-		{ "initial",  true },
-	}
 };
 
 decltype(ircd::m::sync::exposure_depth)

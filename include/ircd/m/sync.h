@@ -52,7 +52,6 @@ struct ircd::m::sync::item
 	json::strung feature;
 	json::object opts;
 	bool phased;
-	bool initial;
 
   public:
 	string_view name() const;

@@ -617,8 +617,8 @@ bool
 ircd::m::sync::apropos(const data &d,
                        const event::idx &event_idx)
 {
-	return event_idx >= d.range.first &&
-	       event_idx < d.range.second;
+	return d.phased ||
+	       (event_idx >= d.range.first && event_idx < d.range.second);
 }
 
 ircd::string_view
@@ -724,10 +724,6 @@ ircd::m::sync::item::item(std::string name,
 {
 	opts.get<bool>("phased", false)
 }
-,initial
-{
-	opts.get<bool>("initial", false)
-}
 {
 	log::debug
 	{
@@ -757,12 +753,7 @@ try
 	if(!enable)
 		return false;
 
-	// Skip the item for phased-sync ranges after initial sync if it has initial=true
-	if(data.phased && initial && int64_t(data.range.first) < 0L)
-		return false;
-
-	// Skip the item for phased-sync ranges if it's not phased-sync aware.
-	if(data.phased && !phased && int64_t(data.range.first) < 0L)
+	if(data.phased && !phased && int64_t(data.range.first) < 0)
 		return false;
 
 	#ifdef RB_DEBUG

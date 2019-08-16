@@ -29,9 +29,6 @@ ircd::m::sync::account_data
 	"account_data",
 	account_data_polylog,
 	account_data_linear,
-	{
-		{ "initial", true }
-	}
 };
 
 bool
