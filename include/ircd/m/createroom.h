@@ -99,7 +99,11 @@ struct ircd::m::createroom
 
 	/// (non-spec) Manually specify the room creator. This is an interface
 	/// convenience and will be overwritten/ignored from unprivileged users.
-	json::property<name::creator, json::string>
+	json::property<name::creator, json::string>,
+
+	/// (non-spec) Manually specify a room version string (ignored from
+	/// unprivileged users/clients).
+	json::property<name::room_version, json::string>
 >
 {
 	using super_type::tuple;

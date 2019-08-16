@@ -138,6 +138,7 @@ struct ircd::m::name
 	static constexpr const char *const power_level_content_override {"power_level_content_override"};
 	static constexpr const char *const parent_room_id {"parent_room_id"};
 	static constexpr const char *const creator {"creator"};
+	static constexpr const char *const room_version {"room_version"};
 
 	static constexpr const char *const id_server {"id_server"};
 

@@ -117,6 +117,7 @@ constexpr const char *const ircd::m::name::guest_can_join;
 constexpr const char *const ircd::m::name::power_level_content_override;
 constexpr const char *const ircd::m::name::parent_room_id;
 constexpr const char *const ircd::m::name::creator;
+constexpr const char *const ircd::m::name::room_version;
 
 constexpr const char *const ircd::m::name::id_server;
 
