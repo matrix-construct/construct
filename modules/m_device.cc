@@ -129,7 +129,7 @@ ircd::m::device::del(const m::user &user,
 	};
 
 	state.for_each(type, [&user, &id, &user_room, &state]
-	(const string_view &type)
+	(const string_view &type, const string_view &, const event::idx &)
 	{
 		const auto event_idx
 		{
@@ -204,7 +204,7 @@ ircd::m::device::has(const m::user &user,
 
 	bool ret(false);
 	state.for_each(type, [&state, &id, &ret]
-	(const string_view &type)
+	(const string_view &type, const string_view &, const event::idx &)
 	{
 		ret = state.has(type, id);
 		return !ret;
@@ -276,7 +276,7 @@ ircd::m::device::for_each(const m::user &user,
 	};
 
 	return state.for_each(type, [&state, &device_id, &closure]
-	(const string_view &type)
+	(const string_view &type, const string_view &, const event::idx &)
 	{
 		const string_view &prop
 		{
@@ -294,15 +294,21 @@ IRCD_MODULE_EXPORT
 ircd::m::device::for_each(const m::user &user,
                           const closure_bool &closure)
 {
-	const m::room::state::keys_bool state_key{[&closure]
-	(const string_view &state_key)
+	const m::user::room user_room
+	{
+		user
+	};
+
+	const m::room::state state
+	{
+		user_room
+	};
+
+	return state.for_each("ircd.device.device_id", [&closure]
+	(const string_view &, const string_view &state_key, const event::idx &)
 	{
 		return closure(state_key);
-	}};
-
-	const m::user::room user_room{user};
-	const m::room::state state{user_room};
-	return state.for_each("ircd.device.device_id", state_key);
+	});
 }
 
 ircd::m::device::id::buf

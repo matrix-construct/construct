@@ -26,10 +26,6 @@ struct ircd::m::room::state
 	struct space;
 	struct history;
 
-	using keys = std::function<void (const string_view &)>;
-	using keys_bool = std::function<bool (const string_view &)>;
-	using types = std::function<void (const string_view &)>;
-	using types_bool = std::function<bool (const string_view &)>;
 	using closure = std::function<void (const string_view &, const string_view &, const event::idx &)>;
 	using closure_bool = std::function<bool (const string_view &, const string_view &, const event::idx &)>;
 	IRCD_STRONG_TYPEDEF(string_view, type_prefix)
@@ -46,12 +42,6 @@ struct ircd::m::room::state
 	bool present() const;
 
 	// Iterate the state
-	bool for_each(const types_bool &) const;
-	void for_each(const types &) const;
-	bool for_each(const type_prefix &pref, const types_bool &) const;
-	bool for_each(const string_view &type, const keys_bool &view) const;
-	void for_each(const string_view &type, const keys &) const;
-	bool for_each(const string_view &type, const string_view &lower_bound, const keys_bool &view) const;
 	bool for_each(const string_view &type, const string_view &lower_bound, const closure_bool &view) const;
 	bool for_each(const string_view &type, const string_view &lower_bound, const event::closure_idx_bool &view) const;
 	bool for_each(const string_view &type, const string_view &lower_bound, const event::id::closure_bool &view) const;
@@ -63,6 +53,7 @@ struct ircd::m::room::state
 	void for_each(const string_view &type, const event::id::closure &) const;
 	bool for_each(const string_view &type, const event::closure_bool &view) const;
 	void for_each(const string_view &type, const event::closure &) const;
+	bool for_each(const type_prefix &type, const closure_bool &view) const;
 	bool for_each(const closure_bool &view) const;
 	bool for_each(const event::closure_idx_bool &view) const;
 	void for_each(const event::closure_idx &) const;

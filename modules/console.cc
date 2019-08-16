@@ -7739,26 +7739,30 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "servers err:   " << m::room::origins{room_id}.count_error() << std::endl;
 	out << std::endl;
 
-	state.for_each("m.", m::room::state::types_bool{[&out, &state]
-	(const string_view &type)
+	state.for_each(m::room::state::type_prefix{"m."}, [&out, &state]
+	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
 	{
 		assert(startswith(type, "m."));
 		if(type == "m.room.member")
 			return true;
 
-		state.for_each(type, m::event::closure{[&out, &type]
-		(const m::event &event)
-		{
-			if(json::get<"state_key"_>(event) != "" && type != "m.room.aliases")
-				return;
+		if(state_key != ""_sv && type != "m.room.aliases")
+			return true;
 
-			for(const auto &[prop, val] : json::get<"content"_>(event))
-				out << json::get<"type"_>(event)
-				    << ": " << prop << ": " << val << std::endl;
-		}});
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
+
+		for(const auto &[prop, val] : json::get<"content"_>(event))
+			out << json::get<"type"_>(event)
+			    << ": " << prop << ": " << val << std::endl;
 
 		return true;
-	}});
+	});
 
 	out << "\nrecent events:"
 	    << std::endl;
@@ -8958,12 +8962,12 @@ console_cmd__room__state__types(opt &out, const string_view &line)
 		room
 	};
 
-	state.for_each(m::room::state::types{[&out]
-	(const string_view &type)
+	state.for_each([&out]
+	(const string_view &type, const string_view &state_key, const m::event::idx &)
 	{
 		out << type << std::endl;
 		return true;
-	}});
+	});
 
 	return true;
 }
@@ -9006,15 +9010,15 @@ console_cmd__room__state__keys(opt &out, const string_view &line)
 		room
 	};
 
-	state.for_each(type, prefix, m::room::state::keys_bool{[&out, &prefix]
-	(const string_view &state_key)
+	state.for_each(type, prefix, [&out, &prefix]
+	(const string_view &, const string_view &state_key, const m::event::idx &)
 	{
 		if(prefix && !startswith(state_key, prefix))
 			return false;
 
 		out << state_key << std::endl;
 		return true;
-	}});
+	});
 
 	return true;
 }

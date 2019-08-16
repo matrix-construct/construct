@@ -2289,6 +2289,26 @@ const
 	return true;
 }
 
+bool
+ircd::m::room::state::for_each(const type_prefix &prefix,
+                               const closure_bool &closure)
+const
+{
+	bool ret(true), cont(true);
+	for_each(closure_bool{[&prefix, &closure, &ret, &cont]
+	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
+	{
+		if(!startswith(type, string_view(prefix)))
+			return cont;
+
+		cont = false;
+		ret = closure(type, state_key, event_idx);
+		return ret;
+	}});
+
+	return ret;
+}
+
 void
 ircd::m::room::state::for_each(const string_view &type,
                                const event::closure &closure)
@@ -2470,167 +2490,6 @@ const
 
 		const byte_view<event::idx> idx(it->second);
 		if(!closure(std::get<0>(key), std::get<1>(key), idx))
-			return false;
-	}
-
-	return true;
-}
-
-void
-ircd::m::room::state::for_each(const string_view &type,
-                               const keys &closure)
-const
-{
-	for_each(type, keys_bool{[&closure]
-	(const string_view &key)
-	{
-		closure(key);
-		return true;
-	}});
-}
-
-bool
-ircd::m::room::state::for_each(const string_view &type,
-                               const keys_bool &closure)
-const
-{
-	return for_each(type, string_view{}, closure);
-}
-
-bool
-ircd::m::room::state::for_each(const string_view &type,
-                               const string_view &state_key_lb,
-                               const keys_bool &closure)
-const
-{
-	if(!present())
-	{
-		const history history
-		{
-			room_id, event_id
-		};
-
-		return history.for_each(type, state_key_lb, [&closure]
-		(const auto &, const auto &state_key, const auto &, const auto &)
-		{
-			return closure(state_key);
-		});
-	}
-
-	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
-	const auto &key
-	{
-		dbs::room_state_key(keybuf, room_id, type, state_key_lb)
-	};
-
-	db::gopts opts
-	{
-		this->fopts? this->fopts->gopts : db::gopts{}
-	};
-
-	if(!opts.readahead)
-		opts.readahead = size_t(readahead_size);
-
-	auto &column{dbs::room_state};
-	for(auto it{column.begin(key, opts)}; bool(it); ++it)
-	{
-		const auto key
-		{
-			dbs::room_state_key(it->first)
-		};
-
-		if(std::get<0>(key) != type)
-			break;
-
-		if(!closure(std::get<1>(key)))
-			return false;
-	}
-
-	return true;
-}
-
-bool
-ircd::m::room::state::for_each(const type_prefix &prefix,
-                               const types_bool &closure)
-const
-{
-	bool ret(true), cont(true);
-	for_each(types_bool([&prefix, &closure, &ret, &cont]
-	(const string_view &type)
-	{
-		if(!startswith(type, string_view(prefix)))
-			return cont;
-
-		cont = false;
-		ret = closure(type);
-		return ret;
-	}));
-
-	return ret;
-}
-
-void
-ircd::m::room::state::for_each(const types &closure)
-const
-{
-	for_each(types_bool{[&closure]
-	(const string_view &type)
-	{
-		closure(type);
-		return true;
-	}});
-}
-
-bool
-ircd::m::room::state::for_each(const types_bool &closure)
-const
-{
-	string_view last;
-	char lastbuf[m::event::TYPE_MAX_SIZE];
-
-	if(!present())
-	{
-		const history history
-		{
-			room_id, event_id
-		};
-
-		return history.for_each([&closure]
-		(const auto &type, const auto &, const auto &, const auto &)
-		{
-			return closure(type);
-		});
-	}
-
-	char keybuf[dbs::ROOM_STATE_KEY_MAX_SIZE];
-	const auto &key
-	{
-		dbs::room_state_key(keybuf, room_id, string_view{})
-	};
-
-	db::gopts opts
-	{
-		this->fopts? this->fopts->gopts : db::gopts{}
-	};
-
-	auto &column{dbs::room_state};
-	for(auto it{column.begin(key, opts)}; bool(it); ++it)
-	{
-		const auto part
-		{
-			dbs::room_state_key(it->first)
-		};
-
-		const auto &type
-		{
-			std::get<0>(part)
-		};
-
-		if(type == last)
-			continue;
-
-		last = strlcpy(lastbuf, type);
-		if(!closure(type))
 			return false;
 	}
 
@@ -3978,11 +3837,11 @@ const
 		room
 	};
 
-	return state.for_each("m.room.aliases", room::state::keys_bool{[this, &closure]
-	(const string_view &state_key)
+	return state.for_each("m.room.aliases", [this, &closure]
+	(const string_view &type, const string_view &state_key, const event::idx &)
 	{
 		return for_each(state_key, closure);
-	}});
+	});
 }
 
 bool
