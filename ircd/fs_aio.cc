@@ -65,6 +65,24 @@ ircd::fs::aio::max_submit
 	{ "persist",  false                     },
 };
 
+decltype(ircd::fs::aio::submit_coalesce)
+ircd::fs::aio::submit_coalesce
+{
+	{ "name",     "ircd.fs.aio.submit.coalesce"  },
+	{ "default",  true                           },
+	{ "description",
+
+	R"(
+	Enable coalescing to briefly delay the submission of a request, under
+	certain conditions, allowing other contexts to submit additional requests.
+	All requests are submitted to the kernel at once, allowing the disk
+	controller to plot the most efficient route of the head to satisfy all
+	requests with the lowest overall latency. Users with SSD's do not require
+	this and latency may be improved by setting it to false, though, there is
+	a counter-benefit by increasing system call overhead.
+	)"}
+};
+
 //
 // init
 //
@@ -789,8 +807,15 @@ ircd::fs::aio::system::submit(request &request)
 	// and be submitted itself as well.
 	const bool submit_now
 	{
+		// By default a request is not submitted to the kernel immediately
+		// to benefit from coalescing unless one of the conditions is met.
+		false
+
+		// Submission coalescing is disabled by the configuration
+		|| !aio::submit_coalesce
+
 		// The nodelay flag is set by the user.
-		request.opts->nodelay
+		|| request.opts->nodelay
 
 		// The queue has reached its limits.
 		|| qcount >= max_submit()

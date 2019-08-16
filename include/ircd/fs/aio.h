@@ -35,6 +35,7 @@ namespace ircd::fs::aio
 	extern conf::item<bool> enable;
 	extern conf::item<size_t> max_events;
 	extern conf::item<size_t> max_submit;
+	extern conf::item<bool> submit_coalesce;
 
 	extern struct stats stats;
 	extern struct system *system;
