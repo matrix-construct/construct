@@ -363,7 +363,17 @@ ircd::m::sync::room_state_phased_events(data &data)
 				event_idx, std::nothrow
 			};
 
-			if(unlikely(!event.valid))
+			if(unlikely(event_idx && !event.valid))
+				log::error
+				{
+					log, "Failed to find event_idx:%lu in room %s state (%s,%s)",
+					event_idx,
+					string_view{data.room->room_id},
+					key.first,
+					key.second,
+				};
+
+			if(!event.valid)
 				return;
 
 			append(event_idx, event);
