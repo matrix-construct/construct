@@ -106,5 +106,7 @@ struct ircd::m::createroom
 	json::property<name::room_version, json::string>
 >
 {
+	static conf::item<std::string> version_default;
+
 	using super_type::tuple;
 };

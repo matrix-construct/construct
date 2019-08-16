@@ -70,6 +70,14 @@ spec_preset(const string_view &preset)
 	return std::find(begin(spec_presets), end(spec_presets), preset) != end(spec_presets);
 }
 
+decltype(ircd::m::createroom::version_default)
+IRCD_MODULE_EXPORT_DATA
+ircd::m::createroom::version_default
+{
+	{ "name",     "ircd.m.createroom.version_default"  },
+	{ "default",  "5"                                  },
+};
+
 resource::response
 post__createroom(client &client,
                  const resource::request::object<m::createroom> &request)
@@ -77,6 +85,12 @@ post__createroom(client &client,
 	m::createroom c
 	{
 		request
+	};
+
+	// unconditionally set/override the room_version here
+	json::get<"room_version"_>(c) = string_view
+	{
+		m::createroom::version_default
 	};
 
 	json::get<"creator"_>(c) = request.user_id;
@@ -497,22 +511,26 @@ ircd::m::_create_event(const createroom &c)
 		}
 	};
 
-	static conf::item<std::string> default_version
+	const string_view &room_version
 	{
-		{ "name",     "ircd.m.room.create.version_default"  },
-		{ "default",  "4"                                   },
+		json::get<"room_version"_>(c)?
+			string_view{json::get<"room_version"_>(c)}:
+			string_view{m::createroom::version_default}
 	};
 
 	const json::iov::push _room_version
 	{
 		content,
 		{
-			"room_version", json::value { default_version, json::STRING }
+			"room_version", json::value
+			{
+				room_version, json::STRING
+			}
 		}
 	};
 
 	m::vm::copts opts;
-	opts.room_version = default_version;
+	opts.room_version = room_version;
 	opts.verify = false;
 	m::vm::eval
 	{

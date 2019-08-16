@@ -53,7 +53,7 @@ ircd::m::client_capabilities::get(client &client,
 
 	const json::value default_room_version
 	{
-		"1", json::STRING
+		string_view{m::createroom::version_default}, json::STRING
 	};
 
 	return resource::response
