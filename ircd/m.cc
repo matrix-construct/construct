@@ -207,6 +207,7 @@ ircd::m::module_names
 	"m_rooms_summary",
 	"m_users",
 	"m_user",
+	"m_user_filter",
 	"m_user_rooms",
 	"m_user_mitsein",
 	"m_user_events",
@@ -2617,122 +2618,6 @@ ircd::m::user::room::room(const m::user &user,
 	{
 		room_id, copts, fopts
 	};
-}
-
-//
-// user::filter
-//
-
-ircd::string_view
-ircd::m::user::filter::set(const mutable_buffer &buf,
-                           const json::object &val)
-const
-{
-	return set(buf, user, val);
-}
-
-std::string
-ircd::m::user::filter::get(const string_view &id)
-const
-{
-	std::string ret;
-	get(std::nothrow, id, [&ret]
-	(const string_view &id, const json::object &val)
-	{
-		ret = val;
-	});
-
-	return ret;
-}
-
-ircd::json::object
-ircd::m::user::filter::get(const mutable_buffer &out,
-                           const string_view &id)
-const
-{
-	json::object ret;
-	get(std::nothrow, id, [&out, &ret]
-	(const string_view &id, const json::object &val)
-	{
-		ret = string_view { data(out), copy(out, val) };
-	});
-
-	return ret;
-}
-
-void
-ircd::m::user::filter::get(const string_view &id,
-                           const closure &closure)
-const
-{
-	if(!get(std::nothrow, user, id, closure))
-		throw m::NOT_FOUND
-		{
-			"filter id '%s' for user %s not found",
-			id,
-			string_view{user.user_id}
-		};
-}
-
-bool
-ircd::m::user::filter::get(std::nothrow_t,
-                           const string_view &id,
-                           const closure &closure)
-const
-{
-	return get(std::nothrow, user, id, closure);
-}
-
-bool
-ircd::m::user::filter::for_each(const closure_bool &closure)
-const
-{
-	return for_each(user, closure);
-}
-
-ircd::string_view
-ircd::m::user::filter::set(const mutable_buffer &buf,
-                           const m::user &u,
-                           const json::object &v)
-{
-	using prototype = string_view (const mutable_buffer &, const m::user &, const json::object &);
-
-	static mods::import<prototype> function
-	{
-		"client_user", "ircd::m::user::filter::set"
-	};
-
-	return function(buf, u, v);
-}
-
-bool
-ircd::m::user::filter::get(std::nothrow_t,
-                           const m::user &u,
-                           const string_view &id,
-                           const closure &c)
-{
-	using prototype = bool (std::nothrow_t, const m::user &, const string_view &, const closure &);
-
-	static mods::import<prototype> function
-	{
-		"client_user", "ircd::m::user::filter::get"
-	};
-
-	return function(std::nothrow, u, id, c);
-}
-
-bool
-ircd::m::user::filter::for_each(const m::user &u,
-                                const closure_bool &c)
-{
-	using prototype = bool (const m::user &, const closure_bool &);
-
-	static mods::import<prototype> function
-	{
-		"client_user", "ircd::m::user::filter::for_each"
-	};
-
-	return function(u, c);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
