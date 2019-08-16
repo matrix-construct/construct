@@ -28,6 +28,9 @@ namespace ircd::net::dns
 	static void handle_resolve_A_ipport(const hostport &, const json::object &rr, opts, uint16_t, callback_ipport);
 	static void handle_resolve_SRV_ipport(const hostport &, const json::object &rr, opts, callback_ipport);
 	static void handle_resolve_one(const hostport &, const json::array &rr, callback_one);
+
+	static void fini();
+	static void init();
 }
 
 namespace ircd::net::dns::cache
@@ -35,7 +38,7 @@ namespace ircd::net::dns::cache
 	struct waiter;
 
 	static bool call_waiter(const string_view &, const string_view &, const json::array &, waiter &);
-	static void call_waiters(const string_view &, const string_view &, const json::array &);
+	static size_t call_waiters(const string_view &, const string_view &, const json::array &);
 	static void handle(const m::event &, m::vm::eval &);
 
 	static bool put(const string_view &type, const string_view &state_key, const records &rrs);

@@ -14,15 +14,33 @@ ircd::mapi::header
 IRCD_MODULE
 {
 	"Domain Name System Client, Cache & Components",
-	[] // init
-	{
-		ircd::net::dns::resolver_init(ircd::net::dns::handle_resolved);
-	},
-	[] // fini
-	{
-		ircd::net::dns::resolver_fini();
-	}
+	ircd::net::dns::init,
+	ircd::net::dns::fini,
 };
+
+void
+ircd::net::dns::init()
+{
+	resolver_init(handle_resolved);
+}
+
+void
+ircd::net::dns::fini()
+{
+	resolver_fini();
+
+	if(!cache::waiting.empty())
+		log::warning
+		{
+			log, "Waiting for %zu unfinished cache operations.",
+			cache::waiting.size(),
+		};
+
+	cache::dock.wait([]
+	{
+		return cache::waiting.empty();
+	});
+}
 
 void
 IRCD_MODULE_EXPORT
@@ -381,6 +399,9 @@ ircd::net::dns::cache::hook
 
 decltype(ircd::net::dns::cache::waiting)
 ircd::net::dns::cache::waiting;
+
+decltype(ircd::net::dns::cache::dock)
+ircd::net::dns::cache::dock;
 
 bool
 IRCD_MODULE_EXPORT
@@ -840,20 +861,28 @@ catch(const std::exception &e)
 	};
 }
 
-void
+size_t
 ircd::net::dns::cache::call_waiters(const string_view &type,
                                     const string_view &state_key,
                                     const json::array &rrs)
 {
+	size_t ret(0);
 	auto it(begin(waiting));
 	while(it != end(waiting))
 	{
 		auto &waiter(*it);
 		if(call_waiter(type, state_key, rrs, waiter))
+		{
 			it = waiting.erase(it);
-		else
-			++it;
+			++ret;
+		}
+		else ++it;
 	}
+
+	if(ret)
+		dock.notify_all();
+
+	return ret;
 }
 
 bool
