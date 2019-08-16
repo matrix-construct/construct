@@ -45,10 +45,6 @@ get__presence_status(client &,
                      const resource::request &,
                      const m::user::id &);
 
-static resource::response
-get__presence_list(client &,
-                   const resource::request &);
-
 resource::response
 get__presence(client &client,
               const resource::request &request)
@@ -58,9 +54,6 @@ get__presence(client &client,
 		{
 			"user_id or command required"
 		};
-
-	if(request.parv[0] == "list")
-		return get__presence_list(client, request);
 
 	m::user::id::buf user_id
 	{
@@ -109,37 +102,6 @@ get__presence_status(client &client,
 	return {}; // responded from closure or threw
 }
 
-resource::response
-get__presence_list(client &client,
-                   const resource::request &request)
-{
-	if(request.parv.size() < 2)
-		throw m::NEED_MORE_PARAMS
-		{
-			"user_id required"
-		};
-
-	m::user::id::buf user_id
-	{
-		url::decode(user_id, request.parv[1])
-	};
-
-	const m::user::room user_room
-	{
-		user_id
-	};
-
-	//TODO: reuse composition from /status
-	std::vector<json::value> list;
-	return resource::response
-	{
-		client, json::value
-		{
-			list.data(), list.size()
-		}
-	};
-}
-
 //
 // POST ?
 //
@@ -157,10 +119,6 @@ method_post
 	}
 };
 
-static resource::response
-post__presence_list(client &,
-                    const resource::request &);
-
 resource::response
 post__presence(client &client,
                const resource::request &request)
@@ -171,38 +129,9 @@ post__presence(client &client,
 			"command required"
 		};
 
-	if(request.parv[0] == "list")
-		return get__presence_list(client, request);
-
 	throw m::NOT_FOUND
 	{
 		"Presence command not found"
-	};
-}
-
-resource::response
-post__presence_list(client &client,
-                    const resource::request &request)
-{
-	if(request.parv.size() < 2)
-		throw m::NEED_MORE_PARAMS
-		{
-			"user_id required"
-		};
-
-	m::user::id::buf user_id
-	{
-		url::decode(user_id, request.parv[1])
-	};
-
-	const m::user::room user_room
-	{
-		user_id
-	};
-
-	return resource::response
-	{
-		client, http::OK
 	};
 }
 
