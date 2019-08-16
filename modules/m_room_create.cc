@@ -127,7 +127,19 @@ ircd::m::auth_room_create(const event &event,
 			event.event_id.version()
 		};
 
-		if(claim_version == "3")
+		if(claim_version == "1" || claim_version == "2")
+		{
+			// When the claimed version is 1 or 2 we don't actually
+			// care if the event_id is version 1, 3 or 4 etc; the server
+			// has eliminated use of the event_id hostpart in all rooms.
+
+			//if(id_version != "1")
+			//	throw FAIL
+			//	{
+			//		"m.room.create room_version not 1"
+			//	};
+		}
+		else if(claim_version == "3")
 		{
 			if(id_version != "3")
 				throw FAIL
@@ -143,20 +155,17 @@ ircd::m::auth_room_create(const event &event,
 					"m.room.create room_version not 4"
 				};
 		}
-		else if(claim_version == "1" || claim_version == "2")
+		else
 		{
-			//if(id_version != "1")
-			//	return "m.room.create room_version not 1";
-		}
-		else if(claim_version != "1" && claim_version != "2")
-		{
+			// Note that id_version reports "4" even for version "5"
+			// and beyond room versions. When a room version requires
+			// a new ID version these branches must be updated.
 			if(id_version != "4")
 				throw FAIL
 				{
 					"m.room.create room_version not 4"
 				};
 		}
-		else assert(0);
 	}
 
 	// d. If content has no creator field, reject.

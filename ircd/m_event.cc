@@ -3449,9 +3449,10 @@ ircd::m::check_id(const event &event,
                   const string_view &room_version)
 noexcept try
 {
+	assert(event.event_id);
 	const auto &version
 	{
-		room_version?: json::get<"event_id"_>(event)? "1"_sv: "4"_sv
+		room_version?: event.event_id.version()
 	};
 
 	thread_local char buf[64];
@@ -3462,9 +3463,6 @@ noexcept try
 
 		version == "3"?
 			event::id{event::id::v3{buf, event}}:
-
-		version == "4" || version == "5"?
-			event::id{event::id::v4{buf, event}}:
 
 		event::id{event::id::v4{buf, event}}
 	};
