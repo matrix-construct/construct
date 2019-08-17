@@ -309,24 +309,20 @@ ircd::m::auth_room_member_invite(const m::event &event,
 			"m.room.member membership=invite sender must have membership=join."
 		};
 
-	if(!data.auth_member_target)
-		throw FAIL
-		{
-			"m.room.member membership=invite missing target member auth event."
-		};
-
 	// iii. If target user's current membership state is join or ban, reject.
-	if(membership(*data.auth_member_target) == "join")
-		throw FAIL
-		{
-			"m.room.member membership=invite target cannot have membership=join."
-		};
+	if(data.auth_member_target)
+		if(membership(*data.auth_member_target) == "join")
+			throw FAIL
+			{
+				"m.room.member membership=invite target cannot have membership=join."
+			};
 
-	if(membership(*data.auth_member_target) == "ban")
-		throw FAIL
-		{
-			"m.room.member membership=invite target cannot have membership=ban."
-		};
+	if(data.auth_member_target)
+		if(membership(*data.auth_member_target) == "ban")
+			throw FAIL
+			{
+				"m.room.member membership=invite target cannot have membership=ban."
+			};
 
 	// iv. If the sender's power level is greater than or equal to the invite level,
 	// allow.
