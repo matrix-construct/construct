@@ -21,8 +21,9 @@ static void recv();
 static void recv_worker();
 ctx::dock recv_action;
 
-static void send(const m::event &, const m::user::id &user_id);
-static void send(const m::event &, const m::room::id &room_id);
+static void send_from_user(const m::event &, const m::user::id &user_id);
+static void send_to_user(const m::event &, const m::user::id &user_id);
+static void send_to_room(const m::event &, const m::room::id &room_id);
 static void send(const m::event &);
 static void send_worker();
 
@@ -144,6 +145,11 @@ send_worker()
 void
 send(const m::event &event)
 {
+	const auto &sender
+	{
+		json::get<"sender"_>(event)
+	};
+
 	const auto &room_id
 	{
 		json::get<"room_id"_>(event)
@@ -152,16 +158,23 @@ send(const m::event &event)
 	if(json::get<"depth"_>(event) == json::undefined_number)
 		return;
 
+	// target is every remote server in a room
 	if(valid(m::id::ROOM, room_id))
-		return send(event, m::room::id{room_id});
+		return send_to_room(event, m::room::id{room_id});
 
+	// target is remote server hosting user/device
 	if(valid(m::id::USER, room_id))
-		return send(event, m::user::id{room_id});
+		return send_to_user(event, m::user::id{room_id});
+
+	// target is every remote server from every room a user is joined to.
+	if(valid(m::id::USER, sender))
+		return send_from_user(event, m::user::id{sender});
 }
 
+/// EDU and PDU path where the target is a room
 void
-send(const m::event &event,
-     const m::room::id &room_id)
+send_to_room(const m::event &event,
+             const m::room::id &room_id)
 {
 	// Unit is not allocated until we find another server in the room.
 	std::shared_ptr<struct unit> unit;
@@ -195,9 +208,10 @@ send(const m::event &event,
 	});
 }
 
+/// EDU path where the target is a user/device
 void
-send(const m::event &event,
-     const m::user::id &user_id)
+send_to_user(const m::event &event,
+             const m::user::id &user_id)
 {
 	const string_view &remote
 	{
@@ -227,6 +241,48 @@ send(const m::event &event,
 
 	node.push(std::move(unit));
 	node.flush();
+}
+
+/// EDU path where the he target is every server from every room the sender
+/// is joined to.
+void
+send_from_user(const m::event &event,
+               const m::user::id &user_id)
+{
+	const m::user::servers servers
+	{
+		user_id
+	};
+
+	// Iterate all of the servers visible in this user's joined rooms.
+	servers.for_each("join", [&user_id, &event]
+	(const string_view &origin)
+	{
+		if(my_host(origin))
+			return true;
+
+		auto it{nodes.lower_bound(origin)};
+		if(it == end(nodes) || it->first != origin)
+		{
+			if(server::errmsg(origin))
+				return true;
+
+			it = nodes.emplace_hint(it, origin, origin);
+		}
+
+		auto &node{it->second};
+		if(node.err)
+			return true;
+
+		auto unit
+		{
+			std::make_shared<struct unit>(event)
+		};
+
+		node.push(unit);
+		node.flush();
+		return true;
+	});
 }
 
 void
