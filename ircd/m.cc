@@ -2620,6 +2620,14 @@ ircd::m::user::room::room(const m::user &user,
 	};
 }
 
+bool
+ircd::m::user::room::is(const room::id &room_id,
+                        const user::id &user_id)
+{
+	const user::room user_room{user_id};
+	return user_room.room_id == room_id;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/txn.h

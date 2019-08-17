@@ -29,4 +29,6 @@ struct ircd::m::user::room
 	room() = default;
 	room(const room &) = delete;
 	room &operator=(const room &) = delete;
+
+	static bool is(const room::id &, const user::id &);
 };
