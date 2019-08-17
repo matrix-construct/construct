@@ -10,6 +10,7 @@
 
 using namespace ircd;
 
+static void handle_ircd_presence(const m::event &, m::vm::eval &);
 static void handle_edu_m_presence_object(const m::event &, const m::presence &edu);
 static void handle_edu_m_presence(const m::event &, m::vm::eval &);
 
@@ -19,11 +20,25 @@ IRCD_MODULE
 	"Matrix Presence"
 };
 
+/// Coarse enabler for incoming federation presence events. If this is
+/// disabled then all presence coming over the federation is ignored. Note
+/// that there are other ways to degrade or ignore presence in various
+/// other subsystems like sync without losing the data; however presence
+/// data over the federation is considerable and tiny deployments which
+/// won't /sync presence to clients should probably quench it here too.
 conf::item<bool>
 federation_incoming
 {
 	{ "name",     "ircd.m.presence.federation.incoming" },
 	{ "default",  true                                  },
+};
+
+/// Coarse enabler to send presence events over the federation.
+conf::item<bool>
+federation_send
+{
+	{ "name",     "ircd.m.presence.federation.send" },
+	{ "default",  false                             },
 };
 
 log::log
@@ -32,9 +47,8 @@ presence_log
 	"m.presence"
 };
 
-extern const string_view
-valid_states[];
-
+/// This hook processes incoming m.presence events from the federation and
+/// turns them into ircd.presence events in the user's room.
 const m::hookfn<m::vm::eval &>
 _m_presence_eval
 {
@@ -45,6 +59,9 @@ _m_presence_eval
 	}
 };
 
+extern const string_view
+valid_states[];
+
 void
 handle_edu_m_presence(const m::event &event,
                       m::vm::eval &eval)
@@ -53,7 +70,7 @@ try
 	if(!federation_incoming)
 		return;
 
-	if(m::my_host(at<"origin"_>(event)))
+	if(my(event))
 		return;
 
 	const json::object &content
@@ -201,6 +218,101 @@ catch(const m::error &e)
 		json::get<"origin"_>(event),
 		e.what(),
 		e.content
+	};
+}
+
+/// This hook processes ircd.presence events generated internally from local
+/// users and converts them to m.presence over the federation.
+const m::hookfn<m::vm::eval &>
+_ircd_presence_eval
+{
+	handle_ircd_presence,
+	{
+		{ "_site",   "vm.effect"      },
+		{ "type",    "ircd.presence"  },
+	}
+};
+
+void
+handle_ircd_presence(const m::event &event,
+                     m::vm::eval &eval)
+try
+{
+	if(!federation_send)
+		return;
+
+	const m::user::id &user_id
+	{
+		json::get<"sender"_>(event)
+	};
+
+	if(!my(user_id))
+		return;
+
+	// The event has to be an ircd.presence in the user's room, not just a
+	// random ircd.presence typed event in some other room...
+	if(!m::user::room::is(json::get<"room_id"_>(event), user_id))
+		return;
+
+	// Get the spec EDU data from our PDU's content
+	const m::edu::m_presence edu
+	{
+		json::get<"content"_>(event)
+	};
+
+	// Check if the user_id in the content is legitimate. This should have
+	// been checked on any input side, but nevertheless we'll ignore any
+	// discrepancies here for now.
+	if(unlikely(json::get<"user_id"_>(edu) != user_id))
+		return;
+
+	// The matrix EDU format requires us to wrap this data in an array
+	// called "push" so we copy content into this stack buffer :/
+	char buf[512];
+	json::stack out{buf};
+	{
+		json::stack::array push{out};
+		push.append(edu);
+	}
+
+	// Note that "sender" is intercepted by the federation sender and not
+	// actually sent over the wire.
+	json::iov edu_event, content;
+	const json::iov::push pushed[]
+	{
+		{ edu_event,  { "type",    "m.presence"     }},
+		{ edu_event,  { "sender",  user_id          }},
+		{ content,    { "push",    out.completed()  }},
+	};
+
+	// Setup for a core injection of an EDU.
+	m::vm::copts opts;
+	opts.prop_mask.reset();            // Clear all PDU properties
+	opts.conforming = false;           // EDU's are not event::conforms checked
+	opts.notify_clients = false;       // Client /sync already saw the ircd.presence
+
+	// Execute
+	m::vm::eval
+	{
+		edu_event, content, opts
+	};
+
+	log::info
+	{
+		presence_log, "%s is %s and %s %zd seconds ago",
+		string_view{user_id},
+		json::get<"currently_active"_>(edu)? "active"_sv : "inactive"_sv,
+		json::get<"presence"_>(edu),
+		json::get<"last_active_ago"_>(edu) / 1000L,
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		presence_log, "Presence from our %s to federation :%s",
+		string_view{json::get<"sender"_>(event)},
+		e.what(),
 	};
 }
 
