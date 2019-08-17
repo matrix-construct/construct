@@ -63,4 +63,6 @@ struct ircd::m::room::head
 	head(const m::room &room)
 	:room{room}
 	{}
+
+	head() = default;
 };

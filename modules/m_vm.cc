@@ -283,6 +283,11 @@ ircd::m::vm::inject(eval &eval,
 		is_room_create && contents.has("room_version")?
 			string_view{contents.at("room_version")}:
 
+		// If this is an EDU or some kind of feature without a room_id then
+		// we'll leave this blank.
+		!eval.room_id?
+			string_view{}:
+
 		// Make a query to find the version. The version string will be hosted
 		// by the stack buffer.
 			m::version(room_version_buf, room{eval.room_id}, std::nothrow)
@@ -292,7 +297,6 @@ ircd::m::vm::inject(eval &eval,
 	// event iov being injected. This is the inverse of the above satisfying
 	// the case where the room_id is supplied via the reference, not the iov;
 	// in the end we want that reference in both places.
-	assert(eval.room_id);
 	const json::iov::add room_id_
 	{
 		event, eval.room_id && !event.has("room_id"),
@@ -344,6 +348,7 @@ ircd::m::vm::inject(eval &eval,
 		!is_room_create
 		&& opts.prop_mask.has("prev_events")
 		&& !event.has("prev_events")
+		&& eval.room_id
 	};
 
 	// The buffer we'll be composing the prev_events JSON array into.
@@ -357,7 +362,13 @@ ircd::m::vm::inject(eval &eval,
 	// Conduct the prev_events composition into our buffer. This sub returns
 	// a finished json::array in our buffer as well as a depth integer for
 	// the event which will be using the references.
-	const room::head head{room{eval.room_id}};
+	const room::head head
+	{
+		add_prev_events?
+			room::head{room{eval.room_id}}:
+			room::head{}
+	};
+
 	const auto &[prev_events, depth]
 	{
 		add_prev_events?
@@ -403,6 +414,7 @@ ircd::m::vm::inject(eval &eval,
 		!is_room_create
 		&& opts.prop_mask.has("auth_events")
 		&& !event.has("auth_events")
+		&& eval.room_id
 	};
 
 	// The auth_events have more deterministic properties.
