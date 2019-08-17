@@ -10347,6 +10347,38 @@ console_cmd__user__presence(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__presence__set(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "state", "status"
+	}};
+
+	const m::user user
+	{
+		param.at("user_id")
+	};
+
+	const string_view &state
+	{
+		param.at("state")
+	};
+
+	const string_view &status
+	{
+		param["status"]
+	};
+
+	const auto eid
+	{
+		m::presence::set(user, state, status)
+	};
+
+	out << eid << std::endl;
+	return true;
+}
+
+bool
 console_cmd__user__rooms(opt &out, const string_view &line)
 {
 	const params param{line, " ",
