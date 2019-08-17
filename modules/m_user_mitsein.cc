@@ -27,12 +27,12 @@ ircd::m::user::mitsein::has(const m::user &other,
 const
 {
 	// Return true if broken out of loop.
-	return !for_each(other, membership, rooms::closure_bool{[]
+	return !for_each(other, membership, []
 	(const m::room &, const string_view &)
 	{
 		// Break out of loop at first shared room
 		return false;
-	}});
+	});
 }
 
 size_t
@@ -44,6 +44,7 @@ const
 	for_each(membership, [&ret](const m::user &)
 	{
 		++ret;
+		return true;
 	});
 
 	return ret;
@@ -59,17 +60,10 @@ const
 	for_each(user, membership, [&ret](const m::room &, const string_view &)
 	{
 		++ret;
+		return true;
 	});
 
 	return ret;
-}
-
-void
-IRCD_MODULE_EXPORT
-ircd::m::user::mitsein::for_each(const closure &closure)
-const
-{
-	for_each(string_view{}, closure);
 }
 
 bool
@@ -78,20 +72,6 @@ ircd::m::user::mitsein::for_each(const closure_bool &closure)
 const
 {
 	return for_each(string_view{}, closure);
-}
-
-void
-IRCD_MODULE_EXPORT
-ircd::m::user::mitsein::for_each(const string_view &membership,
-                                 const closure &closure)
-const
-{
-	for_each(membership, closure_bool{[&closure]
-	(const m::user &user)
-	{
-		closure(user);
-		return true;
-	}});
 }
 
 bool
@@ -140,15 +120,6 @@ const
 	}});
 }
 
-void
-IRCD_MODULE_EXPORT
-ircd::m::user::mitsein::for_each(const m::user &user,
-                                 const rooms::closure &closure)
-const
-{
-	for_each(user, string_view{}, closure);
-}
-
 bool
 IRCD_MODULE_EXPORT
 ircd::m::user::mitsein::for_each(const m::user &user,
@@ -156,21 +127,6 @@ ircd::m::user::mitsein::for_each(const m::user &user,
 const
 {
 	return for_each(user, string_view{}, closure);
-}
-
-void
-IRCD_MODULE_EXPORT
-ircd::m::user::mitsein::for_each(const m::user &user,
-                                 const string_view &membership,
-                                 const rooms::closure &closure)
-const
-{
-	for_each(user, membership, rooms::closure_bool{[&membership, &closure]
-	(const m::room &room, const string_view &)
-	{
-		closure(room, membership);
-		return true;
-	}});
 }
 
 bool

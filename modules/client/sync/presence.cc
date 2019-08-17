@@ -160,6 +160,7 @@ ircd::m::sync::presence_polylog(data &data)
 	(const m::user &user)
 	{
 		concurrent(std::string(user.user_id));
+		return true;
 	});
 
 	const ctx::uninterruptible ui;

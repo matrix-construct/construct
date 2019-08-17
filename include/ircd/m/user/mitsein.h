@@ -19,15 +19,11 @@ struct ircd::m::user::mitsein
   public:
 	// All common rooms with user
 	bool for_each(const m::user &, const string_view &membership, const rooms::closure_bool &) const;
-	void for_each(const m::user &, const string_view &membership, const rooms::closure &) const;
 	bool for_each(const m::user &, const rooms::closure_bool &) const;
-	void for_each(const m::user &, const rooms::closure &) const;
 
 	// All common users in all rooms
 	bool for_each(const string_view &membership, const closure_bool &) const;
-	void for_each(const string_view &membership, const closure &) const;
 	bool for_each(const closure_bool &) const;
-	void for_each(const closure &) const;
 
 	// Counting convenience
 	size_t count(const m::user &, const string_view &membership = {}) const;

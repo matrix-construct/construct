@@ -240,6 +240,8 @@ initialsync_presence(client &client,
 				};
 			}
 		});
+
+		return true;
 	});
 }
 
