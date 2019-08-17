@@ -30,7 +30,10 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read
 {
 	"rooms.ephemeral.m_receipt",
 	room_ephemeral_m_receipt_m_read_polylog,
-	room_ephemeral_m_receipt_m_read_linear
+	room_ephemeral_m_receipt_m_read_linear,
+	{
+		{ "phased", true }
+	}
 };
 
 decltype(ircd::m::sync::receipt_scan_depth)
@@ -90,10 +93,14 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_linear(data &data)
 bool
 ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 {
-	const m::room &room{*data.room};
+	// With this sync::item being phased=true, this gets called for initial (zero)
+	// and all negative phases. We don't want to incur this load during initial.
+	if(data.phased && int64_t(data.range.first) == 0L)
+		return false;
+
 	m::room::messages it
 	{
-		room
+		*data.room
 	};
 
 	ssize_t i(0);

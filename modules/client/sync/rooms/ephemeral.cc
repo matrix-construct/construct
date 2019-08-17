@@ -27,7 +27,10 @@ ircd::m::sync::rooms_ephemeral
 {
 	"rooms.ephemeral",
 	rooms_ephemeral_polylog,
-	rooms_ephemeral_linear
+	rooms_ephemeral_linear,
+	{
+		{ "phased", true }
+	}
 };
 
 bool
