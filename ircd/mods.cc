@@ -89,31 +89,29 @@ ircd::mods::unload(mod &mod)
 		mod.location()
 	};
 
+	// Save the children! dlclose() does not like to be called recursively during static
+	// destruction of a module. The mod ctor recorded all of the modules loaded while this
+	// module was loading so we can reverse the record and unload them here.
+	std::vector<std::shared_ptr<mods::mod>> children(mod.children.size());
+	std::transform(begin(mod.children), end(mod.children), begin(children), []
+	(auto *const &ptr)
+	{
+		assert(ptr);
+		return shared_from(*ptr);
+	});
+
 	// Call the user's unloading function here.
 	assert(mod.header);
 	assert(mod.header->meta);
 	if(mod.header->meta->fini)
 		mod.header->meta->fini();
 
-	// Save the children! dlclose() does not like to be called recursively during static
-	// destruction of a module. The mod ctor recorded all of the modules loaded while this
-	// module was loading so we can reverse the record and unload them here.
-	// Note: If the user loaded more modules from inside their module they will have to dtor them
-	// before 'static destruction' does. They can also do that by adding them to this vector.
-	std::for_each(rbegin(mod.children), rend(mod.children), []
-	(auto *const &ptr)
-	{
-		// Only trigger an unload if there is one reference remaining to the module,
-		// in addition to the reference created by invoking shared_from() right here.
-		if(shared_from(*ptr).use_count() <= 2)
-			unload(*ptr);
-	});
-
 	log::debug
 	{
-		log, "Attempting static unload for '%s' @ `%s'",
+		log, "Attempting static unload for '%s' @ `%s' children:%zu",
 		mod.name(),
-		mod.location()
+		mod.location(),
+		children.size(),
 	};
 
 	mapi::static_destruction = false;
@@ -913,7 +911,19 @@ try
 	// construction of the module. This way the init function sees the module
 	// as loaded and can make shared_ptr references, etc.
 	if(ret->header->meta && ret->header->meta->init)
+	{
+		// Reassert that this module is "loading" again. We did this during
+		// static initialization in case the module recursively loaded other
+		// modules. This function gives the same opportunity.
+		mod::loading.emplace_front(ret.get());
+		const unwind pop_loading{[&ret]
+		{
+			assert(mod::loading.front() == ret.get());
+			mod::loading.pop_front();
+		}};
+
 		ret->header->meta->init();
+	}
 
 	log::info
 	{
