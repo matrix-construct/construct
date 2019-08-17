@@ -499,17 +499,6 @@ ircd::m::_create_event(const createroom &c)
 		{ content,   { "creator",     creator          }},
 	};
 
-	const json::iov::add _parent
-	{
-		content, !parent.empty() && m::room::id(parent).local() != "init",
-		{
-			"parent", [&parent]() -> json::value
-			{
-				return parent;
-			}
-		}
-	};
-
 	const json::iov::add _type
 	{
 		content, !type.empty() && type != "room",
