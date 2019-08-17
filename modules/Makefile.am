@@ -106,6 +106,7 @@ m_user_events_la_SOURCES = m_user_events.cc
 m_user_rooms_la_SOURCES = m_user_rooms.cc
 m_user_filter_la_SOURCES = m_user_filter.cc
 m_user_mitsein_la_SOURCES = m_user_mitsein.cc
+m_user_servers_la_SOURCES = m_user_servers.cc
 m_user_highlight_la_SOURCES = m_user_highlight.cc
 m_user_profile_la_SOURCES = m_user_profile.cc
 m_node_la_SOURCES = m_node.cc
@@ -153,6 +154,7 @@ m_module_LTLIBRARIES = \
 	m_user_rooms.la \
 	m_user_filter.la \
 	m_user_mitsein.la \
+	m_user_servers.la \
 	m_user_highlight.la \
 	m_user_profile.la \
 	m_node.la \

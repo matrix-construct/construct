@@ -9,29 +9,25 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_USER_ROOMS_H
+#define HAVE_IRCD_M_USER_SERVERS_H
 
-/// Interface to the rooms for a user.
-struct ircd::m::user::rooms
+/// Interface to the other servers visible to a user from their rooms
+struct ircd::m::user::servers
 {
-	struct origins;
+	using closure_bool = room::origins::closure_bool;
 
-	using closure = std::function<void (const m::room &, const string_view &)>;
-	using closure_bool = std::function<bool (const m::room &, const string_view &)>;
-
-	m::user::room user_room;
+	m::user user;
 
   public:
-	// All rooms with specific membership
+	// All servers for the user in all their rooms
 	bool for_each(const string_view &membership, const closure_bool &) const;
-	void for_each(const string_view &membership, const closure &) const;
-
-	// All rooms with any membership
 	bool for_each(const closure_bool &) const;
-	void for_each(const closure &) const;
 
-	size_t count(const string_view &membership) const;
-	size_t count() const;
+	// Counting convenience
+	size_t count(const string_view &membership = {}) const;
 
-	rooms(const m::user &user);
+	// Existential convenience (does `user` and `other` share any common room).
+	bool has(const string_view &server, const string_view &membership = {}) const;
+
+	servers(const m::user &user);
 };

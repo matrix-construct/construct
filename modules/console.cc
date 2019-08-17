@@ -10398,16 +10398,17 @@ console_cmd__user__rooms__origins(opt &out, const string_view &line)
 		param[1]
 	};
 
-	const m::user::rooms::origins origins
+	const m::user::servers origins
 	{
 		user
 	};
 
-	origins.for_each(membership, m::user::rooms::origins::closure{[&out]
+	origins.for_each(membership, [&out]
 	(const string_view &origin)
 	{
 		out << origin << std::endl;
-	}});
+		return true;
+	});
 
 	return true;
 }

@@ -210,6 +210,7 @@ ircd::m::module_names
 	"m_user_filter",
 	"m_user_rooms",
 	"m_user_mitsein",
+	"m_user_servers",
 	"m_user_events",
 	"m_user_highlight",
 	"m_user_profile",

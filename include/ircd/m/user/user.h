@@ -33,6 +33,7 @@ struct ircd::m::user
 	struct room;
 	struct rooms;
 	struct mitsein;
+	struct servers;
 	struct events;
 	struct profile;
 	struct account_data;
@@ -82,6 +83,7 @@ const
 #include "room.h"
 #include "rooms.h"
 #include "mitsein.h"
+#include "servers.h"
 #include "events.h"
 #include "profile.h"
 #include "account_data.h"
