@@ -896,6 +896,10 @@ ircd::m::vm::execute_pdu(eval &eval,
 	if(opts.fetch)
 		call_hook(fetch_hook, eval, event, eval);
 
+	// Evaluation by auth system; throws
+	if(opts.auth && !internal(room_id))
+		event::auth::check(event);
+
 	// Obtain sequence number here.
 	const auto *const &top(eval::seqmax());
 	eval.sequence_shared[0] = 0;

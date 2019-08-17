@@ -156,6 +156,9 @@ struct ircd::m::vm::opts
 	/// Call eval hooks or false to bypass this stage.
 	bool eval {true};
 
+	/// Perform auth or false to bypass this state.
+	bool auth {true};
+
 	/// Make writes to database
 	bool write {true};
 
