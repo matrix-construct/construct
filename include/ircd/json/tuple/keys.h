@@ -44,14 +44,12 @@ template<class tuple>
 struct ircd::json::keys<tuple>::selection
 :std::bitset<tuple::size()>
 {
-	template<class closure>
-	constexpr bool until(closure&& function) const;
-
-	template<class closure>
-	constexpr void for_each(closure&& function) const;
-
-	template<class it>
-	constexpr it transform(it, const it end) const;
+	template<class closure> constexpr bool until(closure&&) const;
+	template<class closure> constexpr void for_each(closure&&) const;
+	template<class it> constexpr it transform(it, const it end) const;
+	bool has(const string_view &) const;
+	void set(const string_view &, const bool & = true);
+	void set(const size_t &, const bool & = true);
 
 	// Note the default all-bits set.
 	constexpr selection(const uint64_t &val = -1)
@@ -73,7 +71,7 @@ struct ircd::json::keys<tuple>::include
 	{
 		assert(this->none());
 		for(const auto &key : list)
-			this->set(indexof<tuple>(key), true);
+			this->set(key, true);
 	}
 
 	include(const std::initializer_list<const string_view> &list)
@@ -93,7 +91,7 @@ struct ircd::json::keys<tuple>::exclude
 	{
 		assert(this->all());
 		for(const auto &key : list)
-			this->set(indexof<tuple>(key), false);
+			this->set(key, false);
 	}
 
 	exclude(const std::initializer_list<const string_view> &list)
@@ -104,6 +102,30 @@ struct ircd::json::keys<tuple>::exclude
 //
 // selection
 //
+
+template<class tuple>
+void
+ircd::json::keys<tuple>::selection::set(const string_view &key,
+                                        const bool &val)
+{
+	this->set(json::indexof<tuple>(key), val);
+}
+
+template<class tuple>
+void
+ircd::json::keys<tuple>::selection::set(const size_t &pos,
+                                        const bool &val)
+{
+	this->std::bitset<tuple::size()>::set(pos, val);
+}
+
+template<class tuple>
+bool
+ircd::json::keys<tuple>::selection::has(const string_view &key)
+const
+{
+	return this->test(json::indexof<tuple>(key));
+}
 
 template<class tuple>
 template<class it>
