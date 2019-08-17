@@ -2002,7 +2002,7 @@ ircd::m::check_event_auth_rule_8(const m::event &event,
 
 	// 8. If the event type's required power level is greater than the
 	// sender's power level, reject.
-	if(!power(at<"sender"_>(event), "events", at<"type"_>(event)))
+	if(!power(at<"sender"_>(event), "events", at<"type"_>(event), json::get<"state_key"_>(event)))
 		throw FAIL
 		{
 			"sender has insufficient power for event type."
