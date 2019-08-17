@@ -127,7 +127,7 @@ try
 	{
 		json::stack::object _messages
 		{
-			out, "messages"
+			out
 		};
 
 		json::stack::object _target
