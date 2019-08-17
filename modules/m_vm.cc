@@ -342,7 +342,7 @@ ircd::m::vm::inject(eval &eval,
 	const bool add_prev_events
 	{
 		!is_room_create
-		&& opts.add_prev_events
+		&& opts.prop_mask.has("prev_events")
 		&& !event.has("prev_events")
 	};
 
@@ -381,7 +381,7 @@ ircd::m::vm::inject(eval &eval,
 	assert(depth >= -1);
 	const json::iov::set depth_
 	{
-		event, opts.add_depth && !event.has("depth"),
+		event, opts.prop_mask.has("depth") && !event.has("depth"),
 		{
 			"depth", [&depth]
 			{
@@ -401,7 +401,7 @@ ircd::m::vm::inject(eval &eval,
 	const bool add_auth_events
 	{
 		!is_room_create
-		&& opts.add_auth_events
+		&& opts.prop_mask.has("auth_events")
 		&& !event.has("auth_events")
 	};
 
@@ -440,7 +440,7 @@ ircd::m::vm::inject(eval &eval,
 	// Add our network name.
 	const json::iov::add origin_
 	{
-		event, opts.add_origin,
+		event, opts.prop_mask.has("origin"),
 		{
 			"origin", []() -> json::value
 			{
@@ -452,7 +452,7 @@ ircd::m::vm::inject(eval &eval,
 	// Add the current time.
 	const json::iov::add origin_server_ts_
 	{
-		event, opts.add_origin_server_ts,
+		event, opts.prop_mask.has("origin_server_ts"),
 		{
 			"origin_server_ts", []
 			{
@@ -483,7 +483,7 @@ ircd::m::vm::inject1(eval &eval,
 	assert(eval.room_version);
 	const event::id &event_id
 	{
-		opts.add_event_id?
+		opts.prop_mask.has("event_id")?
 			make_id(m::event{event}, eval.room_version, eval.event_id):
 			event::id{}
 	};
@@ -510,14 +510,14 @@ ircd::m::vm::inject1(eval &eval,
 	char hashes_buf[384];
 	const string_view hashes
 	{
-		opts.add_hash?
+		opts.prop_mask.has("hashes")?
 			m::event::hashes(hashes_buf, event, content):
 			string_view{}
 	};
 
 	const json::iov::add hashes_
 	{
-		event, opts.add_hash && !empty(hashes),
+		event, opts.prop_mask.has("hashes") && !empty(hashes),
 		{
 			"hashes", [&hashes]() -> json::value
 			{
@@ -531,14 +531,14 @@ ircd::m::vm::inject1(eval &eval,
 	char sigs_buf[384];
 	const string_view sigs
 	{
-		opts.add_sig?
+		opts.prop_mask.has("signatures")?
 			m::event::signatures(sigs_buf, event, contents):
 			string_view{}
 	};
 
 	const json::iov::add sigs_
 	{
-		event, opts.add_sig,
+		event, opts.prop_mask.has("signatures"),
 		{
 			"signatures", [&sigs]() -> json::value
 			{
@@ -588,7 +588,7 @@ ircd::m::vm::inject3(eval &eval,
 	char hashes_buf[384];
 	const string_view hashes
 	{
-		opts.add_hash?
+		opts.prop_mask.has("hashes")?
 			m::event::hashes(hashes_buf, event, content):
 			string_view{}
 	};
@@ -596,7 +596,7 @@ ircd::m::vm::inject3(eval &eval,
 	// Add the content hash to the event iov.
 	const json::iov::add hashes_
 	{
-		event, opts.add_hash && !empty(hashes),
+		event, opts.prop_mask.has("hashes") && !empty(hashes),
 		{
 			"hashes", [&hashes]() -> json::value
 			{
@@ -609,7 +609,7 @@ ircd::m::vm::inject3(eval &eval,
 	char sigs_buf[384];
 	const string_view sigs
 	{
-		opts.add_sig?
+		opts.prop_mask.has("signatures")?
 			m::event::signatures(sigs_buf, event, contents):
 			string_view{}
 	};
@@ -617,7 +617,7 @@ ircd::m::vm::inject3(eval &eval,
 	// Add the signature to the event iov.
 	const json::iov::add sigs_
 	{
-		event, opts.add_sig,
+		event, opts.prop_mask.has("signatures"),
 		{
 			"signatures", [&sigs]() -> json::value
 			{
@@ -636,7 +636,7 @@ ircd::m::vm::inject3(eval &eval,
 	// in the eval interface so it persists longer than this stack.
 	const event::id &event_id
 	{
-		opts.add_event_id?
+		opts.prop_mask.has("event_id")?
 			make_id(m::event{event}, eval.room_version, eval.event_id):
 			event::id{}
 	};

@@ -557,15 +557,10 @@ try
 		}}}
 	};
 
-	m::vm::copts opts;
-
 	// EDU options
-	opts.add_hash = false;
-	opts.add_sig = false;
-	opts.add_event_id = false;
-	opts.add_origin = true;
-	opts.add_origin_server_ts = false;
+	m::vm::copts opts;
 	opts.conforming = false;
+	opts.prop_mask.reset();
 
 	// Don't need to notify clients, the /sync system understood the
 	// `ircd.read` directly. The federation sender is what we're hitting here.

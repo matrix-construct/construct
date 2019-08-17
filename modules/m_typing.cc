@@ -100,11 +100,7 @@ commit(const m::typing &edu)
 	};
 
 	m::vm::copts opts;
-	opts.add_hash = false;
-	opts.add_sig = false;
-	opts.add_event_id = false;
-	opts.add_origin = true;
-	opts.add_origin_server_ts = false;
+	opts.prop_mask.reset();
 	opts.conforming = false;
 
 	// Because the matrix spec should use the same format for client

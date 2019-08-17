@@ -325,41 +325,34 @@ struct ircd::m::vm::copts
 	/// A matrix-spec opaque token from a client identifying this eval.
 	string_view client_txnid;
 
-	/// Hash and include hashes object.
-	bool add_hash {true};
+	/// This bitmask covers all of the top-level properties of m::event
+	/// which will be generated internally during injection unless they
+	/// already exist. Clearing any of these bits will prevent the internal
+	/// generation of these properties (i.e. for EDU's).
+	event::keys::selection prop_mask
+	{
+		event::keys::include
+		{
+			"auth_events",
+			"depth",
+			"event_id",
+			"hashes",
+			"origin",
+			"origin_server_ts",
+			"prev_events",
+			"prev_state",
+			"signatures",
+		}
+	};
 
-	/// Sign and include signatures object
-	bool add_sig {true};
-
-	/// Generate and include event_id
-	bool add_event_id {true};
-
-	/// Include our origin
-	bool add_origin {true};
-
-	/// Include origin_server_ts
-	bool add_origin_server_ts {true};
-
-	/// Add prev_events
-	bool add_prev_events {true};
-
-	/// Add depth
-	bool add_depth {true};
-
-	/// Add prev_state
-	bool add_prev_state {true};
-
-	/// Add auth_events
-	bool add_auth_events {true};
+	/// Call the issue hook or bypass
+	bool issue {true};
 
 	/// Whether to log a debug message before commit
 	bool debuglog_precommit {false};
 
 	/// Whether to log an info message after commit accepted
 	bool infolog_postcommit {false};
-
-	/// Call the issue hook or bypass
-	bool issue {true};
 };
 
 struct ircd::m::vm::error
