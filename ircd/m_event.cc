@@ -1733,7 +1733,7 @@ ircd::m::event::auth::check(std::nothrow_t,
 		room.get(std::nothrow, "m.room.member", at<"sender"_>(event)),
 
 		at<"type"_>(event) == "m.room.member" &&
-		membership(event) == "join"?
+		(membership(event) == "join" || membership(event) == "invite")?
 			room.get(std::nothrow, "m.room.join_rules", ""): 0UL,
 
 		at<"type"_>(event) == "m.room.member" &&
