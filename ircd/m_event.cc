@@ -1699,6 +1699,13 @@ ircd::m::event::auth::passfail
 ircd::m::event::auth::check(std::nothrow_t,
                             const event &event)
 {
+	using json::at;
+
+	const m::room room
+	{
+		at<"room_id"_>(event)
+	};
+
 	const m::event::prev refs{event};
 	const auto count
 	{
@@ -1706,26 +1713,42 @@ ircd::m::event::auth::check(std::nothrow_t,
 	};
 
 	if(count > 4)
-	{
 		log::dwarning
 		{
 			"Event %s has an unexpected %zu auth_events references",
 			string_view{event.event_id},
 			count,
 		};
-	}
 
-	const m::event *authv[4];
-	const m::event::fetch auth[4]
+	// Vector of contingent event idxs from the event and the present state
+	m::event::idx idxs[9]
 	{
-		{ count > 0? refs.auth_event(0) : event::id{}, std::nothrow },
-		{ count > 1? refs.auth_event(1) : event::id{}, std::nothrow },
-		{ count > 2? refs.auth_event(2) : event::id{}, std::nothrow },
-		{ count > 3? refs.auth_event(3) : event::id{}, std::nothrow },
+		count > 0? m::index(refs.auth_event(0)): 0UL,
+		count > 1? m::index(refs.auth_event(1)): 0UL,
+		count > 2? m::index(refs.auth_event(2)): 0UL,
+		count > 3? m::index(refs.auth_event(3)): 0UL,
+
+		room.get(std::nothrow, "m.room.create", ""),
+		room.get(std::nothrow, "m.room.power_levels", ""),
+		room.get(std::nothrow, "m.room.member", at<"sender"_>(event)),
+
+		at<"type"_>(event) == "m.room.member" &&
+		membership(event) == "join"?
+			room.get(std::nothrow, "m.room.join_rules", ""): 0UL,
+
+		at<"type"_>(event) == "m.room.member" &&
+		at<"sender"_>(event) != at<"state_key"_>(event)?
+			room.get(std::nothrow, "m.room.member", at<"state_key"_>(event)): 0UL,
 	};
 
-	size_t i(0), j(0);
-	for(; i < 4; ++i)
+	m::event::fetch auth[9];
+	for(size_t i(0); i < 9; ++i)
+		if(idxs[i])
+			seek(auth[i], idxs[i], std::nothrow);
+
+	size_t i, j;
+	const m::event *authv[4];
+	for(i = 0, j = 0; i < 4 && j < 4; ++i)
 		if(auth[i].valid)
 			authv[j++] = &auth[i];
 
@@ -1734,7 +1757,29 @@ ircd::m::event::auth::check(std::nothrow_t,
 		event, {authv, j}
 	};
 
-	return check(std::nothrow, event, data);
+	auto ret
+	{
+		check(std::nothrow, event, data)
+	};
+
+	if(!std::get<bool>(ret) || std::get<std::exception_ptr>(ret))
+		return ret;
+
+	for(i = 4, j = 0; i < 9 && j < 4; ++i)
+		if(auth[i].valid)
+			authv[j++] = &auth[i];
+
+	data =
+	{
+		event, {authv, j}
+	};
+
+	ret =
+	{
+		check(std::nothrow, event, data)
+	};
+
+	return ret;
 }
 
 ircd::m::event::auth::passfail
