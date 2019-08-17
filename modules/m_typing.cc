@@ -101,6 +101,7 @@ commit(const m::typing &edu)
 
 	m::vm::copts opts;
 	opts.prop_mask.reset();
+	opts.prop_mask.set("origin");
 	opts.conforming = false;
 
 	// Because the matrix spec should use the same format for client
