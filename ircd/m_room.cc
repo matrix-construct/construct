@@ -1306,6 +1306,9 @@ ircd::m::internal(const id::room &room_id)
 	if(!my(room))
 		return false;
 
+	if(!exists(room))
+		return false;
+
 	if(!creator(room, m::me))
 		return false;
 
