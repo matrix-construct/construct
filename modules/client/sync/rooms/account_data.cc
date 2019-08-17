@@ -34,6 +34,9 @@ ircd::m::sync::room_account_data
 	"rooms.account_data",
 	room_account_data_polylog,
 	room_account_data_linear,
+	{
+		{ "phased", true }
+	}
 };
 
 bool
