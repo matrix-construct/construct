@@ -177,9 +177,8 @@ ircd::m::auth_room_power_levels(const m::event &event,
 			};
 	}
 
-	string_view ret;
 	using closure = m::room::power::closure_bool;
-	old_power.for_each("users", closure{[&ret, &new_power, &current_level]
+	old_power.for_each("users", closure{[&new_power, &current_level]
 	(const string_view &user_id, const int64_t &old_level)
 	{
 		if(new_power.has_user(user_id))
@@ -189,29 +188,23 @@ ircd::m::auth_room_power_levels(const m::event &event,
 		// i. If the current value is higher than the sender's current
 		// power level, reject.
 		if(old_level > current_level)
-		{
-			ret = "m.room.power_levels user property denied to sender's power level.";
-			return false;
-		};
+			throw FAIL
+			{
+				"m.room.power_levels user property denied to sender's power level."
+			};
 
 		// ii. If the new value is higher than the sender's current power
 		// level, reject.
 		if(new_power.level_user(user_id) > current_level)
-		{
-			ret = "m.room.power_levels user property exceeds sender's power level.";
-			return false;
-		};
+			throw FAIL
+			{
+				"m.room.power_levels user property exceeds sender's power level."
+			};
 
 		return true;
 	}});
 
-	if(ret)
-		throw FAIL
-		{
-			"%s", ret
-		};
-
-	new_power.for_each("users", closure{[&ret, &old_power, &current_level]
+	new_power.for_each("users", closure{[&old_power, &current_level]
 	(const string_view &user_id, const int64_t &new_level)
 	{
 		if(old_power.has_user(user_id))
@@ -221,21 +214,15 @@ ircd::m::auth_room_power_levels(const m::event &event,
 		// i. If the current value is higher than the sender's current
 		// power level, reject.
 		if(new_level > current_level)
-		{
-			ret = "m.room.power_levels user property exceeds sender's power level.";
-			return false;
-		};
+			throw FAIL
+			{
+				"m.room.power_levels user property exceeds sender's power level."
+			};
 
 		return true;
 	}});
 
-	if(ret)
-		throw FAIL
-		{
-			"%s", ret
-		};
-
-	old_power.for_each("events", closure{[&ret, &new_power, &current_level]
+	old_power.for_each("events", closure{[&new_power, &current_level]
 	(const string_view &type, const int64_t &old_level)
 	{
 		if(new_power.has_event(type))
@@ -245,29 +232,23 @@ ircd::m::auth_room_power_levels(const m::event &event,
 		// i. If the current value is higher than the sender's current
 		// power level, reject.
 		if(old_level > current_level)
-		{
-			ret = "m.room.power_levels event property denied to sender's power level.";
-			return false;
-		};
+			throw FAIL
+			{
+				"m.room.power_levels event property denied to sender's power level."
+			};
 
 		// ii. If the new value is higher than the sender's current power
 		// level, reject.
 		if(new_power.level_event(type) > current_level)
-		{
-			ret = "m.room.power_levels event property exceeds sender's power level.";
-			return false;
-		};
+			throw FAIL
+			{
+				"m.room.power_levels event property exceeds sender's power level."
+			};
 
 		return true;
 	}});
 
-	if(ret)
-		throw FAIL
-		{
-			"%s", ret
-		};
-
-	new_power.for_each("events", closure{[&ret, &old_power, &current_level]
+	new_power.for_each("events", closure{[&old_power, &current_level]
 	(const string_view &type, const int64_t &new_level)
 	{
 		if(old_power.has_event(type))
@@ -277,16 +258,16 @@ ircd::m::auth_room_power_levels(const m::event &event,
 		// i. If the current value is higher than the sender's current
 		// power level, reject.
 		if(new_level > current_level)
-		{
-			ret = "m.room.power_levels event property exceeds sender's power level.";
-			return false;
-		};
+			throw FAIL
+			{
+				"m.room.power_levels event property exceeds sender's power level."
+			};
 
 		return true;
 	}});
 
 	// d. For each entry being changed under the users key...
-	old_power.for_each("users", closure{[&ret, &event, &new_power, &current_level]
+	old_power.for_each("users", closure{[&event, &new_power, &current_level]
 	(const string_view &user_id, const int64_t &old_level)
 	{
 		// ...other than the sender's own entry:
@@ -300,21 +281,14 @@ ircd::m::auth_room_power_levels(const m::event &event,
 		// i. If the current value is equal to the sender's current power
 		// level, reject.
 		if(old_level == current_level)
-		{
-			ret = "m.room.power_levels user property denied to sender's power level.";
-			return false;
-		};
+			throw FAIL
+			{
+				"m.room.power_levels user property denied to sender's power level."
+			};
 
 		return true;
 	}});
 
-	if(ret)
-		throw FAIL
-		{
-			"%s", ret
-		};
-
 	// e. Otherwise, allow.
-	assert(!ret);
 	data.allow = true;
 }
