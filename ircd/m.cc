@@ -1830,9 +1830,10 @@ ircd::m::presence::set(const user &user,
 {
 	return set(m::presence
 	{
-		{ "user_id",     user.user_id  },
-		{ "presence",    presence      },
-		{ "status_msg",  status_msg    },
+		{ "user_id",           user.user_id         },
+		{ "presence",          presence             },
+		{ "status_msg",        status_msg           },
+		{ "currently_active",  presence == "online" },
 	});
 }
 
