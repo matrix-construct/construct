@@ -197,17 +197,12 @@ ircd::m::auth_room_member_join(const m::event &event,
 		};
 
 	// iii. If the sender is banned, reject.
-	if(!data.auth_member_sender)
-		throw FAIL
-		{
-			"m.room.member membership=join missing sender member auth event."
-		};
-
-	if(membership(*data.auth_member_sender) == "ban")
-		throw FAIL
-		{
-			"m.room.member membership=join references membership=ban auth_event."
-		};
+	if(data.auth_member_sender)
+		if(membership(*data.auth_member_sender) == "ban")
+			throw FAIL
+			{
+				"m.room.member membership=join references membership=ban auth_event."
+			};
 
 	const json::string &join_rule
 	{
