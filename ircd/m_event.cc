@@ -432,6 +432,9 @@ ircd::m::vm::conform_check_origin
 	},
 	[](const m::event &event, eval &eval)
 	{
+		if(eval.opts && !eval.opts->conforming)
+			return;
+
 		if(unlikely(eval.copts && !my_host(at<"origin"_>(event))))
 			throw error
 			{
