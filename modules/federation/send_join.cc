@@ -223,6 +223,7 @@ put__send_join(client &client,
 		(const m::event::id &event_id)
 		{
 			state_ids.append(event_id);
+			return true;
 		}});
 	}
 

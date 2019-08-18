@@ -61,17 +61,12 @@ struct ircd::m::room::auth::refs
 
 struct ircd::m::room::auth::chain
 {
-	using closure_bool = event::closure_idx_bool;
-	using closure = event::closure_idx;
+	using closure = event::closure_idx_bool;
 
 	event::idx idx;
 
-	static bool for_each(const auth::chain &, const closure_bool &);
-
   public:
-	bool for_each(const closure_bool &) const;
 	bool for_each(const closure &) const;
-
 	bool has(const string_view &type) const noexcept;
 	size_t depth() const noexcept;
 

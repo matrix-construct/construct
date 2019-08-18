@@ -122,6 +122,8 @@ get__state(client &client,
 		{
 			if(seek(event, event_idx, std::nothrow))
 				auth_chain.append(event);
+
+			return true;
 		});
 	}
 

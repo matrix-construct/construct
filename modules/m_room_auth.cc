@@ -681,6 +681,7 @@ const noexcept
 	for_each([&ret](const auto &)
 	{
 		++ret;
+		return true;
 	});
 
 	return ret;
@@ -692,7 +693,7 @@ ircd::m::room::auth::chain::has(const string_view &type)
 const noexcept
 {
 	bool ret(false);
-	for_each(closure_bool{[&type, &ret]
+	for_each([&type, &ret]
 	(const auto &idx)
 	{
 		m::get(std::nothrow, idx, "type", [&type, &ret]
@@ -702,7 +703,7 @@ const noexcept
 		});
 
 		return !ret;
-	}});
+	});
 
 	return ret;
 }
@@ -712,30 +713,9 @@ IRCD_MODULE_EXPORT
 ircd::m::room::auth::chain::for_each(const closure &closure)
 const
 {
-	return for_each(closure_bool{[&closure]
-	(const auto &idx)
-	{
-		closure(idx);
-		return true;
-	}});
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::room::auth::chain::for_each(const closure_bool &closure)
-const
-{
-	return chain::for_each(*this, closure);
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::room::auth::chain::for_each(const auth::chain &c,
-                                      const closure_bool &closure)
-{
 	m::event::fetch e, a;
 	std::set<event::idx> ae;
-	std::deque<event::idx> aq {c.idx}; do
+	std::deque<event::idx> aq {idx}; do
 	{
 		const auto idx(aq.front());
 		aq.pop_front();
@@ -743,8 +723,7 @@ ircd::m::room::auth::chain::for_each(const auth::chain &c,
 			continue;
 
 		const m::event::prev prev{e};
-		const auto count(prev.auth_events_count());
-		for(size_t i(0); i < count && i < 4; ++i)
+		for(size_t i(0); i < prev.auth_events_count() && i < 4; ++i)
 		{
 			const auto &auth_event_id(prev.auth_event(i));
 			const auto &auth_event_idx(index(auth_event_id, std::nothrow));

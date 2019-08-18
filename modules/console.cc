@@ -10001,6 +10001,7 @@ console_cmd__room__auth(opt &out, const string_view &line)
 			out << " " << pretty_oneline(event);
 
 		out << std::endl;
+		return true;
 	});
 
 	return true;
@@ -12830,6 +12831,8 @@ console_cmd__fed__query_auth(opt &out, const string_view &line)
 		{
 			if(seek(event, event_idx, std::nothrow))
 				auth_chain.append(event);
+
+			return true;
 		});
 	}
 

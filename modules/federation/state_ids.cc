@@ -102,6 +102,8 @@ get__state_ids(client &client,
 			{
 				auth_chain_ids.append(event_id);
 			});
+
+			return true;
 		});
 	}
 
@@ -117,6 +119,7 @@ get__state_ids(client &client,
 		(const m::event::id &event_id)
 		{
 			pdu_ids.append(event_id);
+			return true;
 		}});
 	}
 
