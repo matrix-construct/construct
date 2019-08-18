@@ -35,16 +35,12 @@ put__state(client &client,
 		url::decode(type_buf, request.parv[2])
 	};
 
-	if(request.parv.size() < 3)
-		throw m::NEED_MORE_PARAMS
-		{
-			"'state_key' path parameter required."
-		};
-
 	char skey_buf[m::event::STATE_KEY_MAX_SIZE];
 	const string_view &state_key
 	{
-		url::decode(skey_buf, request.parv[3])
+		request.parv.size() > 3?
+			url::decode(skey_buf, request.parv[3]):
+			string_view{""} // "" is significant
 	};
 
 	const json::object &content
@@ -74,13 +70,17 @@ get__state(client &client,
 	char type_buf[m::event::TYPE_MAX_SIZE];
 	const string_view &type
 	{
-		url::decode(type_buf, request.parv[2])
+		request.parv.size() > 2?
+			url::decode(type_buf, request.parv[2]):
+			string_view{}
 	};
 
 	char skey_buf[m::event::STATE_KEY_MAX_SIZE];
 	const string_view &state_key
 	{
-		url::decode(skey_buf, request.parv[3])
+		request.parv.size() > 3?
+			url::decode(skey_buf, request.parv[3]):
+			string_view{}
 	};
 
 	// (non-standard) Allow an event_id to be passed in the query string
