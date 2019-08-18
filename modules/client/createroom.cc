@@ -227,7 +227,7 @@ try
 		                                  "invite"
 	};
 
-	if(join_rule != "invite" || spec_preset(preset)) try
+	if(join_rule != "invite") try
 	{
 		send(room, creator, "m.room.join_rules", "",
 		{
