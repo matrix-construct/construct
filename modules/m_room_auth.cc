@@ -362,6 +362,16 @@ ircd::m::check_room_auth_rule_2(const m::event &event,
 					};
 		}
 
+		// aa. have auth events that are not in the same room.
+		if(at<"room_id"_>(a) != at<"room_id"_>(event))
+			throw FAIL
+			{
+				"Auth event %s in %s cannot be used in %s",
+				string_view{a.event_id},
+				at<"room_id"_>(a),
+				at<"room_id"_>(event),
+			};
+
 		// b. have entries whose type and state_key don't match those specified by
 		// the auth events selection algorithm described in the server...
 		const string_view &type
