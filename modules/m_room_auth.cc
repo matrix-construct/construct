@@ -111,7 +111,7 @@ ircd::m::room::auth::generate(json::stack::array &out,
 	state.get(std::nothrow, "m.room.power_levels", "", fetch_append);
 
 	if(type == "m.room.member")
-		if(!m::membership(event) || m::membership(event) == "join")
+		if(!m::membership(event) || m::membership(event) == "join" || m::membership(event) == "invite")
 			state.get(std::nothrow, "m.room.join_rules", "", fetch_append);
 
 	const string_view member_sender
