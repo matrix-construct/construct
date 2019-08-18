@@ -7713,16 +7713,32 @@ console_cmd__room__top(opt &out, const string_view &line)
 	};
 
 	char version_buf[32];
-	out << "index:         " << m::room::index(room_id) << std::endl;
-	out << "version:       " << m::version(version_buf, room_id) << std::endl;
-	out << "federated:     " << std::boolalpha << m::federated(room_id) << std::endl;
-	out << "top index:     " << std::get<m::event::idx>(top) << std::endl;
-	out << "top depth:     " << std::get<int64_t>(top) << std::endl;
-	out << "top event:     " << std::get<m::event::id::buf>(top) << std::endl;
-	out << "joined:        " << m::room::members{room_id}.count("join") << std::endl;
-	out << "servers:       " << m::room::origins{room_id}.count() << std::endl;
-	out << "servers up:    " << m::room::origins{room_id}.count_online() << std::endl;
-	out << "servers err:   " << m::room::origins{room_id}.count_error() << std::endl;
+	out << "index:             " << m::room::index(room_id) << std::endl;
+	out << "version:           " << m::version(version_buf, room_id) << std::endl;
+	out << "federated:         " << std::boolalpha << m::federated(room_id) << std::endl;
+	out << "joined:            " << m::room::members{room_id}.count("join") << std::endl;
+	out << "servers:           " << m::room::origins{room_id}.count() << std::endl;
+	out << "servers up:        " << m::room::origins{room_id}.count_online() << std::endl;
+	out << "servers err:       " << m::room::origins{room_id}.count_error() << std::endl;
+	out << "heads:             " << m::room::head{room_id}.count() << std::endl;
+	out << "state:             " << m::room::state{room_id}.count() << std::endl;
+	out << "states:            " << m::room::state::space{room_id}.count() << std::endl;
+	out << "events:            " << m::room{room_id}.count() << std::endl;
+	out << "top depth:         " << std::get<int64_t>(top) << std::endl;
+	out << "top index:         " << std::get<m::event::idx>(top) << std::endl;
+	out << "top event:         " << std::get<m::event::id::buf>(top) << std::endl;
+	out << "recent events:     "
+	    << std::endl;
+
+	char linebuf[256];
+	static const size_t last_count(4);
+	console_cmd__room__events(out, fmt::sprintf
+	{
+		linebuf, "%s -%ld",
+		string_view{room_id},
+		last_count,
+	});
+
 	out << std::endl;
 
 	state.for_each(m::room::state::type_prefix{"m."}, [&out, &state]
@@ -7743,23 +7759,20 @@ console_cmd__room__top(opt &out, const string_view &line)
 		if(!event.valid)
 			return true;
 
+		const size_t &evw
+		{
+			event.event_id.version() == "1"? 64UL : 40UL
+		};
+
 		for(const auto &[prop, val] : json::get<"content"_>(event))
-			out << json::get<"type"_>(event)
-			    << ": " << prop << ": " << val << std::endl;
+			out
+			<< std::left << std::setw(evw) << event.event_id
+			<< "  " << std::left << std::setw(30) << json::get<"type"_>(event)
+			<< " " << std::right << std::setw(24) << prop
+			<< "  :" << val
+			<< std::endl;
 
 		return true;
-	});
-
-	out << "\nrecent events:"
-	    << std::endl;
-
-	char linebuf[256];
-	static const size_t last_count(4);
-	console_cmd__room__events(out, fmt::sprintf
-	{
-		linebuf, "%s -%ld",
-		string_view{room_id},
-		last_count,
 	});
 
 	return true;
