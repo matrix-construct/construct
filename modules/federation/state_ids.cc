@@ -67,7 +67,7 @@ get__state_ids(client &client,
 		room
 	};
 
-	const m::event::auth::chain ac
+	const m::room::auth::chain ac
 	{
 		event_id?
 			m::index(event_id):

@@ -5921,13 +5921,11 @@ console_cmd__stage__make_auth(opt &out, const string_view &line)
 		at<"room_id"_>(event)
 	};
 
-	const m::room::auth auth
-	{
-		room
-	};
-
 	thread_local char buf[1024];
-	json::get<"auth_events"_>(event) = auth.make_refs(buf, event);
+	json::get<"auth_events"_>(event) =
+	{
+		m::room::auth::generate(buf, room, event)
+	};
 
 	stage.at(id) = json::strung
 	{
@@ -6653,7 +6651,7 @@ console_cmd__event(opt &out, const string_view &line)
 		out << std::endl;
 	}
 
-	if(m::event::auth::is_power_event(event))
+	if(m::room::auth::is_power_event(event))
 		out << std::setw(16) << std::right << "POWER EVENT" << "  "
 		    << std::endl;
 
@@ -6743,7 +6741,7 @@ console_cmd__event(opt &out, const string_view &line)
 		    << "HASH MISMATCH :" << b64encode_unpadded(hash(event))
 		    << std::endl;
 
-	const auto &[authed, failmsg](m::event::auth::check(std::nothrow, event));
+	const auto &[authed, failmsg](m::room::auth::check(std::nothrow, event));
 	if(!authed)
 		out << std::setw(9) << std::left << "!!! ERROR" << "  "
 		    << "UNAUTHORIZED :" << what(failmsg)
@@ -7194,25 +7192,13 @@ console_cmd__event__auth(opt &out, const string_view &line)
 		param.at("event_id")
 	};
 
-	const m::event::auth::chain ac
+	const m::event::fetch event
 	{
-		m::index(event_id)
+		event_id
 	};
 
-	ac.for_each([&out](const auto &idx)
-	{
-		const m::event::fetch event
-		{
-			idx, std::nothrow
-		};
-
-		out << idx;
-		if(event.valid)
-			out << " " << pretty_oneline(event);
-
-		out << std::endl;
-	});
-
+	m::room::auth::check(event);
+	out << "pass" << std::endl;
 	return true;
 }
 
@@ -7340,7 +7326,7 @@ console_cmd__event__refs__auth(opt &out, const string_view &line)
 		param.at("type", ""_sv)
 	};
 
-	const m::event::auth::refs auth
+	const m::room::auth::refs auth
 	{
 		index(event_id)
 	};
@@ -9995,15 +9981,24 @@ console_cmd__room__auth(opt &out, const string_view &line)
 			p0
 	};
 
-	const m::room room
+	const m::room::auth::chain ac
 	{
-		room_id, event_id
+		m::index(event_id)
 	};
 
-	const m::room::auth auth
+	ac.for_each([&out](const auto &idx)
 	{
-		room
-	};
+		const m::event::fetch event
+		{
+			idx, std::nothrow
+		};
+
+		out << idx;
+		if(event.valid)
+			out << " " << pretty_oneline(event);
+
+		out << std::endl;
+	});
 
 	return true;
 }
@@ -12821,7 +12816,7 @@ console_cmd__fed__query_auth(opt &out, const string_view &line)
 			top, "auth_chain"
 		};
 
-		const m::event::auth::chain chain
+		const m::room::auth::chain chain
 		{
 			m::index(event_id)
 		};

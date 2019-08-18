@@ -581,7 +581,14 @@ ircd::m::dbs::_index_event_refs_auth(db::txn &txn,
 {
 	assert(opts.appendix.test(appendix::EVENT_REFS));
 	assert(opts.event_refs.test(uint(ref::NEXT_AUTH)));
-	if(!event::auth::is_power_event(event))
+
+	//TODO: XXX module dep
+	static mods::import<bool (const m::event &)> is_power_event
+	{
+		"m_room_auth", "ircd::m::room::auth::is_power_event"
+	};
+
+	if(!is_power_event(event))
 		return;
 
 	const event::prev prev{event};

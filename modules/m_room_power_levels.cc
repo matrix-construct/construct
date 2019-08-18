@@ -10,8 +10,8 @@
 
 namespace ircd::m
 {
-    static void auth_room_power_levels(const event &, event::auth::hookdata &);
-    extern hookfn<event::auth::hookdata &> auth_room_power_levels_hookfn;
+    static void auth_room_power_levels(const event &, room::auth::hookdata &);
+    extern hookfn<room::auth::hookdata &> auth_room_power_levels_hookfn;
 
     static void changed_room_power_levels(const event &, vm::eval &);
 	extern m::hookfn<m::vm::eval &> changed_room_power_levels_hookfn;
@@ -51,16 +51,16 @@ ircd::m::auth_room_power_levels_hookfn
 {
 	auth_room_power_levels,
 	{
-		{ "_site",    "event.auth"           },
+		{ "_site",    "room.auth"            },
 		{ "type",     "m.room.power_levels"  },
 	}
 };
 
 void
 ircd::m::auth_room_power_levels(const m::event &event,
-                                event::auth::hookdata &data)
+                                room::auth::hookdata &data)
 {
-	using FAIL = event::auth::FAIL;
+	using FAIL = room::auth::FAIL;
 
 	// 10. If type is m.room.power_levels:
 	assert(json::get<"type"_>(event) == "m.room.power_levels");

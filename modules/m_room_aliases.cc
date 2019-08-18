@@ -15,8 +15,8 @@ namespace ircd::m
 	extern const room::id::buf alias_room_id;
 	extern const room alias_room;
 
-	static void auth_room_aliases(const event &, event::auth::hookdata &);
-	extern hookfn<event::auth::hookdata &> auth_room_aliases_hookfn;
+	static void auth_room_aliases(const event &, room::auth::hookdata &);
+	extern hookfn<room::auth::hookdata &> auth_room_aliases_hookfn;
 
 	static void changed_room_aliases(const event &, vm::eval &);
 	extern hookfn<vm::eval &> changed_room_aliases_hookfn;
@@ -139,16 +139,16 @@ ircd::m::auth_room_aliases_hookfn
 {
 	auth_room_aliases,
 	{
-		{ "_site",    "event.auth"      },
+		{ "_site",    "room.auth"       },
 		{ "type",     "m.room.aliases"  },
 	}
 };
 
 void
 ircd::m::auth_room_aliases(const event &event,
-                           event::auth::hookdata &data)
+                           room::auth::hookdata &data)
 {
-	using FAIL = m::event::auth::FAIL;
+	using FAIL = m::room::auth::FAIL;
 	using conforms = m::event::conforms;
 
 	// 4. If type is m.room.aliases:

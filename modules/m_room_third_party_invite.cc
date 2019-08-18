@@ -10,8 +10,8 @@
 
 namespace ircd::m
 {
-	static void auth_room_third_party_invite(const event &, event::auth::hookdata &);
-	extern hookfn<event::auth::hookdata &> auth_room_third_party_invite_hookfn;
+	static void auth_room_third_party_invite(const event &, room::auth::hookdata &);
+	extern hookfn<room::auth::hookdata &> auth_room_third_party_invite_hookfn;
 }
 
 ircd::mapi::header
@@ -29,16 +29,16 @@ ircd::m::auth_room_third_party_invite_hookfn
 {
 	auth_room_third_party_invite,
 	{
-		{ "_site",    "event.auth"                 },
+		{ "_site",    "room.auth"                  },
 		{ "type",     "m.room.third_party_invite"  },
 	}
 };
 
 void
 ircd::m::auth_room_third_party_invite(const event &event,
-                                      event::auth::hookdata &data)
+                                      room::auth::hookdata &data)
 {
-	using FAIL = m::event::auth::FAIL;
+	using FAIL = m::room::auth::FAIL;
 
 	// 7. If type is m.room.third_party_invite:
 	assert(json::get<"type"_>(event) == "m.room.third_party_invite");

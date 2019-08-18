@@ -10,8 +10,8 @@
 
 namespace ircd::m
 {
-	static void auth_room_create(const event &, event::auth::hookdata &);
-	extern hookfn<event::auth::hookdata &> auth_room_create_hookfn;
+	static void auth_room_create(const event &, room::auth::hookdata &);
+	extern hookfn<room::auth::hookdata &> auth_room_create_hookfn;
 
 	static void created_room(const event &, vm::eval &);
 	extern hookfn<vm::eval &> created_room_hookfn;
@@ -83,16 +83,16 @@ ircd::m::auth_room_create_hookfn
 {
 	auth_room_create,
 	{
-		{ "_site",    "event.auth"     },
+		{ "_site",    "room.auth"      },
 		{ "type",     "m.room.create"  },
 	}
 };
 
 void
 ircd::m::auth_room_create(const event &event,
-                          event::auth::hookdata &data)
+                          room::auth::hookdata &data)
 {
-	using FAIL = m::event::auth::FAIL;
+	using FAIL = m::room::auth::FAIL;
 	using conforms = m::event::conforms;
 
 	// 1. If type is m.room.create:

@@ -424,18 +424,13 @@ ircd::m::vm::inject(eval &eval,
 		add_auth_events? auth_buf_sz : 0UL
 	};
 
-	// Default to an empty array.
-	json::array auth_events
+	// Conditionally compose the auth events. efault to an empty array.
+	const json::array auth_events
 	{
-		json::empty_array
+		add_auth_events?
+			room::auth::generate(auth_buf, m::room{eval.room_id}, m::event{event}):
+			json::empty_array
 	};
-
-	// Conditionally compose the auth events.
-	if(add_auth_events)
-	{
-		const room::auth auth{room{eval.room_id}};
-		auth_events = auth.make_refs(auth_buf, m::event{event});
-	}
 
 	// Conditionally add the auth_events to the event iov.
 	const json::iov::add auth_events_
@@ -898,7 +893,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	// Evaluation by auth system; throws
 	if(opts.auth && !internal(room_id))
-		event::auth::check(event);
+		room::auth::check(event);
 
 	// Obtain sequence number here.
 	const auto *const &top(eval::seqmax());

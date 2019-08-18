@@ -69,7 +69,7 @@ _visible_to_node(const m::event &event,
 		return true;
 
 	// Allow auth chain events XXX: this is too broad
-	if(m::event::auth::is_power_event(event))
+	if(m::room::auth::is_power_event(event))
 		return true;
 
 	// Allow any event where the state_key string is a user mxid and the server

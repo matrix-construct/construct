@@ -104,7 +104,6 @@ get__make_leave(client &client,
 	};
 
 	{
-		const m::room::auth auth{room};
 		json::stack::checkpoint cp{out};
 		json::stack::array auth_events
 		{
@@ -122,7 +121,7 @@ get__make_leave(client &client,
 			}}
 		};
 
-		if(!auth.make_refs(auth_events, m::event{args}))
+		if(!m::room::auth::generate(auth_events, room, m::event{args}))
 			cp.decommit();
 	}
 

@@ -15,17 +15,87 @@
 ///
 struct ircd::m::room::auth
 {
-	using closure_bool = std::function<bool (const event::idx &)>;
-	using closure = std::function<void (const event::idx &)>;
+	struct refs;
+	struct chain;
+	struct hookdata;
 	using types = vector_view<const string_view>;
+	using events_view = vector_view<const event *>;
+	using passfail = std::tuple<bool, std::exception_ptr>;
+	IRCD_M_EXCEPTION(error, FAIL, http::UNAUTHORIZED)
 
-	m::room room;
+	static bool is_power_event(const event &);
+
+	static passfail check(std::nothrow_t, const event &, hookdata &);
+	static passfail check(std::nothrow_t, const event &);
+	static void check(const event &);
+
+	static bool generate(json::stack::array &, const m::room &, const m::event &);
+	static json::array generate(const mutable_buffer &, const m::room &, const m::event &);
+};
+
+/// Interface to the references made by other power events to this power
+/// event in the `auth_events`. This interface only deals with power events,
+/// it doesn't care if a non-power event referenced a power event. This does
+/// not contain the auth-chain or state resolution algorithm here, those are
+/// later constructed out of this data.
+struct ircd::m::room::auth::refs
+{
+	event::idx idx;
 
   public:
-	bool make_refs(json::stack::array &, const m::event &) const;
-	json::array make_refs(const mutable_buffer &, const m::event &) const;
+	using closure_bool = event::closure_idx_bool;
 
-	auth(const m::room &room)
-	:room{room}
+	bool for_each(const string_view &type, const closure_bool &) const;
+	bool for_each(const closure_bool &) const;
+
+	bool has(const string_view &type) const noexcept;
+	bool has(const event::idx &) const noexcept;
+
+	size_t count(const string_view &type) const noexcept;
+	size_t count() const noexcept;
+
+	refs(const event::idx &idx)
+	:idx{idx}
 	{}
+};
+
+struct ircd::m::room::auth::chain
+{
+	using closure_bool = event::closure_idx_bool;
+	using closure = event::closure_idx;
+
+	event::idx idx;
+
+	static bool for_each(const auth::chain &, const closure_bool &);
+
+  public:
+	bool for_each(const closure_bool &) const;
+	bool for_each(const closure &) const;
+
+	bool has(const string_view &type) const noexcept;
+	size_t depth() const noexcept;
+
+	chain(const event::idx &idx)
+	:idx{idx}
+	{}
+};
+
+class ircd::m::room::auth::hookdata
+{
+	const event *find(const event::closure_bool &) const;
+
+  public:
+	event::prev prev;
+	vector_view<const event *> auth_events;
+	const event *auth_create {nullptr};
+	const event *auth_power {nullptr};
+	const event *auth_join_rules {nullptr};
+	const event *auth_member_target {nullptr};
+	const event *auth_member_sender {nullptr};
+
+	bool allow {false};
+	std::exception_ptr fail;
+
+	hookdata(const event &, const events_view &auth_events);
+	hookdata() = default;
 };

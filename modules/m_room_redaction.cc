@@ -10,8 +10,8 @@
 
 namespace ircd::m
 {
-    static void auth_room_redaction(const event &, event::auth::hookdata &);
-    extern hookfn<event::auth::hookdata &> auth_room_redaction_hookfn;
+    static void auth_room_redaction(const event &, room::auth::hookdata &);
+    extern hookfn<room::auth::hookdata &> auth_room_redaction_hookfn;
 }
 
 ircd::mapi::header
@@ -25,16 +25,16 @@ ircd::m::auth_room_redaction_hookfn
 {
 	auth_room_redaction,
 	{
-		{ "_site",    "event.auth"        },
+		{ "_site",    "room.auth"         },
 		{ "type",     "m.room.redaction"  },
 	}
 };
 
 void
 ircd::m::auth_room_redaction(const m::event &event,
-                                event::auth::hookdata &data)
+                             room::auth::hookdata &data)
 {
-	using FAIL = event::auth::FAIL;
+	using FAIL = room::auth::FAIL;
 
 	// 11. If type is m.room.redaction:
 	assert(json::get<"type"_>(event) == "m.room.redaction");

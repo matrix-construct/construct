@@ -10,8 +10,8 @@
 
 namespace ircd::m
 {
-	static void room_message_auth(const event &, event::auth::hookdata &);
-	extern hookfn<event::auth::hookdata &> room_message_auth_hook;
+	static void room_message_auth(const event &, room::auth::hookdata &);
+	extern hookfn<room::auth::hookdata &> room_message_auth_hook;
 
 	static void room_message_notify(const event &, vm::eval &);
 	extern hookfn<vm::eval &> room_message_notify_hook;
@@ -69,16 +69,16 @@ ircd::m::room_message_auth_hook
 {
 	room_message_auth,
 	{
-		{ "_site",  "event.auth"      },
+		{ "_site",  "room.auth"       },
 		{ "type",   "m.room.message"  },
 	}
 };
 
 void
 ircd::m::room_message_auth(const event &event,
-                           event::auth::hookdata &data)
+                           room::auth::hookdata &data)
 {
-	using FAIL = m::event::auth::FAIL;
+	using FAIL = m::room::auth::FAIL;
 	using conforms = m::event::conforms;
 	assert(json::get<"type"_>(event) == "m.room.message");
 

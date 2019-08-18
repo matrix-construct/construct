@@ -118,7 +118,7 @@ put__send_join(client &client,
 		room_id
 	};
 
-	const m::event::auth::chain auth_chain
+	const m::room::auth::chain auth_chain
 	{
 		m::head_idx(room_id)
 	};

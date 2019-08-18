@@ -113,7 +113,7 @@ get__event_auth(client &client,
 		top, "auth_chain"
 	};
 
-	const m::event::auth::chain chain
+	const m::room::auth::chain chain
 	{
 		m::index(event_id)
 	};

@@ -98,7 +98,6 @@ struct ircd::m::event
 	struct prev;
 	struct refs;
 	struct horizon;
-	struct auth;
 	struct fetch;
 	struct conforms;
 	struct append;
@@ -162,7 +161,6 @@ struct ircd::m::event
 #include "prev.h"
 #include "refs.h"
 #include "horizon.h"
-#include "auth.h"
 #include "index.h"
 #include "event_id.h"
 #include "fetch.h"

@@ -515,7 +515,7 @@ ircd::m::bootstrap::eval_lazy_chain(const json::array &auth_chain)
 	{
 		// Skip all events which aren't power events. We don't need them
 		// here yet. They can wait until state evaluation later.
-		if(!m::event::auth::is_power_event(event))
+		if(!m::room::auth::is_power_event(event))
 			continue;
 
 		// Find the member event for the sender of this power event so the

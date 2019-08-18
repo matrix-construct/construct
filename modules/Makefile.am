@@ -129,6 +129,7 @@ m_events_la_SOURCES = m_events.cc
 m_rooms_la_SOURCES = m_rooms.cc
 m_rooms_summary_la_SOURCES = m_rooms_summary.cc
 m_room_la_SOURCES = m_room.cc
+m_room_auth_la_SOURCES = m_room_auth.cc
 m_room_timeline_la_SOURCES = m_room_timeline.cc
 m_room_create_la_SOURCES = m_room_create.cc
 m_room_member_la_SOURCES = m_room_member.cc
@@ -179,6 +180,7 @@ m_module_LTLIBRARIES = \
 	m_rooms.la \
 	m_rooms_summary.la \
 	m_room.la \
+	m_room_auth.la \
 	m_room_timeline.la \
 	m_room_create.la \
 	m_room_member.la \

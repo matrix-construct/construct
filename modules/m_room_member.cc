@@ -13,20 +13,20 @@ namespace ircd::m
 	static void affect_user_room(const event &, vm::eval &);
 	extern m::hookfn<m::vm::eval &> affect_user_room_hookfn;
 
-	static void auth_room_member_ban(const event &, event::auth::hookdata &);
-	extern m::hookfn<event::auth::hookdata &> auth_room_member_ban_hookfn;
+	static void auth_room_member_ban(const event &, room::auth::hookdata &);
+	extern m::hookfn<room::auth::hookdata &> auth_room_member_ban_hookfn;
 
-	static void auth_room_member_leave(const event &, event::auth::hookdata &);
-	extern m::hookfn<event::auth::hookdata &> auth_room_member_leave_hookfn;
+	static void auth_room_member_leave(const event &, room::auth::hookdata &);
+	extern m::hookfn<room::auth::hookdata &> auth_room_member_leave_hookfn;
 
-	static void auth_room_member_invite(const event &, event::auth::hookdata &);
-	extern m::hookfn<event::auth::hookdata &> auth_room_member_invite_hookfn;
+	static void auth_room_member_invite(const event &, room::auth::hookdata &);
+	extern m::hookfn<room::auth::hookdata &> auth_room_member_invite_hookfn;
 
-	static void auth_room_member_join(const event &, event::auth::hookdata &);
-	extern m::hookfn<event::auth::hookdata &> auth_room_member_join_hookfn;
+	static void auth_room_member_join(const event &, room::auth::hookdata &);
+	extern m::hookfn<room::auth::hookdata &> auth_room_member_join_hookfn;
 
-	static void auth_room_member(const event &, event::auth::hookdata &);
-	extern m::hookfn<event::auth::hookdata &> auth_room_member_hookfn;
+	static void auth_room_member(const event &, room::auth::hookdata &);
+	extern m::hookfn<room::auth::hookdata &> auth_room_member_hookfn;
 }
 
 ircd::mapi::header
@@ -94,16 +94,16 @@ ircd::m::auth_room_member_hookfn
 {
 	auth_room_member,
 	{
-		{ "_site",  "event.auth"    },
+		{ "_site",  "room.auth"     },
 		{ "type",   "m.room.member" },
 	}
 };
 
 void
 ircd::m::auth_room_member(const m::event &event,
-                          event::auth::hookdata &data)
+                          room::auth::hookdata &data)
 {
-	using FAIL = m::event::auth::FAIL;
+	using FAIL = m::room::auth::FAIL;
 
 	// 5. If type is m.room.member:
 	assert(json::get<"type"_>(event) == "m.room.member");
@@ -161,7 +161,7 @@ ircd::m::auth_room_member_join_hookfn
 {
 	auth_room_member_join,
 	{
-		{ "_site",       "event.auth"    },
+		{ "_site",       "room.auth"     },
 		{ "type",        "m.room.member" },
 		{ "content",
 		{
@@ -172,9 +172,9 @@ ircd::m::auth_room_member_join_hookfn
 
 void
 ircd::m::auth_room_member_join(const m::event &event,
-                               event::auth::hookdata &data)
+                               room::auth::hookdata &data)
 {
-	using FAIL = m::event::auth::FAIL;
+	using FAIL = m::room::auth::FAIL;
 
 	// b. If membership is join
 	assert(membership(event) == "join");
@@ -258,7 +258,7 @@ ircd::m::auth_room_member_invite_hookfn
 {
 	auth_room_member_invite,
 	{
-		{ "_site",       "event.auth"    },
+		{ "_site",       "room.auth"     },
 		{ "type",        "m.room.member" },
 		{ "content",
 		{
@@ -269,9 +269,9 @@ ircd::m::auth_room_member_invite_hookfn
 
 void
 ircd::m::auth_room_member_invite(const m::event &event,
-                                 event::auth::hookdata &data)
+                                 room::auth::hookdata &data)
 {
-	using FAIL = m::event::auth::FAIL;
+	using FAIL = m::room::auth::FAIL;
 
 	// c. If membership is invite
 	assert(membership(event) == "invite");
@@ -349,7 +349,7 @@ ircd::m::auth_room_member_leave_hookfn
 {
 	auth_room_member_leave,
 	{
-		{ "_site",       "event.auth"    },
+		{ "_site",       "room.auth"     },
 		{ "type",        "m.room.member" },
 		{ "content",
 		{
@@ -360,9 +360,9 @@ ircd::m::auth_room_member_leave_hookfn
 
 void
 ircd::m::auth_room_member_leave(const m::event &event,
-                                event::auth::hookdata &data)
+                                room::auth::hookdata &data)
 {
-	using FAIL = m::event::auth::FAIL;
+	using FAIL = m::room::auth::FAIL;
 
 	// d. If membership is leave
 	assert(membership(event) == "leave");
@@ -445,7 +445,7 @@ ircd::m::auth_room_member_ban_hookfn
 {
 	auth_room_member_ban,
 	{
-		{ "_site",       "event.auth"    },
+		{ "_site",       "room.auth"     },
 		{ "type",        "m.room.member" },
 		{ "content",
 		{
@@ -456,9 +456,9 @@ ircd::m::auth_room_member_ban_hookfn
 
 void
 ircd::m::auth_room_member_ban(const m::event &event,
-                              event::auth::hookdata &data)
+                              room::auth::hookdata &data)
 {
-	using FAIL = m::event::auth::FAIL;
+	using FAIL = m::room::auth::FAIL;
 
 	// e. If membership is ban
 	assert(membership(event) == "ban");

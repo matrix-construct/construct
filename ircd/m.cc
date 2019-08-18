@@ -210,6 +210,8 @@ ircd::m::module_names
 	"m_user_events",
 	"m_user_highlight",
 	"m_user_profile",
+	"m_room",
+	"m_room_auth",
 	"m_room_timeline",
 	"m_room_aliases",
 	"m_room_canonical_alias",
