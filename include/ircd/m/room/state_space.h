@@ -33,6 +33,7 @@ struct ircd::m::room::state::space
 	size_t count(const string_view &type, const string_view &state_key, const int64_t &depth) const;
 	size_t count(const string_view &type, const string_view &state_key) const;
 	size_t count(const string_view &type) const;
+	size_t count() const;
 
 	bool has(const string_view &type, const string_view &state_key, const int64_t &depth) const;
 	bool has(const string_view &type, const string_view &state_key) const;

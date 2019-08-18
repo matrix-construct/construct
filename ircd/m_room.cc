@@ -2819,6 +2819,13 @@ const
 }
 
 size_t
+ircd::m::room::state::space::count()
+const
+{
+	return count(string_view{});
+}
+
+size_t
 ircd::m::room::state::space::count(const string_view &type)
 const
 {
