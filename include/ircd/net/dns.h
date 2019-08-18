@@ -84,6 +84,8 @@ struct ircd::net::dns::opts
 	/// is ignored and always considered to be set to true; this is because
 	/// the returned record is a reference to the cached error.
 	bool nxdomain_exceptions {true};
+
+	opts() = default;
 };
 
 /// (internal) DNS cache

@@ -41,9 +41,5 @@ struct ircd::m::v1::user::opts
 	const struct server::request::opts *sopts {nullptr};
 	bool dynamic {true};
 
-	opts(const net::hostport &remote)
-	:remote{remote}
-	{}
-
 	opts() = default;
 };
