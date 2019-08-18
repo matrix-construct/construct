@@ -890,7 +890,6 @@ catch(const std::system_error &)
 catch(const http::error &e)
 {
 	const ctx::exception_handler eh;
-
 	if(!empty(e.content))
 		log::derror
 		{
@@ -901,6 +900,9 @@ catch(const http::error &e)
 			http::status(e.code),
 			e.content
 		};
+
+	if(!sock || sock->fini)
+		return false;
 
 	resource::response
 	{
@@ -935,6 +937,9 @@ catch(const std::exception &e)
 		head.uri,
 		e.what()
 	};
+
+	if(!sock || sock->fini)
+		return false;
 
 	resource::response
 	{
