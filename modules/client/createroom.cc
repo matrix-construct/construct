@@ -201,13 +201,42 @@ try
 	// initial power levels aren't set on internal user rooms for now.
 	if(!preset || spec_preset(preset)) try
 	{
-		thread_local char pl_content_buf[4_KiB];
-		send(room, creator, "m.room.power_levels", "",
+		thread_local char content_buf[8_KiB];
+		const json::object content
 		{
+			// If there is an override, use it
 			json::get<"power_level_content_override"_>(c)?
 				json::get<"power_level_content_override"_>(c):
-				m::room::power::default_content(pl_content_buf, creator)
-		});
+
+			// Otherwise generate the default content which allows our closure
+			// to add some items to the collections while it's buffering.
+			m::room::power::compose_content(content_buf, [&c, &creator, &preset]
+			(const string_view &key, json::stack::object &object)
+			{
+				if(key != "users")
+					return;
+
+				// Give the creator their power in the users collection
+				json::stack::member
+				{
+					object, creator, json::value(room::power::default_creator_level)
+				};
+
+				// For trusted_private_chat we need to promote everyone invited
+				// to the same level in the users collection
+				if(preset != "trusted_private_chat")
+					return;
+
+				for(const json::string &user_id : json::get<"invite"_>(c))
+					if(valid(id::USER, user_id))
+						json::stack::member
+						{
+							object, user_id, json::value(room::power::default_creator_level)
+						};
+			})
+		};
+
+		send(room, creator, "m.room.power_levels", "", content);
 	}
 	catch(const std::exception &e)
 	{
@@ -360,6 +389,8 @@ try
 			errors, room_id, creator, "Failed to set room topic: %s", e.what()
 		};
 	}
+
+	// invitation vector
 
 	for(const json::string &_user_id : json::get<"invite"_>(c)) try
 	{
