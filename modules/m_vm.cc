@@ -372,7 +372,7 @@ ircd::m::vm::inject(eval &eval,
 	const auto &[prev_events, depth]
 	{
 		add_prev_events?
-			head.make_refs(prev_buf, size_t(prev_limit), true):
+			head.generate(prev_buf, size_t(prev_limit), true):
 			std::pair<json::array, int64_t>{{}, -1}
 	};
 

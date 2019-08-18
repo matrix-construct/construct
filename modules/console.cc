@@ -5881,7 +5881,7 @@ console_cmd__stage__make_prev(opt &out, const string_view &line)
 	thread_local char buf[8192];
 	const auto prev
 	{
-		head.make_refs(buf, limit, true)
+		head.generate(buf, limit, true)
 	};
 
 	json::get<"prev_events"_>(event) = prev.first;
@@ -7819,6 +7819,7 @@ console_cmd__room__head(opt &out, const string_view &line)
 		};
 
 		out << pretty_oneline(event) << std::endl;
+		return true;
 	});
 
 	return true;

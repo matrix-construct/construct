@@ -181,7 +181,7 @@ get__make_join(client &client,
 			event, "prev_events"
 		};
 
-		head.make_refs(prev_events, 32, true);
+		head.generate(prev_events, 32, true);
 	}
 
 	json::stack::member
