@@ -100,6 +100,7 @@ m_moduledir = @moduledir@
 
 m_vm_la_SOURCES = m_vm.cc
 m_noop_la_SOURCES = m_noop.cc
+m_event_la_SOURCES = m_event.cc
 m_event_append_la_SOURCES = m_event_append.cc
 m_user_la_SOURCES = m_user.cc
 m_user_events_la_SOURCES = m_user_events.cc
@@ -127,6 +128,7 @@ m_breadcrumb_rooms_la_SOURCES = m_breadcrumb_rooms.cc
 m_events_la_SOURCES = m_events.cc
 m_rooms_la_SOURCES = m_rooms.cc
 m_rooms_summary_la_SOURCES = m_rooms_summary.cc
+m_room_la_SOURCES = m_room.cc
 m_room_timeline_la_SOURCES = m_room_timeline.cc
 m_room_create_la_SOURCES = m_room_create.cc
 m_room_member_la_SOURCES = m_room_member.cc
@@ -148,6 +150,7 @@ m_users_la_SOURCES = m_users.cc
 m_module_LTLIBRARIES = \
 	m_vm.la \
 	m_noop.la \
+	m_event.la \
 	m_event_append.la \
 	m_user.la \
 	m_user_events.la \
@@ -175,6 +178,7 @@ m_module_LTLIBRARIES = \
 	m_events.la \
 	m_rooms.la \
 	m_rooms_summary.la \
+	m_room.la \
 	m_room_timeline.la \
 	m_room_create.la \
 	m_room_member.la \
