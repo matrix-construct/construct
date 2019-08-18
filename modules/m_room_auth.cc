@@ -725,8 +725,16 @@ const
 		const m::event::prev prev{e};
 		for(size_t i(0); i < prev.auth_events_count() && i < 4; ++i)
 		{
-			const auto &auth_event_id(prev.auth_event(i));
-			const auto &auth_event_idx(index(auth_event_id, std::nothrow));
+			const m::event::id &auth_event_id
+			{
+				prev.auth_event(i)
+			};
+
+			const auto &auth_event_idx
+			{
+				m::index(auth_event_id, std::nothrow)
+			};
+
 			if(!auth_event_idx)
 				continue;
 
