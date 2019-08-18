@@ -3660,6 +3660,24 @@ ircd::json::object
 ircd::m::room::power::default_content(const mutable_buffer &buf,
                                       const m::user::id &creator)
 {
+	return compose_content(buf, [&creator]
+	(const string_view &key, json::stack::object &object)
+	{
+		if(key != "users")
+			return;
+
+		assert(default_creator_level == 100);
+		json::stack::member
+		{
+			object, creator, json::value(default_creator_level)
+		};
+	});
+}
+
+ircd::json::object
+ircd::m::room::power::compose_content(const mutable_buffer &buf,
+                                      const compose_closure &closure)
+{
 	json::stack out{buf};
 	json::stack::object content{out};
 
@@ -3669,10 +3687,14 @@ ircd::m::room::power::default_content(const mutable_buffer &buf,
 		content, "ban", json::value(default_power_level)
 	};
 
-	json::stack::object
 	{
-		content, "events"
-	};
+		json::stack::object events
+		{
+			content, "events"
+		};
+
+		closure("events", events);
+	}
 
 	assert(default_event_level == 0);
 	json::stack::member
@@ -3700,6 +3722,8 @@ ircd::m::room::power::default_content(const mutable_buffer &buf,
 		{
 			notifications, "room", json::value(default_power_level)
 		};
+
+		closure("notifications", notifications);
 	}
 
 	json::stack::member
@@ -3718,11 +3742,7 @@ ircd::m::room::power::default_content(const mutable_buffer &buf,
 			content, "users"
 		};
 
-		assert(default_creator_level == 100);
-		json::stack::member
-		{
-			users, creator, json::value(default_creator_level)
-		};
+		closure("users", users);
 	}
 
 	assert(default_user_level == 0);

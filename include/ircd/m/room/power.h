@@ -77,5 +77,7 @@ struct ircd::m::room::power
 	power(const m::room &);
 	power() = default;
 
+	using compose_closure = std::function<void (const string_view &, json::stack::object &)>;
+	static json::object compose_content(const mutable_buffer &out, const compose_closure &);
 	static json::object default_content(const mutable_buffer &out, const m::id::user &creator);
 };
