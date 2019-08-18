@@ -2830,10 +2830,15 @@ ircd::m::room::state::space::for_each(const string_view &type,
                                       const closure &closure)
 const
 {
+	const int64_t &_depth
+	{
+		type? depth : 0L
+	};
+
 	char buf[dbs::ROOM_STATE_SPACE_KEY_MAX_SIZE];
 	const string_view &key
 	{
-		dbs::room_state_space_key(buf, room.room_id, type, state_key, depth, 0UL)
+		dbs::room_state_space_key(buf, room.room_id, type, state_key, _depth, 0UL)
 	};
 
 	auto it
