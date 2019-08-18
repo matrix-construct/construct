@@ -7907,35 +7907,6 @@ console_cmd__room__head__del(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__room__herd(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"room_id", "user_id"
-	}};
-
-	const auto &room_id
-	{
-		m::room_id(param.at(0))
-	};
-
-	const m::user::id &user_id
-	{
-		param.at(1)
-	};
-
-	using prototype = void (const m::room &, const m::user &, const milliseconds &);
-	static mods::import<prototype> room_herd
-	{
-		"m_room", "room_herd"
-	};
-
-	room_herd(room_id, user_id, out.timeout);
-	out << "done" << std::endl;
-	return true;
-}
-
-bool
 console_cmd__room__head__reset(opt &out, const string_view &line)
 {
 	const params param{line, " ",
@@ -9979,42 +9950,6 @@ console_cmd__room__purge(opt &out, const string_view &line)
 	};
 
 	out << "erased " << ret << std::endl;
-	return true;
-}
-
-bool
-console_cmd__room__dagree(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"room_id",
-	}};
-
-	const auto &room_id
-	{
-		m::room_id(param.at(0))
-	};
-
-	const m::room room
-	{
-		room_id
-	};
-
-	using prototype = size_t (const m::room &, std::vector<size_t> &);
-	static mods::import<prototype> dagree_histogram
-	{
-		"m_room", "dagree_histogram"
-	};
-
-	std::vector<size_t> v(32, 0);
-	const size_t count
-	{
-		dagree_histogram(room, v)
-	};
-
-	for(size_t i(0); i < v.size(); ++i)
-		out << std::setw(2) << std::right << i << ": " << v.at(i) << std::endl;
-
 	return true;
 }
 
