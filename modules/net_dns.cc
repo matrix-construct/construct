@@ -929,20 +929,12 @@ catch(const std::exception &e)
 // cache room creation
 //
 
-namespace ircd::net::dns::cache
+namespace ircd::net::dns {
+namespace [[gnu::visibility("hidden")]] cache
 {
 	static void create_room();
-
-	extern bool room_exists;
 	extern m::hookfn<m::vm::eval &> create_room_hook;
-	extern const ircd::run::changed create_room_hook_alt;
-}
-
-decltype(ircd::net::dns::cache::room_exists)
-ircd::net::dns::cache::room_exists
-{
-	m::exists(room_id)
-};
+}}
 
 decltype(ircd::net::dns::cache::create_room_hook)
 ircd::net::dns::cache::create_room_hook
@@ -957,22 +949,6 @@ ircd::net::dns::cache::create_room_hook
 		create_room();
 	}
 };
-
-/// This is for existing installations that won't catch an
-/// !ircd room create and must create this room.
-decltype(ircd::net::dns::cache::create_room_hook_alt)
-ircd::net::dns::cache::create_room_hook_alt{[]
-(const auto &level)
-{
-	if(level != run::level::RUN || room_exists)
-		return;
-
-	context{[]
-	{
-		if(m::exists(m::my_room))  // if false, the other hook will succeed.
-			create_room();
-	}};
-}};
 
 void
 ircd::net::dns::cache::create_room()
