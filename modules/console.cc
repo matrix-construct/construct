@@ -9062,15 +9062,17 @@ console_cmd__room__state__space(opt &out, const string_view &line)
 
 	const string_view &type
 	{
-		param["type"]
+		param["type"] != "*"?
+			param["type"] : string_view{},
 	};
 
 	const string_view &state_key
 	{
-		param["state_key"]
+		param["state_key"] != "\"\""?
+			param["state_key"] : string_view{},
 	};
 
-	const auto depth
+	const int64_t depth
 	{
 		param.at("depth", -1L)
 	};
