@@ -91,6 +91,12 @@ get__make_leave(client &client,
 			membership
 		};
 
+	char room_version_buf[m::room::VERSION_MAX_SIZE];
+	const string_view &room_version
+	{
+		m::version(room_version_buf, room, std::nothrow)
+	};
+
 	const unique_buffer<mutable_buffer> buf
 	{
 		8_KiB
@@ -98,6 +104,15 @@ get__make_leave(client &client,
 
 	json::stack out{buf};
 	json::stack::object top{out};
+
+	json::stack::member
+	{
+		top, "room_version", json::value
+		{
+			room_version, json::STRING
+		}
+	};
+
 	json::stack::object event
 	{
 		top, "event"
