@@ -2848,21 +2848,21 @@ const
 
 	for(; it; ++it)
 	{
-		const auto &key
+		const auto &[_type, _state_key, _depth, _event_idx]
 		{
 			dbs::room_state_space_key(it->first)
 		};
 
-		if(type && std::get<0>(key) != type)
+		if(type && type != _type)
 			break;
 
-		if(state_key && std::get<1>(key) != state_key)
+		if(state_key && state_key != _state_key)
 			break;
 
-		if(depth > -1 && std::get<2>(key) != depth)
+		if(depth >= 0 && depth != _depth)
 			break;
 
-		if(!closure(std::get<0>(key), std::get<1>(key), std::get<2>(key), std::get<3>(key)))
+		if(!closure(_type, _state_key, _depth, _event_idx))
 			return false;
 	}
 
