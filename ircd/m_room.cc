@@ -1400,6 +1400,57 @@ ircd::m::room::index(const room::id &room_id,
 // room::room
 //
 
+size_t
+ircd::m::room::count()
+const
+{
+	size_t ret(0);
+	for_each(event::closure_idx_bool{[&ret]
+	(const event::idx &event_idx)
+	{
+		++ret;
+		return true;
+	}});
+
+	return ret;
+}
+
+size_t
+ircd::m::room::count(const string_view &type)
+const
+{
+	size_t ret(0);
+	for_each(type, event::closure_idx_bool{[&ret]
+	(const event::idx &event_idx)
+	{
+		++ret;
+		return true;
+	}});
+
+	return ret;
+}
+
+size_t
+ircd::m::room::count(const string_view &type,
+                     const string_view &state_key)
+const
+{
+	size_t ret(0);
+	for_each(type, event::closure_idx_bool{[&state_key, &ret]
+	(const event::idx &event_idx)
+	{
+		ret += query(std::nothrow, event_idx, "state_key", [&state_key]
+		(const string_view &_state_key) -> bool
+		{
+			return state_key == _state_key;
+		});
+
+		return true;
+	}});
+
+	return ret;
+}
+
 bool
 ircd::m::room::has(const string_view &type)
 const

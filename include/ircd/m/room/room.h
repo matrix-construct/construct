@@ -156,6 +156,9 @@ struct ircd::m::room
 	void get(const string_view &type, const event::closure &) const;
 	event::idx get(std::nothrow_t, const string_view &type) const;
 	event::idx get(const string_view &type) const;
+	size_t count(const string_view &type, const string_view &state_key) const;
+	size_t count(const string_view &type) const;
+	size_t count() const;
 
 	room(const id &room_id,
 	     const string_view &event_id,
