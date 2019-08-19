@@ -936,17 +936,14 @@ github_handle__organization(std::ostream &out,
 		split(action, '_')
 	};
 
-	out
-	<< " "
-	<< "<b>"
-	<< action_words.first;
+	out << " " << "<b>";
 
 	if(action_words.second)
 		out
-		<< " "
-		<< split(action, '_').second;
+		<< split(action, '_').second
+		<< " ";
 
-	out << "</b>";
+	out << action_words.first << "</b>";
 
 	if(action == "member_added")
 	{
@@ -980,6 +977,24 @@ github_handle__organization(std::ostream &out,
 		const json::object &user
 		{
 			membership["user"]
+		};
+
+		out << " "
+		    << "<a href=" << user["html_url"] << ">"
+		    << json::string(user["login"])
+		    << "</a>"
+		    ;
+	}
+	else if(action == "member_invited")
+	{
+		const json::object &invitation
+		{
+			content["invitation"]
+		};
+
+		const json::object &user
+		{
+			invitation["user"]
 		};
 
 		out << " "
