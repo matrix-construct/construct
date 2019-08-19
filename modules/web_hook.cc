@@ -931,11 +931,22 @@ github_handle__organization(std::ostream &out,
 		content["action"]
 	};
 
-	out << " "
-	    << "<b>"
-	    << action
-	    << "</b>"
-	    ;
+	const auto &action_words
+	{
+		split(action, '_')
+	};
+
+	out
+	<< " "
+	<< "<b>"
+	<< action_words.first;
+
+	if(action_words.second)
+		out
+		<< " "
+		<< split(action, '_').second;
+
+	out << "</b>";
 
 	if(action == "member_added")
 	{
@@ -957,6 +968,24 @@ github_handle__organization(std::ostream &out,
 
 		out << " with role "
 		    << json::string(membership["role"])
+		    ;
+	}
+	else if(action == "member_removed")
+	{
+		const json::object &membership
+		{
+			content["membership"]
+		};
+
+		const json::object &user
+		{
+			membership["user"]
+		};
+
+		out << " "
+		    << "<a href=" << user["html_url"] << ">"
+		    << json::string(user["login"])
+		    << "</a>"
 		    ;
 	}
 
