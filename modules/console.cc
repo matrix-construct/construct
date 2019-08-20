@@ -7839,6 +7839,28 @@ console_cmd__room__head(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__head__count(opt &out, const string_view &line)
+{
+	const auto &room_id
+	{
+		m::room_id(token(line, ' ', 0))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::head head
+	{
+		room
+	};
+
+	out << head.count() << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__head__rebuild(opt &out, const string_view &line)
 {
 	const params param{line, " ",
