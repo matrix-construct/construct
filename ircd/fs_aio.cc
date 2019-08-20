@@ -78,8 +78,8 @@ ircd::fs::aio::submit_coalesce
 	All requests are submitted to the kernel at once, allowing the disk
 	controller to plot the most efficient route of the head to satisfy all
 	requests with the lowest overall latency. Users with SSD's do not require
-	this and latency may be improved by setting it to false, though, there is
-	a counter-benefit by increasing system call overhead.
+	this and latency may be improved by setting it to false, though beware
+	of increasing system call overhead.
 	)"}
 };
 
