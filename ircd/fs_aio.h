@@ -125,12 +125,13 @@ struct ircd::fs::aio::request
 	ssize_t retval {-2L};
 	ssize_t errcode {0L};
 	const struct opts *opts {nullptr};
-	ctx::ctx *waiter {ctx::current};
+	ctx::dock waiter;
 
   public:
 	const_iovec_view iovec() const;
 	bool completed() const;
 	bool queued() const;
+	bool wait();
 
 	size_t operator()();
 	bool cancel();

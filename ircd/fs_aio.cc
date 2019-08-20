@@ -422,7 +422,6 @@ ircd::fs::aio::request::operator()()
 {
 	assert(system);
 	assert(ctx::current);
-	assert(waiter == ctx::current);
 
 	const size_t submitted_bytes
 	{
@@ -446,7 +445,7 @@ ircd::fs::aio::request::operator()()
 	system->submit(*this);
 
 	// Wait for completion
-	while(!system->wait(*this));
+	while(!wait());
 
 	assert(completed());
 	assert(retval <= ssize_t(submitted_bytes));
@@ -489,6 +488,47 @@ ircd::fs::aio::request::operator()()
 	{
 		make_error_code(errcode), errbuf
 	};
+}
+
+/// Block the current context while waiting for results.
+///
+/// This function returns true when the request completes and it's safe to
+/// continue. This function intercepts all exceptions and cancels the request
+/// if it's appropriate before rethrowing; after which it is safe to continue.
+///
+/// If this function returns false it is not safe to continue; it *must* be
+/// called again until it no longer returns false.
+bool
+ircd::fs::aio::request::wait()
+try
+{
+	waiter.wait([this]
+	{
+		return completed();
+	});
+
+	return true;
+}
+catch(...)
+{
+	// When the ctx is interrupted we're obliged to cancel the request
+	// if it has not reached a completed state.
+	if(completed())
+		throw;
+
+	// The handler callstack is invoked synchronously on this stack for
+	// requests which are still in our userspace queue.
+	if(queued())
+	{
+		cancel();
+		throw;
+	}
+
+	// The handler callstack is invoked asynchronously for requests
+	// submitted to the kernel; we *must* wait for that by blocking
+	// ctx interrupts and terminations and continue to wait. The caller
+	// must loop into this call again until it returns true or throws.
+	return false;
 }
 
 bool
@@ -667,46 +707,6 @@ ircd::fs::aio::system::wait()
 
 	assert(request_count() == 0);
 	return true;
-}
-
-/// Block the current context while waiting for results.
-///
-/// This function returns true when the request completes and it's safe to
-/// continue. This function intercepts all exceptions and cancels the request
-/// if it's appropriate before rethrowing; after which it is safe to continue.
-///
-/// If this function returns false it is not safe to continue; it *must* be
-/// called again until it no longer returns false.
-bool
-ircd::fs::aio::system::wait(request &request)
-try
-{
-	assert(ctx::current == request.waiter);
-	while(!request.completed())
-		ctx::wait();
-
-	return true;
-}
-catch(...)
-{
-	// When the ctx is interrupted we're obliged to cancel the request
-	// if it has not reached a completed state.
-	if(request.completed())
-		throw;
-
-	// The handler callstack is invoked synchronously on this stack for
-	// requests which are still in our userspace queue.
-	if(request.queued())
-	{
-		request.cancel();
-		throw;
-	}
-
-	// The handler callstack is invoked asynchronously for requests
-	// submitted to the kernel; we *must* wait for that by blocking
-	// ctx interrupts and terminations and continue to wait. The caller
-	// must loop into this call again until it returns true or throws.
-	return false;
 }
 
 bool
@@ -1181,8 +1181,7 @@ noexcept try
 
 	// Notify the waiting context. Note that we are on the main async stack
 	// but it is safe to notify from here.
-	assert(request->waiter);
-	ctx::notify(*request->waiter);
+	request->waiter.notify_one();
 	stats.events++;
 }
 catch(const std::exception &e)
