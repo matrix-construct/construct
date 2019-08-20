@@ -268,7 +268,7 @@ ircd::m::events::for_each_in_origin(const string_view &origin,
 	char buf[dbs::EVENT_SENDER_KEY_MAX_SIZE];
 	const string_view &key
 	{
-		dbs::event_sender_key(buf, origin)
+		dbs::event_sender_origin_key(buf, origin)
 	};
 
 	auto it
@@ -280,20 +280,14 @@ ircd::m::events::for_each_in_origin(const string_view &origin,
 	{
 		const auto &keyp
 		{
-			dbs::event_sender_key(it->first)
+			dbs::event_sender_origin_key(it->first)
 		};
 
-		char _buf[m::id::MAX_SIZE];
-		mutable_buffer buf{_buf};
-		consume(buf, copy(buf, std::get<0>(keyp)));
-		consume(buf, copy(buf, ":"_sv));
-		consume(buf, copy(buf, origin));
-		const string_view &user_id
+		const user::id::buf user_id
 		{
-			_buf, data(buf)
+			std::get<0>(keyp), origin
 		};
 
-		assert(valid(id::USER, user_id));
 		if(!closure(user_id, std::get<1>(keyp)))
 			return false;
 	}
@@ -314,7 +308,7 @@ ircd::m::events::for_each_in_sender(const id::user &user,
 	char buf[dbs::EVENT_SENDER_KEY_MAX_SIZE];
 	const string_view &key
 	{
-		dbs::event_sender_key(buf, user, 0)
+		dbs::event_sender_key(buf, user)
 	};
 
 	auto it
@@ -329,10 +323,7 @@ ircd::m::events::for_each_in_sender(const id::user &user,
 			dbs::event_sender_key(it->first)
 		};
 
-		if(std::get<0>(keyp) != user.local())
-			break;
-
-		if(!closure(user, std::get<1>(keyp)))
+		if(!closure(user, std::get<event::idx>(keyp)))
 			return false;
 	}
 
@@ -431,6 +422,8 @@ IRCD_MODULE_EXPORT
 ircd::m::events::for_each_sender(const string_view &hostlb,
                                  const closure_sender_name_bool &closure)
 {
+	assert(!startswith(hostlb, '@'));
+
 	db::column &column
 	{
 		dbs::event_sender
@@ -488,6 +481,8 @@ IRCD_MODULE_EXPORT
 ircd::m::events::for_each_origin(const string_view &prefix,
                                  const closure_origin_name_bool &closure)
 {
+	assert(!startswith(hostlb, '@'));
+
 	db::column &column
 	{
 		dbs::event_sender

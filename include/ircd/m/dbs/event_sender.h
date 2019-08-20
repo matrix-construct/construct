@@ -18,11 +18,19 @@ namespace ircd::m::dbs
 		id::MAX_SIZE + 1 + 8
 	};
 
-	string_view event_sender_key(const mutable_buffer &out, const string_view &origin, const string_view &localpart = {}, const event::idx & = 0);
-	string_view event_sender_key(const mutable_buffer &out, const id::user &, const event::idx &);
-	std::tuple<string_view, event::idx> event_sender_key(const string_view &amalgam);
+	// sender keyspace
+	bool is_event_sender_key(const string_view &amalgam);
+	string_view event_sender_key(const mutable_buffer &out, const id::user &, const event::idx & = 0UL);
+	std::tuple<event::idx> event_sender_key(const string_view &amalgam);
 
-	// host | local, event_idx
+	// sender_origin keyspace
+	bool is_event_sender_origin_key(const string_view &amalgam);
+	string_view event_sender_origin_key(const mutable_buffer &out, const string_view &origin, const string_view &localpart = {}, const event::idx & = 0UL);
+	string_view event_sender_origin_key(const mutable_buffer &out, const id::user &, const event::idx &);
+	std::tuple<string_view, event::idx> event_sender_origin_key(const string_view &amalgam);
+
+	// mxid | event_idx
+	// host | local, event_idx  (see event_sender_origin.h)
 	extern db::domain event_sender;
 }
 

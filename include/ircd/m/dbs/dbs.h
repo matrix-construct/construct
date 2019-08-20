@@ -49,7 +49,7 @@ namespace ircd::m::dbs::appendix
 #include "event_refs.h"             // eventidx | ref_type, event_idx
 #include "event_horizon.h"          // event_id | event_idx
 #include "event_type.h"             // type | event_idx
-#include "event_sender.h"           // hostpart | localpart, event_idx
+#include "event_sender.h"           // sender | event_idx || hostpart | localpart, event_idx
 #include "room_head.h"              // room_id | event_id => event_idx
 #include "room_events.h"            // room_id | depth, event_idx
 #include "room_joined.h"            // room_id | origin, member => event_idx
