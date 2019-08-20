@@ -13,9 +13,9 @@
 
 namespace ircd::m
 {
-	void prefetch(const event::idx &, const event::fetch::opts & = event::fetch::default_opts);
-	void prefetch(const event::idx &, const string_view &key);
+	bool prefetch(const event::idx &, const event::fetch::opts & = event::fetch::default_opts);
+	bool prefetch(const event::idx &, const string_view &key);
 
-	void prefetch(const event::id &, const event::fetch::opts & = event::fetch::default_opts);
-	void prefetch(const event::id &, const string_view &key);
+	bool prefetch(const event::id &, const event::fetch::opts & = event::fetch::default_opts);
+	bool prefetch(const event::id &, const string_view &key);
 }

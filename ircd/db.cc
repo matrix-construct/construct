@@ -5784,22 +5784,25 @@ ircd::db::bytes(column &column,
 	return ret[0];
 }
 
-void
+bool
 ircd::db::prefetch(column &column,
                    const string_view &key,
                    const gopts &gopts)
 {
 	if(cached(column, key, gopts))
-		return;
+		return false;
 
 	if(!request.avail())
-		return;
+		return false;
 
 	request([column(column), key(std::string(key)), gopts]
 	() mutable
 	{
 		has(column, key, gopts);
 	});
+
+	ctx::yield();
+	return true;
 }
 
 #if 0

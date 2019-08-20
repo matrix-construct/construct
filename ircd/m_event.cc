@@ -789,32 +789,46 @@ const
 // event/prefetch.h
 //
 
-void
+bool
 ircd::m::prefetch(const event::id &event_id,
                   const event::fetch::opts &opts)
 {
-	prefetch(index(event_id), opts);
+	return prefetch(index(event_id), opts);
 }
 
-void
+bool
 ircd::m::prefetch(const event::id &event_id,
                   const string_view &key)
 {
-	prefetch(index(event_id), key);
+	return prefetch(index(event_id), key);
 }
 
-void
+bool
 ircd::m::prefetch(const event::idx &event_idx,
                   const event::fetch::opts &opts)
 {
-	const event::keys keys{opts.keys};
-	const vector_view<const string_view> cols{keys};
+	if(event::fetch::should_seek_json(opts))
+		return db::prefetch(dbs::event_json, byte_view<string_view>{event_idx});
+
+	const event::keys keys
+	{
+		opts.keys
+	};
+
+	const vector_view<const string_view> cols
+	{
+		keys
+	};
+
+	bool ret{false};
 	for(const auto &col : cols)
 		if(col)
-			prefetch(event_idx, col);
+			ret |= prefetch(event_idx, col);
+
+	return ret;
 }
 
-void
+bool
 ircd::m::prefetch(const event::idx &event_idx,
                   const string_view &key)
 {
@@ -828,7 +842,7 @@ ircd::m::prefetch(const event::idx &event_idx,
 		dbs::event_column.at(column_idx)
 	};
 
-	db::prefetch(column, byte_view<string_view>{event_idx});
+	return db::prefetch(column, byte_view<string_view>{event_idx});
 }
 
 ///////////////////////////////////////////////////////////////////////////////

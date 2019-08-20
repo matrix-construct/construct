@@ -192,8 +192,7 @@ ircd::m::room::state::prefetch(const state &state,
 		if(range.second && event_idx > range.second)
 			return;
 
-		m::prefetch(event_idx, fopts);
-		++ret;
+		ret += m::prefetch(event_idx, fopts);
 	}});
 
 	return ret;

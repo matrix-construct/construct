@@ -42,7 +42,7 @@ namespace ircd::db
 	// [GET] Tests if key exists
 	bool has(column &, const string_view &key, const gopts & = {});
 	bool cached(column &, const string_view &key, const gopts & = {});
-	void prefetch(column &, const string_view &key, const gopts & = {});
+	bool prefetch(column &, const string_view &key, const gopts & = {});
 
 	// [GET] Query space usage
 	size_t bytes(column &, const std::pair<string_view, string_view> &range, const gopts & = {});
