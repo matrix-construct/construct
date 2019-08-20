@@ -61,9 +61,36 @@ IRCD_MODULE_EXPORT
 ircd::m::users::for_each(const opts &opts,
                          const user::closure_bool &closure)
 {
-	// Note: if opts.hostpart is given then for_each_host() will close over
-	// that host, so no branch is needed here.
-	return for_each_host(opts, closure);
+	// Branch to a better query for hosts when there's no localpart given.
+	if(opts.hostpart && (!opts.localpart || opts.localpart == "@"))
+		return for_each_host(opts, closure);
+
+	bool ret{true};
+	events::for_each_sender(opts.localpart, [&opts, &ret, &closure]
+	(const id::user &sender)
+	{
+		if(opts.localpart && !opts.localpart_prefix)
+			if(sender.local() != opts.localpart)
+				return false;
+
+		if(opts.localpart && opts.localpart_prefix)
+			if(!startswith(sender.local(), opts.localpart))
+				return false;
+
+		if(opts.hostpart && !opts.hostpart_prefix)
+			if(sender.host() != opts.hostpart)
+				return true;
+
+		if(opts.hostpart && opts.hostpart_prefix)
+			if(!startswith(sender.host(), opts.hostpart))
+				return true;
+
+		// Call the user with match.a
+		ret = closure(sender);
+		return ret;
+	});
+
+	return ret;
 }
 
 bool
@@ -74,15 +101,17 @@ ircd::m::users::for_each_host(const opts &opts,
 	events::for_each_origin(opts.hostpart, [&ret, &opts, &closure]
 	(const string_view &origin)
 	{
-		// The events:: iteration interface works with prefixes; if our
-		// user wants to iterate users on exactly a single server, we test
-		// for an exact match here and can break from the loop if no match.
 		if(opts.hostpart && !opts.hostpart_prefix)
 			if(origin != opts.hostpart)
 				return false;
 
+		if(opts.hostpart && opts.hostpart_prefix)
+			if(!startswith(origin, opts.hostpart))
+				return false;
+
 		auto _opts(opts);
 		_opts.hostpart = origin;
+		_opts.hostpart_prefix = false;
 		ret = for_each_in_host(_opts, closure);
 		return ret;
 	});
@@ -94,32 +123,33 @@ bool
 ircd::m::users::for_each_in_host(const opts &opts,
                                  const user::closure_bool &closure)
 {
-	assert(opts.hostpart);
-
 	bool ret{true};
-	events::for_each_sender(opts.hostpart, [&opts, &ret, &closure]
-	(const id::user &sender)
+	m::user::id::buf last;
+	events::for_each_in_origin(opts.hostpart, [&opts, &ret, &closure, &last]
+	(const id::user &sender, const auto &event_idx)
 	{
-		// The events:: iteration interface only tests if the sender's
-		// hostpart startswith our queried hostpart; we want an exact
-		// match here, otherwise our loop can finish.
-		if(sender.host() != opts.hostpart)
-			return false;
+		if(sender == last)
+			return true;
 
-		// Skip this entry if the user wants a prefix match on the localpart
-		// and this mxid doesn't match.
+		if(opts.hostpart && !opts.hostpart_prefix)
+			if(sender.host() != opts.hostpart)
+				return false;
+
+		if(opts.hostpart && opts.hostpart_prefix)
+			if(!startswith(sender.host(), opts.hostpart))
+				return false;
+
 		if(opts.localpart && opts.localpart_prefix)
 			if(!startswith(sender.local(), opts.localpart))
 				return true;
 
-		// Skip this entry if the user wants an exact match on the localpart
-		// and this mxid doesn't match.
 		if(opts.localpart && !opts.localpart_prefix)
 			if(sender.local() != opts.localpart)
 				return true;
 
 		// Call the user with match.
 		ret = closure(sender);
+		last = sender;
 		return ret;
 	});
 
@@ -133,6 +163,7 @@ ircd::m::users::opts::opts(const string_view &query)
 	{
 		localpart = split(query, ':').first;
 		hostpart = split(query, ':').second;
+		hostpart_prefix = !has(hostpart, '.');
 		return;
 	}
 
@@ -146,9 +177,10 @@ ircd::m::users::opts::opts(const string_view &query)
 	if(startswith(query, ':'))
 	{
 		hostpart = lstrip(query, ':');
+		hostpart_prefix = !has(hostpart, '.');
 		return;
 	}
 
-	hostpart = query;
-	hostpart_prefix = true;
+	localpart = query;
+	localpart_prefix = true;
 }
