@@ -170,18 +170,6 @@ ircd::m::room::state::rebuild_present(const room::id &room_id)
 	return ret;
 }
 
-namespace ircd::m
-{
-	extern conf::item<ulong> state__prefetch__yield_modulus;
-}
-
-decltype(ircd::m::state__prefetch__yield_modulus)
-ircd::m::state__prefetch__yield_modulus
-{
-	{ "name",     "ircd.m.room.state_prefetch.yield_modulus" },
-	{ "default",  256L                                       },
-};
-
 size_t
 ircd::m::room::state::prefetch(const state &state,
                                const string_view &type,
@@ -206,10 +194,6 @@ ircd::m::room::state::prefetch(const state &state,
 
 		m::prefetch(event_idx, fopts);
 		++ret;
-
-		const ulong ym(state__prefetch__yield_modulus);
-		if(ym && ret % ym == 0)
-			ctx::yield();
 	}});
 
 	return ret;
