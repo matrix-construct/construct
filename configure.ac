@@ -602,6 +602,12 @@ dnl
 CXXFLAGS+=" -fno-threadsafe-statics"
 
 dnl
+AM_COND_IF([GCC],
+[
+	CXXFLAGS+=" -fverbose-asm"
+])
+
+dnl
 dnl Compiler warnings
 dnl
 
