@@ -399,10 +399,14 @@ ircd::m::events::for_each_type(const string_view &prefix,
 		if(type == last)
 			continue;
 
-		if(!startswith(type, prefix))
+		if(prefix && !startswith(type, prefix))
 			break;
 
-		last = { lastbuf, copy(lastbuf, type) };
+		last =
+		{
+			lastbuf, copy(lastbuf, type)
+		};
+
 		if(!closure(type))
 			return false;
 	}
@@ -419,11 +423,9 @@ ircd::m::events::for_each_sender(const closure_sender_name_bool &closure)
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::events::for_each_sender(const string_view &hostlb,
+ircd::m::events::for_each_sender(const string_view &prefix_,
                                  const closure_sender_name_bool &closure)
 {
-	assert(!startswith(hostlb, '@'));
-
 	db::column &column
 	{
 		dbs::event_sender
@@ -434,36 +436,41 @@ ircd::m::events::for_each_sender(const string_view &hostlb,
 		dbs::desc::events__event_sender__pfx
 	};
 
-	user::id::buf last;
-	string_view last_local, last_host;
-	for(auto it(column.lower_bound(hostlb)); bool(it); ++it)
+	// We MUST query the column with a key starting with '@' here. For a more
+	// convenient API, if the user did not supply an '@' we prefix it for them.
+	char prebuf[id::user::buf::SIZE] {"@"};
+	const string_view prefix
 	{
-		const string_view &host
+		!startswith(prefix_, '@')?
+			strlcat{prebuf, prefix_}:
+			prefix_
+	};
+
+	m::user::id::buf last;
+	for(auto it(column.lower_bound(prefix)); bool(it); ++it)
+	{
+		// Check if this is an '@' key; otherwise it's in the origin
+		// keyspace (sharing this column) which we don't want here.
+		if(!m::dbs::is_event_sender_key(it->first))
+			break;
+
+		// Apply the domain prefixer, since we're iterating as a db::column
+		// rather than db::domain.
+		const m::user::id &user_id
 		{
 			prefixer.get(it->first)
 		};
 
-		if(!startswith(host, hostlb))
-			break;
-
-		const auto &[localpart, event_idx]
-		{
-			dbs::event_sender_key(it->first.substr(size(host)))
-		};
-
-		if(last && host == last_host && localpart == last_local)
+		if(user_id == last)
 			continue;
 
-		last = m::user::id::buf
-		{
-			localpart, host
-		};
+		if(!startswith(user_id, prefix))
+			break;
 
-		if(!closure(last))
+		if(!closure(user_id))
 			return false;
 
-		last_local = last.local();
-		last_host = last.host();
+		last = user_id;
 	}
 
 	return true;
@@ -481,8 +488,6 @@ IRCD_MODULE_EXPORT
 ircd::m::events::for_each_origin(const string_view &prefix,
                                  const closure_origin_name_bool &closure)
 {
-	assert(!startswith(hostlb, '@'));
-
 	db::column &column
 	{
 		dbs::event_sender
@@ -493,10 +498,19 @@ ircd::m::events::for_each_origin(const string_view &prefix,
 		dbs::desc::events__event_sender__pfx
 	};
 
+	if(unlikely(startswith(prefix, '@')))
+		throw panic
+		{
+			"Prefix argument should be a hostname. It must not start with '@'"
+		};
+
 	string_view last;
 	char buf[rfc3986::DOMAIN_BUFSIZE];
 	for(auto it(column.lower_bound(prefix)); bool(it); ++it)
 	{
+		if(!m::dbs::is_event_sender_origin_key(it->first))
+			break;
+
 		const string_view &host
 		{
 			prefixer.get(it->first)
