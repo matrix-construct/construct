@@ -7,12 +7,12 @@
 It all started in 1988 when Jarkko Oikarinen developed a free and open source server
 at the University of Oulu which facilitated real-time communication over the internet.
 Its [derivatives](https://upload.wikimedia.org/wikipedia/commons/d/d8/IRCd_software_implementations.png)
-have underpinned the major IRC networks for decades ever since.
+have underpinned the major chat networks for decades ever since.
 
-Due to its age and stagnation since the mid-2000's, a growing number of proprietary cloud services
-have filled the vacuum of innovation. In 2014 a new approach was proposed to reinvigorate
-real-time communication for free and open source software: a *federation of networks*
-known as *the matrix*.
+Due to their age and stagnation since the mid-2000's, a growing number of
+proprietary cloud services have filled the vacuum of innovation. In 2014 a new
+approach was proposed to reinvigorate real-time communication for free and open
+source software: a *federation of networks* known as *the matrix*.
 
 <a href="https://github.com/vector-im/riot-web/">
 	<img align="right" src="https://i.imgur.com/DUuGSrH.png" />
