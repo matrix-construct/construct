@@ -7698,31 +7698,46 @@ console_cmd__room__top(opt &out, const string_view &line)
 		m::top(std::nothrow, room_id)
 	};
 
-	const m::room::state state
+	const m::room room
 	{
-		room_id
+		room_id, std::get<m::event::id::buf>(top)
 	};
 
-	char version_buf[32];
-	out << "index:             " << m::room::index(room_id) << std::endl;
-	out << "version:           " << m::version(version_buf, room_id) << std::endl;
-	out << "federated:         " << std::boolalpha << m::federated(room_id) << std::endl;
-	out << "joined:            " << m::room::members{room_id}.count("join") << std::endl;
-	out << "servers:           " << m::room::origins{room_id}.count() << std::endl;
-	out << "servers up:        " << m::room::origins{room_id}.count_online() << std::endl;
-	out << "servers err:       " << m::room::origins{room_id}.count_error() << std::endl;
-	out << "heads:             " << m::room::head{room_id}.count() << std::endl;
-	out << "state:             " << m::room::state{room_id}.count() << std::endl;
-	out << "states:            " << m::room::state::space{room_id}.count() << std::endl;
-	out << "events:            " << m::room{room_id}.count() << std::endl;
-	out << "top depth:         " << std::get<int64_t>(top) << std::endl;
-	out << "top index:         " << std::get<m::event::idx>(top) << std::endl;
-	out << "top event:         " << std::get<m::event::id::buf>(top) << std::endl;
-	out << "recent events:     "
-	    << std::endl;
+	const m::room::state state
+	{
+		room
+	};
+
+	const m::room::auth::chain auth
+	{
+		std::get<m::event::idx>(top)
+	};
+
+	out << "top auth:" << std::endl;
+
+	ssize_t adi(auth.depth());
+	auth.for_each([&room, &out, &adi]
+	(const m::event::idx &event_idx)
+	{
+		if(adi-- > 8)
+			return true;
+
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(event.valid)
+			m::pretty_stateline(out, event, room.event_id, event_idx);
+
+		return true;
+	});
+
+	out << std::endl;
+	out << "recent messages: " << std::endl;
 
 	char linebuf[256];
-	static const size_t last_count(4);
+	static const size_t last_count(8);
 	console_cmd__room__events(out, fmt::sprintf
 	{
 		linebuf, "%s -%ld",
@@ -7731,11 +7746,12 @@ console_cmd__room__top(opt &out, const string_view &line)
 	});
 
 	out << std::endl;
+	out << "m.room state: " << std::endl;
 
-	state.for_each(m::room::state::type_prefix{"m."}, [&out, &state]
+	state.for_each(m::room::state::type_prefix{"m.room."}, [&out, &state]
 	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
 	{
-		assert(startswith(type, "m."));
+		assert(startswith(type, "m.room."));
 		if(type == "m.room.member")
 			return true;
 
@@ -7758,14 +7774,32 @@ console_cmd__room__top(opt &out, const string_view &line)
 		for(const auto &[prop, val] : json::get<"content"_>(event))
 			out
 			<< std::left << std::setw(evw) << event.event_id
-			<< "  " << std::left << std::setw(30) << json::get<"type"_>(event)
-			<< " " << std::right << std::setw(24) << prop
-			<< "  :" << val
+			<< " " << std::right << std::setw(30) << json::get<"type"_>(event)
+			<< " | " << std::left << std::setw(24) << prop
+			<< " " << val
 			<< std::endl;
 
 		return true;
 	});
 
+	out << std::endl;
+
+	char version_buf[32];
+	out << "index:             " << m::room::index(room_id) << std::endl;
+	out << "version:           " << m::version(version_buf, room_id) << std::endl;
+	out << "federated:         " << std::boolalpha << m::federated(room_id) << std::endl;
+	out << "joined:            " << m::room::members{room_id}.count("join") << std::endl;
+	out << "servers:           " << m::room::origins{room_id}.count() << std::endl;
+	out << "servers up:        " << m::room::origins{room_id}.count_online() << std::endl;
+	out << "servers err:       " << m::room::origins{room_id}.count_error() << std::endl;
+	out << "heads:             " << m::room::head{room_id}.count() << std::endl;
+	out << "state:             " << m::room::state{room_id}.count() << std::endl;
+	out << "states:            " << m::room::state::space{room_id}.count() << std::endl;
+	out << "events:            " << m::room{room_id}.count() << std::endl;
+	out << "auth depth:        " << auth.depth() << std::endl;
+	out << "top depth:         " << std::get<int64_t>(top) << std::endl;
+	out << "top index:         " << std::get<m::event::idx>(top) << std::endl;
+	out << "top event:         " << std::get<m::event::id::buf>(top) << std::endl;
 	return true;
 }
 
