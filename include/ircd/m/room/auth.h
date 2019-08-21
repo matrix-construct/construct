@@ -49,11 +49,11 @@ struct ircd::m::room::auth::refs
 	bool for_each(const string_view &type, const closure_bool &) const;
 	bool for_each(const closure_bool &) const;
 
-	bool has(const string_view &type) const noexcept;
-	bool has(const event::idx &) const noexcept;
+	bool has(const string_view &type) const;
+	bool has(const event::idx &) const;
 
-	size_t count(const string_view &type) const noexcept;
-	size_t count() const noexcept;
+	size_t count(const string_view &type) const;
+	size_t count() const;
 
 	refs(const event::idx &idx)
 	:idx{idx}
@@ -68,8 +68,8 @@ struct ircd::m::room::auth::chain
 
   public:
 	bool for_each(const closure &) const;
-	bool has(const string_view &type) const noexcept;
-	size_t depth() const noexcept;
+	bool has(const string_view &type) const;
+	size_t depth() const;
 
 	chain(const event::idx &idx)
 	:idx{idx}

@@ -581,7 +581,7 @@ const
 size_t
 IRCD_MODULE_EXPORT
 ircd::m::room::auth::refs::count()
-const noexcept
+const
 {
 	return count(string_view{});
 }
@@ -589,7 +589,7 @@ const noexcept
 size_t
 IRCD_MODULE_EXPORT
 ircd::m::room::auth::refs::count(const string_view &type)
-const noexcept
+const
 {
 	size_t ret(0);
 	for_each(type, [&ret](const auto &)
@@ -604,7 +604,7 @@ const noexcept
 bool
 IRCD_MODULE_EXPORT
 ircd::m::room::auth::refs::has(const event::idx &idx)
-const noexcept
+const
 {
 	return !for_each([&idx](const event::idx &ref)
 	{
@@ -615,7 +615,7 @@ const noexcept
 bool
 IRCD_MODULE_EXPORT
 ircd::m::room::auth::refs::has(const string_view &type)
-const noexcept
+const
 {
 	bool ret{false};
 	for_each(type, [&ret](const auto &)
@@ -683,7 +683,7 @@ const
 size_t
 IRCD_MODULE_EXPORT
 ircd::m::room::auth::chain::depth()
-const noexcept
+const
 {
 	size_t ret(0);
 	for_each([&ret](const auto &)
@@ -698,7 +698,7 @@ const noexcept
 bool
 IRCD_MODULE_EXPORT
 ircd::m::room::auth::chain::has(const string_view &type)
-const noexcept
+const
 {
 	bool ret(false);
 	for_each([&type, &ret]
