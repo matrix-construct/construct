@@ -781,30 +781,8 @@ console_cmd__uptime(opt &out, const string_view &line)
 		ircd::uptime()
 	};
 
-	const hours uptime_h
-	{
-		uptime.count() / (60L * 60L)
-	};
-
-	const minutes uptime_m
-	{
-		(uptime.count() / 60L) % 60L
-	};
-
-	const minutes uptime_s
-	{
-		uptime.count() % 60L
-	};
-
-	out << "Running for ";
-
-	if(uptime_h.count())
-		out << uptime_h.count() << " hours ";
-
-	if(uptime_m.count())
-		out << uptime_m.count() << " minutes ";
-
-	out << uptime_s.count() << " seconds." << std::endl;
+	char tmp[48];
+	out << pretty(tmp, uptime) << std::endl;
 	return true;
 }
 
