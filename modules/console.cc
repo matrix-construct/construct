@@ -9395,13 +9395,24 @@ console_cmd__room__count(opt &out, const string_view &line)
 		json::get<"limit"_>(filter)?: -1
 	};
 
-	size_t count{0};
-	m::room::messages it{room};
-	for(; it && limit; --it, --limit)
+	if(param[1])
 	{
-		const m::event &event{*it};
-		count += match(filter, event);
+		size_t count{0};
+		m::room::messages it{room};
+		for(; it && limit; --it, --limit)
+		{
+			const m::event &event{*it};
+			count += match(filter, event);
+		}
+
+		out << count << std::endl;
+		return true;
 	}
+
+	const size_t count
+	{
+		room.count()
+	};
 
 	out << count << std::endl;
 	return true;
