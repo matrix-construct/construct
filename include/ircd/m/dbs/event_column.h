@@ -11,6 +11,11 @@
 #pragma once
 #define HAVE_IRCD_M_DBS_EVENT_COLUMN_H
 
+// These columns all store duplicate data from the original _event_json
+// but limited to a single specific property. The index key is an event_idx
+// (just like _event_json). These columns are useful for various optimizations
+// at the cost of the additional space consumed.
+
 namespace ircd::m::dbs
 {
 	// Event property column max-count. The number of event columns may be
@@ -20,6 +25,9 @@ namespace ircd::m::dbs
 		event::size()
 	};
 
+	// There is one position in this array corresponding to each property
+	// in the m::event tuple, however, the db::column in this position may
+	// be default-initialized if this column is not used.
 	extern std::array<db::column, event_columns> event_column;
 }
 

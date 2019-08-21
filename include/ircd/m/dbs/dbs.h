@@ -46,7 +46,7 @@ namespace ircd::m::dbs::appendix
 #include "event_column.h"           // event_idx => (direct value)
 #include "event_idx.h"              // event_id => event_idx
 #include "event_json.h"             // event_idx => (full JSON)
-#include "event_refs.h"             // eventidx | ref_type, event_idx
+#include "event_refs.h"             // event_idx | ref_type, event_idx
 #include "event_horizon.h"          // event_id | event_idx
 #include "event_type.h"             // type | event_idx
 #include "event_sender.h"           // sender | event_idx || hostpart | localpart, event_idx
