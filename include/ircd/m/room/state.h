@@ -69,6 +69,7 @@ struct ircd::m::room::state
 	// Existential
 	bool has(const string_view &type, const string_view &state_key) const;
 	bool has(const string_view &type) const;
+	bool has(const event::idx &) const;
 
 	// Fetch a state event
 	bool get(std::nothrow_t, const string_view &type, const string_view &state_key, const event::closure_idx &) const;
@@ -95,6 +96,7 @@ struct ircd::m::room::state
 	static event::idx next(const event::idx &);
 
 	static size_t prefetch(const state &, const string_view &, const event::idx_range &);
+	static bool present(const event::idx &);
 	static size_t rebuild_present(const room::id &);
 	static bool force_present(const event &);
 	static size_t purge_replaced(const room::id &);

@@ -170,6 +170,38 @@ ircd::m::room::state::rebuild_present(const room::id &room_id)
 	return ret;
 }
 
+bool
+ircd::m::room::state::present(const event::idx &event_idx)
+{
+	static const event::fetch::opts fopts
+	{
+		event::keys::include { "room_id", "type", "state_key" },
+	};
+
+	const m::event::fetch event
+	{
+		event_idx, fopts
+	};
+
+	const m::room room
+	{
+		at<"room_id"_>(event)
+	};
+
+	const m::room::state state
+	{
+		room
+	};
+
+	const auto state_idx
+	{
+		state.get(std::nothrow, at<"type"_>(event), at<"state_key"_>(event))
+	};
+
+	assert(event_idx);
+	return state_idx == event_idx;
+}
+
 size_t
 ircd::m::room::state::prefetch(const state &state,
                                const string_view &type,
@@ -2139,6 +2171,32 @@ const
 	{
 		closure(byte_view<event::idx>(value));
 	});
+}
+
+bool
+ircd::m::room::state::has(const event::idx &event_idx)
+const
+{
+	static const event::fetch::opts fopts
+	{
+		event::keys::include { "type", "state_key" },
+	};
+
+	const m::event::fetch event
+	{
+		event_idx, std::nothrow, fopts
+	};
+
+	if(!event.valid)
+		return false;
+
+	const auto state_idx
+	{
+		get(std::nothrow, at<"type"_>(event), at<"state_key"_>(event))
+	};
+
+	assert(event_idx);
+	return event_idx == state_idx;
 }
 
 bool
