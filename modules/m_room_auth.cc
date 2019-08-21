@@ -144,23 +144,95 @@ void
 IRCD_MODULE_EXPORT
 ircd::m::room::auth::check(const event &event)
 {
-	const auto &[pass, fail]
-	{
-		check(std::nothrow, event)
-	};
+	passfail pf;
+	auto &[pass, fail] {pf};
 
-	if(!pass)
+	pf = check_static(event);
+
+	if(!pass) try
 	{
 		assert(bool(fail));
 		std::rethrow_exception(fail);
 		__builtin_unreachable();
 	}
+	catch(const FAIL &e)
+	{
+		throw FAIL
+		{
+			"Fails against provided auth_events :%s", e.what()
+		};
+	}
+
+	if(!m::exists(room(at<"room_id"_>(event))))
+		if(at<"type"_>(event) == "m.room.create")
+			return;
+
+	pf = check_present(event);
+
+	if(!pass) try
+	{
+		assert(bool(fail));
+		std::rethrow_exception(fail);
+		__builtin_unreachable();
+	}
+	catch(const FAIL &e)
+	{
+		throw FAIL
+		{
+			"Fails against present state of %s :%s",
+			json::get<"room_id"_>(event),
+			e.what()
+		};
+	}
+
+	if(!m::exists(event.event_id))
+		return;
+
+	pf = check_relative(event);
+
+	if(!pass) try
+	{
+		assert(bool(fail));
+		std::rethrow_exception(fail);
+		__builtin_unreachable();
+	}
+	catch(const FAIL &e)
+	{
+		throw FAIL
+		{
+			"Fails against state of %s relative to %s :%s",
+			json::get<"room_id"_>(event),
+			string_view{event.event_id},
+			e.what()
+		};
+	}
 }
 
 ircd::m::room::auth::passfail
 IRCD_MODULE_EXPORT
-ircd::m::room::auth::check(std::nothrow_t,
-                           const event &event)
+ircd::m::room::auth::check_relative(const event &event)
+try
+{
+	using json::at;
+
+	const m::room room
+	{
+		at<"room_id"_>(event), event.event_id
+	};
+
+	return check(event, room);
+}
+catch(const std::exception &)
+{
+	return
+	{
+		false, std::current_exception()
+	};
+}
+
+ircd::m::room::auth::passfail
+IRCD_MODULE_EXPORT
+ircd::m::room::auth::check_present(const event &event)
 try
 {
 	using json::at;
@@ -170,7 +242,28 @@ try
 		at<"room_id"_>(event)
 	};
 
-	const m::event::prev refs{event};
+	return check(event, room);
+}
+catch(const std::exception &)
+{
+	return
+	{
+		false, std::current_exception()
+	};
+}
+
+ircd::m::room::auth::passfail
+IRCD_MODULE_EXPORT
+ircd::m::room::auth::check_static(const event &event)
+try
+{
+	using json::at;
+
+	const m::event::prev refs
+	{
+		event
+	};
+
 	const auto count
 	{
 		refs.auth_events_count()
@@ -184,14 +277,33 @@ try
 			count,
 		};
 
-	// Vector of contingent event idxs from the event and the present state
-	m::event::idx idxs[9]
+	m::event::idx idx[4]
 	{
 		count > 0? m::index(refs.auth_event(0)): 0UL,
 		count > 1? m::index(refs.auth_event(1)): 0UL,
 		count > 2? m::index(refs.auth_event(2)): 0UL,
 		count > 3? m::index(refs.auth_event(3)): 0UL,
+	};
 
+	return check(event, vector_view<event::idx>{idx, count});
+}
+catch(const std::exception &)
+{
+	return
+	{
+		false, std::current_exception()
+	};
+}
+
+ircd::m::room::auth::passfail
+IRCD_MODULE_EXPORT
+ircd::m::room::auth::check(const event &event,
+                           const room &room)
+{
+	using json::at;
+
+	m::event::idx idx[5]
+	{
 		room.get(std::nothrow, "m.room.create", ""),
 		room.get(std::nothrow, "m.room.power_levels", ""),
 		room.get(std::nothrow, "m.room.member", at<"sender"_>(event)),
@@ -205,58 +317,36 @@ try
 			room.get(std::nothrow, "m.room.member", at<"state_key"_>(event)): 0UL,
 	};
 
-	m::event::fetch auth[9];
-	for(size_t i(0); i < 9; ++i)
-		if(idxs[i])
-			seek(auth[i], idxs[i], std::nothrow);
-
-	size_t i, j;
-	const m::event *authv[4];
-	for(i = 0, j = 0; i < 4 && j < 4; ++i)
-		if(auth[i].valid)
-			authv[j++] = &auth[i];
-
-	hookdata data
-	{
-		event, {authv, j}
-	};
-
-	auto ret
-	{
-		check(std::nothrow, event, data)
-	};
-
-	if(!std::get<bool>(ret) || std::get<std::exception_ptr>(ret))
-		return ret;
-
-	for(i = 4, j = 0; i < 9 && j < 4; ++i)
-		if(auth[i].valid)
-			authv[j++] = &auth[i];
-
-	data =
-	{
-		event, {authv, j}
-	};
-
-	ret =
-	{
-		check(std::nothrow, event, data)
-	};
-
-	return ret;
-}
-catch(const std::exception &)
-{
-	return
-	{
-		false, std::current_exception()
-	};
+	return check(event, vector_view<event::idx>{idx, 5});
 }
 
 ircd::m::room::auth::passfail
 IRCD_MODULE_EXPORT
-ircd::m::room::auth::check(std::nothrow_t,
-                           const event &event,
+ircd::m::room::auth::check(const event &event,
+                           const vector_view<event::idx> &idx)
+{
+	std::array<m::event::fetch, 5> auth;
+	for(size_t i(0), j(0); i < idx.size(); ++i)
+		if(idx.at(i))
+			m::seek(auth.at(j++), idx.at(i), std::nothrow);
+
+	size_t j(0);
+	std::array<const m::event *, 5> authv;
+	for(size_t i(0); i < auth.size(); ++i)
+		if(auth.at(i).valid)
+			authv.at(j++) = &auth.at(i);
+
+	hookdata data
+	{
+		event, {authv.data(), j}
+	};
+
+	return check(event, data);
+}
+
+ircd::m::room::auth::passfail
+IRCD_MODULE_EXPORT
+ircd::m::room::auth::check(const event &event,
                            hookdata &data)
 try
 {

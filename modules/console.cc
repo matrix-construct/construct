@@ -6732,11 +6732,28 @@ console_cmd__event(opt &out, const string_view &line)
 		    << "HASH MISMATCH :" << b64encode_unpadded(hash(event))
 		    << std::endl;
 
-	const auto &[authed, failmsg](m::room::auth::check(std::nothrow, event));
-	if(!authed)
-		out << std::setw(9) << std::left << "!!! ERROR" << "  "
-		    << "UNAUTHORIZED :" << what(failmsg)
-		    << std::endl;
+	{
+		const auto &[authed, failmsg](m::room::auth::check_static(event));
+		if(!authed)
+			out << std::setw(9) << std::left << "!!! ERROR" << "  "
+			    << "UNAUTHORIZED STATIC :" << what(failmsg)
+			    << std::endl;
+	}
+
+	{
+		const auto &[authed, failmsg](m::room::auth::check_present(event));
+		if(!authed)
+			out << std::setw(9) << std::left << "!!! ERROR" << "  "
+			    << "PRESENTLY UNAUTHORIZED :" << what(failmsg)
+			    << std::endl;
+	}
+	{
+		const auto &[authed, failmsg](m::room::auth::check_relative(event));
+		if(!authed)
+			out << std::setw(9) << std::left << "!!! ERROR" << "  "
+			    << "RELATIVELY UNAUTHORIZED :" << what(failmsg)
+			    << std::endl;
+	}
 
 	try
 	{
@@ -7716,7 +7733,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "top auth:" << std::endl;
 
 	ssize_t adi(auth.depth());
-	auth.for_each([&room, &out, &adi]
+	auth.for_each([&out, &adi]
 	(const m::event::idx &event_idx)
 	{
 		if(adi-- > 8)
@@ -7728,7 +7745,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 		};
 
 		if(event.valid)
-			m::pretty_stateline(out, event, room.event_id, event_idx);
+			m::pretty_stateline(out, event, event_idx);
 
 		return true;
 	});
@@ -8811,7 +8828,7 @@ console_cmd__room__state(opt &out, const string_view &line)
 			string_view{}
 	};
 
-	state.for_each(type, [&out, &state]
+	state.for_each(type, [&out]
 	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
 	{
 		const m::event::fetch event
@@ -8822,7 +8839,7 @@ console_cmd__room__state(opt &out, const string_view &line)
 		if(!event.valid)
 			return true;
 
-		m::pretty_stateline(out, event, state.event_id, event_idx);
+		m::pretty_stateline(out, event, event_idx);
 
 		/*
 		size_t i(0);
@@ -9071,7 +9088,7 @@ console_cmd__room__state__history(opt &out, const string_view &line)
 		room, bound
 	};
 
-	history.for_each(type, state_key, [&out, &room]
+	history.for_each(type, state_key, [&out]
 	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
 	{
 		const m::event::fetch event
@@ -9082,7 +9099,7 @@ console_cmd__room__state__history(opt &out, const string_view &line)
 		if(!event.valid)
 			return true;
 
-		m::pretty_stateline(out, event, room.event_id, event_idx);
+		m::pretty_stateline(out, event, event_idx);
 		return true;
 	});
 
@@ -9129,7 +9146,7 @@ console_cmd__room__state__space(opt &out, const string_view &line)
 		room_id
 	};
 
-	space.for_each(type, state_key, depth, [&out, &state]
+	space.for_each(type, state_key, depth, [&out]
 	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
 	{
 		const m::event::fetch event
@@ -9140,7 +9157,7 @@ console_cmd__room__state__space(opt &out, const string_view &line)
 		if(!event.valid)
 			return true;
 
-		m::pretty_stateline(out, event, {}, event_idx);
+		m::pretty_stateline(out, event, event_idx);
 		return true;
 	});
 

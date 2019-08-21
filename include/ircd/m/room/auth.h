@@ -26,8 +26,12 @@ struct ircd::m::room::auth
 
 	static bool is_power_event(const event &);
 
-	static passfail check(std::nothrow_t, const event &, hookdata &);
-	static passfail check(std::nothrow_t, const event &);
+	static passfail check(const event &, hookdata &);
+	static passfail check(const event &, const vector_view<event::idx> &);
+	static passfail check(const event &, const room &);
+	static passfail check_static(const event &);
+	static passfail check_present(const event &);
+	static passfail check_relative(const event &);
 	static void check(const event &);
 
 	static bool generate(json::stack::array &, const m::room &, const m::event &);

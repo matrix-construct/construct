@@ -23,12 +23,11 @@ std::ostream &
 IRCD_MODULE_EXPORT
 ircd::m::pretty_stateline(std::ostream &out,
                           const event &event,
-                          const event::id &rel,
                           const event::idx &event_idx)
 {
 	const room room
 	{
-		json::get<"room_id"_>(event), rel?: event::id{}
+		json::get<"room_id"_>(event)
 	};
 
 	const room::state &state
@@ -55,23 +54,40 @@ ircd::m::pretty_stateline(std::ostream &out,
 		m::room::auth::is_power_event(event)
 	};
 
-	const auto auth
+	const room::auth::passfail auth[]
 	{
 		event_idx?
-			room::auth::check(std::nothrow, event):
-			room::auth::passfail{true, {}}
+			room::auth::check_static(event):
+			room::auth::passfail{false, {}},
+
+		event_idx && m::exists(event.event_id)?
+			room::auth::check_relative(event):
+			room::auth::passfail{false, {}},
+
+		event_idx?
+			room::auth::check_present(event):
+			room::auth::passfail{false, {}},
 	};
 
-	char buf[16];
+	char buf[32];
 	const string_view flags
 	{
 		fmt::sprintf
 		{
-			buf, "%c%c%c%c",
-			active? 'A' : ' ',
-			!std::get<bool>(auth)? 'F' : ' ',
-			power? 'P' : ' ',
-			redacted? 'R' : ' ',
+			buf, "%c%c%c|%c%c%c",
+
+			active? 'A' : '-',
+			redacted? 'R' : '-',
+			power? 'P' : '-',
+
+			std::get<bool>(auth[0]) && !std::get<std::exception_ptr>(auth[0])? ' ':
+			!std::get<bool>(auth[0]) && std::get<std::exception_ptr>(auth[0])? 'X': '?',
+
+			std::get<bool>(auth[1]) && !std::get<std::exception_ptr>(auth[1])? ' ':
+			!std::get<bool>(auth[1]) && std::get<std::exception_ptr>(auth[1])? 'X': '?',
+
+			std::get<bool>(auth[2]) && !std::get<std::exception_ptr>(auth[2])? ' ':
+			!std::get<bool>(auth[2]) && std::get<std::exception_ptr>(auth[2])? 'X': '?',
 		}
 	};
 
@@ -125,8 +141,8 @@ ircd::m::pretty_stateline(std::ostream &out,
 		;
 	}
 
-	if(std::get<1>(auth))
-		out << ":" << trunc(what(std::get<1>(auth)), 72);
+	if(std::get<1>(auth[0]))
+		out << ":" << trunc(what(std::get<1>(auth[0])), 72);
 
 	out << std::endl;
 	return out;

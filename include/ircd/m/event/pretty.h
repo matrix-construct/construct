@@ -30,5 +30,5 @@ namespace ircd::m
 
 	// Informational pretty for state
 	// io=true will run db queries to enhance w/ more information.
-	std::ostream &pretty_stateline(std::ostream &, const event &, const event::id &rel = {}, const event::idx & = 0);
+	std::ostream &pretty_stateline(std::ostream &, const event &, const event::idx & = 0);
 }
