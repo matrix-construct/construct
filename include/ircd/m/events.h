@@ -40,6 +40,10 @@ namespace ircd::m::events::type
 
 	// Iterate the events for a specific type.
 	bool for_each_in(const string_view &, const closure &);
+
+	// Test if type name is known to the server.
+	bool has_prefix(const string_view &);
+	bool has(const string_view &);
 }
 
 /// Interface to the senders of all events known to the server.

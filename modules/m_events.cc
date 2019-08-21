@@ -261,6 +261,36 @@ ircd::m::events::for_each(const range &range,
 
 bool
 IRCD_MODULE_EXPORT
+ircd::m::events::type::has(const string_view &type)
+{
+	bool ret{false};
+	for_each(type, [&ret, &type]
+	(const string_view &type_)
+	{
+		ret = type == type_;
+		return false; // uncond break out of loop after first result
+	});
+
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::events::type::has_prefix(const string_view &type)
+{
+	bool ret{false};
+	for_each(type, [&ret, &type]
+	(const string_view &type_)
+	{
+		ret = startswith(type_, type);
+		return false; // uncond break out of loop after first result
+	});
+
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
 ircd::m::events::type::for_each_in(const string_view &type,
                                    const closure &closure)
 {
