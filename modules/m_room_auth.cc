@@ -161,6 +161,7 @@ ircd::m::room::auth::passfail
 IRCD_MODULE_EXPORT
 ircd::m::room::auth::check(std::nothrow_t,
                            const event &event)
+try
 {
 	using json::at;
 
@@ -243,6 +244,13 @@ ircd::m::room::auth::check(std::nothrow_t,
 	};
 
 	return ret;
+}
+catch(const std::exception &)
+{
+	return
+	{
+		false, std::current_exception()
+	};
 }
 
 ircd::m::room::auth::passfail
