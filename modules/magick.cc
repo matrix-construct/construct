@@ -114,12 +114,14 @@ decltype(ircd::magick::call_ready)
 ircd::magick::call_ready;
 
 decltype(ircd::magick::version_api)
+IRCD_MODULE_EXPORT_DATA
 ircd::magick::version_api
 {
 	"magick", info::versions::API, MagickLibVersion, {0}, MagickLibVersionText
 };
 
 decltype(ircd::magick::version_abi)
+IRCD_MODULE_EXPORT_DATA
 ircd::magick::version_abi
 {
 	"magick", info::versions::ABI, 0, {0}, []
@@ -203,6 +205,7 @@ ircd::magick::fini()
 // thumbcrop
 //
 
+IRCD_MODULE_EXPORT
 ircd::magick::thumbcrop::thumbcrop(const const_buffer &in,
                                    const dimensions &req,
                                    const result_closure &out)
@@ -260,6 +263,7 @@ ircd::magick::thumbcrop::thumbcrop(const const_buffer &in,
 // thumbnail
 //
 
+IRCD_MODULE_EXPORT
 ircd::magick::thumbnail::thumbnail(const const_buffer &in,
                                    const dimensions &dim,
                                    const result_closure &out)
@@ -277,6 +281,7 @@ ircd::magick::thumbnail::thumbnail(const const_buffer &in,
 // scale
 //
 
+IRCD_MODULE_EXPORT
 ircd::magick::scale::scale(const const_buffer &in,
                            const dimensions &dim,
                            const result_closure &out)
@@ -294,6 +299,7 @@ ircd::magick::scale::scale(const const_buffer &in,
 // shave
 //
 
+IRCD_MODULE_EXPORT
 ircd::magick::shave::shave(const const_buffer &in,
                            const dimensions &dim,
                            const offset &off,
@@ -320,6 +326,7 @@ ircd::magick::shave::shave(const const_buffer &in,
 // crop
 //
 
+IRCD_MODULE_EXPORT
 ircd::magick::crop::crop(const const_buffer &in,
                          const dimensions &dim,
                          const offset &off,
@@ -346,6 +353,7 @@ ircd::magick::crop::crop(const const_buffer &in,
 // transform (internal)
 //
 
+IRCD_MODULE_EXPORT
 ircd::magick::transform::transform(const const_buffer &input,
                                    const output &output,
                                    const transformer &transformer)
@@ -392,6 +400,7 @@ ircd::magick::transform::transform(const const_buffer &input,
 // display (internal)
 //
 
+IRCD_MODULE_EXPORT
 ircd::magick::display::display(const const_buffer &input)
 {
 	const custom_ptr<ImageInfo> input_info
@@ -412,6 +421,7 @@ ircd::magick::display::display(const const_buffer &input)
 	};
 }
 
+IRCD_MODULE_EXPORT
 ircd::magick::display::display(const ImageInfo &info,
                                Image &image)
 {
