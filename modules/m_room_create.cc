@@ -99,7 +99,7 @@ ircd::m::auth_room_create(const event &event,
 	assert(json::get<"type"_>(event) == "m.room.create");
 
 	// a. If it has any previous events, reject.
-	if(count(data.prev) || !empty(data.auth_events))
+	if(count(data.prev))
 		throw FAIL
 		{
 			"m.room.create has previous events."
