@@ -194,18 +194,20 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
                                const long double &ns,
                                const uint &fmt)
 {
-	static const std::array<std::array<string_view, 2>, 9> unit
+	using formats = std::array<string_view, 2>;
+	using element = std::tuple<formats, double>;
+	static const std::array<element, 9> unit
 	{{
-		// fmt=0             fmt=1
-		{ "nanoseconds",     "ns"   },
-		{ "microseconds",    "us"   },
-		{ "milliseconds",    "ms"   },
-		{ "seconds",         "s"    },
-		{ "minutes",         "m"    },
-		{ "hours",           "h"    },
-		{ "days",            "d"    },
-		{ "weeks",           "w"    },
-		{ "months",          "M"    },
+		//  fmt=0              fmt=1
+		{ { "nanoseconds",     "ns" },     1000.0  },
+		{ { "microseconds",    "us" },     1000.0  },
+		{ { "milliseconds",    "ms" },     1000.0  },
+		{ { "seconds",         "s"  },       60.0  },
+		{ { "minutes",         "m"  },       60.0  },
+		{ { "hours",           "h"  },       24.0  },
+		{ { "days",            "d"  },        7.0  },
+		{ { "weeks",           "w"  },       30.0  },
+		{ { "months",          "M"  },       12.0  },
 	}};
 
 	const string_view &fmtstr
@@ -215,77 +217,14 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
 			"%.2lf %s"_sv
 	};
 
-	auto pos(0);
+	size_t i(0), pos(0);
 	long double val(ns);
+	for(; val > std::get<1>(unit.at(pos)); ++pos)
+		val /= std::get<1>(unit.at(pos));
 
-	// nanoseconds -> microseconds
-	if(val > 1000.0)
-	{
-		val /= 1000;
-		++pos;
-	}
-	else goto done;
-
-	// microseconds -> milliseconds
-	if(val > 1000.0)
-	{
-		val /= 1000;
-		++pos;
-	}
-	else goto done;
-
-	// milliseconds -> seconds
-	if(val > 1000.0)
-	{
-		val /= 1000;
-		++pos;
-	}
-	else goto done;
-
-	// seconds -> minutes
-	if(val > 60.0)
-	{
-		val /= 60;
-		++pos;
-	}
-	else goto done;
-
-	// minutes -> hours
-	if(val > 60.0)
-	{
-		val /= 60;
-		++pos;
-	}
-	else goto done;
-
-	// hours -> days
-	if(val > 24.0)
-	{
-		val /= 24;
-		++pos;
-	}
-	else goto done;
-
-	// days -> weeks
-	if(val > 7.0)
-	{
-		val /= 7;
-		++pos;
-	}
-	else goto done;
-
-	// weeks -> months
-	if(val > 30.0)
-	{
-		val /= 30;
-		++pos;
-	}
-	else goto done;
-
-	done:
 	return fmt::sprintf
 	{
-		out, fmtstr, val, unit.at(pos).at(fmt)
+		out, fmtstr, val, std::get<0>(unit.at(pos)).at(fmt)
 	};
 }
 
