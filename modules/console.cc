@@ -198,6 +198,10 @@ _console_command(opt &out,
 
 #pragma GCC visibility push(default)
 
+bool
+console_cmd__help(opt &,
+                  const string_view &line);
+
 /// This function may be linked and called by those wishing to execute a
 /// command. Output from the command will be appended to the provided ostream.
 /// The input to the command is passed in `line`. Since `struct opt` is not
@@ -215,7 +219,16 @@ try
 		has(opts, "html")
 	};
 
-	return _console_command(opt, line);
+	int ret
+	{
+		_console_command(opt, line)
+	};
+
+	if(ret <= 0)
+		if(console_cmd__help(opt, line))
+			return -2;
+
+	return ret;
 }
 catch(const params::error &e)
 {
@@ -273,7 +286,7 @@ console_command_derived(opt &out, const string_view &line)
 		}
 
 		default:
-			break;
+			return -2;
 	}
 
 	return -1;
@@ -352,7 +365,7 @@ console_cmd__help(opt &out, const string_view &line)
 		//TODO: help string symbol map
 	}
 
-	out << "Commands available: \n"
+	out << "\nSubcommands available:\n"
 	    << std::endl;
 
 	const size_t elems

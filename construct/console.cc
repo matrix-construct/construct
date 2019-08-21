@@ -336,7 +336,7 @@ construct::console::handle_line_bymodule()
 		// we use this code to translate it.
 		case -2: throw bad_command
 		{
-			"%s", out.str()
+			out.str()
 		};
 
 		// Command isn't handled by the module; continue handling here
