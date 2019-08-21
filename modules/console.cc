@@ -9103,18 +9103,98 @@ console_cmd__room__state__space(opt &out, const string_view &line)
 		param.at("depth", -1L)
 	};
 
+	const m::room::state state
+	{
+		room_id
+	};
+
 	const m::room::state::space space
 	{
 		room_id
 	};
 
-	space.for_each(type, state_key, depth, [&out]
+	space.for_each(type, state_key, depth, [&out, &state]
 	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
 	{
-		out << std::setw(11) << std::left << event_idx;
-		out << " " << std::setw(9) << std::left << depth;
-		out << " " << std::setw(32) << std::left << type;
-		out << " " << std::setw(64) << std::left << state_key;
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
+
+		const bool active
+		{
+			state.has(event.event_idx)
+		};
+
+		const bool redacted
+		{
+			m::redacted(event.event_idx)
+		};
+
+		const bool power
+		{
+			m::room::auth::is_power_event(event)
+		};
+
+		const auto auth
+		{
+			m::room::auth::check(std::nothrow, event)
+		};
+
+		char buf[16];
+		const string_view flags
+		{
+			fmt::sprintf
+			{
+				buf, "%c%c%c%c",
+				active? 'A' : ' ',
+				!std::get<bool>(auth)? 'F' : ' ',
+				power? 'P' : ' ',
+				redacted? 'R' : ' ',
+			}
+		};
+
+		thread_local char smbuf[48];
+		if(event.event_id.version() == "1")
+		{
+			out
+			<< smalldate(smbuf, json::get<"origin_server_ts"_>(event) / 1000L)
+			<< std::right << " "
+			<< std::setw(9) << json::get<"depth"_>(event)
+			<< std::right << " [ "
+			<< std::setw(30) << type
+			<< std::left << " | "
+			<< std::setw(50) << state_key
+			<< std::left << " ] " << flags << " "
+			<< std::setw(10) << event.event_idx
+			<< std::left << "  "
+			<< std::setw(72) << string_view{event.event_id}
+			<< std::left << " "
+			;
+		} else {
+			out
+			<< std::left
+			<< smalldate(smbuf, json::get<"origin_server_ts"_>(event) / 1000L)
+			<< ' '
+			<< string_view{event.event_id}
+			<< std::right << " "
+			<< std::setw(9) << json::get<"depth"_>(event)
+			<< std::right << " [ "
+			<< std::setw(40) << type
+			<< std::left << " | "
+			<< std::setw(56) << state_key
+			<< std::left << " ] " << flags << " "
+			<< std::setw(10) << event.event_idx
+			<< ' '
+			;
+		}
+
+		if(std::get<1>(auth))
+			out << ":" << trunc(what(std::get<1>(auth)), 72);
+
 		out << std::endl;
 		return true;
 	});
