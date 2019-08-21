@@ -83,6 +83,24 @@ ircd::microdate(const mutable_buffer &buf)
 }
 
 ircd::string_view
+ircd::ago(const mutable_buffer &buf,
+          const system_point &tp,
+          const uint &fmt)
+{
+	const auto diff
+	{
+		now<system_point>() - tp
+	};
+
+	thread_local char tmp[64];
+	return fmt::sprintf
+	{
+		buf, "%s ago",
+		pretty(tmp, diff, fmt),
+	};
+}
+
+ircd::string_view
 ircd::timef(const mutable_buffer &out,
             const char *const &fmt)
 {

@@ -44,6 +44,7 @@ namespace ircd
 	template<size_t max = 128, class... args> std::string timestr(args&&...);
 
 	// Other tools
+	string_view ago(const mutable_buffer &buf, const system_point &, const uint &fmt = 0);
 	string_view smalldate(const mutable_buffer &buf, const time_t &ltime);
 	string_view microdate(const mutable_buffer &buf);
 	string_view microtime(const mutable_buffer &);
