@@ -14,40 +14,59 @@
 namespace ircd::m::events
 {
 	struct range;
-	using closure_bool = std::function<bool (const event::idx &, const event &)>;
-	using closure_type_bool = std::function<bool (const string_view &, const event::idx &)>;
-	using closure_sender_bool = std::function<bool (const id::user &, const event::idx &)>;
-	using closure_type_name_bool = std::function<bool (const string_view &)>;
-	using closure_sender_name_bool = std::function<bool (const id::user &)>;
-	using closure_origin_name_bool = std::function<bool (const string_view &)>;
-
-	// Iterate types starting with some prefix, or all types.
-	bool for_each_type(const closure_type_name_bool &);
-	bool for_each_type(const string_view &prefix, const closure_type_name_bool &);
-
-	// Iterate servers starting at the hostname equal to or greater than provided
-	bool for_each_origin(const closure_origin_name_bool &);
-	bool for_each_origin(const string_view &hostlb, const closure_origin_name_bool &);
-
-	// Iterate senders of events (users).
-	bool for_each_sender(const closure_sender_name_bool &);
-	bool for_each_sender(const string_view &key, const closure_sender_name_bool &);
-
-	// Iterate event indexes matching the argument
-	bool for_each_in_type(const string_view &, const closure_type_bool &);
-	bool for_each_in_sender(const id::user &, const closure_sender_bool &);
-	bool for_each_in_origin(const string_view &, const closure_sender_bool &);
+	using closure = std::function<bool (const event::idx &, const event &)>;
 
 	// Iterate viable event indexes in a range
 	bool for_each(const range &, const event::closure_idx_bool &);
 	bool for_each(const range &, const event_filter &, const event::closure_idx_bool &);
 
 	// Iterate events in an index range
-	bool for_each(const range &, const closure_bool &);
-	bool for_each(const range &, const event_filter &, const closure_bool &);
+	bool for_each(const range &, const closure &);
+	bool for_each(const range &, const event_filter &, const closure &);
 
 	// util
 	void dump__file(const string_view &filename);
+}
+
+/// Interface to the types of all events known to this server.
+namespace ircd::m::events::type
+{
+	using closure = std::function<bool (const string_view &, const event::idx &)>;
+	using closure_name = std::function<bool (const string_view &)>;
+
+	// Iterate the names of all event types.
+	bool for_each(const closure_name &);
+	bool for_each(const string_view &prefix, const closure_name &);
+
+	// Iterate the events for a specific type.
+	bool for_each_in(const string_view &, const closure &);
+}
+
+/// Interface to the senders of all events known to the server.
+namespace ircd::m::events::sender
+{
+	using closure = std::function<bool (const id::user &, const event::idx &)>;
+	using closure_name = std::function<bool (const id::user &)>;
+
+	// Iterate all of the sender mxids known to the server.
+	bool for_each(const closure_name &);
+	bool for_each(const string_view &key, const closure_name &);
+
+	// Iterate all of the events for a specific sender mxid.
+	bool for_each_in(const id::user &, const closure &);
+}
+
+/// Interface to the servers of the senders of all events known to this server.
+namespace ircd::m::events::origin
+{
+	using closure_name = std::function<bool (const string_view &)>;
+
+	// Iterate all server names known to this server.
+	bool for_each(const closure_name &);
+	bool for_each(const string_view &hostlb, const closure_name &);
+
+	// Iterate all senders mxids on a specific server.
+	bool for_each_in(const string_view &, const sender::closure &);
 }
 
 /// Range to start (inclusive) and stop (exclusive). If start is greater than
@@ -67,3 +86,21 @@ struct ircd::m::events::range
 	,fopts{fopts}
 	{}
 };
+
+inline bool
+ircd::m::events::origin::for_each(const closure_name &closure)
+{
+	return for_each(string_view{}, closure);
+}
+
+inline bool
+ircd::m::events::sender::for_each(const closure_name &closure)
+{
+	return for_each(string_view{}, closure);
+}
+
+inline bool
+ircd::m::events::type::for_each(const closure_name &closure)
+{
+	return for_each(string_view{}, closure);
+}

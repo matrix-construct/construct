@@ -66,7 +66,7 @@ ircd::m::users::for_each(const opts &opts,
 		return for_each_host(opts, closure);
 
 	bool ret{true};
-	events::for_each_sender(opts.localpart, [&opts, &ret, &closure]
+	events::sender::for_each(opts.localpart, [&opts, &ret, &closure]
 	(const id::user &sender)
 	{
 		if(opts.localpart && !opts.localpart_prefix)
@@ -98,7 +98,7 @@ ircd::m::users::for_each_host(const opts &opts,
                               const user::closure_bool &closure)
 {
 	bool ret{true};
-	events::for_each_origin(opts.hostpart, [&ret, &opts, &closure]
+	events::origin::for_each(opts.hostpart, [&ret, &opts, &closure]
 	(const string_view &origin)
 	{
 		if(opts.hostpart && !opts.hostpart_prefix)
@@ -125,7 +125,7 @@ ircd::m::users::for_each_in_host(const opts &opts,
 {
 	bool ret{true};
 	m::user::id::buf last;
-	events::for_each_in_origin(opts.hostpart, [&opts, &ret, &closure, &last]
+	events::origin::for_each_in(opts.hostpart, [&opts, &ret, &closure, &last]
 	(const id::user &sender, const auto &event_idx)
 	{
 		if(sender == last)

@@ -115,7 +115,7 @@ ircd::m::rooms::for_each(const opts &opts,
 		});
 	}
 
-	return events::for_each_in_type("m.room.create", [&proffer, &ret]
+	return events::type::for_each_in("m.room.create", [&proffer, &ret]
 	(const string_view &type, const event::idx &event_idx)
 	{
 		assert(type == "m.room.create");

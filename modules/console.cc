@@ -6335,7 +6335,7 @@ console_cmd__events__in__sender(opt &out, const string_view &line)
 		param.at("user_id")
 	};
 
-	m::events::for_each_in_sender(user_id, [&out]
+	m::events::sender::for_each_in(user_id, [&out]
 	(const m::user::id &user_id, const m::event::idx &event_idx)
 	{
 		const m::event::fetch event
@@ -6369,7 +6369,7 @@ console_cmd__events__in__origin(opt &out, const string_view &line)
 		lstrip(param.at("origin"), ':')
 	};
 
-	m::events::for_each_in_origin(origin, [&out]
+	m::events::origin::for_each_in(origin, [&out]
 	(const m::user::id &user_id, const m::event::idx &event_idx)
 	{
 		const m::event::fetch event
@@ -6403,7 +6403,7 @@ console_cmd__events__in__type(opt &out, const string_view &line)
 		param.at("type")
 	};
 
-	m::events::for_each_in_type(type, [&out]
+	m::events::type::for_each_in(type, [&out]
 	(const string_view &type, const m::event::idx &event_idx)
 	{
 		const m::event::fetch event
@@ -6459,7 +6459,7 @@ console_cmd__events__type(opt &out, const string_view &line)
 		param["prefix"]
 	};
 
-	m::events::for_each_type(prefix, [&out]
+	m::events::type::for_each(prefix, [&out]
 	(const string_view &type)
 	{
 		out << type << std::endl;
@@ -6482,7 +6482,7 @@ console_cmd__events__sender(opt &out, const string_view &line)
 		param["prefix"]
 	};
 
-	m::events::for_each_sender(prefix, [&out]
+	m::events::sender::for_each(prefix, [&out]
 	(const m::user::id &user_id)
 	{
 		out << user_id << std::endl;
@@ -6505,7 +6505,7 @@ console_cmd__events__origin(opt &out, const string_view &line)
 		param["prefix"]
 	};
 
-	m::events::for_each_origin(prefix, [&out]
+	m::events::origin::for_each(prefix, [&out]
 	(const string_view &origin)
 	{
 		out << origin << std::endl;

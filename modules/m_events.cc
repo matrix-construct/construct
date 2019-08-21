@@ -106,7 +106,7 @@ bool
 IRCD_MODULE_EXPORT
 ircd::m::events::for_each(const range &range,
                           const event_filter &filter,
-                          const closure_bool &closure)
+                          const closure &closure)
 {
 	auto limit
 	{
@@ -130,7 +130,7 @@ ircd::m::events::for_each(const range &range,
 bool
 IRCD_MODULE_EXPORT
 ircd::m::events::for_each(const range &range,
-                          const closure_bool &closure)
+                          const closure &closure)
 {
 	event::fetch event
 	{
@@ -255,85 +255,14 @@ ircd::m::events::for_each(const range &range,
 	return true;
 }
 
-bool
-IRCD_MODULE_EXPORT
-ircd::m::events::for_each_in_origin(const string_view &origin,
-                                    const closure_sender_bool &closure)
-{
-	auto &column
-	{
-		dbs::event_sender
-	};
-
-	char buf[dbs::EVENT_SENDER_KEY_MAX_SIZE];
-	const string_view &key
-	{
-		dbs::event_sender_origin_key(buf, origin)
-	};
-
-	auto it
-	{
-		column.begin(key)
-	};
-
-	for(; bool(it); ++it)
-	{
-		const auto &keyp
-		{
-			dbs::event_sender_origin_key(it->first)
-		};
-
-		const user::id::buf user_id
-		{
-			std::get<0>(keyp), origin
-		};
-
-		if(!closure(user_id, std::get<1>(keyp)))
-			return false;
-	}
-
-	return true;
-}
+//
+// events::type
+//
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::events::for_each_in_sender(const id::user &user,
-                                    const closure_sender_bool &closure)
-{
-	auto &column
-	{
-		dbs::event_sender
-	};
-
-	char buf[dbs::EVENT_SENDER_KEY_MAX_SIZE];
-	const string_view &key
-	{
-		dbs::event_sender_key(buf, user)
-	};
-
-	auto it
-	{
-		column.begin(key)
-	};
-
-	for(; bool(it); ++it)
-	{
-		const auto &keyp
-		{
-			dbs::event_sender_key(it->first)
-		};
-
-		if(!closure(user, std::get<event::idx>(keyp)))
-			return false;
-	}
-
-	return true;
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::events::for_each_in_type(const string_view &type,
-                                  const closure_type_bool &closure)
+ircd::m::events::type::for_each_in(const string_view &type,
+                                   const closure &closure)
 {
 	auto &column
 	{
@@ -367,15 +296,8 @@ ircd::m::events::for_each_in_type(const string_view &type,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::events::for_each_type(const closure_type_name_bool &closure)
-{
-	return for_each_type(string_view{}, closure);
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::events::for_each_type(const string_view &prefix,
-                               const closure_type_name_bool &closure)
+ircd::m::events::type::for_each(const string_view &prefix,
+                                const closure_name &closure)
 {
 	db::column &column
 	{
@@ -414,17 +336,140 @@ ircd::m::events::for_each_type(const string_view &prefix,
 	return true;
 }
 
+//
+// events::origin
+//
+
 bool
 IRCD_MODULE_EXPORT
-ircd::m::events::for_each_sender(const closure_sender_name_bool &closure)
+ircd::m::events::origin::for_each_in(const string_view &origin,
+                                     const sender::closure &closure)
 {
-	return for_each_sender(string_view{}, closure);
+	auto &column
+	{
+		dbs::event_sender
+	};
+
+	char buf[dbs::EVENT_SENDER_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		dbs::event_sender_origin_key(buf, origin)
+	};
+
+	auto it
+	{
+		column.begin(key)
+	};
+
+	for(; bool(it); ++it)
+	{
+		const auto &keyp
+		{
+			dbs::event_sender_origin_key(it->first)
+		};
+
+		const user::id::buf user_id
+		{
+			std::get<0>(keyp), origin
+		};
+
+		if(!closure(user_id, std::get<1>(keyp)))
+			return false;
+	}
+
+	return true;
 }
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::events::for_each_sender(const string_view &prefix_,
-                                 const closure_sender_name_bool &closure)
+ircd::m::events::origin::for_each(const string_view &prefix,
+                                  const closure_name &closure)
+{
+	db::column &column
+	{
+		dbs::event_sender
+	};
+
+	const auto &prefixer
+	{
+		dbs::desc::events__event_sender__pfx
+	};
+
+	if(unlikely(startswith(prefix, '@')))
+		throw panic
+		{
+			"Prefix argument should be a hostname. It must not start with '@'"
+		};
+
+	string_view last;
+	char buf[rfc3986::DOMAIN_BUFSIZE];
+	for(auto it(column.lower_bound(prefix)); bool(it); ++it)
+	{
+		if(!m::dbs::is_event_sender_origin_key(it->first))
+			break;
+
+		const string_view &host
+		{
+			prefixer.get(it->first)
+		};
+
+		if(host == last)
+			continue;
+
+		if(!startswith(host, prefix))
+			break;
+
+		last = { buf, copy(buf, host) };
+		if(!closure(host))
+			return false;
+	}
+
+	return true;
+}
+
+//
+// events::sender
+//
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::events::sender::for_each_in(const id::user &user,
+                                     const closure &closure)
+{
+	auto &column
+	{
+		dbs::event_sender
+	};
+
+	char buf[dbs::EVENT_SENDER_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		dbs::event_sender_key(buf, user)
+	};
+
+	auto it
+	{
+		column.begin(key)
+	};
+
+	for(; bool(it); ++it)
+	{
+		const auto &keyp
+		{
+			dbs::event_sender_key(it->first)
+		};
+
+		if(!closure(user, std::get<event::idx>(keyp)))
+			return false;
+	}
+
+	return true;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::events::sender::for_each(const string_view &prefix_,
+                                  const closure_name &closure)
 {
 	db::column &column
 	{
@@ -471,60 +516,6 @@ ircd::m::events::for_each_sender(const string_view &prefix_,
 			return false;
 
 		last = user_id;
-	}
-
-	return true;
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::events::for_each_origin(const closure_origin_name_bool &closure)
-{
-	return for_each_origin(string_view{}, closure);
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::events::for_each_origin(const string_view &prefix,
-                                 const closure_origin_name_bool &closure)
-{
-	db::column &column
-	{
-		dbs::event_sender
-	};
-
-	const auto &prefixer
-	{
-		dbs::desc::events__event_sender__pfx
-	};
-
-	if(unlikely(startswith(prefix, '@')))
-		throw panic
-		{
-			"Prefix argument should be a hostname. It must not start with '@'"
-		};
-
-	string_view last;
-	char buf[rfc3986::DOMAIN_BUFSIZE];
-	for(auto it(column.lower_bound(prefix)); bool(it); ++it)
-	{
-		if(!m::dbs::is_event_sender_origin_key(it->first))
-			break;
-
-		const string_view &host
-		{
-			prefixer.get(it->first)
-		};
-
-		if(host == last)
-			continue;
-
-		if(!startswith(host, prefix))
-			break;
-
-		last = { buf, copy(buf, host) };
-		if(!closure(host))
-			return false;
 	}
 
 	return true;
