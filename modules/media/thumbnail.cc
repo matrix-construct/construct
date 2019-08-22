@@ -11,6 +11,7 @@
 #include "media.h"
 
 using namespace ircd::m::media::thumbnail; //TODO: XXX
+using namespace ircd;
 
 decltype(ircd::m::media::thumbnail::enable)
 ircd::m::media::thumbnail::enable
@@ -91,8 +92,7 @@ thumbnail_resource
 static resource::response
 get__thumbnail_local(client &client,
                      const resource::request &request,
-                     const string_view &server,
-                     const string_view &file,
+                     const m::media::mxc &,
                      const m::room &room);
 
 resource::response
@@ -111,14 +111,9 @@ get__thumbnail(client &client,
 			"Media ID parameter required"
 		};
 
-	auto &server
+	const m::media::mxc mxc
 	{
-		request.parv[0]
-	};
-
-	const auto &file
-	{
-		request.parv[1]
+		request.parv[0], request.parv[1]
 	};
 
 	// Thumbnail doesn't require auth so if there is no user_id detected
@@ -134,7 +129,7 @@ get__thumbnail(client &client,
 	{
 		const m::room::id::buf room_id
 		{
-			file_room_id(server, file)
+			m::media::file::room_id(mxc)
 		};
 
 		if(!exists(room_id))
@@ -146,10 +141,10 @@ get__thumbnail(client &client,
 
 	const m::room::id::buf room_id
 	{
-		download(server, file, user_id)
+		m::media::file::download(mxc, user_id)
 	};
 
-	return get__thumbnail_local(client, request, server, file, room_id);
+	return get__thumbnail_local(client, request, mxc, room_id);
 }
 
 static resource::method
@@ -167,8 +162,7 @@ method_get
 static resource::response
 get__thumbnail_local(client &client,
                      const resource::request &request,
-                     const string_view &hostname,
-                     const string_view &mediaid,
+                     const m::media::mxc &mxc,
                      const m::room &room)
 {
 	const auto &method
@@ -247,15 +241,15 @@ get__thumbnail_local(client &client,
 
 	const size_t read_size
 	{
-		read_each_block(room, sink)
+		m::media::file::read(room, sink)
 	};
 
 	if(unlikely(read_size != file_size || file_size != copied))
 		throw ircd::error
 		{
 			"File %s/%s [%s] size mismatch: expected %zu got %zu copied %zu",
-			hostname,
-			mediaid,
+			mxc.server,
+			mxc.mediaid,
 			string_view{room.room_id},
 			file_size,
 			read_size,
@@ -264,7 +258,7 @@ get__thumbnail_local(client &client,
 
 	const bool available
 	{
-		magick_support
+		m::media::magick_support
 	};
 
 	const auto mime_type
@@ -309,8 +303,8 @@ get__thumbnail_local(client &client,
 		log::dwarning
 		{
 			"Not thumbnailing %s/%s [%s] '%s' bytes:%zu :%s",
-			hostname,
-			mediaid,
+			mxc.server,
+			mxc.mediaid,
 			string_view{room.room_id},
 			content_type,
 			file_size,

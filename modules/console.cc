@@ -13367,24 +13367,12 @@ console_cmd__file__room(opt &out, const string_view &line)
 		param[1]
 	};
 
-	if(empty(file))
+	const m::media::mxc mxc
 	{
-		const auto s(split(server, '/'));
-		server = s.first;
-		file = s.second;
-	}
-
-	using prototype = m::room::id (m::room::id::buf &,
-	                               const string_view &server,
-	                               const string_view &file);
-
-	static mods::import<prototype> file_room_id
-	{
-		"media_media", "file_room_id"
+		server, file
 	};
 
-	m::room::id::buf buf;
-	out << file_room_id(buf, server, file) << std::endl;
+	out << m::media::file::room_id(mxc) << std::endl;
 	return true;
 }
 
@@ -13416,19 +13404,14 @@ console_cmd__file__download(opt &out, const string_view &line)
 		param.at("[remote]", server)
 	};
 
-	using prototype = m::room::id::buf (const string_view &server,
-	                                    const string_view &file,
-	                                    const m::user::id &,
-	                                    const net::hostport &remote);
-
-	static mods::import<prototype> download
+	const m::media::mxc mxc
 	{
-		"media_media", "download"
+		server, file
 	};
 
-	const m::room::id::buf room_id
+	const auto room_id
 	{
-		download(server, file, m::me.user_id, remote)
+		m::media::file::download(mxc, m::me.user_id, remote)
 	};
 
 	out << room_id << std::endl;

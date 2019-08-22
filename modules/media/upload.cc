@@ -10,6 +10,8 @@
 
 #include "media.h"
 
+using namespace ircd;
+
 resource
 upload_resource__legacy
 {
@@ -53,9 +55,14 @@ post__upload(client &client,
 		rand::string(rand::dict::alpha, randbuf)
 	};
 
+	const m::media::mxc mxc
+	{
+		server, randstr
+	};
+
 	const m::room::id::buf room_id
 	{
-		file_room_id(server, randstr)
+		m::media::file::room_id(mxc)
 	};
 
 	m::vm::copts vmopts;
@@ -78,26 +85,23 @@ post__upload(client &client,
 
 	const size_t written
 	{
-		write_file(room, request.user_id, buf, content_type)
+		m::media::file::write(room, request.user_id, buf, content_type)
 	};
 
 	char uribuf[256];
 	const string_view content_uri
 	{
-		fmt::sprintf
-		{
-			uribuf, "mxc://%s/%s", server, randstr
-		}
+		mxc.uri(uribuf)
 	};
 
 	log::debug
 	{
-		"%s uploaded %zu bytes uri: `%s' file_room: %s :%s",
+		m::media::log, "%s uploaded %zu bytes uri: `%s' file_room: %s :%s",
 		request.user_id,
 		request.head.content_length,
 		content_uri,
 		string_view{room.room_id},
-		filename
+		filename,
 	};
 
 	return resource::response

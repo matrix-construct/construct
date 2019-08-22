@@ -10,6 +10,8 @@
 
 #include "media.h"
 
+using namespace ircd;
+
 resource
 download_resource
 {
@@ -73,7 +75,7 @@ get__download(client &client,
 
 	const m::room::id::buf room_id
 	{
-		download(server, file, user_id)
+		m::media::file::download({server, file}, user_id)
 	};
 
 	return get__download_local(client, request, server, file, room_id);
@@ -133,7 +135,7 @@ get__download_local(client &client,
 
 	size_t sent{0}, read
 	{
-		read_each_block(room, [&client, &sent]
+		m::media::file::read(room, [&client, &sent]
 		(const string_view &block)
 		{
 			sent += write_all(*client.sock, block);
@@ -142,7 +144,7 @@ get__download_local(client &client,
 
 	if(unlikely(read != file_size)) log::error
 	{
-		media_log, "File %s/%s [%s] size mismatch: expected %zu got %zu",
+		m::media::log, "File %s/%s [%s] size mismatch: expected %zu got %zu",
 		server,
 		file,
 		string_view{room.room_id},

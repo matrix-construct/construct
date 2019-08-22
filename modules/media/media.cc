@@ -10,14 +10,6 @@
 
 #include "media.h"
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"11.7 :Content respository",
-	ircd::m::media::init,
-	ircd::m::media::fini
-};
-
 struct ircd::m::media::magick
 {
 	module modules
@@ -26,72 +18,40 @@ struct ircd::m::media::magick
 	};
 };
 
-void
-ircd::m::media::init()
+ircd::mapi::header
+IRCD_MODULE
 {
-	static const std::string dbopts;
-	::media = std::make_shared<database>("media", dbopts, media_description);
-	::blocks = db::column{*::media, "blocks"};
+	"11.7 :Content respository",
+	ircd::m::media::init,
+	ircd::m::media::fini
+};
 
-	// The conf setter callbacks must be manually executed after
-	// the database was just loaded to set the cache size.
-	conf::reset("ircd.media.blocks.cache.size");
-	conf::reset("ircd.media.blocks.cache_comp.size");
+decltype(ircd::m::media::magick_support)
+ircd::m::media::magick_support;
 
-	// conditions to load the magick.so module
-	const bool enable_magick
-	{
-		// used by the thumbnailer
-		thumbnail::enable
-
-		// support is available
-		&& mods::available("magick")
-	};
-
-	if(enable_magick)
-		magick_support.reset(new media::magick{});
-	else
-		log::warning
-		{
-			media_log, "GraphicsMagick support is disabled or unavailable."
-		};
-}
-
-void
-ircd::m::media::fini()
-{
-	magick_support.reset();
-
-	// The database close contains pthread_join()'s within RocksDB which
-	// deadlock under certain conditions when called during a dlclose()
-	// (i.e static destruction of this module). Therefor we must manually
-	// close the db here first.
-	::media = std::shared_ptr<database>{};
-}
-
-decltype(media_log)
-media_log
+decltype(ircd::m::media::log)
+ircd::m::media::log
 {
 	"m.media"
 };
 
-decltype(media_blocks_cache_enable)
-media_blocks_cache_enable
+decltype(ircd::m::media::blocks_cache_enable)
+ircd::m::media::blocks_cache_enable
 {
 	{ "name",     "ircd.media.blocks.cache.enable"  },
 	{ "default",  true                              },
 };
 
-decltype(media_blocks_cache_comp_enable)
-media_blocks_cache_comp_enable
+decltype(ircd::m::media::blocks_cache_comp_enable)
+ircd::m::media::blocks_cache_comp_enable
 {
 	{ "name",     "ircd.media.blocks.cache_comp.enable"  },
 	{ "default",  false                                  },
 };
 
 // Blocks column
-decltype(media_blocks_descriptor)
-media_blocks_descriptor
+decltype(ircd::m::media::blocks_descriptor)
+ircd::m::media::blocks_descriptor
 {
 	// name
 	"blocks",
@@ -113,9 +73,9 @@ media_blocks_descriptor
 	{},      // prefix transform
 	false,   // drop column
 
-	bool(media_blocks_cache_enable)? -1 : 0,
+	bool(blocks_cache_enable)? -1 : 0,
 
-	bool(media_blocks_cache_comp_enable)? -1 : 0,
+	bool(blocks_cache_comp_enable)? -1 : 0,
 
 	// bloom_bits
 	10,
@@ -133,16 +93,16 @@ media_blocks_descriptor
 	""s // no compression
 };
 
-decltype(media_description)
-media_description
+decltype(ircd::m::media::description)
+ircd::m::media::description
 {
 	{ "default" }, // requirement of RocksDB
 
-	media_blocks_descriptor,
+	blocks_descriptor,
 };
 
-decltype(media_blocks_cache_size)
-media_blocks_cache_size
+decltype(ircd::m::media::blocks_cache_size)
+ircd::m::media::blocks_cache_size
 {
 	{
 		{ "name",     "ircd.media.blocks.cache.size" },
@@ -152,13 +112,13 @@ media_blocks_cache_size
 		if(!blocks)
 			return;
 
-		const size_t &value{media_blocks_cache_size};
+		const size_t &value{blocks_cache_size};
 		db::capacity(db::cache(blocks), value);
 	}
 };
 
-decltype(media_blocks_cache_comp_size)
-media_blocks_cache_comp_size
+decltype(ircd::m::media::blocks_cache_comp_size)
+ircd::m::media::blocks_cache_comp_size
 {
 	{
 		{ "name",     "ircd.media.blocks.cache_comp.size" },
@@ -168,54 +128,102 @@ media_blocks_cache_comp_size
 		if(!blocks)
 			return;
 
-		const size_t &value{media_blocks_cache_comp_size};
+		const size_t &value{blocks_cache_comp_size};
 		db::capacity(db::cache_compressed(blocks), value);
 	}
 };
 
-decltype(media)
-media;
+decltype(ircd::m::media::database)
+ircd::m::media::database;
 
-decltype(blocks)
-blocks;
+decltype(ircd::m::media::blocks)
+ircd::m::media::blocks;
 
-decltype(magick_support)
-magick_support;
+decltype(ircd::m::media::downloading)
+ircd::m::media::downloading;
 
-std::set<m::room::id>
-downloading;
+decltype(ircd::m::media::downloading_dock)
+ircd::m::media::downloading_dock;
 
-ctx::dock
-downloading_dock;
+//
+// init
+//
 
-m::room::id::buf
-download(const string_view &server,
-         const string_view &mediaid,
-         const m::user::id &user_id,
-         const net::hostport &remote)
+void
+ircd::m::media::init()
+{
+	static const std::string dbopts;
+	database = std::make_shared<db::database>("media", dbopts, description);
+	blocks = db::column{*database, "blocks"};
+
+	// The conf setter callbacks must be manually executed after
+	// the database was just loaded to set the cache size.
+	conf::reset("ircd.media.blocks.cache.size");
+	conf::reset("ircd.media.blocks.cache_comp.size");
+
+	// conditions to load the magick.so module
+	const bool enable_magick
+	{
+		// used by the thumbnailer
+		thumbnail::enable
+
+		// support is available
+		&& mods::available("magick")
+	};
+
+	if(enable_magick)
+		magick_support.reset(new media::magick{});
+	else
+		log::warning
+		{
+			log, "GraphicsMagick support is disabled or unavailable."
+		};
+}
+
+void
+ircd::m::media::fini()
+{
+	magick_support.reset();
+
+	// The database close contains pthread_join()'s within RocksDB which
+	// deadlock under certain conditions when called during a dlclose()
+	// (i.e static destruction of this module). Therefor we must manually
+	// close the db here first.
+	database = std::shared_ptr<db::database>{};
+}
+
+//
+// media::file
+//
+
+ircd::m::room::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::media::file::download(const mxc &mxc,
+                               const m::user::id &user_id,
+                               const net::hostport &remote)
 {
 	const m::room::id::buf room_id
 	{
-		file_room_id(server, mediaid)
+		file::room_id(mxc)
 	};
 
 	thread_local char rembuf[256];
 	if(remote && my_host(string(rembuf, remote)))
 		return room_id;
 
-	if(!remote && my_host(server))
+	if(!remote && my_host(mxc.server))
 		return room_id;
 
-	download(server, mediaid, user_id, remote, room_id);
+	download(mxc, user_id, remote, room_id);
 	return room_id;
 }
 
-m::room
-download(const string_view &server,
-         const string_view &mediaid,
-         const m::user::id &user_id,
-         const net::hostport &remote,
-         const m::room::id &room_id)
+ircd::m::room
+IRCD_MODULE_EXPORT
+ircd::m::media::file::download(const mxc &mxc,
+                               const m::user::id &user_id,
+                               const net::hostport &remote,
+                               const m::room::id &room_id)
 try
 {
 	auto iit
@@ -249,7 +257,7 @@ try
 
 	const auto pair
 	{
-		download(buf, server, mediaid, remote)
+		download(buf, mxc, remote)
 	};
 
 	const auto &head
@@ -270,11 +278,11 @@ try
 
 	if(content_type != head.content_type) log::dwarning
 	{
-		media_log, "Server %s claims thumbnail %s is '%s' but we think it is '%s'",
+		log, "Server %s claims thumbnail %s is '%s' but we think it is '%s'",
 		string(remote),
-		mediaid,
+		mxc.mediaid,
 		head.content_type,
-		content_type
+		content_type,
 	};
 
 	m::vm::copts vmopts;
@@ -292,7 +300,7 @@ try
 
 	const size_t written
 	{
-		write_file(room, user_id, content, content_type)
+		file::write(room, user_id, content, content_type)
 	};
 
 	return room;
@@ -305,32 +313,36 @@ catch(const ircd::server::unavailable &e)
 		http::BAD_GATEWAY, "M_MEDIA_UNAVAILABLE",
 		"Server '%s' is not available for media for '%s/%s' :%s",
 		string(rembuf, remote),
-		server,
-		mediaid,
+		mxc.server,
+		mxc.mediaid,
 		e.what()
 	};
 }
 
-conf::item<seconds>
-media_download_timeout
+decltype(ircd::m::media::download_timeout)
+ircd::m::media::download_timeout
 {
 	{ "name",     "ircd.media.download.timeout" },
 	{ "default",  15L                           },
 };
 
-std::pair<http::response::head, unique_buffer<mutable_buffer>>
-download(const mutable_buffer &head_buf,
-         const string_view &server,
-         const string_view &mediaid,
-         net::hostport remote,
-         server::request::opts *const opts)
+std::pair
+<
+	ircd::http::response::head,
+	ircd::unique_buffer<ircd::mutable_buffer>
+>
+IRCD_MODULE_EXPORT
+ircd::m::media::file::download(const mutable_buffer &head_buf,
+                               const mxc &mxc,
+                               net::hostport remote,
+                               server::request::opts *const opts)
 {
 	thread_local char rembuf[256];
-	assert(remote || !my_host(server));
+	assert(remote || !my_host(mxc.server));
 	assert(!remote || !my_host(string(rembuf, remote)));
 
 	if(!remote)
-		remote = server;
+		remote = mxc.server;
 
 	window_buffer wb{head_buf};
 	thread_local char uri[4_KiB];
@@ -338,7 +350,9 @@ download(const mutable_buffer &head_buf,
 	{
 		wb, host(remote), "GET", fmt::sprintf
 		{
-			uri, "/_matrix/media/r0/download/%s/%s", server, mediaid
+			uri, "/_matrix/media/r0/download/%s/%s",
+			mxc.server,
+			mxc.mediaid,
 		}
 	};
 
@@ -359,14 +373,14 @@ download(const mutable_buffer &head_buf,
 		remote, { out_head }, { in_head, {} }, opts
 	};
 
-	if(!remote_request.wait(seconds(media_download_timeout), std::nothrow))
+	if(!remote_request.wait(seconds(download_timeout), std::nothrow))
 		throw m::error
 		{
 			http::GATEWAY_TIMEOUT, "M_MEDIA_DOWNLOAD_TIMEOUT",
 			"Server '%s' did not respond with media for '%s/%s' in time",
 			string(rembuf, remote),
-			server,
-			mediaid
+			mxc.server,
+			mxc.mediaid
 		};
 
 	const auto &code
@@ -387,10 +401,11 @@ download(const mutable_buffer &head_buf,
 }
 
 size_t
-write_file(const m::room &room,
-           const m::user::id &user_id,
-           const const_buffer &content,
-           const string_view &content_type)
+IRCD_MODULE_EXPORT
+ircd::m::media::file::write(const m::room &room,
+                            const m::user::id &user_id,
+                            const const_buffer &content,
+                            const string_view &content_type)
 {
 	//TODO: TXN
 	send(room, user_id, "ircd.file.stat", "size", json::members
@@ -417,7 +432,7 @@ write_file(const m::room &room,
 			data(content) + off, blksz
 		};
 
-		block_set(room, user_id, block);
+		block::set(room, user_id, block);
 		wrote += size(block);
 		off += blksz;
 	}
@@ -428,19 +443,17 @@ write_file(const m::room &room,
 }
 
 size_t
-read_each_block(const m::room &room,
-                const std::function<void (const const_buffer &)> &closure)
+IRCD_MODULE_EXPORT
+ircd::m::media::file::read(const m::room &room,
+                           const closure &closure)
 {
-	static const m::event::fetch::opts fopts
+	static const event::fetch::opts fopts
 	{
-		m::event::keys::include
-		{
-			"content", "type"
-		}
+		event::keys::include { "content", "type" }
 	};
 
 	size_t ret{0};
-	m::room::messages it
+	room::messages it
 	{
 		room, 1, &fopts
 	};
@@ -469,7 +482,7 @@ read_each_block(const m::room &room,
 
 		const const_buffer &block
 		{
-			block_get(buf, hash)
+			block::get(buf, hash)
 		};
 
 		if(unlikely(size(block) != blksz)) throw error
@@ -490,88 +503,28 @@ read_each_block(const m::room &room,
 	return ret;
 }
 
-const_buffer
-block_get(const mutable_buffer &out,
-          const string_view &b58hash)
-{
-	return read(blocks, b58hash, out);
-}
+//
+// media::file
+//
 
-m::event::id::buf
-block_set(const m::room &room,
-          const m::user::id &user_id,
-          const const_buffer &block)
-{
-	static constexpr const auto bufsz
-	{
-		b58encode_size(sha256::digest_size)
-	};
-
-	char b58buf[bufsz];
-	const auto hash
-	{
-		block_set(mutable_buffer{b58buf}, block)
-	};
-
-	return send(room, user_id, "ircd.file.block", json::members
-	{
-		{ "size",  long(size(block))  },
-		{ "hash",  hash               }
-	});
-}
-
-string_view
-block_set(const mutable_buffer &b58buf,
-          const const_buffer &block)
-{
-	const sha256::buf hash
-	{
-		sha256{block}
-	};
-
-	const string_view b58hash
-	{
-		b58encode(b58buf, hash)
-	};
-
-	block_set(b58hash, block);
-	return b58hash;
-}
-
-void
-block_set(const string_view &b58hash,
-          const const_buffer &block)
-{
-	write(blocks, b58hash, block);
-}
-
-m::room::id::buf
-file_room_id(const string_view &server,
-             const string_view &file)
+ircd::m::room::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::media::file::room_id(const mxc &mxc)
 {
 	m::room::id::buf ret;
-	file_room_id(ret, server, file);
+	room_id(ret, mxc);
 	return ret;
 }
 
-m::room::id
-file_room_id(m::room::id::buf &out,
-             const string_view &server,
-             const string_view &file)
+ircd::m::room::id
+IRCD_MODULE_EXPORT
+ircd::m::media::file::room_id(room::id::buf &out,
+                              const mxc &mxc)
 {
-	if(empty(server) || empty(file))
-		throw m::BAD_REQUEST
-		{
-			"Invalid MXC: empty server or file parameters..."
-		};
-
 	thread_local char buf[512];
-	const string_view path
+	const auto path
 	{
-		fmt::sprintf
-		{
-			buf, "%s/%s", server, file
-		}
+		mxc.path(buf)
 	};
 
 	const sha256::buf hash
@@ -585,4 +538,142 @@ file_room_id(m::room::id::buf &out,
 	};
 
 	return out;
+}
+
+//
+// media::block
+//
+
+ircd::m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::media::block::set(const m::room &room,
+                           const m::user::id &user_id,
+                           const const_buffer &block)
+{
+	static constexpr const auto bufsz
+	{
+		b58encode_size(sha256::digest_size)
+	};
+
+	char b58buf[bufsz];
+	const auto hash
+	{
+		set(mutable_buffer{b58buf}, block)
+	};
+
+	return send(room, user_id, "ircd.file.block", json::members
+	{
+		{ "size",  long(size(block))  },
+		{ "hash",  hash               }
+	});
+}
+
+ircd::string_view
+IRCD_MODULE_EXPORT
+ircd::m::media::block::set(const mutable_buffer &b58buf,
+                           const const_buffer &block)
+{
+	const sha256::buf hash
+	{
+		sha256{block}
+	};
+
+	const string_view b58hash
+	{
+		b58encode(b58buf, hash)
+	};
+
+	set(b58hash, block);
+	return b58hash;
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::media::block::set(const string_view &b58hash,
+                           const const_buffer &block)
+{
+	db::write(blocks, b58hash, block);
+}
+
+ircd::const_buffer
+IRCD_MODULE_EXPORT
+ircd::m::media::block::get(const mutable_buffer &out,
+                           const string_view &b58hash)
+{
+	return db::read(blocks, b58hash, out);
+}
+
+//
+// media::mxc
+//
+
+IRCD_MODULE_EXPORT
+ircd::m::media::mxc::mxc(const string_view &server,
+                         const string_view &mediaid)
+:server
+{
+	split(lstrip(server, "mxc://"), '/').first
+}
+,mediaid
+{
+	mediaid?: rsplit(server, '/').second
+}
+{
+	if(empty(server))
+		throw m::BAD_REQUEST
+		{
+			"Invalid MXC: missing server parameter."
+		};
+
+	if(empty(mediaid))
+		throw m::BAD_REQUEST
+		{
+			"Invalid MXC: missing mediaid parameter."
+		};
+}
+
+IRCD_MODULE_EXPORT
+ircd::m::media::mxc::mxc(const string_view &uri)
+:server
+{
+	split(lstrip(uri, "mxc://"), '/').first
+}
+,mediaid
+{
+	rsplit(uri, '/').second
+}
+{
+	if(empty(server))
+		throw m::BAD_REQUEST
+		{
+			"Invalid MXC: missing server parameter."
+		};
+
+	if(empty(mediaid))
+		throw m::BAD_REQUEST
+		{
+			"Invalid MXC: missing mediaid parameter."
+		};
+}
+
+ircd::string_view
+IRCD_MODULE_EXPORT
+ircd::m::media::mxc::uri(const mutable_buffer &out)
+const
+{
+	return fmt::sprintf
+	{
+		out, "mxc://%s/%s", server, mediaid
+	};
+}
+
+ircd::string_view
+IRCD_MODULE_EXPORT
+ircd::m::media::mxc::path(const mutable_buffer &out)
+const
+{
+	return fmt::sprintf
+	{
+		out, "%s/%s", server, mediaid
+	};
 }

@@ -79,6 +79,7 @@ namespace ircd::m
 #include "sync.h"
 #include "fetch.h"
 #include "breadcrumb_rooms.h"
+#include "media.h"
 
 struct ircd::m::init
 {

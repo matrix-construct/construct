@@ -10,6 +10,8 @@
 
 #include "media.h"
 
+using namespace ircd;
+
 resource
 preview_url_resource
 {
