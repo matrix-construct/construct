@@ -15,7 +15,6 @@
 namespace ircd::rfc3986
 {
 	struct uri;
-	struct parser;
 
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, coding_error)
@@ -55,7 +54,7 @@ struct ircd::rfc3986::uri
 	uri() = default;
 };
 
-struct ircd::rfc3986::parser
+namespace ircd::rfc3986::parser
 {
 	using it = const char *;
 	using unused = boost::spirit::unused_type;
@@ -63,63 +62,63 @@ struct ircd::rfc3986::parser
 	template<class R = unused>
 	using rule = boost::spirit::qi::rule<it, R, unused, unused, unused>;
 
-	static const rule<> sub_delims;
-	static const rule<> gen_delims;
-	static const rule<> reserved;
-	static const rule<> unreserved;
-	static const rule<> pct_encoded;
-	static const rule<> pchar;
-	static const rule<> query;
-	static const rule<> fragment;
-	static const rule<> segment;
-	static const rule<> segment_nz;
-	static const rule<> segment_nz_nc;
-	static const rule<> path_rootless;
-	static const rule<> path_noscheme;
-	static const rule<> path_absolute;
-	static const rule<> path_abempty;
-	static const rule<> path;
-	static const rule<> reg_name;
-	static const rule<> userinfo;
+	extern const rule<> sub_delims;
+	extern const rule<> gen_delims;
+	extern const rule<> reserved;
+	extern const rule<> unreserved;
+	extern const rule<> pct_encoded;
+	extern const rule<> pchar;
+	extern const rule<> query;
+	extern const rule<> fragment;
+	extern const rule<> segment;
+	extern const rule<> segment_nz;
+	extern const rule<> segment_nz_nc;
+	extern const rule<> path_rootless;
+	extern const rule<> path_noscheme;
+	extern const rule<> path_absolute;
+	extern const rule<> path_abempty;
+	extern const rule<> path;
+	extern const rule<> reg_name;
+	extern const rule<> userinfo;
 
-	static const rule<uint16_t> port; // note in examples portnums are optional
+	extern const rule<uint16_t> port; // note in examples portnums are optional
 
-	static const rule<> ip4_octet;
-	static const rule<> ip4_address;  // 1.2.3.4
-	static const rule<> ip4_literal;  // 1.2.3.4
-	static const rule<> ip4_remote;   // 1.2.3.4:12345
+	extern const rule<> ip4_octet;
+	extern const rule<> ip4_address;  // 1.2.3.4
+	extern const rule<> ip4_literal;  // 1.2.3.4
+	extern const rule<> ip4_remote;   // 1.2.3.4:12345
 
-	static const rule<> ip6_char;
-	static const rule<> ip6_h16;
-	static const rule<> ip6_piece;
-	static const rule<> ip6_ipiece;
-	static const rule<> ip6_ls32;
-	static const rule<> ip6_addr[9];
-	static const rule<> ip6_address;  // ::1
-	static const rule<> ip6_literal;  // [::1]
-	static const rule<> ip6_remote;   // [::1]:12345
+	extern const rule<> ip6_char;
+	extern const rule<> ip6_h16;
+	extern const rule<> ip6_piece;
+	extern const rule<> ip6_ipiece;
+	extern const rule<> ip6_ls32;
+	extern const rule<> ip6_addr[9];
+	extern const rule<> ip6_address;  // ::1
+	extern const rule<> ip6_literal;  // [::1]
+	extern const rule<> ip6_remote;   // [::1]:12345
 
-	static const rule<> ip_address;   // 1.2.3.4 | ::1
-	static const rule<> ip_literal;   // 1.2.3.4 | [::1]
-	static const rule<> ip_remote;    // 1.2.3.4:12345 | [::1]:12345
+	extern const rule<> ip_address;   // 1.2.3.4 | ::1
+	extern const rule<> ip_literal;   // 1.2.3.4 | [::1]
+	extern const rule<> ip_remote;    // 1.2.3.4:12345 | [::1]:12345
 
-	static const rule<> hostname;     // foo
-	static const rule<> domain;       // foo.com
-	static const rule<> hostport;     // foo.bar.com:12345
+	extern const rule<> hostname;     // foo
+	extern const rule<> domain;       // foo.com
+	extern const rule<> hostport;     // foo.bar.com:12345
 
-	static const rule<> host;         // 1.2.3.4 | ::1 | foo.com
-	static const rule<> host_literal; // 1.2.3.4 | [::1] | foo.com
+	extern const rule<> host;         // 1.2.3.4 | ::1 | foo.com
+	extern const rule<> host_literal; // 1.2.3.4 | [::1] | foo.com
 
-	static const rule<> remote;       // 1.2.3.4:12345 | [::1]:12345 | foo.com:12345
+	extern const rule<> remote;       // 1.2.3.4:12345 | [::1]:12345 | foo.com:12345
 
-	static const rule<> authority;
-	static const rule<> scheme;
-	static const rule<> hier_part;
-	static const rule<> relative_part;
-	static const rule<> relative_ref;
-	static const rule<> absolute_uri;
-	static const rule<> uri;
-	static const rule<> uri_ref;     // uri | relative_ref
+	extern const rule<> authority;
+	extern const rule<> scheme;
+	extern const rule<> hier_part;
+	extern const rule<> relative_part;
+	extern const rule<> relative_ref;
+	extern const rule<> absolute_uri;
+	extern const rule<> uri;
+	extern const rule<> uri_ref;     // uri | relative_ref
 };
 
 // Validator suite
