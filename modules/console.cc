@@ -7691,6 +7691,47 @@ console_cmd__rooms__fetch(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__rooms__head__reset(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"server"
+	}};
+
+	const string_view &server
+	{
+		param["server"] != "*" &&
+		param["server"] != "remote_joined_only" &&
+		param["server"] != "local_only"?
+			param["server"]:
+			string_view{}
+	};
+
+	m::rooms::opts opts;
+	opts.server = server;
+
+	if(param["server"] == "remote_joined_only")
+		opts.remote_joined_only = true;
+
+	if(param["server"] == "local_only")
+		opts.local_only = true;
+
+	m::rooms::for_each(opts, [&out]
+	(const m::room::id &room_id) -> bool
+	{
+		const m::room::head head
+		{
+			room_id
+		};
+
+		m::room::head::reset(head);
+		return true;
+	});
+
+	return true;
+}
+
 //
 // room
 //
