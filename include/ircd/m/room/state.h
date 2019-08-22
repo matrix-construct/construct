@@ -106,5 +106,4 @@ struct ircd::m::room::state
 struct ircd::m::room::state::rebuild
 {
 	rebuild(const room::id &);
-	rebuild();
 };

@@ -9179,10 +9179,28 @@ console_cmd__room__state__space__rebuild(opt &out, const string_view &line)
 			m::room::id::buf{}
 	};
 
-	if(room_id)
-		m::room::state::space::rebuild{room_id};
-	else
-		m::room::state::space::rebuild{};
+	if(room_id == "*" || room_id == "remote_joined_only")
+	{
+		m::rooms::opts opts;
+		opts.remote_joined_only = room_id == "remote_joined_only";
+		m::rooms::for_each(opts, []
+		(const m::room::id &room_id)
+		{
+			m::room::state::space::rebuild
+			{
+				room_id
+			};
+
+			return true;
+		});
+
+		return true;
+	}
+
+	m::room::state::space::rebuild
+	{
+		room_id
+	};
 
 	return true;
 }

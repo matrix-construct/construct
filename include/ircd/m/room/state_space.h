@@ -45,5 +45,4 @@ struct ircd::m::room::state::space
 struct ircd::m::room::state::space::rebuild
 {
 	rebuild(const room::id &);
-	rebuild();
 };

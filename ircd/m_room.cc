@@ -36,17 +36,6 @@ ircd::m::room::purge(const room &room)
 	return ret;
 }
 
-ircd::m::room::state::rebuild::rebuild()
-{
-	rooms::opts opts;
-	opts.remote_joined_only = true;
-	rooms::for_each(opts, [](const auto &room_id)
-	{
-		rebuild{room_id};
-		return true;
-	});
-}
-
 ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 {
 	const m::event::id::buf event_id
@@ -3006,17 +2995,6 @@ const
 //
 // room::state::space::rebuild
 //
-
-ircd::m::room::state::space::rebuild::rebuild()
-{
-	rooms::opts opts;
-	opts.remote_joined_only = true;
-	rooms::for_each(opts, [](const auto &room_id)
-	{
-		rebuild{room_id};
-		return true;
-	});
-}
 
 ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 {
