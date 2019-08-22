@@ -9172,33 +9172,6 @@ console_cmd__room__state__space__rebuild(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__room__state__force(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"event_id"
-	}};
-
-	const m::event::id &event_id
-	{
-		param.at(0)
-	};
-
-	const m::event::fetch event
-	{
-		event_id
-	};
-
-	const auto res
-	{
-		m::room::state::force_present(event)
-	};
-
-	out << "forced " << event_id << " into present state" << std::endl;
-	return true;
-}
-
-bool
 console_cmd__room__state__purge__replaced(opt &out, const string_view &line)
 {
 	const params param{line, " ",

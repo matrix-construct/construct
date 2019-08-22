@@ -95,39 +95,6 @@ ircd::m::room::state::purge_replaced(const room::id &room_id)
 	return ret;
 }
 
-bool
-ircd::m::room::state::force_present(const m::event &event)
-{
-	db::txn txn
-	{
-		*m::dbs::events
-	};
-
-	if(!defined(json::get<"room_id"_>(event)))
-		throw error
-		{
-			"event %s is not a room event (no room_id)",
-			string_view{event.event_id}
-		};
-
-	if(!defined(json::get<"state_key"_>(event)))
-		throw error
-		{
-			"event %s is not a state event (no state_key)",
-			string_view{event.event_id}
-		};
-
-	dbs::write_opts opts;
-	opts.event_idx = m::index(event);
-	opts.appendix.reset();
-	opts.appendix.set(dbs::appendix::ROOM_STATE);
-	opts.appendix.reset(dbs::appendix::ROOM_JOINED);
-	dbs::write(txn, event, opts);
-
-	txn();
-	return true;
-}
-
 size_t
 ircd::m::room::state::rebuild_present(const room::id &room_id)
 {
