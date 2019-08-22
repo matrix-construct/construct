@@ -3095,7 +3095,7 @@ ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 			e.what()
 		};
 
-		break;
+		throw;
 	}
 	catch(const std::exception &e)
 	{

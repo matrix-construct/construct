@@ -225,6 +225,10 @@ try
 
 	return check(event, room);
 }
+catch(const ctx::interrupted &)
+{
+	throw;
+}
 catch(const std::exception &)
 {
 	return
@@ -258,6 +262,10 @@ try
 	};
 
 	return check(event, room);
+}
+catch(const ctx::interrupted &)
+{
+	throw;
 }
 catch(const std::exception &)
 {
@@ -301,6 +309,10 @@ try
 	};
 
 	return check(event, vector_view<event::idx>{idx, count});
+}
+catch(const ctx::interrupted &)
+{
+	throw;
 }
 catch(const std::exception &)
 {
