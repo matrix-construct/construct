@@ -313,7 +313,8 @@ ircd::m::room::auth::check(const event &event,
 			room.get(std::nothrow, "m.room.join_rules", ""): 0UL,
 
 		at<"type"_>(event) == "m.room.member" &&
-		at<"sender"_>(event) != at<"state_key"_>(event)?
+		at<"sender"_>(event) != json::get<"state_key"_>(event) &&
+		valid(m::id::USER, json::get<"state_key"_>(event))?
 			room.get(std::nothrow, "m.room.member", at<"state_key"_>(event)): 0UL,
 	};
 
