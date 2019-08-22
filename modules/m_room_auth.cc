@@ -144,66 +144,69 @@ void
 IRCD_MODULE_EXPORT
 ircd::m::room::auth::check(const event &event)
 {
-	passfail pf;
-	auto &[pass, fail] {pf};
-
-	pf = check_static(event);
-
-	if(!pass) try
+	const bool check_static
 	{
-		assert(bool(fail));
-		std::rethrow_exception(fail);
-		__builtin_unreachable();
-	}
-	catch(const FAIL &e)
+		true
+	};
+
+	const bool check_relative
 	{
-		throw FAIL
+		m::exists(event.event_id)
+	};
+
+	const bool check_present
+	{
+		true
+	};
+
+	if(check_static)
+	{
+		const auto &[pass, fail]
 		{
-			"Fails against provided auth_events :%s", e.what()
+			auth::check_static(event)
 		};
-	}
 
-	if(!m::exists(room(at<"room_id"_>(event))))
-		if(at<"type"_>(event) == "m.room.create")
+		if(pass)
 			return;
 
-	pf = check_present(event);
-
-	if(!pass) try
-	{
-		assert(bool(fail));
-		std::rethrow_exception(fail);
-		__builtin_unreachable();
-	}
-	catch(const FAIL &e)
-	{
 		throw FAIL
 		{
-			"Fails against present state of %s :%s",
-			json::get<"room_id"_>(event),
-			e.what()
+			"Fails against provided auth_events :%s",
+			what(fail),
 		};
 	}
 
-	if(!m::exists(event.event_id))
-		return;
-
-	pf = check_relative(event);
-
-	if(!pass) try
+	if(check_relative)
 	{
-		assert(bool(fail));
-		std::rethrow_exception(fail);
-		__builtin_unreachable();
-	}
-	catch(const FAIL &e)
-	{
+		const auto &[pass, fail]
+		{
+			auth::check_relative(event)
+		};
+
+		if(pass)
+			return;
+
 		throw FAIL
 		{
-			"Fails against state of %s relative to %s :%s",
-			json::get<"room_id"_>(event),
-			string_view{event.event_id},
-			e.what()
+			"Fails against the state of the room at the event :%s",
+			what(fail),
+		};
+	}
+
+	if(check_present)
+	{
+		const auto &[pass, fail]
+		{
+			auth::check_present(event)
+		};
+
+		if(pass)
+			return;
+
+		throw FAIL
+		{
+			"Fails against the present state of the room :%s",
+			what(fail),
 		};
 	}
 }
@@ -236,6 +239,18 @@ ircd::m::room::auth::check_present(const event &event)
 try
 {
 	using json::at;
+
+	if(at<"type"_>(event)  == "m.room.create")
+		return {true, {}};
+
+	const bool is_leave_event
+	{
+		at<"type"_>(event) == "m.room.member" &&
+		(m::membership(event) == "leave" || m::membership(event) == "ban")
+	};
+
+	if(is_leave_event)
+		return {true, {}};
 
 	const m::room room
 	{

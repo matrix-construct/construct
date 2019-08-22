@@ -94,7 +94,7 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 	});
 
 	ssize_t added(0);
-	history.for_each([&opts, &txn, &added]
+	history.for_each([&opts, &txn, &added, &room_id]
 	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
 	{
 		const m::event::fetch &event
@@ -104,6 +104,24 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 
 		if(!event.valid)
 			return true;
+
+		const auto &[pass, fail]
+		{
+			auth::check_present(event)
+		};
+
+		if(!pass)
+		{
+			log::dwarning
+			{
+				log, "%s fails for present state in %s :%s",
+				string_view{event.event_id},
+				string_view{room_id},
+				what(fail),
+			};
+
+			return true;
+		}
 
 		auto _opts(opts);
 		_opts.op = db::op::SET;
@@ -3028,18 +3046,34 @@ ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 
 		++state_count;
 		const m::event &event{*it};
-		const auto &[pass, reason]
+		const auto &[pass_static, reason_static]
 		{
-			m::room::auth::check_static(event)
+			room::auth::check_static(event)
 		};
 
-		if(!pass)
+		if(!pass_static)
 			log::dwarning
 			{
-				log, "%s in %s erased from state space :%s",
+				log, "%s in %s erased from state space (static) :%s",
 				string_view{event.event_id},
 				string_view{room_id},
-				what(reason),
+				what(reason_static),
+			};
+
+		const auto &[pass_relative, reason_relative]
+		{
+			pass_static?
+				room::auth::check_relative(event):
+				room::auth::passfail{false, {}},
+		};
+
+		if(pass_static && !pass_relative)
+			log::dwarning
+			{
+				log, "%s in %s erased from state space (relative) :%s",
+				string_view{event.event_id},
+				string_view{room_id},
+				what(reason_relative),
 			};
 
 		dbs::write_opts opts;
@@ -3048,8 +3082,8 @@ ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 		opts.appendix.reset();
 		opts.appendix.set(dbs::appendix::ROOM_STATE_SPACE);
 
-		opts.op = pass? db::op::SET : db::op::DELETE;
-		state_deleted += !pass;
+		opts.op = pass_static && pass_relative? db::op::SET : db::op::DELETE;
+		state_deleted += opts.op == db::op::DELETE;
 
 		dbs::write(txn, event, opts);
 	}
