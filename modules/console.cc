@@ -9167,7 +9167,23 @@ console_cmd__room__state__space(opt &out, const string_view &line)
 bool
 console_cmd__room__state__space__rebuild(opt &out, const string_view &line)
 {
-	m::room::state::space::rebuild{};
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto room_id
+	{
+		param["room_id"]?
+			m::room_id(param.at("room_id")):
+			m::room::id::buf{}
+	};
+
+	if(room_id)
+		m::room::state::space::rebuild{room_id};
+	else
+		m::room::state::space::rebuild{};
+
 	return true;
 }
 
@@ -9194,7 +9210,7 @@ console_cmd__room__state__purge__replaced(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
+console_cmd__room__state__rebuild(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -9212,19 +9228,12 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 	{
 		m::rooms::opts opts;
 		opts.remote_joined_only = room_id == "remote_joined_only";
-		m::rooms::for_each(opts, [&out]
+		m::rooms::for_each(opts, []
 		(const m::room::id &room_id)
 		{
-			const size_t count
+			m::room::state::rebuild
 			{
-				m::room::state::rebuild_present(room_id)
-			};
-
-			log::info
-			{
-				"Rebuild of %s complete with %zu present state events.",
-				string_view{room_id},
-				count,
+				room_id
 			};
 
 			return true;
@@ -9233,12 +9242,12 @@ console_cmd__room__state__rebuild__present(opt &out, const string_view &line)
 		return true;
 	}
 
-	const size_t count
+	m::room::state::rebuild
 	{
-		m::room::state::rebuild_present(room_id)
+		room_id
 	};
 
-	out << "done " << room_id << " " << count << std::endl;
+	out << "done" << std::endl;
 	return true;
 }
 

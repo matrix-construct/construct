@@ -25,6 +25,7 @@ struct ircd::m::room::state
 	struct opts;
 	struct space;
 	struct history;
+	struct rebuild;
 
 	using closure = std::function<void (const string_view &, const string_view &, const event::idx &)>;
 	using closure_bool = std::function<bool (const string_view &, const string_view &, const event::idx &)>;
@@ -97,8 +98,13 @@ struct ircd::m::room::state
 
 	static size_t prefetch(const state &, const string_view &, const event::idx_range &);
 	static bool present(const event::idx &);
-	static size_t rebuild_present(const room::id &);
 	static size_t purge_replaced(const room::id &);
 	static bool is(std::nothrow_t, const event::idx &);
 	static bool is(const event::idx &);
+};
+
+struct ircd::m::room::state::rebuild
+{
+	rebuild(const room::id &);
+	rebuild();
 };
