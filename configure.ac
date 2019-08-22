@@ -876,6 +876,7 @@ RB_CHK_SYSHEADER(linux/magic.h, [LINUX_MAGIC_H])
 RB_CHK_SYSHEADER(linux/perf_event.h, [LINUX_PERF_EVENT_H])
 RB_CHK_SYSHEADER(linux/hw_breakpoint.h, [LINUX_HW_BREAKPOINT_H])
 RB_CHK_SYSHEADER(linux/io_uring.h, [LINUX_IO_URING_H])
+RB_CHK_SYSHEADER(linux/icmp.h, [LINUX_ICMP_H])
 
 dnl windows platform
 RB_CHK_SYSHEADER(windows.h, [WINDOWS_H])
