@@ -19,6 +19,15 @@ namespace ircd::allocator
 	extern info::versions je_malloc_version_abi;
 }
 
+#if defined(IRCD_ALLOCATOR_USE_JEMALLOC) && defined(HAVE_JEMALLOC_H)
+const char *
+__attribute__((weak))
+malloc_conf
+{
+	"narenas:1,"
+};
+#endif
+
 decltype(ircd::allocator::je_malloc_version_api)
 ircd::allocator::je_malloc_version_api
 {
