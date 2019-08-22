@@ -76,9 +76,9 @@ ircd::m::pretty_stateline(std::ostream &out,
 		{
 			buf, "%c%c%c|%c%c%c",
 
-			active? 'A' : '-',
-			redacted? 'R' : '-',
-			power? 'P' : '-',
+			active? 'A' : ' ',
+			redacted? 'R' : ' ',
+			power? 'P' : ' ',
 
 			std::get<bool>(auth[0]) && !std::get<std::exception_ptr>(auth[0])? ' ':
 			!std::get<bool>(auth[0]) && std::get<std::exception_ptr>(auth[0])? 'X': '?',
