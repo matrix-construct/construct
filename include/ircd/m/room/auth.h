@@ -22,7 +22,8 @@ struct ircd::m::room::auth
 	using events_view = vector_view<const event *>;
 	using passfail = std::tuple<bool, std::exception_ptr>;
 	IRCD_M_EXCEPTION(m::error, error, http::INTERNAL_SERVER_ERROR)
-	IRCD_M_EXCEPTION(error, FAIL, http::UNAUTHORIZED)
+	IRCD_M_EXCEPTION(error, AUTH_FAIL, http::UNAUTHORIZED)
+	using FAIL = AUTH_FAIL;
 
 	static bool is_power_event(const event &);
 
