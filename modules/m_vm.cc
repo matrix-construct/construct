@@ -1033,21 +1033,69 @@ ircd::m::vm::write_append(eval &eval,
 	const auto &opts{*eval.opts};
 	auto &txn{*eval.txn};
 
-	log::debug
-	{
-		log, "%s | append", loghead(eval)
-	};
-
-	// Preliminary write_opts
 	m::dbs::write_opts wopts(opts.wopts);
-	wopts.appendix.set(dbs::appendix::ROOM_STATE, opts.present);
-	wopts.appendix.set(dbs::appendix::ROOM_JOINED, opts.present);
-	wopts.appendix.set(dbs::appendix::ROOM_STATE_SPACE, opts.history);
+	wopts.event_idx = eval.sequence;
+	wopts.json_source = opts.json_source;
 	wopts.appendix.set(dbs::appendix::ROOM_HEAD, opts.room_head);
 	wopts.appendix.set(dbs::appendix::ROOM_HEAD_RESOLVE, opts.room_head_resolve);
-	wopts.json_source = opts.json_source;
-	wopts.event_idx = eval.sequence;
+	wopts.appendix.set(dbs::appendix::ROOM_STATE_SPACE, opts.history);
+	if(opts.present && json::get<"state_key"_>(event))
+	{
+		const room room
+		{
+			at<"room_id"_>(event)
+		};
+
+		const room::state state
+		{
+			room
+		};
+
+		//XXX
+		const auto pres_idx
+		{
+			state.get(std::nothrow, at<"type"_>(event), at<"state_key"_>(event))
+		};
+
+		//XXX
+		int64_t pres_depth(0);
+		const auto fresher
+		{
+			!pres_idx ||
+			m::get<int64_t>(pres_idx, "depth", pres_depth) < json::get<"depth"_>(event)
+		};
+
+		if(fresher)
+		{
+			//XXX
+			const auto &[pass, fail]
+			{
+				opts.auth && !internal(room.room_id)?
+					room::auth::check(event, room):
+					room::auth::passfail{true, {}}
+			};
+
+			if(fail)
+				log::dwarning
+				{
+					log, "%s | fails auth for present state of %s :%s",
+					loghead(eval),
+					string_view{room.room_id},
+					what(fail),
+				};
+
+			wopts.appendix.set(dbs::appendix::ROOM_STATE, pass);
+			wopts.appendix.set(dbs::appendix::ROOM_JOINED, pass);
+		}
+	}
+
 	dbs::write(*eval.txn, event, wopts);
+
+	log::debug
+	{
+		log, "%s | append",
+		loghead(eval),
+	};
 }
 
 void
