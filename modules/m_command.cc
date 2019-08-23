@@ -343,14 +343,12 @@ command__read(const mutable_buffer &buf,
 {
 	const params param{tokens_after(cmd, ' ', 0), " ",
 	{
-		"event_id", "[time]"
+		"arg", "[time]"
 	}};
 
-	const m::event::id::buf event_id
+	const string_view &arg
 	{
-		param["event_id"]?
-			m::event::id::buf{param["event_id"]}:
-			m::head(room)
+		param["arg"]
 	};
 
 	const time_t &ms
@@ -358,7 +356,78 @@ command__read(const mutable_buffer &buf,
 		param.at("[time]", ircd::time<milliseconds>())
 	};
 
-	m::receipt::read(room, user, event_id, ms);
+	if(m::valid(m::id::EVENT, arg))
+	{
+		const m::event::id::buf event_id
+		{
+			arg?
+				m::event::id::buf{arg}:
+				m::head(room)
+		};
+
+		m::receipt::read(room, user, event_id, ms);
+		return {};
+	}
+	else if(m::valid(m::id::ROOM, arg) || m::valid(m::id::ROOM_ALIAS, arg))
+	{
+		const auto room_id
+		{
+			m::room_id(arg)
+		};
+
+		const m::room room
+		{
+			room_id
+		};
+
+		const m::event::id::buf event_id
+		{
+			m::head(room)
+		};
+
+		m::receipt::read(room, user, event_id, ms);
+		return {};
+	}
+
+	if(arg != "*" && arg != "favorite" && arg != "favourite")
+		return {};
+
+	const m::user::rooms user_rooms
+	{
+		user
+	};
+
+	user_rooms.for_each("join", [&user, &ms, &arg]
+	(const m::room::id &room_id, const string_view &)
+	{
+		if(arg == "favorite" || arg == "favourite")
+		{
+			const m::user::room_tags room_tags
+			{
+				user, room_id
+			};
+
+			const auto _continue{[&room_id]
+			(const string_view &key, const json::object &object)
+			{
+				return key != room_id || !object.has("m.favourite");
+			}};
+
+			if(room_tags.for_each(_continue))
+				return;
+		}
+
+		const m::event::id::buf event_id
+		{
+			m::head(std::nothrow, room_id)
+		};
+
+		if(!event_id)
+			return;
+
+		m::receipt::read(room_id, user, event_id, ms);
+	});
+
 	return {};
 }
 
