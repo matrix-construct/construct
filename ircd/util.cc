@@ -219,7 +219,7 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
 
 	size_t i(0), pos(0);
 	long double val(ns);
-	for(; val > std::get<1>(unit.at(pos)); ++pos)
+	for(; val > std::get<1>(unit.at(pos)) && pos < unit.size() - 1; ++pos)
 		val /= std::get<1>(unit.at(pos));
 
 	return fmt::sprintf
