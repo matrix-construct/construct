@@ -199,15 +199,15 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
 	static const std::array<element, 9> unit
 	{{
 		//  fmt=0              fmt=1
-		{ { "nanoseconds",     "ns" },     1000.0  },
-		{ { "microseconds",    "us" },     1000.0  },
-		{ { "milliseconds",    "ms" },     1000.0  },
-		{ { "seconds",         "s"  },       60.0  },
-		{ { "minutes",         "m"  },       60.0  },
-		{ { "hours",           "h"  },       24.0  },
-		{ { "days",            "d"  },        7.0  },
-		{ { "weeks",           "w"  },       30.0  },
-		{ { "months",          "M"  },       12.0  },
+		{ { "nanoseconds",     "ns" },     1000.0L  },
+		{ { "microseconds",    "us" },     1000.0L  },
+		{ { "milliseconds",    "ms" },     1000.0L  },
+		{ { "seconds",         "s"  },       60.0L  },
+		{ { "minutes",         "m"  },       60.0L  },
+		{ { "hours",           "h"  },       24.0L  },
+		{ { "days",            "d"  },        7.0L  },
+		{ { "weeks",           "w"  },       30.0L  },
+		{ { "months",          "M"  },       12.0L  },
 	}};
 
 	const string_view &fmtstr
