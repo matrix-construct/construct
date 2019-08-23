@@ -74,11 +74,11 @@ ircd::m::pretty_stateline(std::ostream &out,
 	{
 		fmt::sprintf
 		{
-			buf, "%c%c%c|%c%c%c",
+			buf, "%c %c%c%c%c%c",
 
-			active? 'A' : ' ',
+			active? '*' : ' ',
+			power? '@' : ' ',
 			redacted? 'R' : ' ',
-			power? 'P' : ' ',
 
 			std::get<bool>(auth[0]) && !std::get<std::exception_ptr>(auth[0])? ' ':
 			!std::get<bool>(auth[0]) && std::get<std::exception_ptr>(auth[0])? 'X': '?',
@@ -117,7 +117,7 @@ ircd::m::pretty_stateline(std::ostream &out,
 		<< std::setw(30) << type
 		<< std::left << " | "
 		<< std::setw(50) << state_key
-		<< std::left << " ] " << flags << " "
+		<< std::left << " ]" << flags << " "
 		<< std::setw(10) << event_idx
 		<< std::left << "  "
 		<< std::setw(72) << string_view{event.event_id}
@@ -135,7 +135,7 @@ ircd::m::pretty_stateline(std::ostream &out,
 		<< std::setw(40) << type
 		<< std::left << " | "
 		<< std::setw(56) << state_key
-		<< std::left << " ] " << flags << " "
+		<< std::left << " ]" << flags << " "
 		<< std::setw(10) << event_idx
 		<< ' '
 		;
