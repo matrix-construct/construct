@@ -10507,20 +10507,45 @@ console_cmd__user__read(opt &out, const string_view &line)
 		"user_id",
 	}};
 
-	const m::user user
+	const m::user::id user_id
 	{
-		param.at(0)
+		param.at("user_id")
 	};
 
-	const m::user::room user_room{user};
-	const m::room::state state{user_room};
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	const m::room::state state
+	{
+		user_room
+	};
+
 	state.for_each("ircd.read", m::event::closure{[&out]
 	(const m::event &event)
 	{
-		out << timestr(at<"origin_server_ts"_>(event) / 1000)
-		    << " " << at<"state_key"_>(event)
-		    << " " << at<"content"_>(event)
+		const milliseconds origin_server_ts
+		{
+			json::get<"origin_server_ts"_>(event)
+		};
+
+		char tsbuf[2][64];
+		const auto timef
+		{
+			ircd::timef(tsbuf[0], origin_server_ts.count() / 1000L)
+		};
+
+		const auto ago
+		{
+			ircd::ago(tsbuf[1], system_point(origin_server_ts))
+		};
+
+		out << timef
+		    << " " << json::get<"state_key"_>(event)
+		    << " " << json::get<"content"_>(event)
 		    << " " << event.event_id
+		    << " " << ago
 		    << std::endl;
 	}});
 
