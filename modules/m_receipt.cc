@@ -10,7 +10,7 @@
 
 using namespace ircd;
 
-static void handle_ircd_m_read(const m::event &, m::vm::eval &);
+static void handle_ircd_read(const m::event &, m::vm::eval &);
 extern m::hookfn<m::vm::eval &> _ircd_read_eval;
 
 static void handle_implicit_receipt(const m::event &, m::vm::eval &);
@@ -464,7 +464,7 @@ catch(const std::exception &e)
 decltype(_ircd_read_eval)
 _ircd_read_eval
 {
-	handle_ircd_m_read,
+	handle_ircd_read,
 	{
 		{ "_site",   "vm.effect"  },
 		{ "type",    "ircd.read"  },
@@ -475,8 +475,8 @@ _ircd_read_eval
 /// This handler looks for ircd.read events and conducts a federation
 /// broadcast of the m.receipt edu.
 void
-handle_ircd_m_read(const m::event &event,
-                   m::vm::eval &eval)
+handle_ircd_read(const m::event &event,
+                 m::vm::eval &eval)
 try
 {
 	if(!json::get<"state_key"_>(event))
