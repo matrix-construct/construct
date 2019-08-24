@@ -312,9 +312,10 @@ try
 {
 	m::v1::user::keys::query::opts opts;
 	opts.remote = remote;
+	opts.dynamic = true;
 	const auto &buffer
 	{
-		buffers.emplace_back(8_KiB)
+		buffers.emplace_back(16_KiB)
 	};
 
 	ret.emplace
