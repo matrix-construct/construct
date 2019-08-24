@@ -255,7 +255,7 @@ ircd::m::vm::inject(eval &eval,
 	const scope_restore eval_room_id
 	{
 		eval.room_id,
-		!eval.room_id && event.has("room_id")?
+		!eval.room_id && event.has("room_id") && valid(id::ROOM, event.at("room_id"))?
 			string_view{event.at("room_id")}:
 			string_view{eval.room_id}
 	};
@@ -688,7 +688,9 @@ try
 		eval.room_id,
 		eval.room_id?
 			eval.room_id:
-			string_view(json::get<"room_id"_>(event))
+		valid(id::ROOM, json::get<"room_id"_>(event))?
+			string_view(json::get<"room_id"_>(event)):
+			eval.room_id,
 	};
 
 	// Procure the room version.
