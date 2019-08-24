@@ -264,14 +264,23 @@ try
 		response["device_keys"]
 	};
 
-	for(const auto &m : device_keys)
+	for(const auto &[_user_id, device_keys] : device_keys)
 	{
-		const m::user::id &user_id(m.first);
-		const json::object &device_keys(m.second);
-		json::stack::member
+		const m::user::id &user_id
 		{
-			object, user_id, device_keys
+			_user_id
 		};
+
+		json::stack::object user_object
+		{
+			object, user_id
+		};
+
+		for(const auto &[device_id, keys] : json::object(device_keys))
+			json::stack::member
+			{
+				user_object, device_id, keys
+			};
 	}
 }
 catch(const std::exception &e)
