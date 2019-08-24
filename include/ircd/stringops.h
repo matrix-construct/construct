@@ -569,7 +569,7 @@ ircd::ifind(const string_view &s,
 }
 
 template<class T>
-bool
+inline bool
 ircd::has(const string_view &s,
           const T &t)
 {
