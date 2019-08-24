@@ -2886,7 +2886,7 @@ noexcept try
 		room_version?: event.event_id.version()
 	};
 
-	thread_local char buf[64];
+	char buf[64];
 	const event::id &check_id
 	{
 		version == "1" || version == "2"?
