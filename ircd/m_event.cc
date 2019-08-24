@@ -2902,9 +2902,9 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::critical
+	log::error
 	{
-		"m::check_id() unexpected :%s", e.what()
+		"m::check_id() :%s", e.what()
 	};
 
 	return false;
