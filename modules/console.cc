@@ -7842,7 +7842,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 
 	out << std::endl;
 
-	char version_buf[32];
+	char version_buf[32], display_buf[256];
 	out << "index:             " << m::room::index(room_id) << std::endl;
 	out << "version:           " << m::version(version_buf, room_id) << std::endl;
 	out << "federated:         " << std::boolalpha << m::federated(room_id) << std::endl;
@@ -7858,6 +7858,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "top depth:         " << std::get<int64_t>(top) << std::endl;
 	out << "top index:         " << std::get<m::event::idx>(top) << std::endl;
 	out << "top event:         " << std::get<m::event::id::buf>(top) << std::endl;
+	out << "display name:      " << m::display_name(display_buf, room_id) << std::endl;
 	return true;
 }
 

@@ -44,6 +44,7 @@ namespace ircd::m
 	string_view version(const mutable_buffer &, const room &);
 	string_view join_rule(const mutable_buffer &out, const room &);
 	string_view membership(const mutable_buffer &out, const room &, const m::id::user &);
+	string_view display_name(const mutable_buffer &out, const room &);
 	id::user::buf any_user(const room &, const string_view &host, const string_view &memshp = "join");
 
 	id::room room_id(const mutable_buffer &, const id::room_alias &);
