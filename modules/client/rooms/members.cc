@@ -99,6 +99,16 @@ get__members(client &client,
 		room
 	};
 
+	members.for_each(membership, [&not_membership]
+	(const m::user::id &member, const m::event::idx &event_idx)
+	{
+		if(m::room::members::membership(event_idx, not_membership))
+			return true;
+
+		m::prefetch(event_idx);
+		return true;
+	});
+
 	members.for_each(membership, [&request, &chunk, &not_membership]
 	(const m::user::id &member, const m::event::idx &event_idx)
 	{
@@ -168,6 +178,13 @@ get__joined_members(client &client,
 	{
 		room
 	};
+
+	members.for_each("join", []
+	(const m::user::id &user_id, const m::event::idx &event_idx)
+	{
+		m::prefetch(event_idx);
+		return true;
+	});
 
 	members.for_each("join", [&joined, &room]
 	(const m::user::id &user_id, const m::event::idx &event_idx)
