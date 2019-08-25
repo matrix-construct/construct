@@ -182,6 +182,7 @@ init_conf_items()
 		conf_room, &fopts
 	};
 
+	state.prefetch("ircd.conf.item");
 	state.for_each("ircd.conf.item", []
 	(const m::event &event)
 	{
