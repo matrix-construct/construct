@@ -130,6 +130,9 @@ catch(const std::exception &e)
 ircd::db::init::~init()
 noexcept
 {
+	delete prefetcher;
+	prefetcher = nullptr;
+
 	if(request.active())
 		log::warning
 		{
@@ -5784,6 +5787,10 @@ ircd::db::bytes(column &column,
 	return ret[0];
 }
 
+//
+// db::prefetch
+//
+
 bool
 ircd::db::prefetch(column &column,
                    const string_view &key,
@@ -5792,18 +5799,201 @@ ircd::db::prefetch(column &column,
 	if(cached(column, key, gopts))
 		return false;
 
-	if(!request.avail())
-		return false;
-
-	request([column(column), key(std::string(key)), gopts]
-	() mutable
+	static construction instance
 	{
-		has(column, key, gopts);
+		[] { prefetcher = new struct prefetcher(); }
+	};
+
+	assert(prefetcher);
+	return (*prefetcher)(column, key, gopts);
+}
+
+//
+// db::prefetcher
+//
+
+decltype(ircd::db::prefetcher)
+ircd::db::prefetcher;
+
+ircd::db::prefetcher::prefetcher()
+:context
+{
+	"db.prefetcher",
+	128_KiB,
+	context::POST,
+	std::bind(&prefetcher::worker, this)
+}
+{
+}
+
+ircd::db::prefetcher::~prefetcher()
+noexcept
+{
+	while(!queue.empty())
+	{
+		log::warning
+		{
+			log, "Prefetcher waiting for %zu requests to clear...",
+			queue.size(),
+		};
+
+		dock.wait_for(seconds(5), [this]
+		{
+			return queue.empty();
+		});
+	}
+
+	assert(queue.empty());
+}
+
+bool
+ircd::db::prefetcher::operator()(column &c,
+                                 const string_view &key,
+                                 const gopts &opts)
+{
+	auto &d
+	{
+		static_cast<database &>(c)
+	};
+
+	const auto start
+	{
+		#ifdef IRCD_DB_DEBUG_PREFETCH
+			now<steady_point>()
+		#else
+			steady_point{}
+		#endif
+	};
+
+	queue.emplace_back(request
+	{
+		key, &d, now<steady_point>(), db::id(c)
 	});
 
-	ctx::yield();
+	++requests;
+	++request_counter;
+	dock.notify_one();
 	return true;
 }
+
+void
+ircd::db::prefetcher::worker()
+try
+{
+	while(1)
+	{
+		dock.wait([this]
+		{
+			return !queue.empty() && request_counter > handles_counter;
+		});
+
+		handle();
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "prefetcher worker: %s",
+		e.what()
+	};
+}
+
+void
+ircd::db::prefetcher::handle()
+{
+	auto handler
+	{
+		std::bind(&prefetcher::request_worker, this)
+	};
+
+	db::request(std::move(handler));
+	++handles_counter;
+}
+
+void
+ircd::db::prefetcher::request_worker()
+{
+	const scope_count request_workers
+	{
+		this->request_workers
+	};
+
+	assert(queue.size());
+	auto request
+	{
+		std::move(queue.front())
+	};
+
+	queue.pop_front();
+	request_handle(request);
+	--requests;
+}
+
+void
+ircd::db::prefetcher::request_handle(request &request)
+try
+{
+	const scope_count request_handles
+	{
+		this->request_handles
+	};
+
+	assert(request.d);
+	db::column column
+	{
+		(*request.d)[request.cid]
+	};
+
+	const bool has
+	{
+		db::has(column, request.key)
+	};
+
+	#ifdef IRCD_DB_DEBUG_PREFETCH
+	char pbuf[32];
+	log::debug
+	{
+		log, "[%s][%s] completed fetch:%b queue:%zu r:%zu rh:%zu rw:%zu rc:%zu hc:%zu in %s",
+		name(*request.d),
+		name(column),
+		has? false : true,
+		queue.size(),
+		this->requests,
+		this->request_handles,
+		this->request_workers,
+		this->request_counter,
+		this->handles_counter,
+		pretty(pbuf, now<steady_point>() - request.start, 1),
+	};
+	#endif
+}
+catch(const not_found &e)
+{
+	assert(request.d);
+	log::dwarning
+	{
+		log, "[%s][%u] :%s",
+		name(*request.d),
+		request.cid,
+		e.what(),
+	};
+}
+catch(const std::exception &e)
+{
+	assert(request.d);
+	log::error
+	{
+		log, "[%s][%u] :%s",
+		name(*request.d),
+		request.cid,
+		e.what(),
+	};
+}
+
+//
+// db::cached
+//
 
 #if 0
 bool

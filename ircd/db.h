@@ -56,6 +56,7 @@ namespace ircd::db
 {
 	struct throw_on_error;
 	struct error_to_status;
+	struct prefetcher;
 
 	constexpr const auto BLOCKING      { rocksdb::ReadTier::kReadAllTier      };
 	constexpr const auto NON_BLOCKING  { rocksdb::ReadTier::kBlockCacheTier   };
@@ -67,6 +68,7 @@ namespace ircd::db
 	extern ctx::pool::opts request_pool_opts;
 	extern ctx::pool request;
 	extern ctx::mutex write_mutex;
+	extern db::prefetcher *prefetcher;
 
 	// reflections
 	string_view reflect(const rocksdb::Status::Severity &);
@@ -133,6 +135,10 @@ namespace ircd::db
 #include "db_env_state.h"
 #include "db_database.h"
 
+//
+// util
+//
+
 struct ircd::db::throw_on_error
 {
 	throw_on_error(const rocksdb::Status & = rocksdb::Status::OK());
@@ -145,6 +151,10 @@ struct ircd::db::error_to_status
 	error_to_status(const std::system_error &);
 	error_to_status(const std::exception &);
 };
+
+//
+// txn
+//
 
 struct ircd::db::txn::handler
 :rocksdb::WriteBatch::Handler
@@ -176,4 +186,40 @@ struct ircd::db::txn::handler
 	:d{d}
 	,cb{cb}
 	{}
+};
+
+//
+// prefetcher
+//
+
+struct ircd::db::prefetcher
+{
+	struct request;
+
+	ctx::dock dock;
+	std::deque<request> queue;
+	ctx::context context;
+	size_t requests {0};
+	size_t request_handles {0};
+	size_t request_workers {0};
+	size_t request_counter {0};
+	size_t handles_counter {0};
+
+	void request_handle(request &);
+	void request_worker();
+	void handle();
+	void worker();
+
+	bool operator()(column &, const string_view &key, const gopts &);
+
+	prefetcher();
+	~prefetcher() noexcept;
+};
+
+struct ircd::db::prefetcher::request
+{
+	std::string key;
+	database *d {nullptr};
+	steady_point start;
+	uint32_t cid {0};
 };
