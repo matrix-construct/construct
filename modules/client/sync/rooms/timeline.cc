@@ -232,9 +232,10 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	// event first so we seek down first and then iterate back up. Due to
 	// an issue with rocksdb's prefix-iteration this iterator becomes
 	// toxic as soon as it becomes invalid. As a result we have to copy the
-	// event_id on the way down in case of renewing the iterator for the
+	// event_idx on the way down in case of renewing the iterator for the
 	// way back. This is not a big deal but rocksdb should fix their shit.
 	m::event::id::buf event_id;
+	m::event::idx event_idx {0};
 	m::room::messages it
 	{
 		room
@@ -250,11 +251,11 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 
 	for(; it && i <= limit; --it)
 	{
-		if(!i && it.event_idx() >= data.range.second)
+		event_idx = it.event_idx();
+		if(!i && event_idx >= data.range.second)
 			continue;
 
-		event_id = it.event_id();
-		if(it.event_idx() < data.range.first)
+		if(event_idx < data.range.first)
 			break;
 
 		++i;
@@ -262,17 +263,25 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 
 	limited = i >= limit;
 	if(i > 0 && !it)
-		it.seek(event_id);
+		it.seek(event_idx);
 
 	if(i > 0)
 		for(++it; it && i > -1; ++it, --i)
 		{
-			const m::event &event(*it);
-			const m::event::idx &event_idx(it.event_idx());
+			const m::event::idx &event_idx
+			{
+				it.event_idx()
+			};
+
+			const m::event &event
+			{
+				*it
+			};
+
 			ret |= _room_timeline_append(data, array, event_idx, event);
 		}
 
-	return event_id;
+	return m::event_id(event_idx, std::nothrow);
 }
 
 bool
