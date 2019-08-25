@@ -219,6 +219,7 @@ ircd::m::module_names
 	"m_room_history_visibility",
 	"m_room_join_rules",
 	"m_room_member",
+	"m_room_name",
 	"m_room_third_party_invite",
 	"m_room_message",
 	"m_room_power_levels",
