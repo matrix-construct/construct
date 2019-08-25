@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_SIGNAL_H
 #include <RB_INC_MAGICK_API_H
 
 namespace ircd::magick
@@ -133,6 +134,36 @@ ircd::magick::version_abi
 	}
 };
 
+namespace ircd::magick
+{
+	extern const int sig_overrides[];
+	extern const size_t sig_overrides_num;
+}
+
+decltype(ircd::magick::sig_overrides)
+ircd::magick::sig_overrides
+{
+	#ifdef HAVE_SIGNAL_H
+	SIGABRT,
+	SIGBUS,
+	SIGCHLD,
+	SIGFPE,
+	SIGHUP,
+	SIGINT,
+	SIGQUIT,
+	SIGTERM,
+	SIGSEGV,
+	SIGXCPU,
+	SIGXFSZ,
+	#endif HAVE_SIGNAL_H
+};
+
+decltype(ircd::magick::sig_overrides_num)
+ircd::magick::sig_overrides_num
+{
+	sizeof(sig_overrides) / sizeof(int)
+};
+
 //
 // init
 //
@@ -157,6 +188,12 @@ ircd::magick::init()
 			long(version_abi),
 		};
 
+	#ifdef HAVE_SIGNAL_H
+	struct sigaction sig_vector[sig_overrides_num];
+	for(size_t i(0); i < sig_overrides_num; ++i)
+		syscall(::sigaction, sig_overrides[i], nullptr, sig_vector + i);
+	#endif
+
 	InitializeMagick(nullptr);
 	MagickAllocFunctions(handle_free, handle_malloc, handle_realloc);
 	SetFatalErrorHandler(handle_fatal);
@@ -166,6 +203,11 @@ ircd::magick::init()
 	//SetLogEventMask("all"); // Pollutes stderr :/ can't fix
 	SetMonitorHandler(handle_progress);
 	SetMagickResourceLimit(ThreadsResource, 1UL);
+
+	#ifdef HAVE_SIGNAL_H
+	for(size_t i(0); i < sig_overrides_num; ++i)
+		syscall(::sigaction, sig_overrides[i], sig_vector + i, nullptr);
+	#endif
 
 	call_ready = true;
 	call_dock.notify_all();
