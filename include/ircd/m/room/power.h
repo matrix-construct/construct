@@ -16,9 +16,29 @@
 /// This interface focuses specifically on making the power levels accessible
 /// to developers for common query and manipulation operations. power_levels
 /// is a single state event in the room containing integer thresholds for
-/// privileges in the room in addition to a list of users mapping to an integer
-/// for their level. This interface hides the details of that event by
+/// privileges in the room. It also contains the list of users mapping to an
+/// integer threshold. This interface hides the details of that event by
 /// presenting single operations which can appear succinctly in IRCd code.
+///
+/// Users will typically query the operator() which will return true for allow
+/// and false for deny. All other calls are slightly lower level and require
+/// a bit more knowledge to safely use.
+///
+/// There are several modes of construction for this object, however they all
+/// funnel into gathering the same information to implement the interface.
+///
+/// The content property of the power levels event is essential. If the user
+/// does not provide this directly, or an event::idx of a power_levels event,
+/// current state will be queried. If no power_levels event exists or if it
+/// does not contain all of the default properties we will supplement the spec
+/// defaults such that this interface always returns results (note that it is
+/// still liable to throw exceptions for other reasons).
+///
+/// The mxid of the room creator should be supplemented for correct operation.
+/// If this is not provided the interface still functions correctly but some
+/// privileges reserved for room creators will not be available when querying
+/// with the creator's room_id. This may be essential functionality when no
+/// power_levels event exists.
 ///
 struct ircd::m::room::power
 {

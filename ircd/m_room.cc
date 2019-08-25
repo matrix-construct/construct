@@ -3953,6 +3953,20 @@ ircd::m::room::power::power(const json::object &power_event_content,
 {
 }
 
+/// "all who attain great power and riches make use of either force or fraud"
+///
+/// Returns bool for "allow" or "deny"
+///
+/// Provide the user invoking the power. The return value indicates whether
+/// they have the power.
+///
+/// Provide the property/event_type. There are two usages here: 1. This is a
+/// string corresponding to one of the spec top-level properties like "ban"
+/// and "redact". In this case, the type and state_key parameters to this
+/// function are not used. 2. This string is empty or "events" in which case
+/// the type parameter is used to fetch the power threshold for that type.
+/// For state events of a type, the state_key must be provided for inspection
+/// here as well.
 bool
 ircd::m::room::power::operator()(const m::user::id &user_id,
                                  const string_view &prop,
