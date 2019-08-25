@@ -60,6 +60,17 @@ ircd::m::init::backfill::init()
 		return;
 	}
 
+	if(ircd::read_only || ircd::write_avoid)
+	{
+		log::warning
+		{
+			log, "Initial synchronization of rooms from remote servers has"
+			" been disabled by the configuration to avoid write operations."
+		};
+
+		return;
+	}
+
 	assert(!worker_context);
 	worker_context.reset(new context
 	{
