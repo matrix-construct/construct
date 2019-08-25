@@ -10791,6 +10791,46 @@ console_cmd__user__sees(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__mitsein(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id_a", "user_id_b", "membership"
+	}};
+
+	const m::user user_a
+	{
+		m::user(param.at("user_id_a"))
+	};
+
+	const m::user user_b
+	{
+		m::user(param.at("user_id_b"))
+	};
+
+	const string_view membership
+	{
+		param.at("membership", "join"_sv)
+	};
+
+	const m::user::mitsein mitsein
+	{
+		user_a
+	};
+
+	mitsein.for_each(user_b, membership, [&out]
+	(const m::room &room, const string_view &membership)
+	{
+		out << room.room_id
+		    << std::endl;
+
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__user__tokens(opt &out, const string_view &line)
 {
 	const params param{line, " ",
