@@ -132,21 +132,32 @@ ircd::net::dns::resolver::resolver(answers_callback callback)
 ircd::net::dns::resolver::~resolver()
 noexcept
 {
+	log::debug
+	{
+		log, "Shutting down with %zu unfinished DNS resolutions.",
+		tags.size()
+	};
+
+	const ctx::uninterruptible::nothrow ui;
 	if(ns.is_open())
 		ns.close();
 
 	done.wait([this]
 	{
-		const bool ret(tags.empty());
-		if(!ret)
+		if(!tags.empty())
 			log::warning
 			{
 				log, "Waiting for %zu unfinished DNS resolutions",
 				tags.size()
 			};
 
-		return ret;
+		return tags.empty();
 	});
+
+	const std::lock_guard lock
+	{
+		mutex
+	};
 
 	timeout_context.terminate();
 	sendq_context.terminate();
