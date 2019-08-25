@@ -3657,6 +3657,9 @@ ircd::m::_hook_fix_state_key(const json::members &members,
 		})
 	};
 
+	if(!is_member_event)
+		return;
+
 	// Rewrite the sender if the supplied input has no hostname
 	if(valid_local_only(id::USER, member.second))
 	{
