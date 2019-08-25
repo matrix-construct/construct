@@ -134,10 +134,29 @@ ircd::magick::version_abi
 	}
 };
 
+//
+// Magick library signal handler workarounds.
+//
+// By default the graphicsmagick library installs signal handlers on
+// supporting platforms starting in InitializeMagick() for the duration
+// of the library. These handlers provide no essential functionality,
+// polluting the address space for other libraries and users of our libircd,
+// causing unexpected behavior.
+//
+// Even though the library makes a good faith attempt to not step on already-
+// installed signal handlers: it falls short by not maintaining the full
+// sigaction structure. It loses information for SA_SIGINFO handlers, etc.
+//
+// Our principal workaround involves interposing this function (thankfully
+// exported by the library). Unfortunately this doesn't work in all
+// environments so we retain a full list of signal numbers the libmagick
+// interferes with.
+
 namespace ircd::magick
 {
 	extern const int sig_overrides[];
 	extern const size_t sig_overrides_num;
+	static void sig_pre(), sig_post();
 }
 
 decltype(ircd::magick::sig_overrides)
@@ -164,6 +183,38 @@ ircd::magick::sig_overrides_num
 	sizeof(sig_overrides) / sizeof(int)
 };
 
+#ifdef HAVE_SIGNAL_H
+static struct sigaction
+ircd_magick_sig_vector[ircd::magick::sig_overrides_num];
+#endif
+
+void
+ircd::magick::sig_pre()
+{
+	#ifdef HAVE_SIGNAL_H
+	for(size_t i(0); i < sig_overrides_num; ++i)
+		syscall(::sigaction, sig_overrides[i], nullptr, ircd_magick_sig_vector + i);
+	#endif HAVE_SIGNAL_H
+}
+
+void
+ircd::magick::sig_post()
+{
+	#ifdef HAVE_SIGNAL_H
+	for(size_t i(0); i < sig_overrides_num; ++i)
+		syscall(::sigaction, sig_overrides[i], ircd_magick_sig_vector + i, nullptr);
+	#endif HAVE_SIGNAL_H
+}
+
+extern "C" void
+InitializeMagickSignalHandlers(void)
+{
+	ircd::log::debug
+	{
+		ircd::magick::log, "Bypassed InitializeMagickSignalHandlers()",
+	};
+}
+
 //
 // init
 //
@@ -188,12 +239,7 @@ ircd::magick::init()
 			long(version_abi),
 		};
 
-	#ifdef HAVE_SIGNAL_H
-	struct sigaction sig_vector[sig_overrides_num];
-	for(size_t i(0); i < sig_overrides_num; ++i)
-		syscall(::sigaction, sig_overrides[i], nullptr, sig_vector + i);
-	#endif
-
+	sig_pre();
 	InitializeMagick(nullptr);
 	MagickAllocFunctions(handle_free, handle_malloc, handle_realloc);
 	SetFatalErrorHandler(handle_fatal);
@@ -203,11 +249,7 @@ ircd::magick::init()
 	//SetLogEventMask("all"); // Pollutes stderr :/ can't fix
 	SetMonitorHandler(handle_progress);
 	SetMagickResourceLimit(ThreadsResource, 1UL);
-
-	#ifdef HAVE_SIGNAL_H
-	for(size_t i(0); i < sig_overrides_num; ++i)
-		syscall(::sigaction, sig_overrides[i], sig_vector + i, nullptr);
-	#endif
+	sig_post();
 
 	call_ready = true;
 	call_dock.notify_all();
