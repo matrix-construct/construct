@@ -408,14 +408,14 @@ ircd::m::vm::conform_check_event_id
 			if(!event::id::v3::is(event.event_id))
 				throw error
 				{
-					fault::GENERAL, "Event ID %s is not sufficient for version 3 room.",
+					fault::INVALID, "Event ID %s is not sufficient for version 3 room.",
 					string_view{event.event_id}
 				};
 
 		if(!event::id::v4::is(event.event_id))
 			throw error
 			{
-				fault::GENERAL, "Event ID %s is not sufficient for version %s room",
+				fault::INVALID, "Event ID %s is not sufficient for version %s room",
 				string_view{event.event_id},
 				eval.room_version,
 			};
@@ -438,7 +438,7 @@ ircd::m::vm::conform_check_origin
 		if(unlikely(eval.copts && !my_host(at<"origin"_>(event))))
 			throw error
 			{
-				fault::GENERAL, "Issuing event for origin: %s", at<"origin"_>(event)
+				fault::INVALID, "Issuing event for origin: %s", at<"origin"_>(event)
 			};
 	}
 };
