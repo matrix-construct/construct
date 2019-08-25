@@ -251,6 +251,7 @@ ircd::m::room::state::prefetch(const state &state,
 		ret += m::prefetch(event_idx, fopts);
 	}});
 
+	ctx::yield();
 	return ret;
 }
 
