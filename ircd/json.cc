@@ -1784,27 +1784,21 @@ ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const iov &iov)
 {
-	const ctx::critical_assertion ca;
-	thread_local const member *m[iov::max_size];
-	if(unlikely(size_t(iov.size()) > iov.max_size))
-		throw iov::oversize
+	static const auto addressof //TODO: XXX
+	{
+		[](const member &m) noexcept
 		{
-			"IOV has %zd members but maximum is %zu",
-			iov.size(),
-			iov.max_size
-		};
+			return std::addressof(m);
+		}
+	};
 
-	std::transform(std::begin(iov), std::end(iov), m, []
-	(const member &m)
+	static const auto less_member
 	{
-		return &m;
-	});
-
-	std::sort(m, m + iov.size(), []
-	(const member *const &a, const member *const &b)
-	{
-		return *a < *b;
-	});
+		[](const member *const &a, const member *const &b) noexcept
+		{
+			return *a < *b;
+		}
+	};
 
 	static const auto print_member
 	{
@@ -1815,7 +1809,19 @@ ircd::json::stringify(mutable_buffer &buf,
 		}
 	};
 
-	char *const start{begin(buf)};
+	thread_local const member *m[iov::max_size];
+	const ctx::critical_assertion ca;
+	if(unlikely(size_t(iov.size()) > iov.max_size))
+		throw iov::oversize
+		{
+			"IOV has %zd members but maximum is %zu",
+			iov.size(),
+			iov.max_size
+		};
+
+	const auto start(begin(buf));
+	std::transform(std::begin(iov), std::end(iov), m, addressof);
+	std::sort(m, m + iov.size(), less_member);
 	printer(buf, printer.object_begin);
 	printer::list_protocol(buf, m, m + iov.size(), print_member);
 	printer(buf, printer.object_end);

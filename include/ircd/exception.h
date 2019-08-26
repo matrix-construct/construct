@@ -89,9 +89,10 @@ struct ircd::exception
 		512UL
 	};
 
-  protected:
 	IRCD_OVERLOAD(generate_skip)
+	IRCD_OVERLOAD(hide_name)
 
+  protected:
 	char buf[BUFSIZE];
 
 	ssize_t generate(const char *const &name, const string_view &fmt, const va_rtti &ap) noexcept;
@@ -155,6 +156,20 @@ struct ircd::terminate
 struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
+    template<class... args>                                                   \
+    name(hide_name_t, const string_view &fmt, args&&... ap) noexcept          \
+    :parent{generate_skip}                                                    \
+    {                                                                         \
+        generate(fmt, ircd::va_rtti{std::forward<args>(ap)...});              \
+    }                                                                         \
+                                                                              \
+    template<class... args>                                                   \
+    name(hide_name_t, const string_view &fmt = " ") noexcept                  \
+    :parent{generate_skip}                                                    \
+    {                                                                         \
+        generate(fmt, ircd::va_rtti{});                                       \
+    }                                                                         \
+                                                                              \
     template<class... args>                                                   \
     name(const string_view &fmt, args&&... ap) noexcept                       \
     :parent{generate_skip}                                                    \
