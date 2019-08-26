@@ -227,6 +227,7 @@ ircd::m::module_names
 	"m_room_redaction",
 	"m_room_bootstrap",
 	"m_room_join",
+	"m_room_leave",
 	"m_events",
 	"m_rooms",
 	"m_rooms_summary",

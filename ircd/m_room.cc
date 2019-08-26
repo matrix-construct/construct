@@ -384,7 +384,7 @@ ircd::m::leave(const room &room,
 
 	static mods::import<prototype> function
 	{
-		"client_rooms", "ircd::m::leave"
+		"m_room_leave", "ircd::m::leave"
 	};
 
 	return function(room, user_id);
