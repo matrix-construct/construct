@@ -50,35 +50,20 @@ ircd::m::fetch::requests_max
 	{ "default",  256L                        },
 };
 
-decltype(ircd::m::fetch::hook)
-ircd::m::fetch::hook
-{
-	hook_handle,
-	{
-		{ "_site",  "vm.fetch" }
-	}
-};
-
 decltype(ircd::m::fetch::request_context)
 ircd::m::fetch::request_context
 {
 	"m.fetch.req", 512_KiB, &request_worker, context::POST
 };
 
-decltype(ircd::m::fetch::eval_context)
-ircd::m::fetch::eval_context
-{
-	"m.fetch.eval", 512_KiB, &eval_worker, context::POST
-};
-
-decltype(ircd::m::fetch::complete)
-ircd::m::fetch::complete;
-
 decltype(ircd::m::fetch::rooms)
 ircd::m::fetch::rooms;
 
 decltype(ircd::m::fetch::requests)
 ircd::m::fetch::requests;
+
+decltype(ircd::m::fetch::requests_mutex)
+ircd::m::fetch::requests_mutex;
 
 decltype(ircd::m::fetch::dock)
 ircd::m::fetch::dock;
@@ -95,246 +80,11 @@ ircd::m::fetch::init()
 void
 ircd::m::fetch::fini()
 {
-	clear();
 	request_context.terminate();
-	eval_context.terminate();
 	request_context.join();
-	eval_context.join();
 	requests.clear();
-	complete.clear();
 
 	assert(requests.empty());
-	assert(complete.empty());
-}
-
-//
-// fetch_phase
-//
-
-void
-ircd::m::fetch::hook_handle(const event &event,
-                            vm::eval &eval)
-try
-{
-	assert(eval.opts);
-	assert(eval.opts->fetch);
-	const auto &opts{*eval.opts};
-
-	const auto &type
-	{
-		at<"type"_>(event)
-	};
-
-	if(type == "m.room.create")
-		return;
-
-	const m::event::id &event_id
-	{
-		event.event_id
-	};
-
-	const m::room::id &room_id
-	{
-		at<"room_id"_>(event)
-	};
-
-	// Can't construct m::room with the event_id argument because it
-	// won't be found (we're evaluating that event here!) so we just set
-	// the member manually to make further use of the room struct.
-	m::room room{room_id};
-	room.event_id = event_id;
-
-	evaltab tab;
-	if(opts.fetch_auth_check)
-		hook_handle_auth(event, eval, tab, room);
-
-	if(opts.fetch_prev_check)
-		hook_handle_prev(event, eval, tab, room);
-
-	log::debug
-	{
-		log, "%s %s ac:%zu ae:%zu pc:%zu pe:%zu pf:%zu",
-		loghead(eval),
-		json::get<"room_id"_>(event),
-		tab.auth_count,
-		tab.auth_exists,
-		tab.prev_count,
-		tab.prev_exists,
-		tab.prev_fetched,
-	};
-}
-catch(const std::exception &e)
-{
-	log::derror
-	{
-		log, "%s :%s",
-		loghead(eval),
-		e.what(),
-	};
-
-	throw;
-}
-
-void
-ircd::m::fetch::hook_handle_auth(const event &event,
-                                 vm::eval &eval,
-                                 evaltab &tab,
-                                 const room &room)
-
-{
-	// Count how many of the auth_events provided exist locally.
-	const auto &opts{*eval.opts};
-	const event::prev prev{event};
-	tab.auth_count = prev.auth_events_count();
-	for(size_t i(0); i < tab.auth_count; ++i)
-	{
-		const auto &auth_id
-		{
-			prev.auth_event(i)
-		};
-
-		tab.auth_exists += bool(m::exists(auth_id));
-	}
-
-	// We are satisfied at this point if all auth_events for this event exist,
-	// as those events have themselves been successfully evaluated and so forth.
-	assert(tab.auth_exists <= tab.auth_count);
-	if(tab.auth_exists == tab.auth_count)
-		return;
-
-	// At this point we are missing one or more auth_events for this event.
-	log::dwarning
-	{
-		log, "%s auth_events:%zu hit:%zu miss:%zu",
-		loghead(eval),
-		tab.auth_count,
-		tab.auth_exists,
-		tab.auth_count - tab.auth_exists,
-	};
-
-	// We need to figure out where best to sling a request to fetch these
-	// missing auth_events. We prefer the remote client conducting this eval
-	// with their /federation/send/ request which we stored in the opts.
-	const string_view &remote
-	{
-		opts.node_id?
-			opts.node_id:
-		!my_host(json::get<"origin"_>(event))?
-			string_view(json::get<"origin"_>(event)):
-		!my_host(room.room_id.host())?                  //TODO: XXX
-			room.room_id.host():
-			string_view{}
-	};
-
-	// Bail out here if we can't or won't attempt fetching auth_events.
-	if(!opts.fetch_auth || !bool(m::fetch::enable) || !remote)
-		throw vm::error
-		{
-			vm::fault::EVENT, "Failed to fetch auth_events for %s in %s",
-			string_view{event.event_id},
-			json::get<"room_id"_>(event)
-		};
-
-	// This is a blocking call to recursively fetch and evaluate the auth_chain
-	// for this event. Upon return all of the auth_events for this event will
-	// have themselves been fetched and auth'ed recursively or throws.
-	auth_chain(room, remote);
-	tab.auth_exists = tab.auth_count;
-}
-
-void
-ircd::m::fetch::hook_handle_prev(const event &event,
-                                 vm::eval &eval,
-                                 evaltab &tab,
-                                 const room &room)
-{
-	const auto &opts{*eval.opts};
-	const event::prev prev{event};
-	tab.prev_count = prev.prev_events_count();
-	for(size_t i(0); i < tab.prev_count; ++i)
-	{
-		const auto &prev_id
-		{
-			prev.prev_event(i)
-		};
-
-		if(m::exists(prev_id))
-		{
-			++tab.prev_exists;
-			continue;
-		}
-
-		const bool can_fetch
-		{
-			opts.fetch_prev && bool(m::fetch::enable)
-		};
-
-		const bool fetching
-		{
-			can_fetch && start(room.room_id, prev_id)
-		};
-
-		tab.prev_fetching += fetching;
-	}
-
-	// If we have all of the referenced prev_events we are satisfied here.
-	assert(tab.prev_exists <= tab.prev_count);
-	if(tab.prev_exists == tab.prev_count)
-		return;
-
-	// At this point one or more prev_events are missing; the fetches were
-	// launched asynchronously if the options allowed for it.
-	log::dwarning
-	{
-		log, "%s prev_events:%zu hit:%zu miss:%zu fetching:%zu",
-		loghead(eval),
-		tab.prev_count,
-		tab.prev_exists,
-		tab.prev_count - tab.prev_exists,
-		tab.prev_fetching,
-	};
-
-	// If the options want to wait for the fetch+evals of the prev_events to occur
-	// before we continue processing this event further, we block in here.
-	const bool &prev_wait{opts.fetch_prev_wait};
-	if(prev_wait && tab.prev_fetching) for(size_t i(0); i < tab.prev_count; ++i)
-	{
-		const auto &prev_id
-		{
-			prev.prev_event(i)
-		};
-
-		dock.wait([&prev_id]
-		{
-			return !requests.count(prev_id);
-		});
-
-		tab.prev_fetched += m::exists(prev_id);
-	}
-
-	// Aborts this event if the options want us to guarantee at least one
-	// prev_event was fetched and evaluated for this event. This is generally
-	// used in conjunction with the fetch_prev_wait option to be effective.
-	const bool &prev_any{opts.fetch_prev_any};
-	if(prev_any && tab.prev_exists + tab.prev_fetched == 0)
-		throw vm::error
-		{
-			vm::fault::EVENT, "Failed to fetch any prev_events for %s in %s",
-			string_view{event.event_id},
-			json::get<"room_id"_>(event)
-		};
-
-	// Aborts this event if the options want us to guarantee ALL of the
-	// prev_events were fetched and evaluated for this event.
-	const bool &prev_all{opts.fetch_prev_all};
-	if(prev_all && tab.prev_exists + tab.prev_fetched < tab.prev_count)
-		throw vm::error
-		{
-			vm::fault::EVENT, "Failed to fetch all %zu required prev_events for %s in %s",
-			tab.prev_count,
-			string_view{event.event_id},
-			json::get<"room_id"_>(event)
-		};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -411,71 +161,7 @@ catch(const std::exception &e)
 	throw;
 }
 
-size_t
-IRCD_MODULE_EXPORT
-ircd::m::fetch::clear()
-{
-	size_t ret{0};
-	for_each([&ret](auto &request)
-	{
-		ret += cancel(request);
-		return true;
-	});
-
-	return ret;
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::fetch::cancel(request &request)
-{
-	bool ret{false};
-	if(request.finished == -1)
-		return ret;
-
-	if(request.finished == 0)
-	{
-		assert(request.started);
-		ret |= server::cancel(request);
-	}
-
-	request.finished = -1;
-	return ret;
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::fetch::start(const m::room &room)
-{
-	if(room.event_id)
-		return start(room.room_id, room.event_id);
-
-	feds::opts opts;
-	opts.op = feds::op::head;
-	opts.room_id = room.room_id;
-	opts.closure_errors = false;
-	feds::execute
-	{
-		opts, [](const auto &result)
-		{
-			const json::object &event
-			{
-				result.object["event"]
-			};
-
-			return m::for_each(event::prev(event), [&result]
-			(const event::id &event_id)
-			{
-				start(result.request->room_id, event_id);
-				return true;
-			});
-		}
-	};
-
-	return true;
-}
-
-bool
+ircd::ctx::future<ircd::m::fetch::result>
 IRCD_MODULE_EXPORT
 ircd::m::fetch::start(const m::room::id &room_id,
                       const m::event::id &event_id)
@@ -495,8 +181,10 @@ ircd::m::fetch::start(const m::room::id &room_id,
 			reflect(run::level)
 		};
 
-	if(count() > size_t(requests_max))
-		return false;
+	dock.wait([]
+	{
+		return count() < size_t(requests_max);
+	});
 
 	return submit(event_id, room_id);
 }
@@ -532,46 +220,43 @@ ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 //
 
 template<class... args>
-bool
+ircd::ctx::future<ircd::m::fetch::result>
 ircd::m::fetch::submit(const m::event::id &event_id,
                        const m::room::id &room_id,
                        const size_t &bufsz,
                        args&&... a)
-try
 {
 	assert(room_id && event_id);
+	std::unique_lock lock
+	{
+		requests_mutex
+	};
+
+	const scope_notify dock
+	{
+		fetch::dock
+	};
+
 	auto it(requests.lower_bound(string_view(event_id)));
 	if(it != end(requests) && it->event_id == event_id)
 	{
 		assert(it->room_id == room_id);
-		return false;
+		return ctx::future<result>{}; //TODO: shared_future.
 	}
 
 	it = requests.emplace_hint(it, room_id, event_id, bufsz, std::forward<args>(a)...);
-	auto &request(const_cast<fetch::request &>(*it)); try
+	auto &request
 	{
-		while(!start(request))
-			request.origin = {};
-	}
-	catch(const std::exception &e)
-	{
-		fetch::cancel(request);
-		throw;
-	}
-
-	return true;
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "Failed to start any fetch for %s in %s :%s",
-		string_view{event_id},
-		string_view{room_id},
-		e.what(),
+		const_cast<fetch::request &>(*it)
 	};
 
-	return false;
+	ctx::future<result> ret
+	{
+		request.promise
+	};
+
+	start(request);
+	return ret;
 }
 
 //
@@ -587,17 +272,11 @@ try
 		dock.wait([]
 		{
 			return std::any_of(begin(requests), end(requests), []
-			(const request &r)
+			(const auto &request)
 			{
-				return r.finished <= 0;
+				return request.started || request.finished;
 			});
 		});
-
-		if(request_cleanup())
-			continue;
-
-		if(requests.empty())
-			continue;
 
 		request_handle();
 	}
@@ -613,57 +292,30 @@ catch(const std::exception &e)
 	throw;
 }
 
-size_t
-ircd::m::fetch::request_cleanup()
-{
-	// assert that there is no race starting from here.
-	const ctx::critical_assertion ca;
-
-	size_t ret(0);
-	auto it(begin(requests));
-	while(it != end(requests))
-	{
-		if(it->finished == -1)
-		{
-			it = requests.erase(it);
-			++ret;
-		}
-		else ++it;
-	}
-
-	return ret;
-}
-
 void
 ircd::m::fetch::request_handle()
 {
+	std::unique_lock lock
+	{
+		requests_mutex
+	};
+
+	if(requests.empty())
+		return;
+
 	auto next
 	{
 		ctx::when_any(requests.begin(), requests.end())
 	};
 
-	if(!next.wait(seconds(timeout), std::nothrow))
+	bool timeout{true};
 	{
-		const auto now(ircd::time());
-		for(auto it(begin(requests)); it != end(requests); ++it)
-		{
-			auto &request(const_cast<fetch::request &>(*it));
-			if(request.finished < 0 || request.last == std::numeric_limits<time_t>::max())
-				continue;
+		const unlock_guard unlock{lock};
+		timeout = !next.wait(seconds(timeout), std::nothrow);
+	};
 
-			if(request.finished == 0 && timedout(request, now))
-			{
-				retry(request);
-				continue;
-			}
-
-			if(request.finished > 0 && timedout(request, now))
-			{
-				request.finished = -1;
-				continue;
-			}
-		}
-
+	if(timeout)
+	{
 		request_cleanup();
 		return;
 	}
@@ -682,147 +334,56 @@ ircd::m::fetch::request_handle()
 
 void
 ircd::m::fetch::request_handle(const decltype(requests)::iterator &it)
-try
 {
 	auto &request
 	{
 		const_cast<fetch::request &>(*it)
 	};
-
-	if(!request.started || !request.last || request.finished < 0)
-		return;
 
 	if(!request.finished && !handle(request))
 		return;
 
-	assert(request.finished);
-	if(request.eptr)
-	{
-		request.finished = -1;
-		std::rethrow_exception(request.eptr);
-		__builtin_unreachable();
-	}
-
-	assert(!request.eptr);
-	request.last = std::numeric_limits<time_t>::max();
-	complete.emplace_back(it);
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "request %s in %s :%s",
-		string_view{it->event_id},
-		string_view{it->room_id},
-		e.what()
-	};
+	requests.erase(it);
 }
 
-//
-// eval worker
-//
-
-void
-ircd::m::fetch::eval_worker()
-try
+size_t
+ircd::m::fetch::request_cleanup()
 {
-	while(1)
+	size_t ret(0);
+	const auto now(ircd::time());
+	for(auto it(begin(requests)); it != end(requests); ++it)
 	{
-		dock.wait([]
+		auto &request
 		{
-			return !complete.empty();
-		});
+			const_cast<fetch::request &>(*it)
+		};
 
-		eval_handle();
+		if(!request.started)
+		{
+			start(request);
+			continue;
+		}
+
+		if(!request.finished && timedout(request, now))
+			retry(request);
 	}
-}
-catch(const std::exception &e)
-{
-	log::critical
+
+	for(auto it(begin(requests)); it != end(requests); )
 	{
-		log, "fetch eval worker :%s",
-		e.what()
-	};
+		auto &request
+		{
+			const_cast<fetch::request &>(*it)
+		};
 
-	throw;
-}
+		if(request.finished)
+		{
+			it = requests.erase(it);
+			++ret;
+		}
+		else ++it;
+	}
 
-void
-ircd::m::fetch::eval_handle()
-{
-	assert(!complete.empty());
-	const unwind pop{[]
-	{
-		assert(!complete.empty());
-		complete.pop_front();
-	}};
-
-	const auto it
-	{
-		complete.front()
-	};
-
-	eval_handle(it);
-}
-
-void
-ircd::m::fetch::eval_handle(const decltype(requests)::iterator &it)
-try
-{
-	auto &request
-	{
-		const_cast<fetch::request &>(*it)
-	};
-
-	const unwind free{[&request]
-	{
-		request.finished = -1;
-		dock.notify_all();
-	}};
-
-	assert(!request.eptr);
-	log::debug
-	{
-		log, "eval handling %s in %s (r:%zu c:%zu)",
-		string_view{request.event_id},
-		string_view{request.room_id},
-		requests.size(),
-		complete.size(),
-	};
-
-	const m::event event
-	{
-		json::object{request}, request.event_id
-	};
-
-	m::vm::opts opts;
-	opts.infolog_accept = true;
-	opts.fetch_prev = false;
-	opts.fetch_state_wait = false;
-	opts.fetch_auth_wait = false;
-	opts.fetch_prev_wait = false;
-	m::vm::eval
-	{
-		event, opts
-	};
-}
-catch(const std::exception &e)
-{
-	auto &request
-	{
-		const_cast<fetch::request &>(*it)
-	};
-
-	if(!request.eptr)
-		request.eptr = std::current_exception();
-
-	log::error
-	{
-		log, "fetch eval %s in %s :%s",
-		string_view{request.event_id},
-		string_view{request.room_id},
-		e.what()
-	};
+	return ret;
 }
 
 //
@@ -830,15 +391,40 @@ catch(const std::exception &e)
 //
 
 bool
-ircd::m::fetch::start(request &request)
+ircd::m::fetch::start(request &request) try
 {
 	m::v1::event::opts opts;
 	opts.dynamic = true;
-	if(!request.origin)
-		select_random_origin(request);
 
-	opts.remote = request.origin;
-	return start(request, opts);
+	assert(request.finished == 0);
+	if(!request.started)
+		request.started = ircd::time();
+
+	if(!request.origin)
+	{
+		select_random_origin(request);
+		opts.remote = request.origin;
+	}
+
+	while(request.origin)
+	{
+		if(start(request, opts))
+			return true;
+
+		select_random_origin(request);
+		opts.remote = request.origin;
+	}
+
+	assert(!request.finished);
+	finish(request);
+	return false;
+}
+catch(...)
+{
+	assert(!request.finished);
+	request.eptr = std::current_exception();
+	finish(request);
+	return false;
 }
 
 bool
@@ -865,7 +451,7 @@ try
 
 	log::debug
 	{
-		log, "Started request for %s in %s from '%s'",
+		log, "Starting request for %s in %s from '%s'",
 		string_view{request.event_id},
 		string_view{request.room_id},
 		string_view{request.origin},
@@ -879,7 +465,7 @@ catch(const http::error &e)
 	log::logf
 	{
 		log, run::level == run::level::QUIT? log::DERROR: log::ERROR,
-		"Failed to start request for %s in %s to '%s' :%s %s",
+		"Starting request for %s in %s to '%s' :%s %s",
 		string_view{request.event_id},
 		string_view{request.room_id},
 		string_view{request.origin},
@@ -894,7 +480,7 @@ catch(const std::exception &e)
 	log::logf
 	{
 		log, run::level == run::level::QUIT? log::DERROR: log::ERROR,
-		"Failed to start request for %s in %s to '%s' :%s",
+		"Starting request for %s in %s to '%s' :%s",
 		string_view{request.event_id},
 		string_view{request.room_id},
 		string_view{request.origin},
@@ -975,7 +561,7 @@ ircd::m::fetch::handle(request &request)
 
 		log::debug
 		{
-			log, "%u %s for %s in %s from '%s'",
+			log, "Received %u %s good %s in %s from '%s'",
 			uint(code),
 			status(code),
 			string_view{request.event_id},
@@ -989,7 +575,7 @@ ircd::m::fetch::handle(request &request)
 
 		log::derror
 		{
-			log, "Failure for %s in %s from '%s' :%s",
+			log, "Erroneous remote for %s in %s from '%s' :%s",
 			string_view{request.event_id},
 			string_view{request.room_id},
 			string_view{request.origin},
@@ -1011,6 +597,7 @@ try
 {
 	assert(!request.finished);
 	assert(request.started && request.last);
+
 	server::cancel(request);
 	request.eptr = std::exception_ptr{};
 	request.origin = {};
@@ -1025,8 +612,34 @@ catch(...)
 void
 ircd::m::fetch::finish(request &request)
 {
-	assert(request.started);
 	request.finished = ircd::time();
+
+	#if 0
+	log::logf
+	{
+		log, request.eptr? log::DERROR: log::DEBUG,
+		"%s in %s started:%ld finished:%d attempted:%zu abandon:%b %S%s",
+		string_view{request.event_id},
+		string_view{request.room_id},
+		request.started,
+		request.finished,
+		request.attempted.size(),
+		!request.promise,
+		request.eptr? " :" : "",
+		what(request.eptr),
+	};
+	#endif
+
+	if(!request.promise)
+		return;
+
+	if(request.eptr)
+	{
+		request.promise.set_exception(std::move(request.eptr));
+		return;
+	}
+
+	request.promise.set_value(result{request});
 }
 
 bool
@@ -1071,5 +684,21 @@ ircd::m::fetch::request::request(const m::room::id &room_id,
 :room_id{room_id}
 ,event_id{event_id}
 ,buf{bufsz}
+{
+}
+
+//
+// result::result
+//
+
+ircd::m::fetch::result::result(request &request)
+:m::event
+{
+	static_cast<json::object>(request)["event"]
+}
+,buf
+{
+	std::move(request.in.dynamic)
+}
 {
 }

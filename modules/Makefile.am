@@ -98,7 +98,6 @@ endif IMAGEMAGICK
 
 m_moduledir = @moduledir@
 
-m_vm_la_SOURCES = m_vm.cc
 m_noop_la_SOURCES = m_noop.cc
 m_event_la_SOURCES = m_event.cc
 m_event_append_la_SOURCES = m_event_append.cc
@@ -154,9 +153,10 @@ m_init_bootstrap_la_SOURCES = m_init_bootstrap.cc
 m_init_backfill_la_SOURCES = m_init_backfill.cc
 m_listen_la_SOURCES = m_listen.cc
 m_users_la_SOURCES = m_users.cc
+m_vm_la_SOURCES = m_vm.cc
+m_vm_fetch_la_SOURCES = m_vm_fetch.cc
 
 m_module_LTLIBRARIES = \
-	m_vm.la \
 	m_noop.la \
 	m_event.la \
 	m_event_append.la \
@@ -212,6 +212,8 @@ m_module_LTLIBRARIES = \
 	m_init_backfill.la \
 	m_listen.la \
 	m_users.la \
+	m_vm.la \
+	m_vm_fetch.la \
 	###
 
 ###############################################################################

@@ -17,6 +17,7 @@
 ///
 namespace ircd::m::fetch
 {
+	struct result;
 	struct request;
 
 	// Observers
@@ -24,15 +25,21 @@ namespace ircd::m::fetch
 	bool exists(const m::event::id &);
 	size_t count();
 
-	// Control panel
-	bool start(const m::room::id &, const m::event::id &);
-	bool start(const room &);
-	bool cancel(request &);
-	size_t clear();
+	// Primary operations
+	ctx::future<result> start(const m::room::id &, const m::event::id &);
 
 	// Composed operations
 	void auth_chain(const room &, const net::hostport &);
 }
+
+struct ircd::m::fetch::result
+:m::event
+{
+	unique_buffer<mutable_buffer> buf;
+
+	result(request &);
+	result() = default;
+};
 
 /// Fetch entity state. This is not meant for construction by users of this
 /// interface.
@@ -43,6 +50,7 @@ struct ircd::m::fetch::request
 
 	m::room::id::buf room_id;
 	m::event::id::buf event_id;
+	ctx::promise<result> promise;
 	unique_buffer<mutable_buffer> buf;
 	std::set<std::string, std::less<>> attempted;
 	string_view origin;

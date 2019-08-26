@@ -332,6 +332,7 @@ ircd::m::module_names
 	"web_root",
 	"web_hook",
 	"m_listen",
+	"m_vm_fetch",
 	"m_vm",
 	"m_init_backfill",
 	"stats",

@@ -222,7 +222,17 @@ try
 				return true;
 			}
 
-			fetching += fetch::start(room_id, event_id);
+			auto future
+			{
+				fetch::start(room_id, event_id)
+			};
+
+			m::fetch::result result
+			{
+				future.get()
+			};
+
+			//TODO: XXX
 			return true;
 		});
 

@@ -11,20 +11,15 @@
 // Fetch unit state
 namespace ircd::m::fetch
 {
-	struct request; // m/fetch.h
-	struct evaltab;
-
 	static bool operator<(const request &a, const request &b) noexcept;
 	static bool operator<(const request &a, const string_view &b) noexcept;
 	static bool operator<(const string_view &a, const request &b) noexcept;
 
 	extern ctx::dock dock;
+	extern ctx::mutex requests_mutex;
 	extern std::set<request, std::less<>> requests;
 	extern std::multimap<room::id, request *> rooms;
-	extern std::deque<decltype(requests)::iterator> complete;
-	extern ctx::context eval_context;
 	extern ctx::context request_context;
-	extern hookfn<vm::eval &> hook;
 	extern conf::item<size_t> requests_max;
 	extern conf::item<seconds> auth_timeout;
 	extern conf::item<seconds> timeout;
@@ -40,30 +35,18 @@ namespace ircd::m::fetch
 	static bool start(request &);
 	static bool handle(request &);
 
-	static void eval_handle(const decltype(requests)::iterator &);
-	static void eval_handle();
-	static void eval_worker();
 	static void request_handle(const decltype(requests)::iterator &);
 	static void request_handle();
 	static size_t request_cleanup();
 	static void request_worker();
 
-	template<class... args> static bool submit(const event::id &, const room::id &, const size_t &bufsz = 8_KiB, args&&...);
-
-	static void hook_handle_prev(const event &, vm::eval &, evaltab &, const room &);
-	static void hook_handle_auth(const event &, vm::eval &, evaltab &, const room &);
-	static void hook_handle(const event &, vm::eval &);
+	template<class... args>
+	static ctx::future<result>
+	submit(const event::id &,
+	       const room::id &,
+	       const size_t &bufsz = 8_KiB,
+	       args&&...);
 
 	static void init();
 	static void fini();
 }
-
-struct ircd::m::fetch::evaltab
-{
-	size_t auth_count {0};
-	size_t auth_exists {0};
-	size_t prev_count {0};
-	size_t prev_exists {0};
-	size_t prev_fetching {0};
-	size_t prev_fetched {0};
-};

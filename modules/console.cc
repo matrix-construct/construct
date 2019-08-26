@@ -6978,7 +6978,7 @@ console_cmd__event__horizon__flush(opt &out, const string_view &line)
 		if(!room_id)
 			return true;
 
-		m::fetch::start(room_id, event_id);
+		//m::fetch::start(room_id, event_id);
 		++count;
 
 		//TODO: XXX
@@ -13767,33 +13767,30 @@ console_cmd__fetch(opt &out, const string_view &line)
 
 	const m::event::id &event_id
 	{
-		param["event_id"]?
-			m::event::id{param["event_id"]}:
-			m::event::id{}
+		m::event::id{param.at("event_id")}
 	};
 
-	if(!event_id)
+	auto future
 	{
-		if(!m::fetch::start(room_id))
-		{
-			out << "failed to start for "
-			    << room_id
-			    << std::endl;
+		m::fetch::start(room_id, event_id)
+	};
 
-			return true;
-		}
-	}
-	else if(!m::fetch::start(room_id, event_id))
+	const auto result
 	{
-		out << "failed to start for "
-		    << event_id << " in "
-		    << room_id
-		    << std::endl;
+		future.get()
+	};
 
-		return true;
-	}
+	out << "Received "
+	    << event_id << " in "
+	    << room_id
+	    << std::endl
+	    << std::endl
+	    ;
 
-	out << "starting..." << std::endl;
+	out << m::event{result}
+	    << std::endl
+	    ;
+
 	return true;
 }
 
@@ -13817,18 +13814,6 @@ console_cmd__fetch__list(opt &out, const string_view &line)
 		return true;
 	});
 
-	return true;
-}
-
-bool
-console_cmd__fetch__clear(opt &out, const string_view &line)
-{
-	const size_t cleared
-	{
-		m::fetch::clear()
-	};
-
-	out << "Cleared " << cleared << std::endl;
 	return true;
 }
 
