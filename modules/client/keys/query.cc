@@ -10,11 +10,14 @@
 
 using namespace ircd;
 
-using user_devices_map = std::map<m::user::id, json::array>;
-using host_users_map = std::map<string_view, user_devices_map>;
-using query_map = std::map<string_view, m::v1::user::keys::query>;
-using failure_map = std::map<string_view, std::exception_ptr, std::less<>>;
-using buffer_list = std::vector<unique_buffer<mutable_buffer>>;
+namespace
+{
+	using user_devices_map = std::map<m::user::id, json::array>;
+	using host_users_map = std::map<string_view, user_devices_map>;
+	using query_map = std::map<string_view, m::v1::user::keys::query>;
+	using failure_map = std::map<string_view, std::exception_ptr, std::less<>>;
+	using buffer_list = std::vector<unique_buffer<mutable_buffer>>;
+}
 
 static host_users_map
 parse_user_request(const json::object &device_keys);
