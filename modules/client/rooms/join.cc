@@ -10,22 +10,21 @@
 
 #include "rooms.h"
 
-using namespace ircd::m;
 using namespace ircd;
 
 resource::response
 post__join(client &client,
            const resource::request &request,
-           const room::id &room_id)
+           const m::room::id &room_id)
 {
-	const string_view &third_party_signed
+	const json::string &third_party_signed
 	{
-		unquote(request["third_party_signed"])
+		request["third_party_signed"]
 	};
 
-	const string_view &server_name
+	const json::string &server_name
 	{
-		unquote(request["server_name"])
+		request["server_name"]
 	};
 
 	const m::room room
