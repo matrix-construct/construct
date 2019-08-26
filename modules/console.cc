@@ -224,7 +224,7 @@ try
 		_console_command(opt, line)
 	};
 
-	if(ret <= 0)
+	if(ret < 0)
 		if(console_cmd__help(opt, line))
 			return -2;
 
