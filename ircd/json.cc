@@ -2322,7 +2322,7 @@ try
 		m.at(i) = *it;
 
 	std::sort(begin(m), begin(m) + i, []
-	(const object::member &a, const object::member &b)
+	(const object::member &a, const object::member &b) noexcept
 	{
 		return a.first < b.first;
 	});
@@ -3063,22 +3063,13 @@ try
 	using member_arrays = std::array<member_array, object::max_recursion_depth>;
 	static_assert(sizeof(member_arrays) == 256_KiB);
 
-	thread_local member_arrays ma;
-	thread_local size_t mctr;
-	const size_t mc{mctr};
-	const scope_count _mc{mctr};
-	assert(mc < ma.size());
-
-	size_t i(0);
-	auto &m{ma.at(mc)};
-	for(auto it(b); it != e; ++it)
-		m.at(i++) = it;
-
-	std::sort(begin(m), begin(m) + i, []
-	(const member *const &a, const member *const &b)
+	static const auto less_member
 	{
-		return *a < *b;
-	});
+		[](const member *const &a, const member *const &b) noexcept
+		{
+			return *a < *b;
+		}
+	};
 
 	static const auto print_member
 	{
@@ -3091,7 +3082,19 @@ try
 		}
 	};
 
+	thread_local member_arrays ma;
+	thread_local size_t mctr;
+	const size_t mc{mctr};
+	const scope_count _mc{mctr};
+	assert(mc < ma.size());
+
+	size_t i(0);
+	auto &m{ma.at(mc)};
+	for(auto it(b); it != e; ++it)
+		m.at(i++) = it;
+
 	char *const start{begin(buf)};
+	std::sort(begin(m), begin(m) + i, less_member);
 	printer(buf, printer.object_begin);
 	printer::list_protocol(buf, m.data(), m.data() + i, print_member);
 	printer(buf, printer.object_end);
