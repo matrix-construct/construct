@@ -165,7 +165,11 @@ ircd::net::dns::handle_resolve_SRV_ipport(const hostport &hp,
 	if(error)
 	{
 		static const ipport empty;
-		const auto eptr(make_exception_ptr<rfc1035::error>("%s", error));
+		const auto eptr
+		{
+			make_exception_ptr<rfc1035::error>(exception::hide_name, "%s", error)
+		};
+
 		return callback(eptr, target, empty);
 	}
 
@@ -211,7 +215,7 @@ ircd::net::dns::handle_resolve_A_ipport(const hostport &hp,
 	const auto eptr
 	{
 		!empty(error)?
-			make_exception_ptr<rfc1035::error>("%s", error):
+			make_exception_ptr<rfc1035::error>(exception::hide_name, "%s", error):
 		!ipport?
 			make_exception_ptr<net::error>("Host has no A record."):
 			std::exception_ptr{}
