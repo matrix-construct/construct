@@ -240,7 +240,7 @@ ircd::ctx::future<T>::get()
 	if(bool(state().eptr))
 		std::rethrow_exception(state().eptr);
 
-	return state().val;
+	return std::move(state().val);
 }
 
 template<class T>
