@@ -226,7 +226,7 @@ ircd::m::module_names
 	"m_room_server_acl",
 	"m_room_redaction",
 	"m_room_bootstrap",
-	"m_event",
+	"m_room_join",
 	"m_events",
 	"m_rooms",
 	"m_rooms_summary",

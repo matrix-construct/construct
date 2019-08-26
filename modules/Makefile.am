@@ -134,6 +134,7 @@ m_room_head_la_SOURCES = m_room_head.cc
 m_room_timeline_la_SOURCES = m_room_timeline.cc
 m_room_create_la_SOURCES = m_room_create.cc
 m_room_member_la_SOURCES = m_room_member.cc
+m_room_join_la_SOURCES = m_room_join.cc
 m_room_join_rules_la_SOURCES = m_room_join_rules.cc
 m_room_history_visibility_la_SOURCES = m_room_history_visibility.cc
 m_room_canonical_alias_la_SOURCES = m_room_canonical_alias.cc
@@ -187,6 +188,7 @@ m_module_LTLIBRARIES = \
 	m_room_timeline.la \
 	m_room_create.la \
 	m_room_member.la \
+	m_room_join.la \
 	m_room_join_rules.la \
 	m_room_history_visibility.la \
 	m_room_canonical_alias.la \
