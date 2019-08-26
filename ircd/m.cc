@@ -182,9 +182,6 @@ void
 ircd::m::init::modules::fini_imports()
 noexcept
 {
-	// Stop the vm (unload) this first even though it loads first.
-	mods::imports.erase("m_vm");
-
 	for(auto it(module_names.rbegin()); it != module_names.rend(); ++it)
 		mods::imports.erase(*it);
 }
@@ -247,13 +244,12 @@ ircd::m::module_names
 	"m_event_append",
 	"m_command",
 	"m_control",
+	"conf",
+	"net_dns",
 	"key_query",
 	"key_server",
 	"identity_pubkey",
 	"identity_v1",
-	"media_media",
-	"conf",
-	"net_dns",
 	"federation_backfill_ids",
 	"federation_backfill",
 	"federation_event_auth",
@@ -287,10 +283,10 @@ ircd::m::module_names
 	"client_devices",
 	"client_delete_devices",
 	"client_send_to_device",
-	"client_keys_query",
-	"client_keys_claim",
 	"client_keys_changes",
 	"client_keys_upload",
+	"client_keys_claim",
+	"client_keys_query",
 	"client_presence",
 	"client_joined_groups",
 	"client_publicised_groups",
@@ -326,16 +322,17 @@ ircd::m::module_names
 	"client_sync_rooms_summary",
 	"client_voip_turnserver",
 	"client_thirdparty_protocols",
+	"media_media",
 	"client_versions",
 	"client_capabilities",
 	"well_known",
 	"web_root",
 	"web_hook",
-	"m_listen",
+	"stats",
 	"m_vm_fetch",
 	"m_vm",
 	"m_init_backfill",
-	"stats",
+	"m_listen",
 };
 
 /// This is a list of modules that are considered "optional" and any loading
