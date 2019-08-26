@@ -1839,19 +1839,39 @@ ircd::db::database::column::column(database &d,
 	//this->options.bottommost_compression_opts = this->options.compression_opts;
 
 	//TODO: descriptor / conf
-	this->options.disable_auto_compactions = false;
-	this->options.level_compaction_dynamic_level_bytes = false;
 
-	this->options.num_levels = 7;
 	this->options.write_buffer_size = 4_MiB;
 	this->options.max_write_buffer_number = 8;
 	this->options.min_write_buffer_number_to_merge = 4;
 	this->options.max_write_buffer_number_to_maintain = 0;
+
+	this->options.num_levels = 7;
 	this->options.level0_file_num_compaction_trigger = 2;
-	this->options.target_file_size_base = 48_MiB;
-	this->options.target_file_size_multiplier = 16;
-	this->options.max_bytes_for_level_base = 1_MiB;
-	this->options.max_bytes_for_level_multiplier = 2;
+	this->options.disable_auto_compactions = false;
+	this->options.level_compaction_dynamic_level_bytes = false;
+
+	this->options.target_file_size_base = this->descriptor->target_file_size.base;
+	this->options.target_file_size_multiplier = this->descriptor->target_file_size.multiplier;
+
+	this->options.max_bytes_for_level_base = this->descriptor->max_bytes_for_level[0].base;
+	this->options.max_bytes_for_level_multiplier = this->descriptor->max_bytes_for_level[0].multiplier;
+	this->options.max_bytes_for_level_multiplier_additional = std::vector<int>(this->options.num_levels, 1);
+	{
+		auto &dst(this->options.max_bytes_for_level_multiplier_additional);
+		const auto &src(this->descriptor->max_bytes_for_level);
+		const size_t src_size(std::distance(begin(src) + 1, std::end(src)));
+		assert(src_size >= 1);
+		const auto end
+		{
+			begin(src) + 1 + std::min(dst.size(), src_size)
+		};
+
+		std::transform(begin(src) + 1, end, begin(dst), []
+		(const auto &mbfl)
+		{
+			return mbfl.multiplier;
+		});
+	}
 
 	//
 	// Table options

@@ -89,4 +89,30 @@ struct ircd::db::descriptor
 
 	/// User given compaction callback surface.
 	db::compactor compactor {};
+
+	/// Compaction related parameters. see: rocksdb/advanced_options.h
+	struct
+	{
+		size_t base {64_MiB};    // rocksdb default
+		size_t multiplier {1};   // rocksdb default
+	}
+	target_file_size;
+
+	/// Compaction related parameters. see: rocksdb/advanced_options.h
+	struct max_bytes_for_level
+	{
+		size_t base {0};
+		size_t multiplier {1};
+	}
+	max_bytes_for_level[8]
+	{
+		{ 256_MiB,  10L }, // max_bytes_for_level_base
+		{      0L,   1L }, // max_bytes_for_level[0]
+		{      0L,   1L }, // max_bytes_for_level[1]
+		{      0L,   1L }, // max_bytes_for_level[2]
+		{      0L,   1L }, // max_bytes_for_level[3]
+		{      0L,   1L }, // max_bytes_for_level[4]
+		{      0L,   1L }, // max_bytes_for_level[5]
+		{      0L,   1L }, // max_bytes_for_level[6]
+	};
 };
