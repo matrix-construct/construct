@@ -56,27 +56,27 @@ namespace ircd::m
 	event::id::buf commit(const room &, json::iov &event, const json::iov &content);
 
 	// [SET] Send state to room
-	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::iov &content);
-	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::members &content);
-	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const string_view &state_key, const json::object &content);
+	event::id::buf send(const room &, const id::user &sender, const string_view &type, const string_view &state_key, const json::iov &content);
+	event::id::buf send(const room &, const id::user &sender, const string_view &type, const string_view &state_key, const json::members &content);
+	event::id::buf send(const room &, const id::user &sender, const string_view &type, const string_view &state_key, const json::object &content);
 
 	// [SET] Send non-state to room
-	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const json::iov &content);
-	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const json::members &content);
-	event::id::buf send(const room &, const m::id::user &sender, const string_view &type, const json::object &content);
+	event::id::buf send(const room &, const id::user &sender, const string_view &type, const json::iov &content);
+	event::id::buf send(const room &, const id::user &sender, const string_view &type, const json::members &content);
+	event::id::buf send(const room &, const id::user &sender, const string_view &type, const json::object &content);
 
 	// [SET] Convenience sends
-	event::id::buf redact(const room &, const m::id::user &sender, const m::id::event &, const string_view &reason);
-	event::id::buf message(const room &, const m::id::user &sender, const json::members &content);
-	event::id::buf message(const room &, const m::id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
-	event::id::buf msghtml(const room &, const m::id::user &sender, const string_view &html, const string_view &alt = {}, const string_view &msgtype = "m.notice");
-	event::id::buf notice(const room &, const m::id::user &sender, const string_view &body);
+	event::id::buf redact(const room &, const id::user &sender, const id::event &, const string_view &reason);
+	event::id::buf message(const room &, const id::user &sender, const json::members &content);
+	event::id::buf message(const room &, const id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
+	event::id::buf msghtml(const room &, const id::user &sender, const string_view &html, const string_view &alt = {}, const string_view &msgtype = "m.notice");
+	event::id::buf notice(const room &, const id::user &sender, const string_view &body);
 	event::id::buf notice(const room &, const string_view &body); // sender is @ircd
-	event::id::buf invite(const room &, const m::id::user &target, const m::id::user &sender, json::iov &add_content);
-	event::id::buf invite(const room &, const m::id::user &target, const m::id::user &sender);
-	event::id::buf leave(const room &, const m::id::user &);
-	event::id::buf join(const room &, const m::id::user &);
-	event::id::buf join(const id::room_alias &, const m::id::user &);
+	event::id::buf invite(const room &, const id::user &target, const id::user &sender, json::iov &add_content);
+	event::id::buf invite(const room &, const id::user &target, const id::user &sender);
+	event::id::buf leave(const room &, const id::user &);
+	event::id::buf join(const room &, const id::user &);
+	event::id::buf join(const id::room_alias &, const id::user &);
 
 	// [SET] Create new room
 	room create(const createroom &, json::stack::array *const &errors = nullptr);
