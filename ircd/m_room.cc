@@ -532,14 +532,15 @@ ircd::m::send(const room &room,
               const string_view &state_key,
               const json::iov &content)
 {
-	using prototype = event::id::buf (const m::room &, const id::user &, const string_view &, const string_view &, const json::iov &);
-
-	static mods::import<prototype> function
+	json::iov event;
+	const json::iov::push push[]
 	{
-		"client_rooms", "ircd::m::send"
+		{ event,    { "sender",     sender     }},
+		{ event,    { "type",       type       }},
+		{ event,    { "state_key",  state_key  }},
 	};
 
-	return function(room, sender, type, state_key, content);
+	return commit(room, event, content);
 }
 
 #pragma GCC diagnostic push
@@ -588,14 +589,14 @@ ircd::m::send(const room &room,
               const string_view &type,
               const json::iov &content)
 {
-	using prototype = event::id::buf (const m::room &, const id::user &, const string_view &, const json::iov &);
-
-	static mods::import<prototype> function
+	json::iov event;
+	const json::iov::push push[]
 	{
-		"client_rooms", "ircd::m::send"
+		{ event,    { "sender",  sender  }},
+		{ event,    { "type",    type    }},
 	};
 
-	return function(room, sender, type, content);
+	return commit(room, event, content);
 }
 
 ircd::m::event::id::buf

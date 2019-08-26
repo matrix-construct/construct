@@ -50,7 +50,7 @@ put__state(client &client,
 
 	const auto event_id
 	{
-		send(room_id, request.user_id, type, state_key, content)
+		m::send(room_id, request.user_id, type, state_key, content)
 	};
 
 	return resource::response
@@ -164,23 +164,4 @@ get__state(client &client,
 	});
 
 	return std::move(response);
-}
-
-m::event::id::buf
-IRCD_MODULE_EXPORT
-ircd::m::send(const m::room &room,
-              const m::id::user &sender,
-              const string_view &type,
-              const string_view &state_key,
-              const json::iov &content)
-{
-	json::iov event;
-	const json::iov::push push[]
-	{
-		{ event,    { "sender",     sender     }},
-		{ event,    { "type",       type       }},
-		{ event,    { "state_key",  state_key  }},
-	};
-
-	return commit(room, event, content);
 }
