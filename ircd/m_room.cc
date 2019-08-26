@@ -342,7 +342,7 @@ ircd::m::create(const createroom &c,
 
 	static mods::import<prototype> call
 	{
-		"client_createroom", "ircd::m::create"
+		"m_room_create", "ircd::m::create"
 	};
 
 	return call(c, errors);

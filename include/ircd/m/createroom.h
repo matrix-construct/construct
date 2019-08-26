@@ -106,7 +106,10 @@ struct ircd::m::createroom
 	json::property<name::room_version, json::string>
 >
 {
+	static std::array<string_view, 3> spec_presets;
 	static conf::item<std::string> version_default;
+
+	static bool spec_preset(const string_view &);
 
 	using super_type::tuple;
 };
