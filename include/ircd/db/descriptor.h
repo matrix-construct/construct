@@ -94,7 +94,7 @@ struct ircd::db::descriptor
 	struct
 	{
 		size_t base {64_MiB};    // rocksdb default
-		size_t multiplier {1};   // rocksdb default
+		size_t multiplier {2};   // rocksdb default
 	}
 	target_file_size;
 
@@ -106,13 +106,13 @@ struct ircd::db::descriptor
 	}
 	max_bytes_for_level[8]
 	{
-		{ 256_MiB,  10L }, // max_bytes_for_level_base
-		{      0L,   1L }, // max_bytes_for_level[0]
+		{  32_MiB,   1L }, // max_bytes_for_level_base
+		{      0L,   0L }, // max_bytes_for_level[0]
 		{      0L,   1L }, // max_bytes_for_level[1]
 		{      0L,   1L }, // max_bytes_for_level[2]
-		{      0L,   1L }, // max_bytes_for_level[3]
-		{      0L,   1L }, // max_bytes_for_level[4]
-		{      0L,   1L }, // max_bytes_for_level[5]
-		{      0L,   1L }, // max_bytes_for_level[6]
+		{      0L,   3L }, // max_bytes_for_level[3]
+		{      0L,   7L }, // max_bytes_for_level[4]
+		{      0L,  15L }, // max_bytes_for_level[5]
+		{      0L,  31L }, // max_bytes_for_level[6]
 	};
 };

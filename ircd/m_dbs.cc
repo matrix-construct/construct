@@ -1718,6 +1718,30 @@ ircd::m::dbs::desc::events__event_json
 
 	// meta_block size
 	size_t(events__event_json__meta_block__size),
+
+	// compression
+	"kLZ4Compression;kSnappyCompression"s,
+
+	// compactor
+	{},
+
+	// target_file_size
+	{
+		2_GiB,   // base
+		1L,      // multiplier
+	},
+
+	// max_bytes_for_level[8]
+	{
+		{ 128_MiB,    1L }, // max_bytes_for_level_base
+		{      0L,    0L }, // max_bytes_for_level[0]
+		{      0L,    1L }, // max_bytes_for_level[1]
+		{      0L,    1L }, // max_bytes_for_level[2]
+		{      0L,    3L }, // max_bytes_for_level[3]
+		{      0L,    7L }, // max_bytes_for_level[4]
+		{      0L,   15L }, // max_bytes_for_level[5]
+		{      0L,   31L }, // max_bytes_for_level[6]
+	},
 };
 
 //
