@@ -540,6 +540,25 @@ ircd::m::keys::cache::get(const string_view &server_name,
 
 bool
 IRCD_MODULE_EXPORT
+ircd::m::keys::cache::has(const string_view &server_name,
+                          const string_view &key_id)
+{
+	const m::node::room node_room
+	{
+		server_name
+	};
+
+	// Without a key_id we search for the most recent key; note this is not
+	// the same as making a state_key="" query, as that would be an actual
+	// ircd.key entry without an id (which shouldn't exist).
+	return
+		key_id?
+			node_room.has("ircd.key", key_id):
+			node_room.has("ircd.key");
+}
+
+bool
+IRCD_MODULE_EXPORT
 ircd::m::keys::cache::for_each(const string_view &server_name,
                                const keys::closure_bool &closure)
 {
