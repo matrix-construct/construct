@@ -26,6 +26,7 @@ namespace ircd::m::fetch
 	extern log::log log;
 
 	static bool timedout(const request &, const time_t &now);
+	static void check_response(const request &, const json::object &);
 	static string_view select_origin(request &, const string_view &);
 	static string_view select_random_origin(request &);
 	static void finish(request &);
@@ -599,14 +600,23 @@ ircd::m::fetch::handle(request &request)
 			request.get()
 		};
 
+		const json::object response
+		{
+			request
+		};
+
+		check_response(request, response);
+
+		char pbuf[48];
 		log::debug
 		{
-			log, "Received %u %s good %s in %s from '%s'",
+			log, "Received %u %s good %s in %s from '%s' %s",
 			uint(code),
 			status(code),
 			string_view{request.event_id},
 			string_view{request.room_id},
-			string_view{request.origin}
+			string_view{request.origin},
+			pretty(pbuf, iec(size(string_view(response)))),
 		};
 	}
 	catch(...)
@@ -682,6 +692,131 @@ ircd::m::fetch::finish(request &request)
 	request.promise.set_value(result{request});
 }
 
+namespace ircd::m::fetch
+{
+	extern conf::item<bool> check_event_id;
+	extern conf::item<bool> check_conforms;
+	extern conf::item<int> check_signature;
+}
+
+decltype(ircd::m::fetch::check_event_id)
+ircd::m::fetch::check_event_id
+{
+	{ "name",     "ircd.m.fetch.check.event_id" },
+	{ "default",  true                          },
+};
+
+decltype(ircd::m::fetch::check_conforms)
+ircd::m::fetch::check_conforms
+{
+	{ "name",     "ircd.m.fetch.check.conforms" },
+	{ "default",  false                         },
+};
+
+decltype(ircd::m::fetch::check_signature)
+ircd::m::fetch::check_signature
+{
+	{ "name",         "ircd.m.fetch.check.signature" },
+	{ "default",      true                           },
+	{ "description",
+
+	R"(
+	false - Signatures of events will not be checked by the fetch unit (they
+	are still checked normally during evaluation; this conf item does not
+	disable event signature verification for the server).
+
+	true - Signatures of events will be checked by the fetch unit such that
+	bogus responses allow the fetcher to try the next server. This check might
+	not occur in all cases. It will only occur if the server has the public
+	key already; fetch unit worker contexts cannot be blocked trying to obtain
+	unknown keys from remote hosts.
+	)"},
+};
+
+void
+ircd::m::fetch::check_response(const request &request,
+                               const json::object &response)
+{
+	const m::event event
+	{
+		response, request.event_id
+	};
+
+	if(check_event_id && !m::check_id(event))
+	{
+		event::id::buf buf;
+		const m::event &claim
+		{
+			buf, response
+		};
+
+		throw ircd::error
+		{
+			"event::id claim:%s != sought:%s",
+			string_view{claim.event_id},
+			string_view{request.event_id},
+		};
+	}
+
+	if(check_conforms)
+	{
+		thread_local char buf[128];
+		const m::event::conforms conforms
+		{
+			event
+		};
+
+		const string_view failures
+		{
+			conforms.string(buf)
+		};
+
+		assert(failures || conforms.clean());
+		if(!conforms.clean())
+			throw ircd::error
+			{
+				"Non-conforming event in response :%s",
+				failures,
+			};
+	}
+
+	if(check_signature)
+	{
+		const string_view &server
+		{
+			!json::get<"origin"_>(event)?
+				user::id(at<"sender"_>(event)).host():
+				string_view(json::get<"origin"_>(event))
+		};
+
+		const json::object &signatures
+		{
+			at<"signatures"_>(event).at("server")
+		};
+
+		const json::string &key_id
+		{
+			!signatures.empty()?
+				signatures.begin()->first:
+				string_view{},
+		};
+
+		if(!key_id)
+			throw ircd::error
+			{
+				"Cannot find any keys for '%s' in event.signatures",
+				server,
+			};
+
+		if(m::keys::cache::has(server, key_id))
+			if(!verify(event, server))
+				throw ircd::error
+				{
+					"Signature verification failed."
+				};
+	}
+}
+
 bool
 ircd::m::fetch::timedout(const request &request,
                          const time_t &now)
@@ -734,7 +869,7 @@ ircd::m::fetch::request::request(const m::room::id &room_id,
 ircd::m::fetch::result::result(request &request)
 :m::event
 {
-	static_cast<json::object>(request)["event"]
+	static_cast<json::object>(request)
 }
 ,buf
 {
