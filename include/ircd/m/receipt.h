@@ -13,15 +13,24 @@
 
 namespace ircd::m::receipt
 {
-	// [GET]
+	// [GET] Query if the user has ever read the event.
 	bool exists(const id::room &, const id::user &, const id::event &);
+
+	// [GET] Query if already read a later event in the room; false if so.
 	bool freshest(const id::room &, const id::user &, const id::event &);
+
+	// [GET] Query if the user is not *sending* receipts for certain events
+	// matched internal features of this interface (i.e by sender).
 	bool ignoring(const m::user &, const id::event &);
+
+	// [GET] Query if the user is not *sending* receipts to an entire room.
 	bool ignoring(const m::user &, const id::room &);
+
+	// [GET] Get the last event the user has read in the room.
 	bool read(const id::room &, const id::user &, const id::event::closure &);
 	id::event read(id::event::buf &out, const id::room &, const id::user &);
 
-	// [SET]
+	// [SET] Indicate that the user has read the event in the room.
 	id::event::buf read(const id::room &, const id::user &, const id::event &, const time_t &);
 	id::event::buf read(const id::room &, const id::user &, const id::event &); // now
 };
