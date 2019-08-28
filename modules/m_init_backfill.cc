@@ -117,6 +117,9 @@ try
 	rooms::for_each(opts, [&count]
 	(const room::id &room_id)
 	{
+		if(unlikely(run::level != run::level::RUN))
+			return false;
+
 		handle_room(room_id);
 		++count;
 		return true;
