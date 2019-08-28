@@ -2598,6 +2598,7 @@ void
 ircd::m::event::essential(json::iov &event,
                           const json::iov &contents,
                           const event::closure_iov_mutable &closure)
+try
 {
 	const auto &type
 	{
@@ -2716,10 +2717,21 @@ ircd::m::event::essential(json::iov &event,
 		closure(event);
 	}
 }
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "Error while isolating essential keys (redaction algorithm) :%s",
+		e.what(),
+	};
+
+	throw;
+}
 
 ircd::m::event
 ircd::m::essential(m::event event,
                    const mutable_buffer &contentbuf)
+try
 {
 	const auto &type
 	{
@@ -2797,6 +2809,16 @@ ircd::m::essential(m::event event,
 
 	json::get<"signatures"_>(event) = {};
 	return event;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "Error while isolating essential keys (redaction algorithm) :%s",
+		e.what(),
+	};
+
+	throw;
 }
 
 ircd::m::id::event
