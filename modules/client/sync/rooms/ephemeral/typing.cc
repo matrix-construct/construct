@@ -59,6 +59,10 @@ ircd::m::sync::room_ephemeral_m_typing_linear(data &data)
 	if(json::get<"room_id"_>(*data.event) != user_room.room_id)
 		return false;
 
+	// Check if the user does not want to receive typing events for this room.
+	if(!m::typing::allow(data.user, *data.room, "sync"))
+		return false;
+
 	json::stack::object rooms
 	{
 		*data.out, "rooms"

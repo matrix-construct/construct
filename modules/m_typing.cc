@@ -216,6 +216,11 @@ ircd::m::typing::commit::commit(const m::typing &edu)
 			string_view{room.room_id}
 		};
 
+	// If the user does not want to transmit typing events to this room,
+	// bail out here.
+	if(!allow(at<"user_id"_>(edu), room, "send"))
+		return;
+
 	// Clients like Riot will send erroneous and/or redundant typing requests
 	// for example requesting typing=false when the state already =false.
 	// We don't want to tax the vm::eval for this noise so we try to update
@@ -241,6 +246,40 @@ ircd::m::typing::commit::commit(const m::typing &edu)
 	{
 		event, content, opts
 	};
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::typing::allow(const user::id &user_id,
+                       const room::id &room_id,
+                       const string_view &allow_type)
+{
+	const user::room user_room
+	{
+		user_id
+	};
+
+	const room::state state
+	{
+		user_room
+	};
+
+	char buf[event::TYPE_MAX_SIZE+1]
+	{
+		"ircd.typing.disable."
+	};
+
+	const string_view &type
+	{
+		strlcat{buf, allow_type}
+	};
+
+	const string_view &state_key
+	{
+		room_id
+	};
+
+	return !state.has(type, state_key);
 }
 
 bool

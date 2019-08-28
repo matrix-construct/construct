@@ -40,6 +40,10 @@ struct ircd::m::typing
 	//NOTE: no yielding in this iteration.
 	static bool for_each(const closure &);
 
+	// Get whether a user enabled typing events for a room. The type string
+	// can be "send" or "sync" prevent typing one's events from being sent or
+	// others' from being sync'ed, respectively
+	static bool allow(const id::user &, const id::room &, const string_view &type);
 
 	using edu::m_typing::m_typing;
 };
