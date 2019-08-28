@@ -36,14 +36,16 @@ struct ircd::m::typing
 
 	using closure = std::function<bool (const typing &)>;
 
+	// Iterate all of the active typists held in RA<
 	//NOTE: no yielding in this iteration.
 	static bool for_each(const closure &);
+
 
 	using edu::m_typing::m_typing;
 };
 
+/// Interface to update the typing state, generate all events, send etc.
 struct ircd::m::typing::commit
-:event::id::buf
 {
 	commit(const typing &);
 };

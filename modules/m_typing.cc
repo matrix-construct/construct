@@ -56,69 +56,13 @@ timeout_min
 };
 
 static system_point calc_timesout(milliseconds relative);
-static bool update_state(const m::typing &);
-extern "C" m::event::id::buf commit(const m::typing &edu);
-
-//
-// typing commit handler stack (local user)
-//
-
-// This function is called via ircd::m::typing linkage to create a typing
-// event originating from our client. This event takes the form of the
-// federation edu and is broadcast to servers. Unfortunately the matrix
-// client spec has a different edu format for typing; so to propagate this
-// event to clients we hook it during eval and create a new event formatted
-// for clients and then run that through eval too. (see below).
-//
-m::event::id::buf
-commit(const m::typing &edu)
-{
-	// Check if the user is actually in the room.
-	const m::room room{at<"room_id"_>(edu)};
-	if(!membership(room, at<"user_id"_>(edu), "join"))
-		throw m::FORBIDDEN
-		{
-			"Cannot type in a room %s to which you are not joined",
-			string_view{room.room_id}
-		};
-
-	// Clients like Riot will send erroneous and/or redundant typing requests
-	// for example requesting typing=false when the state already =false.
-	// We don't want to tax the vm::eval for this noise so we try to update
-	// state first and if that returns false it indicates we should ignore.
-	if(!update_state(edu))
-		return {};
-
-	json::iov event, content;
-	const json::iov::push push[]
-	{
-		{ event,    { "type",     "m.typing"                  } },
-		{ event,    { "room_id",  at<"room_id"_>(edu)         } },
-		{ content,  { "user_id",  at<"user_id"_>(edu)         } },
-		{ content,  { "room_id",  at<"room_id"_>(edu)         } },
-		{ content,  { "typing",   json::get<"typing"_>(edu)   } },
-	};
-
-	m::vm::copts opts;
-	opts.prop_mask.reset();
-	opts.prop_mask.set("origin");
-	opts.conforming = false;
-
-	// Because the matrix spec should use the same format for client
-	// and federation typing events, we don't prevent this from being
-	// sent to clients who wish to preemptively implement this format.
-	//opts.notify_clients = false;
-
-	return m::vm::eval
-	{
-		event, content, opts
-	};
-}
+static bool update_state(const m::edu::m_typing &);
 
 //
 // typing edu handler stack (local and remote)
 //
 
+static m::event::id::buf set_typing(const m::edu::m_typing &edu);
 static void _handle_edu_m_typing(const m::event &, const m::typing &edu);
 static void handle_edu_m_typing(const m::event &, m::vm::eval &);
 
@@ -237,40 +181,96 @@ _handle_edu_m_typing(const m::event &event,
 			return;
 	}
 
-	const m::user::room user_room
+	set_typing(edu);
+}
+
+//
+// interface
+//
+
+/// typing commit handler stack (local user)
+///
+/// This function is called via ircd::m::typing linkage to create a typing
+/// event originating from our client. This event takes the form of the
+/// federation edu and is broadcast to servers. Unfortunately the matrix
+/// client spec has a different edu format for typing; so to propagate this
+/// event to clients we hook it during eval and create a new event formatted
+/// for clients and then run that through eval too. (see below).
+///
+IRCD_MODULE_EXPORT
+ircd::m::typing::commit::commit(const m::typing &edu)
+{
+	using json::at;
+
+	// Check if the user is actually in the room.
+	const m::room room
 	{
-		user_id
+		at<"room_id"_>(edu)
 	};
 
-	const auto &timeout
-	{
-		json::get<"timeout"_>(edu)?
-			json::get<"timeout"_>(edu):
-		json::get<"typing"_>(edu)?
-			milliseconds(timeout_max).count():
-			0L
-	};
-
-	const auto evid
-	{
-		send(user_room, user_id, "ircd.typing",
+	// Only allow user to send typing events to rooms they are joined...
+	if(!membership(room, at<"user_id"_>(edu), "join"))
+		throw m::FORBIDDEN
 		{
-			{ "room_id",  json::get<"room_id"_>(edu)  },
-			{ "typing",   json::get<"typing"_>(edu)   },
-			{ "timeout",  timeout                     },
-		})
+			"Cannot type in a room %s to which you are not joined",
+			string_view{room.room_id}
+		};
+
+	// Clients like Riot will send erroneous and/or redundant typing requests
+	// for example requesting typing=false when the state already =false.
+	// We don't want to tax the vm::eval for this noise so we try to update
+	// state first and if that returns false it indicates we should ignore.
+	if(!update_state(edu))
+		return;
+
+	json::iov event, content;
+	const json::iov::push push[]
+	{
+		{ event,    { "type",     "m.typing"                  } },
+		{ event,    { "room_id",  at<"room_id"_>(edu)         } },
+		{ content,  { "user_id",  at<"user_id"_>(edu)         } },
+		{ content,  { "room_id",  at<"room_id"_>(edu)         } },
+		{ content,  { "typing",   json::get<"typing"_>(edu)   } },
 	};
 
-	char pbuf[32];
-	log::info
+	m::vm::copts opts;
+	opts.prop_mask.reset();
+	opts.prop_mask.set("origin");
+	opts.conforming = false;
+	m::vm::eval
 	{
-		typing_log, "%s %s %s typing in %s timeout:%s",
-		origin,
-		string_view{user_id},
-		json::get<"typing"_>(edu)? "started"_sv : "stopped"_sv,
-		string_view{room_id},
-		pretty(pbuf, milliseconds(long(timeout)), 1),
+		event, content, opts
 	};
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::typing::for_each(const closure &closure)
+{
+	// User cannot yield in their closure because the iteration
+	// may be invalidated by the timeout worker during their yield.
+	const ctx::critical_assertion ca;
+
+	for(const auto &t : typists)
+	{
+		const time_t timeout
+		{
+			system_clock::to_time_t(t.timesout)
+		};
+
+		const m::typing event
+		{
+			{ "user_id",  t.user_id   },
+			{ "room_id",  t.room_id   },
+			{ "typing",   true        },
+			{ "timeout",  timeout     },
+		};
+
+		if(!closure(event))
+			return false;
+	}
+
+	return true;
 }
 
 //
@@ -350,41 +350,59 @@ timeout_timeout(const typist &t)
 }
 
 //
-// misc
+// internal
 //
 
-bool
-IRCD_MODULE_EXPORT
-ircd::m::typing::for_each(const closure &closure)
+ircd::m::event::id::buf
+set_typing(const m::edu::m_typing &edu)
 {
-	// User cannot yield in their closure because the iteration
-	// may be invalidated by the timeout worker during their yield.
-	const ctx::critical_assertion ca;
-
-	for(const auto &t : typists)
+	assert(json::get<"room_id"_>(edu));
+	const m::user::id &user_id
 	{
-		const time_t timeout
+		at<"user_id"_>(edu)
+	};
+
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	const auto &timeout
+	{
+		json::get<"timeout"_>(edu)?
+			json::get<"timeout"_>(edu):
+		json::get<"typing"_>(edu)?
+			milliseconds(timeout_max).count():
+			0L
+	};
+
+	const auto evid
+	{
+		send(user_room, user_id, "ircd.typing",
 		{
-			system_clock::to_time_t(t.timesout)
-		};
+			{ "room_id",  at<"room_id"_>(edu)         },
+			{ "typing",   json::get<"typing"_>(edu)   },
+			{ "timeout",  timeout                     },
+		})
+	};
 
-		const m::typing event
-		{
-			{ "user_id",  t.user_id   },
-			{ "room_id",  t.room_id   },
-			{ "typing",   true        },
-			{ "timeout",  timeout     },
-		};
+	char pbuf[32];
+	log::info
+	{
+		typing_log, "%s %s typing in %s timeout:%s",
+		string_view{user_id},
+		json::get<"typing"_>(edu)?
+			"started"_sv:
+			"stopped"_sv,
+		at<"room_id"_>(edu),
+		pretty(pbuf, milliseconds(long(timeout)), 1),
+	};
 
-		if(!closure(event))
-			return false;
-	}
-
-	return true;
+	return evid;
 }
 
 bool
-update_state(const m::typing &object)
+update_state(const m::edu::m_typing &object)
 try
 {
 	const auto &user_id

@@ -1785,30 +1785,6 @@ ircd::m::receipt::exists(const room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// m/typing.h
-//
-
-//
-// m::typing::commit::commit
-//
-
-ircd::m::typing::commit::commit(const m::typing &object)
-:ircd::m::event::id::buf{[&object]
-{
-	using prototype = m::event::id::buf (const m::typing &);
-
-	static mods::import<prototype> function
-	{
-		"m_typing", "commit"
-	};
-
-	return function(object);
-}()}
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // m/presence.h
 //
 
