@@ -108,17 +108,30 @@ ircd::mods::unload(mod &mod)
 
 	log::debug
 	{
-		log, "Attempting static unload for '%s' @ `%s' children:%zu",
+		log, "Static unload for '%s' @ `%s' children:%zu loaded:%zu unloading:%zu attempting...",
 		mod.name(),
 		mod.location(),
 		children.size(),
+		mod.loaded.size(),
+		std::distance(begin(mod.unloading), end(mod.unloading)),
 	};
 
 	mapi::static_destruction = false;
 	mod.handle.unload();
+
+	log::debug
+	{
+		log, "Static unload for '%s' complete=%b loaded:%zu unloading:%zu",
+		mod.name(),
+		mapi::static_destruction,
+		mod.loaded.size(),
+		std::distance(begin(mod.unloading), end(mod.unloading)),
+	};
+
 	assert(!mod.handle.is_loaded());
 	mod.loaded.erase(mod.name());
 	mod.unloading.remove(&mod);
+
 	if(!mapi::static_destruction)
 	{
 		handle_stuck(mod);
