@@ -46,30 +46,61 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 	if(!data.event_idx)
 		return false;
 
-	if(!data.membership)
-		return false;
-
 	if(!data.room)
 		return false;
 
-	// skips state events only until a non-state event is seen.
+	const bool is_user_room
+	{
+		data.room->room_id == data.user_room.room_id
+	};
+
 	assert(data.event);
-	if(defined(json::get<"state_key"_>(*data.event)))
+	const bool is_self_read
+	{
+		is_user_room && json::get<"type"_>(*data.event) == "ircd.read"
+	};
+
+	const m::room &room
+	{
+		!is_self_read?
+			data.room->room_id:
+			room::id{at<"state_key"_>(*data.event)}
+	};
+
+	char membuf[32];
+	const string_view &membership
+	{
+		!is_self_read?
+			data.membership:
+			m::membership(membuf, room, data.user)
+	};
+
+	if(!membership)
 		return false;
 
-	// skips old events the server has backfilled in the background.
-	if(int64_t(exposure_depth) > -1)
-		if(json::get<"depth"_>(*data.event) + int64_t(exposure_depth) < data.room_depth)
+	// skips state events only until a non-state event is seen.
+	if(likely(!is_self_read))
+		if(defined(json::get<"state_key"_>(*data.event)))
 			return false;
 
-	const auto &room{*data.room};
+	// skips old events the server has backfilled in the background.
+	if(likely(!is_self_read))
+		if(int64_t(exposure_depth) > -1)
+			if(json::get<"depth"_>(*data.event) + int64_t(exposure_depth) < data.room_depth)
+				return false;
+
 	m::event::id::buf last_read;
-	if(!m::receipt::read(last_read, room.room_id, data.user))
-		return false;
+	if(likely(!is_self_read))
+		if(!m::receipt::read(last_read, room.room_id, data.user))
+			return false;
 
 	const auto start_idx
 	{
-		index(last_read)
+		last_read?
+			index(last_read):
+		!is_self_read?
+			index(room):
+			0UL
 	};
 
 	json::stack::object rooms
@@ -79,12 +110,12 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 
 	json::stack::object membership_
 	{
-		*data.out, data.membership
+		*data.out, membership
 	};
 
 	json::stack::object room_
 	{
-		*data.out, data.room->room_id
+		*data.out, room.room_id
 	};
 
 	json::stack::object unread_notifications
@@ -102,7 +133,9 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 	{
 		*data.out, "highlight_count", json::value
 		{
-			_highlight_count(room, data.user, start_idx, upper_bound)
+			start_idx?
+				_highlight_count(room, data.user, start_idx, upper_bound):
+				0L
 		}
 	};
 
@@ -111,7 +144,9 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 	{
 		*data.out, "notification_count", json::value
 		{
-			_notification_count(room, start_idx, upper_bound)
+			start_idx && !is_self_read?
+				_notification_count(room, start_idx, upper_bound):
+				0L
 		}
 	};
 
@@ -121,14 +156,28 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 bool
 ircd::m::sync::room_unread_notifications_polylog(data &data)
 {
-	const auto &room{*data.room};
-	m::event::id::buf last_read;
-	if(!m::receipt::read(last_read, room.room_id, data.user))
+	if(!data.membership)
 		return false;
+
+	assert(data.room);
+	const auto &room
+	{
+		*data.room
+	};
+
+	m::event::id::buf last_read_buf;
+	const auto last_read
+	{
+		m::receipt::read(last_read_buf, room.room_id, data.user)
+	};
 
 	const auto start_idx
 	{
-		index(last_read)
+		last_read?
+			index(last_read):
+		data.membership == "join"?
+			room::index(room):
+			0UL
 	};
 
 	if(!apropos(data, start_idx))
