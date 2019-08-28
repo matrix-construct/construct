@@ -12,6 +12,7 @@
 /// this code should be portable for a future when m::init is unstructured.
 struct ircd::m::init::backfill
 {
+	static bool handle_head(const room::id &, const event::id &);
 	static void handle_room(const room::id &);
 	static void worker();
 	static void fini();
@@ -182,7 +183,9 @@ try
 		m::any_user(room, my_host(), "join")
 	};
 
-	size_t respond(0), behind(0), equal(0), ahead(0), exists(0), fetching(0);
+	size_t respond(0), behind(0), equal(0), ahead(0);
+	size_t exists(0), fetching(0), evaluated(0);
+	std::set<std::string, std::less<>> errors;
 	const auto &[top_event_id, top_depth, top_event_idx]
 	{
 		m::top(std::nothrow, room)
@@ -208,31 +211,34 @@ try
 			std::max(json::get<"depth"_>(event) - 1L, 0L)
 		};
 
+		++respond;
 		ahead += depth > top_depth;
 		equal += depth == top_depth;
 		behind += depth < top_depth;
-		respond++;
-
-		const event::prev prev{event};
-		m::for_each(prev, [&](const event::id &event_id)
+		const event::prev prev
 		{
-			if(m::exists(event_id))
+			event
+		};
+
+		m::for_each(prev, [&](const string_view &event_id)
+		{
+			if(errors.count(event_id))
+				return true;
+
+			if(m::exists(event::id(event_id)))
 			{
 				++exists;
 				return true;
 			}
 
-			auto future
+			++fetching;
+			if(!handle_head(room_id, event_id))
 			{
-				fetch::start(room_id, event_id)
-			};
+				errors.emplace(event_id);
+				return true;
+			}
 
-			m::fetch::result result
-			{
-				future.get()
-			};
-
-			//TODO: XXX
+			++evaluated;
 			return true;
 		});
 
@@ -241,18 +247,18 @@ try
 
 	log::info
 	{
-		log, "acquired %s remote head; depth:%ld servers:%zu online:%zu error:%zu"
-		" respond:%zu behind:%zu equal:%zu ahead:%zu fetching:%zu",
+		log, "acquired %s remote head; servers:%zu online:%zu"
+		" depth:%ld lt:eq:gt %zu:%zu:%zu exist:%zu eval:%zu error:%zu",
 		string_view{room_id},
-		top_depth,
 		origins.count(),
 		origins.count_online(),
-		origins.count_error(),
-		respond,
+		top_depth,
 		behind,
 		equal,
 		ahead,
-		fetching,
+		exists,
+		evaluated,
+		errors.size(),
 	};
 
 	assert(ahead + equal + behind == respond);
@@ -265,4 +271,42 @@ catch(const std::exception &e)
 		string_view{room_id},
 		e.what(),
 	};
+}
+
+bool
+ircd::m::init::backfill::handle_head(const room::id &room_id,
+                                     const event::id &event_id)
+try
+{
+	auto future
+	{
+		fetch::start(room_id, event_id)
+	};
+
+	m::fetch::result result
+	{
+		future.get()
+	};
+
+	m::vm::opts opts;
+	opts.infolog_accept = true;
+	result.event_id = event_id;
+	m::vm::eval eval
+	{
+		result, opts
+	};
+
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		log, "Failed to synchronize %s with %s :%s",
+		string_view{room_id},
+		string_view{event_id},
+		e.what(),
+	};
+
+	return false;
 }
