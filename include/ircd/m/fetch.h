@@ -27,9 +27,6 @@ namespace ircd::m::fetch
 
 	// Primary operations
 	ctx::future<result> start(const m::room::id &, const m::event::id &);
-
-	// Composed operations
-	void auth_chain(const room &, const net::hostport &);
 }
 
 struct ircd::m::fetch::result

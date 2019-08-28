@@ -20,7 +20,6 @@ namespace ircd::m::fetch
 	extern std::multimap<room::id, request *> rooms;
 	extern ctx::context request_context;
 	extern conf::item<size_t> requests_max;
-	extern conf::item<seconds> auth_timeout;
 	extern conf::item<seconds> timeout;
 	extern conf::item<bool> enable;
 	extern log::log log;
@@ -77,13 +76,6 @@ ircd::m::fetch::timeout
 	{ "default",  5L                     },
 };
 
-decltype(ircd::m::fetch::auth_timeout)
-ircd::m::fetch::auth_timeout
-{
-	{ "name",     "ircd.m.fetch.auth.timeout" },
-	{ "default",  15L                         },
-};
-
 decltype(ircd::m::fetch::requests_max)
 ircd::m::fetch::requests_max
 {
@@ -128,79 +120,9 @@ ircd::m::fetch::fini()
 	assert(requests.empty());
 }
 
-///////////////////////////////////////////////////////////////////////////////
 //
-// m/fetch.h
+// <ircd/m/fetch.h>
 //
-
-void
-IRCD_MODULE_EXPORT
-ircd::m::fetch::auth_chain(const room &room,
-                           const net::hostport &remote)
-try
-{
-	thread_local char rembuf[64];
-	log::debug
-	{
-		log, "Fetching auth chain for %s in %s from %s",
-		string_view{room.event_id},
-		string_view{room.room_id},
-		string(rembuf, remote),
-	};
-
-	m::v1::event_auth::opts opts;
-	opts.remote = remote;
-	opts.dynamic = true;
-	const unique_buffer<mutable_buffer> buf
-	{
-		16_KiB
-	};
-
-	m::v1::event_auth request
-	{
-		room.room_id, room.event_id, buf, std::move(opts)
-	};
-
-	request.wait(seconds(auth_timeout));
-	request.get();
-	const json::array events
-	{
-		request
-	};
-
-	log::debug
-	{
-		log, "Evaluating %zu auth events in chain for %s in %s from %s",
-		events.size(),
-		string_view{room.event_id},
-		string_view{room.room_id},
-		string(rembuf, remote),
-	};
-
-	m::vm::opts vmopts;
-	vmopts.infolog_accept = true;
-	vmopts.fetch_prev_check = false;
-	vmopts.fetch_state_check = false;
-	vmopts.warnlog &= ~vm::fault::EXISTS;
-	m::vm::eval
-	{
-		events, vmopts
-	};
-}
-catch(const std::exception &e)
-{
-	thread_local char rembuf[64];
-	log::error
-	{
-		log, "Fetching auth chain for %s in %s from %s :%s",
-		string_view{room.event_id},
-		string_view{room.room_id},
-		string(rembuf, remote),
-		e.what(),
-	};
-
-	throw;
-}
 
 ircd::ctx::future<ircd::m::fetch::result>
 IRCD_MODULE_EXPORT
@@ -255,9 +177,8 @@ ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 	return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
 //
-// s_fetch.h
+// internal
 //
 
 template<class... args>

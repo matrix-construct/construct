@@ -13,9 +13,11 @@ namespace ircd::m::vm::fetch
 	struct evaltab;
 
 	static void hook_handle_prev(const event &, vm::eval &, evaltab &, const room &);
+	static void auth_chain(const room &, const net::hostport &);
 	static void hook_handle_auth(const event &, vm::eval &, evaltab &, const room &);
 	static void hook_handle(const event &, vm::eval &);
 
+	extern conf::item<seconds> auth_timeout;
 	extern conf::item<bool> enable;
 	extern hookfn<vm::eval &> hook;
 	extern log::log log;
@@ -48,6 +50,13 @@ ircd::m::vm::fetch::enable
 {
 	{ "name",     "ircd.m.vm.fetch.enable" },
 	{ "default",  true                     },
+};
+
+decltype(ircd::m::vm::fetch::auth_timeout)
+ircd::m::vm::fetch::auth_timeout
+{
+	{ "name",     "ircd.m.vm.fetch.auth.timeout" },
+	{ "default",  15L                            },
 };
 
 decltype(ircd::m::vm::fetch::hook)
@@ -190,8 +199,76 @@ ircd::m::vm::fetch::hook_handle_auth(const event &event,
 	// This is a blocking call to recursively fetch and evaluate the auth_chain
 	// for this event. Upon return all of the auth_events for this event will
 	// have themselves been fetched and auth'ed recursively or throws.
-	m::fetch::auth_chain(room, remote);
+	auth_chain(room, remote);
 	tab.auth_exists = tab.auth_count;
+}
+
+void
+ircd::m::vm::fetch::auth_chain(const room &room,
+                               const net::hostport &remote)
+try
+{
+	thread_local char rembuf[64];
+	log::debug
+	{
+		log, "Fetching auth chain for %s in %s from %s",
+		string_view{room.event_id},
+		string_view{room.room_id},
+		string(rembuf, remote),
+	};
+
+	m::v1::event_auth::opts opts;
+	opts.remote = remote;
+	opts.dynamic = true;
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::v1::event_auth request
+	{
+		room.room_id, room.event_id, buf, std::move(opts)
+	};
+
+	request.wait(seconds(auth_timeout));
+	request.get();
+	const json::array events
+	{
+		request
+	};
+
+	log::debug
+	{
+		log, "Evaluating %zu auth events in chain for %s in %s from %s",
+		events.size(),
+		string_view{room.event_id},
+		string_view{room.room_id},
+		string(rembuf, remote),
+	};
+
+	m::vm::opts vmopts;
+	vmopts.infolog_accept = true;
+	vmopts.fetch_prev_check = false;
+	vmopts.fetch_state_check = false;
+	vmopts.warnlog &= ~vm::fault::EXISTS;
+	m::vm::eval
+	{
+		events, vmopts
+	};
+}
+catch(const std::exception &e)
+{
+	thread_local char rembuf[64];
+	log::error
+	{
+		log, "Fetching auth chain for %s in %s from %s :%s",
+		string_view{room.event_id},
+		string_view{room.room_id},
+		string(rembuf, remote),
+		e.what(),
+	};
+
+	throw;
 }
 
 void
