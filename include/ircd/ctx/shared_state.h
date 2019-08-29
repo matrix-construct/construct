@@ -64,7 +64,7 @@ struct ircd::ctx::shared_state_base
 	shared_state_base(const shared_state_base &) = delete;
 	shared_state_base &operator=(shared_state_base &&) = default;
 	shared_state_base &operator=(const shared_state_base &) = delete;
-	~shared_state_base() noexcept;
+	virtual ~shared_state_base() noexcept;
 };
 
 /// Internal shared state between future and promise appropos a future value.
