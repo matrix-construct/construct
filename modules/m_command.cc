@@ -356,6 +356,9 @@ command__read(const mutable_buffer &buf,
 		param.at("[time]", ircd::time<milliseconds>())
 	};
 
+	std::ostringstream out;
+	pubsetbuf(out, buf);
+
 	if(m::valid(m::id::EVENT, arg))
 	{
 		const m::event::id::buf event_id
@@ -389,46 +392,124 @@ command__read(const mutable_buffer &buf,
 		return {};
 	}
 
-	if(arg != "*" && arg != "favorite" && arg != "favourite")
+	// We don't accept no-argument as a wildcard to prevent a naive user
+	// just probing the command interface from performing the following large
+	// operation on all their rooms...
+	if(!arg)
 		return {};
 
+	// The string argument can be a globular expression of room tags, like
+	// `m.*` or just `*`.
+	const globular_match match
+	{
+		arg
+	};
+
+	// Iterate all joined rooms for a user. For each room we'll test if the
+	// room's tag matches the arg string globular expression.
 	const m::user::rooms user_rooms
 	{
 		user
 	};
 
-	user_rooms.for_each("join", [&user, &ms, &arg]
+	const string_view fg[] {"#FFFFFF"};
+	const string_view bg[] {"#000000"};
+	out
+	<< "<pre>"
+	<< "<font color=\"" << fg[0] << "\" data-mx-bg-color=\"" << bg[0] << "\">"
+	<< "<table>"
+	;
+
+	size_t matched(0);
+	user_rooms.for_each("join", [&user, &ms, &match, &out, &matched]
 	(const m::room::id &room_id, const string_view &)
 	{
-		if(arg == "favorite" || arg == "favourite")
+		const m::user::room_tags room_tags
 		{
-			const m::user::room_tags room_tags
-			{
-				user, room_id
-			};
+			user, room_id
+		};
 
-			const auto _continue{[&room_id]
-			(const string_view &key, const json::object &object)
-			{
-				return key != room_id || !object.has("m.favourite");
-			}};
+		// return true if the expression is not matched for this room.
+		const auto without_match{[&match]
+		(const string_view &key, const json::object &object)
+		{
+			return !match(key);
+		}};
 
-			if(room_tags.for_each(_continue))
+		// for_each returns true if it didn't break from the loop, which means
+		// no match and skip actions for this room.
+		if(match.expr != "*")
+			if(room_tags.for_each(without_match))
 				return;
-		}
 
+		// Get the room head (if there are multiple, the best is selected for
+		// us) which will be the target of our receipt.
 		const m::event::id::buf event_id
 		{
 			m::head(std::nothrow, room_id)
 		};
 
+		// Nothing to send a receipt for.
 		if(!event_id)
 			return;
 
+		const auto put{[&out]
+		(const string_view &room_id, const string_view &event_id)
+		{
+			out
+			<< "<tr>"
+			<< "<td>"
+			<< "<b>"
+			<< room_id
+			<< "</b>"
+			<< "</td>"
+			<< "<td>"
+			<< event_id
+			<< "</td>"
+			<< "</tr>"
+			;
+		}};
+
+		// Check if event_id is more recent than the last receipt's event_id.
+		if(!m::receipt::freshest(room_id, user, event_id))
+		{
+			put(room_id, "You already read this or a later event in the room.");
+			return;
+		}
+
+		// Check if user wants to prevent sending receipts to this room.
+		if(m::receipt::ignoring(user, room_id))
+		{
+			put(room_id, "You have configured to not send receipts to this room.");
+			return;
+		}
+
+		// Check if user wants to prevent based on this event's specifics.
+		if(m::receipt::ignoring(user, event_id))
+		{
+			put(room_id, "You have configured to not send receipts for this event.");
+			return;
+		}
+
+		// Commit the receipt.
 		m::receipt::read(room_id, user, event_id, ms);
+		put(room_id, event_id);
+		++matched;
 	});
 
-	return {};
+	out
+	<< "</table>"
+	<< "</font>"
+	<< "<br />*** Marked "
+	<< matched
+	<< " rooms as read.<br />"
+	<< "</pre>"
+	;
+
+	return
+	{
+		view(out, buf), "TODO: alt text."
+	};
 }
 
 static std::pair<string_view, string_view>
