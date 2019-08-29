@@ -71,6 +71,32 @@ handle_m_fully_read(client &client,
 		request.user_id, room_id
 	};
 
+	// Check if riot is sending a duplicate read marker with the same event.
+	bool duplicate{false};
+	account_data.get(std::nothrow, "m.fully_read", [&duplicate, &event_id]
+	(const string_view &key, const json::object &content)
+	{
+		const json::string &prior_id
+		{
+			content.get("event_id")
+		};
+
+		duplicate = prior_id == event_id;
+	});
+
+	if(duplicate)
+	{
+		log::dwarning
+		{
+			m::log, "Ignoring duplicate m.fully_read marker for %s in %s by %s",
+			string_view{event_id},
+			string_view{room_id},
+			request.user_id,
+		};
+
+		return;
+	}
+
 	const json::strung content{json::members
 	{
 		{ "event_id", event_id }
