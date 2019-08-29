@@ -133,7 +133,7 @@ ircd::timef(const mutable_buffer &out,
 {
 	const time_t t
 	{
-		duration_cast<seconds>(epoch.time_since_epoch()).count()
+		duration_cast<seconds>(tse(epoch)).count()
 	};
 
 	return timef(out, t, localtime, fmt);
@@ -146,7 +146,7 @@ ircd::timef(const mutable_buffer &out,
 {
 	const time_t t
 	{
-		duration_cast<seconds>(epoch.time_since_epoch()).count()
+		duration_cast<seconds>(tse(epoch)).count()
 	};
 
 	return timef(out, t, fmt);

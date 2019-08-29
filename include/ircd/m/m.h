@@ -11,19 +11,19 @@
 #pragma once
 #define HAVE_IRCD_M_H
 
-// required for clang to consider string_view operators inherited by
-// m::id among other import disambiguations.
-#ifdef __clang__
+// required to disambiguate resolution around some overloads in this ns.
 namespace ircd::m
 {
-    using std::operator==;
-    using std::operator!=;
-    using std::operator<;
-    using ircd::operator!;
-    using ircd::json::at;
-    using ircd::json::get;
+	#ifdef __clang__
+	using std::operator<;
+	using std::operator==;
+	using std::operator!=;
+	using ircd::json::at;
+	using ircd::json::get;
+	#endif
+
+	using ircd::operator!;
 }
-#endif
 
 // explicit imports required for GCC or clang
 namespace ircd::m

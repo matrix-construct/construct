@@ -44,6 +44,10 @@ namespace ircd
 	template<size_t max = 128, class... args> std::string timestr(args&&...);
 
 	// Other tools
+	auto tse(const steady_point &);
+	auto tse(const system_point &);
+	bool operator!(const steady_point &);
+	bool operator!(const system_point &);
 	string_view ago(const mutable_buffer &buf, const system_point &, const uint &fmt = 0);
 	string_view smalldate(const mutable_buffer &buf, const time_t &ltime);
 	string_view microdate(const mutable_buffer &buf);
@@ -81,6 +85,38 @@ ircd::timestr(args&&... a)
 }
 
 //
+// inline tools
+//
+
+extern inline auto
+__attribute__((always_inline, gnu_inline, artificial, flatten))
+ircd::tse(const system_point &sp)
+{
+	return sp.time_since_epoch();
+}
+
+extern inline auto
+__attribute__((always_inline, gnu_inline, artificial, flatten))
+ircd::tse(const steady_point &sp)
+{
+	return sp.time_since_epoch();
+}
+
+extern inline bool
+__attribute__((always_inline, gnu_inline, artificial, flatten))
+ircd::operator!(const system_point &sp)
+{
+	return !tse(sp).count();
+}
+
+extern inline bool
+__attribute__((always_inline, gnu_inline, artificial, flatten))
+ircd::operator!(const steady_point &sp)
+{
+	return !tse(sp).count();
+}
+
+//
 // system_clock
 //
 
@@ -107,9 +143,9 @@ extern inline time_t &
 __attribute__((always_inline, gnu_inline, artificial, flatten))
 ircd::time(time_t &ref)
 {
-	const auto now
+	const auto &now
 	{
-		ircd::now<system_point>().time_since_epoch()
+		tse(ircd::now<system_point>())
 	};
 
 	ref = duration_cast<unit>(now).count();
@@ -125,9 +161,9 @@ extern inline unit
 __attribute__((always_inline, gnu_inline, artificial, flatten))
 ircd::now()
 {
-	const auto now
+	const auto &now
 	{
-		ircd::now<steady_point>().time_since_epoch()
+		tse(ircd::now<steady_point>())
 	};
 
 	return std::chrono::duration_cast<unit>(now);
