@@ -11,19 +11,22 @@
 #pragma once
 #define HAVE_IRCD_M_FEDS_H
 
-/// Concurrent federation request interface. This fronts several of the m::v1
+/// Parallel federation network interface. This fronts several of the m::fed
 /// requests and conducts them to all servers in a room (e.g. m::room::origins)
-/// at the same time. The hybrid control flow of this interface is best suited
-/// to the real-world uses of these operations.
+/// at the same time.
 ///
-/// Each call in this interface is synchronous and will block the ircd::ctx
-/// until it returns. The return value is the for_each-protocol result based on your
-/// closure (if the closure ever returns false, the function also returns false).
+/// This is a "hybrid" of internally asynchronous operations anchored to a
+/// context by a synchronous execution device (`feds::execute`). The closure
+/// is invoked asynchronously as results come in. If the closure returns false,
+/// the interface function will return immediately and all pending requests will
+/// go out of scope and may be cancelled as per ircd::server decides.
 ///
-/// The closure is invoked asynchronously as results come in. If the closure
-/// returns false, the interface function will return immediately and all
-/// pending requests will go out of scope and may be cancelled as per
-/// ircd::server decides.
+/// Alternatively, m::fetch is another federation network interface much better
+/// suited to find-and-retrieve for a single piece of data (i.e an event). This
+/// interface unconditionally launches requests to every server in parallel, if
+/// one server's response provides a satisfying result this method can be
+/// wasteful in comparison.
+///
 namespace ircd::m::feds
 {
 	enum class op :uint8_t;
@@ -33,17 +36,42 @@ namespace ircd::m::feds
 	using closure = std::function<bool (const result &)>;
 };
 
+/// Execute federation operations in parallel.
+///
+/// This device is invoked with request options and a result closure. If
+/// the user wishes to execute multiple parallel operations in parallel,
+/// a vector of options can be passed. The result structure passed to the
+/// user's closure contains a pointer to the related opts structure, so
+/// the user can distinguish different requests in their options vector.
+///
 struct ircd::m::feds::execute
 {
 	execute(const vector_view<const opts> &, const closure &);
 	execute(const opts &, const closure &);
 };
 
+/// Result structure created internally when a result arrives and passed to
+/// the user's closure. The structure is merely an alternative to specifying
+/// a lot of arguments to the closure.
+///
 struct ircd::m::feds::result
 {
+	/// Points at the opts passed to execute().
 	const opts *request;
+
+	/// The remote server which provided this result.
 	string_view origin;
+
+	/// Error pointer. This will contain an exception if a remote cannot be
+	/// contacted, or did not return a 2xx HTTP status. When the eptr is set
+	/// the result contents (below) will be empty. Note that several options
+	/// control the conditions for invoking the closure with this eptr set.
 	std::exception_ptr eptr;
+
+	/// Result content. This points to successfully received result JSON from
+	/// the remote; or empty if eptr is set. Note that both of these point to
+	/// the same content because the user is most likely expecting one and
+	/// ircd::json will just throw if trouble.
 	json::object object;
 	json::array array;
 };
