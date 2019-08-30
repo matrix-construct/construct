@@ -12954,6 +12954,14 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 		return true;
 	}
 
+	if(param["ids_only"] == "raw")
+	{
+		for(const string_view &event : auth_chain)
+			out << event << std::endl;
+
+		return true;
+	}
+
 	std::vector<m::event> events(size(auth_chain));
 	std::transform(begin(auth_chain), end(auth_chain), begin(events), []
 	(const json::object &event) -> m::event
