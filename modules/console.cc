@@ -13770,9 +13770,13 @@ console_cmd__fetch(opt &out, const string_view &line)
 		m::event::id{param.at("event_id")}
 	};
 
+	m::fetch::opts opts;
+	opts.op = m::fetch::op::event;
+	opts.room_id = room_id;
+	opts.event_id = event_id;
 	auto future
 	{
-		m::fetch::start(room_id, event_id)
+		m::fetch::start(opts)
 	};
 
 	const auto result
@@ -13787,7 +13791,7 @@ console_cmd__fetch(opt &out, const string_view &line)
 	    << std::endl
 	    ;
 
-	out << m::event{result}
+	out << json::object{result}
 	    << std::endl
 	    ;
 

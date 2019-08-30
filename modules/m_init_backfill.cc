@@ -281,9 +281,13 @@ ircd::m::init::backfill::handle_head(const room::id &room_id,
                                      const event::id &event_id)
 try
 {
+	fetch::opts opts;
+	opts.op = fetch::op::event;
+	opts.room_id = room_id;
+	opts.event_id = event_id;
 	auto future
 	{
-		fetch::start(room_id, event_id)
+		fetch::start(opts)
 	};
 
 	m::fetch::result result
@@ -291,12 +295,21 @@ try
 		future.get()
 	};
 
-	m::vm::opts opts;
-	opts.infolog_accept = true;
-	result.event_id = event_id;
+	const json::array &pdu
+	{
+		json::object(result).at("pdus")
+	};
+
+	const m::event event
+	{
+		pdu.at(0), event_id
+	};
+
+	m::vm::opts vmopts;
+	vmopts.infolog_accept = true;
 	m::vm::eval eval
 	{
-		result, opts
+		event, vmopts
 	};
 
 	return true;
