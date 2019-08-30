@@ -390,6 +390,9 @@ bool
 ircd::m::fetch::start(request &request) try
 {
 	assert(!request.finished);
+	if(!request.started && !request.origin)
+		request.origin = request.opts.hint;
+
 	if(!request.started)
 		request.started = ircd::now<system_point>();
 

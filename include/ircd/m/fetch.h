@@ -89,6 +89,11 @@ struct ircd::m::fetch::opts
 	/// where 16_KiB is [current server default] for headers and 64_KiB is
 	/// m::event::MAX_SIZE.
 	size_t bufsz {0};
+
+	/// Name of a remote server which will be queried first; if failure,
+	/// the normal room_id based operation is the fallback. If the room
+	/// is not known to us, it would be best to set this.
+	string_view hint;
 };
 
 struct ircd::m::fetch::result
