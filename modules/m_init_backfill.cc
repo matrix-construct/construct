@@ -12,7 +12,7 @@
 /// this code should be portable for a future when m::init is unstructured.
 struct ircd::m::init::backfill
 {
-	static bool handle_head(const room::id &, const event::id &);
+	static bool handle_head(const room::id &, const event::id &, const string_view &hint);
 	static void handle_room(const room::id &);
 	static void worker();
 	static void fini();
@@ -235,7 +235,7 @@ try
 			}
 
 			++fetching;
-			if(!handle_head(room_id, event_id))
+			if(!handle_head(room_id, event_id, result.origin))
 			{
 				errors.emplace(event_id);
 				return true;
@@ -278,13 +278,16 @@ catch(const std::exception &e)
 
 bool
 ircd::m::init::backfill::handle_head(const room::id &room_id,
-                                     const event::id &event_id)
+                                     const event::id &event_id,
+                                     const string_view &hint)
 try
 {
 	fetch::opts opts;
 	opts.op = fetch::op::event;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
+	opts.limit = 1;
+	opts.hint = hint;
 	auto future
 	{
 		fetch::start(opts)
@@ -295,21 +298,35 @@ try
 		future.get()
 	};
 
-	const json::array &pdu
+	const json::object response
+	{
+		result
+	};
+
+	const json::array &pdus
 	{
 		json::object(result).at("pdus")
 	};
 
 	const m::event event
 	{
-		pdu.at(0), event_id
+		pdus.at(0), event_id
 	};
 
 	m::vm::opts vmopts;
 	vmopts.infolog_accept = true;
+	vmopts.node_id = hint;
 	m::vm::eval eval
 	{
 		event, vmopts
+	};
+
+	log::info
+	{
+		log, "acquired %s head %s depth:%zu",
+		string_view{room_id},
+		string_view{event_id},
+		json::get<"depth"_>(event),
 	};
 
 	return true;
