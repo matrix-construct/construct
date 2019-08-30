@@ -25,8 +25,6 @@ namespace ircd::m::fetch
 
 	static bool timedout(const request &, const system_point &now);
 	static void _check_event(const request &, const m::event &);
-	static void check_response__event(const request &, const json::object &);
-	static void check_response__auth(const request &, const json::object &);
 	static void check_response(const request &, const json::object &);
 	static string_view select_origin(request &, const string_view &);
 	static string_view select_random_origin(request &);
@@ -222,8 +220,9 @@ ircd::m::fetch::reflect(const op &op)
 	switch(op)
 	{
 		case op::noop:        return "noop";
-		case op::event:       return "event";
 		case op::auth:        return "auth";
+		case op::event:       return "event";
+		case op::backfill:    return "backfill";
 	}
 
 	return "?????";
@@ -433,20 +432,8 @@ try
 
 	switch(request.opts.op)
 	{
-		case op::event:
-		{
-			v1::event::opts opts;
-			opts.remote = remote;
-			opts.dynamic = true;
-			request.future = std::make_unique<v1::event>
-			(
-				request.opts.event_id,
-				request.buf,
-				std::move(opts)
-			);
-
+		case op::noop:
 			break;
-		}
 
 		case op::auth:
 		{
@@ -464,8 +451,37 @@ try
 			break;
 		}
 
-		case op::noop:
+		case op::event:
+		{
+			v1::event::opts opts;
+			opts.remote = remote;
+			opts.dynamic = true;
+			request.future = std::make_unique<v1::event>
+			(
+				request.opts.event_id,
+				request.buf,
+				std::move(opts)
+			);
+
 			break;
+		}
+
+		case op::backfill:
+		{
+			v1::backfill::opts opts;
+			opts.remote = remote;
+			opts.dynamic = true;
+			opts.limit = request.opts.limit?: 64;
+			opts.event_id = request.opts.event_id;
+			request.future = std::make_unique<v1::backfill>
+			(
+				request.opts.room_id,
+				request.buf,
+				std::move(opts)
+			);
+
+			break;
+		}
 	}
 
 	log::debug
@@ -684,6 +700,10 @@ ircd::m::fetch::finish(request &request)
 
 namespace ircd::m::fetch
 {
+	static void check_response__backfill(const request &, const json::object &);
+	static void check_response__event(const request &, const json::object &);
+	static void check_response__auth(const request &, const json::object &);
+
 	extern conf::item<bool> check_event_id;
 	extern conf::item<bool> check_conforms;
 	extern conf::item<int> check_signature;
@@ -729,6 +749,9 @@ ircd::m::fetch::check_response(const request &request,
 {
 	switch(request.opts.op)
 	{
+		case op::backfill:
+			return check_response__backfill(request, response);
+
 		case op::event:
 			return check_response__event(request, response);
 
@@ -782,6 +805,27 @@ ircd::m::fetch::check_response__event(const request &request,
 	};
 
 	_check_event(request, event);
+}
+
+void
+ircd::m::fetch::check_response__backfill(const request &request,
+                                         const json::object &response)
+{
+	const json::array &pdus
+	{
+		response.at("pdus")
+	};
+
+	for(const json::object &event : pdus)
+	{
+		event::id::buf event_id;
+		const m::event _event
+		{
+			event_id, event
+		};
+
+		_check_event(request, _event);
+	}
 }
 
 void

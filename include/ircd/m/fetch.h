@@ -58,8 +58,9 @@ enum class ircd::m::fetch::op
 :uint8_t
 {
 	noop,
-	event,
 	auth,
+	event,
+	backfill,
 };
 
 struct ircd::m::fetch::opts
