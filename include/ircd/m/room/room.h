@@ -102,7 +102,7 @@ namespace ircd::m
 ///
 struct ircd::m::room
 {
-	struct messages;
+	struct events;
 	struct timeline;
 	struct state;
 	struct members;
@@ -188,7 +188,7 @@ struct ircd::m::room
 	static size_t purge(const room &); // cuidado!
 };
 
-#include "messages.h"
+#include "events.h"
 #include "timeline.h"
 #include "state.h"
 #include "state_space.h"

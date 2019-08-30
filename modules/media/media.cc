@@ -453,7 +453,7 @@ ircd::m::media::file::read(const m::room &room,
 	};
 
 	size_t ret{0};
-	room::messages it
+	room::events it
 	{
 		room, 1, &fopts
 	};

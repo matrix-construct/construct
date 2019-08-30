@@ -9492,7 +9492,7 @@ console_cmd__room__count(opt &out, const string_view &line)
 	if(param[1])
 	{
 		size_t count{0};
-		m::room::messages it{room};
+		m::room::events it{room};
 		for(; it && limit; --it, --limit)
 		{
 			const m::event &event{*it};
@@ -9547,7 +9547,7 @@ console_cmd__room__events(opt &out, const string_view &line)
 		room_id
 	};
 
-	m::room::messages it
+	m::room::events it
 	{
 		room, uint64_t(depth >= 0? depth : -1)
 	};
@@ -9595,7 +9595,7 @@ console_cmd__room__messages(opt &out, const string_view &line)
 		room_id
 	};
 
-	m::room::messages it{room};
+	m::room::events it{room};
 	if(depth >= 0 && depth < std::numeric_limits<int64_t>::max())
 		it.seek(depth);
 

@@ -101,7 +101,7 @@ ircd::m::sync::room_summary_append_heroes(data &data)
 	std::array<char[bufsz], count> buf;
 	std::array<string_view, count> last;
 	size_t ret(0), i(0);
-	m::room::messages it
+	m::room::events it
 	{
 		*data.room
 	};

@@ -554,7 +554,7 @@ initialsync_room_timeline_events(client &client,
 	// way back. This is not a big deal but rocksdb should fix their shit.
 	ssize_t i(0);
 	m::event::id::buf event_id;
-	m::room::messages it{room};
+	m::room::events it{room};
 	for(; it && i < 10; --it, ++i)
 		event_id = it.event_id();
 

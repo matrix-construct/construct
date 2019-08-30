@@ -15,10 +15,9 @@
 ///
 /// This interface focuses specifically on the details of room state. Most of
 /// the queries to this interface respond in logarithmic time. If an event with
-/// a state_key is present in room::messages but it is not present in
-/// room::state (state tree) it was accepted into the room but we will not
-/// apply it to our machine, though other parties may (this is a
-/// state-conflict).
+/// a state_key is present in room::events but it is not present in room::state
+/// or room::state::space it was accepted into the room but we will not apply
+/// it to our machine, though other parties may (this is a state-conflict).
 ///
 struct ircd::m::room::state
 {

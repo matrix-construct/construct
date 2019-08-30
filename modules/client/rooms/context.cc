@@ -161,7 +161,7 @@ get__context(client &client,
 			ret, "events_before"
 		};
 
-		m::room::messages before
+		m::room::events before
 		{
 			room, event_id
 		};
@@ -201,7 +201,7 @@ get__context(client &client,
 			ret, "events_after"
 		};
 
-		m::room::messages after
+		m::room::events after
 		{
 			room, event_id
 		};

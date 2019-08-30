@@ -236,7 +236,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 	// way back. This is not a big deal but rocksdb should fix their shit.
 	m::event::id::buf event_id;
 	m::event::idx event_idx {0};
-	m::room::messages it
+	m::room::events it
 	{
 		room
 	};

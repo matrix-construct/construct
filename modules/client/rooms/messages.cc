@@ -90,7 +90,7 @@ get__messages(client &client,
 		request.user_id
 	};
 
-	m::room::messages it
+	m::room::events it
 	{
 		room, page.from
 	};

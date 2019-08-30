@@ -98,7 +98,7 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 	if(data.phased && int64_t(data.range.first) == 0L)
 		return false;
 
-	m::room::messages it
+	m::room::events it
 	{
 		*data.room
 	};

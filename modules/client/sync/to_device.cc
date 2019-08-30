@@ -44,7 +44,7 @@ ircd::m::sync::to_device_polylog(data &data)
 		*data.out, "events"
 	};
 
-	m::room::messages it
+	m::room::events it
 	{
 		data.user_room
 	};

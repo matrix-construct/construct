@@ -43,7 +43,7 @@ ircd::m::room::timeline::for_each(coord &coord,
                                   const closure &closure)
 const
 {
-	messages it
+	events it
 	{
 		this->room, uint64_t(coord.y)
 	};
@@ -99,7 +99,7 @@ const
 void
 ircd::m::room::timeline::rebuild(const m::room &room)
 {
-	m::room::messages it
+	m::room::events it
 	{
 		room, 0UL
 	};

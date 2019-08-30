@@ -214,7 +214,7 @@ get__initialsync_local(client &client,
 	}});
 	state.~array();
 
-	m::room::messages it{room};
+	m::room::events it{room};
 	json::stack::object messages
 	{
 		out, "messages"

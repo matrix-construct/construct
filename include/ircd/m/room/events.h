@@ -1,7 +1,7 @@
 // Matrix Construct
 //
 // Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) 2016-2019 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -9,7 +9,7 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_ROOM_MESSAGES_H
+#define HAVE_IRCD_M_ROOM_EVENTS_H
 
 namespace ircd::m
 {
@@ -35,15 +35,15 @@ namespace ircd::m
 	std::pair<int64_t, event::idx> twain(const room &);
 }
 
-/// Interface to room messages
+/// Interface to room events
 ///
-/// This interface has the form of an STL-style iterator over room messages
+/// This interface has the form of an STL-style iterator over room events
 /// which are state and non-state events from all integrated timelines.
 /// Moving the iterator is cheap, but the dereference operators fetch a
 /// full event. One can iterate just event_idx's by using event_idx() instead
 /// of the dereference operators.
 ///
-struct ircd::m::room::messages
+struct ircd::m::room::events
 {
 	m::room room;
 	db::domain::const_iterator it;
@@ -73,18 +73,18 @@ struct ircd::m::room::messages
 	const m::event &operator*();
 	const m::event *operator->()       { return &operator*();                  }
 
-	messages(const m::room &room,
-	         const uint64_t &depth,
-	         const event::fetch::opts *const & = nullptr);
+	events(const m::room &,
+	       const uint64_t &depth,
+	       const event::fetch::opts *const & = nullptr);
 
-	messages(const m::room &room,
-	         const event::id &,
-	         const event::fetch::opts *const & = nullptr);
+	events(const m::room &,
+	       const event::id &,
+	       const event::fetch::opts *const & = nullptr);
 
-	messages(const m::room &room,
-	         const event::fetch::opts *const & = nullptr);
+	events(const m::room &,
+	       const event::fetch::opts *const & = nullptr);
 
-	messages() = default;
-	messages(const messages &) = delete;
-	messages &operator=(const messages &) = delete;
+	events() = default;
+	events(const events &) = delete;
+	events &operator=(const events &) = delete;
 };

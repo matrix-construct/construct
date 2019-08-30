@@ -135,7 +135,7 @@ ircd::m::user::highlight::for_each(const m::room &room,
                                    const event::closure_idx_bool &closure)
 const
 {
-	m::room::messages it
+	m::room::events it
 	{
 		room
 	};

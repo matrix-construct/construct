@@ -64,7 +64,7 @@ const
 	return rooms.for_each(rooms::closure_bool{[this, &closure]
 	(const m::room &room, const string_view &membership)
 	{
-		m::room::messages it
+		m::room::events it
 		{
 			room
 		};

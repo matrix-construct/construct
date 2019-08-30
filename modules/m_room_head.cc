@@ -183,7 +183,7 @@ ircd::m::room::head::reset(const head &head)
 {
 	size_t ret{0};
 	const auto &room{head.room};
-	m::room::messages it{room};
+	m::room::events it{room};
 	if(!it)
 		return ret;
 
@@ -250,7 +250,7 @@ ircd::m::room::head::rebuild(const head &head)
 		{ db::get::NO_CACHE }
 	};
 
-	m::room::messages it
+	m::room::events it
 	{
 		head.room, 0UL, &fopts
 	};

@@ -171,7 +171,7 @@ ircd::m::room::state::purge_replaced(const room::id &room_id)
 	};
 
 	size_t ret(0);
-	m::room::messages it
+	m::room::events it
 	{
 		room_id, uint64_t(0)
 	};
@@ -710,7 +710,7 @@ bool
 ircd::m::rfor_each_depth_gap(const room &room,
                              const depth_range_closure &closure)
 {
-	room::messages it
+	room::events it
 	{
 		room
 	};
@@ -748,7 +748,7 @@ bool
 ircd::m::for_each_depth_gap(const room &room,
                             const depth_range_closure &closure)
 {
-	room::messages it
+	room::events it
 	{
 		room, int64_t(0L)
 	};
@@ -806,7 +806,7 @@ ircd::m::count_since(const m::room &room,
                      const m::event::idx &a,
                      const m::event::idx &b)
 {
-	m::room::messages it
+	m::room::events it
 	{
 		room
 	};
@@ -1429,7 +1429,7 @@ ircd::m::room::index(const room::id &room_id,
                      std::nothrow_t)
 {
 	uint64_t depth{0};
-	room::messages it
+	room::events it
 	{
 		room_id, depth
 	};
@@ -1751,7 +1751,7 @@ const
 		dbs::event_column.at(idx)
 	};
 
-	messages it{*this};
+	events it{*this};
 	for(; it; --it)
 	{
 		const auto &event_idx
@@ -1780,11 +1780,11 @@ const
 }
 
 //
-// room::messages
+// room::events
 //
 
-ircd::m::room::messages::messages(const m::room &room,
-                                  const event::fetch::opts *const &fopts)
+ircd::m::room::events::events(const m::room &room,
+                              const event::fetch::opts *const &fopts)
 :room{room}
 ,_event
 {
@@ -1803,9 +1803,9 @@ ircd::m::room::messages::messages(const m::room &room,
 		seek();
 }
 
-ircd::m::room::messages::messages(const m::room &room,
-                                  const event::id &event_id,
-                                  const event::fetch::opts *const &fopts)
+ircd::m::room::events::events(const m::room &room,
+                              const event::id &event_id,
+                              const event::fetch::opts *const &fopts)
 :room{room}
 ,_event
 {
@@ -1821,9 +1821,9 @@ ircd::m::room::messages::messages(const m::room &room,
 	seek(event_id);
 }
 
-ircd::m::room::messages::messages(const m::room &room,
-                                  const uint64_t &depth,
-                                  const event::fetch::opts *const &fopts)
+ircd::m::room::events::events(const m::room &room,
+                              const uint64_t &depth,
+                              const event::fetch::opts *const &fopts)
 :room{room}
 ,_event
 {
@@ -1844,13 +1844,13 @@ ircd::m::room::messages::messages(const m::room &room,
 }
 
 const ircd::m::event &
-ircd::m::room::messages::operator*()
+ircd::m::room::events::operator*()
 {
 	return fetch(std::nothrow);
 };
 
 bool
-ircd::m::room::messages::seek(const event::id &event_id)
+ircd::m::room::events::seek(const event::id &event_id)
 {
 	const event::idx &event_idx
 	{
@@ -1863,7 +1863,7 @@ ircd::m::room::messages::seek(const event::id &event_id)
 }
 
 bool
-ircd::m::room::messages::seek(const uint64_t &depth)
+ircd::m::room::events::seek(const uint64_t &depth)
 {
 	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
 	const string_view seek_key
@@ -1878,7 +1878,7 @@ ircd::m::room::messages::seek(const uint64_t &depth)
 }
 
 bool
-ircd::m::room::messages::seek_idx(const event::idx &event_idx)
+ircd::m::room::events::seek_idx(const event::idx &event_idx)
 try
 {
 	uint64_t depth(0);
@@ -1909,7 +1909,7 @@ catch(const db::not_found &e)
 	return false;
 }
 
-ircd::m::room::messages::operator
+ircd::m::room::events::operator
 ircd::m::event::idx()
 const
 {
@@ -1917,14 +1917,14 @@ const
 }
 
 ircd::m::event::id::buf
-ircd::m::room::messages::event_id()
+ircd::m::room::events::event_id()
 const
 {
 	return m::event_id(this->event_idx(), std::nothrow);
 }
 
 uint64_t
-ircd::m::room::messages::depth()
+ircd::m::room::events::depth()
 const
 {
 	assert(bool(*this));
@@ -1937,7 +1937,7 @@ const
 }
 
 ircd::m::event::idx
-ircd::m::room::messages::event_idx()
+ircd::m::room::events::event_idx()
 const
 {
 	assert(bool(*this));
@@ -1950,14 +1950,14 @@ const
 }
 
 const ircd::m::event &
-ircd::m::room::messages::fetch()
+ircd::m::room::events::fetch()
 {
 	m::seek(_event, event_idx());
 	return _event;
 }
 
 const ircd::m::event &
-ircd::m::room::messages::fetch(std::nothrow_t)
+ircd::m::room::events::fetch(std::nothrow_t)
 {
 	m::seek(_event, event_idx(), std::nothrow);
 	return _event;
@@ -3005,7 +3005,7 @@ ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 		*m::dbs::events
 	};
 
-	m::room::messages it
+	m::room::events it
 	{
 		room_id, uint64_t(0)
 	};
@@ -4378,7 +4378,7 @@ size_t
 ircd::m::room::stats::bytes_json(const m::room &room)
 {
 	size_t ret(0);
-	for(m::room::messages it(room); it; --it)
+	for(m::room::events it(room); it; --it)
 	{
 		const m::event::idx &event_idx
 		{

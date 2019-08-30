@@ -103,7 +103,7 @@ get__backfill_ids(client &client,
 		calc_limit(request)
 	};
 
-	m::room::messages it
+	m::room::events it
 	{
 		room
 	};

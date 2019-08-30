@@ -328,7 +328,7 @@ get_events_from(client &client,
 		request.user_id
 	};
 
-	m::room::messages it
+	m::room::events it
 	{
 		room_id, event_id
 	};

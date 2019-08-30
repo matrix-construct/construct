@@ -407,7 +407,7 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 		}
 	};
 
-	m::room::messages it
+	m::room::events it
 	{
 		*data.room
 	};

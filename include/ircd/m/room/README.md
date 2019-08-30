@@ -10,7 +10,7 @@ tables as the database for room in addition to the raw event data itself.
 - room_events
 This is the timeline for room events. We sort the keys of this table by
 an event's `depth`. This table allows us to scan the room's events as
-a collection. See: `m::room::messages`.
+a collection. See: `m::room::events`.
 
 - room_state
 This is the present state table for a room. We sort the keys of this table
