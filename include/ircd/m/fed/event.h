@@ -21,17 +21,8 @@ struct ircd::m::v1::event
 {
 	struct opts;
 
-	explicit operator json::object() const
-	{
-		const json::object object{in.content};
-		const json::array pdus{object.at("pdus")};
-		return pdus.at(0);
-	}
-
-	explicit operator m::event() const
-	{
-		return json::object{*this};
-	}
+	explicit operator json::object() const;
+	explicit operator m::event() const;
 
 	event(const m::event::id &, const mutable_buffer &, opts);
 	event() = default;
@@ -46,3 +37,29 @@ struct ircd::m::v1::event::opts
 	const struct server::request::opts *sopts {nullptr};
 	bool dynamic {false};
 };
+
+inline
+ircd::m::v1::event::operator
+ircd::m::event()
+const
+{
+	return json::object{*this};
+}
+
+inline
+ircd::m::v1::event::operator
+ircd::json::object()
+const
+{
+	const json::object object
+	{
+		in.content
+	};
+
+	const json::array pdus
+	{
+		object.at("pdus")
+	};
+
+	return pdus.at(0);
+}
