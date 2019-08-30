@@ -59,6 +59,7 @@ enum class ircd::m::fetch::op
 {
 	noop,
 	event,
+	auth,
 };
 
 struct ircd::m::fetch::opts

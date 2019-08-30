@@ -26,6 +26,7 @@ namespace ircd::m::fetch
 	static bool timedout(const request &, const system_point &now);
 	static void _check_event(const request &, const m::event &);
 	static void check_response__event(const request &, const json::object &);
+	static void check_response__auth(const request &, const json::object &);
 	static void check_response(const request &, const json::object &);
 	static string_view select_origin(request &, const string_view &);
 	static string_view select_random_origin(request &);
@@ -222,6 +223,7 @@ ircd::m::fetch::reflect(const op &op)
 	{
 		case op::noop:        return "noop";
 		case op::event:       return "event";
+		case op::auth:        return "auth";
 	}
 
 	return "?????";
@@ -438,6 +440,22 @@ try
 			opts.dynamic = true;
 			request.future = std::make_unique<v1::event>
 			(
+				request.opts.event_id,
+				request.buf,
+				std::move(opts)
+			);
+
+			break;
+		}
+
+		case op::auth:
+		{
+			v1::event_auth::opts opts;
+			opts.remote = remote;
+			opts.dynamic = true;
+			request.future = std::make_unique<v1::event_auth>
+			(
+				request.opts.room_id,
 				request.opts.event_id,
 				request.buf,
 				std::move(opts)
@@ -714,6 +732,9 @@ ircd::m::fetch::check_response(const request &request,
 		case op::event:
 			return check_response__event(request, response);
 
+		case op::auth:
+			return check_response__auth(request, response);
+
 		case op::noop:
 			return;
 	}
@@ -723,6 +744,27 @@ ircd::m::fetch::check_response(const request &request,
 		"Unchecked response; fetch op:%u",
 		uint(request.opts.op),
 	};
+}
+
+void
+ircd::m::fetch::check_response__auth(const request &request,
+                                     const json::object &response)
+{
+	const json::array &auth_chain
+	{
+		response.at("auth_chain")
+	};
+
+	for(const json::object &auth_event : auth_chain)
+	{
+		event::id::buf event_id;
+		const m::event event
+		{
+			event_id, auth_event
+		};
+
+		_check_event(request, event);
+	}
 }
 
 void
