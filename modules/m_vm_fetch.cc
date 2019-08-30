@@ -13,7 +13,7 @@ namespace ircd::m::vm::fetch
 	struct evaltab;
 
 	static void hook_handle_prev(const event &, vm::eval &, evaltab &, const room &);
-	static void auth_chain(const room &, const net::hostport &);
+	static void auth_chain(const room &, const string_view &remote);
 	static void hook_handle_auth(const event &, vm::eval &, evaltab &, const room &);
 	static void hook_handle(const event &, vm::eval &);
 
@@ -205,45 +205,48 @@ ircd::m::vm::fetch::hook_handle_auth(const event &event,
 
 void
 ircd::m::vm::fetch::auth_chain(const room &room,
-                               const net::hostport &remote)
+                               const string_view &remote)
 try
 {
-	thread_local char rembuf[64];
 	log::debug
 	{
-		log, "Fetching auth chain for %s in %s from %s",
+		log, "Fetching auth chain for %s in %s (hint: %s)",
 		string_view{room.event_id},
 		string_view{room.room_id},
-		string(rembuf, remote),
+		remote,
 	};
 
-	m::v1::event_auth::opts opts;
-	opts.remote = remote;
-	opts.dynamic = true;
-	const unique_buffer<mutable_buffer> buf
+	m::fetch::opts opts;
+	opts.op = m::fetch::op::auth;
+	opts.room_id = room.room_id;
+	opts.event_id = room.event_id;
+	opts.hint = remote;
+	auto future
 	{
-		16_KiB
+		m::fetch::start(opts)
 	};
 
-	m::v1::event_auth request
+	const auto result
 	{
-		room.room_id, room.event_id, buf, std::move(opts)
+		future.get(seconds(auth_timeout))
 	};
 
-	request.wait(seconds(auth_timeout));
-	request.get();
-	const json::array events
+	const json::object response
 	{
-		request
+		result
+	};
+
+	const json::array &auth_chain
+	{
+		response["auth_chain"]
 	};
 
 	log::debug
 	{
-		log, "Evaluating %zu auth events in chain for %s in %s from %s",
-		events.size(),
+		log, "Evaluating %zu auth events in chain for %s in %s",
+		auth_chain.size(),
 		string_view{room.event_id},
 		string_view{room.room_id},
-		string(rembuf, remote),
 	};
 
 	m::vm::opts vmopts;
@@ -253,7 +256,7 @@ try
 	vmopts.warnlog &= ~vm::fault::EXISTS;
 	m::vm::eval
 	{
-		events, vmopts
+		auth_chain, vmopts
 	};
 }
 catch(const std::exception &e)
