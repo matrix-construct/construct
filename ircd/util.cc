@@ -206,7 +206,7 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
 		{ { "minutes",         "m"  },       60.0L  },
 		{ { "hours",           "h"  },       24.0L  },
 		{ { "days",            "d"  },        7.0L  },
-		{ { "weeks",           "w"  },       30.0L  },
+		{ { "weeks",           "w"  },        4.0L  },
 		{ { "months",          "M"  },       12.0L  },
 	}};
 
