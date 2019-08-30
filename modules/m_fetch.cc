@@ -167,7 +167,7 @@ ircd::m::fetch::start(opts opts)
 		requests.lower_bound(opts)
 	};
 
-	if(it != end(requests) && it->opts.event_id == opts.event_id)
+	if(it != end(requests) && !(*it < opts) && !(opts < *it))
 	{
 		assert(it->opts.room_id == opts.room_id);
 		return ctx::future<result>{}; //TODO: shared_future.
@@ -921,7 +921,7 @@ ircd::m::fetch::operator<(const request &a,
 noexcept
 {
 	return uint(a.opts.op) < uint(b.opts.op) &&
-	       a.opts.event_id < b.opts.event_id;
+	       a.opts.event_id < b.opts.event_id &&
 	       a.opts.room_id < b.opts.room_id;
 }
 
@@ -931,8 +931,8 @@ ircd::m::fetch::operator<(const request &a,
 noexcept
 {
 	return uint(a.opts.op) < uint(b.op) &&
-	       a.opts.event_id < b.event_id;
-	       a.opts.room_id < b.room_id;;
+	       a.opts.event_id < b.event_id &&
+	       a.opts.room_id < b.room_id;
 }
 
 bool
@@ -942,7 +942,7 @@ noexcept
 {
 	return uint(a.op) < uint(b.opts.op) &&
 	       a.event_id < b.opts.event_id &&
-	       a.room_id < b.opts.room_id;;
+	       a.room_id < b.opts.room_id;
 }
 
 //
