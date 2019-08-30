@@ -210,7 +210,7 @@ ircd::m::sync::_notification_count(const room &room,
                                    const event::idx &a,
                                    const event::idx &b)
 {
-	return m::count_since(room, a, a < b? b : a);
+	return room::events::count(room, a, a < b? b : a);
 }
 
 long

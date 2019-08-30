@@ -210,6 +210,7 @@ ircd::m::module_names
 	"m_user_room_account_data",
 	"m_user_room_tags",
 	"m_room",
+	"m_room_events",
 	"m_room_auth",
 	"m_room_head",
 	"m_room_timeline",
