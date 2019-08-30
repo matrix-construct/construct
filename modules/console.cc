@@ -13747,18 +13747,36 @@ console_cmd__mc__register__available(opt &out, const string_view &line)
 //
 
 bool
-console_cmd__fetch__list(opt &out, const string_view &line);
+console_cmd__fetch(opt &out, const string_view &line)
+{
+	m::fetch::for_each([&out]
+	(const m::fetch::request &request)
+	{
+		out
+		<< std::right << std::setw(10) << reflect(request.opts.op) << " "
+		<< std::left << std::setw(64) << trunc(request.event_id, 64) << " "
+		<< std::left << std::setw(40) << trunc(request.room_id, 40) << " "
+		<< std::left << std::setw(32) << trunc(request.origin, 32) << " "
+		<< std::left << "S:" << request.started << " "
+		<< std::left << "A:" << request.attempted.size() << " "
+		<< std::left << "E:" << bool(request.eptr) << " "
+		<< std::left << "F:" << request.finished << " "
+		<< std::endl
+		;
+
+		return true;
+	});
+
+	return true;
+}
 
 bool
-console_cmd__fetch(opt &out, const string_view &line)
+console_cmd__fetch__event(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
 		"room_id", "event_id"
 	}};
-
-	if(!param.count())
-		return console_cmd__fetch__list(out, line);
 
 	const auto room_id
 	{
@@ -13799,24 +13817,59 @@ console_cmd__fetch(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__fetch__list(opt &out, const string_view &line)
+console_cmd__fetch__event__auth(opt &out, const string_view &line)
 {
-	m::fetch::for_each([&out]
-	(const m::fetch::request &request)
+	const params param{line, " ",
 	{
-		out
-		<< std::left << std::setw(64) << trunc(request.event_id, 64) << " "
-		<< std::left << std::setw(40) << trunc(request.room_id, 40) << " "
-		<< std::left << std::setw(32) << trunc(request.origin, 32) << " "
-		<< std::left << "S:" << request.started << " "
-		<< std::left << "A:" << request.attempted.size() << " "
-		<< std::left << "E:" << bool(request.eptr) << " "
-		<< std::left << "F:" << request.finished << " "
-		<< std::endl
-		;
+		"room_id", "event_id"
+	}};
 
-		return true;
-	});
+	const auto room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::event::id &event_id
+	{
+		m::event::id{param.at("event_id")}
+	};
+
+	m::fetch::opts opts;
+	opts.op = m::fetch::op::auth;
+	opts.room_id = room_id;
+	opts.event_id = event_id;
+	auto future
+	{
+		m::fetch::start(opts)
+	};
+
+	const auto result
+	{
+		future.get()
+	};
+
+	const json::object response
+	{
+		result
+	};
+
+	const json::array &auth_chain
+	{
+		response["auth_chain"]
+	};
+
+	out << "Received "
+	    << auth_chain.size()
+	    << " auth events for "
+	    << event_id
+	    << " in "
+	    << room_id
+	    << std::endl
+	    << std::endl
+	    ;
+
+	for(const json::object &event : auth_chain)
+		out << string_view{event} << std::endl;
 
 	return true;
 }
