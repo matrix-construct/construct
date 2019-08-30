@@ -3967,7 +3967,13 @@ bool
 ircd::server::tag::abandoned()
 const
 {
-	return !p.valid();
+	if(!p.valid())
+		return true;
+
+	if(!ctx::is(p.state(), ctx::future_state::PENDING))
+		return true;
+
+	return false;
 }
 
 bool
