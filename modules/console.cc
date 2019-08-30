@@ -7777,7 +7777,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 	auth.for_each([&out, &adi]
 	(const m::event::idx &event_idx)
 	{
-		if(adi-- > 8)
+		if(adi-- > 5)
 			return true;
 
 		const m::event::fetch event
@@ -7795,12 +7795,31 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "recent messages: " << std::endl;
 
 	char linebuf[256];
-	static const size_t last_count(8);
+	static const size_t last_count(5);
 	console_cmd__room__events(out, fmt::sprintf
 	{
 		linebuf, "%s -%ld",
 		string_view{room_id},
 		last_count,
+	});
+
+	out << std::endl;
+	out << "recent gaps: " << std::endl;
+
+	size_t gap_count(4);
+	m::rfor_each_depth_gap(room, [&out, &gap_count]
+	(const auto &range, const auto &event_idx)
+	{
+		out << std::right << std::setw(8) << range.first
+		    << " -> "
+		    << std::left << std::setw(8) << range.second
+		    << " "
+		    << (m::room::state::is(std::nothrow, event_idx)? "S" : " ")
+		    << " "
+		    << m::event_id(event_idx)
+		    << std::endl;
+
+		return --gap_count > 0;
 	});
 
 	out << std::endl;
