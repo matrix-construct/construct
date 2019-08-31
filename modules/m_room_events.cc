@@ -174,6 +174,22 @@ ircd::m::room::events::count(const m::room &room,
 // room::events::missing
 //
 
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::events::missing::count()
+const
+{
+	size_t ret{0};
+	for_each([&ret]
+	(const auto &event_id, const auto &depth, const auto &event_idx)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::room::events::missing::for_each(const closure &closure)

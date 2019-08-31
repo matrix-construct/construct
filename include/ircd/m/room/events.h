@@ -109,6 +109,7 @@ struct ircd::m::room::events::missing
 
   public:
 	bool for_each(const closure &) const;
+	size_t count() const;
 
 	missing() = default;
 	missing(const m::room &room)
