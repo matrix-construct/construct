@@ -12,14 +12,14 @@
 #define HAVE_IRCD_M_EVENT_HORIZON_H
 
 /// Interface to the set of unresolved events. This set contains event_id's
-/// which the server does not have. For each event_id in the set, there is an
-/// event::idx of an event which made a reference to the event_id. There may be
-/// multiple entries for an event_id.
+/// which the server does not have. For each event_id there is an event::idx
+/// of an event which made a reference to the event_id. There may be multiple
+/// entries for an event_id.
 ///
 /// This information helps construct the dependency graph in event::refs out of
 /// order; it is anti-reference which is removed after the event is processed.
 /// Each event::idx for an event_id in the set is then able to be "reprocessed"
-/// in some way; at a minimum the reprocessing removes the event_id|event::idx
+/// in some way; at a minimum the reprocessing removes this event_id|event::idx
 /// entry (see: dbs/event_horizon related).
 ///
 class ircd::m::event::horizon
