@@ -109,6 +109,7 @@ struct ircd::m::room::events::missing
 	m::room room;
 
   public:
+	bool for_each(const int64_t &min_depth, const closure &) const;
 	bool for_each(const closure &) const;
 	size_t count() const;
 

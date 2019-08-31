@@ -195,6 +195,15 @@ IRCD_MODULE_EXPORT
 ircd::m::room::events::missing::for_each(const closure &closure)
 const
 {
+	return for_each(0L, closure);
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::events::missing::for_each(const int64_t &min_depth,
+                                         const closure &closure)
+const
+{
 	bool ret{true};
 	room::events it
 	{
@@ -203,6 +212,9 @@ const
 
 	for(; it && ret; --it)
 	{
+		if(it.depth() < min_depth)
+			break;
+
 		const m::event &event{*it};
 		const m::event::prev prev{event};
 		ret = m::for_each(prev, [&](const m::event::id &event_id)

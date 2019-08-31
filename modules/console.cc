@@ -9614,7 +9614,7 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "limit", "event_id"
+		"room_id", "limit", "min_depth", "event_id"
 	}};
 
 	const auto &room_id
@@ -9625,6 +9625,11 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 	auto limit
 	{
 		param.at("limit", 16L)
+	};
+
+	const auto &min_depth
+	{
+		param.at("min_depth", 0L)
 	};
 
 	const auto &event_id
@@ -9642,7 +9647,7 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 		room
 	};
 
-	missing.for_each([&out, &limit]
+	missing.for_each(min_depth, [&out, &limit]
 	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
 	{
 		out
