@@ -39,8 +39,9 @@ namespace ircd::m
 ///
 struct ircd::m::room::events
 {
-	struct missing;
 	struct sounding;
+	struct horizon;
+	struct missing;
 
 	m::room room;
 	db::domain::const_iterator it;
@@ -94,8 +95,8 @@ struct ircd::m::room::events
 	static size_t count(const event::id &, const event::id &);
 };
 
-/// Find missing room events. This is an interface to the event-horizon for
-/// this room, organized as a breadth-first iteration of missing references.
+/// Find missing room events. This is a breadth-first iteration of missing
+/// references from the tophead (or at the event provided in the room arg)
 ///
 /// The closure is invoked with the first argument being the event_id unknown
 /// to the server, followed by the depth and event::idx of the event making the
@@ -110,8 +111,6 @@ struct ircd::m::room::events::missing
   public:
 	bool for_each(const closure &) const;
 	size_t count() const;
-
-	size_t rebuild();
 
 	missing() = default;
 	missing(const m::room &room)
@@ -138,6 +137,31 @@ struct ircd::m::room::events::sounding
 
 	sounding() = default;
 	sounding(const m::room &room)
+	:room{room}
+	{}
+};
+
+/// Find missing room events. This is an interface to the event-horizon for
+/// this room.
+///
+/// The closure is invoked with the first argument being the event_id unknown
+/// to the server, followed by the depth and event::idx of the event making the
+/// reference.
+///
+struct ircd::m::room::events::horizon
+{
+	using closure = std::function<bool (const event::id &, const uint64_t &, const event::idx &)>;
+
+	m::room room;
+
+  public:
+	bool for_each(const closure &) const;
+	size_t count() const;
+
+	size_t rebuild();
+
+	horizon() = default;
+	horizon(const m::room &room)
 	:room{room}
 	{}
 };

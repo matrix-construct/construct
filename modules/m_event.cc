@@ -206,7 +206,7 @@ ircd::m::event::horizon::rebuild()
 }
 
 size_t
-ircd::m::room::events::missing::rebuild()
+ircd::m::room::events::horizon::rebuild()
 {
 	m::dbs::write_opts opts;
 	opts.appendix.reset();

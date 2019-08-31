@@ -9586,6 +9586,61 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
+		"room_id", "limit", "event_id"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	auto limit
+	{
+		param.at("limit", 16L)
+	};
+
+	const auto &event_id
+	{
+		param["event_id"]
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const m::room::events::missing missing
+	{
+		room
+	};
+
+	missing.for_each([&out, &limit]
+	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
+	{
+		out
+		<< std::right
+		<< std::setw(10)
+		<< ref_idx
+		<< " "
+		<< std::right
+		<< std::setw(8)
+		<< ref_depth
+		<< " "
+		<< std::left
+		<< std::setw(52)
+		<< event_id
+		<< std::endl;
+		return --limit;
+	});
+
+	return true;
+}
+
+bool
+console_cmd__room__events__horizon(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
 		"room_id"
 	}};
 
@@ -9604,12 +9659,12 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 		room_id, event_id
 	};
 
-	const m::room::events::missing missing
+	const m::room::events::horizon horizon
 	{
 		room
 	};
 
-	missing.for_each([&out]
+	horizon.for_each([&out]
 	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
 	{
 		out
@@ -9632,7 +9687,7 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__room__events__missing__rebuild(opt &out, const string_view &line)
+console_cmd__room__events__horizon__rebuild(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
@@ -9649,12 +9704,12 @@ console_cmd__room__events__missing__rebuild(opt &out, const string_view &line)
 		room_id
 	};
 
-	m::room::events::missing missing
+	m::room::events::horizon horizon
 	{
 		room
 	};
 
-	out << "done " << missing.rebuild() << std::endl;
+	out << "done " << horizon.rebuild() << std::endl;
 	return true;
 }
 
