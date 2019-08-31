@@ -7783,63 +7783,31 @@ console_cmd__room__top(opt &out, const string_view &line)
 		std::get<m::event::idx>(top)
 	};
 
-	out << "top auth:" << std::endl;
+	char version_buf[32], display_buf[256];
 
-	ssize_t adi(auth.depth());
-	auth.for_each([&out, &adi]
-	(const m::event::idx &event_idx)
-	{
-		if(adi-- > 5)
-			return true;
+	out << "display name:      " << m::display_name(display_buf, room_id) << std::endl;
+	out << "version:           " << m::version(version_buf, room_id) << std::endl;
+	out << "joined:            " << m::room::members{room_id}.count("join") << std::endl;
+	out << std::endl;
 
-		const m::event::fetch event
-		{
-			event_idx, std::nothrow
-		};
-
-		if(event.valid)
-			m::pretty_stateline(out, event, event_idx);
-
-		return true;
-	});
+	out << "servers:           " << m::room::origins{room_id}.count() << std::endl;
+	out << "servers up:        " << m::room::origins{room_id}.count_online() << std::endl;
+	out << "servers err:       " << m::room::origins{room_id}.count_error() << std::endl;
 
 	out << std::endl;
-	out << "recent messages: " << std::endl;
-
-	char linebuf[256];
-	static const size_t last_count(5);
-	console_cmd__room__events(out, fmt::sprintf
-	{
-		linebuf, "%s -%ld",
-		string_view{room_id},
-		last_count,
-	});
-
+	out << "heads:             " << m::room::head{room_id}.count() << std::endl;
+	out << "auth depth:        " << auth.depth() << std::endl;
+	out << "state:             " << m::room::state{room_id}.count() << std::endl;
+	out << "states:            " << m::room::state::space{room_id}.count() << std::endl;
+	out << "events:            " << m::room{room_id}.count() << std::endl;
+	out << "index:             " << m::room::index(room_id) << std::endl;
 	out << std::endl;
-	out << "recent gaps: " << std::endl;
 
-	size_t gap_count(4);
-	const m::room::events::sounding gaps
-	{
-		room
-	};
-
-	gaps.for_each([&out, &gap_count]
-	(const auto &range, const auto &event_idx)
-	{
-		out << std::right << std::setw(8) << range.first
-		    << " -> "
-		    << std::left << std::setw(8) << range.second
-		    << " "
-		    << (m::room::state::is(std::nothrow, event_idx)? "S" : " ")
-		    << " "
-		    << m::event_id(event_idx)
-		    << std::endl;
-
-		return --gap_count > 0;
-	});
-
+	out << "top depth:         " << std::get<int64_t>(top) << std::endl;
+	out << "top event:         " << std::get<m::event::id::buf>(top) << std::endl;
+	out << "top index:         " << std::get<m::event::idx>(top) << std::endl;
 	out << std::endl;
+
 	out << "m.room state: " << std::endl;
 
 	state.for_each(m::room::state::type_prefix{"m.room."}, [&out, &state]
@@ -7877,24 +7845,84 @@ console_cmd__room__top(opt &out, const string_view &line)
 	});
 
 	out << std::endl;
+	out << "recent auth:" << std::endl;
 
-	char version_buf[32], display_buf[256];
-	out << "index:             " << m::room::index(room_id) << std::endl;
-	out << "version:           " << m::version(version_buf, room_id) << std::endl;
-	out << "federated:         " << std::boolalpha << m::federated(room_id) << std::endl;
-	out << "joined:            " << m::room::members{room_id}.count("join") << std::endl;
-	out << "servers:           " << m::room::origins{room_id}.count() << std::endl;
-	out << "servers up:        " << m::room::origins{room_id}.count_online() << std::endl;
-	out << "servers err:       " << m::room::origins{room_id}.count_error() << std::endl;
-	out << "heads:             " << m::room::head{room_id}.count() << std::endl;
-	out << "state:             " << m::room::state{room_id}.count() << std::endl;
-	out << "states:            " << m::room::state::space{room_id}.count() << std::endl;
-	out << "events:            " << m::room{room_id}.count() << std::endl;
-	out << "auth depth:        " << auth.depth() << std::endl;
-	out << "top depth:         " << std::get<int64_t>(top) << std::endl;
-	out << "top index:         " << std::get<m::event::idx>(top) << std::endl;
-	out << "top event:         " << std::get<m::event::id::buf>(top) << std::endl;
-	out << "display name:      " << m::display_name(display_buf, room_id) << std::endl;
+	ssize_t adi(auth.depth());
+	auth.for_each([&out, &adi]
+	(const m::event::idx &event_idx)
+	{
+		if(adi-- > 5)
+			return true;
+
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow
+		};
+
+		if(event.valid)
+			m::pretty_stateline(out, event, event_idx);
+
+		return true;
+	});
+
+	out << std::endl;
+	out << "recent events: " << std::endl;
+
+	char linebuf[256];
+	static const size_t last_count(5);
+	console_cmd__room__events(out, fmt::sprintf
+	{
+		linebuf, "%s -%ld",
+		string_view{room_id},
+		last_count,
+	});
+
+	out << std::endl;
+	out << "recent missing: " << std::endl;
+
+	const m::room::events::missing missing
+	{
+		room
+	};
+
+	ssize_t missing_count(3);
+	missing.for_each([&out, &missing_count]
+	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
+	{
+		out
+		<< std::right << std::setw(8) << ref_depth
+		<< " "
+		<< std::right << std::setw(10) << ref_idx
+		<< " "
+		<< std::left << event_id
+		<< std::endl;
+		return missing_count--;
+	});
+
+	out << std::endl;
+	out << "recent gaps: " << std::endl;
+
+	size_t gap_count(4);
+	const m::room::events::sounding gaps
+	{
+		room
+	};
+
+	gaps.rfor_each([&out, &gap_count]
+	(const auto &range, const auto &event_idx)
+	{
+		out << std::right << std::setw(8) << range.first
+		    << " -> "
+		    << std::left << std::setw(8) << range.second
+		    << " "
+		    << (m::room::state::is(std::nothrow, event_idx)? "S" : " ")
+		    << " "
+		    << m::event_id(event_idx)
+		    << std::endl;
+
+		return gap_count--;
+	});
+
 	return true;
 }
 
