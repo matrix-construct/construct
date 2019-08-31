@@ -11,20 +11,22 @@
 #pragma once
 #define HAVE_IRCD_M_ROOM_EVENTS_H
 
+// The "sounding" is the depth of the first gap. In any attempt to trace
+// the room timeline from the tophead to the m.room.create event: the sounding
+// is the [highest number] depth preventing that.
+//
+// The "twain" marks the depth at the end of the first gap; the server is in
+// possession of one or more events again at the twain.
+//
+// The "hazard" is the depth of the first gap starting from the m.room.create
+// event toward the tophead. In any attempt to trace the room timeline with
+// an increasing depth, the hazard is the next gap to frontfill.
+
 namespace ircd::m
 {
-	// [GET] Find gaps in the room's event graph. A gap is where no events
-	// have been obtained at that depth. Each gap is reported to the closure
-	// with a separate invocation. The range is [inclusive, exclusive].
-	using depth_range = std::pair<int64_t, int64_t>;
-	using depth_range_closure = std::function<bool (const depth_range &, const event::idx &)>;
-	bool for_each_depth_gap(const room &, const depth_range_closure &);
-	bool rfor_each_depth_gap(const room &, const depth_range_closure &);
-
-	bool sounding(const room &, const depth_range_closure &); // Last missing (all)
-	std::pair<int64_t, event::idx> hazard(const room &); // First missing (one)
 	std::pair<int64_t, event::idx> sounding(const room &); // Last missing (one)
 	std::pair<int64_t, event::idx> twain(const room &);
+	std::pair<int64_t, event::idx> hazard(const room &); // First missing (one)
 }
 
 /// Interface to room events
@@ -37,6 +39,9 @@ namespace ircd::m
 ///
 struct ircd::m::room::events
 {
+	struct missing;
+	struct sounding;
+
 	m::room room;
 	db::domain::const_iterator it;
 	event::fetch _event;
@@ -87,4 +92,49 @@ struct ircd::m::room::events
 	static size_t count(const m::room &, const event::id &, const event::id &);
 	static size_t count(const event::idx &, const event::idx &);
 	static size_t count(const event::id &, const event::id &);
+};
+
+/// Find missing room events. This is an interface to the event-horizon for
+/// this room, organized as a breadth-first iteration of missing references.
+///
+/// The closure is invoked with the first argument being the event_id unknown
+/// to the server, followed by the depth and event::idx of the event making the
+/// reference.
+///
+struct ircd::m::room::events::missing
+{
+	using closure = std::function<bool (const event::id &, const uint64_t &, const event::idx &)>;
+
+	m::room room;
+
+  public:
+	bool for_each(const closure &) const;
+
+	missing() = default;
+	missing(const m::room &room)
+	:room{room}
+	{}
+};
+
+/// Find gaps in the room's events. A gap is where this server has no events
+/// at a certain depth. This is a path-finding diagnostic interface, useful to
+/// understand what areas of the timeline have not been acquired by the server
+/// to calculate backfill requests, etc. This interface is depth-first oriented,
+/// rather than the breadth-first room::events::missing interface.
+///
+struct ircd::m::room::events::sounding
+{
+	using range = std::pair<int64_t, int64_t>;
+	using closure = std::function<bool (const range &, const event::idx &)>;
+
+	m::room room;
+
+  public:
+	bool for_each(const closure &) const;
+	bool rfor_each(const closure &) const;
+
+	sounding() = default;
+	sounding(const m::room &room)
+	:room{room}
+	{}
 };

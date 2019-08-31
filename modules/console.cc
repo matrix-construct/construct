@@ -7807,7 +7807,12 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "recent gaps: " << std::endl;
 
 	size_t gap_count(4);
-	m::rfor_each_depth_gap(room, [&out, &gap_count]
+	const m::room::events::sounding gaps
+	{
+		room
+	};
+
+	gaps.for_each([&out, &gap_count]
 	(const auto &range, const auto &event_idx)
 	{
 		out << std::right << std::setw(8) << range.first
@@ -8101,19 +8106,18 @@ console_cmd__room__sounding(opt &out, const string_view &line)
 		m::room::index(room)
 	};
 
+	const auto sounding
+	{
+		m::sounding(room)
+	};
+
 	out << "head:      " << std::setw(8) << m::depth(room)
 	    << "   " << m::event_id(head) << " (" << head << ")"
 	    << std::endl;
 
-	m::sounding(room, [&out]
-	(const auto &range, const auto &event_idx)
-	{
-		out << "sounding:  " << std::setw(8) << range.second
-		    << "   " << m::event_id(event_idx) << " (" << event_idx << ")"
-		    << std::endl;
-
-		return true;
-	});
+	out << "sounding:  " << std::setw(8) << sounding.first
+	    << "   " << m::event_id(sounding.second) << " (" << sounding.second << ")"
+	    << std::endl;
 
 	out << "twain:     " << std::setw(8) << twain.first
 	    << std::endl;
@@ -8179,10 +8183,15 @@ console_cmd__room__depth__gaps(opt &out, const string_view &line)
 		return true;
 	}};
 
+	const m::room::events::sounding gaps
+	{
+		room
+	};
+
 	if(param["reverse"] == "reverse")
-		m::rfor_each_depth_gap(room, closure);
+		gaps.rfor_each(closure);
 	else
-		m::for_each_depth_gap(room, closure);
+		gaps.for_each(closure);
 
 	return true;
 }
