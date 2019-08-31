@@ -179,7 +179,32 @@ IRCD_MODULE_EXPORT
 ircd::m::room::events::missing::for_each(const closure &closure)
 const
 {
-	return true;
+	const std::function<bool (const string_view &)> in_room
+	{
+		[this](const string_view &room_id)
+		{
+			return room_id == this->room.room_id;
+		}
+	};
+
+	return event::horizon::for_every([&in_room, &closure]
+	(const event::id &event_id, const event::idx &event_idx)
+	{
+		if(!m::query(event_idx, "room_id", false, in_room))
+			return true;
+
+		if(m::exists(event_id))
+			return true;
+
+		uint64_t depth;
+		if(!m::get(event_idx, "depth", depth))
+			return true;
+
+		if(!closure(event_id, depth, event_idx))
+			return false;
+
+		return true;
+	});
 }
 
 //

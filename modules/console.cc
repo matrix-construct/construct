@@ -9570,6 +9570,56 @@ console_cmd__room__events(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__events__missing(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto &event_id
+	{
+		param[2]
+	};
+
+	const m::room room
+	{
+		room_id, event_id
+	};
+
+	const m::room::events::missing missing
+	{
+		room
+	};
+
+	missing.for_each([&out]
+	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
+	{
+		out
+		<< std::right
+		<< std::setw(10)
+		<< ref_idx
+		<< " "
+		<< std::right
+		<< std::setw(8)
+		<< ref_depth
+		<< " "
+		<< std::left
+		<< std::setw(52)
+		<< event_id
+		<< std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__room__messages(opt &out, const string_view &line)
 {
 	const params param{line, " ",
