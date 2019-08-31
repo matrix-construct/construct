@@ -43,18 +43,18 @@ namespace ircd::m::dbs::appendix
 	enum index :uint8_t;
 }
 
-#include "event_column.h"           // event_idx => (direct value)
 #include "event_idx.h"              // event_id => event_idx
 #include "event_json.h"             // event_idx => (full JSON)
+#include "event_column.h"           // event_idx => (direct value)
 #include "event_refs.h"             // event_idx | ref_type, event_idx
 #include "event_horizon.h"          // event_id | event_idx
-#include "event_type.h"             // type | event_idx
 #include "event_sender.h"           // sender | event_idx || hostpart | localpart, event_idx
-#include "room_head.h"              // room_id | event_id => event_idx
+#include "event_type.h"             // type | event_idx
 #include "room_events.h"            // room_id | depth, event_idx
-#include "room_joined.h"            // room_id | origin, member => event_idx
 #include "room_state.h"             // room_id | type, state_key => event_idx
 #include "room_state_space.h"       // room_id | type, state_key, depth, event_idx
+#include "room_joined.h"            // room_id | origin, member => event_idx
+#include "room_head.h"              // room_id | event_id => event_idx
 
 /// Options that affect the dbs::write() of an event to the transaction.
 struct ircd::m::dbs::write_opts
