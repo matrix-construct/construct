@@ -10,9 +10,14 @@
 
 namespace ircd::m::fetch
 {
-	static bool operator<(const request &a, const request &b) noexcept;
+	static bool operator==(const opts &a, const opts &b) noexcept;
+	static bool operator==(const request &a, const opts &b) noexcept;
+	static bool operator==(const opts &a, const request &b) noexcept;
+	static bool operator==(const request &a, const request &b) noexcept;
+	static bool operator<(const opts &a, const opts &b) noexcept;
 	static bool operator<(const request &a, const opts &b) noexcept;
 	static bool operator<(const opts &a, const request &b) noexcept;
+	static bool operator<(const request &a, const request &b) noexcept;
 
 	extern ctx::dock dock;
 	extern ctx::mutex requests_mutex;
@@ -916,33 +921,63 @@ ircd::m::fetch::timedout(const request &request,
 }
 
 bool
-ircd::m::fetch::operator<(const request &a,
-                          const request &b)
+ircd::m::fetch::operator<(const request &a, const request &b)
 noexcept
 {
-	return uint(a.opts.op) < uint(b.opts.op) &&
-	       a.opts.event_id < b.opts.event_id &&
-	       a.opts.room_id < b.opts.room_id;
+	return a.opts < b.opts;
 }
 
 bool
-ircd::m::fetch::operator<(const request &a,
-                          const opts &b)
+ircd::m::fetch::operator<(const opts &a, const request &b)
 noexcept
 {
-	return uint(a.opts.op) < uint(b.op) &&
-	       a.opts.event_id < b.event_id &&
-	       a.opts.room_id < b.room_id;
+	return a < b.opts;
 }
 
 bool
-ircd::m::fetch::operator<(const opts &a,
-                          const request &b)
+ircd::m::fetch::operator<(const request &a, const opts &b)
 noexcept
 {
-	return uint(a.op) < uint(b.opts.op) &&
-	       a.event_id < b.opts.event_id &&
-	       a.room_id < b.opts.room_id;
+	return a.opts < b;
+}
+
+bool
+ircd::m::fetch::operator<(const opts &a, const opts &b)
+noexcept
+{
+	return uint(a.op) < uint(b.op) ||
+	       a.event_id < b.event_id ||
+	       a.room_id < b.room_id;
+}
+
+bool
+ircd::m::fetch::operator==(const request &a, const request &b)
+noexcept
+{
+	return a.opts == b.opts;
+}
+
+bool
+ircd::m::fetch::operator==(const opts &a, const request &b)
+noexcept
+{
+	return a == b.opts;
+}
+
+bool
+ircd::m::fetch::operator==(const request &a, const opts &b)
+noexcept
+{
+	return a.opts == b;
+}
+
+bool
+ircd::m::fetch::operator==(const opts &a, const opts &b)
+noexcept
+{
+	return uint(a.op) == uint(b.op) &&
+	       a.event_id == b.event_id &&
+	       a.room_id == b.room_id;
 }
 
 //
