@@ -401,9 +401,6 @@ ircd::m::vm::conform_check_event_id
 			|| eval.room_version == "2"
 		};
 
-		if(unaffected)
-			return;
-
 		if(eval.room_version == "3")
 			if(!event::id::v3::is(event.event_id))
 				throw error
@@ -412,13 +409,15 @@ ircd::m::vm::conform_check_event_id
 					string_view{event.event_id}
 				};
 
-		if(!event::id::v4::is(event.event_id))
-			throw error
-			{
-				fault::INVALID, "Event ID %s is not sufficient for version %s room",
-				string_view{event.event_id},
-				eval.room_version,
-			};
+		// note: we check v4 format for all other room versions, including "4"
+		if(!unaffected && eval.room_version != "3")
+			if(!event::id::v4::is(event.event_id))
+				throw error
+				{
+					fault::INVALID, "Event ID %s in a version %s room is not a version 4 Event ID.",
+					string_view{event.event_id},
+					eval.room_version,
+				};
 	}
 };
 
