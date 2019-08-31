@@ -6962,6 +6962,18 @@ console_cmd__event__horizon__list(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__event__horizon__rebuild(opt &out, const string_view &line)
+{
+	const auto count
+	{
+		m::event::horizon::rebuild()
+	};
+
+	out << "done " << count << std::endl;
+	return true;
+}
+
+bool
 console_cmd__event__horizon__flush(opt &out, const string_view &line)
 {
 	size_t count(0);
