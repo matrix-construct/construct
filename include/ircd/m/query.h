@@ -15,6 +15,8 @@ namespace ircd::m
 {
 	template<class R> R query(std::nothrow_t, const event::idx &, const string_view &key, R&& def, const std::function<R (const string_view &)> &);
 	template<class F> auto query(std::nothrow_t, const event::idx &, const string_view &key, F&&);
+
+	template<class R, class F> R query(const event::idx &, const string_view &key, R&& def, F&&);
 	template<class F> auto query(const event::idx &, const string_view &key, F&&);
 }
 
@@ -39,6 +41,17 @@ ircd::m::query(const event::idx &event_idx,
 	});
 
 	return ret;
+}
+
+template<class R,
+         class F>
+R
+ircd::m::query(const event::idx &event_idx,
+               const string_view &key,
+               R&& r,
+               F&& f)
+{
+	return query(std::nothrow, event_idx, key, std::forward<R>(r), std::forward<F>(f));
 }
 
 /// See other overload documentation first. This overload implements
