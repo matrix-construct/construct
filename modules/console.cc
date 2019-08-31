@@ -13013,7 +13013,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		return true;
 
 	m::vm::opts vmopts;
-	vmopts.fetch_prev = false;
+	vmopts.fetch_prev = has(op, "prev");
 	m::vm::eval eval
 	{
 		event, vmopts

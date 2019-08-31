@@ -283,6 +283,8 @@ ircd::m::vm::fetch::hook_handle_prev(const event &event,
 	const auto &opts{*eval.opts};
 	const event::prev prev{event};
 	tab.prev_count = prev.prev_events_count();
+
+	std::list<ctx::future<m::fetch::result>> futures;
 	for(size_t i(0); i < tab.prev_count; ++i)
 	{
 		const auto &prev_id
@@ -296,21 +298,38 @@ ircd::m::vm::fetch::hook_handle_prev(const event &event,
 			continue;
 		}
 
-		const bool can_fetch
+		if(!opts.fetch_prev || !m::vm::fetch::enable)
+			continue;
+
+		const int64_t room_depth
 		{
-			opts.fetch_prev && bool(m::vm::fetch::enable)
+			m::depth(std::nothrow, room)
 		};
 
-		const bool fetching
+		//TODO: XXX
+		const bool recent_event
 		{
-			//TODO: XXX
-			can_fetch && false //start(room.room_id, prev_id)
+			at<"depth"_>(event) >= room_depth - 20L //TODO: XXX
 		};
 
-		tab.prev_fetching += fetching;
+		if(!recent_event)
+			continue;
+
+		const ssize_t limit
+		{
+			at<"depth"_>(event) - room_depth
+		};
+
+		m::fetch::opts opts;
+		opts.op = m::fetch::op::backfill;
+		opts.limit = std::min(limit, 32L);
+		opts.room_id = room.room_id;
+		opts.event_id = prev_id;
+		futures.emplace_back(m::fetch::start(opts));
 	}
 
 	// If we have all of the referenced prev_events we are satisfied here.
+	tab.prev_fetching = futures.size();
 	assert(tab.prev_exists <= tab.prev_count);
 	if(tab.prev_exists == tab.prev_count)
 		return;
@@ -329,16 +348,58 @@ ircd::m::vm::fetch::hook_handle_prev(const event &event,
 
 	// If the options want to wait for the fetch+evals of the prev_events to occur
 	// before we continue processing this event further, we block in here.
-	const bool &prev_wait{opts.fetch_prev_wait};
-	if(prev_wait && tab.prev_fetching) for(size_t i(0); i < tab.prev_count; ++i)
+	//const bool &prev_wait{opts.fetch_prev_wait};
+	//if(prev_wait && tab.prev_fetching) for(size_t i(0); i < tab.prev_count; ++i)
+	if(!tab.prev_fetching)
+		return;
+
+	auto fetching
+	{
+		ctx::when_all(begin(futures), end(futures))
+	};
+
+	fetching.wait();
+	for(auto &future : futures) try
+	{
+		m::fetch::result result
+		{
+			future.get()
+		};
+
+		const json::array &pdus
+		{
+			json::object(result).get("pdus")
+		};
+
+		log::debug
+		{
+			log, "%s fetched %zu pdus; evaluating...",
+			loghead(eval),
+			pdus.size(),
+		};
+
+		m::vm::eval
+		{
+			pdus, opts
+		};
+	}
+	catch(const std::exception &e)
+	{
+		log::derror
+		{
+			log, "%s :%s",
+			loghead(eval),
+			e.what(),
+		};
+	}
+
+	for(size_t i(0); i < tab.prev_count; ++i)
 	{
 		const auto &prev_id
 		{
 			prev.prev_event(i)
 		};
 
-		//TODO: XXX
-		assert(0);
 		tab.prev_fetched += m::exists(prev_id);
 	}
 
