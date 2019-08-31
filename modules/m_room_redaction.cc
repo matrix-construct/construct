@@ -104,7 +104,7 @@ ircd::m::auth_room_redaction(const m::event &event,
 		}
 	};
 
-	if(m::query(std::nothrow, redact_target_idx, "redacts", sender_domain_match))
+	if(m::query(std::nothrow, redact_target_idx, "sender", sender_domain_match))
 	{
 		data.allow = true;
 		return;
