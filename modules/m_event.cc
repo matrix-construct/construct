@@ -147,3 +147,99 @@ ircd::m::pretty_stateline(std::ostream &out,
 	out << std::endl;
 	return out;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// event/horizon.h
+//
+
+//TODO: XXX remove fwd decl
+namespace ircd::m::dbs
+{
+	void _index_event_horizon(db::txn &, const event &, const write_opts &, const m::event::id &);
+}
+
+size_t
+ircd::m::event::horizon::rebuild()
+{
+	m::dbs::write_opts opts;
+	opts.appendix.reset();
+	opts.appendix.set(dbs::appendix::EVENT_HORIZON);
+	db::txn txn
+	{
+		*dbs::events
+	};
+
+	size_t ret(0);
+	m::events::for_each({0UL, -1UL}, [&ret, &txn, &opts]
+	(const m::event::idx &event_idx, const m::event &event)
+	{
+		const m::event::prev prev
+		{
+			event
+		};
+
+		m::for_each(prev, [&ret, &txn, &opts, &event_idx, &event]
+		(const m::event::id &event_id)
+		{
+			if(m::exists(event_id))
+				return true;
+
+			opts.event_idx = event_idx;
+			m::dbs::_index_event_horizon(txn, event, opts, event_id);
+			if(++ret % 1024 == 0)
+				log::info
+				{
+					m::log, "event::horizon rebuild @ %lu/%lu",
+					event_idx,
+					m::vm::sequence::retired,
+				};
+
+			return true;
+		});
+
+		return true;
+	});
+
+	txn();
+	return ret;
+}
+
+size_t
+ircd::m::room::events::missing::rebuild()
+{
+	m::dbs::write_opts opts;
+	opts.appendix.reset();
+	opts.appendix.set(dbs::appendix::EVENT_HORIZON);
+	db::txn txn
+	{
+		*dbs::events
+	};
+
+	size_t ret(0);
+	m::room::events it
+	{
+		room
+	};
+
+	for(; it; --it)
+	{
+		const m::event &event{*it};
+		const event::prev prev_events{event};
+
+		opts.event_idx = it.event_idx();
+		m::for_each(prev_events, [&]
+		(const m::event::id &event_id)
+		{
+			if(m::exists(event_id))
+				return true;
+
+			m::dbs::_index_event_horizon(txn, event, opts, event_id);
+			++ret;
+			return true;
+		});
+	}
+
+	txn();
+	return ret;
+}

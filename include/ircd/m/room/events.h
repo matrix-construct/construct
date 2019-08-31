@@ -111,6 +111,8 @@ struct ircd::m::room::events::missing
 	bool for_each(const closure &) const;
 	size_t count() const;
 
+	size_t rebuild();
+
 	missing() = default;
 	missing(const m::room &room)
 	:room{room}

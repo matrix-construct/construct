@@ -9632,6 +9632,33 @@ console_cmd__room__events__missing(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__events__missing__rebuild(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	m::room::events::missing missing
+	{
+		room
+	};
+
+	out << "done " << missing.rebuild() << std::endl;
+	return true;
+}
+
+bool
 console_cmd__room__messages(opt &out, const string_view &line)
 {
 	const params param{line, " ",

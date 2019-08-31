@@ -1671,12 +1671,6 @@ ircd::m::index(const event::id &event_id,
 // event/horizon.h
 //
 
-size_t
-ircd::m::event::horizon::rebuild()
-{
-	throw not_implemented{};
-}
-
 bool
 ircd::m::event::horizon::has(const event::id &event_id)
 {

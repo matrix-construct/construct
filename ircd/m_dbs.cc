@@ -246,7 +246,7 @@ namespace ircd::m::dbs
 	static void _index_event_type(db::txn &, const event &, const write_opts &);
 	static void _index_event_sender(db::txn &, const event &, const write_opts &);
 	static void _index_event_horizon_resolve(db::txn &, const event &, const write_opts &); //query
-	static void _index_event_horizon(db::txn &, const event &, const write_opts &, const id::event &);
+	void _index_event_horizon(db::txn &, const event &, const write_opts &, const id::event &);
 	static void _index_event_refs_m_room_redaction(db::txn &, const event &, const write_opts &); //query
 	static void _index_event_refs_m_receipt_m_read(db::txn &, const event &, const write_opts &); //query
 	static void _index_event_refs_m_relates_m_reply(db::txn &, const event &, const write_opts &); //query
