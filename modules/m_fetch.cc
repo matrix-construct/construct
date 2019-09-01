@@ -172,13 +172,15 @@ ircd::m::fetch::start(opts opts)
 		requests.lower_bound(opts)
 	};
 
-	if(it != end(requests) && !(*it < opts) && !(opts < *it))
+	const bool exists
 	{
-		assert(it->opts.room_id == opts.room_id);
-		return ctx::future<result>{}; //TODO: shared_future.
-	}
+		it != end(requests) && *it == opts
+	};
 
-	it = requests.emplace_hint(it, opts);
+	assert(!exists || it->opts.room_id == opts.room_id);
+	if(!exists)
+		it = requests.emplace_hint(it, opts);
+
 	auto &request
 	{
 		const_cast<fetch::request &>(*it)
@@ -189,7 +191,9 @@ ircd::m::fetch::start(opts opts)
 		request.promise
 	};
 
-	start(request);
+	if(!exists)
+		start(request);
+
 	return ret;
 }
 
