@@ -1204,8 +1204,8 @@ try
 	opts->listeners.emplace_back(this->events);
 
 	// Setup histogram collecting
-	//this->stats->stats_level_ = rocksdb::kAll;
-	this->stats->stats_level_ = rocksdb::kExceptTimeForMutex;
+	//this->stats->stats_level_ = rocksdb::kExceptTimeForMutex;
+	this->stats->stats_level_ = rocksdb::kAll;
 	opts->statistics = this->stats;
 
 	// Setup performance metric options
