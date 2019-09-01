@@ -37,15 +37,22 @@ namespace ircd::ctx
 /// of these promises are making the same promise to the same shared_state;
 /// the list allows for copy semantics which are important for some callback
 /// systems (like boost::asio). This solution is far more optimal than
-/// allocating the promise in a shared_ptr and refcounting...
+/// allocating the promise in a shared_ptr and refcounting... Note that the
+/// same semantic exists on the future side to implement shared futures. Both
+/// parties maintain a pointer to the head of a singly linked list of the
+/// other party, and a pointer to the next instance of their own party.
 struct ircd::ctx::promise_base
 {
-	static void remove(shared_state_base &, promise_base &);
-	static void update(promise_base &new_, promise_base &old);
-	static void append(promise_base &new_, promise_base &old);
+	// Internal operations
+	static const promise_base *head(const shared_state_base &);
+	static const promise_base *head(const promise_base &);
+	static size_t refcount(const shared_state_base &);
 
-	shared_state_base *st {nullptr};
-	mutable promise_base *next {nullptr};
+	static promise_base *head(promise_base &);
+	static promise_base *head(shared_state_base &);
+
+	shared_state_base *st {nullptr};         // the head of all sharing futures
+	mutable promise_base *next {nullptr};    // next sharing promise
 
 	template<class T> const shared_state<T> &state() const noexcept;
 	template<class T> shared_state<T> &state() noexcept;
@@ -54,6 +61,7 @@ struct ircd::ctx::promise_base
 
 	void check_pending() const;
 	void make_ready();
+	void remove();
 
   public:
 	bool valid() const noexcept;
@@ -137,7 +145,23 @@ ircd::ctx::promise<T>::set_value(T&& val)
 		return;
 
 	check_pending();
-	state().val = std::move(val);
+	auto *state
+	{
+		shared_state_base::head(*this)
+	};
+
+	assert(state);
+	if(shared_state_base::refcount(*state) > 1) do
+	{
+		assert(is(*state, future_state::PENDING));
+		static_cast<shared_state<T> &>(*state).val = val;
+	}
+	while((state = state->next)); else
+	{
+		assert(is(this->state(), future_state::PENDING));
+		this->state().val = std::move(val);
+	}
+
 	make_ready();
 }
 
@@ -149,7 +173,13 @@ ircd::ctx::promise<T>::set_value(const T &val)
 		return;
 
 	check_pending();
-	state().val = val;
+	auto *state(shared_state_base::head(*this)); do
+	{
+		assert(state);
+		assert(is(*state, future_state::PENDING));
+		static_cast<shared_state<T> &>(*state).val = val;
+	}
+	while((state = state->next));
 	make_ready();
 }
 
@@ -171,6 +201,15 @@ const
 //
 // promise_base
 //
+
+inline void
+ircd::ctx::promise_base::check_pending()
+const
+{
+	assert(valid());
+	if(unlikely(!is(state(), future_state::PENDING)))
+		throw promise_already_satisfied{};
+}
 
 inline bool
 ircd::ctx::promise_base::operator!()

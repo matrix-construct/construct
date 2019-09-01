@@ -60,13 +60,8 @@ struct ircd::ctx::future
 	template<class duration> T get(const duration &d);
 	template<class time_point> T get_until(const time_point &);
 
-	future() = default;
-	future(promise<T> &promise);
-	future(future &&) noexcept;
-	future(const future &) = delete;
-	future &operator=(future &&) noexcept;
-	future &operator=(const future &) = delete;
-	~future() noexcept;
+	using shared_state<T>::shared_state;
+	using shared_state<T>::operator=;
 };
 
 template<>
@@ -89,125 +84,26 @@ struct ircd::ctx::future<void>
 	template<class duration> void wait(const duration &d) const;
 	void wait() const;
 
-	IRCD_OVERLOAD(already)
-
-	future(promise<void> &promise);
-	future(already_t);                           // construct in ready state
-	future() = default;
-	future(future &&) noexcept;
-	future(const future &) = delete;
-	future &operator=(future &&) noexcept;
-	future &operator=(const future &) = delete;
-	~future() noexcept;
+	using shared_state<void>::shared_state;
+	using shared_state<void>::operator=;
 };
-
-namespace ircd::ctx
-{
-}
 
 template<class... T>
 struct ircd::ctx::scoped_future
 :future<T...>
 {
-	template<class... Args> scoped_future(Args&&... args);
+	using future<T...>::future;
 	~scoped_future() noexcept;
 };
-
-template<class... T>
-template<class... Args>
-ircd::ctx::scoped_future<T...>::scoped_future(Args&&... args)
-:future<T...>{std::forward<Args>(args)...}
-{
-}
 
 template<class... T>
 ircd::ctx::scoped_future<T...>::~scoped_future()
 noexcept
 {
-	if(std::uncaught_exceptions())
+	if(std::uncaught_exceptions() || !this->valid())
 		return;
 
-	if(this->valid())
-		this->wait();
-}
-
-template<class T>
-ircd::ctx::future<T>::future(promise<T> &promise)
-:shared_state<T>{promise}
-{
-	assert(!promise.valid());
-	update(state());
-	assert(promise.valid());
-}
-
-inline
-ircd::ctx::future<void>::future(promise<void> &promise)
-:shared_state<void>{promise}
-{
-	assert(!promise.valid());
-	update(state());
-	assert(promise.valid());
-}
-
-inline
-ircd::ctx::future<void>::future(already_t)
-{
-	set(state(), future_state::READY);
-}
-
-template<class T>
-ircd::ctx::future<T>::future(future<T> &&o)
-noexcept
-:shared_state<T>{std::move(o)}
-{
-	update(state());
-	o.state().p = nullptr;
-}
-
-inline
-ircd::ctx::future<void>::future(future<void> &&o)
-noexcept
-:shared_state<void>{std::move(o)}
-{
-	update(state());
-	o.state().p = nullptr;
-}
-
-template<class T>
-ircd::ctx::future<T> &
-ircd::ctx::future<T>::operator=(future<T> &&o)
-noexcept
-{
-	this->~future();
-	static_cast<shared_state<T> &>(*this) = std::move(o);
-	update(state());
-	o.state().p = nullptr;
-	return *this;
-}
-
-inline ircd::ctx::future<void> &
-ircd::ctx::future<void>::operator=(future<void> &&o)
-noexcept
-{
-	this->~future();
-	static_cast<shared_state<void> &>(*this) = std::move(o);
-	update(state());
-	o.state().p = nullptr;
-	return *this;
-}
-
-template<class T>
-ircd::ctx::future<T>::~future()
-noexcept
-{
-	invalidate(state());
-}
-
-inline
-ircd::ctx::future<void>::~future()
-noexcept
-{
-	invalidate(state());
+	this->wait();
 }
 
 template<class T>
@@ -331,11 +227,7 @@ const
 {
 	if(_wait_until(*this, tp, std::nothrow))
 	{
-		auto &state
-		{
-			const_cast<future<void> *>(this)->state()
-		};
-
+		auto &state(mutable_cast(this->state()));
 		set(state, future_state::RETRIEVED);
 		if(bool(state.eptr))
 			std::rethrow_exception(state.eptr);
@@ -362,11 +254,7 @@ ircd::ctx::_wait_until(const future<T> &f,
                        const time_point &tp,
                        std::nothrow_t)
 {
-	auto &state
-	{
-		const_cast<future<T> &>(f).state()
-	};
-
+	auto &state(mutable_cast(f.state()));
 	if(unlikely(is(state, future_state::INVALID)))
 		throw no_state{};
 

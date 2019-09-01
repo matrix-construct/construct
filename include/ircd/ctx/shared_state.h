@@ -21,14 +21,11 @@ namespace ircd::ctx
 	template<> struct shared_state<void>;
 
 	IRCD_EXCEPTION(ircd::ctx::error, future_error)
+	IRCD_OVERLOAD(already)
 
 	future_state state(const shared_state_base &);
 	bool is(const shared_state_base &, const future_state &);
 	void set(shared_state_base &, const future_state &);
-	size_t refcount(const shared_state_base &);
-	void invalidate(shared_state_base &);
-	void update(shared_state_base &);
-	void notify(shared_state_base &);
 }
 
 /// Internal state enumeration for the promise / future / related. These can
@@ -47,23 +44,47 @@ enum class ircd::ctx::future_state
 /// Internal Non-template base of the state object shared by promise and
 /// future. It is extended by the appropriate template, and usually resides
 /// in the future's instance, where the promise finds it.
+///
+/// There can be multiple promises and multiple futures all associated with
+/// the same resolution event. All promises point to the first
+/// shared_state_base (future) of the associated shared_state_base list. When
+/// any promise in the list of associated promises sets a result, it copies
+/// the result to all futures in the list; if only one future, it std::move()'s
+/// the result; then the association of all promises and all futures and
+/// respective lists are invalidated.
+///
+/// Note that the only way to traverse the list of shared_state_bases's is to
+/// dereference the promise pointer (head promise) and follow the st->next
+/// list. The only way to traverse the list of promises is to dereference a
+/// shared_state_base with a valid *p in future_state::PENDING and chase the
+/// p->next list.
 struct ircd::ctx::shared_state_base
 {
+	static const shared_state_base *head(const shared_state_base &);
+	static const shared_state_base *head(const promise_base &);
+	static size_t refcount(const shared_state_base &);
+
+	static shared_state_base *head(shared_state_base &);
+	static shared_state_base *head(promise_base &);
+
 	mutable dock cond;
 	std::exception_ptr eptr;
 	std::function<void (shared_state_base &)> then;
+	mutable shared_state_base *next{nullptr}; // next sharing future
 	union
 	{
-		promise_base *p {nullptr};
+		promise_base *p {nullptr}; // the head of all sharing promises
 		future_state st;
 	};
 
-	shared_state_base(promise_base &p);
 	shared_state_base() = default;
-	shared_state_base(shared_state_base &&) = default;
-	shared_state_base(const shared_state_base &) = delete;
-	shared_state_base &operator=(shared_state_base &&) = default;
-	shared_state_base &operator=(const shared_state_base &) = delete;
+	shared_state_base(already_t);
+	shared_state_base(promise_base &);
+	shared_state_base(shared_state_base &&) noexcept;
+	shared_state_base(const shared_state_base &);
+	shared_state_base &operator=(promise_base &);
+	shared_state_base &operator=(shared_state_base &&) noexcept;
+	shared_state_base &operator=(const shared_state_base &);
 	~shared_state_base() noexcept;
 };
 

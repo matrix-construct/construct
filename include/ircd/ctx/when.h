@@ -80,7 +80,7 @@ ircd::ctx::when_any(it first,
 		if(is(state(closure(first)), future_state::PENDING))
 			when::set_any_then(p, first, closure);
 
-	if(refcount(p.state()) <= 1)
+	if(promise<it>::refcount(p.state()) <= 1)
 		p.set_value(last);
 
 	return ret;
@@ -118,7 +118,7 @@ ircd::ctx::when_all(it first,
 		if(is(state(closure(first)), future_state::PENDING))
 			when::set_all_then(p, first, closure);
 
-	if(refcount(p.state()) <= 1)
+	if(promise<void>::refcount(p.state()) <= 1)
 		p.set_value();
 
 	return ret;
@@ -174,10 +174,10 @@ ircd::ctx::when::all_then(promise<void> &p)
 	if(!p.valid())
 		return;
 
-	if(refcount(p.state()) < 2)
+	if(promise<void>::refcount(p.state()) < 2)
 		return p.set_value();
 
-	return p.remove(p.state(), p);
+	return p.remove();
 }
 
 /// In order for this template to be reusable with std::set iterations we

@@ -980,7 +980,7 @@ ircd::client::close(const net::close_opts &opts)
 {
 	return likely(sock) && !sock->fini?
 		net::close(*sock, opts):
-		ctx::future<void>::already;
+		ctx::already;
 }
 
 void

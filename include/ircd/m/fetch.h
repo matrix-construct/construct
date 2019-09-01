@@ -101,7 +101,7 @@ struct ircd::m::fetch::opts
 struct ircd::m::fetch::result
 {
 	/// Backing buffer for any data pointed to by this result.
-	unique_buffer<mutable_buffer> buf;
+	shared_buffer<mutable_buffer> buf;
 
 	/// The backing buffer may contain other data ahead of the response
 	/// content; in any case this points to a view of the response content.
