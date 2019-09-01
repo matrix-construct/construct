@@ -123,6 +123,26 @@ struct is_specialization_of<T<args...>, T>
 {};
 
 //
+// Convenience const_cast deduction template
+//
+
+template<class T>
+extern inline T &
+__attribute__((always_inline, gnu_inline, artificial))
+mutable_cast(const T &t)
+{
+	return const_cast<T &>(t);
+}
+
+template<class T>
+extern inline T *const &
+__attribute__((always_inline, gnu_inline, artificial))
+mutable_cast(const T *const &t)
+{
+	return const_cast<T *const &>(t);
+}
+
+//
 // Test if type is shared_from_this
 //
 
