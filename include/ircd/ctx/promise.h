@@ -68,7 +68,7 @@ struct ircd::ctx::promise_base
 	promise_base(promise_base &&) noexcept;
 	promise_base &operator=(const promise_base &);
 	promise_base &operator=(promise_base &&) noexcept;
-	virtual ~promise_base() noexcept;
+	~promise_base() noexcept;
 };
 
 /// Value-oriented promise. The user creates an instance of this promise in
