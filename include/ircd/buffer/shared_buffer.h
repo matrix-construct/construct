@@ -18,15 +18,25 @@ struct ircd::buffer::shared_buffer
 :std::shared_ptr<char>
 ,buffer
 {
-	shared_buffer(const size_t &size);
-	shared_buffer(unique_buffer<buffer> &&);
+	shared_buffer();
+	explicit shared_buffer(const size_t &size, const size_t &align = 0);
+	shared_buffer(unique_buffer<buffer> &&) noexcept;
 	explicit shared_buffer(const const_buffer &);
-	shared_buffer() = default;
 	shared_buffer(shared_buffer &&) = default;
 	shared_buffer(const shared_buffer &) = default;
 	shared_buffer &operator=(shared_buffer &&) = default;
 	shared_buffer &operator=(const shared_buffer &) = default;
+	shared_buffer &operator=(unique_buffer<buffer> &&) noexcept;
+	~shared_buffer() = default;
 };
+
+template<class buffer>
+ircd::buffer::shared_buffer<buffer>::shared_buffer()
+:std::shared_ptr<char>
+{
+	nullptr, std::free
+}
+{}
 
 template<class buffer>
 ircd::buffer::shared_buffer<buffer>::shared_buffer(const const_buffer &src)
@@ -42,30 +52,43 @@ ircd::buffer::shared_buffer<buffer>::shared_buffer(const const_buffer &src)
 
 template<class buffer>
 ircd::buffer::shared_buffer<buffer>::shared_buffer(unique_buffer<buffer> &&buf)
+noexcept
 :std::shared_ptr<char>
 {
-	data(buf),
-	std::default_delete<char[]>()
+	data(buf), std::free
 }
 ,buffer
 {
-	this->std::shared_ptr<char>::get(),
-	size(buf)
+	this->std::shared_ptr<char>::get(), size(buf)
 }
 {
 	buf.release();
 }
 
 template<class buffer>
-ircd::buffer::shared_buffer<buffer>::shared_buffer(const size_t &size)
+ircd::buffer::shared_buffer<buffer>::shared_buffer(const size_t &size,
+                                                   const size_t &align)
 :std::shared_ptr<char>
 {
-	new __attribute__((aligned(16))) char[size],
-	std::default_delete<char[]>()
+	allocator::aligned_alloc(align, size).release(), std::free
 }
 ,buffer
 {
-	this->std::shared_ptr<char>::get(),
-	size
+	this->std::shared_ptr<char>::get(), size
 }
 {}
+
+template<class buffer>
+ircd::buffer::shared_buffer<buffer> &
+ircd::buffer::shared_buffer<buffer>::operator=(unique_buffer<buffer> &&buf)
+noexcept
+{
+	this->std::shared_ptr<char>::reset(data(buf), std::free);
+	*static_cast<buffer *>(this) =
+	{
+		this->std::shared_ptr<char>::get(), size(buf)
+	};
+
+	buf.release();
+	return *this;
+}
