@@ -51,14 +51,20 @@ for these userspace contexts rather than those for operating system threads in
 among others.
 
 * The primary user object is `ircd::context` (or `ircd::ctx::context`) which has
-an `std::thread` interface.
+an `std::thread`-like interface. By default the lifetime of this instance has
+significance, and when `context` goes out of scope, a termination is sent to
+the child context and the parent yields until it has joined (see DETACH and
+WAIT_JOIN flags to change this behavior). Take note that this means by default
+a child context may never be able to complete (or even be entered at all!)
+if the parent constructs and then desctructs `context` without either any flags
+or any strategy by the parent to wait for completion.
 
-* There is no preemptive interleaving of contexts. This makes every sequence
+> There is no preemptive interleaving of contexts. This makes every sequence
 of instructions executed a natural transaction requiring no other method of
 exclusion. It also allows for introspective conditions, i.e: if context switch
 occurred: refresh value, else the old value is good. This is impossible in a
-preemptive environment as the result may have changed at every step during and
-after the process.
+preemptive environment as the result may have changed at instruction boundaries
+rather than at cooperative boundaries.
 
 ### Context Switching
 
@@ -94,7 +100,7 @@ nodes are the contexts themselves participating in the list.
 it provides, the ctx system can run the function itself to test the condition
 without waking up the context.
 
-### When does Context Switching (yielding) occur?
+#### When does Context Switching (yielding) occur?
 
 Bottom line is that this is simply not javascript. There are no
 stack-clairvoyant keywords like `await` which explicitly indicate to everyone
