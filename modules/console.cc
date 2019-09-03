@@ -7132,42 +7132,6 @@ console_cmd__event__rewrite(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__event__fetch(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"room_id", "event_id"
-	}};
-
-	const m::event::id &event_id
-	{
-		param.at("event_id")
-	};
-
-	const auto &room_id
-	{
-		m::room_id(param.at("room_id"))
-	};
-
-	const net::hostport hostport
-	{
-		room_id.host()
-	};
-
-	using prototype = json::object (const m::room::id &,
-	                                const m::event::id &,
-	                                const net::hostport &);
-
-	static mods::import<prototype> acquire
-	{
-		"vm_fetch", "state_fetch"
-	};
-
-	acquire(room_id, event_id, hostport);
-	return true;
-}
-
-bool
 console_cmd__event__visible(opt &out, const string_view &line)
 {
 	const params param{line, " ",
