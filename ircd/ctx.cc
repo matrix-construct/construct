@@ -2191,6 +2191,7 @@ ircd::ctx::set(shared_state_base &st,
 		case future_state::READY:
 		case future_state::RETRIEVED:
 		default:
+			st.p = nullptr;
 			st.st = state;
 			return;
 	}
