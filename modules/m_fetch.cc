@@ -676,11 +676,11 @@ ircd::m::fetch::finish(request &request)
 	log::logf
 	{
 		log, request.eptr? log::DERROR: log::DEBUG,
-		"%s in %s started:%ld finished:%d attempted:%zu abandon:%b %S%s",
+		"Finished %s in %s started:%ld finished:%d attempted:%zu abandon:%b %s%s",
 		string_view{request.opts.event_id},
 		string_view{request.opts.room_id},
-		seconds(tse(request.started)).count(),
-		seconds(tse(request.finished)).count(),
+		duration_cast<seconds>(tse(request.started)).count(),
+		duration_cast<seconds>(tse(request.finished)).count(),
 		request.attempted.size(),
 		!request.promise,
 		request.eptr? " :" : "",
