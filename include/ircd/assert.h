@@ -79,7 +79,7 @@ noexcept
 		static_assert(__has_builtin(__builtin_debugtrap));
 		__builtin_debugtrap();
 	#elif defined(__x86_64__)
-		__asm__ volatile ("int $3");
+		__asm__ volatile ("int $3   # IRCd ASSERTION DEBUG TRAP !!! ");
 	#else
 		__builtin_trap();
 	#endif
