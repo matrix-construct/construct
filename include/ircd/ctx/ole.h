@@ -20,6 +20,7 @@
 namespace ircd::ctx::ole
 {
 	struct init;
+	struct opts;
 	struct offload;
 }
 
@@ -30,13 +31,13 @@ namespace ircd::ctx
 
 struct ircd::ctx::offload
 {
-	struct opts;
-	using closure = std::function<void ()>;
+	using function = std::function<void ()>;
 
-	offload(const opts &, const closure &);
+	offload(const opts &, const function &);
+	offload(const function &);
 };
 
-struct ircd::ctx::ole::offload::opts
+struct ircd::ctx::ole::opts
 {
 	/// Optionally give this offload task a name for any tasklist.
 	string_view name;
