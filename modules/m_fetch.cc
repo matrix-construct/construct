@@ -1005,3 +1005,8 @@ ircd::m::fetch::request::request(const fetch::opts &opts)
 	this->opts.event_id = this->event_id;
 	this->opts.room_id = this->room_id;
 }
+
+ircd::m::fetch::request::~request()
+noexcept
+{
+}

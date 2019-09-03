@@ -150,6 +150,9 @@ struct ircd::m::fetch::request
 	/// in the attempted set at the start of an attempt.
 	string_view origin;
 
+	/// HTTP heads and scratch buffer for server::request
+	unique_buffer<mutable_buffer> buf;
+
 	/// Our future for the server::request. Since we make
 	std::unique_ptr<server::request> future;
 
@@ -160,7 +163,6 @@ struct ircd::m::fetch::request
 	std::exception_ptr eptr;
 
 	/// Buffer backing for opts
-	unique_buffer<mutable_buffer> buf;
 	m::event::id::buf event_id;
 	m::room::id::buf room_id;
 
@@ -170,6 +172,7 @@ struct ircd::m::fetch::request
 	request(const request &) = delete;
 	request &operator=(request &&) = delete;
 	request &operator=(const request &) = delete;
+	~request() noexcept;
 };
 
 inline
