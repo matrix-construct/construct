@@ -63,6 +63,7 @@ namespace ircd
 #include "closure.h"
 #include "test.h"
 #include "boolean.h"
+#include "maybe.h"
 
 // Unsorted section
 namespace ircd {
