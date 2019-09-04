@@ -435,6 +435,8 @@ void
 ircd::m::bootstrap::eval_state(const json::array &state)
 try
 {
+	fetch_keys(state);
+
 	log::info
 	{
 		log, "Evaluating %zu state events...",
