@@ -607,6 +607,7 @@ noexcept
 void
 ircd::server::peer::close(const net::close_opts &opts)
 {
+	assert(!op_fini);
 	op_fini = true;
 	link *links[LINK_MAX];
 	const auto end(pointers(this->links, links));
@@ -3970,9 +3971,8 @@ const
 	if(!p.valid())
 		return true;
 
-	if(!ctx::is(p.state(), ctx::future_state::PENDING))
-		return true;
-
+	assert(p.st);
+	assert(is(p.state(), ctx::future_state::PENDING));
 	return false;
 }
 
