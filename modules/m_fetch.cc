@@ -290,11 +290,7 @@ ircd::m::fetch::request_handle()
 	static const auto dereferencer{[]
 	(auto &it) -> server::request &
 	{
-		auto &request
-		{
-			const_cast<fetch::request &>(*it)
-		};
-
+		auto &request(mutable_cast(*it));
 		assert(request.future);
 		return *request.future;
 	}};
@@ -658,6 +654,12 @@ try
 	assert(!request.finished);
 	assert(!!request.started && !!request.last);
 
+	if(request.future)
+	{
+		server::cancel(*request.future);
+		request.future.reset(nullptr);
+	}
+
 	request.eptr = std::exception_ptr{};
 	request.origin = {};
 	start(request);
@@ -946,9 +948,26 @@ bool
 ircd::m::fetch::operator<(const opts &a, const opts &b)
 noexcept
 {
-	return uint(a.op) < uint(b.op) ||
-	       a.event_id < b.event_id ||
-	       a.room_id < b.room_id;
+	if(uint(a.op) < uint(b.op))
+		return true;
+
+	else if(uint(a.op) > uint(b.op))
+		return false;
+
+	else if(a.room_id < b.room_id)
+		return true;
+
+	else if(a.room_id > b.room_id)
+		return false;
+
+	else if(a.event_id < b.event_id)
+		return true;
+
+	else if(a.event_id > b.event_id)
+		return false;
+
+	assert(operator==(a, b));
+	return false;
 }
 
 bool
