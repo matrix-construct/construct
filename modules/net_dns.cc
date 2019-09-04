@@ -357,7 +357,7 @@ ircd::net::dns::new_record(mutable_buffer &buf,
 
 	const auto pos(data(buf));
 	consume(buf, sizeof(type));
-	return new (data(buf)) type(answer);
+	return new (pos) type(answer);
 }
 
 //
