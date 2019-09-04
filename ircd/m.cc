@@ -3385,6 +3385,7 @@ ircd::m::hook::base::site::site(const json::members &members)
 ircd::m::hook::base::site::~site()
 noexcept
 {
+	assert(!calling);
 	const std::vector<base *> hooks
 	{
 		begin(this->hooks), end(this->hooks)
