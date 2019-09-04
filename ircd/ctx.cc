@@ -2054,6 +2054,7 @@ ircd::ctx::promise_base::make_ready()
 
 	// At this point the promise should no longer be considered valid; no longer
 	// referring to the shared_state.
+	this->st = nullptr;
 	assert(!valid());
 }
 
@@ -2119,8 +2120,13 @@ ircd::ctx::remove(promise_base &p)
 		promise_base::head(p)
 	};
 
-	if(last == &p && p.next)
-		set_futures_promise(*p.next);
+	if(last == &p)
+	{
+		if(p.next)
+			set_futures_promise(*p.next);
+		else
+			invalidate_futures(p);
+	}
 
 	if(last)
 		for(auto *next{last->next}; next; last = next, next = last->next)
@@ -2190,10 +2196,8 @@ ircd::ctx::set_futures_promise(promise_base &p)
 	};
 
 	for(; next; next = next->next)
-	{
-		assert(is(*next, future_state::PENDING));
-		next->p = std::addressof(p);
-	}
+		if(is(*next, future_state::PENDING))
+			next->p = std::addressof(p);
 }
 
 void
