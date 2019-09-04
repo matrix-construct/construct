@@ -355,6 +355,14 @@ ircd::m::bootstrap::backfill(const string_view &host,
                              const m::event::id &event_id)
 try
 {
+	log::info
+	{
+		log, "Requesting recent events for %s from %s at %s",
+		string_view{room_id},
+		host,
+		string_view{event_id},
+	};
+
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB // headers in and out
@@ -397,6 +405,7 @@ try
 
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1;
+	vmopts.warnlog &= ~vm::fault::EXISTS;
 	vmopts.fetch_state_check = false;
 	vmopts.fetch_prev_check = false;
 	vmopts.infolog_accept = false;
@@ -426,11 +435,18 @@ void
 ircd::m::bootstrap::eval_state(const json::array &state)
 try
 {
+	log::info
+	{
+		log, "Evaluating %zu state events...",
+		state.size(),
+	};
+
 	m::vm::opts opts;
 	opts.nothrows = -1;
+	opts.warnlog &= ~vm::fault::EXISTS;
 	opts.fetch_prev_check = false;
 	opts.fetch_state_check = false;
-	opts.infolog_accept = false;
+	opts.infolog_accept = true;
 	m::vm::eval
 	{
 		state, opts
@@ -455,7 +471,14 @@ try
 {
 	fetch_keys(auth_chain);
 
+	log::info
+	{
+		log, "Evaluating %zu authentication events...",
+		auth_chain.size(),
+	};
+
 	m::vm::opts opts;
+	opts.warnlog &= ~vm::fault::EXISTS;
 	opts.infolog_accept = true;
 	opts.fetch = false;
 	m::vm::eval
@@ -479,6 +502,7 @@ void
 ircd::m::bootstrap::eval_lazy_chain(const json::array &auth_chain)
 {
 	m::vm::opts opts;
+	opts.warnlog &= ~vm::fault::EXISTS;
 	opts.infolog_accept = true;
 	opts.fetch = false;
 

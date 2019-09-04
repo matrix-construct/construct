@@ -103,7 +103,7 @@ try
 	if(run::level != run::level::RUN)
 		return;
 
-	log::debug
+	log::info
 	{
 		log, "Starting initial resynchronization from other servers..."
 	};
@@ -315,6 +315,7 @@ try
 
 	m::vm::opts vmopts;
 	vmopts.infolog_accept = true;
+	vmopts.warnlog &= ~vm::fault::EXISTS;
 	vmopts.node_id = hint;
 	m::vm::eval eval
 	{
