@@ -73,6 +73,7 @@ handle_pdus(client &client,
 	m::vm::opts vmopts;
 	vmopts.node_id = request.origin;
 	vmopts.nothrows = -1U;
+	vmopts.warnlog &= ~m::vm::fault::EXISTS;
 	vmopts.infolog_accept = true;
 	m::vm::eval eval
 	{
