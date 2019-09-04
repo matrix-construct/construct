@@ -2069,7 +2069,7 @@ ircd::ctx::promise_base::refcount(const shared_state_base &st)
 	if(!is(st, future_state::PENDING))
 		return ret;
 
-	for(const auto *next(head(mutable_cast(st))); next; next = next->next)
+	for(const auto *next(head(st)); next; next = next->next)
 		++ret;
 
 	return ret;
@@ -2129,10 +2129,10 @@ ircd::ctx::remove(promise_base &p)
 	}
 
 	if(last)
-		for(auto *next{last->next}; next; last = next, next = last->next)
+		for(auto *next{last->next}; next; last = next, next = next->next)
 			if(next == &p)
 			{
-				last->next = p.next;
+				last->next = next->next;
 				break;
 			}
 
@@ -2377,7 +2377,7 @@ noexcept
 {
 	const auto refcount
 	{
-		this->refcount(*this)
+		shared_state_base::refcount(*this)
 	};
 
 	assert(refcount >= 1);
@@ -2481,10 +2481,10 @@ ircd::ctx::remove(shared_state_base &st)
 	}
 
 	assert(last);
-	for(auto *next(last->next); next; last = next, next = last->next)
+	for(auto *next(last->next); next; last = next, next = next->next)
 		if(next == &st)
 		{
-			last->next = st.next;
+			last->next = next->next;
 			break;
 		}
 
