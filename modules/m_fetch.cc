@@ -85,7 +85,7 @@ ircd::m::fetch::requests_max
 decltype(ircd::m::fetch::request_context)
 ircd::m::fetch::request_context
 {
-	"m.fetch.req", 512_KiB, &request_worker, context::POST
+	"m.fetch.req", 1_MiB, &request_worker, context::POST
 };
 
 decltype(ircd::m::fetch::requests)
