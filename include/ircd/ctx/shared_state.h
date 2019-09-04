@@ -70,7 +70,7 @@ struct ircd::ctx::shared_state_base
 	mutable dock cond;
 	std::exception_ptr eptr;
 	std::function<void (shared_state_base &)> then;
-	mutable shared_state_base *next{nullptr}; // next sharing future
+	shared_state_base *next{nullptr}; // next sharing future
 	union
 	{
 		promise_base *p {nullptr}; // the head of all sharing promises

@@ -51,8 +51,8 @@ struct ircd::ctx::promise_base
 	static promise_base *head(promise_base &);
 	static promise_base *head(shared_state_base &);
 
-	shared_state_base *st {nullptr};         // the head of all sharing futures
-	mutable promise_base *next {nullptr};    // next sharing promise
+	shared_state_base *st {nullptr};      // the head of all sharing futures
+	promise_base *next {nullptr};         // next sharing promise
 
 	template<class T> const shared_state<T> &state() const noexcept;
 	template<class T> shared_state<T> &state() noexcept;
