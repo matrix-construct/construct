@@ -40,7 +40,7 @@ namespace ircd::m::fetch
 	static void handle_result(request &);
 	static bool handle(request &);
 
-	static void request_handle(const decltype(requests)::iterator &);
+	static bool request_handle(const decltype(requests)::iterator &);
 	static void request_handle();
 	static size_t request_cleanup();
 	static void request_worker();
@@ -287,11 +287,6 @@ ircd::m::fetch::request_handle()
 		fetch::dock
 	};
 
-	const unwind cleanup
-	{
-		request_cleanup
-	};
-
 	static const auto dereferencer{[]
 	(auto &it) -> server::request &
 	{
@@ -309,47 +304,50 @@ ircd::m::fetch::request_handle()
 		ctx::when_any(requests.begin(), requests.end(), dereferencer)
 	};
 
-	bool timeout{true};
+	bool timedout{true};
 	{
 		const unlock_guard unlock
 		{
 			lock
 		};
 
-		timeout = !next.wait(seconds(timeout), std::nothrow);
+		timedout = !next.wait(seconds(timeout), std::nothrow);
 	};
 
-	if(unlikely(timeout))
-		return;
-
-	const auto it
+	if(likely(!timedout))
 	{
-		next.get()
-	};
+		const auto it
+		{
+			next.get()
+		};
 
-	if(unlikely(it == end(requests)))
-		return;
+		if(it != end(requests))
+			if(!request_handle(it))
+				return;
+	}
 
-	request_handle(it);
+	request_cleanup();
 }
 
-void
+bool
 ircd::m::fetch::request_handle(const decltype(requests)::iterator &it)
 {
 	auto &request
 	{
-		const_cast<fetch::request &>(*it)
+		mutable_cast(*it)
 	};
 
 	if(!request.finished)
 		if(!handle(request))
-			return;
+			return false;
 
 	requests.erase(it);
+	return true;
 }
 
 size_t
 ircd::m::fetch::request_cleanup()
+try
 {
 	const auto now
 	{
@@ -359,28 +357,17 @@ ircd::m::fetch::request_cleanup()
 	size_t ret(0);
 	for(auto it(begin(requests)); it != end(requests); ++it)
 	{
-		auto &request
-		{
-			const_cast<fetch::request &>(*it)
-		};
-
+		auto &request(mutable_cast(*it));
 		if(!request.started)
-		{
 			start(request);
-			continue;
-		}
 
-		if(!request.finished && timedout(request, now))
+		else if(!request.finished && timedout(request, now))
 			retry(request);
 	}
 
 	auto it(begin(requests)); while(it != end(requests))
 	{
-		auto &request
-		{
-			const_cast<fetch::request &>(*it)
-		};
-
+		auto &request(mutable_cast(*it));
 		if(!!request.finished)
 		{
 			it = requests.erase(it);
@@ -390,6 +377,16 @@ ircd::m::fetch::request_cleanup()
 	}
 
 	return ret;
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "request_cleanup(): %s",
+		e.what(),
+	};
+
+	throw;
 }
 
 //
@@ -1013,4 +1010,6 @@ ircd::m::fetch::request::request(const fetch::opts &opts)
 ircd::m::fetch::request::~request()
 noexcept
 {
+	//TODO: bad things unless this first here
+	future.reset(nullptr);
 }
