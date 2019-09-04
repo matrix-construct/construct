@@ -7850,14 +7850,18 @@ console_cmd__room__top(opt &out, const string_view &line)
 	};
 
 	ssize_t missing_count(3);
-	missing.for_each([&out, &missing_count]
+	missing.for_each([&out, &missing_count, &top]
 	(const auto &event_id, const auto &ref_depth, const auto &ref_idx)
 	{
 		out
+		<< std::right << std::setw(8) << (int64_t(ref_depth) - std::get<int64_t>(top))
+		<< " "
 		<< std::right << std::setw(8) << ref_depth
 		<< " "
 		<< std::right << std::setw(10) << ref_idx
 		<< " "
+		<< std::left << std::setw(64) << m::event_id(ref_idx)
+		<< " missing: "
 		<< std::left << event_id
 		<< std::endl;
 		return missing_count--;
@@ -7872,17 +7876,20 @@ console_cmd__room__top(opt &out, const string_view &line)
 		room
 	};
 
-	gaps.rfor_each([&out, &gap_count]
+	gaps.rfor_each([&out, &gap_count, &top]
 	(const auto &range, const auto &event_idx)
 	{
-		out << std::right << std::setw(8) << range.first
-		    << " -> "
-		    << std::left << std::setw(8) << range.second
-		    << " "
-		    << (m::room::state::is(std::nothrow, event_idx)? "S" : " ")
-		    << " "
-		    << m::event_id(event_idx)
-		    << std::endl;
+		out
+		<< std::right << std::setw(8) << (int64_t(range.first) - std::get<int64_t>(top))
+		<< " "
+		<< std::right << std::setw(8) << range.first
+		<< " -> "
+		<< std::left << std::setw(8) << range.second
+		<< " "
+		<< (m::room::state::is(std::nothrow, event_idx)? "S" : " ")
+		<< " "
+		<< m::event_id(event_idx)
+		<< std::endl;
 
 		return gap_count--;
 	});
