@@ -2264,7 +2264,7 @@ ircd::ctx::is(const shared_state_base &st,
 				return st.p == nullptr;
 
 			case future_state::PENDING:
-				return uintptr_t(st.p) >= 0x1000;
+				return uintptr_t(st.p) >= ircd::info::page_size;
 
 			default:
 				return false;
