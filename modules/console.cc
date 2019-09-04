@@ -5381,9 +5381,9 @@ console_cmd__client(opt &out, const string_view &line)
 	    << setw(8) << "SOCKID"
 	    << " "
 	    << left
-	    << setw(40) << "LOCAL"
+	    << setw(50) << "LOCAL"
 	    << " "
-	    << setw(40) << "REMOTE"
+	    << setw(50) << "REMOTE"
 	    << " "
 	    << right
 	    << setw(25) << "BYTES FROM"
@@ -5421,9 +5421,9 @@ console_cmd__client(opt &out, const string_view &line)
 		    ;
 
 		out << " "
-		    << left << setw(40) << local(*client)
+		    << left << setw(50) << local(*client)
 		    << " "
-		    << left << setw(40) << remote(*client)
+		    << left << setw(50) << remote(*client)
 		    ;
 
 		const std::pair<size_t, size_t> stat
