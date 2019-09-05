@@ -1962,6 +1962,28 @@ const
 // event/prev.h
 //
 
+size_t
+ircd::m::event::prev::prev_events_exist()
+const
+{
+	size_t ret(0);
+	for(size_t i(0); i < prev_events_count(); ++i)
+		ret += prev_event_exists(i);
+
+	return ret;
+}
+
+size_t
+ircd::m::event::prev::auth_events_exist()
+const
+{
+	size_t ret(0);
+	for(size_t i(0); i < auth_events_count(); ++i)
+		ret += auth_event_exists(i);
+
+	return ret;
+}
+
 bool
 ircd::m::event::prev::prev_event_exists(const size_t &idx)
 const
