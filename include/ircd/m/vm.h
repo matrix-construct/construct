@@ -232,44 +232,15 @@ struct ircd::m::vm::opts
 	// Verify the origin signature
 	bool verify {true};
 
-	/// Performs a query during the fetch stage to check if the event's auth
-	/// exists locally. This query is required for any fetching to be
-	/// possible.
-	bool fetch_auth_check {true};
-
 	/// Whether to automatically fetch the auth events when they do not exist.
 	bool fetch_auth {true};
-
-	/// Waits for auth events to be processed before continuing. Without
-	/// waiting, if any auth events are missing fault::EVENT is thrown.
-	/// Note that fault::AUTH is only thrown for authentication failures
-	/// while fault::EVENT is when the data is missing.
-	bool fetch_auth_wait {true};
-
-	/// Performs a query during the fetch stage to check if the room's state
-	/// exists locally. This query is required for any fetching to be
-	/// possible.
-	bool fetch_state_check {true};
 
 	/// Whether to automatically fetch the room state when there is no state
 	/// or incomplete state for the room found on the this server.
 	bool fetch_state {true};
 
-	/// Waits for a condition where fault::STATE would not be thrown before
-	/// continuing with the eval.
-	bool fetch_state_wait {true};
-
-	/// Performs a query during the fetch stage to check if the referenced
-	/// prev_events exist locally. This query is required for any fetching
-	/// to be possible.
-	bool fetch_prev_check {true};
-
 	/// Dispatches a fetch operation when a prev_event does not exist locally.
 	bool fetch_prev {true};
-
-	/// Waits for prev_events have been acquired before continuing with this
-	/// evaluation.
-	bool fetch_prev_wait {false};
 
 	/// Throws fault::EVENT if *all* of the prev_events do not exist locally.
 	/// This is used to enforce that at least one path is traversable. This
@@ -280,6 +251,10 @@ struct ircd::m::vm::opts
 	/// This is used to enforce that all references have been acquired; other
 	/// corollary conditions are similar to fetch_prev_any.
 	bool fetch_prev_all {false};
+
+	/// The limit on the number of events to backfill if any of the prev_events
+	/// are missing. -1 is auto / conf.
+	size_t fetch_prev_limit = -1;
 
 	/// Evaluators can set this value to optimize the creation of the database
 	/// transaction where the event will be stored. This value should be set

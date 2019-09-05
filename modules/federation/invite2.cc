@@ -234,7 +234,6 @@ try
 	vmopts.node_id = request.origin;
 
 	// Synapse may 403 a fetch of the prev_event of the invite event.
-	vmopts.fetch_prev_check = false;
 	vmopts.fetch_prev = false;
 
 	// Don't throw an exception for a re-evaluation; this will just be a no-op

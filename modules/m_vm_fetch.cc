@@ -93,10 +93,10 @@ try
 	m::room room{room_id};
 	room.event_id = event_id;
 
-	if(opts.fetch_auth_check)
+	if(opts.fetch_auth)
 		hook_handle_auth(event, eval, room);
 
-	if(opts.fetch_prev_check)
+	if(opts.fetch_prev)
 		hook_handle_prev(event, eval, room);
 
 	log::debug
@@ -231,8 +231,8 @@ try
 
 	m::vm::opts vmopts;
 	vmopts.infolog_accept = true;
-	vmopts.fetch_prev_check = false;
-	vmopts.fetch_state_check = false;
+	vmopts.fetch_prev = false;
+	vmopts.fetch_state = false;
 	vmopts.warnlog &= ~vm::fault::EXISTS;
 	m::vm::eval
 	{

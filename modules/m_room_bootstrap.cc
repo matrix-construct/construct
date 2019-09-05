@@ -406,8 +406,8 @@ try
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1;
 	vmopts.warnlog &= ~vm::fault::EXISTS;
-	vmopts.fetch_state_check = false;
-	vmopts.fetch_prev_check = false;
+	vmopts.fetch_state = false;
+	vmopts.fetch_prev = false;
 	vmopts.infolog_accept = false;
 	m::vm::eval
 	{
@@ -446,8 +446,8 @@ try
 	m::vm::opts opts;
 	opts.nothrows = -1;
 	opts.warnlog &= ~vm::fault::EXISTS;
-	opts.fetch_prev_check = false;
-	opts.fetch_state_check = false;
+	opts.fetch_state = false;
+	opts.fetch_prev = false;
 	opts.infolog_accept = true;
 	m::vm::eval
 	{
