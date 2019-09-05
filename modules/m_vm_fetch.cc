@@ -10,11 +10,9 @@
 
 namespace ircd::m::vm::fetch
 {
-	struct evaltab;
-
-	static void hook_handle_prev(const event &, vm::eval &, evaltab &, const room &);
+	static void hook_handle_prev(const event &, vm::eval &, const room &);
 	static void auth_chain(const room &, const string_view &remote);
-	static void hook_handle_auth(const event &, vm::eval &, evaltab &, const room &);
+	static void hook_handle_auth(const event &, vm::eval &, const room &);
 	static void hook_handle(const event &, vm::eval &);
 
 	extern conf::item<seconds> auth_timeout;
@@ -22,16 +20,6 @@ namespace ircd::m::vm::fetch
 	extern hookfn<vm::eval &> hook;
 	extern log::log log;
 }
-
-struct ircd::m::vm::fetch::evaltab
-{
-	size_t auth_count {0};
-	size_t auth_exists {0};
-	size_t prev_count {0};
-	size_t prev_exists {0};
-	size_t prev_fetching {0};
-	size_t prev_fetched {0};
-};
 
 ircd::mapi::header
 IRCD_MODULE
@@ -105,23 +93,17 @@ try
 	m::room room{room_id};
 	room.event_id = event_id;
 
-	evaltab tab;
 	if(opts.fetch_auth_check)
-		hook_handle_auth(event, eval, tab, room);
+		hook_handle_auth(event, eval, room);
 
 	if(opts.fetch_prev_check)
-		hook_handle_prev(event, eval, tab, room);
+		hook_handle_prev(event, eval, room);
 
 	log::debug
 	{
-		log, "%s %s ac:%zu ae:%zu pc:%zu pe:%zu pf:%zu",
+		log, "%s in %s complete",
 		loghead(eval),
 		json::get<"room_id"_>(event),
-		tab.auth_count,
-		tab.auth_exists,
-		tab.prev_count,
-		tab.prev_exists,
-		tab.prev_fetched,
 	};
 }
 catch(const std::exception &e)
@@ -139,38 +121,37 @@ catch(const std::exception &e)
 void
 ircd::m::vm::fetch::hook_handle_auth(const event &event,
                                      vm::eval &eval,
-                                     evaltab &tab,
                                      const room &room)
 
 {
 	// Count how many of the auth_events provided exist locally.
 	const auto &opts{*eval.opts};
 	const event::prev prev{event};
-	tab.auth_count = prev.auth_events_count();
-	for(size_t i(0); i < tab.auth_count; ++i)
+
+	size_t exists(0);
+	for(size_t i(0); i < prev.auth_events_count(); ++i)
 	{
 		const auto &auth_id
 		{
 			prev.auth_event(i)
 		};
 
-		tab.auth_exists += bool(m::exists(auth_id));
+		exists += bool(m::exists(auth_id));
 	}
 
 	// We are satisfied at this point if all auth_events for this event exist,
 	// as those events have themselves been successfully evaluated and so forth.
-	assert(tab.auth_exists <= tab.auth_count);
-	if(tab.auth_exists == tab.auth_count)
+	assert(exists <= prev.auth_events_count());
+	if(exists == prev.auth_events_count())
 		return;
 
 	// At this point we are missing one or more auth_events for this event.
 	log::dwarning
 	{
-		log, "%s auth_events:%zu hit:%zu miss:%zu",
+		log, "%s auth_events:%zu miss:%zu",
 		loghead(eval),
-		tab.auth_count,
-		tab.auth_exists,
-		tab.auth_count - tab.auth_exists,
+		prev.auth_events_count(),
+		exists - prev.auth_events_count(),
 	};
 
 	// We need to figure out where best to sling a request to fetch these
@@ -200,7 +181,6 @@ ircd::m::vm::fetch::hook_handle_auth(const event &event,
 	// for this event. Upon return all of the auth_events for this event will
 	// have themselves been fetched and auth'ed recursively or throws.
 	auth_chain(room, remote);
-	tab.auth_exists = tab.auth_count;
 }
 
 void
@@ -277,15 +257,18 @@ catch(const std::exception &e)
 void
 ircd::m::vm::fetch::hook_handle_prev(const event &event,
                                      vm::eval &eval,
-                                     evaltab &tab,
                                      const room &room)
 {
 	const auto &opts{*eval.opts};
 	const event::prev prev{event};
-	tab.prev_count = prev.prev_events_count();
+	const size_t prev_count
+	{
+		prev.prev_events_count()
+	};
 
+	size_t prev_exists(0);
 	std::list<ctx::future<m::fetch::result>> futures;
-	for(size_t i(0); i < tab.prev_count; ++i)
+	for(size_t i(0); i < prev_count; ++i)
 	{
 		const auto &prev_id
 		{
@@ -294,7 +277,7 @@ ircd::m::vm::fetch::hook_handle_prev(const event &event,
 
 		if(m::exists(prev_id))
 		{
-			++tab.prev_exists;
+			++prev_exists;
 			continue;
 		}
 
@@ -329,29 +312,21 @@ ircd::m::vm::fetch::hook_handle_prev(const event &event,
 	}
 
 	// If we have all of the referenced prev_events we are satisfied here.
-	tab.prev_fetching = futures.size();
-	assert(tab.prev_exists <= tab.prev_count);
-	if(tab.prev_exists == tab.prev_count)
+	assert(prev_exists < prev_count);
+	if(prev_exists == prev_count)
 		return;
 
 	// At this point one or more prev_events are missing; the fetches were
 	// launched asynchronously if the options allowed for it.
 	log::dwarning
 	{
-		log, "%s prev_events:%zu hit:%zu miss:%zu fetching:%zu",
+		log, "%s prev_events:%zu miss:%zu fetching:%zu",
 		loghead(eval),
-		tab.prev_count,
-		tab.prev_exists,
-		tab.prev_count - tab.prev_exists,
-		tab.prev_fetching,
+		prev_count,
+		prev_exists,
+		prev_count - prev_exists,
+		futures.size(),
 	};
-
-	// If the options want to wait for the fetch+evals of the prev_events to occur
-	// before we continue processing this event further, we block in here.
-	//const bool &prev_wait{opts.fetch_prev_wait};
-	//if(prev_wait && tab.prev_fetching) for(size_t i(0); i < tab.prev_count; ++i)
-	if(!tab.prev_fetching)
-		return;
 
 	auto fetching
 	{
@@ -393,36 +368,39 @@ ircd::m::vm::fetch::hook_handle_prev(const event &event,
 		};
 	}
 
-	for(size_t i(0); i < tab.prev_count; ++i)
+	const bool recount
 	{
-		const auto &prev_id
-		{
-			prev.prev_event(i)
-		};
+		(opts.fetch_prev_any && !prev_exists)
+		|| opts.fetch_prev_all
+	};
 
-		tab.prev_fetched += m::exists(prev_id);
+	if(recount)
+	{
+		prev_exists = 0;
+		for(size_t i(0); i < prev_count; ++i)
+			prev_exists += bool(m::exists(prev.prev_event(i)));
 	}
 
 	// Aborts this event if the options want us to guarantee at least one
 	// prev_event was fetched and evaluated for this event. This is generally
 	// used in conjunction with the fetch_prev_wait option to be effective.
-	const bool &prev_any{opts.fetch_prev_any};
-	if(prev_any && tab.prev_exists + tab.prev_fetched == 0)
+	if(opts.fetch_prev_any && !prev_exists)
 		throw vm::error
 		{
-			vm::fault::EVENT, "Failed to fetch any prev_events for %s in %s",
+			vm::fault::EVENT, "Failed to fetch any of the %zu prev_events for %s in %s",
+			prev_count,
 			string_view{event.event_id},
 			json::get<"room_id"_>(event)
 		};
 
 	// Aborts this event if the options want us to guarantee ALL of the
 	// prev_events were fetched and evaluated for this event.
-	const bool &prev_all{opts.fetch_prev_all};
-	if(prev_all && tab.prev_exists + tab.prev_fetched < tab.prev_count)
+	if(opts.fetch_prev_all && prev_exists < prev_count)
 		throw vm::error
 		{
-			vm::fault::EVENT, "Failed to fetch all %zu required prev_events for %s in %s",
-			tab.prev_count,
+			vm::fault::EVENT, "Missing %zu of %zu required prev_events for %s in %s",
+			prev_exists,
+			prev_count,
 			string_view{event.event_id},
 			json::get<"room_id"_>(event)
 		};
