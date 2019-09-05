@@ -11,6 +11,14 @@
 #pragma once
 #define HAVE_IRCD_M_ROOM_EVENTS_H
 
+// The "viewport" is comprised of events starting from the tophead (most recent
+// in room timeline) and covering about ~20 events leading up to that. Note
+// that this is a completely ad hoc and configurable server value. Events in
+// the viewport must be eval'ed and synced to clients in the order they will
+// be displayed. Events not in the viewport are not /synced to clients and any
+// client request provides event ordering: thus older events (backfills, etc)
+// can be eval'ed without this constraint.
+//
 // The "sounding" is the depth of the first gap. In any attempt to trace
 // the room timeline from the tophead to the m.room.create event: the sounding
 // is the [highest number] depth preventing that.
@@ -24,6 +32,7 @@
 
 namespace ircd::m
 {
+	std::pair<int64_t, event::idx> viewport(const room &);
 	std::pair<int64_t, event::idx> sounding(const room &); // Last missing (one)
 	std::pair<int64_t, event::idx> twain(const room &);
 	std::pair<int64_t, event::idx> hazard(const room &); // First missing (one)
@@ -42,6 +51,8 @@ struct ircd::m::room::events
 	struct sounding;
 	struct horizon;
 	struct missing;
+
+	static conf::item<size_t> viewport_size;
 
 	m::room room;
 	db::domain::const_iterator it;

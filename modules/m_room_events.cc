@@ -14,9 +14,41 @@ IRCD_MODULE
 	"Matrix room library"
 };
 
-//
-// tools
-//
+IRCD_MODULE_EXPORT_DATA
+decltype(ircd::m::room::events::viewport_size)
+ircd::m::room::events::viewport_size
+{
+	{ "name",     "ircd.m.room.events.viewport.size" },
+	{ "default",  24L                                },
+};
+
+std::pair<int64_t, ircd::m::event::idx>
+IRCD_MODULE_EXPORT
+ircd::m::viewport(const room &room)
+{
+	std::pair<int64_t, m::event::idx> ret
+	{
+		-1, 0
+	};
+
+	m::room::events it
+	{
+		room
+	};
+
+	const size_t &max
+	{
+		room::events::viewport_size
+	};
+
+	for(size_t i(0); it && i < max; --it, ++i)
+	{
+		ret.first = it.depth();
+		ret.second = it.event_idx();
+	}
+
+	return ret;
+}
 
 std::pair<int64_t, ircd::m::event::idx>
 IRCD_MODULE_EXPORT
