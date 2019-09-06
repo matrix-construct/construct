@@ -19,7 +19,7 @@ decltype(ircd::m::room::events::viewport_size)
 ircd::m::room::events::viewport_size
 {
 	{ "name",     "ircd.m.room.events.viewport.size" },
-	{ "default",  24L                                },
+	{ "default",  48L                                },
 };
 
 std::pair<int64_t, ircd::m::event::idx>
