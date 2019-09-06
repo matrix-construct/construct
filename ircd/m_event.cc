@@ -2765,52 +2765,99 @@ try
 
 	if(type == "m.room.aliases")
 	{
-		content = json::stringify(essential, json::members
-		{
-			{ "aliases", content.at("aliases") }
-		});
+		if(content.has("aliases"))
+			content = json::stringify(essential, json::members
+			{
+				{ "aliases", content.at("aliases") }
+			});
 	}
 	else if(type == "m.room.create")
 	{
-		content = json::stringify(essential, json::members
-		{
-			{ "creator", content.at("creator") }
-		});
+		if(content.has("creator"))
+			content = json::stringify(essential, json::members
+			{
+				{ "creator", content.at("creator") }
+			});
 	}
 	else if(type == "m.room.history_visibility")
 	{
-		content = json::stringify(essential, json::members
-		{
-			{ "history_visibility", content.at("history_visibility") }
-		});
+		if(content.has("history_visibility"))
+			content = json::stringify(essential, json::members
+			{
+				{ "history_visibility", content.at("history_visibility") }
+			});
 	}
 	else if(type == "m.room.join_rules")
 	{
-		content = json::stringify(essential, json::members
-		{
-			{ "join_rule", content.at("join_rule") }
-		});
+		if(content.has("join_rule"))
+			content = json::stringify(essential, json::members
+			{
+				{ "join_rule", content.at("join_rule") }
+			});
 	}
 	else if(type == "m.room.member")
 	{
-		content = json::stringify(essential, json::members
-		{
-			{ "membership", content.at("membership") }
-		});
+		if(content.has("membership"))
+			content = json::stringify(essential, json::members
+			{
+				{ "membership", content.at("membership") }
+			});
 	}
 	else if(type == "m.room.power_levels")
 	{
-		content = json::stringify(essential, json::members
-		{
-			{ "ban", content.at("ban")                       },
-			{ "events", content.at("events")                 },
-			{ "events_default", content.at("events_default") },
-			{ "kick", content.at("kick")                     },
-			{ "redact", content.at("redact")                 },
-			{ "state_default", content.at("state_default")   },
-			{ "users", content.at("users")                   },
-			{ "users_default", content.at("users_default")   },
-		});
+		json::stack out{essential};
+		json::stack::object top{out};
+
+		if(content.has("ban"))
+			json::stack::member
+			{
+				top, "ban", content.at("ban")
+			};
+
+		if(content.has("events"))
+			json::stack::member
+			{
+				top, "events", content.at("events")
+			};
+
+		if(content.has("events_default"))
+			json::stack::member
+			{
+				top, "events_default", content.at("events_default")
+			};
+
+		if(content.has("kick"))
+			json::stack::member
+			{
+				top, "kick", content.at("kick")
+			};
+
+		if(content.has("redact"))
+			json::stack::member
+			{
+				top, "redact", content.at("redact")
+			};
+
+		if(content.has("state_default"))
+			json::stack::member
+			{
+				top, "state_default", content.at("state_default")
+			};
+
+		if(content.has("users"))
+			json::stack::member
+			{
+				top, "users", content.at("users")
+			};
+
+		if(content.has("users_default"))
+			json::stack::member
+			{
+				top, "users_default", content.at("users_default")
+			};
+
+		top.~object();
+		content = out.completed();
 	}
 	else if(type == "m.room.redaction")
 	{
