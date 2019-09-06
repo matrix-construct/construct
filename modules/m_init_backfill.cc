@@ -19,8 +19,9 @@ struct ircd::m::init::backfill
 	static void fini();
 	static void init();
 
-	static conf::item<bool> enable;
 	static std::unique_ptr<context> worker_context;
+	static conf::item<bool> enable;
+	static conf::item<size_t> pool_size;
 	static log::log log;
 };
 
@@ -38,15 +39,22 @@ ircd::m::init::backfill::log
 	"m.init.backfill"
 };
 
-decltype(ircd::m::init::backfill::worker_context)
-ircd::m::init::backfill::worker_context;
-
 decltype(ircd::m::init::backfill::enable)
 ircd::m::init::backfill::enable
 {
 	{ "name",     "m.init.backfill.enable" },
 	{ "default",  true                     },
 };
+
+decltype(ircd::m::init::backfill::pool_size)
+ircd::m::init::backfill::pool_size
+{
+	{ "name",     "m.init.backfill.pool_size" },
+	{ "default",  8L                          },
+};
+
+decltype(ircd::m::init::backfill::worker_context)
+ircd::m::init::backfill::worker_context;
 
 void
 ircd::m::init::backfill::init()
@@ -104,27 +112,68 @@ try
 	if(run::level != run::level::RUN)
 		return;
 
+	static const ctx::pool::opts pool_opts
+	{
+		512_KiB,               // stack sz
+		size_t(pool_size),     // pool sz
+	};
+
 	log::info
 	{
 		log, "Starting initial resynchronization from other servers..."
 	};
 
-	// Iterate all of the rooms this server is aware of which contain
-	// at least one user from another server which is joined to the room.
-	rooms::opts opts;
-	opts.remote_joined_only = true;
+	ctx::pool pool
+	{
+		"m.init.backfill", pool_opts
+	};
 
-	size_t count(0);
-	rooms::for_each(opts, [&count]
+	ctx::dock dock;
+	size_t count(0), complete(0);
+	const auto each_room{[&complete, &dock]
 	(const room::id &room_id)
 	{
+		const unwind completed{[&complete, &dock]
+		{
+			++complete;
+			dock.notify_one();
+		}};
+
 		if(unlikely(run::level != run::level::RUN))
 			return false;
 
 		handle_room(room_id);
 		handle_missing(room_id);
-		++count;
 		return !ctx::interruption_requested();
+	}};
+
+	// Iterate all of the rooms this server is aware of which contain
+	// at least one user from another server which is joined to the room.
+	rooms::opts opts;
+	opts.remote_joined_only = true;
+	rooms::for_each(opts, [&pool, &each_room, &count]
+	(const room::id &room_id)
+	{
+		++count;
+		pool([&each_room, room_id(std::string(room_id))]
+		{
+			each_room(room_id);
+		});
+
+		return !ctx::interruption_requested();
+	});
+
+	if(complete < count)
+		log::dwarning
+		{
+			log, "Waiting for initial resynchronization count:%zu complete:%zu rooms...",
+			count,
+			complete,
+		};
+
+	dock.wait([&complete, &count]
+	{
+		return complete >= count;
 	});
 
 	log::info
