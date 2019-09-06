@@ -67,19 +67,9 @@ get__publicrooms(client &client,
 		};
 
 	char server_buf[256];
-	const auto &server
+	string_view server
 	{
 		url::decode(server_buf, request.query["server"])
-	};
-
-	const json::object &filter
-	{
-		request["filter"]
-	};
-
-	const string_view &search_term
-	{
-		unquote(filter["generic_search_term"])
 	};
 
 	const uint8_t limit
@@ -93,6 +83,29 @@ get__publicrooms(client &client,
 	{
 		request.get<bool>("include_all_networks", false)
 	};
+
+	const json::object &filter
+	{
+		request["filter"]
+	};
+
+	const json::string &search_term
+	{
+		filter["generic_search_term"]
+	};
+
+	const bool term_room_alias
+	{
+		startswith(search_term, m::id::ROOM_ALIAS)
+	};
+
+	const bool term_room_alias_valid
+	{
+		term_room_alias && m::valid(m::id::ROOM_ALIAS, search_term)
+	};
+
+	if(!server && term_room_alias_valid)
+		server = m::id::room_alias(search_term).host();
 
 	if(server && !my_host(server)) try
 	{
@@ -125,9 +138,23 @@ get__publicrooms(client &client,
 	opts.join_rule = "public";
 	opts.summary = true;
 	opts.search_term = search_term;
-	opts.server = server?: my_host();
 	opts.lower_bound = true;
 	opts.room_id = since;
+	opts.server =
+		server?:
+		term_room_alias?
+			string_view{}:
+			my_host();
+
+	log::debug
+	{
+		m::log, "public rooms query server[%s] search[%s] filter:%s allnet:%b since:%s",
+		opts.server,
+		opts.search_term,
+		string_view{filter},
+		include_all_networks,
+		since,
+	};
 
 	size_t count{0};
 	m::room::id::buf prev_batch_buf;
