@@ -253,17 +253,13 @@ ircd::m::receipt::read(const m::room::id &room_id,
 		user_id
 	};
 
-	const time_t &ms
-	{
-		options.get("ts", ircd::time<milliseconds>())
-	};
-
 	const auto evid
 	{
 		send(user_room, user_id, "ircd.read", room_id,
 		{
-			{ "event_id", event_id },
-			{ "ts",       ms       }
+			{ "event_id",    event_id                                       },
+			{ "ts",          options.get("ts", ircd::time<milliseconds>())  },
+			{ "m.hidden",    options.get("m.hidden", false)                 },
 		})
 	};
 
@@ -546,6 +542,11 @@ try
 	{
 		at<"content"_>(event).at("event_id")
 	};
+
+	// MSC2285; if m.hidden is set here we don't broadcast this receipt
+	// to the federation; nothing further to do here then.
+	if(at<"content"_>(event).get("m.hidden", false))
+		return;
 
 	// Lastly, we elide broadcasts of receipts for a user's own message.
 	m::user::id::buf sender_buf;

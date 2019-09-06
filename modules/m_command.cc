@@ -502,7 +502,8 @@ command__read(const mutable_buffer &buf,
 		// Commit the receipt.
 		m::receipt::read(room_id, user, event_id, json::strung{json::members
 		{
-			{ "ts", ms },
+			{ "ts",        ms   },
+			{ "m.hidden",  true },
 		}});
 
 		put(room_id, event_id);
