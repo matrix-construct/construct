@@ -122,7 +122,7 @@ try
 
 		handle_room(room_id);
 		++count;
-		return true;
+		return !ctx::interruption_requested();
 	});
 
 	log::info
@@ -242,12 +242,13 @@ try
 			}
 
 			++evaluated;
-			return true;
+			return !ctx::interruption_requested();
 		});
 
-		return true;
+		return !ctx::interruption_requested();
 	});
 
+	ctx::interruption_point();
 	log::info
 	{
 		log, "acquired %s remote head; servers:%zu online:%zu"
