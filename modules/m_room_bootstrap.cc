@@ -15,6 +15,7 @@ namespace ircd::m::bootstrap
 
 	static event::id::buf make_join(const string_view &host, const room::id &, const user::id &);
 	static send_join1_response send_join(const string_view &host, const room::id &, const event::id &, const json::object &event);
+	static void broadcast_join(const room &, const event &, const string_view &exclude);
 	static void fetch_keys(const json::array &events);
 	static void eval_lazy_chain(const json::array &auth_chain);
 	static void eval_auth_chain(const json::array &auth_chain);
@@ -259,19 +260,21 @@ try
 		auth_chain.size(),
 	};
 
+	m::bootstrap::fetch_keys(auth_chain);
+
 	if(m::bootstrap::lazychain_enable)
 		m::bootstrap::eval_lazy_chain(auth_chain);
 	else
 		m::bootstrap::eval_auth_chain(auth_chain);
 
 	if(m::bootstrap::backfill_first)
-	{
 		m::bootstrap::backfill(host, room_id, event_id);
-		m::bootstrap::eval_state(state);
-	} else {
-		m::bootstrap::eval_state(state);
+
+	m::bootstrap::fetch_keys(state);
+	m::bootstrap::eval_state(state);
+
+	if(!m::bootstrap::backfill_first)
 		m::bootstrap::backfill(host, room_id, event_id);
-	}
 
 	// After we just received and processed all of this state with only a
 	// recent backfill our system doesn't know if state events which are
@@ -284,6 +287,12 @@ try
 	{
 		m::room::head::reset(room)
 	};
+
+	// At this point we have only transmitted the join event to one bootstrap
+	// server. Now that we have processed the state we know of more servers.
+	// They don't know about our join event though, so we conduct a synchronous
+	// broadcast to the room now manually.
+	m::bootstrap::broadcast_join(room, event, host);
 
 	log::info
 	{
@@ -346,6 +355,83 @@ catch(const std::exception &e)
 		pkg.event_id,
 		pkg.host,
 		e.what(),
+	};
+}
+
+void
+ircd::m::bootstrap::broadcast_join(const m::room &room,
+                                   const m::event &event,
+                                   const string_view &exclude) //TODO: XX
+{
+	const m::room::origins origins
+	{
+		room
+	};
+
+	log::info
+	{
+		log, "Broadcasting %s to %s estimated servers:%zu",
+		string_view{event.event_id},
+		string_view{room.room_id},
+		origins.count(),
+	};
+
+	const json::value pdu
+	{
+		event.source
+	};
+
+	const vector_view<const json::value> pdus
+	{
+		&pdu, 1
+	};
+
+	const auto txn
+	{
+		m::txn::create(pdus)
+	};
+
+	char idbuf[128];
+	const auto txnid
+	{
+		m::txn::create_id(idbuf, txn)
+	};
+
+	m::feds::opts opts;
+	opts.op = feds::op::send;
+	opts.exclude_myself = true;
+	opts.room_id = room;
+	opts.arg[0] = txnid;
+	opts.arg[1] = txn;
+
+	size_t good(0), fail(0);
+	m::feds::execute(opts, [&event, &good, &fail]
+	(const auto &result)
+	{
+		if(result.eptr)
+			log::derror
+			{
+				log, "Failed to broadcast %s to %s :%s",
+				string_view{event.event_id},
+				result.origin,
+				what(result.eptr),
+			};
+
+		fail += bool(result.eptr);
+		good += !result.eptr;
+		return true;
+	});
+
+	log::info
+	{
+		log, "Broadcast %s to %s good:%zu fail:%zu servers:%zu online:%zu error:%zu",
+		string_view{event.event_id},
+		string_view{room.room_id},
+		good,
+		fail,
+		origins.count(),
+		origins.count_online(),
+		origins.count_error(),
 	};
 }
 
@@ -435,8 +521,6 @@ void
 ircd::m::bootstrap::eval_state(const json::array &state)
 try
 {
-	fetch_keys(state);
-
 	log::info
 	{
 		log, "Evaluating %zu state events...",
@@ -471,8 +555,6 @@ void
 ircd::m::bootstrap::eval_auth_chain(const json::array &auth_chain)
 try
 {
-	fetch_keys(auth_chain);
-
 	log::info
 	{
 		log, "Evaluating %zu authentication events...",
