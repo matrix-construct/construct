@@ -368,7 +368,11 @@ command__read(const mutable_buffer &buf,
 				m::head(room)
 		};
 
-		m::receipt::read(room, user, event_id, ms);
+		m::receipt::read(room, user, event_id, json::strung{json::members
+		{
+			{ "ts", ms },
+		}});
+
 		return {};
 	}
 	else if(m::valid(m::id::ROOM, arg) || m::valid(m::id::ROOM_ALIAS, arg))
@@ -388,7 +392,11 @@ command__read(const mutable_buffer &buf,
 			m::head(room)
 		};
 
-		m::receipt::read(room, user, event_id, ms);
+		m::receipt::read(room, user, event_id, json::strung{json::members
+		{
+			{ "ts", ms },
+		}});
+
 		return {};
 	}
 
@@ -492,7 +500,11 @@ command__read(const mutable_buffer &buf,
 		}
 
 		// Commit the receipt.
-		m::receipt::read(room_id, user, event_id, ms);
+		m::receipt::read(room_id, user, event_id, json::strung{json::members
+		{
+			{ "ts", ms },
+		}});
+
 		put(room_id, event_id);
 		++matched;
 	});

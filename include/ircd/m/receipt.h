@@ -27,12 +27,11 @@ namespace ircd::m::receipt
 	bool ignoring(const m::user &, const id::room &);
 
 	// [GET] Get the last event the user has read in the room.
-	bool read(const id::room &, const id::user &, const id::event::closure &);
-	id::event read(id::event::buf &out, const id::room &, const id::user &);
+	bool get(const id::room &, const id::user &, const id::event::closure &);
+	id::event get(id::event::buf &out, const id::room &, const id::user &);
 
 	// [SET] Indicate that the user has read the event in the room.
-	id::event::buf read(const id::room &, const id::user &, const id::event &, const time_t &);
-	id::event::buf read(const id::room &, const id::user &, const id::event &); // now
+	id::event::buf read(const id::room &, const id::user &, const id::event &, const json::object & = {});
 };
 
 struct ircd::m::edu::m_receipt
@@ -50,3 +49,16 @@ struct ircd::m::edu::m_receipt::m_read
 	using super_type::tuple;
 	using super_type::operator=;
 };
+
+inline ircd::m::event::id
+ircd::m::receipt::get(event::id::buf &out,
+                      const room::id &room_id,
+                      const user::id &user_id)
+{
+	const event::id::closure copy
+	{
+		[&out](const auto &event_id) { out = event_id; }
+	};
+
+	return get(room_id, user_id, copy)? event::id{out} : event::id{};
+}

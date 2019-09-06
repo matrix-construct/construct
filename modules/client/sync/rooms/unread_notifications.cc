@@ -83,7 +83,7 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 
 	m::event::id::buf last_read;
 	if(likely(!is_self_read))
-		if(!m::receipt::read(last_read, room.room_id, data.user))
+		if(!m::receipt::get(last_read, room.room_id, data.user))
 			return false;
 
 	const auto start_idx
@@ -160,7 +160,7 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	m::event::id::buf last_read_buf;
 	const auto last_read
 	{
-		m::receipt::read(last_read_buf, room.room_id, data.user)
+		m::receipt::get(last_read_buf, room.room_id, data.user)
 	};
 
 	const auto start_idx

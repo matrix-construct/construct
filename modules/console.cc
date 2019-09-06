@@ -10761,7 +10761,10 @@ console_cmd__user__read__receipt(opt &out, const string_view &line)
 
 	const auto eid
 	{
-		m::receipt::read(room_id, user_id, event_id, ms)
+		m::receipt::read(room_id, user_id, event_id, json::strung{json::members
+		{
+			{ "ts", ms },
+		}})
 	};
 
 	out << eid << std::endl;

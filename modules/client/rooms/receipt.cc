@@ -80,5 +80,15 @@ handle_receipt_m_read(client &client,
 	if(m::receipt::ignoring(request.user_id, event_id))
 		return;
 
-	m::receipt::read(room_id, request.user_id, event_id);
+	// The options object starts with anything in the request content, which
+	// differs depending on whether this is being called from a /receipt or
+	// /read_markers resource handler. The receipt::read() implementation
+	// looks for properties knowing this call pattern, thus it's best to just
+	// convey the whole content here for forward compat.
+	const json::object &options
+	{
+		request
+	};
+
+	m::receipt::read(room_id, request.user_id, event_id, options);
 }

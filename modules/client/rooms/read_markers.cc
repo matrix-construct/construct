@@ -91,7 +91,7 @@ handle_m_fully_read(client &client,
 			m::log, "Ignoring duplicate m.fully_read marker for %s in %s by %s",
 			string_view{event_id},
 			string_view{room_id},
-			request.user_id,
+			string_view{request.user_id},
 		};
 
 		return;

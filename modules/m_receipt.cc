@@ -34,7 +34,7 @@ extern m::hookfn<m::vm::eval &> _ircd_read_eval;
 static void handle_implicit_receipt(const m::event &, m::vm::eval &);
 extern m::hookfn<m::vm::eval &> _implicit_receipt;
 
-static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::event::id &, const time_t &);
+static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::event::id &, const json::object &data);
 static void handle_m_receipt_m_read(const m::room::id &, const m::user::id &, const m::edu::m_receipt::m_read &);
 static void handle_m_receipt_m_read(const m::event &, const m::room::id &, const json::object &);
 static void handle_m_receipt(const m::event &, const m::room::id &, const json::object &);
@@ -172,14 +172,9 @@ handle_m_receipt_m_read(const m::room::id &room_id,
 		json::get<"data"_>(receipt)
 	};
 
-	const time_t &ts
-	{
-		data.get<time_t>("ts")
-	};
-
 	for(const json::string &event_id : event_ids) try
 	{
-		handle_m_receipt_m_read(room_id, user_id, event_id, ts);
+		handle_m_receipt_m_read(room_id, user_id, event_id, data);
 	}
 	catch(const std::exception &e)
 	{
@@ -198,7 +193,7 @@ void
 handle_m_receipt_m_read(const m::room::id &room_id,
                         const m::user::id &user_id,
                         const m::event::id &event_id,
-                        const time_t &ts)
+                        const json::object &data)
 try
 {
 	const m::user user
@@ -227,7 +222,7 @@ try
 
 	const auto evid
 	{
-		m::receipt::read(room_id, user_id, event_id, ts)
+		m::receipt::read(room_id, user_id, event_id, data)
 	};
 }
 catch(const std::exception &e)
@@ -251,11 +246,16 @@ IRCD_MODULE_EXPORT
 ircd::m::receipt::read(const m::room::id &room_id,
                        const m::user::id &user_id,
                        const m::event::id &event_id,
-                       const time_t &ms)
+                       const json::object &options)
 {
 	const m::user::room user_room
 	{
 		user_id
+	};
+
+	const time_t &ms
+	{
+		options.get("ts", ircd::time<milliseconds>())
 	};
 
 	const auto evid
@@ -269,11 +269,11 @@ ircd::m::receipt::read(const m::room::id &room_id,
 
 	log::info
 	{
-		receipt_log, "%s read by %s in %s @ %zd",
+		receipt_log, "%s read by %s in %s options:%s",
 		string_view{event_id},
 		string_view{user_id},
 		string_view{room_id},
-		ms
+		string_view{options},
 	};
 
 	return evid;
@@ -281,29 +281,26 @@ ircd::m::receipt::read(const m::room::id &room_id,
 
 bool
 IRCD_MODULE_EXPORT
-ircd::m::receipt::read(const m::room::id &room_id,
-                       const m::user::id &user_id,
-                       const m::event::id::closure &closure)
+ircd::m::receipt::get(const m::room::id &room_id,
+                      const m::user::id &user_id,
+                      const m::event::id::closure &closure)
 {
-	static const m::event::fetch::opts fopts
-	{
-		m::event::keys::include
-		{
-			"content"
-		}
-	};
-
 	const m::user::room user_room
 	{
-		user_id, nullptr, &fopts
+		user_id
 	};
 
-	return user_room.get(std::nothrow, "ircd.read", room_id, [&closure]
-	(const m::event &event)
+	const auto event_idx
 	{
-		const m::event::id &event_id
+		user_room.get(std::nothrow, "ircd.read", room_id)
+	};
+
+	return m::get(std::nothrow, event_idx, "content", [&closure]
+	(const json::object &content)
+	{
+		const json::string &event_id
 		{
-			unquote(at<"content"_>(event).get("event_id"))
+			content["event_id"]
 		};
 
 		closure(event_id);
@@ -471,14 +468,18 @@ try
 		event.event_id
 	};
 
-	const time_t &ms
+	char databuf[64];
+	const json::object &data
 	{
-		at<"origin_server_ts"_>(event)
+		json::stringify(mutable_buffer{databuf}, json::members
+		{
+			{ "ts", at<"origin_server_ts"_>(event) },
+		})
 	};
 
 	const auto receipt_event_id
 	{
-		m::receipt::read(room_id, user_id, event_id, ms)
+		m::receipt::read(room_id, user_id, event_id, data)
 	};
 }
 catch(const std::exception &e)
