@@ -607,7 +607,10 @@ noexcept
 void
 ircd::server::peer::close(const net::close_opts &opts)
 {
-	assert(!op_fini);
+	//assert(!op_fini);
+	if(op_fini)
+		return;
+
 	op_fini = true;
 	link *links[LINK_MAX];
 	const auto end(pointers(this->links, links));
