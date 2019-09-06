@@ -89,8 +89,9 @@ ircd::m::join(const m::room &room,
 				event::id::buf{}
 		};
 
-		if(event_id)
-			return event_id;
+		//TODO: check duplicate content
+		//if(event_id)
+		//	return event_id;
 	}
 
 	json::iov event;
