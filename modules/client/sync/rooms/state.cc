@@ -26,7 +26,6 @@ namespace ircd::m::sync
 	static bool room_state_linear(data &);
 
 	extern conf::item<bool> crazyload_historical_members;
-	extern conf::item<int64_t> state_exposure_depth; //TODO: XXX
 
 	extern item room_invite_state;
 	extern item room_state;
@@ -78,14 +77,6 @@ ircd::m::sync::room_invite_state_linear(data &data)
 	return room_state_linear_events(data);
 }
 
-//TODO: This has to be merged into the timeline conf items
-decltype(ircd::m::sync::state_exposure_depth)
-ircd::m::sync::state_exposure_depth
-{
-	{ "name",         "ircd.client.sync.rooms.state.exposure.depth" },
-	{ "default",      20L                                           },
-};
-
 bool
 ircd::m::sync::room_state_linear_events(data &data)
 {
@@ -119,9 +110,14 @@ ircd::m::sync::room_state_linear_events(data &data)
 	// overwhelming majority of state events coming through linear-sync will
 	// use the timeline. We make an exception for past state events the server
 	// only recently obtained, to hide them from the timeline.
-	if(int64_t(state_exposure_depth) > -1)
+	const ssize_t &viewport_size
+	{
+		room::events::viewport_size
+	};
+
+	if(viewport_size >= 0)
 		if(data.membership != "invite" && !is_own_join)
-			if(json::get<"depth"_>(*data.event) + int64_t(state_exposure_depth) >= data.room_depth)
+			if(json::get<"depth"_>(*data.event) + viewport_size >= data.room_depth)
 				return false;
 
 	json::stack::object rooms

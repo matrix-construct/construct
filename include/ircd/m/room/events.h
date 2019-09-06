@@ -52,7 +52,7 @@ struct ircd::m::room::events
 	struct horizon;
 	struct missing;
 
-	static conf::item<size_t> viewport_size;
+	static conf::item<ssize_t> viewport_size;
 
 	m::room room;
 	db::domain::const_iterator it;

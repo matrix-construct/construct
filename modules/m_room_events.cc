@@ -36,12 +36,12 @@ ircd::m::viewport(const room &room)
 		room
 	};
 
-	const size_t &max
+	const ssize_t &max
 	{
 		room::events::viewport_size
 	};
 
-	for(size_t i(0); it && i < max; --it, ++i)
+	for(auto i(0); it && i < max; --it, ++i)
 	{
 		ret.first = it.depth();
 		ret.second = it.event_idx();

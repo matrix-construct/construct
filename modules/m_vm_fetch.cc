@@ -426,7 +426,7 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 
 	const long viewport_depth
 	{
-		room_depth - long(room::events::viewport_size)
+		room_depth - room::events::viewport_size
 	};
 
 	std::forward_list

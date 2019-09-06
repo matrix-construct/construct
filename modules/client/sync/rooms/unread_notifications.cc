@@ -21,7 +21,6 @@ namespace ircd::m::sync
 	static bool room_unread_notifications_polylog(data &);
 	static bool room_unread_notifications_linear(data &);
 
-	extern conf::item<int64_t> exposure_depth;
 	extern item room_unread_notifications;
 }
 
@@ -31,13 +30,6 @@ ircd::m::sync::room_unread_notifications
 	"rooms.unread_notifications",
 	room_unread_notifications_polylog,
 	room_unread_notifications_linear,
-};
-
-decltype(ircd::m::sync::exposure_depth)
-ircd::m::sync::exposure_depth
-{
-	{ "name",         "ircd.client.sync.rooms.unread_notifications.exposure.depth" },
-	{ "default",      20L                                                          },
 };
 
 bool
@@ -85,8 +77,8 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 
 	// skips old events the server has backfilled in the background.
 	if(likely(!is_self_read))
-		if(int64_t(exposure_depth) > -1)
-			if(json::get<"depth"_>(*data.event) + int64_t(exposure_depth) < data.room_depth)
+		if(room::events::viewport_size >= 0)
+			if(json::get<"depth"_>(*data.event) + room::events::viewport_size < data.room_depth)
 				return false;
 
 	m::event::id::buf last_read;

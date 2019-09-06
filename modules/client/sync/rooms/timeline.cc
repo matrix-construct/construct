@@ -23,9 +23,6 @@ namespace ircd::m::sync
 	static bool _room_timeline_linear_command(data &);
 	static bool room_timeline_linear(data &);
 
-	extern const string_view exposure_depth_description;
-	extern conf::item<int64_t> exposure_depth;
-	extern conf::item<bool> exposure_state;
 	extern conf::item<size_t> limit_default;
 	extern conf::item<size_t> limit_initial_default;
 	extern item room_timeline;
@@ -52,30 +49,6 @@ ircd::m::sync::limit_initial_default
 	{ "name",     "ircd.client.sync.rooms.timeline.limit_initial.default" },
 	{ "default",  1L                                                      },
 };
-
-decltype(ircd::m::sync::exposure_state)
-ircd::m::sync::exposure_state
-{
-	{ "name",         "ircd.client.sync.rooms.timeline.exposure.state" },
-	{ "default",      false                                            },
-};
-
-decltype(ircd::m::sync::exposure_depth)
-ircd::m::sync::exposure_depth
-{
-	{ "name",         "ircd.client.sync.rooms.timeline.exposure.depth" },
-	{ "default",      20L                                              },
-	{ "description",  exposure_depth_description                       },
-};
-
-decltype(ircd::m::sync::exposure_depth_description)
-ircd::m::sync::exposure_depth_description
-{R"(
-	Does not linear-sync timeline events whose distance from the room head
-	is greater than this value. This prevents past events from appearing at
-	the bottom of the timeline in clients which do not sort their timeline to
-	prevent an incoherent conversation when the server obtains past events.
-)"};
 
 bool
 ircd::m::sync::room_timeline_linear(data &data)
@@ -106,15 +79,14 @@ ircd::m::sync::room_timeline_linear(data &data)
 	if(command)
 		return _room_timeline_linear_command(data);
 
-	if(int64_t(exposure_depth) > -1)
-		if(json::get<"depth"_>(*data.event) + int64_t(exposure_depth) < data.room_depth)
-		{
-			if(!json::get<"state_key"_>(*data.event))
-				return false;
+	const ssize_t &viewport_size
+	{
+		room::events::viewport_size
+	};
 
-			if(!bool(exposure_state))
-				return false;
-		}
+	if(viewport_size >= 0)
+		if(json::get<"depth"_>(*data.event) + viewport_size < data.room_depth)
+			return false;
 
 	json::stack::object membership_
 	{
