@@ -115,14 +115,23 @@ ircd::m::rooms::for_each(const opts &opts,
 			"!public", my_host()
 		};
 
-		const room::state state{public_room_id};
-		return state.for_each("ircd.rooms", opts.server, [&proffer, &ret]
+		const room::state state
+		{
+			public_room_id
+		};
+
+		const auto proffer_state{[&proffer, &ret]
 		(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 		{
 			room::id::buf buf;
 			proffer(room::id::unswap(state_key, buf));
 			return ret;
-		});
+		}};
+
+		return
+			opts.server?
+				state.for_each("ircd.rooms", opts.server, proffer_state):
+				state.for_each("ircd.rooms", proffer_state);
 	}
 
 	return events::type::for_each_in("m.room.create", [&proffer, &ret]
