@@ -79,6 +79,12 @@ struct ircd::m::rooms::opts
 	/// Spec search term
 	string_view search_term;
 
+	/// Room alias prefix search
+	string_view room_alias;
+
+	/// user::rooms convenience
+	id::user user_id;
+
 	/// Filters results to those that have a public rooms list summary
 	bool summary {false};
 

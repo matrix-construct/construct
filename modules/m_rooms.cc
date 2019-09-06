@@ -56,14 +56,8 @@ IRCD_MODULE_EXPORT
 ircd::m::rooms::for_each(const opts &opts,
                          const room::id::closure_bool &closure)
 {
-	const auto match_alias_prefix{[&opts]
-	(const auto &alias)
-	{
-		return !startswith(alias, opts.search_term);
-	}};
-
 	bool ret{true};
-	const auto proffer{[&opts, &closure, &ret, &match_alias_prefix]
+	const auto proffer{[&opts, &closure, &ret]
 	(const m::room::id &room_id)
 	{
 		if(opts.room_id && !opts.lower_bound)
@@ -100,12 +94,35 @@ ircd::m::rooms::for_each(const opts &opts,
 			if(!join_rule(room(room_id), opts.join_rule))
 				return;
 
-		if(startswith(opts.search_term, m::id::ROOM_ALIAS))
+		if(opts.room_alias)
+		{
+			const auto match_alias_prefix{[&opts](const auto &alias)
+			{
+				return !startswith(alias, opts.room_alias);
+			}};
+
 			if(room::aliases(room_id).for_each(match_alias_prefix))
 				return; // no match
+		}
 
 		ret = closure(room_id);
 	}};
+
+	// branch for public rooms of a specific user
+	if(opts.user_id)
+	{
+		const user::rooms user_rooms
+		{
+			opts.user_id
+		};
+
+		return user_rooms.for_each(user::rooms::closure_bool{[&proffer, &ret]
+		(const room::id &room_id, const string_view &membership)
+		{
+			proffer(room_id);
+			return ret;
+		}});
+	}
 
 	// branch for optimized public rooms searches.
 	if(opts.summary)

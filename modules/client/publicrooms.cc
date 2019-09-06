@@ -94,17 +94,7 @@ get__publicrooms(client &client,
 		filter["generic_search_term"]
 	};
 
-	const bool term_room_alias
-	{
-		startswith(search_term, m::id::ROOM_ALIAS)
-	};
-
-	const bool term_room_alias_valid
-	{
-		term_room_alias && m::valid(m::id::ROOM_ALIAS, search_term)
-	};
-
-	if(!server && term_room_alias_valid)
+	if(!server && m::valid(m::id::ROOM_ALIAS, search_term))
 		server = m::id::room_alias(search_term).host();
 
 	if(server && !my_host(server)) try
@@ -140,18 +130,31 @@ get__publicrooms(client &client,
 	opts.search_term = search_term;
 	opts.lower_bound = true;
 	opts.room_id = since;
+
+	if(m::valid(m::id::USER, search_term))
+		opts.user_id = search_term;
+
+	opts.room_alias =
+		startswith(search_term, m::id::ROOM_ALIAS)?
+			string_view{search_term}:
+			string_view{};
+
 	opts.server =
-		server?:
-		term_room_alias?
+		server?
+			server:
+		opts.room_alias || opts.user_id?
 			string_view{}:
 			my_host();
 
 	log::debug
 	{
-		m::log, "public rooms query server[%s] search[%s] filter:%s allnet:%b since:%s",
+		m::log, "public rooms query server[%s] search[%s] filter:%s"
+		" user_id:%b room_alias:%b allnet:%b since:%s",
 		opts.server,
 		opts.search_term,
 		string_view{filter},
+		bool(opts.user_id),
+		bool(opts.room_alias),
 		include_all_networks,
 		since,
 	};
