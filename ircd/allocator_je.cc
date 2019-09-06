@@ -24,7 +24,7 @@ const char *
 __attribute__((weak))
 malloc_conf
 {
-	"narenas:1,"
+	"narenas:1"
 };
 #endif
 
