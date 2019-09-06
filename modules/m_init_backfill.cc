@@ -382,8 +382,30 @@ try
 		pdus.at(0), event_id
 	};
 
+	const auto &[viewport_depth, _]
+	{
+		m::viewport(room_id)
+	};
+
+	const bool below_viewport
+	{
+		json::get<"depth"_>(event) < viewport_depth
+	};
+
+	if(below_viewport)
+		log::debug
+		{
+			log, "skipping acquired %s head %s depth:%ld below viewport:%ld",
+			string_view{room_id},
+			string_view{event_id},
+			json::get<"depth"_>(event),
+			viewport_depth,
+		};
+
 	m::vm::opts vmopts;
 	vmopts.infolog_accept = true;
+	vmopts.fetch_prev = !below_viewport;
+	vmopts.fetch_state = below_viewport;
 	vmopts.warnlog &= ~vm::fault::EXISTS;
 	vmopts.node_id = hint;
 	m::vm::eval eval
@@ -393,10 +415,11 @@ try
 
 	log::info
 	{
-		log, "acquired %s head %s depth:%zu",
+		log, "acquired %s head %s depth:%ld viewport:%ld",
 		string_view{room_id},
 		string_view{event_id},
 		json::get<"depth"_>(event),
+		viewport_depth,
 	};
 
 	return true;
