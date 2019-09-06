@@ -8,6 +8,24 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+/// There are three principal component sections in this unit:
+///
+///    ----------------------------------     _
+///   | 1. Incoming federation EDU hook |     |
+///    ----------------------------------     |
+///    ----------------------------------     |
+///   | 2. ircd::m::receipt API         |     |
+///    ----------------------------------     |
+///    ----------------------------------     |
+///   | 3. Outgoing federation EDU hook |     V
+///    ----------------------------------
+///
+/// This unit parses and accepts m.receipt EDU's from the federation (1); then
+/// it calls the m::receipt API (2) which generates internal PDU's sent to
+/// user rooms. Hooks on these events sent to user rooms (3) turn the events
+/// into federation EDU's for broadcast (for local users). Note that there are
+/// other reactives for these internal events in client/sync, etc.
+
 using namespace ircd;
 
 static void handle_ircd_read(const m::event &, m::vm::eval &);
@@ -34,6 +52,10 @@ receipt_log
 {
 	"m.receipt"
 };
+
+//
+// EDU handler.
+//
 
 decltype(_m_receipt_eval)
 _m_receipt_eval
@@ -220,6 +242,10 @@ catch(const std::exception &e)
 	};
 }
 
+//
+// m::receipt API -> Internal
+//
+
 m::event::id::buf
 IRCD_MODULE_EXPORT
 ircd::m::receipt::read(const m::room::id &room_id,
@@ -399,6 +425,10 @@ ircd::m::receipt::exists(const m::room::id &room_id,
 
 	return ret;
 }
+
+//
+// Internal -> Federation
+//
 
 decltype(_implicit_receipt)
 _implicit_receipt
