@@ -167,7 +167,7 @@ try
 		log, "%s auth_events:%zu miss:%zu",
 		loghead(eval),
 		auth_count,
-		auth_exists - auth_count,
+		auth_count - auth_exists,
 	};
 
 	if(!bool(m::vm::fetch::enable))
