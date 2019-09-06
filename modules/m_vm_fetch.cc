@@ -385,6 +385,8 @@ ircd::m::vm::fetch::prev(const event &event,
 			json::object(result).get("pdus")
 		};
 
+		auto opts(*eval.opts);
+		opts.fetch_prev = false;
 		log::debug
 		{
 			log, "%s fetched %zu pdus; evaluating...",
@@ -444,26 +446,6 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 
 		if(m::exists(prev_id))
 			continue;
-
-		const bool recent_event
-		{
-			at<"depth"_>(event) >= viewport_depth
-		};
-
-		if(!recent_event)
-		{
-			log::dwarning
-			{
-				log, "%s no action for missing prev %s; depth:%ld room:%ld viewport:%ld",
-				loghead(eval),
-				string_view{prev_id},
-				at<"depth"_>(event),
-				room_depth,
-				viewport_depth,
-			};
-
-			continue;
-		}
 
 		const long depth_gap
 		{
