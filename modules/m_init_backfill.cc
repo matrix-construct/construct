@@ -13,6 +13,7 @@
 struct ircd::m::init::backfill
 {
 	static bool handle_head(const room::id &, const event::id &, const string_view &hint);
+	static void handle_missing(const room::id &);
 	static void handle_room(const room::id &);
 	static void worker();
 	static void fini();
@@ -121,6 +122,7 @@ try
 			return false;
 
 		handle_room(room_id);
+		handle_missing(room_id);
 		++count;
 		return !ctx::interruption_requested();
 	});
@@ -249,6 +251,7 @@ try
 	});
 
 	ctx::interruption_point();
+
 	log::info
 	{
 		log, "acquired %s remote head; servers:%zu online:%zu"
@@ -271,7 +274,72 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "Failed to synchronize %s :%s",
+		log, "Failed to synchronize recent %s :%s",
+		string_view{room_id},
+		e.what(),
+	};
+}
+
+void
+ircd::m::init::backfill::handle_missing(const room::id &room_id)
+try
+{
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::events::missing missing
+	{
+		room
+	};
+
+	const int64_t &room_depth
+	{
+		m::depth(std::nothrow, room)
+	};
+
+    const int64_t &min_depth
+    {
+	    std::max(room_depth - ssize_t(m::room::events::viewport_size) * 2, 0L)
+    };
+
+	log::debug
+	{
+		log, "Attempting to fetch recent missing events in %s depth:%ld min:%ld ...",
+		string_view{room_id},
+		room_depth,
+		min_depth,
+	};
+
+	size_t attempted(0);
+    std::set<std::string, std::less<>> fail;
+	missing.for_each(min_depth, [&room_id, &fail, &attempted]
+	(const auto &event_id, const int64_t &ref_depth, const auto &ref_idx)
+	{
+		auto it{fail.lower_bound(event_id)};
+		if(it == end(fail) || *it != event_id)
+			if(!handle_head(room_id, event_id, string_view{}))
+				fail.emplace_hint(it, event_id);
+
+		++attempted;
+		return true;
+	});
+
+	log::info
+	{
+		log, "Fetched %zu recent missing events in %s attempted:%zu fail:%zu",
+		attempted - fail.size(),
+		string_view{room_id},
+		attempted,
+		fail.size(),
+	};
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to synchronize missing %s :%s",
 		string_view{room_id},
 		e.what(),
 	};
