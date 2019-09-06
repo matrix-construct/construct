@@ -56,8 +56,14 @@ IRCD_MODULE_EXPORT
 ircd::m::rooms::for_each(const opts &opts,
                          const room::id::closure_bool &closure)
 {
+	const auto match_alias_prefix{[&opts]
+	(const auto &alias)
+	{
+		return !startswith(alias, opts.search_term);
+	}};
+
 	bool ret{true};
-	const auto proffer{[&opts, &closure, &ret]
+	const auto proffer{[&opts, &closure, &ret, &match_alias_prefix]
 	(const m::room::id &room_id)
 	{
 		if(opts.room_id && !opts.lower_bound)
@@ -93,6 +99,10 @@ ircd::m::rooms::for_each(const opts &opts,
 		if(opts.join_rule)
 			if(!join_rule(room(room_id), opts.join_rule))
 				return;
+
+		if(startswith(opts.search_term, m::id::ROOM_ALIAS))
+			if(room::aliases(room_id).for_each(match_alias_prefix))
+				return; // no match
 
 		ret = closure(room_id);
 	}};
