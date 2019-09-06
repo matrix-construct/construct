@@ -398,6 +398,8 @@ ircd::m::keys::get(const queries &queries,
 	opts.reserve(queries.size());
 	for(const auto &[server_name, key_id] : queries)
 	{
+		assert(key_id);
+		assert(server_name);
 		const bool cached
 		{
 			cache::get(server_name, key_id, [&ret, &closure]
@@ -442,12 +444,17 @@ ircd::m::keys::get(const queries &queries,
 	m::feds::execute(opts, [&ret, &closure]
 	(const auto &result)
 	{
-		if(empty(result.object))
+		const json::array &server_keys
+		{
+			result.object["server_keys"]
+		};
+
+		if(empty(server_keys))
 			return true;
 
 		const m::keys keys
 		{
-			result.object
+			server_keys
 		};
 
 		if(!verify(keys, std::nothrow))
