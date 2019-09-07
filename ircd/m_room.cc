@@ -1035,12 +1035,18 @@ ircd::m::creator(const id::room &room_id)
 bool
 ircd::m::local_only(const room &room)
 {
+	// Branch to test if any remote users are joined to the room, meaning
+	// this result must be false; this is a fast query.
+	if(remote_joined(room))
+		return false;
+
 	const room::members members
 	{
 		room
 	};
 
-	return members.for_each([](const id::user &user_id)
+	return members.for_each([]
+	(const id::user &user_id)
 	{
 		return my(user_id);
 	});
@@ -1054,12 +1060,16 @@ ircd::m::local_only(const room &room)
 bool
 ircd::m::local_joined(const room &room)
 {
-	const room::origins origins
+	const room::members members
 	{
 		room
 	};
 
-	return !origins.empty() && origins.has(my_host());
+	return !members.for_each("join", []
+	(const id::user &user_id)
+	{
+		return my(user_id)? false : true; // false to break.
+	});
 }
 
 /// Member(s) from another server are presently joined to the room. For example
@@ -1069,12 +1079,16 @@ ircd::m::local_joined(const room &room)
 bool
 ircd::m::remote_joined(const room &room)
 {
-	const room::origins origins
+	const room::members members
 	{
 		room
 	};
 
-	return !origins.empty() && !origins.only(my_host());
+	return !members.for_each("join", []
+	(const id::user &user_id)
+	{
+		return my(user_id)? true : false; // false to break.
+	});
 }
 
 bool
