@@ -555,7 +555,7 @@ decltype(ircd::server::peer::link_max_default)
 ircd::server::peer::link_max_default
 {
 	{ "name",     "ircd.server.peer.link_max" },
-	{ "default",  2L                          }
+	{ "default",  4L                          }
 };
 
 decltype(ircd::server::peer::ids)
