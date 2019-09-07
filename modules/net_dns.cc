@@ -355,7 +355,7 @@ ircd::net::dns::new_record(mutable_buffer &buf,
 	if(unlikely(sizeof(type) > size(buf)))
 		return nullptr;
 
-	const auto pos(data(buf));
+	void *const pos(data(buf));
 	consume(buf, sizeof(type));
 	return new (pos) type(answer);
 }
