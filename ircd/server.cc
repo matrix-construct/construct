@@ -1737,8 +1737,27 @@ ircd::server::link::submit(request &request)
 		tag_count()
 	};
 */
+	cleanup_canceled();
+
 	if(ready())
 		wait_writable();
+}
+
+void
+ircd::server::link::cleanup_canceled()
+{
+	auto it(begin(queue));
+	while(it != end(queue))
+	{
+		auto &tag{*it};
+		if(tag.committed() || tag.request)
+		{
+			++it;
+			continue;
+		}
+
+		it = queue.erase(it);
+	}
 }
 
 void
