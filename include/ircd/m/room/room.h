@@ -35,6 +35,8 @@ namespace ircd::m
 	bool membership(const room &, const id::user &, const string_view & = "join");
 	bool join_rule(const room &, const string_view &rule);
 	bool visible(const room &, const string_view &mxid, const m::event *const & = nullptr);
+	bool remote_joined(const room &);
+	bool local_joined(const room &);
 	bool local_only(const room &);
 
 	// [GET] Convenience and tools

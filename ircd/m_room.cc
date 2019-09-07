@@ -1029,20 +1029,53 @@ ircd::m::creator(const id::room &room_id)
 // boolean suite
 //
 
-/// The only joined members are from our origin (local only). This indicates
-/// we won't have any other federation servers to query for room data, nor do
-/// we need to broadcast events to the federation. This is not an authority
-/// about a room's type or ability to federate. Returned value changes to false
-/// when another origin joins.
+/// The only members are from our origin, in any membership state. This
+/// indicates we won't have any other federation servers that could possibly
+/// be party to anything about this room.
 bool
 ircd::m::local_only(const room &room)
+{
+	const room::members members
+	{
+		room
+	};
+
+	return members.for_each([&ret]
+	(const id::user &user_id)
+	{
+		return my(user_id);
+	});
+}
+
+/// Member(s) from our server are presently joined to the room. Returns false
+/// if there's a room on the server where all of our users have left. Note that
+/// some internal rooms have no memberships at all and this will also be false.
+/// This can return true if other servers have memberships in the room too, as
+/// long as one of our users is joined.
+bool
+ircd::m::local_joined(const room &room)
 {
 	const room::origins origins
 	{
 		room
 	};
 
-	return origins.empty() || origins.only(my_host());
+	return !origins.empty() && origins.has(my_host());
+}
+
+/// Member(s) from another server are presently joined to the room. For example
+/// if another user leaves a PM with our user who is still joined, this returns
+/// false. This can return true even if the room has no memberships in any
+/// state from our server, as long as there's a joined member from a remote.
+bool
+ircd::m::remote_joined(const room &room)
+{
+	const room::origins origins
+	{
+		room
+	};
+
+	return !origins.empty() && !origins.only(my_host());
 }
 
 bool
