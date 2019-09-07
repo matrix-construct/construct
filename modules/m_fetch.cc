@@ -638,11 +638,11 @@ catch(...)
 
 	log::derror
 	{
-		log, "Erroneous remote for %s %s in %s from '%s' :%s",
+		log, "%s error for %s %s in %s :%s",
+		string_view{request.origin},
 		reflect(request.opts.op),
 		string_view{request.opts.event_id},
 		string_view{request.opts.room_id},
-		string_view{request.origin},
 		what(request.eptr),
 	};
 }
