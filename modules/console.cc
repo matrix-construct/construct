@@ -9282,11 +9282,9 @@ console_cmd__room__state__space__rebuild(opt &out, const string_view &line)
 		"room_id",
 	}};
 
-	const auto room_id
+	const string_view &room_id
 	{
-		param["room_id"]?
-			m::room_id(param.at("room_id")):
-			m::room::id::buf{}
+		param["room_id"]
 	};
 
 	if(room_id == "*" || room_id == "remote_joined_only")
@@ -9307,9 +9305,16 @@ console_cmd__room__state__space__rebuild(opt &out, const string_view &line)
 		return true;
 	}
 
+	const auto _room_id
+	{
+		room_id?
+			m::room_id(room_id):
+			m::room::id::buf{}
+	};
+
 	m::room::state::space::rebuild
 	{
-		room_id
+		_room_id
 	};
 
 	return true;
