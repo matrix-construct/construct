@@ -244,7 +244,7 @@ const
 
 	for(; it && ret; --it)
 	{
-		if(it.depth() < min_depth)
+		if(int64_t(it.depth()) < min_depth)
 			break;
 
 		const m::event &event{*it};
