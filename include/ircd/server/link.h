@@ -30,6 +30,8 @@ struct ircd::server::link
 	std::shared_ptr<net::socket> socket;         ///< link's socket
 	std::list<tag> queue;                        ///< link's work queue
 	time_t synack_ts {0L};                       ///< time socket was estab
+	time_t read_ts {0L};                         ///< time of last read
+	time_t write_ts {0L};                        ///< time of last write
 	bool op_init {false};                        ///< link is connecting
 	bool op_fini {false};                        ///< link is disconnecting
 	bool op_open {false};

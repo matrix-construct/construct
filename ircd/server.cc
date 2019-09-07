@@ -1907,6 +1907,7 @@ noexcept try
 	using std::errc;
 
 	op_write = false;
+	write_ts = time<seconds>();
 
 	if(unlikely(finished()))
 	{
@@ -2091,6 +2092,7 @@ noexcept try
 	using std::errc;
 
 	op_read = false;
+	read_ts = time<seconds>();
 
 	if(unlikely(finished()))
 	{
