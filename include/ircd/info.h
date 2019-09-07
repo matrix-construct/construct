@@ -22,6 +22,18 @@ namespace ircd::info
 	struct line;
 	struct versions;
 
+	// Util
+	void dump();
+
+	// Primary information
+	extern const string_view name;
+	extern const string_view version;
+	extern const string_view user_agent;
+	extern const string_view server_agent;
+
+	// Extended information
+	extern const string_view credits[];
+
 	// Build information
 	extern const string_view tag;
 	extern const string_view branch;
@@ -62,18 +74,6 @@ namespace ircd::info
 	extern const versions glibc_version_abi;
 	extern const versions glibcxx_version_api;
 	extern const versions sd6_version;
-
-	// Primary information
-	extern const string_view name;
-	extern const string_view version;
-	extern const string_view user_agent;
-	extern const string_view server_agent;
-
-	// Extended information
-	extern const string_view credits[];
-
-	// Util
-	void dump();
 }
 
 namespace ircd::info::hardware
