@@ -66,16 +66,29 @@ ircd::m::rooms::for_each(const opts &opts,
 			return;
 		}
 
+		const m::room room
+		{
+			room_id
+		};
+
 		if(opts.room_id)
 			if(room_id < opts.room_id)
 				return;
 
-		if(opts.remote_joined_only)
-			if(local_only(room(room_id)))
+		if(opts.local_only)
+			if(!local_only(room))
 				return;
 
-		if(opts.local_only)
-			if(!local_only(room(room_id)))
+		if(opts.remote_only)
+			if(local_only(room))
+				return;
+
+		if(opts.local_joined_only)
+			if(!local_joined(room))
+				return;
+
+		if(opts.remote_joined_only)
+			if(!remote_joined(room))
 				return;
 
 		if(opts.server && !opts.summary)
@@ -83,15 +96,15 @@ ircd::m::rooms::for_each(const opts &opts,
 				return;
 
 		if(opts.summary)
-			if(!summary::has(room_id))
+			if(!summary::has(room))
 				return;
 
 		if(opts.server && opts.summary)
-			if(!room::aliases(room_id).count(opts.server))
+			if(!room::aliases(room).count(opts.server))
 				return;
 
 		if(opts.join_rule)
-			if(!join_rule(room(room_id), opts.join_rule))
+			if(!join_rule(room, opts.join_rule))
 				return;
 
 		if(opts.room_alias)
@@ -101,11 +114,11 @@ ircd::m::rooms::for_each(const opts &opts,
 				return !startswith(alias, opts.room_alias);
 			}};
 
-			if(room::aliases(room_id).for_each(match_alias_prefix))
+			if(room::aliases(room).for_each(match_alias_prefix))
 				return; // no match
 		}
 
-		ret = closure(room_id);
+		ret = closure(room);
 	}};
 
 	// branch for public rooms of a specific user

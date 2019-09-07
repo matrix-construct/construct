@@ -94,11 +94,20 @@ struct ircd::m::rooms::opts
 	/// when a room_id is given a for_each() will have 0 or 1 iterations.
 	bool lower_bound {false};
 
-	/// Local-only (see room/room.h). If set to true, results are limited to
-	/// rooms where no other server is joined to the room.
+	/// If set to true, results are limited to rooms where no other server
+	/// is a member of the room. No memberships even those in the leave state
+	/// originated from another server.
 	bool local_only {false};
 
-	/// Non-lonly (see room/room.h). If set to true, rooms where no
-	/// other server is joined to the room are filtered from the results.
+	/// If set to true, the results are filtered to those rooms which have a
+	/// member from anoher server. Note that member may be in the leave state.
+	bool remote_only {false};
+
+	/// If set to true, rooms which have no members from this server presently
+	/// in the join state are filtered from the results.
+	bool local_joined_only {false};
+
+	/// If set to true, rooms where no other server has a presently joined user
+	/// are filtered from the results.
 	bool remote_joined_only {false};
 };
