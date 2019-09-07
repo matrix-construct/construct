@@ -17,44 +17,56 @@ namespace ircd
 	static void main() noexcept;
 }
 
+decltype(ircd::version_api)
+ircd::version_api
+{
+	"IRCd", info::versions::API, 0, {0, 0, 0}, RB_VERSION
+};
+
+decltype(ircd::version_abi)
+ircd::version_abi
+{
+	"IRCd", info::versions::ABI, 0, {0, 0, 0}, ircd::info::version
+};
+
 decltype(ircd::soft_assert)
 ircd::soft_assert
 {
-	{ "name",     "ircd.soft_assert"  },
-	{ "default",  false               },
-	{ "persist",  false               },
+	{ "name",     "ircd.soft_assert"   },
+	{ "default",  false                },
+	{ "persist",  false                },
 };
 
 decltype(ircd::write_avoid)
 ircd::write_avoid
 {
-	{ "name",     "ircd.write_avoid"  },
-	{ "default",  false               },
-	{ "persist",  false               },
+	{ "name",     "ircd.write_avoid"   },
+	{ "default",  false                },
+	{ "persist",  false                },
 };
 
 decltype(ircd::read_only)
 ircd::read_only
 {
-	{ "name",     "ircd.read_only"  },
-	{ "default",  false             },
-	{ "persist",  false             },
+	{ "name",     "ircd.read_only"     },
+	{ "default",  false                },
+	{ "persist",  false                },
 };
 
 decltype(ircd::debugmode)
 ircd::debugmode
 {
-	{ "name",     "ircd.debugmode"  },
-	{ "default",  false             },
-	{ "persist",  false             },
+	{ "name",     "ircd.debugmode"     },
+	{ "default",  false                },
+	{ "persist",  false                },
 };
 
 decltype(ircd::restart)
 ircd::restart
 {
-	{ "name",     "ircd.restart"  },
-	{ "default",  false           },
-	{ "persist",  false           },
+	{ "name",     "ircd.restart"       },
+	{ "default",  false                },
+	{ "persist",  false                },
 };
 
 /// Sets up the IRCd and its main context, then returns without blocking.

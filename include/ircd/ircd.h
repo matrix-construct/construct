@@ -83,6 +83,9 @@ namespace ircd
 	extern conf::item<bool> read_only;
 	extern conf::item<bool> write_avoid;
 	extern conf::item<bool> soft_assert;
+
+	extern const info::versions version_api;
+	extern const info::versions version_abi;
 }
 
 #endif // HAVE_IRCD_IRCD_H
