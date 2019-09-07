@@ -2250,6 +2250,7 @@ ircd::ctx::set(shared_state_base &st,
 bool
 ircd::ctx::is(const shared_state_base &st,
               const future_state &state_)
+noexcept
 {
 	switch(st.st)
 	{
@@ -2286,6 +2287,7 @@ ircd::ctx::is(const shared_state_base &st,
 /// above the few low-numbered enum values.
 ircd::ctx::future_state
 ircd::ctx::state(const shared_state_base &st)
+noexcept
 {
 	return uintptr_t(st.p) >= ircd::info::page_size?
 		future_state::PENDING:
@@ -2296,7 +2298,13 @@ ircd::ctx::state(const shared_state_base &st)
 // shared_state_base::shared_state_base
 //
 
+ircd::ctx::shared_state_base::shared_state_base()
+noexcept
+{
+}
+
 ircd::ctx::shared_state_base::shared_state_base(already_t)
+noexcept
 {
 	set(*this, future_state::READY);
 }

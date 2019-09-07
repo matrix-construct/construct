@@ -23,8 +23,8 @@ namespace ircd::ctx
 	IRCD_EXCEPTION(ircd::ctx::error, future_error)
 	IRCD_OVERLOAD(already)
 
-	future_state state(const shared_state_base &);
-	bool is(const shared_state_base &, const future_state &);
+	future_state state(const shared_state_base &) noexcept;
+	bool is(const shared_state_base &, const future_state &) noexcept;
 	void set(shared_state_base &, const future_state &);
 }
 
@@ -71,14 +71,14 @@ struct ircd::ctx::shared_state_base
 	std::exception_ptr eptr;
 	std::function<void (shared_state_base &)> then;
 	shared_state_base *next{nullptr}; // next sharing future
-	union
+	union alignas(8)
 	{
-		promise_base *p {nullptr}; // the head of all sharing promises
-		future_state st;
+		promise_base *p; // the head of all sharing promises
+		future_state st {future_state::INVALID};
 	};
 
-	shared_state_base() = default;
-	shared_state_base(already_t);
+	shared_state_base() noexcept;
+	shared_state_base(already_t) noexcept;
 	shared_state_base(promise_base &);
 	shared_state_base(shared_state_base &&) noexcept;
 	shared_state_base(const shared_state_base &);
