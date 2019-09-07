@@ -4574,8 +4574,8 @@ console_cmd__peer(opt &out, const string_view &line)
 		    out << ' ' << setw(40) << left << " ";
 
 		out << " " << setw(2) << right << peer.link_count()     << " L"
-		    << " " << setw(2) << right << peer.tag_count()      << " T"
-		    << " " << setw(2) << right << peer.tag_committed()  << " TC"
+		    << " " << setw(3) << right << peer.tag_count()      << " T"
+		    << " " << setw(3) << right << peer.tag_committed()  << " TC"
 		    << " " << setw(9) << right << peer.write_size()     << " UP Q"
 		    << " " << setw(9) << right << peer.read_size()      << " DN Q"
 		    << " " << setw(9) << right << peer.write_total()    << " UP"
@@ -4605,7 +4605,17 @@ console_cmd__peer(opt &out, const string_view &line)
 		has(line, "all")
 	};
 
-	if(hostport && hostport != "all")
+	const bool active
+	{
+		has(line, "active")
+	};
+
+	const bool conn
+	{
+		has(line, "conn")
+	};
+
+	if(hostport && !all && !active && !conn)
 	{
 		auto &peer
 		{
@@ -4620,7 +4630,13 @@ console_cmd__peer(opt &out, const string_view &line)
 	{
 		const auto &host{p.first};
 		const auto &peer{*p.second};
-		if(peer.err_has() && !all)
+		if(!all && peer.err_has())
+			continue;
+
+		if(conn && !peer.link_count())
+			continue;
+
+		if(active && !peer.tag_count())
 			continue;
 
 		print(host, peer);
@@ -4911,9 +4927,10 @@ try
 	const auto each{[&out]
 	(const server::peer &peer, const server::link &link, const server::request &request)
 	{
-		const auto out_head(request.out.gethead(request));
-		if(!out_head.method || !out_head.path)
-			return true;
+		const auto out_head
+		{
+			request.out.gethead(request)
+		};
 
 		thread_local char rembuf[128];
 		const string_view &remote
@@ -4928,7 +4945,19 @@ try
 		<< std::left   << std::setw(8)  << link.id << "  "
 		<< std::left   << std::setw(8)  << id(request) << "  "
 		<< std::right  << std::setw(32) << trunc(peer.hostcanon, 32) << "  "
-		<< std::left   << std::setw(32) << trunc(remote, 32) << "  "
+		<< std::left   << std::setw(32) << trunc(remote, 32) << "  ";
+		if(!out_head.method || !out_head.path)
+		{
+			size_t i(0);
+			for(auto it(begin(link.queue)); it != end(link.queue); ++it, ++i)
+				if(std::addressof(*it) == request.tag)
+					break;
+
+			out << std::setw(5) << std::right << i << " in queue" << std::endl;
+			return true;
+		}
+
+		out
 		<< std::right  << std::setw(7)  << out_head.method << "  "
 		<< std::left   << std::setw(64) << trunc(out_head.path, 64) << "  "
 		;
