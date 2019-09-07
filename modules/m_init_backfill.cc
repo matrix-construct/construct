@@ -115,7 +115,8 @@ try
 	// Prepare to iterate all of the rooms this server is aware of which
 	// contain at least one user from another server which is joined.
 	rooms::opts opts;
-	opts.remote_joined_only = true;
+	opts.remote_only = true;
+	opts.local_joined_only = true;
 
 	// This is only an estimate because the rooms on the server can change
 	// before this task completes.
