@@ -112,15 +112,33 @@ try
 	if(run::level != run::level::RUN)
 		return;
 
+	// Prepare to iterate all of the rooms this server is aware of which
+	// contain at least one user from another server which is joined.
+	rooms::opts opts;
+	opts.remote_joined_only = true;
+
+	// This is only an estimate because the rooms on the server can change
+	// before this task completes.
+	const auto estimate
+	{
+		rooms::count(opts)
+	};
+
+	if(!estimate)
+		return;
+
+	log::notice
+	{
+		log, "Starting initial backfill of %zu rooms from other servers...",
+		estimate,
+	};
+
+	// Prepare a pool of child contexts to process rooms concurrently.
+	// The context pool lives directly in this frame.
 	static const ctx::pool::opts pool_opts
 	{
 		512_KiB,               // stack sz
 		size_t(pool_size),     // pool sz
-	};
-
-	log::info
-	{
-		log, "Starting initial resynchronization from other servers..."
 	};
 
 	ctx::pool pool
@@ -130,7 +148,7 @@ try
 
 	ctx::dock dock;
 	size_t count(0), complete(0);
-	const auto each_room{[&complete, &dock]
+	const auto each_room{[&estimate, &count, &complete, &dock]
 	(const room::id &room_id)
 	{
 		const unwind completed{[&complete, &dock]
@@ -144,13 +162,22 @@ try
 
 		handle_room(room_id);
 		handle_missing(room_id);
+		log::info
+		{
+			log, "Initial backfill of %s complete:%zu of estimate:%zu %02.2lf%%",
+			string_view{room_id},
+			complete,
+			estimate,
+			(complete / double(estimate)) * 100.0,
+			count,
+		};
+
 		return !ctx::interruption_requested();
 	}};
 
-	// Iterate all of the rooms this server is aware of which contain
-	// at least one user from another server which is joined to the room.
-	rooms::opts opts;
-	opts.remote_joined_only = true;
+	// Iterate the room_id's, submitting a copy of each to the next pool
+	// worker; the submission blocks when all pool workers are busy, as per
+	// the pool::opts.
 	rooms::for_each(opts, [&pool, &each_room, &count]
 	(const room::id &room_id)
 	{
@@ -171,12 +198,15 @@ try
 			complete,
 		};
 
+	// All rooms have been submitted to the pool but the pool workers might
+	// still be busy. If we unwind now the pool's dtor will kill the workers
+	// so we synchronize their completion here.
 	dock.wait([&complete, &count]
 	{
 		return complete >= count;
 	});
 
-	log::info
+	log::notice
 	{
 		log, "Initial resynchronization of %zu rooms complete.",
 		count,
@@ -361,8 +391,8 @@ try
 		min_depth,
 	};
 
-	size_t attempted(0);
-    std::set<std::string, std::less<>> fail;
+	ssize_t attempted(0);
+	std::set<std::string, std::less<>> fail;
 	missing.for_each(min_depth, [&room_id, &fail, &attempted]
 	(const auto &event_id, const int64_t &ref_depth, const auto &ref_idx)
 	{
@@ -375,14 +405,15 @@ try
 		return true;
 	});
 
-	log::info
-	{
-		log, "Fetched %zu recent missing events in %s attempted:%zu fail:%zu",
-		attempted - fail.size(),
-		string_view{room_id},
-		attempted,
-		fail.size(),
-	};
+	if(attempted - ssize_t(fail.size()) > 0L)
+		log::info
+		{
+			log, "Fetched %zu recent missing events in %s attempted:%zu fail:%zu",
+			attempted - fail.size(),
+			string_view{room_id},
+			attempted,
+			fail.size(),
+		};
 }
 catch(const std::exception &e)
 {
