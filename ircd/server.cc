@@ -2326,6 +2326,9 @@ ircd::server::link::discard_read()
 		{
 			"%s", string_view{msg}
 		};
+
+	if(!discard)
+		this->close(net::dc::RST);
 }
 
 size_t
