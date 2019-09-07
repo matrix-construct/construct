@@ -1040,8 +1040,7 @@ ircd::m::local_only(const room &room)
 		room
 	};
 
-	return members.for_each([&ret]
-	(const id::user &user_id)
+	return members.for_each([](const id::user &user_id)
 	{
 		return my(user_id);
 	});
@@ -3003,24 +3002,29 @@ const
 	// joined members optimization. Only possible when seeking
 	// membership="join" on the present state of the room.
 	if(membership == "join" && present)
-		return this->for_each(membership, [this, &closure, &state]
-		(const id::user &member)
+		return for_each_join_present([&closure, &state]
+		(const id::user &user_id)
 		{
-			const auto event_idx
+			const auto &event_idx
 			{
-				state.get(std::nothrow, "m.room.member", member)
+				state.get(std::nothrow, "m.room.member", user_id)
 			};
 
-			if(likely(event_idx))
-				return closure(member, event_idx);
-
-			log::error
+			if(unlikely(!event_idx))
 			{
-				log, "Failed to find member event_idx:%zu for %s in present state of %s",
-				event_idx,
-				string_view{member},
-				string_view{room.room_id},
-			};
+				log::error
+				{
+					log, "Failed member:%s event_idx:%lu in room_joined of %s",
+					string_view{user_id},
+					event_idx,
+					string_view{state.room_id},
+				};
+
+				return true;
+			}
+
+			if(!closure(user_id, event_idx))
+				return false;
 
 			return true;
 		});
@@ -3052,22 +3056,41 @@ const
 	// joined members optimization. Only possible when seeking
 	// membership="join" on the present state of the room.
 	if(membership == "join" && present)
-		return room::origins::_for_each(room, [this, &closure]
-		(const string_view &key)
-		{
-			const string_view &member
-			{
-				std::get<1>(dbs::room_joined_key(key))
-			};
-
-			return closure(member);
-		});
+		return for_each_join_present(closure);
 
 	return this->for_each(membership, [&closure]
 	(const auto &user_id, const auto &event_idx)
 	{
 		return closure(user_id);
 	});
+}
+
+bool
+ircd::m::room::members::for_each_join_present(const closure &closure)
+const
+{
+	db::domain &index
+	{
+		dbs::room_joined
+	};
+
+	auto it
+	{
+		index.begin(room.room_id)
+	};
+
+	for(; bool(it); ++it)
+	{
+		const auto &[origin, user_id]
+		{
+			dbs::room_joined_key(it->first)
+		};
+
+		if(!closure(user_id))
+			return false;
+	}
+
+	return true;
 }
 
 bool
