@@ -5367,6 +5367,59 @@ console_cmd__net__listen__unload(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__net__listen__crt(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"listener|path"
+	}};
+
+	string_view filename;
+	const string_view &targ
+	{
+		param.at("listener|path")
+	};
+
+	static mods::import<std::list<net::listener>> listeners
+	{
+		"m_listen", "listeners"
+	};
+
+	const auto &list{*listeners};
+	for(const auto &listener : list)
+	{
+		if(listener.name() != targ)
+			continue;
+
+		const json::object config
+		{
+			listener
+		};
+
+		filename = unquote(config.get("certificate_pem_path"));
+	}
+
+	if(!filename)
+	{
+		filename = targ;
+		return true;
+	}
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		32_KiB
+	};
+
+	const std::string certfile
+	{
+		fs::read(filename)
+	};
+
+	out << openssl::printX509(buf, certfile, 0) << std::endl;
+	return true;
+}
+
 //
 // client
 //
@@ -5598,59 +5651,6 @@ console_cmd__resource(opt &out, const string_view &line)
 //
 //
 //
-
-bool
-console_cmd__crt(opt &out, const string_view &line)
-{
-	const params param{line, " ",
-	{
-		"listener|path"
-	}};
-
-	string_view filename;
-	const string_view &targ
-	{
-		param.at("listener|path")
-	};
-
-	static mods::import<std::list<net::listener>> listeners
-	{
-		"m_listen", "listeners"
-	};
-
-	const auto &list{*listeners};
-	for(const auto &listener : list)
-	{
-		if(listener.name() != targ)
-			continue;
-
-		const json::object config
-		{
-			listener
-		};
-
-		filename = unquote(config.get("certificate_pem_path"));
-	}
-
-	if(!filename)
-	{
-		filename = targ;
-		return true;
-	}
-
-	const unique_buffer<mutable_buffer> buf
-	{
-		32_KiB
-	};
-
-	const std::string certfile
-	{
-		fs::read(filename)
-	};
-
-	out << openssl::printX509(buf, certfile, 0) << std::endl;
-	return true;
-}
 
 //
 // key
@@ -7368,17 +7368,6 @@ console_cmd__event__refs__auth(opt &out, const string_view &line)
 //
 // commit
 //
-
-bool
-console_cmd__commit(opt &out, const string_view &line)
-{
-	m::event event
-	{
-		json::object{line}
-	};
-
-	return true;
-}
 
 //
 // eval
@@ -11596,12 +11585,8 @@ console_cmd__users(opt &out, const string_view &line)
 	return true;
 }
 
-//
-// typing
-//
-
 bool
-console_cmd__typing(opt &out, const string_view &line)
+console_cmd__user__typing(opt &out, const string_view &line)
 {
 	m::typing::for_each([&out]
 	(const m::typing &event)
