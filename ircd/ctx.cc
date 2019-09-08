@@ -1989,10 +1989,7 @@ noexcept
 ircd::ctx::promise_base::~promise_base()
 noexcept
 {
-	if(!valid())
-		return;
-
-	if(promise_base::refcount(state()) == 1)
+	if(promise_base::refcount(*this) == 1)
 		set_exception(make_exception_ptr<broken_promise>());
 
 	remove();
@@ -2024,10 +2021,18 @@ ircd::ctx::promise_base::remove()
 void
 ircd::ctx::promise_base::make_ready()
 {
+	const critical_assertion ca;
+
 	assert(valid());
+	promise_base *p
+	{
+		promise_base::head(*this)
+	};
+
+	assert(p);
 	shared_state_base *next
 	{
-		shared_state_base::head(*this)
+		shared_state_base::head(*p)
 	};
 
 	// First we have to chase the linked list of promises reachable
@@ -2110,7 +2115,7 @@ ircd::ctx::promise_base::head(const promise_base &p)
 {
 	return p.st && head(*p.st)?
 		head(*p.st):
-		nullptr;
+		std::addressof(p);
 }
 
 const ircd::ctx::promise_base *
@@ -2409,11 +2414,10 @@ noexcept
 		shared_state_base::refcount(*this)
 	};
 
-	assert(refcount >= 1);
-	if(refcount <= 1)
+	if(refcount == 1)
 		invalidate_promises(*this);
-
-	remove(*this);
+	else if(refcount > 1)
+		remove(*this);
 }
 
 //
@@ -2425,6 +2429,9 @@ size_t
 ircd::ctx::shared_state_base::refcount(const shared_state_base &st)
 {
 	size_t ret{0};
+	if(!is(st, future_state::PENDING))
+		return ret;
+
 	for(const auto *next(head(st)); next; next = next->next)
 		++ret;
 
@@ -2509,9 +2516,7 @@ ircd::ctx::remove(shared_state_base &st)
 		else
 			invalidate_promises(st);
 	}
-
-	assert(last);
-	for(auto *next(last->next); next; last = next, next = next->next)
+	else for(auto *next(last->next); next; last = next, next = next->next)
 		if(next == &st)
 		{
 			last->next = next->next;
