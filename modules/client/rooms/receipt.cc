@@ -72,23 +72,34 @@ handle_receipt_m_read(client &client,
 	if(!m::receipt::freshest(room_id, request.user_id, event_id))
 		return;
 
-	// Check if user wants to prevent sending receipts to this room.
-	if(m::receipt::ignoring(request.user_id, room_id))
-		return;
+	const bool ignoring
+	{
+		// Check if user wants to prevent sending receipts to this room.
+		m::receipt::ignoring(request.user_id, room_id)
 
-	// Check if user wants to prevent based on this event's specifics.
-	if(m::receipt::ignoring(request.user_id, event_id))
-		return;
+		// Check if user wants to prevent based on this event's specifics.
+		|| m::receipt::ignoring(request.user_id, event_id)
+	};
 
 	// The options object starts with anything in the request content, which
 	// differs depending on whether this is being called from a /receipt or
 	// /read_markers resource handler. The receipt::read() implementation
 	// looks for properties knowing this call pattern, thus it's best to just
 	// convey the whole content here for forward compat.
-	const json::object &options
+	json::object options
 	{
 		request
 	};
+
+	// Ignoring still involves creating a receipt in all respects except
+	// transmitting it to local and remote parties. This behavior is achieved
+	// by the m.hidden tag. If the options do not contain this tag we add it.
+	std::string options_buf;
+	if(ignoring && !options.get("m.hidden", false))
+	{
+		options_buf = json::insert(options, {"m.hidden", true});
+		options = options_buf;
+	}
 
 	m::receipt::read(room_id, request.user_id, event_id, options);
 }
