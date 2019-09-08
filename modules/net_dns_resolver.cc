@@ -172,6 +172,7 @@ uint16_t
 ircd::net::dns::resolver::operator()(const hostport &hp,
                                      const opts &opts)
 {
+	const ctx::critical_assertion ca;
 	auto &tag(set_tag(hp, opts)); try
 	{
 		tag.question = make_query(tag.qbuf, tag);
@@ -321,6 +322,11 @@ try
 catch(const ctx::terminated &)
 {
 	const ctx::exception_handler eh;
+	const std::lock_guard lock
+	{
+		mutex
+	};
+
 	cancel_all();
 }
 
