@@ -2127,8 +2127,7 @@ ircd::ctx::remove(promise_base &p)
 		else
 			invalidate_futures(p);
 	}
-
-	if(last)
+	else if(last)
 		for(auto *next{last->next}; next; last = next, next = next->next)
 			if(next == &p)
 			{
@@ -2155,7 +2154,7 @@ ircd::ctx::update(promise_base &new_,
 	if(last == &old)
 		set_futures_promise(new_);
 
-	if(last)
+	else if(last)
 		for(auto *next{last->next}; next; last = next, next = last->next)
 			if(next == &old)
 			{
@@ -2174,6 +2173,7 @@ ircd::ctx::append(promise_base &new_,
                   promise_base &old)
 {
 	assert(new_.st);
+	assert(old.st);
 	if(!old.next)
 	{
 		old.next = &new_;
@@ -2196,8 +2196,10 @@ ircd::ctx::set_futures_promise(promise_base &p)
 	};
 
 	for(; next; next = next->next)
-		if(is(*next, future_state::PENDING))
-			next->p = std::addressof(p);
+	{
+		assert(is(*next, future_state::PENDING));
+		next->p = std::addressof(p);
+	}
 }
 
 void
@@ -2209,8 +2211,10 @@ ircd::ctx::invalidate_futures(promise_base &p)
 	};
 
 	for(; next; next = next->next)
-		if(is(*next, future_state::PENDING))
-			next->p = nullptr;
+	{
+		assert(is(*next, future_state::PENDING));
+		next->p = nullptr;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2353,6 +2357,9 @@ ircd::ctx::shared_state_base::operator=(promise_base &p)
 {
 	this->~shared_state_base();
 	new (this) shared_state_base{p};
+
+	assert(p.valid());
+	assert(is(*this, future_state::PENDING));
 	return *this;
 }
 
@@ -2480,6 +2487,7 @@ ircd::ctx::remove(shared_state_base &st)
 		shared_state_base::head(st)
 	};
 
+	assert(last);
 	if(last == &st && is(st, future_state::PENDING))
 	{
 		if(last->next)

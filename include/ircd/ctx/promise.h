@@ -43,12 +43,12 @@ namespace ircd::ctx
 /// other party, and a pointer to the next instance of their own party.
 struct ircd::ctx::promise_base
 {
-	// Internal operations
 	static const promise_base *head(const shared_state_base &);
 	static const promise_base *head(const promise_base &);
+	static size_t refcount(const shared_state_base &);
+
 	static promise_base *head(shared_state_base &);
 	static promise_base *head(promise_base &);
-	static size_t refcount(const shared_state_base &);
 
 	shared_state_base *st {nullptr};      // the head of all sharing futures
 	promise_base *next {nullptr};         // next sharing promise
@@ -67,7 +67,7 @@ struct ircd::ctx::promise_base
 	bool operator!() const noexcept;
 	explicit operator bool() const noexcept;
 
-	void set_exception(std::exception_ptr eptr);
+	void set_exception(std::exception_ptr);
 
   protected:
 	promise_base() = default;

@@ -57,7 +57,9 @@ enum class ircd::ctx::future_state
 /// dereference the promise pointer (head promise) and follow the st->next
 /// list. The only way to traverse the list of promises is to dereference a
 /// shared_state_base with a valid *p in future_state::PENDING and chase the
-/// p->next list.
+/// p->next list. Each side of the system relies on the other. This means any
+/// proper iteration of the promise or future lists can only take place before
+/// dissolution of the system.
 struct ircd::ctx::shared_state_base
 {
 	static const shared_state_base *head(const shared_state_base &);
