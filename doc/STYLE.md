@@ -400,7 +400,14 @@ a specific exception expected from the overload alternative** (or set of
 exceptions, etc). Any exception may still come out of that nothrow overload;
 technically including the specific exception if it came from somewhere else!
 
-When no exceptions whatsoever are expected, the `noexcept` keyword is used.
+Use the noexcept keyword with tact, not by default. Most of the project
+propagates exceptions. Functions that handle their errors and are expected to
+return (i.e since they catch `std::exception`), still throw special exceptions
+like `ircd::ctx::terminated`. If the `catch(...)` and `noexcept` features are
+used: developers must cooperate by handling ctx interruptions and propagating
+terminations. This is not an issue on leaf and simple functions where we tend
+to make use of `noexcept`, especially for non-inlines allowing for better
+compiler optimizations to occur.
 
 
 #### Indications of yielding and IO's
