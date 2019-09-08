@@ -75,20 +75,20 @@ ircd::m::rooms::for_each(const opts &opts,
 			if(room_id < opts.room_id)
 				return;
 
-		if(opts.local_only)
-			if(!local_only(room))
-				return;
-
-		if(opts.remote_only)
-			if(local_only(room))
-				return;
-
 		if(opts.local_joined_only)
 			if(!local_joined(room))
 				return;
 
 		if(opts.remote_joined_only)
 			if(!remote_joined(room))
+				return;
+
+		if(opts.local_only)
+			if(!local_only(room))
+				return;
+
+		if(opts.remote_only)
+			if(local_only(room))
 				return;
 
 		if(opts.server && !opts.summary)
