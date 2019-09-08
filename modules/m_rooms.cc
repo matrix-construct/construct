@@ -172,3 +172,61 @@ ircd::m::rooms::for_each(const opts &opts,
 		return ret;
 	});
 }
+
+//
+// ircd::m::rooms::opts::opts
+//
+
+IRCD_MODULE_EXPORT
+ircd::m::rooms::opts::opts(const string_view &input)
+noexcept
+:room_id
+{
+	valid(m::id::ROOM, input)?
+		m::id::room{input}:
+		m::id::room{}
+}
+,server
+{
+	startswith(input, ':')?
+		lstrip(input, ':'):
+		string_view{}
+}
+,room_alias
+{
+	valid(m::id::ROOM_ALIAS, input)?
+		m::id::room_alias{input}:
+		m::id::room_alias{}
+}
+,user_id
+{
+	valid(m::id::USER, input)?
+		m::id::user{input}:
+		m::id::user{}
+}
+,local_only
+{
+	has(input, "local_only")
+}
+,remote_only
+{
+	has(input, "remote_only")
+}
+,local_joined_only
+{
+	has(input, "local_joined_only")
+}
+,remote_joined_only
+{
+	has(input, "remote_joined_only")
+}
+,search_term
+{
+	!room_id && !server && !room_alias && !user_id
+	&& !local_only && !remote_only
+	&& !local_joined_only && !remote_joined_only?
+		input:
+		string_view{}
+}
+{
+}

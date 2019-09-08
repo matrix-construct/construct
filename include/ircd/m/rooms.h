@@ -76,9 +76,6 @@ struct ircd::m::rooms::opts
 	/// Set a string to localize query to a single server
 	string_view server;
 
-	/// Spec search term
-	string_view search_term;
-
 	/// Room alias prefix search
 	string_view room_alias;
 
@@ -110,4 +107,10 @@ struct ircd::m::rooms::opts
 	/// If set to true, rooms where no other server has a presently joined user
 	/// are filtered from the results.
 	bool remote_joined_only {false};
+
+	/// Spec search term
+	string_view search_term;
+
+	opts() = default;
+	opts(const string_view &search_term) noexcept; // special
 };

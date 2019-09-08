@@ -7554,47 +7554,19 @@ console_cmd__eval__file(opt &out, const string_view &line)
 bool
 console_cmd__rooms(opt &out, const string_view &line)
 {
-	const params param{line, " ",
-	{
-		"server", "search_term", "limit"
-	}};
-
-	const string_view &server
-	{
-		param["server"] != "*" &&
-		param["server"] != "remote_joined_only" &&
-		param["server"] != "local_only"?
-			param["server"]:
-			string_view{}
-	};
-
 	const string_view &search_term
 	{
-		param["server"] && startswith(param["server"], ':') && param["search_term"] != "*"?
-			param["search_term"]:
-
-		param["server"] && startswith(param["server"], ':')?
-			string_view{}:
-
-		param["server"] != "*"?
-			param["server"]:
-
-		string_view{}
+		line
 	};
 
-	m::rooms::opts opts;
-	opts.server = server;
-	opts.search_term = search_term;
-
-	if(param["server"] == "remote_joined_only")
-		opts.remote_joined_only = true;
-
-	if(param["server"] == "local_only")
-		opts.local_only = true;
+	const m::rooms::opts opts
+	{
+		search_term
+	};
 
 	auto limit
 	{
-		param.at("limit", 64L)
+		64
 	};
 
 	m::rooms::for_each(opts, [&limit, &out]
