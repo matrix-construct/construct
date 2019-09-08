@@ -436,7 +436,6 @@ try
 	};
 
 	_level = new_level;
-	changed::dock.notify_all();
 
 	// This latch is used to block this call when setting the level
 	// from an ircd::ctx. If the level is set from the main stack then
@@ -463,6 +462,7 @@ try
 		else
 			log::flush();
 
+		changed::dock.notify_all();
 		for(const auto &handler : changed::list) try
 		{
 			(*handler)(new_level);
