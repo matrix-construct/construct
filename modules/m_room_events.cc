@@ -14,8 +14,8 @@ IRCD_MODULE
 	"Matrix room library"
 };
 
-IRCD_MODULE_EXPORT_DATA
 decltype(ircd::m::room::events::viewport_size)
+IRCD_MODULE_EXPORT_DATA
 ircd::m::room::events::viewport_size
 {
 	{ "name",     "ircd.m.room.events.viewport.size" },
