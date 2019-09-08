@@ -1467,6 +1467,26 @@ noexcept try
 		path
 	};
 
+	if(likely(prefetcher))
+	{
+		const size_t canceled
+		{
+			prefetcher->cancel(*this)
+		};
+
+		log::debug
+		{
+			log, "[%s] canceled %zu queued prefetches; waiting for any pending ...",
+			name,
+			canceled,
+		};
+
+		// prefetcher::cancel() only removes requests from its queue, but if
+		// a prefetch request from this database is in flight that is bad; so
+		// we wait until the unit has completed its pending requests.
+		prefetcher->wait_pending();
+	}
+
 	bgcancel(*this, true);
 
 	log::debug
