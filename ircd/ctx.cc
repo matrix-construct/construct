@@ -2058,6 +2058,20 @@ ircd::ctx::promise_base::make_ready()
 	assert(!valid());
 }
 
+/// If no shared state anymore: refcount=0; otherwise the promise
+/// list head from p.st->p resolves to at least &p which means refcount>=1
+size_t
+ircd::ctx::promise_base::refcount(const promise_base &p)
+{
+	const auto ret
+	{
+		p.st? refcount(*p.st): 0UL
+	};
+
+	assert((p.st && ret >= 1) || (!p.st && !ret));
+	return ret;
+}
+
 /// Internal use; returns the number of copies of the promise reachable from
 /// the linked list headed by the shared state. This is used to indicate when
 /// the last copy has destructed which may result in a broken_promise exception

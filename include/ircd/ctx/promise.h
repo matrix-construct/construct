@@ -46,6 +46,7 @@ struct ircd::ctx::promise_base
 	static const promise_base *head(const shared_state_base &);
 	static const promise_base *head(const promise_base &);
 	static size_t refcount(const shared_state_base &);
+	static size_t refcount(const promise_base &);
 
 	static promise_base *head(shared_state_base &);
 	static promise_base *head(promise_base &);
