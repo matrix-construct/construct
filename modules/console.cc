@@ -7770,6 +7770,9 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "display name:      " << m::display_name(display_buf, room_id) << std::endl;
 	out << "version:           " << m::version(version_buf, room_id) << std::endl;
 	out << "joined:            " << m::room::members{room_id}.count("join") << std::endl;
+	out << "remote joined:     " << std::boolalpha << m::remote_joined(room_id) << std::endl;
+	out << "local joined:      " << std::boolalpha << m::local_joined(room_id) << std::endl;
+	out << "local only:        " << std::boolalpha << m::local_only(room_id) << std::endl;
 	out << std::endl;
 
 	out << "servers:           " << m::room::origins{room_id}.count() << std::endl;
