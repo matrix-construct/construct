@@ -378,10 +378,15 @@ try
 		m::depth(std::nothrow, room)
 	};
 
-    const int64_t &min_depth
-    {
-	    std::max(room_depth - ssize_t(m::room::events::viewport_size) * 2, 0L)
-    };
+	const ssize_t &viewport_size
+	{
+		m::room::events::viewport_size
+	};
+
+	const int64_t min_depth
+	{
+		std::max(room_depth - viewport_size * 2, 0L)
+	};
 
 	ssize_t attempted(0);
 	std::set<std::string, std::less<>> fail;
