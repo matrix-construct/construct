@@ -11,6 +11,12 @@
 #pragma once
 #define HAVE_IRCD_M_EVENT_APPEND
 
+/// Used when transmitting events to clients. This tries to hide and provide
+/// as much boilerplate as possible which we abstracted from all of the
+/// different locations where an event may be revealed to a client. This device
+/// will add things like a client txnid, calculate and add an `unsigned.age`,
+/// find and add the prev_state/prev_content for state events, etc.
+///
 struct ircd::m::event::append
 :boolean
 {
@@ -22,6 +28,8 @@ struct ircd::m::event::append
 	append(json::stack::array &, const event &);
 };
 
+/// Provide as much information as you can apropos this event so the impl
+/// can provide the best result.
 struct ircd::m::event::append::opts
 {
 	const event::idx *event_idx {nullptr};
