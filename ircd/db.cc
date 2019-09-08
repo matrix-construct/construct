@@ -5890,10 +5890,54 @@ ircd::db::prefetcher::operator()(column &c,
 		key, &d, now<steady_point>(), db::id(c)
 	});
 
-	++requests;
 	++request_counter;
 	dock.notify_one();
 	return true;
+}
+
+size_t
+ircd::db::prefetcher::cancel(column &c)
+{
+	return cancel([&c]
+	(const auto &request)
+	{
+		return request.cid == id(c);
+	});
+}
+
+size_t
+ircd::db::prefetcher::cancel(database &d)
+{
+	return cancel([&d]
+	(const auto &request)
+	{
+		return request.d == std::addressof(d);
+	});
+}
+
+size_t
+ircd::db::prefetcher::cancel(const closure &closure)
+{
+	const auto e
+	{
+		std::remove_if(begin(queue), end(queue), closure)
+	};
+
+	const ssize_t remain
+	{
+		std::distance(begin(queue), e)
+	};
+
+	assert(remain >= 0);
+	const ssize_t canceled
+	{
+		ssize_t(queue.size()) - remain
+	};
+
+	assert(canceled >= 0);
+	queue.resize(remain);
+	cancels_counter += canceled;
+	return canceled;
 }
 
 void
@@ -5922,6 +5966,11 @@ catch(const std::exception &e)
 void
 ircd::db::prefetcher::handle()
 {
+	const scope_count handles
+	{
+		this->handles
+	};
+
 	auto handler
 	{
 		std::bind(&prefetcher::request_worker, this)
@@ -5939,7 +5988,9 @@ ircd::db::prefetcher::request_worker()
 		this->request_workers
 	};
 
-	assert(queue.size());
+	if(unlikely(queue.empty()))
+		return;
+
 	auto request
 	{
 		std::move(queue.front())
@@ -5947,16 +5998,16 @@ ircd::db::prefetcher::request_worker()
 
 	queue.pop_front();
 	request_handle(request);
-	--requests;
+	++fetched_counter;
 }
 
 void
 ircd::db::prefetcher::request_handle(request &request)
 try
 {
-	const scope_count request_handles
+	const ctx::scope_notify notify
 	{
-		this->request_handles
+		this->dock
 	};
 
 	assert(request.d);
@@ -5974,16 +6025,17 @@ try
 	char pbuf[32];
 	log::debug
 	{
-		log, "[%s][%s] completed fetch:%b queue:%zu r:%zu rh:%zu rw:%zu rc:%zu hc:%zu in %s",
+		log, "[%s][%s] completed fetch:%b queue:%zu h:%zu rw:%zu rc:%zu hc:%zu fc:%zu cc:%zu in %s",
 		name(*request.d),
 		name(column),
 		has? false : true,
 		queue.size(),
-		this->requests,
-		this->request_handles,
+		this->handles,
 		this->request_workers,
 		this->request_counter,
 		this->handles_counter,
+		this->fetched_counter,
+		this->cancels_counter,
 		pretty(pbuf, now<steady_point>() - request.start, 1),
 	};
 	#endif
@@ -6009,6 +6061,28 @@ catch(const std::exception &e)
 		request.cid,
 		e.what(),
 	};
+}
+
+size_t
+ircd::db::prefetcher::wait_pending()
+{
+	const size_t fetched_counter
+	{
+		this->fetched_counter
+	};
+
+	const size_t fetched_target
+	{
+		fetched_counter + request_workers
+	};
+
+	dock.wait([this, &fetched_target]
+	{
+		return this->fetched_counter >= fetched_target;
+	});
+
+	assert(fetched_target >= fetched_counter);
+	return fetched_target - fetched_counter;
 }
 
 //

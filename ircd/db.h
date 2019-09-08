@@ -195,20 +195,28 @@ struct ircd::db::txn::handler
 struct ircd::db::prefetcher
 {
 	struct request;
+	using closure = std::function<bool (request &)>;
 
 	ctx::dock dock;
 	std::deque<request> queue;
 	ctx::context context;
-	size_t requests {0};
-	size_t request_handles {0};
+	size_t handles {0};
 	size_t request_workers {0};
 	size_t request_counter {0};
 	size_t handles_counter {0};
+	size_t fetched_counter {0};
+	size_t cancels_counter {0};
 
+	size_t wait_pending();
 	void request_handle(request &);
 	void request_worker();
 	void handle();
 	void worker();
+
+  public:
+	size_t cancel(const closure &);
+	size_t cancel(database &);         // Cancel all for db
+	size_t cancel(column &);           // Cancel all for column
 
 	bool operator()(column &, const string_view &key, const gopts &);
 
