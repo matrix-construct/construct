@@ -12,7 +12,7 @@
 /// this code should be portable for a future when m::init is unstructured.
 struct ircd::m::init::backfill
 {
-	static bool handle_head(const room::id &, const event::id &, const string_view &hint);
+	static bool handle_event(const room::id &, const event::id &, const string_view &hint);
 	static void handle_missing(const room::id &);
 	static void handle_room(const room::id &);
 	static void worker();
@@ -317,7 +317,7 @@ try
 			}
 
 			++fetching;
-			if(!handle_head(room_id, event_id, result.origin))
+			if(!handle_event(room_id, event_id, result.origin))
 			{
 				errors.emplace(event_id);
 				return true;
@@ -334,7 +334,7 @@ try
 
 	log::info
 	{
-		log, "acquired %s remote head; servers:%zu online:%zu"
+		log, "Acquired %s remote head; servers:%zu online:%zu"
 		" depth:%ld lt:eq:gt %zu:%zu:%zu exist:%zu eval:%zu error:%zu",
 		string_view{room_id},
 		origins.count(),
@@ -384,23 +384,27 @@ try
 	    std::max(room_depth - ssize_t(m::room::events::viewport_size) * 2, 0L)
     };
 
-	log::debug
-	{
-		log, "Attempting to fetch recent missing events in %s depth:%ld min:%ld ...",
-		string_view{room_id},
-		room_depth,
-		min_depth,
-	};
-
 	ssize_t attempted(0);
 	std::set<std::string, std::less<>> fail;
-	missing.for_each(min_depth, [&room_id, &fail, &attempted]
+	missing.for_each(min_depth, [&room_id, &fail, &attempted, &room_depth, &min_depth]
 	(const auto &event_id, const int64_t &ref_depth, const auto &ref_idx)
 	{
 		auto it{fail.lower_bound(event_id)};
 		if(it == end(fail) || *it != event_id)
-			if(!handle_head(room_id, event_id, string_view{}))
+		{
+			log::debug
+			{
+				log, "Fetching missing %s ref_depth:%zd in %s head_depth:%zu min_depth:%zd",
+				string_view{event_id},
+				ref_depth,
+				string_view{room_id},
+				room_depth,
+				min_depth,
+			};
+
+			if(!handle_event(room_id, event_id, string_view{}))
 				fail.emplace_hint(it, event_id);
+		}
 
 		++attempted;
 		return true;
@@ -427,9 +431,9 @@ catch(const std::exception &e)
 }
 
 bool
-ircd::m::init::backfill::handle_head(const room::id &room_id,
-                                     const event::id &event_id,
-                                     const string_view &hint)
+ircd::m::init::backfill::handle_event(const room::id &room_id,
+                                      const event::id &event_id,
+                                      const string_view &hint)
 try
 {
 	fetch::opts opts;
@@ -476,11 +480,11 @@ try
 	if(below_viewport)
 		log::debug
 		{
-			log, "skipping acquired %s head %s depth:%ld below viewport:%ld",
-			string_view{room_id},
+			log, "Will not fetch children of %s depth:%ld below viewport:%ld in %s",
 			string_view{event_id},
 			json::get<"depth"_>(event),
 			viewport_depth,
+			string_view{room_id},
 		};
 
 	m::vm::opts vmopts;
@@ -496,11 +500,12 @@ try
 
 	log::info
 	{
-		log, "acquired %s head %s depth:%ld viewport:%ld",
-		string_view{room_id},
+		log, "acquired %s in %s depth:%ld viewport:%ld state:%b",
 		string_view{event_id},
+		string_view{room_id},
 		json::get<"depth"_>(event),
 		viewport_depth,
+		defined(json::get<"state_key"_>(event)),
 	};
 
 	return true;
@@ -509,9 +514,9 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "Failed to synchronize %s with %s :%s",
-		string_view{room_id},
+		log, "Failed to acquire %s synchronizing %s :%s",
 		string_view{event_id},
+		string_view{room_id},
 		e.what(),
 	};
 
