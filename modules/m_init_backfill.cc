@@ -122,7 +122,7 @@ try
 	// before this task completes.
 	const auto estimate
 	{
-		rooms::count(opts)
+		1UL //rooms::count(opts)
 	};
 
 	if(!estimate)
@@ -130,7 +130,7 @@ try
 
 	log::notice
 	{
-		log, "Starting initial backfill of %zu rooms from other servers...",
+		log, "Starting initial backfill of rooms from other servers...",
 		estimate,
 	};
 
@@ -165,12 +165,11 @@ try
 		handle_missing(room_id);
 		log::info
 		{
-			log, "Initial backfill of %s complete:%zu of estimate:%zu %02.2lf%%",
+			log, "Initial backfill of %s complete:%zu", //estimate:%zu %02.2lf%%",
 			string_view{room_id},
 			complete,
 			estimate,
 			(complete / double(estimate)) * 100.0,
-			count,
 		};
 
 		return !ctx::interruption_requested();
