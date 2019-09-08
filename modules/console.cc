@@ -6559,6 +6559,13 @@ console_cmd__events__dump(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__events__rebuild(opt &out, const string_view &line)
+{
+	m::events::rebuild();
+	return true;
+}
+
 //
 // event
 //

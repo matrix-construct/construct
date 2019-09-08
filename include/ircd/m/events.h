@@ -26,6 +26,7 @@ namespace ircd::m::events
 
 	// util
 	void dump__file(const string_view &filename);
+	void rebuild();
 }
 
 /// Interface to the types of all events known to this server.

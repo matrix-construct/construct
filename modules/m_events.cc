@@ -28,6 +28,71 @@ ircd::m::events::dump_buffer_size
 
 void
 IRCD_MODULE_EXPORT
+ircd::m::events::rebuild()
+{
+	static const event::fetch::opts fopts
+	{
+		event::keys::include {"type", "sender"}
+	};
+
+	static const m::events::range range
+	{
+		0, -1UL, &fopts
+	};
+
+	db::txn txn
+	{
+		*m::dbs::events
+	};
+
+	dbs::write_opts wopts;
+	wopts.appendix.reset();
+	wopts.appendix.set(dbs::appendix::EVENT_TYPE);
+	wopts.appendix.set(dbs::appendix::EVENT_SENDER);
+
+	size_t ret(0);
+	for_each(range, [&txn, &wopts, &ret]
+	(const event::idx &event_idx, const m::event &event)
+	{
+		wopts.event_idx = event_idx;
+		dbs::write(txn, event, wopts);
+		++ret;
+
+		if(ret % 8192UL == 0UL)
+			log::info
+			{
+				log, "Events type/sender table rebuild events %zu of %zu num:%zu txn:%zu %s",
+				event_idx,
+				vm::sequence::retired,
+				ret,
+				txn.size(),
+				pretty(iec(txn.bytes())),
+			};
+
+		return true;
+	});
+
+    log::info
+    {
+        log, "Events type/sender table rebuild events:%zu txn:%zu %s commit...",
+        ret,
+        txn.size(),
+        pretty(iec(txn.bytes())),
+    };
+
+	txn();
+
+    log::notice
+    {
+        log, "Events type/sender table rebuild complete.",
+        ret,
+        txn.size(),
+        pretty(iec(txn.bytes())),
+    };
+}
+
+void
+IRCD_MODULE_EXPORT
 ircd::m::events::dump__file(const string_view &filename)
 {
 	const fs::fd file
