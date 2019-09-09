@@ -952,7 +952,7 @@ ircd::server::peer::handle_error(link &link,
 				e.what()
 			};
 
-			link.close(net::close_opts_default);
+			link.close(net::dc::RST);
 			return;
 
 		default:
