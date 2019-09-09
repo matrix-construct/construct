@@ -868,13 +868,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 		at<"type"_>(event)
 	};
 
-	const bool already_exists
-	{
-		exists(event_id)
-	};
-
-	  //TODO: ABA
-	if(already_exists && !opts.replays)
+	if(m::exists(event_id) && !opts.replays)
 		throw error
 		{
 			fault::EXISTS, "Event has already been evaluated."
@@ -954,7 +948,20 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	// Commit the transaction to database iff this eval is at the stack base.
 	if(opts.write && !eval.sequence_shared[0])
+	{
+		const std::lock_guard lock
+		{
+			sequence::mutex
+		};
+
+		if(m::exists(event_id) && !opts.replays)
+			throw error
+			{
+				fault::EXISTS, "Write commit rejected :Event has already been evaluated."
+			};
+
 		write_commit(eval);
+	}
 
 	// Wait for sequencing only if this is the stack base, otherwise we'll
 	// never return back to that stack base.
@@ -1106,7 +1113,10 @@ ircd::m::vm::write_commit(eval &eval)
 	assert(eval.txn);
 	assert(eval.txn.use_count() == 1);
 	assert(eval.sequence_shared[0] == 0);
-	auto &txn(*eval.txn);
+	auto &txn
+	{
+		*eval.txn
+	};
 
 	#ifdef RB_DEBUG
 	const auto db_seq_before(db::sequence(*m::dbs::events));

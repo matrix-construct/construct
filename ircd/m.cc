@@ -1536,6 +1536,9 @@ ircd::m::vm::eval::operator()(const event &event)
 // sequence
 //
 
+decltype(ircd::m::vm::sequence::mutex)
+ircd::m::vm::sequence::mutex;
+
 decltype(ircd::m::vm::sequence::dock)
 ircd::m::vm::sequence::dock;
 
