@@ -847,6 +847,11 @@ ircd::m::vm::execute_pdu(eval &eval,
 		eval.txn, std::shared_ptr<db::txn>{}
 	};
 
+	const scope_notify sequence_dock
+	{
+		sequence::dock, scope_notify::all
+	};
+
 	assert(eval.opts);
 	const auto &opts
 	{
@@ -933,11 +938,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(sequence::committed < sequence::get(eval));
 	assert(sequence::retired < sequence::get(eval));
 	sequence::committed = sequence::get(eval);
-	const scope_notify sequence_dock
-	{
-		sequence::dock, scope_notify::all
-	};
-
 	if(opts.write)
 		write_prepare(eval, event);
 
