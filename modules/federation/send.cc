@@ -176,7 +176,7 @@ method_put
 		method_put.VERIFY_ORIGIN,
 
 		// Coarse timeout
-		45s,
+		90s, //TODO: conf
 
 		// Payload maximum
 		4_MiB // larger = HTTP 413  //TODO: conf
