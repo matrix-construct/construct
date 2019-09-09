@@ -933,7 +933,10 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(sequence::committed < sequence::get(eval));
 	assert(sequence::retired < sequence::get(eval));
 	sequence::committed = sequence::get(eval);
-	sequence::dock.notify_all();
+	const scope_notify sequence_dock
+	{
+		sequence::dock, scope_notify::all
+	};
 
 	if(opts.write)
 		write_prepare(eval, event);
@@ -982,7 +985,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 		assert(sequence::retired < sequence::get(eval));
 		sequence::retired = std::max(eval.sequence_shared[1], sequence::get(eval));
-		sequence::dock.notify_all();
 	}
 
 	return fault::ACCEPT;
