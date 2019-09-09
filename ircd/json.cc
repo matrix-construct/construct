@@ -3277,6 +3277,14 @@ ircd::json::stringify(mutable_buffer &buf,
 				break;
 			}
 
+			if(unlikely(v.len > value::max_string_size))
+				throw print_error
+				{
+					"String value cannot have length:%zu which exceeds limit:%zu",
+					v.len,
+					value::max_string_size,
+				};
+
 			const string_view sv
 			{
 				v.string, v.len
