@@ -411,7 +411,7 @@ try
 		}
 
 		++attempted;
-		return true;
+		return !ctx::interruption_requested();
 	});
 
 	if(attempted - ssize_t(fail.size()) > 0L)
