@@ -2191,9 +2191,8 @@ try
 
 	if(!tag.committed())
 	{
-		// Tag hasn't sent its data yet, we shouldn't have anything for it
-		assert(empty(overrun));
 		discard_read(); // Should stumble on a socket error.
+		assert(empty(overrun)); // Tag hasn't sent its data yet, we shouldn't
 		return false;
 	}
 
@@ -2300,63 +2299,58 @@ void
 ircd::server::link::discard_read()
 {
 	assert(socket);
-	ssize_t discard
+	const size_t available
+	{
+		net::available(*socket)
+	};
+
+	const ssize_t has_pending
+	{
+		#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+			SSL_has_pending(socket->ssl.native_handle())
+		#else
+			-2L
+		#endif
+	};
+
+	const ssize_t pending
 	{
 		SSL_pending(socket->ssl.native_handle())
 	};
 
-	if(discard <= 0 && queue.empty())
-		discard = available(*socket);
-
-	if(discard <= 0 && !queue.empty())
-		discard = 1;
-
 	const size_t discarded
 	{
-		discard_any(*socket, size_t(discard))
+		discard_any(*socket, size_t(pending))
 	};
 
 	assert(peer);
 	peer->read_bytes += discarded;
 
-	// Shouldn't ever be hit because the read() within discard() throws
-	// the pending error like an eof.
-	thread_local char rembuf[64];
-	const fmt::snstringf msg
+	static const std::error_code end_of_file
 	{
-		512, "peer(%p %s) link(%p q:%zu) socket(%s) discarded %zu of %zd unexpected bytes",
-		peer,
-		peer?
-			peer->hostcanon:
-			std::string{},
-		this,
-		queue.size(),
-		likely(peer)?
-			string(rembuf, peer->remote):
-		socket?
-			string(rembuf, remote_ipport(*socket)):
-			string_view{},
-		discarded,
-		discard
-	};
-
-	log::warning
-	{
-		log, "%s %s",
-		loghead(*this),
-		string_view{msg},
-	};
-
-	// just in case so this doesn't get loopy with discarding zero with
-	// an empty queue...
-	if(unlikely(!discard && !discarded))
-		throw panic
+		make_error_code(boost::system::error_code
 		{
-			"%s", string_view{msg}
-		};
+			boost::asio::error::eof, boost::asio::error::get_misc_category()
+		})
+	};
 
-	if(!discard)
-		this->close(net::dc::RST);
+	log::logf
+	{
+		log, discarded? log::WARNING : log::DWARNING,
+		"%s q:%zu discarded:%zu pending:%zd has_pending:%zd available:%zd :EOF",
+		loghead(*this),
+		queue.size(),
+		discarded,
+		pending,
+		has_pending,
+		available,
+	};
+
+	if(!discarded)
+		throw std::system_error
+		{
+			end_of_file
+		};
 }
 
 size_t
