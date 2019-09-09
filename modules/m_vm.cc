@@ -669,9 +669,20 @@ ircd::m::vm::execute(eval &eval,
                      const event &event)
 try
 {
+	// This assertion is tripped if the end of your context's stack is
+	// danger close; try increasing your stack size.
+	const ctx::stack_usage_assertion sua;
+
 	// m::vm bookkeeping that someone entered this function
-	const scope_count executing{eval::executing};
-	const scope_notify notify{vm::dock};
+	const scope_count executing
+	{
+		eval::executing
+	};
+
+	const scope_notify notify
+	{
+		vm::dock
+	};
 
 	// Set a member pointer to the event currently being evaluated. This
 	// allows other parallel evals to have deep access to this eval.
