@@ -84,6 +84,7 @@ ircd::http::reason
 	{ code::NOT_ACCEPTABLE,                      "Not Acceptable"                                  },
 	{ code::REQUEST_TIMEOUT,                     "Request Time-out"                                },
 	{ code::CONFLICT,                            "Conflict"                                        },
+	{ code::GONE,                                "Gone"                                            },
 	{ code::LENGTH_REQUIRED,                     "Length Required"                                 },
 	{ code::PAYLOAD_TOO_LARGE,                   "Payload Too Large"                               },
 	{ code::REQUEST_URI_TOO_LONG,                "Request URI Too Long"                            },

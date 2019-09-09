@@ -328,6 +328,7 @@ enum ircd::http::code
 	NOT_ACCEPTABLE                          = 406,
 	REQUEST_TIMEOUT                         = 408,
 	CONFLICT                                = 409,
+	GONE                                    = 410,
 	LENGTH_REQUIRED                         = 411,
 	PAYLOAD_TOO_LARGE                       = 413,
 	REQUEST_URI_TOO_LONG                    = 414,
