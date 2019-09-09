@@ -3481,16 +3481,26 @@ noexcept try
 		ec = error_code{asio::error::eof, asio::error::get_misc_category()};
 
 	#ifdef IRCD_DEBUG_NET_SOCKET_READY
+	const auto has_pending
+	{
+		#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+			SSL_has_pending(ssl.native_handle())
+		#else
+			0
+		#endif
+	};
+
 	thread_local char ecbuf[64];
 	log::debug
 	{
-		log, "%s ready %s %s avail:%zu:%zu:%d",
+		log, "%s ready %s %s avail:%zu:%zu:%d:%d",
 		loghead(*this),
 		reflect(type),
 		string(ecbuf, ec),
 		type == ready::READ? bytes : 0UL,
 		type == ready::READ? available(*this) : 0UL,
-		SSL_pending(ssl.native_handle())
+		has_pending,
+		SSL_pending(ssl.native_handle()),
 	};
 	#endif
 
