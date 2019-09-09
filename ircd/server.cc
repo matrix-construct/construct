@@ -1749,12 +1749,19 @@ ircd::server::link::cleanup_canceled()
 	auto it(begin(queue));
 	while(it != end(queue))
 	{
-		auto &tag{*it};
+		const auto &tag{*it};
 		if(tag.committed() || tag.request)
 		{
 			++it;
 			continue;
 		}
+
+		log::dwarning
+		{
+			log, "%s removing abandoned tag:%lu",
+			loghead(*this),
+			tag.state.id,
+		};
 
 		it = queue.erase(it);
 	}
