@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :To Device"
-};
-
 namespace ircd::m::sync
 {
 	static bool to_device_polylog(data &);
@@ -21,6 +15,12 @@ namespace ircd::m::sync
 
 	extern item to_device;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :To Device"
+};
 
 decltype(ircd::m::sync::to_device)
 ircd::m::sync::to_device

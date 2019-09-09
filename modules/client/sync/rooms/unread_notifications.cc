@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :Room Unread Notifications"
-};
-
 namespace ircd::m::sync
 {
 	static long _notification_count(const room &, const event::idx &a, const event::idx &b);
@@ -23,6 +17,12 @@ namespace ircd::m::sync
 
 	extern item room_unread_notifications;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :Room Unread Notifications"
+};
 
 decltype(ircd::m::sync::room_unread_notifications)
 ircd::m::sync::room_unread_notifications

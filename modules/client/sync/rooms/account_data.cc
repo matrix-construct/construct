@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :Room Account Data"
-};
-
 namespace ircd::m::sync
 {
 	static bool room_account_data_polylog_tags(data &);
@@ -27,6 +21,12 @@ namespace ircd::m::sync
 
 	extern item room_account_data;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :Room Account Data"
+};
 
 decltype(ircd::m::sync::room_account_data)
 ircd::m::sync::room_account_data

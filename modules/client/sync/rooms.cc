@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :Rooms"
-};
-
 namespace ircd::m::sync
 {
 	static bool should_ignore(const data &);
@@ -27,6 +21,12 @@ namespace ircd::m::sync
 
 	extern item rooms;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :Rooms"
+};
 
 decltype(ircd::m::sync::rooms)
 ircd::m::sync::rooms

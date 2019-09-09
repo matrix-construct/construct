@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :Account Data"
-};
-
 namespace ircd::m::sync
 {
 	static bool account_data_(data &, const m::event &);
@@ -22,6 +16,12 @@ namespace ircd::m::sync
 
 	extern item account_data;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :Account Data"
+};
 
 decltype(ircd::m::sync::account_data)
 ircd::m::sync::account_data

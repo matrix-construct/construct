@@ -8,18 +8,18 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-    "Client Sync :Room Ephemeral :Typing"
-};
-
 namespace ircd::m::sync
 {
 	static bool room_ephemeral_m_typing_polylog(data &);
 	static bool room_ephemeral_m_typing_linear(data &);
 	extern item room_ephemeral_m_typing;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+    "Client Sync :Room Ephemeral :Typing"
+};
 
 decltype(ircd::m::sync::room_ephemeral_m_typing)
 ircd::m::sync::room_ephemeral_m_typing

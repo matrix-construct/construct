@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :Device One Time Keys Count"
-};
-
 namespace ircd::m
 {
 	std::map<std::string, long>
@@ -28,6 +22,12 @@ namespace ircd::m::sync
 
 	extern item device_one_time_keys_count;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :Device One Time Keys Count"
+};
 
 decltype(ircd::m::sync::device_one_time_keys_count)
 ircd::m::sync::device_one_time_keys_count

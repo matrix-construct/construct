@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :Rooms Ephemeral"
-};
-
 namespace ircd::m::sync
 {
 	static bool rooms_ephemeral_events_polylog(data &);
@@ -21,6 +15,12 @@ namespace ircd::m::sync
 	static bool rooms_ephemeral_linear(data &);
 	extern item rooms_ephemeral;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :Rooms Ephemeral"
+};
 
 decltype(ircd::m::sync::rooms_ephemeral)
 ircd::m::sync::rooms_ephemeral

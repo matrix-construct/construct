@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :Room Summary"
-};
-
 namespace ircd::m::sync
 {
 	static bool room_summary_append_counts(data &);
@@ -23,6 +17,12 @@ namespace ircd::m::sync
 	static bool room_summary_linear(data &);
 	extern item room_summary;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :Room Summary"
+};
 
 decltype(ircd::m::sync::room_summary)
 ircd::m::sync::room_summary

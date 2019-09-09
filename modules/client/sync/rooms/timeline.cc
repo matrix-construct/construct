@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :Room Timeline"
-};
-
 namespace ircd::m::sync
 {
 	static bool _room_timeline_append(data &, json::stack::array &, const m::event::idx &, const m::event &);
@@ -27,6 +21,12 @@ namespace ircd::m::sync
 	extern conf::item<size_t> limit_initial_default;
 	extern item room_timeline;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :Room Timeline"
+};
 
 decltype(ircd::m::sync::room_timeline)
 ircd::m::sync::room_timeline

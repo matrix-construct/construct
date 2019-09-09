@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Client Sync :Presence"
-};
-
 namespace ircd::m::sync
 {
 	static bool presence_polylog(data &);
@@ -21,6 +15,12 @@ namespace ircd::m::sync
 
 	extern item presence;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Client Sync :Presence"
+};
 
 decltype(ircd::m::sync::presence)
 ircd::m::sync::presence

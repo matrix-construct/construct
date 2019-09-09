@@ -8,12 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-    "Client Sync :Room Ephemeral :Receipts"
-};
-
 namespace ircd::m::sync
 {
 	extern conf::item<int64_t> receipt_scan_depth;
@@ -24,6 +18,12 @@ namespace ircd::m::sync
 	static bool room_ephemeral_m_receipt_m_read_linear(data &);
 	extern item room_ephemeral_m_receipt_m_read;
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+    "Client Sync :Room Ephemeral :Receipts"
+};
 
 decltype(ircd::m::sync::room_ephemeral_m_receipt_m_read)
 ircd::m::sync::room_ephemeral_m_receipt_m_read
