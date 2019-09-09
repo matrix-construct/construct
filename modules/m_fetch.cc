@@ -290,9 +290,14 @@ ircd::m::fetch::request_handle()
 	static const auto dereferencer{[]
 	(auto &it) -> server::request &
 	{
+		// If the request doesn't have a server::request future attached
+		// during this pass we reference this default constructed static
+		// instance which when_any() will treat as a no-op.
+		static server::request request_skip;
 		auto &request(mutable_cast(*it));
-		assert(request.future);
-		return *request.future;
+		return request.future?
+			*request.future:
+			request_skip;
 	}};
 
 	auto next
