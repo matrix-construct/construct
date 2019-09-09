@@ -3848,6 +3848,14 @@ ircd::json::value::create_string(const size_t &len,
 		len + 1
 	};
 
+	if(unlikely(max > max_string_size))
+		throw print_error
+		{
+			"Value cannot have string length:%zu which exceeds limit:%zu",
+			max,
+			max_string_size,
+		};
+
 	std::unique_ptr<char[]> string
 	{
 		new char[max]
