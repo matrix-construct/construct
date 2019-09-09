@@ -2548,6 +2548,11 @@ noexcept
 	assert(tag.request == &request);
 	assert(!tag.cancellation);
 
+	const size_t cancellation_size
+	{
+		size(request.out) + size(request.in)
+	};
+
 	// Disassociate the user's request and add our dummy request in its place.
 	disassociate(request, tag);
 
@@ -2557,11 +2562,6 @@ noexcept
 
 	// Setup the cancellation buffers by mirroring the current state of the
 	// user's buffers.
-
-	const size_t cancellation_size
-	{
-		size(request.out) + size(request.in)
-	};
 
 	assert(!tag.cancellation);
 	tag.cancellation = std::make_unique<char[]>(cancellation_size);
