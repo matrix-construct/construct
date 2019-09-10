@@ -121,7 +121,8 @@ try
 		return;
 
 	// Prepare to iterate all of the rooms this server is aware of which
-	// contain at least one user from another server which is joined.
+	// contain at least one member from another server in any state, and
+	// one member from our server in a joined state.
 	rooms::opts opts;
 	opts.remote_only = true;
 	opts.local_joined_only = true;
