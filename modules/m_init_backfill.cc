@@ -19,6 +19,7 @@ struct ircd::m::init::backfill
 	static void fini();
 	static void init();
 
+	static run::changed worker_terminator;
 	static std::unique_ptr<context> worker_context;
 	static conf::item<bool> enable;
 	static conf::item<size_t> pool_size;
@@ -55,6 +56,14 @@ ircd::m::init::backfill::pool_size
 
 decltype(ircd::m::init::backfill::worker_context)
 ircd::m::init::backfill::worker_context;
+
+decltype(ircd::m::init::backfill::worker_terminator)
+ircd::m::init::backfill::worker_terminator{[]
+(const auto &level)
+{
+	if(level == run::level::QUIT && worker_context)
+		worker_context->terminate();
+}};
 
 void
 ircd::m::init::backfill::init()
@@ -166,9 +175,6 @@ try
 			++complete;
 			dock.notify_one();
 		}};
-
-		if(unlikely(run::level != run::level::RUN))
-			return false;
 
 		handle_room(room_id);
 		ctx::interruption_point();
