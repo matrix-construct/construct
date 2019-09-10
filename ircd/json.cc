@@ -392,7 +392,7 @@ const
 
 	const auto throws{[&out]
 	{
-		throw print_error
+		throw print_panic
 		{
 			"Failed to print attributes '%s' generator '%s' (%zd bytes in buffer)",
 			demangle<decltype(a)...>(),
@@ -422,7 +422,7 @@ const
 
 	const auto throws{[&out]
 	{
-		throw print_error
+		throw print_panic
 		{
 			"Failed to print generator '%s' (%zd bytes in buffer)",
 			demangle<decltype(g)>(),
@@ -738,22 +738,24 @@ noexcept try
 
 	if(expect > buf.remaining())
 	{
-		if(unlikely(!flusher)) throw print_error
-		{
-			"Insufficient buffer. I need %zu more bytes; you only have %zu left (of %zu).",
-			expect,
-			buf.remaining(),
-			size(buf.base)
-		};
+		if(unlikely(!flusher))
+			throw print_panic
+			{
+				"Insufficient buffer. I need %zu more bytes; you only have %zu left (of %zu).",
+				expect,
+				buf.remaining(),
+				size(buf.base)
+			};
 
 		if(!flush(true))
 			return;
 
-		if(unlikely(expect > buf.remaining())) throw print_error
-		{
-			"Insufficient flush. I still need %zu more bytes to buffer.",
-			expect - buf.remaining()
-		};
+		if(unlikely(expect > buf.remaining()))
+			throw print_error
+			{
+				"Insufficient flush. I still need %zu more bytes to buffer.",
+				expect - buf.remaining()
+			};
 	}
 
 	buf([&closure](const mutable_buffer &buf)
@@ -3857,7 +3859,7 @@ ircd::json::value::create_string(const size_t &len,
 	};
 
 	if(unlikely(max > max_string_size))
-		throw print_error
+		throw print_panic
 		{
 			"Value cannot have string length:%zu which exceeds limit:%zu",
 			max,
@@ -4022,7 +4024,7 @@ ircd::json::valid_output(const string_view &sv,
                          const size_t &expected)
 {
 	if(unlikely(size(sv) != expected))
-		throw print_error
+		throw print_panic
 		{
 			"stringified:%zu != serialized:%zu: %s",
 			size(sv),
@@ -4031,7 +4033,7 @@ ircd::json::valid_output(const string_view &sv,
 		};
 
 	if(unlikely(!valid(sv, std::nothrow))) //note: false alarm when T=json::member
-		throw print_error
+		throw print_panic
 		{
 			"strung %zu bytes: %s: %s",
 			size(sv),
