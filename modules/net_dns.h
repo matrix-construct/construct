@@ -73,6 +73,11 @@ struct ircd::net::dns::cache::waiter
 			strlcpy(keybuf, host(hp))
 	}
 	{}
+
+	waiter(waiter &&) = delete;
+	waiter(const waiter &) = delete;
+	waiter &operator=(waiter &&) = delete;
+	waiter &operator=(const waiter &) = delete;
 };
 
 //
@@ -182,4 +187,6 @@ struct ircd::net::dns::tag
 
 	tag(tag &&) = delete;
 	tag(const tag &) = delete;
+	tag &operator=(tag &&) = delete;
+	tag &operator=(const tag &) = delete;
 };
