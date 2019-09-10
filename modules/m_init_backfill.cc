@@ -94,6 +94,14 @@ ircd::m::init::backfill::init()
 void
 ircd::m::init::backfill::fini()
 {
+	if(!worker_context)
+		return;
+
+	log::debug
+	{
+		log, "Terminating worker context..."
+	};
+
 	worker_context.reset(nullptr);
 }
 
@@ -162,7 +170,11 @@ try
 			return false;
 
 		handle_room(room_id);
+		ctx::interruption_point();
+
 		handle_missing(room_id);
+		ctx::interruption_point();
+
 		log::info
 		{
 			log, "Initial backfill of %s complete:%zu", //estimate:%zu %02.2lf%%",
@@ -172,22 +184,26 @@ try
 			(complete / double(estimate)) * 100.0,
 		};
 
-		return !ctx::interruption_requested();
+		return true;
 	}};
 
 	// Iterate the room_id's, submitting a copy of each to the next pool
 	// worker; the submission blocks when all pool workers are busy, as per
 	// the pool::opts.
+	const ctx::uninterruptible ui;
 	rooms::for_each(opts, [&pool, &each_room, &count]
 	(const room::id &room_id)
 	{
+		if(unlikely(ctx::interruption_requested()))
+			return false;
+
 		++count;
 		pool([&each_room, room_id(std::string(room_id))]
 		{
 			each_room(room_id);
 		});
 
-		return !ctx::interruption_requested();
+		return true;
 	});
 
 	if(complete < count)
@@ -198,6 +214,9 @@ try
 			complete,
 		};
 
+	if(unlikely(ctx::interruption_requested()))
+		pool.terminate();
+
 	// All rooms have been submitted to the pool but the pool workers might
 	// still be busy. If we unwind now the pool's dtor will kill the workers
 	// so we synchronize their completion here.
@@ -206,9 +225,12 @@ try
 		return complete >= count;
 	});
 
+	if(unlikely(ctx::interruption_requested()))
+		return;
+
 	log::notice
 	{
-		log, "Initial resynchronization of %zu rooms complete.",
+		log, "Initial resynchronization of %zu rooms completed.",
 		count,
 	};
 }
@@ -216,7 +238,7 @@ catch(const ctx::interrupted &e)
 {
 	log::derror
 	{
-		log, "Worker interrupted without completing resynchronization."
+		log, "Worker interrupted without completing resynchronization of all rooms."
 	};
 
 	throw;
@@ -225,7 +247,7 @@ catch(const ctx::terminated &e)
 {
 	log::error
 	{
-		log, "Worker terminated without completing resynchronization."
+		log, "Worker terminated without completing resynchronization of all rooms."
 	};
 
 	throw;
@@ -279,7 +301,7 @@ try
 	opts.op = feds::op::head;
 	opts.room_id = room_id;
 	opts.user_id = user_id;
-	opts.closure_errors = false;
+	opts.closure_errors = false; // exceptions wil not propagate feds::execute
 	opts.exclude_myself = true;
 	feds::execute(opts, [&](const auto &result)
 	{
@@ -304,8 +326,11 @@ try
 			event
 		};
 
-		m::for_each(prev, [&](const string_view &event_id)
+		return m::for_each(prev, [&](const string_view &event_id)
 		{
+			if(unlikely(ctx::interruption_requested()))
+				return false;
+
 			if(errors.count(event_id))
 				return true;
 
@@ -323,13 +348,12 @@ try
 			}
 
 			++evaluated;
-			return !ctx::interruption_requested();
+			return true;
 		});
-
-		return !ctx::interruption_requested();
 	});
 
-	ctx::interruption_point();
+	if(unlikely(ctx::interruption_requested()))
+		return;
 
 	log::info
 	{
@@ -393,6 +417,9 @@ try
 	missing.for_each(min_depth, [&room_id, &fail, &attempted, &room_depth, &min_depth]
 	(const auto &event_id, const int64_t &ref_depth, const auto &ref_idx)
 	{
+		if(unlikely(ctx::interruption_requested()))
+			return false;
+
 		auto it{fail.lower_bound(event_id)};
 		if(it == end(fail) || *it != event_id)
 		{
@@ -411,8 +438,11 @@ try
 		}
 
 		++attempted;
-		return !ctx::interruption_requested();
+		return true;
 	});
+
+	if(unlikely(ctx::interruption_requested()))
+		return;
 
 	if(attempted - ssize_t(fail.size()) > 0L)
 		log::info
