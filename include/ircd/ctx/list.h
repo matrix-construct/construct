@@ -31,6 +31,10 @@ namespace ircd::ctx
 struct ircd::ctx::list
 {
 	struct node;
+	using closure_bool_const = std::function<bool (const ctx &)>;
+	using closure_const = std::function<void (const ctx &)>;
+	using closure_bool = std::function<bool (ctx &)>;
+	using closure = std::function<void (ctx &)>;
 
   private:
 	ctx *head {nullptr};
@@ -49,16 +53,16 @@ struct ircd::ctx::list
 	ctx *back() noexcept;
 
 	// iteration
-	bool for_each(const std::function<bool (const ctx &)> &) const;
-	bool for_each(const std::function<bool (ctx &)> &);
-	void for_each(const std::function<void (const ctx &)> &) const;
-	void for_each(const std::function<void (ctx &)> &);
+	bool for_each(const closure_bool_const &) const;
+	void for_each(const closure_const &) const;
+	bool for_each(const closure_bool &);
+	void for_each(const closure &);
 
 	// reverse iteration
-	bool rfor_each(const std::function<bool (const ctx &)> &) const;
-	bool rfor_each(const std::function<bool (ctx &)> &);
-	void rfor_each(const std::function<void (const ctx &)> &) const;
-	void rfor_each(const std::function<void (ctx &)> &);
+	bool rfor_each(const closure_bool_const &) const;
+	void rfor_each(const closure_const &) const;
+	bool rfor_each(const closure_bool &);
+	void rfor_each(const closure &);
 
 	bool empty() const noexcept;
 	size_t size() const noexcept;

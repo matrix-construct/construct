@@ -2881,14 +2881,14 @@ const noexcept
 }
 
 void
-ircd::ctx::list::rfor_each(const std::function<void (ctx &)> &closure)
+ircd::ctx::list::rfor_each(const closure &closure)
 {
 	for(ctx *tail{this->tail}; tail; tail = prev(tail))
 		closure(*tail);
 }
 
 void
-ircd::ctx::list::rfor_each(const std::function<void (const ctx &)> &closure)
+ircd::ctx::list::rfor_each(const closure_const &closure)
 const
 {
 	for(const ctx *tail{this->tail}; tail; tail = prev(tail))
@@ -2896,7 +2896,7 @@ const
 }
 
 bool
-ircd::ctx::list::rfor_each(const std::function<bool (ctx &)> &closure)
+ircd::ctx::list::rfor_each(const closure_bool &closure)
 {
 	for(ctx *tail{this->tail}; tail; tail = prev(tail))
 		if(!closure(*tail))
@@ -2906,7 +2906,7 @@ ircd::ctx::list::rfor_each(const std::function<bool (ctx &)> &closure)
 }
 
 bool
-ircd::ctx::list::rfor_each(const std::function<bool (const ctx &)> &closure)
+ircd::ctx::list::rfor_each(const closure_bool_const &closure)
 const
 {
 	for(const ctx *tail{this->tail}; tail; tail = prev(tail))
@@ -2917,14 +2917,14 @@ const
 }
 
 void
-ircd::ctx::list::for_each(const std::function<void (ctx &)> &closure)
+ircd::ctx::list::for_each(const closure &closure)
 {
 	for(ctx *head{this->head}; head; head = next(head))
 		closure(*head);
 }
 
 void
-ircd::ctx::list::for_each(const std::function<void (const ctx &)> &closure)
+ircd::ctx::list::for_each(const closure_const &closure)
 const
 {
 	for(const ctx *head{this->head}; head; head = next(head))
@@ -2932,7 +2932,7 @@ const
 }
 
 bool
-ircd::ctx::list::for_each(const std::function<bool (ctx &)> &closure)
+ircd::ctx::list::for_each(const closure_bool &closure)
 {
 	for(ctx *head{this->head}; head; head = next(head))
 		if(!closure(*head))
@@ -2942,7 +2942,7 @@ ircd::ctx::list::for_each(const std::function<bool (ctx &)> &closure)
 }
 
 bool
-ircd::ctx::list::for_each(const std::function<bool (const ctx &)> &closure)
+ircd::ctx::list::for_each(const closure_bool_const &closure)
 const
 {
 	for(const ctx *head{this->head}; head; head = next(head))
