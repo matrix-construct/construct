@@ -29,6 +29,7 @@ class ircd::ctx::mutex
   public:
 	bool locked() const noexcept;
 	size_t waiting() const noexcept;
+	bool waiting(const ctx &) const noexcept;
 
 	bool try_lock() noexcept;
 	template<class time_point> bool try_lock_until(const time_point &);
@@ -133,6 +134,13 @@ noexcept
 
 	m = true;
 	return true;
+}
+
+inline bool
+ircd::ctx::mutex::waiting(const ctx &c)
+const noexcept
+{
+	return q.waiting(c);
 }
 
 inline size_t
