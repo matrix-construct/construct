@@ -235,6 +235,7 @@ ircd::ctx::ctx::wait()
 ///
 /// Returns true if this note was the first note received by this context
 /// while it's been suspended or false if it's already been notified.
+[[gnu::hot]]
 bool
 ircd::ctx::ctx::note()
 noexcept
@@ -331,6 +332,7 @@ noexcept
 	else return false;
 }
 
+[[gnu::hot]]
 bool
 ircd::ctx::ctx::started()
 const noexcept
@@ -338,6 +340,7 @@ const noexcept
 	return stack.base != 0;
 }
 
+[[gnu::hot]]
 bool
 ircd::ctx::ctx::finished()
 const noexcept
@@ -350,6 +353,7 @@ const noexcept
 // ctx/ctx.h
 //
 
+[[gnu::hot]]
 const uint64_t &
 ircd::ctx::epoch()
 noexcept
@@ -468,6 +472,7 @@ ircd::ctx::interrupt(ctx &ctx)
 /// does not ignore an interrupt itself, it only ignores the interruption
 /// points. Thus when a suppression ends if the interrupt flag was ever set
 /// the next interruption point will throw as expected.
+[[gnu::hot]]
 void
 ircd::ctx::interruptible(ctx &ctx,
                          const bool &b)
@@ -479,6 +484,7 @@ ircd::ctx::interruptible(ctx &ctx,
 }
 
 /// !running() && notes > 0
+[[gnu::hot]]
 bool
 ircd::ctx::queued(const ctx &ctx)
 noexcept
@@ -487,6 +493,7 @@ noexcept
 }
 
 /// started() && !finished() && !running
+[[gnu::hot]]
 bool
 ircd::ctx::waiting(const ctx &ctx)
 noexcept
@@ -495,6 +502,7 @@ noexcept
 }
 
 /// Indicates if `ctx` is the current ctx
+[[gnu::hot]]
 bool
 ircd::ctx::running(const ctx &ctx)
 noexcept
@@ -503,6 +511,7 @@ noexcept
 }
 
 /// Indicates if `ctx` was ever jumped to
+[[gnu::hot]]
 bool
 ircd::ctx::started(const ctx &ctx)
 noexcept
@@ -511,6 +520,7 @@ noexcept
 }
 
 /// Indicates if the base frame for `ctx` returned
+[[gnu::hot]]
 bool
 ircd::ctx::finished(const ctx &ctx)
 noexcept
@@ -519,6 +529,7 @@ noexcept
 }
 
 /// Indicates if `ctx` was terminated; does not clear the flag
+[[gnu::hot]]
 bool
 ircd::ctx::termination(const ctx &c)
 noexcept
@@ -527,6 +538,7 @@ noexcept
 }
 
 /// Indicates if `ctx` was interrupted; does not clear the flag
+[[gnu::hot]]
 bool
 ircd::ctx::interruption(const ctx &c)
 noexcept
@@ -535,6 +547,7 @@ noexcept
 }
 
 /// Indicates if `ctx` will suppress any interrupts.
+[[gnu::hot]]
 bool
 ircd::ctx::interruptible(const ctx &c)
 noexcept
@@ -543,6 +556,7 @@ noexcept
 }
 
 /// Returns the cycle count for `ctx`
+[[gnu::hot]]
 const ulong &
 ircd::ctx::cycles(const ctx &ctx)
 noexcept
@@ -551,6 +565,7 @@ noexcept
 }
 
 /// Returns the yield count for `ctx`
+[[gnu::hot]]
 const uint64_t &
 ircd::ctx::epoch(const ctx &ctx)
 noexcept
@@ -559,6 +574,7 @@ noexcept
 }
 
 /// Returns the notification count for `ctx`
+[[gnu::hot]]
 const int32_t &
 ircd::ctx::notes(const ctx &ctx)
 noexcept
@@ -567,6 +583,7 @@ noexcept
 }
 
 /// Returns the notification count for `ctx`
+[[gnu::hot]]
 const size_t &
 ircd::ctx::stack_at(const ctx &ctx)
 noexcept
@@ -575,6 +592,7 @@ noexcept
 }
 
 /// Returns the notification count for `ctx`
+[[gnu::hot]]
 const size_t &
 ircd::ctx::stack_max(const ctx &ctx)
 noexcept
@@ -583,6 +601,7 @@ noexcept
 }
 
 /// Returns the developer's optional name literal for `ctx`
+[[gnu::hot]]
 ircd::string_view
 ircd::ctx::name(const ctx &ctx)
 noexcept
@@ -591,6 +610,7 @@ noexcept
 }
 
 /// Returns a reference to unique ID for `ctx` (which will go away with `ctx`)
+[[gnu::hot]]
 const uint64_t &
 ircd::ctx::id(const ctx &ctx)
 noexcept
@@ -739,6 +759,7 @@ noexcept
 }
 
 /// Returns unique ID of currently running context
+[[gnu::hot]]
 const uint64_t &
 ircd::ctx::this_ctx::id()
 noexcept
@@ -1635,6 +1656,7 @@ ircd::ctx::prof::settings::slice_assertion
 	{ "persist",  false                           },
 };
 
+[[gnu::hot]]
 void
 ircd::ctx::prof::mark(const event &e)
 {
@@ -1650,6 +1672,7 @@ ircd::ctx::prof::mark(const event &e)
 	}
 }
 
+[[gnu::hot]]
 void
 ircd::ctx::prof::inc_ticker(const event &e)
 noexcept
@@ -1664,12 +1687,14 @@ noexcept
 		current->profile.event[uint8_t(e)]++;
 }
 
+[[gnu::hot]]
 void
 ircd::ctx::prof::handle_cur_enter()
 {
 	slice_enter();
 }
 
+[[gnu::hot]]
 void
 ircd::ctx::prof::handle_cur_leave()
 {
@@ -1677,6 +1702,7 @@ ircd::ctx::prof::handle_cur_leave()
 	check_slice();
 }
 
+[[gnu::hot]]
 void
 ircd::ctx::prof::handle_cur_yield()
 {
@@ -1685,12 +1711,14 @@ ircd::ctx::prof::handle_cur_yield()
 	check_stack();
 }
 
+[[gnu::hot]]
 void
 ircd::ctx::prof::handle_cur_continue()
 {
 	slice_enter();
 }
 
+[[gnu::hot]]
 void
 ircd::ctx::prof::slice_enter()
 noexcept
@@ -1701,6 +1729,7 @@ noexcept
 	assert(_slice_start >= _slice_stop);
 }
 
+[[gnu::hot]]
 void
 ircd::ctx::prof::slice_leave()
 noexcept
@@ -1861,6 +1890,7 @@ noexcept
 	return threshold > 0 && cycles >= threshold;
 }
 
+[[gnu::hot]]
 const ulong &
 ircd::ctx::prof::cur_slice_start()
 noexcept
@@ -1868,6 +1898,7 @@ noexcept
 	return _slice_start;
 }
 
+[[gnu::hot]]
 const uint64_t &
 ircd::ctx::prof::get(const ctx &c,
                      const event &e)
@@ -1875,6 +1906,7 @@ ircd::ctx::prof::get(const ctx &c,
 	return get(c).event.at(uint8_t(e));
 }
 
+[[gnu::hot]]
 const ircd::ctx::prof::ticker &
 ircd::ctx::prof::get(const ctx &c)
 noexcept
@@ -1882,12 +1914,14 @@ noexcept
 	return c.profile;
 }
 
+[[gnu::hot]]
 const uint64_t &
 ircd::ctx::prof::get(const event &e)
 {
 	return get().event.at(uint8_t(e));
 }
 
+[[gnu::hot]]
 const ircd::ctx::prof::ticker &
 ircd::ctx::prof::get()
 noexcept

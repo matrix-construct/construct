@@ -101,10 +101,12 @@ noexcept
 {
 }
 
+[[gnu::hot]]
 void
 ircd::ios::descriptor::default_deallocator(handler &handler,
                                            void *const &ptr,
                                            const size_t &size)
+noexcept
 {
 	#ifdef __clang__
 	::operator delete(ptr);
@@ -113,6 +115,7 @@ ircd::ios::descriptor::default_deallocator(handler &handler,
 	#endif
 }
 
+[[gnu::hot]]
 void *
 ircd::ios::descriptor::default_allocator(handler &handler,
                                          const size_t &size)
@@ -161,6 +164,7 @@ decltype(ircd::ios::handler::epoch)
 thread_local
 ircd::ios::handler::epoch;
 
+[[gnu::cold]]
 bool
 ircd::ios::handler::fault(handler *const &handler)
 noexcept
@@ -187,6 +191,7 @@ noexcept
 	return ret;
 }
 
+[[gnu::hot]]
 void
 ircd::ios::handler::leave(handler *const &handler)
 noexcept
@@ -203,6 +208,7 @@ noexcept
 	handler::current = nullptr;
 }
 
+[[gnu::hot]]
 void
 ircd::ios::handler::enter(handler *const &handler)
 noexcept
@@ -219,6 +225,7 @@ noexcept
 	handler->slice_start = cycles();
 }
 
+[[gnu::hot]]
 bool
 ircd::ios::handler::continuation(handler *const &handler)
 noexcept
@@ -228,6 +235,7 @@ noexcept
 	return descriptor.continuation;
 }
 
+[[gnu::hot]]
 void
 ircd::ios::handler::deallocate(handler *const &handler,
                                void *const &ptr,
@@ -245,6 +253,7 @@ noexcept
 	++stats.frees;
 }
 
+[[gnu::hot]]
 void *
 ircd::ios::handler::allocate(handler *const &handler,
                              const size_t &size)
@@ -299,6 +308,7 @@ ircd::ios::dispatch_desc
 	"ircd::ios dispatch"
 };
 
+[[gnu::hot]]
 ircd::ios::dispatch::dispatch(std::function<void ()> function)
 :dispatch
 {
@@ -347,6 +357,7 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
 	latch.wait();
 }
 
+[[gnu::hot]]
 ircd::ios::dispatch::dispatch(descriptor &descriptor,
                               std::function<void ()> function)
 {
@@ -363,6 +374,7 @@ ircd::ios::defer_desc
 	"ircd::ios defer"
 };
 
+[[gnu::hot]]
 ircd::ios::defer::defer(std::function<void ()> function)
 :defer
 {
@@ -411,6 +423,7 @@ ircd::ios::defer::defer(descriptor &descriptor,
 	latch.wait();
 }
 
+[[gnu::hot]]
 ircd::ios::defer::defer(descriptor &descriptor,
                         std::function<void ()> function)
 {
@@ -427,6 +440,7 @@ ircd::ios::post_desc
 	"ircd::ios post"
 };
 
+[[gnu::hot]]
 ircd::ios::post::post(std::function<void ()> function)
 :post
 {
@@ -475,12 +489,14 @@ ircd::ios::post::post(descriptor &descriptor,
 	latch.wait();
 }
 
+[[gnu::hot]]
 ircd::ios::post::post(descriptor &descriptor,
                       std::function<void ()> function)
 {
 	boost::asio::post(get(), handle(descriptor, std::move(function)));
 }
 
+[[gnu::hot]]
 boost::asio::io_context &
 ircd::ios::get()
 noexcept
@@ -489,6 +505,7 @@ noexcept
 	return *user;
 }
 
+[[gnu::hot]]
 bool
 ircd::ios::available()
 noexcept

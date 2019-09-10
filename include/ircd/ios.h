@@ -109,7 +109,7 @@ struct ircd::ios::descriptor
 	static uint64_t ids;
 
 	static void *default_allocator(handler &, const size_t &);
-	static void default_deallocator(handler &, void *const &, const size_t &);
+	static void default_deallocator(handler &, void *const &, const size_t &) noexcept;
 
 	string_view name;
 	uint64_t id {++ids};

@@ -216,6 +216,7 @@ ircd::microtime(const mutable_buffer &buf)
 }
 
 #if defined(HAVE_GETTIMEOFDAY)
+[[gnu::hot]]
 ircd::microtime_t
 ircd::microtime()
 {
@@ -232,6 +233,7 @@ ircd::microtime()
 	};
 }
 #else
+[[gnu::hot]]
 ircd::microtime_t
 ircd::microtime()
 {
@@ -257,6 +259,7 @@ ircd::microtime()
 //
 
 template<>
+[[gnu::hot]]
 ircd::system_point
 ircd::now<ircd::system_point>()
 {
@@ -268,6 +271,7 @@ ircd::now<ircd::system_point>()
 //
 
 template<>
+[[gnu::hot]]
 ircd::steady_point
 ircd::now<ircd::steady_point>()
 {
