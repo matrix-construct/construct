@@ -870,18 +870,33 @@ ircd::net::dns::cache::call_waiters(const string_view &type,
                                     const string_view &state_key,
                                     const json::array &rrs)
 {
-	size_t ret(0);
-	auto it(begin(waiting));
-	while(it != end(waiting))
+	const ctx::uninterruptible::nothrow ui;
+
+	size_t ret(0), last; do
 	{
-		auto &waiter(*it);
-		if(call_waiter(type, state_key, rrs, waiter))
+		waiter *waiter {nullptr};
+		auto it(begin(waiting));
+		while(it != end(waiting))
 		{
+			waiter = std::addressof(*it);
+			if(call_waiter(type, state_key, rrs, *waiter))
+				break;
+
+			++it;
+		}
+
+		last = ret;
+		for(it = begin(waiting); it != end(waiting); ++it)
+		{
+			if(std::addressof(*it) != waiter)
+				continue;
+
 			it = waiting.erase(it);
 			++ret;
+			break;
 		}
-		else ++it;
 	}
+	while(last > ret);
 
 	if(ret)
 		dock.notify_all();
