@@ -2242,6 +2242,9 @@ ircd::server::link::process_read_next(const const_buffer &underrun,
                                       bool &done)
 try
 {
+	assert(socket);
+	net::check(*socket, net::ready::ERROR); // throws
+
 	const mutable_buffer buffer
 	{
 		tag.make_read_buffer()
