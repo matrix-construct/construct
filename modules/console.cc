@@ -10062,43 +10062,6 @@ console_cmd__room__message(opt &out, const string_view &line)
 }
 
 bool
-console_cmd__room__redact(opt &out, const string_view &line)
-{
-	const auto &room_id
-	{
-		m::room_id(token(line, ' ', 0))
-	};
-
-	const m::event::id &redacts
-	{
-		token(line, ' ', 1)
-	};
-
-	const m::user::id &sender
-	{
-		token(line, ' ', 2)
-	};
-
-	const string_view reason
-	{
-		tokens_after(line, ' ', 2)
-	};
-
-	const m::room room
-	{
-		room_id
-	};
-
-	const auto event_id
-	{
-		redact(room, sender, redacts, reason)
-	};
-
-	out << event_id << std::endl;
-	return true;
-}
-
-bool
 console_cmd__room__join(opt &out, const string_view &line)
 {
 	const string_view room_id_or_alias
@@ -14117,5 +14080,55 @@ console_cmd__synchron__item(opt &out, const string_view &line)
 		return true;
 	});
 
+	return true;
+}
+
+//
+// redact
+//
+
+bool
+console_cmd__redact(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"event_id", "sender", "reason"
+	}};
+
+	const m::event::id &redacts
+	{
+		param.at("event_id")
+	};
+
+	const m::user::id &sender
+	{
+		param.at("sender")
+	};
+
+	const string_view reason
+	{
+		param["reason"]
+	};
+
+	const auto room_id
+	{
+		m::room_id(redacts)
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const auto event_id
+	{
+		redact(room, sender, redacts, reason)
+	};
+
+	out
+	<< redacts
+	<< " redacted by " << sender
+	<< " with " << event_id
+	<< std::endl;
 	return true;
 }
