@@ -177,6 +177,7 @@ ircd::server::find(const net::hostport &hostport)
 
 bool
 ircd::server::exists(const net::hostport &hostport)
+noexcept
 {
 	return peers.find(host(hostport)) != end(peers);
 }
@@ -198,6 +199,7 @@ ircd::server::errclear(const net::hostport &hostport)
 
 ircd::string_view
 ircd::server::errmsg(const net::hostport &hostport)
+noexcept
 {
 	const auto it
 	{
@@ -456,6 +458,7 @@ catch(const std::exception &e)
 
 uint64_t
 ircd::server::id(const request &request)
+noexcept
 {
 	return request.tag?
 		request.tag->state.id:
@@ -2689,6 +2692,7 @@ noexcept
 void
 ircd::server::associate(request &request,
                         tag &tag)
+noexcept
 {
 	assert(request.tag == nullptr);
 	assert(tag.request == nullptr);
@@ -2736,6 +2740,7 @@ noexcept
 void
 ircd::server::disassociate(request &request,
                            tag &tag)
+noexcept
 {
 	assert(request.tag == &tag);
 	assert(tag.request == &request);

@@ -48,8 +48,8 @@ namespace ircd::server
 	bool for_each(const request::each_closure &);
 
 	// const utils
-	string_view errmsg(const net::hostport &);
-	bool exists(const net::hostport &);
+	string_view errmsg(const net::hostport &) noexcept;
+	bool exists(const net::hostport &) noexcept;
 	peer &find(const net::hostport &);
 
 	// mutable utils

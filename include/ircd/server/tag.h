@@ -15,10 +15,10 @@ namespace ircd::server
 {
 	struct tag;
 
-	void associate(request &, tag &);
+	void associate(request &, tag &) noexcept;
 	void associate(request &, tag &, tag &&) noexcept;
 	void associate(request &, tag &, request &&) noexcept;
-	void disassociate(request &, tag &);
+	void disassociate(request &, tag &) noexcept;
 	void cancel(request &, tag &) noexcept;
 }
 

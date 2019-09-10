@@ -17,12 +17,12 @@ namespace ircd::server
 	struct out;
 	struct request;
 
-	size_t size(const in &);
-	size_t size(const out &);
-	size_t size_chunks(const in &);
+	size_t size(const in &) noexcept;
+	size_t size(const out &) noexcept;
+	size_t size_chunks(const in &) noexcept;
 
 	// gets the unique tag number from request or 0 if no tag associated.
-	uint64_t id(const request &);
+	uint64_t id(const request &) noexcept;
 
 	// convenience suite used to prefix log messages.
 	string_view loghead(const mutable_buffer &out, const request &);
@@ -240,6 +240,7 @@ noexcept
 
 inline size_t
 ircd::server::size_chunks(const in &in)
+noexcept
 {
 	return std::accumulate(begin(in.chunks), end(in.chunks), size_t(0), []
 	(auto ret, const auto &buffer)
@@ -250,12 +251,14 @@ ircd::server::size_chunks(const in &in)
 
 inline size_t
 ircd::server::size(const in &in)
+noexcept
 {
 	return size(in.head) + size(in.content);
 }
 
 inline size_t
 ircd::server::size(const out &out)
+noexcept
 {
 	return size(out.head) + size(out.content);
 }
