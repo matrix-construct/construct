@@ -949,6 +949,12 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(sequence::committed < sequence::get(eval));
 	assert(sequence::retired < sequence::get(eval));
 	sequence::committed = sequence::get(eval);
+	if(m::exists(event_id) && !opts.replays)
+		throw error
+		{
+			fault::EXISTS, "Write commit rejected :Event has already been evaluated."
+		};
+
 	if(opts.write)
 		write_prepare(eval, event);
 
@@ -963,17 +969,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 	// Commit the transaction to database iff this eval is at the stack base.
 	if(opts.write && !eval.sequence_shared[0])
 	{
-		const std::lock_guard lock
-		{
-			sequence::mutex
-		};
-
-		if(m::exists(event_id) && !opts.replays)
-			throw error
-			{
-				fault::EXISTS, "Write commit rejected :Event has already been evaluated."
-			};
-
 		write_commit(eval);
 	}
 

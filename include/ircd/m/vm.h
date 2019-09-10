@@ -37,7 +37,6 @@ namespace ircd::m::vm
 namespace ircd::m::vm::sequence
 {
 	extern ctx::dock dock;
-	extern ctx::mutex mutex;
 	extern uint64_t retired;      // already written; always monotonic
 	extern uint64_t committed;    // pending write; usually monotonic
 	extern uint64_t uncommitted;  // evaluating; not monotonic
