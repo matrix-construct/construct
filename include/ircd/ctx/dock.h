@@ -30,6 +30,7 @@ class ircd::ctx::dock
   public:
 	bool empty() const noexcept;
 	size_t size() const noexcept;
+	bool waiting(const ctx &) const noexcept;
 
 	template<class time_point> bool wait_until(time_point&&, const predicate &);
 	template<class time_point> bool wait_until(time_point&&);

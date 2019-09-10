@@ -2711,6 +2711,20 @@ noexcept
 }
 
 /// The number of contexts waiting in the queue.
+bool
+ircd::ctx::dock::waiting(const ctx &a)
+const noexcept
+{
+	// for_each returns false if a was found
+	return !q.for_each(list::closure_bool_const{[&a]
+	(const ctx &b)
+	{
+		// return false to break on equal
+		return std::addressof(a) != std::addressof(b);
+	}});
+}
+
+/// The number of contexts waiting in the queue.
 size_t
 ircd::ctx::dock::size()
 const noexcept
