@@ -28,8 +28,8 @@ class ircd::ctx::dock
 	void notify(ctx &) noexcept;
 
   public:
-	bool empty() const;
-	size_t size() const;
+	bool empty() const noexcept;
+	size_t size() const noexcept;
 
 	template<class time_point> bool wait_until(time_point&&, const predicate &);
 	template<class time_point> bool wait_until(time_point&&);

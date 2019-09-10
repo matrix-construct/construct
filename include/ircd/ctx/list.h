@@ -37,16 +37,16 @@ struct ircd::ctx::list
 	ctx *tail {nullptr};
 
 	// Get next or prev entry in ctx
-	static const ctx *next(const ctx *const &);
-	static const ctx *prev(const ctx *const &);
-	static ctx *&next(ctx *const &);
-	static ctx *&prev(ctx *const &);
+	static const ctx *next(const ctx *const &) noexcept;
+	static const ctx *prev(const ctx *const &) noexcept;
+	static ctx *&next(ctx *const &) noexcept;
+	static ctx *&prev(ctx *const &) noexcept;
 
   public:
-	const ctx *front() const;
-	const ctx *back() const;
-	ctx *front();
-	ctx *back();
+	const ctx *front() const noexcept;
+	const ctx *back() const noexcept;
+	ctx *front() noexcept;
+	ctx *back() noexcept;
 
 	// iteration
 	bool for_each(const std::function<bool (const ctx &)> &) const;
@@ -60,18 +60,18 @@ struct ircd::ctx::list
 	void rfor_each(const std::function<void (const ctx &)> &) const;
 	void rfor_each(const std::function<void (ctx &)> &);
 
-	bool empty() const;
-	size_t size() const;
+	bool empty() const noexcept;
+	size_t size() const noexcept;
 
-	void push_front(ctx *const & = current);
-	void push_back(ctx *const & = current);
-	void push(ctx *const & = current);       // push_back
+	void push_front(ctx *const & = current) noexcept;
+	void push_back(ctx *const & = current) noexcept;
+	void push(ctx *const & = current) noexcept;            // push_back
 
-	ctx *pop_front();
-	ctx *pop_back();
-	ctx *pop();                              // pop_front
+	ctx *pop_front() noexcept;
+	ctx *pop_back() noexcept;
+	ctx *pop() noexcept;                                   // pop_front
 
-	void remove(ctx *const & = current);
+	void remove(ctx *const & = current) noexcept;
 
 	list() = default;
 	list(list &&) noexcept;
@@ -119,32 +119,21 @@ noexcept
 
 inline ircd::ctx::ctx *
 ircd::ctx::list::pop()
+noexcept
 {
 	return pop_front();
 }
 
 inline void
 ircd::ctx::list::push(ctx *const &c)
+noexcept
 {
 	push_back(c);
 }
 
-inline size_t
-ircd::ctx::list::size()
-const
-{
-	size_t i{0};
-	for_each([&i](const ctx &)
-	{
-		++i;
-	});
-
-	return i;
-}
-
 inline bool
 ircd::ctx::list::empty()
-const
+const noexcept
 {
 	assert((!head && !tail) || (head && tail));
 	return !head;
@@ -152,26 +141,28 @@ const
 
 inline ircd::ctx::ctx *
 ircd::ctx::list::back()
+noexcept
 {
 	return tail;
 }
 
 inline ircd::ctx::ctx *
 ircd::ctx::list::front()
+noexcept
 {
 	return head;
 }
 
 inline const ircd::ctx::ctx *
 ircd::ctx::list::back()
-const
+const noexcept
 {
 	return tail;
 }
 
 inline const ircd::ctx::ctx *
 ircd::ctx::list::front()
-const
+const noexcept
 {
 	return head;
 }

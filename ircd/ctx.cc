@@ -751,6 +751,7 @@ noexcept
 // uinterruptible
 //
 
+[[gnu::hot]]
 ircd::ctx::this_ctx::uninterruptible::uninterruptible()
 :theirs
 {
@@ -760,6 +761,7 @@ ircd::ctx::this_ctx::uninterruptible::uninterruptible()
 	interruptible(false);
 }
 
+[[gnu::hot]]
 ircd::ctx::this_ctx::uninterruptible::~uninterruptible()
 noexcept(false)
 {
@@ -770,6 +772,7 @@ noexcept(false)
 // uninterruptible::nothrow
 //
 
+[[gnu::hot]]
 ircd::ctx::this_ctx::uninterruptible::nothrow::nothrow()
 noexcept
 :theirs
@@ -780,6 +783,7 @@ noexcept
 	interruptible(false, std::nothrow);
 }
 
+[[gnu::hot]]
 ircd::ctx::this_ctx::uninterruptible::nothrow::~nothrow()
 noexcept
 {
@@ -1006,6 +1010,7 @@ ircd::ctx::continuation::noop_interruptor{[]
 // continuation
 //
 
+[[gnu::hot]]
 ircd::ctx::continuation::continuation(const predicate &pred,
                                       const interruptor &intr,
                                       const yield_closure &closure)
@@ -1083,6 +1088,7 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	}
 }
 
+[[gnu::hot]]
 ircd::ctx::continuation::~continuation()
 noexcept
 {
@@ -1105,6 +1111,7 @@ noexcept
 	// pointer while the context is awake.
 }
 
+[[gnu::hot]]
 ircd::ctx::continuation::operator
 boost::asio::yield_context &()
 noexcept
@@ -1114,6 +1121,7 @@ noexcept
 	return *self->yc;
 }
 
+[[gnu::hot]]
 ircd::ctx::continuation::operator
 const boost::asio::yield_context &()
 const noexcept
@@ -2705,7 +2713,7 @@ noexcept
 /// The number of contexts waiting in the queue.
 size_t
 ircd::ctx::dock::size()
-const
+const noexcept
 {
 	return q.size();
 }
@@ -2713,7 +2721,7 @@ const
 /// The number of contexts waiting in the queue.
 bool
 ircd::ctx::dock::empty()
-const
+const noexcept
 {
 	return q.empty();
 }
@@ -2723,8 +2731,10 @@ const
 // ctx_list.h
 //
 
+[[gnu::hot]]
 void
 ircd::ctx::list::remove(ctx *const &c)
+noexcept
 {
 	assert(c);
 
@@ -2747,8 +2757,10 @@ ircd::ctx::list::remove(ctx *const &c)
 	prev(c) = nullptr;
 }
 
+[[gnu::hot]]
 ircd::ctx::ctx *
 ircd::ctx::list::pop_back()
+noexcept
 {
 	const auto tail
 	{
@@ -2778,8 +2790,10 @@ ircd::ctx::list::pop_back()
 	return tail;
 }
 
+[[gnu::hot]]
 ircd::ctx::ctx *
 ircd::ctx::list::pop_front()
+noexcept
 {
 	const auto head
 	{
@@ -2809,8 +2823,10 @@ ircd::ctx::list::pop_front()
 	return head;
 }
 
+[[gnu::hot]]
 void
 ircd::ctx::list::push_front(ctx *const &c)
+noexcept
 {
 	assert(next(c) == nullptr);
 	assert(prev(c) == nullptr);
@@ -2829,8 +2845,10 @@ ircd::ctx::list::push_front(ctx *const &c)
 	head = c;
 }
 
+[[gnu::hot]]
 void
 ircd::ctx::list::push_back(ctx *const &c)
+noexcept
 {
 	assert(next(c) == nullptr);
 	assert(prev(c) == nullptr);
@@ -2847,6 +2865,19 @@ ircd::ctx::list::push_back(ctx *const &c)
 	next(tail) = c;
 	prev(c) = tail;
 	tail = c;
+}
+
+size_t
+ircd::ctx::list::size()
+const noexcept
+{
+	size_t i{0};
+	for_each([&i](const ctx &)
+	{
+		++i;
+	});
+
+	return i;
 }
 
 void
@@ -2921,29 +2952,37 @@ const
 	return true;
 }
 
+[[gnu::hot]]
 ircd::ctx::ctx *&
 ircd::ctx::list::prev(ctx *const &c)
+noexcept
 {
 	assert(c);
 	return c->node.prev;
 }
 
+[[gnu::hot]]
 ircd::ctx::ctx *&
 ircd::ctx::list::next(ctx *const &c)
+noexcept
 {
 	assert(c);
 	return c->node.next;
 }
 
+[[gnu::hot]]
 const ircd::ctx::ctx *
 ircd::ctx::list::prev(const ctx *const &c)
+noexcept
 {
 	assert(c);
 	return c->node.prev;
 }
 
+[[gnu::hot]]
 const ircd::ctx::ctx *
 ircd::ctx::list::next(const ctx *const &c)
+noexcept
 {
 	assert(c);
 	return c->node.next;

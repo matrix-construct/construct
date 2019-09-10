@@ -27,17 +27,17 @@ class ircd::ctx::mutex
 	bool m;
 
   public:
-	bool locked() const;
-	size_t waiting() const;
+	bool locked() const noexcept;
+	size_t waiting() const noexcept;
 
-	bool try_lock();
+	bool try_lock() noexcept;
 	template<class time_point> bool try_lock_until(const time_point &);
 	template<class duration> bool try_lock_for(const duration &);
 
 	void lock();
 	void unlock();
 
-	mutex();
+	mutex() noexcept;
 	mutex(mutex &&) noexcept;
 	mutex(const mutex &) = delete;
 	mutex &operator=(mutex &&) noexcept;
@@ -47,6 +47,7 @@ class ircd::ctx::mutex
 
 inline
 ircd::ctx::mutex::mutex()
+noexcept
 :m{false}
 {
 }
@@ -125,6 +126,7 @@ ircd::ctx::mutex::try_lock_until(const time_point &tp)
 
 inline bool
 ircd::ctx::mutex::try_lock()
+noexcept
 {
 	if(locked())
 		return false;
@@ -135,14 +137,14 @@ ircd::ctx::mutex::try_lock()
 
 inline size_t
 ircd::ctx::mutex::waiting()
-const
+const noexcept
 {
 	return q.size();
 }
 
 inline bool
 ircd::ctx::mutex::locked()
-const
+const noexcept
 {
 	return m;
 }

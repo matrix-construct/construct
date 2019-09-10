@@ -5101,8 +5101,10 @@ console_cmd__net__host(opt &out, const string_view &line)
 		net::dns::resolve(hostport, opts, cbarr);
 
 	const ctx::uninterruptible ui;
-	while(!done)
-		dock.wait();
+	dock.wait([&done]
+	{
+		return done;
+	});
 
 	if(eptr)
 		std::rethrow_exception(eptr);
