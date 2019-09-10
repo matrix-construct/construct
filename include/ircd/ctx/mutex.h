@@ -26,6 +26,8 @@ class ircd::ctx::mutex
 	dock q;
 	bool m;
 
+	void deadlock_assertion() const noexcept;
+
   public:
 	bool locked() const noexcept;
 	size_t waiting() const noexcept;
@@ -92,6 +94,8 @@ ircd::ctx::mutex::unlock()
 inline void
 ircd::ctx::mutex::lock()
 {
+	deadlock_assertion();
+
 	q.wait([this]
 	{
 		return !locked();
@@ -111,6 +115,8 @@ template<class time_point>
 bool
 ircd::ctx::mutex::try_lock_until(const time_point &tp)
 {
+	deadlock_assertion();
+
 	const bool success
 	{
 		q.wait_until(tp, [this]
@@ -129,6 +135,8 @@ inline bool
 ircd::ctx::mutex::try_lock()
 noexcept
 {
+	deadlock_assertion();
+
 	if(locked())
 		return false;
 
@@ -155,4 +163,12 @@ ircd::ctx::mutex::locked()
 const noexcept
 {
 	return m;
+}
+
+inline void
+__attribute__((always_inline, artificial))
+ircd::ctx::mutex::deadlock_assertion()
+const noexcept
+{
+	assert(!locked() || !waiting(cur()));
 }
