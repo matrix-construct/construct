@@ -2323,8 +2323,23 @@ ircd::server::link::discard_read()
 		discard_any(*socket, size_t(pending))
 	};
 
-	assert(peer);
-	peer->read_bytes += discarded;
+	if(discarded)
+	{
+		log::dwarning
+		{
+			log, "%s q:%zu discarded:%zu pending:%zd has_pending:%zd available:%zd",
+			loghead(*this),
+			queue.size(),
+			discarded,
+			pending,
+			has_pending,
+			available,
+		};
+
+		assert(peer);
+		peer->read_bytes += discarded;
+		return;
+	}
 
 	static const std::error_code end_of_file
 	{
@@ -2334,23 +2349,10 @@ ircd::server::link::discard_read()
 		})
 	};
 
-	log::logf
+	throw std::system_error
 	{
-		log, discarded? log::WARNING : log::DWARNING,
-		"%s q:%zu discarded:%zu pending:%zd has_pending:%zd available:%zd :EOF",
-		loghead(*this),
-		queue.size(),
-		discarded,
-		pending,
-		has_pending,
-		available,
+		end_of_file
 	};
-
-	if(!discarded)
-		throw std::system_error
-		{
-			end_of_file
-		};
 }
 
 size_t
