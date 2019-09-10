@@ -77,10 +77,16 @@ ircd::m::auth_room_power_levels(const m::event &event,
 	for(const auto &[user_id, value] : json::object(at<"content"_>(event).at("users")))
 	{
 		if(!m::valid(m::id::USER, user_id))
-			throw FAIL
+		{
+			log::dwarning
 			{
-				"m.room.power_levels content.users key is not a user mxid"
+				m::log, "Power levels in %s 'users' invalid entry '%s'; not user mxid.",
+				string_view{event.event_id},
+				user_id,
 			};
+
+			continue;
+		}
 
 		if(!try_lex_cast<int64_t>(unquote(value)))
 			throw FAIL
