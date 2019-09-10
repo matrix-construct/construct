@@ -2156,7 +2156,7 @@ catch(...)
 void
 ircd::server::link::handle_readable_success()
 {
-	if(queue.empty())
+	if(!tag_committed())
 	{
 		discard_read();
 		wait_readable();
