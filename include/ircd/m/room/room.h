@@ -49,9 +49,11 @@ namespace ircd::m
 	string_view display_name(const mutable_buffer &out, const room &);
 	id::user::buf any_user(const room &, const string_view &host, const string_view &memshp = "join");
 
-	id::room room_id(const mutable_buffer &, const id::room_alias &);
-	id::room room_id(const mutable_buffer &, const string_view &id_or_alias);
-	id::room::buf room_id(const id::room_alias &);
+	id::room room_id(const mutable_buffer &, const id::event &); // db
+	id::room room_id(const mutable_buffer &, const id::room_alias &); // db + net
+	id::room room_id(const mutable_buffer &, const string_view &mxid);
+	id::room::buf room_id(const id::event &); // db
+	id::room::buf room_id(const id::room_alias &); // db + net
 	id::room::buf room_id(const string_view &id_or_alias);
 
 	// [SET] Lowest-level

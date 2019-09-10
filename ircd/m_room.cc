@@ -640,37 +640,62 @@ ircd::m::room_id(const id::room_alias &room_alias)
 }
 
 ircd::m::id::room::buf
-ircd::m::room_id(const string_view &room_id_or_alias)
+ircd::m::room_id(const id::event &event_id)
 {
 	char buf[m::id::MAX_SIZE + 1];
 	static_assert(sizeof(buf) <= 256);
-	return room_id(buf, room_id_or_alias);
+	return room_id(buf, event_id);
+}
+
+ircd::m::id::room::buf
+ircd::m::room_id(const string_view &mxid)
+{
+	char buf[m::id::MAX_SIZE + 1];
+	static_assert(sizeof(buf) <= 256);
+	return room_id(buf, mxid);
 }
 
 ircd::m::id::room
 ircd::m::room_id(const mutable_buffer &out,
-                 const string_view &room_id_or_alias)
+                 const string_view &mxid)
 {
-	switch(m::sigil(room_id_or_alias))
+	switch(m::sigil(mxid))
 	{
 		case id::ROOM:
-			return id::room{out, room_id_or_alias};
+			return id::room{out, mxid};
 
 		case id::USER:
 		{
-			const m::user::room user_room(room_id_or_alias);
+			const m::user::room user_room(mxid);
 			return string_view{data(out), copy(out, user_room.room_id)};
 		}
 
 		case id::NODE:
 		{
-			const m::node node(lstrip(room_id_or_alias, ':'));
+			const m::node node(lstrip(mxid, ':'));
 			return node.room_id(out);
 		}
 
+		case id::EVENT:
+			return room_id(out, id::event{mxid});
+
 		default:
-			return room_id(out, id::room_alias{room_id_or_alias});
+			return room_id(out, id::room_alias{mxid});
 	}
+}
+
+ircd::m::id::room
+ircd::m::room_id(const mutable_buffer &out,
+                 const id::event &event_id)
+{
+	room::id ret;
+	m::get(event_id, "room_id", [&out, &ret]
+	(const room::id &room_id)
+	{
+		ret = string_view { data(out), copy(out, room_id) };
+	});
+
+	return ret;
 }
 
 ircd::m::id::room
