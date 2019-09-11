@@ -507,6 +507,7 @@ try
 }
 catch(const http::error &e)
 {
+	const ctx::exception_handler eh;
 	log::error
 	{
 		log, "cache put (%s, %s) code:%u (%s) :%s %s",
@@ -530,6 +531,7 @@ catch(const http::error &e)
 }
 catch(const std::exception &e)
 {
+	const ctx::exception_handler eh;
 	log::error
 	{
 		log, "cache put (%s, %s) code:%u (%s) :%s",
@@ -630,6 +632,7 @@ try
 }
 catch(const http::error &e)
 {
+	const ctx::exception_handler eh;
 	log::error
 	{
 		log, "cache put (%s, %s) rrs:%zu :%s %s",
@@ -652,6 +655,7 @@ catch(const http::error &e)
 }
 catch(const std::exception &e)
 {
+	const ctx::exception_handler eh;
 	log::error
 	{
 		log, "cache put (%s, %s) rrs:%zu :%s",
