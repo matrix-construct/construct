@@ -4991,22 +4991,22 @@ try
 		if(request.tag)
 			out << std::setw(4) << uint(request.tag->state.status) << "  ";
 		else
-			out << std::setw(4) << "CNL" << "  ";
+			out << std::setw(4) << "CNCL" << "  ";
 
 		if(request.tag && request.tag->committed())
-			out << std::setw(4) << "COM" << "  ";
+			out << std::setw(4) << "PIPE" << "  ";
 		else
-			out << std::setw(4) << "   " << "  ";
+			out << std::setw(4) << "    " << "  ";
 
 		if(request.tag && request.tag->abandoned())
-			out << std::setw(4) << "ABN" << "  ";
+			out << std::setw(4) << "LEFT" << "  ";
 		else
-			out << std::setw(4) << "   " << "  ";
+			out << std::setw(4) << "    " << "  ";
 
 		if(request.tag && request.tag->canceled())
-			out << std::setw(4) << "CNL" << "  ";
+			out << std::setw(4) << "CNCL" << "  ";
 		else
-			out << std::setw(4) << "   " << "  ";
+			out << std::setw(4) << "    " << "  ";
 
 		out
 		<< std::right  << std::setw(7)  << out_head.method << "  "
