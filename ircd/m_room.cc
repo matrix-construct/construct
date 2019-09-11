@@ -1097,11 +1097,7 @@ ircd::m::local_joined(const room &room)
 		room
 	};
 
-	return !members.for_each("join", []
-	(const id::user &user_id)
-	{
-		return my(user_id)? false : true; // false to break.
-	});
+	return !members.empty("join", my_host());
 }
 
 /// Member(s) from another server are presently joined to the room. For example
