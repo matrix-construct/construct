@@ -5957,6 +5957,10 @@ ircd::db::prefetcher::cancel(const closure &closure)
 	assert(canceled >= 0);
 	queue.resize(remain);
 	cancels_counter += canceled;
+
+	if(canceled)
+		dock.notify_all();
+
 	return canceled;
 }
 
@@ -6003,6 +6007,11 @@ ircd::db::prefetcher::handle()
 void
 ircd::db::prefetcher::request_worker()
 {
+	const ctx::scope_notify notify
+	{
+		this->dock
+	};
+
 	const scope_count request_workers
 	{
 		this->request_workers
@@ -6025,11 +6034,6 @@ void
 ircd::db::prefetcher::request_handle(request &request)
 try
 {
-	const ctx::scope_notify notify
-	{
-		this->dock
-	};
-
 	assert(request.d);
 	db::column column
 	{
