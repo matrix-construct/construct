@@ -4933,9 +4933,16 @@ try
 	<< std::left   << std::setw(8)  << "TAG" << "  "
 	<< std::right  << std::setw(32) << "PEER NAME" << "  "
 	<< std::left   << std::setw(32) << "REMOTE ADDRESS" << "  "
+	<< std::right  << std::setw(8)  << "WROTE" << "  "
+	<< std::right  << std::setw(7)  << "IN HEAD" << "  "
+	<< std::right  << std::setw(9)  << "IN CONT" << "  "
+	<< std::right  << std::setw(9)  << "CONTLEN" << "  "
+	<< std::right  << std::setw(4)  << "CODE" << "  "
+	<< std::right  << std::setw(4)  << "FLAG" << "  "
+	<< std::right  << std::setw(4)  << "FLAG" << "  "
+	<< std::right  << std::setw(4)  << "FLAG" << "  "
 	<< std::right  << std::setw(7)  << "METHOD" << "  "
-	<< std::left   << std::setw(64) << "PATH" << "  "
-	<< std::left   << std::setw(4)  << "CODE" << "  "
+	<< std::left   << std::setw(72) << "PATH" << "  "
 	<< std::endl
 	;
 
@@ -4972,18 +4979,39 @@ try
 			return true;
 		}
 
-		out
-		<< std::right  << std::setw(7)  << out_head.method << "  "
-		<< std::left   << std::setw(64) << trunc(out_head.path, 64) << "  "
-		;
+		out << std::right;
+		if(request.tag)
+		{
+			out << std::setw(8) << request.tag->state.written << "  ";
+			out << std::setw(7) << request.tag->state.head_read << "  ";
+			out << std::setw(9) << request.tag->state.content_read << "  ";
+			out << std::setw(9) << request.tag->state.content_length << "  ";
+		}
 
 		if(request.tag)
-			out << std::setw(4) << uint(request.tag->state.status) << " ";
+			out << std::setw(4) << uint(request.tag->state.status) << "  ";
 		else
-			out << std::setw(4) << "CNCL" << " ";
+			out << std::setw(4) << "CNL" << "  ";
 
-		if(request.tag && request.tag->state.status)
-			out << http::status(request.tag->state.status) << " ";
+		if(request.tag && request.tag->committed())
+			out << std::setw(4) << "COM" << "  ";
+		else
+			out << std::setw(4) << "   " << "  ";
+
+		if(request.tag && request.tag->abandoned())
+			out << std::setw(4) << "ABN" << "  ";
+		else
+			out << std::setw(4) << "   " << "  ";
+
+		if(request.tag && request.tag->canceled())
+			out << std::setw(4) << "CNL" << "  ";
+		else
+			out << std::setw(4) << "   " << "  ";
+
+		out
+		<< std::right  << std::setw(7)  << out_head.method << "  "
+		<< std::left   << std::setw(72) << trunc(out_head.path, 72) << "  "
+		;
 
 		out << std::endl;
 		return true;
