@@ -1300,6 +1300,30 @@ ircd::m::vm::eval::find(const event::id &event_id)
 }
 
 size_t
+ircd::m::vm::eval::count(const event::id &event_id)
+{
+	size_t ret(0);
+	for_each([&event_id, &ret](eval &e)
+	{
+		if(e.event_)
+		{
+			if(e.event_->event_id == event_id)
+				++ret;
+		}
+		else if(e.issue)
+		{
+			if(e.issue->has("event_id"))
+				if(string_view{e.issue->at("event_id")} == event_id)
+					++ret;
+		}
+		else if(e.event_id == event_id)
+			++ret;
+	});
+
+	return ret;
+}
+
+size_t
 ircd::m::vm::eval::count(const ctx::ctx *const &c)
 {
 	return std::count_if(begin(eval::list), end(eval::list), [&c]

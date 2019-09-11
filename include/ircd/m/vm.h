@@ -105,6 +105,7 @@ struct ircd::m::vm::eval
 	static bool for_each(const ctx::ctx *const &, const std::function<bool (eval &)> &);
 	static bool for_each(const std::function<bool (eval &)> &);
 	static size_t count(const ctx::ctx *const &);
+	static size_t count(const event::id &);
 	static eval *find(const event::id &);
 	static eval &get(const event::id &);
 	static bool sequnique(const uint64_t &seq);
