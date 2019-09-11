@@ -743,7 +743,7 @@ try
 
 	// The conform hook runs static checks on an event's formatting and
 	// composure; these checks only require the event data itself.
-	if(opts.conform)
+	if(likely(opts.conform))
 	{
 		const ctx::critical_assertion ca;
 		call_hook(conform_hook, eval, event, eval);
@@ -764,24 +764,24 @@ try
 
 	// The event was executed; now we broadcast the good news. This will
 	// include notifying client `/sync` and the federation sender.
-	if(opts.notify)
+	if(likely(opts.notify))
 		call_hook(notify_hook, eval, event, eval);
 
 	// The "effects" of the event are created by listeners on the effect hook.
 	// These can include the creation of even more events, such as creating a
 	// PDU out of an EDU, etc. Unlike the post_hook in execute_pdu(), the
 	// notify for the event at issue here has already been made.
-	if(opts.effects)
+	if(likely(opts.effects))
 		call_hook(effect_hook, eval, event, eval);
 
-	if(opts.debuglog_accept || bool(log_accept_debug))
-		log::debug
+	if(opts.infolog_accept || bool(log_accept_info))
+		log::info
 		{
 			log, "%s", pretty_oneline(event)
 		};
 
-	if(opts.infolog_accept || bool(log_accept_info))
-		log::info
+	else if(opts.debuglog_accept || bool(log_accept_debug))
+		log::debug
 		{
 			log, "%s", pretty_oneline(event)
 		};
@@ -884,27 +884,27 @@ ircd::m::vm::execute_pdu(eval &eval,
 		at<"type"_>(event)
 	};
 
-	if(m::exists(event_id) && !opts.replays)
+	if(likely(!opts.replays) && m::exists(event_id))
 		throw error
 		{
 			fault::EXISTS, "Event has already been evaluated."
 		};
 
-	if(opts.access)
+	if(likely(opts.access))
 		call_hook(access_hook, eval, event, eval);
 
-	if(opts.verify && !verify(event))
+	if(likely(opts.verify) && !verify(event))
 		throw m::BAD_SIGNATURE
 		{
 			"Signature verification failed"
 		};
 
 	// Fetch dependencies
-	if(opts.fetch)
+	if(likely(opts.fetch))
 		call_hook(fetch_hook, eval, event, eval);
 
 	// Evaluation by auth system; throws
-	if(opts.auth && !internal(room_id))
+	if(likely(opts.auth) && !internal(room_id))
 		room::auth::check(event);
 
 	// Obtain sequence number here.
@@ -932,7 +932,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 	sequence::uncommitted = sequence::get(eval);
 
 	// Evaluation by module hooks
-	if(opts.eval)
+	if(likely(opts.eval))
 		call_hook(eval_hook, eval, event, eval);
 
 	// Wait until this is the lowest sequence number
@@ -949,32 +949,30 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(sequence::committed < sequence::get(eval));
 	assert(sequence::retired < sequence::get(eval));
 	sequence::committed = sequence::get(eval);
-	if(m::exists(event_id) && !opts.replays)
+	if(likely(!opts.replays) && unlikely(m::exists(event_id)))
 		throw error
 		{
 			fault::EXISTS, "Write commit rejected :Event has already been evaluated."
 		};
 
-	if(opts.write)
+	if(likely(opts.write))
 		write_prepare(eval, event);
 
-	if(opts.write)
+	if(likely(opts.write))
 		write_append(eval, event);
 
 	// Generate post-eval/pre-notify effects. This function may conduct
 	// an entire eval of several more events recursively before returning.
-	if(opts.post)
+	if(likely(opts.post))
 		call_hook(post_hook, eval, event, eval);
 
 	// Commit the transaction to database iff this eval is at the stack base.
-	if(opts.write && !eval.sequence_shared[0])
-	{
+	if(likely(opts.write) && !eval.sequence_shared[0])
 		write_commit(eval);
-	}
 
 	// Wait for sequencing only if this is the stack base, otherwise we'll
 	// never return back to that stack base.
-	if(!eval.sequence_shared[0])
+	if(likely(!eval.sequence_shared[0]))
 	{
 		sequence::dock.wait([&eval]
 		{
