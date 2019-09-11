@@ -7800,24 +7800,17 @@ console_cmd__room__top(opt &out, const string_view &line)
 	out << "remote joined:     " << std::boolalpha << m::remote_joined(room_id) << std::endl;
 	out << std::endl;
 
-	const m::room::members members(room_id);
-	out << "invite:            " << std::setw(7) << members.count("invite")
-	    << std::endl
-	    << "invite local:      " << std::setw(7) << members.count("invite", my_host())
-	    << std::endl
-	    << "join:              " << std::setw(7) << members.count("join")
-	    << std::endl
-	    << "join local:        " << std::setw(7) << members.count("join", my_host())
-	    << std::endl
-	    << "leave:             " << std::setw(7) << members.count("leave")
-	    << std::endl
-	    << "leave local:       " << std::setw(7) << members.count("leave", my_host())
-	    << std::endl
-	    << "ban:               " << std::setw(7) << members.count("ban")
-	    << std::endl
-	    << "ban local:         " << std::setw(7) << members.count("ban", my_host())
-	    << std::endl
-	    << std::endl;
+	const m::room::members members{room_id};
+	out
+	<< "invite local:      " << members.count("invite", my_host()) << std::endl
+	<< "invite:            " << members.count("invite") << std::endl
+	<< "join local:        " << members.count("join", my_host()) << std::endl
+	<< "join:              " << members.count("join") << std::endl
+	<< "leave local:       " << members.count("leave", my_host()) << std::endl
+	<< "leave:             " << members.count("leave") << std::endl
+	<< "ban local:         " << members.count("ban", my_host()) << std::endl
+	<< "ban:               " << members.count("ban") << std::endl
+	<< std::endl;
 
 	out << "servers:           " << m::room::origins{room_id}.count() << std::endl;
 	out << "servers up:        " << m::room::origins{room_id}.count_online() << std::endl;
