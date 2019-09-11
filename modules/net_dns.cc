@@ -871,6 +871,10 @@ ircd::net::dns::cache::call_waiters(const string_view &type,
                                     const json::array &rrs)
 {
 	const ctx::uninterruptible::nothrow ui;
+	const scope_notify notify
+	{
+		dock, scope_notify::all
+	};
 
 	size_t ret(0), last; do
 	{
@@ -897,9 +901,6 @@ ircd::net::dns::cache::call_waiters(const string_view &type,
 		}
 	}
 	while(last > ret);
-
-	if(ret)
-		dock.notify_all();
 
 	return ret;
 }
