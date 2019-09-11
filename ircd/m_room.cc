@@ -2879,6 +2879,11 @@ ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 	if(!it)
 		return;
 
+	const bool check_auth
+	{
+		!m::internal(room_id)
+	};
+
 	size_t state_count(0), messages_count(0), state_deleted(0);
 	for(; it; ++it, ++messages_count) try
 	{
@@ -2894,7 +2899,9 @@ ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 		const m::event &event{*it};
 		const auto &[pass_static, reason_static]
 		{
-			room::auth::check_static(event)
+			check_auth?
+				room::auth::check_static(event):
+				room::auth::passfail{true, {}}
 		};
 
 		if(!pass_static)
@@ -2908,6 +2915,8 @@ ircd::m::room::state::space::rebuild::rebuild(const room::id &room_id)
 
 		const auto &[pass_relative, reason_relative]
 		{
+			!check_auth?
+				room::auth::passfail{true, {}}:
 			pass_static?
 				room::auth::check_relative(event):
 				room::auth::passfail{false, {}},
