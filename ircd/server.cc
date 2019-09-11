@@ -1973,6 +1973,9 @@ catch(...)
 void
 ircd::server::link::handle_writable_success()
 {
+	assert(socket);
+	net::check(*socket, net::ready::ERROR);
+
 	auto it(begin(queue));
 	while(it != end(queue))
 	{
@@ -2159,6 +2162,9 @@ catch(...)
 void
 ircd::server::link::handle_readable_success()
 {
+	assert(socket);
+	net::check(*socket, net::ready::ERROR);
+
 	if(!tag_committed())
 	{
 		discard_read();
@@ -2245,9 +2251,6 @@ ircd::server::link::process_read_next(const const_buffer &underrun,
                                       bool &done)
 try
 {
-	assert(socket);
-	net::check(*socket, net::ready::ERROR); // throws
-
 	const mutable_buffer buffer
 	{
 		tag.make_read_buffer()
