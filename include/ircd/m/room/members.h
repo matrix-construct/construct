@@ -26,17 +26,21 @@ struct ircd::m::room::members
 
 	m::room room;
 
-	bool for_each_join_present(const closure &) const;
+	bool for_each_join_present(const string_view &host, const closure &) const;
 
   public:
+	bool for_each(const string_view &membership, const string_view &host, const closure &) const;
+	bool for_each(const string_view &membership, const string_view &host, const closure_idx &) const;
 	bool for_each(const string_view &membership, const closure &) const;
 	bool for_each(const string_view &membership, const closure_idx &) const;
 	bool for_each(const closure &) const;
 	bool for_each(const closure_idx &) const;
 
+	bool empty(const string_view &membership, const string_view &host) const;
 	bool empty(const string_view &membership) const;
 	bool empty() const;
 
+	size_t count(const string_view &membership, const string_view &host) const;
 	size_t count(const string_view &membership) const;
 	size_t count() const;
 

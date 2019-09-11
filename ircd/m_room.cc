@@ -2990,14 +2990,23 @@ bool
 ircd::m::room::members::empty()
 const
 {
-	return empty(string_view{});
+	return empty(string_view{}, string_view{});
 }
 
 bool
 ircd::m::room::members::empty(const string_view &membership)
 const
 {
-	return for_each(membership, closure{[](const auto &)
+	return empty(membership, string_view{});
+}
+
+bool
+ircd::m::room::members::empty(const string_view &membership,
+                              const string_view &host)
+const
+{
+	return for_each(membership, host, closure{[]
+	(const user::id &user_id)
 	{
 		return false;
 	}});
@@ -3007,16 +3016,24 @@ size_t
 ircd::m::room::members::count()
 const
 {
-	return count(string_view{});
+	return count(string_view{}, string_view{});
 }
 
 size_t
 ircd::m::room::members::count(const string_view &membership)
 const
 {
+	return count(membership, string_view{});
+}
+
+size_t
+ircd::m::room::members::count(const string_view &membership,
+                              const string_view &host)
+const
+{
 	size_t ret{0};
-	this->for_each(membership, room::members::closure{[&ret]
-	(const id::user &)
+	for_each(membership, host, closure{[&ret]
+	(const user::id &user_id)
 	{
 		++ret;
 		return true;
@@ -3041,6 +3058,51 @@ const
 
 bool
 ircd::m::room::members::for_each(const string_view &membership,
+                                 const closure &closure)
+const
+{
+	return for_each(membership, string_view{}, closure);
+}
+
+bool
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const closure_idx &closure)
+const
+{
+	return for_each(membership, string_view{}, closure);
+}
+
+bool
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const string_view &host,
+                                 const closure &closure)
+const
+{
+	const m::room::state state
+	{
+		room
+	};
+
+	const bool present
+	{
+		state.present()
+	};
+
+	// joined members optimization. Only possible when seeking
+	// membership="join" on the present state of the room.
+	if(membership == "join" && present)
+		return for_each_join_present(host, closure);
+
+	return this->for_each(membership, host, [&closure]
+	(const auto &user_id, const auto &event_idx)
+	{
+		return closure(user_id);
+	});
+}
+
+bool
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const string_view &host,
                                  const closure_idx &closure)
 const
 {
@@ -3057,7 +3119,7 @@ const
 	// joined members optimization. Only possible when seeking
 	// membership="join" on the present state of the room.
 	if(membership == "join" && present)
-		return for_each_join_present([&closure, &state]
+		return for_each_join_present(host, [&closure, &state]
 		(const id::user &user_id)
 		{
 			const auto &event_idx
@@ -3084,44 +3146,26 @@ const
 			return true;
 		});
 
-	return state.for_each("m.room.member", [this, &membership, &closure]
+	return state.for_each("m.room.member", [this, &host, &membership, &closure]
 	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 	{
+		const m::user::id &user_id
+		{
+			state_key
+		};
+
+		if(host && user_id.host() != host)
+			return true;
+
 		return !membership || this->membership(event_idx, membership)?
-			closure(state_key, event_idx):
+			closure(user_id, event_idx):
 			true;
 	});
 }
 
 bool
-ircd::m::room::members::for_each(const string_view &membership,
-                                 const closure &closure)
-const
-{
-	const m::room::state state
-	{
-		room
-	};
-
-	const bool present
-	{
-		state.present()
-	};
-
-	// joined members optimization. Only possible when seeking
-	// membership="join" on the present state of the room.
-	if(membership == "join" && present)
-		return for_each_join_present(closure);
-
-	return this->for_each(membership, [&closure]
-	(const auto &user_id, const auto &event_idx)
-	{
-		return closure(user_id);
-	});
-}
-
-bool
-ircd::m::room::members::for_each_join_present(const closure &closure)
+ircd::m::room::members::for_each_join_present(const string_view &host,
+                                              const closure &closure)
 const
 {
 	db::domain &index
@@ -3129,9 +3173,15 @@ const
 		dbs::room_joined
 	};
 
+	char keybuf[dbs::ROOM_JOINED_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		dbs::room_joined_key(keybuf, room.room_id, host)
+	};
+
 	auto it
 	{
-		index.begin(room.room_id)
+		index.begin(key)
 	};
 
 	for(; bool(it); ++it)
@@ -3140,6 +3190,9 @@ const
 		{
 			dbs::room_joined_key(it->first)
 		};
+
+		if(host && origin != host)
+			break;
 
 		if(!closure(user_id))
 			return false;

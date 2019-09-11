@@ -7792,12 +7792,32 @@ console_cmd__room__top(opt &out, const string_view &line)
 	char version_buf[32], display_buf[256];
 
 	out << "display name:      " << m::display_name(display_buf, room_id) << std::endl;
+	out << "creator:           " << m::creator(room_id) << std::endl;
 	out << "version:           " << m::version(version_buf, room_id) << std::endl;
-	out << "joined:            " << m::room::members{room_id}.count("join") << std::endl;
-	out << "remote joined:     " << std::boolalpha << m::remote_joined(room_id) << std::endl;
-	out << "local joined:      " << std::boolalpha << m::local_joined(room_id) << std::endl;
+	out << "internal:          " << m::internal(room_id) << std::endl;
 	out << "local only:        " << std::boolalpha << m::local_only(room_id) << std::endl;
+	out << "local joined:      " << std::boolalpha << m::local_joined(room_id) << std::endl;
+	out << "remote joined:     " << std::boolalpha << m::remote_joined(room_id) << std::endl;
 	out << std::endl;
+
+	const m::room::members members(room_id);
+	out << "invite:            " << std::setw(7) << members.count("invite")
+	    << std::endl
+	    << "invite local:      " << std::setw(7) << members.count("invite", my_host())
+	    << std::endl
+	    << "join:              " << std::setw(7) << members.count("join")
+	    << std::endl
+	    << "join local:        " << std::setw(7) << members.count("join", my_host())
+	    << std::endl
+	    << "leave:             " << std::setw(7) << members.count("leave")
+	    << std::endl
+	    << "leave local:       " << std::setw(7) << members.count("leave", my_host())
+	    << std::endl
+	    << "ban:               " << std::setw(7) << members.count("ban")
+	    << std::endl
+	    << "ban local:         " << std::setw(7) << members.count("ban", my_host())
+	    << std::endl
+	    << std::endl;
 
 	out << "servers:           " << m::room::origins{room_id}.count() << std::endl;
 	out << "servers up:        " << m::room::origins{room_id}.count_online() << std::endl;
@@ -8566,7 +8586,7 @@ console_cmd__room__members(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"room_id", "[membership]"
+		"room_id", "[membership]" "[host]"
 	}};
 
 	const auto &room_id
@@ -8576,7 +8596,14 @@ console_cmd__room__members(opt &out, const string_view &line)
 
 	const string_view &membership
 	{
-		param[1]
+		param[1] != "\"\""?
+			param[1]:
+			string_view{}
+	};
+
+	const string_view &host
+	{
+		param[2]
 	};
 
 	const m::room room
@@ -8591,7 +8618,7 @@ console_cmd__room__members(opt &out, const string_view &line)
 
 	if(membership)
 	{
-		members.for_each(membership, [&out, &membership]
+		members.for_each(membership, host, [&out, &membership]
 		(const m::user::id &user_id)
 		{
 			out << std::setw(8) << std::left << membership
@@ -8603,7 +8630,7 @@ console_cmd__room__members(opt &out, const string_view &line)
 		return true;
 	}
 
-	members.for_each(membership, [&out]
+	members.for_each(membership, host, [&out]
 	(const m::user::id &user_id, const m::event::idx &event_idx)
 	{
 		char buf[32];
