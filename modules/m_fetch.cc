@@ -432,6 +432,13 @@ ircd::m::fetch::start(request &request,
                       const string_view &remote)
 try
 {
+	if(unlikely(run::level != run::level::RUN))
+		throw m::UNAVAILABLE
+		{
+			"Cannot take requests in runlevel %s",
+			reflect(run::level),
+		};
+
 	assert(!request.finished);
 	request.last = ircd::now<system_point>();
 	if(!request.started)
@@ -502,6 +509,10 @@ try
 
 	dock.notify_all();
 	return true;
+}
+catch(const m::UNAVAILABLE &e)
+{
+	throw;
 }
 catch(const http::error &e)
 {
