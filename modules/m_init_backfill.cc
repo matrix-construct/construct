@@ -51,7 +51,7 @@ decltype(ircd::m::init::backfill::pool_size)
 ircd::m::init::backfill::pool_size
 {
 	{ "name",     "m.init.backfill.pool_size" },
-	{ "default",  8L                          },
+	{ "default",  12L                         },
 };
 
 decltype(ircd::m::init::backfill::worker_context)
