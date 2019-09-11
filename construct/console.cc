@@ -383,7 +383,12 @@ construct::console::cmd__watch()
 {
 	const auto delay
 	{
-		lex_cast<seconds>(token(this->line, ' ', 1))
+		lex_cast<double>(token(this->line, ' ', 1))
+	};
+
+	const ircd::milliseconds sleep_time
+	{
+		long(delay * 1000.0)
 	};
 
 	const string_view &line
@@ -397,7 +402,7 @@ construct::console::cmd__watch()
 		handle_line(); try
 		{
 			const log::console_quiet quiet(false);
-			ctx::sleep(delay);
+			ctx::sleep(sleep_time);
 		}
 		catch(const ctx::interrupted &)
 		{
