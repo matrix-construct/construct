@@ -13757,24 +13757,16 @@ console_cmd__vm(opt &out, const string_view &line)
 	    << std::right << std::setw(10) << size(m::vm::eval::list)
 	    << std::endl;
 
-	return true;
-}
-
-bool
-console_cmd__vm__eval(opt &out, const string_view &line)
-{
+	out << std::endl;
 	for(const auto *const &eval : m::vm::eval::list)
 	{
 		assert(eval);
 		assert(eval->ctx);
 
-		out << std::setw(9) << std::right << eval->id
-		    << " | " << std::setw(4) << std::right << id(*eval->ctx)
-		    << " | " << std::setw(4) << std::right << eval->sequence
-		    << " | " << std::setw(64) << std::left << eval->event_id
-		    ;
-
-		out << std::endl;
+		out
+		<< loghead(*eval)
+		<< std::endl
+		;
 	}
 
 	return true;
