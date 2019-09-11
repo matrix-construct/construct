@@ -4583,10 +4583,23 @@ console_cmd__peer(opt &out, const string_view &line)
 		const net::ipport &ipp{peer.remote};
 		out << setw(40) << left << host;
 
+		out << ' ';
 		if(ipp)
-		    out << ' ' << setw(40) << left << ipp;
+		    out << setw(40) << left << ipp;
 		else
-		    out << ' ' << setw(40) << left << " ";
+		    out << setw(40) << left << " ";
+
+		out << ' ';
+		if(peer.op_resolve)
+		    out << 'R';
+		else
+		    out << ' ';
+
+		out << ' ';
+		if(peer.op_fini)
+		    out << 'F';
+		else
+		    out << ' ';
 
 		out << " " << setw(2) << right << peer.link_count()     << " L"
 		    << " " << setw(3) << right << peer.tag_count()      << " T"
