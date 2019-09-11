@@ -1101,8 +1101,8 @@ try
 	opts->max_background_flushes = 1;
 	opts->max_background_compactions = 1;
 
-	opts->max_total_wal_size = 32_MiB; //TODO: conf
-	opts->db_write_buffer_size = 32_MiB; //TODO: conf
+	opts->max_total_wal_size = 96_MiB; //TODO: conf
+	opts->db_write_buffer_size = 96_MiB; //TODO: conf
 	//opts->max_log_file_size = 32_MiB; //TODO: conf
 
 	//TODO: range_sync
