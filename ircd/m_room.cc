@@ -53,6 +53,11 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 		room_id
 	};
 
+	const bool check_auth
+	{
+		!m::internal(room_id)
+	};
+
 	m::dbs::write_opts opts;
 	opts.appendix.reset();
 	opts.appendix.set(dbs::appendix::ROOM_STATE);
@@ -83,7 +88,7 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 	});
 
 	ssize_t added(0);
-	history.for_each([&opts, &txn, &added, &room_id]
+	history.for_each([&opts, &txn, &added, &room_id, &check_auth]
 	(const auto &type, const auto &state_key, const auto &depth, const auto &event_idx)
 	{
 		const m::event::fetch &event
@@ -96,7 +101,9 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 
 		const auto &[pass, fail]
 		{
-			auth::check_present(event)
+			check_auth?
+				auth::check_present(event):
+				room::auth::passfail{true, {}}
 		};
 
 		if(!pass)
