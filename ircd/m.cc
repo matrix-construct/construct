@@ -3182,10 +3182,21 @@ noexcept
 	if(!registered)
 		return;
 
-	auto *const site(find_site());
+	auto *const site
+	{
+		find_site()
+	};
+
+	// should be non-null  if !registered
 	assert(site != nullptr);
-	assert(site->calling == 0);
+
+	// if someone is calling and inside this hook we shouldn't be destructing
 	assert(calling == 0);
+
+	// if someone is calling the hook::site but inside some other hook, we can
+	// still remove this hook from the site.
+	//assert(site->calling == 0);
+
 	site->del(*this);
 }
 
