@@ -884,6 +884,12 @@ ircd::m::vm::execute_pdu(eval &eval,
 		at<"type"_>(event)
 	};
 
+	if(eval::count(event_id) > 1)
+		throw error
+		{
+			fault::EXISTS, "Event is already being evaluated."
+		};
+
 	if(likely(!opts.replays) && m::exists(event_id))
 		throw error
 		{
@@ -949,12 +955,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(sequence::committed < sequence::get(eval));
 	assert(sequence::retired < sequence::get(eval));
 	sequence::committed = sequence::get(eval);
-	if(likely(!opts.replays) && unlikely(m::exists(event_id)))
-		throw error
-		{
-			fault::EXISTS, "Write commit rejected :Event has already been evaluated."
-		};
-
 	if(likely(opts.write))
 		write_prepare(eval, event);
 

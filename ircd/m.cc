@@ -1318,6 +1318,8 @@ ircd::m::vm::eval::count(const event::id &event_id)
 		}
 		else if(e.event_id == event_id)
 			++ret;
+
+		return true;
 	});
 
 	return ret;
