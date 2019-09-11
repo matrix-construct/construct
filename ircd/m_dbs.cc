@@ -1628,7 +1628,7 @@ decltype(ircd::m::dbs::desc::events__event_json__block__size)
 ircd::m::dbs::desc::events__event_json__block__size
 {
 	{ "name",     "ircd.m.dbs.events._event_json.block.size" },
-	{ "default",  2048L                                      },
+	{ "default",  long(1_KiB)                                },
 };
 
 decltype(ircd::m::dbs::desc::events__event_json__meta_block__size)
