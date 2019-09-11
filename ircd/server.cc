@@ -1747,30 +1747,6 @@ ircd::server::link::submit(request &request)
 }
 
 void
-ircd::server::link::cleanup_canceled()
-{
-	auto it(begin(queue));
-	while(it != end(queue))
-	{
-		const auto &tag{*it};
-		if(tag.committed() || tag.request)
-		{
-			++it;
-			continue;
-		}
-
-		log::dwarning
-		{
-			log, "%s removing abandoned tag:%lu",
-			loghead(*this),
-			tag.state.id,
-		};
-
-		it = queue.erase(it);
-	}
-}
-
-void
 ircd::server::link::cancel_all(std::exception_ptr eptr)
 {
 	for(auto it(begin(queue)); it != end(queue); it = queue.erase(it))
@@ -1813,6 +1789,30 @@ ircd::server::link::cancel_uncommitted(std::exception_ptr eptr)
 		}
 
 		tag.set_exception(eptr);
+		it = queue.erase(it);
+	}
+}
+
+void
+ircd::server::link::cleanup_canceled()
+{
+	auto it(begin(queue));
+	while(it != end(queue))
+	{
+		const auto &tag{*it};
+		if(tag.committed() || tag.request)
+		{
+			++it;
+			continue;
+		}
+
+		log::dwarning
+		{
+			log, "%s removing abandoned tag:%lu",
+			loghead(*this),
+			tag.state.id,
+		};
+
 		it = queue.erase(it);
 	}
 }
