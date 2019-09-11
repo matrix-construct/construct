@@ -108,21 +108,36 @@ ircd::net::dns::resolve(const hostport &hp,
                         const opts &opts,
                         callback cb)
 {
-	assert(ctx::current);
 	if(unlikely(!opts.qtype))
 		throw error
 		{
 			"A query type is required; not specified; cannot be deduced here."
 		};
 
-	if(opts.cache_check)
+	// Try to satisfy from the cache first. This requires a ctx.
+	if(likely(ctx::current && opts.cache_check))
 		if(cache::get(hp, opts, cb))
 			return;
 
+	// Remote query will be made; register this callback as waiting for reply
 	if(cb)
 		cache::waiting.emplace_back(hp, opts, std::move(cb));
 
-	resolver_call(hp, opts);
+	// Check if there is already someone else waiting on the same query
+	const auto count
+	{
+		!cb? 1: std::count_if(begin(cache::waiting), end(cache::waiting), []
+		(const auto &a)
+		{
+			const auto &b(cache::waiting.back());
+			return a.opts.qtype == b.opts.qtype && a.key != b.key;
+		})
+	};
+
+	// When nobody else is already waiting on this query we have to submit it.
+	assert(count >= 1);
+	if(count == 1)
+		resolver_call(hp, opts);
 }
 
 void
