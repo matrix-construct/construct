@@ -71,7 +71,7 @@ ircd::m::pretty(std::ostream &s,
 		s << std::setw(16) << std::right << "[hash]" << " :"
 		  << hash.first
 		  << " "
-		  << unquote(hash.second)
+		  << json::string(hash.second)
 		  << std::endl;
 	}
 
@@ -275,8 +275,8 @@ ircd::m::pretty_msgline(std::ostream &s,
 	switch(hash(json::get<"type"_>(event)))
 	{
 		case "m.room.message"_:
-			s << unquote(content.get("msgtype")) << ' ';
-			s << unquote(content.get("body")) << ' ';
+			s << json::string(content.get("msgtype")) << ' ';
+			s << json::string(content.get("body")) << ' ';
 			break;
 
 		default:
@@ -314,9 +314,9 @@ ircd::m::pretty(std::ostream &s,
 
 		for(const auto &[algorithm, digest] : ref_hash)
 		{
-			s << ' ' << unquote(algorithm);
+			s << ' ' << json::string(algorithm);
 			if(digest)
-				s << ": " << unquote(digest);
+				s << ": " << json::string(digest);
 		}
 
 		s << std::endl;
@@ -334,9 +334,9 @@ ircd::m::pretty(std::ostream &s,
 
 		for(const auto &[algorithm, digest] : ref_hash)
 		{
-			s << ' ' << unquote(algorithm);
+			s << ' ' << json::string(algorithm);
 			if(digest)
-				s << ": " << unquote(digest);
+				s << ": " << json::string(digest);
 		}
 
 		s << std::endl;
@@ -352,13 +352,13 @@ ircd::m::pretty_oneline(std::ostream &s,
 	const auto &auth_events{json::get<"auth_events"_>(prev)};
 	s << "A[ ";
 	for(const json::array auth_event : auth_events)
-		s << unquote(auth_event[0]) << ' ';
+		s << json::string(auth_event[0]) << ' ';
 	s << "] ";
 
 	const auto &prev_events{json::get<"prev_events"_>(prev)};
 	s << "E[ ";
 	for(const json::array prev_event : prev_events)
-		s << unquote(prev_event[0]) << ' ';
+		s << json::string(prev_event[0]) << ' ';
 	s << "] ";
 
 	return s;
@@ -1155,7 +1155,7 @@ ircd::m::get(std::nothrow_t,
 		// The user expects an unquoted string to their closure, the same as
 		// if this value was found in its own column.
 		if(json::type(value) == json::STRING)
-			value = unquote(value);
+			value = json::string(value);
 
 		ret = true;
 		closure(value);
@@ -1427,7 +1427,7 @@ ircd::m::event::fetch::assign_from_json(const string_view &key)
 	const auto event_id
 	{
 		source_event_id?
-			id(unquote(source.at("event_id"))):
+			id(json::string(source.at("event_id"))):
 		event_id_buf?
 			id(event_id_buf):
 			m::event_id(event_idx, event_id_buf, std::nothrow)
@@ -2317,9 +2317,9 @@ try
 		at<"hashes"_>(event)
 	};
 
-	const string_view &hash
+	const json::string &hash
 	{
-		unquote(object.at("sha256"))
+		object.at("sha256")
 	};
 
 	return hash == b64;
@@ -2395,9 +2395,9 @@ ircd::m::signatures(const mutable_buffer &out_,
 
 	size_t i(0);
 	sigs.at(i++) = my_sig;
-	for(const auto &other : json::get<"signatures"_>(event_))
-		if(!my_host(unquote(other.first)))
-			sigs.at(i++) = { other.first, other.second };
+	for(const auto &[host, sig] : json::get<"signatures"_>(event_))
+		if(!my_host(json::string(host)))
+			sigs.at(i++) = { host, sig };
 
 	event = event_;
 	mutable_buffer out{out_};
@@ -2508,8 +2508,8 @@ ircd::m::verify(const event &event,
 		signatures.at(origin)
 	};
 
-	for(const auto &p : origin_sigs)
-		if(verify(event, origin, unquote(p.first)))
+	for(const auto &[host, sig] : origin_sigs)
+		if(verify(event, origin, json::string(host)))
 			return true;
 
 	return false;
@@ -2569,7 +2569,7 @@ ircd::m::verify(const event &event,
 	{
 		[&origin_sigs, &keyid](auto &buf)
 		{
-			b64decode(buf, unquote(origin_sigs.at(keyid)));
+			b64decode(buf, json::string(origin_sigs.at(keyid)));
 		}
 	};
 
@@ -3246,15 +3246,15 @@ ircd::m::event::event(id::buf &buf,
 {
 	source,
 	version == "1"?
-		id{unquote(source.get("event_id"))}:
+		id{json::string(source.get("event_id"))}:
 	version == "2"?
-		id{unquote(source.get("event_id"))}:
+		id{json::string(source.get("event_id"))}:
 	version == "3"?
 		id{id::v3{buf, source}}:
 	version == "4"?
 		id{id::v4{buf, source}}:
 	source.has("event_id")?
-		id{unquote(source.at("event_id"))}:
+		id{json::string(source.at("event_id"))}:
 		id{id::v4{buf, source}},
 }
 {
