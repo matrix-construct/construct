@@ -58,22 +58,11 @@ struct ircd::net::dns::cache::waiter
 {
 	dns::callback callback;
 	dns::opts opts;
-	uint16_t port {0};
+	uint16_t port;
 	string_view key;
 	char keybuf[rfc1035::NAME_BUFSIZE*2];
 
-	waiter(const hostport &hp, const dns::opts &opts, dns::callback &&callback)
-	:callback{std::move(callback)}
-	,opts{opts}
-	,port{net::port(hp)}
-	,key
-	{
-		opts.qtype == 33?
-			make_SRV_key(keybuf, hp, opts):
-			strlcpy(keybuf, host(hp))
-	}
-	{}
-
+	waiter(const hostport &hp, const dns::opts &opts, dns::callback &&callback);
 	waiter(waiter &&) = delete;
 	waiter(const waiter &) = delete;
 	waiter &operator=(waiter &&) = delete;

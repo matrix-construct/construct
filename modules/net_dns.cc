@@ -965,6 +965,37 @@ catch(const std::exception &e)
 }
 
 //
+// cache::waiter
+//
+
+ircd::net::dns::cache::waiter::waiter(const hostport &hp,
+                                      const dns::opts &opts,
+                                      dns::callback &&callback)
+:callback
+{
+	std::move(callback)
+}
+,opts
+{
+	opts
+}
+,port
+{
+	net::port(hp)
+}
+,key
+{
+	opts.qtype == 33?
+		make_SRV_key(keybuf, hp, opts):
+		strlcpy(keybuf, host(hp))
+}
+{
+	this->opts.srv = {};
+	this->opts.proto = {};
+	assert(this->opts.qtype);
+}
+
+//
 // cache room creation
 //
 
