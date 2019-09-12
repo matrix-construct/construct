@@ -1974,8 +1974,6 @@ void
 ircd::server::link::handle_writable_success()
 {
 	assert(socket);
-	net::check(*socket, net::ready::ERROR);
-
 	auto it(begin(queue));
 	while(it != end(queue))
 	{
@@ -2163,8 +2161,6 @@ void
 ircd::server::link::handle_readable_success()
 {
 	assert(socket);
-	net::check(*socket, net::ready::ERROR);
-
 	if(!tag_committed())
 	{
 		discard_read();
