@@ -399,8 +399,10 @@ construct::console::cmd__watch()
 	this->line = line; do
 	{
 		std::cout << '\n';
+		const ircd::ctx::uninterruptible ui;
 		handle_line(); try
 		{
+			ircd::ctx::interruptible(true);
 			const log::console_quiet quiet(false);
 			ctx::sleep(sleep_time);
 		}
