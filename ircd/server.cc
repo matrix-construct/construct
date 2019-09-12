@@ -427,7 +427,7 @@ try
 	if(empty(request.out.head))
 		return "<no head>";
 
-	if(request.tag && request.tag->cancellation)
+	if(request.tag && request.tag->canceled())
 		return "<canceled; out data is gone>";
 
 	const http::request::head head
@@ -476,7 +476,7 @@ try
 	if(empty(request.in.head))
 		return {};
 
-	if(request.tag && request.tag->cancellation)
+	if(request.tag && request.tag->canceled())
 		return {};
 
 	parse::buffer pb{request.in.head};
@@ -509,7 +509,7 @@ try
 	if(empty(request.out.head))
 		return {};
 
-	if(request.tag && request.tag->cancellation)
+	if(request.tag && request.tag->canceled())
 		return {};
 
 	parse::buffer pb{request.out.head};

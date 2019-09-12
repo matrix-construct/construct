@@ -5003,21 +5003,29 @@ try
 
 		if(request.tag)
 			out << std::setw(4) << uint(request.tag->state.status) << "  ";
+		else if(!request.tag)
+			out << std::setw(4) << "----" << "  ";
 		else
 			out << std::setw(4) << "CNCL" << "  ";
 
 		if(request.tag && request.tag->committed())
 			out << std::setw(4) << "PIPE" << "  ";
+		else if(!request.tag)
+			out << std::setw(4) << "----" << "  ";
 		else
 			out << std::setw(4) << "    " << "  ";
 
 		if(request.tag && request.tag->abandoned())
 			out << std::setw(4) << "LEFT" << "  ";
+		else if(!request.tag)
+			out << std::setw(4) << "----" << "  ";
 		else
 			out << std::setw(4) << "    " << "  ";
 
 		if(request.tag && request.tag->canceled())
 			out << std::setw(4) << "CNCL" << "  ";
+		else if(!request.tag)
+			out << std::setw(4) << "----" << "  ";
 		else
 			out << std::setw(4) << "    " << "  ";
 
