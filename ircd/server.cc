@@ -1994,7 +1994,7 @@ ircd::server::link::handle_writable_success()
 			continue;
 		}
 
-		if(tag.canceled() && tag.committed() && tag_committed() <= 1)
+		if(unlikely(tag.canceled() && tag.committed() && tag_committed() <= 1))
 		{
 			log::debug
 			{
@@ -2189,19 +2189,22 @@ bool
 ircd::server::link::process_read(const_buffer &overrun)
 try
 {
+	assert(peer);
+	assert(!queue.empty());
+
 	auto &tag
 	{
 		queue.front()
 	};
 
-	if(!tag.committed())
+	if(unlikely(!tag.committed()))
 	{
 		discard_read(); // Should stumble on a socket error.
 		assert(empty(overrun)); // Tag hasn't sent its data yet, we shouldn't
 		return false;
 	}
 
-	if(tag.canceled() && tag_committed() <= 1)
+	if(unlikely(tag.canceled() && tag_committed() <= 1))
 	{
 		log::debug
 		{
@@ -2221,18 +2224,17 @@ try
 	}
 	while(!done && !empty(overrun));
 
-	if(!done)
+	if(likely(!done))
 	{
 		// This branch represents a read of -EAGAIN.
 		assert(empty(overrun));
-		return false;
+		return done;
 	}
 
-	assert(peer);
 	peer->handle_tag_done(*this, tag);
 	assert(!queue.empty());
 	queue.pop_front();
-	return true;
+	return done;
 }
 catch(const buffer_overrun &e)
 {
