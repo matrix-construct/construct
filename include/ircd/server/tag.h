@@ -90,7 +90,7 @@ struct ircd::server::tag
 	const_buffer read_buffer(const const_buffer &, bool &done, link &);
 
 	tag() = default;
-	tag(server::request &);
+	tag(server::request &) noexcept;
 	tag(tag &&) noexcept;
 	tag(const tag &) = delete;
 	tag &operator=(tag &&) noexcept;
@@ -100,6 +100,7 @@ struct ircd::server::tag
 
 inline
 ircd::server::tag::tag(server::request &request)
+noexcept
 {
 	associate(request, *this);
 }
