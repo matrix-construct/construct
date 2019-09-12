@@ -373,6 +373,7 @@ console_cmd__help(opt &out, const string_view &line)
 		std::min(token_count(line, ' '), cmd::MAX_DEPTH)
 	};
 
+	size_t num(0);
 	for(size_t e(elems+1); e > 0; --e)
 	{
 		const auto name
@@ -410,7 +411,9 @@ console_cmd__help(opt &out, const string_view &line)
 			if(empty(suffix))
 				continue;
 
-			out << suffix << std::endl;
+			out << std::left << std::setw(20) << suffix;
+			if(++num % 4 == 0)
+				out << std::endl;
 		}
 
 		break;
