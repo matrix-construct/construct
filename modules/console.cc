@@ -13748,26 +13748,80 @@ console_cmd__file__download(opt &out, const string_view &line)
 bool
 console_cmd__vm(opt &out, const string_view &line)
 {
-	out << "sequence:       "
+	out << "sequence retired:    "
 	    << std::right << std::setw(10) << m::vm::sequence::retired
 	    << std::endl;
 
-	out << "eval total:     "
+	out << "sequence committed:  "
+	    << std::right << std::setw(10) << m::vm::sequence::committed
+	    << std::endl;
+
+	out << "sequence uncommit:   "
+	    << std::right << std::setw(10) << m::vm::sequence::uncommitted
+	    << std::endl;
+
+	out << "sequence pending:    "
+	    << std::right << std::setw(10) << m::vm::sequence::pending
+	    << std::endl;
+
+	out << "sequence min:max:    "
+	    << std::right << std::setw(10) << m::vm::sequence::min() << ' '
+	    << std::right  << std::setw(10) << m::vm::sequence::max()
+	    << std::endl;
+
+	out << "eval counter:        "
 	    << std::right << std::setw(10) << m::vm::eval::id_ctr
 	    << std::endl;
 
-	out << "eval current:   "
+	out << "eval instances:      "
 	    << std::right << std::setw(10) << size(m::vm::eval::list)
 	    << std::endl;
 
+	out << "eval executing:      "
+	    << std::right << std::setw(10) << m::vm::eval::executing
+	    << std::endl;
+
+	out << "eval injecting:      "
+	    << std::right << std::setw(10) << m::vm::eval::injecting
+	    << std::endl;
+
 	out << std::endl;
+
+	out
+	<< std::right << std::setw(5) << "ID" << " "
+	<< std::right << std::setw(4) << "CTX" << " "
+	<< std::left << std::setw(8) << " " << " "
+	<< std::left << std::setw(24) << "USER" << " "
+	<< std::right << std::setw(5) << "PDUS" << " "
+	<< std::right << std::setw(10) << "SEQUENCE" << " "
+	<< std::right << std::setw(10) << "SEQSHARE" << " "
+	<< std::right << std::setw(10) << "SEQSHARE" << " "
+	<< std::right << std::setw(8) << "CELLS" << " "
+	<< std::right << std::setw(8) << "SIZE" << "  "
+	<< std::right << std::setw(8) << "ROOM VER" << " "
+	<< std::left << std::setw(40) << "ROOM ID" << " "
+	<< std::left << std::setw(60) << "EVENT ID" << " "
+	<< std::endl;
+
 	for(const auto *const &eval : m::vm::eval::list)
 	{
 		assert(eval);
 		assert(eval->ctx);
 
 		out
-		<< loghead(*eval)
+		<< std::right << std::setw(5) << eval->id << " "
+		<< std::right << std::setw(4) << (eval->ctx? ctx::id(*eval->ctx) : 0UL) << " "
+		<< std::left << std::setw(8) << (eval->ctx? trunc(ctx::name(*eval->ctx), 8) : string_view{}) << " "
+		<< std::left << std::setw(24) << trunc(eval->opts->node_id?: eval->opts->user_id, 24) << " "
+		<< std::right << std::setw(5) << eval->pdus.size() << " "
+		<< std::right << std::setw(10) << eval->sequence << " "
+		<< std::right << std::setw(10) << eval->sequence_shared[0] << " "
+		<< std::right << std::setw(10) << eval->sequence_shared[1] << " "
+		<< std::right << std::setw(8) << (eval->txn? eval->txn->size() : 0UL) << " "
+		<< std::right << std::setw(8) << (eval->txn? eval->txn->bytes() : 0UL) << "  "
+		<< std::right << std::setw(8) << eval->room_version << " "
+		<< std::left << std::setw(40) << trunc(eval->room_id, 40) << " "
+		<< std::left << std::setw(60) << trunc(eval->event_id, 60) << " "
 		<< std::endl
 		;
 	}
