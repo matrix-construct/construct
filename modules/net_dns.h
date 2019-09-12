@@ -54,6 +54,7 @@ namespace ircd::net::dns::cache
 	extern const m::room::id::buf room_id;
 	extern m::hookfn<m::vm::eval &> hook;
 	extern std::list<waiter> waiting;
+	extern ctx::mutex mutex;
 	extern ctx::dock dock;
 }
 

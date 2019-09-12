@@ -418,6 +418,9 @@ ircd::net::dns::cache::hook
 decltype(ircd::net::dns::cache::waiting)
 ircd::net::dns::cache::waiting;
 
+decltype(ircd::net::dns::cache::mutex)
+ircd::net::dns::cache::mutex;
+
 decltype(ircd::net::dns::cache::dock)
 ircd::net::dns::cache::dock;
 
@@ -883,42 +886,38 @@ catch(const std::exception &e)
 	};
 }
 
+/// Note complications due to reentrance and other factors:
+/// - This function is invoked from several different places on both the
+/// timeout and receive contexts, in addition to any evaluator context.
+/// - This function calls back to users making DNS queries, and they may
+/// conduct another query in their callback frame -- mid-loop in this
+/// function.
 size_t
 ircd::net::dns::cache::call_waiters(const string_view &type,
                                     const string_view &state_key,
                                     const json::array &rrs)
 {
 	const ctx::uninterruptible::nothrow ui;
-	const scope_notify notify
-	{
-		dock, scope_notify::all
-	};
-
 	size_t ret(0), last; do
 	{
-		waiter *waiter {nullptr};
+		const std::lock_guard lock
+		{
+			mutex
+		};
+
 		auto it(begin(waiting));
-		while(it != end(waiting))
-		{
-			waiter = std::addressof(*it);
-			if(call_waiter(type, state_key, rrs, *waiter))
+		for(last = ret; it != end(waiting); ++it)
+			if(call_waiter(type, state_key, rrs, *it))
+			{
+				it = waiting.erase(it);
+				++ret;
 				break;
-
-			++it;
-		}
-
-		last = ret;
-		for(it = begin(waiting); it != end(waiting); ++it)
-		{
-			if(std::addressof(*it) != waiter)
-				continue;
-
-			it = waiting.erase(it);
-			++ret;
-			break;
-		}
+			}
 	}
-	while(last > ret);
+	while(last < ret);
+
+	if(ret)
+		dock.notify_all();
 
 	return ret;
 }

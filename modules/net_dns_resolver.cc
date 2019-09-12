@@ -315,7 +315,6 @@ try
 			return !tags.empty();
 		});
 
-		ctx::sleep(1500ms);
 		check_timeouts(milliseconds(timeout));
 	}
 }
@@ -333,26 +332,30 @@ catch(const ctx::terminated &)
 void
 ircd::net::dns::resolver::check_timeouts(const milliseconds &timeout)
 {
-	const std::lock_guard lock
-	{
-		mutex
-	};
-
 	const auto cutoff
 	{
 		now<steady_point>() - timeout
 	};
 
-	auto it(begin(tags));
-	while(it != end(tags))
+	std::unique_lock lock
 	{
-		const auto &id(it->first);
+		mutex
+	};
+
+	auto it(begin(tags));
+	for(; it != end(tags); ++it)
+	{
 		auto &tag(it->second);
+		const auto &id(it->first);
 		if(check_timeout(id, tag, cutoff))
-			it = remove(tag, it);
-		else
-			++it;
+		{
+			it = tags.erase(it);
+			return;
+		}
 	}
+
+	lock.unlock();
+	ctx::sleep(1800ms);
 }
 
 bool
