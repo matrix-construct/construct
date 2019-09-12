@@ -120,17 +120,17 @@ ircd::net::dns::resolve(const hostport &hp,
 			return;
 
 	// Remote query will be made; register this callback as waiting for reply
-	if(cb)
-		cache::waiting.emplace_back(hp, opts, std::move(cb));
+	assert(cb);
+	cache::waiting.emplace_back(hp, opts, std::move(cb));
 
 	// Check if there is already someone else waiting on the same query
 	const auto count
 	{
-		!cb? 1: std::count_if(begin(cache::waiting), end(cache::waiting), []
+		std::count_if(begin(cache::waiting), end(cache::waiting), []
 		(const auto &a)
 		{
 			const auto &b(cache::waiting.back());
-			return a.opts.qtype == b.opts.qtype && a.key != b.key;
+			return a.opts.qtype == b.opts.qtype && a.key == b.key;
 		})
 	};
 
