@@ -213,7 +213,6 @@ ircd::m::module_names
 	"m_room_events",
 	"m_room_auth",
 	"m_room_head",
-	"m_room_timeline",
 	"m_room_aliases",
 	"m_room_canonical_alias",
 	"m_room_create",

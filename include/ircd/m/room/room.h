@@ -107,7 +107,6 @@ namespace ircd::m
 struct ircd::m::room
 {
 	struct events;
-	struct timeline;
 	struct state;
 	struct members;
 	struct origins;
@@ -193,7 +192,6 @@ struct ircd::m::room
 };
 
 #include "events.h"
-#include "timeline.h"
 #include "state.h"
 #include "state_space.h"
 #include "state_history.h"
