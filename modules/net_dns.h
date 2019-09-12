@@ -37,6 +37,9 @@ namespace ircd::net::dns::cache
 {
 	struct waiter;
 
+	static bool operator==(const waiter &, const waiter &);
+	static bool operator!=(const waiter &, const waiter &);
+
 	static bool call_waiter(const string_view &, const string_view &, const json::array &, waiter &);
 	static size_t call_waiters(const string_view &, const string_view &, const json::array &);
 	static void handle(const m::event &, m::vm::eval &);

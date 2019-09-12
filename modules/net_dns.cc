@@ -129,8 +129,7 @@ ircd::net::dns::resolve(const hostport &hp,
 		std::count_if(begin(cache::waiting), end(cache::waiting), []
 		(const auto &a)
 		{
-			const auto &b(cache::waiting.back());
-			return a.opts.qtype == b.opts.qtype && a.key == b.key;
+			return a == cache::waiting.back();
 		})
 	};
 
@@ -966,6 +965,24 @@ catch(const std::exception &e)
 
 //
 // cache::waiter
+//
+
+bool
+ircd::net::dns::cache::operator==(const waiter &a, const waiter &b)
+{
+	return a.opts.qtype == b.opts.qtype &&
+	       a.key && b.key &&
+	       a.key == b.key;
+}
+
+bool
+ircd::net::dns::cache::operator!=(const waiter &a, const waiter &b)
+{
+	return !operator==(a, b);
+}
+
+//
+// cache::waiter::waiter
 //
 
 ircd::net::dns::cache::waiter::waiter(const hostport &hp,
