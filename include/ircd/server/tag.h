@@ -43,7 +43,7 @@ struct ircd::server::tag
 	state;
 	ctx::promise<http::code> p;
 	server::request *request {nullptr};
-	std::unique_ptr<char[]> cancellation;
+	unique_buffer<mutable_buffer> cancellation;
 
 	void set_exception(std::exception_ptr);
 	template<class T, class... args> void set_exception(args&&...);

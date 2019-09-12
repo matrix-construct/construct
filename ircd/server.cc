@@ -2575,8 +2575,15 @@ noexcept
 	// user's buffers.
 
 	assert(!tag.cancellation);
-	tag.cancellation = std::make_unique<char[]>(cancellation_size);
-	char *ptr{tag.cancellation.get()};
+	tag.cancellation = unique_buffer<mutable_buffer>
+	{
+		cancellation_size
+	};
+
+	char *ptr
+	{
+		data(tag.cancellation)
+	};
 
 	const mutable_buffer out_head{ptr, size(request.out.head)};
 	tag.request->out.head = out_head;
@@ -2601,7 +2608,7 @@ noexcept
 	}
 	else tag.request->in.content = request.in.content;
 
-	assert(size_t(std::distance(tag.cancellation.get(), ptr)) == cancellation_size);
+	assert(size_t(std::distance(data(tag.cancellation), ptr)) == cancellation_size);
 
 	// If the head is not completely written we have to copy the remainder from where
 	// the socket left off.
@@ -2756,7 +2763,7 @@ noexcept
 	// place in addition to an cancellation buffer. The existence of this
 	// cancellation buffer indicates that we must delete the request here.
 	// This is a little hacky but it gets the job done.
-	if(bool(tag.cancellation))
+	if(!!tag.cancellation)
 		delete &request;
 }
 
@@ -4021,7 +4028,7 @@ bool
 ircd::server::tag::canceled()
 const
 {
-	return bool(cancellation);
+	return !!cancellation;
 }
 
 bool
