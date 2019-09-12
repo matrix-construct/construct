@@ -13,7 +13,6 @@
 
 namespace ircd::prof
 {
-	struct init;
 	struct type;
 	struct event;
 	enum dpl :uint8_t;
@@ -33,9 +32,6 @@ namespace ircd::prof
 	void stop(group &);
 	void start(group &);
 	void reset(group &);
-
-	// Config
-	extern conf::item<bool> enable;
 }
 
 #include "x86.h"
@@ -77,12 +73,6 @@ enum ircd::prof::dpl
 {
 	KERNEL  = 0,
 	USER    = 1,
-};
-
-struct ircd::prof::init
-{
-	init();
-	~init() noexcept;
 };
 
 #if defined(__x86_64__) || defined(__i386__)

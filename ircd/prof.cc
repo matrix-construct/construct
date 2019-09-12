@@ -16,14 +16,6 @@
 #include <boost/chrono/chrono.hpp>
 #include <boost/chrono/process_cpu_clocks.hpp>
 
-decltype(ircd::prof::enable)
-ircd::prof::enable
-{
-	{ "name",     "ircd.prof.enable" },
-	{ "default",  false              },
-	{ "persist",  false              },
-};
-
 uint64_t
 ircd::prof::time_real()
 noexcept
@@ -57,21 +49,6 @@ __attribute__((weak))
 ircd::prof::time_proc()
 {
 	return 0;
-}
-
-//
-// init
-//
-
-__attribute__((weak))
-ircd::prof::init::init()
-{
-}
-
-__attribute__((weak))
-ircd::prof::init::~init()
-noexcept
-{
 }
 
 ///////////////////////////////////////////////////////////////////////////////

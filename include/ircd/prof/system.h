@@ -44,7 +44,6 @@ struct ircd::prof::system
 	// 6: SWITCH_CPU,
 
 	system(sample_t) noexcept;
-	system()
-	:array_type{{{0}}}
-	{}
+	system() :array_type{{{0}}} {}
+	~system() noexcept;
 };

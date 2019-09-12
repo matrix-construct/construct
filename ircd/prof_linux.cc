@@ -154,47 +154,6 @@ catch(const std::exception &e)
 	return nullptr;
 }
 
-//
-// init
-//
-
-ircd::prof::init::init()
-try
-{
-	if(!enable)
-		return;
-
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK,          true,  false);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK,          false,  true);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK,         true,  false);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK,         false,  true);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MIN,    true,  false);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MIN,    false,  true);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MAJ,    true,  false);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MAJ,    false,  true);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES,   true,  false);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES,   false,  true);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS,     true,  false);
-	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS,     false,  true);
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		"Profiling system initialization :%s",
-		e.what()
-	};
-
-	system::group.clear();
-	throw;
-}
-
-ircd::prof::init::~init()
-noexcept
-{
-	system::group.clear();
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // prof/instructions.h
@@ -376,6 +335,28 @@ noexcept
 	hotsample(*this);
 	start(group);
 }
+
+ircd::prof::system::~system()
+noexcept
+{
+}
+
+/*
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK,          true,  false);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_CLOCK,          false,  true);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK,         true,  false);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_TASK_CLOCK,         false,  true);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MIN,    true,  false);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MIN,    false,  true);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MAJ,    true,  false);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_PAGE_FAULTS_MAJ,    false,  true);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES,   true,  false);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CONTEXT_SWITCHES,   false,  true);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS,     true,  false);
+	create(system::group, PERF_TYPE_SOFTWARE, PERF_COUNT_SW_CPU_MIGRATIONS,     false,  true);
+
+	system::group.clear();
+*/
 
 ///////////////////////////////////////////////////////////////////////////////
 //
