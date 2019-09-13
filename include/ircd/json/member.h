@@ -51,15 +51,6 @@ struct ircd::json::member
 	member() = default;
 };
 
-inline
-ircd::json::member::member(const string_view &key,
-                           value &&v)
-:std::pair<value, value>
-{
-	{ key, json::STRING }, std::move(v)
-}
-{}
-
 template<class V>
 inline __attribute__((always_inline))
 ircd::json::member::member(const string_view &key,
