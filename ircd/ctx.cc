@@ -745,7 +745,7 @@ ircd::ctx::this_ctx::interruption_point()
 {
 	// Asserting to know if this call is useless as it's being made in
 	// an uninterruptible scope anyway. It's okay to relax this assertion.
-	assert(interruptible());
+	//assert(interruptible());
 	return cur().interruption_point();
 }
 
