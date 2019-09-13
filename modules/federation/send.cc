@@ -71,11 +71,12 @@ handle_pdus(client &client,
             const json::array &pdus)
 {
 	m::vm::opts vmopts;
-	vmopts.node_id = request.origin;
+	vmopts.warnlog = 0;
+	vmopts.infolog_accept = true;
 	vmopts.nothrows = -1U;
 	vmopts.nothrows &= ~m::vm::fault::INTERRUPT;
-	vmopts.warnlog &= ~m::vm::fault::EXISTS;
-	vmopts.infolog_accept = true;
+	vmopts.node_id = request.origin;
+	vmopts.fetch_state = false;
 	m::vm::eval eval
 	{
 		pdus, vmopts
