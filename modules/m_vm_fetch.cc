@@ -343,7 +343,7 @@ ircd::m::vm::fetch::state(const event &event,
 		m::sounding(room)
 	};
 
-	if(at<"depth"_>(event) < sounding_depth)
+	if(at<"depth"_>(event) > sounding_depth)
 		return;
 
 	auto futures
