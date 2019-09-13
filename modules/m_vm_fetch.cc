@@ -288,8 +288,7 @@ ircd::m::vm::fetch::auth_chain_eval(const event &event,
 try
 {
 	assert(eval.opts);
-	m::vm::opts opts;
-	opts.node_id = eval.opts->node_id;
+	auto opts(*eval.opts);
 	opts.fetch_prev = false;
 	opts.fetch_state = false;
 	opts.infolog_accept = true;
