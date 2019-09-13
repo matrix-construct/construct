@@ -5584,32 +5584,31 @@ console_cmd__client(opt &out, const string_view &line)
 		return a->id < b->id;
 	});
 
-	out << left
+	out << right
 	    << setw(8) << "ID"
 	    << " "
 	    << setw(8) << "SOCKID"
 	    << " "
-	    << left
-	    << setw(50) << "LOCAL"
+	    << setw(6) << "RDY"
 	    << " "
-	    << setw(50) << "REMOTE"
+	    << setw(6) << "REQ"
+	    << " "
+	    << right
+	    << setw(4) << "CTX"
+	    << " "
+	    << left
+	    << setw(11) << "TIME"
 	    << " "
 	    << right
 	    << setw(25) << "BYTES FROM"
 	    << " "
 	    << setw(25) << "BYTES TO"
 	    << " "
-	    << setw(4) << "RDY"
-	    << " "
-	    << setw(4) << "REQ"
-	    << " "
-	    << setw(6) << "MODE"
-	    << " "
-	    << setw(4) << "CTX"
-	    << " "
-	    << setw(11) << "TIME"
+	    << setw(50) << "LOCAL"
 	    << " "
 	    << left
+	    << setw(50) << "REMOTE"
+	    << " "
 	    << std::endl;
 
 	for(const auto &client : clients)
@@ -5623,16 +5622,10 @@ console_cmd__client(opt &out, const string_view &line)
 		else if(reqs && !client->reqctx)
 			continue;
 
-		out << left << setw(8) << client->id;
+		out << right << setw(8) << client->id;
 
 		out << " "
-		    << left << setw(8) << (client->sock? net::id(*client->sock) : 0UL)
-		    ;
-
-		out << " "
-		    << left << setw(50) << local(*client)
-		    << " "
-		    << left << setw(50) << remote(*client)
+		    << right << setw(8) << (client->sock? net::id(*client->sock) : 0UL)
 		    ;
 
 		const std::pair<size_t, size_t> stat
@@ -5643,19 +5636,9 @@ console_cmd__client(opt &out, const string_view &line)
 		};
 
 		out << " "
-		    << right << setw(25) << pretty(pbuf[0], iec(stat.first))
+		    << right << setw(6) << client->ready_count
 		    << " "
-		    << right << setw(25) << pretty(pbuf[1], iec(stat.second))
-		    ;
-
-		out << " "
-		    << right << setw(4) << client->ready_count
-		    << " "
-		    << right << setw(4) << client->request_count
-		    ;
-
-		out << " " << right << setw(6)
-		    << (client->reqctx? "CTX"_sv : "ASYNC"_sv)
+		    << right << setw(6) << client->request_count
 		    ;
 
 		out << " " << right << setw(4)
@@ -5663,16 +5646,25 @@ console_cmd__client(opt &out, const string_view &line)
 		    ;
 
 		out << " "
-		    << right << setw(11) << pretty(pbuf[0], client->timer.at<nanoseconds>(), true)
+		    << left << setw(11) << pretty(pbuf[0], client->timer.at<nanoseconds>(), true)
 		    ;
 
 		out << " "
-		    << left;
+		    << right << setw(25) << pretty(pbuf[0], iec(stat.first))
+		    << " "
+		    << right << setw(25) << pretty(pbuf[1], iec(stat.second))
+		    ;
+
+		out << " "
+		    << right << setw(50) << local(*client)
+		    << " "
+		    << left << setw(50) << remote(*client)
+		    ;
 
 		if(client->request.user_id)
-			out << " USER " << client->request.user_id;
+			out << " " << client->request.user_id;
 		else if(client->request.origin)
-			out << " PEER " << client->request.origin;
+			out << " " << client->request.origin;
 
 		if(client->request.head.method)
 			out << " " << client->request.head.method;
