@@ -163,7 +163,7 @@ bool
 IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::check(const m::room::id &room_id,
                                  const net::hostport &server)
-noexcept try
+try
 {
 	const server_acl server_acl
 	{
