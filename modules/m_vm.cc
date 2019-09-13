@@ -741,14 +741,6 @@ try
 	if(eval.copts && eval.copts->issue)
 		call_hook(issue_hook, eval, event, eval);
 
-	// The conform hook runs static checks on an event's formatting and
-	// composure; these checks only require the event data itself.
-	if(likely(opts.conform))
-	{
-		const ctx::critical_assertion ca;
-		call_hook(conform_hook, eval, event, eval);
-	}
-
 	// Branch on whether the event is an EDU or a PDU
 	const fault ret
 	{
@@ -883,6 +875,14 @@ ircd::m::vm::execute_pdu(eval &eval,
 	{
 		at<"type"_>(event)
 	};
+
+	// The conform hook runs static checks on an event's formatting and
+	// composure; these checks only require the event data itself.
+	if(likely(opts.conform))
+	{
+		const ctx::critical_assertion ca;
+		call_hook(conform_hook, eval, event, eval);
+	}
 
 	if(eval::count(event_id) > 1)
 		throw error

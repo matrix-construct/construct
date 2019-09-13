@@ -160,7 +160,6 @@ try
 	m::vm::copts opts;
 	opts.prop_mask.reset();
 	opts.prop_mask.set("origin");
-	opts.conforming = false;
 	opts.notify_clients = false;
 	m::vm::eval
 	{

@@ -241,7 +241,6 @@ ircd::m::typing::commit::commit(const m::typing &edu)
 	m::vm::copts opts;
 	opts.prop_mask.reset();
 	opts.prop_mask.set("origin");
-	opts.conforming = false;
 	m::vm::eval
 	{
 		event, content, opts

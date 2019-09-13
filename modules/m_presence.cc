@@ -288,7 +288,6 @@ try
 	// Setup for a core injection of an EDU.
 	m::vm::copts opts;
 	opts.prop_mask.reset();            // Clear all PDU properties
-	opts.conforming = false;           // EDU's are not event::conforms checked
 	opts.notify_clients = false;       // Client /sync already saw the ircd.presence
 
 	// Execute

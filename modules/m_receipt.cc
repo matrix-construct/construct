@@ -591,7 +591,6 @@ try
 
 	// EDU options
 	m::vm::copts opts;
-	opts.conforming = false;
 	opts.prop_mask.reset();
 
 	// Don't need to notify clients, the /sync system understood the
