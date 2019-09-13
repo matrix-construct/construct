@@ -3089,7 +3089,7 @@ try
 
 	auto handle
 	{
-		std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1, 0UL)
+		std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1)
 	};
 
 	switch(opts.type)
@@ -3108,31 +3108,43 @@ try
 			{
 				ircd::post(desc[1], [handle(std::move(handle))]
 				{
-					handle(error_code{}, 1UL);
+					handle(error_code{});
 				});
 
-				break;
+				return;
 			}
 
 			// The problem here is that the wait operation gives ec=success on both a
 			// socket error and when data is actually available. We then have to check
 			// using a non-blocking peek in the handler. By doing it this way here we
 			// just get the error in the handler's ec.
-			sd.async_receive(bufs, sd.message_peek, ios::handle(desc[1], std::move(handle)));
-			//sd.async_wait(wait_type::wait_read, std::move(handle));
-			break;
+			//sd.async_wait(bufs, sd.message_peek, ios::handle(desc[1], [handle(std::move(handle))]
+			sd.async_receive(bufs, sd.message_peek, ios::handle(desc[1], [handle(std::move(handle))]
+			(const auto &ec, const size_t bytes)
+			{
+				handle
+				(
+					!ec && bytes?
+						error_code{}:
+					!ec && !bytes?
+						net::eof:
+						make_error_code(ec)
+				);
+			}));
+
+			return;
 		}
 
 		case ready::WRITE:
 		{
 			sd.async_wait(wait_type::wait_write, ios::handle(desc[2], std::move(handle)));
-			break;
+			return;
 		}
 
 		case ready::ERROR:
 		{
 			sd.async_wait(wait_type::wait_error, ios::handle(desc[3], std::move(handle)));
-			break;
+			return;
 		}
 
 		default: throw ircd::not_implemented{};
@@ -3445,8 +3457,7 @@ void
 ircd::net::socket::handle_ready(const std::weak_ptr<socket> wp,
                                 const net::ready type,
                                 const ec_handler callback,
-                                error_code ec,
-                                const size_t bytes)
+                                error_code ec)
 noexcept try
 {
 	using std::errc;
@@ -3462,9 +3473,6 @@ noexcept try
 
 	if(unlikely(!ec && !sd.is_open()))
 		ec = make_error_code(errc::bad_file_descriptor);
-
-	if(type == ready::READ && !ec && bytes == 0)
-		ec = eof;
 
 	#ifdef IRCD_DEBUG_NET_SOCKET_READY
 	const auto has_pending
