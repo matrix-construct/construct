@@ -26,14 +26,9 @@ requirements. Even though all of the old code has been rewritten, the same spiri
 _philosophy of its predecessors_ is still obvious throughout.
 
 Matrix is about giving you control over your communication; Construct is about
-giving you control over Matrix. Whether you are optimizing the entire protocol or
-just filling a need only a few others might share: please support the project by
-contributing back.
+giving you control over Matrix.
 
-<h3 align="right">
-	Join us in <a href="https://matrix.to/#/#test:zemos.net">#test:zemos.net</a>
-	/ <a href="https://matrix.to/#/#zemos-test:matrix.org">#zemos-test:matrix.org</a>
-</h3>
+[![Chat in #test:zemos.net](https://img.shields.io/matrix/test:zemos.net.svg?label=Chat%20in%20%23test%3Azemos.net&logo=matrix&server_fqdn=matrix.org&style=for-the-badge&color=brightgreen)](https://matrix.to/#/#test:zemos.net)
 
 ## Installation
 
