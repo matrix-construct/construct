@@ -13787,6 +13787,7 @@ console_cmd__vm(opt &out, const string_view &line)
 	<< std::left << std::setw(8) << " " << " "
 	<< std::left << std::setw(24) << "USER" << " "
 	<< std::right << std::setw(5) << "PDUS" << " "
+	<< std::right << std::setw(5) << "DONE" << " "
 	<< std::right << std::setw(10) << "SEQUENCE" << " "
 	<< std::right << std::setw(10) << "SEQSHARE" << " "
 	<< std::right << std::setw(10) << "SEQSHARE" << " "
@@ -13802,12 +13803,20 @@ console_cmd__vm(opt &out, const string_view &line)
 		assert(eval);
 		assert(eval->ctx);
 
+		const auto done
+		{
+			!eval->pdus.empty() && eval->event_?
+				std::distance(begin(eval->pdus), eval->event_):
+				0L
+		};
+
 		out
 		<< std::right << std::setw(5) << eval->id << " "
 		<< std::right << std::setw(4) << (eval->ctx? ctx::id(*eval->ctx) : 0UL) << " "
 		<< std::left << std::setw(8) << (eval->ctx? trunc(ctx::name(*eval->ctx), 8) : string_view{}) << " "
 		<< std::left << std::setw(24) << trunc(eval->opts->node_id?: eval->opts->user_id, 24) << " "
 		<< std::right << std::setw(5) << eval->pdus.size() << " "
+		<< std::right << std::setw(5) << done << " "
 		<< std::right << std::setw(10) << eval->sequence << " "
 		<< std::right << std::setw(10) << eval->sequence_shared[0] << " "
 		<< std::right << std::setw(10) << eval->sequence_shared[1] << " "
