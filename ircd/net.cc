@@ -3102,9 +3102,9 @@ try
 			// the wait. ASIO should fix this by adding a ssl::stream.wait() method
 			// which will bail out immediately in this case before passing up to the
 			// real socket wait.
-			static char buf[1];
+			static char buf[64];
 			static const ilist<mutable_buffer> bufs{buf};
-			if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) >= ssize_t(sizeof(buf)))
+			if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) > 0)
 			{
 				ircd::post(desc[1], [handle(std::move(handle))]
 				{
@@ -3148,11 +3148,8 @@ ircd::net::socket::check(std::nothrow_t,
                          const ready &type)
 noexcept
 {
-	assert(type == ready::ERROR);
-
-	static char buf[1];
-	static const ilist<mutable_buffer> bufs{buf};
-	static const std::error_code eof
+	static char buf[64];
+	static const ilist<mutable_buffer> bufs
 	{
 		buf
 	};
@@ -3161,12 +3158,12 @@ noexcept
 		return make_error_code(std::errc::bad_file_descriptor);
 
 	std::error_code ret;
-	if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) >= ssize_t(sizeof(buf)))
+	if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) > 0)
 		return ret;
 
 	assert(!blocking(*this));
 	boost::system::error_code ec;
-	if(sd.receive(bufs, sd.message_peek, ec) >= ssize_t(sizeof(buf)))
+	if(sd.receive(bufs, sd.message_peek, ec) > 0)
 	{
 		assert(!ec.value());
 		return ret;
