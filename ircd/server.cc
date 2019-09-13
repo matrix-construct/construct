@@ -944,22 +944,18 @@ ircd::server::peer::handle_error(link &link,
 		default:
 			break;
 	}
-	else if(ec.category() == get_misc_category()) switch(ec.value())
+	else if(ec == net::eof)
 	{
-		case asio::error::eof:
-			log::debug
-			{
-				log, "%s [%s]: %s",
-				loghead(link),
-				string(rembuf, remote),
-				e.what()
-			};
+		log::debug
+		{
+			log, "%s [%s]: %s",
+			loghead(link),
+			string(rembuf, remote),
+			e.what()
+		};
 
-			link.close(net::dc::RST);
-			return;
-
-		default:
-			break;
+		link.close(net::dc::RST);
+		return;
 	}
 
 	log::derror
@@ -2348,17 +2344,9 @@ ircd::server::link::discard_read()
 		return;
 	}
 
-	static const std::error_code end_of_file
-	{
-		make_error_code(boost::system::error_code
-		{
-			boost::asio::error::eof, boost::asio::error::get_misc_category()
-		})
-	};
-
 	throw std::system_error
 	{
-		end_of_file
+		net::eof
 	};
 }
 

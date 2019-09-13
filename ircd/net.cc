@@ -91,11 +91,14 @@ noexcept
 // net/net.h
 //
 
-/// Network subsystem log facility with dedicated SNOMASK.
-struct ircd::log::log
-ircd::net::log
+decltype(ircd::net::eof)
+ircd::net::eof
 {
-	"net", 'N'
+	make_error_code(boost::system::error_code
+	{
+		boost::asio::error::eof,
+		boost::asio::error::get_misc_category()
+	})
 };
 
 decltype(ircd::net::enable_ipv6)
@@ -104,6 +107,13 @@ ircd::net::enable_ipv6
 	{ "name",     "ircd.net.enable_ipv6"  },
 	{ "default",  true                    },
 	{ "persist",  false                   },
+};
+
+/// Network subsystem log facility
+decltype(ircd::net::log)
+ircd::net::log
+{
+	"net", 'N'
 };
 
 ircd::string_view
@@ -3162,10 +3172,7 @@ noexcept
 	static const ilist<mutable_buffer> bufs{buf};
 	static const std::error_code eof
 	{
-		make_error_code(boost::system::error_code
-		{
-			boost::asio::error::eof, boost::asio::error::get_misc_category()
-		})
+		buf
 	};
 
 	if(unlikely(!sd.is_open()))
@@ -3223,7 +3230,7 @@ try
 	if(!ret)
 		throw std::system_error
 		{
-			boost::asio::error::eof, boost::asio::error::get_misc_category()
+			eof
 		};
 
 	++in.calls;
@@ -3261,7 +3268,7 @@ try
 	if(!ret)
 		throw std::system_error
 		{
-			asio::error::eof, asio::error::get_misc_category()
+			eof
 		};
 
 	++in.calls;
@@ -3478,7 +3485,7 @@ noexcept try
 		ec = make_error_code(errc::bad_file_descriptor);
 
 	if(type == ready::READ && !ec && bytes == 0)
-		ec = error_code{asio::error::eof, asio::error::get_misc_category()};
+		ec = eof;
 
 	#ifdef IRCD_DEBUG_NET_SOCKET_READY
 	const auto has_pending
@@ -3717,9 +3724,8 @@ noexcept try
 	};
 
 	// This ignores EOF and turns it into a success to alleviate user concern.
-	if(ec.category() == asio::error::get_misc_category())
-		if(ec.value() == asio::error::eof)
-			ec = error_code{};
+	if(ec == eof)
+		ec = error_code{};
 
 	sd.close();
 	call_user(callback, ec);

@@ -29,10 +29,9 @@ namespace ircd::net
 	IRCD_EXCEPTION(error, inauthentic)
 	IRCD_EXCEPTION(error, not_found)
 
-	// SNOMASK 'N' "net"
-	extern log::log log;
-
+	extern const std::error_code eof;
 	extern conf::item<bool> enable_ipv6;
+	extern log::log log;
 }
 
 #include "hostport.h"

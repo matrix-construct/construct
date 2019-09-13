@@ -498,11 +498,6 @@ ircd::handle_ec(client &client,
 		case int(errc::timed_out):           return handle_ec_timeout(client);
 		default:                             return handle_ec_default(client, ec);
 	}
-	else if(ec.category() == get_misc_category()) switch(ec.value())
-	{
-		case asio::error::eof:               return handle_ec_eof(client);
-		default:                             return handle_ec_default(client, ec);
-	}
 	else if(ec.category() == get_ssl_category()) switch(uint8_t(ec.value()))
 	{
 		#ifdef SSL_R_SHORT_READ
@@ -510,7 +505,10 @@ ircd::handle_ec(client &client,
 		#endif
 		default:                             return handle_ec_default(client, ec);
 	}
-	else return handle_ec_default(client, ec);
+	else if(ec == net::eof)
+		return handle_ec_eof(client);
+	else
+		return handle_ec_default(client, ec);
 }
 
 /// The client indicated they will not be sending the data we have been
