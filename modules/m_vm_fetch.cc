@@ -566,6 +566,7 @@ ircd::m::vm::fetch::prev(const event &event,
 
 		auto opts(*eval.opts);
 		opts.fetch_prev = false;
+		opts.fetch_state = false;
 		log::debug
 		{
 			log, "%s fetched %zu pdus; evaluating...",
