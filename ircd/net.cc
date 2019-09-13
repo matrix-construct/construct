@@ -3073,69 +3073,40 @@ ircd::net::socket::wait(const wait_opts &opts,
                         wait_callback_ec callback)
 try
 {
+	static ios::descriptor desc[4]
+	{
+		{ "ircd::net::socket::wait ready::ANY"   },
+		{ "ircd::net::socket::wait ready::READ"  },
+		{ "ircd::net::socket::wait ready::WRITE" },
+		{ "ircd::net::socket::wait ready::ERROR" },
+	};
+
 	set_timeout(opts.timeout);
 	const unwind::exceptional unset{[this]
 	{
 		cancel_timeout();
 	}};
 
+	auto handle
+	{
+		std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1, 0UL)
+	};
+
 	switch(opts.type)
 	{
-		case ready::ERROR:
-		{
-			static ios::descriptor desc
-			{
-				"ircd::net::socket::wait ready::ERROR"
-			};
-
-			auto handle
-			{
-				std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1, 0UL)
-			};
-
-			sd.async_wait(wait_type::wait_error, ios::handle(desc, std::move(handle)));
-			break;
-		}
-
-		case ready::WRITE:
-		{
-			static ios::descriptor desc
-			{
-				"ircd::net::socket::wait ready::WRITE"
-			};
-
-			auto handle
-			{
-				std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1, 0UL)
-			};
-
-			sd.async_wait(wait_type::wait_write, ios::handle(desc, std::move(handle)));
-			break;
-		}
-
 		case ready::READ:
 		{
-			static char buf[1];
-			static const ilist<mutable_buffer> bufs{buf};
-			static ios::descriptor desc
-			{
-				"ircd::net::socket::wait ready::READ"
-			};
-
-			auto handle
-			{
-				std::bind(&socket::handle_ready, this, weak_from(*this), opts.type, std::move(callback), ph::_1, ph::_2)
-			};
-
 			// The problem here is that waiting on the sd doesn't account for bytes
 			// read into SSL that we didn't consume yet. If something is stuck in
 			// those userspace buffers, the socket won't know about it and perform
 			// the wait. ASIO should fix this by adding a ssl::stream.wait() method
 			// which will bail out immediately in this case before passing up to the
 			// real socket wait.
+			static char buf[1];
+			static const ilist<mutable_buffer> bufs{buf};
 			if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) >= ssize_t(sizeof(buf)))
 			{
-				ircd::post(desc, [handle(std::move(handle))]
+				ircd::post(desc[1], [handle(std::move(handle))]
 				{
 					handle(error_code{}, 1UL);
 				});
@@ -3147,13 +3118,24 @@ try
 			// socket error and when data is actually available. We then have to check
 			// using a non-blocking peek in the handler. By doing it this way here we
 			// just get the error in the handler's ec.
-			sd.async_receive(bufs, sd.message_peek, ios::handle(desc, std::move(handle)));
+			sd.async_receive(bufs, sd.message_peek, ios::handle(desc[1], std::move(handle)));
 			//sd.async_wait(wait_type::wait_read, std::move(handle));
 			break;
 		}
 
-		default:
-			throw ircd::not_implemented{};
+		case ready::WRITE:
+		{
+			sd.async_wait(wait_type::wait_write, ios::handle(desc[2], std::move(handle)));
+			break;
+		}
+
+		case ready::ERROR:
+		{
+			sd.async_wait(wait_type::wait_error, ios::handle(desc[3], std::move(handle)));
+			break;
+		}
+
+		default: throw ircd::not_implemented{};
 	}
 }
 catch(const boost::system::system_error &e)
