@@ -5067,7 +5067,9 @@ try
 		else
 			out << std::setw(4) << "CNCL" << "  ";
 
-		if(request.tag && request.tag->committed())
+		if(request.tag && request.tag->committed() && bool(request.tag->state.status))
+			out << std::setw(4) << "DONE" << "  ";
+		else if(request.tag && request.tag->committed())
 			out << std::setw(4) << "PIPE" << "  ";
 		else if(!request.tag)
 			out << std::setw(4) << "----" << "  ";
