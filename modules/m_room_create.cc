@@ -132,7 +132,7 @@ ircd::m::auth_room_create(const event &event,
 
 	// b. If the domain of the room_id does not match the domain of the
 	// sender, reject.
-	if(conforms(event).has(conforms::MISMATCH_CREATE_SENDER))
+	if(room::id(at<"room_id"_>(event)).host() != user::id(at<"sender"_>(event)).host())
 		throw FAIL
 		{
 			"m.room.create room_id domain does not match sender domain."
