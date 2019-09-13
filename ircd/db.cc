@@ -4678,6 +4678,7 @@ ircd::db::_make_iterators(database &d,
 	});
 
 	std::vector<Iterator *> ret;
+	const ctx::stack_usage_assertion sua;
 	throw_on_error
 	{
 		d.d->NewIterators(opts, handles, &ret)
@@ -5727,6 +5728,7 @@ ircd::db::del(column &column,
 
 	const std::lock_guard lock{write_mutex};
 	const ctx::uninterruptible::nothrow ui;
+	const ctx::stack_usage_assertion sua;
 	log::debug
 	{
 		log, "'%s' %lu '%s' RANGE DELETE",
@@ -5752,6 +5754,7 @@ ircd::db::del(column &column,
 
 	const std::lock_guard lock{write_mutex};
 	const ctx::uninterruptible::nothrow ui;
+	const ctx::stack_usage_assertion sua;
 	log::debug
 	{
 		log, "'%s' %lu '%s' DELETE key(%zu B)",
@@ -5779,6 +5782,7 @@ ircd::db::write(column &column,
 
 	const std::lock_guard lock{write_mutex};
 	const ctx::uninterruptible::nothrow ui;
+	const ctx::stack_usage_assertion sua;
 	log::debug
 	{
 		log, "'%s' %lu '%s' PUT key(%zu B) val(%zu B)",
@@ -7414,6 +7418,7 @@ ircd::db::commit(database &d,
 
 	const std::lock_guard lock{write_mutex};
 	const ctx::uninterruptible ui;
+	const ctx::stack_usage_assertion sua;
 	throw_on_error
 	{
 		d.d->Write(opts, &batch)
@@ -7569,6 +7574,8 @@ ircd::db::_seek(database::column &c,
                 const rocksdb::ReadOptions &opts,
                 rocksdb::Iterator &it)
 {
+	const ctx::stack_usage_assertion sua;
+
 	#ifdef RB_DEBUG_DB_SEEK
 	database &d(*c.d);
 	const ircd::timer timer;
