@@ -1390,17 +1390,28 @@ ircd::m::vm::eval::eval(const json::array &pdus,
 	for(auto it(begin(events)); it != end(events); ++it) try
 	{
 		auto &event{*it};
-		if(!json::get<"event_id"_>(event))
-			event.event_id = event::id::v4
-			{
-				this->event_id, event
-			};
+
+		// If we set the event_id in the event instance we have to unset
+		// it so other contexts don't see an invalid reference.
+		const unwind event_id{[&event]
+		{
+			event.event_id = json::get<"event_id"_>(event)?
+				event.event_id:
+				m::event::id{};
+		}};
+
+		// We have to set the event_id in the event instance if it didn't come
+		// with the event JSON.
+		if(!opts.edu && !event.event_id)
+			event.event_id = opts.room_version == "3"?
+				event::id{event::id::v3{this->event_id, event}}:
+				event::id{event::id::v4{this->event_id, event}};
 
 		// When a fault::EXISTS would not actually be revealed to the user in
 		// any way we can elide a lot of grief by checking this here first and
 		// skipping the event. The query path will be adequately cached anyway.
 		if(~(opts.warnlog | opts.errorlog) & fault::EXISTS)
-			if(m::exists(event.event_id))
+			if(event.event_id && m::exists(event.event_id))
 				continue;
 
 		operator()(event);

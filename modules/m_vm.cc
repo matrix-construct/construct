@@ -692,6 +692,11 @@ try
 		eval.event_, &event
 	};
 
+	const scope_restore<event::id> eval_event_id
+	{
+		eval.event_id, event.event_id? event.event_id : eval.event_id
+	};
+
 	// Set a member to the room_id for convenient access, without stepping on
 	// any room_id reference that exists there for whatever reason.
 	const scope_restore eval_room_id
