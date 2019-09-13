@@ -48,6 +48,7 @@ handle_edu(client &client,
 
 	m::vm::opts vmopts;
 	vmopts.node_id = request.origin;
+	vmopts.edu = true;
 	vmopts.notify_clients = false;
 	vmopts.notify_servers = false;
 	m::vm::eval eval

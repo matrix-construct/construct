@@ -239,6 +239,7 @@ ircd::m::typing::commit::commit(const m::typing &edu)
 	};
 
 	m::vm::copts opts;
+	opts.edu = true;
 	opts.prop_mask.reset();
 	opts.prop_mask.set("origin");
 	m::vm::eval

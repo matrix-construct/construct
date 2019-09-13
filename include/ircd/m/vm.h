@@ -219,6 +219,10 @@ struct ircd::m::vm::opts
 	/// true or false for all events in a room.
 	bool history {true};
 
+	/// Evaluate in EDU mode. Input must not have event_id and none will be
+	/// generated for it.
+	bool edu {false};
+
 	/// Bypass check for event having already been evaluated so it can be
 	/// replayed through the system (not recommended).
 	bool replays {false};
