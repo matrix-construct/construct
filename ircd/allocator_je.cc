@@ -25,6 +25,7 @@ __attribute__((weak))
 malloc_conf
 {
 	"narenas:1"
+	",tcache:false"
 };
 #endif
 
