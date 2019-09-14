@@ -13796,6 +13796,9 @@ console_cmd__vm(opt &out, const string_view &line)
 	<< std::right << std::setw(8) << "ROOM VER" << " "
 	<< std::left << std::setw(40) << "ROOM ID" << " "
 	<< std::left << std::setw(60) << "EVENT ID" << " "
+	<< std::left << std::setw(20) << "SENDER" << " "
+	<< std::left << std::setw(20) << "TYPE" << " "
+	<< std::left << std::setw(20) << "STATE_KEY" << " "
 	<< std::endl;
 
 	for(const auto *const &eval : m::vm::eval::list)
@@ -13825,6 +13828,9 @@ console_cmd__vm(opt &out, const string_view &line)
 		<< std::right << std::setw(8) << eval->room_version << " "
 		<< std::left << std::setw(40) << trunc(eval->room_id, 40) << " "
 		<< std::left << std::setw(60) << trunc(eval->event_id, 60) << " "
+		<< std::left << std::setw(20) << trunc(eval->event_? json::get<"sender"_>(*eval->event_) : json::string{}, 20) << " "
+		<< std::left << std::setw(20) << trunc(eval->event_? json::get<"type"_>(*eval->event_) : json::string{}, 20) << " "
+		<< std::left << std::setw(20) << trunc(eval->event_? json::get<"state_key"_>(*eval->event_) : json::string{}, 20) << " "
 		<< std::endl
 		;
 	}
