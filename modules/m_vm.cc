@@ -832,10 +832,10 @@ enum ircd::m::vm::fault
 ircd::m::vm::execute_edu(eval &eval,
                          const event &event)
 {
-	if(eval.opts->eval)
+	if(likely(eval.opts->eval))
 		call_hook(eval_hook, eval, event, eval);
 
-	if(eval.opts->post)
+	if(likely(eval.opts->post))
 		call_hook(post_hook, eval, event, eval);
 
 	return fault::ACCEPT;
@@ -889,7 +889,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 		call_hook(conform_hook, eval, event, eval);
 	}
 
-	if(eval::count(event_id) > 1)
+	if(unlikely(eval::count(event_id) > 1))
 		throw error
 		{
 			fault::EXISTS, "Event is already being evaluated."

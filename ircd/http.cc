@@ -292,7 +292,7 @@ ircd::http::request::head::head(parse::capstan &pc,
 		this->version == "HTTP/1.1"
 	};
 
-	if(!version_compatible)
+	if(unlikely(!version_compatible))
 		throw error
 		{
 			HTTP_VERSION_NOT_SUPPORTED, fmt::snstringf
@@ -302,7 +302,7 @@ ircd::http::request::head::head(parse::capstan &pc,
 			}
 		};
 
-	return http::headers{pc, [this, &c](const auto &h)
+	const auto each_header{[this, &c](const auto &h)
 	{
 		if(iequals(h.first, "host"_sv))
 			this->host = h.second;
@@ -340,6 +340,11 @@ ircd::http::request::head::head(parse::capstan &pc,
 		if(c)
 			c(h);
 	}};
+
+	return http::headers
+	{
+		pc, each_header
+	};
 }()}
 {
 }
