@@ -1062,7 +1062,10 @@ ircd::fs::aio::system::handle_descriptor
 	},
 
 	// no deallocation; satisfied by class member unique_ptr
-	[](auto &handler, void *const &ptr, const auto &size) {}
+	[](auto &handler, void *const &ptr, const auto &size) {},
+
+	// continuation
+	true,
 };
 
 /// Handle notifications that requests are complete.
