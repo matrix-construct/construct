@@ -169,10 +169,9 @@ ircd::m::rooms::for_each(const opts &opts,
 		const auto proffer_state{[&opts, &proffer, &ret]
 		(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 		{
-			room::id::buf buf;
-			const auto &room_id
+			const auto room_id
 			{
-				room::id::unswap(state_key, buf)
+				rooms::summary::unmake_state_key(state_key)
 			};
 
 			proffer(room_id);

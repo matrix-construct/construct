@@ -32,6 +32,10 @@ namespace ircd::m::rooms::summary
 {
 	struct fetch;
 
+	// util
+	string_view make_state_key(const mutable_buffer &, const room::id &);
+	room::id::buf unmake_state_key(const string_view &);
+
 	// observers
 	bool has(const room::id &);
 	void chunk(const room &, json::stack::object &chunk);

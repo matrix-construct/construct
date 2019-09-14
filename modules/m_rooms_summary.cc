@@ -10,8 +10,6 @@
 
 namespace ircd::m::rooms::summary
 {
-	static string_view make_state_key(const mutable_buffer &out, const m::room::id &);
-	static room::id::buf unmake_state_key(const string_view &);
 	static void chunk_remote(const room &, json::stack::object &o);
 	static void chunk_local(const room &, json::stack::object &o);
 
@@ -407,6 +405,7 @@ ircd::m::rooms::summary::has(const room::id &room_id)
 }
 
 ircd::m::room::id::buf
+IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::unmake_state_key(const string_view &key)
 {
 	m::room::id::buf ret;
@@ -414,6 +413,7 @@ ircd::m::rooms::summary::unmake_state_key(const string_view &key)
 }
 
 ircd::string_view
+IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::make_state_key(const mutable_buffer &buf,
                                         const m::room::id &room_id)
 {
