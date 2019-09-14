@@ -28,8 +28,10 @@ namespace ircd::fs
 {
 	static uint posix_flags(const std::ios::openmode &mode);
 	static const char *path_str(const string_view &);
-	static void debug_paths();
-	static void debug_support();
+
+	static void init_check_paths();
+	static void init_check_support();
+	static void init_check_limits();
 }
 
 decltype(ircd::fs::log)
@@ -142,8 +144,9 @@ ircd::fs::support_rwf_write_life
 
 ircd::fs::init::init()
 {
-	debug_support();
-	debug_paths();
+	init_check_support();
+	init_check_paths();
+	init_check_limits();
 }
 
 ircd::fs::init::~init()
@@ -2383,7 +2386,24 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &e)
 //
 
 void
-ircd::fs::debug_support()
+ircd::fs::init_check_limits()
+{
+	const auto &nofile
+	{
+		info::rlimit_nofile
+	};
+
+	if(nofile <= 1024)
+		log::warning
+		{
+			log, "Maximum number of open files limited to %zu. Suggest"
+			" increasing for best performance.",
+			nofile
+		};
+}
+
+void
+ircd::fs::init_check_support()
 {
 	const bool support_async
 	{
@@ -2427,7 +2447,7 @@ ircd::fs::debug_support()
 }
 
 void
-ircd::fs::debug_paths()
+ircd::fs::init_check_paths()
 {
 	thread_local char buf[PATH_MAX_LEN + 1];
 	log::debug
