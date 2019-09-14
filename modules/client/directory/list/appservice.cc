@@ -100,7 +100,7 @@ put__list_appservice(client &client,
 		case "public"_:
 			// We set an empty summary for this room because
 			// we already have its state on this server;
-			m::rooms::summary::set(room.room_id, json::object{});
+			m::rooms::summary::set(room.room_id);
 			break;
 
 		case "private"_:
