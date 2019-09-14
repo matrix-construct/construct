@@ -138,6 +138,22 @@ ircd::m::rooms::for_each(const opts &opts,
 	}
 
 	// branch for optimized public rooms searches.
+	if(opts.summary && opts.server)
+	{
+		m::room::aliases::cache::for_each(opts.server, [&proffer, &ret]
+		(const auto &alias, const auto &room_id)
+		{
+			if(!m::rooms::summary::has(room_id))
+				return true;
+
+			proffer(room_id);
+			return ret;
+		});
+
+		return ret;
+	}
+
+	// branch for optimized public rooms searches.
 	if(opts.summary)
 	{
 		const room::id::buf public_room_id
