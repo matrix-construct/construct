@@ -105,15 +105,12 @@ struct ircd::net::socket
 	void wait(const wait_opts &);
 	void wait(const wait_opts &, wait_callback_ec);
 	void wait(const wait_opts &, wait_callback_eptr);
-
-	void cancel() noexcept;
-
-	// Alias to wait()
-	template<class... args> auto operator()(args&&...);
+	template<class... args> auto operator()(args&&...); // Alias to wait()
 
 	void disconnect(const close_opts &, eptr_handler);
 	void handshake(const open_opts &, eptr_handler);
 	void connect(const endpoint &, const open_opts &, eptr_handler);
+	bool cancel() noexcept;
 
 	socket(asio::ssl::context &        = sslv23_client,
 	       boost::asio::io_service &   = ios::get());

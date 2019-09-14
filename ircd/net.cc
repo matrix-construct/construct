@@ -2966,7 +2966,7 @@ catch(const std::exception &e)
 	};
 }
 
-void
+bool
 ircd::net::socket::cancel()
 noexcept
 {
@@ -2974,16 +2974,18 @@ noexcept
 
 	boost::system::error_code ec;
 	sd.cancel(ec);
-	if(likely(!ec))
-		return;
-
-	thread_local char ecbuf[64];
-	log::dwarning
+	if(unlikely(ec))
 	{
-		log, "socket:%lu cancel :%s",
-		this->id,
-		string(ecbuf, ec)
-	};
+		thread_local char ecbuf[64];
+		log::dwarning
+		{
+			log, "socket:%lu cancel :%s",
+			this->id,
+			string(ecbuf, ec)
+		};
+	}
+
+	return !ec;
 }
 
 void
