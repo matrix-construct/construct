@@ -81,10 +81,7 @@ get_conf_item(const string_view &key,
 {
 	static const m::event::fetch::opts fopts
 	{
-		m::event::keys::include
-		{
-			"content"
-		}
+		m::event::keys::include { "content" }
 	};
 
 	const m::room::state state
@@ -140,12 +137,40 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	if(item_error_log) log::error
+	if(item_error_log)
+		log::error
+		{
+			"Failed to set conf item '%s' :%s",
+			json::get<"state_key"_>(event),
+			e.what()
+		};
+}
+
+static void
+conf_updated(const m::event::idx &event_idx)
+noexcept try
+{
+	static const m::event::fetch::opts fopts
 	{
-		"Failed to set conf item '%s' :%s",
-		json::get<"state_key"_>(event),
-		e.what()
+		m::event::keys::include { "content", "state_key" }
 	};
+
+	const m::event::fetch event
+	{
+		event_idx, fopts
+	};
+
+	conf_updated(event);
+}
+catch(const std::exception &e)
+{
+	if(item_error_log)
+		log::error
+		{
+			"Failed to set conf item by event_idx:%lu :%s",
+			event_idx,
+			e.what()
+		};
 }
 
 static void
@@ -171,10 +196,7 @@ init_conf_items()
 {
 	static const m::event::fetch::opts fopts
 	{
-		m::event::keys::include
-		{
-			"content", "state_key"
-		}
+		m::event::keys::include { "content", "state_key" }
 	};
 
 	const m::room::state state
@@ -184,33 +206,30 @@ init_conf_items()
 
 	state.prefetch("ircd.conf.item");
 	state.for_each("ircd.conf.item", []
-	(const m::event &event)
+	(const auto &, const auto &state_key, const auto &event_idx)
 	{
-		conf_updated(event);
+		conf_updated(event_idx);
+		return true;
 	});
 }
 
 static void
 init_conf_item(conf::item<> &item)
 {
-	static const m::event::fetch::opts fopts
-	{
-		m::event::keys::include
-		{
-			"content", "state_key"
-		}
-	};
-
 	const m::room::state state
 	{
-		conf_room, &fopts
+		conf_room
 	};
 
-	state.get(std::nothrow, "ircd.conf.item", item.name, []
-	(const m::event &event)
+	const auto &event_idx
 	{
-		conf_updated(event);
-	});
+		state.get(std::nothrow, "ircd.conf.item", item.name)
+	};
+
+	if(!event_idx)
+		return;
+
+	conf_updated(event_idx);
 }
 
 static void
