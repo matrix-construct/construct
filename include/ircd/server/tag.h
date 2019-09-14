@@ -125,11 +125,10 @@ ircd::server::tag::operator=(tag &&o)
 noexcept
 {
 	this->~tag();
-	new (this) tag
-	{
-		std::move(o)
-	};
-
+	state = std::move(o.state);
+	p = std::move(o.p);
+	request = std::move(o.request);
+	cancellation = std::move(o.cancellation);
 	return *this;
 }
 
