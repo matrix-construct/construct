@@ -80,6 +80,7 @@ namespace ircd::m
 #include "fetch.h"
 #include "breadcrumb_rooms.h"
 #include "media.h"
+#include "search.h"
 
 struct ircd::m::init
 {

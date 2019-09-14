@@ -171,4 +171,11 @@ struct ircd::m::name
 	static constexpr const char *const prev_id {"prev_id"};
 	static constexpr const char *const deleted {"deleted"};
 	static constexpr const char *const access_token_id {"access_token_id"};
+
+	static constexpr const char *const search_term {"search_term"};
+	static constexpr const char *const order_by {"order_by"};
+	static constexpr const char *const event_context {"event_context"};
+	static constexpr const char *const include_state {"include_state"};
+	static constexpr const char *const groupings {"groupings"};
+	static constexpr const char *const filter {"filter"};
 };

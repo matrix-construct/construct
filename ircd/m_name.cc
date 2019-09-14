@@ -150,3 +150,10 @@ constexpr const char *const ircd::m::name::stream_id;
 constexpr const char *const ircd::m::name::prev_id;
 constexpr const char *const ircd::m::name::deleted;
 constexpr const char *const ircd::m::name::access_token_id;
+
+constexpr const char *const ircd::m::name::search_term;
+constexpr const char *const ircd::m::name::order_by;
+constexpr const char *const ircd::m::name::event_context;
+constexpr const char *const ircd::m::name::include_state;
+constexpr const char *const ircd::m::name::groupings;
+constexpr const char *const ircd::m::name::filter;
