@@ -71,7 +71,7 @@ ircd::m::rooms::summary::fetch::limit
 //
 
 IRCD_MODULE_EXPORT
-ircd::m::rooms::summary::fetch::fetch(const net::hostport &hp,
+ircd::m::rooms::summary::fetch::fetch(const string_view &origin,
                                       const string_view &since,
                                       const size_t &limit)
 {
@@ -88,7 +88,7 @@ ircd::m::rooms::summary::fetch::fetch(const net::hostport &hp,
 
 	m::v1::public_rooms request
 	{
-		hp, buf, std::move(opts)
+		origin, buf, std::move(opts)
 	};
 
 	const auto code

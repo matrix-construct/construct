@@ -7760,7 +7760,7 @@ console_cmd__rooms__fetch(opt &out, const string_view &line)
 		"server", "since"
 	}};
 
-	const net::hostport server
+	const string_view &server
 	{
 		param.at("server")
 	};

@@ -54,7 +54,7 @@ struct ircd::m::rooms::summary::fetch
 	std::string next_batch;
 
 	// request
-	fetch(const net::hostport &hp,
+	fetch(const string_view &origin,
 	      const string_view &since   =  {},
 	      const size_t &limit        = 64);
 
