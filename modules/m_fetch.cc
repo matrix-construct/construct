@@ -894,7 +894,8 @@ ircd::m::fetch::_check_event(const request &request,
 			};
 	}
 
-	if(check_signature)
+	// only check signature for v1 events
+	if(check_signature && request.opts.event_id.version() == "1")
 	{
 		const string_view &server
 		{
