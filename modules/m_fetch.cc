@@ -905,7 +905,7 @@ ircd::m::fetch::_check_event(const request &request,
 
 		const json::object &signatures
 		{
-			at<"signatures"_>(event).at("server")
+			at<"signatures"_>(event).at(server)
 		};
 
 		const json::string &key_id
