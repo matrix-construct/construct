@@ -1646,7 +1646,7 @@ decltype(ircd::server::link::tag_max_default)
 ircd::server::link::tag_max_default
 {
 	{ "name",     "ircd.server.link.tag_max" },
-	{ "default",  -1L                        }
+	{ "default",  16384L                     },
 };
 
 decltype(ircd::server::link::tag_commit_max_default)
