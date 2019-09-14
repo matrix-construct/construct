@@ -50,6 +50,21 @@ struct ircd::m::feds::execute
 	execute(const opts &, const closure &);
 };
 
+/// Supported operations.
+enum class ircd::m::feds::op
+:uint8_t
+{
+	noop,
+	head,
+	auth,
+	event,
+	state,
+	backfill,
+	version,
+	keys,
+	send,
+};
+
 /// Result structure created internally when a result arrives and passed to
 /// the user's closure. The structure is merely an alternative to specifying
 /// a lot of arguments to the closure.
@@ -126,18 +141,4 @@ struct ircd::m::feds::opts
 	/// default, and loopback queries are made for result completeness in the
 	/// typical use case.
 	bool exclude_myself {false};
-};
-
-enum class ircd::m::feds::op
-:uint8_t
-{
-	noop,
-	head,
-	auth ,
-	event,
-	state,
-	backfill,
-	version,
-	keys,
-	send,
 };
