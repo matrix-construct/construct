@@ -103,7 +103,7 @@ ircd::m::rooms::for_each(const opts &opts,
 			if(!room::aliases(room).count(opts.server))
 				return;
 
-		if(opts.join_rule)
+		if(opts.join_rule && !opts.summary)
 			if(!join_rule(room, opts.join_rule))
 				return;
 
