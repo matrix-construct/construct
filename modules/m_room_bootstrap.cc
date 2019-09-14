@@ -867,7 +867,7 @@ try
 	m::vm::copts vmopts;
 	vmopts.infolog_accept = true;
 	vmopts.fetch = false;
-	vmopts.eval = false;
+	vmopts.auth = false;
 	vmopts.user_id = user_id;
 	vmopts.room_version = room_version;
 	const vm::eval eval
