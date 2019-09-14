@@ -10,14 +10,14 @@
 
 using namespace ircd;
 
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Client 11.14 :Server Side Search"
 };
 
-resource
-search
+ircd::resource
+search_resource
 {
 	"/_matrix/client/r0/search",
 	{
@@ -29,6 +29,24 @@ search
 	}
 };
 
+static void
+handle_room_events(client &client,
+                   const resource::request &request,
+                   const json::object &,
+                   json::stack::object &);
+
+static resource::response
+post__search(client &client, const resource::request &request);
+
+resource::method
+post_method
+{
+	search_resource, "POST", post__search,
+	{
+		post_method.REQUIRES_AUTH
+	}
+};
+
 resource::response
 post__search(client &client, const resource::request &request)
 {
@@ -37,30 +55,121 @@ post__search(client &client, const resource::request &request)
 		request.query["next_batch"]
 	};
 
-	int64_t count(0);
-	const string_view next_batch{};
-
-	return resource::response
+	const json::object &search_categories
 	{
-		client, json::members
-		{
-			{ "search_categories", json::members
-			{
-				{ "room_events", json::members
-				{
-					{ "count",       count          },
-					{ "results",     json::array{}  },
-					{ "state",       json::object{} },
-					{ "groups",      json::object{} },
-					{ "next_batch",  next_batch     },
-				}}
-			}}
-		}
+		request["search_categories"]
 	};
+
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	json::stack::object result_categories
+	{
+		top, "search_categories"
+	};
+
+	handle_room_events(client, request, search_categories, result_categories);
+	return response;
 }
 
-resource::method
-post_method
+void
+handle_room_events(client &client,
+                   const resource::request &request,
+                   const json::object &search_categories,
+                   json::stack::object &result_categories)
+try
 {
-	search, "POST", post__search
-};
+	if(!search_categories.has("room_events"))
+		return;
+
+	const m::search::room_events room_events
+	{
+		search_categories["room_events"]
+	};
+
+	json::stack::object room_events_result
+	{
+		result_categories, "room_events"
+	};
+
+	json::stack::array results
+	{
+		room_events_result, "results"
+	};
+
+	const json::string &search_term
+	{
+		at<"search_term"_>(room_events)
+	};
+
+	log::debug
+	{
+		//TODO: search::log
+		m::log, "Search [%s] keys:%s order_by:%s inc_state:%b user:%s",
+		search_term,
+		json::get<"keys"_>(room_events),
+		json::get<"order_by"_>(room_events),
+		json::get<"include_state"_>(room_events),
+	};
+
+	long count(0);
+	{
+		json::stack::object result
+		{
+			results
+		};
+
+		json::stack::member
+		{
+			result, "rank", json::value(0L)
+		};
+
+		json::stack::object result_event
+		{
+			result, "result"
+		};
+
+		//m::event::append::opts opts;
+		//m::append(result_event, event, opts);
+	}
+	results.~array();
+
+	json::stack::member
+	{
+		room_events_result, "count", json::value(count)
+	};
+
+	json::stack::array
+	{
+		room_events_result, "highlights"
+	};
+
+	json::stack::object
+	{
+		room_events_result, "state"
+	};
+}
+catch(const std::system_error &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		//TODO: search::log
+		m::log, "Search error :%s", e.what()
+	};
+}
