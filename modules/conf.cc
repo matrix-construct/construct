@@ -208,6 +208,9 @@ init_conf_items()
 	state.for_each("ircd.conf.item", []
 	(const auto &, const auto &state_key, const auto &event_idx)
 	{
+		if(!conf::exists(state_key))
+			return true;
+
 		conf_updated(event_idx);
 		return true;
 	});
