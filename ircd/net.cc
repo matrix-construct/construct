@@ -2076,7 +2076,7 @@ catch(...)
 		"Acceptor ALPN callback unhandled."
 	};
 
-	throw;
+	ircd::terminate();
 }
 
 bool
@@ -2174,7 +2174,7 @@ catch(...)
 		"Acceptor SNI callback unhandled."
 	};
 
-	throw;
+	ircd::terminate();
 }
 
 void
