@@ -3168,8 +3168,11 @@ noexcept
 		buf
 	};
 
-	if(unlikely(!sd.is_open()))
+	if(!sd.is_open())
 		return make_error_code(std::errc::bad_file_descriptor);
+
+	if(fini)
+		return make_error_code(std::errc::not_connected);
 
 	std::error_code ret;
 	if(SSL_peek(ssl.native_handle(), buf, sizeof(buf)) > 0)
@@ -3475,6 +3478,9 @@ noexcept try
 
 	if(unlikely(!ec && !sd.is_open()))
 		ec = make_error_code(errc::bad_file_descriptor);
+
+	if(unlikely(!ec && fini))
+		ec = make_error_code(errc::not_connected);
 
 	#ifdef IRCD_DEBUG_NET_SOCKET_READY
 	const auto has_pending
