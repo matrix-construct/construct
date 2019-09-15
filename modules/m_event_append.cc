@@ -181,7 +181,7 @@ ircd::m::event::append::append(json::stack::object &object,
 	for_each(event, [&keys, &object]
 	(const auto &key, const auto &val_)
 	{
-		if(!keys.has(key))
+		if(!keys.has(key) && key != "redacts"_sv)
 			return true;
 
 		const json::value val
