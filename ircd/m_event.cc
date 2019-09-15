@@ -1406,6 +1406,7 @@ ircd::m::event::fetch::fetch(const opts &opts)
 
 bool
 ircd::m::event::fetch::assign_from_json(const string_view &key)
+try
 {
 	auto &event
 	{
@@ -1444,9 +1445,29 @@ ircd::m::event::fetch::assign_from_json(const string_view &key)
 	assert(event.event_id == event_id);
 	return true;
 }
+catch(const json::parse_error &e)
+{
+	const auto event_id
+	{
+		event_id_buf?
+			id(event_id_buf):
+			m::event_id(event_idx, event_id_buf, std::nothrow)
+	};
+
+	log::critical
+	{
+		m::log, "Fetching event:%lu %s JSON from local database :%s",
+		event_idx,
+		string_view{event_id},
+		e.what(),
+	};
+
+	return false;
+}
 
 bool
 ircd::m::event::fetch::assign_from_row(const string_view &key)
+try
 {
 	auto &event
 	{
@@ -1470,6 +1491,25 @@ ircd::m::event::fetch::assign_from_row(const string_view &key)
 	assert(event_id);
 	event.event_id = event_id;
 	return true;
+}
+catch(const json::parse_error &e)
+{
+	const auto event_id
+	{
+		event_id_buf?
+			id(event_id_buf):
+			m::event_id(event_idx, event_id_buf, std::nothrow)
+	};
+
+	log::critical
+	{
+		m::log, "Fetching event:%lu %s JSON from local database :%s",
+		event_idx,
+		string_view{event_id},
+		e.what(),
+	};
+
+	return false;
 }
 
 bool
