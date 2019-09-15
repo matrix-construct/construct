@@ -837,7 +837,7 @@ ircd::fs::aio::system::submit(request &request)
 		};
 
 		auto handler(std::bind(&system::chase, this));
-		ircd::defer(descriptor, std::move(handler));
+		ircd::post(descriptor, std::move(handler));
 	}
 
 	return true;
