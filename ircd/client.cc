@@ -998,9 +998,15 @@ size_t
 ircd::client::write_all(const const_buffer &buf)
 {
 	if(unlikely(!sock))
-		throw error
+		throw std::system_error
 		{
-			"No socket to client."
+			make_error_code(std::errc::bad_file_descriptor)
+		};
+
+	if(unlikely(sock->fini))
+		throw std::system_error
+		{
+			make_error_code(std::errc::not_connected)
 		};
 
 	return net::write_all(*sock, buf);
