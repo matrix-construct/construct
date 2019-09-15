@@ -24,6 +24,9 @@ template<class buffer>
 struct ircd::buffer::unique_buffer
 :buffer
 {
+	bool operator!() const;
+	explicit operator bool() const;
+
 	buffer release();
 
 	unique_buffer() = default;
@@ -103,4 +106,20 @@ ircd::buffer::unique_buffer<buffer>::release()
 	std::get<0>(*this) = nullptr;
 	std::get<1>(*this) = nullptr;
 	return ret;
+}
+
+template<class buffer>
+ircd::buffer::unique_buffer<buffer>::operator
+bool()
+const
+{
+	return !this->buffer::null();
+}
+
+template<class buffer>
+bool
+ircd::buffer::unique_buffer<buffer>::operator!()
+const
+{
+	return this->buffer::null();
 }
