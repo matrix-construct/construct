@@ -196,12 +196,21 @@ void
 ircd::ios::handler::leave(handler *const &handler)
 noexcept
 {
+	const auto slice_stop
+	{
+		cycles()
+	};
+
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
 
 	assert(descriptor.stats);
 	auto &stats(*descriptor.stats);
-	stats.slice_last = cycles() - handler->slice_start;
+
+	// NOTE: will fail without constant_tsc;
+	// NOTE: may fail without nonstop_tsc after OS suspend mode
+	assert(slice_stop >= handler->slice_start);
+	stats.slice_last = slice_stop - handler->slice_start;
 	stats.slice_total += stats.slice_last;
 
 	assert(handler::current == handler);

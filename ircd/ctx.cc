@@ -1736,8 +1736,11 @@ noexcept
 {
 	_slice_stop = cycles();
 
-	auto &c(cur());
+	// NOTE: will fail without constant_tsc;
+	// NOTE: may fail without nonstop_tsc after OS suspend mode
 	assert(_slice_stop >= _slice_start);
+
+	auto &c(cur());
 	const auto last_slice
 	{
 		_slice_stop - _slice_start
