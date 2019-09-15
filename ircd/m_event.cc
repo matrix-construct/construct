@@ -3262,6 +3262,7 @@ ircd::m::event::event(id::buf &buf,
 
 ircd::m::event::event(const json::object &source,
                       const id &event_id)
+try
 :super_type
 {
 	source
@@ -3280,10 +3281,23 @@ ircd::m::event::event(const json::object &source,
 }
 {
 }
+catch(const json::parse_error &e)
+{
+	log::error
+	{
+		log, "Event %s from JSON source (%zu bytes) :%s",
+		event_id?
+			string_view{event_id}:
+			"<event_id in source>"_sv,
+		string_view{source}.size(),
+		e.what(),
+	};
+}
 
 ircd::m::event::event(const json::object &source,
                       const id &event_id,
                       const keys &keys)
+try
 :super_type
 {
 	source, keys
@@ -3301,4 +3315,15 @@ ircd::m::event::event(const json::object &source,
 		id{},
 }
 {
+}
+catch(const json::parse_error &e)
+{
+	log::error
+	{
+		log, "Event %s from JSON source (%zu bytes) keys:%zu :%s",
+		string_view{event_id},
+		string_view{source}.size(),
+		keys.count(),
+		e.what(),
+	};
 }
