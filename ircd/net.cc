@@ -2840,7 +2840,8 @@ void
 ircd::net::socket::handshake(const open_opts &opts,
                              eptr_handler callback)
 {
-	assert(!fini && sd.is_open());
+	assert(!fini);
+	assert(sd.is_open());
 
 	log::debug
 	{
@@ -2889,6 +2890,7 @@ try
 		return;
 	}
 
+	assert(!fini);
 	log::debug
 	{
 		log, "%s disconnect type:%d user: in:%zu out:%zu",
@@ -2898,9 +2900,9 @@ try
 		out.bytes
 	};
 
+	cancel();
 	assert(!fini);
 	fini = true;
-	cancel();
 
 	if(opts.sopts)
 		set(*this, *opts.sopts);
@@ -3010,6 +3012,7 @@ void
 ircd::net::socket::wait(const wait_opts &opts)
 try
 {
+	assert(!fini);
 	const auto interruption{[this]
 	(ctx::ctx *const &)
 	{
@@ -3083,6 +3086,7 @@ try
 		{ "ircd::net::socket::wait ready::ERROR" },
 	};
 
+	assert(!fini);
 	set_timeout(opts.timeout);
 	const unwind::exceptional unset{[this]
 	{
@@ -3208,6 +3212,7 @@ try
 		asio::transfer_all()
 	};
 
+	assert(!fini);
 	const auto interruption{[this]
 	(ctx::ctx *const &)
 	{
@@ -3246,6 +3251,7 @@ size_t
 ircd::net::socket::read_few(iov&& bufs)
 try
 {
+	assert(!fini);
 	const auto interruption{[this]
 	(ctx::ctx *const &)
 	{
@@ -3283,12 +3289,13 @@ template<class iov>
 size_t
 ircd::net::socket::read_any(iov&& bufs)
 {
-	assert(!blocking(*this));
 	static const auto completion
 	{
 		asio::transfer_all()
 	};
 
+	assert(!fini);
+	assert(!blocking(*this));
 	boost::system::error_code ec;
 	const size_t ret
 	{
@@ -3315,8 +3322,8 @@ template<class iov>
 size_t
 ircd::net::socket::read_one(iov&& bufs)
 {
+	assert(!fini);
 	assert(!blocking(*this));
-
 	boost::system::error_code ec;
 	const size_t ret
 	{
@@ -3349,6 +3356,8 @@ try
 		asio::transfer_all()
 	};
 
+	assert(!fini);
+	assert(!blocking(*this));
 	const auto interruption{[this]
 	(ctx::ctx *const &)
 	{
@@ -3381,6 +3390,8 @@ size_t
 ircd::net::socket::write_few(iov&& bufs)
 try
 {
+	assert(!fini);
+	assert(!blocking(*this));
 	const auto interruption{[this]
 	(ctx::ctx *const &)
 	{
@@ -3418,6 +3429,7 @@ try
 		asio::transfer_all()
 	};
 
+	assert(!fini);
 	assert(!blocking(*this));
 	const size_t ret
 	{
@@ -3441,6 +3453,7 @@ size_t
 ircd::net::socket::write_one(iov&& bufs)
 try
 {
+	assert(!fini);
 	assert(!blocking(*this));
 	const size_t ret
 	{
