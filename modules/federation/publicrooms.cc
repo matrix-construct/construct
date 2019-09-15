@@ -116,7 +116,7 @@ handle_get(client &client,
 				chunk
 			};
 
-			m::rooms::summary::chunk(room_id, obj);
+			m::rooms::summary::get(obj, room_id);
 			next_batch_buf = room_id;
 			return ++count < limit;
 		});

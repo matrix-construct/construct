@@ -528,7 +528,7 @@ try
 		// This call sends a message to the !public room to list this room in the
 		// public rooms list. We set an empty summary for this room because we
 		// already have its state on this server;
-		m::rooms::summary::set(room.room_id, json::object{});
+		m::rooms::summary::set(room.room_id);
 	}
 	catch(const std::exception &e)
 	{

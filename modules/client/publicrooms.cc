@@ -169,7 +169,7 @@ get__publicrooms(client &client,
 		m::rooms::for_each(opts, [&](const m::room::id &room_id)
 		{
 			json::stack::object obj{chunk};
-			m::rooms::summary::chunk(room_id, obj);
+			m::rooms::summary::get(obj, room_id);
 			if(!count && !empty(since))
 				prev_batch_buf = room_id; //TODO: ???
 

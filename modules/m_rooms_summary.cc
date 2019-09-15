@@ -111,7 +111,7 @@ ircd::m::rooms::summary::fetch::fetch(const string_view &origin,
 			summary.at("room_id")
 		};
 
-		summary::set(room_id, summary);
+		summary::set(room_id, origin, summary);
 	}
 
 	this->total_room_count_estimate =
@@ -129,9 +129,22 @@ ircd::m::rooms::summary::fetch::fetch(const string_view &origin,
 // rooms::summary
 //
 
-ircd::m::event::id::buf
+void
 IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::del(const m::room &room)
+{
+	for_each(room, [&room]
+	(const string_view &origin, const event::idx &event_idx)
+	{
+		del(room, origin);
+		return true;
+	});
+}
+
+ircd::m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::rooms::summary::del(const m::room &room,
+                             const string_view &origin)
 {
 	const m::room::state state
 	{
@@ -141,12 +154,12 @@ ircd::m::rooms::summary::del(const m::room &room)
 	char state_key_buf[m::event::STATE_KEY_MAX_SIZE];
 	const auto state_key
 	{
-		make_state_key(state_key_buf, room.room_id)
+		make_state_key(state_key_buf, room.room_id, origin)
 	};
 
 	const m::event::idx &event_idx
 	{
-		state.get(std::nothrow, "ircd.rooms", state_key)
+		state.get(std::nothrow, "ircd.rooms.summary", state_key)
 	};
 
 	if(!event_idx)
@@ -178,35 +191,36 @@ ircd::m::rooms::summary::set(const m::room &room)
 
 	const json::object summary
 	{
-		chunk(room, buf)
+		get(buf, room)
 	};
 
-	return set(room.room_id, summary);
+	return set(room.room_id, my_host(), summary);
 }
 
 ircd::m::event::id::buf
 IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::set(const m::room::id &room_id,
+                             const string_view &origin,
                              const json::object &summary)
 {
 	char state_key_buf[event::STATE_KEY_MAX_SIZE];
 	const auto state_key
 	{
-		make_state_key(state_key_buf, room_id)
+		make_state_key(state_key_buf, room_id, origin)
 	};
 
-	return send(public_room_id, m::me, "ircd.rooms", state_key, summary);
+	return send(public_room_id, m::me, "ircd.rooms.summary", state_key, summary);
 }
 
 ircd::json::object
 IRCD_MODULE_EXPORT
-ircd::m::rooms::summary::chunk(const m::room &room,
-                               const mutable_buffer &buf)
+ircd::m::rooms::summary::get(const mutable_buffer &buf,
+                             const m::room &room)
 {
 	json::stack out{buf};
 	{
 		json::stack::object obj{out};
-		chunk(room, obj);
+		get(obj, room);
 	}
 
 	return json::object
@@ -217,42 +231,122 @@ ircd::m::rooms::summary::chunk(const m::room &room,
 
 void
 IRCD_MODULE_EXPORT
-ircd::m::rooms::summary::chunk(const m::room &room,
-                               json::stack::object &obj)
+ircd::m::rooms::summary::get(json::stack::object &obj,
+                             const m::room &room)
 {
 	return exists(room)?
 		chunk_local(room, obj):
 		chunk_remote(room, obj);
 }
 
-void
-ircd::m::rooms::summary::chunk_remote(const m::room &room,
-                                      json::stack::object &obj)
+bool
+IRCD_MODULE_EXPORT
+ircd::m::rooms::summary::has(const room::id &room_id,
+                             const string_view &origin)
 {
-	const m::room publix
+	return !for_each(room_id, [&origin]
+	(const string_view &_origin, const json::object &summary)
+	{
+		if(!origin)
+			return false;
+
+		if(origin && _origin == origin)
+			return false;
+
+		return true;
+	});
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::rooms::summary::for_each(const room::id &room_id,
+                                  const closure &closure)
+{
+	return for_each(room_id, [&closure]
+	(const string_view &origin, const event::idx &event_idx)
+	{
+		bool ret{true};
+		m::get(std::nothrow, event_idx, "content", [&closure, &origin, &ret]
+		(const json::object &content)
+		{
+			ret = closure(origin, content);
+		});
+
+		return ret;
+	});
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::rooms::summary::for_each(const room::id &room_id,
+                                  const closure_idx &closure)
+{
+	const m::room::state state
 	{
 		public_room_id
 	};
 
-	char state_key_buf[event::STATE_KEY_MAX_SIZE];
+	char state_key_buf[m::event::STATE_KEY_MAX_SIZE];
 	const auto state_key
 	{
-		make_state_key(state_key_buf, room.room_id)
+		make_state_key(state_key_buf, room_id, string_view{})
 	};
 
-	publix.get("ircd.rooms", state_key, [&obj]
-	(const m::event &event)
+	bool ret{true};
+	state.for_each("ircd.rooms.summary", state_key, [&room_id, &closure, &ret]
+	(const auto &type, const auto &state_key, const auto &event_idx)
 	{
-		const json::object &summary
+		const auto &[_room_id, origin]
 		{
-			json::at<"content"_>(event)
+			unmake_state_key(state_key)
 		};
 
-		for(const auto &member : summary)
-			json::stack::member m
-			{
-				obj, member.first, member.second
-			};
+		if(_room_id != room_id)
+			return false;
+
+		if(!closure(origin, event_idx))
+			ret = false;
+
+		return ret;
+	});
+
+	return ret;
+}
+
+std::pair<ircd::m::room::id, ircd::string_view>
+IRCD_MODULE_EXPORT
+ircd::m::rooms::summary::unmake_state_key(const string_view &key)
+{
+	return rsplit(key, '!');
+}
+
+ircd::string_view
+IRCD_MODULE_EXPORT
+ircd::m::rooms::summary::make_state_key(const mutable_buffer &buf,
+                                        const m::room::id &room_id,
+                                        const string_view &origin)
+{
+	return fmt::sprintf
+	{
+		buf, "%s!%s",
+		string_view{room_id},
+		origin,
+	};
+}
+
+//
+// internal
+//
+
+void
+ircd::m::rooms::summary::chunk_remote(const m::room &room,
+                                      json::stack::object &obj)
+{
+	for_each(room, [&obj]
+	(const string_view &origin, const json::object &summary)
+	{
+		obj.append(summary);
+		return false;
 	});
 }
 
@@ -384,38 +478,4 @@ ircd::m::rooms::summary::chunk_local(const m::room &room,
 			}
 		};
 	});
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::rooms::summary::has(const room::id &room_id)
-{
-	const m::room::state state
-	{
-		public_room_id
-	};
-
-	char state_key_buf[m::event::STATE_KEY_MAX_SIZE];
-	const auto state_key
-	{
-		make_state_key(state_key_buf, room_id)
-	};
-
-	return state.has("ircd.rooms", state_key);
-}
-
-ircd::m::room::id::buf
-IRCD_MODULE_EXPORT
-ircd::m::rooms::summary::unmake_state_key(const string_view &key)
-{
-	m::room::id::buf ret;
-	return m::room::id::unswap(key, ret);
-}
-
-ircd::string_view
-IRCD_MODULE_EXPORT
-ircd::m::rooms::summary::make_state_key(const mutable_buffer &buf,
-                                        const m::room::id &room_id)
-{
-	return room_id.swap(buf);
 }

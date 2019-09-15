@@ -95,14 +95,6 @@ ircd::m::rooms::for_each(const opts &opts,
 			if(opts.server != room_id.host())
 				return;
 
-		if(opts.summary)
-			if(!summary::has(room))
-				return;
-
-		if(opts.server && opts.summary)
-			if(!room::aliases(room).count(opts.server))
-				return;
-
 		if(opts.join_rule && !opts.summary)
 			if(!join_rule(room, opts.join_rule))
 				return;
@@ -138,22 +130,6 @@ ircd::m::rooms::for_each(const opts &opts,
 	}
 
 	// branch for optimized public rooms searches.
-	if(opts.summary && opts.server)
-	{
-		m::room::aliases::cache::for_each(opts.server, [&proffer, &ret]
-		(const auto &alias, const auto &room_id)
-		{
-			if(!m::rooms::summary::has(room_id))
-				return true;
-
-			proffer(room_id);
-			return ret;
-		});
-
-		return ret;
-	}
-
-	// branch for optimized public rooms searches.
 	if(opts.summary)
 	{
 		const room::id::buf public_room_id
@@ -166,19 +142,21 @@ ircd::m::rooms::for_each(const opts &opts,
 			public_room_id
 		};
 
-		const auto proffer_state{[&opts, &proffer, &ret]
+		state.for_each("ircd.rooms.summary", [&opts, &proffer, &ret]
 		(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 		{
-			const auto room_id
+			const auto &[room_id, origin]
 			{
 				rooms::summary::unmake_state_key(state_key)
 			};
 
+			if(opts.server && origin != opts.server)
+				return true;
+
 			proffer(room_id);
 			return ret;
-		}};
+		});
 
-		state.for_each("ircd.rooms", proffer_state);
 		return ret;
 	}
 

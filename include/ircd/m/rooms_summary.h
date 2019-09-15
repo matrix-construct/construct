@@ -15,20 +15,25 @@
 namespace ircd::m::rooms::summary
 {
 	struct fetch;
+	using closure = std::function<bool (const string_view &, const json::object &)>;
+	using closure_idx = std::function<bool (const string_view &, const event::idx &)>;
 
-	// util
-	string_view make_state_key(const mutable_buffer &, const room::id &);
-	room::id::buf unmake_state_key(const string_view &);
+	string_view make_state_key(const mutable_buffer &, const room::id &, const string_view &origin);
+	std::pair<room::id, string_view> unmake_state_key(const string_view &);
 
-	// observers
-	bool has(const room::id &);
-	void chunk(const room &, json::stack::object &chunk);
-	json::object chunk(const room &, const mutable_buffer &out);
+	bool for_each(const room::id &, const closure_idx &);
+	bool for_each(const room::id &, const closure &);
 
-	// mutators
-	event::id::buf set(const room::id &, const json::object &summary);
+	bool has(const room::id &, const string_view &origin = {});
+
+	void get(json::stack::object &chunk, const room &);
+	json::object get(const mutable_buffer &out, const room &);
+
+	event::id::buf set(const room::id &, const string_view &origin, const json::object &summary);
 	event::id::buf set(const room &);
-	event::id::buf del(const room &);
+
+	event::id::buf del(const room &, const string_view &origin);
+	void del(const room &);
 }
 
 struct ircd::m::rooms::summary::fetch
