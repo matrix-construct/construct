@@ -17,7 +17,6 @@ namespace ircd::m::bootstrap
 	static send_join1_response send_join(const string_view &host, const room::id &, const event::id &, const json::object &event);
 	static void broadcast_join(const room &, const event &, const string_view &exclude);
 	static void fetch_keys(const json::array &events);
-	static void eval_lazy_chain(const json::array &auth_chain);
 	static void eval_auth_chain(const json::array &auth_chain);
 	static void eval_state(const json::array &state);
 	static void backfill(const string_view &host, const room::id &, const event::id &);
@@ -27,8 +26,6 @@ namespace ircd::m::bootstrap
 	extern conf::item<seconds> send_join_timeout;
 	extern conf::item<seconds> backfill_timeout;
 	extern conf::item<size_t> backfill_limit;
-	extern conf::item<bool> backfill_first;
-	extern conf::item<bool> lazychain_enable;
 	extern log::log log;
 }
 
@@ -49,42 +46,6 @@ decltype(ircd::m::bootstrap::log)
 ircd::m::bootstrap::log
 {
 	"m.room.bootstrap"
-};
-
-decltype(ircd::m::bootstrap::lazychain_enable)
-ircd::m::bootstrap::lazychain_enable
-{
-	{ "name",         "ircd.client.rooms.join.lazychain.enable" },
-	{ "default",      false                                     },
-	{ "description",
-
-	R"(
-	During the room join bootstrap process, this controls whether the
-	auth_chain in the response is only selectively processed. This is a
-	safe optimization that allows the bootstrap to progress to the next
-	phase. The skipped events are eventually processed during the state
-	evaluation phase.
-	)"}
-};
-
-decltype(ircd::m::bootstrap::backfill_first)
-ircd::m::bootstrap::backfill_first
-{
-	{ "name",         "ircd.client.rooms.join.backfill.first" },
-	{ "default",      true                                    },
-	{ "description",
-
-	R"(
-	During the room join bootstrap process, this controls whether backfilling
-	recent timeline events occurs before processing the room state. If true,
-	user experience may be improved because their client's timeline is
-	immediately populated with recent messages. Otherwise, the backfill will be
-	delayed until after all state events have been processed first. Setting
-	this to false is safer, as some clients may be confused by timeline events
-	which are missing related state events. Note that fundamental state events
-	for the room are still processed first regardless of this setting. Also
-	known as the Hackfill optimization.
-	)"}
 };
 
 decltype(ircd::m::bootstrap::backfill_limit)
@@ -276,20 +237,12 @@ try
 	};
 
 	m::bootstrap::fetch_keys(auth_chain);
-
-	if(m::bootstrap::lazychain_enable)
-		m::bootstrap::eval_lazy_chain(auth_chain);
-	else
-		m::bootstrap::eval_auth_chain(auth_chain);
-
-	if(m::bootstrap::backfill_first)
-		m::bootstrap::backfill(host, room_id, event_id);
+	m::bootstrap::eval_auth_chain(auth_chain);
 
 	m::bootstrap::fetch_keys(state);
 	m::bootstrap::eval_state(state);
 
-	if(!m::bootstrap::backfill_first)
-		m::bootstrap::backfill(host, room_id, event_id);
+	m::bootstrap::backfill(host, room_id, event_id);
 
 	// After we just received and processed all of this state with only a
 	// recent backfill our system doesn't know if state events which are
@@ -595,73 +548,6 @@ catch(const std::exception &e)
 	// This needs to rethrow because any failure coming out of vm::eval to
 	// process the auth_chain is a showstopper.
 	throw;
-}
-
-void
-ircd::m::bootstrap::eval_lazy_chain(const json::array &auth_chain)
-{
-	m::vm::opts opts;
-	opts.warnlog &= ~vm::fault::EXISTS;
-	opts.infolog_accept = true;
-	opts.fetch = false;
-
-	// Parse and sort the auth_chain first so we don't have to keep scanning
-	// the JSON to do the various operations that follow.
-	std::vector<m::event> events(begin(auth_chain), end(auth_chain));
-	std::sort(begin(events), end(events));
-
-	// When we selectively evaluate the auth_chain below we may need to feed
-	// the vm certain member events first to avoid complications; this
-	// subroutine will find them.
-	const auto find_member{[&events]
-	(const m::user::id &user_id, const int64_t &depth)
-	{
-		const auto it(std::find_if(rbegin(events), rend(events), [&user_id, &depth]
-		(const m::event &event)
-		{
-			return json::get<"depth"_>(event) < depth &&
-			       json::get<"type"_>(event) == "m.room.member" &&
-			       json::get<"state_key"_>(event) == user_id;
-		}));
-
-		if(unlikely(it == rend(events)))
-			throw m::NOT_FOUND
-			{
-				"No m.room.member event for %s found in auth chain.",
-				string_view{user_id}
-			};
-
-		return *it;
-	}};
-
-	for(const auto &event : events)
-	{
-		// Skip all events which aren't power events. We don't need them
-		// here yet. They can wait until state evaluation later.
-		if(!m::room::auth::is_power_event(event))
-			continue;
-
-		// Find the member event for the sender of this power event so the
-		// system is aware of their identity first; this isn't done for the
-		// create event because the vm expects that first regardless.
-		if(json::get<"type"_>(event) != "m.room.create")
-		{
-			const auto &member_event
-			{
-				find_member(at<"sender"_>(event), at<"depth"_>(event))
-			};
-
-			m::vm::eval
-			{
-				member_event, opts
-			};
-		}
-
-		m::vm::eval
-		{
-			event, opts
-		};
-	}
 }
 
 void
