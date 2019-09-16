@@ -1233,7 +1233,21 @@ ircd::m::exists(const id::room &room_id)
 		dbs::room_events.begin(room_id)
 	};
 
-	return bool(it);
+	if(!it)
+		return false;
+
+	const auto &[depth, event_idx]
+	{
+		dbs::room_events_key(it->first)
+	};
+
+	if(likely(depth < 2UL))
+		return true;
+
+	if(my_host(room_id.host()) && creator(room_id, m::me))
+		return true;
+
+	return false;
 }
 
 bool
