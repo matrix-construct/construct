@@ -127,7 +127,7 @@ construct::console::console()
 	"console",
 	stack_sz,
 	std::bind(&console::main, this),
-	ircd::context::POST
+	ircd::context::DISPATCH,
 }
 ,runlevel_changed
 {
