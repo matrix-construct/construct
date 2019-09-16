@@ -12,7 +12,7 @@
 
 namespace ircd::m::sync
 {
-	static bool room_state_append(data &, json::stack::array &, const m::event &, const m::event::idx &);
+	static bool room_state_append(data &, json::stack::array &, const m::event &, const m::event::idx &, const bool &query_prev);
 
 	static bool room_state_phased_member_events(data &, json::stack::array &);
 	static bool room_state_phased_events(data &);
@@ -163,7 +163,7 @@ ircd::m::sync::room_state_linear_events(data &data)
 			};
 
 			if(event.valid)
-				ret |= room_state_append(data, array, event, event_idx);
+				ret |= room_state_append(data, array, event, event_idx, true);
 
 			return true;
 		}
@@ -196,7 +196,7 @@ ircd::m::sync::room_state_linear_events(data &data)
 		state.get(std::nothrow, "m.room.member", sender, append);
 	}
 
-	ret |= room_state_append(data, array, *data.event, data.event_idx);
+	ret |= room_state_append(data, array, *data.event, data.event_idx, true);
 	return ret;
 }
 
@@ -282,7 +282,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 
 			assert(event.valid);
 			const std::lock_guard lock{mutex};
-			ret |= room_state_append(data, array, event, event_idx);
+			ret |= room_state_append(data, array, event, event_idx, false);
 		}
 	};
 
@@ -340,7 +340,7 @@ ircd::m::sync::room_state_phased_events(data &data)
 		(const m::event::idx &event_idx, const m::event &event)
 		{
 			const std::lock_guard lock{mutex};
-			ret |= room_state_append(data, array, event, event_idx);
+			ret |= room_state_append(data, array, event, event_idx, true);
 		}
 	};
 
@@ -353,6 +353,8 @@ ircd::m::sync::room_state_phased_events(data &data)
 			{
 				data.room->get(std::nothrow, key.first, key.second)
 			};
+
+			m::prefetch(m::room::state::prev(event_idx), "content");
 
 			const m::event::fetch event
 			{
@@ -436,7 +438,7 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 				return;
 
 			last.at(ret) = strlcpy(buf.at(ret), sender);
-			room_state_append(data, array, event, sender_idx);
+			room_state_append(data, array, event, sender_idx, false);
 			++ret;
 		});
 
@@ -447,7 +449,8 @@ bool
 ircd::m::sync::room_state_append(data &data,
                                  json::stack::array &events,
                                  const m::event &event,
-                                 const m::event::idx &event_idx)
+                                 const m::event::idx &event_idx,
+                                 const bool &query_prev)
 {
 	m::event::append::opts opts;
 	opts.event_idx = &event_idx;
@@ -455,5 +458,6 @@ ircd::m::sync::room_state_append(data &data,
 	opts.user_room = &data.user_room;
 	opts.query_txnid = false;
 	opts.room_depth = &data.room_depth;
+	opts.query_prev_state = query_prev;
 	return m::event::append(events, event, opts);
 }
