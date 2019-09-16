@@ -1241,20 +1241,15 @@ ircd::m::internal(const id::room &room_id)
 bool
 ircd::m::exists(const id::room &room_id)
 {
-	const auto it
+	const m::room::events it
 	{
-		dbs::room_events.begin(room_id)
+		room_id, 0UL
 	};
 
 	if(!it)
 		return false;
 
-	const auto &[depth, event_idx]
-	{
-		dbs::room_events_key(it->first)
-	};
-
-	if(likely(depth < 2UL))
+	if(likely(it.depth() < 2UL))
 		return true;
 
 	if(my_host(room_id.host()) && creator(room_id, m::me))
