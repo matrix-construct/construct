@@ -481,7 +481,7 @@ try
 	opts.op = fetch::op::event;
 	opts.room_id = room_id;
 	opts.event_id = event_id;
-	opts.limit = 1;
+	opts.backfill_limit = 1;
 	opts.hint = hint;
 	auto future
 	{

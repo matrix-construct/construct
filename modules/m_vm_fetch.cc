@@ -636,9 +636,9 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 		opts.op = m::fetch::op::backfill;
 		opts.room_id = room.room_id;
 		opts.event_id = prev_id;
-		opts.limit = size_t(depth_gap);
-		opts.limit = std::min(opts.limit, eval.opts->fetch_prev_limit);
-		opts.limit = std::min(opts.limit, size_t(prev_backfill_limit));
+		opts.backfill_limit = size_t(depth_gap);
+		opts.backfill_limit = std::min(opts.backfill_limit, eval.opts->fetch_prev_limit);
+		opts.backfill_limit = std::min(opts.backfill_limit, size_t(prev_backfill_limit));
 		log::debug
 		{
 			log, "%s requesting backfill off %s; depth:%ld viewport:%ld room:%ld gap:%ld limit:%zu",
@@ -648,7 +648,7 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 			viewport_depth,
 			room_depth,
 			depth_gap,
-			opts.limit,
+			opts.backfill_limit,
 		};
 
 		ret.emplace_front(m::fetch::start(opts));

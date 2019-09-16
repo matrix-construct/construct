@@ -77,11 +77,6 @@ struct ircd::m::fetch::opts
 	/// required, we'll try to use the top head from any room_id.
 	event::id event_id;
 
-	/// If the op makes use of a spec limit parameter that can be controlled
-	/// by the user here. The default of 0 will be replaced by some internal
-	/// configured limit like 8 or 16 etc.
-	size_t limit {0};
-
 	/// The principal allocation size. This is passed up the stack to m::fed,
 	/// server::request and ends up containing the request head and content,
 	/// and response head. The response content is usually dynamically
@@ -96,6 +91,15 @@ struct ircd::m::fetch::opts
 	/// the normal room_id based operation is the fallback. If the room
 	/// is not known to us, it would be best to set this.
 	string_view hint;
+
+	//
+	// special options
+	//
+
+	/// If the op makes use of a spec limit parameter that can be controlled
+	/// by the user here. The default of 0 will be replaced by some internal
+	/// configured limit like 8 or 16 etc.
+	size_t backfill_limit {0};
 };
 
 struct ircd::m::fetch::result

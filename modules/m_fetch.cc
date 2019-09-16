@@ -485,7 +485,7 @@ try
 			v1::backfill::opts opts;
 			opts.remote = remote;
 			opts.dynamic = true;
-			opts.limit = request.opts.limit?: 64;
+			opts.limit = request.opts.backfill_limit?: 64;
 			opts.event_id = request.opts.event_id;
 			request.future = std::make_unique<v1::backfill>
 			(
