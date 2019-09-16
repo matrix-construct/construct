@@ -23,6 +23,7 @@ namespace ircd::m::fetch
 	extern ctx::mutex requests_mutex;
 	extern std::set<request, std::less<>> requests;
 	extern ctx::context request_context;
+	extern conf::item<size_t> backfill_limit_default;
 	extern conf::item<size_t> requests_max;
 	extern conf::item<seconds> timeout;
 	extern conf::item<bool> enable;
@@ -80,6 +81,13 @@ ircd::m::fetch::requests_max
 {
 	{ "name",     "ircd.m.fetch.requests.max" },
 	{ "default",  256L                        },
+};
+
+decltype(ircd::m::fetch::backfill_limit_default)
+ircd::m::fetch::backfill_limit_default
+{
+	{ "name",     "ircd.m.fetch.backfill.limit.default" },
+	{ "default",  96L                                   },
 };
 
 decltype(ircd::m::fetch::request_context)
@@ -485,7 +493,8 @@ try
 			v1::backfill::opts opts;
 			opts.remote = remote;
 			opts.dynamic = true;
-			opts.limit = request.opts.backfill_limit?: 64;
+			opts.limit = request.opts.backfill_limit;
+			opts.limit = opts.limit?: size_t(backfill_limit_default);
 			opts.event_id = request.opts.event_id;
 			request.future = std::make_unique<v1::backfill>
 			(
