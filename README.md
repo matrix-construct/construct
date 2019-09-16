@@ -93,8 +93,14 @@ problems.
 
 [![](https://img.shields.io/badge/License-BSD-brightgreen.svg?label=%20license&style=for-the-badge&color=brightgreen)]() [![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?label=contributions&style=for-the-badge&color=brightgreen)]()
 
+##### DOCUMENTATION
+
 Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
 directory is `doc/html`. Browse to `doc/html/index.html`.
+
+##### ARCHITECTURE
+
+See the [ARCHITECTURE](doc/ARCHITECTURE.md) overview.
 
 ## Plan
 

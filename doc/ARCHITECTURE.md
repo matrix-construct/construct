@@ -11,31 +11,30 @@ linking to `libircd`. That `io_service` must be orchestrated by the executable
 at its discretion; typically the embedder's call to `ios.run()` is the only
 place the process will _block_.
 
-> Applications are limited by one or more of the following bounds:
-> - Computing: program is limited by the efficiency of the CPU over time.
-> - Space: program is limited by the space available for its dataset.
-> - I/O: program is limited by external events, disks, and networks.
+> Generally, applications are limited by one or more of the following bounds:
+> Computing, Memory (Space), Memory (Peripheral I/O)
 >
 > `libircd` is dominated by the **I/O bound**.
 
-Its design is heavily optimized for this assumption with its single-thread
-orientation. This methodology ensures there is an _uninterrupted_,
-_uncontended_, _predictable_ execution which is easy for developers to
-reason about intuitively with sequential-consistency in a cooperative
-coroutine model. If there are periods of execution which are computationally
-intense like parsing, hashing, cryptography, etc: this is absorbed in lieu of
-thread synchronization and bus contention.
+Our effort is rooted in the above assumption. The single-threaded approach
+ensures there is an _uninterrupted_, _uncontended_, _predictable_ execution
+which is easy for developers to reason about intuitively with
+sequential-consistency in a cooperative coroutine model. If there are periods
+of execution which are computationally intense like parsing, hashing,
+cryptography, etc: this is absorbed in lieu of thread synchronization and bus
+contention.
 
 This system achieves scale through running multiple independent instances which
-synchronize at the application-logic level with message passing.
+synchronize at the application-logic level through passing the application's own
+messages.
 
 ✝ However, do not assume a truly threadless execution for the entire address
 space. If there is ever a long-running background computation or a call to a
-3rd party library which will do IO and block the event loop, we may use an
-additional `std::thread` to "offload" such an operation. Thus we do have a
-threading model, but it is heterogeneous.
+3rd party library which will block the event loop, we may use an additional
+`std::thread` to "offload" such an operation. Thus we do have a threading model,
+but it is heterogeneous.
 
-##### Introduces userspace threading✝
+##### Introduces userspace threading
 
 IRCd presents an interface introducing stackful coroutines, a.k.a. userspace
 context switching, a.k.a. green threads, a.k.a. fibers. The library avoids callbacks
@@ -43,14 +42,24 @@ as the way to break up execution when waiting for events. Instead, we harken bac
 to the simple old ways of synchronous programming where control flow and data are
 easy to follow.
 
-✝ If there are certain cases where we don't want a stack to linger which may
-jeopardize the c10k'ness of the daemon the asynchronous pattern is still used.
+If there are certain cases where we don't want a stack to linger which may
+jeopardize the c10k'ness of the daemon the asynchronous pattern is still used,
+thus this is a hybrid system.
+
+Consider coroutines like "macro-ops" and asynchronous callbacks like
+"micro-ops." The pattern tends to use a coroutine to perform a large and
+complex operation which may involve many micro-ops behind the scenes. This
+approach relegates the asynchronous callback pattern to simple tasks contained
+within specific units which require scale, encapsulating the complexity away
+from the rest of the project.
 
 ##### Can be embedded in your application with very minimal overhead.
 
 Linking to libircd from your executable allows you to customize and extend the
 functionality of the server and have control over its execution, or, simply use
-library routines provided by the library without any daemonization.
+library routines provided by the library without any daemonization. Users of
+the library should never pay for what they don't use. The library should also
+minimize conflicts with other libraries sharing the address space.
 
 ##### Runs only one server at a time.
 
@@ -80,21 +89,13 @@ amounts of duplicate code drawn from the static library. This would be a huge dr
 on both compilation and the runtime performance.
 
 ```
-                           (module)   (module)
-                               |         |
-                               |         |
-                               V         V
                              |-------------|
 ----------------------       |             | < ---- (module)
 |                    |       |             |
-|  User's executable | <---- |   libircd   |
+|  User's executable | <---- |   libircd   | < ---- (module)
 |                    |       |             |
 ----------------------       |             | < ---- (module)
                              |-------------|
-                               ^         ^
-                               |         |
-                               |         |
-                           (module)   (module)
 
 ```
 
