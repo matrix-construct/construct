@@ -114,6 +114,9 @@ ircd::m::sync::room_timeline_linear(data &data)
 		is_own_membership && data.membership == "join"
 	};
 
+	// Branch to backfill the user's timeline before their own join event to
+	// the room. This simply reuses the polylog handler as if they were
+	// initial-syncing the room.
 	if(is_own_join)
 	{
 		const auto last_membership_state_idx
