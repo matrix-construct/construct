@@ -13,12 +13,6 @@
 using namespace ircd::m;
 using namespace ircd;
 
-extern "C" event::id::buf
-redact__(const room &room,
-         const id::user &sender,
-         const id::event &event_id,
-         const string_view &reason);
-
 resource::response
 put__redact(client &client,
             const resource::request &request,
@@ -58,7 +52,7 @@ put__redact(client &client,
 
 	const auto event_id
 	{
-		redact__(room, request.user_id, redacts, reason)
+		m::redact(room, request.user_id, redacts, reason)
 	};
 
 	return resource::response
@@ -98,7 +92,7 @@ post__redact(client &client,
 
 	const auto event_id
 	{
-		redact(room, request.user_id, redacts, reason)
+		m::redact(room, request.user_id, redacts, reason)
 	};
 
 	return resource::response
@@ -108,33 +102,4 @@ post__redact(client &client,
 			{ "event_id", event_id }
 		}
 	};
-}
-
-event::id::buf
-redact__(const room &room,
-         const id::user &sender,
-         const id::event &event_id,
-         const string_view &reason)
-{
-	json::iov event;
-	const json::iov::push push[]
-	{
-		{ event,    { "type",       "m.room.redaction"  }},
-		{ event,    { "sender",      sender             }},
-		{ event,    { "redacts",     event_id           }},
-	};
-
-	json::iov content;
-	const json::iov::set _reason
-	{
-		content, !empty(reason),
-		{
-			"reason", [&reason]() -> json::value
-			{
-				return reason;
-			}
-		}
-	};
-
-	return commit(room, event, content);
 }

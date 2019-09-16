@@ -428,14 +428,27 @@ ircd::m::redact(const room &room,
                 const id::event &event_id,
                 const string_view &reason)
 {
-	using prototype = event::id::buf (const m::room &, const id::user &, const id::event &, const string_view &);
-
-	static mods::import<prototype> function
+	json::iov event;
+	const json::iov::push push[]
 	{
-		"client_rooms", "redact__"
+		{ event,    { "type",       "m.room.redaction"  }},
+		{ event,    { "sender",      sender             }},
+		{ event,    { "redacts",     event_id           }},
 	};
 
-	return function(room, sender, event_id, reason);
+	json::iov content;
+	const json::iov::set _reason
+	{
+		content, !empty(reason),
+		{
+			"reason", [&reason]() -> json::value
+			{
+				return reason;
+			}
+		}
+	};
+
+	return commit(room, event, content);
 }
 
 ircd::m::event::id::buf
