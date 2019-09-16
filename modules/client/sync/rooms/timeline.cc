@@ -84,7 +84,7 @@ ircd::m::sync::room_timeline_linear(data &data)
 		room::events::viewport_size
 	};
 
-	if(viewport_size >= 0)
+	if(likely(viewport_size >= 0))
 		if(json::get<"depth"_>(*data.event) + viewport_size < data.room_depth)
 			return false;
 
@@ -102,6 +102,38 @@ ircd::m::sync::room_timeline_linear(data &data)
 	{
 		*data.out, "timeline"
 	};
+
+	const bool is_own_membership
+	{
+		json::get<"type"_>(*data.event) == "m.room.member"
+		&& json::get<"state_key"_>(*data.event) == data.user.user_id
+	};
+
+	const bool is_own_join
+	{
+		is_own_membership && data.membership == "join"
+	};
+
+	if(is_own_join)
+	{
+		const auto last_membership_state_idx
+		{
+			m::room::state::prev(data.event_idx)
+		};
+
+		const scope_restore range_first
+		{
+			data.range.first, last_membership_state_idx
+		};
+
+		bool ret{false}, limited{false};
+		const auto prev_batch
+		{
+			_room_timeline_polylog_events(data, *data.room, limited, ret)
+		};
+
+		return ret;
+	}
 
 	json::stack::array array
 	{
