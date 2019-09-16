@@ -403,7 +403,8 @@ catch(const std::exception &e)
 //
 
 bool
-ircd::m::fetch::start(request &request) try
+ircd::m::fetch::start(request &request)
+try
 {
 	assert(!request.finished);
 	if(!request.started && !request.origin)
@@ -415,12 +416,13 @@ ircd::m::fetch::start(request &request) try
 	if(!request.origin)
 		select_random_origin(request);
 
-	while(request.origin)
+	for(; request.origin; select_random_origin(request))
 	{
 		if(start(request, request.origin))
 			return true;
 
-		select_random_origin(request);
+		if(request.attempted.size() > request.opts.attempt_limit - 1UL)
+			break;
 	}
 
 	assert(!request.finished);

@@ -92,6 +92,11 @@ struct ircd::m::fetch::opts
 	/// is not known to us, it would be best to set this.
 	string_view hint;
 
+	/// Limit the number of servers to be contacted for this operation. Zero
+	/// is automatic / unlimited. Note that setting this value to 1 in
+	/// conjunction with a hint is analogous to just making an m::fed request.
+	size_t attempt_limit {0};
+
 	//
 	// special options
 	//
