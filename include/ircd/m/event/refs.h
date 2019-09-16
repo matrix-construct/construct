@@ -47,6 +47,4 @@ inline
 ircd::m::event::refs::refs(const event::idx &idx)
 noexcept
 :idx{idx}
-{
-	assert(idx);
-}
+{}

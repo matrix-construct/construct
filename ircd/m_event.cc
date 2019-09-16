@@ -1895,7 +1895,6 @@ size_t
 ircd::m::event::refs::count(const dbs::ref &type)
 const
 {
-	assert(idx);
 	size_t ret(0);
 	for_each(type, [&ret]
 	(const event::idx &, const dbs::ref &)
@@ -1950,8 +1949,10 @@ ircd::m::event::refs::for_each(const dbs::ref &type,
                                const closure_bool &closure)
 const
 {
-	assert(idx);
 	thread_local char buf[dbs::EVENT_REFS_KEY_MAX_SIZE];
+
+	if(!idx)
+		return true;
 
 	// Allow -1 to iterate through all types by starting
 	// the iteration at type value 0 and then ignoring the
