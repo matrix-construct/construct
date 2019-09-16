@@ -12,7 +12,7 @@
 /// this code should be portable for a future when m::init is unstructured.
 struct ircd::m::init::backfill
 {
-	static bool handle_event(const room::id &, const event::id &, const string_view &hint);
+	static bool handle_event(const room::id &, const event::id &, const string_view &hint, const bool &ask_one);
 	static void handle_missing(const room::id &);
 	static void handle_room(const room::id &);
 	static void worker();
@@ -348,7 +348,7 @@ try
 			}
 
 			++fetching;
-			if(!handle_event(room_id, event_id, result.origin))
+			if(!handle_event(room_id, event_id, result.origin, true))
 			{
 				errors.emplace(event_id);
 				return true;
@@ -440,7 +440,7 @@ try
 				min_depth,
 			};
 
-			if(!handle_event(room_id, event_id, string_view{}))
+			if(!handle_event(room_id, event_id, string_view{}, false))
 				fail.emplace_hint(it, event_id);
 		}
 
@@ -474,7 +474,8 @@ catch(const std::exception &e)
 bool
 ircd::m::init::backfill::handle_event(const room::id &room_id,
                                       const event::id &event_id,
-                                      const string_view &hint)
+                                      const string_view &hint,
+                                      const bool &ask_hint_only)
 try
 {
 	fetch::opts opts;
@@ -483,6 +484,7 @@ try
 	opts.event_id = event_id;
 	opts.backfill_limit = 1;
 	opts.hint = hint;
+	opts.attempt_limit = ask_hint_only;
 	auto future
 	{
 		fetch::start(opts)
