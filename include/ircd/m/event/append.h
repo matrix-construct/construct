@@ -40,6 +40,7 @@ struct ircd::m::event::append::opts
 	const event::keys *keys {nullptr};
 	long age {std::numeric_limits<long>::min()};
 	bool query_txnid {true};
+	bool query_prev_state {true};
 };
 
 inline

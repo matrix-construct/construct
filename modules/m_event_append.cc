@@ -209,7 +209,7 @@ ircd::m::event::append::append(json::stack::object &object,
 		return true;
 	});
 
-	if(is_state && has_event_idx)
+	if(has_event_idx && opts.query_prev_state && is_state)
 	{
 		const auto prev_idx
 		{
