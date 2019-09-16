@@ -11557,10 +11557,13 @@ console_cmd__users(opt &out, const string_view &line)
 		param.at("query", string_view{})
 	};
 
-	const m::users::opts opts
+	m::users::opts opts
 	{
 		query
 	};
+
+	if(!query || query != "*")
+		opts.hostpart = my_host();
 
 	m::users::for_each(opts, [&out]
 	(const m::user &user)
