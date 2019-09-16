@@ -935,6 +935,11 @@ ircd::m::vm::execute_pdu(eval &eval,
 			sequence::committed + 1
 	};
 
+	log::debug
+	{
+		log, "%s | event sequenced", loghead(eval)
+	};
+
 	// Wait until this is the lowest sequence number
 	sequence::dock.wait([&eval]
 	{
@@ -946,7 +951,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	log::debug
 	{
-		log, "%s | acquire", loghead(eval)
+		log, "%s | event committing", loghead(eval)
 	};
 
 	assert(eval.sequence != 0);
@@ -972,7 +977,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 
 	log::debug
 	{
-		log, "%s | commit", loghead(eval)
+		log, "%s | event committed", loghead(eval)
 	};
 
 	assert(sequence::committed < sequence::get(eval));
@@ -1132,7 +1137,7 @@ ircd::m::vm::write_append(eval &eval,
 
 	log::debug
 	{
-		log, "%s | append",
+		log, "%s | write buffered",
 		loghead(eval),
 	};
 }
@@ -1193,13 +1198,27 @@ ircd::m::vm::call_hook(hook::site<T> &hook,
                        T&& data)
 try
 {
+	log::debug
+	{
+		log, "%s | phase:%s enter",
+		loghead(eval),
+		unquote(hook.feature.get("name")),
+	};
+
 	hook(event, std::forward<T>(data));
+
+	log::debug
+	{
+		log, "%s | phase:%s leave",
+		loghead(eval),
+		unquote(hook.feature.get("name")),
+	};
 }
 catch(const m::error &e)
 {
 	log::derror
 	{
-		"%s | phase:%s :%s :%s :%s",
+		log, "%s | phase:%s :%s :%s :%s",
 		loghead(eval),
 		unquote(hook.feature.get("name")),
 		e.what(),
@@ -1213,7 +1232,7 @@ catch(const http::error &e)
 {
 	log::derror
 	{
-		"%s | phase:%s :%s :%s",
+		log, "%s | phase:%s :%s :%s",
 		loghead(eval),
 		unquote(hook.feature.get("name")),
 		e.what(),
@@ -1226,7 +1245,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		"%s | phase:%s :%s",
+		log, "%s | phase:%s :%s",
 		loghead(eval),
 		unquote(hook.feature.get("name")),
 		e.what(),
