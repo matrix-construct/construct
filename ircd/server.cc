@@ -1280,6 +1280,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
+	err_set(std::current_exception());
 	const ctx::exception_handler eh;
 	close();
 }
@@ -1344,6 +1345,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
+	err_set(std::current_exception());
 	const ctx::exception_handler eh;
 	close();
 }
@@ -1406,6 +1408,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
+	err_set(std::current_exception());
 	const ctx::exception_handler eh;
 	close();
 }
@@ -1439,6 +1442,7 @@ catch(const std::exception &e)
 		e.what()
 	};
 
+	err_set(std::current_exception());
 	const ctx::exception_handler eh;
 	close();
 }
