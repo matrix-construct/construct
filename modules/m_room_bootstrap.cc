@@ -140,8 +140,23 @@ ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
 		host
 	};
 
-	// synchronous; yields ctx.
-	event_id_buf = m::bootstrap::make_join(host, room_id, user_id);
+	const auto member_event_idx
+	{
+		m::room(room_id).get(std::nothrow, "m.room.member", user_id)
+	};
+
+	const bool existing_join
+	{
+		member_event_idx &&
+		m::room::members::membership(member_event_idx, "join")
+	};
+
+	if(existing_join)
+		event_id_buf = m::event_id(member_event_idx, std::nothrow);
+
+	if(!event_id_buf)
+		event_id_buf = m::bootstrap::make_join(host, room_id, user_id);
+
 	assert(event_id_buf);
 
 	// asynchronous; returns quickly
