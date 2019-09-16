@@ -28,13 +28,13 @@ _philosophy of its predecessors_ is still obvious throughout.
 Matrix is about giving you control over your communication; Construct is about
 giving you control over Matrix.
 
-[![Chat in #test:zemos.net](https://img.shields.io/matrix/test:zemos.net.svg?label=Chat%20in%20%23test%3Azemos.net&logo=matrix&server_fqdn=matrix.org&style=for-the-badge&color=brightgreen)](https://matrix.to/#/#test:zemos.net)
-
 ## Installation
 
 <a href="https://github.com/tulir/gomuks">
 	<img align="right" src="https://i.imgur.com/YMUAULE.png" />
 </a>
+
+[![Chat in #test:zemos.net](https://img.shields.io/matrix/test:zemos.net.svg?label=Chat%20in%20%23test%3Azemos.net&logo=matrix&server_fqdn=matrix.org&style=for-the-badge&color=brightgreen)](https://matrix.to/#/#test:zemos.net)
 
 ### Dependencies
 
@@ -89,13 +89,12 @@ problems.
 
 <a href="https://github.com/mujx/nheko">
 	<img align="right" src="https://i.imgur.com/GQ91GOK.png" />
-	<br />
 </a>
 
-[![](https://img.shields.io/badge/License-BSD-brightgreen.svg)]() [![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)]()
+[![](https://img.shields.io/badge/License-BSD-brightgreen.svg?label=%20license&style=for-the-badge&color=brightgreen)]() [![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?label=contributions&style=for-the-badge&color=brightgreen)]()
 
- Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
- directory is `doc/html`. Browse to `doc/html/index.html`.
+Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
+directory is `doc/html`. Browse to `doc/html/index.html`.
 
 ## Plan
 
