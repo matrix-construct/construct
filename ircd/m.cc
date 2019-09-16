@@ -2461,44 +2461,6 @@ const
 	return function(*this);
 }
 
-ircd::m::event::id::buf
-ircd::m::user::password(const string_view &password)
-{
-	using prototype = event::id::buf (const m::user::id &, const string_view &) noexcept;
-
-	static mods::import<prototype> function
-	{
-		"client_account", "set_password"
-	};
-
-	return function(user_id, password);
-}
-
-bool
-ircd::m::user::is_password(const string_view &password)
-const noexcept try
-{
-	using prototype = bool (const m::user::id &, const string_view &) noexcept;
-
-	static mods::import<prototype> function
-	{
-		"client_account", "is_password"
-	};
-
-	return function(user_id, password);
-}
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		"user::is_password(): %s %s",
-		string_view{user_id},
-		e.what()
-	};
-
-	return false;
-}
-
 //
 // user::room
 //
