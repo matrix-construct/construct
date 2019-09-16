@@ -75,8 +75,9 @@ get__make_join(client &client,
 	if(!exists(room))
 		throw m::NOT_FOUND
 		{
-			"Room %s is not known here.",
-			string_view{room_id}
+			"Room %s is not known by %s.",
+			string_view{room_id},
+			my_host(),
 		};
 
 	if(m::room::server_acl::enable_read && !m::room::server_acl::check(room_id, request.node_id))
