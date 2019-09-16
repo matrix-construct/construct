@@ -425,9 +425,13 @@ try
 			break;
 	}
 
-	assert(!request.finished);
-	finish(request);
-	return false;
+	throw m::NOT_FOUND
+	{
+		"Cannot find any server to fetch %s in %s in %zu attempts",
+		string_view{request.opts.event_id},
+		string_view{request.opts.room_id},
+		request.attempted.size(),
+	};
 }
 catch(...)
 {
@@ -592,14 +596,7 @@ ircd::m::fetch::select_random_origin(request &request)
 	}};
 
 	request.origin = {};
-	if(!origins.random(closure, proffer) || !request.origin)
-		throw m::NOT_FOUND
-		{
-			"Cannot find any server to fetch %s in %s",
-			string_view{request.opts.event_id},
-			string_view{request.opts.room_id},
-		};
-
+	origins.random(closure, proffer);
 	return request.origin;
 }
 
