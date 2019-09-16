@@ -776,12 +776,7 @@ try
 		event, content, vmopts
 	};
 
-	if(unlikely(!eval.event_id))
-		throw m::UNAVAILABLE
-		{
-			"Unknown error"
-		};
-
+	assert(eval.event_id);
 	return eval.event_id;
 }
 catch(const std::exception &e)
