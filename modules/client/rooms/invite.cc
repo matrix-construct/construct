@@ -64,13 +64,6 @@ ircd::m::invite(const m::room &room,
                 const m::user::id &sender,
                 json::iov &content)
 {
-	if(!exists(room))
-		throw m::NOT_FOUND
-		{
-			"Not aware of room %s",
-			string_view{room.room_id}
-		};
-
 	json::iov event;
 	const json::iov::push push[]
 	{
