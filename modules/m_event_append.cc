@@ -133,7 +133,12 @@ ircd::m::event::append::append(json::stack::object &object,
 	//assert(json::get<"origin_server_ts"_>(event));
 	//assert(json::get<"origin_server_ts"_>(event) != json::undefined_number);
 
-	if(has_event_idx && !defined(json::get<"state_key"_>(event)) && m::redacted(*opts.event_idx))
+	const bool is_state
+	{
+		defined(json::get<"state_key"_>(event))
+	};
+
+	if(has_event_idx && !is_state && m::redacted(*opts.event_idx))
 	{
 		log::debug
 		{
@@ -144,9 +149,13 @@ ircd::m::event::append::append(json::stack::object &object,
 		return false;
 	}
 
-	if(!json::get<"state_key"_>(event) && has_user)
+	if(has_user && !is_state && *opts.user_id != json::get<"sender"_>(event))
 	{
-		const m::user::ignores ignores{*opts.user_id};
+		const m::user::ignores ignores
+		{
+			*opts.user_id
+		};
+
 		if(ignores.enforce("events") && ignores.has(json::get<"sender"_>(event)))
 		{
 			log::debug
@@ -200,22 +209,21 @@ ircd::m::event::append::append(json::stack::object &object,
 		return true;
 	});
 
-	if(json::get<"state_key"_>(event) && has_event_idx)
+	if(is_state && has_event_idx)
 	{
 		const auto prev_idx
 		{
 			room::state::prev(*opts.event_idx)
 		};
 
-		if(prev_idx)
-			m::get(std::nothrow, prev_idx, "content", [&object]
-			(const json::object &content)
+		m::get(std::nothrow, prev_idx, "content", [&object]
+		(const json::object &content)
+		{
+			json::stack::member
 			{
-				json::stack::member
-				{
-					object, "prev_content", content
-				};
-			});
+				object, "prev_content", content
+			};
+		});
 	}
 
 	json::stack::object unsigned_
