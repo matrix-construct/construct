@@ -491,7 +491,7 @@ ircd::m::vm::inject1(eval &eval,
 	const event::id &event_id
 	{
 		opts.prop_mask.has("event_id")?
-			make_id(m::event{event}, eval.room_version, eval.event_id):
+			eval.event_id.assigned(make_id(m::event{event}, eval.room_version, eval.event_id)):
 			event::id{}
 	};
 
@@ -644,7 +644,7 @@ ircd::m::vm::inject3(eval &eval,
 	const event::id &event_id
 	{
 		opts.prop_mask.has("event_id")?
-			make_id(m::event{event}, eval.room_version, eval.event_id):
+			eval.event_id.assigned(make_id(m::event{event}, eval.room_version, eval.event_id)):
 			event::id{}
 	};
 
