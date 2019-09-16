@@ -1447,6 +1447,8 @@ try
 }
 catch(const json::parse_error &e)
 {
+	const ctx::exception_handler eh;
+
 	const auto event_id
 	{
 		event_id_buf?
@@ -1494,6 +1496,8 @@ try
 }
 catch(const json::parse_error &e)
 {
+	const ctx::exception_handler eh;
+
 	const auto event_id
 	{
 		event_id_buf?
