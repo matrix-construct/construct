@@ -98,9 +98,15 @@ problems.
 Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
 directory is `doc/html`. Browse to `doc/html/index.html`.
 
-##### ARCHITECTURE
+##### ARCHITECTURE GUIDE
 
-See the [ARCHITECTURE](doc/ARCHITECTURE.md) overview.
+See the [ARCHITECTURE](doc/ARCHITECTURE.md) summary for design choices and
+things to know when starting out.
+
+##### DEVELOPMENT STYLE GUIDE
+
+See the [STYLE](doc/STYLE.md) guide for an admittedly tongue-in-cheek lecture on
+the development approach.
 
 ## Plan
 

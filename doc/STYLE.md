@@ -9,53 +9,19 @@ will integrate -std=gnu++17 and how developers should approach it.
 
 ### C++ With Respect For C People
 
-
 Remember your C heritage. There is nothing wrong with C, it is just incomplete.
 There is also no overhead with C++, that is a myth. If you write C code in C++
 it will be the same C code. Think about it like this: if C is like a bunch of
 macros on assembly, C++ is a bunch of macros on C. This guide will not address
 any more myths and for that we refer you [here](https://isocpp.org/blog/2014/12/myths-3).
 
-###### Repeat the following mantra:
-1. How would I do this in C?
-2. Why is that dangerous, hacky, or ugly?
-3. What feature does C++ offer to do it right?
-
-This can be applied to many real patterns seen in C software which really beg
-for something C++ did to make it legitimate and proper. Examples:
-* Leading several structures with the same member, then casting to that leading
-type to deal with the structure abstractly for container insertion. -> Think
-inheritance.
-* Creating a structure with a bunch of function pointers, then having a user
-of the structure fill in the pointers with their own functionality. -> Think
-virtual functions.
-* `if` statements that check for errors and `goto` some label at the bottom of
-a function under the nominal return statement. -> Think exceptions.
-
-
-#### Encapsulation will be relaxed
-
-
-To summarize, most structures will default to being fully public unless there
-is a very pressing reason to create a private section. Such a reason is not
-"the user *could* break something by touching this," instead it is "the user
-*will only ever* break something by touching this."
-
-* Do not use the keyword `class` unless your sole intent is to have the members
-immediately following it be private.
-
-* Using `class` followed by a `public:` label is nubile.
-
 
 #### Direct initialization
-
 
 Use `=` only for assignment to an existing object. *Break your C habit right now.*
 Use bracket initialization `{}` of all variables and objects. Fall back to parens `()`
 if brackets conflict with an initializer_list constructor (such as with STL containers)
 or if absolutely necessary to quash warnings about conversions.
-
-* Do not put uninitialized variables at the top of a function and assign them later.
 
 > Quick note to preempt a confusion for C people:
 > Initialization in C++ is like C but you don't have to use the `=`.
@@ -77,9 +43,14 @@ or if absolutely necessary to quash warnings about conversions.
 > };
 > ```
 
+* Do not put uninitialized variables at the top of a function and assign them
+later.
+
+* Even though C++17 mandates [copy elision](https://en.cppreference.com/w/cpp/language/copy_elision)
+this project does not relax its comprehensive use of direct initialization.
+
 
 #### Use full const correctness
-
 
 `const` correctness should extend to all variables, pointers, arguments, and
 functions- not just "pointed-to" data. If it *can* be `const` then make it
@@ -87,7 +58,6 @@ functions- not just "pointed-to" data. If it *can* be `const` then make it
 
 
 #### Use auto
-
 
 Use `auto` whenever it is possible to use it; specify a type when you must.
 If the compiler can't figure out the auto, that's when you indicate the type.
@@ -128,11 +98,9 @@ to a completely consistent state at that point.
 > happen*. They're not always your fault, and many times are in other parts of the
 > code which are outside of your control. This is a good approach for robust and
 > durable code over long-lived large-scale projects.
->
 
 
 #### Exceptions will be used
-
 
 Wait, you were trolling "respect for C people" right? **No.** If you viewed
 the above section merely through the prism avoiding classic memory leaks, and
@@ -180,6 +148,25 @@ would have been.
 > while((x = foo());
 > ```
 
+
+#### Encapsulation will be relaxed
+
+To summarize, most structures will default to being fully public unless there
+is a very pressing reason to create a private section. Such a reason is not
+"the user *could* break something by touching this," instead it is "the user
+*will only ever* break something by touching this."
+
+* Do not use the keyword `class` unless your sole intent is to have the members
+immediately following it be private. Using `class` followed by a `public:`
+label is nubile.
+
+Note that public interfaces and private implementation patterns are still
+widely used and encouraged, even expected, but not purely using the C++
+language features. The intent here is to allow hacking on the project to be
+easy. We don't want to stifle creativity by getting in the way of developers
+implementing new ideas which do things that weren't originally intended.
+In practice, interfaces try to expose as much as possible, but require only
+a tiny surface by default for actual intended use.
 
 
 #### Pointers and References
@@ -335,11 +322,12 @@ completely blank line after that you now have more whitespace.
 
 ### Conventions
 
-These are things you should know when mulling over the code as a whole.
-Importantly, knowing these things will help you avoid various gotchas and not
-waste your time debugging little surprises. You may or may not agree with some
-of these choices (specifically the lack of choices in many cases) but that's
-why they're explicitly discussed here.
+These are things you should know when mulling over the code as a whole. Knowing
+these things will help you avoid various gotchas and not waste your tim
+debugging little surprises. You may or may not agree with some of these
+choices (specifically the lack of choices in many cases) but that's why they're
+explicitly discussed here. Conventions are not laws: they can be ignored or
+overruled on a case basis. One should follow them by default.
 
 
 #### Null termination
@@ -447,8 +435,8 @@ being changed.
 - Prefixes tend to just be the namespace where the change is occurring.
 - Prefixes can be an actual class name if that class has a lot of nested
 assets and pretty much acts as a namespace.
-- Prefixes for changes in `modules/` tend to be the path to the module
-or the file in a large module. i.e `modules/s_conf:` or `modules/client/sync:`
+- Prefixes for changes in `modules/` where code is not in any namespace tend
+to be the path to the module i.e `modules/s_conf:` or `modules/client/sync:`
 - Prefixes for other areas of the project can just be the directory like `doc:`
 or `tools:` or `README:`
 
