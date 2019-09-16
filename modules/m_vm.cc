@@ -881,6 +881,11 @@ ircd::m::vm::execute_pdu(eval &eval,
 		at<"type"_>(event)
 	};
 
+	const bool authenticate
+	{
+		opts.auth && !internal(room_id)
+	};
+
 	// The conform hook runs static checks on an event's formatting and
 	// composure; these checks only require the event data itself.
 	if(likely(opts.conform))
@@ -915,8 +920,8 @@ ircd::m::vm::execute_pdu(eval &eval,
 		call_hook(fetch_hook, eval, event, eval);
 
 	// Evaluation by auth system; throws
-	if(likely(opts.auth) && !internal(room_id))
-		room::auth::check(event);
+	if(likely(authenticate))
+		room::auth::check_static(event);
 
 	// Obtain sequence number here.
 	const auto *const &top(eval::seqmax());
@@ -930,6 +935,15 @@ ircd::m::vm::execute_pdu(eval &eval,
 			sequence::committed + 1
 	};
 
+	// Wait until this is the lowest sequence number
+	sequence::dock.wait([&eval]
+	{
+		return eval::seqnext(sequence::uncommitted) == &eval;
+	});
+
+	if(likely(authenticate))
+		room::auth::check_relative(event);
+
 	log::debug
 	{
 		log, "%s | acquire", loghead(eval)
@@ -942,15 +956,19 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(eval::sequnique(sequence::get(eval)));
 	sequence::uncommitted = sequence::get(eval);
 
-	// Evaluation by module hooks
-	if(likely(opts.eval))
-		call_hook(eval_hook, eval, event, eval);
-
 	// Wait until this is the lowest sequence number
 	sequence::dock.wait([&eval]
 	{
 		return eval::seqnext(sequence::committed) == &eval;
 	});
+
+	// Reevaluation of auth against the present state of the room.
+	if(likely(authenticate))
+		room::auth::check_present(event);
+
+	// Evaluation by module hooks
+	if(likely(opts.eval))
+		call_hook(eval_hook, eval, event, eval);
 
 	log::debug
 	{
@@ -960,6 +978,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 	assert(sequence::committed < sequence::get(eval));
 	assert(sequence::retired < sequence::get(eval));
 	sequence::committed = sequence::get(eval);
+
 	if(likely(opts.write))
 		write_prepare(eval, event);
 
