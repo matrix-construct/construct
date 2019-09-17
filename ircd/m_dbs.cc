@@ -1517,14 +1517,14 @@ decltype(ircd::m::dbs::desc::events__event_idx__block__size)
 ircd::m::dbs::desc::events__event_idx__block__size
 {
 	{ "name",     "ircd.m.dbs.events._event_idx.block.size" },
-	{ "default",  512L                                      },
+	{ "default",  256L                                      },
 };
 
 decltype(ircd::m::dbs::desc::events__event_idx__meta_block__size)
 ircd::m::dbs::desc::events__event_idx__meta_block__size
 {
 	{ "name",     "ircd.m.dbs.events._event_idx.meta_block.size" },
-	{ "default",  4096L                                          },
+	{ "default",  2048L                                          },
 };
 
 decltype(ircd::m::dbs::desc::events__event_idx__cache__size)
