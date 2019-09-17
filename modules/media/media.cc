@@ -133,6 +133,13 @@ ircd::m::media::blocks_cache_comp_size
 	}
 };
 
+decltype(ircd::m::media::events_prefetch)
+ircd::m::media::events_prefetch
+{
+	{ "name",     "ircd.media.file.prefetch.events" },
+	{ "default",  16L                               },
+};
+
 decltype(ircd::m::media::database)
 ircd::m::media::database;
 
@@ -458,15 +465,32 @@ ircd::m::media::file::read(const m::room &room,
 		room, 1, &fopts
 	};
 
+	if(!it)
+		return ret;
+
+	room::events it_pf
+	{
+		room, 1, &fopts
+	};
+
 	// Block buffer
 	const unique_buffer<mutable_buffer> buf
 	{
 		64_KiB
 	};
 
-	for(; bool(it); ++it)
+	size_t prefetched(0), fetched(0);
+	for(; bool(it); ++it, ++fetched)
 	{
-		const m::event &event{*it};
+		for(; it_pf && prefetched < fetched + events_prefetch; ++it_pf)
+			prefetched += m::prefetch(it_pf.event_idx(), fopts);
+
+		++fetched;
+		const m::event &event
+		{
+			*it
+		};
+
 		if(at<"type"_>(event) != "ircd.file.block")
 			continue;
 
