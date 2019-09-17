@@ -158,28 +158,62 @@ get__query_directory(client &client,
 		m::room_id(room_alias)
 	};
 
-	//TODO: servers
-	const std::array<json::value, 2> server
+	const unique_buffer<mutable_buffer> buf
 	{
-		{ room_alias.host(), my_host() }
+		4_KiB
 	};
 
-	const size_t server_count
+	json::stack out{buf};
+	json::stack::object top
 	{
-		server.size() - bool(room_alias.host() == my_host())
+		out
 	};
 
-	const json::value servers
+	json::stack::member
 	{
-		server.data(), server_count
+		top, "room_id", room_id
 	};
 
+	json::stack::array servers
+	{
+		top, "servers"
+	};
+
+	servers.append(my_host());
+	if(visible(m::room(room_id), request.node_id))
+	{
+		static const size_t max_servers
+		{
+			size(buf) / rfc1035::NAME_MAX - 2
+		};
+
+		const m::room::origins origins
+		{
+			room_id
+		};
+
+		size_t i(0);
+		origins.for_each(m::room::origins::closure_bool{[&i, &servers]
+		(const string_view &origin)
+		{
+			if(my_host(origin))
+				return true;
+
+			if(!server::exists(origin))
+				return true;
+
+			servers.append(origin);
+			return ++i < max_servers;
+		}});
+	}
+
+	servers.~array();
+	top.~object();
 	return resource::response
 	{
-		client, json::members
+		client, json::object
 		{
-			{ "room_id", room_id },
-			{ "servers", servers },
+			out.completed()
 		}
 	};
 }
