@@ -71,6 +71,9 @@ struct ircd::m::room::events
 	const m::event &fetch(std::nothrow_t);
 	const m::event &fetch();
 
+	bool prefetch(const string_view &event_prop);
+	bool prefetch(); // uses property keys from any fetch::opts supplied.
+
 	bool seek_idx(const event::idx &);
 	bool seek(const uint64_t &depth = -1);
 	bool seek(const event::id &);

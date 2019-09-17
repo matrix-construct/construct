@@ -1800,6 +1800,33 @@ catch(const db::not_found &e)
 	return false;
 }
 
+bool
+ircd::m::room::events::prefetch()
+{
+	assert(_event.fopts);
+	return m::prefetch(event_idx(), *_event.fopts);
+}
+
+bool
+ircd::m::room::events::prefetch(const string_view &event_prop)
+{
+	return m::prefetch(event_idx(), event_prop);
+}
+
+const ircd::m::event &
+ircd::m::room::events::fetch()
+{
+	m::seek(_event, event_idx());
+	return _event;
+}
+
+const ircd::m::event &
+ircd::m::room::events::fetch(std::nothrow_t)
+{
+	m::seek(_event, event_idx(), std::nothrow);
+	return _event;
+}
+
 ircd::m::room::events::operator
 ircd::m::event::idx()
 const
@@ -1838,20 +1865,6 @@ const
 	};
 
 	return std::get<1>(part);
-}
-
-const ircd::m::event &
-ircd::m::room::events::fetch()
-{
-	m::seek(_event, event_idx());
-	return _event;
-}
-
-const ircd::m::event &
-ircd::m::room::events::fetch(std::nothrow_t)
-{
-	m::seek(_event, event_idx(), std::nothrow);
-	return _event;
 }
 
 //
