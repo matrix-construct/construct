@@ -729,7 +729,7 @@ ircd::net::open(socket &socket,
 	(std::exception_ptr eptr)
 	{
 		if(eptr && !s->fini)
-			close(*s, dc::RST);
+			close(*s, dc::RST, close_ignore);
 
 		handler(std::move(eptr));
 	}};
