@@ -157,11 +157,9 @@ struct ircd::m::room::events::sounding
 };
 
 /// Find missing room events. This is an interface to the event-horizon for
-/// this room.
-///
-/// The closure is invoked with the first argument being the event_id unknown
-/// to the server, followed by the depth and event::idx of the event making the
-/// reference.
+/// this room. The event horizon is keyed by event_id and the value is the
+/// event::idx of the event referencing it. There can be multiple entries for
+/// an event_id. The closure is also invoked with the depth of the referencer.
 ///
 struct ircd::m::room::events::horizon
 {
