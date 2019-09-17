@@ -22,6 +22,7 @@ namespace ircd::m::media
 	extern conf::item<bool> blocks_cache_comp_enable;
 	extern conf::item<size_t> blocks_cache_size;
 	extern conf::item<size_t> blocks_cache_comp_size;
+	extern conf::item<size_t> blocks_prefetch;
 	extern conf::item<size_t> events_prefetch;
 	extern const db::descriptor blocks_descriptor;
 	extern const db::description description;

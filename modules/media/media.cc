@@ -133,6 +133,13 @@ ircd::m::media::blocks_cache_comp_size
 	}
 };
 
+decltype(ircd::m::media::blocks_prefetch)
+ircd::m::media::blocks_prefetch
+{
+	{ "name",     "ircd.media.file.prefetch.blocks" },
+	{ "default",  32L                               },
+};
+
 decltype(ircd::m::media::events_prefetch)
 ircd::m::media::events_prefetch
 {
@@ -468,7 +475,14 @@ ircd::m::media::file::read(const m::room &room,
 	if(!it)
 		return ret;
 
-	room::events it_pf
+	size_t events_fetched(0), events_prefetched(0);
+	room::events epf
+	{
+		room, 1, &fopts
+	};
+
+	size_t blocks_fetched(0), blocks_prefetched(0);
+	room::events bpf
 	{
 		room, 1, &fopts
 	};
@@ -479,13 +493,34 @@ ircd::m::media::file::read(const m::room &room,
 		64_KiB
 	};
 
-	size_t prefetched(0), fetched(0);
-	for(; bool(it); ++it, ++fetched)
+	for(; it; ++it)
 	{
-		for(; it_pf && prefetched < fetched + events_prefetch; ++it_pf)
-			prefetched += m::prefetch(it_pf.event_idx(), fopts);
+		for(; bpf && blocks_prefetched < blocks_fetched + blocks_prefetch; ++bpf)
+		{
+			for(; epf && events_prefetched < events_fetched + events_prefetch; ++epf)
+				events_prefetched += epf.prefetch();
 
-		++fetched;
+			++events_fetched;
+			const m::event &event
+			{
+				*bpf
+			};
+
+			if(at<"type"_>(event) != "ircd.file.block")
+				continue;
+
+			const json::string &hash
+			{
+				at<"content"_>(event).at("hash")
+			};
+
+			blocks_prefetched += block::prefetch(hash);
+		}
+
+		if(!blocks_fetched)
+			ctx::yield();
+
+		++blocks_fetched;
 		const m::event &event
 		{
 			*it
@@ -509,18 +544,35 @@ ircd::m::media::file::read(const m::room &room,
 			block::get(buf, hash)
 		};
 
-		if(unlikely(size(block) != blksz)) throw error
-		{
-			"File [%s] block [%s] (%s) blksz %zu != %zu",
-			string_view{room.room_id},
-			string_view{m::get(std::nothrow, it.event_idx(), "event_id", buf)},
-			hash,
-			blksz,
-			size(block)
-		};
+		if(unlikely(size(block) != blksz))
+			throw error
+			{
+				"File [%s] block [%s] (%s) blksz %zu != %zu",
+				string_view{room.room_id},
+				string_view{m::get(std::nothrow, it.event_idx(), "event_id", buf)},
+				hash,
+				blksz,
+				size(block)
+			};
 
 		assert(size(block) == blksz);
 		ret += size(block);
+
+		#if 0
+		log::debug
+		{
+			log, "File %s read %s block[fetched:%zu prefetched:%zu] events[fetched:%zu prefetched:%zu] size:%zu total:%zu",
+			string_view{room.room_id},
+			hash,
+			blocks_fetched,
+			blocks_prefetched,
+			events_fetched,
+			events_prefetched,
+			blksz,
+			ret,
+		};
+		#endif
+
 		closure(block);
 	}
 
