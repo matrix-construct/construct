@@ -154,7 +154,12 @@ ircd::m::event::append::append(json::stack::object &object,
 		return false;
 	}
 
-	if(has_user && !is_state && *opts.user_id != json::get<"sender"_>(event))
+	const bool check_ignores
+	{
+		has_user && !is_state
+	};
+
+	if(check_ignores && *opts.user_id != json::get<"sender"_>(event))
 	{
 		const m::user::ignores ignores
 		{
@@ -180,6 +185,28 @@ ircd::m::event::append::append(json::stack::object &object,
 		{
 			object, "event_id", event.event_id
 		};
+
+	const bool query_prev_state
+	{
+		has_event_idx && opts.query_prev_state && is_state
+	};
+
+	if(query_prev_state)
+	{
+		const auto prev_idx
+		{
+			room::state::prev(*opts.event_idx)
+		};
+
+		m::get(std::nothrow, prev_idx, "content", [&object]
+		(const json::object &content)
+		{
+			json::stack::member
+			{
+				object, "prev_content", content
+			};
+		});
+	}
 
 	// Get the list of properties to send to the client so we can strip
 	// the remaining and save b/w
@@ -213,23 +240,6 @@ ircd::m::event::append::append(json::stack::object &object,
 
 		return true;
 	});
-
-	if(has_event_idx && opts.query_prev_state && is_state)
-	{
-		const auto prev_idx
-		{
-			room::state::prev(*opts.event_idx)
-		};
-
-		m::get(std::nothrow, prev_idx, "content", [&object]
-		(const json::object &content)
-		{
-			json::stack::member
-			{
-				object, "prev_content", content
-			};
-		});
-	}
 
 	json::stack::object unsigned_
 	{
