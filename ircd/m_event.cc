@@ -836,6 +836,9 @@ ircd::m::prefetch(const event::idx &event_idx,
 		json::indexof<event>(key)
 	};
 
+	if(column_idx >= dbs::event_column.size())
+		return prefetch(event_idx, event::fetch::default_opts);
+
 	auto &column
 	{
 		dbs::event_column.at(column_idx)
