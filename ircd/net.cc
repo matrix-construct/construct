@@ -2789,7 +2789,7 @@ noexcept try
 	if(unlikely(--instances == 0))
 		net::dock.notify_all();
 
-	if((RB_DEBUG_LEVEL) && unlikely(opened(*this)))
+	if(unlikely(opened(*this)))
 		throw panic
 		{
 			"Failed to ensure socket(%p) is disconnected from %s before dtor.",
@@ -2807,6 +2807,16 @@ catch(const std::exception &e)
 	};
 
 	return;
+}
+catch(...)
+{
+	log::critical
+	{
+		log, "socket(%p) close: unexpected",
+		this,
+	};
+
+	ircd::terminate();
 }
 
 void
