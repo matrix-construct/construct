@@ -627,6 +627,13 @@ ircd::m::media::block::get(const mutable_buffer &out,
 	return db::read(blocks, b58hash, out);
 }
 
+bool
+IRCD_MODULE_EXPORT
+ircd::m::media::block::prefetch(const string_view &b58hash)
+{
+	return db::prefetch(blocks, b58hash);
+}
+
 //
 // media::mxc
 //
