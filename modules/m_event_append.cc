@@ -138,7 +138,12 @@ ircd::m::event::append::append(json::stack::object &object,
 		defined(json::get<"state_key"_>(event))
 	};
 
-	if(has_event_idx && !is_state && m::redacted(*opts.event_idx))
+	const bool query_redacted
+	{
+		has_event_idx && opts.query_redacted && !is_state
+	};
+
+	if(query_redacted && m::redacted(*opts.event_idx))
 	{
 		log::debug
 		{

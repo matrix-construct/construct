@@ -41,6 +41,7 @@ struct ircd::m::event::append::opts
 	long age {std::numeric_limits<long>::min()};
 	bool query_txnid {true};
 	bool query_prev_state {true};
+	bool query_redacted {true};
 };
 
 inline
