@@ -487,12 +487,6 @@ ircd::m::media::file::read(const m::room &room,
 		room, 1, &fopts
 	};
 
-	// Block buffer
-	const unique_buffer<mutable_buffer> buf
-	{
-		64_KiB
-	};
-
 	for(; it; ++it)
 	{
 		for(; bpf && blocks_prefetched < blocks_fetched + blocks_prefetch; ++bpf)
@@ -534,46 +528,55 @@ ircd::m::media::file::read(const m::room &room,
 			at<"content"_>(event).at("hash")
 		};
 
-		const auto &blksz
+		const auto &block_size
 		{
 			at<"content"_>(event).get<size_t>("size")
 		};
 
-		const const_buffer &block
+		const auto handle{[&](const const_buffer &block)
 		{
-			block::get(buf, hash)
-		};
+			if(unlikely(size(block) != block_size))
+				throw error
+				{
+					"File [%s] block [%s] event %s idx:%lu block size %zu != %zu",
+					string_view{room.room_id},
+					hash,
+					string_view{event.event_id},
+					it.event_idx(),
+					block_size,
+					size(block)
+				};
 
-		if(unlikely(size(block) != blksz))
+			assert(size(block) == block_size);
+			ret += size(block);
+
+			#if 0
+			log::debug
+			{
+				log, "File %s read %s block[fetched:%zu prefetched:%zu] events[fetched:%zu prefetched:%zu] size:%zu total:%zu",
+				string_view{room.room_id},
+				hash,
+				blocks_fetched,
+				blocks_prefetched,
+				events_fetched,
+				events_prefetched,
+				block_size,
+				ret,
+			};
+			#endif
+
+			closure(block);
+		}};
+
+		if(unlikely(!block::get(hash, handle)))
 			throw error
 			{
-				"File [%s] block [%s] (%s) blksz %zu != %zu",
+				"File [%s] block %s missing in event %s idx:%lu",
 				string_view{room.room_id},
-				string_view{m::get(std::nothrow, it.event_idx(), "event_id", buf)},
 				hash,
-				blksz,
-				size(block)
+				string_view{event.event_id},
+				it.event_idx(),
 			};
-
-		assert(size(block) == blksz);
-		ret += size(block);
-
-		#if 0
-		log::debug
-		{
-			log, "File %s read %s block[fetched:%zu prefetched:%zu] events[fetched:%zu prefetched:%zu] size:%zu total:%zu",
-			string_view{room.room_id},
-			hash,
-			blocks_fetched,
-			blocks_prefetched,
-			events_fetched,
-			events_prefetched,
-			blksz,
-			ret,
-		};
-		#endif
-
-		closure(block);
 	}
 
 	return ret;
