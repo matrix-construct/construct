@@ -49,6 +49,7 @@ namespace ircd::m::media::block
 	using closure = std::function<void (const const_buffer &)>;
 
 	bool prefetch(const string_view &hash);
+	bool get(const string_view &hash, const closure &);
 	const_buffer get(const mutable_buffer &out, const string_view &hash);
 
 	void set(const string_view &hash, const const_buffer &block);
