@@ -416,21 +416,9 @@ bool
 ircd::m::sync::room_state_phased_member_events(data &data,
                                                json::stack::array &array)
 {
-	static const auto count{20}, bufsz{32}, limit{20};
-
-	size_t i(0), ret(0);
-	std::array<char[bufsz], count> buf;
-	std::array<string_view, count> last;
-	const auto already
+	static const size_t &count
 	{
-		[&last, &ret](const string_view &sender) -> bool
-		{
-			return std::any_of(begin(last), begin(last)+ret, [&sender]
-			(const auto &last)
-			{
-				return startswith(sender, last);
-			});
-		}
+		20
 	};
 
 	m::room::events it
@@ -438,37 +426,52 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 		*data.room
 	};
 
-	for(; it && ret < count && i < limit; --it, ++i)
-		m::get(std::nothrow, it.event_idx(), "sender", [&]
-		(const string_view &sender)
+	// Prefetch the senders of the recent room events
+	size_t i(0), prefetched(0);
+	std::array<event::idx, count> event_idx;
+	for(; it && i < event_idx.size(); --it, ++i)
+	{
+		event_idx[i] = it.event_idx();
+		prefetched += m::prefetch(event_idx[i], "sender");
+	}
+
+	// Transform the senders into member event::idx's and prefetch events
+	std::transform(begin(event_idx), begin(event_idx) + i, begin(event_idx), [&data]
+	(const m::event::idx &event_idx)
+	{
+		const event::idx &member_idx
 		{
-			if(already(sender))
-				return;
-
-			const auto sender_idx
+			m::query(std::nothrow, event_idx, "sender", [&data]
+			(const string_view &sender)
 			{
-				data.room->get(std::nothrow, "m.room.member", sender)
-			};
+				return data.room->get(std::nothrow, "m.room.member", sender);
+			})
+		};
 
-			if(!sender_idx)
-				return;
+		m::prefetch(member_idx);
+		return member_idx;
+	});
 
-			// check if this is an m.room.member event in the timeline.
-			if(sender_idx == it.event_idx())
-				return;
+	// Eliminate duplicate member event::idx
+	std::sort(begin(event_idx), begin(event_idx) + i);
+	const auto end(std::unique(begin(event_idx), begin(event_idx) + i));
+	assert(std::distance(begin(event_idx), end) > 0 || i == 0);
 
-			const m::event::fetch event
-			{
-				sender_idx, std::nothrow
-			};
+	// Fetch and stream those member events to client
+	bool ret{false};
+	std::for_each(begin(event_idx), end, [&data, &array, &ret]
+	(const event::idx &sender_idx)
+	{
+		const m::event::fetch event
+		{
+			sender_idx, std::nothrow
+		};
 
-			if(!event.valid)
-				return;
+		if(!event.valid)
+			return;
 
-			last.at(ret) = strlcpy(buf.at(ret), sender);
-			room_state_append(data, array, event, sender_idx, false);
-			++ret;
-		});
+		ret |= room_state_append(data, array, event, sender_idx, false);
+	});
 
 	return ret;
 }
