@@ -1962,10 +1962,17 @@ const
 	// Allow -1 to iterate through all types by starting
 	// the iteration at type value 0 and then ignoring the
 	// type as a loop continue condition.
-	const bool all_type(type == dbs::ref(uint8_t(-1)));
-	const auto &_type{all_type? dbs::ref::NEXT : type};
-	assert(uint8_t(dbs::ref::NEXT) == 0);
+	const bool all_type
+	{
+		type == dbs::ref(uint8_t(-1))
+	}'
 
+	const auto &_type
+	{
+		all_type? dbs::ref::NEXT : type
+	};
+
+	static_assert(uint8_t(dbs::ref::NEXT) == 0);
 	char buf[dbs::EVENT_REFS_KEY_MAX_SIZE];
 	const string_view key
 	{
