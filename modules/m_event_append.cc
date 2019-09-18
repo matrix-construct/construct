@@ -140,7 +140,10 @@ ircd::m::event::append::append(json::stack::object &object,
 
 	const bool query_redacted
 	{
-		has_event_idx && opts.query_redacted && !is_state
+		has_event_idx &&
+		opts.query_redacted &&
+		!is_state &&
+		(!opts.room_depth || *opts.room_depth > json::get<"depth"_>(event))
 	};
 
 	if(query_redacted && m::redacted(*opts.event_idx))
