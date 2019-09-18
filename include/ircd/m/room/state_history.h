@@ -36,6 +36,9 @@ struct ircd::m::room::state::history
 	event::idx get(std::nothrow_t, const string_view &type, const string_view &state_key) const;
 	event::idx get(const string_view &type, const string_view &state_key) const;
 
+	bool prefetch(const string_view &type, const string_view &state_key) const;
+	bool prefetch(const string_view &type) const;
+
 	history(const m::room &, const int64_t &bound);
 	history(const m::room::id &, const m::event::id &);
 	history(const m::room &);

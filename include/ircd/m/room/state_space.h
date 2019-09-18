@@ -39,6 +39,10 @@ struct ircd::m::room::state::space
 	bool has(const string_view &type, const string_view &state_key) const;
 	bool has(const string_view &type) const;
 
+	bool prefetch(const string_view &type, const string_view &state_key, const int64_t &depth) const;
+	bool prefetch(const string_view &type, const string_view &state_key) const;
+	bool prefetch(const string_view &type) const;
+
 	space(const m::room &);
 };
 

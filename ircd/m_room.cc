@@ -2580,6 +2580,21 @@ ircd::m::room::state::history::history(const m::room &room,
 {
 }
 
+bool
+ircd::m::room::state::history::prefetch(const string_view &type)
+const
+{
+	return prefetch(type, string_view{});
+}
+
+bool
+ircd::m::room::state::history::prefetch(const string_view &type,
+                                        const string_view &state_key)
+const
+{
+	return space.prefetch(type, state_key, bound);
+}
+
 ircd::m::event::idx
 ircd::m::room::state::history::get(const string_view &type,
                                    const string_view &state_key)
@@ -2723,6 +2738,41 @@ ircd::m::room::state::space::space(const m::room &room)
 	room
 }
 {
+}
+
+bool
+ircd::m::room::state::space::prefetch(const string_view &type)
+const
+{
+	return prefetch(type, string_view{});
+}
+
+bool
+ircd::m::room::state::space::prefetch(const string_view &type,
+                                      const string_view &state_key)
+const
+{
+	return prefetch(type, state_key, -1);
+}
+
+bool
+ircd::m::room::state::space::prefetch(const string_view &type,
+                                      const string_view &state_key,
+                                      const int64_t &depth)
+const
+{
+	const int64_t &_depth
+	{
+		type? depth : 0L
+	};
+
+	char buf[dbs::ROOM_STATE_SPACE_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		dbs::room_state_space_key(buf, room.room_id, type, state_key, _depth, 0UL)
+	};
+
+	return db::prefetch(dbs::room_state_space, key);
 }
 
 bool
