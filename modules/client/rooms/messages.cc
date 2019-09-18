@@ -40,7 +40,7 @@ conf::item<size_t>
 prefetch_max
 {
 	{ "name",      "ircd.client.rooms.messages.prefetch.max" },
-	{ "default",   32L                                       },
+	{ "default",   24L                                       },
 };
 
 log::log
@@ -132,12 +132,12 @@ get__messages(client &client,
 		top, "chunk"
 	};
 
-	const auto &pfetch_max
+	const auto &max_prefetch
 	{
 		std::min(size_t(page.limit), size_t(prefetch_max))
 	};
 
-	size_t pfetch{0}, pfetched{0};
+	size_t prefetch{0};
 	m::room::events pf
 	{
 		room
@@ -151,10 +151,10 @@ get__messages(client &client,
 
 	for(; it; page.dir == 'b'? --it : ++it)
 	{
-		for(; pf && pfetch < pfetched + prefetch_max; page.dir == 'b'? --pf : ++pf)
-			pfetch += pf.prefetch();
+		for(; pf && prefetch < hit + miss + max_prefetch; page.dir == 'b'? --pf : ++pf)
+			prefetch += pf.prefetch();
 
-		if(hit + miss == 0 && pfetch > 0)
+		if(hit + miss == 0 && prefetch > 0)
 			ctx::yield();
 
 		const m::event &event
@@ -166,22 +166,17 @@ get__messages(client &client,
 		if(hit > page.limit || miss >= size_t(max_filter_miss))
 			break;
 
-		if(!visible(event, request.user_id))
+		const bool ok
 		{
-			++miss;
-			continue;
-		}
+			(empty(filter_json) || match(filter, event))
 
-		if(!empty(filter_json) && !match(filter, event))
-		{
-			++miss;
-			continue;
-		}
+			&& visible(event, request.user_id)
 
-		if(_append(chunk, event, it.event_idx(), user_room, room_depth))
-			++hit;
-		else
-			++miss;
+			&& _append(chunk, event, it.event_idx(), user_room, room_depth)
+		};
+
+		hit += ok;
+		miss += !ok;
 	}
 	chunk.~array();
 
