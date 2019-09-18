@@ -24,15 +24,19 @@ struct ircd::db::prefetcher
 	ctx::dock dock;
 	std::deque<request> queue;
 	ctx::context context;
-	size_t handles {0};
 	size_t request_workers {0};
 	size_t request_counter {0};
+	size_t directs_counter {0};
 	size_t handles_counter {0};
+	size_t handled_counter {0};
+	size_t fetches_counter {0};
 	size_t fetched_counter {0};
 	size_t cancels_counter {0};
+	size_t cache_hits {0};
 
 	size_t wait_pending();
 	void request_handle(request &);
+	size_t request_cleanup() noexcept;
 	void request_worker();
 	void handle();
 	void worker();
@@ -50,8 +54,22 @@ struct ircd::db::prefetcher
 
 struct ircd::db::prefetcher::request
 {
-	std::string key;
-	database *d {nullptr};
-	steady_point start;
-	uint32_t cid {0};
+	database *d {nullptr};             // database instance
+	uint32_t cid {0};                  // column ID
+	uint32_t len {0};                  // length of key
+	steady_point snd;                  // submitted by user
+	steady_point req;                  // request sent to database
+	steady_point fin;                  // result from database
+	char key[208] alignas(16);         // key buffer
+
+	explicit operator string_view() const noexcept;
+
+	request(database &d, const column &c, const string_view &key) noexcept;
+	request() = default;
 };
+
+static_assert
+(
+	sizeof(ircd::db::prefetcher::request) == 256,
+	"struct ircd::db::prefetcher::request fell out of alignment"
+);
