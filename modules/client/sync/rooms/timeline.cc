@@ -272,12 +272,15 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 		++i;
 	}
 
-	limited = i >= limit;
-	if(i > 0 && !it)
+	limited = i > limit;
+	if(i > 1 && !it)
 		it.seek(event_idx);
 
-	if(i > 0)
-		for(++it; it && i > -1; ++it, --i)
+	if(i > 1 && it)
+		--i, ++it;
+
+	if(i > 0 && it)
+		for(++it; i > 0 && it; --i, ++it)
 		{
 			const m::event &event
 			{
