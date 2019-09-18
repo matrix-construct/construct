@@ -248,7 +248,6 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 		room
 	};
 
-	ssize_t i(0);
 	const ssize_t limit
 	{
 		data.phased && data.range.first == 0?
@@ -256,6 +255,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 			ssize_t(limit_default)
 	};
 
+	ssize_t i(0), prefetched(0);
 	for(; it && i <= limit; --it)
 	{
 		event_idx = it.event_idx();
@@ -264,6 +264,9 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 
 		if(event_idx < data.range.first)
 			break;
+
+		if(limit > 1)
+			prefetched += m::prefetch(event_idx);
 
 		++i;
 	}
