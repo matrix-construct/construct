@@ -1120,6 +1120,9 @@ ircd::m::get(std::nothrow_t,
              const string_view &key,
              const event::fetch::view_closure &closure)
 {
+	if(!event_idx)
+		return false;
+
 	const auto &column_idx
 	{
 		json::indexof<event>(key)
@@ -1129,9 +1132,6 @@ ircd::m::get(std::nothrow_t,
 	{
 		dbs::event_column.at(column_idx)
 	};
-
-	if(!event_idx)
-		return false;
 
 	const string_view &column_key
 	{
