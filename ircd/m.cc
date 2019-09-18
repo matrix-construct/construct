@@ -1653,7 +1653,7 @@ ircd::m::vm::sequence::get(const eval &eval)
 //
 
 ircd::m::redacted::redacted(const event::idx &event_idx)
-:ret
+:boolean
 {
 	event_idx?
 		event::refs(event_idx).has(dbs::ref::M_ROOM_REDACTION):

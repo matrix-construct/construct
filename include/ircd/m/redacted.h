@@ -17,12 +17,8 @@ namespace ircd::m
 }
 
 struct ircd::m::redacted
+:boolean
 {
-	bool ret;
-
-  public:
-	operator const bool &() const;
-
 	redacted(const event::idx &);
 	redacted(const event::id &);
 	explicit redacted(const event &);
@@ -43,10 +39,3 @@ ircd::m::redacted::redacted(const event::id &event_id)
     index(event_id, std::nothrow)
 }
 {}
-
-inline ircd::m::redacted::operator
-const bool &()
-const
-{
-	return ret;
-}
