@@ -38,6 +38,9 @@ struct ircd::m::event::refs
 	size_t count(const dbs::ref &type) const;
 	size_t count() const;
 
+	bool prefetch(const dbs::ref &type) const;
+	bool prefetch() const;
+
 	refs(const event::idx &idx) noexcept;
 
 	static void rebuild();

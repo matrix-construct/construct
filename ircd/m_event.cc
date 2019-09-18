@@ -1891,6 +1891,43 @@ ircd::m::event::refs::rebuild()
 	txn();
 }
 
+bool
+ircd::m::event::refs::prefetch()
+const
+{
+	return prefetch(dbs::ref(-1));
+}
+
+bool
+ircd::m::event::refs::prefetch(const dbs::ref &type)
+const
+{
+	if(unlikely(!idx))
+		return false;
+
+	// Allow -1 to iterate through all types by starting
+	// the iteration at type value 0 and then ignoring the
+	// type as a loop continue condition.
+	const bool all_type
+	{
+		type == dbs::ref(uint8_t(-1))
+	};
+
+	const auto &_type
+	{
+		all_type? dbs::ref::NEXT : type
+	};
+
+	static_assert(uint8_t(dbs::ref::NEXT) == 0);
+	char buf[dbs::EVENT_REFS_KEY_MAX_SIZE];
+	const string_view key
+	{
+		dbs::event_refs_key(buf, idx, _type, 0)
+	};
+
+	return db::prefetch(dbs::event_refs, key);
+}
+
 size_t
 ircd::m::event::refs::count()
 const
@@ -1965,7 +2002,7 @@ const
 	const bool all_type
 	{
 		type == dbs::ref(uint8_t(-1))
-	}'
+	};
 
 	const auto &_type
 	{
