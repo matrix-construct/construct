@@ -324,16 +324,6 @@ ircd::m::sync::room_state_phased_events(data &data)
 		*data.out, "events"
 	};
 
-	const std::pair<string_view, string_view> keys[]
-	{
-		{ "m.room.create",           ""                        },
-		{ "m.room.canonical_alias",  ""                        },
-		{ "m.room.name",             ""                        },
-		{ "m.room.avatar",           ""                        },
-		{ "m.room.aliases",          data.user.user_id.host()  },
-		{ "m.room.member",           data.user.user_id         },
-	};
-
 	const auto append
 	{
 		[&data, &array, &ret, &mutex]
@@ -344,39 +334,77 @@ ircd::m::sync::room_state_phased_events(data &data)
 		}
 	};
 
-	sync::pool.min(6);
-	ctx::concurrent_for_each<const std::pair<string_view, string_view>>
+	std::array<event::idx, 6> event_idx;
+	const std::pair<string_view, string_view> keys[]
 	{
-		sync::pool, keys, [&data, &append](const auto &key)
-		{
-			const auto &event_idx
-			{
-				data.room->get(std::nothrow, key.first, key.second)
-			};
-
-			m::prefetch(m::room::state::prev(event_idx), "content");
-
-			const m::event::fetch event
-			{
-				event_idx, std::nothrow
-			};
-
-			if(unlikely(event_idx && !event.valid))
-				log::error
-				{
-					log, "Failed to find event_idx:%lu in room %s state (%s,%s)",
-					event_idx,
-					string_view{data.room->room_id},
-					key.first,
-					key.second,
-				};
-
-			if(!event.valid)
-				return;
-
-			append(event_idx, event);
-		}
+		{ "m.room.create",           ""                        },
+		{ "m.room.canonical_alias",  ""                        },
+		{ "m.room.name",             ""                        },
+		{ "m.room.avatar",           ""                        },
+		{ "m.room.aliases",          data.user.user_id.host()  },
+		{ "m.room.member",           data.user.user_id         },
 	};
+
+	const room::state state
+	{
+		*data.room
+	};
+
+	// Prefetch the state cells
+	size_t state_prefetched(0);
+	for(const auto &[type, state_key] : keys)
+		state_prefetched += state.prefetch(type, state_key);
+
+	// Fetch the state cells and prefetch the event data
+	size_t i(0);
+	size_t prev_content_prefetched(0);
+	for(const auto &[type, state_key] : keys)
+	{
+		auto &idx(event_idx.at(i++));
+		idx = state.get(std::nothrow, type, state_key);
+
+		// Prefetch the content of the previous state for event::append()
+		if(likely(type != "m.room.create"))
+		{
+			const auto &prev_idx
+			{
+				room::state::prev(idx)
+			};
+
+			prev_content_prefetched += m::prefetch(prev_idx, "content");
+		}
+	}
+
+	// Fetch the event data and stream to client
+	assert(i <= event_idx.size());
+	for(i = 0; i < event_idx.size(); ++i) try
+	{
+		if(!event_idx.at(i))
+			continue;
+
+		const m::event::fetch event
+		{
+			event_idx.at(i)
+		};
+
+		append(event_idx.at(i), event);
+	}
+	catch(const std::exception &e)
+	{
+		const auto &[type, state_key]
+		{
+			keys[i]
+		};
+
+		log::error
+		{
+			log, "Failed to find event_idx:%lu in room %s state (%s,%s)",
+			event_idx.at(i),
+			string_view{data.room->room_id},
+			type,
+			state_key,
+		};
+	}
 
 	if(data.membership == "join")
 		ret |= room_state_phased_member_events(data, array);
