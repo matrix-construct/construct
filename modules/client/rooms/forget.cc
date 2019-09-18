@@ -39,43 +39,11 @@ post__forget(client &client,
 			string_view{room_id}
 		};
 
-	char room_membuf[m::room::MEMBERSHIP_MAX_SIZE];
-	const string_view &room_membership
-	{
-		membership(room_membuf, room, request.user_id)
-	};
-
-	char user_membuf[m::room::MEMBERSHIP_MAX_SIZE];
-	string_view user_membership;
-	m::get(std::nothrow, event_idx, "content", [&user_membuf, &user_membership]
-	(const json::object &content)
-	{
-		const json::string &membership
-		{
-			content.get("membership")
-		};
-
-		user_membership =
-		{
-			user_membuf, copy(user_membuf, membership)
-		};
-	});
-
-	if(room_membership != user_membership)
-		log::critical
-		{
-			"Membership mismatch for user %s in room %s: user:%s vs. room:%s",
-			string_view{request.user_id},
-			string_view{room_id},
-			user_membership,
-			room_membership
-		};
-
-	if(user_membership != "leave")
+	if(m::membership(event_idx, m::membership_positive))
 		throw m::error
 		{
-			http::OK, "M_MEMBERSHIP_NOT_LEAVE",
-			"You must leave the room first to forget it"
+			http::UNPROCESSABLE_ENTITY, "M_MEMBERSHIP_POSITIVE",
+			"You must leave or be banned from the room to forget it."
 		};
 
 	const auto event_id
