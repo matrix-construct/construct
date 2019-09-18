@@ -56,7 +56,6 @@ namespace ircd::db
 {
 	struct throw_on_error;
 	struct error_to_status;
-	struct prefetcher;
 
 	constexpr const auto BLOCKING      { rocksdb::ReadTier::kReadAllTier      };
 	constexpr const auto NON_BLOCKING  { rocksdb::ReadTier::kBlockCacheTier   };
@@ -68,7 +67,6 @@ namespace ircd::db
 	extern ctx::pool::opts request_pool_opts;
 	extern ctx::pool request;
 	extern ctx::mutex write_mutex;
-	extern db::prefetcher *prefetcher;
 
 	// reflections
 	string_view reflect(const rocksdb::Status::Severity &);
@@ -186,48 +184,4 @@ struct ircd::db::txn::handler
 	:d{d}
 	,cb{cb}
 	{}
-};
-
-//
-// prefetcher
-//
-
-struct ircd::db::prefetcher
-{
-	struct request;
-	using closure = std::function<bool (request &)>;
-
-	ctx::dock dock;
-	std::deque<request> queue;
-	ctx::context context;
-	size_t handles {0};
-	size_t request_workers {0};
-	size_t request_counter {0};
-	size_t handles_counter {0};
-	size_t fetched_counter {0};
-	size_t cancels_counter {0};
-
-	size_t wait_pending();
-	void request_handle(request &);
-	void request_worker();
-	void handle();
-	void worker();
-
-  public:
-	size_t cancel(const closure &);
-	size_t cancel(database &);         // Cancel all for db
-	size_t cancel(column &);           // Cancel all for column
-
-	bool operator()(column &, const string_view &key, const gopts &);
-
-	prefetcher();
-	~prefetcher() noexcept;
-};
-
-struct ircd::db::prefetcher::request
-{
-	std::string key;
-	database *d {nullptr};
-	steady_point start;
-	uint32_t cid {0};
 };

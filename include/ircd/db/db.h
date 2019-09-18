@@ -56,6 +56,7 @@ namespace ircd::db
 #include "row.h"
 #include "json.h"
 #include "txn.h"
+#include "prefetcher.h"
 #include "stats.h"
 
 //

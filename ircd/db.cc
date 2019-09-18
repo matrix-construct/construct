@@ -2360,175 +2360,6 @@ catch(const std::exception &e)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// db/stats.h
-//
-
-std::string
-ircd::db::string(const rocksdb::IOStatsContext &ic,
-                 const bool &all)
-{
-	const bool exclude_zeros(!all);
-	return ic.ToString(exclude_zeros);
-}
-
-const rocksdb::IOStatsContext &
-ircd::db::iostats_current()
-{
-	const auto *const &ret
-	{
-		rocksdb::get_iostats_context()
-	};
-
-	if(unlikely(!ret))
-		throw error
-		{
-			"IO counters are not available on this thread."
-		};
-
-	return *ret;
-}
-
-std::string
-ircd::db::string(const rocksdb::PerfContext &pc,
-                 const bool &all)
-{
-	const bool exclude_zeros(!all);
-	return pc.ToString(exclude_zeros);
-}
-
-const rocksdb::PerfContext &
-ircd::db::perf_current()
-{
-	const auto *const &ret
-	{
-		rocksdb::get_perf_context()
-	};
-
-	if(unlikely(!ret))
-		throw error
-		{
-			"Performance counters are not available on this thread."
-		};
-
-	return *ret;
-}
-
-void
-ircd::db::perf_level(const uint &level)
-{
-	if(level >= rocksdb::PerfLevel::kOutOfBounds)
-		throw error
-		{
-			"Perf level of '%u' is invalid; maximum is '%u'",
-			level,
-			uint(rocksdb::PerfLevel::kOutOfBounds)
-		};
-
-	rocksdb::SetPerfLevel(rocksdb::PerfLevel(level));
-}
-
-uint
-ircd::db::perf_level()
-{
-	return rocksdb::GetPerfLevel();
-}
-
-//
-// ticker
-//
-
-uint64_t
-ircd::db::ticker(const database &d,
-                 const string_view &key)
-{
-	return ticker(d, ticker_id(key));
-}
-
-uint64_t
-ircd::db::ticker(const database &d,
-                 const uint32_t &id)
-{
-	return d.stats->getTickerCount(id);
-}
-
-uint32_t
-ircd::db::ticker_id(const string_view &key)
-{
-	for(const auto &pair : rocksdb::TickersNameMap)
-		if(key == pair.second)
-			return pair.first;
-
-	throw std::out_of_range
-	{
-		"No ticker with that key"
-	};
-}
-
-ircd::string_view
-ircd::db::ticker_id(const uint32_t &id)
-{
-	for(const auto &pair : rocksdb::TickersNameMap)
-		if(id == pair.first)
-			return pair.second;
-
-	return {};
-}
-
-decltype(ircd::db::ticker_max)
-ircd::db::ticker_max
-{
-	rocksdb::TICKER_ENUM_MAX
-};
-
-//
-// histogram
-//
-
-const struct ircd::db::histogram &
-ircd::db::histogram(const database &d,
-                    const string_view &key)
-{
-	return histogram(d, histogram_id(key));
-}
-
-const struct ircd::db::histogram &
-ircd::db::histogram(const database &d,
-                    const uint32_t &id)
-{
-	return d.stats->histogram.at(id);
-}
-
-uint32_t
-ircd::db::histogram_id(const string_view &key)
-{
-	for(const auto &pair : rocksdb::HistogramsNameMap)
-		if(key == pair.second)
-			return pair.first;
-
-	throw std::out_of_range
-	{
-		"No histogram with that key"
-	};
-}
-
-ircd::string_view
-ircd::db::histogram_id(const uint32_t &id)
-{
-	for(const auto &pair : rocksdb::HistogramsNameMap)
-		if(id == pair.first)
-			return pair.second;
-
-	return {};
-}
-
-decltype(ircd::db::histogram_max)
-ircd::db::histogram_max
-{
-	rocksdb::HISTOGRAM_ENUM_MAX
-};
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // database::stats (db/database/stats.h) internal
 //
 
@@ -3808,6 +3639,439 @@ ircd::db::database::wal::info::operator=(const rocksdb::LogFile &lf)
 	return *this;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// db/stats.h
+//
+
+std::string
+ircd::db::string(const rocksdb::IOStatsContext &ic,
+                 const bool &all)
+{
+	const bool exclude_zeros(!all);
+	return ic.ToString(exclude_zeros);
+}
+
+const rocksdb::IOStatsContext &
+ircd::db::iostats_current()
+{
+	const auto *const &ret
+	{
+		rocksdb::get_iostats_context()
+	};
+
+	if(unlikely(!ret))
+		throw error
+		{
+			"IO counters are not available on this thread."
+		};
+
+	return *ret;
+}
+
+std::string
+ircd::db::string(const rocksdb::PerfContext &pc,
+                 const bool &all)
+{
+	const bool exclude_zeros(!all);
+	return pc.ToString(exclude_zeros);
+}
+
+const rocksdb::PerfContext &
+ircd::db::perf_current()
+{
+	const auto *const &ret
+	{
+		rocksdb::get_perf_context()
+	};
+
+	if(unlikely(!ret))
+		throw error
+		{
+			"Performance counters are not available on this thread."
+		};
+
+	return *ret;
+}
+
+void
+ircd::db::perf_level(const uint &level)
+{
+	if(level >= rocksdb::PerfLevel::kOutOfBounds)
+		throw error
+		{
+			"Perf level of '%u' is invalid; maximum is '%u'",
+			level,
+			uint(rocksdb::PerfLevel::kOutOfBounds)
+		};
+
+	rocksdb::SetPerfLevel(rocksdb::PerfLevel(level));
+}
+
+uint
+ircd::db::perf_level()
+{
+	return rocksdb::GetPerfLevel();
+}
+
+//
+// ticker
+//
+
+uint64_t
+ircd::db::ticker(const database &d,
+                 const string_view &key)
+{
+	return ticker(d, ticker_id(key));
+}
+
+uint64_t
+ircd::db::ticker(const database &d,
+                 const uint32_t &id)
+{
+	return d.stats->getTickerCount(id);
+}
+
+uint32_t
+ircd::db::ticker_id(const string_view &key)
+{
+	for(const auto &pair : rocksdb::TickersNameMap)
+		if(key == pair.second)
+			return pair.first;
+
+	throw std::out_of_range
+	{
+		"No ticker with that key"
+	};
+}
+
+ircd::string_view
+ircd::db::ticker_id(const uint32_t &id)
+{
+	for(const auto &pair : rocksdb::TickersNameMap)
+		if(id == pair.first)
+			return pair.second;
+
+	return {};
+}
+
+decltype(ircd::db::ticker_max)
+ircd::db::ticker_max
+{
+	rocksdb::TICKER_ENUM_MAX
+};
+
+//
+// histogram
+//
+
+const struct ircd::db::histogram &
+ircd::db::histogram(const database &d,
+                    const string_view &key)
+{
+	return histogram(d, histogram_id(key));
+}
+
+const struct ircd::db::histogram &
+ircd::db::histogram(const database &d,
+                    const uint32_t &id)
+{
+	return d.stats->histogram.at(id);
+}
+
+uint32_t
+ircd::db::histogram_id(const string_view &key)
+{
+	for(const auto &pair : rocksdb::HistogramsNameMap)
+		if(key == pair.second)
+			return pair.first;
+
+	throw std::out_of_range
+	{
+		"No histogram with that key"
+	};
+}
+
+ircd::string_view
+ircd::db::histogram_id(const uint32_t &id)
+{
+	for(const auto &pair : rocksdb::HistogramsNameMap)
+		if(id == pair.first)
+			return pair.second;
+
+	return {};
+}
+
+decltype(ircd::db::histogram_max)
+ircd::db::histogram_max
+{
+	rocksdb::HISTOGRAM_ENUM_MAX
+};
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// db/prefetcher.h
+//
+
+decltype(ircd::db::prefetcher)
+ircd::db::prefetcher;
+
+//
+// db::prefetcher
+//
+ircd::db::prefetcher::prefetcher()
+:context
+{
+	"db.prefetcher",
+	128_KiB,
+	context::POST,
+	std::bind(&prefetcher::worker, this)
+}
+{
+}
+
+ircd::db::prefetcher::~prefetcher()
+noexcept
+{
+	while(!queue.empty())
+	{
+		log::warning
+		{
+			log, "Prefetcher waiting for %zu requests to clear...",
+			queue.size(),
+		};
+
+		dock.wait_for(seconds(5), [this]
+		{
+			return queue.empty();
+		});
+	}
+
+	assert(queue.empty());
+}
+
+bool
+ircd::db::prefetcher::operator()(column &c,
+                                 const string_view &key,
+                                 const gopts &opts)
+{
+	auto &d
+	{
+		static_cast<database &>(c)
+	};
+
+	const auto start
+	{
+		#ifdef IRCD_DB_DEBUG_PREFETCH
+			now<steady_point>()
+		#else
+			steady_point{}
+		#endif
+	};
+
+	queue.emplace_back(request
+	{
+		key, &d, now<steady_point>(), db::id(c)
+	});
+
+	++request_counter;
+	dock.notify_one();
+	return true;
+}
+
+size_t
+ircd::db::prefetcher::cancel(column &c)
+{
+	return cancel([&c]
+	(const auto &request)
+	{
+		return request.cid == id(c);
+	});
+}
+
+size_t
+ircd::db::prefetcher::cancel(database &d)
+{
+	return cancel([&d]
+	(const auto &request)
+	{
+		return request.d == std::addressof(d);
+	});
+}
+
+size_t
+ircd::db::prefetcher::cancel(const closure &closure)
+{
+	const auto e
+	{
+		std::remove_if(begin(queue), end(queue), closure)
+	};
+
+	const ssize_t remain
+	{
+		std::distance(begin(queue), e)
+	};
+
+	assert(remain >= 0);
+	const ssize_t canceled
+	{
+		ssize_t(queue.size()) - remain
+	};
+
+	assert(canceled >= 0);
+	queue.resize(remain);
+	cancels_counter += canceled;
+
+	if(canceled)
+		dock.notify_all();
+
+	return canceled;
+}
+
+void
+ircd::db::prefetcher::worker()
+try
+{
+	while(1)
+	{
+		dock.wait([this]
+		{
+			return !queue.empty() && request_counter > handles_counter;
+		});
+
+		handle();
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "prefetcher worker: %s",
+		e.what()
+	};
+}
+
+void
+ircd::db::prefetcher::handle()
+{
+	const scope_count handles
+	{
+		this->handles
+	};
+
+	auto handler
+	{
+		std::bind(&prefetcher::request_worker, this)
+	};
+
+	db::request(std::move(handler));
+	++handles_counter;
+}
+
+void
+ircd::db::prefetcher::request_worker()
+{
+	const ctx::scope_notify notify
+	{
+		this->dock
+	};
+
+	const scope_count request_workers
+	{
+		this->request_workers
+	};
+
+	if(unlikely(queue.empty()))
+		return;
+
+	auto request
+	{
+		std::move(queue.front())
+	};
+
+	queue.pop_front();
+	request_handle(request);
+	++fetched_counter;
+}
+
+void
+ircd::db::prefetcher::request_handle(request &request)
+try
+{
+	assert(request.d);
+	db::column column
+	{
+		(*request.d)[request.cid]
+	};
+
+	const bool has
+	{
+		db::has(column, request.key)
+	};
+
+	#ifdef IRCD_DB_DEBUG_PREFETCH
+	char pbuf[32];
+	log::debug
+	{
+		log, "[%s][%s] completed fetch:%b queue:%zu h:%zu rw:%zu rc:%zu hc:%zu fc:%zu cc:%zu in %s",
+		name(*request.d),
+		name(column),
+		has? false : true,
+		queue.size(),
+		this->handles,
+		this->request_workers,
+		this->request_counter,
+		this->handles_counter,
+		this->fetched_counter,
+		this->cancels_counter,
+		pretty(pbuf, now<steady_point>() - request.start, 1),
+	};
+	#endif
+}
+catch(const not_found &e)
+{
+	assert(request.d);
+	log::dwarning
+	{
+		log, "[%s][%u] :%s",
+		name(*request.d),
+		request.cid,
+		e.what(),
+	};
+}
+catch(const std::exception &e)
+{
+	assert(request.d);
+	log::error
+	{
+		log, "[%s][%u] :%s",
+		name(*request.d),
+		request.cid,
+		e.what(),
+	};
+}
+
+size_t
+ircd::db::prefetcher::wait_pending()
+{
+	const size_t fetched_counter
+	{
+		this->fetched_counter
+	};
+
+	const size_t fetched_target
+	{
+		fetched_counter + request_workers
+	};
+
+	dock.wait([this, &fetched_target]
+	{
+		return this->fetched_counter >= fetched_target;
+	});
+
+	assert(fetched_target >= fetched_counter);
+	return fetched_target - fetched_counter;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -5850,267 +6114,6 @@ ircd::db::prefetch(column &column,
 
 	assert(prefetcher);
 	return (*prefetcher)(column, key, gopts);
-}
-
-//
-// db::prefetcher
-//
-
-decltype(ircd::db::prefetcher)
-ircd::db::prefetcher;
-
-ircd::db::prefetcher::prefetcher()
-:context
-{
-	"db.prefetcher",
-	128_KiB,
-	context::POST,
-	std::bind(&prefetcher::worker, this)
-}
-{
-}
-
-ircd::db::prefetcher::~prefetcher()
-noexcept
-{
-	while(!queue.empty())
-	{
-		log::warning
-		{
-			log, "Prefetcher waiting for %zu requests to clear...",
-			queue.size(),
-		};
-
-		dock.wait_for(seconds(5), [this]
-		{
-			return queue.empty();
-		});
-	}
-
-	assert(queue.empty());
-}
-
-bool
-ircd::db::prefetcher::operator()(column &c,
-                                 const string_view &key,
-                                 const gopts &opts)
-{
-	auto &d
-	{
-		static_cast<database &>(c)
-	};
-
-	const auto start
-	{
-		#ifdef IRCD_DB_DEBUG_PREFETCH
-			now<steady_point>()
-		#else
-			steady_point{}
-		#endif
-	};
-
-	queue.emplace_back(request
-	{
-		key, &d, now<steady_point>(), db::id(c)
-	});
-
-	++request_counter;
-	dock.notify_one();
-	return true;
-}
-
-size_t
-ircd::db::prefetcher::cancel(column &c)
-{
-	return cancel([&c]
-	(const auto &request)
-	{
-		return request.cid == id(c);
-	});
-}
-
-size_t
-ircd::db::prefetcher::cancel(database &d)
-{
-	return cancel([&d]
-	(const auto &request)
-	{
-		return request.d == std::addressof(d);
-	});
-}
-
-size_t
-ircd::db::prefetcher::cancel(const closure &closure)
-{
-	const auto e
-	{
-		std::remove_if(begin(queue), end(queue), closure)
-	};
-
-	const ssize_t remain
-	{
-		std::distance(begin(queue), e)
-	};
-
-	assert(remain >= 0);
-	const ssize_t canceled
-	{
-		ssize_t(queue.size()) - remain
-	};
-
-	assert(canceled >= 0);
-	queue.resize(remain);
-	cancels_counter += canceled;
-
-	if(canceled)
-		dock.notify_all();
-
-	return canceled;
-}
-
-void
-ircd::db::prefetcher::worker()
-try
-{
-	while(1)
-	{
-		dock.wait([this]
-		{
-			return !queue.empty() && request_counter > handles_counter;
-		});
-
-		handle();
-	}
-}
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		log, "prefetcher worker: %s",
-		e.what()
-	};
-}
-
-void
-ircd::db::prefetcher::handle()
-{
-	const scope_count handles
-	{
-		this->handles
-	};
-
-	auto handler
-	{
-		std::bind(&prefetcher::request_worker, this)
-	};
-
-	db::request(std::move(handler));
-	++handles_counter;
-}
-
-void
-ircd::db::prefetcher::request_worker()
-{
-	const ctx::scope_notify notify
-	{
-		this->dock
-	};
-
-	const scope_count request_workers
-	{
-		this->request_workers
-	};
-
-	if(unlikely(queue.empty()))
-		return;
-
-	auto request
-	{
-		std::move(queue.front())
-	};
-
-	queue.pop_front();
-	request_handle(request);
-	++fetched_counter;
-}
-
-void
-ircd::db::prefetcher::request_handle(request &request)
-try
-{
-	assert(request.d);
-	db::column column
-	{
-		(*request.d)[request.cid]
-	};
-
-	const bool has
-	{
-		db::has(column, request.key)
-	};
-
-	#ifdef IRCD_DB_DEBUG_PREFETCH
-	char pbuf[32];
-	log::debug
-	{
-		log, "[%s][%s] completed fetch:%b queue:%zu h:%zu rw:%zu rc:%zu hc:%zu fc:%zu cc:%zu in %s",
-		name(*request.d),
-		name(column),
-		has? false : true,
-		queue.size(),
-		this->handles,
-		this->request_workers,
-		this->request_counter,
-		this->handles_counter,
-		this->fetched_counter,
-		this->cancels_counter,
-		pretty(pbuf, now<steady_point>() - request.start, 1),
-	};
-	#endif
-}
-catch(const not_found &e)
-{
-	assert(request.d);
-	log::dwarning
-	{
-		log, "[%s][%u] :%s",
-		name(*request.d),
-		request.cid,
-		e.what(),
-	};
-}
-catch(const std::exception &e)
-{
-	assert(request.d);
-	log::error
-	{
-		log, "[%s][%u] :%s",
-		name(*request.d),
-		request.cid,
-		e.what(),
-	};
-}
-
-size_t
-ircd::db::prefetcher::wait_pending()
-{
-	const size_t fetched_counter
-	{
-		this->fetched_counter
-	};
-
-	const size_t fetched_target
-	{
-		fetched_counter + request_workers
-	};
-
-	dock.wait([this, &fetched_target]
-	{
-		return this->fetched_counter >= fetched_target;
-	});
-
-	assert(fetched_target >= fetched_counter);
-	return fetched_target - fetched_counter;
 }
 
 //
