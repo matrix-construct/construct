@@ -2323,10 +2323,25 @@ ircd::m::event_filter::event_filter(const mutable_buffer &buf,
 // m/membership.h
 //
 
+decltype(ircd::m::membership_positive)
+ircd::m::membership_positive
+{
+	"join"_sv,
+	"invite"_sv,
+};
+
+decltype(ircd::m::membership_negative)
+ircd::m::membership_negative
+{
+	"leave"_sv,
+	"ban"_sv,
+	""_sv,
+};
+
 bool
 ircd::m::membership(const room &room,
                     const user::id &user_id,
-                    const string_view &membership)
+                    const vector_view<const string_view> &membership)
 {
 	const room::state state
 	{
@@ -2339,6 +2354,47 @@ ircd::m::membership(const room &room,
 	};
 
 	return m::membership(event_idx, membership);
+}
+
+bool
+ircd::m::membership(const event::idx &event_idx,
+                    const vector_view<const string_view> &membership)
+{
+	bool ret;
+	const auto closure
+	{
+		[&membership, &ret](const json::object &content)
+		{
+			const json::string &content_membership
+			{
+				content["membership"]
+			};
+
+			const auto it
+			{
+				std::find(begin(membership), end(membership), content_membership)
+			};
+
+			ret = content_membership && it != end(membership);
+		}
+	};
+
+	// If the query was successful a membership state exists (even if the
+	// string found was illegally empty) thus we must return the value of ret.
+	if(m::get(std::nothrow, event_idx, "content", closure))
+		return ret;
+
+	// If the user included an empty string in the vector, they want us to
+	// return true for non-membership (i.e a failed query).
+	static const auto &empty{[](auto&& s) { return !s; }};
+	if(std::any_of(begin(membership), end(membership), empty))
+		return true;
+
+	// If the membership vector itself was empty that's also a non-membership.
+	if(membership.empty())
+		return true;
+
+	return false;
 }
 
 ircd::string_view
@@ -2357,34 +2413,6 @@ ircd::m::membership(const mutable_buffer &out,
 	};
 
 	return m::membership(out, event_idx);
-}
-
-bool
-ircd::m::membership(const event::idx &event_idx,
-                    const string_view &membership)
-{
-	bool ret; // not initialized unless fetched=true below
-	const auto closure
-	{
-		[&membership, &ret](const json::object &content)
-		{
-			const json::string &content_membership
-			{
-				content["membership"]
-			};
-
-			ret = membership && content_membership == membership;
-		}
-	};
-
-	const bool fetched
-	{
-		m::get(std::nothrow, event_idx, "content", closure)
-	};
-
-	// In addition to the intuitive behavior of this function, we allow the
-	// user to pass an empty membership string to test non-membership as well.
-	return (fetched && ret) || (!fetched && !membership);
 }
 
 ircd::string_view

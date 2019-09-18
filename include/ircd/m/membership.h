@@ -32,4 +32,39 @@ namespace ircd::m
 	// Query and compare membership string; queries room state. (also room.h)
 	// also see overload notes.
 	bool membership(const room &, const id::user &, const string_view &);
+
+	// Convenience suite with optimal aggregate queries; if the membership
+	// is equal to any of the strings (including the non-membership empty
+	// string described above) these functions return true. An empty vector is
+	// also a non-membership query.
+	bool membership(const event::idx &, const vector_view<const string_view> &);
+	bool membership(const room &, const id::user &, const vector_view<const string_view> &);
+
+	extern const vector_view<const string_view> membership_positive; // join, invite
+	extern const vector_view<const string_view> membership_negative; // leave, ban, [non-membership]
+}
+
+inline bool
+ircd::m::membership(const room &room,
+                    const id::user &user_id,
+                    const string_view &membership)
+{
+	const vector_view<const string_view> memberships
+	{
+		std::addressof(membership), 1
+	};
+
+	return m::membership(room, user_id, memberships);
+}
+
+inline bool
+ircd::m::membership(const event::idx &event_idx,
+                    const string_view &membership)
+{
+	const vector_view<const string_view> memberships
+	{
+		std::addressof(membership), 1
+	};
+
+	return m::membership(event_idx, memberships);
 }
