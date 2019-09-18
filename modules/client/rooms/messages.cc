@@ -138,10 +138,19 @@ get__messages(client &client,
 	};
 
 	size_t prefetch{0};
-	m::room::events pf
+	if((false) && max_prefetch)
 	{
-		room
-	};
+		m::room::events pf
+		{
+			room
+		};
+
+		for(; pf && prefetch < max_prefetch; page.dir == 'b'? --pf : ++pf)
+			prefetch += pf.prefetch();
+
+		if(prefetch > 0)
+			ctx::yield();
+	}
 
 	size_t hit{0}, miss{0};
 	m::room::events it
@@ -151,12 +160,6 @@ get__messages(client &client,
 
 	for(; it; page.dir == 'b'? --it : ++it)
 	{
-		for(; pf && prefetch < hit + miss + max_prefetch; page.dir == 'b'? --pf : ++pf)
-			prefetch += pf.prefetch();
-
-		if(hit + miss == 0 && prefetch > 0)
-			ctx::yield();
-
 		const m::event &event
 		{
 			*it
