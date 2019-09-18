@@ -17,18 +17,34 @@ get__members(client &client,
              const resource::request &request,
              const m::room::id &room_id)
 {
-	char membershipbuf[32];
-	const auto &membership
+	// Acquire the membership/not_membership constraints from query string
+	char membuf[2][4][32];
+	string_view memship[2][4];
+	const size_t memcount[2]
 	{
-		url::decode(membershipbuf, request.query["membership"])
+		request.query.count("not_membership"),
+		request.query.count("membership")
 	};
 
-	char not_membershipbuf[32];
-	const auto &not_membership
+	for(size_t i(0); i < 4 && i < memcount[0]; ++i)
+		memship[0][i] = url::decode(membuf[0][i], request.query.at("not_membership", i));
+
+	for(size_t i(0); i < 4 && i < memcount[1]; ++i)
+		memship[1][i] = url::decode(membuf[1][i], request.query.at("membership", i));
+
+	// List of membership strings user does not want in response.
+	const vector_view<const string_view> not_memberships
 	{
-		url::decode(not_membershipbuf, request.query["not_membership"])
+		memship[0], memcount[0]
 	};
 
+	// List of membership strings  user wants in response
+	const vector_view<const string_view> memberships
+	{
+		memship[1], memcount[1]
+	};
+
+	// Acquire the at/since parameter from query string.
 	char atbuf[48];
 	const string_view at
 	{
@@ -55,6 +71,8 @@ get__members(client &client,
 			m::event::id::buf{}
 	};
 
+	// View the room at the requested event; if no event requested this
+	// instance represents the present state of the room.
 	const m::room room
 	{
 		room_id, event_id
@@ -99,20 +117,53 @@ get__members(client &client,
 		room
 	};
 
-	members.for_each(membership, [&not_membership]
+	// The room::members interface can perform an optimized iteration if we
+	// supply a single membership type; otherwise all memberships iterated.
+	const string_view &membership
+	{
+		// A single membership entry is given in the query string
+		memberships.size() == 1?
+			memberships.at(0):
+			string_view{}
+	};
+
+	// Tests if a member matches all of the membership constraint params. Used
+	// in the members iteration closures below. Note that if a membership
+	// parameter was passed to for_each() all members are of that membership,
+	// and that membership is desired, so we don't have to run any match here.
+	const auto membership_match{[&memberships, &not_memberships]
 	(const m::user::id &member, const m::event::idx &event_idx)
 	{
-		if(m::membership(event_idx, not_membership))
+		if(likely(!empty(not_memberships)))
+		{
+			if(m::membership(event_idx, not_memberships))
+				return false;
+		}
+		else if(likely(!empty(memberships)))
+		{
+			if(!m::membership(event_idx, memberships))
+				return false;
+		}
+
+		return true;
+	}};
+
+	// prefetch loop
+	members.for_each(membership, [&membership, &membership_match]
+	(const m::user::id &member, const m::event::idx &event_idx)
+	{
+		if(!membership && !membership_match(member, event_idx))
 			return true;
 
 		m::prefetch(event_idx);
 		return true;
 	});
 
-	members.for_each(membership, [&request, &chunk, &not_membership]
+	// stream to client
+	members.for_each(membership, [&membership, &membership_match, &chunk]
 	(const m::user::id &member, const m::event::idx &event_idx)
 	{
-		if(m::membership(event_idx, not_membership))
+		if(!membership && !membership_match(member, event_idx))
 			return true;
 
 		const m::event::fetch event
