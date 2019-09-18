@@ -3099,6 +3099,25 @@ ircd::m::before(const event &a,
 	return prev.prev_events_has(a.event_id);
 }
 
+size_t
+ircd::m::degree(const event &event)
+{
+	return degree(event::prev{event});
+}
+
+size_t
+ircd::m::degree(const event::prev &prev)
+{
+	size_t ret{0};
+	json::for_each(prev, [&ret]
+	(const auto &, const json::array &prevs)
+	{
+		ret += prevs.count();
+	});
+
+	return ret;
+}
+
 bool
 ircd::m::operator>=(const event &a, const event &b)
 {
@@ -3184,49 +3203,6 @@ ircd::m::exists(const id::event &event_id)
 	};
 
 	return bool(event_id) && has(column, event_id);
-}
-
-ircd::string_view
-ircd::m::membership(const event &event)
-{
-	const json::object &content
-	{
-		json::get<"content"_>(event)
-	};
-
-	const string_view &membership
-	{
-		json::get<"membership"_>(event)
-	};
-
-	if(membership)
-		return membership;
-
-	const json::string &content_membership
-	{
-		content.get("membership")
-	};
-
-	return content_membership;
-}
-
-size_t
-ircd::m::degree(const event &event)
-{
-	return degree(event::prev{event});
-}
-
-size_t
-ircd::m::degree(const event::prev &prev)
-{
-	size_t ret{0};
-	json::for_each(prev, [&ret]
-	(const auto &, const json::array &prevs)
-	{
-		ret += prevs.count();
-	});
-
-	return ret;
 }
 
 bool

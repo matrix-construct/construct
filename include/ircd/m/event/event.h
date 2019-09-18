@@ -18,10 +18,6 @@ namespace ircd::m
 	// General util
 	bool my(const id::event &);
 	bool my(const event &);
-	size_t degree(const event &);
-	string_view membership(const event &);
-
-	// [GET]
 	bool exists(const id::event &);
 	bool exists(const id::event &, const bool &good);
 	bool cached(const id::event &);
@@ -38,6 +34,7 @@ namespace ircd::m
 	bool operator>=(const event &, const event &);
 
 	// Topological comparison
+	size_t degree(const event &);
 	bool before(const event &a, const event &b);
 
 	bool check_id(const event &) noexcept;

@@ -108,8 +108,7 @@ ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
 
 	const bool existing_join
 	{
-		member_event_idx &&
-		m::room::members::membership(member_event_idx, "join")
+		m::membership(member_event_idx, "join")
 	};
 
 	if(existing_join)

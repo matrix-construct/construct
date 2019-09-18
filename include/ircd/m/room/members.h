@@ -21,9 +21,6 @@ struct ircd::m::room::members
 	using closure_idx = std::function<bool (const id::user &, const event::idx &)>;
 	using closure = std::function<bool (const id::user &)>;
 
-	static string_view membership(const mutable_buffer &out, const event::idx &);
-	static bool membership(const event::idx &, const string_view &);
-
 	m::room room;
 
 	bool for_each_join_present(const string_view &host, const closure &) const;

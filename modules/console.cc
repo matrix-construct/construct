@@ -8701,7 +8701,7 @@ console_cmd__room__members(opt &out, const string_view &line)
 	(const m::user::id &user_id, const m::event::idx &event_idx)
 	{
 		char buf[32];
-		out << std::setw(8) << std::left << m::room::members::membership(buf, event_idx)
+		out << std::setw(8) << std::left << m::membership(buf, event_idx)
 		    << " " << user_id << std::endl;
 
 		return true;

@@ -102,7 +102,7 @@ get__members(client &client,
 	members.for_each(membership, [&not_membership]
 	(const m::user::id &member, const m::event::idx &event_idx)
 	{
-		if(m::room::members::membership(event_idx, not_membership))
+		if(m::membership(event_idx, not_membership))
 			return true;
 
 		m::prefetch(event_idx);
@@ -112,7 +112,7 @@ get__members(client &client,
 	members.for_each(membership, [&request, &chunk, &not_membership]
 	(const m::user::id &member, const m::event::idx &event_idx)
 	{
-		if(m::room::members::membership(event_idx, not_membership))
+		if(m::membership(event_idx, not_membership))
 			return true;
 
 		const m::event::fetch event

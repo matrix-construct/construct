@@ -891,24 +891,6 @@ ircd::m::any_user(const room &room,
 	return ret;
 }
 
-ircd::string_view
-ircd::m::membership(const mutable_buffer &out,
-                    const room &room,
-                    const user::id &user_id)
-{
-	const room::state state
-	{
-		room
-	};
-
-	const auto event_idx
-	{
-		state.get(std::nothrow, "m.room.member", user_id)
-	};
-
-	return room::members::membership(out, event_idx);
-}
-
 /// Receive the join_rule of the room into buffer of sufficient size.
 /// The protocol does not specify a join_rule string longer than 7
 /// characters but do be considerate of the future. This function
@@ -1159,24 +1141,6 @@ ircd::m::join_rule(const room &room,
 {
 	char buf[32];
 	return join_rule(buf, room) == rule;
-}
-
-bool
-ircd::m::membership(const room &room,
-                    const user::id &user_id,
-                    const string_view &membership)
-{
-	const room::state state
-	{
-		room
-	};
-
-	const auto event_idx
-	{
-		state.get(std::nothrow, "m.room.member", user_id)
-	};
-
-	return room::members::membership(event_idx, membership);
 }
 
 bool
@@ -3188,7 +3152,7 @@ const
 		if(host && user_id.host() != host)
 			return true;
 
-		return !membership || this->membership(event_idx, membership)?
+		return !membership || m::membership(event_idx, membership)?
 			closure(user_id, event_idx):
 			true;
 	});
@@ -3230,41 +3194,6 @@ const
 	}
 
 	return true;
-}
-
-bool
-ircd::m::room::members::membership(const event::idx &event_idx,
-                                   const string_view &membership)
-{
-	return m::query(std::nothrow, event_idx, "content", [&membership]
-	(const json::object &content)
-	{
-		const json::string &content_membership
-		{
-			content["membership"]
-		};
-
-		return content_membership && content_membership == membership;
-	});
-}
-
-ircd::string_view
-ircd::m::room::members::membership(const mutable_buffer &out,
-                                   const event::idx &event_idx)
-{
-	return m::query(std::nothrow, event_idx, "content", [&out]
-	(const json::object &content) -> string_view
-	{
-		const json::string &content_membership
-		{
-			content["membership"]
-		};
-
-		return strlcpy
-		{
-			out, content_membership
-		};
-	});
 }
 
 //

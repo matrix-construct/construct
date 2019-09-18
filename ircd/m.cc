@@ -2320,6 +2320,106 @@ ircd::m::event_filter::event_filter(const mutable_buffer &buf,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// m/membership.h
+//
+
+bool
+ircd::m::membership(const room &room,
+                    const user::id &user_id,
+                    const string_view &membership)
+{
+	const room::state state
+	{
+		room
+	};
+
+	const auto event_idx
+	{
+		state.get(std::nothrow, "m.room.member", user_id)
+	};
+
+	return m::membership(event_idx, membership);
+}
+
+ircd::string_view
+ircd::m::membership(const mutable_buffer &out,
+                    const room &room,
+                    const user::id &user_id)
+{
+	const room::state state
+	{
+		room
+	};
+
+	const auto event_idx
+	{
+		state.get(std::nothrow, "m.room.member", user_id)
+	};
+
+	return m::membership(out, event_idx);
+}
+
+bool
+ircd::m::membership(const event::idx &event_idx,
+                    const string_view &membership)
+{
+	return m::query(std::nothrow, event_idx, "content", [&membership]
+	(const json::object &content)
+	{
+		const json::string &content_membership
+		{
+			content["membership"]
+		};
+
+		return content_membership == membership;
+	});
+}
+
+ircd::string_view
+ircd::m::membership(const mutable_buffer &out,
+                    const event::idx &event_idx)
+{
+	return m::query(std::nothrow, event_idx, "content", [&out]
+	(const json::object &content) -> string_view
+	{
+		const json::string &content_membership
+		{
+			content["membership"]
+		};
+
+		return strlcpy
+		{
+			out, content_membership
+		};
+	});
+}
+
+ircd::string_view
+ircd::m::membership(const event &event)
+{
+	const json::object &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	const string_view &membership
+	{
+		json::get<"membership"_>(event)
+	};
+
+	if(membership)
+		return membership;
+
+	const json::string &content_membership
+	{
+		content.get("membership")
+	};
+
+	return content_membership;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // m/user.h
 //
 
