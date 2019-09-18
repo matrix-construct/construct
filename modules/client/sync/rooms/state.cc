@@ -416,9 +416,11 @@ bool
 ircd::m::sync::room_state_phased_member_events(data &data,
                                                json::stack::array &array)
 {
-	static const size_t &count
+	// The number of recent room events we'll seek senders for.
+	static const size_t &max{24};
+	const size_t &count
 	{
-		20
+		std::min(size_t(room::events::viewport_size), max)
 	};
 
 	m::room::events it
@@ -428,8 +430,9 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 
 	// Prefetch the senders of the recent room events
 	size_t i(0), prefetched(0);
-	std::array<event::idx, count> event_idx;
-	for(; it && i < event_idx.size(); --it, ++i)
+	std::array<event::idx, max> event_idx;
+	assert(count <= max && count <= event_idx.size());
+	for(; it && i < count; --it, ++i)
 	{
 		event_idx[i] = it.event_idx();
 		prefetched += m::prefetch(event_idx[i], "sender");
