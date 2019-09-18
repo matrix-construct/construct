@@ -912,6 +912,8 @@ AC_CHECK_FUNCS([        \
 	strlcat             \
 	strlcpy             \
 	strnlen             \
+	strncpy             \
+	strcpy              \
 	vsnprintf           \
 ])
 

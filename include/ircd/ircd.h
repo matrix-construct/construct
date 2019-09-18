@@ -37,6 +37,7 @@
 #include "base.h"
 #include "stringops.h"
 #include "strl.h"
+#include "strn.h"
 #include "cmp.h"
 #include "globular.h"
 #include "tokens.h"
