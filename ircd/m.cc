@@ -1662,6 +1662,17 @@ ircd::m::redacted::redacted(const event::idx &event_idx)
 {
 }
 
+bool
+ircd::m::redacted::prefetch(const event::idx &event_idx)
+{
+	const event::refs refs
+	{
+		event_idx
+	};
+
+	return refs.prefetch(dbs::ref::M_ROOM_REDACTION);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/visible.h

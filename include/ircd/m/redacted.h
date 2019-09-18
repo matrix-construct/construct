@@ -22,6 +22,8 @@ struct ircd::m::redacted
 	redacted(const event::idx &);
 	redacted(const event::id &);
 	explicit redacted(const event &);
+
+	static bool prefetch(const event::idx &);
 };
 
 inline
