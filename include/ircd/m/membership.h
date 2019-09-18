@@ -20,13 +20,16 @@ namespace ircd::m
 	// is not checked here, only content.membership is sought.
 	string_view membership(const mutable_buffer &out, const event::idx &);
 
-	// Query and compare membership string to argument string. Returns
-	// true on equal; false on not equal; false on not found.
-	bool membership(const event::idx &, const string_view &);
-
 	// Query and copy membership string to buffer; queries room state. (also room.h)
 	string_view membership(const mutable_buffer &out, const room &, const id::user &);
 
+	// Query and compare membership string to argument string. Returns true on
+	// equal; false on not equal; false on not found. Note in addition to this
+	// we allow the user to pass an empty membership string which will test for
+	// non-membership as well and return true.
+	bool membership(const event::idx &, const string_view &);
+
 	// Query and compare membership string; queries room state. (also room.h)
+	// also see overload notes.
 	bool membership(const room &, const id::user &, const string_view &);
 }

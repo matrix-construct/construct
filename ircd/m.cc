@@ -2363,16 +2363,28 @@ bool
 ircd::m::membership(const event::idx &event_idx,
                     const string_view &membership)
 {
-	return m::query(std::nothrow, event_idx, "content", [&membership]
-	(const json::object &content)
+	bool ret; // not initialized unless fetched=true below
+	const auto closure
 	{
-		const json::string &content_membership
+		[&membership, &ret](const json::object &content)
 		{
-			content["membership"]
-		};
+			const json::string &content_membership
+			{
+				content["membership"]
+			};
 
-		return content_membership == membership;
-	});
+			ret = membership && content_membership == membership;
+		}
+	};
+
+	const bool fetched
+	{
+		m::get(std::nothrow, event_idx, "content", closure)
+	};
+
+	// In addition to the intuitive behavior of this function, we allow the
+	// user to pass an empty membership string to test non-membership as well.
+	return (fetched && ret) || (!fetched && !membership);
 }
 
 ircd::string_view
