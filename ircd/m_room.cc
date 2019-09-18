@@ -233,35 +233,6 @@ ircd::m::room::state::present(const event::idx &event_idx)
 	return state_idx == event_idx;
 }
 
-size_t
-ircd::m::room::state::prefetch(const state &state,
-                               const string_view &type,
-                               const event::idx_range &range)
-{
-	const m::event::fetch::opts &fopts
-	{
-		state.fopts?
-			*state.fopts:
-			m::event::fetch::default_opts
-	};
-
-	size_t ret{0};
-	state.for_each(type, m::event::closure_idx{[&ret, &fopts, &range]
-	(const m::event::idx &event_idx)
-	{
-		if(event_idx < range.first)
-			return;
-
-		if(range.second && event_idx > range.second)
-			return;
-
-		ret += m::prefetch(event_idx, fopts);
-	}});
-
-	ctx::yield();
-	return ret;
-}
-
 ircd::m::event::idx
 ircd::m::room::state::prev(const event::idx &event_idx)
 {
@@ -1874,21 +1845,35 @@ ircd::m::room::state::state(const m::room &room,
 {
 }
 
-size_t
-ircd::m::room::state::prefetch(const event::idx &start,
-                               const event::idx &stop)
+bool
+ircd::m::room::state::prefetch(const string_view &type)
 const
 {
-	return prefetch(string_view{}, start, stop);
+	return prefetch(type, string_view{});
 }
 
-size_t
+bool
 ircd::m::room::state::prefetch(const string_view &type,
-                               const event::idx &start,
-                               const event::idx &stop)
+                               const string_view &state_key)
 const
 {
-	return prefetch(*this, type, event::idx_range{start, stop});
+	if(!present())
+	{
+		const history history
+		{
+			room_id, event_id
+		};
+
+		return history.prefetch(type, state_key);
+	}
+
+	char buf[dbs::ROOM_STATE_KEY_MAX_SIZE];
+	const auto &key
+	{
+		dbs::room_state_key(buf, room_id, type, state_key)
+	};
+
+	return db::prefetch(dbs::room_state, key);
 }
 
 ircd::m::event::idx

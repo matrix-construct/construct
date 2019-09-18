@@ -81,9 +81,9 @@ struct ircd::m::room::state
 	event::idx get(std::nothrow_t, const string_view &type, const string_view &state_key = "") const;
 	event::idx get(const string_view &type, const string_view &state_key = "") const;
 
-	// Initiate a database prefetch on the state to cache for future access.
-	size_t prefetch(const string_view &type, const event::idx &start = 0, const event::idx &stop = 0) const;
-	size_t prefetch(const event::idx &start = 0, const event::idx &stop = 0) const;
+	// Prefetch state cells
+	bool prefetch(const string_view &type, const string_view &state_key) const;
+	bool prefetch(const string_view &type) const;
 
 	state(const m::room &room, const event::fetch::opts *const & = nullptr);
 	state() = default;
@@ -95,7 +95,6 @@ struct ircd::m::room::state
 	static event::idx prev(const event::idx &);
 	static event::idx next(const event::idx &);
 
-	static size_t prefetch(const state &, const string_view &, const event::idx_range &);
 	static bool present(const event::idx &);
 	static size_t purge_replaced(const room::id &);
 	static bool is(std::nothrow_t, const event::idx &);
