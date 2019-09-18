@@ -1956,8 +1956,6 @@ ircd::m::event::refs::for_each(const dbs::ref &type,
                                const closure_bool &closure)
 const
 {
-	thread_local char buf[dbs::EVENT_REFS_KEY_MAX_SIZE];
-
 	if(!idx)
 		return true;
 
@@ -1967,6 +1965,8 @@ const
 	const bool all_type(type == dbs::ref(uint8_t(-1)));
 	const auto &_type{all_type? dbs::ref::NEXT : type};
 	assert(uint8_t(dbs::ref::NEXT) == 0);
+
+	char buf[dbs::EVENT_REFS_KEY_MAX_SIZE];
 	const string_view key
 	{
 		dbs::event_refs_key(buf, idx, _type, 0)
