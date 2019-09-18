@@ -36,13 +36,6 @@ max_filter_miss
 	{ "default",   2048L                                        },
 };
 
-conf::item<size_t>
-prefetch_max
-{
-	{ "name",      "ircd.client.rooms.messages.prefetch.max" },
-	{ "default",   24L                                       },
-};
-
 log::log
 messages_log
 {
@@ -131,26 +124,6 @@ get__messages(client &client,
 	{
 		top, "chunk"
 	};
-
-	const auto &max_prefetch
-	{
-		std::min(size_t(page.limit), size_t(prefetch_max))
-	};
-
-	size_t prefetch{0};
-	if((false) && max_prefetch)
-	{
-		m::room::events pf
-		{
-			room
-		};
-
-		for(; pf && prefetch < max_prefetch; page.dir == 'b'? --pf : ++pf)
-			prefetch += pf.prefetch();
-
-		if(prefetch > 0)
-			ctx::yield();
-	}
 
 	size_t hit{0}, miss{0};
 	m::room::events it
