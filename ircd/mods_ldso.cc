@@ -267,21 +267,45 @@ _dl_signal_exception(int errcode,
                      struct dl_exception *e,
                      const char *occasion)
 {
-	const ircd::unwind free
+	using namespace ircd;
+
+	const unwind free
 	{
 		std::bind(_dl_exception_free, e)
 	};
 
-	ircd::log::derror
+	assert(e);
+	log::derror
 	{
-		ircd::mods::log, "dynamic linker (%d) %s in `%s' :%s",
+		mods::log, "dynamic linker (%d) %s in `%s' :%s",
 		errcode,
 		occasion,
 		e->objname,
 		e->errstring
 	};
 
-	throw ircd::mods::error
+	static const auto &undefined_symbol_prefix
+	{
+		"undefined symbol: "
+	};
+
+	if(startswith(e->errstring, undefined_symbol_prefix))
+	{
+		const auto &mangled
+		{
+			lstrip(e->errstring, undefined_symbol_prefix)
+		};
+
+		throw mods::undefined_symbol
+		{
+			"%s %s (%s)",
+			e->objname,
+			demangle(mangled),
+			mangled,
+		};
+	}
+
+	throw mods::error
 	{
 		"%s in %s (%d) %s",
 		occasion,
