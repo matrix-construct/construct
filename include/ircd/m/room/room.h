@@ -167,22 +167,11 @@ struct ircd::m::room
 	room(const id &room_id,
 	     const string_view &event_id,
 	     const vm::copts *const &copts = nullptr,
-	     const event::fetch::opts *const &fopts = nullptr)
-	:room_id{room_id}
-	,event_id{event_id? event::id{event_id} : event::id{}}
-	,copts{copts}
-	,fopts{fopts}
-	{}
+	     const event::fetch::opts *const &fopts = nullptr);
 
-	room(const id &room_id,
+	room(const id &room_id = {},
 	     const vm::copts *const &copts = nullptr,
-	     const event::fetch::opts *const &fopts = nullptr)
-	:room_id{room_id}
-	,copts{copts}
-	,fopts{fopts}
-	{}
-
-	room() = default;
+	     const event::fetch::opts *const &fopts = nullptr);
 
 	// Index of create event
 	static event::idx index(const id &, std::nothrow_t);
@@ -204,6 +193,26 @@ struct ircd::m::room
 #include "stats.h"
 #include "server_acl.h"
 #include "bootstrap.h"
+
+inline
+ircd::m::room::room(const id &room_id,
+                    const string_view &event_id,
+                    const vm::copts *const &copts,
+                    const event::fetch::opts *const &fopts)
+:room_id{room_id}
+,event_id{event_id? event::id{event_id} : event::id{}}
+,copts{copts}
+,fopts{fopts}
+{}
+
+inline
+ircd::m::room::room(const id &room_id,
+                    const vm::copts *const &copts,
+                    const event::fetch::opts *const &fopts)
+:room_id{room_id}
+,copts{copts}
+,fopts{fopts}
+{}
 
 inline ircd::m::room::operator
 const ircd::m::room::id &()
