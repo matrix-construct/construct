@@ -1275,8 +1275,9 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) resolve SRV :%s",
+		log, "peer(%p) '%s' resolve SRV :%s",
 		this,
+		this->hostcanon,
 		e.what()
 	};
 
@@ -1340,8 +1341,9 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) resolve AAAA: %s",
+		log, "peer(%p) resolve '%s' AAAA: %s",
 		this,
+		this->hostcanon,
 		e.what()
 	};
 
@@ -1403,8 +1405,9 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "peer(%p) resolve A :%s",
+		log, "peer(%p) '%s' resolve A :%s",
 		this,
+		this->hostcanon,
 		e.what()
 	};
 
