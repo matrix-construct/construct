@@ -4029,8 +4029,10 @@ ircd::db::prefetcher::request_worker()
 
 	request->req = now<steady_point>();
 	assert(request->fin == steady_point::min());
+	total_snd_req += duration_cast<microseconds>(request->req - request->snd);
 	++fetches_counter;
 	request_handle(*request);
+	assert(request->fin != steady_point::min());
 	++fetched_counter;
 
 	#ifdef IRCD_DB_DEBUG_PREFETCH
@@ -4081,23 +4083,31 @@ try
 		seek(column, key, gopts{})
 	};
 
+	const ctx::critical_assertion ca;
+	request.fin = now<steady_point>();
+	total_req_fin += duration_cast<microseconds>(request.fin - request.req);
 	const bool lte
 	{
 		valid_lte(*it, key)
 	};
 
-	const ctx::critical_assertion ca;
-	request.fin = now<steady_point>();
+	if(likely(lte))
+	{
+		fetched_bytes_key += size(it->key());
+		fetched_bytes_val += size(it->value());
+	}
 
 	#ifdef IRCD_DB_DEBUG_PREFETCH
 	char pbuf[3][32];
 	log::debug
 	{
-		log, "[%s][%s] completed prefetch len:%zu lte:%b snd-req:%s req-fin:%s snd-fin:%s queue:%zu",
+		log, "[%s][%s] completed prefetch len:%zu lte:%b k:%zu v:%zu snd-req:%s req-fin:%s snd-fin:%s queue:%zu",
 		name(*request.d),
 		name(column),
 		size(key),
 		lte,
+		lte? size(it->key()) : 0UL,
+		lte? size(it->value()) : 0UL,
 		pretty(pbuf[0], request.req - request.snd, 1),
 		pretty(pbuf[1], request.fin - request.req, 1),
 		pretty(pbuf[2], request.fin - request.snd, 1),

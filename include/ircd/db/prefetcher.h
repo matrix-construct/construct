@@ -24,6 +24,7 @@ struct ircd::db::prefetcher
 	ctx::dock dock;
 	std::deque<request> queue;
 	ctx::context context;
+	size_t cache_hits {0};
 	size_t request_workers {0};
 	size_t request_counter {0};
 	size_t directs_counter {0};
@@ -32,7 +33,10 @@ struct ircd::db::prefetcher
 	size_t fetches_counter {0};
 	size_t fetched_counter {0};
 	size_t cancels_counter {0};
-	size_t cache_hits {0};
+	size_t fetched_bytes_key {0};
+	size_t fetched_bytes_val {0};
+	microseconds total_snd_req {0us};
+	microseconds total_req_fin {0us};
 
 	size_t wait_pending();
 	void request_handle(request &);
