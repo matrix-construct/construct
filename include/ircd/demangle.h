@@ -11,8 +11,7 @@
 #pragma once
 #define HAVE_IRCD_DEMANGLE_H
 
-namespace ircd {
-inline namespace util
+namespace ircd
 {
 	IRCD_EXCEPTION(ircd::error, demangle_error)
 	IRCD_EXCEPTION(demangle_error, not_mangled)
@@ -23,18 +22,18 @@ inline namespace util
 	std::string demangle(const char *const &symbol);
 	template<class T> string_view demangle(const mutable_buffer &out);
 	template<class T> std::string demangle();
-}}
+}
 
 template<class T>
 std::string
-ircd::util::demangle()
+ircd::demangle()
 {
 	return demangle(typeid(T).name());
 }
 
 template<class T>
 ircd::string_view
-ircd::util::demangle(const mutable_buffer &out)
+ircd::demangle(const mutable_buffer &out)
 {
 	return demangle(out, typeid(T).name());
 }

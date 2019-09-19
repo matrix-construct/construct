@@ -14,7 +14,7 @@ thread_local char
 outbuf[8192];
 
 std::string
-ircd::util::demangle(const char *const &symbol)
+ircd::demangle(const char *const &symbol)
 {
 	const string_view demangled
 	{
@@ -25,7 +25,7 @@ ircd::util::demangle(const char *const &symbol)
 }
 
 std::string
-ircd::util::demangle(const string_view &symbol)
+ircd::demangle(const string_view &symbol)
 {
 	const string_view demangled
 	{
@@ -36,8 +36,8 @@ ircd::util::demangle(const string_view &symbol)
 }
 
 ircd::string_view
-ircd::util::demangle(const mutable_buffer &out,
-                     const string_view &symbol_)
+ircd::demangle(const mutable_buffer &out,
+               const string_view &symbol_)
 {
 	assert(size(symbol_) < 4096);
 	thread_local char symbuf[8192];
@@ -50,8 +50,8 @@ ircd::util::demangle(const mutable_buffer &out,
 }
 
 ircd::string_view
-ircd::util::demangle(const mutable_buffer &out,
-                     const char *const &symbol)
+ircd::demangle(const mutable_buffer &out,
+               const char *const &symbol)
 {
 	int status(0);
 	size_t len(size(out));
