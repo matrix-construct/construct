@@ -807,7 +807,12 @@ ircd::m::prefetch(const event::idx &event_idx,
                   const event::fetch::opts &opts)
 {
 	if(event::fetch::should_seek_json(opts))
+	{
+		if(!event_idx)
+			return false;
+
 		return db::prefetch(dbs::event_json, byte_view<string_view>{event_idx});
+	}
 
 	const event::keys keys
 	{
@@ -843,6 +848,9 @@ ircd::m::prefetch(const event::idx &event_idx,
 	{
 		dbs::event_column.at(column_idx)
 	};
+
+	if(!event_idx)
+		return false;
 
 	return db::prefetch(column, byte_view<string_view>{event_idx});
 }
