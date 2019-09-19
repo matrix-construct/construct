@@ -44,13 +44,13 @@ giving you control over Matrix.
 - **OpenSSL** library for HTTPS TLS / X.509.
 - **Magic** library for MIME type recognition.
 
-##### Optional
+##### OPTIONAL
 
 - **zlib** or **lz4** or **snappy** database compressions.
 - **GraphicsMagick** for media thumbnails.
 - **jemalloc** for dynamic memory.
 
-##### Build tools
+##### BUILD TOOLS
 
 - **GNU C++** compiler, automake, autoconf, autoconf2.13,
 autoconf-archive, libtool.
@@ -108,25 +108,31 @@ things to know when starting out.
 See the [STYLE](doc/STYLE.md) guide for an admittedly tongue-in-cheek lecture on
 the development approach.
 
-## Plan
+## Roadmap
 
-#### Roadmap for service
+##### FEATURE EXPERIENCE
 
-- [x] **Phase One**: Matrix clients using HTTPS.
-- [ ] **Phase Two**: Legacy IRC network TS6 protocol.
-- [ ] **Phase Three**: Legacy IRC clients using RFC1459 / RFC2812 legacy grammars.
+- [x] Phase One: **Matrix clients** using HTTPS.
+- [ ] Phase Two: Legacy IRC network **TS6 protocol**.
 
-#### Roadmap for deployments
+##### TECHNOLOGY
 
-The deployment mode is a macro of configuration variables which tune the daemon
-for how it is being used. Modes mostly affect aspects of local clients.
+- [x] Phase Zero: **Core libircd**: Utils; Modules; Contexts; JSON; Database; HTTP; etc...
+- [x] Phase One: **Matrix Protocol**: Core VM; Core modules; Protocol endpoints; etc...
+- [ ] Phase Two: **Construct Cluster**: Kademlia sharding of events; Maymounkov's erasure codes.
+
+##### DEPLOYMENT
+
+```
+Operating a Construct server which is open to public user registration is unsafe. Local users may
+be able to exceed resource limitations and deny service to other users.
+```
 
 - [x] **Personal**: One or few users. Few default restrictions; higher log output.
 - [ ] **Company**: Hundreds of users. Moderate default restrictions.
 - [ ] **Public**: Thousands of users. Untrusting configuration defaults.
 
-#### Roadmap for innovation
-
-- [x] Phase Zero: **Core libircd**: Utils; Modules; Contexts; JSON; Database; HTTP; etc...
-- [x] Phase One: **Matrix Protocol**: Core VM; Core modules; Protocol endpoints; etc...
-- [ ] Phase Two: **Construct Cluster**: Kademlia sharding of events; Maymounkov's erasure codes.
+> Due to the breadth of the Matrix client/server protocol we can only endorse
+production use of Construct gradually while local user restrictions are
+developed. This notice applies to locally registered users connecting with
+clients, it does not apply to federation.
