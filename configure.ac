@@ -854,6 +854,7 @@ RB_CHK_SYSHEADER(fcntl.h, [FCNTL_H])
 RB_CHK_SYSHEADER(elf.h, [ELF_H])
 RB_CHK_SYSHEADER(link.h, [LINK_H])
 RB_CHK_SYSHEADER(dlfcn.h, [DLFCN_H])
+RB_CHK_SYSHEADER(execinfo.h, [EXECINFO_H])
 RB_CHK_SYSHEADER(sys/types.h, [SYS_TYPES_H])
 RB_CHK_SYSHEADER(sys/time.h, [SYS_TIME_H])
 RB_CHK_SYSHEADER(sys/stat.h, [SYS_STAT_H])
@@ -903,18 +904,19 @@ dnl
 dnl Specific function checks
 dnl
 
-AC_CHECK_FUNCS([        \
-	gettimeofday        \
-	posix_fadvise       \
-	preadv2             \
-	pwritev2            \
-	snprintf            \
-	strlcat             \
-	strlcpy             \
-	strnlen             \
-	strncpy             \
-	strcpy              \
-	vsnprintf           \
+AC_CHECK_FUNCS([          \
+	backtrace             \
+	gettimeofday          \
+	posix_fadvise         \
+	preadv2               \
+	pwritev2              \
+	snprintf              \
+	strlcat               \
+	strlcpy               \
+	strnlen               \
+	strncpy               \
+	strcpy                \
+	vsnprintf             \
 ])
 
 AC_SEARCH_LIBS(dlinfo, dl, AC_DEFINE(HAVE_DLINFO, 1, [Define if you have dlinfo]))
