@@ -340,6 +340,52 @@ const
 // room::events::horizon
 //
 
+//TODO: XXX remove fwd decl
+namespace ircd::m::dbs
+{
+	void _index_event_horizon(db::txn &, const event &, const write_opts &, const m::event::id &);
+}
+
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::events::horizon::rebuild()
+{
+	m::dbs::write_opts opts;
+	opts.appendix.reset();
+	opts.appendix.set(dbs::appendix::EVENT_HORIZON);
+	db::txn txn
+	{
+		*dbs::events
+	};
+
+	size_t ret(0);
+	m::room::events it
+	{
+		room
+	};
+
+	for(; it; --it)
+	{
+		const m::event &event{*it};
+		const event::prev prev_events{event};
+
+		opts.event_idx = it.event_idx();
+		m::for_each(prev_events, [&]
+		(const m::event::id &event_id)
+		{
+			if(m::exists(event_id))
+				return true;
+
+			m::dbs::_index_event_horizon(txn, event, opts, event_id);
+			++ret;
+			return true;
+		});
+	}
+
+	txn();
+	return ret;
+}
+
 size_t
 IRCD_MODULE_EXPORT
 ircd::m::room::events::horizon::count()
