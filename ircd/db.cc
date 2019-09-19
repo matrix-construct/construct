@@ -3866,7 +3866,6 @@ ircd::db::prefetcher::operator()(column &c,
 		return false;
 	}
 
-	const ctx::critical_assertion ca;
 	queue.emplace_back(d, c, key);
 	queue.back().snd = now<steady_point>();
 	++request_counter;
@@ -3879,9 +3878,19 @@ ircd::db::prefetcher::operator()(column &c,
 	if(db::request.wouldblock())
 	{
 		dock.notify_one();
+
+		// If the user sets NO_BLOCKING we honor their request to not
+		// context switch for a prefetch. However by default we want to
+		// control queue growth, so we insert voluntary yield here to allow
+		// prefetch operations to at least be processed before returning to
+		// the user submitting more prefetches.
+		if(likely(!test(opts, db::get::NO_BLOCKING)))
+			ctx::yield();
+
 		return true;
 	}
 
+	const ctx::critical_assertion ca;
 	++directs_counter;
 	this->handle();
 	return true;
