@@ -47,6 +47,7 @@ struct ircd::ctx::pool
 	auto active() const                { return working;                       }
 	auto avail() const                 { return running - active();            }
 	auto pending() const               { return active() + queued();           }
+	bool wouldblock() const;
 
 	// dispatch to pool
 	template<class F, class... A> future_void<F, A...> async(F&&, A&&...);

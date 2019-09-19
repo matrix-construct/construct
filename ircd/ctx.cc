@@ -1476,13 +1476,7 @@ ircd::ctx::pool::operator()(closure closure)
 	if(current && opt->queue_max_soft >= 0 && opt->queue_max_blocking)
 		q_max.wait([this]
 		{
-			if(q.size() < size_t(opt->queue_max_soft))
-				return true;
-
-			if(!opt->queue_max_soft && q.size() < avail())
-				return true;
-
-			return false;
+			return !wouldblock();
 		});
 
 	if(unlikely(q.size() >= size_t(opt->queue_max_hard)))
@@ -1499,6 +1493,19 @@ ircd::ctx::pool::operator()(closure closure)
 		};
 
 	q.push(std::move(closure));
+}
+
+bool
+ircd::ctx::pool::wouldblock()
+const
+{
+	if(q.size() < size_t(opt->queue_max_soft))
+		return false;
+
+	if(!opt->queue_max_soft && q.size() < avail())
+		return false;
+
+	return true;
 }
 
 /// Main execution loop for a pool.
