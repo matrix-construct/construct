@@ -274,7 +274,7 @@ notified
 
 void
 handle_notify(const m::event &event,
-              m::vm::eval &)
+              m::vm::eval &eval)
 try
 {
 	const auto &room_id
@@ -282,7 +282,8 @@ try
 		json::get<"room_id"_>(event)
 	};
 
-	if(!room_id)
+	// Prevent EDU's from notifying
+	if(!event.event_id || !room_id)
 		return;
 
 	for(auto &waiter : clients)
