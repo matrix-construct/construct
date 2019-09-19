@@ -132,37 +132,20 @@ ircd::net::dns::resolver::resolver(answers_callback callback)
 ircd::net::dns::resolver::~resolver()
 noexcept
 {
-	log::debug
-	{
-		log, "Shutting down with %zu unfinished DNS resolutions.",
-		tags.size()
-	};
-
 	const ctx::uninterruptible::nothrow ui;
-	if(ns.is_open())
-		ns.close();
-
 	done.wait([this]
 	{
 		if(!tags.empty())
 			log::warning
 			{
-				log, "Waiting for %zu unfinished DNS resolutions",
+				log, "Waiting for %zu unfinished DNS resolutions...",
 				tags.size()
 			};
 
 		return tags.empty();
 	});
 
-	const std::lock_guard lock
-	{
-		mutex
-	};
-
-	timeout_context.terminate();
-	sendq_context.terminate();
-	recv_context.terminate();
-
+	assert(!mutex.locked());
 	assert(sendq.empty());
 	assert(tags.empty());
 }
@@ -306,7 +289,6 @@ catch(const std::out_of_range &e)
 
 void
 ircd::net::dns::resolver::timeout_worker()
-try
 {
 	while(1)
 	{
@@ -317,16 +299,6 @@ try
 
 		check_timeouts(milliseconds(timeout));
 	}
-}
-catch(const ctx::terminated &)
-{
-	const ctx::exception_handler eh;
-	const std::lock_guard lock
-	{
-		mutex
-	};
-
-	cancel_all();
 }
 
 void
