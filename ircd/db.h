@@ -113,7 +113,6 @@ namespace ircd::db
 
 	// [GET] seek suite
 	template<class pos> bool seek(database::column &, const pos &, const rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &it);
-	template<class pos> bool seek(database::column &, const pos &, const gopts &, std::unique_ptr<rocksdb::Iterator> &it);
 	std::unique_ptr<rocksdb::Iterator> seek(column &, const gopts &);
 	std::unique_ptr<rocksdb::Iterator> seek(column &, const string_view &key, const gopts &);
 	std::vector<row::value_type> seek(database &, const gopts &);

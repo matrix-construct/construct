@@ -5245,7 +5245,12 @@ ircd::db::cell::load(const string_view &index,
 	}
 
 	database::column &c(this->c);
-	if(!seek(c, index, opts, this->it))
+	const auto _opts
+	{
+		make_opts(opts)
+	};
+
+	if(!seek(c, index, _opts, this->it))
 		return false;
 
 	return valid(index);
@@ -6610,7 +6615,7 @@ ircd::db::seek(column::const_iterator_base &it,
                const pos &p)
 {
 	database::column &c(it);
-	return seek(c, p, it.opts, it.it);
+	return seek(c, p, make_opts(it.opts), it.it);
 }
 template bool ircd::db::seek<ircd::db::pos>(column::const_iterator_base &, const pos &);
 template bool ircd::db::seek<ircd::string_view>(column::const_iterator_base &, const string_view &);
@@ -7501,23 +7506,8 @@ ircd::db::seek(column &column,
 	database::column &c(column);
 
 	std::unique_ptr<rocksdb::Iterator> ret;
-	seek(c, key, opts, ret);
+	seek(c, key, make_opts(opts), ret);
 	return ret;
-}
-
-template<class pos>
-bool
-ircd::db::seek(database::column &c,
-               const pos &p,
-               const gopts &gopts,
-               std::unique_ptr<rocksdb::Iterator> &it)
-{
-	const rocksdb::ReadOptions opts
-	{
-		make_opts(gopts)
-	};
-
-	return seek(c, p, opts, it);
 }
 
 template<class pos>
