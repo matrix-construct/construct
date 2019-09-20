@@ -103,7 +103,7 @@ get_conf_item(const string_view &key,
 
 static void
 conf_updated(const m::event &event)
-noexcept try
+try
 {
 	const auto &content
 	{
@@ -148,7 +148,7 @@ catch(const std::exception &e)
 
 static void
 conf_updated(const m::event::idx &event_idx)
-noexcept try
+try
 {
 	static const m::event::fetch::opts fopts
 	{
