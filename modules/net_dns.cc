@@ -27,8 +27,6 @@ ircd::net::dns::init()
 void
 ircd::net::dns::fini()
 {
-	resolver_fini();
-
 	if(!cache::waiting.empty())
 		log::warning
 		{
@@ -40,6 +38,8 @@ ircd::net::dns::fini()
 	{
 		return cache::waiting.empty();
 	});
+
+	resolver_fini();
 }
 
 void

@@ -145,6 +145,7 @@ noexcept
 		return tags.empty();
 	});
 
+	ns.close();
 	assert(!mutex.locked());
 	assert(sendq.empty());
 	assert(tags.empty());
