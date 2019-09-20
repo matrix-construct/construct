@@ -23,7 +23,7 @@ struct ircd::util::scope_restore
 	T *restore {nullptr};
 	T theirs;
 
-	scope_restore(T &restore);
+	scope_restore(T &restore) noexcept;
 	scope_restore(T &restore, T&& ours);
 	template<class... args> scope_restore(T &restore, args&&... ours);
 	scope_restore(const scope_restore &) = delete;
@@ -33,6 +33,7 @@ struct ircd::util::scope_restore
 
 template<class T>
 ircd::util::scope_restore<T>::scope_restore(T &restore)
+noexcept
 :restore{&restore}
 ,theirs{std::move(restore)}
 {
