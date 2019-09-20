@@ -3820,7 +3820,11 @@ ircd::db::prefetcher;
 // db::prefetcher
 //
 ircd::db::prefetcher::prefetcher()
-:context
+:ticker
+{
+	std::make_unique<struct ticker>()
+}
+,context
 {
 	"db.prefetcher",
 	128_KiB,
@@ -3860,15 +3864,17 @@ ircd::db::prefetcher::operator()(column &c,
 		static_cast<database &>(c)
 	};
 
+	assert(ticker);
+	ticker->queries++;
 	if(db::cached(c, key, opts))
 	{
-		++cache_hits;
+		ticker->rejects++;
 		return false;
 	}
 
 	queue.emplace_back(d, c, key);
 	queue.back().snd = now<steady_point>();
-	++request_counter;
+	ticker->request++;
 
 	// Branch here based on whether it's not possible to directly dispatch
 	// a db::request worker. If all request workers are busy we notify our own
@@ -3891,7 +3897,7 @@ ircd::db::prefetcher::operator()(column &c,
 	}
 
 	const ctx::critical_assertion ca;
-	++directs_counter;
+	ticker->directs++;
 	this->handle();
 	return true;
 }
@@ -3942,6 +3948,8 @@ ircd::db::prefetcher::cancel(const closure &closure)
 	if(canceled)
 		dock.notify_all();
 
+	assert(ticker);
+	ticker->cancels += canceled;
 	return canceled;
 }
 
@@ -3956,7 +3964,8 @@ try
 			if(queue.empty())
 				return false;
 
-			if(request_counter <= handles_counter)
+			assert(ticker);
+			if(ticker->request <= ticker->handles)
 				return false;
 
 			return true;
@@ -3982,9 +3991,9 @@ ircd::db::prefetcher::handle()
 		std::bind(&prefetcher::request_worker, this)
 	};
 
-	++handles_counter;
+	ticker->handles++;
 	db::request(std::move(handler));
-	++handled_counter;
+	ticker->handled++;
 }
 
 void
@@ -4027,24 +4036,27 @@ ircd::db::prefetcher::request_worker()
 	if(request == end(queue))
 		return;
 
-	request->req = now<steady_point>();
+	assert(ticker);
 	assert(request->fin == steady_point::min());
-	total_snd_req += duration_cast<microseconds>(request->req - request->snd);
-	++fetches_counter;
+	request->req = now<steady_point>();
+	ticker->last_snd_req = duration_cast<microseconds>(request->req - request->snd);
+	ticker->accum_snd_req += ticker->last_snd_req;
+
+	ticker->fetches++;
 	request_handle(*request);
 	assert(request->fin != steady_point::min());
-	++fetched_counter;
+	ticker->fetched++;
 
 	#ifdef IRCD_DB_DEBUG_PREFETCH
 	log::debug
 	{
-		log, "prefetcher ch:%zu rc:%zu hc:%zu fc:%zu dc:%zu cc:%zu queue:%zu rw:%zu",
-		cache_hits,
-		request_counter,
-		handles_counter,
-		fetches_counter,
-		directs_counter,
-		cancels_counter,
+		log, "prefetcher reject:%zu request:%zu handle:%zu fetch:%zu direct:%zu cancel:%zu queue:%zu rw:%zu",
+		ticker->rejects,
+		ticker->request,
+		ticker->handles,
+		ticker->fetches,
+		ticker->directs,
+		ticker->cancels,
 		queue.size(),
 		this->request_workers,
 	};
@@ -4085,7 +4097,8 @@ try
 
 	const ctx::critical_assertion ca;
 	request.fin = now<steady_point>();
-	total_req_fin += duration_cast<microseconds>(request.fin - request.req);
+	ticker->last_req_fin = duration_cast<microseconds>(request.fin - request.req);
+	ticker->accum_req_fin += ticker->last_req_fin;
 	const bool lte
 	{
 		valid_lte(*it, key)
@@ -4093,8 +4106,8 @@ try
 
 	if(likely(lte))
 	{
-		fetched_bytes_key += size(it->key());
-		fetched_bytes_val += size(it->value());
+		ticker->fetched_bytes_key += size(it->key());
+		ticker->fetched_bytes_val += size(it->value());
 	}
 
 	#ifdef IRCD_DB_DEBUG_PREFETCH
@@ -4139,7 +4152,7 @@ ircd::db::prefetcher::wait_pending()
 {
 	const size_t fetched_counter
 	{
-		this->fetched_counter
+		ticker->fetched
 	};
 
 	const size_t fetched_target
@@ -4149,7 +4162,7 @@ ircd::db::prefetcher::wait_pending()
 
 	dock.wait([this, &fetched_target]
 	{
-		return this->fetched_counter >= fetched_target;
+		return this->ticker->fetched >= fetched_target;
 	});
 
 	assert(fetched_target >= fetched_counter);
