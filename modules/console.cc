@@ -1376,36 +1376,25 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 	// control
 	{
 		__sync_synchronize();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 		started = prof::cycles();
-		asm volatile ("lfence" :::);
-		executed = prof::cycles();
-		asm volatile ("lfence" :::);
-		returned = prof::cycles();
-		asm volatile ("lfence" :::);
-	}
+		asm volatile ("lfence");
 
-	out
-	<< "bare send:    "  << (executed - started)    << std::endl
-	<< "bare recv:    "  << (returned - executed)   << std::endl
-	<< "bare rtt:     "  << (returned - started)    << std::endl
-	<< std::endl;
-
-	// control
-	{
 		__sync_synchronize();
-		started = prof::x86::rdtscp();
-		asm volatile ("lfence" :::);
-		executed = prof::x86::rdtscp();
-		asm volatile ("lfence" :::);
-		returned = prof::x86::rdtscp();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
+		executed = prof::cycles();
+		asm volatile ("lfence");
+
+		__sync_synchronize();
+		asm volatile ("lfence");
+		returned = prof::cycles();
+		asm volatile ("lfence");
 	}
 
 	out
-	<< "tscp send:    "  << (executed - started)    << std::endl
-	<< "tscp recv:    "  << (returned - executed)   << std::endl
-	<< "tscp rtt:     "  << (returned - started)    << std::endl
+	<< "tsc send:     "  << (executed - started)    << std::endl
+	<< "tsc recv:     "  << (returned - executed)   << std::endl
+	<< "tsc rtt:      "  << (returned - started)    << std::endl
 	<< std::endl;
 
 	//
@@ -1414,22 +1403,22 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 
 	{
 		__sync_synchronize();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 		started = prof::cycles();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 
 		ios::dispatch(ios::synchronous, [&executed]
 		{
 			__sync_synchronize();
-			asm volatile ("lfence" :::);
+			asm volatile ("lfence");
 			executed = prof::cycles();
-			asm volatile ("lfence" :::);
+			asm volatile ("lfence");
 		});
 
 		__sync_synchronize();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 		returned = prof::cycles();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 	}
 
 	out
@@ -1444,22 +1433,22 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 
 	{
 		__sync_synchronize();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 		started = prof::cycles();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 
 		ios::defer(ios::synchronous, [&executed]
 		{
 			__sync_synchronize();
-			asm volatile ("lfence" :::);
+			asm volatile ("lfence");
 			executed = prof::cycles();
-			asm volatile ("lfence" :::);
+			asm volatile ("lfence");
 		});
 
 		__sync_synchronize();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 		returned = prof::cycles();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 	}
 
 	out
@@ -1474,22 +1463,22 @@ console_cmd__ios__latency(opt &out, const string_view &line)
 
 	{
 		__sync_synchronize();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 		started = prof::cycles();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 
 		ios::post(ios::synchronous, [&executed]
 		{
 			__sync_synchronize();
-			asm volatile ("lfence" :::);
+			asm volatile ("lfence");
 			executed = prof::cycles();
-			asm volatile ("lfence" :::);
+			asm volatile ("lfence");
 		});
 
 		__sync_synchronize();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 		returned = prof::cycles();
-		asm volatile ("lfence" :::);
+		asm volatile ("lfence");
 	}
 
 	out
