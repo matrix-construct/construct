@@ -70,12 +70,12 @@ ircd::server::wait_all()
 		[] { return !peer_unfinished(); }
 	};
 
-	while(!dock.wait_for(seconds(4), finished))
+	while(!dock.wait_for(seconds(5), finished))
 	{
 		for(const auto &[name, peer] : peers)
 			log::dwarning
 			{
-				log, "Waiting for peer %s tags:%zu links:%zu err:%b op[r:%b f:%b] %s",
+				log, "Waiting for peer %s tags:%zu links:%zu err:%b op[r:%b f:%b]",
 				name,
 				peer->tag_count(),
 				peer->link_count(),
@@ -1159,8 +1159,17 @@ ircd::server::peer::resolve(const hostport &hostport,
                             const net::dns::opts &opts)
 try
 {
-	if(op_resolve || op_fini)
+	assert(!op_resolve);
+	if(op_fini)
 		return;
+
+	const unwind::exceptional failure{[this]
+	{
+		op_resolve = false;
+		err_set(std::current_exception());
+		if(unlikely(ircd::run::level != ircd::run::level::RUN))
+			op_fini = true;
+	}};
 
 	// Skip DNS resolution for IP literals
 	if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_address, host(hostport)))
@@ -1200,11 +1209,6 @@ catch(const std::exception &e)
 		string(buf, hostport),
 		e.what()
 	};
-
-	op_resolve = false;
-	err_set(std::current_exception());
-	if(unlikely(ircd::run::level != ircd::run::level::RUN))
-		op_fini = true;
 }
 
 void
