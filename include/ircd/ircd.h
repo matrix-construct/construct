@@ -24,6 +24,7 @@
 #include "exception.h"
 #include "run.h"
 #include "demangle.h"
+#include "backtrace.h"
 #include "localee.h"
 #include "timedate.h"
 #include "logger.h"

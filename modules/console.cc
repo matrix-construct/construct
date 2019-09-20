@@ -511,6 +511,21 @@ console_cmd__demangle(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__bt(opt &out, const string_view &line)
+{
+	const ircd::backtrace bt;
+	for(size_t i(0); i < bt.size(); ++i)
+	{
+		out
+		<< std::dec << std::setw(3) << i << ':'
+		<< ' ' << std::hex << '[' << uintptr_t(bt[i]) << ']'
+		<< std::endl;
+	}
+
+	return true;
+}
+
 //
 // main
 //
