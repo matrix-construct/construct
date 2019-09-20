@@ -576,7 +576,13 @@ ircd::server::peer::peer(const net::hostport &hostport,
 }
 ,service
 {
-	net::service(hostport)
+	// hostport arguments with a port of 0 or net::canon_port (8448) are
+	// normal; if the port is such, and if we are supplied a service string
+	// an SRV query will be performed. For other port numbers, we ignore any
+	// service string and SRV won't be resolved.
+	!net::port(hostport) || net::port(hostport) == net::canon_port?
+		net::service(hostport):
+		string_view{}
 }
 ,open_opts
 {
@@ -585,9 +591,9 @@ ircd::server::peer::peer(const net::hostport &hostport,
 {
 	const net::hostport &canon{this->hostcanon};
 
-	this->open_opts.hostport.host = this->hostcanon;      // Resolve SRV on this name.
+	this->open_opts.hostport.host = this->hostcanon;
 	this->open_opts.hostport.port = net::port(hostport);
-	this->open_opts.hostport.service = this->service;     // Resolve SRV on this protocol.
+	this->open_opts.hostport.service = this->service;
 
 	this->open_opts.server_name = this->hostcanon;        // Send SNI for this name.
 	this->open_opts.common_name = this->hostcanon;        // Cert verify this name.
@@ -1149,8 +1155,21 @@ void
 ircd::server::peer::resolve(const hostport &hostport)
 {
 	net::dns::opts opts;
-	opts.qtype = 33; // start with SRV.
-	opts.nxdomain_exceptions = false;
+
+	// Figure out the initial query type. Most of the time it's SRV.
+	opts.qtype = net::service(hostport)?
+			33:  // SRV
+	peer::enable_ipv6 && net::enable_ipv6?
+			28:  // AAAA
+			 1;  // A
+
+	// When the result comes back as nxdomain this tells the resolver to
+	// not set eptr; instead it gives an empty set of results. We do this
+	// with SRV/AAAA queries for seamless fallback.
+	opts.nxdomain_exceptions =
+		opts.qtype != 33 &&     // SRV
+		opts.qtype != 28;       // AAAA
+
 	resolve(hostport, opts);
 }
 
