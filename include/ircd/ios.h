@@ -43,7 +43,6 @@ namespace ircd::ios
 	struct defer;
 	struct post;
 
-	extern const std::thread::id static_thread_id;
 	extern std::thread::id main_thread_id;
 	extern asio::io_context *user;
 
@@ -51,7 +50,6 @@ namespace ircd::ios
 	const string_view &name(const handler &);
 
 	bool is_main_thread();
-	bool is_static_thread();
 	void assert_main_thread();
 
 	bool available() noexcept;
@@ -290,11 +288,4 @@ ircd::ios::is_main_thread()
 {
 	return std::this_thread::get_id() == main_thread_id ||
 	       main_thread_id == std::thread::id();
-}
-
-inline bool
-__attribute__((always_inline))
-ircd::ios::is_static_thread()
-{
-	return std::this_thread::get_id() == static_thread_id;
 }

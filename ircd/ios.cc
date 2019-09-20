@@ -10,13 +10,6 @@
 
 #include <ircd/asio.h>
 
-/// Record of the ID of the thread static initialization took place on.
-decltype(ircd::ios::static_thread_id)
-ircd::ios::static_thread_id
-{
-    std::this_thread::get_id()
-};
-
 /// "main" thread for IRCd; the one the main context landed on.
 decltype(ircd::ios::main_thread_id)
 ircd::ios::main_thread_id;
