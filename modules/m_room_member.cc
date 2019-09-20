@@ -40,7 +40,7 @@ ircd::m::affect_user_room_hookfn
 {
 	affect_user_room,
 	{
-		{ "_site",  "vm.effect"     },
+		{ "_site",  "vm.post"       },
 		{ "type",   "m.room.member" },
 	}
 };
@@ -74,6 +74,19 @@ try
 	{
 		subject
 	};
+
+	const auto &prev_idx
+	{
+		user_room.get(std::nothrow, "ircd.member", room_id)
+	};
+
+	const auto prev_depth
+	{
+		m::get(std::nothrow, prev_idx, "depth", 0L)
+	};
+
+	if(at<"depth"_>(event) < prev_depth)
+		return;
 
 	send(user_room, sender, "ircd.member", room_id, at<"content"_>(event));
 }
