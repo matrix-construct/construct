@@ -13,9 +13,7 @@
 
 namespace ircd::prof
 {
-	struct type;
 	struct event;
-	enum dpl :uint8_t;
 	using group = std::vector<std::unique_ptr<event>>;
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_OVERLOAD(sample)
@@ -36,6 +34,7 @@ namespace ircd::prof
 
 #include "x86.h"
 #include "vg.h"
+#include "type.h"
 #include "syscall_timer.h"
 #include "instructions.h"
 #include "resource.h"
@@ -47,33 +46,6 @@ namespace ircd
 {
 	using prof::cycles;
 }
-
-/// Type descriptor for prof events. This structure is used to aggregate
-/// information that describes a profiling event type, including whether
-/// the kernel or the user is being profiled (dpl), the principal counter
-/// type being profiled (counter) and any other contextual attributes.
-struct ircd::prof::type
-{
-	enum dpl dpl {0};
-	uint8_t type_id {0};
-	uint8_t counter {0};
-	uint8_t cacheop {0};
-	uint8_t cacheres {0};
-
-	type(const event &);
-	type(const enum dpl & = (enum dpl)0,
-	     const uint8_t &attr_type = 0,
-	     const uint8_t &counter = 0,
-	     const uint8_t &cacheop = 0,
-	     const uint8_t &cacheres = 0);
-};
-
-enum ircd::prof::dpl
-:std::underlying_type<ircd::prof::dpl>::type
-{
-	KERNEL  = 0,
-	USER    = 1,
-};
 
 #if defined(__x86_64__) || defined(__i386__)
 extern inline uint64_t
