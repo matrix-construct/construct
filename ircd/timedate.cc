@@ -253,27 +253,3 @@ ircd::microtime()
 	};
 }
 #endif
-
-//
-// system clock
-//
-
-template<>
-[[gnu::hot]]
-ircd::system_point
-ircd::now<ircd::system_point>()
-{
-	return system_clock::now();
-}
-
-//
-// steady clock
-//
-
-template<>
-[[gnu::hot]]
-ircd::steady_point
-ircd::now<ircd::steady_point>()
-{
-	return steady_clock::now();
-}

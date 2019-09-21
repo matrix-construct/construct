@@ -152,6 +152,14 @@ ircd::time(time_t &ref)
 	return ref;
 }
 
+template<>
+inline ircd::system_point
+__attribute__((always_inline, artificial, flatten))
+ircd::now<ircd::system_point>()
+{
+    return system_clock::now();
+}
+
 //
 // steady_clock
 //
@@ -167,4 +175,12 @@ ircd::now()
 	};
 
 	return std::chrono::duration_cast<unit>(now);
+}
+
+template<>
+inline ircd::steady_point
+__attribute__((always_inline, artificial, flatten))
+ircd::now<ircd::steady_point>()
+{
+    return steady_clock::now();
 }
