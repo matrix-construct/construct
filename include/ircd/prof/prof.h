@@ -35,6 +35,7 @@ namespace ircd::prof
 #include "x86.h"
 #include "vg.h"
 #include "type.h"
+#include "scope_cycles.h"
 #include "syscall_timer.h"
 #include "instructions.h"
 #include "resource.h"
