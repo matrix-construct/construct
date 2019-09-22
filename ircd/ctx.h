@@ -81,13 +81,7 @@ struct ircd::ctx::ctx
 	ctx(const string_view &name                  = "<noname>"_sv,
 	    const size_t &stack_max                  = DEFAULT_STACK_SIZE,
 	    const context::flags &flags              = (context::flags)0U,
-	    boost::asio::io_service &ios             = ircd::ios::get())
-	:name{name}
-	,flags{flags}
-	,strand{ios}
-	,alarm{ios}
-	,stack{stack_max}
-	{}
+	    boost::asio::io_service &ios             = ircd::ios::get());
 
 	ctx(ctx &&) = delete;
 	ctx(const ctx &) = delete;

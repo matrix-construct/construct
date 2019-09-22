@@ -57,7 +57,19 @@ ircd::ctx::ctx::ios_desc
 	"ircd::ctx::ctx"
 };
 
-// linkage for dtor
+/// Internal context struct ctor
+ircd::ctx::ctx::ctx(const string_view &name,
+                    const size_t &stack_max,
+                    const context::flags &flags,
+                    boost::asio::io_service &ios)
+:name{name}
+,flags{flags}
+,strand{ios}
+,alarm{ios}
+,stack{stack_max}
+{
+}
+
 ircd::ctx::ctx::~ctx()
 noexcept
 {
