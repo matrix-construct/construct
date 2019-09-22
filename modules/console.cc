@@ -1315,14 +1315,16 @@ console_cmd__ios(opt &out, const string_view &line)
 {
 	out << std::left << std::setw(3) << "ID"
 	    << " " << std::left << std::setw(48) << "NAME"
+	    << " " << std::right << std::setw(6) << "QUEUED"
+	    << " " << std::right << std::setw(13) << "LAST LATENCY"
+	    << " " << std::right << std::setw(13) << "AVG LATENCY"
+	    << " " << std::right << std::setw(13) << "AVG CYCLES"
+	    << " " << std::right << std::setw(13) << "LAST CYCLES"
 	    << " " << std::right << std::setw(10) << "CALLS"
-	    << " " << std::right << std::setw(15) << "TOTAL CYCLES"
-	    << " " << std::right << std::setw(15) << "LAST CYCLES"
 	    << " " << std::right << std::setw(10) << "ALLOCS"
 	    << " " << std::right << std::setw(10) << "FREES"
 	    << " " << std::right << std::setw(26) << "ALLOCATED"
 	    << " " << std::right << std::setw(26) << "FREED"
-	    << " " << std::right << std::setw(8) << "QUEUED"
 	    << " " << std::right << std::setw(8) << "FAULTS"
 	    << std::endl
 	    ;
@@ -1331,16 +1333,33 @@ console_cmd__ios(opt &out, const string_view &line)
 	(const auto &s)
 	{
 		thread_local char pbuf[64];
-		out << " " << std::right << std::setw(10) << s.calls
-		    << " " << std::right << std::setw(15) << s.slice_total
-		    << " " << std::right << std::setw(15) << s.slice_last
-		    << " " << std::right << std::setw(10) << s.allocs
-		    << " " << std::right << std::setw(10) << s.frees
-		    << " " << std::right << std::setw(26) << pretty(iec(s.alloc_bytes))
-		    << " " << std::right << std::setw(26) << pretty(iec(s.free_bytes))
-		    << " " << std::right << std::setw(8) << s.queued
-		    << " " << std::right << std::setw(8) << s.faults
-		    ;
+		const auto latency_avg
+		{
+			s.calls?
+				(long double)s.latency_total / (long double)s.calls:
+				0.0L
+		};
+
+		const auto cycles_avg
+		{
+			s.calls?
+				(long double)s.slice_total / (long double)s.calls:
+				0.0L
+		};
+
+		out
+		<< " " << std::right << std::setw(6) << s.queued
+		<< " " << std::right << std::setw(13) << pretty(pbuf, si(ulong(s.latency_last)), 2)
+		<< " " << std::right << std::setw(13) << pretty(pbuf, si(ulong(latency_avg)), 2)
+		<< " " << std::right << std::setw(13) << pretty(pbuf, si(ulong(cycles_avg)), 2)
+		<< " " << std::right << std::setw(13) << pretty(pbuf, si(s.slice_last), 2)
+		<< " " << std::right << std::setw(10) << s.calls
+		<< " " << std::right << std::setw(10) << s.allocs
+		<< " " << std::right << std::setw(10) << s.frees
+		<< " " << std::right << std::setw(26) << pretty(pbuf, iec(s.alloc_bytes))
+		<< " " << std::right << std::setw(26) << pretty(pbuf, iec(s.free_bytes))
+		<< " " << std::right << std::setw(8) << s.faults
+		;
 	}};
 
 	struct ios::descriptor::stats total;

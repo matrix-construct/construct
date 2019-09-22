@@ -137,6 +137,8 @@ struct ircd::ios::descriptor::stats
 	uint64_t free_bytes{0};
 	uint64_t slice_total {0};
 	uint64_t slice_last {0};
+	uint64_t latency_total {0};
+	uint64_t latency_last {0};
 
 	stats &operator+=(const stats &) &;
 
@@ -157,7 +159,7 @@ struct ircd::ios::handler
 	static bool fault(handler *const &) noexcept;
 
 	ios::descriptor *descriptor {nullptr};
-	uint64_t slice_start {0};
+	uint64_t ts {0}; // last tsc sample; for profiling each phase
 };
 
 template<class function>
@@ -191,7 +193,7 @@ namespace ircd::ios
 template<class function>
 ircd::ios::handle<function>::handle(ios::descriptor &d,
                                     function f)
-:handler{&d}
+:handler{&d, prof::cycles()}
 ,f{std::move(f)}
 {
 	assert(d.stats);

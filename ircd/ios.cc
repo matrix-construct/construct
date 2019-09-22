@@ -155,6 +155,8 @@ ircd::ios::descriptor::stats::operator+=(const stats &o)
 	free_bytes += o.free_bytes;
 	slice_total += o.slice_total;
 	slice_last += o.slice_last;
+	latency_total += o.latency_total;
+	latency_last += o.latency_last;
 	return *this;
 }
 
@@ -187,7 +189,7 @@ noexcept
 	// needs to be tied off here instead.
 	if(!ret)
 	{
-		stats.slice_last = cycles() - handler->slice_start;
+		stats.slice_last = cycles() - handler->ts;
 		stats.slice_total += stats.slice_last;
 
 		assert(handler::current == handler);
@@ -202,21 +204,21 @@ void
 ircd::ios::handler::leave(handler *const &handler)
 noexcept
 {
-	const auto slice_stop
-	{
-		cycles()
-	};
-
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
 
 	assert(descriptor.stats);
 	auto &stats(*descriptor.stats);
 
+	const auto slice_stop
+	{
+		cycles()
+	};
+
 	// NOTE: will fail without constant_tsc;
 	// NOTE: may fail without nonstop_tsc after OS suspend mode
-	assert(slice_stop >= handler->slice_start);
-	stats.slice_last = slice_stop - handler->slice_start;
+	assert(slice_stop >= handler->ts);
+	stats.slice_last = slice_stop - handler->ts;
 	stats.slice_total += stats.slice_last;
 
 	assert(handler::current == handler);
@@ -228,16 +230,24 @@ void
 ircd::ios::handler::enter(handler *const &handler)
 noexcept
 {
+	assert(!handler::current);
 	assert(handler && handler->descriptor);
 	auto &descriptor(*handler->descriptor);
 
 	assert(descriptor.stats);
 	auto &stats(*descriptor.stats);
-	++stats.calls;
-	++handler::epoch;
-	assert(!handler::current);
+
 	handler::current = handler;
-	handler->slice_start = cycles();
+	++handler::epoch;
+	++stats.calls;
+
+	const auto last_ts
+	{
+		std::exchange(handler->ts, cycles())
+	};
+
+	stats.latency_last = handler->ts - last_ts;
+	stats.latency_total += stats.latency_last;
 }
 
 [[gnu::hot]]
