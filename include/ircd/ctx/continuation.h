@@ -57,6 +57,7 @@ struct ircd::ctx::continuation
 	ctx *const self;
 	const predicate *const pred;
 	const interruptor *const intr;
+	const void *const frame_address;
 	const uint uncaught_exceptions;
 
 	operator const boost::asio::yield_context &() const noexcept;
@@ -70,5 +71,4 @@ struct ircd::ctx::continuation
 	continuation(const continuation &) = delete;
 	continuation &operator=(continuation &&) = delete;
 	continuation &operator=(const continuation &) = delete;
-	~continuation() noexcept;
 };

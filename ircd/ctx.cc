@@ -197,6 +197,15 @@ ircd::ctx::ctx::wait()
 	if(--notes > 0)
 		return false;
 
+	// Save the return address on the stack here so we can reference it in
+	// a closure below shortly after resuming from the context switch. The
+	// return stack buffer may not have our return address anymore so we'll
+	// issue a prefetch instruction manually soon after the context switch.
+	const void *const return_address
+	{
+		__builtin_return_address(0)
+	};
+
 	// An interrupt invokes this closure to force the alarm to return.
 	const interruptor &interruptor{[this]
 	(ctx *const &interruptor) noexcept
@@ -217,10 +226,11 @@ ircd::ctx::ctx::wait()
 	// arguments comprise the initial control after the context switch.
 	boost::system::error_code ec; continuation
 	{
-		predicate, interruptor, [this, &ec]
+		predicate, interruptor, [this, &ec, &return_address]
 		(auto &yield)
 		{
 			alarm.async_wait(yield[ec]);
+			__builtin_prefetch(return_address, 0, 3);
 		}
 	};
 
@@ -1061,6 +1071,10 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 {
 	&intr
 }
+,frame_address
+{
+	__builtin_frame_address(0)
+}
 ,uncaught_exceptions
 {
 	exception_handler::uncaught_exceptions(0)
@@ -1087,6 +1101,9 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	// the ircd::ctx in an exception handler.
 	assert(!std::current_exception());
 
+	// Check that we saved a valid context reference to this object for later.
+	assert(self->yc);
+
 	// Point to this continuation instance (which is on the context's stack)
 	// from the context's instance. This allows its features to be accessed
 	// while the context is asleep (i.e interruptor and predicate functions).
@@ -1099,51 +1116,54 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	// its execution run and is now yielding.
 	mark(prof::event::YIELD);
 
-	// Check that we saved a valid context reference to this object for later.
-	assert(self->yc);
-
 	// Null the fundamental current context register as the last operation
 	// during execution before yielding. When a context resumes it will
 	// restore this register; otherwise it remains null for executions on
 	// the program's main stack.
-	ircd::ctx::current = nullptr; try
-	{
-		// Run the provided routine which performs the actual context switch.
-		// Everything happening in this closure is no longer considered part
-		// of this context, but it is technically operating on this stack.
-		closure(*self->yc);
+	ircd::ctx::current = nullptr;
 
-		// Check for an interrupt that was sent while asleep. This will throw.
-		self->interruption_point();
+	// Run the provided routine which performs the actual context switch.
+	// Everything happening in this closure is no longer considered part
+	// of this context, but it is technically operating on this stack.
+	std::exception_ptr eptr; try
+	{
+		closure(*self->yc);
 	}
 	catch(...)
 	{
-		this->~continuation();
-		throw;
+		eptr = std::current_exception();
 	}
-}
 
-[[gnu::hot]]
-ircd::ctx::continuation::~continuation()
-noexcept
-{
-	// Set the fundamental current context register as the first operation
-	// upon resuming execution.
+	// The branch predictor's return address buffer is likely useless now.
+	// We try to manually ensure the next return target is cached.
+	__builtin_prefetch(__builtin_return_address(0), 0, 3);
+
+	// Restore the current context register.
 	ircd::ctx::current = self;
-
-	// Restore the uncaught exception count for this context to the cxxabi
-	assert(std::uncaught_exceptions() == 0);
-	exception_handler::uncaught_exceptions(uncaught_exceptions);
-
-	// Tell the profiler this is the point where the context is now resuming.
-	// On some optimized builds this might lead nowhere.
-	mark(prof::event::CONTINUE);
 
 	// Unconditionally reset the notes counter to 1 because we're awake now.
 	self->notes = 1;
 
+	// Restore exception state
+	assert(std::uncaught_exceptions() == 0);
+	exception_handler::uncaught_exceptions(uncaught_exceptions);
+
 	// self->continuation is not null'ed here; it remains an invalid
 	// pointer while the context is awake.
+
+	// Tell the profiler this is the point where the context is now resuming.
+	mark(prof::event::CONTINUE);
+
+	// Check for an interrupt or termination that was sent while asleep.
+	if(unlikely(self->interruption()))
+	{
+		self->interruption_point();
+		__builtin_unreachable();
+	}
+
+	// Check if the operation failed; it's now safe to throw that.
+	if(unlikely(eptr))
+		std::rethrow_exception(eptr);
 }
 
 [[gnu::hot]]
