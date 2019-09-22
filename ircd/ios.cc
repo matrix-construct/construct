@@ -79,14 +79,27 @@ ircd::ios::descriptor::descriptor(const string_view &name,
                                   const decltype(allocator) &allocator,
                                   const decltype(deallocator) &deallocator,
                                   const bool &continuation)
-:name{name}
-,stats{std::make_unique<struct stats>()}
-,allocator{allocator}
-,deallocator{deallocator}
-,continuation{continuation}
+:name
 {
-	assert(allocator);
-	assert(deallocator);
+	name
+}
+,stats
+{
+	std::make_unique<struct stats>()
+}
+,allocator
+{
+	allocator?: default_allocator
+}
+,deallocator
+{
+	deallocator?: default_deallocator
+}
+,continuation
+{
+	continuation
+}
+{
 }
 
 ircd::ios::descriptor::~descriptor()
