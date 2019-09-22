@@ -323,6 +323,23 @@ catch(const std::out_of_range &e)
 }
 
 ircd::human_readable_size
+ircd::util::si(const uint64_t &value)
+{
+	static const std::array<string_view, 7> unit
+	{
+		" ", "K", "M", "G", "T", "P", "E"
+	};
+
+	auto pos(0);
+	long double v(value);
+	for(; v > 1000.0; v /= 1000.0, ++pos);
+	return
+	{
+		value, v, unit.at(pos)
+	};
+}
+
+ircd::human_readable_size
 ircd::util::iec(const uint64_t &value)
 {
 	static const std::array<string_view, 7> unit
@@ -333,23 +350,6 @@ ircd::util::iec(const uint64_t &value)
 	auto pos(0);
 	long double v(value);
 	for(; v > 1024.0; v /= 1024.0, ++pos);
-	return
-	{
-		value, v, unit.at(pos)
-	};
-}
-
-ircd::human_readable_size
-ircd::util::si(const uint64_t &value)
-{
-	static const std::array<string_view, 7> unit
-	{
-		"B", "KB", "MB", "GB", "TB", "PB", "EB"
-	};
-
-	auto pos(0);
-	long double v(value);
-	for(; v > 1000.0; v /= 1000.0, ++pos);
 	return
 	{
 		value, v, unit.at(pos)
