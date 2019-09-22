@@ -18,8 +18,7 @@ inline namespace util
 	using human_readable_size = std::tuple<uint64_t, long double, const string_view &>;
 
 	// Default format strings used for pretty(size).
-	extern const string_view pretty_size_fmt;
-	extern const string_view pretty_only_size_fmt;
+	extern const string_view pretty_fmt[];
 
 	// Process the value to be made pretty first with one of the following:
 	human_readable_size iec(const uint64_t &value);
@@ -30,12 +29,8 @@ inline namespace util
 	std::string pretty(const human_readable_size &, const string_view &fmt);
 
 	// Generate a pretty string with the pretty_fmt_default implied.
-	string_view pretty(const mutable_buffer &out, const human_readable_size &);
-	std::string pretty(const human_readable_size &);
-
-	// Generate a pretty string with another (simpler) default fmt string.
-	string_view pretty_only(const mutable_buffer &out, const human_readable_size &);
-	std::string pretty_only(const human_readable_size &);
+	string_view pretty(const mutable_buffer &out, const human_readable_size &, const uint &fmt = 0);
+	std::string pretty(const human_readable_size &, const uint &fmt = 0);
 
 	// Human readable time suite (for timers and counts; otherwise see date.h)
 	string_view pretty_nanoseconds(const mutable_buffer &out, const long double &, const uint &fmt = 0);

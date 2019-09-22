@@ -232,60 +232,28 @@ ircd::util::pretty_nanoseconds(const mutable_buffer &out,
 // Human readable space suite
 //
 
-decltype(ircd::util::pretty_size_fmt)
-ircd::util::pretty_size_fmt
+decltype(ircd::util::pretty_fmt)
+ircd::util::pretty_fmt
 {
-	"%.2lf %s (%lu)"
-};
-
-decltype(ircd::util::pretty_only_size_fmt)
-ircd::util::pretty_only_size_fmt
-{
-	"%.2lf %s",
+	"%.2lf %s (%lu)"_sv,
+	"%.2lf %s"_sv,
+	"%.2lf%s"_sv,
+	string_view{},
 };
 
 std::string
-ircd::util::pretty_only(const human_readable_size &value)
+ircd::util::pretty(const human_readable_size &value,
+                   const uint &fmt)
 {
-	return util::string(32, [&value]
-	(const mutable_buffer &out)
-	{
-		return pretty_only(out, value);
-	});
-}
-
-ircd::string_view
-ircd::util::pretty_only(const mutable_buffer &out,
-                        const human_readable_size &value)
-try
-{
-	return fmt::sprintf
-	{
-		out, pretty_only_size_fmt,
-		std::get<long double>(value),
-		std::get<const string_view &>(value)
-	};
-}
-catch(const std::out_of_range &e)
-{
-	return fmt::sprintf
-	{
-		out, "%lu B",
-		std::get<uint64_t>(value)
-	};
-}
-
-std::string
-ircd::util::pretty(const human_readable_size &value)
-{
-	return pretty(value, pretty_size_fmt);
+	return pretty(value, pretty_fmt[fmt]);
 }
 
 ircd::string_view
 ircd::util::pretty(const mutable_buffer &out,
-                   const human_readable_size &value)
+                   const human_readable_size &value,
+                   const uint &fmt)
 {
-	return pretty(out, pretty_size_fmt, value);
+	return pretty(out, pretty_fmt[fmt], value);
 }
 
 std::string
@@ -317,7 +285,7 @@ catch(const std::out_of_range &e)
 {
 	return fmt::sprintf
 	{
-		out, "%lu B",
+		out, "%lu",
 		std::get<uint64_t>(value)
 	};
 }
