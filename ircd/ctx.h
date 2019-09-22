@@ -64,6 +64,7 @@ struct ircd::ctx::ctx
 
 	bool started() const noexcept;               // context was ever entered
 	bool finished() const noexcept;              // context will not be further entered.
+	bool interruption() const noexcept;
 
 	bool interruption_point(std::nothrow_t) noexcept;
 	bool termination_point(std::nothrow_t) noexcept;

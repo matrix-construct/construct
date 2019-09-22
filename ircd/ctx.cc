@@ -269,44 +269,32 @@ catch(const std::exception &e)
 
 /// Throws if this context has been flagged for interruption and clears
 /// the flag.
+[[gnu::hot]]
 void
 ircd::ctx::ctx::interruption_point()
 {
-	static const auto &flags
+	if(unlikely(interruption()))
 	{
-		context::TERMINATED | context::INTERRUPTED
-	};
+		if(termination_point(std::nothrow))
+			throw terminated{};
 
-	// Fast test-and-bail for the very likely case there is no interrupt.
-	if(likely((this->flags & flags) == 0))
-		return;
-
-	// The NOINTERRUPT flag works by pretending there is no interrupt flag
-	// set and also does not clear the flag. This allows the interrupt
-	// to remain pending until the uninterruptible section is complete.
-	if(this->flags & context::NOINTERRUPT)
-		return;
-
-	// Termination shouldn't be used for normal operation so please eat this
-	// branch misprediction.
-	if(unlikely(termination_point(std::nothrow)))
-		throw terminated{};
-
-	if(interruption_point(std::nothrow))
-		throw interrupted
-		{
-			"ctx:%lu '%s'", id, name
-		};
+		if(likely(interruption_point(std::nothrow)))
+			throw interrupted
+			{
+				"ctx:%lu '%s'", id, name
+			};
+	}
 }
 
 /// Returns true if this context has been flagged for termination. Does not
 /// clear the flag. Sets the NOINTERRUPT flag so the context cannot be further
 // interrupted which simplifies the termination process.
+[[gnu::hot]]
 bool
 ircd::ctx::ctx::termination_point(std::nothrow_t)
 noexcept
 {
-	if(flags & context::TERMINATED)
+	if(unlikely(flags & context::TERMINATED))
 	{
 		assert(~flags & context::NOINTERRUPT);
 		flags |= context::NOINTERRUPT;
@@ -318,11 +306,12 @@ noexcept
 
 /// Returns true if this context has been flagged for interruption and
 /// clears the flag.
+[[gnu::hot]]
 bool
 ircd::ctx::ctx::interruption_point(std::nothrow_t)
 noexcept
 {
-	if(flags & context::INTERRUPTED)
+	if(unlikely(flags & context::INTERRUPTED))
 	{
 		assert(~flags & context::NOINTERRUPT);
 		flags &= ~context::INTERRUPTED;
@@ -330,6 +319,31 @@ noexcept
 		return true;
 	}
 	else return false;
+}
+
+/// True if this context has been flagged for interruption or termination
+/// and interrupts are not blocked.
+[[gnu::hot]]
+bool
+ircd::ctx::ctx::interruption()
+const noexcept
+{
+	static const auto &flags
+	{
+		context::TERMINATED | context::INTERRUPTED
+	};
+
+	// Fast test-and-bail for the very likely case there is no interrupt.
+	if(likely((this->flags & flags) == 0))
+		return false;
+
+	// The NOINTERRUPT flag works by pretending there is no interrupt flag
+	// set and also does not clear the flag. This allows the interrupt
+	// to remain pending until the uninterruptible section is complete.
+	if(this->flags & context::NOINTERRUPT)
+		return false;
+
+	return true;
 }
 
 [[gnu::hot]]
