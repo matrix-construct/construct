@@ -1227,6 +1227,13 @@ ircd::ctx::context::context(const string_view &name,
 	std::make_unique<ctx>(name, stack_sz, flags, ios::get())
 }
 {
+	static ios::descriptor desc[3]
+	{
+		{ "ircd::ctx::spawn post"      },
+		{ "ircd::ctx::spawn defer"     },
+		{ "ircd::ctx::spawn dispatch"  },
+	};
+
 	auto spawn
 	{
 		std::bind(&ctx::spawn, c.get(), std::move(func))
@@ -1247,25 +1254,9 @@ ircd::ctx::context::context(const string_view &name,
 		}
 	};
 
-	static ios::descriptor post_desc
+	if(flags & POST || !current)
 	{
-		"ircd::ctx::spawn post"
-	};
-
-	if(flags & POST)
-	{
-		ios::post(post_desc, std::move(spawn));
-		return;
-	}
-
-	static ios::descriptor dispatch_desc
-	{
-		"ircd::ctx::spawn dispatch"
-	};
-
-	if(!current)
-	{
-		ios::dispatch(dispatch_desc, std::move(spawn));
+		ios::post(desc[0], std::move(spawn));
 		return;
 	}
 
@@ -1275,9 +1266,18 @@ ircd::ctx::context::context(const string_view &name,
 		(auto &yield)
 		{
 			if(flags & DISPATCH)
-				ios::dispatch(dispatch_desc, std::move(spawn));
-			else
-				spawn();
+			{
+				ios::dispatch(desc[2], std::move(spawn));
+				return;
+			}
+
+			if(flags & DEFER)
+			{
+				ios::defer(desc[1], std::move(spawn));
+				return;
+			}
+
+			spawn();
 		}
 	};
 }
