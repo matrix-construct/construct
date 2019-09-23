@@ -410,7 +410,7 @@ ircd::net::dns::cache::hook
 {
     handle,
     {
-        { "_site",       "vm.notify"          },
+        { "_site",       "vm.effect"          },
         { "room_id",     string_view{room_id} },
     }
 };
