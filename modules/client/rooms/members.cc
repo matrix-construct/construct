@@ -51,17 +51,22 @@ get__members(client &client,
 		url::decode(atbuf, request.query["at"])
 	};
 
+	// at is a /sync since token we gave the client. This is simply
+	// an event_idx sequence integer, except during phased-polylog sync
+	// when this is a negative integer. If this is phased sync, we can
+	// parse this token for the snapshot integer.
+	const auto &[since, snapshot]
+	{
+		split(at, '_')
+	};
+
 	const auto event_idx
 	{
-		// at is a /sync since token we gave the client. This is simply
-		// an event_idx sequence integer, except during phased-polylog sync
-		// when this is a negative integer. If this is phased sync, we can
-		// parse this token for the snapshot integer.
-		at && !startswith(at, '-')?
-			lex_cast<m::event::idx>(at):
-		startswith(at, '-')?
-			lex_cast<m::event::idx>(split(at, '_').second):
-			m::event::idx{0}
+		snapshot?
+			lex_cast<m::event::idx>(snapshot):
+		since?
+			lex_cast<m::event::idx>(since):
+		0UL
 	};
 
 	const m::event::id::buf event_id
