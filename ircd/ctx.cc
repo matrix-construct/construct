@@ -94,6 +94,7 @@ ircd::ctx::ctx::spawn(context::function func)
 		std::bind(&ctx::operator(), this, ph::_1, std::move(func))
 	};
 
+	mark(prof::event::SPAWN);
 	boost::asio::spawn(strand, std::move(bound), attrs);
 }
 
@@ -107,6 +108,7 @@ ircd::ctx::ctx::operator()(boost::asio::yield_context yc,
                            const std::function<void ()> func)
 noexcept try
 {
+	assert(!ircd::ctx::current);
 	ircd::ctx::current = this;
 	this->yc = &yc;
 	notes = 1;
@@ -1230,10 +1232,6 @@ ircd::ctx::context::context(const string_view &name,
 		std::bind(&ctx::spawn, c.get(), std::move(func))
 	};
 
-	// The profiler is told about the spawn request here, not inside the closure
-	// which is probably the same event-slice as event::CUR_ENTER and not as useful.
-	mark(prof::event::SPAWN);
-
 	// When the user passes the DETACH flag we want to release the unique_ptr
 	// of the ctx if and only if that ctx is committed to freeing itself. Our
 	// commitment ends at the 180 of this function. If no exception was thrown
@@ -1249,34 +1247,39 @@ ircd::ctx::context::context(const string_view &name,
 		}
 	};
 
+	static ios::descriptor post_desc
+	{
+		"ircd::ctx::spawn post"
+	};
+
 	if(flags & POST)
 	{
-		static ios::descriptor descriptor
-		{
-			"ircd::ctx::spawn post"
-		};
-
-		ios::post(descriptor, std::move(spawn));
+		ios::post(post_desc, std::move(spawn));
 		return;
 	}
 
-	// The current context must be reasserted if spawn returns here
-	auto *const theirs(ircd::ctx::current);
-	const unwind recurrent([&theirs]
+	static ios::descriptor dispatch_desc
 	{
-		ircd::ctx::current = theirs;
-	});
+		"ircd::ctx::spawn dispatch"
+	};
 
-	if(flags & DISPATCH)
+	if(!current)
 	{
-		static ios::descriptor descriptor
-		{
-			"ircd::ctx::spawn dispatch"
-		};
-
-		ios::dispatch(descriptor, std::move(spawn));
+		ios::dispatch(dispatch_desc, std::move(spawn));
+		return;
 	}
-	else spawn();
+
+	continuation
+	{
+		continuation::false_predicate, continuation::noop_interruptor, [&spawn, &flags]
+		(auto &yield)
+		{
+			if(flags & DISPATCH)
+				ios::dispatch(dispatch_desc, std::move(spawn));
+			else
+				spawn();
+		}
+	};
 }
 
 ircd::ctx::context::context(const string_view &name,
