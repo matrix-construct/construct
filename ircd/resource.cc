@@ -977,12 +977,23 @@ ircd::resource::response::chunked::finish()
 ircd::const_buffer
 ircd::resource::response::chunked::flush(const const_buffer &buf)
 {
-	const const_buffer wrote
+	assert(size(buf) <= size(this->buf) || empty(this->buf));
+	const size_t wrote
 	{
-		data(buf), write(buf)
+		write(buf, true)
 	};
 
-	return wrote;
+	assert(wrote > 0 || empty(buf));
+	const size_t flushed
+	{
+		std::min(size(buf), wrote)
+	};
+
+	assert(flushed <= size(buf));
+	return const_buffer
+	{
+		data(buf), flushed
+	};
 }
 
 size_t
@@ -990,6 +1001,7 @@ ircd::resource::response::chunked::write(const const_buffer &chunk,
                                          const bool &ignore_empty)
 try
 {
+	assert(size(chunk) <= size(this->buf) || empty(this->buf));
 	size_t ret{0};
 
 	if(!c)

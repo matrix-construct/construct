@@ -408,11 +408,13 @@ ircd::m::sync::flush(data &data,
                      resource::response::chunked &response,
                      const const_buffer &buffer)
 {
+	assert(size(buffer) <= size(response.buf));
 	const auto wrote
 	{
 		response.flush(buffer)
 	};
 
+	assert(size(wrote) <= size(buffer));
 	if(data.stats)
 	{
 		data.stats->flush_bytes += size(wrote);
