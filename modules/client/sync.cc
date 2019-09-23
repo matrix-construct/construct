@@ -263,7 +263,7 @@ ircd::m::sync::handle_get(client &client,
 	json::stack out
 	{
 		response.buf,
-		std::bind(&sync::flush, std::ref(data), std::ref(response), ph::_1),
+		std::bind(sync::flush, std::ref(data), std::ref(response), ph::_1),
 		size_t(flush_hiwat)
 	};
 	data.out = &out;
@@ -483,7 +483,7 @@ try
 				int64_t(data.range.second)
 		};
 
-		char buf[48];
+		char buf[64];
 		const string_view &next_batch_token
 		{
 			// The polylog phased since token. We pack two numbers separted by a '_'

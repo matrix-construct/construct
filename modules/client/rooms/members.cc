@@ -45,7 +45,7 @@ get__members(client &client,
 	};
 
 	// Acquire the at/since parameter from query string.
-	char atbuf[48];
+	char atbuf[64];
 	const string_view at
 	{
 		url::decode(atbuf, request.query["at"])
