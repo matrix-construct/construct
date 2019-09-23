@@ -11,11 +11,15 @@
 #pragma once
 #define HAVE_IRCD_CTX_CRITICAL_ASSERTION_H
 
-namespace ircd::ctx {
-inline namespace this_ctx
+namespace ircd::ctx
 {
-	struct critical_assertion;         // Assert no yielding for a section
-}}
+	inline namespace this_ctx
+	{
+		struct critical_assertion;         // Assert no yielding for a section
+	}
+
+	void assert_critical();
+}
 
 /// An instance of critical_assertion detects an attempt to context switch.
 ///

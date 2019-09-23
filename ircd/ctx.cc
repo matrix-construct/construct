@@ -853,10 +853,12 @@ noexcept
 
 namespace ircd::ctx
 {
-	thread_local bool critical_asserted;
-
-	static void assert_critical();
+	extern thread_local bool critical_asserted;
 }
+
+decltype(ircd::ctx::critical_asserted)
+thread_local
+ircd::ctx::critical_asserted;
 
 #ifndef NDEBUG
 ircd::ctx::this_ctx::critical_assertion::critical_assertion()
