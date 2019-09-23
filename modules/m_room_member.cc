@@ -80,13 +80,10 @@ try
 		user_room.get(std::nothrow, "ircd.member", room_id)
 	};
 
-	const auto prev_depth
-	{
-		m::get(std::nothrow, prev_idx, "depth", 0L)
-	};
-
-	if(at<"depth"_>(event) < prev_depth)
-		return;
+	int64_t prev_depth;
+	if(m::get(prev_idx, "depth", prev_depth))
+		if(at<"depth"_>(event) < prev_depth)
+			return;
 
 	send(user_room, sender, "ircd.member", room_id, at<"content"_>(event));
 }
