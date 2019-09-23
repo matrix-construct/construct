@@ -358,7 +358,7 @@ ircd::m::feds::handler(request_list &reqs,
 {
 	const auto when
 	{
-		now<steady_point>() + timeout
+		now<system_point>() + timeout
 	};
 
 	while(!reqs.empty())

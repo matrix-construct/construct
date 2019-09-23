@@ -108,7 +108,7 @@ template<class duration>
 bool
 ircd::ctx::mutex::try_lock_for(const duration &d)
 {
-	return try_lock_until(steady_clock::now() + d);
+	return try_lock_until(system_clock::now() + d);
 }
 
 template<class time_point>

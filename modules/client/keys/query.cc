@@ -199,9 +199,9 @@ recv_responses(query_map &queries,
                const milliseconds &timeout)
 try
 {
-	const steady_point timedout
+	const system_point timedout
 	{
-		ircd::now<steady_point>() + timeout
+		ircd::now<system_point>() + timeout
 	};
 
 	json::stack::object response_keys

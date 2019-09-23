@@ -126,7 +126,7 @@ T &
 ircd::ctx::view<T, mutex>::wait_for(lock &l,
                                     const duration &dur)
 {
-	return wait_until(l, now<steady_point>() + dur);
+	return wait_until(l, now<system_point>() + dur);
 }
 
 template<class T,

@@ -51,7 +51,7 @@ struct ircd::m::sync::args
 
 	/// The point in time at which this /sync should stop longpolling and return
 	/// an empty'ish response to the client.
-	steady_point timesout;
+	system_point timesout;
 
 	/// 6.2.1 Controls whether to include the full state for all rooms the user is a member of.
 	/// If this is set to true, then all state events will be returned, even if since is non-empty.

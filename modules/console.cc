@@ -12614,7 +12614,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 
 	const auto when
 	{
-		now<steady_point>() + timeout
+		now<system_point>() + timeout
 	};
 
 	bfrequest.wait_until(when);

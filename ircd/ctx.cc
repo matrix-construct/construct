@@ -667,23 +667,9 @@ ircd::ctx::current;
 
 /// Yield the currently running context until `time_point` ignoring notes
 void
-ircd::ctx::this_ctx::sleep_until(const steady_clock::time_point &tp)
+ircd::ctx::this_ctx::sleep_until(const system_point &tp)
 {
 	while(!wait_until(tp, std::nothrow));
-}
-
-/// Yield the currently running context until notified or `time_point`.
-///
-/// Returns true if this function returned because `time_point` was hit or
-/// false because this context was notified.
-bool
-ircd::ctx::this_ctx::wait_until(const steady_clock::time_point &tp,
-                                const std::nothrow_t &)
-{
-	auto &c(cur());
-	c.alarm.expires_at(tp);
-	c.wait(); // now you're yielding with portals
-	return steady_clock::now() >= tp;
 }
 
 /// Yield the currently running context for `duration` or until notified.
@@ -694,15 +680,57 @@ ircd::microseconds
 ircd::ctx::this_ctx::wait(const microseconds &duration,
                           const std::nothrow_t &)
 {
+	const boost::posix_time::microseconds ptime_duration
+	{
+		duration.count()
+	};
+
 	auto &c(cur());
-	c.alarm.expires_from_now(duration);
+	c.alarm.expires_from_now(ptime_duration);
 	c.wait(); // now you're yielding with portals
-	const auto ret(c.alarm.expires_from_now());
+	const auto &ret
+	{
+		c.alarm.expires_from_now()
+	};
 
 	// return remaining duration.
 	// this is > 0 if notified
 	// this is unchanged if a note prevented any wait at all
-	return duration_cast<microseconds>(ret);
+	return microseconds(ret.total_microseconds());
+}
+
+/// Yield the currently running context until notified or `time_point`.
+///
+/// Returns true if this function returned because `time_point` was hit or
+/// false because this context was notified.
+bool
+ircd::ctx::this_ctx::wait_until(const system_point &tp,
+                                const std::nothrow_t &)
+{
+	const auto &diff
+	{
+		tp - now<system_point>()
+	};
+
+	const boost::posix_time::microseconds duration
+	{
+		duration_cast<microseconds>(diff).count()
+	};
+
+	const auto &expires_at
+	{
+		boost::posix_time::microsec_clock::universal_time() + duration
+	};
+
+	auto &c(cur());
+	c.alarm.expires_at(expires_at);
+	c.wait(); // now you're yielding with portals
+	const auto &ret
+	{
+		c.alarm.expires_from_now()
+	};
+
+	return ret <= boost::posix_time::microseconds(0);
 }
 
 /// Yield the currently running context until notified.
@@ -710,7 +738,7 @@ void
 ircd::ctx::this_ctx::wait()
 {
 	auto &c(cur());
-	c.alarm.expires_at(steady_clock::time_point::max());
+	c.alarm.expires_at(boost::posix_time::pos_infin);
 	c.wait(); // now you're yielding with portals
 }
 

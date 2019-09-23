@@ -39,7 +39,7 @@ recv_response(const string_view &,
               m::v1::user::keys::claim &,
               failure_map &,
               json::stack::object &,
-              const steady_point &);
+              const system_point &);
 
 static void
 recv_responses(query_map &,
@@ -190,9 +190,9 @@ recv_responses(query_map &queries,
                json::stack::object &out,
                const milliseconds &timeout)
 {
-	const steady_point timedout
+	const system_point timedout
 	{
-		ircd::now<steady_point>() + timeout
+		ircd::now<system_point>() + timeout
 	};
 
 	json::stack::object one_time_keys
@@ -215,7 +215,7 @@ recv_response(const string_view &remote,
               m::v1::user::keys::claim &request,
               failure_map &failures,
               json::stack::object &object,
-              const steady_point &timeout)
+              const system_point &timeout)
 try
 {
 	request.wait_until(timeout);

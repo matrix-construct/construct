@@ -297,7 +297,7 @@ noexcept
 	assert_main_thread();
 	mu->AssertHeld();
 	const std::chrono::microseconds us(abs_time_us);
-	const std::chrono::steady_clock::time_point tp(us);
+	const std::chrono::system_clock::time_point tp(us);
 	const ctx::uninterruptible::nothrow ui;
 	return cv.wait_until(mu->mu, tp) == std::cv_status::timeout;
 }

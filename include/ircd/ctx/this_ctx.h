@@ -31,12 +31,12 @@ inline namespace this_ctx
 	template<class E = timeout, class duration> throw_overload<E, duration> wait(const duration &);
 
 	// Returns false if notified; true if time point reached, timeout thrown on throw_overloads
-	bool wait_until(const steady_point &tp, const std::nothrow_t &);
-	template<class E> nothrow_overload<E, bool> wait_until(const steady_point &tp);
-	template<class E = timeout> throw_overload<E> wait_until(const steady_point &tp);
+	bool wait_until(const system_point &tp, const std::nothrow_t &);
+	template<class E> nothrow_overload<E, bool> wait_until(const system_point &tp);
+	template<class E = timeout> throw_overload<E> wait_until(const system_point &tp);
 
 	// Ignores notes. Throws if interrupted.
-	void sleep_until(const steady_point &tp);
+	void sleep_until(const system_point &tp);
 	template<class duration> void sleep(const duration &);
 	void sleep(const int &secs);
 }}
@@ -68,7 +68,7 @@ template<class duration>
 void
 ircd::ctx::this_ctx::sleep(const duration &d)
 {
-	sleep_until(steady_clock::now() + d);
+	sleep_until(system_clock::now() + d);
 }
 
 /// Wait for a notification until a point in time. If there is a notification
@@ -77,7 +77,7 @@ ircd::ctx::this_ctx::sleep(const duration &d)
 /// interruption point.
 template<class E>
 ircd::throw_overload<E>
-ircd::ctx::this_ctx::wait_until(const steady_point &tp)
+ircd::ctx::this_ctx::wait_until(const system_point &tp)
 {
 	if(wait_until<std::nothrow_t>(tp))
 		throw E{};
@@ -88,7 +88,7 @@ ircd::ctx::this_ctx::wait_until(const steady_point &tp)
 /// interruption point. this is not noexcept.
 template<class E>
 ircd::nothrow_overload<E, bool>
-ircd::ctx::this_ctx::wait_until(const steady_point &tp)
+ircd::ctx::this_ctx::wait_until(const system_point &tp)
 {
 	return wait_until(tp, std::nothrow);
 }
