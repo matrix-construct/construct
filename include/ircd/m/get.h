@@ -71,6 +71,6 @@ ircd::m::get(const event::idx &event_idx,
 		get(std::nothrow, event_idx, key, buf)
 	};
 
-	assert(size(rbuf) >= sizeof(T));
+	assert(empty(rbuf) || size(rbuf) >= sizeof(T));
 	return !empty(rbuf);
 }
