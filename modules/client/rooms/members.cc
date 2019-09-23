@@ -60,30 +60,21 @@ get__members(client &client,
 		split(at, '_')
 	};
 
-	const auto event_idx
+	const auto at_idx
 	{
 		snapshot?
 			lex_cast<m::event::idx>(snapshot):
 		since?
 			lex_cast<m::event::idx>(since):
-		0UL
+		-1UL
 	};
 
-	const m::event::id::buf event_id
-	{
-		event_idx && event_idx <= m::vm::sequence::retired?
-			m::event_id(event_idx, std::nothrow):
-			m::event::id::buf{}
-	};
-
-	// View the room at the requested event; if no event requested this
-	// instance represents the present state of the room.
 	const m::room room
 	{
-		room_id, event_id
+		room_id
 	};
 
-	if(!event_id && !exists(room))
+	if(!exists(room))
 		throw m::NOT_FOUND
 		{
 			"Room %s does not exist.",
@@ -154,9 +145,12 @@ get__members(client &client,
 	}};
 
 	// prefetch loop
-	members.for_each(membership, [&membership, &membership_match]
+	members.for_each(membership, [&membership, &membership_match, &at_idx]
 	(const m::user::id &member, const m::event::idx &event_idx)
 	{
+		if(event_idx > at_idx)
+			return true;
+
 		if(!membership && !membership_match(member, event_idx))
 			return true;
 
@@ -165,9 +159,12 @@ get__members(client &client,
 	});
 
 	// stream to client
-	members.for_each(membership, [&membership, &membership_match, &chunk]
+	members.for_each(membership, [&membership, &membership_match, &at_idx, &chunk]
 	(const m::user::id &member, const m::event::idx &event_idx)
 	{
+		if(event_idx > at_idx)
+			return true;
+
 		if(!membership && !membership_match(member, event_idx))
 			return true;
 
