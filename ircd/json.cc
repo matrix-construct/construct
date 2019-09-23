@@ -736,6 +736,10 @@ noexcept try
 	if(unlikely(failed()))
 		return;
 
+	// Since all appends are atomic, we need to have buffer available to print
+	// the JSON without having to flush while doing so. If we're low on buffer,
+	// this branch triggers a flush. Afterward, if there is still not enough
+	// buffer that's an error so the user needs to flush enough when called.
 	if(expect > buf.remaining())
 	{
 		if(unlikely(!flusher))
@@ -758,13 +762,28 @@ noexcept try
 			};
 	}
 
-	buf([&closure](const mutable_buffer &buf)
+	// Print the JSON to the buffer and advance the window pointer
+	buf([&expect, &closure]
+	(const mutable_buffer &buf)
 	{
-		return closure(buf);
+		const size_t ret
+		{
+			closure(buf)
+		};
+
+		assert(ret <= size(buf));
+		assert(ret == expect);
+		return ret;
 	});
 
+	// Conditions to courtesy flush after a sufficiently large dump; when
+	// there's no buffer remaining we'll inevitably have to flush; the call
+	// is force=true so the flusher must accomplish something.
 	if(!buf.remaining())
 		flush(true);
+
+	// The high-watermark feature triggers a flush when the buffer has exceeded
+	// the threshold from accumulated writes; force is not set to true.
 	else if(buf.consumed() >= hiwat)
 		flush();
 }
