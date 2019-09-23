@@ -128,6 +128,9 @@ ircd::m::changed_room_aliases(const m::event &event,
 			e.what(),
 		};
 	}
+
+	if(m::join_rule(room_id, "public"))
+		rooms::summary::set(room_id);
 }
 
 //
