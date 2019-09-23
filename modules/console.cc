@@ -2683,19 +2683,19 @@ try
 		param[1]
 	};
 
-	const auto level
-	{
-		param.at(2, -1)
-	};
-
 	const auto begin
 	{
-		param[3]
+		param[2]
 	};
 
 	const auto end
 	{
-		param[4]
+		param[3]
+	};
+
+	const auto level
+	{
+		param.at(4, -1)
 	};
 
 	auto &database
