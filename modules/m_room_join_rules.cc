@@ -38,16 +38,9 @@ _changed_rules(const m::event &event,
 		at<"room_id"_>(event)
 	};
 
-	static mods::import<m::event::id::buf (const m::room::id &, const json::object &)> set
-	{
-		"m_rooms_summary", "ircd::m::rooms::summary::set"
-	};
-
 	// This call sends a message to the !public room to list this room in the
-	// public rooms list. We set an empty summary for this room because we
-	// already have its state on this server; saving a summary object in the
-	// event sent to !public is only for rooms whose state is not synced.
-	set(room_id, json::object{});
+	// public rooms list.
+	m::rooms::summary::set(room_id);
 }
 
 m::hookfn<m::vm::eval &>
