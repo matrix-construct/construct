@@ -40,7 +40,7 @@ ircd::m::affect_user_room_hookfn
 {
 	affect_user_room,
 	{
-		{ "_site",  "vm.post"       },
+		{ "_site",  "vm.effect"     },
 		{ "type",   "m.room.member" },
 	}
 };
@@ -69,12 +69,13 @@ try
 	if(!exists(subject))
 		create(subject);
 
-	//TODO: ABA / TXN
 	m::user::room user_room
 	{
 		subject
 	};
 
+	//TODO: ABA / TXN
+	assert(exists(user_room));
 	const auto &prev_idx
 	{
 		user_room.get(std::nothrow, "ircd.member", room_id)
