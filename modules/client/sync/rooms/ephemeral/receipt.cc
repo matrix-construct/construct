@@ -142,7 +142,7 @@ ircd::m::sync::_handle_message(data &data,
 		assert(type == dbs::ref::M_RECEIPT__M_READ);
 		static const m::event::fetch::opts fopts
 		{
-			m::event::keys::include{"content", "sender"}
+			m::event::keys::include {"content", "sender"}
 		};
 
 		const m::event::fetch event
@@ -187,7 +187,10 @@ ircd::m::sync::_handle_message_receipt(data &data,
 
 	json::stack::object event_id_
 	{
-		content_, unquote(content.at("event_id"))
+		content_, json::string
+		{
+			content.at("event_id")
+		}
 	};
 
 	json::stack::object m_read_
@@ -202,7 +205,10 @@ ircd::m::sync::_handle_message_receipt(data &data,
 
 	json::stack::member
 	{
-		sender_, "ts", json::value(content.at("ts"))
+		sender_, "ts", json::value
+		{
+			content.at("ts")
+		}
 	};
 
 	return true;
