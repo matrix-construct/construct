@@ -151,9 +151,11 @@ get__members(client &client,
 		if(event_idx > at_idx)
 			return true;
 
-		if(!membership && !membership_match(member, event_idx))
-			return true;
+		// Prefetch the content cell for the m::membership test
+		if(!membership)
+			m::prefetch(event_idx, "content");
 
+		// Prefetch the event JSON
 		m::prefetch(event_idx);
 		return true;
 	});
