@@ -722,9 +722,11 @@ void
 ircd::json::stack::append(const string_view &s)
 noexcept
 {
-	append(size(s), [&s](const mutable_buffer &buf)
+	append(s.size(), [&s]
+	(const mutable_buffer &buf)
 	{
-		return copy(buf, s);
+		assert(ircd::size(buf) >= s.size());
+		return ircd::copy(buf, s);
 	});
 }
 
@@ -733,7 +735,7 @@ ircd::json::stack::append(const size_t &expect,
                           const window_buffer::closure &closure)
 noexcept try
 {
-	if(unlikely(failed()))
+	if(!expect || failed())
 		return;
 
 	// Since all appends are atomic, we need to have buffer available to print
@@ -763,18 +765,27 @@ noexcept try
 	}
 
 	// Print the JSON to the buffer and advance the window pointer
-	buf([&expect, &closure]
-	(const mutable_buffer &buf)
+	const const_buffer appended
 	{
-		const size_t ret
+		buf([&expect, &closure](const mutable_buffer &buf)
 		{
-			closure(buf)
-		};
+			const size_t appended
+			{
+				closure(buf)
+			};
 
-		assert(ret <= size(buf));
-		assert(ret == expect);
-		return ret;
-	});
+			assert(appended <= size(buf));
+			assert(appended == expect);
+			return const_buffer
+			{
+				data(buf), appended
+			};
+		})
+	};
+
+	this->appended += expect;
+	assert(size(appended) >= expect);
+	assert(this->appended >= size(appended));
 
 	// Conditions to courtesy flush after a sufficiently large dump; when
 	// there's no buffer remaining we'll inevitably have to flush; the call
@@ -816,7 +827,7 @@ noexcept try
 	if(!force && cp)
 		return false;
 
-	if(cp)
+	if(unlikely(cp))
 	{
 		const size_t invalidated
 		{
@@ -841,6 +852,7 @@ noexcept try
 	};
 
 	assert(data(flushed) == data(buf.completed())); // Can only flush front sry
+	this->flushed += size(flushed);
 	buf.shift(size(flushed));
 	return true;
 }
@@ -865,18 +877,38 @@ ircd::json::stack::invalidate_checkpoints()
 void
 ircd::json::stack::clear()
 {
-	rewind(buf.consumed());
+	const size_t rewound
+	{
+		rewind(buf.consumed())
+	};
+
 	this->eptr = std::exception_ptr{};
 }
 
 size_t
 ircd::json::stack::rewind(const size_t &bytes)
 {
-	const size_t before(buf.consumed());
-	const size_t &amount(std::min(bytes, before));
-	const size_t after(size(buf.rewind(amount)));
+	const size_t before
+	{
+		buf.consumed()
+	};
+
+	assert(appended >= before);
+	const size_t &amount
+	{
+		std::min(bytes, before)
+	};
+
+	assert(appended >= amount);
+	const size_t after
+	{
+		size(buf.rewind(amount))
+	};
+
 	assert(before >= after);
 	assert(before - after == amount);
+	appended -= amount;
+	assert(appended >= after);
 	return amount;
 }
 

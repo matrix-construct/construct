@@ -54,6 +54,8 @@ struct ircd::json::stack
 	flush_callback flusher;
 	std::exception_ptr eptr;
 	checkpoint *cp {nullptr};
+	size_t appended {0};
+	size_t flushed {0};
 	size_t hiwat;                      ///< autoflush watermark
 	size_t lowat;                      ///< flush(false) call min watermark
 
@@ -308,9 +310,9 @@ ircd::json::stack::member::append(const json::tuple<T...> &t)
 		_post_append();
 	}};
 
-	s->append(serialized(t), [this, &t](mutable_buffer buf)
+	s->append(serialized(t), [&t](mutable_buffer buf)
 	{
-		return size(stringify(buf, t));
+		return ircd::size(stringify(buf, t));
 	});
 }
 
@@ -326,7 +328,7 @@ ircd::json::stack::array::append(const json::tuple<T...> &t)
 
 	s->append(serialized(t), [&t](mutable_buffer buf)
 	{
-		return size(stringify(buf, t));
+		return ircd::size(stringify(buf, t));
 	});
 }
 
@@ -336,10 +338,15 @@ ircd::json::stack::object::append(const json::tuple<T...> &t)
 {
 	for_each(t, [this](const auto &name, const auto &_value)
 	{
-		const json::value value(_value);
-		if(defined(value)) json::stack::member
+		const json::value value
 		{
-			*this, name, value
+			_value
 		};
+
+		if(defined(value))
+			json::stack::member
+			{
+				*this, name, value
+			};
 	});
 }
