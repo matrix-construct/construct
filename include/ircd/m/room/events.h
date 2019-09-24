@@ -62,28 +62,29 @@ struct ircd::m::room::events
 	explicit operator bool() const     { return bool(it);                      }
 	bool operator!() const             { return !it;                           }
 
-	event::id::buf event_id() const;   // deprecated; will remove
-	event::idx event_idx() const;      // Available from the iterator key.
-	uint64_t depth() const;            // Available from the iterator key.
-
+	// Observers from the current valid iterator
+	uint64_t depth() const;
+	event::idx event_idx() const;
 	explicit operator event::idx() const;
 
-	const m::event &fetch(std::nothrow_t);
-	const m::event &fetch();
-
-	bool prefetch(const string_view &event_prop);
-	bool prefetch(); // uses property keys from any fetch::opts supplied.
-
+	// Perform a new lookup / iterator
 	bool seek_idx(const event::idx &);
 	bool seek(const uint64_t &depth = -1);
 	bool seek(const event::id &);
 
-	// These are reversed on purpose
+	// Move the iterator
 	auto &operator++()                 { return --it;                          }
 	auto &operator--()                 { return ++it;                          }
 
+	// Fetch the actual event data at the iterator's position
 	const m::event &operator*();
 	const m::event *operator->()       { return &operator*();                  }
+	const m::event &fetch(std::nothrow_t);
+	const m::event &fetch();
+
+	// Prefetch the actual event data at the iterator's position
+	bool prefetch(const string_view &event_prop);
+	bool prefetch(); // uses supplied fetch::opts.
 
 	events(const m::room &,
 	       const uint64_t &depth,

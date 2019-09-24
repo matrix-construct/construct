@@ -1669,6 +1669,33 @@ ircd::m::room::events::events(const m::room &room,
 		seek(1);
 }
 
+bool
+ircd::m::room::events::prefetch()
+{
+	assert(_event.fopts);
+	return m::prefetch(event_idx(), *_event.fopts);
+}
+
+bool
+ircd::m::room::events::prefetch(const string_view &event_prop)
+{
+	return m::prefetch(event_idx(), event_prop);
+}
+
+const ircd::m::event &
+ircd::m::room::events::fetch()
+{
+	m::seek(_event, event_idx());
+	return _event;
+}
+
+const ircd::m::event &
+ircd::m::room::events::fetch(std::nothrow_t)
+{
+	m::seek(_event, event_idx(), std::nothrow);
+	return _event;
+}
+
 const ircd::m::event &
 ircd::m::room::events::operator*()
 {
@@ -1735,58 +1762,11 @@ catch(const db::not_found &e)
 	return false;
 }
 
-bool
-ircd::m::room::events::prefetch()
-{
-	assert(_event.fopts);
-	return m::prefetch(event_idx(), *_event.fopts);
-}
-
-bool
-ircd::m::room::events::prefetch(const string_view &event_prop)
-{
-	return m::prefetch(event_idx(), event_prop);
-}
-
-const ircd::m::event &
-ircd::m::room::events::fetch()
-{
-	m::seek(_event, event_idx());
-	return _event;
-}
-
-const ircd::m::event &
-ircd::m::room::events::fetch(std::nothrow_t)
-{
-	m::seek(_event, event_idx(), std::nothrow);
-	return _event;
-}
-
 ircd::m::room::events::operator
 ircd::m::event::idx()
 const
 {
 	return event_idx();
-}
-
-ircd::m::event::id::buf
-ircd::m::room::events::event_id()
-const
-{
-	return m::event_id(this->event_idx(), std::nothrow);
-}
-
-uint64_t
-ircd::m::room::events::depth()
-const
-{
-	assert(bool(*this));
-	const auto part
-	{
-		dbs::room_events_key(it->first)
-	};
-
-	return std::get<0>(part);
 }
 
 ircd::m::event::idx
@@ -1800,6 +1780,19 @@ const
 	};
 
 	return std::get<1>(part);
+}
+
+uint64_t
+ircd::m::room::events::depth()
+const
+{
+	assert(bool(*this));
+	const auto part
+	{
+		dbs::room_events_key(it->first)
+	};
+
+	return std::get<0>(part);
 }
 
 //
