@@ -93,29 +93,17 @@ ircd::m::handle_breadcrumb_rooms_focus_in(const event &event,
 	if(!focus_in)
 		return;
 
-	room::events it
+	const size_t prefetched
 	{
-		focus_in
+		m::room::events::prefetch_viewport(focus_in)
 	};
-
-	ssize_t prefetched(0), i(0);
-	const ssize_t prefetch_max
-	{
-		ssize_t(room::events::viewport_size) / 2
-	};
-
-	for(; it && i < prefetch_max / 2; ++i, --it)
-		prefetched += m::prefetch(it.event_idx());
 
 	log::debug
 	{
-		m::log, "Prefetched %zu/%zu viewport:%zu of %s for %s now in focus",
+		m::log, "Prefetched %zu recent events to focus %s for %s",
 		prefetched,
-		i,
-		prefetch_max,
 		string_view{focus_in},
 		at<"sender"_>(event),
-		rooms.size(),
 	};
 }
 
