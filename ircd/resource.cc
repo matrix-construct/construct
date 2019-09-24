@@ -970,6 +970,7 @@ ircd::resource::response::chunked::finish()
 		return false;
 
 	write(const_buffer{}, false);
+	assert(finished);
 	c = nullptr;
 	return true;
 }
@@ -990,6 +991,8 @@ ircd::resource::response::chunked::flush(const const_buffer &buf)
 	};
 
 	assert(flushed <= size(buf));
+	this->flushed += flushed;
+	assert(this->flushed <= this->wrote);
 	return const_buffer
 	{
 		data(buf), flushed
@@ -1002,20 +1005,34 @@ ircd::resource::response::chunked::write(const const_buffer &chunk,
 try
 {
 	assert(size(chunk) <= size(this->buf) || empty(this->buf));
-	size_t ret{0};
-
+	assert(!finished);
 	if(!c)
-		return ret;
+		return 0UL;
 
-	if(ignore_empty && empty(chunk))
-		return ret;
+	if(empty(chunk) && ignore_empty)
+		return 0UL;
+
+	char headbuf[32];
+	const size_t wrote
+	{
+		this->wrote
+	};
 
 	//TODO: bring iov from net::socket -> net::write_() -> client::write_()
-	char headbuf[32];
-	ret += c->write_all(http::writechunk(headbuf, size(chunk)));
-	ret += size(chunk)? c->write_all(chunk) : 0UL;
-	ret += c->write_all("\r\n"_sv);
-	return ret;
+	const auto head
+	{
+		http::writechunk(headbuf, size(chunk))
+	};
+
+	this->wrote += c->write_all(head);
+	this->wrote += !empty(chunk)? c->write_all(chunk) : 0UL;
+	this->wrote += c->write_all("\r\n"_sv);
+	finished |= empty(chunk);
+	count++;
+
+	assert(this->wrote >= wrote);
+	assert(this->wrote >= 2 || !finished);
+	return this->wrote - wrote;
 }
 catch(...)
 {

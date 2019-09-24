@@ -933,7 +933,8 @@ void
 ircd::http::writechunk(window_buffer &buf,
                        const uint32_t &chunk_size)
 {
-	writeline(buf, [&chunk_size](const mutable_buffer &out) -> size_t
+	writeline(buf, [&chunk_size]
+	(const mutable_buffer &out) -> size_t
 	{
 		return ::snprintf(data(out), size(out), "%08x", chunk_size);
 	});

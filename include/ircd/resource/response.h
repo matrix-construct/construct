@@ -88,6 +88,10 @@ struct ircd::resource::response::chunked
 
 	client *c {nullptr};
 	unique_buffer<mutable_buffer> buf;
+	size_t flushed {0};
+	size_t wrote {0};
+	uint count {0};
+	bool finished {false};
 
 	size_t write(const const_buffer &chunk, const bool &ignore_empty = true);
 	const_buffer flush(const const_buffer &);
@@ -99,8 +103,10 @@ struct ircd::resource::response::chunked
 	chunked(client &, const http::code &, const string_view &content_type, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size);
 	chunked(client &, const http::code &, const vector_view<const http::header> &, const size_t &buffer_size = default_buffer_size);
 	chunked(client &, const http::code &, const size_t &buffer_size = default_buffer_size);
-	chunked(const chunked &) = delete;
-	chunked(chunked &&) = delete;
 	chunked() = default;
+	chunked(chunked &&) = delete;
+	chunked(const chunked &) = delete;
+	chunked &operator=(chunked &&) = delete;
+	chunked &operator=(const chunked &&) = delete;
 	~chunked() noexcept;
 };
