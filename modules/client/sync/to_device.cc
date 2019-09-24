@@ -56,12 +56,13 @@ ircd::m::sync::to_device_polylog(data &data)
 		if(!apropos(data, event_idx))
 			break;
 
-		bool relevant(false);
-		m::get(std::nothrow, event_idx, "type", [&relevant]
-		(const string_view &type)
+		const bool relevant
 		{
-			relevant = type == "ircd.to_device";
-		});
+			m::query(event_idx, "type", [](const string_view &type)
+			{
+				return type == "ircd.to_device";
+			})
+		};
 
 		if(!relevant)
 			continue;
