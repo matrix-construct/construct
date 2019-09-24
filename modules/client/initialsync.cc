@@ -479,14 +479,9 @@ initialsync_room_state(client &client,
                        const m::user::room &user_room,
                        const m::room &room)
 {
-	json::stack::member member
-	{
-		out, "events"
-	};
-
 	json::stack::array array
 	{
-		member
+		out, "events"
 	};
 
 	const m::room::state state
@@ -517,8 +512,11 @@ initialsync_room_timeline(client &client,
 	// events
 	m::event::id::buf prev;
 	{
-		json::stack::member member{out, "events"};
-		json::stack::array array{member};
+		json::stack::array array
+		{
+			out, "events"
+		};
+
 		prev = initialsync_room_timeline_events(client, request, array, user_room, room);
 	}
 
