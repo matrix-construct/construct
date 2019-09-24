@@ -187,6 +187,78 @@ ircd::m::room::events::count(const m::room &room,
 	return ret;
 }
 
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::events::prefetch_viewport(const m::room &room)
+{
+	m::room::events it
+	{
+		room
+	};
+
+	const event::fetch::opts &fopts
+	{
+		room.fopts?
+			*room.fopts:
+			event::fetch::default_opts
+	};
+
+	ssize_t i(0), ret(0);
+	for(; it && i < viewport_size; --it, ++i)
+	{
+		const auto &event_idx(it.event_idx());
+		ret += m::prefetch(event_idx, fopts);
+	}
+
+	return ret;
+}
+
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::events::prefetch(const m::room &room,
+                                const depth_range &range)
+{
+	m::room::events it
+	{
+		room, std::max(range.first, range.second)
+	};
+
+	const event::fetch::opts &fopts
+	{
+		room.fopts?
+			*room.fopts:
+			event::fetch::default_opts
+	};
+
+	ssize_t i(0), ret(0);
+	for(; it && i < viewport_size; --it, ++i)
+	{
+		const auto &depth(it.depth());
+		const auto &event_idx(it.event_idx());
+		ret += m::prefetch(event_idx, fopts);
+		if(depth <= std::min(range.first, range.second))
+			break;
+	}
+
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::events::preseek(const m::room &room,
+                               const uint64_t &depth)
+{
+	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
+	const string_view key
+	{
+		depth != uint64_t(-1)?
+			dbs::room_events_key(buf, room.room_id, depth):
+			string_view{room.room_id}
+	};
+
+	return db::prefetch(dbs::room_events, key);
+}
+
 //
 // room::events::events
 //

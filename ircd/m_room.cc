@@ -1703,6 +1703,20 @@ ircd::m::room::events::operator*()
 };
 
 bool
+ircd::m::room::events::preseek(const uint64_t &depth)
+{
+	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
+	const string_view key
+	{
+		depth != uint64_t(-1)?
+			dbs::room_events_key(buf, room.room_id, depth):
+			room.room_id
+	};
+
+	return db::prefetch(dbs::room_events, key);
+}
+
+bool
 ircd::m::room::events::seek(const event::id &event_id)
 {
 	const event::idx &event_idx

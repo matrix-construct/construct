@@ -72,6 +72,9 @@ struct ircd::m::room::events
 	bool seek(const uint64_t &depth = -1);
 	bool seek(const event::id &);
 
+	// Prefetch a new iterator lookup (async)
+	bool preseek(const uint64_t &depth = -1);
+
 	// Move the iterator
 	auto &operator++()                 { return --it;                          }
 	auto &operator--()                 { return ++it;                          }
@@ -82,7 +85,7 @@ struct ircd::m::room::events
 	const m::event &fetch(std::nothrow_t);
 	const m::event &fetch();
 
-	// Prefetch the actual event data at the iterator's position
+	// Prefetch the actual event data at the iterator's position (async)
 	bool prefetch(const string_view &event_prop);
 	bool prefetch(); // uses supplied fetch::opts.
 
@@ -100,6 +103,14 @@ struct ircd::m::room::events
 	events() = default;
 	events(const events &) = delete;
 	events &operator=(const events &) = delete;
+
+	// Prefetch a new iterator (without any construction)
+	static bool preseek(const m::room &, const uint64_t &depth = -1);
+
+	// Prefetch the actual room event data for a range; or most recent.
+	using depth_range = std::pair<uint64_t, uint64_t>;
+	static size_t prefetch(const m::room &, const depth_range &);
+	static size_t prefetch_viewport(const m::room &);
 
 	// Note the range here is unusual: The start index is exclusive, the ending
 	// index is inclusive. The start index must be valid and in the room.
