@@ -100,13 +100,10 @@ struct ircd::m::room::events
 	events(const events &) = delete;
 	events &operator=(const events &) = delete;
 
-	// [GET] Count the events in the room between two indexes.
 	// Note the range here is unusual: The start index is exclusive, the ending
 	// index is inclusive. The start index must be valid and in the room.
-	static size_t count(const m::room &, const event::idx &, const event::idx &);
-	static size_t count(const m::room &, const event::id &, const event::id &);
-	static size_t count(const event::idx &, const event::idx &);
-	static size_t count(const event::id &, const event::id &);
+	static size_t count(const m::room &, const event::idx_range &);
+	static size_t count(const event::idx_range &);
 };
 
 /// Find missing room events. This is a breadth-first iteration of missing

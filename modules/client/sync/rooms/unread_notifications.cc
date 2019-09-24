@@ -202,7 +202,12 @@ ircd::m::sync::_notification_count(const room &room,
                                    const event::idx &a,
                                    const event::idx &b)
 {
-	return room::events::count(room, a, a < b? b : a);
+	const event::idx_range range
+	{
+		std::min(a, b), std::max(a, b)
+	};
+
+	return room::events::count(room, range);
 }
 
 long
@@ -216,9 +221,9 @@ ircd::m::sync::_highlight_count(const room &room,
 		user
 	};
 
-	const m::event::idx_range range
+	const event::idx_range range
 	{
-		a, a < b? b : a
+		std::min(a, b), std::max(a, b)
 	};
 
 	return highlight.count_between(room, range);

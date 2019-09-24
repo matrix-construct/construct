@@ -131,42 +131,33 @@ ircd::m::hazard(const room &room)
 
 size_t
 IRCD_MODULE_EXPORT
-ircd::m::room::events::count(const m::event::id &a,
-                             const m::event::id &b)
+ircd::m::room::events::count(const m::event::idx_range &range)
 {
-	return count(index(a), index(b));
-}
+	const auto &[a, b]
+	{
+		range
+	};
 
-size_t
-IRCD_MODULE_EXPORT
-ircd::m::room::events::count(const m::event::idx &a,
-                             const m::event::idx &b)
-{
 	// Get the room_id from b here; a might not be in the same room but downstream
 	// the counter seeks to a in the given room and will properly fail there.
 	room::id::buf room_id
 	{
-		m::get(std::max(a, b), "room_id", room_id)
+		m::get(std::min(a, b), "room_id", room_id)
 	};
 
-	return count(room_id, a, b);
+	return count(room_id, range);
 }
 
 size_t
 IRCD_MODULE_EXPORT
 ircd::m::room::events::count(const m::room &room,
-                             const m::event::id &a,
-                             const m::event::id &b)
+                             const m::event::idx_range &range)
 {
-	return count(room, index(a), index(b));
-}
+	const auto &[a, b]
+	{
+		range
+	};
 
-size_t
-IRCD_MODULE_EXPORT
-ircd::m::room::events::count(const m::room &room,
-                             const m::event::idx &a,
-                             const m::event::idx &b)
-{
 	m::room::events it
 	{
 		room
@@ -174,7 +165,6 @@ ircd::m::room::events::count(const m::room &room,
 
 	assert(a <= b);
 	it.seek_idx(a);
-
 	if(!it && !exists(room))
 		throw m::NOT_FOUND
 		{
