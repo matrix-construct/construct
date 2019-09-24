@@ -1675,46 +1675,6 @@ ircd::m::redacted::prefetch(const event::idx &event_idx)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// m/visible.h
-//
-
-bool
-ircd::m::visible(const event::id &event_id,
-                 const string_view &mxid)
-{
-	m::room::id::buf room_id
-	{
-		get(event_id, "room_id", room_id)
-	};
-
-	const m::event event
-	{
-		json::members
-		{
-			{ "event_id",  event_id  },
-			{ "room_id",   room_id   },
-		}
-	};
-
-	return visible(event, mxid);
-}
-
-bool
-ircd::m::visible(const event &event,
-                 const string_view &mxid)
-{
-	using prototype = bool (const m::event &, const string_view &);
-
-	static mods::import<prototype> call
-	{
-		"m_room_history_visibility", "ircd::m::visible"
-	};
-
-	return call(event, mxid);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // m/presence.h
 //
 

@@ -192,15 +192,15 @@ get__initialsync_local(client &client,
 	room_state.for_each(m::event::id::closure_bool{[&]
 	(const m::event::id &event_id)
 	{
-		if(!visible(event_id, user.user_id))
-			return true;
-
 		const m::event::fetch event
 		{
 			event_id, std::nothrow
 		};
 
 		if(!event.valid)
+			return true;
+
+		if(!visible(event, user.user_id))
 			return true;
 
 		m::event::append::opts opts;
@@ -223,7 +223,7 @@ get__initialsync_local(client &client,
 	if(it)
 		json::stack::member
 		{
-			messages, "start", it.event_id()
+			messages, "start", m::event_id(it.event_idx())
 		};
 
 	// seek down first to give events in chronological order.
@@ -231,7 +231,7 @@ get__initialsync_local(client &client,
 	if(it)
 		json::stack::member
 		{
-			messages, "end", it.event_id()
+			messages, "end", m::event_id(it.event_idx())
 		};
 
 	json::stack::array chunk
@@ -241,12 +241,10 @@ get__initialsync_local(client &client,
 
 	for(; it; ++it)
 	{
-		const auto &event_id(it.event_id());
-		if(!visible(event_id, user.user_id))
-			continue;
-
-		const m::event &event(*it);
 		const auto &event_idx(it.event_idx());
+		const m::event &event(*it);
+		if(!visible(event, user.user_id))
+			continue;
 
 		m::event::append::opts opts;
 		opts.event_idx = &event_idx;

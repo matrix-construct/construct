@@ -183,7 +183,7 @@ get__context(client &client,
 			--before;
 
 		if(before)
-			start = before.event_id();
+			start = m::event_id(before.event_idx());
 		else
 			start = {};
 	}
@@ -223,7 +223,7 @@ get__context(client &client,
 			++after;
 
 		if(after)
-			end = after.event_id();
+			end = m::event_id(after.event_idx());
 		else
 			end = {};
 	}

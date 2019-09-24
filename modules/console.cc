@@ -7406,12 +7406,17 @@ console_cmd__event__visible(opt &out, const string_view &line)
 		param[1]
 	};
 
-	const bool visible
+	const m::event event
 	{
-		m::visible(event_id, mxid)
+		event_id
 	};
 
-	out << event_id << " is "
+	const bool visible
+	{
+		m::visible(event, mxid)
+	};
+
+	out << event.event_id << " is "
 	    << (visible? "VISIBLE" : "NOT VISIBLE")
 	    << (mxid? " to " : "")
 	    << mxid

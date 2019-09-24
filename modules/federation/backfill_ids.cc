@@ -127,9 +127,10 @@ get__backfill_ids(client &client,
 	size_t count{0};
 	for(; it && count < limit; ++count, --it)
 	{
-		const auto &event_id(it.event_id());
-		if(!visible(event_id, request.node_id))
-			continue;
+		const auto event_id
+		{
+			m::event_id(it.event_idx())
+		};
 
 		pdus.append(event_id);
 	}

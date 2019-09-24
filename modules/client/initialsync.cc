@@ -551,13 +551,17 @@ initialsync_room_timeline_events(client &client,
 	// event_id on the way down in case of renewing the iterator for the
 	// way back. This is not a big deal but rocksdb should fix their shit.
 	ssize_t i(0);
+	m::event::idx event_idx{0};
 	m::event::id::buf event_id;
 	m::room::events it{room};
 	for(; it && i < 10; --it, ++i)
-		event_id = it.event_id();
+	{
+		event_idx = it.event_idx();
+		event_id = m::event_id(event_idx);
+	}
 
 	if(i > 0 && !it)
-		it.seek(event_id);
+		it.seek(event_idx);
 
 	if(i > 0)
 		for(; it && i > -1; ++it, --i)

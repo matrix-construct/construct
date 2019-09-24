@@ -17,5 +17,4 @@ namespace ircd::m
 	// authentication is supplied (m::id cannot be empty because that's
 	// considered an invalid mxid). In that case the test is for public vis.
 	bool visible(const event &, const string_view &mxid);
-	bool visible(const id::event &, const string_view &mxid);
 }

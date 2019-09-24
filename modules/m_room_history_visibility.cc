@@ -8,100 +8,42 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m
+{
+	static bool visible_to_node(const room &, const string_view &node_id, const event &);
+	static bool visible_to_user(const room &, const string_view &history_visibility, const m::user::id &, const event &);
 
-mapi::header
+	static void changed_history_visibility(const event &, vm::eval &);
+	extern hookfn<vm::eval &> changed_history_visibility_hookfn;
+}
+
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Matrix m.room.history_visibility"
 };
 
-static bool
-_visible_to_user(const m::event &event,
-                 const m::user::id &user_id,
-                 const m::room &room,
-                 const string_view &history_visibility)
+decltype(ircd::m::changed_history_visibility_hookfn)
+ircd::m::changed_history_visibility_hookfn
 {
-	char membership_buf[m::room::MEMBERSHIP_MAX_SIZE];
-	string_view membership
+	changed_history_visibility,
 	{
-		m::membership(membership_buf, room, user_id)
-	};
-
-	if(membership == "join")
-		return true;
-
-	if(history_visibility == "joined")
-		return false;
-
-	if(history_visibility == "invited")
-		return membership == "invite";
-
-	assert(history_visibility == "shared");
-	if(membership == "invite")
-		return true;
-
-	// If the room is not at the present event then we have to run another
-	// test for membership here. Otherwise the "join" test already failed.
-	if(room.event_id)
-	{
-		const m::room present{room.room_id};
-		membership = m::membership(membership_buf, present, user_id);
-		return membership == "join" || membership == "invite";
+		{ "_site",    "vm.effect"                  },
+		{ "type",     "m.room.history_visibility"  },
 	}
+};
 
-	return false;
-}
-
-static bool
-_visible_to_node(const m::event &event,
-                 const string_view &node_id,
-                 const m::room &room,
-                 const string_view &history_visibility)
+void
+ircd::m::changed_history_visibility(const event &event,
+                                    vm::eval &)
 {
-	const m::room::origins origins
+	log::info
 	{
-		room
-	};
-
-	// Allow joined servers
-	if(origins.has(node_id))
-		return true;
-
-	// Allow auth chain events XXX: this is too broad
-	if(m::room::auth::is_power_event(event))
-		return true;
-
-	// Allow any event where the state_key string is a user mxid and the server
-	// is the host of that user. Note that applies to any type of event.
-	if(m::valid(m::id::USER, json::get<"state_key"_>(event)))
-		if(m::user::id(at<"state_key"_>(event)).host() == node_id)
-			return true;
-
-	return false;
-}
-
-static bool
-_visible(const m::event &event,
-         const string_view &mxid,
-         const m::room &room,
-         const string_view &history_visibility)
-{
-	if(history_visibility == "world_readable")
-		return true;
-
-	if(empty(mxid))
-		return false;
-
-	if(m::valid(m::id::USER, mxid))
-		return _visible_to_user(event, mxid, room, history_visibility);
-
-	if(rfc3986::valid_remote(std::nothrow, mxid))
-		return _visible_to_node(event, mxid, room, history_visibility);
-
-	throw m::UNSUPPORTED
-	{
-		"Cannot determine visibility for '%s'", mxid
+		log, "Changed visibility of %s to %s by %s => %s",
+		json::get<"room_id"_>(event),
+		json::get<"content"_>(event).get("history_visibility"),
+		json::get<"sender"_>(event),
+		string_view{event.event_id},
 	};
 }
 
@@ -115,61 +57,127 @@ ircd::m::visible(const m::event &event,
 		at<"room_id"_>(event), event.event_id
 	};
 
-	static const m::event::fetch::opts fopts
-	{
-		m::event::keys::include{"content"}
-	};
-
 	const m::room::state state
 	{
-		room, &fopts
+		room
 	};
 
-	bool ret{false};
-	const bool has_state_event
+	const event::idx visibility_event_idx
 	{
-		state.get(std::nothrow, "m.room.history_visibility", "", [&]
-		(const m::event &visibility_event)
+		state.get(std::nothrow, "m.room.history_visibility", "")
+	};
+
+	char buf[32];
+	string_view history_visibility{"shared"};
+	m::get(std::nothrow, visibility_event_idx, "content", [&buf, &history_visibility]
+	(const json::object &content)
+	{
+		const json::string &_history_visibility
 		{
-			const json::object &content
-			{
-				json::get<"content"_>(visibility_event)
-			};
+			content.get("history_visibility", "shared")
+		};
 
-			const string_view &history_visibility
-			{
-				unquote(content.get("history_visibility", "shared"))
-			};
+		history_visibility = strncpy
+		{
+			buf, _history_visibility
+		};
+	});
 
-			ret = _visible(event, mxid, room, history_visibility);
-		})
-	};
+	if(history_visibility == "world_readable")
+		return true;
 
-	return !has_state_event?
-		_visible(event, mxid, room, "shared"):
-		ret;
-}
+	if(empty(mxid))
+		return false;
 
-static void
-_changed_visibility(const m::event &event,
-                    m::vm::eval &)
-{
-	log::info
+	if(m::valid(m::id::USER, mxid))
+		return visible_to_user(room, history_visibility, mxid, event);
+
+	if(rfc3986::valid_remote(std::nothrow, mxid))
+		return visible_to_node(room, mxid, event);
+
+	throw m::UNSUPPORTED
 	{
-		m::log, "Changed visibility of %s to %s by %s => %s",
-		json::get<"room_id"_>(event),
-		json::get<"content"_>(event).get("history_visibility"),
-		json::get<"sender"_>(event),
-		string_view{event.event_id}
+		"Cannot determine visibility of %s for '%s'",
+		string_view{room.room_id},
+		mxid,
 	};
 }
 
-m::hookfn<m::vm::eval &>
-_changed_visibility_hookfn
+bool
+ircd::m::visible_to_user(const m::room &room,
+                         const string_view &history_visibility,
+                         const m::user::id &user_id,
+                         const m::event &event)
 {
-	_changed_visibility,
+	assert(history_visibility != "world_readable");
+
+	// Allow any member event where the state_key string is a user mxid.
+	if(json::get<"type"_>(event) == "m.room.member")
+		if(at<"state_key"_>(event) == user_id)
+			return true;
+
+	// Get the membership of the user in the room at the event.
+	char buf[m::room::MEMBERSHIP_MAX_SIZE];
+	const string_view membership
 	{
-		{ "_site",    "vm.effect"                  },
-		{ "type",     "m.room.history_visibility"  },
-	}
-};
+		m::membership(buf, room, user_id)
+	};
+
+	if(membership == "join")
+		return true;
+
+	if(history_visibility == "joined")
+		return false;
+
+	if(membership == "invite")
+		return true;
+
+	if(history_visibility == "invited")
+		return false;
+
+	// The history_visibility is now likely "shared"; though we cannot assert
+	// that in case some other string is used for any non-spec customization
+	// or for graceful forward compatibility. We default to "shared" here.
+	//assert(history_visibility == "shared");
+
+	// An m::room instance with no event_id is used to query the room at the
+	// present state.
+	const m::room present
+	{
+		room.room_id
+	};
+
+	// If the room is not at the present event then we have to run another
+	// test for membership here. Otherwise the "join" test already failed.
+	if(!room.event_id)
+		return false;
+
+	return m::membership(present, user_id, m::membership_positive); // join || invite
+}
+
+bool
+ircd::m::visible_to_node(const m::room &room,
+                         const string_view &node_id,
+                         const m::event &event)
+{
+	// Allow auth chain events XXX: this is too broad
+	if(m::room::auth::is_power_event(event))
+		return true;
+
+	// Allow any event where the state_key string is a user mxid and the server
+	// is the host of that user. Note that applies to any type of event.
+	if(m::valid(m::id::USER, json::get<"state_key"_>(event)))
+		if(m::user::id(at<"state_key"_>(event)).host() == node_id)
+			return true;
+
+	const m::room::origins origins
+	{
+		room
+	};
+
+	// Allow joined servers
+	if(origins.has(node_id))
+		return true;
+
+	return false;
+}

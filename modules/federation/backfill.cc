@@ -91,12 +91,6 @@ get__backfill(client &client,
 			m::head(room_id)
 	};
 
-	if(!visible(event_id, request.node_id))
-		throw m::ACCESS_DENIED
-		{
-			"You are not permitted to view the room at this event."
-		};
-
 	const size_t limit
 	{
 		calc_limit(request)

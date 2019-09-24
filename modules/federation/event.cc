@@ -44,16 +44,16 @@ handle_get(client &client,
 		url::decode(event_id, request.parv[0])
 	};
 
-	if(!visible(event_id, request.node_id))
-		throw m::ACCESS_DENIED
-		{
-			"You are not permitted to view this event"
-		};
-
 	const m::event::fetch event
 	{
 		event_id
 	};
+
+	if(!visible(event, request.node_id))
+		throw m::ACCESS_DENIED
+		{
+			"You are not permitted to view this event"
+		};
 
 	resource::response::chunked response
 	{

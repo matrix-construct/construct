@@ -345,19 +345,28 @@ get_events_from(client &client,
 	size_t i(0), j(0);
 	for(; it && i < size_t(events_limit); --it, ++i)
 	{
-		if(!visible(it.event_id(), request.user_id))
+		const m::event &event{*it};
+		if(!visible(event, request.user_id))
 			continue;
 
-		j += append_event(chunk, *it, it.event_idx(), room_depth, user_room);
+		const auto &event_idx(it.event_idx());
+		j += append_event(chunk, event, event_idx, room_depth, user_room);
 	}
 
 	if(!j)
 		return j;
 
 	chunk.~array();
+	const m::event::id::buf end_token
+	{
+		it?
+			m::event_id(it.event_idx()):
+			room_head
+	};
+
 	json::stack::member
 	{
-		out, "end", it? it.event_id() : room_head
+		out, "end", end_token
 	};
 
 	return j;
