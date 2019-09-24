@@ -881,9 +881,14 @@ ircd::m::vm::execute_pdu(eval &eval,
 		at<"type"_>(event)
 	};
 
+	const bool internal
+	{
+		m::internal(room_id)
+	};
+
 	const bool authenticate
 	{
-		opts.auth && !internal(room_id)
+		opts.auth && !internal
 	};
 
 	// The conform hook runs static checks on an event's formatting and
@@ -893,6 +898,12 @@ ircd::m::vm::execute_pdu(eval &eval,
 		const ctx::critical_assertion ca;
 		call_hook(conform_hook, eval, event, eval);
 	}
+
+	if(unlikely(internal && !my(event)))
+		throw error
+		{
+			fault::GENERAL, "Internal room event denied from external source."
+		};
 
 	if(unlikely(eval::count(event_id) > 1))
 		throw error
