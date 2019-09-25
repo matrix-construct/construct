@@ -129,7 +129,7 @@ ircd::is(const std::error_code &ec,
          const std::errc &errc)
 noexcept
 {
-	return ec == errc;
+	return system_category(ec) && ec.value() == int(errc);
 }
 
 bool
