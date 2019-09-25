@@ -98,37 +98,12 @@ endif IMAGEMAGICK
 
 m_moduledir = @moduledir@
 
-m_noop_la_SOURCES = m_noop.cc
-m_event_la_SOURCES = m_event.cc
-m_event_append_la_SOURCES = m_event_append.cc
-m_user_la_SOURCES = m_user.cc
-m_user_events_la_SOURCES = m_user_events.cc
-m_user_rooms_la_SOURCES = m_user_rooms.cc
-m_user_filter_la_SOURCES = m_user_filter.cc
-m_user_mitsein_la_SOURCES = m_user_mitsein.cc
-m_user_servers_la_SOURCES = m_user_servers.cc
-m_user_profile_la_SOURCES = m_user_profile.cc
-m_user_account_data_la_SOURCES = m_user_account_data.cc
-m_user_room_account_data_la_SOURCES = m_user_room_account_data.cc
-m_user_room_tags_la_SOURCES = m_user_room_tags.cc
 m_node_la_SOURCES = m_node.cc
 m_keys_la_SOURCES = m_keys.cc
+m_event_la_SOURCES = m_event.cc
 m_feds_la_SOURCES = m_feds.cc
 m_fetch_la_SOURCES = m_fetch.cc
-m_command_la_SOURCES = m_command.cc
-m_control_la_SOURCES = m_control.cc
-m_device_la_SOURCES = m_device.cc
-m_direct_la_SOURCES = m_direct.cc
-m_typing_la_SOURCES = m_typing.cc
-m_receipt_la_SOURCES = m_receipt.cc
-m_presence_la_SOURCES = m_presence.cc
-m_direct_to_device_la_SOURCES = m_direct_to_device.cc
-m_device_list_update_la_SOURCES = m_device_list_update.cc
-m_ignored_user_list_la_SOURCES = m_ignored_user_list.cc
-m_breadcrumb_rooms_la_SOURCES = m_breadcrumb_rooms.cc
-m_events_la_SOURCES = m_events.cc
-m_rooms_la_SOURCES = m_rooms.cc
-m_rooms_summary_la_SOURCES = m_rooms_summary.cc
+
 m_room_la_SOURCES = m_room.cc
 m_room_events_la_SOURCES = m_room_events.cc
 m_room_auth_la_SOURCES = m_room_auth.cc
@@ -148,14 +123,47 @@ m_room_third_party_invite_la_SOURCES = m_room_third_party_invite.cc
 m_room_redaction_la_SOURCES = m_room_redaction.cc
 m_room_bootstrap_la_SOURCES = m_room_bootstrap.cc
 m_room_name_la_SOURCES = m_room_name.cc
+
+m_user_la_SOURCES = m_user.cc
+m_user_events_la_SOURCES = m_user_events.cc
+m_user_rooms_la_SOURCES = m_user_rooms.cc
+m_user_filter_la_SOURCES = m_user_filter.cc
+m_user_mitsein_la_SOURCES = m_user_mitsein.cc
+m_user_servers_la_SOURCES = m_user_servers.cc
 m_user_highlight_la_SOURCES = m_user_highlight.cc m_user_highlight_auth.cc
+m_user_profile_la_SOURCES = m_user_profile.cc
+m_user_account_data_la_SOURCES = m_user_account_data.cc
+m_user_room_account_data_la_SOURCES = m_user_room_account_data.cc
+m_user_room_tags_la_SOURCES = m_user_room_tags.cc
+
+m_events_la_SOURCES = m_events.cc
+m_rooms_la_SOURCES = m_rooms.cc
+m_rooms_summary_la_SOURCES = m_rooms_summary.cc
+m_users_la_SOURCES = m_users.cc
+
+m_presence_la_SOURCES = m_presence.cc
+m_receipt_la_SOURCES = m_receipt.cc
+m_typing_la_SOURCES = m_typing.cc
+m_device_list_update_la_SOURCES = m_device_list_update.cc
+m_device_la_SOURCES = m_device.cc
+m_direct_la_SOURCES = m_direct.cc
+m_direct_to_device_la_SOURCES = m_direct_to_device.cc
+m_breadcrumb_rooms_la_SOURCES = m_breadcrumb_rooms.cc
+m_ignored_user_list_la_SOURCES = m_ignored_user_list.cc
+m_command_la_SOURCES = m_command.cc
+m_control_la_SOURCES = m_control.cc
 m_create_la_SOURCES = m_create.cc
+m_profile_la_SOURCES = m_profile.cc
+m_noop_la_SOURCES = m_noop.cc
+
+m_event_append_la_SOURCES = m_event_append.cc
 m_event_horizon_la_SOURCES = m_event_pretty.cc
 m_event_pretty_la_SOURCES = m_event_horizon.cc
+
 m_init_bootstrap_la_SOURCES = m_init_bootstrap.cc
 m_init_backfill_la_SOURCES = m_init_backfill.cc
 m_listen_la_SOURCES = m_listen.cc
-m_users_la_SOURCES = m_users.cc
+
 m_vm_la_SOURCES = m_vm.cc
 m_vm_fetch_la_SOURCES = m_vm_fetch.cc
 
@@ -183,6 +191,7 @@ m_module_LTLIBRARIES = \
 	m_command.la \
 	m_control.la \
 	m_create.la \
+	m_profile.la \
 	m_device.la \
 	m_direct.la \
 	m_typing.la \
@@ -220,6 +229,128 @@ m_module_LTLIBRARIES = \
 	m_users.la \
 	m_vm.la \
 	m_vm_fetch.la \
+	###
+
+###############################################################################
+#
+# /_matrix/key/
+#
+
+key_moduledir = @moduledir@
+
+key_key_server_la_SOURCES = key/server.cc
+key_key_query_la_SOURCES = key/query.cc
+
+key_module_LTLIBRARIES = \
+	key/key_server.la \
+	key/key_query.la \
+	###
+
+###############################################################################
+#
+# /_matrix/app/
+#
+
+app_moduledir = @moduledir@
+
+app_app_app_la_SOURCES = \
+	app/app.cc \
+	app/transactions.cc \
+	###
+
+app_module_LTLIBRARIES = \
+	app/app_app.la \
+	###
+
+###############################################################################
+#
+# /_matrix/identity/
+#
+
+identity_moduledir = @moduledir@
+
+identity_identity_v1_la_SOURCES = identity/v1.cc
+identity_identity_pubkey_la_SOURCES = identity/pubkey.cc
+
+identity_module_LTLIBRARIES = \
+	identity/identity_v1.la \
+	identity/identity_pubkey.la \
+	###
+
+###############################################################################
+#
+# /_matrix/media/
+#
+
+media_moduledir = @moduledir@
+
+media_media_media_la_SOURCES = \
+	media/download.cc \
+	media/upload.cc \
+	media/thumbnail.cc \
+	media/preview_url.cc \
+	media/media.cc \
+	###
+
+media_module_LTLIBRARIES = \
+	media/media_media.la \
+	###
+
+###############################################################################
+#
+# /_matrix/federation/
+#
+
+federation_moduledir = @moduledir@
+
+federation_federation_send_la_SOURCES = federation/send.cc
+federation_federation_event_la_SOURCES = federation/event.cc
+federation_federation_get_missing_events_la_SOURCES = federation/get_missing_events.cc
+federation_federation_get_groups_publicised_la_SOURCES = federation/get_groups_publicised.cc
+federation_federation_version_la_SOURCES = federation/version.cc
+federation_federation_sender_la_SOURCES = federation/sender.cc
+federation_federation_query_la_SOURCES = federation/query.cc
+federation_federation_invite_la_SOURCES = federation/invite.cc
+federation_federation_invite2_la_SOURCES = federation/invite2.cc
+federation_federation_make_join_la_SOURCES = federation/make_join.cc
+federation_federation_send_join_la_SOURCES = federation/send_join.cc
+federation_federation_state_ids_la_SOURCES = federation/state_ids.cc
+federation_federation_state_la_SOURCES = federation/state.cc
+federation_federation_make_leave_la_SOURCES = federation/make_leave.cc
+federation_federation_send_leave_la_SOURCES = federation/send_leave.cc
+federation_federation_backfill_la_SOURCES = federation/backfill.cc
+federation_federation_backfill_ids_la_SOURCES = federation/backfill_ids.cc
+federation_federation_event_auth_la_SOURCES = federation/event_auth.cc
+federation_federation_query_auth_la_SOURCES = federation/query_auth.cc
+federation_federation_publicrooms_la_SOURCES = federation/publicrooms.cc
+federation_federation_user_devices_la_SOURCES = federation/user_devices.cc
+federation_federation_user_keys_query_la_SOURCES = federation/user_keys_query.cc
+federation_federation_user_keys_claim_la_SOURCES = federation/user_keys_claim.cc
+
+federation_module_LTLIBRARIES = \
+	federation/federation_send.la \
+	federation/federation_event.la \
+	federation/federation_get_missing_events.la \
+	federation/federation_get_groups_publicised.la \
+	federation/federation_version.la \
+	federation/federation_sender.la \
+	federation/federation_query.la \
+	federation/federation_invite.la \
+	federation/federation_invite2.la \
+	federation/federation_make_join.la \
+	federation/federation_send_join.la \
+	federation/federation_state_ids.la \
+	federation/federation_state.la \
+	federation/federation_make_leave.la \
+	federation/federation_send_leave.la \
+	federation/federation_backfill.la \
+	federation/federation_backfill_ids.la \
+	federation/federation_event_auth.la \
+	federation/federation_query_auth.la \
+	federation/federation_publicrooms.la \
+	federation/federation_user_devices.la \
+	federation/federation_user_keys_query.la \
+	federation/federation_user_keys_claim.la \
 	###
 
 ###############################################################################
@@ -453,128 +584,6 @@ client_module_LTLIBRARIES += \
 	client/client_keys_query.la \
 	client/client_keys_claim.la \
 	client/client_keys_changes.la \
-	###
-
-###############################################################################
-#
-# /_matrix/key/
-#
-
-key_moduledir = @moduledir@
-
-key_key_server_la_SOURCES = key/server.cc
-key_key_query_la_SOURCES = key/query.cc
-
-key_module_LTLIBRARIES = \
-	key/key_server.la \
-	key/key_query.la \
-	###
-
-###############################################################################
-#
-# /_matrix/federation/
-#
-
-federation_moduledir = @moduledir@
-
-federation_federation_send_la_SOURCES = federation/send.cc
-federation_federation_event_la_SOURCES = federation/event.cc
-federation_federation_get_missing_events_la_SOURCES = federation/get_missing_events.cc
-federation_federation_get_groups_publicised_la_SOURCES = federation/get_groups_publicised.cc
-federation_federation_version_la_SOURCES = federation/version.cc
-federation_federation_sender_la_SOURCES = federation/sender.cc
-federation_federation_query_la_SOURCES = federation/query.cc
-federation_federation_invite_la_SOURCES = federation/invite.cc
-federation_federation_invite2_la_SOURCES = federation/invite2.cc
-federation_federation_make_join_la_SOURCES = federation/make_join.cc
-federation_federation_send_join_la_SOURCES = federation/send_join.cc
-federation_federation_state_ids_la_SOURCES = federation/state_ids.cc
-federation_federation_state_la_SOURCES = federation/state.cc
-federation_federation_make_leave_la_SOURCES = federation/make_leave.cc
-federation_federation_send_leave_la_SOURCES = federation/send_leave.cc
-federation_federation_backfill_la_SOURCES = federation/backfill.cc
-federation_federation_backfill_ids_la_SOURCES = federation/backfill_ids.cc
-federation_federation_event_auth_la_SOURCES = federation/event_auth.cc
-federation_federation_query_auth_la_SOURCES = federation/query_auth.cc
-federation_federation_publicrooms_la_SOURCES = federation/publicrooms.cc
-federation_federation_user_devices_la_SOURCES = federation/user_devices.cc
-federation_federation_user_keys_query_la_SOURCES = federation/user_keys_query.cc
-federation_federation_user_keys_claim_la_SOURCES = federation/user_keys_claim.cc
-
-federation_module_LTLIBRARIES = \
-	federation/federation_send.la \
-	federation/federation_event.la \
-	federation/federation_get_missing_events.la \
-	federation/federation_get_groups_publicised.la \
-	federation/federation_version.la \
-	federation/federation_sender.la \
-	federation/federation_query.la \
-	federation/federation_invite.la \
-	federation/federation_invite2.la \
-	federation/federation_make_join.la \
-	federation/federation_send_join.la \
-	federation/federation_state_ids.la \
-	federation/federation_state.la \
-	federation/federation_make_leave.la \
-	federation/federation_send_leave.la \
-	federation/federation_backfill.la \
-	federation/federation_backfill_ids.la \
-	federation/federation_event_auth.la \
-	federation/federation_query_auth.la \
-	federation/federation_publicrooms.la \
-	federation/federation_user_devices.la \
-	federation/federation_user_keys_query.la \
-	federation/federation_user_keys_claim.la \
-	###
-
-###############################################################################
-#
-# /_matrix/media/
-#
-
-media_moduledir = @moduledir@
-
-media_media_media_la_SOURCES = \
-	media/download.cc \
-	media/upload.cc \
-	media/thumbnail.cc \
-	media/preview_url.cc \
-	media/media.cc \
-	###
-
-media_module_LTLIBRARIES = \
-	media/media_media.la \
-	###
-
-###############################################################################
-#
-# /_matrix/app/
-#
-
-app_moduledir = @moduledir@
-
-app_app_app_la_SOURCES = \
-	app/app.cc \
-	app/transactions.cc \
-	###
-
-app_module_LTLIBRARIES = \
-	app/app_app.la \
-	###
-
-###############################################################################
-#
-# /_matrix/identity/
-#
-
-identity_moduledir = @moduledir@
-
-identity_identity_v1_la_SOURCES = identity/v1.cc
-identity_identity_pubkey_la_SOURCES = identity/pubkey.cc
-
-identity_module_LTLIBRARIES = \
-	identity/identity_v1.la \
-	identity/identity_pubkey.la \
 	###
 
 ###############################################################################
