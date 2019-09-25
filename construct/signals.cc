@@ -104,12 +104,17 @@ noexcept
 void
 construct::signals::set_handle()
 {
+	static ircd::ios::descriptor desc
+	{
+		"construct::signals"
+	};
+
 	auto handler
 	{
 		std::bind(&signals::on_signal, this, ph::_1, ph::_2)
 	};
 
-	signal_set->async_wait(std::move(handler));
+	signal_set->async_wait(ircd::ios::handle(desc, std::move(handler)));
 }
 
 void
