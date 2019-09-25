@@ -229,6 +229,7 @@ ircd::m::module_names
 	"m_user_account_data",
 	"m_user_room_account_data",
 	"m_user_room_tags",
+	"m_user_register",
 
 	"m_events",
 	"m_rooms",

@@ -19,25 +19,14 @@ IRCD_MODULE
 extern const std::string
 flows;
 
-static void
-validate_password(const string_view &password);
-
-extern "C" void
-validate_user_id(const m::id::user &user_id);
-
-extern "C" std::string
-register_user(const m::registar &,
-              const client *const & = nullptr,
-              const bool &gen_token = false);
+static resource::response
+post__register_guest(client &client, const resource::request::object<m::user::registar> &request);
 
 static resource::response
-post__register_guest(client &client, const resource::request::object<m::registar> &request);
+post__register_user(client &client, const resource::request::object<m::user::registar> &request);
 
 static resource::response
-post__register_user(client &client, const resource::request::object<m::registar> &request);
-
-static resource::response
-post__register(client &client, const resource::request::object<m::registar> &request);
+post__register(client &client, const resource::request::object<m::user::registar> &request);
 
 resource
 register_resource
@@ -55,18 +44,17 @@ method_post
 };
 
 ircd::conf::item<bool>
-IRCD_MODULE_EXPORT
 register_enable
 {
 	{ "name",     "ircd.client.register.enable" },
 	{ "default",  true                          }
 };
 
-/// see: ircd/m/register.h for the m::registar tuple.
+/// see: ircd/m/register.h for the m::user::registar tuple.
 ///
 resource::response
 post__register(client &client,
-               const resource::request::object<m::registar> &request)
+               const resource::request::object<m::user::registar> &request)
 {
 	const json::object &auth
 	{
@@ -104,7 +92,6 @@ post__register(client &client,
 }
 
 ircd::conf::item<bool>
-IRCD_MODULE_EXPORT
 register_user_enable
 {
 	{ "name",     "ircd.client.register.user.enable" },
@@ -113,7 +100,7 @@ register_user_enable
 
 resource::response
 post__register_user(client &client,
-                    const resource::request::object<m::registar> &request)
+                    const resource::request::object<m::user::registar> &request)
 try
 {
 	if(!bool(register_user_enable))
@@ -123,20 +110,27 @@ try
 			"User registration for this server is disabled."
 		};
 
-	const bool &inhibit_login
+	const unique_buffer<mutable_buffer> buf
 	{
-		json::get<"inhibit_login"_>(request)
+		4_KiB
 	};
 
-	const std::string response
+	// upcast to the user::registar tuple
+	const m::user::registar &registar
 	{
-		register_user(request, &client, !inhibit_login)
+		request
+	};
+
+	// call operator() to register the user and receive response output
+	const json::object response
+	{
+		registar(buf, remote(client))
 	};
 
 	// Send response to user
 	return resource::response
 	{
-		client, http::CREATED, json::object{response}
+		client, http::CREATED, response
 	};
 }
 catch(const m::INVALID_MXID &e)
@@ -157,7 +151,7 @@ register_guest_enable
 
 resource::response
 post__register_guest(client &client,
-                     const resource::request::object<m::registar> &request)
+                     const resource::request::object<m::user::registar> &request)
 {
 	if(!bool(register_guest_enable))
 		throw m::error
@@ -188,205 +182,8 @@ post__register_guest(client &client,
 	};
 }
 
-std::string
-register_user(const m::registar &request,
-              const client *const &client,
-              const bool &gen_token)
-{
-	// 3.3.1 Additional authentication information for the user-interactive authentication API.
-	const json::object &auth
-	{
-		json::get<"auth"_>(request)
-	};
-
-	// 3.3.1 The login type that the client is attempting to complete.
-	const string_view &type
-	{
-		!empty(auth)? unquote(auth.at("type")) : string_view{}
-	};
-
-	// We only support this for now, for some reason. TODO: XXX
-	if(type && type != "m.login.dummy")
-		throw m::UNSUPPORTED
-		{
-			"Registration '%s' not supported.", type
-		};
-
-	// 3.3.1 The local part of the desired Matrix ID. If omitted, the homeserver MUST
-	// generate a Matrix ID local part.
-	const auto &username
-	{
-		json::get<"username"_>(request)
-	};
-
-	// Generate canonical mxid. The home_server is appended if one is not
-	// specified. We do not generate a user_id here if the local part is not
-	// specified. TODO: isn't that guest reg?
-	const m::id::user::buf user_id
-	{
-		username, my_host()
-	};
-
-	// Check if the the user_id is acceptably formed for this server or throws
-	validate_user_id(user_id);
-
-	// 3.3.1 Required. The desired password for the account.
-	const auto &password
-	{
-		at<"password"_>(request)
-	};
-
-	// (r0.3.0) 3.4.1 ID of the client device. If this does not correspond to a
-	// known client device, a new device will be created. The server will auto-
-	// generate a device_id if this is not specified.
-	const auto requested_device_id
-	{
-		json::get<"device_id"_>(request)
-	};
-
-	const m::id::device::buf device_id
-	{
-		requested_device_id?
-			m::id::device::buf{requested_device_id, my_host()}:
-		gen_token?
-			m::id::device::buf{m::id::generate, my_host()}:
-			m::id::device::buf{}
-	};
-
-	const auto &initial_device_display_name
-	{
-		json::get<"initial_device_display_name"_>(request)
-	};
-
-	// 3.3.1 If true, the server binds the email used for authentication to the
-	// Matrix ID with the ID Server. Defaults to false.
-	const auto &bind_email
-	{
-		get<"bind_email"_>(request, false)
-	};
-
-	// Check if the password is acceptable for this server or throws
-	validate_password(password);
-
-	//TODO: ABA
-	if(exists(user_id))
-		throw m::error
-		{
-			http::CONFLICT, "M_USER_IN_USE",
-			"The desired user ID is already in use."
-		};
-
-	//TODO: ABA / TXN
-	// Represent the user
-	m::user user
-	{
-		m::create(user_id)
-	};
-
-	// Activate the account. Underneath this will create a special room
-	// for this user in the form of !@user:host and set a key in !users:host
-	// If the user_id is taken this throws 409 Conflict because those assets
-	// will already exist; otherwise the user is registered after this call.
-	//TODO: ABA / TXN
-	user.activate();
-
-	// Set the password for the account. This issues an ircd.password state
-	// event to the user's room. User will be able to login with
-	// m.login.password
-	user.password(password);
-
-	// Store the options from registration.
-	m::user::room user_room{user};
-	send(user_room, user.user_id, "ircd.account.options", "registration", json::members
-	{
-		{ "bind_email", bind_email },
-	});
-
-	char access_token_buf[32];
-	const string_view access_token
-	{
-		gen_token?
-			m::user::gen_access_token(access_token_buf):
-			string_view{}
-	};
-
-	// Log the user in by issuing an event in the tokens room containing
-	// the generated token. When this call completes without throwing the
-	// access_token will be committed and the user will be logged in.
-	if(gen_token)
-	{
-		char remote_buf[96];
-		const json::value last_seen_ip
-		{
-			client?
-				string(remote_buf, remote(*client)):
-				string_view{},
-
-			json::STRING
-		};
-
-		const m::event::id::buf access_token_id
-		{
-			m::send(m::user::tokens, user_id, "ircd.access_token", access_token, json::members
-			{
-				{ "ip",         last_seen_ip },
-				{ "device_id",  device_id    },
-			})
-		};
-
-		const json::members device
-		{
-			{ "device_id",        device_id                    },
-			{ "display_name",     initial_device_display_name  },
-			{ "last_seen_ts",     ircd::time<milliseconds>()   },
-			{ "last_seen_ip",     last_seen_ip                 },
-			{ "access_token_id",  access_token_id              },
-		};
-
-		m::device::set(user_id, device);
-	}
-
-	// Send response to user
-	return json::strung
-	{
-		json::members
-		{
-			{ "user_id",         user_id        },
-			{ "home_server",     my_host()      },
-			{ "access_token",    access_token   },
-			{ "device_id",       device_id      },
-		}
-	};
-}
-
-void
-validate_user_id(const m::id::user &user_id)
-{
-	if(user_id.host() != my_host())
-		throw m::error
-		{
-			http::BAD_REQUEST,
-			"M_INVALID_USERNAME",
-			"Can only register with host '%s'",
-			my_host()
-		};
-}
-
-void
-validate_password(const string_view &password)
-{
-	if(password.size() > 255)
-		throw m::error
-		{
-			http::BAD_REQUEST,
-			"M_INVALID_PASSWORD",
-			"The desired password is too long"
-		};
-}
-
 const std::string
-flows
-{R"({
+flows{R"({
 	"flows":
 	[
 		{

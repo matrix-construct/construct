@@ -42,6 +42,7 @@ struct ircd::m::user
 	struct filter;
 	struct ignores;
 	struct highlight;
+	struct registar;
 
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;
@@ -92,3 +93,4 @@ const
 #include "filter.h"
 #include "ignores.h"
 #include "highlight.h"
+#include "register.h"

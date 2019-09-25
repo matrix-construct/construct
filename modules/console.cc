@@ -10554,26 +10554,22 @@ console_cmd__user__register(opt &out, const string_view &line)
 		param.at(1)
 	};
 
-	const m::registar request
+	const m::user::registar request
 	{
-		{ "username",    username },
-		{ "password",    password },
-		{ "bind_email",  false    },
+		{ "username",       username  },
+		{ "password",       password  },
+		{ "bind_email",     false     },
+		{ "inhibit_login",  true      },
 	};
 
-	using prototype = std::string
-	                  (const m::registar &,
-	                   const client *const &,
-	                   const bool &);
-
-	static mods::import<prototype> register_user
+	const unique_buffer<mutable_buffer> buf
 	{
-		"client_register", "register_user"
+		4_KiB
 	};
 
 	const auto ret
 	{
-		register_user(request, nullptr, false)
+		request(buf)
 	};
 
 	out << ret << std::endl;

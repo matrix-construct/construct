@@ -62,7 +62,6 @@ namespace ircd::m
 #include "events.h"
 #include "node.h"
 #include "login.h"
-#include "register.h"
 #include "device.h"
 #include "request.h"
 #include "fed/fed.h"
