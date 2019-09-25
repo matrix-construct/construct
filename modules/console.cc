@@ -6711,6 +6711,40 @@ console_cmd__events__type(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__events__type__counts(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"prefix"
+	}};
+
+	const string_view &prefix
+	{
+		param["prefix"]
+	};
+
+	m::events::type::for_each(prefix, [&out]
+	(const string_view &type)
+	{
+		size_t i(0);
+		m::events::type::for_each_in(type, [&i]
+		(const string_view &type, const m::event::idx &event_idx)
+		{
+			++i;
+			return true;
+		});
+
+		out
+		<< std::setw(8) << std::right << i
+		<< " " << type
+		<< std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__events__sender(opt &out, const string_view &line)
 {
 	const params param{line, " ",
