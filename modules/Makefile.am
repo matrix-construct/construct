@@ -150,6 +150,8 @@ m_room_redaction_la_SOURCES = m_room_redaction.cc
 m_room_bootstrap_la_SOURCES = m_room_bootstrap.cc
 m_room_name_la_SOURCES = m_room_name.cc
 m_create_la_SOURCES = m_create.cc
+m_event_horizon_la_SOURCES = m_event_pretty.cc
+m_event_pretty_la_SOURCES = m_event_horizon.cc
 m_init_bootstrap_la_SOURCES = m_init_bootstrap.cc
 m_init_backfill_la_SOURCES = m_init_backfill.cc
 m_listen_la_SOURCES = m_listen.cc
@@ -161,6 +163,8 @@ m_module_LTLIBRARIES = \
 	m_noop.la \
 	m_event.la \
 	m_event_append.la \
+	m_event_horizon.la \
+	m_event_pretty.la \
 	m_user.la \
 	m_user_events.la \
 	m_user_rooms.la \

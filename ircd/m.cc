@@ -244,6 +244,8 @@ ircd::m::module_names
 	"m_command",
 	"m_control",
 	"m_create",
+	"m_event_horizon",
+	"m_event_pretty",
 	"conf",
 	"net_dns",
 	"key_query",
