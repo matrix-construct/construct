@@ -10,9 +10,6 @@
 
 namespace ircd::m
 {
-	static void room_message_auth(const event &, room::auth::hookdata &);
-	extern hookfn<room::auth::hookdata &> room_message_auth_hook;
-
 	static void room_message_notify(const event &, vm::eval &);
 	extern hookfn<vm::eval &> room_message_notify_hook;
 }
@@ -62,74 +59,4 @@ ircd::m::room_message_notify(const event &event,
 		trunc(body, 128),
 		size(body) > 128? "..."_sv : string_view{}
 	};
-}
-
-decltype(ircd::m::room_message_auth_hook)
-ircd::m::room_message_auth_hook
-{
-	room_message_auth,
-	{
-		{ "_site",  "room.auth"       },
-		{ "type",   "m.room.message"  },
-	}
-};
-
-void
-ircd::m::room_message_auth(const event &event,
-                           room::auth::hookdata &data)
-{
-	using FAIL = m::room::auth::FAIL;
-	using conforms = m::event::conforms;
-	assert(json::get<"type"_>(event) == "m.room.message");
-
-	const auto &content
-	{
-		json::get<"content"_>(event)
-	};
-
-	if(!user::highlight::match_at_room)
-		return;
-
-	const json::string &body
-	{
-		content.get("body")
-	};
-
-	if(likely(!startswith(body, "@room")))
-		return;
-
-	const room::power power
-	{
-		data.auth_power?
-			*data.auth_power : m::event{},
-		*data.auth_create
-	};
-
-	const auto &user_level
-	{
-		power.level_user(at<"sender"_>(event))
-	};
-
-	int64_t required_level
-	{
-		room::power::default_power_level
-	};
-
-	power.for_each("notifications", room::power::closure_bool{[&required_level]
-	(const auto &name, const auto &level)
-	{
-		if(name != "room")
-			return true;
-
-		required_level = level;
-		return false;
-	}});
-
-	if(user_level < required_level)
-		throw FAIL
-		{
-			"Insufficient power level to highlight the room (have:%ld require:%ld).",
-			user_level,
-			required_level
-		};
 }
