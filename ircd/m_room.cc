@@ -312,20 +312,6 @@ ircd::m::create(const id::room &room_id,
 	});
 }
 
-ircd::m::room
-ircd::m::create(const createroom &c,
-                json::stack::array *const &errors)
-{
-	using prototype = room (const createroom &, json::stack::array *const &);
-
-	static mods::import<prototype> call
-	{
-		"m_room_create", "ircd::m::create"
-	};
-
-	return call(c, errors);
-}
-
 ircd::m::event::id::buf
 ircd::m::join(const id::room_alias &room_alias,
               const id::user &user_id)

@@ -149,6 +149,7 @@ m_room_third_party_invite_la_SOURCES = m_room_third_party_invite.cc
 m_room_redaction_la_SOURCES = m_room_redaction.cc
 m_room_bootstrap_la_SOURCES = m_room_bootstrap.cc
 m_room_name_la_SOURCES = m_room_name.cc
+m_create_la_SOURCES = m_create.cc
 m_init_bootstrap_la_SOURCES = m_init_bootstrap.cc
 m_init_backfill_la_SOURCES = m_init_backfill.cc
 m_listen_la_SOURCES = m_listen.cc
@@ -177,6 +178,7 @@ m_module_LTLIBRARIES = \
 	m_fetch.la \
 	m_command.la \
 	m_control.la \
+	m_create.la \
 	m_device.la \
 	m_direct.la \
 	m_typing.la \
