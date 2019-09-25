@@ -47,6 +47,9 @@ namespace ircd::net::dns::cache
 	static bool put(const string_view &type, const string_view &state_key, const records &rrs);
 	static bool put(const string_view &type, const string_view &state_key, const uint &code, const string_view &msg);
 
+	static void fini();
+	static void init();
+
 	extern conf::item<seconds> min_ttl IRCD_MODULE_EXPORT_DATA;
 	extern conf::item<seconds> error_ttl IRCD_MODULE_EXPORT_DATA;
 	extern conf::item<seconds> nxdomain_ttl IRCD_MODULE_EXPORT_DATA;
