@@ -131,6 +131,7 @@ ircd::m::handle_breadcrumb_rooms_focus_out(const event &event,
 }
 
 ircd::m::event::id::buf
+IRCD_MODULE_EXPORT
 ircd::m::breadcrumb_rooms::set(const json::array &rooms)
 const
 {
@@ -146,6 +147,7 @@ const
 }
 
 bool
+IRCD_MODULE_EXPORT
 ircd::m::breadcrumb_rooms::for_each(const closure_bool &closure)
 const
 {
@@ -165,6 +167,7 @@ const
 }
 
 void
+IRCD_MODULE_EXPORT
 ircd::m::breadcrumb_rooms::get(const closure &closure)
 const
 {
@@ -176,6 +179,7 @@ const
 }
 
 bool
+IRCD_MODULE_EXPORT
 ircd::m::breadcrumb_rooms::get(std::nothrow_t,
                                const closure &closure)
 const
