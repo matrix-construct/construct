@@ -7440,7 +7440,7 @@ console_cmd__event__visible(opt &out, const string_view &line)
 		param[1]
 	};
 
-	const m::event event
+	const m::event::fetch event
 	{
 		event_id
 	};
