@@ -65,10 +65,10 @@
 #include "rfc3986.h"
 #include "net/net.h"
 #include "server/server.h"
+#include "magick.h"
 #include "m/m.h"
 #include "resource/resource.h"
 #include "client.h"
-#include "magick.h"
 
 /// \brief Internet Relay Chat daemon. This is the principal namespace for IRCd.
 ///

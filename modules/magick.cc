@@ -159,21 +159,15 @@ namespace ircd::magick
 	static void sig_pre(), sig_post();
 }
 
+/// List of signals from libmagick
 decltype(ircd::magick::sig_overrides)
 ircd::magick::sig_overrides
 {
 	#ifdef HAVE_SIGNAL_H
-	SIGABRT,
-	SIGBUS,
-	SIGCHLD,
-	SIGFPE,
-	SIGHUP,
-	SIGINT,
-	SIGQUIT,
-	SIGTERM,
-	SIGSEGV,
-	SIGXCPU,
-	SIGXFSZ,
+	SIGABRT,   SIGBUS,    SIGCHLD,
+	SIGFPE,    SIGHUP,    SIGINT,
+	SIGQUIT,   SIGTERM,   SIGSEGV,
+	SIGXCPU,   SIGXFSZ,
 	#endif HAVE_SIGNAL_H
 };
 
@@ -515,10 +509,6 @@ ircd::magick::display::display(const ImageInfo &info,
 //
 // util (internal)
 //
-
-namespace ircd::magick
-{
-}
 
 template<class return_t,
          class function,
