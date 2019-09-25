@@ -17,6 +17,7 @@ AM_CPPFLAGS = \
     ###
 
 AM_CXXFLAGS = \
+	-x c++-header \
 	@EXTRA_CXXFLAGS@ \
 	###
 
