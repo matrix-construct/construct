@@ -20,35 +20,17 @@ AM_CPPFLAGS = \
 	@EXTRA_CPPFLAGS@ \
 	###
 
+#TODO: split options for if LD_GOLD
 AM_LDFLAGS = \
 	-module \
 	-avoid-version \
-	-Wl,--warn-common \
-	-Wl,--warn-execstack \
-	-Wl,--detect-odr-violations \
 	-Wl,--allow-shlib-undefined \
-	-Wl,--icf=all \
-	-Wl,--gdb-index \
 	-Wl,-z,lazy \
-	-Wl,-z,noexecstack \
-	-Wl,-z,combreloc \
-	-Wl,-z,text-unlikely-segment \
 	-L$(top_srcdir)/ircd \
+	-L$(top_srcdir)/matrix \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
 	###
-
-if GCC
-AM_LDFLAGS += \
-	-Wl,-fuse-ld=gold \
-	###
-endif
-
-if CLANG
-AM_LDFLAGS += \
-	-fuse-ld=gold \
-	###
-endif
 
 ###############################################################################
 #
@@ -161,7 +143,6 @@ m_event_append_la_SOURCES = m_event_append.cc
 m_event_horizon_la_SOURCES = m_event_pretty.cc
 m_event_pretty_la_SOURCES = m_event_horizon.cc
 
-m_init_bootstrap_la_SOURCES = m_init_bootstrap.cc
 m_init_backfill_la_SOURCES = m_init_backfill.cc
 m_listen_la_SOURCES = m_listen.cc
 
@@ -225,7 +206,6 @@ m_module_LTLIBRARIES = \
 	m_room_server_acl.la \
 	m_room_bootstrap.la \
 	m_room_name.la \
-	m_init_bootstrap.la \
 	m_init_backfill.la \
 	m_listen.la \
 	m_users.la \

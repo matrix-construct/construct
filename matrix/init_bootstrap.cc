@@ -8,15 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-ircd::mapi::header
-IRCD_MODULE
-{
-	"Matrix initial bootstrap support."
-};
-
-void
-IRCD_MODULE_EXPORT
-ircd::m::init::bootstrap()
+ircd::m::init::bootstrap::bootstrap()
 try
 {
 	assert(dbs::events);

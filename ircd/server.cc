@@ -1444,11 +1444,11 @@ ircd::server::peer::open_links()
 try
 {
 	if(unlikely(is_loop(open_opts.ipport)))
-		if(!my_host(server_name(open_opts)))
+		if(!my_host(net::server_name(open_opts)))
 			throw unavailable
 			{
 				"Won't open loopback for remote host '%s'",
-				server_name(open_opts),
+				net::server_name(open_opts),
 			};
 
 	// The hostname in open_opts should still reference this object's string.

@@ -102,7 +102,6 @@ noexcept try
 	auto argv(_argv), envp(_envp);
 	const char *const progname(_argv[0]);
 	parseargs(&argc, &argv, opts);
-	applyargs();
 
 	// cores are not dumped without consent of the user to maintain the privacy
 	// of cryptographic key material in memory at the time of the crash. Note
@@ -117,9 +116,6 @@ noexcept try
 
 	if(printversion)
 		return print_version();
-
-	if(quietmode)
-		ircd::log::console_disable();
 
 	// The matrix origin is the first positional argument after any switched
 	// arguments. The matrix origin is the hostpart of MXID's for the server.
@@ -151,25 +147,29 @@ noexcept try
 			"usage :%s <origin> [servername]", progname
 		};
 
+	// Set the required name conf items based on the positional program
+	// arguments. This operation will throw if the strings are not fit for
+	// purpose as host/domain names.
+	ircd::network_name.set(origin);
+	ircd::server_name.set(hostname);
+
+	// Sets various other conf items based on the program options captured into
+	// the globals preceding this frame.
+	applyargs();
+
 	// The smoketest uses this ircd::run::level callback to set a flag when
-	// each ircd::run::level is reached. All flags must be set to pass.
+	// each ircd::run::level is reached. All flags must be set to pass. The
+	// smoketest is inert unless the -smoketest program option is used.
 	const ircd::run::changed smoketester{[](const auto &level)
 	{
 		smoketest.at(size_t(level) + 1) = true;
-		if(smoketest[0] && level == ircd::run::level::RUN) ircd::post{[]
-		{
-			ircd::quit();
-		}};
+		if(smoketest[0] && level == ircd::run::level::RUN)
+			ircd::post {[] { ircd::quit(); }};
 	}};
 
 	// This is the sole io_context for Construct, and the ios.run() below is the
 	// the only place where the program actually blocks.
 	boost::asio::io_context ios;
-
-	// Associates libircd with our io_context and posts the initial routines
-	// to that io_context. Execution of IRCd will then occur during ios::run()
-	// note: only supports service for one hostname/origin at this time.
-	ircd::init(ios, origin, hostname);
 
 	// libircd does no signal handling (or at least none that you ever have to
 	// care about); reaction to all signals happens out here instead. Handling
@@ -179,6 +179,10 @@ noexcept try
 	// of signals but with the benefit of unconditional safety and cross-
 	// platformness with windows etc.
 	const construct::signals signals{ios};
+
+	// Associates libircd with our io_context and posts the initial routines
+	// to that io_context. Execution of IRCd will then occur during ios::run()
+	ircd::init(ios);
 
 	// If the user wants to immediately drop to an interactive command line
 	// without having to send a ctrl-c for it, that is provided here. This does
@@ -375,4 +379,7 @@ applyargs()
 
 	if(soft_assert)
 		ircd::soft_assert.set("true");
+
+	if(quietmode)
+		ircd::log::console_disable();
 }

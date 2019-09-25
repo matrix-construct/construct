@@ -21,34 +21,24 @@ namespace ircd::net::dns
 	using answers_callback = std::function<void (std::exception_ptr, const tag &, const answers &)>;
 
 	constexpr const size_t MAX_COUNT {64};
-
-	template<class T> static rfc1035::record *new_record(mutable_buffer &, const rfc1035::answer &);
-	static void handle_resolved(std::exception_ptr, const tag &, const answers &);
-
-	static void handle_resolve_A_ipport(const hostport &, const json::object &rr, opts, uint16_t, callback_ipport);
-	static void handle_resolve_SRV_ipport(const hostport &, const json::object &rr, opts, callback_ipport);
-	static void handle_resolve_one(const hostport &, const json::array &rr, callback_one);
-
-	static void fini();
-	static void init();
 }
 
 namespace ircd::net::dns::cache
 {
 	struct waiter;
 
-	static bool operator==(const waiter &, const waiter &);
-	static bool operator!=(const waiter &, const waiter &);
+	bool operator==(const waiter &, const waiter &);
+	bool operator!=(const waiter &, const waiter &);
 
-	static bool call_waiter(const string_view &, const string_view &, const json::array &, waiter &);
-	static size_t call_waiters(const string_view &, const string_view &, const json::array &);
-	static void handle(const m::event &, m::vm::eval &);
+	bool call_waiter(const string_view &, const string_view &, const json::array &, waiter &);
+	size_t call_waiters(const string_view &, const string_view &, const json::array &);
+	void handle(const m::event &, m::vm::eval &);
 
-	static bool put(const string_view &type, const string_view &state_key, const records &rrs);
-	static bool put(const string_view &type, const string_view &state_key, const uint &code, const string_view &msg);
+	bool put(const string_view &type, const string_view &state_key, const records &rrs);
+	bool put(const string_view &type, const string_view &state_key, const uint &code, const string_view &msg);
 
-	static void fini();
-	static void init();
+	void fini();
+	void init();
 
 	extern conf::item<seconds> min_ttl IRCD_MODULE_EXPORT_DATA;
 	extern conf::item<seconds> error_ttl IRCD_MODULE_EXPORT_DATA;

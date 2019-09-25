@@ -10,10 +10,7 @@
 
 namespace ircd
 {
-	std::string _origin;                         // user's supplied param
-	std::string _servername;                     // user's supplied param
-	ctx::ctx *main_context;                      // Main program loop
-
+	extern ctx::ctx *main_context;
 	static void main() noexcept;
 }
 
@@ -69,6 +66,45 @@ ircd::restart
 	{ "persist",  false                },
 };
 
+decltype(ircd::server_name)
+ircd::server_name
+{
+	{
+		{ "name",     "ircd.name.server"   },
+		{ "default",  "localhost"          },
+		{ "persist",  false                },
+	}, []
+	{
+		if(!rfc3986::valid_remote(std::nothrow, ircd::server_name))
+			throw user_error
+			{
+				"The 'ircd.name.server' conf \"%s\" is not a valid hostname.",
+				string_view(server_name),
+			};
+	}
+};
+
+decltype(ircd::network_name)
+ircd::network_name
+{
+	{
+		{ "name",     "ircd.name.network"  },
+		{ "default",  "localhost"          },
+		{ "persist",  false                },
+	}, []
+	{
+		if(!rfc3986::valid_remote(std::nothrow, ircd::network_name))
+			throw user_error
+			{
+				"The 'ircd.name.network' conf \"%s\" is not a valid hostname.",
+				string_view(network_name),
+			};
+	}
+};
+
+decltype(ircd::main_context)
+ircd::main_context;
+
 /// Sets up the IRCd and its main context, then returns without blocking.
 //
 /// Pass your io_context instance, it will share it with the rest of your program.
@@ -79,9 +115,7 @@ ircd::restart
 ///
 /// init() can only be called from a run::level::HALT state
 void
-ircd::init(boost::asio::io_context &user_ios,
-           const string_view &origin,
-           const string_view &servername)
+ircd::init(boost::asio::io_context &user_ios)
 try
 {
 	// This function must only be called from a HALT state.
@@ -90,24 +124,6 @@ try
 		{
 			"Cannot init() IRCd from runlevel %s", reflect(run::level)
 		};
-
-	// Check that the supplied origin string is properly formatted.
-	if(!rfc3986::valid_remote(std::nothrow, origin))
-		throw user_error
-		{
-			"The 'origin' argument \"%s\" is not a valid hostname.", origin
-		};
-
-	// Check that the supplied servername string is properly formatted.
-	if(!rfc3986::valid_remote(std::nothrow, servername))
-		throw user_error
-		{
-			"The 'servername' argument \"%s\" is not a valid hostname.", servername
-		};
-
-	// Save the params used for m::init later.
-	_origin = std::string{origin};
-	_servername = std::string{servername};
 
 	// Setup the core event loop system starting with the user's supplied ios.
 	ios::init(user_ios);
@@ -299,23 +315,7 @@ noexcept try
 	server::init _server_;   // Server related
 	client::init _client_;   // Client related
 	js::init _js_;           // SpiderMonkey
-	m::init _matrix_         // Matrix
-	{
-		string_view{_origin},
-		string_view{_servername}
-	};
-
-	// Any deinits which have to be done with all subsystems intact
-	const unwind shutdown{[&]
-	{
-		_matrix_.close();
-		server::interrupt_all();
-		client::terminate_all();
-		client::close_all();
-		server::close_all();
-		server::wait_all();
-		client::wait_all();
-	}};
+	m::matrix _matrix_;      // Matrix
 
 	// IRCd will now transition to the RUN state indicating full functionality.
 	run::set(run::level::RUN);

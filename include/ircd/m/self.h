@@ -51,7 +51,7 @@ struct ircd::m::self::init
 	static void tls_certificate();
 	static void keys();
 
-	init(const string_view &origin, const string_view &servername);
+	init();
 };
 
 inline ircd::string_view

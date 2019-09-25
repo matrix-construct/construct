@@ -481,6 +481,9 @@ ircd::mods::available()
 std::string
 ircd::mods::fullpath(const string_view &name)
 {
+	if(fs::is_absolute(name))
+		return postfixed(name);
+
 	std::vector<std::string> why;
 	const auto path
 	{

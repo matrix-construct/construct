@@ -10,6 +10,19 @@
 
 #include "net_dns.h"
 
+namespace ircd::net::dns
+{
+	template<class T> static rfc1035::record *new_record(mutable_buffer &, const rfc1035::answer &);
+	static void handle_resolved(std::exception_ptr, const tag &, const answers &);
+
+	static void handle_resolve_A_ipport(const hostport &, const json::object &rr, opts, uint16_t, callback_ipport);
+	static void handle_resolve_SRV_ipport(const hostport &, const json::object &rr, opts, callback_ipport);
+	static void handle_resolve_one(const hostport &, const json::array &rr, callback_one);
+
+	static void fini();
+	static void init();
+}
+
 ircd::mapi::header
 IRCD_MODULE
 {

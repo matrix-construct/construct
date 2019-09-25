@@ -66,7 +66,7 @@
 #include "net/net.h"
 #include "server/server.h"
 #include "magick.h"
-#include "m/m.h"
+#include "m/matrix.h"
 #include "resource/resource.h"
 #include "client.h"
 
@@ -74,11 +74,8 @@
 ///
 namespace ircd
 {
-	seconds uptime();
-
-	void cont() noexcept;
-	bool quit() noexcept;
-	void init(boost::asio::io_context &ios, const string_view &origin, const string_view &hostname);
+	extern const info::versions version_api;
+	extern const info::versions version_abi;
 
 	extern conf::item<bool> restart;
 	extern conf::item<bool> debugmode;
@@ -86,8 +83,13 @@ namespace ircd
 	extern conf::item<bool> write_avoid;
 	extern conf::item<bool> soft_assert;
 
-	extern const info::versions version_api;
-	extern const info::versions version_abi;
+	extern conf::item<std::string> server_name;
+	extern conf::item<std::string> network_name;
+
+	seconds uptime();
+	void init(boost::asio::io_context &ios);
+	void cont() noexcept;
+	bool quit() noexcept;
 }
 
 #endif // HAVE_IRCD_IRCD_H

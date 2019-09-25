@@ -42,6 +42,7 @@ AC_CONFIG_FILES(\
 	include/ircd/Makefile   \
 	construct/Makefile      \
 	ircd/Makefile           \
+	matrix/Makefile         \
 	modules/Makefile        \
 	share/Makefile          \
 )
@@ -499,6 +500,42 @@ AC_ARG_ENABLE(lowmem-compile, AC_HELP_STRING([--enable-lowmem-compile], [Enable 
 ])
 
 AM_CONDITIONAL([LOWMEM_COMPILE], [[[[ $lowmem_compile = "yes" ]]]])
+
+dnl
+dnl Gold linker
+dnl
+
+AC_ARG_ENABLE(gold, AC_HELP_STRING([--enable-ld-gold], [Use the gold linker.]),
+[
+	ld_gold="yes"
+], [
+	ld_gold="yes"
+])
+
+AM_CONDITIONAL([LD_GOLD], [[[[ $ld_gold = "yes" ]]]])
+
+AM_COND_IF([LD_GOLD],
+[
+	AM_COND_IF([GCC],
+	[
+		LDFLAGS+=" -Wl,-fuse-ld=gold"
+		LDFLAGS+=" -Wl,--gdb-index"
+	])
+
+	AM_COND_IF([CLANG],
+	[
+		LDFLAGS+=" -fuse-ld=gold"
+	])
+
+	LDFLAGS+=" -Wl,--warn-common"
+	LDFLAGS+=" -Wl,--warn-execstack"
+	LDFLAGS+=" -Wl,--detect-odr-violations"
+	LDFLAGS+=" -Wl,--rosegment"
+	LDFLAGS+=" -Wl,--icf=all"
+	LDFLAGS+=" -Wl,-z,noexecstack"
+	LDFLAGS+=" -Wl,-z,combreloc"
+	LDFLAGS+=" -Wl,-z,text-unlikely-segment"
+])
 
 dnl
 dnl Optimization

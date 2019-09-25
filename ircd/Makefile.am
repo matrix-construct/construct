@@ -32,38 +32,18 @@ AM_CPPFLAGS = \
 	@EXTRA_CPPFLAGS@ \
 	###
 
+#TODO: split options for if LD_GOLD
 AM_LDFLAGS = \
 	-version-info 3:1:0 \
-	-Wl,--warn-common \
-	-Wl,--warn-execstack \
-	-Wl,--detect-odr-violations \
-	-Wl,--unresolved-symbols=report-all \
 	-Wl,--no-undefined-version \
+	-Wl,--unresolved-symbols=report-all \
 	-Wl,--weak-unresolved-symbols \
-	-Wl,--icf=all \
-	-Wl,--rosegment \
-	-Wl,--gdb-index \
-	-Wl,-z,lazy \
+	-Wl,-z,now \
 	-Wl,-z,nodelete \
 	-Wl,-z,nodlopen \
-	-Wl,-z,noexecstack \
-	-Wl,-z,combreloc \
-	-Wl,-z,text-unlikely-segment \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
 	###
-
-if GCC
-AM_LDFLAGS += \
-	-Wl,-fuse-ld=gold \
-	###
-endif
-
-if CLANG
-AM_LDFLAGS += \
-	-fuse-ld=gold \
-	###
-endif
 
 if MINGW
 AM_LDFLAGS += \
@@ -176,13 +156,6 @@ libircd_la_SOURCES += resource.cc
 if JS
 libircd_la_SOURCES += js.cc
 endif
-libircd_la_SOURCES += m_name.cc
-libircd_la_SOURCES += m_id.cc
-libircd_la_SOURCES += m_dbs.cc
-libircd_la_SOURCES += m_room.cc
-libircd_la_SOURCES += m_fed.cc
-libircd_la_SOURCES += m.cc
-libircd_la_SOURCES += m_event.cc
 libircd_la_SOURCES += ircd.cc
 
 db_write_thread.lo:    AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb/include
@@ -227,6 +200,3 @@ rfc3986.lo:    CXXFLAGS += ${GUNIT_CXXFLAGS}
 
 rfc1459.lo:    AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
 rfc1459.lo:    CXXFLAGS += ${GUNIT_CXXFLAGS}
-
-m_id.lo:       AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-m_id.lo:       CXXFLAGS += ${GUNIT_CXXFLAGS}

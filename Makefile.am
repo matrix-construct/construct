@@ -3,6 +3,7 @@ ACLOCAL_AMFLAGS = -I tools/m4
 
 SUBDIRS = include/ircd
 SUBDIRS += ircd
+SUBDIRS += matrix
 SUBDIRS += modules
 SUBDIRS += share
 SUBDIRS += construct

@@ -8,6 +8,25 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m
+{
+	std::unique_ptr<self::init> _self;
+	std::unique_ptr<dbs::init> _dbs;
+	std::unique_ptr<init::modules> _modules;
+
+	static void on_load();
+	static void on_unload() noexcept;
+}
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Matrix Chat Protocol",
+	ircd::m::on_load,
+	ircd::m::on_unload,
+};
+
+IRCD_MODULE_EXPORT_DATA
 decltype(ircd::m::log)
 ircd::m::log
 {
@@ -32,26 +51,14 @@ me_offline_status_msg
 	{ "default",  "Catch ya on the flip side..."   }
 };
 
-//
-// init::init
-//
-
-ircd::m::init::init(const string_view &origin,
-                    const string_view &servername)
+void
+ircd::m::on_load()
 try
-:_self
 {
-	origin, servername
-}
-,_dbs
-{
-	self::servername, std::string{}
-}
-,_modules
-{
-	std::make_unique<modules>()
-}
-{
+	_self = std::make_unique<self::init>();
+	_dbs = std::make_unique<dbs::init>(ircd::server_name, std::string{});
+	_modules = std::make_unique<init::modules>();
+
 	if(!ircd::write_avoid && vm::sequence::retired != 0)
 		presence::set(me, "online", me_online_status_msg);
 }
@@ -78,14 +85,29 @@ catch(const std::exception &e)
 	throw;
 }
 
-ircd::m::init::~init()
+void
+ircd::m::on_unload()
 noexcept try
 {
+	mods::imports.erase("m_listen"s);
+
 	if(m::sync::pool.size())
 		m::sync::pool.join();
 
 	if(!std::uncaught_exceptions() && !ircd::write_avoid)
 		presence::set(me, "offline", me_offline_status_msg);
+
+	_modules.reset(nullptr);
+	_dbs.reset(nullptr);
+	_self.reset(nullptr);
+
+	//TODO: remove this for non-interfering shutdown
+	server::interrupt_all();
+	client::terminate_all();
+	client::close_all();
+	server::close_all();
+	server::wait_all();
+	client::wait_all();
 }
 catch(const m::error &e)
 {
@@ -95,12 +117,6 @@ catch(const m::error &e)
 	};
 
 	ircd::terminate();
-}
-
-void
-ircd::m::init::close()
-{
-	mods::imports.erase("m_listen"s);
 }
 
 //
@@ -164,17 +180,7 @@ ircd::m::init::modules::init_imports()
 			"database is empty. I will be bootstrapping it with initial events now..."
 		};
 
-		const module m_init_bootstrap
-		{
-			"m_init_bootstrap"
-		};
-
-		const mods::import<void ()> bootstrap
-		{
-			m_init_bootstrap, "ircd::m::init::bootstrap"
-		};
-
-		bootstrap();
+		m::init::bootstrap{};
 	}
 }
 
@@ -483,17 +489,17 @@ ircd::m::self::host()
 extern ircd::m::room::id::buf users_room_id;
 extern ircd::m::room::id::buf tokens_room_id;
 
-ircd::m::self::init::init(const string_view &origin,
-                          const string_view &servername)
+ircd::m::self::init::init()
+try
 {
+	self::origin = string_view{ircd::network_name};
+	self::servername = string_view{ircd::server_name};
+
 	// Sanity check that these are valid hostname strings. This was likely
 	// already checked, so these validators will simply throw without very
 	// useful error messages if invalid strings ever make it this far.
 	rfc3986::valid_host(origin);
 	rfc3986::valid_host(servername);
-
-	self::origin = origin;
-	self::servername = servername;
 
 	m::my_node = string_view{strlcpy
 	{
@@ -520,6 +526,17 @@ ircd::m::self::init::init(const string_view &origin,
 	// here makes the module dependent on libircd and unloadable.
 	assert(ircd::run::level == run::level::START);
 	mods::imports.emplace("m_keys"s, "m_keys"s);
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		m::log, "Failed to init self origin[%s] servername[%s]",
+		origin,
+		servername,
+	};
+
+	throw;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

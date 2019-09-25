@@ -34,7 +34,7 @@ namespace ircd::m
 /// Matrix Protocol System
 namespace ircd::m
 {
-	struct init;
+	struct matrix;
 
 	IRCD_OVERLOAD(generate)
 
@@ -44,6 +44,7 @@ namespace ircd::m
 #include "name.h"
 #include "error.h"
 #include "self.h"
+#include "init.h"
 #include "id.h"
 #include "event/event.h"
 #include "get.h"
@@ -83,30 +84,15 @@ namespace ircd::m
 #include "media.h"
 #include "search.h"
 
-struct ircd::m::init
+struct ircd::m::matrix
 {
-	struct modules;
-	struct backfill;
+	std::string module_path
+	{
+		fs::path_string(fs::base::LIB, "libircd_matrix")
+	};
 
-	self::init _self;
-	dbs::init _dbs;
-	std::unique_ptr<modules> _modules;
-
-	static void bootstrap();
-	void close();
-
-  public:
-	init(const string_view &origin, const string_view &hostname);
-	~init() noexcept;
-};
-
-struct ircd::m::init::modules
-{
-	void fini_imports() noexcept;
-	void init_imports();
-	void init_keys();
-
-  public:
-	modules();
-	~modules() noexcept;
+	ircd::module module
+	{
+		module_path
+	};
 };

@@ -13,11 +13,11 @@
 
 namespace ircd::m
 {
+	struct room;
+
 	IRCD_M_EXCEPTION(m::error, CONFLICT, http::CONFLICT);
 	IRCD_M_EXCEPTION(m::error, NOT_MODIFIED, http::NOT_MODIFIED);
 	IRCD_M_EXCEPTION(CONFLICT, ALREADY_MEMBER, http::CONFLICT);
-
-	struct room;
 
 	// Util
 	bool my(const room &);
