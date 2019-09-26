@@ -52,7 +52,7 @@ giving you control over Matrix.
 
 ##### BUILD TOOLS
 
-- **GNU C++** compiler, automake, autoconf, autoconf2.13,
+- **GNU C++** compiler, ld.gold, automake, autoconf, autoconf2.13,
 autoconf-archive, libtool.
 
 - A platform capable of loading dynamic shared objects at runtime is required.
