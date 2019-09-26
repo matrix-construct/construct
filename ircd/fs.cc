@@ -2292,6 +2292,7 @@ ircd::fs::basepaths
 	{ "data directory",           RB_DATA_DIR    },
 	{ "database directory",       RB_DB_DIR      },
 	{ "log directory",            RB_LOG_DIR     },
+	{ "library directory",        RB_LIB_DIR     },
 	{ "module directory",         RB_MODULE_DIR  },
 }};
 

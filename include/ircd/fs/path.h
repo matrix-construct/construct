@@ -86,6 +86,7 @@ enum class ircd::fs::base
 	DATA,       ///< Read-only data directory (e.g. $prefix/share)
 	DB,         ///< Database directory (e.g. $prefix/var/db)
 	LOG,        ///< Logfile directory (e.g. $prefix/var/log)
+	LIB,        ///< Shared library directory (e.g. $prefix/lib)
 	MODULES,    ///< Modules directory (e.g. $prefix/lib/modules)
 
 	_NUM_
