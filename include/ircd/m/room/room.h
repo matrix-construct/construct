@@ -171,7 +171,7 @@ struct ircd::m::room
 
 	room(const id &room_id = {},
 	     const vm::copts *const &copts = nullptr,
-	     const event::fetch::opts *const &fopts = nullptr);
+	     const event::fetch::opts *const &fopts = nullptr) noexcept;
 
 	// Index of create event
 	static event::idx index(const id &, std::nothrow_t);
@@ -209,6 +209,7 @@ inline
 ircd::m::room::room(const id &room_id,
                     const vm::copts *const &copts,
                     const event::fetch::opts *const &fopts)
+noexcept
 :room_id{room_id}
 ,copts{copts}
 ,fopts{fopts}
