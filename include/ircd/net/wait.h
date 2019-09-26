@@ -59,8 +59,7 @@ struct ircd::net::wait_opts
 	};
 
 	wait_opts(const ready &, const milliseconds &timeout) noexcept;
-	wait_opts(const ready &) noexcept;
-	wait_opts() = default;
+	wait_opts(const ready & = ready::ANY) noexcept;
 };
 
 inline
