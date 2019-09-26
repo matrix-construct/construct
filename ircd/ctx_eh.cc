@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_CXXABI_H
-#include <ircd/asio.h>
 #include "ctx.h"
 
 #ifdef HAVE_CXXABI_H

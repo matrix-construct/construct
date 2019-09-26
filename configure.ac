@@ -146,11 +146,13 @@ dnl
 AC_MSG_CHECKING(whether to enable debugging)
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [Enable debugging suite for development.]),
 [
+	debug="yes"
 	AC_MSG_RESULT([yes])
 	AC_SUBST(DEBUG, 1)
 	RB_DEFINE_UNQUOTED([DEBUG], [1], [Not configured for release when lit.])
 	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [1], [Defined to 0 for release; or > 0 otherwise])
 ], [
+	debug="no"
 	AC_MSG_RESULT([no])
 	RB_DEFINE_UNQUOTED([DEBUG_LEVEL], [0], [Defined to 0 for release])
 ])
@@ -417,8 +419,10 @@ AM_CONDITIONAL([GENERIC], [[[[ "$enable_generic" = "yes" ]]]])
 
 AM_COND_IF([GENERIC],
 [
+	machine_tuning="generic instruction set"
 	CXXFLAGS+=" -mtune=generic"
 ], [
+	machine_tuning="native instruction set"
 	CXXFLAGS+=" -march=native"
 ])
 
@@ -441,6 +445,7 @@ AM_CONDITIONAL([UNTUNED], [[[[ "$enable_untuned" = "yes" ]]]])
 
 AM_COND_IF([UNTUNED],
 [
+	machine_tuning="fully generic and untuned"
 	CXXFLAGS+=" -mno-default"
 ], [
 	CXXFLAGS+=""
@@ -505,11 +510,12 @@ dnl
 dnl Gold linker
 dnl
 
-AC_ARG_ENABLE(gold, AC_HELP_STRING([--enable-ld-gold], [Use the gold linker.]),
+AC_ARG_ENABLE(gold, AC_HELP_STRING([--disable-ld-gold], [Disable defaulting to the gold linker.]),
 [
-	ld_gold="yes"
+	ld_gold="no"
 ], [
 	ld_gold="yes"
+	LD="ld.gold"
 ])
 
 AM_CONDITIONAL([LD_GOLD], [[[[ $ld_gold = "yes" ]]]])
@@ -1841,6 +1847,7 @@ AM_COND_IF([MINGW],
 	])
 ])
 
+
 dnl ***************************************************************************
 dnl
 dnl Application settings
@@ -1933,10 +1940,50 @@ AC_ARG_WITH(custom-version, AC_HELP_STRING([--with-custom-version=NAME], [Custom
 	AC_MSG_RESULT([no])
 ])
 
+
 dnl ***************************************************************************
 dnl
-dnl Misc
+dnl Unit configuration macros
 dnl
+dnl These are used in various Makefiles on certain units which require them.
+dnl They are defined here to deduplicate between Makefile.
+
+dnl Units which require boost::asio use these flags. This includes the
+dnl ircd/asio.h PCH, which includes ircd.h upstream in the precompile.
+AC_SUBST(ASIO_UNIT_CPPFLAGS)
+ASIO_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
+ASIO_UNIT_CPPFLAGS+=" $SSL_CPPFLAGS"
+ASIO_UNIT_CPPFLAGS+=" $CRYPTO_CPPFLAGS"
+ASIO_UNIT_CPPFLAGS+=" -include ircd/asio.h"
+
+dnl Units which include rocksdb headers use these flags.
+AC_SUBST(ROCKSDB_UNIT_CPPFLAGS)
+ROCKSDB_UNIT_CPPFLAGS+=" $ROCKSDB_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $SNAPPY_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $LZ4_CPPFLAGS"
+ROCKSDB_UNIT_CPPFLAGS+=" $Z_CPPFLAGS"
+
+dnl Units defining spirit grammars may benefit from special compiler flags due
+dnl to their various complexities. The ./configure may have generated flags
+dnl in $GRAMMAR_UNIT_CXXFLAGS to improve compile time and reduce debug symbol.
+AC_SUBST(SPIRIT_UNIT_CPPFLAGS)
+SPIRIT_UNIT_CPPFLAGS+=" $BOOST_CPPFLAGS"
+SPIRIT_UNIT_CPPFLAGS+=" -include ircd/spirit.h"
+
+AC_SUBST(SPIRIT_UNIT_CXXFLAGS)
+SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking"
+
+AM_COND_IF([GCC],
+[
+	SPIRIT_UNIT_CXXFLAGS+=" -fno-var-tracking-assignments"
+	SPIRIT_UNIT_CXXFLAGS+=" -femit-struct-debug-baseonly"
+
+	AM_COND_IF([LOWMEM_COMPILE],
+	[
+		SPIRIT_UNIT_CXXFLAGS+=" --param ggc-min-expand=1"
+	])
+])
+
 
 dnl ***************************************************************************
 dnl
@@ -1944,13 +1991,6 @@ dnl Output
 dnl
 
 AC_OUTPUT
-
-if [[ $DEBUG ]]; then
-	debug="yes"
-else
-	debug="no"
-fi
-
 
 dnl Make it look sexay!
 echo
@@ -1960,9 +2000,21 @@ echo "Configuration time ................ $RB_DATESTR"
 echo "Host OS ........................... $host_os"
 echo "Compiler .......................... $CXX"
 echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
+echo "Linker ............................ $LD"
+echo "Linker flags (LDFLAGS) ............ $LDFLAGS"
+echo "Developer debug ................... $debug"
+echo "Developer assert .................. $assert ($assert_type)"
+echo "Low-memory compile ................ $lowmem_compile"
+echo "Precompiled headers ............... $build_pch"
+echo "Optimized compile ................. $optimize"
+echo "Optimized linking ................. $lto"
+echo "Optimization level ................ $optimize_level"
+echo "Machine tuned ..................... $machine_tuning"
+echo "Memory allocator .................. $alloc_lib"
 echo "Building boost .................... $with_included_boost"
 echo "Building RocksDB .................. $with_included_rocksdb"
 echo "Building JS (SpiderMonkey) ........ $with_included_js"
+echo "IPv6 support ...................... $ipv6"
 echo "Ziplinks (libz) support ........... $have_zlib"
 echo "LZ4 support ....................... $have_lz4"
 echo "Snappy support .................... $have_snappy"
@@ -1974,16 +2026,6 @@ echo "Magic support ..................... $have_magic"
 echo "ImageMagick support ............... $have_imagemagick"
 echo "Linux AIO support ................. $aio"
 echo "Linux io_uring support ............ $io_uring"
-echo "IPv6 support ...................... $ipv6"
-echo "Precompiled headers ............... $build_pch"
-echo "Developer debug ................... $debug"
-echo "Developer assert .................. $assert ($assert_type)"
-echo "Optimized build ................... $optimize"
-echo "Link-time optimized ............... $lto"
-echo "Optimization level ................ $optimize_level"
-echo "Generic binary .................... $enable_generic"
-echo "Untuned binary .................... $enable_untuned"
-echo "Memory allocator .................. $alloc_lib"
 echo "Logging level ..................... $LOG_LEVEL"
 echo "Installing into ................... $prefix"
 echo

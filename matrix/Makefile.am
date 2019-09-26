@@ -23,7 +23,6 @@ AM_CPPFLAGS = \
 	@EXTRA_CPPFLAGS@ \
 	###
 
-#TODO: split options for if LD_GOLD
 AM_LDFLAGS = \
 	-version-info 0:1:0 \
 	-Wl,--no-undefined-version \
@@ -43,10 +42,17 @@ AM_LDFLAGS += \
 endif
 
 libircd_matrixdir = @libdir@
-libircd_matrix_LTLIBRARIES = libircd_matrix.la
+libircd_matrix_LTLIBRARIES = \
+	libircd_matrix.la \
+	###
 
-libircd_matrix_LIBADD =#
-libircd_matrix_LIBADD += -lircd
+libircd_matrix_la_LIBADD = \
+	-lircd \
+	###
+
+#
+# Unit list
+#
 
 libircd_matrix_la_SOURCES =#
 libircd_matrix_la_SOURCES += name.cc
@@ -58,29 +64,9 @@ libircd_matrix_la_SOURCES += init_bootstrap.cc
 libircd_matrix_la_SOURCES += matrix.cc
 libircd_matrix_la_SOURCES += event.cc
 
-### TODO: dedup with ircd/Makefile.am
+#
+# Unit configurations
+#
 
-# Units containing a spirit grammar have some special needs to mitigate
-# larger-than-normal compile time, compile memory, and output objects.
-# A composite of CXXFLAGS is used specifically on units with grammars.
-GUNIT_CXXFLAGS = ###
-
-# Grammar templates can generate a huge number of individual debug symbols
-# for each template instantiation deep within spirit; we try to reduce...
-GUNIT_CXXFLAGS += -fno-var-tracking
-if GCC
-GUNIT_CXXFLAGS += -fno-var-tracking-assignments
-GUNIT_CXXFLAGS += -femit-struct-debug-baseonly
-endif
-
-# The recursive grammars can consume a large amount of RAM when compiling
-# (>= 2 GiB) which can thrash small systems and even sometimes crash GCC.
-# This option reduces memory consumption at the cost of compilation speed.
-if GCC
-if LOWMEM_COMPILE
-GUNIT_CXXFLAGS += --param ggc-min-expand=1
-endif
-endif
-
-id.lo: AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-id.lo: CXXFLAGS += ${GUNIT_CXXFLAGS}
+id.lo: AM_CPPFLAGS   := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+id.lo: CXXFLAGS      += ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}

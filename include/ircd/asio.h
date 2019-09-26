@@ -8,7 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#pragma once
+#ifndef HAVE_IRCD_ASIO_H
 #define HAVE_IRCD_ASIO_H
 
 ///
@@ -23,6 +23,10 @@
 /// standard headers. That still significantly improves compile times of these
 /// boost headers for the time being...
 ///
+
+// ircd.h is included here so that it can be compiled into this header. Then
+// this becomes the single leading precompiled header.
+#include <ircd/ircd.h>
 
 #define BOOST_COROUTINES_NO_DEPRECATION_WARNING
 
@@ -45,3 +49,5 @@
 
 #include <ircd/ctx/continuation.h>
 #include <ircd/net/asio.h>
+
+#endif HAVE_IRCD_ASIO_H

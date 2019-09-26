@@ -9,48 +9,38 @@ AM_CXXFLAGS = \
 	@EXTRA_CXXFLAGS@ \
 	###
 
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	-include ircd/ircd.pic.h \
+	@EXTRA_CPPFLAGS@ \
+	###
+
+AM_LDFLAGS = \
+	-version-info 3:1:0 \
+	-Wl,--no-undefined-version \
+	-Wl,--unresolved-symbols=report-all \
+	-Wl,--weak-unresolved-symbols \
+	-Wl,-z,nodelete \
+	-Wl,-z,nodlopen \
+	-Wl,-z,now \
+	$(PLATFORM_LDFLAGS) \
+	@EXTRA_LDFLAGS@ \
+	###
+
 if DEBUG
 if GCC
 AM_CXXFLAGS += -fmax-errors=2
 endif
 endif
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	@ROCKSDB_CPPFLAGS@ \
-	@JS_CPPFLAGS@ \
-	@BOOST_CPPFLAGS@ \
-	@SSL_CPPFLAGS@ \
-	@CRYPTO_CPPFLAGS@ \
-	@SODIUM_CPPFLAGS@ \
-	@MAGIC_CPPFLAGS@ \
-	@SNAPPY_CPPFLAGS@ \
-	@LZ4_CPPFLAGS@ \
-	@Z_CPPFLAGS@ \
-	@MALLOC_CPPFLAGS@ \
-	-include ircd/ircd.pic.h \
-	@EXTRA_CPPFLAGS@ \
-	###
-
-#TODO: split options for if LD_GOLD
-AM_LDFLAGS = \
-	-version-info 3:1:0 \
-	-Wl,--no-undefined-version \
-	-Wl,--unresolved-symbols=report-all \
-	-Wl,--weak-unresolved-symbols \
-	-Wl,-z,now \
-	-Wl,-z,nodelete \
-	-Wl,-z,nodlopen \
-	$(PLATFORM_LDFLAGS) \
-	@EXTRA_LDFLAGS@ \
-	###
-
 if MINGW
-AM_LDFLAGS += \
-	-Wl,--enable-runtime-pseudo-reloc \
-	-export-symbols-regex '*' \
-	###
+AM_LDFLAGS += -Wl,--enable-runtime-pseudo-reloc
+AM_LDFLAGS += -export-symbols-regex '*'
 endif
+
+#
+# libircd
+#
 
 libircddir = @libdir@
 libircd_LTLIBRARIES = libircd.la
@@ -85,13 +75,16 @@ libircd_la_LIBADD = \
 	@EXTRA_LIBS@ \
 	###
 
+#
+# Unit list
+#
 # Since this is a GNU C++ project we assume the non-standard respect for
 # the order of this sources list. Static initialization will occur in
 # the same order as this list, and destruction in the reverse order.
-#
 # Add the most dependent units at the end and the least dependent units
 # at the beginning.
 #
+
 libircd_la_SOURCES =#
 libircd_la_SOURCES += assert.cc
 libircd_la_SOURCES += info.cc
@@ -118,8 +111,12 @@ libircd_la_SOURCES += json.cc
 libircd_la_SOURCES += conf.cc
 libircd_la_SOURCES += stats.cc
 libircd_la_SOURCES += logger.cc
+if MAGIC
 libircd_la_SOURCES += magic.cc
+endif
+if SODIUM
 libircd_la_SOURCES += sodium.cc
+endif
 libircd_la_SOURCES += openssl.cc
 libircd_la_SOURCES += rfc1459.cc
 libircd_la_SOURCES += rfc3986.cc
@@ -158,45 +155,52 @@ libircd_la_SOURCES += js.cc
 endif
 libircd_la_SOURCES += ircd.cc
 
-db_write_thread.lo:    AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb/include
-db_write_thread.lo:    AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb
+#
+# Specific unit configurations
+#
 
-# Units containing a spirit grammar have some special needs to mitigate
-# larger-than-normal compile time, compile memory, and output objects.
-# A composite of CXXFLAGS is used specifically on units with grammars.
-GUNIT_CXXFLAGS = ###
-
-# Grammar templates can generate a huge number of individual debug symbols
-# for each template instantiation deep within spirit; we try to reduce...
-GUNIT_CXXFLAGS += -fno-var-tracking
-if GCC
-GUNIT_CXXFLAGS += -fno-var-tracking-assignments
-GUNIT_CXXFLAGS += -femit-struct-debug-baseonly
+base.lo:              AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
+client.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+ctx.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+ctx_ole.lo:           AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+ctx_eh.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+db.lo:                AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+db_env.lo:            AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+db_port.lo:           AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+db_write_thread.lo:   AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+db_write_thread.lo:   AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb/include
+db_write_thread.lo:   AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb
+fmt.lo:               AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+fmt.lo:               AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+fs.lo:                AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+if AIO
+fs_aio.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 endif
-
-# The recursive grammars can consume a large amount of RAM when compiling
-# (>= 2 GiB) which can thrash small systems and even sometimes crash GCC.
-# This option reduces memory consumption at the cost of compilation speed.
-if GCC
-if LOWMEM_COMPILE
-GUNIT_CXXFLAGS += --param ggc-min-expand=1
+if IOU
+fs_iou.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 endif
+http.lo:              AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+http.lo:              AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+ios.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+if JS
+js.lo:                AM_CPPFLAGS := @JS_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
-
-parse.lo:      AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-parse.lo:      CXXFLAGS += ${GUNIT_CXXFLAGS}
-
-json.lo:       AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-json.lo:       CXXFLAGS += ${GUNIT_CXXFLAGS}
-
-http.lo:       AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-http.lo:       CXXFLAGS += ${GUNIT_CXXFLAGS}
-
-fmt.lo:        AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-fmt.lo:        CXXFLAGS += ${GUNIT_CXXFLAGS}
-
-rfc3986.lo:    AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-rfc3986.lo:    CXXFLAGS += ${GUNIT_CXXFLAGS}
-
-rfc1459.lo:    AM_CPPFLAGS := -include ircd/spirit.h ${AM_CPPFLAGS}
-rfc1459.lo:    CXXFLAGS += ${GUNIT_CXXFLAGS}
+json.lo:              AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+json.lo:              AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+lex_cast.lo:          AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
+if MAGIC
+magic.lo:             AM_CPPFLAGS := @MAGIC_CPPFLAGS@ ${AM_CPPFLAGS}
+endif
+mods.lo:              AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+net.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+openssl.lo:           AM_CPPFLAGS := @SSL_CPPFLAGS@ @CRYPTO_CPPFLAGS@ ${AM_CPPFLAGS}
+parse.lo:             AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+parse.lo:             AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+rfc1459.lo:           AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+rfc1459.lo:           AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+rfc3986.lo:           AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+rfc3986.lo:           AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+server.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+if SODIUM
+sodium.lo:            AM_CPPFLAGS := @SODIUM_CPPFLAGS@ ${AM_CPPFLAGS}
+endif

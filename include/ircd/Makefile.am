@@ -2,17 +2,6 @@ AUTOMAKE_OPTIONS = foreign
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	@ROCKSDB_CPPFLAGS@ \
-	@JS_CPPFLAGS@ \
-	@BOOST_CPPFLAGS@ \
-	@SSL_CPPFLAGS@ \
-	@CRYPTO_CPPFLAGS@ \
-	@SODIUM_CPPFLAGS@ \
-	@MAGIC_CPPFLAGS@ \
-	@SNAPPY_CPPFLAGS@ \
-	@LZ4_CPPFLAGS@ \
-	@Z_CPPFLAGS@ \
-	@MALLOC_CPPFLAGS@ \
 	@EXTRA_CPPFLAGS@ \
     ###
 
@@ -40,6 +29,7 @@ BUILT_SOURCES = \
 	ircd.h.gch \
 	ircd.pic.h.gch \
 	spirit.h.gch \
+	asio.h.gch \
 	###
 endif
 
@@ -66,14 +56,21 @@ ircd.pic.h.gch: $(DEPS)
 spirit.h.gch: $(DEPS)
 	$(CXX) $(CXXFLAGS) $(LOWMEM_FLAGS) $(AM_CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC -include ircd.pic.h spirit.h
 
+asio.h.gch: $(DEPS)
+	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o asio.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC -include ircd.h asio.h
+
+asio.h.gch: \
+	AM_CPPFLAGS += @BOOST_CPPFLAGS@ @SSL_CPPFLAGS@ @CRYPTO_CPPFLAGS@
+
 clean-local:
 	rm -f ircd.h.gch
 	rm -f ircd.pic.h
 	rm -f ircd.pic.h.gch
+	rm -f asio.h.gch
 	rm -f spirit.h.gch
 	rm -f *.gch.tmp
 
-install-mkdirs: $(DEPS) ircd.h.gch ircd.pic.h.gch spirit.h.gch
+install-mkdirs: $(DEPS) ircd.h.gch ircd.pic.h.gch asio.h.gch spirit.h.gch
 	-@if test ! -d $(DESTDIR)$(includedir); then \
 		echo "mkdir -p $(DESTDIR)$(includedir)"; \
 		mkdir -p $(DESTDIR)$(includedir); \

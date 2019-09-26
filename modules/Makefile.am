@@ -41,8 +41,9 @@ moduledir = @moduledir@
 
 conf_la_SOURCES = conf.cc
 stats_la_SOURCES = stats.cc
-net_dns_la_SOURCES =  net_dns.cc net_dns_cache.cc net_dns_resolver.cc
-net_dns_la_CPPFLAGS = $(AM_CPPFLAGS) @BOOST_CPPFLAGS@
+net_dns_la_SOURCES = net_dns.cc net_dns_cache.cc net_dns_resolver.cc
+net_dns_la_CPPFLAGS = -include $(top_srcdir)/include/ircd/asio.h
+net_dns_la_CPPFLAGS += $(AM_CPPFLAGS) @BOOST_CPPFLAGS@
 net_dns_la_LDFLAGS = $(AM_LDFLAGS) @BOOST_LDFLAGS@
 net_dns_la_LIBADD = $(AM_LIBS) @BOOST_LIBS@
 console_la_SOURCES = console.cc

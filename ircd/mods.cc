@@ -14,7 +14,6 @@
 namespace filesystem = boost::filesystem;
 namespace load_mode = boost::dll::load_mode;
 
-#include <ircd/asio.h>
 #include <ircd/mods/mapi.h>  // Module's internal API
 #include "mods.h"
 
