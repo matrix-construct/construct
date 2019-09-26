@@ -97,7 +97,8 @@ ircd::mods::unload(mod &mod)
 	(auto *const &ptr)
 	{
 		assert(ptr);
-		return shared_from(*ptr);
+		const auto ret(shared_from(*ptr));
+		return ret.use_count() > 2? ret : std::shared_ptr<mods::mod>{};
 	});
 
 	// Call the user's unloading function here.
