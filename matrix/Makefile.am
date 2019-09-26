@@ -57,6 +57,7 @@ libircd_matrix_la_SOURCES =#
 libircd_matrix_la_SOURCES += name.cc
 libircd_matrix_la_SOURCES += id.cc
 libircd_matrix_la_SOURCES += dbs.cc
+libircd_matrix_la_SOURCES += self.cc
 libircd_matrix_la_SOURCES += matrix.cc
 libircd_matrix_la_SOURCES += event.cc
 libircd_matrix_la_SOURCES += room.cc

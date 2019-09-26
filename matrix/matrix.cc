@@ -10,7 +10,6 @@
 
 namespace ircd::m
 {
-	std::unique_ptr<self::init> _self;
 	std::unique_ptr<dbs::init> _dbs;
 	std::unique_ptr<init::modules> _modules;
 
@@ -55,7 +54,9 @@ void
 ircd::m::on_load()
 try
 {
-	_self = std::make_unique<self::init>();
+	assert(ircd::run::level == run::level::START);
+	m::self::init::keys();
+
 	_dbs = std::make_unique<dbs::init>(ircd::server_name, std::string{});
 	_modules = std::make_unique<init::modules>();
 
@@ -99,7 +100,6 @@ noexcept try
 
 	_modules.reset(nullptr);
 	_dbs.reset(nullptr);
-	_self.reset(nullptr);
 
 	//TODO: remove this for non-interfering shutdown
 	server::interrupt_all();
@@ -325,183 +325,6 @@ ircd::m::module_names_optional
 {
 	"web_hook",
 };
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/self.h
-//
-
-std::string
-ircd::m::self::origin
-{};
-
-std::string
-ircd::m::self::servername
-{};
-
-ircd::ed25519::sk
-ircd::m::self::secret_key
-{};
-
-ircd::ed25519::pk
-ircd::m::self::public_key
-{};
-
-std::string
-ircd::m::self::public_key_b64
-{};
-
-std::string
-ircd::m::self::public_key_id
-{};
-
-std::string
-ircd::m::self::tls_cert_der
-{};
-
-std::string
-ircd::m::self::tls_cert_der_sha256_b64
-{};
-
-//
-// my user
-//
-
-ircd::m::user::id::buf
-ircd_user_id
-{
-	"ircd", "localhost"  // gets replaced after conf init
-};
-
-ircd::m::user
-ircd::m::me
-{
-	ircd_user_id
-};
-
-//
-// my room
-//
-
-ircd::m::room::id::buf
-ircd_room_id
-{
-	"ircd", "localhost" // replaced after conf init
-};
-
-ircd::m::room
-ircd::m::my_room
-{
-	ircd_room_id
-};
-
-//
-// my node
-//
-
-std::array<char, ircd::rfc3986::DOMAIN_BUFSIZE>
-ircd_node_id
-{
-	"localhost"  // replaced after conf init
-};
-
-ircd::m::node
-ircd::m::my_node
-{
-	ircd_node_id
-};
-
-bool
-ircd::m::self::host(const string_view &other)
-{
-	// port() is 0 when the origin has no port (and implies 8448)
-	const auto port
-	{
-		net::port(hostport(origin))
-	};
-
-	// If my_host has a port number, then the argument must also have the
-	// same port number.
-	if(port)
-		return host() == other;
-
-	/// If my_host has no port number, then the argument can have port
-	/// 8448 or no port number, which will initialize net::hostport.port to
-	/// the "canon_port" of 8448.
-	assert(net::canon_port == 8448);
-	const net::hostport _other{other};
-	if(net::port(_other) != net::canon_port)
-		return false;
-
-	if(host() != host(_other))
-		return false;
-
-	return true;
-}
-
-ircd::string_view
-ircd::m::self::host()
-{
-	return m::self::origin;
-}
-
-//
-// init
-//
-
-//TODO: XXX
-extern ircd::m::room::id::buf users_room_id;
-extern ircd::m::room::id::buf tokens_room_id;
-
-ircd::m::self::init::init()
-try
-{
-	self::origin = string_view{ircd::network_name};
-	self::servername = string_view{ircd::server_name};
-
-	// Sanity check that these are valid hostname strings. This was likely
-	// already checked, so these validators will simply throw without very
-	// useful error messages if invalid strings ever make it this far.
-	rfc3986::valid_host(origin);
-	rfc3986::valid_host(servername);
-
-	m::my_node = string_view{strlcpy
-	{
-		ircd_node_id, origin
-	}};
-
-	ircd_user_id = {"ircd", origin};
-	m::me = {ircd_user_id};
-
-	ircd_room_id = {"ircd", origin};
-	m::my_room = {ircd_room_id};
-
-	tokens_room_id = {"tokens", origin};
-	m::user::tokens = {tokens_room_id};
-
-	if(origin == "localhost")
-		log::warning
-		{
-			"The origin is configured or has defaulted to 'localhost'"
-		};
-
-	// Loading the keys module in runlevel::START will do further
-	// inits of m::self::globals. Calling the inits directly from
-	// here makes the module dependent on libircd and unloadable.
-	assert(ircd::run::level == run::level::START);
-	m::self::init::keys();
-}
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		m::log, "Failed to init self origin[%s] servername[%s]",
-		origin,
-		servername,
-	};
-
-	throw;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1866,14 +1689,24 @@ const
 //
 
 ircd::m::node::room::room(const string_view &node_id)
-:room{m::node{node_id}}
-{}
+:room
+{
+	m::node{node_id}
+}
+{
+}
 
 ircd::m::node::room::room(const m::node &node)
-:node{node}
-,room_id{node.room_id()}
+:node
 {
-	static_cast<m::room &>(*this) = room_id;
+	node
+}
+,room_id
+{
+	node.room_id()
+}
+{
+	this->m::room::room_id = this->room_id;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2202,25 +2035,6 @@ ircd::m::membership(const event &event)
 //
 // m/user.h
 //
-
-/// ID of the room which stores ephemeral tokens (an instance of the room is
-/// provided below).
-ircd::m::room::id::buf
-tokens_room_id
-{
-	"tokens", ircd::my_host()
-};
-
-/// The tokens room serves as a key-value lookup for various tokens to
-/// users, etc. It primarily serves to store access tokens for users. This
-/// is a separate room from the users room because in the future it may
-/// have an optimized configuration as well as being more easily cleared.
-///
-ircd::m::room
-ircd::m::user::tokens
-{
-	tokens_room_id
-};
 
 bool
 ircd::m::exists(const user::id &user_id)

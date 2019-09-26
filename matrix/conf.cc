@@ -8,6 +8,11 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m
+{
+	struct conf_room;
+}
+
 using namespace ircd;
 
 extern "C" void default_conf(const string_view &prefix);
@@ -15,6 +20,24 @@ extern "C" void rehash_conf(const string_view &prefix, const bool &existing);
 extern "C" void reload_conf();
 extern "C" void refresh_conf();
 static void init_conf_item(conf::item<> &);
+
+struct ircd::m::conf_room
+{
+	m::room::id::buf room_id
+	{
+		"conf", my_host()
+	};
+
+	m::room room
+	{
+	    room_id
+	};
+
+    operator const m::room &() const
+    {
+        return room;
+    }
+};
 
 // This module registers with conf::on_init to be called back
 // when a conf item is initialized; when this module is unloaded
@@ -44,18 +67,6 @@ item_error_log
 	true
 };
 
-const m::room::id::buf
-conf_room_id
-{
-	"conf", ircd::my_host()
-};
-
-const m::room
-conf_room
-{
-	conf_room_id
-};
-
 extern "C" m::event::id::buf
 set_conf_item(const m::user::id &sender,
               const string_view &key,
@@ -67,6 +78,7 @@ set_conf_item(const m::user::id &sender,
 		return {};
 	}
 
+	const m::conf_room conf_room;
 	return send(conf_room, sender, "ircd.conf.item", key,
 	{
 		{ "value", val }
@@ -82,6 +94,7 @@ get_conf_item(const string_view &key,
 		m::event::keys::include { "content" }
 	};
 
+	const m::conf_room conf_room;
 	const m::room::state state
 	{
 		conf_room, &fopts
@@ -197,6 +210,7 @@ init_conf_items()
 		m::event::keys::include { "content", "state_key" }
 	};
 
+	const m::conf_room conf_room;
 	const m::room::state state
 	{
 		conf_room, &fopts
@@ -217,6 +231,7 @@ init_conf_items()
 static void
 init_conf_item(conf::item<> &item)
 {
+	const m::conf_room conf_room;
 	const m::room::state state
 	{
 		conf_room
@@ -282,7 +297,8 @@ static void
 create_conf_room(const m::event &,
                  m::vm::eval &)
 {
-	m::create(conf_room_id, m::me.user_id);
+	const m::conf_room conf_room;
+	m::create(conf_room.room_id, m::me.user_id);
 	//rehash_conf({}, true);
 }
 
@@ -301,6 +317,7 @@ void
 rehash_conf(const string_view &prefix,
             const bool &existing)
 {
+	const m::conf_room conf_room;
 	const m::room::state state
 	{
 		conf_room
