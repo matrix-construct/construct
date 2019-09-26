@@ -10,15 +10,15 @@
 
 using namespace ircd;
 
+static void
+handle_edu_m_device_list_update(const m::event &,
+                                m::vm::eval &);
+
 mapi::header
 IRCD_MODULE
 {
 	"Matrix Device List Update"
 };
-
-static void
-handle_edu_m_device_list_update(const m::event &,
-                                m::vm::eval &);
 
 m::hookfn<m::vm::eval &>
 _m_device_list_update_eval

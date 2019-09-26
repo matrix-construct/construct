@@ -33,5 +33,7 @@ struct ircd::m::user::rooms
 	size_t count(const string_view &membership) const;
 	size_t count() const;
 
-	rooms(const m::user &user);
+	rooms(const m::user &user)
+	:user_room{user}
+	{}
 };

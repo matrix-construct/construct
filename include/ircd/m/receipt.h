@@ -32,6 +32,8 @@ namespace ircd::m::receipt
 
 	// [SET] Indicate that the user has read the event in the room.
 	id::event::buf read(const id::room &, const id::user &, const id::event &, const json::object & = {});
+
+	extern log::log log;
 };
 
 struct ircd::m::edu::m_receipt

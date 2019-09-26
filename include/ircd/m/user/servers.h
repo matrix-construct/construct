@@ -29,5 +29,7 @@ struct ircd::m::user::servers
 	// Existential convenience (does `user` and `other` share any common room).
 	bool has(const string_view &server, const string_view &membership = {}) const;
 
-	servers(const m::user &user);
+	servers(const m::user &user)
+	:user{user}
+	{}
 };

@@ -39,7 +39,6 @@ AM_LDFLAGS = \
 
 moduledir = @moduledir@
 
-conf_la_SOURCES = conf.cc
 stats_la_SOURCES = stats.cc
 net_dns_la_SOURCES = net_dns.cc net_dns_cache.cc net_dns_resolver.cc
 net_dns_la_CPPFLAGS = -include $(top_srcdir)/include/ircd/asio.h
@@ -52,7 +51,6 @@ web_hook_la_SOURCES = web_hook.cc
 well_known_la_SOURCES = well_known.cc
 
 module_LTLIBRARIES = \
-	conf.la \
 	stats.la \
 	net_dns.la \
 	console.la \
@@ -81,135 +79,62 @@ endif IMAGEMAGICK
 
 m_moduledir = @moduledir@
 
-m_node_la_SOURCES = m_node.cc
-m_keys_la_SOURCES = m_keys.cc
-m_event_la_SOURCES = m_event.cc
-m_feds_la_SOURCES = m_feds.cc
-m_fetch_la_SOURCES = m_fetch.cc
-
-m_room_la_SOURCES = m_room.cc
-m_room_events_la_SOURCES = m_room_events.cc
-m_room_auth_la_SOURCES = m_room_auth.cc
-m_room_head_la_SOURCES = m_room_head.cc
-m_room_create_la_SOURCES = m_room_create.cc
-m_room_member_la_SOURCES = m_room_member.cc
-m_room_join_la_SOURCES = m_room_join.cc
-m_room_leave_la_SOURCES = m_room_leave.cc
-m_room_join_rules_la_SOURCES = m_room_join_rules.cc
-m_room_history_visibility_la_SOURCES = m_room_history_visibility.cc
-m_room_canonical_alias_la_SOURCES = m_room_canonical_alias.cc
-m_room_aliases_la_SOURCES = m_room_aliases.cc
-m_room_message_la_SOURCES = m_room_message.cc
-m_room_power_levels_la_SOURCES = m_room_power_levels.cc
-m_room_server_acl_la_SOURCES = m_room_server_acl.cc
-m_room_third_party_invite_la_SOURCES = m_room_third_party_invite.cc
-m_room_redaction_la_SOURCES = m_room_redaction.cc
-m_room_bootstrap_la_SOURCES = m_room_bootstrap.cc
-m_room_name_la_SOURCES = m_room_name.cc
-
-m_user_la_SOURCES = m_user.cc
-m_user_events_la_SOURCES = m_user_events.cc
-m_user_rooms_la_SOURCES = m_user_rooms.cc
-m_user_filter_la_SOURCES = m_user_filter.cc
-m_user_register_la_SOURCES = m_user_register.cc
-m_user_mitsein_la_SOURCES = m_user_mitsein.cc
-m_user_servers_la_SOURCES = m_user_servers.cc
-m_user_highlight_la_SOURCES = m_user_highlight.cc m_user_highlight_auth.cc
-m_user_profile_la_SOURCES = m_user_profile.cc
-m_user_account_data_la_SOURCES = m_user_account_data.cc
-m_user_room_account_data_la_SOURCES = m_user_room_account_data.cc
-m_user_room_tags_la_SOURCES = m_user_room_tags.cc
-
-m_events_la_SOURCES = m_events.cc
-m_rooms_la_SOURCES = m_rooms.cc
-m_rooms_summary_la_SOURCES = m_rooms_summary.cc
-m_users_la_SOURCES = m_users.cc
-
-m_presence_la_SOURCES = m_presence.cc
-m_receipt_la_SOURCES = m_receipt.cc
-m_typing_la_SOURCES = m_typing.cc
-m_device_list_update_la_SOURCES = m_device_list_update.cc
-m_device_la_SOURCES = m_device.cc
-m_direct_la_SOURCES = m_direct.cc
-m_direct_to_device_la_SOURCES = m_direct_to_device.cc
 m_breadcrumb_rooms_la_SOURCES = m_breadcrumb_rooms.cc
-m_ignored_user_list_la_SOURCES = m_ignored_user_list.cc
 m_command_la_SOURCES = m_command.cc
 m_control_la_SOURCES = m_control.cc
-m_create_la_SOURCES = m_create.cc
-m_profile_la_SOURCES = m_profile.cc
-m_noop_la_SOURCES = m_noop.cc
-
-m_event_append_la_SOURCES = m_event_append.cc
-m_event_horizon_la_SOURCES = m_event_pretty.cc
-m_event_pretty_la_SOURCES = m_event_horizon.cc
-
-m_init_backfill_la_SOURCES = m_init_backfill.cc
+m_device_la_SOURCES = m_device.cc
+m_device_list_update_la_SOURCES = m_device_list_update.cc
+m_direct_la_SOURCES = m_direct.cc
+m_direct_to_device_la_SOURCES = m_direct_to_device.cc
+m_ignored_user_list_la_SOURCES = m_ignored_user_list.cc
 m_listen_la_SOURCES = m_listen.cc
-
+m_noop_la_SOURCES = m_noop.cc
+m_presence_la_SOURCES = m_presence.cc
+m_profile_la_SOURCES = m_profile.cc
+m_receipt_la_SOURCES = m_receipt.cc
+m_room_aliases_la_SOURCES = m_room_aliases.cc
+m_room_canonical_alias_la_SOURCES = m_room_canonical_alias.cc
+m_room_create_la_SOURCES = m_room_create.cc
+m_room_history_visibility_la_SOURCES = m_room_history_visibility.cc
+m_room_join_rules_la_SOURCES = m_room_join_rules.cc
+m_room_member_la_SOURCES = m_room_member.cc
+m_room_message_la_SOURCES = m_room_message.cc
+m_room_name_la_SOURCES = m_room_name.cc
+m_room_power_levels_la_SOURCES = m_room_power_levels.cc
+m_room_redaction_la_SOURCES = m_room_redaction.cc
+m_room_server_acl_la_SOURCES = m_room_server_acl.cc
+m_room_third_party_invite_la_SOURCES = m_room_third_party_invite.cc
+m_user_highlight_auth_la_SOURCES = m_user_highlight_auth.cc
 m_vm_la_SOURCES = m_vm.cc
 m_vm_fetch_la_SOURCES = m_vm_fetch.cc
 
 m_module_LTLIBRARIES = \
-	m_noop.la \
-	m_event.la \
-	m_event_append.la \
-	m_event_horizon.la \
-	m_event_pretty.la \
-	m_user.la \
-	m_user_events.la \
-	m_user_rooms.la \
-	m_user_filter.la \
-	m_user_register.la \
-	m_user_mitsein.la \
-	m_user_servers.la \
-	m_user_highlight.la \
-	m_user_profile.la \
-	m_user_account_data.la \
-	m_user_room_account_data.la \
-	m_user_room_tags.la \
-	m_node.la \
-	m_keys.la \
-	m_feds.la \
-	m_fetch.la \
+	m_breadcrumb_rooms.la \
 	m_command.la \
 	m_control.la \
-	m_create.la \
-	m_profile.la \
 	m_device.la \
-	m_direct.la \
-	m_typing.la \
-	m_receipt.la \
-	m_presence.la \
-	m_direct_to_device.la \
 	m_device_list_update.la \
+	m_direct.la \
+	m_direct_to_device.la \
 	m_ignored_user_list.la \
-	m_breadcrumb_rooms.la \
-	m_events.la \
-	m_rooms.la \
-	m_rooms_summary.la \
-	m_room.la \
-	m_room_events.la \
-	m_room_auth.la \
-	m_room_head.la \
-	m_room_create.la \
-	m_room_member.la \
-	m_room_join.la \
-	m_room_leave.la \
-	m_room_join_rules.la \
-	m_room_history_visibility.la \
-	m_room_canonical_alias.la \
+	m_listen.la \
+	m_noop.la \
+	m_presence.la \
+	m_profile.la \
+	m_receipt.la \
 	m_room_aliases.la \
+	m_room_canonical_alias.la \
+	m_room_create.la \
+	m_room_history_visibility.la \
+	m_room_join_rules.la \
+	m_room_member.la \
 	m_room_message.la \
+	m_room_name.la \
 	m_room_power_levels.la \
-	m_room_third_party_invite.la \
 	m_room_redaction.la \
 	m_room_server_acl.la \
-	m_room_bootstrap.la \
-	m_room_name.la \
-	m_init_backfill.la \
-	m_listen.la \
-	m_users.la \
+	m_room_third_party_invite.la \
+	m_user_highlight_auth.la \
 	m_vm.la \
 	m_vm_fetch.la \
 	###

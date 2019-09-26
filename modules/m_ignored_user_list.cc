@@ -19,20 +19,6 @@ IRCD_MODULE
 	"14.24 :Ignoring Users"
 };
 
-conf::item<bool>
-enforce_invites
-{
-	{ "name",     "ircd.m.ignored_user_list.enforce.invites" },
-	{ "default",  true                                       }
-};
-
-conf::item<bool>
-enforce_events
-{
-	{ "name",     "ircd.m.ignored_user_list.enforce.events" },
-	{ "default",  false                                     }
-};
-
 /*
 m::hookfn<m::vm::eval &>
 _m_ignored_user_list
@@ -95,66 +81,4 @@ handle_m_ignored_user(const m::event &event,
 		string_view{at<"sender"_>(event)},
 		string_view{user_id},
 	};
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::user::ignores::has(const m::user::id &other)
-const
-{
-	return !for_each([&other]
-	(const m::user::id &user_id, const json::object &)
-	{
-		return user_id != other;
-	});
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::user::ignores::for_each(const closure_bool &closure)
-const try
-{
-	const m::user::account_data account_data
-	{
-		user
-	};
-
-	bool ret{true};
-	account_data.get(std::nothrow, "m.ignored_user_list", [&closure, &ret]
-	(const string_view &key, const json::object &content)
-	{
-		const json::object &ignored_users
-		{
-			content.get("ignored_users")
-		};
-
-		for(const auto &[user_id, object] : ignored_users)
-			if(!(ret = closure(user_id, object)))
-				return;
-	});
-
-	return ret;
-}
-catch(const std::exception &e)
-{
-	log::derror
-	{
-		m::log, "Error in ignore list for %s",
-		string_view{user.user_id}
-	};
-
-	return true;
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::user::ignores::enforce(const string_view &type)
-{
-	if(type == "events")
-		return bool(enforce_events);
-
-	if(type == "invites")
-		return bool(enforce_invites);
-
-	return false;
 }

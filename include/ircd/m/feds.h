@@ -45,6 +45,7 @@ namespace ircd::m::feds
 /// the user can distinguish different requests in their options vector.
 ///
 struct ircd::m::feds::execute
+:boolean
 {
 	execute(const vector_view<const opts> &, const closure &);
 	execute(const opts &, const closure &);
@@ -142,3 +143,13 @@ struct ircd::m::feds::opts
 	/// typical use case.
 	bool exclude_myself {false};
 };
+
+inline
+ircd::m::feds::execute::execute(const opts &opts,
+                                const closure &closure)
+:execute
+{
+	vector_view<const feds::opts>(std::addressof(opts), 1),
+	closure
+}
+{}

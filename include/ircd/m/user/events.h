@@ -24,5 +24,7 @@ struct ircd::m::user::events
 	bool for_each(const closure_bool &) const;
 	size_t count() const;
 
-	events(const m::user &user);
+	events(const m::user &user)
+	:user{user}
+	{}
 };

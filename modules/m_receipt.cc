@@ -8,24 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-/// There are three principal component sections in this unit:
-///
-///    ----------------------------------     _
-///   | 1. Incoming federation EDU hook |     |
-///    ----------------------------------     |
-///    ----------------------------------     |
-///   | 2. ircd::m::receipt API         |     |
-///    ----------------------------------     |
-///    ----------------------------------     |
-///   | 3. Outgoing federation EDU hook |     V
-///    ----------------------------------
-///
-/// This unit parses and accepts m.receipt EDU's from the federation (1); then
-/// it calls the m::receipt API (2) which generates internal PDU's sent to
-/// user rooms. Hooks on these events sent to user rooms (3) turn the events
-/// into federation EDU's for broadcast (for local users). Note that there are
-/// other reactives for these internal events in client/sync, etc.
-
 using namespace ircd;
 
 static void handle_ircd_read(const m::event &, m::vm::eval &);
@@ -45,12 +27,6 @@ mapi::header
 IRCD_MODULE
 {
 	"Matrix Receipts"
-};
-
-log::log
-receipt_log
-{
-	"m.receipt"
 };
 
 //
@@ -98,7 +74,7 @@ handle_edu_m_receipt(const m::event &event,
 		{
 			log::dwarning
 			{
-				receipt_log, "Ignoring m.receipt from '%s' in %s :denied by m.room.server_acl.",
+				m::receipt::log, "Ignoring m.receipt from '%s' in %s :denied by m.room.server_acl.",
 				json::get<"origin"_>(event),
 				string_view{room_id},
 			};
@@ -125,7 +101,7 @@ handle_m_receipt(const m::event &event,
 
 		log::dwarning
 		{
-			receipt_log, "Unhandled m.receipt type '%s' to room '%s'",
+			m::receipt::log, "Unhandled m.receipt type '%s' to room '%s'",
 			type,
 			string_view{room_id}
 		};
@@ -144,7 +120,7 @@ handle_m_receipt_m_read(const m::event &event,
 		{
 			log::dwarning
 			{
-				receipt_log, "Ignoring m.receipt m.read from '%s' in %s for alien %s.",
+				m::receipt::log, "Ignoring m.receipt m.read from '%s' in %s for alien %s.",
 				json::get<"origin"_>(event),
 				string_view{room_id},
 				string_view{user_id},
@@ -180,7 +156,7 @@ handle_m_receipt_m_read(const m::room::id &room_id,
 	{
 		log::derror
 		{
-			receipt_log, "Failed to handle m.receipt m.read for %s in %s for '%s' :%s",
+			m::receipt::log, "Failed to handle m.receipt m.read for %s in %s for '%s' :%s",
 			string_view{user_id},
 			string_view{room_id},
 			string_view{event_id},
@@ -211,7 +187,7 @@ try
 	{
 		log::dwarning
 		{
-			receipt_log, "Ignoring m.receipt m.read for unknown %s in %s for %s",
+			m::receipt::log, "Ignoring m.receipt m.read for unknown %s in %s for %s",
 			string_view{user_id},
 			string_view{room_id},
 			string_view{event_id}
@@ -229,194 +205,12 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		receipt_log, "Failed to save m.receipt m.read for %s in %s for %s :%s",
+		m::receipt::log, "Failed to save m.receipt m.read for %s in %s for %s :%s",
 		string_view{user_id},
 		string_view{room_id},
 		string_view{event_id},
 		e.what()
 	};
-}
-
-//
-// m::receipt API -> Internal
-//
-
-m::event::id::buf
-IRCD_MODULE_EXPORT
-ircd::m::receipt::read(const m::room::id &room_id,
-                       const m::user::id &user_id,
-                       const m::event::id &event_id,
-                       const json::object &options)
-{
-	const m::user::room user_room
-	{
-		user_id
-	};
-
-	const auto evid
-	{
-		send(user_room, user_id, "ircd.read", room_id,
-		{
-			{ "event_id",    event_id                                       },
-			{ "ts",          options.get("ts", ircd::time<milliseconds>())  },
-			{ "m.hidden",    options.get("m.hidden", false)                 },
-		})
-	};
-
-	log::info
-	{
-		receipt_log, "%s read by %s in %s options:%s",
-		string_view{event_id},
-		string_view{user_id},
-		string_view{room_id},
-		string_view{options},
-	};
-
-	return evid;
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::receipt::get(const m::room::id &room_id,
-                      const m::user::id &user_id,
-                      const m::event::id::closure &closure)
-{
-	const m::user::room user_room
-	{
-		user_id
-	};
-
-	const auto event_idx
-	{
-		user_room.get(std::nothrow, "ircd.read", room_id)
-	};
-
-	return m::get(std::nothrow, event_idx, "content", [&closure]
-	(const json::object &content)
-	{
-		const json::string &event_id
-		{
-			content["event_id"]
-		};
-
-		closure(event_id);
-	});
-}
-
-
-/// Does the user wish to not send receipts for events sent by its specific
-/// sender?
-bool
-IRCD_MODULE_EXPORT
-ircd::m::receipt::ignoring(const m::user &user,
-                           const m::event::id &event_id)
-{
-	bool ret{false};
-	m::get(std::nothrow, event_id, "sender", [&ret, &user]
-	(const string_view &sender)
-	{
-		const m::user::room user_room{user};
-		ret = user_room.has("ircd.read.ignore", sender);
-	});
-
-	return ret;
-}
-
-/// Does the user wish to not send receipts for events for this entire room?
-bool
-IRCD_MODULE_EXPORT
-ircd::m::receipt::ignoring(const m::user &user,
-                           const m::room::id &room_id)
-{
-	const m::user::room user_room{user};
-	return user_room.has("ircd.read.ignore", room_id);
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::receipt::freshest(const m::room::id &room_id,
-                           const m::user::id &user_id,
-                           const m::event::id &event_id)
-try
-{
-	const m::user::room user_room
-	{
-		user_id
-	};
-
-	bool ret{true};
-	user_room.get("ircd.read", room_id, [&ret, &event_id]
-	(const m::event &event)
-	{
-		const auto &content
-		{
-			at<"content"_>(event)
-		};
-
-		const m::event::id &previous_id
-		{
-			unquote(content.get("event_id"))
-		};
-
-		if(event_id == previous_id)
-		{
-			ret = false;
-			return;
-		}
-
-		const m::event::idx &previous_idx
-		{
-			index(previous_id)
-		};
-
-		const m::event::idx &event_idx
-		{
-			index(event_id)
-		};
-
-		ret = event_idx > previous_idx;
-	});
-
-	return ret;
-}
-catch(const std::exception &e)
-{
-	log::derror
-	{
-		receipt_log, "Freshness of receipt in %s from %s for %s :%s",
-		string_view{room_id},
-		string_view{user_id},
-		string_view{event_id},
-		e.what()
-	};
-
-	return true;
-}
-
-bool
-IRCD_MODULE_EXPORT
-ircd::m::receipt::exists(const m::room::id &room_id,
-                         const m::user::id &user_id,
-                         const m::event::id &event_id)
-{
-	const m::user::room user_room
-	{
-		user_id
-	};
-
-	bool ret{false};
-	user_room.get(std::nothrow, "ircd.read", room_id, [&ret, &event_id]
-	(const m::event &event)
-	{
-		const auto &content
-		{
-			at<"content"_>(event)
-		};
-
-		ret = unquote(content.get("event_id")) == event_id;
-	});
-
-	return ret;
 }
 
 //
@@ -482,7 +276,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		receipt_log, "Implicit receipt hook for %s :%s",
+		m::receipt::log, "Implicit receipt hook for %s :%s",
 		string_view{event.event_id},
 		e.what(),
 	};
@@ -607,7 +401,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		receipt_log, "ircd.read hook on %s for federation broadcast :%s",
+		m::receipt::log, "ircd.read hook on %s for federation broadcast :%s",
 		string_view{event.event_id},
 		e.what(),
 	};

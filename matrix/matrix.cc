@@ -198,69 +198,34 @@ noexcept
 decltype(ircd::m::module_names)
 ircd::m::module_names
 {
-	"m_node",
-	"m_keys",
-	"m_event",
-	"m_fetch",
-	"m_feds",
-
-	"m_room",
-	"m_room_events",
-	"m_room_auth",
-	"m_room_head",
-	"m_room_bootstrap",
-	"m_room_join",
-	"m_room_leave",
+	"m_noop",
+	"m_breadcrumb_rooms",
+	"m_command",
+	"m_control",
+	"m_device",
+	"m_device_list_update",
+	"m_direct",
+	"m_direct_to_device",
+	"m_ignored_user_list",
+	"m_init_backfill",
+	"m_listen",
+	"m_presence",
+	"m_profile",
+	"m_receipt",
 	"m_room_aliases",
 	"m_room_canonical_alias",
 	"m_room_create",
 	"m_room_history_visibility",
 	"m_room_join_rules",
 	"m_room_member",
-	"m_room_name",
-	"m_room_third_party_invite",
 	"m_room_message",
+	"m_room_name",
 	"m_room_power_levels",
-	"m_room_server_acl",
 	"m_room_redaction",
+	"m_room_server_acl",
+	"m_room_third_party_invite",
+	"m_user_highlight_auth",
 
-	"m_user",
-	"m_user_filter",
-	"m_user_rooms",
-	"m_user_mitsein",
-	"m_user_servers",
-	"m_user_events",
-	"m_user_highlight",
-	"m_user_profile",
-	"m_user_account_data",
-	"m_user_room_account_data",
-	"m_user_room_tags",
-	"m_user_register",
-
-	"m_events",
-	"m_rooms",
-	"m_rooms_summary",
-	"m_users",
-	"m_presence",
-	"m_receipt",
-	"m_typing",
-	"m_device_list_update",
-	"m_device",
-	"m_direct",
-	"m_direct_to_device",
-	"m_breadcrumb_rooms",
-	"m_ignored_user_list",
-	"m_command",
-	"m_control",
-	"m_create",
-	"m_profile",
-	"m_noop",
-
-	"m_event_append",
-	"m_event_horizon",
-	"m_event_pretty",
-
-	"conf",
 	"net_dns",
 	"key_query",
 	"key_server",
@@ -350,7 +315,6 @@ ircd::m::module_names
 	"stats",
 	"m_vm_fetch",
 	"m_vm",
-	"m_init_backfill",
 	"m_listen",
 };
 
@@ -453,7 +417,7 @@ ircd::m::self::host(const string_view &other)
 	// port() is 0 when the origin has no port (and implies 8448)
 	const auto port
 	{
-		me.user_id.port()
+		net::port(hostport(origin))
 	};
 
 	// If my_host has a port number, then the argument must also have the
@@ -478,7 +442,7 @@ ircd::m::self::host(const string_view &other)
 ircd::string_view
 ircd::m::self::host()
 {
-	return me.user_id.host();
+	return m::self::origin;
 }
 
 //
@@ -525,7 +489,7 @@ try
 	// inits of m::self::globals. Calling the inits directly from
 	// here makes the module dependent on libircd and unloadable.
 	assert(ircd::run::level == run::level::START);
-	mods::imports.emplace("m_keys"s, "m_keys"s);
+	m::self::init::keys();
 }
 catch(const std::exception &e)
 {
@@ -1052,33 +1016,6 @@ ircd::m::app::exists(const string_view &id)
 	};
 
 	return call(id);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// m/feds.h
-//
-
-ircd::m::feds::execute::execute(const opts &o,
-                                const closure &c)
-:execute
-{
-	vector_view<const opts>{&o, 1}, c
-}
-{
-}
-
-ircd::m::feds::execute::execute(const vector_view<const opts> &o,
-                                const closure &c)
-{
-	using prototype = bool (const vector_view<const opts> &, const closure &);
-
-	static mods::import<prototype> call
-	{
-		"m_feds", "ircd::m::feds::execute"
-	};
-
-	call(o, c);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1741,19 +1678,6 @@ ircd::m::presence::set(const user &user,
 	});
 }
 
-ircd::m::event::id::buf
-ircd::m::presence::set(const presence &object)
-{
-	using prototype = event::id::buf (const presence &);
-
-	static mods::import<prototype> function
-	{
-		"m_presence", "ircd::m::presence::set"
-	};
-
-	return function(object);
-}
-
 void
 ircd::m::presence::get(const user &user,
                        const closure &closure)
@@ -1784,22 +1708,6 @@ ircd::m::presence::get(std::nothrow_t,
 	return get(std::nothrow, user, reclosure, &fopts);
 }
 
-bool
-ircd::m::presence::get(std::nothrow_t,
-                       const user &user,
-                       const closure_event &closure,
-                       const event::fetch::opts *const &opts)
-{
-	using prototype = bool (std::nothrow_t, const m::user &, const closure_event &, const event::fetch::opts *const &);
-
-	static mods::import<prototype> function
-	{
-		"m_presence", "ircd::m::presence::get"
-	};
-
-	return function(std::nothrow, user, closure, opts);
-}
-
 ircd::m::event::idx
 ircd::m::presence::get(const user &user)
 {
@@ -1817,110 +1725,10 @@ ircd::m::presence::get(const user &user)
 	return ret;
 }
 
-ircd::m::event::idx
-ircd::m::presence::get(std::nothrow_t,
-                       const user &user)
-{
-	using prototype = event::idx (std::nothrow_t, const m::user &);
-
-	static mods::import<prototype> function
-	{
-		"m_presence", "ircd::m::presence::get"
-	};
-
-	return function(std::nothrow, user);
-}
-
-bool
-ircd::m::presence::valid_state(const string_view &state)
-{
-	using prototype = bool (const string_view &);
-
-	static mods::import<prototype> function
-	{
-		"m_presence", "ircd::m::presence::valid_state"
-	};
-
-	return function(state);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // m/device.h
 //
-
-bool
-ircd::m::device::set(const m::user &user,
-                     const device &device_)
-{
-	using prototype = bool (const m::user &, const device &);
-
-	static mods::import<prototype> function
-	{
-		"m_device", "ircd::m::device::set"
-	};
-
-	return function(user, device_);
-}
-
-bool
-ircd::m::device::set(const m::user &user,
-                     const string_view &id,
-                     const string_view &prop,
-                     const string_view &val)
-{
-	using prototype = bool (const m::user &, const string_view &, const string_view &, const string_view &);
-
-	static mods::import<prototype> function
-	{
-		"m_device", "ircd::m::device::set"
-	};
-
-	return function(user, id, prop, val);
-}
-
-bool
-ircd::m::device::del(const m::user &user,
-                     const string_view &id)
-{
-	using prototype = bool (const m::user &, const string_view &);
-
-	static mods::import<prototype> function
-	{
-		"m_device", "ircd::m::device::del"
-	};
-
-	return function(user, id);
-}
-
-bool
-ircd::m::device::has(const m::user &user,
-                     const string_view &id)
-{
-	using prototype = bool (const m::user &, const string_view &id);
-
-	static mods::import<prototype> function
-	{
-		"m_device", "ircd::m::device::has"
-	};
-
-	return function(user, id);
-}
-
-bool
-ircd::m::device::has(const m::user &user,
-                     const string_view &id,
-                     const string_view &prop)
-{
-	using prototype = bool (const m::user &, const string_view &id, const string_view &prop);
-
-	static mods::import<prototype> function
-	{
-		"m_device", "ircd::m::device::has"
-	};
-
-	return function(user, id, prop);
-}
 
 bool
 ircd::m::device::get(const m::user &user,
@@ -1943,56 +1751,6 @@ ircd::m::device::get(const m::user &user,
 		};
 
 	return ret;
-}
-
-bool
-ircd::m::device::get(std::nothrow_t,
-                     const m::user &user,
-                     const string_view &id,
-                     const string_view &prop,
-                     const closure &c)
-{
-	using prototype = bool (std::nothrow_t,
-	                        const m::user &,
-	                        const string_view &,
-	                        const string_view &,
-	                        const closure &);
-
-	static mods::import<prototype> function
-	{
-		"m_device", "ircd::m::device::get"
-	};
-
-	return function(std::nothrow, user, id, prop, c);
-}
-
-bool
-ircd::m::device::for_each(const m::user &user,
-                          const string_view &id,
-                          const closure_bool &c)
-{
-	using prototype = bool (const m::user &, const string_view &id, const closure_bool &);
-
-	static mods::import<prototype> function
-	{
-		"m_device", "ircd::m::device::for_each"
-	};
-
-	return function(user, id, c);
-}
-
-bool
-ircd::m::device::for_each(const m::user &user,
-                          const closure_bool &c)
-{
-	using prototype = bool (const m::user &, const closure_bool &);
-
-	static mods::import<prototype> function
-	{
-		"m_device", "ircd::m::device::for_each"
-	};
-
-	return function(user, c);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2035,15 +1793,7 @@ ircd::m::node::key(const string_view &key_id,
                    const key_closure &closure)
 const
 {
-	using prototype = void (const string_view &, const string_view &, const keys::closure &);
-
-	//TODO: Remove this import once this callsite is outside of libircd.
-	static mods::import<prototype> call
-	{
-		"m_keys", "ircd::m::keys::get"
-	};
-
-	call(node_id, key_id, [&closure, &key_id]
+	m::keys::get(node_id, key_id, [&closure, &key_id]
 	(const json::object &keys)
 	{
 		const json::object &vks

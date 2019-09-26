@@ -313,48 +313,6 @@ ircd::m::create(const id::room &room_id,
 }
 
 ircd::m::event::id::buf
-ircd::m::join(const id::room_alias &room_alias,
-              const id::user &user_id)
-{
-	using prototype = event::id::buf (const id::room_alias &, const id::user &);
-
-	static mods::import<prototype> function
-	{
-		"m_room_join", "ircd::m::join"
-	};
-
-	return function(room_alias, user_id);
-}
-
-ircd::m::event::id::buf
-ircd::m::join(const room &room,
-              const id::user &user_id)
-{
-	using prototype = event::id::buf (const m::room &, const id::user &);
-
-	static mods::import<prototype> function
-	{
-		"m_room_join", "ircd::m::join"
-	};
-
-	return function(room, user_id);
-}
-
-ircd::m::event::id::buf
-ircd::m::leave(const room &room,
-               const id::user &user_id)
-{
-	using prototype = event::id::buf (const m::room &, const id::user &);
-
-	static mods::import<prototype> function
-	{
-		"m_room_leave", "ircd::m::leave"
-	};
-
-	return function(room, user_id);
-}
-
-ircd::m::event::id::buf
 ircd::m::invite(const room &room,
                 const id::user &target,
                 const id::user &sender)
@@ -3548,51 +3506,9 @@ const
 	return for_each(room, server, closure);
 }
 
-bool
-ircd::m::room::aliases::for_each(const m::room &room,
-                                 const string_view &server,
-                                 const closure_bool &closure)
-{
-	using prototype = bool (const m::room &, const string_view &, const closure_bool &);
-
-	static mods::import<prototype> call
-	{
-		"m_room_aliases", "ircd::m::room::aliases::for_each"
-	};
-
-	return call(room, server, closure);
-}
-
 //
 // room::aliases::cache
 //
-
-bool
-ircd::m::room::aliases::cache::del(const alias &a)
-{
-	using prototype = bool (const alias &);
-
-	static mods::import<prototype> call
-	{
-		"m_room_aliases", "ircd::m::room::aliases::cache::del"
-	};
-
-	return call(a);
-}
-
-bool
-ircd::m::room::aliases::cache::set(const alias &a,
-                                   const id &i)
-{
-	using prototype = bool (const alias &, const id &);
-
-	static mods::import<prototype> call
-	{
-		"m_room_aliases", "ircd::m::room::aliases::cache::set"
-	};
-
-	return call(a, i);
-}
 
 bool
 ircd::m::room::aliases::cache::fetch(std::nothrow_t,
@@ -3615,20 +3531,6 @@ catch(const std::exception &e)
 	};
 
 	return false;
-}
-
-void
-ircd::m::room::aliases::cache::fetch(const alias &a,
-                                     const net::hostport &hp)
-{
-	using prototype = void (const alias &, const net::hostport &);
-
-	static mods::import<prototype> call
-	{
-		"m_room_aliases", "ircd::m::room::aliases::cache::fetch"
-	};
-
-	return call(a, hp);
 }
 
 ircd::m::room::id::buf
@@ -3671,51 +3573,9 @@ ircd::m::room::aliases::cache::get(const alias &a,
 }
 
 bool
-ircd::m::room::aliases::cache::get(std::nothrow_t,
-                                   const alias &a,
-                                   const id::closure &c)
-{
-	using prototype = bool (std::nothrow_t, const alias &, const id::closure &);
-
-	static mods::import<prototype> call
-	{
-		"m_room_aliases", "ircd::m::room::aliases::cache::get"
-	};
-
-	return call(std::nothrow, a, c);
-}
-
-bool
-ircd::m::room::aliases::cache::has(const alias &a)
-{
-	using prototype = bool (const alias &);
-
-	static mods::import<prototype> call
-	{
-		"m_room_aliases", "ircd::m::room::aliases::cache::has"
-	};
-
-	return call(a);
-}
-
-bool
 ircd::m::room::aliases::cache::for_each(const closure_bool &c)
 {
 	return for_each(string_view{}, c);
-}
-
-bool
-ircd::m::room::aliases::cache::for_each(const string_view &s,
-                                        const closure_bool &c)
-{
-	using prototype = bool (const string_view &, const closure_bool &);
-
-	static mods::import<prototype> call
-	{
-		"m_room_aliases", "ircd::m::room::aliases::cache::for_each"
-	};
-
-	return call(s, c);
 }
 
 //

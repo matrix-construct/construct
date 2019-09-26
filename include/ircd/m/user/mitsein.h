@@ -32,5 +32,7 @@ struct ircd::m::user::mitsein
 	// Existential convenience (does `user` and `other` share any common room).
 	bool has(const m::user &other, const string_view &membership = {}) const;
 
-	mitsein(const m::user &user);
+	mitsein(const m::user &user)
+	:user{user}
+	{}
 };
