@@ -59,3 +59,102 @@ ircd::m::event::horizon::rebuild()
 	txn();
 	return ret;
 }
+
+bool
+ircd::m::event::horizon::has(const event::id &event_id)
+{
+	char buf[m::dbs::EVENT_HORIZON_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		m::dbs::event_horizon_key(buf, event_id, 0UL)
+	};
+
+	auto it
+	{
+		m::dbs::event_horizon.begin(key)
+	};
+
+	return bool(it);
+}
+
+size_t
+ircd::m::event::horizon::count()
+const
+{
+	size_t ret(0);
+	for_each([&ret]
+	(const auto &, const auto &)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::event::horizon::has(const event::idx &event_idx)
+const
+{
+	return !for_each([&event_idx]
+	(const auto &, const auto &_event_idx)
+	{
+		// false to break; true to continue.
+		return _event_idx == event_idx? false : true;
+	});
+}
+
+bool
+ircd::m::event::horizon::for_each(const closure_bool &closure)
+const
+{
+	if(!this->event_id)
+		return for_every(closure);
+
+	char buf[m::dbs::EVENT_HORIZON_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		m::dbs::event_horizon_key(buf, event_id, 0UL)
+	};
+
+	for(auto it(m::dbs::event_horizon.begin(key)); it; ++it)
+	{
+		const auto &event_idx
+		{
+			std::get<0>(m::dbs::event_horizon_key(it->first))
+		};
+
+		if(!closure(event_id, event_idx))
+			return false;
+	}
+
+	return true;
+}
+
+bool
+ircd::m::event::horizon::for_every(const closure_bool &closure)
+{
+	db::column &column{dbs::event_horizon};
+	for(auto it(column.begin()); it; ++it)
+	{
+		const auto &parts
+		{
+			split(it->first, "\0"_sv)
+		};
+
+		const auto &event_id
+		{
+			parts.first
+		};
+
+		const auto &event_idx
+		{
+			byte_view<event::idx>(parts.second)
+		};
+
+		if(!closure(event_id, event_idx))
+			return false;
+	}
+
+	return true;
+}
