@@ -93,10 +93,11 @@ ircd::mods::unload(mod &mod)
 	// destruction of a module. The mod ctor recorded all of the modules loaded while this
 	// module was loading so we can reverse the record and unload them here.
 	std::vector<std::shared_ptr<mods::mod>> children(mod.children.size());
-	std::transform(begin(mod.children), end(mod.children), begin(children), []
+	std::transform(begin(mod.children), end(mod.children), begin(children), [&mod]
 	(auto *const &ptr)
 	{
 		assert(ptr);
+		assert(ptr != std::addressof(mod));
 		const auto ret(shared_from(*ptr));
 		return ret.use_count() > 2? ret : std::shared_ptr<mods::mod>{};
 	});
