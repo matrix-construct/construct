@@ -14,6 +14,30 @@ namespace ircd::m
 	static room create_user_room(const user::id &, const room::id &, const json::members &contents);
 }
 
+bool
+ircd::m::exists(const user::id &user_id)
+{
+	// The way we know a user exists is testing if their room exists.
+	const m::user::room user_room
+	{
+		user_id
+	};
+
+	return m::exists(user_room);
+}
+
+bool
+ircd::m::exists(const user &user)
+{
+	return exists(user.user_id);
+}
+
+bool
+ircd::m::my(const user &user)
+{
+	return my(user.user_id);
+}
+
 ircd::m::user
 IRCD_MODULE_EXPORT
 ircd::m::create(const m::user::id &user_id,
@@ -64,6 +88,108 @@ catch(const std::exception &e)
 //
 // user::user
 //
+
+/// Generates a user-room ID into buffer; see room_id() overload.
+ircd::m::id::room::buf
+ircd::m::user::room_id()
+const
+{
+	ircd::m::id::room::buf buf;
+	return buf.assigned(room_id(buf));
+}
+
+/// This generates a room mxid for the "user's room" essentially serving as
+/// a database mechanism for this specific user. This room_id is a hash of
+/// the user's full mxid.
+///
+ircd::m::id::room
+ircd::m::user::room_id(const mutable_buffer &buf)
+const
+{
+	assert(!empty(user_id));
+	const ripemd160::buf hash
+	{
+		ripemd160{user_id}
+	};
+
+	char b58[size(hash) * 2];
+	return
+	{
+		buf, b58encode(b58, hash), my_host()
+	};
+}
+
+ircd::m::device::id::buf
+ircd::m::user::get_device_from_access_token(const string_view &token)
+{
+	const event::idx event_idx
+	{
+		user::tokens.get("ircd.access_token", token)
+	};
+
+	device::id::buf ret;
+	m::get(event_idx, "content", [&ret]
+	(const json::object &content)
+	{
+		ret = unquote(content.at("device_id"));
+	});
+
+	return ret;
+}
+
+ircd::string_view
+ircd::m::user::gen_access_token(const mutable_buffer &buf)
+{
+	static const size_t token_max{32};
+	static const auto &token_dict{rand::dict::alpha};
+
+	const mutable_buffer out
+	{
+		data(buf), std::min(token_max, size(buf))
+	};
+
+	return rand::string(token_dict, out);
+}
+
+ircd::m::event::id::buf
+ircd::m::user::activate()
+{
+	using prototype = event::id::buf (const m::user &);
+
+	static mods::import<prototype> function
+	{
+		"client_account", "activate__user"
+	};
+
+	return function(*this);
+}
+
+ircd::m::event::id::buf
+ircd::m::user::deactivate()
+{
+	using prototype = event::id::buf (const m::user &);
+
+	static mods::import<prototype> function
+	{
+		"client_account", "deactivate__user"
+	};
+
+	return function(*this);
+}
+
+bool
+ircd::m::user::is_active()
+const
+{
+	using prototype = bool (const m::user &);
+
+	static mods::import<prototype> function
+	{
+		"client_account", "is_active__user"
+	};
+
+	return function(*this);
+}
 
 ircd::m::event::id::buf
 IRCD_MODULE_EXPORT
@@ -149,4 +275,38 @@ ircd::m::gen_password_hash(const mutable_buffer &out,
 	};
 
 	return b64encode_unpadded(out, hash);
+}
+
+//
+// user::room
+//
+
+ircd::m::user::room::room(const m::user::id &user_id,
+                          const vm::copts *const &copts,
+                          const event::fetch::opts *const &fopts)
+:room
+{
+	m::user{user_id}, copts, fopts
+}
+{
+}
+
+ircd::m::user::room::room(const m::user &user,
+                          const vm::copts *const &copts,
+                          const event::fetch::opts *const &fopts)
+:user{user}
+,room_id{user.room_id()}
+{
+	static_cast<m::room &>(*this) =
+	{
+		room_id, copts, fopts
+	};
+}
+
+bool
+ircd::m::user::room::is(const room::id &room_id,
+                        const user::id &user_id)
+{
+	const user::room user_room{user_id};
+	return user_room.room_id == room_id;
 }

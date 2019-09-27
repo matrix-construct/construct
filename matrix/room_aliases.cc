@@ -111,7 +111,7 @@ const
 	return for_each(room, server, closure);
 }
 
-ebool
+bool
 IRCD_MODULE_EXPORT
 ircd::m::room::aliases::for_each(const m::room &room,
                                  const string_view &server,

@@ -41,3 +41,25 @@ ircd::m::redacted::redacted(const event::id &event_id)
     index(event_id, std::nothrow)
 }
 {}
+
+inline
+ircd::m::redacted::redacted(const event::idx &event_idx)
+:boolean
+{
+	event_idx?
+		event::refs(event_idx).has(dbs::ref::M_ROOM_REDACTION):
+		false
+}
+{
+}
+
+inline bool
+ircd::m::redacted::prefetch(const event::idx &event_idx)
+{
+	const event::refs refs
+	{
+		event_idx
+	};
+
+	return refs.prefetch(dbs::ref::M_ROOM_REDACTION);
+}

@@ -14,6 +14,12 @@ namespace ircd::m
 	extern hookfn<room::auth::hookdata &> user_highlight_auth_hook;
 }
 
+ircd::mapi::header
+IRCD_MODULE
+{
+	"Matrix @room highlight authentication"
+};
+
 decltype(ircd::m::user_highlight_auth_hook)
 ircd::m::user_highlight_auth_hook
 {

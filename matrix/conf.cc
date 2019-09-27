@@ -248,26 +248,6 @@ init_conf_item(conf::item<> &item)
 	conf_updated(event_idx);
 }
 
-static void
-handle_init_conf_items(const m::event &,
-                       m::vm::eval &eval)
-{
-	init_conf_items();
-}
-
-m::hookfn<m::vm::eval &>
-init_conf_items_hook
-{
-	handle_init_conf_items,
-	{
-		{ "_site",       "vm.effect"      },
-		{ "room_id",     "!ircd"          },
-		{ "type",        "m.room.member"  },
-		{ "membership",  "join"           },
-		{ "state_key",   "@ircd"          },
-	}
-};
-
 static m::event::id::buf
 create_conf_item(const string_view &key,
                  const conf::item<> &item)

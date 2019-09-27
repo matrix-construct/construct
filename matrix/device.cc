@@ -179,6 +179,30 @@ ircd::m::device::has(const m::user &user,
 
 bool
 IRCD_MODULE_EXPORT
+ircd::m::device::get(const m::user &user,
+                     const string_view &id,
+                     const string_view &prop,
+                     const closure &c)
+{
+	const bool ret
+	{
+		get(std::nothrow, user, id, prop, c)
+	};
+
+	if(!ret)
+		throw m::NOT_FOUND
+		{
+			"Property '%s' for device '%s' for user %s not found",
+			id,
+			prop,
+			string_view{user.user_id}
+		};
+
+	return ret;
+}
+
+bool
+IRCD_MODULE_EXPORT
 ircd::m::device::get(std::nothrow_t,
                      const m::user &user,
                      const string_view &id,

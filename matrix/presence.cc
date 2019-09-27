@@ -21,6 +21,91 @@ ircd::m::presence_valid_states
 	"unavailable",
 };
 
+IRCD_MODULE_EXPORT
+ircd::m::presence::presence(const user &user,
+                            const mutable_buffer &buf)
+:edu::m_presence{[&user, &buf]
+{
+	json::object ret;
+	get(user, [&ret, &buf]
+	(const json::object &content)
+	{
+		ret =
+		{
+			data(buf), copy(buf, string_view{content})
+		};
+	});
+
+	return ret;
+}()}
+{
+}
+
+ircd::m::event::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::presence::set(const user &user,
+                       const string_view &presence,
+                       const string_view &status_msg)
+{
+	return set(m::presence
+	{
+		{ "user_id",           user.user_id         },
+		{ "presence",          presence             },
+		{ "status_msg",        status_msg           },
+		{ "currently_active",  presence == "online" },
+	});
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::presence::get(const user &user,
+                       const closure &closure)
+{
+	if(!get(std::nothrow, user, closure))
+		throw m::NOT_FOUND
+		{
+			"No presence found for %s", string_view{user.user_id}
+		};
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::presence::get(std::nothrow_t,
+                       const user &user,
+                       const closure &closure)
+{
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include {"content"}
+	};
+
+	const auto reclosure{[&closure]
+	(const m::event &event)
+	{
+		closure(json::get<"content"_>(event));
+	}};
+
+	return get(std::nothrow, user, reclosure, &fopts);
+}
+
+ircd::m::event::idx
+IRCD_MODULE_EXPORT
+ircd::m::presence::get(const user &user)
+{
+	const event::idx ret
+	{
+		get(std::nothrow, user)
+	};
+
+	if(!ret)
+		throw m::NOT_FOUND
+		{
+			"No presence found for %s", string_view{user.user_id}
+		};
+
+	return ret;
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::presence::get(const std::nothrow_t,

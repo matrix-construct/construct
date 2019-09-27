@@ -1663,6 +1663,11 @@ console_cmd__conf(opt &out, const string_view &line)
 	return console_cmd__conf__list(out, line);
 }
 
+extern "C" ircd::m::event::id::buf
+set_conf_item(const ircd::m::user::id &,
+	          const ircd::string_view &key,
+	          const ircd::string_view &val);
+
 bool
 console_cmd__conf__set(opt &out, const string_view &line)
 {
@@ -1679,15 +1684,6 @@ console_cmd__conf__set(opt &out, const string_view &line)
 	const auto &val
 	{
 		tokens_after(line, ' ', 0)
-	};
-
-	using prototype = m::event::id::buf (const m::user::id &,
-	                                     const string_view &key,
-	                                     const string_view &val);
-
-	static mods::import<prototype> set_conf_item
-	{
-		"conf", "set_conf_item"
 	};
 
 	const auto event_id

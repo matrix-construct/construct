@@ -46,8 +46,8 @@ namespace ircd::m::fetch
 	static size_t request_cleanup();
 	static void request_worker();
 
-	static void init();
-	static void fini();
+	void init();
+	void fini();
 }
 
 decltype(ircd::m::fetch::log)
