@@ -1285,3 +1285,1258 @@ const
 
 	return true;
 }
+
+//
+// room::members
+//
+
+bool
+ircd::m::room::members::empty()
+const
+{
+	return empty(string_view{}, string_view{});
+}
+
+bool
+ircd::m::room::members::empty(const string_view &membership)
+const
+{
+	return empty(membership, string_view{});
+}
+
+bool
+ircd::m::room::members::empty(const string_view &membership,
+                              const string_view &host)
+const
+{
+	return for_each(membership, host, closure{[]
+	(const user::id &user_id)
+	{
+		return false;
+	}});
+}
+
+size_t
+ircd::m::room::members::count()
+const
+{
+	return count(string_view{}, string_view{});
+}
+
+size_t
+ircd::m::room::members::count(const string_view &membership)
+const
+{
+	return count(membership, string_view{});
+}
+
+size_t
+ircd::m::room::members::count(const string_view &membership,
+                              const string_view &host)
+const
+{
+	size_t ret{0};
+	for_each(membership, host, closure{[&ret]
+	(const user::id &user_id)
+	{
+		++ret;
+		return true;
+	}});
+
+	return ret;
+}
+
+bool
+ircd::m::room::members::for_each(const closure &closure)
+const
+{
+	return for_each(string_view{}, closure);
+}
+
+bool
+ircd::m::room::members::for_each(const closure_idx &closure)
+const
+{
+	return for_each(string_view{}, closure);
+}
+
+bool
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const closure &closure)
+const
+{
+	return for_each(membership, string_view{}, closure);
+}
+
+bool
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const closure_idx &closure)
+const
+{
+	return for_each(membership, string_view{}, closure);
+}
+
+bool
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const string_view &host,
+                                 const closure &closure)
+const
+{
+	const m::room::state state
+	{
+		room
+	};
+
+	const bool present
+	{
+		state.present()
+	};
+
+	// joined members optimization. Only possible when seeking
+	// membership="join" on the present state of the room.
+	if(membership == "join" && present)
+		return for_each_join_present(host, closure);
+
+	return this->for_each(membership, host, [&closure]
+	(const auto &user_id, const auto &event_idx)
+	{
+		return closure(user_id);
+	});
+}
+
+bool
+ircd::m::room::members::for_each(const string_view &membership,
+                                 const string_view &host,
+                                 const closure_idx &closure)
+const
+{
+	const m::room::state state
+	{
+		room
+	};
+
+	const bool present
+	{
+		state.present()
+	};
+
+	// joined members optimization. Only possible when seeking
+	// membership="join" on the present state of the room.
+	if(membership == "join" && present)
+		return for_each_join_present(host, [&closure, &state]
+		(const id::user &user_id)
+		{
+			const auto &event_idx
+			{
+				state.get(std::nothrow, "m.room.member", user_id)
+			};
+
+			if(unlikely(!event_idx))
+			{
+				log::error
+				{
+					log, "Failed member:%s event_idx:%lu in room_joined of %s",
+					string_view{user_id},
+					event_idx,
+					string_view{state.room_id},
+				};
+
+				return true;
+			}
+
+			if(!closure(user_id, event_idx))
+				return false;
+
+			return true;
+		});
+
+	return state.for_each("m.room.member", [this, &host, &membership, &closure]
+	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
+	{
+		const m::user::id &user_id
+		{
+			state_key
+		};
+
+		if(host && user_id.host() != host)
+			return true;
+
+		return !membership || m::membership(event_idx, membership)?
+			closure(user_id, event_idx):
+			true;
+	});
+}
+
+bool
+ircd::m::room::members::for_each_join_present(const string_view &host,
+                                              const closure &closure)
+const
+{
+	db::domain &index
+	{
+		dbs::room_joined
+	};
+
+	char keybuf[dbs::ROOM_JOINED_KEY_MAX_SIZE];
+	const string_view &key
+	{
+		dbs::room_joined_key(keybuf, room.room_id, host)
+	};
+
+	auto it
+	{
+		index.begin(key)
+	};
+
+	for(; bool(it); ++it)
+	{
+		const auto &[origin, user_id]
+		{
+			dbs::room_joined_key(it->first)
+		};
+
+		if(host && origin != host)
+			break;
+
+		if(!closure(user_id))
+			return false;
+	}
+
+	return true;
+}
+
+//
+// room::origins
+//
+
+ircd::string_view
+ircd::m::room::origins::random(const mutable_buffer &buf,
+                               const closure_bool &proffer)
+const
+{
+	string_view ret;
+	const auto closure{[&buf, &proffer, &ret]
+	(const string_view &origin)
+	{
+		ret = { data(buf), copy(buf, origin) };
+	}};
+
+	random(closure, proffer);
+	return ret;
+}
+
+bool
+ircd::m::room::origins::random(const closure &view,
+                               const closure_bool &proffer)
+const
+{
+	return random(*this, view, proffer);
+}
+
+bool
+ircd::m::room::origins::random(const origins &origins,
+                               const closure &view,
+                               const closure_bool &proffer)
+{
+	bool ret{false};
+	const size_t max
+	{
+		origins.count()
+	};
+
+	if(unlikely(!max))
+		return ret;
+
+	auto select
+	{
+		ssize_t(rand::integer(0, max - 1))
+	};
+
+	const closure_bool closure{[&proffer, &view, &select]
+	(const string_view &origin)
+	{
+		if(select-- > 0)
+			return true;
+
+		// Test if this random selection is "ok" e.g. the callback allows the
+		// user to test a blacklist for this origin. Skip to next if not.
+		if(proffer && !proffer(origin))
+		{
+			++select;
+			return true;
+		}
+
+		view(origin);
+		return false;
+	}};
+
+	const auto iteration{[&origins, &closure, &ret]
+	{
+		ret = !origins.for_each(closure);
+	}};
+
+	// Attempt select on first iteration
+	iteration();
+
+	// If nothing was OK between the random int and the end of the iteration
+	// then start again and pick the first OK.
+	if(!ret && select >= 0)
+		iteration();
+
+	return ret;
+}
+
+bool
+ircd::m::room::origins::empty()
+const
+{
+	return for_each(closure_bool{[]
+	(const string_view &)
+	{
+		// return false to break and return false.
+		return false;
+	}});
+}
+
+size_t
+ircd::m::room::origins::count()
+const
+{
+	size_t ret{0};
+	for_each([&ret](const string_view &)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::room::origins::count_error()
+const
+{
+	size_t ret{0};
+	for_each([&ret](const string_view &server)
+	{
+		ret += !ircd::empty(server::errmsg(server));
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::room::origins::count_online()
+const
+{
+	ssize_t ret
+	{
+		0 - ssize_t(count_error())
+	};
+
+	for_each([&ret](const string_view &hostport)
+	{
+		ret += bool(server::exists(hostport));
+	});
+
+	assert(ret >= 0L);
+	return std::max(ret, 0L);
+}
+
+/// Tests if argument is the only origin in the room.
+/// If a zero or more than one origins exist, returns false. If the only origin
+/// in the room is the argument origin, returns true.
+bool
+ircd::m::room::origins::only(const string_view &origin)
+const
+{
+	ushort ret{2};
+	for_each(closure_bool{[&ret, &origin]
+	(const string_view &origin_) -> bool
+	{
+		if(origin == origin_)
+			ret = 1;
+		else
+			ret = 0;
+
+		return ret;
+	}});
+
+	return ret == 1;
+}
+
+bool
+ircd::m::room::origins::has(const string_view &origin)
+const
+{
+	db::domain &index
+	{
+		dbs::room_joined
+	};
+
+	char querybuf[dbs::ROOM_JOINED_KEY_MAX_SIZE];
+	const auto query
+	{
+		dbs::room_joined_key(querybuf, room.room_id, origin)
+	};
+
+	auto it
+	{
+		index.begin(query)
+	};
+
+	if(!it)
+		return false;
+
+	const string_view &key
+	{
+		lstrip(it->first, "\0"_sv)
+	};
+
+	const string_view &key_origin
+	{
+		std::get<0>(dbs::room_joined_key(key))
+	};
+
+	return key_origin == origin;
+}
+
+void
+ircd::m::room::origins::for_each(const closure &view)
+const
+{
+	for_each(closure_bool{[&view]
+	(const string_view &origin)
+	{
+		view(origin);
+		return true;
+	}});
+}
+
+bool
+ircd::m::room::origins::for_each(const closure_bool &view)
+const
+{
+	string_view last;
+	char lastbuf[rfc1035::NAME_BUFSIZE];
+	return _for_each(*this, [&last, &lastbuf, &view]
+	(const string_view &key)
+	{
+		const string_view &origin
+		{
+			std::get<0>(dbs::room_joined_key(key))
+		};
+
+		if(origin == last)
+			return true;
+
+		if(!view(origin))
+			return false;
+
+		last = { lastbuf, copy(lastbuf, origin) };
+		return true;
+	});
+}
+
+bool
+ircd::m::room::origins::_for_each(const origins &origins,
+                                  const closure_bool &view)
+{
+	db::domain &index
+	{
+		dbs::room_joined
+	};
+
+	auto it
+	{
+		index.begin(origins.room.room_id)
+	};
+
+	for(; bool(it); ++it)
+	{
+		const string_view &key
+		{
+			lstrip(it->first, "\0"_sv)
+		};
+
+		if(!view(key))
+			return false;
+	}
+
+	return true;
+}
+
+//
+// room::aliases
+//
+
+size_t
+ircd::m::room::aliases::count()
+const
+{
+	return count(string_view{});
+}
+
+size_t
+ircd::m::room::aliases::count(const string_view &server)
+const
+{
+	size_t ret(0);
+	for_each(server, [&ret](const auto &a)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::room::aliases::has(const alias &alias)
+const
+{
+	return !for_each(alias.host(), [&alias]
+	(const id::room_alias &a)
+	{
+		assert(a.host() == alias.host());
+		return a == alias? false : true; // false to break on found
+	});
+}
+
+bool
+ircd::m::room::aliases::for_each(const closure_bool &closure)
+const
+{
+	const room::state state
+	{
+		room
+	};
+
+	return state.for_each("m.room.aliases", [this, &closure]
+	(const string_view &type, const string_view &state_key, const event::idx &)
+	{
+		return for_each(state_key, closure);
+	});
+}
+
+bool
+ircd::m::room::aliases::for_each(const string_view &server,
+                                 const closure_bool &closure)
+const
+{
+	if(!server)
+		return for_each(closure);
+
+	return for_each(room, server, closure);
+}
+
+//
+// room::aliases::cache
+//
+
+bool
+ircd::m::room::aliases::cache::fetch(std::nothrow_t,
+                                     const alias &a,
+                                     const net::hostport &hp)
+try
+{
+	fetch(a, hp);
+	return true;
+}
+catch(const std::exception &e)
+{
+	thread_local char buf[384];
+	log::error
+	{
+		log, "Failed to fetch room_id for %s from %s :%s",
+		string_view{a},
+		string(buf, hp),
+		e.what(),
+	};
+
+	return false;
+}
+
+ircd::m::room::id::buf
+ircd::m::room::aliases::cache::get(const alias &a)
+{
+	id::buf ret;
+	get(a, [&ret]
+	(const id &room_id)
+	{
+		ret = room_id;
+	});
+
+	return ret;
+}
+
+ircd::m::room::id::buf
+ircd::m::room::aliases::cache::get(std::nothrow_t,
+                                   const alias &a)
+{
+	id::buf ret;
+	get(std::nothrow, a, [&ret]
+	(const id &room_id)
+	{
+		ret = room_id;
+	});
+
+	return ret;
+}
+
+void
+ircd::m::room::aliases::cache::get(const alias &a,
+                                   const id::closure &c)
+{
+	if(!get(std::nothrow, a, c))
+		throw m::NOT_FOUND
+		{
+			"Cannot find room_id for %s",
+			string_view{a}
+		};
+}
+
+bool
+ircd::m::room::aliases::cache::for_each(const closure_bool &c)
+{
+	return for_each(string_view{}, c);
+}
+
+//
+// room::power
+//
+
+decltype(ircd::m::room::power::default_creator_level)
+ircd::m::room::power::default_creator_level
+{
+	100
+};
+
+decltype(ircd::m::room::power::default_power_level)
+ircd::m::room::power::default_power_level
+{
+	50
+};
+
+decltype(ircd::m::room::power::default_event_level)
+ircd::m::room::power::default_event_level
+{
+	0
+};
+
+decltype(ircd::m::room::power::default_user_level)
+ircd::m::room::power::default_user_level
+{
+	0
+};
+
+ircd::json::object
+ircd::m::room::power::default_content(const mutable_buffer &buf,
+                                      const m::user::id &creator)
+{
+	return compose_content(buf, [&creator]
+	(const string_view &key, json::stack::object &object)
+	{
+		if(key != "users")
+			return;
+
+		assert(default_creator_level == 100);
+		json::stack::member
+		{
+			object, creator, json::value(default_creator_level)
+		};
+	});
+}
+
+ircd::json::object
+ircd::m::room::power::compose_content(const mutable_buffer &buf,
+                                      const compose_closure &closure)
+{
+	json::stack out{buf};
+	json::stack::object content{out};
+
+	assert(default_power_level == 50);
+	json::stack::member
+	{
+		content, "ban", json::value(default_power_level)
+	};
+
+	{
+		json::stack::object events
+		{
+			content, "events"
+		};
+
+		closure("events", events);
+	}
+
+	assert(default_event_level == 0);
+	json::stack::member
+	{
+		content, "events_default", json::value(default_event_level)
+	};
+
+	json::stack::member
+	{
+		content, "invite", json::value(default_power_level)
+	};
+
+	json::stack::member
+	{
+		content, "kick", json::value(default_power_level)
+	};
+
+	{
+		json::stack::object notifications
+		{
+			content, "notifications"
+		};
+
+		json::stack::member
+		{
+			notifications, "room", json::value(default_power_level)
+		};
+
+		closure("notifications", notifications);
+	}
+
+	json::stack::member
+	{
+		content, "redact", json::value(default_power_level)
+	};
+
+	json::stack::member
+	{
+		content, "state_default", json::value(default_power_level)
+	};
+
+	{
+		json::stack::object users
+		{
+			content, "users"
+		};
+
+		closure("users", users);
+	}
+
+	assert(default_user_level == 0);
+	json::stack::member
+	{
+		content, "users_default", json::value(default_user_level)
+	};
+
+	content.~object();
+	return json::object{out.completed()};
+}
+
+//
+// room::power::power
+//
+
+ircd::m::room::power::power(const m::room &room)
+:power
+{
+	room, room.get(std::nothrow, "m.room.power_levels", "")
+}
+{
+}
+
+ircd::m::room::power::power(const m::room &room,
+                            const event::idx &power_event_idx)
+:room
+{
+	room
+}
+,power_event_idx
+{
+	power_event_idx
+}
+{
+}
+
+ircd::m::room::power::power(const m::event &power_event,
+                            const m::event &create_event)
+:power
+{
+	power_event, m::user::id(unquote(json::get<"content"_>(create_event).get("creator")))
+}
+{
+}
+
+ircd::m::room::power::power(const m::event &power_event,
+                            const m::user::id &room_creator_id)
+:power
+{
+	json::get<"content"_>(power_event), room_creator_id
+}
+{
+}
+
+ircd::m::room::power::power(const json::object &power_event_content,
+                            const m::user::id &room_creator_id)
+:power_event_content
+{
+	power_event_content
+}
+,room_creator_id
+{
+	room_creator_id
+}
+{
+}
+
+/// "all who attain great power and riches make use of either force or fraud"
+///
+/// Returns bool for "allow" or "deny"
+///
+/// Provide the user invoking the power. The return value indicates whether
+/// they have the power.
+///
+/// Provide the property/event_type. There are two usages here: 1. This is a
+/// string corresponding to one of the spec top-level properties like "ban"
+/// and "redact". In this case, the type and state_key parameters to this
+/// function are not used. 2. This string is empty or "events" in which case
+/// the type parameter is used to fetch the power threshold for that type.
+/// For state events of a type, the state_key must be provided for inspection
+/// here as well.
+bool
+ircd::m::room::power::operator()(const m::user::id &user_id,
+                                 const string_view &prop,
+                                 const string_view &type,
+                                 const string_view &state_key)
+const
+{
+	const auto &user_level
+	{
+		level_user(user_id)
+	};
+
+	const auto &required_level
+	{
+		empty(prop) || prop == "events"?
+			level_event(type, state_key):
+			level(prop)
+	};
+
+	return user_level >= required_level;
+}
+
+int64_t
+ircd::m::room::power::level_user(const m::user::id &user_id)
+const try
+{
+	int64_t ret
+	{
+		default_user_level
+	};
+
+	const auto closure{[&user_id, &ret]
+	(const json::object &content)
+	{
+		const auto users_default
+		{
+			content.get<int64_t>("users_default", default_user_level)
+		};
+
+		const json::object &users
+		{
+			content.get("users")
+		};
+
+		ret = users.get<int64_t>(user_id, users_default);
+	}};
+
+	const bool has_power_levels_event
+	{
+		view(closure)
+	};
+
+	if(!has_power_levels_event)
+	{
+		if(room_creator_id && user_id == room_creator_id)
+			ret = default_creator_level;
+
+		if(room.room_id && creator(room, user_id))
+			ret = default_creator_level;
+	}
+
+	return ret;
+}
+catch(const json::error &e)
+{
+	return default_user_level;
+}
+
+int64_t
+ircd::m::room::power::level_event(const string_view &type)
+const try
+{
+	int64_t ret
+	{
+		default_event_level
+	};
+
+	const auto closure{[&type, &ret]
+	(const json::object &content)
+	{
+		const auto &events_default
+		{
+			content.get<int64_t>("events_default", default_event_level)
+		};
+
+		const json::object &events
+		{
+			content.get("events")
+		};
+
+		ret = events.get<int64_t>(type, events_default);
+	}};
+
+	const bool has_power_levels_event
+	{
+		view(closure)
+	};
+
+	return ret;
+}
+catch(const json::error &e)
+{
+	return default_event_level;
+}
+
+int64_t
+ircd::m::room::power::level_event(const string_view &type,
+                                  const string_view &state_key)
+const try
+{
+	if(!defined(state_key))
+		return level_event(type);
+
+	int64_t ret
+	{
+		default_power_level
+	};
+
+	const auto closure{[&type, &ret]
+	(const json::object &content)
+	{
+		const auto &state_default
+		{
+			content.get<int64_t>("state_default", default_power_level)
+		};
+
+		const json::object &events
+		{
+			content.get("events")
+		};
+
+		ret = events.get<int64_t>(type, state_default);
+	}};
+
+	const bool has_power_levels_event
+	{
+		view(closure)
+	};
+
+	return ret;
+}
+catch(const json::error &e)
+{
+	return default_power_level;
+}
+
+int64_t
+ircd::m::room::power::level(const string_view &prop)
+const try
+{
+	int64_t ret
+	{
+		default_power_level
+	};
+
+	view([&prop, &ret]
+	(const json::object &content)
+	{
+		ret = content.at<int64_t>(prop);
+	});
+
+	return ret;
+}
+catch(const json::error &e)
+{
+	return default_power_level;
+}
+
+size_t
+ircd::m::room::power::count_levels()
+const
+{
+	size_t ret{0};
+	for_each([&ret]
+	(const string_view &, const int64_t &)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::room::power::count_collections()
+const
+{
+	size_t ret{0};
+	view([&ret]
+	(const json::object &content)
+	{
+		for(const auto &member : content)
+			ret += json::type(member.second) == json::OBJECT;
+	});
+
+	return ret;
+}
+
+size_t
+ircd::m::room::power::count(const string_view &prop)
+const
+{
+	size_t ret{0};
+	for_each(prop, [&ret]
+	(const string_view &, const int64_t &)
+	{
+		++ret;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::room::power::has_event(const string_view &type)
+const try
+{
+	bool ret{false};
+	view([&type, &ret]
+	(const json::object &content)
+	{
+		const json::object &events
+		{
+			content.at("events")
+		};
+
+		const string_view &level
+		{
+			unquote(events.at(type))
+		};
+
+		ret = json::type(level) == json::NUMBER;
+	});
+
+	return ret;
+}
+catch(const json::error &)
+{
+	return false;
+}
+
+bool
+ircd::m::room::power::has_user(const m::user::id &user_id)
+const try
+{
+	bool ret{false};
+	view([&user_id, &ret]
+	(const json::object &content)
+	{
+		const json::object &users
+		{
+			content.at("users")
+		};
+
+		const string_view &level
+		{
+			unquote(users.at(user_id))
+		};
+
+		ret = json::type(level) == json::NUMBER;
+	});
+
+	return ret;
+}
+catch(const json::error &)
+{
+	return false;
+}
+
+bool
+ircd::m::room::power::has_collection(const string_view &prop)
+const
+{
+	bool ret{false};
+	view([&prop, &ret]
+	(const json::object &content)
+	{
+		const auto &value{content.get(prop)};
+		if(value && json::type(value) == json::OBJECT)
+			ret = true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::room::power::has_level(const string_view &prop)
+const
+{
+	bool ret{false};
+	view([&prop, &ret]
+	(const json::object &content)
+	{
+		const auto &value(unquote(content.get(prop)));
+		if(value && json::type(value) == json::NUMBER)
+			ret = true;
+	});
+
+	return ret;
+}
+
+void
+ircd::m::room::power::for_each(const closure &closure)
+const
+{
+	for_each(string_view{}, closure);
+}
+
+bool
+ircd::m::room::power::for_each(const closure_bool &closure)
+const
+{
+	return for_each(string_view{}, closure);
+}
+
+void
+ircd::m::room::power::for_each(const string_view &prop,
+                               const closure &closure)
+const
+{
+	for_each(prop, closure_bool{[&closure]
+	(const string_view &key, const int64_t &level)
+	{
+		closure(key, level);
+		return true;
+	}});
+}
+
+bool
+ircd::m::room::power::for_each(const string_view &prop,
+                               const closure_bool &closure)
+const
+{
+	bool ret{true};
+	view([&prop, &closure, &ret]
+	(const json::object &content)
+	{
+		const json::object &collection
+		{
+			// This little cmov gimmick sets collection to be the outer object
+			// itself if no property was given, allowing us to reuse this func
+			// for all iterations of key -> level mappings.
+			prop? json::object{content.get(prop)} : content
+		};
+
+		const string_view _collection{collection};
+		if(prop && (!_collection || json::type(_collection) != json::OBJECT))
+			return;
+
+		for(auto it(begin(collection)); it != end(collection) && ret; ++it)
+		{
+			const auto &member(*it);
+			if(json::type(unquote(member.second)) != json::NUMBER)
+				continue;
+
+			const auto &key
+			{
+				unquote(member.first)
+			};
+
+			const auto &val
+			{
+				lex_cast<int64_t>(member.second)
+			};
+
+			ret = closure(key, val);
+		}
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::room::power::view(const std::function<void (const json::object &)> &closure)
+const
+{
+	if(power_event_idx)
+		if(m::get(std::nothrow, power_event_idx, "content", closure))
+			return true;
+
+	closure(power_event_content);
+	return !empty(power_event_content);
+}
+
+//
+// room::stats
+//
+
+size_t
+__attribute__((noreturn))
+ircd::m::room::stats::bytes_total(const m::room &room)
+{
+	throw m::UNSUPPORTED
+	{
+		"Not yet implemented."
+	};
+}
+
+size_t
+__attribute__((noreturn))
+ircd::m::room::stats::bytes_total_compressed(const m::room &room)
+{
+	throw m::UNSUPPORTED
+	{
+		"Not yet implemented."
+	};
+}
+
+size_t
+ircd::m::room::stats::bytes_json(const m::room &room)
+{
+	size_t ret(0);
+	for(m::room::events it(room); it; --it)
+	{
+		const m::event::idx &event_idx
+		{
+			it.event_idx()
+		};
+
+		const byte_view<string_view> key
+		{
+			event_idx
+		};
+
+		static const db::gopts gopts
+		{
+			db::get::NO_CACHE
+		};
+
+		ret += db::bytes_value(m::dbs::event_json, key, gopts);
+	}
+
+	return ret;
+}
+
+size_t
+__attribute__((noreturn))
+ircd::m::room::stats::bytes_json_compressed(const m::room &room)
+{
+	throw m::UNSUPPORTED
+	{
+		"Not yet implemented."
+	};
+}

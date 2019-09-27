@@ -256,7 +256,206 @@ ircd::m::room::events::preseek(const m::room &room,
 //
 // room::events::events
 //
-// (see: ircd/m_room.cc for now)
+
+ircd::m::room::events::events(const m::room &room,
+                              const event::fetch::opts *const &fopts)
+:room{room}
+,_event
+{
+	fopts?
+		*fopts:
+	room.fopts?
+		*room.fopts:
+		event::fetch::default_opts
+}
+{
+	assert(room.room_id);
+
+	if(room.event_id)
+		seek(room.event_id);
+	else
+		seek();
+}
+
+ircd::m::room::events::events(const m::room &room,
+                              const event::id &event_id,
+                              const event::fetch::opts *const &fopts)
+:room{room}
+,_event
+{
+	fopts?
+		*fopts:
+	room.fopts?
+		*room.fopts:
+		event::fetch::default_opts
+}
+{
+	assert(room.room_id);
+
+	seek(event_id);
+}
+
+ircd::m::room::events::events(const m::room &room,
+                              const uint64_t &depth,
+                              const event::fetch::opts *const &fopts)
+:room{room}
+,_event
+{
+	fopts?
+		*fopts:
+	room.fopts?
+		*room.fopts:
+		event::fetch::default_opts
+}
+{
+	assert(room.room_id);
+
+	// As a special convenience for the ctor only, if the depth=0 and
+	// nothing is found another attempt is made for depth=1 for synapse
+	// rooms which start at depth=1.
+	if(!seek(depth) && depth == 0)
+		seek(1);
+}
+
+bool
+ircd::m::room::events::prefetch()
+{
+	assert(_event.fopts);
+	return m::prefetch(event_idx(), *_event.fopts);
+}
+
+bool
+ircd::m::room::events::prefetch(const string_view &event_prop)
+{
+	return m::prefetch(event_idx(), event_prop);
+}
+
+const ircd::m::event &
+ircd::m::room::events::fetch()
+{
+	m::seek(_event, event_idx());
+	return _event;
+}
+
+const ircd::m::event &
+ircd::m::room::events::fetch(std::nothrow_t)
+{
+	m::seek(_event, event_idx(), std::nothrow);
+	return _event;
+}
+
+const ircd::m::event &
+ircd::m::room::events::operator*()
+{
+	return fetch(std::nothrow);
+};
+
+bool
+ircd::m::room::events::preseek(const uint64_t &depth)
+{
+	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
+	const string_view key
+	{
+		depth != uint64_t(-1)?
+			dbs::room_events_key(buf, room.room_id, depth):
+			room.room_id
+	};
+
+	return db::prefetch(dbs::room_events, key);
+}
+
+bool
+ircd::m::room::events::seek(const event::id &event_id)
+{
+	const event::idx &event_idx
+	{
+		m::index(event_id, std::nothrow)
+	};
+
+	return event_idx?
+		seek_idx(event_idx):
+		false;
+}
+
+bool
+ircd::m::room::events::seek(const uint64_t &depth)
+{
+	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
+	const string_view seek_key
+	{
+		depth != uint64_t(-1)?
+			dbs::room_events_key(buf, room.room_id, depth):
+			room.room_id
+	};
+
+	this->it = dbs::room_events.begin(seek_key);
+	return bool(*this);
+}
+
+bool
+ircd::m::room::events::seek_idx(const event::idx &event_idx)
+try
+{
+	uint64_t depth(0);
+	if(event_idx)
+		m::get(event_idx, "depth", mutable_buffer
+		{
+			reinterpret_cast<char *>(&depth), sizeof(depth)
+		});
+
+	char buf[dbs::ROOM_EVENTS_KEY_MAX_SIZE];
+	const auto &seek_key
+	{
+		dbs::room_events_key(buf, room.room_id, depth, event_idx)
+	};
+
+	this->it = dbs::room_events.begin(seek_key);
+	if(!bool(*this))
+		return false;
+
+	// Check if this event_idx is actually in this room
+	if(event_idx && event_idx != this->event_idx())
+		return false;
+
+	return true;
+}
+catch(const db::not_found &e)
+{
+	return false;
+}
+
+ircd::m::room::events::operator
+ircd::m::event::idx()
+const
+{
+	return event_idx();
+}
+
+ircd::m::event::idx
+ircd::m::room::events::event_idx()
+const
+{
+	assert(bool(*this));
+	const auto part
+	{
+		dbs::room_events_key(it->first)
+	};
+
+	return std::get<1>(part);
+}
+
+uint64_t
+ircd::m::room::events::depth()
+const
+{
+	assert(bool(*this));
+	const auto part
+	{
+		dbs::room_events_key(it->first)
+	};
+
+	return std::get<0>(part);
+}
 
 //
 // room::events::missing

@@ -46,7 +46,72 @@ ircd::m::alias_fetch_timeout
 // m::room::aliases
 //
 
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::count()
+const
+{
+	return count(string_view{});
+}
+
+size_t
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::count(const string_view &server)
+const
+{
+	size_t ret(0);
+	for_each(server, [&ret](const auto &a)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
 bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::has(const alias &alias)
+const
+{
+	return !for_each(alias.host(), [&alias]
+	(const id::room_alias &a)
+	{
+		assert(a.host() == alias.host());
+		return a == alias? false : true; // false to break on found
+	});
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::for_each(const closure_bool &closure)
+const
+{
+	const room::state state
+	{
+		room
+	};
+
+	return state.for_each("m.room.aliases", [this, &closure]
+	(const string_view &type, const string_view &state_key, const event::idx &)
+	{
+		return for_each(state_key, closure);
+	});
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::for_each(const string_view &server,
+                                 const closure_bool &closure)
+const
+{
+	if(!server)
+		return for_each(closure);
+
+	return for_each(room, server, closure);
+}
+
+ebool
 IRCD_MODULE_EXPORT
 ircd::m::room::aliases::for_each(const m::room &room,
                                  const string_view &server,
@@ -215,6 +280,79 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 namespace ircd::m
 {
 	thread_local char room_aliases_cache_fetch_hpbuf[384];
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::fetch(std::nothrow_t,
+                                     const alias &a,
+                                     const net::hostport &hp)
+try
+{
+	fetch(a, hp);
+	return true;
+}
+catch(const std::exception &e)
+{
+	thread_local char buf[384];
+	log::error
+	{
+		log, "Failed to fetch room_id for %s from %s :%s",
+		string_view{a},
+		string(buf, hp),
+		e.what(),
+	};
+
+	return false;
+}
+
+ircd::m::room::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::get(const alias &a)
+{
+	id::buf ret;
+	get(a, [&ret]
+	(const id &room_id)
+	{
+		ret = room_id;
+	});
+
+	return ret;
+}
+
+ircd::m::room::id::buf
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::get(std::nothrow_t,
+                                   const alias &a)
+{
+	id::buf ret;
+	get(std::nothrow, a, [&ret]
+	(const id &room_id)
+	{
+		ret = room_id;
+	});
+
+	return ret;
+}
+
+void
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::get(const alias &a,
+                                   const id::closure &c)
+{
+	if(!get(std::nothrow, a, c))
+		throw m::NOT_FOUND
+		{
+			"Cannot find room_id for %s",
+			string_view{a}
+		};
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::room::aliases::cache::for_each(const closure_bool &c)
+{
+	return for_each(string_view{}, c);
 }
 
 void
