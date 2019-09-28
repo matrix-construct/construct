@@ -7,17 +7,9 @@ AM_CXXFLAGS = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	@ROCKSDB_CPPFLAGS@ \
-	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
 	@SSL_CPPFLAGS@ \
 	@CRYPTO_CPPFLAGS@ \
-	@SODIUM_CPPFLAGS@ \
-	@MAGIC_CPPFLAGS@ \
-	@SNAPPY_CPPFLAGS@ \
-	@LZ4_CPPFLAGS@ \
-	@Z_CPPFLAGS@ \
-	@MALLOC_CPPFLAGS@ \
 	@EXTRA_CPPFLAGS@ \
 	###
 
@@ -88,6 +80,7 @@ construct_LDADD = \
 
 construct_SOURCES = \
 	construct.cc    \
+	matrix.cc       \
 	signals.cc      \
 	console.cc      \
 	lgetopt.cc      \

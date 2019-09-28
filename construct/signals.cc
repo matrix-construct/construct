@@ -8,11 +8,12 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/ircd.h>
+#include <ircd/ircd.h> // must include because asio.h.gch is fPIC
 #include <ircd/asio.h>
 #include "construct.h"
 #include "signals.h"
 #include "console.h"
+#include "matrix.h"
 
 namespace construct
 {

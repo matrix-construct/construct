@@ -8,12 +8,27 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd
+{
+	struct matrix;
+}
+
 namespace construct
 {
-	struct signals;
-	struct console;
 	struct matrix;
-
-	extern struct console *console;
-	extern struct matrix *matrix;
 }
+
+struct construct::matrix
+{
+	ircd::ctx::dock dock;
+	ircd::context context;
+	ircd::matrix *instance {nullptr};
+
+	void main() noexcept;
+
+	matrix();
+	~matrix() noexcept;
+
+	static void init();
+	static void quit();
+};

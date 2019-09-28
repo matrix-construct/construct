@@ -8,11 +8,12 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/ircd.h>
+#include <ircd/matrix.h>
 #include <RB_INC_SYS_RESOURCE_H
 #include <ircd/asio.h>
 #include "lgetopt.h"
 #include "construct.h"
+#include "matrix.h"
 #include "signals.h"
 #include "console.h"
 
@@ -34,6 +35,7 @@ bool norun;
 bool read_only;
 bool write_avoid;
 bool soft_assert;
+bool nomatrix;
 const char *execute;
 std::array<bool, 6> smoketest;
 
@@ -60,6 +62,7 @@ lgetopt opts[]
 	{ "wa",         &write_avoid,   lgetopt::BOOL,    "Like read-only mode, but writes permitted if triggered." },
 	{ "smoketest",  &smoketest[0],  lgetopt::BOOL,    "Starts and stops the daemon to return success."},
 	{ "sassert",    &soft_assert,   lgetopt::BOOL,    "Softens assertion effects in debug mode."},
+	{ "nomatrix",   &nomatrix,      lgetopt::BOOL,    "Prevent loading the matrix application module."},
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -183,6 +186,10 @@ noexcept try
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
 	ircd::init(ios);
+
+	// Start matrix application.
+	if(likely(!nomatrix))
+		construct::matrix::init();
 
 	// If the user wants to immediately drop to an interactive command line
 	// without having to send a ctrl-c for it, that is provided here. This does

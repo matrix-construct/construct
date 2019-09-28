@@ -41,6 +41,11 @@ namespace ircd::m
 	extern struct log::log log;
 }
 
+namespace ircd
+{
+	using m::matrix;
+}
+
 #include "name.h"
 #include "error.h"
 #include "self.h"

@@ -315,7 +315,6 @@ noexcept try
 	server::init _server_;   // Server related
 	client::init _client_;   // Client related
 	js::init _js_;           // SpiderMonkey
-	//m::matrix _matrix_;      // Matrix
 
 	// IRCd will now transition to the RUN state indicating full functionality.
 	run::set(run::level::RUN);
