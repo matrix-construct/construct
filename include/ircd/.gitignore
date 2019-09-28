@@ -1,6 +1,6 @@
 setup.h*
 serno.h
-ircd.pic*
+*.pic.h
 config.h
 config.h.in
 *.gch.tmp

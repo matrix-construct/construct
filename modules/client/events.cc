@@ -25,7 +25,7 @@ append_event(json::stack::array &out,
 
 static bool
 get_events_from(client &client,
-                const resource::request &request,
+                const m::resource::request &request,
                 const m::room::id &room_id,
                 const m::event::id &event_id,
                 const m::event::id &room_head,
@@ -34,7 +34,7 @@ get_events_from(client &client,
 
 static resource::response
 get__events(client &client,
-            const resource::request &request);
+            const m::resource::request &request);
 
 resource
 events_resource
@@ -87,7 +87,7 @@ flush_hiwat
 	{ "default",  long(16_KiB)                           },
 };
 
-resource::method
+m::resource::method
 method_get
 {
 	events_resource, "GET", get__events
@@ -107,7 +107,7 @@ clients;
 
 resource::response
 get__events(client &client,
-            const resource::request &request)
+            const m::resource::request &request)
 {
 	if(!request.query["room_id"])
 		throw m::UNSUPPORTED
@@ -317,7 +317,7 @@ catch(const std::exception &e)
 
 bool
 get_events_from(client &client,
-                const resource::request &request,
+                const m::resource::request &request,
                 const m::room::id &room_id,
                 const m::event::id &event_id,
                 const m::event::id &room_head,

@@ -66,7 +66,6 @@
 #include "net/net.h"
 #include "server/server.h"
 #include "magick.h"
-#include "m/matrix.h"
 #include "resource/resource.h"
 #include "client.h"
 

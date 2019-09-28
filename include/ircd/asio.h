@@ -19,10 +19,6 @@
 /// we can compose a precompiled header for your definition file much easier
 /// this way.
 ///
-/// Note that there is no precompile for this header right now, only the
-/// standard headers. That still significantly improves compile times of these
-/// boost headers for the time being...
-///
 
 // ircd.h is included here so that it can be compiled into this header. Then
 // this becomes the single leading precompiled header.

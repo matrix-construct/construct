@@ -19,13 +19,8 @@ struct ircd::resource::request
 	http::request::head head;
 	string_view content;
 	http::query::string query;
-	string_view origin;
-	string_view access_token;
 	vector_view<string_view> parv;
 	string_view param[8];
-	string_view node_id;
-	m::user::id user_id;
-	char user_id_buf[256];
 
 	request(const http::request::head &head,
 	        const string_view &content)
@@ -46,10 +41,6 @@ struct ircd::resource::request::object
 	const http::request::head &head;
 	const string_view &content;
 	const http::query::string &query;
-	const decltype(r.origin) &origin;
-	const decltype(r.user_id) &user_id;
-	const decltype(r.node_id) &node_id;
-	const decltype(r.access_token) &access_token;
 	const vector_view<string_view> &parv;
 	const json::object &body;
 
@@ -59,10 +50,6 @@ struct ircd::resource::request::object
 	,head{r.head}
 	,content{r.content}
 	,query{r.query}
-	,origin{r.origin}
-	,user_id{r.user_id}
-	,node_id{r.node_id}
-	,access_token{r.access_token}
 	,parv{r.parv}
 	,body{r}
 	{}

@@ -30,6 +30,8 @@ BUILT_SOURCES = \
 	ircd.pic.h.gch \
 	spirit.h.gch \
 	asio.h.gch \
+	matrix.h.gch \
+	matrix.pic.h.gch \
 	###
 endif
 
@@ -39,25 +41,34 @@ LOWMEM_FLAGS= --param ggc-min-expand=1
 endif
 endif
 
-DEPS = *.h */*.h */*/*.h
-
 # includedir = @includedir@/$(PACKAGE_TARNAME)
 includedir = @includedir@/ircd
 nobase_include_HEADERS = $(DEPS)
 noinst_HEADERS = *.gch
 
-ircd.h.gch: $(DEPS)
+
+ircd.h.gch: ircd.h
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o ircd.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) ircd.h
 
-ircd.pic.h.gch: $(DEPS)
+ircd.pic.h.gch: ircd.h
 	cp ircd.h ircd.pic.h
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o ircd.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC ircd.pic.h
 
-spirit.h.gch: $(DEPS)
-	$(CXX) $(CXXFLAGS) $(LOWMEM_FLAGS) $(AM_CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC -include ircd.pic.h spirit.h
+matrix.h.gch: matrix.h
+	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o matrix.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) matrix.h
 
-asio.h.gch: $(DEPS)
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o asio.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC -include ircd.h asio.h
+matrix.pic.h.gch: matrix.h
+	cp matrix.h matrix.pic.h
+	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o matrix.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC matrix.pic.h
+
+spirit.h.gch: ircd.h
+	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC spirit.h
+
+spirit.h.gch: \
+	AM_CXXFLAGS += $(LOWMEM_FLAGS)
+
+asio.h.gch: ircd.h
+	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o asio.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC asio.h
 
 asio.h.gch: \
 	AM_CPPFLAGS += @BOOST_CPPFLAGS@ @SSL_CPPFLAGS@ @CRYPTO_CPPFLAGS@
@@ -68,9 +79,12 @@ clean-local:
 	rm -f ircd.pic.h.gch
 	rm -f asio.h.gch
 	rm -f spirit.h.gch
+	rm -f matrix.h.gch
+	rm -f matrix.pic.h
+	rm -f matrix.pic.h.gch
 	rm -f *.gch.tmp
 
-install-mkdirs: $(DEPS) ircd.h.gch ircd.pic.h.gch asio.h.gch spirit.h.gch
+install-mkdirs: $(DEPS) $(BUILT_SOURCES)
 	-@if test ! -d $(DESTDIR)$(includedir); then \
 		echo "mkdir -p $(DESTDIR)$(includedir)"; \
 		mkdir -p $(DESTDIR)$(includedir); \

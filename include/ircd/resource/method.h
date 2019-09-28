@@ -18,8 +18,6 @@ struct ircd::resource::method
 	struct stats;
 	using handler = std::function<response (client &, request &)>;
 
-	static conf::item<bool> x_matrix_verify_origin;
-	static conf::item<bool> x_matrix_verify_destination;
 	static ctx::dock idle_dock;
 
 	struct resource *resource;
@@ -29,13 +27,11 @@ struct ircd::resource::method
 	std::unique_ptr<struct stats> stats;
 	unique_const_iterator<decltype(resource::methods)> methods_it;
 
-	string_view verify_origin(client &, request &) const;
-	string_view authenticate(client &, request &) const;
 	void handle_timeout(client &) const;
-	void call_handler(client &, request &);
+	response call_handler(client &, request &);
 
   public:
-	void operator()(client &, const http::request::head &, const string_view &content_partial);
+	response operator()(client &, const http::request::head &, const string_view &content_partial);
 
 	method(struct resource &, const string_view &name, handler, struct opts);
 	method(struct resource &, const string_view &name, handler);

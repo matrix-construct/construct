@@ -83,6 +83,7 @@ namespace ircd::m
 #include "breadcrumb_rooms.h"
 #include "media.h"
 #include "search.h"
+#include "resource.h"
 
 struct ircd::m::matrix
 {

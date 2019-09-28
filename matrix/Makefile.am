@@ -12,13 +12,13 @@ AM_CXXFLAGS = \
 
 if DEBUG
 if GCC
-AM_CXXFLAGS += -fmax-errors=2
+AM_CXXFLAGS += -fmax-errors=3
 endif
 endif
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	-include ircd/ircd.pic.h \
+	-include ircd/matrix.pic.h \
 	-include ircd/mods/mapi.h \
 	@EXTRA_CPPFLAGS@ \
 	###
@@ -128,6 +128,7 @@ libircd_matrix_la_SOURCES += txn.cc
 libircd_matrix_la_SOURCES += vm.cc
 libircd_matrix_la_SOURCES += init_backfill.cc
 libircd_matrix_la_SOURCES += init_bootstrap.cc
+libircd_matrix_la_SOURCES += resource.cc
 libircd_matrix_la_SOURCES += matrix.cc
 
 #

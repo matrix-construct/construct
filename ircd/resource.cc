@@ -411,7 +411,7 @@ noexcept
 	});
 }
 
-void
+ircd::resource::response
 ircd::resource::method::operator()(client &client,
                                    const http::request::head &head,
                                    const string_view &content_partial)
@@ -529,32 +529,13 @@ try
 		client.request.param, tokens(pathparm, '/', client.request.param)
 	};
 
-	// Client access token verified here. On success, user_id owning the token
-	// is copied into the client.request structure. On failure, the method is
-	// checked to see if it requires authentication and if so, this throws.
-	authenticate(client, client.request);
-
-	// Server X-Matrix header verified here. Similar to client auth, origin
-	// which has been authed is referenced in the client.request. If the method
-	// requires, and auth fails or not provided, this function throws.
-	// Otherwise it returns a string_view of the origin name in
-	// client.request.origin, or an empty string_view if an origin was not
-	// apropos for this request (i.e a client request rather than federation).
-	if(verify_origin(client, client.request))
+	const unwind::nominal completions{[this]
 	{
-		assert(client.request.origin);
-
-		// If we have an error cached from previously not being able to
-		// contact this origin we can clear that now that they're alive.
-		server::errclear(client.request.origin);
-
-		// The origin was verified so we can invoke the cache warming now.
-		cache_warm_origin(client.request.origin);
-	}
+		++stats->completions;
+	}};
 
 	// Finally handle the request.
-	call_handler(client, client.request);
-	++stats->completions;
+	return call_handler(client, client.request);
 }
 catch(const http::error &e)
 {
@@ -577,60 +558,39 @@ catch(...)
 	throw;
 }
 
-void
+ircd::resource::response
 ircd::resource::method::call_handler(client &client,
                                      resource::request &request)
 try
 {
-	function(client, request);
-}
-catch(const json::print_error &e)
-{
-	throw m::error
-	{
-		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
-	};
-}
-catch(const json::not_found &e)
-{
-	throw m::error
-	{
-		http::BAD_REQUEST, "M_BAD_JSON", "Required JSON field: %s", e.what()
-	};
-}
-catch(const json::error &e)
-{
-	throw m::error
-	{
-		http::BAD_REQUEST, "M_NOT_JSON", "%s", e.what()
-	};
+	return function(client, request);
 }
 catch(const ctx::timeout &e)
 {
-	throw m::error
+	throw http::error
 	{
-		http::BAD_GATEWAY, "M_REQUEST_TIMEOUT", "%s", e.what()
+		http::REQUEST_TIMEOUT, "%s", e.what()
 	};
 }
 catch(const mods::unavailable &e)
 {
-	throw m::UNAVAILABLE
+	throw http::error
 	{
-		"%s", e.what()
+		http::SERVICE_UNAVAILABLE, "%s", e.what()
 	};
 }
 catch(const std::bad_function_call &e)
 {
-	throw m::UNAVAILABLE
+	throw http::error
 	{
-		"%s", e.what()
+		http::SERVICE_UNAVAILABLE, "%s", e.what()
 	};
 }
 catch(const std::out_of_range &e)
 {
-	throw m::NOT_FOUND
+	throw http::error
 	{
-		"%s", e.what()
+		http::NOT_FOUND, "%s", e.what()
 	};
 }
 
@@ -657,203 +617,6 @@ const
 	//TODO: If we know that no response has been sent yet
 	//TODO: we can respond with http::REQUEST_TIMEOUT instead.
 	client.close(net::dc::RST, net::close_ignore);
-}
-
-/// Authenticate a client based on access_token either in the query string or
-/// in the Authentication bearer header. If a token is found the user_id owning
-/// the token is copied into the request. If it is not found or it is invalid
-/// then the method being requested is checked to see if it is required. If so
-/// the appropriate exception is thrown.
-ircd::string_view
-ircd::resource::method::authenticate(client &client,
-                                     resource::request &request)
-const
-{
-	request.access_token =
-	{
-		request.query["access_token"]
-	};
-
-	if(empty(request.access_token))
-	{
-		const auto authorization
-		{
-			split(request.head.authorization, ' ')
-		};
-
-		if(iequals(authorization.first, "bearer"_sv))
-			request.access_token = authorization.second;
-	}
-
-	const auto requires_auth
-	{
-		opts->flags & REQUIRES_AUTH
-	};
-
-	if(!request.access_token && requires_auth)
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_MISSING_TOKEN",
-			"Credentials for this method are required but missing."
-		};
-
-	if(!request.access_token)
-		return {};
-
-	static const m::event::fetch::opts fopts
-	{
-		m::event::keys::include {"sender"}
-	};
-
-	const m::room::state tokens{m::user::tokens, &fopts};
-	tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&request]
-	(const m::event &event)
-	{
-		// The user sent this access token to the tokens room
-		request.user_id = string_view
-		{
-			request.user_id_buf, copy(request.user_id_buf, at<"sender"_>(event))
-		};
-	});
-
-	if(!request.user_id && requires_auth)
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_UNKNOWN_TOKEN",
-			"Credentials for this method are required but invalid."
-		};
-
-	return request.user_id;
-}
-
-decltype(ircd::resource::method::x_matrix_verify_origin)
-ircd::resource::method::x_matrix_verify_origin
-{
-	{ "name",     "ircd.resource.x_matrix.verify_origin" },
-	{ "default",  true                                   },
-};
-
-decltype(ircd::resource::method::x_matrix_verify_origin)
-ircd::resource::method::x_matrix_verify_destination
-{
-	{ "name",     "ircd.resource.x_matrix.verify_destination" },
-	{ "default",  true                                        },
-};
-
-ircd::string_view
-ircd::resource::method::verify_origin(client &client,
-                                      request &request)
-const try
-{
-	const auto required
-	{
-		opts->flags & VERIFY_ORIGIN
-	};
-
-	const auto authorization
-	{
-		split(request.head.authorization, ' ')
-	};
-
-	const bool supplied
-	{
-		iequals(authorization.first, "X-Matrix"_sv)
-	};
-
-	if(!required && !supplied)
-		return {};
-
-	if(required && !supplied)
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_MISSING_AUTHORIZATION",
-			"Required X-Matrix Authorization was not supplied"
-		};
-
-	if(x_matrix_verify_destination && !m::my_host(request.head.host))
-		throw m::error
-		{
-			http::UNAUTHORIZED, "M_NOT_MY_HOST",
-			"The X-Matrix Authorization destination '%s' is not recognized here.",
-			request.head.host
-		};
-
-	const m::request::x_matrix x_matrix
-	{
-		request.head.authorization
-	};
-
-	const m::request object
-	{
-		x_matrix.origin, request.head.host, name, request.head.uri, request.content
-	};
-
-	if(x_matrix_verify_origin && !object.verify(x_matrix.key, x_matrix.sig))
-		throw m::error
-		{
-			http::FORBIDDEN, "M_INVALID_SIGNATURE",
-			"The X-Matrix Authorization is invalid."
-		};
-
-	request.origin = x_matrix.origin;
-	request.node_id = request.origin; //TODO: remove request.node_id.
-	return request.origin;
-}
-catch(const m::error &)
-{
-	throw;
-}
-catch(const std::exception &e)
-{
-	log::derror
-	{
-		resource::log, "X-Matrix Authorization from %s: %s",
-		string(remote(client)),
-		e.what()
-	};
-
-	throw m::error
-	{
-		http::UNAUTHORIZED, "M_UNKNOWN_ERROR",
-		"An error has prevented authorization: %s",
-		e.what()
-	};
-}
-
-decltype(ircd::cache_warmup_time)
-ircd::cache_warmup_time
-{
-	{ "name",     "ircd.cache_warmup_time" },
-	{ "default",  3600L                    },
-};
-
-/// We can smoothly warmup some memory caches after daemon startup as the
-/// requests trickle in from remote servers. This function is invoked after
-/// a remote contacts and reveals its identity with the X-Matrix verification.
-///
-/// This process helps us avoid cold caches for the first requests coming from
-/// our server. Such requests are often parallel requests, for ex. to hundreds
-/// of servers in a Matrix room at the same time.
-///
-/// This function does nothing after the cache warmup period has ended.
-void
-ircd::cache_warm_origin(const string_view &origin)
-try
-{
-	if(ircd::uptime() > seconds(cache_warmup_time))
-		return;
-
-	// Make a query through SRV and A records.
-	//net::dns::resolve(origin, net::dns::prefetch_ipport);
-}
-catch(const std::exception &e)
-{
-	log::derror
-	{
-		resource::log, "Cache warming for '%s' :%s",
-		origin,
-		e.what()
-	};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1108,17 +871,21 @@ try
 			return;
 		}
 
-		default: throw m::error
+		default: throw http::error
 		{
-			http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Cannot send json::%s as response content", type(value)
+			"Cannot send json::%s as response content",
+			http::INTERNAL_SERVER_ERROR,
+			type(value),
 		};
 	}
 }
 catch(const json::error &e)
 {
-	throw m::error
+	throw http::error
 	{
-		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
+		"Generator Protection: %s",
+		http::INTERNAL_SERVER_ERROR,
+		e.what(),
 	};
 }
 
@@ -1146,9 +913,11 @@ try
 }
 catch(const json::error &e)
 {
-	throw m::error
+	throw http::error
 	{
-		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
+		"Generator Protection: %s",
+		http::INTERNAL_SERVER_ERROR,
+		e.what()
 	};
 }
 
@@ -1176,9 +945,11 @@ try
 }
 catch(const json::error &e)
 {
-	throw m::error
+	throw http::error
 	{
-		http::INTERNAL_SERVER_ERROR, "M_NOT_JSON", "Generator Protection: %s", e.what()
+		"Generator Protection: %s",
+		http::INTERNAL_SERVER_ERROR,
+		e.what(),
 	};
 }
 
