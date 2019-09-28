@@ -38,9 +38,9 @@ create_report_room_hook
 	}
 };
 
-resource::response
+m::resource::response
 post__report(client &client,
-             const resource::request &request,
+             const m::resource::request &request,
              const m::room::id &room_id)
 {
 	if(request.parv.size() < 3)
@@ -97,7 +97,7 @@ post__report(client &client,
 		{ "reason",      trunc(reason, size_t(reason_max)) },
 	});
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};

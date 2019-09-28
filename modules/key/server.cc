@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Federation 2.2.1.1 :Publishing Keys"
 };
 
-resource
+m::resource
 server_resource
 {
 	"/_matrix/key/v2/server/",
@@ -26,9 +26,9 @@ server_resource
 	}
 };
 
-resource::response
+m::resource::response
 handle_get(client &client,
-           const resource::request &request)
+           const m::resource::request &request)
 {
 	char key_id_buf[256];
 	const auto key_id
@@ -41,7 +41,7 @@ handle_get(client &client,
 	m::keys::get(my_host(), key_id, [&client]
 	(const json::object &keys)
 	{
-		resource::response
+		m::resource::response
 		{
 			client, http::OK, keys
 		};
@@ -50,7 +50,7 @@ handle_get(client &client,
 	return {};
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	server_resource, "GET", handle_get

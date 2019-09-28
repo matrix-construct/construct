@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Identity Service 6 :Status Check"
 };
 
-resource
+m::resource
 identity_resource
 {
 	"/_matrix/identity/api/v1",
@@ -26,17 +26,17 @@ identity_resource
 	}
 };
 
-static resource::response
+static m::resource::response
 handle_get(client &client,
-           const resource::request &request)
+           const m::resource::request &request)
 {
-	return resource::response
+	return m::resource::response
 	{
 		client, http::NOT_IMPLEMENTED
 	};
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	identity_resource, "GET", handle_get

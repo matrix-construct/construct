@@ -12,9 +12,9 @@
 
 using namespace ircd;
 
-resource::response
+m::resource::response
 get__members(client &client,
-             const resource::request &request,
+             const m::resource::request &request,
              const m::room::id &room_id)
 {
 	// Acquire the membership/not_membership constraints from query string
@@ -88,7 +88,7 @@ get__members(client &client,
 			string_view{room_id}
 		};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -185,9 +185,9 @@ get__members(client &client,
 	return std::move(response);
 }
 
-resource::response
+m::resource::response
 get__joined_members(client &client,
-                    const resource::request &request,
+                    const m::resource::request &request,
                     const m::room::id &room_id)
 {
 	const m::room room
@@ -209,7 +209,7 @@ get__joined_members(client &client,
 			string_view{room_id}
 		};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};

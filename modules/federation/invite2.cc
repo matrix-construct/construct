@@ -12,12 +12,12 @@ using namespace ircd;
 
 static void
 process(client &,
-        const resource::request &,
+        const m::resource::request &,
         const m::event &);
 
-static resource::response
+static m::resource::response
 put__invite(client &client,
-            const resource::request &request);
+            const m::resource::request &request);
 
 mapi::header
 IRCD_MODULE
@@ -25,7 +25,7 @@ IRCD_MODULE
 	"Federation 12 :Inviting to a room (v2)"
 };
 
-resource
+m::resource
 invite_resource
 {
 	"/_matrix/federation/v2/invite/",
@@ -35,7 +35,7 @@ invite_resource
 	}
 };
 
-resource::method
+m::resource::method
 method_put
 {
 	invite_resource, "PUT", put__invite,
@@ -50,9 +50,9 @@ stream_cross_sleeptime
 	"federation_invite", "stream_cross_sleeptime"
 };
 
-resource::response
+m::resource::response
 put__invite(client &client,
-            const resource::request &request)
+            const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -201,7 +201,7 @@ put__invite(client &client,
 	// (one for this request, and another when m::eval effects connect to them
 	// and make any requests). But either way if this call fails then we will
 	// lose the invite but that may not be such a bad thing.
-	resource::response response
+	m::resource::response response
 	{
 		client, json::members
 		{
@@ -223,7 +223,7 @@ put__invite(client &client,
 
 void
 process(client &client,
-        const resource::request &request,
+        const m::resource::request &request,
         const m::event &event)
 try
 {

@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Client 7.2 :Room aliases"
 };
 
-resource
+m::resource
 directory_room_resource
 {
 	"/_matrix/client/r0/directory/room/",
@@ -26,19 +26,19 @@ directory_room_resource
 	}
 };
 
-static resource::response
+static m::resource::response
 get__directory_room(client &client,
-                    const resource::request &request);
+                    const m::resource::request &request);
 
-resource::method
+m::resource::method
 directory_room_get
 {
 	directory_room_resource, "GET", get__directory_room
 };
 
-resource::response
+m::resource::response
 get__directory_room(client &client,
-                    const resource::request &request)
+                    const m::resource::request &request)
 {
 	m::room::alias::buf room_alias
 	{
@@ -50,7 +50,7 @@ get__directory_room(client &client,
 		m::room_id(room_alias)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
@@ -59,11 +59,11 @@ get__directory_room(client &client,
 	};
 }
 
-static resource::response
+static m::resource::response
 put__directory_room(client &client,
-                    const resource::request &request);
+                    const m::resource::request &request);
 
-resource::method
+m::resource::method
 directory_room_put
 {
 	directory_room_resource, "PUT", put__directory_room,
@@ -72,9 +72,9 @@ directory_room_put
 	}
 };
 
-resource::response
+m::resource::response
 put__directory_room(client &client,
-                    const resource::request &request)
+                    const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -150,7 +150,7 @@ put__directory_room(client &client,
 		})
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
@@ -159,11 +159,11 @@ put__directory_room(client &client,
 	};
 }
 
-static resource::response
+static m::resource::response
 delete__directory_room(client &client,
-                       const resource::request &request);
+                       const m::resource::request &request);
 
-resource::method
+m::resource::method
 directory_room_delete
 {
 	directory_room_resource, "DELETE", delete__directory_room,
@@ -172,9 +172,9 @@ directory_room_delete
 	}
 };
 
-resource::response
+m::resource::response
 delete__directory_room(client &client,
-                       const resource::request &request)
+                       const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -227,7 +227,7 @@ delete__directory_room(client &client,
 	}
 
 	if(!removed)
-		return resource::response
+		return m::resource::response
 		{
 			client, http::OK
 		};
@@ -242,7 +242,7 @@ delete__directory_room(client &client,
 		})
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{

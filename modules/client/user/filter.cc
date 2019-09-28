@@ -12,9 +12,9 @@
 
 using namespace ircd;
 
-resource::response
+m::resource::response
 get__filter(client &client,
-            const resource::request &request,
+            const m::resource::request &request,
             const m::user::id &user_id)
 {
 	char filter_id_buf[64];
@@ -36,7 +36,7 @@ get__filter(client &client,
 	filter.get(filter_id, [&client]
 	(const string_view &filter_id, const json::object &filter)
 	{
-		resource::response
+		m::resource::response
 		{
 			client, filter
 		};
@@ -48,9 +48,9 @@ get__filter(client &client,
 
 // (5.2) Uploads a new filter definition to the homeserver. Returns a filter ID that
 // may be used in future requests to restrict which events are returned to the client.
-resource::response
+m::resource::response
 post__filter(client &client,
-             const resource::request::object<const m::filter> &request,
+             const m::resource::request::object<const m::filter> &request,
              const m::user::id &user_id)
 {
 	// (5.2) Required. The id of the user uploading the filter. The access
@@ -120,7 +120,7 @@ post__filter(client &client,
 		filter.set(filter_id_buf, request.body)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::CREATED,
 		{

@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Federation 5.1.5.2 :Query Auth"
 };
 
-resource
+m::resource
 query_auth_resource
 {
 	"/_matrix/federation/v1/query_auth/",
@@ -26,11 +26,11 @@ query_auth_resource
 	}
 };
 
-static resource::response
+static m::resource::response
 post__query_auth(client &client,
-                 const resource::request &request);
+                 const m::resource::request &request);
 
-resource::method
+m::resource::method
 method_post
 {
 	query_auth_resource, "POST", post__query_auth,
@@ -39,9 +39,9 @@ method_post
 	}
 };
 
-resource::response
+m::resource::response
 post__query_auth(client &client,
-                 const resource::request &request)
+                 const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -90,7 +90,7 @@ post__query_auth(client &client,
 	// This method appears to be unused by synapse.
 	//
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::NOT_IMPLEMENTED
 	};

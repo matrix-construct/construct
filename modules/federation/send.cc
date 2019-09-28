@@ -16,7 +16,7 @@ IRCD_MODULE
 	"federation send"
 };
 
-resource
+m::resource
 send_resource
 {
 	"/_matrix/federation/v1/send/",
@@ -35,7 +35,7 @@ allow_self
 
 void
 handle_edu(client &client,
-           const resource::request::object<m::txn> &request,
+           const m::resource::request::object<m::txn> &request,
            const string_view &txn_id,
            const m::edu &edu)
 {
@@ -59,7 +59,7 @@ handle_edu(client &client,
 
 void
 handle_pdus(client &client,
-            const resource::request::object<m::txn> &request,
+            const m::resource::request::object<m::txn> &request,
             const string_view &txn_id,
             const json::array &pdus)
 {
@@ -78,7 +78,7 @@ handle_pdus(client &client,
 
 void
 handle_pdu_failure(client &client,
-                   const resource::request::object<m::txn> &request,
+                   const m::resource::request::object<m::txn> &request,
                    const string_view &txn_id,
                    const json::object &pdu_failure)
 {
@@ -92,9 +92,9 @@ handle_pdu_failure(client &client,
 	};
 }
 
-resource::response
+m::resource::response
 handle_put(client &client,
-           const resource::request::object<m::txn> &request)
+           const m::resource::request::object<m::txn> &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -156,13 +156,13 @@ handle_put(client &client,
 	for(const json::object &edu : edus)
 		handle_edu(client, request, txn_id, edu);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::method
+m::resource::method
 method_put
 {
 	send_resource, "PUT", handle_put,

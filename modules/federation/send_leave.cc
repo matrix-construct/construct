@@ -25,7 +25,7 @@ users in that room.
 
 )"};
 
-resource
+m::resource
 send_leave_resource
 {
 	"/_matrix/federation/v1/send_leave/",
@@ -35,9 +35,9 @@ send_leave_resource
 	}
 };
 
-resource::response
+m::resource::response
 put__send_leave(client &client,
-               const resource::request &request)
+               const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -118,13 +118,13 @@ put__send_leave(client &client,
 		"[200,{}]"
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK, response
 	};
 }
 
-resource::method
+m::resource::method
 method_put
 {
 	send_leave_resource, "PUT", put__send_leave,

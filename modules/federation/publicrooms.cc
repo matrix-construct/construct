@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Federation 14.1 :Public Rooms"
 };
 
-resource
+m::resource
 publicrooms_resource
 {
 	"/_matrix/federation/v1/publicRooms",
@@ -34,11 +34,11 @@ flush_hiwat
 	{ "default",  16384L                                    },
 };
 
-static resource::response
+static m::resource::response
 handle_get(client &,
-           const resource::request &);
+           const m::resource::request &);
 
-resource::method
+m::resource::method
 get_method
 {
 	publicrooms_resource, "GET", handle_get,
@@ -47,9 +47,9 @@ get_method
 	}
 };
 
-resource::response
+m::resource::response
 handle_get(client &client,
-           const resource::request &request)
+           const m::resource::request &request)
 {
 	char sincebuf[m::room::id::buf::SIZE];
 	const string_view &since
@@ -81,7 +81,7 @@ handle_get(client &client,
 		request.get<bool>("include_all_networks", false)
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};

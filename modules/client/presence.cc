@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Client 11.6 :Presence"
 };
 
-ircd::resource
+m::resource
 presence_resource
 {
 	"/_matrix/client/r0/presence/",
@@ -30,11 +30,11 @@ presence_resource
 // get
 //
 
-static resource::response
+static m::resource::response
 get__presence(client &,
-              const resource::request &);
+              const m::resource::request &);
 
-resource::method
+m::resource::method
 method_get
 {
 	presence_resource, "GET", get__presence
@@ -42,12 +42,12 @@ method_get
 
 static resource::response
 get__presence_status(client &,
-                     const resource::request &,
+                     const m::resource::request &,
                      const m::user::id &);
 
 resource::response
 get__presence(client &client,
-              const resource::request &request)
+              const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -82,7 +82,7 @@ get__presence(client &client,
 
 resource::response
 get__presence_status(client &client,
-                     const resource::request &request,
+                     const m::resource::request &request,
                      const m::user::id &user_id)
 {
 	const m::user user
@@ -106,11 +106,11 @@ get__presence_status(client &client,
 // POST ?
 //
 
-static resource::response
+static m::resource::response
 post__presence(client &,
-               const resource::request &);
+               const m::resource::request &);
 
-resource::method
+m::resource::method
 method_post
 {
 	presence_resource, "POST", post__presence,
@@ -119,9 +119,9 @@ method_post
 	}
 };
 
-resource::response
+m::resource::response
 post__presence(client &client,
-               const resource::request &request)
+               const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -139,16 +139,16 @@ post__presence(client &client,
 // put
 //
 
-static resource::response
+static m::resource::response
 put__presence_status(client &,
-                     const resource::request &,
+                     const m::resource::request &,
                      const m::user::id &);
 
-static resource::response
+static m::resource::response
 put__presence(client &,
-              const resource::request &);
+              const m::resource::request &);
 
-resource::method
+m::resource::method
 method_put
 {
 	presence_resource, "PUT", put__presence,
@@ -157,9 +157,9 @@ method_put
 	}
 };
 
-resource::response
+m::resource::response
 put__presence(client &client,
-              const resource::request &request)
+              const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -200,9 +200,9 @@ put__presence(client &client,
 	};
 }
 
-resource::response
+m::resource::response
 put__presence_status(client &client,
-                     const resource::request &request,
+                     const m::resource::request &request,
                      const m::user::id &user_id)
 {
 	const string_view &presence
@@ -240,7 +240,7 @@ put__presence_status(client &client,
 	});
 
 	if(!modified)
-		return resource::response
+		return m::resource::response
 		{
 			client, http::OK
 		};
@@ -250,7 +250,7 @@ put__presence_status(client &client,
 		m::presence::set(user, presence, status_msg)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};

@@ -12,9 +12,9 @@
 
 using namespace ircd;
 
-resource::response
+m::resource::response
 post__join(client &client,
-           const resource::request &request,
+           const m::resource::request &request,
            const m::room::id &room_id)
 {
 	const json::string &third_party_signed
@@ -34,7 +34,7 @@ post__join(client &client,
 
 	m::join(room, request.user_id);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{

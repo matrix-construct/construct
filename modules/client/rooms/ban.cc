@@ -12,9 +12,9 @@
 
 using namespace ircd;
 
-resource::response
+m::resource::response
 post__ban(client &client,
-          const resource::request &request,
+          const m::resource::request &request,
           const m::room::id &room_id)
 {
 	const m::user::id &user_id
@@ -61,7 +61,7 @@ post__ban(client &client,
 		})
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK, json::members
 		{

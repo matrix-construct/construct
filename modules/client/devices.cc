@@ -15,22 +15,22 @@ _get_device(json::stack::object &obj,
             const m::user &user,
             const string_view &device_id);
 
-static resource::response
+static m::resource::response
 get__devices_all(client &client,
-                 const resource::request &request,
+                 const m::resource::request &request,
                  const m::room user_room);
 
-static resource::response
+static m::resource::response
 get__devices(client &client,
-             const resource::request &request);
+             const m::resource::request &request);
 
-static resource::response
+static m::resource::response
 put__devices(client &client,
-             const resource::request &request);
+             const m::resource::request &request);
 
-static resource::response
+static m::resource::response
 delete__devices(client &client,
-                const resource::request &request);
+                const m::resource::request &request);
 
 extern const std::string flows;
 
@@ -40,7 +40,7 @@ IRCD_MODULE
 	"Client 11.9 Device Management"
 };
 
-ircd::resource
+ircd::m::resource
 devices_resource
 {
 	"/_matrix/client/r0/devices/",
@@ -50,7 +50,7 @@ devices_resource
 	}
 };
 
-ircd::resource
+ircd::m::resource
 devices_resource__unstable
 {
 	"/_matrix/client/unstable/devices/",
@@ -60,7 +60,7 @@ devices_resource__unstable
 	}
 };
 
-resource::method
+m::resource::method
 method_get
 {
 	devices_resource, "GET", get__devices,
@@ -69,7 +69,7 @@ method_get
 	}
 };
 
-resource::method
+m::resource::method
 method_get__unstable
 {
 	devices_resource__unstable, "GET", get__devices,
@@ -78,7 +78,7 @@ method_get__unstable
 	}
 };
 
-resource::method
+m::resource::method
 method_delete
 {
 	devices_resource, "DELETE", delete__devices,
@@ -87,7 +87,7 @@ method_delete
 	}
 };
 
-resource::method
+m::resource::method
 method_delete__unstable
 {
 	devices_resource__unstable, "DELETE", delete__devices,
@@ -96,7 +96,7 @@ method_delete__unstable
 	}
 };
 
-resource::method
+m::resource::method
 method_put
 {
 	devices_resource, "PUT", put__devices,
@@ -105,7 +105,7 @@ method_put
 	}
 };
 
-resource::method
+m::resource::method
 method_put__unstable
 {
 	devices_resource__unstable, "PUT", put__devices,
@@ -114,9 +114,9 @@ method_put__unstable
 	}
 };
 
-resource::response
+m::resource::response
 get__devices(client &client,
-             const resource::request &request)
+             const m::resource::request &request)
 {
 	const m::user::room user_room
 	{
@@ -137,7 +137,7 @@ get__devices(client &client,
 			"Device ID '%s' not found", device_id
 		};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -156,9 +156,9 @@ get__devices(client &client,
 	return {};
 }
 
-resource::response
+m::resource::response
 put__devices(client &client,
-             const resource::request &request)
+             const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -176,15 +176,15 @@ put__devices(client &client,
 
 	m::device::set(request.user_id, data);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::response
+m::resource::response
 delete__devices(client &client,
-                const resource::request &request)
+                const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -205,7 +205,7 @@ delete__devices(client &client,
 	// 14.10.2 Security considerations
 	const json::string &type{auth["type"]};
 	if(type != "m.login.password")
-		return resource::response
+		return m::resource::response
 		{
 			client, http::UNAUTHORIZED, json::object{flows}
 		};
@@ -219,18 +219,18 @@ delete__devices(client &client,
 
 	m::device::del(request.user_id, device_id);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::response
+m::resource::response
 get__devices_all(client &client,
-                 const resource::request &request,
+                 const m::resource::request &request,
                  const m::room user_room)
 {
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};

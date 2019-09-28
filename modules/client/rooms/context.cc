@@ -47,9 +47,9 @@ _append(json::stack::array &,
         const int64_t &,
         const bool &query_txnid = true);
 
-resource::response
+m::resource::response
 get__context(client &client,
-             const resource::request &request,
+             const m::resource::request &request,
              const m::room::id &room_id)
 {
 	if(request.parv.size() < 3)
@@ -114,7 +114,7 @@ get__context(client &client,
 		m::depth(std::nothrow, room_id)
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};

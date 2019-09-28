@@ -10,13 +10,13 @@
 
 using namespace ircd;
 
-static resource::response
+static m::resource::response
 get__list_room(client &client,
-               const resource::request &request);
+               const m::resource::request &request);
 
-static resource::response
+static m::resource::response
 put__list_room(client &client,
-               const resource::request &request);
+               const m::resource::request &request);
 
 mapi::header
 IRCD_MODULE
@@ -24,7 +24,7 @@ IRCD_MODULE
 	"Client 10.5 :Listing rooms"
 };
 
-resource
+m::resource
 list_room_resource
 {
 	"/_matrix/client/r0/directory/list/room/",
@@ -34,7 +34,7 @@ list_room_resource
 	}
 };
 
-resource::method
+m::resource::method
 list_room_put
 {
 	list_room_resource, "PUT", put__list_room,
@@ -43,9 +43,9 @@ list_room_put
 	}
 };
 
-resource::response
+m::resource::response
 put__list_room(client &client,
-               const resource::request &request)
+               const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -112,21 +112,21 @@ put__list_room(client &client,
 		};
 	}
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::method
+m::resource::method
 list_room_get
 {
 	list_room_resource, "GET", get__list_room
 };
 
-resource::response
+m::resource::response
 get__list_room(client &client,
-               const resource::request &request)
+               const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -156,7 +156,7 @@ get__list_room(client &client,
 		m::rooms::summary::has(room_id)? "public" : "private"
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{

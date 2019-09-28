@@ -12,8 +12,8 @@ using namespace ircd;
 
 [[noreturn]] static void rethrow(const std::exception_ptr &, const m::user &, const string_view &);
 static std::exception_ptr fetch_profile_remote(const m::user &, const string_view &);
-static resource::response get__profile(client &, const resource::request &);
-static resource::response put__profile(client &, const resource::request &);
+static m::resource::response get__profile(client &, const m::resource::request &);
+static m::resource::response put__profile(client &, const m::resource::request &);
 
 mapi::header
 IRCD_MODULE
@@ -27,7 +27,7 @@ PARAM_MAX_SIZE
 	128
 };
 
-ircd::resource
+ircd::m::resource
 profile_resource
 {
 	"/_matrix/client/r0/profile/",
@@ -37,13 +37,13 @@ profile_resource
 	}
 };
 
-resource::method
+m::resource::method
 method_get
 {
 	profile_resource, "GET", get__profile
 };
 
-resource::method
+m::resource::method
 method_put
 {
 	profile_resource, "PUT", put__profile,
@@ -52,9 +52,9 @@ method_put
 	}
 };
 
-resource::response
+m::resource::response
 put__profile(client &client,
-              const resource::request &request)
+              const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -110,7 +110,7 @@ put__profile(client &client,
 	});
 
 	if(!modified)
-		return resource::response
+		return m::resource::response
 		{
 			client, http::OK
 		};
@@ -120,15 +120,15 @@ put__profile(client &client,
 		profile.set(param, value)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::response
+m::resource::response
 get__profile(client &client,
-             const resource::request &request)
+             const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -176,7 +176,7 @@ get__profile(client &client,
 		profile.get(param, [&client]
 		(const string_view &param, const string_view &value)
 		{
-			resource::response
+			m::resource::response
 			{
 				client, json::members
 				{
@@ -220,7 +220,7 @@ get__profile(client &client,
 			string_view{user.user_id}
 		};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};

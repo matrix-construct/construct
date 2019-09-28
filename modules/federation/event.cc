@@ -16,9 +16,9 @@ mapi::header IRCD_MODULE
 };
 
 struct send
-:resource
+:m::resource
 {
-	using resource::resource;
+	using m::resource::resource;
 }
 event_resource
 {
@@ -29,9 +29,9 @@ event_resource
 	}
 };
 
-resource::response
+m::resource::response
 handle_get(client &client,
-           const resource::request &request)
+           const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -55,7 +55,7 @@ handle_get(client &client,
 			"You are not permitted to view this event"
 		};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -75,7 +75,8 @@ handle_get(client &client,
 	return std::move(response);
 }
 
-resource::method method_get
+m::resource::method
+method_get
 {
 	event_resource, "GET", handle_get,
 	{

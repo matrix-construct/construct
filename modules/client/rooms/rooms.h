@@ -8,16 +8,16 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-extern ircd::resource rooms_resource;
+extern ircd::m::resource rooms_resource;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
 // event.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 get__event(ircd::client &client,
-           const ircd::resource::request &request,
+           const ircd::m::resource::request &request,
            const ircd::m::room::id &room_id);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -25,9 +25,9 @@ get__event(ircd::client &client,
 // messages.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 get__messages(ircd::client &,
-              const ircd::resource::request &,
+              const ircd::m::resource::request &,
               const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -35,14 +35,14 @@ get__messages(ircd::client &,
 // state.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 get__state(ircd::client &client,
-           const ircd::resource::request &request,
+           const ircd::m::resource::request &request,
            const ircd::m::room::id &room_id);
 
-ircd::resource::response
+ircd::m::resource::response
 put__state(ircd::client &client,
-           const ircd::resource::request &request,
+           const ircd::m::resource::request &request,
            const ircd::m::room::id &room_id);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -50,14 +50,14 @@ put__state(ircd::client &client,
 // members.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 get__members(ircd::client &client,
-             const ircd::resource::request &request,
+             const ircd::m::resource::request &request,
              const ircd::m::room::id &room_id);
 
-ircd::resource::response
+ircd::m::resource::response
 get__joined_members(ircd::client &client,
-                    const ircd::resource::request &request,
+                    const ircd::m::resource::request &request,
                     const ircd::m::room::id &room_id);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -65,9 +65,9 @@ get__joined_members(ircd::client &client,
 // context.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 get__context(ircd::client &client,
-             const ircd::resource::request &request,
+             const ircd::m::resource::request &request,
              const ircd::m::room::id &room_id);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -75,9 +75,9 @@ get__context(ircd::client &client,
 // send.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 put__send(ircd::client &client,
-          const ircd::resource::request &request,
+          const ircd::m::resource::request &request,
           const ircd::m::room::id &room_id);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,9 +85,9 @@ put__send(ircd::client &client,
 // typing.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 put__typing(ircd::client &client,
-            const ircd::resource::request &request,
+            const ircd::m::resource::request &request,
             const ircd::m::room::id &room_id);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -95,14 +95,14 @@ put__typing(ircd::client &client,
 // redact.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 put__redact(ircd::client &client,
-            const ircd::resource::request &request,
+            const ircd::m::resource::request &request,
             const ircd::m::room::id &room_id);
 
-ircd::resource::response
+ircd::m::resource::response
 post__redact(ircd::client &client,
-             const ircd::resource::request &request,
+             const ircd::m::resource::request &request,
              const ircd::m::room::id &room_id);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -110,9 +110,9 @@ post__redact(ircd::client &client,
 // receipt.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 post__receipt(ircd::client &,
-              const ircd::resource::request &,
+              const ircd::m::resource::request &,
               const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -120,9 +120,9 @@ post__receipt(ircd::client &,
 // join.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 post__join(ircd::client &,
-           const ircd::resource::request &,
+           const ircd::m::resource::request &,
            const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -130,9 +130,9 @@ post__join(ircd::client &,
 // invite.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 post__invite(ircd::client &,
-             const ircd::resource::request &,
+             const ircd::m::resource::request &,
              const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -140,9 +140,9 @@ post__invite(ircd::client &,
 // leave.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 post__leave(ircd::client &,
-            const ircd::resource::request &,
+            const ircd::m::resource::request &,
             const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -150,9 +150,9 @@ post__leave(ircd::client &,
 // forget.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 post__forget(ircd::client &,
-             const ircd::resource::request &,
+             const ircd::m::resource::request &,
              const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -160,9 +160,9 @@ post__forget(ircd::client &,
 // kick.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 post__kick(ircd::client &,
-           const ircd::resource::request &,
+           const ircd::m::resource::request &,
            const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -170,9 +170,9 @@ post__kick(ircd::client &,
 // ban.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 post__ban(ircd::client &,
-          const ircd::resource::request &,
+          const ircd::m::resource::request &,
           const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -180,9 +180,9 @@ post__ban(ircd::client &,
 // unban.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 post__unban(ircd::client &,
-            const ircd::resource::request &,
+            const ircd::m::resource::request &,
             const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -190,9 +190,9 @@ post__unban(ircd::client &,
 // read_markers.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 post__read_markers(ircd::client &,
-                   const ircd::resource::request &,
+                   const ircd::m::resource::request &,
                    const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -200,9 +200,9 @@ post__read_markers(ircd::client &,
 // initialsync.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 get__initialsync(ircd::client &,
-                 const ircd::resource::request &,
+                 const ircd::m::resource::request &,
                  const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -210,9 +210,9 @@ get__initialsync(ircd::client &,
 // report.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 post__report(ircd::client &,
-             const ircd::resource::request &,
+             const ircd::m::resource::request &,
              const ircd::m::room::id &);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -220,7 +220,7 @@ post__report(ircd::client &,
 // relations.cc
 //
 
-ircd::resource::response
+ircd::m::resource::response
 get__relations(ircd::client &,
-               const ircd::resource::request &,
+               const ircd::m::resource::request &,
                const ircd::m::room::id &);

@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Federation (undocumented) :Get groups publicised."
 };
 
-resource
+m::resource
 get_groups_publicised_resource
 {
 	"/_matrix/federation/v1/get_groups_publicised",
@@ -25,9 +25,9 @@ get_groups_publicised_resource
 	}
 };
 
-static resource::response post__groups_publicised(client &, const resource::request &);
+static m::resource::response post__groups_publicised(client &, const m::resource::request &);
 
-resource::method
+m::resource::method
 method_post
 {
 	get_groups_publicised_resource, "POST", post__groups_publicised,
@@ -36,9 +36,9 @@ method_post
 	}
 };
 
-resource::response
+m::resource::response
 post__groups_publicised(client &client,
-                        const resource::request &request)
+                        const m::resource::request &request)
 {
 	const json::array user_ids
 	{
@@ -59,7 +59,7 @@ post__groups_publicised(client &client,
 		users.emplace_back(user_id, json::empty_array);
 	}
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{

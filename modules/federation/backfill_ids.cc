@@ -16,7 +16,7 @@ IRCD_MODULE
 	"federation backfill event IDs"
 };
 
-resource
+m::resource
 backfill_ids_resource
 {
 	"/_matrix/federation/v1/backfill_ids/",
@@ -41,7 +41,7 @@ backfill_ids_limit_default
 };
 
 static size_t
-calc_limit(const resource::request &request)
+calc_limit(const m::resource::request &request)
 {
 	const auto &limit
 	{
@@ -59,9 +59,9 @@ calc_limit(const resource::request &request)
 	return std::min(ret, size_t(backfill_ids_limit_max));
 }
 
-resource::response
+m::resource::response
 get__backfill_ids(client &client,
-                  const resource::request &request)
+                  const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -108,7 +108,7 @@ get__backfill_ids(client &client,
 		room
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -138,7 +138,7 @@ get__backfill_ids(client &client,
 	return response;
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	backfill_ids_resource, "GET", get__backfill_ids,

@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Federation 20 :Device Management"
 };
 
-resource
+m::resource
 user_devices_resource
 {
 	"/_matrix/federation/v1/user/devices",
@@ -26,11 +26,11 @@ user_devices_resource
 	}
 };
 
-static resource::response
+static m::resource::response
 get__user_devices(client &client,
-                  const resource::request &request);
+                  const m::resource::request &request);
 
-resource::method
+m::resource::method
 method_get
 {
 	user_devices_resource, "GET", get__user_devices,
@@ -39,9 +39,9 @@ method_get
 	}
 };
 
-resource::response
+m::resource::response
 get__user_devices(client &client,
-                  const resource::request &request)
+                  const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -54,7 +54,7 @@ get__user_devices(client &client,
 		url::decode(user_id, request.parv[0])
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};

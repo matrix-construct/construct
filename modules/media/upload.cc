@@ -12,7 +12,7 @@
 
 using namespace ircd;
 
-resource
+m::resource
 upload_resource__legacy
 {
 	"/_matrix/media/v1/upload/",
@@ -21,7 +21,7 @@ upload_resource__legacy
 	}
 };
 
-resource
+m::resource
 upload_resource
 {
 	"/_matrix/media/r0/upload/",
@@ -30,9 +30,9 @@ upload_resource
 	}
 };
 
-resource::response
+m::resource::response
 post__upload(client &client,
-             const resource::request &request)
+             const m::resource::request &request)
 {
 	const auto &content_type
 	{
@@ -104,7 +104,7 @@ post__upload(client &client,
 		filename,
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::CREATED, json::members
 		{
@@ -113,24 +113,24 @@ post__upload(client &client,
 	};
 }
 
-static const struct resource::method::opts
+static const struct m::resource::method::opts
 method_post_opts
 {
-	resource::method::REQUIRES_AUTH |
-	resource::method::CONTENT_DISCRETION,
+	m::resource::method::REQUIRES_AUTH |
+	m::resource::method::CONTENT_DISCRETION,
 
 	-1s, // TODO: no coarse timer
 
 	8_MiB //TODO: conf; (this is the payload max option)
 };
 
-static resource::method
+static m::resource::method
 method_post
 {
 	upload_resource, "POST", post__upload, method_post_opts
 };
 
-static resource::method
+static m::resource::method
 method_post__legacy
 {
 	upload_resource__legacy, "POST", post__upload, method_post_opts

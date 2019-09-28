@@ -16,7 +16,7 @@ IRCD_MODULE
 	"federation event_auth (undocumented)"
 };
 
-resource
+m::resource
 event_auth_resource
 {
 	"/_matrix/federation/v1/event_auth/",
@@ -33,9 +33,9 @@ event_auth_flush_hiwat
 	{ "default",  16384L                                   },
 };
 
-resource::response
+m::resource::response
 get__event_auth(client &client,
-                const resource::request &request)
+                const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -97,7 +97,7 @@ get__event_auth(client &client,
 			"You are not permitted to view the room at this event"
 		};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -131,7 +131,7 @@ get__event_auth(client &client,
 	return std::move(response);
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	event_auth_resource, "GET", get__event_auth,

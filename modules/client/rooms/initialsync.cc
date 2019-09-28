@@ -12,12 +12,12 @@ using namespace ircd;
 
 static void
 get__initialsync_remote(client &client,
-                        const resource::request &request,
+                        const m::resource::request &request,
                         const m::room &room);
 
 static void
 get__initialsync_local(client &client,
-                       const resource::request &request,
+                       const m::resource::request &request,
                        const m::room &room,
                        const m::user &user,
                        json::stack::object &out);
@@ -43,9 +43,9 @@ flush_hiwat
 	{ "default",  long(32_KiB)                                },
 };
 
-resource::response
+m::resource::response
 get__initialsync(client &client,
-                 const resource::request &request,
+                 const m::resource::request &request,
                  const m::room::id &room_id)
 {
 	const m::room room
@@ -64,7 +64,7 @@ get__initialsync(client &client,
 			};
 	}
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK, buffer_size
 	};
@@ -85,7 +85,7 @@ get__initialsync(client &client,
 
 void
 get__initialsync_local(client &client,
-                       const resource::request &request,
+                       const m::resource::request &request,
                        const m::room &room,
                        const m::user &user,
                        json::stack::object &out)
@@ -258,7 +258,7 @@ get__initialsync_local(client &client,
 
 void
 get__initialsync_remote(client &client,
-                        const resource::request &request,
+                        const m::resource::request &request,
                         const m::room &room)
 {
 	const m::room::origins origins{room};

@@ -25,7 +25,7 @@ users in that room.
 
 )"};
 
-resource
+m::resource
 send_join_resource
 {
 	"/_matrix/federation/v1/send_join/",
@@ -35,9 +35,9 @@ send_join_resource
 	}
 };
 
-resource::response
+m::resource::response
 put__send_join(client &client,
-               const resource::request &request)
+               const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -123,7 +123,7 @@ put__send_join(client &client,
 		m::head_idx(room_id)
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -230,7 +230,7 @@ put__send_join(client &client,
 	return std::move(response);
 }
 
-resource::method
+m::resource::method
 method_put
 {
 	send_join_resource, "PUT", put__send_join,

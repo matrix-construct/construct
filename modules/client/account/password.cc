@@ -12,7 +12,7 @@
 
 using namespace ircd;
 
-resource
+m::resource
 account_password
 {
 	"/_matrix/client/r0/account/password",
@@ -21,9 +21,9 @@ account_password
 	}
 };
 
-resource::response
+m::resource::response
 post__password(client &client,
-               const resource::request &request)
+               const m::resource::request &request)
 try
 {
 	const json::string &new_password
@@ -58,7 +58,7 @@ try
 	};
 
 	user.password(new_password);
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
@@ -71,7 +71,7 @@ catch(const db::not_found &e)
 	};
 }
 
-resource::method
+m::resource::method
 post_password
 {
 	account_password, "POST", post__password,

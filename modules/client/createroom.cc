@@ -10,9 +10,9 @@
 
 using namespace ircd;
 
-static resource::response
+static m::resource::response
 post__createroom(client &client,
-                 const resource::request::object<m::createroom> &request);
+                 const m::resource::request::object<m::createroom> &request);
 
 mapi::header
 IRCD_MODULE
@@ -20,7 +20,7 @@ IRCD_MODULE
 	"Client 7.1.1 :Create Room"
 };
 
-resource
+m::resource
 createroom_resource
 {
 	"/_matrix/client/r0/createRoom",
@@ -29,7 +29,7 @@ createroom_resource
 	}
 };
 
-resource::method
+m::resource::method
 post_method
 {
 	createroom_resource, "POST", post__createroom,
@@ -38,9 +38,9 @@ post_method
 	}
 };
 
-resource::response
+m::resource::response
 post__createroom(client &client,
-                 const resource::request::object<m::createroom> &request)
+                 const m::resource::request::object<m::createroom> &request)
 {
 	m::createroom c
 	{
@@ -101,7 +101,7 @@ post__createroom(client &client,
 
 	errors.~array();
 	top.~object();
-	return resource::response
+	return m::resource::response
 	{
 		client, http::CREATED, json::object
 		{

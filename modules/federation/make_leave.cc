@@ -25,7 +25,7 @@ create a leave event 'in the blind' for one of their users.
 
 )"};
 
-resource
+m::resource
 make_leave_resource
 {
 	"/_matrix/federation/v1/make_leave/",
@@ -35,9 +35,9 @@ make_leave_resource
 	}
 };
 
-resource::response
+m::resource::response
 get__make_leave(client &client,
-                const resource::request &request)
+                const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -192,7 +192,7 @@ get__make_leave(client &client,
 
 	event.~object();
 	top.~object();
-	return resource::response
+	return m::resource::response
 	{
 		client, json::object
 		{
@@ -201,7 +201,7 @@ get__make_leave(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	make_leave_resource, "GET", get__make_leave,

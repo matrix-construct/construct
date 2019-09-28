@@ -12,14 +12,14 @@
 
 using namespace ircd;
 
-static resource::response
+static m::resource::response
 post__openid__request_token(client &client,
-                            const resource::request &request,
+                            const m::resource::request &request,
                             const m::user::id &user_id);
 
-resource::response
+m::resource::response
 post__openid(client &client,
-             const resource::request &request,
+             const m::resource::request &request,
              const m::user::id &user_id)
 {
 	if(user_id != request.user_id)
@@ -46,12 +46,12 @@ post__openid(client &client,
 	};
 }
 
-resource::response
+m::resource::response
 post__openid__request_token(client &client,
-                            const resource::request &request,
+                            const m::resource::request &request,
                             const m::user::id &user_id)
 {
-	return resource::response
+	return m::resource::response
 	{
 		client, http::TOO_MANY_REQUESTS
 	};

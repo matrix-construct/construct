@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Federation 2.2 :Version"
 };
 
-resource
+m::resource
 version_resource
 {
 	"/_matrix/federation/v1/version",
@@ -25,9 +25,9 @@ version_resource
 	}
 };
 
-resource::response
+m::resource::response
 get__version(client &client,
-             const resource::request &request)
+             const m::resource::request &request)
 {
 	const json::members server
 	{
@@ -35,7 +35,7 @@ get__version(client &client,
 		{ "version",  ircd::info::version },
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
@@ -44,7 +44,7 @@ get__version(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	version_resource, "GET", get__version

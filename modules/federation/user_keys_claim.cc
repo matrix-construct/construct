@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Federation 21 :End-to-End Encryption"
 };
 
-resource
+m::resource
 user_keys_claim_resource
 {
 	"/_matrix/federation/v1/user/keys/claim",
@@ -25,11 +25,11 @@ user_keys_claim_resource
 	}
 };
 
-static resource::response
+static m::resource::response
 post__user_keys_claim(client &client,
-                      const resource::request &request);
+                      const m::resource::request &request);
 
-resource::method
+m::resource::method
 user_keys_claim__post
 {
 	user_keys_claim_resource, "POST", post__user_keys_claim,
@@ -38,11 +38,11 @@ user_keys_claim__post
 	}
 };
 
-resource::response
+m::resource::response
 post__user_keys_claim(client &client,
-                      const resource::request &request)
+                      const m::resource::request &request)
 {
-	return resource::response
+	return m::resource::response
 	{
 		client, http::NOT_FOUND
 	};

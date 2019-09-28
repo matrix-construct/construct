@@ -12,7 +12,7 @@
 
 using namespace ircd;
 
-resource
+m::resource
 preview_url_resource
 {
 	"/_matrix/media/r0/preview_url",
@@ -27,9 +27,9 @@ request_url(const string_view &urle);
 static json::strung
 parse_og(const string_view &content);
 
-static resource::response
+static m::resource::response
 get__preview_url(client &client,
-                 const resource::request &request)
+                 const m::resource::request &request)
 {
 	const auto &url
 	{
@@ -56,13 +56,13 @@ get__preview_url(client &client,
 		parse_og(content)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::object{ogs}
 	};
 }
 
-static resource::method
+static m::resource::method
 method_get
 {
 	preview_url_resource, "GET", get__preview_url

@@ -13,14 +13,14 @@
 using namespace ircd::m;
 using namespace ircd;
 
-static resource::response
+static m::resource::response
 get__state(client &client,
-           const resource::request &request,
+           const m::resource::request &request,
            const m::room::state &state);
 
-resource::response
+m::resource::response
 put__state(client &client,
-           const resource::request &request,
+           const m::resource::request &request,
            const room::id &room_id)
 {
 	if(request.parv.size() < 3)
@@ -53,7 +53,7 @@ put__state(client &client,
 		m::send(room_id, request.user_id, type, state_key, content)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
@@ -62,9 +62,9 @@ put__state(client &client,
 	};
 }
 
-resource::response
+m::resource::response
 get__state(client &client,
-           const resource::request &request,
+           const m::resource::request &request,
            const room::id &room_id)
 {
 	char type_buf[m::event::TYPE_MAX_SIZE];
@@ -128,18 +128,18 @@ get__state(client &client,
 			string_view{room_id}
 		};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, event.source
 	};
 }
 
-resource::response
+m::resource::response
 get__state(client &client,
-           const resource::request &request,
+           const m::resource::request &request,
            const m::room::state &state)
 {
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};

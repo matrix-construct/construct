@@ -14,19 +14,19 @@ using namespace ircd;
 
 void // This is in receipt.cc; not listed in rooms.h so we declare here.
 handle_receipt_m_read(client &client,
-                      const resource::request &request,
+                      const m::resource::request &request,
                       const m::room::id &room_id,
                       const m::event::id &event_id);
 
 static void
 handle_m_fully_read(client &client,
-                    const resource::request &request,
+                    const m::resource::request &request,
                     const m::room::id &room_id,
                     const json::string &input);
 
-resource::response
+m::resource::response
 post__read_markers(client &client,
-                   const resource::request &request,
+                   const m::resource::request &request,
                    const m::room::id &room_id)
 {
 	const json::string &m_read
@@ -45,7 +45,7 @@ post__read_markers(client &client,
 	if(m_read)
 		handle_receipt_m_read(client, request, room_id, m_read);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
@@ -53,7 +53,7 @@ post__read_markers(client &client,
 
 void
 handle_m_fully_read(client &client,
-                    const resource::request &request,
+                    const m::resource::request &request,
                     const m::room::id &room_id,
                     const json::string &input)
 {

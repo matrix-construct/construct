@@ -13,7 +13,7 @@ namespace ircd::m::client_capabilities
 	static resource::response get(client &, const resource::request &);
 
 	extern resource::method method_get;
-	extern ircd::resource resource;
+	extern m::resource resource;
 }
 
 ircd::mapi::header

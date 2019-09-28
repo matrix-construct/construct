@@ -12,19 +12,19 @@ using namespace ircd;
 
 static void
 upload_device_keys(client &,
-                   const resource::request &,
+                   const m::resource::request &,
                    const m::device::id &,
                    const m::device_keys &);
 
 static void
 upload_one_time_keys(client &,
-                     const resource::request &,
+                     const m::resource::request &,
                      const m::device::id &,
                      const json::object &);
 
-static resource::response
+static m::resource::response
 post__keys_upload(client &client,
-                  const resource::request &request);
+                  const m::resource::request &request);
 
 mapi::header
 IRCD_MODULE
@@ -32,7 +32,7 @@ IRCD_MODULE
 	"Client 14.11.5.2 :Key management API"
 };
 
-ircd::resource
+ircd::m::resource
 upload_resource
 {
 	"/_matrix/client/r0/keys/upload",
@@ -42,7 +42,7 @@ upload_resource
 	}
 };
 
-ircd::resource
+ircd::m::resource
 upload_resource__unstable
 {
 	"/_matrix/client/unstable/keys/upload",
@@ -52,7 +52,7 @@ upload_resource__unstable
 	}
 };
 
-resource::method
+m::resource::method
 method_post
 {
 	upload_resource, "POST", post__keys_upload,
@@ -61,7 +61,7 @@ method_post
 	}
 };
 
-resource::method
+m::resource::method
 method_post__unstable
 {
 	upload_resource__unstable, "POST", post__keys_upload,
@@ -70,9 +70,9 @@ method_post__unstable
 	}
 };
 
-resource::response
+m::resource::response
 post__keys_upload(client &client,
-                  const resource::request &request)
+                  const m::resource::request &request)
 {
 	const m::user::room user_room
 	{
@@ -125,7 +125,7 @@ post__keys_upload(client &client,
 
 	one_time_key_counts.~object();
 	top.~object();
-	return resource::response
+	return m::resource::response
 	{
 		client, json::object
 		{
@@ -136,7 +136,7 @@ post__keys_upload(client &client,
 
 void
 upload_one_time_keys(client &client,
-                     const resource::request &request,
+                     const m::resource::request &request,
                      const m::device::id &device_id,
                      const json::object &one_time_keys)
 {
@@ -174,7 +174,7 @@ upload_one_time_keys(client &client,
 
 void
 upload_device_keys(client &client,
-                   const resource::request &request,
+                   const m::resource::request &request,
                    const m::device::id &device_id,
                    const m::device_keys &device_keys)
 {

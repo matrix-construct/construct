@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Client 7.4.2.3 :Join"
 };
 
-resource
+m::resource
 join_resource
 {
 	"/_matrix/client/r0/join/",
@@ -26,19 +26,19 @@ join_resource
 	}
 };
 
-static resource::response
+static m::resource::response
 _post__join(client &client,
-            const resource::request &request,
+            const m::resource::request &request,
             const m::room::id &room_id);
 
-static resource::response
+static m::resource::response
 _post__join(client &client,
-            const resource::request &request,
+            const m::resource::request &request,
             const m::room::alias &room_alias);
 
-resource::response
+m::resource::response
 post__join(client &client,
-           const resource::request &request)
+           const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw http::error
@@ -67,7 +67,7 @@ post__join(client &client,
 	}
 }
 
-resource::method
+m::resource::method
 method_post
 {
 	join_resource, "POST", post__join,
@@ -76,14 +76,14 @@ method_post
 	}
 };
 
-static resource::response
+static m::resource::response
 _post__join(client &client,
-            const resource::request &request,
+            const m::resource::request &request,
             const m::room::alias &room_alias)
 {
 	m::join(room_alias, request.user_id);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
@@ -95,9 +95,9 @@ _post__join(client &client,
 /// This function forwards the join request to the /rooms/{room_id}/join
 /// module so they can reuse the same code. That's done with the m::join()
 /// convenience linkage.
-static resource::response
+static m::resource::response
 _post__join(client &client,
-            const resource::request &request,
+            const m::resource::request &request,
             const m::room::id &room_id)
 {
 	const m::room room
@@ -107,7 +107,7 @@ _post__join(client &client,
 
 	m::join(room, request.user_id);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{

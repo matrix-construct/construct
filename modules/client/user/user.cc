@@ -18,7 +18,7 @@ IRCD_MODULE
 	"Client X.X :User endpoints"
 };
 
-resource
+m::resource
 user_resource
 {
 	"/_matrix/client/r0/user/",
@@ -28,8 +28,8 @@ user_resource
 	}
 };
 
-resource::response
-get_user(client &client, const resource::request &request)
+m::resource::response
+get_user(client &client, const m::resource::request &request)
 {
 	if(request.parv.size() < 2)
 		throw m::NEED_MORE_PARAMS
@@ -68,7 +68,7 @@ get_user(client &client, const resource::request &request)
 	};
 }
 
-resource::method
+m::resource::method
 get_method
 {
 	user_resource, "GET", get_user,
@@ -77,8 +77,8 @@ get_method
 	}
 };
 
-resource::response
-post_user(client &client, resource::request &request)
+m::resource::response
+post_user(client &client, m::resource::request &request)
 {
 	if(request.parv.size() < 2)
 		throw m::NEED_MORE_PARAMS
@@ -114,7 +114,7 @@ post_user(client &client, resource::request &request)
 	};
 }
 
-resource::method
+m::resource::method
 post_method
 {
 	user_resource, "POST", post_user,
@@ -123,8 +123,8 @@ post_method
 	}
 };
 
-resource::response
-put_user(client &client, const resource::request &request)
+m::resource::response
+put_user(client &client, const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -166,7 +166,7 @@ put_user(client &client, const resource::request &request)
 	};
 }
 
-resource::method
+m::resource::method
 put_method
 {
 	user_resource, "PUT", put_user,
@@ -175,8 +175,8 @@ put_method
 	}
 };
 
-resource::response
-delete_user(client &client, const resource::request &request)
+m::resource::response
+delete_user(client &client, const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -215,7 +215,7 @@ delete_user(client &client, const resource::request &request)
 	};
 }
 
-resource::method
+m::resource::method
 delete_method
 {
 	user_resource, "DELETE", delete_user,

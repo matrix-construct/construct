@@ -10,16 +10,15 @@
 
 #include "rooms.h"
 
-using namespace ircd::m;
 using namespace ircd;
 
-mapi::header
+ircd::mapi::header
 IRCD_MODULE
 {
 	"Client 7 :Rooms"
 };
 
-resource
+m::resource
 rooms_resource
 {
 	"/_matrix/client/r0/rooms/",
@@ -29,7 +28,7 @@ rooms_resource
 	}
 };
 
-resource
+m::resource
 rooms_resource_unstable
 {
 	"/_matrix/client/unstable/rooms/",
@@ -39,9 +38,9 @@ rooms_resource_unstable
 	}
 };
 
-resource::response
+m::resource::response
 get_rooms(client &client,
-          const resource::request &request)
+          const m::resource::request &request)
 {
 	if(request.parv.size() < 2)
 		throw m::NEED_MORE_PARAMS
@@ -49,7 +48,7 @@ get_rooms(client &client,
 			"/rooms command required"
 		};
 
-	room::id::buf room_id
+	m::room::id::buf room_id
 	{
 		url::decode(room_id, request.parv[0])
 	};
@@ -89,21 +88,21 @@ get_rooms(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	rooms_resource, "GET", get_rooms
 };
 
-resource::method
+m::resource::method
 method_get_unstable
 {
 	rooms_resource_unstable, "GET", get_rooms
 };
 
-resource::response
+m::resource::response
 put_rooms(client &client,
-          const resource::request &request)
+          const m::resource::request &request)
 {
 	if(request.parv.size() < 2)
 		throw m::NEED_MORE_PARAMS
@@ -111,7 +110,7 @@ put_rooms(client &client,
 			"/rooms command required"
 		};
 
-	room::id::buf room_id
+	m::room::id::buf room_id
 	{
 		url::decode(room_id, request.parv[0])
 	};
@@ -139,7 +138,7 @@ put_rooms(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 method_put
 {
 	rooms_resource, "PUT", put_rooms,
@@ -148,9 +147,9 @@ method_put
 	}
 };
 
-resource::response
+m::resource::response
 post_rooms(client &client,
-           const resource::request &request)
+           const m::resource::request &request)
 {
 	if(request.parv.size() < 2)
 		throw m::NEED_MORE_PARAMS
@@ -158,7 +157,7 @@ post_rooms(client &client,
 			"/rooms command required"
 		};
 
-	room::id::buf room_id
+	m::room::id::buf room_id
 	{
 		url::decode(room_id, request.parv[0])
 	};
@@ -207,7 +206,7 @@ post_rooms(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 method_post
 {
 	rooms_resource, "POST", post_rooms,

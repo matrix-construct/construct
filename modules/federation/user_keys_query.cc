@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Federation 21 :End-to-End Encryption"
 };
 
-resource
+m::resource
 user_keys_query_resource
 {
 	"/_matrix/federation/v1/user/keys/query",
@@ -27,16 +27,16 @@ user_keys_query_resource
 
 static void
 _query_user_device(client &client,
-                   const resource::request &request,
+                   const m::resource::request &request,
                    const m::user::id &user_id,
                    const string_view &device_id,
                    json::stack::object &out);
 
-static resource::response
+static m::resource::response
 post__user_keys_query(client &client,
-                      const resource::request &request);
+                      const m::resource::request &request);
 
-resource::method
+m::resource::method
 user_keys_query__post
 {
 	user_keys_query_resource, "POST", post__user_keys_query,
@@ -45,16 +45,16 @@ user_keys_query__post
 	}
 };
 
-resource::response
+m::resource::response
 post__user_keys_query(client &client,
-                      const resource::request &request)
+                      const m::resource::request &request)
 {
 	const json::object &request_keys
 	{
 		request.at("device_keys")
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -96,7 +96,7 @@ post__user_keys_query(client &client,
 
 void
 _query_user_device(client &client,
-                   const resource::request &request,
+                   const m::resource::request &request,
                    const m::user::id &user_id,
                    const string_view &device_id,
                    json::stack::object &out)

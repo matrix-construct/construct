@@ -14,13 +14,13 @@ using namespace ircd;
 
 void
 handle_receipt_m_read(client &client,
-                      const resource::request &request,
+                      const m::resource::request &request,
                       const m::room::id &room_id,
                       const m::event::id &event_id);
 
-resource::response
+m::resource::response
 post__receipt(client &client,
-              const resource::request &request,
+              const m::resource::request &request,
               const m::room::id &room_id)
 {
 	if(request.parv.size() < 3)
@@ -55,7 +55,7 @@ post__receipt(client &client,
 		receipt_type
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
@@ -63,7 +63,7 @@ post__receipt(client &client,
 
 void
 handle_receipt_m_read(client &client,
-                      const resource::request &request,
+                      const m::resource::request &request,
                       const m::room::id &room_id,
                       const m::event::id &event_id)
 {

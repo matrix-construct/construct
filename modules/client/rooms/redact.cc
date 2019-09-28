@@ -13,9 +13,9 @@
 using namespace ircd::m;
 using namespace ircd;
 
-resource::response
+m::resource::response
 put__redact(client &client,
-            const resource::request &request,
+            const m::resource::request &request,
             const room::id &room_id)
 {
 	if(request.parv.size() < 3)
@@ -55,7 +55,7 @@ put__redact(client &client,
 		m::redact(room, request.user_id, redacts, reason)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
@@ -64,9 +64,9 @@ put__redact(client &client,
 	};
 }
 
-resource::response
+m::resource::response
 post__redact(client &client,
-             const resource::request &request,
+             const m::resource::request &request,
              const room::id &room_id)
 {
 	if(request.parv.size() < 3)
@@ -95,7 +95,7 @@ post__redact(client &client,
 		m::redact(room, request.user_id, redacts, reason)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{

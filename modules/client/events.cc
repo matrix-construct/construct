@@ -36,7 +36,7 @@ static resource::response
 get__events(client &client,
             const m::resource::request &request);
 
-resource
+m::resource
 events_resource
 {
 	"/_matrix/client/r0/events",

@@ -16,7 +16,7 @@ IRCD_MODULE
 	"federation state_ids"
 };
 
-resource
+m::resource
 state_ids_resource
 {
 	"/_matrix/federation/v1/state_ids/",
@@ -26,9 +26,9 @@ state_ids_resource
 	}
 };
 
-resource::response
+m::resource::response
 get__state_ids(client &client,
-               const resource::request &request)
+               const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -74,7 +74,7 @@ get__state_ids(client &client,
 			m::head_idx(room)
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -126,7 +126,7 @@ get__state_ids(client &client,
 	return std::move(response);
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	state_ids_resource, "GET", get__state_ids,

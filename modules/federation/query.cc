@@ -26,7 +26,7 @@ that kind of query. The response is a JSON-encoded object whose
 meaning also depends on the kind of query.
 )"};
 
-resource
+m::resource
 query_resource
 {
 	"/_matrix/federation/v1/query/",
@@ -36,17 +36,17 @@ query_resource
 	}
 };
 
-static resource::response
+static m::resource::response
 get__query_profile(client &client,
-                   const resource::request &request);
+                   const m::resource::request &request);
 
-static resource::response
+static m::resource::response
 get__query_directory(client &client,
-                     const resource::request &request);
+                     const m::resource::request &request);
 
-resource::response
+m::resource::response
 get__query(client &client,
-           const resource::request &request)
+           const m::resource::request &request)
 {
 	const auto type
 	{
@@ -65,7 +65,7 @@ get__query(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	query_resource, "GET", get__query,
@@ -74,9 +74,9 @@ method_get
 	}
 };
 
-resource::response
+m::resource::response
 get__query_profile(client &client,
-                   const resource::request &request)
+                   const m::resource::request &request)
 {
 	m::user::id::buf user_id
 	{
@@ -103,7 +103,7 @@ get__query_profile(client &client,
 		profile.get(field, [&client]
 		(const string_view &field, const string_view &value)
 		{
-			resource::response
+			m::resource::response
 			{
 				client, json::members
 				{
@@ -115,7 +115,7 @@ get__query_profile(client &client,
 		return {};
 	}
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -144,9 +144,9 @@ get__query_profile(client &client,
 	return response;
 }
 
-resource::response
+m::resource::response
 get__query_directory(client &client,
-                     const resource::request &request)
+                     const m::resource::request &request)
 {
 	m::room::alias::buf room_alias
 	{
@@ -209,7 +209,7 @@ get__query_directory(client &client,
 
 	servers.~array();
 	top.~object();
-	return resource::response
+	return m::resource::response
 	{
 		client, json::object
 		{

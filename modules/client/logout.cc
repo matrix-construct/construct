@@ -14,13 +14,13 @@ static bool
 do_logout(const m::user::id &user_id,
           const m::event::idx &token_event_idx);
 
-static resource::response
+static m::resource::response
 post__logout(client &,
-             const resource::request &);
+             const m::resource::request &);
 
-static resource::response
+static m::resource::response
 post__logout_all(client &,
-                 const resource::request &);
+                 const m::resource::request &);
 
 mapi::header
 IRCD_MODULE
@@ -28,7 +28,7 @@ IRCD_MODULE
 	"Client 3.3.2 :Logout"
 };
 
-resource
+m::resource
 logout_resource
 {
 	"/_matrix/client/r0/logout",
@@ -38,7 +38,7 @@ logout_resource
 	}
 };
 
-resource
+m::resource
 logout_all_resource
 {
 	"/_matrix/client/r0/logout/all",
@@ -49,7 +49,7 @@ logout_all_resource
 	}
 };
 
-resource::method
+m::resource::method
 post_method
 {
 	logout_resource, "POST", post__logout,
@@ -58,7 +58,7 @@ post_method
 	}
 };
 
-resource::method
+m::resource::method
 post_all_method
 {
 	logout_all_resource, "POST", post__logout_all,
@@ -67,9 +67,9 @@ post_all_method
 	}
 };
 
-resource::response
+m::resource::response
 post__logout(client &client,
-             const resource::request &request)
+             const m::resource::request &request)
 {
 	const auto &access_token
 	{
@@ -88,15 +88,15 @@ post__logout(client &client,
 
 	do_logout(request.user_id, token_event_idx);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::response
+m::resource::response
 post__logout_all(client &client,
-                 const resource::request &request)
+                 const m::resource::request &request)
 {
 	const m::room::state tokens
 	{
@@ -121,7 +121,7 @@ post__logout_all(client &client,
 		}
 	}});
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{

@@ -12,9 +12,9 @@
 
 using namespace ircd;
 
-resource::response
+m::resource::response
 get__event(client &client,
-           const resource::request &request,
+           const m::resource::request &request,
            const m::room::id &room_id)
 {
 	if(request.parv.size() < 3)
@@ -46,7 +46,7 @@ get__event(client &client,
 		event_id, fopts
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, event.source
 	};

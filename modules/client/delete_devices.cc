@@ -10,9 +10,9 @@
 
 using namespace ircd;
 
-static resource::response
+static m::resource::response
 post__delete_devices(client &client,
-                     const resource::request &request);
+                     const m::resource::request &request);
 
 extern const std::string flows;
 
@@ -22,7 +22,7 @@ IRCD_MODULE
 	"Client 14.10.1.5 :Device Management"
 };
 
-ircd::resource
+ircd::m::resource
 delete_devices_resource
 {
 	"/_matrix/client/r0/delete_devices/",
@@ -31,7 +31,7 @@ delete_devices_resource
 	}
 };
 
-ircd::resource
+ircd::m::resource
 delete_devices_resource__unstable
 {
 	"/_matrix/client/unstable/delete_devices/",
@@ -40,7 +40,7 @@ delete_devices_resource__unstable
 	}
 };
 
-resource::method
+m::resource::method
 method_post
 {
 	delete_devices_resource, "POST", post__delete_devices,
@@ -49,7 +49,7 @@ method_post
 	}
 };
 
-resource::method
+m::resource::method
 method_post__unstable
 {
 	delete_devices_resource__unstable, "POST", post__delete_devices,
@@ -58,9 +58,9 @@ method_post__unstable
 	}
 };
 
-resource::response
+m::resource::response
 post__delete_devices(client &client,
-                     const resource::request &request)
+                     const m::resource::request &request)
 {
 	const json::array &devices
 	{
@@ -75,7 +75,7 @@ post__delete_devices(client &client,
 	// 14.10.2 Security considerations
 	const json::string &type{auth["type"]};
 	if(type != "m.login.password")
-		return resource::response
+		return m::resource::response
 		{
 			client, http::UNAUTHORIZED, json::object{flows}
 		};
@@ -90,7 +90,7 @@ post__delete_devices(client &client,
 	for(const json::string &device_id : devices)
 		m::device::del(request.user_id, device_id);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};

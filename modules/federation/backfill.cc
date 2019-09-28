@@ -16,7 +16,7 @@ IRCD_MODULE
 	"federation backfill"
 };
 
-resource
+m::resource
 backfill_resource
 {
 	"/_matrix/federation/v1/backfill/",
@@ -27,13 +27,13 @@ backfill_resource
 };
 
 static size_t
-calc_limit(const resource::request &request);
+calc_limit(const m::resource::request &request);
 
-resource::response
+m::resource::response
 get__backfill(client &client,
-              const resource::request &request);
+              const m::resource::request &request);
 
-resource::method
+m::resource::method
 method_get
 {
 	backfill_resource, "GET", get__backfill,
@@ -63,9 +63,9 @@ backfill_flush_hiwat
 	{ "default",  16384L                                 },
 };
 
-resource::response
+m::resource::response
 get__backfill(client &client,
-              const resource::request &request)
+              const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -101,7 +101,7 @@ get__backfill(client &client,
 		room_id, event_id
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -131,7 +131,7 @@ get__backfill(client &client,
 }
 
 static size_t
-calc_limit(const resource::request &request)
+calc_limit(const m::resource::request &request)
 {
 	const auto &limit
 	{

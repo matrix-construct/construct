@@ -69,7 +69,7 @@ ircd::m::media::thumbnail::mime_blacklist
 	{ "default",  ""                                      },
 };
 
-resource
+m::resource
 thumbnail_resource__legacy
 {
 	"/_matrix/media/v1/thumbnail/",
@@ -79,7 +79,7 @@ thumbnail_resource__legacy
 	}
 };
 
-resource
+m::resource
 thumbnail_resource
 {
 	"/_matrix/media/r0/thumbnail/",
@@ -89,15 +89,15 @@ thumbnail_resource
 	}
 };
 
-static resource::response
+static m::resource::response
 get__thumbnail_local(client &client,
-                     const resource::request &request,
+                     const m::resource::request &request,
                      const m::media::mxc &,
                      const m::room &room);
 
-resource::response
+m::resource::response
 get__thumbnail(client &client,
-               const resource::request &request)
+               const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -133,7 +133,7 @@ get__thumbnail(client &client,
 		};
 
 		if(!exists(room_id))
-			return resource::response
+			return m::resource::response
 			{
 				client, http::NOT_FOUND
 			};
@@ -147,21 +147,21 @@ get__thumbnail(client &client,
 	return get__thumbnail_local(client, request, mxc, room_id);
 }
 
-static resource::method
+static m::resource::method
 method_get__legacy
 {
 	thumbnail_resource__legacy, "GET", get__thumbnail
 };
 
-static resource::method
+static m::resource::method
 method_get
 {
 	thumbnail_resource, "GET", get__thumbnail
 };
 
-static resource::response
+static m::resource::response
 get__thumbnail_local(client &client,
-                     const resource::request &request,
+                     const m::resource::request &request,
                      const m::media::mxc &mxc,
                      const m::room &room)
 {
@@ -316,7 +316,7 @@ get__thumbnail_local(client &client,
 		};
 
 	if(fallback)
-		return resource::response
+		return m::resource::response
 		{
 			client, buf, content_type
 		};
@@ -324,7 +324,7 @@ get__thumbnail_local(client &client,
 	const auto closure{[&client, &content_type]
 	(const const_buffer &buf)
 	{
-		resource::response
+		m::resource::response
 		{
 			client, buf, content_type
 		};

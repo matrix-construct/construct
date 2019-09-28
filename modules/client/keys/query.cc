@@ -50,9 +50,9 @@ static void
 handle_failures(const failure_map &,
                 json::stack::object &);
 
-static resource::response
+static m::resource::response
 post__keys_query(client &client,
-                 const resource::request &request);
+                 const m::resource::request &request);
 
 mapi::header
 IRCD_MODULE
@@ -60,7 +60,7 @@ IRCD_MODULE
 	"Client 14.11.5.2 :Key management API"
 };
 
-ircd::resource
+ircd::m::resource
 query_resource
 {
 	"/_matrix/client/r0/keys/query",
@@ -69,7 +69,7 @@ query_resource
 	}
 };
 
-ircd::resource
+ircd::m::resource
 query_resource__unstable
 {
 	"/_matrix/client/unstable/keys/query",
@@ -78,7 +78,7 @@ query_resource__unstable
 	}
 };
 
-resource::method
+m::resource::method
 method_post
 {
 	query_resource, "POST", post__keys_query,
@@ -87,7 +87,7 @@ method_post
 	}
 };
 
-resource::method
+m::resource::method
 method_post__unstable
 {
 	query_resource__unstable, "POST", post__keys_query,
@@ -117,9 +117,9 @@ query_timeout_max
 	{ "default",  20000L                               },
 };
 
-resource::response
+m::resource::response
 post__keys_query(client &client,
-                 const resource::request &request)
+                 const m::resource::request &request)
 {
 	const milliseconds timeout{[&request]
 	{
@@ -152,7 +152,7 @@ post__keys_query(client &client,
 		send_requests(map, buffers, failures)
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};

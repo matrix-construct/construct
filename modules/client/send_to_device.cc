@@ -18,9 +18,9 @@ send_to_device(const string_view &txnid,
                const string_view &type,
                const json::object &message);
 
-static resource::response
+static m::resource::response
 put__send_to_device(client &client,
-                    const resource::request &request);
+                    const m::resource::request &request);
 
 mapi::header
 IRCD_MODULE
@@ -28,7 +28,7 @@ IRCD_MODULE
 	"Client 14.9 :Send-to-Device messaging"
 };
 
-ircd::resource
+ircd::m::resource
 send_to_device_resource
 {
 	"/_matrix/client/r0/sendToDevice/",
@@ -38,7 +38,7 @@ send_to_device_resource
 	}
 };
 
-ircd::resource
+ircd::m::resource
 send_to_device_resource__unstable
 {
 	"/_matrix/client/unstable/sendToDevice/",
@@ -48,7 +48,7 @@ send_to_device_resource__unstable
 	}
 };
 
-resource::method
+m::resource::method
 method_put
 {
 	send_to_device_resource, "PUT", put__send_to_device,
@@ -57,7 +57,7 @@ method_put
 	}
 };
 
-resource::method
+m::resource::method
 method_put__unstable
 {
 	send_to_device_resource__unstable, "PUT", put__send_to_device,
@@ -66,9 +66,9 @@ method_put__unstable
 	}
 };
 
-resource::response
+m::resource::response
 put__send_to_device(client &client,
-                    const resource::request &request)
+                    const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -103,7 +103,7 @@ put__send_to_device(client &client,
 		for(const auto &[device_id, message] : json::object(messages))
 			send_to_device(txnid, request.user_id, user_id, device_id, type, message);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};

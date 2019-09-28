@@ -5758,12 +5758,12 @@ console_cmd__client(opt &out, const string_view &line)
 		    << " "
 		    << left << setw(50) << remote(*client)
 		    ;
-
+/*
 		if(client->request.user_id)
 			out << " " << client->request.user_id;
 		else if(client->request.origin)
 			out << " " << client->request.origin;
-
+*/
 		if(client->request.head.method)
 			out << " " << client->request.head.method;
 

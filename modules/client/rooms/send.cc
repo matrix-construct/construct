@@ -17,9 +17,9 @@ static void
 save_transaction_id(const m::event &,
                     m::vm::eval &);
 
-static resource::response
+static m::resource::response
 handle_command(client &,
-               const resource::request &,
+               const m::resource::request &,
                const room &);
 
 m::hookfn<m::vm::eval &>
@@ -32,9 +32,9 @@ save_transaction_id_hookfn
 	}
 };
 
-resource::response
+m::resource::response
 put__send(client &client,
-          const resource::request &request,
+          const m::resource::request &request,
           const room::id &room_id)
 {
 	if(request.parv.size() < 3)
@@ -88,7 +88,7 @@ put__send(client &client,
 		m::send(room, request.user_id, type, content)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
@@ -97,9 +97,9 @@ put__send(client &client,
 	};
 }
 
-resource::response
+m::resource::response
 handle_command(client &client,
-               const resource::request &request,
+               const m::resource::request &request,
                const room &room)
 {
 	const user::room user_room
@@ -117,7 +117,7 @@ handle_command(client &client,
 		})
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{

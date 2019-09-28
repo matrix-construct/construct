@@ -25,7 +25,7 @@ create a join event 'in the blind' for one of their users.
 
 )"};
 
-resource
+m::resource
 make_join_resource
 {
 	"/_matrix/federation/v1/make_join/",
@@ -35,9 +35,9 @@ make_join_resource
 	}
 };
 
-resource::response
+m::resource::response
 get__make_join(client &client,
-                const resource::request &request)
+                const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -207,7 +207,7 @@ get__make_join(client &client,
 
 	event.~object();
 	top.~object();
-	return resource::response
+	return m::resource::response
 	{
 		client, json::object
 		{
@@ -216,7 +216,7 @@ get__make_join(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	make_join_resource, "GET", get__make_join,

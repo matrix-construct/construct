@@ -12,7 +12,7 @@
 
 using namespace ircd;
 
-resource
+m::resource
 download_resource
 {
 	"/_matrix/media/r0/download/",
@@ -22,7 +22,7 @@ download_resource
 	}
 };
 
-resource
+m::resource
 download_resource__legacy
 {
 	"/_matrix/media/v1/download/",
@@ -32,16 +32,16 @@ download_resource__legacy
 	}
 };
 
-static resource::response
+static m::resource::response
 get__download_local(client &client,
-                    const resource::request &request,
+                    const m::resource::request &request,
                     const string_view &server,
                     const string_view &file,
                     const m::room &room);
 
-static resource::response
+static m::resource::response
 get__download(client &client,
-              const resource::request &request)
+              const m::resource::request &request)
 {
 	if(request.parv.size() < 2)
 		throw http::error
@@ -81,9 +81,9 @@ get__download(client &client,
 	return get__download_local(client, request, server, file, room_id);
 }
 
-static resource::response
+static m::resource::response
 get__download_local(client &client,
-                    const resource::request &request,
+                    const m::resource::request &request,
                     const string_view &server,
                     const string_view &file,
                     const m::room &room)
@@ -128,7 +128,7 @@ get__download_local(client &client,
 	});
 
 	// Send HTTP head to client
-	resource::response
+	m::resource::response
 	{
 		client, http::OK, content_type, file_size
 	};
@@ -159,13 +159,13 @@ get__download_local(client &client,
 	return {};
 }
 
-static resource::method
+static m::resource::method
 method_get
 {
 	download_resource, "GET", get__download
 };
 
-static resource::method
+static m::resource::method
 method_get__legacy
 {
 	download_resource__legacy, "GET", get__download

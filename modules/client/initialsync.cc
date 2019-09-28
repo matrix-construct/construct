@@ -34,7 +34,7 @@ call the /sync API with no since parameter.
 // sync resource
 //
 
-resource
+m::resource
 initialsync_resource
 {
 	"/_matrix/client/r0/initialSync",
@@ -43,11 +43,11 @@ initialsync_resource
 	}
 };
 
-resource::response
+m::resource::response
 initialsync(client &client,
-            const resource::request &request);
+            const m::resource::request &request);
 
-resource::method
+m::resource::method
 get_initialsync
 {
 	initialsync_resource, "GET", initialsync,
@@ -73,12 +73,12 @@ initialsync_limit_max
 
 static void
 _initialsync(client &client,
-             const resource::request &request,
+             const m::resource::request &request,
              json::stack::object &out);
 
-resource::response
+m::resource::response
 initialsync(client &client,
-            const resource::request &request)
+            const m::resource::request &request)
 try
 {
 	const auto &filter_id
@@ -106,7 +106,7 @@ try
 		96_KiB
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK, "application/json; charset=utf-8"
 	};
@@ -139,25 +139,25 @@ catch(const std::exception &e)
 
 static void
 initialsync_rooms(client &client,
-                  const resource::request &request,
+                  const m::resource::request &request,
                   json::stack::object &out,
                   const m::user::room &);
 
 static void
 initialsync_presence(client &client,
-                     const resource::request &request,
+                     const m::resource::request &request,
                      json::stack::object &out,
                      const m::user &user);
 
 static void
 initialsync_account_data(client &client,
-                         const resource::request &request,
+                         const m::resource::request &request,
                          json::stack::object &out,
                          const m::user::room &);
 
 void
 _initialsync(client &client,
-             const resource::request &request,
+             const m::resource::request &request,
              json::stack::object &out)
 {
 	const m::user user{request.user_id};
@@ -200,7 +200,7 @@ _initialsync(client &client,
 
 void
 initialsync_presence(client &client,
-                     const resource::request &request,
+                     const m::resource::request &request,
                      json::stack::object &out,
                      const m::user &user)
 {
@@ -247,7 +247,7 @@ initialsync_presence(client &client,
 
 void
 initialsync_account_data(client &client,
-                         const resource::request &request,
+                         const m::resource::request &request,
                          json::stack::object &out,
                          const m::user::room &user_room)
 {
@@ -280,25 +280,25 @@ initialsync_account_data(client &client,
 
 static void
 initialsync_rooms_join(client &client,
-                       const resource::request &request,
+                       const m::resource::request &request,
                        json::stack::object &out,
                        const m::user::room &user_room);
 
 static void
 initialsync_rooms_leave(client &client,
-                        const resource::request &request,
+                        const m::resource::request &request,
                         json::stack::object &out,
                         const m::user::room &user_room);
 
 static void
 initialsync_rooms_invite(client &client,
-                         const resource::request &request,
+                         const m::resource::request &request,
                          json::stack::object &out,
                          const m::user::room &user_room);
 
 void
 initialsync_rooms(client &client,
-                  const resource::request &request,
+                  const m::resource::request &request,
                   json::stack::object &out,
                   const m::user::room &user_room)
 {
@@ -326,13 +326,13 @@ initialsync_rooms(client &client,
 
 void
 initialsync_rooms__membership(client &client,
-                              const resource::request &request,
+                              const m::resource::request &request,
                               json::stack::object &out,
                               const m::user::room &user_room,
                               const string_view &membership);
 void
 initialsync_rooms_join(client &client,
-                       const resource::request &request,
+                       const m::resource::request &request,
                        json::stack::object &out,
                        const m::user::room &user_room)
 {
@@ -341,7 +341,7 @@ initialsync_rooms_join(client &client,
 
 void
 initialsync_rooms_leave(client &client,
-                        const resource::request &request,
+                        const m::resource::request &request,
                         json::stack::object &out,
                         const m::user::room &user_room)
 {
@@ -350,7 +350,7 @@ initialsync_rooms_leave(client &client,
 
 void
 initialsync_rooms_invite(client &client,
-                         const resource::request &request,
+                         const m::resource::request &request,
                          json::stack::object &out,
                          const m::user::room &user_room)
 {
@@ -359,7 +359,7 @@ initialsync_rooms_invite(client &client,
 
 static void
 initialsync_room(client &client,
-                 const resource::request &request,
+                 const m::resource::request &request,
                  json::stack::object &out,
                  const m::user::room &user_room,
                  const m::room &room,
@@ -367,7 +367,7 @@ initialsync_room(client &client,
 
 void
 initialsync_rooms__membership(client &client,
-                              const resource::request &request,
+                              const m::resource::request &request,
                               json::stack::object &out,
                               const m::user::room &user_room,
                               const string_view &membership)
@@ -389,42 +389,42 @@ initialsync_rooms__membership(client &client,
 
 static void
 initialsync_room_state(client &client,
-                       const resource::request &request,
+                       const m::resource::request &request,
                        json::stack::object &out,
                        const m::user::room &user_room,
                        const m::room &room);
 
 static void
 initialsync_room_timeline(client &client,
-                          const resource::request &request,
+                          const m::resource::request &request,
                           json::stack::object &out,
                           const m::user::room &user_room,
                           const m::room &room);
 
 static void
 initialsync_room_ephemeral(client &client,
-                           const resource::request &request,
+                           const m::resource::request &request,
                            json::stack::object &out,
                            const m::user::room &user_room,
                            const m::room &room);
 
 static void
 initialsync_room_account_data(client &client,
-                              const resource::request &request,
+                              const m::resource::request &request,
                               json::stack::object &out,
                               const m::user::room &user_room,
                               const m::room &room);
 
 static void
 initialsync_room_unread_notifications(client &client,
-                                      const resource::request &request,
+                                      const m::resource::request &request,
                                       json::stack::object &out,
                                       const m::user::room &user_room,
                                       const m::room &room);
 
 void
 initialsync_room(client &client,
-                 const resource::request &request,
+                 const m::resource::request &request,
                  json::stack::object &out,
                  const m::user::room &user_room,
                  const m::room &room,
@@ -474,7 +474,7 @@ initialsync_room(client &client,
 
 void
 initialsync_room_state(client &client,
-                       const resource::request &request,
+                       const m::resource::request &request,
                        json::stack::object &out,
                        const m::user::room &user_room,
                        const m::room &room)
@@ -497,14 +497,14 @@ initialsync_room_state(client &client,
 
 static m::event::id::buf
 initialsync_room_timeline_events(client &client,
-                                 const resource::request &request,
+                                 const m::resource::request &request,
                                  json::stack::array &out,
                                  const m::user::room &user_room,
                                  const m::room &room);
 
 void
 initialsync_room_timeline(client &client,
-                          const resource::request &request,
+                          const m::resource::request &request,
                           json::stack::object &out,
                           const m::user::room &user_room,
                           const m::room &room)
@@ -539,7 +539,7 @@ initialsync_room_timeline(client &client,
 
 m::event::id::buf
 initialsync_room_timeline_events(client &client,
-                                 const resource::request &request,
+                                 const m::resource::request &request,
                                  json::stack::array &out,
                                  const m::user::room &user_room,
                                  const m::room &room)
@@ -572,13 +572,13 @@ initialsync_room_timeline_events(client &client,
 
 static void
 initialsync_room_ephemeral_events(client &client,
-                                  const resource::request &request,
+                                  const m::resource::request &request,
                                   json::stack::array &out,
                                   const m::room &room);
 
 void
 initialsync_room_ephemeral(client &client,
-                           const resource::request &request,
+                           const m::resource::request &request,
                            json::stack::object &out,
                            const m::user::room &user_room,
                            const m::room &room)
@@ -592,7 +592,7 @@ initialsync_room_ephemeral(client &client,
 
 void
 initialsync_room_ephemeral_events(client &client,
-                                  const resource::request &request,
+                                  const m::resource::request &request,
                                   json::stack::array &events,
                                   const m::room &room)
 {
@@ -655,7 +655,7 @@ initialsync_room_ephemeral_events(client &client,
 
 void
 initialsync_room_account_data(client &client,
-                              const resource::request &request,
+                              const m::resource::request &request,
                               json::stack::object &out,
                               const m::user::room &user_room,
                               const m::room &room)
@@ -665,7 +665,7 @@ initialsync_room_account_data(client &client,
 
 void
 initialsync_room_unread_notifications(client &client,
-                                      const resource::request &request,
+                                      const m::resource::request &request,
                                       json::stack::object &out,
                                       const m::user::room &user_room,
                                       const m::room &room)

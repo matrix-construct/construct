@@ -12,7 +12,7 @@
 
 using namespace ircd;
 
-resource
+m::resource
 account_whoami
 {
 	"/_matrix/client/r0/account/whoami",
@@ -21,11 +21,11 @@ account_whoami
 	}
 };
 
-resource::response
+m::resource::response
 get__whoami(client &client,
-            const resource::request &request)
+            const m::resource::request &request)
 {
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
@@ -34,7 +34,7 @@ get__whoami(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 get_whoami
 {
 	account_whoami, "GET", get__whoami,

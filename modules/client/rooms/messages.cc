@@ -19,7 +19,7 @@ struct pagination_tokens
 	m::event::id::buf from;
 	m::event::id::buf to;
 
-	pagination_tokens(const resource::request &);
+	pagination_tokens(const m::resource::request &);
 };
 
 static bool
@@ -42,9 +42,9 @@ messages_log
 	"m.messages"
 };
 
-resource::response
+m::resource::response
 get__messages(client &client,
-              const resource::request &request,
+              const m::resource::request &request,
               const m::room::id &room_id)
 {
 	const pagination_tokens page
@@ -95,7 +95,7 @@ get__messages(client &client,
 		m::depth(std::nothrow, room)
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -202,7 +202,7 @@ _append(json::stack::array &chunk,
 }
 
 // Client-Server 6.3.6 query parameters
-pagination_tokens::pagination_tokens(const resource::request &request)
+pagination_tokens::pagination_tokens(const m::resource::request &request)
 try
 :limit
 {

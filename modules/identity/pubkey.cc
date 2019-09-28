@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Identity Service 7 :Key management"
 };
 
-resource
+m::resource
 pubkey_resource
 {
 	"/_matrix/identity/api/v1/pubkey/",
@@ -26,19 +26,19 @@ pubkey_resource
 	}
 };
 
-static resource::response
+static m::resource::response
 handle_get(client &,
-           const resource::request &);
+           const m::resource::request &);
 
-resource::method
+m::resource::method
 method_get
 {
 	pubkey_resource, "GET", handle_get
 };
 
-resource::response
+m::resource::response
 handle_get(client &client,
-           const resource::request &request)
+           const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -67,7 +67,7 @@ handle_get(client &client,
 
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::NOT_FOUND, json::members
 		{

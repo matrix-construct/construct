@@ -19,9 +19,9 @@ timeout_default
 	{ "default",  30 * 1000L                    },
 };
 
-resource::response
+m::resource::response
 put__typing(client &client,
-            const resource::request &request,
+            const m::resource::request &request,
             const m::room::id &room_id)
 {
 	if(request.parv.size() < 3)
@@ -64,7 +64,7 @@ put__typing(client &client,
 		event
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};

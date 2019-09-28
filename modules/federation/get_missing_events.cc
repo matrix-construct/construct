@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Federation (undocumented) :Get missing events."
 };
 
-resource
+m::resource
 get_missing_events_resource
 {
 	"/_matrix/federation/v1/get_missing_events/",
@@ -26,9 +26,9 @@ get_missing_events_resource
 	}
 };
 
-static resource::response get__missing_events(client &, const resource::request &);
+static m::resource::response get__missing_events(client &, const m::resource::request &);
 
-resource::method
+m::resource::method
 method_get
 {
 	get_missing_events_resource, "GET", get__missing_events,
@@ -37,7 +37,7 @@ method_get
 	}
 };
 
-resource::method
+m::resource::method
 method_post
 {
 	get_missing_events_resource, "POST", get__missing_events,
@@ -60,9 +60,9 @@ flush_hiwat
 	{ "default",  long(16_KiB)                                 },
 };
 
-resource::response
+m::resource::response
 get__missing_events(client &client,
-                    const resource::request &request)
+                    const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -114,7 +114,7 @@ get__missing_events(client &client,
 		});
 	}};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};

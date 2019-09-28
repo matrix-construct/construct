@@ -12,7 +12,7 @@
 
 using namespace ircd;
 
-resource
+m::resource
 account_3pid
 {
 	"/_matrix/client/r0/account/3pid",
@@ -21,9 +21,9 @@ account_3pid
 	}
 };
 
-resource::response
+m::resource::response
 get__3pid(client &client,
-          const resource::request &request)
+          const m::resource::request &request)
 {
 	std::vector<json::value> vec;
 	json::value threepids
@@ -31,7 +31,7 @@ get__3pid(client &client,
 		vec.data(), vec.size()
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
@@ -40,7 +40,7 @@ get__3pid(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 get_3pid
 {
 	account_3pid, "GET", get__3pid,
@@ -49,17 +49,17 @@ get_3pid
 	}
 };
 
-resource::response
+m::resource::response
 post__3pid(client &client,
-          const resource::request &request)
+          const m::resource::request &request)
 {
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::method
+m::resource::method
 post_3pid
 {
 	account_3pid, "POST", post__3pid,

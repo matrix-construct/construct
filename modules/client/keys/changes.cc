@@ -10,9 +10,9 @@
 
 using namespace ircd;
 
-static resource::response
+static m::resource::response
 get__keys_changes(client &client,
-                  const resource::request &request);
+                  const m::resource::request &request);
 
 mapi::header
 IRCD_MODULE
@@ -20,7 +20,7 @@ IRCD_MODULE
 	"Client 14.11.5.2 :Key management API"
 };
 
-ircd::resource
+ircd::m::resource
 changes_resource
 {
 	"/_matrix/client/r0/keys/changes",
@@ -29,7 +29,7 @@ changes_resource
 	}
 };
 
-ircd::resource
+ircd::m::resource
 changes_resource__unstable
 {
 	"/_matrix/client/unstable/keys/changes",
@@ -38,7 +38,7 @@ changes_resource__unstable
 	}
 };
 
-resource::method
+m::resource::method
 method_get
 {
 	changes_resource, "GET", get__keys_changes,
@@ -47,7 +47,7 @@ method_get
 	}
 };
 
-resource::method
+m::resource::method
 method_get__unstable
 {
 	changes_resource__unstable, "GET", get__keys_changes,
@@ -56,11 +56,11 @@ method_get__unstable
 	}
 };
 
-resource::response
+m::resource::response
 get__keys_changes(client &client,
-                  const resource::request &request)
+                  const m::resource::request &request)
 {
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};

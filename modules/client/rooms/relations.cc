@@ -14,16 +14,16 @@ using namespace ircd;
 
 static void
 relations_chunk(client &client,
-                const resource::request &request,
+                const m::resource::request &request,
                 const m::room::id &room_id,
                 const m::event::id &event_id,
                 const string_view &rel_type,
                 const string_view &type,
                 json::stack::array &chunk);
 
-resource::response
+m::resource::response
 get__relations(client &client,
-               const resource::request &request,
+               const m::resource::request &request,
                const m::room::id &room_id)
 {
 	if(!m::exists(room_id))
@@ -80,7 +80,7 @@ get__relations(client &client,
 		url::decode(type_buf, request.parv[4])
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -106,7 +106,7 @@ get__relations(client &client,
 
 void
 relations_chunk(client &client,
-                const resource::request &request,
+                const m::resource::request &request,
                 const m::room::id &room_id,
                 const m::event::id &event_id,
                 const string_view &rel_type,

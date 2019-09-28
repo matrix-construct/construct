@@ -12,7 +12,7 @@
 
 using namespace ircd;
 
-resource
+m::resource
 account_deactivate
 {
 	"/_matrix/client/r0/account/deactivate",
@@ -21,9 +21,9 @@ account_deactivate
 	}
 };
 
-resource::response
+m::resource::response
 post__deactivate(client &client,
-                 const resource::request &request)
+                 const m::resource::request &request)
 {
 	const json::object &auth
 	{
@@ -47,7 +47,7 @@ post__deactivate(client &client,
 
 	user.deactivate();
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
@@ -56,7 +56,7 @@ post__deactivate(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 post_deactivate
 {
 	account_deactivate, "POST", post__deactivate,

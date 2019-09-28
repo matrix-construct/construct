@@ -29,9 +29,9 @@ ircd::m::invite_foreign_hook
 	}
 };
 
-ircd::resource::response
+ircd::m::resource::response
 post__invite(ircd::client &client,
-             const ircd::resource::request &request,
+             const ircd::m::resource::request &request,
              const ircd::m::room::id &room_id)
 {
 	using namespace ircd;
@@ -51,7 +51,7 @@ post__invite(ircd::client &client,
 		m::invite(room_id, target, sender)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};

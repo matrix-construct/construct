@@ -16,7 +16,7 @@ IRCD_MODULE
 	"federation state"
 };
 
-resource
+m::resource
 state_resource
 {
 	"/_matrix/federation/v1/state/",
@@ -33,9 +33,9 @@ state_flush_hiwat
 	{ "default",  16384L                              },
 };
 
-resource::response
+m::resource::response
 get__state(client &client,
-           const resource::request &request)
+           const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -81,7 +81,7 @@ get__state(client &client,
 			m::head_idx(room)
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -130,7 +130,7 @@ get__state(client &client,
 	return std::move(response);
 }
 
-resource::method
+m::resource::method
 method_get
 {
 	state_resource, "GET", get__state,

@@ -12,9 +12,9 @@
 
 using namespace ircd;
 
-resource::response
+m::resource::response
 post__forget(client &client,
-             const resource::request &request,
+             const m::resource::request &request,
              const m::room::id &room_id)
 {
 	const m::room room
@@ -56,7 +56,7 @@ post__forget(client &client,
 		redact(user_room, request.user_id, event_id, "forget")
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};

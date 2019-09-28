@@ -22,7 +22,7 @@ IRCD_MODULE
 	"Client 3.4,3.5,3.6 :Account"
 };
 
-resource
+m::resource
 account_resource
 {
 	"/_matrix/client/r0/account",
