@@ -39,6 +39,7 @@
 ///
 namespace ircd::m::fetch
 {
+	struct init;
 	struct opts;
 	struct result;
 	struct request;
@@ -182,6 +183,12 @@ struct ircd::m::fetch::request
 	request &operator=(request &&) = delete;
 	request &operator=(const request &) = delete;
 	~request() noexcept;
+};
+
+/// Internally held
+struct ircd::m::fetch::init
+{
+	init(), ~init() noexcept;
 };
 
 inline

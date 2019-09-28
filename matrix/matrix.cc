@@ -10,9 +10,6 @@
 
 namespace ircd::m
 {
-	std::unique_ptr<dbs::init> _dbs;
-	std::unique_ptr<init::modules> _modules;
-
 	static void on_load(), on_unload() noexcept;
 }
 
@@ -49,13 +46,19 @@ me_offline_status_msg
 	{ "default",  "Catch ya on the flip side..."   }
 };
 
-namespace ircd::m::fetch
-{
-	void init(), fini();
-}
+/// --- tmp ---
 
 extern "C" void
 reload_conf();
+
+namespace ircd::m
+{
+	std::unique_ptr<dbs::init> _dbs;
+	std::unique_ptr<fetch::init> _fetch;
+	std::unique_ptr<init::modules> _modules;
+}
+
+/// --- /tmp ---
 
 void
 ircd::m::on_load()
@@ -65,7 +68,7 @@ try
 	m::self::init::keys();
 	_dbs = std::make_unique<dbs::init>(ircd::server_name, std::string{});
 	reload_conf();
-	m::fetch::init();
+	_fetch = std::make_unique<fetch::init>();
 	_modules = std::make_unique<init::modules>();
 
 	if(!ircd::write_avoid && vm::sequence::retired != 0)
@@ -99,7 +102,6 @@ ircd::m::on_unload()
 noexcept try
 {
 	mods::imports.erase("m_listen"s);
-	m::fetch::fini();
 
 	if(m::sync::pool.size())
 		m::sync::pool.join();
@@ -107,6 +109,7 @@ noexcept try
 	if(!std::uncaught_exceptions() && !ircd::write_avoid)
 		presence::set(me, "offline", me_offline_status_msg);
 
+	_fetch.reset(nullptr);
 	_modules.reset(nullptr);
 	_dbs.reset(nullptr);
 

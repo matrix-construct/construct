@@ -45,9 +45,6 @@ namespace ircd::m::fetch
 	static void request_handle();
 	static size_t request_cleanup();
 	static void request_worker();
-
-	void init();
-	void fini();
 }
 
 decltype(ircd::m::fetch::log)
@@ -103,13 +100,12 @@ ircd::m::fetch::dock;
 // init
 //
 
-void
-ircd::m::fetch::init()
+ircd::m::fetch::init::init()
 {
 }
 
-void
-ircd::m::fetch::fini()
+ircd::m::fetch::init::~init()
+noexcept
 {
 	request_context.terminate();
 	request_context.join();
