@@ -2091,8 +2091,18 @@ try
 	if(!name)
 		return true;
 
-	//TODO: XXX
-	if(!m::my_host(name))
+	const string_view accept[]
+	{
+		ircd::server_name,
+		ircd::network_name,
+	};
+
+	const bool accepts
+	{
+		std::find(begin(accept), end(accept), name) != end(accept)
+	};
+
+	if(!accepts)
 	{
 		log::dwarning
 		{

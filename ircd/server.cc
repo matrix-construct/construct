@@ -1442,7 +1442,7 @@ ircd::server::peer::open_links()
 try
 {
 	if(unlikely(is_loop(open_opts.ipport)))
-		if(!my_host(net::server_name(open_opts)))
+		if(net::server_name(open_opts) != string_view{ircd::network_name})
 			throw unavailable
 			{
 				"Won't open loopback for remote host '%s'",
