@@ -141,7 +141,10 @@ ircd::string_view
 ircd::m::user::gen_access_token(const mutable_buffer &buf)
 {
 	static const size_t token_max{32};
-	static const auto &token_dict{rand::dict::alpha};
+	static const auto &token_dict
+	{
+		rand::dict::alpha
+	};
 
 	const mutable_buffer out
 	{
@@ -215,7 +218,7 @@ ircd::m::user::password(const string_view &password)
 bool
 IRCD_MODULE_EXPORT
 ircd::m::user::is_password(const string_view &password)
-const noexcept try
+const try
 {
 	char buf[64];
 	const auto supplied

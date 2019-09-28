@@ -60,7 +60,7 @@ struct ircd::m::user
 	id::room room_id(const mutable_buffer &) const;
 	id::room::buf room_id() const;
 
-	bool is_password(const string_view &password) const noexcept;
+	bool is_password(const string_view &password) const;
 	event::id::buf password(const string_view &password);
 
 	bool is_active() const;
