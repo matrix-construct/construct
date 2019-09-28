@@ -18,7 +18,9 @@ inline namespace util
 	/// browser-javascript land: it is window.onload.addEventListener() in lieu
 	/// of assigning window.onload = function(). This is a list of multiple
 	/// callbacks listening for invocation. The listener is responsible for
-	/// both adding and removing itself using the std list interface.
+	/// both adding and removing itself using the std list interface (Note:
+	/// convenience templates for this which elide as much boilerplate as
+	/// possible have been provided below).
 	///
 	/// The template provides an option for whether exceptions should propagate
 	/// to the caller. If they propagate, all listeners after the exception won't
