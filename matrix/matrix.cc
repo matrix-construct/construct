@@ -32,20 +32,6 @@ ircd::m::log
 // init
 //
 
-ircd::conf::item<std::string>
-me_online_status_msg
-{
-	{ "name",     "ircd.me.online.status_msg"          },
-	{ "default",  "Wanna chat? IRCd at your service!"  }
-};
-
-ircd::conf::item<std::string>
-me_offline_status_msg
-{
-	{ "name",     "ircd.me.offline.status_msg"     },
-	{ "default",  "Catch ya on the flip side..."   }
-};
-
 /// --- tmp ---
 
 extern "C" void
@@ -70,9 +56,7 @@ try
 	reload_conf();
 	_fetch = std::make_unique<fetch::init>();
 	_modules = std::make_unique<init::modules>();
-
-	if(!ircd::write_avoid && vm::sequence::retired != 0)
-		presence::set(me, "online", me_online_status_msg);
+	self::signon();
 }
 catch(const m::error &e)
 {
@@ -106,9 +90,7 @@ noexcept try
 	if(m::sync::pool.size())
 		m::sync::pool.join();
 
-	if(!std::uncaught_exceptions() && !ircd::write_avoid)
-		presence::set(me, "offline", me_offline_status_msg);
-
+	self::signoff();
 	_fetch.reset(nullptr);
 	_modules.reset(nullptr);
 	_dbs.reset(nullptr);

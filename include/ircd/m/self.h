@@ -28,6 +28,7 @@ namespace ircd::m::self
 	bool host(const string_view &);
 
 	void create_my_key();
+	void signon(), signoff();
 }
 
 namespace ircd::m

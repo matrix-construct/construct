@@ -86,6 +86,38 @@ ircd::m::my_node
 	ircd::my_host()
 };
 
+//
+// signon/signoff greetings
+//
+
+ircd::conf::item<std::string>
+me_online_status_msg
+{
+	{ "name",     "ircd.me.online.status_msg"          },
+	{ "default",  "Wanna chat? IRCd at your service!"  }
+};
+
+ircd::conf::item<std::string>
+me_offline_status_msg
+{
+	{ "name",     "ircd.me.offline.status_msg"     },
+	{ "default",  "Catch ya on the flip side..."   }
+};
+
+void
+ircd::m::self::signon()
+{
+	if(!ircd::write_avoid && vm::sequence::retired != 0)
+		presence::set(me, "online", me_online_status_msg);
+}
+
+void
+ircd::m::self::signoff()
+{
+	if(!std::uncaught_exceptions() && !ircd::write_avoid)
+		presence::set(me, "offline", me_offline_status_msg);
+}
+
 bool
 ircd::m::self::host(const string_view &other)
 {
