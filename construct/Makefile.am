@@ -33,18 +33,6 @@ AM_LDFLAGS = \
 	@EXTRA_LDFLAGS@ \
 	###
 
-if GCC
-AM_LDFLAGS += \
-	-Wl,-fuse-ld=gold \
-	###
-endif
-
-if CLANG
-AM_LDFLAGS += \
-	-fuse-ld=gold \
-	###
-endif
-
 bin_PROGRAMS = construct
 
 construct_LDFLAGS = \
