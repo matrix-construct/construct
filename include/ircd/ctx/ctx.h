@@ -104,6 +104,7 @@ namespace ircd::ctx
 #include "fault.h"
 #include "concurrent.h"
 #include "concurrent_for_each.h"
+#include "trit.h"
 
 // Exports to ircd::
 namespace ircd
