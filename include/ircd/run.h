@@ -16,15 +16,29 @@ namespace ircd::ctx
 	struct dock;
 }
 
+/// Library control details and patch-panel. This namespace contains the
+/// current runlevel state for the library and provides callback interfaces
+/// which can be notified for, or augment the behavior of runlevel transitions
+/// (i.e when the lib is being initialized for service or shutting down, etc).
 namespace ircd::run
 {
 	enum class level :int;
 	struct changed;
 
 	string_view reflect(const enum level &);
-	bool set(const enum level &);
 
+	// Access to the current runlevel indicator.
 	extern const enum level &level;
+
+	// Another callback list (albeit simply using util::callbacks) which is
+	// called during level::START on the main context after all subsystems have
+	// constructed, and again in level::QUIT before all subsystems have
+	// destructed. The purpose here is to allow extensions to the START and
+	// QUIT runlevels as if another subsystem was being listed in ircd::main().
+	// These callbacks are intended to block the main context from moving to
+	// the next runlevel until each one completes (run::changed doesn't quite
+	// work this way).
+	extern callbacks main;
 }
 
 /// An instance of this class registers itself to be called back when

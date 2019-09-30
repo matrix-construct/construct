@@ -10,9 +10,31 @@
 
 namespace ircd
 {
+	// Fundamental context #1; all subsystems live as objects on this stack.
+	// This is created by ircd::init(), and it executes ircd::main(), it then
+	// deletes itself and nulls this pointer when finished.
 	extern ctx::ctx *main_context;
+
+	// Main function. This frame anchors the initialization and destruction of
+	// all non-static assets provided by the library.
 	static void main() noexcept;
 }
+
+// internal interface to ircd::run (see ircd/run.h)
+namespace ircd::run
+{
+	struct main_event;
+
+	// change the current runlevel
+	static bool set(const enum level &);
+}
+
+/// Placed on the main stack after all subsystems; this object represents
+/// a user's extension to the main stack via callbacks (see ircd/run.h)
+struct ircd::run::main_event
+{
+	main_event(), ~main_event() noexcept;
+};
 
 decltype(ircd::version_api)
 ircd::version_api
@@ -315,9 +337,16 @@ noexcept try
 	server::init _server_;   // Server related
 	client::init _client_;   // Client related
 	js::init _js_;           // SpiderMonkey
+	run::main_event _me_;    // Additional user callbacks
 
 	// IRCd will now transition to the RUN state indicating full functionality.
 	run::set(run::level::RUN);
+
+	// Transition to the QUIT state on unwind.
+	const unwind quit{[]
+	{
+		ircd::run::set(run::level::QUIT);
+	}};
 
 	// This call blocks until the main context is notified or interrupted etc.
 	// Waiting here will hold open this stack with all of the above objects
@@ -326,8 +355,6 @@ noexcept try
 	{
 		return !main_context;
 	});
-
-	ircd::run::set(run::level::QUIT);
 }
 catch(const http::error &e) // <-- m::error
 {
@@ -377,6 +404,27 @@ ircd::run::level
 {
 	_level
 };
+
+decltype(ircd::run::main)
+ircd::run::main;
+
+//
+// run::main_event
+//
+
+ircd::run::main_event::main_event()
+{
+	assert(level == level::START);
+	run::main();
+}
+
+ircd::run::main_event::~main_event()
+noexcept
+{
+	assert(level != level::RUN);
+	assert(level == level::QUIT);
+	run::main();
+}
 
 //
 // run::changed
