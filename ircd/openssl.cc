@@ -288,6 +288,40 @@ ircd::openssl::get_error(const X509_STORE_CTX &cx)
 }
 
 X509 &
+ircd::openssl::cert(SSL_CTX &ssl)
+{
+	auto *const ret
+	{
+		SSL_CTX_get0_certificate(&ssl)
+	};
+
+	if(unlikely(!ret))
+		throw error
+		{
+			"No X509 certificate for SSL context."
+		};
+
+	return *ret;
+}
+
+const X509 &
+ircd::openssl::cert(const SSL_CTX &ssl)
+{
+	const auto *const ret
+	{
+		SSL_CTX_get0_certificate(&ssl)
+	};
+
+	if(unlikely(!ret))
+		throw error
+		{
+			"No X509 certificate for SSL context."
+		};
+
+	return *ret;
+}
+
+X509 &
 ircd::openssl::peer_cert(SSL &ssl)
 {
 	auto *const ret

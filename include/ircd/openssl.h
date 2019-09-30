@@ -112,6 +112,8 @@ namespace ircd::openssl
 	std::string stringify(const X509 &);
 	const X509 &peer_cert(const SSL &);
 	X509 &peer_cert(SSL &);
+	const X509 &cert(const SSL_CTX &);
+	X509 &cert(SSL_CTX &);
 
 	int get_error(const X509_STORE_CTX &);
 	const char *cert_error_string(const long &);
@@ -123,7 +125,6 @@ namespace ircd::openssl
 	// Cipher suite
 	string_view name(const SSL_CIPHER &);
 	const SSL_CIPHER *current_cipher(const SSL &);
-
 	string_view shared_ciphers(const mutable_buffer &buf, const SSL &);
 	string_view cipher_list(const SSL &, const int &priority);
 	std::string cipher_list(const SSL_CTX &, const int &priority = 0);
