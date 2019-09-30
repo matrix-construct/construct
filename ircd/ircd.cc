@@ -503,11 +503,7 @@ try
 			"IRCd %s", reflect(new_level)
 		};
 
-		if(new_level == level::HALT)
-			log::fini();
-		else
-			log::flush();
-
+		log::flush();
 		changed::dock.notify_all();
 		for(const auto &handler : changed::list) try
 		{
