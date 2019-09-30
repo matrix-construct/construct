@@ -26,7 +26,7 @@ inline namespace util
 	/// to the caller. If they propagate, all listeners after the exception won't
 	/// be invoked.
 	///
-	template<class prototype,
+	template<class prototype = void (void),
 	         bool exceptions = true>
 	struct callbacks;
 
