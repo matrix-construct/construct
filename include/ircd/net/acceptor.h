@@ -39,6 +39,7 @@ struct ircd::net::acceptor
 	net::listener *listener_;
 	std::string name;
 	std::string opts;
+	std::string cname;
 	size_t backlog;
 	listener::callback cb;
 	listener::proffer pcb;

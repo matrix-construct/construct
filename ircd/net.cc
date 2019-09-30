@@ -2093,8 +2093,7 @@ try
 
 	const string_view accept[]
 	{
-		ircd::server_name,
-		ircd::network_name,
+		this->cname,
 	};
 
 	const bool accepts
@@ -2357,11 +2356,26 @@ ircd::net::acceptor::configure_certs(const json::object &opts)
 			};
 
 		ssl.use_certificate_file(filename, asio::ssl::context::pem);
+
+		const auto *const x509
+		{
+			SSL_CTX_get0_certificate(ssl.native_handle())
+		};
+
+		this->cname = ircd::string(rfc3986::DOMAIN_BUFSIZE | SHRINK_TO_FIT, [&x509]
+		(const mutable_buffer &buf)
+		{
+			return x509?
+				openssl::subject_common_name(buf, *x509):
+				string_view{};
+		});
+
 		log::info
 		{
-			log, "%s using certificate file '%s'",
+			log, "%s using file '%s' with certificate for '%s'",
 			loghead(*this),
-			filename
+			filename,
+			this->cname,
 		};
 	}
 
