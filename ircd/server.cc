@@ -1441,14 +1441,6 @@ void
 ircd::server::peer::open_links()
 try
 {
-	if(unlikely(is_loop(open_opts.ipport)))
-		if(net::server_name(open_opts) != string_view{ircd::network_name})
-			throw unavailable
-			{
-				"Won't open loopback for remote host '%s'",
-				net::server_name(open_opts),
-			};
-
 	// The hostname in open_opts should still reference this object's string.
 	assert(host(open_opts.hostport).data() == this->hostcanon.data());
 
