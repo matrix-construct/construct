@@ -2191,9 +2191,24 @@ ircd::net::acceptor::configure(const json::object &opts)
 {
 	log::debug
 	{
-		log, "%s preparing listener socket configuration...", loghead(*this)
+		log, "%s preparing listener socket configuration...",
+		loghead(*this)
 	};
 
+	configure_password(opts);
+	configure_flags(opts);
+	configure_ciphers(opts);
+	configure_curves(opts);
+	configure_certs(opts);
+
+	SSL_CTX_set_alpn_select_cb(ssl.native_handle(), ircd_net_acceptor_handle_alpn, this);
+	SSL_CTX_set_tlsext_servername_callback(ssl.native_handle(), ircd_net_acceptor_handle_sni);
+	SSL_CTX_set_tlsext_servername_arg(ssl.native_handle(), this);
+}
+
+void
+ircd::net::acceptor::configure_flags(const json::object &opts)
+{
 	ulong flags(0);
 
 	if(opts.get<bool>("ssl_default_workarounds", false))
@@ -2218,7 +2233,11 @@ ircd::net::acceptor::configure(const json::object &opts)
 		flags |= ssl.no_tlsv1_2;
 
 	ssl.set_options(flags);
+}
 
+void
+ircd::net::acceptor::configure_ciphers(const json::object &opts)
+{
 	if(!empty(unquote(opts["ssl_cipher_list"])))
 	{
 		const json::string &list
@@ -2232,7 +2251,11 @@ ircd::net::acceptor::configure(const json::object &opts)
 	else if(!empty(string_view(ssl_cipher_list)))
 	{
 		assert(ssl.native_handle());
-		const string_view &list(ssl_cipher_list);
+		const string_view &list
+		{
+			ssl_cipher_list
+		};
+
 		openssl::set_cipher_list(*ssl.native_handle(), list);
 	}
 	else if(!empty(string_view(ssl_cipher_blacklist)))
@@ -2240,8 +2263,16 @@ ircd::net::acceptor::configure(const json::object &opts)
 		assert(ssl.native_handle());
 
 		std::stringstream res;
-		const string_view &blacklist(ssl_cipher_blacklist);
-		const auto ciphers(openssl::cipher_list(*ssl.native_handle(), 0));
+		const string_view &blacklist
+		{
+			ssl_cipher_blacklist
+		};
+
+		const auto ciphers
+		{
+			openssl::cipher_list(*ssl.native_handle(), 0)
+		};
+
 		ircd::tokens(ciphers, ':', [&res, &blacklist]
 		(const string_view &cipher)
 		{
@@ -2253,9 +2284,14 @@ ircd::net::acceptor::configure(const json::object &opts)
 		std::string list(res.str());
 		assert(list.empty() || list.back() == ':');
 		list.pop_back();
+
 		openssl::set_cipher_list(*ssl.native_handle(), list);
 	}
+}
 
+void
+ircd::net::acceptor::configure_curves(const json::object &opts)
+{
 	if(!empty(unquote(opts["ssl_curve_list"])))
 	{
 		const json::string &list
@@ -2268,16 +2304,24 @@ ircd::net::acceptor::configure(const json::object &opts)
 	}
 	else if(!empty(string_view(ssl_curve_list)))
 	{
-		const string_view &list(ssl_curve_list);
+		const string_view &list
+		{
+			ssl_curve_list
+		};
+
 		assert(ssl.native_handle());
 		openssl::set_curves(*ssl.native_handle(), list);
 	}
+}
 
+void
+ircd::net::acceptor::configure_certs(const json::object &opts)
+{
 	if(!empty(unquote(opts["certificate_chain_path"])))
 	{
-		const std::string filename
+		const json::string filename
 		{
-			unquote(opts["certificate_chain_path"])
+			opts["certificate_chain_path"]
 		};
 
 		if(!fs::exists(filename))
@@ -2344,12 +2388,16 @@ ircd::net::acceptor::configure(const json::object &opts)
 			filename
 		};
 	}
+}
 
+void
+ircd::net::acceptor::configure_dh(const json::object &opts)
+{
 	if(!empty(unquote(opts["tmp_dh_path"])))
 	{
-		const std::string filename
+		const json::string filename
 		{
-			unquote(opts.at("tmp_dh_path"))
+			opts.at("tmp_dh_path")
 		};
 
 		if(!fs::exists(filename))
@@ -2365,30 +2413,19 @@ ircd::net::acceptor::configure(const json::object &opts)
 		{
 			log, "%s using tmp dh file '%s'",
 			loghead(*this),
-			filename
-		};
-	}
-	else if(!empty(unquote(opts["tmp_dh"])))
-	{
-		const const_buffer buf
-		{
-			unquote(opts.at("tmp_dh"))
+			filename,
 		};
 
-		ssl.use_tmp_dh(buf);
-		log::info
-		{
-			log, "%s using DH params supplied in options (%zu bytes)",
-			loghead(*this),
-			size(buf)
-		};
-	}
-	else
-	{
-		assert(ssl.native_handle());
-		openssl::set_ecdh_auto(*ssl.native_handle(), true);
+		return;
 	}
 
+	assert(ssl.native_handle());
+	openssl::set_ecdh_auto(*ssl.native_handle(), true);
+}
+
+void
+ircd::net::acceptor::configure_password(const json::object &opts)
+{
 	//TODO: XXX
 	ssl.set_password_callback([this]
 	(const auto &size, const auto &purpose)
@@ -2405,10 +2442,6 @@ ircd::net::acceptor::configure(const json::object &opts)
 		assert(0);
 		return "foobar";
 	});
-
-	SSL_CTX_set_alpn_select_cb(ssl.native_handle(), ircd_net_acceptor_handle_alpn, this);
-	SSL_CTX_set_tlsext_servername_callback(ssl.native_handle(), ircd_net_acceptor_handle_sni);
-	SSL_CTX_set_tlsext_servername_arg(ssl.native_handle(), this);
 }
 
 //

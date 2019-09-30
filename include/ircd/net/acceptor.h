@@ -50,6 +50,13 @@ struct ircd::net::acceptor
 	bool interrupting {false};
 	ctx::dock joining;
 
+	// Internal configuration
+	void configure_dh(const json::object &);
+	void configure_certs(const json::object &);
+	void configure_curves(const json::object &);
+	void configure_ciphers(const json::object &);
+	void configure_flags(const json::object &);
+	void configure_password(const json::object &);
 	void configure(const json::object &opts);
 
 	// Handshake stack
