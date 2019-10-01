@@ -14,6 +14,9 @@
 namespace ircd::mods
 {
 	struct module;
+
+	bool operator<(const module &a, const module &b) noexcept;
+	bool operator==(const module &a, const module &b) noexcept;
 }
 
 struct ircd::mods::module
@@ -36,6 +39,20 @@ struct ircd::mods::module
 	module(std::shared_ptr<mod> ptr = {});
 	module(const string_view &name);
 };
+
+inline bool
+ircd::mods::operator==(const module &a, const module &b)
+noexcept
+{
+	return a.name() == b.name();
+}
+
+inline bool
+ircd::mods::operator<(const module &a, const module &b)
+noexcept
+{
+	return a.name() < b.name();
+}
 
 inline
 ircd::mods::module::module(std::shared_ptr<mod> ptr)
