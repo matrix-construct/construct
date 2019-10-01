@@ -5892,7 +5892,6 @@ console_cmd__key(opt &out, const string_view &line)
 		out << "origin:                  " << m::my_host() << std::endl;
 		out << "public key ID:           " << m::self::public_key_id << std::endl;
 		out << "public key base64:       " << m::self::public_key_b64 << std::endl;
-		out << "TLS cert sha256 base64:  " << m::self::tls_cert_der_sha256_b64 << std::endl;
 		return true;
 	}
 

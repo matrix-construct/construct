@@ -40,7 +40,6 @@ namespace ircd::m
 /// verify_keys         Object, Public keys of the homeserver for verifying digital signatures.
 /// old_verify_keys     Object, The public keys that the server used to use and when it stopped using them.
 /// signatures          Object, Digital signatures for this object signed using the verify_keys.
-/// tls_fingerprints    Array of Objects, Hashes of X.509 TLS certificates used by this this server encoded as Unpadded Base64.
 /// valid_until_ts      Integer, POSIX timestamp when the list of valid keys should be refreshed.
 ///
 struct ircd::m::keys
@@ -49,7 +48,6 @@ struct ircd::m::keys
 	json::property<name::old_verify_keys, json::object>,
 	json::property<name::server_name, json::string>,
 	json::property<name::signatures, json::object>,
-	json::property<name::tls_fingerprints, json::array>,
 	json::property<name::valid_until_ts, time_t>,
 	json::property<name::verify_keys, json::object>
 >
