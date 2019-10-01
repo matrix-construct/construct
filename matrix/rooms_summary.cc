@@ -13,15 +13,8 @@ namespace ircd::m::rooms::summary
 	static void chunk_remote(const room &, json::stack::object &o);
 	static void chunk_local(const room &, json::stack::object &o);
 
-	extern const room::id::buf public_room_id;
 	extern hookfn<vm::eval &> create_public_room;
 }
-
-decltype(ircd::m::rooms::summary::public_room_id)
-ircd::m::rooms::summary::public_room_id
-{
-	"public", ircd::my_host()
-};
 
 /// Create the public rooms room during initial database bootstrap.
 /// This hooks the creation of the !ircd room which is a fundamental
@@ -34,9 +27,19 @@ ircd::m::rooms::summary::create_public_room
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	},
-	[](const m::event &, m::vm::eval &)
+	[](const m::event &event, m::vm::eval &)
 	{
-		m::create(public_room_id, m::me.user_id);
+		auto &my
+		{
+			m::my(at<"origin"_>(event))
+		};
+
+		const auto &public_room_id
+		{
+			*my.rooms.emplace("public", origin(my)).first
+		};
+
+		m::create(public_room_id, me());
 	}
 };
 
@@ -140,6 +143,11 @@ IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::del(const m::room &room,
                              const string_view &origin)
 {
+	const m::room::id::buf public_room_id
+	{
+		"public", my_host()
+	};
+
 	const m::room::state state
 	{
 		public_room_id
@@ -164,7 +172,7 @@ ircd::m::rooms::summary::del(const m::room &room,
 		m::event_id(event_idx)
 	};
 
-	return redact(public_room_id, m::me, event_id, "delisted");
+	return redact(public_room_id, me(), event_id, "delisted");
 }
 
 ircd::m::event::id::buf
@@ -197,13 +205,19 @@ ircd::m::rooms::summary::set(const m::room::id &room_id,
                              const string_view &origin,
                              const json::object &summary)
 {
+	const m::room::id::buf public_room_id
+	{
+		"public", my_host()
+	};
+
+
 	char state_key_buf[event::STATE_KEY_MAX_SIZE];
 	const auto state_key
 	{
 		make_state_key(state_key_buf, room_id, origin)
 	};
 
-	return send(public_room_id, m::me, "ircd.rooms.summary", state_key, summary);
+	return send(public_room_id, me(), "ircd.rooms.summary", state_key, summary);
 }
 
 ircd::json::object
@@ -275,6 +289,11 @@ IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::for_each(const room::id &room_id,
                                   const closure_idx &closure)
 {
+	const m::room::id::buf public_room_id
+	{
+		"public", my_host()
+	};
+
 	const m::room::state state
 	{
 		public_room_id

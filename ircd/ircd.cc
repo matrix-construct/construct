@@ -88,42 +88,6 @@ ircd::restart
 	{ "persist",  false                },
 };
 
-decltype(ircd::server_name)
-ircd::server_name
-{
-	{
-		{ "name",     "ircd.name.server"   },
-		{ "default",  "localhost"          },
-		{ "persist",  false                },
-	}, []
-	{
-		if(!rfc3986::valid_remote(std::nothrow, ircd::server_name))
-			throw user_error
-			{
-				"The 'ircd.name.server' conf \"%s\" is not a valid hostname.",
-				string_view(server_name),
-			};
-	}
-};
-
-decltype(ircd::network_name)
-ircd::network_name
-{
-	{
-		{ "name",     "ircd.name.network"  },
-		{ "default",  "localhost"          },
-		{ "persist",  false                },
-	}, []
-	{
-		if(!rfc3986::valid_remote(std::nothrow, ircd::network_name))
-			throw user_error
-			{
-				"The 'ircd.name.network' conf \"%s\" is not a valid hostname.",
-				string_view(network_name),
-			};
-	}
-};
-
 decltype(ircd::main_context)
 ircd::main_context;
 

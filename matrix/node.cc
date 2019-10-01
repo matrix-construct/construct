@@ -123,7 +123,7 @@ ircd::m::create(const node &node,
 		node.room_id()
 	};
 
-	create(room_id, m::me.user_id);
+	create(room_id, me());
 	return node;
 }
 

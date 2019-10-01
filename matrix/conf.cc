@@ -259,7 +259,7 @@ try
 		item.get(vbuf)
 	};
 
-	return set_conf_item(m::me.user_id, key, val);
+	return set_conf_item(m::me(), key, val);
 }
 catch(const std::exception &e)
 {
@@ -278,7 +278,7 @@ create_conf_room(const m::event &,
                  m::vm::eval &)
 {
 	const m::conf_room conf_room;
-	m::create(conf_room.room_id, m::me.user_id);
+	m::create(conf_room.room_id, m::me());
 	//rehash_conf({}, true);
 }
 

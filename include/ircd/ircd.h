@@ -82,9 +82,6 @@ namespace ircd
 	extern conf::item<bool> write_avoid;
 	extern conf::item<bool> soft_assert;
 
-	extern conf::item<std::string> server_name;
-	extern conf::item<std::string> network_name;
-
 	seconds uptime();
 	void init(boost::asio::io_context &ios);
 	void cont() noexcept;

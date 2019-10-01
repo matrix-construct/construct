@@ -100,7 +100,7 @@ noexcept try
 		"no alt text"
 	};
 
-	msghtml(control_room, m::me.user_id, str, alt, "m.notice");
+	msghtml(control_room, m::me(), str, alt, "m.notice");
 }
 catch(const std::exception &e)
 {
@@ -127,15 +127,15 @@ static void
 create_control_room(const m::event &,
                     m::vm::eval &)
 {
-	create(control_room_id, m::me.user_id);
-	join(control_room, m::me.user_id);
-	send(control_room, m::me.user_id, "m.room.name", "",
+	create(control_room_id, m::me());
+	join(control_room, m::me());
+	send(control_room, m::me(), "m.room.name", "",
 	{
 		{ "name", "Control Room" }
 	});
 
-	notice(control_room, m::me.user_id, "Welcome to the control room.");
-	notice(control_room, m::me.user_id, "I am the daemon. You can talk to me in this room by highlighting me.");
+	notice(control_room, m::me(), "Welcome to the control room.");
+	notice(control_room, m::me(), "I am the daemon. You can talk to me in this room by highlighting me.");
 }
 
 m::hookfn<m::vm::eval &>

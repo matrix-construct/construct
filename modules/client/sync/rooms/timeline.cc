@@ -67,7 +67,7 @@ ircd::m::sync::room_timeline_linear(data &data)
 	{
 		*data.room == data.user_room &&
 		startswith(json::get<"type"_>(*data.event), "ircd.cmd") &&
-		(json::get<"sender"_>(*data.event) == m::me.user_id ||
+		(json::get<"sender"_>(*data.event) == me() ||
 		 json::get<"sender"_>(*data.event) == data.user.user_id)
 	};
 

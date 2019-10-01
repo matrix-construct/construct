@@ -56,6 +56,11 @@ ircd::m::_access_token_delete(const m::event &event,
 			unquote(content.at(""))
 		};
 
-		m::redact(m::user::tokens, at<"sender"_>(event), token_event_id, "device deleted");
+		const m::room::id::buf tokens_room
+		{
+			"tokens", origin(m::my())
+		};
+
+		m::redact(tokens_room, at<"sender"_>(event), token_event_id, "device deleted");
 	});
 };

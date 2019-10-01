@@ -76,9 +76,14 @@ post__logout(client &client,
 		request.access_token
 	};
 
+	const m::room::id::buf tokens_room_id
+	{
+		"tokens", origin(m::my())
+	};
+
 	const m::room::state tokens
 	{
-		m::user::tokens
+		tokens_room_id
 	};
 
 	const auto token_event_idx
@@ -98,9 +103,14 @@ m::resource::response
 post__logout_all(client &client,
                  const m::resource::request &request)
 {
+	const m::room::id::buf tokens_room_id
+	{
+		"tokens", origin(m::my())
+	};
+
 	const m::room::state tokens
 	{
-		m::user::tokens
+		tokens_room_id
 	};
 
 	long count(0);
@@ -145,9 +155,14 @@ try
 		m::event_id(token_event_idx)
 	};
 
+	const m::room::id::buf tokens_room_id
+	{
+		"tokens", origin(m::my())
+	};
+
 	const auto redaction_event_id
 	{
-		m::redact(m::user::tokens, user_id, token_event_id, reason)
+		m::redact(tokens_room_id, user_id, token_event_id, reason)
 	};
 
 	return true;

@@ -11,6 +11,12 @@
 #pragma once
 #define HAVE_IRCD_M_EVENT_APPEND
 
+//XXX fwd decl
+namespace ircd::m
+{
+	struct room;
+};
+
 /// Used when transmitting events to clients. This tries to hide and provide
 /// as much boilerplate as possible which we abstracted from all of the
 /// different locations where an event may be revealed to a client. This device

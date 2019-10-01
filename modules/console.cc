@@ -1688,7 +1688,7 @@ console_cmd__conf__set(opt &out, const string_view &line)
 
 	const auto event_id
 	{
-		set_conf_item(m::me, key, val)
+		set_conf_item(m::me(), key, val)
 	};
 
 	out << event_id << " <- " << key << " = " << val << std::endl;
@@ -5506,9 +5506,14 @@ console_cmd__net__listen(opt &out, const string_view &line)
 	for(const auto &[name, prop] : addl)
 		opts = insert(opts, json::member(name, prop));
 
+	const m::room::id::buf my_room
+	{
+		"ircd", origin(m::my())
+	};
+
 	const auto eid
 	{
-		m::send(m::my_room, m::me, "ircd.listen", token.at("name"), opts)
+		m::send(my_room, m::me(), "ircd.listen", token.at("name"), opts)
 	};
 
 	out << eid << std::endl;
@@ -5523,9 +5528,19 @@ console_cmd__net__listen__del(opt &out, const string_view &line)
 		"name"
 	}};
 
+	const m::room::id::buf my_room_id
+	{
+		"ircd", origin(m::my())
+	};
+
+	const m::room my_room
+	{
+		my_room_id
+	};
+
 	const auto event_idx
 	{
-		m::my_room.get("ircd.listen", token.at("name"))
+		my_room.get("ircd.listen", token.at("name"))
 	};
 
 	const auto event_id
@@ -5535,7 +5550,7 @@ console_cmd__net__listen__del(opt &out, const string_view &line)
 
 	const auto redact_id
 	{
-		m::redact(m::my_room, m::me, event_id, "deleted")
+		m::redact(my_room, m::me(), event_id, "deleted")
 	};
 
 	out << "Removed listener '" << token.at("name") << "' configuration. " << std::endl
@@ -5890,8 +5905,8 @@ console_cmd__key(opt &out, const string_view &line)
 	if(!server_name)
 	{
 		out << "origin:                  " << m::my_host() << std::endl;
-		out << "public key ID:           " << m::self::public_key_id << std::endl;
-		out << "public key base64:       " << m::self::public_key_b64 << std::endl;
+		out << "public key ID:           " << m::public_key_id(m::my()) << std::endl;
+		//out << "public key base64:       " << m::self::public_key_b64 << std::endl;
 		return true;
 	}
 
@@ -5950,14 +5965,6 @@ console_cmd__key__get(opt &out, const string_view &line)
 	return true;
 }
 
-bool
-console_cmd__key__create(opt &out, const string_view &line)
-{
-	m::self::create_my_key();
-	out << "done" << std::endl;
-	return true;
-}
-
 //
 // stage
 //
@@ -6008,6 +6015,11 @@ console_cmd__stage(opt &out, const string_view &line)
 		key? tokens_after(line, ' ', 1) : string_view{}
 	};
 
+	const m::room::id::buf my_room
+	{
+		"ircd", origin(m::my())
+	};
+
 	if(stage.size() == id)
 	{
 		m::event base_event{json::members
@@ -6015,8 +6027,8 @@ console_cmd__stage(opt &out, const string_view &line)
 			{ "depth",             json::undefined_number  },
 			{ "origin",            my_host()               },
 			{ "origin_server_ts",  time<milliseconds>()    },
-			{ "sender",            m::me.user_id           },
-			{ "room_id",           m::my_room.room_id      },
+			{ "sender",            m::me()                 },
+			{ "room_id",           my_room                 },
 			{ "type",              "m.room.message"        },
 			{ "prev_state",        "[]"                    },
 		}};
@@ -10332,7 +10344,7 @@ console_cmd__room__create(opt &out, const string_view &line)
 
 	const m::user::id creator
 	{
-		param.at(1, m::me.user_id)
+		param.at(1, m::me())
 	};
 
 	const string_view type
@@ -10976,7 +10988,7 @@ console_cmd__user__read__ignore(opt &out, const string_view &line)
 
 	const auto eid
 	{
-		send(user_room, m::me.user_id, "ircd.read.ignore", target, json::object{})
+		send(user_room, m::me(), "ircd.read.ignore", target, json::object{})
 	};
 
 	out << "User " << my_user.user_id << " will not send receipts for"
@@ -11170,9 +11182,14 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 		param["clear"] == "clear"
 	};
 
+	const m::room::id::buf tokens_room
+	{
+		"tokens", origin(m::my())
+	};
+
 	const m::room::state &tokens
 	{
-		m::user::tokens
+		tokens_room
 	};
 
 	tokens.for_each("ircd.access_token", m::event::closure_idx{[&out, &user, &clear]
@@ -11216,12 +11233,16 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 		    << " "
 		    << string_view{event.event_id};
 
-
 		if(clear)
 		{
+			const m::room::id::buf tokens_room
+			{
+				"tokens", origin(m::my())
+			};
+
 			const auto eid
 			{
-				m::redact(m::user::tokens, user.user_id, event.event_id, "cleared")
+				m::redact(tokens_room, user.user_id, event.event_id, "cleared")
 			};
 
 			out << " - cleared by " << eid;
@@ -12079,7 +12100,7 @@ console_cmd__feds__heads(opt &out, const string_view &line)
 
 	const m::user::id &user_id
 	{
-		param.at(1, m::me.user_id)
+		param.at(1, m::me())
 	};
 
 	using closure_prototype = bool (const string_view &,
@@ -13863,7 +13884,7 @@ console_cmd__file__download(opt &out, const string_view &line)
 
 	const auto room_id
 	{
-		m::media::file::download(mxc, m::me.user_id, remote)
+		m::media::file::download(mxc, m::me(), remote)
 	};
 
 	out << room_id << std::endl;

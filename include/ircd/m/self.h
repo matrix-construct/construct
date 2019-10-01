@@ -13,56 +13,27 @@
 
 namespace ircd::m::self
 {
-	struct init;
+	// Test if provided string is one of my homeserver's network_name()'s.
+	bool my_host(const string_view &);
 
-	extern std::string origin;
-	extern std::string servername;
-	extern ed25519::sk secret_key;
-	extern ed25519::pk public_key;
-	extern std::string public_key_b64;
-	extern std::string public_key_id;
-	extern std::string tls_cert_der;
-	extern std::string tls_cert_der_sha256_b64;
-
-	string_view host();
+	// Similar to my_host(), but the comparison is relaxed to allow port
+	// numbers to be a factor: myself.com:8448 input will match if a homeserver
+	// here has a network_name of myself.com. OTOH, myself.com:1234 (i.e some
+	// non-canonical port) can only match a homeserver here with the explicit
+	// name of myself.com:1234.
 	bool host(const string_view &);
 
-	void create_my_key();
-	void signon(), signoff();
+	// Alias for origin(my()); primary homeserver's network name
+	string_view my_host(); //__attribute__((deprecated));
 }
 
 namespace ircd::m
 {
-	extern struct user me;
-	extern struct room my_room;
-	extern struct node my_node;
-
-	string_view my_host();
-	bool my_host(const string_view &);
+	using self::my_host;
+	using self::host;
 }
 
 namespace ircd
 {
 	using m::my_host;
-}
-
-struct ircd::m::self::init
-{
-	static void federation_ed25519();
-	static void tls_certificate();
-	static void keys();
-
-	init();
-};
-
-inline ircd::string_view
-ircd::m::my_host()
-{
-	return self::host();
-}
-
-inline bool
-ircd::m::my_host(const string_view &host)
-{
-	return self::host(host);
 }

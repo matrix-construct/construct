@@ -49,7 +49,7 @@ try
 
 	const auto &level
 	{
-		my(sender) && sender != m::me?
+		my(sender) && sender != me()?
 			log::INFO:
 			log::DEBUG
 	};

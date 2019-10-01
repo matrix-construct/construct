@@ -28,18 +28,6 @@ IRCD_MODULE
 	"Matrix m.room.aliases"
 };
 
-decltype(ircd::m::alias_room_id)
-ircd::m::alias_room_id
-{
-	"alias", ircd::my_host()
-};
-
-decltype(ircd::m::alias_room)
-ircd::m::alias_room
-{
-	alias_room_id
-};
-
 //
 // create the alias room as an effect of !ircd created on bootstrap
 //
@@ -53,9 +41,19 @@ ircd::m::create_alias_room_hookfn
 		{ "type",        "m.room.create"  },
 	},
 
-	[](const m::event &, m::vm::eval &)
+	[](const m::event &event, m::vm::eval &)
 	{
-		create(alias_room_id, m::me.user_id);
+		auto &my
+		{
+			m::my(at<"origin"_>(event))
+		};
+
+		const auto &alias_room_id
+		{
+			*my.rooms.emplace("alias", origin(my)).first
+		};
+
+		create(alias_room_id, my.self);
 	}
 };
 

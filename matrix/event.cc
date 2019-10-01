@@ -182,20 +182,30 @@ ircd::m::event::signatures(const mutable_buffer &out,
                            json::iov &event,
                            const json::iov &content)
 {
+	const string_view &origin
+	{
+		event.at("origin")
+	};
+
 	const ed25519::sig sig
 	{
 		sign(event, content)
 	};
 
+	const string_view public_key_id
+	{
+		m::public_key_id(my(origin))
+	};
+
 	thread_local char sigb64buf[b64encode_size(sizeof(sig))];
 	const json::members sigb64
 	{
-		{ self::public_key_id, b64encode_unpadded(sigb64buf, sig) }
+		{ public_key_id, b64encode_unpadded(sigb64buf, sig) }
 	};
 
 	const json::members sigs
 	{
-		{ event.at("origin"), sigb64 }
+		{ origin, sigb64 }
     };
 
 	return json::stringify(mutable_buffer{out}, sigs);
@@ -222,19 +232,22 @@ ircd::m::signatures(const mutable_buffer &out_,
 		sign(preimage)
 	};
 
-	const auto sig_host
+	const auto &origin
 	{
-		my_host(json::get<"origin"_>(event))?
-			json::get<"origin"_>(event):
-			my_host()
+		json::at<"origin"_>(event)
+	};
+
+	const string_view public_key_id
+	{
+		m::public_key_id(my(origin))
 	};
 
 	thread_local char sigb64buf[b64encode_size(sizeof(sig))];
 	const json::member my_sig
 	{
-		sig_host, json::members
+		origin, json::members
 		{
-			{ self::public_key_id, b64encode_unpadded(sigb64buf, sig) }
+			{ public_key_id, b64encode_unpadded(sigb64buf, sig) }
 		}
 	};
 
@@ -257,7 +270,17 @@ ircd::ed25519::sig
 ircd::m::event::sign(json::iov &event,
                      const json::iov &contents)
 {
-	return sign(event, contents, self::secret_key);
+	const string_view &origin
+	{
+		event.at("origin")
+	};
+
+	const auto &secret_key
+	{
+		m::secret_key(my(origin))
+	};
+
+	return sign(event, contents, secret_key);
 }
 
 ircd::ed25519::sig
@@ -278,7 +301,17 @@ ircd::m::event::sign(json::iov &event,
 ircd::ed25519::sig
 ircd::m::sign(const event &event)
 {
-	return sign(event, self::secret_key);
+	const string_view &origin
+	{
+		json::at<"origin"_>(event)
+	};
+
+	const auto &secret_key
+	{
+		m::secret_key(my(origin))
+	};
+
+	return sign(event, secret_key);
 }
 
 ircd::ed25519::sig
@@ -297,7 +330,17 @@ ircd::m::sign(const event &event,
 ircd::ed25519::sig
 ircd::m::event::sign(const json::object &event)
 {
-	return sign(event, self::secret_key);
+	const json::string &origin
+	{
+		event.at("origin")
+	};
+
+	const auto &secret_key
+	{
+		m::secret_key(my(origin))
+	};
+
+	return sign(event, secret_key);
 }
 
 ircd::ed25519::sig
@@ -317,7 +360,17 @@ ircd::m::event::sign(const json::object &event,
 ircd::ed25519::sig
 ircd::m::event::sign(const string_view &event)
 {
-	return sign(event, self::secret_key);
+	const json::string &origin
+	{
+		json::object(event).at("origin")
+	};
+
+	const auto &secret_key
+	{
+		m::secret_key(my(origin))
+	};
+
+	return sign(event, secret_key);
 }
 
 ircd::ed25519::sig
@@ -766,7 +819,7 @@ ircd::m::make_id(const event &event,
 	{
 		const id::event ret
 		{
-			buf, b64tob64url(readable, b64encode_unpadded(readable, hash)), my_host()
+			buf, b64tob64url(readable, b64encode_unpadded(readable, hash)), at<"origin"_>(event)
 		};
 
 		buf.assigned(ret);

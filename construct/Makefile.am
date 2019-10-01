@@ -68,7 +68,6 @@ construct_LDADD = \
 
 construct_SOURCES = \
 	construct.cc    \
-	matrix.cc       \
 	signals.cc      \
 	console.cc      \
 	lgetopt.cc      \

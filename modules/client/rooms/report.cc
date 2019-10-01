@@ -14,12 +14,6 @@ using namespace ircd;
 
 static void create_report_room(const m::event &, m::vm::eval &);
 
-const m::room::id::buf
-report_room_id
-{
-	"abuse", m::my_host()
-};
-
 conf::item<size_t>
 reason_max
 {
@@ -78,6 +72,11 @@ post__report(client &client,
 		request.at("reason")
 	};
 
+	const m::room::id::buf report_room_id
+	{
+		"abuse", request.user_id.host()
+	};
+
 	const m::room room
 	{
 		report_room_id
@@ -104,16 +103,26 @@ post__report(client &client,
 }
 
 void
-create_report_room(const m::event &,
+create_report_room(const m::event &event,
                    m::vm::eval &)
 try
 {
+	const auto &origin
+	{
+		at<"origin"_>(event)
+	};
+
+	const m::room::id::buf report_room_id
+	{
+		"abuse", origin
+	};
+
 	if(m::exists(report_room_id))
 		return;
 
 	const m::room room
 	{
-		m::create(report_room_id, m::me, "internal")
+		m::create(report_room_id, m::my(origin).self, "internal")
 	};
 
 	log::debug
@@ -126,8 +135,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		m::log, "Creating the '%s' room failed :%s",
-		string_view{report_room_id},
+		m::log, "Creating the !abuse room failed :%s",
 		e.what()
 	};
 }

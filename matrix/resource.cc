@@ -212,9 +212,14 @@ ircd::m::authenticate_user(const resource::method &method,
 		m::event::keys::include {"sender"}
 	};
 
+	const m::room::id::buf tokens_room
+	{
+		"tokens", origin(my())
+	};
+
 	const m::room::state tokens
 	{
-		m::user::tokens, &fopts
+		tokens_room, &fopts
 	};
 
 	tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&request]

@@ -87,7 +87,6 @@ ircd::m::vm::conform_check_size
 {
 	{
 		{ "_site",  "vm.conform"  },
-		{ "origin",  my_host()    }
 	},
 	[](const m::event &event, eval &eval)
 	{

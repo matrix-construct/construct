@@ -65,7 +65,7 @@ get__download(client &client,
 	{
 		request.user_id?
 			m::user::id{request.user_id}:
-			m::me.user_id
+			m::me()
 	};
 
 	const bool allow_remote

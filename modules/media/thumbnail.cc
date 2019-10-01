@@ -122,7 +122,7 @@ get__thumbnail(client &client,
 	{
 		request.user_id?
 			m::user::id{request.user_id}:
-			m::me.user_id
+			m::me()
 	};
 
 	if(!m::media::thumbnail::enable_remote)

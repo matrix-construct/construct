@@ -67,7 +67,7 @@ ircd::m::create_user_room(const user::id &user_id,
                           const json::members &contents)
 try
 {
-	return create(room_id, m::me.user_id, "user");
+	return create(room_id, me(), "user");
 }
 catch(const std::exception &e)
 {
@@ -115,16 +115,26 @@ const
 	char b58[size(hash) * 2];
 	return
 	{
-		buf, b58encode(b58, hash), my_host()
+		buf, b58encode(b58, hash), origin(my())
 	};
 }
 
 ircd::m::device::id::buf
 ircd::m::user::get_device_from_access_token(const string_view &token)
 {
+	const m::room::id::buf tokens_room_id
+	{
+		"tokens", origin(my())
+	};
+
+	const m::room tokens
+	{
+		tokens_room_id
+	};
+
 	const event::idx event_idx
 	{
-		user::tokens.get("ircd.access_token", token)
+		tokens.get("ircd.access_token", token)
 	};
 
 	device::id::buf ret;

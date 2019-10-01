@@ -99,11 +99,29 @@ const
 	thread_local char x_matrix[2_KiB];
 	if(startswith(json::at<"uri"_>(*this), "/_matrix/federation"))
 	{
-		const auto &sk{self::secret_key};
-		const auto &pkid{self::public_key_id};
+		const json::string &origin
+		{
+			json::at<"origin"_>(*this)
+		};
+
+		const auto &my
+		{
+			m::my(origin)
+		};
+
+		const auto &secret_key
+		{
+			m::secret_key(my)
+		};
+
+		const auto &public_key_id
+		{
+			m::public_key_id(my)
+		};
+
 		header[headers++] =
 		{
-			"Authorization", generate(x_matrix, sk, pkid)
+			"Authorization", generate(x_matrix, secret_key, public_key_id)
 		};
 	}
 
@@ -169,14 +187,19 @@ const
 		stringify(mutable_buffer{buf}, *this)
 	};
 
-	const ed25519::sig sig
+	const json::string &origin
 	{
-		self::secret_key.sign(object)
+		json::at<"origin"_>(*this)
 	};
 
-	const auto &origin
+	const auto &secret_key
 	{
-		unquote(string_view{json::at<"origin"_>(*this)})
+		m::secret_key(my(origin))
+	};
+
+	const ed25519::sig sig
+	{
+		secret_key.sign(object)
 	};
 
 	thread_local char sigb64[1_KiB];

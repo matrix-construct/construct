@@ -110,12 +110,17 @@ post__login_password(client &client,
 		string(remote_buf, remote(client)), json::STRING
 	};
 
+	const m::room::id::buf tokens_room
+	{
+		"tokens", origin(m::my())
+	};
+
 	// Log the user in by issuing an event in the tokens room containing
 	// the generated token. When this call completes without throwing the
 	// access_token will be committed and the user will be logged in.
 	const m::event::id::buf access_token_id
 	{
-		m::send(m::user::tokens, user_id, "ircd.access_token", access_token,
+		m::send(tokens_room, user_id, "ircd.access_token", access_token,
 		{
 			{ "ip",         last_seen_ip   },
 			{ "device_id",  device_id      },

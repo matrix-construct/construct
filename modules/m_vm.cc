@@ -135,7 +135,7 @@ ircd::m::vm::init()
 	log::info
 	{
 		log, "BOOT %s @%lu [%s] db:%lu",
-		string_view{m::my_node.node_id},
+		server_name(my()),
 		sequence::retired,
 		sequence::retired?
 			string_view{event_id} : "NO EVENTS"_sv,
@@ -175,7 +175,7 @@ ircd::m::vm::fini()
 	log::info
 	{
 		log, "HALT '%s' @%lu [%s] vm:%lu:%lu:%lu db:%lu",
-		string_view{m::my_node.node_id},
+		server_name(my()),
 		retired,
 		retired?
 			string_view{event_id} : "NO EVENTS"_sv,

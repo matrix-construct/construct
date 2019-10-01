@@ -43,7 +43,7 @@ void
 ircd::m::app::init()
 {
 	if(!m::exists(app_room_id))
-		m::create(app_room_id, m::me, "internal");
+		m::create(app_room_id, me(), "internal");
 
 	init_apps();
 }

@@ -28,169 +28,12 @@ ircd::m::log
 	"m", 'm'
 };
 
-//
-// init
-//
-
-/// --- tmp ---
-
-extern "C" void
-reload_conf();
-
-namespace ircd::m
-{
-	std::unique_ptr<dbs::init> _dbs;
-	std::unique_ptr<fetch::init> _fetch;
-	std::unique_ptr<init::modules> _modules;
-}
-
-/// --- /tmp ---
-
-void
-ircd::m::on_load()
-try
-{
-	assert(ircd::run::level == run::level::START);
-	m::self::init::keys();
-	_dbs = std::make_unique<dbs::init>(ircd::server_name, std::string{});
-	reload_conf();
-	_fetch = std::make_unique<fetch::init>();
-	_modules = std::make_unique<init::modules>();
-	self::signon();
-}
-catch(const m::error &e)
-{
-	log::error
-	{
-		log, "Failed to start matrix (%u) %s :%s :%s",
-		uint(e.code),
-		http::status(e.code),
-		e.errcode(),
-		e.errstr(),
-	};
-
-	throw;
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		log, "Failed to start matrix :%s", e.what()
-	};
-
-	throw;
-}
-
-void
-ircd::m::on_unload()
-noexcept try
-{
-	mods::imports.erase("m_listen"s);
-
-	if(m::sync::pool.size())
-		m::sync::pool.join();
-
-	self::signoff();
-	_fetch.reset(nullptr);
-	_modules.reset(nullptr);
-	_dbs.reset(nullptr);
-
-	//TODO: remove this for non-interfering shutdown
-	server::interrupt_all();
-	client::terminate_all();
-	client::close_all();
-	server::close_all();
-	server::wait_all();
-	client::wait_all();
-}
-catch(const m::error &e)
-{
-	log::critical
-	{
-		log, "%s %s", e.what(), e.content
-	};
-
-	ircd::terminate();
-}
-
-//
-// init::modules
-//
-
-namespace ircd::m
-{
-	extern const std::vector<string_view> module_names;
-	extern const std::vector<string_view> module_names_optional;
-}
-
-ircd::m::init::modules::modules()
-{
-	const unwind::exceptional unload{[this]
-	{
-		this->fini_imports();
-	}};
-
-	init_imports();
-}
-
-ircd::m::init::modules::~modules()
-noexcept
-{
-	fini_imports();
-}
-
-void
-ircd::m::init::modules::init_imports()
-{
-	if(!bool(ircd::mods::autoload))
-	{
-		log::warning
-		{
-			"Not loading modules because noautomod flag is set. "
-			"You may still load modules manually."
-		};
-
-		return;
-	}
-
-	for(const auto &name : module_names) try
-	{
-		mods::imports.emplace(name, name);
-	}
-	catch(...)
-	{
-		const auto &optional(module_names_optional);
-		if(std::count(begin(optional), end(optional), name))
-			continue;
-
-		throw;
-	}
-
-	if(vm::sequence::retired == 0)
-	{
-		log::notice
-		{
-			log, "This appears to be your first time running IRCd because the events "
-			"database is empty. I will be bootstrapping it with initial events now..."
-		};
-
-		m::init::bootstrap{};
-	}
-}
-
-void
-ircd::m::init::modules::fini_imports()
-noexcept
-{
-	for(auto it(module_names.rbegin()); it != module_names.rend(); ++it)
-		mods::imports.erase(*it);
-}
-
 /// This is an ordered list for loading and unloading modules. This is not the
 /// solution I really want at all so consider it temporary. Modules are loaded
 /// in the order of the lines and unloaded in reverse order.
-decltype(ircd::m::module_names)
-ircd::m::module_names
+IRCD_MODULE_EXPORT_DATA
+decltype(ircd::m::matrix::module_names)
+ircd::m::matrix::module_names
 {
 	"m_noop",
 	"m_breadcrumb_rooms",
@@ -313,8 +156,165 @@ ircd::m::module_names
 
 /// This is a list of modules that are considered "optional" and any loading
 /// error for them will not propagate and interrupt m::init.
-decltype(ircd::m::module_names_optional)
-ircd::m::module_names_optional
+IRCD_MODULE_EXPORT_DATA
+decltype(ircd::m::matrix::module_names_optional)
+ircd::m::matrix::module_names_optional
 {
 	"web_hook",
 };
+
+//
+// init
+//
+
+/// --- tmp ---
+
+extern "C" void
+reload_conf();
+
+namespace ircd::m::init
+{
+	struct modules;
+}
+
+namespace ircd::m
+{
+	std::unique_ptr<dbs::init> _dbs;
+	std::unique_ptr<fetch::init> _fetch;
+	//std::unique_ptr<init::modules> _modules;
+}
+
+/// --- /tmp ---
+
+void
+ircd::m::on_load()
+try
+{
+	assert(ircd::run::level == run::level::START);
+	//reload_conf();
+	_fetch = std::make_unique<fetch::init>();
+	//_modules = std::make_unique<init::modules>();
+	//self::signon();
+}
+catch(const m::error &e)
+{
+	log::error
+	{
+		log, "Failed to start matrix (%u) %s :%s :%s",
+		uint(e.code),
+		http::status(e.code),
+		e.errcode(),
+		e.errstr(),
+	};
+
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to start matrix :%s", e.what()
+	};
+
+	throw;
+}
+
+void
+ircd::m::on_unload()
+noexcept try
+{
+	//mods::imports.erase("m_listen"s);
+
+	if(m::sync::pool.size())
+		m::sync::pool.join();
+
+	//self::signoff();
+	_fetch.reset(nullptr);
+	//_modules.reset(nullptr);
+
+	//TODO: remove this for non-interfering shutdown
+	//server::interrupt_all();
+	//client::terminate_all();
+	//client::close_all();
+	//server::close_all();
+	//server::wait_all();
+	//client::wait_all();
+}
+catch(const m::error &e)
+{
+	log::critical
+	{
+		log, "%s %s", e.what(), e.content
+	};
+
+	ircd::terminate();
+}
+
+//
+// init::modules
+//
+
+/*
+ircd::m::init::modules::modules()
+{
+	const unwind::exceptional unload{[this]
+	{
+		this->fini_imports();
+	}};
+
+	init_imports();
+}
+
+ircd::m::init::modules::~modules()
+noexcept
+{
+	fini_imports();
+}
+
+void
+ircd::m::init::modules::init_imports()
+{
+	if(!bool(ircd::mods::autoload))
+	{
+		log::warning
+		{
+			"Not loading modules because noautomod flag is set. "
+			"You may still load modules manually."
+		};
+
+		return;
+	}
+
+	for(const auto &name : module_names) try
+	{
+		mods::imports.emplace(name, name);
+	}
+	catch(...)
+	{
+		const auto &optional(module_names_optional);
+		if(std::count(begin(optional), end(optional), name))
+			continue;
+
+		throw;
+	}
+
+	if(vm::sequence::retired == 0)
+	{
+		log::notice
+		{
+			log, "This appears to be your first time running IRCd because the events "
+			"database is empty. I will be bootstrapping it with initial events now..."
+		};
+
+		m::init::bootstrap{};
+	}
+}
+
+void
+ircd::m::init::modules::fini_imports()
+noexcept
+{
+	for(auto it(module_names.rbegin()); it != module_names.rend(); ++it)
+		mods::imports.erase(*it);
+}
+*/

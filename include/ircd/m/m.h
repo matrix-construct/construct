@@ -35,6 +35,7 @@ namespace ircd::m
 namespace ircd::m
 {
 	struct matrix;
+	struct homeserver;
 
 	IRCD_OVERLOAD(generate)
 
@@ -48,9 +49,8 @@ namespace ircd
 
 #include "name.h"
 #include "error.h"
-#include "self.h"
-#include "init.h"
 #include "id.h"
+#include "self.h"
 #include "event/event.h"
 #include "get.h"
 #include "query.h"
@@ -89,9 +89,13 @@ namespace ircd
 #include "media.h"
 #include "search.h"
 #include "resource.h"
+#include "homeserver.h"
 
 struct ircd::m::matrix
 {
+	static const std::vector<string_view> module_names;
+	static const std::vector<string_view> module_names_optional;
+
 	std::string module_path
 	{
 		fs::path_string(fs::base::LIB, "libircd_matrix")
@@ -100,5 +104,17 @@ struct ircd::m::matrix
 	ircd::module module
 	{
 		module_path
+	};
+
+	using init_proto = m::homeserver *(const struct m::homeserver::opts *);
+	mods::import<init_proto> init
+	{
+		module, "ircd::m::homeserver::init"
+	};
+
+	using fini_proto = void (m::homeserver *) noexcept;
+	mods::import<fini_proto> fini
+	{
+		module, "ircd::m::homeserver::fini"
 	};
 };

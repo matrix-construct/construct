@@ -12,21 +12,7 @@ namespace ircd::m
 {
 	extern conf::item<seconds> alias_fetch_timeout;
 	extern conf::item<seconds> alias_cache_ttl;
-	extern const room::id::buf alias_room_id;
-	extern const room alias_room;
 }
-
-decltype(ircd::m::alias_room_id)
-ircd::m::alias_room_id
-{
-	"alias", ircd::my_host()
-};
-
-decltype(ircd::m::alias_room)
-ircd::m::alias_room
-{
-	alias_room_id
-};
 
 decltype(ircd::m::alias_cache_ttl)
 ircd::m::alias_cache_ttl
@@ -168,6 +154,16 @@ ircd::m::room::aliases::cache::del(const alias &alias)
 		make_key(buf, alias)
 	};
 
+	const m::room::id::buf alias_room_id
+	{
+		"alias", origin(my())
+	};
+
+	const m::room alias_room
+	{
+		alias_room_id
+	};
+
 	const auto &event_idx
 	{
 		alias_room.get(std::nothrow, "ircd.room.alias", key)
@@ -186,7 +182,7 @@ ircd::m::room::aliases::cache::del(const alias &alias)
 
 	const auto ret
 	{
-		redact(alias_room, m::me.user_id, event_id, "deleted")
+		redact(alias_room, me(), event_id, "deleted")
 	};
 
 	return true;
@@ -203,9 +199,19 @@ ircd::m::room::aliases::cache::set(const alias &alias,
 		make_key(buf, alias)
 	};
 
+	const m::room::id::buf alias_room_id
+	{
+		"alias", origin(my())
+	};
+
+	const m::room alias_room
+	{
+		alias_room_id
+	};
+
 	const auto ret
 	{
-		send(alias_room, m::me.user_id, "ircd.room.alias", key,
+		send(alias_room, me(), "ircd.room.alias", key,
 		{
 			{ "room_id", id }
 		})
@@ -427,9 +433,14 @@ IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::for_each(const string_view &server,
                                         const closure_bool &closure)
 {
+	const m::room::id::buf alias_room_id
+	{
+		"alias", origin(my())
+	};
+
 	const m::room::state state
 	{
-		alias_room
+		alias_room_id
 	};
 
 	bool ret{true};
@@ -572,6 +583,16 @@ ircd::m::room::aliases::cache::getidx(const alias &alias)
 	const string_view &key
 	{
 		tolower(buf, swapped)
+	};
+
+	const m::room::id::buf alias_room_id
+	{
+		"alias", origin(my())
+	};
+
+	const m::room alias_room
+	{
+		alias_room_id
 	};
 
 	const auto &event_idx

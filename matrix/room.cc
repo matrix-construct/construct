@@ -107,7 +107,7 @@ ircd::m::event::id::buf
 ircd::m::notice(const room &room,
                 const string_view &body)
 {
-	return message(room, me.user_id, body, "m.notice");
+	return message(room, me(), body, "m.notice");
 }
 
 ircd::m::event::id::buf
@@ -744,7 +744,12 @@ ircd::m::local_joined(const room &room)
 		room
 	};
 
-	return !members.empty("join", my_host());
+	return !for_each([&members]
+	(const homeserver &homeserver)
+	{
+		// return false to break and return false; true to continue
+		return members.empty("join", origin(homeserver));
+	});
 }
 
 /// Member(s) from another server are presently joined to the room. For example
@@ -848,7 +853,7 @@ ircd::m::internal(const id::room &room_id)
 	if(!exists(room))
 		return false;
 
-	if(!creator(room, m::me))
+	if(!creator(room, me()))
 		return false;
 
 	return true;
@@ -868,7 +873,7 @@ ircd::m::exists(const id::room &room_id)
 	if(likely(it.depth() < 2UL))
 		return true;
 
-	if(my_host(room_id.host()) && creator(room_id, m::me))
+	if(my_host(room_id.host()) && creator(room_id, me()))
 		return true;
 
 	return false;

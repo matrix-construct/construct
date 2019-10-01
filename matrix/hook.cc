@@ -207,7 +207,7 @@ const
 ircd::m::hook::base::base(const json::members &members)
 :_feature
 {
-	_hook_make_feature(members)
+	members // _hook_make_feature(members)
 }
 ,feature
 {

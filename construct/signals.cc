@@ -13,7 +13,6 @@
 #include "construct.h"
 #include "signals.h"
 #include "console.h"
-#include "matrix.h"
 
 namespace construct
 {

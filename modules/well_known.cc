@@ -80,7 +80,7 @@ handle_matrix_server(client &client,
 	{
 		client, json::members
 		{
-			{ "m.server", m::self::servername }
+			{ "m.server", m::server_name(m::my()) }
 		}
 	};
 }

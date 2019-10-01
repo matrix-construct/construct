@@ -302,7 +302,16 @@ IRCD_MODULE_EXPORT
 ircd::m::device::access_token_to_id(const string_view &token,
                                     const closure &closure)
 {
-	const m::room::state &state{m::user::tokens};
+	const m::room::id::buf tokens
+	{
+		"tokens", origin(my())
+	};
+
+	const m::room::state &state
+	{
+		tokens
+	};
+
 	const m::event::idx &event_idx
 	{
 		state.get(std::nothrow, "ircd.access_token", token)

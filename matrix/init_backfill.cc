@@ -8,6 +8,11 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+namespace ircd::m::init
+{
+	struct backfill;
+}
+
 /// This should be a namespace but we're stuck in struct m::init for now, so
 /// this code should be portable for a future when m::init is unstructured.
 struct ircd::m::init::backfill

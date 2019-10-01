@@ -39,7 +39,7 @@ activate__user(const m::user &user)
 		user
 	};
 
-	return send(user_room, m::me.user_id, "ircd.account", "active", json::members
+	return send(user_room, m::me(), "ircd.account", "active", json::members
 	{
 		{ "value", true }
 	});

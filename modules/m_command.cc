@@ -113,7 +113,7 @@ try
 
 	const auto &response_sender
 	{
-		public_response? user : m::me
+		public_response? user : m::user(m::me())
 	};
 
 	const auto &response_room

@@ -476,7 +476,7 @@ ircd::m::keys::cache::set(const json::object &keys)
 	};
 
 	if(!exists(node_room.room_id))
-		create(node_room, m::me.user_id);
+		create(node_room, me());
 
 	const json::object &vks
 	{
@@ -490,7 +490,7 @@ ircd::m::keys::cache::set(const json::object &keys)
 			return ret;
 
 		const auto &key_id(unquote(member.first));
-		send(node_room, m::me.user_id, "ircd.key", key_id, keys);
+		send(node_room, me(), "ircd.key", key_id, keys);
 		++ret;
 	}
 

@@ -172,7 +172,7 @@ try
 	rr0.~object();
 	array.~array();
 	content.~object();
-	send(room_id, m::me, type, state_key, json::object(out.completed()));
+	send(room_id, m::me(), type, state_key, json::object(out.completed()));
 	return true;
 }
 catch(const http::error &e)
@@ -297,7 +297,7 @@ try
 
 	array.~array();
 	content.~object();
-	send(room_id, m::me, type, state_key, json::object{out.completed()});
+	send(room_id, m::me(), type, state_key, json::object{out.completed()});
 	return true;
 }
 catch(const http::error &e)
@@ -695,7 +695,7 @@ try
 {
 	const m::room room
 	{
-		m::create(room_id, m::me, "internal")
+		m::create(room_id, m::me(), "internal")
 	};
 
 	log::debug

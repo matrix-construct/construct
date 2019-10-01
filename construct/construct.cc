@@ -13,7 +13,6 @@
 #include <ircd/asio.h>
 #include "lgetopt.h"
 #include "construct.h"
-#include "matrix.h"
 #include "signals.h"
 #include "console.h"
 
@@ -120,8 +119,13 @@ noexcept try
 	if(printversion)
 		return print_version();
 
-	// The matrix origin is the first positional argument after any switched
-	// arguments. The matrix origin is the hostpart of MXID's for the server.
+	// Sets various other conf items based on the program options captured into
+	// the globals preceding this frame.
+	applyargs();
+
+	// The network name (matrix origin) is the first positional argument after
+	// any switched arguments. The matrix origin is the hostpart of MXID's for
+	// the server.
 	const ircd::string_view origin
 	{
 		argc > 0?
@@ -129,46 +133,42 @@ noexcept try
 			nullptr
 	};
 
-	// The hostname is the unique name for this specific server. This is
+	// The server_name is the unique name for this specific server. This is
 	// generally the same as origin; but if origin is example.org with an
-	// SRV record redirecting to matrix.example.org then hostname is
+	// SRV record redirecting to matrix.example.org then server_name is
 	// matrix.example.org. In clusters serving a single origin, all
-	// hostnames must be different.
-	const ircd::string_view hostname
+	// server_names must be different.
+	const ircd::string_view server_name
 	{
-		argc > 1?     // hostname given on command line
+		argc > 1?     // server_name given on command line
 			argv[1]:
-		argc > 0?     // hostname matches origin
+		argc > 0?     // server_name matches origin
 			argv[0]:
 			nullptr
 	};
 
-	// at least one hostname argument is required for now.
-	if(!hostname)
+	// at least one server_name argument is required for now.
+	if(!server_name)
 		throw ircd::user_error
 		{
 			"usage :%s <origin> [servername]", progname
 		};
 
-	// Set the required name conf items based on the positional program
-	// arguments. This operation will throw if the strings are not fit for
-	// purpose as host/domain names.
-	ircd::network_name.set(origin);
-	ircd::server_name.set(hostname);
-
-	// Sets various other conf items based on the program options captured into
-	// the globals preceding this frame.
-	applyargs();
-
 	// The smoketest uses this ircd::run::level callback to set a flag when
 	// each ircd::run::level is reached. All flags must be set to pass. The
-	// smoketest is inert unless the -smoketest program option is used.
-	const ircd::run::changed smoketester{[](const auto &level)
+	// smoketest is inert unless the -smoketest program option is used. Note
+	// the special case for run::level::RUN, which initiates the transition
+	// to QUIT; the ircd::post allows any operations queued in the io_context
+	// to run in case the smoketest isn't the only callback being invoked.
+	const ircd::run::changed smoketester
 	{
-		smoketest.at(size_t(level) + 1) = true;
-		if(smoketest[0] && level == ircd::run::level::RUN)
-			ircd::post {[] { ircd::quit(); }};
-	}};
+		[](const auto &level)
+		{
+			smoketest.at(size_t(level) + 1) = true;
+			if(smoketest[0] && level == ircd::run::level::RUN)
+				ircd::post {[] { ircd::quit(); }};
+		}
+	};
 
 	// This is the sole io_context for Construct, and the ios.run() below is the
 	// the only place where the program actually blocks.
@@ -187,9 +187,88 @@ noexcept try
 	// to that io_context. Execution of IRCd will then occur during ios::run()
 	ircd::init(ios);
 
-	// Start matrix application.
-	if(likely(!nomatrix))
-		construct::matrix::init();
+	// Setup synchronization primitives on this stack for starting and stopping
+	// the application (matrix homeserver). Note this stack cannot actually use
+	// these; they'll be used to synchronize the closures below running in
+	// different contexts.
+	ircd::ctx::latch start(2), quit(2);
+
+	// Setup the matrix homeserver application. This will be executed on an
+	// ircd::context (dedicated stack). We construct several objects on the
+	// stack which are the basis for our matrix homeserver. When the stack
+	// unwinds, the homeserver will go out of service.
+	const auto homeserver{[&origin, &server_name, &start, &quit]
+	{
+		// 5
+		struct ircd::m::homeserver::opts opts;
+		opts.origin = origin;
+		opts.server_name = server_name;
+
+		// 6
+		// Load the matrix library dynamic shared object
+		ircd::matrix matrix;
+
+		// 7
+		// Run a primary homeserver based on the program options given.
+		const ircd::custom_ptr<ircd::m::homeserver> homeserver
+		{
+			// 7.1
+			matrix.init(&opts), [&matrix]
+			(ircd::m::homeserver *const homeserver)
+			{
+				// 13.1
+				matrix.fini(homeserver);
+			}
+		};
+
+		// 8
+		// Notify the loader the homeserver is ready for service.
+		start.count_down_and_wait();
+
+		// 9
+		// Yield until the loader notifies us; this stack will then unwind.
+		quit.count_down_and_wait();
+
+		// 13
+	}};
+
+	// This object registers a callback for a specific event in libircd; the
+	// closure is called from the main context (#1) running ircd::main().
+	// after libircd is ready for service in runlevel START but before entering
+	// runlevel RUN. It is called again immediately after entering runlevel
+	// QUIT, but before any functionality of libircd destructs. This cues us
+	// to start and stop the homeserver.
+	const decltype(ircd::run::main)::callback loader
+	{
+		ircd::run::main, [&homeserver, &start, &quit]
+		{
+			static ircd::context context;
+
+			// 2 This branch is taken the first time this function is called,
+			// and not taken the second time.
+			if(!context)
+			{
+				// 3 Launch the homeserver context (asynchronous).
+				context = { "matrix", homeserver };
+
+				// 4 Yield until the homeserver function notifies `start`; waiting
+				// here prevents ircd::main() from entering runlevel RUN.
+				start.count_down_and_wait();
+
+				// 10
+				return;
+			}
+
+			// 11
+			// Notify the waiting homeserver context to quit; this will
+			// start shutting down the homeserver.
+			quit.count_down_and_wait();
+
+			// 12
+			// Wait for the homeserver context to finish before we return.
+			context.join();
+		}
+	};
 
 	// If the user wants to immediately drop to an interactive command line
 	// without having to send a ctrl-c for it, that is provided here. This does
@@ -207,10 +286,12 @@ noexcept try
 	if(norun)
 		return EXIT_SUCCESS;
 
+	// 1
 	// Execution.
 	// Blocks until a clean exit from a quit() or an exception comes out of it.
 	ios.run();
 
+	// 14
 	// The smoketest is enabled if the first value is true; then all of the
 	// values must be true for the smoketest to pass.
 	if(smoketest[0])
@@ -331,6 +412,8 @@ enable_coredumps()
 }
 #endif
 
+/// These operations are safe to call before ircd::init() and anytime after
+/// static initialization.
 void
 applyargs()
 {

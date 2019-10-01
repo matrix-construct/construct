@@ -45,7 +45,7 @@ const
 	// specified. TODO: isn't that guest reg?
 	const m::id::user::buf user_id
 	{
-		username, my_host()
+		username, origin(my())
 	};
 
 	// Check if the the user_id is acceptably formed for this server or throws
@@ -155,9 +155,14 @@ const
 			json::STRING
 		};
 
+		const m::room::id::buf user_tokens
+		{
+			"tokens", user_id.host()
+		};
+
 		const m::event::id::buf access_token_id
 		{
-			m::send(m::user::tokens, user_id, "ircd.access_token", access_token, json::members
+			m::send(user_tokens, user_id, "ircd.access_token", access_token, json::members
 			{
 				{ "ip",         last_seen_ip },
 				{ "device_id",  device_id    },

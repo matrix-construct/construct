@@ -57,7 +57,6 @@ libircd_matrix_la_SOURCES =#
 libircd_matrix_la_SOURCES += name.cc
 libircd_matrix_la_SOURCES += id.cc
 libircd_matrix_la_SOURCES += dbs.cc
-libircd_matrix_la_SOURCES += self.cc
 libircd_matrix_la_SOURCES += hook.cc
 libircd_matrix_la_SOURCES += event.cc
 libircd_matrix_la_SOURCES += event_cached.cc
@@ -127,7 +126,7 @@ libircd_matrix_la_SOURCES += filter.cc
 libircd_matrix_la_SOURCES += txn.cc
 libircd_matrix_la_SOURCES += vm.cc
 libircd_matrix_la_SOURCES += init_backfill.cc
-libircd_matrix_la_SOURCES += init_bootstrap.cc
+libircd_matrix_la_SOURCES += homeserver.cc
 libircd_matrix_la_SOURCES += resource.cc
 libircd_matrix_la_SOURCES += matrix.cc
 

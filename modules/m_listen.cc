@@ -104,8 +104,17 @@ on_quit()
 void
 init_listeners()
 {
-	m::room::state{m::my_room}.for_each("ircd.listen", []
-	(const m::event &event)
+	const m::room::id::buf my_room
+	{
+		"ircd", m::origin(m::my())
+	};
+
+	const m::room::state state
+	{
+		my_room
+	};
+
+	state.for_each("ircd.listen", [](const m::event &event)
 	{
 		load_listener(event);
 	});
@@ -150,7 +159,16 @@ load_listener(const string_view &name)
 try
 {
 	bool ret{false};
-	const m::room::state state{m::my_room};
+	const m::room::id::buf my_room
+	{
+		"ircd", m::origin(m::my())
+	};
+
+	const m::room::state state
+	{
+		my_room
+	};
+
 	state.get("ircd.listen", name, [&ret]
 	(const m::event &event)
 	{
