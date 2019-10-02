@@ -8,6 +8,13 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+// internal interface to ircd::run (see ircd/run.h)
+namespace ircd::run
+{
+	// change the current runlevel
+	static bool set(const enum level &);
+}
+
 namespace ircd
 {
 	// Fundamental context #1; all subsystems live as objects on this stack.
@@ -19,22 +26,6 @@ namespace ircd
 	// all non-static assets provided by the library.
 	static void main() noexcept;
 }
-
-// internal interface to ircd::run (see ircd/run.h)
-namespace ircd::run
-{
-	struct main_event;
-
-	// change the current runlevel
-	static bool set(const enum level &);
-}
-
-/// Placed on the main stack after all subsystems; this object represents
-/// a user's extension to the main stack via callbacks (see ircd/run.h)
-struct ircd::run::main_event
-{
-	main_event(), ~main_event() noexcept;
-};
 
 decltype(ircd::version_api)
 ircd::version_api
@@ -191,11 +182,11 @@ noexcept
 			return true;
 		}
 
+		case run::level::IDLE:
 		case run::level::START:
 		{
 			ctx::terminate(*main_context);
 			main_context = nullptr;
-			ircd::run::set(run::level::QUIT);
 			return true;
 		}
 
@@ -242,6 +233,7 @@ noexcept
 		case run::level::QUIT:
 			return;
 
+		case run::level::IDLE:
 		case run::level::RUN:
 			break;
 	}
@@ -301,10 +293,6 @@ noexcept try
 	server::init _server_;   // Server related
 	client::init _client_;   // Client related
 	js::init _js_;           // SpiderMonkey
-	run::main_event _me_;    // Additional user callbacks
-
-	// IRCd will now transition to the RUN state indicating full functionality.
-	run::set(run::level::RUN);
 
 	// Transition to the QUIT state on unwind.
 	const unwind quit{[]
@@ -312,13 +300,17 @@ noexcept try
 		ircd::run::set(run::level::QUIT);
 	}};
 
+	// IRCd will now transition to the IDLE state allowing library user's to
+	// load their applications using the run::changed callback.
+	run::set(run::level::IDLE);
+
+	// IRCd will now transition to the RUN state indicating full functionality.
+	run::set(run::level::RUN);
+
 	// This call blocks until the main context is notified or interrupted etc.
 	// Waiting here will hold open this stack with all of the above objects
 	// living on it.
-	run::changed::dock.wait([]
-	{
-		return !main_context;
-	});
+	ctx::wait();
 }
 catch(const http::error &e) // <-- m::error
 {
@@ -360,7 +352,7 @@ ircd::uptime()
 
 namespace ircd::run
 {
-	static enum level _level;
+	static enum level _level, _chadburn;
 }
 
 decltype(ircd::run::level)
@@ -369,26 +361,11 @@ ircd::run::level
 	_level
 };
 
-decltype(ircd::run::main)
-ircd::run::main;
-
-//
-// run::main_event
-//
-
-ircd::run::main_event::main_event()
+decltype(ircd::run::chadburn)
+ircd::run::chadburn
 {
-	assert(level == level::START);
-	run::main();
-}
-
-ircd::run::main_event::~main_event()
-noexcept
-{
-	assert(level != level::RUN);
-	assert(level == level::QUIT);
-	run::main();
-}
+	_chadburn
+};
 
 //
 // run::changed
@@ -409,23 +386,6 @@ ircd::util::instance_list<ircd::run::changed>::list
 decltype(ircd::run::changed::dock)
 ircd::run::changed::dock;
 
-//
-// run::changed::changed
-//
-
-ircd::run::changed::changed(handler function)
-:handler
-{
-	std::move(function)
-}
-{
-}
-
-ircd::run::changed::~changed()
-noexcept
-{
-}
-
 /// The notification will be posted to the io_context. This is important to
 /// prevent the callback from continuing execution on some ircd::ctx stack and
 /// instead invoke their function on the main stack in their own io_context
@@ -434,72 +394,65 @@ bool
 ircd::run::set(const enum level &new_level)
 try
 {
-	if(level == new_level)
+	if(new_level == chadburn)
 		return false;
 
-	log::debug
-	{
-		"IRCd level transition from '%s' to '%s' (notifying %zu)",
-		reflect(level),
-		reflect(new_level),
-		changed::list.size()
-	};
-
-	_level = new_level;
-
-	// This latch is used to block this call when setting the level
-	// from an ircd::ctx. If the level is set from the main stack then
-	// the caller will have to do synchronization themselves.
-	ctx::latch latch
-	{
-		bool(ctx::current) // latch has count of 1 if we're on an ircd::ctx
-	};
-
-	// This function will notify the user of the change to IRCd. When there
-	// are listeners, function is posted to the io_context ensuring THERE IS
-	// NO CONTINUATION ON THIS STACK by the user.
-	const auto call_users{[new_level, &latch, latching(!latch.is_ready())]
-	{
-		assert(new_level == run::level);
-
-		log::notice
+	if(!ctx::current && level != chadburn)
+		throw panic
 		{
-			"IRCd %s", reflect(new_level)
+			"Transition '%s' -> '%s' already in progress; cannot wait without ctx",
+			reflect(chadburn),
+			reflect(level),
 		};
 
-		log::flush();
-		changed::dock.notify_all();
-		for(const auto &handler : changed::list) try
-		{
-			(*handler)(new_level);
-		}
-		catch(const std::exception &e)
-		{
-			log::critical
-			{
-				"Runlevel change to %s handler(%p) :%s",
-				reflect(new_level),
-				handler,
-				e.what()
-			};
-		}
+	// Wait for
+	changed::dock.wait([]
+	{
+		return level == chadburn;
+	});
 
-		if(latching)
-			latch.count_down();
+	_level = new_level;
+	const unwind chadburn_{[]
+	{
+		_chadburn = level;
 	}};
 
-	static ios::descriptor descriptor
+	changed::dock.notify_all();
+	log::debug
 	{
-		"ircd::run::set"
+		"IRCd level transition from '%s' to '%s' (dock:%zu callbacks:%zu)",
+		reflect(chadburn),
+		reflect(level),
+		changed::dock.size(),
+		changed::list.size(),
 	};
 
-	if(changed::list.size() && ctx::current)
-		ircd::post(descriptor, call_users);
-	else
-		call_users();
+	log::notice
+	{
+		"IRCd %s", reflect(level)
+	};
 
-	if(ctx::current)
-		latch.wait();
+	log::flush();
+	for(const auto &handler : changed::list) try
+	{
+		handler->function(new_level);
+	}
+	catch(const std::exception &e)
+	{
+		switch(level)
+		{
+			case level::IDLE:  throw;
+			default:           break;
+		}
+
+		log::critical
+		{
+			"Runlevel change to %s handler(%p) :%s",
+			reflect(new_level),
+			handler,
+			e.what()
+		};
+	}
 
 	return true;
 }
@@ -524,6 +477,7 @@ ircd::run::reflect(const enum run::level &level)
 		case level::HALT:      return "HALT";
 		case level::READY:     return "READY";
 		case level::START:     return "START";
+		case level::IDLE:      return "IDLE";
 		case level::RUN:       return "RUN";
 		case level::QUIT:      return "QUIT";
 		case level::FAULT:     return "FAULT";

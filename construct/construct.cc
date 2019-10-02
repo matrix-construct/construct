@@ -36,7 +36,7 @@ bool write_avoid;
 bool soft_assert;
 bool nomatrix;
 const char *execute;
-std::array<bool, 6> smoketest;
+std::array<bool, 7> smoketest;
 
 lgetopt opts[]
 {
@@ -170,23 +170,6 @@ noexcept try
 		}
 	};
 
-	// This is the sole io_context for Construct, and the ios.run() below is the
-	// the only place where the program actually blocks.
-	boost::asio::io_context ios;
-
-	// libircd does no signal handling (or at least none that you ever have to
-	// care about); reaction to all signals happens out here instead. Handling
-	// is done properly through the io_context which registers the handler for
-	// the platform and then safely posts the received signal to the io_context
-	// event loop. This means we lose the true instant hardware-interrupt gratitude
-	// of signals but with the benefit of unconditional safety and cross-
-	// platformness with windows etc.
-	const construct::signals signals{ios};
-
-	// Associates libircd with our io_context and posts the initial routines
-	// to that io_context. Execution of IRCd will then occur during ios::run()
-	ircd::init(ios);
-
 	// Setup synchronization primitives on this stack for starting and stopping
 	// the application (matrix homeserver). Note this stack cannot actually use
 	// these; they'll be used to synchronize the closures below running in
@@ -238,15 +221,15 @@ noexcept try
 	// runlevel RUN. It is called again immediately after entering runlevel
 	// QUIT, but before any functionality of libircd destructs. This cues us
 	// to start and stop the homeserver.
-	const decltype(ircd::run::main)::callback loader
+	const ircd::run::changed loader
 	{
-		ircd::run::main, [&homeserver, &start, &quit]
+		[&homeserver, &start, &quit](const auto &level)
 		{
 			static ircd::context context;
 
 			// 2 This branch is taken the first time this function is called,
 			// and not taken the second time.
-			if(!context)
+			if(level == ircd::run::level::IDLE && !context)
 			{
 				// 3 Launch the homeserver context (asynchronous).
 				context = { "matrix", homeserver };
@@ -259,6 +242,9 @@ noexcept try
 				return;
 			}
 
+			if(level != ircd::run::level::QUIT)
+				return;
+
 			// 11
 			// Notify the waiting homeserver context to quit; this will
 			// start shutting down the homeserver.
@@ -269,6 +255,23 @@ noexcept try
 			context.join();
 		}
 	};
+
+	// This is the sole io_context for Construct, and the ios.run() below is the
+	// the only place where the program actually blocks.
+	boost::asio::io_context ios;
+
+	// libircd does no signal handling (or at least none that you ever have to
+	// care about); reaction to all signals happens out here instead. Handling
+	// is done properly through the io_context which registers the handler for
+	// the platform and then safely posts the received signal to the io_context
+	// event loop. This means we lose the true instant hardware-interrupt gratitude
+	// of signals but with the benefit of unconditional safety and cross-
+	// platformness with windows etc.
+	const construct::signals signals{ios};
+
+	// Associates libircd with our io_context and posts the initial routines
+	// to that io_context. Execution of IRCd will then occur during ios::run()
+	ircd::init(ios);
 
 	// If the user wants to immediately drop to an interactive command line
 	// without having to send a ctrl-c for it, that is provided here. This does

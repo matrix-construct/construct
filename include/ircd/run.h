@@ -30,40 +30,31 @@ namespace ircd::run
 	// Access to the current runlevel indicator.
 	extern const enum level &level;
 
-	// Another callback list (albeit simply using util::callbacks) which is
-	// called during level::START on the main context after all subsystems have
-	// constructed, and again in level::QUIT before all subsystems have
-	// destructed. The purpose here is to allow extensions to the START and
-	// QUIT runlevels as if another subsystem was being listed in ircd::main().
-	// These callbacks are intended to block the main context from moving to
-	// the next runlevel until each one completes (run::changed doesn't quite
-	// work this way).
-	extern callbacks main;
+	// Access to the desired runlevel. When this differs from the current
+	// level, a command to change the runlevel has been given but not all
+	// tasks have completed at the current runlevel.
+	extern const enum level &chadburn;
 }
 
 /// An instance of this class registers itself to be called back when
-/// the ircd::run::level has changed.
+/// the ircd::run::level has changed. The context for this callback differs
+/// based on the level argument; not all invocations are on an ircd::ctx, etc.
 ///
 /// Note: Its destructor will access a list in libircd; after a callback
 /// for a HALT do not unload libircd.so until destructing this object.
 ///
-/// A static ctx::dock is also available for contexts to wait for a run::level
-/// change notification.
-///
 struct ircd::run::changed
 :instance_list<ircd::run::changed>
-,std::function<void (const enum level &)>
 {
 	using handler = std::function<void (const enum level &)>;
 
-	// Users on an ircd::ctx who wish to use the dock interface to wait for
-	// a run::level change can directly access this static instance.
 	static ctx::dock dock;
+
+	handler function;
 
 	/// The handler function will be called back for any run::level change while
 	/// this instance remains in scope.
-	changed(handler function);
-	~changed() noexcept;
+	changed(handler function) noexcept;
 };
 
 /// The run::level allows all observers to know the coarse state of IRCd and to
@@ -82,6 +73,9 @@ struct ircd::run::changed
 /// * START indicates the daemon is executing its startup procedures. Leaving
 /// the START state occurs internally when there is success or a fatal error.
 ///
+/// * IDLE indicates the library is ready for use. The user can load their
+/// application in this mode before transitioning to RUN.
+///
 /// * RUN is the service mode. Full client and application functionality exists
 /// in this mode. Leaving the RUN mode is done with ircd::quit();
 ///
@@ -94,10 +88,17 @@ struct ircd::run::changed
 enum class ircd::run::level
 :int
 {
+	FAULT    = -1,   ///<           Unrecoverable fault.
 	HALT     = 0,    ///<   x <--   IRCd Powered off.
 	READY    = 1,    ///<   |   |   Ready for user to run ios event loop.
-	START    = 2,    ///<   |   |   Starting up subsystems for service.
-	RUN      = 3,    ///<   O   |   IRCd in service.
-	QUIT     = 4,    ///<   --> ^   Clean shutdown in progress.
-	FAULT    = -1,   ///<           Unrecoverable fault.
+	START    = 2,    ///<   |   |   Starting internal subsystems.
+	IDLE     = 3,    ///<   |   |   Ready for user to load application.
+	RUN      = 4,    ///<   O   |   IRCd in service.
+	QUIT     = 5,    ///<   --> ^   Clean shutdown in progress.
 };
+
+inline
+ircd::run::changed::changed(handler function)
+noexcept
+:function(std::move(function))
+{}

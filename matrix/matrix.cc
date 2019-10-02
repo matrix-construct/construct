@@ -190,7 +190,7 @@ void
 ircd::m::on_load()
 try
 {
-	assert(ircd::run::level == run::level::START);
+	assert(ircd::run::level == run::level::IDLE);
 	//reload_conf();
 	_fetch = std::make_unique<fetch::init>();
 	//_modules = std::make_unique<init::modules>();
