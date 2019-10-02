@@ -569,28 +569,28 @@ catch(const ctx::timeout &e)
 {
 	throw http::error
 	{
-		http::REQUEST_TIMEOUT, "%s", e.what()
+		"%s", http::REQUEST_TIMEOUT, e.what()
 	};
 }
 catch(const mods::unavailable &e)
 {
 	throw http::error
 	{
-		http::SERVICE_UNAVAILABLE, "%s", e.what()
+		"%s", http::SERVICE_UNAVAILABLE, e.what()
 	};
 }
 catch(const std::bad_function_call &e)
 {
 	throw http::error
 	{
-		http::SERVICE_UNAVAILABLE, "%s", e.what()
+		"%s", http::SERVICE_UNAVAILABLE, e.what()
 	};
 }
 catch(const std::out_of_range &e)
 {
 	throw http::error
 	{
-		http::NOT_FOUND, "%s", e.what()
+		"%s", http::NOT_FOUND, e.what()
 	};
 }
 
