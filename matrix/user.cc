@@ -167,41 +167,50 @@ ircd::m::user::gen_access_token(const mutable_buffer &buf)
 ircd::m::event::id::buf
 ircd::m::user::activate()
 {
-	using prototype = event::id::buf (const m::user &);
-
-	static mods::import<prototype> function
+	const m::user::room user_room
 	{
-		"client_account", "activate__user"
+		user_id
 	};
 
-	return function(*this);
+	return send(user_room, m::me(), "ircd.account", "active", json::members
+	{
+		{ "value", true }
+	});
 }
 
 ircd::m::event::id::buf
 ircd::m::user::deactivate()
 {
-	using prototype = event::id::buf (const m::user &);
-
-	static mods::import<prototype> function
+	const m::user::room user_room
 	{
-		"client_account", "deactivate__user"
+		user_id
 	};
 
-	return function(*this);
+	return send(user_room, m::me(), "ircd.account", "active", json::members
+	{
+		{ "value", false }
+	});
 }
 
 bool
 ircd::m::user::is_active()
 const
 {
-	using prototype = bool (const m::user &);
-
-	static mods::import<prototype> function
+	const m::user::room user_room
 	{
-		"client_account", "is_active__user"
+		user_id
 	};
 
-	return function(*this);
+	const m::event::idx &event_idx
+	{
+		user_room.get(std::nothrow, "ircd.account", "active")
+	};
+
+	return m::query(event_idx, "content", []
+	(const json::object &content)
+	{
+		return content.get<bool>("value", false);
+	});
 }
 
 ircd::m::event::id::buf

@@ -64,18 +64,3 @@ post_deactivate
 		post_deactivate.REQUIRES_AUTH
 	}
 };
-
-extern "C" m::event::id::buf
-deactivate__user(const m::user &user,
-                 const json::members &)
-{
-	const m::user::room user_room
-	{
-		user
-	};
-
-	return send(user_room, m::me(), "ircd.account", "active", json::members
-	{
-		{ "value", false }
-	});
-}

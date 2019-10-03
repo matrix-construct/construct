@@ -12,10 +12,6 @@
 
 using namespace ircd;
 
-extern "C" bool is_active__user(const m::user &user);
-extern "C" m::event::id::buf activate__user(const m::user &user);
-extern "C" m::event::id::buf deactivate__user(const m::user &user);
-
 mapi::header
 IRCD_MODULE
 {
@@ -30,40 +26,3 @@ account_resource
 		"(3.4,3.5,3.6) Account management"
 	}
 };
-
-m::event::id::buf
-activate__user(const m::user &user)
-{
-	const m::user::room user_room
-	{
-		user
-	};
-
-	return send(user_room, m::me(), "ircd.account", "active", json::members
-	{
-		{ "value", true }
-	});
-}
-
-bool
-is_active__user(const m::user &user)
-{
-	const m::user::room user_room
-	{
-		user
-	};
-
-	bool ret{false};
-	user_room.get(std::nothrow, "ircd.account", "active", [&ret]
-	(const m::event &event)
-	{
-		const json::object &content
-		{
-			at<"content"_>(event)
-		};
-
-		ret = content.get<bool>("value") == true;
-	});
-
-	return ret;
-}
