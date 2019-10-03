@@ -69,6 +69,9 @@ struct ircd::m::homeserver
 	/// Loaded modules.
 	std::list<ircd::module> modules;
 
+	/// vm
+	std::shared_ptr<vm::init> vm;
+
 	homeserver(const struct opts *const &);
 	~homeserver() noexcept;
 
@@ -79,11 +82,14 @@ struct ircd::m::homeserver
 
 struct ircd::m::homeserver::key
 {
-	/// Current federation secret key instance
-	ed25519::sk secret_key;
+	/// Current secret key path
+	std::string secret_key_path;
 
 	/// Current federation public key instance
 	ed25519::pk public_key;
+
+	/// Current federation secret key instance
+	ed25519::sk secret_key;
 
 	/// Current federation public key base64
 	std::string public_key_b64;

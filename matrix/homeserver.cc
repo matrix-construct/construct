@@ -11,6 +11,10 @@
 namespace ircd::m
 {
 	static void bootstrap(homeserver &);
+	static void signon(homeserver &), signoff(homeserver &);
+
+	extern conf::item<std::string> online_status_msg;
+	extern conf::item<std::string> offline_status_msg;
 }
 
 // Linkage for the container of all active clients for iteration purposes.
@@ -144,6 +148,9 @@ IRCD_MODULE_EXPORT
 ircd::m::homeserver *
 ircd::m::homeserver::init(const struct opts *const opts)
 {
+	assert(opts);
+	rfc3986::valid_host(opts->origin);
+	rfc3986::valid_host(opts->server_name);
 	return new homeserver
 	{
 		opts
@@ -168,10 +175,12 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 {
 	string_view{opts->origin}
 }
-,opts
+,opts{[this, &opts]
 {
-	opts
-}
+	//TODO: xxx
+	primary = primary?: this;
+	return opts;
+}()}
 ,key
 {
 	std::make_unique<struct key>(opts->origin)
@@ -188,21 +197,26 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 {
 	"ircd", opts->origin
 }
+,modules
 {
-	primary = primary?: this;
-
-	modules =
-	{
-		begin(matrix::module_names), end(matrix::module_names)
-	};
-
+	begin(matrix::module_names), end(matrix::module_names)
+}
+,vm
+{
+	std::make_shared<vm::init>()
+}
+{
 	if(primary == this && dbs::events && sequence(*dbs::events) == 0)
 		bootstrap(*this);
+
+	signon(*this);
 }
 
 ircd::m::homeserver::~homeserver()
 noexcept
 {
+	signoff(*this);
+
 	while(!modules.empty())
 		modules.pop_back();
 }
@@ -295,6 +309,25 @@ ircd::m::self::init::federation_ed25519()
 //
 
 ircd::m::homeserver::key::key(const string_view &origin)
+:secret_key_path
+{
+	(("%s.ed25519"_snstringf, rfc3986::DOMAIN_BUFSIZE + 16UL), origin)
+}
+,secret_key
+{
+	secret_key_path, &public_key
+}
+,public_key_b64
+{
+	ircd::string(96, [this](const mutable_buffer &buf)
+	{
+		return b64encode_unpadded(buf, public_key);
+	})
+}
+,public_key_id
+{
+	trunc(public_key_b64, 8)
+}
 {
 /*
 	const json::members verify_keys_
@@ -402,40 +435,35 @@ ircd::m::self::my_host(const string_view &name)
 // signon/signoff greetings
 //
 
-/*
-namespace ircd::m::self
-{
-	void signon(), signoff();
-}
-
-ircd::conf::item<std::string>
-me_online_status_msg
+decltype(ircd::m::online_status_msg)
+ircd::m::online_status_msg
 {
 	{ "name",     "ircd.me.online.status_msg"          },
 	{ "default",  "Wanna chat? IRCd at your service!"  }
 };
 
-ircd::conf::item<std::string>
-me_offline_status_msg
+decltype(ircd::m::offline_status_msg)
+ircd::m::offline_status_msg
 {
 	{ "name",     "ircd.me.offline.status_msg"     },
 	{ "default",  "Catch ya on the flip side..."   }
 };
 
 void
-ircd::m::self::signon()
+ircd::m::signon(homeserver &homeserver)
 {
 	if(!ircd::write_avoid && vm::sequence::retired != 0)
-		presence::set(me, "online", me_online_status_msg);
+		presence::set(homeserver.self, "online", online_status_msg);
 }
 
 void
-ircd::m::self::signoff()
+ircd::m::signoff(homeserver &homeserver)
 {
-	if(!std::uncaught_exceptions() && !ircd::write_avoid)
-		presence::set(me, "offline", me_offline_status_msg);
+	if(!std::uncaught_exceptions() && !ircd::write_avoid && vm::sequence::retired != 0)
+		presence::set(homeserver.self, "offline", offline_status_msg);
 }
 
+/*
 //
 // init
 //
@@ -446,8 +474,6 @@ try
 	// Sanity check that these are valid hostname strings. This was likely
 	// already checked, so these validators will simply throw without very
 	// useful error messages if invalid strings ever make it this far.
-	rfc3986::valid_host(origin);
-	rfc3986::valid_host(servername);
 
 	ircd_user_id = {"ircd", origin};
 	m::me = {ircd_user_id};
@@ -486,59 +512,91 @@ try
 {
 	assert(dbs::events);
 	assert(db::sequence(*dbs::events) == 0);
-	if(homeserver.self.hostname() == "localhost")
+
+	assert(homeserver.self);
+	const m::user::id &my_id
+	{
+		homeserver.self
+	};
+
+	if(my_id.hostname() == "localhost")
 		log::warning
 		{
 			"The server's name is configured to localhost. This is probably not what you want."
 		};
 
-	if(!exists(homeserver.self))
+	m::user me
 	{
-		create(homeserver.self);
-		user(homeserver.self).activate();
+		my_id
+	};
+
+	if(!exists(me))
+	{
+		create(me);
+		me.activate();
 	}
+
+	const m::node my_node
+	{
+		origin(homeserver)
+	};
 
 	const m::room::id::buf node_room_id
 	{
-		node(origin(homeserver)).room_id()
+		my_node.room_id()
 	};
 
-	if(!exists(node_room_id))
-		create(room(node_room_id));
+	const m::room node_room
+	{
+		node_room_id
+	};
 
-	const m::room::id::buf my_room
+	if(!exists(node_room))
+		create(node_room, me);
+
+	const m::room::id::buf my_room_id
 	{
 		"ircd", origin(homeserver)
 	};
 
+	const m::room my_room
+	{
+		my_room_id
+	};
+
 	if(!exists(my_room))
-		create(my_room, homeserver.self, "internal");
+		create(my_room, me, "internal");
 
-	if(!membership(my_room, homeserver.self, "join"))
-		join(room(my_room), user(homeserver.self));
+	if(!membership(my_room, me, "join"))
+		join(my_room, me);
 
-	if(!room(my_room).has("m.room.name", ""))
-		send(my_room, homeserver.self, "m.room.name", "",
+	if(!my_room.has("m.room.name", ""))
+		send(my_room, me, "m.room.name", "",
 		{
 			{ "name", "IRCd's Room" }
 		});
 
-	if(!room(my_room).has("m.room.topic", ""))
-		send(my_room, homeserver.self, "m.room.topic", "",
+	if(!my_room.has("m.room.topic", ""))
+		send(my_room, me, "m.room.topic", "",
 		{
 			{ "topic", "The daemon's den." }
 		});
 
-	const m::room::id::buf tokens_room
+	const m::room::id::buf tokens_room_id
 	{
 		"tokens", origin(homeserver)
 	};
 
-	if(!exists(tokens_room))
-		create(tokens_room, homeserver.self);
+	const m::room tokens_room
+	{
+		tokens_room_id
+	};
 
-	if(!room(tokens_room).has("m.room.name",""))
-		send(tokens_room, homeserver.self, "m.room.name", "",
+	if(!exists(tokens_room))
+		create(tokens_room, me);
+
+	if(!tokens_room.has("m.room.name",""))
+		send(tokens_room, me, "m.room.name", "",
 		{
 			{ "name", "User Tokens" }
 		});
