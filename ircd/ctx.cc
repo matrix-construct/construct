@@ -1246,70 +1246,6 @@ ircd::ctx::context::context()
 }
 
 ircd::ctx::context::context(const string_view &name,
-                            const size_t &stack_sz,
-                            const flags &flags,
-                            function func)
-:c
-{
-	std::make_unique<ctx>(name, stack_sz, flags, ios::get())
-}
-{
-	static ios::descriptor desc[3]
-	{
-		{ "ircd::ctx::spawn post"      },
-		{ "ircd::ctx::spawn defer"     },
-		{ "ircd::ctx::spawn dispatch"  },
-	};
-
-	auto spawn
-	{
-		std::bind(&ctx::spawn, c.get(), std::move(func))
-	};
-
-	// When the user passes the DETACH flag we want to release the unique_ptr
-	// of the ctx if and only if that ctx is committed to freeing itself. Our
-	// commitment ends at the 180 of this function. If no exception was thrown
-	// we expect the context to be committed to entry. If the POST flag is
-	// supplied and it gets lost in the asio queue it will not be entered, and
-	// will not be able to free itself; that will leak.
-	const unwind::nominal release
-	{
-		[this, &flags]
-		{
-			if(flags & context::DETACH)
-				this->detach();
-		}
-	};
-
-	if(flags & POST || !current)
-	{
-		ios::post(desc[0], std::move(spawn));
-		return;
-	}
-
-	continuation
-	{
-		continuation::false_predicate, continuation::noop_interruptor, [&spawn, &flags]
-		(auto &yield)
-		{
-			if(flags & DISPATCH)
-			{
-				ios::dispatch(desc[2], std::move(spawn));
-				return;
-			}
-
-			if(flags & DEFER)
-			{
-				ios::defer(desc[1], std::move(spawn));
-				return;
-			}
-
-			spawn();
-		}
-	};
-}
-
-ircd::ctx::context::context(const string_view &name,
                             const size_t &stack_size,
                             function func,
                             const flags &flags)
@@ -1347,6 +1283,74 @@ ircd::ctx::context::context(function func,
 	"<noname>", DEFAULT_STACK_SIZE, flags, std::move(func)
 }
 {
+}
+
+ircd::ctx::context::context(const string_view &name,
+                            const size_t &stack_sz,
+                            const flags &flags,
+                            function func)
+:c
+{
+	std::make_unique<ctx>
+	(
+		name,
+		stack_sz,
+		!current? flags | POST : flags,
+		ios::get()
+	)
+}
+{
+	static ios::descriptor desc[3]
+	{
+		{ "ircd::ctx::spawn post"      },
+		{ "ircd::ctx::spawn defer"     },
+		{ "ircd::ctx::spawn dispatch"  },
+	};
+
+	auto spawn
+	{
+		std::bind(&ctx::spawn, c.get(), std::move(func))
+	};
+
+	// When the user passes the DETACH flag we want to release the unique_ptr
+	// of the ctx if and only if that ctx is committed to freeing itself. Our
+	// commitment ends at the 180 of this function. If no exception was thrown
+	// we expect the context to be committed to entry. If the POST flag is
+	// supplied and it gets lost in the asio queue it will not be entered, and
+	// will not be able to free itself; that will leak.
+	const unwind::nominal release{[this]
+	{
+		assert(c);
+		if(c->flags & context::DETACH)
+			this->detach();
+	}};
+
+	if(c->flags & POST)
+	{
+		ios::post(desc[0], std::move(spawn));
+		return;
+	}
+
+	continuation
+	{
+		continuation::false_predicate, continuation::noop_interruptor, [&spawn, this]
+		(auto &yield)
+		{
+			if(c->flags & DISPATCH)
+			{
+				ios::dispatch(desc[2], std::move(spawn));
+				return;
+			}
+
+			if(c->flags & DEFER)
+			{
+				ios::defer(desc[1], std::move(spawn));
+				return;
+			}
+
+			spawn();
+		}
+	};
 }
 
 ircd::ctx::context::context(context &&other)
