@@ -394,9 +394,13 @@ bool
 ircd::run::set(const enum level &new_level)
 try
 {
+	// ignore any redundant calls during and after a transition.
 	if(new_level == chadburn)
 		return false;
 
+	// When called during a transition already in progress, the behavior
+	// is to wait for the transition to complete; if the caller is
+	// asynchronous they cannot make this call.
 	if(!ctx::current && level != chadburn)
 		throw panic
 		{
@@ -405,27 +409,24 @@ try
 			reflect(level),
 		};
 
-	// Wait for
+	// Wait for any pending runlevel transition to complete before
+	// continuing with another transition.
 	changed::dock.wait([]
 	{
 		return level == chadburn;
 	});
 
+	// Ignore any redundant calls which made it this far.
+	if(level == new_level)
+		return false;
+
+	// Indicate the new runlevel here; the transition starts here, and ends
+	// when chatburn=level, set unconditionally on unwind.
 	_level = new_level;
 	const unwind chadburn_{[]
 	{
 		_chadburn = level;
 	}};
-
-	changed::dock.notify_all();
-	log::debug
-	{
-		"IRCd level transition from '%s' to '%s' (dock:%zu callbacks:%zu)",
-		reflect(chadburn),
-		reflect(level),
-		changed::dock.size(),
-		changed::list.size(),
-	};
 
 	log::notice
 	{
@@ -433,6 +434,7 @@ try
 	};
 
 	log::flush();
+	changed::dock.notify_all();
 	for(const auto &handler : changed::list) try
 	{
 		handler->function(new_level);
@@ -441,8 +443,10 @@ try
 	{
 		switch(level)
 		{
-			case level::IDLE:  throw;
 			default:           break;
+			case level::IDLE:  throw;
+			case level::QUIT:  continue;
+			case level::HALT:  continue;
 		}
 
 		log::critical
@@ -453,6 +457,18 @@ try
 			e.what()
 		};
 	}
+
+	if(level == level::HALT)
+		return true;
+
+	log::debug
+	{
+		"IRCd level transition from '%s' to '%s' (dock:%zu callbacks:%zu)",
+		reflect(chadburn),
+		reflect(level),
+		changed::dock.size(),
+		changed::list.size(),
+	};
 
 	return true;
 }
