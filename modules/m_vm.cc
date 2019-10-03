@@ -57,7 +57,7 @@ decltype(ircd::m::vm::log_accept_debug)
 ircd::m::vm::log_accept_debug
 {
 	{ "name",     "ircd.m.vm.log.accept.debug" },
-	{ "default",  false                        },
+	{ "default",  true                         },
 };
 
 decltype(ircd::m::vm::log_accept_info)
