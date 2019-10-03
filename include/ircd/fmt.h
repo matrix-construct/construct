@@ -25,9 +25,19 @@ namespace ircd::fmt
 	struct vsnprintf;
 	struct snstringf;
 	struct vsnstringf;
+	struct literal_snstringf;
+	struct literal_snstringf__max;
 	template<size_t MAX> struct bsprintf;
-
 	using arg = std::tuple<const void *, const std::type_index &>;
+
+	literal_snstringf operator ""_snstringf(const char *text, const size_t len);
+	literal_snstringf__max operator,(const literal_snstringf, const ulong max);
+	template<class... args> std::string operator,(const literal_snstringf__max, args&&...);
+}
+
+namespace ircd
+{
+	using fmt::operator ""_snstringf;
 }
 
 /// Typesafe snprintf() from formal grammar and RTTI.
@@ -173,3 +183,48 @@ struct ircd::fmt::bsprintf
 		buf.data(), size_t(static_cast<snprintf &>(*this))
 	}{}
 };
+
+struct ircd::fmt::literal_snstringf
+{
+	string_view format;
+};
+
+struct ircd::fmt::literal_snstringf__max
+{
+	literal_snstringf format;
+	size_t max;
+};
+
+template<class... args>
+inline std::string
+ircd::fmt::operator,(const literal_snstringf__max format,
+                     args&&... a)
+{
+	return fmt::snstringf
+	{
+		format.max, format.format.format, std::forward<args>(a)...
+	};
+}
+
+inline ircd::fmt::literal_snstringf__max
+ircd::fmt::operator,(const literal_snstringf format,
+                     const ulong max)
+{
+	return literal_snstringf__max
+	{
+		format, max
+	};
+}
+
+inline ircd::fmt::literal_snstringf
+ircd::fmt::operator ""_snstringf(const char *const format,
+                                 const size_t len)
+{
+	return literal_snstringf
+	{
+		string_view
+		{
+			format, len
+		}
+	};
+}
