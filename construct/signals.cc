@@ -55,6 +55,7 @@ construct::signals::on_runlevel(const enum ircd::run::level &level)
 	switch(level)
 	{
 		case ircd::run::level::HALT:
+		case ircd::run::level::QUIT:
 			signal_set->cancel();
 			break;
 
@@ -185,6 +186,7 @@ void
 construct::handle_quit()
 try
 {
+	console::terminate();
 	ircd::quit();
 }
 catch(const std::exception &e)

@@ -499,8 +499,12 @@ construct::console::on_runlevel(const enum ircd::run::level &runlevel)
 	switch(runlevel)
 	{
 		case ircd::run::level::QUIT:
+			if(terminate())
+				context.join();
+			break;
+
 		case ircd::run::level::HALT:
-			console::terminate();
+			terminate();
 			break;
 
 		default:
