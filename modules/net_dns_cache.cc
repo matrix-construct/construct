@@ -10,19 +10,32 @@
 
 #include "net_dns.h"
 
-decltype(ircd::net::dns::cache::room_id)
-ircd::net::dns::cache::room_id
+namespace ircd::net::dns::cache
 {
-	"dns", my_host()
+	static bool call_waiter(const string_view &, const string_view &, const json::array &, waiter &);
+	static size_t call_waiters(const string_view &, const string_view &, const json::array &);
+	static void handle(const m::event &, m::vm::eval &);
+
+	static bool put(const string_view &type, const string_view &state_key, const records &rrs);
+	static bool put(const string_view &type, const string_view &state_key, const uint &code, const string_view &msg);
+
+	extern const m::room::id::buf dns_room_id;
+	extern m::hookfn<m::vm::eval &> hook;
+}
+
+decltype(ircd::net::dns::cache::dns_room_id)
+ircd::net::dns::cache::dns_room_id
+{
+	"dns", m::my_host()
 };
 
 decltype(ircd::net::dns::cache::hook)
 ircd::net::dns::cache::hook
 {
-    handle,
+    ircd::net::dns::cache::handle,
     {
-        { "_site",       "vm.effect"          },
-        { "room_id",     string_view{room_id} },
+        { "_site",    "vm.effect"              },
+        { "room_id",  string_view{dns_room_id} },
     }
 };
 
@@ -153,11 +166,11 @@ try
 	content.~object();
 	const m::room room
 	{
-		room_id
+		dns_room_id
 	};
 
 	if(unlikely(!exists(room)))
-		create(room);
+		create(room, m::me(), "internal");
 
 	send(room, m::me(), type, state_key, json::object(out.completed()));
 	return true;
@@ -286,13 +299,13 @@ try
 	content.~object();
 	const m::room room
 	{
-		room_id
+		dns_room_id
 	};
 
 	if(unlikely(!exists(room)))
-		create(room);
+		create(room, m::me(), "internal");
 
-	send(room_id, m::me(), type, state_key, json::object{out.completed()});
+	send(room, m::me(), type, state_key, json::object{out.completed()});
 	return true;
 }
 catch(const http::error &e)
@@ -364,7 +377,7 @@ ircd::net::dns::cache::get(const hostport &hp,
 
 	const m::room::state state
 	{
-		room_id
+		dns_room_id
 	};
 
 	const m::event::idx &event_idx
@@ -426,7 +439,7 @@ ircd::net::dns::cache::for_each(const hostport &hp,
 
 	const m::room::state state
 	{
-		room_id
+		dns_room_id
 	};
 
 	const m::event::idx &event_idx
@@ -472,7 +485,7 @@ ircd::net::dns::cache::for_each(const string_view &type,
 
 	const m::room::state state
 	{
-		room_id
+		dns_room_id
 	};
 
 	return state.for_each(full_type, [&closure]
@@ -690,13 +703,13 @@ try
 {
 	const m::room room
 	{
-		m::create(room_id, m::me(), "internal")
+		m::create(dns_room_id, m::me(), "internal")
 	};
 
 	log::debug
 	{
 		m::log, "Created '%s' for the DNS cache module.",
-		string_view{room.room_id}
+		string_view{dns_room_id}
 	};
 }
 catch(const std::exception &e)
@@ -704,7 +717,7 @@ catch(const std::exception &e)
 	log::critical
 	{
 		m::log, "Creating the '%s' room failed :%s",
-		string_view{room_id},
+		string_view{dns_room_id},
 		e.what()
 	};
 }

@@ -8,8 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/asio.h>
-
 namespace ircd::net::dns::cache
 {
 	struct waiter;
@@ -17,18 +15,9 @@ namespace ircd::net::dns::cache
 	bool operator==(const waiter &, const waiter &);
 	bool operator!=(const waiter &, const waiter &);
 
-	bool call_waiter(const string_view &, const string_view &, const json::array &, waiter &);
-	size_t call_waiters(const string_view &, const string_view &, const json::array &);
-	void handle(const m::event &, m::vm::eval &);
-
-	bool put(const string_view &type, const string_view &state_key, const records &rrs);
-	bool put(const string_view &type, const string_view &state_key, const uint &code, const string_view &msg);
-
 	void fini();
 	void init();
 
-	extern const m::room::id::buf room_id;
-	extern m::hookfn<m::vm::eval &> hook;
 	extern std::list<waiter> waiting;
 	extern ctx::mutex mutex;
 	extern ctx::dock dock;

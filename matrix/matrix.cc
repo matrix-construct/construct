@@ -35,7 +35,7 @@ IRCD_MODULE_EXPORT_DATA
 decltype(ircd::m::matrix::module_names)
 ircd::m::matrix::module_names
 {
-	//"net_dns",
+	"net_dns",
 	"key_query",
 	"key_server",
 	"identity_pubkey",

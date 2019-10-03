@@ -40,10 +40,11 @@ AM_LDFLAGS = \
 moduledir = @moduledir@
 
 stats_la_SOURCES = stats.cc
-net_dns_la_SOURCES = net_dns_cache.cc net_dns.cc
+net_dns_la_SOURCES = net_dns.cc net_dns_cache.cc
 net_dns_la_CPPFLAGS = -include $(top_srcdir)/include/ircd/asio.h
 net_dns_la_CPPFLAGS += $(AM_CPPFLAGS) @BOOST_CPPFLAGS@
 net_dns_la_LDFLAGS = $(AM_LDFLAGS) @BOOST_LDFLAGS@
+net_dns_la_LDFLAGS += -Wl,--no-gnu-unique
 console_la_SOURCES = console.cc
 web_root_la_SOURCES = web_root.cc
 web_hook_la_SOURCES = web_hook.cc
