@@ -102,7 +102,7 @@ ircd::ed25519::sk::sk(pk *const &pk_arg,
 	};
 }
 
-ircd::ed25519::sk::sk(const std::string &filename,
+ircd::ed25519::sk::sk(const string_view &filename,
                       pk *const &pk_arg)
 try
 :key
