@@ -35,6 +35,17 @@ IRCD_MODULE_EXPORT_DATA
 decltype(ircd::m::matrix::module_names)
 ircd::m::matrix::module_names
 {
+	//"net_dns",
+	"key_query",
+	"key_server",
+	"identity_pubkey",
+	"identity_v1",
+	"media_media",
+	"well_known",
+	"web_root",
+	"web_hook",
+	"stats",
+
 	"m_noop",
 	"m_breadcrumb_rooms",
 	"m_command",
@@ -61,13 +72,7 @@ ircd::m::matrix::module_names
 	"m_room_server_acl",
 	"m_room_third_party_invite",
 	"m_user_highlight_auth",
-
-	"net_dns",
-	"key_query",
-	"key_server",
-	"identity_pubkey",
-	"identity_v1",
-	"media_media",
+	"m_vm_fetch",
 
 	"federation_backfill_ids",
 	"federation_backfill",
@@ -145,11 +150,6 @@ ircd::m::matrix::module_names
 	"client_versions",
 	"client_capabilities",
 
-	"well_known",
-	"web_root",
-	"web_hook",
-	"stats",
-	"m_vm_fetch",
 	"m_listen",
 };
 

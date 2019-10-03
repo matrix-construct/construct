@@ -28,7 +28,7 @@ AM_LDFLAGS = \
 	-Wl,--no-undefined-version \
 	-Wl,--allow-shlib-undefined \
 	-Wl,--unresolved-symbols=ignore-in-shared-libs \
-	-Wl,-z,now \
+	-Wl,-z,lazy \
 	-L$(top_srcdir)/ircd \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
