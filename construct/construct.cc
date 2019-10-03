@@ -229,7 +229,7 @@ noexcept try
 
 			// 2 This branch is taken the first time this function is called,
 			// and not taken the second time.
-			if(level == ircd::run::level::IDLE && !context)
+			if(level == ircd::run::level::IDLE && !context && !nomatrix)
 			{
 				// 3 Launch the homeserver context (asynchronous).
 				context = { "matrix", homeserver };
@@ -242,7 +242,7 @@ noexcept try
 				return;
 			}
 
-			if(level != ircd::run::level::QUIT)
+			if(level != ircd::run::level::QUIT || !context)
 				return;
 
 			// 11
