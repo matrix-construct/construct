@@ -633,7 +633,7 @@ try
 		closure(event);
 	}
 }
-catch(const std::exception &e)
+catch(const json::not_found &e)
 {
 	log::derror
 	{
@@ -773,7 +773,7 @@ try
 	json::get<"signatures"_>(event) = {};
 	return event;
 }
-catch(const std::exception &e)
+catch(const json::not_found &e)
 {
 	log::derror
 	{
