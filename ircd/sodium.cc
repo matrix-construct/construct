@@ -156,6 +156,12 @@ ircd::ed25519::sig
 ircd::ed25519::sk::sign(const const_buffer &msg)
 const
 {
+	if(unlikely(!key))
+		throw error
+		{
+			"No ed25519 secret key is loaded."
+		};
+
 	struct sig sig;
 	unsigned long long sig_sz;
 
