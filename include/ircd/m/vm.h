@@ -16,22 +16,26 @@
 namespace ircd::m::vm
 {
 	struct error; // custom exception
+	struct init;
 	struct opts;
 	struct copts;
 	struct eval;
 	enum fault :uint;
 	using fault_t = std::underlying_type<fault>::type;
 
-	string_view reflect(const fault &);
-	http::code http_code(const fault &);
-	string_view loghead(const mutable_buffer &, const eval &);
-	string_view loghead(const eval &);    // single tls buffer
-
 	extern const opts default_opts;
 	extern const copts default_copts;
 	extern log::log log;
 	extern ctx::dock dock;
 	extern bool ready;
+
+	string_view reflect(const fault &);
+	http::code http_code(const fault &);
+	string_view loghead(const mutable_buffer &, const eval &);
+	string_view loghead(const eval &);    // single tls buffer
+
+	fault execute(eval &, const event &);
+	fault inject(eval &, json::iov &, const json::iov &);
 }
 
 namespace ircd::m::vm::sequence
@@ -46,6 +50,11 @@ namespace ircd::m::vm::sequence
 	uint64_t get(id::event::buf &); // [GET]
 	uint64_t max();
 	uint64_t min();
+};
+
+struct ircd::m::vm::init
+{
+	init(), ~init() noexcept;
 };
 
 /// Event Evaluation Device

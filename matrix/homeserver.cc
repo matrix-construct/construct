@@ -140,8 +140,8 @@ ircd::m::origin(const homeserver &homeserver)
 decltype(ircd::m::homeserver::primary)
 ircd::m::homeserver::primary;
 
-ircd::m::homeserver *
 IRCD_MODULE_EXPORT
+ircd::m::homeserver *
 ircd::m::homeserver::init(const struct opts *const opts)
 {
 	return new homeserver

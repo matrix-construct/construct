@@ -150,7 +150,6 @@ ircd::m::matrix::module_names
 	"web_hook",
 	"stats",
 	"m_vm_fetch",
-	"m_vm",
 	"m_listen",
 };
 
