@@ -4201,6 +4201,27 @@ ircd::net::dns::log
 	"net.dns"
 };
 
+decltype(ircd::net::dns::cache::min_ttl)
+ircd::net::dns::cache::min_ttl
+{
+	{ "name",     "ircd.net.dns.cache.min_ttl" },
+	{ "default",  28800L                       },
+};
+
+decltype(ircd::net::dns::cache::error_ttl)
+ircd::net::dns::cache::error_ttl
+{
+	{ "name",     "ircd.net.dns.cache.error_ttl" },
+	{ "default",  1200L                          },
+};
+
+decltype(ircd::net::dns::cache::nxdomain_ttl)
+ircd::net::dns::cache::nxdomain_ttl
+{
+	{ "name",     "ircd.net.dns.cache.nxdomain_ttl" },
+	{ "default",  86400L                            },
+};
+
 /// Linkage for default opts
 decltype(ircd::net::dns::opts_default)
 ircd::net::dns::opts_default;
@@ -4322,28 +4343,16 @@ bool
 ircd::net::dns::expired(const json::object &rr,
                         const time_t &rr_ts)
 {
-	static mods::import<conf::item<seconds>> min_ttl
+	const seconds &min_seconds
 	{
-		"net_dns", "ircd::net::dns::cache::min_ttl"
+		cache::min_ttl
 	};
 
-	static mods::import<conf::item<seconds>> error_ttl
+	const seconds &err_seconds
 	{
-		"net_dns", "ircd::net::dns::cache::error_ttl"
+		cache::error_ttl
 	};
 
-	const conf::item<seconds> &min_ttl_item
-	{
-		static_cast<conf::item<seconds> &>(min_ttl)
-	};
-
-	const conf::item<seconds> &error_ttl_item
-	{
-		static_cast<conf::item<seconds> &>(error_ttl)
-	};
-
-	const seconds &min_seconds(min_ttl_item);
-	const seconds &err_seconds(error_ttl_item);
 	const time_t &min
 	{
 		is_error(rr)?
@@ -4359,7 +4368,11 @@ ircd::net::dns::expired(const json::object &rr,
                         const time_t &rr_ts,
                         const time_t &min_ttl)
 {
-	const auto ttl(get_ttl(rr));
+	const auto &ttl
+	{
+		get_ttl(rr)
+	};
+
 	return rr_ts + std::max(ttl, min_ttl) < ircd::time();
 }
 

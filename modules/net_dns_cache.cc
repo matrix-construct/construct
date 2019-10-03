@@ -10,27 +10,6 @@
 
 #include "net_dns.h"
 
-decltype(ircd::net::dns::cache::error_ttl)
-ircd::net::dns::cache::error_ttl
-{
-	{ "name",     "ircd.net.dns.cache.error_ttl" },
-	{ "default",  1200L                          },
-};
-
-decltype(ircd::net::dns::cache::nxdomain_ttl)
-ircd::net::dns::cache::nxdomain_ttl
-{
-	{ "name",     "ircd.net.dns.cache.nxdomain_ttl" },
-	{ "default",  86400L                            },
-};
-
-decltype(ircd::net::dns::cache::min_ttl)
-ircd::net::dns::cache::min_ttl
-{
-	{ "name",     "ircd.net.dns.cache.min_ttl" },
-	{ "default",  28800L                       },
-};
-
 decltype(ircd::net::dns::cache::room_id)
 ircd::net::dns::cache::room_id
 {
@@ -172,7 +151,15 @@ try
 	rr0.~object();
 	array.~array();
 	content.~object();
-	send(room_id, m::me(), type, state_key, json::object(out.completed()));
+	const m::room room
+	{
+		room_id
+	};
+
+	if(unlikely(!exists(room)))
+		create(room);
+
+	send(room, m::me(), type, state_key, json::object(out.completed()));
 	return true;
 }
 catch(const http::error &e)
@@ -297,6 +284,14 @@ try
 
 	array.~array();
 	content.~object();
+	const m::room room
+	{
+		room_id
+	};
+
+	if(unlikely(!exists(room)))
+		create(room);
+
 	send(room_id, m::me(), type, state_key, json::object{out.completed()});
 	return true;
 }

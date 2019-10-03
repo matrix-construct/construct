@@ -147,6 +147,7 @@ libircd_la_SOURCES += db_port.cc
 libircd_la_SOURCES += db_env.cc
 libircd_la_SOURCES += db.cc
 libircd_la_SOURCES += net.cc
+libircd_la_SOURCES += net_dns_resolver.cc
 libircd_la_SOURCES += server.cc
 libircd_la_SOURCES += client.cc
 libircd_la_SOURCES += resource.cc
@@ -193,6 +194,7 @@ magic.lo:             AM_CPPFLAGS := @MAGIC_CPPFLAGS@ ${AM_CPPFLAGS}
 endif
 mods.lo:              AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 net.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+net_dns_resolver.lo:  AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 openssl.lo:           AM_CPPFLAGS := @SSL_CPPFLAGS@ @CRYPTO_CPPFLAGS@ ${AM_CPPFLAGS}
 parse.lo:             AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 parse.lo:             AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}

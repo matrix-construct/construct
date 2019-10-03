@@ -93,6 +93,10 @@ namespace ircd::net::dns::cache
 {
 	using closure = std::function<bool (const string_view &, const json::object &)>;
 
+	extern conf::item<seconds> min_ttl;
+	extern conf::item<seconds> error_ttl;
+	extern conf::item<seconds> nxdomain_ttl;
+
 	string_view make_type(const mutable_buffer &out, const string_view &);
 	string_view make_type(const mutable_buffer &out, const uint16_t &);
 

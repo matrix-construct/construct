@@ -47,6 +47,7 @@ namespace ircd::net
 #include <ircd/net/socket.h>
 #include <ircd/net/acceptor.h>
 #include <ircd/net/acceptor_udp.h>
+#include <ircd/net/dns_resolver.h>
 
 namespace ircd
 {

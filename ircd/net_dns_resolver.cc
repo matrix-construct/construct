@@ -8,23 +8,8 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include "net_dns.h"
-
 decltype(ircd::net::dns::resolver_instance)
 ircd::net::dns::resolver_instance;
-
-decltype(ircd::net::dns::resolver::servers)
-ircd::net::dns::resolver::servers
-{
-	{
-		{ "name",     "ircd.net.dns.resolver.servers"                    },
-		{ "default",   "4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4 4.2.2.5 4.2.2.6" },
-	}, []
-	{
-		if(bool(ircd::net::dns::resolver_instance))
-			ircd::net::dns::resolver_instance->set_servers();
-	}
-};
 
 decltype(ircd::net::dns::resolver::timeout)
 ircd::net::dns::resolver::timeout
@@ -37,14 +22,14 @@ decltype(ircd::net::dns::resolver::send_rate)
 ircd::net::dns::resolver::send_rate
 {
 	{ "name",     "ircd.net.dns.resolver.send_rate" },
-	{ "default",   60L                              },
+	{ "default",   67L                              },
 };
 
 decltype(ircd::net::dns::resolver::send_burst)
 ircd::net::dns::resolver::send_burst
 {
 	{ "name",     "ircd.net.dns.resolver.send_burst" },
-	{ "default",   8L                                },
+	{ "default",   5L                                },
 };
 
 decltype(ircd::net::dns::resolver::retry_max)
@@ -52,6 +37,19 @@ ircd::net::dns::resolver::retry_max
 {
 	{ "name",     "ircd.net.dns.resolver.retry_max" },
 	{ "default",   4L                               },
+};
+
+decltype(ircd::net::dns::resolver::servers)
+ircd::net::dns::resolver::servers
+{
+	{
+		{ "name",     "ircd.net.dns.resolver.servers"                    },
+		{ "default",  "4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4 4.2.2.5 4.2.2.6"  },
+	}, []
+	{
+		if(bool(ircd::net::dns::resolver_instance))
+			ircd::net::dns::resolver_instance->set_servers();
+	}
 };
 
 //
@@ -62,7 +60,6 @@ void
 ircd::net::dns::resolver_init(answers_callback callback)
 {
 	assert(!ircd::net::dns::resolver_instance);
-
 	ircd::net::dns::resolver_instance = new resolver
 	{
 		std::move(callback)
