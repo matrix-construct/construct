@@ -232,7 +232,7 @@ noexcept try
 			if(level == ircd::run::level::IDLE && !context && !nomatrix)
 			{
 				// 3 Launch the homeserver context (asynchronous).
-				context = { "matrix", homeserver };
+				context = { "matrix", ircd::context::POST, homeserver };
 
 				// 4 Yield until the homeserver function notifies `start`; waiting
 				// here prevents ircd::main() from entering runlevel RUN.
