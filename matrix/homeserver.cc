@@ -246,7 +246,6 @@ noexcept
 // homeserver::key
 //
 
-/*
 namespace ircd::m
 {
 	extern conf::item<std::string> ed25519_key_dir;
@@ -259,20 +258,14 @@ ircd::m::ed25519_key_dir
 	{ "default",  fs::cwd()                    },
 };
 
-void
-IRCD_MODULE_EXPORT
-ircd::m::self::init::federation_ed25519()
+ircd::m::homeserver::key::key(const struct opts &opts)
+:secret_key_path{[&opts]
+() -> std::string
 {
-	if(empty(m::self::origin))
-		throw error
-		{
-			"The m::self::origin must be set to init my ed25519 key."
-		};
-
 	const std::string path_parts[]
 	{
 		std::string{ed25519_key_dir},
-		m::self::origin + ".ed25519",
+		std::string{opts.origin} + ".ed25519"s,
 	};
 
 	const std::string sk_file
@@ -283,53 +276,14 @@ ircd::m::self::init::federation_ed25519()
 		})
 	};
 
-	if(fs::exists(sk_file) || ircd::write_avoid)
-		log::info
-		{
-			m::log, "Using ed25519 secret key @ `%s'", sk_file
-		};
-	else
+	if(!fs::exists(sk_file) && !ircd::write_avoid)
 		log::notice
 		{
 			m::log, "Creating ed25519 secret key @ `%s'", sk_file
 		};
 
-	m::self::secret_key = ed25519::sk
-	{
-		sk_file, &m::self::public_key
-	};
-
-	m::self::public_key_b64 = b64encode_unpadded(m::self::public_key);
-	const fixed_buffer<const_buffer, sha256::digest_size> hash
-	{
-		sha256{m::self::public_key}
-	};
-
-	const auto public_key_hash_b58
-	{
-		b58encode(hash)
-	};
-
-	static const auto trunc_size{8};
-	m::self::public_key_id = fmt::snstringf
-	{
-		32, "ed25519:%s", trunc(public_key_hash_b58, trunc_size)
-	};
-
-	log::info
-	{
-		m::log, "Current key is '%s' and the public key is: %s",
-		m::self::public_key_id,
-		m::self::public_key_b64
-	};
-}
-*/
-
-ircd::m::homeserver::key::key(const struct opts &opts)
-:secret_key_path
-{
-	(("%s.ed25519"_snstringf, rfc3986::DOMAIN_BUFSIZE + 16UL), opts.origin)
-}
+	return sk_file;
+}()}
 ,secret_key
 {
 	secret_key_path, &public_key
@@ -343,7 +297,7 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 }
 ,public_key_id
 {
-	trunc(public_key_b64, 8)
+	"ed25519:"s + std::string{trunc(public_key_b64, 8)}
 }
 ,verify_keys{[this, &opts]
 () -> std::string
@@ -385,7 +339,10 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 	{
 		json::stringify(mutable_buffer(buf[0]), json::members
 		{
-			{ opts.origin, { public_key_id, b64encode_unpadded(buf[1], sig) } }
+			{ opts.origin, json::member
+			{
+				public_key_id, b64encode_unpadded(buf[1], sig)
+			}}
 		})
 	};
 
@@ -398,6 +355,14 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 	return ret;
 }()}
 {
+	log::info
+	{
+		m::log, "Secret key for %s at `%s'. Public key is %s identified as '%s'",
+		opts.origin,
+		secret_key_path,
+		public_key_b64,
+		public_key_id,
+	};
 }
 
 //
