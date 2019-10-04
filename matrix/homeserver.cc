@@ -812,7 +812,7 @@ try
 	};
 
 	if(!exists(my_room))
-		create(my_room, me, "internal");
+		create(my_room, me);
 
 	if(!membership(my_room, me, "join"))
 		join(my_room, me);

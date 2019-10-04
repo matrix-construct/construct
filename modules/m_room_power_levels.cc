@@ -37,6 +37,9 @@ void
 ircd::m::changed_room_power_levels(const m::event &event,
                                    m::vm::eval &)
 {
+	if(myself(json::get<"sender"_>(event)))
+		return;
+
 	log::info
 	{
 		m::log, "%s changed power_levels in %s [%s]",
