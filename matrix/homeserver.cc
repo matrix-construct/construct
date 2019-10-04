@@ -86,6 +86,26 @@ ircd::m::my(const string_view &name)
 }
 
 bool
+ircd::m::myself(const m::user::id &user_id)
+{
+	return !for_each([&user_id]
+	(const auto &homeserver)
+	{
+		return homeserver.self != user_id;
+	});
+}
+
+bool
+ircd::m::my_origin(const string_view &origin)
+{
+	return !for_each([&origin]
+	(const auto &homeserver)
+	{
+		return m::origin(homeserver) != origin;
+	});
+}
+
+bool
 ircd::m::for_each(const std::function<bool (homeserver &)> &closure)
 {
 	for(auto &[name, hs_p] : homeserver::map)

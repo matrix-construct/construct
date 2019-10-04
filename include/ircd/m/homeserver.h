@@ -29,6 +29,9 @@ namespace ircd::m
 
 	bool for_each(const std::function<bool (homeserver &)> &);
 
+	bool my_origin(const string_view &origin);
+	bool myself(const m::user::id &);
+
 	homeserver &my(const string_view &origin);
 	homeserver &my(); // primary
 
