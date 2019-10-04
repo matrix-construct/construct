@@ -228,7 +228,12 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 	if(primary == this && dbs::events && sequence(*dbs::events) == 0)
 		bootstrap(*this);
 
-	m::keys::cache::set(key->verify_keys);
+	if(primary == this && conf)
+		conf->load();
+
+	if(key && !key->verify_keys.empty())
+		m::keys::cache::set(key->verify_keys);
+
 	signon(*this);
 }
 
