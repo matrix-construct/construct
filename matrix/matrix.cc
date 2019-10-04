@@ -36,15 +36,19 @@ decltype(ircd::m::matrix::module_names)
 ircd::m::matrix::module_names
 {
 	"net_dns",
-	"key_query",
-	"key_server",
-	"identity_pubkey",
-	"identity_v1",
+
 	"media_media",
+
 	"well_known",
 	"web_root",
 	"web_hook",
 	"stats",
+
+	"key_query",
+	"key_server",
+
+	"identity_pubkey",
+	"identity_v1",
 
 	"m_noop",
 	"m_breadcrumb_rooms",
@@ -73,6 +77,7 @@ ircd::m::matrix::module_names
 	"m_room_third_party_invite",
 	"m_user_highlight_auth",
 	"m_vm_fetch",
+	"m_listen",
 
 	"federation_backfill_ids",
 	"federation_backfill",
@@ -149,8 +154,6 @@ ircd::m::matrix::module_names
 	"client_thirdparty_protocols",
 	"client_versions",
 	"client_capabilities",
-
-	"m_listen",
 };
 
 /// This is a list of modules that are considered "optional" and any loading

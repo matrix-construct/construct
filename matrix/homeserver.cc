@@ -216,6 +216,7 @@ ircd::m::homeserver::~homeserver()
 noexcept
 {
 	signoff(*this);
+	vm.reset();
 
 	while(!modules.empty())
 		modules.pop_back();
