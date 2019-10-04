@@ -18,9 +18,7 @@ namespace ircd::m::self
 
 	// Similar to my_host(), but the comparison is relaxed to allow port
 	// numbers to be a factor: myself.com:8448 input will match if a homeserver
-	// here has a network_name of myself.com. OTOH, myself.com:1234 (i.e some
-	// non-canonical port) can only match a homeserver here with the explicit
-	// name of myself.com:1234.
+	// here has a network_name of myself.com.
 	bool host(const string_view &);
 
 	// Alias for origin(my()); primary homeserver's network name

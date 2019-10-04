@@ -120,7 +120,6 @@ libircd_matrix_la_SOURCES += sync.cc
 libircd_matrix_la_SOURCES += typing.cc
 libircd_matrix_la_SOURCES += users.cc
 libircd_matrix_la_SOURCES += users_servers.cc
-libircd_matrix_la_SOURCES += conf.cc
 libircd_matrix_la_SOURCES += error.cc
 libircd_matrix_la_SOURCES += filter.cc
 libircd_matrix_la_SOURCES += txn.cc

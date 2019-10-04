@@ -1643,14 +1643,14 @@ console_cmd__conf__list(opt &out, const string_view &line)
 	};
 
 	thread_local char val[4_KiB];
-	for(const auto &item : conf::items)
+	for(const auto &[key, item_p] : conf::items)
 	{
-		if(prefix && !startswith(item.first, prefix))
+		if(prefix && !startswith(key, prefix))
 			continue;
 
 		out
-		<< std::setw(64) << std::left << std::setfill('_') << item.first
-		<< " " << item.second->get(val)
+		<< std::setw(64) << std::left << std::setfill('_') << key
+		<< " " << item_p->get(val)
 		<< std::endl;
 	}
 
@@ -1662,11 +1662,6 @@ console_cmd__conf(opt &out, const string_view &line)
 {
 	return console_cmd__conf__list(out, line);
 }
-
-extern "C" ircd::m::event::id::buf
-set_conf_item(const ircd::m::user::id &,
-	          const ircd::string_view &key,
-	          const ircd::string_view &val);
 
 bool
 console_cmd__conf__set(opt &out, const string_view &line)
@@ -1688,7 +1683,7 @@ console_cmd__conf__set(opt &out, const string_view &line)
 
 	const auto event_id
 	{
-		set_conf_item(m::me(), key, val)
+		m::my().conf->set(key, val)
 	};
 
 	out << event_id << " <- " << key << " = " << val << std::endl;
@@ -1732,14 +1727,8 @@ console_cmd__conf__rehash(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"prefix", "force"
+		"prefix"
 	}};
-
-	using prototype = void (const string_view &, const bool &);
-	static mods::import<prototype> rehash_conf
-	{
-		"conf", "rehash_conf"
-	};
 
 	string_view prefix
 	{
@@ -1749,18 +1738,18 @@ console_cmd__conf__rehash(opt &out, const string_view &line)
 	if(prefix == "*")
 		prefix = string_view{};
 
-	const bool force
+	const auto stored
 	{
-		param["force"] == "force"
+		m::my().conf->store(prefix)
 	};
 
-	rehash_conf(prefix, force);
-
-	out << "Saved runtime conf items"
-	    << (prefix? " with the prefix "_sv : string_view{})
-	    << (prefix? prefix : string_view{})
-	    << " from the current state into !conf:" << my_host()
-	    << std::endl;
+	out
+	<< "Saved runtime conf items"
+	<< (prefix? " with the prefix "_sv : string_view{})
+	<< (prefix? prefix : string_view{})
+	<< " from the current state into "
+	<< m::my().conf->room_id
+	<< std::endl;
 
 	return true;
 }
@@ -1773,47 +1762,66 @@ console_cmd__conf__default(opt &out, const string_view &line)
 		"prefix"
 	}};
 
-	using prototype = void (const string_view &);
-	static mods::import<prototype> default_conf
+	const auto &prefix
 	{
-		"conf", "default_conf"
+		param["prefix"]
 	};
 
-	string_view prefix
+	const auto defaulted
 	{
-		param.at("prefix", "*"_sv)
+		m::my().conf->defaults(prefix)
 	};
 
-	if(prefix == "*")
-		prefix = string_view{};
-
-	default_conf(prefix);
-
-	out << "Set runtime conf items"
-	    << (prefix? " with the prefix "_sv : string_view{})
-	    << (prefix? prefix : string_view{})
-	    << " to their default value."
-	    << std::endl
-	    << "Note: These values must be saved with the rehash command"
-	    << " to survive a restart/reload."
-	    << std::endl;
+	out
+	<< "Set "
+	<< defaulted
+	<< " runtime conf items"
+	<< (prefix? " with the prefix "_sv : string_view{})
+	<< (prefix? prefix : string_view{})
+	<< " to their default value."
+	<< std::endl
+	<< "Note: These values must be saved with the rehash command"
+	<< " to survive a restart/reload."
+	<< std::endl;
 
 	return true;
 }
 
 bool
-console_cmd__conf__reload(opt &out, const string_view &line)
+console_cmd__conf__load(opt &out, const string_view &line)
 {
-	using prototype = void ();
-	static mods::import<prototype> reload_conf
+	const params param{line, " ",
 	{
-		"conf", "reload_conf"
+		"room_id", "prefix"
+	}};
+
+	const auto &room_id
+	{
+		startswith(param["room_id"], '!')?
+			param["room_id"]:
+			m::my().conf->room_id
 	};
 
-	reload_conf();
-	out << "Updated any runtime conf items"
-	    << " from the current state in !conf:" << my_host()
-	    << std::endl;
+	const auto &prefix
+	{
+		startswith(param["room_id"], '!')?
+			param["prefix"]:
+			param["room_id"]
+	};
+
+	// TODO: interface for room_id
+
+	const auto loaded
+	{
+		m::my().conf->load(prefix)
+	};
+
+	out
+	<< "Updated "
+	<< loaded
+	<< " runtime conf items from the current state in "
+	<< room_id
+	<< std::endl;
 
 	return true;
 }
@@ -1821,13 +1829,7 @@ console_cmd__conf__reload(opt &out, const string_view &line)
 bool
 console_cmd__conf__reset(opt &out, const string_view &line)
 {
-	using prototype = void ();
-	static mods::import<prototype> refresh_conf
-	{
-		"conf", "refresh_conf"
-	};
-
-	refresh_conf();
+	ircd::conf::reset();
 	out << "All conf items which execute code upon a change"
 	    << " have done so with the latest runtime value."
 	    << std::endl;
@@ -5881,8 +5883,16 @@ console_cmd__resource(opt &out, const string_view &line)
 }
 
 //
+// me
 //
-//
+
+bool
+console_cmd__me(opt &out, const string_view &line)
+{
+	out << m::me() << std::endl;
+	out << m::public_key_id(m::my()) << std::endl;
+	return true;
+}
 
 //
 // key
@@ -5900,15 +5910,6 @@ console_cmd__key(opt &out, const string_view &line)
 	{
 		param["server_name"]
 	};
-
-	// information on my current key
-	if(!server_name)
-	{
-		out << "origin:                  " << m::my_host() << std::endl;
-		out << "public key ID:           " << m::public_key_id(m::my()) << std::endl;
-		//out << "public key base64:       " << m::self::public_key_b64 << std::endl;
-		return true;
-	}
 
 	// keys cached for server by param.
 	m::keys::cache::for_each(server_name, [&out]

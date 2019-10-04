@@ -177,25 +177,24 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 }
 ,opts{[this, &opts]
 {
-	//TODO: xxx
-	primary = primary?: this;
+	primary = primary?: this; //TODO: xxx
 	return opts;
 }()}
 ,key
 {
-	std::make_unique<struct key>(opts->origin)
+	std::make_unique<struct key>(*opts)
 }
 ,database
 {
-	std::make_shared<dbs::init>(opts->server_name, std::string{})
-}
-,rooms
-{
-	{ "ircd", opts->origin },
+	std::make_shared<dbs::init>(opts->server_name)
 }
 ,self
 {
 	"ircd", opts->origin
+}
+,conf
+{
+	std::make_unique<struct conf>(*opts)
 }
 ,modules
 {
@@ -223,7 +222,7 @@ noexcept
 }
 
 //
-// homeserver::keys
+// homeserver::key
 //
 
 /*
@@ -305,14 +304,10 @@ ircd::m::self::init::federation_ed25519()
 }
 */
 
-//
-// create_my_key
-//
-
-ircd::m::homeserver::key::key(const string_view &origin)
+ircd::m::homeserver::key::key(const struct opts &opts)
 :secret_key_path
 {
-	(("%s.ed25519"_snstringf, rfc3986::DOMAIN_BUFSIZE + 16UL), origin)
+	(("%s.ed25519"_snstringf, rfc3986::DOMAIN_BUFSIZE + 16UL), opts.origin)
 }
 ,secret_key
 {
@@ -374,62 +369,321 @@ ircd::m::homeserver::key::key(const string_view &origin)
 */
 }
 
-///////////////////////////////////////////////////////////////////////////////
 //
-// m/self.h
+// homeserver::conf
 //
 
-ircd::string_view
-ircd::m::self::my_host()
+namespace ircd::m
 {
-	return origin(my());
+	static bool load_conf_item(const event &);
+	static bool load_conf_item(const event::idx &);
+	static size_t load_conf_items(const room &, const string_view &prefix);
+
+	static void handle_conf_room_hook(const event &, vm::eval &);
+	static void handle_item_init(const room &, conf::item<> &);
 }
 
-bool
-ircd::m::self::host(const string_view &other)
+//
+// homeserver::conf::conf
+//
+
+ircd::m::homeserver::conf::conf(const struct opts &opts)
+:room_id
 {
-	const net::hostport other_host{other};
-	for(const auto &[my_network, hs_p] : homeserver::map)
+	"conf", opts.origin
+}
+,room
+{
+	room_id
+}
+,item_init
+{
+	ircd::conf::on_init, [this](ircd::conf::item<> &item)
 	{
-		// port() is 0 when the origin has no port (and implies 8448)
-		const auto port
+		handle_item_init(room, item);
+	}
+}
+,conf_updated
+{
+	handle_conf_room_hook,
+	{
+		{ "_site",    "vm.effect"       },
+		{ "room_id",  room_id           },
+		{ "type",     "ircd.conf.item"  },
+	}
+}
+{
+}
+
+size_t
+ircd::m::homeserver::conf::store(const string_view &prefix,
+                                 const bool &force)
+const
+{
+	size_t ret(0);
+	for(const auto &[key, item] : ircd::conf::items) try
+	{
+		if(prefix && !startswith(key, prefix))
+			continue;
+
+		// Conf items marked with a persist=false property are not written
+		// to the conf room; regardless of force=true
+		if(!item->feature.get("persist", true))
+			continue;
+
+		thread_local char buf[4_KiB];
+		const auto &val
 		{
-			net::port(net::hostport(my_network))
+			item->get(buf)
 		};
 
-		// If my_host has a port number, then the argument must also have the
-		// same port number.
-		if(port && my_network == other)
-			return true;
-		else if(port)
+		bool dup{false}, exists{false};
+		if(!force)
+			get(key, [&exists, &dup, &val](const string_view &val_)
+			{
+				exists = true;
+				dup = val == val_;
+			});
+
+		// No reason to store the same value
+		if(!force && dup)
 			continue;
 
-		/// If my_host has no port number, then the argument can have port
-		/// 8448 or no port number, which will initialize net::hostport.port to
-		/// the "canon_port" of 8448.
-		assert(net::canon_port == 8448);
-		if(net::port(other_host) != net::canon_port)
+		const json::string &default_value
+		{
+			item->feature["default"]
+		};
+
+		// When the !conf room has nothing for a key, and this store request
+		// is asking us to write the default value, that is rejected here.
+		if(!force && !exists && val == default_value)
 			continue;
 
-		/// Both myself and input are using 8448; now the name has to match.
-		if(my_network != host(other_host))
-			continue;
-
-		return true;
+		set(key, val);
+		ret++;
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			"Failed to create conf item '%s' :%s",
+			key,
+			e.what()
+		};
 	}
 
-	return false;
+	return ret;
+}
+
+size_t
+ircd::m::homeserver::conf::load(const string_view &prefix)
+const
+{
+	return load_conf_items(room, prefix);
+}
+
+size_t
+ircd::m::homeserver::conf::defaults(const string_view &prefix)
+const
+{
+	size_t ret(0);
+	for(const auto &[key, item] : ircd::conf::items)
+	{
+		if(prefix && !startswith(key, prefix))
+			continue;
+
+		assert(item);
+		const json::string &default_value
+		{
+			item->feature["default"]
+		};
+
+		ret += ircd::conf::set(key, default_value);
+	}
+
+	return ret;
+}
+
+ircd::m::event::id::buf
+ircd::m::homeserver::conf::set(const string_view &key,
+                               const string_view &val)
+const
+{
+	// Branch for conf items that do not persist. We don't send a message to
+	// the conf room to update them; the value is put directly into the item.
+	if(ircd::conf::exists(key) && !ircd::conf::persists(key))
+	{
+		ircd::conf::set(key, val);
+		return {};
+	}
+
+	const m::user::id::buf sender
+	{
+		"ircd", room_id.hostname()
+	};
+
+	return send(room, sender, "ircd.conf.item", key, json::members
+	{
+		{ "value", val }
+	});
 }
 
 bool
-ircd::m::self::my_host(const string_view &name)
+ircd::m::homeserver::conf::get(const string_view &key,
+                               const std::function<void (const string_view &)> &closure)
+const
 {
-	const auto it
+	const auto &event_idx
 	{
-		homeserver::map.find(name)
+		room.get("ircd.conf.item", key)
 	};
 
-	return it != end(homeserver::map);
+	return m::get(std::nothrow, event_idx, "content", [&closure]
+	(const json::object &content)
+	{
+		const json::string &value
+		{
+			content["value"]
+		};
+
+		closure(value);
+	});
+}
+
+void
+ircd::m::handle_item_init(const room &room,
+                          conf::item<> &item)
+{
+	const auto event_idx
+	{
+		room.get(std::nothrow, "ircd.conf.item", item.name)
+	};
+
+	if(!event_idx)
+		return;
+
+	load_conf_item(event_idx);
+}
+
+void
+ircd::m::handle_conf_room_hook(const event &event,
+                               vm::eval &eval)
+{
+	if(!homeserver::primary)
+		return;
+
+	assert(homeserver::primary->conf);
+	const m::room::id &primary_room
+	{
+		homeserver::primary->conf->room_id
+	};
+
+	// Only the primary homeserver controls the global conf items.
+	if(json::get<"room_id"_>(event) != primary_room)
+		return;
+
+	load_conf_item(event);
+}
+
+size_t
+ircd::m::load_conf_items(const m::room &room,
+                         const string_view &prefix)
+{
+	const m::room::state state
+	{
+		room
+	};
+
+	state.for_each("ircd.conf.item", [&prefix]
+	(const auto &, const auto &state_key, const auto &event_idx)
+	{
+		static const m::event::fetch::opts fopts
+		{
+			m::event::keys::include { "content", "state_key" }
+		};
+
+		if(prefix && !startswith(state_key, prefix))
+			return true;
+
+		m::prefetch(event_idx, fopts);
+		return true;
+	});
+
+	size_t ret(0);
+	state.for_each("ircd.conf.item", [&ret, &prefix]
+	(const auto &, const auto &state_key, const auto &event_idx)
+	{
+		if(prefix && !startswith(state_key, prefix))
+			return true;
+
+		if(!conf::exists(state_key))
+			return true;
+
+		ret += load_conf_item(event_idx);
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::load_conf_item(const m::event::idx &event_idx)
+{
+	static const m::event::fetch::opts fopts
+	{
+		m::event::keys::include { "content", "state_key" }
+	};
+
+	const m::event::fetch event
+	{
+		event_idx, std::nothrow, fopts
+	};
+
+	return event.valid && load_conf_item(event);
+}
+
+bool
+ircd::m::load_conf_item(const m::event &event)
+try
+{
+	const auto &key
+	{
+		at<"state_key"_>(event)
+	};
+
+	const auto &content
+	{
+		at<"content"_>(event)
+	};
+
+	const json::string &value
+	{
+		content.get("value")
+	};
+
+	// Conf items marked with a persist=false property are not read from
+	// the conf room into the item, even if the value exists in the room.
+	if(conf::exists(key) && !conf::persists(key))
+		return false;
+
+	log::debug
+	{
+		"Updating conf [%s] => [%s]", key, value
+	};
+
+	ircd::conf::set(key, value);
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Failed to set conf item '%s' :%s",
+		json::get<"state_key"_>(event),
+		e.what()
+	};
+
+	return false;
 }
 
 //
@@ -464,48 +718,9 @@ ircd::m::signoff(homeserver &homeserver)
 		presence::set(homeserver.self, "offline", offline_status_msg);
 }
 
-/*
 //
-// init
+// bootstrap
 //
-
-ircd::m::self::init::init()
-try
-{
-	// Sanity check that these are valid hostname strings. This was likely
-	// already checked, so these validators will simply throw without very
-	// useful error messages if invalid strings ever make it this far.
-
-	ircd_user_id = {"ircd", origin};
-	m::me = {ircd_user_id};
-
-	ircd_room_id = {"ircd", origin};
-	m::my_room = {ircd_room_id};
-
-	if(origin == "localhost")
-		log::warning
-		{
-			"The origin is configured or has defaulted to 'localhost'"
-		};
-}
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		m::log, "Failed to init self origin[%s] servername[%s]",
-		origin,
-		servername,
-	};
-
-	throw;
-}
-
-static const auto self_init{[]
-{
-	ircd::m::self::init();
-	return true;
-}()};
-*/
 
 void
 ircd::m::bootstrap(homeserver &homeserver)
@@ -583,6 +798,25 @@ try
 			{ "topic", "The daemon's den." }
 		});
 
+	const m::room::id::buf conf_room_id
+	{
+		"conf", origin(homeserver)
+	};
+
+	const m::room conf_room
+	{
+		conf_room_id
+	};
+
+	if(!exists(conf_room))
+		create(conf_room, me);
+
+	if(!conf_room.has("m.room.name",""))
+		send(conf_room, me, "m.room.name", "",
+		{
+			{ "name", "Server Configuration" }
+		});
+
 	const m::room::id::buf tokens_room_id
 	{
 		"tokens", origin(homeserver)
@@ -615,4 +849,82 @@ catch(const std::exception &e)
 		server_name(homeserver),
 		e.what()
 	};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// m/self.h
+//
+//
+// !!! DEPRECATED !!!
+//
+// These items are being replaced, but their widespread use throughout the
+// codebase is keeping them here for now.
+//
+
+namespace ircd::m::self
+{
+	static bool match(const net::hostport &a, const net::hostport &b) noexcept;
+}
+
+/// Get network name (origin) of the primary homeserver. Use of this function
+/// is discouraged, though it's not marked as deprecated to reduce warnings
+/// for now until an actual effort is made to eliminate all callsites. Instead
+/// of using this function, try to obtain a more specific homeserver instance
+/// being hosted from this server based on the context of the callsite.
+ircd::string_view
+ircd::m::self::my_host()
+{
+	return origin(my());
+}
+
+bool
+ircd::m::self::my_host(const string_view &name)
+{
+	const auto it
+	{
+		homeserver::map.find(name)
+	};
+
+	return it != end(homeserver::map);
+}
+
+/// Determine if argument string is one of my homeserver's network names. This
+/// is not a simple string comparison; strings postfixed with port :8448 are
+/// compared equal to strings without a port.
+bool
+ircd::m::self::host(const string_view &other)
+{
+	assert(net::canon_port == 8448);
+	const net::hostport other_host{other};
+	for(const auto &[my_network, hs_p] : homeserver::map)
+		if(match(my_network, other))
+			return true;
+
+	return false;
+}
+
+bool
+ircd::m::self::match(const net::hostport &a,
+                     const net::hostport &b)
+noexcept
+{
+	// port() is 0 when the origin has no port (and implies 8448)
+	const auto my_port
+	{
+		port(a)?: 8448
+	};
+
+	// If my_host has a non-canonical port number, then the argument must
+	// also have the same port number, or there is no possible match.
+	if(my_port != net::canon_port)
+		return my_port == port(b) && host(a) == host(b);
+
+	// Since my host is on the canonical port, if other host has some
+	// different port number, there is no possible match.
+	if(port(b) != net::canon_port)
+		return false;
+
+	// Both myself and input are using 8448; now the name has to match.
+	return host(a) == host(b);
 }

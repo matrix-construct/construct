@@ -43,6 +43,7 @@ struct ircd::m::homeserver
 	struct key;
 	struct cert;
 	struct opts;
+	struct conf;
 
 	/// Internal state; use m::my().
 	static homeserver *primary;
@@ -59,6 +60,9 @@ struct ircd::m::homeserver
 	/// An inscription of @ircd:network.name to root various references to
 	/// a user representing the server.
 	m::user::id::buf self;
+
+	/// Configuration
+	std::unique_ptr<struct conf> conf;
 
 	/// Loaded modules.
 	std::list<ircd::module> modules;
@@ -91,15 +95,33 @@ struct ircd::m::homeserver::key
 	/// Current ed25519:ident string
 	std::string public_key_id;
 
-	key(const string_view &origin);
+	key(const struct opts &);
 	key() = default;
 };
 
-struct ircd::m::homeserver::cert
+struct ircd::m::homeserver::conf
 {
-	std::string tls_private_key_path;
-	std::string tls_public_key_path;
-	std::string tls_cert_path;
+	/// !conf:origin
+	m::room::id::buf room_id;
+
+	/// Convenience
+	m::room room;
+
+	/// Register the conf item init callback //TODO: XXX
+	decltype(ircd::conf::on_init)::callback item_init;
+
+	/// Register the !conf room item message hook.
+	hookfn<vm::eval &> conf_updated;
+
+	// Interface
+	bool get(const string_view &key, const std::function<void (const string_view &)> &) const;
+	event::id::buf set(const string_view &key, const string_view &val) const;
+
+	size_t defaults(const string_view &prefix = {}) const;
+	size_t load(const string_view &prefix = {}) const;
+	size_t store(const string_view &prefix = {}, const bool &force = false) const;
+
+	conf(const struct opts &);
 };
 
 struct ircd::m::homeserver::opts
