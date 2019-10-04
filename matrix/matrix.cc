@@ -226,7 +226,6 @@ ircd::m::on_unload()
 noexcept try
 {
 	//mods::imports.erase("m_listen"s);
-
 	if(m::sync::pool.size())
 		m::sync::pool.join();
 

@@ -235,11 +235,17 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 		m::keys::cache::set(key->verify_keys);
 
 	signon(*this);
+
+	if(primary == this)
+		m::init::backfill::init();
 }
 
 ircd::m::homeserver::~homeserver()
 noexcept
 {
+	if(primary == this)
+		m::init::backfill::fini();
+
 	signoff(*this);
 	vm.reset();
 

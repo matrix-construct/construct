@@ -51,6 +51,7 @@ namespace ircd
 #include "error.h"
 #include "id.h"
 #include "self.h"
+#include "init.h"
 #include "event/event.h"
 #include "get.h"
 #include "query.h"

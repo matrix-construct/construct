@@ -8,27 +8,17 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::m::init
+namespace ircd::m::init::backfill
 {
-	struct backfill;
-}
+	bool handle_event(const room::id &, const event::id &, const string_view &hint, const bool &ask_one);
+	void handle_missing(const room::id &);
+	void handle_room(const room::id &);
+	void worker();
 
-/// This should be a namespace but we're stuck in struct m::init for now, so
-/// this code should be portable for a future when m::init is unstructured.
-struct ircd::m::init::backfill
-{
-	static bool handle_event(const room::id &, const event::id &, const string_view &hint, const bool &ask_one);
-	static void handle_missing(const room::id &);
-	static void handle_room(const room::id &);
-	static void worker();
-	static void fini();
-	static void init();
-
-	static run::changed worker_terminator;
-	static std::unique_ptr<context> worker_context;
-	static conf::item<bool> enable;
-	static conf::item<size_t> pool_size;
-	static log::log log;
+	extern std::unique_ptr<context> worker_context;
+	extern conf::item<bool> enable;
+	extern conf::item<size_t> pool_size;
+	extern log::log log;
 };
 
 decltype(ircd::m::init::backfill::log)
@@ -53,14 +43,6 @@ ircd::m::init::backfill::pool_size
 
 decltype(ircd::m::init::backfill::worker_context)
 ircd::m::init::backfill::worker_context;
-
-decltype(ircd::m::init::backfill::worker_terminator)
-ircd::m::init::backfill::worker_terminator{[]
-(const auto &level)
-{
-	if(level == run::level::QUIT && worker_context)
-		worker_context->terminate();
-}};
 
 void
 ircd::m::init::backfill::init()
@@ -99,6 +81,7 @@ ircd::m::init::backfill::init()
 
 void
 ircd::m::init::backfill::fini()
+noexcept
 {
 	if(!worker_context)
 		return;
@@ -115,16 +98,10 @@ void
 ircd::m::init::backfill::worker()
 try
 {
-	// The common case is that we're in runlevel START when this context is
-	// entered; we don't want to start this operation until we're in RUN.
 	run::changed::dock.wait([]
 	{
-		return run::level != run::level::START;
+		return run::level == run::level::RUN;
 	});
-
-	// If some other level is observed here we shouldn't run this operation.
-	if(run::level != run::level::RUN)
-		return;
 
 	// Prepare to iterate all of the rooms this server is aware of which
 	// contain at least one member from another server in any state, and

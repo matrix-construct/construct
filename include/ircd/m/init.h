@@ -14,8 +14,13 @@
 namespace ircd::m::init
 {
 	struct modules;
-	struct backfill;
 	struct bootstrap;
+}
+
+/// Internal use only; do not call
+namespace ircd::m::init::backfill
+{
+	void init(), fini() noexcept;
 }
 
 /// Internal use only; do not call
