@@ -204,8 +204,9 @@ ircd::m::authenticate_user(const resource::method &method,
 			"Credentials for this method are required but missing."
 		};
 
+	m::user::id::buf ret;
 	if(!request.access_token)
-		return {};
+		return ret;
 
 	static const m::event::fetch::opts fopts
 	{
@@ -222,21 +223,21 @@ ircd::m::authenticate_user(const resource::method &method,
 		tokens_room, &fopts
 	};
 
-	tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&request]
+	tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&ret]
 	(const m::event &event)
 	{
 		// The user sent this access token to the tokens room
-		request.user_id = at<"sender"_>(event);
+		ret = at<"sender"_>(event);
 	});
 
-	if(!request.user_id && requires_auth)
+	if(requires_auth && !ret)
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_UNKNOWN_TOKEN",
 			"Credentials for this method are required but invalid."
 		};
 
-	return request.user_id;
+	return ret;
 }
 
 ircd::string_view
