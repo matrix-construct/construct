@@ -2097,9 +2097,10 @@ console_cmd__mod__reload(opt &out, const string_view &line)
 	{
 		const auto &name{*it};
 		if(mods::imports.erase(std::string{name}))
+		{
 			out << name << " unloaded." << std::endl;
-		else
-			out << name << " is not loaded." << std::endl;
+			break;
+		}
 	}
 
 	for(auto it(names.rbegin()); it != names.rend(); ++it)

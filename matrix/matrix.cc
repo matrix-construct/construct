@@ -35,8 +35,6 @@ IRCD_MODULE_EXPORT_DATA
 decltype(ircd::m::matrix::module_names)
 ircd::m::matrix::module_names
 {
-	"net_dns",
-
 	"media_media",
 
 	"well_known",
@@ -171,9 +169,6 @@ ircd::m::matrix::module_names_optional
 
 /// --- tmp ---
 
-extern "C" void
-reload_conf();
-
 namespace ircd::m::init
 {
 	struct modules;
@@ -181,7 +176,6 @@ namespace ircd::m::init
 
 namespace ircd::m
 {
-	std::unique_ptr<dbs::init> _dbs;
 	std::unique_ptr<fetch::init> _fetch;
 	//std::unique_ptr<init::modules> _modules;
 }
@@ -193,10 +187,7 @@ ircd::m::on_load()
 try
 {
 	assert(ircd::run::level == run::level::IDLE);
-	//reload_conf();
 	_fetch = std::make_unique<fetch::init>();
-	//_modules = std::make_unique<init::modules>();
-	//self::signon();
 }
 catch(const m::error &e)
 {
@@ -225,13 +216,12 @@ void
 ircd::m::on_unload()
 noexcept try
 {
-	//mods::imports.erase("m_listen"s);
 	if(m::sync::pool.size())
 		m::sync::pool.join();
 
-	//self::signoff();
 	_fetch.reset(nullptr);
-	//_modules.reset(nullptr);
+
+	mods::imports.erase("net_dns"s);
 
 	//TODO: remove this for non-interfering shutdown
 	//server::interrupt_all();

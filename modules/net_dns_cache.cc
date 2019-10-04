@@ -676,20 +676,20 @@ ircd::net::dns::cache::waiter::waiter(const hostport &hp,
 // cache room creation
 //
 
-namespace ircd::net::dns {
-namespace [[gnu::visibility("hidden")]] cache
+namespace ircd::net::dns::cache
 {
 	static void create_room();
+
 	extern m::hookfn<m::vm::eval &> create_room_hook;
-}}
+}
 
 decltype(ircd::net::dns::cache::create_room_hook)
 ircd::net::dns::cache::create_room_hook
 {
 	{
-		{ "_site",       "vm.effect"      },
-		{ "room_id",     "!ircd"          },
-		{ "type",        "m.room.create"  },
+		{ "_site",    "vm.effect"      },
+		{ "room_id",  "!ircd"          },
+		{ "type",     "m.room.create"  },
 	},
 	[](const m::event &, m::vm::eval &)
 	{

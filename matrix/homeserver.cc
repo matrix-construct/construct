@@ -225,16 +225,19 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 	std::make_shared<vm::init>()
 }
 {
-	if(primary == this && dbs::events && sequence(*dbs::events) == 0)
-		bootstrap(*this);
-
 	if(primary == this && conf)
 		conf->load();
+
+	if(primary == this && dbs::events && sequence(*dbs::events) == 0)
+		bootstrap(*this);
 
 	if(key && !key->verify_keys.empty())
 		m::keys::cache::set(key->verify_keys);
 
 	signon(*this);
+
+	if(primary == this)
+		mods::imports.emplace("net_dns"s, "net_dns"s);
 
 	if(primary == this)
 		m::init::backfill::init();
