@@ -40,7 +40,6 @@ ircd::m::create_alias_room_hookfn
 		{ "room_id",     "!ircd"          },
 		{ "type",        "m.room.create"  },
 	},
-
 	[](const m::event &event, m::vm::eval &)
 	{
 		auto &my
@@ -48,9 +47,9 @@ ircd::m::create_alias_room_hookfn
 			m::my(at<"origin"_>(event))
 		};
 
-		const auto &alias_room_id
+		const m::room::id::buf alias_room_id
 		{
-			*my.rooms.emplace("alias", origin(my)).first
+			"alias", origin(my)
 		};
 
 		create(alias_room_id, my.self);

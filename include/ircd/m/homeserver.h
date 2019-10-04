@@ -56,12 +56,6 @@ struct ircd::m::homeserver
 	/// Database
 	std::shared_ptr<dbs::init> database;
 
-	/// List of special room specific to this homeserver. This includes the
-	/// fundamental !ircd room, !conf room, etc. This list generally doesn't
-	/// change after construction, but it's mutable to allow modules to add
-	/// new rooms to the list.
-	std::set<m::room::id::buf> rooms;
-
 	/// An inscription of @ircd:network.name to root various references to
 	/// a user representing the server.
 	m::user::id::buf self;

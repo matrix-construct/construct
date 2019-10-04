@@ -34,9 +34,9 @@ ircd::m::rooms::summary::create_public_room
 			m::my(at<"origin"_>(event))
 		};
 
-		const auto &public_room_id
+		const m::room::id::buf public_room_id
 		{
-			*my.rooms.emplace("public", origin(my)).first
+			"public", origin(my)
 		};
 
 		m::create(public_room_id, me());
