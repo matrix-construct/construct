@@ -95,6 +95,9 @@ struct ircd::m::homeserver::key
 	/// Current ed25519:ident string
 	std::string public_key_id;
 
+	/// Current verify_keys (json::object) (m::keys)
+	std::string verify_keys;
+
 	key(const struct opts &);
 	key() = default;
 };

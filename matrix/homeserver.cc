@@ -208,6 +208,7 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 	if(primary == this && dbs::events && sequence(*dbs::events) == 0)
 		bootstrap(*this);
 
+	m::keys::cache::set(key->verify_keys);
 	signon(*this);
 }
 
@@ -324,49 +325,59 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 {
 	trunc(public_key_b64, 8)
 }
+,verify_keys{[this, &opts]
+() -> std::string
 {
-/*
-	const json::members verify_keys_
-	{{
-		string_view{m::self::public_key_id},
-		{
-			{ "key", m::self::public_key_b64 }
-		}
-	}};
-
-	m::keys my_key;
-	json::get<"server_name"_>(my_key) = my_host();
-	json::get<"old_verify_keys"_>(my_key) = "{}";
-
-	//TODO: conf
-	json::get<"valid_until_ts"_>(my_key) =
-		ircd::time<milliseconds>() + milliseconds(1000UL * 60 * 60 * 24 * 180).count();
-
-	const json::strung verify_keys{verify_keys_}; // must be on stack until my_keys serialized.
-	json::get<"verify_keys"_>(my_key) = verify_keys;
-
-	const json::strung presig
+	const json::strung verify_keys
 	{
-		my_key
+		json::members
+		{
+			{ public_key_id, json::member
+			{
+				"key", public_key_b64
+			}}
+		}
+	};
+
+	const time_t ts
+	{
+		//TODO: XXX
+		ircd::time<milliseconds>() + (1000 * 60 * 60 * 24 * 7)
+	};
+
+	m::keys key;
+	json::get<"server_name"_>(key) = opts.origin;
+	json::get<"old_verify_keys"_>(key) = "{}";
+	json::get<"verify_keys"_>(key) = verify_keys;
+	json::get<"valid_until_ts"_>(key) = ts;
+	json::strung ret
+	{
+		key
 	};
 
 	const ed25519::sig sig
 	{
-		m::self::secret_key.sign(const_buffer{presig})
+		secret_key.sign(const_buffer(ret))
 	};
 
-	char signature[256];
-	const json::strung signatures{json::members
+	char buf[2][512];
+	const json::object sigs
 	{
-		{ my_host(),
+		json::stringify(mutable_buffer(buf[0]), json::members
 		{
-			{ string_view{m::self::public_key_id}, b64encode_unpadded(signature, sig) }
-		}}
-	}};
+			{ opts.origin, { public_key_id, b64encode_unpadded(buf[1], sig) } }
+		})
+	};
 
-	json::get<"signatures"_>(my_key) = signatures;
-	keys::cache::set(json::strung{my_key});
-*/
+	json::get<"signatures"_>(key) = sigs;
+	ret = json::strung
+	{
+		key
+	};
+
+	return ret;
+}()}
+{
 }
 
 //
