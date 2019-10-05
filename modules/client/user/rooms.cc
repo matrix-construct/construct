@@ -12,39 +12,39 @@
 
 using namespace ircd;
 
-static resource::response
+static m::resource::response
 put__tags(client &client,
-          const resource::request &request,
+          const m::resource::request &request,
           const m::user &user,
           const m::room &room_id);
 
-static resource::response
+static m::resource::response
 get__tags(client &client,
-          const resource::request &request,
+          const m::resource::request &request,
           const m::user &user,
           const m::room &room);
 
-static resource::response
+static m::resource::response
 delete__tags(client &client,
-             const resource::request &request,
+             const m::resource::request &request,
              const m::user &user,
              const m::room &room);
 
-static resource::response
+static m::resource::response
 put__account_data(client &client,
-                  const resource::request &request,
+                  const m::resource::request &request,
                   const m::user &user,
                   const m::room &room_id);
 
-static resource::response
+static m::resource::response
 get__account_data(client &client,
-                  const resource::request &request,
+                  const m::resource::request &request,
                   const m::user &user,
                   const m::room &room);
 
-resource::response
+m::resource::response
 put__rooms(client &client,
-           const resource::request &request,
+           const m::resource::request &request,
            const m::user::id &user_id)
 {
 	if(request.parv.size() < 3)
@@ -81,9 +81,9 @@ put__rooms(client &client,
 	};
 }
 
-resource::response
+m::resource::response
 get__rooms(client &client,
-           const resource::request &request,
+           const m::resource::request &request,
            const m::user::id &user_id)
 {
 	if(request.parv.size() < 3)
@@ -120,9 +120,9 @@ get__rooms(client &client,
 	};
 }
 
-resource::response
+m::resource::response
 delete__rooms(client &client,
-              const resource::request &request,
+              const m::resource::request &request,
               const m::user::id &user_id)
 {
 	if(request.parv.size() < 3)
@@ -156,9 +156,9 @@ delete__rooms(client &client,
 	};
 }
 
-resource::response
+m::resource::response
 put__tags(client &client,
-          const resource::request &request,
+          const m::resource::request &request,
           const m::user &user,
           const m::room &room)
 {
@@ -186,15 +186,15 @@ put__tags(client &client,
 
 	room_tags.set(tag, value);
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::response
+m::resource::response
 get__tags(client &client,
-          const resource::request &request,
+          const m::resource::request &request,
           const m::user &user,
           const m::room &room)
 {
@@ -203,7 +203,7 @@ get__tags(client &client,
 		user, room
 	};
 
-	resource::response::chunked response
+	m::resource::response::chunked response
 	{
 		client, http::OK
 	};
@@ -233,9 +233,9 @@ get__tags(client &client,
 	return std::move(response);
 }
 
-resource::response
+m::resource::response
 delete__tags(client &client,
-             const resource::request &request,
+             const m::resource::request &request,
              const m::user &user,
              const m::room &room)
 {
@@ -262,15 +262,15 @@ delete__tags(client &client,
 		room_tags.del(tag)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, deleted? http::OK : http::NOT_FOUND
 	};
 }
 
-resource::response
+m::resource::response
 put__account_data(client &client,
-                  const resource::request &request,
+                  const m::resource::request &request,
                   const m::user &user,
                   const m::room &room)
 {
@@ -296,15 +296,15 @@ put__account_data(client &client,
 		m::user::room_account_data{user, room}.set(type, value)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::response
+m::resource::response
 get__account_data(client &client,
-                  const resource::request &request,
+                  const m::resource::request &request,
                   const m::user &user,
                   const m::room &room)
 {
@@ -324,7 +324,7 @@ get__account_data(client &client,
 	m::user::room_account_data{user, room}.get(type, [&client]
 	(const string_view &type, const json::object &value)
 	{
-		resource::response
+		m::resource::response
 		{
 			client, value
 		};

@@ -12,9 +12,9 @@
 
 using namespace ircd;
 
-resource::response
+m::resource::response
 put__account_data(client &client,
-                  const resource::request &request,
+                  const m::resource::request &request,
                   const m::user &user)
 {
 	if(request.parv.size() < 3)
@@ -39,15 +39,15 @@ put__account_data(client &client,
 		m::user::account_data{user}.set(type, value)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::OK
 	};
 }
 
-resource::response
+m::resource::response
 get__account_data(client &client,
-                  const resource::request &request,
+                  const m::resource::request &request,
                   const m::user &user)
 {
 	if(request.parv.size() < 3)

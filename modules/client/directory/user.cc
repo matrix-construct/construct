@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Client 8.1 :User Directory"
 };
 
-resource
+m::resource
 search_resource
 {
 	"/_matrix/client/r0/user_directory/search",
@@ -25,9 +25,9 @@ search_resource
 	}
 };
 
-resource::response
+m::resource::response
 post__search(client &client,
-             const resource::request &request)
+             const m::resource::request &request)
 {
 	const json::string &search_term
 	{
@@ -115,7 +115,7 @@ post__search(client &client,
 	};
 
 	top.~object();
-	return resource::response
+	return m::resource::response
 	{
 		client, json::object
 		{
@@ -124,7 +124,7 @@ post__search(client &client,
 	};
 }
 
-resource::method
+m::resource::method
 search_post
 {
 	search_resource, "POST", post__search,

@@ -16,7 +16,7 @@ IRCD_MODULE
 	"Client 11.3 :Voice over IP"
 };
 
-resource
+m::resource
 turnserver_resource
 {
 	"/_matrix/client/r0/voip/turnServer",
@@ -26,11 +26,11 @@ turnserver_resource
 	}
 };
 
-static resource::response
+static m::resource::response
 get__turnserver(client &client,
-                const resource::request &request);
+                const m::resource::request &request);
 
-resource::method
+m::resource::method
 turnserver_get
 {
 	turnserver_resource, "GET", get__turnserver,
@@ -70,11 +70,11 @@ turnserver_uris
 	{ "default",  json::empty_array                  },
 };
 
-resource::response
+m::resource::response
 get__turnserver(client &client,
-                const resource::request &request)
+                const m::resource::request &request)
 {
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
