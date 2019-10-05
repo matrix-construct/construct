@@ -60,18 +60,20 @@ ircd::m::invite(const room &room,
 
 ircd::m::event::id::buf
 ircd::m::invite(const room &room,
-                const id::user &target,
-                const id::user &sender,
+                const user::id &target,
+                const user::id &sender,
                 json::iov &content)
 {
-	using prototype = event::id::buf (const m::room &, const id::user &, const id::user &, json::iov &);
-
-	static mods::import<prototype> call
+	json::iov event;
+	const json::iov::push push[]
 	{
-		"client_rooms", "ircd::m::invite"
+		{ event,    { "type",        "m.room.member"  }},
+		{ event,    { "sender",      sender           }},
+		{ event,    { "state_key",   target           }},
+		{ content,  { "membership",  "invite"         }},
 	};
 
-	return call(room, target, sender, content);
+	return commit(room, event, content);
 }
 
 ircd::m::event::id::buf

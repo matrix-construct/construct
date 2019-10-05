@@ -57,25 +57,6 @@ post__invite(ircd::client &client,
 	};
 }
 
-ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
-ircd::m::invite(const m::room &room,
-                const m::user::id &target,
-                const m::user::id &sender,
-                json::iov &content)
-{
-	json::iov event;
-	const json::iov::push push[]
-	{
-		{ event,    { "type",        "m.room.member"  }},
-		{ event,    { "sender",      sender           }},
-		{ event,    { "state_key",   target           }},
-		{ content,  { "membership",  "invite"         }},
-	};
-
-	return commit(room, event, content);
-}
-
 void
 ircd::m::on_invite_foreign(const event &event,
                            vm::eval &eval)
