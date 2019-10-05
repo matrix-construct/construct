@@ -36,95 +36,6 @@ close_all_timeout
 	{ "default",  2L                              },
 };
 
-//
-// init
-//
-
-ircd::server::init::init()
-{
-}
-
-ircd::server::init::~init()
-noexcept
-{
-	interrupt_all();
-	close_all();
-	wait_all();
-	log::debug
-	{
-		log, "All server peers, connections, and requests are clear."
-	};
-}
-
-//
-// server
-//
-
-void
-ircd::server::wait_all()
-{
-	static const auto finished
-	{
-		[] { return !peer_unfinished(); }
-	};
-
-	while(!dock.wait_for(seconds(5), finished))
-	{
-		for(const auto &[name, peer] : peers)
-			log::dwarning
-			{
-				log, "Waiting for peer %s tags:%zu links:%zu err:%b op[r:%b f:%b]",
-				name,
-				peer->tag_count(),
-				peer->link_count(),
-				peer->err_has(),
-				peer->op_resolve,
-				peer->op_fini,
-			};
-
-		log::warning
-		{
-			log, "Waiting for %zu tags on %zu links on %zu of %zu peers to close...",
-			tag_count(),
-			link_count(),
-			peer_unfinished(),
-			peer_count()
-		};
-	}
-
-	peers.clear();
-}
-
-void
-ircd::server::close_all()
-{
-	log::debug
-	{
-		log, "Closing all %zu peers",
-		peer_count()
-	};
-
-	net::close_opts opts;
-	opts.timeout = seconds(close_all_timeout);
-	for(auto &peer : peers)
-		peer.second->close(opts);
-}
-
-void
-ircd::server::interrupt_all()
-{
-	log::debug
-	{
-		log, "Interrupting %zu tags on %zu links on %zu peers",
-		tag_count(),
-		link_count(),
-		peer_count()
-	};
-
-	for(auto &peer : peers)
-		peer.second->cancel();
-}
-
 ircd::server::peer &
 ircd::server::get(const net::hostport &hostport)
 {
@@ -318,7 +229,90 @@ ircd::server::accumulate_peers(F&& closure)
 	});
 }
 
-///
+//
+// init
+//
+
+ircd::server::init::init()
+noexcept
+{
+}
+
+ircd::server::init::~init()
+noexcept
+{
+	interrupt(), close(), wait();
+	peers.clear();
+	log::debug
+	{
+		log, "All server peers, connections, and requests are clear."
+	};
+}
+
+void
+ircd::server::init::wait()
+{
+	static const auto finished
+	{
+		[] { return !peer_unfinished(); }
+	};
+
+	while(!dock.wait_for(seconds(5), finished))
+	{
+		for(const auto &[name, peer] : peers)
+			log::dwarning
+			{
+				log, "Waiting for peer %s tags:%zu links:%zu err:%b op[r:%b f:%b]",
+				name,
+				peer->tag_count(),
+				peer->link_count(),
+				peer->err_has(),
+				peer->op_resolve,
+				peer->op_fini,
+			};
+
+		log::warning
+		{
+			log, "Waiting for %zu tags on %zu links on %zu of %zu peers to close...",
+			tag_count(),
+			link_count(),
+			peer_unfinished(),
+			peer_count()
+		};
+	}
+}
+
+void
+ircd::server::init::close()
+{
+	log::debug
+	{
+		log, "Closing all %zu peers",
+		peer_count()
+	};
+
+	net::close_opts opts;
+	opts.timeout = seconds(close_all_timeout);
+	for(auto &peer : peers)
+		peer.second->close(opts);
+}
+
+void
+ircd::server::init::interrupt()
+{
+	log::debug
+	{
+		log, "Cancel %zu tags on %zu links on %zu peers",
+		tag_count(),
+		link_count(),
+		peer_count()
+	};
+
+	for(auto &peer : peers)
+		peer.second->cancel();
+}
+
+//
 // request
 //
 

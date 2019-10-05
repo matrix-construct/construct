@@ -55,17 +55,17 @@ namespace ircd::server
 	// mutable utils
 	bool errclear(const net::hostport &);
 	peer &get(const net::hostport &);     // creates the peer if not found.
-
-	// control panel
-	void interrupt_all();
-	void close_all();
-	void wait_all();
 }
 
 /// Subsystem initialization / destruction from ircd::main
 ///
 struct ircd::server::init
 {
-	init();
+	// manual control panel
+	void interrupt();
+	void close();
+	void wait();
+
+	init() noexcept,
 	~init() noexcept;
 };

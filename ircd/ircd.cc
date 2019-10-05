@@ -290,8 +290,8 @@ noexcept try
 	openssl::init _ossl_;    // openssl crypto
 	net::init _net_;         // Networking
 	db::init _db_;           // RocksDB
-	server::init _server_;   // Server related
 	client::init _client_;   // Client related
+	server::init _server_;   // Server related
 	js::init _js_;           // SpiderMonkey
 
 	// Transition to the QUIT state on unwind.
