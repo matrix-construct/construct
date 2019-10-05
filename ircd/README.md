@@ -1,6 +1,6 @@
-# IRCd Library Definitions
+# Library Definitions
 
-This directory contains definitions and linkage for `libircd`
+This directory contains definitions for `libircd`
 
 The purpose of `libircd` is to facilitate the execution of a server which
 handles requests from end-users. The library hosts a set of pluggable modules
@@ -26,8 +26,8 @@ header or third-party dependency which is not involved in the
 [ircd.h include group](../include/ircd#what-to-include). Second to that, units
 tend to be divided by namespace and the subsystem they're implementing. Units
 can further be divided if they become unwieldy, but we bias toward large aggregate
-units. Within these large units, there are divisions which group the definitions
-by the `include/ircd/` header which declares them.
+units in this library. Within these large units, there are divisions which group
+the definitions by the `include/ircd/` header which declares them.
 
 We do not included third-party headers in our own [headers](../include/ircd)
 which are included by others. A developer of an `ircd::` interface can choose
