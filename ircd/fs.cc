@@ -1383,18 +1383,22 @@ ircd::fs::aio::system;
 // init
 //
 
-__attribute__((weak))
+#ifndef IRCD_USE_AIO
+[[gnu::weak]]
 ircd::fs::aio::init::init()
 {
 	assert(!system);
 }
+#endif
 
-__attribute__((weak))
+#ifndef IRCD_USE_AIO
+[[gnu::weak]]
 ircd::fs::aio::init::~init()
 noexcept
 {
 	assert(!system);
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1433,18 +1437,22 @@ ircd::fs::iou::system;
 // init
 //
 
-__attribute__((weak))
+#ifndef IRCD_USE_IOU
+[[gnu::weak]]
 ircd::fs::iou::init::init()
 {
 	assert(!system);
 }
+#endif
 
-__attribute__((weak))
+#ifndef IRCD_USE_IOU
+[[gnu::weak]]
 ircd::fs::iou::init::~init()
 noexcept
 {
 	assert(!system);
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1892,6 +1900,7 @@ ircd::fs::reflect(const op &op)
 }
 
 #ifndef IRCD_USE_AIO
+[[gnu::weak]]
 ircd::fs::op
 ircd::fs::aio::translate(const int &val)
 {
@@ -1900,6 +1909,7 @@ ircd::fs::aio::translate(const int &val)
 #endif
 
 #ifndef IRCD_USE_IOU
+[[gnu::weak]]
 ircd::fs::op
 ircd::fs::iou::translate(const int &val)
 {

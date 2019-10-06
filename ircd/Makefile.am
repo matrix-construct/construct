@@ -18,11 +18,11 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = \
 	-version-info 3:2:0 \
 	-Wl,--no-undefined-version \
-	-Wl,--unresolved-symbols=report-all \
 	-Wl,--weak-unresolved-symbols \
+	-Wl,--unresolved-symbols=ignore-in-shared-libs \
 	-Wl,-z,nodelete \
 	-Wl,-z,nodlopen \
-	-Wl,-z,now \
+	-Wl,-z,lazy \
 	$(PLATFORM_LDFLAGS) \
 	@EXTRA_LDFLAGS@ \
 	###
