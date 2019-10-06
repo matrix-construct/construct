@@ -6,7 +6,7 @@ DEFS += \
 	###
 
 AM_CXXFLAGS = \
-	-ftls-model=global-dynamic \
+	-ftls-model=local-dynamic \
 	@EXTRA_CXXFLAGS@ \
 	###
 
