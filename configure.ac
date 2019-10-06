@@ -569,7 +569,6 @@ AM_COND_IF([OPTIMIZE],
 		CXXFLAGS+=" -fweb"
 		CXXFLAGS+=" -fgcse-sm"
 		CXXFLAGS+=" -fgcse-las"
-		CXXFLAGS+=" -fgcse-after-reload"
 		CXXFLAGS+=" -frename-registers"
 		CXXFLAGS+=" -fsched-stalled-insns=0"
 		CXXFLAGS+=" -fira-hoist-pressure"
