@@ -1635,7 +1635,7 @@ noexcept try
 	if(opts.direct)
 		return Status::OK();
 
-	fs::evict(fd, length, offset);
+	fs::evict(fd, length, fs::opts(offset));
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -3111,7 +3111,7 @@ noexcept try
 	if(opts.direct)
 		return Status::OK();
 
-	fs::evict(fd, length, offset);
+	fs::evict(fd, length, fs::opts(offset));
 	return Status::OK();
 }
 catch(const std::system_error &e)
@@ -3382,7 +3382,7 @@ noexcept
 	if(opts.direct)
 		return Status::OK();
 
-	fs::evict(fd, length, offset);
+	fs::evict(fd, length, fs::opts(offset));
 	return Status::OK();
 }
 

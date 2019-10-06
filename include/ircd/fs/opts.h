@@ -60,7 +60,7 @@ struct ircd::fs::opts
 	/// opcode and then pass the opts structure to write().
 	enum op op {op::NOOP};
 
-	opts(const off_t &, const enum op &op);
+	opts(const off_t &, const enum op & = op::NOOP);
 	opts() = default;
 };
 
