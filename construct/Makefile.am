@@ -24,7 +24,6 @@ AM_LDFLAGS = \
 	-Wl,--dynamic-list-cpp-new\
 	-Wl,--dynamic-list-cpp-typeinfo \
 	-Wl,--rosegment \
-	-Wl,--gdb-index \
 	-Wl,-z,noexecstack \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/modules \
@@ -36,32 +35,16 @@ bin_PROGRAMS = construct
 
 construct_LDFLAGS = \
 	$(AM_LDFLAGS) \
-	@ROCKSDB_LDFLAGS@ \
-	@JS_LDFLAGS@ \
-	@BOOST_LDFLAGS@ \
-	@SSL_LDFLAGS@ \
-	@CRYPTO_LDFLAGS@ \
-	@SODIUM_LDFLAGS@ \
-	@MAGIC_LDFLAGS@ \
-	@SNAPPY_LDFLAGS@ \
-	@LZ4_LDFLAGS@ \
-	@Z_LDFLAGS@ \
-	@MALLOC_LDFLAGS@ \
+	@BOOST_LIBS@ \
+	@SSL_LIBS@ \
+	@CRYPTO_LIBS@ \
 	###
 
 construct_LDADD = \
 	-lircd \
-	@ROCKSDB_LIBS@ \
-	@JS_LIBS@ \
 	@BOOST_LIBS@ \
 	@SSL_LIBS@ \
 	@CRYPTO_LIBS@ \
-	@SODIUM_LIBS@ \
-	@MAGIC_LIBS@ \
-	@SNAPPY_LIBS@ \
-	@LZ4_LIBS@ \
-	@Z_LIBS@ \
-	@MALLOC_LIBS@ \
 	@EXTRA_LIBS@ \
 	###
 
