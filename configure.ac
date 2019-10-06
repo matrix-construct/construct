@@ -566,7 +566,6 @@ AM_COND_IF([OPTIMIZE],
 
 	AM_COND_IF([GCC],
 	[
-		CXXFLAGS+=" -fweb"
 		CXXFLAGS+=" -fgcse-sm"
 		CXXFLAGS+=" -fgcse-las"
 		CXXFLAGS+=" -frename-registers"
@@ -575,6 +574,13 @@ AM_COND_IF([OPTIMIZE],
 		CXXFLAGS+=" -fbranch-target-load-optimize"
 		CXXFLAGS+=" -frerun-loop-opt"
 		CXXFLAGS+=" -fdevirtualize-at-ltrans"
+
+		dnl Optimization options that aren't compatible with debugging.
+		AM_COND_IF([DEBUG], [],
+		[
+			dnl CXXFLAGS+=" -fweb"
+			CXXFLAGS+=""
+		])
 	])
 ], [
 	optimize="no"
