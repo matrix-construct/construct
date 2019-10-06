@@ -338,10 +338,10 @@ operator delete(void *const ptr,
 // Linker symbol wrapping hook
 //
 
-extern "C" void *__real_malloc(size_t size);
-extern "C" void *__real_calloc(size_t nmemb, size_t size);
-extern "C" void *__real_realloc(void *ptr, size_t size);
-extern "C" void __real_free(void *ptr);
+extern "C" [[gnu::weak]] void *__real_malloc(size_t size);
+extern "C" [[gnu::weak]] void *__real_calloc(size_t nmemb, size_t size);
+extern "C" [[gnu::weak]] void *__real_realloc(void *ptr, size_t size);
+extern "C" [[gnu::weak]] void __real_free(void *ptr);
 
 extern "C" void *
 __wrap_malloc(size_t size)
