@@ -50,6 +50,7 @@ namespace ircd::m::dbs::appendix
 #include "event_horizon.h"          // event_id | event_idx
 #include "event_sender.h"           // sender | event_idx || hostpart | localpart, event_idx
 #include "event_type.h"             // type | event_idx
+#include "event_state.h"            // state_key, type, room_id, depth, event_idx
 #include "room_events.h"            // room_id | depth, event_idx
 #include "room_state.h"             // room_id | type, state_key => event_idx
 #include "room_state_space.h"       // room_id | type, state_key, depth, event_idx
@@ -154,6 +155,9 @@ enum ircd::m::dbs::appendix::index
 
 	/// Involves the event_type column (reverse index on the event type).
 	EVENT_TYPE,
+
+	/// Involves the event_state column.
+	EVENT_STATE,
 
 	/// Involves room_events table.
 	ROOM_EVENTS,

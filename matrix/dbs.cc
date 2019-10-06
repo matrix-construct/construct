@@ -51,6 +51,11 @@ decltype(ircd::m::dbs::event_type)
 ircd::m::dbs::event_type
 {};
 
+/// Linkage for a reference to the event_state column.
+decltype(ircd::m::dbs::event_state)
+ircd::m::dbs::event_state
+{};
+
 /// Linkage for a reference to the room_head column
 decltype(ircd::m::dbs::room_head)
 ircd::m::dbs::room_head
@@ -184,6 +189,7 @@ ircd::m::dbs::init::init(const string_view &servername,
 	event_horizon = db::domain{*events, desc::events__event_horizon.name};
 	event_sender = db::domain{*events, desc::events__event_sender.name};
 	event_type = db::domain{*events, desc::events__event_type.name};
+	event_state = db::domain{*events, desc::events__event_state.name};
 	room_head = db::domain{*events, desc::events__room_head.name};
 	room_events = db::domain{*events, desc::events__room_events.name};
 	room_joined = db::domain{*events, desc::events__room_joined.name};
@@ -243,6 +249,7 @@ namespace ircd::m::dbs
 	static void _index_room_head(db::txn &, const event &, const write_opts &);
 	static void _index_room_events(db::txn &,  const event &, const write_opts &);
 	static void _index_room(db::txn &, const event &, const write_opts &);
+	static void _index_event_state(db::txn &, const event &, const write_opts &);
 	static void _index_event_type(db::txn &, const event &, const write_opts &);
 	static void _index_event_sender(db::txn &, const event &, const write_opts &);
 	static void _index_event_horizon_resolve(db::txn &, const event &, const write_opts &); //query
@@ -350,6 +357,9 @@ ircd::m::dbs::_index_event(db::txn &txn,
 
 	if(opts.appendix.test(appendix::EVENT_TYPE))
 		_index_event_type(txn, event, opts);
+
+	if(opts.appendix.test(appendix::EVENT_STATE))
+		_index_event_state(txn, event, opts);
 
 	if(opts.appendix.test(appendix::EVENT_REFS) && opts.event_refs.any())
 		_index_event_refs(txn, event, opts);
@@ -1182,6 +1192,35 @@ ircd::m::dbs::_index_event_type(db::txn &txn,
 		txn, dbs::event_type,
 		{
 			opts.op, key
+		}
+	};
+}
+
+void
+ircd::m::dbs::_index_event_state(db::txn &txn,
+                                 const event &event,
+                                 const write_opts &opts)
+{
+	assert(opts.appendix.test(appendix::EVENT_STATE));
+	assert(json::get<"type"_>(event));
+	assert(opts.event_idx);
+
+	if(!defined(json::get<"state_key"_>(event)))
+		return;
+
+	thread_local char buf[EVENT_STATE_KEY_MAX_SIZE];
+	db::txn::append
+	{
+		txn, dbs::event_state,
+		{
+			opts.op, event_state_key(buf, event_state_tuple
+			{
+				at<"state_key"_>(event),
+				at<"type"_>(event),
+				at<"room_id"_>(event),
+				at<"depth"_>(event),
+				opts.event_idx,
+			})
 		}
 	};
 }
@@ -2503,6 +2542,206 @@ ircd::m::dbs::desc::events__event_type
 
 	// meta_block size
 	size_t(events__event_type__meta_block__size),
+};
+
+//
+// event_state
+//
+
+decltype(ircd::m::dbs::desc::events__event_state__block__size)
+ircd::m::dbs::desc::events__event_state__block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_state.block.size" },
+	{ "default",  512L                                        },
+};
+
+decltype(ircd::m::dbs::desc::events__event_state__meta_block__size)
+ircd::m::dbs::desc::events__event_state__meta_block__size
+{
+	{ "name",     "ircd.m.dbs.events._event_state.meta_block.size" },
+	{ "default",  2048L                                            },
+};
+
+decltype(ircd::m::dbs::desc::events__event_state__cache__size)
+ircd::m::dbs::desc::events__event_state__cache__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_state.cache.size" },
+		{ "default",  long(16_MiB)                                },
+	}, []
+	{
+		const size_t &value{events__event_state__cache__size};
+		db::capacity(db::cache(event_state), value);
+	}
+};
+
+decltype(ircd::m::dbs::desc::events__event_state__cache_comp__size)
+ircd::m::dbs::desc::events__event_state__cache_comp__size
+{
+	{
+		{ "name",     "ircd.m.dbs.events._event_state.cache_comp.size" },
+		{ "default",  long(0_MiB)                                      },
+	}, []
+	{
+		const size_t &value{events__event_state__cache_comp__size};
+		db::capacity(db::cache_compressed(event_state), value);
+	}
+};
+
+ircd::string_view
+ircd::m::dbs::event_state_key(const mutable_buffer &out_,
+                              const event_state_tuple &tuple)
+{
+	assert(size(out_) >= EVENT_TYPE_KEY_MAX_SIZE);
+
+	const auto &[state_key, type, room_id, depth, event_idx]
+	{
+		tuple
+	};
+
+	mutable_buffer out{out_};
+	consume(out, copy(out, state_key));
+	if(!type)
+		return {data(out_), data(out)};
+
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, type));
+	if(!room_id)
+		return {data(out_), data(out)};
+
+	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, room_id));
+	if(!room_id)
+		return {data(out_), data(out)};
+
+	consume(out, copy(out, "\0"_sv));
+	if(depth < 0)
+		return {data(out_), data(out)};
+
+	consume(out, copy(out, byte_view<string_view>(depth)));
+	if(!event_idx)
+		return {data(out_), data(out)};
+
+	consume(out, copy(out, byte_view<string_view>(event_idx)));
+	return {data(out_), data(out)};
+}
+
+ircd::m::dbs::event_state_tuple
+ircd::m::dbs::event_state_key(const string_view &amalgam)
+{
+	string_view parts[4];
+	const auto num
+	{
+		tokens(amalgam, '\0', parts)
+	};
+
+	assert(num <= 4);
+	assert(num <= 3 || size(parts[3]) == 16);
+	return event_state_tuple
+	{
+		parts[0],
+		parts[1],
+		num >= 3?
+			m::room::id{parts[2]}:
+			m::room::id{},
+		num >= 4?
+			int64_t(byte_view<int64_t>(parts[3].substr(0, 8))):
+			-1L,
+		num >= 4?
+			event::idx(byte_view<uint64_t>(parts[3].substr(8))):
+			0UL,
+	};
+}
+
+const ircd::db::comparator
+ircd::m::dbs::desc::events__event_state__cmp
+{
+	"_event_state",
+
+	// less
+	[](const string_view &a, const string_view &b)
+	{
+		const event_state_tuple key[2]
+		{
+			event_state_key(a),
+			event_state_key(b),
+		};
+
+		if(std::get<0>(key[0]) != std::get<0>(key[1]))
+			return std::get<0>(key[0]) < std::get<0>(key[1]);
+
+		if(std::get<1>(key[0]) != std::get<1>(key[1]))
+			return std::get<1>(key[0]) < std::get<1>(key[1]);
+
+		if(std::get<id::room>(key[0]) != std::get<id::room>(key[1]))
+			return std::get<id::room>(key[0]) < std::get<id::room>(key[1]);
+
+		if(std::get<int64_t>(key[0]) != std::get<int64_t>(key[1]))
+			return std::get<int64_t>(key[0]) > std::get<int64_t>(key[1]);
+
+		if(std::get<event::idx>(key[0]) != std::get<event::idx>(key[1]))
+			return std::get<event::idx>(key[0]) > std::get<event::idx>(key[1]);
+
+		return false;
+	},
+
+	// equal
+	[](const string_view &a, const string_view &b)
+	{
+		return a == b;
+	}
+};
+
+const ircd::db::descriptor
+ircd::m::dbs::desc::events__event_state
+{
+	// name
+	"_event_state",
+
+	// explanation
+	R"(Index of states of events.
+
+	state_key, type, room_id, depth, event_idx => --
+
+	The state transitions of events are indexed by this column,
+	based on the state_key property.
+
+	)",
+
+	// typing (key, value)
+	{
+		typeid(string_view), typeid(string_view)
+	},
+
+	// options
+	{},
+
+	// comparator
+	events__event_state__cmp,
+
+	// prefix transform
+	{},
+
+	// drop column
+	false,
+
+	// cache size
+	bool(events_cache_enable)? -1 : 0, //uses conf item
+
+	// cache size for compressed assets
+	bool(events_cache_comp_enable)? -1 : 0,
+
+	// bloom filter bits
+	0,
+
+	// expect queries hit
+	false,
+
+	// block size
+	size_t(events__event_state__block__size),
+
+	// meta_block size
+	size_t(events__event_state__meta_block__size),
 };
 
 //
@@ -4896,6 +5135,10 @@ ircd::m::dbs::desc::events
 	// type | event_idx
 	// Mapping of type strings to event_idx's of that type.
 	events__event_type,
+
+	// state_key, type, room_id, depth, event_idx
+	// Mapping of event states, indexed for application features.
+	events__event_state,
 
 	// (room_id, (depth, event_idx))
 	// Sequence of all events for a room, ever.
