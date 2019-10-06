@@ -23,7 +23,6 @@ AM_LDFLAGS = \
 	-Wl,--dynamic-list-data \
 	-Wl,--dynamic-list-cpp-new\
 	-Wl,--dynamic-list-cpp-typeinfo \
-	-Wl,--icf=all \
 	-Wl,--rosegment \
 	-Wl,--gdb-index \
 	-Wl,-z,noexecstack \

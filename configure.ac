@@ -537,7 +537,7 @@ AM_COND_IF([LD_GOLD],
 	LDFLAGS+=" -Wl,--warn-execstack"
 	LDFLAGS+=" -Wl,--detect-odr-violations"
 	LDFLAGS+=" -Wl,--rosegment"
-	LDFLAGS+=" -Wl,--icf=all"
+dnl	LDFLAGS+=" -Wl,--icf=all"
 	LDFLAGS+=" -Wl,-z,noexecstack"
 	LDFLAGS+=" -Wl,-z,combreloc"
 	LDFLAGS+=" -Wl,-z,text-unlikely-segment"
