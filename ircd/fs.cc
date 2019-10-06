@@ -23,6 +23,9 @@
 	#include "fs_iou.h"
 #endif
 
+// TODO: prevents use until io_uring support implemented
+#undef IRCD_USE_IOU
+
 namespace ircd::fs
 {
 	static uint posix_flags(const std::ios::openmode &mode);
@@ -1513,6 +1516,7 @@ ircd::fs::advise(const fd &fd,
                  const size_t &count,
                  const opts &opts)
 {
+	return 0UL;
 }
 #endif
 
