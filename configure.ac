@@ -21,6 +21,7 @@ LT_INIT([dlopen shared disable-static])
 LT_LANG([C++])
 
 CXXFLAGS="-pipe"
+AM_PROG_AS
 AC_PROG_CXX
 AC_PROG_CXX_C_O
 AC_PROG_LIBTOOL
