@@ -18,6 +18,7 @@
 ///
 namespace ircd::net::dns
 {
+	struct init;
 	struct opts;
 	using records = vector_view<const rfc1035::record *>;
 	using callback = std::function<void (const hostport &, const json::array &)>;
@@ -106,3 +107,9 @@ namespace ircd::net::dns::cache
 	bool put(const hostport &, const opts &, const records &);
 	bool put(const hostport &, const opts &, const uint &code, const string_view &msg = {});
 }
+
+/// (internal)
+struct ircd::net::dns::init
+{
+	init(), ~init() noexcept;
+};

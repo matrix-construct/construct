@@ -8,7 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include "net_dns.h"
+#include <ircd/net/dns_cache.h>
 
 namespace ircd::net::dns::cache
 {
@@ -21,7 +21,17 @@ namespace ircd::net::dns::cache
 
 	extern const m::room::id::buf dns_room_id;
 	extern m::hookfn<m::vm::eval &> hook;
+
+	static void init(), fini();
 }
+
+ircd::mapi::header
+IRCD_MODULE
+{
+	"DNS cache using Matrix rooms.",
+	ircd::net::dns::cache::init,
+	ircd::net::dns::cache::fini,
+};
 
 decltype(ircd::net::dns::cache::dns_room_id)
 ircd::net::dns::cache::dns_room_id
@@ -32,25 +42,21 @@ ircd::net::dns::cache::dns_room_id
 decltype(ircd::net::dns::cache::hook)
 ircd::net::dns::cache::hook
 {
-    ircd::net::dns::cache::handle,
-    {
-        { "_site",    "vm.effect"              },
-        { "room_id",  string_view{dns_room_id} },
-    }
+	ircd::net::dns::cache::handle,
+	{
+		{ "_site",    "vm.effect"              },
+		{ "room_id",  string_view{dns_room_id} },
+	}
 };
-
-decltype(ircd::net::dns::cache::waiting)
-ircd::net::dns::cache::waiting;
-
-decltype(ircd::net::dns::cache::mutex)
-ircd::net::dns::cache::mutex;
-
-decltype(ircd::net::dns::cache::dock)
-ircd::net::dns::cache::dock;
 
 void
 ircd::net::dns::cache::init()
 {
+	log::debug
+	{
+		"DNS cache room %s currently set.",
+		string_view{dns_room_id}
+	};
 }
 
 void
@@ -624,55 +630,6 @@ catch(const std::exception &e)
 }
 
 //
-// cache::waiter
-//
-
-bool
-ircd::net::dns::cache::operator==(const waiter &a, const waiter &b)
-{
-	return a.opts.qtype == b.opts.qtype &&
-	       a.key && b.key &&
-	       a.key == b.key;
-}
-
-bool
-ircd::net::dns::cache::operator!=(const waiter &a, const waiter &b)
-{
-	return !operator==(a, b);
-}
-
-//
-// cache::waiter::waiter
-//
-
-ircd::net::dns::cache::waiter::waiter(const hostport &hp,
-                                      const dns::opts &opts,
-                                      dns::callback &&callback)
-:callback
-{
-	std::move(callback)
-}
-,opts
-{
-	opts
-}
-,port
-{
-	net::port(hp)
-}
-,key
-{
-	opts.qtype == 33?
-		make_SRV_key(keybuf, hp, opts):
-		strlcpy(keybuf, host(hp))
-}
-{
-	this->opts.srv = {};
-	this->opts.proto = {};
-	assert(this->opts.qtype);
-}
-
-//
 // cache room creation
 //
 
@@ -691,6 +648,7 @@ ircd::net::dns::cache::create_room_hook
 		{ "room_id",  "!ircd"          },
 		{ "type",     "m.room.create"  },
 	},
+
 	[](const m::event &, m::vm::eval &)
 	{
 		create_room();

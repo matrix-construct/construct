@@ -237,7 +237,7 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 	signon(*this);
 
 	if(primary == this)
-		mods::imports.emplace("net_dns"s, "net_dns"s);
+		mods::imports.emplace("net_dns_cache"s, "net_dns_cache"s);
 
 	if(primary == this)
 		m::init::backfill::init();

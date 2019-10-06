@@ -1,22 +1,24 @@
 // Matrix Construct
 //
 // Copyright (C) Matrix Construct Developers, Authors & Contributors
-// Copyright (C) 2016-2018 Jason Volk <jason@zemos.net>
+// Copyright (C) 2016-2019 Jason Volk <jason@zemos.net>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+//
+// This file is not included in any include group. It is used when
+// implementing the dns::cache by modules and extensions.
+//
+
 namespace ircd::net::dns::cache
 {
 	struct waiter;
 
-	bool operator==(const waiter &, const waiter &);
-	bool operator!=(const waiter &, const waiter &);
-
-	void fini();
-	void init();
+	bool operator==(const waiter &, const waiter &) noexcept;
+	bool operator!=(const waiter &, const waiter &) noexcept;
 
 	extern std::list<waiter> waiting;
 	extern ctx::mutex mutex;

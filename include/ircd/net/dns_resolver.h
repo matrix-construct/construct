@@ -25,8 +25,6 @@ namespace ircd::net::dns
 	constexpr const size_t MAX_COUNT {64};
 
 	uint16_t resolver_call(const hostport &, const opts &);
-	void resolver_init(answers_callback);
-	void resolver_fini();
 }
 
 struct ircd::net::dns::resolver

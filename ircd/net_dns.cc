@@ -8,7 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include "net_dns.h"
+#include <ircd/net/dns_cache.h>
 
 namespace ircd::net::dns
 {
@@ -18,35 +18,42 @@ namespace ircd::net::dns
 	static void handle_resolve_A_ipport(const hostport &, const json::object &rr, opts, uint16_t, callback_ipport);
 	static void handle_resolve_SRV_ipport(const hostport &, const json::object &rr, opts, callback_ipport);
 	static void handle_resolve_one(const hostport &, const json::array &rr, callback_one);
-
-	static void fini();
-	static void init();
 }
 
-ircd::mapi::header
-IRCD_MODULE
+decltype(ircd::net::dns::log)
+ircd::net::dns::log
 {
-	"Domain Name System Client, Cache & Components",
-	ircd::net::dns::init,
-	ircd::net::dns::fini,
+	"net.dns"
 };
 
-void
-ircd::net::dns::init()
+decltype(ircd::net::dns::opts_default)
+ircd::net::dns::opts_default;
+
+//
+// init
+//
+
+ircd::net::dns::init::init()
 {
-	cache::init();
-	resolver_init(handle_resolved);
+	assert(!resolver_instance);
+	resolver_instance = new resolver
+	{
+		handle_resolved
+    };
 }
 
-void
-ircd::net::dns::fini()
+ircd::net::dns::init::~init()
+noexcept
 {
-	cache::fini();
-	resolver_fini();
+	delete resolver_instance;
+	resolver_instance = nullptr;
 }
 
+//
+// net/dns.h
+//
+
 void
-IRCD_MODULE_EXPORT
 ircd::net::dns::resolve(const hostport &hp,
                         const opts &opts_,
                         callback_ipport callback)
@@ -86,7 +93,6 @@ ircd::net::dns::resolve(const hostport &hp,
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::net::dns::resolve(const hostport &hp,
                         const opts &opts,
                         callback_one callback)
@@ -106,7 +112,6 @@ ircd::net::dns::resolve(const hostport &hp,
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::net::dns::resolve(const hostport &hp,
                         const opts &opts,
                         callback cb)
@@ -141,6 +146,153 @@ ircd::net::dns::resolve(const hostport &hp,
 	if(count == 1)
 		resolver_call(hp, opts);
 }
+
+/// Really assumptional and hacky right now. We're just assuming the SRV
+/// key is the first two elements of a dot-delimited string which start
+/// with underscores. If that isn't good enough in the future this will rot
+/// and become a regression hazard.
+ircd::string_view
+ircd::net::dns::unmake_SRV_key(const string_view &key)
+{
+	if(token_count(key, '.') < 3)
+		return key;
+
+	if(!startswith(token(key, '.', 0), '_'))
+		return key;
+
+	if(!startswith(token(key, '.', 1), '_'))
+		return key;
+
+	return tokens_after(key, '.', 1);
+}
+
+ircd::string_view
+ircd::net::dns::make_SRV_key(const mutable_buffer &out,
+                             const hostport &hp,
+                             const opts &opts)
+{
+	thread_local char tlbuf[2][rfc1035::NAME_BUFSIZE];
+
+	if(!opts.srv)
+		return fmt::sprintf
+		{
+			out, "_%s._%s.%s",
+			tolower(tlbuf[0], service(hp)),
+			opts.proto,
+			tolower(tlbuf[1], host(hp)),
+		};
+	else
+		return fmt::sprintf
+		{
+			out, "%s%s",
+			opts.srv,
+			tolower(tlbuf[1], host(hp))
+		};
+}
+
+ircd::json::object
+ircd::net::dns::random_choice(const json::array &rrs)
+{
+	const size_t &count
+	{
+		rrs.size()
+	};
+
+	if(!count)
+		return json::object{};
+
+	const auto choice
+	{
+		rand::integer(0, count - 1)
+	};
+
+	assert(choice < count);
+	const json::object &rr
+	{
+		rrs[choice]
+	};
+
+	return rr;
+}
+
+bool
+ircd::net::dns::expired(const json::object &rr,
+                        const time_t &rr_ts)
+{
+	const seconds &min_seconds
+	{
+		cache::min_ttl
+	};
+
+	const seconds &err_seconds
+	{
+		cache::error_ttl
+	};
+
+	const time_t &min
+	{
+		is_error(rr)?
+			err_seconds.count():
+			min_seconds.count()
+	};
+
+	return expired(rr, rr_ts, min);
+}
+
+bool
+ircd::net::dns::expired(const json::object &rr,
+                        const time_t &rr_ts,
+                        const time_t &min_ttl)
+{
+	const auto &ttl
+	{
+		get_ttl(rr)
+	};
+
+	return rr_ts + std::max(ttl, min_ttl) < ircd::time();
+}
+
+time_t
+ircd::net::dns::get_ttl(const json::object &rr)
+{
+	return rr.get<time_t>("ttl", 0L);
+}
+
+bool
+ircd::net::dns::is_empty(const json::array &rrs)
+{
+	return std::all_of(begin(rrs), end(rrs), []
+	(const json::object &rr)
+	{
+		return is_empty(rr);
+	});
+}
+
+bool
+ircd::net::dns::is_empty(const json::object &rr)
+{
+	return empty(rr) || (rr.has("ttl") && size(rr) == 1);
+}
+
+bool
+ircd::net::dns::is_error(const json::array &rrs)
+{
+	return !std::none_of(begin(rrs), end(rrs), []
+	(const json::object &rr)
+	{
+		return is_error(rr);
+	});
+}
+
+bool
+ircd::net::dns::is_error(const json::object &rr)
+{
+	return rr.has("error");
+}
+
+//
+// internal
+//
 
 void
 ircd::net::dns::handle_resolve_one(const hostport &hp,

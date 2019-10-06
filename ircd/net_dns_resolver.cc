@@ -56,23 +56,6 @@ ircd::net::dns::resolver::servers
 // interface
 //
 
-void
-ircd::net::dns::resolver_init(answers_callback callback)
-{
-	assert(!ircd::net::dns::resolver_instance);
-	ircd::net::dns::resolver_instance = new resolver
-	{
-		std::move(callback)
-	};
-}
-
-void
-ircd::net::dns::resolver_fini()
-{
-	delete ircd::net::dns::resolver_instance;
-	ircd::net::dns::resolver_instance = nullptr;
-}
-
 uint16_t
 ircd::net::dns::resolver_call(const hostport &hp,
                               const opts &opts)
@@ -84,7 +67,11 @@ ircd::net::dns::resolver_call(const hostport &hp,
 			host(hp)
 		};
 
-	auto &resolver{*dns::resolver_instance};
+	auto &resolver
+	{
+		*dns::resolver_instance
+	};
+
 	if(unlikely(!resolver.ns.is_open()))
 		throw error
 		{
