@@ -437,25 +437,27 @@ try
 	changed::dock.notify_all();
 	for(const auto &handler : changed::list) try
 	{
-		handler->function(new_level);
+		handler->function(level);
 	}
 	catch(const std::exception &e)
 	{
 		switch(level)
 		{
-			default:           break;
+			case level::HALT:  break;
+			case level::QUIT:  break;
 			case level::IDLE:  throw;
-			case level::QUIT:  continue;
-			case level::HALT:  continue;
+			default:           throw;
 		}
 
-		log::critical
+		log::error
 		{
-			"Runlevel change to %s handler(%p) :%s",
-			reflect(new_level),
+			"Runlevel transition to '%s' handler(%p) :%s",
+			reflect(level),
 			handler,
-			e.what()
+			e.what(),
 		};
+
+		continue;
 	}
 
 	if(level == level::HALT)
@@ -474,6 +476,12 @@ try
 }
 catch(const std::exception &e)
 {
+	switch(new_level)
+	{
+		case level::IDLE:  throw;
+		default:           break;
+	}
+
 	log::critical
 	{
 		"IRCd level change to '%s': %s",
@@ -481,7 +489,6 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	ircd::terminate();
 	return false;
 }
 
