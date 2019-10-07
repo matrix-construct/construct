@@ -44,13 +44,13 @@ jump_fcontext:
 	movq      %rdi, %rax               // store transfer_t.fctx (retval)
 //	ldmxcsr   0x00(%rsp)               // load MMX control- and status-word
 //	fldcw     0x04(%rsp)               // load x87 control-word
-	subq      $-0x08, %rsp             // free fc_mxcsr | fc_x87_cw
-	pop       %r12                     // load r12
+	addq      $0x08, %rsp              // free fc_mxcsr | fc_x87_cw
+	pop       %r12                     // load r12                    <-- LLd miss
 	pop       %r13                     // load r13
 	pop       %r14                     // load r14
 	pop       %r15                     // load r15
 	pop       %rbx                     // load rbx
-	pop       %rbp                     // load rbp
+	pop       %rbp                     // load rbp                    <-- LLd miss
 	retq                               // enter context
 
 // mark the size of jump_fcontext
