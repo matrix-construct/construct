@@ -129,6 +129,7 @@ libircd_la_SOURCES += prof_linux.cc
 endif
 libircd_la_SOURCES += fs.cc
 libircd_la_SOURCES += ios.cc
+libircd_la_SOURCES += ctx_x86_64.S
 libircd_la_SOURCES += ctx.cc
 libircd_la_SOURCES += ctx_eh.cc
 libircd_la_SOURCES += ctx_ole.cc
@@ -164,6 +165,7 @@ libircd_la_SOURCES += ircd.cc
 
 base.lo:              AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 client.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+ctx_x86_64.lo:        AM_CPPFLAGS := -I$(top_srcdir)/include
 ctx.lo:               AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 ctx_ole.lo:           AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 ctx_eh.lo:            AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
