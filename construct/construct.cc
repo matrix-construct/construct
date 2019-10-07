@@ -175,55 +175,64 @@ noexcept try
 	// these; they'll be used to synchronize the closures below running in
 	// different contexts.
 	ircd::ctx::latch start(2), quit(2);
+	std::exception_ptr eptr;
 
 	// Setup the matrix homeserver application. This will be executed on an
 	// ircd::context (dedicated stack). We construct several objects on the
 	// stack which are the basis for our matrix homeserver. When the stack
 	// unwinds, the homeserver will go out of service.
-	const auto homeserver{[&origin, &server_name, &start, &quit]
+	const auto homeserver{[&origin, &server_name, &start, &quit, &eptr]
 	{
-		// 5
-		struct ircd::m::homeserver::opts opts;
-		opts.origin = origin;
-		opts.server_name = server_name;
-
-		// 6
-		// Load the matrix library dynamic shared object
-		ircd::matrix matrix;
-
-		// 7
-		// Run a primary homeserver based on the program options given.
-		const ircd::custom_ptr<ircd::m::homeserver> homeserver
+		try
 		{
-			// 7.1
-			matrix.init(&opts), [&matrix]
-			(ircd::m::homeserver *const homeserver)
+			// 5 Load the matrix library dynamic shared object
+			ircd::matrix matrix;
+
+			// 6 Run a primary homeserver based on the program options given.
+			struct ircd::m::homeserver::opts opts;
+			opts.origin = origin;
+			opts.server_name = server_name;
+			const ircd::custom_ptr<ircd::m::homeserver> homeserver
 			{
-				// 13.1
-				matrix.fini(homeserver);
-			}
-		};
+				// 6.1
+				matrix.init(&opts), [&matrix]
+				(ircd::m::homeserver *const homeserver)
+				{
+					// 11.1
+					matrix.fini(homeserver);
+				}
+			};
 
-		// 8
-		// Notify the loader the homeserver is ready for service.
-		start.count_down_and_wait();
+			// 7 Notify the loader the homeserver is ready for service.
+			start.count_down_and_wait();
 
-		// 9
-		// Yield until the loader notifies us; this stack will then unwind.
-		quit.count_down_and_wait();
+			// 9 Yield until the loader notifies us; this stack will then unwind.
+			quit.count_down_and_wait();
+		}
+		catch(...)
+		{
+			eptr = std::current_exception();
+			const ircd::ctx::exception_handler eh;
 
-		// 13
+			// 7' Notify the loader the homeserver failed to start
+			start.count_down_and_wait();
+
+			// 9' Yield until the loader notifies us; this stack will then unwind.
+			quit.count_down_and_wait();
+		}
+
+		// 11
 	}};
 
 	// This object registers a callback for a specific event in libircd; the
 	// closure is called from the main context (#1) running ircd::main().
-	// after libircd is ready for service in runlevel START but before entering
+	// after libircd is ready for service in runlevel IDLE but before entering
 	// runlevel RUN. It is called again immediately after entering runlevel
 	// QUIT, but before any functionality of libircd destructs. This cues us
 	// to start and stop the homeserver.
 	const ircd::run::changed loader
 	{
-		[&homeserver, &start, &quit](const auto &level)
+		[&homeserver, &start, &quit, &eptr](const auto &level)
 		{
 			static ircd::context context;
 
@@ -238,20 +247,23 @@ noexcept try
 				// here prevents ircd::main() from entering runlevel RUN.
 				start.count_down_and_wait();
 
-				// 10
+				// 8 Check if error on start; rethrowing that here propagates
+				// to ircd::main() and triggers a runlevel QUIT sequence.
+				if(!!eptr)
+					std::rethrow_exception(eptr);
+
+				// 8.1
 				return;
 			}
 
 			if(level != ircd::run::level::QUIT || !context)
 				return;
 
-			// 11
-			// Notify the waiting homeserver context to quit; this will
+			// 10 Notify the waiting homeserver context to quit; this will
 			// start shutting down the homeserver.
 			quit.count_down_and_wait();
 
-			// 12
-			// Wait for the homeserver context to finish before we return.
+			// 12 Wait for the homeserver context to finish before we return.
 			context.join();
 		}
 	};
@@ -294,7 +306,7 @@ noexcept try
 	// Blocks until a clean exit from a quit() or an exception comes out of it.
 	ios.run();
 
-	// 14
+	// 13
 	// The smoketest is enabled if the first value is true; then all of the
 	// values must be true for the smoketest to pass.
 	if(smoketest[0])
