@@ -144,6 +144,7 @@ if LINUX
 libircd_la_SOURCES += mods_ldso.cc
 endif
 libircd_la_SOURCES += db_write_thread.cc
+libircd_la_SOURCES += db_crc32.cc
 libircd_la_SOURCES += db_port.cc
 libircd_la_SOURCES += db_env.cc
 libircd_la_SOURCES += db.cc
@@ -175,6 +176,9 @@ db_port.lo:           AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 db_write_thread.lo:   AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 db_write_thread.lo:   AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb/include
 db_write_thread.lo:   AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb
+db_crc32.lo:          AM_CPPFLAGS := ${ROCKSDB_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
+db_crc32.lo:          AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb/include
+db_crc32.lo:          AM_CPPFLAGS += -I$(top_srcdir)/deps/rocksdb
 fmt.lo:               AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 fmt.lo:               AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
 fs.lo:                AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
