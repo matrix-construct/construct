@@ -15,7 +15,7 @@ namespace ircd::m
 	[[noreturn]] void failure(const qi::expectation_failure<const char *> &, const string_view &);
 }
 
-struct ircd::m::id::input
+struct __attribute__((visibility("hidden"))) ircd::m::id::input
 :qi::grammar<const char *, unused_type>
 {
 	using id = m::id;
@@ -154,7 +154,7 @@ struct ircd::m::id::input
 	{}
 };
 
-struct ircd::m::id::output
+struct __attribute__((visibility("hidden"))) ircd::m::id::output
 :karma::grammar<char *, unused_type>
 {
 	using it = char *;
@@ -165,7 +165,7 @@ struct ircd::m::id::output
 	{}
 };
 
-struct ircd::m::id::parser
+struct __attribute__((visibility("hidden"))) ircd::m::id::parser
 :input
 {
 	string_view operator()(const id::sigil &, const string_view &id) const;
@@ -335,7 +335,7 @@ catch(...)
 //
 
 //TODO: abstract this pattern with ircd::json::printer in ircd/spirit.h
-struct ircd::m::id::printer
+struct __attribute__((visibility("hidden"))) ircd::m::id::printer
 :output
 {
 	template<class generator,
