@@ -1142,11 +1142,14 @@ github_handle__create(std::ostream &out,
 		content["ref_type"]
 	};
 
-	out << ' '
-	    << ref_type
-	    << ' '
-	    << ref
-	    ;
+	out
+	<< ' '
+	<< ref_type
+	<< ' '
+	<< "<b>"
+	<< ref
+	<< "</b>"
+	;
 
 	return true;
 }
@@ -1165,11 +1168,14 @@ github_handle__delete(std::ostream &out,
 		content["ref_type"]
 	};
 
-	out << ' '
-	    << ref_type
-	    << ' '
-	    << ref
-	    ;
+	out
+	<< ' '
+	<< ref_type
+	<< ' '
+	<< "<b>"
+	<< ref
+	<< "</b>"
+	;
 
 	return true;
 }
