@@ -403,7 +403,7 @@ github_handle__push(std::ostream &out,
 		const json::object committer(commit["committer"]);
 		if(committer["email"] != author["email"])
 			out << " via <b>"
-			    << committer["name"]
+			    << json::string(committer["name"])
 			    << "</b>"
 			    ;
 
