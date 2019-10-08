@@ -154,6 +154,10 @@ github_handle__delete(std::ostream &,
                       const json::object &content);
 
 static bool
+github_handle__create(std::ostream &,
+                      const json::object &content);
+
+static bool
 github_handle__ping(std::ostream &,
                     const json::object &content);
 
@@ -232,6 +236,8 @@ github_handle(client &client,
 			github_handle__status(out, request.content):
 		type == "repository"?
 			github_handle__repository(out, request.content):
+		type == "create"?
+			github_handle__create(out, request.content):
 		type == "delete"?
 			github_handle__delete(out, request.content):
 
@@ -1118,6 +1124,29 @@ github_handle__repository(std::ostream &out,
 	out << "<pre><code>"
 	    << json::string(content["description"])
 	    << "</code></pre>";
+
+	return true;
+}
+
+bool
+github_handle__create(std::ostream &out,
+                      const json::object &content)
+{
+	const json::string &ref
+	{
+		content["ref"]
+	};
+
+	const json::string &ref_type
+	{
+		content["ref_type"]
+	};
+
+	out << ' '
+	    << ref_type
+	    << ' '
+	    << ref
+	    ;
 
 	return true;
 }
