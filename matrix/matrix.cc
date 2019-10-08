@@ -75,7 +75,6 @@ ircd::m::matrix::module_names
 	"m_room_third_party_invite",
 	"m_user_highlight_auth",
 	"m_vm_fetch",
-	"m_listen",
 
 	"federation_backfill_ids",
 	"federation_backfill",
