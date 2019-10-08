@@ -38,7 +38,7 @@ struct ircd::util::unwind
 
 	unwind(const unwind &) = delete;
 	unwind &operator=(const unwind &) = delete;
-	~unwind() noexcept
+	~unwind() noexcept __attribute__((always_inline))
 	{
 		func();
 	}
@@ -60,7 +60,7 @@ struct ircd::util::unwind::nominal
 	:func{std::forward<F>(func)}
 	{}
 
-	~nominal() noexcept
+	~nominal() noexcept __attribute__((always_inline))
 	{
 		if(likely(!std::uncaught_exceptions()))
 			func();
@@ -87,7 +87,7 @@ struct ircd::util::unwind::exceptional
 	:func{std::forward<F>(func)}
 	{}
 
-	~exceptional() noexcept
+	~exceptional() noexcept __attribute__((always_inline))
 	{
 		if(unlikely(std::uncaught_exceptions()))
 			func();
