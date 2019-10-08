@@ -376,17 +376,14 @@ ircd::m::sync::room_state_phased_events(data &data)
 	}
 
 	// Fetch the event data and stream to client
+	m::event::fetch event;
 	assert(i <= event_idx.size());
 	for(i = 0; i < event_idx.size(); ++i) try
 	{
 		if(!event_idx.at(i))
 			continue;
 
-		const m::event::fetch event
-		{
-			event_idx.at(i)
-		};
-
+		seek(event, event_idx.at(i));
 		append(event_idx.at(i), event);
 	}
 	catch(const std::exception &e)
@@ -462,15 +459,11 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 
 	// Fetch and stream those member events to client
 	bool ret{false};
-	std::for_each(begin(event_idx), end, [&data, &array, &ret]
+	m::event::fetch event;
+	std::for_each(begin(event_idx), end, [&data, &array, &ret, &event]
 	(const event::idx &sender_idx)
 	{
-		const m::event::fetch event
-		{
-			sender_idx, std::nothrow
-		};
-
-		if(!event.valid)
+		if(!seek(event, sender_idx, std::nothrow))
 			return;
 
 		ret |= room_state_append(data, array, event, sender_idx, false);
