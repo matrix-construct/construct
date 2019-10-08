@@ -161,7 +161,8 @@ get__members(client &client,
 	});
 
 	// stream to client
-	members.for_each(membership, [&membership, &membership_match, &at_idx, &chunk]
+	m::event::fetch event;
+	members.for_each(membership, [&membership, &membership_match, &at_idx, &chunk, &event]
 	(const m::user::id &member, const m::event::idx &event_idx)
 	{
 		if(event_idx > at_idx)
@@ -170,12 +171,7 @@ get__members(client &client,
 		if(!membership && !membership_match(member, event_idx))
 			return true;
 
-		const m::event::fetch event
-		{
-			event_idx, std::nothrow
-		};
-
-		if(!event.valid)
+		if(!seek(event, event_idx, std::nothrow))
 			return true;
 
 		chunk.append(event);
