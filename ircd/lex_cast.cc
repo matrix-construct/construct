@@ -169,6 +169,14 @@ ircd::lex_cast(ulong i,
 }
 
 template<> ircd::string_view
+ircd::lex_cast(float i,
+               const mutable_buffer &buf)
+{
+	static const size_t MAX(64);
+	return _lex_cast<MAX>(i, buf);
+}
+
+template<> ircd::string_view
 ircd::lex_cast(double i,
                const mutable_buffer &buf)
 {
@@ -272,6 +280,12 @@ ircd::lex_cast(const string_view &s)
 	return _lex_cast<unsigned long>(s);
 }
 
+template<> float
+ircd::lex_cast(const string_view &s)
+{
+	return _lex_cast<float>(s);
+}
+
 template<> double
 ircd::lex_cast(const string_view &s)
 {
@@ -368,6 +382,13 @@ template<> bool
 ircd::try_lex_cast<unsigned long>(const string_view &s)
 {
 	unsigned long i;
+	return boost::conversion::try_lexical_convert(s, i);
+}
+
+template<> bool
+ircd::try_lex_cast<float>(const string_view &s)
+{
+	float i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 

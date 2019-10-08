@@ -41,6 +41,7 @@ namespace ircd
 	template<> bool try_lex_cast<string_view>(const string_view &);       // stub always true
 	template<> bool try_lex_cast<long double>(const string_view &);
 	template<> bool try_lex_cast<double>(const string_view &);
+	template<> bool try_lex_cast<float>(const string_view &);
 	template<> bool try_lex_cast<ulong>(const string_view &);
 	template<> bool try_lex_cast<long>(const string_view &);
 	template<> bool try_lex_cast<uint>(const string_view &);
@@ -61,6 +62,7 @@ namespace ircd
 	template<> std::string lex_cast(const string_view &);                     // trivial
 	template<> long double lex_cast(const string_view &);
 	template<> double lex_cast(const string_view &);
+	template<> float lex_cast(const string_view &);
 	template<> ulong lex_cast(const string_view &);
 	template<> long lex_cast(const string_view &);
 	template<> uint lex_cast(const string_view &);
@@ -84,6 +86,7 @@ namespace ircd
 	template<> string_view lex_cast(nanoseconds, const mutable_buffer &buf);
 	template<> string_view lex_cast(long double, const mutable_buffer &buf);
 	template<> string_view lex_cast(double, const mutable_buffer &buf);
+	template<> string_view lex_cast(float, const mutable_buffer &buf);
 	template<> string_view lex_cast(ulong, const mutable_buffer &buf);
 	template<> string_view lex_cast(long, const mutable_buffer &buf);
 	template<> string_view lex_cast(uint, const mutable_buffer &buf);
