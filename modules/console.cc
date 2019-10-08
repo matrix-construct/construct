@@ -2929,9 +2929,14 @@ try
 		if(val == 0 && ticker != "-a")
 			continue;
 
-		out << std::left << std::setw(48) << std::setfill('_') << name
-		    << " " << val
-		    << std::endl;
+		char buf[48];
+		out << std::left << std::setw(48) << std::setfill('_') << name << " ";
+		if(has(name, ".bytes"))
+			out << pretty(buf, iec(val));
+		else
+			out << val;
+
+		out << std::endl;
 	}
 
 	for(uint32_t i(0); i < db::histogram_max; ++i)
