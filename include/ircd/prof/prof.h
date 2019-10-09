@@ -41,6 +41,7 @@ namespace ircd::prof
 #include "resource.h"
 #include "times.h"
 #include "system.h"
+#include "psi.h"
 
 // Exports to ircd::
 namespace ircd

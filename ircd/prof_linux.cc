@@ -156,6 +156,131 @@ catch(const std::exception &e)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// prof/psi.h
+//
+
+decltype(ircd::prof::psi::supported)
+ircd::prof::psi::supported
+{
+	info::kernel_version[0] > 4 ||
+	(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 20)
+};
+
+decltype(ircd::prof::psi::cpu)
+ircd::prof::psi::cpu
+{
+	"cpu"
+};
+
+decltype(ircd::prof::psi::mem)
+ircd::prof::psi::mem
+{
+	"memory"
+};
+
+decltype(ircd::prof::psi::io)
+ircd::prof::psi::io
+{
+	"io"
+};
+
+//
+// prof::psi::metric::refresh
+//
+
+bool
+ircd::prof::psi::refresh(file &file)
+noexcept try
+{
+	if(!supported)
+		return false;
+
+	if(unlikely(!file.name))
+		return false;
+
+	thread_local unique_mutable_buffer path_buf
+	{
+		fs::PATH_MAX_LEN
+	};
+
+	const auto &path
+	{
+		fs::path(path_buf, vector_view<const string_view>
+		{
+			"/proc/pressure"_sv, file.name
+		})
+	};
+
+	// Copy value into userspace
+	char buf[256];
+	fs::read_opts opts;
+	opts.aio = false; // can't read /proc through AIO
+	opts.all = false; // don't need posix read-loop; make one read(2) only.
+	const auto &result
+	{
+		fs::read(path, buf, opts)
+	};
+
+	tokens(result, '\n', [&file] // Read each line
+	(const string_view &line)
+	{
+		const auto &[type, vals]
+		{
+			split(line, ' ')
+		};
+
+		// The first token tells us what the metric is; we have allocated
+		// results for the following
+		if(type != "full" && type != "some")
+			return;
+
+		auto &metric
+		{
+			type == "full"?
+				file.full:
+				file.some
+		};
+
+		size_t i(0);
+		tokens(vals, ' ', [&metric, &i] // Read each key=value pair
+		(const string_view &key_val)
+		{
+			const auto &[key, val]
+			{
+				split(key_val, '=')
+			};
+
+			if(key == "total")
+			{
+				metric.stall = lex_cast<microseconds>(val);
+				return;
+			}
+			else if(startswith(key, "avg") && i < metric.avg.size())
+			{
+				metric.avg.at(i).window = lex_cast<seconds>(lstrip(key, "avg"));
+				metric.avg.at(i).pct = lex_cast<float>(val);
+				++i;
+			}
+		});
+	});
+
+	file.sampled = ircd::now<system_point>();
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		"Failed to refresh pressure stall information '%s' :%s",
+		file.name,
+		e.what(),
+	};
+
+	return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // prof/instructions.h
 //
 

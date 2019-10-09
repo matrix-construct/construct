@@ -1195,6 +1195,64 @@ console_cmd__vg(opt &out, const string_view &line)
 //
 
 bool
+console_cmd__prof__psi(opt &out, const string_view &line)
+{
+	const auto show_file{[&out]
+	(const string_view &name, prof::psi::file &file)
+	{
+		if(!refresh(file))
+			return;
+
+		char pbuf[48];
+		out
+		<< std::left << name
+		<< " some stall    "
+		<< pretty(pbuf, file.some.stall)
+		<< " ("
+		<< file.some.stall.count()
+		<< ')'
+		<< std::endl
+		;
+		for(size_t i(0); i < file.some.avg.size(); i++)
+			out
+			<< std::left << name
+			<< " some  "
+			<< std::right << std::setw(3) << file.some.avg.at(i).window.count()
+			<< "s        "
+			<< std::right << std::setw(4) << file.some.avg.at(i).pct << '%'
+			<< std::endl
+			;
+
+		out
+		<< std::endl
+		<< std::left << name
+		<< " full stall    "
+		<< pretty(pbuf, file.full.stall)
+		<< " ("
+		<< file.full.stall.count()
+		<< ')'
+		<< std::endl
+		;
+		for(size_t i(0); i < file.full.avg.size(); i++)
+			out
+			<< std::left << name
+			<< " full  "
+			<< std::right << std::setw(3) << file.full.avg.at(i).window.count()
+			<< "s        "
+			<< std::right << std::setw(4) << file.full.avg.at(i).pct << '%'
+			<< std::endl
+			;
+
+		out << std::endl;
+	}};
+
+	show_file("cpu", prof::psi::cpu);
+	show_file("mem", prof::psi::mem);
+	show_file("io ", prof::psi::io);
+	return true;
+}
+
+bool
 console_cmd__prof__vg__start(opt &out, const string_view &line)
 {
 	prof::vg::start();
