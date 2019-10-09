@@ -916,12 +916,6 @@ ircd::ctx::assert_critical()
 			"%lu '%s' :Illegal context switch", id(), name()
 		};
 }
-#else
-void
-ircd::ctx::assert_critical()
-{
-
-}
 #endif
 
 //

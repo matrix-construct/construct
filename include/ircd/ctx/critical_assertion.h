@@ -40,3 +40,11 @@ class ircd::ctx::this_ctx::critical_assertion
 	~critical_assertion() noexcept;
 	#endif
 };
+
+#ifdef NDEBUG
+inline void
+ircd::ctx::assert_critical()
+{
+	// eliminated in non-debug mode.
+}
+#endif
