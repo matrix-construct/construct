@@ -322,6 +322,21 @@ noexcept
 {
 }
 
+/// Inject a new event originating from this server.
+///
+ircd::m::vm::fault
+ircd::m::vm::eval::operator()(json::iov &event,
+                              const json::iov &contents)
+{
+	return vm::inject(*this, event, contents);
+}
+
+ircd::m::vm::fault
+ircd::m::vm::eval::operator()(const event &event)
+{
+	return vm::execute(*this, event);
+}
+
 ircd::m::vm::eval::operator
 const event::id::buf &()
 const
@@ -382,37 +397,4 @@ ircd::m::vm::eval::for_each_pdu(const std::function<bool (const event &)> &closu
 
 		return true;
 	});
-}
-
-///
-/// Figure 1:
-///          in     .  <-- injection
-///    ===:::::::==//
-///    |  ||||||| //   <-- these functions
-///    |   \\|// //|
-///    |    ||| // |   |  acceleration
-///    |    |||//  |   |
-///    |    |||/   |   |
-///    |    |||    |   V
-///    |    !!!    |
-///    |     *     |   <----- nozzle
-///    | ///|||\\\ |
-///    |/|/|/|\|\|\|   <---- propagation cone
-///  _/|/|/|/|\|\|\|\_
-///         out
-///
-
-/// Inject a new event originating from this server.
-///
-ircd::m::vm::fault
-ircd::m::vm::eval::operator()(json::iov &event,
-                              const json::iov &contents)
-{
-	return vm::inject(*this, event, contents);
-}
-
-ircd::m::vm::fault
-ircd::m::vm::eval::operator()(const event &event)
-{
-	return vm::execute(*this, event);
 }
