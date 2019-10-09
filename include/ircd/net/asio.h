@@ -22,6 +22,7 @@
 namespace ircd::net
 {
 	namespace ip = asio::ip;
+	using asio::deadline_timer;
 	using asio::steady_timer;
 	using ircd::string;
 

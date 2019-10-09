@@ -57,7 +57,7 @@ struct ircd::net::socket
 	ip::tcp::socket sd;
 	asio::ssl::stream<ip::tcp::socket &> ssl;
 	stat in, out;
-	steady_timer timer;
+	deadline_timer timer;
 	uint64_t timer_sem[2] {0};                   // handler, sender
 	bool timer_set {false};                      // boolean lockout
 	bool timedout {false};

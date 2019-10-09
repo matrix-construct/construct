@@ -4109,9 +4109,9 @@ noexcept
 		timer.expires_from_now()
 	};
 
-	const auto ret
+	const milliseconds ret
 	{
-		duration_cast<milliseconds>(exp)
+		exp.total_milliseconds()
 	};
 
 	timer_set = false;
@@ -4154,7 +4154,12 @@ ircd::net::socket::set_timeout(const milliseconds &t,
 	assert(timedout == false);
 	++timer_sem[1];
 	timer_set = true;
-	timer.expires_from_now(t);
+	const boost::posix_time::milliseconds pt
+	{
+		t.count()
+	};
+
+	timer.expires_from_now(pt);
 	timer.async_wait(ios::handle(descriptor, std::move(handler)));
 }
 
