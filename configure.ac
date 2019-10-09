@@ -569,23 +569,34 @@ AM_COND_IF([OPTIMIZE],
 	[
 		CXXFLAGS+=" -fgcse-sm"
 		CXXFLAGS+=" -fgcse-las"
-		CXXFLAGS+=" -frename-registers"
 		CXXFLAGS+=" -fsched-stalled-insns=0"
+		CXXFLAGS+=" -fsched-pressure"
+		CXXFLAGS+=" -fsched-spec-load"
+dnl		CXXFLAGS+=" -fsched2-use-superblocks"
+dnl		CXXFLAGS+=" -fsched2-use-superblocks"
 		CXXFLAGS+=" -fira-hoist-pressure"
 		CXXFLAGS+=" -fbranch-target-load-optimize"
 		CXXFLAGS+=" -frerun-loop-opt"
 		CXXFLAGS+=" -fdevirtualize-at-ltrans"
+dnl		CXXFLAGS+=" -fbtr-bb-exclusive"
+		CXXFLAGS+=" -fipa-pta"
+		CXXFLAGS+=" -fmodulo-sched"
+		CXXFLAGS+=" -fmodulo-sched-allow-regmoves"
+		CXXFLAGS+=" -ftracer"
 
 		dnl Optimization options that aren't compatible with debugging.
 		AM_COND_IF([DEBUG], [],
 		[
-			dnl CXXFLAGS+=" -fweb"
 			CXXFLAGS+=""
 		])
 	])
 ], [
 	optimize="no"
 	CXXFLAGS+=" -falign-functions"
+	CXXFLAGS+=" -falign-labels"
+	CXXFLAGS+=" -falign-loops"
+	CXXFLAGS+=" -falign-jumps"
+	CXXFLAGS+=" -fsection-anchors"
 ])
 
 dnl
@@ -629,6 +640,11 @@ dnl CXXFLAGS+=" -fcheck-pointer-bounds"
 AM_COND_IF([GCC],
 [
 	CXXFLAGS+=" -fstack-protector-explicit"
+])
+
+AM_COND_IF([GCC],
+[
+	CXXFLAGS+=" -fvtable-verify=none"
 ])
 
 dnl  -fvisibility-inlines-hidden - for optimization; note the address of inline
@@ -1987,6 +2003,7 @@ AM_COND_IF([GCC],
 	AM_COND_IF([LOWMEM_COMPILE],
 	[
 		SPIRIT_UNIT_CXXFLAGS+=" --param ggc-min-expand=1"
+		SPIRIT_UNIT_CXXFLAGS+=" -fno-ipa-pta"
 	])
 ])
 
