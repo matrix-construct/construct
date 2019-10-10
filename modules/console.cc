@@ -3859,6 +3859,8 @@ _print_sst_info_full(opt &out,
 	close_size("values size", f.values_size);
 	close_size("values average size", f.values_size / double(f.entries));
 	close_size("values average size per-block", f.values_size / double(f.data_blocks));
+	close_auto("values average per-block", f.entries / double(f.data_blocks));
+	close_auto("values average per-index", f.entries / double(f.index_parts));
 	close_auto("", "");
 }
 
