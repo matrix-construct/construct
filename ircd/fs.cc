@@ -753,12 +753,12 @@ ircd::fs::read(const fd &fd,
 	assert(opts.op == op::READ);
 
 	#ifdef IRCD_USE_IOU
-	if(iou::system && opts.aio)
+	if(likely(iou::system && opts.aio))
 		return iou::read(fd, iov, opts);
 	#endif
 
 	#ifdef IRCD_USE_AIO
-	if(aio::system && opts.aio)
+	if(likely(aio::system && opts.aio))
 		return aio::read(fd, iov, opts);
 	#endif
 
@@ -1134,12 +1134,12 @@ ircd::fs::write(const fd &fd,
 	assert(opts.op == op::WRITE);
 
 	#ifdef IRCD_USE_IOU
-	if(iou::system && opts.aio)
+	if(likely(iou::system && opts.aio))
 		return iou::write(fd, iov, opts);
 	#endif
 
 	#ifdef IRCD_USE_AIO
-	if(aio::system && opts.aio)
+	if(likely(aio::system && opts.aio))
 		return aio::write(fd, iov, opts);
 	#endif
 
