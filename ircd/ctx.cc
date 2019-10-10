@@ -211,15 +211,6 @@ ircd::ctx::ctx::wait()
 	if(--notes > 0)
 		return false;
 
-	// Save the return address on the stack here so we can reference it in
-	// a closure below shortly after resuming from the context switch. The
-	// return stack buffer may not have our return address anymore so we'll
-	// issue a prefetch instruction manually soon after the context switch.
-	const void *const return_address
-	{
-		__builtin_return_address(0)
-	};
-
 	// An interrupt invokes this closure to force the alarm to return.
 	const interruptor &interruptor{[this]
 	(ctx *const &interruptor) noexcept
@@ -240,11 +231,10 @@ ircd::ctx::ctx::wait()
 	// arguments comprise the initial control after the context switch.
 	boost::system::error_code ec; continuation
 	{
-		predicate, interruptor, [this, &ec, &return_address]
+		predicate, interruptor, [this, &ec]
 		(auto &yield)
 		{
 			alarm.async_wait(yield[ec]);
-			__builtin_prefetch(return_address, 0, 3);
 		}
 	};
 
@@ -1172,10 +1162,6 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	{
 		eptr = std::current_exception();
 	}
-
-	// The branch predictor's return address buffer is likely useless now.
-	// We try to manually ensure the next return target is cached.
-	__builtin_prefetch(__builtin_return_address(0), 0, 3);
 
 	// Restore the current context register.
 	ircd::ctx::current = self;
