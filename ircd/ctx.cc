@@ -198,6 +198,7 @@ ircd::ctx::ctx::jump()
 /// considered handled an another attempt to `wait()` can be made. Returns true
 /// if the context suspended and was notified. When a context wakes up the
 /// note counter is reset.
+[[gnu::hot]]
 bool
 IRCD_CTX_STACK_PROTECT
 ircd::ctx::ctx::wait()
@@ -258,7 +259,6 @@ ircd::ctx::ctx::wait()
 ///
 /// Returns true if this note was the first note received by this context
 /// while it's been suspended or false if it's already been notified.
-[[gnu::hot]]
 bool
 ircd::ctx::ctx::note()
 noexcept
@@ -411,6 +411,7 @@ ircd::ctx::for_each(const std::function<bool (ctx &)> &closure)
 /// Yield to context `ctx`.
 ///
 ///
+[[gnu::hot]]
 void
 ircd::ctx::yield(ctx &ctx)
 {
@@ -427,7 +428,7 @@ ircd::ctx::yield(ctx &ctx)
 	// things allowing for more direct jumps until all work is complete.
 	// !!! TODO !!!
 
-	notify(ctx);
+	ctx.note();
 }
 
 /// Notifies `ctx` to wake up from another std::thread
@@ -733,6 +734,7 @@ ircd::ctx::this_ctx::wait_until(const system_point &tp,
 }
 
 /// Yield the currently running context until notified.
+[[gnu::hot]]
 void
 ircd::ctx::this_ctx::wait()
 {
@@ -2754,16 +2756,7 @@ noexcept
 		return;
 
 	q.push_back(c);
-	notify(*c);
-}
-
-/// Wake up the next context waiting on the dock
-void
-ircd::ctx::dock::notify_one()
-noexcept
-{
-	if(!q.empty())
-		notify(*q.front());
+	ircd::ctx::notify(*c);
 }
 
 /// Wake up all contexts waiting on the dock.
@@ -2777,10 +2770,11 @@ noexcept
 {
 	q.for_each([this](ctx &c)
 	{
-		notify(c);
+		ircd::ctx::notify(c);
 	});
 }
 
+[[gnu::hot]]
 void
 ircd::ctx::dock::wait()
 {
@@ -2821,13 +2815,6 @@ ircd::ctx::dock::wait(const predicate &pred)
 		ircd::ctx::wait();
 	}
 	while(!pred());
-}
-
-void
-ircd::ctx::dock::notify(ctx &ctx)
-noexcept
-{
-	ircd::ctx::notify(ctx);
 }
 
 /// The number of contexts waiting in the queue.

@@ -25,8 +25,6 @@ class ircd::ctx::dock
 
 	list q;
 
-	void notify(ctx &) noexcept;
-
   public:
 	bool empty() const noexcept;
 	size_t size() const noexcept;
@@ -160,4 +158,15 @@ ircd::ctx::dock::wait_until(time_point&& tp,
 			return false;
 	}
 	while(1);
+}
+
+/// Wake up the next context waiting on the dock
+inline void
+ircd::ctx::dock::notify_one()
+noexcept
+{
+	if(q.empty())
+		return;
+
+	ircd::ctx::notify(*q.front());
 }
