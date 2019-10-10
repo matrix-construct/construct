@@ -1091,9 +1091,11 @@ try
 	// MUST be 0 or std::threads are spawned in rocksdb.
 	opts->max_file_opening_threads = 0;
 
-	// TODO: We should hint rocksdb with a harder value so it doesn't
-	// potentially eat up all our fd's.
-	opts->max_open_files = ircd::info::rlimit_nofile / 2;
+	// limit maxfdto prevent too many small files degrading read perf; too low is
+	// bad for write perf.
+	opts->max_open_files = ircd::info::rlimit_nofile?
+		std::min(ircd::info::rlimit_nofile, 256UL): // limit when rlimit supported
+		256UL; // default when rlimit not supported.
 
 	// TODO: Check if these values can be increased; RocksDB may keep
 	// thread_local state preventing values > 1.
