@@ -720,6 +720,7 @@ catch(const std::exception &e)
 	return error_to_status{e};
 }
 
+[[gnu::hot]]
 uint64_t
 ircd::db::database::env::NowMicros()
 noexcept
@@ -729,6 +730,7 @@ noexcept
 
 /// Bug in rocksdb causes this to not be called all the time, specifically
 /// for perf events.
+[[gnu::hot]]
 uint64_t
 ircd::db::database::env::NowNanos()
 noexcept
