@@ -121,14 +121,14 @@ m::resource::response
 post__keys_query(client &client,
                  const m::resource::request &request)
 {
-	const milliseconds timeout{[&request]
+	const milliseconds
+	timeout_min{query_timeout_min},
+	timeout_max{query_timeout_max},
+	timeout_default{query_timeout_default},
+	timeout
 	{
-		const milliseconds _default(query_timeout_default);
-		milliseconds ret(request.get("timeout", _default));
-		ret = std::max(ret, milliseconds(query_timeout_min));
-		ret = std::min(ret, milliseconds(query_timeout_max));
-		return ret;
-	}()};
+		std::clamp(request.get("timeout", timeout_default), timeout_min, timeout_max)
+	};
 
 	const auto &token
 	{

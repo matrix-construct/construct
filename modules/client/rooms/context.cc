@@ -63,11 +63,10 @@ get__context(client &client,
 		url::decode(event_id, request.parv[2])
 	};
 
-	const auto limit{[&request]
+	const auto &limit
 	{
-		auto ret(request.query.get<size_t>("limit", default_limit));
-		return std::min(ret, size_t(limit_max));
-	}()};
+		std::min(request.query.get<size_t>("limit", default_limit), size_t(limit_max))
+	};
 
 	const m::room room
 	{

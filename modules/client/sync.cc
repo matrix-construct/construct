@@ -1106,17 +1106,15 @@ try
 {
 	uint64_t(lex_cast<int64_t>(next_batch_token?: "-1"_sv))
 }
-,timesout{[&request]
+,timesout
 {
-	auto ret
-	{
-		request.query.get("timeout", milliseconds(timeout_default))
-	};
-
-	ret = std::min(ret, milliseconds(timeout_max));
-	ret = std::max(ret, milliseconds(timeout_min));
-	return now<system_point>() + ret;
-}()}
+	std::clamp
+	(
+		request.query.get("timeout", milliseconds(timeout_default)),
+		milliseconds(timeout_min),
+		milliseconds(timeout_max)
+	)
+}
 ,full_state
 {
 	request.query.get("full_state", false)

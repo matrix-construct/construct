@@ -122,14 +122,14 @@ m::resource::response
 post__keys_claim(client &client,
                  const m::resource::request &request)
 {
-	const milliseconds timeout{[&request]
+	const milliseconds
+	timeout_min{claim_timeout_min},
+	timeout_max{claim_timeout_max},
+	timeout_default{claim_timeout_default},
+	timeout
 	{
-		const milliseconds _default(claim_timeout_default);
-		milliseconds ret(request.get("timeout", _default));
-		ret = std::max(ret, milliseconds(claim_timeout_min));
-		ret = std::min(ret, milliseconds(claim_timeout_max));
-		return ret;
-	}()};
+		std::clamp(request.get("timeout", timeout_default), timeout_min, timeout_max)
+	};
 
 	const json::object &one_time_keys
 	{
