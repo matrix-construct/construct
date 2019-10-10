@@ -372,3 +372,20 @@ struct ircd::m::id::buf
 		return *this;
 	}
 };
+
+inline
+ircd::m::id::id(const string_view &str)
+:id
+{
+	m::sigil(str), str
+}
+{
+}
+
+inline
+ircd::m::id::id(const id::sigil &sigil,
+                const string_view &id)
+:string_view{id}
+{
+	valid(sigil, id);
+}

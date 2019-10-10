@@ -416,21 +416,6 @@ const
 // id::id
 //
 
-ircd::m::id::id(const string_view &str)
-:id
-{
-	m::sigil(str), str
-}
-{
-}
-
-ircd::m::id::id(const id::sigil &sigil,
-                const string_view &id)
-:string_view{id}
-{
-	valid(sigil, id);
-}
-
 ircd::m::id::id(const enum sigil &sigil,
                 const mutable_buffer &buf,
                 const string_view &local,
