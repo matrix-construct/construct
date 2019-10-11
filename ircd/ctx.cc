@@ -207,16 +207,10 @@ ircd::ctx::ctx::wait()
 
 	assert(this->yc);
 	assert(current == this);
+	assert(notes == 1);
 
-	if(--notes > 0)
-		return false;
-
-	// An interrupt invokes this closure to force the alarm to return.
-	const interruptor &interruptor{[this]
-	(ctx *const &interruptor) noexcept
-	{
-		wake();
-	}};
+	// Clear the notification counter.
+	notes = 0;
 
 	// This is currently a dummy predicate; this is where we can take the
 	// user's real wakeup condition (i.e from a ctx::dock) and use it with
@@ -224,6 +218,13 @@ ircd::ctx::ctx::wait()
 	const predicate &predicate{[this]
 	{
 		return notes > 0;
+	}};
+
+	// An interrupt invokes this closure to force the alarm to return.
+	const interruptor &interruptor{[this]
+	(ctx *const &interruptor) noexcept
+	{
+		wake();
 	}};
 
 	// The construction of the arguments to the call on this stack comprise
