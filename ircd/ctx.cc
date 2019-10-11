@@ -181,7 +181,7 @@ ircd::ctx::ctx::jump()
 	continuation
 	{
 		continuation::false_predicate, continuation::noop_interruptor, [&target]
-		(auto &yield)
+		(auto &yield) noexcept
 		{
 			target();
 		}
@@ -232,7 +232,7 @@ ircd::ctx::ctx::wait()
 	boost::system::error_code ec; continuation
 	{
 		predicate, interruptor, [this, &ec]
-		(auto &yield)
+		(auto &yield) noexcept
 		{
 			alarm.async_wait(yield[ec]);
 		}
@@ -1080,34 +1080,10 @@ ircd::ctx::continuation::noop_interruptor{[]
 	return;
 }};
 
-//
-// continuation
-//
-
 [[gnu::hot]]
-ircd::ctx::continuation::continuation(const predicate &pred,
-                                      const interruptor &intr,
-                                      const yield_closure &closure)
-:self
-{
-	ircd::ctx::current
-}
-,pred
-{
-	&pred
-}
-,intr
-{
-	&intr
-}
-,frame_address
-{
-	__builtin_frame_address(0)
-}
-,uncaught_exceptions
-{
-	exception_handler::uncaught_exceptions(0)
-}
+void
+ircd::ctx::continuation::leave()
+noexcept
 {
 	assert(self != nullptr);
 	assert(self->notes <= 1);
@@ -1150,19 +1126,12 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	// restore this register; otherwise it remains null for executions on
 	// the program's main stack.
 	ircd::ctx::current = nullptr;
+}
 
-	// Run the provided routine which performs the actual context switch.
-	// Everything happening in this closure is no longer considered part
-	// of this context, but it is technically operating on this stack.
-	std::exception_ptr eptr; try
-	{
-		closure(*self->yc);
-	}
-	catch(...)
-	{
-		eptr = std::current_exception();
-	}
-
+[[gnu::hot]]
+void
+ircd::ctx::continuation::enter()
+{
 	// Restore the current context register.
 	ircd::ctx::current = self;
 
@@ -1185,13 +1154,8 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 		self->interruption_point();
 		__builtin_unreachable();
 	}
-
-	// Check if the operation failed; it's now safe to throw that.
-	if(unlikely(eptr))
-		std::rethrow_exception(eptr);
 }
 
-[[gnu::hot]]
 ircd::ctx::continuation::operator
 boost::asio::yield_context &()
 noexcept
@@ -1201,7 +1165,6 @@ noexcept
 	return *self->yc;
 }
 
-[[gnu::hot]]
 ircd::ctx::continuation::operator
 const boost::asio::yield_context &()
 const noexcept

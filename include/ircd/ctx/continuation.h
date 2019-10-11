@@ -21,7 +21,6 @@ namespace ircd::ctx
 	struct continuation;
 
 	using yield_context = boost::asio::yield_context;
-	using yield_closure = std::function<void (yield_context &)>;
 	using interruptor = std::function<void (ctx *const &)>;
 	using predicate = std::function<bool ()>;
 }
@@ -54,21 +53,75 @@ struct ircd::ctx::continuation
 	static const predicate false_predicate;
 	static const interruptor noop_interruptor;
 
-	ctx *const self;
-	const predicate *const pred;
-	const interruptor *const intr;
 	const void *const frame_address;
-	const uint uncaught_exceptions;
+	const void *const return_address;
+	const interruptor *const intr;
+	const predicate *const pred;
+	const size_t uncaught_exceptions;
+	ctx *const self;
 
 	operator const boost::asio::yield_context &() const noexcept;
 	operator boost::asio::yield_context &() noexcept;
 
+	void enter();
+	void leave() noexcept;
+
+	template<class yield_closure>
 	continuation(const predicate &,
 	             const interruptor &,
-	             const yield_closure &);
+	             yield_closure&&);
 
 	continuation(continuation &&) = delete;
 	continuation(const continuation &) = delete;
 	continuation &operator=(continuation &&) = delete;
 	continuation &operator=(const continuation &) = delete;
 };
+
+template<class yield_closure>
+inline
+__attribute__((always_inline))
+ircd::ctx::continuation::continuation(const predicate &pred,
+                                      const interruptor &intr,
+                                      yield_closure&& closure)
+:frame_address
+{
+	__builtin_frame_address(0)
+}
+,return_address
+{
+	__builtin_return_address(0)
+}
+,intr
+{
+	&intr
+}
+,pred
+{
+	&pred
+}
+,uncaught_exceptions
+{
+	exception_handler::uncaught_exceptions(0)
+}
+,self
+{
+	ircd::ctx::current
+}
+{
+	// Run the provided routine which performs the actual context switch.
+	// Everything happening in this closure is no longer considered part
+	// of this context, but it is technically operating on this stack.
+	leave();
+	std::exception_ptr eptr; try
+	{
+		closure(static_cast<yield_context &>(*this));
+	}
+	catch(...)
+	{
+		eptr = std::current_exception();
+	}
+
+	enter();
+	if(unlikely(eptr))
+		std::rethrow_exception(eptr);
+}
