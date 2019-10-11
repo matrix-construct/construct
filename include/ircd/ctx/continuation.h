@@ -125,3 +125,27 @@ ircd::ctx::continuation::continuation(const predicate &pred,
 	if(unlikely(eptr))
 		std::rethrow_exception(eptr);
 }
+
+inline void *
+__attribute__((always_inline))
+boost::coroutines::detail::coroutine_context::jump(coroutine_context &other,
+                                                   void *param)
+{
+	data_t data
+	{
+		this, param
+	};
+
+	context::detail::transfer_t t
+	{
+		context::detail::jump_fcontext(other.ctx_, &data)
+	};
+
+	data_t *const td
+	{
+		static_cast<data_t *>(t.data)
+	};
+
+	td->from->ctx_ = t.fctx;
+	return td->data;
+}
