@@ -1,32 +1,37 @@
 # This — is The **Construct**
 
 <a href="share/webapp">
-	<img align="right" src="https://i.imgur.com/TIf8kEC.png" />
+	<img align="right" src="https://i.imgur.com/TIf8kEC.png">
 </a>
 
 It all started in 1988 when Jarkko Oikarinen developed a free and open source server
 at the University of Oulu which facilitated real-time communication over the internet.
 Its [derivatives](https://upload.wikimedia.org/wikipedia/commons/d/d8/IRCd_software_implementations.png)
-have underpinned the major chat networks for decades ever since.
+have underpinned the major networks for decades.
 
-Due to their age and stagnation since the mid-2000's, a growing number of
-proprietary cloud services have filled the vacuum of innovation. In 2014 a new
-approach was proposed to reinvigorate real-time communication for free and open
-source software: a *federation of networks* known as *the matrix*.
+The protocol has since stagnated, largely abandoned except by evangelists. A
+growing number of proprietary cloud services have filled the vacuum of
+innovation. Free software projects are relegated to collaborating on non-free
+platforms for a basic rich user experience. The consensus is that decentralization
+is needed, and users not be limited
+to some arcane retro-environment.
 
 <a href="https://github.com/vector-im/riot-web/">
 	<img align="right" src="https://i.imgur.com/DUuGSrH.png" />
 </a>
 
-**This is the Construct** — the community's own Matrix server. It is designed to be
-fast and highly scalable, and to be developed by volunteer contributors over
-the internet. This mission strives to make the software easy to understand, modify, audit,
-and extend. It remains true to its roots with its modular design and having minimal
-requirements. Even though all of the old code has been rewritten, the same spirit and
-_philosophy of its predecessors_ is still obvious throughout.
+**This is the Construct** — Federated team collaboration built with the
+[WASM Virtual Machine](https://webassembly.org). Clients and servers implement a
+minimal ABI based on their capabilities while the community at large builds all
+features as modules. Construct makes the chat room programmable.
+Applications govern all their basic functions. Everything from the appearance of a room as seen by
+users to some continuous-integration running in the background for developers
+is customizable by embedding apps around your room.
 
-Matrix is about giving you control over your communication; Construct is about
-giving you control over Matrix.
+A variety of apps have already been created by developers for their own needs.
+Most choose to make them available to the community, licensed as free
+software. This is a powerful construct, as you can import these apps to enrich
+your own rooms.
 
 ## Installation
 
