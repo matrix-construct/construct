@@ -74,15 +74,10 @@ asio.h.gch: \
 	AM_CPPFLAGS += @BOOST_CPPFLAGS@ @SSL_CPPFLAGS@ @CRYPTO_CPPFLAGS@
 
 clean-local:
-	rm -f ircd.h.gch
-	rm -f ircd.pic.h
-	rm -f ircd.pic.h.gch
-	rm -f asio.h.gch
-	rm -f spirit.h.gch
-	rm -f matrix.h.gch
-	rm -f matrix.pic.h
-	rm -f matrix.pic.h.gch
+	rm -f *.h.gch
 	rm -f *.gch.tmp
+	rm -f ircd.pic.h
+	rm -f matrix.pic.h
 
 install-mkdirs: $(DEPS) $(BUILT_SOURCES)
 	-@if test ! -d $(DESTDIR)$(includedir); then \
