@@ -596,7 +596,6 @@ dnl		CXXFLAGS+=" -fbtr-bb-exclusive"
 	CXXFLAGS+=" -falign-labels"
 	CXXFLAGS+=" -falign-loops"
 	CXXFLAGS+=" -falign-jumps"
-	CXXFLAGS+=" -fsection-anchors"
 ])
 
 dnl
