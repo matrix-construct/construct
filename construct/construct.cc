@@ -35,6 +35,7 @@ bool read_only;
 bool write_avoid;
 bool soft_assert;
 bool nomatrix;
+bool matrix;
 const char *execute;
 std::array<bool, 7> smoketest;
 
@@ -62,6 +63,7 @@ lgetopt opts[]
 	{ "smoketest",  &smoketest[0],  lgetopt::BOOL,    "Starts and stops the daemon to return success."},
 	{ "sassert",    &soft_assert,   lgetopt::BOOL,    "Softens assertion effects in debug mode."},
 	{ "nomatrix",   &nomatrix,      lgetopt::BOOL,    "Prevent loading the matrix application module."},
+	{ "matrix",     &matrix,        lgetopt::BOOL,    "Allow loading the matrix application module."},
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -104,6 +106,8 @@ noexcept try
 	auto argv(_argv), envp(_envp);
 	const char *const progname(_argv[0]);
 	parseargs(&argc, &argv, opts);
+	matrix &= !nomatrix;
+	nomatrix |= !matrix;
 
 	// cores are not dumped without consent of the user to maintain the privacy
 	// of cryptographic key material in memory at the time of the crash. Note
@@ -148,7 +152,7 @@ noexcept try
 	};
 
 	// at least one server_name argument is required for now.
-	if(!server_name)
+	if(!server_name && matrix)
 		throw ircd::user_error
 		{
 			"usage :%s <origin> [servername]", progname
