@@ -39,6 +39,14 @@ namespace ircd::spirit
 	extern thread_local char rulebuf[64]; // parse.cc
 }
 
+namespace ircd
+{
+	template<class parent_error,
+	         class it = const char *,
+	         class... args>
+	bool parse(args&&...);
+}
+
 namespace ircd {
 namespace spirit
 __attribute__((visibility("hidden")))
@@ -157,5 +165,19 @@ ircd::spirit::expectation_failure<parent>::expectation_failure(const qi::expecta
 	string_view{e.first, e.first + std::min(std::distance(e.first, e.last), show_max)}
 }
 {}
+
+template<class parent_error,
+         class it,
+         class... args>
+inline bool
+ircd::parse(args&&... a)
+try
+{
+	return spirit::qi::parse(std::forward<args>(a)...);
+}
+catch(const spirit::qi::expectation_failure<it> &e)
+{
+	throw spirit::expectation_failure<parent_error>(e);
+}
 
 #endif // HAVE_IRCD_SPIRIT_H
