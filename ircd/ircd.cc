@@ -484,7 +484,7 @@ catch(const std::exception &e)
 
 	log::critical
 	{
-		"IRCd level change to '%s': %s",
+		"IRCd level change to '%s' :%s",
 		reflect(new_level),
 		e.what()
 	};
