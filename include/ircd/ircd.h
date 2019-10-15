@@ -19,6 +19,7 @@
 #include "vector_view.h"
 #include "byte_view.h"
 #include "buffer/buffer.h"
+#include "leb128.h"
 #include "allocator.h"
 #include "util/util.h"
 #include "exception.h"
