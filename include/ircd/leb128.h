@@ -14,17 +14,20 @@
 /// Little Endian Base 128 (unsigned) tool suite.
 namespace ircd::uleb128
 {
-	template<class T> constexpr size_t len(const T &) noexcept;
+	template<class T> constexpr size_t length(const T &) noexcept;
+	template<> size_t length(const uint128_t &) noexcept;
+	template<> size_t length(const uint64_t &) noexcept;
+
 	template<class T> constexpr T encode(T) noexcept;
 	template<class T> constexpr T decode(T) noexcept;
 }
 
 /// Generic template to decode an unsigned LEB128. For constexprs this
 /// produces zero code. Inlined it is branchless, and reasonable. Unfortunately
-/// too much unrolling can be unwieldy for inlining, but the use cases tend to
-/// be very high in call frequency to decode many bytes: this is why we have
-/// some template specializations with platform-specific optimizations;
-/// otherwise, this template is the default.
+/// too much unrolling can be unwieldy for inlining when using larger word
+/// sizes, but the use cases tend to be very high in call frequency to decode
+/// many bytes: this is why we have some template specializations with
+/// platform-specific optimizations; otherwise, this template is the default.
 ///
 /// Note that the input can contain junk above the encoded integer, which will
 /// be ignored. Decoding starts at the first byte of the input (regardless of
@@ -63,6 +66,10 @@ noexcept
 	return ret;
 }
 
+/// Generic template to encode an unsigned LEB128 integer from native type T.
+/// Type T must be large enough to hold the result. For the common T=uint64_t
+/// the input cannot use more than 56 bits. There is no checking if the input
+/// value is too large for encoding.
 template<class T>
 inline constexpr T
 ircd::uleb128::encode(T val)
@@ -93,9 +100,45 @@ noexcept
 	return ret;
 }
 
+/// The terminating/last byte for the encoded input is the least significant
+/// byte without its MSB set. We find that by inverting the mask and
+/// counting the trailing (least significant) zero bits; then add one for
+/// the terminating byte itself. Note doc sez if mask had all zero bits then
+/// the result of clz/ctz is undefined.
+template<>
+inline size_t
+ircd::uleb128::length(const uint64_t &val)
+noexcept
+{
+	const int mask
+	{
+		_mm_movemask_pi8(__m64(val))
+	};
+
+	return __builtin_ctz(~mask) + 1;
+}
+
+template<>
+inline size_t
+ircd::uleb128::length(const uint128_t &val)
+noexcept
+{
+	const int mask
+	{
+		_mm_movemask_epi8(__m128i(val))
+	};
+
+	return __builtin_ctz(~mask) + 1;
+}
+
+/// Counts number of bytes of an LEB encoded integer contained in a word of
+/// type T. This is the length of the LEB encoding, not the decoded length.
+/// For large integers some template specializations generate optimized
+/// code which doesn't need to be unrolled; otherwise this template is the
+/// default naive loop (which generates zero code for constexprs).
 template<class T>
 inline constexpr size_t
-ircd::uleb128::len(const T &val)
+ircd::uleb128::length(const T &val)
 noexcept
 {
 	constexpr const T control_mask {0x80};
