@@ -105,6 +105,7 @@ noexcept
 /// counting the trailing (least significant) zero bits; then add one for
 /// the terminating byte itself. Note doc sez if mask had all zero bits then
 /// the result of clz/ctz is undefined.
+#if defined(__MMX__)
 template<>
 inline size_t
 ircd::uleb128::length(const uint64_t &val)
@@ -119,7 +120,9 @@ noexcept
 
 	return __builtin_ctz(~mask) + 1;
 }
+#endif
 
+#if defined(__SSE2__)
 template<>
 inline size_t
 ircd::uleb128::length(const uint128_t &val)
@@ -134,6 +137,7 @@ noexcept
 
 	return __builtin_ctz(~mask) + 1;
 }
+#endif
 
 /// Counts number of bytes of an LEB encoded integer contained in a word of
 /// type T. This is the length of the LEB encoding, not the decoded length.
