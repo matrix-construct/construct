@@ -110,9 +110,11 @@ inline size_t
 ircd::uleb128::length(const uint64_t &val)
 noexcept
 {
+	static const int max_mask {0x0000007f};
+
 	const int mask
 	{
-		_mm_movemask_pi8(__m64(val))
+		_mm_movemask_pi8(__m64(val)) & max_mask
 	};
 
 	return __builtin_ctz(~mask) + 1;
@@ -123,9 +125,11 @@ inline size_t
 ircd::uleb128::length(const uint128_t &val)
 noexcept
 {
+	static const int max_mask {0x00007fff};
+
 	const int mask
 	{
-		_mm_movemask_epi8(__m128i(val))
+		_mm_movemask_epi8(__m128i(val)) & max_mask
 	};
 
 	return __builtin_ctz(~mask) + 1;
@@ -144,7 +148,7 @@ noexcept
 	constexpr const T control_mask {0x80};
 
 	size_t i(0);
-	for(; i < sizeof(T); ++i)
+	for(; i < sizeof(T) - 1; ++i)
 		if(~val & (control_mask << (i * 8)))
 			break;
 
