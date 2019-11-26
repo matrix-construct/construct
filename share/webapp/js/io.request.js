@@ -427,9 +427,15 @@ mc.io.request.on.readystatechange[XMLHttpRequest.LOADING] = function(event)
 
 mc.io.request.on.readystatechange[XMLHttpRequest.DONE] = function(event)
 {
-	mc.io.request.destructor.call(this);
-
 	let code = parseInt(this.xhr.status);
+
+	// Case for file:// protocol which reports code 0 (since it's not HTTP)
+	// on success and failure; we test for success here and manually assign
+	// a 200 code.
+	if(!code && this.xhr.responseURL.startsWith("file://"))
+		code = defined(this.xhr.response)? 200 : 0;
+
+	mc.io.request.destructor.call(this);
 	switch(Math.floor(code / 100))
 	{
 		case 2:   // 2xx
@@ -504,6 +510,8 @@ mc.io.request.error = function(event)
 			undefined,
 
 		name:
+			empty(this.xhr)?
+				"Network Request Not Possible":
 			this.xhr.statusText == "error"?
 				"Network Request Error":
 			this.xhr.statusText == "abort"?
@@ -516,9 +524,9 @@ mc.io.request.error = function(event)
 				this.reason:
 			!window.navigator.onLine?
 				"disconnected":
-			this.started + 10 > mc.now()?
-				"killed":
-			"timeout",
+			this.started + (10 * 1000) < mc.now()?
+				"timeout":
+			"unknown/unhandled",
 
 		status:
 			this.xhr.status != 0? this.xhr.status : "Client",
