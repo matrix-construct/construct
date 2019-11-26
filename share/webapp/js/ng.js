@@ -189,6 +189,9 @@ mc.ng.timeout = function(timeout, closure)
 		timeout = undefined;
 	}
 
+	if(typeof(closure) != "function")
+		closure = () => {};
+
 	//TODO: XXX: arbitrary
 	let $timeout = mc.ng.timeout.$timeout;
 	return $timeout(closure, timeout);
