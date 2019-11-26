@@ -2531,6 +2531,7 @@ type="text/ng-template"
 	class="menu"
 	ng-if="handler_exists(['mc.menu', event.state_key])"
 	ng-include="handler_path(['mc.menu', event.state_key])"
+	ng-controller="menu as menu"
 	>
 	</div>
 	<div
