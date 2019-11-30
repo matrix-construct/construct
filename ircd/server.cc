@@ -3770,7 +3770,8 @@ const
 	const auto &req{*request};
 	const auto &content{req.in.content};
 
-	if(unlikely(size(content) <= state.content_read))
+	static const size_t buf_min {16};
+	if(unlikely(size(content) <= state.content_read + buf_min))
 		throw buffer_overrun
 		{
 			"Content buffer of %zu bytes too small to read next chunk header",
@@ -3865,7 +3866,8 @@ const
 	};
 
 	assert(head_max >= head_offset);
-	if(unlikely(head_max - head_offset <= 16))
+	static const size_t buf_min {16};
+	if(unlikely(head_max - head_offset <= buf_min))
 		throw buffer_overrun
 		{
 			"Remaining head buffer of %zu bytes too small to read next chunk header",
