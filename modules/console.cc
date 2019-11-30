@@ -3017,7 +3017,7 @@ try
 
 		out << std::left << std::setw(48) << std::setfill('_') << name
 		    << std::setfill(' ') << std::right
-		    << " " << std::setw(9) << val.hits << " hit "
+		    << " " << std::setw(10) << val.hits << " hit "
 		    << " " << std::setw(13) << val.time << " tot "
 		    << " " << std::setw(12) << uint64_t(val.max) << " max "
 		    << " " << std::setw(10) << uint64_t(val.median) << " med "
@@ -3237,7 +3237,7 @@ try
 		    << " "
 		    << std::setw(7) << "PCT"
 		    << " "
-		    << std::setw(9) << "HITS"
+		    << std::setw(10) << "HITS"
 		    << " "
 		    << std::setw(9) << "MISSES"
 		    << " "
@@ -3260,7 +3260,7 @@ try
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (usage_pct * 100)
 		    << "%"
 		    << " "
-		    << std::setw(9) << hits
+		    << std::setw(10) << hits
 		    << " "
 		    << std::setw(9) << misses
 		    << " "
@@ -3288,7 +3288,7 @@ try
 	    << " "
 	    << std::setw(7) << "PCT"
 	    << " "
-	    << std::setw(9) << "HITS"
+	    << std::setw(10) << "HITS"
 	    << " "
 	    << std::setw(9) << "MISSES"
 	    << " "
@@ -3318,7 +3318,7 @@ try
 		    << std::setw(6) << std::right << std::fixed << std::setprecision(2) << (pct * 100)
 		    << '%'
 		    << " "
-		    << std::setw(9) << s.hits
+		    << std::setw(10) << s.hits
 		    << " "
 		    << std::setw(9) << s.misses
 		    << " "
