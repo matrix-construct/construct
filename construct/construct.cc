@@ -35,7 +35,7 @@ bool read_only;
 bool write_avoid;
 bool soft_assert;
 bool nomatrix;
-bool matrix;
+bool matrix {true}; // matrix server by default.
 const char *execute;
 std::array<bool, 7> smoketest;
 
