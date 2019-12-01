@@ -535,9 +535,6 @@ AM_COND_IF([LTO],
 AM_COND_IF([OPTIMIZE],
 [
 	optimize="yes"
-	CXXFLAGS+=" -fdata-sections"
-	CXXFLAGS+=" -ffunction-sections"
-	CXXFLAGS+=" -ftree-vectorize"
 
 	AM_COND_IF([GCC],
 	[
@@ -557,6 +554,8 @@ dnl		CXXFLAGS+=" -fbtr-bb-exclusive"
 		CXXFLAGS+=" -fmodulo-sched"
 		CXXFLAGS+=" -fmodulo-sched-allow-regmoves"
 		CXXFLAGS+=" -ftracer"
+		CXXFLAGS+=" -ftree-loop-im"
+		CXXFLAGS+=" -ftree-switch-conversion"
 
 		dnl Optimization options that aren't compatible with debugging.
 		AM_COND_IF([DEBUG], [],
@@ -566,10 +565,26 @@ dnl		CXXFLAGS+=" -fbtr-bb-exclusive"
 	])
 ], [
 	optimize="no"
+
+	dnl Optimization options we enable in non-optimized mode. These will be enabled
+	dnl in non-optimized mode as well as optimized mode so they are as similar as
+	dnl possible without impacting debuggability.
 	CXXFLAGS+=" -falign-functions"
 	CXXFLAGS+=" -falign-labels"
 	CXXFLAGS+=" -falign-loops"
 	CXXFLAGS+=" -falign-jumps"
+dnl	CXXFLAGS+=" -fdata-sections"
+dnl	CXXFLAGS+=" -ffunction-sections"
+	CXXFLAGS+=" -ftree-vectorize"
+
+	AM_COND_IF([GCC],
+	[
+		CXXFLAGS+=" -ftree-vrp"
+		CXXFLAGS+=" -ftree-dce"
+		CXXFLAGS+=" -ftree-dse"
+		CXXFLAGS+=" -ftree-loop-im"
+		CXXFLAGS+=" -ftree-switch-conversion"
+	])
 ])
 
 dnl
