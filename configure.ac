@@ -605,6 +605,19 @@ dnl CXXFLAGS+=" -fcheck-pointer-bounds"
 AM_COND_IF([GCC],
 [
 	CXXFLAGS+=" -fstack-protector-explicit"
+
+	dnl These flags should not be used on Intel-CET capable platforms
+	dnl TODO: XXX
+	AS_IF([test "$CXX_EPOCH" -ge "9"],
+	[
+		AM_COND_IF([GENERIC],
+		[
+			CXXFLAGS+=" -fcf-protection=full"
+		], [
+			CXXFLAGS+=" -fcf-protection=none"
+			CXXFLAGS+=" -mmanual-endbr"
+		])
+	])
 ])
 
 AM_COND_IF([GCC],
