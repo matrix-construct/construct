@@ -468,32 +468,6 @@ AC_ARG_ENABLE(malloc-libs, AC_HELP_STRING([--disable-malloc-libs], [Disable thir
 
 AM_CONDITIONAL([MALLOC_LIBS], [[[[ "$use_malloc_libs" = "yes" ]]]])
 
-dnl  !!! Experimental !!!
-dnl
-dnl  Allows a signal handler to throw a C++ exception if the signal is from
-dnl  a CPU trap on an instruction (ex. SIGFPE from a floating point divide
-dnl  by zero). This allows the signal handler to transfer control to the
-dnl  catch block wrapping the area which errored, thereby aborting any further
-dnl  execution after the signal was received which would have to manually check
-dnl  for such an error after each floating point operation and throw.
-
-AC_ARG_ENABLE(asyncexcept, AC_HELP_STRING([--enable-asyncexcept], [Enable experimental asynchronous exceptions]),
-[
-	asyncexcept="yes"
-], [
-	asyncexcept="no"
-])
-
-dnl CHARYBDIS_C_GCC_TRY_FLAGS([-fnon-call-exceptions], charybdis_cv_c_gcc_f_non_call_exceptions)
-
-if test "$asyncexcept" = "yes"; then
-	IRCD_DEFINE(USE_ASYNC_EXCEPTIONS, [1], [Experimental asynchronous exceptions are supported])
-	CXXFLAGS+=" -fasynchronous-unwind-tables"
-	CXXFLAGS+=" -fnon-call-exceptions"
-fi
-
-AM_CONDITIONAL([ASYNCEXCEPT], [[[[ $asyncexcept = "yes" ]]]])
-
 dnl
 dnl Low memory compilation mode
 dnl
