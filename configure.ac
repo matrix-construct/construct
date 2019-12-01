@@ -4,8 +4,10 @@ AUTOMAKE_OPTIONS = 1.11
 AC_INIT([construct], [1.0-dev])
 AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
+
 AC_PREFIX_DEFAULT([/])
 AC_CONFIG_MACRO_DIR([tools/m4])
+AC_CONFIG_HEADER(include/ircd/config.h)
 
 AC_PATH_PROG(AUTOMAKE, automake)
 AC_PATH_PROG(ACLOCAL, aclocal)
@@ -20,14 +22,17 @@ AC_PATH_PROG(TOUCH, touch)
 LT_INIT([dlopen shared disable-static])
 LT_LANG([C++])
 
+dnl Note that AC_PROG_CXX will default CXXFLAGS to -O2 and -g; this just adds
+dnl clutter and confusion. Setting it first prevents that.
 CXXFLAGS="-pipe"
+
 AM_PROG_AS
 AC_PROG_CXX
 AC_PROG_CXX_C_O
 AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
+
 AC_LANG(C++)
-AC_CONFIG_HEADER(include/ircd/config.h)
 AX_CXX_COMPILE_STDCXX([17], [gnu], [mandatory], 201703)
 
 
@@ -51,6 +56,14 @@ AC_CONFIG_FILES(\
 AM_INIT_AUTOMAKE([subdir-objects])
 
 dnl
+dnl Recursive local targets (clean-local is implied)
+dnl
+
+#AM_EXTRA_RECURSIVE_TARGETS([
+#	mrproper
+#])
+
+dnl
 dnl Initialization of variables exported to Makefile.am.
 dnl These will be further composed throughout this file...
 dnl
@@ -63,57 +76,13 @@ AC_SUBST(LD)
 AC_SUBST(LDFLAGS)
 AC_SUBST(LIBS)
 
-dnl
-dnl Preprocessor define macros
-dnl
-dnl Use RB_DEFINE() et al to generate defines in config.h
-dnl Use CPPDEFINE() to generate defines on the command line if required
-dnl
-
-AC_DEFUN([RB_DEFINE],
-[
-	AC_DEFINE([RB_$1], [$2], [$3])
-])
-
-AC_DEFUN([RB_DEFINE_UNQUOTED],
-[
-	AC_DEFINE_UNQUOTED([RB_$1], [$2], [$3])
-])
-
-AC_DEFUN([IRCD_DEFINE],
-[
-	AC_DEFINE([IRCD_$1], [$2], [$3])
-])
-
-AC_DEFUN([IRCD_DEFINE_UNQUOTED],
-[
-	AC_DEFINE_UNQUOTED([IRCD_$1], [$2], [$3])
-])
-
-AC_DEFUN([CPPDEFINE],
-[
-	if [[ -z "$2" ]]; then
-		CPPFLAGS="-D$1 $CPPFLAGS"
-	else
-		CPPFLAGS="-D$1=$2 $CPPFLAGS"
-	fi
-])
-
 dnl ***************************************************************************
 dnl
 dnl Platform
 dnl
 
 dnl
-dnl Recursive local targets (clean-local is implied)
-dnl
-
-#AM_EXTRA_RECURSIVE_TARGETS([
-#	mrproper
-#])
-
-dnl
-dnl Coarse compiler test macros
+dnl Compiler brand and version detection
 dnl
 
 AM_CONDITIONAL([GCC],        [[[[ $CXX = g\+\+* ]]]])
