@@ -35,7 +35,6 @@ AC_PROG_MAKE_SET
 AC_LANG(C++)
 AX_CXX_COMPILE_STDCXX([17], [gnu], [mandatory], 201703)
 
-
 dnl ***************************************************************************
 dnl
 dnl Makefile tree
@@ -82,13 +81,22 @@ dnl Platform
 dnl
 
 dnl
-dnl Compiler brand and version detection
+dnl Compiler brand
 dnl
 
-AM_CONDITIONAL([GCC],        [[[[ $CXX = g\+\+* ]]]])
-AM_CONDITIONAL([CLANG],      [[[[ $CXX = clang* ]]]])
-
+AM_CONDITIONAL([GCC], [[[[ $CXX = g\+\+* ]]]])
+AM_CONDITIONAL([CLANG], [[[[ $CXX = clang* ]]]])
 RB_DEFINE_UNQUOTED([CXX], ["$CXX"], [CXX Compiler])
+
+dnl
+dnl Compiler version
+dnl
+
+AX_CXX_VERSION
+RB_DEFINE_UNQUOTED([CXX_VERSION], ["$CXX_VERSION"], [CXX Compiler Version])
+
+AX_CXX_EPOCH
+RB_DEFINE_UNQUOTED([CXX_EPOCH], [$CXX_EPOCH], [CXX Compiler Version (major nr)])
 
 dnl
 dnl Coarse operating system test macros
