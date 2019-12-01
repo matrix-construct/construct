@@ -687,9 +687,6 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wnoexcept], charybdis_cv_c_gcc_w_noexcept)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wsized-deallocation], charybdis_cv_c_gcc_w_sized_deallocation)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wctor-dtor-privacy], charybdis_cv_c_gcc_w_ctor_dtor_privacy)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wsign-promo], charybdis_cv_c_gcc_w_sign_promo)
-CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-final-types], charybdis_cv_c_gcc_w_suggest_final_types)
-CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-final-methods], charybdis_cv_c_gcc_w_suggest_final_methods)
-CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-override], charybdis_cv_c_gcc_w_suggest_override)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wtrampolines], charybdis_cv_c_gcc_w_trampolines)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wduplicated-cond], charybdis_cv_c_gcc_w_duplicated_cond)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wduplicate-branches], charybdis_cv_c_gcc_w_duplicate_branches)
@@ -734,6 +731,19 @@ dnl clarity.
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-endif-labels], charybdis_cv_c_gcc_w_endif_labels)
 
 dnl
+dnl Suppressed unless in debug mode
+dnl
+
+AM_COND_IF([DEBUG],
+[
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-final-types], charybdis_cv_c_gcc_w_suggest_final_types)
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-final-methods], charybdis_cv_c_gcc_w_suggest_final_methods)
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-override], charybdis_cv_c_gcc_w_suggest_override)
+], [
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-suggest], charybdis_cv_c_gcc_w_no_suggest)
+])
+
+dnl
 dnl List of compiler-specific / incompatible warning options
 dnl
 
@@ -745,20 +755,23 @@ AM_COND_IF([GCC],
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wframe-larger-than=$FRAME_SIZE_WARNING], charybdis_cv_c_gcc_w_frame_larger_than)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Walloca], charybdis_cv_c_gcc_w_alloca)
 
-	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
-	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=noreturn], charybdis_cv_c_gcc_w_suggest_attribute_noreturn)
-	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=malloc], charybdis_cv_c_gcc_w_suggest_attribute_malloc)
-	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=cold], charybdis_cv_c_gcc_w_suggest_attribute_cold)
-	dnl CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=pure], charybdis_cv_c_gcc_w_suggest_attribute_pure)
-	dnl CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=const], charybdis_cv_c_gcc_w_suggest_attribute_const)
-],[])
+	AM_COND_IF([DEBUG],
+	[
+		CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
+		CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=noreturn], charybdis_cv_c_gcc_w_suggest_attribute_noreturn)
+		CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=malloc], charybdis_cv_c_gcc_w_suggest_attribute_malloc)
+		CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=cold], charybdis_cv_c_gcc_w_suggest_attribute_cold)
+		dnl CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=pure], charybdis_cv_c_gcc_w_suggest_attribute_pure)
+		dnl CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=const], charybdis_cv_c_gcc_w_suggest_attribute_const)
+	])
+])
 
 AM_COND_IF([CLANG],
 [
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-mismatched-tags], charybdis_cv_c_gcc_w_mismatched_tags)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-format-security], charybdis_cv_c_gcc_w_format_security)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-unknown-warning-option], charybdis_cv_c_gcc_w_unknown_warning_option)
-],[])
+])
 
 ])
 
