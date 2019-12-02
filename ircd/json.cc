@@ -741,17 +741,31 @@ noexcept try
 	if(!expect || failed())
 		return;
 
+	// Minimum bytes we keep available all times to allow the JSON to close
+	// correctly without complication on the user's stack unwind; hinted by
+	// the recursion level.
+	const size_t buf_min
+	{
+		level + 8
+	};
+
+	// Calculated buffer bytes required.
+	const size_t buf_req
+	{
+		expect + buf_min
+	};
+
 	// Since all appends are atomic, we need to have buffer available to print
 	// the JSON without having to flush while doing so. If we're low on buffer,
 	// this branch triggers a flush. Afterward, if there is still not enough
 	// buffer that's an error so the user needs to flush enough when called.
-	if(expect > buf.remaining())
+	if(buf_req > buf.remaining())
 	{
 		if(unlikely(!flusher))
 			throw print_panic
 			{
 				"Insufficient buffer. I need %zu more bytes; you only have %zu left (of %zu).",
-				expect,
+				buf_req,
 				buf.remaining(),
 				size(buf.base)
 			};
@@ -759,11 +773,11 @@ noexcept try
 		if(!flush(true))
 			return;
 
-		if(unlikely(expect > buf.remaining()))
+		if(unlikely(buf_req > buf.remaining()))
 			throw print_error
 			{
 				"Insufficient flush. I still need %zu more bytes to buffer.",
-				expect - buf.remaining()
+				buf_req - buf.remaining(),
 			};
 	}
 
