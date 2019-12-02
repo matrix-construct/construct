@@ -669,6 +669,8 @@ noexcept
 ,flusher{std::move(other.flusher)}
 ,eptr{std::move(other.eptr)}
 ,cp{std::move(other.cp)}
+,appended{std::move(other.appended)}
+,flushed{std::move(other.flushed)}
 ,hiwat{std::move(other.hiwat)}
 ,lowat{std::move(other.lowat)}
 ,co{std::move(other.co)}
