@@ -671,6 +671,7 @@ noexcept
 ,cp{std::move(other.cp)}
 ,appended{std::move(other.appended)}
 ,flushed{std::move(other.flushed)}
+,level{std::move(other.level)}
 ,hiwat{std::move(other.hiwat)}
 ,lowat{std::move(other.lowat)}
 ,co{std::move(other.co)}
@@ -838,9 +839,10 @@ noexcept try
 
 		log::dwarning
 		{
-			"Flushing json::stack(%p) %zu bytes under %zu checkpoints.",
+			"Flushing json::stack(%p) bytes:%zu level:%zu checkpoints:%zu",
 			this,
 			size(buf.completed()),
+			level,
 			invalidated,
 		};
 	}
@@ -939,6 +941,7 @@ bool
 ircd::json::stack::done()
 const
 {
+	assert((opened() && level) || !level);
 	return closed() && buf.consumed();
 }
 
@@ -1057,6 +1060,7 @@ ircd::json::stack::object::object(stack &s)
 	assert(s.clean());
 	s.co = this;
 	s.append('{');
+	s.level++;
 }
 
 ircd::json::stack::object::object(stack &s,
@@ -1079,6 +1083,7 @@ ircd::json::stack::object::object(object &po,
 	pm->co = this;
 	s->append('{');
 	pm->vc |= true;
+	s->level++;
 }
 
 ircd::json::stack::object::object(member &pm)
@@ -1093,6 +1098,7 @@ ircd::json::stack::object::object(member &pm)
 	pm.co = this;
 	s->append('{');
 	pm.vc |= true;
+	s->level++;
 }
 
 ircd::json::stack::object::object(array &pa)
@@ -1110,6 +1116,7 @@ ircd::json::stack::object::object(array &pa)
 		s->append(',');
 
 	s->append('{');
+	s->level++;
 }
 
 void
@@ -1136,6 +1143,7 @@ noexcept
 
 	assert(cm == nullptr);
 	s->append('}');
+	s->level--;
 
 	if(pm) // branch taken if member of object
 	{
@@ -1267,6 +1275,7 @@ ircd::json::stack::array::array(stack &s)
 	assert(s.clean());
 	s.ca = this;
 	s.append('[');
+	s.level++;
 }
 
 ircd::json::stack::array::array(stack &s,
@@ -1289,6 +1298,7 @@ ircd::json::stack::array::array(object &po,
 	pm->ca = this;
 	s->append('[');
 	pm->vc |= true;
+	s->level++;
 }
 
 ircd::json::stack::array::array(array &pa)
@@ -1306,6 +1316,7 @@ ircd::json::stack::array::array(array &pa)
 		s->append(',');
 
 	s->append('[');
+	s->level++;
 }
 
 ircd::json::stack::array::array(member &pm)
@@ -1320,6 +1331,7 @@ ircd::json::stack::array::array(member &pm)
 	pm.ca = this;
 	s->append('[');
 	pm.vc |= true;
+	s->level++;
 }
 
 ircd::json::stack::array::~array()
@@ -1337,6 +1349,7 @@ noexcept
 	assert(co == nullptr);
 	assert(ca == nullptr);
 	s->append(']');
+	s->level--;
 
 	if(pm) // branch taken if member of object
 	{

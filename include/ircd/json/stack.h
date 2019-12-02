@@ -56,6 +56,7 @@ struct ircd::json::stack
 	checkpoint *cp {nullptr};
 	size_t appended {0};
 	size_t flushed {0};
+	size_t level {0};
 	size_t hiwat;                      ///< autoflush watermark
 	size_t lowat;                      ///< flush(false) call min watermark
 
