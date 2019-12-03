@@ -10,6 +10,10 @@
 
 namespace ircd::m::init::backfill
 {
+	extern conf::item<bool> gossip_enable;
+	extern conf::item<seconds> gossip_timeout;
+	size_t gossip(const room::id &, const event::id &, const string_view &remote);
+
 	bool handle_event(const room::id &, const event::id &, const string_view &hint, const bool &ask_one);
 	void handle_missing(const room::id &);
 	void handle_room(const room::id &);
@@ -320,12 +324,19 @@ try
 				++fetching;
 				if(!handle_event(room_id, event_id, result.origin, true))
 				{
+					// If we fail the process the event we cache that and cease here.
 					errors.emplace(event_id);
 					return true;
 				}
 				else ++evaluated;
 			}
 			else ++exists;
+
+			// If the event already exists or was successfully obtained we
+			// reward the remote with gossip of events which reference this
+			// event which it is unlikely to have.
+			if(gossip_enable)
+				gossip(room_id, event_id, result.origin);
 
 			return true;
 		});
@@ -536,4 +547,120 @@ catch(const std::exception &e)
 	};
 
 	return false;
+}
+
+decltype(ircd::m::init::backfill::gossip_enable)
+ircd::m::init::backfill::gossip_enable
+{
+	{ "name",     "m.init.backfill.gossip.enable" },
+	{ "default",  true                            },
+};
+
+decltype(ircd::m::init::backfill::gossip_timeout)
+ircd::m::init::backfill::gossip_timeout
+{
+	{ "name",     "m.init.backfill.gossip.timeout" },
+	{ "default",  5L                               },
+};
+
+/// Initial gossip protocol works by sending the remote server some events which
+/// reference an event contained in the remote's head which we just obtained.
+/// This is part of a family of active measures taken to reduce forward
+/// extremities on other servers but without polluting the chain with
+/// permanent data for this purpose such as with org.matrix.dummy_event.
+size_t
+ircd::m::init::backfill::gossip(const room::id &room_id,
+                                const event::id &event_id,
+                                const string_view &remote)
+{
+	size_t ret{0};
+	const m::event::refs refs
+	{
+		m::index(event_id, std::nothrow)
+	};
+
+	const size_t count
+	{
+		refs.count(dbs::ref::NEXT)
+	};
+
+	if(!count)
+		return ret;
+
+	const unique_mutable_buffer buf[]
+	{
+		{ 96_KiB },
+		{ 16_KiB },
+	};
+
+	refs.for_each(dbs::ref::NEXT, [&buf, &ret, &count, &remote, &event_id, &room_id]
+	(const event::idx &next_idx, const auto &ref_type)
+	{
+		assert(ref_type == dbs::ref::NEXT);
+		const m::event::fetch event
+		{
+			next_idx, std::nothrow
+		};
+
+		if(!event.valid)
+			return true;
+
+		const json::value &pdu{event.source};
+		const vector_view<const json::value> pdus
+		{
+			&pdu, &pdu + 1
+		};
+
+		const string_view txn
+		{
+			m::txn::create(buf[0], pdus)
+		};
+
+		char idbuf[64];
+		const auto txnid
+		{
+			m::txn::create_id(idbuf, txn)
+		};
+
+		m::v1::send::opts opts;
+		opts.remote = remote;
+		m::v1::send request
+		{
+			txnid, txn, buf[1], std::move(opts)
+		};
+
+		http::code code{0};
+		std::exception_ptr eptr;
+		if(request.wait(seconds(gossip_timeout), std::nothrow)) try
+		{
+			code = request.get();
+			ret += code == http::OK;
+		}
+		catch(...)
+		{
+			eptr = std::current_exception();
+		}
+
+		log::logf
+		{
+			log, code == http::OK? log::INFO : log::DERROR,
+			"gossip %zu:%zu %s to %s reference to %s in %s :%s %s",
+			ret,
+			count,
+			string_view{event.event_id},
+			remote,
+			string_view{event_id},
+			string_view{room_id},
+			code?
+				status(code):
+				"failed",
+			eptr?
+				what(eptr):
+				string_view{},
+		};
+
+		return true;
+	});
+
+	return ret;
 }
