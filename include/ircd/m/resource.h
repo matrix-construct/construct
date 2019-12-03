@@ -16,6 +16,7 @@ namespace ircd::m
 	struct resource;
 }
 
+/// Extension of the ircd::resource framework for matrix resource handlers.
 struct ircd::m::resource
 :ircd::resource
 {

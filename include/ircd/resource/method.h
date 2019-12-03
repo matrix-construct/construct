@@ -41,9 +41,9 @@ struct ircd::resource::method
 enum ircd::resource::method::flag
 :uint
 {
-	REQUIRES_AUTH         = 0x01,
+	REQUIRES_AUTH         = 0x01,   //TODO: matrix abstraction bleed.
 	RATE_LIMITED          = 0x02,
-	VERIFY_ORIGIN         = 0x04,
+	VERIFY_ORIGIN         = 0x04,   //TODO: matrix abstraction bleed.
 	CONTENT_DISCRETION    = 0x08,
 };
 
