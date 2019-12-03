@@ -1264,7 +1264,7 @@ ircd::ctx::context::context(const string_view &name,
 	// we expect the context to be committed to entry. If the POST flag is
 	// supplied and it gets lost in the asio queue it will not be entered, and
 	// will not be able to free itself; that will leak.
-	const unwind::nominal release{[this]
+	const unwind_nominal release{[this]
 	{
 		assert(c);
 		if(c->flags & context::DETACH)
@@ -2729,7 +2729,7 @@ void
 ircd::ctx::dock::wait()
 {
 	assert(current);
-	const unwind::exceptional renotify{[this]
+	const unwind_exceptional renotify{[this]
 	{
 		notify_one();
 	}};
@@ -2750,7 +2750,7 @@ ircd::ctx::dock::wait(const predicate &pred)
 		return;
 
 	assert(current);
-	const unwind::exceptional renotify{[this]
+	const unwind_exceptional renotify{[this]
 	{
 		notify_one();
 	}};

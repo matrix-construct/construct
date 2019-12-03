@@ -1174,7 +1174,7 @@ try
 	if(op_fini)
 		return;
 
-	const unwind::exceptional failure{[this]
+	const unwind_exceptional failure{[this]
 	{
 		op_resolve = false;
 		err_set(std::current_exception());
@@ -1850,7 +1850,7 @@ ircd::server::link::open(const net::open_opts &open_opts)
 
 	op_init = true;
 	op_open = true;
-	const unwind::exceptional unhandled{[this]
+	const unwind_exceptional unhandled{[this]
 	{
 		op_init = false;
 		op_open = false;
@@ -1938,7 +1938,7 @@ ircd::server::link::wait_writable()
 
 	assert(ready());
 	op_write = true;
-	const unwind::exceptional unhandled{[this]
+	const unwind_exceptional unhandled{[this]
 	{
 		op_write = false;
 	}};
@@ -2119,7 +2119,7 @@ ircd::server::link::wait_readable()
 
 	assert(ready());
 	op_read = true;
-	const unwind::exceptional unhandled{[this]
+	const unwind_exceptional unhandled{[this]
 	{
 		op_read = false;
 	}};

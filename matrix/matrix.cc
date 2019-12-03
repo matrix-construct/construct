@@ -247,7 +247,7 @@ catch(const m::error &e)
 /*
 ircd::m::init::modules::modules()
 {
-	const unwind::exceptional unload{[this]
+	const unwind_exceptional unload{[this]
 	{
 		this->fini_imports();
 	}};

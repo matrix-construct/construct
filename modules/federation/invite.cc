@@ -161,7 +161,7 @@ put__invite(client &client,
 
 	// We don't want this eval throwing an exception because the response has
 	// already been made for this request.
-	const unwind::nominal::assertion na;
+	const unwind_nominal_assertion na;
 	vmopts.nothrows = -1;
 
 	m::vm::eval

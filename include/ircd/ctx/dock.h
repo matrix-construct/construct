@@ -52,7 +52,7 @@ ircd::ctx::dock::wait_for(const duration &dur)
 	static const duration zero(0);
 
 	assert(current);
-	const unwind::exceptional renotify{[this]
+	const unwind_exceptional renotify{[this]
 	{
 		notify_one();
 	}};
@@ -78,7 +78,7 @@ ircd::ctx::dock::wait_for(const duration &dur,
 		return true;
 
 	assert(current);
-	const unwind::exceptional renotify{[this]
+	const unwind_exceptional renotify{[this]
 	{
 		notify_one();
 	}};
@@ -110,7 +110,7 @@ bool
 ircd::ctx::dock::wait_until(time_point&& tp)
 {
 	assert(current);
-	const unwind::exceptional renotify{[this]
+	const unwind_exceptional renotify{[this]
 	{
 		notify_one();
 	}};
@@ -134,7 +134,7 @@ ircd::ctx::dock::wait_until(time_point&& tp,
 		return true;
 
 	assert(current);
-	const unwind::exceptional renotify{[this]
+	const unwind_exceptional renotify{[this]
 	{
 		notify_one();
 	}};

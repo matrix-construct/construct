@@ -270,7 +270,7 @@ noexcept try
 
 	// When this function completes without exception, subsystems are done shutting down and IRCd
 	// transitions to HALT.
-	const unwind::defer halted{[]
+	const unwind_defer halted{[]
 	{
 		run::set(run::level::HALT);
 	}};

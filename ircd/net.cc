@@ -3153,7 +3153,7 @@ try
 
 	assert(!fini);
 	set_timeout(opts.timeout);
-	const unwind::exceptional unset{[this]
+	const unwind_exceptional unset{[this]
 	{
 		cancel_timeout();
 	}};

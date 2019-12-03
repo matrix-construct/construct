@@ -234,7 +234,7 @@ try
 		file_size
 	};
 
-	const unwind::exceptional terminate{[&client]
+	const unwind_exceptional terminate{[&client]
 	{
 		client.close(net::dc::RST, net::close_ignore);
 	}};

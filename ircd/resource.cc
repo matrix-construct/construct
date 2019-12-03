@@ -529,7 +529,7 @@ try
 		client.request.param, tokens(pathparm, '/', client.request.param)
 	};
 
-	const unwind::nominal completions{[this]
+	const unwind_nominal completions{[this]
 	{
 		++stats->completions;
 	}};

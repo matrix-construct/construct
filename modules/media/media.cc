@@ -307,7 +307,7 @@ try
 	};
 
 	create(room, user_id, "file");
-	const unwind::exceptional purge{[&room]
+	const unwind_exceptional purge{[&room]
 	{
 		m::room::purge(room);
 	}};

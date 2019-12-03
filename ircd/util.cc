@@ -509,7 +509,7 @@ ircd::util::a2u(const mutable_buffer &out,
 // util/unwind.h
 //
 
-ircd::util::unwind::defer::~defer()
+ircd::util::unwind_defer::~unwind_defer()
 noexcept
 {
 	ircd::defer

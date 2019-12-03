@@ -345,7 +345,7 @@ try
 	};
 
 	txns.emplace_back(*this, std::move(content), std::move(opts));
-	const unwind::nominal::assertion na;
+	const unwind_nominal_assertion na;
 	curtxn = &txns.back();
 	q.clear();
 	log::debug
