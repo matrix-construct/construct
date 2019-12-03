@@ -400,3 +400,8 @@ ircd::m::event::fetch::opts::opts(const event::keys::selection &keys,
 ,gopts{gopts}
 {
 }
+
+ircd::m::event::fetch::opts::opts()
+noexcept
+{
+}

@@ -108,5 +108,5 @@ struct ircd::m::event::fetch::opts
 
 	opts(const event::keys::selection &, const db::gopts & = {});
 	opts(const db::gopts &, const event::keys::selection & = {});
-	opts() = default;
+	opts() noexcept;
 };
