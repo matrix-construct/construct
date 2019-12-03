@@ -25,6 +25,7 @@ namespace ircd::m::sync
 	static bool room_invite_state_linear(data &);
 	static bool room_state_linear(data &);
 
+	extern conf::item<bool> lazyload_members;
 	extern conf::item<bool> crazyload_historical_members;
 
 	extern item room_invite_state;
@@ -230,10 +231,18 @@ ircd::m::sync::_room_state_polylog(data &data)
 	return room_state_polylog_events(data);
 }
 
+decltype(ircd::m::sync::lazyload_members)
+ircd::m::sync::lazyload_members
+{
+	{ "name",         "ircd.client.sync.rooms.state.members.lazyload" },
+	{ "default",      true                                            },
+	{ "persist",      false                                           },
+};
+
 decltype(ircd::m::sync::crazyload_historical_members)
 ircd::m::sync::crazyload_historical_members
 {
-	{ "name",         "ircd.client.sync.rooms.state.historical.members" },
+	{ "name",         "ircd.client.sync.rooms.state.members.historical" },
 	{ "default",      false                                             },
 };
 
@@ -297,12 +306,16 @@ ircd::m::sync::room_state_polylog_events(data &data)
 			if(!apropos(data, event_idx))
 				return true;
 
-		// For crazyloading, skip membership events in rooms the user is not
-		// presently joined.
-		if(!crazyload_historical_members)
-			if(!data.args->full_state && type == "m.room.member")
+		// For crazyloading/lazyloading related membership event optimiztions.
+		if(!data.args->full_state && type == "m.room.member")
+		{
+			if(lazyload_members)
+				return true;
+
+			if(!crazyload_historical_members)
 				if(data.membership == "leave" || data.membership == "ban")
 					return true;
+		}
 
 		this_ctx::interruption_point();
 		concurrent(event_idx);
