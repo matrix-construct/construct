@@ -307,7 +307,7 @@ try
 			event
 		};
 
-		return m::for_each(prev, [&](const string_view &event_id)
+		return m::for_each(prev, [&](const event::id &event_id)
 		{
 			if(unlikely(ctx::interruption_requested()))
 				return false;
@@ -315,20 +315,18 @@ try
 			if(errors.count(event_id))
 				return true;
 
-			if(m::exists(event::id(event_id)))
+			if(!m::exists(event::id(event_id)))
 			{
-				++exists;
-				return true;
+				++fetching;
+				if(!handle_event(room_id, event_id, result.origin, true))
+				{
+					errors.emplace(event_id);
+					return true;
+				}
+				else ++evaluated;
 			}
+			else ++exists;
 
-			++fetching;
-			if(!handle_event(room_id, event_id, result.origin, true))
-			{
-				errors.emplace(event_id);
-				return true;
-			}
-
-			++evaluated;
 			return true;
 		});
 	});
