@@ -16,6 +16,7 @@ namespace ircd::m::client_versions
 
 	extern conf::item<bool> m_lazy_load_members;
 	extern conf::item<std::string> versions;
+	extern const string_view versions_default;
 	extern resource::method method_get;
 	extern resource resource;
 }
@@ -62,14 +63,25 @@ ircd::m::client_versions::get(client &client,
 	};
 }
 
+decltype(ircd::m::client_versions::versions_default)
+ircd::m::client_versions::versions_default
+{
+	"r0.1.0 "
+	"r0.2.0 "
+	"r0.3.0 "
+	"r0.4.0 "
+	"r0.5.0 "
+	"r0.6.0 "
+};
+
 /// Note this conf item doesn't persist to and from the database, which means
 /// it assumes its default value on every startup.
 decltype(ircd::m::client_versions::versions)
 ircd::m::client_versions::versions
 {
-	{ "name",     "ircd.m.client.versions.versions"    },
-	{ "default",  "r0.1.0 r0.2.0 r0.3.0 r0.4.0 r0.5.0" },
-	{ "persist",  false                                },
+	{ "name",     "ircd.m.client.versions.versions"  },
+	{ "persist",  false                              },
+	{ "default",  versions_default                   },
 };
 
 void
