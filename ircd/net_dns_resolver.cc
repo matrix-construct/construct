@@ -443,6 +443,7 @@ try
 	assert(ns.is_open());
 	assert(ns.non_blocking());
 	assert(!empty(tag.question));
+	const ctx::uninterruptible::nothrow ui;
 	const const_buffer &buf{tag.question};
 	const auto sent
 	{
@@ -644,8 +645,9 @@ ircd::net::dns::resolver::handle_reply(const ipport &from,
 		return;
 	}
 
-	// The tag is committed to being handled after this point. It will be
-	// removed from the tags map and any retry must c
+	// The tag is committed to being handled after this point; it will be
+	// removed from the tags map...
+	const ctx::uninterruptible::nothrow ui;
 	const unwind untag{[this, &tag, &it]
 	{
 		remove(tag, it);
