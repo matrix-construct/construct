@@ -480,27 +480,39 @@ console_cmd__debug(opt &out, const string_view &line)
 		out << "Turning on debuglog..." << std::endl;
 		while(!log::console_enabled(log::DEBUG))
 			log::console_enable(log::DEBUG);
-
-		return true;
 	}
 	else if(param["onoff"] == "off")
 	{
 		out << "Turning off debuglog..." << std::endl;
 		log::console_disable(log::DEBUG);
-		return true;
 	}
 	else if(log::console_enabled(log::DEBUG))
 	{
 		out << "Turning off debuglog..." << std::endl;
 		log::console_disable(log::DEBUG);
-		return true;
 	} else {
 		out << "Turning on debuglog..." << std::endl;
 		while(!log::console_enabled(log::DEBUG))
 			log::console_enable(log::DEBUG);
-
-		return true;
 	}
+
+	// When not compiled in debug-mode we attempt to set all DEBUG related
+	// levels (DERROR / DWARNING) to always match DEBUG. In debug-mode
+	// compilation they remain independent, but if we don't do this in release
+	// mode it will leave the user with DERROR messages which weren't DCE'ed
+	if(!RB_DEBUG_LEVEL)
+	{
+		if(log::console_enabled(log::DEBUG))
+		{
+			log::console_enable(log::DERROR);
+			log::console_enable(log::DWARNING);
+		} else {
+			log::console_disable(log::DERROR);
+			log::console_disable(log::DWARNING);
+		}
+	}
+
+	return true;
 }
 
 bool
