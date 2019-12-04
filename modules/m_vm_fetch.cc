@@ -434,7 +434,7 @@ ircd::m::vm::fetch::state_fetch(const event &event,
 	opts.nothrow_closure = true;
 	log::debug
 	{
-		log, "%s acquire state event ids in %s from %zu servers (est).",
+		log, "%s acquire state event ids in %s...",
 		loghead(eval),
 		string_view{room.room_id},
 	};
