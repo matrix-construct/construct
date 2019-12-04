@@ -478,16 +478,16 @@ ircd::m::vm::fetch::state_fetch(const event &event,
 			result.object["auth_chain_ids"]
 		};
 
+		const json::array &pdu_ids
+		{
+			result.object["pdu_ids"]
+		};
+
 		for(const json::string &auth_chain_id : auth_chain_ids)
 			each_state_id(auth_chain_id);
 
-		const json::array &pdus
-		{
-			result.object["pdus"]
-		};
-
-		for(const json::string &pdu : pdus)
-			each_state_id(pdu);
+		for(const json::string &pdu_id : pdu_ids)
+			each_state_id(pdu_id);
 
 		return true;
 	});
