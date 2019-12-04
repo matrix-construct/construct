@@ -466,10 +466,9 @@ bool
 console_cmd__debug(opt &out, const string_view &line)
 {
 	if(!RB_DEBUG_LEVEL)
-	{
-		out << "Debugging is not compiled in." << std::endl;
-		return true;
-	}
+		out << "Debugging is not compiled in. Some messages optimized out."
+		    << std::endl
+		    << std::endl;
 
 	const params param{line, " ",
 	{
