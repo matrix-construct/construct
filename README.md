@@ -21,17 +21,16 @@ to some arcane retro-environment.
 </a>
 
 **This is the Construct** — Federated team collaboration built with the
-[WASM Virtual Machine](https://webassembly.org). Clients and servers implement a
-minimal ABI based on their capabilities while the community at large builds all
-features as modules. Construct makes the chat room programmable.
+[WASM Virtual Machine](https://webassembly.org). Construct makes the chat room programmable.
 Applications govern all their basic functions. Everything from the appearance of a room as seen by
 users to some continuous-integration running in the background for developers
 is customizable by embedding apps around your room.
 
-A variety of apps have already been created by developers for their own needs.
-Most choose to make them available to the community, licensed as free
-software. This is a powerful construct, as you can import these apps to enrich
-your own rooms.
+Clients and servers implement a minimal ABI based on their capabilities while
+the community at large builds all features as apps. A variety of apps have
+already been created by developers for their own needs. Most choose to make
+them available to the community, licensed as free software, so you can import
+them and enrich your own rooms.
 
 ## Installation
 
