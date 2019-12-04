@@ -579,9 +579,10 @@ ircd::m::init::backfill::gossip(const room::id &room_id,
 		m::index(event_id, std::nothrow)
 	};
 
+	static const size_t max{48};
 	const size_t count
 	{
-		refs.count(dbs::ref::NEXT)
+		std::min(refs.count(dbs::ref::NEXT), max)
 	};
 
 	if(!count)
@@ -589,78 +590,97 @@ ircd::m::init::backfill::gossip(const room::id &room_id,
 
 	const unique_mutable_buffer buf[]
 	{
-		{ 96_KiB },
-		{ 16_KiB },
+		{ event::MAX_SIZE * (count + 1)  },
+		{ 16_KiB                         },
 	};
 
-	refs.for_each(dbs::ref::NEXT, [&buf, &ret, &count, &remote, &event_id, &room_id]
-	(const event::idx &next_idx, const auto &ref_type)
+	size_t i{0};
+	std::array<event::idx, max> next_idx;
+	refs.for_each(dbs::ref::NEXT, [&next_idx, &i]
+	(const event::idx &event_idx, const auto &ref_type)
 	{
 		assert(ref_type == dbs::ref::NEXT);
-		const m::event::fetch event
-		{
-			next_idx, std::nothrow
-		};
-
-		if(!event.valid)
-			return true;
-
-		const json::value &pdu{event.source};
-		const vector_view<const json::value> pdus
-		{
-			&pdu, &pdu + 1
-		};
-
-		const string_view txn
-		{
-			m::txn::create(buf[0], pdus)
-		};
-
-		char idbuf[64];
-		const auto txnid
-		{
-			m::txn::create_id(idbuf, txn)
-		};
-
-		m::v1::send::opts opts;
-		opts.remote = remote;
-		m::v1::send request
-		{
-			txnid, txn, buf[1], std::move(opts)
-		};
-
-		http::code code{0};
-		std::exception_ptr eptr;
-		if(request.wait(seconds(gossip_timeout), std::nothrow)) try
-		{
-			code = request.get();
-			ret += code == http::OK;
-		}
-		catch(...)
-		{
-			eptr = std::current_exception();
-		}
-
-		log::logf
-		{
-			log, code == http::OK? log::INFO : log::DERROR,
-			"gossip %zu:%zu %s to %s reference to %s in %s :%s %s",
-			ret,
-			count,
-			string_view{event.event_id},
-			remote,
-			string_view{event_id},
-			string_view{room_id},
-			code?
-				status(code):
-				"failed",
-			eptr?
-				what(eptr):
-				string_view{},
-		};
-
-		return true;
+		next_idx.at(i) = event_idx;
+		return ++i < next_idx.size();
 	});
+
+	json::stack out{buf[0]};
+	{
+		json::stack::object top
+		{
+			out
+		};
+
+		json::stack::member
+		{
+			top, "origin", m::my_host()
+		};
+
+		json::stack::member
+		{
+			top, "origin_server_ts", json::value
+			{
+				long(ircd::time<milliseconds>())
+			}
+		};
+
+		json::stack::array pdus
+		{
+			top, "pdus"
+		};
+
+		m::event::fetch event;
+		for(assert(ret == 0); ret < i; ++ret)
+			if(seek(event, next_idx.at(ret), std::nothrow))
+				pdus.append(event.source);
+	}
+
+	const string_view txn
+	{
+		out.completed()
+	};
+
+	char idbuf[64];
+	const string_view txnid
+	{
+		m::txn::create_id(idbuf, txn)
+	};
+
+	m::v1::send::opts opts;
+	opts.remote = remote;
+	m::v1::send request
+	{
+		txnid, txn, buf[1], std::move(opts)
+	};
+
+	http::code code{0};
+	std::exception_ptr eptr;
+	if(request.wait(seconds(gossip_timeout), std::nothrow)) try
+	{
+		code = request.get();
+		ret += code == http::OK;
+	}
+	catch(...)
+	{
+		eptr = std::current_exception();
+	}
+
+	log::logf
+	{
+		log, code == http::OK? log::DEBUG : log::DERROR,
+		"gossip %zu:%zu to %s reference to %s in %s :%s %s",
+		ret,
+		count,
+		remote,
+		string_view{event_id},
+		string_view{room_id},
+		code?
+			status(code):
+			"failed",
+		eptr?
+			what(eptr):
+			string_view{},
+	};
 
 	return ret;
 }
