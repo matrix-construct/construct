@@ -117,8 +117,17 @@ ircd::log::hook;
 void
 ircd::log::init()
 {
+	// DEBUG is very noisy so it always starts off by default unless -debug
 	if(!ircd::debugmode)
 		console_disable(level::DEBUG);
+
+	// In non-debug-mode compilation we don't want DWARNING and DERROR
+	// messages which weren't DCE'ed to be displayed by default.
+	if(!RB_DEBUG_LEVEL && !ircd::debugmode)
+	{
+		console_disable(level::DERROR);
+		console_disable(level::DWARNING);
+	}
 
 	if(ircd::write_avoid)
 		return;
