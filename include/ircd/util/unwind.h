@@ -30,10 +30,10 @@ namespace ircd
 
 /// Unconditionally executes the provided code when the object goes out of scope.
 ///
-template<class F = void (*)()>
+template<class F>
 struct ircd::util::unwind
 {
-	F func;
+	const F func;
 
 	unwind(F&& func)
 	:func{std::forward<F>(func)}
@@ -41,7 +41,8 @@ struct ircd::util::unwind
 
 	unwind(const unwind &) = delete;
 	unwind &operator=(const unwind &) = delete;
-	~unwind() noexcept __attribute__((always_inline))
+	~unwind() noexcept
+	__attribute__((always_inline))
 	{
 		func();
 	}
@@ -52,16 +53,17 @@ struct ircd::util::unwind
 /// The function is expected to be executed and the likely() should pipeline
 /// that branch and make this device cheaper to use under normal circumstances.
 ///
-template<class F = void (*)()>
+template<class F>
 struct ircd::util::unwind_nominal
 {
-	F func;
+	const F func;
 
 	unwind_nominal(F&& func)
 	:func{std::forward<F>(func)}
 	{}
 
-	~unwind_nominal() noexcept __attribute__((always_inline))
+	~unwind_nominal() noexcept
+	__attribute__((always_inline))
 	{
 		if(likely(!std::uncaught_exceptions()))
 			func();
@@ -77,16 +79,17 @@ struct ircd::util::unwind_nominal
 /// optimize the pipeline for the nominal path, making this device as cheap
 /// as possible to use.
 ///
-template<class F = void (*)()>
+template<class F>
 struct ircd::util::unwind_exceptional
 {
-	F func;
+	const F func;
 
 	unwind_exceptional(F&& func)
 	:func{std::forward<F>(func)}
 	{}
 
-	~unwind_exceptional() noexcept __attribute__((always_inline))
+	~unwind_exceptional() noexcept
+	__attribute__((always_inline))
 	{
 		if(unlikely(std::uncaught_exceptions()))
 			func();
