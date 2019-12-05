@@ -1143,6 +1143,7 @@ ircd::json::stack::object::append(const json::object &object)
 		};
 }
 
+__attribute__((optimize("no-lifetime-dse")))
 ircd::json::stack::object::~object()
 noexcept
 {
@@ -1351,6 +1352,7 @@ ircd::json::stack::array::array(member &pm)
 	s->level++;
 }
 
+__attribute__((optimize("no-lifetime-dse")))
 ircd::json::stack::array::~array()
 noexcept
 {
@@ -1556,6 +1558,7 @@ ircd::json::stack::member::member(object &po,
 	append(value);
 }
 
+__attribute__((optimize("no-lifetime-dse")))
 ircd::json::stack::member::~member()
 noexcept
 {
