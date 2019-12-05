@@ -1108,7 +1108,7 @@ try
 }
 ,timesout
 {
-	std::clamp
+	ircd::now<system_point>() + std::clamp
 	(
 		request.query.get("timeout", milliseconds(timeout_default)),
 		milliseconds(timeout_min),
