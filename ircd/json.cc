@@ -1147,7 +1147,10 @@ ircd::json::stack::object::~object()
 noexcept
 {
 	if(!s)
+	{
+		assert(!m.s);
 		return; // std::move()'ed away
+	}
 
 	const unwind _{[this]
 	{
@@ -1352,7 +1355,10 @@ ircd::json::stack::array::~array()
 noexcept
 {
 	if(!s)
+	{
+		assert(!m.s);
 		return; // std::move()'ed away
+	}
 
 	const unwind _{[this]
 	{
