@@ -8,34 +8,40 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-std::pair<ircd::json::array, int64_t>
 IRCD_MODULE_EXPORT
-ircd::m::room::head::generate(const mutable_buffer &buf,
-                              const size_t &limit,
-                              const bool &need_top)
-const
+ircd::m::room::head::generate::generate(const mutable_buffer &buf,
+                                        const m::room::head &head,
+                                        const opts &opts)
 {
+	if(!head.room)
+		return;
+
 	json::stack out{buf};
-	json::stack::array array{out};
-	const auto depth
 	{
-		generate(array, limit, need_top)
-	};
-	array.~array();
-	return
-	{
-		json::array{out.completed()},
-		depth
-	};
+		json::stack::array array
+		{
+			out
+		};
+
+		const generate g
+		{
+			array, head, opts
+		};
+
+		this->depth = g.depth;
+	}
+
+	this->array = out.completed();
 }
 
-int64_t
 IRCD_MODULE_EXPORT
-ircd::m::room::head::generate(json::stack::array &out,
-                              const size_t &_limit,
-                              const bool &_need_tophead)
-const
+ircd::m::room::head::generate::generate(json::stack::array &out,
+                                        const m::room::head &head,
+                                        const opts &opts)
 {
+	if(!head.room)
+		return;
+
 	const m::event::id::closure &v1_ref{[&out]
 	(const auto &event_id)
 	{
@@ -59,7 +65,7 @@ const
 	char versionbuf[32];
 	const auto version
 	{
-		m::version(versionbuf, room, std::nothrow)
+		m::version(versionbuf, head.room, std::nothrow)
 	};
 
 	const auto &append
@@ -67,39 +73,96 @@ const
 		version == "1" || version == "2"? v1_ref : v3_ref
 	};
 
-	bool need_tophead{_need_tophead};
 	const auto top_head
 	{
-		need_tophead?
-			m::top(std::nothrow, room.room_id):
+		opts.need_top_head?
+			m::top(std::nothrow, head.room.room_id):
 			std::tuple<m::id::event::buf, int64_t, m::event::idx>{}
 	};
 
-	int64_t depth{-1};
-	size_t limit{_limit};
 	m::event::fetch event;
-	for_each([&event, &need_tophead, &top_head, &depth, &append, &limit]
-	(const m::event::idx &idx, const m::event::id &event_id)
+	size_t limit{opts.limit};
+	bool need_top_head{opts.need_top_head};
+	bool need_my_head{opts.need_my_head};
+	head.for_each([&](const m::event::idx &event_idx, const m::event::id &event_id)
 	{
-		if(!seek(event, idx, event_id, std::nothrow))
+		if(!seek(event, event_idx, event_id, std::nothrow))
 			return true;
 
-		if(need_tophead)
+		if(need_top_head)
 			if(event.event_id == std::get<0>(top_head))
-				need_tophead = false;
+				need_top_head = false;
 
-		append(event_id);
-		depth = std::max(json::get<"depth"_>(event), depth);
-		return --limit - need_tophead > 0;
+		const auto _append{[&]() -> bool
+		{
+			if(need_my_head && my(event))
+				need_my_head = false;
+
+			append(event_id);
+			this->depth[0] = std::min(json::get<"depth"_>(event), this->depth[0]);
+			this->depth[1] = std::max(json::get<"depth"_>(event), this->depth[1]);
+			return --limit - need_top_head - need_my_head > 0;
+		}};
+
+		if(limit - need_top_head - need_my_head > 0)
+		{
+			if(need_my_head && my(event))
+				need_my_head = false;
+
+			return _append();
+		}
+
+		if(!need_my_head)
+			return false;
+
+		if(my(event))
+			return _append();
+		else
+			return limit > 0;
 	});
 
-	if(need_tophead)
+	if(need_top_head)
 	{
+		assert(limit > 0);
 		append(std::get<0>(top_head));
-		depth = std::get<1>(top_head);
+		this->depth[1] = std::get<1>(top_head);
+		--limit;
 	}
 
-	return depth;
+	if(!need_my_head || limit <= 0)
+		return;
+
+	for(m::room::events it{head.room}; it; --it)
+	{
+		const bool my_sender
+		{
+			m::query<bool>(std::nothrow, event::idx{it}, "sender", false, []
+			(const m::user::id &user_id)
+			{
+				return m::my(user_id);
+			})
+		};
+
+		if(!my_sender)
+			continue;
+
+		const auto event_id
+		{
+			m::event_id(event::idx{it}, std::nothrow)
+		};
+
+		if(!event_id)
+			continue;
+
+		assert(limit > 0);
+		append(event_id);
+		const int64_t &depth(it.depth());
+		this->depth[0] = std::min(depth, this->depth[0]);
+		this->depth[1] = std::max(depth, this->depth[1]);
+		need_my_head = false;
+		--limit;
+		break;
+	}
 }
 
 size_t

@@ -40,6 +40,7 @@ namespace ircd::m
 ///
 struct ircd::m::room::head
 {
+	struct generate;
 	using closure = std::function<bool (const event::idx &, const event::id &)>;
 
 	m::room room;
@@ -47,9 +48,6 @@ struct ircd::m::room::head
 	bool for_each(const closure &) const;
 	bool has(const event::id &) const;
 	size_t count() const;
-
-	int64_t generate(json::stack::array &, const size_t &, const bool &) const;
-	std::pair<json::array, int64_t> generate(const mutable_buffer &, const size_t &, const bool &) const;
 
 	head() = default;
 	head(const m::room &room)
@@ -59,4 +57,36 @@ struct ircd::m::room::head
 	static void modify(const event::id &, const db::op &, const bool &);
 	static size_t rebuild(const head &);
 	static size_t reset(const head &);
+};
+
+struct ircd::m::room::head::generate
+{
+	struct opts;
+
+	/// won't be set when using json::stack overload
+	json::array array;
+
+	/// lowest and highest depths in results
+	std::array<int64_t, 2> depth
+	{
+		std::numeric_limits<int64_t>::max(),
+		std::numeric_limits<int64_t>::min(),
+	};
+
+	generate(json::stack::array &, const m::room::head &, const opts &);
+	generate(const mutable_buffer &, const m::room::head &, const opts &);
+	generate() = default;
+};
+
+struct ircd::m::room::head::generate::opts
+{
+	/// Limit the number of result elements.
+	size_t limit {16};
+
+	/// Requires that at least one reference is at the highest known depth.
+	bool need_top_head {false};
+
+	/// Requires that at least one reference is to an event created by this
+	/// server (origin).
+	bool need_my_head {false};
 };

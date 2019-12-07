@@ -194,7 +194,7 @@ ircd::m::vm::inject(eval &eval,
 	const unique_buffer<mutable_buffer> prev_buf
 	{
 		add_prev_events?
-			std::min(size_t(prev_limit) * prev_scalar, event::MAX_SIZE):
+			std::min(size_t(prev_limit) * (prev_scalar + 1), event::MAX_SIZE):
 			0UL
 	};
 
@@ -208,27 +208,34 @@ ircd::m::vm::inject(eval &eval,
 			room::head{}
 	};
 
-	const auto &[prev_events, depth]
+	const room::head::generate prev_events
 	{
-		add_prev_events?
-			head.generate(prev_buf, size_t(prev_limit), true):
-			std::pair<json::array, int64_t>{{}, -1}
+		prev_buf, head,
+		{
+			16,      // .limit = 16,
+			true,    // .need_top_head = true,
+			true,    // .need_my_head = false,
+		}
 	};
 
 	// Add the prev_events
 	const json::iov::add prev_events_
 	{
-		event, add_prev_events && !empty(prev_events),
+		event, add_prev_events && !empty(prev_events.array),
 		{
 			"prev_events", [&prev_events]() -> json::value
 			{
-				return prev_events;
+				return prev_events.array;
 			}
 		}
 	};
 
+	const auto &depth
+	{
+		prev_events.depth[1]
+	};
+
 	// Conditionally add the depth property to the event iov.
-	assert(depth >= -1);
 	const json::iov::set depth_
 	{
 		event, opts.prop_mask.has("depth") && !event.has("depth"),
@@ -243,7 +250,9 @@ ircd::m::vm::inject(eval &eval,
 					depth == std::numeric_limits<int64_t>::max() ||
 					depth == json::undefined_number?
 						json::value{depth}:
-						json::value{depth + 1};
+					depth >= -1?
+						json::value{depth + 1}:
+						json::value{json::undefined_number};
 			}
 		}
 	};

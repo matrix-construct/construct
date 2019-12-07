@@ -182,7 +182,15 @@ get__make_join(client &client,
 			event, "prev_events"
 		};
 
-		head.generate(prev_events, 32, true);
+		m::room::head::generate
+		{
+			prev_events, head,
+			{
+				16,    // .limit           = 16,
+				true,  // .need_top_head   = true,
+				true,  // .need_my_head    = true,
+			}
+		};
 	}
 
 	json::stack::member

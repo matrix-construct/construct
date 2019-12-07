@@ -6205,14 +6205,18 @@ console_cmd__stage__make_prev(opt &out, const string_view &line)
 	};
 
 	thread_local char buf[8192];
-	const auto prev
+	const m::room::head::generate prev
 	{
-		head.generate(buf, limit, true)
+		buf, head,
+		{
+			16,     // .limit           = 20,
+			false,  // .need_top_head   = true,
+			false,  // .need_my_head    = false,
+		}
 	};
 
-	json::get<"prev_events"_>(event) = prev.first;
-	json::get<"depth"_>(event) = prev.second;
-
+	json::get<"prev_events"_>(event) = prev.array;
+	json::get<"depth"_>(event) = prev.depth[1];
 	stage.at(id) = json::strung
 	{
 		event
@@ -6661,7 +6665,8 @@ console_cmd__events__in__sender(opt &out, const string_view &line)
 		param.at("user_id")
 	};
 
-	m::events::sender::for_each_in(user_id, [&out]
+	size_t i(0);
+	m::events::sender::for_each_in(user_id, [&out, &i]
 	(const m::user::id &user_id, const m::event::idx &event_idx)
 	{
 		const m::event::fetch event
@@ -6675,8 +6680,14 @@ console_cmd__events__in__sender(opt &out, const string_view &line)
 			return true;
 		}
 
+		if(json::get<"room_id"_>(event) == "!2Ae7qzmYoskWNSUuTMRTdze6DQo5:zemos.net")
+			return true;
+
+		if(json::get<"room_id"_>(event) == "!AAAANTUiY1fBZ230:zemos.net")
+			return true;
+
 		out << event_idx << " " << pretty_oneline(event) << std::endl;;
-		return true;
+		return i++ < 2048;
 	});
 
 	return true;
