@@ -13,6 +13,9 @@
 
 namespace ircd::m::dbs
 {
+	//NOTE: this is a forward declaration for the reference type enumeration
+	//NOTE: which is defined in the dbs/ system rather than here, for now.
+
 	enum class ref :uint8_t;
 }
 
