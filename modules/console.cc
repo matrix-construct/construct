@@ -7606,7 +7606,7 @@ console_cmd__event__refs(opt &out, const string_view &line)
 
 	const string_view &typestr
 	{
-		param.at("type")
+		param["type"]
 	};
 
 	m::dbs::ref type
@@ -7618,7 +7618,7 @@ console_cmd__event__refs(opt &out, const string_view &line)
 	};
 
 	if(!empty(typestr))
-		for(; uint8_t(type) < sizeof(m::dbs::ref) * 8; type = m::dbs::ref(uint8_t(type) + 1))
+		for(; uint8_t(type) < sizeof(m::dbs::ref) * 256; type = m::dbs::ref(uint8_t(type) + 1))
 			if(reflect(type) == typestr)
 				break;
 
