@@ -194,7 +194,7 @@ ircd::m::event::signatures(const mutable_buffer &out,
 
 	const string_view public_key_id
 	{
-		m::public_key_id(my(origin))
+		m::public_key_id(m::my(origin))
 	};
 
 	thread_local char sigb64buf[b64encode_size(sizeof(sig))];
@@ -277,7 +277,7 @@ ircd::m::event::sign(json::iov &event,
 
 	const auto &secret_key
 	{
-		m::secret_key(my(origin))
+		m::secret_key(m::my(origin))
 	};
 
 	return sign(event, contents, secret_key);
@@ -337,7 +337,7 @@ ircd::m::event::sign(const json::object &event)
 
 	const auto &secret_key
 	{
-		m::secret_key(my(origin))
+		m::secret_key(m::my(origin))
 	};
 
 	return sign(event, secret_key);
@@ -367,7 +367,7 @@ ircd::m::event::sign(const string_view &event)
 
 	const auto &secret_key
 	{
-		m::secret_key(my(origin))
+		m::secret_key(m::my(origin))
 	};
 
 	return sign(event, secret_key);
@@ -1033,8 +1033,19 @@ ircd::m::my(const event &event)
 bool
 ircd::m::my(const id::event &event_id)
 {
-	assert(event_id.host());
-	return self::host(event_id.host());
+	return event_id.version() == "1"?
+		self::host(event_id.host()):
+		event::my(index(event_id));
+}
+
+bool
+ircd::m::event::my(const idx &event_idx)
+{
+	return m::query(std::nothrow, event_idx, "origin", []
+	(const string_view &origin)
+	{
+		return m::my_host(origin);
+	});
 }
 
 //

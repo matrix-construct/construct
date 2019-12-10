@@ -115,6 +115,7 @@ struct ircd::m::event
 	static constexpr const size_t &ORIGIN_MAX_SIZE {256};
 	static conf::item<size_t> max_size;
 
+	static bool my(const idx &);
 	static void essential(json::iov &event, const json::iov &content, const closure_iov_mutable &);
 	static bool verify(const json::object &, const ed25519::pk &, const ed25519::sig &sig);
 	static ed25519::sig sign(const string_view &, const ed25519::sk &);
