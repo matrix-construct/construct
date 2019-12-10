@@ -89,4 +89,7 @@ struct ircd::m::room::head::generate::opts
 	/// Requires that at least one reference is to an event created by this
 	/// server (origin).
 	bool need_my_head {false};
+
+	/// Hint the room version which determines the output format; avoid query.
+	string_view version;
 };

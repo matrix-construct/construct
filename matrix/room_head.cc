@@ -52,7 +52,8 @@ ircd::m::room::head::generate::generate(json::stack::array &out,
 	char versionbuf[32];
 	const auto version
 	{
-		m::version(versionbuf, head.room, std::nothrow)
+		opts.version?:
+			m::version(versionbuf, head.room, std::nothrow)
 	};
 
 	// The output format depends on the room version; we select an output

@@ -212,9 +212,10 @@ ircd::m::vm::inject(eval &eval,
 	{
 		prev_buf, head,
 		{
-			16,      // .limit = 16,
-			true,    // .need_top_head = true,
-			true,    // .need_my_head = false,
+			16,                 // .limit = 16,
+			true,               // .need_top_head = true,
+			true,               // .need_my_head = false,
+			eval.room_version   // .version = eval.room_version,
 		}
 	};
 
