@@ -44,6 +44,7 @@ IRCD_MODULE_EXPORT
 ircd::m::room::head::generate::generate(json::stack::array &out,
                                         const m::room::head &head,
                                         const opts &opts)
+try
 {
 	if(!head.room)
 		return;
@@ -157,6 +158,17 @@ ircd::m::room::head::generate::generate(json::stack::array &out,
 		}
 
 	assert(limit >= 0);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "%s prev_events generator :%s",
+		string_view{head.room},
+		e.what(),
+	};
+
+	throw;
 }
 
 void
