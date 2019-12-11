@@ -12097,32 +12097,47 @@ console_cmd__feds__head(opt &out, const string_view &line)
 	{
 		if(result.eptr)
 		{
-			out << "- " << std::setw(40) << std::left << result.origin
-			    << " " << what(result.eptr)
-			    << std::endl;
-
+			out << std::setw(8) << std::right << 0 << " ";
+			out << std::setw(3) << std::right << 0 << " ";
+			out << std::setw(40) << std::left << result.origin << " ";
+			out << what(result.eptr);
+			out << std::endl;
 			return true;
 		}
 
 		const json::object &event
 		{
-			result.object.at("event")
+			result.object["event"]
 		};
 
-		out << "+ " << std::setw(40) << std::left << result.origin;
-		out << " " << event["depth"];
-		const m::event::prev prev(event);
-		for(size_t i(0); i < prev.prev_events_count(); ++i)
+		const m::event::prev prev
+		{
+			event
+		};
+
+		for(ssize_t i(prev.prev_events_count() - 1); i >= 0; --i)
 		{
 			const auto &prev_event_id
 			{
 				prev.prev_event(i)
 			};
 
-			out << " " << string_view{prev_event_id};
-		};
+			const m::event::fetch prev_event
+			{
+				prev_event_id, std::nothrow
+			};
 
-		out << std::endl;
+			out << std::setw(8) << std::right << event["depth"] << " ";
+			out << std::setw(3) << std::right << i << " ";
+			out << std::setw(40) << std::left << result.origin;
+			if(prev_event.valid)
+				out << pretty_oneline(prev_event);
+			else
+				out << string_view{prev_event_id};
+
+			out << std::endl;
+		}
+
 		return true;
 	});
 
