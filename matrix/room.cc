@@ -157,6 +157,25 @@ ircd::m::message(const room &room,
 	return send(room, sender, "m.room.message", contents);
 }
 
+ircd::m::event::id::buf
+ircd::m::react(const room &room,
+               const id::user &sender,
+               const id::event &target,
+               const string_view &rel_type,
+               json::iov &relates)
+{
+	json::iov content;
+	thread_local char buf[event::MAX_SIZE];
+	const json::iov::push push[]
+	{
+		{ relates,  { "event_id",      target                                  }},
+		{ relates,  { "rel_type",      rel_type                                }},
+		{ content,  { "m.relates_to",  stringify(mutable_buffer{buf}, relates) }},
+	};
+
+	return send(room, sender, "m.reaction", content);
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstack-usage="
 ircd::m::event::id::buf
