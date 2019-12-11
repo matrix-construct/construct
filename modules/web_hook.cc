@@ -257,9 +257,14 @@ github_handle(client &client,
 		string_view(webhook_user), my_host()
 	};
 
+	const json::string &apropos_hash
+	{
+		github_find_commit_hash(request.content)
+	};
+
 	const auto evid
 	{
-		m::msghtml(room_id, user_id, view(out, buf), "No alt text", "m.notice")
+		m::msghtml(room_id, user_id, view(out, buf), apropos_hash, "m.notice")
 	};
 
 	log::info
