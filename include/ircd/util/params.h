@@ -34,14 +34,21 @@ struct ircd::util::params
 	IRCD_EXCEPTION(error, invalid)
 
 	string_view in;
-	const char *sep;
+	string_view prefix;
+	const char *sep {" "};
 	std::array<string_view, MAX> names;
 
+	bool for_each_pararg(const token_view_bool &) const;
+	bool for_each_posarg(const token_view_bool &) const;
 	string_view name(const size_t &i) const;
 	size_t name(const string_view &) const;
 
   public:
+	size_t count_pararg() const;
 	size_t count() const;
+
+	bool has(const string_view &param) const;
+	string_view get(const string_view &param) const;
 
 	// Get positional argument by position index
 	string_view operator[](const size_t &i) const;            // returns empty
@@ -58,6 +65,10 @@ struct ircd::util::params
 	params(const string_view &in,
 	       const char *const &sep,
 	       const std::array<string_view, MAX> &names = {});
+
+	params(const string_view &in,
+	       const std::pair<const char *, const char *> &sep,
+	       const std::array<string_view, MAX> &names = {});
 };
 
 inline
@@ -70,35 +81,72 @@ ircd::util::params::params(const string_view &in,
 {
 }
 
+inline
+ircd::util::params::params(const string_view &in,
+	                       const std::pair<const char *, const char *> &sep,
+	                       const std::array<string_view, MAX> &names)
+:in{in}
+,prefix{sep.second}
+,sep{sep.first}
+,names{names}
+{
+}
+
 template<class T>
 T
 ircd::util::params::at(const string_view &name,
                        const T &def)
-const
+const try
 {
-	return at<T>(this->name(name), def);
+	const auto &val(get(name));
+	return val? lex_cast<T>(val): def;
+}
+catch(const bad_lex_cast &)
+{
+	return def;
 }
 
 template<class T>
 T
 ircd::util::params::at(const string_view &name)
-const
+const try
 {
-	return at<T>(this->name(name));
+	return lex_cast<T>(get(name));
+}
+catch(const bad_lex_cast &e)
+{
+	throw invalid
+	{
+		"parameter <%s> :%s",
+		name,
+		e.what()
+	};
 }
 
 inline ircd::string_view
 ircd::util::params::at(const string_view &name)
 const
 {
-	return at(this->name(name));
+	const string_view ret
+	{
+		get(name)
+	};
+
+	if(unlikely(!ret))
+		throw missing
+		{
+			"required parameter <%s>",
+			name,
+		};
+
+	return ret;
 }
 
 inline ircd::string_view
 ircd::util::params::operator[](const string_view &name)
 const
 {
-	return operator[](this->name(name));
+	return get(name);
 }
 
 template<class T>
@@ -111,10 +159,7 @@ const try
 }
 catch(const bad_lex_cast &e)
 {
-	throw invalid
-	{
-		"parameter #%zu <%s>", i, name(i)
-	};
+	return def;
 }
 
 template<class T>
@@ -134,32 +179,107 @@ catch(const bad_lex_cast &e)
 
 inline ircd::string_view
 ircd::util::params::at(const size_t &i)
-const try
+const
 {
-	return token(in, sep, i);
-}
-catch(const std::out_of_range &e)
-{
-	throw missing
+	const string_view ret
 	{
-		"required parameter #%zu <%s>", i, name(i)
+		this->operator[](i)
 	};
+
+	if(unlikely(!ret))
+		throw missing
+		{
+			"required parameter #%zu <%s>",
+			i,
+			name(i)
+		};
+
+	return ret;
 }
 
 inline ircd::string_view
 ircd::util::params::operator[](const size_t &i)
 const
 {
-	return count() > i?
-		token(in, sep, i):
-		string_view{};
+	size_t j{i};
+	string_view ret;
+	for_each_posarg([&ret, &j]
+	(const string_view &token)
+	{
+		if(j-- == 0)
+		{
+			ret = token;
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
+}
+
+inline ircd::string_view
+ircd::util::params::get(const string_view &arg)
+const
+{
+	if(prefix && startswith(arg, prefix))
+	{
+		string_view ret;
+		for_each_pararg([&ret, &arg]
+		(const string_view &token)
+		{
+			if(startswith(token, arg))
+			{
+				ret = token;
+				return false;
+			}
+			else return true;
+		});
+
+		return ret;
+	}
+	else return operator[](this->name(arg));
+}
+
+inline bool
+ircd::util::params::has(const string_view &arg)
+const
+{
+	if(prefix && startswith(arg, prefix))
+		return !for_each_pararg([&arg]
+		(const string_view &token)
+		{
+			return !startswith(token, arg);
+		});
+
+	return count() > this->name(arg);
 }
 
 inline size_t
 ircd::util::params::count()
 const
 {
-	return token_count(in, sep);
+	size_t ret{0};
+	for_each_posarg([&ret](const string_view &)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+inline size_t
+ircd::util::params::count_pararg()
+const
+{
+	size_t ret{0};
+	for_each_pararg([&ret](const string_view &)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
 }
 
 inline size_t
@@ -176,4 +296,30 @@ const
 	return names.size() > i?
 		*std::next(begin(names), i):
 		"<unnamed>";
+}
+
+inline bool
+ircd::util::params::for_each_posarg(const token_view_bool &closure)
+const
+{
+	return tokens(in, sep, token_view_bool{[this, &closure]
+	(const string_view &token)
+	{
+		return !prefix || !startswith(token, prefix)?
+			closure(token):
+			true;
+	}});
+}
+
+inline bool
+ircd::util::params::for_each_pararg(const token_view_bool &closure)
+const
+{
+	return tokens(in, sep, token_view_bool{[this, &closure]
+	(const string_view &token)
+	{
+		return prefix && startswith(token, prefix)?
+			closure(token):
+			true;
+	}});
 }
