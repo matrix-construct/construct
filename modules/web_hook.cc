@@ -1022,18 +1022,114 @@ bool
 github_handle__status(std::ostream &out,
                       const json::object &content)
 {
+	const m::user::id::buf _webhook_user
+	{
+		string_view{webhook_user}, my_host()
+	};
+
+	const auto _webhook_room_id
+	{
+		m::room_id(string_view(webhook_room))
+	};
+
+	const m::room _webhook_room
+	{
+		_webhook_room_id
+	};
+
 	const json::string &state
 	{
 		content["state"]
 	};
 
-	if(state == "pending")
-		return false;
+	// Find the message resulting from the push and react with the status.
+	m::event::id::buf push_event_id;
+	{
+		const json::string &commit_hash
+		{
+			content["sha"]
+		};
+
+		m::room::events it
+		{
+			_webhook_room
+		};
+
+		static const auto type_match
+		{
+			[](const string_view &type)
+			{
+				return type == "m.room.message";
+			}
+		};
+
+		const auto user_match
+		{
+			[&_webhook_user](const string_view &sender)
+			{
+				return sender && sender == _webhook_user;
+			}
+		};
+
+		const auto content_match
+		{
+			[&commit_hash](const json::object &content)
+			{
+				const json::string &body
+				{
+					content["body"]
+				};
+
+				return body == commit_hash;
+			}
+		};
+
+		// Limit the search to a maximum of recent messages from the
+		// webhook user and total messages so we don't run out of control
+		// and scan the whole room history.
+		int lim[2] { 512, 32 };
+		for(; it && lim[0] > 0 && lim[1] > 0; --it, --lim[0])
+		{
+			if(!m::query(std::nothrow, it.event_idx(), "sender", user_match))
+				continue;
+
+			--lim[1];
+			if(!m::query(std::nothrow, it.event_idx(), "type", type_match))
+				continue;
+
+			if(!m::query(std::nothrow, it.event_idx(), "content", content_match))
+				continue;
+
+			push_event_id = m::event_id(it.event_idx(), std::nothrow);
+			break;
+		}
+	}
+
+	if(push_event_id) switch(hash(state))
+	{
+		case "failure"_:
+			break;
+
+		case "pending"_:
+			m::annotate(_webhook_room, _webhook_user, push_event_id, "🟨");
+			break;
+
+		case "success"_:
+			m::annotate(_webhook_room, _webhook_user, push_event_id, "🟩");
+			break;
+	}
+
 
 	if(!webhook_status_verbose) switch(hash(state))
 	{
 		case "failure"_:
 			break;
+
+		case "pending"_:
+			return false;
+
+		case "success"_:
+			return false;
 
 		default:
 			return false;
