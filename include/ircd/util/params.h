@@ -14,23 +14,30 @@
 // This file is not part of the standard include stack. It is included
 // manually as needed.
 
-namespace ircd {
-inline namespace util
+namespace ircd
 {
-	struct params;
-}}
+	inline namespace util
+	{
+		struct params;
+	}
+}
 
 struct ircd::util::params
 {
+	static const size_t MAX
+	{
+		12
+	};
+
 	IRCD_EXCEPTION(ircd::error, error)
 	IRCD_EXCEPTION(error, missing)
 	IRCD_EXCEPTION(error, invalid)
 
 	string_view in;
 	const char *sep;
-	std::vector<const char *> names;
+	std::array<string_view, MAX> names;
 
-	const char *name(const size_t &i) const;
+	string_view name(const size_t &i) const;
 	size_t name(const string_view &) const;
 
   public:
@@ -50,13 +57,13 @@ struct ircd::util::params
 
 	params(const string_view &in,
 	       const char *const &sep,
-	       const std::initializer_list<const char *> &names = {});
+	       const std::array<string_view, MAX> &names = {});
 };
 
 inline
 ircd::util::params::params(const string_view &in,
                            const char *const &sep,
-	                       const std::initializer_list<const char *> &names)
+	                       const std::array<string_view, MAX> &names)
 :in{in}
 ,sep{sep}
 ,names{names}
@@ -143,7 +150,9 @@ inline ircd::string_view
 ircd::util::params::operator[](const size_t &i)
 const
 {
-	return count() > i? token(in, sep, i) : string_view{};
+	return count() > i?
+		token(in, sep, i):
+		string_view{};
 }
 
 inline size_t
@@ -160,9 +169,11 @@ const
 	return util::index(begin(names), end(names), name);
 }
 
-inline const char *
+inline ircd::string_view
 ircd::util::params::name(const size_t &i)
 const
 {
-	return names.size() > i? *std::next(begin(names), i) : "<unnamed>";
+	return names.size() > i?
+		*std::next(begin(names), i):
+		"<unnamed>";
 }
