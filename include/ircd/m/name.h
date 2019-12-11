@@ -178,4 +178,6 @@ struct ircd::m::name
 	static constexpr const char *const include_state {"include_state"};
 	static constexpr const char *const groupings {"groupings"};
 	static constexpr const char *const filter {"filter"};
+
+	static constexpr const char *const rel_type {"rel_type"};
 };

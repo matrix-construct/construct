@@ -157,3 +157,5 @@ constexpr const char *const ircd::m::name::event_context;
 constexpr const char *const ircd::m::name::include_state;
 constexpr const char *const ircd::m::name::groupings;
 constexpr const char *const ircd::m::name::filter;
+
+constexpr const char *const ircd::m::name::rel_type;

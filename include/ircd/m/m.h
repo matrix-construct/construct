@@ -78,6 +78,7 @@ namespace ircd
 #include "typing.h"
 #include "receipt.h"
 #include "direct_to_device.h"
+#include "relates.h"
 #include "txn.h"
 #include "hook.h"
 #include "visible.h"
