@@ -158,6 +158,21 @@ ircd::m::message(const room &room,
 }
 
 ircd::m::event::id::buf
+ircd::m::annotate(const room &room,
+                  const id::user &sender,
+                  const id::event &target,
+                  const string_view &key)
+{
+	json::iov relates;
+	const json::iov::push push
+	{
+		relates, { "key", key },
+	};
+
+	return react(room, sender, target, "m.annotation", relates);
+}
+
+ircd::m::event::id::buf
 ircd::m::react(const room &room,
                const id::user &sender,
                const id::event &target,

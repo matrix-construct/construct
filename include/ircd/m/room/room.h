@@ -71,6 +71,7 @@ namespace ircd::m
 
 	// [SET] Convenience sends
 	event::id::buf react(const room &, const id::user &sender, const id::event &, const string_view &rel_type, json::iov &relates);
+	event::id::buf annotate(const room &, const id::user &sender, const id::event &, const string_view &key);
 	event::id::buf message(const room &, const id::user &sender, const json::members &content);
 	event::id::buf message(const room &, const id::user &sender, const string_view &body, const string_view &msgtype = "m.text");
 	event::id::buf msghtml(const room &, const id::user &sender, const string_view &html, const string_view &alt = {}, const string_view &msgtype = "m.notice");
