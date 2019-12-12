@@ -658,21 +658,25 @@ ircd::m::vm::call_hook(hook::site<T> &hook,
                        T&& data)
 try
 {
+	#if 0
 	log::debug
 	{
 		log, "%s | phase:%s enter",
 		loghead(eval),
 		unquote(hook.feature.get("name")),
 	};
+	#endif
 
 	hook(event, std::forward<T>(data));
 
+	#if 0
 	log::debug
 	{
 		log, "%s | phase:%s leave",
 		loghead(eval),
 		unquote(hook.feature.get("name")),
 	};
+	#endif
 }
 catch(const m::error &e)
 {
