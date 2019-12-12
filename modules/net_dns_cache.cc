@@ -296,11 +296,6 @@ try
 		}
 	}
 
-	// When the array has a zero value count we didn't know how to cache
-	// any of these records; don't send anything to the cache room.
-	if(!array.vc)
-		return false;
-
 	array.~array();
 	content.~object();
 	const m::room room
