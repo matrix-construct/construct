@@ -1824,12 +1824,14 @@ ircd::server::link::cleanup_canceled()
 			continue;
 		}
 
+		#if 0
 		log::dwarning
 		{
 			log, "%s removing abandoned tag:%lu",
 			loghead(*this),
 			tag.state.id,
 		};
+		#endif
 
 		it = queue.erase(it);
 	}
