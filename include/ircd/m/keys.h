@@ -48,6 +48,7 @@ struct ircd::m::keys
 	json::property<name::old_verify_keys, json::object>,
 	json::property<name::server_name, json::string>,
 	json::property<name::signatures, json::object>,
+	json::property<name::tls_fingerprints, json::array>,
 	json::property<name::valid_until_ts, time_t>,
 	json::property<name::verify_keys, json::object>
 >
