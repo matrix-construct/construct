@@ -132,9 +132,9 @@ ircd::m::verify(const m::keys &keys)
 		at<"signatures"_>(keys)
 	};
 
-	const string_view &server_name
+	const json::string &server_name
 	{
-		unquote(at<"server_name"_>(keys))
+		at<"server_name"_>(keys)
 	};
 
 	const json::object &server_signatures
@@ -478,21 +478,22 @@ ircd::m::keys::cache::set(const json::object &keys)
 	if(!exists(node_room.room_id))
 		create(node_room, me());
 
-	const json::object &vks
+	const auto send_to_cache{[&node_room, &keys]
+	(const json::object::member &member)
 	{
-		keys.at("verify_keys")
-	};
+		const json::string &key_id{member.first};
+		send(node_room, me(), "ircd.key", key_id, keys);
+	}};
 
 	size_t ret{0};
-	for(const auto &member : vks)
-	{
-		if(ret > 16)
-			return ret;
+	static const size_t max{32};
+	const json::object &vks{keys["verify_keys"]};
+	for(auto it(begin(vks)); it != end(vks) && ret < max; ++it, ++ret)
+		send_to_cache(*it);
 
-		const auto &key_id(unquote(member.first));
-		send(node_room, me(), "ircd.key", key_id, keys);
-		++ret;
-	}
+	const json::object &old_vks{keys["old_verify_keys"]};
+	for(auto it(begin(old_vks)); it != end(old_vks) && ret < max; ++it, ++ret)
+		send_to_cache(*it);
 
 	return ret;
 }
