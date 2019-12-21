@@ -11862,7 +11862,8 @@ console_cmd__node__keys(opt &out, const string_view &line)
 			json::get<"content"_>(event)
 		};
 
-		out << keys << std::endl;
+		pretty_oneline(out, keys);
+		out << std::endl;
 		return --limit;
 	}});
 
@@ -11896,7 +11897,8 @@ console_cmd__node__key(opt &out, const string_view &line)
 			json::get<"content"_>(event)
 		};
 
-		out << key << std::endl;
+		pretty(out, key);
+		out << std::endl;
 	});
 
 	return true;
