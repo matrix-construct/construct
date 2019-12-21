@@ -105,7 +105,7 @@ noexcept
 /// counting the trailing (least significant) zero bits; then add one for
 /// the terminating byte itself. Note doc sez if mask had all zero bits then
 /// the result of clz/ctz is undefined.
-#if defined(__MMX__)
+#if defined(__MMX__) && !defined(RB_GENERIC)
 template<>
 inline size_t
 ircd::uleb128::length(const uint64_t &val)
@@ -122,7 +122,7 @@ noexcept
 }
 #endif
 
-#if defined(__SSE2__)
+#if defined(__SSE2__) && !defined(RB_GENERIC)
 template<>
 inline size_t
 ircd::uleb128::length(const uint128_t &val)
