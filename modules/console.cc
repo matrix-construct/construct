@@ -10164,7 +10164,7 @@ console_cmd__room__get(opt &out, const string_view &line)
 
 	const string_view state_key
 	{
-		param.at(2)
+		param.at(2, ""_sv)
 	};
 
 	const string_view arg
