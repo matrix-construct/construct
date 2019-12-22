@@ -1111,11 +1111,11 @@ github_handle__status(std::ostream &out,
 			break;
 
 		case "pending"_:
-			m::annotate(_webhook_room, _webhook_user, push_event_id, "🟨");
+			m::annotate(_webhook_room, _webhook_user, push_event_id, "🟡");
 			break;
 
 		case "success"_:
-			m::annotate(_webhook_room, _webhook_user, push_event_id, "🟩");
+			m::annotate(_webhook_room, _webhook_user, push_event_id, "🟢");
 			break;
 	}
 
