@@ -427,8 +427,10 @@ ircd::m::_create_event(const createroom &c)
 	make_iov(content, _user_content, user_content_count, user_content);
 	const json::iov::push push[]
 	{
-		{ event,     { "room_id",     room.room_id     }},
+		{ event,     { "auth_events", "[]"             }},
 		{ event,     { "depth",       0L               }},
+		{ event,     { "prev_events", "[]"             }},
+		{ event,     { "room_id",     room.room_id     }},
 		{ event,     { "sender",      creator          }},
 		{ event,     { "state_key",   ""               }},
 		{ event,     { "type",        "m.room.create"  }},
