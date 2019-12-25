@@ -487,12 +487,12 @@ ircd::m::keys::cache::set(const json::object &keys)
 
 	size_t ret{0};
 	static const size_t max{32};
-	const json::object &vks{keys["verify_keys"]};
-	for(auto it(begin(vks)); it != end(vks) && ret < max; ++it, ++ret)
-		send_to_cache(*it);
-
 	const json::object &old_vks{keys["old_verify_keys"]};
 	for(auto it(begin(old_vks)); it != end(old_vks) && ret < max; ++it, ++ret)
+		send_to_cache(*it);
+
+	const json::object &vks{keys["verify_keys"]};
+	for(auto it(begin(vks)); it != end(vks) && ret < max; ++it, ++ret)
 		send_to_cache(*it);
 
 	return ret;
