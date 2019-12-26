@@ -1721,7 +1721,7 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	JS_LDFLAGS+=" -L$PWD/deps/gecko-dev/js/src/build_OPT.OBJ/js/src"
 
 	AC_SUBST(JS_LIBS)
-	JS_LIBS+=" -lmozjs-52"
+	JS_LIBS+=" -lmozjs-68"
 	JS_LIBS+=" -lmozglue"
 
 	dnl !!!!
@@ -1744,7 +1744,7 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 		JS_LIBS+=" -ljs_static"
 	fi
 
-	js_branch="esr52"
+	js_branch="esr68"
 
 	if [[ $DEBUG ]]; then
 		js_options="--disable-optimize --enable-debug --disable-js-shell"
@@ -1763,17 +1763,17 @@ AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonk
 	with_included_js="no"
 
 	dnl TODO mumble mumble
-	AC_CHECK_LIB(mozjs-52, _Z11JS_ShutDownv,
+	AC_CHECK_LIB(mozjs-68, _Z11JS_ShutDownv,
 	[
 
 	], [
-		AC_MSG_WARN([Unable to find JS engine (SpiderMonkey 52) package. Try apt-get install libmozjs-dev])
+		AC_MSG_WARN([Unable to find JS engine (SpiderMonkey 68) package. Try apt-get install libmozjs-dev])
 	])
 
 	dnl TODO
-	dnl AC_SUBST(JS_CPPFLAGS, ["-I/usr/include/mozjs-52"])
+	dnl AC_SUBST(JS_CPPFLAGS, ["-I/usr/include/mozjs-68"])
 	dnl AC_SUBST(JS_LDFLAGS, [])
-	dnl AC_SUBST(JS_LIBS, ["-lmozjs-52"])
+	dnl AC_SUBST(JS_LIBS, ["-lmozjs-68"])
 ])
 
 dnl TODO use an $enable_js var
