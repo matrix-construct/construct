@@ -108,6 +108,7 @@ libircd_la_SOURCES += base.cc
 libircd_la_SOURCES += crh.cc
 libircd_la_SOURCES += fmt.cc
 libircd_la_SOURCES += json.cc
+libircd_la_SOURCES += cbor.cc
 libircd_la_SOURCES += conf.cc
 libircd_la_SOURCES += stats.cc
 libircd_la_SOURCES += logger.cc
