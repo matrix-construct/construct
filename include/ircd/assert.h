@@ -34,8 +34,9 @@
 // Our utils
 namespace ircd
 {
-	void print_assertion(const char *const &, const char *const &, const unsigned &, const char *const &) noexcept;
 	void debugtrap() noexcept;
+	void always_assert(const bool &) noexcept;
+	void print_assertion(const char *const &, const char *const &, const unsigned &, const char *const &) noexcept;
 }
 
 /// Override the standard assert behavior, if enabled, to trap into the
@@ -83,4 +84,14 @@ noexcept
 	#else
 		__builtin_trap();
 	#endif
+}
+
+/// Trap on false expression whether or not NDEBUG.
+extern inline void
+__attribute__((always_inline, gnu_inline, artificial))
+ircd::always_assert(const bool &expr)
+noexcept
+{
+	if(__builtin_expect(!expr, 0))
+		debugtrap();
 }
