@@ -2106,7 +2106,7 @@ ircd::server::link::process_write_next(const const_buffer &buffer)
 	assert(bytes <= size(buffer));
 	const const_buffer written
 	{
-		data(buffer), bytes
+		buffer, bytes
 	};
 
 	assert(peer);
@@ -2283,7 +2283,7 @@ try
 
 	const mutable_buffer remaining
 	{
-		data(buffer) + copied, size(buffer) - copied
+		buffer + copied
 	};
 
 	const const_buffer view
@@ -2322,7 +2322,7 @@ ircd::server::link::read(const mutable_buffer &buf)
 	assert(received <= size(buf));
 	return const_buffer
 	{
-		data(buf), received
+		buf, received
 	};
 }
 
@@ -2630,7 +2630,7 @@ noexcept
 	{
 		const const_buffer src
 		{
-			data(request.out.head) + tag.state.written, size(request.out.head) - tag.state.written
+			request.out.head + tag.state.written
 		};
 
 		const mutable_buffer dst
@@ -2652,7 +2652,7 @@ noexcept
 	{
 		const const_buffer src
 		{
-			data(request.out.content) + content_written, size(request.out.content) - content_written
+			request.out.content + content_written
 		};
 
 		const mutable_buffer dst
@@ -2669,12 +2669,12 @@ noexcept
 	{
 		const const_buffer src
 		{
-			data(request.in.head), tag.state.head_read
+			request.in.head, tag.state.head_read
 		};
 
 		const mutable_buffer dst
 		{
-			data(in_head), size(in_head)
+			in_head
 		};
 
 		copy(dst, src);
@@ -2689,7 +2689,7 @@ noexcept
 		assert(tag.state.content_read >= tag.state.content_length);
 		const const_buffer src
 		{
-			data(request.in.content) + tag.state.content_length,
+			request.in.content + tag.state.content_length,
 			tag.state.content_read - tag.state.content_length
 		};
 
@@ -2802,7 +2802,7 @@ ircd::server::tag::wrote_buffer(const const_buffer &buffer)
 		// Invoke the user's optional progress callback; this function
 		// should be marked noexcept and has no reason to throw yet.
 		if(req.out.progress)
-			req.out.progress(buffer, const_buffer{data(req.out.content), state.written});
+			req.out.progress(buffer, const_buffer{req.out.content, state.written});
 	}
 	else
 	{
@@ -2834,14 +2834,9 @@ const
 	assert(request);
 	const auto &req{*request};
 
-	const size_t remain
-	{
-		size(req.out.head) - state.written
-	};
-
 	const const_buffer window
 	{
-		data(req.out.head) + state.written, remain
+		req.out.head + state.written
 	};
 
 	return window;
@@ -2853,8 +2848,8 @@ const
 {
 	assert(request);
 	const auto &req{*request};
-	assert(state.written >= size(req.out.head));
 
+	assert(state.written >= size(req.out.head));
 	const size_t content_offset
 	{
 		state.written - size(req.out.head)
@@ -2867,7 +2862,7 @@ const
 
 	const const_buffer window
 	{
-		data(req.out.content) + content_offset, remain
+		req.out.content + content_offset, remain
 	};
 
 	return window;
@@ -2974,7 +2969,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// Window on any data in the buffer after the head.
 	const const_buffer beyond_head
 	{
-		data(req.in.head) + head_read, beyond_head_len
+		req.in.head + head_read, beyond_head_len
 	};
 
 	// Before changing the user's head buffer, we branch for a feature that
@@ -2997,7 +2992,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	state.head_rem = size(req.in.head) - head_read;
 	req.in.head = mutable_buffer
 	{
-		data(req.in.head), head_read
+		req.in.head, head_read
 	};
 
 	// Setup the capstan and mark the end of the tape
@@ -3045,7 +3040,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		const const_buffer chunk
 		{
 			!dynamic?
-				const_buffer{data(req.in.content), move(req.in.content, beyond_head)}:
+				const_buffer{req.in.content, move(req.in.content, beyond_head)}:
 				beyond_head
 		};
 
@@ -3102,7 +3097,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// Anything remaining is not our response and must be given back.
 	const const_buffer overrun
 	{
-		data(beyond_head) + size(partial_content), beyond_content_len
+		beyond_head + size(partial_content), beyond_content_len
 	};
 
 	// Reduce the user's content buffer to the content-length. This is sort of
@@ -3111,7 +3106,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	// find the given content-length by parsing the header.
 	req.in.content = mutable_buffer
 	{
-		data(req.in.content), std::min(state.content_length, size(req.in.content))
+		req.in.content, state.content_length
 	};
 
 	// Any partial content was written to the head buffer by accident,
@@ -3157,7 +3152,7 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 	// Invoke the user's optional progress callback; this function
 	// should be marked noexcept for the time being.
 	if(req.in.progress)
-		req.in.progress(buffer, const_buffer{data(content), state.content_read});
+		req.in.progress(buffer, const_buffer{content, state.content_read});
 
 	// Not finished with content
 	if(likely(state.content_read != size(content) + content_overflow()))
@@ -3239,7 +3234,7 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	// Window on any data in the buffer after the head.
 	const const_buffer beyond_head
 	{
-		data(content) + state.content_length + head_length, beyond_head_length
+		content + state.content_length + head_length, beyond_head_length
 	};
 
 	// Setup the capstan and mark the end of the tape
@@ -3247,7 +3242,7 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	{
 		mutable_buffer
 		{
-			data(content) + state.content_length, head_length
+			content + state.content_length, head_length
 		}
 	};
 	parse::capstan pc{pb};
@@ -3274,7 +3269,7 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 	// after it.
 	const mutable_buffer target
 	{
-		data(content) + state.content_length, beyond_head_length
+		content + state.content_length, beyond_head_length
 	};
 
 	assert(!empty(target));
@@ -3288,12 +3283,12 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 
 	const const_buffer partial_chunk
 	{
-		data(target), chunk_read
+		target, chunk_read
 	};
 
 	const const_buffer overrun
 	{
-		data(target) + chunk_read, beyond_chunk_length
+		target + chunk_read, beyond_chunk_length
 	};
 
 	assert(state.chunk_length >= 2);
@@ -3340,7 +3335,7 @@ ircd::server::tag::read_chunk_content(const const_buffer &buffer,
 	// Invoke the user's optional progress callback; this function
 	// should be marked noexcept for the time being.
 	if(req.in.progress && !done)
-		req.in.progress(buffer, const_buffer{data(content), state.content_read});
+		req.in.progress(buffer, const_buffer{content, state.content_read});
 
 	// This branch is taken at the completion of a chunk. The size
 	// all the buffers is rolled back to hide the terminator so it's
@@ -3391,7 +3386,7 @@ ircd::server::chunk_content_completed(tag &tag,
 	assert(state.chunk_read == 0);
 	assert(!done);
 	done = true;
-	req.in.content = mutable_buffer{data(req.in.content), state.content_length};
+	req.in.content = mutable_buffer{req.in.content, state.content_length};
 	tag.set_value(state.status);
 }
 
@@ -3457,7 +3452,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	// Window on any data in the buffer after the head.
 	const const_buffer beyond_head
 	{
-		data(buffer) + addl_head_bytes, beyond_head_length
+		buffer + addl_head_bytes, beyond_head_length
 	};
 
 	// Setup the capstan and mark the end of the tape
@@ -3465,7 +3460,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	{
 		mutable_buffer
 		{
-			data(req.in.head) + state.head_read, head_length
+			req.in.head + state.head_read, head_length
 		}
 	};
 	parse::capstan pc{pb};
@@ -3502,7 +3497,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 
 	const const_buffer partial_chunk
 	{
-		data(beyond_head), chunk_read
+		beyond_head, chunk_read
 	};
 
 	const size_t copied
@@ -3512,7 +3507,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 
 	const const_buffer overrun
 	{
-		data(beyond_head) + chunk_read, beyond_chunk_length
+		beyond_head + chunk_read, beyond_chunk_length
 	};
 
 	assert(state.chunk_length >= 2);
@@ -3569,7 +3564,7 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	// Invoke the user's optional progress callback; this function
 	// should be marked noexcept for the time being.
 	if(req.in.progress && !done)
-		req.in.progress(buffer, const_buffer{data(chunk), state.chunk_read});
+		req.in.progress(buffer, const_buffer{chunk, state.chunk_read});
 
 	if(state.chunk_read == state.chunk_length)
 		chunk_dynamic_content_completed(*this, done);
@@ -3734,7 +3729,7 @@ const
 
 	const mutable_buffer buffer
 	{
-		data(head) + state.head_read, remaining
+		head + state.head_read, remaining
 	};
 
 	assert(size(buffer) <= size(head));
@@ -3758,16 +3753,13 @@ const
 		};
 
 	// The amount of bytes we still have to read to for the response
-	const size_t remaining
+	const mutable_buffer buffer
 	{
-		size(content) - state.content_read
+		content + state.content_read
 	};
 
-	assert(remaining > 0);
-	return
-	{
-		data(content) + state.content_read, remaining
-	};
+	assert(!empty(buffer));
+	return buffer;
 }
 
 /// The chunk head buffer starts after the last chunk ended and has a size of
@@ -3848,7 +3840,7 @@ const
 
 	const mutable_buffer buffer
 	{
-		data(content) + state.content_read, buffer_size
+		content + state.content_read, buffer_size
 	};
 
 	assert(!empty(buffer));
