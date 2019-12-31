@@ -24,6 +24,7 @@ struct ircd::buffer::const_buffer
 	template<size_t SIZE> const_buffer(const char (&buf)[SIZE]);
 	template<size_t SIZE> const_buffer(const std::array<char, SIZE> &buf);
 	const_buffer(const buffer<const char *> &b);
+	const_buffer(const buffer<char *> &b, const size_t &);
 	const_buffer(const buffer<char *> &b);
 	const_buffer(const mutable_buffer &b);
 	const_buffer(const string_view &s);
@@ -40,6 +41,13 @@ inline
 __attribute__((always_inline))
 ircd::buffer::const_buffer::const_buffer(const buffer<char *> &b)
 :buffer<const char *>{data(b), size(b)}
+{}
+
+inline
+__attribute__((always_inline))
+ircd::buffer::const_buffer::const_buffer(const buffer<char *> &b,
+                                         const size_t &max)
+:buffer<const char *>{{data(b), size(b)}, max}
 {}
 
 inline

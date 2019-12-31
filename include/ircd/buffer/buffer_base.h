@@ -36,6 +36,7 @@ struct ircd::buffer::buffer
 	explicit operator std::string() const;
 	operator string_view() const;
 
+	buffer(const buffer &start, const size_t &size);
 	buffer(const it &start, const it &stop);
 	buffer(const it &start, const size_t &size);
 	buffer();
@@ -59,6 +60,16 @@ inline __attribute__((always_inline, flatten))
 ircd::buffer::buffer<it>::buffer(const it &start,
                                  const it &stop)
 :std::pair<it, it>{start, stop}
+{}
+
+template<class it>
+inline __attribute__((always_inline))
+ircd::buffer::buffer<it>::buffer(const buffer &start,
+                                 const size_t &size)
+:buffer
+{
+	data(start), std::min(ircd::buffer::size(start), size)
+}
 {}
 
 template<class it>
