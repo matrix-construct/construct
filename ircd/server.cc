@@ -3693,7 +3693,7 @@ const
 		state.status == (http::code)0?
 			make_read_head_buffer():
 
-		chunk_header_mode && null(request->in.content)?
+		chunk_dynamic_header_mode?
 			make_read_chunk_dynamic_head_buffer():
 
 		chunk_header_mode?
