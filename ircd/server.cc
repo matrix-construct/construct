@@ -2103,6 +2103,7 @@ ircd::server::link::process_write_next(const const_buffer &buffer)
 		write_any(*socket, buffer)
 	};
 
+	assert(bytes <= size(buffer));
 	const const_buffer written
 	{
 		data(buffer), bytes
@@ -2258,6 +2259,7 @@ try
 }
 catch(const buffer_overrun &e)
 {
+	assert(!queue.empty());
 	queue.pop_front();
 	throw;
 }
@@ -2307,6 +2309,7 @@ catch(const buffer_overrun &)
 ircd::const_buffer
 ircd::server::link::read(const mutable_buffer &buf)
 {
+	assert(socket);
 	assert(!empty(buf));
 	const size_t received
 	{
@@ -2316,6 +2319,7 @@ ircd::server::link::read(const mutable_buffer &buf)
 	assert(peer);
 	peer->read_bytes += received;
 
+	assert(received <= size(buf));
 	return const_buffer
 	{
 		data(buf), received
@@ -2892,6 +2896,7 @@ ircd::server::tag::read_buffer(const const_buffer &buffer,
                                bool &done,
                                link &link)
 {
+	assert(!done);
 	assert(request);
 	const bool chunk_header_mode
 	{
@@ -3272,6 +3277,7 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 		data(content) + state.content_length, beyond_head_length
 	};
 
+	assert(!empty(target));
 	move(target, beyond_head);
 
 	// Increment the content_length to now include this chunk
@@ -3788,6 +3794,7 @@ const
 			size(content)
 		};
 
+	assert(size(content) >= state.content_read);
 	const size_t remaining
 	{
 		size(content) - state.content_read
@@ -3798,7 +3805,7 @@ const
 		data(content) + state.content_read, remaining
 	};
 
-	assert(size(buffer) > 0);
+	assert(!empty(buffer));
 	return buffer;
 }
 
@@ -3844,7 +3851,7 @@ const
 		data(content) + state.content_read, buffer_size
 	};
 
-	assert(size(buffer) > 0);
+	assert(!empty(buffer));
 	return buffer;
 }
 
@@ -3925,7 +3932,7 @@ const
 		data(buffer) + state.chunk_read, buffer_remaining
 	};
 
-	assert(size(ret) > 0);
+	assert(!empty(ret));
 	return ret;
 }
 
