@@ -6204,7 +6204,11 @@ console_cmd__stage__make_prev(opt &out, const string_view &line)
 		room
 	};
 
-	thread_local char buf[8192];
+	const unique_mutable_buffer buf
+	{
+		8_KiB
+	};
+
 	const m::room::head::generate prev
 	{
 		buf, head,
@@ -6251,7 +6255,11 @@ console_cmd__stage__make_auth(opt &out, const string_view &line)
 		at<"room_id"_>(event)
 	};
 
-	thread_local char buf[1024];
+	const unique_mutable_buffer buf
+	{
+		1_KiB
+	};
+
 	json::get<"auth_events"_>(event) =
 	{
 		m::room::auth::generate(buf, room, event)
@@ -7214,7 +7222,11 @@ console_cmd__event__sign(opt &out, const string_view &line)
 		request
 	};
 
-	thread_local char sigbuf[64_KiB];
+	const unique_mutable_buffer sigbuf
+	{
+		64_KiB
+	};
+
 	const auto event
 	{
 		m::signatures(mutable_buffer{sigbuf}, orig_event)
@@ -12557,7 +12569,11 @@ console_cmd__fed__head(opt &out, const string_view &line)
 	if(!user_id)
 		user_id = any_user(room, my_host(), "invite");
 
-	thread_local char buf[16_KiB];
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
 	m::v1::make_join::opts opts;
 	opts.remote = remote;
 	m::v1::make_join request
@@ -12639,7 +12655,11 @@ console_cmd__fed__send(opt &out, const string_view &line)
 		event_id
 	};
 
-	thread_local char pdubuf[m::event::MAX_SIZE];
+	const unique_mutable_buffer pdubuf
+	{
+		m::event::MAX_SIZE
+	};
+
 	const json::value pdu
 	{
 		json::stringify(mutable_buffer{pdubuf}, event)
@@ -12870,7 +12890,11 @@ console_cmd__fed__state(opt &out, const string_view &line)
 		event_id = head_buf;
 
 	// Used for out.head, out.content, in.head, but in.content is dynamic
-	thread_local char buf[8_KiB];
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
 	m::v1::state::opts opts;
 	opts.remote = remote;
 	opts.event_id = event_id;
@@ -12957,7 +12981,11 @@ console_cmd__fed__state_ids(opt &out, const string_view &line)
 	};
 
 	// Used for out.head, out.content, in.head, but in.content is dynamic
-	thread_local char buf[8_KiB];
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
 	m::v1::state::opts opts;
 	opts.remote = remote;
 	opts.event_id = event_id;
@@ -13037,7 +13065,11 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 		std::swap(op, event_id);
 
 	// Used for out.head, out.content, in.head, but in.content is dynamic
-	thread_local char buf[16_KiB];
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
 	m::v1::backfill::opts opts;
 	opts.remote = remote;
 	opts.limit = lex_cast<size_t>(count);
@@ -13539,7 +13571,11 @@ console_cmd__fed__query__profile(opt &out, const string_view &line)
 	m::v1::query::opts opts;
 	opts.remote = remote;
 
-	thread_local char buf[8_KiB];
+	const unique_mutable_buffer buf
+	{
+		8_KiB
+	};
+
 	m::v1::query::profile request
 	{
 		user_id, buf, std::move(opts)
@@ -13576,7 +13612,11 @@ console_cmd__fed__query__directory(opt &out, const string_view &line)
 	m::v1::query::opts opts;
 	opts.remote = remote;
 
-	thread_local char buf[8_KiB];
+	const unique_mutable_buffer buf
+	{
+		8_KiB
+	};
+
 	m::v1::query::directory request
 	{
 		room_alias, buf, std::move(opts)
@@ -13903,7 +13943,11 @@ console_cmd__fed__version(opt &out, const string_view &line)
 	m::v1::version::opts opts;
 	opts.remote = remote;
 
-	thread_local char buf[8_KiB];
+	const unique_mutable_buffer buf
+	{
+		16_KiB
+	};
+
 	m::v1::version request
 	{
 		buf, std::move(opts)
