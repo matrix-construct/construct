@@ -2898,25 +2898,30 @@ ircd::server::tag::read_buffer(const const_buffer &buffer,
 		state.chunk_length == size_t(-1)
 	};
 
-	if(empty(buffer))
-		return buffer;
+	const const_buffer ret
+	{
+		empty(buffer)?
+			buffer:
 
-	if(state.status == (http::code)0)
-		return read_head(buffer, done, link);
+		state.status == (http::code)0?
+			read_head(buffer, done, link):
 
-	if(chunk_header_mode && null(request->in.content))
-		return read_chunk_dynamic_head(buffer, done);
+		chunk_header_mode && null(request->in.content)?
+			read_chunk_dynamic_head(buffer, done):
 
-	if(chunk_header_mode)
-		return read_chunk_head(buffer, done);
+		chunk_header_mode?
+			read_chunk_head(buffer, done):
 
-	if(state.chunk_length && null(request->in.content))
-		return read_chunk_dynamic_content(buffer, done);
+		state.chunk_length && null(request->in.content)?
+			read_chunk_dynamic_content(buffer, done):
 
-	if(state.chunk_length)
-		return read_chunk_content(buffer, done);
+		state.chunk_length?
+			read_chunk_content(buffer, done):
 
-	return read_content(buffer, done);
+		read_content(buffer, done)
+	};
+
+	return ret;
 }
 
 ircd::const_buffer
@@ -3677,26 +3682,30 @@ const
 	assert(state.head_read <= size(request->in.head));
 	assert(state.content_read <= state.content_length + state.chunk_read || chunk_header_mode);
 	assert(state.content_read <= state.content_length || chunk_header_mode);
+	const mutable_buffer ret
+	{
+		state.status == (http::code)0?
+			make_read_head_buffer():
 
-	if(state.status == (http::code)0)
-		return make_read_head_buffer();
+		chunk_header_mode && null(request->in.content)?
+			make_read_chunk_dynamic_head_buffer():
 
-	if(chunk_header_mode && null(request->in.content))
-		return make_read_chunk_dynamic_head_buffer();
+		chunk_header_mode?
+			make_read_chunk_head_buffer():
 
-	if(chunk_header_mode)
-		return make_read_chunk_head_buffer();
+		state.chunk_length && null(request->in.content)?
+			make_read_chunk_dynamic_content_buffer():
 
-	if(state.chunk_length && null(request->in.content))
-		return make_read_chunk_dynamic_content_buffer();
+		state.chunk_length?
+			make_read_chunk_content_buffer():
 
-	if(state.chunk_length)
-		return make_read_chunk_content_buffer();
+		state.content_read >= size(request->in.content)?
+			make_read_discard_buffer():
 
-	if(state.content_read >= size(request->in.content))
-		return make_read_discard_buffer();
+		make_read_content_buffer()
+	};
 
-	return make_read_content_buffer();
+	return ret;
 }
 
 ircd::mutable_buffer
@@ -3941,10 +3950,13 @@ const
 		std::min(remaining, sizeof(buffer))
 	};
 
-	return
+	const mutable_buffer ret
 	{
 		buffer, buffer_max
 	};
+
+	assert(!empty(ret));
+	return ret;
 }
 
 size_t
