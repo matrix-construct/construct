@@ -3716,21 +3716,18 @@ const
 	assert(request);
 	const auto &req{*request};
 	const auto &head{req.in.head};
-	if(unlikely(size(req.in.head) <= state.head_read))
-		throw buffer_overrun
-		{
-			"Supplied buffer of %zu too small for HTTP head", size(req.in.head)
-		};
-
-	const size_t remaining
-	{
-		size(head) - state.head_read
-	};
-
 	const mutable_buffer buffer
 	{
-		head + state.head_read, remaining
+		head + state.head_read
 	};
+
+	if(unlikely(empty(buffer)))
+		throw buffer_overrun
+		{
+			"Head buffer too small for HTTP; size:%zu head_read:%zu",
+			size(req.in.head),
+			state.head_read,
+		};
 
 	assert(size(buffer) <= size(head));
 	assert(size(buffer) > 0);
@@ -3744,19 +3741,19 @@ const
 	assert(request);
 	const auto &req{*request};
 	const auto &content{req.in.content};
-	if(unlikely(size(content) <= state.content_read))
-		throw buffer_overrun
-		{
-			"Content buffer of %zu bytes too small to read %zu bytes of content",
-			size(content),
-			state.content_length
-		};
-
-	// The amount of bytes we still have to read to for the response
 	const mutable_buffer buffer
 	{
 		content + state.content_read
 	};
+
+	if(unlikely(empty(buffer)))
+		throw buffer_overrun
+		{
+			"Content buffer too small; size:%zu content_length:%zu content_read:%zu",
+			size(content),
+			state.content_length,
+			state.content_read,
+		};
 
 	assert(!empty(buffer));
 	return buffer;
@@ -3779,23 +3776,19 @@ const
 	const auto &req{*request};
 	const auto &content{req.in.content};
 
-	if(unlikely(size(content) <= state.content_read))
-		throw buffer_overrun
-		{
-			"Content buffer of %zu bytes too small to read next chunk header",
-			size(content)
-		};
-
 	assert(size(content) >= state.content_read);
-	const size_t remaining
-	{
-		size(content) - state.content_read
-	};
-
 	const mutable_buffer buffer
 	{
-		data(content) + state.content_read, remaining
+		content + state.content_read
 	};
+
+	if(unlikely(empty(buffer)))
+		throw buffer_overrun
+		{
+			"Content buffer too small to read next chunk header; size:%zu content_read:%zu",
+			size(content),
+			state.content_read,
+		};
 
 	assert(!empty(buffer));
 	return buffer;
@@ -3813,11 +3806,6 @@ const
 	const auto &content{req.in.content};
 
 	assert(size(content) >= state.content_read);
-	const size_t buffer_remaining
-	{
-		size(content) - state.content_read
-	};
-
 	const size_t chunk_remaining
 	{
 		content_remaining()
@@ -3825,23 +3813,19 @@ const
 
 	assert(chunk_remaining <= state.chunk_length);
 	assert(chunk_remaining == state.content_length - state.content_read);
-	const size_t buffer_size
-	{
-		std::min(buffer_remaining, chunk_remaining)
-	};
-
-	if(unlikely(buffer_size < chunk_remaining))
-		throw buffer_overrun
-		{
-			"Content buffer of %zu bytes too small to read remaining %zu of chunk",
-			size(content),
-			chunk_remaining
-		};
-
 	const mutable_buffer buffer
 	{
-		content + state.content_read, buffer_size
+		content + state.content_read, chunk_remaining
 	};
+
+	if(unlikely(empty(buffer)))
+		throw buffer_overrun
+		{
+			"Chunk dynamic content buffer too small size:%zu content_read:%zu chunk_remaining:%zu",
+			size(content),
+			state.content_read,
+			chunk_remaining,
+		};
 
 	assert(!empty(buffer));
 	return buffer;
@@ -3862,11 +3846,6 @@ const
 	assert(null(req.in.content));
 	assert(size(req.in.head) >= state.head_read);
 
-	const size_t head_max
-	{
-		size(req.in.head) + state.head_rem
-	};
-
 	// The total offset in the head buffer is the message head plus the
 	// amount of chunk head received so far, which is kept in chunk_read.
 	const size_t head_offset
@@ -3874,25 +3853,22 @@ const
 		state.head_read + state.chunk_read
 	};
 
-	assert(head_max >= head_offset);
-	if(unlikely(head_max - head_offset <= 16))
-		throw buffer_overrun
-		{
-			"Remaining head buffer of %zu bytes too small to read next chunk header",
-			head_max - state.head_read
-		};
-
-	const size_t remaining
-	{
-		head_max - head_offset
-	};
-
 	const mutable_buffer buffer
 	{
-		data(req.in.head) + state.head_read + state.chunk_read, remaining
+		req.in.head + head_offset
 	};
 
-	assert(size(buffer) > 0);
+	if(unlikely(size(buffer) < 16))
+		throw buffer_overrun
+		{
+			"Chunk dynamic head buffer too small size:%zu chunk_read:%zu head_read:%zu head_offset:%zu",
+			size(buffer),
+			state.chunk_read,
+			state.head_read,
+			head_offset,
+		};
+
+	assert(!empty(buffer));
 	return buffer;
 }
 
@@ -3914,15 +3890,19 @@ const
 
 	assert(size(buffer) == state.chunk_length);
 	assert(state.chunk_read <= size(buffer));
-	const size_t buffer_remaining
-	{
-		size(buffer) - state.chunk_read
-	};
-
 	const mutable_buffer ret
 	{
-		data(buffer) + state.chunk_read, buffer_remaining
+		buffer + state.chunk_read
 	};
+
+	if(unlikely(empty(ret)))
+		throw buffer_overrun
+		{
+			"Chunk dynamic content buffer too small size:%zu chunk_read:%zu chunk_length:%zu",
+			size(buffer),
+			state.chunk_read,
+			state.chunk_length,
+		};
 
 	assert(!empty(ret));
 	return ret;
