@@ -1288,7 +1288,7 @@ AC_CHECK_LIB(ssl, SSL_version,
 	SSL_LIBS="-lssl"
 ], [
 	have_ssl="no"
-	AC_MSG_ERROR([libssl is required but not found. Try apt-get install libssl1.0-dev])
+	AC_MSG_ERROR([libssl is required but not found. Try apt-get install libssl-dev])
 ])
 
 AM_CONDITIONAL([SSL], [test "x$have_ssl" = "xyes"])
