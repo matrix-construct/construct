@@ -3018,6 +3018,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 			std::max(ssize_t(size(req.in.content) - head_read), ssize_t(0))
 		};
 
+		//TODO: XXX data(req.in.head)
 		req.in.content = mutable_buffer
 		{
 			data(req.in.head) + head_read, size_t(content_max)
@@ -3089,6 +3090,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 		beyond_head_len - content_read
 	};
 
+	//TODO: XXX data(req.in.head)
 	const const_buffer partial_content
 	{
 		data(req.in.head) + head_read, content_read
