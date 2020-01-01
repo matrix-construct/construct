@@ -3556,7 +3556,7 @@ ircd::server::tag::read_chunk_dynamic_content(const const_buffer &buffer,
 	state.content_read += addl_content_read;
 	assert(state.chunk_read <= state.content_read);
 	assert(state.chunk_read <= state.chunk_length);
-	assert(state.content_length >= state.content_read);
+	assert(state.content_length >= state.chunk_length);
 
 	// Invoke the user's optional progress callback; this function
 	// should be marked noexcept for the time being.
@@ -3606,7 +3606,6 @@ ircd::server::chunk_dynamic_content_completed(tag &tag,
 
 	// State sanity tests
 	assert(state.content_length == size_chunks(req.in));
-	assert(state.content_length >= state.content_read);
 	assert(state.content_length >= state.chunk_length);
 	assert(state.content_length >= state.chunk_read);
 	assert(state.content_read >= state.chunk_length);
