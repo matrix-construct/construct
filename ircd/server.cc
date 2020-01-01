@@ -3440,31 +3440,28 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 
 	state.chunk_read += addl_head_bytes;
 	state.content_read += addl_head_bytes;
-	const auto head_length
+	const const_buffer chunk_head
 	{
-		state.chunk_read
+		req.in.head + state.head_read, state.chunk_read
 	};
 
 	state.chunk_read = 0;
-	assert(state.content_read >= head_length);
-	state.content_read -= head_length;
+	assert(state.content_read >= size(chunk_head));
+	state.content_read -= size(chunk_head);
 
 	// Window on any data in the buffer after the head.
 	const const_buffer beyond_head
 	{
-		buffer + addl_head_bytes, beyond_head_length
+		req.in.head + size(chunk_head), beyond_head_length
 	};
 
 	// Setup the capstan and mark the end of the tape
 	parse::buffer pb
 	{
-		mutable_buffer
-		{
-			req.in.head + state.head_read, head_length
-		}
+		mutable_buffer(const_cast<char *>(data(chunk_head)), size(chunk_head))
 	};
 	parse::capstan pc{pb};
-	pc.read += head_length;
+	pc.read += size(chunk_head);
 
 	// Play the tape through the formal grammar.
 	const http::response::chunk chunk{pc};
