@@ -84,6 +84,8 @@ and use the latest head.
 
 3. See the [SETUP](doc/SETUP.md) instructions to run Construct for the first time.
 
+4. See the [TUNING](doc/TUNING.md) guide to optimize Construct for your deployment.
+
 ##### TROUBLESHOOTING
 
 See the [TROUBLESHOOTING](doc/TROUBLESHOOTING.md) guide for solutions to possible
