@@ -392,7 +392,12 @@ try
 		request
 	};
 
-	if(!response.has("room_id"))
+	const json::string &room_id
+	{
+		response["room_id"]
+	};
+
+	if(!valid(m::id::ROOM, room_id))
 		throw m::NOT_FOUND
 		{
 			"Server '%s' does not know room_id for %s",
@@ -400,12 +405,7 @@ try
 			string_view{alias},
 		};
 
-	const m::room::id &room_id
-	{
-		unquote(response["room_id"])
-	};
-
-	set(alias, room_id);
+	set(alias, m::id::room(room_id));
 }
 catch(const ctx::timeout &e)
 {
