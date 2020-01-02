@@ -1,9 +1,10 @@
 ## SETUP
 
-- For standalone builds you will need to add the included lib directories
-in your git repo to the library path:
-`export LD_LIBRARY_PATH=/path/to/src/deps/boost/lib:$LD_LIBRARY_PATH`
-`export LD_LIBRARY_PATH=/path/to/src/deps/rocksdb:$LD_LIBRARY_PATH`
+This guide will help you execute Construct for the first time. If you are
+building from source code and have not already done so please follow the
+instructions in [BUILD](BUILD.md) before continuing here.
+
+#### NOTES
 
 - We will refer to your server as `host.tld`. For those familiar with matrix:
 this is your _origin_ and mxid `@user:host.tld` hostpart. If you delegate
@@ -12,6 +13,11 @@ this as your _servername_.
 
 > Construct clusters all share the same _origin_ but each individual instance
 of the daemon has a unique _servername_.
+
+- If you built construct yourself as a standalone build you will need to add
+the included library directories before executing:
+`export LD_LIBRARY_PATH=/path/to/src/deps/boost/lib:$LD_LIBRARY_PATH`
+`export LD_LIBRARY_PATH=/path/to/src/deps/rocksdb:$LD_LIBRARY_PATH`
 
 ### PROCEDURE
 
