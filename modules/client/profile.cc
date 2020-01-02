@@ -199,13 +199,14 @@ get__profile(client &client,
 
 	// Have to return a 404 if the profile is empty rather than a {},
 	// so we iterate for at least one element first to check that.
-	bool empty{true};
-	profile.for_each([&empty]
-	(const string_view &, const string_view &)
+	const bool empty
 	{
-		empty = false;
-		return false;
-	});
+		profile.for_each([]
+		(const string_view &, const string_view &)
+		{
+			return false;
+		})
+	};
 
 	// If we have no profile data and the user is not ours, eptr might have
 	// a better error for our client.
