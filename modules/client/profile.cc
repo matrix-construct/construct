@@ -210,7 +210,7 @@ get__profile(client &client,
 
 	// If we have no profile data and the user is not ours, eptr might have
 	// a better error for our client.
-	if(empty && !my(user))
+	if(empty && eptr && !my(user))
 		rethrow(eptr, user, param);
 
 	// Otherwise if there's no profile data we 404 our client.
@@ -269,6 +269,7 @@ rethrow(const std::exception_ptr &eptr,
         const string_view &key)
 try
 {
+	assert(bool(eptr));
 	std::rethrow_exception(eptr);
 }
 catch(const http::error &e)
