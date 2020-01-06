@@ -126,6 +126,29 @@ ircd::m::sync::apropos(const data &d,
 }
 
 ircd::string_view
+ircd::m::sync::make_since(const mutable_buffer &buf,
+                          const int64_t &val)
+{
+	return fmt::sprintf
+	{
+		buf, "ctor_%lu",
+		val
+	};
+}
+
+ircd::string_view
+ircd::m::sync::make_since(const mutable_buffer &buf,
+                          const m::events::range &val)
+{
+	return fmt::sprintf
+	{
+		buf, "ctor_%lu_%lu",
+		val.first,
+		val.second,
+	};
+}
+
+ircd::string_view
 ircd::m::sync::loghead(const data &data)
 {
 	thread_local char headbuf[256], rembuf[128], iecbuf[2][64], tmbuf[32];

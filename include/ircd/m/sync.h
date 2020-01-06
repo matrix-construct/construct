@@ -27,6 +27,9 @@ namespace ircd::m::sync
 
 	string_view loghead(const data &);
 
+	string_view make_since(const mutable_buffer &, const int64_t &);
+	string_view make_since(const mutable_buffer &, const m::events::range &);
+
 	bool apropos(const data &, const event::idx &);
 	bool apropos(const data &, const event::id &);
 	bool apropos(const data &, const event &);

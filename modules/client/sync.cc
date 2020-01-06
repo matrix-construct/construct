@@ -387,11 +387,12 @@ ircd::m::sync::empty_response(data &data,
 		top, "presence"
 	};
 
+	char buf[64];
 	json::stack::member
 	{
 		top, "next_batch", json::value
 		{
-			lex_cast(next_batch), json::STRING
+			make_since(buf, next_batch), json::STRING
 		}
 	};
 
@@ -492,23 +493,17 @@ try
 			// second part is the next_batch upper-bound integer which is a snapshot
 			// of the server's sequence number when the phased sync started.
 			data.phased?
-				fmt::sprintf
-				{
-					buf, "%ld_%lu", next_batch, data.range.second
-				}:
+				make_since(buf, m::events::range{next_batch, data.range.second}):
 
 			// The normal integer since token.
-				fmt::sprintf
-				{
-					buf, "%ld", next_batch
-				}
+				make_since(buf, next_batch)
 		};
 
 		json::stack::member
 		{
 			*data.out, "next_batch", json::value
 			{
-				next_batch_token ,json::STRING
+				next_batch_token, json::STRING
 			}
 		};
 	}
@@ -603,11 +598,12 @@ try
 
 	if(last)
 	{
+		char buf[64];
 		json::stack::member
 		{
 			top, "next_batch", json::value
 			{
-				lex_cast(next), json::STRING
+				make_since(buf, next), json::STRING
 			}
 		};
 
@@ -966,11 +962,12 @@ ircd::m::sync::longpoll::polled(data &data,
 			std::min(data.range.second + 1, vm::sequence::retired + 1)
 	};
 
+	char since_buf[64];
 	json::stack::member
 	{
 		top, "next_batch", json::value
 		{
-			lex_cast(next), json::STRING
+			make_since(since_buf, next), json::STRING
 		}
 	};
 
@@ -1092,7 +1089,7 @@ try
 }
 ,since_token
 {
-	split(request.query.get("since", "0"_sv), '_')
+	split(lstrip(request.query.get("since", "0"_sv), "ctor_"), '_')
 }
 ,since
 {
@@ -1104,7 +1101,7 @@ try
 }
 ,next_batch
 {
-	uint64_t(lex_cast<int64_t>(next_batch_token?: "-1"_sv))
+	uint64_t(lex_cast<uint64_t>(next_batch_token?: "-1"_sv))
 }
 ,timesout
 {

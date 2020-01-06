@@ -57,7 +57,7 @@ get__members(client &client,
 	// parse this token for the snapshot integer.
 	const auto &[since, snapshot]
 	{
-		split(at, '_')
+		split(lstrip(at, "ctor_"), '_')
 	};
 
 	const auto at_idx
