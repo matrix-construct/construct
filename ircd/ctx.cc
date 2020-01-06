@@ -1515,7 +1515,13 @@ ircd::ctx::pool::add(const size_t &num)
 {
 	assert(opt);
 	for(size_t i(0); i < num; ++i)
+	{
 		ctxs.emplace_back(name, opt->stack_size, context::POST, std::bind(&pool::main, this));
+
+		assert(opt);
+		ionice(ctxs.back(), opt->ionice);
+		nice(ctxs.back(), opt->nice);
+	}
 }
 
 void

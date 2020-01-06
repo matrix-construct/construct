@@ -108,6 +108,12 @@ struct ircd::ctx::pool::opts
 	/// are blocked from submitting (see: queue_max_blocking). This warning
 	/// will still be seen for submissions outside any ircd::ctx.
 	bool queue_max_dwarning {true};
+
+	/// IO priority nice value for contexts in this pool.
+	int8_t ionice {0};
+
+	/// Scheduler priority nice value for contexts in this pool.
+	int8_t nice {0};
 };
 
 template<class F,
