@@ -34,6 +34,8 @@ struct ircd::db::database::env final
 	using ThreadStatus = rocksdb::ThreadStatus;
 	using ThreadStatusUpdater = rocksdb::ThreadStatusUpdater;
 
+	static int8_t make_nice(const IOPriority &prio);
+
 	static ircd::log::log log;
 
 	database &d;
@@ -206,7 +208,7 @@ struct ircd::db::database::env::writable_file
 	rocksdb::EnvOptions env_opts;
 	fs::fd::opts opts;
 	IOPriority prio {IO_LOW};
-	int8_t prio_val {0};
+	int8_t ionice {0};
 	bool nodelay {false};
 	WriteLifeTimeHint hint {WriteLifeTimeHint::WLTH_NOT_SET};
 	fs::fd fd;

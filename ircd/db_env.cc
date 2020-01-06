@@ -1217,6 +1217,17 @@ catch(const std::exception &e)
 	return 0;
 }
 
+int8_t
+ircd::db::database::env::make_nice(const IOPriority &prio)
+{
+	switch(prio)
+	{
+		case IOPriority::IO_HIGH:     return -5;
+		case IOPriority::IO_LOW:      return 5;
+		default:                      return 0;
+	}
+}
+
 //
 // writable_file
 //
@@ -1580,7 +1591,7 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->prio_val;
+	wopts.priority = this->ionice;
 	wopts.nodelay = this->nodelay;
 	fs::truncate(fd, size, wopts);
 	return Status::OK();
@@ -1690,7 +1701,7 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->prio_val;
+	wopts.priority = this->ionice;
 	wopts.nodelay = this->nodelay;
 	const const_buffer buf
 	{
@@ -1754,7 +1765,7 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->prio_val;
+	wopts.priority = this->ionice;
 	wopts.nodelay = this->nodelay;
 	wopts.offset = offset;
 	const const_buffer buf
@@ -1924,7 +1935,7 @@ ircd::db::database::env::writable_file::_allocate(const size_t &offset,
 
 	fs::write_opts wopts;
 	wopts.offset = allocate_offset;
-	wopts.priority = this->prio_val;
+	wopts.priority = this->ionice;
 	wopts.nodelay = this->nodelay;
 	wopts.keep_size = env_opts.fallocate_with_keep_size;
 
@@ -2044,16 +2055,15 @@ noexcept
 	#endif
 
 	this->prio = prio;
+	this->ionice = make_nice(prio);
 	switch(this->prio)
 	{
 		case IOPriority::IO_HIGH:
-			prio_val = -5; //TODO: magic
 			nodelay = true;
 			break;
 
 		default:
 		case IOPriority::IO_LOW:
-			prio_val = 5; //TODO: magic
 			nodelay = false;
 			break;
 	}
@@ -2213,7 +2223,7 @@ noexcept try
 	if(logical_offset > 0 && fs::size(fd) != logical_offset)
 	{
 		fs::write_opts wopts;
-		wopts.priority = this->prio_val;
+		wopts.priority = this->ionice;
 		wopts.nodelay = true;
 		fs::truncate(fd, logical_offset, wopts);
 	}
@@ -2265,7 +2275,7 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->prio_val;
+	wopts.priority = this->ionice;
 	wopts.nodelay = true;
 	fs::truncate(fd, size, wopts);
 	logical_offset = size;
@@ -2699,7 +2709,7 @@ ircd::db::database::env::writable_file_direct::_write__aligned(const const_buffe
 	assert(aligned(offset));
 
 	fs::write_opts wopts;
-	wopts.priority = this->prio_val;
+	wopts.priority = this->ionice;
 	wopts.nodelay = this->nodelay;
 	wopts.offset = offset;
 	fs::write(fd, buf, wopts);
