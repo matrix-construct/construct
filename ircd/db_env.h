@@ -181,7 +181,7 @@ struct ircd::db::database::env::sequential_file final
 	fs::fd::opts opts;
 	fs::fd fd;
 	size_t _buffer_align;
-	off_t offset;
+	off_t offset {0};
 	bool aio;
 
 	bool use_direct_io() const noexcept override;

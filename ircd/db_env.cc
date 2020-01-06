@@ -2815,10 +2815,6 @@ try
 		fs::block_size(fd):
 		1
 }
-,offset
-{
-	0
-}
 ,aio
 {
 	// When this flag is false then AIO operations are never used for this
