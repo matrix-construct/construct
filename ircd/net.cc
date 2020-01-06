@@ -364,7 +364,7 @@ size_t
 ircd::net::discard_all(socket &socket,
                        const size_t &len)
 {
-	static char buffer[512];
+	thread_local char buffer[512];
 
 	size_t remain{len}; while(remain)
 	{
@@ -388,7 +388,7 @@ size_t
 ircd::net::discard_any(socket &socket,
                        const size_t &len)
 {
-	static char buffer[512];
+	thread_local char buffer[512];
 
 	size_t remain{len}; while(remain)
 	{

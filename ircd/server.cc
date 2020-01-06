@@ -3921,7 +3921,7 @@ const
 	};
 
 	assert(remaining <= state.content_length);
-	static char buffer[512];
+	thread_local char buffer[512];
 	const size_t buffer_max
 	{
 		std::min(remaining, sizeof(buffer))
