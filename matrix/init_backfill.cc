@@ -107,6 +107,10 @@ try
 		return run::level == run::level::RUN;
 	});
 
+	// Set a low priority for this context; see related pool_opts
+	ionice(ctx::cur(), 4);
+	nice(ctx::cur(), 4);
+
 	// Prepare to iterate all of the rooms this server is aware of which
 	// contain at least one member from another server in any state, and
 	// one member from our server in a joined state.
@@ -136,6 +140,12 @@ try
 	{
 		512_KiB,               // stack sz
 		size_t(pool_size),     // pool sz
+		-1,                    // queue max hard
+		0,                     // queue max soft
+		true,                  // queue max blocking
+		true,                  // queue max warning
+		3,                     // ionice
+		3,                     // nice
 	};
 
 	ctx::pool pool
