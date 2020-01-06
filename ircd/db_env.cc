@@ -1218,6 +1218,18 @@ catch(const std::exception &e)
 }
 
 int8_t
+ircd::db::database::env::make_nice(const Priority &prio)
+{
+	switch(prio)
+	{
+		case Priority::HIGH:     return -5;
+		case Priority::LOW:      return 5;
+		case Priority::BOTTOM:   return 20;
+		default:     	         return 0;
+	}
+}
+
+int8_t
 ircd::db::database::env::make_nice(const IOPriority &prio)
 {
 	switch(prio)
@@ -1257,6 +1269,10 @@ try
 	ret.cloexec = this->env_opts.set_fd_cloexec;
 	return ret;
 }()}
+,ionice
+{
+	ctx::ionice(ctx::cur())
+}
 ,fd
 {
 	name, this->opts
@@ -1381,6 +1397,7 @@ noexcept try
 
 	fs::sync_opts opts;
 	opts.metadata = false;
+	opts.priority = ionice;
 	fs::flush(fd, opts);
 	return Status::OK();
 }
@@ -1429,6 +1446,7 @@ noexcept try
 	#endif
 
 	fs::sync_opts opts;
+	opts.priority = ionice;
 	fs::sync(fd, opts);
 	return Status::OK();
 }
@@ -1477,6 +1495,7 @@ noexcept try
 	#endif
 
 	fs::sync_opts opts;
+	opts.priority = ionice;
 	fs::flush(fd, opts);
 	return Status::OK();
 }
@@ -1538,6 +1557,7 @@ noexcept try
 
 	fs::sync_opts opts;
 	opts.metadata = false;
+	opts.priority = ionice;
 	fs::flush(fd, offset, length, opts);
 	return Status::OK();
 }
@@ -2815,6 +2835,10 @@ try
 		fs::block_size(fd):
 		1
 }
+,ionice
+{
+	ctx::ionice(ctx::cur())
+}
 ,aio
 {
 	// When this flag is false then AIO operations are never used for this
@@ -2926,6 +2950,7 @@ noexcept try
 
 	fs::read_opts opts;
 	opts.offset = offset;
+	opts.priority = ionice;
 	opts.aio = this->aio;
 	opts.all = false;
 	const mutable_buffer buf
@@ -3014,6 +3039,7 @@ noexcept try
 
 	fs::read_opts opts;
 	opts.offset = offset;
+	opts.priority = ionice;
 	opts.aio = this->aio;
 	opts.all = false;
 	const mutable_buffer buf
@@ -3205,6 +3231,10 @@ try
 		fs::block_size(fd):
 		1
 }
+,ionice
+{
+	ctx::ionice(ctx::cur())
+}
 ,aio
 {
 	// When this flag is false then AIO operations are never used for this
@@ -3320,6 +3350,7 @@ const noexcept try
 
 	fs::read_opts opts;
 	opts.offset = offset;
+	opts.priority = ionice;
 	opts.aio = this->aio;
 	opts.all = !this->opts.direct;
 	const mutable_buffer buf
@@ -3510,6 +3541,10 @@ try
 		fs::block_size(fd):
 		1
 }
+,ionice
+{
+	ctx::ionice(ctx::cur())
+}
 ,aio
 {
 	true
@@ -3614,6 +3649,7 @@ noexcept try
 	#endif
 
 	fs::sync_opts opts;
+	opts.priority = ionice;
 	fs::flush(fd, opts);
 	return Status::OK();
 }
@@ -3661,6 +3697,7 @@ noexcept try
 	#endif
 
 	fs::sync_opts opts;
+	opts.priority = ionice;
 	fs::sync(fd, opts);
 	return Status::OK();
 }
@@ -3709,6 +3746,7 @@ noexcept try
 
 	fs::sync_opts opts;
 	opts.metadata = false;
+	opts.priority = ionice;
 	fs::flush(fd, opts);
 	return Status::OK();
 }
@@ -3765,6 +3803,7 @@ const noexcept try
 
 	fs::read_opts opts;
 	opts.offset = offset;
+	opts.priority = ionice;
 	opts.aio = this->aio;
 	opts.all = !this->opts.direct;
 	const mutable_buffer buf

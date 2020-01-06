@@ -34,7 +34,8 @@ struct ircd::db::database::env final
 	using ThreadStatus = rocksdb::ThreadStatus;
 	using ThreadStatusUpdater = rocksdb::ThreadStatusUpdater;
 
-	static int8_t make_nice(const IOPriority &prio);
+	static int8_t make_nice(const IOPriority &);
+	static int8_t make_nice(const Priority &);
 
 	static ircd::log::log log;
 
@@ -127,6 +128,7 @@ struct ircd::db::database::env::random_access_file final
 	fs::fd::opts opts;
 	fs::fd fd;
 	size_t _buffer_align;
+	int8_t ionice {0};
 	bool aio;
 
 	bool use_direct_io() const noexcept override;
@@ -153,6 +155,7 @@ struct ircd::db::database::env::random_rw_file final
 	fs::fd::opts opts;
 	fs::fd fd;
 	size_t _buffer_align;
+	int8_t ionice {0};
 	bool aio;
 
 	bool use_direct_io() const noexcept override;
@@ -182,6 +185,7 @@ struct ircd::db::database::env::sequential_file final
 	fs::fd fd;
 	size_t _buffer_align;
 	off_t offset {0};
+	int8_t ionice {0};
 	bool aio;
 
 	bool use_direct_io() const noexcept override;
