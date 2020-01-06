@@ -3987,6 +3987,8 @@ ircd::db::database::env::state::pool::pool(database &d,
 {
 	pri == Priority::HIGH?
 		IOPriority::IO_HIGH:
+	pri == Priority::BOTTOM?
+		IOPriority::IO_LOW:
 		IOPriority::IO_LOW
 }
 ,name
@@ -4002,6 +4004,10 @@ ircd::db::database::env::state::pool::pool(database &d,
 	0,                     // initial workers
 	-1,                    // queue hard limit
 	-1,                    // queue soft limit
+	true,                  // queue_max_blocking
+	true,                  // queue_max_dwarning
+	make_nice(iopri),      // ionice
+	make_nice(this->pri),  // nice
 }
 ,p
 {

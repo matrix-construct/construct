@@ -512,6 +512,22 @@ ircd::ctx::interruptible(ctx &ctx,
 		ctx.flags |= context::NOINTERRUPT;
 }
 
+int8_t
+ircd::ctx::nice(ctx &ctx,
+                const int8_t &val)
+{
+	ctx.nice = val;
+	return ctx.nice;
+}
+
+int8_t
+ircd::ctx::ionice(ctx &ctx,
+                  const int8_t &val)
+{
+	ctx.ionice = val;
+	return ctx.ionice;
+}
+
 /// !running() && notes > 0
 [[gnu::hot]]
 bool
@@ -591,6 +607,24 @@ ircd::ctx::cycles(const ctx &ctx)
 noexcept
 {
 	return prof::get(ctx, prof::event::CYCLES);
+}
+
+/// Returns the IO priority nice-value
+[[gnu::hot]]
+const int8_t &
+ircd::ctx::ionice(const ctx &ctx)
+noexcept
+{
+	return ctx.ionice;
+}
+
+/// Returns the context scheduling priority nice-value
+[[gnu::hot]]
+const int8_t &
+ircd::ctx::nice(const ctx &ctx)
+noexcept
+{
+	return ctx.nice;
 }
 
 /// Returns the yield count for `ctx`

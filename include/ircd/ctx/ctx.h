@@ -50,6 +50,8 @@ namespace ircd::ctx
 	const int32_t &notes(const ctx &) noexcept;     // Peeks at internal semaphore count
 	const uint64_t &epoch(const ctx &) noexcept;    // Context switching counter
 	const ulong &cycles(const ctx &) noexcept;      // Accumulated tsc (not counting cur slice)
+	const int8_t &ionice(const ctx &) noexcept;     // IO priority nice-value
+	const int8_t &nice(const ctx &) noexcept;       // Scheduling priority nice-value
 	bool interruptible(const ctx &) noexcept;       // Context can throw at interruption point
 	bool interruption(const ctx &) noexcept;        // Context was marked for interruption
 	bool termination(const ctx &) noexcept;         // Context was marked for termination
@@ -59,6 +61,8 @@ namespace ircd::ctx
 	bool waiting(const ctx &) noexcept;             // started() && !finished() && !running()
 	bool queued(const ctx &) noexcept;              // !running() && notes() > 0
 
+	int8_t ionice(ctx &, const int8_t &);           // IO priority nice-value
+	int8_t nice(ctx &, const int8_t &);             // Scheduling priority nice-value
 	void interruptible(ctx &, const bool &);        // False for interrupt suppression.
 	void interrupt(ctx &);                          // Interrupt the context.
 	void terminate(ctx &);                          // Interrupt for termination.
