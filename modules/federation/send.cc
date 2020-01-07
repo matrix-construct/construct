@@ -141,6 +141,15 @@ handle_put(client &client,
 		pdu_failures.count()
 	};
 
+	if(origin && origin != request.origin)
+		throw m::ACCESS_DENIED
+		{
+			"txn[%s] originating from '%s' not accepted when relayed by '%s'",
+			txn_id,
+			origin,
+			request.origin,
+		};
+
 	// Don't accept sends to ourself for whatever reason (i.e a 127.0.0.1
 	// leaked into the target list). This should be a 500 so it's not
 	// considered success or cached as failure by the sender's state.
