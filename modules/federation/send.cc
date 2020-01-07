@@ -33,6 +33,13 @@ allow_self
 	{ "default",  "false"                           },
 };
 
+conf::item<size_t>
+eval_max_per_node
+{
+	{ "name",     "ircd.federation.send.eval.max_per_node" },
+	{ "default",  1L                                       },
+};
+
 void
 handle_edu(client &client,
            const m::resource::request::object<m::txn> &request,
@@ -160,19 +167,27 @@ handle_put(client &client,
 			txn_id
 		};
 
+	size_t evals{0};
 	const bool txn_in_progress
 	{
-		!m::vm::eval::for_each([&txn_id, &request]
+		!m::vm::eval::for_each([&txn_id, &request, &evals]
 		(const auto &eval)
 		{
 			assert(eval.opts);
-			const bool match
+
+			const bool match_node
 			{
-				eval.opts->node_id == request.origin &&
+				eval.opts->node_id == request.origin
+			};
+
+			const bool match_txn
+			{
+				match_node &&
 				eval.opts->txn_id == txn_id
 			};
 
-			return !match; // false to break; for_each() returns false
+			evals += match_node;
+			return !match_txn; // false to break; for_each() returns false
 		})
 	};
 
@@ -180,6 +195,12 @@ handle_put(client &client,
 		return m::resource::response
 		{
 			client, http::ACCEPTED
+		};
+
+	if(evals >= size_t(eval_max_per_node))
+		return m::resource::response
+		{
+			client, http::TOO_MANY_REQUESTS
 		};
 
 	for(const auto &pdu_failure : pdu_failures)
