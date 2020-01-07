@@ -154,6 +154,9 @@ struct ircd::m::vm::opts
 	/// The mxid of the user which is conducting this eval.
 	string_view user_id;
 
+	/// The txnid from the node conducting the eval.
+	string_view txn_id;
+
 	/// Call conform hooks (detailed behavior can be tweaked below)
 	bool conform {true};
 

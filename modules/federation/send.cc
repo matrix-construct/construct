@@ -48,6 +48,7 @@ handle_edu(client &client,
 
 	m::vm::opts vmopts;
 	vmopts.node_id = request.origin;
+	vmopts.txn_id = txn_id;
 	vmopts.edu = true;
 	vmopts.notify_clients = false;
 	vmopts.notify_servers = false;
@@ -69,6 +70,7 @@ handle_pdus(client &client,
 	vmopts.nothrows = -1U;
 	vmopts.nothrows &= ~m::vm::fault::INTERRUPT;
 	vmopts.node_id = request.origin;
+	vmopts.txn_id = txn_id;
 	vmopts.fetch_state = false;
 	m::vm::eval eval
 	{
