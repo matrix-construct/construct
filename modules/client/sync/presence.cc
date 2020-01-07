@@ -105,6 +105,14 @@ ircd::m::sync::presence_polylog(data &data)
 		if(skip)
 			return;
 
+		const json::string &user_id
+		{
+			event.get("user_id")
+		};
+
+		if(!valid(m::id::USER, user_id))
+			return;
+
 		// Lock the json::stack for the append operations. This mutex will only be
 		// contended during a json::stack flush to the client; not during database
 		// queries leading to this.
@@ -119,7 +127,7 @@ ircd::m::sync::presence_polylog(data &data)
 		// sender
 		json::stack::member
 		{
-			object, "sender", unquote(event.get("user_id"))
+			object, "sender", user_id
 		};
 
 		// type
