@@ -160,6 +160,28 @@ handle_put(client &client,
 			txn_id
 		};
 
+	const bool txn_in_progress
+	{
+		!m::vm::eval::for_each([&txn_id, &request]
+		(const auto &eval)
+		{
+			assert(eval.opts);
+			const bool match
+			{
+				eval.opts->node_id == request.origin &&
+				eval.opts->txn_id == txn_id
+			};
+
+			return !match; // false to break; for_each() returns false
+		})
+	};
+
+	if(txn_in_progress)
+		return m::resource::response
+		{
+			client, http::ACCEPTED
+		};
+
 	for(const auto &pdu_failure : pdu_failures)
 		handle_pdu_failure(client, request, txn_id, pdu_failure);
 
