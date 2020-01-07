@@ -104,9 +104,10 @@ handle_put(client &client,
 			"txn_id path parameter required"
 		};
 
+	char txn_id_buf[128];
 	const auto txn_id
 	{
-		request.parv[0]
+		url::decode(txn_id_buf, request.parv[0])
 	};
 
 	const string_view &origin
