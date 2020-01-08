@@ -17,7 +17,7 @@ decltype(ircd::m::events::dump_buffer_size)
 ircd::m::events::dump_buffer_size
 {
 	{ "name",     "ircd.m.events.dump.buffer_size" },
-	{ "default",  int64_t(4_MiB)                   },
+	{ "default",  int64_t(512_KiB)                 },
 };
 
 void
