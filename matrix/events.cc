@@ -104,7 +104,7 @@ ircd::m::events::dump__file(const string_view &filename)
 
 	char *pos{data(buf)};
 	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
-	for(auto it(begin(dbs::event_json)); it; ++it)
+	for(auto it(begin(dbs::event_json)); it; ++it) try
 	{
 		const event::idx seq
 		{
@@ -155,6 +155,23 @@ ircd::m::events::dump__file(const string_view &filename)
 				};
 			}
 		}
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const std::exception &e)
+	{
+		++errcount;
+		log::error
+		{
+			"dump[%s] events; %s in %zu writes; %zu errors :%s",
+			filename,
+			ecount,
+			acount,
+			errcount,
+			e.what(),
+		};
 	}
 
 	if(pos > data(buf))
