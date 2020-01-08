@@ -94,6 +94,9 @@ ircd::m::events::dump__file(const string_view &filename)
 		filename, std::ios::out | std::ios::app
 	};
 
+	// POSIX_FADV_DONTNEED
+	fs::evict(file);
+
 	const unique_buffer<mutable_buffer> buf
 	{
 		size_t(dump_buffer_size)
