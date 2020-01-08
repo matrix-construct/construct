@@ -104,17 +104,30 @@ ircd::m::events::dump__file(const string_view &filename)
 
 	char *pos{data(buf)};
 	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
-	for_each(m::event::idx{0}, [&]
-	(const event::idx &seq, const m::event &event)
+	for(auto it(begin(dbs::event_json)); it; ++it)
 	{
+		const event::idx seq
+		{
+			byte_view<uint64_t>(it->first)
+		};
+
+		const string_view source
+		{
+			it->second
+		};
+
 		const auto remain
 		{
 			size_t(data(buf) + size(buf) - pos)
 		};
 
 		assert(remain >= event::MAX_SIZE && remain <= size(buf));
-		const mutable_buffer mb{pos, remain};
-		pos += copy(mb, event.source);
+		const mutable_buffer mb
+		{
+			pos, remain
+		};
+
+		pos += copy(mb, source);
 		++ecount;
 		if(pos + event::MAX_SIZE > data(buf) + size(buf))
 		{
@@ -142,9 +155,7 @@ ircd::m::events::dump__file(const string_view &filename)
 				};
 			}
 		}
-
-		return true;
-	});
+	}
 
 	if(pos > data(buf))
 	{
