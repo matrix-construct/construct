@@ -113,31 +113,31 @@ ircd::m::events::dump__file(const string_view &filename)
 		const mutable_buffer mb{pos, remain};
 		pos += copy(mb, event.source);
 		++ecount;
-
 		if(pos + event::MAX_SIZE > data(buf) + size(buf))
 		{
-			const const_buffer cb{data(buf), pos};
+			const const_buffer cb
+			{
+				data(buf), pos
+			};
+
 			foff += size(fs::append(file, cb));
 			pos = data(buf);
-			++acount;
-
-			const double pct
+			if(acount++ % 256 == 0)
 			{
-				(seq / double(m::vm::sequence::retired)) * 100.0
-			};
-
-			log::info
-			{
-				"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %zu bytes; %zu writes; %zu errors",
-				filename,
-				pct,
-				seq,
-				m::vm::sequence::retired,
-				ecount,
-				foff,
-				acount,
-				errcount
-			};
+				char pbuf[48];
+				log::info
+				{
+					"dump[%s] %0.2lf%% @ seq %zu of %zu; %zu events; %s in %zu writes; %zu errors",
+					filename,
+					(seq / double(m::vm::sequence::retired)) * 100.0,
+					seq,
+					m::vm::sequence::retired,
+					ecount,
+					pretty(pbuf, iec(foff)),
+					acount,
+					errcount
+				};
+			}
 		}
 
 		return true;
