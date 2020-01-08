@@ -473,6 +473,46 @@ ircd::db::check(database &d)
 }
 
 void
+ircd::db::check(database &d,
+                const string_view &file)
+{
+	assert(file);
+	assert(d.d);
+
+	const auto &opts
+	{
+		d.d->GetOptions()
+	};
+
+	const rocksdb::EnvOptions env_opts
+	{
+		opts
+	};
+
+	const bool absolute
+	{
+		fs::is_absolute(file)
+	};
+
+	const string_view parts[]
+	{
+		d.path, file
+	};
+
+	const std::string path
+	{
+		!absolute?
+			fs::path_string(parts):
+			std::string{file}
+	};
+
+	throw_on_error
+	{
+		rocksdb::VerifySstFileChecksum(opts, env_opts, path)
+	};
+}
+
+void
 ircd::db::resume(database &d)
 {
 	assert(d.d);

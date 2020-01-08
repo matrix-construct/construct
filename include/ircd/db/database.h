@@ -52,6 +52,7 @@ namespace ircd::db
 	void bgcontinue(database &);
 	void bgpause(database &);
 	void resume(database &);
+	void check(database &, const string_view &file);
 	void check(database &);
 	void compact(database &, const std::pair<int, int> &level, const compactor & = {});
 	void compact(database &, const compactor & = {});
