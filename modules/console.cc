@@ -4399,15 +4399,39 @@ bool
 console_cmd__db__check(opt &out, const string_view &line)
 try
 {
-	const auto dbname
+	const params param{line, " ",
 	{
-		token(line, ' ', 0)
+		"dbname", "column"
+	}};
+
+	const auto &dbname
+	{
+		param.at("dbname")
+	};
+
+	const auto &colname
+	{
+		param["column"]
 	};
 
 	auto &database
 	{
 		db::database::get(dbname)
 	};
+
+	if(colname)
+	{
+		db::column column
+		{
+			database[colname]
+		};
+
+		check(column);
+		out << "Check of " << colname << " in " << dbname << " completed without error."
+		    << std::endl;
+
+		return true;
+	}
 
 	check(database);
 	out << "Check of " << dbname << " completed without error."

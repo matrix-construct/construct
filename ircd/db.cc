@@ -5961,6 +5961,27 @@ ircd::db::drop(column &column)
 }
 
 void
+ircd::db::check(column &column)
+{
+	database &d(column);
+	const auto &files
+	{
+		db::files(column)
+	};
+
+	for(const auto &file : files)
+	{
+		const auto &path
+		{
+			 // remove false leading slash; the rest is relative to db.
+			lstrip(file, '/')
+		};
+
+		db::check(d, path);
+	}
+}
+
+void
 ircd::db::sort(column &column,
                const bool &blocking,
                const bool &now)
