@@ -443,10 +443,25 @@ ircd::db::compact(database &d,
 		{}, {}
 	};
 
-	for(const auto &c : d.columns)
+	for(const auto &c : d.columns) try
 	{
 		db::column column{*c};
 		compact(column, range, -1, cb);
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const std::exception &e)
+	{
+		assert(c);
+		log::error
+		{
+			log, "[%s] compact '%s' :%s",
+			name(d),
+			name(*c),
+			e.what(),
+		};
 	}
 }
 
@@ -455,10 +470,25 @@ ircd::db::compact(database &d,
                   const std::pair<int, int> &level,
                   const compactor &cb)
 {
-	for(const auto &c : d.columns)
+	for(const auto &c : d.columns) try
 	{
 		db::column column{*c};
 		compact(column, level, cb);
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const std::exception &e)
+	{
+		assert(c);
+		log::error
+		{
+			log, "[%s] compact '%s' :%s",
+			name(d),
+			name(*c),
+			e.what(),
+		};
 	}
 }
 
