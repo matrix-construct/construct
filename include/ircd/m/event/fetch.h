@@ -11,6 +11,15 @@
 #pragma once
 #define HAVE_IRCD_M_EVENT_FETCH_H
 
+namespace ircd::m
+{
+	bool seek(event::fetch &, const event::idx &, const event::id &, std::nothrow_t);
+	bool seek(event::fetch &, const event::idx &, std::nothrow_t);
+	void seek(event::fetch &, const event::idx &);
+	bool seek(event::fetch &, const event::id &, std::nothrow_t);
+	void seek(event::fetch &, const event::id &);
+}
+
 /// Event Fetcher (local).
 ///
 /// Fetches event data from the local database and populates an m::event which
@@ -60,15 +69,6 @@ struct ircd::m::event::fetch
 	fetch(const idx &, const opts & = default_opts);
 	fetch(const opts & = default_opts);
 };
-
-namespace ircd::m
-{
-	bool seek(event::fetch &, const event::idx &, const event::id &, std::nothrow_t);
-	bool seek(event::fetch &, const event::idx &, std::nothrow_t);
-	void seek(event::fetch &, const event::idx &);
-	bool seek(event::fetch &, const event::id &, std::nothrow_t);
-	void seek(event::fetch &, const event::id &);
-}
 
 /// Event Fetch Options.
 ///
