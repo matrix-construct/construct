@@ -7973,11 +7973,32 @@ ircd::db::valid(const rocksdb::Iterator &it)
 	{
 		using rocksdb::Status;
 
-		case Status::kOk:          break;
-		case Status::kNotFound:    break;
-		case Status::kIncomplete:  break;
+		case Status::kOk:
+		case Status::kNotFound:
+		case Status::kIncomplete:
+			break;
+
+		case Status::kCorruption:
+		{
+			const db::error error
+			{
+				it.status()
+			};
+
+			log::critical
+			{
+				"%s", error.what()
+			};
+
+			[[fallthrough]];
+		}
+
 		default:
-			throw_on_error(it.status());
+			throw_on_error
+			{
+				it.status()
+			};
+
 			__builtin_unreachable();
 	}
 
