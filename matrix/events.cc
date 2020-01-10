@@ -104,7 +104,12 @@ ircd::m::events::dump__file(const string_view &filename)
 
 	char *pos{data(buf)};
 	size_t foff{0}, ecount{0}, acount{0}, errcount{0};
-	for(auto it(begin(dbs::event_json)); it; ++it) try
+	static const db::gopts gopts
+	{
+		db::get::NO_CACHE, db::get::NO_CHECKSUM
+	};
+
+	for(auto it(dbs::event_json.begin(gopts)); it; ++it) try
 	{
 		const event::idx seq
 		{
