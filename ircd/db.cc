@@ -7523,8 +7523,19 @@ ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &status)
 		case Status::kNotFound:
 			throw not_found{};
 
+		#ifdef RB_DEBUG
+		case Status::kCorruption:
+		case Status::kNotSupported:
+		case Status::kInvalidArgument:
+			debugtrap();
+			[[fallthrough]];
+		#endif
+
 		default:
-			throw error{status};
+			throw error
+			{
+				status
+			};
 	}
 }
 
