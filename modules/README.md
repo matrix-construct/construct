@@ -2,8 +2,6 @@
 
 This directory contains dynamically loadable functionality to libircd.
 
-#### Layout
-
 #### Approach
 
 Unlike most of the module systems found in traditional C free software
@@ -13,17 +11,28 @@ direction is made viable by C++ and advances in the compiler and linker
 toolchains. The result is significantly simpler and more convenient for
 developers to work with.
 
-- Modules are loaded with `RTLD_GLOBAL` on both posix and windows platforms.
+##### GLOBAL SYMBOLS
+
+Modules are loaded with `RTLD_GLOBAL` on both posix and windows platforms.
 Use of C++ namespaces, visibility attributes, `STB_GNU_UNIQUE`, etc are
 adequate to make this modernization.
 
-- All project code is built to silently weaken undefined symbols. This means
+##### WEAK UNDEFINED SYMBOLS
+
+All project code is built to silently weaken undefined symbols. This means
 a complicated interface declared in a header, like a class interface with
-public and private and static members -- typical in C++ -- can be included
+public and private and static members (typical in C++) can be included
 by itself into any part of the project without knowing where the definitions
-of that interface are until they are *first used* at runtime. If said
-definitions are not available because they are in an unloaded module, a C++
-exception is thrown directly from the callsite.
+of that interface are until they are *first used* at runtime.
+
+If definitions are not available because they are in an unloaded module: a C++
+exception is thrown directly from the callsite. We have built this action
+is built into the lookup mechanism of the runtime dynamic linker; none of
+this requires knowledge or effort from developers to use.
+
+#### Layout
+
+(TODO)
 
 ## Getting started
 
