@@ -29,6 +29,13 @@ that are less predictable. Contexts will accomplish as much work as possible
 in a "straight line" before yielding to the kernel to wait for the completion
 of any I/O event.
 
+> There is no preemptive interleaving of contexts. This makes every sequence
+of instructions executed a natural transaction requiring no other method of
+exclusion. It also allows for introspective conditions, i.e: check if context
+switch occurred: if so, refresh value; if not, the old value is good. This is
+impossible in a preemptive environment as the result may have changed at
+instruction boundaries rather than at cooperative boundaries.
+
 ### Foundation
 
 This library is based in `boost::coroutine / boost::context` which wraps
@@ -58,13 +65,6 @@ WAIT_JOIN flags to change this behavior). Take note that this means by default
 a child context may never be able to complete (or even be entered at all!)
 if the parent constructs and then desctructs `context` without either any flags
 or any strategy by the parent to wait for completion.
-
-> There is no preemptive interleaving of contexts. This makes every sequence
-of instructions executed a natural transaction requiring no other method of
-exclusion. It also allows for introspective conditions, i.e: if context switch
-occurred: refresh value, else the old value is good. This is impossible in a
-preemptive environment as the result may have changed at instruction boundaries
-rather than at cooperative boundaries.
 
 ### Context Switching
 
