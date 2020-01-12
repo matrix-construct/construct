@@ -216,7 +216,7 @@ try
 
 	m::v1::key::opts opts;
 	opts.remote = net::hostport{query_server};
-	opts.dynamic = true;
+	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB
@@ -325,6 +325,7 @@ try
 	};
 
 	m::v1::key::opts opts;
+	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB
