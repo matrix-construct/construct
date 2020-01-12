@@ -18,6 +18,7 @@ namespace ircd::db
 	// Broad conf items
 	extern conf::item<bool> open_check;
 	extern conf::item<std::string> open_recover;
+	extern conf::item<bool> open_repair;
 
 	// General information
 	const std::string &name(const database &);

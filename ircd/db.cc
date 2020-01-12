@@ -383,6 +383,25 @@ ircd::db::open_recover
 	{ "persist",  false                   },
 };
 
+/// Conf item determines if database repair should occur (before open). This
+/// mechanism can be used when SST file corruption occurs which is too deep
+/// for log-based recovery. The affected blocks may be discarded; this risks
+/// destabilizing an application expecting the data in those blocks to exist.
+///
+/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+///
+/// Use with caution.
+///
+/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+///
+decltype(ircd::db::open_repair)
+ircd::db::open_repair
+{
+	{ "name",     "ircd.db.open.repair"  },
+	{ "default",  false                  },
+	{ "persist",  false                  },
+};
+
 void
 ircd::db::sync(database &d)
 {
@@ -1098,7 +1117,7 @@ try
 }
 ,fsck
 {
-	false
+	db::open_repair
 }
 ,read_only
 {

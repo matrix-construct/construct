@@ -24,6 +24,7 @@ bool nolisten;
 bool noautomod;
 bool checkdb;
 bool pitrecdb;
+bool repairdb;
 bool nojs;
 bool nodirect;
 bool noaio;
@@ -51,6 +52,7 @@ lgetopt opts[]
 	{ "noautomod",  &noautomod,     lgetopt::BOOL,    "Normal execution but without autoloading modules" },
 	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
 	{ "pitrecdb",   &pitrecdb,      lgetopt::BOOL,    "Allow Point-In-Time-Recover if DB reports corruption after crash" },
+	{ "repairdb",   &repairdb,      lgetopt::BOOL,    "Perform full DB repair after deep block/file corruption." },
 	{ "nojs",       &nojs,          lgetopt::BOOL,    "Disable SpiderMonkey JS subsystem from initializing. (noop when not available)." },
 	{ "nodirect",   &nodirect,      lgetopt::BOOL,    "Disable direct IO (O_DIRECT) for unsupporting filesystems." },
 	{ "noaio",      &noaio,         lgetopt::BOOL,    "Disable the AIO interface in favor of traditional syscalls. " },
@@ -467,6 +469,11 @@ applyargs()
 		ircd::db::open_recover.set("point");
 	else
 		ircd::db::open_recover.set("absolute");
+
+	if(repairdb)
+		ircd::db::open_repair.set("true");
+	else
+		ircd::db::open_repair.set("false");
 
 	if(nodirect)
 		ircd::fs::fd::opts::direct_io_enable.set("false");
