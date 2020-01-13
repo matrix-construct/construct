@@ -1,6 +1,21 @@
 
 # TROUBLESHOOTING
 
+##### Useful program options
+
+Start the daemon with one or more of the following program options to make it
+easier to troubleshoot and perform maintenance:
+
+- *-nolisten* will disable the loading of any listener sockets during startup.
+
+- *-wa* write-avoid will discourage (but not deny) writes to the database. This
+prevents a lot of background tasks and other noise for any maintenance.
+
+- *-console* convenience to immediately drop to the adminstrator console
+after startup.
+
+- *-debug* enables full debug log output.
+
 ##### Recovering from broken configurations
 
 If your server ever fails to start from an errant conf item: you can override
