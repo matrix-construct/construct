@@ -6,6 +6,9 @@
 Start the daemon with one or more of the following program options to make it
 easier to troubleshoot and perform maintenance:
 
+- *-single* will start in "single user mode" which is a convenience combination
+of *-nolisten -wa -console* options described below.
+
 - *-nolisten* will disable the loading of any listener sockets during startup.
 
 - *-wa* write-avoid will discourage (but not deny) writes to the database. This

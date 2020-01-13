@@ -19,6 +19,7 @@
 bool printversion;
 bool cmdline;
 bool quietmode;
+bool single;
 bool debugmode;
 bool nolisten;
 bool noautomod;
@@ -46,6 +47,7 @@ lgetopt opts[]
 	{ "version",    &printversion,  lgetopt::BOOL,    "Print version and exit" },
 	{ "debug",      &debugmode,     lgetopt::BOOL,    "Enable options for debugging" },
 	{ "quiet",      &quietmode,     lgetopt::BOOL,    "Suppress log messages at the terminal." },
+	{ "single",     &single,        lgetopt::BOOL,    "Single user mode for maintenance and diagnostic." },
 	{ "console",    &cmdline,       lgetopt::BOOL,    "Drop to a command line immediately after startup" },
 	{ "execute",    &execute,       lgetopt::STRING,  "Execute command lines immediately after startup" },
 	{ "nolisten",   &nolisten,      lgetopt::BOOL,    "Normal execution but without listening sockets" },
@@ -438,6 +440,13 @@ enable_coredumps()
 void
 applyargs()
 {
+	if(single)
+	{
+		nolisten = true;
+		write_avoid = true;
+		cmdline = true;
+	}
+
 	if(read_only)
 		ircd::read_only.set("true");
 
