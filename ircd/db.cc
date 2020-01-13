@@ -1428,7 +1428,7 @@ try
 	{
 		log::critical
 		{
-			"[%s] Error finding described handle '%s' which RocksDB opened :%s",
+			log, "[%s] Error finding described handle '%s' which RocksDB opened :%s",
 			this->name,
 			handle->GetName(),
 			e.what()
@@ -4521,7 +4521,9 @@ catch(const std::exception &e)
 	_continue = false;
 	log::critical
 	{
-		"txn::handler: cfid[%u]: %s", cfid, e.what()
+		log, "txn::handler: cfid[%u]: %s",
+		cfid,
+		e.what()
 	};
 
 	ircd::terminate();
@@ -8006,7 +8008,7 @@ ircd::db::valid(const rocksdb::Iterator &it)
 
 			log::critical
 			{
-				"%s", error.what()
+				log, "%s", error.what()
 			};
 
 			[[fallthrough]];
