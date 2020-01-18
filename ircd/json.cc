@@ -153,7 +153,7 @@ struct ircd::json::input
 	// primary recursive rule
 	const rule<unused_type(uint)> value
 	{
-		lit_false | lit_null | lit_true | string | number | object(depth + 1) | array(depth + 1)
+		string | number | lit_true | lit_false | lit_null | object(depth + 1) | array(depth + 1)
 		,"value"
 	};
 
@@ -204,11 +204,11 @@ struct ircd::json::input
 	:input::base_type{rule<>{}} // required by spirit
 	{
 		// synthesized repropagation of recursive rules
-		value %= lit_false
-		       | lit_null
-		       | lit_true
-		       | string
+		value %= string
 		       | number
+		       | lit_true
+		       | lit_false
+		       | lit_null
 		       | object(depth + 1)
 		       | array(depth + 1)
 		       ;
