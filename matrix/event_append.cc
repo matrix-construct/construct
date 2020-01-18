@@ -126,6 +126,11 @@ ircd::m::event::append::append(json::stack::object &object,
 	assert(defined(json::get<"sender"_>(event)));
 	//assert(json::get<"origin_server_ts"_>(event));
 	//assert(json::get<"origin_server_ts"_>(event) != json::undefined_number);
+	if(unlikely(!defined(json::get<"type"_>(event))))
+		return false;
+
+	if(unlikely(!defined(json::get<"sender"_>(event))))
+		return false;
 
 	const bool is_state
 	{
