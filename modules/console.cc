@@ -13898,8 +13898,16 @@ console_cmd__fed__key(opt &out, const string_view &line)
 		request
 	};
 
-	const m::keys &key{response};
-	out << key << std::endl;
+	const m::keys key
+	{
+		response
+	};
+
+	pretty(out, key);
+	out << std::endl
+	    << string_view{response}
+	    << std::endl;
+
 	return true;
 }
 
