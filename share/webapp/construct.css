@@ -396,6 +396,7 @@ body.loaded
 
 .ircd i
 {
+	display: flex;
 	text-shadow: var(--tsIA);
 	color: var(--pal-CD);
 }
@@ -1750,6 +1751,11 @@ body.loaded
 
 
 /* Status frieze bar */
+.ircd .room div.status.frieze.bar i
+{
+	align-items: center;
+}
+
 .ircd .room div.status.frieze > div > div
 {
 	margin-left: 2px;
@@ -3688,6 +3694,7 @@ div.rooms div.info > div.stats
 	justify-content: center;
 	border-radius: 0px 0px 0px 0px;
 	border-top: 1px solid var(--pal-AE);
+	margin: 0px;
 }
 
 .ircd .room .main .content form.input div.message input:focus,
