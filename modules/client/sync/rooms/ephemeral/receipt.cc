@@ -160,9 +160,6 @@ ircd::m::sync::_prefetch_message(data &data,
                                  const event::idx &idx)
 {
 	size_t ret(0);
-	if(!apropos(data, idx))
-		return ret;
-
 	const event::refs refs{idx};
 	refs.for_each(dbs::ref::M_RECEIPT__M_READ, [&ret]
 	(const event::idx &idx, const auto &type)
@@ -180,9 +177,6 @@ ircd::m::sync::_handle_message(data &data,
                                const event::idx &idx)
 {
 	bool ret{false};
-	if(!apropos(data, idx))
-		return ret;
-
 	const event::refs refs{idx};
 	refs.for_each(dbs::ref::M_RECEIPT__M_READ, [&data, &ret]
 	(const event::idx &idx, const auto &type)
