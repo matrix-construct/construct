@@ -2575,9 +2575,17 @@ noexcept
 	assert(tag.request == &request);
 	assert(!tag.cancellation);
 
+	// The cancellation is a straightforward facsimile except in the case of
+	// dynamic chunked encoding mode where we need to add additional scratch.
+	const size_t additional_scratch
+	{
+		tag.state.chunk_length != 0 && null(request.in.content)?
+			std::max(tag.state.head_rem, size_t(8_KiB)) : 0_KiB
+	};
+
 	const size_t cancellation_size
 	{
-		size(request.out) + size(request.in)
+		size(request.out) + size(request.in) + additional_scratch
 	};
 
 	// Disassociate the user's request and add our dummy request in its place.
@@ -2609,9 +2617,11 @@ noexcept
 	tag.request->out.content = out_content;
 	ptr += size(out_content);
 
+	// The in_head buffer is a straightforward facsimile except in the case of
+	// dynamic chunked encoding mode where we need to add additional scratch.
 	const mutable_buffer in_head{ptr, size(request.in.head)};
 	tag.request->in.head = in_head;
-	ptr += size(in_head);
+	ptr += size(in_head) + additional_scratch;
 
 	const mutable_buffer in_content{ptr, size(request.in.content)};
 	// The nullity (btw that's a real word) of in.content has to be preserved
