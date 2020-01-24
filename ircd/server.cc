@@ -3436,6 +3436,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 	};
 
 	// The received buffer may go past the end of the head.
+	assert(addl_head_bytes >= size(http::line::terminator));
 	assert(addl_head_bytes <= size(buffer));
 	const size_t beyond_head_length
 	{
@@ -3444,20 +3445,35 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 
 	state.chunk_read += addl_head_bytes;
 	state.content_read += addl_head_bytes;
+
+	// The primary HTTP head was placed in req.in.head. Before this function
+	// was reached req.in.head was resized tight to that head. There is still
+	// buffer remaining after that which we now use for chunk heads. We offset
+	// to state.head_read and cannot use more than state.head_rem for chunk
+	// head scratch. Chunk heads may overwrite each other to not run out of
+	// head buffer while keeping the data buffers pure with chunk content.
+	assert(size(req.in.head) >= state.head_read);
+	const const_buffer chunk_head_buffer
+	{
+		data(req.in.head) + state.head_read, state.head_rem
+	};
+
+	// Focus specifically on this chunk head and nothing after.
+	assert(data(chunk_head_buffer) <= data(buffer));
 	const const_buffer chunk_head
 	{
-		req.in.head + state.head_read, state.chunk_read
+		chunk_head_buffer, state.chunk_read
+	};
+
+	// Window on any data in the buffer after the head.
+	const const_buffer beyond_head
+	{
+		chunk_head_buffer + size(chunk_head), beyond_head_length
 	};
 
 	state.chunk_read = 0;
 	assert(state.content_read >= size(chunk_head));
 	state.content_read -= size(chunk_head);
-
-	// Window on any data in the buffer after the head.
-	const const_buffer beyond_head
-	{
-		req.in.head + size(chunk_head), beyond_head_length
-	};
 
 	// Setup the capstan and mark the end of the tape
 	parse::buffer pb
@@ -3474,6 +3490,7 @@ ircd::server::tag::read_chunk_dynamic_head(const const_buffer &buffer,
 
 	// Increment the content_length to now include this chunk
 	state.content_length += state.chunk_length;
+	assert(state.content_read <= state.content_length);
 
 	// Allocate the chunk content on the vector.
 	//TODO: maxalloc
@@ -3846,26 +3863,26 @@ const
 	assert(null(req.in.content));
 	assert(size(req.in.head) >= state.head_read);
 
-	// The total offset in the head buffer is the message head plus the
-	// amount of chunk head received so far, which is kept in chunk_read.
-	const size_t head_offset
+	const mutable_buffer head_buffer
 	{
-		state.head_read + state.chunk_read
+		data(req.in.head) + state.head_read, state.head_rem
 	};
 
+	// The total offset in the head buffer is the message head plus the
+	// amount of chunk head received so far, which is kept in chunk_read.
 	const mutable_buffer buffer
 	{
-		req.in.head + head_offset
+		head_buffer + state.chunk_read
 	};
 
 	if(unlikely(size(buffer) < 16))
 		throw buffer_overrun
 		{
-			"Chunk dynamic head buffer too small size:%zu chunk_read:%zu head_read:%zu head_offset:%zu",
+			"Chunk dynamic head buffer too small size:%zu chunk_read:%zu head_read:%zu head_rem:%zu",
 			size(buffer),
 			state.chunk_read,
 			state.head_read,
-			head_offset,
+			state.head_rem,
 		};
 
 	assert(!empty(buffer));
