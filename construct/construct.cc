@@ -312,7 +312,10 @@ noexcept try
 	// 1
 	// Execution.
 	// Blocks until a clean exit from a quit() or an exception comes out of it.
-	ios.run();
+	const size_t handled
+	{
+		ios.run()
+	};
 
 	// 13
 	// The smoketest is enabled if the first value is true; then all of the
