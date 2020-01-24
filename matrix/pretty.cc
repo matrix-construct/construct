@@ -173,6 +173,11 @@ ircd::m::pretty(std::ostream &s,
 		"redacts",
 	};
 
+	if(!json::get<"event_id"_>(event) && event.event_id)
+		s << std::setw(16) << std::right << "(event_id)" << " :"
+		  << string_view{event.event_id}
+		  << std::endl;
+
 	json::for_each(event, top_keys, out);
 
 	const auto &ts{json::get<"origin_server_ts"_>(event)};
