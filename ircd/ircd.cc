@@ -8,13 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-// internal interface to ircd::run (see ircd/run.h)
-namespace ircd::run
-{
-	// change the current runlevel
-	static bool set(const enum level &);
-}
-
 namespace ircd
 {
 	// Fundamental context #1; all subsystems live as objects on this stack.
@@ -25,6 +18,13 @@ namespace ircd
 	// Main function. This frame anchors the initialization and destruction of
 	// all non-static assets provided by the library.
 	static void main() noexcept;
+}
+
+// internal interface to ircd::run (see ircd/run.h, ircd/run.cc)
+namespace ircd::run
+{
+	// change the current runlevel
+	bool set(const enum level &);
 }
 
 decltype(ircd::version_api)
@@ -343,168 +343,4 @@ ircd::seconds
 ircd::uptime()
 {
 	return seconds(ircd::time() - info::startup_time);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
-// ircd/run.h
-//
-
-namespace ircd::run
-{
-	static enum level _level, _chadburn;
-}
-
-decltype(ircd::run::level)
-ircd::run::level
-{
-	_level
-};
-
-decltype(ircd::run::chadburn)
-ircd::run::chadburn
-{
-	_chadburn
-};
-
-//
-// run::changed
-//
-
-template<>
-decltype(ircd::run::changed::allocator)
-ircd::util::instance_list<ircd::run::changed>::allocator
-{};
-
-template<>
-decltype(ircd::run::changed::list)
-ircd::util::instance_list<ircd::run::changed>::list
-{
-	allocator
-};
-
-decltype(ircd::run::changed::dock)
-ircd::run::changed::dock;
-
-/// The notification will be posted to the io_context. This is important to
-/// prevent the callback from continuing execution on some ircd::ctx stack and
-/// instead invoke their function on the main stack in their own io_context
-/// event slice.
-bool
-ircd::run::set(const enum level &new_level)
-try
-{
-	// ignore any redundant calls during and after a transition.
-	if(new_level == chadburn)
-		return false;
-
-	// When called during a transition already in progress, the behavior
-	// is to wait for the transition to complete; if the caller is
-	// asynchronous they cannot make this call.
-	if(!ctx::current && level != chadburn)
-		throw panic
-		{
-			"Transition '%s' -> '%s' already in progress; cannot wait without ctx",
-			reflect(chadburn),
-			reflect(level),
-		};
-
-	// Wait for any pending runlevel transition to complete before
-	// continuing with another transition.
-	changed::dock.wait([]
-	{
-		return level == chadburn;
-	});
-
-	// Ignore any redundant calls which made it this far.
-	if(level == new_level)
-		return false;
-
-	// Indicate the new runlevel here; the transition starts here, and ends
-	// when chatburn=level, set unconditionally on unwind.
-	_level = new_level;
-	const unwind chadburn_{[]
-	{
-		_chadburn = level;
-	}};
-
-	log::notice
-	{
-		"IRCd %s", reflect(level)
-	};
-
-	log::flush();
-	changed::dock.notify_all();
-	for(const auto &handler : changed::list) try
-	{
-		handler->function(level);
-	}
-	catch(const std::exception &e)
-	{
-		switch(level)
-		{
-			case level::HALT:  break;
-			case level::QUIT:  break;
-			case level::IDLE:  throw;
-			default:           throw;
-		}
-
-		log::error
-		{
-			"Runlevel transition to '%s' handler(%p) :%s",
-			reflect(level),
-			handler,
-			e.what(),
-		};
-
-		continue;
-	}
-
-	if(level == level::HALT)
-		return true;
-
-	log::debug
-	{
-		"IRCd level transition from '%s' to '%s' (dock:%zu callbacks:%zu)",
-		reflect(chadburn),
-		reflect(level),
-		changed::dock.size(),
-		changed::list.size(),
-	};
-
-	return true;
-}
-catch(const std::exception &e)
-{
-	switch(new_level)
-	{
-		case level::IDLE:  throw;
-		default:           break;
-	}
-
-	log::critical
-	{
-		"IRCd level change to '%s' :%s",
-		reflect(new_level),
-		e.what()
-	};
-
-	return false;
-}
-
-ircd::string_view
-ircd::run::reflect(const enum run::level &level)
-{
-	switch(level)
-	{
-		case level::HALT:      return "HALT";
-		case level::READY:     return "READY";
-		case level::START:     return "START";
-		case level::IDLE:      return "IDLE";
-		case level::RUN:       return "RUN";
-		case level::QUIT:      return "QUIT";
-		case level::FAULT:     return "FAULT";
-	}
-
-	return "??????";
 }

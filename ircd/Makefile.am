@@ -112,6 +112,7 @@ libircd_la_SOURCES += cbor.cc
 libircd_la_SOURCES += conf.cc
 libircd_la_SOURCES += stats.cc
 libircd_la_SOURCES += logger.cc
+libircd_la_SOURCES += run.cc
 if MAGIC
 libircd_la_SOURCES += magic.cc
 endif
