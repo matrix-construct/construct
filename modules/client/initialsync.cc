@@ -103,7 +103,7 @@ try
 	// buffer must hold a 64_KiB worst-case event and then a little extra.
 	const unique_buffer<mutable_buffer> buf
 	{
-		96_KiB
+		128_KiB
 	};
 
 	m::resource::response::chunked response

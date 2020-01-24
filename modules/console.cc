@@ -7227,7 +7227,7 @@ console_cmd__event__sign(opt &out, const string_view &line)
 	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
 	{
-		96_KiB
+		128_KiB
 	};
 
 	m::v1::event request
@@ -13245,7 +13245,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
 	{
-		96_KiB
+		128_KiB
 	};
 
 	m::v1::event request

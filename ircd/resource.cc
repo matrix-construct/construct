@@ -680,7 +680,7 @@ decltype(ircd::resource::response::chunked::default_buffer_size)
 ircd::resource::response::chunked::default_buffer_size
 {
 	{ "name",    "ircd.resource.response.chunked.buffer_size" },
-	{ "default", long(96_KiB)                                 },
+	{ "default", long(128_KiB)                                },
 };
 
 ircd::resource::response::chunked::chunked(client &client,

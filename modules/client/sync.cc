@@ -573,7 +573,7 @@ try
 	const unique_buffer<mutable_buffer> buf
 	{
 		// must be at least worst-case size of m::event plus some.
-		std::max(size_t(linear_buffer_size), size_t(96_KiB))
+		std::max(size_t(linear_buffer_size), size_t(128_KiB))
 	};
 
 	window_buffer wb{buf};
@@ -924,7 +924,7 @@ ircd::m::sync::longpoll::polled(data &data,
 
 	const unique_buffer<mutable_buffer> scratch
 	{
-		96_KiB
+		128_KiB
 	};
 
 	const size_t consumed

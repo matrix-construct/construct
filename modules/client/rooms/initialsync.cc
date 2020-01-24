@@ -33,7 +33,7 @@ static conf::item<size_t>
 buffer_size
 {
 	{ "name",     "ircd.client.rooms.initialsync.buffer_size" },
-	{ "default",  long(96_KiB)                                },
+	{ "default",  long(128_KiB)                               },
 };
 
 static conf::item<size_t>
