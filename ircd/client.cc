@@ -354,6 +354,9 @@ ircd::client::async()
 	assert(bool(this->sock));
 	assert(bool(this->conf));
 	auto &sock(*this->sock);
+	if(unlikely(sock.fini))
+		return false;
+
 	const auto &timeout
 	{
 		conf->async_timeout
