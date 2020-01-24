@@ -31,11 +31,13 @@ namespace ircd
 	string_view lstrip(const string_view &str, const char &c = ' ');
 	string_view lstrip(string_view str, const string_view &c);
 	string_view lstrip(string_view str, const string_view &c, size_t n);
+	string_view lstrip(string_view str, const char &c, size_t n);
 
 	// return view without trailing occurrences of c
 	string_view rstrip(const string_view &str, const char &c = ' ');
 	string_view rstrip(string_view str, const string_view &c);
 	string_view rstrip(string_view str, const string_view &c, size_t n);
+	string_view rstrip(string_view str, const char &c, size_t n);
 
 	// return view without leading and trailing occurrences of c
 	string_view strip(const string_view &str, const char &c = ' ');
@@ -480,6 +482,18 @@ ircd::rstrip(string_view str,
 
 /// Remove trailing instances of c from the returned view
 inline ircd::string_view
+ircd::rstrip(string_view str,
+             const char &c,
+             size_t n)
+{
+	while(endswith(str, c) && n--)
+		str.pop_back();
+
+	return str;
+}
+
+/// Remove trailing instances of c from the returned view
+inline ircd::string_view
 ircd::rstrip(const string_view &str,
              const char &c)
 {
@@ -508,6 +522,18 @@ ircd::lstrip(string_view str,
 	if(c)
 		while(startswith(str, c) && n--)
 			str = str.substr(size(c));
+
+	return str;
+}
+
+/// Remove n leading instances of c from the returned view
+inline ircd::string_view
+ircd::lstrip(string_view str,
+             const char &c,
+             size_t n)
+{
+	while(startswith(str, c) && n--)
+		str.pop_front();
 
 	return str;
 }
