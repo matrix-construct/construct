@@ -864,7 +864,9 @@ ircd::server::peer::handle_open(link &link,
 {
 	if(eptr)
 	{
-		if(links.size() == 1)
+		// Mark the peer as errored if the first link connection failed.
+		assert(!links.empty());
+		if(std::addressof(link) == std::addressof(links.front()))
 			err_set(eptr);
 
 		thread_local char rembuf[64];
