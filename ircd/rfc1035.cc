@@ -520,7 +520,7 @@ ircd::rfc1035::parse_name(const mutable_buffer &out,
 void
 ircd::rfc1035::valid_name(const string_view &name)
 {
-	rfc3986::valid_domain(name);
+	rfc3986::valid_domain(rstrip(name, '.', 1));
 }
 
 void
@@ -533,7 +533,7 @@ bool
 ircd::rfc1035::valid_name(std::nothrow_t,
                           const string_view &name)
 {
-	return rfc3986::valid_domain(std::nothrow, name);
+	return rfc3986::valid_domain(std::nothrow, rstrip(name, '.', 1));
 }
 
 bool
