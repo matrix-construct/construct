@@ -159,7 +159,7 @@ decltype(ircd::m::request::generate_content_max)
 ircd::m::request::generate_content_max
 {
 	{ "name",    "ircd.m.request.generate.content_max" },
-	{ "default",  long(1_MiB)                          },
+	{ "default",  long(4_MiB)                          },
 };
 
 ircd::string_view
@@ -249,7 +249,7 @@ decltype(ircd::m::request::verify_content_max)
 ircd::m::request::verify_content_max
 {
 	{ "name",    "ircd.m.request.verify.content_max" },
-	{ "default",  long(1_MiB)                        },
+	{ "default",  long(4_MiB)                        },
 };
 
 bool
