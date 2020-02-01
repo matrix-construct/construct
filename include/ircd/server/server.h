@@ -66,6 +66,6 @@ struct ircd::server::init
 	void close();
 	void wait();
 
-	init() noexcept,
+	init() noexcept;
 	~init() noexcept;
 };
