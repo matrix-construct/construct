@@ -48,13 +48,15 @@ struct ircd::db::prefetcher
 
 struct ircd::db::prefetcher::request
 {
+	using key_buf = char[208];
+
 	database *d {nullptr};             // database instance
 	uint32_t cid {0};                  // column ID
 	uint32_t len {0};                  // length of key
 	steady_point snd;                  // submitted by user
 	steady_point req;                  // request sent to database
 	steady_point fin;                  // result from database
-	char key[208] alignas(16);         // key buffer
+	key_buf key alignas(16);           // key buffer
 
 	explicit operator string_view() const noexcept;
 
