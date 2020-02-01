@@ -29,7 +29,7 @@ namespace ircd::ctx
 	using ole::offload;
 }
 
-struct ircd::ctx::offload
+struct ircd::ctx::ole::offload
 {
 	using function = std::function<void ()>;
 
