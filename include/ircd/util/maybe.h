@@ -13,6 +13,8 @@
 
 namespace ircd { inline namespace util
 {
+	using maybe_void_type = std::tuple<bool, std::exception_ptr>;
+
 	template<class function>
 	using maybe_retval = typename std::invoke_result<function>::type;
 
@@ -21,57 +23,48 @@ namespace ircd { inline namespace util
 
 	template<class function>
 	constexpr bool maybe_void();
-	using maybe_void_type = std::tuple<bool, std::exception_ptr>;
 
 	template<class function>
 	typename std::enable_if<!maybe_void<function>(), maybe_type<function>>::type
-	maybe(function &&) noexcept;
+	maybe(function&& f)
+	noexcept try
+	{
+		return
+		{
+			f(), std::exception_ptr{}
+		};
+	}
+	catch(...)
+	{
+		return
+		{
+			{}, std::current_exception()
+		};
+	}
 
 	template<class function>
 	typename std::enable_if<maybe_void<function>(), maybe_void_type>::type
-	maybe(function &&) noexcept;
+	maybe(function&& f)
+	noexcept try
+	{
+		f();
+		return
+		{
+			true, std::exception_ptr{}
+		};
+	}
+	catch(...)
+	{
+		return
+		{
+			false, std::current_exception()
+		};
+	}
+
+	template<class function>
+	constexpr bool
+	maybe_void()
+	{
+		return std::is_same<maybe_retval<function>, void>();
+	}
 }}
-
-template<class function>
-typename std::enable_if<!ircd::util::maybe_void<function>(), ircd::util::maybe_type<function>>::type
-ircd::util::maybe(function&& f)
-noexcept try
-{
-	return
-	{
-		f(), std::exception_ptr{}
-	};
-}
-catch(...)
-{
-	return
-	{
-		{}, std::current_exception()
-	};
-}
-
-template<class function>
-typename std::enable_if<ircd::util::maybe_void<function>(), ircd::util::maybe_void_type>::type
-ircd::util::maybe(function&& f)
-noexcept try
-{
-	f();
-	return
-	{
-		true, std::exception_ptr{}
-	};
-}
-catch(...)
-{
-	return
-	{
-		false, std::current_exception()
-	};
-}
-
-template<class function>
-constexpr bool
-ircd::util::maybe_void()
-{
-	return std::is_same<maybe_retval<function>, void>();
-}
