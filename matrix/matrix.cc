@@ -21,7 +21,6 @@ IRCD_MODULE
 	ircd::m::on_unload,
 };
 
-IRCD_MODULE_EXPORT_DATA
 decltype(ircd::m::log)
 ircd::m::log
 {
@@ -31,7 +30,6 @@ ircd::m::log
 /// This is an ordered list for loading and unloading modules. This is not the
 /// solution I really want at all so consider it temporary. Modules are loaded
 /// in the order of the lines and unloaded in reverse order.
-IRCD_MODULE_EXPORT_DATA
 decltype(ircd::m::matrix::module_names)
 ircd::m::matrix::module_names
 {
@@ -155,7 +153,6 @@ ircd::m::matrix::module_names
 
 /// This is a list of modules that are considered "optional" and any loading
 /// error for them will not propagate and interrupt m::init.
-IRCD_MODULE_EXPORT_DATA
 decltype(ircd::m::matrix::module_names_optional)
 ircd::m::matrix::module_names_optional
 {
