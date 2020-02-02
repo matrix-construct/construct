@@ -17,6 +17,12 @@ __attribute__((visibility("hidden")))
     struct decoder extern const decoder;
 }}
 
+namespace ircd { namespace rfc3986 { namespace parser
+__attribute__((visibility("hidden")))
+{
+	using namespace ircd::spirit;
+}}}
+
 struct ircd::rfc3986::encoder
 :karma::grammar<char *, const string_view &>
 {
