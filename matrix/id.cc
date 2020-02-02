@@ -422,7 +422,8 @@ ircd::m::id::id(const enum sigil &sigil,
                 const string_view &host)
 :string_view{[&sigil, &buf, &local, &host]
 {
-	thread_local char tmp[2][MAX_SIZE] alignas(16);
+	thread_local char tmp alignas(16) [2][MAX_SIZE];
+	static_assert(sizeof(tmp) == MAX_SIZE * 2);
 	const string_view src
 	{
 		startswith(local, sigil)?

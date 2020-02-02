@@ -573,7 +573,7 @@ ircd::m::event::idx
 IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::getidx(const alias &alias)
 {
-	thread_local char swapbuf[m::id::room_alias::buf::SIZE];
+	thread_local char swapbuf alignas(16) [m::id::room_alias::buf::SIZE];
 	const string_view &swapped
 	{
 		alias.swap(swapbuf)
@@ -609,7 +609,7 @@ ircd::m::room::aliases::cache::make_key(const mutable_buffer &out,
                                         const alias &alias)
 {
 
-	thread_local char swapbuf[m::id::room_alias::buf::SIZE] alignas(16);
+	thread_local char swapbuf alignas(16) [m::id::room_alias::buf::SIZE];
 	const string_view &swapped
 	{
 		alias.swap(swapbuf)
