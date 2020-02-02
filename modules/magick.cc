@@ -16,8 +16,8 @@ namespace ircd::magick
 	struct display;
 	struct transform;
 
-	static void handle_exception(const ExceptionType, const char *, const char *);
-	static void handle_fatal(const ExceptionType, const char *, const char *) noexcept;
+	[[noreturn]] static void handle_exception(const ExceptionType, const char *, const char *);
+	[[noreturn]] static void handle_fatal(const ExceptionType, const char *, const char *) noexcept;
 	static void handle_error(const ExceptionType, const char *, const char *) noexcept;
 	static void handle_warning(const ExceptionType, const char *, const char *) noexcept;
 	static void handle_log(const ExceptionType, const char *) noexcept;
@@ -911,7 +911,7 @@ noexcept
 	};
 }
 
-[[noreturn]] void
+void
 ircd::magick::handle_fatal(const ExceptionType type,
                            const char *const reason,
                            const char *const description)
@@ -930,7 +930,7 @@ noexcept
 	ircd::terminate();
 }
 
-[[noreturn]] void
+void
 ircd::magick::handle_exception(const ExceptionType type,
                                const char *const reason,
                                const char *const description)
