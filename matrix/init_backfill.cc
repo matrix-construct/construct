@@ -287,7 +287,7 @@ try
 	size_t respond(0), behind(0), equal(0), ahead(0);
 	size_t exists(0), fetching(0), evaluated(0);
 	std::set<std::string, std::less<>> errors;
-	const auto &[top_event_id, top_depth, top_event_idx]
+	const auto &[top_event_id, top_event_depth, top_event_idx]
 	{
 		m::top(std::nothrow, room)
 	};
@@ -298,6 +298,7 @@ try
 	opts.user_id = user_id;
 	opts.closure_errors = false; // exceptions wil not propagate feds::execute
 	opts.exclude_myself = true;
+	const auto &top_depth(top_event_depth); // clang structured-binding & closure oops
 	feds::execute(opts, [&](const auto &result)
 	{
 		const m::event event
