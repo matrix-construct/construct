@@ -39,22 +39,6 @@ namespace ircd
 	void print_assertion(const char *const &, const char *const &, const unsigned &, const char *const &) noexcept;
 }
 
-/// Override the standard assert behavior, if enabled, to trap into the
-/// debugger as close as possible to the offending site.
-///
-#if defined(IRCD_ASSERT_OVERRIDE) && defined(RB_ASSERT_INTRINSIC)
-extern "C" inline void
-__attribute__((flatten, always_inline, gnu_inline, artificial))
-__assert_fail(const char *__assertion,
-              const char *__file,
-              unsigned int __line,
-              const char *__function)
-{
-	ircd::print_assertion(__assertion, __file, __line, __function);
-	ircd::debugtrap();
-}
-#endif
-
 /// Override the standard assert behavior to take one of several different
 /// actions as defined in our internal assert.cc unit. When trapping assert
 /// is disabled this path will be used instead.
@@ -66,6 +50,25 @@ __assert_fail(const char *__assertion,
               const char *__file,
               unsigned int __line,
               const char *__function);
+#endif
+
+/// Override the standard assert behavior, if enabled, to trap into the
+/// debugger as close as possible to the offending site.
+///
+#if defined(IRCD_ASSERT_OVERRIDE) && defined(RB_ASSERT_INTRINSIC)
+extern "C" // for clang
+{
+	extern inline void
+	__attribute__((flatten, always_inline, gnu_inline, artificial))
+	__assert_fail(const char *__assertion,
+	              const char *__file,
+	              unsigned int __line,
+	              const char *__function)
+	{
+		ircd::print_assertion(__assertion, __file, __line, __function);
+		ircd::debugtrap();
+	}
+}
 #endif
 
 /// Intrinsic to halt execution for examination by a tracing debugger without
