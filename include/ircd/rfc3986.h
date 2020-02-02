@@ -54,7 +54,8 @@ struct ircd::rfc3986::uri
 	uri() = default;
 };
 
-namespace ircd::rfc3986::parser
+namespace ircd { namespace rfc3986 { namespace parser
+__attribute__((visibility("default")))
 {
 	using it = const char *;
 	using unused = boost::spirit::unused_type;
@@ -119,7 +120,7 @@ namespace ircd::rfc3986::parser
 	extern const rule<> absolute_uri;
 	extern const rule<> uri;
 	extern const rule<> uri_ref;     // uri | relative_ref
-};
+}}}
 
 // Validator suite
 namespace ircd::rfc3986
