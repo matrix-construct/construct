@@ -27,8 +27,12 @@ struct ircd::prof::scope_cycles
 	~scope_cycles() noexcept;
 };
 
+#ifdef __clang__
+inline //TODO: ???
+#else
 extern inline
 __attribute__((flatten, always_inline, gnu_inline, artificial))
+#endif
 ircd::prof::scope_cycles::scope_cycles(uint64_t &result)
 noexcept
 :result{result}
@@ -45,8 +49,12 @@ noexcept
 	#endif
 }
 
+#ifdef __clang__
+inline //TODO: ???
+#else
 extern inline
 __attribute__((flatten, always_inline, gnu_inline, artificial))
+#endif
 ircd::prof::scope_cycles::~scope_cycles()
 noexcept
 {
