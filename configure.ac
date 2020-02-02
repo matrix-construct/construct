@@ -547,15 +547,16 @@ dnl		CXXFLAGS+=" -fbtr-bb-exclusive"
 	dnl in non-optimized mode as well as optimized mode so they are as similar as
 	dnl possible without impacting debuggability.
 	CXXFLAGS+=" -falign-functions"
-	CXXFLAGS+=" -falign-labels"
-	CXXFLAGS+=" -falign-loops"
-	CXXFLAGS+=" -falign-jumps"
 dnl	CXXFLAGS+=" -fdata-sections"
 dnl	CXXFLAGS+=" -ffunction-sections"
 	CXXFLAGS+=" -ftree-vectorize"
 
 	AM_COND_IF([GCC],
 	[
+		CXXFLAGS+=" -falign-labels"
+		CXXFLAGS+=" -falign-loops"
+		CXXFLAGS+=" -falign-jumps"
+
 		CXXFLAGS+=" -ftree-vrp"
 		CXXFLAGS+=" -ftree-dce"
 		CXXFLAGS+=" -ftree-dse"
