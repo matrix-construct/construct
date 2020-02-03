@@ -54,6 +54,10 @@ struct ircd::util::instance_list
 	~instance_list() noexcept;
 };
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundefined-var-template"
+#endif __clang__
 template<class T>
 ircd::util::instance_list<T>::instance_list()
 {
@@ -62,7 +66,14 @@ ircd::util::instance_list<T>::instance_list()
 	it = list.emplace(end(list), static_cast<T *>(this));
 	list.get_allocator().s->next = nullptr;
 }
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif __clang__
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundefined-var-template"
+#endif __clang__
 template<class T>
 ircd::util::instance_list<T>::instance_list(instance_list &&other)
 noexcept
@@ -72,7 +83,14 @@ noexcept
 	it = list.emplace(end(list), static_cast<T *>(this));
 	list.get_allocator().s->next = nullptr;
 }
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif __clang__
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundefined-var-template"
+#endif __clang__
 template<class T>
 ircd::util::instance_list<T>::instance_list(const instance_list &other)
 {
@@ -81,6 +99,9 @@ ircd::util::instance_list<T>::instance_list(const instance_list &other)
 	it = list.emplace(end(list), static_cast<T *>(this));
 	list.get_allocator().s->next = nullptr;
 }
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif __clang__
 
 template<class T>
 ircd::util::instance_list<T> &
