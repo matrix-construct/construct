@@ -1835,6 +1835,39 @@ AM_COND_IF([MALLOC_LIBS],
 
 dnl
 dnl
+dnl libLLVM
+dnl
+dnl
+
+AC_SUBST(LLVM_CPPFLAGS, [])
+AC_SUBST(LLVM_LDFLAGS, [])
+AC_SUBST(LLVM_LIBS, [])
+
+AC_ARG_WITH(llvm-includes,
+AC_HELP_STRING([--with-llvm-includes=[[[DIR]]]], [Path to libllvm include directory]),
+[
+	LLVM_CPPFLAGS="-isystem $withval"
+], [])
+
+AC_ARG_WITH(llvm-libs,
+AC_HELP_STRING([--with-llvm-libs=[[[DIR]]]], [Path to libllvm library directory]),
+[
+	LLVM_LDFLAGS="-L$withval"
+], [])
+
+AC_CHECK_LIB([LLVM-9], [LLVMBuildAnd],
+[
+	have_libllvm="yes"
+	LLVM_LIBS="-lLLVM-9"
+], [
+	have_libllvm="no"
+	AC_MSG_WARN([Unable to find LLVM-9 compiler infrastructure library on this system.])
+])
+
+AM_CONDITIONAL([LLVM], [test "x$have_libllvm" = "xyes" ])
+
+dnl
+dnl
 dnl Additional linkages
 dnl
 dnl
@@ -2039,6 +2072,7 @@ echo "SSL support ....................... $have_ssl"
 echo "Crypto support .................... $have_crypto"
 echo "Magic support ..................... $have_magic"
 echo "ImageMagick support ............... $have_imagemagick"
+echo "LLVM library support .............. $have_libllvm"
 echo "Linux AIO support ................. $aio"
 echo "Linux io_uring support ............ $io_uring"
 echo "Logging level ..................... $LOG_LEVEL"
