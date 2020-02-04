@@ -1449,12 +1449,32 @@ dnl libgmp support
 dnl
 dnl
 
-PKG_CHECK_MODULES(GMP, [gmp], [have_gmp="yes"], [have_gmp="no"])
-AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes"])
-
 AC_SUBST(GMP_CPPFLAGS, [])
 AC_SUBST(GMP_LDFLAGS, [])
-AC_SUBST(GMP_LIBS, ["-lgmp"])
+AC_SUBST(GMP_LIBS, [])
+
+AC_ARG_WITH(gmp-includes,
+AC_HELP_STRING([--with-gmp-includes=[[[DIR]]]], [Path to libgmp include directory]),
+[
+	GMP_CPPFLAGS="-isystem $withval"
+], [])
+
+AC_ARG_WITH(gmp-libs,
+AC_HELP_STRING([--with-gmp-libs=[[[DIR]]]], [Path to libgmp library directory]),
+[
+	GMP_LDFLAGS="-L$withval"
+], [])
+
+AC_CHECK_LIB([gmp], [__gmp_version],
+[
+	have_gmp="yes"
+	GMP_LIBS="-lgmp"
+], [
+	have_gmp="no"
+	AC_MSG_WARN([Unable to find GNU Multi-Precision library (libgmp) on this system.])
+])
+
+AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes" ])
 
 dnl
 dnl
