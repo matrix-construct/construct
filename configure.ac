@@ -1478,6 +1478,61 @@ AM_CONDITIONAL([GMP], [test "x$have_gmp" = "xyes" ])
 
 dnl
 dnl
+dnl libpbc support
+dnl
+dnl
+
+AC_SUBST(PBC_CPPFLAGS, [])
+AC_SUBST(PBC_LDFLAGS, [])
+AC_SUBST(PBC_LIBS, [])
+
+AC_ARG_WITH(pbc-includes,
+AC_HELP_STRING([--with-pbc-includes=[[[DIR]]]], [Path to libpbc include directory]),
+[
+	PBC_CPPFLAGS="-isystem $withval"
+], [])
+
+AC_ARG_WITH(pbc-libs,
+AC_HELP_STRING([--with-pbc-libs=[[[DIR]]]], [Path to libpbc library directory]),
+[
+	PBC_LDFLAGS="-L$withval"
+], [])
+
+AC_MSG_CHECKING([whether you asked to use the Pairing-Based Cryptography library included here])
+AC_ARG_WITH(included-pbc,
+AC_HELP_STRING([--with-included-pbc], [Use the libpbc sources from included submodule]),
+[
+	AC_MSG_RESULT([yes])
+	have_pbc="yes"
+	with_included_pbc="yes"
+	AC_DEFINE(HAVE_PBC, 1, [Define to 1 if libpbc is available.])
+
+	PBC_CPPFLAGS="-isystem $PWD/deps/pbc/include"
+	PBC_LDFLAGS="-L$PWD/deps/pbc/"
+	PBC_LIBS="$PWD/deps/pbc/libpbc.a"
+
+	bash tools/buildpbc.sh
+	AS_IF([ test $? != 0 ],
+	[
+		AC_MSG_ERROR([Failed to build Pairing-Based Cryptography library included submodule])
+	])
+], [
+	with_included_pbc="no"
+	AC_CHECK_LIB([pbc], [pbc_set_memory_functions],
+	[
+		have_pbc="yes"
+		AC_DEFINE(HAVE_PBC, 1, [Define to 1 if libpbc is available.])
+		PBC_LIBS="-lpbc"
+	], [
+		have_pbc="no"
+		AC_MSG_WARN([Unable to find Pairing-Based Cryptography (libpbc) on this system.])
+	])
+])
+
+AM_CONDITIONAL([PBC], [test "x$have_pbc" = "xyes" ])
+
+dnl
+dnl
 dnl ImageMagick support
 dnl
 dnl
@@ -2087,9 +2142,10 @@ echo "Ziplinks (libz) support ........... $have_zlib"
 echo "LZ4 support ....................... $have_lz4"
 echo "Snappy support .................... $have_snappy"
 echo "GNU MP support .................... $have_gmp"
+echo "Crypto support .................... $have_crypto"
 echo "Sodium support .................... $have_sodium"
 echo "SSL support ....................... $have_ssl"
-echo "Crypto support .................... $have_crypto"
+echo "PBC support ....................... $have_pbc"
 echo "Magic support ..................... $have_magic"
 echo "ImageMagick support ............... $have_imagemagick"
 echo "LLVM library support .............. $have_libllvm"

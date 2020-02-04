@@ -8,3 +8,10 @@
 	path = deps/gecko-dev
 	url = https://github.com/mozilla/gecko-dev.git
 	branch = esr45
+[submodule "pbc"]
+	path = pbc
+	url = https://github.com/blynn/pbc.git
+	branch = master
+[submodule "deps/pbc"]
+	path = deps/pbc
+	url = https://github.com/blynn/pbc.git
