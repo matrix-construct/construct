@@ -25,6 +25,7 @@ LT_LANG([C++])
 dnl Note that AC_PROG_CXX will default CXXFLAGS to -O2 and -g; this just adds
 dnl clutter and confusion. Setting it first prevents that.
 CXXFLAGS="-pipe"
+CFLAGS="-pipe"
 
 AM_PROG_AS
 AC_PROG_CXX
@@ -69,9 +70,11 @@ dnl
 
 AC_SUBST(CC)
 AC_SUBST(CXX)
+AC_SUBST(LD)
+
+AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(CXXFLAGS)
-AC_SUBST(LD)
 AC_SUBST(LDFLAGS)
 AC_SUBST(LIBS)
 
@@ -776,7 +779,11 @@ AM_COND_IF([CLANG],
 
 ])
 
+dnl assume the warning flags
 CPPFLAGS+="$CWARNS"
+
+dnl mirror the base CFLAGS and CXXFLAGS up to this point
+CFLAGS="$CXXFLAGS"
 
 
 dnl ***************************************************************************
@@ -821,6 +828,7 @@ AC_CHECK_SIZEOF(__int128_t)
 AC_CHECK_SIZEOF(__uint128_t)
 
 dnl -fsigned-char ensures 'char' is signed on all platforms
+CFLAGS+=" -fsigned-char"
 CXXFLAGS+=" -fsigned-char"
 
 dnl
@@ -2121,8 +2129,10 @@ echo "Configured ........................ $PACKAGE_NAME $PACKAGE_VERSION"
 echo "Version ........................... $RB_VERSION"
 echo "Configuration time ................ $RB_DATESTR"
 echo "Host OS ........................... $host_os"
-echo "Compiler .......................... $CXX"
-echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
+echo "C Compiler ........................ $CC"
+echo "C Compiler flags (CFLAGS) ......... $CFLAGS"
+echo "C++ Compiler ...................... $CXX"
+echo "C++ Compiler flags (CXXFLAGS) ..... $CXXFLAGS"
 echo "Linker ............................ $LD"
 echo "Linker flags (LDFLAGS) ............ $LDFLAGS"
 echo "Developer debug ................... $debug"
