@@ -3593,9 +3593,9 @@ ircd::json::value::value(const std::string &s,
 {
 	const string_view sv{s};
 	create_string(serialized(sv), [&sv]
-	(mutable_buffer buf)
+	(mutable_buffer &buffer)
 	{
-		json::stringify(buf, sv);
+		json::stringify(buffer, sv);
 	});
 }
 
