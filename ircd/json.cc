@@ -4124,7 +4124,7 @@ ircd::json::valid_output(const string_view &sv,
 	if(unlikely(size(sv) != expected))
 		throw print_panic
 		{
-			"stringified:%zu != serialized:%zu: %s",
+			"stringified:%zu != serialized:%zu :%s",
 			size(sv),
 			expected,
 			sv
@@ -4133,7 +4133,7 @@ ircd::json::valid_output(const string_view &sv,
 	if(unlikely(!valid(sv, std::nothrow))) //note: false alarm when T=json::member
 		throw print_panic
 		{
-			"strung %zu bytes: %s: %s",
+			"strung %zu bytes :%s :%s",
 			size(sv),
 			why(sv),
 			sv
