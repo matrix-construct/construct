@@ -1143,7 +1143,9 @@ ircd::json::stack::object::append(const json::object &object)
 		};
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
 __attribute__((optimize("no-lifetime-dse")))
+#endif
 ircd::json::stack::object::~object()
 noexcept
 {
@@ -1352,7 +1354,9 @@ ircd::json::stack::array::array(member &pm)
 	s->level++;
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
 __attribute__((optimize("no-lifetime-dse")))
+#endif
 ircd::json::stack::array::~array()
 noexcept
 {
@@ -1558,7 +1562,9 @@ ircd::json::stack::member::member(object &po,
 	append(value);
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
 __attribute__((optimize("no-lifetime-dse")))
+#endif
 ircd::json::stack::member::~member()
 noexcept
 {
