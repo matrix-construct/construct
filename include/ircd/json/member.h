@@ -44,20 +44,31 @@ namespace ircd::json
 struct ircd::json::member
 :std::pair<value, value>
 {
-	member(const string_view &key, value &&);
-	template<class V> member(const string_view &key, V&&);
 	explicit member(const string_view &k);
 	explicit member(const object::member &m);
+	template<class K, class V> member(K&&, V&&);
+	template<class K> member(K&&, value);
 	member() = default;
 };
 
-template<class V>
+template<class K,
+         class V>
 inline __attribute__((always_inline))
-ircd::json::member::member(const string_view &key,
+ircd::json::member::member(K&& k,
                            V&& v)
-:member
+:std::pair<value, value>
 {
-	key, value { std::forward<V>(v) }
+	value { std::forward<K>(k), json::STRING }, value { std::forward<V>(v) }
+}
+{}
+
+template<class K>
+inline __attribute__((always_inline))
+ircd::json::member::member(K&& k,
+                           value v)
+:std::pair<value, value>
+{
+	value { std::forward<K>(k), json::STRING }, std::move(v)
 }
 {}
 

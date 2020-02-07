@@ -3136,15 +3136,6 @@ ircd::json::operator>(const array::const_iterator &a, const array::const_iterato
 // json/member.h
 //
 
-ircd::json::member::member(const string_view &key,
-                           value &&v)
-:std::pair<value, value>
-{
-	{ key, json::STRING }, std::move(v)
-}
-{
-}
-
 ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const members &list)
