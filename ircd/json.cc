@@ -3163,7 +3163,6 @@ ircd::string_view
 ircd::json::stringify(mutable_buffer &buf,
                       const member *const &b,
                       const member *const &e)
-try
 {
 	using member_array = std::array<const member *, object::max_sorted_members>;
 	using member_arrays = std::array<member_array, object::max_recursion_depth>;
@@ -3171,7 +3170,8 @@ try
 
 	static const auto less_member
 	{
-		[](const member *const &a, const member *const &b) noexcept
+		[](const member *const &a, const member *const &b)
+		noexcept
 		{
 			return *a < *b;
 		}
@@ -3188,21 +3188,28 @@ try
 		}
 	};
 
+	const size_t count(std::distance(b, e));
+	if(unlikely(count > object::max_sorted_members))
+		throw print_error
+		{
+			"json::member vector of %zu exceeds maximum %zu.",
+			count,
+			object::max_sorted_members,
+		};
+
 	thread_local member_arrays ma;
 	thread_local size_t mctr;
 	const size_t mc{mctr};
 	const scope_count _mc{mctr};
 	assert(mc < ma.size());
+	auto &m(ma.at(mc));
+	for(size_t i(0); i < count; ++i)
+		m[i] = b + i;
 
-	size_t i(0);
-	auto &m{ma.at(mc)};
-	for(auto it(b); it != e; ++it)
-		m.at(i++) = it;
-
-	char *const start{begin(buf)};
-	std::sort(begin(m), begin(m) + i, less_member);
+	std::sort(begin(m), begin(m) + count, less_member);
+	const char *const start(begin(buf));
 	printer(buf, printer.object_begin);
-	printer::list_protocol(buf, m.data(), m.data() + i, print_member);
+	printer::list_protocol(buf, begin(m), begin(m) + count, print_member);
 	printer(buf, printer.object_end);
 	const string_view ret
 	{
@@ -3211,13 +3218,6 @@ try
 
 	assert(serialized(b, e) == size(ret));
 	return ret;
-}
-catch(const std::out_of_range &)
-{
-	throw print_error
-	{
-		"Too many members (%zd) for stringifying", std::distance(b, e)
-	};
 }
 
 size_t
