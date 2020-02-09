@@ -360,10 +360,17 @@ struct ircd::json::printer
 {
 	template<class gen,
 	         class... attr>
-	bool operator()(mutable_buffer &out, gen&&, attr&&...) const;
+	bool operator()(std::nothrow_t, mutable_buffer &out, gen&&, attr&&...) const;
 
 	template<class gen>
-	bool operator()(mutable_buffer &out, gen&&) const;
+	bool operator()(std::nothrow_t, mutable_buffer &out, gen&&) const;
+
+	template<class gen,
+	         class... attr>
+	void operator()(mutable_buffer &out, gen&&, attr&&...) const;
+
+	template<class gen>
+	void operator()(mutable_buffer &out, gen&&) const;
 
 	template<class it_a,
 	         class it_b,
@@ -374,24 +381,14 @@ const ircd::json::printer;
 
 template<class gen,
          class... attr>
-bool
+inline void
+__attribute__((always_inline))
 ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g,
                                 attr&&... a)
 const
 {
-	const auto maxwidth
-	{
-		karma::maxwidth(size(out))
-	};
-
-	const auto gg
-	{
-		maxwidth[std::forward<gen>(g)]
-	};
-
-	const auto throws{[&out]
-	{
+	if(unlikely(!operator()(std::nothrow, out, std::forward<gen>(g), std::forward<attr>(a)...)))
 		throw print_panic
 		{
 			"Failed to print attributes '%s' generator '%s' (%zd bytes in buffer)",
@@ -399,44 +396,63 @@ const
 			demangle<decltype(g)>(),
 			size(out)
 		};
-	}};
-
-	return karma::generate(begin(out), gg | eps[throws], std::forward<attr>(a)...);
 }
 
 template<class gen>
-bool
+inline void
+__attribute__((always_inline))
 ircd::json::printer::operator()(mutable_buffer &out,
                                 gen&& g)
 const
 {
-	const auto maxwidth
-	{
-		karma::maxwidth(size(out))
-	};
-
-	const auto gg
-	{
-		maxwidth[std::forward<gen>(g)]
-	};
-
-	const auto throws{[&out]
-	{
+	if(unlikely(!operator()(std::nothrow, out, std::forward<gen>(g))))
 		throw print_panic
 		{
 			"Failed to print generator '%s' (%zd bytes in buffer)",
 			demangle<decltype(g)>(),
 			size(out)
 		};
-	}};
+}
 
-	return karma::generate(begin(out), gg | eps[throws]);
+template<class gen,
+         class... attr>
+inline bool
+__attribute__((always_inline))
+ircd::json::printer::operator()(std::nothrow_t,
+                                mutable_buffer &out,
+                                gen&& g,
+                                attr&&... a)
+const
+{
+	const auto generator
+	{
+		karma::maxwidth(size(out))[std::forward<gen>(g)]
+	};
+
+	return karma::generate(begin(out), generator, std::forward<attr>(a)...);
+}
+
+template<class gen>
+inline bool
+__attribute__((always_inline))
+ircd::json::printer::operator()(std::nothrow_t,
+                                mutable_buffer &out,
+                                gen&& g)
+const
+{
+	const auto generator
+	{
+		karma::maxwidth(size(out))[std::forward<gen>(g)]
+	};
+
+	return karma::generate(begin(out), generator);
 }
 
 template<class it_a,
          class it_b,
          class closure>
-void
+inline void
+__attribute__((always_inline))
 ircd::json::printer::list_protocol(mutable_buffer &buffer,
                                    it_a it,
                                    const it_b &end,
@@ -447,7 +463,8 @@ ircd::json::printer::list_protocol(mutable_buffer &buffer,
 		lambda(buffer, *it);
 		for(++it; it != end; ++it)
 		{
-			json::printer(buffer, json::printer.value_sep);
+			static const auto &printer(json::printer);
+			printer(buffer, printer.value_sep);
 			lambda(buffer, *it);
 		}
 	}
@@ -1534,7 +1551,7 @@ ircd::json::stack::member::member(object &po,
 	};
 
 	mutable_buffer buf{tmp};
-	if(!printer(buf, rule, name))
+	if(!printer(std::nothrow, buf, rule, name))
 		throw error
 		{
 			"member name overflow: max size is under %zu", sizeof(tmp)
