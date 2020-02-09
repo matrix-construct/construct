@@ -3326,10 +3326,7 @@ ircd::json::escape(const mutable_buffer &buf,
 //
 
 decltype(ircd::json::value::max_string_size)
-ircd::json::value::max_string_size
-{
-	64_KiB
-};
+ircd::json::value::max_string_size;
 
 std::ostream &
 ircd::json::operator<<(std::ostream &s, const value &v)

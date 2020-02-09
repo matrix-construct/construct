@@ -69,7 +69,7 @@ namespace ircd::json
 ///
 struct ircd::json::value
 {
-	static const size_t max_string_size;
+	static constexpr const size_t max_string_size {64_KiB};
 
 	union
 	{
