@@ -1528,9 +1528,9 @@ ircd::json::stack::member::member(object &po,
 		s->append(',');
 
 	thread_local char tmp[2048];
-	static const json::printer::rule<string_view> rule
+	static const printer::rule<string_view> rule
 	{
-		json::printer.name << json::printer.name_sep
+		printer.name << printer.name_sep
 	};
 
 	mutable_buffer buf{tmp};
