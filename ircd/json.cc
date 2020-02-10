@@ -306,29 +306,25 @@ struct ircd::json::output
 	// primary recursive rule
 	rule<string_view> value
 	{
-		   (&object << object)
-		 | (&array << array)
-		 | (&literal << literal)
-		 | (&number << number)
-		 | string
+		rule<string_view>{}
 		,"value"
 	};
 
 	rule<json::object::member> member
 	{
-		name << name_sep << value
+		rule<json::object::member>{}
 		,"member"
 	};
 
 	rule<json::object> object
 	{
-		object_begin << -(member % value_sep) << object_end
+		rule<json::object>{}
 		,"object"
 	};
 
 	rule<json::array> array
 	{
-		array_begin << -(value % value_sep) << array_end
+		rule<json::array>{}
 		,"array"
 	};
 
@@ -339,6 +335,9 @@ struct ircd::json::output
 			escaped.add(p.first, p.second);
 
 		// synthesized repropagation of recursive rules
+		member %= name << name_sep << value;
+		object %= object_begin << -(member % value_sep) << object_end;
+		array %= array_begin << -(value % value_sep) << array_end;
 		value %= (&object << object)
 		       | (&array << array)
 		       | (&literal << literal)
