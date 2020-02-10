@@ -281,30 +281,30 @@ struct ircd::json::output
 		{ '\\',     "\\\\"     },
 	};
 
-	const karma::symbols<char, const char *> escaped
+	karma::symbols<char, const char *> escaped
 	{
 		"escaped"
 	};
 
-	const rule<char()> character
+	rule<char()> character
 	{
 		escaped | char_
 	};
 
-	const rule<string_view> string
+	rule<string_view> string
 	{
 		quote << *(character) << quote
 		,"string"
 	};
 
-	const rule<string_view> name
+	rule<string_view> name
 	{
 		string
 		,"name"
 	};
 
 	// primary recursive rule
-	const rule<string_view> value
+	rule<string_view> value
 	{
 		   (&object << object)
 		 | (&array << array)
@@ -314,19 +314,19 @@ struct ircd::json::output
 		,"value"
 	};
 
-	const rule<json::object::member> member
+	rule<json::object::member> member
 	{
 		name << name_sep << value
 		,"member"
 	};
 
-	const rule<json::object> object
+	rule<json::object> object
 	{
 		object_begin << -(member % value_sep) << object_end
 		,"object"
 	};
 
-	const rule<json::array> array
+	rule<json::array> array
 	{
 		array_begin << -(value % value_sep) << array_end
 		,"array"
