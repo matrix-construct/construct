@@ -17,6 +17,11 @@ namespace [[gnu::visibility("hidden")]] ircd
 	thread_local char base_conv_tmp_buf[64_KiB];
 }
 
+namespace [[gnu::visibility("default")]] ircd
+{
+	// this stub needed for clang
+}
+
 ircd::string_view
 ircd::b64urltob64(const mutable_buffer &out,
                   const string_view &in)
@@ -78,7 +83,7 @@ ircd::b64tob58(const mutable_buffer &out,
 	return b58encode(out, b64decode(base_conv_tmp_buf, in));
 }
 
-namespace ircd
+namespace [[gnu::visibility("hidden")]] ircd
 {
 	const char _b64_pad_
 	{
@@ -87,6 +92,11 @@ namespace ircd
 
 	using _b64_encoder = std::function<string_view (const mutable_buffer &, const const_buffer &)>;
 	static std::string _b64encode(const const_buffer &in, const _b64_encoder &);
+}
+
+namespace [[gnu::visibility("default")]] ircd
+{
+	// this stub needed for clang
 }
 
 /// Allocate and return a string without padding from the encoding of in
