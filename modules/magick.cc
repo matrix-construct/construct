@@ -115,14 +115,12 @@ decltype(ircd::magick::call_ready)
 ircd::magick::call_ready;
 
 decltype(ircd::magick::version_api)
-IRCD_MODULE_EXPORT_DATA
 ircd::magick::version_api
 {
 	"magick", info::versions::API, MagickLibVersion, {0}, MagickLibVersionText
 };
 
 decltype(ircd::magick::version_abi)
-IRCD_MODULE_EXPORT_DATA
 ircd::magick::version_abi
 {
 	"magick", info::versions::ABI, 0, {0}, []
