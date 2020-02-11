@@ -465,8 +465,7 @@ struct ircd::log::critical
 	critical(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
-
-		#ifndef NDEBUG
+		#if defined(RB_ASSERT)
 		__assert_fail("critical",
 		              "critical log level", 0,
 		              "CRITICAL messages trap for debugging when assertions are enabled");
@@ -480,8 +479,7 @@ struct ircd::log::critical
 	critical(const string_view &fmt, args&&... a)
 	{
 		vlog(general, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
-
-		#ifndef NDEBUG
+		#if defined(RB_ASSERT)
 		__assert_fail("critical",
 		              "critical log level", 0,
 		              "CRITICAL messages trap for debugging when assertions are enabled");
