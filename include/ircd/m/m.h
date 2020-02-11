@@ -114,7 +114,7 @@ struct ircd::m::matrix
 		module, "ircd::m::homeserver::init"
 	};
 
-	using fini_proto = void (m::homeserver *) noexcept;
+	using fini_proto = void (m::homeserver *);
 	mods::import<fini_proto> fini
 	{
 		module, "ircd::m::homeserver::fini"
