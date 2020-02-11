@@ -349,10 +349,10 @@ ircd::m::sync::handle_get(client &client,
 	};
 
 	if(complete)
-		return response;
+		return std::move(response);
 
 	if(longpoll_handle(data))
-		return response;
+		return std::move(response);
 
 	const auto &next_batch
 	{
@@ -364,7 +364,7 @@ ircd::m::sync::handle_get(client &client,
 	// A user-timeout occurred. According to the spec we return a
 	// 200 with empty fields rather than a 408.
 	empty_response(data, next_batch);
-	return response;
+	return std::move(response);
 }
 
 void
