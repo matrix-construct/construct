@@ -80,7 +80,7 @@ struct ircd::json::value
 		const struct member *object;
 	};
 
-	uint64_t len     : 57;      ///< length indicator
+	uint64_t len     : 58;      ///< length indicator
 	uint64_t type    : 3;       ///< json::type indicator
 	uint64_t serial  : 1;       ///< only *string is used. type indicates JSON
 	uint64_t alloc   : 1;       ///< indicates the pointer for type is owned
