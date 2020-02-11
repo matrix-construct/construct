@@ -44,7 +44,7 @@ inline namespace this_ctx
 namespace ircd::ctx
 {
 	/// Points to the currently running context or null for main stack (do not modify)
-	extern __thread ctx *current;
+	extern thread_local ctx *current;
 }
 
 namespace ircd

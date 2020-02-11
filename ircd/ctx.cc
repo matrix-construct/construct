@@ -687,7 +687,8 @@ noexcept
 //
 
 // set by the continuation object and the base frame.
-__thread ircd::ctx::ctx *
+thread_local
+ircd::ctx::ctx *
 ircd::ctx::current;
 
 /// Yield the currently running context until `time_point` ignoring notes
