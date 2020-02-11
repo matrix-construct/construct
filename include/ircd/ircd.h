@@ -50,6 +50,7 @@
 #include "json/json.h"
 #include "cbor/cbor.h"
 #include "openssl.h"
+#include "pbc.h"
 #include "fmt.h"
 #include "http.h"
 #include "http2/http2.h"

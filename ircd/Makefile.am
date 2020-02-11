@@ -51,6 +51,7 @@ libircd_la_LDFLAGS = \
 	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@ \
 	@SSL_LDFLAGS@ \
+	@PBC_LDFLAGS@ \
 	@CRYPTO_LDFLAGS@ \
 	@SODIUM_LDFLAGS@ \
 	@MAGIC_LDFLAGS@ \
@@ -64,6 +65,7 @@ libircd_la_LIBADD = \
 	@ROCKSDB_LIBS@ \
 	@JS_LIBS@ \
 	@BOOST_LIBS@ \
+	@PBC_LIBS@ \
 	@SSL_LIBS@ \
 	@CRYPTO_LIBS@ \
 	@SODIUM_LIBS@ \
@@ -118,6 +120,9 @@ libircd_la_SOURCES += magic.cc
 endif
 if SODIUM
 libircd_la_SOURCES += sodium.cc
+endif
+if PBC
+libircd_la_SOURCES += pbc.cc
 endif
 libircd_la_SOURCES += openssl.cc
 libircd_la_SOURCES += rfc1459.cc
@@ -210,6 +215,9 @@ net_dns_resolver.lo:  AM_CPPFLAGS := ${ASIO_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 openssl.lo:           AM_CPPFLAGS := @SSL_CPPFLAGS@ @CRYPTO_CPPFLAGS@ ${AM_CPPFLAGS}
 parse.lo:             AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 parse.lo:             AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
+if PBC
+pbc.lo:               AM_CPPFLAGS := @PBC_CPPFLAGS@ ${AM_CPPFLAGS}
+endif
 rfc1459.lo:           AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 rfc1459.lo:           AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
 rfc3986.lo:           AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
