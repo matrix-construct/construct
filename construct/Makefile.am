@@ -1,7 +1,7 @@
 prefix = @prefix@
 
 AM_CXXFLAGS = \
-	-ftls-model=local-exec \
+	-ftls-model=initial-exec \
 	@EXTRA_CXXFLAGS@ \
 	###
 
