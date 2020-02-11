@@ -2075,6 +2075,7 @@ catch(...)
 	};
 
 	ircd::terminate();
+	__builtin_unreachable();
 }
 
 bool
@@ -2182,6 +2183,7 @@ catch(...)
 	};
 
 	ircd::terminate();
+	__builtin_unreachable();
 }
 
 void
