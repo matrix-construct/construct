@@ -568,6 +568,12 @@ dnl	CXXFLAGS+=" -ffunction-sections"
 	])
 ])
 
+AM_COND_IF([CLANG],
+[
+	CXXFLAGS+=" -fno-data-sections"
+	CXXFLAGS+=" -fno-function-sections"
+])
+
 dnl
 dnl Compiler intrumentation
 dnl
