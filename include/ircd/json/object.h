@@ -188,11 +188,15 @@ T
 ircd::json::at(const object &object)
 try
 {
-	const auto it(object.find(key));
-	if(it == end(object))
+	const auto it
+	{
+		object.find(key)
+	};
+
+	if(unlikely(it == end(object)))
 		throw not_found
 		{
-			"[key hash] '%zu'", key
+			"[key hash] '%lu'", ulong(key)
 		};
 
 	return lex_cast<T>(it->second);
@@ -201,8 +205,8 @@ catch(const bad_lex_cast &e)
 {
 	throw type_error
 	{
-		"[key hash] '%zu' must cast to type %s",
-		key,
+		"[key hash] '%lu' must cast to type %s",
+		ulong(key),
 		typeid(T).name()
 	};
 }
@@ -212,8 +216,12 @@ T
 ircd::json::object::at(const string_view &key)
 const try
 {
-	const auto it(find(key));
-	if(it == end())
+	const auto it
+	{
+		find(key)
+	};
+
+	if(unlikely(it == end()))
 		throw not_found
 		{
 			"'%s'", key
@@ -238,12 +246,22 @@ ircd::json::get(const object &object,
                 const T &def)
 try
 {
-	const auto it{object.find(key)};
+	const auto it
+	{
+		object.find(key)
+	};
+
 	if(it == end(object))
 		return def;
 
-	const string_view sv{it->second};
-	return !sv.empty()? lex_cast<T>(sv) : def;
+	const string_view sv
+	{
+		it->second
+	};
+
+	return !sv.empty()?
+		lex_cast<T>(sv):
+		def;
 }
 catch(const bad_lex_cast &e)
 {
@@ -256,8 +274,14 @@ ircd::json::object::get(const string_view &key,
                         const T &def)
 const try
 {
-	const string_view sv(operator[](key));
-	return !sv.empty()? lex_cast<T>(sv) : def;
+	const string_view sv
+	{
+		operator[](key)
+	};
+
+	return !sv.empty()?
+		lex_cast<T>(sv):
+		def;
 }
 catch(const bad_lex_cast &e)
 {
