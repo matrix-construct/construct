@@ -1108,6 +1108,7 @@ github_handle__status(std::ostream &out,
 	if(push_event_id) switch(hash(state))
 	{
 		case "failure"_:
+			m::annotate(_webhook_room, _webhook_user, push_event_id, "🔴");
 			break;
 
 		case "pending"_:
