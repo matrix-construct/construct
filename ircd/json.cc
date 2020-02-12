@@ -151,19 +151,19 @@ struct ircd::json::input
 	[[noreturn]] static void throws_exceeded();
 
 	// primary recursive rule
-	const rule<unused_type(uint)> value
+	rule<unused_type(uint)> value
 	{
 		string | number | lit_true | lit_false | lit_null | object(depth + 1) | array(depth + 1)
 		,"value"
 	};
 
-	const rule<unused_type(uint)> member
+	rule<unused_type(uint)> member
 	{
 		name >> -ws >> name_sep >> -ws >> value(depth)
 		,"member"
 	};
 
-	const rule<unused_type(uint)> object
+	rule<unused_type(uint)> object
 	{
 		(eps(depth < json::object::max_recursion_depth) | eps[throws_exceeded]) >>
 
@@ -171,7 +171,7 @@ struct ircd::json::input
 		,"object"
 	};
 
-	const rule<unused_type(uint)> array
+	rule<unused_type(uint)> array
 	{
 		(eps(depth < json::array::max_recursion_depth) | eps[throws_exceeded]) >>
 
@@ -180,7 +180,7 @@ struct ircd::json::input
 	};
 
 	// type checkers
-	const rule<enum json::type> type
+	rule<enum json::type> type
 	{
 		(omit[quote]           >> attr(json::STRING))  |
 		(omit[object_begin]    >> attr(json::OBJECT))  |
@@ -190,7 +190,7 @@ struct ircd::json::input
 		,"type"
 	};
 
-	const rule<enum json::type> type_strict
+	rule<enum json::type> type_strict
 	{
 		(omit[string]     >> attr(json::STRING))  |
 		(omit[object(0)]  >> attr(json::OBJECT))  |
