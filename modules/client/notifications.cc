@@ -81,7 +81,7 @@ get__notifications(client &client,
 		};
 
 	top.~object();
-	return response;
+	return std::move(response);
 }
 
 resource::method

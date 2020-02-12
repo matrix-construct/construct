@@ -135,7 +135,7 @@ get__backfill_ids(client &client,
 		pdus.append(event_id);
 	}
 
-	return response;
+	return std::move(response);
 }
 
 m::resource::method

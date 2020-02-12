@@ -366,7 +366,7 @@ ircd::m::homeserver::key::key(const struct opts &opts)
 		key
 	};
 
-	return ret;
+	return std::move(ret);
 }()}
 {
 	log::info

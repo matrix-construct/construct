@@ -81,7 +81,7 @@ post__search(client &client, const resource::request &request)
 	};
 
 	handle_room_events(client, request, search_categories, result_categories);
-	return response;
+	return std::move(response);
 }
 
 void

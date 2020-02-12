@@ -141,7 +141,7 @@ get__query_profile(client &client,
 		return true;
 	});
 
-	return response;
+	return std::move(response);
 }
 
 m::resource::response
