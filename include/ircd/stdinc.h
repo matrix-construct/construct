@@ -109,9 +109,15 @@ extern "C"
 #undef major
 #undef minor
 
-// Trouble. clang++-8
-#ifndef assert
-	#define assert(expr) (static_cast<void>(0))
+// Trouble; clang.
+#if defined(__clang__) && !defined(assert)
+	#ifdef NDEBUG
+		#define assert(expr) \
+			(static_cast<void>(0))
+	#else
+		#define assert(expr) \
+			(static_cast<bool>(expr)? void(0): __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__))
+	#endif
 #endif
 
 //////////////////////////////////////////////////////////////////////////////>
