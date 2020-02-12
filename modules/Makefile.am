@@ -56,6 +56,19 @@ module_LTLIBRARIES = \
 	###
 
 #
+# LLVM
+#
+if LLVM
+
+llvm_la_SOURCES = llvm.cc
+llvm_la_CPPFLAGS = $(AM_CPPFLAGS) @LLVM_CPPFLAGS@
+llvm_la_LDFLAGS = $(AM_LDFLAGS) @LLVM_LDFLAGS@
+llvm_la_LIBADD = $(AM_LIBS) @LLVM_LIBS@
+module_LTLIBRARIES += llvm.la
+
+endif LLVM
+
+#
 # {Image|Graphics}Magick Support
 #
 if IMAGEMAGICK
