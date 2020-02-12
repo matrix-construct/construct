@@ -452,19 +452,19 @@ template<class it_a,
          class closure>
 inline void
 __attribute__((always_inline))
-ircd::json::printer::list_protocol(mutable_buffer &buffer,
+ircd::json::printer::list_protocol(mutable_buffer &out,
                                    it_a it,
                                    const it_b &end,
                                    closure&& lambda)
 {
-	if(it != end)
+	if(likely(it != end))
 	{
-		lambda(buffer, *it);
+		lambda(out, *it);
 		for(++it; it != end; ++it)
 		{
 			static const auto &printer(json::printer);
-			printer(buffer, printer.value_sep);
-			lambda(buffer, *it);
+			printer(out, printer.value_sep);
+			lambda(out, *it);
 		}
 	}
 }
