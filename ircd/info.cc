@@ -53,7 +53,8 @@ ircd::info::dump()
 	// This message flashes information about our API dependencies from compile time.
 	log::info
 	{
-		log::star, "SD-6 %s. glibcxx %s. glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		log::star, "%s SD-6 %s. glibcxx %s. glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		string_view{RB_CXX},
 		string_view{sd6_version},
 		string_view{glibcxx_version_api},
 		string_view{glibc_version_api},
