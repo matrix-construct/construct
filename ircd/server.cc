@@ -2192,10 +2192,16 @@ ircd::server::link::handle_readable_success()
 	}
 
 	// Data pointed to by overrun will remain intact between iterations
-	// because this loop isn't executing in any ircd::ctx.
+	// because this loop isn't executing in any ircd::ctx. Since the buffers
+	// we're using are supplied by users in other ctxs they will continue to
+	// exist as this loop continues to the next tags. There is one exception
+	// case though: canceled requests have their buffers free'ed when the tag
+	// is pop'ed from this link's queue, because the user is gone; the scratch
+	// buffer is maintained between iterations in that case.
+	unique_buffer<mutable_buffer> scratch;
 	const_buffer overrun; do
 	{
-		if(!process_read(overrun))
+		if(!process_read(overrun, scratch))
 		{
 			wait_readable();
 			return;
@@ -2209,7 +2215,8 @@ ircd::server::link::handle_readable_success()
 
 /// Process as many read operations for one tag as possible
 bool
-ircd::server::link::process_read(const_buffer &overrun)
+ircd::server::link::process_read(const_buffer &overrun,
+                                 unique_buffer<mutable_buffer> &scratch)
 try
 {
 	assert(peer);
@@ -2252,6 +2259,22 @@ try
 		// This branch represents a read of -EAGAIN.
 		assert(empty(overrun));
 		return done;
+	}
+
+	// Branch to handle overrun out of a cancelled tag which needs its data
+	// copied to scratch before being pop'ed off the queue; fairly rare case.
+	// If the tag is not in a canceled state, the overrun will point to valid
+	// data for the next tag even after being popped off the queue.
+	if(!empty(overrun) && tag.canceled())
+	{
+		// Copy into new buffer before trashing the old buffer in case each
+		// tag being processed here is just windowing down on the same data
+		// nagled together at the first tag.
+		unique_buffer<mutable_buffer> _scratch(overrun);
+		scratch = std::move(_scratch);
+		overrun = scratch;
+		assert(!empty(overrun));
+		assert(!empty(scratch));
 	}
 
 	peer->handle_tag_done(*this, tag);

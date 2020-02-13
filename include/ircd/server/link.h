@@ -44,7 +44,7 @@ struct ircd::server::link
 	void discard_read();
 	const_buffer read(const mutable_buffer &buf);
 	const_buffer process_read_next(const const_buffer &, tag &, bool &done);
-	bool process_read(const_buffer &);
+	bool process_read(const_buffer &, unique_buffer<mutable_buffer> &);
 	void handle_readable_success();
 	void handle_readable(const error_code &) noexcept;
 	void wait_readable();
