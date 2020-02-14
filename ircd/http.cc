@@ -216,6 +216,12 @@ struct ircd::http::parser
 }
 const ircd::http::parser;
 
+namespace ircd { namespace http
+__attribute__((visibility("default")))
+{
+	// stub needed for clang
+}}
+
 /// Compose a request. This prints an HTTP head into the buffer. No real IO is
 /// done here. After composing into the buffer, the user can then drive the
 /// socket by sending the header and the content as specified.
