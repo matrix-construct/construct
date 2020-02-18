@@ -219,8 +219,13 @@ noexcept try
 		}
 		catch(...)
 		{
-			eptr = std::current_exception();
+			// ctx::exception_handler allows us to yield an ircd::ctx (stack
+			// switch) inside a catch block, which we'll need in this scope.
 			const ircd::ctx::exception_handler eh;
+
+			// Copy a reference to the current exception which was saved by eh.
+			// Note it is not safe to call std::current_exception() here.
+			eptr = eh;
 
 			// 7' Notify the loader the homeserver failed to start
 			start.count_down_and_wait();
