@@ -54,7 +54,24 @@ ircd::llvm::log
 void
 ircd::llvm::init()
 {
-
+	log::info
+	{
+		log, "LLVM %s library; host:%s; %s%s%s%s%s%s",
+		version_api.string,
+		LLVM_HOST_TRIPLE,
+		LLVM_ENABLE_THREADS?
+			"multithreading ": "",
+		LLVM_HAS_ATOMICS?
+			"atomics ": "",
+		LLVM_ON_UNIX?
+			"unix ": "",
+		LLVM_USE_INTEL_JITEVENTS?
+			"intel-jit ": "",
+		LLVM_USE_OPROFILE?
+			"oprofile-jit ": "",
+		LLVM_USE_PERF?
+			"perf-jit ": "",
+	};
 }
 
 void
