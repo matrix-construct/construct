@@ -142,6 +142,8 @@ try
 		this->depth[1] = std::get<1>(top_head);
 		need_top_head = false;
 		--limit;
+		if(need_my_head && event::my(std::get<event::idx>(top_head)))
+			need_my_head = false;
 	}
 
 	// If the iteration did not provide us with any heads from this origin
