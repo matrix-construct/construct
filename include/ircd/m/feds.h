@@ -142,6 +142,10 @@ struct ircd::m::feds::opts
 	/// default, and loopback queries are made for result completeness in the
 	/// typical use case.
 	bool exclude_myself {false};
+
+	// Default construction is inline by member; this is defined to impose
+	// noexcept over `milliseconds timeout` which we guarantee won't throw.
+	opts() noexcept {}
 };
 
 inline
