@@ -312,13 +312,6 @@ noexcept try
 	// living on it.
 	ctx::wait();
 }
-catch(const http::error &e) // <-- m::error
-{
-	log::critical
-	{
-		"IRCd main :%s %s", e.what(), e.content
-	};
-}
 catch(const std::exception &e)
 {
 	log::critical
