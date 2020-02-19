@@ -1398,6 +1398,7 @@ noexcept try
 	fs::sync_opts opts;
 	opts.metadata = false;
 	opts.priority = ionice;
+	opts.nodelay = nodelay;
 	fs::flush(fd, opts);
 	return Status::OK();
 }
@@ -1447,6 +1448,7 @@ noexcept try
 
 	fs::sync_opts opts;
 	opts.priority = ionice;
+	opts.nodelay = true;
 	fs::sync(fd, opts);
 	return Status::OK();
 }
@@ -1496,6 +1498,7 @@ noexcept try
 
 	fs::sync_opts opts;
 	opts.priority = ionice;
+	opts.nodelay = true;
 	fs::flush(fd, opts);
 	return Status::OK();
 }
@@ -1558,6 +1561,7 @@ noexcept try
 	fs::sync_opts opts;
 	opts.metadata = false;
 	opts.priority = ionice;
+	opts.nodelay = nodelay;
 	fs::flush(fd, offset, length, opts);
 	return Status::OK();
 }
@@ -1611,8 +1615,8 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->ionice;
-	wopts.nodelay = this->nodelay;
+	wopts.priority = ionice;
+	wopts.nodelay = nodelay;
 	fs::truncate(fd, size, wopts);
 	return Status::OK();
 }
@@ -1721,8 +1725,8 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->ionice;
-	wopts.nodelay = this->nodelay;
+	wopts.priority = ionice;
+	wopts.nodelay = nodelay;
 	const const_buffer buf
 	{
 		data(s), size(s)
@@ -1785,8 +1789,8 @@ noexcept try
 	#endif
 
 	fs::write_opts wopts;
-	wopts.priority = this->ionice;
-	wopts.nodelay = this->nodelay;
+	wopts.priority = ionice;
+	wopts.nodelay = nodelay;
 	wopts.offset = offset;
 	const const_buffer buf
 	{
@@ -1955,8 +1959,8 @@ ircd::db::database::env::writable_file::_allocate(const size_t &offset,
 
 	fs::write_opts wopts;
 	wopts.offset = allocate_offset;
-	wopts.priority = this->ionice;
-	wopts.nodelay = this->nodelay;
+	wopts.priority = ionice;
+	wopts.nodelay = nodelay;
 	wopts.keep_size = env_opts.fallocate_with_keep_size;
 
 	#ifdef RB_DEBUG_DB_ENV
@@ -2729,8 +2733,8 @@ ircd::db::database::env::writable_file_direct::_write__aligned(const const_buffe
 	assert(aligned(offset));
 
 	fs::write_opts wopts;
-	wopts.priority = this->ionice;
-	wopts.nodelay = this->nodelay;
+	wopts.priority = ionice;
+	wopts.nodelay = nodelay;
 	wopts.offset = offset;
 	fs::write(fd, buf, wopts);
 	return {};
@@ -3650,6 +3654,7 @@ noexcept try
 
 	fs::sync_opts opts;
 	opts.priority = ionice;
+	opts.nodelay = true;
 	fs::flush(fd, opts);
 	return Status::OK();
 }
@@ -3698,6 +3703,7 @@ noexcept try
 
 	fs::sync_opts opts;
 	opts.priority = ionice;
+	opts.nodelay = true;
 	fs::sync(fd, opts);
 	return Status::OK();
 }
@@ -3747,6 +3753,7 @@ noexcept try
 	fs::sync_opts opts;
 	opts.metadata = false;
 	opts.priority = ionice;
+	opts.nodelay = nodelay;
 	fs::flush(fd, opts);
 	return Status::OK();
 }

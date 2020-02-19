@@ -156,6 +156,7 @@ struct ircd::db::database::env::random_rw_file final
 	fs::fd fd;
 	size_t _buffer_align;
 	int8_t ionice {0};
+	bool nodelay {false};
 	bool aio;
 
 	bool use_direct_io() const noexcept override;
