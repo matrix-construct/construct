@@ -13,6 +13,7 @@
 
 namespace ircd::llvm
 {
+	extern log::log log;
 	extern info::versions version_api, version_abi;
 
 	static void init(), fini();
@@ -42,6 +43,12 @@ decltype(ircd::llvm::version_abi)
 ircd::llvm::version_abi
 {
     "llvm", info::versions::ABI, 0
+};
+
+decltype(ircd::llvm::log)
+ircd::llvm::log
+{
+	"llvm"
 };
 
 void
