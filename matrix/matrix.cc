@@ -196,7 +196,16 @@ catch(const m::error &e)
 		e.errstr(),
 	};
 
-	throw;
+	// Don't rethrow m::error so the catcher doesn't depend on
+	// RTTI/personality from this shlib after it unloads.
+	throw ircd::error
+	{
+		"Failed to start matrix (%u) %s :%s :%s",
+		uint(e.code),
+		http::status(e.code),
+		e.errcode(),
+		e.errstr(),
+	};
 }
 catch(const std::exception &e)
 {

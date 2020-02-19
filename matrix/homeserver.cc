@@ -167,6 +167,7 @@ ircd::m::homeserver::primary;
 IRCD_MODULE_EXPORT
 ircd::m::homeserver *
 ircd::m::homeserver::init(const struct opts *const opts)
+try
 {
 	assert(opts);
 	rfc3986::valid_host(opts->origin);
@@ -174,6 +175,20 @@ ircd::m::homeserver::init(const struct opts *const opts)
 	return new homeserver
 	{
 		opts
+	};
+}
+catch(const m::error &e)
+{
+	assert(opts);
+	// Don't rethrow m::error so the catcher doesn't depend on
+	// RTTI/personality from this shlib after it unloads.
+	throw ircd::error
+	{
+		"Failed to initialize homeserver %s of %s :%s :%s",
+		opts->server_name,
+		opts->origin,
+		e.errcode(),
+		e.errstr(),
 	};
 }
 
