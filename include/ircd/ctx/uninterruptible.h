@@ -52,3 +52,65 @@ struct ircd::ctx::this_ctx::uninterruptible::nothrow
 	nothrow(const nothrow &) = delete;
 	~nothrow() noexcept;
 };
+
+//
+// uninterruptible
+//
+
+inline
+ircd::ctx::this_ctx::uninterruptible::uninterruptible()
+:theirs
+{
+	interruptible(cur())
+}
+{
+	interruptible(false);
+}
+
+inline
+ircd::ctx::this_ctx::uninterruptible::~uninterruptible()
+noexcept(false)
+{
+	interruptible(theirs);
+}
+
+//
+// uninterruptible::nothrow
+//
+
+inline
+ircd::ctx::this_ctx::uninterruptible::nothrow::nothrow()
+noexcept
+:theirs
+{
+	interruptible(cur())
+}
+{
+	interruptible(false, std::nothrow);
+}
+
+inline
+ircd::ctx::this_ctx::uninterruptible::nothrow::~nothrow()
+noexcept
+{
+	interruptible(theirs, std::nothrow);
+}
+
+//
+// interruptible
+//
+
+inline void
+ircd::ctx::this_ctx::interruptible(const bool &b,
+                                   std::nothrow_t)
+noexcept
+{
+	interruptible(cur(), b);
+}
+
+inline bool
+ircd::ctx::this_ctx::interruptible()
+noexcept
+{
+	return interruptible(cur());
+}

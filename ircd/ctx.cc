@@ -800,40 +800,6 @@ ircd::ctx::this_ctx::stack_at_here()
 /// Throws interrupted if the currently running context was interrupted
 /// and clears the interrupt flag.
 void
-ircd::ctx::this_ctx::interruptible(const bool &b)
-{
-	const bool theirs
-	{
-		interruptible(cur())
-	};
-
-	if(theirs && !b)
-		interruption_point();
-
-	interruptible(cur(), b);
-
-	if(!theirs && b)
-		interruption_point();
-}
-
-void
-ircd::ctx::this_ctx::interruptible(const bool &b,
-                                   std::nothrow_t)
-noexcept
-{
-	interruptible(cur(), b);
-}
-
-bool
-ircd::ctx::this_ctx::interruptible()
-noexcept
-{
-	return interruptible(cur());
-}
-
-/// Throws interrupted if the currently running context was interrupted
-/// and clears the interrupt flag.
-void
 ircd::ctx::this_ctx::interruption_point()
 {
 	// Asserting to know if this call is useless as it's being made in
@@ -862,46 +828,27 @@ noexcept
 }
 
 //
-// uinterruptible
+// interruptible
 //
 
+/// Throws interrupted if the currently running context was interrupted
+/// and clears the interrupt flag.
 [[gnu::hot]]
-ircd::ctx::this_ctx::uninterruptible::uninterruptible()
-:theirs
+void
+ircd::ctx::this_ctx::interruptible(const bool &b)
 {
-	interruptible(cur())
-}
-{
-	interruptible(false);
-}
+	const bool theirs
+	{
+		interruptible(cur())
+	};
 
-[[gnu::hot]]
-ircd::ctx::this_ctx::uninterruptible::~uninterruptible()
-noexcept(false)
-{
-	interruptible(theirs);
-}
+	if(theirs && !b)
+		interruption_point();
 
-//
-// uninterruptible::nothrow
-//
+	interruptible(cur(), b);
 
-[[gnu::hot]]
-ircd::ctx::this_ctx::uninterruptible::nothrow::nothrow()
-noexcept
-:theirs
-{
-	interruptible(cur())
-}
-{
-	interruptible(false, std::nothrow);
-}
-
-[[gnu::hot]]
-ircd::ctx::this_ctx::uninterruptible::nothrow::~nothrow()
-noexcept
-{
-	interruptible(theirs, std::nothrow);
+	if(!theirs && b)
+		interruption_point();
 }
 
 //
