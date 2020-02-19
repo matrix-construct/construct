@@ -749,8 +749,6 @@ AM_COND_IF([DEBUG],
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-final-types], charybdis_cv_c_gcc_w_suggest_final_types)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-final-methods], charybdis_cv_c_gcc_w_suggest_final_methods)
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-override], charybdis_cv_c_gcc_w_suggest_override)
-], [
-	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-suggest], charybdis_cv_c_gcc_w_no_suggest)
 ])
 
 dnl
