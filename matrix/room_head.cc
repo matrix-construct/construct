@@ -81,6 +81,27 @@ try
 	head.for_each([&]
 	(const event::idx &event_idx, const event::id &event_id)
 	{
+		// Determine the depth for metrics
+		const int64_t depth
+		{
+			event_id == std::get<0>(top_head)?
+				std::get<int64_t>(top_head):
+				m::get<int64_t>(std::nothrow, event_idx, "depth", -1L)
+		};
+
+		if(unlikely(depth < 0))
+		{
+			log::derror
+			{
+				log, "Missing depth for %s idx:%lu in room head of %s",
+				string_view{event_id},
+				event_idx,
+				string_view{head.room.room_id},
+			};
+
+			return true;
+		}
+
 		// When using the need_my_head option, if we hit a head which
 		// originated from this server we mark that is no longer needed.
 		if(need_my_head && event::my(event_idx))
@@ -103,14 +124,6 @@ try
 
 		// Add this head reference to result to output.
 		append(out, event_id);
-
-		// Determine the depth for metrics
-		const int64_t depth
-		{
-			event_id == std::get<0>(top_head)?
-				std::get<int64_t>(top_head):
-				m::get<int64_t>(event_idx, "depth")
-		};
 
 		// Indicate if this depth is highest or lowest of the set.
 		this->depth[0] = std::min(depth, this->depth[0]);
