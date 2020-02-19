@@ -66,3 +66,100 @@ namespace ircd::db
 	void clear(rocksdb::Cache &);
 	void clear(rocksdb::Cache *const &);
 }
+
+inline void
+ircd::db::clear(rocksdb::Cache *const &cache)
+{
+	if(cache)
+		return clear(*cache);
+}
+
+inline bool
+ircd::db::remove(rocksdb::Cache *const &cache,
+                 const string_view &key)
+{
+	return cache?
+		remove(*cache, key):
+		false;
+}
+
+inline bool
+ircd::db::insert(rocksdb::Cache *const &cache,
+                 const string_view &key,
+                 const string_view &value)
+{
+	return cache?
+		insert(*cache, key, value):
+		false;
+}
+
+inline bool
+ircd::db::insert(rocksdb::Cache *const &cache,
+                 const string_view &key,
+                 unique_buffer<const_buffer> &&value)
+{
+	return cache?
+		insert(*cache, key, std::move(value)):
+		false;
+}
+
+inline void
+ircd::db::for_each(const rocksdb::Cache *const &cache,
+                   const cache_closure &closure)
+{
+	if(cache)
+		for_each(*cache, closure);
+}
+
+inline bool
+ircd::db::exists(const rocksdb::Cache *const &cache,
+                 const string_view &key)
+{
+	return cache?
+		exists(*cache, key):
+		false;
+}
+
+inline size_t
+ircd::db::pinned(const rocksdb::Cache *const &cache)
+{
+	return cache?
+		pinned(*cache):
+		0UL;
+}
+
+inline size_t
+ircd::db::usage(const rocksdb::Cache *const &cache)
+{
+	return cache?
+		usage(*cache):
+		0UL;
+}
+
+inline bool
+ircd::db::capacity(rocksdb::Cache *const &cache,
+                   const size_t &cap)
+{
+	if(!cache)
+		return false;
+
+	capacity(*cache, cap);
+	return true;
+}
+
+inline size_t
+ircd::db::capacity(const rocksdb::Cache *const &cache)
+{
+	return cache?
+		capacity(*cache):
+		0UL;
+}
+
+inline uint64_t
+ircd::db::ticker(const rocksdb::Cache *const &cache,
+                 const uint32_t &ticker_id)
+{
+	return cache?
+		ticker(*cache, ticker_id):
+		0UL;
+}

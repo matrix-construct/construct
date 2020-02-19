@@ -7043,23 +7043,9 @@ const
 //
 
 void
-ircd::db::clear(rocksdb::Cache *const &cache)
-{
-	if(cache)
-		return clear(*cache);
-}
-
-void
 ircd::db::clear(rocksdb::Cache &cache)
 {
 	cache.EraseUnRefEntries();
-}
-
-bool
-ircd::db::remove(rocksdb::Cache *const &cache,
-                 const string_view &key)
-{
-	return cache? remove(*cache, key) : false;
 }
 
 bool
@@ -7068,14 +7054,6 @@ ircd::db::remove(rocksdb::Cache &cache,
 {
 	cache.Erase(slice(key));
 	return true;
-}
-
-bool
-ircd::db::insert(rocksdb::Cache *const &cache,
-                 const string_view &key,
-                 const string_view &value)
-{
-	return cache? insert(*cache, key, value) : false;
 }
 
 bool
@@ -7089,14 +7067,6 @@ ircd::db::insert(rocksdb::Cache &cache,
 	};
 
 	return insert(cache, key, std::move(buf));
-}
-
-bool
-ircd::db::insert(rocksdb::Cache *const &cache,
-                 const string_view &key,
-                 unique_buffer<const_buffer> &&value)
-{
-	return cache? insert(*cache, key, std::move(value)) : false;
 }
 
 bool
@@ -7131,14 +7101,6 @@ ircd::db::insert(rocksdb::Cache &cache,
 }
 
 void
-ircd::db::for_each(const rocksdb::Cache *const &cache,
-                   const cache_closure &closure)
-{
-	if(cache)
-		for_each(*cache, closure);
-}
-
-void
 ircd::db::for_each(const rocksdb::Cache &cache,
                    const cache_closure &closure)
 {
@@ -7170,13 +7132,7 @@ ircd::db::for_each(const rocksdb::Cache &cache,
 	true);
 }
 
-bool
-ircd::db::exists(const rocksdb::Cache *const &cache,
-                 const string_view &key)
-{
-	return cache? exists(*cache, key) : false;
-}
-
+[[gnu::hot]]
 bool
 ircd::db::exists(const rocksdb::Cache &cache_,
                  const string_view &key)
@@ -7198,38 +7154,15 @@ ircd::db::exists(const rocksdb::Cache &cache_,
 }
 
 size_t
-ircd::db::pinned(const rocksdb::Cache *const &cache)
-{
-	return cache? pinned(*cache) : 0;
-}
-
-size_t
 ircd::db::pinned(const rocksdb::Cache &cache)
 {
 	return cache.GetPinnedUsage();
 }
 
 size_t
-ircd::db::usage(const rocksdb::Cache *const &cache)
-{
-	return cache? usage(*cache) : 0;
-}
-
-size_t
 ircd::db::usage(const rocksdb::Cache &cache)
 {
 	return cache.GetUsage();
-}
-
-bool
-ircd::db::capacity(rocksdb::Cache *const &cache,
-                   const size_t &cap)
-{
-	if(!cache)
-		return false;
-
-	capacity(*cache, cap);
-	return true;
 }
 
 void
@@ -7240,22 +7173,9 @@ ircd::db::capacity(rocksdb::Cache &cache,
 }
 
 size_t
-ircd::db::capacity(const rocksdb::Cache *const &cache)
-{
-	return cache? capacity(*cache): 0;
-}
-
-size_t
 ircd::db::capacity(const rocksdb::Cache &cache)
 {
 	return cache.GetCapacity();
-}
-
-uint64_t
-ircd::db::ticker(const rocksdb::Cache *const &cache,
-                 const uint32_t &ticker_id)
-{
-	return cache? ticker(*cache, ticker_id) : 0UL;
 }
 
 const uint64_t &
