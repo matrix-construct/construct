@@ -485,6 +485,7 @@ try
 		};
 
 		char buf[64];
+		assert(!data.phased || next_batch >= 0UL);
 		const string_view &next_batch_token
 		{
 			// The polylog phased since token. We pack two numbers separted by a '_'
@@ -493,7 +494,7 @@ try
 			// second part is the next_batch upper-bound integer which is a snapshot
 			// of the server's sequence number when the phased sync started.
 			data.phased?
-				make_since(buf, m::events::range{next_batch, data.range.second}):
+				make_since(buf, m::events::range{uint64_t(next_batch), data.range.second}):
 
 			// The normal integer since token.
 				make_since(buf, next_batch)
