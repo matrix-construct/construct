@@ -3565,6 +3565,69 @@ catch(const std::out_of_range &e)
 }
 
 bool
+console_cmd__db__cache__each(opt &out, const string_view &line)
+try
+{
+	const params param{line, " ",
+	{
+		"dbname", "column", "limit"
+	}};
+
+	const auto dbname
+	{
+		param.at(0)
+	};
+
+	auto colname
+	{
+		param[1]
+	};
+
+	const auto limit
+	{
+		param.at("limit", 32UL)
+	};
+
+	auto &database
+	{
+		db::database::get(dbname)
+	};
+
+	if(!colname)
+	{
+		out << "No column specified."
+		    << std::endl;
+
+		return true;
+	}
+
+	const db::column column
+	{
+		database, colname
+	};
+
+	size_t i(0);
+	db::for_each(db::cache(column), [&]
+	(const const_buffer &value)
+	{
+		out
+		<< std::right << std::setw(4) << i
+		<< ' ' << std::right << std::setw(8) << size(value)
+		<< ' ' << std::left << std::setw(15)
+		<< std::endl;
+
+		return i++ < limit;
+	});
+
+	return true;
+}
+catch(const std::out_of_range &e)
+{
+	out << "No open database by that name" << std::endl;
+	return true;
+}
+
+bool
 console_cmd__db__stats(opt &out, const string_view &line)
 {
 	const params param{line, " ",
