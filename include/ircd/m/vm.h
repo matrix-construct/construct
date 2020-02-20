@@ -80,9 +80,9 @@ struct ircd::m::vm::eval
 	uint64_t sequence_shared[2] {0}; // min, max
 	std::shared_ptr<db::txn> txn;
 
+	vector_view<m::event> pdus;
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};
-	vector_view<m::event> pdus;
 
 	string_view room_id;
 	event::id::buf event_id;
@@ -97,11 +97,13 @@ struct ircd::m::vm::eval
 	operator const event::id::buf &() const;
 
 	fault operator()(const event &);
-	fault operator()(json::iov &event, const json::iov &content);
+	size_t operator()(const vector_view<m::event> &);
+	fault operator()(json::iov &event, const json::iov &content); //inject
 
 	eval(const vm::opts &);
 	eval(const vm::copts &);
 	eval(const event &, const vm::opts & = default_opts);
+	eval(const vector_view<m::event> &, const vm::opts & = default_opts);
 	eval(const json::array &event, const vm::opts & = default_opts);
 	eval(json::iov &event, const json::iov &content, const vm::copts & = default_copts);
 	eval() = default;

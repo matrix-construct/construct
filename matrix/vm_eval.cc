@@ -267,13 +267,46 @@ ircd::m::vm::eval::eval(const json::array &pdus,
 	// be from different rooms but it doesn't matter.
 	std::vector<m::event> events(begin(pdus), end(pdus));
 	std::sort(begin(events), end(events));
-	this->pdus = events;
+	operator()(events);
+}
+
+ircd::m::vm::eval::eval(const vector_view<m::event> &events,
+                        const vm::opts &opts)
+:opts{&opts}
+{
+	operator()(events);
+}
+
+ircd::m::vm::eval::~eval()
+noexcept
+{
+}
+
+size_t
+ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
+{
+	assert(opts);
+	const scope_restore eval_pdus
+	{
+		this->pdus, events
+	};
 
 	// Conduct each eval without letting any one exception ruin things for the
 	// others, including an interrupt. The only exception is a termination.
+	size_t ret(0);
 	for(auto it(begin(events)); it != end(events); ++it) try
 	{
-		auto &event{*it};
+		auto &event
+		{
+			const_cast<m::event &>(*it)
+		};
+
+		// We have to set the event_id in the event instance if it didn't come
+		// with the event JSON.
+		if(!opts->edu && !event.event_id)
+			event.event_id = opts->room_version == "3"?
+				event::id{event::id::v3{this->event_id, event}}:
+				event::id{event::id::v4{this->event_id, event}};
 
 		// If we set the event_id in the event instance we have to unset
 		// it so other contexts don't see an invalid reference.
@@ -284,25 +317,23 @@ ircd::m::vm::eval::eval(const json::array &pdus,
 				m::event::id{};
 		}};
 
-		// We have to set the event_id in the event instance if it didn't come
-		// with the event JSON.
-		if(!opts.edu && !event.event_id)
-			event.event_id = opts.room_version == "3"?
-				event::id{event::id::v3{this->event_id, event}}:
-				event::id{event::id::v4{this->event_id, event}};
-
 		// When a fault::EXISTS would not actually be revealed to the user in
 		// any way we can elide a lot of grief by checking this here first and
 		// skipping the event. The query path will be adequately cached anyway.
-		if(~(opts.warnlog | opts.errorlog) & fault::EXISTS)
+		if(~(opts->warnlog | opts->errorlog) & fault::EXISTS)
 			if(event.event_id && m::exists(event.event_id))
 				continue;
 
-		operator()(event);
+		const auto status
+		{
+			operator()(event)
+		};
+
+		ret += status == fault::ACCEPT;
 	}
 	catch(const ctx::interrupted &e)
 	{
-		if(opts.nothrows & fault::INTERRUPT)
+		if(opts->nothrows & fault::INTERRUPT)
 			continue;
 		else
 			throw;
@@ -311,15 +342,8 @@ ircd::m::vm::eval::eval(const json::array &pdus,
 	{
 		continue;
 	}
-	catch(const ctx::terminated &)
-	{
-		throw;
-	}
-}
 
-ircd::m::vm::eval::~eval()
-noexcept
-{
+	return ret;
 }
 
 /// Inject a new event originating from this server.
