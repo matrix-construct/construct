@@ -93,6 +93,8 @@ struct ircd::m::vm::eval
 	static const event *find_pdu(const eval &, const event::id &);
 	static const event *find_pdu(const event::id &);
 
+	void mfetch_keys() const;
+
   public:
 	operator const event::id::buf &() const;
 
@@ -248,8 +250,12 @@ struct ircd::m::vm::opts
 	/// if the evaluator already performed this and the json source is good.
 	bool json_source {false};
 
-	// Verify the origin signature
+	/// Verify the origin signature; recommended.
 	bool verify {true};
+
+	/// Whether to gather all unknown keys from an input vector of events and
+	/// perform a parallel/mass fetch before proceeding with the evals.
+	bool mfetch_keys {true};
 
 	/// Whether to automatically fetch the auth events when they do not exist.
 	bool fetch_auth {true};

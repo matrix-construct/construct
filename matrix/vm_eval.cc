@@ -291,6 +291,9 @@ ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
 		this->pdus, events
 	};
 
+	if(likely(opts->mfetch_keys))
+		mfetch_keys();
+
 	// Conduct each eval without letting any one exception ruin things for the
 	// others, including an interrupt. The only exception is a termination.
 	size_t ret(0);
@@ -366,6 +369,73 @@ const event::id::buf &()
 const
 {
 	return event_id;
+}
+
+void
+ircd::m::vm::eval::mfetch_keys()
+const
+{
+	using m::v1::key::server_key;
+
+	// Determine federation keys which we don't have.
+	std::set<server_key> miss;
+	for(const auto &event : this->pdus)
+	{
+		// When the node_id is set (eval on behalf of remote) we only parallel
+		// fetch keys from that node for events from that node. This is to
+		// prevent amplification. Note that these will still be evaluated and
+		// key fetching may be attempted, but not here.
+		assert(opts);
+		const auto &origin(json::get<"origin"_>(event));
+		if(opts->node_id && opts->node_id != origin)
+			continue;
+
+		const json::object &signature
+		{
+			json::get<"signatures"_>(event).get(origin)
+		};
+
+		for(const auto &[key_id, sig] : signature)
+		{
+			const server_key key(origin, key_id);
+			const auto it(miss.lower_bound(key));
+			if(it != end(miss) && *it == key)
+				continue;
+
+			if(m::keys::cache::has(origin, key_id))
+				continue;
+
+			miss.emplace_hint(it, key);
+		}
+	}
+
+	//TODO: XXX
+	const std::vector<server_key> queries(begin(miss), end(miss));
+	if(!queries.empty())
+		log::debug
+		{
+			log, "%s fetching %zu new keys from %zu events...",
+			loghead(*this),
+			queries.size(),
+			this->pdus.size(),
+		};
+
+	const size_t fetched
+	{
+		!queries.empty()?
+			m::keys::fetch(queries):
+			0UL
+	};
+
+	if(fetched)
+		log::info
+		{
+			log, "%s fetched %zu of %zu new keys from %zu events",
+			loghead(*this),
+			fetched,
+			queries.size(),
+			this->pdus.size(),
+		};
 }
 
 const ircd::m::event *
