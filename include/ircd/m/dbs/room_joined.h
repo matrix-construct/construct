@@ -20,7 +20,7 @@ namespace ircd::m::dbs
 
 	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin, const id::user &member);
 	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin);
-	std::pair<string_view, string_view> room_joined_key(const string_view &amalgam);
+	std::tuple<string_view, string_view> room_joined_key(const string_view &amalgam);
 
 	// room_id | origin, member => event_idx
 	extern db::domain room_joined;

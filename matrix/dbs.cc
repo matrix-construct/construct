@@ -2994,7 +2994,7 @@ ircd::m::dbs::desc::events__room_events__cmp
 			return false;
 
 		// Distill out the depth and event_idx integers
-		const std::pair<uint64_t, event::idx> pair[2]
+		const std::tuple<uint64_t, event::idx> pair[2]
 		{
 			room_events_key(post[0]),
 			room_events_key(post[1])
@@ -3056,7 +3056,7 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out_,
 	return { data(out_), data(out) };
 }
 
-std::pair<uint64_t, ircd::m::event::idx>
+std::tuple<uint64_t, ircd::m::event::idx>
 ircd::m::dbs::room_events_key(const string_view &amalgam)
 {
 	assert(size(amalgam) >= 1 + 8 + 8 || size(amalgam) == 1 + 8);
@@ -3242,7 +3242,7 @@ ircd::m::dbs::room_joined_key(const mutable_buffer &out_,
 	return { data(out_), data(out) };
 }
 
-std::pair<ircd::string_view, ircd::string_view>
+std::tuple<ircd::string_view, ircd::string_view>
 ircd::m::dbs::room_joined_key(const string_view &amalgam)
 {
 	const auto &key
@@ -3418,7 +3418,7 @@ ircd::m::dbs::room_state_key(const mutable_buffer &out_,
 	return { data(out_), data(out) };
 }
 
-std::pair<ircd::string_view, ircd::string_view>
+std::tuple<ircd::string_view, ircd::string_view>
 ircd::m::dbs::room_state_key(const string_view &amalgam)
 {
 	const auto &key

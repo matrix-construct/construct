@@ -20,7 +20,7 @@ namespace ircd::m::dbs
 
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type, const string_view &state_key);
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type);
-	std::pair<string_view, string_view> room_state_key(const string_view &amalgam);
+	std::tuple<string_view, string_view> room_state_key(const string_view &amalgam);
 
 	// room_id | type, state_key => event_idx
 	extern db::domain room_state;
