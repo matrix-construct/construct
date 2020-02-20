@@ -463,6 +463,12 @@ ircd::json::input::throws_exceeded()
 	};
 }
 
+namespace ircd { namespace json
+__attribute__((visibility("default")))
+{
+	// this stub needed for clang
+}}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // json/tool.h
