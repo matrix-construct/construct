@@ -36,12 +36,20 @@ namespace ircd::m::sync
 	extern resource resource;
 }
 
+namespace ircd::m::sync::longpoll
+{
+	static void fini() noexcept;
+}
+
 #include "sync/args.h"
 
 ircd::mapi::header
 IRCD_MODULE
 {
-	"Client 6.2.1 :Sync"
+	"Client 6.2.1 :Sync", nullptr, []
+	{
+		ircd::m::sync::longpoll::fini();
+	}
 };
 
 decltype(ircd::m::sync::resource)
@@ -756,6 +764,7 @@ namespace ircd::m::sync::longpoll
 	static bool polled(data &, const args &);
 	static int poll(data &);
 	static void handle_notify(const m::event &, m::vm::eval &);
+	static void fini() noexcept;
 
 	extern m::hookfn<m::vm::eval &> notified;
 	extern ctx::dock dock;
@@ -772,6 +781,20 @@ ircd::m::sync::longpoll::notified
 		{ "_site",  "vm.notify" },
 	}
 };
+
+void
+ircd::m::sync::longpoll::fini()
+noexcept
+{
+	if(!dock.empty())
+		log::warning
+		{
+			log, "Interrupting %zu longpolling clients...",
+			dock.size(),
+		};
+
+	interrupt(dock);
+}
 
 void
 ircd::m::sync::longpoll::handle_notify(const m::event &event,
