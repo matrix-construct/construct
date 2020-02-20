@@ -66,8 +66,7 @@ ircd::m::init::backfill::init()
 	{
 		log::warning
 		{
-			log, "Initial synchronization of rooms from remote servers has"
-			" been disabled by the configuration to avoid write operations."
+			log, "Not performing initial backfill because write-avoid flag is set."
 		};
 
 		return;
@@ -270,13 +269,6 @@ try
 		room
 	};
 
-	log::debug
-	{
-		log, "Resynchronizing %s with %zu joined servers.",
-		string_view{room_id},
-		origins.count(),
-	};
-
 	// When the room isn't public we need to supply a user_id of one of our
 	// users in the room to satisfy matrix protocol requirements upstack.
 	const auto user_id
@@ -290,6 +282,16 @@ try
 	const auto &[top_event_id, top_event_depth, top_event_idx]
 	{
 		m::top(std::nothrow, room)
+	};
+
+	log::info
+	{
+		log, "Resynchronizing %s from %s [idx:%lu depth:%ld] from %zu joined servers...",
+		string_view{room_id},
+		string_view{top_event_id},
+		top_event_idx,
+		top_event_depth,
+		origins.count(),
 	};
 
 	feds::opts opts;
