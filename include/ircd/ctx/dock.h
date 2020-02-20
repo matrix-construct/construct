@@ -14,6 +14,10 @@
 namespace ircd::ctx
 {
 	struct dock;
+
+	void terminate(dock &) noexcept;
+	void interrupt(dock &) noexcept;
+	void notify(dock &) noexcept;
 }
 
 /// dock is a condition variable which has no requirement for locking because
@@ -39,6 +43,8 @@ class ircd::ctx::dock
 	void wait(const predicate &);
 	void wait();
 
+	void terminate_all() noexcept;
+	void interrupt_all() noexcept;
 	void notify_all() noexcept;
 	void notify_one() noexcept;
 	void notify() noexcept;
@@ -169,4 +175,25 @@ noexcept
 		return;
 
 	ircd::ctx::notify(*q.front());
+}
+
+inline void
+ircd::ctx::notify(dock &dock)
+noexcept
+{
+	dock.notify();
+}
+
+inline void
+ircd::ctx::interrupt(dock &dock)
+noexcept
+{
+	dock.interrupt_all();
+}
+
+inline void
+ircd::ctx::terminate(dock &dock)
+noexcept
+{
+	dock.terminate_all();
 }

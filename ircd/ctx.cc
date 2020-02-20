@@ -2712,6 +2712,28 @@ noexcept
 	});
 }
 
+/// Wake up all contexts waiting on the dock to throw an interrupt exception.
+void
+ircd::ctx::dock::interrupt_all()
+noexcept
+{
+	q.for_each([this](ctx &c)
+	{
+		ircd::ctx::interrupt(c);
+	});
+}
+
+/// Wake up all contexts waiting on the dock to throw an interrupt exception.
+void
+ircd::ctx::dock::terminate_all()
+noexcept
+{
+	q.for_each([this](ctx &c)
+	{
+		ircd::ctx::terminate(c);
+	});
+}
+
 [[gnu::hot]]
 void
 ircd::ctx::dock::wait()
