@@ -150,13 +150,6 @@ struct ircd::json::input
 	_r1_type depth;
 	[[noreturn]] static void throws_exceeded();
 
-	// primary recursive rule
-	rule<unused_type(uint)> value
-	{
-		string | number | lit_true | lit_false | lit_null | object(depth + 1) | array(depth + 1)
-		,"value"
-	};
-
 	rule<unused_type(uint)> member
 	{
 		name >> -ws >> name_sep >> -ws >> value(depth)
@@ -177,6 +170,13 @@ struct ircd::json::input
 
 		array_begin >> -((-ws >> value(depth)) % (-ws >> value_sep)) >> -ws >> array_end
 		,"array"
+	};
+
+	// primary recursive rule
+	rule<unused_type(uint)> value
+	{
+		string | number | lit_true | lit_false | lit_null | object(depth + 1) | array(depth + 1)
+		,"value"
 	};
 
 	// type checkers
