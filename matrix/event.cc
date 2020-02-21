@@ -409,8 +409,8 @@ ircd::m::verify(const event &event,
 		signatures.at(origin)
 	};
 
-	for(const auto &[host, sig] : origin_sigs)
-		if(verify(event, origin, json::string(host)))
+	for(const auto &[keyid, sig] : origin_sigs)
+		if(verify(event, origin, json::string(keyid)))
 			return true;
 
 	return false;
