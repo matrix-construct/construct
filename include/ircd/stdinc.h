@@ -94,11 +94,6 @@ extern "C"
 #include <RB_INC_EXPERIMENTAL_STRING_VIEW
 #include <RB_INC_EXPERIMENTAL_OPTIONAL
 
-// FreeBSD unsigned long ctype
-#if defined(__FreeBSD__) && !defined(ulong)
-	typedef u_long ulong;
-#endif
-
 // These are #defined in stdio.h. If the system includes it indirectly we have
 // to undef those here or there will be trouble.
 #undef stdin
@@ -109,17 +104,6 @@ extern "C"
 #undef major
 #undef minor
 
-// Trouble; clang.
-#if defined(__clang__) && !defined(assert)
-	#ifdef NDEBUG
-		#define assert(expr) \
-			(static_cast<void>(0))
-	#else
-		#define assert(expr) \
-			(static_cast<bool>(expr)? void(0): __assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__))
-	#endif
-#endif
-
 //////////////////////////////////////////////////////////////////////////////>
 //
 // Pollution
@@ -127,10 +111,6 @@ extern "C"
 // This section lists all of the items introduced outside of our namespace
 // which may conflict with your project.
 //
-
-// Common branch prediction macros
-#define likely(x)       __builtin_expect(!!(x), 1)
-#define unlikely(x)     __builtin_expect(!!(x), 0)
 
 // Experimental std::string_view
 #if !defined(__cpp_lib_string_view) && defined(__cpp_lib_experimental_string_view)
@@ -165,22 +145,6 @@ namespace std
 //
 // Some items imported into our namespace.
 //
-
-// 128 bit integer support
-#if !defined(HAVE_INT128_T) || !defined(HAVE_UINT128_T)
-namespace ircd
-{
-	#if defined(HAVE___INT128_T) && defined(HAVE__UINT128_T)
-		using int128_t = __int128_t;
-		using uint128_t = __uint128_t;
-	#elif defined(HAVE___INT128)
-		using int128_t = signed __int128;
-		using uint128_t = unsigned __int128;
-	#else
-		#error "Missing 128 bit integer types on this platform."
-	#endif
-}
-#endif
 
 namespace ircd
 {
