@@ -111,12 +111,16 @@ ircd::m::verify(const m::keys &keys)
 
 	const string_view &key_id
 	{
-		begin(verify_keys)->first
+		!empty(verify_keys)?
+			begin(verify_keys)->first:
+			string_view{}
 	};
 
 	const json::object &key
 	{
-		begin(verify_keys)->second
+		!empty(verify_keys)?
+			begin(verify_keys)->second:
+			string_view{}
 	};
 
 	const ed25519::pk pk
