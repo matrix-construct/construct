@@ -177,7 +177,8 @@ _handle_edu_m_typing(const m::event &event,
 		// don't/can't set and then update the state. Use the maximum timeout
 		// value here because the minimum might unfairly time them out.
 		auto _edu(edu);
-		json::get<"timeout"_>(_edu) = milliseconds(timeout_max).count();
+		const milliseconds max(timeout_max), min(timeout_min);
+		json::get<"timeout"_>(_edu) = std::clamp(json::get<"timeout"_>(_edu), min.count(), max.count());
 		if(!update_state(_edu))
 			return;
 	}
