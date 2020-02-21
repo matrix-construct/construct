@@ -315,10 +315,14 @@ static bool timeout_check();
 static void timeout_worker();
 context timeout_context
 {
-	"typing", 128_KiB, context::POST, timeout_worker
+	"typing",
+	256_KiB,
+	context::POST,
+	timeout_worker
 };
 
 void
+__attribute__((noreturn))
 timeout_worker()
 {
 	while(1)
