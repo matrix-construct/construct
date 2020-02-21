@@ -341,7 +341,6 @@ timeout_check()
 		ircd::now<system_point>()
 	};
 
-	auto it(begin(typists));
 	for(auto it(begin(typists)); it != end(typists); ++it)
 		if(it->timesout < now)
 		{
