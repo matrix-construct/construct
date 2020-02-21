@@ -49,6 +49,13 @@ timeout_min
 	{ "default",  15 * 1000L                },
 };
 
+conf::item<milliseconds>
+timeout_int
+{
+	{ "name",     "ircd.typing.timeout.int" },
+	{ "default",  5 * 1000L                 },
+};
+
 static system_point calc_timesout(milliseconds relative);
 static bool update_state(const m::edu::m_typing &);
 
@@ -325,15 +332,14 @@ void
 __attribute__((noreturn))
 timeout_worker()
 {
-	while(1)
+	for(;; ctx::sleep(milliseconds(timeout_int)))
 	{
 		timeout_dock.wait([]
 		{
 			return !typists.empty();
 		});
 
-		if(!timeout_check())
-			ctx::sleep(seconds(5));
+		timeout_check();
 	}
 }
 
