@@ -1936,21 +1936,25 @@ AC_ARG_WITH(llvm-includes,
 AC_HELP_STRING([--with-llvm-includes=[[[DIR]]]], [Path to libllvm include directory]),
 [
 	LLVM_CPPFLAGS="-isystem $withval"
-], [])
+], [
+	LLVM_CPPFLAGS="-isystem /usr/include/llvm-9"
+])
 
 AC_ARG_WITH(llvm-libs,
 AC_HELP_STRING([--with-llvm-libs=[[[DIR]]]], [Path to libllvm library directory]),
 [
 	LLVM_LDFLAGS="-L$withval"
-], [])
+], [
+	LLVM_LDFLAGS="-L/usr/lib/llvm-9/lib"
+])
 
-AC_CHECK_LIB([LLVM-9], [LLVMBuildAnd],
+AC_CHECK_LIB([LLVM], [LLVMBuildAnd],
 [
 	have_libllvm="yes"
-	LLVM_LIBS="-lLLVM-9"
+	LLVM_LIBS="-lLLVM"
 ], [
 	have_libllvm="no"
-	AC_MSG_WARN([Unable to find LLVM-9 compiler infrastructure library on this system.])
+	AC_MSG_WARN([Unable to find LLVM compiler infrastructure library on this system.])
 ])
 
 AM_CONDITIONAL([LLVM], [test "x$have_libllvm" = "xyes" ])
