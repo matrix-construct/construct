@@ -40,7 +40,7 @@ __attribute__((visibility("hidden")))
 
 	bool is_specifier(const string_view &name);
 	void handle_specifier(mutable_buffer &out, const uint &idx, const spec &, const arg &);
-	template<class generator> bool generate_string(char *&out, const generator &gen, const arg &val);
+	template<class generator> bool generate_string(char *&out, generator&&, const arg &val);
 	template<class T, class lambda> bool visit_type(const arg &val, lambda&& closure);
 }}
 
@@ -1083,26 +1083,28 @@ const
 	}
 	static const generator;
 
-	const auto &mw(maxwidth(max));
-	static const auto &ep(eps[throw_illegal]);
+	static const auto ep
+	{
+		eps[throw_illegal]
+	};
 
 	if(!spec.width)
-		return generate_string(out, mw[generator] | ep, val);
+		return generate_string(out, maxwidth(max)[generator] | ep, val);
 
 	if(spec.sign == '-')
 	{
 		const auto &g(generator.aligned_left(spec.width, spec.pad));
-		return generate_string(out, mw[g] | ep, val);
+		return generate_string(out, maxwidth(max)[g] | ep, val);
 	}
 
 	const auto &g(generator.aligned_right(spec.width, spec.pad));
-	return generate_string(out, mw[g] | ep, val);
+	return generate_string(out, maxwidth(max)[g] | ep, val);
 }
 
 template<class generator>
 bool
 ircd::fmt::generate_string(char *&out,
-                           const generator &gen,
+                           generator&& gen,
                            const arg &val)
 {
 	using karma::eps;
@@ -1115,22 +1117,22 @@ ircd::fmt::generate_string(char *&out,
 	   type == typeid(ircd::json::array))
 	{
 		const auto &str(*static_cast<const ircd::string_view *>(ptr));
-		return karma::generate(out, gen, str);
+		return karma::generate(out, std::forward<generator>(gen), str);
 	}
 	else if(type == typeid(std::string_view))
 	{
 		const auto &str(*static_cast<const std::string_view *>(ptr));
-		return karma::generate(out, gen, str);
+		return karma::generate(out, std::forward<generator>(gen), str);
 	}
 	else if(type == typeid(std::string))
 	{
 		const auto &str(*static_cast<const std::string *>(ptr));
-		return karma::generate(out, gen, string_view{str});
+		return karma::generate(out, std::forward<generator>(gen), string_view{str});
 	}
 	else if(type == typeid(const char *))
 	{
 		const char *const &str{*static_cast<const char *const *>(ptr)};
-		return karma::generate(out, gen, string_view{str});
+		return karma::generate(out, std::forward<generator>(gen), string_view{str});
 	}
 
 	// This for string literals which have unique array types depending on their size.
@@ -1138,5 +1140,5 @@ ircd::fmt::generate_string(char *&out,
 	// grammar will fail gracefully (most of the time) or not print something bogus when
 	// it happens to be legal.
 	const auto &str(static_cast<const char *>(ptr));
-	return karma::generate(out, gen, string_view{str});
+	return karma::generate(out, std::forward<generator>(gen), string_view{str});
 }
