@@ -396,6 +396,12 @@ bool
 ircd::m::fetch::start(request &request)
 try
 {
+	if(unlikely(run::level != run::level::RUN || ctx::termination(request_context)))
+		throw m::UNAVAILABLE
+		{
+			"Cannot start fetch requests at this time."
+		};
+
 	assert(!request.finished);
 	if(!request.started && !request.origin)
 		request.origin = request.opts.hint;
