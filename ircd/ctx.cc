@@ -784,7 +784,7 @@ ircd::ctx::this_ctx::yield()
 		"ircd::ctx courtesy yield"
 	};
 
-	ircd::defer
+	ircd::post
 	{
 		descriptor, ios::synchronous
 	};
