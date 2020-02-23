@@ -320,8 +320,8 @@ try
 		return;
 
 	// Only broadcast if the user is joined to the room.
-	if(!membership(m::room(room_id), user, "join"))
-		return;
+	//if(!membership(m::room(room_id), user, "join"))
+	//	return;
 
 	const m::user::room user_room
 	{
