@@ -212,8 +212,21 @@ ircd::m::event::signatures(const mutable_buffer &out,
 }
 
 ircd::m::event
+ircd::m::signatures(const mutable_buffer &out,
+                    const m::event &event)
+{
+	const string_view &origin
+	{
+		at<"origin"_>(event)
+	};
+
+	return signatures(out, event, origin);
+}
+
+ircd::m::event
 ircd::m::signatures(const mutable_buffer &out_,
-                    const m::event &event_)
+                    const m::event &event_,
+                    const string_view &origin)
 {
 	thread_local char content[event::MAX_SIZE];
 	m::event event
@@ -222,19 +235,14 @@ ircd::m::signatures(const mutable_buffer &out_,
 	};
 
 	thread_local char buf[event::MAX_SIZE];
-	const json::object &preimage
+	const string_view &preimage
 	{
 		stringify(buf, event)
 	};
 
-	const ed25519::sig sig
+	const auto &secret_key
 	{
-		sign(preimage)
-	};
-
-	const auto &origin
-	{
-		json::at<"origin"_>(event)
+		m::secret_key(my(origin))
 	};
 
 	const string_view public_key_id
@@ -242,12 +250,22 @@ ircd::m::signatures(const mutable_buffer &out_,
 		m::public_key_id(my(origin))
 	};
 
-	thread_local char sigb64buf[b64encode_size(sizeof(sig))];
-	const json::member my_sig
+	const ed25519::sig my_sig
+	{
+		event::sign(preimage, secret_key)
+	};
+
+	static const auto sigb64bufsz
+	{
+		b64encode_size(sizeof(my_sig))
+	};
+
+	thread_local char sigb64buf[sigb64bufsz];
+	const json::member my_sig_member
 	{
 		origin, json::members
 		{
-			{ public_key_id, b64encode_unpadded(sigb64buf, sig) }
+			{ public_key_id, b64encode_unpadded(sigb64buf, my_sig) }
 		}
 	};
 
@@ -255,9 +273,9 @@ ircd::m::signatures(const mutable_buffer &out_,
 	thread_local std::array<json::member, SIG_MAX> sigs;
 
 	size_t i(0);
-	sigs.at(i++) = my_sig;
+	sigs.at(i++) = my_sig_member;
 	for(const auto &[host, sig] : json::get<"signatures"_>(event_))
-		if(!my_host(json::string(host)))
+		if(json::string(host) != origin)
 			sigs.at(i++) = { host, sig };
 
 	event = event_;
@@ -303,9 +321,16 @@ ircd::m::sign(const event &event)
 {
 	const string_view &origin
 	{
-		json::at<"origin"_>(event)
+		at<"origin"_>(event)
 	};
 
+	return sign(event, origin);
+}
+
+ircd::ed25519::sig
+ircd::m::sign(const event &event,
+              const string_view &origin)
+{
 	const auto &secret_key
 	{
 		m::secret_key(my(origin))

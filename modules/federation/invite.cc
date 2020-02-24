@@ -110,11 +110,15 @@ put__invite(client &client,
 		};
 
 	check_event(request, event);
+	const m::user::id target
+	{
+		at<"state_key"_>(event)
+	};
 
 	thread_local char sigs[4_KiB];
 	const m::event signed_event
 	{
-		signatures(sigs, event)
+		signatures(sigs, event, target.host())
 	};
 
 	const json::strung revent

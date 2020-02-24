@@ -184,7 +184,7 @@ put__invite(client &client,
 	thread_local char sigs[4_KiB];
 	m::event signed_event
 	{
-		signatures(sigs, event)
+		signatures(sigs, event, target.host())
 	};
 
 	signed_event.event_id = event_id;

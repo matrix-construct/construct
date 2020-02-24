@@ -43,6 +43,7 @@ namespace ircd::m
 	id::event make_id(const event &, const string_view &version, id::event::buf &buf);
 
 	json::object hashes(const mutable_buffer &, const event &);
+	event signatures(const mutable_buffer &, const m::event &, const string_view &origin);
 	event signatures(const mutable_buffer &, const m::event &);
 	event essential(event, const mutable_buffer &content);
 
@@ -58,6 +59,7 @@ namespace ircd::m
 
 	sha256::buf hash(const event &);
 	ed25519::sig sign(const event &, const ed25519::sk &);
+	ed25519::sig sign(const event &, const string_view &origin);
 	ed25519::sig sign(const event &);
 }
 
