@@ -105,21 +105,28 @@ ircd::m::sync::room_state_linear_events(data &data)
 		is_own_membership && data.membership == "join"
 	};
 
+	const ssize_t &viewport_size
+	{
+		room::events::viewport_size
+	};
+
 	// Figure out whether the event was included in the timeline or whether
 	// to include it here in the state, which comes before the timeline.
 	// Since linear-sync is already distinct from polylog-sync, the
 	// overwhelming majority of state events coming through linear-sync will
 	// use the timeline. We make an exception for past state events the server
 	// only recently obtained, to hide them from the timeline.
-	const ssize_t &viewport_size
+	if(viewport_size >= 0 && data.membership != "invite" && !is_own_join)
 	{
-		room::events::viewport_size
-	};
+		if(json::get<"depth"_>(*data.event) + viewport_size >= data.room_depth)
+			return false;
 
-	if(viewport_size >= 0)
-		if(data.membership != "invite" && !is_own_join)
-			if(json::get<"depth"_>(*data.event) + viewport_size >= data.room_depth)
-				return false;
+		// We also query whether this state cell has been overwritten.
+		// Unlike the timeline, the state field will not be processed
+		// sequentially by our client so we can skip outdated events.
+		if(m::room::state::next(data.event_idx))
+			return false;
+	}
 
 	json::stack::object rooms
 	{
