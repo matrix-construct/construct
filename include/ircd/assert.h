@@ -35,7 +35,7 @@
 namespace ircd
 {
 	void debugtrap() noexcept;
-	void always_assert(const bool &) noexcept;
+	template<class expr> void always_assert(expr&&) noexcept;
 	void print_assertion(const char *const &, const char *const &, const unsigned &, const char *const &) noexcept;
 }
 
@@ -90,11 +90,12 @@ noexcept
 }
 
 /// Trap on false expression whether or not NDEBUG.
+template<class expr>
 extern inline void
 __attribute__((always_inline, gnu_inline, artificial))
-ircd::always_assert(const bool &expr)
+ircd::always_assert(expr&& x)
 noexcept
 {
-	if(__builtin_expect(!expr, 0))
+	if(__builtin_expect(!bool(x), 0))
 		debugtrap();
 }
