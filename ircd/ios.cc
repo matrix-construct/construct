@@ -394,7 +394,10 @@ ircd::ios::dispatch::dispatch(descriptor &descriptor,
 decltype(ircd::ios::defer_desc)
 ircd::ios::defer_desc
 {
-	"ircd::ios defer"
+	"ircd::ios defer",
+	descriptor::default_allocator,
+	descriptor::default_deallocator,
+	true, // continuation
 };
 
 [[gnu::hot]]
