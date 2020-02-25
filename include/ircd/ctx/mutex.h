@@ -21,7 +21,7 @@ namespace ircd::ctx
 // additional contexts are queued. This can be used with std::
 // locking concepts.
 //
-class ircd::ctx::mutex
+struct ircd::ctx::mutex
 {
 	dock q;
 	bool m;

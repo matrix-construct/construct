@@ -16,7 +16,7 @@ namespace ircd::ctx
 	class shared_mutex;
 }
 
-class ircd::ctx::shared_mutex
+struct ircd::ctx::shared_mutex
 {
 	dock q;
 	ssize_t s;
