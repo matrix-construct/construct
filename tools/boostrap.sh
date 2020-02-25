@@ -185,7 +185,12 @@ B2FLAGS+=" $_BCXXFLAGS"
 
 ### Install should go right into this local submodule repository
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
-run ./bjam --clean $B2FLAGS
+
+BJAM="./bjam"
+if test -f "$BJAM"; then
+	run $BJAM --clean $B2FLAGS
+fi
+
 run ./b2 -d0 headers $B2FLAGS
 run ./b2 -d0 install $B2FLAGS
 
