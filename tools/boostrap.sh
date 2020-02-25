@@ -101,6 +101,7 @@ run cd deps/boost
 ### Build toolsy
 run git submodule update --init --recursive --checkout tools/build
 run git submodule update --init --recursive --checkout tools/inspect
+run git submodule update --init --recursive --checkout tools/boost_install
 
 ### These are the libraries we need. Most of them are header-only. If not header-only,
 ### add to the list --with-libraries in the ./bootstrap command below
@@ -111,6 +112,7 @@ run git submodule update --init --recursive --checkout libs/type_traits
 run git submodule update --init --recursive --checkout libs/config
 run git submodule update --init --recursive --checkout libs/core
 run git submodule update --init --recursive --checkout libs/detail
+run git submodule update --init --recursive --checkout libs/headers
 
 run git submodule update --init --recursive --checkout libs/asio
 run git submodule update --init --recursive --checkout libs/system
