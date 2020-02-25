@@ -281,40 +281,6 @@ catch(const std::exception &e)
 	return false;
 }
 
-// Optimize ctx::wake() by reimplementing the timer cancel's op scheduler to
-// enqueue as a defer (private/priority queue) rather than to the post queue.
-#if defined(BOOST_ASIO_HAS_EPOLL)
-using epoll_time_traits = boost::asio::time_traits<boost::posix_time::ptime>;
-
-template<>
-inline std::size_t
-boost::asio::detail::epoll_reactor::cancel_timer(timer_queue<epoll_time_traits> &queue,
-                                                 typename timer_queue<epoll_time_traits>::per_timer_data &t,
-                                                 std::size_t max)
-{
-	std::size_t ret;
-	op_queue<operation> ops;
-	{
-		const mutex::scoped_lock lock(mutex_);
-		ret = queue.cancel_timer(t, ops, max);
-	}
-
-	auto *const thread_info
-	{
-		static_cast<scheduler_thread_info *>(scheduler::thread_call_stack::top())
-	};
-
-	for(auto *op(ops.front()); op; ops.pop(), op = ops.front())
-	{
-		static const bool is_continuation(true);
-		scheduler_.post_immediate_completion(op, is_continuation);
-		thread_info->private_outstanding_work -= is_continuation;
-	}
-
-	return ret;
-}
-#endif
-
 /// Throws if this context has been flagged for interruption and clears
 /// the flag.
 [[gnu::hot]]
@@ -3102,3 +3068,47 @@ noexcept
 	assert(c);
 	return c->node.next;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// (internal) boost::asio
+//
+
+//
+// Optimize ctx::wake() by reimplementing the timer cancel's op scheduler to
+// enqueue as a defer (private/priority queue) rather than to the post queue.
+// This interposes the function for all callstacks in this translation unit,
+// including primarily ctx::wake().
+//
+#if defined(BOOST_ASIO_HAS_EPOLL)
+using epoll_time_traits = boost::asio::time_traits<boost::posix_time::ptime>;
+
+template<>
+std::size_t
+__attribute__((visibility("internal")))
+boost::asio::detail::epoll_reactor::cancel_timer(timer_queue<epoll_time_traits> &queue,
+                                                 typename timer_queue<epoll_time_traits>::per_timer_data &t,
+                                                 std::size_t max)
+{
+	std::size_t ret;
+	op_queue<operation> ops;
+	{
+		const mutex::scoped_lock lock(mutex_);
+		ret = queue.cancel_timer(t, ops, max);
+	}
+
+	auto *const thread_info
+	{
+		static_cast<scheduler_thread_info *>(scheduler::thread_call_stack::top())
+	};
+
+	for(auto *op(ops.front()); op; ops.pop(), op = ops.front())
+	{
+		static const bool is_continuation(true);
+		scheduler_.post_immediate_completion(op, is_continuation);
+		thread_info->private_outstanding_work -= is_continuation;
+	}
+
+	return ret;
+}
+#endif
