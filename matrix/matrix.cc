@@ -226,8 +226,6 @@ noexcept try
 
 	_fetch.reset(nullptr);
 
-	mods::imports.erase("net_dns_cache"s);
-
 	//TODO: remove this for non-interfering shutdown
 	//server::interrupt_all();
 	//client::terminate_all();

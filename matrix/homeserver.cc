@@ -267,6 +267,9 @@ noexcept
 	signoff(*this);
 	vm.reset();
 
+	if(primary == this)
+		mods::imports.erase("net_dns_cache"s);
+
 	while(!modules.empty())
 		modules.pop_back();
 }
