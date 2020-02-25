@@ -2750,7 +2750,7 @@ ircd::ctx::dock::wait()
 	}};
 
 	q.push_back(current);
-	ircd::ctx::wait();
+	this_ctx::wait();
 }
 
 void
@@ -2772,7 +2772,7 @@ ircd::ctx::dock::wait(const predicate &pred)
 
 	q.push_back(current); do
 	{
-		ircd::ctx::wait();
+		this_ctx::wait();
 	}
 	while(!pred());
 }
