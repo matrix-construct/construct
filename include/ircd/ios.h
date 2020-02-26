@@ -19,7 +19,6 @@
 namespace boost::asio
 {
 	struct io_context;
-	struct signal_set;
 
 	template<class function>
 	void asio_handler_invoke(function&, ...);
