@@ -24,7 +24,7 @@ __attribute__((visibility("hidden")))
 }}}
 
 struct ircd::rfc3986::encoder
-:karma::grammar<char *, const string_view &>
+:karma::grammar<char *, const string_view>
 {
 	[[noreturn]] void throw_illegal()
 	{
@@ -34,7 +34,7 @@ struct ircd::rfc3986::encoder
 		};
 	}
 
-	karma::rule<char *, const string_view &> url_encoding
+	karma::rule<char *, const string_view> url_encoding
 	{
 		*(karma::char_("A-Za-z0-9") | (karma::lit('%') << karma::hex))
 		,"url encoding"
