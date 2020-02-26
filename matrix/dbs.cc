@@ -2592,7 +2592,7 @@ ircd::string_view
 ircd::m::dbs::event_state_key(const mutable_buffer &out_,
                               const event_state_tuple &tuple)
 {
-	assert(size(out_) >= EVENT_TYPE_KEY_MAX_SIZE);
+	assert(size(out_) >= EVENT_STATE_KEY_MAX_SIZE);
 
 	const auto &[state_key, type, room_id, depth, event_idx]
 	{
