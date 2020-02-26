@@ -3095,7 +3095,7 @@ catch(const std::exception &e)
 
 rocksdb::Status
 ircd::db::database::env::sequential_file::Skip(uint64_t size)
-noexcept
+noexcept try
 {
 	const ctx::uninterruptible::nothrow ui;
 	const std::unique_lock lock
@@ -3126,6 +3126,18 @@ noexcept
 
 	offset += size;
 	return Status::OK();
+}
+catch(const panic &e)
+{
+	log::critical
+	{
+		log, "[%s] seqfile:%p :%s",
+		d.name,
+		this,
+		e.what(),
+	};
+
+	return Status::Busy();
 }
 
 rocksdb::Status
