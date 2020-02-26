@@ -321,13 +321,20 @@ ircd::m::typing::for_each(const closure &closure)
 static void timeout_timeout(const typist &);
 static bool timeout_check();
 static void timeout_worker();
-context timeout_context
+static context timeout_context
 {
 	"typing",
 	256_KiB,
-	context::POST,
+	context::POST | context::WAIT_JOIN,
 	timeout_worker
 };
+
+static void
+__attribute__((destructor))
+timeout_terminate()
+{
+	timeout_context.terminate();
+}
 
 void
 __attribute__((noreturn))
