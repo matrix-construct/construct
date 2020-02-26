@@ -8,8 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <boost/system/system_error.hpp>
-
 [[noreturn]] static void
 ircd_terminate_handler()
 noexcept

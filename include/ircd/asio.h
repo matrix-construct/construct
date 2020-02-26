@@ -27,8 +27,11 @@
 #define BOOST_COROUTINES_NO_DEPRECATION_WARNING
 #pragma GCC visibility push(default)
 
+// Boost preambles
 #include <boost/version.hpp>
+#include <boost/config.hpp>
 
+// Workarounds / fixes
 #if BOOST_VERSION >= 107000
 namespace boost
 {
@@ -37,7 +40,10 @@ namespace boost
 }
 #endif
 
-#include <boost/config.hpp>
+// Needed for consistent interop with std::system_error
+#include <boost/system/system_error.hpp>
+
+// Boost ASIO stack
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -53,7 +59,10 @@ namespace boost
 /// need these low-level interfaces.
 ///
 
+// Context system headers depending on boost.
 #include <ircd/ctx/continuation.h>
+
+// Network system headers depending on boost.
 #include <ircd/net/asio.h>
 
 #endif HAVE_IRCD_ASIO_H
