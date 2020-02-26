@@ -1051,9 +1051,9 @@ const
 	});
 
 	struct generator
-	:karma::grammar<char *, const string_view &>
+	:karma::grammar<char *, const string_view>
 	{
-		karma::rule<char *, const string_view &> string
+		karma::rule<char *, const string_view> string
 		{
 			*(karma::print)
 			,"string"
@@ -1061,19 +1061,19 @@ const
 
 		_r1_type width;
 		_r2_type pad;
-		karma::rule<char *, const string_view &(ushort, char)> aligned_left
+		karma::rule<char *, const string_view (ushort, char)> aligned_left
 		{
 			karma::left_align(width, pad)[string]
 			,"left aligned"
 		};
 
-		karma::rule<char *, const string_view &(ushort, char)> aligned_right
+		karma::rule<char *, const string_view (ushort, char)> aligned_right
 		{
 			karma::right_align(width, pad)[string]
 			,"right aligned"
 		};
 
-		karma::rule<char *, const string_view &(ushort, char)> aligned_center
+		karma::rule<char *, const string_view (ushort, char)> aligned_center
 		{
 			karma::center(width, pad)[string]
 			,"center aligned"
