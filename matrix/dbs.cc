@@ -2599,6 +2599,9 @@ ircd::m::dbs::event_state_key(const mutable_buffer &out_,
 		tuple
 	};
 
+	if(!state_key)
+		return {};
+
 	mutable_buffer out{out_};
 	consume(out, copy(out, state_key));
 	if(!type)
@@ -2611,13 +2614,10 @@ ircd::m::dbs::event_state_key(const mutable_buffer &out_,
 
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, room_id));
-	if(!room_id)
-		return {data(out_), data(out)};
-
-	consume(out, copy(out, "\0"_sv));
 	if(depth < 0)
 		return {data(out_), data(out)};
 
+	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, byte_view<string_view>(depth)));
 	if(!event_idx)
 		return {data(out_), data(out)};
@@ -2629,26 +2629,33 @@ ircd::m::dbs::event_state_key(const mutable_buffer &out_,
 ircd::m::dbs::event_state_tuple
 ircd::m::dbs::event_state_key(const string_view &amalgam)
 {
-	string_view parts[4];
-	const auto num
+	const auto &[state_key, r0]
 	{
-		tokens(amalgam, '\0', parts)
+		split(amalgam, "\0"_sv)
 	};
 
-	assert(num <= 4);
-	assert(num <= 3 || size(parts[3]) == 16);
+	const auto &[type, r1]
+	{
+		split(r0, "\0"_sv)
+	};
+
+	const auto &[room_id, r2]
+	{
+		split(r1, "\0"_sv)
+	};
+
 	return event_state_tuple
 	{
-		parts[0],
-		parts[1],
-		num >= 3?
-			m::room::id{parts[2]}:
+		state_key,
+		type,
+		room_id?
+			m::room::id{room_id}:
 			m::room::id{},
-		num >= 4?
-			int64_t(byte_view<int64_t>(parts[3].substr(0, 8))):
+		r2.size() >= 8?
+			int64_t(byte_view<int64_t>(r2.substr(0, 8))):
 			-1L,
-		num >= 4?
-			event::idx(byte_view<uint64_t>(parts[3].substr(8))):
+		r2.size() >= 16?
+			event::idx(byte_view<uint64_t>(r2.substr(8))):
 			0UL,
 	};
 }
