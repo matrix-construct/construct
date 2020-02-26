@@ -48,6 +48,7 @@
 #include "allocator.h"
 #include "util/util.h"
 #include "exception.h"
+#include "panic.h"
 #include "run.h"
 #include "demangle.h"
 #include "backtrace.h"
