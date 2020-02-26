@@ -35,9 +35,9 @@ bin_PROGRAMS = construct
 
 construct_LDFLAGS = \
 	$(AM_LDFLAGS) \
-	@BOOST_LIBS@ \
-	@SSL_LIBS@ \
-	@CRYPTO_LIBS@ \
+	@BOOST_LDFLAGS@ \
+	@SSL_LDFLAGS@ \
+	@CRYPTO_LDFLAGS@ \
 	###
 
 construct_LDADD = \
