@@ -25,15 +25,25 @@
 #include <ircd/ircd.h>
 
 #define BOOST_COROUTINES_NO_DEPRECATION_WARNING
-
 #pragma GCC visibility push(default)
+
 #include <boost/version.hpp>
+
+#if BOOST_VERSION >= 107000
+namespace boost
+{
+	using std::begin;
+	using std::end;
+}
+#endif
+
 #include <boost/config.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/io_service.hpp>
+
 #pragma GCC visibility pop
 
 ///
