@@ -22,6 +22,11 @@
 // this becomes the single leading precompiled header.
 #include <ircd/ircd.h>
 
+#pragma GCC visibility push(default)
+#include <boost/config.hpp>
+#include <boost/function.hpp>
+#pragma GCC visibility pop
+
 #pragma GCC visibility push(hidden)
 #include <boost/fusion/include/at.hpp>
 #include <boost/spirit/include/qi.hpp>
@@ -32,14 +37,17 @@
 #include <boost/fusion/adapted/std_tuple.hpp>
 #pragma GCC visibility pop
 
-namespace ircd::spirit
+namespace ircd {
+namespace spirit
+__attribute__((visibility("default")))
 {
 	template<class parent_error> struct expectation_failure;
 
 	extern thread_local char rulebuf[64]; // parse.cc
-}
+}}
 
 namespace ircd
+__attribute__((visibility("default")))
 {
 	template<class parent_error,
 	         class it = const char *,
@@ -123,8 +131,15 @@ namespace ircd::spirit::local
 	using qi::_3;
 }
 
+namespace ircd {
+namespace spirit
+__attribute__((visibility("default")))
+{
+}}
+
 template<class parent_error>
-struct ircd::spirit::expectation_failure
+struct __attribute__((visibility("default")))
+ircd::spirit::expectation_failure
 :parent_error
 {
 	template<class it = const char *>
