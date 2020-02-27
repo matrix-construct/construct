@@ -31,6 +31,7 @@ namespace ircd
 #define IRCD_UNIQUE(a)      IRCD_CONCAT(a, __COUNTER__)
 
 #include "typography.h"
+#include "identity.h"
 #include "unit_literal.h"
 #include "construction.h"
 #include "unwind.h"
