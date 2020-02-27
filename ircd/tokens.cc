@@ -15,6 +15,7 @@ ircd::tokens_before(const string_view &str,
                     const char &sep,
                     const size_t &i)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	return tokens_before(str, ssep, i);
 }
@@ -47,6 +48,7 @@ ircd::tokens_after(const string_view &str,
                    const char &sep,
                    const size_t &i)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	return tokens_after(str, ssep, i);
 }
@@ -78,6 +80,7 @@ ircd::string_view
 ircd::token_first(const string_view &str,
                   const char &sep)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	return token(str, ssep, 0);
 }
@@ -93,6 +96,7 @@ ircd::string_view
 ircd::token_last(const string_view &str,
                  const char &sep)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	return token_last(str, ssep);
 }
@@ -128,6 +132,7 @@ ircd::token(const string_view &str,
             const size_t &i,
             const string_view &def)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	return token(str, ssep, i, def);
 }
@@ -178,6 +183,7 @@ ircd::token_exists(const string_view &str,
                    const char &sep,
                    const string_view &tok)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	return token_exists(str, ssep, tok);
 }
@@ -204,6 +210,7 @@ size_t
 ircd::token_count(const string_view &str,
                   const char &sep)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	return token_count(str, ssep);
 }
@@ -231,6 +238,7 @@ ircd::tokens(const string_view &str,
              const mutable_buffer &buf,
              const token_view &closure)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	return tokens(str, ssep, buf, closure);
 }
@@ -265,6 +273,7 @@ ircd::tokens(const string_view &str,
              const size_t &limit,
              const token_view &closure)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	return tokens(str, ssep, limit, closure);
 }
@@ -297,6 +306,7 @@ ircd::tokens(const string_view &str,
              const char &sep,
              const token_view_bool &closure)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	return tokens(str, ssep, closure);
 }
@@ -328,6 +338,7 @@ ircd::tokens(const string_view &str,
              const char &sep,
              const token_view &closure)
 {
+	assert(sep != '\0');
 	const char ssep[2] { sep, '\0' };
 	tokens(str, ssep, closure);
 }
