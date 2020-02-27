@@ -7268,7 +7268,7 @@ ircd::db::error::error(const rocksdb::Status &s)
 {
 	fmt::sprintf
 	{
-		buf, "(%u:%u:%u %s): %s",
+		buf, "(%u:%u:%u %s) :%s",
 		this->code,
 		this->subcode,
 		this->severity,
@@ -7293,7 +7293,7 @@ ircd::db::error::error(generate_skip_t,
 }
 ,severity
 {
-	 s.severity()
+	s.severity()
 }
 {
 }
