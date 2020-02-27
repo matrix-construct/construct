@@ -45,19 +45,21 @@ const
 	m::keys::get(node_id, key_id, [&closure, &key_id]
 	(const json::object &keys)
 	{
-		const json::object &vks
+		const json::object &verify_keys
 		{
 			keys.at("verify_keys")
 		};
 
-		const json::object &vkk
+		const json::object &verify_key
 		{
-			vks.at(key_id)
+			verify_keys.has(key_id)?
+				verify_keys.get(key_id):
+				json::object(keys["old_verify_keys"]).get(key_id)
 		};
 
 		const string_view &key
 		{
-			vkk.at("key")
+			verify_key.at("key")
 		};
 
 		closure(key);
