@@ -7472,7 +7472,7 @@ ircd::db::throw_on_error::throw_on_error(const rocksdb::Status &status)
 			throw not_found{};
 
 		#ifdef RB_DEBUG
-		case Status::kCorruption:
+		//case Status::kCorruption:
 		case Status::kNotSupported:
 		case Status::kInvalidArgument:
 			debugtrap();
@@ -7730,6 +7730,7 @@ ircd::db::_seek(database::column &c,
                 const string_view &p,
                 const rocksdb::ReadOptions &opts,
                 rocksdb::Iterator &it)
+try
 {
 	const ctx::uninterruptible ui;
 
@@ -7756,12 +7757,28 @@ ircd::db::_seek(database::column &c,
 
 	return valid(it);
 }
+catch(const error &e)
+{
+	const database &d(*c.d);
+	log::critical
+	{
+		log, "[%s][%s] %lu:%lu SEEK key :%s",
+		name(d),
+		name(c),
+		sequence(d),
+		sequence(opts.snapshot),
+		e.what(),
+	};
+
+	throw;
+}
 
 bool
 ircd::db::_seek(database::column &c,
                 const pos &p,
                 const rocksdb::ReadOptions &opts,
                 rocksdb::Iterator &it)
+try
 {
 	const ctx::stack_usage_assertion sua;
 
@@ -7792,6 +7809,22 @@ ircd::db::_seek(database::column &c,
 	#endif
 
 	return valid(it);
+}
+catch(const error &e)
+{
+	const database &d(*c.d);
+	log::critical
+	{
+		log, "[%s][%s] %lu:%lu SEEK %s :%s",
+		name(d),
+		name(c),
+		sequence(d),
+		sequence(opts.snapshot),
+		reflect(p),
+		e.what(),
+	};
+
+	throw;
 }
 
 /// Seek to entry NOT GREATER THAN key. That is, equal to or less than key
@@ -7924,22 +7957,7 @@ ircd::db::valid(const rocksdb::Iterator &it)
 		case Status::kOk:
 		case Status::kNotFound:
 		case Status::kIncomplete:
-			break;
-
-		case Status::kCorruption:
-		{
-			const db::error error
-			{
-				it.status()
-			};
-
-			log::critical
-			{
-				log, "%s", error.what()
-			};
-
-			[[fallthrough]];
-		}
+			return it.Valid();
 
 		default:
 			throw_on_error
@@ -7949,8 +7967,6 @@ ircd::db::valid(const rocksdb::Iterator &it)
 
 			__builtin_unreachable();
 	}
-
-	return it.Valid();
 }
 
 //
