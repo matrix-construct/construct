@@ -27,18 +27,23 @@ namespace ircd::run
 	bool set(const enum level &);
 }
 
+/// Records compile-time header version information.
 decltype(ircd::version_api)
 ircd::version_api
 {
 	"IRCd", info::versions::API, 0, {0, 0, 0}, RB_VERSION
 };
 
+/// Records runtime linked library (this library) version information.
 decltype(ircd::version_abi)
 ircd::version_abi
 {
 	"IRCd", info::versions::ABI, 0, {0, 0, 0}, ircd::info::version
 };
 
+/// When assertions are enabled this further softens runtime behavior to be
+/// non-disruptive/non-terminating for diagnostic purposes. Debugging/developer
+/// use only. This item may be toggled at any time.
 decltype(ircd::soft_assert)
 ircd::soft_assert
 {
@@ -47,6 +52,10 @@ ircd::soft_assert
 	{ "persist",  false                },
 };
 
+/// Coarse mode indicator for degraded operation known as "write-avoid" which
+/// is similar to read_only but not hard-enforced. Writes may still occur,
+/// such as those manually triggered by an admin. All subsystems and background
+/// tasks otherwise depart from normal operation to avoid writes.
 decltype(ircd::write_avoid)
 ircd::write_avoid
 {
@@ -55,6 +64,10 @@ ircd::write_avoid
 	{ "persist",  false                },
 };
 
+/// Coarse mode declaration for read-only behavior. All subsystems and feature
+/// modules respect this indicator by preventing any writes and persistence
+/// during execution. This item should be set before ircd::init() to be most
+/// effective.
 decltype(ircd::read_only)
 ircd::read_only
 {
@@ -63,6 +76,11 @@ ircd::read_only
 	{ "persist",  false                },
 };
 
+/// Coarse mode indicator for debug/developer behavior when and if possible.
+/// For example: additional log messages may be enabled by this mode. This
+/// option is technically effective in both release builds and debug builds
+/// but it controls far less in non-debug builds. This item may be toggled
+/// at any time.
 decltype(ircd::debugmode)
 ircd::debugmode
 {
@@ -79,6 +97,7 @@ ircd::restart
 	{ "persist",  false                },
 };
 
+/// Main context pointer placement.
 decltype(ircd::main_context)
 ircd::main_context;
 

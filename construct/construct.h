@@ -12,8 +12,6 @@ namespace construct
 {
 	struct signals;
 	struct console;
-	struct matrix;
 
 	extern struct console *console;
-	extern struct matrix *matrix;
 }

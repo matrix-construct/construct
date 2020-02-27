@@ -102,6 +102,7 @@
 ///
 namespace ircd
 {
+	// Library version information (also see info.h for more version related)
 	extern const info::versions version_api;
 	extern const info::versions version_abi;
 
@@ -111,7 +112,10 @@ namespace ircd
 	extern conf::item<bool> write_avoid;
 	extern conf::item<bool> soft_assert;
 
+	// Informational
 	seconds uptime();
+
+	// Control panel
 	void init(boost::asio::io_context &ios);
 	void cont() noexcept;
 	bool quit() noexcept;
