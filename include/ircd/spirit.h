@@ -22,6 +22,10 @@
 // this becomes the single leading precompiled header.
 #include <ircd/ircd.h>
 
+// Disables asserts in spirit headers even when we're NDEBUG due to
+// some false asserts around boolean character tests in spirit.
+#define BOOST_DISABLE_ASSERTS
+
 #pragma GCC visibility push(default)
 #include <boost/config.hpp>
 #include <boost/function.hpp>
