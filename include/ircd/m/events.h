@@ -74,6 +74,16 @@ namespace ircd::m::events::origin
 	bool for_each_in(const string_view &, const sender::closure &);
 }
 
+/// Interface to the state_key index of all events known to this server.
+namespace ircd::m::events::state
+{
+	using tuple = dbs::event_state_tuple;
+	using closure = std::function<bool (const tuple &)>;
+
+	bool for_each(const tuple &, const closure &);
+	bool for_each(const closure &);
+}
+
 /// Range to start (inclusive) and stop (exclusive). If start is greater than
 /// stop a reverse iteration will occur. -1 (or unsigned max value) can be used
 /// to start or stop at the end. 0 can be used to start or stop at the beginning.

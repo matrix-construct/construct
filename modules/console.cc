@@ -6981,6 +6981,46 @@ console_cmd__events__origin(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__events__state(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"state_key", "type", "room_id", "depth", "idx"
+	}};
+
+	const m::events::state::tuple key
+	{
+		param["state_key"],
+		param["type"],
+		param.at("room_id", m::room::id{}),
+		param.at("depth", -1L),
+		param.at("idx", 0UL),
+	};
+
+	size_t i(0);
+	m::events::state::for_each(key, [&out, &i]
+	(const auto &tuple)
+	{
+		const auto &[state_key, type, room_id, depth, event_idx]
+		{
+			tuple
+		};
+
+		out
+		<< std::right << std::setw(6) << (i++) << "  "
+		<< std::left << std::setw(48) << room_id << " "
+		<< std::right << std::setw(8) << depth << " [ "
+		<< std::right << std::setw(48) << type << " | "
+		<< std::left << std::setw(48) << state_key << " ] "
+		<< std::left << std::setw(10) << event_idx << " "
+		<< std::endl;
+		return true;
+	});
+
+	return true;
+}
+
 conf::item<size_t>
 events_dump_buffer_size
 {

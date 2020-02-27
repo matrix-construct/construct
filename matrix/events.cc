@@ -351,6 +351,73 @@ ircd::m::events::for_each(const range &range,
 }
 
 //
+// events::state
+//
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::events::state::for_each(const closure &closure)
+{
+	static const tuple none
+	{
+		{}, {}, {}, -1L, 0UL
+	};
+
+	return state::for_each(none, [&closure]
+	(const tuple &key) -> bool
+	{
+		return closure(key);
+	});
+}
+
+bool
+IRCD_MODULE_EXPORT
+ircd::m::events::state::for_each(const tuple &query,
+                                 const closure &closure)
+{
+	db::column &column
+	{
+		dbs::event_state
+	};
+
+	char buf[dbs::EVENT_STATE_KEY_MAX_SIZE];
+	const string_view query_key
+	{
+		dbs::event_state_key(buf, query)
+	};
+
+	for(auto it(column.lower_bound(query_key)); bool(it); ++it)
+	{
+		const auto key
+		{
+			dbs::event_state_key(it->first)
+		};
+
+		const auto &[state_key, type, room_id, depth, event_idx]
+		{
+			key
+		};
+
+		const bool tab[]
+		{
+			!std::get<0>(query) || std::get<0>(query) == std::get<0>(key),
+			!std::get<1>(query) || std::get<1>(query) == std::get<1>(key),
+			!std::get<2>(query) || std::get<2>(query) == std::get<2>(key),
+			std::get<3>(query) <= 0 || std::get<3>(query) == std::get<3>(key),
+			std::get<4>(query) == 0 || std::get<4>(query) == std::get<4>(key),
+		};
+
+		if(!std::all_of(begin(tab), end(tab), identity()))
+			break;
+
+		if(!closure(key))
+			return false;
+	}
+
+	return true;
+}
+
+//
 // events::type
 //
 
