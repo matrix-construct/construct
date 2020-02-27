@@ -8501,6 +8501,33 @@ ircd::db::reflect(const rocksdb::Status::Severity &s)
 }
 
 ircd::string_view
+ircd::db::reflect(const rocksdb::Status::Code &s)
+{
+	using Code = rocksdb::Status::Code;
+
+	switch(s)
+	{
+		case Code::kOk:                    return "Ok";
+		case Code::kNotFound:              return "NotFound";
+		case Code::kCorruption:            return "Corruption";
+		case Code::kNotSupported:          return "NotSupported";
+		case Code::kInvalidArgument:       return "InvalidArgument";
+		case Code::kIOError:               return "IOError";
+		case Code::kMergeInProgress:       return "MergeInProgress";
+		case Code::kIncomplete:            return "Incomplete";
+		case Code::kShutdownInProgress:    return "ShutdownInProgress";
+		case Code::kTimedOut:              return "TimedOut";
+		case Code::kAborted:               return "Aborted";
+		case Code::kBusy:                  return "Busy";
+		case Code::kExpired:               return "Expired";
+		case Code::kTryAgain:              return "TryAgain";
+		case Code::kCompactionTooLarge:    return "CompactionTooLarge";
+	}
+
+	return "?????";
+}
+
+ircd::string_view
 ircd::db::reflect(const rocksdb::RandomAccessFile::AccessPattern &p)
 {
 	switch(p)
