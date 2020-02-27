@@ -7268,11 +7268,12 @@ ircd::db::error::error(const rocksdb::Status &s)
 {
 	fmt::sprintf
 	{
-		buf, "(%u:%u:%u %s) :%s",
+		buf, "(%u:%u:%u) %s %s :%s",
 		this->code,
 		this->subcode,
 		this->severity,
-		reflect(s.severity()),
+		reflect(rocksdb::Status::Severity(this->severity)),
+		reflect(rocksdb::Status::Code(this->code)),
 		s.getState(),
 	};
 }
@@ -7293,7 +7294,13 @@ ircd::db::error::error(generate_skip_t,
 }
 ,severity
 {
-	s.severity()
+	s.severity()?
+		s.severity():
+
+	code == rocksdb::Status::kCorruption?
+		rocksdb::Status::kHardError:
+
+	rocksdb::Status::kNoError
 }
 {
 }
