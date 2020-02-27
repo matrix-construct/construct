@@ -161,6 +161,15 @@ ircd::m::origin(const homeserver &homeserver)
 // homeserver::homeserver
 //
 
+/// --- tmp ---
+
+namespace ircd::m
+{
+	std::unique_ptr<fetch::init> _fetch;
+}
+
+/// --- /tmp ---
+
 decltype(ircd::m::homeserver::primary)
 ircd::m::homeserver::primary;
 
@@ -172,6 +181,11 @@ try
 	assert(opts);
 	rfc3986::valid_host(opts->origin);
 	rfc3986::valid_host(opts->server_name);
+
+	//TODO: XXX
+	if(!_fetch)
+		_fetch = std::make_unique<fetch::init>();
+
 	return new homeserver
 	{
 		opts
@@ -262,13 +276,29 @@ ircd::m::homeserver::~homeserver()
 noexcept
 {
 	if(primary == this)
-		m::init::backfill::fini();
-
-	signoff(*this);
-	vm.reset();
+	{
+		//TODO: remove this for non-interfering shutdown
+		server::init::interrupt();
+		client::terminate_all();
+		server::init::close();
+		client::close_all();
+		client::wait_all();
+		server::init::wait();
+	}
 
 	if(primary == this)
+	{
+		m::init::backfill::fini();
+		m::sync::pool.join();
+	}
+
+	signoff(*this);
+	if(primary == this)
 		mods::imports.erase("net_dns_cache"s);
+
+	vm.reset();
+	if(primary == this)
+		_fetch.reset(nullptr);
 
 	while(!modules.empty())
 		modules.pop_back();

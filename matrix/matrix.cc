@@ -163,27 +163,11 @@ ircd::m::matrix::module_names_optional
 // init
 //
 
-/// --- tmp ---
-
-namespace ircd::m::init
-{
-	struct modules;
-}
-
-namespace ircd::m
-{
-	std::unique_ptr<fetch::init> _fetch;
-	//std::unique_ptr<init::modules> _modules;
-}
-
-/// --- /tmp ---
-
 void
 ircd::m::on_load()
 try
 {
 	assert(ircd::run::level == run::level::IDLE);
-	_fetch = std::make_unique<fetch::init>();
 }
 catch(const m::error &e)
 {
@@ -221,18 +205,7 @@ void
 ircd::m::on_unload()
 noexcept try
 {
-	if(m::sync::pool.size())
-		m::sync::pool.join();
 
-	_fetch.reset(nullptr);
-
-	//TODO: remove this for non-interfering shutdown
-	//server::interrupt_all();
-	//client::terminate_all();
-	//client::close_all();
-	//server::close_all();
-	//server::wait_all();
-	//client::wait_all();
 }
 catch(const m::error &e)
 {
