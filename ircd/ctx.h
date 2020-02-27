@@ -55,7 +55,6 @@ struct ircd::ctx::ctx
 	int8_t nice {0};                             // Scheduling priority nice-value
 	int8_t ionice {0};                           // IO priority nice-value (defaults for fs::opts)
 	int32_t notes {0};                           // norm: 0 = asleep; 1 = awake; inc by others; dec by self
-	boost::asio::io_context::strand strand;      // mutex/serializer
 	boost::asio::deadline_timer alarm;           // acting semaphore (64B)
 	boost::asio::yield_context *yc {nullptr};    // boost interface
 	continuation *cont {nullptr};                // valid when asleep; invalid when awake

@@ -68,10 +68,6 @@ ircd::ctx::ctx::ctx(const string_view &name,
 {
 	flags
 }
-,strand
-{
-	ios::get()
-}
 ,alarm
 {
 	ios::get()
@@ -108,7 +104,7 @@ ircd::ctx::ctx::spawn(context::function func)
 	};
 
 	mark(prof::event::SPAWN);
-	boost::asio::spawn(strand, std::move(bound), attrs);
+	boost::asio::spawn(ios::get(), std::move(bound), attrs);
 }
 
 /// Base frame for a context.
@@ -463,7 +459,7 @@ void
 ircd::ctx::signal(ctx &ctx,
                   std::function<void ()> func)
 {
-	ctx.strand.post(std::move(func));
+	ircd::dispatch(std::move(func));
 }
 
 /// Marks `ctx` for termination. Terminate is similar to interrupt() but the
