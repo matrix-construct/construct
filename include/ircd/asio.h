@@ -52,17 +52,44 @@ namespace boost
 
 #pragma GCC visibility pop
 
-///
-/// The following IRCd headers are not included in the main stdinc.h list of
-/// includes because they require boost directly or symbols which we cannot
-/// forward declare. You should include this in your definition file if you
-/// need these low-level interfaces.
-///
+// Boost version dependent behavior for getting the io_service/io_context
+// abstract executor (recent versions) or the derived instance (old versions).
+namespace ircd::ios
+{
+	#if BOOST_VERSION >= 107000
+	asio::executor &get() noexcept;
+	#else
+	asio::io_context &get() noexcept;
+	#endif
+}
+
+// The following IRCd headers are not included in the main stdinc.h list of
+// includes because they require boost directly or symbols which we cannot
+// forward declare. You should include this in your definition file if you
+// need these low-level interfaces.
 
 // Context system headers depending on boost.
 #include <ircd/ctx/continuation.h>
 
 // Network system headers depending on boost.
 #include <ircd/net/asio.h>
+
+#if BOOST_VERSION >= 107000
+inline boost::asio::executor &
+ircd::ios::get()
+noexcept
+{
+	assert(bool(main));
+	return main;
+}
+#else
+inline boost::asio::io_context &
+ircd::ios::get()
+noexcept
+{
+	auto &context(const_cast<asio::execution_context &>(main.context()));
+	return static_cast<asio::io_context &>(context);
+}
+#endif
 
 #endif HAVE_IRCD_ASIO_H

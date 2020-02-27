@@ -112,8 +112,7 @@ struct ircd::net::socket
 	void connect(const endpoint &, const open_opts &, eptr_handler);
 	bool cancel() noexcept;
 
-	socket(asio::ssl::context &        = sslv23_client,
-	       boost::asio::io_service &   = ios::get());
+	socket(asio::ssl::context & = sslv23_client);
 
 	// Socket cannot be copied or moved; must be constructed as shared ptr
 	socket(socket &&) = delete;

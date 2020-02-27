@@ -102,16 +102,15 @@ decltype(ircd::main_context)
 ircd::main_context;
 
 /// Sets up the IRCd and its main context, then returns without blocking.
-//
-/// Pass your io_context instance, it will share it with the rest of your program.
-/// An exception will be thrown on error.
+///
+/// Pass the executor obtained from your io_context instance.
 ///
 /// This function will setup the main program loop of libircd. The execution will
 /// occur when your io_context.run() or poll() is further invoked.
 ///
 /// init() can only be called from a run::level::HALT state
 void
-ircd::init(boost::asio::io_context &user_ios)
+ircd::init(boost::asio::executor &&executor)
 try
 {
 	// This function must only be called from a HALT state.
@@ -122,7 +121,7 @@ try
 		};
 
 	// Setup the core event loop system starting with the user's supplied ios.
-	ios::init(user_ios);
+	ios::init(std::move(executor));
 
 	// The log is available. but it is console-only until conf opens files.
 	log::init();

@@ -59,13 +59,27 @@ ircd::ctx::ctx::ios_desc
 /// Internal context struct ctor
 ircd::ctx::ctx::ctx(const string_view &name,
                     const size_t &stack_max,
-                    const context::flags &flags,
-                    boost::asio::io_service &ios)
-:name{name}
-,flags{flags}
-,strand{ios}
-,alarm{ios}
-,stack{stack_max}
+                    const context::flags &flags)
+:name
+{
+	name
+}
+,flags
+{
+	flags
+}
+,strand
+{
+	ios::get()
+}
+,alarm
+{
+	ios::get()
+}
+,stack
+{
+	stack_max
+}
 {
 }
 
@@ -1223,8 +1237,7 @@ ircd::ctx::context::context(const string_view &name,
 	(
 		name,
 		stack_sz,
-		!current? flags | POST : flags,
-		ios::get()
+		!current? flags | POST : flags
 	)
 }
 {

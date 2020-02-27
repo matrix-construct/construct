@@ -12,8 +12,13 @@
 decltype(ircd::ios::main_thread_id)
 ircd::ios::main_thread_id;
 
+/// The embedder/executable's (library user) asio::executor provided on init.
 decltype(ircd::ios::user)
 ircd::ios::user;
+
+/// Our library-specific/isolate executor.
+decltype(ircd::ios::main)
+ircd::ios::main;
 
 decltype(ircd::boost_version_api)
 ircd::boost_version_api
@@ -37,7 +42,7 @@ ircd::boost_version_abi
 //
 
 void
-ircd::ios::init(asio::io_context &user)
+ircd::ios::init(asio::executor &&user)
 {
 	// Sample the ID of this thread. Since this is the first transfer of
 	// control to libircd after static initialization we have nothing to
@@ -47,7 +52,10 @@ ircd::ios::init(asio::io_context &user)
 	main_thread_id = std::this_thread::get_id();
 
 	// Set a reference to the user's ios_service
-	ios::user = &user;
+	ios::user = std::move(user);
+
+	// (simple passthru for now)
+	ios::main = ios::user;
 }
 
 //
@@ -306,19 +314,31 @@ namespace ircd::ios
 void
 ircd::ios::forking()
 {
-	get().notify_fork(asio::execution_context::fork_prepare);
+	#if BOOST_VERSION >= 107000
+		get().context().notify_fork(asio::execution_context::fork_prepare);
+	#else
+		get().notify_fork(asio::execution_context::fork_prepare);
+	#endif
 }
 
 void
 ircd::ios::forked_child()
 {
-	get().notify_fork(asio::execution_context::fork_child);
+	#if BOOST_VERSION >= 107000
+		get().context().notify_fork(asio::execution_context::fork_child);
+	#else
+		get().notify_fork(asio::execution_context::fork_child);
+	#endif
 }
 
 void
 ircd::ios::forked_parent()
 {
-	get().notify_fork(asio::execution_context::fork_parent);
+	#if BOOST_VERSION >= 107000
+		get().context().notify_fork(asio::execution_context::fork_parent);
+	#else
+		get().notify_fork(asio::execution_context::fork_parent);
+	#endif
 }
 
 //
@@ -522,19 +542,9 @@ ircd::ios::post::post(descriptor &descriptor,
 	boost::asio::post(get(), handle(descriptor, std::move(function)));
 }
 
-[[gnu::hot]]
-boost::asio::io_context &
-ircd::ios::get()
-noexcept
-{
-	assert(user);
-	return *user;
-}
-
-[[gnu::hot]]
 bool
 ircd::ios::available()
 noexcept
 {
-	return bool(user);
+	return bool(main);
 }

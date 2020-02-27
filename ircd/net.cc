@@ -2692,11 +2692,10 @@ ircd::net::socket::total_calls_out
 // socket
 //
 
-ircd::net::socket::socket(asio::ssl::context &ssl,
-                          boost::asio::io_service &ios)
+ircd::net::socket::socket(asio::ssl::context &ssl)
 :sd
 {
-	ios
+	ios::get()
 }
 ,ssl
 {
@@ -2704,7 +2703,7 @@ ircd::net::socket::socket(asio::ssl::context &ssl,
 }
 ,timer
 {
-	ios
+	ios::get()
 }
 {
 	++instances;

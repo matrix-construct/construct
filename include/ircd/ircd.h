@@ -116,9 +116,9 @@ namespace ircd
 	seconds uptime();
 
 	// Control panel
-	void init(boost::asio::io_context &ios);
 	void cont() noexcept;
 	bool quit() noexcept;
+	void init(boost::asio::executor &&);
 }
 
 #endif // HAVE_IRCD_IRCD_H

@@ -18,6 +18,7 @@
 /// Forward declarations for boost::asio because it is not included here.
 namespace boost::asio
 {
+	struct executor;
 	struct io_context;
 
 	template<class function>
@@ -43,23 +44,21 @@ namespace ircd::ios
 	struct post;
 
 	extern std::thread::id main_thread_id;
-	extern asio::io_context *user;
+	extern asio::executor user;
+	extern asio::executor main;
+
+	bool available() noexcept;
+	bool is_main_thread() noexcept;
+	void assert_main_thread();
 
 	const string_view &name(const descriptor &);
 	const string_view &name(const handler &);
-
-	bool is_main_thread();
-	void assert_main_thread();
-
-	bool available() noexcept;
-	asio::io_context &get() noexcept;
 	const uint64_t &epoch() noexcept;
 
 	void forked_parent();
 	void forked_child();
 	void forking();
-
-	void init(asio::io_context &user);
+	void init(asio::executor &&);
 }
 
 namespace ircd
@@ -286,6 +285,7 @@ ircd::ios::assert_main_thread()
 inline bool
 __attribute__((always_inline))
 ircd::ios::is_main_thread()
+noexcept
 {
 	return std::this_thread::get_id() == main_thread_id ||
 	       main_thread_id == std::thread::id();

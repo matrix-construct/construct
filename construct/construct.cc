@@ -296,7 +296,7 @@ noexcept try
 
 	// Associates libircd with our io_context and posts the initial routines
 	// to that io_context. Execution of IRCd will then occur during ios::run()
-	ircd::init(ios);
+	ircd::init(ios.get_executor());
 
 	// If the user wants to immediately drop to an interactive command line
 	// without having to send a ctrl-c for it, that is provided here. This does
