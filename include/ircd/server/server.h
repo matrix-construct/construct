@@ -62,9 +62,9 @@ namespace ircd::server
 struct ircd::server::init
 {
 	// manual control panel
-	void interrupt();
-	void close();
-	void wait();
+	static void interrupt();
+	static void close();
+	static void wait();
 
 	init() noexcept;
 	~init() noexcept;
