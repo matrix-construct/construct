@@ -222,7 +222,7 @@ load_listener(const m::event &event)
 ctx::context
 _listener_allow
 {
-	"listener allow", 32_KiB, context::POST, []
+	"listener allow", 64_KiB, context::POST, []
 	{
 		while(1)
 		{
