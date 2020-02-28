@@ -19,7 +19,6 @@ namespace ircd::prof
 	IRCD_OVERLOAD(sample)
 
 	// Samples
-	uint64_t cycles() noexcept;     ///< Monotonic reference cycles (since system boot)
 	uint64_t time_user() noexcept;  ///< Nanoseconds of CPU time in userspace.
 	uint64_t time_kern() noexcept;  ///< Nanoseconds of CPU time in kernelland.
 	uint64_t time_real() noexcept;  ///< Nanoseconds of CPU time real.
@@ -35,6 +34,7 @@ namespace ircd::prof
 #include "x86.h"
 #include "vg.h"
 #include "type.h"
+#include "cycles.h"
 #include "scope_cycles.h"
 #include "syscall_timer.h"
 #include "instructions.h"
@@ -42,26 +42,3 @@ namespace ircd::prof
 #include "times.h"
 #include "system.h"
 #include "psi.h"
-
-// Exports to ircd::
-namespace ircd
-{
-	using prof::cycles;
-}
-
-#if defined(__x86_64__) || defined(__i386__)
-extern inline uint64_t
-__attribute__((flatten, always_inline, gnu_inline, artificial))
-ircd::prof::cycles()
-noexcept
-{
-	return x86::rdtsc();
-}
-#else
-ircd::prof::cycles()
-noexcept
-{
-	static_assert(false, "Select reference cycle counter for platform.");
-	return 0;
-}
-#endif
