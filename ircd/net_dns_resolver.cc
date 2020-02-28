@@ -97,15 +97,24 @@ ircd::net::dns::resolver::resolver(answers_callback callback)
 }
 ,recv_context
 {
-	"net.dns.R", 768_KiB, std::bind(&resolver::recv_worker, this), context::POST
+	"net.dns.R",
+	768_KiB,
+	std::bind(&resolver::recv_worker, this),
+	context::POST
 }
 ,timeout_context
 {
-	"net.dns.T", 512_KiB, std::bind(&resolver::timeout_worker, this), context::POST
+	"net.dns.T",
+	512_KiB,
+	std::bind(&resolver::timeout_worker, this),
+	context::POST
 }
 ,sendq_context
 {
-	"net.dns.S", 256_KiB, std::bind(&resolver::sendq_worker, this), context::POST
+	"net.dns.S",
+	256_KiB,
+	std::bind(&resolver::sendq_worker, this),
+	context::POST
 }
 {
 	ns.open(ip::udp::v4());
