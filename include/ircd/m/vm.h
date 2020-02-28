@@ -317,6 +317,8 @@ struct ircd::m::vm::opts
 
 	/// Whether to log an info message on successful eval.
 	bool infolog_accept {false};
+
+	opts() noexcept;
 };
 
 /// Extension structure to vm::opts which includes additional options for
@@ -356,6 +358,8 @@ struct ircd::m::vm::copts
 
 	/// Whether to log an info message after commit accepted
 	bool infolog_postcommit {false};
+
+	copts() noexcept;
 };
 
 struct ircd::m::vm::error

@@ -85,7 +85,8 @@ struct ircd::run::changed
 	{}
 
 	/// Default construction for no-op
-	changed() = default;
+	changed() noexcept;
+	~changed() noexcept;
 };
 
 /// The run::level allows all observers to know the coarse state of IRCd and to

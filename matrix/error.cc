@@ -87,6 +87,12 @@ ircd::m::error::error(internal_t,
 	}
 }
 
+// Out-of-line placement
+ircd::m::error::~error()
+noexcept
+{
+}
+
 ircd::string_view
 ircd::m::error::errstr()
 const noexcept

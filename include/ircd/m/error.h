@@ -54,6 +54,7 @@ class ircd::m::error
 	error(const http::code &);
 	error(std::string);
 	error();
+	~error() noexcept;
 };
 
 /// Macro for all matrix exceptions; all errors rooted from m::error

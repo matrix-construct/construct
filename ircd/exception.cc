@@ -247,6 +247,12 @@ noexcept
 // exception
 //
 
+// Out-of-line placement
+ircd::exception::~exception()
+noexcept
+{
+}
+
 ssize_t
 ircd::exception::generate(const string_view &fmt,
                           const va_rtti &ap)

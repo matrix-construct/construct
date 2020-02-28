@@ -48,6 +48,22 @@ ircd::util::instance_list<ircd::run::changed>::list
 decltype(ircd::run::changed::dock)
 ircd::run::changed::dock;
 
+//
+// run::changed::changed
+//
+
+// Out-of-line placement
+ircd::run::changed::changed()
+noexcept
+{
+}
+
+// Out-of-line placement
+ircd::run::changed::~changed()
+noexcept
+{
+}
+
 /// The notification will be posted to the io_context. This is important to
 /// prevent the callback from continuing execution on some ircd::ctx stack and
 /// instead invoke their function on the main stack in their own io_context

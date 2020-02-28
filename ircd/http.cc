@@ -1109,6 +1109,12 @@ ircd::http::error::error(const http::code &code,
 	::snprintf(buf, sizeof(buf), "%u %s", uint(code), status(code).c_str());
 }
 
+// Out-of-line placement.
+ircd::http::error::~error()
+noexcept
+{
+}
+
 //
 // status
 //
