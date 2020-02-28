@@ -3698,16 +3698,11 @@ ircd::json::value::operator=(const value &other)
 	return *this;
 }
 
+[[gnu::hot]]
 ircd::json::value::~value()
 noexcept
 {
-	if(!alloc)
-		return;
-
-	else if(serial)
-		delete[] string;
-
-	else switch(type)
+	if(alloc) switch(serial? STRING : type)
 	{
 		case STRING:
 			delete[] string;
