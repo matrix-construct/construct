@@ -79,6 +79,8 @@ namespace ircd::ctx
 
 #include "prof.h"
 #include "this_ctx.h"
+#include "wait.h"
+#include "sleep.h"
 #include "stack_usage_assertion.h"
 #include "slice_usage_warning.h"
 #include "syscall_usage_warning.h"
