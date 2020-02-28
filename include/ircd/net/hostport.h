@@ -97,65 +97,6 @@ ircd::net::hostport::hostport(const string_view &host,
 }
 {}
 
-/// Creates a host:service or host:port pair from the single string literally
-/// containing the colon deliminated values. If the suffix is a port number
-/// then the behavior for the port number constructor applies; if a service
-/// string then the service constructor applies; if empty (just a hostname)
-/// then service "matrix" is assumed with port 8448 fallback.
-inline
-ircd::net::hostport::hostport(const string_view &amalgam)
-:host
-{
-	rfc3986::host(amalgam)
-}
-,port
-{
-	rfc3986::port(amalgam)
-}
-{
-	// When the amalgam has no port
-	if(amalgam == host)
-	{
-		// set the port to the canon_port; port=0 is bad
-		port = port?: canon_port;
-		return;
-	}
-
-	// or a valid integer port
-	if(port)
-		return;
-
-	// When the port is actually a service string
-	const auto service
-	{
-		rsplit(amalgam, ':').second
-	};
-
-	if(service)
-		this->service = service;
-	else
-		this->port = canon_port;
-}
-
-inline
-ircd::net::hostport::hostport(const string_view &amalgam,
-                              verbatim_t)
-:host
-{
-	rfc3986::host(amalgam)
-}
-,service
-{
-	amalgam != host && !rfc3986::port(amalgam)?
-		rsplit(amalgam, ':').second:
-		string_view{}
-}
-,port
-{
-	rfc3986::port(amalgam)
-}
-{}
-
 inline
 ircd::net::hostport::operator
 bool()
