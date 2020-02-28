@@ -325,16 +325,18 @@ static context timeout_context
 {
 	"typing",
 	256_KiB,
-	context::POST | context::WAIT_JOIN,
+	context::POST,
 	timeout_worker
 };
 
-static void
-__attribute__((destructor))
-timeout_terminate()
+static const ircd::run::changed
+timeout_context_terminate
 {
-	timeout_context.terminate();
-}
+	run::level::QUIT, []
+	{
+		timeout_context.terminate();
+	}
+};
 
 void
 __attribute__((noreturn))
@@ -376,6 +378,8 @@ timeout_check()
 void
 timeout_timeout(const typist &t)
 {
+	assert(run::level == run::level::RUN);
+
 	const m::typing edu
 	{
 		{ "user_id",  t.user_id   },
