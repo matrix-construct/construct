@@ -277,6 +277,8 @@ noexcept
 {
 	if(primary == this)
 	{
+		m::init::backfill::fini();
+
 		//TODO: remove this for non-interfering shutdown
 		server::init::interrupt();
 		client::terminate_all();
@@ -284,13 +286,10 @@ noexcept
 		client::close_all();
 		client::wait_all();
 		server::init::wait();
-	}
 
-	if(primary == this)
-	{
-		m::init::backfill::fini();
 		m::sync::pool.join();
 	}
+
 
 	signoff(*this);
 	if(primary == this)
