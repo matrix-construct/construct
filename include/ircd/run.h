@@ -46,15 +46,46 @@ namespace ircd::run
 struct ircd::run::changed
 :instance_list<ircd::run::changed>
 {
-	using handler = std::function<void (const enum level &)>;
-
 	static ctx::dock dock;
 
-	handler function;
+	static const enum level single_sentinel
+	{
+		std::numeric_limits<std::underlying_type<enum level>::type>::max()
+	};
+
+	enum level single
+	{
+		single_sentinel
+	};
+
+	std::function<void ()> handler_one;
+	std::function<void (const enum level &)> handler
+	{
+		[this](const auto &level)
+		{
+			if(single == single_sentinel || single != level)
+				return;
+
+			if(likely(handler_one))
+				handler_one();
+		}
+	};
 
 	/// The handler function will be called back for any run::level change while
 	/// this instance remains in scope.
-	changed(handler function) noexcept;
+	changed(decltype(handler) function) noexcept
+	:handler{std::move(function)}
+	{}
+
+	/// The handler function will be called back for the specific run::level
+	/// change while this instance remains in scope.
+	changed(const enum level &single, decltype(handler_one) function) noexcept
+	:single{single}
+	,handler_one{std::move(function)}
+	{}
+
+	/// Default construction for no-op
+	changed() = default;
 };
 
 /// The run::level allows all observers to know the coarse state of IRCd and to
@@ -96,9 +127,3 @@ enum class ircd::run::level
 	RUN      = 4,    ///<   O   |   IRCd in service.
 	QUIT     = 5,    ///<   --> ^   Clean shutdown in progress.
 };
-
-inline
-ircd::run::changed::changed(handler function)
-noexcept
-:function(std::move(function))
-{}

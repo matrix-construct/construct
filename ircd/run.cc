@@ -99,7 +99,7 @@ try
 	changed::dock.notify_all();
 	for(const auto &handler : changed::list) try
 	{
-		handler->function(level);
+		handler->handler(level);
 	}
 	catch(const std::exception &e)
 	{
