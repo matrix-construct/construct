@@ -155,13 +155,43 @@ ircd::m::rooms::for_each(const opts &opts,
 		return ret;
 	}
 
-	return events::type::for_each_in("m.room.create", [&proffer, &ret]
+	ctx::dock dock;
+	size_t fetch {0}, fetched {0};
+	const auto fetcher{[&]
 	(const string_view &type, const event::idx &event_idx)
 	{
-		assert(type == "m.room.create");
-		m::get(std::nothrow, event_idx, "room_id", proffer);
+		++fetch;
+		fetched += m::get(std::nothrow, event_idx, "room_id", proffer);
+		dock.notify_one();
 		return ret;
-	});
+	}};
+
+	size_t prefetch {0}, prefetched {0};
+	const auto prefetcher{[&]
+	(const string_view &type, const event::idx &event_idx)
+	{
+		++prefetch;
+		prefetched += m::prefetch(event_idx, "room_id");
+		dock.wait([&]
+		{
+			return fetch + opts.prefetch > prefetch;
+		});
+
+		return ret;
+	}};
+
+	if(!opts.prefetch)
+		return events::type::for_each_in("m.room.create", fetcher);
+
+	const ctx::context prefetch_worker
+	{
+		"m.rooms.prefetch", [&prefetcher]
+		{
+			events::type::for_each_in("m.room.create", prefetcher);
+		}
+	};
+
+	return events::type::for_each_in("m.room.create", fetcher);
 }
 
 //

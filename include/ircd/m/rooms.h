@@ -77,6 +77,9 @@ struct ircd::m::rooms::opts
 	/// Spec search term
 	string_view search_term;
 
+	/// Specify prefetching to increase iteration performance.
+	size_t prefetch {0};
+
 	opts() = default;
 	opts(const string_view &search_term) noexcept; // special
 };
