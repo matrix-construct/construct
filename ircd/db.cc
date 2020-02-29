@@ -7815,12 +7815,13 @@ catch(const error &e)
 	const database &d(*c.d);
 	log::critical
 	{
-		log, "[%s][%s] %lu:%lu SEEK %s :%s",
+		log, "[%s][%s] %lu:%lu SEEK %s %s :%s",
 		name(d),
 		name(c),
 		sequence(d),
 		sequence(opts.snapshot),
 		reflect(p),
+		it.Valid()? "VALID" : "INVALID",
 		e.what(),
 	};
 
