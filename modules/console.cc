@@ -7021,13 +7021,6 @@ console_cmd__events__state(opt &out, const string_view &line)
 	return true;
 }
 
-conf::item<size_t>
-events_dump_buffer_size
-{
-	{ "name",     "ircd.console.events.dump.buffer_size" },
-	{ "default",  int64_t(4_MiB)                         },
-};
-
 bool
 console_cmd__events__dump(opt &out, const string_view &line)
 {
