@@ -8075,6 +8075,33 @@ console_cmd__rooms(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__rooms__dump(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"filename"
+	}};
+
+	const auto filename
+	{
+		param.at(0)
+	};
+
+	static conf::item<size_t>
+	rooms_dump_prefetch
+	{
+		{ "name",     "ircd.console.rooms.dump.prefetch" },
+		{ "default",  16L                                },
+	};
+
+	m::rooms::opts opts;
+	opts.remote_only = true;
+	opts.prefetch = rooms_dump_prefetch;
+	m::rooms::dump__file(opts, filename);
+	return true;
+}
+
+bool
 console_cmd__rooms__public(opt &out, const string_view &line)
 {
 	const params param{line, " ",

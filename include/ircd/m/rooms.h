@@ -25,6 +25,9 @@ namespace ircd::m::rooms
 	// tools
 	size_t count(const opts & = opts_default);
 	bool has(const opts & = opts_default);
+
+	// util
+	void dump__file(const opts &, const string_view &filename);
 }
 
 /// Arguments structure to rooms::for_each(). This reduces the API surface to

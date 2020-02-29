@@ -12,6 +12,53 @@ decltype(ircd::m::rooms::opts_default)
 IRCD_MODULE_EXPORT_DATA
 ircd::m::rooms::opts_default;
 
+void
+IRCD_MODULE_EXPORT
+ircd::m::rooms::dump__file(const opts &opts,
+                           const string_view &filename)
+{
+	const fs::fd file
+	{
+		filename, std::ios::out | std::ios::app
+	};
+
+	// POSIX_FADV_DONTNEED
+	fs::evict(file);
+
+	size_t len(0), num(0);
+	for_each(opts, [&](const auto &room_id)
+	{
+		const const_buffer bufs[]
+		{
+			room_id, "\n"_sv
+		};
+
+		len += fs::append(file, bufs);
+		++num;
+
+		char pbuf[48];
+		log::info
+		{
+			log, "dump[%s] rooms:%zu %s %s",
+			filename,
+			num,
+			pretty(pbuf, iec(len)),
+			string_view{room_id},
+		};
+
+		return true;
+	});
+
+	char pbuf[48];
+	log::notice
+	{
+		log, "dump[%s] complete rooms:%zu using %s",
+		filename,
+		num,
+		pretty(pbuf, iec(len)),
+    };
+}
+
 bool
 IRCD_MODULE_EXPORT
 ircd::m::rooms::has(const opts &opts)
