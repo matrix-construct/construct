@@ -82,17 +82,17 @@ ircd::m::pretty_stateline(std::ostream &out,
 
 	const auto &type
 	{
-		at<"type"_>(event)
+		json::get<"type"_>(event)
 	};
 
 	const auto &state_key
 	{
-		at<"state_key"_>(event)
+		json::get<"state_key"_>(event)
 	};
 
 	const auto &depth
 	{
-		at<"depth"_>(event)
+		json::get<"depth"_>(event)
 	};
 
 	thread_local char smbuf[48];
