@@ -13,6 +13,10 @@
 using namespace ircd::m;
 using namespace ircd;
 
+static bool
+check_transaction_id(const m::user::id &user_id,
+                     const string_view &transaction_id);
+
 static void
 save_transaction_id(const m::event &,
                     m::vm::eval &);
@@ -60,6 +64,14 @@ put__send(client &client,
 	{
 		url::decode(transaction_id_buf, request.parv[3])
 	};
+
+	if(!check_transaction_id(request.user_id, transaction_id))
+		throw m::error
+		{
+			http::CONFLICT, "M_DUPLICATE_TXNID",
+			"Already processed request with txnid '%s'",
+			transaction_id
+		};
 
 	m::vm::copts copts;
 	copts.client_txnid = transaction_id;
@@ -160,4 +172,56 @@ save_transaction_id(const m::event &event,
 	{
 		{ "transaction_id", eval.copts->client_txnid }
 	});
+}
+
+// Using a linear search here because we have no index on txnids as this
+// is the only codepath where we'd perform that lookup; in contrast the
+// event_id -> txnid query is made far more often for client sync.
+//
+// This means we have to set some arbitrary limits on the linear search:
+// lim[0] is a total limit of events to iterate, so if the user's room
+// has a lot of activity we might return a false non-match and allow a
+// duplicate txnid; this is highly unlikely. lim[1] allows the user to
+// have several /sends in flight at the same time, also unlikely but we
+// avoid that case for false non-match.
+static bool
+check_transaction_id(const m::user::id &user_id,
+                     const string_view &transaction_id)
+{
+	static const auto type_match
+	{
+		[](const string_view &type)
+		{
+			return type == "ircd.client.txnid";
+		}
+	};
+
+	const auto content_match
+	{
+		[&transaction_id](const json::object &content)
+		{
+			const json::string &value
+			{
+				content["transaction_id"]
+			};
+
+			return value == transaction_id;
+		}
+	};
+
+	ssize_t lim[] { 128, 3 };
+	const m::user::room user_room{user_id};
+	for(m::room::events it(user_room); it && lim[0] > 0 && lim[1] > 0; --it, --lim[0])
+	{
+		if(!m::query(std::nothrow, it.event_idx(), "type", type_match))
+			continue;
+
+		--lim[1];
+		if(!m::query(std::nothrow, it.event_idx(), "content", content_match))
+			continue;
+
+		return false;
+	}
+
+	return true;
 }
