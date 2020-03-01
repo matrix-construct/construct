@@ -289,6 +289,7 @@ try
 	m::vm::copts opts;
 	opts.edu = true;
 	opts.prop_mask.reset();            // Clear all PDU properties
+	opts.prop_mask.set("origin");
 	opts.notify_clients = false;       // Client /sync already saw the ircd.presence
 
 	// Execute

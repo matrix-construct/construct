@@ -387,6 +387,7 @@ try
 	m::vm::copts opts;
 	opts.edu = true;
 	opts.prop_mask.reset();
+	opts.prop_mask.set("origin");
 
 	// Don't need to notify clients, the /sync system understood the
 	// `ircd.read` directly. The federation sender is what we're hitting here.
