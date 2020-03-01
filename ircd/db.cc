@@ -2959,9 +2959,17 @@ void
 ircd::db::database::events::OnStallConditionsChanged(const rocksdb::WriteStallInfo &info)
 noexcept
 {
-	log::warning
+	const auto level
 	{
-		log, "'%s' stall condition column[%s] %s -> %s",
+		info.condition.cur == rocksdb::WriteStallCondition::kNormal?
+			log::level::INFO:
+			log::level::WARNING
+	};
+
+	log::logf
+	{
+		log, level,
+		"'%s' stall condition column[%s] %s -> %s",
 		d->name,
 		info.cf_name,
 		reflect(info.condition.prev),
