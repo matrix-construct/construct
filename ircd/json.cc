@@ -2389,7 +2389,7 @@ const
 decltype(ircd::json::object::max_recursion_depth)
 ircd::json::object::max_recursion_depth
 {
-	32
+	64
 };
 
 decltype(ircd::json::object::max_sorted_members)
@@ -2412,7 +2412,7 @@ try
 {
 	using member_array = std::array<object::member, object::max_sorted_members>;
 	using member_arrays = std::array<member_array, object::max_recursion_depth>;
-	static_assert(sizeof(member_arrays) == 1_MiB); // yay reentrance .. joy :/
+	static_assert(sizeof(member_arrays) == 2_MiB); // yay reentrance .. joy :/
 
 	thread_local member_arrays ma;
 	thread_local size_t mctr;
@@ -2827,7 +2827,7 @@ ircd::json::operator>(const object::member &a, const object::member &b)
 decltype(ircd::json::array::max_recursion_depth)
 ircd::json::array::max_recursion_depth
 {
-	32
+	64
 };
 
 std::ostream &
@@ -3164,7 +3164,7 @@ ircd::json::stringify(mutable_buffer &buf,
 {
 	using member_array = std::array<const member *, object::max_sorted_members>;
 	using member_arrays = std::array<member_array, object::max_recursion_depth>;
-	static_assert(sizeof(member_arrays) == 256_KiB);
+	static_assert(sizeof(member_arrays) == 512_KiB);
 
 	static const auto less_member
 	{
