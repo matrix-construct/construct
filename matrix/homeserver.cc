@@ -277,16 +277,13 @@ noexcept
 {
 	if(primary == this)
 	{
+		server::init::interrupt();       //TODO: XXX
+		client::terminate_all();         //TODO: XXX
+		server::init::close();           //TODO: XXX
+		client::close_all();             //TODO: XXX
 		m::init::backfill::fini();
-
-		//TODO: remove this for non-interfering shutdown
-		server::init::interrupt();
-		client::terminate_all();
-		server::init::close();
-		client::close_all();
-		client::wait_all();
-		server::init::wait();
-
+		client::wait_all();              //TODO: XXX
+		server::init::wait();            //TODO: XXX
 		m::sync::pool.join();
 	}
 
