@@ -22,6 +22,7 @@ namespace ircd::m::init::backfill
 	extern std::unique_ptr<context> worker_context;
 	extern conf::item<bool> enable;
 	extern conf::item<size_t> pool_size;
+	extern conf::item<bool> local_joined_only;
 	extern log::log log;
 };
 
@@ -43,6 +44,13 @@ ircd::m::init::backfill::pool_size
 {
 	{ "name",     "m.init.backfill.pool_size" },
 	{ "default",  12L                         },
+};
+
+decltype(ircd::m::init::backfill::local_joined_only)
+ircd::m::init::backfill::local_joined_only
+{
+	{ "name",     "m.init.backfill.local_joined_only" },
+	{ "default",  true                                },
 };
 
 decltype(ircd::m::init::backfill::worker_context)
@@ -115,7 +123,7 @@ try
 	// one member from our server in a joined state.
 	rooms::opts opts;
 	opts.remote_only = true;
-	opts.local_joined_only = true;
+	opts.local_joined_only = local_joined_only;
 
 	// This is only an estimate because the rooms on the server can change
 	// before this task completes.
