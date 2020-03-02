@@ -79,28 +79,38 @@ ircd::m::user::rooms::for_each(const string_view &membership,
                                const closure_bool &closure)
 const
 {
-	const m::room::state state
-	{
-		user_room
-	};
+	m::events::state::tuple query;
+	std::get<0>(query) = user;
+	std::get<1>(query) = "m.room.member";
 
-	return state.for_each("ircd.member", [&membership, &closure]
-	(const string_view &, const string_view &state_key, const m::event::idx &event_idx)
+	m::room::id::buf room_id_;
+	return m::events::state::for_each(query, [&]
+	(const auto &tuple)
 	{
 		bool ret{true};
-		m::get(std::nothrow, event_idx, "content", [&state_key, &membership, &closure, &ret]
+		const auto &[state_key, type, room_id, depth, event_idx]
+		{
+			tuple
+		};
+
+		assert(type == "m.room.member");
+		assert(state_key == user);
+		if(room_id != room_id_)
+			room_id_ = room_id;
+		else
+			return ret;
+
+		const auto &_room_id(room_id);
+		m::get(std::nothrow, event_idx, "content", [&]
 		(const json::object &content)
 		{
-			const json::string &membership_
+			const json::string &_membership
 			{
-				content.get("membership")
+				content["membership"]
 			};
 
-			if(!membership || membership_ == membership)
-			{
-				const m::room::id &room_id{state_key};
-				ret = closure(room_id, membership_);
-			}
+			if(!membership || _membership == membership)
+				ret = closure(_room_id, _membership);
 		});
 
 		return ret;

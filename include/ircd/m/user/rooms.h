@@ -19,7 +19,7 @@ struct ircd::m::user::rooms
 	using closure = std::function<void (const m::room &, const string_view &)>;
 	using closure_bool = std::function<bool (const m::room &, const string_view &)>;
 
-	m::user::room user_room;
+	m::user user;
 
   public:
 	// All rooms with specific membership
@@ -34,6 +34,6 @@ struct ircd::m::user::rooms
 	size_t count() const;
 
 	rooms(const m::user &user)
-	:user_room{user}
+	:user{user}
 	{}
 };

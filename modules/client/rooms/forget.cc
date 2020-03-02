@@ -27,34 +27,9 @@ post__forget(client &client,
 		request.user_id
 	};
 
-	const auto event_idx
-	{
-		user_room.get(std::nothrow, "ircd.member", room_id)
-	};
-
-	if(!event_idx)
-		throw m::NOT_FOUND
-		{
-			"No user membership found for room %s.",
-			string_view{room_id}
-		};
-
-	if(m::membership(event_idx, m::membership_positive))
-		throw m::error
-		{
-			http::UNPROCESSABLE_ENTITY, "M_MEMBERSHIP_POSITIVE",
-			"You must leave or be banned from the room to forget it."
-		};
-
-	const auto event_id
-	{
-		m::event_id(event_idx)
-	};
-
-	const auto redact_id
-	{
-		redact(user_room, request.user_id, event_id, "forget")
-	};
+	//
+	//TODO: XXX
+	//
 
 	return m::resource::response
 	{
