@@ -255,7 +255,7 @@ try
 	// broadcast to the room now manually.
 	m::bootstrap::broadcast_join(room, event, host);
 
-	log::info
+	log::notice
 	{
 		log, "Joined to %s for %s at %s reset:%zu complete",
 		string_view{room_id},
