@@ -220,7 +220,7 @@ try
 
 	m::v1::key::opts opts;
 	opts.remote = net::hostport{query_server};
-	opts.dynamic = false;
+	opts.dynamic = true;
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB
