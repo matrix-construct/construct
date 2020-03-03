@@ -667,6 +667,12 @@ try
 	};
 	#endif
 
+	assert(!eval.phase);
+	const scope_restore hook_phase
+	{
+		eval.phase, std::addressof(hook)
+	};
+
 	hook(event, std::forward<T>(data));
 
 	#if 0

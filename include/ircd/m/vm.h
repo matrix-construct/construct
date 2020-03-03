@@ -83,11 +83,11 @@ struct ircd::m::vm::eval
 	vector_view<m::event> pdus;
 	const json::iov *issue {nullptr};
 	const event *event_ {nullptr};
-
 	string_view room_id;
 	event::id::buf event_id;
 	event::conforms report;
 	string_view room_version;
+	const hook::base::site *phase {nullptr};
 
 	static bool for_each_pdu(const std::function<bool (const event &)> &);
 	static const event *find_pdu(const eval &, const event::id &);
