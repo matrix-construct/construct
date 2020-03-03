@@ -356,6 +356,7 @@ timeout_worker()
 
 bool
 timeout_check()
+try
 {
 	const auto now
 	{
@@ -375,9 +376,20 @@ timeout_check()
 
 	return false;
 }
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		typing_log, "Typing timeout check :%s",
+		e.what(),
+	};
+
+	return false;
+}
 
 void
 timeout_timeout(const typist &t)
+try
 {
 	assert(run::level == run::level::RUN);
 
@@ -402,6 +414,16 @@ timeout_timeout(const typist &t)
 	// Call this manually because it currently composes the event
 	// sent to clients to stop the typing for this timed out user.
 	_handle_edu_m_typing(event, edu);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		typing_log, "Typing timeout for %s in %s :%s",
+		string_view{t.user_id},
+		string_view{t.room_id},
+		e.what(),
+	};
 }
 
 //
