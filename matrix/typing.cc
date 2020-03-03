@@ -342,14 +342,15 @@ void
 __attribute__((noreturn))
 timeout_worker()
 {
-	for(;; ctx::sleep(milliseconds(timeout_int)))
+	while(1)
 	{
 		timeout_dock.wait([]
 		{
 			return !typists.empty();
 		});
 
-		timeout_check();
+		if(!timeout_check())
+			ctx::sleep(milliseconds(timeout_int));
 	}
 }
 
