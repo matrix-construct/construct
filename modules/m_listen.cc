@@ -265,6 +265,10 @@ _listener_proffer(net::listener &listener,
 		return false;
 	}
 
+	// Sets the asynchronous handler for the next accept. We can play with
+	// delaying this call under certain conditions to provide flow control.
+	allow(listener);
+
 	if(unlikely(client::map.size() >= size_t(client::settings::max_client)))
 	{
 		log::warning
@@ -287,10 +291,6 @@ _listener_proffer(net::listener &listener,
 
 		return false;
 	}
-
-	// Sets the asynchronous handler for the next accept. We can play with
-	// delaying this call under certain conditions to provide flow control.
-	allow(listener);
 
 	if(client::count(ipport) >= size_t(client::settings::max_client_per_peer))
 	{

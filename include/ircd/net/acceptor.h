@@ -63,12 +63,13 @@ struct ircd::net::acceptor
 	// Handshake stack
 	bool handle_sni(SSL &, int &ad);
 	string_view handle_alpn(SSL &, const vector_view<const string_view> &in);
-	void check_handshake_error(const error_code &ec, socket &);
+	void check_handshake_error(const error_code &ec, socket &) const;
 	void handshake(const error_code &, const std::shared_ptr<socket>, const decltype(handshaking)::const_iterator) noexcept;
 
 	// Acceptance stack
 	static bool proffer_default(listener &, const ipport &);
-	bool check_accept_error(const error_code &ec, socket &);
+	bool check_handshake_limit(socket &, const ipport &) const;
+	bool check_accept_error(const error_code &ec, socket &) const;
 	void accept(const error_code &, const std::shared_ptr<socket>) noexcept;
 
 	// Accept next

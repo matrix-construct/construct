@@ -1590,46 +1590,30 @@ noexcept try
 	};
 
 	--accepting;
-	if(!check_accept_error(ec, *sock))
+	if(unlikely(!check_accept_error(ec, *sock)))
+	{
+		allow(*this);
+		net::close(*sock, dc::RST, close_ignore);
 		return;
+	}
 
 	const auto &remote
 	{
 		remote_ipport(*sock)
 	};
 
-	// Call the proffer-callback if available. This allows the application
-	// to check whether to allow or deny this remote before the handshake.
-	if(pcb && !pcb(*listener_, remote))
+	if(unlikely(!check_handshake_limit(*sock, remote)))
 	{
+		allow(*this);
 		net::close(*sock, dc::RST, close_ignore);
 		return;
 	}
 
-	if(unlikely(handshaking_count(*this) >= size_t(handshaking_max)))
+	// Call the proffer-callback. This allows the application to check whether
+	// to allow or deny this remote before the handshake, as well as setting
+	// the next accept to shape the kernel's queue.
+	if(!pcb(*listener_, remote))
 	{
-		log::dwarning
-		{
-			log, "%s refusing to handshake %s; exceeds maximum of %zu handshakes.",
-			loghead(*sock),
-			loghead(*this),
-			size_t(handshaking_max),
-		};
-
-		net::close(*sock, dc::RST, close_ignore);
-		return;
-	}
-
-	if(unlikely(handshaking_count(*this, remote) >= size_t(handshaking_max_per_peer)))
-	{
-		log::dwarning
-		{
-			log, "%s refusing to handshake %s; exceeds maximum of %zu handshakes to them.",
-			loghead(*sock),
-			loghead(*this),
-			size_t(handshaking_max_per_peer),
-		};
-
 		net::close(*sock, dc::RST, close_ignore);
 		return;
 	}
@@ -1664,26 +1648,10 @@ catch(const ctx::interrupted &e)
 	thread_local char ecbuf[64];
 	log::debug
 	{
-		log, "%s acceptor interrupted %s %s",
-		loghead(*sock),
+		log, "%s acceptor interrupted %s :%s",
 		loghead(*this),
+		loghead(*sock),
 		string(ecbuf, ec)
-	};
-
-	error_code ec_;
-	sock->sd.close(ec_);
-	assert(!ec_);
-	joining.notify_all();
-}
-catch(const std::system_error &e)
-{
-	assert(bool(sock));
-	log::derror
-	{
-		log, "%s %s in accept(): %s",
-		loghead(*sock),
-		loghead(*this),
-		e.what()
 	};
 
 	error_code ec_;
@@ -1696,9 +1664,9 @@ catch(const std::exception &e)
 	assert(bool(sock));
 	log::error
 	{
-		log, "%s %s in accept(): %s",
-		loghead(*sock),
+		log, "%s acceptor error in accept() %s :%s",
 		loghead(*this),
+		loghead(*sock),
 		e.what()
 	};
 
@@ -1715,6 +1683,7 @@ catch(const std::exception &e)
 bool
 ircd::net::acceptor::check_accept_error(const error_code &ec,
                                         socket &sock)
+const
 {
 	using std::errc;
 
@@ -1727,14 +1696,58 @@ ircd::net::acceptor::check_accept_error(const error_code &ec,
 	if(system_category(ec)) switch(ec.value())
 	{
 		case int(errc::operation_canceled):
-			return false;
+			throw ctx::interrupted();
 
 		default:
 			break;
 	}
 
-	throw_system_error(ec);
-	__builtin_unreachable();
+	thread_local char ecbuf[64];
+	log::derror
+	{
+		log, "%s in accept %s :%s",
+		loghead(*this),
+		loghead(sock),
+		string(ecbuf, ec),
+	};
+
+	return false;
+}
+
+/// Checks performed for whether handshaking limits have been reached before
+/// allowing a handshake.
+bool
+ircd::net::acceptor::check_handshake_limit(socket &sock,
+                                           const ipport &remote)
+const
+{
+	if(unlikely(handshaking_count(*this) >= size_t(handshaking_max)))
+	{
+		log::warning
+		{
+			log, "%s refusing to handshake %s; exceeds maximum of %zu handshakes.",
+			loghead(sock),
+			loghead(*this),
+			size_t(handshaking_max),
+		};
+
+		return false;
+	}
+
+	if(unlikely(handshaking_count(*this, remote) >= size_t(handshaking_max_per_peer)))
+	{
+		log::dwarning
+		{
+			log, "%s refusing to handshake %s; exceeds maximum of %zu handshakes to them.",
+			loghead(sock),
+			loghead(*this),
+			size_t(handshaking_max_per_peer),
+		};
+
+		return false;
+	}
+
+	return true;
 }
 
 /// Default proffer callback which accepts this connection and allows the
@@ -1841,6 +1854,7 @@ catch(const std::exception &e)
 void
 ircd::net::acceptor::check_handshake_error(const error_code &ec,
                                            socket &sock)
+const
 {
 	using std::errc;
 
