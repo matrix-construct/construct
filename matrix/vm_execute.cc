@@ -663,7 +663,7 @@ try
 	{
 		log, "%s | phase:%s enter",
 		loghead(eval),
-		unquote(hook.feature.get("name")),
+		hook.name(),
 	};
 	#endif
 
@@ -674,7 +674,7 @@ try
 	{
 		log, "%s | phase:%s leave",
 		loghead(eval),
-		unquote(hook.feature.get("name")),
+		hook.name(),
 	};
 	#endif
 }
