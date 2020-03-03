@@ -425,9 +425,9 @@ const try
 			content.at("events")
 		};
 
-		const string_view &level
+		const json::string &level
 		{
-			unquote(events.at(type))
+			events.at(type)
 		};
 
 		ret = json::type(level) == json::NUMBER;
@@ -453,9 +453,9 @@ const try
 			content.at("users")
 		};
 
-		const string_view &level
+		const json::string &level
 		{
-			unquote(users.at(user_id))
+			users.at(user_id)
 		};
 
 		ret = json::type(level) == json::NUMBER;
@@ -492,7 +492,7 @@ const
 	view([&prop, &ret]
 	(const json::object &content)
 	{
-		const auto &value(unquote(content.get(prop)));
+		const json::string &value(content.get(prop));
 		if(value && json::type(value) == json::NUMBER)
 			ret = true;
 	});
@@ -554,9 +554,9 @@ const
 			if(json::type(unquote(member.second)) != json::NUMBER)
 				continue;
 
-			const auto &key
+			const json::string &key
 			{
-				unquote(member.first)
+				member.first
 			};
 
 			const auto &val
