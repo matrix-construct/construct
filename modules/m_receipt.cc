@@ -181,20 +181,17 @@ try
 	if(my(user))
 		return;
 
-	// If the user isn't known to us yet we drop that here; in the future
-	// we might be able to use this to trigger a resynchronization of the room.
+	// We used to ignore receipts from unknown users by returning from this
+	// branch taken; this behavior was removed for both robustness of rooms
+	// with incomplete state and for peeking.
 	if(!exists(user))
-	{
 		log::dwarning
 		{
-			m::receipt::log, "Ignoring m.receipt m.read for unknown %s in %s for %s",
+			m::receipt::log, "m.receipt m.read for unknown %s in %s for %s",
 			string_view{user_id},
 			string_view{room_id},
-			string_view{event_id}
+			string_view{event_id},
 		};
-
-		return;
-	}
 
 	const auto evid
 	{
