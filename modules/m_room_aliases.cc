@@ -73,6 +73,7 @@ ircd::m::changed_room_aliases_hookfn
 void
 ircd::m::changed_room_aliases(const m::event &event,
                               m::vm::eval &)
+try
 {
 	const m::room::id &room_id
 	{
@@ -112,6 +113,17 @@ ircd::m::changed_room_aliases(const m::event &event,
 
 	if(m::join_rule(room_id, "public"))
 		rooms::summary::set(room_id);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Updating aliases of %s by %s in %s :%s",
+		json::get<"room_id"_>(event),
+		json::get<"sender"_>(event),
+		string_view{event.event_id},
+		e.what(),
+	};
 }
 
 //
