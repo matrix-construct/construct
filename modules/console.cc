@@ -7251,7 +7251,15 @@ console_cmd__event(opt &out, const string_view &line)
 		const auto &[authed, failmsg](m::room::auth::check_static(event));
 		if(!authed)
 			out << std::setw(9) << std::left << "!!! ERROR" << "  "
-			    << "UNAUTHORIZED STATIC :" << what(failmsg)
+			    << "STATICALLY UNAUTHORIZED :" << what(failmsg)
+			    << std::endl;
+	}
+
+	{
+		const auto &[authed, failmsg](m::room::auth::check_relative(event));
+		if(!authed)
+			out << std::setw(9) << std::left << "!!! ERROR" << "  "
+			    << "RELATIVELY UNAUTHORIZED :" << what(failmsg)
 			    << std::endl;
 	}
 
@@ -7259,14 +7267,7 @@ console_cmd__event(opt &out, const string_view &line)
 		const auto &[authed, failmsg](m::room::auth::check_present(event));
 		if(!authed)
 			out << std::setw(9) << std::left << "!!! ERROR" << "  "
-			    << "PRESENTLY UNAUTHORIZED :" << what(failmsg)
-			    << std::endl;
-	}
-	{
-		const auto &[authed, failmsg](m::room::auth::check_relative(event));
-		if(!authed)
-			out << std::setw(9) << std::left << "!!! ERROR" << "  "
-			    << "RELATIVELY UNAUTHORIZED :" << what(failmsg)
+			    << "PRESENTLY UNAUTHORIZED  :" << what(failmsg)
 			    << std::endl;
 	}
 
