@@ -1373,7 +1373,9 @@ try
 }
 ,pcb
 {
-	std::move(pcb)
+	pcb?
+		std::move(pcb):
+		proffer_default
 }
 ,ssl
 {
@@ -1733,6 +1735,17 @@ ircd::net::acceptor::check_accept_error(const error_code &ec,
 
 	throw_system_error(ec);
 	__builtin_unreachable();
+}
+
+/// Default proffer callback which accepts this connection and allows the
+/// next accept to take place as well. This is generally overriden by a
+/// user callback to control this behavior.
+bool
+ircd::net::acceptor::proffer_default(listener &listener,
+                                     const ipport &ipport)
+{
+	allow(listener);
+	return true;
 }
 
 void

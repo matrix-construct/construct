@@ -67,6 +67,7 @@ struct ircd::net::acceptor
 	void handshake(const error_code &, const std::shared_ptr<socket>, const decltype(handshaking)::const_iterator) noexcept;
 
 	// Acceptance stack
+	static bool proffer_default(listener &, const ipport &);
 	bool check_accept_error(const error_code &ec, socket &);
 	void accept(const error_code &, const std::shared_ptr<socket>) noexcept;
 
