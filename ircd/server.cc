@@ -1830,12 +1830,13 @@ ircd::server::link::cancel_uncommitted(std::exception_ptr eptr)
 void
 ircd::server::link::cleanup_canceled()
 {
-	auto it(begin(queue));
-	while(it != end(queue))
+	size_t dead(0);
+	for(auto it(begin(queue)); it != end(queue); )
 	{
 		const auto &tag{*it};
 		if(tag.committed() || tag.request)
 		{
+			dead += tag.committed() && tag.canceled();
 			++it;
 			continue;
 		}
@@ -1850,6 +1851,22 @@ ircd::server::link::cleanup_canceled()
 		#endif
 
 		it = queue.erase(it);
+	}
+
+	// If every committed tag in the pipe is canceled we can close this link
+	// to quickly disperse any queued tags to another link or simply kill this
+	// link if it's timing out.
+	assert(dead <= tag_committed());
+	if(dead && dead == tag_committed())
+	{
+		log::dwarning
+		{
+			log, "%s closing link since all %zu committed tags are dead in the pipe",
+			loghead(*this),
+			dead,
+		};
+
+		close();
 	}
 }
 
