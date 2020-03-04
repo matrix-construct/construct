@@ -10,6 +10,10 @@
 
 using namespace ircd;
 
+// federation_invite (weak)
+extern conf::item<milliseconds>
+stream_cross_sleeptime;
+
 static void
 process(client &,
         const m::resource::request &,
@@ -42,12 +46,6 @@ method_put
 	{
 		method_put.VERIFY_ORIGIN
 	}
-};
-
-mods::import<conf::item<milliseconds>>
-stream_cross_sleeptime
-{
-	"federation_invite", "stream_cross_sleeptime"
 };
 
 m::resource::response
@@ -211,7 +209,7 @@ put__invite(client &client,
 
 	// Synapse needs time to process our response otherwise our eval below may
 	// complete before this response arrives for them and is processed.
-	ctx::sleep(milliseconds(*stream_cross_sleeptime));
+	ctx::sleep(milliseconds(stream_cross_sleeptime));
 
 	// Post processing, does not throw.
 	process(client, request, signed_event);

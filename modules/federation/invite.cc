@@ -52,6 +52,7 @@ method_put
 };
 
 conf::item<milliseconds>
+IRCD_MODULE_EXPORT_DATA
 stream_cross_sleeptime
 {
 	{ "name",    "ircd.federation.invite.stream_cross_sleeptime" },
