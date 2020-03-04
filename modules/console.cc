@@ -4896,51 +4896,6 @@ console_cmd__peer(opt &out, const string_view &line)
 	if(out.html)
 		return html__peer(out, line);
 
-	const auto print{[&out]
-	(const auto &host, const auto &peer)
-	{
-		using std::setw;
-		using std::left;
-		using std::right;
-
-		const net::ipport &ipp{peer.remote};
-		out << setw(40) << left << host;
-
-		out << ' ';
-		if(ipp)
-		    out << setw(40) << left << ipp;
-		else
-		    out << setw(40) << left << " ";
-
-		out << ' ';
-		if(peer.op_resolve)
-		    out << 'R';
-		else
-		    out << ' ';
-
-		out << ' ';
-		if(peer.op_fini)
-		    out << 'F';
-		else
-		    out << ' ';
-
-		out << " " << setw(2) << right << peer.link_count()     << " L"
-		    << " " << setw(3) << right << peer.tag_count()      << " T"
-		    << " " << setw(3) << right << peer.tag_committed()  << " TC"
-		    << " " << setw(9) << right << peer.write_size()     << " UP Q"
-		    << " " << setw(9) << right << peer.read_size()      << " DN Q"
-		    << " " << setw(9) << right << peer.write_total()    << " UP"
-		    << " " << setw(9) << right << peer.read_total()     << " DN"
-		    ;
-
-		if(peer.err_has() && peer.err_msg())
-			out << "  :" << peer.err_msg();
-		else if(peer.err_has())
-			out << "  <unknown error>"_sv;
-
-		out << std::endl;
-	}};
-
 	const params param{line, " ",
 	{
 		"[hostport]", "[all]"
@@ -4951,21 +4906,58 @@ console_cmd__peer(opt &out, const string_view &line)
 		param[0]
 	};
 
-	const bool all
+	const auto print_head{[&out]
 	{
-		has(line, "all")
-	};
+		out
+		<< std::setw(40) << std::right << "NAME" << ' '
+		<< std::setw(40) << std::left << "ADDRESS" << ' '
+		<< std::setw(23) << std::right << "WRITE-TOTAL" << ' '
+		<< std::setw(23) << std::right << "READ-TOTAL" << ' '
+		<< std::setw(19) << std::right << "WRITE-PIPE" << ' '
+		<< std::setw(19) << std::right << "READ-PIPE" << ' '
+		<< std::setw(4) << std::right << "LNKS" << ' '
+		<< std::setw(4) << std::right << "TAGS" << ' '
+		<< std::setw(4) << std::right << "PIPE" << ' '
+		<< std::setw(15) << std::left << "FLAGS" << ' '
+		<< std::setw(32) << std::left << "ERROR" << ' '
+		<< std::endl;
+	}};
 
-	const bool active
+	const auto print{[&out]
+	(const auto &host, const auto &peer)
 	{
-		has(line, "active")
-	};
+		const string_view &error
+		{
+			peer.err_has() && peer.err_msg()?
+				peer.err_msg():
+			peer.err_has()?
+				"<unknown error>"_sv:
+				string_view{}
+		};
 
-	const bool conn
-	{
-		has(line, "conn")
-	};
+		char flags[16] {0};
+		if(peer.op_resolve)  strlcat(flags, "RESOLVING ");
+		if(peer.op_fini)     strlcat(flags, "FINISHED ");
 
+		char pbuf[32];
+		out
+		<< std::setw(40) << std::right << host << ' '
+		<< std::setw(40) << std::left << net::ipport{peer.remote} << ' '
+		<< std::setw(23) << std::right << pretty(pbuf, iec(peer.write_total())) << ' '
+		<< std::setw(23) << std::right << pretty(pbuf, iec(peer.read_total())) << ' '
+		<< std::setw(19) << std::right << pretty(pbuf, iec(peer.write_size())) << ' '
+		<< std::setw(19) << std::right << pretty(pbuf, iec(peer.read_size())) << ' '
+		<< std::setw(4) << std::right << peer.link_count() << ' '
+		<< std::setw(4) << std::right << peer.tag_count() << ' '
+		<< std::setw(4) << std::right << peer.tag_committed() << ' '
+		<< std::setw(15) << std::left << flags << ' '
+		<< std::setw(32) << std::left << error << ' '
+		<< std::endl;
+	}};
+
+	const bool all(has(line, "all"));
+	const bool active(has(line, "active"));
+	const bool conn(has(line, "conn"));
 	if(hostport && !all && !active && !conn)
 	{
 		auto &peer
@@ -4973,10 +4965,12 @@ console_cmd__peer(opt &out, const string_view &line)
 			server::find(hostport)
 		};
 
+		print_head();
 		print(peer.hostcanon, peer);
 		return true;
 	}
 
+	print_head();
 	for(const auto &p : server::peers)
 	{
 		const auto &host{p.first};
