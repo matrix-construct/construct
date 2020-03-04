@@ -30,7 +30,7 @@ conf::item<bool>
 allow_self
 {
 	{ "name",     "ircd.federation.send.allow_self" },
-	{ "default",  "false"                           },
+	{ "default",  false                             },
 };
 
 conf::item<size_t>
