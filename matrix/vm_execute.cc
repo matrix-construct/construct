@@ -690,7 +690,7 @@ catch(const m::error &e)
 	{
 		log, "%s | phase:%s :%s :%s :%s",
 		loghead(eval),
-		unquote(hook.feature.get("name")),
+		hook.name(),
 		e.what(),
 		e.errcode(),
 		e.errstr(),
@@ -704,7 +704,7 @@ catch(const http::error &e)
 	{
 		log, "%s | phase:%s :%s :%s",
 		loghead(eval),
-		unquote(hook.feature.get("name")),
+		hook.name(),
 		e.what(),
 		e.content,
 	};
@@ -717,7 +717,7 @@ catch(const std::exception &e)
 	{
 		log, "%s | phase:%s :%s",
 		loghead(eval),
-		unquote(hook.feature.get("name")),
+		hook.name(),
 		e.what(),
 	};
 
