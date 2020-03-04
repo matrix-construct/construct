@@ -836,20 +836,22 @@ ircd::server::peer::link_get(const request &request)
 		return best;
 	}
 
+	// When we've reached the max number of links we return the best.
 	if(links_maxed)
 		return best;
 
-	// best might not be good enough, we could try another connection. If best
-	// has a backlog or is working on a large download or slow request.
+	// If no best was found or was nulled, we have room for another link.
 	if(!best)
 	{
 		best = &link_add();
 		return best;
 	}
 
-	if(best->tag_uncommitted() < best->tag_commit_max())
+	// If the best has room in its pipe we give it a shot.
+	if(best->tag_committed() < best->tag_commit_max())
 		return best;
 
+	// Otherwise create a new link.
 	best = &link_add();
 	return best;
 }
