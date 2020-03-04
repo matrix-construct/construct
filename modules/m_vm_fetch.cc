@@ -291,6 +291,7 @@ try
 	auto opts(*eval.opts);
 	opts.fetch_prev = false;
 	opts.fetch_state = false;
+	opts.fetch_auth = false;
 	opts.infolog_accept = true;
 	opts.warnlog &= ~vm::fault::EXISTS;
 	log::debug
