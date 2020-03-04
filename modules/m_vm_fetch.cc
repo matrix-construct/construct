@@ -21,6 +21,8 @@ namespace ircd::m::vm::fetch
 	static void handle(const event &, vm::eval &);
 
 	extern conf::item<size_t> prev_backfill_limit;
+	extern conf::item<seconds> event_timeout;
+	extern conf::item<seconds> state_timeout;
 	extern conf::item<seconds> auth_timeout;
 	extern conf::item<bool> enable;
 	extern hookfn<vm::eval &> hook;
@@ -60,6 +62,20 @@ ircd::m::vm::fetch::auth_timeout
 {
 	{ "name",     "ircd.m.vm.fetch.auth.timeout" },
 	{ "default",  15L                            },
+};
+
+decltype(ircd::m::vm::fetch::state_timeout)
+ircd::m::vm::fetch::state_timeout
+{
+	{ "name",     "ircd.m.vm.fetch.state.timeout" },
+	{ "default",  20L                             },
+};
+
+decltype(ircd::m::vm::fetch::event_timeout)
+ircd::m::vm::fetch::event_timeout
+{
+	{ "name",     "ircd.m.vm.fetch.event.timeout" },
+	{ "default",  10L                             },
 };
 
 decltype(ircd::m::vm::fetch::prev_backfill_limit)
@@ -376,7 +392,10 @@ ircd::m::vm::fetch::state(const event &event,
 	};
 
 	// yields context
-	fetching.wait();
+	const bool done
+	{
+		fetching.wait(seconds(state_timeout), std::nothrow)
+	};
 
 	// evaluate results
 	size_t good(0), fail(0);
@@ -557,7 +576,10 @@ ircd::m::vm::fetch::prev(const event &event,
 	};
 
 	// yields context
-	fetching.wait();
+	const bool done
+	{
+		fetching.wait(seconds(event_timeout), std::nothrow)
+	};
 
 	// evaluate results
 	for(auto &future : futures) try
