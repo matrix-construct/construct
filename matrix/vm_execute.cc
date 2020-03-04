@@ -613,17 +613,34 @@ ircd::m::vm::write_append(eval &eval,
 
 {
 	assert(eval.opts);
-	assert(eval.txn);
+	const auto &opts
+	{
+		*eval.opts
+	};
 
-	const auto &opts{*eval.opts};
-	auto &txn{*eval.txn};
+	assert(eval.txn);
+	auto &txn
+	{
+		*eval.txn
+	};
+
+	const bool update_room_head
+	{
+		// User can explicitly disable room head update w/ option
+		opts.room_head &&
+
+		// Don't update the room head with this shit, but we still use it for
+		// room head resolves (so long as opts.room_head_resolve).
+		json::get<"type"_>(event) != "org.matrix.dummy_event"
+	};
 
 	m::dbs::write_opts wopts(opts.wopts);
 	wopts.event_idx = eval.sequence;
 	wopts.json_source = opts.json_source;
-	wopts.appendix.set(dbs::appendix::ROOM_HEAD, opts.room_head);
+	wopts.appendix.set(dbs::appendix::ROOM_HEAD, update_room_head);
 	wopts.appendix.set(dbs::appendix::ROOM_HEAD_RESOLVE, opts.room_head_resolve);
 	wopts.appendix.set(dbs::appendix::ROOM_STATE_SPACE, opts.history);
+
 	if(opts.present && json::get<"state_key"_>(event))
 	{
 		const room room
