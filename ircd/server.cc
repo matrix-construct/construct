@@ -711,6 +711,10 @@ try
 			err_msg()
 		};
 
+	// Run a GC over the links and tags for this peer first.
+	cleanup_canceled();
+
+	// Select the best link for this request or create anew.
 	link *const ret
 	{
 		link_get(request)
@@ -1127,6 +1131,13 @@ ircd::server::peer::disperse_uncommitted(link &link)
 
 		it = queue.erase(it);
 	}
+}
+
+void
+ircd::server::peer::cleanup_canceled()
+{
+	for(auto &link : links)
+		link.cleanup_canceled();
 }
 
 /// This *cannot* be called unless a link's socket is closed and its queue
@@ -1774,8 +1785,6 @@ ircd::server::link::submit(request &request)
 		tag_count()
 	};
 */
-	cleanup_canceled();
-
 	if(ready())
 		wait_writable();
 }

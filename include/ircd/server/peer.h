@@ -53,6 +53,7 @@ struct ircd::server::peer
 	void resolve(const hostport &, const net::dns::opts &);
 	void resolve(const hostport &);
 
+	void cleanup_canceled();
 	void disperse_uncommitted(link &);
 	void disperse(link &);
 	void del(link &);

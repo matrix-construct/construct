@@ -57,6 +57,7 @@ struct ircd::server::link
 
 	void handle_close(std::exception_ptr);
 	void handle_open(std::exception_ptr);
+	void cleanup_canceled();
 
   public:
 	// config related
@@ -94,7 +95,6 @@ struct ircd::server::link
 	void cancel_uncommitted(std::exception_ptr);
 	void cancel_committed(std::exception_ptr);
 	void cancel_all(std::exception_ptr);
-	void cleanup_canceled();
 	void submit(request &);
 
 	// control panel
