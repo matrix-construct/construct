@@ -5258,14 +5258,15 @@ try
 	};
 
 	out
-	<< std::left   << std::setw(8)  << "PEER" << "  "
-	<< std::left   << std::setw(8)  << "LINK" << "  "
-	<< std::left   << std::setw(8)  << "TAG" << "  "
 	<< std::right  << std::setw(32) << "PEER NAME" << "  "
 	<< std::left   << std::setw(32) << "REMOTE ADDRESS" << "  "
+	<< std::right   << std::setw(8)  << "PEER" << "  "
+	<< std::right   << std::setw(8)  << "LINK" << "  "
+	<< std::right   << std::setw(8)  << "TAG" << "  "
+	<< std::right   << std::setw(4)  << "POS" << "  "
 	<< std::right  << std::setw(8)  << "WROTE" << "  "
-	<< std::right  << std::setw(7)  << "IN HEAD" << "  "
-	<< std::right  << std::setw(9)  << "IN CONT" << "  "
+	<< std::right  << std::setw(5)  << "RHEAD" << "  "
+	<< std::right  << std::setw(9)  << "RCONT" << "  "
 	<< std::right  << std::setw(9)  << "CONTLEN" << "  "
 	<< std::right  << std::setw(4)  << "CODE" << "  "
 	<< std::right  << std::setw(4)  << "FLAG" << "  "
@@ -5292,30 +5293,29 @@ try
 				"<no socket>"_sv
 		};
 
-		out
-		<< std::left   << std::setw(8)  << peer.id << "  "
-		<< std::left   << std::setw(8)  << link.id << "  "
-		<< std::left   << std::setw(8)  << id(request) << "  "
-		<< std::right  << std::setw(32) << trunc(peer.hostcanon, 32) << "  "
-		<< std::left   << std::setw(32) << trunc(remote, 32) << "  ";
-		if(!out_head.method || !out_head.path)
-		{
-			size_t i(0);
-			for(auto it(begin(link.queue)); it != end(link.queue); ++it, ++i)
+		size_t pos(0);
+		if(request.tag)
+			for(auto it(begin(link.queue)); it != end(link.queue); ++it, ++pos)
 				if(std::addressof(*it) == request.tag)
 					break;
 
-			out << std::setw(5) << std::right << i << " in queue" << std::endl;
-			return true;
-		}
+		out
+		<< std::right  << std::setw(32) << trunc(peer.hostcanon, 32) << "  "
+		<< std::left   << std::setw(32) << trunc(remote, 32) << "  "
+		<< std::right   << std::setw(8)  << peer.id << "  "
+		<< std::right   << std::setw(8)  << link.id << "  "
+		<< std::right   << std::setw(8)  << id(request) << "  "
+		<< std::right   << std::setw(4)  << pos << "  "
+		;
 
-		out << std::right;
 		if(request.tag)
 		{
-			out << std::setw(8) << request.tag->state.written << "  ";
-			out << std::setw(7) << request.tag->state.head_read << "  ";
-			out << std::setw(9) << request.tag->state.content_read << "  ";
-			out << std::setw(9) << request.tag->state.content_length << "  ";
+			out
+			<< std::right << std::setw(8) << request.tag->state.written << "  "
+			<< std::right << std::setw(5) << request.tag->state.head_read << "  "
+			<< std::right << std::setw(9) << request.tag->state.content_read << "  "
+			<< std::right << std::setw(9) << request.tag->state.content_length << "  "
+			;
 		}
 
 		if(request.tag)
