@@ -346,6 +346,13 @@ ircd::m::vm::fetch::state(const event &event,
 	if(at<"depth"_>(event) > sounding_depth)
 		return;
 
+	log::dwarning
+	{
+		log, "%s fetching possible missing state in %s",
+		loghead(eval),
+		string_view{room.room_id},
+	};
+
 	auto futures
 	{
 		state_fetch(event, eval, room)
@@ -359,7 +366,7 @@ ircd::m::vm::fetch::state(const event &event,
 		ctx::when_all(begin(futures), end(futures))
 	};
 
-	log::info
+	log::warning
 	{
 		log, "%s fetching %zu missing state events in %s",
 		loghead(eval),
