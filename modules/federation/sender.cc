@@ -8,7 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include "sender.int.h"
+#include "sender.h"
 
 std::list<txn> txns;
 std::map<std::string, node, std::less<>> nodes;
