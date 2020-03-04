@@ -340,7 +340,7 @@ ircd::m::vm::fetch::state(const event &event,
 
 	const auto &[sounding_depth, sounding_idx]
 	{
-		m::sounding(room)
+		m::sounding(room.room_id)
 	};
 
 	if(at<"depth"_>(event) > sounding_depth)
