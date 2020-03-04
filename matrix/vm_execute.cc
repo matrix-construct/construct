@@ -234,45 +234,126 @@ try
 
 	return ret;
 }
-catch(const error &e) // VM FAULT CODE
+catch(const vm::error &e) // VM FAULT CODE
 {
+	const json::object &content{e.content};
+	const json::string &error
+	{
+		content["error"]
+	};
+
+	const auto &event_id
+	{
+		event.event_id?
+			string_view{event.event_id}:
+			"<edu>"_sv
+	};
+
+	const auto &room_id
+	{
+		eval.room_id?
+			eval.room_id:
+		json::get<"room_id"_>(event)?
+			string_view(json::get<"room_id"_>(event)):
+			"<edu>"_sv,
+	};
+
 	return handle_error
 	(
 		*eval.opts, e.code,
-		"eval %s :%s",
-		event.event_id? string_view{event.event_id}: "<edu>"_sv,
-		unquote(json::object(e.content).get("error"))
+		"eval %s %s :%s",
+		event_id,
+		room_id,
+		error
 	);
 }
 catch(const m::error &e) // GENERAL MATRIX ERROR
 {
+	const json::object &content{e.content};
+	const json::string error[]
+	{
+		content["errcode"],
+		content["error"]
+	};
+
+	const auto &event_id
+	{
+		event.event_id?
+			string_view{event.event_id}:
+			"<edu>"_sv
+	};
+
+	const auto &room_id
+	{
+		eval.room_id?
+			eval.room_id:
+		json::get<"room_id"_>(event)?
+			string_view(json::get<"room_id"_>(event)):
+			"<edu>"_sv,
+	};
+
 	return handle_error
 	(
 		*eval.opts, fault::GENERAL,
-		"eval %s (General Protection) :%s :%s :%s",
-		event.event_id? string_view{event.event_id}: "<edu>"_sv,
+		"eval %s %s :%s :%s :%s",
+		event_id,
+		room_id,
 		e.what(),
-		unquote(json::object(e.content).get("errcode")),
-		unquote(json::object(e.content).get("error"))
+		error[0],
+		error[1]
 	);
 }
 catch(const ctx::interrupted &e) // INTERRUPTION
 {
+	const auto &event_id
+	{
+		event.event_id?
+			string_view{event.event_id}:
+			"<edu>"_sv
+	};
+
+	const auto &room_id
+	{
+		eval.room_id?
+			eval.room_id:
+		json::get<"room_id"_>(event)?
+			string_view(json::get<"room_id"_>(event)):
+			"<edu>"_sv,
+	};
+
 	return handle_error
 	(
 		*eval.opts, fault::INTERRUPT,
-		"eval %s :%s",
-		event.event_id? string_view{event.event_id}: "<edu>"_sv,
+		"eval %s %s :%s",
+		event_id,
+		room_id,
 		e.what()
 	);
 }
 catch(const std::exception &e) // ALL OTHER ERRORS
 {
+	const auto &event_id
+	{
+		event.event_id?
+			string_view{event.event_id}:
+			"<edu>"_sv
+	};
+
+	const auto &room_id
+	{
+		eval.room_id?
+			eval.room_id:
+		json::get<"room_id"_>(event)?
+			string_view(json::get<"room_id"_>(event)):
+			"<edu>"_sv,
+	};
+
 	return handle_error
 	(
 		*eval.opts, fault::GENERAL,
-		"eval %s (General Protection) :%s",
-		event.event_id? string_view{event.event_id}: "<edu>"_sv,
+		"eval %s %s (General Protection) :%s",
+		event_id,
+		room_id,
 		e.what()
 	);
 }
