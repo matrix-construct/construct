@@ -40,6 +40,20 @@ eval_max_per_node
 	{ "default",  1L                                       },
 };
 
+conf::item<bool>
+fetch_state
+{
+	{ "name",     "ircd.federation.send.fetch_state" },
+	{ "default",  true                               },
+};
+
+conf::item<bool>
+fetch_prev
+{
+	{ "name",     "ircd.federation.send.fetch_prev" },
+	{ "default",  true                              },
+};
+
 void
 handle_edu(client &client,
            const m::resource::request::object<m::txn> &request,
@@ -78,7 +92,8 @@ handle_pdus(client &client,
 	vmopts.nothrows &= ~m::vm::fault::INTERRUPT;
 	vmopts.node_id = request.origin;
 	vmopts.txn_id = txn_id;
-	vmopts.fetch_state = false;
+	vmopts.fetch_prev = bool(fetch_state);
+	vmopts.fetch_state = bool(fetch_prev);
 	m::vm::eval eval
 	{
 		pdus, vmopts
