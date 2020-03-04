@@ -137,8 +137,7 @@ ircd::m::feds::execute::execute(const vector_view<const opts> &optsv,
 
 	milliseconds timeout {0};
 	for(const auto &opts : optsv)
-		if(opts.timeout > timeout)
-			timeout = opts.timeout;
+		timeout = std::max(opts.timeout, timeout);
 
 	this->boolean::val = handler(list, timeout, closure);
 }
