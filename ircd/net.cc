@@ -4452,7 +4452,7 @@ ircd::net::hostport::hostport(const string_view &amalgam,
 std::ostream &
 ircd::net::operator<<(std::ostream &s, const hostport &t)
 {
-	thread_local char buf[256];
+	thread_local char buf[rfc3986::DOMAIN_BUFSIZE * 2];
 	const critical_assertion ca;
 	s << string(buf, t);
 	return s;
@@ -4479,7 +4479,7 @@ ircd::net::canonize(const mutable_buffer &buf,
                     const hostport &hp,
                     const uint16_t &port)
 {
-	thread_local char tlbuf[256];
+	thread_local char tlbuf[rfc3986::DOMAIN_BUFSIZE * 2];
 
 	if(net::port(hp) == 0 || net::port(hp) == port)
 		return fmt::sprintf
@@ -4500,7 +4500,7 @@ ircd::string_view
 ircd::net::string(const mutable_buffer &buf,
                   const hostport &hp)
 {
-	thread_local char tlbuf[2][256];
+	thread_local char tlbuf[2][rfc3986::DOMAIN_BUFSIZE * 2];
 
 	if(empty(service(hp)) && port(hp) == 0)
 		return fmt::sprintf
