@@ -25,11 +25,10 @@ namespace ircd::net
 
 	uint16_t &port(hostport &);
 	string_view &host(hostport &);
+
 	string_view string(const mutable_buffer &out, const hostport &);
-
-	string_view canonize(const mutable_buffer &out, const hostport &, const uint16_t &port = canon_port);
-	std::string canonize(const hostport &, const uint16_t &port = canon_port);
-
+	string_view canonize(const mutable_buffer &out, const hostport &, const uint16_t &port = 0);
+	std::string canonize(const hostport &, const uint16_t &port = 0);
 	std::ostream &operator<<(std::ostream &, const hostport &);
 }
 
@@ -56,14 +55,14 @@ struct ircd::net::hostport
 {
 	IRCD_OVERLOAD(verbatim)
 
-	string_view host {"0.0.0.0"};
-	string_view service {canon_service};
-	uint16_t port {canon_port};
+	string_view host;
+	string_view service;
+	uint16_t port {0};
 
 	explicit operator bool() const;
 	bool operator!() const;
 
-	hostport(const string_view &host, const string_view &service, const uint16_t &port = canon_port);
+	hostport(const string_view &host, const string_view &service, const uint16_t &port);
 	hostport(const string_view &host, const uint16_t &port);
 	hostport(const string_view &amalgam);
 	hostport(const string_view &amalgam, verbatim_t);
@@ -72,16 +71,23 @@ struct ircd::net::hostport
 
 /// Creates a host:service pair from a hostname and a service name string.
 /// When passed to net::dns() this will indicate SRV resolution. If no
-/// SRV record is found
-/// TODO: todo: the servce is translated into its proper port.
-/// TODO: now: the port 8448 is used with the hostname.
+/// SRV record is found.
 inline
 ircd::net::hostport::hostport(const string_view &host,
                               const string_view &service,
                               const uint16_t &port)
-:host{rfc3986::host(host)}
-,service{service}
-,port{port}
+:host
+{
+	rfc3986::host(host)
+}
+,service
+{
+	service
+}
+,port
+{
+	port
+}
 {}
 
 /// Creates a host:port pair from a hostname and a port number. When
@@ -102,7 +108,7 @@ ircd::net::hostport::operator
 bool()
 const
 {
-	return net::host(*this) != net::host(hostport{});
+	return bool(host);
 }
 
 inline bool

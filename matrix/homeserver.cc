@@ -949,7 +949,7 @@ ircd::m::self::my_host(const string_view &name)
 bool
 ircd::m::self::host(const string_view &other)
 {
-	assert(net::canon_port == 8448);
+	assert(m::canon_port == 8448);
 	const net::hostport other_host{other};
 	for(const auto &[my_network, hs_p] : homeserver::map)
 		if(match(my_network, other))
@@ -966,17 +966,17 @@ noexcept
 	// port() is 0 when the origin has no port (and implies 8448)
 	const auto my_port
 	{
-		port(a)?: 8448
+		port(a)?: m::canon_port
 	};
 
 	// If my_host has a non-canonical port number, then the argument must
 	// also have the same port number, or there is no possible match.
-	if(my_port != net::canon_port)
+	if(my_port != m::canon_port)
 		return my_port == port(b) && host(a) == host(b);
 
 	// Since my host is on the canonical port, if other host has some
 	// different port number, there is no possible match.
-	if(port(b) != net::canon_port)
+	if(port(b) != m::canon_port)
 		return false;
 
 	// Both myself and input are using 8448; now the name has to match.

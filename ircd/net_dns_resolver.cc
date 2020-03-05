@@ -936,7 +936,9 @@ try
 
 	const auto &port
 	{
-		net::port(hp) != canon_port? net::port(hp) : uint16_t(53)
+		net::port(hp)?
+			net::port(hp):
+			uint16_t(53)
 	};
 
 	const ipport ipp

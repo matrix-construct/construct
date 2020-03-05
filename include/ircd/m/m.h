@@ -39,6 +39,9 @@ namespace ircd::m
 
 	IRCD_OVERLOAD(generate)
 
+	extern const uint16_t canon_port;
+	extern const string_view canon_service;
+
 	extern struct log::log log;
 }
 

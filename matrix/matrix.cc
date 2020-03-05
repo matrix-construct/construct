@@ -27,6 +27,18 @@ ircd::m::log
 	"m", 'm'
 };
 
+decltype(ircd::m::canon_port)
+ircd::m::canon_port
+{
+	8448
+};
+
+decltype(ircd::m::canon_service)
+ircd::m::canon_service
+{
+	"matrix"
+};
+
 /// This is an ordered list for loading and unloading modules. This is not the
 /// solution I really want at all so consider it temporary. Modules are loaded
 /// in the order of the lines and unloaded in reverse order.

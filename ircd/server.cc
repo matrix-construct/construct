@@ -579,11 +579,11 @@ ircd::server::peer::peer(const net::hostport &hostport,
 }
 ,service
 {
-	// hostport arguments with a port of 0 or net::canon_port (8448) are
-	// normal; if the port is such, and if we are supplied a service string
-	// an SRV query will be performed. For other port numbers, we ignore any
-	// service string and SRV won't be resolved.
-	!net::port(hostport) || net::port(hostport) == net::canon_port?
+	// hostport arguments with a port of 0 are normal; if the port is such,
+	// and if we are supplied a service string an SRV query will be performed.
+	// For other port numbers, we ignore any service string and SRV won't be
+	// resolved.
+	!net::port(hostport)?
 		net::service(hostport):
 		string_view{}
 }

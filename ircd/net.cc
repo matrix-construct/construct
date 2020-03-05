@@ -4380,18 +4380,6 @@ const
 // net/hostport.h
 //
 
-decltype(ircd::net::canon_port)
-ircd::net::canon_port
-{
-	8448
-};
-
-decltype(ircd::net::canon_service)
-ircd::net::canon_service
-{
-	"matrix"
-};
-
 /// Creates a host:service or host:port pair from the single string literally
 /// containing the colon deliminated values. If the suffix is a port number
 /// then the behavior for the port number constructor applies; if a service
@@ -4407,28 +4395,12 @@ ircd::net::hostport::hostport(const string_view &amalgam)
 	rfc3986::port(amalgam)
 }
 {
-	// When the amalgam has no port
-	if(amalgam == host)
-	{
-		// set the port to the canon_port; port=0 is bad
-		port = port?: canon_port;
-		return;
-	}
-
-	// or a valid integer port
-	if(port)
+	// When the amalgam has no port || a valid integer port
+	if(amalgam == host || port)
 		return;
 
 	// When the port is actually a service string
-	const auto service
-	{
-		rsplit(amalgam, ':').second
-	};
-
-	if(service)
-		this->service = service;
-	else
-		this->port = canon_port;
+	this->service = rsplit(amalgam, ':').second;
 }
 
 ircd::net::hostport::hostport(const string_view &amalgam,
