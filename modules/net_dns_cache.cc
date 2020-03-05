@@ -92,7 +92,7 @@ ircd::net::dns::cache::put(const hostport &hp,
 	const string_view &state_key
 	{
 		opts.qtype == 33?
-			make_SRV_key(state_key_buf, host(hp), opts):
+			make_SRV_key(state_key_buf, hp, opts):
 			host(hp)
 	};
 
@@ -120,7 +120,7 @@ ircd::net::dns::cache::put(const hostport &hp,
 	const string_view &state_key
 	{
 		opts.qtype == 33?
-			make_SRV_key(state_key_buf, host(hp), opts):
+			make_SRV_key(state_key_buf, hp, opts):
 			host(hp)
 	};
 
@@ -372,7 +372,7 @@ ircd::net::dns::cache::get(const hostport &hp,
 	const string_view &state_key
 	{
 		opts.qtype == 33?
-			make_SRV_key(state_key_buf, host(hp), opts):
+			make_SRV_key(state_key_buf, hp, opts):
 			host(hp)
 	};
 
@@ -434,7 +434,7 @@ ircd::net::dns::cache::for_each(const hostport &hp,
 	const string_view &state_key
 	{
 		opts.qtype == 33?
-			make_SRV_key(state_key_buf, host(hp), opts):
+			make_SRV_key(state_key_buf, hp, opts):
 			host(hp)
 	};
 

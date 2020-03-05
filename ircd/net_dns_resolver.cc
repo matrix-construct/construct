@@ -178,7 +178,7 @@ ircd::net::dns::resolver::make_query(const mutable_buffer &buf,
 		};
 
 		case 33: // SRV
-			hoststr = make_SRV_key(hostbuf, host(tag.hp), tag.opts);
+			hoststr = make_SRV_key(hostbuf, tag.hp, tag.opts);
 			break;
 
 		default:
