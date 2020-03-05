@@ -14,9 +14,9 @@ namespace ircd::server
 	ctx::dock dock;     // internal semaphore
 
 	// Internal util
-	template<class F> size_t accumulate_peers(F&&);
-	template<class F> size_t accumulate_links(F&&);
-	template<class F> size_t accumulate_tags(F&&);
+	template<class F> static size_t accumulate_peers(F&&);
+	template<class F> static size_t accumulate_links(F&&);
+	template<class F> static size_t accumulate_tags(F&&);
 
 	// Internal control
 	static decltype(ircd::server::peers)::iterator
