@@ -5429,7 +5429,7 @@ console_cmd__net__host(opt &out, const string_view &line)
 
 	const net::hostport hostport
 	{
-		param["hostport"]
+		param.at("hostport")
 	};
 
 	const string_view &qtype
