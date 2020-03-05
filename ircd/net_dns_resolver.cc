@@ -174,7 +174,7 @@ ircd::net::dns::resolver::make_query(const mutable_buffer &buf,
 	{
 		case 0: throw error
 		{
-			"A query type is required to form a question."
+			"Query type is required to form a question."
 		};
 
 		case 33: // SRV

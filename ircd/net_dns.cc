@@ -100,7 +100,7 @@ ircd::net::dns::resolve(const hostport &hp,
 	if(unlikely(!opts.qtype))
 		throw error
 		{
-			"A query type is required; not specified; cannot be deduced here."
+			"Query type is required; not specified; cannot be deduced here."
 		};
 
 	dns::callback handler
@@ -119,7 +119,7 @@ ircd::net::dns::resolve(const hostport &hp,
 	if(unlikely(!opts.qtype))
 		throw error
 		{
-			"A query type is required; not specified; cannot be deduced here."
+			"Query type is required; not specified; cannot be deduced here."
 		};
 
 	// Try to satisfy from the cache first. This requires a ctx.
