@@ -108,18 +108,29 @@ struct ircd::net::dns::tag
 	uint rcode {0};
 	ipport server;
 	char hostbuf[rfc1035::NAME_BUFSIZE];
+	char servicebuf[256];
 	char qbuf[512];
 
-	tag(const hostport &hp, const dns::opts &opts)
-	:hp{hp}
-	,opts{opts}
-	{
-		this->hp.host = { hostbuf, copy(hostbuf, hp.host) };
-		this->hp.service = {};
-	}
-
+	tag(const hostport &hp, const dns::opts &opts);
 	tag(tag &&) = delete;
 	tag(const tag &) = delete;
 	tag &operator=(tag &&) = delete;
 	tag &operator=(const tag &) = delete;
 };
+
+inline
+ircd::net::dns::tag::tag(const hostport &hp,
+                         const dns::opts &opts)
+:hp{hp}
+,opts{opts}
+{
+	this->hp.host =
+	{
+		hostbuf, copy(hostbuf, hp.host)
+	};
+
+	this->hp.service =
+	{
+		servicebuf, copy(servicebuf, hp.service)
+	};
+}
