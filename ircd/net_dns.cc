@@ -172,22 +172,32 @@ ircd::net::dns::make_SRV_key(const mutable_buffer &out,
                              const opts &opts)
 {
 	thread_local char tlbuf[2][rfc1035::NAME_BUFSIZE];
-
-	if(!opts.srv)
-		return fmt::sprintf
+	if(unlikely(!service(hp) && !opts.srv))
+		throw error
 		{
-			out, "_%s._%s.%s",
-			tolower(tlbuf[0], service(hp)),
-			opts.proto,
-			tolower(tlbuf[1], host(hp)),
+			"Service name or query string option is required for SRV lookup."
 		};
-	else
+
+	assert(host(hp));
+	if(!service(hp))
+	{
+		assert(opts.srv);
 		return fmt::sprintf
 		{
 			out, "%s%s",
 			opts.srv,
 			tolower(tlbuf[1], host(hp))
 		};
+	}
+
+	assert(service(hp));
+	return fmt::sprintf
+	{
+		out, "_%s._%s.%s",
+		tolower(tlbuf[0], service(hp)),
+		opts.proto,
+		tolower(tlbuf[1], host(hp)),
+	};
 }
 
 ircd::json::object
