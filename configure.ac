@@ -921,6 +921,7 @@ dnl unix platform
 RB_CHK_SYSHEADER(unistd.h, [UNISTD_H])
 RB_CHK_SYSHEADER(signal.h, [SIGNAL_H])
 RB_CHK_SYSHEADER(ifaddrs.h, [IFADDRS_H])
+RB_CHK_SYSHEADER(netdb.h, [NETDB_H])
 RB_CHK_SYSHEADER(fcntl.h, [FCNTL_H])
 RB_CHK_SYSHEADER(elf.h, [ELF_H])
 RB_CHK_SYSHEADER(link.h, [LINK_H])

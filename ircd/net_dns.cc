@@ -8,6 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+#include <RB_INC_NETDB_H
 #include <ircd/net/dns_cache.h>
 
 namespace ircd::net::dns
@@ -112,15 +113,21 @@ ircd::net::dns::resolve(const hostport &hp,
 }
 
 void
-ircd::net::dns::resolve(const hostport &hp,
+ircd::net::dns::resolve(const hostport &hp_,
                         const opts &opts,
                         callback cb)
 {
+	hostport hp(hp_);
 	if(unlikely(!opts.qtype))
 		throw error
 		{
 			"Query type is required; not specified; cannot be deduced here."
 		};
+
+	// Make any necessary attempt to translate a service name into a portnum.
+	if(likely(opts.service_port))
+		if(!port(hp) && service(hp))
+			port(hp) = service_port(std::nothrow, service(hp), opts.proto);
 
 	// Try to satisfy from the cache first. This requires a ctx.
 	if(likely(ctx::current && opts.cache_check))
@@ -532,3 +539,77 @@ ircd::net::dns::new_record(mutable_buffer &buf,
 	consume(buf, sizeof(type));
 	return new (pos) type(answer);
 }
+
+uint16_t
+ircd::net::dns::service_port(const string_view &name,
+                             const string_view &prot)
+{
+	const auto ret
+	{
+		service_port(std::nothrow, name, prot)
+	};
+
+	if(unlikely(!ret))
+		throw error
+		{
+			"Port for service %s:%s not found",
+			name,
+			prot?: "*"_sv,
+		};
+
+	return ret;
+}
+
+#ifdef HAVE_NETDB_H
+uint16_t
+ircd::net::dns::service_port(std::nothrow_t,
+                             const string_view &name,
+                             const string_view &prot)
+try
+{
+	thread_local struct ::servent res, *ent {nullptr};
+	thread_local char _name[32], _prot[32], buf[2048];
+
+	strlcpy(_name, name);
+	strlcpy(_prot, prot);
+	syscall
+	(
+		::getservbyname_r,
+		_name,
+		prot? _prot : nullptr,
+		&res,
+		buf,
+		sizeof(buf),
+		&ent
+	);
+
+	assert(!ent || ent->s_port != 0);
+	assert(!ent || name == ent->s_name);
+	assert(!ent || !prot || prot == ent->s_proto);
+	return ent?
+		htons(ent->s_port):
+		0U;
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Failure when translating service %s:%s to port number :%s",
+		name,
+		prot?: "*"_sv,
+		e.what(),
+	};
+
+	throw;
+}
+#else
+uint16_t
+ircd::net::dns::service_port(std::nothrow_t,
+                             const string_view &name,
+                             const string_view &prot)
+{
+	//TODO: XXX
+	always_assert(false);
+	return 0;
+}
+#endif

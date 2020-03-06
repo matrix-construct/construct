@@ -37,8 +37,12 @@ namespace ircd::net::dns
 	bool expired(const json::object &rr, const time_t &rr_ts, const time_t &min_ttl);
 	bool expired(const json::object &rr, const time_t &rr_ts);
 	json::object random_choice(const json::array &);
+
 	string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
 	string_view unmake_SRV_key(const string_view &);
+
+	uint16_t service_port(std::nothrow_t, const string_view &name, const string_view &prot = {});
+	uint16_t service_port(const string_view &name, const string_view &prot = {});
 
 	// Callback-based interface
 	void resolve(const hostport &, const opts &, callback);
@@ -85,6 +89,10 @@ struct ircd::net::dns::opts
 	/// is ignored and always considered to be set to true; this is because
 	/// the returned record is a reference to the cached error.
 	bool nxdomain_exceptions {true};
+
+	/// When false, queries to translate service strings to port numbers using
+	/// netdb (i.e. /etc/services) will be disabled if they were to occur.
+	bool service_port {true};
 
 	opts() = default;
 };
