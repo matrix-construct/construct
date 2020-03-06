@@ -569,6 +569,10 @@ try
 {
 	thread_local struct ::servent res, *ent {nullptr};
 	thread_local char _name[32], _prot[32], buf[2048];
+	const prof::syscall_usage_warning timer
+	{
+		"net::dns::service_port(%s)", name
+	};
 
 	strlcpy(_name, name);
 	strlcpy(_prot, prot);
