@@ -10,13 +10,13 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/groups.h
+// fed/groups.h
 //
 
-ircd::m::v1::groups::publicised::publicised(const string_view &node,
-                                            const vector_view<const id::user> &user_ids,
-                                            const mutable_buffer &buf_,
-                                            opts opts)
+ircd::m::fed::groups::publicised::publicised(const string_view &node,
+                                             const vector_view<const id::user> &user_ids,
+                                             const mutable_buffer &buf_,
+                                             opts opts)
 :server::request{[&]
 {
 	if(!opts.remote)
@@ -68,11 +68,11 @@ ircd::m::v1::groups::publicised::publicised(const string_view &node,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/send.h
+// fed/send.h
 //
 
 void
-ircd::m::v1::send::response::for_each_pdu(const pdus_closure &closure)
+ircd::m::fed::send::response::for_each_pdu(const pdus_closure &closure)
 const
 {
 	const json::object &pdus
@@ -88,10 +88,10 @@ const
 	}
 }
 
-ircd::m::v1::send::send(const string_view &txnid,
-                        const const_buffer &content,
-                        const mutable_buffer &buf,
-                        opts opts)
+ircd::m::fed::send::send(const string_view &txnid,
+                         const const_buffer &content,
+                         const mutable_buffer &buf,
+                         opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -139,12 +139,12 @@ ircd::m::v1::send::send(const string_view &txnid,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/public_rooms.h
+// fed/public_rooms.h
 //
 
-ircd::m::v1::public_rooms::public_rooms(const net::hostport &remote,
-                                        const mutable_buffer &buf,
-                                        opts opts)
+ircd::m::fed::public_rooms::public_rooms(const net::hostport &remote,
+                                         const mutable_buffer &buf,
+                                         opts opts)
 :server::request{[&]
 {
 	if(!opts.remote)
@@ -206,13 +206,13 @@ ircd::m::v1::public_rooms::public_rooms(const net::hostport &remote,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/frontfill.h
+// fed/frontfill.h
 //
 
-ircd::m::v1::frontfill::frontfill(const room::id &room_id,
-                                  const span &span,
-                                  const mutable_buffer &buf,
-                                  opts opts)
+ircd::m::fed::frontfill::frontfill(const room::id &room_id,
+                                   const span &span,
+                                   const mutable_buffer &buf,
+                                   opts opts)
 :frontfill
 {
 	room_id,
@@ -223,10 +223,10 @@ ircd::m::v1::frontfill::frontfill(const room::id &room_id,
 {
 }
 
-ircd::m::v1::frontfill::frontfill(const room::id &room_id,
-                                  const ranges &pair,
-                                  const mutable_buffer &buf_,
-                                  opts opts)
+ircd::m::fed::frontfill::frontfill(const room::id &room_id,
+                                   const ranges &pair,
+                                   const mutable_buffer &buf_,
+                                   opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -282,9 +282,9 @@ ircd::m::v1::frontfill::frontfill(const room::id &room_id,
 }
 
 ircd::const_buffer
-ircd::m::v1::frontfill::make_content(const mutable_buffer &buf,
-	                                 const ranges &pair,
-	                                 const opts &opts)
+ircd::m::fed::frontfill::make_content(const mutable_buffer &buf,
+	                                  const ranges &pair,
+	                                  const opts &opts)
 {
 	json::stack out{buf};
 	{
@@ -311,12 +311,12 @@ ircd::m::v1::frontfill::make_content(const mutable_buffer &buf,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/backfill.h
+// fed/backfill.h
 //
 
-ircd::m::v1::backfill::backfill(const room::id &room_id,
-                                const mutable_buffer &buf,
-                                opts opts)
+ircd::m::fed::backfill::backfill(const room::id &room_id,
+                                 const mutable_buffer &buf,
+                                 opts opts)
 :server::request{[&]
 {
 	if(!opts.remote)
@@ -374,12 +374,12 @@ ircd::m::v1::backfill::backfill(const room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/state.h
+// fed/state.h
 //
 
-ircd::m::v1::state::state(const room::id &room_id,
-                          const mutable_buffer &buf,
-                          opts opts)
+ircd::m::fed::state::state(const room::id &room_id,
+                           const mutable_buffer &buf,
+                           opts opts)
 :server::request{[&]
 {
 	if(!opts.remote)
@@ -438,14 +438,14 @@ ircd::m::v1::state::state(const room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/query_auth.h
+// fed/query_auth.h
 //
 
-ircd::m::v1::query_auth::query_auth(const m::room::id &room_id,
-                                    const m::event::id &event_id,
-                                    const json::object &content,
-                                    const mutable_buffer &buf,
-                                    opts opts)
+ircd::m::fed::query_auth::query_auth(const m::room::id &room_id,
+                                     const m::event::id &event_id,
+                                     const json::object &content,
+                                     const mutable_buffer &buf,
+                                     opts opts)
 :server::request{[&]
 {
 	if(!opts.remote)
@@ -498,13 +498,13 @@ ircd::m::v1::query_auth::query_auth(const m::room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/event_auth.h
+// fed/event_auth.h
 //
 
-ircd::m::v1::event_auth::event_auth(const m::room::id &room_id,
-                                    const m::event::id &event_id,
-                                    const mutable_buffer &buf,
-                                    opts opts)
+ircd::m::fed::event_auth::event_auth(const m::room::id &room_id,
+                                     const m::event::id &event_id,
+                                     const mutable_buffer &buf,
+                                     opts opts)
 :server::request{[&]
 {
 	if(!opts.remote)
@@ -563,12 +563,12 @@ ircd::m::v1::event_auth::event_auth(const m::room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/event.h
+// fed/event.h
 //
 
-ircd::m::v1::event::event(const m::event::id &event_id,
-                          const mutable_buffer &buf,
-                          opts opts)
+ircd::m::fed::event::event(const m::event::id &event_id,
+                           const mutable_buffer &buf,
+                           opts opts)
 :server::request{[&]
 {
 	if(!opts.remote)
@@ -617,14 +617,14 @@ ircd::m::v1::event::event(const m::event::id &event_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/invite.h
+// fed/invite.h
 //
 
-ircd::m::v1::invite::invite(const room::id &room_id,
-                            const id::event &event_id,
-                            const json::object &content,
-                            const mutable_buffer &buf,
-                            opts opts)
+ircd::m::fed::invite::invite(const room::id &room_id,
+                             const id::event &event_id,
+                             const json::object &content,
+                             const mutable_buffer &buf,
+                             opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -673,14 +673,14 @@ ircd::m::v1::invite::invite(const room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v2/invite.h
+// fed/invite2.h
 //
 
-ircd::m::v2::invite::invite(const room::id &room_id,
-                            const id::event &event_id,
-                            const json::object &content,
-                            const mutable_buffer &buf,
-                            opts opts)
+ircd::m::fed::invite2::invite2(const room::id &room_id,
+                               const id::event &event_id,
+                               const json::object &content,
+                               const mutable_buffer &buf,
+                               opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -729,14 +729,14 @@ ircd::m::v2::invite::invite(const room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/send_join.h
+// fed/send_join.h
 //
 
-ircd::m::v1::send_join::send_join(const room::id &room_id,
-                                  const id::event &event_id,
-                                  const const_buffer &content,
-                                  const mutable_buffer &buf,
-                                  opts opts)
+ircd::m::fed::send_join::send_join(const room::id &room_id,
+                                   const id::event &event_id,
+                                   const const_buffer &content,
+                                   const mutable_buffer &buf,
+                                   opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -785,13 +785,13 @@ ircd::m::v1::send_join::send_join(const room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/make_join.h
+// fed/make_join.h
 //
 
-ircd::m::v1::make_join::make_join(const room::id &room_id,
-                                  const id::user &user_id_,
-                                  const mutable_buffer &buf,
-                                  opts opts)
+ircd::m::fed::make_join::make_join(const room::id &room_id,
+                                   const id::user &user_id_,
+                                   const mutable_buffer &buf,
+                                   opts opts)
 :server::request{[&]
 {
 	if(!opts.remote)
@@ -851,16 +851,16 @@ ircd::m::v1::make_join::make_join(const room::id &room_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/user_keys.h
+// fed/user_keys.h
 //
 
 //
 // query
 //
 
-ircd::m::v1::user::keys::query::query(const m::user::id &user_id,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::query::query(const m::user::id &user_id,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :query
 {
 	user_id,
@@ -871,10 +871,10 @@ ircd::m::v1::user::keys::query::query(const m::user::id &user_id,
 {
 }
 
-ircd::m::v1::user::keys::query::query(const m::user::id &user_id,
-                                      const string_view &device_id,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::query::query(const m::user::id &user_id,
+                                       const string_view &device_id,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :query
 {
 	user_devices
@@ -890,9 +890,9 @@ ircd::m::v1::user::keys::query::query(const m::user::id &user_id,
 {
 }
 
-ircd::m::v1::user::keys::query::query(const user_devices &v,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::query::query(const user_devices &v,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :query
 {
 	vector_view<const user_devices>
@@ -905,9 +905,9 @@ ircd::m::v1::user::keys::query::query(const user_devices &v,
 {
 }
 
-ircd::m::v1::user::keys::query::query(const users_devices &v,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::query::query(const users_devices &v,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :query{[&v, &buf, &opts]
 {
 	const json::object &content
@@ -923,9 +923,9 @@ ircd::m::v1::user::keys::query::query(const users_devices &v,
 {
 }
 
-ircd::m::v1::user::keys::query::query(const users_devices_map &m,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::query::query(const users_devices_map &m,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :query{[&m, &buf, &opts]
 {
 	const json::object &content
@@ -941,9 +941,9 @@ ircd::m::v1::user::keys::query::query(const users_devices_map &m,
 {
 }
 
-ircd::m::v1::user::keys::query::query(const json::object &content,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::query::query(const json::object &content,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -983,8 +983,8 @@ ircd::m::v1::user::keys::query::query(const json::object &content,
 }
 
 ircd::json::object
-ircd::m::v1::user::keys::query::make_content(const mutable_buffer &buf,
-                                             const users_devices &v)
+ircd::m::fed::user::keys::query::make_content(const mutable_buffer &buf,
+                                              const users_devices &v)
 {
 	json::stack out{buf};
 	{
@@ -1010,8 +1010,8 @@ ircd::m::v1::user::keys::query::make_content(const mutable_buffer &buf,
 }
 
 ircd::json::object
-ircd::m::v1::user::keys::query::make_content(const mutable_buffer &buf,
-                                             const users_devices_map &m)
+ircd::m::fed::user::keys::query::make_content(const mutable_buffer &buf,
+                                              const users_devices_map &m)
 {
 	json::stack out{buf};
 	{
@@ -1035,11 +1035,11 @@ ircd::m::v1::user::keys::query::make_content(const mutable_buffer &buf,
 // claim
 //
 
-ircd::m::v1::user::keys::claim::claim(const m::user::id &user_id,
-                                      const string_view &device_id,
-                                      const string_view &algorithm,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::claim::claim(const m::user::id &user_id,
+                                       const string_view &device_id,
+                                       const string_view &algorithm,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :claim
 {
 	user_id,
@@ -1053,10 +1053,10 @@ ircd::m::v1::user::keys::claim::claim(const m::user::id &user_id,
 {
 }
 
-ircd::m::v1::user::keys::claim::claim(const m::user::id &user_id,
-                                      const device &device,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::claim::claim(const m::user::id &user_id,
+                                       const device &device,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :claim
 {
 	user_devices
@@ -1069,9 +1069,9 @@ ircd::m::v1::user::keys::claim::claim(const m::user::id &user_id,
 {
 }
 
-ircd::m::v1::user::keys::claim::claim(const user_devices &ud,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::claim::claim(const user_devices &ud,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :claim
 {
 	vector_view<const user_devices>
@@ -1084,9 +1084,9 @@ ircd::m::v1::user::keys::claim::claim(const user_devices &ud,
 {
 }
 
-ircd::m::v1::user::keys::claim::claim(const users_devices &v,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::claim::claim(const users_devices &v,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :claim{[&v, &buf, &opts]
 {
 	const json::object &content
@@ -1102,9 +1102,9 @@ ircd::m::v1::user::keys::claim::claim(const users_devices &v,
 {
 }
 
-ircd::m::v1::user::keys::claim::claim(const users_devices_map &m,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::claim::claim(const users_devices_map &m,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :claim{[&m, &buf, &opts]
 {
 	const json::object &content
@@ -1120,9 +1120,9 @@ ircd::m::v1::user::keys::claim::claim(const users_devices_map &m,
 {
 }
 
-ircd::m::v1::user::keys::claim::claim(const json::object &content,
-                                      const mutable_buffer &buf,
-                                      opts opts)
+ircd::m::fed::user::keys::claim::claim(const json::object &content,
+                                       const mutable_buffer &buf,
+                                       opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -1162,8 +1162,8 @@ ircd::m::v1::user::keys::claim::claim(const json::object &content,
 }
 
 ircd::json::object
-ircd::m::v1::user::keys::claim::make_content(const mutable_buffer &buf,
-                                             const users_devices &v)
+ircd::m::fed::user::keys::claim::make_content(const mutable_buffer &buf,
+                                              const users_devices &v)
 {
 	json::stack out{buf};
 	{
@@ -1192,8 +1192,8 @@ ircd::m::v1::user::keys::claim::make_content(const mutable_buffer &buf,
 }
 
 ircd::json::object
-ircd::m::v1::user::keys::claim::make_content(const mutable_buffer &buf,
-                                             const users_devices_map &v)
+ircd::m::fed::user::keys::claim::make_content(const mutable_buffer &buf,
+                                              const users_devices_map &v)
 {
 	json::stack out{buf};
 	{
@@ -1223,12 +1223,12 @@ ircd::m::v1::user::keys::claim::make_content(const mutable_buffer &buf,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/user.h
+// fed/user.h
 //
 
-ircd::m::v1::user::devices::devices(const id::user &user_id,
-                                    const mutable_buffer &buf,
-                                    opts opts)
+ircd::m::fed::user::devices::devices(const id::user &user_id,
+                                     const mutable_buffer &buf,
+                                     opts opts)
 :server::request{[&]
 {
 	if(!opts.remote)
@@ -1276,18 +1276,18 @@ ircd::m::v1::user::devices::devices(const id::user &user_id,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/query.h
+// fed/query.h
 //
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	thread_local char query_arg_buf[1024];
 	thread_local char query_url_buf[1024];
 }
 
-ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
-                                         const mutable_buffer &buf,
-                                         opts opts)
+ircd::m::fed::query::directory::directory(const id::room_alias &room_alias,
+                                          const mutable_buffer &buf,
+                                          opts opts)
 :query
 {
 	"directory",
@@ -1301,9 +1301,9 @@ ircd::m::v1::query::directory::directory(const id::room_alias &room_alias,
 {
 }
 
-ircd::m::v1::query::profile::profile(const id::user &user_id,
-                                     const mutable_buffer &buf,
-                                     opts opts)
+ircd::m::fed::query::profile::profile(const id::user &user_id,
+                                      const mutable_buffer &buf,
+                                      opts opts)
 :query
 {
 	"profile",
@@ -1317,10 +1317,10 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 {
 }
 
-ircd::m::v1::query::profile::profile(const id::user &user_id,
-                                     const string_view &field,
-                                     const mutable_buffer &buf,
-                                     opts opts)
+ircd::m::fed::query::profile::profile(const id::user &user_id,
+                                      const string_view &field,
+                                      const mutable_buffer &buf,
+                                      opts opts)
 :query
 {
 	"profile",
@@ -1337,10 +1337,10 @@ ircd::m::v1::query::profile::profile(const id::user &user_id,
 {
 }
 
-ircd::m::v1::query::query(const string_view &type,
-                          const string_view &args,
-                          const mutable_buffer &buf,
-                          opts opts)
+ircd::m::fed::query::query(const string_view &type,
+                           const string_view &args,
+                           const mutable_buffer &buf,
+                           opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -1389,12 +1389,12 @@ ircd::m::v1::query::query(const string_view &type,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/key.h
+// fed/key.h
 //
 
-ircd::m::v1::key::keys::keys(const string_view &server_name,
-                             const mutable_buffer &buf,
-                             opts opts)
+ircd::m::fed::key::keys::keys(const string_view &server_name,
+                              const mutable_buffer &buf,
+                              opts opts)
 :keys
 {
 	server_key{server_name, ""}, buf, std::move(opts)
@@ -1402,9 +1402,9 @@ ircd::m::v1::key::keys::keys(const string_view &server_name,
 {
 }
 
-ircd::m::v1::key::keys::keys(const server_key &server_key,
-                             const mutable_buffer &buf,
-                             opts opts)
+ircd::m::fed::key::keys::keys(const server_key &server_key,
+                              const mutable_buffer &buf,
+                              opts opts)
 :server::request{[&]
 {
 	const auto &server_name{server_key.first};
@@ -1458,16 +1458,16 @@ ircd::m::v1::key::keys::keys(const server_key &server_key,
 {
 }
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	static const_buffer
 	_make_server_keys(const vector_view<const key::server_key> &,
 	                  const mutable_buffer &);
 }
 
-ircd::m::v1::key::query::query(const vector_view<const server_key> &keys,
-                               const mutable_buffer &buf_,
-                               opts opts)
+ircd::m::fed::key::query::query(const vector_view<const server_key> &keys,
+                                const mutable_buffer &buf_,
+                                opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -1520,8 +1520,8 @@ ircd::m::v1::key::query::query(const vector_view<const server_key> &keys,
 }
 
 static ircd::const_buffer
-ircd::m::v1::_make_server_keys(const vector_view<const key::server_key> &keys,
-                               const mutable_buffer &buf)
+ircd::m::fed::_make_server_keys(const vector_view<const key::server_key> &keys,
+                                const mutable_buffer &buf)
 {
 	json::stack out{buf};
 	json::stack::object top{out};
@@ -1558,11 +1558,11 @@ ircd::m::v1::_make_server_keys(const vector_view<const key::server_key> &keys,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/version.h
+// fed/version.h
 //
 
-ircd::m::v1::version::version(const mutable_buffer &buf,
-                              opts opts)
+ircd::m::fed::version::version(const mutable_buffer &buf,
+                               opts opts)
 :server::request{[&]
 {
 	assert(!!opts.remote);
@@ -1597,7 +1597,7 @@ ircd::m::v1::version::version(const mutable_buffer &buf,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// v1/v1.h
+// fed/v1.h
 //
 
 ircd::conf::item<ircd::milliseconds>
@@ -1608,8 +1608,8 @@ fetch_head_timeout
 };
 
 ircd::m::event::id::buf
-ircd::m::v1::fetch_head(const id::room &room_id,
-                        const net::hostport &remote)
+ircd::m::fed::fetch_head(const id::room &room_id,
+                         const net::hostport &remote)
 {
 	const m::room room
 	{
@@ -1635,9 +1635,9 @@ ircd::m::v1::fetch_head(const id::room &room_id,
 }
 
 ircd::m::event::id::buf
-ircd::m::v1::fetch_head(const id::room &room_id,
-                        const net::hostport &remote,
-                        const id::user &user_id)
+ircd::m::fed::fetch_head(const id::room &room_id,
+                         const net::hostport &remote,
+                         const id::user &user_id)
 {
 	const unique_buffer<mutable_buffer> buf
 	{

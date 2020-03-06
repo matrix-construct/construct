@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_VERSION_H
+#define HAVE_IRCD_M_FED_VERSION_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct version;
 };
 
-struct ircd::m::v1::version
+struct ircd::m::fed::version
 :server::request
 {
 	struct opts;
@@ -30,7 +30,7 @@ struct ircd::m::v1::version
 	version() = default;
 };
 
-struct ircd::m::v1::version::opts
+struct ircd::m::fed::version::opts
 {
 	net::hostport remote;
 	m::request request;

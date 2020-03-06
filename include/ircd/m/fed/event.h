@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_EVENT_H
+#define HAVE_IRCD_M_FED_EVENT_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct event;
 };
 
-struct ircd::m::v1::event
+struct ircd::m::fed::event
 :server::request
 {
 	struct opts;
@@ -28,7 +28,7 @@ struct ircd::m::v1::event
 	event() = default;
 };
 
-struct ircd::m::v1::event::opts
+struct ircd::m::fed::event::opts
 {
 	net::hostport remote;
 	m::request request;
@@ -39,7 +39,7 @@ struct ircd::m::v1::event::opts
 };
 
 inline
-ircd::m::v1::event::operator
+ircd::m::fed::event::operator
 ircd::m::event()
 const
 {
@@ -47,7 +47,7 @@ const
 }
 
 inline
-ircd::m::v1::event::operator
+ircd::m::fed::event::operator
 ircd::json::object()
 const
 {

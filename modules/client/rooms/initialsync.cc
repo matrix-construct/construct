@@ -279,7 +279,7 @@ get__initialsync_remote(client &client,
 
 	const auto head
 	{
-		m::v1::fetch_head(room, remote, request.user_id)
+		m::fed::fetch_head(room, remote, request.user_id)
 	};
 
 	m::room room_{room};

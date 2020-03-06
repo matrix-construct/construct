@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_QUERY_H
+#define HAVE_IRCD_M_FED_QUERY_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct query;
 };
 
-struct ircd::m::v1::query
+struct ircd::m::fed::query
 :server::request
 {
 	struct opts;
@@ -35,7 +35,7 @@ struct ircd::m::v1::query
 	query() = default;
 };
 
-struct ircd::m::v1::query::opts
+struct ircd::m::fed::query::opts
 {
 	net::hostport remote;
 	m::request request;
@@ -51,14 +51,14 @@ struct ircd::m::v1::query::opts
 	opts() = default;
 };
 
-struct ircd::m::v1::query::profile
+struct ircd::m::fed::query::profile
 :query
 {
 	profile(const id::user &user_id, const string_view &field, const mutable_buffer &, opts);
 	profile(const id::user &user_id, const mutable_buffer &, opts);
 };
 
-struct ircd::m::v1::query::directory
+struct ircd::m::fed::query::directory
 :query
 {
 	directory(const id::room_alias &room_alias, const mutable_buffer &, opts);

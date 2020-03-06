@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_QUERY_AUTH_H
+#define HAVE_IRCD_M_FED_QUERY_AUTH_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct query_auth;
 };
 
-struct ircd::m::v1::query_auth
+struct ircd::m::fed::query_auth
 :server::request
 {
 	struct opts;
@@ -38,7 +38,7 @@ struct ircd::m::v1::query_auth
 	query_auth() = default;
 };
 
-struct ircd::m::v1::query_auth::opts
+struct ircd::m::fed::query_auth::opts
 {
 	net::hostport remote;
 	m::request request;

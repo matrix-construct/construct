@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_INVITE_H
+#define HAVE_IRCD_M_FED_INVITE_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct invite;
 };
 
-struct ircd::m::v1::invite
+struct ircd::m::fed::invite
 :server::request
 {
 	struct opts;
@@ -30,7 +30,7 @@ struct ircd::m::v1::invite
 	invite() = default;
 };
 
-struct ircd::m::v1::invite::opts
+struct ircd::m::fed::invite::opts
 {
 	net::hostport remote;
 	m::request request;

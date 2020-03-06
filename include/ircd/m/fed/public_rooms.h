@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_PUBLIC_ROOMS_H
+#define HAVE_IRCD_M_FED_PUBLIC_ROOMS_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct public_rooms;
 };
 
-struct ircd::m::v1::public_rooms
+struct ircd::m::fed::public_rooms
 :server::request
 {
 	struct opts;
@@ -30,7 +30,7 @@ struct ircd::m::v1::public_rooms
 	public_rooms() = default;
 };
 
-struct ircd::m::v1::public_rooms::opts
+struct ircd::m::fed::public_rooms::opts
 {
 	net::hostport remote;
 	size_t limit {128};

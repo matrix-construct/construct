@@ -325,7 +325,7 @@ try
 			break;
 	}
 
-	m::v1::send::opts opts;
+	m::fed::send::opts opts;
 	opts.remote = remote;
 	opts.sopts = &sopts;
 
@@ -453,7 +453,7 @@ try
 		txn
 	};
 
-	const m::v1::send::response resp
+	const m::fed::send::response resp
 	{
 		obj
 	};

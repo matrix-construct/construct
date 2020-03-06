@@ -9,9 +9,9 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_KEY_H
+#define HAVE_IRCD_M_FED_KEY_H
 
-namespace ircd::m::v1::key
+namespace ircd::m::fed::key
 {
 	struct opts;
 	struct keys;
@@ -19,7 +19,7 @@ namespace ircd::m::v1::key
 	using server_key = std::pair<string_view, string_view>; // server_name, key_id
 };
 
-struct ircd::m::v1::key::keys
+struct ircd::m::fed::key::keys
 :server::request
 {
 	using opts = key::opts;
@@ -35,7 +35,7 @@ struct ircd::m::v1::key::keys
 	keys() = default;
 };
 
-struct ircd::m::v1::key::query
+struct ircd::m::fed::key::query
 :server::request
 {
 	using opts = key::opts;
@@ -51,7 +51,7 @@ struct ircd::m::v1::key::query
 	query() = default;
 };
 
-struct ircd::m::v1::key::opts
+struct ircd::m::fed::key::opts
 {
 	net::hostport remote;
 	m::request request;

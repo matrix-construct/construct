@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_GROUPS_H
+#define HAVE_IRCD_M_FED_GROUPS_H
 
-namespace ircd::m::v1::groups
+namespace ircd::m::fed::groups
 {
 	struct publicised;
 };
 
-struct ircd::m::v1::groups::publicised
+struct ircd::m::fed::groups::publicised
 :server::request
 {
 	struct opts;
@@ -30,7 +30,7 @@ struct ircd::m::v1::groups::publicised
 	publicised() = default;
 };
 
-struct ircd::m::v1::groups::publicised::opts
+struct ircd::m::fed::groups::publicised::opts
 {
 	net::hostport remote;
 	m::request request;

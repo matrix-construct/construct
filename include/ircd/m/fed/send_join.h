@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_SEND_JOIN_H
+#define HAVE_IRCD_M_FED_SEND_JOIN_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct send_join;
 };
 
-struct ircd::m::v1::send_join
+struct ircd::m::fed::send_join
 :server::request
 {
 	struct opts;
@@ -30,7 +30,7 @@ struct ircd::m::v1::send_join
 	send_join() = default;
 };
 
-struct ircd::m::v1::send_join::opts
+struct ircd::m::fed::send_join::opts
 {
 	net::hostport remote;
 	m::request request;

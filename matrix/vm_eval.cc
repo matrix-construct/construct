@@ -375,7 +375,7 @@ void
 ircd::m::vm::eval::mfetch_keys()
 const
 {
-	using m::v1::key::server_key;
+	using m::fed::key::server_key;
 
 	// Determine federation keys which we don't have.
 	std::set<server_key> miss;

@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_BACKFILL_H
+#define HAVE_IRCD_M_FED_BACKFILL_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct backfill;
 };
 
-struct ircd::m::v1::backfill
+struct ircd::m::fed::backfill
 :server::request
 {
 	struct opts;
@@ -30,7 +30,7 @@ struct ircd::m::v1::backfill
 	backfill() = default;
 };
 
-struct ircd::m::v1::backfill::opts
+struct ircd::m::fed::backfill::opts
 {
 	net::hostport remote;
 	string_view event_id;

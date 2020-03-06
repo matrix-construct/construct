@@ -667,9 +667,9 @@ ircd::m::init::backfill::gossip(const room::id &room_id,
 		m::txn::create_id(idbuf, txn)
 	};
 
-	m::v1::send::opts opts;
+	m::fed::send::opts opts;
 	opts.remote = remote;
-	m::v1::send request
+	m::fed::send request
 	{
 		txnid, txn, buf[1], std::move(opts)
 	};

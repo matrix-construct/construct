@@ -181,9 +181,9 @@ try
 		bufs + size(proto)
 	};
 
-	m::v2::invite::opts opts;
+	m::fed::invite2::opts opts;
 	opts.remote = target.host();
-	m::v2::invite request
+	m::fed::invite2 request
 	{
 		room_id, event_id, proto, buf, std::move(opts)
 	};

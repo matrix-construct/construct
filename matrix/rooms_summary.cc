@@ -70,7 +70,7 @@ ircd::m::rooms::summary::fetch::fetch(const string_view &origin,
                                       const string_view &since,
                                       const size_t &limit)
 {
-	m::v1::public_rooms::opts opts;
+	m::fed::public_rooms::opts opts;
 	opts.limit = limit;
 	opts.since = since;
 	opts.include_all_networks = true;
@@ -81,7 +81,7 @@ ircd::m::rooms::summary::fetch::fetch(const string_view &origin,
 		16_KiB
 	};
 
-	m::v1::public_rooms request
+	m::fed::public_rooms request
 	{
 		origin, buf, std::move(opts)
 	};

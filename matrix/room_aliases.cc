@@ -372,11 +372,11 @@ try
 		16_KiB
 	};
 
-	m::v1::query::opts opts;
+	m::fed::query::opts opts;
 	opts.remote = hp;
 	opts.dynamic = true;
 
-	m::v1::query::directory request
+	m::fed::query::directory request
 	{
 		alias, buf, std::move(opts)
     };

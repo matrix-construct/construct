@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_FRONTFILL_H
+#define HAVE_IRCD_M_FED_FRONTFILL_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct frontfill;
 };
 
-struct ircd::m::v1::frontfill
+struct ircd::m::fed::frontfill
 :server::request
 {
 	struct opts;
@@ -37,7 +37,7 @@ struct ircd::m::v1::frontfill
 	frontfill() = default;
 };
 
-struct ircd::m::v1::frontfill::opts
+struct ircd::m::fed::frontfill::opts
 {
 	net::hostport remote;
 	size_t limit {64};

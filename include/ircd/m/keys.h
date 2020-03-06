@@ -55,7 +55,7 @@ struct ircd::m::keys
 {
 	struct cache;
 
-	using queries = vector_view<const m::v1::key::server_key>; // <server, key_id>
+	using queries = vector_view<const fed::key::server_key>; // <server, key_id>
 	using closure = std::function<void (const json::object &)>;
 	using closure_bool = std::function<bool (const json::object &)>;
 

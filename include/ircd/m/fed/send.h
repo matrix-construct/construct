@@ -9,9 +9,9 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_SEND_H
+#define HAVE_IRCD_M_FED_SEND_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct send;
 };
@@ -20,7 +20,7 @@ namespace ircd::m::v1
 /// receives a response via the server::request ctx::future. This object
 /// must stay in scope to complete the request until the future is resolved.
 ///
-struct ircd::m::v1::send
+struct ircd::m::fed::send
 :server::request
 {
 	struct opts;
@@ -41,7 +41,7 @@ struct ircd::m::v1::send
 
 /// Options for a federation send request.
 ///
-struct ircd::m::v1::send::opts
+struct ircd::m::fed::send::opts
 {
 	/// The remote server to contact. Must be specified for this request.
 	net::hostport remote;
@@ -64,11 +64,12 @@ struct ircd::m::v1::send::opts
 	/// The lower-level server::request::opts configuration to attach to
 	/// this request.
 	const struct server::request::opts *sopts {nullptr};
+
 	bool dynamic {false};
 };
 
 /// Helper for dealing with response content from a /send/.
-struct ircd::m::v1::send::response
+struct ircd::m::fed::send::response
 :json::object
 {
 	/// A member of the response object is "pdus" and this helps iterate that object

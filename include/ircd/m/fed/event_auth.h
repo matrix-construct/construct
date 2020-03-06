@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_EVENT_AUTH_H
+#define HAVE_IRCD_M_FED_EVENT_AUTH_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct event_auth;
 };
 
-struct ircd::m::v1::event_auth
+struct ircd::m::fed::event_auth
 :server::request
 {
 	struct opts;
@@ -35,7 +35,7 @@ struct ircd::m::v1::event_auth
 	event_auth() = default;
 };
 
-struct ircd::m::v1::event_auth::opts
+struct ircd::m::fed::event_auth::opts
 {
 	net::hostport remote;
 	m::request request;

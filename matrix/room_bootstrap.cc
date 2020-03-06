@@ -415,11 +415,11 @@ try
 		16_KiB // headers in and out
 	};
 
-	m::v1::backfill::opts opts{host};
+	m::fed::backfill::opts opts{host};
 	opts.dynamic = true;
 	opts.event_id = event_id;
 	opts.limit = size_t(backfill_limit);
-	m::v1::backfill request
+	m::fed::backfill request
 	{
 		room_id, buf, std::move(opts)
 	};
@@ -547,7 +547,7 @@ void
 ircd::m::bootstrap::fetch_keys(const json::array &events)
 try
 {
-	std::vector<m::v1::key::server_key> queries;
+	std::vector<m::fed::key::server_key> queries;
 	queries.reserve(events.size());
 
 	for(const json::object &event : events)
@@ -605,9 +605,9 @@ try
 		16_KiB // headers in and out
 	};
 
-	m::v1::send_join::opts opts{host};
+	m::fed::send_join::opts opts{host};
 	opts.dynamic = true;
-	m::v1::send_join send_join
+	m::fed::send_join send_join
 	{
 		room_id, event_id, event, buf, std::move(opts)
 	};
@@ -669,8 +669,8 @@ try
 		16_KiB // headers in and out
 	};
 
-	m::v1::make_join::opts opts{host};
-	m::v1::make_join request
+	m::fed::make_join::opts opts{host};
+	m::fed::make_join request
 	{
 		room_id, user_id, buf, std::move(opts)
 	};

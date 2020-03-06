@@ -218,7 +218,7 @@ try
 {
 	assert(!query_server.empty());
 
-	m::v1::key::opts opts;
+	m::fed::key::opts opts;
 	opts.remote = net::hostport{query_server};
 	opts.dynamic = true;
 	const unique_buffer<mutable_buffer> buf
@@ -226,7 +226,7 @@ try
 		16_KiB
 	};
 
-	m::v1::key::query request
+	m::fed::key::query request
 	{
 		queries, buf, std::move(opts)
 	};
@@ -328,14 +328,14 @@ try
 		m::log, "Keys for %s not cached; querying network...", server_name
 	};
 
-	m::v1::key::opts opts;
+	m::fed::key::opts opts;
 	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
 	{
 		16_KiB
 	};
 
-	m::v1::key::keys request
+	m::fed::key::keys request
 	{
 		server_name, buf, std::move(opts)
 	};

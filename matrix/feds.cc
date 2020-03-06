@@ -149,19 +149,19 @@ ircd::m::feds::send(const opts &opts,
 	const auto make_request{[&opts]
 	(auto &request, const auto &origin)
 	{
-		m::v1::send::opts v1opts;
+		m::fed::send::opts v1opts;
 		v1opts.remote = string_view
 		{
 			strlcpy{request.origin, origin}
 		};
 
-		return m::v1::send
+		return m::fed::send
 		{
 			opts.arg[0], opts.arg[1], request.buf, std::move(v1opts)
 		};
 	}};
 
-	return for_each_in_room<m::v1::send>(opts, closure, make_request);
+	return for_each_in_room<m::fed::send>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -171,27 +171,27 @@ ircd::m::feds::keys(const opts &opts,
 	const auto make_request{[&opts]
 	(auto &request, const auto &origin)
 	{
-		m::v1::key::query::opts v1opts;
+		m::fed::key::query::opts v1opts;
 		v1opts.dynamic = false;
 		v1opts.remote = string_view
 		{
 			strlcpy{request.origin, origin}
 		};
 
-		const m::v1::key::server_key server_key
+		const m::fed::key::server_key server_key
 		{
 			opts.arg[0], opts.arg[1]
 		};
 
-		return m::v1::key::query
+		return m::fed::key::query
 		{
 			{&server_key, 1}, request.buf, std::move(v1opts)
 		};
 	}};
 
 	return opts.room_id?
-		for_each_in_room<m::v1::key::query>(opts, closure, make_request):
-		for_one<m::v1::key::query>(opts.arg[0], opts, closure, make_request);
+		for_each_in_room<m::fed::key::query>(opts, closure, make_request):
+		for_one<m::fed::key::query>(opts.arg[0], opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -201,20 +201,20 @@ ircd::m::feds::version(const opts &opts,
 	static const auto make_request{[]
 	(auto &request, const auto &origin)
 	{
-		m::v1::version::opts opts;
+		m::fed::version::opts opts;
 		opts.dynamic = false;
 		opts.remote = string_view
 		{
 			strlcpy{request.origin, origin}
 		};
 
-		return m::v1::version
+		return m::fed::version
 		{
 			request.buf, std::move(opts)
 		};
 	}};
 
-	return for_each_in_room<m::v1::version>(opts, closure, make_request);
+	return for_each_in_room<m::fed::version>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -224,7 +224,7 @@ ircd::m::feds::backfill(const opts &opts,
 	const auto make_request{[&opts]
 	(auto &request, const auto &origin)
 	{
-		m::v1::backfill::opts v1opts;
+		m::fed::backfill::opts v1opts;
 		v1opts.dynamic = true;
 		v1opts.event_id = opts.event_id;
 		v1opts.limit = opts.argi[0];
@@ -233,13 +233,13 @@ ircd::m::feds::backfill(const opts &opts,
 			strlcpy{request.origin, origin}
 		};
 
-		return m::v1::backfill
+		return m::fed::backfill
 		{
 			opts.room_id, request.buf, std::move(v1opts)
 		};
 	}};
 
-	return for_each_in_room<m::v1::backfill>(opts, closure, make_request);
+	return for_each_in_room<m::fed::backfill>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -249,7 +249,7 @@ ircd::m::feds::state(const opts &opts,
 	const auto make_request{[&opts]
 	(auto &request, const auto &origin)
 	{
-		m::v1::state::opts v1opts;
+		m::fed::state::opts v1opts;
 		v1opts.dynamic = true;
 		v1opts.ids_only = opts.arg[0] == "ids";
 		v1opts.event_id = opts.event_id;
@@ -258,13 +258,13 @@ ircd::m::feds::state(const opts &opts,
 			strlcpy{request.origin, origin}
 		};
 
-		return m::v1::state
+		return m::fed::state
 		{
 			opts.room_id, request.buf, std::move(v1opts)
 		};
 	}};
 
-	return for_each_in_room<m::v1::state>(opts, closure, make_request);
+	return for_each_in_room<m::fed::state>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -274,20 +274,20 @@ ircd::m::feds::event(const opts &opts,
 	const auto make_request{[&opts]
 	(auto &request, const auto &origin)
 	{
-		m::v1::event::opts v1opts;
+		m::fed::event::opts v1opts;
 		v1opts.dynamic = true;
 		v1opts.remote = string_view
 		{
 			strlcpy{request.origin, origin}
 		};
 
-		return m::v1::event
+		return m::fed::event
 		{
 			opts.event_id, request.buf, std::move(v1opts)
 		};
 	}};
 
-	return for_each_in_room<m::v1::event>(opts, closure, make_request);
+	return for_each_in_room<m::fed::event>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -297,20 +297,20 @@ ircd::m::feds::auth(const opts &opts,
 	const auto make_request{[&opts]
 	(auto &request, const auto &origin)
 	{
-		m::v1::event_auth::opts v1opts;
+		m::fed::event_auth::opts v1opts;
 		v1opts.dynamic = true;
 		v1opts.remote = string_view
 		{
 			strlcpy{request.origin, origin}
 		};
 
-		return m::v1::event_auth
+		return m::fed::event_auth
 		{
 			opts.room_id, opts.event_id, request.buf, std::move(v1opts)
 		};
 	}};
 
-	return for_each_in_room<m::v1::event_auth>(opts, closure, make_request);
+	return for_each_in_room<m::fed::event_auth>(opts, closure, make_request);
 }
 
 ircd::m::feds::request_list
@@ -320,19 +320,19 @@ ircd::m::feds::head(const opts &opts,
 	const auto make_request{[&opts]
 	(auto &request, const auto &origin)
 	{
-		m::v1::make_join::opts v1opts;
+		m::fed::make_join::opts v1opts;
 		v1opts.remote = string_view
 		{
 			strlcpy{request.origin, origin}
 		};
 
-		return m::v1::make_join
+		return m::fed::make_join
 		{
 			opts.room_id, opts.user_id, request.buf, std::move(v1opts)
 		};
 	}};
 
-	return for_each_in_room<m::v1::make_join>(opts, closure, make_request);
+	return for_each_in_room<m::fed::make_join>(opts, closure, make_request);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

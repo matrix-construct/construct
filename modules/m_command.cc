@@ -557,7 +557,7 @@ command__ping(const mutable_buffer &buf,
 	if(room_ping)
 		return command__ping__room(buf, user, room, cmd);
 
-	m::v1::version::opts opts;
+	m::fed::version::opts opts;
 	if(m::valid(m::id::USER, target))
 		opts.remote = m::user::id(target).host();
 	else
@@ -569,7 +569,7 @@ command__ping(const mutable_buffer &buf,
 	};
 
 	util::timer timer;
-	m::v1::version request
+	m::fed::version request
 	{
 		http_buf, std::move(opts)
 	};

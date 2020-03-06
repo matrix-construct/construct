@@ -6596,9 +6596,9 @@ console_cmd__stage__send(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::v1::send::opts opts;
+	m::fed::send::opts opts;
 	opts.remote = remote;
-	m::v1::send request
+	m::fed::send request
 	{
 		txnid, const_buffer{txn}, bufs, std::move(opts)
 	};
@@ -6610,7 +6610,7 @@ console_cmd__stage__send(opt &out, const string_view &line)
 	};
 
 	const json::object response{request};
-	const m::v1::send::response resp
+	const m::fed::send::response resp
 	{
 		response
 	};
@@ -7313,7 +7313,7 @@ console_cmd__event__sign(opt &out, const string_view &line)
 		param[2]
 	};
 
-	m::v1::event::opts opts;
+	m::fed::event::opts opts;
 	opts.remote = host;
 	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
@@ -7321,7 +7321,7 @@ console_cmd__event__sign(opt &out, const string_view &line)
 		128_KiB
 	};
 
-	m::v1::event request
+	m::fed::event request
 	{
 		event_id, buf, std::move(opts)
 	};
@@ -12451,7 +12451,7 @@ console_cmd__feds__perspective(opt &out, const string_view &line)
 		param.at(2)
 	};
 
-	const m::v1::key::server_key server_key
+	const m::fed::key::server_key server_key
 	{
 		server_name, key_id
 	};
@@ -12661,8 +12661,8 @@ console_cmd__fed__groups(opt &out, const string_view &line)
 		32_KiB
 	};
 
-	m::v1::groups::publicised::opts opts;
-	m::v1::groups::publicised request
+	m::fed::groups::publicised::opts opts;
+	m::fed::groups::publicised request
 	{
 		node, vector_view<const m::user::id>(ids, count), buf, std::move(opts)
 	};
@@ -12716,9 +12716,9 @@ console_cmd__fed__head(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::v1::make_join::opts opts;
+	m::fed::make_join::opts opts;
 	opts.remote = remote;
-	m::v1::make_join request
+	m::fed::make_join request
 	{
 		room_id, user_id, buf, std::move(opts)
 	};
@@ -12828,9 +12828,9 @@ console_cmd__fed__send(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::v1::send::opts opts;
+	m::fed::send::opts opts;
 	opts.remote = remote;
-	m::v1::send request
+	m::fed::send request
 	{
 		txnid, const_buffer{txn}, bufs, std::move(opts)
 	};
@@ -12847,7 +12847,7 @@ console_cmd__fed__send(opt &out, const string_view &line)
 		request
 	};
 
-	const m::v1::send::response resp
+	const m::fed::send::response resp
 	{
 		response
 	};
@@ -12904,7 +12904,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 		32_KiB
 	};
 
-	m::v1::state::opts stopts;
+	m::fed::state::opts stopts;
 	stopts.remote = remote;
 	stopts.event_id = event_id;
 	const mutable_buffer stbuf
@@ -12912,12 +12912,12 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 		data(buf), size(buf) / 2
 	};
 
-	m::v1::state strequest
+	m::fed::state strequest
 	{
 		room_id, stbuf, std::move(stopts)
 	};
 
-	m::v1::backfill::opts bfopts;
+	m::fed::backfill::opts bfopts;
 	bfopts.remote = remote;
 	bfopts.event_id = event_id;
 	bfopts.limit = limit;
@@ -12926,7 +12926,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 		buf + size(stbuf)
 	};
 
-	m::v1::backfill bfrequest
+	m::fed::backfill bfrequest
 	{
 		room_id, bfbuf, std::move(bfopts)
 	};
@@ -13037,10 +13037,10 @@ console_cmd__fed__state(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::v1::state::opts opts;
+	m::fed::state::opts opts;
 	opts.remote = remote;
 	opts.event_id = event_id;
-	m::v1::state request
+	m::fed::state request
 	{
 		room_id, buf, std::move(opts)
 	};
@@ -13130,11 +13130,11 @@ console_cmd__fed__state_ids(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::v1::state::opts opts;
+	m::fed::state::opts opts;
 	opts.remote = remote;
 	opts.event_id = event_id;
 	opts.ids_only = true;
-	m::v1::state request
+	m::fed::state request
 	{
 		room_id, buf, std::move(opts)
 	};
@@ -13214,12 +13214,12 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::v1::backfill::opts opts;
+	m::fed::backfill::opts opts;
 	opts.remote = remote;
 	opts.limit = lex_cast<size_t>(count);
 	opts.event_id = event_id;
 
-	m::v1::backfill request
+	m::fed::backfill request
 	{
 		room_id, buf, std::move(opts)
 	};
@@ -13309,7 +13309,7 @@ console_cmd__fed__frontfill(opt &out, const string_view &line)
 		param.at(5, 0UL)
 	};
 
-	m::v1::frontfill::opts opts;
+	m::fed::frontfill::opts opts;
 	opts.remote = remote;
 	opts.limit = limit;
 	opts.min_depth = min_depth;
@@ -13318,7 +13318,7 @@ console_cmd__fed__frontfill(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::v1::frontfill request
+	m::fed::frontfill request
 	{
 		room_id, {earliest, latest}, buf, std::move(opts)
 	};
@@ -13360,7 +13360,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		param[2]
 	};
 
-	m::v1::event::opts opts;
+	m::fed::event::opts opts;
 	opts.remote = remote;
 	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
@@ -13368,7 +13368,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		128_KiB
 	};
 
-	m::v1::event request
+	m::fed::event request
 	{
 		event_id, buf, std::move(opts)
 	};
@@ -13468,7 +13468,7 @@ console_cmd__fed__public_rooms(opt &out, const string_view &line)
 		param[3]
 	};
 
-	m::v1::public_rooms::opts opts;
+	m::fed::public_rooms::opts opts;
 	opts.limit = limit;
 	opts.third_party_instance_id = tpid;
 	opts.include_all_networks = all_nets;
@@ -13477,7 +13477,7 @@ console_cmd__fed__public_rooms(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::v1::public_rooms request
+	m::fed::public_rooms request
 	{
 		remote, buf, std::move(opts)
 	};
@@ -13546,7 +13546,7 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 		param["ids_only"]
 	};
 
-	m::v1::event_auth::opts opts;
+	m::fed::event_auth::opts opts;
 	opts.remote = remote;
 	opts.ids_only = ids_only == "ids";
 	const unique_buffer<mutable_buffer> buf
@@ -13554,7 +13554,7 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::v1::event_auth request
+	m::fed::event_auth request
 	{
 		room_id, event_id, buf, std::move(opts)
 	};
@@ -13622,7 +13622,7 @@ console_cmd__fed__query_auth(opt &out, const string_view &line)
 		param.at(2, event_id.host())
 	};
 
-	m::v1::query_auth::opts opts;
+	m::fed::query_auth::opts opts;
 	opts.remote = remote;
 	const unique_buffer<mutable_buffer> buf
 	{
@@ -13658,7 +13658,7 @@ console_cmd__fed__query_auth(opt &out, const string_view &line)
 		ost.completed()
 	};
 
-	m::v1::query_auth request
+	m::fed::query_auth request
 	{
 		room_id, event_id, content, buf + size(ost.completed()), std::move(opts)
 	};
@@ -13712,7 +13712,7 @@ console_cmd__fed__query__profile(opt &out, const string_view &line)
 		token_count(line, ' ') > 1? token(line, ' ', 1) : user_id.host()
 	};
 
-	m::v1::query::opts opts;
+	m::fed::query::opts opts;
 	opts.remote = remote;
 
 	const unique_mutable_buffer buf
@@ -13720,7 +13720,7 @@ console_cmd__fed__query__profile(opt &out, const string_view &line)
 		8_KiB
 	};
 
-	m::v1::query::profile request
+	m::fed::query::profile request
 	{
 		user_id, buf, std::move(opts)
 	};
@@ -13753,7 +13753,7 @@ console_cmd__fed__query__directory(opt &out, const string_view &line)
 		token_count(line, ' ') > 1? token(line, ' ', 1) : room_alias.host()
 	};
 
-	m::v1::query::opts opts;
+	m::fed::query::opts opts;
 	opts.remote = remote;
 
 	const unique_mutable_buffer buf
@@ -13761,7 +13761,7 @@ console_cmd__fed__query__directory(opt &out, const string_view &line)
 		8_KiB
 	};
 
-	m::v1::query::directory request
+	m::fed::query::directory request
 	{
 		room_alias, buf, std::move(opts)
 	};
@@ -13799,7 +13799,7 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 		param.at("remote", user_id.host())
 	};
 
-	m::v1::user::devices::opts opts;
+	m::fed::user::devices::opts opts;
 	opts.remote = remote;
 
 	const unique_buffer<mutable_buffer> buf
@@ -13807,7 +13807,7 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 		8_KiB
 	};
 
-	m::v1::user::devices request
+	m::fed::user::devices request
 	{
 		user_id, buf, std::move(opts)
 	};
@@ -13863,7 +13863,7 @@ console_cmd__fed__user__keys__query(opt &out, const string_view &line)
 		param.at("remote", user_id.host())
 	};
 
-	m::v1::user::opts opts;
+	m::fed::user::opts opts;
 	opts.remote = remote;
 
 	const unique_buffer<mutable_buffer> buf
@@ -13871,7 +13871,7 @@ console_cmd__fed__user__keys__query(opt &out, const string_view &line)
 		8_KiB
 	};
 
-	m::v1::user::keys::query request
+	m::fed::user::keys::query request
 	{
 		user_id, device_id, buf, std::move(opts)
 	};
@@ -13949,7 +13949,7 @@ console_cmd__fed__user__keys__claim(opt &out, const string_view &line)
 		param.at("remote", user_id.host())
 	};
 
-	m::v1::user::opts opts;
+	m::fed::user::opts opts;
 	opts.remote = remote;
 
 	const unique_buffer<mutable_buffer> buf
@@ -13957,7 +13957,7 @@ console_cmd__fed__user__keys__claim(opt &out, const string_view &line)
 		8_KiB
 	};
 
-	m::v1::user::keys::claim request
+	m::fed::user::keys::claim request
 	{
 		user_id, device_id, algorithm, buf, std::move(opts)
 	};
@@ -14001,8 +14001,8 @@ console_cmd__fed__key(opt &out, const string_view &line)
 	};
 
 	const unique_buffer<mutable_buffer> buf{16_KiB};
-	m::v1::key::opts opts;
-	m::v1::key::keys request
+	m::fed::key::opts opts;
+	m::fed::key::keys request
 	{
 		{server_name, key_id}, buf, std::move(opts)
 	};
@@ -14051,7 +14051,7 @@ console_cmd__fed__key__query(opt &out, const string_view &line)
 		r.emplace_back(split(req, ','));
 	});
 
-	m::v1::key::opts opts;
+	m::fed::key::opts opts;
 	opts.dynamic = true;
 	opts.remote = net::hostport
 	{
@@ -14059,7 +14059,7 @@ console_cmd__fed__key__query(opt &out, const string_view &line)
 	};
 
 	const unique_buffer<mutable_buffer> buf{24_KiB};
-	m::v1::key::query request
+	m::fed::key::query request
 	{
 		r, buf, std::move(opts)
 	};
@@ -14092,7 +14092,7 @@ console_cmd__fed__version(opt &out, const string_view &line)
 		token(line, ' ', 0)
 	};
 
-	m::v1::version::opts opts;
+	m::fed::version::opts opts;
 	opts.remote = remote;
 
 	const unique_mutable_buffer buf
@@ -14100,7 +14100,7 @@ console_cmd__fed__version(opt &out, const string_view &line)
 		16_KiB
 	};
 
-	m::v1::version request
+	m::fed::version request
 	{
 		buf, std::move(opts)
 	};

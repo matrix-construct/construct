@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_MAKE_JOIN_H
+#define HAVE_IRCD_M_FED_MAKE_JOIN_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct make_join;
 };
 
-struct ircd::m::v1::make_join
+struct ircd::m::fed::make_join
 :server::request
 {
 	struct opts;
@@ -30,7 +30,7 @@ struct ircd::m::v1::make_join
 	make_join() = default;
 };
 
-struct ircd::m::v1::make_join::opts
+struct ircd::m::fed::make_join::opts
 {
 	net::hostport remote;
 	m::request request;

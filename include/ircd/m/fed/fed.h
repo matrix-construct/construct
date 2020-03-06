@@ -11,7 +11,7 @@
 #pragma once
 #define HAVE_IRCD_M_FED_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	id::event::buf fetch_head(const id::room &room_id, const net::hostport &remote, const id::user &);
 	id::event::buf fetch_head(const id::room &room_id, const net::hostport &remote);

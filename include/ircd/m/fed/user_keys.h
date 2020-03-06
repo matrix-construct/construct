@@ -9,18 +9,18 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_USER_H
+#define HAVE_IRCD_M_FED_USER_H
 
-namespace ircd::m::v1::user::keys
+namespace ircd::m::fed::user::keys
 {
 	struct claim;
 	struct query;
 }
 
-struct ircd::m::v1::user::keys::query
+struct ircd::m::fed::user::keys::query
 :server::request
 {
-	using opts = v1::user::opts;
+	using opts = fed::user::opts;
 	using devices = vector_view<const string_view>;
 	using user_devices = std::pair<m::user::id, devices>;
 	using users_devices = const vector_view<const user_devices>;
@@ -64,10 +64,10 @@ struct ircd::m::v1::user::keys::query
 	query() = default;
 };
 
-struct ircd::m::v1::user::keys::claim
+struct ircd::m::fed::user::keys::claim
 :server::request
 {
-	using opts = v1::user::opts;
+	using opts = fed::user::opts;
 	using device = std::pair<string_view, string_view>;
 	using devices = vector_view<const device>;
 	using user_devices = std::pair<m::user::id, devices>;

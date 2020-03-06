@@ -11,12 +11,12 @@
 #pragma once
 #define HAVE_IRCD_M_FED_INVITE2_H
 
-namespace ircd::m::v2
+namespace ircd::m::fed
 {
-	struct invite;
+	struct invite2;
 };
 
-struct ircd::m::v2::invite
+struct ircd::m::fed::invite2
 :server::request
 {
 	struct opts;
@@ -26,11 +26,11 @@ struct ircd::m::v2::invite
 		return json::object{in.content};
 	}
 
-	invite(const room::id &, const id::event &, const json::object &, const mutable_buffer &, opts);
-	invite() = default;
+	invite2(const room::id &, const id::event &, const json::object &, const mutable_buffer &, opts);
+	invite2() = default;
 };
 
-struct ircd::m::v2::invite::opts
+struct ircd::m::fed::invite2::opts
 {
 	net::hostport remote;
 	m::request request;

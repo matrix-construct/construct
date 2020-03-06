@@ -14,7 +14,7 @@ namespace
 {
 	using user_devices_map = std::map<m::user::id, json::array>;
 	using host_users_map = std::map<string_view, user_devices_map>;
-	using query_map = std::map<string_view, m::v1::user::keys::query>;
+	using query_map = std::map<string_view, m::fed::user::keys::query>;
 	using failure_map = std::map<string_view, std::exception_ptr, std::less<>>;
 	using buffer_list = std::vector<unique_buffer<mutable_buffer>>;
 }
@@ -36,7 +36,7 @@ send_requests(const host_users_map &,
 
 static void
 recv_response(const string_view &,
-              m::v1::user::keys::query &,
+              m::fed::user::keys::query &,
               failure_map &,
               json::stack::object &);
 
@@ -212,7 +212,7 @@ try
 	while(!queries.empty())
 	{
 		static const auto dereferencer{[]
-		(auto &it) -> m::v1::user::keys::query &
+		(auto &it) -> m::fed::user::keys::query &
 		{
 			return it->second;
 		}};
@@ -247,7 +247,7 @@ catch(const std::exception &)
 
 void
 recv_response(const string_view &remote,
-              m::v1::user::keys::query &request,
+              m::fed::user::keys::query &request,
               failure_map &failures,
               json::stack::object &object)
 try
@@ -322,7 +322,7 @@ send_request(const string_view &remote,
              query_map &ret)
 try
 {
-	m::v1::user::keys::query::opts opts;
+	m::fed::user::keys::query::opts opts;
 	opts.remote = remote;
 	opts.dynamic = true;
 	const auto &buffer

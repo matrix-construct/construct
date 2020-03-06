@@ -9,14 +9,14 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_V1_STATE_H
+#define HAVE_IRCD_M_FED_STATE_H
 
-namespace ircd::m::v1
+namespace ircd::m::fed
 {
 	struct state;
 };
 
-struct ircd::m::v1::state
+struct ircd::m::fed::state
 :server::request
 {
 	struct opts;
@@ -30,7 +30,7 @@ struct ircd::m::v1::state
 	state() = default;
 };
 
-struct ircd::m::v1::state::opts
+struct ircd::m::fed::state::opts
 {
 	net::hostport remote;
 	string_view event_id;

@@ -92,7 +92,7 @@ struct node
 
 struct txn
 :txndata
-,m::v1::send
+,m::fed::send
 {
 	struct node *node;
 	steady_point timeout;
@@ -100,7 +100,7 @@ struct txn
 
 	txn(struct node &node,
 	    std::string content,
-	    m::v1::send::opts opts)
+	    m::fed::send::opts opts)
 	:txndata{std::move(content)}
 	,send{this->txnid, string_view{this->content}, this->headers, std::move(opts)}
 	,node{&node}

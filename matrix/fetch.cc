@@ -461,10 +461,10 @@ try
 
 		case op::auth:
 		{
-			v1::event_auth::opts opts;
+			fed::event_auth::opts opts;
 			opts.remote = remote;
 			opts.dynamic = true;
-			request.future = std::make_unique<v1::event_auth>
+			request.future = std::make_unique<fed::event_auth>
 			(
 				request.opts.room_id,
 				request.opts.event_id,
@@ -477,10 +477,10 @@ try
 
 		case op::event:
 		{
-			v1::event::opts opts;
+			fed::event::opts opts;
 			opts.remote = remote;
 			opts.dynamic = true;
-			request.future = std::make_unique<v1::event>
+			request.future = std::make_unique<fed::event>
 			(
 				request.opts.event_id,
 				request.buf,
@@ -492,13 +492,13 @@ try
 
 		case op::backfill:
 		{
-			v1::backfill::opts opts;
+			fed::backfill::opts opts;
 			opts.remote = remote;
 			opts.dynamic = true;
 			opts.limit = request.opts.backfill_limit;
 			opts.limit = opts.limit?: size_t(backfill_limit_default);
 			opts.event_id = request.opts.event_id;
-			request.future = std::make_unique<v1::backfill>
+			request.future = std::make_unique<fed::backfill>
 			(
 				request.opts.room_id,
 				request.buf,
