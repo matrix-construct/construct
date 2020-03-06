@@ -4453,8 +4453,8 @@ ircd::net::canonize(const mutable_buffer &buf,
 {
 	thread_local char tlbuf[2][rfc3986::DOMAIN_BUFSIZE * 2];
 
-	assert(service(hostport));
-	if(unlikely(!service(hostport)))
+	assert(service(hostport) || port(hostport));
+	if(unlikely(!service(hostport) && !port(hostport)))
 		throw error
 		{
 			"Missing service suffix in hostname:service string.",
@@ -4463,9 +4463,8 @@ ircd::net::canonize(const mutable_buffer &buf,
 	if(port(hostport))
 		return fmt::sprintf
 		{
-			buf, "%s:%s:%u",
+			buf, "%s:%u",
 			tolower(tlbuf[0], host(hostport)),
-			tolower(tlbuf[1], service(hostport)),
 			port(hostport),
 		};
 
