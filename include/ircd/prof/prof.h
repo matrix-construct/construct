@@ -39,6 +39,7 @@ namespace ircd::prof
 #include "cycles.h"
 #include "scope_cycles.h"
 #include "syscall_timer.h"
+#include "syscall_usage_warning.h"
 #include "instructions.h"
 #include "resource.h"
 #include "times.h"

@@ -932,7 +932,7 @@ try
 		count_queued(op::SYNC),
 	};
 
-	ctx::syscall_usage_warning warning
+	prof::syscall_usage_warning warning
 	{
 		"fs::aio::system::submit(in_flight:%zu qcount:%zu r:%zu w:%zu s:%zu)",
 		in_flight,

@@ -83,7 +83,6 @@ namespace ircd::ctx
 #include "sleep.h"
 #include "stack_usage_assertion.h"
 #include "slice_usage_warning.h"
-#include "syscall_usage_warning.h"
 #include "critical_assertion.h"
 #include "critical_indicator.h"
 #include "exception_handler.h"
