@@ -25,6 +25,7 @@ namespace ircd::net
 
 	uint16_t &port(hostport &);
 	string_view &host(hostport &);
+	string_view &service(hostport &);
 
 	string_view string(const mutable_buffer &out, const hostport &);
 	string_view canonize(const mutable_buffer &out, const hostport &);
@@ -116,6 +117,12 @@ ircd::net::hostport::operator!()
 const
 {
 	return !bool(*this);
+}
+
+inline ircd::string_view &
+ircd::net::service(hostport &hp)
+{
+	return hp.service;
 }
 
 inline ircd::string_view &
