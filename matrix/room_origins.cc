@@ -117,7 +117,7 @@ const
 	size_t ret{0};
 	for_each([&ret](const string_view &server)
 	{
-		ret += !ircd::empty(server::errmsg(server));
+		ret += !ircd::empty(server::errmsg(fed::matrix_service(server)));
 	});
 
 	return ret;
@@ -134,7 +134,7 @@ const
 
 	for_each([&ret](const string_view &hostport)
 	{
-		ret += bool(server::exists(hostport));
+		ret += bool(server::exists(fed::matrix_service(hostport)));
 	});
 
 	assert(ret >= 0L);

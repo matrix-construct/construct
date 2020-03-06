@@ -384,7 +384,10 @@ ircd::m::media::file::download(const mutable_buffer &head_buf,
 	//TODO: --- This should use the progress callback to build blocks
 	server::request remote_request
 	{
-		remote, { out_head }, { in_head, {} }, opts
+		fed::matrix_service(remote),
+		{ out_head },
+		{ in_head, {} },
+		opts
 	};
 
 	if(!remote_request.wait(seconds(download_timeout), std::nothrow))

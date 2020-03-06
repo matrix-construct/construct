@@ -60,7 +60,10 @@ ircd::m::fed::groups::publicised::publicised(const string_view &node,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -131,7 +134,10 @@ ircd::m::fed::send::send(const string_view &txnid,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -198,7 +204,10 @@ ircd::m::fed::public_rooms::public_rooms(const net::hostport &remote,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -275,7 +284,10 @@ ircd::m::fed::frontfill::frontfill(const room::id &room_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -366,7 +378,10 @@ ircd::m::fed::backfill::backfill(const room::id &room_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -430,7 +445,10 @@ ircd::m::fed::state::state(const room::id &room_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -490,7 +508,10 @@ ircd::m::fed::query_auth::query_auth(const m::room::id &room_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -555,7 +576,10 @@ ircd::m::fed::event_auth::event_auth(const m::room::id &room_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -609,7 +633,10 @@ ircd::m::fed::event::event(const m::event::id &event_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -665,7 +692,10 @@ ircd::m::fed::invite::invite(const room::id &room_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -721,7 +751,10 @@ ircd::m::fed::invite2::invite2(const room::id &room_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -777,7 +810,10 @@ ircd::m::fed::send_join::send_join(const room::id &room_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -843,7 +879,10 @@ ircd::m::fed::make_join::make_join(const room::id &room_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -976,7 +1015,10 @@ ircd::m::fed::user::keys::query::query(const json::object &content,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -1155,7 +1197,10 @@ ircd::m::fed::user::keys::claim::claim(const json::object &content,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -1268,7 +1313,10 @@ ircd::m::fed::user::devices::devices(const id::user &user_id,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -1381,7 +1429,10 @@ ircd::m::fed::query::query(const string_view &type,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -1452,7 +1503,10 @@ ircd::m::fed::key::keys::keys(const server_key &server_key,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -1513,7 +1567,10 @@ ircd::m::fed::key::query::query(const vector_view<const server_key> &keys,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {
@@ -1589,7 +1646,10 @@ ircd::m::fed::version::version(const mutable_buffer &buf,
 
 	return server::request
 	{
-		opts.remote, std::move(opts.out), std::move(opts.in), opts.sopts
+		matrix_service(opts.remote),
+		std::move(opts.out),
+		std::move(opts.in),
+		opts.sopts
 	};
 }()}
 {

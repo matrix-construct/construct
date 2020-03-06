@@ -4962,7 +4962,7 @@ console_cmd__peer(opt &out, const string_view &line)
 	{
 		auto &peer
 		{
-			server::find(hostport)
+			server::find(m::fed::matrix_service(hostport))
 		};
 
 		print_head();
@@ -5090,7 +5090,7 @@ console_cmd__peer__error__clear(opt &out, const string_view &line)
 
 	const auto cleared
 	{
-		server::errclear(hp)
+		server::errclear(m::fed::matrix_service(hp))
 	};
 
 	out << std::boolalpha << cleared << std::endl;
@@ -9377,7 +9377,7 @@ console_cmd__room__origins__random(opt &out, const string_view &line)
 	const auto ok{[&noerror]
 	(const string_view &origin)
 	{
-		if(noerror && ircd::server::errmsg(origin))
+		if(noerror && server::errmsg(m::fed::matrix_service(origin)))
 			return false;
 
 		return true;

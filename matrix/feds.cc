@@ -454,7 +454,7 @@ ircd::m::feds::for_each_in_room(const opts &opts,
 
 		const auto errmsg
 		{
-			server::errmsg(origin)
+			server::errmsg(fed::matrix_service(origin))
 		};
 
 		if(opts.closure_cached_errors || !errmsg) try
@@ -495,7 +495,7 @@ ircd::m::feds::for_one(const string_view &origin,
 
 	const auto errmsg
 	{
-		server::errmsg(origin)
+		server::errmsg(fed::matrix_service(origin))
 	};
 
 	if(opts.closure_cached_errors || !errmsg) try

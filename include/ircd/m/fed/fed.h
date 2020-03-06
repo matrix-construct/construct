@@ -13,6 +13,7 @@
 
 namespace ircd::m::fed
 {
+	net::hostport matrix_service(net::hostport);
 	id::event::buf fetch_head(const id::room &room_id, const net::hostport &remote, const id::user &);
 	id::event::buf fetch_head(const id::room &room_id, const net::hostport &remote);
 }
@@ -35,3 +36,10 @@ namespace ircd::m::fed
 #include "public_rooms.h"
 #include "send.h"
 #include "groups.h"
+
+inline ircd::net::hostport
+ircd::m::fed::matrix_service(net::hostport remote)
+{
+	net::service(remote) = net::service(remote)?: m::canon_service;
+	return remote;
+}

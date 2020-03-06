@@ -81,7 +81,7 @@ try
 	{
 		// If we have an error cached from previously not being able to
 		// contact this origin we can clear that now that they're alive.
-		server::errclear(request.origin);
+		server::errclear(fed::matrix_service(request.origin));
 
 		// The origin was verified so we can invoke the cache warming now.
 		cache_warm_origin(request);
