@@ -4431,40 +4431,49 @@ ircd::net::operator<<(std::ostream &s, const hostport &t)
 }
 
 std::string
-ircd::net::canonize(const hostport &hp,
-                    const uint16_t &port)
+ircd::net::canonize(const hostport &hostport)
 {
 	const size_t len
 	{
-		size(host(hp)) + 1 + 5 + 1 // optimistic ':' + portnum
+		size(host(hostport))            // host
+		+ 1 + size(service(hostport))   // ':' + service
+		+ 1 + 5 + 1                     // ':' + portnum  (optimistic)
 	};
 
-	return ircd::string(len, [&hp, &port]
+	return ircd::string(len, [&hostport]
 	(const mutable_buffer &buf)
 	{
-		return canonize(buf, hp, port);
+		return canonize(buf, hostport);
 	});
 }
 
 ircd::string_view
 ircd::net::canonize(const mutable_buffer &buf,
-                    const hostport &hp,
-                    const uint16_t &port)
+                    const hostport &hostport)
 {
-	thread_local char tlbuf[rfc3986::DOMAIN_BUFSIZE * 2];
+	thread_local char tlbuf[2][rfc3986::DOMAIN_BUFSIZE * 2];
 
-	if(net::port(hp) == 0 || net::port(hp) == port)
+	assert(service(hostport));
+	if(unlikely(!service(hostport)))
+		throw error
+		{
+			"Missing service suffix in hostname:service string.",
+		};
+
+	if(port(hostport))
 		return fmt::sprintf
 		{
-			buf, "%s",
-			tolower(tlbuf, host(hp)),
+			buf, "%s:%s:%u",
+			tolower(tlbuf[0], host(hostport)),
+			tolower(tlbuf[1], service(hostport)),
+			port(hostport),
 		};
 
 	return fmt::sprintf
 	{
-		buf, "%s:%u",
-		tolower(tlbuf, host(hp)),
-		net::port(hp)
+		buf, "%s:%s",
+		tolower(tlbuf[0], host(hostport)),
+		tolower(tlbuf[1], service(hostport)),
 	};
 }
 

@@ -17,6 +17,7 @@ namespace ircd::server
 	template<class F> static size_t accumulate_peers(F&&);
 	template<class F> static size_t accumulate_links(F&&);
 	template<class F> static size_t accumulate_tags(F&&);
+	static string_view canonize(const hostport &); // TLS buffer
 
 	// Internal control
 	static decltype(ircd::server::peers)::iterator
@@ -126,14 +127,17 @@ ircd::server::init::interrupt()
 ircd::server::peer &
 ircd::server::get(const net::hostport &hostport)
 {
-	thread_local char canonbuf[512];
-	const auto canonized
+	const auto hostcanon
 	{
-		net::canonize(canonbuf, hostport)
+		server::canonize(hostport)
 	};
 
-	auto it(peers.lower_bound(canonized));
-	if(it == peers.end() || it->first != canonized)
+	auto it
+	{
+		peers.lower_bound(hostcanon)
+	};
+
+	if(it == peers.end() || it->first != hostcanon)
 		it = create(hostport, it);
 
 	return *it->second;
@@ -168,28 +172,47 @@ ircd::server::create(const net::hostport &hostport,
 ircd::server::peer &
 ircd::server::find(const net::hostport &hostport)
 {
-	return *peers.at(host(hostport));
+	const auto hostcanon
+	{
+		server::canonize(hostport)
+	};
+
+	return *peers.at(hostcanon);
 }
 
 bool
 ircd::server::exists(const net::hostport &hostport)
 noexcept
 {
-	return peers.find(host(hostport)) != end(peers);
+	const auto hostcanon
+	{
+		server::canonize(hostport)
+	};
+
+	return peers.find(hostcanon) != end(peers);
 }
 
 bool
 ircd::server::errclear(const net::hostport &hostport)
 {
+	const auto hostcanon
+	{
+		server::canonize(hostport)
+	};
+
 	const auto it
 	{
-		peers.find(host(hostport))
+		peers.find(hostcanon)
 	};
 
 	if(it == end(peers))
 		return false;
 
-	auto &peer(*it->second);
+	auto &peer
+	{
+		*it->second
+	};
+
 	return peer.err_clear();
 }
 
@@ -197,15 +220,19 @@ ircd::string_view
 ircd::server::errmsg(const net::hostport &hostport)
 noexcept
 {
-	const auto it
+	const auto hostcanon
 	{
-		peers.find(host(hostport))
+		server::canonize(hostport)
 	};
 
-	if(it == end(peers))
-		return {};
+	const auto it
+	{
+		peers.find(hostcanon)
+	};
 
-	return it->second->err_msg();
+	return it != end(peers)?
+		it->second->err_msg():
+		string_view{};
 }
 
 bool
@@ -316,6 +343,13 @@ ircd::server::accumulate_peers(F&& closure)
 	});
 }
 
+ircd::string_view
+ircd::server::canonize(const net::hostport &hostport)
+{
+	thread_local char buf[512];
+	return net::canonize(buf, hostport);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // server/request.h
@@ -383,14 +417,18 @@ __attribute__((stack_protect))
 ircd::server::submit(const hostport &hostport,
                      request &request)
 {
+	assert(request.tag == nullptr);
 	if(unlikely(ircd::run::level != ircd::run::level::RUN))
 		throw unavailable
 		{
 			"Unable to fulfill requests at this time."
 		};
 
-	assert(request.tag == nullptr);
-	auto &peer(server::get(hostport));
+	auto &peer
+	{
+		server::get(hostport)
+	};
+
 	peer.submit(request);
 }
 
@@ -577,34 +615,31 @@ ircd::server::peer::peer(const net::hostport &hostport,
 {
 	net::canonize(hostport)
 }
-,service
-{
-	// hostport arguments with a port of 0 are normal; if the port is such,
-	// and if we are supplied a service string an SRV query will be performed.
-	// For other port numbers, we ignore any service string and SRV won't be
-	// resolved.
-	!net::port(hostport)?
-		net::service(hostport):
-		string_view{}
-}
 ,open_opts
 {
-	std::move(open_opts)
+	open_opts
 }
 {
-	const net::hostport &canon{this->hostcanon};
+	const net::hostport &canon
+	{
+		this->hostcanon
+	};
 
-	this->open_opts.hostport.host = this->hostcanon;
-	this->open_opts.hostport.port = net::port(hostport);
-	this->open_opts.hostport.service = this->service;
+	// Ensure references are to this class's members
+	this->open_opts.hostport.host = host(canon);
+	this->open_opts.hostport.service = service(canon);
+	this->open_opts.hostport.port = port(hostport);
 
-	this->open_opts.server_name = this->hostcanon;        // Send SNI for this name.
-	this->open_opts.common_name = this->hostcanon;        // Cert verify this name.
+	// Send SNI for this name.
+	this->open_opts.server_name = host(canon);
 
-	if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_address, host(this->open_opts.hostport)))
+	// Cert verify this name.
+	this->open_opts.common_name = host(canon);
+
+	if(rfc3986::valid(std::nothrow, rfc3986::parser::ip_address, host(canon)))
 		this->remote =
 		{
-			host(this->open_opts.hostport), port(this->open_opts.hostport)
+			host(canon), port(hostport)
 		};
 
 	this->open_opts.ipport = this->remote;

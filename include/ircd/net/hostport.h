@@ -27,8 +27,8 @@ namespace ircd::net
 	string_view &host(hostport &);
 
 	string_view string(const mutable_buffer &out, const hostport &);
-	string_view canonize(const mutable_buffer &out, const hostport &, const uint16_t &port = 0);
-	std::string canonize(const hostport &, const uint16_t &port = 0);
+	string_view canonize(const mutable_buffer &out, const hostport &);
+	std::string canonize(const hostport &);
 	std::ostream &operator<<(std::ostream &, const hostport &);
 }
 
