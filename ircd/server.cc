@@ -1212,7 +1212,7 @@ ircd::server::peer::resolve(const hostport &hostport)
 	net::dns::opts opts;
 
 	// Figure out the initial query type. Most of the time it's SRV.
-	opts.qtype = net::service(hostport)?
+	opts.qtype = net::service(hostport) && !net::port(hostport)?
 			33:  // SRV
 	peer::enable_ipv6 && net::enable_ipv6?
 			28:  // AAAA
@@ -1317,16 +1317,18 @@ try
 	}
 
 	// Target for the next address record query.
-    const hostport &target
-    {
-        rr.has("tgt")?
-            rstrip(unquote(rr.at("tgt")), '.'):
-            host(hp),
+	const hostport &target
+	{
+		rr.has("tgt")?
+			rstrip(unquote(rr.at("tgt")), '.'):
+			host(hp),
 
-        rr.has("port")?
-            rr.get<uint16_t>("port"):
-            port(hp)
-    };
+		rr.has("port")?
+			rr.get<uint16_t>("port"):
+		port(remote)?
+			port(remote):
+			port(hp)
+	};
 
 	// Save the port from the SRV record to a class member because it won't
 	// get carried through the next A/AAAA query.
@@ -1409,7 +1411,7 @@ try
 	assert(!net::dns::is_error(rr));
 	this->remote = net::ipport
 	{
-		unquote(rr.at("ip")), net::port(this->remote)
+		unquote(rr.at("ip")), port(this->remote)?: port(target)
 	};
 
 	open_opts.ipport = this->remote;
@@ -1431,7 +1433,7 @@ catch(const std::exception &e)
 }
 
 void
-ircd::server::peer::handle_resolve_A(const hostport &,
+ircd::server::peer::handle_resolve_A(const hostport &target,
                                      const json::array &rrs)
 try
 {
@@ -1473,7 +1475,7 @@ try
 	// Save the results of the query to this object instance.
 	this->remote = net::ipport
 	{
-		unquote(rr.at("ip")), net::port(this->remote)
+		unquote(rr.at("ip")), port(this->remote)?: port(target)
 	};
 
 	open_opts.ipport = this->remote;
