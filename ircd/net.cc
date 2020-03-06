@@ -1384,7 +1384,7 @@ try
 ,ep
 {
 	make_address(unquote(opts.get("host", "*"_sv))),
-	opts.get<uint16_t>("port", 8448L)
+	opts.at<uint16_t>("port")
 }
 ,a
 {
@@ -2410,7 +2410,7 @@ try
 ,ep
 {
 	make_address(unquote(opts.get("host", "*"_sv))),
-	opts.get<uint16_t>("port", 8448L)
+	opts.at<uint16_t>("port")
 }
 ,a
 {
@@ -4383,8 +4383,7 @@ const
 /// Creates a host:service or host:port pair from the single string literally
 /// containing the colon deliminated values. If the suffix is a port number
 /// then the behavior for the port number constructor applies; if a service
-/// string then the service constructor applies; if empty (just a hostname)
-/// then service "matrix" is assumed with port 8448 fallback.
+/// string then the service constructor applies.
 ircd::net::hostport::hostport(const string_view &amalgam)
 :host
 {
