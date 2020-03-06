@@ -16,6 +16,12 @@
 #include <boost/chrono/chrono.hpp>
 #include <boost/chrono/process_cpu_clocks.hpp>
 
+decltype(ircd::prof::log)
+ircd::prof::log
+{
+	"prof"
+};
+
 uint64_t
 ircd::prof::time_real()
 noexcept

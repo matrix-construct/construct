@@ -29,6 +29,8 @@ namespace ircd::prof
 	void stop(group &);
 	void start(group &);
 	void reset(group &);
+
+	extern log::log log;
 }
 
 #include "x86.h"
