@@ -14693,7 +14693,7 @@ console_cmd__well_known__matrix__server(opt &out, const string_view &line)
 		"remote"
 	}};
 
-	const net::hostport &remote
+	const string_view &remote
 	{
 		param.at("remote")
 	};
@@ -14705,7 +14705,7 @@ console_cmd__well_known__matrix__server(opt &out, const string_view &line)
 
 	const net::hostport result
 	{
-		m::fed::well_known(buf, remote)
+		m::fed::fetch_well_known(buf, remote)
 	};
 
 	out << result << std::endl;

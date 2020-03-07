@@ -1737,11 +1737,22 @@ ircd::m::fed::fetch_head(const id::room &room_id,
 	return prev_event_id;
 }
 
-ircd::net::hostport
-ircd::m::fed::well_known(const mutable_buffer &buf,
-                         const net::hostport &remote)
+ircd::string_view
+ircd::m::fed::fetch_well_known(const mutable_buffer &buf,
+                               const string_view &origin)
 try
 {
+	const net::hostport remote
+	{
+		origin
+	};
+
+	// Hard target https service; do not inherit matrix service from remote.
+	const net::hostport target
+	{
+		host(remote), "https", port(remote)
+	};
+
 	const unique_buffer<mutable_buffer> head_buf
 	{
 		16_KiB
@@ -1751,12 +1762,6 @@ try
 	http::request
 	{
 		wb, host(remote), "GET", "/.well-known/matrix/server",
-	};
-
-	// Hard target https service; do not inherit matrix service from remote.
-	const net::hostport target
-	{
-		host(remote), "https", port(remote)
 	};
 
 	const const_buffer out_head
@@ -1809,7 +1814,12 @@ try
 		string_view{response},
 	};
 
-	return matrix_service(ret);
+	// Move the returned string to the front of the buffer; this overwrites
+	// any other incoming content to focus on just the unquoted string.
+	return string_view
+	{
+		data(buf), move(buf, m_server)
+	};
 }
 catch(const ctx::interrupted &)
 {
@@ -1817,13 +1827,12 @@ catch(const ctx::interrupted &)
 }
 catch(const std::exception &e)
 {
-	thread_local char rembuf[rfc3986::DOMAIN_BUFSIZE * 2];
 	log::derror
 	{
 		log, "Matrix server well-known query for %s :%s",
-		string(rembuf, remote),
+		origin,
 		e.what(),
 	};
 
-	return remote;
+	return origin;
 }
