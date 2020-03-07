@@ -12,10 +12,10 @@
 
 using namespace ircd;
 
+/// 11.20.1.1 - The maximum number of events to return. Default: 10.
 const size_t
 default_limit
 {
-	// 11.20.1.1 - The maximum number of events to return. Default: 10.
 	10
 };
 
