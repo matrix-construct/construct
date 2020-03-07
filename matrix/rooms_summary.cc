@@ -402,13 +402,18 @@ ircd::m::rooms::summary::chunk_local(const m::room &room,
 		state.for_each("m.room.aliases", [&array]
 		(const m::event &event)
 		{
-			const json::array aliases
+			const json::object &content
 			{
-				json::get<"content"_>(event).get("aliases")
+				json::get<"content"_>(event)
 			};
 
-			for(const string_view &alias : aliases)
-				array.append(unquote(alias));
+			const json::array aliases
+			{
+				content["aliases"]
+			};
+
+			for(const json::string &a : aliases)
+				array.append(a);
 		});
 	}
 
