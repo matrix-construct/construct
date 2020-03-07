@@ -4496,6 +4496,14 @@ ircd::net::string(const mutable_buffer &buf,
 			port(hp)
 		};
 
+	if(!empty(service(hp)) && port(hp) == 0)
+		return fmt::sprintf
+		{
+			buf, "%s:%s",
+			tolower(tlbuf[0], host(hp)),
+			tolower(tlbuf[1], service(hp)),
+		};
+
 	return fmt::sprintf
 	{
 		buf, "%s:%u (%s)",
