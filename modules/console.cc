@@ -14680,3 +14680,34 @@ console_cmd__redact(opt &out, const string_view &line)
 	<< std::endl;
 	return true;
 }
+
+//
+// well-known
+//
+
+bool
+console_cmd__well_known__matrix__server(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"remote"
+	}};
+
+	const net::hostport &remote
+	{
+		param.at("remote")
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		1_KiB
+	};
+
+	const net::hostport result
+	{
+		m::fed::well_known(buf, remote)
+	};
+
+	out << result << std::endl;
+	return true;
+}

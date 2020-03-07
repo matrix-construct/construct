@@ -1736,3 +1736,94 @@ ircd::m::fed::fetch_head(const id::room &room_id,
 
 	return prev_event_id;
 }
+
+ircd::net::hostport
+ircd::m::fed::well_known(const mutable_buffer &buf,
+                         const net::hostport &remote)
+try
+{
+	const unique_buffer<mutable_buffer> head_buf
+	{
+		16_KiB
+	};
+
+	window_buffer wb{head_buf};
+	http::request
+	{
+		wb, host(remote), "GET", "/.well-known/matrix/server",
+	};
+
+	// Hard target https service; do not inherit matrix service from remote.
+	const net::hostport target
+	{
+		host(remote), "https", port(remote)
+	};
+
+	const const_buffer out_head
+	{
+		wb.completed()
+	};
+
+	// Remaining space in buffer is used for received head
+	const mutable_buffer in_head
+	{
+		buf + size(out_head)
+	};
+
+	server::request::opts opts;
+	server::request request
+	{
+		target,
+		{ out_head },
+		{ in_head, buf },
+		&opts
+	};
+
+	const auto code
+	{
+		request.get(seconds(8)) //TODO: XXX conf
+	};
+
+	const json::object &response
+	{
+		request.in.content
+	};
+
+	const json::string &m_server
+	{
+		response["m.server"]
+	};
+
+	const net::hostport ret
+	{
+		m_server
+	};
+
+	thread_local char rembuf[rfc3986::DOMAIN_BUFSIZE * 2];
+	log::debug
+	{
+		log, "Well-known matrix server query to %s %u %s :%s",
+		string(rembuf, target),
+		uint(code),
+		http::status(code),
+		string_view{response},
+	};
+
+	return matrix_service(ret);
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	thread_local char rembuf[rfc3986::DOMAIN_BUFSIZE * 2];
+	log::derror
+	{
+		log, "Matrix server well-known query for %s :%s",
+		string(rembuf, remote),
+		e.what(),
+	};
+
+	return remote;
+}
