@@ -97,25 +97,6 @@ struct ircd::net::dns::opts
 	opts() = default;
 };
 
-/// (internal) DNS cache
-namespace ircd::net::dns::cache
-{
-	using closure = std::function<bool (const string_view &, const json::object &)>;
-
-	extern conf::item<seconds> min_ttl;
-	extern conf::item<seconds> error_ttl;
-	extern conf::item<seconds> nxdomain_ttl;
-
-	string_view make_type(const mutable_buffer &out, const string_view &);
-	string_view make_type(const mutable_buffer &out, const uint16_t &);
-
-	bool for_each(const string_view &type, const closure &); // do not make_type() here
-	bool for_each(const hostport &, const opts &, const closure &);
-	bool get(const hostport &, const opts &, const callback &);
-	bool put(const hostport &, const opts &, const records &);
-	bool put(const hostport &, const opts &, const uint &code, const string_view &msg = {});
-}
-
 /// (internal)
 struct ircd::net::dns::init
 {

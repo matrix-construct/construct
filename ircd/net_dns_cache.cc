@@ -8,8 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <ircd/net/dns_cache.h>
-
 decltype(ircd::net::dns::cache::min_ttl)
 ircd::net::dns::cache::min_ttl
 {

@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 #include <RB_INC_NETDB_H
-#include <ircd/net/dns_cache.h>
 
 namespace ircd::net::dns
 {
