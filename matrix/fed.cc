@@ -466,9 +466,10 @@ ircd::m::fed::query_auth::query_auth(const m::room::id &room_id,
                                      opts opts)
 :server::request{[&]
 {
-	if(!opts.remote)
+	if(!opts.remote && event_id.version() == "1")
 		opts.remote = event_id.host();
 
+	assert(!!opts.remote);
 	if(!defined(json::get<"origin"_>(opts.request)))
 		json::get<"origin"_>(opts.request) = my_host();
 
@@ -528,9 +529,13 @@ ircd::m::fed::event_auth::event_auth(const m::room::id &room_id,
                                      opts opts)
 :server::request{[&]
 {
-	if(!opts.remote)
+	if(!opts.remote && event_id.version() == "1")
 		opts.remote = event_id.host();
 
+	if(!opts.remote)
+		opts.remote = room_id.host();
+
+	assert(!!opts.remote);
 	if(!defined(json::get<"origin"_>(opts.request)))
 		json::get<"origin"_>(opts.request) = my_host();
 
@@ -595,9 +600,10 @@ ircd::m::fed::event::event(const m::event::id &event_id,
                            opts opts)
 :server::request{[&]
 {
-	if(!opts.remote)
+	if(!opts.remote && event_id.version() == "1")
 		opts.remote = event_id.host();
 
+	assert(!!opts.remote);
 	if(!defined(json::get<"origin"_>(opts.request)))
 		json::get<"origin"_>(opts.request) = my_host();
 
