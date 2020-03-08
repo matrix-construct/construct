@@ -1290,7 +1290,7 @@ ircd::m::fed::version::version(const mutable_buffer &buf,
 // request::request
 //
 
-ircd::m::fed::request::request(const mutable_buffer &buf,
+ircd::m::fed::request::request(const mutable_buffer &buf_,
                                opts &&opts)
 :server::request{[&]
 {
@@ -1320,8 +1320,30 @@ ircd::m::fed::request::request(const mutable_buffer &buf,
 	if(!defined(json::get<"method"_>(opts.request)))
 		json::get<"method"_>(opts.request) = "GET";
 
+	// Perform well-known query; note that we hijack the user's buffer to make
+	// this query and receive the result at the front of it. When there's no
+	// well-known this fails silently by just returning the input (likely).
+	const string_view remote
+	{
+		// We don't query for well-known if the origin has an explicit port.
+		!port(net::hostport(opts.remote))?
+			well_known(buf_, opts.remote):
+			opts.remote
+	};
+
+	// Devote the remaining buffer for HTTP as otherwise intended.
+	const mutable_buffer buf
+	{
+		buf_ + size(remote)
+	};
+
 	// Generate the request head including the X-Matrix into buffer.
-	opts.out.head = opts.request(buf);
+	opts.out.head = opts.request(buf,
+	{
+		// Note that we override the HTTP Host header with the well-known
+		// remote; otherwise default is the destination above which may differ.
+		{ "Host", remote }
+	});
 
 	// Setup some buffering features which can optimize the server::request
 	if(!size(opts.in))
@@ -1335,7 +1357,7 @@ ircd::m::fed::request::request(const mutable_buffer &buf,
 	// Launch the request
 	return server::request
 	{
-		matrix_service(opts.remote),
+		matrix_service(remote),
 		std::move(opts.out),
 		std::move(opts.in),
 		opts.sopts
@@ -1347,6 +1369,10 @@ ircd::m::fed::request::request(const mutable_buffer &buf,
 ///////////////////////////////////////////////////////////////////////////////
 //
 // fed/fed.h
+//
+
+//
+// fetch_head util
 //
 
 ircd::conf::item<ircd::milliseconds>
@@ -1426,6 +1452,205 @@ ircd::m::fed::fetch_head(const id::room &room_id,
 	return prev_event_id;
 }
 
+//
+// well-known matrix server
+//
+
+ircd::log::log
+well_known_log
+{
+	"m.well-known"
+};
+
+ircd::conf::item<ircd::seconds>
+well_known_cache_default
+{
+	{ "name",     "ircd.m.fed.well-known.cache.default" },
+	{ "default",  24 * 60 * 60L                         },
+};
+
+ircd::conf::item<ircd::seconds>
+well_known_cache_error
+{
+	{ "name",     "ircd.m.fed.well-known.cache.error" },
+	{ "default",  36 * 60 * 60L                       },
+};
+
+///NOTE: not yet used until HTTP cache headers in response are respected.
+ircd::conf::item<ircd::seconds>
+well_known_cache_max
+{
+	{ "name",     "ircd.m.fed.well-known.cache.max" },
+	{ "default",  48 * 60 * 60L                     },
+};
+
+ircd::string_view
+ircd::m::fed::well_known(const mutable_buffer &buf,
+                         const string_view &origin)
+try
+{
+	static const string_view type
+	{
+		"well-known.matrix.server"
+	};
+
+	const m::room::id::buf room_id
+	{
+		"dns", m::my_host()
+	};
+
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::event::idx event_idx
+	{
+		room.get(std::nothrow, type, origin)
+	};
+
+	const milliseconds origin_server_ts
+	{
+		m::get<time_t>(std::nothrow, event_idx, "origin_server_ts", time_t(0))
+	};
+
+	const json::object content
+	{
+		origin_server_ts > 0ms?
+			m::get(std::nothrow, event_idx, "content", buf):
+			const_buffer{}
+	};
+
+	const json::string cached
+	{
+		content["m_server"]
+	};
+
+	const seconds ttl
+	{
+		content.get<time_t>("ttl", time_t(0))
+	};
+
+	const system_point expires
+	{
+		origin_server_ts + ttl
+	};
+
+	const bool expired
+	{
+		ircd::now<system_point>() > expires
+	};
+
+	// Crucial value that will provide us with a return string for this
+	// function in any case. This is obtained by either using the value
+	// found in cache or making a network query for a new value. expired=true
+	// when a network query needs to be made, otherwise we can return the
+	// cached value. If the network query fails, this value is still defaulted
+	// as the origin string to return and we'll also cache that too.
+	assert(expired || !empty(cached));
+	const string_view delegated
+	{
+		expired?
+			fetch_well_known(buf, origin):
+
+			// Move the returned string to the front of the buffer; this overwrites
+			// other data fetched by the cache query to focus on just the result.
+			string_view
+			{
+				data(buf), move(buf, cached)
+			}
+	};
+
+	// Branch on valid cache hit to return result.
+	if(!expired)
+	{
+		thread_local char tmbuf[48];
+		log::debug
+		{
+			well_known_log, "%s found in cache delegated to %s event_idx:%u expires %s",
+			origin,
+			delegated,
+			event_idx,
+			timef(tmbuf, expires, localtime),
+		};
+
+		return delegated;
+	}
+
+	// We hijack the user's buffer to construct the event content for the
+	// cache record. Since we might have already used this buffer for the
+	// actual well-known network query we window it down to not overwrite
+	// our payload string.
+	const mutable_buffer out_buf
+	{
+		buf + size(delegated)
+	};
+
+	// Print our cache record to the buffer; note that this doesn't really
+	// match the format of other DNS records in this room since it's a bit
+	// simpler, but we don't share the ircd.dns.rr type prefix anyway.
+	json::stack out{out_buf};
+	{
+		json::stack::object content
+		{
+			out
+		};
+
+		json::stack::member
+		{
+			content, "ttl", json::value
+			{
+				// Any time the well-known result is the same as the origin (that
+				// includes legitimate errors where fetch_well_known() returns the
+				// origin to default) we consider that an error and use the error
+				// TTL value. Sorry, no exponential backoff implemented yet.
+				origin == delegated?
+					seconds(well_known_cache_error).count():
+					seconds(well_known_cache_default).count()
+			}
+		};
+
+		json::stack::member
+		{
+			content, "m_server", delegated
+		};
+	}
+
+	// Write to the !dns room
+	const auto cache_id
+	{
+		m::send(room, m::me(), type, origin, json::object
+		{
+			out.completed()
+		})
+	};
+
+	log::debug
+	{
+		well_known_log, "%s caching delegation to %s to cache in %s",
+		origin,
+		delegated,
+		string_view{cache_id},
+	};
+
+	return delegated;
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		well_known_log, "%s :%s",
+		origin,
+		e.what(),
+	};
+
+	return origin;
+}
+
 ircd::string_view
 ircd::m::fed::fetch_well_known(const mutable_buffer &buf,
                                const string_view &origin)
@@ -1442,12 +1667,7 @@ try
 		host(remote), "https", port(remote)
 	};
 
-	const unique_buffer<mutable_buffer> head_buf
-	{
-		16_KiB
-	};
-
-	window_buffer wb{head_buf};
+	window_buffer wb{buf};
 	http::request
 	{
 		wb, host(remote), "GET", "/.well-known/matrix/server",
@@ -1458,7 +1678,10 @@ try
 		wb.completed()
 	};
 
-	// Remaining space in buffer is used for received head
+	// Remaining space in buffer is used for received head; note that below
+	// we specify this same buffer for in.content, but that's a trick
+	// recognized by ircd::server to place received content directly after
+	// head in this buffer without any additional dynamic allocation.
 	const mutable_buffer in_head
 	{
 		buf + size(out_head)
@@ -1469,7 +1692,7 @@ try
 	{
 		target,
 		{ out_head },
-		{ in_head, buf },
+		{ in_head, in_head },
 		&opts
 	};
 
@@ -1488,7 +1711,8 @@ try
 		response["m.server"]
 	};
 
-	const net::hostport ret
+	// This construction validates we didn't get a junk string
+	volatile const net::hostport ret
 	{
 		m_server
 	};
@@ -1496,7 +1720,8 @@ try
 	thread_local char rembuf[rfc3986::DOMAIN_BUFSIZE * 2];
 	log::debug
 	{
-		log, "Well-known matrix server query to %s %u %s :%s",
+		well_known_log, "%s query to %s %u %s :%s",
+		origin,
 		string(rembuf, target),
 		uint(code),
 		http::status(code),
@@ -1518,7 +1743,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		log, "Matrix server well-known query for %s :%s",
+		well_known_log, "%s in network query :%s",
 		origin,
 		e.what(),
 	};

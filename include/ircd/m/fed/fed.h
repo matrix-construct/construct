@@ -16,9 +16,11 @@ namespace ircd::m::fed
 {
 	net::hostport matrix_service(net::hostport);
 
-	string_view fetch_well_known(const mutable_buffer &out, const string_view &origin);
 	id::event::buf fetch_head(const id::room &room_id, const string_view &remote, const id::user &);
 	id::event::buf fetch_head(const id::room &room_id, const string_view &remote);
+
+	string_view fetch_well_known(const mutable_buffer &out, const string_view &origin);
+	string_view well_known(const mutable_buffer &out, const string_view &origin);
 }
 
 #include "request.h"
