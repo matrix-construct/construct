@@ -3379,7 +3379,7 @@ ircd::server::tag::read_chunk_head(const const_buffer &buffer,
 		content + state.content_length, beyond_head_length
 	};
 
-	assert(!empty(target));
+	assert(!empty(target) || !beyond_head);
 	move(target, beyond_head);
 
 	// Increment the content_length to now include this chunk
