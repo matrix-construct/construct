@@ -731,7 +731,7 @@ namespace ircd::m::fetch
 
 	extern conf::item<bool> check_event_id;
 	extern conf::item<bool> check_conforms;
-	extern conf::item<int> check_signature;
+	extern conf::item<bool> check_signature;
 }
 
 decltype(ircd::m::fetch::check_event_id)
