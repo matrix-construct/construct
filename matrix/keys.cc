@@ -219,7 +219,7 @@ try
 	assert(!query_server.empty());
 
 	m::fed::key::opts opts;
-	opts.remote = net::hostport{query_server};
+	opts.remote = query_server;
 	opts.dynamic = true;
 	const unique_buffer<mutable_buffer> buf
 	{

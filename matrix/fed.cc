@@ -1675,7 +1675,7 @@ fetch_head_timeout
 
 ircd::m::event::id::buf
 ircd::m::fed::fetch_head(const id::room &room_id,
-                         const net::hostport &remote)
+                         const string_view &remote)
 {
 	const m::room room
 	{
@@ -1702,7 +1702,7 @@ ircd::m::fed::fetch_head(const id::room &room_id,
 
 ircd::m::event::id::buf
 ircd::m::fed::fetch_head(const id::room &room_id,
-                         const net::hostport &remote,
+                         const string_view &remote,
                          const id::user &user_id)
 {
 	const unique_buffer<mutable_buffer> buf

@@ -283,29 +283,23 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 	return ret;
 }
 
-namespace ircd::m
-{
-	thread_local char room_aliases_cache_fetch_hpbuf[384];
-}
-
 bool
 IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::fetch(std::nothrow_t,
                                      const alias &a,
-                                     const net::hostport &hp)
+                                     const string_view &remote)
 try
 {
-	fetch(a, hp);
+	fetch(a, remote);
 	return true;
 }
 catch(const std::exception &e)
 {
-	thread_local char buf[384];
 	log::error
 	{
 		log, "Failed to fetch room_id for %s from %s :%s",
 		string_view{a},
-		string(buf, hp),
+		remote,
 		e.what(),
 	};
 
@@ -364,7 +358,7 @@ ircd::m::room::aliases::cache::for_each(const closure_bool &c)
 void
 IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::fetch(const alias &alias,
-                                     const net::hostport &hp)
+                                     const string_view &remote)
 try
 {
 	const unique_buffer<mutable_buffer> buf
@@ -373,7 +367,7 @@ try
 	};
 
 	m::fed::query::opts opts;
-	opts.remote = hp;
+	opts.remote = remote;
 	opts.dynamic = true;
 
 	m::fed::query::directory request
@@ -401,7 +395,7 @@ try
 		throw m::NOT_FOUND
 		{
 			"Server '%s' does not know room_id for %s",
-			string(room_aliases_cache_fetch_hpbuf, hp),
+			remote,
 			string_view{alias},
 		};
 
@@ -413,7 +407,7 @@ catch(const ctx::timeout &e)
 	{
 		http::GATEWAY_TIMEOUT, "M_ROOM_ALIAS_TIMEOUT",
 		"Server '%s' did not respond with a room_id for %s in time",
-		string(room_aliases_cache_fetch_hpbuf, hp),
+		remote,
 		string_view{alias},
 	};
 }
@@ -423,7 +417,7 @@ catch(const server::unavailable &e)
 	{
 		http::BAD_GATEWAY, "M_ROOM_ALIAS_UNAVAILABLE",
 		"Server '%s' is not available to query a room_id for %s",
-		string(room_aliases_cache_fetch_hpbuf, hp),
+		remote,
 		string_view{alias},
 	};
 }

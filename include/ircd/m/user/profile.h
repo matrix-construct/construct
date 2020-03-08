@@ -19,7 +19,7 @@ struct ircd::m::user::profile
 
 	m::user user;
 
-	static void fetch(const m::user &, const net::hostport &, const string_view &key = {});
+	static void fetch(const m::user &, const string_view &, const string_view &key = {});
 
   public:
 	bool for_each(const closure_bool &) const;

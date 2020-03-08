@@ -14087,14 +14087,13 @@ console_cmd__fed__key__query(opt &out, const string_view &line)
 bool
 console_cmd__fed__version(opt &out, const string_view &line)
 {
-	const net::hostport remote
+	const params param{line, " ",
 	{
-		token(line, ' ', 0)
-	};
+		"remote"
+	}};
 
 	m::fed::version::opts opts;
-	opts.remote = remote;
-
+	opts.remote = param.at("remote");
 	const unique_mutable_buffer buf
 	{
 		16_KiB

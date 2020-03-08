@@ -123,7 +123,7 @@ const
 void
 IRCD_MODULE_EXPORT
 ircd::m::user::profile::fetch(const m::user &user,
-                              const net::hostport &remote,
+                              const string_view &remote,
                               const string_view &key)
 {
 	const unique_buffer<mutable_buffer> buf
