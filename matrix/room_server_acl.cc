@@ -100,6 +100,18 @@ try
 
 	return server_acl(server);
 }
+catch(const ctx::interrupted &e)
+{
+	log::derror
+	{
+		log, "Interrupted server_acl check for '%s' in %s :%s",
+		string(server),
+		string_view{room_id},
+		e.what()
+	};
+
+	throw;
+}
 catch(const std::exception &e)
 {
 	log::critical
