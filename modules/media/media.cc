@@ -214,7 +214,7 @@ ircd::m::room::id::buf
 IRCD_MODULE_EXPORT
 ircd::m::media::file::download(const mxc &mxc,
                                const m::user::id &user_id,
-                               const net::hostport &remote)
+                               const string_view &remote)
 {
 	const m::room::id::buf room_id
 	{
@@ -236,7 +236,7 @@ ircd::m::room
 IRCD_MODULE_EXPORT
 ircd::m::media::file::download(const mxc &mxc,
                                const m::user::id &user_id,
-                               const net::hostport &remote,
+                               const string_view &remote,
                                const m::room::id &room_id)
 try
 {
@@ -348,46 +348,27 @@ std::pair
 IRCD_MODULE_EXPORT
 ircd::m::media::file::download(const mutable_buffer &head_buf,
                                const mxc &mxc,
-                               net::hostport remote,
+                               string_view remote,
                                server::request::opts *const opts)
 {
-	thread_local char rembuf[256];
-	assert(remote || !my_host(mxc.server));
-	assert(!remote || !my_host(string(rembuf, remote)));
-
-	if(!remote)
-		remote = mxc.server;
-
-	window_buffer wb{head_buf};
 	thread_local char uri[4_KiB];
-	http::request
-	{
-		wb, host(remote), "GET", fmt::sprintf
-		{
-			uri, "/_matrix/media/r0/download/%s/%s",
-			mxc.server,
-			mxc.mediaid,
-		}
-	};
+	assert(remote || !my_host(mxc.server));
+	assert(!remote || !my_host(remote));
 
-	const const_buffer out_head
+	fed::request::opts fedopts;
+	fedopts.remote = remote?: mxc.server;
+	json::get<"method"_>(fedopts.request) = "GET";
+	json::get<"uri"_>(fedopts.request) = fmt::sprintf
 	{
-		wb.completed()
-	};
-
-	// Remaining space in buffer is used for received head
-	const mutable_buffer in_head
-	{
-		data(head_buf) + size(out_head), size(head_buf) - size(out_head)
+		uri, "/_matrix/media/r0/download/%s/%s",
+		mxc.server,
+		mxc.mediaid,
 	};
 
 	//TODO: --- This should use the progress callback to build blocks
-	server::request remote_request
+	fed::request remote_request
 	{
-		fed::matrix_service(remote),
-		{ out_head },
-		{ in_head, {} },
-		opts
+		head_buf, std::move(fedopts)
 	};
 
 	if(!remote_request.wait(seconds(download_timeout), std::nothrow))
@@ -395,7 +376,7 @@ ircd::m::media::file::download(const mutable_buffer &head_buf,
 		{
 			http::GATEWAY_TIMEOUT, "M_MEDIA_DOWNLOAD_TIMEOUT",
 			"Server '%s' did not respond with media for '%s/%s' in time",
-			string(rembuf, remote),
+			remote,
 			mxc.server,
 			mxc.mediaid
 		};

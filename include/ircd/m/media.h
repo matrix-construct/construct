@@ -29,18 +29,18 @@ namespace ircd::m::media::file
 	room::id::buf
 	download(const mxc &,
 	         const m::user::id &,
-	         const net::hostport & = {});
+	         const string_view & = {});
 
 	std::pair<http::response::head, unique_buffer<mutable_buffer>>
 	download(const mutable_buffer &head_buf,
 	         const mxc &mxc,
-	         net::hostport remote = {},
+	         string_view remote = {},
 	         server::request::opts *const opts = nullptr);
 
 	m::room
 	download(const mxc &mxc,
 	         const m::user::id &user_id,
-	         const net::hostport &remote,
+	         const string_view &remote,
 	         const m::room::id &room_id);
 };
 
