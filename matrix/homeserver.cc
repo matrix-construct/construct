@@ -467,6 +467,23 @@ ircd::m::homeserver::conf::conf(const struct opts &opts)
 	}
 }
 {
+	for(const auto &[key, item] : ircd::conf::items) try
+	{
+		assert(item);
+		if(item->set_cb)
+			item->set_cb();
+	}
+	catch(const std::exception &e)
+	{
+		log::error
+		{
+			"Failed to initialize conf item '%s' :%s",
+			key,
+			e.what()
+		};
+
+		throw;
+	}
 }
 
 size_t
