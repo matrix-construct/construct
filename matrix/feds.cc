@@ -225,7 +225,6 @@ ircd::m::feds::backfill(const opts &opts,
 	(auto &request, const auto &origin)
 	{
 		m::fed::backfill::opts v1opts;
-		v1opts.dynamic = true;
 		v1opts.event_id = opts.event_id;
 		v1opts.limit = opts.argi[0];
 		v1opts.remote = string_view
@@ -250,7 +249,6 @@ ircd::m::feds::state(const opts &opts,
 	(auto &request, const auto &origin)
 	{
 		m::fed::state::opts v1opts;
-		v1opts.dynamic = true;
 		v1opts.ids_only = opts.arg[0] == "ids";
 		v1opts.event_id = opts.event_id;
 		v1opts.remote = string_view
@@ -275,7 +273,6 @@ ircd::m::feds::event(const opts &opts,
 	(auto &request, const auto &origin)
 	{
 		m::fed::event::opts v1opts;
-		v1opts.dynamic = true;
 		v1opts.remote = string_view
 		{
 			strlcpy{request.origin, origin}
@@ -298,7 +295,6 @@ ircd::m::feds::auth(const opts &opts,
 	(auto &request, const auto &origin)
 	{
 		m::fed::event_auth::opts v1opts;
-		v1opts.dynamic = true;
 		v1opts.remote = string_view
 		{
 			strlcpy{request.origin, origin}

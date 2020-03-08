@@ -368,7 +368,7 @@ try
 
 	m::fed::query::opts opts;
 	opts.remote = remote;
-	opts.dynamic = true;
+	opts.dynamic = false;
 
 	m::fed::query::directory request
 	{

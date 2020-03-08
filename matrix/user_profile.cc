@@ -128,12 +128,11 @@ ircd::m::user::profile::fetch(const m::user &user,
 {
 	const unique_buffer<mutable_buffer> buf
 	{
-		64_KiB
+		16_KiB
 	};
 
 	m::fed::query::opts opts;
 	opts.remote = remote?: user.user_id.host();
-	opts.dynamic = true;
 	m::fed::query::profile federation_request
 	{
 		user.user_id, key, buf, std::move(opts)

@@ -14052,7 +14052,6 @@ console_cmd__fed__key__query(opt &out, const string_view &line)
 	});
 
 	m::fed::key::opts opts;
-	opts.dynamic = true;
 	opts.remote = param.at("remote");
 
 	const unique_buffer<mutable_buffer> buf{24_KiB};
@@ -14091,6 +14090,7 @@ console_cmd__fed__version(opt &out, const string_view &line)
 
 	m::fed::version::opts opts;
 	opts.remote = param.at("remote");
+	opts.dynamic = false;
 	const unique_mutable_buffer buf
 	{
 		16_KiB

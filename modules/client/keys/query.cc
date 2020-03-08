@@ -324,7 +324,6 @@ try
 {
 	m::fed::user::keys::query::opts opts;
 	opts.remote = remote;
-	opts.dynamic = true;
 	const auto &buffer
 	{
 		buffers.emplace_back(16_KiB)

@@ -220,10 +220,10 @@ try
 
 	m::fed::key::opts opts;
 	opts.remote = query_server;
-	opts.dynamic = true;
+	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
 	{
-		16_KiB
+		32_KiB
 	};
 
 	m::fed::key::query request
@@ -332,7 +332,7 @@ try
 	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
 	{
-		16_KiB
+		32_KiB
 	};
 
 	m::fed::key::keys request

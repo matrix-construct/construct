@@ -463,7 +463,6 @@ try
 		{
 			fed::event_auth::opts opts;
 			opts.remote = remote;
-			opts.dynamic = true;
 			request.future = std::make_unique<fed::event_auth>
 			(
 				request.opts.room_id,
@@ -479,7 +478,6 @@ try
 		{
 			fed::event::opts opts;
 			opts.remote = remote;
-			opts.dynamic = true;
 			request.future = std::make_unique<fed::event>
 			(
 				request.opts.event_id,
@@ -494,7 +492,6 @@ try
 		{
 			fed::backfill::opts opts;
 			opts.remote = remote;
-			opts.dynamic = true;
 			opts.limit = request.opts.backfill_limit;
 			opts.limit = opts.limit?: size_t(backfill_limit_default);
 			opts.event_id = request.opts.event_id;

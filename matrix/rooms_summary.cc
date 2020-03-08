@@ -74,7 +74,6 @@ ircd::m::rooms::summary::fetch::fetch(const string_view &origin,
 	opts.limit = limit;
 	opts.since = since;
 	opts.include_all_networks = true;
-	opts.dynamic = true;
 	const unique_buffer<mutable_buffer> buf
 	{
 		// Buffer for headers and send content; received content is dynamic

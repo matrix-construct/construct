@@ -1416,11 +1416,12 @@ ircd::m::fed::fetch_head(const id::room &room_id,
 {
 	const unique_buffer<mutable_buffer> buf
 	{
-		16_KiB
+		32_KiB
 	};
 
 	make_join::opts opts;
 	opts.remote = remote;
+	opts.dynamic = false;
 	make_join request
 	{
 		room_id, user_id, buf, std::move(opts)

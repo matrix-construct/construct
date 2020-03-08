@@ -416,7 +416,6 @@ try
 	};
 
 	m::fed::backfill::opts opts{host};
-	opts.dynamic = true;
 	opts.event_id = event_id;
 	opts.limit = size_t(backfill_limit);
 	m::fed::backfill request
@@ -606,7 +605,6 @@ try
 	};
 
 	m::fed::send_join::opts opts{host};
-	opts.dynamic = true;
 	m::fed::send_join send_join
 	{
 		room_id, event_id, event, buf, std::move(opts)
