@@ -837,6 +837,8 @@ dnl -fsigned-char ensures 'char' is signed on all platforms
 CFLAGS+=" -fsigned-char"
 CXXFLAGS+=" -fsigned-char"
 
+
+dnl ***************************************************************************
 dnl
 dnl Header files
 dnl
@@ -972,6 +974,8 @@ RB_CHK_SYSHEADER(experimental/string_view, [EXPERIMENTAL_STRING_VIEW])
 RB_CHK_SYSHEADER(experimental/optional, [EXPERIMENTAL_OPTIONAL])
 RB_CHK_SYSHEADER(experimental/memory_resource, [EXPERIMENTAL_MEMORY_RESOURCE])
 
+
+dnl ***************************************************************************
 dnl
 dnl Specific function checks
 dnl
@@ -998,6 +1002,10 @@ dnl
 dnl Networking Functions
 dnl
 
+dnl
+dnl ip6
+dnl
+
 AC_ARG_ENABLE(ipv6, AC_HELP_STRING([--disable-ipv6], [Disable IPv6 support]),
 [
 	ipv6="no"
@@ -1011,6 +1019,29 @@ AM_COND_IF(HAVE_IPV6,
 [
 	AC_DEFINE([HAVE_IPV6], [1], [IPv6 is supported])
 ],[])
+
+dnl
+dnl netdb / libnss_db
+dnl
+
+AC_CHECK_FUNCS([          \
+	endprotoent           \
+	getprotobyname        \
+	getprotobyname_r      \
+	setprotoent           \
+])
+
+dnl Even if getprotobyname(3) is found linux tries to open nss_db at runtime and
+dnl that surprises our user with trouble. The check catches it here FWIW.
+AM_COND_IF(LINUX,
+[
+	AC_CHECK_LIB([nss_db], [_nss_db_getprotobyname_r],
+	[
+		AC_DEFINE(HAVE_LIBNSS_DB, 1, [Define if you have libnss_db])
+	], [
+		AC_MSG_WARN([Missing libnss_db.so for getprotobyname(3) impl. Try apt-get install libnss-db])
+	])
+])
 
 
 dnl ***************************************************************************
