@@ -346,29 +346,30 @@ std::pair
 	ircd::unique_buffer<ircd::mutable_buffer>
 >
 IRCD_MODULE_EXPORT
-ircd::m::media::file::download(const mutable_buffer &head_buf,
+ircd::m::media::file::download(const mutable_buffer &buf_,
                                const mxc &mxc,
                                string_view remote,
                                server::request::opts *const opts)
 {
-	thread_local char uri[4_KiB];
 	assert(remote || !my_host(mxc.server));
 	assert(!remote || !my_host(remote));
 
+	mutable_buffer buf{buf_};
 	fed::request::opts fedopts;
 	fedopts.remote = remote?: mxc.server;
 	json::get<"method"_>(fedopts.request) = "GET";
 	json::get<"uri"_>(fedopts.request) = fmt::sprintf
 	{
-		uri, "/_matrix/media/r0/download/%s/%s",
+		buf, "/_matrix/media/r0/download/%s/%s",
 		mxc.server,
 		mxc.mediaid,
 	};
+	consume(buf, size(json::get<"uri"_>(fedopts.request)));
 
 	//TODO: --- This should use the progress callback to build blocks
 	fed::request remote_request
 	{
-		head_buf, std::move(fedopts)
+		buf, std::move(fedopts)
 	};
 
 	if(!remote_request.wait(seconds(download_timeout), std::nothrow))
