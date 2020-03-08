@@ -1524,7 +1524,7 @@ try
 
 	const json::string cached
 	{
-		content["m_server"]
+		content["m.server"]
 	};
 
 	const seconds ttl
@@ -1540,6 +1540,7 @@ try
 	const bool expired
 	{
 		ircd::now<system_point>() > expires
+		|| empty(cached)
 	};
 
 	// Crucial value that will provide us with a return string for this
@@ -1613,7 +1614,7 @@ try
 
 		json::stack::member
 		{
-			content, "m_server", delegated
+			content, "m.server", delegated
 		};
 	}
 
