@@ -17,25 +17,18 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::version
-:server::request
+:request
 {
-	struct opts;
-
-	operator json::object() const
+	explicit operator json::object() const
 	{
-		return json::object{in.content};
+		return json::object
+		{
+			in.content
+		};
 	}
 
-	version(const mutable_buffer &, opts);
-	version() = default;
-};
+	version(const mutable_buffer &,
+	        opts);
 
-struct ircd::m::fed::version::opts
-{
-	net::hostport remote;
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {false};
+	version() = default;
 };

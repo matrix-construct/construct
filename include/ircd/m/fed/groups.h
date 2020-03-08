@@ -17,25 +17,20 @@ namespace ircd::m::fed::groups
 };
 
 struct ircd::m::fed::groups::publicised
-:server::request
+:request
 {
-	struct opts;
-
-	operator json::object() const
+	explicit operator json::object() const
 	{
-		return json::object{in.content};
+		return json::object
+		{
+			in.content
+		};
 	}
 
-	publicised(const string_view &, const vector_view<const id::user> &, const mutable_buffer &, opts);
-	publicised() = default;
-};
+	publicised(const string_view &,
+	           const vector_view<const id::user> &,
+	           const mutable_buffer &,
+	           opts);
 
-struct ircd::m::fed::groups::publicised::opts
-{
-	net::hostport remote;
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {false};
+	publicised() = default;
 };

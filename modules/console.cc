@@ -6563,7 +6563,7 @@ console_cmd__stage__send(opt &out, const string_view &line)
 		"remote", "[id]"
 	}};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at(0)
 	};
@@ -8926,7 +8926,7 @@ console_cmd__room__alias__cache__fetch(opt &out, const string_view &line)
 		param["alias"]
 	};
 
-	const net::hostport &remote
+	const auto &remote
 	{
 		param["remote"]?
 			param["remote"]:
@@ -11559,7 +11559,7 @@ console_cmd__user__profile__fetch(opt &out, const string_view &line)
 		param["key"]
 	};
 
-	const net::hostport &remote
+	const auto &remote
 	{
 		param["remote"]?
 			param["remote"]:
@@ -12692,7 +12692,7 @@ console_cmd__fed__head(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at(1, room_id.host())
 	};
@@ -12782,7 +12782,7 @@ console_cmd__fed__send(opt &out, const string_view &line)
 		"remote", "event_id",
 	}};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at(0)
 	};
@@ -12878,7 +12878,7 @@ console_cmd__fed__sync(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at(1, room_id.host())
 	};
@@ -13003,7 +13003,7 @@ console_cmd__fed__state(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at(1, room_id.host())
 	};
@@ -13114,7 +13114,7 @@ console_cmd__fed__state_ids(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at(1, room_id.host())
 	};
@@ -13183,7 +13183,7 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 		m::room_id(param.at("room_id"))
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param["remote"]?
 			param["remote"]:
@@ -13280,7 +13280,7 @@ console_cmd__fed__frontfill(opt &out, const string_view &line)
 		m::room_id(param.at(0))
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at(1, room_id.host())
 	};
@@ -13350,7 +13350,7 @@ console_cmd__fed__event(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	const net::hostport &remote
+	const auto &remote
 	{
 		param.at(1, event_id.host())
 	};
@@ -13448,7 +13448,7 @@ console_cmd__fed__public_rooms(opt &out, const string_view &line)
 		"remote", "limit", "all_networks", "3pid"
 	}};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at(0)
 	};
@@ -13536,7 +13536,7 @@ console_cmd__fed__auth(opt &out, const string_view &line)
 		param.at(1)
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at(2, event_id.host())
 	};
@@ -13617,7 +13617,7 @@ console_cmd__fed__query_auth(opt &out, const string_view &line)
 		param.at(1)
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at(2, event_id.host())
 	};
@@ -13707,7 +13707,7 @@ console_cmd__fed__query__profile(opt &out, const string_view &line)
 		token(line, ' ', 0)
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		token_count(line, ' ') > 1? token(line, ' ', 1) : user_id.host()
 	};
@@ -13748,7 +13748,7 @@ console_cmd__fed__query__directory(opt &out, const string_view &line)
 		token(line, ' ', 0)
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		token_count(line, ' ') > 1? token(line, ' ', 1) : room_alias.host()
 	};
@@ -13794,7 +13794,7 @@ console_cmd__fed__user__devices(opt &out, const string_view &line)
 		param.at("user_id")
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at("remote", user_id.host())
 	};
@@ -13858,7 +13858,7 @@ console_cmd__fed__user__keys__query(opt &out, const string_view &line)
 		param.at("device_id", string_view{})
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at("remote", user_id.host())
 	};
@@ -13944,7 +13944,7 @@ console_cmd__fed__user__keys__claim(opt &out, const string_view &line)
 		param.at("algorithm")
 	};
 
-	const net::hostport remote
+	const string_view remote
 	{
 		param.at("remote", user_id.host())
 	};
@@ -14053,10 +14053,7 @@ console_cmd__fed__key__query(opt &out, const string_view &line)
 
 	m::fed::key::opts opts;
 	opts.dynamic = true;
-	opts.remote = net::hostport
-	{
-		param.at(0)
-	};
+	opts.remote = param.at("remote");
 
 	const unique_buffer<mutable_buffer> buf{24_KiB};
 	m::fed::key::query request

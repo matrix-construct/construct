@@ -17,27 +17,28 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::state
-:server::request
+:request
 {
 	struct opts;
 
 	explicit operator json::object() const
 	{
-		return json::object{in.content};
+		return json::object
+		{
+			in.content
+		};
 	}
 
-	state(const room::id &, const mutable_buffer &, opts);
+	state(const room::id &,
+	      const mutable_buffer &,
+	      opts);
+
 	state() = default;
 };
 
 struct ircd::m::fed::state::opts
+:request::opts
 {
-	net::hostport remote;
 	string_view event_id;
 	bool ids_only {false};
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {true};
 };

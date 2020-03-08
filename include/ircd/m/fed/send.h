@@ -21,14 +21,16 @@ namespace ircd::m::fed
 /// must stay in scope to complete the request until the future is resolved.
 ///
 struct ircd::m::fed::send
-:server::request
+:request
 {
-	struct opts;
 	struct response;
 
-	operator json::object() const
+	explicit operator json::object() const
 	{
-		return { in.content };
+		return json::object
+		{
+			in.content
+		};
 	}
 
 	send(const string_view &txnid,        // transaction ID (goes in URL)
@@ -37,35 +39,6 @@ struct ircd::m::fed::send
 	     opts);                           // options structure
 
 	send() = default;
-};
-
-/// Options for a federation send request.
-///
-struct ircd::m::fed::send::opts
-{
-	/// The remote server to contact. Must be specified for this request.
-	net::hostport remote;
-
-	/// The m::request structure which helps compose this request. The fields
-	/// of this object are eventually used to sign the request for [Fed. 12.1]
-	/// Request Authentication. User does not have to fill anything in here;
-	/// anything not provided is derived automatically, but providing these
-	/// fields will override that derivation.
-	m::request request;
-
-	/// The lower-level server::out structure used by server:: when transmitting
-	/// data; providing anything here is optional and will override things.
-	server::out out;
-
-	/// The lower-level server::in structure used by server:: when receiving
-	/// data; providing anything here is optional and will override things.
-	server::in in;
-
-	/// The lower-level server::request::opts configuration to attach to
-	/// this request.
-	const struct server::request::opts *sopts {nullptr};
-
-	bool dynamic {false};
 };
 
 /// Helper for dealing with response content from a /send/.

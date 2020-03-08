@@ -17,34 +17,41 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::frontfill
-:server::request
+:request
 {
 	struct opts;
 	using span = std::pair<m::event::id, m::event::id>;
 	using vector = vector_view<const m::event::id>;
 	using ranges = std::pair<vector, vector>;
 
-    static const_buffer make_content(const mutable_buffer &, const ranges &, const opts &);
+	static const_buffer make_content(const mutable_buffer &, const ranges &, const opts &);
 
 	explicit operator json::array() const
 	{
-		const json::object content{in.content};
-		return content.get("events");
+		const json::object content
+		{
+			in.content
+		};
+
+		return content["events"];
 	}
 
-	frontfill(const room::id &, const ranges &, const mutable_buffer &, opts);
-	frontfill(const room::id &, const span &, const mutable_buffer &, opts);
+	frontfill(const room::id &,
+	          const ranges &,
+	          const mutable_buffer &,
+	          opts);
+
+	frontfill(const room::id &,
+	          const span &,
+	          const mutable_buffer &,
+	          opts);
+
 	frontfill() = default;
 };
 
 struct ircd::m::fed::frontfill::opts
+:request::opts
 {
-	net::hostport remote;
 	size_t limit {64};
 	uint64_t min_depth {0};
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {true};
 };

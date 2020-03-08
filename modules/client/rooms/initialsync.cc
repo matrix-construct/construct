@@ -272,7 +272,7 @@ get__initialsync_remote(client &client,
 		})
 	};
 
-	const net::hostport remote
+	const auto remote
 	{
 		server?: room.room_id.host()
 	};

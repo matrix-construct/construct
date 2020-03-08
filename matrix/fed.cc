@@ -17,21 +17,16 @@ ircd::m::fed::groups::publicised::publicised(const string_view &node,
                                              const vector_view<const id::user> &user_ids,
                                              const mutable_buffer &buf_,
                                              opts opts)
-:server::request{[&]
+:request{[&]
 {
-	if(!opts.remote)
+	if(likely(!opts.remote))
 		opts.remote = node;
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
-
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = node;
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/get_groups_publicised";
 
-	json::get<"method"_>(opts.request) = "POST";
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "POST";
 
 	mutable_buffer buf{buf_};
 	const string_view user_ids_
@@ -45,25 +40,9 @@ ircd::m::fed::groups::publicised::publicised(const string_view &node,
 		{ "user_ids", user_ids_ }
 	});
 
-	// (front of buf was advanced by stringify)
-	opts.out.content = json::get<"content"_>(opts.request);
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	return request
 	{
-		consume(buf, size(opts.out.head));
-		opts.in.head = buf;
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -83,61 +62,44 @@ const
 		this->get("pdus")
 	};
 
-	for(const auto &member : pdus)
-	{
-		const id::event &event_id{member.first};
-		const json::object &error{member.second};
+	for(const auto &[event_id, error] : pdus)
 		closure(event_id, error);
-	}
 }
 
 ircd::m::fed::send::send(const string_view &txnid,
                          const const_buffer &content,
-                         const mutable_buffer &buf,
+                         const mutable_buffer &buf_,
                          opts opts)
-:server::request{[&]
+:request{[&]
 {
 	assert(!!opts.remote);
 
 	assert(!size(opts.out.content));
-	opts.out.content = content;
-
 	assert(!defined(json::get<"content"_>(opts.request)));
-	json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
-
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	json::get<"content"_>(opts.request) = json::object
 	{
-		thread_local char urlbuf[1024], txnidbuf[512];
+		content
+	};
+
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "PUT";
+
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
+	{
+		thread_local char txnidbuf[256];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/send/%s/",
+			buf, "/_matrix/federation/v1/send/%s/",
 			url::encode(txnidbuf, txnid),
 		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "PUT";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -148,29 +110,21 @@ ircd::m::fed::send::send(const string_view &txnid,
 // fed/public_rooms.h
 //
 
-ircd::m::fed::public_rooms::public_rooms(const net::hostport &remote,
-                                         const mutable_buffer &buf,
+ircd::m::fed::public_rooms::public_rooms(const string_view &remote,
+                                         const mutable_buffer &buf_,
                                          opts opts)
-:server::request{[&]
+:request{[&]
 {
 	if(!opts.remote)
 		opts.remote = remote;
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		thread_local char urlbuf[3072], query[2048], since[1024], tpid[1024];
+		thread_local char query[2048], tpid[1024], since[1024];
 		std::stringstream qss;
 		pubsetbuf(qss, query);
 
@@ -184,30 +138,18 @@ ircd::m::fed::public_rooms::public_rooms(const net::hostport &remote,
 
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/publicRooms?limit=%zu%s%s",
+			buf, "/_matrix/federation/v1/publicRooms?limit=%zu%s%s",
 			opts.limit,
 			opts.include_all_networks? "&include_all_networks=true" : "",
 			view(qss, query)
 		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "GET";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -236,58 +178,42 @@ ircd::m::fed::frontfill::frontfill(const room::id &room_id,
                                    const ranges &pair,
                                    const mutable_buffer &buf_,
                                    opts opts)
-:server::request{[&]
+:request{[&]
 {
 	assert(!!opts.remote);
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
-
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"uri"_>(opts.request)))
-	{
-		thread_local char urlbuf[1024], ridbuf[768];
-		json::get<"uri"_>(opts.request) = fmt::sprintf
-		{
-			urlbuf, "/_matrix/federation/v1/get_missing_events/%s/",
-			url::encode(ridbuf, room_id)
-		};
-	}
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "POST";
 
 	window_buffer buf{buf_};
-	if(!defined(json::get<"content"_>(opts.request)))
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
+	{
+		thread_local char ridbuf[768];
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			buf, "/_matrix/federation/v1/get_missing_events/%s/",
+			url::encode(ridbuf, room_id)
+		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
+	}
+
+	if(likely(!defined(json::get<"content"_>(opts.request))))
 	{
 		buf([&pair, &opts](const mutable_buffer &buf)
 		{
 			return make_content(buf, pair, opts);
 		});
 
-		json::get<"content"_>(opts.request) = json::object{buf.completed()};
-		opts.out.content = json::get<"content"_>(opts.request);
+		json::get<"content"_>(opts.request) = json::object
+		{
+			buf.completed()
+		};
 	}
 
-	json::get<"method"_>(opts.request) = "POST";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -327,13 +253,10 @@ ircd::m::fed::frontfill::make_content(const mutable_buffer &buf,
 //
 
 ircd::m::fed::backfill::backfill(const room::id &room_id,
-                                 const mutable_buffer &buf,
+                                 const mutable_buffer &buf_,
                                  opts opts)
-:server::request{[&]
+:request{[&]
 {
-	if(!opts.remote)
-		opts.remote = room_id.host();
-
 	m::event::id::buf event_id_buf;
 	if(!opts.event_id)
 	{
@@ -341,47 +264,30 @@ ircd::m::fed::backfill::backfill(const room::id &room_id,
 		opts.event_id = event_id_buf;
 	}
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(!opts.remote)
+		opts.remote = room_id.host();
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
 
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
+		thread_local char ridbuf[768], eidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/backfill/%s/?limit=%zu&v=%s",
+			buf, "/_matrix/federation/v1/backfill/%s/?limit=%zu&v=%s",
 			url::encode(ridbuf, room_id),
 			opts.limit,
 			url::encode(eidbuf, opts.event_id),
 		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "GET";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -393,13 +299,10 @@ ircd::m::fed::backfill::backfill(const room::id &room_id,
 //
 
 ircd::m::fed::state::state(const room::id &room_id,
-                           const mutable_buffer &buf,
+                           const mutable_buffer &buf_,
                            opts opts)
-:server::request{[&]
+:request{[&]
 {
-	if(!opts.remote)
-		opts.remote = room_id.host();
-
 	m::event::id::buf event_id_buf;
 	if(!opts.event_id)
 	{
@@ -407,48 +310,31 @@ ircd::m::fed::state::state(const room::id &room_id,
 		opts.event_id = event_id_buf;
 	}
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(!opts.remote)
+		opts.remote = room_id.host();
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
 
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
+		thread_local char ridbuf[768], eidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/%s/%s/?event_id=%s%s",
+			buf, "/_matrix/federation/v1/%s/%s/?event_id=%s%s",
 			opts.ids_only? "state_ids" : "state",
 			url::encode(ridbuf, room_id),
 			url::encode(eidbuf, opts.event_id),
 			opts.ids_only? "&auth_chain_ids=0"_sv : ""_sv,
 		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "GET";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -462,57 +348,37 @@ ircd::m::fed::state::state(const room::id &room_id,
 ircd::m::fed::query_auth::query_auth(const m::room::id &room_id,
                                      const m::event::id &event_id,
                                      const json::object &content,
-                                     const mutable_buffer &buf,
+                                     const mutable_buffer &buf_,
                                      opts opts)
-:server::request{[&]
+:request{[&]
 {
 	if(!opts.remote && event_id.version() == "1")
 		opts.remote = event_id.host();
 
-	assert(!!opts.remote);
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
-
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(!defined(json::get<"content"_>(opts.request)))
+	if(likely(!defined(json::get<"content"_>(opts.request))))
 		json::get<"content"_>(opts.request) = content;
 
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "POST";
 
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
+		thread_local char ridbuf[768], eidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/query_auth/%s/%s",
+			buf, "/_matrix/federation/v1/query_auth/%s/%s",
 			url::encode(ridbuf, room_id),
 			url::encode(eidbuf, event_id),
 		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "POST";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	assert(!!opts.remote);
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -525,9 +391,9 @@ ircd::m::fed::query_auth::query_auth(const m::room::id &room_id,
 
 ircd::m::fed::event_auth::event_auth(const m::room::id &room_id,
                                      const m::event::id &event_id,
-                                     const mutable_buffer &buf,
+                                     const mutable_buffer &buf_,
                                      opts opts)
-:server::request{[&]
+:request{[&]
 {
 	if(!opts.remote && event_id.version() == "1")
 		opts.remote = event_id.host();
@@ -535,56 +401,35 @@ ircd::m::fed::event_auth::event_auth(const m::room::id &room_id,
 	if(!opts.remote)
 		opts.remote = room_id.host();
 
-	assert(!!opts.remote);
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
-
+		thread_local char ridbuf[768], eidbuf[768];
 		if(opts.ids_only)
 			json::get<"uri"_>(opts.request) = fmt::sprintf
 			{
-				urlbuf, "/_matrix/federation/v1/state_ids/%s/?event_id=%s&pdu_ids=0",
+				buf, "/_matrix/federation/v1/state_ids/%s/?event_id=%s&pdu_ids=0",
 				url::encode(ridbuf, room_id),
 				url::encode(eidbuf, event_id),
 			};
 		else
 			json::get<"uri"_>(opts.request) = fmt::sprintf
 			{
-				urlbuf, "/_matrix/federation/v1/event_auth/%s/%s",
+				buf, "/_matrix/federation/v1/event_auth/%s/%s",
 				url::encode(ridbuf, room_id),
 				url::encode(eidbuf, event_id),
 			};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "GET";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	assert(!!opts.remote);
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -596,53 +441,33 @@ ircd::m::fed::event_auth::event_auth(const m::room::id &room_id,
 //
 
 ircd::m::fed::event::event(const m::event::id &event_id,
-                           const mutable_buffer &buf,
+                           const mutable_buffer &buf_,
                            opts opts)
-:server::request{[&]
+:request{[&]
 {
 	if(!opts.remote && event_id.version() == "1")
 		opts.remote = event_id.host();
 
-	assert(!!opts.remote);
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		thread_local char urlbuf[1024], eidbuf[768];
+		thread_local char eidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/event/%s/",
+			buf, "/_matrix/federation/v1/event/%s/",
 			url::encode(eidbuf, event_id),
 		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "GET";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	assert(!!opts.remote);
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -656,52 +481,35 @@ ircd::m::fed::event::event(const m::event::id &event_id,
 ircd::m::fed::invite::invite(const room::id &room_id,
                              const id::event &event_id,
                              const json::object &content,
-                             const mutable_buffer &buf,
+                             const mutable_buffer &buf_,
                              opts opts)
-:server::request{[&]
+:request{[&]
 {
-	assert(!!opts.remote);
-
 	assert(!size(opts.out.content));
-	opts.out.content = content;
-
 	assert(!defined(json::get<"content"_>(opts.request)));
-	json::get<"content"_>(opts.request) = json::object{opts.out.content};
+	json::get<"content"_>(opts.request) = content;
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "PUT";
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
+		thread_local char ridbuf[768], eidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/invite/%s/%s",
+			buf, "/_matrix/federation/v1/invite/%s/%s",
 			url::encode(ridbuf, room_id),
 			url::encode(eidbuf, event_id)
 		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "PUT";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	assert(!!opts.remote);
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -715,52 +523,35 @@ ircd::m::fed::invite::invite(const room::id &room_id,
 ircd::m::fed::invite2::invite2(const room::id &room_id,
                                const id::event &event_id,
                                const json::object &content,
-                               const mutable_buffer &buf,
+                               const mutable_buffer &buf_,
                                opts opts)
-:server::request{[&]
+:request{[&]
 {
-	assert(!!opts.remote);
-
 	assert(!size(opts.out.content));
-	opts.out.content = content;
-
 	assert(!defined(json::get<"content"_>(opts.request)));
-	json::get<"content"_>(opts.request) = json::object{opts.out.content};
+	json::get<"content"_>(opts.request) = content;
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "PUT";
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		thread_local char urlbuf[2048], ridbuf[768], eidbuf[768];
+		thread_local char ridbuf[768], eidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v2/invite/%s/%s",
+			buf, "/_matrix/federation/v2/invite/%s/%s",
 			url::encode(ridbuf, room_id),
 			url::encode(eidbuf, event_id)
 		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "PUT";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	assert(!!opts.remote);
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -774,52 +565,39 @@ ircd::m::fed::invite2::invite2(const room::id &room_id,
 ircd::m::fed::send_join::send_join(const room::id &room_id,
                                    const id::event &event_id,
                                    const const_buffer &content,
-                                   const mutable_buffer &buf,
+                                   const mutable_buffer &buf_,
                                    opts opts)
-:server::request{[&]
+:request{[&]
 {
 	assert(!!opts.remote);
 
 	assert(!size(opts.out.content));
-	opts.out.content = content;
-
 	assert(!defined(json::get<"content"_>(opts.request)));
-	json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
-
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	json::get<"content"_>(opts.request) = json::object
 	{
-		thread_local char urlbuf[2048], ridbuf[768], uidbuf[768];
+		content
+	};
+
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "PUT";
+
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
+	{
+		thread_local char ridbuf[768], uidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/send_join/%s/%s",
+			buf, "/_matrix/federation/v1/send_join/%s/%s",
 			url::encode(ridbuf, room_id),
 			url::encode(uidbuf, event_id)
 		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "PUT";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -832,63 +610,43 @@ ircd::m::fed::send_join::send_join(const room::id &room_id,
 
 ircd::m::fed::make_join::make_join(const room::id &room_id,
                                    const id::user &user_id_,
-                                   const mutable_buffer &buf,
+                                   const mutable_buffer &buf_,
                                    opts opts)
-:server::request{[&]
+:request{[&]
 {
 	if(!opts.remote)
 		opts.remote = room_id.host();
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	id::user::buf user_id_buf;
-	const id::user &user_id
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		user_id_?: id::user
+		id::user::buf user_id_buf;
+		const id::user &user_id
 		{
-			user_id_buf, id::generate, json::get<"origin"_>(opts.request)
-		}
-	};
+			user_id_?: id::user
+			{
+				user_id_buf, id::generate, my_host()
+			}
+		};
 
-	if(!defined(json::get<"uri"_>(opts.request)))
-	{
-		thread_local char urlbuf[2048], ridbuf[768], uidbuf[768];
+		thread_local char ridbuf[768], uidbuf[768];
 		json::get<"uri"_>(opts.request) = fmt::sprintf
 		{
-			urlbuf, "/_matrix/federation/v1/make_join/%s/%s"
+			buf, "/_matrix/federation/v1/make_join/%s/%s"
 			"?ver=1&ver=2&ver=3&ver=4&ver=5&ver=6&ver=7&ver=8",
 			url::encode(ridbuf, room_id),
 			url::encode(uidbuf, user_id)
 		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	json::get<"method"_>(opts.request) = "GET";
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -989,42 +747,22 @@ ircd::m::fed::user::keys::query::query(const users_devices_map &m,
 ircd::m::fed::user::keys::query::query(const json::object &content,
                                        const mutable_buffer &buf,
                                        opts opts)
-:server::request{[&]
+:request{[&]
 {
 	assert(!!opts.remote);
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
-
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(!defined(json::get<"uri"_>(opts.request)))
-		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/user/keys/query";
-
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = content;
-
-	if(!defined(json::get<"method"_>(opts.request)))
+	if(likely(!defined(json::get<"method"_>(opts.request))))
 		json::get<"method"_>(opts.request) = "POST";
 
-	opts.out.content = json::get<"content"_>(opts.request);
-	opts.out.head = opts.request(buf);
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
+		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/user/keys/query";
 
-	if(!size(opts.in))
-	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
+	if(likely(!defined(json::get<"content"_>(opts.request))))
+		json::get<"content"_>(opts.request) = content;
 
-	return server::request
+	return request
 	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -1171,42 +909,19 @@ ircd::m::fed::user::keys::claim::claim(const users_devices_map &m,
 ircd::m::fed::user::keys::claim::claim(const json::object &content,
                                        const mutable_buffer &buf,
                                        opts opts)
-:server::request{[&]
+:request{[&]
 {
 	assert(!!opts.remote);
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
-
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(!defined(json::get<"uri"_>(opts.request)))
-		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/user/keys/claim";
-
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = content;
-
-	if(!defined(json::get<"method"_>(opts.request)))
+	if(likely(!defined(json::get<"method"_>(opts.request))))
 		json::get<"method"_>(opts.request) = "POST";
 
-	opts.out.content = json::get<"content"_>(opts.request);
-	opts.out.head = opts.request(buf);
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
+		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/user/keys/claim";
 
-	if(!size(opts.in))
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -1278,51 +993,32 @@ ircd::m::fed::user::keys::claim::make_content(const mutable_buffer &buf,
 //
 
 ircd::m::fed::user::devices::devices(const id::user &user_id,
-                                     const mutable_buffer &buf,
+                                     const mutable_buffer &buf_,
                                      opts opts)
-:server::request{[&]
+:request{[&]
 {
 	if(!opts.remote)
 		opts.remote = user_id.host();
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
-
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(!defined(json::get<"uri"_>(opts.request)))
-	{
-		thread_local char urlbuf[2048], uidbuf[768];
-		json::get<"uri"_>(opts.request) = fmt::sprintf
-		{
-			urlbuf, "/_matrix/federation/v1/user/devices/%s",
-			url::encode(uidbuf, user_id)
-		};
-	}
-
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"method"_>(opts.request)))
+	if(likely(!defined(json::get<"method"_>(opts.request))))
 		json::get<"method"_>(opts.request) = "GET";
 
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
+		thread_local char uidbuf[768];
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			buf, "/_matrix/federation/v1/user/devices/%s",
+			url::encode(uidbuf, user_id)
+		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	return server::request
+	return request
 	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -1347,7 +1043,8 @@ ircd::m::fed::query::directory::directory(const id::room_alias &room_alias,
 	"directory",
 	fmt::sprintf
 	{
-		query_arg_buf, "room_alias=%s", url::encode(query_url_buf, room_alias)
+		query_arg_buf, "room_alias=%s",
+		url::encode(query_url_buf, room_alias)
 	},
 	buf,
 	std::move(opts)
@@ -1363,7 +1060,8 @@ ircd::m::fed::query::profile::profile(const id::user &user_id,
 	"profile",
 	fmt::sprintf
 	{
-		query_arg_buf, "user_id=%s", url::encode(query_url_buf, user_id)
+		query_arg_buf, "user_id=%s",
+		url::encode(query_url_buf, user_id)
 	},
 	buf,
 	std::move(opts)
@@ -1382,7 +1080,7 @@ ircd::m::fed::query::profile::profile(const id::user &user_id,
 	{
 		query_arg_buf, "user_id=%s%s%s",
 		url::encode(query_url_buf, string_view{user_id}),
-		!empty(field)? "&field=" : "",
+		!empty(field)? "&field="_sv: string_view{},
 		field
 	},
 	buf,
@@ -1393,52 +1091,32 @@ ircd::m::fed::query::profile::profile(const id::user &user_id,
 
 ircd::m::fed::query::query(const string_view &type,
                            const string_view &args,
-                           const mutable_buffer &buf,
+                           const mutable_buffer &buf_,
                            opts opts)
-:server::request{[&]
+:request{[&]
 {
 	assert(!!opts.remote);
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
-
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(!defined(json::get<"uri"_>(opts.request)))
-	{
-		thread_local char urlbuf[2048];
-		json::get<"uri"_>(opts.request) = fmt::sprintf
-		{
-			urlbuf, "/_matrix/federation/v1/query/%s%s%s",
-			type,
-			args? "?"_sv : ""_sv,
-			args
-		};
-	}
-
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"method"_>(opts.request)))
+	if(likely(!defined(json::get<"method"_>(opts.request))))
 		json::get<"method"_>(opts.request) = "GET";
 
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			buf, "/_matrix/federation/v1/query/%s%s%s",
+			type,
+			args? "?"_sv: string_view{},
+			args
+		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
 	}
 
-	return server::request
+	return request
 	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -1460,59 +1138,40 @@ ircd::m::fed::key::keys::keys(const string_view &server_name,
 }
 
 ircd::m::fed::key::keys::keys(const server_key &server_key,
-                              const mutable_buffer &buf,
+                              const mutable_buffer &buf_,
                               opts opts)
-:server::request{[&]
+:request{[&]
 {
-	const auto &server_name{server_key.first};
-	const auto &key_id{server_key.second};
+	const auto &[server_name, key_id]
+	{
+		server_key
+	};
 
-	if(!opts.remote)
-		opts.remote = net::hostport{server_name};
+	if(likely(!opts.remote))
+		opts.remote = server_name;
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	mutable_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 	{
 		if(!empty(key_id))
 		{
-			thread_local char uribuf[512];
 			json::get<"uri"_>(opts.request) = fmt::sprintf
 			{
-				uribuf, "/_matrix/key/v2/server/%s/", key_id
+				buf, "/_matrix/key/v2/server/%s/",
+				key_id
 			};
+
+			consume(buf, size(json::get<"uri"_>(opts.request)));
 		}
 		else json::get<"uri"_>(opts.request) = "/_matrix/key/v2/server/";
 	}
 
-	json::get<"method"_>(opts.request) = "GET";
-
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -1528,55 +1187,33 @@ namespace ircd::m::fed
 ircd::m::fed::key::query::query(const vector_view<const server_key> &keys,
                                 const mutable_buffer &buf_,
                                 opts opts)
-:server::request{[&]
+:request{[&]
 {
 	assert(!!opts.remote);
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "POST";
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(defined(json::get<"content"_>(opts.request)))
-		opts.out.content = json::get<"content"_>(opts.request);
-
-	if(!defined(json::get<"content"_>(opts.request)))
-		json::get<"content"_>(opts.request) = json::object{opts.out.content};
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 		json::get<"uri"_>(opts.request) = "/_matrix/key/v2/query";
 
-	json::get<"method"_>(opts.request) = "POST";
-
 	window_buffer buf{buf_};
-	if(!defined(json::get<"content"_>(opts.request)))
+	if(likely(!defined(json::get<"content"_>(opts.request))))
 	{
 		buf([&keys](const mutable_buffer &buf)
 		{
 			return _make_server_keys(keys, buf);
 		});
 
-		json::get<"content"_>(opts.request) = json::object{buf.completed()};
-		opts.out.content = json::get<"content"_>(opts.request);
+		json::get<"content"_>(opts.request) = json::object
+		{
+			buf.completed()
+		};
 	}
 
-	opts.out.head = opts.request(buf);
-
-	if(!size(opts.in))
+	return request
 	{
-		opts.in.head = buf + size(opts.out.head);
-		opts.in.content = opts.dynamic?
-			mutable_buffer{}:  // server::request will allocate new mem
-			opts.in.head;      // server::request will auto partition
-	}
-
-	return server::request
-	{
-		matrix_service(opts.remote),
-		std::move(opts.out),
-		std::move(opts.in),
-		opts.sopts
+		buf, std::move(opts)
 	};
 }()}
 {
@@ -1626,22 +1263,67 @@ ircd::m::fed::_make_server_keys(const vector_view<const key::server_key> &keys,
 
 ircd::m::fed::version::version(const mutable_buffer &buf,
                                opts opts)
-:server::request{[&]
+:request{[&]
 {
 	assert(!!opts.remote);
 
-	if(!defined(json::get<"origin"_>(opts.request)))
-		json::get<"origin"_>(opts.request) = my_host();
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
 
-	if(!defined(json::get<"destination"_>(opts.request)))
-		json::get<"destination"_>(opts.request) = host(opts.remote);
-
-	if(!defined(json::get<"uri"_>(opts.request)))
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
 		json::get<"uri"_>(opts.request) = "/_matrix/federation/v1/version";
 
-	json::get<"method"_>(opts.request) = "GET";
+	return request
+	{
+		buf, std::move(opts)
+	};
+}()}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// fed/request.h
+//
+
+//
+// request::request
+//
+
+ircd::m::fed::request::request(const mutable_buffer &buf,
+                               opts &&opts)
+:server::request{[&]
+{
+	// Requestor must always provide a remote by this point.
+	assert(!!opts.remote);
+
+	// Requestor must always generate a uri by this point
+	assert(defined(json::get<"uri"_>(opts.request)));
+
+	// Default the origin to my primary homeserver
+	if(likely(!defined(json::get<"origin"_>(opts.request))))
+		json::get<"origin"_>(opts.request) = my_host();
+
+	// Default the destination to the remote origin
+	if(likely(!defined(json::get<"destination"_>(opts.request))))
+		json::get<"destination"_>(opts.request) = opts.remote;
+
+	// Set the outgoing HTTP content from the request's content field.
+	if(likely(defined(json::get<"content"_>(opts.request))))
+		opts.out.content = json::get<"content"_>(opts.request);
+
+	// Allows for the reverse to ensure these values are set.
+	if(!defined(json::get<"content"_>(opts.request)))
+		json::get<"content"_>(opts.request) = json::object{opts.out.content};
+
+	// Defaults the method as a convenience if none specified.
+	if(!defined(json::get<"method"_>(opts.request)))
+		json::get<"method"_>(opts.request) = "GET";
+
+	// Generate the request head including the X-Matrix into buffer.
 	opts.out.head = opts.request(buf);
 
+	// Setup some buffering features which can optimize the server::request
 	if(!size(opts.in))
 	{
 		opts.in.head = buf + size(opts.out.head);
@@ -1650,6 +1332,7 @@ ircd::m::fed::version::version(const mutable_buffer &buf,
 			opts.in.head;      // server::request will auto partition
 	}
 
+	// Launch the request
 	return server::request
 	{
 		matrix_service(opts.remote),
@@ -1663,7 +1346,7 @@ ircd::m::fed::version::version(const mutable_buffer &buf,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// fed/v1.h
+// fed/fed.h
 //
 
 ircd::conf::item<ircd::milliseconds>

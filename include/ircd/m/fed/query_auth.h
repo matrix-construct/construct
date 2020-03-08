@@ -17,13 +17,15 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::query_auth
-:server::request
+:request
 {
-	struct opts;
-
 	explicit operator json::object() const
 	{
-		const auto type(json::type(in.content));
+		const auto type
+		{
+			json::type(in.content)
+		};
+
 		return type == json::ARRAY?
 			json::array{in.content}.at(1):  // non-spec [200, {...}]
 			json::object{in.content};       // spec {...}
@@ -36,14 +38,4 @@ struct ircd::m::fed::query_auth
 	           opts);
 
 	query_auth() = default;
-};
-
-struct ircd::m::fed::query_auth::opts
-{
-	net::hostport remote;
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {true};
 };

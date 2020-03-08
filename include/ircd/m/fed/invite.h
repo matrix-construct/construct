@@ -17,25 +17,21 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::invite
-:server::request
+:request
 {
-	struct opts;
-
 	explicit operator json::array() const
 	{
-		return json::array{in.content};
+		return json::array
+		{
+			in.content
+		};
 	}
 
-	invite(const room::id &, const id::event &, const json::object &, const mutable_buffer &, opts);
-	invite() = default;
-};
+	invite(const room::id &,
+	       const id::event &,
+	       const json::object &,
+	       const mutable_buffer &,
+	       opts);
 
-struct ircd::m::fed::invite::opts
-{
-	net::hostport remote;
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {false};
+	invite() = default;
 };

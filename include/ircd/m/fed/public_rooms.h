@@ -17,29 +17,30 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::public_rooms
-:server::request
+:request
 {
 	struct opts;
 
 	explicit operator json::object() const
 	{
-		return json::object{in.content};
+		return json::object
+		{
+			in.content
+		};
 	}
 
-	public_rooms(const net::hostport &, const mutable_buffer &, opts);
+	public_rooms(const string_view &remote,
+	             const mutable_buffer &,
+	             opts);
+
 	public_rooms() = default;
 };
 
 struct ircd::m::fed::public_rooms::opts
+:request::opts
 {
-	net::hostport remote;
 	size_t limit {128};
 	string_view since;
 	string_view third_party_instance_id;
 	bool include_all_networks {true};
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {true};
 };

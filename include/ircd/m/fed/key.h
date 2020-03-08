@@ -13,50 +13,56 @@
 
 namespace ircd::m::fed::key
 {
-	struct opts;
 	struct keys;
 	struct query;
+
+	using opts = request::opts;
 	using server_key = std::pair<string_view, string_view>; // server_name, key_id
 };
 
 struct ircd::m::fed::key::keys
-:server::request
+:request
 {
-	using opts = key::opts;
-
 	explicit operator json::object() const
 	{
-		const json::object object{in.content};
-		return object;
+		return json::object
+		{
+			in.content
+		};
 	}
 
-	keys(const server_key &, const mutable_buffer &, opts);
-	keys(const string_view &server_name, const mutable_buffer &, opts);
+	keys(const server_key &,
+	     const mutable_buffer &,
+	     opts);
+
+	keys(const string_view &server_name,
+	     const mutable_buffer &,
+	     opts);
+
 	keys() = default;
 };
 
 struct ircd::m::fed::key::query
-:server::request
+:request
 {
-	using opts = key::opts;
-
 	explicit operator json::array() const
 	{
-		const json::object object{in.content};
-		const json::array &server_keys{object.get("server_keys")};
+		const json::object object
+		{
+			in.content
+		};
+
+		const json::array server_keys
+		{
+			object["server_keys"]
+		};
+
 		return server_keys;
 	}
 
-	query(const vector_view<const server_key> &, const mutable_buffer &, opts);
-	query() = default;
-};
+	query(const vector_view<const server_key> &,
+	      const mutable_buffer &,
+	      opts);
 
-struct ircd::m::fed::key::opts
-{
-	net::hostport remote;
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {false};
+	query() = default;
 };

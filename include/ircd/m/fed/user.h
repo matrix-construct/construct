@@ -13,33 +13,25 @@
 
 namespace ircd::m::fed::user
 {
-	struct opts;
 	struct devices;
+
+	using opts = request::opts;
 }
 
 struct ircd::m::fed::user::devices
-:server::request
+:request
 {
-	using opts = fed::user::opts;
-
 	explicit operator json::object() const
 	{
-		const json::object object{in.content};
-		return object;
+		return json::object
+		{
+			in.content
+		};
 	}
 
-	devices(const id::user &user_id, const mutable_buffer &, opts);
+	devices(const id::user &user_id,
+	        const mutable_buffer &,
+	        opts);
+
 	devices() = default;
-};
-
-struct ircd::m::fed::user::opts
-{
-	net::hostport remote;
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {true};
-
-	opts() = default;
 };

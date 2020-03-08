@@ -11,14 +11,17 @@
 #pragma once
 #define HAVE_IRCD_M_FED_H
 
+/// Federation Interface
 namespace ircd::m::fed
 {
 	net::hostport matrix_service(net::hostport);
+
 	string_view fetch_well_known(const mutable_buffer &out, const string_view &origin);
 	id::event::buf fetch_head(const id::room &room_id, const string_view &remote, const id::user &);
 	id::event::buf fetch_head(const id::room &room_id, const string_view &remote);
 }
 
+#include "request.h"
 #include "version.h"
 #include "key.h"
 #include "query.h"

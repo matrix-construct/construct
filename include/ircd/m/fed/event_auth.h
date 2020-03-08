@@ -17,7 +17,7 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::event_auth
-:server::request
+:request
 {
 	struct opts;
 
@@ -31,17 +31,16 @@ struct ircd::m::fed::event_auth
 		return object["auth_chain"];
 	}
 
-	event_auth(const m::room::id &, const m::event::id &, const mutable_buffer &, opts);
+	event_auth(const m::room::id &,
+	           const m::event::id &,
+	           const mutable_buffer &,
+	           opts);
+
 	event_auth() = default;
 };
 
 struct ircd::m::fed::event_auth::opts
+:request::opts
 {
-	net::hostport remote;
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {true};
 	bool ids_only {false};
 };

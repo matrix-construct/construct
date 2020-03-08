@@ -17,27 +17,28 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::backfill
-:server::request
+:request
 {
 	struct opts;
 
 	explicit operator json::object() const
 	{
-		return json::object{in.content};
+		return json::object
+		{
+			in.content
+		};
 	}
 
-	backfill(const room::id &, const mutable_buffer &, opts);
+	backfill(const room::id &,
+	         const mutable_buffer &,
+	         opts);
+
 	backfill() = default;
 };
 
 struct ircd::m::fed::backfill::opts
+:request::opts
 {
-	net::hostport remote;
 	string_view event_id;
 	size_t limit {64};
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {true};
 };

@@ -17,25 +17,21 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::send_join
-:server::request
+:request
 {
-	struct opts;
-
-	operator json::array() const
+	explicit operator json::array() const
 	{
-		return json::array{in.content};
+		return json::array
+		{
+			in.content
+		};
 	}
 
-	send_join(const room::id &, const id::event &, const const_buffer &, const mutable_buffer &, opts);
-	send_join() = default;
-};
+	send_join(const room::id &,
+	          const id::event &,
+	          const const_buffer &,
+	          const mutable_buffer &,
+	          opts);
 
-struct ircd::m::fed::send_join::opts
-{
-	net::hostport remote;
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {true};
+	send_join() = default;
 };

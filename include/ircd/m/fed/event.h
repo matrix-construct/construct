@@ -17,25 +17,16 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::event
-:server::request
+:request
 {
-	struct opts;
-
 	explicit operator json::object() const;
 	explicit operator m::event() const;
 
-	event(const m::event::id &, const mutable_buffer &, opts);
-	event() = default;
-};
+	event(const m::event::id &,
+	      const mutable_buffer &,
+	      opts);
 
-struct ircd::m::fed::event::opts
-{
-	net::hostport remote;
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {false};
+	event() = default;
 };
 
 inline

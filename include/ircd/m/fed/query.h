@@ -17,9 +17,8 @@ namespace ircd::m::fed
 };
 
 struct ircd::m::fed::query
-:server::request
+:request
 {
-	struct opts;
 	struct profile;
 	struct directory;
 	struct user_devices;
@@ -27,39 +26,41 @@ struct ircd::m::fed::query
 
 	explicit operator json::object() const
 	{
-		const json::object object{in.content};
-		return object;
+		return json::object
+		{
+			in.content
+		};
 	}
 
-	query(const string_view &type, const string_view &args, const mutable_buffer &, opts);
+	query(const string_view &type,
+	      const string_view &args,
+	      const mutable_buffer &,
+	      opts);
+
 	query() = default;
-};
-
-struct ircd::m::fed::query::opts
-{
-	net::hostport remote;
-	m::request request;
-	server::out out;
-	server::in in;
-	const struct server::request::opts *sopts {nullptr};
-	bool dynamic {false};
-
-	opts(const net::hostport &remote)
-	:remote{remote}
-	{}
-
-	opts() = default;
 };
 
 struct ircd::m::fed::query::profile
 :query
 {
-	profile(const id::user &user_id, const string_view &field, const mutable_buffer &, opts);
-	profile(const id::user &user_id, const mutable_buffer &, opts);
+	profile(const id::user &user_id,
+	        const string_view &field,
+	        const mutable_buffer &,
+	        opts);
+
+	profile(const id::user &user_id,
+	        const mutable_buffer &,
+	        opts);
+
+	profile() = default;
 };
 
 struct ircd::m::fed::query::directory
 :query
 {
-	directory(const id::room_alias &room_alias, const mutable_buffer &, opts);
+	directory(const id::room_alias &room_alias,
+	          const mutable_buffer &,
+	          opts);
+
+	directory() = default;
 };

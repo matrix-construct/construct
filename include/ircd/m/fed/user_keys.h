@@ -18,7 +18,7 @@ namespace ircd::m::fed::user::keys
 }
 
 struct ircd::m::fed::user::keys::query
-:server::request
+:request
 {
 	using opts = fed::user::opts;
 	using devices = vector_view<const string_view>;
@@ -31,8 +31,10 @@ struct ircd::m::fed::user::keys::query
 
 	explicit operator json::object() const
 	{
-		const json::object object{in.content};
-		return object;
+		return json::object
+		{
+			in.content
+		};
 	}
 
 	explicit
@@ -65,7 +67,7 @@ struct ircd::m::fed::user::keys::query
 };
 
 struct ircd::m::fed::user::keys::claim
-:server::request
+:request
 {
 	using opts = fed::user::opts;
 	using device = std::pair<string_view, string_view>;
@@ -79,8 +81,10 @@ struct ircd::m::fed::user::keys::claim
 
 	explicit operator json::object() const
 	{
-		const json::object object{in.content};
-		return object;
+		return json::object
+		{
+			in.content
+		};
 	}
 
 	explicit
