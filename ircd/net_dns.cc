@@ -35,6 +35,11 @@ ircd::net::dns::opts_default;
 
 ircd::net::dns::init::init()
 {
+	#ifdef HAVE_NETDB_H
+	static const int stay_open {true};
+	::setprotoent(stay_open);
+	#endif
+
 	assert(!resolver_instance);
 	resolver_instance = new resolver
 	{
@@ -47,6 +52,10 @@ noexcept
 {
 	delete resolver_instance;
 	resolver_instance = nullptr;
+
+	#ifdef HAVE_NETDB_H
+	::endprotoent();
+	#endif
 }
 
 //
