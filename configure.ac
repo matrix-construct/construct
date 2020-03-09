@@ -202,6 +202,7 @@ AC_ARG_WITH(assert, AC_HELP_STRING([--with-assert[[[=trap]]]], [Soften assertion
 		AC_MSG_RESULT([no, defaulting to "$assert_type"])
 		AC_SUBST(ASSERT_TYPE, $assert_type)
 	], [
+		assert_type="abort"
 		AC_MSG_RESULT([no])
 	])
 ])
