@@ -524,10 +524,9 @@ catch(const m::UNAVAILABLE &e)
 }
 catch(const http::error &e)
 {
-	log::logf
+	log::derror
 	{
-		log, run::level == run::level::QUIT? log::DERROR: log::ERROR,
-		"Starting %s request for %s in %s to '%s' :%s %s",
+		log, "Starting %s request for %s in %s to '%s' :%s %s",
 		reflect(request.opts.op),
 		string_view{request.opts.event_id},
 		string_view{request.opts.room_id},
@@ -538,12 +537,25 @@ catch(const http::error &e)
 
 	return false;
 }
+catch(const server::error &e)
+{
+	log::derror
+	{
+		log, "Starting %s request for %s in %s to '%s' :%s",
+		reflect(request.opts.op),
+		string_view{request.opts.event_id},
+		string_view{request.opts.room_id},
+		string_view{request.origin},
+		e.what(),
+	};
+
+	return false;
+}
 catch(const std::exception &e)
 {
-	log::logf
+	log::error
 	{
-		log, run::level == run::level::QUIT? log::DERROR: log::ERROR,
-		"Starting %s request for %s in %s to '%s' :%s",
+		log, "Starting %s request for %s in %s to '%s' :%s",
 		reflect(request.opts.op),
 		string_view{request.opts.event_id},
 		string_view{request.opts.room_id},
