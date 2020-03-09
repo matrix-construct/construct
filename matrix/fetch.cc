@@ -522,6 +522,10 @@ catch(const m::UNAVAILABLE &e)
 {
 	throw;
 }
+catch(const ctx::interrupted &e)
+{
+	throw;
+}
 catch(const http::error &e)
 {
 	log::derror
