@@ -415,7 +415,8 @@ try
 		16_KiB // headers in and out
 	};
 
-	m::fed::backfill::opts opts{host};
+	m::fed::backfill::opts opts;
+	opts.remote = host;
 	opts.event_id = event_id;
 	opts.limit = size_t(backfill_limit);
 	m::fed::backfill request
