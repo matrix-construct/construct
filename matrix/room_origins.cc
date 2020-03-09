@@ -225,24 +225,55 @@ const
 		index.begin(room.room_id)
 	};
 
+	size_t repeat{0};
+	string_view last;
 	char lastbuf[rfc1035::NAME_BUFSIZE];
-	for(string_view last; bool(it); ++it)
+	for(; bool(it); ++it)
 	{
 		const auto &[origin, user_id]
 		{
 			dbs::room_joined_key(it->first)
 		};
 
-		if(origin == last)
-			continue;
-
-		if(!view(origin))
-			return false;
-
-		last =
+		// This loop is about presenting unique origin strings to our user
+		// through the callback. Since we're iterating all members in the room
+		// we want to skip members from the same origin after the first member
+		// from that origin.
+		if(likely(origin != last))
 		{
-			lastbuf, copy(lastbuf, origin)
+			if(!view(origin))
+				return false;
+
+			// Save the witnessed origin string in this buffer for the first
+			// member of each origin; also reset the repeat ctr (see below).
+			last = { lastbuf, copy(lastbuf, origin) };
+			repeat = 0;
+			continue;
 		};
+
+		// The threshold determines when to incur the cost of a logarithmic
+		// seek on a new key. Under this threshold we iterate normally which
+		// is a simple pointer-chase to the next record. If this threshold is
+		// low, we would pay the logarithmic cost even if every server only had
+		// one or two members joined to the room, etc.
+		static const size_t repeat_threshold
+		{
+			6
+		};
+
+		// Conditional branch that determines if we should generate a new key
+		// to skip many members from the same origin. We do this via increment
+		// of the last character of the current origin so the query key is just
+		// past the end of all the member records from the last origin.
+		if(repeat++ > repeat_threshold)
+		{
+			assert(!last.empty());
+			assert(last.size() < sizeof(lastbuf));
+			lastbuf[last.size() - 1]++;
+			char keybuf[dbs::ROOM_JOINED_KEY_MAX_SIZE];
+			seek(it, dbs::room_joined_key(keybuf, room.room_id, last));
+			repeat = 0;
+		}
 	}
 
 	return true;
