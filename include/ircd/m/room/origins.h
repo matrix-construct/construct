@@ -20,8 +20,6 @@ struct ircd::m::room::origins
 	using closure = std::function<void (const string_view &)>;
 	using closure_bool = std::function<bool (const string_view &)>;
 
-	static bool _for_each(const origins &, const closure_bool &view);
-
 	m::room room;
 
   public:

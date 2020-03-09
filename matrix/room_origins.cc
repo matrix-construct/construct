@@ -215,31 +215,6 @@ bool
 ircd::m::room::origins::for_each(const closure_bool &view)
 const
 {
-	string_view last;
-	char lastbuf[rfc1035::NAME_BUFSIZE];
-	return _for_each(*this, [&last, &lastbuf, &view]
-	(const string_view &key)
-	{
-		const string_view &origin
-		{
-			std::get<0>(dbs::room_joined_key(key))
-		};
-
-		if(origin == last)
-			return true;
-
-		if(!view(origin))
-			return false;
-
-		last = { lastbuf, copy(lastbuf, origin) };
-		return true;
-	});
-}
-
-bool
-ircd::m::room::origins::_for_each(const origins &origins,
-                                  const closure_bool &view)
-{
 	db::domain &index
 	{
 		dbs::room_joined
@@ -247,18 +222,27 @@ ircd::m::room::origins::_for_each(const origins &origins,
 
 	auto it
 	{
-		index.begin(origins.room.room_id)
+		index.begin(room.room_id)
 	};
 
-	for(; bool(it); ++it)
+	char lastbuf[rfc1035::NAME_BUFSIZE];
+	for(string_view last; bool(it); ++it)
 	{
-		const string_view &key
+		const auto &[origin, user_id]
 		{
-			lstrip(it->first, "\0"_sv)
+			dbs::room_joined_key(it->first)
 		};
 
-		if(!view(key))
+		if(origin == last)
+			continue;
+
+		if(!view(origin))
 			return false;
+
+		last =
+		{
+			lastbuf, copy(lastbuf, origin)
+		};
 	}
 
 	return true;
