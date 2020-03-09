@@ -713,10 +713,7 @@ dnl
 
 dnl Uninitialized return values are not useful in this project; forgetting
 dnl to return from a function is always a developer mistake here.
-AM_COND_IF([GCC],
-[
-	CHARYBDIS_C_GCC_TRY_FLAGS([-Werror=return-type], charybdis_cv_c_gcc_w_error_return_type)
-])
+CHARYBDIS_C_GCC_TRY_FLAGS([-Werror=return-type], charybdis_cv_c_gcc_w_error_return_type)
 
 dnl
 dnl List of warnings we suppress:
