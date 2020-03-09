@@ -21,6 +21,7 @@ RUN \
         libbz2-dev \
         libgflags-dev \
         libmagic-dev \
+        libnss-db \
         libsnappy-dev \
         libsodium-dev \
         libssl1.0-dev \
