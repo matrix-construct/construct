@@ -18,7 +18,41 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// mods/ldso.h
+// dlfcn suite
+//
+#if defined(HAVE_DLFCN_H)
+
+bool
+ircd::mods::ldso::loaded(const string_view &name_)
+try
+{
+	static const int flags
+	{
+		RTLD_NOLOAD | RTLD_LAZY
+	};
+
+	const char *const name
+	{
+		data(strlcpy(fs::name_scratch, name_))
+	};
+
+	const custom_ptr<void> ptr
+	{
+		::dlopen(name, flags), ::dlclose
+	};
+
+	return ptr.get() != nullptr;
+}
+catch(...)
+{
+	return false;
+}
+
+#endif // HAVE_DLFCN_H
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// link_map suite
 //
 #if defined(HAVE_LINK_H)
 
