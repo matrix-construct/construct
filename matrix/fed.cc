@@ -1579,51 +1579,26 @@ try
 		return delegated;
 	}
 
-	// We hijack the user's buffer to construct the event content for the
-	// cache record. Since we might have already used this buffer for the
-	// actual well-known network query we window it down to not overwrite
-	// our payload string.
-	const mutable_buffer out_buf
+	// Any time the well-known result is the same as the origin (that
+	// includes legitimate errors where fetch_well_known() returns the
+	// origin to default) we consider that an error and use the error
+	// TTL value. Sorry, no exponential backoff implemented yet.
+	const auto cache_ttl
 	{
-		buf + size(delegated)
+		origin == delegated?
+			seconds(well_known_cache_error).count():
+			seconds(well_known_cache_default).count()
 	};
 
-	// Print our cache record to the buffer; note that this doesn't really
+	// Write our record to the cache room; note that this doesn't really
 	// match the format of other DNS records in this room since it's a bit
 	// simpler, but we don't share the ircd.dns.rr type prefix anyway.
-	json::stack out{out_buf};
-	{
-		json::stack::object content
-		{
-			out
-		};
-
-		json::stack::member
-		{
-			content, "ttl", json::value
-			{
-				// Any time the well-known result is the same as the origin (that
-				// includes legitimate errors where fetch_well_known() returns the
-				// origin to default) we consider that an error and use the error
-				// TTL value. Sorry, no exponential backoff implemented yet.
-				origin == delegated?
-					seconds(well_known_cache_error).count():
-					seconds(well_known_cache_default).count()
-			}
-		};
-
-		json::stack::member
-		{
-			content, "m.server", delegated
-		};
-	}
-
-	// Write to the !dns room
 	const auto cache_id
 	{
-		m::send(room, m::me(), type, origin, json::object
+		m::send(room, m::me(), type, origin, json::members
 		{
-			out.completed()
+			{ "ttl",       cache_ttl  },
+			{ "m.server",  delegated  },
 		})
 	};
 
