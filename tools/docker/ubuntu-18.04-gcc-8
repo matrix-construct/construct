@@ -18,6 +18,7 @@ RUN \
         curl \
         g++-8 \
         gcc-8 \
+        git \
         libbz2-dev \
         libgflags-dev \
         libmagic-dev \

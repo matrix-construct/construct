@@ -17,6 +17,7 @@ RUN \
         clang-9 \
         cmake \
         curl \
+        git \
         libbz2-dev \
         libgflags-dev \
         libmagic-dev \
