@@ -17,6 +17,7 @@ AC_PATH_PROG(RM, rm)
 AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(MV, mv)
 AC_PATH_PROG(LN, ln)
+AC_PATH_PROG(LD, ld.gold)
 AC_PATH_PROG(TOUCH, touch)
 
 LT_INIT([dlopen shared disable-static])
@@ -466,12 +467,14 @@ dnl
 dnl Gold linker
 dnl
 
+AC_MSG_CHECKING(whether to explicitly disable the gold linker)
 AC_ARG_ENABLE(gold, AC_HELP_STRING([--disable-ld-gold], [Disable defaulting to the gold linker.]),
 [
+	AC_MSG_RESULT([yes])
 	ld_gold="no"
 ], [
+	AC_MSG_RESULT([no])
 	ld_gold="yes"
-	LD="ld.gold"
 ])
 
 AM_CONDITIONAL([LD_GOLD], [[[[ $ld_gold = "yes" ]]]])
@@ -497,6 +500,8 @@ dnl	LDFLAGS+=" -Wl,--icf=all"
 	LDFLAGS+=" -Wl,-z,noexecstack"
 	LDFLAGS+=" -Wl,-z,combreloc"
 	LDFLAGS+=" -Wl,-z,text-unlikely-segment"
+], [
+	AC_MSG_ERROR([Sorry, disabling the gold linker is not supported at this time.])
 ])
 
 dnl
