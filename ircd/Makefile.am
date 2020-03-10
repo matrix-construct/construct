@@ -206,6 +206,9 @@ endif
 json.lo:              AM_CPPFLAGS := ${SPIRIT_UNIT_CPPFLAGS} ${AM_CPPFLAGS}
 json.lo:              AM_CXXFLAGS := ${SPIRIT_UNIT_CXXFLAGS} ${AM_CXXFLAGS}
 lex_cast.lo:          AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
+locale.lo:            AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
+tokens.lo:            AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
+prof.lo:              AM_CPPFLAGS := @BOOST_CPPFLAGS@ ${AM_CPPFLAGS}
 if MAGIC
 magic.lo:             AM_CPPFLAGS := @MAGIC_CPPFLAGS@ ${AM_CPPFLAGS}
 endif

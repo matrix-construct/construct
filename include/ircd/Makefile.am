@@ -65,7 +65,7 @@ spirit.h.gch: ircd.h
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o spirit.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC spirit.h
 
 spirit.h.gch: \
-	AM_CXXFLAGS += $(LOWMEM_FLAGS)
+	AM_CXXFLAGS += @BOOST_CPPFLAGS@ $(LOWMEM_FLAGS)
 
 asio.h.gch: ircd.h
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o asio.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) -DPIC asio.h
