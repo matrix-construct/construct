@@ -530,7 +530,7 @@ github_handle__pull_request(std::ostream &out,
 		    ;
 
 	if(pr.has("comments"))
-		out << " / "
+		out << "   "
 		    << "<b>"
 		    << pr["comments"]
 		    << ' '
@@ -543,7 +543,7 @@ github_handle__pull_request(std::ostream &out,
 		    ;
 
 	if(pr.has("changed_files"))
-		out << " / "
+		out << "   "
 		    << "<b>"
 		    << pr["changed_files"]
 		    << ' '
@@ -557,7 +557,7 @@ github_handle__pull_request(std::ostream &out,
 		    ;
 
 	if(pr.has("additions"))
-		out << " / "
+		out << "   "
 		    << "<b>"
 		    << "<font color=\"#33CC33\">"
 		    << "++"
@@ -567,7 +567,7 @@ github_handle__pull_request(std::ostream &out,
 		    ;
 
 	if(pr.has("deletions"))
-		out << " / "
+		out << "   "
 		    << "<b>"
 		    << "<font color=\"#CC0000\">"
 		    << "--"
@@ -580,20 +580,10 @@ github_handle__pull_request(std::ostream &out,
 	{
 		default:
 		case "null"_:
-			out << " / "
-			    << "<font color=\"#000000\""
-			    << "data-mx-bg-color=\"#EEBB00\">"
-			    << "<b>"
-			    << "&nbsp;"
-			    << "CHECKING"
-			    << "&nbsp;"
-			    << "</b>"
-			    << "</font>"
-			    ;
 			break;
 
 		case "true"_:
-			out << " / "
+			out << "   "
 			    << "<font color=\"#FFFFFF\""
 			    << "data-mx-bg-color=\"#03B381\">"
 			    << "<b>"
@@ -606,7 +596,7 @@ github_handle__pull_request(std::ostream &out,
 			break;
 
 		case "false"_:
-			out << " / "
+			out << "   "
 			    << "<font color=\"#FFFFFF\""
 			    << "data-mx-bg-color=\"#CC0000\">"
 			    << "<b>"
