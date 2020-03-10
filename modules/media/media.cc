@@ -106,7 +106,7 @@ ircd::m::media::blocks_cache_size
 {
 	{
 		{ "name",     "ircd.media.blocks.cache.size" },
-		{ "default",  long(48_MiB)                   },
+		{ "default",  long(64_MiB)                   },
 	}, []
 	{
 		if(!blocks)
