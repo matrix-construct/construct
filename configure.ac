@@ -205,6 +205,7 @@ AC_ARG_WITH(assert, AC_HELP_STRING([--with-assert[[[=trap]]]], [Soften assertion
 	], [
 		assert_type="abort"
 		AC_MSG_RESULT([no])
+		AC_SUBST(ASSERT_TYPE, $assert_type)
 	])
 ])
 
@@ -214,7 +215,7 @@ AM_COND_IF(ASSERT,
 		RB_DEFINE_UNQUOTED([ASSERT], ["$assert_type"], [Assertion behavior])
 	fi
 
-	if [ "$assert_type" == "trap" ]; then
+	if [[ "$assert_type" == "trap" ]]; then
 		RB_DEFINE([ASSERT_INTRINSIC], [1], [Intrinsic assertion behavior])
 	fi
 ])
