@@ -1,7 +1,7 @@
 AC_PREREQ(2.63)
 AUTOMAKE_OPTIONS = 1.11
-
 AC_INIT([construct], [1.0-dev])
+
 AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -20,13 +20,18 @@ AC_PATH_PROG(LN, ln)
 AC_PATH_PROG(LD, ld.gold)
 AC_PATH_PROG(TOUCH, touch)
 
+AC_SUBST(CC)
+AC_SUBST(CXX)
+AC_SUBST(LD)
+
+AC_SUBST(CFLAGS, "-pipe")
+AC_SUBST(CXXFLAGS, "-pipe")
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
+AC_SUBST(LIBS)
+
 LT_INIT([dlopen shared disable-static])
 LT_LANG([C++])
-
-dnl Note that AC_PROG_CXX will default CXXFLAGS to -O2 and -g; this just adds
-dnl clutter and confusion. Setting it first prevents that.
-CXXFLAGS="-pipe"
-CFLAGS="-pipe"
 
 AM_PROG_AS
 AC_PROG_CXX
@@ -63,21 +68,6 @@ dnl
 #AM_EXTRA_RECURSIVE_TARGETS([
 #	mrproper
 #])
-
-dnl
-dnl Initialization of variables exported to Makefile.am.
-dnl These will be further composed throughout this file...
-dnl
-
-AC_SUBST(CC)
-AC_SUBST(CXX)
-AC_SUBST(LD)
-
-AC_SUBST(CFLAGS)
-AC_SUBST(CPPFLAGS)
-AC_SUBST(CXXFLAGS)
-AC_SUBST(LDFLAGS)
-AC_SUBST(LIBS)
 
 dnl ***************************************************************************
 dnl
