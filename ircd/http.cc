@@ -349,43 +349,46 @@ void
 ircd::http::assign(request::head &head,
                    const header &header)
 {
-	const auto &[key, val]
+	char buf[64];
+	const auto &[key_, val] {header};
+	assert(size(key_) <= sizeof(buf));
+	const auto &key
 	{
-		header
+		tolower(buf, key_)
 	};
 
-	if(iequals(key, "host"_sv))
+	if(key == "content-length"_sv)
+		head.content_length = parser.content_length(val);
+
+	else if(key == "host"_sv)
 		head.host = val;
 
-	else if(iequals(key, "expect"_sv))
+	else if(key == "expect"_sv)
 		head.expect = val;
 
-	else if(iequals(key, "te"_sv))
+	else if(key == "te"_sv)
 		head.te = val;
 
-	else if(iequals(key, "authorization"_sv))
+	else if(key == "authorization"_sv)
 		head.authorization = val;
 
-	else if(iequals(key, "connection"_sv))
+	else if(key == "connection"_sv)
 		head.connection = val;
 
-	else if(iequals(key, "content-type"_sv))
+	else if(key == "content-type"_sv)
 		head.content_type = val;
 
-	else if(iequals(key, "user-agent"_sv))
+	else if(key == "user-agent"_sv)
 		head.user_agent = val;
 
-	else if(iequals(key, "upgrade"_sv))
+	else if(key == "upgrade"_sv)
 		head.upgrade = val;
 
-	else if(iequals(key, "range"_sv))
+	else if(key == "range"_sv)
 		head.range = val;
 
-	else if(iequals(key, "if-range"_sv))
+	else if(key == "if-range"_sv)
 		head.if_range = val;
-
-	else if(iequals(key, "content-length"_sv))
-		head.content_length = parser.content_length(val);
 }
 
 ircd::http::response::response(window_buffer &out,
@@ -526,27 +529,30 @@ void
 ircd::http::assign(response::head &head,
                    const header &header)
 {
-	const auto &[key, val]
+	char buf[64];
+	const auto &[key_, val] {header};
+	assert(size(key_) <= sizeof(buf));
+	const auto &key
 	{
-		header
+		tolower(buf, key_)
 	};
 
-	if(iequals(key, "content-type"_sv))
-		head.content_type = val;
-
-	else if(iequals(key, "content-length"_sv))
+	if(key == "content-length"_sv)
 		head.content_length = parser.content_length(val);
 
-	else if(iequals(key, "content-range"_sv))
+	else if(key == "content-type"_sv)
+		head.content_type = val;
+
+	else if(key == "content-range"_sv)
 		head.content_range = val;
 
-	else if(iequals(key, "accept-range"_sv))
+	else if(key == "accept-range"_sv)
 		head.content_range = val;
 
-	else if(iequals(key, "transfer-encoding"_sv))
+	else if(key == "transfer-encoding"_sv)
 		head.transfer_encoding = val;
 
-	else if(iequals(key, "server"_sv))
+	else if(key == "server"_sv)
 		head.server = val;
 }
 
