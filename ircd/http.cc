@@ -281,6 +281,11 @@ ircd::http::request::request(window_buffer &out,
 		writeline(out);
 }
 
+namespace ircd::http
+{
+	static void assign(request::head &, const header &);
+}
+
 ircd::http::request::head::head(parse::capstan &pc,
                                 const headers::closure &c)
 :line::request{pc}
@@ -308,48 +313,15 @@ ircd::http::request::head::head(parse::capstan &pc,
 			}
 		};
 
-	const auto each_header{[this, &c](const auto &h)
-	{
-		if(iequals(h.first, "host"_sv))
-			this->host = h.second;
-
-		else if(iequals(h.first, "expect"_sv))
-			this->expect = h.second;
-
-		else if(iequals(h.first, "te"_sv))
-			this->te = h.second;
-
-		else if(iequals(h.first, "authorization"_sv))
-			this->authorization = h.second;
-
-		else if(iequals(h.first, "connection"_sv))
-			this->connection = h.second;
-
-		else if(iequals(h.first, "content-type"_sv))
-			this->content_type = h.second;
-
-		else if(iequals(h.first, "user-agent"_sv))
-			this->user_agent = h.second;
-
-		else if(iequals(h.first, "upgrade"_sv))
-			this->upgrade = h.second;
-
-		else if(iequals(h.first, "range"_sv))
-			this->range = h.second;
-
-		else if(iequals(h.first, "if-range"_sv))
-			this->if_range = h.second;
-
-		else if(iequals(h.first, "content-length"_sv))
-			this->content_length = parser.content_length(h.second);
-
-		if(c)
-			c(h);
-	}};
-
 	return http::headers
 	{
-		pc, each_header
+		pc, [this, &c](const auto &header)
+		{
+			assign(*this, header);
+
+			if(c)
+				c(header);
+		}
 	};
 }()}
 {
@@ -371,6 +343,49 @@ const
 	{
 		request_line.begin(), headers.end()
 	};
+}
+
+void
+ircd::http::assign(request::head &head,
+                   const header &header)
+{
+	const auto &[key, val]
+	{
+		header
+	};
+
+	if(iequals(key, "host"_sv))
+		head.host = val;
+
+	else if(iequals(key, "expect"_sv))
+		head.expect = val;
+
+	else if(iequals(key, "te"_sv))
+		head.te = val;
+
+	else if(iequals(key, "authorization"_sv))
+		head.authorization = val;
+
+	else if(iequals(key, "connection"_sv))
+		head.connection = val;
+
+	else if(iequals(key, "content-type"_sv))
+		head.content_type = val;
+
+	else if(iequals(key, "user-agent"_sv))
+		head.user_agent = val;
+
+	else if(iequals(key, "upgrade"_sv))
+		head.upgrade = val;
+
+	else if(iequals(key, "range"_sv))
+		head.range = val;
+
+	else if(iequals(key, "if-range"_sv))
+		head.if_range = val;
+
+	else if(iequals(key, "content-length"_sv))
+		head.content_length = parser.content_length(val);
 }
 
 ircd::http::response::response(window_buffer &out,
