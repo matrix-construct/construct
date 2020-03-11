@@ -3702,7 +3702,7 @@ ircd::json::value::operator=(const value &other)
 ircd::json::value::~value()
 noexcept
 {
-	if(alloc) switch(serial? STRING : type)
+	if(alloc) switch(serial? STRING : static_cast<enum type>(type))
 	{
 		case STRING:
 			delete[] string;
