@@ -458,15 +458,12 @@ dnl
 dnl Gold linker
 dnl
 
-AC_MSG_CHECKING(whether to explicitly disable the gold linker)
-AC_ARG_ENABLE(gold, AC_HELP_STRING([--disable-ld-gold], [Disable defaulting to the gold linker.]),
-[
-	AC_MSG_RESULT([yes])
-	ld_gold="no"
-], [
-	AC_MSG_RESULT([no])
-	ld_gold="yes"
-])
+dnl Sorry there is no way to disable gold right now. You can try the
+dnl binutils-gold package if your binutils package doesn't ship with it
+dnl by default these days. Not sure if this is a problem with musl; please
+dnl report any issues so we can weigh the need to change course here.
+dnl
+ld_gold="yes"
 
 AM_CONDITIONAL([LD_GOLD], [[[[ $ld_gold = "yes" ]]]])
 
@@ -481,6 +478,7 @@ AM_COND_IF([LD_GOLD],
 	AM_COND_IF([CLANG],
 	[
 		LDFLAGS+=" -fuse-ld=gold"
+		LDFLAGS+=" -Wc,-fuse-ld=gold"
 	])
 
 	LDFLAGS+=" -Wl,--warn-common"
