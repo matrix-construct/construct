@@ -221,8 +221,7 @@ ircd::m::media::file::download(const mxc &mxc,
 		file::room_id(mxc)
 	};
 
-	thread_local char rembuf[256];
-	if(remote && my_host(string(rembuf, remote)))
+	if(remote && my_host(remote))
 		return room_id;
 
 	if(!remote && my_host(mxc.server))
@@ -293,7 +292,7 @@ try
 	if(content_type != head.content_type) log::dwarning
 	{
 		log, "Server %s claims thumbnail %s is '%s' but we think it is '%s'",
-		string(remote),
+		remote,
 		mxc.mediaid,
 		head.content_type,
 		content_type,
@@ -321,12 +320,11 @@ try
 }
 catch(const ircd::server::unavailable &e)
 {
-	thread_local char rembuf[256];
 	throw m::error
 	{
 		http::BAD_GATEWAY, "M_MEDIA_UNAVAILABLE",
 		"Server '%s' is not available for media for '%s/%s' :%s",
-		string(rembuf, remote),
+		remote,
 		mxc.server,
 		mxc.mediaid,
 		e.what()
