@@ -135,7 +135,7 @@ ircd::net::dns::resolve(const hostport &hp_,
 	// Make any necessary attempt to translate a service name into a portnum.
 	if(likely(opts.service_port))
 		if(!port(hp) && service(hp))
-			port(hp) = service_port(std::nothrow, service(hp), opts.proto);
+			port(hp) = service_port(service(hp), opts.proto);
 
 	// Try to satisfy from the cache first. This requires a ctx.
 	if(likely(ctx::current && opts.cache_check))
