@@ -618,7 +618,7 @@ try
 		send_join.get()
 	};
 
-	const json::array &send_join_response
+	const json::array send_join_response
 	{
 		send_join
 	};
