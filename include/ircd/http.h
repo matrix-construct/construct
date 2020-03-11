@@ -280,6 +280,7 @@ struct ircd::http::response::head
 	string_view accept_range;
 	string_view transfer_encoding;
 	string_view server;
+	string_view location;
 
 	string_view headers;
 

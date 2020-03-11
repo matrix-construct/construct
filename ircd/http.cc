@@ -554,6 +554,9 @@ ircd::http::assign(response::head &head,
 
 	else if(key == "server"_sv)
 		head.server = val;
+
+	else if(key == "location"_sv)
+		head.location = val;
 }
 
 ircd::http::response::chunk::chunk(parse::capstan &pc)
