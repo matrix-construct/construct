@@ -498,36 +498,56 @@ ircd::http::response::response(window_buffer &out,
 		writeline(out);
 }
 
+namespace ircd::http
+{
+	static void assign(response::head &, const header &);
+}
+
 ircd::http::response::head::head(parse::capstan &pc,
                                  const headers::closure &c)
 :line::response{pc}
 ,headers
 {
-	http::headers{pc, [this, &c](const auto &h)
+	http::headers
 	{
-		if(iequals(h.first, "content-type"s))
-			this->content_type = h.second;
+		pc, [this, &c](const auto &header)
+		{
+			assign(*this, header);
 
-		else if(iequals(h.first, "content-length"s))
-			this->content_length = parser.content_length(h.second);
-
-		else if(iequals(h.first, "content-range"s))
-			this->content_range = h.second;
-
-		else if(iequals(h.first, "accept-range"s))
-			this->content_range = h.second;
-
-		else if(iequals(h.first, "transfer-encoding"s))
-			this->transfer_encoding = h.second;
-
-		else if(iequals(h.first, "server"s))
-			this->server = h.second;
-
-		if(c)
-			c(h);
-	}}
+			if(c)
+				c(header);
+		}
+	}
 }
 {
+}
+
+void
+ircd::http::assign(response::head &head,
+                   const header &header)
+{
+	const auto &[key, val]
+	{
+		header
+	};
+
+	if(iequals(key, "content-type"_sv))
+		head.content_type = val;
+
+	else if(iequals(key, "content-length"_sv))
+		head.content_length = parser.content_length(val);
+
+	else if(iequals(key, "content-range"_sv))
+		head.content_range = val;
+
+	else if(iequals(key, "accept-range"_sv))
+		head.content_range = val;
+
+	else if(iequals(key, "transfer-encoding"_sv))
+		head.transfer_encoding = val;
+
+	else if(iequals(key, "server"_sv))
+		head.server = val;
 }
 
 ircd::http::response::chunk::chunk(parse::capstan &pc)
