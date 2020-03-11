@@ -71,6 +71,7 @@ ircd::m::matrix::module_names
 	"m_presence",
 	"m_profile",
 	"m_receipt",
+	"m_relation",
 	"m_room_aliases",
 	"m_room_canonical_alias",
 	"m_room_create",
