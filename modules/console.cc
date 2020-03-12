@@ -262,7 +262,7 @@ console_command_derived(opt &out, const string_view &line)
 	// First check if the line starts with a number, this is a special case
 	// sent to a custom dispatcher (which right now is specifically for the
 	// event stager suite).
-	if(try_lex_cast<int>(id))
+	if(lex_castable<int>(id))
 		return console_command_numeric(out, line);
 
 	if(m::has_sigil(id)) switch(m::sigil(id))
@@ -2780,7 +2780,7 @@ try
 
 	const bool integer
 	{
-		begin? try_lex_cast<uint64_t>(begin) : false
+		begin? lex_castable<uint64_t>(begin) : false
 	};
 
 	const uint64_t integers[2]
@@ -4186,7 +4186,7 @@ try
 
 		const bool is_integer_key
 		{
-			try_lex_cast<ulong>(param["key"])
+			lex_castable<ulong>(param["key"])
 		};
 
 		const uint64_t integer_key[2]
@@ -7052,7 +7052,7 @@ console_cmd__event(opt &out, const string_view &line)
 	}};
 
 	m::event::id::buf event_id_buf;
-	if(try_lex_cast<ulong>(param.at("event_id")))
+	if(lex_castable<ulong>(param.at("event_id")))
 		event_id_buf = m::event_id(param.at<ulong>("event_id"));
 
 	const m::event::id event_id
@@ -7554,7 +7554,7 @@ console_cmd__event__cached(opt &out, const string_view &line)
 
 		return true;
 	}
-	else if(try_lex_cast<ulong>(id))
+	else if(lex_castable<ulong>(id))
 	{
 		const m::event::idx event_idx
 		{
@@ -9672,14 +9672,14 @@ console_cmd__room__state__history(opt &out, const string_view &line)
 
 	const m::event::id &event_id
 	{
-		!try_lex_cast<int64_t>(point)?
+		!lex_castable<int64_t>(point)?
 			m::event::id{point}:
 			m::event::id{}
 	};
 
 	const int64_t bound
 	{
-		try_lex_cast<int64_t>(point)?
+		lex_castable<int64_t>(point)?
 			lex_cast<int64_t>(point):
 			-1L
 	};

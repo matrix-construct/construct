@@ -18,7 +18,7 @@ namespace ircd
 {
 	IRCD_EXCEPTION_HIDENAME(ircd::error, bad_lex_cast)
 
-	template<class T> bool try_lex_cast(const string_view &);
+	template<class T> bool lex_castable(const string_view &);
 
 	template<class T> T lex_cast(std::string &);
 	template<class T> T lex_cast(const std::string &);
@@ -36,25 +36,25 @@ namespace ircd
 
 namespace ircd
 {
-	template<> bool try_lex_cast<std::string>(const string_view &);       // stub always true
-	template<> bool try_lex_cast<std::string_view>(const string_view &);  // stub always true
-	template<> bool try_lex_cast<string_view>(const string_view &);       // stub always true
-	template<> bool try_lex_cast<long double>(const string_view &);
-	template<> bool try_lex_cast<double>(const string_view &);
-	template<> bool try_lex_cast<float>(const string_view &);
-	template<> bool try_lex_cast<ulong>(const string_view &);
-	template<> bool try_lex_cast<long>(const string_view &);
-	template<> bool try_lex_cast<uint>(const string_view &);
-	template<> bool try_lex_cast<int>(const string_view &);
-	template<> bool try_lex_cast<ushort>(const string_view &);
-	template<> bool try_lex_cast<short>(const string_view &);
-	template<> bool try_lex_cast<uint8_t>(const string_view &);
-	template<> bool try_lex_cast<int8_t>(const string_view &);
-	template<> bool try_lex_cast<bool>(const string_view &);
-	template<> bool try_lex_cast<seconds>(const string_view &);
-	template<> bool try_lex_cast<milliseconds>(const string_view &);
-	template<> bool try_lex_cast<microseconds>(const string_view &);
-	template<> bool try_lex_cast<nanoseconds>(const string_view &);
+	template<> bool lex_castable<std::string>(const string_view &);       // stub always true
+	template<> bool lex_castable<std::string_view>(const string_view &);  // stub always true
+	template<> bool lex_castable<string_view>(const string_view &);       // stub always true
+	template<> bool lex_castable<long double>(const string_view &);
+	template<> bool lex_castable<double>(const string_view &);
+	template<> bool lex_castable<float>(const string_view &);
+	template<> bool lex_castable<ulong>(const string_view &);
+	template<> bool lex_castable<long>(const string_view &);
+	template<> bool lex_castable<uint>(const string_view &);
+	template<> bool lex_castable<int>(const string_view &);
+	template<> bool lex_castable<ushort>(const string_view &);
+	template<> bool lex_castable<short>(const string_view &);
+	template<> bool lex_castable<uint8_t>(const string_view &);
+	template<> bool lex_castable<int8_t>(const string_view &);
+	template<> bool lex_castable<bool>(const string_view &);
+	template<> bool lex_castable<seconds>(const string_view &);
+	template<> bool lex_castable<milliseconds>(const string_view &);
+	template<> bool lex_castable<microseconds>(const string_view &);
+	template<> bool lex_castable<nanoseconds>(const string_view &);
 
 	template<> std::string &lex_cast(std::string &);                          // trivial
 	template<> std::string lex_cast(const std::string &);                     // trivial
@@ -235,7 +235,7 @@ ircd::lex_cast(T t,
 template<class T>
 IRCD_LEX_CAST_UNNECESSARY
 bool
-ircd::try_lex_cast(const string_view &s)
+ircd::lex_castable(const string_view &s)
 {
 	assert(0);
 	return false;
@@ -244,7 +244,7 @@ ircd::try_lex_cast(const string_view &s)
 /// Trivial conversion; always returns true
 template<>
 inline bool
-ircd::try_lex_cast<ircd::string_view>(const string_view &)
+ircd::lex_castable<ircd::string_view>(const string_view &)
 {
 	return true;
 }
@@ -252,7 +252,7 @@ ircd::try_lex_cast<ircd::string_view>(const string_view &)
 /// Trivial conversion; always returns true
 template<>
 inline bool
-ircd::try_lex_cast<std::string_view>(const string_view &)
+ircd::lex_castable<std::string_view>(const string_view &)
 {
 	return true;
 }
@@ -260,7 +260,7 @@ ircd::try_lex_cast<std::string_view>(const string_view &)
 /// Trivial conversion; always returns true
 template<>
 inline bool
-ircd::try_lex_cast<std::string>(const string_view &s)
+ircd::lex_castable<std::string>(const string_view &s)
 {
 	return true;
 }

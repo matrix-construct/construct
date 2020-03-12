@@ -279,7 +279,7 @@ ircd::info::kernel_version
 		[] // major
 		{
 			const auto str(split(kernel_release, '.').first);
-			return try_lex_cast<int>(str)?
+			return lex_castable<int>(str)?
 				lex_cast<int>(str):
 				0;
 		}(),
@@ -288,7 +288,7 @@ ircd::info::kernel_version
 		{
 			auto str(split(kernel_release, '.').second);
 			str = split(str, '.').first;
-			return try_lex_cast<int>(str)?
+			return lex_castable<int>(str)?
 				lex_cast<int>(str):
 				0;
 		}(),

@@ -323,112 +323,112 @@ ircd::lex_cast(const string_view &s)
 }
 
 template<> bool
-ircd::try_lex_cast<bool>(const string_view &s)
+ircd::lex_castable<bool>(const string_view &s)
 {
 	bool i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<int8_t>(const string_view &s)
+ircd::lex_castable<int8_t>(const string_view &s)
 {
 	int8_t i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<uint8_t>(const string_view &s)
+ircd::lex_castable<uint8_t>(const string_view &s)
 {
 	uint8_t i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<short>(const string_view &s)
+ircd::lex_castable<short>(const string_view &s)
 {
 	short i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<ushort>(const string_view &s)
+ircd::lex_castable<ushort>(const string_view &s)
 {
 	ushort i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<int>(const string_view &s)
+ircd::lex_castable<int>(const string_view &s)
 {
 	int i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<unsigned int>(const string_view &s)
+ircd::lex_castable<unsigned int>(const string_view &s)
 {
 	unsigned int i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<long>(const string_view &s)
+ircd::lex_castable<long>(const string_view &s)
 {
 	long i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<unsigned long>(const string_view &s)
+ircd::lex_castable<unsigned long>(const string_view &s)
 {
 	unsigned long i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<float>(const string_view &s)
+ircd::lex_castable<float>(const string_view &s)
 {
 	float i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<double>(const string_view &s)
+ircd::lex_castable<double>(const string_view &s)
 {
 	double i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<long double>(const string_view &s)
+ircd::lex_castable<long double>(const string_view &s)
 {
 	long double i;
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<ircd::nanoseconds>(const string_view &s)
+ircd::lex_castable<ircd::nanoseconds>(const string_view &s)
 {
 	time_t i; //TODO: XXX
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<ircd::microseconds>(const string_view &s)
+ircd::lex_castable<ircd::microseconds>(const string_view &s)
 {
 	time_t i; //TODO: XXX
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<ircd::milliseconds>(const string_view &s)
+ircd::lex_castable<ircd::milliseconds>(const string_view &s)
 {
 	time_t i; //TODO: XXX
 	return boost::conversion::try_lexical_convert(s, i);
 }
 
 template<> bool
-ircd::try_lex_cast<ircd::seconds>(const string_view &s)
+ircd::lex_castable<ircd::seconds>(const string_view &s)
 {
 	time_t i; //TODO: XXX
 	return boost::conversion::try_lexical_convert(s, i);

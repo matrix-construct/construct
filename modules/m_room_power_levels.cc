@@ -91,7 +91,7 @@ ircd::m::auth_room_power_levels(const m::event &event,
 			continue;
 		}
 
-		if(!try_lex_cast<int64_t>(unquote(value)))
+		if(!lex_castable<int64_t>(unquote(value)))
 			throw FAIL
 			{
 				"m.room.power_levels content.users value is not an integer."
