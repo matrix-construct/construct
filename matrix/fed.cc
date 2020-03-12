@@ -1492,6 +1492,13 @@ well_known_fetch_timeout
 	{ "default",  8L                                    },
 };
 
+ircd::conf::item<size_t>
+well_known_fetch_redirects
+{
+	{ "name",     "ircd.m.fed.well-known.fetch.redirects" },
+	{ "default",  2L                                      },
+};
+
 ircd::string_view
 ircd::m::fed::well_known(const mutable_buffer &buf,
                          const string_view &origin)
@@ -1635,60 +1642,52 @@ catch(const std::exception &e)
 	return origin;
 }
 
+namespace ircd::m::fed
+{
+	static std::tuple<http::code, string_view, string_view>
+	fetch_well_known(const mutable_buffer &out,
+	                 const net::hostport &remote,
+	                 const string_view &url);
+}
+
 ircd::string_view
 ircd::m::fed::fetch_well_known(const mutable_buffer &buf,
                                const string_view &origin)
 try
 {
-	const net::hostport remote
+	static const string_view path
 	{
-		origin
+		"/.well-known/matrix/server"
 	};
 
-	// Hard target https service; do not inherit matrix service from remote.
-	const net::hostport target
+	rfc3986::uri uri;
+	uri.remote = origin;
+	uri.path = path;
+	json::object response;
+	unique_mutable_buffer carry;
+	for(size_t i(0); i < well_known_fetch_redirects; ++i)
 	{
-		host(remote), "https", port(remote)
-	};
+		const auto &[code, location, content]
+		{
+			fetch_well_known(buf, uri.remote, uri.path)
+		};
 
-	window_buffer wb{buf};
-	http::request
-	{
-		wb, host(remote), "GET", "/.well-known/matrix/server",
-	};
+		// Successful error; bail
+		if(code >= 400)
+			return origin;
 
-	const const_buffer out_head
-	{
-		wb.completed()
-	};
+		// Successful result; response content handled after loop.
+		if(code < 300)
+		{
+			response = content;
+			break;
+		}
 
-	// Remaining space in buffer is used for received head; note that below
-	// we specify this same buffer for in.content, but that's a trick
-	// recognized by ircd::server to place received content directly after
-	// head in this buffer without any additional dynamic allocation.
-	const mutable_buffer in_head
-	{
-		buf + size(out_head)
-	};
-
-	server::request::opts opts;
-	server::request request
-	{
-		target,
-		{ out_head },
-		{ in_head, in_head },
-		&opts
-	};
-
-	const auto code
-	{
-		request.get(seconds(well_known_fetch_timeout))
-	};
-
-	const json::object &response
-	{
-		request.in.content
-	};
+		// Redirection; carry over the new target by copying it because it's
+		// in the buffer which we'll be overwriting for the new request.
+		carry = unique_mutable_buffer{location};
+		uri = string_view{carry};
+	}
 
 	const json::string &m_server
 	{
@@ -1704,12 +1703,10 @@ try
 	thread_local char rembuf[rfc3986::DOMAIN_BUFSIZE * 2];
 	log::debug
 	{
-		well_known_log, "%s query to %s %u %s :%s",
+		well_known_log, "%s query to %s found delegation to %s",
 		origin,
-		string(rembuf, target),
-		uint(code),
-		http::status(code),
-		string_view{response},
+		uri.remote,
+		m_server,
 	};
 
 	// Move the returned string to the front of the buffer; this overwrites
@@ -1733,4 +1730,79 @@ catch(const std::exception &e)
 	};
 
 	return origin;
+}
+
+/// Return a tuple of the HTTP code, any Location header, and the response
+/// content. These values are unconditional if this function doesn't throw,
+/// but if there's no Location header and/or content then those will be empty
+/// string_view's. This function is intended to be run in a loop by the caller
+/// to chase redirection. No HTTP codes will throw from here; server and
+/// network errors (and others) will.
+static std::tuple<ircd::http::code, ircd::string_view, ircd::string_view>
+ircd::m::fed::fetch_well_known(const mutable_buffer &buf,
+	                           const net::hostport &remote,
+	                           const string_view &url)
+{
+	// Hard target https service; do not inherit any matrix service from remote.
+	const net::hostport target
+	{
+		host(remote), "https", port(remote)
+	};
+
+	window_buffer wb{buf};
+	http::request
+	{
+		wb, host(target), "GET", url
+	};
+
+	const const_buffer out_head
+	{
+		wb.completed()
+	};
+
+	// Remaining space in buffer is used for received head; note that below
+	// we specify this same buffer for in.content, but that's a trick
+	// recognized by ircd::server to place received content directly after
+	// head in this buffer without any additional dynamic allocation.
+	const mutable_buffer in_head
+	{
+		buf + size(out_head)
+	};
+
+	server::request::opts opts;
+	opts.http_exceptions = false; // 3xx/4xx/5xx response won't throw.
+	server::request request
+	{
+		target,
+		{ out_head },
+		{ in_head, in_head },
+		&opts
+	};
+
+	const auto code
+	{
+		request.get(seconds(well_known_fetch_timeout))
+	};
+
+	thread_local char rembuf[rfc3986::DOMAIN_BUFSIZE * 2];
+	log::debug
+	{
+		well_known_log, "fetch from %s %s :%u %s",
+		string(rembuf, target),
+		url,
+		uint(code),
+		http::status(code)
+	};
+
+	const http::response::head head
+	{
+		request.in.gethead(request)
+	};
+
+	return
+	{
+		code,
+		head.location,
+		request.in.content,
+	};
 }
