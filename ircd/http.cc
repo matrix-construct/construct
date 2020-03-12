@@ -58,6 +58,8 @@ ircd::http::reason
 {
 	{ code::CONTINUE,                            "Continue"                                        },
 	{ code::SWITCHING_PROTOCOLS,                 "Switching Protocols"                             },
+	{ code::PROCESSING,                          "Processing"                                      },
+	{ code::EARLY_HINTS,                         "Early Hints"                                     },
 
 	{ code::OK,                                  "OK"                                              },
 	{ code::CREATED,                             "Created"                                         },
