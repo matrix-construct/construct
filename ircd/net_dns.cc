@@ -37,7 +37,7 @@ ircd::net::dns::init::init()
 {
 	#ifdef HAVE_NETDB_H
 	static const int stay_open {true};
-	::setprotoent(stay_open);
+	::setservent(stay_open);
 	#endif
 
 	assert(!resolver_instance);
@@ -54,7 +54,7 @@ noexcept
 	resolver_instance = nullptr;
 
 	#ifdef HAVE_NETDB_H
-	::endprotoent();
+	::endservent();
 	#endif
 }
 
