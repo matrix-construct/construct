@@ -5420,6 +5420,45 @@ console_cmd__net__addrs(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__net__service(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"service", "proto"
+	}};
+
+	const string_view &service
+	{
+		param.at("service")
+	};
+
+	const string_view &proto
+	{
+		param.at("proto", "tcp"_sv)
+	};
+
+	if(lex_castable<uint16_t>(service))
+	{
+		char buf[64];
+		const auto name
+		{
+			net::dns::service_name(buf, lex_cast<uint16_t>(service), proto)
+		};
+
+		out << name << std::endl;
+		return true;
+	}
+
+	const auto port
+	{
+		net::dns::service_port(service, proto)
+	};
+
+	out << port << std::endl;
+	return true;
+}
+
+bool
 console_cmd__net__host(opt &out, const string_view &line)
 {
 	const params param{line, " ",
