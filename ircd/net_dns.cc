@@ -625,3 +625,82 @@ ircd::net::dns::service_port(std::nothrow_t,
 	return 0;
 }
 #endif
+
+ircd::string_view
+ircd::net::dns::service_name(const mutable_buffer &out,
+                             const uint16_t &port,
+                             const string_view &prot)
+{
+	const auto ret
+	{
+		service_name(std::nothrow, out, port, prot)
+	};
+
+	if(unlikely(!ret))
+		throw error
+		{
+			"Name of service for port %u:%s not found",
+			port,
+			prot?: "*"_sv,
+		};
+
+	return ret;
+}
+
+#ifdef HAVE_NETDB_H
+ircd::string_view
+ircd::net::dns::service_name(std::nothrow_t,
+                              const mutable_buffer &out,
+                              const uint16_t &port,
+                              const string_view &prot)
+try
+{
+	thread_local struct ::servent res, *ent {nullptr};
+	thread_local char _prot[32], buf[2048];
+	const prof::syscall_usage_warning timer
+	{
+		"net::dns::service_name(%s)", name
+	};
+
+	strlcpy(_prot, prot);
+	syscall
+	(
+		::getservbyport_r,
+		ntohs(port),
+		prot? _prot : nullptr,
+		&res,
+		buf,
+		sizeof(buf),
+		&ent
+	);
+
+	assert(!ent || ent->s_port == ntohs(port));
+	assert(!ent || !prot || prot == ent->s_proto);
+	return ent?
+		strlcpy(out, ent->s_name):
+		string_view{};
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Failure when translating port %u:%s to service name :%s",
+		port,
+		prot?: "*"_sv,
+		e.what(),
+	};
+
+	throw;
+}
+#else
+ircd::string_view
+ircd::net::dns::service_name(std::nothrow_t,
+                              const mutable_buffer &out,
+                              const uint16_t &port,
+                              const string_view &prot)
+{
+	//TODO: XXX
+	always_assert(false);
+	return {};
+}
+#endif

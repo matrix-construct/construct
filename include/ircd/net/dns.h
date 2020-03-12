@@ -41,6 +41,9 @@ namespace ircd::net::dns
 	string_view make_SRV_key(const mutable_buffer &out, const hostport &, const opts &);
 	string_view unmake_SRV_key(const string_view &);
 
+	// netdb tools
+	string_view service_name(std::nothrow_t, const mutable_buffer &out, const uint16_t &port, const string_view &prot = {});
+	string_view service_name(const mutable_buffer &out, const uint16_t &port, const string_view &prot = {});
 	uint16_t service_port(std::nothrow_t, const string_view &name, const string_view &prot = {});
 	uint16_t service_port(const string_view &name, const string_view &prot = {});
 
