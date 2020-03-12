@@ -50,6 +50,7 @@ ircd::magic::init::init()
 	{
 		"/usr/local/share/misc/magic.mgc",
 		"/usr/share/misc/magic.mgc",
+		"/usr/share/file/misc/magic.mgc",
 		nullptr
 	};
 
