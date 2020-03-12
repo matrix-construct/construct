@@ -3029,6 +3029,11 @@ ircd::server::tag::read_buffer(const const_buffer &buffer,
 	return ret;
 }
 
+namespace ircd::server
+{
+	static void content_completed(tag &, bool &done);
+}
+
 ircd::const_buffer
 ircd::server::tag::read_head(const const_buffer &buffer,
                              bool &done,
@@ -3261,29 +3266,38 @@ ircd::server::tag::read_content(const const_buffer &buffer,
 	if(req.in.progress)
 		req.in.progress(buffer, const_buffer{content, state.content_read});
 
-	// Not finished with content
-	if(likely(state.content_read != size(content) + content_overflow()))
-		return {};
+	// Finished with content
+	if(state.content_read == size(content) + content_overflow())
+		content_completed(*this, done);
+
+	return {};
+}
+
+void
+ircd::server::content_completed(tag &tag,
+                                bool &done)
+{
+	assert(tag.request);
+	auto &req{*tag.request};
+	const auto &content{req.in.content};
 
 	assert(!done);
 	done = true;
 
 	assert(req.opt);
-	assert(state.content_read == state.content_length);
-	if(content_overflow() && !req.opt->truncate_content)
+	assert(tag.state.content_read == tag.state.content_length);
+	if(tag.content_overflow() && !req.opt->truncate_content)
 	{
-		assert(state.content_read > size(content));
-		set_exception<buffer_overrun>
+		assert(tag.state.content_read > size(content));
+		tag.set_exception<buffer_overrun>
 		(
 			"buffer of %zu bytes too small for content-length %zu bytes by %zu bytes",
 			size(content),
-			state.content_length,
-			content_overflow()
+			tag.state.content_length,
+			tag.content_overflow()
 		);
 	}
-	else set_value(state.status);
-
-	return {};
+	else tag.set_value(tag.state.status);
 }
 
 //
@@ -3491,9 +3505,13 @@ ircd::server::chunk_content_completed(tag &tag,
 		return;
 
 	assert(state.chunk_read == 0);
+	req.in.content = mutable_buffer
+	{
+		req.in.content, state.content_length
+	};
+
 	assert(!done);
 	done = true;
-	req.in.content = mutable_buffer{req.in.content, state.content_length};
 	tag.set_value(state.status);
 }
 
@@ -3739,13 +3757,12 @@ ircd::server::chunk_dynamic_content_completed(tag &tag,
 		return;
 
 	assert(state.chunk_read == 0);
-	assert(!done);
-	done = true;
-
 	assert(req.opt);
 	if(req.opt->contiguous_content && !req.in.chunks.empty())
 		chunk_dynamic_contiguous_copy(state, req);
 
+	assert(!done);
+	done = true;
 	tag.set_value(state.status);
 }
 
