@@ -1485,6 +1485,13 @@ well_known_cache_max
 	{ "default",  48 * 60 * 60L                     },
 };
 
+ircd::conf::item<ircd::seconds>
+well_known_fetch_timeout
+{
+	{ "name",     "ircd.m.fed.well-known.fetch.timeout" },
+	{ "default",  8L                                    },
+};
+
 ircd::string_view
 ircd::m::fed::well_known(const mutable_buffer &buf,
                          const string_view &origin)
@@ -1675,7 +1682,7 @@ try
 
 	const auto code
 	{
-		request.get(seconds(8)) //TODO: XXX conf
+		request.get(seconds(well_known_fetch_timeout))
 	};
 
 	const json::object &response
