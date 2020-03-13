@@ -435,7 +435,16 @@ ircd::m::vm::execute_pdu(eval &eval,
 			fault::GENERAL, "Internal room event denied from external source."
 		};
 
-	if(unlikely(eval::count(event_id) > 1))
+	// Wait for any pending duplicate evals before proceeding.
+	assert(eval::count(event_id));
+	sequence::dock.wait([&event_id]
+	{
+		return eval::count(event_id) <= 1;
+	});
+
+	// This branch won't be taken anymore with the above condition added; but
+	// leaving the code for reference right now.
+	if((false) && unlikely(eval::count(event_id) > 1))
 		throw error
 		{
 			fault::EXISTS, "Event is already being evaluated."

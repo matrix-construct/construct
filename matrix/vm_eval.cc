@@ -323,9 +323,20 @@ ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
 		// When a fault::EXISTS would not actually be revealed to the user in
 		// any way we can elide a lot of grief by checking this here first and
 		// skipping the event. The query path will be adequately cached anyway.
-		if(~(opts->warnlog | opts->errorlog) & fault::EXISTS)
-			if(event.event_id && m::exists(event.event_id))
+		if(event.event_id && ~(opts->warnlog | opts->errorlog) & fault::EXISTS)
+		{
+			// If the event is already being evaluated, wait here until the other
+			// evaluation is finished. If the other was successful, the exists()
+			// check will skip this, otherwise we have to try again here because
+			// this evaluator might be using different options/credentials.
+			sequence::dock.wait([&event]
+			{
+				return eval::count(event.event_id) == 0;
+			});
+
+			if(m::exists(event.event_id))
 				continue;
+		}
 
 		const auto status
 		{
