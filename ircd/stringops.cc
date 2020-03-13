@@ -10,6 +10,18 @@
 
 #include <ircd/simd.h>
 
+size_t
+ircd::indexof(const string_view &s,
+              const string_table &tab)
+{
+	size_t i(0);
+	for(; i < tab.size(); ++i)
+		if(s == tab[i])
+			break;
+
+	return i;
+}
+
 ircd::string_view
 ircd::toupper(const mutable_buffer &out,
               const string_view &in)

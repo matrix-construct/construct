@@ -21,6 +21,10 @@ namespace ircd
 	inline bool ihas(const string_view &s, const string_view &t);
 	inline size_t ifind(const string_view &s, const string_view &t);
 
+	// Multi-string table suite; returns index past the end on no-match
+	using string_table = vector_view<const string_view>;
+	size_t indexof(const string_view &, const string_table &);
+
 	// return view without any trailing characters contained in c
 	string_view rstripa(const string_view &str, const string_view &c);
 
