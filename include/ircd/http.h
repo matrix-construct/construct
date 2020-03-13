@@ -284,7 +284,8 @@ struct ircd::http::response::head
 
 	string_view headers;
 
-	head(parse::capstan &pc, const headers::closure &c = {});
+	head(parse::capstan &pc, const headers::closure &c);
+	head(parse::capstan &pc);
 	head() = default;
 };
 

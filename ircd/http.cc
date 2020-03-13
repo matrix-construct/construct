@@ -289,7 +289,7 @@ namespace ircd::http
 }
 
 ircd::http::request::head::head(parse::capstan &pc,
-                                const headers::closure &c)
+                                const headers::closure &closure)
 :line::request{pc}
 ,uri
 {
@@ -297,7 +297,7 @@ ircd::http::request::head::head(parse::capstan &pc,
 	query?    string_view { begin(path), end(query)    }:
 	          string_view { begin(path), end(path)     }
 }
-,headers{[this, &pc, &c]
+,headers{[this, &pc, &closure]
 {
 	const bool version_compatible
 	{
@@ -315,14 +315,21 @@ ircd::http::request::head::head(parse::capstan &pc,
 			}
 		};
 
+	if(closure)
+		return http::headers
+		{
+			pc, [this, &closure](const auto &header)
+			{
+				assign(*this, header);
+				closure(header);
+			}
+		};
+
 	return http::headers
 	{
-		pc, [this, &c](const auto &header)
+		pc, [this](const auto &header)
 		{
 			assign(*this, header);
-
-			if(c)
-				c(header);
 		}
 	};
 }()}
@@ -508,19 +515,32 @@ namespace ircd::http
 	static void assign(response::head &, const header &);
 }
 
-ircd::http::response::head::head(parse::capstan &pc,
-                                 const headers::closure &c)
+ircd::http::response::head::head(parse::capstan &pc)
 :line::response{pc}
 ,headers
 {
 	http::headers
 	{
-		pc, [this, &c](const auto &header)
+		pc, [this](const auto &header)
 		{
 			assign(*this, header);
+		}
+	}
+}
+{
+}
 
-			if(c)
-				c(header);
+ircd::http::response::head::head(parse::capstan &pc,
+                                 const headers::closure &closure)
+:line::response{pc}
+,headers
+{
+	http::headers
+	{
+		pc, [this, &closure](const auto &header)
+		{
+			assign(*this, header);
+			closure(header);
 		}
 	}
 }
