@@ -907,6 +907,19 @@ try
 			{ "name", "User Tokens" }
 		});
 
+	const m::room::id::buf public_room_id
+	{
+		"public", origin(homeserver)
+	};
+
+	const m::room public_room
+	{
+		public_room_id
+	};
+
+	if(!exists(public_room))
+		create(public_room, me);
+
 	log::info
 	{
 		log, "Bootstrap event generation completed nominally."
