@@ -142,15 +142,16 @@ get__download_local(client &client,
 		})
 	};
 
-	if(unlikely(read != file_size)) log::error
-	{
-		m::media::log, "File %s/%s [%s] size mismatch: expected %zu got %zu",
-		server,
-		file,
-		string_view{room.room_id},
-		file_size,
-		read
-	};
+	if(unlikely(read != file_size))
+		log::error
+		{
+			m::media::log, "File %s/%s [%s] size mismatch: expected %zu got %zu",
+			server,
+			file,
+			string_view{room.room_id},
+			file_size,
+			read
+		};
 
 	// Have to kill client here after failing content length expectation.
 	if(unlikely(read != file_size))
