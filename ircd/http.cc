@@ -1197,7 +1197,10 @@ ircd::http::status(const string_view &str)
 	const char *start(str.data());
 	const bool parsed(qi::parse(start, start + str.size(), grammar, ret));
 	if(!parsed || ret < 0 || ret >= 1000)
-		throw ircd::error{"Invalid HTTP status code"};
+		throw ircd::error
+		{
+			"Invalid HTTP status code"
+		};
 
 	return http::code(ret);
 }
@@ -1210,7 +1213,7 @@ try
 }
 catch(const std::out_of_range &e)
 {
-	log::warning
+	log::dwarning
 	{
 		"No reason string for HTTP status code %u", uint(code)
 	};
