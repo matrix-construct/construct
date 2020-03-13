@@ -313,54 +313,69 @@ ircd::m::keys::get(const string_view &server_name,
 try
 {
 	assert(!server_name.empty());
-
 	if(cache::get(server_name, key_id, closure))
 		return;
 
 	if(server_name == my_host())
 		throw m::NOT_FOUND
 		{
-			"keys for '%s' (that's myself) not found", server_name
+			"keys for '%s' (that's myself) not found",
+			server_name
 		};
 
 	log::debug
 	{
-		m::log, "Keys for %s not cached; querying network...", server_name
+		log, "Keys for %s not cached; querying network...",
+		server_name
 	};
 
-	m::fed::key::opts opts;
-	opts.dynamic = false;
 	const unique_buffer<mutable_buffer> buf
 	{
 		32_KiB
 	};
 
-	m::fed::key::keys request
+	m::fed::key::opts opts;
+	opts.dynamic = false;
+	opts.remote = server_name;
+	const m::fed::key::server_key query
 	{
-		server_name, buf, std::move(opts)
+		server_name, key_id
+	};
+
+	m::fed::key::query request
+	{
+		{query}, buf, std::move(opts)
 	};
 
 	request.wait(milliseconds(keys_get_timeout));
-	const auto &status(request.get());
-	const json::object response
+	const auto &status
+	{
+		request.get()
+	};
+
+	// note fed::key::query gives us "server_keys" array via cast operator.
+	const json::array response
 	{
 		request
 	};
 
-	const json::object &keys
+	for(const json::object &keys : response)
 	{
-		response
-	};
+		if(unquote(keys["server_name"]) != server_name)
+			continue;
 
-	verify(m::keys(keys));
+		verify(m::keys(keys));
+		log::debug
+		{
+			log, "Verified keys for '%s' from '%s'",
+			server_name,
+			server_name,
+		};
 
-	log::debug
-	{
-		m::log, "Verified keys from '%s'", server_name
-	};
-
-	cache::set(keys);
-	closure(keys);
+		cache::set(keys);
+		closure(keys);
+		break;
+	}
 }
 catch(const ctx::timeout &e)
 {
