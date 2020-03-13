@@ -29,7 +29,7 @@ namespace ircd::m::media::file
 	room::id::buf
 	download(const mxc &,
 	         const m::user::id &,
-	         const string_view & = {});
+	         const string_view &remote = {});
 
 	std::pair<http::response::head, unique_buffer<mutable_buffer>>
 	download(const mutable_buffer &head_buf,
@@ -40,8 +40,8 @@ namespace ircd::m::media::file
 	m::room
 	download(const mxc &mxc,
 	         const m::user::id &user_id,
-	         const string_view &remote,
-	         const m::room::id &room_id);
+	         const m::room::id &room_id,
+	         string_view remote = {});
 };
 
 namespace ircd::m::media::block

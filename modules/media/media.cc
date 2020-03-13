@@ -227,7 +227,7 @@ ircd::m::media::file::download(const mxc &mxc,
 	if(!remote && my_host(mxc.server))
 		return room_id;
 
-	download(mxc, user_id, remote, room_id);
+	download(mxc, user_id, room_id, remote);
 	return room_id;
 }
 
@@ -235,8 +235,8 @@ ircd::m::room
 IRCD_MODULE_EXPORT
 ircd::m::media::file::download(const mxc &mxc,
                                const m::user::id &user_id,
-                               const string_view &remote,
-                               const m::room::id &room_id)
+                               const m::room::id &room_id,
+                               string_view remote)
 try
 {
 	auto iit
@@ -262,6 +262,9 @@ try
 
 	if(exists(room_id))
 		return room_id;
+
+	if(!remote)
+		remote = mxc.server;
 
 	const unique_buffer<mutable_buffer> buf
 	{
