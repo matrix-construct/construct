@@ -659,7 +659,7 @@ try
 	thread_local char _prot[32], buf[2048];
 	const prof::syscall_usage_warning timer
 	{
-		"net::dns::service_name(%s)", name
+		"net::dns::service_name(%u)", port
 	};
 
 	strlcpy(_prot, prot);
