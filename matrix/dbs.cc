@@ -1651,6 +1651,15 @@ ircd::m::dbs::desc::events__event_idx
 
 	// meta_block size
 	size_t(events__event_idx__meta_block__size),
+
+	// compression
+	"kLZ4Compression;kSnappyCompression"s,
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 //
@@ -1757,6 +1766,9 @@ ircd::m::dbs::desc::events__event_json
 
 	// compactor
 	{},
+
+	// compaction priority algorithm
+	"kOldestLargestSeqFirst"s,
 
 	// target_file_size
 	{
@@ -1991,6 +2003,15 @@ ircd::m::dbs::desc::events__event_refs
 
 	// meta_block size
 	size_t(events__event_refs__meta_block__size),
+
+	// compression
+	{}, // no compression for this column
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 //
@@ -2161,6 +2182,15 @@ ircd::m::dbs::desc::events__event_horizon
 
 	// meta_block size
 	size_t(events__event_horizon__meta_block__size),
+
+	// compression
+	"kLZ4Compression;kSnappyCompression"s,
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 //
@@ -2396,6 +2426,15 @@ ircd::m::dbs::desc::events__event_sender
 
 	// meta_block size
 	size_t(events__event_sender__meta_block__size),
+
+	// compression
+	"kLZ4Compression;kSnappyCompression"s,
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 //
@@ -2542,6 +2581,15 @@ ircd::m::dbs::desc::events__event_type
 
 	// meta_block size
 	size_t(events__event_type__meta_block__size),
+
+	// compression
+	"kLZ4Compression;kSnappyCompression"s,
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 //
@@ -2749,6 +2797,15 @@ ircd::m::dbs::desc::events__event_state
 
 	// meta_block size
 	size_t(events__event_state__meta_block__size),
+
+	// compression
+	"kLZ4Compression;kSnappyCompression"s,
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 //
@@ -2888,6 +2945,12 @@ ircd::m::dbs::desc::events__room_head
 
 	// compression
 	{}, // no compression for this column
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kByCompensatedSize"s,
 };
 
 //
@@ -3318,6 +3381,15 @@ ircd::m::dbs::desc::events__room_joined
 
 	// meta_block size
 	size_t(events__room_joined__meta_block__size),
+
+	// compression
+	"kLZ4Compression;kSnappyCompression"s,
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 //
@@ -3496,6 +3568,15 @@ ircd::m::dbs::desc::events__room_state
 
 	// meta_block size
 	size_t(events__room_state__meta_block__size),
+
+	// compression
+	"kLZ4Compression;kSnappyCompression"s,
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 //
@@ -3771,6 +3852,15 @@ ircd::m::dbs::desc::events__room_state_space
 
 	// meta_block size
 	size_t(events__room_state_space__meta_block__size),
+
+	// compression
+	"kLZ4Compression;kSnappyCompression"s,
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 //

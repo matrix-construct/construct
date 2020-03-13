@@ -90,6 +90,9 @@ struct ircd::db::descriptor
 	/// User given compaction callback surface.
 	db::compactor compactor {};
 
+	/// Compaction priority algorithm
+	std::string compaction_pri {"kOldestLargestSeqFirst"};
+
 	/// Compaction related parameters. see: rocksdb/advanced_options.h
 	struct
 	{

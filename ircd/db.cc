@@ -1930,9 +1930,17 @@ ircd::db::database::column::column(database &d,
 	//this->options.compaction_style = rocksdb::kCompactionStyleNone;
 	this->options.compaction_style = rocksdb::kCompactionStyleLevel;
 
-	// Set the compaction priority; this should probably be in the descriptor
-	// but this is currently selected for the general matrix workload.
-	this->options.compaction_pri = rocksdb::CompactionPri::kOldestSmallestSeqFirst;
+	// Set the compaction priority from string in the descriptor
+	this->options.compaction_pri =
+		this->descriptor->compaction_pri == "kByCompensatedSize"?
+			rocksdb::CompactionPri::kByCompensatedSize:
+		this->descriptor->compaction_pri == "kMinOverlappingRatio"?
+			rocksdb::CompactionPri::kMinOverlappingRatio:
+		this->descriptor->compaction_pri == "kOldestSmallestSeqFirst"?
+			rocksdb::CompactionPri::kOldestSmallestSeqFirst:
+		this->descriptor->compaction_pri == "kOldestLargestSeqFirst"?
+			rocksdb::CompactionPri::kOldestLargestSeqFirst:
+			rocksdb::CompactionPri::kOldestLargestSeqFirst;
 
 	// Set filter reductions for this column. This means we expect a key to exist.
 	this->options.optimize_filters_for_hits = this->descriptor->expect_queries_hit;

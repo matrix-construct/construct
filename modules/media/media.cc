@@ -90,7 +90,13 @@ ircd::m::media::blocks_descriptor
 	512,
 
 	// compression
-	""s // no compression
+	{}, // no compression
+
+	// compactor
+	{},
+
+	// compaction priority algorithm
+	"kOldestSmallestSeqFirst"s,
 };
 
 decltype(ircd::m::media::description)
