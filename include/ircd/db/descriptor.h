@@ -97,7 +97,7 @@ struct ircd::db::descriptor
 	struct
 	{
 		size_t base {64_MiB};    // rocksdb default
-		size_t multiplier {2};   // rocksdb default
+		size_t multiplier {1};   // rocksdb default
 	}
 	target_file_size;
 
