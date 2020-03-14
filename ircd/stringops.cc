@@ -48,7 +48,7 @@ noexcept
 	};
 }
 
-#if defined(HAVE_X86INTRIN_H) && defined(__SSE2__)
+#if defined(IRCD_SIMD) && defined(__SSE2__)
 ircd::string_view
 ircd::tolower(const mutable_buffer &out,
               const string_view &in)

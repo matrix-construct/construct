@@ -14,8 +14,12 @@
 //
 
 #pragma once
-#define HAVE_IRCD_INTRIN_H
+#define HAVE_IRCD_SIMD_H
 #include <RB_INC_X86INTRIN_H
+
+#ifdef HAVE_X86INTRIN_H
+	#define IRCD_SIMD
+#endif
 
 //
 // scalar
@@ -42,7 +46,7 @@ namespace ircd
 // unsigned
 //
 
-#if defined(HAVE_X86INTRIN_H)
+#if defined(IRCD_SIMD)
 namespace ircd
 {
 	typedef __v32qu       u8x32;     //  [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|
@@ -65,7 +69,7 @@ namespace ircd
 // signed
 //
 
-#if defined(HAVE_X86INTRIN_H)
+#if defined(IRCD_SIMD)
 namespace ircd
 {
 	typedef __v32qi       i8x32;     //  [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|
@@ -88,7 +92,7 @@ namespace ircd
 // single precision
 //
 
-#if defined(HAVE_X86INTRIN_H)
+#if defined(IRCD_SIMD)
 namespace ircd
 {
 	typedef __v16qs       f8x16;     //  [0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|
@@ -105,7 +109,7 @@ namespace ircd
 // double precision
 //
 
-#if defined(HAVE_X86INTRIN_H)
+#if defined(IRCD_SIMD)
 namespace ircd
 {
 	typedef __v4df        f64x4;     //  [____0____|____1____|____2____|____3____|
