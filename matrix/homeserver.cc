@@ -920,6 +920,19 @@ try
 	if(!exists(public_room))
 		create(public_room, me);
 
+	const m::room::id::buf alias_room_id
+	{
+		"alias", origin(homeserver)
+	};
+
+	const m::room alias_room
+	{
+		alias_room_id
+	};
+
+	if(!exists(alias_room))
+		create(alias_room, me);
+
 	log::info
 	{
 		log, "Bootstrap event generation completed nominally."
