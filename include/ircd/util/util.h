@@ -79,6 +79,7 @@ size_t size(std::ostream &s);
 template<size_t SIZE>
 constexpr size_t
 size(const char (&buf)[SIZE])
+noexcept
 {
 	return SIZE;
 }
@@ -86,6 +87,7 @@ size(const char (&buf)[SIZE])
 template<size_t SIZE>
 constexpr size_t
 size(const std::array<const char, SIZE> &buf)
+noexcept
 {
 	return SIZE;
 }
@@ -93,6 +95,7 @@ size(const std::array<const char, SIZE> &buf)
 template<size_t SIZE>
 constexpr size_t
 size(const std::array<char, SIZE> &buf)
+noexcept
 {
 	return SIZE;
 }
@@ -100,6 +103,7 @@ size(const std::array<char, SIZE> &buf)
 template<class T>
 constexpr typename std::enable_if<std::is_integral<T>::value, size_t>::type
 size(const T &val)
+noexcept
 {
 	return sizeof(T);
 }
@@ -111,6 +115,7 @@ size(const T &val)
 template<size_t SIZE>
 constexpr const char *
 data(const char (&buf)[SIZE])
+noexcept
 {
 	return buf;
 }
@@ -118,6 +123,7 @@ data(const char (&buf)[SIZE])
 template<size_t SIZE>
 constexpr char *
 data(char (&buf)[SIZE])
+noexcept
 {
 	return buf;
 }
@@ -125,6 +131,7 @@ data(char (&buf)[SIZE])
 template<class T>
 constexpr typename std::enable_if<std::is_pod<T>::value, const uint8_t *>::type
 data(const T &val)
+noexcept
 {
 	return reinterpret_cast<const uint8_t *>(&val);
 }
@@ -132,6 +139,7 @@ data(const T &val)
 template<class T>
 constexpr typename std::enable_if<std::is_pod<T>::value, uint8_t *>::type
 data(T &val)
+noexcept
 {
 	return reinterpret_cast<uint8_t *>(&val);
 }
@@ -220,6 +228,7 @@ struct values
 constexpr bool
 _constexpr_equal(const char *a,
                  const char *b)
+noexcept
 {
 	return *a == *b && (*a == '\0' || _constexpr_equal(a + 1, b + 1));
 }
