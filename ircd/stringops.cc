@@ -10,15 +10,74 @@
 
 #include <ircd/simd.h>
 
+namespace ircd
+{
+	template<class i8xN,
+	         size_t N>
+	static size_t indexof(const string_view &, const std::array<string_view, N> &);
+}
+
 size_t
 ircd::indexof(const string_view &s,
-              const string_table &tab)
+              const string_views &tab)
 {
-	size_t i(0);
-	for(; i < tab.size(); ++i)
-		if(s == tab[i])
-			break;
+	#if defined(__AVX__)
+		static const size_t N {32};
+		using i8xN = i8x32;
+	#elif defined(__SSE__)
+		static const size_t N {16};
+		using i8xN = i8x16;
+	#else
+		static const size_t N {1};
+		using i8xN = char __attribute__((vector_size(1)));
+	#endif
 
+	size_t i, j, ret;
+	std::array<string_view, N> a;
+	for(i = 0; i < tab.size() / N; ++i)
+	{
+		for(j = 0; j < N; ++j)
+			a[j] = tab[i * N + j];
+
+		if((ret = indexof<i8xN, N>(s, a)) != N)
+			return i * N + ret;
+	}
+
+	#pragma clang loop unroll (disable)
+	for(j = 0; j < N; ++j)
+		a[j] = i * N + j < tab.size()?
+			tab[i * N + j]:
+			string_view{};
+
+	return i * N + indexof<i8xN, N>(s, a);
+}
+
+template<class i8xN,
+         size_t N>
+size_t
+ircd::indexof(const string_view &s,
+              const std::array<string_view, N> &st)
+{
+	i8xN ct, res;
+	size_t i, j, k;
+	for(i = 0; i < N; ++i)
+		res[i] = true;
+
+	const size_t max(s.size());
+	for(i = 0, j = 0; i < max; i = (j < N)? i + 1 : max)
+	{
+		#pragma clang loop unroll (disable)
+		for(k = 0; k < N; ++k)
+		{
+			res[k] &= size(st[k]) > i;
+			ct[k] = res[k]? st[k][i]: 0;
+		}
+
+		res &= ct == s[i];
+		for(; j < N && !res[j]; ++j);
+	}
+
+	for(i = 0; i < N && !res[i]; ++i);
 	return i;
 }
 
