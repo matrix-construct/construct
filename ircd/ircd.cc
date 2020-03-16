@@ -200,7 +200,7 @@ noexcept
 			return true;
 		}
 
-		case run::level::IDLE:
+		case run::level::LOAD:
 		case run::level::START:
 		{
 			ctx::terminate(*main_context);
@@ -251,7 +251,7 @@ noexcept
 		case run::level::QUIT:
 			return;
 
-		case run::level::IDLE:
+		case run::level::LOAD:
 		case run::level::RUN:
 			break;
 	}
@@ -318,9 +318,9 @@ noexcept try
 		ircd::run::set(run::level::QUIT);
 	}};
 
-	// IRCd will now transition to the IDLE state allowing library user's to
+	// IRCd will now transition to the LOAD state allowing library user's to
 	// load their applications using the run::changed callback.
-	run::set(run::level::IDLE);
+	run::set(run::level::LOAD);
 
 	// IRCd will now transition to the RUN state indicating full functionality.
 	run::set(run::level::RUN);

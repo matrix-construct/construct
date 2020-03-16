@@ -123,7 +123,7 @@ try
 		{
 			case level::HALT:  break;
 			case level::QUIT:  break;
-			case level::IDLE:  throw;
+			case level::LOAD:  throw;
 			default:           throw;
 		}
 
@@ -156,7 +156,7 @@ catch(const std::exception &e)
 {
 	switch(new_level)
 	{
-		case level::IDLE:  throw;
+		case level::LOAD:  throw;
 		default:           break;
 	}
 
@@ -178,7 +178,7 @@ ircd::run::reflect(const enum run::level &level)
 		case level::HALT:      return "HALT";
 		case level::READY:     return "READY";
 		case level::START:     return "START";
-		case level::IDLE:      return "IDLE";
+		case level::LOAD:      return "LOAD";
 		case level::RUN:       return "RUN";
 		case level::QUIT:      return "QUIT";
 		case level::FAULT:     return "FAULT";

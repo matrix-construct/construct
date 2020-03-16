@@ -239,7 +239,7 @@ noexcept try
 
 	// This object registers a callback for a specific event in libircd; the
 	// closure is called from the main context (#1) running ircd::main().
-	// after libircd is ready for service in runlevel IDLE but before entering
+	// after libircd is ready for service in runlevel LOAD but before entering
 	// runlevel RUN. It is called again immediately after entering runlevel
 	// QUIT, but before any functionality of libircd destructs. This cues us
 	// to start and stop the homeserver.
@@ -251,7 +251,7 @@ noexcept try
 
 			// 2 This branch is taken the first time this function is called,
 			// and not taken the second time.
-			if(level == ircd::run::level::IDLE && !context && !nomatrix)
+			if(level == ircd::run::level::LOAD && !context && !nomatrix)
 			{
 				// 3 Launch the homeserver context (asynchronous).
 				context = { "matrix", ircd::context::POST, homeserver };

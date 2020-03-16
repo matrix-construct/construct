@@ -180,7 +180,7 @@ void
 ircd::m::on_load()
 try
 {
-	assert(ircd::run::level == run::level::IDLE);
+	assert(ircd::run::level == run::level::LOAD);
 }
 catch(const m::error &e)
 {
