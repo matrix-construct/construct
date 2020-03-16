@@ -936,6 +936,7 @@ RB_CHK_SYSHEADER(gnu/lib-names.h, [GNU_LIB_NAMES_H])
 
 dnl linux platform
 RB_CHK_SYSHEADER(sys/auxv.h, [SYS_AUXV_H])
+RB_CHK_SYSHEADER(sys/sysinfo.h, [SYS_SYSINFO_H])
 RB_CHK_SYSHEADER(sys/eventfd.h, [SYS_EVENTFD_H])
 RB_CHK_SYSHEADER(sys/inotify.h, [SYS_INOTIFY_H])
 RB_CHK_SYSHEADER(sys/sysmacros.h, [SYS_SYSMACROS_H])

@@ -8,9 +8,10 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include <RB_INC_SYS_RESOURCE_H
 #include <RB_INC_UNISTD_H
 #include <RB_INC_CPUID_H
+#include <RB_INC_SYS_SYSINFO_H
+#include <RB_INC_SYS_RESOURCE_H
 #include <RB_INC_GNU_LIBC_VERSION_H
 
 namespace ircd::info
@@ -433,14 +434,17 @@ ircd::info::dump_sys_info()
 
 	// Additional detected system parameters
 	#ifdef RB_DEBUG
+	char buf[2][48];
 	log::logf
 	{
 		log::star, log::DEBUG,
-		"page_size=%zu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu",
+		"page_size=%zu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu ram=%s swap=%s",
 		page_size,
 		iov_max,
 		aio_max,
 		aio_reqprio_max,
+		pretty(buf[0], iec(total_ram)),
+		pretty(buf[1], iec(total_swap)),
 	};
 	#endif
 }
@@ -509,7 +513,7 @@ ircd::info::kernel_version
 };
 
 //
-// System information
+// Resource limits
 //
 
 #ifdef HAVE_SYS_RESOURCE_H
@@ -576,6 +580,10 @@ ircd::info::rlimit_as
 	#endif
 };
 
+//
+// System configuration
+//
+
 #ifdef _SC_CLK_TCK
 decltype(ircd::info::clk_tck)
 ircd::info::clk_tck
@@ -619,6 +627,43 @@ ircd::info::page_size
 {
 	#ifdef _SC_PAGESIZE
 	size_t(syscall(::sysconf, _SC_PAGESIZE))
+	#endif
+};
+
+//
+// System information
+//
+
+namespace ircd::info
+{
+	#ifdef HAVE_SYS_SYSINFO_H
+	extern struct ::sysinfo sysinfo;
+	#endif
+}
+
+#ifdef HAVE_SYS_SYSINFO_H
+decltype(ircd::info::sysinfo)
+ircd::info::sysinfo{[]
+{
+	struct ::sysinfo ret;
+	syscall(::sysinfo, &ret);
+	return ret;
+}()};
+#endif
+
+decltype(ircd::info::total_ram)
+ircd::info::total_ram
+{
+	#ifdef HAVE_SYS_SYSINFO_H
+	sysinfo.totalram
+	#endif
+};
+
+decltype(ircd::info::total_swap)
+ircd::info::total_swap
+{
+	#ifdef HAVE_SYS_SYSINFO_H
+	sysinfo.totalswap
 	#endif
 };
 

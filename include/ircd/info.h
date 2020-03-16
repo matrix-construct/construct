@@ -44,12 +44,14 @@ namespace ircd::info
 	extern const string_view compiled;
 	extern const string_view startup;
 
-	// System information
+	// System configuration / information
 	extern const size_t page_size;
 	extern const size_t iov_max;
 	extern const size_t aio_max;
 	extern const size_t aio_reqprio_max;
 	extern const size_t clk_tck;
+	extern const size_t total_ram;
+	extern const size_t total_swap;
 
 	// Resource limitations
 	extern const size_t rlimit_as;
