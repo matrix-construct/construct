@@ -29,10 +29,10 @@ struct typist
 	bool operator()(const typist &a, const typist &b) const;
 };
 
-ctx::dock
+static ctx::dock
 timeout_dock;
 
-std::set<typist, typist>
+static std::set<typist, typist>
 typists;
 
 conf::item<milliseconds>
@@ -318,7 +318,9 @@ ircd::m::typing::for_each(const closure &closure)
 static void timeout_timeout(const typist &);
 static bool timeout_check();
 static void timeout_worker();
-static context timeout_context
+
+static context
+timeout_context
 {
 	"typing",
 	256_KiB,
@@ -336,8 +338,8 @@ timeout_context_terminate
 };
 
 void
-__attribute__((noreturn))
 timeout_worker()
+try
 {
 	while(1)
 	{
@@ -349,6 +351,14 @@ timeout_worker()
 		if(!timeout_check())
 			ctx::sleep(milliseconds(timeout_int));
 	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		typing_log, "Typing timeout worker fatal :%s",
+		e.what()
+	};
 }
 
 bool
