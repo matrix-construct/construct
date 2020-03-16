@@ -1503,7 +1503,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "acceptor(%p) join: %s",
+		log, "acceptor(%p) join :%s",
 		this,
 		e.what()
 	};
@@ -1524,7 +1524,7 @@ catch(const boost::system::system_error &e)
 {
 	log::error
 	{
-		log, "acceptor(%p) interrupt: %s",
+		log, "acceptor(%p) interrupt :%s",
 		this,
 		string(e)
 	};
@@ -1564,7 +1564,9 @@ catch(const std::exception &e)
 {
 	throw panic
 	{
-		"%s :%s", loghead(*this), e.what()
+		"%s :%s",
+		loghead(*this),
+		e.what()
 	};
 }
 
@@ -1823,7 +1825,7 @@ catch(const std::system_error &e)
 	assert(bool(sock));
 	log::derror
 	{
-		log, "%s %s in handshake(): %s",
+		log, "%s %s in handshake() :%s",
 		loghead(*sock),
 		loghead(*this),
 		e.what()
@@ -1837,7 +1839,7 @@ catch(const std::exception &e)
 	assert(bool(sock));
 	log::error
 	{
-		log, "%s %s in handshake(): %s",
+		log, "%s %s in handshake() :%s",
 		loghead(*sock),
 		loghead(*this),
 		e.what()
@@ -2459,7 +2461,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "acceptor(%p) join: %s", this, e.what()
+		log, "acceptor(%p) join :%s", this, e.what()
 	};
 }
 
@@ -2474,7 +2476,7 @@ catch(const boost::system::system_error &e)
 {
 	log::error
 	{
-		log, "acceptor(%p) interrupt: %s", this, string(e)
+		log, "acceptor(%p) interrupt :%s", this, string(e)
 	};
 
 	return false;
@@ -2631,7 +2633,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "socket(%p) scope_timeout::cancel: %s",
+		log, "socket(%p) scope_timeout::cancel :%s",
 		(const void *)s,
 		e.what()
 	};
@@ -2758,7 +2760,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "socket(%p) close: %s",
+		log, "socket(%p) close :%s",
 		this,
 		e.what()
 	};
@@ -2928,7 +2930,7 @@ catch(const std::exception &e)
 {
 	throw panic
 	{
-		"socket:%lu disconnect: type: %d: %s",
+		"socket:%lu disconnect: type: %d :%s",
 		this->id,
 		uint(opts.type),
 		e.what()
@@ -3506,7 +3508,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "socket(%p) handle: %s",
+		log, "socket(%p) handle :%s",
 		this,
 		e.what()
 	};
@@ -3552,7 +3554,9 @@ noexcept try
 		// All other errors are unexpected, logged and ignored here.
 		default: throw panic
 		{
-			"socket(%p): unexpected: %s\n", (const void *)this, string(ec)
+			"socket(%p): unexpected :%s",
+			(const void *)this,
+			string(ec)
 		};
 	}
 	else ec = make_error_code(std::errc::operation_canceled);
@@ -3580,7 +3584,7 @@ catch(const boost::system::system_error &e)
 			assert(0);
 			log::critical
 			{
-				log, "socket(%p) handle timeout: %s",
+				log, "socket(%p) handle timeout :%s",
 				(const void *)this,
 				string(e)
 			};
@@ -3596,7 +3600,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "socket(%p) handle timeout: %s",
+		log, "socket(%p) handle timeout :%s",
 		(const void *)this,
 		e.what()
 	};
@@ -3666,7 +3670,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "socket(%p) handle_connect: %s",
+		log, "socket(%p) handle_connect :%s",
 		this,
 		e.what()
 	};
@@ -3709,7 +3713,7 @@ catch(const boost::system::system_error &e)
 {
 	log::error
 	{
-		log, "socket(%p) disconnect: %s",
+		log, "socket(%p) disconnect :%s",
 		this,
 		e.what()
 	};
@@ -3721,7 +3725,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "socket(%p) disconnect: %s",
+		log, "socket(%p) disconnect :%s",
 		this,
 		e.what()
 	};
@@ -3778,7 +3782,7 @@ catch(const boost::system::system_error &e)
 {
 	log::error
 	{
-		log, "socket(%p) after handshake: %s",
+		log, "socket(%p) after handshake :%s",
 		this,
 		e.what()
 	};
@@ -3800,7 +3804,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "socket(%p) handle_handshake: %s",
+		log, "socket(%p) handle_handshake :%s",
 		this,
 		e.what()
 	};
@@ -3850,7 +3854,7 @@ noexcept try
 		const critical_assertion ca;
 		log::warning
 		{
-			log, "verify[%s]: %s :%s",
+			log, "verify[%s] :%s :%s",
 			common_name(opts),
 			openssl::get_error_string(stctx),
 			openssl::print_subject(buf, cert)
@@ -3935,7 +3939,7 @@ noexcept try
 	const critical_assertion ca;
 	log::debug
 	{
-		log, "verify[%s]: %s",
+		log, "verify[%s] %s",
 		common_name(opts),
 		openssl::print_subject(buf, cert)
 	};
@@ -3947,7 +3951,7 @@ catch(const inauthentic &e)
 {
 	log::error
 	{
-		log, "Certificate rejected: %s", e.what()
+		log, "Certificate rejected :%s", e.what()
 	};
 
 	return false;
@@ -3956,7 +3960,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "Certificate error: %s", e.what()
+		log, "Certificate error :%s", e.what()
 	};
 
 	return false;
@@ -3973,7 +3977,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "socket(%p) async handler: unhandled exception: %s",
+		log, "socket(%p) async handler: unhandled exception :%s",
 		this,
 		e.what()
 	};
@@ -3995,7 +3999,7 @@ catch(const std::exception &e)
 {
 	log::critical
 	{
-		log, "socket(%p) async handler: unhandled exception: %s",
+		log, "socket(%p) async handler: unhandled exception :%s",
 		this,
 		e.what()
 	};
