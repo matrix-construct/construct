@@ -18,4 +18,7 @@ namespace ircd::fs::support
 
 	// Test if fallocate() is supported at target path
 	bool fallocate(const string_view &path, const write_opts &wopts = write_opts_default);
+
+	// Dump information to infolog
+	void dump_info();
 }

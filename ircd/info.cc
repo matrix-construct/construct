@@ -118,8 +118,8 @@ ircd::info::dump()
 	};
 	#endif
 
+	fs::support::dump_info();
 	dump_cpu_info();
-
 }
 
 //

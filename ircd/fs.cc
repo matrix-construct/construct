@@ -30,10 +30,6 @@ namespace ircd::fs
 {
 	static uint posix_flags(const std::ios::openmode &mode);
 	static const char *path_str(const string_view &);
-
-	static void init_check_paths();
-	static void init_check_support();
-	static void init_check_limits();
 }
 
 decltype(ircd::fs::log)
@@ -146,9 +142,30 @@ ircd::fs::support_rwf_write_life
 
 ircd::fs::init::init()
 {
-	init_check_support();
-	init_check_paths();
-	init_check_limits();
+	const bool support_async
+	{
+		false
+		|| iou::system
+		|| aio::system
+	};
+
+	if(support_async)
+		log::info
+		{
+			log, "Asynchronous filesystem IO provided by %s %s.",
+			"Linux",
+			iou::system?
+				"io_uring":
+			aio::system?
+				"AIO":
+			"?????",
+		};
+	else
+		log::warning
+		{
+			log, "Support for asynchronous filesystem IO has not been"
+			" established. Filesystem IO is degraded to synchronous system calls."
+		};
 }
 
 ircd::fs::init::~init()
@@ -310,6 +327,61 @@ catch(const filesystem::filesystem_error &e)
 //
 // fs/support.h
 //
+
+void
+ircd::fs::support::dump_info()
+{
+	#if defined(IRCD_USE_AIO) || defined(IRCD_USE_IOU)
+		const bool support_async {true};
+	#else
+		const bool support_async {false};
+	#endif
+
+	if(info::rlimit_nofile <= 1024)
+		log::warning
+		{
+			log, "Maximum number of open files limited to %zu."
+			" Suggest increasing for best performance.",
+			info::rlimit_nofile,
+		};
+
+	log::info
+	{
+		log, "Support: async:%b preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",
+		support_async,
+		support_preadv2,
+		support_pwritev2,
+		support_sync,
+		support_dsync,
+		support_hipri,
+		support_nowait,
+		support_append,
+		support_rwh_write_life,
+		support_rwf_write_life,
+	};
+
+	#ifdef RB_DEBUG
+	const unique_mutable_buffer buf
+	{
+		PATH_MAX_LEN + 1
+	};
+
+	log::debug
+	{
+		log, "Current working directory: `%s'", cwd(buf)
+	};
+
+	for_each<base>([](const base &base)
+	{
+		log::debug
+		{
+			log, "Working %s is `%s'",
+			basepath::get(base).name,
+			basepath::get(base).path,
+		};
+	});
+	#endif
+}
 
 bool
 ircd::fs::support::fallocate(const string_view &path,
@@ -2398,87 +2470,6 @@ ircd::fs::error::error(const boost::filesystem::filesystem_error &e)
 //
 // Internal utils
 //
-
-void
-ircd::fs::init_check_limits()
-{
-	const auto &nofile
-	{
-		info::rlimit_nofile
-	};
-
-	if(nofile <= 1024)
-		log::warning
-		{
-			log, "Maximum number of open files limited to %zu. Suggest"
-			" increasing for best performance.",
-			nofile
-		};
-}
-
-void
-ircd::fs::init_check_support()
-{
-	const bool support_async
-	{
-		false
-		|| iou::system
-		|| aio::system
-	};
-
-	log::info
-	{
-		log, "Supports async:%b preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",
-		support_async,
-		support_preadv2,
-		support_pwritev2,
-		support_sync,
-		support_dsync,
-		support_hipri,
-		support_nowait,
-		support_append,
-		support_rwh_write_life,
-		support_rwf_write_life,
-	};
-
-	if(support_async)
-		log::info
-		{
-			log, "Asynchronous filesystem IO provided by %s %s.",
-			"Linux",
-			iou::system?
-				"io_uring":
-			aio::system?
-				"AIO":
-			"?????",
-		};
-	else
-		log::warning
-		{
-			log, "Support for asynchronous filesystem IO has not been"
-			" established. Filesystem IO is degraded to synchronous system calls."
-		};
-}
-
-void
-ircd::fs::init_check_paths()
-{
-	thread_local char buf[PATH_MAX_LEN + 1];
-	log::debug
-	{
-		log, "Current working directory: `%s'", cwd(buf)
-	};
-
-	for_each<base>([](const base &base)
-	{
-		log::debug
-		{
-			log, "Working %s is `%s'",
-			basepath::get(base).name,
-			basepath::get(base).path,
-		};
-	});
-}
 
 const char *
 ircd::fs::path_str(const string_view &s)
