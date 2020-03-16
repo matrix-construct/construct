@@ -23,6 +23,7 @@ namespace ircd::ctx
 namespace ircd::run
 {
 	enum class level :int;
+	template<class> struct barrier;
 	struct changed;
 
 	string_view reflect(const enum level &);
@@ -124,4 +125,26 @@ struct ircd::run::changed
 	/// Default construction for no-op
 	changed() noexcept;
 	~changed() noexcept;
+
+	// convenience to wait on the dock for the levels
+	static void wait(const std::initializer_list<enum level> &);
+};
+
+/// Tool to yield a context until the run::level is RUN or QUIT. Once either is
+/// satisfied (or if already satisfied) the run::level is checked to be RUN
+/// otherwise an exception is thrown.
+///
+template<class exception>
+struct ircd::run::barrier
+{
+	template<class... args>
+	barrier(args&&... a)
+	{
+		changed::wait({level::RUN, level::QUIT});
+		if(unlikely(level != level::RUN))
+			throw exception
+			{
+				std::forward<args>(a)...
+			};
+	}
 };

@@ -64,6 +64,23 @@ noexcept
 {
 }
 
+void
+ircd::run::changed::wait(const std::initializer_list<enum level> &levels)
+{
+	changed::dock.wait([&levels]
+	{
+		return std::any_of(begin(levels), end(levels), []
+		(const auto &level)
+		{
+			return run::level == level;
+		});
+	});
+}
+
+//
+// ircd::run
+//
+
 /// The notification will be posted to the io_context. This is important to
 /// prevent the callback from continuing execution on some ircd::ctx stack and
 /// instead invoke their function on the main stack in their own io_context
