@@ -15,6 +15,9 @@
 
 namespace ircd::info
 {
+	static void dump_exe_info();
+	static void dump_lib_info();
+	static void dump_sys_info();
 	static void dump_cpu_info();
 }
 
@@ -38,87 +41,9 @@ ircd::info::credits
 void
 ircd::info::dump()
 {
-	// This message flashes information about IRCd itself for this execution.
-	log::info
-	{
-		log::star, "%s %s configured: %s; compiled: %s; executed: %s; %s",
-		BRANDING_NAME,
-		BRANDING_VERSION,
-		configured,
-		compiled,
-		startup,
-		RB_DEBUG_LEVEL? "(DEBUG MODE)" : ""
-	};
-
-	// This message flashes information about our API dependencies from compile time.
-	log::info
-	{
-		log::star, "%s SD-6 %s. glibcxx %s. glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
-		string_view{RB_CXX},
-		string_view{sd6_version},
-		string_view{glibcxx_version_api},
-		string_view{glibc_version_api},
-		string_view{boost_version_api},
-		string_view{db::version_api},
-		string_view{nacl::version_api},
-		string_view{openssl::version_api},
-		long(magic::version_api),
-	};
-
-	// This message flashes information about our ABI dependencies on this system.
-	log::info
-	{
-		log::star, "Linked: glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
-		string_view{glibc_version_abi},
-		string_view{boost_version_abi},
-		string_view{db::version_abi},
-		string_view{nacl::version_abi},
-		string_view{openssl::version_abi},
-		long(magic::version_abi),
-	};
-
-	#ifdef RB_DEBUG
-	log::logf
-	{
-		log::star, log::DEBUG,
-		"page_size=%zu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu",
-		page_size,
-		iov_max,
-		aio_max,
-		aio_reqprio_max,
-	};
-	#endif
-
-	// This message flashes posix information about the system and platform IRCd
-	// is running on when ::uname() is available
-	#ifdef HAVE_SYS_UTSNAME_H
-	log::info
-	{
-		log::star, "%s %s %s %s %s",
-		utsname.sysname,
-		utsname.nodename,
-		utsname.release,
-		utsname.version,
-		utsname.machine
-	};
-	#endif
-
-	// This message flashes posix information about the resource limits
-	#ifdef RB_DEBUG
-	log::logf
-	{
-		log::star, log::DEBUG,
-		"rlimit AS=%lu DATA=%lu RSS=%lu NOFILE=%lu RTTIME=%lu MEMLOCK=%lu",
-		rlimit_as,
-		rlimit_data,
-		rlimit_rss,
-		rlimit_nofile,
-		rlimit_rttime,
-		rlimit_memlock,
-	};
-	#endif
-
-	fs::support::dump_info();
+	dump_exe_info();
+	dump_lib_info();
+	dump_sys_info();
 	dump_cpu_info();
 }
 
@@ -193,345 +118,93 @@ noexcept
 {
 }
 
+///////////////////////////////////////////////////////////////////////////////
 //
-// Primary information
-//
-
-decltype(ircd::info::server_agent)
-ircd::info::server_agent
-{
-	BRANDING_NAME " (IRCd " BRANDING_VERSION ")"
-};
-
-decltype(ircd::info::user_agent)
-ircd::info::user_agent
-{
-	BRANDING_NAME " (IRCd " BRANDING_VERSION ")"
-};
-
-decltype(ircd::info::version)
-ircd::info::version
-{
-	RB_VERSION
-};
-
-decltype(ircd::info::name)
-ircd::info::name
-{
-	PACKAGE_NAME
-};
-
-extern "C" const char *const
-ircd_version
-{
-	RB_VERSION
-};
-
-extern "C" const char *const
-ircd_name
-{
-	PACKAGE_NAME
-};
-
-//
-// Third party dependency information
+// Hardware / Platform
 //
 
-//
-// System information
-//
-
-#ifdef HAVE_SYS_UTSNAME_H
-decltype(ircd::info::utsname)
-ircd::info::utsname{[]
+void
+ircd::info::dump_cpu_info()
 {
-	struct ::utsname utsname;
-	syscall(::uname, &utsname);
-	return utsname;
-}()};
-#endif
-
-//
-// kernel
-//
-
-decltype(ircd::info::kernel_name)
-ircd::info::kernel_name
-{
-	#ifdef HAVE_SYS_UTSNAME_H
-	utsname.sysname
-	#endif
-};
-
-decltype(ircd::info::kernel_release)
-ircd::info::kernel_release
-{
-	#ifdef HAVE_SYS_UTSNAME_H
-	utsname.release
-	#endif
-};
-
-decltype(ircd::info::kernel_version)
-ircd::info::kernel_version
-{
-	"kernel", versions::ABI, 0,
+	// This message flashes hardware standard information about this platform
+	#if defined(__i386__) or defined(__x86_64__)
+	log::info
 	{
-		[] // major
-		{
-			const auto str(split(kernel_release, '.').first);
-			return lex_castable<int>(str)?
-				lex_cast<int>(str):
-				0;
-		}(),
-
-		[] // minor
-		{
-			auto str(split(kernel_release, '.').second);
-			str = split(str, '.').first;
-			return lex_castable<int>(str)?
-				lex_cast<int>(str):
-				0;
-		}(),
-
-		0 // patch
-	},
-
-	[](auto &that, const auto &buf)
-	{
-		::snprintf(data(buf), size(buf), "%s %s",
-		           utsname.sysname,
-		           utsname.release);
-	}
-};
-
-//
-// gnuc
-//
-
-decltype(ircd::info::gnuc_version)
-ircd::info::gnuc_version
-{
-	"gnuc", versions::API, 0,
-	{
-		#if defined(__GNUC__)
-			__GNUC__,
-		#endif
-
-		#if defined(__GNUC_MINOR__)
-			__GNUC_MINOR__,
-		#endif
-
-		#if defined(__GNUC_PATCHLEVEL__)
-			__GNUC_PATCHLEVEL__,
-		#endif
-	},
-
-	#if defined(__VERSION__)
-		__VERSION__
+		log::star, "%s mmx:%b sse:%b sse2:%b sse3:%b ssse3:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b",
+		hardware::x86::vendor,
+		hardware::x86::mmx,
+		hardware::x86::sse,
+		hardware::x86::sse2,
+		hardware::x86::sse3,
+		hardware::x86::ssse3,
+		hardware::x86::sse4_1,
+		hardware::x86::sse4_2,
+		hardware::x86::avx,
+		hardware::x86::avx2,
+	};
 	#endif
-};
 
-//
-// clang
-//
-
-decltype(ircd::info::clang_version)
-ircd::info::clang_version
-{
-	"clang", versions::API, 0,
+	// This message flashes language standard information about this platform
+	#ifdef RB_DEBUG
+	log::logf
 	{
-		#if defined(__clang_major__)
-			__clang_major__,
-		#endif
-
-		#if defined(__clang_minor__)
-			__clang_minor__,
-		#endif
-
-		#if defined(__clang_patchlevel__)
-			__clang_patchlevel__,
-		#endif
-	},
-
-	#if defined(__clang_version__)
-		__clang_version__
+		log::star, log::DEBUG,
+		"max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
+		hardware::max_align,
+		hardware::hardware_concurrency,
+		hardware::destructive_interference,
+		hardware::constructive_interference,
+	};
 	#endif
-};
 
-//
-// glibc
-//
+	if(!ircd::debugmode)
+		return;
 
-decltype(ircd::info::glibc_version_api)
-ircd::info::glibc_version_api
-{
-	"glibc", versions::API, 0,
+	log::debug
 	{
-		#if defined(__GNU_LIBRARY__)
-			__GNU_LIBRARY__,
-		#endif
+		log::star,
+		"0..00 STD MANUFAC [%08x|%08x|%08x|%08x] "
+		"0..01 STD FEATURE [%08x|%08x|%08x|%08x]",
+		uint32_t(hardware::x86::manufact >> 0),
+		uint32_t(hardware::x86::manufact >> 32),
+		uint32_t(hardware::x86::manufact >> 64),
+		uint32_t(hardware::x86::manufact >> 96),
+		uint32_t(hardware::x86::features >> 0),
+		uint32_t(hardware::x86::features >> 32),
+		uint32_t(hardware::x86::features >> 64),
+		uint32_t(hardware::x86::features >> 96),
+	};
 
-		#if defined(__GLIBC__)
-			__GLIBC__,
-		#endif
+	log::debug
+	{
+		log::star,
+		"8..00 EXT MANUFAC [%08x|%08x|%08x|%08x] "
+		"8..01 EXT FEATURE [%08x|%08x|%08x|%08x]",
+		uint32_t(hardware::x86::_manufact >> 0),
+		uint32_t(hardware::x86::_manufact >> 32),
+		uint32_t(hardware::x86::_manufact >> 64),
+		uint32_t(hardware::x86::_manufact >> 96),
+		uint32_t(hardware::x86::_features >> 0),
+		uint32_t(hardware::x86::_features >> 32),
+		uint32_t(hardware::x86::_features >> 64),
+		uint32_t(hardware::x86::_features >> 96),
+	};
 
-		#if defined(__GLIBC_MINOR__)
-			__GLIBC_MINOR__,
-		#endif
-	},
-};
-
-decltype(ircd::info::glibc_version_abi)
-ircd::info::glibc_version_abi
-{
-	"glibc", versions::ABI, 0, {0},
-
-	#if defined(HAVE_GNU_LIBC_VERSION_H)
-		::gnu_get_libc_version()
-	#endif
-};
-
-//
-// glibcxx
-//
-
-decltype(ircd::info::glibcxx_version_api)
-ircd::info::glibcxx_version_api
-{
-	"glibcxx", versions::API,
-
-	#if defined(__GLIBCXX__)
-		__GLIBCXX__
-	#endif
-};
-
-//
-// sd6
-//
-
-decltype(ircd::info::sd6_version)
-ircd::info::sd6_version
-{
-	"SD-6", versions::API, __cplusplus
-};
-
-//
-// System information
-//
-
-#ifdef HAVE_SYS_RESOURCE_H
-static uint64_t
-_get_rlimit(const int &resource)
-{
-	rlimit rlim;
-	ircd::syscall(getrlimit, resource, &rlim);
-	return rlim.rlim_cur;
+	log::debug
+	{
+		log::star,
+		"8..07 EXT APMI    [%08x|%08x|%08x|%08x] "
+		"8..1C EXT LWPROF  [%08x|%08x|%08x|%08x]",
+		uint32_t(hardware::x86::_apmi >> 0),
+		uint32_t(hardware::x86::_apmi >> 32),
+		uint32_t(hardware::x86::_apmi >> 64),
+		uint32_t(hardware::x86::_apmi >> 96),
+		uint32_t(hardware::x86::_lwp >> 0),
+		uint32_t(hardware::x86::_lwp >> 32),
+		uint32_t(hardware::x86::_lwp >> 64),
+		uint32_t(hardware::x86::_lwp >> 96),
+	};
 }
-#else
-static uint64_t
-_get_rlimit(const int &resource)
-{
-	return 0;
-}
-#endif
-
-decltype(ircd::info::rlimit_memlock)
-ircd::info::rlimit_memlock
-{
-	#ifdef RLIMIT_MEMLOCK
-	_get_rlimit(RLIMIT_MEMLOCK)
-	#endif
-};
-
-decltype(ircd::info::rlimit_rttime)
-ircd::info::rlimit_rttime
-{
-	#ifdef RLIMIT_RTTIME
-	_get_rlimit(RLIMIT_RTTIME)
-	#endif
-};
-
-decltype(ircd::info::rlimit_nofile)
-ircd::info::rlimit_nofile
-{
-	#ifdef RLIMIT_NOFILE
-	_get_rlimit(RLIMIT_NOFILE)
-	#endif
-};
-
-decltype(ircd::info::rlimit_rss)
-ircd::info::rlimit_rss
-{
-	#ifdef RLIMIT_RSS
-	_get_rlimit(RLIMIT_RSS)
-	#endif
-};
-
-decltype(ircd::info::rlimit_data)
-ircd::info::rlimit_data
-{
-	#ifdef RLIMIT_DATA
-	_get_rlimit(RLIMIT_DATA)
-	#endif
-};
-
-decltype(ircd::info::rlimit_as)
-ircd::info::rlimit_as
-{
-	#ifdef RLIMIT_AS
-	_get_rlimit(RLIMIT_AS)
-	#endif
-};
-
-#ifdef _SC_CLK_TCK
-decltype(ircd::info::clk_tck)
-ircd::info::clk_tck
-{
-	size_t(syscall(::sysconf, _SC_CLK_TCK))
-};
-#else
-decltype(ircd::info::clk_tck)
-ircd::info::clk_tck
-{
-	1 // prevent #DE
-};
-#endif
-
-decltype(ircd::info::aio_reqprio_max)
-ircd::info::aio_reqprio_max
-{
-	#ifdef _SC_AIO_PRIO_DELTA_MAX
-	size_t(syscall(::sysconf, _SC_AIO_PRIO_DELTA_MAX))
-	#endif
-};
-
-decltype(ircd::info::aio_max)
-ircd::info::aio_max
-{
-	#ifdef _SC_AIO_MAX
-	0 //size_t(syscall(::sysconf, _SC_AIO_MAX))
-	#endif
-};
-
-decltype(ircd::info::iov_max)
-ircd::info::iov_max
-{
-	#ifdef _SC_IOV_MAX
-	size_t(syscall(::sysconf, _SC_IOV_MAX))
-	#endif
-};
-
-decltype(ircd::info::page_size)
-ircd::info::page_size
-{
-	#ifdef _SC_PAGESIZE
-	size_t(syscall(::sysconf, _SC_PAGESIZE))
-	#endif
-};
-
-//
-// Hardware
-//
 
 decltype(ircd::info::hardware::max_align)
 ircd::info::hardware::max_align
@@ -718,92 +391,440 @@ ircd::info::hardware::x86::cpuid(const uint &leaf,
 }
 #endif
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// System information
+//
+
 void
-ircd::info::dump_cpu_info()
+ircd::info::dump_sys_info()
 {
-	// This message flashes hardware standard information about this platform
-	#if defined(__i386__) or defined(__x86_64__)
+	// This message flashes posix information about the system and platform IRCd
+	// is running on when ::uname() is available
+	#ifdef HAVE_SYS_UTSNAME_H
 	log::info
 	{
-		log::star, "%s mmx:%b sse:%b sse2:%b sse3:%b ssse3:%b sse4.1:%b sse4.2:%b avx:%b avx2:%b",
-		hardware::x86::vendor,
-		hardware::x86::mmx,
-		hardware::x86::sse,
-		hardware::x86::sse2,
-		hardware::x86::sse3,
-		hardware::x86::ssse3,
-		hardware::x86::sse4_1,
-		hardware::x86::sse4_2,
-		hardware::x86::avx,
-		hardware::x86::avx2,
+		log::star, "%s %s %s %s %s",
+		utsname.sysname,
+		utsname.nodename,
+		utsname.release,
+		utsname.version,
+		utsname.machine
 	};
 	#endif
 
-	// This message flashes language standard information about this platform
+	// Dump detected filesystem related to log.
+	fs::support::dump_info();
+
+	// This message flashes posix information about the resource limits
 	#ifdef RB_DEBUG
 	log::logf
 	{
 		log::star, log::DEBUG,
-		"max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
-		hardware::max_align,
-		hardware::hardware_concurrency,
-		hardware::destructive_interference,
-		hardware::constructive_interference,
+		"rlimit AS=%lu DATA=%lu RSS=%lu NOFILE=%lu RTTIME=%lu MEMLOCK=%lu",
+		rlimit_as,
+		rlimit_data,
+		rlimit_rss,
+		rlimit_nofile,
+		rlimit_rttime,
+		rlimit_memlock,
 	};
 	#endif
 
-	if(!ircd::debugmode)
-		return;
-
-	log::debug
+	// Additional detected system parameters
+	#ifdef RB_DEBUG
+	log::logf
 	{
-		log::star,
-		"0..00 STD MANUFAC [%08x|%08x|%08x|%08x] "
-		"0..01 STD FEATURE [%08x|%08x|%08x|%08x]",
-		uint32_t(hardware::x86::manufact >> 0),
-		uint32_t(hardware::x86::manufact >> 32),
-		uint32_t(hardware::x86::manufact >> 64),
-		uint32_t(hardware::x86::manufact >> 96),
-		uint32_t(hardware::x86::features >> 0),
-		uint32_t(hardware::x86::features >> 32),
-		uint32_t(hardware::x86::features >> 64),
-		uint32_t(hardware::x86::features >> 96),
+		log::star, log::DEBUG,
+		"page_size=%zu iov_max=%zu aio_max=%zu aio_reqprio_max=%zu",
+		page_size,
+		iov_max,
+		aio_max,
+		aio_reqprio_max,
+	};
+	#endif
+}
+
+#ifdef HAVE_SYS_UTSNAME_H
+decltype(ircd::info::utsname)
+ircd::info::utsname{[]
+{
+	struct ::utsname utsname;
+	syscall(::uname, &utsname);
+	return utsname;
+}()};
+#endif
+
+//
+// kernel
+//
+
+decltype(ircd::info::kernel_name)
+ircd::info::kernel_name
+{
+	#ifdef HAVE_SYS_UTSNAME_H
+	utsname.sysname
+	#endif
+};
+
+decltype(ircd::info::kernel_release)
+ircd::info::kernel_release
+{
+	#ifdef HAVE_SYS_UTSNAME_H
+	utsname.release
+	#endif
+};
+
+decltype(ircd::info::kernel_version)
+ircd::info::kernel_version
+{
+	"kernel", versions::ABI, 0,
+	{
+		[] // major
+		{
+			const auto str(split(kernel_release, '.').first);
+			return lex_castable<int>(str)?
+				lex_cast<int>(str):
+				0;
+		}(),
+
+		[] // minor
+		{
+			auto str(split(kernel_release, '.').second);
+			str = split(str, '.').first;
+			return lex_castable<int>(str)?
+				lex_cast<int>(str):
+				0;
+		}(),
+
+		0 // patch
+	},
+
+	[](auto &that, const auto &buf)
+	{
+		::snprintf(data(buf), size(buf), "%s %s",
+		           utsname.sysname,
+		           utsname.release);
+	}
+};
+
+//
+// System information
+//
+
+#ifdef HAVE_SYS_RESOURCE_H
+static uint64_t
+_get_rlimit(const int &resource)
+{
+	rlimit rlim;
+	ircd::syscall(getrlimit, resource, &rlim);
+	return rlim.rlim_cur;
+}
+#else
+static uint64_t
+_get_rlimit(const int &resource)
+{
+	return 0;
+}
+#endif
+
+decltype(ircd::info::rlimit_memlock)
+ircd::info::rlimit_memlock
+{
+	#ifdef RLIMIT_MEMLOCK
+	_get_rlimit(RLIMIT_MEMLOCK)
+	#endif
+};
+
+decltype(ircd::info::rlimit_rttime)
+ircd::info::rlimit_rttime
+{
+	#ifdef RLIMIT_RTTIME
+	_get_rlimit(RLIMIT_RTTIME)
+	#endif
+};
+
+decltype(ircd::info::rlimit_nofile)
+ircd::info::rlimit_nofile
+{
+	#ifdef RLIMIT_NOFILE
+	_get_rlimit(RLIMIT_NOFILE)
+	#endif
+};
+
+decltype(ircd::info::rlimit_rss)
+ircd::info::rlimit_rss
+{
+	#ifdef RLIMIT_RSS
+	_get_rlimit(RLIMIT_RSS)
+	#endif
+};
+
+decltype(ircd::info::rlimit_data)
+ircd::info::rlimit_data
+{
+	#ifdef RLIMIT_DATA
+	_get_rlimit(RLIMIT_DATA)
+	#endif
+};
+
+decltype(ircd::info::rlimit_as)
+ircd::info::rlimit_as
+{
+	#ifdef RLIMIT_AS
+	_get_rlimit(RLIMIT_AS)
+	#endif
+};
+
+#ifdef _SC_CLK_TCK
+decltype(ircd::info::clk_tck)
+ircd::info::clk_tck
+{
+	size_t(syscall(::sysconf, _SC_CLK_TCK))
+};
+#else
+decltype(ircd::info::clk_tck)
+ircd::info::clk_tck
+{
+	1 // prevent #DE
+};
+#endif
+
+decltype(ircd::info::aio_reqprio_max)
+ircd::info::aio_reqprio_max
+{
+	#ifdef _SC_AIO_PRIO_DELTA_MAX
+	size_t(syscall(::sysconf, _SC_AIO_PRIO_DELTA_MAX))
+	#endif
+};
+
+decltype(ircd::info::aio_max)
+ircd::info::aio_max
+{
+	#ifdef _SC_AIO_MAX
+	0 //size_t(syscall(::sysconf, _SC_AIO_MAX))
+	#endif
+};
+
+decltype(ircd::info::iov_max)
+ircd::info::iov_max
+{
+	#ifdef _SC_IOV_MAX
+	size_t(syscall(::sysconf, _SC_IOV_MAX))
+	#endif
+};
+
+decltype(ircd::info::page_size)
+ircd::info::page_size
+{
+	#ifdef _SC_PAGESIZE
+	size_t(syscall(::sysconf, _SC_PAGESIZE))
+	#endif
+};
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Userspace / Library
+//
+
+void
+ircd::info::dump_lib_info()
+{
+	// This message flashes information about our API dependencies from compile time.
+	log::info
+	{
+		log::star, "%s SD-6 %s. glibcxx %s. glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		string_view{RB_CXX},
+		string_view{sd6_version},
+		string_view{glibcxx_version_api},
+		string_view{glibc_version_api},
+		string_view{boost_version_api},
+		string_view{db::version_api},
+		string_view{nacl::version_api},
+		string_view{openssl::version_api},
+		long(magic::version_api),
 	};
 
-	log::debug
+	// This message flashes information about our ABI dependencies on this system.
+	log::info
 	{
-		log::star,
-		"8..00 EXT MANUFAC [%08x|%08x|%08x|%08x] "
-		"8..01 EXT FEATURE [%08x|%08x|%08x|%08x]",
-		uint32_t(hardware::x86::_manufact >> 0),
-		uint32_t(hardware::x86::_manufact >> 32),
-		uint32_t(hardware::x86::_manufact >> 64),
-		uint32_t(hardware::x86::_manufact >> 96),
-		uint32_t(hardware::x86::_features >> 0),
-		uint32_t(hardware::x86::_features >> 32),
-		uint32_t(hardware::x86::_features >> 64),
-		uint32_t(hardware::x86::_features >> 96),
-	};
-
-	log::debug
-	{
-		log::star,
-		"8..07 EXT APMI    [%08x|%08x|%08x|%08x] "
-		"8..1C EXT LWPROF  [%08x|%08x|%08x|%08x]",
-		uint32_t(hardware::x86::_apmi >> 0),
-		uint32_t(hardware::x86::_apmi >> 32),
-		uint32_t(hardware::x86::_apmi >> 64),
-		uint32_t(hardware::x86::_apmi >> 96),
-		uint32_t(hardware::x86::_lwp >> 0),
-		uint32_t(hardware::x86::_lwp >> 32),
-		uint32_t(hardware::x86::_lwp >> 64),
-		uint32_t(hardware::x86::_lwp >> 96),
+		log::star, "Linked: glibc %s. boost %s. RocksDB %s. sodium %s. %s. magic %ld.",
+		string_view{glibc_version_abi},
+		string_view{boost_version_abi},
+		string_view{db::version_abi},
+		string_view{nacl::version_abi},
+		string_view{openssl::version_abi},
+		long(magic::version_abi),
 	};
 }
 
 //
-// Build information
+// gnuc
 //
+
+decltype(ircd::info::gnuc_version)
+ircd::info::gnuc_version
+{
+	"gnuc", versions::API, 0,
+	{
+		#if defined(__GNUC__)
+			__GNUC__,
+		#endif
+
+		#if defined(__GNUC_MINOR__)
+			__GNUC_MINOR__,
+		#endif
+
+		#if defined(__GNUC_PATCHLEVEL__)
+			__GNUC_PATCHLEVEL__,
+		#endif
+	},
+
+	#if defined(__VERSION__)
+		__VERSION__
+	#endif
+};
+
+//
+// clang
+//
+
+decltype(ircd::info::clang_version)
+ircd::info::clang_version
+{
+	"clang", versions::API, 0,
+	{
+		#if defined(__clang_major__)
+			__clang_major__,
+		#endif
+
+		#if defined(__clang_minor__)
+			__clang_minor__,
+		#endif
+
+		#if defined(__clang_patchlevel__)
+			__clang_patchlevel__,
+		#endif
+	},
+
+	#if defined(__clang_version__)
+		__clang_version__
+	#endif
+};
+
+//
+// glibc
+//
+
+decltype(ircd::info::glibc_version_api)
+ircd::info::glibc_version_api
+{
+	"glibc", versions::API, 0,
+	{
+		#if defined(__GNU_LIBRARY__)
+			__GNU_LIBRARY__,
+		#endif
+
+		#if defined(__GLIBC__)
+			__GLIBC__,
+		#endif
+
+		#if defined(__GLIBC_MINOR__)
+			__GLIBC_MINOR__,
+		#endif
+	},
+};
+
+decltype(ircd::info::glibc_version_abi)
+ircd::info::glibc_version_abi
+{
+	"glibc", versions::ABI, 0, {0},
+
+	#if defined(HAVE_GNU_LIBC_VERSION_H)
+		::gnu_get_libc_version()
+	#endif
+};
+
+//
+// glibcxx
+//
+
+decltype(ircd::info::glibcxx_version_api)
+ircd::info::glibcxx_version_api
+{
+	"glibcxx", versions::API,
+
+	#if defined(__GLIBCXX__)
+		__GLIBCXX__
+	#endif
+};
+
+//
+// sd6
+//
+
+decltype(ircd::info::sd6_version)
+ircd::info::sd6_version
+{
+	"SD-6", versions::API, __cplusplus
+};
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Primary / Executable
+//
+
+void
+ircd::info::dump_exe_info()
+{
+	// This message flashes information about IRCd itself for this execution.
+	log::info
+	{
+		log::star, "%s %s configured: %s; compiled: %s; executed: %s; %s",
+		BRANDING_NAME,
+		BRANDING_VERSION,
+		configured,
+		compiled,
+		startup,
+		RB_DEBUG_LEVEL? "(DEBUG MODE)" : ""
+	};
+}
+
+decltype(ircd::info::server_agent)
+ircd::info::server_agent
+{
+	BRANDING_NAME " (IRCd " BRANDING_VERSION ")"
+};
+
+decltype(ircd::info::user_agent)
+ircd::info::user_agent
+{
+	BRANDING_NAME " (IRCd " BRANDING_VERSION ")"
+};
+
+decltype(ircd::info::version)
+ircd::info::version
+{
+	RB_VERSION
+};
+
+decltype(ircd::info::name)
+ircd::info::name
+{
+	PACKAGE_NAME
+};
+
+extern "C" const char *const
+ircd_version
+{
+	RB_VERSION
+};
+
+extern "C" const char *const
+ircd_name
+{
+	PACKAGE_NAME
+};
 
 decltype(ircd::info::startup)
 ircd::info::startup
