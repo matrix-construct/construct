@@ -1926,22 +1926,6 @@ ircd::db::database::column::column(database &d,
 	// More stats reported by the rocksdb.stats property.
 	this->options.report_bg_io_stats = true;
 
-	// Set the compaction style; we don't override this in the descriptor yet.
-	//this->options.compaction_style = rocksdb::kCompactionStyleNone;
-	this->options.compaction_style = rocksdb::kCompactionStyleLevel;
-
-	// Set the compaction priority from string in the descriptor
-	this->options.compaction_pri =
-		this->descriptor->compaction_pri == "kByCompensatedSize"?
-			rocksdb::CompactionPri::kByCompensatedSize:
-		this->descriptor->compaction_pri == "kMinOverlappingRatio"?
-			rocksdb::CompactionPri::kMinOverlappingRatio:
-		this->descriptor->compaction_pri == "kOldestSmallestSeqFirst"?
-			rocksdb::CompactionPri::kOldestSmallestSeqFirst:
-		this->descriptor->compaction_pri == "kOldestLargestSeqFirst"?
-			rocksdb::CompactionPri::kOldestLargestSeqFirst:
-			rocksdb::CompactionPri::kOldestLargestSeqFirst;
-
 	// Set filter reductions for this column. This means we expect a key to exist.
 	this->options.optimize_filters_for_hits = this->descriptor->expect_queries_hit;
 
@@ -1963,6 +1947,23 @@ ircd::db::database::column::column(database &d,
 	this->options.max_write_buffer_number = 8;
 	this->options.min_write_buffer_number_to_merge = 4;
 	this->options.max_write_buffer_number_to_maintain = 0;
+
+	// Set the compaction style; we don't override this in the descriptor yet.
+	//this->options.compaction_style = rocksdb::kCompactionStyleNone;
+	this->options.compaction_style = rocksdb::kCompactionStyleLevel;
+	//this->options.compaction_style = rocksdb::kCompactionStyleUniversal;
+
+	// Set the compaction priority from string in the descriptor
+	this->options.compaction_pri =
+		this->descriptor->compaction_pri == "kByCompensatedSize"?
+			rocksdb::CompactionPri::kByCompensatedSize:
+		this->descriptor->compaction_pri == "kMinOverlappingRatio"?
+			rocksdb::CompactionPri::kMinOverlappingRatio:
+		this->descriptor->compaction_pri == "kOldestSmallestSeqFirst"?
+			rocksdb::CompactionPri::kOldestSmallestSeqFirst:
+		this->descriptor->compaction_pri == "kOldestLargestSeqFirst"?
+			rocksdb::CompactionPri::kOldestLargestSeqFirst:
+			rocksdb::CompactionPri::kOldestLargestSeqFirst;
 
 	this->options.num_levels = 7;
 	this->options.level0_file_num_compaction_trigger = 2;
@@ -1991,6 +1992,16 @@ ircd::db::database::column::column(database &d,
 			return mbfl.multiplier;
 		});
 	}
+
+	// Universal compaction options; these are unused b/c we don't use this
+	// style; they are here for hacking an experimentation for now.
+	this->options.compaction_options_universal.size_ratio = 1;
+	this->options.compaction_options_universal.min_merge_width = 2;
+	this->options.compaction_options_universal.max_merge_width = UINT_MAX;
+	this->options.compaction_options_universal.max_size_amplification_percent = 200;
+	this->options.compaction_options_universal.compression_size_percent = -1;
+	this->options.compaction_options_universal.stop_style = rocksdb::kCompactionStopStyleTotalSize;
+	this->options.compaction_options_universal.allow_trivial_move = false;;
 
 	//
 	// Table options
