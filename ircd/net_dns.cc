@@ -598,6 +598,14 @@ try
 	assert(!ent || ent->s_port != 0);
 	assert(!ent || name == ent->s_name);
 	assert(!ent || !prot || prot == ent->s_proto);
+	if(unlikely(!ent || !ent->s_port))
+		log::error
+		{
+			log, "Uknown service %s/%s; please add port number to /etc/services",
+			name,
+			prot?: "*"_sv
+		};
+
 	return ent?
 		htons(ent->s_port):
 		0U;
