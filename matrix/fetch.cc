@@ -118,32 +118,16 @@ noexcept
 // <ircd/m/fetch.h>
 //
 
-static void
-wait_for_run()
-{
-	using namespace ircd::run;
-	using namespace ircd;
-
-	changed::dock.wait([]
-	{
-		return level == level::RUN || level == level::QUIT;
-	});
-
-	if(unlikely(level != level::RUN))
-		throw m::UNAVAILABLE
-		{
-			"Cannot fetch in runlevel '%s'",
-			reflect(level)
-		};
-}
-
 ircd::ctx::future<ircd::m::fetch::result>
 ircd::m::fetch::start(opts opts)
 {
 	assert(opts.room_id && opts.event_id);
 
 	// in case requests are started before runlevel RUN they are stalled here
-	wait_for_run();
+	run::barrier<m::UNAVAILABLE>
+	{
+		"The fetch unit is unavailable to start requests."
+	};
 
 	// in case the fetch unit has reached capacity the context will yield.
 	dock.wait([]

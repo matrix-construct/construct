@@ -109,10 +109,8 @@ void
 ircd::m::init::backfill::worker()
 try
 {
-	run::changed::dock.wait([]
-	{
-		return run::level == run::level::RUN;
-	});
+	// Wait for runlevel RUN before proceeding...
+	run::barrier<ctx::interrupted>{};
 
 	// Set a low priority for this context; see related pool_opts
 	ionice(ctx::cur(), 4);
