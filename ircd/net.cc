@@ -3783,7 +3783,6 @@ catch(const boost::system::system_error &e)
 		e.what()
 	};
 
-	assert(0);
 	call_user(callback, e.code());
 }
 catch(const std::bad_weak_ptr &e)
