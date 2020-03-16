@@ -67,8 +67,8 @@ struct ircd::m::homeserver
 	/// Configuration
 	std::unique_ptr<struct conf> conf;
 
-	/// Loaded modules.
-	std::list<ircd::module> modules;
+	/// Requested modules.
+	std::vector<string_view> modules;
 
 	/// vm
 	std::shared_ptr<vm::init> vm;

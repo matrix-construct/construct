@@ -249,11 +249,13 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 {
 	begin(matrix::module_names), end(matrix::module_names)
 }
-,vm
 {
-	std::make_shared<vm::init>()
-}
-{
+	for(const auto &name : modules)
+		mods::imports.emplace(std::string{name}, name);
+
+	if(primary == this)
+		vm = std::make_shared<vm::init>();
+
 	if(primary == this && conf)
 		conf->load();
 
@@ -287,17 +289,19 @@ noexcept
 		m::sync::pool.join();
 	}
 
-
 	signoff(*this);
 	if(primary == this)
 		mods::imports.erase("net_dns_cache"s);
 
-	vm.reset();
+	if(primary == this)
+		vm.reset();
+
 	if(primary == this)
 		_fetch.reset(nullptr);
 
-	while(!modules.empty())
-		modules.pop_back();
+	if(primary == this)
+		for(auto rit(rbegin(modules)); rit != rend(modules); ++rit)
+			mods::imports.erase(*rit);
 }
 
 //
