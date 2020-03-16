@@ -2791,8 +2791,17 @@ try
 
 	const std::pair<string_view, string_view> range
 	{
-		integer? byte_view<string_view>(integers[0]) : begin,
-		integer && end? byte_view<string_view>(integers[1]) : end,
+		integer?
+			byte_view<string_view>(integers[0]):
+		begin == "*"?
+			string_view{}:
+			begin,
+
+		integer && end?
+			byte_view<string_view>(integers[1]):
+		end == "*"?
+			string_view{}:
+			end,
 	};
 
 	const auto compact_column{[&out, &database, &level, &range]
