@@ -1683,10 +1683,18 @@ try
 			break;
 		}
 
+		// Indirection code, but no location response header
+		if(!location)
+			return origin;
+
 		// Redirection; carry over the new target by copying it because it's
 		// in the buffer which we'll be overwriting for the new request.
 		carry = unique_mutable_buffer{location};
 		uri = string_view{carry};
+
+		// Indirection code, bad location header.
+		if(!uri.path || !uri.remote)
+			return origin;
 	}
 
 	const json::string &m_server
