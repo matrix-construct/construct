@@ -51,7 +51,6 @@ ircd::m::event_append_default_keys
 	event_append_exclude_keys
 };
 
-IRCD_MODULE_EXPORT
 ircd::m::event::append::append(json::stack::array &array,
                                const event &event_,
                                const opts &opts)
@@ -75,7 +74,6 @@ ircd::m::event::append::append(json::stack::array &array,
 {
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::event::append::append(json::stack::object &object,
                                const event &event,
                                const opts &opts)

@@ -9,14 +9,12 @@
 // full license for this software is available in the LICENSE file.
 
 decltype(ircd::m::receipt::log)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::receipt::log
 {
 	"m.receipt"
 };
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::receipt::read(const m::room::id &room_id,
                        const m::user::id &user_id,
                        const m::event::id &event_id,
@@ -50,7 +48,6 @@ ircd::m::receipt::read(const m::room::id &room_id,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::receipt::get(const m::room::id &room_id,
                       const m::user::id &user_id,
                       const m::event::id::closure &closure)
@@ -81,7 +78,6 @@ ircd::m::receipt::get(const m::room::id &room_id,
 /// Does the user wish to not send receipts for events sent by its specific
 /// sender?
 bool
-IRCD_MODULE_EXPORT
 ircd::m::receipt::ignoring(const m::user &user,
                            const m::event::id &event_id)
 {
@@ -98,7 +94,6 @@ ircd::m::receipt::ignoring(const m::user &user,
 
 /// Does the user wish to not send receipts for events for this entire room?
 bool
-IRCD_MODULE_EXPORT
 ircd::m::receipt::ignoring(const m::user &user,
                            const m::room::id &room_id)
 {
@@ -107,7 +102,6 @@ ircd::m::receipt::ignoring(const m::user &user,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::receipt::freshest(const m::room::id &room_id,
                            const m::user::id &user_id,
                            const m::event::id &event_id)
@@ -168,7 +162,6 @@ catch(const std::exception &e)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::receipt::exists(const m::room::id &room_id,
                          const m::user::id &user_id,
                          const m::event::id &event_id)

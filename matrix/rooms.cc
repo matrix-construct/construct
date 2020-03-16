@@ -9,11 +9,9 @@
 // full license for this software is available in the LICENSE file.
 
 decltype(ircd::m::rooms::opts_default)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::rooms::opts_default;
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::rooms::dump__file(const opts &opts,
                            const string_view &filename)
 {
@@ -60,7 +58,6 @@ ircd::m::rooms::dump__file(const opts &opts,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::rooms::has(const opts &opts)
 {
 	return !for_each(opts, []
@@ -72,7 +69,6 @@ ircd::m::rooms::has(const opts &opts)
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::rooms::count(const opts &opts)
 {
 	size_t ret{0};
@@ -87,14 +83,12 @@ ircd::m::rooms::count(const opts &opts)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::rooms::for_each(const room::id::closure_bool &closure)
 {
 	return for_each(opts_default, closure);
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::rooms::for_each(const opts &opts,
                          const room::id::closure_bool &closure)
 {
@@ -245,7 +239,6 @@ ircd::m::rooms::for_each(const opts &opts,
 // ircd::m::rooms::opts::opts
 //
 
-IRCD_MODULE_EXPORT
 ircd::m::rooms::opts::opts(const string_view &input)
 noexcept
 :room_id

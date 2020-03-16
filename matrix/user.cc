@@ -39,7 +39,6 @@ ircd::m::my(const user &user)
 }
 
 ircd::m::user
-IRCD_MODULE_EXPORT
 ircd::m::create(const m::user::id &user_id,
                 const json::members &contents)
 {
@@ -214,7 +213,6 @@ const
 }
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::user::password(const string_view &password)
 {
 	char buf[64];
@@ -235,7 +233,6 @@ ircd::m::user::password(const string_view &password)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::is_password(const string_view &password)
 const try
 {

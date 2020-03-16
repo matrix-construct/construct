@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::servers::has(const string_view &server,
                             const string_view &membership)
 const
@@ -24,7 +23,6 @@ const
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::user::servers::count(const string_view &membership)
 const
 {
@@ -40,7 +38,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::servers::for_each(const closure_bool &closure)
 const
 {
@@ -48,7 +45,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::servers::for_each(const string_view &membership,
                                  const closure_bool &closure)
 const

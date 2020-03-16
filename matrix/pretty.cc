@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 std::ostream &
-IRCD_MODULE_EXPORT
 ircd::m::pretty_stateline(std::ostream &out,
                           const event &event,
                           const event::idx &event_idx)
@@ -138,7 +137,6 @@ ircd::m::pretty_stateline(std::ostream &out,
 }
 
 std::string
-IRCD_MODULE_EXPORT
 ircd::m::pretty(const event &event)
 {
 	std::string ret;
@@ -150,7 +148,6 @@ ircd::m::pretty(const event &event)
 }
 
 std::ostream &
-IRCD_MODULE_EXPORT
 ircd::m::pretty(std::ostream &s,
                 const event &event)
 {
@@ -237,7 +234,6 @@ ircd::m::pretty(std::ostream &s,
 }
 
 std::string
-IRCD_MODULE_EXPORT
 ircd::m::pretty_oneline(const event &event,
                         const int &fmt)
 {
@@ -250,7 +246,6 @@ ircd::m::pretty_oneline(const event &event,
 }
 
 std::ostream &
-IRCD_MODULE_EXPORT
 ircd::m::pretty_oneline(std::ostream &s,
                         const event &event,
                         const int &fmt)
@@ -369,7 +364,6 @@ ircd::m::pretty_oneline(std::ostream &s,
 }
 
 std::string
-IRCD_MODULE_EXPORT
 ircd::m::pretty_msgline(const event &event)
 {
 	std::string ret;
@@ -381,7 +375,6 @@ ircd::m::pretty_msgline(const event &event)
 }
 
 std::ostream &
-IRCD_MODULE_EXPORT
 ircd::m::pretty_msgline(std::ostream &s,
                         const event &event)
 {
@@ -423,7 +416,6 @@ ircd::m::pretty_msgline(std::ostream &s,
 }
 
 std::string
-IRCD_MODULE_EXPORT
 ircd::m::pretty(const event::prev &prev)
 {
 	std::string ret;
@@ -435,7 +427,6 @@ ircd::m::pretty(const event::prev &prev)
 }
 
 std::ostream &
-IRCD_MODULE_EXPORT
 ircd::m::pretty(std::ostream &s,
                 const event::prev &prev)
 {
@@ -483,7 +474,6 @@ ircd::m::pretty(std::ostream &s,
 }
 
 std::ostream &
-IRCD_MODULE_EXPORT
 ircd::m::pretty_oneline(std::ostream &s,
                         const event::prev &prev)
 {

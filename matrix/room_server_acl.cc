@@ -25,7 +25,6 @@
 /// This option has no effect on the room::server_acl interface itself, it is
 /// available for the callsite to check independently before using the iface.
 decltype(ircd::m::room::server_acl::enable_write)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::room::server_acl::enable_write
 {
 	{ "name",     "ircd.m.room.server_acl.enable.write" },
@@ -43,7 +42,6 @@ ircd::m::room::server_acl::enable_write
 /// This option has no effect on the room::server_acl interface itself, it is
 /// available for the callsite to check independently before using the iface.
 decltype(ircd::m::room::server_acl::enable_read)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::room::server_acl::enable_read
 {
 	{ "name",     "ircd.m.room.server_acl.enable.read" },
@@ -63,7 +61,6 @@ ircd::m::room::server_acl::enable_read
 /// This option has no effect on the room::server_acl interface itself, it is
 /// available for the callsite to check independently before using the iface.
 decltype(ircd::m::room::server_acl::enable_fetch)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::room::server_acl::enable_fetch
 {
 	{ "name",     "ircd.m.room.server_acl.enable.fetch" },
@@ -80,7 +77,6 @@ ircd::m::room::server_acl::enable_fetch
 /// This option has no effect on the room::server_acl interface itself, it is
 /// available for the callsite to check independently before using the iface.
 decltype(ircd::m::room::server_acl::enable_send)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::room::server_acl::enable_send
 {
 	{ "name",     "ircd.m.room.server_acl.enable.send" },
@@ -88,7 +84,6 @@ ircd::m::room::server_acl::enable_send
 };
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::check(const m::room::id &room_id,
                                  const net::hostport &server)
 try
@@ -129,7 +124,6 @@ catch(const std::exception &e)
 // server_acl::server_acl
 //
 
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::server_acl(const m::room &room,
                                       const event::idx &event_idx)
 :room
@@ -146,7 +140,6 @@ ircd::m::room::server_acl::server_acl(const m::room &room,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::operator()(const net::hostport &server)
 const
 {
@@ -168,7 +161,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::match(const string_view &prop,
                                  const net::hostport &remote)
 const
@@ -194,7 +186,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::has(const string_view &prop,
                                const string_view &expr)
 const
@@ -208,7 +199,6 @@ const
 }
 
 int
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::getbool(const string_view &prop)
 const
 {
@@ -231,7 +221,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::has(const string_view &prop)
 const
 {
@@ -246,7 +235,6 @@ const
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::count(const string_view &prop)
 const
 {
@@ -262,7 +250,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::for_each(const string_view &prop,
                                     const closure_bool &closure)
 const
@@ -293,7 +280,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::exists()
 const
 {
@@ -301,7 +287,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::check(const net::hostport &server)
 const
 {
@@ -330,7 +315,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::server_acl::view(const view_closure &closure)
 const
 {

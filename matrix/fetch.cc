@@ -138,7 +138,6 @@ wait_for_run()
 }
 
 ircd::ctx::future<ircd::m::fetch::result>
-IRCD_MODULE_EXPORT
 ircd::m::fetch::start(opts opts)
 {
 	assert(opts.room_id && opts.event_id);
@@ -196,21 +195,18 @@ ircd::m::fetch::start(opts opts)
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::fetch::count()
 {
 	return requests.size();
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::fetch::exists(const opts &opts)
 {
 	return requests.count(opts);
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 {
 	for(auto &request : requests)
@@ -221,7 +217,6 @@ ircd::m::fetch::for_each(const std::function<bool (request &)> &closure)
 }
 
 ircd::string_view
-IRCD_MODULE_EXPORT
 ircd::m::fetch::reflect(const op &op)
 {
 	switch(op)

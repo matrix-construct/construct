@@ -31,7 +31,6 @@ ircd::m::room_auth_hook
 //
 
 ircd::json::array
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::generate(const mutable_buffer &buf,
                               const m::room &room,
                               const m::event &event)
@@ -48,7 +47,6 @@ ircd::m::room::auth::generate(const mutable_buffer &buf,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::generate(json::stack::array &out,
                               const m::room &room,
                               const m::event &event)
@@ -135,7 +133,6 @@ ircd::m::room::auth::generate(json::stack::array &out,
 //
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::check(const event &event)
 {
 	const bool check_static
@@ -206,7 +203,6 @@ ircd::m::room::auth::check(const event &event)
 }
 
 ircd::m::room::auth::passfail
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::check_relative(const event &event)
 try
 {
@@ -232,7 +228,6 @@ catch(const std::exception &)
 }
 
 ircd::m::room::auth::passfail
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::check_present(const event &event)
 try
 {
@@ -270,7 +265,6 @@ catch(const std::exception &)
 }
 
 ircd::m::room::auth::passfail
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::check_static(const event &event)
 try
 {
@@ -317,7 +311,6 @@ catch(const std::exception &)
 }
 
 ircd::m::room::auth::passfail
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::check(const event &event,
                            const room &room)
 {
@@ -343,7 +336,6 @@ ircd::m::room::auth::check(const event &event,
 }
 
 ircd::m::room::auth::passfail
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::check(const event &event,
                            const vector_view<event::idx> &idx)
 {
@@ -367,7 +359,6 @@ ircd::m::room::auth::check(const event &event,
 }
 
 ircd::m::room::auth::passfail
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::check(const event &event,
                            hookdata &data)
 try
@@ -590,7 +581,6 @@ ircd::m::check_room_auth_rule_9(const m::event &event,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::is_power_event(const m::event &event)
 {
 	if(!json::get<"type"_>(event))
@@ -624,7 +614,6 @@ ircd::m::room::auth::is_power_event(const m::event &event)
 // room::auth::hookdata
 //
 
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::hookdata::hookdata(const m::event &event,
                                         const vector_view<const m::event *> &auth_events)
 :prev
@@ -691,7 +680,6 @@ const
 //
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::refs::count()
 const
 {
@@ -699,7 +687,6 @@ const
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::refs::count(const string_view &type)
 const
 {
@@ -714,7 +701,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::refs::has(const event::idx &idx)
 const
 {
@@ -725,7 +711,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::refs::has(const string_view &type)
 const
 {
@@ -740,7 +725,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::refs::for_each(const closure_bool &closure)
 const
 {
@@ -748,7 +732,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::refs::for_each(const string_view &type,
                                      const closure_bool &closure)
 const
@@ -793,7 +776,6 @@ const
 //
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::chain::depth()
 const
 {
@@ -808,7 +790,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::chain::has(const string_view &type)
 const
 {
@@ -829,7 +810,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::auth::chain::for_each(const closure &closure)
 const
 {

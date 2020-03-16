@@ -18,7 +18,6 @@ decltype(ircd::m::users::opts_default)
 ircd::m::users::opts_default;
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::users::exists(const opts &opts)
 {
 	return !for_each(opts, []
@@ -30,7 +29,6 @@ ircd::m::users::exists(const opts &opts)
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::users::count(const opts &opts)
 {
 	size_t ret(0);
@@ -44,14 +42,12 @@ ircd::m::users::count(const opts &opts)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::users::for_each(const user::closure_bool &closure)
 {
 	return for_each(opts_default, closure);
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::users::for_each(const opts &opts,
                          const user::closure_bool &closure)
 {
@@ -150,7 +146,6 @@ ircd::m::users::for_each_in_host(const opts &opts,
 	return ret;
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::users::opts::opts(const string_view &query)
 {
 	if(startswith(query, '@') && has(query, ':'))

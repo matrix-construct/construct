@@ -1077,7 +1077,6 @@ ircd::m::event::my(const idx &event_idx)
 // event::event
 //
 
-IRCD_MODULE_EXPORT
 ircd::m::event::event(const json::members &members)
 :super_type
 {
@@ -1092,7 +1091,6 @@ ircd::m::event::event(const json::members &members)
 {
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::event::event(const json::iov &members)
 :event
 {
@@ -1104,7 +1102,6 @@ ircd::m::event::event(const json::iov &members)
 {
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::event::event(const json::iov &members,
                       const id &id)
 :super_type
@@ -1118,7 +1115,6 @@ ircd::m::event::event(const json::iov &members,
 {
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::event::event(const json::object &source)
 :super_type
 {
@@ -1137,7 +1133,6 @@ ircd::m::event::event(const json::object &source)
 {
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::event::event(const json::object &source,
                       const keys &keys)
 :super_type
@@ -1157,7 +1152,6 @@ ircd::m::event::event(const json::object &source,
 {
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::event::event(id::buf &buf,
                       const json::object &source,
                       const string_view &version)
@@ -1179,7 +1173,6 @@ ircd::m::event::event(id::buf &buf,
 {
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::event::event(const json::object &source,
                       const id &event_id)
 try
@@ -1214,7 +1207,6 @@ catch(const json::parse_error &e)
 	};
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::event::event(const json::object &source,
                       const id &event_id,
                       const keys &keys)

@@ -33,7 +33,6 @@ namespace ircd::m::vm
 ///
 
 ircd::m::vm::fault
-IRCD_MODULE_EXPORT
 ircd::m::vm::inject(eval &eval,
                     json::iov &event,
                     const json::iov &contents)

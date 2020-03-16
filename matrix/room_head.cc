@@ -14,7 +14,6 @@ namespace ircd::m
 	static void append_v3(json::stack::array &, const event::id &);
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::room::head::generate::generate(const mutable_buffer &buf,
                                         const m::room::head &head,
                                         const opts &opts)
@@ -40,7 +39,6 @@ ircd::m::room::head::generate::generate(const mutable_buffer &buf,
 	this->array = out.completed();
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::room::head::generate::generate(json::stack::array &out,
                                         const m::room::head &head,
                                         const opts &opts)
@@ -218,7 +216,6 @@ ircd::m::append_v3(json::stack::array &out,
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::head::count()
 const
 {
@@ -234,7 +231,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::head::has(const event::id &event_id)
 const
 {
@@ -250,7 +246,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::head::for_each(const closure &closure)
 const
 {
@@ -283,7 +278,6 @@ const
 //
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::head::reset(const head &head)
 {
 	size_t ret{0};
@@ -346,7 +340,6 @@ ircd::m::room::head::reset(const head &head)
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::head::rebuild(const head &head)
 {
 	size_t ret{0};
@@ -385,7 +378,6 @@ ircd::m::room::head::rebuild(const head &head)
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::room::head::modify(const m::event::id &event_id,
                             const db::op &op,
                             const bool &refs)

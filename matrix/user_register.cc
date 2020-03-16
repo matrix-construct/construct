@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 ircd::json::object
-IRCD_MODULE_EXPORT
 ircd::m::user::registar::operator()(const mutable_buffer &out,
                                     const net::ipport &remote)
 const
@@ -192,7 +191,6 @@ const
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::user::registar::validate_password(const string_view &password)
 {
 	static const size_t &max
@@ -210,7 +208,6 @@ ircd::m::user::registar::validate_password(const string_view &password)
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::user::registar::validate_user_id(const m::user::id &user_id)
 {
 	if(user_id.host() != my_host())

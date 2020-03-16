@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::user::events::count()
 const
 {
@@ -24,7 +23,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::events::for_each(const closure_bool &closure)
 const
 {
@@ -40,7 +38,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::events::for_each(const idx_closure_bool &closure)
 const
 {

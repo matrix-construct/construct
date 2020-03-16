@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::user::account_data::set(const string_view &type,
                                  const json::object &value)
 const
@@ -23,7 +22,6 @@ const
 }
 
 ircd::json::object
-IRCD_MODULE_EXPORT
 ircd::m::user::account_data::get(const mutable_buffer &out,
                                  const string_view &type)
 const
@@ -39,7 +37,6 @@ const
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::user::account_data::get(const string_view &type,
                                  const closure &closure)
 const
@@ -54,7 +51,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::account_data::get(std::nothrow_t,
                                  const string_view &type,
                                  const closure &closure)
@@ -75,7 +71,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::account_data::for_each(const closure_bool &closure)
 const
 {

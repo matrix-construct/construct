@@ -199,7 +199,6 @@ _handle_edu_m_typing(const m::event &event,
 /// event to clients we hook it during eval and create a new event formatted
 /// for clients and then run that through eval too. (see below).
 ///
-IRCD_MODULE_EXPORT
 ircd::m::typing::commit::commit(const m::typing &edu)
 {
 	using json::at;
@@ -251,7 +250,6 @@ ircd::m::typing::commit::commit(const m::typing &edu)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::typing::allow(const user::id &user_id,
                        const room::id &room_id,
                        const string_view &allow_type)
@@ -285,7 +283,6 @@ ircd::m::typing::allow(const user::id &user_id,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::typing::for_each(const closure &closure)
 {
 	// User cannot yield in their closure because the iteration

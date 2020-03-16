@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::user::rooms::count()
 const
 {
@@ -24,7 +23,6 @@ const
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::user::rooms::count(const string_view &membership)
 const
 {
@@ -39,7 +37,6 @@ const
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::user::rooms::for_each(const closure &closure)
 const
 {
@@ -52,7 +49,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::rooms::for_each(const closure_bool &closure)
 const
 {
@@ -60,7 +56,6 @@ const
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::user::rooms::for_each(const string_view &membership,
                                const closure &closure)
 const
@@ -74,7 +69,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::rooms::for_each(const string_view &membership,
                                const closure_bool &closure)
 const

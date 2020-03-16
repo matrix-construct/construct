@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::leave(const room &room,
                const id::user &user_id)
 {

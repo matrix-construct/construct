@@ -28,7 +28,6 @@ struct ircd::m::report_error
 };
 
 decltype(ircd::m::createroom::version_default)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::createroom::version_default
 {
 	{ "name",     "ircd.m.createroom.version_default"  },
@@ -36,7 +35,6 @@ ircd::m::createroom::version_default
 };
 
 decltype(ircd::m::createroom::spec_presets)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::createroom::spec_presets
 {
 	"private_chat",
@@ -45,7 +43,6 @@ ircd::m::createroom::spec_presets
 };
 
 ircd::m::room
-IRCD_MODULE_EXPORT
 ircd::m::create(const createroom &c,
                 json::stack::array *const &errors)
 try
@@ -377,7 +374,6 @@ catch(const db::not_found &e)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::createroom::spec_preset(const string_view &preset)
 {
 	const auto &s(spec_presets);

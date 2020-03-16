@@ -21,7 +21,6 @@ ircd::m::remote_request_timeout
 };
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::user::profile::set(const string_view &key,
                             const string_view &val)
 const
@@ -38,7 +37,6 @@ const
 }
 
 ircd::string_view
-IRCD_MODULE_EXPORT
 ircd::m::user::profile::get(const mutable_buffer &out,
                             const string_view &key)
 const
@@ -54,7 +52,6 @@ const
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::user::profile::get(const string_view &key,
                             const closure &closure)
 const
@@ -69,7 +66,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::profile::get(std::nothrow_t,
                             const string_view &key,
                             const closure &closure)
@@ -95,7 +91,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::profile::for_each(const closure_bool &closure)
 const
 {
@@ -121,7 +116,6 @@ const
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::user::profile::fetch(const m::user &user,
                               const string_view &remote,
                               const string_view &key)

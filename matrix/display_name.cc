@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 ircd::string_view
-IRCD_MODULE_EXPORT
 ircd::m::display_name(const mutable_buffer &out,
                       const room &room)
 {

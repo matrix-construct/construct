@@ -8,7 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-IRCD_MODULE_EXPORT
 ircd::m::node::node(const string_view &node_id)
 :node_id{node_id}
 {
@@ -16,7 +15,6 @@ ircd::m::node::node(const string_view &node_id)
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::node::key(const string_view &key_id,
                    const ed25519_closure &closure)
 const
@@ -37,7 +35,6 @@ const
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::node::key(const string_view &key_id,
                    const key_closure &closure)
 const
@@ -68,7 +65,6 @@ const
 
 /// Generates a node-room ID into buffer; see room_id() overload.
 ircd::m::id::room::buf
-IRCD_MODULE_EXPORT
 ircd::m::node::room_id()
 const
 {
@@ -81,7 +77,6 @@ const
 /// the node's full mxid.
 ///
 ircd::m::id::room
-IRCD_MODULE_EXPORT
 ircd::m::node::room_id(const mutable_buffer &buf)
 const
 {
@@ -115,7 +110,6 @@ const
 }
 
 ircd::m::node
-IRCD_MODULE_EXPORT
 ircd::m::create(const node &node,
                 const json::members &args)
 {
@@ -130,7 +124,6 @@ ircd::m::create(const node &node,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::exists(const node &node)
 {
 	const m::room::id::buf room_id
@@ -142,7 +135,6 @@ ircd::m::exists(const node &node)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::my(const node &node)
 {
 	return my_host(node.node_id);
@@ -152,7 +144,6 @@ ircd::m::my(const node &node)
 // node::room
 //
 
-IRCD_MODULE_EXPORT
 ircd::m::node::room::room(const string_view &node_id)
 :room
 {
@@ -161,7 +152,6 @@ ircd::m::node::room::room(const string_view &node_id)
 {
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::node::room::room(const m::node &node)
 :node
 {

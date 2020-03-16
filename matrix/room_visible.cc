@@ -15,7 +15,6 @@ namespace ircd::m
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::visible(const m::event &event,
                  const string_view &mxid)
 {

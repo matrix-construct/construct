@@ -65,7 +65,6 @@ ircd::m::rooms::summary::fetch::limit
 // fetch::fetch
 //
 
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::fetch::fetch(const string_view &origin,
                                       const string_view &since,
                                       const size_t &limit)
@@ -126,7 +125,6 @@ ircd::m::rooms::summary::fetch::fetch(const string_view &origin,
 //
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::del(const m::room &room)
 {
 	for_each(room, [&room]
@@ -138,7 +136,6 @@ ircd::m::rooms::summary::del(const m::room &room)
 }
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::del(const m::room &room,
                              const string_view &origin)
 {
@@ -175,7 +172,6 @@ ircd::m::rooms::summary::del(const m::room &room,
 }
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::set(const m::room &room)
 {
 	if(!exists(room))
@@ -199,7 +195,6 @@ ircd::m::rooms::summary::set(const m::room &room)
 }
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::set(const m::room::id &room_id,
                              const string_view &origin,
                              const json::object &summary)
@@ -220,7 +215,6 @@ ircd::m::rooms::summary::set(const m::room::id &room_id,
 }
 
 ircd::json::object
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::get(const mutable_buffer &buf,
                              const m::room &room)
 {
@@ -237,7 +231,6 @@ ircd::m::rooms::summary::get(const mutable_buffer &buf,
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::get(json::stack::object &obj,
                              const m::room &room)
 {
@@ -247,7 +240,6 @@ ircd::m::rooms::summary::get(json::stack::object &obj,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::has(const room::id &room_id,
                              const string_view &origin)
 {
@@ -265,7 +257,6 @@ ircd::m::rooms::summary::has(const room::id &room_id,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::for_each(const room::id &room_id,
                                   const closure &closure)
 {
@@ -284,7 +275,6 @@ ircd::m::rooms::summary::for_each(const room::id &room_id,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::for_each(const room::id &room_id,
                                   const closure_idx &closure)
 {
@@ -326,14 +316,12 @@ ircd::m::rooms::summary::for_each(const room::id &room_id,
 }
 
 std::pair<ircd::m::room::id, ircd::string_view>
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::unmake_state_key(const string_view &key)
 {
 	return rsplit(key, '!');
 }
 
 ircd::string_view
-IRCD_MODULE_EXPORT
 ircd::m::rooms::summary::make_state_key(const mutable_buffer &buf,
                                         const m::room::id &room_id,
                                         const string_view &origin)

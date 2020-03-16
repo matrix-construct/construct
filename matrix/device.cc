@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 std::map<std::string, long>
-IRCD_MODULE_EXPORT
 ircd::m::device::count_one_time_keys(const user &user,
                                      const string_view &device_id)
 {
@@ -48,7 +47,6 @@ ircd::m::device::count_one_time_keys(const user &user,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::device::set(const m::user &user,
                      const device &device)
 {
@@ -80,7 +78,6 @@ ircd::m::device::set(const m::user &user,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::device::set(const m::user &user,
                      const string_view &id,
                      const string_view &prop,
@@ -105,7 +102,6 @@ ircd::m::device::set(const m::user &user,
 /// ircd.device.* (and ircd.device) which have a state_key of the device_id.
 /// Those events are redacted which removes them from appearing in the state.
 bool
-IRCD_MODULE_EXPORT
 ircd::m::device::del(const m::user &user,
                      const string_view &id)
 {
@@ -139,7 +135,6 @@ ircd::m::device::del(const m::user &user,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::device::has(const m::user &user,
                      const string_view &id)
 {
@@ -162,7 +157,6 @@ ircd::m::device::has(const m::user &user,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::device::has(const m::user &user,
                      const string_view &id,
                      const string_view &prop)
@@ -178,7 +172,6 @@ ircd::m::device::has(const m::user &user,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::device::get(const m::user &user,
                      const string_view &id,
                      const string_view &prop,
@@ -202,7 +195,6 @@ ircd::m::device::get(const m::user &user,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::device::get(std::nothrow_t,
                      const m::user &user,
                      const string_view &id,
@@ -235,7 +227,6 @@ ircd::m::device::get(std::nothrow_t,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::device::for_each(const m::user &user,
                           const string_view &device_id,
                           const closure_bool &closure)
@@ -262,7 +253,6 @@ ircd::m::device::for_each(const m::user &user,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::device::for_each(const m::user &user,
                           const closure_bool &closure)
 {
@@ -284,7 +274,6 @@ ircd::m::device::for_each(const m::user &user,
 }
 
 ircd::m::device::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::device::access_token_to_id(const string_view &token)
 {
 	id::buf ret;
@@ -298,7 +287,6 @@ ircd::m::device::access_token_to_id(const string_view &token)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::device::access_token_to_id(const string_view &token,
                                     const closure &closure)
 {

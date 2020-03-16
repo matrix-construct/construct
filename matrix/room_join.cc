@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::join(const room::alias &room_alias,
               const user::id &user_id)
 {
@@ -44,7 +43,6 @@ ircd::m::join(const room::alias &room_alias,
 }
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::join(const m::room &room,
               const m::id::user &user_id)
 {

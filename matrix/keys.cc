@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 std::ostream &
-IRCD_MODULE_EXPORT
 ircd::m::pretty_oneline(std::ostream &s,
                         const m::keys &keys)
 {
@@ -41,7 +40,6 @@ ircd::m::pretty_oneline(std::ostream &s,
 }
 
 std::ostream &
-IRCD_MODULE_EXPORT
 ircd::m::pretty(std::ostream &s,
                 const m::keys &keys)
 {
@@ -80,7 +78,6 @@ ircd::m::pretty(std::ostream &s,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::verify(const m::keys &keys,
                 std::nothrow_t)
 noexcept try
@@ -101,7 +98,6 @@ catch(const std::exception &e)
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::verify(const m::keys &keys)
 {
 	const json::object &verify_keys
@@ -182,7 +178,6 @@ ircd::m::verify(const m::keys &keys)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::expired(const m::keys &keys)
 {
 	const auto &valid_until_ts
@@ -210,7 +205,6 @@ ircd::m::keys_query_timeout
 };
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::keys::query(const string_view &query_server,
                      const queries &queries,
                      const closure_bool &closure)
@@ -284,7 +278,6 @@ ircd::m::keys_get_timeout
 };
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::keys::fetch(const queries &queries)
 {
 	size_t ret(0);
@@ -298,7 +291,6 @@ ircd::m::keys::fetch(const queries &queries)
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::keys::get(const string_view &server_name,
                    const closure &closure)
 {
@@ -306,7 +298,6 @@ ircd::m::keys::get(const string_view &server_name,
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::keys::get(const string_view &server_name,
                    const string_view &key_id,
                    const closure &closure)
@@ -388,7 +379,6 @@ catch(const ctx::timeout &e)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::keys::get(const queries &queries,
                    const closure_bool &closure)
 {
@@ -482,7 +472,6 @@ ircd::m::keys::get(const queries &queries,
 //
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::keys::cache::set(const json::object &keys)
 {
 	const json::string &server_name
@@ -519,7 +508,6 @@ ircd::m::keys::cache::set(const json::object &keys)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::keys::cache::get(const string_view &server_name,
                           const string_view &key_id,
                           const keys::closure &closure)
@@ -545,7 +533,6 @@ ircd::m::keys::cache::get(const string_view &server_name,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::keys::cache::has(const string_view &server_name,
                           const string_view &key_id)
 {
@@ -564,7 +551,6 @@ ircd::m::keys::cache::has(const string_view &server_name,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::keys::cache::for_each(const string_view &server_name,
                                const keys::closure_bool &closure)
 {

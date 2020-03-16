@@ -91,7 +91,6 @@ noexcept
 // m/feds.h
 //
 
-IRCD_MODULE_EXPORT
 ircd::m::feds::execute::execute(const vector_view<const opts> &optsv,
                                 const closure &closure)
 :boolean{true}

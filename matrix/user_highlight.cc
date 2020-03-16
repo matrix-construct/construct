@@ -14,7 +14,6 @@ namespace ircd::m
 }
 
 decltype(ircd::m::user::highlight::enable_count)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::user::highlight::enable_count
 {
 	{ "name",    "ircd.m.user.highlight.enable.count" },
@@ -22,7 +21,6 @@ ircd::m::user::highlight::enable_count
 };
 
 decltype(ircd::m::user::highlight::match_mxid_full)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::user::highlight::match_mxid_full
 {
 	{ "name",    "ircd.m.user.highlight.match.mxid.full" },
@@ -30,7 +28,6 @@ ircd::m::user::highlight::match_mxid_full
 };
 
 decltype(ircd::m::user::highlight::match_mxid_local_cs)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::user::highlight::match_mxid_local_cs
 {
 	{ "name",    "ircd.m.user.highlight.match.mxid.local.cs" },
@@ -38,7 +35,6 @@ ircd::m::user::highlight::match_mxid_local_cs
 };
 
 decltype(ircd::m::user::highlight::match_mxid_local_cs)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::user::highlight::match_mxid_local_ci
 {
 	{ "name",    "ircd.m.user.highlight.match.mxid.local.ci" },
@@ -46,7 +42,6 @@ ircd::m::user::highlight::match_mxid_local_ci
 };
 
 decltype(ircd::m::user::highlight::match_at_room)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::user::highlight::match_at_room
 {
 	{ "name",    "ircd.m.user.highlight.match.at.room" },
@@ -54,7 +49,6 @@ ircd::m::user::highlight::match_at_room
 };
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::user::highlight::count()
 const
 {
@@ -75,7 +69,6 @@ const
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::user::highlight::count(const m::room &room)
 const
 {
@@ -88,7 +81,6 @@ const
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::user::highlight::count_to(const m::room &room,
                                    const event::idx &current)
 const
@@ -116,7 +108,6 @@ const
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::user::highlight::count_between(const m::room &room,
                                         const event::idx_range &range)
 const
@@ -133,7 +124,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::highlight::for_each(const m::room &room,
                                    const event::idx_range &range,
                                    const event::closure_idx_bool &closure)
@@ -172,7 +162,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::highlight::has(const event::idx &event_idx)
 const
 {
@@ -199,7 +188,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::highlight::has(const event &event)
 const
 {
@@ -220,7 +208,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::highlight::match(const string_view &text)
 const
 {
@@ -249,7 +236,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::highlight::match(const string_view &text,
                                 const string_view &arg)
 {
@@ -262,7 +248,6 @@ ircd::m::user::highlight::match(const string_view &text,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::highlight::imatch(const string_view &text,
                                  const string_view &arg)
 {

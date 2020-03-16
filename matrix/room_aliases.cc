@@ -33,7 +33,6 @@ ircd::m::alias_fetch_timeout
 //
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::count()
 const
 {
@@ -41,7 +40,6 @@ const
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::count(const string_view &server)
 const
 {
@@ -56,7 +54,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::has(const alias &alias)
 const
 {
@@ -69,7 +66,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::for_each(const closure_bool &closure)
 const
 {
@@ -86,7 +82,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::for_each(const string_view &server,
                                  const closure_bool &closure)
 const
@@ -98,7 +93,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::for_each(const m::room &room,
                                  const string_view &server,
                                  const closure_bool &closure)
@@ -145,7 +139,6 @@ ircd::m::room::aliases::for_each(const m::room &room,
 //
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::del(const alias &alias)
 {
 	char buf[m::id::room_alias::buf::SIZE];
@@ -189,7 +182,6 @@ ircd::m::room::aliases::cache::del(const alias &alias)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::set(const alias &alias,
                                    const id &id)
 {
@@ -221,7 +213,6 @@ ircd::m::room::aliases::cache::set(const alias &alias,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::get(std::nothrow_t,
                                    const alias &alias,
                                    const id::closure &closure)
@@ -284,7 +275,6 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::fetch(std::nothrow_t,
                                      const alias &a,
                                      const string_view &remote)
@@ -307,7 +297,6 @@ catch(const std::exception &e)
 }
 
 ircd::m::room::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::get(const alias &a)
 {
 	id::buf ret;
@@ -321,7 +310,6 @@ ircd::m::room::aliases::cache::get(const alias &a)
 }
 
 ircd::m::room::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::get(std::nothrow_t,
                                    const alias &a)
 {
@@ -336,7 +324,6 @@ ircd::m::room::aliases::cache::get(std::nothrow_t,
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::get(const alias &a,
                                    const id::closure &c)
 {
@@ -349,14 +336,12 @@ ircd::m::room::aliases::cache::get(const alias &a,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::for_each(const closure_bool &c)
 {
 	return for_each(string_view{}, c);
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::fetch(const alias &alias,
                                      const string_view &remote)
 try
@@ -423,7 +408,6 @@ catch(const server::unavailable &e)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::for_each(const string_view &server,
                                         const closure_bool &closure)
 {
@@ -473,7 +457,6 @@ ircd::m::room::aliases::cache::for_each(const string_view &server,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::has(const alias &alias)
 {
 	const auto &event_idx
@@ -503,7 +486,6 @@ ircd::m::room::aliases::cache::has(const alias &alias)
 }
 
 ircd::system_point
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::expires(const alias &alias)
 {
 	const auto event_idx
@@ -528,7 +510,6 @@ ircd::m::room::aliases::cache::expires(const alias &alias)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::expired(const event::idx &event_idx)
 {
 	const milliseconds age
@@ -545,7 +526,6 @@ ircd::m::room::aliases::cache::expired(const event::idx &event_idx)
 }
 
 ircd::milliseconds
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::age(const event::idx &event_idx)
 {
 	time_t ts;
@@ -564,7 +544,6 @@ ircd::m::room::aliases::cache::age(const event::idx &event_idx)
 }
 
 ircd::m::event::idx
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::getidx(const alias &alias)
 {
 	thread_local char swapbuf alignas(16) [m::id::room_alias::buf::SIZE];
@@ -598,7 +577,6 @@ ircd::m::room::aliases::cache::getidx(const alias &alias)
 }
 
 ircd::string_view
-IRCD_MODULE_EXPORT
 ircd::m::room::aliases::cache::make_key(const mutable_buffer &out,
                                         const alias &alias)
 {

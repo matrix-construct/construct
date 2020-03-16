@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 decltype(ircd::m::room::events::viewport_size)
-IRCD_MODULE_EXPORT_DATA
 ircd::m::room::events::viewport_size
 {
 	{ "name",     "ircd.m.room.events.viewport.size" },
@@ -17,7 +16,6 @@ ircd::m::room::events::viewport_size
 };
 
 std::pair<int64_t, ircd::m::event::idx>
-IRCD_MODULE_EXPORT
 ircd::m::viewport(const room &room)
 {
 	std::pair<int64_t, m::event::idx> ret
@@ -45,7 +43,6 @@ ircd::m::viewport(const room &room)
 }
 
 std::pair<int64_t, ircd::m::event::idx>
-IRCD_MODULE_EXPORT
 ircd::m::twain(const room &room)
 {
 	std::pair<int64_t, m::event::idx> ret
@@ -70,7 +67,6 @@ ircd::m::twain(const room &room)
 }
 
 std::pair<int64_t, ircd::m::event::idx>
-IRCD_MODULE_EXPORT
 ircd::m::sounding(const room &room)
 {
 	std::pair<int64_t, m::event::idx> ret
@@ -95,7 +91,6 @@ ircd::m::sounding(const room &room)
 }
 
 std::pair<int64_t, ircd::m::event::idx>
-IRCD_MODULE_EXPORT
 ircd::m::hazard(const room &room)
 {
 	std::pair<int64_t, m::event::idx> ret
@@ -124,7 +119,6 @@ ircd::m::hazard(const room &room)
 //
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::events::count(const m::event::idx_range &range)
 {
 	const auto &[a, b]
@@ -143,7 +137,6 @@ ircd::m::room::events::count(const m::event::idx_range &range)
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::events::count(const m::room &room,
                              const m::event::idx_range &range)
 {
@@ -182,7 +175,6 @@ ircd::m::room::events::count(const m::room &room,
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::events::prefetch_viewport(const m::room &room)
 {
 	m::room::events it
@@ -208,7 +200,6 @@ ircd::m::room::events::prefetch_viewport(const m::room &room)
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::events::prefetch(const m::room &room,
                                 const depth_range &range)
 {
@@ -238,7 +229,6 @@ ircd::m::room::events::prefetch(const m::room &room,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::events::preseek(const m::room &room,
                                const uint64_t &depth)
 {
@@ -462,7 +452,6 @@ const
 //
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::events::missing::count()
 const
 {
@@ -478,7 +467,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::events::missing::for_each(const closure &closure)
 const
 {
@@ -486,7 +474,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::events::missing::for_each(const int64_t &min_depth,
                                          const closure &closure)
 const
@@ -524,7 +511,6 @@ const
 //
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::events::sounding::rfor_each(const closure &closure)
 const
 {
@@ -563,7 +549,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::events::sounding::for_each(const closure &closure)
 const
 {
@@ -602,7 +587,6 @@ namespace ircd::m::dbs
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::events::horizon::rebuild()
 {
 	m::dbs::write_opts opts;
@@ -642,7 +626,6 @@ ircd::m::room::events::horizon::rebuild()
 }
 
 size_t
-IRCD_MODULE_EXPORT
 ircd::m::room::events::horizon::count()
 const
 {
@@ -658,7 +641,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::room::events::horizon::for_each(const closure &closure)
 const
 {

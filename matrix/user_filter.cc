@@ -9,7 +9,6 @@
 // full license for this software is available in the LICENSE file.
 
 ircd::string_view
-IRCD_MODULE_EXPORT
 ircd::m::user::filter::set(const mutable_buffer &buf,
                            const json::object &val)
 const
@@ -18,7 +17,6 @@ const
 }
 
 ircd::string_view
-IRCD_MODULE_EXPORT
 ircd::m::user::filter::set(const mutable_buffer &idbuf,
                            const m::user &user,
                            const json::object &filter)
@@ -48,7 +46,6 @@ ircd::m::user::filter::set(const mutable_buffer &idbuf,
 }
 
 std::string
-IRCD_MODULE_EXPORT
 ircd::m::user::filter::get(const string_view &id)
 const
 {
@@ -63,7 +60,6 @@ const
 }
 
 ircd::json::object
-IRCD_MODULE_EXPORT
 ircd::m::user::filter::get(const mutable_buffer &out,
                            const string_view &id)
 const
@@ -79,7 +75,6 @@ const
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::user::filter::get(const string_view &id,
                            const closure &closure)
 const
@@ -94,7 +89,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::filter::get(std::nothrow_t,
                            const string_view &id,
                            const closure &closure)
@@ -104,7 +98,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::filter::for_each(const closure_bool &closure)
 const
 {
@@ -112,7 +105,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::filter::get(std::nothrow_t,
                            const m::user &user,
                            const string_view &filter_id,
@@ -141,7 +133,6 @@ ircd::m::user::filter::get(std::nothrow_t,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::filter::for_each(const m::user &user,
                                 const closure_bool &closure)
 {

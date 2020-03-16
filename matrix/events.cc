@@ -21,7 +21,6 @@ ircd::m::events::dump_buffer_size
 };
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::events::rebuild()
 {
 	static const event::fetch::opts fopts
@@ -86,7 +85,6 @@ ircd::m::events::rebuild()
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::events::dump__file(const string_view &filename)
 {
 	const fs::fd file
@@ -198,7 +196,6 @@ ircd::m::events::dump__file(const string_view &filename)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::for_each(const range &range,
                           const event_filter &filter,
                           const closure &closure)
@@ -223,7 +220,6 @@ ircd::m::events::for_each(const range &range,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::for_each(const range &range,
                           const closure &closure)
 {
@@ -262,7 +258,6 @@ ircd::m::events::for_each(const range &range,
 ///TODO: This impl is temp. Need better dispatching based on filter before
 ///TODO: fetching event.
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::for_each(const range &range,
                           const event_filter &filter,
                           const event::closure_idx_bool &closure)
@@ -297,7 +292,6 @@ ircd::m::events::for_each(const range &range,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::for_each(const range &range,
                           const event::closure_idx_bool &closure)
 {
@@ -355,7 +349,6 @@ ircd::m::events::for_each(const range &range,
 //
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::state::for_each(const closure &closure)
 {
 	static const tuple none
@@ -371,7 +364,6 @@ ircd::m::events::state::for_each(const closure &closure)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::state::for_each(const tuple &query,
                                  const closure &closure)
 {
@@ -422,7 +414,6 @@ ircd::m::events::state::for_each(const tuple &query,
 //
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::type::has(const string_view &type)
 {
 	bool ret{false};
@@ -437,7 +428,6 @@ ircd::m::events::type::has(const string_view &type)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::type::has_prefix(const string_view &type)
 {
 	bool ret{false};
@@ -452,7 +442,6 @@ ircd::m::events::type::has_prefix(const string_view &type)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::type::for_each_in(const string_view &type,
                                    const closure &closure)
 {
@@ -487,7 +476,6 @@ ircd::m::events::type::for_each_in(const string_view &type,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::type::for_each(const string_view &prefix,
                                 const closure_name &closure)
 {
@@ -533,7 +521,6 @@ ircd::m::events::type::for_each(const string_view &prefix,
 //
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::origin::for_each_in(const string_view &origin,
                                      const sender::closure &closure)
 {
@@ -573,7 +560,6 @@ ircd::m::events::origin::for_each_in(const string_view &origin,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::origin::for_each(const string_view &prefix,
                                   const closure_name &closure)
 {
@@ -624,7 +610,6 @@ ircd::m::events::origin::for_each(const string_view &prefix,
 //
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::sender::for_each_in(const id::user &user,
                                      const closure &closure)
 {
@@ -659,7 +644,6 @@ ircd::m::events::sender::for_each_in(const id::user &user,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::events::sender::for_each(const string_view &prefix_,
                                   const closure_name &closure)
 {

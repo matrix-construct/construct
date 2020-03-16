@@ -113,7 +113,6 @@ ircd::m::vm::effect_hook
 //
 
 ircd::m::vm::fault
-IRCD_MODULE_EXPORT
 ircd::m::vm::execute(eval &eval,
                      const event &event)
 try

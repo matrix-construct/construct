@@ -21,7 +21,6 @@ ircd::m::presence_valid_states
 	"unavailable",
 };
 
-IRCD_MODULE_EXPORT
 ircd::m::presence::presence(const user &user,
                             const mutable_buffer &buf)
 :edu::m_presence{[&user, &buf]
@@ -42,7 +41,6 @@ ircd::m::presence::presence(const user &user,
 }
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::presence::set(const user &user,
                        const string_view &presence,
                        const string_view &status_msg)
@@ -57,7 +55,6 @@ ircd::m::presence::set(const user &user,
 }
 
 void
-IRCD_MODULE_EXPORT
 ircd::m::presence::get(const user &user,
                        const closure &closure)
 {
@@ -69,7 +66,6 @@ ircd::m::presence::get(const user &user,
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::presence::get(std::nothrow_t,
                        const user &user,
                        const closure &closure)
@@ -89,7 +85,6 @@ ircd::m::presence::get(std::nothrow_t,
 }
 
 ircd::m::event::idx
-IRCD_MODULE_EXPORT
 ircd::m::presence::get(const user &user)
 {
 	const event::idx ret
@@ -107,7 +102,6 @@ ircd::m::presence::get(const user &user)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::presence::get(const std::nothrow_t,
                        const m::user &user,
                        const m::presence::closure_event &closure,
@@ -138,7 +132,6 @@ ircd::m::presence::get(const std::nothrow_t,
 }
 
 ircd::m::event::idx
-IRCD_MODULE_EXPORT
 ircd::m::presence::get(const std::nothrow_t,
                        const m::user &user)
 {
@@ -156,7 +149,6 @@ ircd::m::presence::get(const std::nothrow_t,
 }
 
 ircd::m::event::id::buf
-IRCD_MODULE_EXPORT
 ircd::m::presence::set(const m::presence &content)
 {
 	const m::user user
@@ -179,7 +171,6 @@ ircd::m::presence::set(const m::presence &content)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::presence::valid_state(const string_view &state)
 {
 	return std::any_of(begin(presence_valid_states), end(presence_valid_states), [&state]

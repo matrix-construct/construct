@@ -81,7 +81,6 @@ ircd::m::bootstrap::make_join_timeout
 // m::room::bootstrap
 //
 
-IRCD_MODULE_EXPORT
 ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
                                     const m::room::id &room_id,
                                     const m::user::id &user_id,
@@ -120,7 +119,6 @@ ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
 	};
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::room::bootstrap::bootstrap(const m::event::id &event_id,
                                     const string_view &host)
 try
@@ -168,7 +166,6 @@ catch(const std::exception &e)
 	};
 }
 
-IRCD_MODULE_EXPORT
 ircd::m::room::bootstrap::bootstrap(const m::event &event,
                                     const string_view &host)
 try

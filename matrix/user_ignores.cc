@@ -29,7 +29,6 @@ ircd::m::ignored_user_list_enforce_events
 };
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::ignores::has(const m::user::id &other)
 const
 {
@@ -41,7 +40,6 @@ const
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::ignores::for_each(const closure_bool &closure)
 const try
 {
@@ -78,7 +76,6 @@ catch(const std::exception &e)
 }
 
 bool
-IRCD_MODULE_EXPORT
 ircd::m::user::ignores::enforce(const string_view &type)
 {
 	if(type == "events")
