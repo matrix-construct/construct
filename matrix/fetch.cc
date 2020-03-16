@@ -81,11 +81,8 @@ ircd::m::fetch::backfill_limit_default
 	{ "default",  96L                                   },
 };
 
-decltype(ircd::m::fetch::request_context)
-ircd::m::fetch::request_context
-{
-	"m.fetch.req", 1_MiB, &request_worker, context::POST
-};
+decltype(ircd::m::fetch::dock)
+ircd::m::fetch::dock;
 
 decltype(ircd::m::fetch::requests)
 ircd::m::fetch::requests;
@@ -93,8 +90,14 @@ ircd::m::fetch::requests;
 decltype(ircd::m::fetch::requests_mutex)
 ircd::m::fetch::requests_mutex;
 
-decltype(ircd::m::fetch::dock)
-ircd::m::fetch::dock;
+decltype(ircd::m::fetch::request_context)
+ircd::m::fetch::request_context
+{
+	"m.fetch.req",
+	1_MiB,
+	&request_worker,
+	context::POST
+};
 
 //
 // init
@@ -102,6 +105,7 @@ ircd::m::fetch::dock;
 
 ircd::m::fetch::init::init()
 {
+	assert(requests.empty());
 }
 
 ircd::m::fetch::init::~init()
@@ -110,7 +114,6 @@ noexcept
 	request_context.terminate();
 	request_context.join();
 	requests.clear();
-
 	assert(requests.empty());
 }
 
