@@ -91,6 +91,15 @@ ircd::m::on_invite_foreign(const event &event,
 	{
 		invite_foreign(event)
 	};
+
+	log::info
+	{
+		m::log, "Invite %s to %s by %s completed with %s",
+		string_view{target},
+		string_view{room_id},
+		json::get<"sender"_>(event),
+		string_view{eid},
+	};
 }
 
 ircd::m::event::id::buf
@@ -233,9 +242,10 @@ try
 			"Invite event no longer verified by our signature."
 		};
 
-	log::info
+	log::logf
 	{
-		m::log, "Invite %s in %s accepted by '%s'",
+		m::log, log::level::DEBUG,
+		"Invite %s in %s accepted by '%s'",
 		string_view{event.event_id},
 		string_view{room_id},
 		string_view{target.host()},
@@ -243,8 +253,12 @@ try
 
 	m::vm::opts vmopts;
 	vmopts.infolog_accept = true;
+	vmopts.unique = false;
+	m::vm::eval
+	{
+		revent, vmopts
+	};
 
-	m::vm::eval(revent, vmopts);
 	return revent.event_id;
 }
 catch(const std::exception &e)
