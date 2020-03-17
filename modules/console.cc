@@ -4102,22 +4102,22 @@ try
 
 	if(colname == "*")
 	{
-		auto fileinfos
+		db::database::sst::info::vector vector
 		{
-			db::database::sst::info::vector(database)
+			database
 		};
 
-		std::sort(begin(fileinfos), end(fileinfos), []
+		std::sort(begin(vector), end(vector), []
 		(const auto &a, const auto &b)
 		{
-			return a.name < b.name;
+			return a.created < b.created;
 		});
 
 		_print_sst_info_header(out);
-		for(const auto &fileinfo : fileinfos)
+		for(const auto &fileinfo : vector)
 			_print_sst_info(out, fileinfo);
 
-		out << "-- " << fileinfos.size() << " files"
+		out << "-- " << vector.size() << " files"
 		    << std::endl;
 
 		return true;
@@ -4135,7 +4135,17 @@ try
 		database, colname
 	};
 
-	const db::database::sst::info::vector vector{column};
+	db::database::sst::info::vector vector
+	{
+		column
+	};
+
+	std::sort(begin(vector), end(vector), []
+	(const auto &a, const auto &b)
+	{
+		return a.created < b.created;
+	});
+
 	_print_sst_info_header(out);
 	for(const auto &info : vector)
 		_print_sst_info(out, info);
