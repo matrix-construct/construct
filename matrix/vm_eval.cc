@@ -334,7 +334,7 @@ ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
 				return eval::count(event.event_id) == 0;
 			});
 
-			if(m::exists(event.event_id))
+			if(likely(!opts->replays) && m::exists(event.event_id))
 				continue;
 		}
 
