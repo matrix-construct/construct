@@ -15,8 +15,16 @@ namespace ircd::m
 	static event::id::buf invite_remote(const event &);
 	static void on_invite_remote(const event &, vm::eval &);
 
+	extern conf::item<seconds> invite_remote_timeout;
 	extern hookfn<vm::eval &> invite_remote_hook;
 }
+
+decltype(ircd::m::invite_remote_timeout)
+ircd::m::invite_remote_timeout
+{
+	{ "name",     "ircd.client.rooms.invite.remote.timeout" },
+	{ "default",  15L                                       },
+};
 
 decltype(ircd::m::invite_remote_hook)
 ircd::m::invite_remote_hook
@@ -199,7 +207,7 @@ try
 
 	http::code rcode; try
 	{
-		request.wait(seconds(10)); //TODO: conf
+		request.wait(seconds(invite_remote_timeout));
 		rcode = request.get();
 	}
 	catch(const http::error &e)
