@@ -3775,16 +3775,18 @@ _print_sst_info_header(opt &out)
 	    << std::setw(12) << "name"
 	    << "  " << std::setw(32) << "creation"
 	    << std::right
-	    << "  " << std::setw(23) << "key range"
-	    << "  " << std::setw(23) << "sequence number"
-	    << "  " << std::setw(3) << "lev"
+	    << "  " << std::setw(5) << "press"
 	    << std::left
+	    << "  " << std::setw(3) << "flt"
 	    << "  " << std::setw(24) << "file size"
 	    << std::right
-	    << "  " << std::setw(6) << "idxs"
-	    << "  " << std::setw(9) << "blocks"
+	    << "  " << std::setw(23) << "sequence number"
+	    << "  " << std::setw(23) << "key range"
+	    << "  " << std::setw(8) << "reads"
 	    << "  " << std::setw(9) << "entries"
-	    << "  " << std::setw(4) << "cfid"
+	    << "  " << std::setw(9) << "blocks"
+	    << "  " << std::setw(6) << "idxs"
+	    << "  " << std::setw(3) << "lev"
 	    << std::left
 	    << "  " << std::setw(20) << "column"
 	    << std::endl;
@@ -3808,17 +3810,20 @@ _print_sst_info(opt &out,
 			0UL
 	};
 
+	char tmbuf[64], pbuf[48];
 	out << std::left << std::setfill(' ')
 	    << std::setw(12) << f.name
-	    << "  " << std::setw(32) << std::left << timestr(f.created, ircd::localtime)
-	    << "  " << std::setw(10) << std::right << min_key << " : " << std::setw(10) << std::left << max_key
+	    << "  " << std::setw(32) << std::left << timef(tmbuf, f.created, ircd::localtime)
+	    << "  " << std::setw(5) << std::right << trunc(f.compression, 5)
+	    << "  " << std::setw(3) << std::left << (!f.filter.empty()? 'F' : ' ')
+	    << "  " << std::setw(24) << std::left << pretty(pbuf, iec(f.size))
 	    << "  " << std::setw(10) << std::right << f.min_seq << " : " << std::setw(10) << std::left << f.max_seq
-	    << "  " << std::setw(3) << std::right << f.level
-	    << "  " << std::setw(24) << std::left << pretty(iec(f.size))
-	    << "  " << std::setw(6) << std::right << f.index_parts
-	    << "  " << std::setw(9) << std::right << f.data_blocks
+	    << "  " << std::setw(10) << std::right << min_key << " : " << std::setw(10) << std::left << max_key
+	    << "  " << std::setw(8) << std::right << f.num_reads
 	    << "  " << std::setw(9) << std::right << f.entries
-	    << "  " << std::setw(4) << std::right << f.cfid
+	    << "  " << std::setw(9) << std::right << f.data_blocks
+	    << "  " << std::setw(6) << std::right << f.index_parts
+	    << "  " << std::setw(3) << std::right << f.level
 	    << "  " << std::setw(20) << std::left << f.column
 	    << std::endl;
 }
