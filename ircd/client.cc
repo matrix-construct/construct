@@ -825,7 +825,11 @@ catch(const std::system_error &e)
 	const ctx::exception_handler eh;
 	resource::response
 	{
-		*this, http::REQUEST_TIMEOUT, {}, 0L, {}
+		*this,
+		http::REQUEST_TIMEOUT,
+		{},
+		0L,
+		{}
 	};
 
 	return false;
@@ -847,7 +851,11 @@ catch(const http::error &e)
 	const ctx::exception_handler eh;
 	resource::response
 	{
-		*this, e.content, "text/html; charset=utf-8", e.code, e.headers
+		*this,
+		e.content,
+		"text/html; charset=utf-8",
+		e.code,
+		e.headers
 	};
 
 	return false;
@@ -905,7 +913,11 @@ catch(const http::error &e)
 
 	resource::response
 	{
-		*this, e.content, "text/html; charset=utf-8", e.code, e.headers
+		*this,
+		e.content,
+		"text/html; charset=utf-8",
+		e.code,
+		e.headers
 	};
 
 	switch(e.code)
@@ -942,7 +954,10 @@ catch(const std::exception &e)
 
 	resource::response
 	{
-		*this, e.what(), "text/html; charset=utf-8", http::INTERNAL_SERVER_ERROR
+		*this,
+		e.what(),
+		"text/html; charset=utf-8",
+		http::INTERNAL_SERVER_ERROR
 	};
 
 	return false;
