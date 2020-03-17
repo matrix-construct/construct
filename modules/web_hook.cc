@@ -1097,6 +1097,10 @@ github_handle__status(std::ostream &out,
 
 	if(push_event_id) switch(hash(state))
 	{
+		case "error"_:
+			m::annotate(_webhook_room, _webhook_user, push_event_id, "⭕");
+			break;
+
 		case "failure"_:
 			m::annotate(_webhook_room, _webhook_user, push_event_id, "🔴");
 			break;
@@ -1113,6 +1117,9 @@ github_handle__status(std::ostream &out,
 
 	if(!webhook_status_verbose) switch(hash(state))
 	{
+		case "error"_:
+			return false;
+
 		case "failure"_:
 			break;
 
