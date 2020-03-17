@@ -1058,11 +1058,15 @@ noexcept try
 	};
 
 	if(tag.request)
-		log::debug
+	{
+		assert(link.peer);
+		log::logf
 		{
-			request::log, "%s [%u] wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu chunks:%zu",
+			request::log, uint(tag.state.status) >= 300? log::DERROR: log::DEBUG,
+			"%s [%u] %s wt:%zu rt:%zu hr:%zu cr:%zu cl:%zu chunks:%zu",
 			loghead(*tag.request),
 			uint(tag.state.status),
+			link.peer->hostcanon,
 			tag.write_size(),
 			tag.read_size(),
 			tag.state.head_read,
@@ -1070,6 +1074,7 @@ noexcept try
 			tag.state.content_length,
 			tag.request->in.chunks.size(),
 		};
+	}
 
 	if(link.tag_committed() >= link.tag_commit_max())
 		link.wait_writable();
