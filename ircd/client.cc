@@ -836,9 +836,10 @@ catch(const std::system_error &e)
 }
 catch(const http::error &e)
 {
-	log::derror
+	log::logf
 	{
-		resource::log, "%s HTTP %u %s :%s",
+		log, log::level::DERROR,
+		"%s HTTP %u %s :%s",
 		loghead(),
 		uint(e.code),
 		http::status(e.code),
@@ -897,10 +898,12 @@ catch(const std::system_error &)
 catch(const http::error &e)
 {
 	const ctx::exception_handler eh;
+
 	if(!empty(e.content))
-		log::derror
+		log::logf
 		{
-			log, "%s HTTP %u `%s' %s :%s",
+			resource::log, log::level::DERROR,
+			"%s HTTP %u `%s' %s :%s",
 			loghead(),
 			uint(e.code),
 			head.uri,
@@ -943,7 +946,7 @@ catch(const std::exception &e)
 
 	log::error
 	{
-		log, "%s HTTP 500 Internal Error `%s' :%s",
+		resource::log, "%s HTTP 500 Internal Error `%s' :%s",
 		loghead(),
 		head.uri,
 		e.what()
