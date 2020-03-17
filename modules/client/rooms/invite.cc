@@ -12,16 +12,16 @@
 
 namespace ircd::m
 {
-	static event::id::buf invite_foreign(const event &);
-	static void on_invite_foreign(const event &, vm::eval &);
+	static event::id::buf invite_remote(const event &);
+	static void on_invite_remote(const event &, vm::eval &);
 
-	extern hookfn<vm::eval &> invite_foreign_hook;
+	extern hookfn<vm::eval &> invite_remote_hook;
 }
 
-decltype(ircd::m::invite_foreign_hook)
-ircd::m::invite_foreign_hook
+decltype(ircd::m::invite_remote_hook)
+ircd::m::invite_remote_hook
 {
-	on_invite_foreign,
+	on_invite_remote,
 	{
 		{ "_site",          "vm.issue"      },
 		{ "type",           "m.room.member" },
@@ -58,8 +58,8 @@ post__invite(ircd::client &client,
 }
 
 void
-ircd::m::on_invite_foreign(const event &event,
-                           vm::eval &eval)
+ircd::m::on_invite_remote(const event &event,
+                          vm::eval &eval)
 {
 	const m::room::id &room_id
 	{
@@ -89,7 +89,7 @@ ircd::m::on_invite_foreign(const event &event,
 
 	const auto eid
 	{
-		invite_foreign(event)
+		invite_remote(event)
 	};
 
 	log::info
@@ -103,7 +103,7 @@ ircd::m::on_invite_foreign(const event &event,
 }
 
 ircd::m::event::id::buf
-ircd::m::invite_foreign(const event &event)
+ircd::m::invite_remote(const event &event)
 try
 {
 	const auto &event_id
