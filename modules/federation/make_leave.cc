@@ -87,8 +87,10 @@ get__make_leave(client &client,
 	if(membership != "join" && membership != "invite")
 		throw m::ACCESS_DENIED
 		{
-			"You are not permitted to leave the room with membership '%s'",
-			membership
+			membership?
+				"You are not permitted to leave the room with membership '%s'":
+				"You are not permitted to leave the room without membership.",
+			membership,
 		};
 
 	char room_version_buf[m::room::VERSION_MAX_SIZE];
