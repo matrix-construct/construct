@@ -243,6 +243,11 @@ struct ircd::m::vm::opts
 	/// replayed through the system (not recommended).
 	bool replays {false};
 
+	/// Bypass check for another evaluation of the same event_id already
+	/// occurring. If this is false (not recommended) two duplicate events
+	/// being evaluated may race through the core.
+	bool unique {true};
+
 	/// If the input event has a reference to already-strung json we can use
 	/// that directly when writing to the DB. When this is false we will
 	/// re-stringify the event internally either from a referenced source or

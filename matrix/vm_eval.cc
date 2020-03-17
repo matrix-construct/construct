@@ -329,10 +329,11 @@ ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
 			// evaluation is finished. If the other was successful, the exists()
 			// check will skip this, otherwise we have to try again here because
 			// this evaluator might be using different options/credentials.
-			sequence::dock.wait([&event]
-			{
-				return eval::count(event.event_id) == 0;
-			});
+			if(likely(opts->unique))
+				sequence::dock.wait([&event]
+				{
+					return eval::count(event.event_id) == 0;
+				});
 
 			if(likely(!opts->replays) && m::exists(event.event_id))
 				continue;
