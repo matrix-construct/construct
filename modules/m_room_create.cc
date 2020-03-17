@@ -54,13 +54,14 @@ try
 			log::DEBUG
 	};
 
-	log::logf
-	{
-		m::log, level, "Created room %s with %s by %s",
-		json::get<"room_id"_>(event),
-		json::get<"sender"_>(event),
-		string_view{event.event_id},
-	};
+	if(RB_DEBUG_LEVEL || level != log::DEBUG)
+		log::logf
+		{
+			m::log, level, "Created room %s with %s by %s",
+			json::get<"room_id"_>(event),
+			json::get<"sender"_>(event),
+			string_view{event.event_id},
+		};
 }
 catch(const std::exception &e)
 {
