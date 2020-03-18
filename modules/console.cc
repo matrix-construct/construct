@@ -11999,6 +11999,59 @@ console_cmd__user__breadcrumb_rooms(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__pushrules(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "scope", "kind", "ruleid"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const auto &scope
+	{
+		param["scope"]
+	};
+
+	const auto &kind
+	{
+		param["kind"]
+	};
+
+	const auto &ruleid
+	{
+		param["ruleid"]
+	};
+
+	const m::user::pushrules pushrules
+	{
+		user_id
+	};
+
+	pushrules.for_each({scope, kind, ruleid}, [&out]
+	(const auto &path, const json::object &rule)
+	{
+		const auto &[scope, kind, ruleid]
+		{
+			path
+		};
+
+		out
+		<< std::left << std::setw(10) << scope << " | "
+		<< std::left << std::setw(10) << kind << " | "
+		<< std::left << std::setw(32) << ruleid << "  "
+		<< string_view{rule}
+		<< std::endl;
+		return true;
+	});
+
+	return true;
+}
+
 //
 // users
 //
