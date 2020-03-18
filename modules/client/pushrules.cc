@@ -8,11 +8,14 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::m::pushrules
+namespace ircd::m::push
 {
+	static path params(mutable_buffer, const resource::request &);
 	static resource::response handle_delete(client &, const resource::request &);
 	static resource::response handle_put(client &, const resource::request &);
 	static resource::response handle_get(client &, const resource::request &);
+
+	static const size_t PATH_BUFSIZE {256};
 	extern resource::method method_get;
 	extern resource::method method_put;
 	extern resource::method method_delete;
@@ -25,8 +28,8 @@ IRCD_MODULE
 	"Client 0.6.0-13.13.1.6 :Push Rules API"
 };
 
-decltype(ircd::m::pushrules::resource)
-ircd::m::pushrules::resource
+decltype(ircd::m::push::resource)
+ircd::m::push::resource
 {
 	"/_matrix/client/r0/pushrules",
 	{
@@ -36,8 +39,8 @@ ircd::m::pushrules::resource
 	}
 };
 
-decltype(ircd::m::pushrules::method_get)
-ircd::m::pushrules::method_get
+decltype(ircd::m::push::method_get)
+ircd::m::push::method_get
 {
 	resource, "GET", handle_get,
 	{
@@ -46,50 +49,152 @@ ircd::m::pushrules::method_get
 };
 
 ircd::m::resource::response
-ircd::m::pushrules::handle_get(client &client,
-                               const resource::request &request)
+ircd::m::push::handle_get(client &client,
+                          const resource::request &request)
 {
-	char buf[3][64];
-	const auto &scope
+	char buf[PATH_BUFSIZE];
+	const auto &path
 	{
-		request.parv.size() > 0?
-			url::decode(buf[0], request.parv[0]):
-			string_view{},
+		params(buf, request)
 	};
 
-	const auto &kind
+	const auto &[scope, kind, ruleid]
 	{
-		request.parv.size() > 1?
-			url::decode(buf[1], request.parv[1]):
-			string_view{},
+		path
 	};
 
-	const auto &ruleid
+	const user::pushrules pushrules
 	{
-		request.parv.size() > 2?
-			url::decode(buf[2], request.parv[2]):
-			string_view{},
+		request.user_id
 	};
 
-
-	return resource::response
+	m::resource::response::chunked response
 	{
-		client, json::members
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	const auto append_rule{[]
+	(json::stack::array &_kind, const auto &path, const json::object &rule)
+	{
+		const auto &[scope, kind, ruleid]
 		{
-			{ "global", json::members
+			path
+		};
+
+		json::stack::object object
+		{
+			_kind
+		};
+
+		json::stack::member
+		{
+			object, "rule_id", ruleid
+		};
+
+		for(const auto &[key, val] : rule)
+			json::stack::member
 			{
-				{ "content",     json::array{} },
-				{ "override",    json::array{} },
-				{ "room",        json::array{} },
-				{ "sender",      json::array{} },
-				{ "underride",   json::array{} },
-			}}
-		}
-	};
+				object, key, val
+			};
+	}};
+
+	if(ruleid)
+	{
+		json::stack::object _scope
+		{
+			top, scope
+		};
+
+		json::stack::array _kind
+		{
+			_scope, kind
+		};
+
+		pushrules.get(std::nothrow, path, [&]
+		(const auto &path, const json::object &rule)
+		{
+			append_rule(_kind, path, rule);
+		});
+
+		return {};
+	}
+
+	if(kind)
+	{
+		json::stack::object _scope
+		{
+			top, scope
+		};
+
+		json::stack::array _kind
+		{
+			_scope, kind
+		};
+
+		pushrules.for_each(push::path{scope, kind, {}}, [&]
+		(const auto &path, const json::object &rule)
+		{
+			append_rule(_kind, path, rule);
+			return true;
+		});
+
+		return {};
+	}
+
+	const auto each_scope{[&]
+	(const auto &scope)
+	{
+		json::stack::object _scope
+		{
+			top, scope
+		};
+
+		const auto each_kind{[&]
+		(const string_view &kind)
+		{
+			json::stack::array _kind
+			{
+				_scope, kind
+			};
+
+			pushrules.for_each(push::path{scope, kind, {}}, [&]
+			(const auto &path, const json::object &rule)
+			{
+				append_rule(_kind, path, rule);
+				return true;
+			});
+		}};
+
+		each_kind("content");
+		each_kind("override");
+		each_kind("room");
+		each_kind("sender");
+		each_kind("underride");
+	}};
+
+	if(scope)
+	{
+		each_scope(scope);
+		return {};
+	}
+
+	//TODO: XXX device scopes
+	each_scope("global");
+	return {};
 }
 
-decltype(ircd::m::pushrules::method_put)
-ircd::m::pushrules::method_put
+decltype(ircd::m::push::method_put)
+ircd::m::push::method_put
 {
 	resource, "PUT", handle_put,
 	{
@@ -98,39 +203,59 @@ ircd::m::pushrules::method_put
 };
 
 ircd::m::resource::response
-ircd::m::pushrules::handle_put(client &client,
-                               const resource::request &request)
+ircd::m::push::handle_put(client &client,
+                          const resource::request &request)
 {
-	char buf[3][64];
-	const auto &scope
+	char buf[PATH_BUFSIZE];
+	const auto &path
 	{
-		request.parv.size() > 0?
-			url::decode(buf[0], request.parv[0]):
-			string_view{},
+		params(buf, request)
 	};
 
-	const auto &kind
+	const auto &[scope, kind, ruleid]
 	{
-		request.parv.size() > 1?
-			url::decode(buf[1], request.parv[1]):
-			string_view{},
+		path
 	};
 
-	const auto &ruleid
+	if(!scope || !kind || !ruleid)
+		throw m::NEED_MORE_PARAMS
+		{
+			"Missing some path parameters; {scope}/{kind}/{ruleid} required."
+		};
+
+	const auto &before
 	{
-		request.parv.size() > 2?
-			url::decode(buf[2], request.parv[2]):
-			string_view{},
+		request.query["before"]
+	};
+
+	const auto &after
+	{
+		request.query["after"]
+	};
+
+	const user::pushrules pushrules
+	{
+		request.user_id
+	};
+
+	const json::object &rule
+	{
+		request
+	};
+
+	const auto res
+	{
+		pushrules.set(path, rule)
 	};
 
 	return resource::response
 	{
-		client, json::object{}
+		client, http::OK
 	};
 }
 
-decltype(ircd::m::pushrules::method_delete)
-ircd::m::pushrules::method_delete
+decltype(ircd::m::push::method_delete)
+ircd::m::push::method_delete
 {
 	resource, "DELETE", handle_delete,
 	{
@@ -139,33 +264,73 @@ ircd::m::pushrules::method_delete
 };
 
 ircd::m::resource::response
-ircd::m::pushrules::handle_delete(client &client,
-                                  const resource::request &request)
+ircd::m::push::handle_delete(client &client,
+                             const resource::request &request)
 {
-	char buf[3][64];
-	const auto &scope
+	char buf[PATH_BUFSIZE];
+	const auto &path
 	{
-		request.parv.size() > 0?
-			url::decode(buf[0], request.parv[0]):
-			string_view{},
+		params(buf, request)
 	};
 
-	const auto &kind
+	const auto &[scope, kind, ruleid]
 	{
-		request.parv.size() > 1?
-			url::decode(buf[1], request.parv[1]):
-			string_view{},
+		path
 	};
 
-	const auto &ruleid
+	if(!scope || !kind || !ruleid)
+		throw m::NEED_MORE_PARAMS
+		{
+			"Missing some path parameters; {scope}/{kind}/{ruleid} required."
+		};
+
+	const user::pushrules pushrules
 	{
-		request.parv.size() > 2?
-			url::decode(buf[2], request.parv[2]):
-			string_view{},
+		request.user_id
+	};
+
+	const auto res
+	{
+		pushrules.del(path)
 	};
 
 	return resource::response
 	{
-		client, json::object{}
+		client, res?
+			http::OK:
+			http::NOT_FOUND
+	};
+}
+
+ircd::m::push::path
+ircd::m::push::params(mutable_buffer buf,
+                      const resource::request &request)
+{
+	const auto &scope
+	{
+		request.parv.size() > 0?
+			url::decode(buf, request.parv[0]):
+			string_view{},
+	};
+
+	consume(buf, size(scope));
+	const auto &kind
+	{
+		request.parv.size() > 1?
+			url::decode(buf, request.parv[1]):
+			string_view{},
+	};
+
+	consume(buf, size(kind));
+	const auto &ruleid
+	{
+		request.parv.size() > 2?
+			url::decode(buf, request.parv[2]):
+			string_view{},
+	};
+
+	return path
+	{
+		scope, kind, ruleid
 	};
 }
