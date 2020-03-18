@@ -10,6 +10,7 @@
 
 namespace ircd::m::sync
 {
+	static bool push_rules(data &);
 	static bool account_data_(data &, const m::event &);
 	static bool account_data_polylog(data &);
 	static bool account_data_linear(data &);
@@ -39,10 +40,16 @@ ircd::m::sync::account_data_linear(data &data)
 
 	assert(data.event);
 	const m::event &event{*data.event};
-	if(json::get<"type"_>(event) != "ircd.account_data")
+	if(json::get<"room_id"_>(event) != data.user_room.room_id)
 		return false;
 
-	if(json::get<"room_id"_>(event) != data.user_room.room_id)
+	const bool regard
+	{
+		json::get<"type"_>(event) == "ircd.account_data" ||
+		startswith(json::get<"type"_>(event), push::rule::type_prefix)
+	};
+
+	if(!regard)
 		return false;
 
 	json::stack::object account_data
@@ -54,6 +61,9 @@ ircd::m::sync::account_data_linear(data &data)
 	{
 		*data.out, "events"
 	};
+
+	if(startswith(json::get<"type"_>(event), push::rule::type_prefix))
+		return push_rules(data);
 
 	return account_data_(data, event);
 }
@@ -94,6 +104,7 @@ ircd::m::sync::account_data_polylog(data &data)
 		ret |= account_data_(data, event);
 	});
 
+	ret |= push_rules(data);
 	return ret;
 }
 
@@ -119,5 +130,79 @@ ircd::m::sync::account_data_(data &data,
 		*data.out, "content", at<"content"_>(event)
 	};
 
+	return true;
+}
+
+bool
+ircd::m::sync::push_rules(data &data)
+{
+	// Each account_data event is an object in the events array
+	json::stack::object object
+	{
+		*data.out
+	};
+
+	// type
+	json::stack::member
+	{
+		object, "type", "m.push_rules"
+	};
+
+	// content
+	json::stack::object content
+	{
+		object, "content"
+	};
+
+	//TODO: XXX dynamic scopes / dynamic kinds please
+	//TODO: XXX please deduplicate and centralize a json::stack
+	//TODO: composition under m::push
+	const m::user::pushrules pushrules
+	{
+		data.user
+	};
+
+	json::stack::object _scope
+	{
+		content, "global"
+	};
+
+	const auto each_kind{[&_scope, &pushrules]
+	(const string_view &scope, const string_view &kind)
+	{
+		json::stack::array _kind
+		{
+			_scope, kind
+		};
+
+		pushrules.for_each(push::path{scope, kind, {}}, [&_kind]
+		(const auto &path, const json::object &members)
+		{
+			const auto &[scope, kind, ruleid] {path};
+			json::stack::object object
+			{
+				_kind
+			};
+
+			json::stack::member
+			{
+				object, "rule_id", ruleid
+			};
+
+			for(const auto &[key, val] : members)
+				json::stack::member
+				{
+					object, key, val
+				};
+
+			return true;
+		});
+	}};
+
+	each_kind("global", "content");
+	each_kind("global", "override");
+	each_kind("global", "room");
+	each_kind("global", "sender");
+	each_kind("global", "underride");
 	return true;
 }
