@@ -69,6 +69,7 @@ namespace ircd
 #include "rooms.h"
 #include "rooms_summary.h"
 #include "membership.h"
+#include "push.h"
 #include "filter.h"
 #include "events.h"
 #include "node.h"

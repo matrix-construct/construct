@@ -159,3 +159,25 @@ constexpr const char *const ircd::m::name::groupings;
 constexpr const char *const ircd::m::name::filter;
 
 constexpr const char *const ircd::m::name::rel_type;
+
+constexpr const char *const ircd::m::name::kind;
+constexpr const char *const ircd::m::name::key;
+constexpr const char *const ircd::m::name::pattern;
+constexpr const char *const ircd::m::name::is;
+constexpr const char *const ircd::m::name::cond;
+
+constexpr const char *const ircd::m::name::actions;
+constexpr const char *const ircd::m::name::default_;
+constexpr const char *const ircd::m::name::enabled;
+constexpr const char *const ircd::m::name::rule_id;
+constexpr const char *const ircd::m::name::conditions;
+
+constexpr const char *const ircd::m::name::override_;
+constexpr const char *const ircd::m::name::underride;
+
+constexpr const char *const ircd::m::name::pushkey;
+constexpr const char *const ircd::m::name::app_id;
+constexpr const char *const ircd::m::name::app_display_name;
+constexpr const char *const ircd::m::name::profile_tag;
+constexpr const char *const ircd::m::name::lang;
+constexpr const char *const ircd::m::name::append;

@@ -180,4 +180,26 @@ struct ircd::m::name
 	static constexpr const char *const filter {"filter"};
 
 	static constexpr const char *const rel_type {"rel_type"};
+
+	static constexpr const char *const kind {"kind"};
+	static constexpr const char *const key {"key"};
+	static constexpr const char *const pattern {"pattern"};
+	static constexpr const char *const is {"is"};
+	static constexpr const char *const cond {"cond"};
+
+	static constexpr const char *const actions {"actions"};
+	static constexpr const char *const default_ {"default"};
+	static constexpr const char *const enabled {"enabled"};
+	static constexpr const char *const rule_id {"rule_id"};
+	static constexpr const char *const conditions {"conditions"};
+
+	static constexpr const char *const override_ {"override"};
+	static constexpr const char *const underride {"underride"};
+
+	static constexpr const char *const pushkey {"pushkey"};
+	static constexpr const char *const app_id {"app_id"};
+	static constexpr const char *const app_display_name {"app_display_name"};
+	static constexpr const char *const profile_tag {"profile_tag"};
+	static constexpr const char *const lang {"lang"};
+	static constexpr const char *const append {"append"};
 };
