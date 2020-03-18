@@ -43,6 +43,7 @@ struct ircd::m::user
 	struct ignores;
 	struct highlight;
 	struct registar;
+	struct pushrules;
 
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;
@@ -92,3 +93,4 @@ const
 #include "ignores.h"
 #include "highlight.h"
 #include "register.h"
+#include "pushrules.h"

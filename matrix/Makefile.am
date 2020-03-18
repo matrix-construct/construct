@@ -97,6 +97,7 @@ libircd_matrix_la_SOURCES += user_filter.cc
 libircd_matrix_la_SOURCES += user_highlight.cc
 libircd_matrix_la_SOURCES += user_mitsein.cc
 libircd_matrix_la_SOURCES += user_profile.cc
+libircd_matrix_la_SOURCES += user_pushrules.cc
 libircd_matrix_la_SOURCES += user_register.cc
 libircd_matrix_la_SOURCES += user_room_account_data.cc
 libircd_matrix_la_SOURCES += user_room_tags.cc
