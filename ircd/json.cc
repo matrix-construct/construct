@@ -475,6 +475,30 @@ __attribute__((visibility("default")))
 //
 
 ircd::json::strung
+ircd::json::replace(const strung &s,
+                    const json::member &m_)
+{
+	if(!empty(s) && type(s) != type::OBJECT)
+		throw type_error
+		{
+			"Cannot replace member into JSON of type %s",
+			reflect(type(s))
+		};
+
+	size_t mctr {0};
+	thread_local std::array<member, iov::max_size> mb;
+	for(const object::member &m : object{s})
+		if(m.first != string_view{m_.first})
+			mb.at(mctr++) = member{m};
+
+	mb.at(mctr++) = m_;
+	return strung
+	{
+		mb.data(), mb.data() + mctr
+	};
+}
+
+ircd::json::strung
 ircd::json::insert(const strung &s,
                    const json::member &m)
 {
