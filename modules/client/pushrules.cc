@@ -68,6 +68,29 @@ ircd::m::push::handle_get(client &client,
 		request.user_id
 	};
 
+	const bool handle_enabled
+	{
+		request.parv.size() > 3 &&
+		request.parv[3] == "enabled"
+	};
+
+	if(handle_enabled)
+	{
+		pushrules.get(path, [&]
+		(const auto &path, const json::object &rule)
+		{
+			resource::response
+			{
+				client, json::members
+				{
+					{ "enabled", rule["enabled"] }
+				}
+			};
+		});
+
+		return {}; // returned from closure or threw 404
+	}
+
 	m::resource::response::chunked response
 	{
 		client, http::OK
@@ -242,6 +265,37 @@ ircd::m::push::handle_put(client &client,
 	{
 		request
 	};
+
+	const bool handle_enabled
+	{
+		request.parv.size() > 3 &&
+		request.parv[3] == "enabled"
+	};
+
+	if(handle_enabled)
+	{
+		pushrules.get(path, [&pushrules, &rule]
+		(const auto &path, const json::object &old_rule)
+		{
+			const auto new_rule
+			{
+				json::replace(old_rule,
+				{
+					"enabled", json::get<"enabled"_>(rule)
+				})
+			};
+
+			const auto res
+			{
+				pushrules.set(path, new_rule)
+			};
+		});
+
+		return resource::response
+		{
+			client, http::OK
+		};
+	}
 
 	const auto res
 	{
