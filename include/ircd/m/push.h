@@ -17,6 +17,9 @@ namespace ircd::m::push
 	struct rule;
 	struct rules;
 	struct pusher;
+
+	/// Specification pre-defined defaults.
+	extern const rules defaults;
 }
 
 /// PushCondition
