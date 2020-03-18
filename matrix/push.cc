@@ -8,6 +8,79 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+decltype(ircd::m::push::rule::type_prefix)
+ircd::m::push::rule::type_prefix
+{
+	"ircd.push.rule"
+};
+
+ircd::m::push::path
+ircd::m::push::make_path(const event &event)
+{
+	return make_path(at<"type"_>(event), at<"state_key"_>(event));
+}
+
+ircd::m::push::path
+ircd::m::push::make_path(const string_view &type,
+                         const string_view &state_key)
+{
+	if(unlikely(!startswith(type, rule::type_prefix)))
+		throw NOT_A_RULE
+		{
+			"Type '%s' does not start with prefix '%s'",
+			type,
+			rule::type_prefix,
+		};
+
+	const auto unprefixed
+	{
+		lstrip(lstrip(type, rule::type_prefix), '.')
+	};
+
+	const auto &[scope, kind]
+	{
+		split(unprefixed, '.')
+	};
+
+	return path
+	{
+		scope, kind, state_key
+	};
+}
+
+ircd::string_view
+ircd::m::push::make_type(const mutable_buffer &buf,
+                         const path &path)
+{
+	const auto &[scope, kind, ruleid]
+	{
+		path
+	};
+
+	if(!scope)
+		return fmt::sprintf
+		{
+			buf, "%s.",
+			rule::type_prefix,
+		};
+
+	else if(!kind)
+		return fmt::sprintf
+		{
+			buf, "%s.%s.",
+			rule::type_prefix,
+			scope,
+		};
+
+	return fmt::sprintf
+	{
+		buf, "%s.%s.%s",
+		rule::type_prefix,
+		scope,
+		kind,
+	};
+}
+
 decltype(ircd::m::push::defaults)
 ircd::m::push::defaults
 {R"(

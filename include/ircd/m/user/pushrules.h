@@ -13,7 +13,7 @@
 
 struct ircd::m::user::pushrules
 {
-	using path = std::tuple<string_view, string_view, string_view>; // path, kind, ruleid
+	using path = push::path;
 	using closure_bool = std::function<bool ()>;
 	using closure = std::function<void ()>;
 
