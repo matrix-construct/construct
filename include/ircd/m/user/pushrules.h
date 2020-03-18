@@ -14,18 +14,18 @@
 struct ircd::m::user::pushrules
 {
 	using path = push::path;
-	using closure_bool = std::function<bool ()>;
-	using closure = std::function<void ()>;
+	using closure_bool = std::function<bool (const path &, const json::object &)>;
+	using closure = std::function<void (const path &, const json::object &)>;
 
 	m::user user;
 
   public:
+	bool for_each(const path &, const closure_bool &) const;
 	bool for_each(const closure_bool &) const;
-
 	bool get(std::nothrow_t, const path &, const closure &) const;
 	void get(const path &, const closure &) const;
-
-	event::id::buf set(const path &, const json::object &value) const;
+	bool set(const path &, const json::object &value) const;
+	bool del(const path &) const;
 
 	pushrules(const m::user &user) noexcept;
 };
