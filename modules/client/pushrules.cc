@@ -74,16 +74,40 @@ ircd::m::push::handle_get(client &client,
 		request.parv[3] == "enabled"
 	};
 
-	if(handle_enabled)
+	const bool handle_actions
+	{
+		!handle_enabled &&
+		request.parv.size() > 3 &&
+		request.parv[3] == "actions"
+	};
+
+	if(handle_enabled || handle_actions)
 	{
 		pushrules.get(path, [&]
 		(const auto &path, const json::object &rule)
 		{
+			const json::member member
+			{
+				handle_enabled?
+					json::member
+					{
+						"enabled", rule["enabled"]
+					}:
+
+				handle_actions?
+					json::member
+					{
+						"actions", rule["actions"]
+					}:
+
+				json::member{}
+			};
+
 			resource::response
 			{
 				client, json::members
 				{
-					{ "enabled", rule["enabled"] }
+					member
 				}
 			};
 		});
@@ -272,17 +296,33 @@ ircd::m::push::handle_put(client &client,
 		request.parv[3] == "enabled"
 	};
 
-	if(handle_enabled)
+	const bool handle_actions
 	{
-		pushrules.get(path, [&pushrules, &rule]
+		!handle_enabled &&
+		request.parv.size() > 3 &&
+		request.parv[3] == "actions"
+	};
+
+	if(handle_enabled || handle_actions)
+	{
+		pushrules.get(path, [&]
 		(const auto &path, const json::object &old_rule)
 		{
 			const auto new_rule
 			{
-				json::replace(old_rule,
-				{
-					"enabled", json::get<"enabled"_>(rule)
-				})
+				handle_enabled?
+					json::replace(old_rule,
+					{
+						"enabled", json::get<"enabled"_>(rule)
+					}):
+
+				handle_actions?
+					json::replace(old_rule,
+					{
+						"actions", json::get<"actions"_>(rule)
+					}):
+
+				json::strung{}
 			};
 
 			const auto res
