@@ -14,7 +14,7 @@
 
 bool
 ircd::globular_equals::operator()(const string_view &a, const string_view &b)
-const
+const noexcept
 {
 	size_t ap(0), bp(0);
 	while(ap < a.size() && bp < b.size())
@@ -52,17 +52,4 @@ const
 		return true;
 
 	return iequals(a.substr(ap), b.substr(bp));
-}
-
-//
-// globular_match
-//
-
-bool
-ircd::globular_match::operator()(const string_view &a)
-const
-{
-	//TODO: optimize.
-	const globular_equals globular_equals(expr, a);
-	return bool(globular_equals);
 }

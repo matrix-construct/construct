@@ -22,25 +22,17 @@ namespace ircd
 /// and '?' characters and equality of the string expressions will be
 /// determined.
 struct ircd::globular_equals
+:boolean
 {
 	using is_transparent = std::true_type;
 
-	bool s;
-
-	operator const bool &() const
-	{
-		return s;
-	}
-
-	bool operator()(const string_view &a, const string_view &b) const;
+	bool operator()(const string_view &a, const string_view &b) const noexcept;
 
 	template<class A,
 	         class B>
 	globular_equals(A&& a, B&& b)
-	:s{operator()(std::forward<A>(a), std::forward<B>(b))}
+	:boolean{operator()(std::forward<A>(a), std::forward<B>(b))}
 	{}
-
-	globular_equals() = default;
 };
 
 /// Globular match. Similar to globular_equals but only one side of the
@@ -51,24 +43,19 @@ struct ircd::globular_equals
 struct ircd::globular_match
 {
 	string_view expr;
-	bool s;
-
-	operator const bool &() const
-	{
-		return s;
-	}
-
-	bool operator()(const string_view &a) const;
-
-	globular_match(const string_view &expr)
-	:expr{expr}
-	{}
 
 	template<class A>
-	globular_match(const string_view &expr, A&& a)
-	:expr{expr}
-	,s{operator()(std::forward<A>(a))}
-	{}
+	bool operator()(A&& a) const noexcept
+	{
+		const globular_equals globular_equals
+		{
+			expr, std::forward<A>(a)
+		};
 
-	globular_match() = default;
+		return bool(globular_equals);
+	}
+
+	globular_match(const string_view &expr = {})
+	:expr{expr}
+	{}
 };
