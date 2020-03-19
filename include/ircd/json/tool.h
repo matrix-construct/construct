@@ -17,6 +17,9 @@ namespace ircd::json
 
 	strung remove(const strung &, const string_view &key);
 	strung remove(const strung &, const size_t &index);
+
 	strung insert(const strung &, const member &);
+
 	strung replace(const strung &, const member &);
+	strung replace(const strung &, const members &);
 }
