@@ -126,5 +126,63 @@ at(const tuple &t,
 		at<tuple, function, i + 1>(t, name, std::forward<function>(f));
 }
 
+template<class R,
+         class tuple>
+enable_if_tuple<tuple, const R &>
+at(const tuple &t,
+   const string_view &name)
+{
+	const R *ret;
+	const auto closure
+	{
+		[&name, &ret](const auto &key, const auto &val)
+		{
+			if(key == name)
+			{
+				ret = std::addressof(val);
+				return false;
+			}
+			else return true;
+		}
+	};
+
+	if(unlikely(until(t, closure)))
+		throw not_found
+		{
+			"%s", name
+		};
+
+	return *ret;
+}
+
+template<class R,
+         class tuple>
+enable_if_tuple<tuple, R &>
+at(tuple &t,
+   const string_view &name)
+{
+	R *ret;
+	const auto closure
+	{
+		[&name, &ret](const auto &key, auto &val)
+		{
+			if(key == name)
+			{
+				ret = std::addressof(val);
+				return false;
+			}
+			else return true;
+		}
+	};
+
+	if(unlikely(until(t, closure)))
+		throw not_found
+		{
+			"%s", name
+		};
+
+	return *ret;
+}
+
 } // namespace json
 } // namespace ircd

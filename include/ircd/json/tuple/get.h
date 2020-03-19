@@ -125,5 +125,27 @@ noexcept
 	return get<name_hash(name), tuple>(t, def);
 }
 
+template<class R,
+         class tuple>
+enable_if_tuple<tuple, R>
+get(const tuple &t,
+    const string_view &name,
+    R ret)
+noexcept
+{
+	until(t, [&name, &ret]
+	(const auto &key, auto&& val)
+	{
+		if(key == name)
+		{
+			ret = val;
+			return false;
+		}
+		else return true;
+	});
+
+	return ret;
+}
+
 } // namespace json
 } // namespace ircd

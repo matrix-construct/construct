@@ -67,6 +67,10 @@ struct tuple
 	template<class name> constexpr decltype(auto) at(name&&) const;
 	template<class name> constexpr decltype(auto) at(name&&);
 
+	template<class R, class name> R get(name&&, R def = {}) const noexcept;
+	template<class R, class name> const R &at(name&&) const;
+	template<class R, class name> R &at(name&&);
+
 	template<class... U> explicit tuple(const tuple<U...> &);
 	template<class U> explicit tuple(const json::object &, const json::keys<U> &);
 	template<class U> explicit tuple(const tuple &, const json::keys<U> &);
@@ -166,10 +170,10 @@ key_exists(const string_view &key)
 } // namespace json
 } // namespace ircd
 
-#include "get.h"
-#include "at.h"
 #include "for_each.h"
 #include "until.h"
+#include "get.h"
+#include "at.h"
 #include "set.h"
 
 namespace ircd {
@@ -295,6 +299,36 @@ const noexcept
 	};
 
 	return json::get<hash>(*this);
+}
+
+template<class... T>
+template<class R,
+         class name>
+R
+tuple<T...>::get(name&& n,
+                 R ret)
+const noexcept
+{
+	return json::get<R>(*this, n, ret);
+}
+
+template<class... T>
+template<class R,
+         class name>
+const R &
+tuple<T...>::at(name&& n)
+const
+{
+	return json::at<R>(*this, n);
+}
+
+template<class... T>
+template<class R,
+         class name>
+R &
+tuple<T...>::at(name&& n)
+{
+	return json::at<R>(*this, n);
 }
 
 template<class... T>
