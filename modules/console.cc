@@ -12043,8 +12043,8 @@ console_cmd__user__pushrules(opt &out, const string_view &line)
 		out
 		<< std::left << std::setw(10) << scope << " | "
 		<< std::left << std::setw(10) << kind << " | "
-		<< std::left << std::setw(32) << ruleid << "  "
-		<< string_view{rule}
+		<< std::left << std::setw(36) << ruleid << "  "
+		<< rule
 		<< std::endl;
 		return true;
 	});
