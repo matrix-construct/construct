@@ -91,7 +91,7 @@ ircd::m::push::handle_get(client &client,
 				handle_enabled?
 					json::member
 					{
-						"enabled", rule["enabled"]
+						"enabled", rule.get("enabled", false)
 					}:
 
 				handle_actions?
@@ -313,7 +313,7 @@ ircd::m::push::handle_put(client &client,
 				handle_enabled?
 					json::replace(old_rule,
 					{
-						"enabled", json::get<"enabled"_>(rule)
+						"enabled", bool(json::get<"enabled"_>(rule))
 					}):
 
 				handle_actions?
@@ -337,9 +337,18 @@ ircd::m::push::handle_put(client &client,
 		};
 	}
 
+	const auto new_rule
+	{
+		json::replace(rule, json::members
+		{
+			{ "enabled",  rule.get("enabled", true)  },
+			{ "default",  false                      },
+		})
+	};
+
 	const auto res
 	{
-		pushrules.set(path, rule)
+		pushrules.set(path, new_rule)
 	};
 
 	return resource::response
