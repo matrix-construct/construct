@@ -239,6 +239,22 @@ ircd::m::push::rules::defaults{R"(
 			]
 		}
 	],
+	"content":
+	[
+		{
+			"rule_id": ".m.rule.contains_user_name",
+			"default": true,
+			"enabled": true,
+			"actions":
+			[
+				"notify",
+				{
+					"set_tweak": "sound",
+					"value": "default"
+				}
+			]
+		}
+	],
 	"underride":
 	[
 		{
