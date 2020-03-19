@@ -343,6 +343,7 @@ try
 {
 	while(1)
 	{
+		ctx::interruption_point();
 		timeout_dock.wait([]
 		{
 			return !typists.empty();
