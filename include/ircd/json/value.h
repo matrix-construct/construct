@@ -151,20 +151,17 @@ ircd::json::value::value(const nullptr_t &)
 {
 	literal_null, type::LITERAL
 }
-{
-}
+{}
 
 inline
 ircd::json::value::value(const json::object &sv)
 :value{sv, OBJECT}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const json::array &sv)
 :value{sv, ARRAY}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const bool &boolean)
@@ -172,44 +169,37 @@ ircd::json::value::value(const bool &boolean)
 {
 	boolean? literal_true : literal_false, type::LITERAL
 }
-{
-}
+{}
 
 inline
 ircd::json::value::value(const uint8_t &integer)
 :value{int64_t{integer}}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const int8_t &integer)
 :value{int64_t{integer}}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const uint16_t &integer)
 :value{int64_t{integer}}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const int16_t &integer)
 :value{int64_t{integer}}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const uint32_t &integer)
 :value{int64_t{integer}}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const int32_t &integer)
 :value{int64_t{integer}}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const int64_t &integer)
@@ -219,8 +209,7 @@ ircd::json::value::value(const int64_t &integer)
 ,serial{false}
 ,alloc{false}
 ,floats{false}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const double &floating)
@@ -230,27 +219,23 @@ ircd::json::value::value(const double &floating)
 ,serial{false}
 ,alloc{false}
 ,floats{true}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const char *const &str)
 :value{string_view{str}}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const char *const &str,
                          const enum type &type)
 :value{string_view{str}, type}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const string_view &sv)
 :value{sv, json::type(sv, strict, std::nothrow)}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const string_view &sv,
@@ -261,14 +246,12 @@ ircd::json::value::value(const string_view &sv,
 ,serial{type == STRING? surrounds(sv, '"') : true}
 ,alloc{false}
 ,floats{false}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const std::string &s)
 :value{s, json::type(s, strict, std::nothrow)}
-{
-}
+{}
 
 inline
 ircd::json::value::value(const struct value *const &array,
@@ -279,8 +262,7 @@ ircd::json::value::value(const struct value *const &array,
 ,serial{false}
 ,alloc{false}
 ,floats{false}
-{
-}
+{}
 
 inline
 ircd::json::value::value(std::unique_ptr<const struct value[]> &&array,
