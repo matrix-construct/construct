@@ -10,6 +10,18 @@
 
 using namespace ircd;
 
+static void
+send_join__response(client &,
+                    const m::resource::request &,
+                    const m::event &,
+                    const m::room::state &,
+                    const m::room::auth::chain &,
+                    json::stack::object &out);
+
+static m::resource::response
+put__send_join(client &,
+               const m::resource::request &);
+
 mapi::header
 IRCD_MODULE
 {
@@ -35,10 +47,43 @@ send_join_resource
 	}
 };
 
+m::resource
+send_join_resource_v2
+{
+	"/_matrix/federation/v2/send_join/",
+	{
+		send_join_description,
+		resource::DIRECTORY
+	}
+};
+
+m::resource::method
+method_put
+{
+	send_join_resource, "PUT", put__send_join,
+	{
+		method_put.VERIFY_ORIGIN
+	}
+};
+
+m::resource::method
+method_put_v2
+{
+	send_join_resource_v2, "PUT", put__send_join,
+	{
+		method_put.VERIFY_ORIGIN
+	}
+};
+
 m::resource::response
 put__send_join(client &client,
                const m::resource::request &request)
 {
+	const bool v1
+	{
+		startswith(request.head.path, "/_matrix/federation/v1/")
+	};
+
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
 		{
@@ -108,6 +153,7 @@ put__send_join(client &client,
 		};
 
 	m::vm::opts vmopts;
+	vmopts.fetch = false;
 	m::vm::eval eval
 	{
 		event, vmopts
@@ -133,17 +179,44 @@ put__send_join(client &client,
 		response.buf, response.flusher()
 	};
 
-	json::stack::array top
+	if(v1)
+	{
+		json::stack::array top
+		{
+			out
+		};
+
+		// First element is the 200
+		top.append(json::value(200L));
+
+		// Second element is the object
+		json::stack::object data
+		{
+			top
+		};
+
+		send_join__response(client, request, event, state, auth_chain, data);
+		return std::move(response);
+	}
+
+	json::stack::object top
 	{
 		out
 	};
 
-	// First element is the 200
-	top.append(json::value(200L));
+	// Top element is the object
+	send_join__response(client, request, event, state, auth_chain, top);
+	return std::move(response);
+}
 
-	// Second element is the object
-	json::stack::object data{top};
-
+void
+send_join__response(client &client,
+                    const m::resource::request &request,
+                    const m::event &event,
+                    const m::room::state &state,
+                    const m::room::auth::chain &auth_chain,
+                    json::stack::object &data)
+{
 	// Required. The resident server's DNS name.
 	json::stack::member
 	{
@@ -226,15 +299,4 @@ put__send_join(client &client,
 			return true;
 		}});
 	}
-
-	return std::move(response);
 }
-
-m::resource::method
-method_put
-{
-	send_join_resource, "PUT", put__send_join,
-	{
-		method_put.VERIFY_ORIGIN
-	}
-};
