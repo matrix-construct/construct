@@ -408,7 +408,7 @@ command__read(const mutable_buffer &buf,
 
 	// The string argument can be a globular expression of room tags, like
 	// `m.*` or just `*`.
-	const globular_match match
+	const globular_imatch match
 	{
 		arg
 	};

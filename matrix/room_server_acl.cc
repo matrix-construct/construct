@@ -175,7 +175,7 @@ const
 	return !for_each(prop, [&server]
 	(const string_view &expression)
 	{
-		const globular_match match
+		const globular_imatch match
 		{
 			expression
 		};

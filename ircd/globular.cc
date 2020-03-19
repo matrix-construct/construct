@@ -9,11 +9,11 @@
 // full license for this software is available in the LICENSE file.
 
 //
-// globular_equals
+// globular_iequals
 //
 
 bool
-ircd::globular_equals::operator()(const string_view &a, const string_view &b)
+ircd::globular_iequals::operator()(const string_view &a, const string_view &b)
 const noexcept
 {
 	size_t ap(0), bp(0);

@@ -14,14 +14,14 @@
 namespace ircd
 {
 	// Globular ('*' and '?') expression utils.
-	struct globular_match;
-	struct globular_equals;
+	struct globular_imatch;
+	struct globular_iequals;
 }
 
 /// Globular equals. This allows either side of the comparison to include '*'
 /// and '?' characters and equality of the string expressions will be
-/// determined.
-struct ircd::globular_equals
+/// determined. Case insensitive.
+struct ircd::globular_iequals
 :boolean
 {
 	using is_transparent = std::true_type;
@@ -30,7 +30,7 @@ struct ircd::globular_equals
 
 	template<class A,
 	         class B>
-	globular_equals(A&& a, B&& b)
+	globular_iequals(A&& a, B&& b)
 	:boolean{operator()(std::forward<A>(a), std::forward<B>(b))}
 	{}
 };
@@ -39,23 +39,23 @@ struct ircd::globular_equals
 /// comparison is considered to be the expression with '*' and '?' characters.
 /// The expression string is passed at construction. The comparison inputs are
 /// treated as non-expression strings. This allows for greater optimization
-/// than globular_equals.
-struct ircd::globular_match
+/// than globular_equals. Case insensitive.
+struct ircd::globular_imatch
 {
 	string_view expr;
 
 	template<class A>
 	bool operator()(A&& a) const noexcept
 	{
-		const globular_equals globular_equals
+		const globular_iequals globular_iequals
 		{
 			expr, std::forward<A>(a)
 		};
 
-		return bool(globular_equals);
+		return bool(globular_iequals);
 	}
 
-	globular_match(const string_view &expr = {})
+	globular_imatch(const string_view &expr = {})
 	:expr{expr}
 	{}
 };
