@@ -81,9 +81,8 @@ ircd::m::push::make_type(const mutable_buffer &buf,
 	};
 }
 
-decltype(ircd::m::push::defaults)
-ircd::m::push::defaults
-{R"(
+decltype(ircd::m::push::rules::defaults)
+ircd::m::push::rules::defaults{R"(
 {
 	"override":
 	[

@@ -26,9 +26,6 @@ namespace ircd::m::push
 	string_view make_type(const mutable_buffer &, const path &);
 	path make_path(const string_view &type, const string_view &state_key);
 	path make_path(const event &);
-
-	/// Specification pre-defined defaults.
-	extern const rules defaults;
 }
 
 /// PushCondition
@@ -122,6 +119,9 @@ struct ircd::m::push::rules
 	json::property<name::underride, json::array>
 >
 {
+	/// Specification pre-defined defaults.
+	static const rules defaults;
+
 	using super_type::tuple;
 	using super_type::operator=;
 };
