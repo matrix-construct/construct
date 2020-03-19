@@ -106,10 +106,11 @@ try
 
 	// Wait for any pending runlevel transition to complete before
 	// continuing with another transition.
-	changed::dock.wait([]
-	{
-		return level == chadburn;
-	});
+	if(ctx::current)
+		changed::dock.wait([]
+		{
+			return level == chadburn;
+		});
 
 	// Ignore any redundant calls which made it this far.
 	if(level == new_level)
