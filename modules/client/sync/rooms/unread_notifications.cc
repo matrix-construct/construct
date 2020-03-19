@@ -185,14 +185,13 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	};
 
 	// highlight_count
-	if(m::user::highlight::enable_count)
-		json::stack::member
+	json::stack::member
+	{
+		*data.out, "highlight_count", json::value
 		{
-			*data.out, "highlight_count", json::value
-			{
-				_highlight_count(room, data.user, start_idx, data.range.second)
-			}
-		};
+			_highlight_count(room, data.user, start_idx, data.range.second)
+		}
+	};
 
 	return true;
 }
@@ -216,15 +215,10 @@ ircd::m::sync::_highlight_count(const room &room,
                                 const event::idx &a,
                                 const event::idx &b)
 {
-	const m::user::highlight highlight
-	{
-		user
-	};
-
 	const event::idx_range range
 	{
 		std::minmax(a, b)
 	};
 
-	return highlight.count_between(room, range);
+	return 0L;
 }

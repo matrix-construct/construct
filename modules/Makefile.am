@@ -114,7 +114,6 @@ m_room_power_levels_la_SOURCES = m_room_power_levels.cc
 m_room_redaction_la_SOURCES = m_room_redaction.cc
 m_room_server_acl_la_SOURCES = m_room_server_acl.cc
 m_room_third_party_invite_la_SOURCES = m_room_third_party_invite.cc
-m_user_highlight_auth_la_SOURCES = m_user_highlight_auth.cc
 m_vm_fetch_la_SOURCES = m_vm_fetch.cc
 
 m_module_LTLIBRARIES = \
@@ -144,7 +143,6 @@ m_module_LTLIBRARIES = \
 	m_room_redaction.la \
 	m_room_server_acl.la \
 	m_room_third_party_invite.la \
-	m_user_highlight_auth.la \
 	m_vm_fetch.la \
 	###
 

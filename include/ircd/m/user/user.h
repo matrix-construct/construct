@@ -41,7 +41,6 @@ struct ircd::m::user
 	struct room_tags;
 	struct filter;
 	struct ignores;
-	struct highlight;
 	struct registar;
 	struct pushrules;
 
@@ -91,6 +90,5 @@ const
 #include "room_tags.h"
 #include "filter.h"
 #include "ignores.h"
-#include "highlight.h"
 #include "register.h"
 #include "pushrules.h"
