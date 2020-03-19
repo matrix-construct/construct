@@ -115,6 +115,29 @@ const
 		path
 	};
 
+	// Present the default rules to the closure.
+	if(likely(scope == "global"))
+	{
+		const auto &rules
+		{
+			push::rules::defaults.get<json::array>(kind)
+		};
+
+		for(const json::object &rule : rules)
+		{
+			const json::string &_ruleid
+			{
+				rule["rule_id"]
+			};
+
+			if(_ruleid == ruleid)
+			{
+				closure(path, rule);
+				return true;
+			}
+		}
+	}
+
 	char typebuf[event::TYPE_MAX_SIZE];
 	const string_view &type
 	{
@@ -154,6 +177,33 @@ const
 	{
 		path
 	};
+
+	// If the path contains a ruleid there's at most one item to iterate...
+	if(ruleid)
+		return get(std::nothrow, path, closure);
+
+	// Present the default rules to the closure; note that the for_each
+	// convention dictates if the user's closure returns false we'll never
+	// get past this branch to iterate the default rules.
+	if(!scope || scope == "global")
+	{
+		for(const auto &_kind : json::keys<decltype(push::rules::defaults)>())
+		{
+			if(kind && kind != _kind)
+				continue;
+
+			for(const json::object &rule : push::rules::defaults.at<json::array>(_kind))
+			{
+				const push::path path
+				{
+					"global", _kind, json::string{rule["rule_id"]}
+				};
+
+				if(!closure(path, rule))
+					return false;
+			}
+		}
+	}
 
 	char typebuf[event::TYPE_MAX_SIZE];
 	const room::state::type_prefix type
