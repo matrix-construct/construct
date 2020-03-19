@@ -399,9 +399,7 @@ ircd::m::push::handle_delete(client &client,
 
 	return resource::response
 	{
-		client, res?
-			http::OK:
-			http::NOT_FOUND
+		client, http::OK
 	};
 }
 
