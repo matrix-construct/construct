@@ -37,7 +37,38 @@ ircd::fs::log
 // init
 //
 
+namespace ircd::fs
+{
+	extern conf::item<ulong> rlimit_nofile;
+	static void init_rlimit_nofile();
+	static void init_dump_info();
+}
+
+decltype(ircd::fs::rlimit_nofile)
+ircd::fs::rlimit_nofile
+{
+	{ "name",      "ircd.fs.rlimit.nofile"  },
+	{ "default",   65535L                   },
+	{ "persist",   false                    },
+};
+
+//
+// init::init
+//
+
 ircd::fs::init::init()
+{
+	init_rlimit_nofile();
+	init_dump_info();
+}
+
+ircd::fs::init::~init()
+noexcept
+{
+}
+
+void
+ircd::fs::init_dump_info()
 {
 	const bool support_async
 	{
@@ -61,10 +92,42 @@ ircd::fs::init::init()
 		};
 }
 
-ircd::fs::init::~init()
-noexcept
+#if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_NOFILE)
+void
+ircd::fs::init_rlimit_nofile()
+try
 {
+	rlimit rlim[2] {0};
+	syscall(getrlimit, RLIMIT_NOFILE, &rlim[0]);
+	rlim[1] = rlim[0];
+	rlim[1].rlim_cur = std::max(rlim[1].rlim_cur, ulong(fs::rlimit_nofile));
+	rlim[1].rlim_cur = std::min(rlim[1].rlim_cur, rlim[1].rlim_max);
+	syscall(setrlimit, RLIMIT_NOFILE, &rlim[1]);
+	log::info
+	{
+		log, "Raised resource limit for number of open files from %ld to %ld",
+		rlim[0].rlim_cur,
+		rlim[1].rlim_cur,
+	};
 }
+catch(const std::system_error &e)
+{
+	log::warning
+	{
+		log, "Failed to raise resource limit for number of open files :%s",
+		e.what()
+	};
+}
+#else
+void
+ircd::fs::init_rlimit_nofile()
+{
+	log::dwarning
+	{
+		log, "Cannot modify resource limit for number of open files."
+	};
+}
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
