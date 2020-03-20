@@ -12,6 +12,7 @@
 #include <RB_INC_SYS_STAT_H
 #include <RB_INC_SYS_STATFS_H
 #include <RB_INC_SYS_STATVFS_H
+#include <RB_INC_SYS_RESOURCE_H
 #include <boost/filesystem.hpp>
 #include <RB_INC_SYS_SYSMACROS_H
 
@@ -282,6 +283,22 @@ catch(const std::system_error &e)
 
 	throw;
 }
+
+#if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_NOFILE)
+size_t
+ircd::fs::support::rlimit_nofile()
+{
+	rlimit rlim;
+	syscall(getrlimit, RLIMIT_NOFILE, &rlim);
+	return rlim.rlim_cur;
+}
+#else
+size_t
+ircd::fs::support::rlimit_nofile()
+{
+	return -1;
+}
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //

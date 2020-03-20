@@ -1182,9 +1182,7 @@ try
 
 	// limit maxfdto prevent too many small files degrading read perf; too low is
 	// bad for write perf.
-	opts->max_open_files = ircd::info::rlimit_nofile?
-		std::min(ircd::info::rlimit_nofile, 256UL): // limit when rlimit supported
-		256UL; // default when rlimit not supported.
+	opts->max_open_files = fs::support::rlimit_nofile();
 
 	// TODO: Check if these values can be increased; RocksDB may keep
 	// thread_local state preventing values > 1.
