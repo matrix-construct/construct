@@ -23,7 +23,7 @@ decltype(ircd::m::invite_remote_timeout)
 ircd::m::invite_remote_timeout
 {
 	{ "name",     "ircd.client.rooms.invite.remote.timeout" },
-	{ "default",  15L                                       },
+	{ "default",  30L                                       },
 };
 
 decltype(ircd::m::invite_remote_hook)
