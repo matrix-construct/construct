@@ -347,6 +347,22 @@ catch(const std::system_error &e)
 	throw;
 }
 
+#if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_FSIZE)
+size_t
+ircd::fs::support::rlimit_fsize()
+{
+	rlimit rlim;
+	syscall(getrlimit, RLIMIT_FSIZE, &rlim);
+	return rlim.rlim_cur;
+}
+#else
+size_t
+ircd::fs::support::rlimit_fize()
+{
+	return -1;
+}
+#endif
+
 #if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_NOFILE)
 size_t
 ircd::fs::support::rlimit_nofile()
