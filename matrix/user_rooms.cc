@@ -94,7 +94,7 @@ const
 		else
 			return ret;
 
-		const auto &_room_id(room_id);
+		const m::room::id &_room_id(room_id);
 		m::get(std::nothrow, event_idx, "content", [&]
 		(const json::object &content)
 		{

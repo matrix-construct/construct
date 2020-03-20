@@ -2660,6 +2660,7 @@ ircd::m::dbs::event_state_key(const mutable_buffer &out_,
 	if(!room_id)
 		return {data(out_), data(out)};
 
+	assert(m::valid(m::id::ROOM, room_id));
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, room_id));
 	if(depth < 0)
@@ -2677,6 +2678,7 @@ ircd::m::dbs::event_state_key(const mutable_buffer &out_,
 ircd::m::dbs::event_state_tuple
 ircd::m::dbs::event_state_key(const string_view &amalgam)
 {
+	assert(!startswith(amalgam, '\0'));
 	const auto &[state_key, r0]
 	{
 		split(amalgam, "\0"_sv)
@@ -2692,13 +2694,12 @@ ircd::m::dbs::event_state_key(const string_view &amalgam)
 		split(r1, "\0"_sv)
 	};
 
+	assert(!room_id || m::valid(m::id::ROOM, room_id));
 	return event_state_tuple
 	{
 		state_key,
 		type,
-		room_id?
-			m::room::id{room_id}:
-			m::room::id{},
+		room_id,
 		r2.size() >= 8?
 			int64_t(byte_view<int64_t>(r2.substr(0, 8))):
 			-1L,
@@ -2722,20 +2723,30 @@ ircd::m::dbs::desc::events__event_state__cmp
 			event_state_key(b),
 		};
 
-		if(std::get<0>(key[0]) != std::get<0>(key[1]))
-			return std::get<0>(key[0]) < std::get<0>(key[1]);
+		const auto &[state_key_a, type_a, room_id_a, depth_a, event_idx_a]
+		{
+			key[0]
+		};
 
-		if(std::get<1>(key[0]) != std::get<1>(key[1]))
-			return std::get<1>(key[0]) < std::get<1>(key[1]);
+		const auto &[state_key_b, type_b, room_id_b, depth_b, event_idx_b]
+		{
+			key[1]
+		};
 
-		if(std::get<id::room>(key[0]) != std::get<id::room>(key[1]))
-			return std::get<id::room>(key[0]) < std::get<id::room>(key[1]);
+		if(state_key_a != state_key_b)
+			return state_key_a < state_key_b;
 
-		if(std::get<int64_t>(key[0]) != std::get<int64_t>(key[1]))
-			return std::get<int64_t>(key[0]) > std::get<int64_t>(key[1]);
+		if(type_a != type_b)
+			return type_a < type_b;
 
-		if(std::get<event::idx>(key[0]) != std::get<event::idx>(key[1]))
-			return std::get<event::idx>(key[0]) > std::get<event::idx>(key[1]);
+		if(room_id_a != room_id_b)
+			return room_id_a < room_id_b;
+
+		if(depth_a != depth_b)
+			return depth_a > depth_b;
+
+		if(event_idx_a != event_idx_b)
+			return event_idx_a > event_idx_b;
 
 		return false;
 	},

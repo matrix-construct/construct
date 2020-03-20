@@ -24,7 +24,8 @@ namespace ircd::m::dbs
 		+ 8
 	};
 
-	using event_state_tuple = std::tuple<string_view, string_view, id::room, int64_t, event::idx>;
+	// state_key, type, room_id, depth, event_idx
+	using event_state_tuple = std::tuple<string_view, string_view, string_view, int64_t, event::idx>;
 
 	string_view event_state_key(const mutable_buffer &out, const event_state_tuple &);
 	event_state_tuple event_state_key(const string_view &);
