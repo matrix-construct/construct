@@ -11,7 +11,6 @@
 #include <RB_INC_UNISTD_H
 #include <RB_INC_CPUID_H
 #include <RB_INC_SYS_SYSINFO_H
-#include <RB_INC_SYS_RESOURCE_H
 #include <RB_INC_GNU_LIBC_VERSION_H
 
 namespace ircd::info
@@ -417,21 +416,6 @@ ircd::info::dump_sys_info()
 	// Dump detected filesystem related to log.
 	fs::support::dump_info();
 
-	// This message flashes posix information about the resource limits
-	#ifdef RB_DEBUG
-	log::logf
-	{
-		log::star, log::DEBUG,
-		"rlimit AS=%lu DATA=%lu RSS=%lu NOFILE=%lu RTTIME=%lu MEMLOCK=%lu",
-		rlimit_as,
-		rlimit_data,
-		rlimit_rss,
-		rlimit_nofile,
-		rlimit_rttime,
-		rlimit_memlock,
-	};
-	#endif
-
 	// Additional detected system parameters
 	#ifdef RB_DEBUG
 	char buf[2][48];
@@ -510,74 +494,6 @@ ircd::info::kernel_version
 		           utsname.sysname,
 		           utsname.release);
 	}
-};
-
-//
-// Resource limits
-//
-
-#ifdef HAVE_SYS_RESOURCE_H
-static uint64_t
-_get_rlimit(const int &resource)
-{
-	rlimit rlim;
-	ircd::syscall(getrlimit, resource, &rlim);
-	return rlim.rlim_cur;
-}
-#else
-static uint64_t
-_get_rlimit(const int &resource)
-{
-	return 0;
-}
-#endif
-
-decltype(ircd::info::rlimit_memlock)
-ircd::info::rlimit_memlock
-{
-	#ifdef RLIMIT_MEMLOCK
-	_get_rlimit(RLIMIT_MEMLOCK)
-	#endif
-};
-
-decltype(ircd::info::rlimit_rttime)
-ircd::info::rlimit_rttime
-{
-	#ifdef RLIMIT_RTTIME
-	_get_rlimit(RLIMIT_RTTIME)
-	#endif
-};
-
-decltype(ircd::info::rlimit_nofile)
-ircd::info::rlimit_nofile
-{
-	#ifdef RLIMIT_NOFILE
-	_get_rlimit(RLIMIT_NOFILE)
-	#endif
-};
-
-decltype(ircd::info::rlimit_rss)
-ircd::info::rlimit_rss
-{
-	#ifdef RLIMIT_RSS
-	_get_rlimit(RLIMIT_RSS)
-	#endif
-};
-
-decltype(ircd::info::rlimit_data)
-ircd::info::rlimit_data
-{
-	#ifdef RLIMIT_DATA
-	_get_rlimit(RLIMIT_DATA)
-	#endif
-};
-
-decltype(ircd::info::rlimit_as)
-ircd::info::rlimit_as
-{
-	#ifdef RLIMIT_AS
-	_get_rlimit(RLIMIT_AS)
-	#endif
 };
 
 //

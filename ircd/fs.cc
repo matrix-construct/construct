@@ -337,14 +337,6 @@ ircd::fs::support::dump_info()
 		const bool support_async {false};
 	#endif
 
-	if(info::rlimit_nofile <= 1024)
-		log::warning
-		{
-			log, "Maximum number of open files limited to %zu."
-			" Suggest increasing for best performance.",
-			info::rlimit_nofile,
-		};
-
 	log::info
 	{
 		log, "Support: async:%b preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",

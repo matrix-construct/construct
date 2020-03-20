@@ -53,14 +53,6 @@ namespace ircd::info
 	extern const size_t total_ram;
 	extern const size_t total_swap;
 
-	// Resource limitations
-	extern const size_t rlimit_as;
-	extern const size_t rlimit_data;
-	extern const size_t rlimit_rss;
-	extern const size_t rlimit_nofile;
-	extern const size_t rlimit_rttime;
-	extern const size_t rlimit_memlock;
-
 	// Host & third-party information
 	#ifdef HAVE_SYS_UTSNAME_H
 	extern const ::utsname utsname;
