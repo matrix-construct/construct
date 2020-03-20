@@ -291,7 +291,7 @@ ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
 		this->pdus, events
 	};
 
-	if(likely(opts->mfetch_keys))
+	if(likely(opts->verify && opts->mfetch_keys))
 		mfetch_keys();
 
 	// Conduct each eval without letting any one exception ruin things for the
