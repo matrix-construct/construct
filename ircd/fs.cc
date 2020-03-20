@@ -26,114 +26,10 @@
 // TODO: prevents use until io_uring support implemented
 #undef IRCD_USE_IOU
 
-namespace ircd::fs
-{
-	static uint posix_flags(const std::ios::openmode &mode);
-	static const char *path_str(const string_view &);
-}
-
 decltype(ircd::fs::log)
 ircd::fs::log
 {
 	"fs"
-};
-
-decltype(ircd::fs::support_pwritev2)
-ircd::fs::support_pwritev2
-{
-	#if defined(HAVE_PWRITEV2)
-		info::kernel_version[0] > 4 ||
-		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 6)
-	#else
-		false
-	#endif
-};
-
-decltype(ircd::fs::support_preadv2)
-ircd::fs::support_preadv2
-{
-	#if defined(HAVE_PREADV2)
-		info::kernel_version[0] > 4 ||
-		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 6)
-	#else
-		false
-	#endif
-};
-
-decltype(ircd::fs::support_sync)
-ircd::fs::support_sync
-{
-	#if defined(HAVE_PWRITEV2) && defined(RWF_SYNC)
-		info::kernel_version[0] > 4 ||
-		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 7)
-	#else
-		false
-	#endif
-};
-
-decltype(ircd::fs::support_dsync)
-ircd::fs::support_dsync
-{
-	#if defined(HAVE_PWRITEV2) && defined(RWF_DSYNC)
-		info::kernel_version[0] > 4 ||
-		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 7)
-	#else
-		false
-	#endif
-};
-
-decltype(ircd::fs::support_hipri)
-ircd::fs::support_hipri
-{
-	#if defined(HAVE_PWRITEV2) && defined(RWF_HIPRI)
-		info::kernel_version[0] > 4 ||
-		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 6)
-	#else
-		false
-	#endif
-};
-
-decltype(ircd::fs::support_nowait)
-ircd::fs::support_nowait
-{
-	#if defined(HAVE_PWRITEV2) && defined(RWF_NOWAIT)
-		info::kernel_version[0] > 4 ||
-		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 14)
-	#else
-		false
-	#endif
-};
-
-decltype(ircd::fs::support_append)
-ircd::fs::support_append
-{
-	#if defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
-		info::kernel_version[0] > 4 ||
-		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 16)
-	#else
-		false
-	#endif
-};
-
-decltype(ircd::fs::support_rwh_write_life)
-ircd::fs::support_rwh_write_life
-{
-	#if defined(HAVE_FCNTL_H) && defined(F_SET_FILE_RW_HINT)
-		info::kernel_version[0] > 4 ||
-		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 13)
-	#else
-		false
-	#endif
-};
-
-decltype(ircd::fs::support_rwf_write_life)
-ircd::fs::support_rwf_write_life
-{
-	#if defined(RWF_WRITE_LIFE_SHIFT)
-		false //TODO: XXX
-	#else
-		false
-	#endif
 };
 
 //
@@ -144,21 +40,17 @@ ircd::fs::init::init()
 {
 	const bool support_async
 	{
-		false
-		|| iou::system
-		|| aio::system
+		false || iou::system || aio::system
 	};
 
 	if(support_async)
 		log::info
 		{
 			log, "Asynchronous filesystem IO provided by %s %s.",
-			"Linux",
-			iou::system?
-				"io_uring":
-			aio::system?
-				"AIO":
-			"?????",
+			RB_OS,
+			iou::system? "io_uring":
+			aio::system? "AIO":
+			              "?????",
 		};
 	else
 		log::warning
@@ -171,6 +63,224 @@ ircd::fs::init::init()
 ircd::fs::init::~init()
 noexcept
 {
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// fs/support.h
+//
+
+decltype(ircd::fs::support::pwritev2)
+ircd::fs::support::pwritev2
+{
+	#if defined(HAVE_PWRITEV2)
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 6)
+	#else
+		false
+	#endif
+};
+
+decltype(ircd::fs::support::preadv2)
+ircd::fs::support::preadv2
+{
+	#if defined(HAVE_PREADV2)
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 6)
+	#else
+		false
+	#endif
+};
+
+decltype(ircd::fs::support::sync)
+ircd::fs::support::sync
+{
+	#if defined(HAVE_PWRITEV2) && defined(RWF_SYNC)
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 7)
+	#else
+		false
+	#endif
+};
+
+decltype(ircd::fs::support::dsync)
+ircd::fs::support::dsync
+{
+	#if defined(HAVE_PWRITEV2) && defined(RWF_DSYNC)
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 7)
+	#else
+		false
+	#endif
+};
+
+decltype(ircd::fs::support::hipri)
+ircd::fs::support::hipri
+{
+	#if defined(HAVE_PWRITEV2) && defined(RWF_HIPRI)
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 6)
+	#else
+		false
+	#endif
+};
+
+decltype(ircd::fs::support::nowait)
+ircd::fs::support::nowait
+{
+	#if defined(HAVE_PWRITEV2) && defined(RWF_NOWAIT)
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 14)
+	#else
+		false
+	#endif
+};
+
+decltype(ircd::fs::support::append)
+ircd::fs::support::append
+{
+	#if defined(HAVE_PWRITEV2) && defined(RWF_APPEND)
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 16)
+	#else
+		false
+	#endif
+};
+
+decltype(ircd::fs::support::rwh_write_life)
+ircd::fs::support::rwh_write_life
+{
+	#if defined(HAVE_FCNTL_H) && defined(F_SET_FILE_RW_HINT)
+		info::kernel_version[0] > 4 ||
+		(info::kernel_version[0] >= 4 && info::kernel_version[1] >= 13)
+	#else
+		false
+	#endif
+};
+
+decltype(ircd::fs::support::rwf_write_life)
+ircd::fs::support::rwf_write_life
+{
+	#if defined(RWF_WRITE_LIFE_SHIFT)
+		false //TODO: XXX
+	#else
+		false
+	#endif
+};
+
+decltype(ircd::fs::support::aio)
+ircd::fs::support::aio
+{
+	#ifdef IRCD_USE_AIO
+		true
+	#else
+		false
+	#endif
+};
+
+void
+ircd::fs::support::dump_info()
+{
+	#if defined(IRCD_USE_AIO) || defined(IRCD_USE_IOU)
+		const bool support_async {true};
+	#else
+		const bool support_async {false};
+	#endif
+
+	log::info
+	{
+		log, "Support: async:%b preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",
+		support_async,
+		preadv2,
+		pwritev2,
+		sync,
+		dsync,
+		hipri,
+		nowait,
+		append,
+		rwh_write_life,
+		rwf_write_life,
+	};
+
+	#ifdef RB_DEBUG
+	const unique_mutable_buffer buf
+	{
+		PATH_MAX_LEN + 1
+	};
+
+	log::debug
+	{
+		log, "Current working directory: `%s'", cwd(buf)
+	};
+
+	for_each<base>([](const base &base)
+	{
+		log::debug
+		{
+			log, "Working %s is `%s'",
+			basepath::get(base).name,
+			basepath::get(base).path,
+		};
+	});
+	#endif
+}
+
+bool
+ircd::fs::support::fallocate(const string_view &path,
+                             const write_opts &wopts)
+try
+{
+	const fd::opts opts
+	{
+		std::ios::out
+	};
+
+	fs::fd fd
+	{
+		path, opts
+	};
+
+	fs::allocate(fd, info::page_size, wopts);
+	return true;
+}
+catch(const std::system_error &e)
+{
+	const auto &ec(e.code());
+	if(system_category(ec)) switch(ec.value())
+	{
+		case int(std::errc::invalid_argument):
+		case int(std::errc::operation_not_supported):
+			return false;
+
+		default:
+			break;
+	}
+
+	throw;
+}
+
+bool
+ircd::fs::support::direct_io(const string_view &path)
+try
+{
+	fd::opts opts{std::ios::out};
+	opts.direct = true;
+	fd{path, opts};
+	return true;
+}
+catch(const std::system_error &e)
+{
+	const auto &ec(e.code());
+	if(system_category(ec)) switch(ec.value())
+	{
+		case int(std::errc::invalid_argument):
+			return false;
+
+		default:
+			break;
+	}
+
+	throw;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -325,116 +435,6 @@ catch(const filesystem::filesystem_error &e)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// fs/support.h
-//
-
-void
-ircd::fs::support::dump_info()
-{
-	#if defined(IRCD_USE_AIO) || defined(IRCD_USE_IOU)
-		const bool support_async {true};
-	#else
-		const bool support_async {false};
-	#endif
-
-	log::info
-	{
-		log, "Support: async:%b preadv2:%b pwritev2:%b SYNC:%b DSYNC:%b HIPRI:%b NOWAIT:%b APPEND:%b RWH:%b WLH:%b",
-		support_async,
-		support_preadv2,
-		support_pwritev2,
-		support_sync,
-		support_dsync,
-		support_hipri,
-		support_nowait,
-		support_append,
-		support_rwh_write_life,
-		support_rwf_write_life,
-	};
-
-	#ifdef RB_DEBUG
-	const unique_mutable_buffer buf
-	{
-		PATH_MAX_LEN + 1
-	};
-
-	log::debug
-	{
-		log, "Current working directory: `%s'", cwd(buf)
-	};
-
-	for_each<base>([](const base &base)
-	{
-		log::debug
-		{
-			log, "Working %s is `%s'",
-			basepath::get(base).name,
-			basepath::get(base).path,
-		};
-	});
-	#endif
-}
-
-bool
-ircd::fs::support::fallocate(const string_view &path,
-                             const write_opts &wopts)
-try
-{
-	const fd::opts opts
-	{
-		std::ios::out
-	};
-
-	fs::fd fd
-	{
-		path, opts
-	};
-
-	fs::allocate(fd, info::page_size, wopts);
-	return true;
-}
-catch(const std::system_error &e)
-{
-	const auto &ec(e.code());
-	if(system_category(ec)) switch(ec.value())
-	{
-		case int(std::errc::invalid_argument):
-		case int(std::errc::operation_not_supported):
-			return false;
-
-		default:
-			break;
-	}
-
-	throw;
-}
-
-bool
-ircd::fs::support::direct_io(const string_view &path)
-try
-{
-	fd::opts opts{std::ios::out};
-	opts.direct = true;
-	fd{path, opts};
-	return true;
-}
-catch(const std::system_error &e)
-{
-	const auto &ec(e.code());
-	if(system_category(ec)) switch(ec.value())
-	{
-		case int(std::errc::invalid_argument):
-			return false;
-
-		default:
-			break;
-	}
-
-	throw;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//
 // fs/stdin.h
 //
 
@@ -560,10 +560,10 @@ ircd::fs::flush(const fd &fd,
 	#ifdef IRCD_USE_AIO
 	if(aio::system && opts.aio)
 	{
-		if(aio::support_fdsync && !opts.metadata)
+		if(support::aio_fdsync && !opts.metadata)
 			return aio::fsync(fd, opts);
 
-		if(aio::support_fsync && opts.metadata)
+		if(support::aio_fsync && opts.metadata)
 			return aio::fsync(fd, opts);
 	}
 	#endif
@@ -574,7 +574,7 @@ ircd::fs::flush(const fd &fd,
 		int(fd),
 		opts.metadata,
 		opts.aio,
-		opts.metadata? aio::support_fsync : aio::support_fdsync
+		opts.metadata? support::aio_fsync : support::aio_fdsync
 	};
 
 	if(!opts.metadata)
@@ -827,7 +827,7 @@ ircd::fs::read(const fd &fd,
 	#endif
 
 	#ifdef HAVE_PREADV2
-	return support_preadv2?
+	return support::preadv2?
 		_read_preadv2(fd, iov, opts):
 		_read_preadv(fd, iov, opts);
 	#else
@@ -896,12 +896,12 @@ ircd::fs::flags(const read_opts &opts)
 	int ret{0};
 
 	#if defined(RWF_HIPRI)
-	if(support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
+	if(support::hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
 		ret |= RWF_HIPRI;
 	#endif
 
 	#if defined(RWF_NOWAIT)
-	if(support_nowait && !opts.blocking)
+	if(support::nowait && !opts.blocking)
 		ret |= RWF_NOWAIT;
 	#endif
 
@@ -1073,7 +1073,7 @@ ircd::fs::append(const fd &fd,
                  const write_opts &opts_)
 {
 	auto opts(opts_);
-	if(support_pwritev2 && support_append)
+	if(support::pwritev2 && support::append)
 		opts.offset = -1;
 	else if(!opts.offset || opts.offset == -1)
 		opts.offset = syscall(::lseek, fd, 0, SEEK_END);
@@ -1208,7 +1208,7 @@ ircd::fs::write(const fd &fd,
 	#endif
 
 	#ifdef HAVE_PWRITEV2
-	return support_pwritev2?
+	return support::pwritev2?
 		_write_pwritev2(fd, iov, opts):
 		_write_pwritev(fd, iov, opts);
 	#else
@@ -1280,33 +1280,33 @@ ircd::fs::flags(const write_opts &opts)
 	int ret{0};
 
 	#if defined(RWF_APPEND)
-	assert(opts.offset >= 0 || support_append);
-	if(support_append && opts.offset == -1)
+	assert(opts.offset >= 0 || support::append);
+	if(support::append && opts.offset == -1)
 		ret |= RWF_APPEND;
 	#endif
 
 	#if defined(RWF_HIPRI)
-	if(support_hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
+	if(support::hipri && reqprio(opts.priority) == reqprio(opts::highest_priority))
 		ret |= RWF_HIPRI;
 	#endif
 
 	#if defined(RWF_NOWAIT)
-	if(support_nowait && !opts.blocking)
+	if(support::nowait && !opts.blocking)
 		ret |= RWF_NOWAIT;
 	#endif
 
 	#if defined(RWF_DSYNC)
-	if(support_dsync && opts.sync && !opts.metadata)
+	if(support::dsync && opts.sync && !opts.metadata)
 		ret |= RWF_DSYNC;
 	#endif
 
 	#if defined(RWF_SYNC)
-	if(support_sync && opts.sync && opts.metadata)
+	if(support::sync && opts.sync && opts.metadata)
 		ret |= RWF_SYNC;
 	#endif
 
 	#ifdef RWF_WRITE_LIFE_SHIFT
-	if(support_rwf_write_life && opts.write_life)
+	if(support::rwf_write_life && opts.write_life)
 		ret |= (opts.write_life << (RWF_WRITE_LIFE_SHIFT));
 	#endif
 
@@ -1409,16 +1409,6 @@ ircd::fs::reflect(const ready &ready)
 //
 // fs/aio.h
 //
-
-decltype(ircd::fs::aio::support)
-ircd::fs::aio::support
-{
-	#ifdef IRCD_USE_AIO
-		true
-	#else
-		false
-	#endif
-};
 
 decltype(ircd::fs::aio::MAX_REQPRIO)
 ircd::fs::aio::MAX_REQPRIO
@@ -1525,6 +1515,8 @@ noexcept
 
 namespace ircd::fs
 {
+	static const char *path_str(const string_view &);
+	static uint posix_flags(const std::ios::openmode &mode);
 	static long pathconf(const fd &, const int &arg);
 }
 
@@ -1597,7 +1589,7 @@ void
 ircd::fs::write_life(const fd &fd,
                      const uint64_t &hint)
 {
-	if(!support_rwh_write_life)
+	if(!support::rwh_write_life)
 		return;
 
 	syscall(::fcntl, int(fd), F_SET_FILE_RW_HINT, &hint);

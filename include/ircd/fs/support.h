@@ -13,6 +13,20 @@
 
 namespace ircd::fs::support
 {
+	// Runtime-gauged support indicators
+	extern const bool pwritev2;
+	extern const bool preadv2;
+	extern const bool append;
+	extern const bool nowait;
+	extern const bool hipri;
+	extern const bool sync;
+	extern const bool dsync;
+	extern const bool rwh_write_life;
+	extern const bool rwf_write_life;
+	extern const bool aio;
+	extern const bool aio_fsync;
+	extern const bool aio_fdsync;
+
 	// Test if O_DIRECT supported at target path
 	bool direct_io(const string_view &path);
 

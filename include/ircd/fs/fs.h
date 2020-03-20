@@ -36,17 +36,6 @@ namespace ircd::fs
 	// may make forward-declared references to boost symbols.
 	namespace filesystem = boost::filesystem;
 
-	// Runtime-detected support lights.
-	extern const bool support_pwritev2;
-	extern const bool support_preadv2;
-	extern const bool support_append;
-	extern const bool support_nowait;
-	extern const bool support_hipri;
-	extern const bool support_sync;
-	extern const bool support_dsync;
-	extern const bool support_rwh_write_life;
-	extern const bool support_rwf_write_life;
-
 	// Log facility for ircd::fs
 	extern log::log log;
 }

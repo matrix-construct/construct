@@ -1243,7 +1243,7 @@ try
 
 	// Doesn't appear to be in effect when direct io is used. Not supported by
 	// all filesystems so disabled for now.
-	// TODO: use fs::support::fallocate() test similar to direct_io_test_file.
+	// TODO: use fs::support::test_fallocate() test similar to direct_io_test_file.
 	opts->allow_fallocate = false;
 
 	#ifdef RB_DEBUG

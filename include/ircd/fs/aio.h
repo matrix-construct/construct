@@ -25,10 +25,6 @@ namespace ircd::fs::aio
 	struct system;
 	struct request;
 
-	extern const bool support;
-	extern const bool support_fsync;
-	extern const bool support_fdsync;
-
 	extern const size_t MAX_EVENTS;
 	extern const size_t MAX_REQPRIO;
 

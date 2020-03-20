@@ -18,8 +18,8 @@
 
 /// True if IOCB_CMD_FSYNC is supported by AIO. If this is false then
 /// fs::fsync_opts::async=true flag is ignored.
-decltype(ircd::fs::aio::support_fsync)
-ircd::fs::aio::support_fsync
+decltype(ircd::fs::support::aio_fsync)
+ircd::fs::support::aio_fsync
 {
 	#if defined(RWF_SYNC)
 		info::kernel_version[0] > 4 ||
@@ -31,8 +31,8 @@ ircd::fs::aio::support_fsync
 
 /// True if IOCB_CMD_FDSYNC is supported by AIO. If this is false then
 /// fs::fsync_opts::async=true flag is ignored.
-decltype(ircd::fs::aio::support_fdsync)
-ircd::fs::aio::support_fdsync
+decltype(ircd::fs::support::aio_fdsync)
+ircd::fs::support::aio_fdsync
 {
 	#if defined(RWF_DSYNC)
 		info::kernel_version[0] > 4 ||
@@ -202,7 +202,7 @@ ircd::fs::aio::read(const fd &fd,
 	stats.max_reads = std::max(stats.max_reads, stats.cur_reads);
 
 	#if defined(RWF_NOWAIT) && defined(RB_DEBUG_FS_AIO_READ_BLOCKING)
-	request.aio_rw_flags |= support_nowait? RWF_NOWAIT : 0;
+	request.aio_rw_flags |= support::nowait? RWF_NOWAIT : 0;
 	#endif
 
 	size_t bytes
@@ -263,7 +263,7 @@ ircd::fs::aio::request::write::write(const int &fd,
 	aio_offset = opts.offset;
 
 	#if defined(RWF_APPEND)
-	if(support_append && opts.offset == -1)
+	if(support::append && opts.offset == -1)
 	{
 		// AIO departs from pwritev2() behavior and EINVAL's on -1.
 		aio_offset = 0;
@@ -272,17 +272,17 @@ ircd::fs::aio::request::write::write(const int &fd,
 	#endif
 
 	#if defined(RWF_DSYNC)
-	if(support_dsync && opts.sync && !opts.metadata)
+	if(support::dsync && opts.sync && !opts.metadata)
 		aio_rw_flags |= RWF_DSYNC;
 	#endif
 
 	#if defined(RWF_SYNC)
-	if(support_sync && opts.sync && opts.metadata)
+	if(support::sync && opts.sync && opts.metadata)
 		aio_rw_flags |= RWF_SYNC;
 	#endif
 
 	#ifdef RWF_WRITE_LIFE_SHIFT
-	if(support_rwf_write_life && opts.write_life)
+	if(support::rwf_write_life && opts.write_life)
 		aio_rw_flags |= (opts.write_life << (RWF_WRITE_LIFE_SHIFT));
 	#endif
 }
@@ -384,12 +384,12 @@ ircd::fs::aio::request::request(const int &fd,
 	aio_reqprio = reqprio(opts->priority);
 
 	#if defined(RWF_HIPRI)
-	if(support_hipri && aio_reqprio == reqprio(opts::highest_priority))
+	if(support::hipri && aio_reqprio == reqprio(opts::highest_priority))
 		aio_rw_flags |= RWF_HIPRI;
 	#endif
 
 	#if defined(RWF_NOWAIT)
-	if(support_nowait && !opts->blocking)
+	if(support::nowait && !opts->blocking)
 		aio_rw_flags |= RWF_NOWAIT;
 	#endif
 }
