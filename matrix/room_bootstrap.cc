@@ -17,9 +17,9 @@ namespace ircd::m::bootstrap
 	static send_join1_response send_join(const string_view &host, const room::id &, const event::id &, const json::object &event);
 	static void broadcast_join(const room &, const event &, const string_view &exclude);
 	static void fetch_keys(const json::array &events);
-	static void eval_auth_chain(const json::array &auth_chain);
-	static void eval_state(const json::array &state);
-	static void backfill(const string_view &host, const room::id &, const event::id &);
+	static void eval_auth_chain(const json::array &auth_chain, vm::opts);
+	static void eval_state(const json::array &state, vm::opts);
+	static void backfill(const string_view &host, const room::id &, const event::id &, vm::opts);
 	static void worker(pkg);
 
 	extern conf::item<seconds> make_join_timeout;
@@ -240,13 +240,21 @@ try
 		auth_chain.size(),
 	};
 
+	m::vm::opts vmopts;
+	vmopts.infolog_accept = false;
+	vmopts.warnlog &= ~vm::fault::EXISTS;
+	vmopts.nothrows = -1;
+	vmopts.room_version = room_version;
+	vmopts.fetch_state = false;
+	vmopts.fetch_prev = false;
+
 	m::bootstrap::fetch_keys(auth_chain);
-	m::bootstrap::eval_auth_chain(auth_chain, room_version);
+	m::bootstrap::eval_auth_chain(auth_chain, vmopts);
 
 	m::bootstrap::fetch_keys(state);
-	m::bootstrap::eval_state(state, room_version);
+	m::bootstrap::eval_state(state, vmopts);
 
-	m::bootstrap::backfill(host, room_id, event_id, room_version);
+	m::bootstrap::backfill(host, room_id, event_id, vmopts);
 
 	// After we just received and processed all of this state with only a
 	// recent backfill our system doesn't know if state events which are
@@ -411,7 +419,7 @@ void
 ircd::m::bootstrap::backfill(const string_view &host,
                              const m::room::id &room_id,
                              const m::event::id &event_id,
-                             const string_view &room_version)
+                             vm::opts vmopts)
 try
 {
 	log::info
@@ -462,13 +470,6 @@ try
 		pdus.size(),
 	};
 
-	m::vm::opts vmopts;
-	vmopts.nothrows = -1;
-	vmopts.warnlog &= ~vm::fault::EXISTS;
-	vmopts.infolog_accept = false;
-	vmopts.room_version = room_version;
-	vmopts.fetch_state = false;
-	vmopts.fetch_prev = false;
 	m::vm::eval
 	{
 		pdus, vmopts
@@ -493,7 +494,7 @@ catch(const std::exception &e)
 
 void
 ircd::m::bootstrap::eval_state(const json::array &state,
-                               const string_view &room_version)
+                               vm::opts vmopts)
 try
 {
 	log::info
@@ -502,16 +503,9 @@ try
 		state.size(),
 	};
 
-	m::vm::opts opts;
-	opts.nothrows = -1;
-	opts.warnlog &= ~vm::fault::EXISTS;
-	opts.infolog_accept = true;
-	opts.room_version = room_version;
-	opts.fetch_state = false;
-	opts.fetch_prev = false;
 	m::vm::eval
 	{
-		state, opts
+		state, vmopts
 	};
 }
 catch(const std::exception &e)
@@ -529,7 +523,7 @@ catch(const std::exception &e)
 
 void
 ircd::m::bootstrap::eval_auth_chain(const json::array &auth_chain,
-                                    const string_view &room_version)
+                                    vm::opts vmopts)
 try
 {
 	log::info
@@ -538,14 +532,11 @@ try
 		auth_chain.size(),
 	};
 
-	m::vm::opts opts;
-	opts.warnlog &= ~vm::fault::EXISTS;
-	opts.infolog_accept = true;
-	opts.room_version = room_version;
-	opts.fetch = false;
+	vmopts.nothrows = vm::fault::EXISTS;
+	vmopts.fetch = false;
 	m::vm::eval
 	{
-		auth_chain, opts
+		auth_chain, vmopts
 	};
 }
 catch(const std::exception &e)
