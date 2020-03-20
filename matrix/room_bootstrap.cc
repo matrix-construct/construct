@@ -13,7 +13,7 @@ namespace ircd::m::bootstrap
 	struct pkg;
 	using send_join1_response = std::tuple<json::object, unique_buffer<mutable_buffer>>;
 
-	static event::id::buf make_join(const string_view &host, const room::id &, const user::id &);
+	static event::id::buf make_join(const string_view &host, const room::id &, const user::id &, const mutable_buffer &);
 	static send_join1_response send_join(const string_view &host, const room::id &, const event::id &, const json::object &event);
 	static void broadcast_join(const room &, const event &, const string_view &exclude);
 	static void fetch_keys(const json::array &events);
@@ -34,6 +34,7 @@ struct ircd::m::bootstrap::pkg
 	std::string event;
 	std::string event_id;
 	std::string host;
+	std::string room_version;
 };
 
 decltype(ircd::m::bootstrap::log)
@@ -104,23 +105,33 @@ ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
 		m::membership(member_event_idx, "join")
 	};
 
+	char room_version_buf[64];
+	string_view room_version
+	{
+		m::version(room_version_buf, room_id, std::nothrow)
+	};
+
 	if(existing_join)
 		event_id_buf = m::event_id(member_event_idx, std::nothrow);
 
 	if(!event_id_buf)
-		event_id_buf = m::bootstrap::make_join(host, room_id, user_id);
+		event_id_buf = m::bootstrap::make_join(host, room_id, user_id, room_version_buf);
+
+	if(!room_version)
+		m::bootstrap::make_join(host, room_id, user_id, room_version_buf);
 
 	assert(event_id_buf);
 
 	// asynchronous; returns quickly
 	room::bootstrap
 	{
-		event_id_buf, host
+		event_id_buf, host, room_version
 	};
 }
 
 ircd::m::room::bootstrap::bootstrap(const m::event::id &event_id,
-                                    const string_view &host)
+                                    const string_view &host,
+                                    const string_view &room_version)
 try
 {
 	static const context::flags flags
@@ -145,6 +156,7 @@ try
 		std::string(event.source),
 		event.event_id,
 		host,
+		room_version,
 	};
 
 	context
@@ -167,7 +179,8 @@ catch(const std::exception &e)
 }
 
 ircd::m::room::bootstrap::bootstrap(const m::event &event,
-                                    const string_view &host)
+                                    const string_view &host,
+                                    const string_view &room_version)
 try
 {
 	const m::event::id &event_id
@@ -192,8 +205,9 @@ try
 
 	log::info
 	{
-		log, "Sending in %s for %s at %s to '%s'",
+		log, "Sending in %s (version %s) for %s at %s to '%s'",
 		string_view{room_id},
+		room_version,
 		string_view{user_id},
 		string_view{event_id},
 		host
@@ -227,12 +241,12 @@ try
 	};
 
 	m::bootstrap::fetch_keys(auth_chain);
-	m::bootstrap::eval_auth_chain(auth_chain);
+	m::bootstrap::eval_auth_chain(auth_chain, room_version);
 
 	m::bootstrap::fetch_keys(state);
-	m::bootstrap::eval_state(state);
+	m::bootstrap::eval_state(state, room_version);
 
-	m::bootstrap::backfill(host, room_id, event_id);
+	m::bootstrap::backfill(host, room_id, event_id, room_version);
 
 	// After we just received and processed all of this state with only a
 	// recent backfill our system doesn't know if state events which are
@@ -291,7 +305,7 @@ try
 	assert(!empty(pkg.host));
 	room::bootstrap
 	{
-		event, pkg.host
+		event, pkg.host, pkg.room_version
 	};
 }
 catch(const http::error &e)
@@ -396,7 +410,8 @@ ircd::m::bootstrap::broadcast_join(const m::room &room,
 void
 ircd::m::bootstrap::backfill(const string_view &host,
                              const m::room::id &room_id,
-                             const m::event::id &event_id)
+                             const m::event::id &event_id,
+                             const string_view &room_version)
 try
 {
 	log::info
@@ -450,9 +465,10 @@ try
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1;
 	vmopts.warnlog &= ~vm::fault::EXISTS;
+	vmopts.infolog_accept = false;
+	vmopts.room_version = room_version;
 	vmopts.fetch_state = false;
 	vmopts.fetch_prev = false;
-	vmopts.infolog_accept = false;
 	m::vm::eval
 	{
 		pdus, vmopts
@@ -476,7 +492,8 @@ catch(const std::exception &e)
 }
 
 void
-ircd::m::bootstrap::eval_state(const json::array &state)
+ircd::m::bootstrap::eval_state(const json::array &state,
+                               const string_view &room_version)
 try
 {
 	log::info
@@ -488,9 +505,10 @@ try
 	m::vm::opts opts;
 	opts.nothrows = -1;
 	opts.warnlog &= ~vm::fault::EXISTS;
+	opts.infolog_accept = true;
+	opts.room_version = room_version;
 	opts.fetch_state = false;
 	opts.fetch_prev = false;
-	opts.infolog_accept = true;
 	m::vm::eval
 	{
 		state, opts
@@ -510,7 +528,8 @@ catch(const std::exception &e)
 }
 
 void
-ircd::m::bootstrap::eval_auth_chain(const json::array &auth_chain)
+ircd::m::bootstrap::eval_auth_chain(const json::array &auth_chain,
+                                    const string_view &room_version)
 try
 {
 	log::info
@@ -522,6 +541,7 @@ try
 	m::vm::opts opts;
 	opts.warnlog &= ~vm::fault::EXISTS;
 	opts.infolog_accept = true;
+	opts.room_version = room_version;
 	opts.fetch = false;
 	m::vm::eval
 	{
@@ -657,7 +677,8 @@ catch(const std::exception &e)
 ircd::m::event::id::buf
 ircd::m::bootstrap::make_join(const string_view &host,
                               const m::room::id &room_id,
-                              const m::user::id &user_id)
+                              const m::user::id &user_id,
+                              const mutable_buffer &room_version_buf)
 try
 {
 	const unique_buffer<mutable_buffer> buf
@@ -756,15 +777,16 @@ try
 
 	m::vm::copts vmopts;
 	vmopts.infolog_accept = true;
+	vmopts.room_version = room_version;
+	vmopts.user_id = user_id;
 	vmopts.fetch = false;
 	vmopts.auth = false;
-	vmopts.user_id = user_id;
-	vmopts.room_version = room_version;
 	const vm::eval eval
 	{
 		event, content, vmopts
 	};
 
+	strlcpy(room_version_buf, room_version);
 	assert(eval.event_id);
 	return eval.event_id;
 }
