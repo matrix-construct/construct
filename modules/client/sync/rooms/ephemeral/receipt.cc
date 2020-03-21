@@ -139,11 +139,11 @@ ircd::m::sync::room_ephemeral_m_receipt_m_read_polylog(data &data)
 	}
 
 	if(i > 0)
-		it.seek();
+		it.seek_idx(idx);
 
 	// Fetch loop; stream to client.
 	bool ret{false};
-	for(ssize_t j(0); it && j < i; --it)
+	for(ssize_t j(0); it && j < i; ++it)
 	{
 		if(!apropos(data, it.event_idx()))
 			continue;
