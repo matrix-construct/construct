@@ -30,104 +30,6 @@ namespace ircd::m::push
 	bool match(const cond &, const event &);
 }
 
-/// PushCondition
-struct ircd::m::push::cond
-:json::tuple
-<
-	/// Required. The kind of condition to apply. See conditions for more
-	/// information on the allowed kinds and how they work.
-	json::property<name::kind, json::string>,
-
-	/// Required for event_match conditions. The dot- separated field of the
-	/// event to match. Required for sender_notification_permission conditions.
-	/// The field in the power level event the user needs a minimum power level
-	/// for. Fields must be specified under the notifications property in the
-	/// power level event's content.
-	json::property<name::key, json::string>,
-
-	/// Required for event_match conditions. The glob-style pattern to match
-	/// against. Patterns with no special glob characters should be treated
-	/// as having asterisks prepended and appended when testing the condition.
-	json::property<name::pattern, json::string>,
-
-	/// Required for room_member_count conditions. A decimal integer optionally
-	/// prefixed by one of, ==, <, >, >= or <=. A prefix of < matches rooms
-	/// where the member count is strictly less than the given number and so
-	/// forth. If no prefix is present, this parameter defaults to ==.
-	json::property<name::is, json::string>
->
-{
-	using super_type::tuple;
-	using super_type::operator=;
-};
-
-/// PushRule
-struct ircd::m::push::rule
-:json::tuple
-<
-	/// [object or string] Required. The actions to perform when this rule is
-	/// matched.
-	json::property<name::actions, string_view>,
-
-	/// Required. Whether this is a default rule, or has been set explicitly.
-	json::property<name::default_, bool>,
-
-	/// Required. Whether the push rule is enabled or not.
-	json::property<name::enabled, bool>,
-
-	/// Required. The ID of this rule.
-	json::property<name::rule_id, json::string>,
-
-	/// The conditions that must hold true for an event in order for a rule
-	/// to be applied to an event. A rule with no conditions always matches.
-	/// Only applicable to underride and override rules.
-	json::property<name::conditions, json::array>,
-
-	/// The glob-style pattern to match against. Only applicable to content
-	/// rules.
-	json::property<name::pattern, json::string>
->
-{
-	static const string_view type_prefix;
-
-	using super_type::tuple;
-	using super_type::operator=;
-};
-
-/// 13.13.1.5 Push Ruleset
-struct ircd::m::push::rules
-:json::tuple
-<
-	/// These configure behaviour for (unencrypted) messages that match
-	/// certain patterns. Content rules take one parameter: pattern, that
-	/// gives the glob pattern to match against. This is treated in the same
-	/// way as pattern for event_match.
-	json::property<name::content, json::array>,
-
-	/// The highest priority rules are user-configured overrides.
-	json::property<name::override_, json::array>,
-
-	/// These rules change the behaviour of all messages for a given room. The
-	/// rule_id of a room rule is always the ID of the room that it affects.
-	json::property<name::room, json::array>,
-
-	/// These rules configure notification behaviour for messages from a
-	/// specific Matrix user ID. The rule_id of Sender rules is always the
-	/// Matrix user ID of the user whose messages they'd apply to.
-	json::property<name::sender, json::array>,
-
-	/// These are identical to override rules, but have a lower priority
-	/// than content, room and sender rules.
-	json::property<name::underride, json::array>
->
-{
-	/// Specification pre-defined defaults.
-	static const rules defaults;
-
-	using super_type::tuple;
-	using super_type::operator=;
-};
-
 /// 13.13.1 I'm your pusher, baby.
 struct ircd::m::push::pusher
 :json::tuple
@@ -167,6 +69,104 @@ struct ircd::m::push::pusher
 	/// Otherwise, the homeserver must remove any other pushers with the same
 	/// App ID and pushkey for different users. The default is false.
 	json::property<name::append, bool>
+>
+{
+	using super_type::tuple;
+	using super_type::operator=;
+};
+
+/// 13.13.1.5 Push Ruleset
+struct ircd::m::push::rules
+:json::tuple
+<
+	/// These configure behaviour for (unencrypted) messages that match
+	/// certain patterns. Content rules take one parameter: pattern, that
+	/// gives the glob pattern to match against. This is treated in the same
+	/// way as pattern for event_match.
+	json::property<name::content, json::array>,
+
+	/// The highest priority rules are user-configured overrides.
+	json::property<name::override_, json::array>,
+
+	/// These rules change the behaviour of all messages for a given room. The
+	/// rule_id of a room rule is always the ID of the room that it affects.
+	json::property<name::room, json::array>,
+
+	/// These rules configure notification behaviour for messages from a
+	/// specific Matrix user ID. The rule_id of Sender rules is always the
+	/// Matrix user ID of the user whose messages they'd apply to.
+	json::property<name::sender, json::array>,
+
+	/// These are identical to override rules, but have a lower priority
+	/// than content, room and sender rules.
+	json::property<name::underride, json::array>
+>
+{
+	/// Specification pre-defined defaults.
+	static const rules defaults;
+
+	using super_type::tuple;
+	using super_type::operator=;
+};
+
+/// PushRule
+struct ircd::m::push::rule
+:json::tuple
+<
+	/// [object or string] Required. The actions to perform when this rule is
+	/// matched.
+	json::property<name::actions, string_view>,
+
+	/// Required. Whether this is a default rule, or has been set explicitly.
+	json::property<name::default_, bool>,
+
+	/// Required. Whether the push rule is enabled or not.
+	json::property<name::enabled, bool>,
+
+	/// Required. The ID of this rule.
+	json::property<name::rule_id, json::string>,
+
+	/// The conditions that must hold true for an event in order for a rule
+	/// to be applied to an event. A rule with no conditions always matches.
+	/// Only applicable to underride and override rules.
+	json::property<name::conditions, json::array>,
+
+	/// The glob-style pattern to match against. Only applicable to content
+	/// rules.
+	json::property<name::pattern, json::string>
+>
+{
+	static const string_view type_prefix;
+
+	using super_type::tuple;
+	using super_type::operator=;
+};
+
+/// PushCondition
+struct ircd::m::push::cond
+:json::tuple
+<
+	/// Required. The kind of condition to apply. See conditions for more
+	/// information on the allowed kinds and how they work.
+	json::property<name::kind, json::string>,
+
+	/// Required for event_match conditions. The dot- separated field of the
+	/// event to match. Required for sender_notification_permission conditions.
+	/// The field in the power level event the user needs a minimum power level
+	/// for. Fields must be specified under the notifications property in the
+	/// power level event's content.
+	json::property<name::key, json::string>,
+
+	/// Required for event_match conditions. The glob-style pattern to match
+	/// against. Patterns with no special glob characters should be treated
+	/// as having asterisks prepended and appended when testing the condition.
+	json::property<name::pattern, json::string>,
+
+	/// Required for room_member_count conditions. A decimal integer optionally
+	/// prefixed by one of, ==, <, >, >= or <=. A prefix of < matches rooms
+	/// where the member count is strictly less than the given number and so
+	/// forth. If no prefix is present, this parameter defaults to ==.
+	json::property<name::is, json::string>
 >
 {
 	using super_type::tuple;
