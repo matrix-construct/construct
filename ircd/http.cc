@@ -106,8 +106,11 @@ ircd::http::reason
 	{ code::GATEWAY_TIMEOUT,                     "Gateway Timeout"                                 },
 	{ code::HTTP_VERSION_NOT_SUPPORTED,          "HTTP Version Not Supported"                      },
 	{ code::INSUFFICIENT_STORAGE,                "Insufficient Storage"                            },
-	{ code::WEB_SERVER_IS_DOWN,                  "Web Server Is Down"                              },
-	{ code::A_TIMEOUT_OCCURRED,                  "A Timeout Occurred"                              },
+
+	{ code::CLOUDFLARE_REFUSED,                  "Cloudflare Customer Connection Refused"          },
+	{ code::CLOUDFLARE_TIMEDOUT,                 "Cloudflare Customer Connection Timed-out"        },
+	{ code::CLOUDFLARE_UNREACHABLE,              "Cloudflare Customer Unreachable"                 },
+	{ code::CLOUDFLARE_REQUEST_TIMEOUT,          "Cloudflare Customer Request Time-out"            },
 };
 
 struct ircd::http::grammar
