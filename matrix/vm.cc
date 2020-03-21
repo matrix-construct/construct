@@ -72,7 +72,20 @@ noexcept
 		return !eval::executing && !eval::injecting;
 	});
 
-	assert(!sequence::pending);
+	if(sequence::pending)
+		log::warning
+		{
+			log, "Waiting for pending:%zu sequencing (retired:%zu committed:%zu uncommitted:%zu)",
+			sequence::pending,
+			sequence::retired,
+			sequence::committed,
+			sequence::uncommitted,
+		};
+
+	sequence::dock.wait([]
+	{
+		return !sequence::pending;
+	});
 
 	event::id::buf event_id;
 	const auto retired
