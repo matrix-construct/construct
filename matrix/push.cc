@@ -8,30 +8,102 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::m::push
-{
-	static bool room_member_count(const cond &, const event &);
-	static bool sender_notification_permission(const cond &, const event &);
-	static bool contains_display_name(const cond &, const event &, const m::user &);
-	static bool event_match(const cond &, const event &);
-}
-
 decltype(ircd::m::push::rule::type_prefix)
 ircd::m::push::rule::type_prefix
 {
 	"ircd.push.rule"
 };
 
-bool
-ircd::m::push::match(const cond &cond,
-                     const event &event)
+//
+// match
+//
+
+namespace ircd::m::push
 {
-	return false;
+	static bool unknown_condition_kind(const event &, const cond &, const match::opts &);
+	static bool sender_notification_permission(const event &, const cond &, const match::opts &);
+	static bool contains_display_name(const event &, const cond &, const match::opts &);
+	static bool room_member_count(const event &, const cond &, const match::opts &);
+	static bool event_match(const event &, const cond &, const match::opts &);
 }
 
+decltype(ircd::m::push::match::cond_kind)
+ircd::m::push::match::cond_kind
+{
+	event_match,
+	room_member_count,
+	contains_display_name,
+	sender_notification_permission,
+	unknown_condition_kind,
+};
+
+decltype(ircd::m::push::match::cond_kind_name)
+ircd::m::push::match::cond_kind_name
+{
+	"event_match",
+	"room_member_count",
+	"contains_display_name",
+	"sender_notification_permission",
+};
+
+//
+// match::match
+//
+
+ircd::m::push::match::match(const event &event,
+                            const rule &rule,
+                            const match::opts &opts)
+:boolean{[&event, &rule, &opts]
+{
+	const auto &conditions
+	{
+		json::get<"conditions"_>(rule)
+	};
+
+	for(const json::object &cond : conditions)
+		if(!match(event, push::cond(cond), opts))
+			return false;
+
+	return true;
+}}
+{
+}
+
+ircd::m::push::match::match(const event &event,
+                            const cond &cond,
+                            const match::opts &opts)
+:boolean{[&event, &cond, &opts]
+{
+	const string_view &kind
+	{
+		json::get<"kind"_>(cond)
+	};
+
+	const auto pos
+	{
+		indexof(kind, string_views(cond_kind_name))
+	};
+
+	assert(pos <= 5);
+	const auto &func
+	{
+		cond_kind[pos]
+	};
+
+	return func(event, cond, opts);
+}}
+{
+}
+
+//
+// push::match condition functors (internal)
+//
+
 bool
-ircd::m::push::event_match(const cond &cond,
-                           const event &event)
+ircd::m::push::event_match(const event &event,
+                           const cond &cond,
+                           const match::opts &opts)
+try
 {
 	assert(json::get<"kind"_>(cond) == "event_match");
 
@@ -70,11 +142,27 @@ ircd::m::push::event_match(const cond &cond,
 
 	return pattern(value);
 }
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Push condition 'event_match' %s :%s",
+		string_view{event.event_id},
+		e.what(),
+	};
+
+	return false;
+}
 
 bool
-ircd::m::push::contains_display_name(const cond &cond,
-                                     const event &event,
-                                     const m::user &user)
+ircd::m::push::contains_display_name(const event &event,
+                                     const cond &cond,
+                                     const match::opts &opts)
+try
 {
 	assert(json::get<"kind"_>(cond) == "contains_display_name");
 
@@ -91,9 +179,13 @@ ircd::m::push::contains_display_name(const cond &cond,
 	if(!body)
 		return false;
 
+	assert(opts.user_id);
+	if(unlikely(!opts.user_id))
+		return false;
+
 	const m::user::profile profile
 	{
-		user
+		opts.user_id
 	};
 
 	char buf[256];
@@ -104,10 +196,27 @@ ircd::m::push::contains_display_name(const cond &cond,
 
 	return displayname && has(body, displayname);
 }
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Push condition 'contains_display_name' %s :%s",
+		string_view{event.event_id},
+		e.what(),
+	};
+
+	return false;
+}
 
 bool
-ircd::m::push::sender_notification_permission(const cond &cond,
-                                              const event &event)
+ircd::m::push::sender_notification_permission(const event &event,
+                                              const cond &cond,
+                                              const match::opts &opts)
+try
 {
 	assert(json::get<"kind"_>(cond) == "sender_notification_permission");
 
@@ -165,10 +274,27 @@ ircd::m::push::sender_notification_permission(const cond &cond,
 
 	return ret;
 }
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Push condition 'sender_notification_permission' %s :%s",
+		string_view{event.event_id},
+		e.what(),
+	};
+
+	return false;
+}
 
 bool
-ircd::m::push::room_member_count(const cond &cond,
-                                 const event &event)
+ircd::m::push::room_member_count(const event &event,
+                                 const cond &cond,
+                                 const match::opts &opts)
+try
 {
 	assert(json::get<"kind"_>(cond) == "room_member_count");
 
@@ -236,6 +362,29 @@ ircd::m::push::room_member_count(const cond &cond,
 					members.empty("join"):
 					false;
 	};
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Push condition 'room_member_count' %s :%s",
+		string_view{event.event_id},
+		e.what(),
+	};
+
+	return false;
+}
+
+bool
+ircd::m::push::unknown_condition_kind(const event &event,
+                                      const cond &cond,
+                                      const match::opts &opts)
+{
+	return false;
 }
 
 //

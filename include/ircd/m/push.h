@@ -20,15 +20,32 @@ namespace ircd::m::push
 	struct rule;
 	struct rules;
 	struct pusher;
+	struct match;
 
 	/// scope, kind, ruleid
 	using path = std::tuple<string_view, string_view, string_view>;
 	string_view make_type(const mutable_buffer &, const path &);
 	path make_path(const string_view &type, const string_view &state_key);
 	path make_path(const event &);
-
-	bool match(const cond &, const event &);
 }
+
+struct ircd::m::push::match
+:boolean
+{
+	struct opts;
+	using cond_kind_func = bool (*)(const event &, const cond &, const opts &);
+
+	static string_view cond_kind_name[4];
+	static const cond_kind_func cond_kind[5];
+
+	explicit match(const event &, const cond &, const opts &);
+	explicit match(const event &, const rule &, const opts &);
+};
+
+struct ircd::m::push::match::opts
+{
+	m::id::user user_id;
+};
 
 /// 13.13.1 I'm your pusher, baby.
 struct ircd::m::push::pusher
