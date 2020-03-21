@@ -12052,6 +12052,55 @@ console_cmd__user__pushrules(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__pushers(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "pushkey",
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const auto &pushkey
+	{
+		param["pushkey"]
+	};
+
+	const m::user::pushers pushers
+	{
+		user_id
+	};
+
+	if(pushkey)
+	{
+		pushers.get(pushkey, [&out]
+		(const auto &key, const json::object &pusher)
+		{
+			out
+			<< pusher
+			<< std::endl;
+		});
+
+		return true;
+	}
+
+	pushers.for_each([&out]
+	(const auto &pushkey, const json::object &pusher)
+	{
+		out
+		<< std::left << std::setw(40) << pushkey << " | "
+		<< pusher
+		<< std::endl;
+		return true;
+	});
+
+	return true;
+}
+
 //
 // users
 //
