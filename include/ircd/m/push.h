@@ -26,6 +26,8 @@ namespace ircd::m::push
 	string_view make_type(const mutable_buffer &, const path &);
 	path make_path(const string_view &type, const string_view &state_key);
 	path make_path(const event &);
+
+	bool match(const cond &, const event &);
 }
 
 /// PushCondition
