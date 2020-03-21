@@ -10,10 +10,10 @@
 
 namespace ircd::m
 {
-    static void auth_room_power_levels(const event &, room::auth::hookdata &);
-    extern hookfn<room::auth::hookdata &> auth_room_power_levels_hookfn;
+	static void auth_room_power_levels(const event &, room::auth::hookdata &);
+	extern hookfn<room::auth::hookdata &> auth_room_power_levels_hookfn;
 
-    static void changed_room_power_levels(const event &, vm::eval &);
+	static void changed_room_power_levels(const event &, vm::eval &);
 	extern m::hookfn<m::vm::eval &> changed_room_power_levels_hookfn;
 }
 
