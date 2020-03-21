@@ -13,14 +13,14 @@
 
 namespace ircd::m::push
 {
-	IRCD_M_EXCEPTION(m::error, error, http::INTERNAL_SERVER_ERROR)
-	IRCD_M_EXCEPTION(error, NOT_A_RULE, http::BAD_REQUEST)
-
 	struct cond;
 	struct rule;
 	struct rules;
 	struct pusher;
 	struct match;
+
+	IRCD_M_EXCEPTION(m::error, error, http::INTERNAL_SERVER_ERROR)
+	IRCD_M_EXCEPTION(error, NOT_A_RULE, http::BAD_REQUEST)
 
 	/// scope, kind, ruleid
 	using path = std::tuple<string_view, string_view, string_view>;
@@ -88,6 +88,8 @@ struct ircd::m::push::pusher
 	json::property<name::append, bool>
 >
 {
+	static const string_view type_prefix;
+
 	using super_type::tuple;
 	using super_type::operator=;
 };
