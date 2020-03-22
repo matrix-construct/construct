@@ -396,6 +396,19 @@ ircd::m::push::unknown_condition_kind(const event &event,
                                       const cond &cond,
                                       const match::opts &opts)
 {
+	const string_view &kind
+	{
+		json::get<"kind"_>(cond)
+	};
+
+	log::derror
+	{
+		log, "Push condition for %s by %s :unknown kind '%s' rule always fails...",
+		string_view{event.event_id},
+		string_view{opts.user_id},
+		kind,
+	};
+
 	return false;
 }
 
