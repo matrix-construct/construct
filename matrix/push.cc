@@ -741,13 +741,13 @@ ircd::m::push::rules::defaults{R"(
 			"conditions":
 			[
 				{
-					"kind": "room_member_count",
-					"is": "2"
-				},
-				{
 					"kind": "event_match",
 					"key": "type",
 					"pattern": "m.room.encrypted"
+				},
+				{
+					"kind": "room_member_count",
+					"is": "2"
 				}
 			],
 			"actions":
@@ -770,13 +770,13 @@ ircd::m::push::rules::defaults{R"(
 			"conditions":
 			[
 				{
-					"kind": "room_member_count",
-					"is": "2"
-				},
-				{
 					"kind": "event_match",
 					"key": "type",
 					"pattern": "m.room.message"
+				},
+				{
+					"kind": "room_member_count",
+					"is": "2"
 				}
 			],
 			"actions":
