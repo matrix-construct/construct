@@ -35,6 +35,7 @@ namespace ircd::m::push
 	static bool unknown_condition_kind(const event &, const cond &, const match::opts &);
 	static bool sender_notification_permission(const event &, const cond &, const match::opts &);
 	static bool contains_display_name(const event &, const cond &, const match::opts &);
+	static bool contains_user_mxid(const event &, const cond &, const match::opts &);
 	static bool room_member_count(const event &, const cond &, const match::opts &);
 	static bool event_match(const event &, const cond &, const match::opts &);
 }
@@ -44,6 +45,7 @@ ircd::m::push::match::cond_kind
 {
 	event_match,
 	room_member_count,
+	contains_user_mxid,
 	contains_display_name,
 	sender_notification_permission,
 	unknown_condition_kind,
@@ -54,6 +56,7 @@ ircd::m::push::match::cond_kind_name
 {
 	"event_match",
 	"room_member_count",
+	"contains_user_mxid",
 	"contains_display_name",
 	"sender_notification_permission",
 };
@@ -160,6 +163,49 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "Push condition 'event_match' %s :%s",
+		string_view{event.event_id},
+		e.what(),
+	};
+
+	return false;
+}
+
+bool
+ircd::m::push::contains_user_mxid(const event &event,
+                                  const cond &cond,
+                                  const match::opts &opts)
+try
+{
+	assert(json::get<"kind"_>(cond) == "contains_user_mxid");
+
+	const json::object &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	const json::string &body
+	{
+		content["body"]
+	};
+
+	if(!body)
+		return false;
+
+	assert(opts.user_id);
+	if(unlikely(!opts.user_id))
+		return false;
+
+	return has(body, opts.user_id);
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Push condition 'contains_user_mxid' %s :%s",
 		string_view{event.event_id},
 		e.what(),
 	};
@@ -707,6 +753,12 @@ ircd::m::push::rules::defaults{R"(
 			"rule_id": ".m.rule.contains_user_name",
 			"default": true,
 			"enabled": true,
+			"conditions":
+			[
+				{
+					"kind": "contains_user_mxid"
+				}
+			],
 			"actions":
 			[
 				"notify",
