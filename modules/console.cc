@@ -12101,6 +12101,40 @@ console_cmd__user__pushers(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__user__notifications(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "only"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const m::user::notifications notifications
+	{
+		user_id
+	};
+
+	m::user::notifications::opts opts;
+	opts.only = param["only"];
+
+	notifications.for_each(opts, [&out]
+	(const auto &idx, const json::object &notification)
+	{
+		out
+		<< std::right << std::setw(10) << idx << " | "
+		<< notification
+		<< std::endl;
+		return true;
+	});
+
+	return true;
+}
+
 //
 // users
 //

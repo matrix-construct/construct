@@ -44,6 +44,7 @@ struct ircd::m::user
 	struct registar;
 	struct pushrules;
 	struct pushers;
+	struct notifications;
 
 	using id = m::id::user;
 	using closure = std::function<void (const user &)>;
@@ -94,3 +95,4 @@ const
 #include "register.h"
 #include "pushrules.h"
 #include "pushers.h"
+#include "notifications.h"
