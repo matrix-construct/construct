@@ -468,14 +468,14 @@ ircd::m::vm::execute_pdu(eval &eval,
 		at<"type"_>(event)
 	};
 
-	const bool internal
+	const scope_restore room_internal
 	{
-		m::internal(room_id)
+		eval.room_internal, m::internal(room_id)
 	};
 
 	const bool authenticate
 	{
-		opts.auth && !internal
+		opts.auth && !eval.room_internal
 	};
 
 	// The conform hook runs static checks on an event's formatting and
@@ -486,7 +486,7 @@ ircd::m::vm::execute_pdu(eval &eval,
 		call_hook(conform_hook, eval, event, eval);
 	}
 
-	if(unlikely(internal && !my(event)))
+	if(unlikely(eval.room_internal && !my(event)))
 		throw error
 		{
 			fault::GENERAL, "Internal room event denied from external source."
@@ -730,7 +730,7 @@ ircd::m::vm::write_append(eval &eval,
 			//XXX
 			const auto &[pass, fail]
 			{
-				opts.auth && !internal(room.room_id)?
+				opts.auth && !eval.room_internal?
 					room::auth::check(event, room):
 					room::auth::passfail{true, {}}
 			};
