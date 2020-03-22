@@ -35,6 +35,7 @@ namespace ircd::m::push
 	static bool unknown_condition_kind(const event &, const cond &, const match::opts &);
 	static bool sender_notification_permission(const event &, const cond &, const match::opts &);
 	static bool contains_display_name(const event &, const cond &, const match::opts &);
+	static bool state_key_user_mxid(const event &, const cond &, const match::opts &);
 	static bool contains_user_mxid(const event &, const cond &, const match::opts &);
 	static bool room_member_count(const event &, const cond &, const match::opts &);
 	static bool event_match(const event &, const cond &, const match::opts &);
@@ -46,6 +47,7 @@ ircd::m::push::match::cond_kind
 	event_match,
 	room_member_count,
 	contains_user_mxid,
+	state_key_user_mxid,
 	contains_display_name,
 	sender_notification_permission,
 	unknown_condition_kind,
@@ -57,6 +59,7 @@ ircd::m::push::match::cond_kind_name
 	"event_match",
 	"room_member_count",
 	"contains_user_mxid",
+	"state_key_user_mxid",
 	"contains_display_name",
 	"sender_notification_permission",
 };
@@ -206,6 +209,38 @@ catch(const std::exception &e)
 	log::error
 	{
 		log, "Push condition 'contains_user_mxid' %s :%s",
+		string_view{event.event_id},
+		e.what(),
+	};
+
+	return false;
+}
+
+bool
+ircd::m::push::state_key_user_mxid(const event &event,
+                                   const cond &cond,
+                                   const match::opts &opts)
+try
+{
+	assert(json::get<"kind"_>(cond) == "state_key_user_mxid");
+
+	const auto &state_key
+	{
+		json::get<"state_key"_>(event)
+	};
+
+	assert(opts.user_id);
+	return state_key == opts.user_id;
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Push condition 'state_key_user_mxid' %s :%s",
 		string_view{event.event_id},
 		e.what(),
 	};
@@ -638,9 +673,7 @@ ircd::m::push::rules::defaults{R"(
 					"pattern": "invite"
 				},
 				{
-					"key": "state_key",
-					"kind": "event_match",
-					"pattern": "[the user's Matrix ID]"
+					"kind": "state_key_user_mxid"
 				}
 			],
 			"actions":
