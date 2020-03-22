@@ -8,6 +8,12 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+decltype(ircd::m::push::log)
+ircd::m::push::log
+{
+	"m.push"
+};
+
 decltype(ircd::m::push::pusher::type_prefix)
 ircd::m::push::pusher::type_prefix
 {
