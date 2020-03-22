@@ -151,7 +151,7 @@ const
 
 	const event::idx &event_idx
 	{
-		user_room.get(type, ruleid)
+		user_room.get(std::nothrow, type, ruleid)
 	};
 
 	return m::get(std::nothrow, event_idx, "content", [&path, &closure]
@@ -180,7 +180,10 @@ const
 
 	// If the path contains a ruleid there's at most one item to iterate...
 	if(ruleid)
-		return get(std::nothrow, path, closure);
+	{
+		get(std::nothrow, path, closure);
+		return true;
+	}
 
 	// Present the default rules to the closure; note that the for_each
 	// convention dictates if the user's closure returns false we'll never
