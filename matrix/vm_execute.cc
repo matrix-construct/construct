@@ -173,6 +173,15 @@ ircd::m::vm::execute(eval &eval,
 		m::version(room_version_buf, room{eval.room_id}, std::nothrow)
 	};
 
+	// Query for whether the room apropos is an internal room.
+	const scope_restore room_internal
+	{
+		eval.room_internal,
+		eval.room_id?
+			m::internal(eval.room_id):
+			false
+	};
+
 	// We have to set the event_id in the event instance if it didn't come
 	// with the event JSON.
 	if(!opts.edu && !event.event_id)
@@ -466,11 +475,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 	const string_view &type
 	{
 		at<"type"_>(event)
-	};
-
-	const scope_restore room_internal
-	{
-		eval.room_internal, m::internal(room_id)
 	};
 
 	const bool authenticate
