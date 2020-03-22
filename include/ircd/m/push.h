@@ -159,6 +159,9 @@ struct ircd::m::push::rule
 {
 	static const string_view type_prefix;
 
+	using closure_bool = std::function<bool (const id::user &, const path &, const json::object &)>;
+	static bool for_each(const path &, const closure_bool &);
+
 	using super_type::tuple;
 	using super_type::operator=;
 };

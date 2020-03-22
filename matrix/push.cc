@@ -400,6 +400,69 @@ ircd::m::push::unknown_condition_kind(const event &event,
 }
 
 //
+// rule
+//
+
+bool
+ircd::m::push::rule::for_each(const path &path,
+                              const closure_bool &closure)
+{
+	using json::at;
+
+	char typebuf[event::TYPE_MAX_SIZE];
+	const string_view &type
+	{
+		make_type(typebuf, path)
+	};
+
+	return events::type::for_each_in(type, [&closure]
+	(const string_view &type, const event::idx &event_idx)
+	{
+		static const event::fetch::opts fopts
+		{
+			event::keys::include
+			{
+				"content",
+				"room_id",
+				"sender",
+				"state_key",
+			}
+		};
+
+		if(!m::room::state::present(event_idx))
+			return true;
+
+		const m::event::fetch event
+		{
+			event_idx, std::nothrow, fopts
+		};
+
+		if(!event.valid)
+			return true;
+
+		const m::user::id &sender
+		{
+			at<"sender"_>(event)
+		};
+
+		const m::room::id &room_id
+		{
+			at<"room_id"_>(event)
+		};
+
+		if(!my(sender) || !m::user::room::is(room_id, sender))
+			return true;
+
+		const push::path path
+		{
+			make_path(type, at<"state_key"_>(event))
+		};
+
+		return closure(at<"sender"_>(event), path, at<"content"_>(event));
+	});
+}
+
+//
 // path
 //
 
