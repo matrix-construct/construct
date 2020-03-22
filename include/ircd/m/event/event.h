@@ -113,8 +113,8 @@ struct ircd::m::event
 
 	static constexpr const size_t &MAX_SIZE {64_KiB};
 	static constexpr const size_t &TYPE_MAX_SIZE {256};
-	static constexpr const size_t &STATE_KEY_MAX_SIZE {256};
 	static constexpr const size_t &ORIGIN_MAX_SIZE {256};
+	static constexpr const size_t &STATE_KEY_MAX_SIZE {512};
 	static conf::item<size_t> max_size;
 
 	static bool my(const idx &);
