@@ -136,10 +136,14 @@ noexcept
 	until(t, [&name, &ret]
 	(const auto &key, auto&& val)
 	{
-		if(key == name)
+		if constexpr(std::is_assignable<R, decltype(val)>())
 		{
-			ret = val;
-			return false;
+			if(key == name)
+			{
+				ret = val;
+				return false;
+			}
+			else return true;
 		}
 		else return true;
 	});

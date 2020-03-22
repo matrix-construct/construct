@@ -137,10 +137,14 @@ at(const tuple &t,
 	{
 		[&name, &ret](const auto &key, const auto &val)
 		{
-			if(key == name)
+			if constexpr(std::is_assignable<R, decltype(val)>())
 			{
-				ret = std::addressof(val);
-				return false;
+				if(key == name)
+				{
+					ret = std::addressof(val);
+					return false;
+				}
+				else return true;
 			}
 			else return true;
 		}
@@ -166,10 +170,14 @@ at(tuple &t,
 	{
 		[&name, &ret](const auto &key, auto &val)
 		{
-			if(key == name)
+			if constexpr(std::is_assignable<R, decltype(val)>())
 			{
-				ret = std::addressof(val);
-				return false;
+				if(key == name)
+				{
+					ret = std::addressof(val);
+					return false;
+				}
+				else return true;
 			}
 			else return true;
 		}
