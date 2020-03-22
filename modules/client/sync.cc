@@ -1008,75 +1008,6 @@ ircd::m::sync::longpoll::polled(data &data,
 }
 
 //
-// data
-//
-
-ircd::m::sync::data::data(const m::user &user,
-                          const m::events::range &range,
-                          ircd::client *const &client,
-                          json::stack *const &out,
-                          sync::stats *const &stats,
-                          const sync::args *const &args,
-                          const device::id &device_id)
-:range
-{
-    range
-}
-,stats
-{
-    stats
-}
-,client
-{
-    client
-}
-,args
-{
-    args
-}
-,user
-{
-    user
-}
-,user_room
-{
-    user
-}
-,user_state
-{
-    user_room
-}
-,user_rooms
-{
-    user
-}
-,filter_buf
-{
-    this->args?
-        m::filter::get(this->args->filter_id, user):
-        std::string{}
-}
-,filter
-{
-    json::object{filter_buf}
-}
-,device_id
-{
-	device_id
-}
-,out
-{
-    out
-}
-{
-}
-
-ircd::m::sync::data::~data()
-noexcept
-{
-}
-
-//
 // sync/args.h
 //
 
@@ -1160,4 +1091,73 @@ catch(const bad_lex_cast &e)
 	{
 		"Since parameter invalid :%s", e.what()
 	};
+}
+
+//
+// data
+//
+
+ircd::m::sync::data::data(const m::user &user,
+                          const m::events::range &range,
+                          ircd::client *const &client,
+                          json::stack *const &out,
+                          sync::stats *const &stats,
+                          const sync::args *const &args,
+                          const device::id &device_id)
+:range
+{
+    range
+}
+,stats
+{
+    stats
+}
+,client
+{
+    client
+}
+,args
+{
+    args
+}
+,user
+{
+    user
+}
+,user_room
+{
+    user
+}
+,user_state
+{
+    user_room
+}
+,user_rooms
+{
+    user
+}
+,filter_buf
+{
+    this->args?
+        m::filter::get(this->args->filter_id, user):
+        std::string{}
+}
+,filter
+{
+    json::object{filter_buf}
+}
+,device_id
+{
+	device_id
+}
+,out
+{
+    out
+}
+{
+}
+
+ircd::m::sync::data::~data()
+noexcept
+{
 }
