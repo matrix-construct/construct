@@ -119,37 +119,34 @@ try
 {
 	assert(json::get<"kind"_>(cond) == "event_match");
 
-	const auto &[path, prop]
+	const auto &[top, path]
 	{
-		rsplit(json::get<"key"_>(cond), '.')
+		split(json::get<"key"_>(cond), '.')
 	};
 
-	json::object targ
+	string_view value
 	{
-		event.source
+		json::get(event, top, json::object{})
 	};
 
-	const token_view_bool walk
+	tokens(path, ".", token_view_bool{[&value]
+	(const string_view &key)
 	{
-		[&targ](const string_view &key)
-		{
-			targ = targ[key];
-			return targ && json::type(targ) == json::OBJECT;
-		}
-	};
+		if(json::type(value, std::nothrow) != json::OBJECT)
+			return false;
 
-	if(!tokens(path, ".", walk))
+		value = json::object(value)[key];
+		if(likely(json::type(value, std::nothrow) != json::STRING))
+			return true;
+
+		value = json::string(value);
 		return false;
+	}});
 
 	 //TODO: XXX spec leading/trailing; not imatch
 	const globular_imatch pattern
 	{
 		json::get<"pattern"_>(cond)
-	};
-
-	const json::string &value
-	{
-		targ[prop]
 	};
 
 	return pattern(value);
