@@ -590,6 +590,46 @@ ircd::m::push::notifying(const rule &rule)
 	return false;
 }
 
+bool
+ircd::m::push::highlighting(const rule &rule)
+{
+	const json::array &actions
+	{
+		json::get<"actions"_>(rule)
+	};
+
+	for(const string_view &action : actions)
+	{
+		if(json::type(action, std::nothrow) != json::OBJECT)
+			continue;
+
+		const json::object &object
+		{
+			action
+		};
+
+		const json::string set_tweak
+		{
+			object["set_tweak"]
+		};
+
+		if(set_tweak != "highlight")
+			continue;
+
+		const auto &value
+		{
+			object["value"]
+		};
+
+		// Spec sez: If a highlight tweak is given with no value, its value is
+		// defined to be true. If no highlight tweak is given at all then the
+		// value of highlight is defined to be false.
+		return !value || value == "true";
+	}
+
+	return false;
+}
+
 //
 // path
 //
