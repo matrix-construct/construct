@@ -493,7 +493,7 @@ try
 		};
 
 		char buf[64];
-		assert(!data.phased || next_batch >= 0L);
+		assert(data.phased || next_batch >= 0L);
 		const string_view &next_batch_token
 		{
 			// The polylog phased since token. We pack two numbers separted by a '_'
