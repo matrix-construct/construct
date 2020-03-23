@@ -59,6 +59,11 @@ try
 	members.for_each("join", my_host(), [&event, &eval]
 	(const user::id &user_id, const event::idx &membership_event_idx)
 	{
+		// r0.6.0-13.13.15 Homeservers MUST NOT notify the Push Gateway for
+		// events that the user has sent themselves.
+		if(user_id == at<"sender"_>(event))
+			return true;
+
 		handle_rules(event, eval, user_id, "global");
 		return true;
 	});
