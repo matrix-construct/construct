@@ -10,8 +10,8 @@
 
 namespace ircd::m::push
 {
-	static void perform_action(const event &, vm::eval &, const user::id &, const path &, const rule &, const string_view &action);
-	static bool check_rule(const event &, vm::eval &, const user::id &, const path &, const rule &);
+	static void execute(const event &, vm::eval &, const user::id &, const path &, const rule &);
+	static bool matching(const event &, vm::eval &, const user::id &, const path &, const rule &);
 	static bool handle_kind(const event &, vm::eval &, const user::id &, const path &);
 	static void handle_rules(const event &, vm::eval &, const user::id &, const string_view &scope);
 	static void handle_event(const m::event &, vm::eval &);
@@ -116,28 +116,21 @@ ircd::m::push::handle_kind(const event &event,
 	return pushrules.for_each(path, [&event, &eval, &user_id]
 	(const push::path &path, const push::rule &rule)
 	{
-		if(!check_rule(event, eval, user_id, path, rule))
-			return true;
-
-		const json::array &actions
+		if(matching(event, eval, user_id, path, rule))
 		{
-			json::get<"actions"_>(rule)
-		};
-
-		for(const string_view &action : actions)
-			perform_action(event, eval, user_id, path, rule, action);
-
-		// false to break due to match; check_rule returns true on match.
-		return false;
+			execute(event, eval, user_id, path, rule);
+			return false; // false to break due to match
+		}
+		else return true;
 	});
 }
 
 bool
-ircd::m::push::check_rule(const event &event,
-                          vm::eval &eval,
-                          const user::id &user_id,
-                          const path &path,
-                          const rule &rule)
+ircd::m::push::matching(const event &event,
+                        vm::eval &eval,
+                        const user::id &user_id,
+                        const path &path,
+                        const rule &rule)
 try
 {
 	const auto &[scope, kind, ruleid]
@@ -196,17 +189,21 @@ catch(const std::exception &e)
 }
 
 void
-ircd::m::push::perform_action(const event &event,
-                              vm::eval &eval,
-                              const user::id &user_id,
-                              const path &path,
-                              const rule &rule,
-                              const string_view &action)
+ircd::m::push::execute(const event &event,
+                       vm::eval &eval,
+                       const user::id &user_id,
+                       const path &path,
+                       const rule &rule)
 try
 {
 	const auto &[scope, kind, ruleid]
 	{
 		path
+	};
+
+	const json::array &actions
+	{
+		json::get<"actions"_>(rule)
 	};
 
 	log::debug
@@ -217,7 +214,7 @@ try
 		kind,
 		ruleid,
 		string_view{user_id},
-		action,
+		string_view{json::get<"actions"_>(rule)},
 	};
 
 
