@@ -102,7 +102,7 @@ ircd::m::push::match::match(const event &event,
 		indexof(kind, string_views(cond_kind_name))
 	};
 
-	assert(pos <= 5);
+	assert(pos <= sizeof(cond_kind_name) / sizeof(string_view));
 	const auto &func
 	{
 		cond_kind[pos]
