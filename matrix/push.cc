@@ -278,13 +278,14 @@ try
 		opts.user_id
 	};
 
-	char buf[256];
-	const string_view displayname
+	bool ret{false};
+	profile.get(std::nothrow, "displayname", [&ret, &body]
+	(const string_view &, const json::string &displayname)
 	{
-		profile.get(buf, "displayname")
-	};
+		ret = displayname && has(body, displayname);
+	});
 
-	return displayname && has(body, displayname);
+	return ret;
 }
 catch(const ctx::interrupted &)
 {
