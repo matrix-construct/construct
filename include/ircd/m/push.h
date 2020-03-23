@@ -28,6 +28,9 @@ namespace ircd::m::push
 	path make_path(const string_view &type, const string_view &state_key);
 	path make_path(const event &);
 
+	// true on "notify" or "coalesce"
+	bool notifying(const rule &);
+
 	extern log::log log;
 }
 

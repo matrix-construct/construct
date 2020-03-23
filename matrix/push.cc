@@ -562,6 +562,34 @@ ircd::m::push::rule::for_each(const path &path,
 	});
 }
 
+bool
+ircd::m::push::notifying(const rule &rule)
+{
+	const json::array &actions
+	{
+		json::get<"actions"_>(rule)
+	};
+
+	for(const string_view &action : actions)
+	{
+		if(json::type(action, std::nothrow) != json::STRING)
+			continue;
+
+		const json::string &string
+		{
+			action
+		};
+
+		if(string == "notify")
+			return true;
+
+		if(string == "coalesce")
+			return true;
+	}
+
+	return false;
+}
+
 //
 // path
 //
