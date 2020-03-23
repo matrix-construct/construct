@@ -84,7 +84,7 @@ ircd::m::push::handle_get(client &client,
 	if(handle_enabled || handle_actions)
 	{
 		pushrules.get(path, [&]
-		(const auto &path, const json::object &rule)
+		(const auto &event_idx, const auto &path, const json::object &rule)
 		{
 			const json::member member
 			{
@@ -168,7 +168,7 @@ ircd::m::push::handle_get(client &client,
 		};
 
 		pushrules.get(std::nothrow, path, [&]
-		(const auto &path, const json::object &rule)
+		(const auto &event_idx, const auto &path, const json::object &rule)
 		{
 			append_rule(_kind, path, rule);
 		});
@@ -189,7 +189,7 @@ ircd::m::push::handle_get(client &client,
 		};
 
 		pushrules.for_each(push::path{scope, kind, {}}, [&]
-		(const auto &path, const json::object &rule)
+		(const auto &event_idx, const auto &path, const json::object &rule)
 		{
 			append_rule(_kind, path, rule);
 			return true;
@@ -215,7 +215,7 @@ ircd::m::push::handle_get(client &client,
 			};
 
 			pushrules.for_each(push::path{scope, kind, {}}, [&]
-			(const auto &path, const json::object &rule)
+			(const auto &event_idx, const auto &path, const json::object &rule)
 			{
 				append_rule(_kind, path, rule);
 				return true;
@@ -306,7 +306,7 @@ ircd::m::push::handle_put(client &client,
 	if(handle_enabled || handle_actions)
 	{
 		pushrules.get(path, [&]
-		(const auto &path, const json::object &old_rule)
+		(const auto &event_idx, const auto &path, const json::object &old_rule)
 		{
 			const auto new_rule
 			{

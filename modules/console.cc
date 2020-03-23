@@ -12033,7 +12033,7 @@ console_cmd__user__pushrules(opt &out, const string_view &line)
 	};
 
 	pushrules.for_each({scope, kind, ruleid}, [&out]
-	(const auto &path, const json::object &rule)
+	(const auto &event_idx, const auto &path, const json::object &rule)
 	{
 		const auto &[scope, kind, ruleid]
 		{
@@ -12041,6 +12041,7 @@ console_cmd__user__pushrules(opt &out, const string_view &line)
 		};
 
 		out
+		<< std::right << std::setw(10) << event_idx << " | "
 		<< std::left << std::setw(10) << scope << " | "
 		<< std::left << std::setw(10) << kind << " | "
 		<< std::left << std::setw(36) << ruleid << "  "
@@ -12078,7 +12079,7 @@ console_cmd__user__pushers(opt &out, const string_view &line)
 	if(pushkey)
 	{
 		pushers.get(pushkey, [&out]
-		(const auto &key, const json::object &pusher)
+		(const auto &event_idx, const auto &key, const json::object &pusher)
 		{
 			out
 			<< pusher
@@ -12089,7 +12090,7 @@ console_cmd__user__pushers(opt &out, const string_view &line)
 	}
 
 	pushers.for_each([&out]
-	(const auto &pushkey, const json::object &pusher)
+	(const auto &event_idx, const auto &pushkey, const json::object &pusher)
 	{
 		out
 		<< std::left << std::setw(40) << pushkey << " | "

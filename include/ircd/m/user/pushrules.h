@@ -14,8 +14,8 @@
 struct ircd::m::user::pushrules
 {
 	using path = push::path;
-	using closure_bool = std::function<bool (const path &, const json::object &)>;
-	using closure = std::function<void (const path &, const json::object &)>;
+	using closure_bool = std::function<bool (const event::idx &, const path &, const json::object &)>;
+	using closure = std::function<void (const event::idx &, const path &, const json::object &)>;
 
 	m::user user;
 

@@ -132,7 +132,7 @@ const
 
 			if(_ruleid == ruleid)
 			{
-				closure(path, rule);
+				closure(0UL, path, rule);
 				return true;
 			}
 		}
@@ -154,10 +154,10 @@ const
 		user_room.get(std::nothrow, type, ruleid)
 	};
 
-	return m::get(std::nothrow, event_idx, "content", [&path, &closure]
+	return m::get(std::nothrow, event_idx, "content", [&path, &closure, &event_idx]
 	(const json::object &content)
 	{
-		closure(path, content);
+		closure(event_idx, path, content);
 	});
 }
 
@@ -202,7 +202,7 @@ const
 					"global", _kind, json::string{rule["rule_id"]}
 				};
 
-				if(!closure(path, rule))
+				if(!closure(0UL, path, rule))
 					return false;
 			}
 		}
@@ -232,10 +232,10 @@ const
 			push::make_path(type, state_key)
 		};
 
-		return m::query<bool>(std::nothrow, event_idx, "content", true, [&path, &closure]
+		return m::query<bool>(std::nothrow, event_idx, "content", true, [&]
 		(const json::object &content)
 		{
-			return closure(path, content);
+			return closure(event_idx, path, content);
 		});
 	}});
 }

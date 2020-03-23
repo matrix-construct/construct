@@ -147,7 +147,7 @@ ircd::m::push::handle_pushers_get(client &client,
 	};
 
 	user_pushers.for_each([&pushers]
-	(const string_view &pushkey, const json::object &pusher)
+	(const event::idx &, const string_view &pushkey, const json::object &pusher)
 	{
 		pushers.append(pusher);
 		return true;

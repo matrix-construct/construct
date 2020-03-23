@@ -114,7 +114,7 @@ ircd::m::push::handle_kind(const event &event,
 	};
 
 	return pushrules.for_each(path, [&event, &eval, &user_id]
-	(const push::path &path, const push::rule &rule)
+	(const auto &event_idx, const auto &path, const auto &rule)
 	{
 		if(matching(event, eval, user_id, path, rule))
 		{

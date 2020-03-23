@@ -113,10 +113,10 @@ const
 		user_room.get(type, key)
 	};
 
-	return m::get(std::nothrow, event_idx, "content", [&key, &closure]
+	return m::get(std::nothrow, event_idx, "content", [&key, &closure, &event_idx]
 	(const json::object &content)
 	{
-		closure(key, content);
+		closure(event_idx, key, content);
 	});
 }
 
@@ -143,10 +143,10 @@ const
 	(const string_view &_type, const string_view &state_key, const m::event::idx &event_idx)
 	{
 		assert(type == _type);
-		return m::query<bool>(std::nothrow, event_idx, "content", true, [&state_key, &closure]
+		return m::query<bool>(std::nothrow, event_idx, "content", true, [&]
 		(const json::object &content)
 		{
-			return closure(state_key, content);
+			return closure(event_idx, state_key, content);
 		});
 	}});
 }

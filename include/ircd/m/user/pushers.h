@@ -13,8 +13,8 @@
 
 struct ircd::m::user::pushers
 {
-	using closure_bool = std::function<bool (const string_view &, const json::object &)>;
-	using closure = std::function<void (const string_view &, const json::object &)>;
+	using closure_bool = std::function<bool (const event::idx &, const string_view &, const json::object &)>;
+	using closure = std::function<void (const event::idx &, const string_view &, const json::object &)>;
 
 	m::user user;
 
