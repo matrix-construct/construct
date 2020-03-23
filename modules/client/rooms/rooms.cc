@@ -200,6 +200,9 @@ post_rooms(client &client,
 	if(cmd == "report")
 		return post__report(client, request, room_id);
 
+	if(cmd == "upgrade")
+		return post__upgrade(client, request, room_id);
+
 	throw m::NOT_FOUND
 	{
 		"/rooms command not found"

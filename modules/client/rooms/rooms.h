@@ -224,3 +224,13 @@ ircd::m::resource::response
 get__relations(ircd::client &,
                const ircd::m::resource::request &,
                const ircd::m::room::id &);
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// upgrade.cc
+//
+
+ircd::m::resource::response
+post__upgrade(ircd::client &,
+              const ircd::m::resource::request &,
+              const ircd::m::room::id &);
