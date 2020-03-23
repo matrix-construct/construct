@@ -140,16 +140,18 @@ try
 		event, rule, opts
 	};
 
+	#if 0
 	log::debug
 	{
-		log, "event %s rule {%s, %s, %s} for %s %s",
+		log, "event %s rule { %s, %s, %s } for %s %s",
 		string_view{event.event_id},
 		scope,
 		kind,
 		ruleid,
 		string_view{opts.user_id},
-		bool(match)? "MATCH"_sv : "-----"_sv,
+		bool(match)? "MATCH"_sv : string_view{}
 	};
+	#endif
 
 	if(!bool(match))
 		return false;
@@ -177,7 +179,7 @@ catch(const std::exception &e)
 
 	log::error
 	{
-		log, "Push rule matching in %s for %s at {%s, %s, %s} :%s",
+		log, "Push rule matching in %s for %s at { %s, %s, %s } :%s",
 		string_view{event.event_id},
 		string_view{opts.user_id},
 		scope,
@@ -205,7 +207,7 @@ try
 
 	log::debug
 	{
-		log, "event %s rule {%s, %s, %s} for %s action :%s",
+		log, "event %s rule { %s, %s, %s } for %s action :%s",
 		string_view{event.event_id},
 		scope,
 		kind,
@@ -229,7 +231,7 @@ catch(const std::exception &e)
 
 	log::error
 	{
-		log, "Push rule action in %s for %s at {%s, %s, %s} :%s",
+		log, "Push rule action in %s for %s at { %s, %s, %s } :%s",
 		string_view{event.event_id},
 		string_view{opts.user_id},
 		scope,
