@@ -8,33 +8,66 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m
+{
+	static resource::response
+	get_notifications(client &,
+	                  const resource::request &);
 
-mapi::header
+	extern const event::keys notification_event_keys;
+	extern conf::item<size_t> notifications_limit_default;
+	extern resource::method notifications_method_get;
+	extern resource notifications_resource;
+}
+
+ircd::mapi::header
 IRCD_MODULE
 {
-	"Client 14.13.1.3 :Listing Notifications"
+	"Client r0.6.0-13.13.1.3.1 :Listing Notifications"
 };
 
-ircd::resource
-notifications_resource
+decltype(ircd::m::notifications_resource)
+ircd::m::notifications_resource
 {
 	"/_matrix/client/r0/notifications",
 	{
-		"(14.13.1.3) Listing Notifications"
+		"(r0.6.0-13.13.1.3.1) Listing Notifications"
 	}
 };
 
-conf::item<size_t>
-limit_default
+decltype(ircd::m::notifications_method_get)
+ircd::m::notifications_method_get
 {
-	{ "name",    "ircd.client.notifications.limit.default" },
-	{ "default",  256                                      }
+	notifications_resource, "GET", get_notifications,
+	{
+		notifications_method_get.REQUIRES_AUTH
+	}
 };
 
-resource::response
-get__notifications(client &client,
-                   const resource::request &request)
+decltype(ircd::m::notifications_limit_default)
+ircd::m::notifications_limit_default
+{
+	{ "name",    "ircd.client.notifications.limit.default" },
+	{ "default",  12                                       }
+};
+
+decltype(ircd::m::notification_event_keys)
+ircd::m::notification_event_keys
+{
+	event::keys::include
+	{
+		"event_id",
+		"content",
+		"origin_server_ts",
+		"sender",
+		"state_key",
+		"type",
+	}
+};
+
+ircd::m::resource::response
+ircd::m::get_notifications(client &client,
+                           const resource::request &request)
 {
 	const string_view &from
 	{
@@ -48,7 +81,19 @@ get__notifications(client &client,
 
 	const ushort limit
 	{
-		request.query.get<ushort>("limit", size_t(limit_default))
+		request.query.get<ushort>("limit", size_t(notifications_limit_default))
+	};
+
+	m::user::notifications::opts opts;
+	opts.only = only;
+	opts.to = 0UL;
+	opts.from = from?
+		lex_cast<event::idx>(from):
+		0UL;
+
+	const m::user::notifications notifications
+	{
+		request.user_id
 	};
 
 	resource::response::chunked response
@@ -66,29 +111,121 @@ get__notifications(client &client,
 		out
 	};
 
-	string_view next_token;
+	size_t count(0);
+	event::idx next_token(0);
 	{
-		json::stack::array notifications
+		json::stack::array array
 		{
 			top, "notifications"
 		};
+
+		notifications.for_each(opts, [&]
+		(const event::idx &note_idx, const json::object &note)
+		{
+			assert(note_idx);
+			next_token = note_idx;
+			if(count >= limit)
+				return false;
+
+			const event::idx &event_idx
+			{
+				note.get<event::idx>("event_idx")
+			};
+
+			const event::idx &rule_idx
+			{
+				note.get<event::idx>("rule_idx")
+			};
+
+			//if(m::redacted(event_idx))
+			//	return true;
+
+			const m::event::fetch event
+			{
+				event_idx, std::nothrow
+			};
+
+			if(!event.valid)
+				return true;
+
+			json::stack::object object
+			{
+				array
+			};
+
+			json::stack::member
+			{
+				object, "room_id", json::get<"room_id"_>(event)
+			};
+
+			json::stack::member
+			{
+				object, "ts", json::value
+				{
+					m::get<time_t>(note_idx, "origin_server_ts")
+				}
+			};
+
+			m::event::id::buf last_read;
+			m::receipt::get(last_read, json::get<"room_id"_>(event), request.user_id);
+			json::stack::member
+			{
+				object, "read", json::value
+				{
+					last_read && index(last_read, std::nothrow) >= event_idx
+				}
+			};
+
+			//TODO: get from rule_idx
+			json::stack::member
+			{
+				object, "actions", json::value
+				{
+					opts.only == "highlight"?
+						R"(["notify",{"set_tweak":"highlight","value":true}])":
+						R"(["notify"])"
+				}
+			};
+
+			//TODO: get from notification source
+			json::stack::member
+			{
+				object, "profile_tag", json::value
+				{
+					nullptr
+				}
+			};
+
+			json::stack::object event_object
+			{
+				object, "event"
+			};
+
+			m::event::append::opts opts;
+			opts.keys = &notification_event_keys;
+			opts.event_idx = &event_idx;
+			opts.query_redacted = false;
+			//opts.query_txnid = false;
+			//opts.query_prev_state = false;
+			m::event::append
+			{
+				event_object, event, opts
+			};
+
+			++count;
+			return true;
+		});
 	}
 
-	if(next_token)
+	if(next_token != opts.from)
 		json::stack::member
 		{
-			top, "next_token", next_token
+			top, "next_token", json::value
+			{
+				lex_cast(next_token), json::STRING
+			}
 		};
 
 	top.~object();
 	return std::move(response);
 }
-
-resource::method
-method_get
-{
-	notifications_resource, "GET", get__notifications,
-	{
-		method_get.REQUIRES_AUTH
-	}
-};
