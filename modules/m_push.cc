@@ -10,7 +10,7 @@
 
 namespace ircd::m::push
 {
-	static void execute(const event &, vm::eval &, const user::id &, const path &, const rule &);
+	static void execute(const event &, vm::eval &, const user::id &, const path &, const rule &, const event::idx &);
 	static bool matching(const event &, vm::eval &, const user::id &, const path &, const rule &);
 	static bool handle_kind(const event &, vm::eval &, const user::id &, const path &);
 	static void handle_rules(const event &, vm::eval &, const user::id &, const string_view &scope);
@@ -118,7 +118,7 @@ ircd::m::push::handle_kind(const event &event,
 	{
 		if(matching(event, eval, user_id, path, rule))
 		{
-			execute(event, eval, user_id, path, rule);
+			execute(event, eval, user_id, path, rule, event_idx);
 			return false; // false to break due to match
 		}
 		else return true;
@@ -193,7 +193,8 @@ ircd::m::push::execute(const event &event,
                        vm::eval &eval,
                        const user::id &user_id,
                        const path &path,
-                       const rule &rule)
+                       const rule &rule,
+                       const event::idx &rule_idx)
 try
 {
 	const auto &[scope, kind, ruleid]
@@ -217,7 +218,28 @@ try
 		string_view{json::get<"actions"_>(rule)},
 	};
 
+	// action is dont_notify or undefined etc
+	if(!notifying(rule))
+		return;
 
+	// We send highlight notifications through the user's room
+	if(highlighting(rule))
+	{
+		char type_buf[event::TYPE_MAX_SIZE];
+		user::notifications::opts opts;
+		opts.only = "highlight";
+		const auto &type
+		{
+			user::notifications::make_type(type_buf, opts)
+		};
+
+		const user::room user_room{user_id};
+		send(user_room, at<"sender"_>(event), type, json::members
+		{
+			{ "event_idx",  long(eval.sequence)  },
+			{ "rule_idx",   long(rule_idx)       },
+		});
+	}
 }
 catch(const ctx::interrupted &)
 {
