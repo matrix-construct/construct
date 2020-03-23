@@ -40,7 +40,7 @@ struct ircd::m::push::match
 	struct opts;
 	using cond_kind_func = bool (*)(const event &, const cond &, const opts &);
 
-	static string_view cond_kind_name[6];
+	static const string_view cond_kind_name[6];
 	static const cond_kind_func cond_kind[7];
 
 	explicit match(const event &, const cond &, const opts &);
