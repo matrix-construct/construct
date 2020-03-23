@@ -13,7 +13,7 @@ namespace ircd::m::push
 	static void handle_action(const event &, vm::eval &, const match::opts &, const path &, const rule &, const string_view &action);
 	static bool handle_rule(const event &, vm::eval &, const match::opts &, const path &, const rule &);
 	static bool handle_kind(const event &, vm::eval &, const user::id &, const path &);
-	static void handle_rules(const event &, vm::eval &, const user::id &);
+	static void handle_rules(const event &, vm::eval &, const user::id &, const string_view &scope);
 	static void handle_event(const m::event &, vm::eval &);
 	extern hookfn<vm::eval &> hook_event;
 }
@@ -59,7 +59,7 @@ try
 	members.for_each("join", my_host(), [&event, &eval]
 	(const user::id &user_id, const event::idx &membership_event_idx)
 	{
-		handle_rules(event, eval, user_id);
+		handle_rules(event, eval, user_id, "global");
 		return true;
 	});
 }
@@ -80,15 +80,16 @@ catch(const std::exception &e)
 void
 ircd::m::push::handle_rules(const event &event,
                             vm::eval &eval,
-                            const user::id &user_id)
+                            const user::id &user_id,
+                            const string_view &scope)
 {
 	const push::path path[]
 	{
-		{ "global",  "override",   string_view{}         },
-		{ "global",  "content",    string_view{}         },
-		{ "global",  "room",       at<"room_id"_>(event) },
-		{ "global",  "sender",     at<"sender"_>(event)  },
-		{ "global",  "underride",  string_view{}         },
+		{ scope, "override",   string_view{}         },
+		{ scope, "content",    string_view{}         },
+		{ scope, "room",       at<"room_id"_>(event) },
+		{ scope, "sender",     at<"sender"_>(event)  },
+		{ scope, "underride",  string_view{}         },
 	};
 
 	for(const auto &p : path)
