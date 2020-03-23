@@ -95,6 +95,7 @@ libircd_matrix_la_SOURCES += user_events.cc
 libircd_matrix_la_SOURCES += user_rooms.cc
 libircd_matrix_la_SOURCES += user_filter.cc
 libircd_matrix_la_SOURCES += user_mitsein.cc
+libircd_matrix_la_SOURCES += user_notifications.cc
 libircd_matrix_la_SOURCES += user_profile.cc
 libircd_matrix_la_SOURCES += user_pushers.cc
 libircd_matrix_la_SOURCES += user_pushrules.cc

@@ -16,18 +16,29 @@ struct ircd::m::user::notifications
 	struct opts;
 	using closure_bool = std::function<bool (const event::idx &, const json::object &)>;
 
+	static const string_view type_prefix;
+
+	static string_view make_type(const mutable_buffer &, const opts &);
+
 	m::user user;
 
   public:
 	bool for_each(const opts &, const closure_bool &) const;
+	size_t count(const opts &) const;
+	bool empty(const opts &) const;
 
-	notifications(const m::user &user) noexcept
-	:user{user}
-	{}
+	notifications(const m::user &user) noexcept;
 };
 
 struct ircd::m::user::notifications::opts
 {
-	event::idx from {0};
-	string_view only;
+	event::idx from {0};     // highest idx counting down
+	event::idx to {0};       // lowest idx ending iteration
+	string_view only;        // spec "only" filter
 };
+
+inline
+ircd::m::user::notifications::notifications(const m::user &user)
+noexcept
+:user{user}
+{}
