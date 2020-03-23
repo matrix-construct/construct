@@ -181,6 +181,10 @@ try
 {
 	assert(json::get<"kind"_>(cond) == "contains_user_mxid");
 
+	assert(opts.user_id);
+	if(unlikely(!opts.user_id))
+		return false;
+
 	const json::object &content
 	{
 		json::get<"content"_>(event)
@@ -191,14 +195,18 @@ try
 		content["body"]
 	};
 
-	if(!body)
-		return false;
+	if(has(body, opts.user_id))
+		return true;
 
-	assert(opts.user_id);
-	if(unlikely(!opts.user_id))
-		return false;
+	const json::string &formatted_body
+	{
+		content["formatted_body"]
+	};
 
-	return has(body, opts.user_id);
+	if(has(formatted_body, opts.user_id))
+		return true;
+
+	return false;
 }
 catch(const ctx::interrupted &)
 {
