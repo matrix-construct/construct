@@ -363,6 +363,14 @@ ircd::m::room_id(const string_view &mxid)
 	return room_id(buf, mxid);
 }
 
+ircd::m::id::room::buf
+ircd::m::room_id(const event::idx &event_idx)
+{
+	char buf[m::id::MAX_SIZE + 1];
+	static_assert(sizeof(buf) <= 256);
+	return room_id(buf, event_idx);
+}
+
 ircd::m::id::room
 ircd::m::room_id(const mutable_buffer &out,
                  const string_view &mxid)
@@ -390,6 +398,20 @@ ircd::m::room_id(const mutable_buffer &out,
 		default:
 			return room_id(out, id::room_alias{mxid});
 	}
+}
+
+ircd::m::id::room
+ircd::m::room_id(const mutable_buffer &out,
+                 const event::idx &event_idx)
+{
+	room::id ret;
+	m::get(event_idx, "room_id", [&out, &ret]
+	(const room::id &room_id)
+	{
+		ret = string_view { data(out), copy(out, room_id) };
+	});
+
+	return ret;
 }
 
 ircd::m::id::room
