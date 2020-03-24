@@ -25,6 +25,7 @@ struct ircd::m::room::type
 	m::room room;
 	string_view _type;
 	std::pair<uint64_t, int64_t> range; // highest (inclusive) to lowest (exclusive)
+	bool prefixing; // true = startswith(type)
 
   public:
 	bool for_each(const closure &) const;
@@ -33,7 +34,8 @@ struct ircd::m::room::type
 
 	type(const m::room &,
 	     const string_view &type  = {},
-	     const decltype(range) &  = { -1UL, -1L });
+	     const decltype(range) &  = { -1UL, -1L },
+	     const bool &prefixing    = false);
 
 	static bool prefetch(const room::id &, const string_view &type, const int64_t &depth);
 	static bool prefetch(const room::id &, const string_view &type);
@@ -42,8 +44,10 @@ struct ircd::m::room::type
 inline
 ircd::m::room::type::type(const m::room &room,
                           const string_view &type,
-                          const decltype(range) &range)
+                          const decltype(range) &range,
+                          const bool &prefixing)
 :room{room}
 ,_type{type}
 ,range{range}
+,prefixing{prefixing}
 {}

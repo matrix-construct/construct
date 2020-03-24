@@ -77,10 +77,13 @@ const
 			dbs::room_type_key(it->first)
 		};
 
-		if(this->_type && this->_type != _type)
+		if(int64_t(depth) <= range.second)
 			break;
 
-		if(int64_t(depth) <= range.second)
+		if(this->_type && !prefixing && this->_type != _type)
+			break;
+
+		if(this->_type && prefixing && !startswith(_type, this->_type))
 			break;
 
 		if(!closure(_type, depth, event_idx))
