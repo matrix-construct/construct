@@ -53,7 +53,6 @@ const
 	return ret;
 }
 
-//TODO: XXX optimize
 bool
 ircd::m::user::notifications::for_each(const opts &opts,
                                        const closure_bool &closure)
@@ -70,31 +69,27 @@ const
 		make_type(type_buf, opts)
 	};
 
-	const auto type_match{[&type](const auto &_type)
+	const room::type events
 	{
-		return _type == type;
-	}};
-
-	m::room::events it
-	{
-		user_room
+		user_room, type
 	};
 
-	if(opts.from)
-		it.seek_idx(opts.from);
-
-	bool ret(true);
-	for(; it && ret && it.event_idx() > opts.to; --it) //TODO: XXX optimize
+	return events.for_each([&opts, &closure]
+	(const auto &type, const auto &depth, const auto &event_idx)
 	{
-		if(!m::query(std::nothrow, it.event_idx(), "type", type_match))
-			continue;
+		if(opts.from && event_idx > opts.from) //TODO: XXX
+			return true;
 
-		m::get(std::nothrow, it.event_idx(), "content", [&ret, &it, &closure]
+		if(opts.to && event_idx <= opts.to) //TODO: XXX
+			return false;
+
+		bool ret{true};
+		m::get(std::nothrow, event_idx, "content", [&ret, &closure, &event_idx]
 		(const json::object &content)
 		{
-			ret = closure(it.event_idx(), content);
+			ret = closure(event_idx, content);
 		});
-	}
 
-	return ret;
+		return ret;
+	});
 }
