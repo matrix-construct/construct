@@ -52,6 +52,7 @@ namespace ircd::m::dbs::appendix
 #include "event_type.h"             // type | event_idx
 #include "event_state.h"            // state_key, type, room_id, depth, event_idx
 #include "room_events.h"            // room_id | depth, event_idx
+#include "room_type.h"              // room_id | type, depth, event_idx
 #include "room_state.h"             // room_id | type, state_key => event_idx
 #include "room_state_space.h"       // room_id | type, state_key, depth, event_idx
 #include "room_joined.h"            // room_id | origin, member => event_idx
@@ -161,6 +162,9 @@ enum ircd::m::dbs::appendix::index
 
 	/// Involves room_events table.
 	ROOM_EVENTS,
+
+	/// Involves room_type table.
+	ROOM_TYPE,
 
 	/// Whether the event should be added to the room_head, indicating that
 	/// it has not yet been referenced at the time of this write. Defaults
