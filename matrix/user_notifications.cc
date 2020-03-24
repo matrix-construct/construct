@@ -14,6 +14,25 @@ ircd::m::user::notifications::type_prefix
 	"ircd.push.note"
 };
 
+ircd::m::user::notifications::opts
+ircd::m::user::notifications::unmake_type(const string_view &type)
+{
+	const string_view &room_id
+	{
+		type.substr(type.find('!'))
+	};
+
+	const string_view &only
+	{
+		lstrip(split(type, '!').first, type_prefix)
+	};
+
+	opts ret;
+	ret.only = lstrip(only, '.');
+	ret.room_id = room_id? room::id{room_id} : room::id{};
+	return ret;
+}
+
 /// valid result examples:
 ///
 /// ircd.push.note.highlight!AAAANTUiY1fBZ230:zemos.net

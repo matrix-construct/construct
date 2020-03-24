@@ -19,6 +19,7 @@ struct ircd::m::user::notifications
 	static const string_view type_prefix;
 
 	static string_view make_type(const mutable_buffer &, const opts &);
+	static opts unmake_type(const string_view &type);
 
 	m::user user;
 
