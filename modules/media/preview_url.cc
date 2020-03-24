@@ -92,26 +92,21 @@ request_url(const string_view &urle)
 		url::decode(buf, urle)
 	};
 
-	const auto &host
+	const rfc3986::uri uri
 	{
-		between(url, "://", "/")  //TODO: grammar / rfc3986.h
+		url
 	};
 
-	const string_view &service
+	const net::hostport remote
 	{
-		split(url, "://").first
+		uri
 	};
 
-	const string_view &path
-	{
-		end(host), end(url)
-	};
-
-	if(empty(host) || empty(path))
+	if(empty(host(remote)) || empty(uri.path))
 		throw m::error
 		{
 			http::BAD_REQUEST, "M_BAD_URL",
-			"Something was wrong with the supplied URL."
+			"Required elements are missing from the supplied URL."
 		};
 
 	window_buffer wb
@@ -121,7 +116,7 @@ request_url(const string_view &urle)
 
 	http::request
 	{
-		wb, host, "GET", path, 0, {},
+		wb, host(remote), "GET", uri.path, 0, {},
 		{
 			{ "User-Agent", info::user_agent },
 		}
@@ -135,11 +130,6 @@ request_url(const string_view &urle)
 	const mutable_buffer in_head
 	{
 		buf + size(url) + size(out_head)
-	};
-
-	const net::hostport remote
-	{
-		host, service
 	};
 
 	server::request::opts sopts;
