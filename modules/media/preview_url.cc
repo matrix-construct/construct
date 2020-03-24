@@ -139,8 +139,7 @@ request_url(const string_view &urle)
 
 	const net::hostport remote
 	{
-		//TODO: fix services translation in net::dns::
-		host, {}, service == "https"? uint16_t(443) : uint16_t(80)
+		host, service
 	};
 
 	server::request::opts sopts;
