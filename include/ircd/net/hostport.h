@@ -63,7 +63,7 @@ struct ircd::net::hostport
 	explicit operator bool() const;
 	bool operator!() const;
 
-	hostport(const string_view &host, const string_view &service, const uint16_t &port);
+	hostport(const string_view &host, const string_view &service, const uint16_t &port = 0);
 	hostport(const string_view &host, const uint16_t &port);
 	hostport(const string_view &amalgam);
 	hostport(const string_view &amalgam, verbatim_t);
