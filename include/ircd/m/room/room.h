@@ -114,6 +114,7 @@ struct ircd::m::room
 	struct state;
 	struct members;
 	struct origins;
+	struct type;
 	struct head;
 	struct auth;
 	struct power;
@@ -190,6 +191,7 @@ struct ircd::m::room
 #include "state_history.h"
 #include "members.h"
 #include "origins.h"
+#include "type.h"
 #include "head.h"
 #include "auth.h"
 #include "power.h"
