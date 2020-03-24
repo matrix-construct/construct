@@ -35,6 +35,7 @@ struct ircd::m::user::notifications::opts
 	event::idx from {0};     // highest idx counting down
 	event::idx to {0};       // lowest idx ending iteration
 	string_view only;        // spec "only" filter
+	room::id room_id;        // room_id filter (optional)
 };
 
 inline

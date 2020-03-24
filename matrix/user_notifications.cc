@@ -14,16 +14,23 @@ ircd::m::user::notifications::type_prefix
 	"ircd.push.note"
 };
 
+/// valid result examples:
+///
+/// ircd.push.note.highlight!AAAANTUiY1fBZ230:zemos.net
+/// ircd.push.note.highlight
+/// ircd.push.note!AAAANTUiY1fBZ230:zemos.net
+/// ircd.push.note
 ircd::string_view
 ircd::m::user::notifications::make_type(const mutable_buffer &buf,
                                         const opts &opts)
 {
 	return fmt::sprintf
 	{
-		buf, "%s%s%s",
+		buf, "%s%s%s%s",
 		type_prefix,
 		opts.only? "."_sv : string_view{},
 		opts.only,
+		string_view{opts.room_id},
 	};
 }
 
@@ -71,7 +78,7 @@ const
 
 	const room::type events
 	{
-		user_room, type
+		user_room, type, {-1UL, -1L}, true
 	};
 
 	return events.for_each([&opts, &closure]

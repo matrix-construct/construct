@@ -228,6 +228,7 @@ try
 		char type_buf[event::TYPE_MAX_SIZE];
 		user::notifications::opts opts;
 		opts.only = "highlight";
+		opts.room_id = eval.room_id;
 		const auto &type
 		{
 			user::notifications::make_type(type_buf, opts)
