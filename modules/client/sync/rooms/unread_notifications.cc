@@ -47,36 +47,57 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 	};
 
 	assert(data.event);
+	const auto &type
+	{
+		json::get<"type"_>(*data.event)
+	};
+
 	const bool is_self_read
 	{
-		is_user_room && json::get<"type"_>(*data.event) == "ircd.read"
+		is_user_room &&
+		type == "ircd.read"
+	};
+
+	const bool is_push_note
+	{
+		is_user_room &&
+		startswith(type, user::notifications::type_prefix)
+	};
+
+	const user::notifications::opts note_opts
+	{
+		is_push_note?
+			user::notifications::unmake_type(type):
+			user::notifications::opts{}
 	};
 
 	const m::room &room
 	{
-		!is_self_read?
-			data.room->room_id:
-			room::id{at<"state_key"_>(*data.event)}
+		is_self_read?
+			room::id{at<"state_key"_>(*data.event)}:
+		is_push_note && note_opts.room_id?
+			note_opts.room_id:
+			data.room->room_id
 	};
 
 	char membuf[32];
 	const string_view &membership
 	{
-		!is_self_read?
-			data.membership:
-			m::membership(membuf, room, data.user)
+		room.room_id != data.room->room_id?
+			m::membership(membuf, room, data.user):
+			data.membership
 	};
 
 	if(!membership)
 		return false;
 
 	// skips state events only until a non-state event is seen.
-	if(likely(!is_self_read))
+	if(likely(!is_user_room))
 		if(defined(json::get<"state_key"_>(*data.event)))
 			return false;
 
 	// skips old events the server has backfilled in the background.
-	if(likely(!is_self_read))
+	if(likely(!is_user_room))
 		if(room::events::viewport_size >= 0)
 			if(json::get<"depth"_>(*data.event) + room::events::viewport_size < data.room_depth)
 				return false;
@@ -220,5 +241,20 @@ ircd::m::sync::_highlight_count(const room &room,
 		std::minmax(a, b)
 	};
 
-	return 0L;
+	const user::notifications notifications
+	{
+		user
+	};
+
+	user::notifications::opts opts;
+	opts.room_id = room.room_id;
+	opts.only = "highlight";
+	opts.from = b;
+	opts.to = a;
+	const auto ret
+	{
+		notifications.count(opts)
+	};
+
+	return ret;
 }
