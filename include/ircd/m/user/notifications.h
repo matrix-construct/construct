@@ -14,7 +14,8 @@
 struct ircd::m::user::notifications
 {
 	struct opts;
-	using closure_bool = std::function<bool (const event::idx &, const json::object &)>;
+	using closure_meta = std::function<bool (const string_view &type, const event::idx &)>;
+	using closure = std::function<bool (const event::idx &, const json::object &)>;
 
 	static const string_view type_prefix;
 
@@ -24,7 +25,8 @@ struct ircd::m::user::notifications
 	m::user user;
 
   public:
-	bool for_each(const opts &, const closure_bool &) const;
+	bool for_each(const opts &, const closure_meta &) const;
+	bool for_each(const opts &, const closure &) const;
 	size_t count(const opts &) const;
 	bool empty(const opts &) const;
 

@@ -57,11 +57,11 @@ bool
 ircd::m::user::notifications::empty(const opts &opts)
 const
 {
-	return !for_each(opts, [&]
+	return !for_each(opts, closure_meta{[&]
 	(const auto &, const auto &)
 	{
 		return false;
-	});
+	}});
 }
 
 size_t
@@ -69,19 +69,35 @@ ircd::m::user::notifications::count(const opts &opts)
 const
 {
 	size_t ret(0);
-	for_each(opts, [&ret]
+	for_each(opts, closure_meta{[&ret]
 	(const auto &, const auto &)
 	{
 		++ret;
 		return true;
-	});
+	}});
 
 	return ret;
 }
 
 bool
 ircd::m::user::notifications::for_each(const opts &opts,
-                                       const closure_bool &closure)
+                                       const closure &closure)
+const
+{
+	return for_each(opts, closure_meta{[&closure]
+	(const auto &type, const auto &event_idx)
+	{
+		return m::query(std::nothrow, event_idx, "content", [&closure, &event_idx]
+		(const json::object &content)
+		{
+			return closure(event_idx, content);
+		});
+	}});
+}
+
+bool
+ircd::m::user::notifications::for_each(const opts &opts,
+                                       const closure_meta &closure)
 const
 {
 	const user::room user_room
@@ -109,13 +125,6 @@ const
 		if(opts.to && event_idx <= opts.to) //TODO: XXX
 			return false;
 
-		bool ret{true};
-		m::get(std::nothrow, event_idx, "content", [&ret, &closure, &event_idx]
-		(const json::object &content)
-		{
-			ret = closure(event_idx, content);
-		});
-
-		return ret;
+		return closure(type, event_idx);
 	});
 }
