@@ -73,12 +73,20 @@ ircd::m::push::match::match(const event &event,
                             const match::opts &opts)
 :boolean{[&event, &rule, &opts]
 {
-	const auto &conditions
+	if(json::get<"pattern"_>(rule))
 	{
-		json::get<"conditions"_>(rule)
-	};
+		const push::cond cond
+		{
+			{ "kind",     "event_match"               },
+			{ "key",      "content.body"              },
+			{ "pattern",  json::get<"pattern"_>(rule) },
+		};
 
-	for(const json::object &cond : conditions)
+		if(!match(event, cond, opts))
+			return false;
+	}
+
+	for(const json::object &cond : json::get<"conditions"_>(rule))
 		if(!match(event, push::cond(cond), opts))
 			return false;
 
