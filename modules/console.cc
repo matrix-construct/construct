@@ -10362,6 +10362,60 @@ console_cmd__room__messages(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__room__type(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "type", "start_depth", "end_depth"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto &type
+	{
+		param["type"]
+	};
+
+	const uint64_t start_depth
+	{
+		param.at<uint64_t>(2, -1UL)
+	};
+
+	const int64_t end_depth
+	{
+		param.at<int64_t>(3, -1L)
+	};
+
+	const m::room::type events
+	{
+		room_id, type,
+		{
+			start_depth, end_depth
+		}
+	};
+
+	m::event::fetch event;
+	events.for_each([&out, &event]
+	(const string_view &type, const uint64_t &depth, const m::event::idx &event_idx)
+	{
+		if(!seek(event, event_idx, std::nothrow))
+			return true;
+
+		out
+		<< std::left << std::setw(10) << event_idx
+		<< " "
+		<< pretty_oneline(event)
+		<< std::endl;
+		return true;
+	});
+
+	return true;
+}
+
+bool
 console_cmd__room__get(opt &out, const string_view &line)
 {
 	const params param{line, " ",
