@@ -67,6 +67,7 @@ struct ircd::net::hostport
 	hostport(const string_view &host, const uint16_t &port);
 	hostport(const string_view &amalgam);
 	hostport(const string_view &amalgam, verbatim_t);
+	explicit hostport(const rfc3986::uri &);
 	hostport() = default;
 };
 
@@ -88,6 +89,23 @@ ircd::net::hostport::hostport(const string_view &host,
 ,port
 {
 	port
+}
+{}
+
+/// Constructs from an rfc3986 URI i.e https://foo.com or https://foo.com:8080
+inline
+ircd::net::hostport::hostport(const rfc3986::uri &uri)
+:host
+{
+	rfc3986::host(uri.remote)
+}
+,service
+{
+	uri.scheme
+}
+,port
+{
+	rfc3986::port(uri.remote)
 }
 {}
 
