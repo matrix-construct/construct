@@ -112,6 +112,7 @@ ircd::m::get_notifications(client &client,
 	};
 
 	size_t count(0);
+	bool finished(true);
 	event::idx next_token(0);
 	{
 		json::stack::array array
@@ -119,7 +120,7 @@ ircd::m::get_notifications(client &client,
 			top, "notifications"
 		};
 
-		notifications.for_each(opts, [&]
+		finished = notifications.for_each(opts, [&]
 		(const event::idx &note_idx, const json::object &note)
 		{
 			assert(note_idx);
@@ -145,7 +146,7 @@ ircd::m::get_notifications(client &client,
 				event_idx, std::nothrow
 			};
 
-			if(!event.valid)
+			if(unlikely(!event.valid))
 				return true;
 
 			json::stack::object object
@@ -217,7 +218,7 @@ ircd::m::get_notifications(client &client,
 		});
 	}
 
-	if(next_token != opts.from)
+	if(!finished)
 		json::stack::member
 		{
 			top, "next_token", json::value
