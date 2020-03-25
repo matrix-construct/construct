@@ -12161,12 +12161,26 @@ console_cmd__user__notifications(opt &out, const string_view &line)
 {
 	const params param{line, " ",
 	{
-		"user_id", "only"
+		"user_id", "only", "room_id", "from", "to"
 	}};
 
 	const m::user::id &user_id
 	{
 		param.at("user_id")
+	};
+
+	const string_view &only
+	{
+		param["only"] == "*"?
+			string_view{}:
+			param["only"]
+	};
+
+	const m::room::id &room_id
+	{
+		param["room_id"] == "*"?
+			m::room::id{}:
+			m::room::id{param["room_id"]}
 	};
 
 	const m::user::notifications notifications
@@ -12175,8 +12189,10 @@ console_cmd__user__notifications(opt &out, const string_view &line)
 	};
 
 	m::user::notifications::opts opts;
-	opts.only = param["only"];
-
+	opts.only = only;
+	opts.room_id = room_id;
+	opts.from = param.at<m::event::idx>("from", 0UL);
+	opts.to = param.at<m::event::idx>("to", 0UL);
 	notifications.for_each(opts, [&out]
 	(const auto &idx, const json::object &notification)
 	{
