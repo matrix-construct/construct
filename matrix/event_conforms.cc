@@ -156,8 +156,10 @@ ircd::m::event_conforms_reflects
 	"INVALID_OR_MISSING_ROOM_ID",
 	"INVALID_OR_MISSING_SENDER_ID",
 	"MISSING_TYPE",
+	"INVALID_TYPE",
 	"MISSING_ORIGIN",
 	"INVALID_ORIGIN",
+	"INVALID_STATE_KEY",
 	"INVALID_OR_MISSING_REDACTS_ID",
 	"MISSING_CONTENT_MEMBERSHIP",
 	"INVALID_CONTENT_MEMBERSHIP",
@@ -246,6 +248,9 @@ ircd::m::event::conforms::conforms(const event &e)
 	if(empty(json::get<"type"_>(e)))
 		set(MISSING_TYPE);
 
+	if(json::get<"type"_>(e).size() > event::TYPE_MAX_SIZE)
+		set(INVALID_TYPE);
+
 	if(empty(json::get<"origin"_>(e)))
 		set(MISSING_ORIGIN);
 
@@ -254,6 +259,9 @@ ircd::m::event::conforms::conforms(const event &e)
 
 	if(!rfc3986::valid_remote(std::nothrow, json::get<"origin"_>(e)))
 		set(INVALID_ORIGIN);
+
+	if(json::get<"state_key"_>(e).size() > event::STATE_KEY_MAX_SIZE)
+		set(INVALID_STATE_KEY);
 
 	if(empty(json::get<"signatures"_>(e)))
 		set(MISSING_SIGNATURES);

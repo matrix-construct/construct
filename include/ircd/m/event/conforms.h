@@ -61,8 +61,10 @@ enum ircd::m::event::conforms::code
 	INVALID_OR_MISSING_ROOM_ID,        ///< room_id empty or failed mxid grammar check
 	INVALID_OR_MISSING_SENDER_ID,      ///< sender empty or failed mxid grammar check
 	MISSING_TYPE,                      ///< type empty
+	INVALID_TYPE,                      ///< type field invalid or too long
 	MISSING_ORIGIN,                    ///< origin empty
 	INVALID_ORIGIN,                    ///< origin not a proper domain
+	INVALID_STATE_KEY,                 ///< state_key invalid or too long
 	INVALID_OR_MISSING_REDACTS_ID,     ///< for m.room.redaction
 	MISSING_CONTENT_MEMBERSHIP,        ///< for m.room.member, content.membership
 	INVALID_CONTENT_MEMBERSHIP,        ///< for m.room.member, content.membership
