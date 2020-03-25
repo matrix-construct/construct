@@ -10389,12 +10389,17 @@ console_cmd__room__type(opt &out, const string_view &line)
 		param.at<int64_t>(3, -1L)
 	};
 
+	const bool prefix_match
+	{
+		endswith(type, "...")
+	};
+
 	const m::room::type events
 	{
-		room_id, type,
-		{
-			start_depth, end_depth
-		}
+		room_id,
+		rstrip(type, "..."),
+		{ start_depth, end_depth },
+		prefix_match
 	};
 
 	m::event::fetch event;
