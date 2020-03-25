@@ -22,17 +22,19 @@ namespace ircd::m::dbs
 	string_view room_state_key(const mutable_buffer &out, const id::room &, const string_view &type);
 	std::tuple<string_view, string_view> room_state_key(const string_view &amalgam);
 
+	void _index_room_state(db::txn &, const event &, const write_opts &);
+
 	// room_id | type, state_key => event_idx
 	extern db::domain room_state;
 }
 
 namespace ircd::m::dbs::desc
 {
-	extern conf::item<size_t> events__room_state__block__size;
-	extern conf::item<size_t> events__room_state__meta_block__size;
-	extern conf::item<size_t> events__room_state__cache__size;
-	extern conf::item<size_t> events__room_state__cache_comp__size;
-	extern conf::item<size_t> events__room_state__bloom__bits;
-	extern const db::prefix_transform events__room_state__pfx;
-	extern const db::descriptor events__room_state;
+	extern conf::item<size_t> room_state__block__size;
+	extern conf::item<size_t> room_state__meta_block__size;
+	extern conf::item<size_t> room_state__cache__size;
+	extern conf::item<size_t> room_state__cache_comp__size;
+	extern conf::item<size_t> room_state__bloom__bits;
+	extern const db::prefix_transform room_state__pfx;
+	extern const db::descriptor room_state;
 }

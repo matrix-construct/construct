@@ -35,6 +35,8 @@ namespace ircd::m::dbs
 	              const uint64_t &depth       = -1,
 	              const event::idx &          = -1);
 
+	void _index_room_type(db::txn &,  const event &, const write_opts &);
+
 	// room_id | type, depth, event_idx
 	extern db::domain room_type;
 }
@@ -42,11 +44,11 @@ namespace ircd::m::dbs
 namespace ircd::m::dbs::desc
 {
 	// room events sequence
-	extern conf::item<size_t> events__room_type__block__size;
-	extern conf::item<size_t> events__room_type__meta_block__size;
-	extern conf::item<size_t> events__room_type__cache__size;
-	extern conf::item<size_t> events__room_type__cache_comp__size;
-	extern const db::prefix_transform events__room_type__pfx;
-	extern const db::comparator events__room_type__cmp;
-	extern const db::descriptor events__room_type;
+	extern conf::item<size_t> room_type__block__size;
+	extern conf::item<size_t> room_type__meta_block__size;
+	extern conf::item<size_t> room_type__cache__size;
+	extern conf::item<size_t> room_type__cache_comp__size;
+	extern const db::prefix_transform room_type__pfx;
+	extern const db::comparator room_type__cmp;
+	extern const db::descriptor room_type;
 }

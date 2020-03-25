@@ -19,10 +19,10 @@ namespace ircd::m::dbs
 	enum class ref :uint8_t;
 
 	// General confs
-	extern conf::item<bool> events_cache_enable;
-	extern conf::item<bool> events_cache_comp_enable;
-	extern conf::item<size_t> events_mem_write_buffer_size;
-	extern conf::item<size_t> events_sst_write_buffer_size;
+	extern conf::item<bool> cache_enable;
+	extern conf::item<bool> cache_comp_enable;
+	extern conf::item<size_t> mem_write_buffer_size;
+	extern conf::item<size_t> sst_write_buffer_size;
 
 	// Database instance
 	extern std::shared_ptr<db::database> events;
@@ -197,3 +197,9 @@ struct ircd::m::dbs::init
 	init(const string_view &servername, std::string dbopts = {});
 	~init() noexcept;
 };
+
+// Internal utils (here for now)
+namespace ircd::m::dbs
+{
+	event::idx find_event_idx(const event::id &, const write_opts &);
+}

@@ -13,15 +13,17 @@
 
 namespace ircd::m::dbs
 {
+	void _index_event_id(db::txn &, const event &, const write_opts &);
+
 	extern db::column event_idx;       // event_id => event_idx
 }
 
 namespace ircd::m::dbs::desc
 {
-	extern conf::item<size_t> events__event_idx__block__size;
-	extern conf::item<size_t> events__event_idx__meta_block__size;
-	extern conf::item<size_t> events__event_idx__cache__size;
-	extern conf::item<size_t> events__event_idx__cache_comp__size;
-	extern conf::item<size_t> events__event_idx__bloom__bits;
-	extern const db::descriptor events__event_idx;
+	extern conf::item<size_t> event_idx__block__size;
+	extern conf::item<size_t> event_idx__meta_block__size;
+	extern conf::item<size_t> event_idx__cache__size;
+	extern conf::item<size_t> event_idx__cache_comp__size;
+	extern conf::item<size_t> event_idx__bloom__bits;
+	extern const db::descriptor event_idx;
 }

@@ -29,6 +29,8 @@ namespace ircd::m::dbs
 	string_view event_sender_origin_key(const mutable_buffer &out, const id::user &, const event::idx &);
 	std::tuple<string_view, event::idx> event_sender_origin_key(const string_view &amalgam);
 
+	void _index_event_sender(db::txn &, const event &, const write_opts &);
+
 	// mxid | event_idx
 	// host | local, event_idx  (see event_sender_origin.h)
 	extern db::domain event_sender;
@@ -36,10 +38,10 @@ namespace ircd::m::dbs
 
 namespace ircd::m::dbs::desc
 {
-	extern conf::item<size_t> events__event_sender__block__size;
-	extern conf::item<size_t> events__event_sender__meta_block__size;
-	extern conf::item<size_t> events__event_sender__cache__size;
-	extern conf::item<size_t> events__event_sender__cache_comp__size;
-	extern const db::prefix_transform events__event_sender__pfx;
-	extern const db::descriptor events__event_sender;
+	extern conf::item<size_t> event_sender__block__size;
+	extern conf::item<size_t> event_sender__meta_block__size;
+	extern conf::item<size_t> event_sender__cache__size;
+	extern conf::item<size_t> event_sender__cache_comp__size;
+	extern const db::prefix_transform event_sender__pfx;
+	extern const db::descriptor event_sender;
 }

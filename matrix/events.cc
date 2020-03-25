@@ -486,7 +486,7 @@ ircd::m::events::type::for_each(const string_view &prefix,
 
 	const auto &prefixer
 	{
-		dbs::desc::events__event_type__pfx
+		dbs::desc::event_type__pfx
 	};
 
 	string_view last;
@@ -570,7 +570,7 @@ ircd::m::events::origin::for_each(const string_view &prefix,
 
 	const auto &prefixer
 	{
-		dbs::desc::events__event_sender__pfx
+		dbs::desc::event_sender__pfx
 	};
 
 	if(unlikely(startswith(prefix, '@')))
@@ -654,7 +654,7 @@ ircd::m::events::sender::for_each(const string_view &prefix_,
 
 	const auto &prefixer
 	{
-		dbs::desc::events__event_sender__pfx
+		dbs::desc::event_sender__pfx
 	};
 
 	// We MUST query the column with a key starting with '@' here. For a more

@@ -28,9 +28,6 @@ namespace ircd::m::dbs
 		0xFFUL << ref_shift
 	};
 
-	// event_idx | ref_type, event_idx
-	extern db::domain event_refs;
-
 	string_view
 	event_refs_key(const mutable_buffer &out,
 	               const event::idx &tgt,
@@ -42,17 +39,22 @@ namespace ircd::m::dbs
 
 	string_view
 	reflect(const ref &);
+
+	void _index_event_refs(db::txn &, const event &, const write_opts &);
+
+	// event_idx | ref_type, event_idx
+	extern db::domain event_refs;
 }
 
 namespace ircd::m::dbs::desc
 {
-	extern conf::item<size_t> events__event_refs__block__size;
-	extern conf::item<size_t> events__event_refs__meta_block__size;
-	extern conf::item<size_t> events__event_refs__cache__size;
-	extern conf::item<size_t> events__event_refs__cache_comp__size;
-	extern const db::prefix_transform events__event_refs__pfx;
-	extern const db::comparator events__event_refs__cmp;
-	extern const db::descriptor events__event_refs;
+	extern conf::item<size_t> event_refs__block__size;
+	extern conf::item<size_t> event_refs__meta_block__size;
+	extern conf::item<size_t> event_refs__cache__size;
+	extern conf::item<size_t> event_refs__cache_comp__size;
+	extern const db::prefix_transform event_refs__pfx;
+	extern const db::comparator event_refs__cmp;
+	extern const db::descriptor event_refs;
 }
 
 /// Types of references indexed by event_refs. This is a single byte integer,

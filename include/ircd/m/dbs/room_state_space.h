@@ -30,18 +30,20 @@ namespace ircd::m::dbs
 	string_view room_state_space_key(const mutable_buffer &out, const id::room &);
 	room_state_space_key_parts room_state_space_key(const string_view &amalgam);
 
+	void _index_room_state_space(db::txn &,  const event &, const write_opts &);
+
 	// room_id | type, state_key, depth, event_idx => --
 	extern db::domain room_state_space;
 }
 
 namespace ircd::m::dbs::desc
 {
-	extern conf::item<size_t> events__room_state_space__block__size;
-	extern conf::item<size_t> events__room_state_space__meta_block__size;
-	extern conf::item<size_t> events__room_state_space__cache__size;
-	extern conf::item<size_t> events__room_state_space__cache_comp__size;
-	extern conf::item<size_t> events__room_state_space__bloom__bits;
-	extern const db::prefix_transform events__room_state_space__pfx;
-	extern const db::comparator events__room_state_space__cmp;
-	extern const db::descriptor events__room_state_space;
+	extern conf::item<size_t> room_state_space__block__size;
+	extern conf::item<size_t> room_state_space__meta_block__size;
+	extern conf::item<size_t> room_state_space__cache__size;
+	extern conf::item<size_t> room_state_space__cache_comp__size;
+	extern conf::item<size_t> room_state_space__bloom__bits;
+	extern const db::prefix_transform room_state_space__pfx;
+	extern const db::comparator room_state_space__cmp;
+	extern const db::descriptor room_state_space;
 }

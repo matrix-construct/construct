@@ -22,17 +22,19 @@ namespace ircd::m::dbs
 	string_view room_joined_key(const mutable_buffer &out, const id::room &, const string_view &origin);
 	std::tuple<string_view, string_view> room_joined_key(const string_view &amalgam);
 
+	void _index_room_joined(db::txn &, const event &, const write_opts &);
+
 	// room_id | origin, member => event_idx
 	extern db::domain room_joined;
 }
 
 namespace ircd::m::dbs::desc
 {
-	extern conf::item<size_t> events__room_joined__block__size;
-	extern conf::item<size_t> events__room_joined__meta_block__size;
-	extern conf::item<size_t> events__room_joined__cache__size;
-	extern conf::item<size_t> events__room_joined__cache_comp__size;
-	extern conf::item<size_t> events__room_joined__bloom__bits;
-	extern const db::prefix_transform events__room_joined__pfx;
-	extern const db::descriptor events__room_joined;
+	extern conf::item<size_t> room_joined__block__size;
+	extern conf::item<size_t> room_joined__meta_block__size;
+	extern conf::item<size_t> room_joined__cache__size;
+	extern conf::item<size_t> room_joined__cache_comp__size;
+	extern conf::item<size_t> room_joined__bloom__bits;
+	extern const db::prefix_transform room_joined__pfx;
+	extern const db::descriptor room_joined;
 }

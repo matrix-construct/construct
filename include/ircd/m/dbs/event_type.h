@@ -21,6 +21,8 @@ namespace ircd::m::dbs
 	string_view event_type_key(const mutable_buffer &out, const string_view &, const event::idx & = 0);
 	std::tuple<event::idx> event_type_key(const string_view &amalgam);
 
+	void _index_event_type(db::txn &, const event &, const write_opts &);
+
 	// type | event_idx => -
 	extern db::domain event_type;
 }
@@ -28,10 +30,10 @@ namespace ircd::m::dbs
 namespace ircd::m::dbs::desc
 {
 	// events type
-	extern conf::item<size_t> events__event_type__block__size;
-	extern conf::item<size_t> events__event_type__meta_block__size;
-	extern conf::item<size_t> events__event_type__cache__size;
-	extern conf::item<size_t> events__event_type__cache_comp__size;
-	extern const db::prefix_transform events__event_type__pfx;
-	extern const db::descriptor events__event_type;
+	extern conf::item<size_t> event_type__block__size;
+	extern conf::item<size_t> event_type__meta_block__size;
+	extern conf::item<size_t> event_type__cache__size;
+	extern conf::item<size_t> event_type__cache_comp__size;
+	extern const db::prefix_transform event_type__pfx;
+	extern const db::descriptor event_type;
 }

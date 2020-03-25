@@ -13,16 +13,18 @@
 
 namespace ircd::m::dbs
 {
+	void _index_event_json(db::txn &, const event &, const write_opts &);
+
 	// event_idx => full json
 	extern db::column event_json;
 }
 
 namespace ircd::m::dbs::desc
 {
-	extern conf::item<size_t> events__event_json__block__size;
-	extern conf::item<size_t> events__event_json__meta_block__size;
-	extern conf::item<size_t> events__event_json__cache__size;
-	extern conf::item<size_t> events__event_json__cache_comp__size;
-	extern conf::item<size_t> events__event_json__bloom__bits;
-	extern const db::descriptor events__event_json;
+	extern conf::item<size_t> event_json__block__size;
+	extern conf::item<size_t> event_json__meta_block__size;
+	extern conf::item<size_t> event_json__cache__size;
+	extern conf::item<size_t> event_json__cache_comp__size;
+	extern conf::item<size_t> event_json__bloom__bits;
+	extern const db::descriptor event_json;
 }

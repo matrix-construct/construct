@@ -74,7 +74,7 @@ output from the above command, use the following command where `<COLUMN>` is
 replaced by one of the names under `COLUMN` in the above output:
 
 ```
-conf ircd.m.dbs.events.<COLUMN>.cache.size
+conf ircd.m.dbs.<COLUMN>.cache.size
 ```
 
 To alter a cache size, set the configuration item with a byte value. In the
@@ -82,7 +82,7 @@ example below we will set the `_event_json` cache size to 256 MiB. This change
 will take effect immediately and the cache will grow or shrink to that size.
 
 ```
-conf set ircd.m.dbs.events._event_json.cache.size 268435456
+conf set ircd.m.dbs._event_json.cache.size 268435456
 ```
 
 > Tip: The best metric to figure out which caches are inadequate is not

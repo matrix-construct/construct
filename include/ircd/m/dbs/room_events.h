@@ -22,6 +22,8 @@ namespace ircd::m::dbs
 	string_view room_events_key(const mutable_buffer &out, const id::room &, const uint64_t &depth);
 	std::tuple<uint64_t, event::idx> room_events_key(const string_view &amalgam);
 
+	void _index_room_events(db::txn &, const event &, const write_opts &);
+
 	// room_id | depth, event_idx => node_id
 	extern db::domain room_events;
 }
@@ -29,11 +31,11 @@ namespace ircd::m::dbs
 namespace ircd::m::dbs::desc
 {
 	// room events sequence
-	extern conf::item<size_t> events__room_events__block__size;
-	extern conf::item<size_t> events__room_events__meta_block__size;
-	extern conf::item<size_t> events__room_events__cache__size;
-	extern conf::item<size_t> events__room_events__cache_comp__size;
-	extern const db::prefix_transform events__room_events__pfx;
-	extern const db::comparator events__room_events__cmp;
-	extern const db::descriptor events__room_events;
+	extern conf::item<size_t> room_events__block__size;
+	extern conf::item<size_t> room_events__meta_block__size;
+	extern conf::item<size_t> room_events__cache__size;
+	extern conf::item<size_t> room_events__cache_comp__size;
+	extern const db::prefix_transform room_events__pfx;
+	extern const db::comparator room_events__cmp;
+	extern const db::descriptor room_events;
 }

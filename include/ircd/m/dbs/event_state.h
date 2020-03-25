@@ -30,6 +30,8 @@ namespace ircd::m::dbs
 	string_view event_state_key(const mutable_buffer &out, const event_state_tuple &);
 	event_state_tuple event_state_key(const string_view &);
 
+	void _index_event_state(db::txn &, const event &, const write_opts &);
+
 	// state_key, type, room_id, depth, event_idx
 	extern db::domain event_state;
 }
@@ -37,10 +39,10 @@ namespace ircd::m::dbs
 namespace ircd::m::dbs::desc
 {
 	// events _event_state
-	extern conf::item<size_t> events__event_state__block__size;
-	extern conf::item<size_t> events__event_state__meta_block__size;
-	extern conf::item<size_t> events__event_state__cache__size;
-	extern conf::item<size_t> events__event_state__cache_comp__size;
-	extern const db::comparator events__event_state__cmp;
-	extern const db::descriptor events__event_state;
+	extern conf::item<size_t> event_state__block__size;
+	extern conf::item<size_t> event_state__meta_block__size;
+	extern conf::item<size_t> event_state__cache__size;
+	extern conf::item<size_t> event_state__cache_comp__size;
+	extern const db::comparator event_state__cmp;
+	extern const db::descriptor event_state;
 }
