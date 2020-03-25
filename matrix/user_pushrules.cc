@@ -115,29 +115,6 @@ const
 		path
 	};
 
-	// Present the default rules to the closure.
-	if(likely(scope == "global"))
-	{
-		const auto &rules
-		{
-			push::rules::defaults.get<json::array>(kind)
-		};
-
-		for(const json::object &rule : rules)
-		{
-			const json::string &_ruleid
-			{
-				rule["rule_id"]
-			};
-
-			if(_ruleid == ruleid)
-			{
-				closure(0UL, path, rule);
-				return true;
-			}
-		}
-	}
-
 	char typebuf[event::TYPE_MAX_SIZE];
 	const string_view &type
 	{
@@ -154,11 +131,45 @@ const
 		user_room.get(std::nothrow, type, ruleid)
 	};
 
-	return m::get(std::nothrow, event_idx, "content", [&path, &closure, &event_idx]
-	(const json::object &content)
+	const bool user_rule_found
 	{
-		closure(event_idx, path, content);
-	});
+		m::get(std::nothrow, event_idx, "content", [&path, &closure, &event_idx]
+		(const json::object &content)
+		{
+			closure(event_idx, path, content);
+		})
+	};
+
+	// Allow user-set rule found with the same id as a server-default to
+	// always take priority.
+	if(user_rule_found)
+		return true;
+
+	// Present the default rule to the closure.
+	if(likely(scope == "global"))
+	{
+		const auto &rules
+		{
+			push::rules::defaults.get<json::array>(kind)
+		};
+
+		for(const json::object &rule : rules)
+		{
+			const json::string &_ruleid
+			{
+				rule["rule_id"]
+			};
+
+			if(_ruleid != ruleid)
+				continue;
+
+			closure(0UL, path, rule);
+			return true;
+		}
+	}
+
+	// Nothing found
+	return false;
 }
 
 bool
@@ -185,9 +196,17 @@ const
 		return true;
 	}
 
-	// Present the default rules to the closure; note that the for_each
-	// convention dictates if the user's closure returns false we'll never
-	// get past this branch to iterate the default rules.
+	const user::room user_room
+	{
+		user
+	};
+
+	const room::state state
+	{
+		user_room
+	};
+
+	// Present the default rules to the closure
 	if(!scope || scope == "global")
 	{
 		for(const auto &_kind : json::keys<decltype(push::rules::defaults)>())
@@ -197,11 +216,29 @@ const
 
 			for(const json::object &rule : push::rules::defaults.at<json::array>(_kind))
 			{
-				const push::path path
+				const json::string &_ruleid
 				{
-					"global", _kind, json::string{rule["rule_id"]}
+					rule["rule_id"]
 				};
 
+				const push::path path
+				{
+					"global", _kind, _ruleid
+				};
+
+				char typebuf[event::TYPE_MAX_SIZE];
+				const string_view &type
+				{
+					push::make_type(typebuf, path)
+				};
+
+				// Check if the user set a rule with the same path/id as a
+				// server-default rule; if so, we want their rule to take
+				// priority over the this server-default below.
+				if(state.has(type, _ruleid))
+					continue;
+
+				// Present the server-default rule to the iteration.
 				if(!closure(0UL, path, rule))
 					return false;
 			}
@@ -214,17 +251,7 @@ const
 		push::make_type(typebuf, path)
 	};
 
-	const user::room user_room
-	{
-		user
-	};
-
-	const room::state state
-	{
-		user_room
-	};
-
-	return state.for_each(type, room::state::closure_bool{[&closure]
+	return state.for_each(type, [&closure]
 	(const string_view &type, const string_view &state_key, const m::event::idx &event_idx)
 	{
 		const auto path
@@ -237,5 +264,5 @@ const
 		{
 			return closure(event_idx, path, content);
 		});
-	}});
+	});
 }
