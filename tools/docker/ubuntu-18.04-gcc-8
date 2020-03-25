@@ -21,9 +21,9 @@ RUN \
         git \
         libbz2-dev \
         libgflags-dev \
+        liblz4-dev \
         libmagic-dev \
         libnss-db \
-        libsnappy-dev \
         libsodium-dev \
         libssl1.0-dev \
         libtool \
@@ -48,7 +48,7 @@ RUN \
         -DWITH_TOOLS=0 \
         -DUSE_RTTI=1 \
         -DWITH_ZLIB=1 \
-        -DWITH_SNAPPY=1 \
+        -DWITH_LZ4=1 \
         -DBUILD_SHARED_LIBS=1 && \
     cmake --build build --target install && \
     rm -Rf /tmpbuild/
