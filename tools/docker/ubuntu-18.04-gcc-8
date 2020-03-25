@@ -28,10 +28,8 @@ RUN \
         libsodium-dev \
         libssl-dev \
         libtool \
-        libzstd-dev \
         shtool \
-        xz-utils \
-        zlib1g-dev && \
+        xz-utils && \
     apt-get clean && \
     apt-get autoremove --purge -y
 
@@ -48,7 +46,6 @@ RUN \
         -DWITH_TESTS=0 \
         -DWITH_TOOLS=0 \
         -DUSE_RTTI=1 \
-        -DWITH_ZLIB=1 \
         -DWITH_LZ4=1 \
         -DBUILD_SHARED_LIBS=1 && \
     cmake --build build --target install && \
