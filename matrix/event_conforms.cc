@@ -249,8 +249,10 @@ ircd::m::event::conforms::conforms(const event &e)
 	if(empty(json::get<"origin"_>(e)))
 		set(MISSING_ORIGIN);
 
-	//TODO: XXX
-	if((false))
+	if(json::get<"origin"_>(e).size() > event::ORIGIN_MAX_SIZE)
+		set(INVALID_ORIGIN);
+
+	if(!rfc3986::valid_remote(std::nothrow, json::get<"origin"_>(e)))
 		set(INVALID_ORIGIN);
 
 	if(empty(json::get<"signatures"_>(e)))
