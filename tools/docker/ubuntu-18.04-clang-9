@@ -24,7 +24,7 @@ RUN \
         libmagic-dev \
         libnss-db \
         libsodium-dev \
-        libssl1.0-dev \
+        libssl-dev \
         libtool \
         libzstd-dev \
         shtool \
