@@ -21,6 +21,7 @@ RUN \
         git \
         libbz2-dev \
         libgflags-dev \
+        libgraphicsmagick1-dev \
         liblz4-dev \
         libmagic-dev \
         libnss-db \
