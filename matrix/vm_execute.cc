@@ -215,22 +215,6 @@ ircd::m::vm::execute(eval &eval,
 		if(m::exists(event.event_id))
 			return fault::EXISTS;
 
-	return execute_du(eval, event);
-}
-
-ircd::m::vm::fault
-ircd::m::vm::execute_du(eval &eval,
-                        const event &event)
-try
-{
-	assert(eval.id);
-	assert(eval.ctx);
-	assert(eval.opts);
-	const auto &opts
-	{
-		*eval.opts
-	};
-
 	// Set a member pointer to the event currently being evaluated. This
 	// allows other parallel evals to have deep access to this eval. It also
 	// will be used to count this event as currently being evaluated.
@@ -251,10 +235,25 @@ try
 			eval.event_id
 	};
 
+	return execute_du(eval, event);
+}
+
+ircd::m::vm::fault
+ircd::m::vm::execute_du(eval &eval,
+                        const event &event)
+try
+{
+	assert(eval.id);
+	assert(eval.ctx);
+	assert(eval.opts);
 	assert(eval.opts->edu || event.event_id);
 	assert(eval.opts->edu || eval.event_id);
 	assert(eval.event_id == event.event_id);
 	assert(eval.event_);
+	const auto &opts
+	{
+		*eval.opts
+	};
 
 	// The issue hook is only called when this server is injecting a newly
 	// created event.
