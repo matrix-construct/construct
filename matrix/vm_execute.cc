@@ -116,6 +116,7 @@ ircd::m::vm::effect_hook
 ircd::m::vm::fault
 ircd::m::vm::execute(eval &eval,
                      const event &event)
+try
 {
 	// This assertion is tripped if the end of your context's stack is
 	// danger close; try increasing your stack size.
@@ -237,6 +238,65 @@ ircd::m::vm::execute(eval &eval,
 
 	return execute_du(eval, event);
 }
+catch(const vm::error &e)
+{
+	throw; // propagate from execute_du
+}
+catch(const m::error &e)
+{
+	const json::object &content
+	{
+		e.content
+	};
+
+	assert(eval.opts);
+	return handle_error
+	(
+		*eval.opts, fault::GENERAL,
+		"eval %s %s :%s :%s :%s",
+		event.event_id?
+			string_view{event.event_id}:
+			"<unknown>"_sv,
+		json::get<"room_id"_>(event)?
+			string_view{json::get<"room_id"_>(event)}:
+			"<unknown>"_sv,
+		e.what(),
+		json::string{content["errcode"]},
+		json::string{content["error"]}
+	);
+}
+catch(const ctx::interrupted &e)
+{
+	assert(eval.opts);
+	return handle_error
+	(
+		*eval.opts, fault::INTERRUPT,
+		"eval %s %s :%s",
+		event.event_id?
+			string_view{event.event_id}:
+			"<unknown>"_sv,
+		json::get<"room_id"_>(event)?
+			string_view{json::get<"room_id"_>(event)}:
+			"<unknown>"_sv,
+		e.what()
+	);
+}
+catch(const std::exception &e)
+{
+	assert(eval.opts);
+	return handle_error
+	(
+		*eval.opts, fault::GENERAL,
+		"eval %s %s (General Protection) :%s",
+		event.event_id?
+			string_view{event.event_id}:
+			"<unknown>"_sv,
+		json::get<"room_id"_>(event)?
+			string_view{json::get<"room_id"_>(event)}:
+			"<unknown>"_sv,
+		e.what()
+	);
+}
 
 ircd::m::vm::fault
 ircd::m::vm::execute_du(eval &eval,
@@ -307,28 +367,16 @@ catch(const vm::error &e) // VM FAULT CODE
 		content["error"]
 	};
 
-	const auto &event_id
-	{
-		event.event_id?
-			string_view{event.event_id}:
-			"<edu>"_sv
-	};
-
-	const auto &room_id
-	{
-		eval.room_id?
-			eval.room_id:
-		json::get<"room_id"_>(event)?
-			string_view(json::get<"room_id"_>(event)):
-			"<edu>"_sv,
-	};
-
 	return handle_error
 	(
 		*eval.opts, e.code,
-		"eval %s %s :%s",
-		event_id,
-		room_id,
+		"execute %s %s :%s",
+		event.event_id?
+			string_view{event.event_id}:
+			"<edu>"_sv,
+		eval.room_id?
+			eval.room_id:
+			"<edu>"_sv,
 		error
 	);
 }
@@ -341,28 +389,16 @@ catch(const m::error &e) // GENERAL MATRIX ERROR
 		content["error"]
 	};
 
-	const auto &event_id
-	{
-		event.event_id?
-			string_view{event.event_id}:
-			"<edu>"_sv
-	};
-
-	const auto &room_id
-	{
-		eval.room_id?
-			eval.room_id:
-		json::get<"room_id"_>(event)?
-			string_view(json::get<"room_id"_>(event)):
-			"<edu>"_sv,
-	};
-
 	return handle_error
 	(
 		*eval.opts, fault::GENERAL,
-		"eval %s %s :%s :%s :%s",
-		event_id,
-		room_id,
+		"execute %s %s :%s :%s :%s",
+		event.event_id?
+			string_view{event.event_id}:
+			"<edu>"_sv,
+		eval.room_id?
+			eval.room_id:
+			"<edu>"_sv,
 		e.what(),
 		error[0],
 		error[1]
@@ -370,55 +406,31 @@ catch(const m::error &e) // GENERAL MATRIX ERROR
 }
 catch(const ctx::interrupted &e) // INTERRUPTION
 {
-	const auto &event_id
-	{
-		event.event_id?
-			string_view{event.event_id}:
-			"<edu>"_sv
-	};
-
-	const auto &room_id
-	{
-		eval.room_id?
-			eval.room_id:
-		json::get<"room_id"_>(event)?
-			string_view(json::get<"room_id"_>(event)):
-			"<edu>"_sv,
-	};
-
 	return handle_error
 	(
 		*eval.opts, fault::INTERRUPT,
-		"eval %s %s :%s",
-		event_id,
-		room_id,
+		"execute %s %s :%s",
+		event.event_id?
+			string_view{event.event_id}:
+			"<edu>"_sv,
+		eval.room_id?
+			eval.room_id:
+			"<edu>"_sv,
 		e.what()
 	);
 }
 catch(const std::exception &e) // ALL OTHER ERRORS
 {
-	const auto &event_id
-	{
-		event.event_id?
-			string_view{event.event_id}:
-			"<edu>"_sv
-	};
-
-	const auto &room_id
-	{
-		eval.room_id?
-			eval.room_id:
-		json::get<"room_id"_>(event)?
-			string_view(json::get<"room_id"_>(event)):
-			"<edu>"_sv,
-	};
-
 	return handle_error
 	(
 		*eval.opts, fault::GENERAL,
-		"eval %s %s (General Protection) :%s",
-		event_id,
-		room_id,
+		"execute %s %s (General Protection) :%s",
+		event.event_id?
+			string_view{event.event_id}:
+			"<edu>"_sv,
+		eval.room_id?
+			eval.room_id:
+			"<edu>"_sv,
 		e.what()
 	);
 }
