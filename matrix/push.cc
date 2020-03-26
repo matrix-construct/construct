@@ -863,6 +863,23 @@ ircd::m::push::rules::defaults{R"(
 					"value": true
 				}
 			]
+		},
+		{
+			"rule_id": ".m.rule.reaction",
+			"default": true,
+			"enabled": true,
+			"conditions":
+			[
+				{
+					"kind": "event_match",
+					"key": "type",
+					"pattern": "m.reaction"
+				}
+			],
+			"actions":
+			[
+				"dont_notify"
+			]
 		}
 	],
 	"content":
