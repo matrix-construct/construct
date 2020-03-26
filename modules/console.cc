@@ -12183,7 +12183,7 @@ console_cmd__user__notifications(opt &out, const string_view &line)
 
 	const m::room::id &room_id
 	{
-		param["room_id"] == "*"?
+		!param["room_id"] || param["room_id"] == "*"?
 			m::room::id{}:
 			m::room::id{param["room_id"]}
 	};
