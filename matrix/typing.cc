@@ -85,6 +85,7 @@ _m_typing_eval
 void
 handle_edu_m_typing(const m::event &event,
                     m::vm::eval &eval)
+try
 {
 	const json::object &content
 	{
@@ -92,6 +93,21 @@ handle_edu_m_typing(const m::event &event,
 	};
 
 	_handle_edu_m_typing(event, content);
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		typing_log, "m.typing from %s :%s",
+		json::get<"origin"_>(event),
+		e.what(),
+	};
+
+	throw;
 }
 
 void
