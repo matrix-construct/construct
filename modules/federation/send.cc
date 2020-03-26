@@ -59,7 +59,6 @@ handle_edu(client &client,
            const m::resource::request::object<m::txn> &request,
            const string_view &txn_id,
            const m::edu &edu)
-try
 {
 	m::event event;
 	json::get<"origin"_>(event) = request.origin;
@@ -69,6 +68,8 @@ try
 	json::get<"depth"_>(event) = json::undefined_number;
 
 	m::vm::opts vmopts;
+	vmopts.nothrows = -1U;
+	vmopts.nothrows &= ~m::vm::fault::INTERRUPT;
 	vmopts.node_id = request.origin;
 	vmopts.txn_id = txn_id;
 	vmopts.edu = true;
@@ -77,20 +78,6 @@ try
 	m::vm::eval eval
 	{
 		event, vmopts
-	};
-}
-catch(const ctx::interrupted &)
-{
-	throw;
-}
-catch(const std::exception &e)
-{
-	log::derror
-	{
-		m::log, "%s :%s EDU :%s",
-		txn_id,
-		request.origin,
-		e.what(),
 	};
 }
 
@@ -115,6 +102,47 @@ handle_pdus(client &client,
 	};
 }
 
+json::object
+handle_txn(client &client,
+           const m::resource::request::object<m::txn> &request,
+           const string_view &txn_id,
+           unique_mutable_buffer &buf)
+try
+{
+	const auto &pdus
+	{
+		json::get<"pdus"_>(request)
+	};
+
+	const auto &edus
+	{
+		json::get<"edus"_>(request)
+	};
+
+	handle_pdus(client, request, txn_id, pdus);
+
+	for(const json::object &edu : edus)
+		handle_edu(client, request, txn_id, edu);
+
+	return json::empty_object;
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		m::log, "Unhandled error processing txn '%s' from '%s' :%s",
+		txn_id,
+		request.origin,
+		e.what(),
+	};
+
+	throw;
+}
+
 m::resource::response
 handle_put(client &client,
            const m::resource::request::object<m::txn> &request)
@@ -136,24 +164,15 @@ handle_put(client &client,
 		json::at<"origin"_>(request)
 	};
 
-	const json::array &edus
-	{
-		json::get<"edus"_>(request)
-	};
-
-	const json::array &pdus
-	{
-		json::get<"pdus"_>(request)
-	};
-
+	char rembuf[64];
 	log::debug
 	{
 		m::log, "%s :%s | %s --> edus:%zu pdus:%zu",
 		txn_id,
 		origin,
-		string(remote(client)),
-		edus.count(),
-		pdus.count(),
+		string(rembuf, remote(client)),
+		json::get<"edus"_>(request).count(),
+		json::get<"pdus"_>(request).count(),
 	};
 
 	if(origin && origin != request.origin)
@@ -182,7 +201,6 @@ handle_put(client &client,
 		(const auto &eval)
 		{
 			assert(eval.opts);
-
 			const bool match_node
 			{
 				eval.opts->node_id == request.origin
@@ -211,14 +229,16 @@ handle_put(client &client,
 			client, http::TOO_MANY_REQUESTS
 		};
 
-	handle_pdus(client, request, txn_id, pdus);
-
-	for(const json::object &edu : edus)
-		handle_edu(client, request, txn_id, edu);
+	// Lazy-allocated response buffer; only for error transcription
+	unique_mutable_buffer response_buffer;
+	const json::object &response
+	{
+		handle_txn(client, request, txn_id, response_buffer)
+	};
 
 	return m::resource::response
 	{
-		client, http::OK
+		client, response
 	};
 }
 
