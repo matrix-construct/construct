@@ -59,6 +59,7 @@ handle_edu(client &client,
            const m::resource::request::object<m::txn> &request,
            const string_view &txn_id,
            const m::edu &edu)
+try
 {
 	m::event event;
 	json::get<"origin"_>(event) = request.origin;
@@ -76,6 +77,20 @@ handle_edu(client &client,
 	m::vm::eval eval
 	{
 		event, vmopts
+	};
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::derror
+	{
+		m::log, "%s :%s EDU :%s",
+		txn_id,
+		request.origin,
+		e.what(),
 	};
 }
 
