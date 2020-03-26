@@ -39,6 +39,7 @@ struct ircd::m::user::notifications::opts
 	event::idx to {0};       // lowest idx ending iteration
 	string_view only;        // spec "only" filter
 	room::id room_id;        // room_id filter (optional)
+	bool sorted {true};      // sorted or optimal results
 };
 
 inline

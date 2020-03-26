@@ -116,15 +116,38 @@ const
 		user_room, type, {-1UL, -1L}, true
 	};
 
-	return events.for_each([&opts, &closure]
+	if(!opts.sorted || opts.room_id)
+		return events.for_each([&opts, &closure]
+		(const auto &type, const auto &depth, const auto &event_idx)
+		{
+			if(opts.from && event_idx > opts.from) //TODO: XXX
+				return true;
+
+			if(opts.to && event_idx <= opts.to) //TODO: XXX
+				return false;
+
+			return closure(type, event_idx);
+		});
+
+	std::vector<event::idx> idxs;
+	idxs.reserve(events.count());
+	events.for_each([&opts, &idxs]
 	(const auto &type, const auto &depth, const auto &event_idx)
 	{
-		if(opts.from && event_idx > opts.from) //TODO: XXX
+		if(opts.from && event_idx > opts.from)
 			return true;
 
-		if(opts.to && event_idx <= opts.to) //TODO: XXX
+		if(opts.to && event_idx <= opts.to)
+			return true;
+
+		idxs.emplace_back(event_idx);
+		return true;
+	});
+
+	std::sort(rbegin(idxs), rend(idxs));
+	for(const auto &idx : idxs)
+		if(!closure(string_view{}, idx)) //NOTE: no type string to closure
 			return false;
 
-		return closure(type, event_idx);
-	});
+	return true;
 }
