@@ -13623,12 +13623,16 @@ console_cmd__fed__event(opt &out, const string_view &line)
 
 	const m::event::id &event_id
 	{
-		param.at(0)
+		param.at("event_id")
 	};
 
-	const auto &remote
+	const string_view &remote
 	{
-		param.at(1, event_id.host())
+		param["remote"]?
+			param["remote"]:
+		event_id.host()?
+			event_id.host():
+			param.at("remote")
 	};
 
 	const string_view op
