@@ -115,22 +115,6 @@ handle_pdus(client &client,
 	};
 }
 
-void
-handle_pdu_failure(client &client,
-                   const m::resource::request::object<m::txn> &request,
-                   const string_view &txn_id,
-                   const json::object &pdu_failure)
-{
-	log::error
-	{
-		m::log, "%s :%s | (pdu_failure) %s",
-		txn_id,
-		at<"origin"_>(request),
-		pdu_failure.get("sender", string_view{"*"}),
-		string_view{pdu_failure}
-	};
-}
-
 m::resource::response
 handle_put(client &client,
            const m::resource::request::object<m::txn> &request)
@@ -162,20 +146,14 @@ handle_put(client &client,
 		json::get<"pdus"_>(request)
 	};
 
-	const json::array &pdu_failures
-	{
-		json::get<"pdu_failures"_>(request)
-	};
-
 	log::debug
 	{
-		m::log, "%s :%s | %s --> edus:%zu pdus:%zu errors:%zu",
+		m::log, "%s :%s | %s --> edus:%zu pdus:%zu",
 		txn_id,
 		origin,
 		string(remote(client)),
 		edus.count(),
 		pdus.count(),
-		pdu_failures.count()
 	};
 
 	if(origin && origin != request.origin)
@@ -232,9 +210,6 @@ handle_put(client &client,
 		{
 			client, http::TOO_MANY_REQUESTS
 		};
-
-	for(const auto &pdu_failure : pdu_failures)
-		handle_pdu_failure(client, request, txn_id, pdu_failure);
 
 	handle_pdus(client, request, txn_id, pdus);
 
