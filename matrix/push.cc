@@ -900,6 +900,10 @@ ircd::m::push::rules::defaults{R"(
 				{
 					"set_tweak": "sound",
 					"value": "default"
+				},
+				{
+					"set_tweak": "highlight",
+					"value": true
 				}
 			]
 		}
