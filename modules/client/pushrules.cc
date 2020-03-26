@@ -313,7 +313,7 @@ ircd::m::push::handle_put(client &client,
 				handle_enabled?
 					json::replace(old_rule,
 					{
-						"enabled", bool(json::get<"enabled"_>(rule))
+						"enabled", json::get<"enabled"_>(rule)
 					}):
 
 				handle_actions?
