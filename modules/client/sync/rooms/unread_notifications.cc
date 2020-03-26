@@ -249,8 +249,8 @@ ircd::m::sync::_highlight_count(const room &room,
 	user::notifications::opts opts;
 	opts.room_id = room.room_id;
 	opts.only = "highlight";
-	opts.from = b;
-	opts.to = a;
+	opts.from = range.second;
+	opts.to = range.first;
 	const auto ret
 	{
 		notifications.count(opts)
