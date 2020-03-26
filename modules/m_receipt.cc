@@ -193,6 +193,9 @@ try
 			string_view{event_id},
 		};
 
+	if(!exists(user))
+		create(user);
+
 	const auto evid
 	{
 		m::receipt::read(room_id, user_id, event_id, data)
