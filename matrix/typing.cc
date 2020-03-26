@@ -463,9 +463,17 @@ set_typing(const m::edu::m_typing &edu)
 		at<"user_id"_>(edu)
 	};
 
-	const m::user::room user_room
+	const m::user user
 	{
 		user_id
+	};
+
+	if(!exists(user))
+		create(user);
+
+	const m::user::room user_room
+	{
+		user
 	};
 
 	const auto &timeout
