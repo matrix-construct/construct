@@ -131,28 +131,9 @@ ircd::m::push::handle_get(client &client,
 	};
 
 	const auto append_rule{[]
-	(json::stack::array &_kind, const auto &path, const json::object &rule)
+	(json::stack::array &array, const auto &path, const json::object &rule)
 	{
-		const auto &[scope, kind, ruleid]
-		{
-			path
-		};
-
-		json::stack::object object
-		{
-			_kind
-		};
-
-		json::stack::member
-		{
-			object, "rule_id", ruleid
-		};
-
-		for(const auto &[key, val] : rule)
-			json::stack::member
-			{
-				object, key, val
-			};
+		array.append(rule);
 	}};
 
 	if(ruleid)
@@ -343,6 +324,7 @@ ircd::m::push::handle_put(client &client,
 		{
 			{ "enabled",  rule.get("enabled", true)  },
 			{ "default",  false                      },
+			{ "rule_id",  ruleid                     },
 		})
 	};
 

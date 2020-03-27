@@ -176,25 +176,9 @@ ircd::m::sync::push_rules(data &data)
 		};
 
 		pushrules.for_each(push::path{scope, kind, {}}, [&_kind]
-		(const auto &event_idx, const auto &path, const auto &members)
+		(const auto &event_idx, const auto &path, const json::object &rule)
 		{
-			const auto &[scope, kind, ruleid] {path};
-			json::stack::object object
-			{
-				_kind
-			};
-
-			json::stack::member
-			{
-				object, "rule_id", ruleid
-			};
-
-			for(const auto &[key, val] : members)
-				json::stack::member
-				{
-					object, key, val
-				};
-
+			_kind.append(rule);
 			return true;
 		});
 	}};
