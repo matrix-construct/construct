@@ -452,6 +452,8 @@ github_handle__pull_request(std::ostream &out,
 		    << ">"
 		    << json::string(pr["title"])
 		    << "</a>"
+		    << "&nbsp;"
+		    << ' '
 		    ;
 
 	const json::object head
@@ -514,10 +516,11 @@ github_handle__pull_request(std::ostream &out,
 		    << "<pre><code>"
 		    << body
 		    << "</code></pre>"
+		    << " &nbsp; "
 		    ;
 
 	if(pr.has("commits"))
-		out << " "
+		out << "  "
 		    << "<b>"
 		    << pr["commits"]
 		    << ' '
@@ -530,7 +533,7 @@ github_handle__pull_request(std::ostream &out,
 		    ;
 
 	if(pr.has("comments"))
-		out << "   "
+		out << " &nbsp;"
 		    << "<b>"
 		    << pr["comments"]
 		    << ' '
@@ -543,7 +546,7 @@ github_handle__pull_request(std::ostream &out,
 		    ;
 
 	if(pr.has("changed_files"))
-		out << "   "
+		out << " &nbsp;"
 		    << "<b>"
 		    << pr["changed_files"]
 		    << ' '
@@ -557,7 +560,7 @@ github_handle__pull_request(std::ostream &out,
 		    ;
 
 	if(pr.has("additions"))
-		out << "   "
+		out << " &nbsp;"
 		    << "<b>"
 		    << "<font color=\"#33CC33\">"
 		    << "++"
@@ -567,7 +570,7 @@ github_handle__pull_request(std::ostream &out,
 		    ;
 
 	if(pr.has("deletions"))
-		out << "   "
+		out << " "
 		    << "<b>"
 		    << "<font color=\"#CC0000\">"
 		    << "--"
