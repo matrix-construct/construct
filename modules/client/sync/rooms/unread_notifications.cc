@@ -141,24 +141,27 @@ ircd::m::sync::room_unread_notifications_linear(data &data)
 		std::max(data.range.second, data.event_idx + 1)
 	};
 
-	// highlight_count
-	json::stack::member
+	const auto notification_count
 	{
-		*data.out, "highlight_count", json::value
-		{
-			start_idx?
-				_highlight_count(room, data.user, start_idx, upper_bound):
-				0L
-		}
+		start_idx && !is_self_read?
+			_notification_count(room, start_idx, upper_bound):
+			0L
 	};
 
-	// notification_count
 	json::stack::member
 	{
 		*data.out, "notification_count", json::value
 		{
-			start_idx && !is_self_read?
-				_notification_count(room, start_idx, upper_bound):
+			notification_count
+		}
+	};
+
+	json::stack::member
+	{
+		*data.out, "highlight_count", json::value
+		{
+			notification_count?
+				_highlight_count(room, data.user, start_idx, upper_bound):
 				0L
 		}
 	};
@@ -196,21 +199,26 @@ ircd::m::sync::room_unread_notifications_polylog(data &data)
 	if(!apropos(data, start_idx))
 		return false;
 
-	// notification_count
+	const auto notification_count
+	{
+		_notification_count(room, start_idx, data.range.second)
+	};
+
 	json::stack::member
 	{
 		*data.out, "notification_count", json::value
 		{
-			_notification_count(room, start_idx, data.range.second)
+			notification_count
 		}
 	};
 
-	// highlight_count
 	json::stack::member
 	{
 		*data.out, "highlight_count", json::value
 		{
-			_highlight_count(room, data.user, start_idx, data.range.second)
+			notification_count?
+				_highlight_count(room, data.user, start_idx, data.range.second):
+				0L
 		}
 	};
 
