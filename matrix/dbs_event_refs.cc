@@ -42,7 +42,7 @@ ircd::m::dbs::desc::event_refs__cache__size
 {
 	{
 		{ "name",     "ircd.m.dbs._event_refs.cache.size" },
-		{ "default",  long(16_MiB)                        },
+		{ "default",  long(24_MiB)                        },
 	}, []
 	{
 		const size_t &value{event_refs__cache__size};
