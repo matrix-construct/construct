@@ -925,6 +925,7 @@ ircd::magick::handle_fatal(const ExceptionType type,
 	};
 
 	ircd::terminate();
+	__builtin_unreachable();
 }
 
 void
