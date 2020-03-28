@@ -211,6 +211,7 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 		_opts.appendix.reset();
 		_opts.appendix.set(appendix::EVENT_REFS);
 		_opts.appendix.set(appendix::ROOM_REDACT);
+		_opts.appendix.set(appendix::ROOM_HEAD_RESOLVE);
 		_opts.event_refs = opts.horizon_resolve;
 		_opts.interpose = &txn;
 		write(txn, _event, _opts);
