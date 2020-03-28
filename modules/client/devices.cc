@@ -168,7 +168,7 @@ put__devices(client &client,
 
 	m::id::device::buf device_id
 	{
-		url::decode(device_id, request.parv[1])
+		url::decode(device_id, request.parv[0])
 	};
 
 	m::device data{request.content};
@@ -194,7 +194,7 @@ delete__devices(client &client,
 
 	m::id::device::buf device_id
 	{
-		url::decode(device_id, request.parv[1])
+		url::decode(device_id, request.parv[0])
 	};
 
 	const json::object &auth
