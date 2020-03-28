@@ -134,6 +134,10 @@ try
 	if(opts.fetch_state)
 		state(event, eval, room);
 }
+catch(const ctx::interrupted &)
+{
+	throw;
+}
 catch(const std::exception &e)
 {
 	log::derror
@@ -283,6 +287,10 @@ catch(const vm::error &e)
 {
 	throw;
 }
+catch(const ctx::interrupted &)
+{
+	throw;
+}
 catch(const std::exception &e)
 {
 	log::error
@@ -324,6 +332,10 @@ try
 		auth_chain, opts
 	};
 }
+catch(const ctx::interrupted &)
+{
+	throw;
+}
 catch(const std::exception &e)
 {
 	log::error
@@ -345,6 +357,7 @@ void
 ircd::m::vm::fetch::state(const event &event,
                           vm::eval &eval,
                           const room &room)
+try
 {
 	const event::prev prev{event};
 	const size_t prev_miss
@@ -441,6 +454,22 @@ ircd::m::vm::fetch::state(const event &event,
 		good,
 		fail,
 	};
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "%s state fetch in %s :%s",
+		loghead(eval),
+		string_view{room.room_id},
+		e.what(),
+	};
+
+	throw;
 }
 
 std::forward_list
@@ -647,7 +676,7 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 	>
 	ret;
 	const event::prev prev{event};
-	for(size_t i(0); i < prev.prev_events_count(); ++i)
+	for(size_t i(0); i < prev.prev_events_count(); ++i) try
 	{
 		const auto &prev_id
 		{
@@ -682,6 +711,21 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 		};
 
 		ret.emplace_front(m::fetch::start(opts));
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const std::exception &e)
+	{
+		log::derror
+		{
+			log, "%s requesting backfill off prev %s; depth:%ld :%s",
+			loghead(eval),
+			string_view{prev.prev_event(i)},
+			json::get<"depth"_>(event),
+			e.what(),
+		};
 	}
 
 	return ret;
