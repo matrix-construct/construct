@@ -30,6 +30,7 @@ namespace ircd::rfc3986
 	string_view encode(const mutable_buffer &, const string_view &url);
 	string_view encode(const mutable_buffer &, const json::members &);
 	string_view decode(const mutable_buffer &, const string_view &url);
+	const_buffer decode_unsafe(const mutable_buffer &, const string_view &url);
 
 	// extractor suite
 	uint16_t port(const string_view &remote); // get portnum from valid remote

@@ -23,60 +23,6 @@ __attribute__((visibility("hidden")))
 	using namespace ircd::spirit;
 }}}
 
-struct ircd::rfc3986::encoder
-:karma::grammar<char *, const string_view>
-{
-	[[noreturn]] void throw_illegal()
-	{
-		throw encoding_error
-		{
-			"Generator Protection: urlencode"
-		};
-	}
-
-	karma::rule<char *, const string_view> url_encoding
-	{
-		*(karma::char_("A-Za-z0-9") | (karma::lit('%') << karma::hex))
-		,"url encoding"
-	};
-
-	encoder(): encoder::base_type{url_encoding} {}
-}
-const ircd::rfc3986::encoder;
-
-struct ircd::rfc3986::decoder
-:qi::grammar<const char *, mutable_buffer>
-{
-	template<class R = unused_type, class... S> using rule = qi::rule<const char *, R, S...>;
-
-	rule<> url_illegal
-	{
-		char_(0x00, 0x1f)
-		,"url illegal"
-	};
-
-	rule<char()> url_encodable
-	{
-		char_("A-Za-z0-9")
-		,"url encodable character"
-	};
-
-	rule<char()> urlencoded_character
-	{
-		'%' > qi::uint_parser<char, 16, 2, 2>{}
-		,"urlencoded character"
-	};
-
-	rule<mutable_buffer> url_decode
-	{
-		*((char_ - '%') | urlencoded_character)
-		,"urldecode"
-	};
-
-	decoder(): decoder::base_type { url_decode } {}
-}
-const ircd::rfc3986::decoder;
-
 decltype(ircd::rfc3986::parser::sub_delims)
 ircd::rfc3986::parser::sub_delims
 {
@@ -472,8 +418,148 @@ ircd::rfc3986::uri::uri(const string_view &input)
 }
 
 //
-// general interface
+// uri decoding
 //
+
+struct ircd::rfc3986::decoder
+:qi::grammar<const char *, mutable_buffer>
+{
+	template<class R = unused_type,
+	         class... S>
+	using rule = qi::rule<const char *, R, S...>;
+
+	[[noreturn]] static void throw_unsafe()
+	{
+		throw decoding_error
+		{
+			"Unsafe characters in decoding."
+		};
+	}
+
+	const rule<char()> decode_char
+	{
+		lit('%') > qi::uint_parser<char, 16, 2, 2>{}
+		,"url decodable character"
+	};
+
+	const rule<char()> unreserved_char
+	{
+		// unreserved characters and !$+*'(),
+		char_("A-Za-z0-9._~!$+*'(),-")
+		,"url unreserved characters"
+	};
+
+	const rule<mutable_buffer> decode_unsafe
+	{
+		*((char_ - '%') | decode_char)
+		,"url unsafe decode"
+	};
+
+	rule<mutable_buffer> decode_safe
+	{
+		rule<mutable_buffer>{}
+		,"url safe decode"
+	};
+
+	decoder()
+	:decoder::base_type{decode_safe}
+	{
+		//TODO: XXX this never reports failure to throw; it just stops parsing
+		decode_safe %= *(unreserved_char | decode_char[_pass = (local::_1 > 0x1F)]);
+	}
+}
+const ircd::rfc3986::decoder;
+
+ircd::const_buffer
+ircd::rfc3986::decode_unsafe(const mutable_buffer &buf,
+                             const string_view &url)
+try
+{
+	const char *start(url.data()), *const stop
+	{
+		start + std::min(size(url), size(buf))
+	};
+
+	mutable_buffer mb
+	{
+		data(buf), size_t(0)
+	};
+
+	const bool ok
+	{
+		qi::parse(start, stop, decoder.decode_unsafe, mb)
+	};
+
+	assert(size(mb) <= size(url));
+	return string_view
+	{
+		data(mb), size(mb)
+	};
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure<decoding_error>{e};
+}
+
+ircd::string_view
+ircd::rfc3986::decode(const mutable_buffer &buf,
+                      const string_view &url)
+try
+{
+	const char *start(url.data()), *const stop
+	{
+		start + std::min(size(url), size(buf))
+	};
+
+	mutable_buffer mb
+	{
+		data(buf), size_t(0)
+	};
+
+	const bool ok
+	{
+		qi::parse(start, stop, decoder.decode_safe, mb)
+	};
+
+	assert(size(mb) <= size(url));
+	return string_view
+	{
+		data(mb), size(mb)
+	};
+}
+catch(const qi::expectation_failure<const char *> &e)
+{
+	throw expectation_failure<decoding_error>{e};
+}
+
+//
+// uri encoding
+//
+
+struct ircd::rfc3986::encoder
+:karma::grammar<char *, const string_view>
+{
+	template<class R = unused_type,
+	         class... S>
+	using rule = karma::rule<char *, R, S...>;
+
+	const rule<char()> unreserved
+	{
+		char_("A-Za-z0-9._~-")
+		,"url unencoded"
+	};
+
+	const rule<const string_view> encode
+	{
+		*(unreserved | (lit('%') << karma::right_align(2, '0')[karma::hex]))
+		,"url encode"
+	};
+
+	encoder()
+	:encoder::base_type{encode}
+	{}
+}
+const ircd::rfc3986::encoder;
 
 ircd::string_view
 ircd::rfc3986::encode(const mutable_buffer &out,
@@ -514,49 +600,20 @@ ircd::rfc3986::encode(const mutable_buffer &buf,
                       const string_view &url)
 {
 	char *out(data(buf));
-	karma::generate(out, maxwidth(size(buf))[encoder], url);
+	const bool ok
+	{
+		karma::generate(out, maxwidth(size(buf))[encoder], url)
+	};
+
 	return string_view
 	{
 		data(buf), size_t(std::distance(data(buf), out))
 	};
 }
 
-ircd::string_view
-ircd::rfc3986::decode(const mutable_buffer &buf,
-                      const string_view &url)
-try
-{
-	const char *start(url.data()), *const stop
-	{
-		start + std::min(size(url), size(buf))
-	};
-
-	mutable_buffer mb
-	{
-		data(buf), size_t(0)
-	};
-
-	qi::parse(start, stop, eps > decoder, mb);
-	return string_view
-	{
-		data(mb), size(mb)
-	};
-}
-catch(const qi::expectation_failure<const char *> &e)
-{
-	const auto rule
-	{
-		ircd::string(e.what_)
-	};
-
-	throw decoding_error
-	{
-		"I require a valid urlencoded %s. You sent %zu invalid chars starting with `%s'.",
-		between(rule, "<", ">"),
-		size_t(e.last - e.first),
-		string_view{e.first, e.last}
-	};
-}
+//
+// general interface
+//
 
 ircd::string_view
 ircd::rfc3986::host(const string_view &str)
