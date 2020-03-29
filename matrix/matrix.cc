@@ -125,6 +125,8 @@ ircd::m::matrix::module_names
 	"client_keys_upload",
 	"client_keys_claim",
 	"client_keys_query",
+	"client_room_keys_version",
+	"client_room_keys_keys",
 	"client_presence",
 	"client_joined_groups",
 	"client_publicised_groups",
