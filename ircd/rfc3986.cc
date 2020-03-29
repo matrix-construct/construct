@@ -99,7 +99,7 @@ ircd::rfc3986::parser::unreserved
 {
 	ascii::alpha | ascii::digit |
 	lit('-') | lit('.') | lit('_') | lit('~')
-	,"reserved"
+	,"unreserved"
 };
 
 decltype(ircd::rfc3986::parser::reserved)
