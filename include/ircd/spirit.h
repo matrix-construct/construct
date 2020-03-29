@@ -69,8 +69,6 @@ __attribute__((visibility("hidden")))
 	namespace qi = spirit::qi;
 	namespace phx = boost::phoenix;
 
-	using spirit::unused_type;
-
 	using qi::locals;
 	using qi::_a;
 	using qi::_r1_type;
@@ -120,6 +118,9 @@ __attribute__((visibility("hidden")))
 	using karma::attr_cast;
 	using karma::maxwidth;
 	using karma::buffer;
+
+	using spirit::unused_type;
+	using spirit::_pass;
 
 	using _val_type = phx::actor<spirit::attribute<0>>;
 	using _r0_type = phx::actor<spirit::attribute<0>>;
