@@ -496,12 +496,16 @@ client_client_keys_upload_la_SOURCES = client/keys/upload.cc
 client_client_keys_query_la_SOURCES = client/keys/query.cc
 client_client_keys_claim_la_SOURCES = client/keys/claim.cc
 client_client_keys_changes_la_SOURCES = client/keys/changes.cc
+client_client_keys_signatures_upload_la_SOURCES = client/keys/signatures/upload.cc
+client_client_keys_device_signing_upload_la_SOURCES = client/keys/device_signing/upload.cc
 
 client_module_LTLIBRARIES += \
 	client/client_keys_upload.la \
 	client/client_keys_query.la \
 	client/client_keys_claim.la \
 	client/client_keys_changes.la \
+	client/client_keys_signatures_upload.la \
+	client/client_keys_device_signing_upload.la \
 	###
 
 #
