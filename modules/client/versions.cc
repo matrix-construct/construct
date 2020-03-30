@@ -14,6 +14,7 @@ namespace ircd::m::client_versions
 	static void append_versions(client &, resource::request &, json::stack &);
 	static resource::response get(client &, resource::request &);
 
+	extern conf::item<bool> org_matrix_label_based_filtering;
 	extern conf::item<bool> m_lazy_load_members;
 	extern conf::item<std::string> versions;
 	extern const string_view versions_default;
@@ -113,6 +114,13 @@ ircd::m::client_versions::m_lazy_load_members
 	{ "default",  true,                                        },
 };
 
+decltype(ircd::m::client_versions::org_matrix_label_based_filtering)
+ircd::m::client_versions::org_matrix_label_based_filtering
+{
+	{ "name",     "ircd.m.client.versions.org_matrix_label_based_filtering" },
+	{ "default",  true,                                                     },
+};
+
 void
 ircd::m::client_versions::append_unstable_features(client &client,
                                                    resource::request &request,
@@ -129,6 +137,15 @@ ircd::m::client_versions::append_unstable_features(client &client,
 		out, "m.lazy_load_members", json::value
 		{
 			bool(m_lazy_load_members)
+		}
+	};
+
+	// org.matrix.label_based_filtering
+	json::stack::member
+	{
+		out, "org.matrix.label_based_filtering", json::value
+		{
+			bool(org_matrix_label_based_filtering)
 		}
 	};
 }
