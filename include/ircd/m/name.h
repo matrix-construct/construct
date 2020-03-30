@@ -91,6 +91,8 @@ struct ircd::m::name
 	static constexpr const char *const not_types {"not_types"};
 	static constexpr const char *const senders {"senders"};
 	static constexpr const char *const not_senders {"not_senders"};
+	static constexpr const char *const labels {"org.matrix.labels"};
+	static constexpr const char *const not_labels {"org.matrix.not_labels"};
 	static constexpr const char *const limit {"limit"};
 	static constexpr const char *const contains_url {"contains_url"};
 	static constexpr const char *const lazy_load_members {"lazy_load_members"};
