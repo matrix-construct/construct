@@ -14,6 +14,7 @@ namespace ircd::m::client_versions
 	static void append_versions(client &, resource::request &, json::stack &);
 	static resource::response get(client &, resource::request &);
 
+	extern conf::item<bool> org_matrix_e2e_cross_signing;
 	extern conf::item<bool> org_matrix_label_based_filtering;
 	extern conf::item<bool> m_lazy_load_members;
 	extern conf::item<std::string> versions;
@@ -121,6 +122,13 @@ ircd::m::client_versions::org_matrix_label_based_filtering
 	{ "default",  true,                                                     },
 };
 
+decltype(ircd::m::client_versions::org_matrix_e2e_cross_signing)
+ircd::m::client_versions::org_matrix_e2e_cross_signing
+{
+	{ "name",     "ircd.m.client.versions.org_matrix_e2e_cross_signing" },
+	{ "default",  true,                                                 },
+};
+
 void
 ircd::m::client_versions::append_unstable_features(client &client,
                                                    resource::request &request,
@@ -146,6 +154,15 @@ ircd::m::client_versions::append_unstable_features(client &client,
 		out, "org.matrix.label_based_filtering", json::value
 		{
 			bool(org_matrix_label_based_filtering)
+		}
+	};
+
+	// org.matrix.e2e_cross_signing
+	json::stack::member
+	{
+		out, "org.matrix.e2e_cross_signing", json::value
+		{
+			bool(org_matrix_e2e_cross_signing)
 		}
 	};
 }
