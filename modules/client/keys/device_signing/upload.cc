@@ -10,6 +10,7 @@
 
 namespace ircd::m
 {
+	extern std::string flows;
 	static resource::response post_keys_device_signing_upload(client &, const resource::request &);
 	extern resource::method keys_device_signing_upload_post;
 	extern resource keys_device_signing_upload;
@@ -73,8 +74,32 @@ ircd::m::post_keys_device_signing_upload(client &client,
 		request.user_id
 	};
 
+	if(empty(auth))
+		return resource::response
+		{
+			client, http::UNAUTHORIZED, json::object{flows}
+		};
+
 	return resource::response
 	{
 		client, http::OK
 	};
 }
+
+decltype(ircd::m::flows)
+ircd::m::flows
+{
+	ircd::string(512 | SHRINK_TO_FIT, [](const mutable_buffer &buf)
+	{
+		json::stack out{buf};
+		{
+			json::stack::object top{out};
+			json::stack::array flows{top, "flows"};
+			json::stack::object flow{flows};
+			json::stack::array stages{flow, "stages"};
+			stages.append("m.login.password");
+		}
+
+		return out.completed();
+	})
+};
