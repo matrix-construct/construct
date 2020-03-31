@@ -43,9 +43,74 @@ ircd::m::resource::response
 ircd::m::post_keys_signatures_upload(client &client,
                                      const resource::request &request)
 {
+	const m::device::id::buf device_id
+	{
+		m::user::get_device_from_access_token(request.access_token)
+	};
+
+	const m::user::room user_room
+	{
+		request.user_id
+	};
+
+	for(const auto &[_user_id, devices_keys_] : request)
+	{
+		if(!valid(m::id::USER, _user_id))
+			continue;
+
+		if(_user_id != request.user_id)
+			throw m::ACCESS_DENIED
+			{
+				"Uploading for user %s by %s not allowed or supported",
+				_user_id,
+				string_view{request.user_id},
+			};
+
+		const m::user::id user_id
+		{
+			_user_id
+		};
+
+		const json::object &devices_keys
+		{
+			devices_keys_
+		};
+
+		for(const auto &[_device_id, device_keys_] : devices_keys)
+		{
+			const m::device_keys device_keys
+			{
+				device_keys_
+			};
+
+			if(json::get<"device_id"_>(device_keys) != _device_id)
+				throw m::BAD_REQUEST
+				{
+					"device_id '%s' does not match object property name '%s'",
+					json::get<"device_id"_>(device_keys),
+					_device_id,
+				};
+
+			if((false) && _device_id != device_id) // is this the "cross-sign?" gotta find out!
+				throw m::ACCESS_DENIED
+				{
+					"device_id '%s' does not match your current device_id '%s'",
+					_device_id,
+					string_view{device_id},
+				};
+
+			const bool set
+			{
+				m::device::set(user_id, _device_id, "signatures", device_keys_)
+			};
+		}
+	}
 
 	return resource::response
 	{
-		client, http::NOT_IMPLEMENTED
+		client, json::members
+		{
+			{ "failures", json::empty_object }
+		}
 	};
 }
