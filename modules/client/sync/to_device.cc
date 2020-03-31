@@ -44,29 +44,18 @@ ircd::m::sync::to_device_polylog(data &data)
 		*data.out, "events"
 	};
 
-	m::room::events it
+	m::room::type events
 	{
-		data.user_room
+		data.user_room, "ircd.to_device",
+		{
+			-1UL, data.range.first
+		}
 	};
 
 	bool ret{false};
-	for(it.seek_idx(data.range.first); it; --it)
+	events.for_each([&data, &array, &ret]
+	(const string_view &type, const uint64_t &depth, const event::idx &event_idx)
 	{
-		const auto &event_idx(it.event_idx());
-		if(!apropos(data, event_idx))
-			break;
-
-		const bool relevant
-		{
-			m::query(event_idx, "type", [](const string_view &type)
-			{
-				return type == "ircd.to_device";
-			})
-		};
-
-		if(!relevant)
-			continue;
-
 		m::get(std::nothrow, event_idx, "content", [&data, &array, &ret]
 		(const json::object &content)
 		{
@@ -103,7 +92,9 @@ ircd::m::sync::to_device_polylog(data &data)
 
 			ret = true;
 		});
-	}
+
+		return true;
+	});
 
 	return ret;
 }
