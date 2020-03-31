@@ -145,6 +145,11 @@ send_worker()
 void
 send(const m::event &event)
 {
+	const auto &type
+	{
+		json::get<"type"_>(event)
+	};
+
 	const auto &sender
 	{
 		json::get<"sender"_>(event)
@@ -155,6 +160,11 @@ send(const m::event &event)
 		json::get<"room_id"_>(event)
 	};
 
+	const json::object &content
+	{
+		json::get<"content"_>(event)
+	};
+
 	if(json::get<"depth"_>(event) == json::undefined_number)
 		return;
 
@@ -163,8 +173,16 @@ send(const m::event &event)
 		return send_to_room(event, m::room::id{room_id});
 
 	// target is remote server hosting user/device
-	if(valid(m::id::USER, room_id))
-		return send_to_user(event, m::user::id{room_id});
+	if(type == "m.direct_to_device")
+	{
+		const json::string &target
+		{
+			content.get("target")
+		};
+
+		if(valid(m::id::USER, target))
+			return send_to_user(event, m::user::id(target));
+	}
 
 	// target is every remote server from every room a user is joined to.
 	if(valid(m::id::USER, sender))

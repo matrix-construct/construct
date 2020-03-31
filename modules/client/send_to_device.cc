@@ -146,13 +146,10 @@ try
 	json::iov event, content;
 	const json::iov::push push[]
 	{
-		// The federation sender considers the room_id property of an event
-		// as the "destination" and knows what to do if it's actually some
-		// some other string like the user::id we're targeting here.
-		{ event,   { "room_id",      target                } },
 		{ event,   { "type",        "m.direct_to_device"   } },
 		{ content, { "type",         type                  } },
 		{ content, { "sender",       sender                } },
+		{ content, { "target",       target                } },
 		{ content, { "message_id",   txnid                 } },
 		{ content, { "messages",     out.completed()       } },
 	};
@@ -160,6 +157,7 @@ try
 	m::vm::copts opts;
 	opts.prop_mask.reset();
 	opts.prop_mask.set("origin");
+	opts.edu = true;
 	opts.notify_clients = false;
 	m::vm::eval
 	{
