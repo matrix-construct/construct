@@ -59,6 +59,24 @@ ircd::m::sync::to_device_polylog(data &data)
 		m::get(std::nothrow, event_idx, "content", [&data, &array, &ret]
 		(const json::object &content)
 		{
+			const json::string &device_id
+			{
+				content.at("device_id")
+			};
+
+			if(device_id != data.device_id)
+				return;
+
+			const json::string &sender
+			{
+				content.at("sender")
+			};
+
+			const json::string &type
+			{
+				content.at("type")
+			};
+
 			json::stack::object event
 			{
 				array
@@ -66,12 +84,12 @@ ircd::m::sync::to_device_polylog(data &data)
 
 			json::stack::member
 			{
-				event, "sender", unquote(content.at("sender"))
+				event, "sender", sender
 			};
 
 			json::stack::member
 			{
-				event, "type", unquote(content.at("type"))
+				event, "type", type
 			};
 
 			json::stack::object content_
@@ -81,7 +99,7 @@ ircd::m::sync::to_device_polylog(data &data)
 
 			json::stack::member
 			{
-				content_, "device_id", unquote(content.at("device_id"))
+				content_, "device_id", device_id
 			};
 
 			for(const auto &[property, value] : json::object(content.at("content")))
