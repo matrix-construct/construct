@@ -80,7 +80,7 @@ try
 
 	const event::id &event_id
 	{
-		m_relates_to["event_id"]
+		m_relates_to.get<json::string>("event_id")
 	};
 
 	// If the relates_to is a prev_event then the vm::fetch unit will perform
