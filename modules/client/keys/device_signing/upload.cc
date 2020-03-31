@@ -43,9 +43,38 @@ ircd::m::resource::response
 ircd::m::post_keys_device_signing_upload(client &client,
                                          const resource::request &request)
 {
+	const json::object &auth
+	{
+		request["auth"]
+	};
+
+	const json::object &master_key
+	{
+		request["master_key"]
+	};
+
+	const json::object &self_signing_key
+	{
+		request["self_signing_key"]
+	};
+
+	const json::object &user_signing_key
+	{
+		request["user_signing_key"]
+	};
+
+	const m::device::id::buf device_id
+	{
+		m::user::get_device_from_access_token(request.access_token)
+	};
+
+	const m::user::room user_room
+	{
+		request.user_id
+	};
 
 	return resource::response
 	{
-		client, http::NOT_IMPLEMENTED
+		client, http::OK
 	};
 }
