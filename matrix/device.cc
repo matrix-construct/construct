@@ -98,39 +98,32 @@ ircd::m::device::set(const m::user &user,
 	return true;
 }
 
-/// To delete a device we iterate the user's room state for all types matching
-/// ircd.device.* (and ircd.device) which have a state_key of the device_id.
-/// Those events are redacted which removes them from appearing in the state.
 bool
 ircd::m::device::del(const m::user &user,
                      const string_view &id)
 {
-	const user::room user_room{user};
-	const room::state state{user_room};
-	const room::state::type_prefix type
+	const user::room user_room
 	{
-		"ircd.device."
+		user
 	};
 
-	state.for_each(type, [&user, &id, &user_room, &state]
-	(const string_view &type, const string_view &, const event::idx &)
+	const auto event_idx
 	{
-		const auto event_idx
-		{
-			state.get(std::nothrow, type, id)
-		};
+		user_room.get("ircd.device.device_id", id)
+	};
 
-		const auto event_id
-		{
-			m::event_id(event_idx, std::nothrow)
-		};
+	if(!event_idx)
+		return false;
 
-		if(event_id)
-			m::redact(user_room, user, event_id, "deleted");
+	const auto event_id
+	{
+		m::event_id(event_idx, std::nothrow)
+	};
 
-		return true;
-	});
+	if(!event_id)
+		return false;
 
+	m::redact(user_room, user_room.user, event_id, "deleted");
 	return true;
 }
 
