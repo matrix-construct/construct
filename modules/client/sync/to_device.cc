@@ -10,6 +10,7 @@
 
 namespace ircd::m::sync
 {
+	static void _to_device_append(data &, const json::object &, json::stack::array &);
 	static bool to_device_polylog(data &);
 	static bool to_device_linear(data &);
 
@@ -33,7 +34,37 @@ ircd::m::sync::to_device
 bool
 ircd::m::sync::to_device_linear(data &data)
 {
-	return false;
+	if(!data.event_idx)
+		return false;
+
+	assert(data.event);
+	const m::event &event{*data.event};
+	if(json::get<"room_id"_>(event) != data.user_room.room_id)
+		return false;
+
+	if(json::get<"type"_>(event) != "ircd.to_device")
+		return false;
+
+	const json::object &content
+	{
+		json::get<"content"_>(event)
+	};
+
+	const json::string &device_id
+	{
+		content.at("device_id")
+	};
+
+	if(device_id != data.device_id)
+		return false;
+
+	json::stack::array array
+	{
+		*data.out, "events"
+	};
+
+	_to_device_append(data, content, array);
+	return true;
 }
 
 bool
@@ -67,47 +98,7 @@ ircd::m::sync::to_device_polylog(data &data)
 			if(device_id != data.device_id)
 				return;
 
-			const json::string &sender
-			{
-				content.at("sender")
-			};
-
-			const json::string &type
-			{
-				content.at("type")
-			};
-
-			json::stack::object event
-			{
-				array
-			};
-
-			json::stack::member
-			{
-				event, "sender", sender
-			};
-
-			json::stack::member
-			{
-				event, "type", type
-			};
-
-			json::stack::object content_
-			{
-				event, "content"
-			};
-
-			json::stack::member
-			{
-				content_, "device_id", device_id
-			};
-
-			for(const auto &[property, value] : json::object(content.at("content")))
-				json::stack::member
-				{
-					content_, property, value
-				};
-
+			_to_device_append(data, content, array);
 			ret = true;
 		});
 
@@ -115,4 +106,50 @@ ircd::m::sync::to_device_polylog(data &data)
 	});
 
 	return ret;
+}
+
+void
+ircd::m::sync::_to_device_append(data &data,
+                                 const json::object &content,
+                                 json::stack::array &array)
+{
+	json::stack::object event
+	{
+		array
+	};
+
+	json::stack::member
+	{
+		event, "sender", json::string
+		{
+			content.at("sender")
+		}
+	};
+
+	json::stack::member
+	{
+		event, "type", json::string
+		{
+			content.at("type")
+		}
+	};
+
+	json::stack::object _content
+	{
+		event, "content"
+	};
+
+	json::stack::member
+	{
+		_content, "device_id", json::string
+		{
+			content.at("device_id")
+		}
+	};
+
+	for(const auto &[key, val] : json::object(content.at("content")))
+		json::stack::member
+		{
+			_content, key, val
+		};
 }
