@@ -58,10 +58,55 @@ ircd::m::resource::response
 ircd::m::post_room_keys_version(client &client,
                                 const resource::request &request)
 {
+	const json::string &algorithm
+	{
+		request["algorithm"]
+	};
+
+	const json::object &auth_data
+	{
+		request["auth_data"]
+	};
+
+	const json::string &public_key
+	{
+		auth_data["public_key"]
+	};
+
+	const json::object &signatures
+	{
+		auth_data["signatures"]
+	};
+
+	const m::device::id::buf device_id
+	{
+		m::user::get_device_from_access_token(request.access_token)
+	};
+
+	const m::user::room user_room
+	{
+		request.user_id
+	};
+
+	const auto event_id
+	{
+		m::send(user_room, request.user_id, "ircd.room_keys.version", json::object
+		{
+			request
+		})
+	};
+
+	const json::value version
+	{
+		lex_cast(m::index(event_id)), json::STRING
+	};
 
 	return resource::response
 	{
-		client, http::NOT_IMPLEMENTED
+		client, json::members
+		{
+			{ "version", version }
+		}
 	};
 }
 
