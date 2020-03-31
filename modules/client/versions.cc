@@ -14,6 +14,7 @@ namespace ircd::m::client_versions
 	static void append_versions(client &, resource::request &, json::stack &);
 	static resource::response get(client &, resource::request &);
 
+	extern conf::item<bool> m_require_identity_server;
 	extern conf::item<bool> org_matrix_e2e_cross_signing;
 	extern conf::item<bool> org_matrix_label_based_filtering;
 	extern conf::item<bool> m_lazy_load_members;
@@ -129,6 +130,13 @@ ircd::m::client_versions::org_matrix_e2e_cross_signing
 	{ "default",  true,                                                 },
 };
 
+decltype(ircd::m::client_versions::m_require_identity_server)
+ircd::m::client_versions::m_require_identity_server
+{
+	{ "name",     "ircd.m.client.versions.m_require_identity_server" },
+	{ "default",  false,                                             },
+};
+
 void
 ircd::m::client_versions::append_unstable_features(client &client,
                                                    resource::request &request,
@@ -163,6 +171,15 @@ ircd::m::client_versions::append_unstable_features(client &client,
 		out, "org.matrix.e2e_cross_signing", json::value
 		{
 			bool(org_matrix_e2e_cross_signing)
+		}
+	};
+
+	// m.require_identity_server
+	json::stack::member
+	{
+		out, "m.require_identity_server", json::value
+		{
+			bool(m_require_identity_server)
 		}
 	};
 }
