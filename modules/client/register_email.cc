@@ -103,7 +103,9 @@ ircd::m::register_email::requesttoken::post(client &client,
 
 	const json::string &id_server
 	{
-		request.at("id_server")
+		request["id_server"]?
+			request["id_server"]:
+			my_host()
 	};
 
 	log::debug
