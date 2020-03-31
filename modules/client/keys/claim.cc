@@ -218,10 +218,9 @@ recv_response(const string_view &remote,
               const system_point &timeout)
 try
 {
-	request.wait_until(timeout);
 	const auto code
 	{
-		request.get()
+		request.get_until(timeout)
 	};
 
 	const json::object response
@@ -237,7 +236,7 @@ try
 	for(const auto &[user_id, keys] : one_time_keys)
 		json::stack::member
 		{
-			object, m::user::id{user_id}, json::object{keys}
+			object, user_id, json::object{keys}
 		};
 }
 catch(const std::exception &e)
