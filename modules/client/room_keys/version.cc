@@ -175,9 +175,64 @@ ircd::m::resource::response
 ircd::m::get_room_keys_version(client &client,
                                const resource::request &request)
 {
-
-	return resource::response
+	const m::user::room user_room
 	{
-		client, http::NOT_IMPLEMENTED
+		request.user_id
 	};
+
+	event::idx event_idx
+	{
+		request.parv.size() >= 1?
+			lex_cast<event::idx>(request.parv[0]):
+			0UL
+	};
+
+	if(!event_idx)
+	{
+		const m::room::type events
+		{
+			user_room, "ircd.room_keys.version"
+		};
+
+		events.for_each([&event_idx]
+		(const auto &, const auto &, const event::idx &_event_idx)
+		{
+			event_idx = _event_idx;
+			return false; // false to break after this first hit
+		});
+	}
+
+	if(!event_idx)
+		return resource::response
+		{
+			client, http::NOT_FOUND
+		};
+
+	if(m::room_id(event_idx) != user_room.room_id)
+		throw m::ACCESS_DENIED
+		{
+			"Event idx:%lu is not in your room",
+			event_idx,
+		};
+
+	m::get(event_idx, "content", [&client, &event_idx]
+	(const json::object &content)
+	{
+		const json::value version
+		{
+			lex_cast(event_idx), json::STRING
+		};
+
+		resource::response
+		{
+			client, json::members
+			{
+				{ "version",    version              },
+				{ "algorithm",  content["algorithm"] },
+				{ "auth_data",  content["auth_data"] },
+			}
+		};
+	});
+
+	return {}; // Responded from closure
 }
