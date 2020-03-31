@@ -127,10 +127,42 @@ ircd::m::resource::response
 ircd::m::delete_room_keys_version(client &client,
                                   const resource::request &request)
 {
+	if(request.parv.size() < 1)
+		throw m::NEED_MORE_PARAMS
+		{
+			"version path parameter required",
+		};
+
+	const m::user::room user_room
+	{
+		request.user_id
+	};
+
+	const event::idx event_idx
+	{
+		lex_cast<event::idx>(request.parv[0])
+	};
+
+	if(m::room_id(event_idx) != user_room.room_id)
+		throw m::ACCESS_DENIED
+		{
+			"Event idx:%lu is not in your room",
+			event_idx,
+		};
+
+	const auto event_id
+	{
+		m::event_id(event_idx)
+	};
+
+	const auto redact_id
+	{
+		m::redact(user_room, request.user_id, event_id, "deleted by client")
+	};
 
 	return resource::response
 	{
-		client, http::NOT_IMPLEMENTED
+		client, http::OK
 	};
 }
 
@@ -197,6 +229,9 @@ ircd::m::get_room_keys_version(client &client,
 		events.for_each([&event_idx]
 		(const auto &, const auto &, const event::idx &_event_idx)
 		{
+			if(m::redacted(_event_idx))
+				return true;
+
 			event_idx = _event_idx;
 			return false; // false to break after this first hit
 		});
@@ -213,6 +248,12 @@ ircd::m::get_room_keys_version(client &client,
 		{
 			"Event idx:%lu is not in your room",
 			event_idx,
+		};
+
+	if(m::redacted(event_idx))
+		return resource::response
+		{
+			client, http::NOT_FOUND
 		};
 
 	m::get(event_idx, "content", [&client, &event_idx]
