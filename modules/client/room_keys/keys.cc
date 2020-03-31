@@ -197,9 +197,124 @@ ircd::m::resource::response
 ircd::m::get_room_keys_keys(client &client,
                             const resource::request &request)
 {
-
-	return resource::response
+	char room_id_buf[room::id::buf::SIZE];
+	const string_view &room_id
 	{
-		client, http::NOT_IMPLEMENTED
+		request.parv.size() > 0?
+			url::decode(room_id_buf, request.parv[0]):
+			string_view{}
 	};
+
+	char session_id_buf[256];
+	const string_view &session_id
+	{
+		request.parv.size() > 1?
+			url::decode(session_id_buf, request.parv[1]):
+			string_view{}
+	};
+
+	const event::idx version
+	{
+		request.query.at<event::idx>("version")
+	};
+
+	const m::user::room user_room
+	{
+		request.user_id
+	};
+
+	const m::room::state state
+	{
+		user_room
+	};
+
+	if(room_id && session_id)
+	{
+		char state_key_buf[event::STATE_KEY_MAX_SIZE];
+		const string_view state_key{fmt::sprintf
+		{
+			state_key_buf, "%s:%s:%u",
+			string_view{room_id},
+			session_id,
+			version,
+		}};
+
+		const auto event_idx
+		{
+			state.get("ircd.room_keys.key", state_key)
+		};
+
+		m::get(event_idx, "content", [&client]
+		(const json::object &content)
+		{
+			resource::response
+			{
+				client, content
+			};
+		});
+
+		return {}; // responded from closure
+	}
+
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top
+	{
+		out
+	};
+
+	if(room_id)
+	{
+		json::stack::object sessions
+		{
+			top, "sessions"
+		};
+
+		state.for_each("ircd.room_keys.key", [&room_id, &version, &sessions]
+		(const string_view &type, const string_view &state_key, const event::idx &event_idx)
+		{
+			string_view part[4]; const auto parts
+			{
+				tokens(state_key, ":", part)
+			};
+
+			const auto &_version{part[3]};
+			const auto &_session_id{part[2]};
+			const string_view &_room_id
+			{
+				begin(part[0]), end(part[1])
+			};
+
+			assert(m::valid(id::ROOM, _room_id));
+			if(_room_id != room_id)
+				return true;
+
+			if(_version != lex_cast<event::idx>(version))
+				return true;
+
+			m::get(std::nothrow, event_idx, "content", [&sessions, &_session_id]
+			(const json::object &session)
+			{
+				json::stack::member
+				{
+					sessions, _session_id, session
+				};
+			});
+
+			return true;
+		});
+
+		return {};
+	}
+
+	assert(0);
+	return {};
 }
