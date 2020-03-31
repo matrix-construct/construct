@@ -126,8 +126,32 @@ try
 
 	return json::empty_object;
 }
-catch(const ctx::interrupted &)
+catch(const m::vm::error &e)
 {
+	if(e.code == m::vm::fault::INTERRUPT)
+		throw;
+
+	const json::object &content
+	{
+		e.content
+	};
+
+	const json::string error[]
+	{
+		content["errcode"],
+		content["error"]
+	};
+
+	log::error
+	{
+		m::log, "Unhandled error processing txn '%s' from '%s' :%s :%s :%s",
+		txn_id,
+		request.origin,
+		e.what(),
+		error[0],
+		error[1],
+	};
+
 	throw;
 }
 catch(const std::exception &e)
