@@ -205,7 +205,7 @@ const
 		user_room.get(std::nothrow, "ircd.account", "active")
 	};
 
-	return m::query(event_idx, "content", []
+	return m::query(std::nothrow, event_idx, "content", []
 	(const json::object &content)
 	{
 		return content.get<bool>("value", false);
