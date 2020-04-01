@@ -175,7 +175,27 @@ ircd::m::device::del(const m::user &user,
 	if(!event_id)
 		return false;
 
-	m::redact(user_room, user_room.user, event_id, "deleted");
+	const auto redaction_id
+	{
+		m::redact(user_room, user_room.user, event_id, "deleted")
+	};
+
+	if(!my(user))
+		return true;
+
+	json::iov content;
+	const json::iov::push push[]
+	{
+		{ content,  { "user_id",    user.user_id  } },
+		{ content,  { "device_id",  id            } },
+		{ content,  { "deleted",    true          } },
+	};
+
+	const bool broadcasted
+	{
+		device_list_update::send(content)
+	};
+
 	return true;
 }
 
@@ -373,4 +393,47 @@ ircd::m::device::access_token_to_id(const string_view &token,
 		return ret;
 
 	return ret;
+}
+
+bool
+ircd::m::device_list_update::send(json::iov &content)
+try
+{
+	assert(content.has("user_id"));
+	assert(content.has("device_id"));
+
+	json::iov event;
+	const json::iov::push push[]
+	{
+		{ event, { "type",    "m.direct_to_device"  } },
+		{ event, { "sender",  content.at("user_id") } },
+	};
+
+	m::vm::copts opts;
+	opts.edu = true;
+	opts.prop_mask.reset();
+	opts.prop_mask.set("origin");
+	opts.notify_clients = false;
+	m::vm::eval
+	{
+		event, content, opts
+	};
+
+	return true;
+}
+catch(const ctx::interrupted &)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		m::log, "Send m.device_list_update for '%s' belonging to %s :%s",
+		content.at("device_id"),
+		content.at("user_id"),
+		e.what(),
+	};
+
+	return false;
 }

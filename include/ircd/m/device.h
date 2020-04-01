@@ -86,6 +86,8 @@ struct ircd::m::device_list_update
 	json::property<name::keys, json::object>
 >
 {
+	static bool send(json::iov &content);
+
 	using super_type::tuple;
 	using super_type::operator=;
 };
