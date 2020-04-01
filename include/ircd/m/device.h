@@ -135,6 +135,7 @@ struct ircd::m::device
 	static bool put(const user &, const string_view &id, const string_view &prop, const string_view &val);
 	static bool set(const user &, const string_view &id, const string_view &prop, const string_view &val);
 	static bool set(const user &, const device &);
+	static bool set(const device_list_update &);
 
 	// composite interface
 	static std::map<std::string, long> count_one_time_keys(const user &, const string_view &);

@@ -47,6 +47,44 @@ ircd::m::device::count_one_time_keys(const user &user,
 }
 
 bool
+ircd::m::device::set(const device_list_update &update)
+{
+	const m::user &user
+	{
+		json::at<"user_id"_>(update)
+	};
+
+	const auto &device_id
+	{
+		json::at<"device_id"_>(update)
+	};
+
+	if(json::get<"deleted"_>(update))
+		return del(user, device_id);
+
+	// Properties we're interested in for now...
+	static const string_view mask[]
+	{
+		"device_id",
+		"device_display_name",
+		"keys",
+	};
+
+	bool ret {false};
+	json::for_each(update, mask, [&ret, &user, &device_id]
+	(const auto &prop, auto &&val)
+	{
+		if constexpr(std::is_assignable<string_view, decltype(val)>())
+		{
+			if(json::defined(json::value(val)))
+				ret |= set(user, device_id, prop, val);
+		}
+	});
+
+	return ret;
+}
+
+bool
 ircd::m::device::set(const m::user &user,
                      const device &device)
 {
