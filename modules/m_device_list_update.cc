@@ -25,7 +25,7 @@ _m_device_list_update_eval
 {
 	handle_edu_m_device_list_update,
 	{
-		{ "_site",   "vm.eval"               },
+		{ "_site",   "vm.effect"             },
 		{ "type",    "m.device_list_update"  },
 	}
 };
@@ -47,6 +47,22 @@ try
 	{
 		content
 	};
+
+	const m::user::id &user_id
+	{
+		json::get<"user_id"_>(update)
+	};
+
+	if(user_id.host() != at<"origin"_>(event))
+		return;
+
+	const bool updated
+	{
+		m::device::set(update)
+	};
+
+	if(!updated)
+		return;
 
 	log::info
 	{
