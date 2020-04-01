@@ -30,7 +30,7 @@ const
 
 	const event::idx &event_idx
 	{
-		user_room.get(type, ruleid)
+		user_room.get(std::nothrow, type, ruleid)
 	};
 
 	const m::event::id::buf event_id
