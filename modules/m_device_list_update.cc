@@ -76,6 +76,10 @@ try
 			string_view{}
 	};
 }
+catch(const ctx::interrupted &e)
+{
+	throw;
+}
 catch(const std::exception &e)
 {
 	log::derror
