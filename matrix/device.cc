@@ -161,11 +161,8 @@ ircd::m::device::del(const m::user &user,
 
 	const auto event_idx
 	{
-		user_room.get("ircd.device.device_id", id)
+		user_room.get(std::nothrow, "ircd.device.device_id", id)
 	};
-
-	if(!event_idx)
-		return false;
 
 	const auto event_id
 	{
