@@ -129,7 +129,7 @@ try
 
 	m::event::idx event_idx
 	{
-		index(event_id, std::nothrow)
+		index(std::nothrow, event_id)
 	};
 
 	m::event::fetch event

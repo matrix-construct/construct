@@ -173,7 +173,7 @@ ircd::m::get_notifications(client &client,
 			{
 				object, "read", json::value
 				{
-					last_read && index(last_read, std::nothrow) >= event_idx
+					last_read && index(std::nothrow, last_read) >= event_idx
 				}
 			};
 

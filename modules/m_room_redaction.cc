@@ -73,7 +73,7 @@ ircd::m::auth_room_redaction(const m::event &event,
 	// the power levels.
 	const auto redact_target_idx
 	{
-		m::index(at<"redacts"_>(event), std::nothrow)
+		m::index(std::nothrow, at<"redacts"_>(event))
 	};
 
 	if(!redact_target_idx)

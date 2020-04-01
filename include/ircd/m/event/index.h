@@ -13,11 +13,11 @@
 
 namespace ircd::m
 {
-	bool index(const event::id &, std::nothrow_t, const event::closure_idx &);
+	bool index(std::nothrow_t, const event::id &, const event::closure_idx &);
 
-	event::idx index(const event::id &, std::nothrow_t);
+	event::idx index(std::nothrow_t, const event::id &);
 	event::idx index(const event::id &);
 
-	event::idx index(const event &, std::nothrow_t);
+	event::idx index(std::nothrow_t, const event &);
 	event::idx index(const event &);
 }

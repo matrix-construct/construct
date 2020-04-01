@@ -23,7 +23,7 @@ ircd::m::cached(const id::event &event_id,
 
 	const event::idx event_idx
 	{
-		index(event_id, std::nothrow)
+		index(std::nothrow, event_id)
 	};
 
 	return event_idx?

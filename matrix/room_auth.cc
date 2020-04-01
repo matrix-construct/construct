@@ -832,7 +832,7 @@ const
 
 			const auto &auth_event_idx
 			{
-				m::index(auth_event_id, std::nothrow)
+				m::index(std::nothrow, auth_event_id)
 			};
 
 			if(!auth_event_idx)

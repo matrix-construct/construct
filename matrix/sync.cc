@@ -107,14 +107,14 @@ bool
 ircd::m::sync::apropos(const data &d,
                        const event &event)
 {
-	return apropos(d, index(event, std::nothrow));
+	return apropos(d, index(std::nothrow, event));
 }
 
 bool
 ircd::m::sync::apropos(const data &d,
                        const event::id &event_id)
 {
-	return apropos(d, index(event_id, std::nothrow));
+	return apropos(d, index(std::nothrow, event_id));
 }
 
 bool

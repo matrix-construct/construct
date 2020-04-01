@@ -30,7 +30,7 @@ ircd::m::seek(event::fetch &fetch,
 {
 	const auto &event_idx
 	{
-		index(event_id, std::nothrow)
+		index(std::nothrow, event_id)
 	};
 
 	return seek(fetch, event_idx, event_id, std::nothrow);
@@ -130,7 +130,7 @@ ircd::m::event::fetch::fetch(const event::id &event_id,
                              const opts &opts)
 :fetch
 {
-	index(event_id, std::nothrow), event_id, std::nothrow, opts
+	index(std::nothrow, event_id), event_id, std::nothrow, opts
 }
 {
 }

@@ -23,10 +23,10 @@ catch(const json::not_found &)
 }
 
 ircd::m::event::idx
-ircd::m::index(const event &event,
-               std::nothrow_t)
+ircd::m::index(std::nothrow_t,
+               const event &event)
 {
-	return index(event.event_id, std::nothrow);
+	return index(std::nothrow, event.event_id);
 }
 
 ircd::m::event::idx
@@ -35,7 +35,7 @@ ircd::m::index(const event::id &event_id)
 	assert(event_id);
 	const auto ret
 	{
-		index(event_id, std::nothrow)
+		index(std::nothrow, event_id)
 	};
 
 	if(!ret)
@@ -50,11 +50,11 @@ ircd::m::index(const event::id &event_id)
 }
 
 ircd::m::event::idx
-ircd::m::index(const event::id &event_id,
-               std::nothrow_t)
+ircd::m::index(std::nothrow_t,
+               const event::id &event_id)
 {
 	event::idx ret{0};
-	index(event_id, std::nothrow, [&ret]
+	index(std::nothrow, event_id, [&ret]
 	(const event::idx &event_idx)
 	{
 		ret = event_idx;
@@ -64,8 +64,8 @@ ircd::m::index(const event::id &event_id,
 }
 
 bool
-ircd::m::index(const event::id &event_id,
-               std::nothrow_t,
+ircd::m::index(std::nothrow_t,
+               const event::id &event_id,
                const event::closure_idx &closure)
 {
 	auto &column

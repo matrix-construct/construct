@@ -398,7 +398,7 @@ ircd::m::dbs::find_event_idx(const event::id &event_id,
 		ret = wopts.interpose->val(db::op::SET, "_event_idx", event_id, 0UL);
 
 	if(wopts.allow_queries && !ret)
-		ret = m::index(event_id, std::nothrow); // query
+		ret = m::index(std::nothrow, event_id); // query
 
 	return ret;
 }

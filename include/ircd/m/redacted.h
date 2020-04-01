@@ -38,7 +38,7 @@ inline
 ircd::m::redacted::redacted(const event::id &event_id)
 :redacted
 {
-    index(event_id, std::nothrow)
+    index(std::nothrow, event_id)
 }
 {}
 

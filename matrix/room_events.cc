@@ -359,7 +359,7 @@ ircd::m::room::events::seek(const event::id &event_id)
 {
 	const event::idx &event_idx
 	{
-		m::index(event_id, std::nothrow)
+		m::index(std::nothrow, event_id)
 	};
 
 	return event_idx?

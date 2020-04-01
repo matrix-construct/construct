@@ -991,7 +991,7 @@ bool
 ircd::m::bad(const id::event &event_id)
 {
 	bool ret {false};
-	index(event_id, std::nothrow, [&ret]
+	index(std::nothrow, event_id, [&ret]
 	(const event::idx &event_idx)
 	{
 		ret = event_idx == 0;
@@ -1016,7 +1016,7 @@ ircd::m::count(const event::prev &prev)
 bool
 ircd::m::good(const id::event &event_id)
 {
-	return bool(event_id) && index(event_id, std::nothrow) != 0;
+	return bool(event_id) && index(std::nothrow, event_id) != 0;
 }
 
 bool

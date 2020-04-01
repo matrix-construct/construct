@@ -595,7 +595,7 @@ ircd::m::init::backfill::gossip(const room::id &room_id,
 	size_t ret{0};
 	const m::event::refs refs
 	{
-		m::index(event_id, std::nothrow)
+		m::index(std::nothrow, event_id)
 	};
 
 	static const size_t max{48};
