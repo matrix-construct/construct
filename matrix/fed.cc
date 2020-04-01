@@ -921,6 +921,9 @@ ircd::m::fed::user::keys::claim::claim(const json::object &content,
 {
 	assert(!!opts.remote);
 
+	assert(!defined(json::get<"content"_>(opts.request)));
+	json::get<"content"_>(opts.request) = content;
+
 	if(likely(!defined(json::get<"method"_>(opts.request))))
 		json::get<"method"_>(opts.request) = "POST";
 
