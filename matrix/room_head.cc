@@ -154,7 +154,7 @@ try
 
 			const auto event_id
 			{
-				m::event_id(it.event_idx(), std::nothrow)
+				m::event_id(std::nothrow, it.event_idx())
 			};
 
 			if(unlikely(!event_id))

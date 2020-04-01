@@ -270,7 +270,7 @@ try
 			id(json::string(source.at("event_id"))):
 		event_id_buf?
 			id(event_id_buf):
-			m::event_id(event_idx, event_id_buf, std::nothrow)
+			m::event_id(std::nothrow, event_idx, event_id_buf)
 	};
 
 	assert(fopts);
@@ -292,7 +292,7 @@ catch(const json::parse_error &e)
 	{
 		event_id_buf?
 			id(event_id_buf):
-			m::event_id(event_idx, event_id_buf, std::nothrow)
+			m::event_id(std::nothrow, event_idx, event_id_buf)
 	};
 
 	log::critical
@@ -326,7 +326,7 @@ try
 			id{json::get<"event_id"_>(event)}:
 		event_id_buf?
 			id{event_id_buf}:
-			m::event_id(event_idx, event_id_buf, std::nothrow)
+			m::event_id(std::nothrow, event_idx, event_id_buf)
 	};
 
 	assert(event_id);
@@ -341,7 +341,7 @@ catch(const json::parse_error &e)
 	{
 		event_id_buf?
 			id(event_id_buf):
-			m::event_id(event_idx, event_id_buf, std::nothrow)
+			m::event_id(std::nothrow, event_idx, event_id_buf)
 	};
 
 	log::critical

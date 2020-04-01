@@ -136,7 +136,7 @@ const
 	get(type, state_key, event::closure_idx{[&]
 	(const event::idx &idx)
 	{
-		if(!m::event_id(idx, std::nothrow, closure))
+		if(!m::event_id(std::nothrow, idx, closure))
 			throw m::NOT_FOUND
 			{
 				"(%s,%s) in %s idx:%lu event_id :not found",
@@ -214,7 +214,7 @@ const
 	return get(std::nothrow, type, state_key, event::closure_idx{[&closure]
 	(const event::idx &idx)
 	{
-		m::event_id(idx, std::nothrow, closure);
+		m::event_id(std::nothrow, idx, closure);
 	}});
 }
 
@@ -405,7 +405,7 @@ const
 	(const event::idx &idx)
 	{
 		bool ret{true};
-		m::event_id(idx, std::nothrow, [&ret, &closure]
+		m::event_id(std::nothrow, idx, [&ret, &closure]
 		(const event::id &id)
 		{
 			ret = closure(id);
@@ -607,7 +607,7 @@ const
 	(const event::idx &idx)
 	{
 		bool ret{true};
-		m::event_id(idx, std::nothrow, [&ret, &closure]
+		m::event_id(std::nothrow, idx, [&ret, &closure]
 		(const event::id &id)
 		{
 			ret = closure(id);

@@ -572,7 +572,7 @@ ircd::m::top(std::nothrow_t,
 		event::id::buf{}, depth, event_idx
 	};
 
-	m::event_id(event_idx, std::nothrow, [&ret]
+	m::event_id(std::nothrow, event_idx, [&ret]
 	(const event::id &event_id)
 	{
 		std::get<event::id::buf>(ret) = event_id;
@@ -1283,7 +1283,7 @@ const
 	(const event::idx &idx)
 	{
 		bool ret{true};
-		m::event_id(idx, std::nothrow, [&ret, &closure]
+		m::event_id(std::nothrow, idx, [&ret, &closure]
 		(const event::id &event_id)
 		{
 			ret = closure(event_id);

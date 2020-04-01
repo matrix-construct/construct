@@ -112,7 +112,7 @@ ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
 	};
 
 	if(existing_join)
-		event_id_buf = m::event_id(member_event_idx, std::nothrow);
+		event_id_buf = m::event_id(std::nothrow, member_event_idx);
 
 	if(!event_id_buf)
 		event_id_buf = m::bootstrap::make_join(host, room_id, user_id, room_version_buf);

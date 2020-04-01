@@ -290,7 +290,7 @@ ircd::m::sync::_room_timeline_polylog_events(data &data,
 			ret |= _room_timeline_append(data, array, it.event_idx(), event);
 		}
 
-	return m::event_id(event_idx, std::nothrow);
+	return m::event_id(std::nothrow, event_idx);
 }
 
 bool

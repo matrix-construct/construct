@@ -7497,7 +7497,7 @@ console_cmd__event__horizon(opt &out, const string_view &line)
 	{
 		const auto _event_id
 		{
-			m::event_id(event_idx, std::nothrow)
+			m::event_id(std::nothrow, event_idx)
 		};
 
 		out << event_id
@@ -7522,7 +7522,7 @@ console_cmd__event__horizon__list(opt &out, const string_view &line)
 	{
 		const auto _event_id
 		{
-			m::event_id(event_idx, std::nothrow)
+			m::event_id(std::nothrow, event_idx)
 		};
 
 		out << event_id

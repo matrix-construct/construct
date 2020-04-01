@@ -1097,7 +1097,7 @@ github_handle__status(std::ostream &out,
 			if(!m::query(std::nothrow, it.event_idx(), "content", content_match))
 				continue;
 
-			push_event_id = m::event_id(it.event_idx(), std::nothrow);
+			push_event_id = m::event_id(std::nothrow, it.event_idx());
 			break;
 		}
 	}

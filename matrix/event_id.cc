@@ -17,11 +17,11 @@ ircd::m::event_id(const event::idx &event_idx)
 }
 
 ircd::m::event::id::buf
-ircd::m::event_id(const event::idx &event_idx,
-                  std::nothrow_t)
+ircd::m::event_id(std::nothrow_t,
+                  const event::idx &event_idx)
 {
 	event::id::buf ret;
-	event_id(event_idx, ret, std::nothrow);
+	event_id(std::nothrow, event_idx, ret);
 	return ret;
 }
 
@@ -31,35 +31,38 @@ ircd::m::event_id(const event::idx &event_idx,
 {
 	const event::id ret
 	{
-		event_id(event_idx, buf, std::nothrow)
+		event_id(std::nothrow, event_idx, buf)
 	};
 
 	if(!ret)
 		throw m::NOT_FOUND
 		{
-			"Cannot find event ID from idx[%lu]", event_idx
+			"Cannot find event ID from idx[%lu]",
+			event_idx
 		};
 
 	return ret;
 }
 
 ircd::m::event::id
-ircd::m::event_id(const event::idx &event_idx,
-                  event::id::buf &buf,
-                  std::nothrow_t)
+ircd::m::event_id(std::nothrow_t,
+                  const event::idx &event_idx,
+                  event::id::buf &buf)
 {
-	event_id(event_idx, std::nothrow, [&buf]
+	event_id(std::nothrow, event_idx, [&buf]
 	(const event::id &eid)
 	{
 		buf = eid;
 	});
 
-	return buf? event::id{buf} : event::id{};
+	return buf?
+		event::id{buf}:
+		event::id{};
 }
 
 bool
-ircd::m::event_id(const event::idx &event_idx,
-                  std::nothrow_t,
+ircd::m::event_id(std::nothrow_t,
+                  const event::idx &event_idx,
                   const event::id::closure &closure)
 {
 	return get(std::nothrow, event_idx, "event_id", closure);

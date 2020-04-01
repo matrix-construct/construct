@@ -97,7 +97,7 @@ get__state_ids(client &client,
 		ac.for_each([&auth_chain_ids]
 		(const m::event::idx &event_idx)
 		{
-			m::event_id(event_idx, std::nothrow, [&auth_chain_ids]
+			m::event_id(std::nothrow, event_idx, [&auth_chain_ids]
 			(const auto &event_id)
 			{
 				auth_chain_ids.append(event_id);

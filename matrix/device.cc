@@ -166,7 +166,7 @@ ircd::m::device::del(const m::user &user,
 
 	const auto event_id
 	{
-		m::event_id(event_idx, std::nothrow)
+		m::event_id(std::nothrow, event_idx)
 	};
 
 	if(!event_id)

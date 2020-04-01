@@ -35,7 +35,7 @@ const
 
 	const m::event::id::buf event_id
 	{
-		m::event_id(event_idx, std::nothrow)
+		m::event_id(std::nothrow, event_idx)
 	};
 
 	if(!event_id)

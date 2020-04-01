@@ -77,7 +77,7 @@ ircd::m::join(const m::room &room,
 		const event::id::buf event_id
 		{
 			event_idx?
-				m::event_id(event_idx, std::nothrow):
+				m::event_id(std::nothrow, event_idx):
 				event::id::buf{}
 		};
 
