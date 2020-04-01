@@ -55,20 +55,44 @@ ircd::m::device::set(const m::user &user,
 		json::at<"device_id"_>(device)
 	};
 
-	json::for_each(device, [&user, &device_id]
+	bool ret {false};
+	json::for_each(device, [&user, &device_id, &ret]
 	(const auto &prop, auto &&val)
 	{
-		if(!json::defined(json::value(val)))
-			return;
-
-		set(user, device_id, prop, val);
+		if constexpr(std::is_assignable<string_view, decltype(val)>())
+		{
+			if(json::defined(json::value(val)))
+				ret |= set(user, device_id, prop, val);
+		}
 	});
 
-	return true;
+	return ret;
 }
 
 bool
 ircd::m::device::set(const m::user &user,
+                     const string_view &id,
+                     const string_view &prop,
+                     const string_view &val)
+{
+	bool dup {false};
+	const bool got
+	{
+		get(std::nothrow, user, id, prop, [&val, &dup]
+		(const json::string &existing)
+		{
+			dup = val == existing;
+		})
+	};
+
+	assert(!dup || got);
+	return !dup?
+		put(user, id, prop, val):
+		false;
+}
+
+bool
+ircd::m::device::put(const m::user &user,
                      const string_view &id,
                      const string_view &prop,
                      const string_view &val)

@@ -132,6 +132,7 @@ struct ircd::m::device
 	static bool has(const user &, const string_view &id, const string_view &prop);
 	static bool has(const user &, const string_view &id);
 	static bool del(const user &, const string_view &id);
+	static bool put(const user &, const string_view &id, const string_view &prop, const string_view &val);
 	static bool set(const user &, const string_view &id, const string_view &prop, const string_view &val);
 	static bool set(const user &, const device &);
 
