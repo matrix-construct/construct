@@ -50,28 +50,18 @@ bool
 ircd::m::device::set(const m::user &user,
                      const device &device)
 {
-	const user::room user_room{user};
 	const string_view &device_id
 	{
 		json::at<"device_id"_>(device)
 	};
 
-	json::for_each(device, [&user, &user_room, &device_id]
+	json::for_each(device, [&user, &device_id]
 	(const auto &prop, auto &&val)
 	{
 		if(!json::defined(json::value(val)))
 			return;
 
-		char buf[m::event::TYPE_MAX_SIZE];
-		const string_view type{fmt::sprintf
-		{
-			buf, "ircd.device.%s", prop
-		}};
-
-		m::send(user_room, user, type, device_id, json::members
-		{
-			{ "", val }
-		});
+		set(user, device_id, prop, val);
 	});
 
 	return true;
