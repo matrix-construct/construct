@@ -38,6 +38,12 @@ struct ircd::m::fed::send
 	     const mutable_buffer &head,      // buffer for HTTP head in and out
 	     opts);                           // options structure
 
+	explicit
+	send(const txn::array &pdu,
+	     const txn::array &edu,
+	     const mutable_buffer &buf,
+	     opts);
+
 	send() = default;
 };
 

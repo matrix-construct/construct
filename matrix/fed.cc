@@ -66,6 +66,35 @@ const
 		closure(event_id, error);
 }
 
+ircd::m::fed::send::send(const txn::array &pdu,
+                         const txn::array &edu,
+                         const mutable_buffer &buf_,
+                         opts opts)
+:send{[&]
+{
+	assert(!!opts.remote);
+
+	mutable_buffer buf{buf_};
+	const string_view &content
+	{
+		txn::create(buf, pdu, edu)
+	};
+
+	consume(buf, size(content));
+	const string_view &txnid
+	{
+		txn::create_id(buf, content)
+	};
+
+	consume(buf, size(txnid));
+	return send
+	{
+		txnid, content, buf, std::move(opts)
+	};
+}()}
+{
+}
+
 ircd::m::fed::send::send(const string_view &txnid,
                          const const_buffer &content,
                          const mutable_buffer &buf_,
