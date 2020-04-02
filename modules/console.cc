@@ -11581,14 +11581,21 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 			m::event_id(std::nothrow, event_idx)
 		};
 
+		const auto device_id
+		{
+			m::user::tokens::device(token)
+		};
+
 		out
 		<< token
 		<< " "
+		<< device_id
+		<< " "
 		<< ost
 		<< " "
-		<< pretty(now - ost) << " ago"
-		<< " "
 		<< string_view{event_id}
+		<< " "
+		<< pretty(now - ost) << " ago"
 		<< std::endl;
 		return true;
 	});
