@@ -353,6 +353,9 @@ const
 		user_room
 	};
 
+	if(!state.has("ircd.device.device_id", device_id))
+		return true;
+
 	const room::state::type_prefix type
 	{
 		"ircd.device."
