@@ -11964,6 +11964,51 @@ console_cmd__user__devices(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__user__devices__update(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"user_id", "device_id", "deleted"
+	}};
+
+	const m::user::id &user_id
+	{
+		param.at("user_id")
+	};
+
+	const string_view &device_id
+	{
+		param.at("device_id")
+	};
+
+	const bool deleted
+	{
+		param["deleted"] == "deleted"
+	};
+
+	const m::user::devices devices
+	{
+		user_id
+	};
+
+	json::iov content;
+	const json::iov::push push[]
+	{
+		{ content,  { "user_id",    user_id       } },
+		{ content,  { "device_id",  device_id     } },
+		{ content,  { "deleted",    deleted       } },
+	};
+
+	const bool broadcasted
+	{
+		m::user::devices::send(content)
+	};
+
+	out << "done" << std::endl;
+	return true;
+}
+
+bool
 console_id__device(opt &out,
                    const m::device::id &id,
                    const string_view &line)
