@@ -262,25 +262,7 @@ const
 		user
 	};
 
-	const room::state state
-	{
-		user_room
-	};
-
-	const room::state::type_prefix type
-	{
-		"ircd.device."
-	};
-
-	bool ret{false};
-	state.for_each(type, [&state, &id, &ret]
-	(const string_view &type, const string_view &, const event::idx &)
-	{
-		ret = state.has(type, id);
-		return !ret;
-	});
-
-	return ret;
+	return user_room.has("ircd.device.device_id", id);
 }
 
 bool
