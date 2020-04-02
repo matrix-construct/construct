@@ -135,7 +135,7 @@ const
 	const string_view access_token
 	{
 		!json::get<"inhibit_login"_>(*this)?
-			m::user::gen_access_token(access_token_buf):
+			m::user::tokens::generate(access_token_buf):
 			string_view{}
 	};
 

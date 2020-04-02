@@ -118,51 +118,6 @@ const
 	};
 }
 
-ircd::m::device::id::buf
-ircd::m::user::get_device_from_access_token(const string_view &token)
-{
-	const m::room::id::buf tokens_room_id
-	{
-		"tokens", origin(my())
-	};
-
-	const m::room tokens
-	{
-		tokens_room_id
-	};
-
-	const event::idx event_idx
-	{
-		tokens.get("ircd.access_token", token)
-	};
-
-	device::id::buf ret;
-	m::get(event_idx, "content", [&ret]
-	(const json::object &content)
-	{
-		ret = unquote(content.at("device_id"));
-	});
-
-	return ret;
-}
-
-ircd::string_view
-ircd::m::user::gen_access_token(const mutable_buffer &buf)
-{
-	static const size_t token_max{32};
-	static const auto &token_dict
-	{
-		rand::dict::alpha
-	};
-
-	const mutable_buffer out
-	{
-		data(buf), std::min(token_max, size(buf))
-	};
-
-	return rand::string(token_dict, out);
-}
-
 ircd::m::event::id::buf
 ircd::m::user::activate()
 {

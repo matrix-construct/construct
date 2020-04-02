@@ -80,7 +80,7 @@ ircd::m::post_room_keys_version(client &client,
 
 	const m::device::id::buf device_id
 	{
-		m::user::get_device_from_access_token(request.access_token)
+		m::user::tokens::device(request.access_token)
 	};
 
 	const m::user::room user_room

@@ -101,7 +101,7 @@ post__login_password(client &client,
 	char access_token_buf[32];
 	const string_view access_token
 	{
-		m::user::gen_access_token(access_token_buf)
+		m::user::tokens::generate(access_token_buf)
 	};
 
 	char remote_buf[96];

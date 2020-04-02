@@ -165,10 +165,10 @@ post__register_guest(client &client,
 		m::generate, my_host()
 	};
 
-	char access_token_buf[32];
+	char access_token_buf[64];
 	const string_view access_token
 	{
-		m::user::gen_access_token(access_token_buf)
+		m::user::tokens::generate(access_token_buf)
 	};
 
 	return resource::response

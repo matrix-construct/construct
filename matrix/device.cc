@@ -335,63 +335,6 @@ ircd::m::device::for_each(const m::user &user,
 	});
 }
 
-ircd::m::device::id::buf
-ircd::m::device::access_token_to_id(const string_view &token)
-{
-	id::buf ret;
-	access_token_to_id(token, [&ret]
-	(const string_view &device_id)
-	{
-		ret = device_id;
-	});
-
-	return ret;
-}
-
-bool
-ircd::m::device::access_token_to_id(const string_view &token,
-                                    const closure &closure)
-{
-	const m::room::id::buf tokens
-	{
-		"tokens", origin(my())
-	};
-
-	const m::room::state &state
-	{
-		tokens
-	};
-
-	const m::event::idx &event_idx
-	{
-		state.get(std::nothrow, "ircd.access_token", token)
-	};
-
-	bool ret{false};
-	const auto device_id{[&closure, &ret]
-	(const json::object &content)
-	{
-		const json::string &device_id
-		{
-			content["device_id"]
-		};
-
-		if(likely(device_id))
-		{
-			closure(device_id);
-			ret = true;
-		}
-	}};
-
-	if(!event_idx)
-		return ret;
-
-	if(!m::get(std::nothrow, event_idx, "content", device_id))
-		return ret;
-
-	return ret;
-}
-
 bool
 ircd::m::device_list_update::send(json::iov &content)
 try

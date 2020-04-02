@@ -11547,42 +11547,28 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 		param["clear"] == "clear"
 	};
 
-	const m::room::id::buf tokens_room
+	const m::user::tokens tokens
 	{
-		"tokens", origin(m::my())
+		user
 	};
 
-	const m::room::state &tokens
+	if(clear)
 	{
-		tokens_room
-	};
-
-	tokens.for_each("ircd.access_token", m::event::closure_idx{[&out, &user, &clear]
-	(const m::event::idx &event_idx)
-	{
-		bool match(false);
-		m::get(std::nothrow, event_idx, "sender", [&match, &user]
-		(const string_view &sender)
+		const size_t count
 		{
-			match = sender == user.user_id;
-		});
-
-		if(!match)
-			return;
-
-		const m::event::fetch event
-		{
-			event_idx
+			tokens.del("Invalidated by administrator console.")
 		};
 
-		const string_view &token
-		{
-			at<"state_key"_>(event)
-		};
+		out << "Invalidated " << count << std::endl;
+		return true;
+	}
 
+	tokens.for_each([&out]
+	(const m::event::idx &event_idx, const string_view &token)
+	{
 		const milliseconds ost
 		{
-			at<"origin_server_ts"_>(event)
+			m::get<long>(event_idx, "origin_server_ts")
 		};
 
 		const milliseconds now
@@ -11590,31 +11576,22 @@ console_cmd__user__tokens(opt &out, const string_view &line)
 			time<milliseconds>()
 		};
 
-		out << token
-		    << " "
-		    << ost
-		    << " "
-		    << pretty(now - ost) << " ago"
-		    << " "
-		    << string_view{event.event_id};
-
-		if(clear)
+		const auto event_id
 		{
-			const m::room::id::buf tokens_room
-			{
-				"tokens", origin(m::my())
-			};
+			m::event_id(std::nothrow, event_idx)
+		};
 
-			const auto eid
-			{
-				m::redact(tokens_room, user.user_id, event.event_id, "cleared")
-			};
-
-			out << " - cleared by " << eid;
-		}
-
-		out << std::endl;
-	}});
+		out
+		<< token
+		<< " "
+		<< ost
+		<< " "
+		<< pretty(now - ost) << " ago"
+		<< " "
+		<< string_view{event_id}
+		<< std::endl;
+		return true;
+	});
 
 	return true;
 }

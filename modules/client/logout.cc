@@ -10,10 +10,6 @@
 
 using namespace ircd;
 
-static bool
-do_logout(const m::user::id &user_id,
-          const m::event::idx &token_event_idx);
-
 static m::resource::response
 post__logout(client &,
              const m::resource::request &);
@@ -76,22 +72,15 @@ post__logout(client &client,
 		request.access_token
 	};
 
-	const m::room::id::buf tokens_room_id
+	const m::user::tokens tokens
 	{
-		"tokens", origin(m::my())
+		request.user_id
 	};
 
-	const m::room::state tokens
+	const bool deleted
 	{
-		tokens_room_id
+		tokens.del(access_token, "client logout")
 	};
-
-	const auto token_event_idx
-	{
-		tokens.get("ircd.access_token", access_token)
-	};
-
-	do_logout(request.user_id, token_event_idx);
 
 	return m::resource::response
 	{
@@ -103,79 +92,21 @@ m::resource::response
 post__logout_all(client &client,
                  const m::resource::request &request)
 {
-	const m::room::id::buf tokens_room_id
+	const m::user::tokens tokens
 	{
-		"tokens", origin(m::my())
+		request.user_id
 	};
 
-	const m::room::state tokens
+	const size_t invalidations
 	{
-		tokens_room_id
+		tokens.del("client logout all")
 	};
-
-	long count(0);
-	tokens.for_each("ircd.access_token", m::event::closure_idx{[&request, &count]
-	(const m::event::idx &event_idx)
-	{
-		bool match(false);
-		m::get(std::nothrow, event_idx, "sender", [&request, &match]
-		(const string_view &sender)
-		{
-			match = request.user_id == sender;
-		});
-
-		if(match)
-		{
-			do_logout(request.user_id, event_idx);
-			++count;
-		}
-	}});
 
 	return m::resource::response
 	{
 		client, json::members
 		{
-			{ "invalidations", count }
+			{ "invalidations", long(invalidations) }
 		}
 	};
-}
-
-bool
-do_logout(const m::user::id &user_id,
-          const m::event::idx &token_event_idx)
-try
-{
-	static const string_view reason
-	{
-		"logout"
-	};
-
-	const auto token_event_id
-	{
-		m::event_id(token_event_idx)
-	};
-
-	const m::room::id::buf tokens_room_id
-	{
-		"tokens", origin(m::my())
-	};
-
-	const auto redaction_event_id
-	{
-		m::redact(tokens_room_id, user_id, token_event_id, reason)
-	};
-
-	return true;
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		m::log, "Error logging out user '%s' token event_idx:%lu :%s",
-		string_view{user_id},
-		token_event_idx,
-		e.what()
-	};
-
-	return false;
 }
