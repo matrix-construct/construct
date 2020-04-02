@@ -1200,7 +1200,7 @@ decltype(ircd::net::acceptor::handshaking_max)
 ircd::net::acceptor::handshaking_max
 {
 	{ "name",     "ircd.net.acceptor.handshaking.max" },
-	{ "default",  64L                                 },
+	{ "default",  1024L                               },
 };
 
 /// The number of simultaneous handshakes we conduct for a single peer (which
