@@ -109,21 +109,23 @@ handle_txn(client &client,
            unique_mutable_buffer &buf)
 try
 {
-	const auto &pdus
-	{
-		json::get<"pdus"_>(request)
-	};
+	// We process PDU's before EDU's and we process all PDU's at once by
+	// passing the complete array. The events are sorted and dependencies
+	// are detected within the array. If we looped here for eval'ing one
+	// at a time we'd risk issuing fetch requests for prev_events which may
+	// exist in the same array, etc.
+	handle_pdus(client, request, txn_id, json::get<"pdus"_>(request));
 
-	const auto &edus
-	{
-		json::get<"edus"_>(request)
-	};
-
-	handle_pdus(client, request, txn_id, pdus);
-
-	for(const json::object &edu : edus)
+	// We process EDU's after PDU's. This is because checks on EDU's may
+	// depend on updates provided by PDU's in the same txn; for example:
+	// 1. user X joins room Y. 2. user X starts typing in room Y. Note that
+	// we also process EDU's one at a time since there is no dependency graph
+	// or anything like that so if this loop wasn't here it would just be
+	// somewhere else.
+	for(const json::object &edu : json::get<"edus"_>(request))
 		handle_edu(client, request, txn_id, edu);
 
+	//TODO: this should be an error object with problems from PDU evals.
 	return json::empty_object;
 }
 catch(const m::vm::error &e)
