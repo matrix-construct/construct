@@ -26,9 +26,9 @@ user_keys_query_resource
 };
 
 static void
-_query_user_device(client &client,
-                   const m::resource::request &request,
-                   const m::user::id &user_id,
+_query_user_device(client &,
+                   const m::resource::request &,
+                   const m::user::devices &,
                    const string_view &device_id,
                    json::stack::object &out);
 
@@ -70,25 +70,38 @@ post__user_keys_query(client &client,
 		top, "device_keys"
 	};
 
-	for(const auto &m : request_keys)
+	for(const auto &[user_id_, device_ids_] : request_keys)
 	{
-		const m::user::id &user_id{m.first};
-		const json::array &device_ids{m.second};
+		const m::user::id &user_id
+		{
+			user_id_
+		};
+
+		const json::array &device_ids
+		{
+			device_ids_
+		};
+
+		const m::user::devices devices
+		{
+			user_id
+		};
+
 		json::stack::object response_keys_user
 		{
 			response_keys, user_id
 		};
 
 		if(empty(device_ids))
-			m::device::for_each(user_id, [&client, &request, &user_id, &response_keys_user]
-			(const string_view &device_id)
+			devices.for_each([&client, &request, &devices, &response_keys_user]
+			(const auto &event_idx, const string_view &device_id)
 			{
-				_query_user_device(client, request, user_id, device_id, response_keys_user);
+				_query_user_device(client, request, devices, device_id, response_keys_user);
 				return true;
 			});
 		else
 			for(const json::string &device_id : device_ids)
-				_query_user_device(client, request, user_id, device_id, response_keys_user);
+				_query_user_device(client, request, devices, device_id, response_keys_user);
 	}
 
 	return std::move(response);
@@ -97,11 +110,11 @@ post__user_keys_query(client &client,
 void
 _query_user_device(client &client,
                    const m::resource::request &request,
-                   const m::user::id &user_id,
+                   const m::user::devices &devices,
                    const string_view &device_id,
                    json::stack::object &out)
 {
-	if(!m::device::has(user_id, device_id, "keys"))
+	if(!devices.has(device_id, "keys"))
 		return;
 
 	json::stack::object object
@@ -109,8 +122,8 @@ _query_user_device(client &client,
 		out, device_id
 	};
 
-	m::device::get(std::nothrow, user_id, device_id, "keys", [&device_id, &object]
-	(const json::object &device_keys)
+	devices.get(std::nothrow, device_id, "keys", [&device_id, &object]
+	(const auto &event_idx, const json::object &device_keys)
 	{
 		for(const auto &member : device_keys)
 			json::stack::member
@@ -119,8 +132,8 @@ _query_user_device(client &client,
 			};
 	});
 
-	m::device::get(std::nothrow, user_id, device_id, "display_name", [&device_id, &object]
-	(const string_view &display_name)
+	devices.get(std::nothrow, device_id, "display_name", [&device_id, &object]
+	(const auto &event_idx, const string_view &display_name)
 	{
 		json::stack::object non_hancock
 		{

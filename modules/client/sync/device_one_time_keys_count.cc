@@ -82,7 +82,7 @@ ircd::m::sync::_device_one_time_keys_count(data &data)
 
 	const auto counts
 	{
-		m::device::count_one_time_keys(data.user, data.device_id)
+		m::user::devices::count_one_time_keys(data.user, data.device_id)
 	};
 
 	for(const auto &[algorithm, count] : counts)

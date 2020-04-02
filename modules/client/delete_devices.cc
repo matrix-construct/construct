@@ -87,8 +87,13 @@ post__delete_devices(client &client,
 			"Incorrect password."
 		};
 
+	const m::user::devices user_devices
+	{
+		request.user_id
+	};
+
 	for(const json::string &device_id : devices)
-		m::device::del(request.user_id, device_id);
+		user_devices.del(device_id);
 
 	return m::resource::response
 	{

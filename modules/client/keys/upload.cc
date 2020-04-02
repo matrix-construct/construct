@@ -114,7 +114,7 @@ post__keys_upload(client &client,
 
 	const auto counts
 	{
-		m::device::count_one_time_keys(request.user_id, device_id)
+		m::user::devices::count_one_time_keys(request.user_id, device_id)
 	};
 
 	for(const auto &[algorithm, count] : counts)
@@ -140,6 +140,11 @@ upload_one_time_keys(client &client,
                      const m::device::id &device_id,
                      const json::object &one_time_keys)
 {
+	const m::user::devices devices
+	{
+		request.user_id
+	};
+
 	for(const auto &[ident, object] : one_time_keys)
 	{
 		const auto &[algorithm, name]
@@ -160,7 +165,10 @@ upload_one_time_keys(client &client,
 			strlcat(state_key_buf, ident)
 		};
 
-		m::device::set(request.user_id, device_id, state_key, object);
+		const auto set
+		{
+			devices.set(device_id, state_key, object)
+		};
 
 		log::debug
 		{
@@ -207,8 +215,16 @@ upload_device_keys(client &client,
 		at<"signatures"_>(device_keys)
 	};
 
+	const m::user::devices devices
+	{
+		request.user_id
+	};
+
 	m::device data;
 	json::get<"device_id"_>(data) = device_id;
 	json::get<"keys"_>(data) = request["device_keys"];
-	m::device::set(request.user_id, data);
+	const auto set
+	{
+		devices.set(data)
+	};
 }

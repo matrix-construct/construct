@@ -11,8 +11,8 @@
 using namespace ircd;
 
 static void
-_get_device(json::stack::object &obj,
-            const m::user &user,
+_get_device(json::stack::object &,
+            const m::user::devices &,
             const string_view &device_id);
 
 static m::resource::response
@@ -94,7 +94,12 @@ get__devices(client &client,
 		url::decode(device_id, request.parv[0])
 	};
 
-	if(!m::device::has(request.user_id, device_id))
+	const m::user::devices devices
+	{
+		request.user_id
+	};
+
+	if(!devices.has(device_id))
 		throw m::NOT_FOUND
 		{
 			"Device ID '%s' not found", device_id
@@ -115,7 +120,7 @@ get__devices(client &client,
 		out
 	};
 
-	_get_device(top, request.user_id, device_id);
+	_get_device(top, devices, device_id);
 	return {};
 }
 
@@ -134,10 +139,18 @@ put__devices(client &client,
 		url::decode(device_id, request.parv[0])
 	};
 
+	const m::user::devices devices
+	{
+		request.user_id
+	};
+
 	m::device data{request.content};
 	json::get<"device_id"_>(data) = device_id;
 
-	m::device::set(request.user_id, data);
+	const bool set
+	{
+		devices.set(data)
+	};
 
 	return m::resource::response
 	{
@@ -180,7 +193,15 @@ delete__devices(client &client,
 			"Incorrect password."
 		};
 
-	m::device::del(request.user_id, device_id);
+	const m::user::devices devices
+	{
+		request.user_id
+	};
+
+	const bool deleted
+	{
+		devices.del(device_id)
+	};
 
 	return m::resource::response
 	{
@@ -193,6 +214,11 @@ get__devices_all(client &client,
                  const m::resource::request &request,
                  const m::room user_room)
 {
+	const m::user::devices user_devices
+	{
+		request.user_id
+	};
+
 	m::resource::response::chunked response
 	{
 		client, http::OK
@@ -213,11 +239,15 @@ get__devices_all(client &client,
 		top, "devices"
 	};
 
-	m::device::for_each(request.user_id, [&request, &devices]
-	(const string_view &device_id)
+	user_devices.for_each([&user_devices, &devices]
+	(const auto &event_idx, const string_view &device_id)
 	{
-		json::stack::object obj{devices};
-		_get_device(obj, request.user_id, device_id);
+		json::stack::object obj
+		{
+			devices
+		};
+
+		_get_device(obj, user_devices, device_id);
 		return true;
 	});
 
@@ -226,7 +256,7 @@ get__devices_all(client &client,
 
 void
 _get_device(json::stack::object &obj,
-            const m::user &user,
+            const m::user::devices &devices,
             const string_view &device_id)
 {
 	json::stack::member
@@ -234,8 +264,8 @@ _get_device(json::stack::object &obj,
 		obj, "device_id", device_id
 	};
 
-	m::device::get(std::nothrow, user, device_id, "display_name", [&obj]
-	(const string_view &value)
+	devices.get(std::nothrow, device_id, "display_name", [&obj]
+	(const auto &, const string_view &value)
 	{
 		json::stack::member
 		{
@@ -243,8 +273,8 @@ _get_device(json::stack::object &obj,
 		};
 	});
 
-	m::device::get(std::nothrow, user, device_id, "last_seen_ip", [&obj]
-	(const string_view &value)
+	devices.get(std::nothrow, device_id, "last_seen_ip", [&obj]
+	(const auto &, const string_view &value)
 	{
 		json::stack::member
 		{
@@ -252,8 +282,8 @@ _get_device(json::stack::object &obj,
 		};
 	});
 
-	m::device::get(std::nothrow, user, device_id, "last_seen_ts", [&obj]
-	(const string_view &value)
+	devices.get(std::nothrow, device_id, "last_seen_ts", [&obj]
+	(const auto &, const string_view &value)
 	{
 		json::stack::member
 		{

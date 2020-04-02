@@ -58,7 +58,7 @@ try
 
 	const bool updated
 	{
-		m::device::set(update)
+		m::user::devices::update(update)
 	};
 
 	if(!updated)

@@ -127,16 +127,19 @@ post__login_password(client &client,
 		})
 	};
 
-	const json::members device
+	const m::user::devices devices
+	{
+		user_id
+	};
+
+	devices.set(json::members
 	{
 		{ "device_id",        device_id                    },
 		{ "display_name",     initial_device_display_name  },
 		{ "last_seen_ts",     ircd::time<milliseconds>()   },
 		{ "last_seen_ip",     last_seen_ip                 },
 		{ "access_token_id",  access_token_id              },
-	};
-
-	m::device::set(user_id, device);
+	});
 
 	// Send response to user
 	return resource::response

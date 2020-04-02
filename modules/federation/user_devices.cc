@@ -54,6 +54,11 @@ get__user_devices(client &client,
 		url::decode(user_id, request.parv[0])
 	};
 
+	const m::user::devices user_devices
+	{
+		user_id
+	};
+
 	m::resource::response::chunked response
 	{
 		client, http::OK
@@ -84,8 +89,8 @@ get__user_devices(client &client,
 		top, "devices"
 	};
 
-	m::device::for_each(user_id, [&devices, &user_id]
-	(const string_view &device_id)
+	user_devices.for_each([&user_devices, &devices]
+	(const auto &, const string_view &device_id)
 	{
 		json::stack::object device
 		{
@@ -99,17 +104,17 @@ get__user_devices(client &client,
 
 		// The property name difference here is on purpose, probably one of
 		// those so-called spec "thinkos"
-		m::device::get(std::nothrow, user_id, device_id, "display_name", [&device]
-		(const string_view &value)
+		user_devices.get(std::nothrow, device_id, "display_name", [&device]
+		(const auto &, const json::string &value)
 		{
 			json::stack::member
 			{
-				device, "device_display_name", unquote(value)
+				device, "device_display_name", value
 			};
 		});
 
-		m::device::get(std::nothrow, user_id, device_id, "keys", [&device]
-		(const json::object &value)
+		user_devices.get(std::nothrow, device_id, "keys", [&device]
+		(const auto &, const json::object &value)
 		{
 			json::stack::member
 			{

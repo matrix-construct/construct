@@ -71,6 +71,11 @@ ircd::m::post_keys_signatures_upload(client &client,
 			_user_id
 		};
 
+		const m::user::devices devices
+		{
+			user_id
+		};
+
 		const json::object &devices_keys
 		{
 			devices_keys_
@@ -101,7 +106,7 @@ ircd::m::post_keys_signatures_upload(client &client,
 
 			const bool set
 			{
-				m::device::set(user_id, _device_id, "signatures", device_keys_)
+				devices.set(_device_id, "signatures", device_keys_)
 			};
 		}
 	}

@@ -86,8 +86,6 @@ struct ircd::m::device_list_update
 	json::property<name::keys, json::object>
 >
 {
-	static bool send(json::iov &content);
-
 	using super_type::tuple;
 	using super_type::operator=;
 };
@@ -119,24 +117,6 @@ struct ircd::m::device
 >
 {
 	using id = m::id::device;
-	using closure = std::function<void (const string_view &)>;
-	using closure_bool = std::function<bool (const string_view &)>;
-
-	// primary interface
-	static bool for_each(const user &, const closure_bool &); // each device_id
-	static bool for_each(const user &, const string_view &id, const closure_bool &); // each property
-	static bool get(std::nothrow_t, const user &, const string_view &id, const string_view &prop, const closure &);
-	static bool get(const user &, const string_view &id, const string_view &prop, const closure &);
-	static bool has(const user &, const string_view &id, const string_view &prop);
-	static bool has(const user &, const string_view &id);
-	static bool del(const user &, const string_view &id);
-	static bool put(const user &, const string_view &id, const string_view &prop, const string_view &val);
-	static bool set(const user &, const string_view &id, const string_view &prop, const string_view &val);
-	static bool set(const user &, const device &);
-	static bool set(const device_list_update &);
-
-	// composite interface
-	static std::map<std::string, long> count_one_time_keys(const user &, const string_view &);
 
 	using super_type::tuple;
 	using super_type::operator=;

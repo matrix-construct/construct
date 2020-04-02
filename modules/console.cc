@@ -11929,10 +11929,15 @@ console_cmd__user__devices(opt &out, const string_view &line)
 		param.at("device_id", string_view{})
 	};
 
+	const m::user::devices devices
+	{
+		user_id
+	};
+
 	if(!device_id)
 	{
-		m::device::for_each(user_id, [&out]
-		(const string_view &device_id)
+		devices.for_each([&out]
+		(const auto &event_idx, const string_view &device_id)
 		{
 			out << device_id << std::endl;
 			return true;
@@ -11941,11 +11946,11 @@ console_cmd__user__devices(opt &out, const string_view &line)
 		return true;
 	}
 
-	m::device::for_each(user_id, device_id, [&out, &user_id, &device_id]
-	(const string_view &prop)
+	devices.for_each(device_id, [&out, &devices, &device_id]
+	(const auto &event_idx, const string_view &prop)
 	{
-		m::device::get(std::nothrow, user_id, device_id, prop, [&out, &prop]
-		(const string_view &value)
+		devices.get(std::nothrow, device_id, prop, [&out, &prop]
+		(const auto &event_idx, const string_view &value)
 		{
 			out << prop << ": "
 			    << value
