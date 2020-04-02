@@ -220,7 +220,7 @@ ircd::m::sync::handle_get(client &client,
 	// the stack here for this sync.
 	const device::id::buf device_id
 	{
-		device::access_token_to_id(request.access_token)
+		m::user::tokens::device(request.access_token)
 	};
 
 	// Keep state for statistics of this sync here on the stack.

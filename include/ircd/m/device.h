@@ -122,10 +122,6 @@ struct ircd::m::device
 	using closure = std::function<void (const string_view &)>;
 	using closure_bool = std::function<bool (const string_view &)>;
 
-	// util
-	static id::buf access_token_to_id(std::nothrow_t, const string_view &token);
-	static id::buf access_token_to_id(const string_view &token);
-
 	// primary interface
 	static bool for_each(const user &, const closure_bool &); // each device_id
 	static bool for_each(const user &, const string_view &id, const closure_bool &); // each property
@@ -145,16 +141,3 @@ struct ircd::m::device
 	using super_type::tuple;
 	using super_type::operator=;
 };
-
-inline ircd::m::device::id::buf
-ircd::m::device::access_token_to_id(const string_view &token)
-{
-	return m::user::tokens::device(token);
-}
-
-inline ircd::m::device::id::buf
-ircd::m::device::access_token_to_id(std::nothrow_t,
-                                    const string_view &token)
-{
-	return m::user::tokens::device(std::nothrow, token);
-}
