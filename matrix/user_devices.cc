@@ -362,16 +362,17 @@ const
 	};
 
 	return state.for_each(type, [&state, &device_id, &closure]
-	(const string_view &type, const string_view &, const event::idx &event_idx)
+	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
 	{
+		if(state_key != device_id)
+			return true;
+
 		const string_view &prop
 		{
 			lstrip(type, "ircd.device.")
 		};
 
-		return state.has(type, device_id)?
-			closure(event_idx, prop):
-			true;
+		return closure(event_idx, prop);
 	});
 }
 
