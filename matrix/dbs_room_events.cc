@@ -229,18 +229,28 @@ ircd::m::dbs::room_events__cmp_lt(const string_view &a,
 		return false;
 
 	// Distill out the depth and event_idx integers
-	const std::tuple<uint64_t, event::idx> pair[2]
+
+	const auto &[depth_a, event_idx_a]
 	{
-		room_events_key(post[0]),
+		room_events_key(post[0])
+	};
+
+	const auto &[depth_b, event_idx_b]
+	{
 		room_events_key(post[1])
 	};
 
 	// When two events are at the same depth sort by index (the sequence
 	// number given as they were admitted into the system) otherwise
 	// sort by depth. Note this is a reverse order comparison.
-	return std::get<0>(pair[1]) != std::get<0>(pair[0])?
-		std::get<0>(pair[1]) < std::get<0>(pair[0]):
-		std::get<1>(pair[1]) < std::get<1>(pair[0]);
+	const auto ret
+	{
+		depth_b != depth_a?
+			depth_b < depth_a:
+			event_idx_b < event_idx_a
+	};
+
+	return ret;
 }
 
 //

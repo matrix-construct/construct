@@ -211,34 +211,39 @@ ircd::m::dbs::room_state_space__cmp_lt(const string_view &a,
 		return false;
 
 	// Decompose the postfix of the key for granular sorting
-	const room_state_space_key_parts k[2]
+
+	const auto &[type_a, state_key_a, depth_a, event_idx_a]
 	{
-		room_state_space_key(post[0]),
+		room_state_space_key(post[0])
+	};
+
+	const auto &[type_b, state_key_b, depth_b, event_idx_b]
+	{
 		room_state_space_key(post[1])
 	};
 
 	// type
-	if(std::get<0>(k[0]) < std::get<0>(k[1]))
+	if(type_a < type_b)
 		return true;
-	else if(std::get<0>(k[0]) > std::get<0>(k[1]))
+	else if(type_a > type_b)
 		return false;
 
 	// state_key
-	if(std::get<1>(k[0]) < std::get<1>(k[1]))
+	if(state_key_a < state_key_b)
 		return true;
-	else if(std::get<1>(k[0]) > std::get<1>(k[1]))
+	else if(state_key_a > state_key_b)
 		return false;
 
 	// depth (ORDER IS DESCENDING!)
-	if(uint64_t(std::get<2>(k[0])) > uint64_t(std::get<2>(k[1])))
+	if(uint64_t(depth_a) > uint64_t(depth_b))
 		return true;
-	else if(uint64_t(std::get<2>(k[0])) < uint64_t(std::get<2>(k[1])))
+	else if(uint64_t(depth_a) < uint64_t(depth_b))
 		return false;
 
 	// event_idx (ORDER IS DESCENDING!)
-	if(std::get<3>(k[0]) > std::get<3>(k[1]))
+	if(event_idx_a > event_idx_b)
 		return true;
-	else if(std::get<3>(k[0]) < std::get<3>(k[1]))
+	else if(event_idx_a < event_idx_b)
 		return false;
 
 	return false;
