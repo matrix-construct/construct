@@ -732,7 +732,7 @@ const
 ircd::m::id::event::v3::v3(const string_view &id)
 :id::event{id}
 {
-	if(unlikely(version() != "3"))
+	if(unlikely(!is(id)))
 		throw m::INVALID_MXID
 		{
 			"'%s' is not a version 3 event mxid; maybe version %s?",
@@ -803,7 +803,7 @@ noexcept
 ircd::m::id::event::v4::v4(const string_view &id)
 :id::event{id}
 {
-	if(unlikely(version() != "4"))
+	if(unlikely(!is(id)))
 		throw m::INVALID_MXID
 		{
 			"'%s' is not a version 4 event mxid; maybe version %s?",
