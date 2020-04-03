@@ -14,12 +14,13 @@ namespace ircd
 {
 	template<class i8xN,
 	         size_t N>
-	static size_t indexof(const string_view &, const std::array<string_view, N> &);
+	static size_t indexof(const string_view &, const string_view *const &) noexcept;
 }
 
 size_t
 ircd::indexof(const string_view &s,
               const string_views &tab)
+noexcept
 {
 	#if defined(__AVX__)
 		static const size_t N {32};
@@ -32,8 +33,8 @@ ircd::indexof(const string_view &s,
 		using i8xN = char __attribute__((vector_size(1)));
 	#endif
 
+	string_view a[N];
 	size_t i, j, ret;
-	std::array<string_view, N> a;
 	for(i = 0; i < tab.size() / N; ++i)
 	{
 		for(j = 0; j < N; ++j)
@@ -43,20 +44,22 @@ ircd::indexof(const string_view &s,
 			return i * N + ret;
 	}
 
-	#pragma clang loop unroll (disable)
-	for(j = 0; j < N; ++j)
-		a[j] = i * N + j < tab.size()?
-			tab[i * N + j]:
-			string_view{};
+	for(j = 0; j < tab.size() % N; ++j)
+		a[j] = tab[i * N + j];
 
-	return i * N + indexof<i8xN, N>(s, a);
+	for(; j < N; ++j)
+		a[j] = string_view{};
+
+	ret = i * N + indexof<i8xN, N>(s, a);
+	return std::min(ret, tab.size());
 }
 
 template<class i8xN,
          size_t N>
 size_t
 ircd::indexof(const string_view &s,
-              const std::array<string_view, N> &st)
+              const string_view *const &st)
+noexcept
 {
 	i8xN ct, res;
 	size_t i, j, k;
@@ -74,7 +77,8 @@ ircd::indexof(const string_view &s,
 		}
 
 		res &= ct == s[i];
-		for(; j < N && !res[j]; ++j);
+		while(j < N && !res[j])
+			++j;
 	}
 
 	for(i = 0; i < N && !res[i]; ++i);

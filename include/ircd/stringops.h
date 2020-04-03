@@ -23,7 +23,7 @@ namespace ircd
 
 	// Multi-string table suite; returns index past the end on no-match
 	using string_views = vector_view<const string_view>;
-	size_t indexof(const string_view &, const string_views &);
+	size_t indexof(const string_view &, const string_views &) noexcept;
 
 	// return view without any trailing characters contained in c
 	string_view rstripa(const string_view &str, const string_view &c);
