@@ -19,9 +19,9 @@ namespace ircd::m
 {
 	bool event_id(std::nothrow_t, const event::idx &, const event::id::closure &);
 
-	[[gnu::warn_unused_result]] event::id event_id(std::nothrow_t, const event::idx &, event::id::buf &);
+	[[nodiscard]] event::id event_id(std::nothrow_t, const event::idx &, event::id::buf &);
 	event::id event_id(const event::idx &, event::id::buf &);
 
-	[[gnu::warn_unused_result]] event::id::buf event_id(std::nothrow_t, const event::idx &);
+	[[nodiscard]] event::id::buf event_id(std::nothrow_t, const event::idx &);
 	event::id::buf event_id(const event::idx &);
 }

@@ -15,9 +15,9 @@ namespace ircd::m
 {
 	bool index(std::nothrow_t, const event::id &, const event::closure_idx &);
 
-	[[gnu::warn_unused_result]] event::idx index(std::nothrow_t, const event::id &);
+	[[nodiscard]] event::idx index(std::nothrow_t, const event::id &);
 	event::idx index(const event::id &);
 
-	[[gnu::warn_unused_result]] event::idx index(std::nothrow_t, const event &);
+	[[nosdiscard]] event::idx index(std::nothrow_t, const event &);
 	event::idx index(const event &);
 }
