@@ -73,53 +73,7 @@ struct ircd::json::array
 	template<class it> static string_view stringify(mutable_buffer &, const it &b, const it &e);
 };
 
-namespace ircd::json
-{
-	bool operator==(const array::const_iterator &, const array::const_iterator &);
-	bool operator!=(const array::const_iterator &, const array::const_iterator &);
-	bool operator<=(const array::const_iterator &, const array::const_iterator &);
-	bool operator>=(const array::const_iterator &, const array::const_iterator &);
-	bool operator<(const array::const_iterator &, const array::const_iterator &);
-	bool operator>(const array::const_iterator &, const array::const_iterator &);
-}
-
-struct ircd::json::array::const_iterator
-{
-	using value_type = const string_view;
-	using pointer = value_type *;
-	using reference = value_type &;
-	using iterator = const_iterator;
-	using size_type = size_t;
-	using difference_type = ptrdiff_t;
-	using iterator_category = std::forward_iterator_tag;
-
-  protected:
-	friend class array;
-
-	const char *start {nullptr};
-	const char *stop {nullptr};
-	string_view state;
-
-	const_iterator(const char *const &start, const char *const &stop)
-	:start{start}
-	,stop{stop}
-	{}
-
-  public:
-	value_type *operator->() const               { return &state;                                  }
-	value_type &operator*() const                { return *operator->();                           }
-
-	const_iterator &operator++();
-
-	const_iterator() = default;
-
-	friend bool operator==(const const_iterator &, const const_iterator &);
-	friend bool operator!=(const const_iterator &, const const_iterator &);
-	friend bool operator<=(const const_iterator &, const const_iterator &);
-	friend bool operator>=(const const_iterator &, const const_iterator &);
-	friend bool operator<(const const_iterator &, const const_iterator &);
-	friend bool operator>(const const_iterator &, const const_iterator &);
-};
+#include "array_iterator.h"
 
 template<class T>
 T
@@ -134,4 +88,11 @@ catch(const bad_lex_cast &e)
 	{
 		"indice %zu must cast to type %s", i, typeid(T).name()
 	};
+}
+
+inline ircd::json::array::const_iterator
+ircd::json::array::end()
+const
+{
+	return { string_view::end(), string_view::end() };
 }

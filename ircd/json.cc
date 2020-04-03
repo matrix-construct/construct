@@ -2982,14 +2982,6 @@ catch(const qi::expectation_failure<const char *> &e)
 	};
 }
 
-ircd::json::array::const_iterator
-ircd::json::array::end()
-const
-{
-	return { string_view::end(), string_view::end() };
-}
-
-
 ircd::string_view
 ircd::json::array::operator[](const size_t &i)
 const
@@ -3083,42 +3075,6 @@ catch(const qi::expectation_failure<const char *> &e)
 	{
 		e, start, error_show_max
 	};
-}
-
-bool
-ircd::json::operator==(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start == b.start;
-}
-
-bool
-ircd::json::operator!=(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start != b.start;
-}
-
-bool
-ircd::json::operator<=(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start <= b.start;
-}
-
-bool
-ircd::json::operator>=(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start >= b.start;
-}
-
-bool
-ircd::json::operator<(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start < b.start;
-}
-
-bool
-ircd::json::operator>(const array::const_iterator &a, const array::const_iterator &b)
-{
-	return a.start > b.start;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
