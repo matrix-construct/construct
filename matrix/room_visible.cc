@@ -106,17 +106,17 @@ ircd::m::visible_to_user(const m::room &room,
 	// or for graceful forward compatibility. We default to "shared" here.
 	//assert(history_visibility == "shared");
 
+	// If the room is not at the present event then we have to run another
+	// test for membership here. Otherwise the "join" test already failed.
+	if(!room.event_id)
+		return false;
+
 	// An m::room instance with no event_id is used to query the room at the
 	// present state.
 	const m::room present
 	{
 		room.room_id
 	};
-
-	// If the room is not at the present event then we have to run another
-	// test for membership here. Otherwise the "join" test already failed.
-	if(!room.event_id)
-		return false;
 
 	return m::membership(present, user_id, m::membership_positive); // join || invite
 }
