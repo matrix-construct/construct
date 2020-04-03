@@ -171,7 +171,7 @@ try
 		}
 
 	assert(limit >= 0);
-	if(unlikely(opts.limit && limit == opts.limit))
+	if(unlikely(opts.limit && size_t(limit) == opts.limit))
 		throw error
 		{
 			"Failed to find any events at the room head"
