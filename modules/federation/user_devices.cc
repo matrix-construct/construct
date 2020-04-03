@@ -81,7 +81,10 @@ get__user_devices(client &client,
 
 	json::stack::member
 	{
-		top, "stream_id", json::value(0L)
+		top, "stream_id", json::value
+		{
+			0L // unused; triggers query from synapse on m.device_list_update
+		}
 	};
 
 	json::stack::array devices
