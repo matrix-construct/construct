@@ -16,7 +16,7 @@ namespace json {
 
 template<size_t hash,
          class tuple>
-enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, hash>()> &>
+inline enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, hash>()> &>
 at(const tuple &t)
 {
 	constexpr size_t idx
@@ -40,7 +40,7 @@ at(const tuple &t)
 
 template<size_t hash,
          class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
+inline enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
 at(tuple &t)
 {
 	constexpr size_t idx
@@ -64,7 +64,7 @@ at(tuple &t)
 
 template<const char *const &name,
          class tuple>
-enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, name>()> &>
+inline enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, name>()> &>
 at(const tuple &t)
 {
 	return at<name_hash(name), tuple>(t);
@@ -72,7 +72,7 @@ at(const tuple &t)
 
 template<const char *const &name,
          class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()> &>
+inline enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()> &>
 at(tuple &t)
 {
 	return at<name_hash(name), tuple>(t);
@@ -81,17 +81,17 @@ at(tuple &t)
 template<class tuple,
          class function,
          size_t i>
-typename std::enable_if<i == size<tuple>(), void>::type
+constexpr typename std::enable_if<i == size<tuple>(), void>::type
 at(tuple &t,
    const string_view &name,
    function&& f)
-{
-}
+noexcept
+{}
 
 template<class tuple,
          class function,
          size_t i = 0>
-typename std::enable_if<i < size<tuple>(), void>::type
+inline typename std::enable_if<i < size<tuple>(), void>::type
 at(tuple &t,
    const string_view &name,
    function&& f)
@@ -105,17 +105,17 @@ at(tuple &t,
 template<class tuple,
          class function,
          size_t i>
-typename std::enable_if<i == size<tuple>(), void>::type
+constexpr typename std::enable_if<i == size<tuple>(), void>::type
 at(const tuple &t,
    const string_view &name,
    function&& f)
-{
-}
+noexcept
+{}
 
 template<class tuple,
          class function,
          size_t i = 0>
-typename std::enable_if<i < size<tuple>(), void>::type
+inline typename std::enable_if<i < size<tuple>(), void>::type
 at(const tuple &t,
    const string_view &name,
    function&& f)
@@ -128,7 +128,7 @@ at(const tuple &t,
 
 template<class R,
          class tuple>
-enable_if_tuple<tuple, const R &>
+inline enable_if_tuple<tuple, const R &>
 at(const tuple &t,
    const string_view &name)
 {
@@ -161,7 +161,7 @@ at(const tuple &t,
 
 template<class R,
          class tuple>
-enable_if_tuple<tuple, R &>
+inline enable_if_tuple<tuple, R &>
 at(tuple &t,
    const string_view &name)
 {

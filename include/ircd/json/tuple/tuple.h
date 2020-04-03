@@ -112,14 +112,14 @@ template<class tuple,
 using tuple_value_type = typename tuple_element<tuple, i>::value_type;
 
 template<class tuple>
-auto &
+inline auto &
 stdcast(const tuple &o)
 {
 	return static_cast<const typename tuple::tuple_type &>(o);
 }
 
 template<class tuple>
-auto &
+inline auto &
 stdcast(tuple &o)
 {
 	return static_cast<typename tuple::tuple_type &>(o);
@@ -144,7 +144,7 @@ namespace json {
 
 template<size_t i,
          class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, i> &>
+inline enable_if_tuple<tuple, tuple_value_type<tuple, i> &>
 val(tuple &t)
 noexcept
 {
@@ -153,7 +153,7 @@ noexcept
 
 template<size_t i,
          class tuple>
-enable_if_tuple<tuple, const tuple_value_type<tuple, i> &>
+inline enable_if_tuple<tuple, const tuple_value_type<tuple, i> &>
 val(const tuple &t)
 noexcept
 {
@@ -304,7 +304,7 @@ const noexcept
 template<class... T>
 template<class R,
          class name>
-R
+inline R
 tuple<T...>::get(name&& n,
                  R ret)
 const noexcept
@@ -315,7 +315,7 @@ const noexcept
 template<class... T>
 template<class R,
          class name>
-const R &
+inline const R &
 tuple<T...>::at(name&& n)
 const
 {
@@ -325,7 +325,7 @@ const
 template<class... T>
 template<class R,
          class name>
-R &
+inline R &
 tuple<T...>::at(name&& n)
 {
 	return json::at<R>(*this, n);

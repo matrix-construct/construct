@@ -17,23 +17,25 @@ namespace json {
 template<size_t i,
          class tuple,
          class function>
-typename std::enable_if<i == size<tuple>(), void>::type
+constexpr typename std::enable_if<i == size<tuple>(), void>::type
 for_each(const tuple &t,
          function&& f)
+noexcept
 {}
 
 template<size_t i,
          class tuple,
          class function>
-typename std::enable_if<i == size<tuple>(), void>::type
+constexpr typename std::enable_if<i == size<tuple>(), void>::type
 for_each(tuple &t,
          function&& f)
+noexcept
 {}
 
 template<size_t i = 0,
          class tuple,
          class function>
-typename std::enable_if<i < size<tuple>(), void>::type
+inline typename std::enable_if<i < size<tuple>(), void>::type
 for_each(const tuple &t,
          function&& f)
 {
@@ -44,7 +46,7 @@ for_each(const tuple &t,
 template<size_t i = 0,
          class tuple,
          class function>
-typename std::enable_if<i < size<tuple>(), void>::type
+inline typename std::enable_if<i < size<tuple>(), void>::type
 for_each(tuple &t,
          function&& f)
 {
@@ -54,7 +56,7 @@ for_each(tuple &t,
 
 template<class tuple,
          class function>
-void
+inline void
 for_each(const tuple &t,
          const vector_view<const string_view> &mask,
          function&& f)
@@ -72,7 +74,7 @@ for_each(const tuple &t,
 
 template<class tuple,
          class function>
-void
+inline void
 for_each(tuple &t,
          const vector_view<const string_view> &mask,
          function&& f)
@@ -91,23 +93,25 @@ for_each(tuple &t,
 template<class tuple,
          class function,
          ssize_t i>
-typename std::enable_if<(i < 0), void>::type
+constexpr typename std::enable_if<(i < 0), void>::type
 rfor_each(const tuple &t,
           function&& f)
+noexcept
 {}
 
 template<class tuple,
          class function,
          ssize_t i>
-typename std::enable_if<(i < 0), void>::type
+constexpr typename std::enable_if<(i < 0), void>::type
 rfor_each(tuple &t,
           function&& f)
+noexcept
 {}
 
 template<class tuple,
          class function,
          ssize_t i = size<tuple>() - 1>
-typename std::enable_if<i < tuple_size<tuple>(), void>::type
+inline typename std::enable_if<i < tuple_size<tuple>(), void>::type
 rfor_each(const tuple &t,
           function&& f)
 {
@@ -118,7 +122,7 @@ rfor_each(const tuple &t,
 template<class tuple,
          class function,
          ssize_t i = size<tuple>() - 1>
-typename std::enable_if<i < tuple_size<tuple>(), void>::type
+inline typename std::enable_if<i < tuple_size<tuple>(), void>::type
 rfor_each(tuple &t,
           function&& f)
 {

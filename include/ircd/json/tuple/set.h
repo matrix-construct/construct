@@ -16,7 +16,7 @@ namespace json {
 
 template<class dst,
          class src>
-typename std::enable_if
+inline typename std::enable_if
 <
 	std::is_base_of<json::string, dst>() &&
 	std::is_convertible<src, ircd::string_view>(),
@@ -29,7 +29,7 @@ _assign(dst &d,
 
 template<class dst,
          class src>
-typename std::enable_if
+inline typename std::enable_if
 <
 	!std::is_base_of<json::string, dst>() &&
 	std::is_convertible<src, dst>() &&
@@ -44,7 +44,7 @@ _assign(dst &d,
 
 template<class dst,
          class src>
-typename std::enable_if
+inline typename std::enable_if
 <
 	!std::is_base_of<json::string, dst>() &&
 	std::is_convertible<src, dst>() &&
@@ -60,7 +60,7 @@ _assign(dst &d,
 
 template<class dst,
          class src>
-typename std::enable_if
+inline typename std::enable_if
 <
 	std::is_arithmetic<dst>() &&
 	std::is_base_of<std::string_view, typename std::remove_reference<src>::type>() &&
@@ -84,7 +84,7 @@ catch(const bad_lex_cast &e)
 
 template<class dst,
          class src>
-typename std::enable_if
+inline typename std::enable_if
 <
 	std::is_arithmetic<dst>() &&
 	std::is_base_of<ircd::byte_view<ircd::string_view>, typename std::remove_reference<src>::type>(),
@@ -98,7 +98,7 @@ _assign(dst &d,
 
 template<class dst,
          class src>
-typename std::enable_if
+inline typename std::enable_if
 <
 	std::is_base_of<std::string_view, dst>() &&
 	std::is_pod<typename std::remove_reference<src>::type>(),
@@ -111,7 +111,7 @@ _assign(dst &d,
 
 template<class dst,
          class src>
-typename std::enable_if
+inline typename std::enable_if
 <
 	ircd::json::is_tuple<dst>() &&
 	std::is_assignable<dst, src>(),
@@ -124,7 +124,7 @@ _assign(dst &d,
 
 template<class dst,
          class src>
-typename std::enable_if
+inline typename std::enable_if
 <
 	ircd::json::is_tuple<dst>() &&
 	!std::is_assignable<dst, src>() &&
@@ -138,7 +138,7 @@ _assign(dst &d,
 
 template<class dst,
          class src>
-typename std::enable_if
+inline typename std::enable_if
 <
 	ircd::json::is_tuple<dst>() &&
 	!std::is_assignable<dst, src>() &&
@@ -156,7 +156,7 @@ _assign(dst &d,
 
 template<class V,
          class... T>
-tuple<T...> &
+inline tuple<T...> &
 set(tuple<T...> &t,
     const string_view &key,
     V&& val)
@@ -182,7 +182,7 @@ catch(const std::exception &e)
 }
 
 template<class... T>
-tuple<T...> &
+inline tuple<T...> &
 set(tuple<T...> &t,
     const string_view &key,
     const json::value &value)

@@ -17,9 +17,10 @@ namespace json {
 template<size_t i,
          class tuple,
          class function>
-typename std::enable_if<i == size<tuple>(), bool>::type
+constexpr typename std::enable_if<i == size<tuple>(), bool>::type
 until(const tuple &t,
       function&& f)
+noexcept
 {
 	return true;
 }
@@ -27,9 +28,10 @@ until(const tuple &t,
 template<size_t i,
          class tuple,
          class function>
-typename std::enable_if<i == size<tuple>(), bool>::type
+constexpr typename std::enable_if<i == size<tuple>(), bool>::type
 until(tuple &t,
       function&& f)
+noexcept
 {
 	return true;
 }
@@ -37,7 +39,7 @@ until(tuple &t,
 template<size_t i = 0,
          class tuple,
          class function>
-typename std::enable_if<i < size<tuple>(), bool>::type
+inline typename std::enable_if<i < size<tuple>(), bool>::type
 until(const tuple &t,
       function&& f)
 {
@@ -49,7 +51,7 @@ until(const tuple &t,
 template<size_t i = 0,
          class tuple,
          class function>
-typename std::enable_if<i < size<tuple>(), bool>::type
+inline typename std::enable_if<i < size<tuple>(), bool>::type
 until(tuple &t,
       function&& f)
 {
@@ -61,10 +63,11 @@ until(tuple &t,
 template<size_t i,
          class tuple,
          class function>
-typename std::enable_if<i == size<tuple>(), bool>::type
+constexpr typename std::enable_if<i == size<tuple>(), bool>::type
 until(const tuple &a,
       const tuple &b,
       function&& f)
+noexcept
 {
 	return true;
 }
@@ -72,7 +75,7 @@ until(const tuple &a,
 template<size_t i = 0,
          class tuple,
          class function>
-typename std::enable_if<i < size<tuple>(), bool>::type
+inline typename std::enable_if<i < size<tuple>(), bool>::type
 until(const tuple &a,
       const tuple &b,
       function&& f)
@@ -85,9 +88,10 @@ until(const tuple &a,
 template<class tuple,
          class function,
          ssize_t i>
-typename std::enable_if<(i < 0), bool>::type
+constexpr typename std::enable_if<(i < 0), bool>::type
 runtil(const tuple &t,
        function&& f)
+noexcept
 {
 	return true;
 }
@@ -95,9 +99,10 @@ runtil(const tuple &t,
 template<class tuple,
          class function,
          ssize_t i>
-typename std::enable_if<(i < 0), bool>::type
+constexpr typename std::enable_if<(i < 0), bool>::type
 runtil(tuple &t,
        function&& f)
+noexcept
 {
 	return true;
 }
@@ -105,7 +110,7 @@ runtil(tuple &t,
 template<class tuple,
          class function,
          ssize_t i = size<tuple>() - 1>
-typename std::enable_if<i < size<tuple>(), bool>::type
+inline typename std::enable_if<i < size<tuple>(), bool>::type
 runtil(const tuple &t,
        function&& f)
 {
@@ -117,7 +122,7 @@ runtil(const tuple &t,
 template<class tuple,
          class function,
          ssize_t i = size<tuple>() - 1>
-typename std::enable_if<i < size<tuple>(), bool>::type
+inline typename std::enable_if<i < size<tuple>(), bool>::type
 runtil(tuple &t,
        function&& f)
 {

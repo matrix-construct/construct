@@ -16,7 +16,7 @@ namespace json {
 
 template<size_t hash,
          class tuple>
-enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, hash>()> &>
+inline enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, hash>()> &>
 get(const tuple &t)
 noexcept
 {
@@ -35,7 +35,7 @@ noexcept
 
 template<size_t hash,
          class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()>>
+inline enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()>>
 get(const tuple &t,
     const tuple_value_type<tuple, indexof<tuple, hash>()> &def)
 noexcept
@@ -55,7 +55,7 @@ noexcept
 
 template<size_t hash,
          class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
+inline enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
 get(tuple &t)
 noexcept
 {
@@ -74,7 +74,7 @@ noexcept
 
 template<size_t hash,
          class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
+inline enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, hash>()> &>
 get(tuple &t,
     tuple_value_type<tuple, indexof<tuple, hash>()> &def)
 noexcept
@@ -89,7 +89,7 @@ noexcept
 
 template<const char *const &name,
          class tuple>
-enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, name>()> &>
+inline enable_if_tuple<tuple, const tuple_value_type<tuple, indexof<tuple, name>()> &>
 get(const tuple &t)
 noexcept
 {
@@ -98,7 +98,7 @@ noexcept
 
 template<const char *const &name,
          class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
+inline enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
 get(const tuple &t,
     const tuple_value_type<tuple, indexof<tuple, name>()> &def)
 noexcept
@@ -108,7 +108,7 @@ noexcept
 
 template<const char *const &name,
          class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
+inline enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
 get(tuple &t)
 noexcept
 {
@@ -117,7 +117,7 @@ noexcept
 
 template<const char *const &name,
          class tuple>
-enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
+inline enable_if_tuple<tuple, tuple_value_type<tuple, indexof<tuple, name>()>>
 get(tuple &t,
     tuple_value_type<tuple, indexof<tuple, hash>()> &def)
 noexcept
@@ -127,7 +127,7 @@ noexcept
 
 template<class R,
          class tuple>
-enable_if_tuple<tuple, R>
+inline enable_if_tuple<tuple, R>
 get(const tuple &t,
     const string_view &name,
     R ret)
