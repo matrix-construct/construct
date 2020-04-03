@@ -217,6 +217,7 @@ ircd::json::keys<tuple>::count()
 const
 {
 	size_t i(0);
+	#pragma clang loop unroll (disable)
 	for(; i < this->size(); ++i)
 		if(!(*this)[i])
 			break;
