@@ -930,7 +930,7 @@ ircd::m::sync::longpoll::polled(data &data,
 {
 	const m::event::fetch event
 	{
-		data.range.second, std::nothrow
+		std::nothrow, data.range.second
 	};
 
 	if(!event.valid)

@@ -234,7 +234,7 @@ ircd::m::sync::room_account_data_polylog_events(data &data)
 
 		m::event::fetch event
 		{
-			event_idx, std::nothrow, fopts
+			std::nothrow, event_idx, fopts
 		};
 
 		if(!event.valid)
@@ -315,7 +315,7 @@ ircd::m::sync::room_account_data_polylog_tags(data &data)
 
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow, fopts
+			std::nothrow, event_idx, fopts
 		};
 
 		if(!event.valid)

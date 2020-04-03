@@ -6823,7 +6823,7 @@ console_cmd__events__in__sender(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)
@@ -6863,7 +6863,7 @@ console_cmd__events__in__origin(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)
@@ -6897,7 +6897,7 @@ console_cmd__events__in__type(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)
@@ -7234,7 +7234,7 @@ console_cmd__event(opt &out, const string_view &line)
 	for(size_t i(0); i < prev.auth_events_count(); ++i)
 	{
 		const m::event::id &id{prev.auth_event(i)};
-		const m::event::fetch event{id, std::nothrow};
+		const m::event::fetch event{std::nothrow, id};
 		if(!event.valid)
 		{
 			out << "x-> AUTH        "
@@ -7252,7 +7252,7 @@ console_cmd__event(opt &out, const string_view &line)
 	for(size_t i(0); i < prev.prev_events_count(); ++i)
 	{
 		const m::event::id &id{prev.prev_event(i)};
-		const m::event::fetch event{id, std::nothrow};
+		const m::event::fetch event{std::nothrow, id};
 		if(!event.valid)
 		{
 			out << "x-> PREV        " << id << std::endl;
@@ -7817,7 +7817,7 @@ console_cmd__event__refs(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			idx, std::nothrow
+			std::nothrow, idx
 		};
 
 		if(!event.valid)
@@ -7857,7 +7857,7 @@ console_cmd__event__refs__next(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			idx, std::nothrow
+			std::nothrow, idx
 		};
 
 		if(!event.valid)
@@ -7902,7 +7902,7 @@ console_cmd__event__refs__auth(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			idx, std::nothrow
+			std::nothrow, idx
 		};
 
 		if(!event.valid)
@@ -8372,7 +8372,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)
@@ -8406,7 +8406,7 @@ console_cmd__room__top(opt &out, const string_view &line)
 
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(event.valid)
@@ -8533,7 +8533,7 @@ console_cmd__room__head(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		out << pretty_oneline(event) << std::endl;
@@ -9196,7 +9196,7 @@ console_cmd__room__members__events(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)
@@ -9292,7 +9292,7 @@ console_cmd__room__members__origin(opt &out, const string_view &line)
 
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)
@@ -9507,7 +9507,7 @@ console_cmd__room__state(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)
@@ -9767,7 +9767,7 @@ console_cmd__room__state__history(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)
@@ -9825,7 +9825,7 @@ console_cmd__room__state__space(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)
@@ -10406,7 +10406,7 @@ console_cmd__room__type(opt &out, const string_view &line)
 	events.for_each([&out, &event]
 	(const string_view &type, const uint64_t &depth, const m::event::idx &event_idx)
 	{
-		if(!seek(event, event_idx, std::nothrow))
+		if(!seek(std::nothrow, event, event_idx))
 			return true;
 
 		out
@@ -10813,7 +10813,7 @@ console_cmd__room__auth(opt &out, const string_view &line)
 	{
 		const m::event::fetch event
 		{
-			idx, std::nothrow
+			std::nothrow, idx
 		};
 
 		out << idx;
@@ -12589,7 +12589,7 @@ console_cmd__feds__head(opt &out, const string_view &line)
 
 			const m::event::fetch prev_event
 			{
-				prev_event_id, std::nothrow
+				std::nothrow, prev_event_id
 			};
 
 			out << std::setw(8) << std::right << event["depth"] << " ";
@@ -13960,7 +13960,7 @@ console_cmd__fed__query_auth(opt &out, const string_view &line)
 		chain.for_each([&auth_chain, &event]
 		(const m::event::idx &event_idx)
 		{
-			if(seek(event, event_idx, std::nothrow))
+			if(seek(std::nothrow, event, event_idx))
 				auth_chain.append(event);
 
 			return true;

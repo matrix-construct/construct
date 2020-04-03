@@ -650,7 +650,7 @@ ircd::m::init::backfill::gossip(const room::id &room_id,
 
 		m::event::fetch event;
 		for(assert(ret == 0); ret < i; ++ret)
-			if(seek(event, next_idx.at(ret), std::nothrow))
+			if(seek(std::nothrow, event, next_idx.at(ret)))
 				pdus.append(event.source);
 	}
 

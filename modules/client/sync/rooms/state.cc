@@ -167,7 +167,7 @@ ircd::m::sync::room_state_linear_events(data &data)
 		{
 			const event::fetch event
 			{
-				event_idx, std::nothrow
+				std::nothrow, event_idx
 			};
 
 			if(event.valid)
@@ -283,7 +283,7 @@ ircd::m::sync::room_state_polylog_events(data &data)
 
 			assert(i < events.size());
 			auto &event(events.at(i));
-			if(!m::seek(event, event_idx, std::nothrow))
+			if(!m::seek(std::nothrow, event, event_idx))
 			{
 				log::error
 				{
@@ -483,7 +483,7 @@ ircd::m::sync::room_state_phased_member_events(data &data,
 	std::for_each(begin(event_idx), end, [&data, &array, &ret, &event]
 	(const event::idx &sender_idx)
 	{
-		if(!seek(event, sender_idx, std::nothrow))
+		if(!seek(std::nothrow, event, sender_idx))
 			return;
 
 		ret |= room_state_append(data, array, event, sender_idx, false);

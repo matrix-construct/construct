@@ -143,7 +143,7 @@ ircd::m::get_notifications(client &client,
 
 			const m::event::fetch event
 			{
-				event_idx, std::nothrow
+				std::nothrow, event_idx
 			};
 
 			if(unlikely(!event.valid))

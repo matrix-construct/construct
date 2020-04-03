@@ -342,7 +342,7 @@ ircd::m::room::auth::check(const event &event,
 	std::array<m::event::fetch, 5> auth;
 	for(size_t i(0), j(0); i < idx.size(); ++i)
 		if(idx.at(i))
-			m::seek(auth.at(j++), idx.at(i), std::nothrow);
+			m::seek(std::nothrow, auth.at(j++), idx.at(i));
 
 	size_t j(0);
 	std::array<const m::event *, 5> authv;
@@ -819,7 +819,7 @@ const
 	{
 		const auto idx(aq.front());
 		aq.pop_front();
-		if(!seek(e, idx, std::nothrow))
+		if(!seek(std::nothrow, e, idx))
 			continue;
 
 		const m::event::prev prev{e};
@@ -841,7 +841,7 @@ const
 			auto it(ae.lower_bound(auth_event_idx));
 			if(it == end(ae) || *it != auth_event_idx)
 			{
-				seek(a, auth_event_idx, std::nothrow);
+				seek(std::nothrow, a, auth_event_idx);
 				ae.emplace_hint(it, auth_event_idx);
 				if(a.valid)
 					aq.emplace_back(auth_event_idx);

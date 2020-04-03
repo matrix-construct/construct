@@ -13,10 +13,10 @@
 
 namespace ircd::m
 {
-	bool seek(event::fetch &, const event::idx &, const event::id &, std::nothrow_t);
-	bool seek(event::fetch &, const event::idx &, std::nothrow_t);
+	bool seek(std::nothrow_t, event::fetch &, const event::idx &, const event::id &);
+	bool seek(std::nothrow_t, event::fetch &, const event::idx &);
+	bool seek(std::nothrow_t, event::fetch &, const event::id &);
 	void seek(event::fetch &, const event::idx &);
-	bool seek(event::fetch &, const event::id &, std::nothrow_t);
 	void seek(event::fetch &, const event::id &);
 }
 
@@ -62,9 +62,9 @@ struct ircd::m::event::fetch
 	bool assign_from_json(const string_view &key);
 
   public:
-	explicit fetch(const idx &, const id &, std::nothrow_t, const opts & = default_opts);
-	fetch(const idx &, std::nothrow_t, const opts & = default_opts);
-	fetch(const id &, std::nothrow_t, const opts & = default_opts);
+	explicit fetch(std::nothrow_t, const idx &, const id &, const opts & = default_opts);
+	fetch(std::nothrow_t, const idx &, const opts & = default_opts);
+	fetch(std::nothrow_t, const id &, const opts & = default_opts);
 	fetch(const id &, const opts & = default_opts);
 	fetch(const idx &, const opts & = default_opts);
 	fetch(const opts & = default_opts);

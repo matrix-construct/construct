@@ -330,7 +330,7 @@ ircd::m::room::events::fetch()
 const ircd::m::event &
 ircd::m::room::events::fetch(std::nothrow_t)
 {
-	m::seek(_event, event_idx(), std::nothrow);
+	m::seek(std::nothrow, _event, event_idx());
 	return _event;
 }
 

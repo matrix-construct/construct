@@ -16,50 +16,52 @@ void
 ircd::m::seek(event::fetch &fetch,
               const event::id &event_id)
 {
-	if(!seek(fetch, event_id, std::nothrow))
+	if(!seek(std::nothrow, fetch, event_id))
 		throw m::NOT_FOUND
 		{
-			"%s not found in database", event_id
+			"%s not found in database",
+			event_id
 		};
 }
 
 bool
-ircd::m::seek(event::fetch &fetch,
-              const event::id &event_id,
-              std::nothrow_t)
+ircd::m::seek(std::nothrow_t,
+              event::fetch &fetch,
+              const event::id &event_id)
 {
 	const auto &event_idx
 	{
 		index(std::nothrow, event_id)
 	};
 
-	return seek(fetch, event_idx, event_id, std::nothrow);
+	return seek(std::nothrow, fetch, event_idx, event_id);
 }
 
 void
 ircd::m::seek(event::fetch &fetch,
               const event::idx &event_idx)
 {
-	if(!seek(fetch, event_idx, std::nothrow))
+	if(!seek(std::nothrow, fetch, event_idx))
 		throw m::NOT_FOUND
 		{
-			"%lu not found in database", event_idx
+			"%lu not found in database",
+			event_idx
 		};
 }
 
 bool
-ircd::m::seek(event::fetch &fetch,
-              const event::idx &event_idx,
-              std::nothrow_t)
+ircd::m::seek(std::nothrow_t,
+              event::fetch &fetch,
+              const event::idx &event_idx)
 {
-	return seek(fetch, event_idx, m::event::id{}, std::nothrow);
+	return seek(std::nothrow, fetch, event_idx, m::event::id{});
 }
 
 bool
-ircd::m::seek(event::fetch &fetch,
+ircd::m::seek(std::nothrow_t,
+              event::fetch &fetch,
               const event::idx &event_idx,
-              const event::id &event_id,
-              std::nothrow_t)
+              const event::id &event_id)
 {
 	fetch.event_idx = event_idx;
 	fetch.event_id_buf = event_id?
@@ -113,24 +115,31 @@ ircd::m::event::fetch::fetch(const event::id &event_id,
                              const opts &opts)
 :fetch
 {
-	index(event_id), event_id, std::nothrow, opts
+	std::nothrow,
+	index(event_id),
+	event_id,
+	opts,
 }
 {
 	if(!valid)
 		throw m::NOT_FOUND
 		{
-			"%s not found in database", string_view{event_id}
+			"%s not found in database",
+			string_view{event_id}
 		};
 }
 
 /// Seek to event_id and populate this event from database.
 /// Event is not populated if not found in database.
-ircd::m::event::fetch::fetch(const event::id &event_id,
-                             std::nothrow_t,
+ircd::m::event::fetch::fetch(std::nothrow_t,
+                             const event::id &event_id,
                              const opts &opts)
 :fetch
 {
-	index(std::nothrow, event_id), event_id, std::nothrow, opts
+	std::nothrow,
+	index(std::nothrow, event_id),
+	event_id,
+	opts,
 }
 {
 }
@@ -141,31 +150,37 @@ ircd::m::event::fetch::fetch(const event::idx &event_idx,
                              const opts &opts)
 :fetch
 {
-	event_idx, std::nothrow, opts
+	std::nothrow,
+	event_idx,
+	opts,
 }
 {
 	if(!valid)
 		throw m::NOT_FOUND
 		{
-			"idx %zu not found in database", event_idx
+			"idx %zu not found in database",
+			event_idx
 		};
 }
 
-ircd::m::event::fetch::fetch(const event::idx &event_idx,
-                             std::nothrow_t,
+ircd::m::event::fetch::fetch(std::nothrow_t,
+                             const event::idx &event_idx,
                              const opts &opts)
 :fetch
 {
-	event_idx, m::event::id{}, std::nothrow, opts
+	std::nothrow,
+	event_idx,
+	m::event::id{},
+	opts,
 }
 {
 }
 
 /// Seek to event_idx and populate this event from database.
 /// Event is not populated if not found in database.
-ircd::m::event::fetch::fetch(const event::idx &event_idx,
+ircd::m::event::fetch::fetch(std::nothrow_t,
+                             const event::idx &event_idx,
                              const event::id &event_id,
-                             std::nothrow_t,
                              const opts &opts)
 :fopts
 {

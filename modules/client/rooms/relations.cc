@@ -134,13 +134,13 @@ try
 
 	m::event::fetch event
 	{
-		event_idx, std::nothrow
+		std::nothrow, event_idx
 	};
 
 	const auto each_ref{[&event, &append, &rel_type, &request]
 	(const m::event::idx &event_idx, const m::dbs::ref &)
 	{
-		if(!seek(event, event_idx, std::nothrow))
+		if(!seek(std::nothrow, event, event_idx))
 			return true;
 
 		const json::object &m_relates_to

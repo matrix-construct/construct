@@ -197,7 +197,7 @@ const
 	{
 		const event::fetch event
 		{
-			event_idx, std::nothrow, fopts? *fopts : event::fetch::default_opts
+			std::nothrow, event_idx, fopts? *fopts : event::fetch::default_opts
 		};
 
 		closure(event);
@@ -265,7 +265,7 @@ const
 
 	const m::event::fetch event
 	{
-		event_idx, std::nothrow, fopts
+		std::nothrow, event_idx, fopts
 	};
 
 	if(!event.valid)
@@ -377,7 +377,7 @@ const
 	return for_each(event::closure_idx_bool{[&event, &closure]
 	(const event::idx &event_idx)
 	{
-		if(seek(event, event_idx, std::nothrow))
+		if(seek(std::nothrow, event, event_idx))
 			if(!closure(event))
 				return false;
 
@@ -589,7 +589,7 @@ const
 	return for_each(type, state_key_lb, event::closure_idx_bool{[&event, &closure]
 	(const event::idx &event_idx)
 	{
-		if(seek(event, event_idx, std::nothrow))
+		if(seek(std::nothrow, event, event_idx))
 			if(!closure(event))
 				return false;
 
@@ -926,7 +926,7 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 	{
 		const m::event::fetch &event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)
@@ -946,7 +946,7 @@ ircd::m::room::state::rebuild::rebuild(const room::id &room_id)
 	{
 		const m::event::fetch &event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)

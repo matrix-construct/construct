@@ -171,7 +171,7 @@ get__members(client &client,
 		if(!membership && !membership_match(member, event_idx))
 			return true;
 
-		if(!seek(event, event_idx, std::nothrow))
+		if(!seek(std::nothrow, event, event_idx))
 			return true;
 
 		chunk.append(event);

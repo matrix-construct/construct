@@ -95,7 +95,7 @@ ircd::m::sync::account_data_polylog(data &data)
 
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow, fopts
+			std::nothrow, event_idx, fopts
 		};
 
 		if(!event.valid)

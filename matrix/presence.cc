@@ -122,7 +122,7 @@ ircd::m::presence::get(const std::nothrow_t,
 
 	const m::event::fetch event
 	{
-		event_idx, std::nothrow, fopts
+		std::nothrow, event_idx, fopts
 	};
 
 	if(event.valid)

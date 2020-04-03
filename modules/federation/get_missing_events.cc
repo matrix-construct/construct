@@ -159,7 +159,7 @@ get__missing_events(client &client,
 			queue.pop_front();
 		}};
 
-		if(!seek(event, event_id, std::nothrow))
+		if(!seek(std::nothrow, event, event_id))
 			continue;
 
 		if(!visible(event, request.node_id))

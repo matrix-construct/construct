@@ -267,7 +267,7 @@ get__context(client &client,
 			if(lazy_loaded)
 				return true;
 
-			if(!seek(event, event_idx, std::nothrow))
+			if(!seek(std::nothrow, event, event_idx))
 				return true;
 
 			if(!visible(event, request.user_id))

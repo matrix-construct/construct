@@ -156,7 +156,7 @@ ircd::m::user::filter::for_each(const m::user &user,
 
 		const event::fetch event
 		{
-			event_idx, std::nothrow, fopts
+			std::nothrow, event_idx, fopts
 		};
 
 		if(!event.valid)

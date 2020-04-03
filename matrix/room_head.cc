@@ -312,7 +312,7 @@ ircd::m::room::head::reset(const head &head)
 	{
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!event.valid)

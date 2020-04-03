@@ -30,7 +30,7 @@ const
 	return for_each([&closure, &event]
 	(const event::idx &event_idx)
 	{
-		if(!seek(event, event_idx, std::nothrow))
+		if(!seek(std::nothrow, event, event_idx))
 			return true;
 
 		return closure(event);

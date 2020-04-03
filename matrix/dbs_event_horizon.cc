@@ -179,7 +179,7 @@ ircd::m::dbs::_index_event_horizon_resolve(db::txn &txn,
 		assert(event_idx != opts.event_idx);
 		const event::fetch _event
 		{
-			event_idx, std::nothrow
+			std::nothrow, event_idx
 		};
 
 		if(!_event.valid)

@@ -184,7 +184,7 @@ ircd::m::sync::_handle_message(data &data,
 		assert(type == dbs::ref::M_RECEIPT__M_READ);
 		const m::event::fetch event
 		{
-			idx, std::nothrow, receipt_fopts
+			std::nothrow, idx, receipt_fopts
 		};
 
 		if(event.valid)

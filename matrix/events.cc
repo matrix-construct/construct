@@ -248,7 +248,7 @@ ircd::m::events::for_each(const range &range,
 	};
 
 	for(; start != stop; ascending? ++start : --start)
-		if(seek(event, start, std::nothrow))
+		if(seek(std::nothrow, event, start))
 			if(!closure(start, event))
 				return false;
 
@@ -273,7 +273,7 @@ ircd::m::events::for_each(const range &range,
 	{
 		const m::event::fetch event
 		{
-			event_idx, std::nothrow, range.fopts? *range.fopts : event::fetch::default_opts
+			std::nothrow, event_idx, range.fopts? *range.fopts : event::fetch::default_opts
 		};
 
 		if(!event.valid)

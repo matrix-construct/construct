@@ -236,7 +236,7 @@ send_join__response(client &client,
 		{
 			const m::event::fetch event
 			{
-				event_idx, std::nothrow
+				std::nothrow, event_idx
 			};
 
 			if(event.valid)

@@ -194,7 +194,7 @@ get__initialsync_local(client &client,
 	{
 		const m::event::fetch event
 		{
-			event_id, std::nothrow
+			std::nothrow, event_id
 		};
 
 		if(!event.valid)

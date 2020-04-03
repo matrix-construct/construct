@@ -711,7 +711,7 @@ ircd::m::load_conf_item(const m::event::idx &event_idx)
 
 	const m::event::fetch event
 	{
-		event_idx, std::nothrow, fopts
+		std::nothrow, event_idx, fopts
 	};
 
 	return event.valid && load_conf_item(event);

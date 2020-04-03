@@ -120,7 +120,7 @@ get__state(client &client,
 		ac.for_each([&auth_chain, &event]
 		(const m::event::idx &event_idx)
 		{
-			if(seek(event, event_idx, std::nothrow))
+			if(seek(std::nothrow, event, event_idx))
 				auth_chain.append(event);
 
 			return true;
