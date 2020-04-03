@@ -2679,52 +2679,9 @@ catch(const qi::expectation_failure<const char *> &e)
 	};
 }
 
-ircd::json::object::const_iterator
-ircd::json::object::end()
-const
-{
-	return { string_view::end(), string_view::end() };
-}
-
 //
 // object::const_iterator
 //
-
-bool
-ircd::json::operator==(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start == b.start;
-}
-
-bool
-ircd::json::operator!=(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start != b.start;
-}
-
-bool
-ircd::json::operator<=(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start <= b.start;
-}
-
-bool
-ircd::json::operator>=(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start >= b.start;
-}
-
-bool
-ircd::json::operator<(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start < b.start;
-}
-
-bool
-ircd::json::operator>(const object::const_iterator &a, const object::const_iterator &b)
-{
-	return a.start > b.start;
-}
 
 ircd::json::object::const_iterator &
 ircd::json::object::const_iterator::operator++()
@@ -2843,42 +2800,6 @@ ircd::json::sorted(const object::member *const &begin,
 	{
 		return a.first < b.first;
 	});
-}
-
-bool
-ircd::json::operator==(const object::member &a, const object::member &b)
-{
-	return a.first == b.first;
-}
-
-bool
-ircd::json::operator!=(const object::member &a, const object::member &b)
-{
-	return a.first != b.first;
-}
-
-bool
-ircd::json::operator<=(const object::member &a, const object::member &b)
-{
-	return a.first <= b.first;
-}
-
-bool
-ircd::json::operator>=(const object::member &a, const object::member &b)
-{
-	return a.first >= b.first;
-}
-
-bool
-ircd::json::operator<(const object::member &a, const object::member &b)
-{
-	return a.first < b.first;
-}
-
-bool
-ircd::json::operator>(const object::member &a, const object::member &b)
-{
-	return a.first > b.first;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

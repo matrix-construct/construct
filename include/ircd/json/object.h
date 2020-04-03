@@ -108,79 +108,8 @@ struct ircd::json::object
 	using string_view::string_view;
 };
 
-namespace ircd::json
-{
-	bool operator==(const object::member &, const object::member &);
-	bool operator!=(const object::member &, const object::member &);
-	bool operator<=(const object::member &, const object::member &);
-	bool operator>=(const object::member &, const object::member &);
-	bool operator<(const object::member &, const object::member &);
-	bool operator>(const object::member &, const object::member &);
-
-	bool sorted(const object::member *const &, const object::member *const &);
-	size_t serialized(const object::member *const &, const object::member *const &);
-	size_t serialized(const object::member &);
-	string_view stringify(mutable_buffer &, const object::member *const &, const object::member *const &);
-	string_view stringify(mutable_buffer &, const object::member &);
-	std::ostream &operator<<(std::ostream &, const object::member &);
-}
-
-struct ircd::json::object::member
-:std::pair<string_view, string_view>
-{
-	member(const string_view &first = {}, const string_view &second = {})
-	:std::pair<string_view, string_view>{first, second}
-	{}
-};
-
-namespace ircd::json
-{
-	bool operator==(const object::const_iterator &, const object::const_iterator &);
-	bool operator!=(const object::const_iterator &, const object::const_iterator &);
-	bool operator<=(const object::const_iterator &, const object::const_iterator &);
-	bool operator>=(const object::const_iterator &, const object::const_iterator &);
-	bool operator<(const object::const_iterator &, const object::const_iterator &);
-	bool operator>(const object::const_iterator &, const object::const_iterator &);
-}
-
-struct ircd::json::object::const_iterator
-{
-	friend class object;
-
-	using key_type = string_view;
-	using mapped_type = string_view;
-	using value_type = const member;
-	using pointer = value_type *;
-	using reference = value_type &;
-	using size_type = size_t;
-	using difference_type = size_t;
-	using key_compare = std::less<value_type>;
-	using iterator_category = std::forward_iterator_tag;
-
-	const char *start {nullptr};
-	const char *stop {nullptr};
-	member state;
-
-	const_iterator(const char *const &start, const char *const &stop)
-	:start{start}
-	,stop{stop}
-	{}
-
-  public:
-	value_type *operator->() const
-	{
-		return &state;
-	}
-
-	value_type &operator*() const
-	{
-		return *operator->();
-	}
-
-	const_iterator &operator++();
-
-	const_iterator() = default;
-};
+#include "object_member.h"
+#include "object_iterator.h"
 
 template<ircd::json::name_hash_t key,
          class T>
@@ -286,4 +215,11 @@ const try
 catch(const bad_lex_cast &e)
 {
 	return def;
+}
+
+inline ircd::json::object::const_iterator
+ircd::json::object::end()
+const
+{
+	return { string_view::end(), string_view::end() };
 }
