@@ -712,7 +712,7 @@ ircd::m::vm::write_append(eval &eval,
 	// Don't update or resolve the room head with this shit.
 	const bool dummy_event(json::get<"type"_>(event) == "org.matrix.dummy_event");
 	wopts.appendix.set(dbs::appendix::ROOM_HEAD, opts.room_head && !dummy_event);
-	wopts.appendix.set(dbs::appendix::ROOM_HEAD_RESOLVE, opts.room_head_resolve && !dummy_event);
+	wopts.appendix.set(dbs::appendix::ROOM_HEAD_RESOLVE, opts.room_head_resolve);
 
 	if(opts.present && json::get<"state_key"_>(event))
 	{
