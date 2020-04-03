@@ -228,19 +228,19 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 		*data.out, room.room_id
 	};
 
-	const auto top
+	const auto &[top_event_id, top_depth, top_event_idx]
 	{
 		m::top(std::nothrow, room)
 	};
 
 	const scope_restore their_head
 	{
-		data.room_head, std::get<2>(top)
+		data.room_head, top_event_idx
 	};
 
 	const scope_restore their_depth
 	{
-		data.room_depth, std::get<1>(top)
+		data.room_depth, top_depth
 	};
 
 	bool ret{false};

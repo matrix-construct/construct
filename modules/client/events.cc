@@ -153,19 +153,9 @@ get__events(client &client,
 		out
 	};
 
-	const auto &room_top
+	const auto &[room_head, room_depth, room_head_idx]
 	{
 		m::top(room_id)
-	};
-
-	const auto &room_depth
-	{
-		std::get<int64_t>(room_top)
-	};
-
-	const m::event::id &room_head
-	{
-		std::get<m::event::id::buf>(room_top)
 	};
 
 	json::stack::member
