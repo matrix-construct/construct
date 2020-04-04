@@ -134,10 +134,6 @@ try
 	if(opts.fetch_state)
 		state(event, eval, room);
 }
-catch(const ctx::interrupted &)
-{
-	throw;
-}
 catch(const std::exception &e)
 {
 	log::derror
@@ -287,10 +283,6 @@ catch(const vm::error &e)
 {
 	throw;
 }
-catch(const ctx::interrupted &)
-{
-	throw;
-}
 catch(const std::exception &e)
 {
 	log::error
@@ -331,10 +323,6 @@ try
 	{
 		auth_chain, opts
 	};
-}
-catch(const ctx::interrupted &)
-{
-	throw;
 }
 catch(const std::exception &e)
 {
@@ -433,6 +421,23 @@ try
 		};
 
 		++good;
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const vm::error &e)
+	{
+		if(e.code == vm::fault::INTERRUPT)
+			throw;
+
+		++fail;
+		log::derror
+		{
+			log, "%s state eval :%s",
+			loghead(eval),
+			e.what(),
+		};
 	}
 	catch(const std::exception &e)
 	{
@@ -636,6 +641,22 @@ ircd::m::vm::fetch::prev(const event &event,
 		vm::eval
 		{
 			pdus, opts
+		};
+	}
+	catch(const ctx::interrupted &)
+	{
+		throw;
+	}
+	catch(const vm::error &e)
+	{
+		if(e.code == vm::fault::INTERRUPT)
+			throw;
+
+		log::derror
+		{
+			log, "%s prev fetch/eval :%s",
+			loghead(eval),
+			e.what(),
 		};
 	}
 	catch(const std::exception &e)
