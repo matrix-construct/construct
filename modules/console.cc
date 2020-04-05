@@ -2277,9 +2277,9 @@ console_cmd__ctx__interrupt(opt &out, const string_view &line)
 		"id", "[id]..."
 	}};
 
-	bool cont{true};
+	size_t count(0);
 	for(size_t i(0); i < param.count() && cont; ++i)
-		cont = ctx::for_each([&](auto &ctx)
+		count += !ctx::for_each([&](auto &ctx)
 		{
 			if(id(ctx) == param.at<uint64_t>(i))
 			{
@@ -2347,9 +2347,9 @@ console_cmd__ctx__term(opt &out, const string_view &line)
 		"id", "[id]..."
 	}};
 
-	bool cont {true};
+	size_t count(0);
 	for(size_t i(0); i < param.count() && cont; ++i)
-		cont = ctx::for_each([&](auto &ctx)
+		count += !ctx::for_each([&](auto &ctx)
 		{
 			if(id(ctx) == param.at<uint64_t>(i))
 			{
