@@ -37,7 +37,7 @@ ircd::conf::item<size_t>
 ircd::client::settings::pool_size
 {
 	{
-		{ "name",     "ircd.client.pool_size " },
+		{ "name",     "ircd.client.pool_size"  },
 		{ "default",  64L                      },
 	}, []
 	{
