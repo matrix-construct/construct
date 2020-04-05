@@ -18,6 +18,6 @@ namespace ircd::m
 	[[nodiscard]] event::idx index(std::nothrow_t, const event::id &);
 	event::idx index(const event::id &);
 
-	[[nosdiscard]] event::idx index(std::nothrow_t, const event &);
+	[[nodiscard]] event::idx index(std::nothrow_t, const event &);
 	event::idx index(const event &);
 }
