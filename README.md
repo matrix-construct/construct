@@ -134,7 +134,7 @@ Operating a Construct server which is open to public user registration is unsafe
 be able to exceed resource limitations and deny service to other users.
 ```
 
-- [x] **Personal**: One or few users. Few default restrictions; higher log output.
+- [x] **Personal**: Dozens of users. Few default restrictions; higher log output.
 - [ ] **Company**: Hundreds of users. Moderate default restrictions.
 - [ ] **Public**: Thousands of users. Untrusting configuration defaults.
 
