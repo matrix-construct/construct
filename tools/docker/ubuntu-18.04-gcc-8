@@ -22,6 +22,7 @@ RUN \
         libbz2-dev \
         libgflags-dev \
         libgraphicsmagick1-dev \
+        libjemalloc-dev \
         liblz4-dev \
         libmagic-dev \
         libnss-db \
