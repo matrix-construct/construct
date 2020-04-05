@@ -45,6 +45,7 @@ construct_LDADD = \
 	@BOOST_LIBS@ \
 	@SSL_LIBS@ \
 	@CRYPTO_LIBS@ \
+	@MALLOC_LIBS@ \
 	@EXTRA_LIBS@ \
 	###
 
