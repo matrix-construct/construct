@@ -166,20 +166,14 @@ bool
 ircd::m::dbs::event_state__cmp_lt(const string_view &a,
                                   const string_view &b)
 {
-	const event_state_tuple key[2]
-	{
-		event_state_key(a),
-		event_state_key(b),
-	};
-
 	const auto &[state_key_a, type_a, room_id_a, depth_a, event_idx_a]
 	{
-		key[0]
+		event_state_key(a)
 	};
 
 	const auto &[state_key_b, type_b, room_id_b, depth_b, event_idx_b]
 	{
-		key[1]
+		event_state_key(b)
 	};
 
 	if(state_key_a != state_key_b)
