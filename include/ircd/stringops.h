@@ -286,7 +286,9 @@ ircd::startswith_count(const string_view &str,
                        const char &v)
 {
 	const auto pos(str.find_first_not_of(v));
-	return pos == string_view::npos? str.size() : str.size() - pos - 1;
+	return pos == string_view::npos?
+		str.size():
+		str.size() - pos - 1;
 }
 
 /// Test if a string starts with any of the values in the iterable
@@ -324,7 +326,9 @@ ircd::endswith_count(const string_view &str,
                      const char &v)
 {
 	const auto pos(str.find_last_not_of(v));
-	return pos == string_view::npos? str.size() : str.size() - pos - 1;
+	return pos == string_view::npos?
+		str.size():
+		str.size() - pos - 1;
 }
 
 /// Test if a string ends with any of the values in iterable
@@ -383,15 +387,12 @@ inline std::pair<ircd::string_view, ircd::string_view>
 ircd::rsplit(const string_view &str,
              const string_view &delim)
 {
+	using pair = std::pair<ircd::string_view, ircd::string_view>;
+
 	const auto pos(str.rfind(delim));
-	if(pos == string_view::npos) return
-	{
-		str, string_view{}
-	};
-	else return
-	{
-		str.substr(0, pos), str.substr(pos + delim.size())
-	};
+	return pos != string_view::npos?
+		pair { str.substr(0, pos), str.substr(pos + delim.size()) }:
+		pair { str, string_view{} };
 }
 
 /// Split a string on the last match of delim. Delim not included; no match
@@ -400,15 +401,12 @@ inline std::pair<ircd::string_view, ircd::string_view>
 ircd::rsplit(const string_view &str,
              const char &delim)
 {
+	using pair = std::pair<ircd::string_view, ircd::string_view>;
+
 	const auto pos(str.find_last_of(delim));
-	if(pos == string_view::npos) return
-	{
-		str, string_view{}
-	};
-	else return
-	{
-		str.substr(0, pos), str.substr(pos + 1)
-	};
+	return pos != string_view::npos?
+		pair { str.substr(0, pos), str.substr(pos + 1) }:
+		pair { str, string_view{} };
 }
 
 /// Split a string on the first match of delim. Delim not included; no match
@@ -417,15 +415,12 @@ inline std::pair<ircd::string_view, ircd::string_view>
 ircd::split(const string_view &str,
             const string_view &delim)
 {
+	using pair = std::pair<ircd::string_view, ircd::string_view>;
+
 	const auto pos(str.find(delim));
-	if(pos == string_view::npos) return
-	{
-		str, string_view{}
-	};
-	else return
-	{
-		str.substr(0, pos), str.substr(pos + delim.size())
-	};
+	return pos != string_view::npos?
+		pair { str.substr(0, pos), str.substr(pos + delim.size()) }:
+		pair { str, string_view{} };
 }
 
 /// Split a string on the first match of delim. Delim not included; no match
@@ -434,15 +429,12 @@ inline std::pair<ircd::string_view, ircd::string_view>
 ircd::split(const string_view &str,
             const char &delim)
 {
+	using pair = std::pair<ircd::string_view, ircd::string_view>;
+
 	const auto pos(str.find(delim));
-	if(pos == string_view::npos) return
-	{
-		str, string_view{}
-	};
-	else return
-	{
-		str.substr(0, pos), str.substr(pos + 1)
-	};
+	return pos != string_view::npos?
+		pair { str.substr(0, pos), str.substr(pos + 1) }:
+		pair { str, string_view{} };
 }
 
 /// Remove leading and trailing instances of c from the returned view
@@ -502,7 +494,9 @@ ircd::rstrip(const string_view &str,
              const char &c)
 {
 	const auto pos(str.find_last_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
+	return pos != string_view::npos?
+		string_view{str.substr(0, pos + 1)}:
+		str;
 }
 
 /// Remove leading instances of c from the returned view
@@ -548,8 +542,9 @@ ircd::lstrip(const string_view &str,
              const char &c)
 {
 	const auto pos(str.find_first_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(pos)}:
-	                                 string_view{str.data(), size_t{0}};
+	return pos != string_view::npos?
+		string_view{str.substr(pos)}:
+		string_view{str.data(), size_t{0}};
 }
 
 /// Remove leading instances of any character in c from the returned view
@@ -558,7 +553,9 @@ ircd::lstripa(const string_view &str,
               const string_view &c)
 {
 	const auto pos(str.find_first_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(pos)} : str;
+	return pos != string_view::npos?
+		string_view{str.substr(pos)}:
+		str;
 }
 
 /// Remove trailing instances of any character in c from the returned view
@@ -567,7 +564,9 @@ ircd::rstripa(const string_view &str,
               const string_view &c)
 {
 	const auto pos(str.find_last_not_of(c));
-	return pos != string_view::npos? string_view{str.substr(0, pos + 1)} : str;
+	return pos != string_view::npos?
+		string_view{str.substr(0, pos + 1)}:
+		str;
 }
 
 inline bool
