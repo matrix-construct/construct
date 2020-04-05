@@ -33,7 +33,7 @@ struct tuple_base
 ///
 /// Here we represent a JSON object with a named tuple, allowing the programmer
 /// to create a structure specifying all of the potentially valid members of the
-/// object. Thus at runtime, the tuple only carries around its values like a
+/// object. Thus at runtime, the tuple carries around its values like a
 /// `struct`. Unlike a `struct`, the tuple is abstractly iterable and we have
 /// implemented logic operating on all JSON tuples regardless of their makeup
 /// without any effort from a developer when creating a new tuple.
@@ -61,6 +61,12 @@ struct tuple
 
 	operator json::value() const;
 	operator crh::sha256::buf() const;
+
+	/// For json::object constructions, the source JSON (string_view) is
+	/// carried with the instance. This is important to convey additional
+	/// keys not enumerated in the tuple. This will be default-initialized
+	/// for other constructions when no source JSON buffer is available.
+	json::object source;
 
 	template<class name> constexpr decltype(auto) get(name&&) const noexcept;
 	template<class name> constexpr decltype(auto) get(name&&) noexcept;
@@ -183,6 +189,10 @@ template<class... T>
 template<class U>
 tuple<T...>::tuple(const json::object &object,
                    const json::keys<U> &keys)
+:source
+{
+	object
+}
 {
 	std::for_each(std::begin(object), std::end(object), [this, &keys]
 	(const auto &member)
@@ -194,6 +204,10 @@ tuple<T...>::tuple(const json::object &object,
 
 template<class... T>
 tuple<T...>::tuple(const json::object &object)
+:source
+{
+	object
+}
 {
 	std::for_each(std::begin(object), std::end(object), [this]
 	(const auto &member)
@@ -226,6 +240,10 @@ template<class... T>
 template<class U>
 tuple<T...>::tuple(const tuple &t,
                    const keys<U> &keys)
+:source
+{
+	t.source
+}
 {
 	for_each(t, [this, &keys]
 	(const auto &key, const auto &val)
@@ -238,6 +256,10 @@ tuple<T...>::tuple(const tuple &t,
 template<class... T>
 template<class... U>
 tuple<T...>::tuple(const tuple<U...> &t)
+:source
+{
+	t.source
+}
 {
 	for_each(t, [this]
 	(const auto &key, const auto &val)

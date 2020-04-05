@@ -1120,10 +1120,6 @@ ircd::m::event::event(const json::object &source)
 {
 	source
 }
-,source
-{
-	source
-}
 ,event_id
 {
 	defined(json::get<"event_id"_>(*this))?
@@ -1138,10 +1134,6 @@ ircd::m::event::event(const json::object &source,
 :super_type
 {
 	source, keys
-}
-,source
-{
-	source
 }
 ,event_id
 {
@@ -1180,10 +1172,6 @@ try
 {
 	source
 }
-,source
-{
-	source
-}
 ,event_id
 {
 	event_id?
@@ -1214,10 +1202,6 @@ try
 :super_type
 {
 	source, keys
-}
-,source
-{
-	source
 }
 ,event_id
 {
