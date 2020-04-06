@@ -306,7 +306,7 @@ ircd::m::dbs::room_type_key(const mutable_buffer &out_,
 		return { data(out_), data(out) };
 
 	consume(out, copy(out, "\0"_sv));
-	consume(out, copy(out, type));
+	consume(out, copy(out, trunc(type, event::TYPE_MAX_SIZE)));
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, byte_view<string_view>(depth)));
 	consume(out, copy(out, byte_view<string_view>(event_idx)));

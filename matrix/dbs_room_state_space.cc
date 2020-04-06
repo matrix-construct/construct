@@ -326,9 +326,9 @@ ircd::m::dbs::room_state_space_key(const mutable_buffer &out_,
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
 	consume(out, copy(out, "\0"_sv));
-	consume(out, copy(out, type));
+	consume(out, copy(out, trunc(type, event::TYPE_MAX_SIZE)));
 	consume(out, copy(out, "\0"_sv));
-	consume(out, copy(out, state_key));
+	consume(out, copy(out, trunc(state_key, event::STATE_KEY_MAX_SIZE)));
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, byte_view<string_view>(depth)));
 	consume(out, copy(out, byte_view<string_view>(event_idx)));

@@ -247,23 +247,27 @@ ircd::m::dbs::event_state_key(const mutable_buffer &out_,
 		return {};
 
 	mutable_buffer out{out_};
-	consume(out, copy(out, state_key));
+	consume(out, copy(out, trunc(state_key, event::STATE_KEY_MAX_SIZE)));
+
 	if(!type)
 		return {data(out_), data(out)};
 
 	consume(out, copy(out, "\0"_sv));
-	consume(out, copy(out, type));
+	consume(out, copy(out, trunc(type, event::TYPE_MAX_SIZE)));
+
 	if(!room_id)
 		return {data(out_), data(out)};
 
 	assert(m::valid(m::id::ROOM, room_id));
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, room_id));
+
 	if(depth < 0)
 		return {data(out_), data(out)};
 
 	consume(out, copy(out, "\0"_sv));
 	consume(out, copy(out, byte_view<string_view>(depth)));
+
 	if(!event_idx)
 		return {data(out_), data(out)};
 

@@ -202,13 +202,13 @@ ircd::m::dbs::room_state_key(const mutable_buffer &out_,
 	if(likely(defined(type)))
 	{
 		consume(out, copy(out, "\0"_sv));
-		consume(out, copy(out, type));
+		consume(out, copy(out, trunc(type, event::TYPE_MAX_SIZE)));
 	}
 
 	if(defined(state_key))
 	{
 		consume(out, copy(out, "\0"_sv));
-		consume(out, copy(out, state_key));
+		consume(out, copy(out, trunc(state_key, event::STATE_KEY_MAX_SIZE)));
 	}
 
 	return { data(out_), data(out) };
