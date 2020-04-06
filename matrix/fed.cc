@@ -136,6 +136,43 @@ ircd::m::fed::send::send(const string_view &txnid,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// fed/rooms.h
+//
+
+ircd::m::fed::rooms::complexity::complexity(const m::id::room &room_id,
+                                            const mutable_buffer &buf_,
+                                            opts opts)
+:request{[&]
+{
+	if(!opts.remote)
+		opts.remote = room_id.host();
+
+	window_buffer buf{buf_};
+	if(likely(!defined(json::get<"uri"_>(opts.request))))
+	{
+		thread_local char ridbuf[768];
+		json::get<"uri"_>(opts.request) = fmt::sprintf
+		{
+			buf, "/_matrix/federation/unstable/rooms/%s/complexity",
+			url::encode(ridbuf, room_id)
+		};
+
+		consume(buf, size(json::get<"uri"_>(opts.request)));
+	}
+
+	if(likely(!defined(json::get<"method"_>(opts.request))))
+		json::get<"method"_>(opts.request) = "GET";
+
+	return request
+	{
+		buf, std::move(opts)
+	};
+}()}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // fed/public_rooms.h
 //
 

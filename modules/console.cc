@@ -12989,6 +12989,51 @@ console_cmd__fed__groups(opt &out, const string_view &line)
 }
 
 bool
+console_cmd__fed__rooms__complexity(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "remote"
+	}};
+
+	const auto room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const auto remote
+	{
+		param["remote"]
+	};
+
+	const unique_buffer<mutable_buffer> buf
+	{
+		16_KiB
+	};
+
+	m::fed::rooms::complexity::opts opts;
+	opts.remote = remote;
+	opts.dynamic = false;
+	m::fed::rooms::complexity request
+	{
+		room_id, buf, std::move(opts)
+	};
+
+	const auto code
+	{
+		request.get(out.timeout)
+	};
+
+	const json::object response
+	{
+		request
+	};
+
+	out << string_view{response} << std::endl;
+	return true;
+}
+
+bool
 console_cmd__fed__head(opt &out, const string_view &line)
 {
 	const params param{line, " ",

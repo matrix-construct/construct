@@ -40,6 +40,7 @@ namespace ircd::m::fed
 #include "backfill.h"
 #include "frontfill.h"
 #include "public_rooms.h"
+#include "rooms.h"
 #include "send.h"
 #include "groups.h"
 
