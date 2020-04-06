@@ -313,10 +313,7 @@ ircd::m::vm::eval::operator()(const vector_view<m::event> &events)
 	}
 	catch(const ctx::interrupted &e)
 	{
-		if(opts->nothrows & fault::INTERRUPT)
-			continue;
-		else
-			throw;
+		throw;
 	}
 	catch(const std::exception &e)
 	{

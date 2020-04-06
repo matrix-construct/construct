@@ -13445,7 +13445,6 @@ console_cmd__fed__state(opt &out, const string_view &line)
 
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1;
-	vmopts.nothrows &= ~m::vm::fault::INTERRUPT;
 	vmopts.fetch_state = false;
 	vmopts.fetch_prev = false;
 	m::vm::eval eval

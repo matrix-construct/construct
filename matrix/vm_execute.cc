@@ -265,21 +265,9 @@ catch(const m::error &e)
 		json::string{content["error"]}
 	);
 }
-catch(const ctx::interrupted &e)
+catch(const ctx::interrupted &)
 {
-	assert(eval.opts);
-	return handle_error
-	(
-		*eval.opts, fault::INTERRUPT,
-		"eval %s %s :%s",
-		event.event_id?
-			string_view{event.event_id}:
-			"<unknown>"_sv,
-		json::get<"room_id"_>(event)?
-			string_view{json::get<"room_id"_>(event)}:
-			"<unknown>"_sv,
-		e.what()
-	);
+	throw;
 }
 catch(const std::exception &e)
 {
@@ -406,18 +394,7 @@ catch(const m::error &e) // GENERAL MATRIX ERROR
 }
 catch(const ctx::interrupted &e) // INTERRUPTION
 {
-	return handle_error
-	(
-		*eval.opts, fault::INTERRUPT,
-		"execute %s %s :%s",
-		event.event_id?
-			string_view{event.event_id}:
-			"<edu>"_sv,
-		eval.room_id?
-			eval.room_id:
-			"<edu>"_sv,
-		e.what()
-	);
+	throw;
 }
 catch(const std::exception &e) // ALL OTHER ERRORS
 {

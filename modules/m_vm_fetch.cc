@@ -431,19 +431,6 @@ try
 	{
 		throw;
 	}
-	catch(const vm::error &e)
-	{
-		if(e.code == vm::fault::INTERRUPT)
-			throw;
-
-		++fail;
-		log::derror
-		{
-			log, "%s state eval :%s",
-			loghead(eval),
-			e.what(),
-		};
-	}
 	catch(const std::exception &e)
 	{
 		++fail;
@@ -464,10 +451,6 @@ try
 		good,
 		fail,
 	};
-}
-catch(const ctx::interrupted &)
-{
-	throw;
 }
 catch(const std::exception &e)
 {
@@ -651,18 +634,6 @@ ircd::m::vm::fetch::prev(const event &event,
 	catch(const ctx::interrupted &)
 	{
 		throw;
-	}
-	catch(const vm::error &e)
-	{
-		if(e.code == vm::fault::INTERRUPT)
-			throw;
-
-		log::derror
-		{
-			log, "%s prev fetch/eval :%s",
-			loghead(eval),
-			e.what(),
-		};
 	}
 	catch(const std::exception &e)
 	{

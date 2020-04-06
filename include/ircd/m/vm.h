@@ -147,7 +147,6 @@ enum ircd::m::vm::fault
 	AUTH          = 0x08,  ///< Auth rules violation. (#av)
 	STATE         = 0x10,  ///< Required state is missing (#st)
 	EVENT         = 0x20,  ///< Eval requires addl events in the ef register (#ef)
-	INTERRUPT     = 0x40,  ///< ctx::interrupted (#nmi)
 };
 
 /// Evaluation Options

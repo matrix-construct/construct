@@ -69,7 +69,6 @@ handle_edu(client &client,
 
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1U;
-	vmopts.nothrows &= ~m::vm::fault::INTERRUPT;
 	vmopts.node_id = request.origin;
 	vmopts.txn_id = txn_id;
 	vmopts.edu = true;
@@ -91,7 +90,6 @@ handle_pdus(client &client,
 	vmopts.warnlog = 0;
 	vmopts.infolog_accept = true;
 	vmopts.nothrows = -1U;
-	vmopts.nothrows &= ~m::vm::fault::INTERRUPT;
 	vmopts.node_id = request.origin;
 	vmopts.txn_id = txn_id;
 	vmopts.fetch_prev = bool(fetch_state);
@@ -130,9 +128,6 @@ try
 }
 catch(const m::vm::error &e)
 {
-	if(e.code == m::vm::fault::INTERRUPT)
-		throw;
-
 	const json::object &content
 	{
 		e.content
