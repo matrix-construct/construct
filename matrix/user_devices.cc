@@ -59,6 +59,19 @@ ircd::m::user::devices::update(const device_list_update &update)
 		json::at<"user_id"_>(update)
 	};
 
+	// Don't create unknown users on this codepath since there's no efficient
+	// check if this is just spam; updates for unknowns are just dropped here.
+	if(!exists(user))
+	{
+		log::derror
+		{
+			log, "Refusing device update for unknown user %s",
+			string_view{user.user_id},
+		};
+
+		return false;
+	}
+
 	const m::user::devices devices
 	{
 		user
