@@ -407,9 +407,14 @@ try
 			future.get()
 		};
 
+		const json::object &content
+		{
+			result
+		};
+
 		const json::array &pdus
 		{
-			json::object(result).get("pdus")
+			content["pdus"]
 		};
 
 		auto opts(*eval.opts);
