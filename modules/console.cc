@@ -9440,7 +9440,7 @@ console_cmd__room__origins__random(opt &out, const string_view &line)
 	const auto ok{[&noerror]
 	(const string_view &origin)
 	{
-		if(noerror && server::errmsg(m::fed::matrix_service(origin)))
+		if(noerror && server::errant(m::fed::matrix_service(origin)))
 			return false;
 
 		return true;

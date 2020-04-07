@@ -580,7 +580,7 @@ ircd::m::fetch::select_random_origin(request &request)
 			return false;
 
 		// Don't want to use a peer marked with an error by ircd::server
-		if(ircd::server::errmsg(fed::matrix_service(origin)))
+		if(ircd::server::errant(fed::matrix_service(origin)))
 			return false;
 
 		return true;

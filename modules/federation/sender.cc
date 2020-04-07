@@ -208,7 +208,7 @@ send_to_room(const m::event &event,
 		auto it{nodes.lower_bound(origin)};
 		if(it == end(nodes) || it->first != origin)
 		{
-			if(server::errmsg(m::fed::matrix_service(origin)))
+			if(server::errant(m::fed::matrix_service(origin)))
 				return;
 
 			it = nodes.emplace_hint(it, origin, origin);
@@ -242,7 +242,7 @@ send_to_user(const m::event &event,
 	auto it{nodes.lower_bound(remote)};
 	if(it == end(nodes) || it->first != remote)
 	{
-		if(server::errmsg(m::fed::matrix_service(remote)))
+		if(server::errant(m::fed::matrix_service(remote)))
 			return;
 
 		it = nodes.emplace_hint(it, remote, remote);
@@ -282,7 +282,7 @@ send_from_user(const m::event &event,
 		auto it{nodes.lower_bound(origin)};
 		if(it == end(nodes) || it->first != origin)
 		{
-			if(server::errmsg(m::fed::matrix_service(origin)))
+			if(server::errant(m::fed::matrix_service(origin)))
 				return true;
 
 			it = nodes.emplace_hint(it, origin, origin);

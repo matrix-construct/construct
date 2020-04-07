@@ -49,6 +49,7 @@ namespace ircd::server
 
 	// const utils
 	string_view errmsg(const net::hostport &) noexcept;
+	bool errant(const net::hostport &) noexcept;
 	bool exists(const net::hostport &) noexcept;
 	peer &find(const net::hostport &);
 

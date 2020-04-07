@@ -447,12 +447,12 @@ ircd::m::feds::for_each_in_room(const opts &opts,
 		if(opts.exclude_myself && my_host(origin))
 			return;
 
-		const auto errmsg
+		const auto errant
 		{
-			server::errmsg(fed::matrix_service(origin))
+			server::errant(fed::matrix_service(origin))
 		};
 
-		if(opts.closure_cached_errors || !errmsg) try
+		if(opts.closure_cached_errors || !errant) try
 		{
 			ret.emplace_back(std::make_unique<request<T>>(opts, [&create_closure, &origin]
 			(auto &request)
@@ -488,12 +488,12 @@ ircd::m::feds::for_one(const string_view &origin,
 	if(opts.exclude_myself && my_host(origin))
 		return ret;
 
-	const auto errmsg
+	const auto errant
 	{
-		server::errmsg(fed::matrix_service(origin))
+		server::errant(fed::matrix_service(origin))
 	};
 
-	if(opts.closure_cached_errors || !errmsg) try
+	if(opts.closure_cached_errors || !errant) try
 	{
 		ret.emplace_back(std::make_unique<request<T>>(opts, [&create_closure, &origin]
 		(auto &request)

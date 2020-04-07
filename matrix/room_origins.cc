@@ -117,7 +117,7 @@ const
 	size_t ret{0};
 	for_each([&ret](const string_view &server)
 	{
-		ret += !ircd::empty(server::errmsg(fed::matrix_service(server)));
+		ret += server::errant(fed::matrix_service(server));
 	});
 
 	return ret;
