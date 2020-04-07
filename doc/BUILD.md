@@ -8,7 +8,7 @@ made their way to mainstream systems. Important notes that may affect you:
 - GCC: Ubuntu Xenial (16.04) users must use a PPA to obtain GCC-7 or greater; don't
 forget to `export CXX=g++-7` before running `./configure` on that system.
 
-- Boost: The required version is available through `apt` as `boost-all-dev` on
+- Boost: The required version is available through `apt` as `libboost-all-dev` on
 Ubuntu Cosmic (18.10). All earlier releases (including 18.04 LTS) can configure
 with `--with-included-boost` as instructed below.
 
