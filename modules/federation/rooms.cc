@@ -96,7 +96,7 @@ get__rooms__complexity(client &client,
 		0.00
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, json::members
 		{
