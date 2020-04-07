@@ -407,7 +407,7 @@ try
 			future.get()
 		};
 
-		const json::object &content
+		const json::object content
 		{
 			result
 		};
