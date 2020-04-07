@@ -166,6 +166,8 @@ ircd::m::matrix::module_names
 	"client_thirdparty_protocols",
 	"client_versions",
 	"client_capabilities",
+
+	"app_app",
 };
 
 /// This is a list of modules that are considered "optional" and any loading

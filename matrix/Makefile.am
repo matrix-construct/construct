@@ -121,6 +121,7 @@ libircd_matrix_la_SOURCES += user_room_account_data.cc
 libircd_matrix_la_SOURCES += user_room_tags.cc
 libircd_matrix_la_SOURCES += user_rooms.cc
 libircd_matrix_la_SOURCES += user_tokens.cc
+libircd_matrix_la_SOURCES += app.cc
 libircd_matrix_la_SOURCES += breadcrumb_rooms.cc
 libircd_matrix_la_SOURCES += display_name.cc
 libircd_matrix_la_SOURCES += event_append.cc
