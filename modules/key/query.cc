@@ -13,6 +13,9 @@ namespace ircd::m
 	static resource::response handle_key_query_get(client &, const resource::request &);
 	extern resource::method key_query_get;
 
+	static resource::response handle_key_query_post(client &, const resource::request &);
+	extern resource::method key_query_post;
+
 	extern resource key_query_resource;
 }
 
@@ -31,6 +34,73 @@ ircd::m::key_query_resource
 		resource::DIRECTORY,
 	}
 };
+
+decltype(ircd::m::key_query_post)
+ircd::m::key_query_post
+{
+	key_query_resource, "POST", handle_key_query_post
+};
+
+ircd::m::resource::response
+ircd::m::handle_key_query_post(client &client,
+                               const m::resource::request &request)
+{
+	const json::object &server_keys_request
+	{
+		request["server_keys"]
+	};
+
+	resource::response::chunked response
+	{
+		client, http::OK
+	};
+
+	json::stack out
+	{
+		response.buf, response.flusher()
+	};
+
+	json::stack::object top{out};
+	json::stack::array server_keys_out
+	{
+		top, "server_keys"
+	};
+
+	for(const auto &[server_name, requests] : server_keys_request)
+	{
+		if(empty(json::object(requests)))
+		{
+			keys::cache::for_each(server_name, [&server_keys_out]
+			(const m::keys &keys)
+			{
+				server_keys_out.append(keys.source);
+				return true;
+			});
+
+			continue;
+		}
+
+		for(const auto &[key_id, criteria] : json::object(requests))
+		{
+			const time_t &minimum_valid_until_ts
+			{
+				json::object(criteria).get<time_t>("minimum_valid_until_ts", ircd::time<milliseconds>())
+			};
+
+			keys::cache::get(server_name, key_id, [&server_keys_out, &minimum_valid_until_ts]
+			(const m::keys &keys)
+			{
+				// Condition ignored to match synapse behavior.
+				if((false) && json::get<"valid_until_ts"_>(keys) < minimum_valid_until_ts)
+					return;
+
+				server_keys_out.append(keys.source);
+			});
+		}
+	}
+
+	return {};
+}
 
 decltype(ircd::m::key_query_get)
 ircd::m::key_query_get
