@@ -174,10 +174,20 @@ try
 		m::version(room_version_buf, room{eval.room_id}, std::nothrow)
 	};
 
+	// Determine if this is an internal room creation event
+	const bool is_internal_room_create
+	{
+		json::get<"type"_>(event) == "m.room.create" &&
+		json::get<"sender"_>(event) &&
+		m::myself(json::get<"sender"_>(event))
+	};
+
 	// Query for whether the room apropos is an internal room.
 	const scope_restore room_internal
 	{
 		eval.room_internal,
+		is_internal_room_create?
+			true:
 		eval.room_id?
 			m::internal(eval.room_id):
 			false
