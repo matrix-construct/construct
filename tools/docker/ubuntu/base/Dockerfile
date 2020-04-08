@@ -1,8 +1,10 @@
 FROM ubuntu:18.04
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN \
     apt-get update && \
-    apt-get install -y software-properties-common && \
+    apt-get install --no-install-recommends -y software-properties-common && \
     add-apt-repository -y ppa:mhier/libboost-latest && \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
     apt-get update && \
@@ -14,7 +16,6 @@ RUN \
         autotools-dev \
         boost1.68 \
         build-essential \
-        clang-9 \
         cmake \
         curl \
         git \
@@ -30,8 +31,10 @@ RUN \
         libtool \
         shtool \
         xz-utils && \
+    apt-get purge -y software-properties-common && \
     apt-get clean && \
-    apt-get autoremove --purge -y
+    apt-get autoremove --purge -y && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV ROCKSDB_VERSION=5.16.6
 
@@ -53,9 +56,5 @@ RUN \
 
 RUN mkdir /build
 
-ENV CC clang-9
-ENV CXX clang++-9
-
 WORKDIR /build
 
-CMD [ "/bin/bash" ]
