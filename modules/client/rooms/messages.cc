@@ -139,7 +139,7 @@ get__messages(client &client,
 		};
 
 		end = event.event_id;
-		if(hit > page.limit || miss >= size_t(max_filter_miss))
+		if(hit >= page.limit || miss >= size_t(max_filter_miss))
 			break;
 
 		const bool ok
