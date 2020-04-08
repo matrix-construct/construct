@@ -1,9 +1,12 @@
 #!/bin/sh
-# Please run from the directory this file in
-docker pull ubuntu:18.04
-docker build -t jevolk/construct:ubuntu-18.04 ./ubuntu/base
-docker build -t jevolk/construct:ubuntu-18.04-clang-9 ./ubuntu/clang-9
-docker build -t jevolk/construct:ubuntu-18.04-gcc-8 ./ubuntu/gcc-8
+BASEDIR=$(dirname "$0")
 
-docker push jevolk/construct:ubuntu-18.04-clang-9
-docker push jevolk/construct:ubuntu-18.04-gcc-8
+docker pull ubuntu:18.04
+docker build -t jevolk/construct:ubuntu-18.04 $BASEDIR/ubuntu/base
+docker build -t jevolk/construct:ubuntu-18.04-clang-9 $BASEDIR/ubuntu/clang-9
+docker build -t jevolk/construct:ubuntu-18.04-gcc-8 $BASEDIR/ubuntu/gcc-8
+docker build -t jevolk/construct:ubuntu-18.04-gcc-9 $BASEDIR/ubuntu/gcc-9
+
+#docker push jevolk/construct:ubuntu-18.04-clang-9
+#docker push jevolk/construct:ubuntu-18.04-gcc-8
+#docker push jevolk/construct:ubuntu-18.04-gcc-9
