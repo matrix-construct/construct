@@ -168,9 +168,28 @@ get__messages(client &client,
 			top, "end", json::value{end}
 		};
 
+	// Manually close out and flush here so the client isn't impacted by
+	// anything related to the postprefetching loop below.
+	top.~object();
+	out.flush(true);
+	response.finish();
+
+	// Continue the room::events iteration to prefetch the next results for a
+	// client hitting /messages to paginate. This endpoint does not conduct any
+	// other prefetching because: 1. The first /messages is predicted by other
+	// requests which initiate prefetches. 2. Subsequent /messages are
+	// prefetched by the following loop after each request from here. Note that
+	// this loop does not yet account for visibility and filters etc.
+	size_t postfetched(0);
+	for(size_t i(0); i <= page.limit && it; ++i, page.dir == 'b'? --it : ++it)
+	{
+		const auto &event_idx(it.event_idx());
+		postfetched += m::prefetch(event_idx);
+	}
+
 	log::debug
 	{
-		messages_log, "%s in %s from:%s to:%s dir:%c limit:%zu start:%s end:%s hit:%zu miss:%zu",
+		messages_log, "%s in %s from:%s to:%s dir:%c limit:%zu start:%s end:%s hit:%zu miss:%zu post:%zu",
 		client.loghead(),
 		string_view{room_id},
 		string_view{page.from},
@@ -181,6 +200,7 @@ get__messages(client &client,
 		string_view{end},
 		hit,
 		miss,
+		postfetched,
 	};
 
 	return {};
