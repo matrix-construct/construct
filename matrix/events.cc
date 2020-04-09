@@ -65,23 +65,23 @@ ircd::m::events::rebuild()
 		return true;
 	});
 
-    log::info
-    {
-        log, "Events type/sender table rebuild events:%zu txn:%zu %s commit...",
-        ret,
-        txn.size(),
-        pretty(iec(txn.bytes())),
-    };
+	log::info
+	{
+		log, "Events type/sender table rebuild events:%zu txn:%zu %s commit...",
+		ret,
+		txn.size(),
+		pretty(iec(txn.bytes())),
+	};
 
 	txn();
 
-    log::notice
-    {
-        log, "Events type/sender table rebuild complete.",
-        ret,
-        txn.size(),
-        pretty(iec(txn.bytes())),
-    };
+	log::notice
+	{
+		log, "Events type/sender table rebuild complete.",
+		ret,
+		txn.size(),
+		pretty(iec(txn.bytes())),
+	};
 }
 
 void
