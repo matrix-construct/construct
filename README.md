@@ -9,7 +9,7 @@ at the University of Oulu which facilitated real-time communication over the int
 Its [derivatives](https://upload.wikimedia.org/wikipedia/commons/d/d8/IRCd_software_implementations.png)
 have underpinned the major networks for decades.
 
-The protocol has since stagnated, largely abandoned except for a small cult of
+The protocol has since stagnated, largely abandoned except by a small cult of
 millenarians. A growing number of proprietary cloud services have filled the
 vacuum of innovation. Free software projects are relegated to collaborating on
 non-free platforms for a basic rich user experience. The consensus is that
@@ -29,7 +29,8 @@ rewritten, the same spirit and philosophy of its predecessors is still obvious
 throughout.
 
 Matrix is about giving you control over your communication; Construct is about
-giving you control over Matrix.
+giving you control over Matrix. Your privacy and security matters. We encourage
+you to contribute new ideas and are liberal in accepting experimental features.
 
 
 ## Installation
