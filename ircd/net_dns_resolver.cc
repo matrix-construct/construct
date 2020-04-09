@@ -564,10 +564,10 @@ try
 		*reinterpret_cast<rfc1035::header *>(data(buf))
 	};
 
-	ntoh(&header.qdcount);
-	ntoh(&header.ancount);
-	ntoh(&header.nscount);
-	ntoh(&header.arcount);
+	header.qdcount = ntoh(header.qdcount);
+	header.ancount = ntoh(header.ancount);
+	header.nscount = ntoh(header.nscount);
+	header.arcount = ntoh(header.arcount);
 
 	const const_buffer body
 	{
