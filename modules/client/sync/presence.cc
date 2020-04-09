@@ -44,9 +44,14 @@ ircd::m::sync::presence_linear(data &data)
 	if(!my_host(json::get<"origin"_>(event)))
 		return false;
 
+	const json::object &content
+	{
+		at<"content"_>(event)
+	};
+
 	const json::string &sender
 	{
-		at<"content"_>(event).get("user_id")
+		content["user_id"]
 	};
 
 	const m::user::mitsein mitsein
@@ -54,6 +59,7 @@ ircd::m::sync::presence_linear(data &data)
 		data.user
 	};
 
+	assert(sender);
 	if(!mitsein.has(m::user::id(sender), "join"))
 		return false;
 
