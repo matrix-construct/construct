@@ -101,7 +101,7 @@ conf::item<milliseconds>
 claim_timeout_default
 {
 	{ "name",     "ircd.client.keys.claim.timeout.default" },
-	{ "default",  10000L                                   },
+	{ "default",  20000L                                   },
 };
 
 conf::item<milliseconds>
@@ -115,7 +115,7 @@ conf::item<milliseconds>
 claim_timeout_max
 {
 	{ "name",     "ircd.client.keys.claim.timeout.max" },
-	{ "default",  20000L                               },
+	{ "default",  30000L                               },
 };
 
 m::resource::response
