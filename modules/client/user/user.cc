@@ -29,7 +29,8 @@ user_resource
 };
 
 m::resource::response
-get_user(client &client, const m::resource::request &request)
+get_user(client &client,
+         const m::resource::request &request)
 {
 	if(request.parv.size() < 2)
 		throw m::NEED_MORE_PARAMS
@@ -78,7 +79,8 @@ get_method
 };
 
 m::resource::response
-post_user(client &client, m::resource::request &request)
+post_user(client &client,
+          m::resource::request &request)
 {
 	if(request.parv.size() < 2)
 		throw m::NEED_MORE_PARAMS
@@ -124,7 +126,8 @@ post_method
 };
 
 m::resource::response
-put_user(client &client, const m::resource::request &request)
+put_user(client &client,
+         const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
@@ -176,7 +179,8 @@ put_method
 };
 
 m::resource::response
-delete_user(client &client, const m::resource::request &request)
+delete_user(client &client,
+            const m::resource::request &request)
 {
 	if(request.parv.size() < 1)
 		throw m::NEED_MORE_PARAMS
