@@ -937,6 +937,25 @@ try
 	if(!exists(alias_room))
 		create(alias_room, me);
 
+	const m::room::id::buf control_room_id
+	{
+		"control", origin(homeserver)
+	};
+
+	const m::room control_room
+	{
+		control_room_id
+	};
+
+	if(!exists(control_room))
+		create(control_room, me);
+
+	if(!control_room.has("m.room.name", ""))
+		send(control_room, me, "m.room.name", "",
+		{
+			{ "name", "Control Room" }
+		});
+
 	log::info
 	{
 		log, "Bootstrap event generation completed nominally."
