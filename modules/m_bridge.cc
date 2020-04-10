@@ -11,18 +11,18 @@
 ircd::mapi::header
 IRCD_MODULE
 {
-	"Application Services"
+	"Bridges (Application Services)"
 };
 
-namespace ircd::m::app
+namespace ircd::m::bridge
 {
 	static void handle_event(const m::event &, vm::eval &);
 
 	extern hookfn<vm::eval &> notify_hook;
 }
 
-decltype(ircd::m::app::notify_hook)
-ircd::m::app::notify_hook
+decltype(ircd::m::bridge::notify_hook)
+ircd::m::bridge::notify_hook
 {
 	handle_event,
 	{
@@ -31,8 +31,8 @@ ircd::m::app::notify_hook
 };
 
 void
-ircd::m::app::handle_event(const m::event &event,
-                           vm::eval &eval)
+ircd::m::bridge::handle_event(const m::event &event,
+                              vm::eval &eval)
 try
 {
 	// Drop internal room traffic
@@ -43,12 +43,13 @@ try
 	if(!event.event_id)
 		return;
 
+
 }
 catch(const std::exception &e)
 {
 	log::error
 	{
-		log, "Failed to handle for application services :%s",
+		log, "Failed to handle for bridgelication services :%s",
 		e.what(),
 	};
 }

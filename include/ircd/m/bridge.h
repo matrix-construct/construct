@@ -9,20 +9,36 @@
 // full license for this software is available in the LICENSE file.
 
 #pragma once
-#define HAVE_IRCD_M_APP_H
+#define HAVE_IRCD_M_BRIDGE_H
 
-namespace ircd::m::app
+namespace ircd::m::bridge
 {
 	struct namespace_;
 	struct namespaces;
 	struct config;
+	struct query;
 
 	bool exists(const string_view &id);
 
 	extern log::log log;
 }
 
-struct ircd::m::app::namespace_
+struct ircd::m::bridge::query
+{
+	rfc3986::uri base_url;
+	unique_mutable_buffer buf;
+	window_buffer wb;
+	string_view uri;
+	http::request hypertext;
+	server::request request;
+	http::code code;
+
+  public:
+	query(const config &, const m::user::id &);
+	query(const config &, const m::room::alias &);
+};
+
+struct ircd::m::bridge::namespace_
 :json::tuple
 <
 	/// Required. A true or false value stating whether this application
@@ -37,7 +53,7 @@ struct ircd::m::app::namespace_
 	using super_type::tuple;
 };
 
-struct ircd::m::app::namespaces
+struct ircd::m::bridge::namespaces
 :json::tuple
 <
 	/// Events which are sent from certain users.
@@ -53,7 +69,7 @@ struct ircd::m::app::namespaces
 	using super_type::tuple;
 };
 
-struct ircd::m::app::config
+struct ircd::m::bridge::config
 :json::tuple
 <
 	/// Required. A unique, user-defined ID of the application service which
@@ -87,13 +103,16 @@ struct ircd::m::app::config
 	json::property<name::protocols, json::array>
 >
 {
+	using closure_bool = std::function<bool (const event::idx &, const config &)>;
+	using closure = std::function<void (const event::idx &, const config &)>;
+
 	static event::idx idx(std::nothrow_t, const string_view &id);
 	static event::idx idx(const string_view &id);
 
-	static bool get(std::nothrow_t, const string_view &id, const event::fetch::view_closure &);
-	static void get(const string_view &id, const event::fetch::view_closure &);
-	static std::string get(std::nothrow_t, const string_view &id);
-	static std::string get(const string_view &id);
+	static bool get(std::nothrow_t, const string_view &id, const closure &);
+	static void get(const string_view &id, const closure &);
+
+	static bool for_each(const closure_bool &);
 
 	using super_type::tuple;
 };

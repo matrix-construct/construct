@@ -15065,3 +15065,23 @@ console_cmd__well_known__matrix__server(opt &out, const string_view &line)
 	out << result << std::endl;
 	return true;
 }
+
+//
+// bridge
+//
+
+bool
+console_cmd__bridge(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"id"
+	}};
+
+	const string_view &id
+	{
+		param.at("id")
+	};
+
+	return true;
+}

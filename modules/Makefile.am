@@ -89,6 +89,7 @@ endif IMAGEMAGICK
 m_moduledir = @moduledir@
 
 m_breadcrumb_rooms_la_SOURCES = m_breadcrumb_rooms.cc
+m_bridge_la_SOURCES = m_bridge.cc
 m_command_la_SOURCES = m_command.cc
 m_control_la_SOURCES = m_control.cc
 m_device_la_SOURCES = m_device.cc
@@ -119,6 +120,7 @@ m_vm_fetch_la_SOURCES = m_vm_fetch.cc
 
 m_module_LTLIBRARIES = \
 	m_breadcrumb_rooms.la \
+	m_bridge.la \
 	m_command.la \
 	m_control.la \
 	m_device.la \
@@ -161,21 +163,6 @@ key_key_query_la_SOURCES = key/query.cc
 key_module_LTLIBRARIES = \
 	key/key_server.la \
 	key/key_query.la \
-	###
-
-###############################################################################
-#
-# /_matrix/app/
-#
-
-app_moduledir = @moduledir@
-
-app_app_app_la_SOURCES = \
-	app/app.cc \
-	###
-
-app_module_LTLIBRARIES = \
-	app/app_app.la \
 	###
 
 ###############################################################################
