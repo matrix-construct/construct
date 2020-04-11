@@ -55,9 +55,9 @@ noexcept try
 		at<"content"_>(event)
 	};
 
-	const string_view &body
+	const json::string &body
 	{
-		unquote(content.at("body"))
+		content.at("body")
 	};
 
 	const string_view &cmd
