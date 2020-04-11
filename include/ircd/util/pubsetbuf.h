@@ -56,7 +56,9 @@ stringstream &
 resizebuf(stringstream &ss,
           std::string &s)
 {
-	s.resize(ss.tellp());
+	const auto pos(ss.tellp());
+	assert(pos >= 0);
+	s.resize(pos);
 	return ss;
 }
 
