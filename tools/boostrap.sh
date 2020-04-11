@@ -128,6 +128,7 @@ run git submodule update --init --recursive --checkout libs/numeric
 run git submodule update --init --recursive --checkout libs/integer
 run git submodule update --init --recursive --checkout libs/array
 run git submodule update --init --recursive --checkout libs/functional
+run git submodule update --init --recursive --checkout libs/container_hash
 run git submodule update --init --recursive --checkout libs/container
 run git submodule update --init --recursive --checkout libs/move
 run git submodule update --init --recursive --checkout libs/math
