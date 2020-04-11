@@ -50,6 +50,9 @@ command_control(const m::event &event,
                 m::vm::eval &)
 noexcept try
 {
+	if(json::get<"room_id"_>(event) != control_room_id) //TODO: XXX see hook
+		return;
+
 	const auto &content
 	{
 		at<"content"_>(event)
@@ -114,7 +117,7 @@ command_control_hook
 	command_control,
 	{
 		{ "_site",       "vm.effect"       },
-		{ "room_id",     "!control"        },
+//		{ "room_id",     "!control"        }, //TODO: XXX
 		{ "type",        "m.room.message"  },
 		{ "content",
 		{
