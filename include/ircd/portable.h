@@ -57,7 +57,7 @@ namespace ircd
 // Trouble; clang w/ our custom assert
 //
 
-#if defined(__clang__) && !defined(assert)
+#if defined(RB_ASSERT) && defined(__clang__) && !defined(assert)
 	#ifdef NDEBUG
 		#define assert(expr) \
 			(static_cast<void>(0))

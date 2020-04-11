@@ -10,7 +10,7 @@
 
 #include <RB_INC_SIGNAL_H
 
-#if defined(IRCD_ASSERT_OVERRIDE) && !defined(RB_ASSERT_INTRINSIC)
+#if defined(RB_ASSERT) && !defined(RB_ASSERT_INTRINSIC)
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunreachable-code"

@@ -27,7 +27,6 @@
 /// Define an indicator for whether we override standard assert() behavior in
 /// this build if the conditions are appropriate.
 #if defined(RB_ASSERT) && !defined(NDEBUG)
-	#define IRCD_ASSERT_OVERRIDE
 	#define _ASSERT_H_DECLS
 #endif
 
@@ -43,7 +42,7 @@ namespace ircd
 /// actions as defined in our internal assert.cc unit. When trapping assert
 /// is disabled this path will be used instead.
 ///
-#if defined(IRCD_ASSERT_OVERRIDE) && !defined(RB_ASSERT_INTRINSIC)
+#if defined(RB_ASSERT) && !defined(RB_ASSERT_INTRINSIC)
 extern "C" void
 __attribute__((visibility("default")))
 __assert_fail(const char *__assertion,
@@ -55,7 +54,7 @@ __assert_fail(const char *__assertion,
 /// Override the standard assert behavior, if enabled, to trap into the
 /// debugger as close as possible to the offending site.
 ///
-#if defined(IRCD_ASSERT_OVERRIDE) && defined(RB_ASSERT_INTRINSIC)
+#if defined(RB_ASSERT) && defined(RB_ASSERT_INTRINSIC)
 extern "C" // for clang
 {
 	extern inline void

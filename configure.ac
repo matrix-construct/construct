@@ -61,6 +61,11 @@ AC_CONFIG_FILES(\
 
 AM_INIT_AUTOMAKE([subdir-objects])
 
+dnl If this is not (un)set, paths are added such as -I../include/ircd to every
+dnl build command and that isn't nice because it makes our headers conflict
+dnl with standard library/path headers which we don't want or need.
+AC_SUBST(DEFAULT_INCLUDES, [])
+
 dnl
 dnl Recursive local targets (clean-local is implied)
 dnl
@@ -181,32 +186,27 @@ dnl Switch to control the action of assert()
 dnl
 
 AC_MSG_CHECKING(whether to change the behavior of assertions)
-AC_ARG_WITH(assert, AC_HELP_STRING([--with-assert[[[=trap]]]], [Soften assertion behavior]),
+AC_ARG_WITH(assert, AC_HELP_STRING([--with-assert[[[=abort]]]], [Soften assertion behavior]),
 [
 	assert_type=$withval
-	AC_MSG_RESULT([yes])
+	AC_MSG_RESULT([yes, "$assert_type"])
 	AC_SUBST(ASSERT_TYPE, $assert_type)
 ], [
-	AM_COND_IF(DEBUG,
-	[
-		assert_type="trap"
-		AC_MSG_RESULT([no, defaulting to "$assert_type"])
-		AC_SUBST(ASSERT_TYPE, $assert_type)
-	], [
-		assert_type="abort"
-		AC_MSG_RESULT([no])
-		AC_SUBST(ASSERT_TYPE, $assert_type)
-	])
+	AC_MSG_RESULT([no])
 ])
 
 AM_COND_IF(ASSERT,
 [
 	if [[ ! -z "$assert_type" ]]; then
-		RB_DEFINE_UNQUOTED([ASSERT], ["$assert_type"], [Assertion behavior])
-	fi
 
-	if [[ "$assert_type" == "trap" ]]; then
-		RB_DEFINE([ASSERT_INTRINSIC], [1], [Intrinsic assertion behavior])
+		if [[ "$assert_type" != "abort" ]]; then
+			RB_DEFINE_UNQUOTED([ASSERT], ["$assert_type"], [Assertion behavior])
+		fi
+
+		if [[ "$assert_type" == "trap" ]]; then
+			RB_DEFINE([ASSERT_INTRINSIC], [1], [Intrinsic assertion behavior])
+		fi
+
 	fi
 ])
 
