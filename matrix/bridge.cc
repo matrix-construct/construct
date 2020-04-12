@@ -127,8 +127,28 @@ ircd::m::bridge::query::query(const config &config,
 bool
 ircd::m::bridge::config::for_each(const closure_bool &closure)
 {
+	const m::room::id::buf bridge_room_id
+	{
+		"bridge", my_host()
+	};
 
-	return true;
+	const m::room::state state
+	{
+		bridge_room_id
+	};
+
+	return state.for_each("ircd.bridge", [&closure]
+	(const string_view &type, const string_view &state_key, const event::idx &event_idx)
+	{
+		bool ret{true};
+		m::get(std::nothrow, event_idx, "content", [&event_idx, &closure, &ret]
+		(const json::object &content)
+		{
+			ret = closure(event_idx, content);
+		});
+
+		return ret;
+	});
 }
 
 void

@@ -15080,8 +15080,33 @@ console_cmd__bridge(opt &out, const string_view &line)
 
 	const string_view &id
 	{
-		param.at("id")
+		param["id"]
 	};
+
+	if(!id)
+	{
+		m::bridge::config::for_each([&out]
+		(const auto &event_idx, const m::bridge::config &config)
+		{
+			out
+			<< json::get<"id"_>(config)
+			<< std::endl;
+			return true;
+		});
+
+		return true;
+	}
+
+	m::bridge::config::get(id, [&out]
+	(const auto &event_idx, const m::bridge::config &config)
+	{
+		for(const auto &[key, val] : config.source)
+			out
+			<< std::right << std::setw(24) << key
+			<< " : "
+			<< std::left << val
+			<< std::endl;
+	});
 
 	return true;
 }
