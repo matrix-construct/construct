@@ -59,17 +59,25 @@ template<class tuple>
 struct ircd::m::resource::request::object
 :ircd::resource::request::object<tuple>
 {
-	const m::resource::request &r;
-	const decltype(r.access_token) &access_token;
+	const m::resource::request &request;
 
-	const decltype(r.node_id) &node_id;
-	const decltype(r.user_id) &user_id;
+	const decltype(request.access_token) &access_token
+	{
+		request.access_token
+	};
 
-	object(m::resource::request &r)
-	:ircd::resource::request::object<tuple>{r}
-	,r{r}
-	,access_token{r.access_token}
-	,node_id{r.node_id}
-	,user_id{r.user_id}
+	const decltype(request.node_id) &node_id
+	{
+		request.node_id
+	};
+
+	const decltype(request.user_id) &user_id
+	{
+		request.user_id
+	};
+
+	object(m::resource::request &request)
+	:ircd::resource::request::object<tuple>{request}
+	,request{request}
 	{}
 };
