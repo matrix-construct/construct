@@ -291,10 +291,11 @@ catch(const m::error &)
 }
 catch(const std::exception &e)
 {
+	thread_local char rembuf[128];
 	log::derror
 	{
 		resource::log, "X-Matrix Authorization from %s: %s",
-		string(remote(client)),
+		string(rembuf, remote(client)),
 		e.what()
 	};
 
