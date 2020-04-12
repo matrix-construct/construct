@@ -137,11 +137,27 @@ ircd::m::resource::request::request(const method &method,
 {
 	r
 }
-,origin
+,authorization
 {
-	//NOTE: may be assigned by authenticate_user()
+	split(head.authorization, ' ')
+}
+,access_token
+{
+	iequals(authorization.first, "Bearer"_sv)?
+		authorization.second:
+		query["access_token"]
+}
+,x_matrix
+{
+	!access_token && iequals(authorization.first, "X-Matrix"_sv)?
+		m::request::x_matrix{authorization.first, authorization.second}:
+		m::request::x_matrix{}
 }
 ,node_id
+{
+	//NOTE: may be assigned by authenticate_node()
+}
+,origin
 {
 	// Server X-Matrix header verified here. Similar to client auth, origin
 	// which has been authed is referenced in the client.request. If the method
@@ -150,10 +166,6 @@ ircd::m::resource::request::request(const method &method,
 	// client.request.origin, or an empty string_view if an origin was not
 	// apropos for this request (i.e a client request rather than federation).
 	authenticate_node(method, client, *this)
-}
-,access_token
-{
-	//NOTE: may be assigned by authenticate_user()
 }
 ,user_id
 {
@@ -175,38 +187,22 @@ ircd::m::authenticate_user(const resource::method &method,
                            const client &client,
                            resource::request &request)
 {
-	request.access_token =
-	{
-		request.query["access_token"]
-	};
-
-	if(empty(request.access_token))
-	{
-		const auto authorization
-		{
-			split(request.head.authorization, ' ')
-		};
-
-		if(iequals(authorization.first, "bearer"_sv))
-			request.access_token = authorization.second;
-	}
-
 	assert(method.opts);
 	const auto requires_auth
 	{
 		method.opts->flags & resource::method::REQUIRES_AUTH
 	};
 
-	if(!request.access_token && requires_auth)
+	m::user::id::buf ret;
+	if(!request.access_token && !requires_auth)
+		return ret;
+
+	if(!request.access_token)
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_MISSING_TOKEN",
 			"Credentials for this method are required but missing."
 		};
-
-	m::user::id::buf ret;
-	if(!request.access_token)
-		return ret;
 
 	static const m::event::fetch::opts fopts
 	{
@@ -252,14 +248,9 @@ try
 		method.opts->flags & resource::method::VERIFY_ORIGIN
 	};
 
-	const auto authorization
-	{
-		split(request.head.authorization, ' ')
-	};
-
 	const bool supplied
 	{
-		iequals(authorization.first, "X-Matrix"_sv)
+		!empty(x_matrix.origin)
 	};
 
 	if(!required && !supplied)
@@ -280,14 +271,13 @@ try
 			request.head.host
 		};
 
-	const m::request::x_matrix x_matrix
-	{
-		request.head.authorization
-	};
-
 	const m::request object
 	{
-		x_matrix.origin, request.head.host, method.name, request.head.uri, request.content
+		x_matrix.origin,
+		request.head.host,
+		method.name,
+		request.head.uri,
+		request.content
 	};
 
 	if(x_matrix_verify_origin && !object.verify(x_matrix.key, x_matrix.sig))
@@ -297,9 +287,8 @@ try
 			"The X-Matrix Authorization is invalid."
 		};
 
-	request.origin = x_matrix.origin;
 	request.node_id = request.origin; //TODO: remove request.node_id.
-	return request.origin;
+	return x_matrix.origin;
 }
 catch(const m::error &)
 {

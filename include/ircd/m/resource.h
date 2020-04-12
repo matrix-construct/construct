@@ -44,10 +44,12 @@ struct ircd::m::resource::request
 {
 	template<class> struct object;
 
-	string_view origin;
-	string_view node_id;
-	string_view access_token;
-	m::user::id::buf user_id;
+	pair<string_view> authorization;   // proffering any
+	string_view access_token;          // proffering user
+	m::request::x_matrix x_matrix;     // proferring server
+	string_view node_id;               // authenticated server
+	string_view origin;                // authenticated server
+	m::user::id::buf user_id;          // authenticated user
 
 	request(const method &, const client &, ircd::resource::request &r);
 	request() = default;
