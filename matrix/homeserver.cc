@@ -956,6 +956,19 @@ try
 			{ "name", "Control Room" }
 		});
 
+	const m::room::id::buf bridge_room_id
+	{
+		"bridge", origin(homeserver)
+	};
+
+	const m::room bridge_room
+	{
+		bridge_room_id
+	};
+
+	if(!exists(bridge_room))
+		create(bridge_room, me);
+
 	log::info
 	{
 		log, "Bootstrap event generation completed nominally."
