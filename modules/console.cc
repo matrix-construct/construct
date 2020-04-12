@@ -15110,3 +15110,60 @@ console_cmd__bridge(opt &out, const string_view &line)
 
 	return true;
 }
+
+bool
+console_cmd__bridge__query(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"bridge_id", "mxid"
+	}};
+
+	const string_view &bridge_id
+	{
+		param.at("bridge_id")
+	};
+
+	const string_view &mxid
+	{
+		param.at("mxid")
+	};
+
+	std::string config;
+	m::bridge::config::get(bridge_id, [&config]
+	(const auto &, const auto &object)
+	{
+		config = object.source;
+	});
+
+	switch(m::sigil(mxid))
+	{
+		case m::id::USER:
+		{
+			m::bridge::query
+			{
+				m::bridge::config{config}, m::user::id{mxid}
+			};
+
+			break;
+		}
+
+		case m::id::ROOM_ALIAS:
+		{
+			m::bridge::query
+			{
+				m::bridge::config{config}, m::room::alias{mxid}
+			};
+
+			break;
+		}
+
+		default:
+			throw error
+			{
+				"Invalid MXID argument"
+			};
+	}
+
+	return true;
+}

@@ -25,10 +25,12 @@ namespace ircd::m::bridge
 
 struct ircd::m::bridge::query
 {
+	static conf::item<seconds> timeout;
+
 	rfc3986::uri base_url;
 	unique_mutable_buffer buf;
-	window_buffer wb;
 	string_view uri;
+	window_buffer wb;
 	http::request hypertext;
 	server::request request;
 	http::code code;

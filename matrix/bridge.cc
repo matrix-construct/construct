@@ -24,6 +24,18 @@ ircd::m::bridge::exists(const string_view &id)
 // query
 //
 
+namespace ircd::m::bridge
+{
+	thread_local char urlencbuf[512];
+}
+
+decltype(ircd::m::bridge::query::timeout)
+ircd::m::bridge::query::timeout
+{
+	{ "name",      "ircd.m.bridge.query.timeout"  },
+	{ "default",   5L                             },
+};
+
 ircd::m::bridge::query::query(const config &config,
                               const m::room::alias &alias)
 :base_url
@@ -34,23 +46,19 @@ ircd::m::bridge::query::query(const config &config,
 {
 	8_KiB
 }
-,wb
-{
-	buf
-}
 ,uri
 {
-	wb([this, &config, &alias](const mutable_buffer &buf)
+	fmt::sprintf
 	{
-		thread_local char urlencbuf[512];
-		return fmt::sprintf
-		{
-			buf, "%s/_matrix/app/v1/rooms/%s?access_token=%s",
-			base_url.path,
-			url::encode(urlencbuf, alias),
-			at<"hs_token"_>(config),
-		};
-	})
+		buf, "%s/_matrix/app/v1/rooms/%s?access_token=%s",
+		base_url.path,
+		url::encode(urlencbuf, alias),
+		at<"hs_token"_>(config),
+	}
+}
+,wb
+{
+	buf + size(uri)
 }
 ,hypertext
 {
@@ -67,7 +75,7 @@ ircd::m::bridge::query::query(const config &config,
 }
 ,code
 {
-	request.get(seconds(10)) //TODO: conf
+	request.get(seconds(timeout))
 }
 {
 }
@@ -82,23 +90,19 @@ ircd::m::bridge::query::query(const config &config,
 {
 	8_KiB
 }
-,wb
-{
-	buf
-}
 ,uri
 {
-	wb([this, &config, &user_id](const mutable_buffer &buf)
+	fmt::sprintf
 	{
-		thread_local char urlencbuf[512];
-		return fmt::sprintf
-		{
-			buf, "%s/_matrix/app/v1/users/%s?access_token=%s",
-			base_url.path,
-			url::encode(urlencbuf, user_id),
-			at<"hs_token"_>(config),
-		};
-	})
+		buf, "%s/_matrix/app/v1/users/%s?access_token=%s",
+		base_url.path,
+		url::encode(urlencbuf, user_id),
+		at<"hs_token"_>(config),
+	}
+}
+,wb
+{
+	buf + size(uri)
 }
 ,hypertext
 {
@@ -115,7 +119,7 @@ ircd::m::bridge::query::query(const config &config,
 }
 ,code
 {
-	request.get(seconds(10)) //TODO: conf
+	request.get(seconds(timeout))
 }
 {
 }
