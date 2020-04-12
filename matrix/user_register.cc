@@ -20,9 +20,9 @@ const
 	};
 
 	// 3.3.1 The login type that the client is attempting to complete.
-	const string_view &type
+	const json::string &type
 	{
-		!empty(auth)? unquote(auth.at("type")) : string_view{}
+		auth["type"]
 	};
 
 	// We only support this for now, for some reason. TODO: XXX
