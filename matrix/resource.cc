@@ -77,11 +77,11 @@ try
 		*this, client, request_
 	};
 
-	if(request.origin)
+	if(request.node_id)
 	{
 		// If we have an error cached from previously not being able to
 		// contact this origin we can clear that now that they're alive.
-		server::errclear(fed::matrix_service(request.origin));
+		server::errclear(fed::matrix_service(request.node_id));
 
 		// The origin was verified so we can invoke the cache warming now.
 		cache_warm_origin(request);
@@ -155,22 +155,18 @@ ircd::m::resource::request::request(const method &method,
 }
 ,node_id
 {
-	//NOTE: may be assigned by authenticate_node()
-}
-,origin
-{
 	// Server X-Matrix header verified here. Similar to client auth, origin
 	// which has been authed is referenced in the client.request. If the method
 	// requires, and auth fails or not provided, this function throws.
 	// Otherwise it returns a string_view of the origin name in
-	// client.request.origin, or an empty string_view if an origin was not
+	// request.node_id, or an empty string_view if an origin was not
 	// apropos for this request (i.e a client request rather than federation).
 	authenticate_node(method, client, *this)
 }
 ,user_id
 {
 	// Client access token verified here. On success, user_id owning the token
-	// is copied into the client.request structure. On failure, the method is
+	// is copied into the request structure. On failure, the method is
 	// checked to see if it requires authentication and if so, this throws.
 	authenticate_user(method, client, *this)
 }
@@ -250,7 +246,7 @@ try
 
 	const bool supplied
 	{
-		!empty(x_matrix.origin)
+		!empty(request.x_matrix.origin)
 	};
 
 	if(!required && !supplied)
@@ -273,22 +269,21 @@ try
 
 	const m::request object
 	{
-		x_matrix.origin,
+		request.x_matrix.origin,
 		request.head.host,
 		method.name,
 		request.head.uri,
 		request.content
 	};
 
-	if(x_matrix_verify_origin && !object.verify(x_matrix.key, x_matrix.sig))
+	if(x_matrix_verify_origin && !object.verify(request.x_matrix.key, request.x_matrix.sig))
 		throw m::error
 		{
 			http::FORBIDDEN, "M_INVALID_SIGNATURE",
 			"The X-Matrix Authorization is invalid."
 		};
 
-	request.node_id = request.origin; //TODO: remove request.node_id.
-	return x_matrix.origin;
+	return request.x_matrix.origin;
 }
 catch(const m::error &)
 {
@@ -324,7 +319,7 @@ void
 ircd::m::cache_warm_origin(const resource::request &request)
 try
 {
-	assert(request.origin);
+	assert(request.node_id);
 	if(ircd::uptime() > seconds(cache_warmup_time))
 		return;
 
@@ -336,7 +331,7 @@ catch(const std::exception &e)
 	log::derror
 	{
 		resource::log, "Cache warming for '%s' :%s",
-		request.origin,
+		request.node_id,
 		e.what()
 	};
 }

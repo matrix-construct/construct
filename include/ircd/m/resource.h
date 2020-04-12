@@ -47,8 +47,8 @@ struct ircd::m::resource::request
 	pair<string_view> authorization;   // proffering any
 	string_view access_token;          // proffering user
 	m::request::x_matrix x_matrix;     // proferring server
+
 	string_view node_id;               // authenticated server
-	string_view origin;                // authenticated server
 	m::user::id::buf user_id;          // authenticated user
 
 	request(const method &, const client &, ircd::resource::request &r);
@@ -60,17 +60,16 @@ struct ircd::m::resource::request::object
 :ircd::resource::request::object<tuple>
 {
 	const m::resource::request &r;
-	const decltype(r.origin) &origin;
-	const decltype(r.user_id) &user_id;
-	const decltype(r.node_id) &node_id;
 	const decltype(r.access_token) &access_token;
+
+	const decltype(r.node_id) &node_id;
+	const decltype(r.user_id) &user_id;
 
 	object(m::resource::request &r)
 	:ircd::resource::request::object<tuple>{r}
 	,r{r}
-	,origin{r.origin}
-	,user_id{r.user_id}
-	,node_id{r.node_id}
 	,access_token{r.access_token}
+	,node_id{r.node_id}
+	,user_id{r.user_id}
 	{}
 };

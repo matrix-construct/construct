@@ -118,7 +118,7 @@ put__invite(client &client,
 			"event.content.membership must be invite."
 		};
 
-	if(at<"origin"_>(event) != request.origin)
+	if(at<"origin"_>(event) != request.node_id)
 		throw m::error
 		{
 			http::FORBIDDEN, "M_INVALID_ORIGIN",
@@ -130,7 +130,7 @@ put__invite(client &client,
 		at<"sender"_>(event)
 	};
 
-	if(sender.host() != request.origin)
+	if(sender.host() != request.node_id)
 		throw m::error
 		{
 			http::FORBIDDEN, "M_INVALID_ORIGIN",
@@ -229,7 +229,7 @@ try
 	// also try to sync the room as best as possible. The invitee will then be
 	// presented with this invite request in their rooms list.
 	m::vm::opts vmopts;
-	vmopts.node_id = request.origin;
+	vmopts.node_id = request.node_id;
 
 	// Synapse may 403 a fetch of the prev_event of the invite event.
 	vmopts.fetch_prev = false;

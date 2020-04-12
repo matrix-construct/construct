@@ -61,7 +61,7 @@ handle_edu(client &client,
            const m::edu &edu)
 {
 	m::event event;
-	json::get<"origin"_>(event) = request.origin;
+	json::get<"origin"_>(event) = request.node_id;
 	json::get<"origin_server_ts"_>(event) = at<"origin_server_ts"_>(request);
 	json::get<"content"_>(event) = at<"content"_>(edu);
 	json::get<"type"_>(event) = at<"edu_type"_>(edu);
@@ -69,7 +69,7 @@ handle_edu(client &client,
 
 	m::vm::opts vmopts;
 	vmopts.nothrows = -1U;
-	vmopts.node_id = request.origin;
+	vmopts.node_id = request.node_id;
 	vmopts.txn_id = txn_id;
 	vmopts.edu = true;
 	vmopts.notify_clients = false;
@@ -90,7 +90,7 @@ handle_pdus(client &client,
 	vmopts.warnlog = 0;
 	vmopts.infolog_accept = true;
 	vmopts.nothrows = -1U;
-	vmopts.node_id = request.origin;
+	vmopts.node_id = request.node_id;
 	vmopts.txn_id = txn_id;
 	vmopts.fetch_prev = bool(fetch_state);
 	vmopts.fetch_state = bool(fetch_prev);
@@ -143,7 +143,7 @@ catch(const m::vm::error &e)
 	{
 		m::log, "Unhandled error processing txn '%s' from '%s' :%s :%s :%s",
 		txn_id,
-		request.origin,
+		request.node_id,
 		e.what(),
 		error[0],
 		error[1],
@@ -157,7 +157,7 @@ catch(const std::exception &e)
 	{
 		m::log, "Unhandled error processing txn '%s' from '%s' :%s",
 		txn_id,
-		request.origin,
+		request.node_id,
 		e.what(),
 	};
 
@@ -196,19 +196,19 @@ handle_put(client &client,
 		json::get<"pdus"_>(request).count(),
 	};
 
-	if(origin && origin != request.origin)
+	if(origin && origin != request.node_id)
 		throw m::ACCESS_DENIED
 		{
 			"txn[%s] originating from '%s' not accepted when relayed by '%s'",
 			txn_id,
 			origin,
-			request.origin,
+			request.node_id,
 		};
 
 	// Don't accept sends to ourself for whatever reason (i.e a 127.0.0.1
 	// leaked into the target list). This should be a 500 so it's not
 	// considered success or cached as failure by the sender's state.
-	if(unlikely(my_host(request.origin)) && !bool(allow_self))
+	if(unlikely(my_host(request.node_id)) && !bool(allow_self))
 		throw m::error
 		{
 			"M_SEND_TO_SELF", "Tried to send %s from myself to myself.",
@@ -224,7 +224,7 @@ handle_put(client &client,
 			assert(eval.opts);
 			const bool match_node
 			{
-				eval.opts->node_id == request.origin
+				eval.opts->node_id == request.node_id
 			};
 
 			const bool match_txn

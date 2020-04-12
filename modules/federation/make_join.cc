@@ -61,7 +61,7 @@ get__make_join(client &client,
 		url::decode(user_id, request.parv[1])
 	};
 
-	if(user_id.host() != request.origin)
+	if(user_id.host() != request.node_id)
 		throw m::ACCESS_DENIED
 		{
 			"You are not permitted to spoof users on other hosts."
@@ -167,7 +167,7 @@ get__make_join(client &client,
 
 	json::stack::member
 	{
-		event, "origin", request.origin
+		event, "origin", request.node_id
 	};
 
 	json::stack::member

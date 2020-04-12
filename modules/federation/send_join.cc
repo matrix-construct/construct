@@ -139,7 +139,7 @@ put__send_join(client &client,
 			"Event content.membership state must be 'join'."
 		};
 
-	if(json::get<"origin"_>(event) != request.origin)
+	if(json::get<"origin"_>(event) != request.node_id)
 		throw m::error
 		{
 			http::NOT_MODIFIED, "M_MISMATCH_ORIGIN",

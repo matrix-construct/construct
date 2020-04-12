@@ -94,7 +94,7 @@ put__send_leave(client &client,
 			"Event content.membership state must be 'leave'."
 		};
 
-	if(json::get<"origin"_>(event) != request.origin)
+	if(json::get<"origin"_>(event) != request.node_id)
 		throw m::error
 		{
 			http::NOT_MODIFIED, "M_MISMATCH_ORIGIN",
