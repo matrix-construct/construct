@@ -57,13 +57,13 @@ struct ircd::m::bridge::namespaces
 :json::tuple
 <
 	/// Events which are sent from certain users.
-	json::property<name::users, namespace_>,
+	json::property<name::users, json::array>,
 
 	/// Events which are sent in rooms with certain room aliases.
-	json::property<name::aliases, namespace_>,
+	json::property<name::aliases, json::array>,
 
 	/// Events which are sent in rooms with certain room IDs.
-	json::property<name::rooms, namespace_>
+	json::property<name::rooms, json::array>
 >
 {
 	using super_type::tuple;
