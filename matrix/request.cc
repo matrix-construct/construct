@@ -306,10 +306,31 @@ ircd::m::request::verify(const ed25519::pk &pk,
 // x_matrix
 //
 
-ircd::m::request::x_matrix::x_matrix(const string_view &input)
+ircd::m::request::x_matrix::x_matrix(const string_view &authorization)
+:x_matrix
 {
+	split(authorization, ' ')
+}
+{
+}
+
+ircd::m::request::x_matrix::x_matrix(const pair<string_view> &authorization)
+:x_matrix
+{
+	authorization.first,
+	authorization.second
+}
+{
+}
+
+ircd::m::request::x_matrix::x_matrix(const string_view &type,
+                                     const string_view &values)
+{
+	// Assumes caller determined this is X-Matrix lest they suffer exception.
+	assert(iequals(type, "X-Matrix"_sv));
+
 	string_view tokens[3];
-	if(ircd::tokens(split(input, ' ').second, ',', tokens) != 3)
+	if(ircd::tokens(values, ',', tokens) != 3)
 		throw std::out_of_range
 		{
 			"The x_matrix header is malformed"
@@ -317,13 +338,21 @@ ircd::m::request::x_matrix::x_matrix(const string_view &input)
 
 	for(const auto &token : tokens)
 	{
-		const auto &kv{split(token, '=')};
-		const auto &val{unquote(kv.second)};
-		switch(hash(kv.first))
+		const auto &[key, val_]
 		{
-		    case hash("origin"):  origin = val;  break;
-		    case hash("key"):     key = val;     break;
-		    case hash("sig"):     sig = val;     break;
+			split(token, '=')
+		};
+
+		const auto &val
+		{
+			unquote(val_)
+		};
+
+		switch(hash(key))
+		{
+			case hash("origin"):  this->origin = val;  break;
+			case hash("key"):     this->key = val;     break;
+			case hash("sig"):     this->sig = val;     break;
 		}
 	}
 

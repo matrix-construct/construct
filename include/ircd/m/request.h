@@ -72,6 +72,8 @@ struct ircd::m::request::x_matrix
 	string_view key;
 	string_view sig;
 
-	x_matrix(const string_view &);
+	x_matrix(const string_view &type, const string_view &values);
+	x_matrix(const pair<string_view> &authorization);
+	x_matrix(const string_view &authorization);
 	x_matrix() = default;
 };
