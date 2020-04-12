@@ -14,7 +14,8 @@ namespace ircd::m
 	extern conf::item<bool> x_matrix_verify_origin;
 	extern conf::item<bool> x_matrix_verify_destination;
 
-	static user::id::buf authenticate_user(const resource::method &, const client &, resource::request &);
+	static string_view authenticate_bridge(const resource::method &, const client &, resource::request &);
+	static user::id authenticate_user(const resource::method &, const client &, resource::request &);
 	static string_view authenticate_node(const resource::method &, const client &, resource::request &);
 	static void cache_warm_origin(const resource::request &);
 }
@@ -170,6 +171,12 @@ ircd::m::resource::request::request(const method &method,
 	// checked to see if it requires authentication and if so, this throws.
 	authenticate_user(method, client, *this)
 }
+,bridge_id
+{
+	// Application service access token verified here. Note that on success
+	// this function will set the user_id as well as the bridge_id.
+	authenticate_bridge(method, client, *this)
+}
 {
 }
 
@@ -177,8 +184,9 @@ ircd::m::resource::request::request(const method &method,
 /// in the Authentication bearer header. If a token is found the user_id owning
 /// the token is copied into the request. If it is not found or it is invalid
 /// then the method being requested is checked to see if it is required. If so
-/// the appropriate exception is thrown.
-ircd::m::user::id::buf
+/// the appropriate exception is thrown. Note that if the access_token belongs
+/// to a bridge (application service), the bridge_id is set accordingly.
+ircd::m::user::id
 ircd::m::authenticate_user(const resource::method &method,
                            const client &client,
                            resource::request &request)
@@ -189,47 +197,123 @@ ircd::m::authenticate_user(const resource::method &method,
 		method.opts->flags & resource::method::REQUIRES_AUTH
 	};
 
-	m::user::id::buf ret;
-	if(!request.access_token && !requires_auth)
-		return ret;
+	if(!requires_auth && !request.access_token)
+		return {};
 
-	if(!request.access_token)
+	// Note that we still try to auth a token and obtain a user_id here even
+	// if the endpoint does not require auth; an auth'ed user may enjoy
+	// additional functionality if credentials provided.
+	if(requires_auth && !request.access_token)
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_MISSING_TOKEN",
 			"Credentials for this method are required but missing."
 		};
 
-	static const m::event::fetch::opts fopts
-	{
-		m::event::keys::include {"sender"}
-	};
+	// Belay authentication to authenticate_bridge().
+	if(startswith(request.access_token, "bridge_"))
+		return {};
 
-	const m::room::id::buf tokens_room
+	const m::room::id::buf tokens_room_id
 	{
 		"tokens", origin(my())
 	};
 
 	const m::room::state tokens
 	{
-		tokens_room, &fopts
+		tokens_room_id
 	};
 
-	tokens.get(std::nothrow, "ircd.access_token", request.access_token, [&ret]
-	(const m::event &event)
+	const event::idx event_idx
 	{
-		// The user sent this access token to the tokens room
-		ret = at<"sender"_>(event);
-	});
+		tokens.get(std::nothrow, "ircd.access_token", request.access_token)
+	};
 
-	if(requires_auth && !ret)
+	// The sender of the token is the user being authenticated.
+	const string_view sender
+	{
+		m::get(std::nothrow, event_idx, "sender", request.id_buf)
+	};
+
+	// Note that if the endpoint does not require auth and we were not
+	// successful in authenticating the provided token: we do not throw here;
+	// instead we continue as if no token was provided, and no user_id will
+	// be known to the requested endpoint.
+	if(requires_auth && !sender)
 		throw m::error
 		{
 			http::UNAUTHORIZED, "M_UNKNOWN_TOKEN",
 			"Credentials for this method are required but invalid."
 		};
 
-	return ret;
+	return sender;
+}
+
+/// Authenticate an application service (bridge)
+ircd::string_view
+ircd::m::authenticate_bridge(const resource::method &method,
+                             const client &client,
+                             resource::request &request)
+{
+	// Real user was already authenticated; not a bridge.
+	if(request.user_id)
+		return {};
+
+	// No attempt at authenticating as a bridge; not a bridge.
+	if(!startswith(request.access_token, "bridge_"))
+		return {};
+
+	const m::room::id::buf tokens_room_id
+	{
+		"tokens", origin(my())
+	};
+
+	const m::room::state tokens
+	{
+		tokens_room_id
+	};
+
+	const event::idx event_idx
+	{
+		tokens.get(std::nothrow, "ircd.access_token", request.access_token)
+	};
+
+	// The sender of the token is the bridge's user_id, where the bridge_id
+	// is the localpart, but none of this is a puppetting/target user_id.
+	const string_view sender
+	{
+		m::get(std::nothrow, event_idx, "sender", request.id_buf)
+	};
+
+	// Note that unlike authenticate_user, if an as_token was proffered but is
+	// not valid, there is no possible fallback to unauthenticated mode and
+	// this must throw here.
+	if(!sender)
+		throw m::error
+		{
+			http::UNAUTHORIZED, "M_UNKNOWN_TOKEN",
+			"Credentials for this method are required but invalid."
+		};
+
+	// Find the user_id the bridge wants to masquerade as.
+	const string_view puppet_user_id
+	{
+		request.query["user_id"]
+	};
+
+	// Set the user credentials for the request at the discretion of the
+	// bridge. If the bridge did not supply a user_id then we set the value
+	// to the bridge's own agency. Note that we urldecode into the id_buf
+	// after the bridge_user_id; care not to overwrite it.
+	{
+		mutable_buffer buf(request.id_buf);
+		request.user_id = puppet_user_id?
+			url::decode(buf + size(sender), puppet_user_id):
+			sender;
+	}
+
+	// Return only the localname (that's the localpart not including sigil).
+	return m::user::id(sender).localname();
 }
 
 ircd::string_view

@@ -49,7 +49,10 @@ struct ircd::m::resource::request
 	m::request::x_matrix x_matrix;     // proferring server
 
 	string_view node_id;               // authenticated server
-	m::user::id::buf user_id;          // authenticated user
+	m::user::id user_id;               // authenticated user or bridge pup
+	string_view bridge_id;             // authenticated bridge
+
+	char id_buf[384];
 
 	request(const method &, const client &, ircd::resource::request &r);
 	request() = default;
@@ -74,6 +77,11 @@ struct ircd::m::resource::request::object
 	const decltype(request.user_id) &user_id
 	{
 		request.user_id
+	};
+
+	const decltype(request.bridge_id) &bridge_id
+	{
+		request.bridge_id
 	};
 
 	object(m::resource::request &request)
