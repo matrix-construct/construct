@@ -189,8 +189,13 @@ flows{R"({
 		{
 			"stages":
 			[
+				"m.login.dummy"
+			]
+		},
+		{
+			"stages":
+			[
 				"m.login.dummy",
-				"m.login.password",
 				"m.login.email.identity"
 			]
 		}
