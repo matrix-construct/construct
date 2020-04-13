@@ -10,6 +10,33 @@
 
 #include <RB_INC_NETDB_H
 
+namespace ircd::net::dns
+{
+	static uint16_t _service_port(const string_view &name, const string_view &prot);
+	static string_view _service_name(const uint16_t &port, const string_view &prot);
+
+	extern const std::map<pair<string_view>, uint16_t> service_ports;
+	extern const std::map<pair<uint16_t, string_view>, string_view> service_names;
+}
+
+/// Custom internal database. This translates a service name and protocol
+/// into a port number. Note that a query to this table will only be made
+/// after the system query does not return results (or cannot be made).
+decltype(ircd::net::dns::service_ports)
+ircd::net::dns::service_ports
+{
+	{ { "matrix", "tcp" },  8448 },
+};
+
+/// Custom internal database. This translates a service port and protocol
+/// into a service name. Note that a query to this table will only be made
+/// after the system query does not return results (or cannot be made).
+decltype(ircd::net::dns::service_names)
+ircd::net::dns::service_names
+{
+	{ { 8448, "tcp" },  "matrix" },
+};
+
 uint16_t
 ircd::net::dns::service_port(const string_view &name,
                              const string_view &prot)
@@ -60,6 +87,10 @@ try
 	assert(!ent || ent->s_port != 0);
 	assert(!ent || name == ent->s_name);
 	assert(!ent || !prot || prot == ent->s_proto);
+	if(!ent || !ent->s_port)
+		if((res.s_port = _service_port(name, prot)))
+			return res.s_port;
+
 	if(unlikely(!ent || !ent->s_port))
 		log::error
 		{
@@ -150,7 +181,7 @@ try
 	assert(!ent || !prot || prot == ent->s_proto);
 	return ent?
 		strlcpy(out, ent->s_name):
-		string_view{};
+		strlcpy(out, _service_name(port, prot));
 }
 catch(const std::exception &e)
 {
@@ -176,3 +207,41 @@ ircd::net::dns::service_name(std::nothrow_t,
 	return {};
 }
 #endif
+
+uint16_t
+ircd::net::dns::_service_port(const string_view &name,
+                              const string_view &prot)
+{
+	const pair<string_view> query
+	{
+		name, prot
+	};
+
+	const auto it
+	{
+		service_ports.find(query)
+	};
+
+	return it != end(service_ports)?
+		it->second:
+		0;
+}
+
+ircd::string_view
+ircd::net::dns::_service_name(const uint16_t &port,
+                              const string_view &prot)
+{
+	const pair<uint16_t, string_view> query
+	{
+		port, prot
+	};
+
+	const auto it
+	{
+		service_names.find(query)
+	};
+
+	return it != end(service_names)?
+		it->second:
+		string_view{};
+}
