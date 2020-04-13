@@ -10,9 +10,6 @@
 
 namespace ircd::m
 {
-	static void affect_user_room(const event &, vm::eval &);
-	extern m::hookfn<m::vm::eval &> affect_user_room_hookfn;
-
 	static void auth_room_member_ban(const event &, room::auth::hookdata &);
 	extern m::hookfn<room::auth::hookdata &> auth_room_member_ban_hookfn;
 
