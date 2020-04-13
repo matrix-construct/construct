@@ -2365,6 +2365,16 @@ console_cmd__ctx__term(opt &out, const string_view &line)
 bool
 console_cmd__ctx__list(opt &out, const string_view &line)
 {
+	const params param{line, " ",
+	{
+		"name",
+	}};
+
+	const auto name_filter
+	{
+		param["name"]
+	};
+
 	out << " "
 	    << std::setw(5)
 	    << "ID"
@@ -2396,8 +2406,13 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 	    << ":NAME"
 	    << std::endl;
 
-	ctx::for_each([&out](auto &ctx)
+	ctx::for_each([&out, &name_filter]
+	(auto &ctx)
 	{
+		if(name_filter)
+			if(name(ctx) != name_filter)
+				return true;
+
 		out << std::setw(5) << std::right << id(ctx);
 		out << " "
 		    << (started(ctx)? 'A' : '-')
