@@ -73,9 +73,14 @@ ircd::m::user::rooms::for_each(const string_view &membership,
                                const closure_bool &closure)
 const
 {
-	m::events::state::tuple query;
-	std::get<0>(query) = user;
-	std::get<1>(query) = "m.room.member";
+	const m::events::state::tuple query
+	{
+		user,
+		"m.room.member"_sv,
+		m::room::id{},
+		-1L,
+		0UL
+	};
 
 	m::room::id::buf room_id_;
 	return m::events::state::for_each(query, [&]
