@@ -158,6 +158,7 @@ libircd_la_SOURCES += db.cc
 libircd_la_SOURCES += net.cc
 libircd_la_SOURCES += net_addrs.cc
 libircd_la_SOURCES += net_dns.cc
+libircd_la_SOURCES += net_dns_netdb.cc
 libircd_la_SOURCES += net_dns_cache.cc
 libircd_la_SOURCES += net_dns_resolver.cc
 libircd_la_SOURCES += net_listener.cc
