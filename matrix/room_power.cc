@@ -69,6 +69,21 @@ ircd::m::room::power::compose_content(const mutable_buffer &buf,
 			content, "events"
 		};
 
+		json::stack::member
+		{
+			events, "m.room.encryption", json::value(default_creator_level)
+		};
+
+		json::stack::member
+		{
+			events, "m.room.server_acl", json::value(default_creator_level)
+		};
+
+		json::stack::member
+		{
+			events, "m.room.tombstone", json::value(default_creator_level)
+		};
+
 		closure("events", events);
 	}
 
