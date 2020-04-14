@@ -262,13 +262,13 @@ ircd::m::sync::_rooms_polylog_room(data &data,
 			ret = true;
 			data.out->invalidate_checkpoints();
 		}
-		else checkpoint.decommit();
+		else checkpoint.committing(false);
 
 		return true;
 	});
 
 	if(!ret)
-		checkpoint.decommit();
+		checkpoint.committing(false);
 
 	return ret;
 }

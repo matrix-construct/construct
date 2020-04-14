@@ -478,7 +478,7 @@ try
 			ret = true;
 			data.out->invalidate_checkpoints();
 		}
-		else checkpoint.decommit();
+		else checkpoint.committing(false);
 
 		return true;
 	});
@@ -518,7 +518,7 @@ try
 	}
 
 	if(!ret)
-		checkpoint.decommit();
+		checkpoint.committing(false);
 
 	if(!data.phased && stats_info) log::info
 	{
@@ -618,7 +618,7 @@ try
 
 		json::merge(top, vector);
 	}
-	else checkpoint.decommit();
+	else checkpoint.committing(false);
 
 	log::debug
 	{

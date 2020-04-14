@@ -268,10 +268,9 @@ struct ircd::json::stack::checkpoint
 	bool exception_rollback {true};
 
   public:
-	bool committing() const;     ///< When false, destructor will rollback()
-	bool recommit();             ///< Sets committing() to true.
-	bool decommit();             ///< Sets committing() to false.
-	bool rollback();             ///< Performs rollback of buffer.
+	bool committing() const noexcept;         ///< When false, destructor will rollback()
+	bool committing(const bool &) noexcept;   ///< Sets committing() to value.
+	bool rollback();                          ///< Performs rollback of buffer.
 
 	checkpoint(stack &s,
 	           const bool &committed = true,
@@ -350,4 +349,20 @@ ircd::json::stack::object::append(const json::tuple<T...> &t)
 				*this, name, value
 			};
 	});
+}
+
+inline bool
+ircd::json::stack::checkpoint::committing(const bool &committed)
+noexcept
+{
+	const bool ret(this->committed);
+	this->committed = committed;
+	return ret;
+}
+
+inline bool
+ircd::json::stack::checkpoint::committing()
+const noexcept
+{
+	return committed;
 }

@@ -1731,7 +1731,7 @@ ircd::json::stack::checkpoint::~checkpoint()
 noexcept
 {
 	if(std::uncaught_exceptions() && exception_rollback)
-		decommit();
+		committing(false);
 
 	if(!committing())
 		rollback();
@@ -1772,29 +1772,8 @@ ircd::json::stack::checkpoint::rollback()
 	else if(top.m)
 		top.m->vc = vc;
 
-	recommit();
+	committing(true);
 	return true;
-}
-
-bool
-ircd::json::stack::checkpoint::decommit()
-{
-	committed = false;
-	return true;
-}
-
-bool
-ircd::json::stack::checkpoint::recommit()
-{
-	committed = true;
-	return true;
-}
-
-bool
-ircd::json::stack::checkpoint::committing()
-const
-{
-	return committed;
 }
 
 //

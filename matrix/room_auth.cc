@@ -40,7 +40,7 @@ ircd::m::room::auth::generate(const mutable_buffer &buf,
 	{
 		json::stack::array array{out};
 		if(!generate(array, room, event))
-			cp.decommit();
+			cp.committing(false);
 	}
 
 	return json::array{out.completed()};

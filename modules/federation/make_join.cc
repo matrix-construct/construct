@@ -152,7 +152,7 @@ get__make_join(client &client,
 		};
 
 		if(!m::room::auth::generate(auth_events, room, m::event{args}))
-			cp.decommit();
+			cp.committing(false);
 	}
 
 	json::stack::member
