@@ -80,8 +80,10 @@ namespace ircd::buffer
 	// Single buffer mutators
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
 	template<class it> buffer<it> &operator+=(buffer<it> &buffer, const size_t &bytes);
+	char *&copy(char *&dest, char *const &stop, char src);
 	char *&copy(char *&dest, char *const &stop, const const_buffer &src);
 	char *&move(char *&dest, char *const &stop, const const_buffer &src);
+	size_t copy(const mutable_buffer &dst, const char src);
 	size_t copy(const mutable_buffer &dst, const const_buffer &src);
 	size_t move(const mutable_buffer &dst, const const_buffer &src);
 	template<size_t SIZE> size_t copy(const mutable_buffer &dst, const char (&)[SIZE]);
@@ -311,6 +313,16 @@ ircd::buffer::copy(const mutable_buffer &dst,
 	return std::distance(s, e);
 }
 
+inline size_t
+ircd::buffer::copy(const mutable_buffer &dst,
+                   const char src)
+{
+	char *const &s(begin(dst)), *e(s);
+	e = copy(e, end(dst), src);
+	assert(std::distance(s, e) >= 0);
+	return std::distance(s, e);
+}
+
 inline char *&
 ircd::buffer::move(char *&dest,
                    char *const &stop,
@@ -339,6 +351,19 @@ ircd::buffer::copy(char *&dest,
 	assert(cpsz <= size(src));
 	assert(cpsz <= remain);
 	__builtin_memcpy(dest, data(src), cpsz);
+	dest += cpsz;
+	assert(dest <= stop);
+	return dest;
+}
+
+inline char *&
+ircd::buffer::copy(char *&dest,
+                   char *const &stop,
+                   char src)
+{
+	assert(dest <= stop);
+	const bool cpsz(dest != stop);
+	(cpsz? *dest : src) = src;
 	dest += cpsz;
 	assert(dest <= stop);
 	return dest;
