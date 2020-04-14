@@ -2734,7 +2734,7 @@ ircd::json::stringify(mutable_buffer &buf,
 {
 	char *const start(begin(buf));
 	assert(!surrounds(member.first, '"'));
-	consume(buf, copy(buf, "\""_sv));
+	consume(buf, copy(buf, '"'));
 	consume(buf, copy(buf, member.first));
 	consume(buf, copy(buf, "\":"_sv));
 	stringify(buf, member.second);

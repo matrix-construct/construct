@@ -83,7 +83,7 @@ ircd::m::dbs::desc::room_state_space__pfx
 
 	[](const string_view &key)
 	{
-		return split(key, "\0"_sv).first;
+		return split(key, '\0').first;
 	}
 };
 
@@ -258,17 +258,17 @@ ircd::m::dbs::room_state_space_key(const string_view &amalgam)
 {
 	const auto &key
 	{
-		lstrip(amalgam, "\0"_sv)
+		lstrip(amalgam, '\0')
 	};
 
 	const auto &[type, after_type]
 	{
-		split(key, "\0"_sv)
+		split(key, '\0')
 	};
 
 	const auto &[state_key, after_state_key]
 	{
-		split(after_type, "\0"_sv)
+		split(after_type, '\0')
 	};
 
 	const int64_t &depth
@@ -325,11 +325,11 @@ ircd::m::dbs::room_state_space_key(const mutable_buffer &out_,
 {
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, trunc(type, event::TYPE_MAX_SIZE)));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, trunc(state_key, event::STATE_KEY_MAX_SIZE)));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, byte_view<string_view>(depth)));
 	consume(out, copy(out, byte_view<string_view>(event_idx)));
 	return { data(out_), data(out) };

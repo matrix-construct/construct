@@ -389,7 +389,7 @@ const
 			continue;
 
 		if(begin(buf) != begin(out))
-			consume(buf, copy(buf, " "_sv));
+			consume(buf, copy(buf, ' '));
 
 		consume(buf, copy(buf, m::reflect(code(i))));
 	}

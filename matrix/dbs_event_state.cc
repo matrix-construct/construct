@@ -204,17 +204,17 @@ ircd::m::dbs::event_state_key(const string_view &amalgam)
 	assert(!startswith(amalgam, '\0'));
 	const auto &[state_key, r0]
 	{
-		split(amalgam, "\0"_sv)
+		split(amalgam, '\0')
 	};
 
 	const auto &[type, r1]
 	{
-		split(r0, "\0"_sv)
+		split(r0, '\0')
 	};
 
 	const auto &[room_id, r2]
 	{
-		split(r1, "\0"_sv)
+		split(r1, '\0')
 	};
 
 	assert(!room_id || m::valid(m::id::ROOM, room_id));
@@ -252,20 +252,20 @@ ircd::m::dbs::event_state_key(const mutable_buffer &out_,
 	if(!type)
 		return {data(out_), data(out)};
 
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, trunc(type, event::TYPE_MAX_SIZE)));
 
 	if(!room_id)
 		return {data(out_), data(out)};
 
 	assert(m::valid(m::id::ROOM, room_id));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, room_id));
 
 	if(depth < 0)
 		return {data(out_), data(out)};
 
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, byte_view<string_view>(depth)));
 
 	if(!event_idx)

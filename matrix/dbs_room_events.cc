@@ -73,7 +73,7 @@ ircd::m::dbs::desc::room_events__pfx
 
 	[](const string_view &key)
 	{
-		return split(key, "\0"_sv).first;
+		return split(key, '\0').first;
 	}
 };
 
@@ -292,7 +292,7 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out_,
 
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, depth_cb));
 	return { data(out_), data(out) };
 }
@@ -315,7 +315,7 @@ ircd::m::dbs::room_events_key(const mutable_buffer &out_,
 
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, depth_cb));
 	consume(out, copy(out, event_idx_cb));
 	return { data(out_), data(out) };

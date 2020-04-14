@@ -90,17 +90,17 @@ stringify(mutable_buffer &buf,
           const tuple<T...> *e)
 {
 	const auto start(begin(buf));
-	consume(buf, copy(buf, "["_sv));
+	consume(buf, copy(buf, '['));
 	if(b != e)
 	{
 		stringify(buf, *b);
 		for(++b; b != e; ++b)
 		{
-			consume(buf, copy(buf, ","_sv));
+			consume(buf, copy(buf, ','));
 			stringify(buf, *b);
 		}
 	}
-	consume(buf, copy(buf, "]"_sv));
+	consume(buf, copy(buf, ']'));
 	return { start, begin(buf) };
 }
 

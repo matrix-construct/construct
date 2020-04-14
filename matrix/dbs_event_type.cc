@@ -185,7 +185,7 @@ ircd::m::dbs::event_type_key(const mutable_buffer &out_,
 
 	mutable_buffer out{out_};
 	consume(out, copy(out, trunc(type, event::TYPE_MAX_SIZE)));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, byte_view<string_view>(event_idx)));
 	return { data(out_), data(out) };
 }

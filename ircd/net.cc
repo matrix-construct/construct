@@ -2577,17 +2577,17 @@ ircd::net::string(const mutable_buffer &buf,
 	};
 
 	if(need_bracket)
-		consume(out, copy(out, "["_sv));
+		consume(out, copy(out, '['));
 
 	if(ipp)
 		consume(out, size(string(out, std::get<ipport::IP>(ipp))));
 
 	if(need_bracket)
-		consume(out, copy(out, "]"_sv));
+		consume(out, copy(out, ']'));
 
 	if(has_port)
 	{
-		consume(out, copy(out, ":"_sv));
+		consume(out, copy(out, ':'));
 		consume(out, size(lex_cast(port(ipp), out)));
 	}
 

@@ -297,7 +297,7 @@ ircd::m::dbs::event_horizon_key(const mutable_buffer &out,
 
 	if(event_idx)
 	{
-		consume(buf, copy(buf, "\0"_sv));
+		consume(buf, copy(buf, '\0'));
 		consume(buf, copy(buf, byte_view<string_view>(event_idx)));
 	}
 

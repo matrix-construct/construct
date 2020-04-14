@@ -72,7 +72,7 @@ ircd::m::dbs::desc::room_joined__pfx
 
 	[](const string_view &key)
 	{
-		return split(key, "\0"_sv).first;
+		return split(key, '\0').first;
 	}
 };
 
@@ -200,12 +200,12 @@ ircd::m::dbs::room_joined_key(const string_view &amalgam)
 {
 	const auto &key
 	{
-		lstrip(amalgam, "\0"_sv)
+		lstrip(amalgam, '\0')
 	};
 
 	const auto &s
 	{
-		split(key, "@"_sv)
+		split(key, '@')
 	};
 
 	return
@@ -224,7 +224,7 @@ ircd::m::dbs::room_joined_key(const mutable_buffer &out_,
 {
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, origin));
 	return { data(out_), data(out) };
 }
@@ -237,7 +237,7 @@ ircd::m::dbs::room_joined_key(const mutable_buffer &out_,
 {
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, origin));
 	consume(out, copy(out, member));
 	return { data(out_), data(out) };

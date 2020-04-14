@@ -72,7 +72,7 @@ ircd::m::dbs::desc::room_type__pfx
 
 	[](const string_view &key)
 	{
-		return split(key, "\0"_sv).first;
+		return split(key, '\0').first;
 	}
 };
 
@@ -305,9 +305,9 @@ ircd::m::dbs::room_type_key(const mutable_buffer &out_,
 	if(!type)
 		return { data(out_), data(out) };
 
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, trunc(type, event::TYPE_MAX_SIZE)));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, byte_view<string_view>(depth)));
 	consume(out, copy(out, byte_view<string_view>(event_idx)));
 	return { data(out_), data(out) };

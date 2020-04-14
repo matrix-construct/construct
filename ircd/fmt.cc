@@ -379,7 +379,7 @@ try
 	// Ensure null termination if out buffer is non-empty.
 	assert(size(this->out) > 0);
 	assert(this->out.remaining());
-	copy(this->out, "\0"_sv);
+	copy(this->out, '\0');
 }
 catch(const std::out_of_range &e)
 {

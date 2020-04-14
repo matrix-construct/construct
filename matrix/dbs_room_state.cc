@@ -76,7 +76,7 @@ ircd::m::dbs::desc::room_state__pfx
 
 	[](const string_view &key)
 	{
-		return split(key, "\0"_sv).first;
+		return split(key, '\0').first;
 	}
 };
 
@@ -201,13 +201,13 @@ ircd::m::dbs::room_state_key(const mutable_buffer &out_,
 
 	if(likely(defined(type)))
 	{
-		consume(out, copy(out, "\0"_sv));
+		consume(out, copy(out, '\0'));
 		consume(out, copy(out, trunc(type, event::TYPE_MAX_SIZE)));
 	}
 
 	if(defined(state_key))
 	{
-		consume(out, copy(out, "\0"_sv));
+		consume(out, copy(out, '\0'));
 		consume(out, copy(out, trunc(state_key, event::STATE_KEY_MAX_SIZE)));
 	}
 
@@ -219,12 +219,12 @@ ircd::m::dbs::room_state_key(const string_view &amalgam)
 {
 	const auto &key
 	{
-		lstrip(amalgam, "\0"_sv)
+		lstrip(amalgam, '\0')
 	};
 
 	const auto &s
 	{
-		split(key, "\0"_sv)
+		split(key, '\0')
 	};
 
 	return

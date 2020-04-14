@@ -226,7 +226,7 @@ ircd::m::dbs::event_sender_key(const mutable_buffer &out_,
 
 	if(user_id && event_idx)
 	{
-		consume(out, copy(out, "\0"_sv));
+		consume(out, copy(out, '\0'));
 		consume(out, copy(out, byte_view<string_view>(event_idx)));
 	}
 
@@ -283,7 +283,7 @@ ircd::m::dbs::event_sender_origin_key(const mutable_buffer &out_,
 
 	if(localpart && event_idx)
 	{
-		consume(out, copy(out, "\0"_sv));
+		consume(out, copy(out, '\0'));
 		consume(out, copy(out, byte_view<string_view>(event_idx)));
 	}
 

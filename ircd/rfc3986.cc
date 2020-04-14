@@ -581,7 +581,7 @@ ircd::rfc3986::encode(const mutable_buffer &out,
 			};
 
 		consume(buf, size(encode(buf, member.first)));
-		consume(buf, copy(buf, "="_sv));
+		consume(buf, copy(buf, '='));
 		consume(buf, size(encode(buf, member.second)));
 	}};
 
@@ -591,7 +591,7 @@ ircd::rfc3986::encode(const mutable_buffer &out,
 		append(*it);
 		for(++it; it != end(members); ++it)
 		{
-			consume(buf, copy(buf, "&"_sv));
+			consume(buf, copy(buf, '&'));
 			append(*it);
 		}
 	}

@@ -52,7 +52,7 @@ ircd::m::dbs::desc::room_head__pfx
 
 	[](const string_view &key)
 	{
-		return split(key, "\0"_sv).first;
+		return split(key, '\0').first;
 	}
 };
 
@@ -207,7 +207,7 @@ ircd::m::dbs::room_head_key(const string_view &amalgam)
 {
 	const auto &key
 	{
-		lstrip(amalgam, "\0"_sv)
+		lstrip(amalgam, '\0')
 	};
 
 	return
@@ -223,7 +223,7 @@ ircd::m::dbs::room_head_key(const mutable_buffer &out_,
 {
 	mutable_buffer out{out_};
 	consume(out, copy(out, room_id));
-	consume(out, copy(out, "\0"_sv));
+	consume(out, copy(out, '\0'));
 	consume(out, copy(out, event_id));
 	return { data(out_), data(out) };
 }
