@@ -176,6 +176,7 @@ AM_CONDITIONAL([ASSERT], [[[[ "$ASSERT" = "1" ]]]])
 AM_COND_IF(ASSERT,
 [
 	assert="yes"
+	assert_type="abort"
 ], [
 	assert="no"
 	CPPDEFINE([NDEBUG])
