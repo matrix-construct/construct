@@ -56,6 +56,12 @@ ircd::m::event::append::append(json::stack::array &array,
                                const opts &opts)
 :boolean{[&]
 {
+	assert(array.s);
+	json::stack::checkpoint cp
+	{
+		*array.s
+	};
+
 	json::stack::object object
 	{
 		array
@@ -69,6 +75,7 @@ ircd::m::event::append::append(json::stack::array &array,
 		}
 	};
 
+	cp.committing(ret);
 	return ret;
 }}
 {
