@@ -787,6 +787,12 @@ ircd_name
 	PACKAGE_NAME
 };
 
+decltype(ircd::info::startup_time)
+ircd::info::startup_time
+{
+	std::time(nullptr)
+};
+
 decltype(ircd::info::startup)
 ircd::info::startup
 {
@@ -799,22 +805,16 @@ ircd::info::compiled
 	__TIMESTAMP__
 };
 
-decltype(ircd::info::configured)
-ircd::info::configured
-{
-	rstrip(ctime(&configured_time), '\n')
-};
-
-decltype(ircd::info::startup_time)
-ircd::info::startup_time
-{
-	std::time(nullptr)
-};
-
 decltype(ircd::info::configured_time)
 ircd::info::configured_time
 {
 	RB_TIME_CONFIGURED
+};
+
+decltype(ircd::info::configured)
+ircd::info::configured
+{
+	rstrip(ctime(&configured_time), '\n')
 };
 
 decltype(ircd::info::commit)
