@@ -793,10 +793,11 @@ ircd::info::startup_time
 	std::time(nullptr)
 };
 
+static char ircd_info_startup[32];
 decltype(ircd::info::startup)
 ircd::info::startup
 {
-	rstrip(ctime(&startup_time), '\n')
+	rstrip(ctime_r(&startup_time, ircd_info_startup), '\n')
 };
 
 decltype(ircd::info::compiled)
@@ -811,10 +812,11 @@ ircd::info::configured_time
 	RB_TIME_CONFIGURED
 };
 
+static char ircd_info_configured[32];
 decltype(ircd::info::configured)
 ircd::info::configured
 {
-	rstrip(ctime(&configured_time), '\n')
+	rstrip(ctime_r(&configured_time, ircd_info_configured), '\n')
 };
 
 decltype(ircd::info::commit)
