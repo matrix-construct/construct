@@ -80,12 +80,12 @@ namespace ircd::buffer
 	// Single buffer mutators
 	template<class it> size_t consume(buffer<it> &buffer, const size_t &bytes);
 	template<class it> buffer<it> &operator+=(buffer<it> &buffer, const size_t &bytes);
-	char *&copy(char *&dest, char *const &stop, const const_buffer &);
-	char *&move(char *&dest, char *const &stop, const const_buffer &);
-	template<size_t SIZE> size_t copy(const mutable_buffer &dst, const char (&buf)[SIZE]);
-	template<size_t SIZE> size_t move(const mutable_buffer &dst, const char (&buf)[SIZE]);
+	char *&copy(char *&dest, char *const &stop, const const_buffer &src);
+	char *&move(char *&dest, char *const &stop, const const_buffer &src);
 	size_t copy(const mutable_buffer &dst, const const_buffer &src);
 	size_t move(const mutable_buffer &dst, const const_buffer &src);
+	template<size_t SIZE> size_t copy(const mutable_buffer &dst, const char (&)[SIZE]);
+	template<size_t SIZE> size_t move(const mutable_buffer &dst, const char (&)[SIZE]);
 	size_t reverse(const mutable_buffer &dst, const const_buffer &src);
 	void reverse(const mutable_buffer &buf);
 	size_t zero(const mutable_buffer &buf);
