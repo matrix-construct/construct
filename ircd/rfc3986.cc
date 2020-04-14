@@ -13,8 +13,8 @@ __attribute__((visibility("hidden")))
 {
 	using namespace ircd::spirit;
 
-    struct encoder extern const encoder;
-    struct decoder extern const decoder;
+	struct encoder extern const encoder;
+	struct decoder extern const decoder;
 }}
 
 namespace ircd { namespace rfc3986 { namespace parser
