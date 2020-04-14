@@ -192,6 +192,7 @@ media_media_media_la_SOURCES = \
 	media/upload.cc \
 	media/thumbnail.cc \
 	media/preview_url.cc \
+	media/config.cc \
 	media/media.cc \
 	###
 
