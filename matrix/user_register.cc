@@ -26,7 +26,7 @@ const
 	};
 
 	// We only support this for now, for some reason. TODO: XXX
-	if(type && type != "m.login.dummy")
+	if(type && (type != "m.login.dummy" && type != "m.login.application_service"))
 		throw m::UNSUPPORTED
 		{
 			"Registration '%s' not supported.", type
@@ -53,7 +53,7 @@ const
 	// 3.3.1 Required. The desired password for the account.
 	const auto &password
 	{
-		json::at<"password"_>(*this)
+		json::get<"password"_>(*this)
 	};
 
 	// (r0.3.0) 3.4.1 ID of the client device. If this does not correspond to a
@@ -86,7 +86,8 @@ const
 	};
 
 	// Check if the password is acceptable for this server or throws
-	validate_password(password);
+	if(type != "m.login.application_service")
+		validate_password(password);
 
 	//TODO: ABA
 	if(exists(user_id))
@@ -113,7 +114,8 @@ const
 	// Set the password for the account. This issues an ircd.password state
 	// event to the user's room. User will be able to login with
 	// m.login.password
-	user.password(password);
+	if(type != "m.login.application_service")
+		user.password(password);
 
 	// Represent the user's room; was created in m::create(user_id)
 	m::user::room user_room
@@ -142,7 +144,7 @@ const
 	// Log the user in by issuing an event in the tokens room containing
 	// the generated token. When this call completes without throwing the
 	// access_token will be committed and the user will be logged in.
-	if(!json::get<"inhibit_login"_>(*this))
+	if(type != "m.login.application_service" && !json::get<"inhibit_login"_>(*this))
 	{
 		char remote_buf[96];
 		const json::value last_seen_ip
