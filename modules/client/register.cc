@@ -20,6 +20,9 @@ extern const std::string
 flows;
 
 static m::resource::response
+post__register_already(client &client, const m::resource::request::object<m::user::registar> &request);
+
+static m::resource::response
 post__register_guest(client &client, const m::resource::request::object<m::user::registar> &request);
 
 static m::resource::response
@@ -56,6 +59,11 @@ m::resource::response
 post__register(client &client,
                const m::resource::request::object<m::user::registar> &request)
 {
+	// Branch for special spec-behavior when a client (or bridge) who is
+	// already logged in hits this endpoint.
+	if(request.bridge_id || request.user_id)
+		return post__register_already(client, request);
+
 	const json::object &auth
 	{
 		json::get<"auth"_>(request)
@@ -178,6 +186,83 @@ post__register_guest(client &client,
 			{ "user_id",         user_id        },
 			{ "home_server",     my_host()      },
 			{ "access_token",    access_token   },
+		}
+	};
+}
+
+m::resource::response
+post__register_already(client &client,
+                       const m::resource::request::object<m::user::registar> &request)
+{
+	const auto kind
+	{
+		request.query["kind"]
+	};
+
+	// Sanity condition to reject this kind; note we don't require any other
+	// specific string here like "user" or "bridge" for forward spec-compat.
+	if(kind == "guest")
+	{
+		if(!bool(register_guest_enable))
+			throw m::error
+			{
+				http::FORBIDDEN, "M_GUEST_DISABLED",
+				"Guest access is disabled"
+			};
+
+		throw m::UNSUPPORTED
+		{
+			"Obtaining a guest access token when you're already registered"
+			" and logged in is not yet supported."
+		};
+	}
+
+	const m::user::registar &registar
+	{
+		request
+	};
+
+	const auto &username
+	{
+		json::get<"username"_>(request)?
+			string_view(json::get<"username"_>(request)):
+			string_view(request.user_id.localname())
+	};
+
+	if(username != request.user_id.localname())
+	{
+		if(!request.bridge_id)
+			throw m::ACCESS_DENIED
+			{
+				"Expecting username '%s' but you supplied '%s'",
+				request.user_id.localname(),
+				username,
+			};
+
+		throw m::UNSUPPORTED
+		{
+			"Cannot set agency for the bridge here."
+			" Please pre-register at this time..."
+		};
+	}
+
+	const m::user::id::buf user_id
+	{
+		username, my_host()
+	};
+
+	const auto &access_token
+	{
+		request.access_token
+	};
+
+	return m::resource::response
+	{
+		client, http::OK,
+		{
+			{ "user_id",         user_id       },
+			{ "home_server",     my_host()     },
+			{ "access_token",    access_token  },
 		}
 	};
 }
