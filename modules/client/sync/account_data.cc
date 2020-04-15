@@ -167,7 +167,8 @@ ircd::m::sync::push_rules(data &data)
 		content, "global"
 	};
 
-	const auto each_kind{[&_scope, &pushrules]
+	bool ret{false};
+	const auto each_kind{[&_scope, &pushrules, &ret]
 	(const string_view &scope, const string_view &kind)
 	{
 		json::stack::array _kind
@@ -175,10 +176,11 @@ ircd::m::sync::push_rules(data &data)
 			_scope, kind
 		};
 
-		pushrules.for_each(push::path{scope, kind, {}}, [&_kind]
+		pushrules.for_each(push::path{scope, kind, {}}, [&_kind, &ret]
 		(const auto &event_idx, const auto &path, const json::object &rule)
 		{
 			_kind.append(rule);
+			ret |= true;
 			return true;
 		});
 	}};
@@ -188,5 +190,5 @@ ircd::m::sync::push_rules(data &data)
 	each_kind("global", "room");
 	each_kind("global", "sender");
 	each_kind("global", "underride");
-	return true;
+	return ret;
 }
