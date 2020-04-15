@@ -19,16 +19,16 @@ IRCD_MODULE
 extern const std::string
 flows;
 
-static resource::response
-post__register_guest(client &client, const resource::request::object<m::user::registar> &request);
+static m::resource::response
+post__register_guest(client &client, const m::resource::request::object<m::user::registar> &request);
 
-static resource::response
-post__register_user(client &client, const resource::request::object<m::user::registar> &request);
+static m::resource::response
+post__register_user(client &client, const m::resource::request::object<m::user::registar> &request);
 
-static resource::response
-post__register(client &client, const resource::request::object<m::user::registar> &request);
+static m::resource::response
+post__register(client &client, const m::resource::request::object<m::user::registar> &request);
 
-resource
+m::resource
 register_resource
 {
 	"/_matrix/client/r0/register",
@@ -37,7 +37,7 @@ register_resource
 	}
 };
 
-resource::method
+m::resource::method
 method_post
 {
 	register_resource, "POST", post__register
@@ -52,9 +52,9 @@ register_enable
 
 /// see: ircd/m/register.h for the m::user::registar tuple.
 ///
-resource::response
+m::resource::response
 post__register(client &client,
-               const resource::request::object<m::user::registar> &request)
+               const m::resource::request::object<m::user::registar> &request)
 {
 	const json::object &auth
 	{
@@ -62,7 +62,7 @@ post__register(client &client,
 	};
 
 	if(empty(auth))
-		return resource::response
+		return m::resource::response
 		{
 			client, http::UNAUTHORIZED, json::object{flows}
 		};
@@ -98,9 +98,9 @@ register_user_enable
 	{ "default",  true                               }
 };
 
-resource::response
+m::resource::response
 post__register_user(client &client,
-                    const resource::request::object<m::user::registar> &request)
+                    const m::resource::request::object<m::user::registar> &request)
 try
 {
 	if(!bool(register_user_enable))
@@ -128,7 +128,7 @@ try
 	};
 
 	// Send response to user
-	return resource::response
+	return m::resource::response
 	{
 		client, http::CREATED, response
 	};
@@ -149,9 +149,9 @@ register_guest_enable
 	{ "default",  false                               }
 };
 
-resource::response
+m::resource::response
 post__register_guest(client &client,
-                     const resource::request::object<m::user::registar> &request)
+                     const m::resource::request::object<m::user::registar> &request)
 {
 	if(!bool(register_guest_enable))
 		throw m::error
@@ -171,7 +171,7 @@ post__register_guest(client &client,
 		m::user::tokens::generate(access_token_buf)
 	};
 
-	return resource::response
+	return m::resource::response
 	{
 		client, http::CREATED,
 		{
