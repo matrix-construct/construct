@@ -69,7 +69,13 @@ post__register(client &client,
 		json::get<"auth"_>(request)
 	};
 
-	if(empty(auth))
+
+	const auto &type
+	{
+		json::get<"type"_>(request)
+	};
+
+	if(empty(auth) && type != "m.login.application_service")
 		return m::resource::response
 		{
 			client, http::UNAUTHORIZED, json::object{flows}
