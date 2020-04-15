@@ -188,30 +188,25 @@ get__initialsync_local(client &client,
 		out, "state"
 	};
 
-	const m::room::state room_state{room};
-	room_state.for_each(m::event::id::closure_bool{[&]
-	(const m::event::id &event_id)
+	m::event::fetch state_event;
+	m::room::state{room}.for_each([&]
+	(const auto &type, const auto &state_key, const m::event::idx &event_idx)
 	{
-		const m::event::fetch event
-		{
-			std::nothrow, event_id
-		};
-
-		if(!event.valid)
+		if(!seek(std::nothrow, state_event, event_idx))
 			return true;
 
-		if(!visible(event, user.user_id))
+		if(!visible(state_event, user.user_id))
 			return true;
 
 		m::event::append::opts opts;
-		opts.event_idx = &event.event_idx;
+		opts.event_idx = &event_idx;
 		opts.user_id = &user.user_id;
 		opts.user_room = &user_room;
 		opts.room_depth = &room_depth;
 		opts.query_txnid = false;
-		m::event::append(state, event, opts);
+		m::event::append(state, state_event, opts);
 		return true;
-	}});
+	});
 	state.~array();
 
 	m::room::events it{room};
