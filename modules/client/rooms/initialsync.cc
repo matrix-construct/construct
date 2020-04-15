@@ -221,8 +221,14 @@ get__initialsync_local(client &client,
 			messages, "start", m::event_id(it.event_idx())
 		};
 
+	const size_t limit
+	{
+		std::min(request.query.get("limit", size_t(initial_backfill)), 256UL)
+	};
+
 	// seek down first to give events in chronological order.
-	for(size_t i(0); it && i <= size_t(initial_backfill); --it, ++i);
+	for(size_t i(0); it && i <= limit; --it, ++i);
+
 	if(it)
 		json::stack::member
 		{
