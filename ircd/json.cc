@@ -1596,17 +1596,18 @@ ircd::json::stack::member::member(object &po,
 	if(po.mc)
 		s->append(',');
 
-	thread_local char tmp[2048];
 	static const printer::rule<string_view> rule
 	{
 		printer.name << printer.name_sep
 	};
 
+	char tmp[512];
 	mutable_buffer buf{tmp};
-	if(!printer(buf, rule, name))
+	if(unlikely(!printer(buf, rule, name)))
 		throw error
 		{
-			"member name overflow: max size is under %zu", sizeof(tmp)
+			"member name overflow: max size is under %zu",
+			sizeof(tmp)
 		};
 
 	assert(data(buf) >= tmp);
