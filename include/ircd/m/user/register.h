@@ -16,9 +16,9 @@
 /// (see json/tuple.h)). This is a superset of m::create(user::id), which is
 /// called internally and only one part of the process. This function returns
 /// a spec JSON object [into the buffer] which could be returned from an
-/// `r0/register` endpoint. The IP argument is optional, used for for
-/// information about the registrant if a client; to programmatically register
-/// a user simply fill out the structure as best as possible otherwise.
+/// `r0/register` endpoint. The IP argument is optional, used for information
+/// about the registrant if a client; to programmatically register a user,
+/// simply fill out the structure as best as possible otherwise.
 ///
 struct ircd::m::user::registar
 :json::tuple
