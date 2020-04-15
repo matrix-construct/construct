@@ -53,10 +53,31 @@ post__login_password(client &client,
 			at<"user"_>(request)
 	};
 
+	const auto &localpart
+	{
+		valid(m::id::USER, username)?
+			m::id::user(username).local():
+			string_view{username}
+	};
+
+	const auto &hostpart
+	{
+		valid(m::id::USER, username)?
+			m::id::user(username).host():
+			my_host()
+	};
+
+	if(!my_host(hostpart))
+		throw m::UNSUPPORTED
+		{
+			"Credentials for users of homeserver '%s' cannot be obtained here.",
+			hostpart,
+		};
+
 	// Build a canonical MXID from a the user field
 	const m::id::user::buf user_id
 	{
-		username, my_host()
+		localpart, hostpart
 	};
 
 	const string_view &supplied_password
