@@ -1741,6 +1741,14 @@ noexcept
 
 	assert(s->cp == this);
 	s->cp = pc;
+
+	// Certain uses of json::stack in loops might create and destroy
+	// checkpoints without any appends between their lifetimes. This results
+	// in the buffer filling up and inevitably force-flushing under an unlucky
+	// checkpoint (which is bad). This non-forced flush here prevents that once
+	// the buffer reaches the low-watermark and there is no parent checkpoint.
+	if(committing())
+		s->flush();
 }
 
 bool
