@@ -843,6 +843,11 @@ ircd::net::acceptor::handle_alpn(SSL &ssl,
 	}
 	#endif IRCD_NET_ACCEPTOR_DEBUG_ALPN
 
+	//NOTE: proto == "h2" condition goes here
+	for(const auto &proto : in)
+		if(proto == "http/1.1")
+			return proto;
+
 	return {};
 }
 
