@@ -75,11 +75,6 @@ ircd::m::sync::device_one_time_keys_count_polylog(data &data)
 bool
 ircd::m::sync::_device_one_time_keys_count(data &data)
 {
-	json::stack::object one_time_keys_count
-	{
-		*data.out, "device_one_time_keys_count"
-	};
-
 	const auto counts
 	{
 		m::user::devices::count_one_time_keys(data.user, data.device_id)
@@ -88,7 +83,7 @@ ircd::m::sync::_device_one_time_keys_count(data &data)
 	for(const auto &[algorithm, count] : counts)
 		json::stack::member
 		{
-			one_time_keys_count, algorithm, json::value{count}
+			*data.out, algorithm, json::value{count}
 		};
 
 	return true;
