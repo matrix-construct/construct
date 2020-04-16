@@ -55,7 +55,7 @@ ircd::m::sync::to_device_linear(data &data)
 		content.at("device_id")
 	};
 
-	if(device_id != data.device_id)
+	if(device_id != "*" && device_id != data.device_id)
 		return false;
 
 	json::stack::array array
@@ -95,7 +95,7 @@ ircd::m::sync::to_device_polylog(data &data)
 				content.at("device_id")
 			};
 
-			if(device_id != data.device_id)
+			if(device_id != "*" && device_id != data.device_id)
 				return;
 
 			_to_device_append(data, content, array);
