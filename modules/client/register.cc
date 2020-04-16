@@ -20,7 +20,7 @@ extern const std::string
 flows;
 
 static m::resource::response
-post__register_already(client &client, const m::resource::request::object<m::user::registar> &request);
+post__register_puppet(client &client, const m::resource::request::object<m::user::registar> &request);
 
 static m::resource::response
 post__register_guest(client &client, const m::resource::request::object<m::user::registar> &request);
@@ -59,23 +59,24 @@ m::resource::response
 post__register(client &client,
                const m::resource::request::object<m::user::registar> &request)
 {
-	// Branch for special spec-behavior when a client (or bridge) who is
-	// already logged in hits this endpoint.
-	if(request.bridge_id || request.user_id)
-		return post__register_already(client, request);
-
 	const json::object &auth
 	{
 		json::get<"auth"_>(request)
 	};
 
-
 	const auto &type
 	{
-		json::get<"type"_>(request)
+		auth["type"]?
+			json::string(auth["type"]):
+			json::get<"type"_>(request)
 	};
 
-	if(empty(auth) && type != "m.login.application_service")
+	// Branch for special spec-behavior when a client (or bridge) who is
+	// already logged in hits this endpoint.
+	if(request.bridge_id)
+		return post__register_puppet(client, request);
+
+	if(!type || type == "m.login.application_service")
 		return m::resource::response
 		{
 			client, http::UNAUTHORIZED, json::object{flows}
@@ -197,9 +198,20 @@ post__register_guest(client &client,
 }
 
 m::resource::response
-post__register_already(client &client,
-                       const m::resource::request::object<m::user::registar> &request)
+post__register_puppet(client &client,
+                      const m::resource::request::object<m::user::registar> &request)
+try
 {
+	assert(request.bridge_id);
+	m::user::registar registar
+	{
+		request
+	};
+
+	// Help out non-spec-compliant bridges
+	if(!json::get<"type"_>(registar))
+		json::get<"type"_>(registar) = "m.login.application_service"_sv;
+
 	const auto kind
 	{
 		request.query["kind"]
@@ -208,70 +220,37 @@ post__register_already(client &client,
 	// Sanity condition to reject this kind; note we don't require any other
 	// specific string here like "user" or "bridge" for forward spec-compat.
 	if(kind == "guest")
-	{
-		if(!bool(register_guest_enable))
-			throw m::error
-			{
-				http::FORBIDDEN, "M_GUEST_DISABLED",
-				"Guest access is disabled"
-			};
-
 		throw m::UNSUPPORTED
 		{
 			"Obtaining a guest access token when you're already registered"
 			" and logged in is not yet supported."
 		};
-	}
 
-	const m::user::registar &registar
+	const unique_buffer<mutable_buffer> buf
 	{
-		request
+		4_KiB
 	};
 
-	const auto &username
+	// call operator() to register the user and receive response output
+	const json::object response
 	{
-		json::get<"username"_>(request)?
-			string_view(json::get<"username"_>(request)):
-			string_view(request.user_id.localname())
+		registar(buf, remote(client))
 	};
 
-	if(username != request.user_id.localname())
-	{
-		if(!request.bridge_id)
-			throw m::ACCESS_DENIED
-			{
-				"Expecting username '%s' but you supplied '%s'",
-				request.user_id.localname(),
-				username,
-			};
-
-		throw m::UNSUPPORTED
-		{
-			"Cannot set agency for the bridge here."
-			" Please pre-register at this time..."
-		};
-	}
-
-	const m::user::id::buf user_id
-	{
-		username, my_host()
-	};
-
-	const auto &access_token
-	{
-		request.access_token
-	};
-
+	// Send response to user
 	return m::resource::response
 	{
-		client, http::OK,
-		{
-			{ "user_id",         user_id       },
-			{ "home_server",     my_host()     },
-			{ "access_token",    access_token  },
-		}
+		client, http::CREATED, response
 	};
 }
+catch(const m::INVALID_MXID &e)
+{
+	throw m::error
+	{
+		http::BAD_REQUEST, "M_INVALID_USERNAME",
+		"Not a valid username. Please try again."
+	};
+};
 
 const std::string
 flows{R"({

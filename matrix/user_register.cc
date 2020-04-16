@@ -22,7 +22,9 @@ const
 	// 3.3.1 The login type that the client is attempting to complete.
 	const json::string &type
 	{
-		auth["type"]
+		auth["type"]?
+			json::string(auth["type"]):
+			json::get<"type"_>(*this)
 	};
 
 	// We only support this for now, for some reason. TODO: XXX
@@ -209,6 +211,13 @@ ircd::m::user::registar::validate_password(const string_view &password)
 			http::BAD_REQUEST, "M_INVALID_PASSWORD",
 			"The desired password exceeds %zu characters",
 			max,
+		};
+
+	if(!password)
+		throw m::error
+		{
+			http::BAD_REQUEST, "M_INVALID_PASSWORD",
+			"Required password was not submitted.",
 		};
 }
 
