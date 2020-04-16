@@ -72,11 +72,11 @@ get__publicrooms(client &client,
 		url::decode(server_buf, request.query["server"])
 	};
 
-	const uint8_t limit
+	const size_t limit
 	{
 		request.has("limit")?
-			uint8_t(request.at<ushort>("limit")):
-			uint8_t(request.query.get<ushort>("limit", 16U))
+			request.at<size_t>("limit"):
+			request.query.get<size_t>("limit", -1UL)
 	};
 
 	const bool include_all_networks
@@ -160,7 +160,7 @@ get__publicrooms(client &client,
 	};
 
 	size_t count{0};
-	m::room::id::buf prev_batch_buf;
+	m::room::id::buf prev_batch_buf; //TODO: XXX
 	m::room::id::buf next_batch_buf;
 	json::stack::object top{out};
 	{
@@ -168,24 +168,31 @@ get__publicrooms(client &client,
 		json::stack::array chunk{chunk_m};
 		m::rooms::for_each(opts, [&](const m::room::id &room_id)
 		{
+			if(++count > limit)
+			{
+				next_batch_buf = room_id;
+				return false;
+			}
+
 			json::stack::object obj{chunk};
 			m::rooms::summary::get(obj, room_id);
-			if(!count && !empty(since))
-				prev_batch_buf = room_id; //TODO: ???
-
-			next_batch_buf = room_id;
-			return ++count < limit;
+			return true;
 		});
 	}
 
 	// To count the total we clear the since token, otherwise the count
 	// will be the remainder.
 	opts.room_id = {};
+	const size_t total_rooms_count_estimate
+	{
+		m::rooms::count(opts)
+	};
+
 	json::stack::member
 	{
 		top, "total_room_count_estimate", json::value
 		{
-			ssize_t(m::rooms::count(opts))
+			long(total_rooms_count_estimate)
 		}
 	};
 
@@ -195,7 +202,7 @@ get__publicrooms(client &client,
 			top, "prev_batch", prev_batch_buf
 		};
 
-	if(count >= limit)
+	if(next_batch_buf)
 		json::stack::member
 		{
 			top, "next_batch", next_batch_buf
