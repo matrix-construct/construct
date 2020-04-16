@@ -279,7 +279,7 @@ try
 		revent, vmopts
 	};
 
-	return revent.event_id;
+	return revent_id;
 }
 catch(const std::exception &e)
 {
