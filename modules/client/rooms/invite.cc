@@ -87,6 +87,11 @@ ircd::m::on_invite_remote(const event &event,
 	if(m::my_host(target_host))
 		return;
 
+	// Host already signed event elsehow.
+	for(const auto &[host, sig] : json::get<"signatures"_>(event))
+		if(host == target_host)
+			return;
+
 	const m::room::origins origins
 	{
 		room_id
