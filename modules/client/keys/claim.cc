@@ -291,8 +291,9 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		m::log, "user keys claim to %s :%s",
+		m::log, "user keys claim to %s for %zu users :%s",
 		remote,
+		queries.size(),
 		e.what()
 	};
 
