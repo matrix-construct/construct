@@ -205,6 +205,13 @@ try
 		room_id, event_id, proto, buf, std::move(opts)
 	};
 
+	log::debug
+	{
+		m::log, "Sending invite %s to %s",
+		string_view{event.event_id},
+		target.host(),
+	};
+
 	http::code rcode; try
 	{
 		request.wait(seconds(invite_remote_timeout));
@@ -214,9 +221,9 @@ try
 	{
 		log::error
 		{
-			"Invite %s to %s :%s :%s",
+			m::log, "Invite %s to %s :%s :%s",
 			string_view{event.event_id},
-			string(opts.remote),
+			target.host(),
 			e.what(),
 			e.content,
 		};
@@ -273,7 +280,7 @@ catch(const std::exception &e)
 {
 	log::error
 	{
-		"Invite remote %s :%s",
+		m::log, "Invite remote %s :%s",
 		string_view{event.event_id},
 		e.what(),
 	};
