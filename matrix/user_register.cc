@@ -126,13 +126,11 @@ const
 	};
 
 	// Store the options from registration.
-	const m::event::id::buf account_options_id
-	{
+	if(type != "m.login.application_service")
 		send(user_room, user.user_id, "ircd.account.options", "registration", json::members
 		{
 			{ "bind_email", bind_email },
-		})
-	};
+		});
 
 	// Optionally generate an access_token for login.
 	char access_token_buf[32];
