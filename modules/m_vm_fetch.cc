@@ -560,10 +560,18 @@ ircd::m::vm::fetch::prev(const event &event,
 		prev.prev_events_count()
 	};
 
-	const size_t prev_exists
+	size_t prev_exists
 	{
 		prev.prev_events_exist()
 	};
+
+	//TODO: remove or soften when eval::count() / eval::find_pdu()
+	//TODO: is restored kthx (though it can never truly be removed)
+	for(size_t check(0); prev_exists < prev_count && check < 3;)
+	{
+		ctx::sleep(milliseconds(++check * 333));
+		prev_exists = prev.prev_events_exist();
+	}
 
 	assert(prev_exists <= prev_count);
 	if(prev_count == prev_exists)
