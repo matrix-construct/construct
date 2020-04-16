@@ -15,11 +15,19 @@ try
 	assert(content.has("user_id"));
 	assert(content.has("device_id"));
 
+	// Triggers a devices request from the remote; also see
+	// modules/federation/user_devices.cc
+	const long &stream_id
+	{
+		1L
+	};
+
 	json::iov event;
 	const json::iov::push push[]
 	{
-		{ event, { "type",    "m.device_list_update"  } },
-		{ event, { "sender",  content.at("user_id")   } },
+		{ event,    { "type",       "m.device_list_update"  } },
+		{ event,    { "sender",     content.at("user_id")   } },
+		{ content,  { "stream_id",  stream_id               } },
 	};
 
 	m::vm::copts opts;
