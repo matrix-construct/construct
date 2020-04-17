@@ -269,10 +269,11 @@ const
 		{
 			assert(!last.empty());
 			assert(last.size() < sizeof(lastbuf));
+			repeat = 0;
 			lastbuf[last.size() - 1]++;
 			char keybuf[dbs::ROOM_JOINED_KEY_MAX_SIZE];
-			seek(it, dbs::room_joined_key(keybuf, room.room_id, last));
-			repeat = 0;
+			if(!seek(it, dbs::room_joined_key(keybuf, room.room_id, last)))
+				break;
 		}
 	}
 
