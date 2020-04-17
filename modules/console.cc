@@ -14461,8 +14461,16 @@ console_cmd__fed__version(opt &out, const string_view &line)
 		"remote"
 	}};
 
+	const auto remote
+	{
+		param.at("remote")
+	};
+
+	if(valid(m::id::ROOM, remote) || valid(m::id::ROOM_ALIAS, remote))
+		return console_cmd__feds__version(out, line);
+
 	m::fed::version::opts opts;
-	opts.remote = param.at("remote");
+	opts.remote = remote;
 	opts.dynamic = false;
 	const unique_mutable_buffer buf
 	{
