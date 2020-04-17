@@ -2617,34 +2617,66 @@ const
 	});
 }
 
+namespace ircd::json
+{
+	extern const parser::rule<object::member> object_member;
+	extern const parser::rule<object::member> object_next;
+	extern const parser::rule<object::member> object_begin;
+	extern const parser::rule<object::member> object_next_parse;
+	extern const parser::rule<object::member> object_begin_parse;
+}
+
+[[gnu::visibility("internal")]]
+decltype(ircd::json::object_member)
+ircd::json::object_member
+{
+	parser.name >> -parser.ws >> parser.name_sep >> -parser.ws >> raw[parser.value(0)]
+	,"object member"
+};
+
+[[gnu::visibility("internal")]]
+decltype(ircd::json::object_next)
+ircd::json::object_next
+{
+	parser.object_end | (parser.value_sep >> -parser.ws >> object_member)
+	,"object member"
+};
+
+[[gnu::visibility("internal")]]
+decltype(ircd::json::object_begin)
+ircd::json::object_begin
+{
+	parser.object_begin >> -parser.ws >> (parser.object_end | object_member)
+	,"object"
+};
+
+[[gnu::visibility("internal")]]
+decltype(ircd::json::object_next_parse)
+ircd::json::object_next_parse
+{
+	expect[object_next >> -parser.ws]
+	,"object increment"
+};
+
+[[gnu::visibility("internal")]]
+decltype(ircd::json::object_begin_parse)
+ircd::json::object_begin_parse
+{
+	expect[-parser.ws >> object_begin >> -parser.ws]
+	,"object begin"
+};
+
 ircd::json::object::const_iterator
 ircd::json::object::begin()
 const try
 {
-	static const auto &ws
-	{
-		parser.ws
-	};
-
-	static const parser::rule<json::object::member> object_member
-	{
-		parser.name >> -ws >> parser.name_sep >> -ws >> raw[parser.value(0)]
-		,"object member"
-	};
-
-	static const parser::rule<json::object::member> parse_begin
-	{
-		-ws >> parser.object_begin >> -ws >> (parser.object_end | object_member) >> -ws
-		,"object begin and member or end"
-	};
-
 	const_iterator ret
 	{
 		string_view::begin(), string_view::end()
 	};
 
-	if(!string_view{*this}.empty())
-		qi::parse(ret.start, ret.stop, eps > parse_begin, ret.state);
+	if(likely(!string_view{*this}.empty()))
+		qi::parse(ret.start, ret.stop, object_begin_parse, ret.state);
 
 	return ret;
 }
@@ -2675,26 +2707,9 @@ ircd::json::object::const_iterator &
 ircd::json::object::const_iterator::operator++()
 try
 {
-	static const auto &ws
-	{
-		parser.ws
-	};
-
-	static const parser::rule<json::object::member> member
-	{
-		parser.name >> -ws >> parser.name_sep >> -ws >> raw[parser.value(0)]
-		,"next object member"
-	};
-
-	static const parser::rule<json::object::member> parse_next
-	{
-		(parser.object_end | (parser.value_sep >> -ws >> member)) >> -ws
-		,"next object member or end"
-	};
-
 	state.first = string_view{};
 	state.second = string_view{};
-	qi::parse(start, stop, eps > parse_next, state);
+	qi::parse(start, stop, object_next_parse, state);
 	return *this;
 }
 catch(const qi::expectation_failure<const char *> &e)
