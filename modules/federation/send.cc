@@ -94,6 +94,7 @@ handle_pdus(client &client,
 	vmopts.txn_id = txn_id;
 	vmopts.fetch_prev = bool(fetch_state);
 	vmopts.fetch_state = bool(fetch_prev);
+	vmopts.fetch_prev_wait_count = -1;
 	m::vm::eval eval
 	{
 		pdus, vmopts
