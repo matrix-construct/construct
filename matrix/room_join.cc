@@ -144,6 +144,11 @@ ircd::m::join(const m::room &room,
 bool
 ircd::m::need_bootstrap(const room::id &room_id)
 {
+	// No bootstrap for my rooms
+	//TODO: issue for clustering
+	if(my(room_id))
+		return false;
+
 	// We have nothing for the room
 	if(!exists(room_id))
 		return true;
