@@ -619,9 +619,14 @@ ircd::m::vm::fetch::prev(const event &event,
 			future.get()
 		};
 
+		const json::object content
+		{
+			result
+		};
+
 		const json::array &pdus
 		{
-			json::object(result).get("pdus")
+			content["pdus"]
 		};
 
 		auto opts(*eval.opts);
