@@ -32,7 +32,10 @@ post__join(client &client,
 		room_id
 	};
 
-	m::join(room, request.user_id);
+	const auto event_id
+	{
+		m::join(room, request.user_id)
+	};
 
 	return m::resource::response
 	{
