@@ -348,14 +348,25 @@ dnl
 AC_MSG_CHECKING(whether to do a profile build)
 AC_ARG_ENABLE(profile, AC_HELP_STRING([--enable-profile], [Enable profiling]),
 [
-	if test "$ac_cv_c_compiler_gnu" = yes; then
+	profiling="yes"
+	AM_COND_IF(GCC,
+	[
 		AC_MSG_RESULT([yes, adding -pg])
 		CXXFLAGS+=" -pg"
 		AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
-	else
-		AC_MSG_RESULT([no, profile builds only work with gcc])
-	fi
+	])
+
+	AM_COND_IF(CLANG,
+	[
+		AC_MSG_RESULT([yes, adding profiling flags])
+		CXXFLAGS+=" -fprofile-instr-generate"
+		CXXFLAGS+=" -fcoverage-mapping"
+		LDFLAGS+=" -fprofile-instr-generate"
+		AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
+	])
 ], [
+	AC_MSG_RESULT([no])
+	profiling="no"
 ])
 
 dnl
@@ -2174,6 +2185,7 @@ echo "Linker ............................ $LD"
 echo "Linker flags (LDFLAGS) ............ $LDFLAGS"
 echo "Developer debug ................... $debug"
 echo "Developer assert .................. $assert ($assert_type)"
+echo "Developer profiling ............... $profiling"
 echo "Low-memory compile ................ $lowmem_compile"
 echo "Precompiled headers ............... $build_pch"
 echo "Optimized compile ................. $optimize"
