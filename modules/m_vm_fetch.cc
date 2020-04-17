@@ -605,11 +605,24 @@ ircd::m::vm::fetch::prev(const event &event,
 		ctx::when_all(begin(futures), end(futures))
 	};
 
-	// yields context
-	const bool done
+	const auto timeout
 	{
-		fetching.wait(seconds(event_timeout), std::nothrow)
+		now<system_point>() + seconds(event_timeout)
 	};
+
+	// Rather than waiting for all of the events to arrive or for the entire
+	// timeout to expire, we check if the sought events made it to the server
+	// in the meantime. If so we can drop these requests and bail.
+	while(now<system_point>() < timeout)
+	{
+		// Wait for an interval to give this loop some iterations.
+		if(fetching.wait(milliseconds(500), std::nothrow))
+			break;
+
+		// Check for satisfaction.
+		if((prev_exists = prev.prev_events_exist()) == prev_count)
+			return;
+	}
 
 	// evaluate results
 	for(auto &future : futures) try
