@@ -21,6 +21,7 @@ namespace ircd::m::vm::fetch
 	static void auth(const event &, vm::eval &, const room &);
 	static void handle(const event &, vm::eval &);
 
+	extern conf::item<milliseconds> prev_fetch_check_interval;
 	extern conf::item<milliseconds> prev_wait_time;
 	extern conf::item<size_t> prev_wait_count;
 	extern conf::item<size_t> prev_backfill_limit;
@@ -100,6 +101,13 @@ ircd::m::vm::fetch::prev_wait_time
 {
 	{ "name",     "ircd.m.vm.fetch.prev.wait.time" },
 	{ "default",  200L                             },
+};
+
+decltype(ircd::m::vm::fetch::prev_fetch_check_interval)
+ircd::m::vm::fetch::prev_fetch_check_interval
+{
+	{ "name",     "ircd.m.vm.fetch.prev.fetch.check_interval" },
+	{ "default",  500L                                        },
 };
 
 //
@@ -623,13 +631,20 @@ ircd::m::vm::fetch::prev(const event &event,
 		now<system_point>() + seconds(event_timeout)
 	};
 
+	const milliseconds &check_interval
+	{
+		prev_fetch_check_interval
+	};
+
 	// Rather than waiting for all of the events to arrive or for the entire
 	// timeout to expire, we check if the sought events made it to the server
 	// in the meantime. If so we can drop these requests and bail.
+	//TODO: Ideally should be replaced with listener/notification/hook on the
+	//TODO: events arriving rather than this coarse sleep cycles.
 	while(now<system_point>() < timeout)
 	{
 		// Wait for an interval to give this loop some iterations.
-		if(fetching.wait(milliseconds(500), std::nothrow))
+		if(fetching.wait(check_interval, std::nothrow))
 			break;
 
 		// Check for satisfaction.
