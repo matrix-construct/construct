@@ -282,6 +282,20 @@ struct ircd::m::vm::opts
 	/// corollary conditions are similar to fetch_prev_any.
 	bool fetch_prev_all {false};
 
+	/// The number of iterations of the wait cycle which checks for missing
+	/// prev_events will iterate before issuing remote fetches for them.
+	/// The default is 0 which bypasses the functionality, and is recommended
+	/// when the evaluator is confident missing prev_events won't arrive
+	/// elsehow. Setting to -1 enables it with an auto/conf value.
+	size_t fetch_prev_wait_count {0};
+
+	/// Base time to wait for missing prev_events to arrive at the server by
+	/// some other means before issuing remote fetches for them. The waiting
+	/// occurs in a loop where prev_events satisfaction is checked at each
+	/// iteration. This value is multiplied by the number of iterations for
+	/// multiplicative backoff. The default of -1 is auto / conf.
+	milliseconds fetch_prev_wait_time {-1};
+
 	/// The limit on the number of events to backfill if any of the prev_events
 	/// are missing. -1 is auto / conf.
 	size_t fetch_prev_limit = -1;

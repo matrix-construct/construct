@@ -11,6 +11,7 @@
 namespace ircd::m::vm::fetch
 {
 	static void prev_check(const event &, vm::eval &);
+	static bool prev_wait(const event &, vm::eval &);
 	static std::forward_list<ctx::future<m::fetch::result>> prev_fetch(const event &, vm::eval &, const room &);
 	static void prev(const event &, vm::eval &, const room &);
 	static std::forward_list<ctx::future<m::fetch::result>> state_fetch(const event &, vm::eval &, const room &);
@@ -20,6 +21,8 @@ namespace ircd::m::vm::fetch
 	static void auth(const event &, vm::eval &, const room &);
 	static void handle(const event &, vm::eval &);
 
+	extern conf::item<milliseconds> prev_wait_time;
+	extern conf::item<size_t> prev_wait_count;
 	extern conf::item<size_t> prev_backfill_limit;
 	extern conf::item<seconds> event_timeout;
 	extern conf::item<seconds> state_timeout;
@@ -83,6 +86,20 @@ ircd::m::vm::fetch::prev_backfill_limit
 {
 	{ "name",     "ircd.m.vm.fetch.prev.backfill.limit" },
 	{ "default",  128L                                  },
+};
+
+decltype(ircd::m::vm::fetch::prev_wait_count)
+ircd::m::vm::fetch::prev_wait_count
+{
+	{ "name",     "ircd.m.vm.fetch.prev.wait.count" },
+	{ "default",  4L                                },
+};
+
+decltype(ircd::m::vm::fetch::prev_wait_time)
+ircd::m::vm::fetch::prev_wait_time
+{
+	{ "name",     "ircd.m.vm.fetch.prev.wait.time" },
+	{ "default",  200L                             },
 };
 
 //
@@ -560,21 +577,17 @@ ircd::m::vm::fetch::prev(const event &event,
 		prev.prev_events_count()
 	};
 
-	size_t prev_exists
+	const size_t prev_exists
 	{
 		prev.prev_events_exist()
 	};
 
-	//TODO: remove or soften when eval::count() / eval::find_pdu()
-	//TODO: is restored kthx (though it can never truly be removed)
-	for(size_t check(0); prev_exists < prev_count && check < 3;)
-	{
-		ctx::sleep(milliseconds(++check * 333));
-		prev_exists = prev.prev_events_exist();
-	}
-
 	assert(prev_exists <= prev_count);
 	if(prev_count == prev_exists)
+		return;
+
+	// Attempt to wait for missing prev_events without issuing fetches here.
+	if(prev_wait(event, eval))
 		return;
 
 	if(!opts.fetch_prev || !m::vm::fetch::enable)
@@ -620,7 +633,7 @@ ircd::m::vm::fetch::prev(const event &event,
 			break;
 
 		// Check for satisfaction.
-		if((prev_exists = prev.prev_events_exist()) == prev_count)
+		if(prev.prev_events_exist() == prev_count)
 			return;
 	}
 
@@ -752,6 +765,43 @@ ircd::m::vm::fetch::prev_fetch(const event &event,
 	}
 
 	return ret;
+}
+
+//TODO: Adjust when PDU lookahead/lookaround is fixed in the vm::eval iface.
+//TODO: Wait on another eval completion instead of just coarse sleep()'s.
+bool
+ircd::m::vm::fetch::prev_wait(const event &event,
+                              vm::eval &eval)
+{
+	const auto &opts(*eval.opts);
+	const event::prev prev(event);
+	const size_t prev_count
+	{
+		prev.prev_events_count()
+	};
+
+	const size_t &wait_count
+	{
+		ssize_t(opts.fetch_prev_wait_count) >= 0?
+			opts.fetch_prev_wait_count:
+			size_t(prev_wait_count)
+	};
+
+	const milliseconds &wait_time
+	{
+		opts.fetch_prev_wait_time >= 0ms?
+			opts.fetch_prev_wait_time:
+			milliseconds(prev_wait_time)
+	};
+
+	size_t i(0); while(i < wait_count)
+	{
+		sleep(milliseconds(++i * wait_time));
+		if(prev_count == prev.prev_events_exist())
+			return true;
+	}
+
+	return false;
 }
 
 void
