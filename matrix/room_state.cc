@@ -284,6 +284,16 @@ bool
 ircd::m::room::state::has(const string_view &type)
 const
 {
+	if(!present())
+	{
+		const history history
+		{
+			room_id, event_id
+		};
+
+		return history.has(type);
+	}
+
 	return !for_each(type, []
 	(const string_view &, const string_view &, const event::idx &)
 	{
