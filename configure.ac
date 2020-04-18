@@ -237,16 +237,25 @@ dnl Explicit link-time-optimization switch
 dnl
 
 AC_MSG_CHECKING(whether to enable link-time optimization)
-AC_ARG_ENABLE(lto, AC_HELP_STRING([--enable-lto], [Enable link-time optimization]),
+AC_ARG_ENABLE(lto, AC_HELP_STRING([--disable-lto], [Enable link-time optimization]),
 [
-	AC_MSG_RESULT([yes])
-	AC_SUBST(LTO, 1)
+	lto="no"
+	AC_MSG_RESULT([no, explicitly disabled])
 ], [
-	AM_COND_IF(DEBUG,
+	AM_COND_IF(OPTIMIZE,
 	[
-		AC_MSG_RESULT([no])
+		AM_COND_IF(CLANG,
+		[
+			lto="yes"
+			AC_MSG_RESULT([yes])
+			AC_SUBST(LTO, 1)
+		], [
+			lto="no"
+			AC_MSG_RESULT([no, only available with clang])
+		])
 	], [
-		AC_MSG_RESULT([no, link-time optimization is explicit-only at this time])
+		lto="no"
+		AC_MSG_RESULT([no, optimizations disabled])
 	])
 ])
 
@@ -510,14 +519,6 @@ dnl Optimization
 dnl
 
 CXXFLAGS+=" -O$optimize_level"
-
-AM_COND_IF([LTO],
-[
-	lto="yes"
-	CXXFLAGS+=" -flto=`nproc`"
-], [
-	lto="no"
-])
 
 AM_COND_IF([OPTIMIZE],
 [

@@ -27,6 +27,10 @@ AM_LDFLAGS = \
 	@EXTRA_LDFLAGS@ \
 	###
 
+if LTO
+AM_CXXFLAGS += -flto
+endif
+
 if DEBUG
 if GCC
 AM_CXXFLAGS += -fmax-errors=2

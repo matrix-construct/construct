@@ -35,6 +35,10 @@ if GCC
 AM_CXXFLAGS += -ftls-model=local-dynamic
 endif
 
+if LTO
+AM_CXXFLAGS += -flto
+endif
+
 if DEBUG
 if GCC
 AM_CXXFLAGS += -fmax-errors=3
