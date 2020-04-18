@@ -1870,8 +1870,7 @@ ircd::fs::fd::fd(const string_view &path,
 	const mode_t &mode(opts.mask);
 	assert((flags & ~O_CREAT) || mode != 0);
 
-	const char *const &p(path_str(path));
-	return syscall(::open, p, flags, mode);
+	return syscall(::open, path_cstr(path), flags, mode);
 }()}
 {
 	if(opts.ate)

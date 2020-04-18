@@ -39,18 +39,21 @@ ircd::fs::PATH_MAX_LEN
 	#endif
 };
 
+// Convenience scratch buffers for path making.
 namespace ircd::fs
 {
-	thread_local char _path_scratch[PATH_MAX_LEN];
 	thread_local char _name_scratch[NAME_MAX_LEN];
+	thread_local char _path_scratch[PATH_MAX_LEN];
 }
 
+// External mutable_buffer to the scratch
 decltype(ircd::fs::path_scratch)
 ircd::fs::path_scratch
 {
 	_path_scratch
 };
 
+// External mutable_buffer to the scratch
 decltype(ircd::fs::name_scratch)
 ircd::fs::name_scratch
 {
@@ -114,7 +117,7 @@ size_t
 ircd::fs::name_max_len(const string_view &path)
 {
 	struct statfs f{0};
-	syscall(::statfs, path_str(path), &f);
+	syscall(::statfs, path_cstr(path), &f);
 	return f.f_namelen;
 }
 #else
@@ -129,7 +132,7 @@ long
 ircd::fs::pathconf(const string_view &path,
                    const int &arg)
 {
-	return syscall(::pathconf, path_str(path), arg);
+	return syscall(::pathconf, path_cstr(path), arg);
 }
 
 ircd::string_view
@@ -172,6 +175,29 @@ bool
 ircd::fs::is_absolute(const string_view &p)
 {
 	return _path(p).is_absolute();
+}
+
+//
+// fs::path_cstr()
+//
+
+namespace ircd::fs
+{
+	static const size_t _PATH_CSTR_BUFS {4};
+	thread_local char _path_cstr[_PATH_CSTR_BUFS][PATH_MAX_LEN];
+	thread_local size_t _path_cstr_pos;
+}
+
+const char *
+ircd::fs::path_cstr(const string_view &s)
+{
+	const auto pos
+	{
+		++_path_cstr_pos %= _PATH_CSTR_BUFS
+	};
+
+	strlcpy(_path_cstr[pos], s);
+	return _path_cstr[pos];
 }
 
 //
@@ -277,18 +303,6 @@ try
 catch(const filesystem::filesystem_error &e)
 {
 	throw error{e};
-}
-
-const char *
-ircd::fs::path_str(const string_view &s)
-{
-	static const size_t sz{PATH_MAX_LEN}, cnt{8};
-	thread_local char buffer[cnt][sz];
-	thread_local size_t i{0};
-	auto &buf(buffer[i]);
-	++i %= cnt;
-	strlcpy(buf, s);
-	return buf;
 }
 
 //
