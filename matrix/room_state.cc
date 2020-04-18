@@ -298,7 +298,7 @@ const
 	(const string_view &, const string_view &, const event::idx &)
 	{
 		return false;
-	}});
+	});
 }
 
 bool
@@ -326,11 +326,20 @@ ircd::m::room::state::count()
 const
 {
 	if(!present())
-		return count(string_view{});
+	{
+		const history history
+		{
+			room_id, event_id
+		};
+
+		return history.count(string_view{});
+	}
 
 	const db::gopts &opts
 	{
-		this->fopts? this->fopts->gopts : db::gopts{}
+		this->fopts?
+			this->fopts->gopts:
+			db::gopts{}
 	};
 
 	size_t ret(0);
@@ -346,20 +355,22 @@ ircd::m::room::state::count(const string_view &type)
 const
 {
 	if(!present())
-		return count(type);
-
-	const db::gopts &opts
 	{
-		this->fopts? this->fopts->gopts : db::gopts{}
-	};
+		const history history
+		{
+			room_id, event_id
+		};
+
+		return history.count(type);
+	}
 
 	size_t ret(0);
-	auto &column{dbs::room_state};
-	for(auto it{column.begin(room_id, opts)}; bool(it); ++it)
+	for_each(type, [&ret]
+	(const string_view &, const string_view &, const event::idx &)
 	{
-		const auto key(dbs::room_state_key(it->first));
-		ret += std::get<0>(key) == type;
-	}
+		++ret;
+		return true;
+	});
 
 	return ret;
 }
