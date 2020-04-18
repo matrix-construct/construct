@@ -9,10 +9,13 @@ environment:
 
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-      DOCKER_IMAGE: jevolk/construct:ubuntu-18.04-clang-9
+      DOCKER_IMAGE: jevolk/construct:ubuntu-18.04-gcc-8
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
-      DOCKER_IMAGE: jevolk/construct:ubuntu-18.04-gcc-8
+      DOCKER_IMAGE: jevolk/construct:ubuntu-18.04-gcc-9
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu1804
+      DOCKER_IMAGE: jevolk/construct:ubuntu-18.04-clang-9
 
 for:
 -
