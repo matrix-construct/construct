@@ -30,6 +30,7 @@ namespace ircd::fs
 	// convenience tls buffers of appropriate size.
 	extern const mutable_buffer path_scratch;
 	extern const mutable_buffer name_scratch;
+	const char *path_str(const string_view &);
 
 	filesystem::path _path(std::string);
 	filesystem::path _path(const string_view &);
