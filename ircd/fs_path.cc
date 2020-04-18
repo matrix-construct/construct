@@ -194,7 +194,7 @@ ircd::fs::path(const mutable_buffer &buf,
 
 ircd::string_view
 ircd::fs::path(const mutable_buffer &buf,
-               const path_view &list)
+               const path_views &list)
 {
 	return strlcpy(buf, _path(list).c_str());
 }
@@ -243,7 +243,7 @@ catch(const filesystem::filesystem_error &e)
 }
 
 boost::filesystem::path
-ircd::fs::_path(const path_view &list)
+ircd::fs::_path(const path_views &list)
 try
 {
 	filesystem::path ret;

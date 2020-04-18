@@ -21,7 +21,7 @@ namespace ircd::fs
 {
 	enum class base :uint;
 	struct basepath;
-	using path_view = vector_view<const string_view>;
+	using path_views = vector_view<const string_view>;
 	using path_strings = vector_view<const std::string>;
 
 	extern const size_t NAME_MAX_LEN;
@@ -34,12 +34,12 @@ namespace ircd::fs
 
 	filesystem::path _path(std::string);
 	filesystem::path _path(const string_view &);
-	filesystem::path _path(const path_view &);
+	filesystem::path _path(const path_views &);
 	filesystem::path _path(const path_strings &);
 
 	string_view path(const base &) noexcept;
 	string_view path(const mutable_buffer &, const base &, const string_view &);
-	string_view path(const mutable_buffer &, const path_view &);
+	string_view path(const mutable_buffer &, const path_views &);
 	string_view path(const mutable_buffer &, const path_strings &);
 	string_view path(const mutable_buffer &, const filesystem::path &);
 	template<class... A> std::string path_string(A&&...);
