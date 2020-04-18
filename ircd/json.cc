@@ -8,8 +8,7 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd { namespace json
-__attribute__((visibility("hidden")))
+namespace ircd::json
 {
 	using namespace ircd::spirit;
 
@@ -21,7 +20,7 @@ __attribute__((visibility("hidden")))
 	struct printer extern const printer;
 
 	const size_t &error_show_max {48};
-}}
+}
 
 BOOST_FUSION_ADAPT_STRUCT
 (
@@ -37,7 +36,8 @@ BOOST_FUSION_ADAPT_STRUCT
     ( decltype(ircd::json::object::member::second),  second )
 )
 
-struct ircd::json::input
+struct [[gnu::visibility("internal")]]
+ircd::json::input
 :qi::grammar<const char *, unused_type>
 {
 	using it = const char *;
@@ -215,7 +215,8 @@ struct ircd::json::input
 	}
 };
 
-struct ircd::json::output
+struct [[gnu::visibility("internal")]]
+ircd::json::output
 :karma::grammar<char *, unused_type>
 {
 	using it = char *;
@@ -347,14 +348,16 @@ struct ircd::json::output
 	}
 };
 
-struct ircd::json::parser
+struct [[gnu::visibility("internal")]]
+ircd::json::parser
 :input
 {
 	using input::input;
 }
 const ircd::json::parser;
 
-struct ircd::json::printer
+struct [[gnu::visibility("internal")]]
+ircd::json::printer
 :output
 {
 	template<class gen,
@@ -462,12 +465,6 @@ ircd::json::input::throws_exceeded()
 		"Maximum recursion depth exceeded"
 	};
 }
-
-namespace ircd { namespace json
-__attribute__((visibility("default")))
-{
-	// this stub needed for clang
-}}
 
 ///////////////////////////////////////////////////////////////////////////////
 //
