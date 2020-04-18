@@ -78,6 +78,7 @@ __attribute__((visibility("hidden")))
 	using qi::hold;
 	using qi::eoi;
 	using qi::eps;
+	using qi::expect;
 	using qi::attr;
 	using qi::attr_cast;
 	using qi::repeat;
