@@ -9,16 +9,6 @@ AM_CXXFLAGS = \
 	@EXTRA_CXXFLAGS@ \
 	###
 
-if GCC
-AM_CXXFLAGS += -ftls-model=local-dynamic
-endif
-
-if DEBUG
-if GCC
-AM_CXXFLAGS += -fmax-errors=3
-endif
-endif
-
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-include ircd/matrix.pic.h \
@@ -40,6 +30,16 @@ AM_LDFLAGS = \
 AM_LIBS = \
 	-lircd \
 	###
+
+if GCC
+AM_CXXFLAGS += -ftls-model=local-dynamic
+endif
+
+if DEBUG
+if GCC
+AM_CXXFLAGS += -fmax-errors=3
+endif
+endif
 
 if MINGW
 AM_LDFLAGS += \
