@@ -142,7 +142,7 @@ ircd::json::input
 	// container
 	const rule<string_view> name
 	{
-		string
+		string.alias()
 		,"name"
 	};
 
@@ -300,7 +300,7 @@ ircd::json::output
 
 	rule<string_view> name
 	{
-		string
+		string.alias()
 		,"name"
 	};
 
