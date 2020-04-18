@@ -7,6 +7,6 @@ RUN apt-get update \
    && apt-get install --no-install-recommends -y software-properties-common \
    && add-apt-repository ppa:jonathonf/gcc-9.2 \
    && apt-get update \
-   && apt-get install --no-install-recommends -y g++- gcc-9 \
+   && apt-get install --no-install-recommends -y g++-9 gcc-9 \
    && apt-get clean -y \
    && rm -rf /var/lib/apt/lists/*
