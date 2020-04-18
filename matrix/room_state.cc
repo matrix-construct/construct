@@ -284,9 +284,10 @@ bool
 ircd::m::room::state::has(const string_view &type)
 const
 {
-	return for_each(type, event::id::closure_bool{[](const m::event::id &)
+	return !for_each(type, []
+	(const string_view &, const string_view &, const event::idx &)
 	{
-		return true;
+		return false;
 	}});
 }
 
