@@ -104,7 +104,10 @@ struct ircd::m::matrix
 
 	std::string module_path
 	{
-		fs::path_string(fs::base::LIB, "libircd_matrix")
+		fs::path_string(fs::path_views
+		{
+			fs::base::lib, "libircd_matrix"
+		})
 	};
 
 	ircd::module module

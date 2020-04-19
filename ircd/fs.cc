@@ -282,16 +282,6 @@ ircd::fs::support::dump_info()
 	{
 		log, "Current working directory: `%s'", cwd(buf)
 	};
-
-	for_each<base>([](const base &base)
-	{
-		log::debug
-		{
-			log, "Working %s is `%s'",
-			basepath::get(base).name,
-			basepath::get(base).path,
-		};
-	});
 	#endif
 }
 

@@ -81,19 +81,20 @@ ircd::m::dbs::init::init(const string_view &servername,
                          std::string dbopts)
 :our_dbpath
 {
-	ircd::string(fs::PATH_MAX_LEN | SHRINK_TO_FIT, [&servername]
-	(const mutable_buffer &buf)
+	fs::path_string(fs::path_views
 	{
-		return fs::path(buf, fs::base::DB, servername);
+		fs::base::db, servername
 	})
 }
 ,their_dbpath
 {
-	// NOTE that this is a global change that leaks outside of ircd::m. The
-	// database directory for the entire process is being changed here.
-	fs::basepath::set(fs::base::DB, our_dbpath)
+	fs::base::db
 }
 {
+	// NOTE that this is a global change that leaks outside of ircd::m. The
+	// database directory for the entire process is being changed here.
+	fs::base::db.set(our_dbpath);
+
 	// Recall the db directory init manually with the now-updated basepath
 	db::init::directory();
 
@@ -138,7 +139,7 @@ noexcept
 	events = {};
 
 	// restore the fs::base::DB path the way we found it.
-	fs::basepath::set(fs::base::DB, their_dbpath);
+	fs::base::db.set(their_dbpath);
 }
 
 //
