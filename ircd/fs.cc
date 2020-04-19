@@ -40,16 +40,19 @@ ircd::fs::log
 namespace ircd::fs
 {
 	extern conf::item<ulong> rlimit_nofile;
-	static void init_rlimit_nofile();
+	static void update_rlimit_nofile();
 	static void init_dump_info();
 }
 
 decltype(ircd::fs::rlimit_nofile)
 ircd::fs::rlimit_nofile
 {
-	{ "name",      "ircd.fs.rlimit.nofile"  },
-	{ "default",   65535L                   },
-	{ "persist",   false                    },
+	{
+		{ "name",      "ircd.fs.rlimit.nofile"  },
+		{ "default",   65535L                   },
+		{ "persist",   false                    },
+	},
+	update_rlimit_nofile
 };
 
 //
@@ -58,7 +61,6 @@ ircd::fs::rlimit_nofile
 
 ircd::fs::init::init()
 {
-	init_rlimit_nofile();
 	init_dump_info();
 }
 
@@ -94,7 +96,7 @@ ircd::fs::init_dump_info()
 
 #if defined(HAVE_SYS_RESOURCE_H) && defined(RLIMIT_NOFILE)
 void
-ircd::fs::init_rlimit_nofile()
+ircd::fs::update_rlimit_nofile()
 try
 {
 	rlimit rlim[2] {0};
