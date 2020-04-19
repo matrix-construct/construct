@@ -8,6 +8,143 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
+ircd::m::room::power::revoke::revoke(json::stack::object &out,
+                                     const room::power &power,
+                                     const pair<string_view> &prop_key)
+:boolean{false}
+{
+	bool &ret(*this);
+	const auto replace{[&ret]
+	(json::stack::object &out, const json::object &object, const string_view &sought)
+	{
+		for(const auto &[key, val] : object)
+		{
+			if(key == sought)
+			{
+				ret = true;
+				continue;
+			}
+
+			json::stack::member
+			{
+				out, key, val
+			};
+		}
+	}};
+
+	power.view([&out, &prop_key, &replace]
+	(const json::object &power)
+	{
+		const auto &[revoke_prop, revoke_key]
+		{
+			prop_key
+		};
+
+		if(!revoke_prop)
+		{
+			replace(out, power, revoke_key);
+			return;
+		}
+
+		for(const auto &[key, val] : power)
+		{
+			if(key == revoke_prop)
+			{
+				json::stack::object prop
+				{
+					out, key
+				};
+
+				replace(prop, val, revoke_key);
+				continue;
+			}
+
+			json::stack::member
+			{
+				out, key, val
+			};
+		}
+	});
+}
+
+ircd::m::room::power::grant::grant(json::stack::object &out,
+                                   const room::power &power,
+                                   const pair<string_view> &prop_key,
+                                   const int64_t &level)
+:boolean{false}
+{
+	bool &ret(*this);
+	const auto replace{[&ret, &level]
+	(json::stack::object &out, const json::object &object, const string_view &sought)
+	{
+		for(const auto &[key, val] : object)
+		{
+			if(key == sought)
+			{
+				json::stack::member
+				{
+					out, key, json::value{level}
+				};
+
+				ret = true;
+				continue;
+			}
+			else if(key > sought && !ret) // maintains lexical sorting
+			{
+				json::stack::member
+				{
+					out, sought, json::value{level}
+				};
+
+				ret = true;
+			}
+
+			json::stack::member
+			{
+				out, key, val
+			};
+		}
+	}};
+
+	power.view([&out, &prop_key, &level, &replace]
+	(const json::object &power)
+	{
+		const auto &[grant_prop, grant_key]
+		{
+			prop_key
+		};
+
+		if(!grant_prop)
+		{
+			replace(out, power, grant_key);
+			return;
+		}
+
+		for(const auto &[key, val] : power)
+		{
+			if(key == grant_prop)
+			{
+				json::stack::object prop
+				{
+					out, key
+				};
+
+				replace(prop, val, grant_key);
+				continue;
+			}
+
+			json::stack::member
+			{
+				out, key, val
+			};
+		}
+	});
+}
+
+//
+// room::power
+//
+
 decltype(ircd::m::room::power::default_creator_level)
 ircd::m::room::power::default_creator_level
 {

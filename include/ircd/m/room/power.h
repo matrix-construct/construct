@@ -42,6 +42,8 @@
 ///
 struct ircd::m::room::power
 {
+	struct grant;
+	struct revoke;
 	using closure = std::function<bool (const string_view &, const int64_t &)>;
 
 	static const int64_t default_creator_level;
@@ -103,3 +105,49 @@ struct ircd::m::room::power
 	static json::object compose_content(const mutable_buffer &out, const compose_closure &);
 	static json::object default_content(const mutable_buffer &out, const m::id::user &creator);
 };
+
+struct ircd::m::room::power::grant
+:boolean
+{
+	grant(json::stack::object &, const room::power &, const pair<string_view> &, const int64_t &);
+	grant(json::stack::object &, const room::power &, const m::id::user &, const int64_t &);
+};
+
+struct ircd::m::room::power::revoke
+:boolean
+{
+	revoke(json::stack::object &, const room::power &, const pair<string_view> &);
+	revoke(json::stack::object &, const room::power &, const m::id::user &);
+};
+
+inline
+ircd::m::room::power::revoke::revoke(json::stack::object &out,
+                                     const room::power &power,
+                                     const m::id::user &user_id)
+:revoke
+{
+	out,
+	power,
+	pair<string_view>
+	{
+		"users", user_id
+	},
+}
+{}
+
+inline
+ircd::m::room::power::grant::grant(json::stack::object &out,
+                                   const room::power &power,
+                                   const m::id::user &user_id,
+                                   const int64_t &level)
+:grant
+{
+	out,
+	power,
+	pair<string_view>
+	{
+		"users", user_id
+	},
+	level,
+}
+{}
