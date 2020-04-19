@@ -12,18 +12,15 @@
 
 namespace ircd::magic
 {
-	magic_t cookie;
+	extern const char *const fallback_paths[]
+	extern magic_t cookie;
+	extern int flags;
 
-	// magic_getflags() may not be available; this will supplement for our
-	// tracking of their flags state.
-	int flags{MAGIC_NONE};
-
+	static void version_check();
 	static void throw_on_error(const magic_t &);
 	static void set_flags(const magic_t &, const int &flags);
 	static string_view call(const magic_t &, const int &flags, const mutable_buffer &, const std::function<const char *()> &);
 	static string_view call(const magic_t &, const int &flags, const mutable_buffer &, const const_buffer &);
-
-	static void version_check();
 }
 
 decltype(ircd::magic::version_api)
@@ -38,21 +35,36 @@ ircd::magic::version_abi
 	"magic", info::versions::ABI, ::magic_version()
 };
 
+decltype(ircd::magic::fallback_paths)
+ircd::magic::fallback_paths
+{
+	"/usr/local/share/misc/magic.mgc",
+	"/usr/share/misc/magic.mgc",
+	"/usr/share/file/misc/magic.mgc",
+	nullptr
+};
+
+decltype(ircd::magic::cookie)
+ircd::magic::cookie;
+
+// magic_getflags() may not be available; this will supplement for our
+// tracking of their flags state.
+decltype(ircd::magic::flags)
+ircd::magic::flags
+{
+	MAGIC_NONE
+};
+
+//
+// init
+//
+
 ircd::magic::init::init()
 {
 	version_check();
 
 	if(unlikely(!(cookie = ::magic_open(flags))))
 		throw error{"magic_open() failed"};
-
-	//TODO: conf; TODO: windows
-	static const char *const paths[]
-	{
-		"/usr/local/share/misc/magic.mgc",
-		"/usr/share/misc/magic.mgc",
-		"/usr/share/file/misc/magic.mgc",
-		nullptr
-	};
 
 	for(const char *const *path{paths}; *path; ++path)
 		if(fs::exists(*path))
@@ -71,6 +83,10 @@ noexcept
 {
 	::magic_close(cookie);
 }
+
+//
+// interface
+//
 
 ircd::string_view
 ircd::magic::description(const mutable_buffer &out,
