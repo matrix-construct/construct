@@ -1119,8 +1119,12 @@ dnl
 dnl Installation Layout
 dnl
 
+AC_PREFIX_DEFAULT([/usr])
+AC_PREFIX_PROGRAM([/usr])
+
 PKG_PROG_PKG_CONFIG
 
+AC_SUBST_DIR([prefix])
 if test "$prefix" = "NONE"; then
 	prefix="$ac_default_prefix"
 else
@@ -1130,7 +1134,6 @@ else
 fi
 
 RB_DEFINE_UNQUOTED(PREFIX, ["$prefix"], [Prefix of IRCd install])
-AC_SUBST_DIR([prefix])
 
 dnl
 dnl bindir
@@ -1138,6 +1141,13 @@ dnl
 
 AC_SUBST_DIR([bindir])
 RB_DEFINE_UNQUOTED([BIN_DIR], ["$bindir"], [Directory where binary executables are to be found.])
+
+dnl
+dnl Check for --with-confdir [deprecated, use --sysconfdir instead]
+dnl
+
+AC_SUBST_DIR([sysconfdir])
+RB_DEFINE_UNQUOTED([CONF_DIR], ["$sysconfdir"], [Prefix where config files are installed.])
 
 dnl
 dnl includedir
@@ -1154,26 +1164,66 @@ AC_SUBST_DIR([libdir])
 RB_DEFINE_UNQUOTED([LIB_DIR], ["$libdir"], [Prefix where libs are installed.])
 
 dnl
-dnl localstatedir
+dnl Check for --with-moduledir
 dnl
 
-dnl Avoid name collisions.
-AC_SUBST_DIR([localstatedir])
-RB_DEFINE_UNQUOTED([LOCALSTATE_DIR], ["$localstatedir"], [Prefix where db and logs go.])
+AC_SUBST_DIR([moduledir])
+AC_MSG_CHECKING([whether to modify moduledir])
+AC_ARG_WITH(moduledir, [AC_HELP_STRING([--with-moduledir=DIR], [Directory to install modules.])],
+[
+	AC_MSG_RESULT(yes)
+	moduledir=`echo $withval | sed 's/\/$//'`
+], [
+	AC_MSG_RESULT(no)
+	moduledir="${libdir}/modules/${PACKAGE_TARNAME}"
+])
+
+RB_DEFINE_UNQUOTED([MODULE_DIR], ["$moduledir"], [Prefix where modules are installed.])
 
 dnl
-dnl Check for --with-confdir [deprecated, use --sysconfdir instead]
+dnl datarootdir
 dnl
 
-AC_SUBST_DIR([sysconfdir])
-RB_DEFINE_UNQUOTED([CONF_DIR], ["$sysconfdir"], [Prefix where config files are installed.])
+AC_SUBST_DIR([datarootdir])
+RB_DEFINE_UNQUOTED([DATAROOT_DIR], ["$datarootdir"], [Directory where read-only assets go.])
 
 dnl
 dnl datadir
 dnl
 
 AC_SUBST_DIR([datadir])
-RB_DEFINE_UNQUOTED([DATA_DIR], ["$datadir/${PACKAGE_TARNAME}"], [Directory where read-only assets go.])
+
+if test "x$datarootdir" = "x$datadir"; then
+	datadir="$datarootdir/${PACKAGE_TARNAME}"
+fi
+
+RB_DEFINE_UNQUOTED([DATA_DIR], ["$datadir"], [Directory where read-only assets go.])
+
+dnl
+dnl Check for --with-webappdir
+dnl
+
+AC_MSG_CHECKING([whether to modify webappdir])
+AC_ARG_WITH(webappdir, [AC_HELP_STRING([--with-webappdir=DIR], [Directory to install served assets])],
+[
+	AC_MSG_RESULT(yes)
+	webappdir=`echo $withval | sed 's/\/$//'`
+], [
+	AC_MSG_RESULT(no)
+	webappdir="${datadir}/webapp"
+])
+
+RB_DEFINE_UNQUOTED([WEBAPP_DIR], ["$webappdir"], [Prefix where website assets are served from.])
+AC_SUBST_DIR([webappdir])
+
+
+dnl
+dnl localstatedir
+dnl
+
+dnl Avoid name collisions.
+AC_SUBST_DIR([localstatedir])
+RB_DEFINE_UNQUOTED([LOCALSTATE_DIR], ["$localstatedir"], [Prefix where db and logs go.])
 
 dnl
 dnl Check for --with-dbdir
@@ -1210,38 +1260,12 @@ RB_DEFINE_UNQUOTED([LOG_DIR], ["$logdir"], [Prefix where to write logfiles.])
 AC_SUBST_DIR([logdir])
 
 dnl
-dnl Check for --with-moduledir
+dnl runstatedir
 dnl
 
-AC_MSG_CHECKING([whether to modify moduledir])
-AC_ARG_WITH(moduledir, [AC_HELP_STRING([--with-moduledir=DIR], [Directory to install modules.])],
-[
-	AC_MSG_RESULT(yes)
-	moduledir=`echo $withval | sed 's/\/$//'`
-], [
-	AC_MSG_RESULT(no)
-	moduledir="${libdir}/modules/${PACKAGE_TARNAME}"
-])
-
-RB_DEFINE_UNQUOTED([MODULE_DIR], ["$moduledir"], [Prefix where modules are installed.])
-AC_SUBST_DIR([moduledir])
-
-dnl
-dnl Check for --with-webappdir
-dnl
-
-AC_MSG_CHECKING([whether to modify webappdir])
-AC_ARG_WITH(webappdir, [AC_HELP_STRING([--with-webappdir=DIR], [Directory to install served assets])],
-[
-	AC_MSG_RESULT(yes)
-	webappdir=`echo $withval | sed 's/\/$//'`
-], [
-	AC_MSG_RESULT(no)
-	webappdir="${datadir}/webapp"
-])
-
-RB_DEFINE_UNQUOTED([WEBAPP_DIR], ["$webappdir"], [Prefix where website assets are served from.])
-AC_SUBST_DIR([webappdir])
+AC_SUBST_DIR([runstatedir])
+runstatedir="$runstatedir/${PACKAGE_TARNAME}"
+RB_DEFINE_UNQUOTED([RUN_DIR], ["$runstatedir"], [Prefix where runtime ephemeral files go.])
 
 
 dnl ***************************************************************************
@@ -2213,7 +2237,18 @@ echo "LLVM library support .............. $have_libllvm"
 echo "Linux AIO support ................. $aio"
 echo "Linux io_uring support ............ $io_uring"
 echo "Logging level ..................... $LOG_LEVEL"
-echo "Installing into ................... $prefix"
+echo "Install Prefix .................... $prefix"
+echo "Binary directory .................. $bindir"
+echo "Config directory .................. $sysconfdir"
+echo "Include directory ................. $includedir"
+echo "Library directory ................. $libdir"
+echo "Modules directory ................. $moduledir"
+echo "Shared dataroot directory ..,...... $datarootdir"
+echo "Shared data directory ..,.......... $datadir"
+echo "Webapp directory .................. $webappdir"
+echo "Runtime state directory ........... $runstatedir"
+echo "Database directory ................ $dbdir"
+echo "Logging directory ................. $logdir"
 echo
 echo "* Ready to build $PACKAGE_NAME"
 echo "* Now run 'make'"
