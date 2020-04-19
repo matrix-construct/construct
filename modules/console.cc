@@ -10952,6 +10952,181 @@ console_cmd__room__power(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__room__power__grant(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "sender", "collection", "key", "level"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::user::id &sender
+	{
+		param.at("sender")
+	};
+
+	string_view collection
+	{
+		param.at("collection")
+	};
+
+	string_view key
+	{
+		param.at("key")
+	};
+
+	const int64_t level
+	{
+		lex_castable<int64_t>(key)?
+			lex_cast<int64_t>(key):
+			param.at<int64_t>("level")
+
+	};
+
+	if(lex_castable<int64_t>(key))
+	{
+		key = collection;
+		if(valid(m::id::USER, collection))
+			collection = "users";
+		else
+			collection = {};
+	}
+
+	const m::room::power power
+	{
+		room_id
+	};
+
+	const unique_mutable_buffer buf
+	{
+		48_KiB
+	};
+
+	json::stack stack{buf};
+	{
+		json::stack::object content
+		{
+			stack
+		};
+
+		m::room::power::grant
+		{
+			content,
+			power,
+			pair<string_view>
+			{
+				collection, key
+			},
+			level
+		};
+	}
+
+	const auto event_id
+	{
+		m::send(room_id, "m.room.power_levels", "", json::object
+		{
+			stack.completed()
+		})
+	};
+
+	out
+	<< sender << ' '
+	<< "granted level " << level << ' '
+	<< "to " << key << ' '
+	<< "in " << collection << ' '
+	<< "with " << event_id << ' '
+	<< std::endl;
+	return true;
+}
+
+bool
+console_cmd__room__power__revoke(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id", "sender", "collection", "key"
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::user::id &sender
+	{
+		param.at("sender")
+	};
+
+	string_view collection
+	{
+		param.at("collection")
+	};
+
+	string_view key
+	{
+		param["key"]
+	};
+
+	if(!key)
+	{
+		key = collection;
+		if(valid(m::id::USER, collection))
+			collection = "users";
+		else
+			collection = {};
+	}
+
+	const m::room::power power
+	{
+		room_id
+	};
+
+	const unique_mutable_buffer buf
+	{
+		48_KiB
+	};
+
+	json::stack stack{buf};
+	{
+		json::stack::object content
+		{
+			stack
+		};
+
+		m::room::power::revoke
+		{
+			content,
+			power,
+			pair<string_view>
+			{
+				collection, key
+			},
+		};
+	}
+
+	const auto event_id
+	{
+		m::send(room_id, sender, "m.room.power_levels", "", json::object
+		{
+			stack.completed()
+		})
+	};
+
+	out
+	<< sender << ' '
+	<< "revoked power "
+	<< "from " << key << ' '
+	<< "in " << collection << ' '
+	<< "by " << event_id << ' '
+	<< std::endl;
+	return true;
+}
+
 //
 // user
 //
