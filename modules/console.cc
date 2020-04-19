@@ -10898,6 +10898,60 @@ console_cmd__room__restrap(opt &out, const string_view &line)
 	return true;
 }
 
+bool
+console_cmd__room__power(opt &out, const string_view &line)
+{
+	const params param{line, " ",
+	{
+		"room_id",
+	}};
+
+	const auto &room_id
+	{
+		m::room_id(param.at("room_id"))
+	};
+
+	const m::room::power power
+	{
+		room_id
+	};
+
+	power.for_each([&out]
+	(const auto &key, const auto &level)
+	{
+		out
+		<< std::left << std::setw(16) << ' '
+		<< " "
+		<< std::right << std::setw(8) << level
+		<< "  : "
+		<< std::left << key
+		<< std::endl;
+		return true;
+	});
+
+	out << std::endl;
+	power.for_each_collection([&out, &power]
+	(const auto &collection, const auto &level)
+	{
+		power.for_each(collection, [&out, &collection]
+		(const auto &key, const auto &level)
+		{
+			out
+			<< std::left << std::setw(16) << collection
+			<< " "
+			<< std::right << std::setw(8) << level
+			<< "  : "
+			<< std::left << key
+			<< std::endl;
+			return true;
+		});
+
+		return true;
+	});
+
+	return true;
+}
+
 //
 // user
 //
