@@ -63,11 +63,16 @@ struct ircd::m::room::power
 	// Iterates all of the integer levels, excludes the collections.
 	bool for_each(const closure &) const;
 
+	// Iterates the names of all collections, the integer arg may be undefined.
+	bool for_each_collection(const closure &) const;
+
+	// Existential queries
 	bool has_level(const string_view &prop) const;
 	bool has_collection(const string_view &prop) const;
 	bool has_event(const string_view &type) const;
 	bool has_user(const m::id::user &) const;
 
+	// Summations
 	size_t count(const string_view &prop) const;
 	size_t count_collections() const;
 	size_t count_levels() const;

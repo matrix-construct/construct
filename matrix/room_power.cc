@@ -518,6 +518,31 @@ const
 }
 
 bool
+ircd::m::room::power::for_each_collection(const closure &closure)
+const
+{
+	bool ret{true};
+	view([&closure, &ret]
+	(const json::object &content)
+	{
+		for(const auto &[key_, val] : content)
+		{
+			if(json::type(val) != json::OBJECT)
+				continue;
+
+			const json::string &key{key_};
+			if(!closure(key, std::numeric_limits<int64_t>::min()))
+			{
+				ret = false;
+				break;
+			}
+		}
+	});
+
+	return ret;
+}
+
+bool
 ircd::m::room::power::for_each(const closure &closure)
 const
 {
