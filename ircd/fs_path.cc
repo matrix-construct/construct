@@ -60,6 +60,139 @@ ircd::fs::name_scratch
 	_name_scratch
 };
 
+/// e.g. / default=RB_PREFIX
+/// env=ircd_fs_base_prefix
+decltype(ircd::fs::base::prefix)
+ircd::fs::base::prefix
+{
+	{
+		{ "name",        "ircd.fs.base.prefix"       },
+		{ "default",     RB_PREFIX                   },
+		{ "help",        "directory prefix"          },
+	},
+	nullptr
+};
+
+/// e.g. /usr/bin default=RB_BIN_DIR
+/// env=ircd_fs_base_bin
+decltype(ircd::fs::base::bin)
+ircd::fs::base::bin
+{
+	{
+		{ "name",        "ircd.fs.base.bin"          },
+		{ "default",     RB_BIN_DIR                  },
+		{ "help",        "binary directory"          },
+	},
+	nullptr
+};
+
+/// e.g. /etc default=RB_CONF_DIR
+/// env=$ircd_fs_base_etc env=$CONFIGURATION_DIRECTORY
+decltype(ircd::fs::base::etc)
+ircd::fs::base::etc
+{
+	{
+		{ "name",        "ircd.fs.base.etc"          },
+		{ "default",     RB_CONF_DIR                 },
+		{ "help",        "configuration directory"   },
+	}, []
+	{
+		string_view env;
+		if((env = getenv("CONFIGURATION_DIRECTORY")))
+			etc._value = env;
+	}
+};
+
+/// e.g. /usr/lib default=RB_LIB_DIR
+/// env=$ircd_fs_base_lib
+decltype(ircd::fs::base::lib)
+ircd::fs::base::lib
+{
+	{
+		{ "name",        "ircd.fs.base.lib"          },
+		{ "default",     RB_LIB_DIR                  },
+		{ "help",        "library directory"         },
+	},
+	nullptr
+};
+
+/// e.g. /usr/lib/modules/construct default=RB_MODULE_DIR
+/// env=$ircd_fs_base_modules
+decltype(ircd::fs::base::modules)
+ircd::fs::base::modules
+{
+	{
+		{ "name",        "ircd.fs.base.modules"      },
+		{ "default",     RB_MODULE_DIR               },
+		{ "help",        "modules directory"         },
+	},
+	nullptr
+};
+
+/// e.g. /usr/share/construct default=RB_DATA_DIR
+/// env=$ircd_fs_base_share
+decltype(ircd::fs::base::share)
+ircd::fs::base::share
+{
+	{
+		{ "name",        "ircd.fs.base.share"        },
+		{ "default",     RB_DATA_DIR                 },
+		{ "help",        "read-only data directory"  },
+	},
+	nullptr
+};
+
+/// e.g. /var/run/construct default=RB_RUN_DIR
+/// env=$ircd_fs_base_run env=$RUNTIME_DIRECTORY
+decltype(ircd::fs::base::run)
+ircd::fs::base::run
+{
+	{
+		{ "name",        "ircd.fs.base.run"          },
+		{ "default",     RB_RUN_DIR                  },
+		{ "help",        "runtime directory"         },
+	}, []
+	{
+		string_view env;
+		if((env = getenv("RUNTIME_DIRECTORY")))
+			run._value = env;
+	}
+};
+
+/// e.g. /var/log/construct default=RB_LOG_DIR
+/// env=$ircd_fs_base_log env=$LOGS_DIRECTORY
+decltype(ircd::fs::base::log)
+ircd::fs::base::log
+{
+	{
+		{ "name",        "ircd.fs.base.log"          },
+		{ "default",     RB_LOG_DIR                  },
+		{ "help",        "logging directory"         },
+	}, []
+	{
+		string_view env;
+		if((env = getenv("LOGS_DIRECTORY")))
+			log._value = env;
+	}
+};
+
+/// e.g. /var/db/construct default=RB_DB_DIR
+/// env=$ircd_fs_base_db env=$STATE_DIRECTORY
+decltype(ircd::fs::base::db)
+ircd::fs::base::db
+{
+	{
+		{ "name",        "ircd.fs.base.db"           },
+		{ "default",     RB_DB_DIR                   },
+		{ "help",        "database directory"        },
+	}, []
+	{
+		string_view env;
+		if((env = getenv("STATE_DIRECTORY")))
+			db._value = env;
+	}
+};
+
 std::string
 ircd::fs::cwd()
 try
@@ -225,30 +358,6 @@ ircd::fs::path(const mutable_buffer &buf,
 	return strlcpy(buf, _path(list).c_str());
 }
 
-ircd::string_view
-ircd::fs::path(const mutable_buffer &buf,
-               const base &base,
-               const string_view &rest)
-{
-	const auto p
-	{
-		_path(std::initializer_list<const string_view>
-		{
-			path(base),
-			rest,
-		})
-	};
-
-	return strlcpy(buf, p.c_str());
-}
-
-ircd::string_view
-ircd::fs::path(const base &base)
-noexcept
-{
-	return basepath::get(base).path;
-}
-
 //
 // fs::_path()
 //
@@ -303,51 +412,4 @@ try
 catch(const filesystem::filesystem_error &e)
 {
 	throw error{e};
-}
-
-//
-// fs::basepath
-//
-
-namespace ircd::fs
-{
-	extern std::array<basepath, num_of<base>()> basepaths;
-}
-
-decltype(ircd::fs::basepaths)
-ircd::fs::basepaths
-{{
-	{ "installation prefix",      RB_PREFIX      },
-	{ "binary directory",         RB_BIN_DIR     },
-	{ "configuration directory",  RB_CONF_DIR    },
-	{ "data directory",           RB_DATA_DIR    },
-	{ "database directory",       RB_DB_DIR      },
-	{ "log directory",            RB_LOG_DIR     },
-	{ "library directory",        RB_LIB_DIR     },
-	{ "module directory",         RB_MODULE_DIR  },
-}};
-
-ircd::string_view
-ircd::fs::basepath::set(const base &base,
-                        const string_view &path)
-{
-	log::debug
-	{
-		log, "Updating base path #%u '%s' from `%s' to `%s'",
-		uint(base),
-		basepaths.at(uint(base)).name,
-		basepaths.at(uint(base)).path,
-		path,
-	};
-
-	const string_view ret(basepaths.at(uint(base)).path);
-	basepaths.at(uint(base)).path = path;
-	return ret;
-}
-
-const ircd::fs::basepath &
-ircd::fs::basepath::get(const base &base)
-noexcept
-{
-	return basepaths.at(uint(base));
 }

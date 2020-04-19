@@ -166,7 +166,7 @@ try
 {
 	const auto dbdir
 	{
-		fs::path(fs::base::DB)
+		fs::path(fs::base::db)
 	};
 
 	if(!fs::is_dir(dbdir) && (ircd::read_only || ircd::write_avoid))

@@ -19,8 +19,6 @@ namespace boost::filesystem
 
 namespace ircd::fs
 {
-	enum class base :uint;
-	struct basepath;
 	using path_views = vector_view<const string_view>;
 	using path_strings = vector_view<const std::string>;
 
@@ -36,8 +34,6 @@ namespace ircd::fs
 	filesystem::path _path(const path_views &);
 	filesystem::path _path(const path_strings &);
 
-	string_view path(const base &) noexcept;
-	string_view path(const mutable_buffer &, const base &, const string_view &);
 	string_view path(const mutable_buffer &, const path_views &);
 	string_view path(const mutable_buffer &, const path_strings &);
 	string_view path(const mutable_buffer &, const filesystem::path &);
@@ -62,37 +58,24 @@ namespace ircd::fs
 	std::string cwd();
 }
 
-/// A compile-time installation base-path. We have several of these in an
-/// internal array accessible with get(enum base) or make_path(enum base).
-/// These can still be modified at runtime by setting a new platform-dependent
-/// string with set(enum base); do so with care.
-struct ircd::fs::basepath
+/// Configuration items storing the base paths used at runtime for program
+/// operation. The defaults are generated at ./configure time and obtained
+/// from macros in config.h. As conf items, these values may be overriden by
+/// environment variables and may be updated by conf loads from the database.
+///
+namespace ircd::fs::base
 {
-	string_view name;
-	string_view path;
-
-	static const basepath &get(const base &) noexcept;
-	static string_view set(const base &, const string_view &); // (returns old value)
-};
-
-/// Index of default paths. Must be aligned with the internal array in fs.cc.
-/// Note that even though the PREFIX is accessible here, custom installations
-/// may use entirely different paths for other components; most installations
-/// use the package-target name as a path component.
-enum class ircd::fs::base
-:uint
-{
-	PREFIX,     ///< Installation prefix (from ./configure --prefix)
-	BIN,        ///< Binary directory (e.g. $prefix/bin)
-	CONF,       ///< Configuration directory (e.g. $prefix/etc)
-	DATA,       ///< Read-only data directory (e.g. $prefix/share)
-	DB,         ///< Database directory (e.g. $prefix/var/db)
-	LOG,        ///< Logfile directory (e.g. $prefix/var/log)
-	LIB,        ///< Shared library directory (e.g. $prefix/lib)
-	MODULES,    ///< Modules directory (e.g. $prefix/lib/modules)
-
-	_NUM_
-};
+	extern conf::item<std::string> prefix;      // e.g. /usr
+	extern conf::item<std::string> bin;         // e.g. /usr/bin
+	extern conf::item<std::string> etc;         // e.g. /etc
+	extern conf::item<std::string> include;     // e.g. /usr/include/ircd
+	extern conf::item<std::string> lib;         // e.g. /usr/lib
+	extern conf::item<std::string> modules;     // e.g. /usr/lib/modules/ircd
+	extern conf::item<std::string> share;       // e.g. /usr/share/ircd
+	extern conf::item<std::string> run;         // e.g. /var/run/ircd
+	extern conf::item<std::string> log;         // e.g. /var/log/ircd
+	extern conf::item<std::string> db;          // e.g. /var/db/ircd
+}
 
 template<class... A>
 std::string

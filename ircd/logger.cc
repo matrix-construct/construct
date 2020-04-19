@@ -145,15 +145,10 @@ ircd::log::fini()
 void
 ircd::log::mkdir()
 {
-	const auto &dir
-	{
-		fs::path(fs::base::LOG)
-	};
-
-	if(fs::exists(dir))
+	if(fs::exists(fs::base::log))
 		return;
 
-	fs::mkdir(dir);
+	fs::mkdir(fs::base::log);
 }
 
 //
@@ -228,7 +223,10 @@ catch(const std::exception &e)
 std::string
 ircd::log::file_path(const level &lev)
 {
-	return fs::path_string(fs::base::LOG, reflect(lev));
+	return fs::path_string(fs::path_views
+	{
+		fs::base::log, reflect(lev)
+	});
 }
 
 void
