@@ -407,8 +407,8 @@ const
 	view([&ret]
 	(const json::object &content)
 	{
-		for(const auto &member : content)
-			ret += json::type(member.second) == json::OBJECT;
+		for(const auto &[key, val] : content)
+			ret += json::type(val) == json::OBJECT;
 	});
 
 	return ret;
@@ -572,18 +572,18 @@ const
 
 		for(auto it(begin(collection)); it != end(collection) && ret; ++it)
 		{
-			const auto &member(*it);
-			if(json::type(unquote(member.second)) != json::NUMBER)
+			const auto &[key_, val_] {*it};
+			if(json::type(unquote(val_)) != json::NUMBER)
 				continue;
 
 			const json::string &key
 			{
-				member.first
+				key_
 			};
 
 			const auto &val
 			{
-				lex_cast<int64_t>(member.second)
+				lex_cast<int64_t>(val_)
 			};
 
 			ret = closure(key, val);
