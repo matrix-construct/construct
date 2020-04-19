@@ -352,7 +352,7 @@ try
 		room::power::default_power_level
 	};
 
-	power.for_each("notifications", room::power::closure_bool{[&required_level, &key]
+	power.for_each("notifications", [&required_level, &key]
 	(const auto &name, const auto &level)
 	{
 		if(name == key)
@@ -361,7 +361,7 @@ try
 			return false;
 		}
 		else return true;
-	}});
+	});
 
 	const bool ret
 	{

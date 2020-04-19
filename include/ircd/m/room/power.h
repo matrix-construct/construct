@@ -42,8 +42,7 @@
 ///
 struct ircd::m::room::power
 {
-	using closure = std::function<void (const string_view &, const int64_t &)>;
-	using closure_bool = std::function<bool (const string_view &, const int64_t &)>;
+	using closure = std::function<bool (const string_view &, const int64_t &)>;
 
 	static const int64_t default_creator_level;
 	static const int64_t default_power_level;
@@ -59,12 +58,10 @@ struct ircd::m::room::power
 
   public:
 	// Iterate a collection usually either "events" or "users" as per spec.
-	bool for_each(const string_view &prop, const closure_bool &) const;
-	void for_each(const string_view &prop, const closure &) const;
+	bool for_each(const string_view &prop, const closure &) const;
 
 	// Iterates all of the integer levels, excludes the collections.
-	bool for_each(const closure_bool &) const;
-	void for_each(const closure &) const;
+	bool for_each(const closure &) const;
 
 	bool has_level(const string_view &prop) const;
 	bool has_collection(const string_view &prop) const;

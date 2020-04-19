@@ -186,8 +186,7 @@ ircd::m::auth_room_power_levels(const m::event &event,
 			};
 	}
 
-	using closure = m::room::power::closure_bool;
-	old_power.for_each("users", closure{[&new_power, &current_level]
+	old_power.for_each("users", [&new_power, &current_level]
 	(const string_view &user_id, const int64_t &old_level)
 	{
 		if(new_power.has_user(user_id))
@@ -211,9 +210,9 @@ ircd::m::auth_room_power_levels(const m::event &event,
 			};
 
 		return true;
-	}});
+	});
 
-	new_power.for_each("users", closure{[&old_power, &current_level]
+	new_power.for_each("users", [&old_power, &current_level]
 	(const string_view &user_id, const int64_t &new_level)
 	{
 		if(old_power.has_user(user_id))
@@ -229,9 +228,9 @@ ircd::m::auth_room_power_levels(const m::event &event,
 			};
 
 		return true;
-	}});
+	});
 
-	old_power.for_each("events", closure{[&new_power, &current_level]
+	old_power.for_each("events", [&new_power, &current_level]
 	(const string_view &type, const int64_t &old_level)
 	{
 		if(new_power.has_event(type))
@@ -255,9 +254,9 @@ ircd::m::auth_room_power_levels(const m::event &event,
 			};
 
 		return true;
-	}});
+	});
 
-	new_power.for_each("events", closure{[&old_power, &current_level]
+	new_power.for_each("events", [&old_power, &current_level]
 	(const string_view &type, const int64_t &new_level)
 	{
 		if(old_power.has_event(type))
@@ -273,10 +272,10 @@ ircd::m::auth_room_power_levels(const m::event &event,
 			};
 
 		return true;
-	}});
+	});
 
 	// d. For each entry being changed under the users key...
-	old_power.for_each("users", closure{[&event, &new_power, &current_level]
+	old_power.for_each("users", [&event, &new_power, &current_level]
 	(const string_view &user_id, const int64_t &old_level)
 	{
 		// ...other than the sender's own entry:
@@ -296,7 +295,7 @@ ircd::m::auth_room_power_levels(const m::event &event,
 			};
 
 		return true;
-	}});
+	});
 
 	// e. Otherwise, allow.
 	data.allow = true;

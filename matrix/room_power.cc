@@ -393,6 +393,7 @@ const
 	(const string_view &, const int64_t &)
 	{
 		++ret;
+		return true;
 	});
 
 	return ret;
@@ -422,6 +423,7 @@ const
 	(const string_view &, const int64_t &)
 	{
 		++ret;
+		return true;
 	});
 
 	return ret;
@@ -515,36 +517,16 @@ const
 	return ret;
 }
 
-void
-ircd::m::room::power::for_each(const closure &closure)
-const
-{
-	for_each(string_view{}, closure);
-}
-
 bool
-ircd::m::room::power::for_each(const closure_bool &closure)
+ircd::m::room::power::for_each(const closure &closure)
 const
 {
 	return for_each(string_view{}, closure);
 }
 
-void
-ircd::m::room::power::for_each(const string_view &prop,
-                               const closure &closure)
-const
-{
-	for_each(prop, closure_bool{[&closure]
-	(const string_view &key, const int64_t &level)
-	{
-		closure(key, level);
-		return true;
-	}});
-}
-
 bool
 ircd::m::room::power::for_each(const string_view &prop,
-                               const closure_bool &closure)
+                               const closure &closure)
 const
 {
 	bool ret{true};
