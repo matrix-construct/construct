@@ -47,6 +47,7 @@ struct ircd::m::resource::request
 	pair<string_view> authorization;   // proffering any
 	string_view access_token;          // proffering user
 	m::request::x_matrix x_matrix;     // proferring server
+	pair<string_view> version;         // enumeration
 
 	string_view node_id;               // authenticated server
 	m::user::id user_id;               // authenticated user or bridge pup

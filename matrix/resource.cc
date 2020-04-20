@@ -14,10 +14,11 @@ namespace ircd::m
 	extern conf::item<bool> x_matrix_verify_origin;
 	extern conf::item<bool> x_matrix_verify_destination;
 
+	static void cache_warm_origin(const resource::request &);
+	static pair<string_view> parse_version(const resource::request &);
 	static string_view authenticate_bridge(const resource::method &, const client &, resource::request &);
 	static user::id authenticate_user(const resource::method &, const client &, resource::request &);
 	static string_view authenticate_node(const resource::method &, const client &, resource::request &);
-	static void cache_warm_origin(const resource::request &);
 }
 
 decltype(ircd::m::cache_warmup_time)
@@ -153,6 +154,10 @@ ircd::m::resource::request::request(const method &method,
 	!access_token && iequals(authorization.first, "X-Matrix"_sv)?
 		m::request::x_matrix{authorization.first, authorization.second}:
 		m::request::x_matrix{}
+}
+,version
+{
+	parse_version(*this)
 }
 ,node_id
 {
@@ -388,6 +393,30 @@ catch(const std::exception &e)
 		http::UNAUTHORIZED, "M_UNKNOWN_ERROR",
 		"An error has prevented authorization: %s",
 		e.what()
+	};
+}
+
+ircd::pair<ircd::string_view>
+ircd::m::parse_version(const m::resource::request &request)
+{
+	const auto &user_agent
+	{
+		request.head.user_agent
+	};
+
+	const auto &[primary, info]
+	{
+		split(user_agent, ' ')
+	};
+
+	const auto &[name, version]
+	{
+		split(primary, '/')
+	};
+
+	return
+	{
+		name, version
 	};
 }
 
