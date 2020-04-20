@@ -54,6 +54,26 @@ post__invite(ircd::client &client,
 		request.user_id
 	};
 
+	const json::string &id_server
+	{
+		request["id_server"]
+	};
+
+	const json::string &id_access_token
+	{
+		request["id_access_token"]
+	};
+
+	const json::string &medium
+	{
+		request["medium"]
+	};
+
+	const json::string &address
+	{
+		request["address"]
+	};
+
 	const auto event_id
 	{
 		m::invite(room_id, target, sender)
