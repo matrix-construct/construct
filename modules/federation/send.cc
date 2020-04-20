@@ -37,7 +37,7 @@ conf::item<size_t>
 eval_max_per_node
 {
 	{ "name",     "ircd.federation.send.eval.max_per_node" },
-	{ "default",  1L                                       },
+	{ "default",  4L                                       },
 };
 
 conf::item<bool>
@@ -217,38 +217,37 @@ handle_put(client &client,
 		};
 
 	size_t evals{0};
-	const bool txn_in_progress
+	bool txn_in_progress{false};
+	m::vm::eval::for_each([&txn_id, &request, &evals, &txn_in_progress]
+	(const auto &eval)
 	{
-		!m::vm::eval::for_each([&txn_id, &request, &evals]
-		(const auto &eval)
+		assert(eval.opts);
+		const bool match_node
 		{
-			assert(eval.opts);
-			const bool match_node
-			{
-				eval.opts->node_id == request.node_id
-			};
-
-			const bool match_txn
-			{
-				match_node &&
-				eval.opts->txn_id == txn_id
-			};
-
-			evals += match_node;
-			return !match_txn; // false to break; for_each() returns false
-		})
-	};
-
-	if(txn_in_progress)
-		return m::resource::response
-		{
-			client, http::ACCEPTED
+			eval.opts->node_id == request.node_id
 		};
+
+		const bool match_txn
+		{
+			match_node &&
+			eval.opts->txn_id == txn_id
+		};
+
+		evals += match_node;
+		txn_in_progress |= match_txn;
+		return evals < size_t(eval_max_per_node);
+	});
 
 	if(evals >= size_t(eval_max_per_node))
 		return m::resource::response
 		{
 			client, http::TOO_MANY_REQUESTS
+		};
+
+	if(txn_in_progress)
+		return m::resource::response
+		{
+			client, http::ACCEPTED
 		};
 
 	// Lazy-allocated response buffer; only for error transcription
