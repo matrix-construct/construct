@@ -65,13 +65,12 @@ ircd::fs::name_scratch
 decltype(ircd::fs::base::prefix)
 ircd::fs::base::prefix
 {
-	{
-		{ "name",        "ircd.fs.base.prefix"       },
-		{ "default",     RB_PREFIX                   },
-		{ "persist",     false                       },
-		{ "help",        "directory prefix"          },
+	{ "name",        "ircd.fs.base.prefix"       },
+	{ "persist",     false                       },
+	{ "help",        "directory prefix"          },
+	{ "default",     getenv("IRCD_PREFIX")?:
+	                 RB_PREFIX
 	},
-	nullptr
 };
 
 /// e.g. /usr/bin default=RB_BIN_DIR
@@ -79,13 +78,12 @@ ircd::fs::base::prefix
 decltype(ircd::fs::base::bin)
 ircd::fs::base::bin
 {
-	{
-		{ "name",        "ircd.fs.base.bin"          },
-		{ "default",     RB_BIN_DIR                  },
-		{ "persist",     false                       },
-		{ "help",        "binary directory"          },
+	{ "name",        "ircd.fs.base.bin"          },
+	{ "persist",     false                       },
+	{ "help",        "binary directory"          },
+	{ "default",     getenv("IRCD_BIN_DIR")?:
+	                 RB_BIN_DIR
 	},
-	nullptr
 };
 
 /// e.g. /etc default=RB_CONF_DIR
@@ -93,17 +91,14 @@ ircd::fs::base::bin
 decltype(ircd::fs::base::etc)
 ircd::fs::base::etc
 {
-	{
-		{ "name",        "ircd.fs.base.etc"          },
-		{ "default",     RB_CONF_DIR                 },
-		{ "persist",     false                       },
-		{ "help",        "configuration directory"   },
-	}, []
-	{
-		string_view env;
-		if((env = getenv("CONFIGURATION_DIRECTORY")))
-			etc._value = env;
-	}
+	{ "name",        "ircd.fs.base.etc"          },
+	{ "default",     RB_CONF_DIR                 },
+	{ "persist",     false                       },
+	{ "help",        "configuration directory"   },
+	{ "default",     getenv("CONFIGURATION_DIRECTORY")?:
+	                 getenv("IRCD_CONF_DIR")?:
+	                 RB_CONF_DIR
+	},
 };
 
 /// e.g. /usr/lib default=RB_LIB_DIR
@@ -111,13 +106,12 @@ ircd::fs::base::etc
 decltype(ircd::fs::base::lib)
 ircd::fs::base::lib
 {
-	{
-		{ "name",        "ircd.fs.base.lib"          },
-		{ "default",     RB_LIB_DIR                  },
-		{ "persist",     false                       },
-		{ "help",        "library directory"         },
+	{ "name",        "ircd.fs.base.lib"          },
+	{ "persist",     false                       },
+	{ "help",        "library directory"         },
+	{ "default",      getenv("IRCD_LIB_DIR")?:
+	                  RB_LIB_DIR
 	},
-	nullptr
 };
 
 /// e.g. /usr/lib/modules/construct default=RB_MODULE_DIR
@@ -125,13 +119,12 @@ ircd::fs::base::lib
 decltype(ircd::fs::base::modules)
 ircd::fs::base::modules
 {
-	{
-		{ "name",        "ircd.fs.base.modules"      },
-		{ "default",     RB_MODULE_DIR               },
-		{ "persist",     false                       },
-		{ "help",        "modules directory"         },
+	{ "name",        "ircd.fs.base.modules"      },
+	{ "persist",     false                       },
+	{ "help",        "modules directory"         },
+	{ "default",      getenv("IRCD_MODULE_DIR")?:
+	                  RB_MODULE_DIR
 	},
-	nullptr
 };
 
 /// e.g. /usr/share/construct default=RB_DATA_DIR
@@ -139,13 +132,12 @@ ircd::fs::base::modules
 decltype(ircd::fs::base::share)
 ircd::fs::base::share
 {
-	{
-		{ "name",        "ircd.fs.base.share"        },
-		{ "default",     RB_DATA_DIR                 },
-		{ "persist",     false                       },
-		{ "help",        "read-only data directory"  },
+	{ "name",        "ircd.fs.base.share"        },
+	{ "persist",     false                       },
+	{ "help",        "read-only data directory"  },
+	{ "default",     getenv("IRCD_DATA_DIR")?:
+	                 RB_DATA_DIR
 	},
-	nullptr
 };
 
 /// e.g. /var/run/construct default=RB_RUN_DIR
@@ -153,17 +145,13 @@ ircd::fs::base::share
 decltype(ircd::fs::base::run)
 ircd::fs::base::run
 {
-	{
-		{ "name",        "ircd.fs.base.run"          },
-		{ "default",     RB_RUN_DIR                  },
-		{ "persist",     false                       },
-		{ "help",        "runtime directory"         },
-	}, []
-	{
-		string_view env;
-		if((env = getenv("RUNTIME_DIRECTORY")))
-			run._value = env;
-	}
+	{ "name",        "ircd.fs.base.run"             },
+	{ "persist",     false                          },
+	{ "help",        "runtime directory"            },
+	{ "default",     getenv("RUNTIME_DIRECTORY")?:
+	                 getenv("IRCD_RUN_DIR")?:
+	                 RB_RUN_DIR
+	},
 };
 
 /// e.g. /var/log/construct default=RB_LOG_DIR
@@ -171,17 +159,13 @@ ircd::fs::base::run
 decltype(ircd::fs::base::log)
 ircd::fs::base::log
 {
-	{
-		{ "name",        "ircd.fs.base.log"          },
-		{ "default",     RB_LOG_DIR                  },
-		{ "persist",     false                       },
-		{ "help",        "logging directory"         },
-	}, []
-	{
-		string_view env;
-		if((env = getenv("LOGS_DIRECTORY")))
-			log._value = env;
-	}
+	{ "name",        "ircd.fs.base.log"          },
+	{ "persist",     false                       },
+	{ "help",        "logging directory"         },
+	{ "default",     getenv("LOGS_DIRECTORY")?:
+	                 getenv("IRCD_LOG_DIR")?:
+	                 RB_LOG_DIR
+	},
 };
 
 /// e.g. /var/db/construct default=RB_DB_DIR
@@ -189,17 +173,13 @@ ircd::fs::base::log
 decltype(ircd::fs::base::db)
 ircd::fs::base::db
 {
-	{
-		{ "name",        "ircd.fs.base.db"           },
-		{ "default",     RB_DB_DIR                   },
-		{ "persist",     false                       },
-		{ "help",        "database directory"        },
-	}, []
-	{
-		string_view env;
-		if((env = getenv("STATE_DIRECTORY")))
-			db._value = env;
-	}
+	{ "name",        "ircd.fs.base.db"           },
+	{ "persist",     false                       },
+	{ "help",        "database directory"        },
+	{ "default",     getenv("STATE_DIRECTORY")?:
+	                 getenv("IRCD_DB_DIR")?:
+	                 RB_DB_DIR
+	},
 };
 
 std::string
