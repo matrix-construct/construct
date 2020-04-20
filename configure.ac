@@ -2122,11 +2122,13 @@ dnl
 AC_MSG_CHECKING([whether custom branding is requested])
 AC_ARG_WITH(custom-branding, AC_HELP_STRING([--with-custom-branding=NAME], [Custom branding name.]),
 [
-	AC_DEFINE_UNQUOTED(BRANDING_NAME, ["$withval"], [Custom branding name.])
+	BRANDING_NAME="$withval"
+	AC_DEFINE_UNQUOTED(BRANDING_NAME, ["$BRANDING_NAME"], [Custom branding name.])
 	AC_DEFINE(CUSTOM_BRANDING, 1, [Define if custom branding is enabled.])
 	AC_MSG_RESULT([yes])
 ],[
-	AC_DEFINE_UNQUOTED(BRANDING_NAME, ["$PACKAGE_NAME"], [Current package])
+	BRANDING_NAME="$PACKAGE_NAME"
+	AC_DEFINE_UNQUOTED(BRANDING_NAME, ["$BRANDING_NAME"], [Current package])
 	AC_MSG_RESULT([no])
 ])
 
@@ -2137,10 +2139,12 @@ dnl
 AC_MSG_CHECKING([whether a custom version is requested])
 AC_ARG_WITH(custom-version, AC_HELP_STRING([--with-custom-version=NAME], [Custom version branding.]),
 [
-	AC_DEFINE_UNQUOTED(BRANDING_VERSION, ["$withval"], [Custom branding version.])
+	BRANDING_VERSION="$withval"
+	AC_DEFINE_UNQUOTED(BRANDING_VERSION, ["$BRANDING_VERSION"], [Custom branding version.])
 	AC_MSG_RESULT([yes])
 ], [
-	AC_DEFINE_UNQUOTED(BRANDING_VERSION, ["$RB_VERSION"], [Current version])
+	BRANDING_VERSION="$RB_VERSION"
+	AC_DEFINE_UNQUOTED(BRANDING_VERSION, ["$BRANDING_VERSION"], [Current version])
 	AC_MSG_RESULT([no])
 ])
 
@@ -2200,7 +2204,7 @@ AC_OUTPUT
 dnl Make it look sexay!
 echo
 echo "Configured ........................ $PACKAGE_NAME $PACKAGE_VERSION"
-echo "Version ........................... $RB_VERSION"
+echo "Branding .......................... $BRANDING_NAME $BRANDING_VERSION"
 echo "Configuration time ................ $RB_DATESTR"
 echo "Host OS ........................... $host_os"
 echo "C Compiler ........................ $CC"
