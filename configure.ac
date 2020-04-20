@@ -2097,12 +2097,12 @@ RB_VERSION_BRANCH=`$VERSION_BRANCH_CMD`
 RB_DEFINE_UNQUOTED([VERSION_BRANCH], ["$RB_VERSION_BRANCH"], [Git branch at configuration time.])
 #CPPDEFINE([RB_VERSION_BRANCH], [`$VERSION_BRANCH_CMD`])
 
-VERSION_TAG_CMD="git describe --tags --abbrev=0 --dirty --always"
+VERSION_TAG_CMD="git describe --tags --abbrev=0 --dirty --always --broken"
 RB_VERSION_TAG=`$VERSION_TAG_CMD`
 RB_DEFINE_UNQUOTED([VERSION_TAG], ["$RB_VERSION_TAG"], [Git tag at configuration time.])
 #CPPDEFINE([RB_VERSION_TAG], [`$VERSION_TAG_CMD`])
 
-VERSION_CMD="git describe --tags --always"
+VERSION_CMD="git describe --tags --always --broken"
 RB_VERSION=`$VERSION_CMD`
 RB_DEFINE_UNQUOTED([VERSION], ["$RB_VERSION"], [Version generated at configuration time.])
 
