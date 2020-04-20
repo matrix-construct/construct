@@ -93,7 +93,7 @@ method_post__unstable
 {
 	claim_resource__unstable, "POST", post__keys_claim,
 	{
-		method_post.REQUIRES_AUTH
+		method_post__unstable.REQUIRES_AUTH
 	}
 };
 
