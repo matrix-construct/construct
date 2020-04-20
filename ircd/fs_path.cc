@@ -68,6 +68,7 @@ ircd::fs::base::prefix
 	{
 		{ "name",        "ircd.fs.base.prefix"       },
 		{ "default",     RB_PREFIX                   },
+		{ "persist",     false                       },
 		{ "help",        "directory prefix"          },
 	},
 	nullptr
@@ -81,6 +82,7 @@ ircd::fs::base::bin
 	{
 		{ "name",        "ircd.fs.base.bin"          },
 		{ "default",     RB_BIN_DIR                  },
+		{ "persist",     false                       },
 		{ "help",        "binary directory"          },
 	},
 	nullptr
@@ -94,6 +96,7 @@ ircd::fs::base::etc
 	{
 		{ "name",        "ircd.fs.base.etc"          },
 		{ "default",     RB_CONF_DIR                 },
+		{ "persist",     false                       },
 		{ "help",        "configuration directory"   },
 	}, []
 	{
@@ -111,6 +114,7 @@ ircd::fs::base::lib
 	{
 		{ "name",        "ircd.fs.base.lib"          },
 		{ "default",     RB_LIB_DIR                  },
+		{ "persist",     false                       },
 		{ "help",        "library directory"         },
 	},
 	nullptr
@@ -124,6 +128,7 @@ ircd::fs::base::modules
 	{
 		{ "name",        "ircd.fs.base.modules"      },
 		{ "default",     RB_MODULE_DIR               },
+		{ "persist",     false                       },
 		{ "help",        "modules directory"         },
 	},
 	nullptr
@@ -137,6 +142,7 @@ ircd::fs::base::share
 	{
 		{ "name",        "ircd.fs.base.share"        },
 		{ "default",     RB_DATA_DIR                 },
+		{ "persist",     false                       },
 		{ "help",        "read-only data directory"  },
 	},
 	nullptr
@@ -150,6 +156,7 @@ ircd::fs::base::run
 	{
 		{ "name",        "ircd.fs.base.run"          },
 		{ "default",     RB_RUN_DIR                  },
+		{ "persist",     false                       },
 		{ "help",        "runtime directory"         },
 	}, []
 	{
@@ -167,6 +174,7 @@ ircd::fs::base::log
 	{
 		{ "name",        "ircd.fs.base.log"          },
 		{ "default",     RB_LOG_DIR                  },
+		{ "persist",     false                       },
 		{ "help",        "logging directory"         },
 	}, []
 	{
@@ -184,6 +192,7 @@ ircd::fs::base::db
 	{
 		{ "name",        "ircd.fs.base.db"           },
 		{ "default",     RB_DB_DIR                   },
+		{ "persist",     false                       },
 		{ "help",        "database directory"        },
 	}, []
 	{
