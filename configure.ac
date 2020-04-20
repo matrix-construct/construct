@@ -1410,6 +1410,15 @@ AC_HELP_STRING([--with-magic-libs=[[[DIR]]]], [Path to magic library directory])
 	MAGIC_LDFLAGS="-L$withval"
 ], [])
 
+AC_ARG_WITH(magic-file,
+AC_HELP_STRING([--with-magic-file=[[[FILE]]]], [Path to magic database file]),
+[
+	MAGIC_FILE="$withval"
+	RB_DEFINE_UNQUOTED([MAGIC_FILE], ["$MAGIC_FILE"], [Magic file path])
+], [
+	RB_DEFINE_UNQUOTED([MAGIC_FILE], [""], [Magic file path])
+])
+
 RB_CHK_SYSHEADER(magic.h, [MAGIC_H])
 AC_CHECK_LIB(magic, magic_version,
 [

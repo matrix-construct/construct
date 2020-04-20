@@ -38,8 +38,13 @@ ircd::magic::version_abi
 decltype(ircd::magic::file_path)
 ircd::magic::file_path
 {
-	{ "name",    "ircd.magic.file" },
-	{ "default",  getenv("MAGIC")  },
+	{ "name",     "ircd.magic.file" },
+	{
+		"default",
+		getenv("MAGIC")?
+			getenv("MAGIC"):
+			RB_MAGIC_FILE
+	},
 };
 
 decltype(ircd::magic::fallback_paths)
