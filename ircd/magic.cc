@@ -12,7 +12,7 @@
 
 namespace ircd::magic
 {
-	extern const char *const fallback_paths[]
+	extern const char *const fallback_paths[];
 	extern magic_t cookie;
 	extern int flags;
 
@@ -33,6 +33,13 @@ decltype(ircd::magic::version_abi)
 ircd::magic::version_abi
 {
 	"magic", info::versions::ABI, ::magic_version()
+};
+
+decltype(ircd::magic::file_path)
+ircd::magic::file_path
+{
+	{ "name",    "ircd.magic.file" },
+	{ "default",  getenv("MAGIC")  },
 };
 
 decltype(ircd::magic::fallback_paths)
@@ -61,16 +68,32 @@ ircd::magic::flags
 
 ircd::magic::init::init()
 {
+	const auto load
+	{
+		[](const string_view &path)
+		{
+			return !empty(path)
+			&& fs::exists(path)
+			&& magic_check(cookie, fs::path_cstr(path)) == 0
+			&& magic_load(cookie, fs::path_cstr(path)) == 0
+			;
+		}
+	};
+
 	version_check();
-
 	if(unlikely(!(cookie = ::magic_open(flags))))
-		throw error{"magic_open() failed"};
+		throw error
+		{
+			"magic_open() failed"
+		};
 
-	for(const char *const *path{paths}; *path; ++path)
-		if(fs::exists(*path))
-			if(magic_check(cookie, *path) == 0)
-				if(magic_load(cookie, *path) == 0)
-					return;
+	// Try the conf item first
+	if(load(string_view(file_path)))
+		return;
+
+	for(const char *const *path{fallback_paths}; *path; ++path)
+		if(load(*path))
+			return;
 
 	throw error
 	{
