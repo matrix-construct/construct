@@ -751,26 +751,8 @@ ircd::info::dump_exe_info()
 	};
 }
 
-decltype(ircd::info::server_agent)
-ircd::info::server_agent
-{
-	BRANDING_NAME " (IRCd " BRANDING_VERSION ")"
-};
-
-decltype(ircd::info::user_agent)
-ircd::info::user_agent
-{
-	BRANDING_NAME " (IRCd " BRANDING_VERSION ")"
-};
-
-decltype(ircd::info::version)
-ircd::info::version
-{
-	RB_VERSION
-};
-
-decltype(ircd::info::name)
-ircd::info::name
+extern "C" const char *const
+ircd_name
 {
 	PACKAGE_NAME
 };
@@ -778,13 +760,38 @@ ircd::info::name
 extern "C" const char *const
 ircd_version
 {
-	RB_VERSION
+	PACKAGE_VERSION
 };
 
-extern "C" const char *const
-ircd_name
+decltype(ircd::info::name)
+ircd::info::name
 {
-	PACKAGE_NAME
+	BRANDING_NAME
+};
+
+decltype(ircd::info::version)
+ircd::info::version
+{
+	BRANDING_VERSION
+};
+
+decltype(ircd::info::server_agent)
+ircd::info::server_agent
+{
+	BRANDING_NAME "/" BRANDING_VERSION
+
+	" (IRCd "
+	#ifdef RB_VERSION_BRANCH
+	"b=" RB_VERSION_BRANCH ","
+	#endif
+	RB_VERSION_COMMIT
+	")"
+};
+
+decltype(ircd::info::user_agent)
+ircd::info::user_agent
+{
+	server_agent
 };
 
 decltype(ircd::info::startup_time)
