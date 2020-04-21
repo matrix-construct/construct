@@ -13697,7 +13697,13 @@ console_cmd__fed__state(opt &out, const string_view &line)
 	vmopts.nothrows = -1;
 	vmopts.fetch_state = false;
 	vmopts.fetch_prev = false;
-	m::vm::eval eval
+
+	m::vm::eval
+	{
+		auth_chain, vmopts
+	};
+
+	m::vm::eval
 	{
 		pdus, vmopts
 	};
