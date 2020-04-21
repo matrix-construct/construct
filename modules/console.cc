@@ -1711,7 +1711,11 @@ console_cmd__conf__list(opt &out, const string_view &line)
 		param.at("prefix", string_view{})
 	};
 
-	thread_local char val[4_KiB];
+	const unique_mutable_buffer val
+	{
+		4_KiB
+	};
+
 	for(const auto &[key, item_p] : conf::items)
 	{
 		if(prefix && !startswith(key, prefix))
@@ -1772,7 +1776,11 @@ console_cmd__conf__get(opt &out, const string_view &line)
 		param.at(0)
 	};
 
-	thread_local char val[4_KiB];
+	const unique_mutable_buffer val
+	{
+		4_KiB
+	};
+
 	for(const auto &item : conf::items)
 	{
 		if(item.first != key)
