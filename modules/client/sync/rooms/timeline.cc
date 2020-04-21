@@ -111,19 +111,30 @@ ircd::m::sync::room_timeline_linear(data &data)
 
 	const bool is_own_join
 	{
-		is_own_membership && data.membership == "join"
+		is_own_membership
+		&& data.membership == "join"
+	};
+
+	const auto last_membership_state_idx
+	{
+		is_own_join?
+			m::room::state::prev(data.event_idx):
+			0UL
+	};
+
+	const bool is_own_rejoin
+	{
+		last_membership_state_idx?
+			m::membership(last_membership_state_idx, "join"):
+			false
 	};
 
 	// Branch to backfill the user's timeline before their own join event to
 	// the room. This simply reuses the polylog handler as if they were
-	// initial-syncing the room.
-	if(is_own_join)
+	// initial-syncing the room. This branch is not taken for rejoins (i.e
+	// displayname and avatar changes).
+	if(is_own_join && !is_own_rejoin)
 	{
-		const auto last_membership_state_idx
-		{
-			m::room::state::prev(data.event_idx)
-		};
-
 		const scope_restore range_first
 		{
 			data.range.first, last_membership_state_idx
