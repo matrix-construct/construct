@@ -89,8 +89,17 @@ noexcept try
 	out.exceptions(out.badbit | out.failbit | out.eofbit);
 
 	out << "<pre>";
-	static const string_view opts{"html"};
-	command(out, body, opts);
+	static const string_view opts{"html"}; try
+	{
+		command(out, body, opts);
+	}
+	catch(const std::exception &e)
+	{
+		const ctx::exception_handler eh;
+		notice(control_room, e.what());
+		return;
+	}
+
 	out << "</pre>";
 
 	std::string str
