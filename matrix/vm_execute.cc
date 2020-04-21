@@ -617,19 +617,37 @@ ircd::m::vm::execute_pdu(eval &eval,
 	{
 		sequence::dock.wait([&eval]
 		{
-			return eval::seqnext(sequence::retired) == &eval;
+			return eval::seqnext(sequence::retired) == std::addressof(eval);
 		});
+
+		const auto highest
+		{
+			std::max(eval.sequence_shared[1], sequence::get(eval))
+		};
+
+		const auto retire
+		{
+			std::clamp
+			(
+				sequence::get(eval),
+				sequence::retired + 1,
+				highest
+			)
+		};
 
 		log::debug
 		{
-			log, "%s | retire %lu:%lu",
+			log, "%s | retire %lu:%lu release %lu",
 			loghead(eval),
 			sequence::get(eval),
-			eval.sequence_shared[1],
+			retire,
+			highest,
 		};
 
+		assert(sequence::get(eval) <= retire);
 		assert(sequence::retired < sequence::get(eval));
-		sequence::retired = std::max(eval.sequence_shared[1], sequence::get(eval));
+		assert(sequence::retired < retire);
+		sequence::retired = retire;
 	}
 
 	return fault::ACCEPT;
