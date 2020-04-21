@@ -135,9 +135,16 @@ ircd::m::sync::room_timeline_linear(data &data)
 	// displayname and avatar changes).
 	if(is_own_join && !is_own_rejoin)
 	{
-		const scope_restore range_first
+		const event::idx range_first
 		{
-			data.range.first, last_membership_state_idx
+			last_membership_state_idx?
+				last_membership_state_idx + 1: // start after last state
+				last_membership_state_idx      // 0 (full initial sync).
+		};
+
+		const scope_restore data_range_first
+		{
+			data.range.first, range_first
 		};
 
 		bool ret{false}, limited{false};
