@@ -313,6 +313,11 @@ try
 		*eval.opts
 	};
 
+	const scope_restore eval_sequence
+	{
+		eval.sequence, 0UL
+	};
+
 	// The issue hook is only called when this server is injecting a newly
 	// created event.
 	if(eval.copts && eval.copts->issue)
@@ -535,7 +540,6 @@ ircd::m::vm::execute_pdu(eval &eval,
 	const auto *const &top(eval::seqmax());
 	eval.sequence_shared[0] = 0;
 	eval.sequence_shared[1] = 0;
-	eval.sequence = 0;
 	eval.sequence =
 	{
 		top?
