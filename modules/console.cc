@@ -1773,7 +1773,7 @@ console_cmd__conf__get(opt &out, const string_view &line)
 
 	const auto &key
 	{
-		param.at(0)
+		param.at("key")
 	};
 
 	const unique_mutable_buffer val
@@ -1781,15 +1781,13 @@ console_cmd__conf__get(opt &out, const string_view &line)
 		4_KiB
 	};
 
-	for(const auto &item : conf::items)
+	for(const auto &[_key, item_p] : conf::items)
 	{
-		if(item.first != key)
+		if(_key != key)
 			continue;
 
-		out << std::setw(48) << std::right << item.first
-		    << " = " << item.second->get(val)
-		    << std::endl;
-
+		assert(item_p);
+		out << item_p->get(val) << std::endl;
 		return true;
 	}
 
