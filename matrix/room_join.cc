@@ -8,11 +8,6 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-namespace ircd::m
-{
-	static bool need_bootstrap(const room::id &);
-}
-
 ircd::m::event::id::buf
 ircd::m::join(const room::alias &room_alias,
               const user::id &user_id)
@@ -28,7 +23,7 @@ ircd::m::join(const room::alias &room_alias,
 		m::room_id(room_alias)
 	};
 
-	if(need_bootstrap(room_id))
+	if(room::bootstrap::required(room_id))
 	{
 		m::event::id::buf ret;
 		m::room::bootstrap
@@ -58,7 +53,7 @@ ircd::m::join(const m::room &room,
 		};
 
 	// Branch for when nothing is known about the room.
-	if(need_bootstrap(room))
+	if(room::bootstrap::required(room))
 	{
 		// The bootstrap condcts a blocking make_join and issues a join
 		// event, returning the event_id; afterward asynchronously it will
@@ -139,25 +134,4 @@ ircd::m::join(const m::room &room,
 	};
 
 	return commit(room, event, content);
-}
-
-bool
-ircd::m::need_bootstrap(const room::id &room_id)
-{
-	// No bootstrap for my rooms
-	//TODO: issue for clustering
-	if(my(room_id))
-		return false;
-
-	// We have nothing for the room
-	if(!exists(room_id))
-		return true;
-
-	// No users are currently joined from this server;
-	//TODO: bootstrap shouldn't have to be used to re-sync a room where we have
-	//TODO: some partial state, so this condition should be eliminated.
-	if(local_joined(room_id) == 0)
-		return true;
-
-	return false;
 }

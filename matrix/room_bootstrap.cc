@@ -797,3 +797,24 @@ catch(const std::exception &e)
 	// bootstrap process.
 	throw;
 }
+
+bool
+ircd::m::room::bootstrap::required(const id &room_id)
+{
+	// No bootstrap for my rooms
+	//TODO: issue for clustering
+	if(my(room_id))
+		return false;
+
+	// We have nothing for the room
+	 if(!exists(room_id))
+		return true;
+
+	// No users are currently joined from this server;
+	//TODO: bootstrap shouldn't have to be used to re-sync a room where we have
+	//TODO: some partial state, so this condition should be eliminated.
+	if(local_joined(room_id) == 0)
+		return true;
+
+	return false;
+}

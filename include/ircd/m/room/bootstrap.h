@@ -21,4 +21,6 @@ struct ircd::m::room::bootstrap
 
 	// synchronous make_join, eval; asynchronous send_join
 	bootstrap(event::id::buf &, const room::id &, const m::id::user &, const string_view &host);
+
+	static bool required(const id &);
 };
