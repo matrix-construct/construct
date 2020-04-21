@@ -35,22 +35,22 @@ ircd::m::init::backfill::log
 decltype(ircd::m::init::backfill::enable)
 ircd::m::init::backfill::enable
 {
-	{ "name",     "m.init.backfill.enable" },
-	{ "default",  true                     },
+	{ "name",     "ircd.m.init.backfill.enable" },
+	{ "default",  true                          },
 };
 
 decltype(ircd::m::init::backfill::pool_size)
 ircd::m::init::backfill::pool_size
 {
-	{ "name",     "m.init.backfill.pool_size" },
-	{ "default",  12L                         },
+	{ "name",     "ircd.m.init.backfill.pool_size" },
+	{ "default",  12L                              },
 };
 
 decltype(ircd::m::init::backfill::local_joined_only)
 ircd::m::init::backfill::local_joined_only
 {
-	{ "name",     "m.init.backfill.local_joined_only" },
-	{ "default",  true                                },
+	{ "name",     "ircd.m.init.backfill.local_joined_only" },
+	{ "default",  true                                     },
 };
 
 decltype(ircd::m::init::backfill::worker_context)
@@ -571,15 +571,15 @@ catch(const std::exception &e)
 decltype(ircd::m::init::backfill::gossip_enable)
 ircd::m::init::backfill::gossip_enable
 {
-	{ "name",     "m.init.backfill.gossip.enable" },
-	{ "default",  true                            },
+	{ "name",     "ircd.m.init.backfill.gossip.enable" },
+	{ "default",  true                                 },
 };
 
 decltype(ircd::m::init::backfill::gossip_timeout)
 ircd::m::init::backfill::gossip_timeout
 {
-	{ "name",     "m.init.backfill.gossip.timeout" },
-	{ "default",  5L                               },
+	{ "name",     "ircd.m.init.backfill.gossip.timeout" },
+	{ "default",  5L                                    },
 };
 
 /// Initial gossip protocol works by sending the remote server some events which
