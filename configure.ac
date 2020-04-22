@@ -2021,13 +2021,19 @@ AC_HELP_STRING([--with-llvm-libs=[[[DIR]]]], [Path to libllvm library directory]
 	LLVM_LDFLAGS="-L/usr/lib/llvm-9/lib"
 ])
 
-AC_CHECK_LIB([LLVM], [LLVMBuildAnd],
+PKG_CHECK_MODULES(LLVM, [LLVM],
 [
 	have_libllvm="yes"
 	LLVM_LIBS="-lLLVM"
 ], [
-	have_libllvm="no"
-	AC_MSG_WARN([Unable to find LLVM compiler infrastructure library on this system.])
+	AC_CHECK_LIB([LLVM], [LLVMBuildAnd],
+	[
+		have_libllvm="yes"
+		LLVM_LIBS="-lLLVM"
+	], [
+		have_libllvm="no"
+		AC_MSG_WARN([Unable to find LLVM compiler infrastructure library on this system.])
+	])
 ])
 
 AM_CONDITIONAL([LLVM], [test "x$have_libllvm" = "xyes" ])
