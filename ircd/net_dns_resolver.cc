@@ -695,7 +695,7 @@ try
 	if(!handle_error(header, tag))
 		throw rfc1035::error
 		{
-			"protocol error #%u :%s",
+			"protocol #%u :%s",
 			header.rcode,
 			rfc1035::rcode.at(header.rcode)
 		};
