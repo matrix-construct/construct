@@ -129,10 +129,11 @@ ircd::log::init()
 		console_disable(level::DWARNING);
 	}
 
-	if(ircd::write_avoid)
+	if(ircd::write_avoid && !ircd::debugmode)
 		return;
 
 	mkdir();
+	open();
 }
 
 void
@@ -145,10 +146,8 @@ ircd::log::fini()
 void
 ircd::log::mkdir()
 {
-	if(fs::exists(fs::base::log))
-		return;
-
-	fs::mkdir(fs::base::log);
+	if(!fs::exists(fs::base::log))
+		fs::mkdir(fs::base::log);
 }
 
 //
@@ -160,13 +159,6 @@ ircd::log::open()
 {
 	for_each<level>([](const level &lev)
 	{
-		if(lev > RB_LOG_LEVEL)
-			return;
-
-		const auto &conf(confs.at(lev));
-		if(!bool(conf.file_enable))
-			return;
-
 		if(file[lev].is_open())
 			file[lev].close();
 
@@ -181,9 +173,6 @@ ircd::log::close()
 {
 	for_each<level>([](const level &lev)
 	{
-		if(lev > RB_LOG_LEVEL)
-			return;
-
 		if(file[lev].is_open())
 			file[lev].close();
 	});
@@ -194,9 +183,6 @@ ircd::log::flush()
 {
 	for_each<level>([](const level &lev)
 	{
-		if(lev > RB_LOG_LEVEL)
-			return;
-
 		file[lev].flush();
 	});
 
@@ -660,7 +646,8 @@ noexcept
 
 	const bool copy_to_file
 	{
-		file[lev].is_open()
+		bool(conf.file_enable)
+		&& file[lev].is_open()
 		&& (log.fmasked || lev == level::CRITICAL)
 	};
 
