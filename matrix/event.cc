@@ -447,13 +447,13 @@ ircd::m::verify(const event &event,
                 const string_view &keyid)
 try
 {
-	const m::node node
+	const m::node::keys node_keys
 	{
 		origin
 	};
 
 	bool ret{false};
-	node.key(keyid, [&ret, &event, &origin, &keyid]
+	node_keys.get(keyid, [&ret, &event, &origin, &keyid]
 	(const ed25519::pk &pk)
 	{
 		ret = verify(event, pk, origin, keyid);

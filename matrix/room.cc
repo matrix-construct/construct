@@ -383,13 +383,20 @@ ircd::m::room_id(const mutable_buffer &out,
 		case id::USER:
 		{
 			const m::user::room user_room(mxid);
-			return string_view{data(out), copy(out, user_room.room_id)};
+			return string_view
+			{
+				data(out), copy(out, user_room.room_id)
+			};
 		}
 
 		case id::NODE:
 		{
 			const m::node node(lstrip(mxid, ':'));
-			return node.room_id(out);
+			const m::node::room node_room(node);
+			return string_view
+			{
+				data(out), copy(out, node_room.room_id)
+			};
 		}
 
 		case id::EVENT:

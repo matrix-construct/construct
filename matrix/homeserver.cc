@@ -832,14 +832,9 @@ try
 		origin(homeserver)
 	};
 
-	const m::room::id::buf node_room_id
+	const m::node::room node_room
 	{
-		my_node.room_id()
-	};
-
-	const m::room node_room
-	{
-		node_room_id
+		my_node
 	};
 
 	if(!exists(node_room))

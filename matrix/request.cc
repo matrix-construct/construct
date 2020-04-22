@@ -230,13 +230,13 @@ const
 		json::at<"origin"_>(*this)
 	};
 
-	const m::node node
+	const m::node::keys node_keys
 	{
 		origin
 	};
 
 	bool verified{false};
-	node.key(key, [this, &verified, &sig]
+	node_keys.get(key, [this, &verified, &sig]
 	(const ed25519::pk &pk)
 	{
 		verified = verify(pk, sig);
