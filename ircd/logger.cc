@@ -886,13 +886,13 @@ ircd::log::confs
 		// file enable
 		{
 			{ "name",     "ircd.log.critical.file.enable" },
-			{ "default",  false                           },
+			{ "default",  true                            },
 		},
 
 		// file flush
 		{
 			{ "name",     "ircd.log.critical.file.flush" },
-			{ "default",  false                          },
+			{ "default",  true                           },
 		},
 
 		// console enable on stdout
@@ -919,13 +919,13 @@ ircd::log::confs
 		// file enable
 		{
 			{ "name",     "ircd.log.error.file.enable" },
-			{ "default",  false                        },
+			{ "default",  true                         },
 		},
 
 		// file flush
 		{
 			{ "name",     "ircd.log.error.file.flush" },
-			{ "default",  false                       },
+			{ "default",  true                        },
 		},
 
 		// console enable on stdout
@@ -952,7 +952,7 @@ ircd::log::confs
 		// file enable
 		{
 			{ "name",     "ircd.log.warning.file.enable" },
-			{ "default",  false                          },
+			{ "default",  true                           },
 		},
 
 		// file flush
@@ -985,13 +985,13 @@ ircd::log::confs
 		// file enable
 		{
 			{ "name",     "ircd.log.notice.file.enable" },
-			{ "default",  false                         },
+			{ "default",  true                          },
 		},
 
 		// file flush
 		{
 			{ "name",     "ircd.log.notice.file.flush" },
-			{ "default",  false                        },
+			{ "default",  true                         },
 		},
 
 		// console enable on stdout
@@ -1051,7 +1051,7 @@ ircd::log::confs
 		// file enable
 		{
 			{ "name",     "ircd.log.derror.file.enable" },
-			{ "default",  false                         },
+			{ "default",  ircd::debugmode               },
 		},
 
 		// file flush
@@ -1084,7 +1084,7 @@ ircd::log::confs
 		// file enable
 		{
 			{ "name",     "ircd.log.dwarning.file.enable" },
-			{ "default",  false                           },
+			{ "default",  ircd::debugmode                 },
 		},
 
 		// file flush
@@ -1117,7 +1117,7 @@ ircd::log::confs
 		// file enable
 		{
 			{ "name",     "ircd.log.debug.file.enable" },
-			{ "default",  false                        },
+			{ "default",  ircd::debugmode              },
 		},
 
 		// file flush
