@@ -13,6 +13,8 @@
 
 struct ircd::m::room::bootstrap
 {
+	static bool required(const id &);
+
 	// restrap: synchronous; send_join
 	bootstrap(const event &, const string_view &host, const string_view &room_version = {});
 
@@ -20,7 +22,5 @@ struct ircd::m::room::bootstrap
 	bootstrap(const event::id &, const string_view &host, const string_view &room_version = {});
 
 	// synchronous make_join, eval; asynchronous send_join
-	bootstrap(event::id::buf &, const room::id &, const m::id::user &, const string_view &host);
-
-	static bool required(const id &);
+	bootstrap(event::id::buf &, const room::id &, const m::id::user &, const vector_view<const string_view> &hosts);
 };

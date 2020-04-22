@@ -85,16 +85,8 @@ ircd::m::bootstrap::make_join_timeout
 ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
                                     const m::room::id &room_id,
                                     const m::user::id &user_id,
-                                    const string_view &host)
+                                    const vector_view<const string_view> &hosts)
 {
-	log::info
-	{
-		log, "Starting in %s for %s to '%s'",
-		string_view{room_id},
-		string_view{user_id},
-		host
-	};
-
 	const auto member_event_idx
 	{
 		m::room(room_id).get(std::nothrow, "m.room.member", user_id)
@@ -110,6 +102,25 @@ ircd::m::room::bootstrap::bootstrap(m::event::id::buf &event_id_buf,
 	{
 		m::version(room_version_buf, room_id, std::nothrow)
 	};
+
+	//TODO: try more hosts?
+	const auto &host
+	{
+		hosts.empty()?
+			room_id.host():
+			hosts[0]
+	};
+
+	log::info
+	{
+		log, "Starting in %s for %s to '%s' joined:%b ver:%s",
+		string_view{room_id},
+		string_view{user_id},
+		host,
+		existing_join,
+		room_version,
+	};
+
 
 	if(existing_join)
 		event_id_buf = m::event_id(std::nothrow, member_event_idx);

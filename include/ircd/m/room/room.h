@@ -83,7 +83,7 @@ namespace ircd::m
 	event::id::buf invite(const room &, const id::user &target, const id::user &sender, json::iov &add_content);
 	event::id::buf invite(const room &, const id::user &target, const id::user &sender);
 	event::id::buf leave(const room &, const id::user &);
-	event::id::buf join(const room &, const id::user &);
+	event::id::buf join(const room &, const id::user &, const vector_view<const string_view> &remotes = {});
 	event::id::buf join(const id::room_alias &, const id::user &);
 
 	// [SET] Create new room

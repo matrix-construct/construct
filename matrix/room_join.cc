@@ -25,10 +25,18 @@ ircd::m::join(const room::alias &room_alias,
 
 	if(room::bootstrap::required(room_id))
 	{
+		const auto &remote
+		{
+			room_alias.host()
+		};
+
 		m::event::id::buf ret;
 		m::room::bootstrap
 		{
-			ret, room_id, user_id, room_alias.host()
+			ret,
+			room_id,
+			user_id,
+			{ &remote, 1 },
 		};
 
 		return ret;
@@ -44,7 +52,8 @@ ircd::m::join(const room::alias &room_alias,
 
 ircd::m::event::id::buf
 ircd::m::join(const m::room &room,
-              const m::id::user &user_id)
+              const m::id::user &user_id,
+              const vector_view<const string_view> &remotes)
 {
 	if(unlikely(!my(user_id)))
 		throw panic
@@ -61,7 +70,10 @@ ircd::m::join(const m::room &room,
 		m::event::id::buf ret;
 		m::room::bootstrap
 		{
-			ret, room.room_id, user_id, room.room_id.host() //TODO: host
+			ret,
+			room.room_id,
+			user_id,
+			remotes,
 		};
 
 		return ret;
