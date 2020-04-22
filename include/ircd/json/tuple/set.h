@@ -198,7 +198,9 @@ set(tuple<T...> &t,
 
 		case type::NUMBER:
 		{
-			if(value.floats)
+			if(value.serial)
+				set(t, key, string_view{value});
+			else if(value.floats)
 				set(t, key, value.floating);
 			else
 				set(t, key, value.integer);
