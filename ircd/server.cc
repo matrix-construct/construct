@@ -217,6 +217,25 @@ ircd::server::errclear(const net::hostport &hostport)
 }
 
 bool
+ircd::server::avail(const net::hostport &hostport)
+noexcept
+{
+	const auto hostcanon
+	{
+		server::canonize(hostport)
+	};
+
+	const auto it
+	{
+		peers.find(hostcanon)
+	};
+
+	return it != end(peers)?
+		!it->second->err_has():
+		false;
+}
+
+bool
 ircd::server::errant(const net::hostport &hostport)
 noexcept
 {
