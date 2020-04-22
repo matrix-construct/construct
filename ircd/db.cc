@@ -2949,6 +2949,8 @@ noexcept
 	{
 		ignore?
 			log::level::DERROR:
+		status->severity() == rocksdb::Status::kFatalError?
+			log::level::CRITICAL:
 			log::level::ERROR
 	};
 
