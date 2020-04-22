@@ -154,6 +154,9 @@ struct ircd::http::query::string
 	string_view at(const string_view &key, const size_t &idx = 0) const;
 	template<class T> T at(const string_view &key, const size_t &idx = 0) const;
 
+	vector_view<string_view> array(const mutable_buffer &, const string_view &key, string_view *const &, const size_t &) const;
+	template<size_t MAX> vector_view<string_view> array(const mutable_buffer &, const string_view &key, string_view (&)[MAX]) const;
+
 	size_t count(const string_view &key) const;
 	bool has(const string_view &key) const;
 
@@ -360,6 +363,16 @@ enum ircd::http::code
 	CLOUDFLARE_UNREACHABLE                  = 523,
 	CLOUDFLARE_REQUEST_TIMEOUT              = 524,
 };
+
+template<size_t MAX>
+inline ircd::vector_view<ircd::string_view>
+ircd::http::query::string::array(const mutable_buffer &buf,
+                                 const string_view &key,
+                                 string_view (&out)[MAX])
+const
+{
+	return array(buf, key, out, MAX);
+}
 
 template<class T>
 T

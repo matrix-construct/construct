@@ -869,6 +869,40 @@ const
 	return ret;
 }
 
+ircd::vector_view<ircd::string_view>
+ircd::http::query::string::array(const mutable_buffer &buf,
+                                 const string_view &key,
+                                 string_view *const &out,
+                                 const size_t &max)
+const
+{
+	if(unlikely(!max))
+		return {};
+
+	size_t ret(0);
+	window_buffer wb(buf);
+	for_each(key, [&out, &max, &ret, &wb]
+	(const auto &query)
+	{
+		wb([&out, &max, &ret, &query]
+		(const mutable_buffer &buf)
+		{
+			assert(ret < max);
+			const auto &[_, server_name] {query};
+			out[ret] = url::decode(buf, server_name);
+			return out[ret];
+		});
+
+		return ++ret < max;
+	});
+
+	return vector_view<string_view>
+	{
+		out, ret
+	};
+}
+
+
 ircd::string_view
 ircd::http::query::string::at(const string_view &key,
                               const size_t &idx)
