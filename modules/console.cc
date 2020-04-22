@@ -688,6 +688,13 @@ console_cmd__mark(opt &out, const string_view &line)
 	return console_cmd__log__mark(out, line);
 }
 
+bool
+console_cmd__log__flush(opt &out, const string_view &line)
+{
+	log::flush();
+	return true;
+}
+
 //
 // info
 //
