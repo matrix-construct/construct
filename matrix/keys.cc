@@ -204,7 +204,7 @@ ircd::m::keys_query_timeout
 	{ "default",  20000L                    }
 };
 
-void
+bool
 ircd::m::keys::query(const string_view &query_server,
                      const queries &queries,
                      const closure_bool &closure)
@@ -232,6 +232,7 @@ try
 		request
 	};
 
+	bool ret(false);
 	for(const json::object &key : response) try
 	{
 		verify(m::keys{key});
@@ -239,6 +240,7 @@ try
 			continue;
 
 		cache::set(key);
+		ret |= true;
 	}
 	catch(const std::exception &e)
 	{
@@ -250,6 +252,8 @@ try
 			e.what()
 		};
 	}
+
+	return ret;
 }
 catch(const ctx::timeout &e)
 {
@@ -290,14 +294,14 @@ ircd::m::keys::fetch(const queries &queries)
 	return ret;
 }
 
-void
+bool
 ircd::m::keys::get(const string_view &server_name,
                    const closure &closure)
 {
 	return get(server_name, string_view{}, closure);
 }
 
-void
+bool
 ircd::m::keys::get(const string_view &server_name,
                    const string_view &key_id,
                    const closure &closure)
@@ -305,7 +309,7 @@ try
 {
 	assert(!server_name.empty());
 	if(cache::get(server_name, key_id, closure))
-		return;
+		return true;
 
 	if(server_name == my_host())
 		throw m::NOT_FOUND
@@ -365,8 +369,10 @@ try
 
 		cache::set(keys);
 		closure(keys);
-		break;
+		return true;
 	}
+
+	return false;
 }
 catch(const ctx::timeout &e)
 {

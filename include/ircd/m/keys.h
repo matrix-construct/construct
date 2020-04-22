@@ -60,9 +60,9 @@ struct ircd::m::keys
 	using closure_bool = std::function<bool (const json::object &)>;
 
 	static bool get(const queries &, const closure_bool &);
-	static void get(const string_view &server_name, const closure &);
-	static void get(const string_view &server_name, const string_view &key_id, const closure &);
-	static void query(const string_view &query_server, const queries &, const closure_bool &);
+	static bool get(const string_view &server_name, const closure &);
+	static bool get(const string_view &server_name, const string_view &key_id, const closure &);
+	static bool query(const string_view &query_server, const queries &, const closure_bool &);
 	static size_t fetch(const queries &);
 
 	using super_type::tuple;
