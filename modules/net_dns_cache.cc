@@ -86,7 +86,7 @@ ircd::net::dns::cache::put(const hostport &hp,
 		make_type(type_buf, opts.qtype)
 	};
 
-	char state_key_buf[rfc1035::NAME_BUFSIZE * 2];
+	char state_key_buf[m::event::STATE_KEY_MAX_SIZE];
 	const string_view &state_key
 	{
 		opts.qtype == 33?
@@ -114,7 +114,7 @@ ircd::net::dns::cache::put(const hostport &hp,
 		make_type(type_buf, type_code)
 	};
 
-	char state_key_buf[rfc1035::NAME_BUFSIZE * 2];
+	char state_key_buf[m::event::STATE_KEY_MAX_SIZE];
 	const string_view &state_key
 	{
 		opts.qtype == 33?
