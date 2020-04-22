@@ -459,9 +459,6 @@ struct ircd::log::error
 struct ircd::log::critical
 {
 	template<class... args>
-	#if !defined(RB_ASSERT)
-	[[noreturn]]
-	#endif
 	critical(const log &log, const string_view &fmt, args&&... a)
 	{
 		vlog(log, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
@@ -473,9 +470,6 @@ struct ircd::log::critical
 	}
 
 	template<class... args>
-	#if !defined(RB_ASSERT)
-	[[noreturn]]
-	#endif
 	critical(const string_view &fmt, args&&... a)
 	{
 		vlog(general, level::CRITICAL, fmt, va_rtti{std::forward<args>(a)...});
