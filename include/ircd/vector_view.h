@@ -116,6 +116,11 @@ struct ircd::vector_view
 	:vector_view(array.data(), array.size())
 	{}
 
+	// Required for reasonable implicit const conversion of value_type.
+	vector_view(const vector_view<typename std::remove_const<value_type>::type> &v)
+	:vector_view(v.data(), v.size())
+	{}
+
 	vector_view() = default;
 };
 
