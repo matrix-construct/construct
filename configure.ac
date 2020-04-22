@@ -2010,7 +2010,7 @@ AC_HELP_STRING([--with-llvm-includes=[[[DIR]]]], [Path to libllvm include direct
 [
 	LLVM_CPPFLAGS="-isystem $withval"
 ], [
-	LLVM_CPPFLAGS="-isystem /usr/include/llvm-9"
+	LLVM_CPPFLAGS="-isystem /usr/lib/llvm-9/include"
 ])
 
 AC_ARG_WITH(llvm-libs,
