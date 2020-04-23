@@ -127,6 +127,7 @@ libircd_matrix_la_SOURCES += user_rooms.cc
 libircd_matrix_la_SOURCES += user_tokens.cc
 libircd_matrix_la_SOURCES += bridge.cc
 libircd_matrix_la_SOURCES += breadcrumb_rooms.cc
+libircd_matrix_la_SOURCES += burst.cc
 libircd_matrix_la_SOURCES += display_name.cc
 libircd_matrix_la_SOURCES += event_append.cc
 libircd_matrix_la_SOURCES += event_horizon.cc

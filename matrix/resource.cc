@@ -10,23 +10,14 @@
 
 namespace ircd::m
 {
-	extern conf::item<seconds> cache_warmup_time;
 	extern conf::item<bool> x_matrix_verify_origin;
 	extern conf::item<bool> x_matrix_verify_destination;
 
-	static void cache_warm_origin(const resource::request &);
 	static pair<string_view> parse_version(const resource::request &);
 	static string_view authenticate_bridge(const resource::method &, const client &, resource::request &);
 	static user::id authenticate_user(const resource::method &, const client &, resource::request &);
 	static string_view authenticate_node(const resource::method &, const client &, resource::request &);
 }
-
-decltype(ircd::m::cache_warmup_time)
-ircd::m::cache_warmup_time
-{
-	{ "name",     "ircd.m.cache_warmup_time" },
-	{ "default",  3600L                      },
-};
 
 decltype(ircd::m::x_matrix_verify_origin)
 ircd::m::x_matrix_verify_origin
@@ -79,14 +70,15 @@ try
 		*this, client, request_
 	};
 
-	if(request.node_id)
+	// If we have an error cached from previously not being able to
+	// contact this origin we can clear that now that they're alive.
+	if(request.node_id && server::errclear(fed::matrix_service(request.node_id)))
 	{
-		// If we have an error cached from previously not being able to
-		// contact this origin we can clear that now that they're alive.
-		server::errclear(fed::matrix_service(request.node_id));
-
-		// The origin was verified so we can invoke the cache warming now.
-		cache_warm_origin(request);
+		m::burst::opts opts;
+		m::burst::burst
+		{
+			request.node_id, opts
+		};
 	}
 
 	return function(client, request);
@@ -417,35 +409,5 @@ ircd::m::parse_version(const m::resource::request &request)
 	return
 	{
 		name, version
-	};
-}
-
-/// We can smoothly warmup some memory caches after daemon startup as the
-/// requests trickle in from remote servers. This function is invoked after
-/// a remote contacts and reveals its identity with the X-Matrix verification.
-///
-/// This process helps us avoid cold caches for the first requests coming from
-/// our server. Such requests are often parallel requests, for ex. to hundreds
-/// of servers in a Matrix room at the same time.
-///
-/// This function does nothing after the cache warmup period has ended.
-void
-ircd::m::cache_warm_origin(const resource::request &request)
-try
-{
-	assert(request.node_id);
-	if(ircd::uptime() > seconds(cache_warmup_time))
-		return;
-
-	// Make a query through SRV and A records.
-	//net::dns::resolve(origin, net::dns::prefetch_ipport);
-}
-catch(const std::exception &e)
-{
-	log::derror
-	{
-		resource::log, "Cache warming for '%s' :%s",
-		request.node_id,
-		e.what()
 	};
 }

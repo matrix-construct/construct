@@ -1,0 +1,34 @@
+// The Construct
+//
+// Copyright (C) The Construct Developers, Authors & Contributors
+// Copyright (C) 2016-2020 Jason Volk <jason@zemos.net>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice is present in all copies. The
+// full license for this software is available in the LICENSE file.
+
+#pragma once
+#define HAVE_IRCD_M_BURST_H
+
+namespace ircd::m::burst
+{
+	struct opts;
+	struct burst;
+
+	extern log::log log;
+};
+
+struct ircd::m::burst::burst
+{
+	burst(const m::node &, const opts &);
+};
+
+struct ircd::m::burst::opts
+{
+	/// Enable gossip on netburst
+	bool gossip {true};
+
+	/// Enable cache warming feature on netburst
+	bool cache_warming {true};
+};

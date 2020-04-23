@@ -95,6 +95,7 @@ namespace ircd
 #include "media.h"
 #include "search.h"
 #include "gossip.h"
+#include "burst.h"
 #include "resource.h"
 #include "homeserver.h"
 
