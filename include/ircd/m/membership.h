@@ -37,6 +37,7 @@ namespace ircd::m
 	// is equal to any of the strings (including the non-membership empty
 	// string described above) these functions return true. An empty vector is
 	// also a non-membership query.
+	bool membership(const event &, const vector_view<const string_view> &);
 	bool membership(const event::idx &, const vector_view<const string_view> &);
 	bool membership(const room &, const id::user &, const vector_view<const string_view> &);
 

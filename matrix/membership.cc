@@ -82,6 +82,18 @@ ircd::m::membership(const event::idx &event_idx,
 	return false;
 }
 
+bool
+ircd::m::membership(const m::event &event,
+                    const vector_view<const string_view> &membership)
+{
+	const auto it
+	{
+		std::find(begin(membership), end(membership), m::membership(event))
+	};
+
+	return it != end(membership);
+}
+
 ircd::string_view
 ircd::m::membership(const mutable_buffer &out,
                     const room &room,
