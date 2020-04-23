@@ -719,9 +719,13 @@ ircd::server::peer::cancel()
 bool
 ircd::server::peer::err_clear()
 {
-	const auto ret{bool(e)};
+	const bool ret(e);
 	e.reset(nullptr);
-	op_fini = false;
+
+	// only clear the fini flag if we're in runlevel run
+	const bool fini(ircd::run::level != ircd::run::level::RUN);
+	op_fini = false | fini;
+
 	return ret;
 }
 
