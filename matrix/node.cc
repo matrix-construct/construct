@@ -146,3 +146,53 @@ const
 		closure(key);
 	});
 }
+
+//
+// node::mitsein
+//
+
+bool
+ircd::m::node::mitsein::has(const m::node &other,
+                            const string_view &membership)
+const
+{
+	return !for_each(other, membership, []
+	(const auto &, const auto &)
+	{
+		return false;
+	});
+}
+
+size_t
+ircd::m::node::mitsein::count(const m::node &other,
+                              const string_view &membership)
+const
+{
+	size_t ret(0);
+	for_each(other, membership, [&ret]
+	(const auto &, const auto &)
+	{
+		++ret;
+		return true;
+	});
+
+	return ret;
+}
+
+bool
+ircd::m::node::mitsein::for_each(const m::node &other,
+                                 const closure &closure)
+const
+{
+	return for_each(other, string_view{}, closure);
+}
+
+bool
+ircd::m::node::mitsein::for_each(const m::node &other,
+                                 const string_view &membership,
+                                 const closure &closure)
+const
+{
+	always_assert(0);
+	return true;
+}

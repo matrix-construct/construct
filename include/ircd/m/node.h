@@ -38,6 +38,7 @@ struct ircd::m::node
 {
 	struct room;
 	struct keys;
+	struct mitsein;
 
 	string_view node_id;
 
@@ -73,6 +74,29 @@ struct ircd::m::node::keys
 	bool get(const string_view &key_id, const key_closure &) const;
 
 	keys(const m::node &node)
+	:node{node}
+	{}
+};
+
+/// Interface to the other nodes visible to a node from common rooms.
+struct ircd::m::node::mitsein
+{
+	using closure = std::function<bool (const string_view &, const m::room &)>;
+
+	m::node node;
+
+  public:
+	// All common rooms with node
+	bool for_each(const m::node &, const string_view &membership, const closure &) const;
+	bool for_each(const m::node &, const closure &) const;
+
+	// Counting convenience
+	size_t count(const m::node &, const string_view &membership = {}) const;
+
+	// Existential convenience (does `node` and `other` share any common room).
+	bool has(const m::node &other, const string_view &membership = {}) const;
+
+	mitsein(const m::node &node)
 	:node{node}
 	{}
 };
