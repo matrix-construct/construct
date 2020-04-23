@@ -12,7 +12,7 @@ namespace ircd::m::init::backfill
 {
 	extern conf::item<bool> gossip_enable;
 	extern conf::item<seconds> gossip_timeout;
-	size_t gossip(const room::id &, const event::id &, const string_view &remote);
+	void gossip(const room::id &, const event::id &, const string_view &remote);
 
 	bool handle_event(const room::id &, const event::id &, const string_view &hint, const bool &ask_one);
 	void handle_missing(const room::id &);
@@ -51,6 +51,20 @@ ircd::m::init::backfill::local_joined_only
 {
 	{ "name",     "ircd.m.init.backfill.local_joined_only" },
 	{ "default",  true                                     },
+};
+
+decltype(ircd::m::init::backfill::gossip_enable)
+ircd::m::init::backfill::gossip_enable
+{
+	{ "name",     "ircd.m.init.backfill.gossip.enable" },
+	{ "default",  true                                 },
+};
+
+decltype(ircd::m::init::backfill::gossip_timeout)
+ircd::m::init::backfill::gossip_timeout
+{
+	{ "name",     "ircd.m.init.backfill.gossip.timeout" },
+	{ "default",  5L                                    },
 };
 
 decltype(ircd::m::init::backfill::worker_context)
@@ -568,138 +582,17 @@ catch(const std::exception &e)
 	return false;
 }
 
-decltype(ircd::m::init::backfill::gossip_enable)
-ircd::m::init::backfill::gossip_enable
-{
-	{ "name",     "ircd.m.init.backfill.gossip.enable" },
-	{ "default",  true                                 },
-};
-
-decltype(ircd::m::init::backfill::gossip_timeout)
-ircd::m::init::backfill::gossip_timeout
-{
-	{ "name",     "ircd.m.init.backfill.gossip.timeout" },
-	{ "default",  5L                                    },
-};
-
-/// Initial gossip protocol works by sending the remote server some events which
-/// reference an event contained in the remote's head which we just obtained.
-/// This is part of a family of active measures taken to reduce forward
-/// extremities on other servers but without polluting the chain with
-/// permanent data for this purpose such as with org.matrix.dummy_event.
-size_t
+void
 ircd::m::init::backfill::gossip(const room::id &room_id,
                                 const event::id &event_id,
                                 const string_view &remote)
 {
-	size_t ret{0};
-	const m::event::refs refs
-	{
-		m::index(std::nothrow, event_id)
-	};
-
-	static const size_t max{48};
-	const size_t count
-	{
-		std::min(refs.count(dbs::ref::NEXT), max)
-	};
-
-	if(!count)
-		return ret;
-
-	const unique_mutable_buffer buf[]
-	{
-		{ event::MAX_SIZE * (count + 1)  },
-		{ 16_KiB                         },
-	};
-
-	size_t i{0};
-	std::array<event::idx, max> next_idx;
-	refs.for_each(dbs::ref::NEXT, [&next_idx, &i]
-	(const event::idx &event_idx, const auto &ref_type)
-	{
-		assert(ref_type == dbs::ref::NEXT);
-		next_idx.at(i) = event_idx;
-		return ++i < next_idx.size();
-	});
-
-	json::stack out{buf[0]};
-	{
-		json::stack::object top
-		{
-			out
-		};
-
-		json::stack::member
-		{
-			top, "origin", m::my_host()
-		};
-
-		json::stack::member
-		{
-			top, "origin_server_ts", json::value
-			{
-				long(ircd::time<milliseconds>())
-			}
-		};
-
-		json::stack::array pdus
-		{
-			top, "pdus"
-		};
-
-		m::event::fetch event;
-		for(assert(ret == 0); ret < i; ++ret)
-			if(seek(std::nothrow, event, next_idx.at(ret)))
-				pdus.append(event.source);
-	}
-
-	const string_view txn
-	{
-		out.completed()
-	};
-
-	char idbuf[64];
-	const string_view txnid
-	{
-		m::txn::create_id(idbuf, txn)
-	};
-
-	m::fed::send::opts opts;
+	m::gossip::opts opts;
+	opts.timeout = seconds(gossip_timeout);
 	opts.remote = remote;
-	m::fed::send request
+	opts.event_id = event_id;
+	gossip::gossip
 	{
-		txnid, txn, buf[1], std::move(opts)
+		room_id, opts
 	};
-
-	http::code code{0};
-	std::exception_ptr eptr;
-	if(request.wait(seconds(gossip_timeout), std::nothrow)) try
-	{
-		code = request.get();
-		ret += code == http::OK;
-	}
-	catch(...)
-	{
-		eptr = std::current_exception();
-	}
-
-	log::logf
-	{
-		log, code == http::OK? log::DEBUG : log::DERROR,
-		"gossip %zu:%zu to %s reference to %s in %s :%s %s",
-		ret,
-		count,
-		remote,
-		string_view{event_id},
-		string_view{room_id},
-		code?
-			status(code):
-			"failed",
-		eptr?
-			what(eptr):
-			string_view{},
-	};
-
-	return ret;
 }

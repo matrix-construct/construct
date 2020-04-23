@@ -134,6 +134,7 @@ libircd_matrix_la_SOURCES += events.cc
 libircd_matrix_la_SOURCES += fed.cc
 libircd_matrix_la_SOURCES += feds.cc
 libircd_matrix_la_SOURCES += fetch.cc
+libircd_matrix_la_SOURCES += gossip.cc
 libircd_matrix_la_SOURCES += request.cc
 libircd_matrix_la_SOURCES += keys.cc
 libircd_matrix_la_SOURCES += node.cc

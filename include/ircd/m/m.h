@@ -94,6 +94,7 @@ namespace ircd
 #include "breadcrumb_rooms.h"
 #include "media.h"
 #include "search.h"
+#include "gossip.h"
 #include "resource.h"
 #include "homeserver.h"
 
