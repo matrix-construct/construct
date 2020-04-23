@@ -18,6 +18,7 @@ struct ircd::ctx::stack
 	uintptr_t base {0};                    // assigned when spawned
 	size_t max {0};                        // User given stack size
 	size_t at {0};                         // Updated for profiling at sleep
+	size_t peak {0};                       // Updated for profiling; maximum
 
 	stack(const size_t &max);
 

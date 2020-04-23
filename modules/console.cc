@@ -2411,6 +2411,9 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 	    << "STACK"
 	    << " "
 	    << std::setw(25)
+	    << "PEAK"
+	    << " "
+	    << std::setw(25)
 	    << "LIMIT"
 	    << " "
 	    << std::setw(6)
@@ -2460,6 +2463,9 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 		thread_local char pbuf[32];
 		out << " "
 		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).at));
+
+		out << " "
+		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).peak));
 
 		out << " "
 		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).max));

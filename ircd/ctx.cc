@@ -1759,6 +1759,7 @@ noexcept
 	c.ios_desc.stats->slice_total += last_slice;
 	c.ios_desc.stats->slice_last = last_slice;
 	c.stack.at = stack_at_here();
+	c.stack.peak = std::max(c.stack.at, c.stack.peak);
 }
 
 #ifndef NDEBUG
