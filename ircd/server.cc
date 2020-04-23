@@ -3120,13 +3120,12 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 
 	// The final update for the confirmed length of the head.
 	state.head_read += addl_head_bytes;
-	const size_t &head_read{state.head_read};
-	assert(head_read + beyond_head_len <= size(req.in.head));
+	assert(state.head_read + beyond_head_len <= size(req.in.head));
 
 	// Window on any data in the buffer after the head.
 	const const_buffer beyond_head
 	{
-		req.in.head + head_read, beyond_head_len
+		req.in.head + state.head_read, beyond_head_len
 	};
 
 	// Before changing the user's head buffer, we branch for a feature that
@@ -3146,10 +3145,11 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 
 	// Resize the user's head buffer tight to the head; this is how we convey
 	// the size of the dome back to the user.
-	state.head_rem = size(req.in.head) - head_read;
+	assert(state.head_read <= size(req.in.head));
+	state.head_rem = size(req.in.head) - state.head_read;
 	req.in.head = mutable_buffer
 	{
-		req.in.head, head_read
+		req.in.head, state.head_read
 	};
 
 	// Setup the capstan and mark the end of the tape
@@ -3159,7 +3159,8 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 
 	// Play the tape through the formal grammar.
 	const http::response::head head{pc};
-	assert(pb.completed() == head_read);
+	assert(pb.completed() == pb.size());
+	assert(pb.completed() == state.head_read);
 	state.status = http::status(head.status);
 	state.content_length = head.content_length;
 
@@ -3172,13 +3173,13 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	{
 		const auto content_max
 		{
-			std::max(ssize_t(size(req.in.content) - head_read), ssize_t(0))
+			std::max(ssize_t(size(req.in.content) - state.head_read), ssize_t(0))
 		};
 
 		//TODO: XXX data(req.in.head)
 		req.in.content = mutable_buffer
 		{
-			data(req.in.head) + head_read, size_t(content_max)
+			data(req.in.head) + state.head_read, size_t(content_max)
 		};
 	}
 
@@ -3250,7 +3251,7 @@ ircd::server::tag::read_head(const const_buffer &buffer,
 	//TODO: XXX data(req.in.head)
 	const const_buffer partial_content
 	{
-		data(req.in.head) + head_read, content_read
+		data(req.in.head) + state.head_read, content_read
 	};
 
 	// Anything remaining is not our response and must be given back.
