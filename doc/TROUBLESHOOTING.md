@@ -38,3 +38,26 @@ the first corrupt event, called the point-in-time.
 When any loss has occurred the daemon will fail to start normally. To enable
 point-in-time recovery use the command-line option `-pitrecdb` at the next
 invocation.
+
+##### Trouble with reverse proxies and middlewares
+
+Construct is designed to be capable internet service software and should
+perform best when directly interfacing with remote parties. Nevertheless,
+some users wish to employ middlewares known as "reverse-proxies" through
+which all communication is forwarded. This gives the appearance, from the
+server's perspective, that all clients are connecting from the same IP
+address on different ports.
+
+At this time there are some known issues with reverse proxies which may be
+mitigated by administrators having reviewed the following:
+
+1. The connection limit from a single remote IP address must be raised from
+its default, for example by entering the following in !control or console:
+
+```
+conf set ircd.client.max_client_per_peer 65535
+```
+
+2. The server does not yet support non-SSL listening sockets. Administrators
+may have to generate locally signed certificates for communication from the
+reverse-proxy.

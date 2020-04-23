@@ -60,3 +60,10 @@ to point at Riot's `webapp/` directory by entering the following:
 	```
 
 6. Browse to `https://host.tld:8448/` and register a user.
+
+
+### ADDENDUM
+
+* If you are employing a reverse-proxy you must review the apropos section in
+the [TROUBLESHOOTING](TROUBLESHOOTING.md#trouble-with-reverse-proxies-and-middlewares)
+guide or the server may not operate correctly.
