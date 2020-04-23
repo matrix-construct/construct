@@ -194,12 +194,19 @@ void
 send_to_room(const m::event &event,
              const m::room::id &room_id)
 {
+	const m::room room
+	{
+		room_id
+	};
+
+	const m::room::origins origins
+	{
+		room
+	};
+
 	// Unit is not allocated until we find another server in the room.
 	std::shared_ptr<struct unit> unit;
-
-	const m::room room{room_id};
-	const m::room::origins origins{room};
-	origins.for_each([&unit, &event]
+	const auto each_origin{[&unit, &event]
 	(const string_view &origin)
 	{
 		if(my_host(origin))
@@ -223,7 +230,29 @@ send_to_room(const m::event &event,
 
 		node.push(unit);
 		node.flush();
-	});
+	}};
+
+	// Iterate all servers with a joined user
+	origins.for_each(each_origin);
+
+	// Special case for negative membership changes (i.e kicks and bans)
+	// which may remove a server from the above iteration
+	if(json::get<"type"_>(event) == "m.room.member")
+		if(m::membership(event, m::membership_negative))
+		{
+			const m::user::id &target
+			{
+				at<"state_key"_>(event)
+			};
+
+			const string_view &origin
+			{
+				target.host()
+			};
+
+			if(!origins.has(origin))
+				each_origin(origin);
+		}
 }
 
 /// EDU path where the target is a user/device
