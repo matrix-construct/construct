@@ -401,6 +401,9 @@ ircd::http::assign(request::head &head,
 
 	else if(key == "if-range"_sv)
 		head.if_range = val;
+
+	else if(key == "x-forwarded-for"_sv)
+		head.forwarded_for = val;
 }
 
 ircd::http::response::response(window_buffer &out,

@@ -241,6 +241,7 @@ struct ircd::http::request::head
 	string_view upgrade;
 	string_view range;
 	string_view if_range;
+	string_view forwarded_for;
 	size_t content_length {0};
 
 	string_view uri;       // full view of (path, query, fragmet)
