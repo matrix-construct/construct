@@ -127,7 +127,6 @@ noexcept try
 	{
 		mark(prof::event::LEAVE);
 		adjoindre.notify_all();
-		stack.max = 0;
 		stack.at = 0;
 		notes = 0;
 		this->yc = nullptr;
