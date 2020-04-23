@@ -13802,14 +13802,16 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 
 	const string_view remote
 	{
-		param["remote"]?
+		param["remote"] && !lex_castable<uint>(param["remote"])?
 			param["remote"]:
 			room_id.host()
 	};
 
 	const string_view &count
 	{
-		param.at("count", "32"_sv)
+		!lex_castable<uint>(param["remote"])?
+			param.at("count", "32"_sv):
+			param.at("remote")
 	};
 
 	string_view event_id
@@ -13824,6 +13826,9 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 
 	if(!op && event_id == "eval")
 		std::swap(op, event_id);
+
+	else if(!event_id && !lex_castable<uint>(param["count"]))
+		op = param["count"];
 
 	// Used for out.head, out.content, in.head, but in.content is dynamic
 	const unique_mutable_buffer buf
