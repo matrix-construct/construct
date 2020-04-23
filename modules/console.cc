@@ -13795,15 +13795,22 @@ console_cmd__fed__backfill(opt &out, const string_view &line)
 		"room_id", "remote", "count", "event_id", "op"
 	}};
 
+	const auto &room_param
+	{
+		param.at("room_id")
+	};
+
 	const auto &room_id
 	{
-		m::room_id(param.at("room_id"))
+		m::room_id(room_param)
 	};
 
 	const string_view remote
 	{
 		param["remote"] && !lex_castable<uint>(param["remote"])?
 			param["remote"]:
+		valid(m::id::ROOM_ALIAS, room_param)?
+			m::room::alias{room_param}.host():
 			room_id.host()
 	};
 
