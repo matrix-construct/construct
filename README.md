@@ -1,45 +1,16 @@
 # This — is The **Construct**
 
-<a href="share/webapp">
-	<img align="right" src="https://i.imgur.com/TIf8kEC.png">
-</a>
+[![Chat in #test:zemos.net](https://img.shields.io/matrix/test:zemos.net.svg?label=Chat%20in%20%23test%3Azemos.net&logo=matrix&server_fqdn=matrix.org&style=for-the-badge&color=brightgreen)](https://matrix.to/#/#test:zemos.net) [![](https://img.shields.io/badge/License-BSD-brightgreen.svg?label=%20license&style=for-the-badge&color=brightgreen)]() [![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?label=contributions&style=for-the-badge&color=brightgreen)]()
 
-It all started in 1988 when Jarkko Oikarinen developed a free and open source server
-at the University of Oulu which facilitated real-time communication over the internet.
-Its [derivatives](https://upload.wikimedia.org/wikipedia/commons/d/d8/IRCd_software_implementations.png)
-have underpinned the major networks for decades.
-
-The protocol has since stagnated, largely abandoned except by a small cult of
-millenarians. A growing number of proprietary cloud services have filled the
-vacuum of innovation. Free software projects are relegated to collaborating on
-non-free platforms for a basic rich user experience. The consensus is that
-decentralization is needed, and users not be limited to some arcane
-retro-environment.
-
-<a href="https://github.com/vector-im/riot-web/">
-	<img align="right" src="https://i.imgur.com/DUuGSrH.png" />
-</a>
-
-**This is the Construct** — the community's own Matrix server. It is designed
-to be fast and highly scalable, and to be developed by volunteer contributors
-over the internet. This mission strives to make the software easy to understand,
-modify, audit, and extend. It remains true to its roots with its modular design
-and having minimal requirements. Even though all of the old code has been
-rewritten, the same spirit and philosophy of its predecessors is still obvious
-throughout.
+The community's own Matrix server. It is designed to be fast and highly scalable,
+and to be developed by volunteer contributors over the internet. This mission
+strives to make the software easy to understand, modify, audit, and extend.
 
 Matrix is about giving you control over your communication; Construct is about
 giving you control over Matrix. Your privacy and security matters. We encourage
 you to contribute new ideas and are liberal in accepting experimental features.
 
-
 ## Installation
-
-<a href="https://github.com/tulir/gomuks">
-	<img align="right" src="https://i.imgur.com/YMUAULE.png" />
-</a>
-
-[![Chat in #test:zemos.net](https://img.shields.io/matrix/test:zemos.net.svg?label=Chat%20in%20%23test%3Azemos.net&logo=matrix&server_fqdn=matrix.org&style=for-the-badge&color=brightgreen)](https://matrix.to/#/#test:zemos.net)
 
 ### Dependencies
 
@@ -94,12 +65,6 @@ problems.
 
 ## Developers
 
-<a href="https://github.com/mujx/nheko">
-	<img align="right" src="https://i.imgur.com/GQ91GOK.png" />
-</a>
-
-[![](https://img.shields.io/badge/License-BSD-brightgreen.svg?label=%20license&style=for-the-badge&color=brightgreen)]() [![](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?label=contributions&style=for-the-badge&color=brightgreen)]()
-
 ##### DOCUMENTATION
 
 Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
@@ -116,11 +81,6 @@ See the [STYLE](doc/STYLE.md) guide for an admittedly tongue-in-cheek lecture on
 the development approach.
 
 ## Roadmap
-
-##### FEATURE EXPERIENCE
-
-- [x] Phase One: **Matrix clients** using HTTPS.
-- [ ] Phase Two: Legacy IRC network **TS6 protocol**.
 
 ##### TECHNOLOGY
 
