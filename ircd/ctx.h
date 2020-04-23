@@ -18,28 +18,10 @@
 	#define IRCD_CTX_STACK_PROTECT
 #endif
 
-namespace ircd::ctx
-{
-	struct stack;
-	struct profile;
-}
-
 namespace ircd::ctx::prof
 {
 	void mark(const event &);
 }
-
-/// Internal structure aggregating any stack related state for the ctx
-struct ircd::ctx::stack
-{
-	uintptr_t base {0};                    // assigned when spawned
-	size_t max {0};                        // User given stack size
-	size_t at {0};                         // Updated for profiling at sleep
-
-	stack(const size_t &max = 0)
-	:max{max}
-	{}
-};
 
 /// Internal context implementation
 ///

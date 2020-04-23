@@ -654,24 +654,6 @@ noexcept
 	return ctx.notes;
 }
 
-/// Returns the notification count for `ctx`
-[[gnu::hot]]
-const size_t &
-ircd::ctx::stack_at(const ctx &ctx)
-noexcept
-{
-	return ctx.stack.at;
-}
-
-/// Returns the notification count for `ctx`
-[[gnu::hot]]
-const size_t &
-ircd::ctx::stack_max(const ctx &ctx)
-noexcept
-{
-	return ctx.stack.max;
-}
-
 /// Returns the developer's optional name literal for `ctx`
 [[gnu::hot]]
 ircd::string_view
@@ -997,6 +979,36 @@ noexcept
 	};
 }
 #endif
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// ctx/stack.h
+//
+
+[[gnu::hot]]
+ircd::ctx::stack &
+ircd::ctx::stack::get(ctx &ctx)
+noexcept
+{
+	return ctx.stack;
+}
+
+[[gnu::hot]]
+const ircd::ctx::stack &
+ircd::ctx::stack::get(const ctx &ctx)
+noexcept
+{
+	return ctx.stack;
+}
+
+//
+// stack::stack
+//
+
+ircd::ctx::stack::stack(const size_t &max)
+:max{max}
+{
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //

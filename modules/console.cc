@@ -2459,14 +2459,14 @@ console_cmd__ctx__list(opt &out, const string_view &line)
 
 		thread_local char pbuf[32];
 		out << " "
-		    << std::setw(25) << std::right << pretty(pbuf, iec(stack_at(ctx)));
+		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).at));
 
 		out << " "
-		    << std::setw(25) << std::right << pretty(pbuf, iec(stack_max(ctx)));
+		    << std::setw(25) << std::right << pretty(pbuf, iec(ctx::stack::get(ctx).max));
 
 		const auto stack_pct
 		{
-			stack_at(ctx) / (long double)stack_max(ctx)
+			ctx::stack::get(ctx).at / (long double)(ctx::stack::get(ctx).max)
 		};
 
 		out << " "

@@ -45,8 +45,6 @@ namespace ircd::ctx
 
 	const uint64_t &id(const ctx &) noexcept;       // Unique ID for context
 	string_view name(const ctx &) noexcept;         // User's optional label for context
-	const size_t &stack_max(const ctx &) noexcept;  // Returns stack size allocated for ctx
-	const size_t &stack_at(const ctx &) noexcept;   // Stack at last sleep (also see this_ctx.h)
 	const int32_t &notes(const ctx &) noexcept;     // Peeks at internal semaphore count
 	const uint64_t &epoch(const ctx &) noexcept;    // Context switching counter
 	const ulong &cycles(const ctx &) noexcept;      // Accumulated tsc (not counting cur slice)
@@ -81,6 +79,7 @@ namespace ircd::ctx
 #include "this_ctx.h"
 #include "wait.h"
 #include "sleep.h"
+#include "stack.h"
 #include "stack_usage_assertion.h"
 #include "slice_usage_warning.h"
 #include "critical_assertion.h"
