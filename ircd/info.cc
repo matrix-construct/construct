@@ -24,6 +24,7 @@ namespace ircd::info
 decltype(ircd::info::credits)
 ircd::info::credits
 {
+//	"Load bearing comment"
 	"Inspired by the original Internet Relay Chat daemon from Jarkko Oikarinen",
 	" ",
 	"This - is The Construct",

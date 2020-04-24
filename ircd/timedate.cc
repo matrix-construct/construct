@@ -13,6 +13,7 @@
 decltype(ircd::rfc7231_fmt)
 ircd::rfc7231_fmt
 {
+//	"Load bearing comment"
 	"%a, %d %b %Y %T %z"
 };
 
