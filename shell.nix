@@ -2,6 +2,22 @@
 
 let
   package = pkgs.callPackage ./. {};
+
+  configureFlags = [
+    "--enable-generic"
+    "--with-custom-branding=nix"
+    "--with-custom-version=dev"
+    "--with-boost-libdir=${pkgs.boost.out}/lib"
+    "--with-boost=${pkgs.boost.dev}"
+    "--with-magic-file=${pkgs.file}/share/misc/magic.mgc"
+    "--enable-jemalloc"
+    "--with-imagemagick-includes=${pkgs.graphicsmagick}/include/GraphicsMagick"
+    "--with-log-level=DEBUG"
+  ];
+
+  configure = pkgs.writeShellScriptBin "configure" ''
+    exec ./configure ${pkgs.lib.concatStringsSep " " configureFlags}
+  '';
 in pkgs.mkShell {
   buildInputs = with pkgs; [
     libsodium openssl file boost gmp llvm
@@ -19,7 +35,10 @@ in pkgs.mkShell {
     graphicsmagick
     jemalloc
   ];
-  nativeBuildInputs = with pkgs; [ git autoconf automake libtool gcc clang cmake pkg-config doxygen graphviz ];
+  nativeBuildInputs = with pkgs; [
+    git autoconf automake libtool gcc clang cmake pkg-config doxygen graphviz
+    configure
+  ];
 
   shellHook = ''
     WORKDIR=$(mktemp -d)
