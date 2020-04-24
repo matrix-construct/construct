@@ -32,6 +32,9 @@ struct typist
 static ctx::dock
 timeout_dock;
 
+static ctx::mutex
+typists_mutex;
+
 static std::set<typist, typist>
 typists;
 
@@ -301,9 +304,10 @@ ircd::m::typing::allow(const user::id &user_id,
 bool
 ircd::m::typing::for_each(const closure &closure)
 {
-	// User cannot yield in their closure because the iteration
-	// may be invalidated by the timeout worker during their yield.
-	const ctx::critical_assertion ca;
+	const std::lock_guard lock
+	{
+		typists_mutex
+	};
 
 	for(const auto &t : typists)
 	{
@@ -332,7 +336,7 @@ ircd::m::typing::for_each(const closure &closure)
 //
 
 static void timeout_timeout(const typist &);
-static bool timeout_check();
+static void timeout_check();
 static void timeout_worker();
 
 static context
@@ -357,16 +361,14 @@ void
 timeout_worker()
 try
 {
-	while(1)
+	for(;; ctx::sleep(milliseconds(timeout_int)))
 	{
-		ctx::interruption_point();
 		timeout_dock.wait([]
 		{
 			return !typists.empty();
 		});
 
-		if(!timeout_check())
-			ctx::sleep(milliseconds(timeout_int));
+		timeout_check();
 	}
 }
 catch(const std::exception &e)
@@ -378,27 +380,31 @@ catch(const std::exception &e)
 	};
 }
 
-bool
+void
 timeout_check()
 try
 {
+	const std::lock_guard lock
+	{
+		typists_mutex
+	};
+
 	const auto now
 	{
 		ircd::now<system_point>()
 	};
 
-	for(auto it(begin(typists)); it != end(typists); ++it)
+	for(auto it(begin(typists)); it != end(typists); )
+	{
 		if(it->timesout < now)
 		{
 			// have to restart the loop if there's a timeout because
 			// the call will have yields and invalidate iterators etc.
-			const auto copy(*it);
-			typists.erase(it);
-			timeout_timeout(copy);
-			return true;
+			timeout_timeout(*it);
+			it = typists.erase(it);
 		}
-
-	return false;
+		else ++it;
+	}
 }
 catch(const std::exception &e)
 {
@@ -407,8 +413,6 @@ catch(const std::exception &e)
 		typing_log, "Typing timeout check :%s",
 		e.what(),
 	};
-
-	return false;
 }
 
 void
@@ -532,6 +536,11 @@ try
 	const milliseconds timeout
 	{
 		at<"timeout"_>(object)
+	};
+
+	const std::lock_guard lock
+	{
+		typists_mutex
 	};
 
 	auto it
