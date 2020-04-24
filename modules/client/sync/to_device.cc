@@ -134,22 +134,11 @@ ircd::m::sync::_to_device_append(data &data,
 		}
 	};
 
-	json::stack::object _content
-	{
-		event, "content"
-	};
-
 	json::stack::member
 	{
-		_content, "device_id", json::string
+		event, "content", json::object
 		{
-			content.at("device_id")
+			content.at("content")
 		}
 	};
-
-	for(const auto &[key, val] : json::object(content.at("content")))
-		json::stack::member
-		{
-			_content, key, val
-		};
 }
