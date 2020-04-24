@@ -46,6 +46,5 @@ struct construct::console
 	static bool active();
 	static bool interrupt();
 	static bool terminate();
-	static bool execute(std::string cmd);
 	static bool spawn();
 };

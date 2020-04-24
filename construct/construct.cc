@@ -38,7 +38,7 @@ bool write_avoid;
 bool soft_assert;
 bool nomatrix;
 bool matrix {true}; // matrix server by default.
-const char *execute;
+std::vector<std::string> execute;
 std::array<bool, 7> smoketest;
 
 lgetopt opts[]
@@ -49,7 +49,7 @@ lgetopt opts[]
 	{ "quiet",      &quietmode,     lgetopt::BOOL,    "Suppress log messages at the terminal." },
 	{ "single",     &single,        lgetopt::BOOL,    "Single user mode for maintenance and diagnostic." },
 	{ "console",    &cmdline,       lgetopt::BOOL,    "Drop to a command line immediately after startup" },
-	{ "execute",    &execute,       lgetopt::STRING,  "Execute command lines immediately after startup" },
+	{ "execute",    &execute,       lgetopt::STRINGS, "Execute command lines immediately after startup" },
 	{ "nolisten",   &nolisten,      lgetopt::BOOL,    "Normal execution but without listening sockets" },
 	{ "noautomod",  &noautomod,     lgetopt::BOOL,    "Normal execution but without autoloading modules" },
 	{ "checkdb",    &checkdb,       lgetopt::BOOL,    "Perform complete checks of databases when opening" },
@@ -301,13 +301,13 @@ noexcept try
 	// If the user wants to immediately drop to an interactive command line
 	// without having to send a ctrl-c for it, that is provided here. This does
 	// not actually take effect until it's processed in the ios.run() below.
-	if(cmdline)
+	if(cmdline || !execute.empty())
 		construct::console::spawn();
 
 	// If the user wants to immediately process console commands
 	// non-interactively from a program argument input, that is enqueued here.
-	if(execute)
-		construct::console::execute({execute});
+	for(auto &&cmd : execute)
+		construct::console::queue.emplace_back(std::move(cmd));
 
 	// For developer debugging and testing this branch from a "-norun" argument
 	// will exit before committing to the ios.run().

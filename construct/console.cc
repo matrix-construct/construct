@@ -82,14 +82,6 @@ construct::console::spawn()
 }
 
 bool
-construct::console::execute(std::string cmd)
-{
-	console::queue.emplace_back(std::move(cmd));
-	console::spawn();
-	return true;
-}
-
-bool
 construct::console::interrupt()
 {
 	if(active())
