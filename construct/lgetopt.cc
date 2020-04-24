@@ -99,6 +99,19 @@ parseargs(int *argc, char * const **argv, struct lgetopt *opts)
 					(*argc)--;
 					(*argv)++;
 					break;
+				case argtype::STRINGS:
+					if(*argc < 2)
+					{
+						fprintf(stderr,
+							"error: option '%c%s' requires an argument\n",
+							OPTCHAR, opts[i].opt);
+						usage(progname, opts);
+					}
+
+					((std::vector<std::string> *)opts[i].argloc)->emplace_back((*argv)[1]);
+					(*argc)--;
+					(*argv)++;
+					break;
 
 				case argtype::USAGE:
 					usage(progname, opts);

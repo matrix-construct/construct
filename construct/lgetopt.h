@@ -27,7 +27,7 @@ struct lgetopt
 	const char *opt;	/* name of the argument */
 	void *argloc;		/* where we store the argument to it (-option argument) */
 	enum
-	{ INTEGER, YESNO, STRING, USAGE, ENDEBUG, BOOL }
+	{ INTEGER, YESNO, STRING, STRINGS, USAGE, ENDEBUG, BOOL }
 	argtype;
 	const char *desc;	/* description of the argument, usage for printing help */
 };
