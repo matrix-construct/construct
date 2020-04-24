@@ -58,9 +58,14 @@ ircd::m::sync::to_device_linear(data &data)
 	if(device_id != "*" && device_id != data.device_id)
 		return false;
 
+	json::stack::object to_device
+	{
+		*data.out, "to_device"
+	};
+
 	json::stack::array array
 	{
-		*data.out, "events"
+		to_device, "events"
 	};
 
 	_to_device_append(data, content, array);
