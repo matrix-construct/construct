@@ -79,6 +79,10 @@ ircd::m::sync::room_timeline_linear(data &data)
 	if(command)
 		return _room_timeline_linear_command(data);
 
+	// User's room conditions must be satisfied before here.
+	if(*data.room == data.user_room)
+		return false;
+
 	const ssize_t &viewport_size
 	{
 		room::events::viewport_size
