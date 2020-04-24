@@ -67,7 +67,7 @@ problems.
 
 ##### DOCUMENTATION
 
-Generate doxygen using `/usr/bin/doxygen tools/doxygen.conf` the target
+Generate doxygen using `doxygen ./Doxyfile` the target
 directory is `doc/html`. Browse to `doc/html/index.html`.
 
 ##### ARCHITECTURE GUIDE

@@ -19,7 +19,7 @@ in pkgs.mkShell {
     graphicsmagick
     jemalloc
   ];
-  nativeBuildInputs = with pkgs; [ git autoconf automake libtool gcc clang cmake pkg-config ];
+  nativeBuildInputs = with pkgs; [ git autoconf automake libtool gcc clang cmake pkg-config doxygen graphviz ];
 
   shellHook = ''
     WORKDIR=$(mktemp -d)
