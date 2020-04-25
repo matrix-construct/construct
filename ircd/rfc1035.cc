@@ -264,7 +264,14 @@ ircd::rfc1035::record::AAAA::AAAA(const answer &answer)
 			"AAAA record data underflow"
 		};
 
-	ip6 = ntoh(*reinterpret_cast<const uint128_t *>(data(rdata)));
+	uint128_t ip6;
+	#if __has_builtin(__builtin_memcpy_inline)
+	__builtin_memcpy_inline(&ip6, data(rdata), sizeof(ip6));
+	#else
+	__builtin_memcpy(&ip6, data(rdata), sizeof(ip6));
+	#endif
+
+	this->ip6 = ntoh(ip6);
 }
 
 void
