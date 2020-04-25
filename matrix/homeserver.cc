@@ -250,8 +250,9 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 	begin(matrix::module_names), end(matrix::module_names)
 }
 {
-	for(const auto &name : modules)
-		mods::imports.emplace(std::string{name}, name);
+	if(ircd::mods::autoload)
+		for(const auto &name : modules)
+			mods::imports.emplace(std::string{name}, name);
 
 	if(primary == this)
 		vm = std::make_shared<vm::init>();
