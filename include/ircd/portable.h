@@ -15,6 +15,14 @@
 #define HAVE_IRCD_PORTABLE_H
 
 //
+// For non-clang
+//
+
+#ifndef __has_builtin
+	#define __has_builtin(x) 0
+#endif
+
+//
 // Common branch prediction macros
 //
 
