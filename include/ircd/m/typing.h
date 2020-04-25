@@ -11,10 +11,29 @@
 #pragma once
 #define HAVE_IRCD_M_TYPING_H
 
-namespace ircd::m
+namespace ircd::m::typing
 {
-	struct typing;
+	struct typist;
+	struct commit;
+
+	using edu = m::edu::m_typing;
+	using closure = std::function<bool (const edu &)>;
+
+	// Iterate all of the active typists held in RA<
+	//NOTE: no yielding in this iteration.
+	bool for_each(const closure &);
+
+	// Get whether a user enabled typing events for a room. The type string
+	// can be "send" or "sync" prevent typing one's events from being sent or
+	// others' from being sync'ed, respectively
+	bool allow(const id::user &, const id::room &, const string_view &type);
 }
+
+/// Interface to update the typing state, generate all events, send etc.
+struct ircd::m::typing::commit
+{
+	commit(const edu &);
+};
 
 struct ircd::m::edu::m_typing
 :json::tuple
@@ -29,27 +48,15 @@ struct ircd::m::edu::m_typing
 	using super_type::operator=;
 };
 
-struct ircd::m::typing
-:m::edu::m_typing
+struct ircd::m::typing::typist
 {
-	struct commit;
+	using is_transparent = void;
 
-	using closure = std::function<bool (const typing &)>;
+	system_point timesout;
+	m::user::id::buf user_id;
+	m::room::id::buf room_id;
 
-	// Iterate all of the active typists held in RA<
-	//NOTE: no yielding in this iteration.
-	static bool for_each(const closure &);
-
-	// Get whether a user enabled typing events for a room. The type string
-	// can be "send" or "sync" prevent typing one's events from being sent or
-	// others' from being sync'ed, respectively
-	static bool allow(const id::user &, const id::room &, const string_view &type);
-
-	using edu::m_typing::m_typing;
-};
-
-/// Interface to update the typing state, generate all events, send etc.
-struct ircd::m::typing::commit
-{
-	commit(const typing &);
+	bool operator()(const typist &a, const string_view &b) const noexcept;
+	bool operator()(const string_view &a, const typist &b) const noexcept;
+	bool operator()(const typist &a, const typist &b) const noexcept;
 };

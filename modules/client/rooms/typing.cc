@@ -51,7 +51,7 @@ put__typing(client &client,
 		request.get("timeout", milliseconds(timeout_default).count())
 	};
 
-	const m::typing event
+	const m::typing::edu event
 	{
 		{ "room_id",  room_id   },
 		{ "typing",   typing    },

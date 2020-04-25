@@ -12547,7 +12547,7 @@ bool
 console_cmd__user__typing(opt &out, const string_view &line)
 {
 	m::typing::for_each([&out]
-	(const m::typing &event)
+	(const m::typing::edu &event)
 	{
 		out << event << std::endl;
 		return true;

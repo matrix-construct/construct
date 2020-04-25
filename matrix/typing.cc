@@ -8,77 +8,82 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-using namespace ircd;
+namespace ircd::m::typing
+{
+	static system_point calc_timesout(milliseconds relative);
+	static bool update_state(const edu &);
+	static m::event::id::buf set_typing(const edu &);
+	static void _handle_edu(const m::event &, const edu &);
+	static void handle_edu(const m::event &, m::vm::eval &);
+	static void timeout_timeout(const typist &);
+	static void timeout_check();
+	static void timeout_worker();
 
-log::log
-typing_log
+	extern log::log log;
+	extern ctx::dock dock;
+	extern ctx::mutex mutex;
+	extern std::set<typist, typist> typists;
+	extern conf::item<milliseconds> timeout_max;
+	extern conf::item<milliseconds> timeout_min;
+	extern conf::item<milliseconds> timeout_int;
+	extern hookfn<vm::eval &> on_eval;
+	extern context timeout_context;
+}
+
+decltype(ircd::m::typing::log)
+ircd::m::typing::log
 {
 	"m.typing"
 };
 
-struct typist
-{
-	using is_transparent = void;
+decltype(ircd::m::typing::dock)
+ircd::m::typing::dock;
 
-	system_point timesout;
-	m::user::id::buf user_id;
-	m::room::id::buf room_id;
+decltype(ircd::m::typing::mutex)
+ircd::m::typing::mutex;
 
-	bool operator()(const typist &a, const string_view &b) const;
-	bool operator()(const string_view &a, const typist &b) const;
-	bool operator()(const typist &a, const typist &b) const;
-};
+decltype(ircd::m::typing::typists)
+ircd::m::typing::typists;
 
-static ctx::dock
-timeout_dock;
-
-static ctx::mutex
-typists_mutex;
-
-static std::set<typist, typist>
-typists;
-
-conf::item<milliseconds>
-timeout_max
+decltype(ircd::m::typing::timeout_max)
+ircd::m::typing::timeout_max
 {
 	{ "name",     "ircd.typing.timeout.max" },
 	{ "default",  90 * 1000L                },
 };
 
-conf::item<milliseconds>
-timeout_min
+decltype(ircd::m::typing::timeout_min)
+ircd::m::typing::timeout_min
 {
 	{ "name",     "ircd.typing.timeout.min" },
 	{ "default",  15 * 1000L                },
 };
 
-conf::item<milliseconds>
-timeout_int
+decltype(ircd::m::typing::timeout_int)
+ircd::m::typing::timeout_int
 {
 	{ "name",     "ircd.typing.timeout.int" },
 	{ "default",  5 * 1000L                 },
 };
 
-static system_point calc_timesout(milliseconds relative);
-static bool update_state(const m::edu::m_typing &);
-
-//
-// typing edu handler stack (local and remote)
-//
-
-static m::event::id::buf set_typing(const m::edu::m_typing &edu);
-static void _handle_edu_m_typing(const m::event &, const m::typing &edu);
-static void handle_edu_m_typing(const m::event &, m::vm::eval &);
+decltype(ircd::m::typing::timeout_context)
+ircd::m::typing::timeout_context
+{
+	"typing",
+	768_KiB,
+	context::POST,
+	timeout_worker,
+};
 
 /// Hooks all federation typing edus from remote servers as well as
 /// the above commit from local clients. This hook rewrites the edu into
 /// a new event formatted for client /sync and then runs that through eval
 /// so our clients can receive the typing events.
 ///
-m::hookfn<m::vm::eval &>
-_m_typing_eval
+decltype(ircd::m::typing::on_eval)
+ircd::m::typing::on_eval
 {
-	handle_edu_m_typing,
+	handle_edu,
 	{
 		{ "_site",   "vm.eval"     },
 		{ "type",    "m.typing"    },
@@ -86,8 +91,105 @@ _m_typing_eval
 };
 
 void
-handle_edu_m_typing(const m::event &event,
-                    m::vm::eval &eval)
+ircd::m::typing::timeout_worker()
+try
+{
+	for(;; ctx::sleep(milliseconds(timeout_int)))
+	{
+		dock.wait([]
+		{
+			return !typists.empty();
+		});
+
+		const std::lock_guard lock
+		{
+			mutex
+		};
+
+		timeout_check();
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Typing timeout worker fatal :%s",
+		e.what()
+	};
+}
+
+void
+ircd::m::typing::timeout_check()
+try
+{
+	const auto now
+	{
+		ircd::now<system_point>()
+	};
+
+	for(auto it(begin(typists)); it != end(typists); )
+	{
+		if(it->timesout < now)
+		{
+			// have to restart the loop if there's a timeout because
+			// the call will have yields and invalidate iterators etc.
+			timeout_timeout(*it);
+			it = typists.erase(it);
+		}
+		else ++it;
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "Typing timeout check :%s",
+		e.what(),
+	};
+}
+
+void
+ircd::m::typing::timeout_timeout(const typist &t)
+try
+{
+	assert(run::level == run::level::RUN);
+
+	const edu edu
+	{
+		{ "user_id",  t.user_id   },
+		{ "room_id",  t.room_id   },
+		{ "typing",   false       },
+	};
+
+	log::debug
+	{
+		log, "Typing timeout for %s in %s",
+		string_view{t.user_id},
+		string_view{t.room_id}
+	};
+
+	m::event event;
+	json::get<"origin"_>(event) = my_host();
+	json::get<"type"_>(event) = "m.typing"_sv;
+
+	// Call this manually because it currently composes the event
+	// sent to clients to stop the typing for this timed out user.
+	_handle_edu(event, edu);
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Typing timeout for %s in %s :%s",
+		string_view{t.user_id},
+		string_view{t.room_id},
+		e.what(),
+	};
+}
+
+void
+ircd::m::typing::handle_edu(const m::event &event,
+                            m::vm::eval &eval)
 try
 {
 	const json::object &content
@@ -95,7 +197,7 @@ try
 		at<"content"_>(event)
 	};
 
-	_handle_edu_m_typing(event, content);
+	_handle_edu(event, content);
 }
 catch(const ctx::interrupted &)
 {
@@ -105,7 +207,7 @@ catch(const std::exception &e)
 {
 	log::derror
 	{
-		typing_log, "m.typing from %s :%s",
+		log, "m.typing from %s :%s",
 		json::get<"origin"_>(event),
 		e.what(),
 	};
@@ -114,8 +216,8 @@ catch(const std::exception &e)
 }
 
 void
-_handle_edu_m_typing(const m::event &event,
-                     const m::typing &edu)
+ircd::m::typing::_handle_edu(const m::event &event,
+                             const edu &edu)
 {
 	// This check prevents interference between the two competing edu formats;
 	// The federation edu has a room_id field while the client edu only has a
@@ -140,19 +242,18 @@ _handle_edu_m_typing(const m::event &event,
 
 	// Check if this server can send an edu for this user. We make an exception
 	// for our server to allow the timeout worker to use this codepath.
-	if(!my_host(origin))
-		if(user_id.host() != origin)
+	if(!my_host(origin) && user_id.host() != origin)
+	{
+		log::dwarning
 		{
-			log::dwarning
-			{
-				typing_log, "Ignoring %s from %s for alien %s",
-				at<"type"_>(event),
-				origin,
-				string_view{user_id}
-			};
+			log, "Ignoring %s from %s for alien %s",
+			at<"type"_>(event),
+			origin,
+			string_view{user_id}
+		};
 
-			return;
-		}
+		return;
+	}
 
 	// Check if this server can write to the room based on the m.room.server_acl.
 	if(!my_host(origin))
@@ -160,7 +261,7 @@ _handle_edu_m_typing(const m::event &event,
 		{
 			log::dwarning
 			{
-				typing_log, "Ignoring %s from '%s' in %s :denied by m.room.server_acl.",
+				log, "Ignoring %s from '%s' in %s :denied by m.room.server_acl.",
 				at<"type"_>(event),
 				origin,
 				string_view{room_id},
@@ -182,7 +283,7 @@ _handle_edu_m_typing(const m::event &event,
 		{
 			log::dwarning
 			{
-				typing_log, "Ignoring %s from %s for user %s because not in room '%s'",
+				log, "Ignoring %s from %s for user %s because not in room '%s'",
 				at<"type"_>(event),
 				origin,
 				string_view{user_id},
@@ -205,9 +306,155 @@ _handle_edu_m_typing(const m::event &event,
 	set_typing(edu);
 }
 
-//
-// interface
-//
+ircd::m::event::id::buf
+ircd::m::typing::set_typing(const edu &edu)
+{
+	assert(json::get<"room_id"_>(edu));
+	const m::user::id &user_id
+	{
+		at<"user_id"_>(edu)
+	};
+
+	const m::user user
+	{
+		user_id
+	};
+
+	if(!exists(user))
+		create(user);
+
+	const m::user::room user_room
+	{
+		user
+	};
+
+	const auto &timeout
+	{
+		json::get<"timeout"_>(edu)?
+			json::get<"timeout"_>(edu):
+		json::get<"typing"_>(edu)?
+			milliseconds(timeout_max).count():
+			0L
+	};
+
+	const auto evid
+	{
+		send(user_room, user_id, "ircd.typing",
+		{
+			{ "room_id",  at<"room_id"_>(edu)         },
+			{ "typing",   json::get<"typing"_>(edu)   },
+			{ "timeout",  timeout                     },
+		})
+	};
+
+	char pbuf[32];
+	log::info
+	{
+		log, "%s %s typing in %s timeout:%s",
+		string_view{user_id},
+		json::get<"typing"_>(edu)?
+			"started"_sv:
+			"stopped"_sv,
+		at<"room_id"_>(edu),
+		util::pretty(pbuf, milliseconds(timeout), 1),
+	};
+
+	return evid;
+}
+
+bool
+ircd::m::typing::update_state(const edu &object)
+try
+{
+	const auto &user_id
+	{
+		at<"user_id"_>(object)
+	};
+
+	const auto &room_id
+	{
+		at<"room_id"_>(object)
+	};
+
+	const auto &typing
+	{
+		at<"typing"_>(object)
+	};
+
+	const milliseconds timeout
+	{
+		at<"timeout"_>(object)
+	};
+
+	const std::lock_guard lock
+	{
+		mutex
+	};
+
+	auto it
+	{
+		typists.lower_bound(user_id)
+	};
+
+	const bool was_typing
+	{
+		it != end(typists) && it->user_id == user_id
+	};
+
+	if(typing && !was_typing)
+	{
+		typists.emplace_hint(it, typist
+		{
+			calc_timesout(timeout), user_id, room_id
+		});
+
+		dock.notify_one();
+	}
+	else if(typing && was_typing)
+	{
+		auto &t(const_cast<typist &>(*it));
+		t.timesout = calc_timesout(timeout);
+	}
+	else if(!typing && was_typing)
+	{
+		typists.erase(it);
+	}
+
+	const bool transmit
+	{
+		(typing && !was_typing) || (!typing && was_typing)
+	};
+
+	log::debug
+	{
+		log, "Typing %s in %s now[%b] was[%b] xmit[%b]",
+		string_view{at<"user_id"_>(object)},
+		string_view{at<"room_id"_>(object)},
+		json::get<"typing"_>(object),
+		was_typing,
+		transmit
+	};
+
+	return transmit;
+}
+catch(const std::exception &e)
+{
+	log::error
+	{
+		log, "Failed to update state :%s",
+		e.what(),
+	};
+
+	throw;
+}
+
+ircd::system_point
+ircd::m::typing::calc_timesout(milliseconds timeout)
+{
+	timeout = std::max(timeout, milliseconds(timeout_min));
+	timeout = std::min(timeout, milliseconds(timeout_max));
+	return now<system_point>() + timeout;
+}
 
 /// typing commit handler stack (local user)
 ///
@@ -218,7 +465,7 @@ _handle_edu_m_typing(const m::event &event,
 /// event to clients we hook it during eval and create a new event formatted
 /// for clients and then run that through eval too. (see below).
 ///
-ircd::m::typing::commit::commit(const m::typing &edu)
+ircd::m::typing::commit::commit(const edu &edu)
 {
 	using json::at;
 
@@ -306,7 +553,7 @@ ircd::m::typing::for_each(const closure &closure)
 {
 	const std::lock_guard lock
 	{
-		typists_mutex
+		mutex
 	};
 
 	for(const auto &t : typists)
@@ -316,7 +563,7 @@ ircd::m::typing::for_each(const closure &closure)
 			system_clock::to_time_t(t.timesout)
 		};
 
-		const m::typing event
+		const edu event
 		{
 			{ "user_id",  t.user_id   },
 			{ "room_id",  t.room_id   },
@@ -332,303 +579,29 @@ ircd::m::typing::for_each(const closure &closure)
 }
 
 //
-// timeout worker stack
-//
-
-static void timeout_timeout(const typist &);
-static void timeout_check();
-static void timeout_worker();
-
-static context
-timeout_context
-{
-	"typing",
-	256_KiB,
-	context::POST,
-	timeout_worker
-};
-
-static const ircd::run::changed
-timeout_context_terminate
-{
-	run::level::QUIT, []
-	{
-		timeout_context.terminate();
-	}
-};
-
-void
-timeout_worker()
-try
-{
-	for(;; ctx::sleep(milliseconds(timeout_int)))
-	{
-		timeout_dock.wait([]
-		{
-			return !typists.empty();
-		});
-
-		timeout_check();
-	}
-}
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		typing_log, "Typing timeout worker fatal :%s",
-		e.what()
-	};
-}
-
-void
-timeout_check()
-try
-{
-	const std::lock_guard lock
-	{
-		typists_mutex
-	};
-
-	const auto now
-	{
-		ircd::now<system_point>()
-	};
-
-	for(auto it(begin(typists)); it != end(typists); )
-	{
-		if(it->timesout < now)
-		{
-			// have to restart the loop if there's a timeout because
-			// the call will have yields and invalidate iterators etc.
-			timeout_timeout(*it);
-			it = typists.erase(it);
-		}
-		else ++it;
-	}
-}
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		typing_log, "Typing timeout check :%s",
-		e.what(),
-	};
-}
-
-void
-timeout_timeout(const typist &t)
-try
-{
-	assert(run::level == run::level::RUN);
-
-	const m::typing edu
-	{
-		{ "user_id",  t.user_id   },
-		{ "room_id",  t.room_id   },
-		{ "typing",   false       },
-	};
-
-	log::debug
-	{
-		typing_log, "Typing timeout for %s in %s",
-		string_view{t.user_id},
-		string_view{t.room_id}
-	};
-
-	m::event event;
-	json::get<"origin"_>(event) = my_host();
-	json::get<"type"_>(event) = "m.typing"_sv;
-
-	// Call this manually because it currently composes the event
-	// sent to clients to stop the typing for this timed out user.
-	_handle_edu_m_typing(event, edu);
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		typing_log, "Typing timeout for %s in %s :%s",
-		string_view{t.user_id},
-		string_view{t.room_id},
-		e.what(),
-	};
-}
-
-//
-// internal
-//
-
-ircd::m::event::id::buf
-set_typing(const m::edu::m_typing &edu)
-{
-	assert(json::get<"room_id"_>(edu));
-	const m::user::id &user_id
-	{
-		at<"user_id"_>(edu)
-	};
-
-	const m::user user
-	{
-		user_id
-	};
-
-	if(!exists(user))
-		create(user);
-
-	const m::user::room user_room
-	{
-		user
-	};
-
-	const auto &timeout
-	{
-		json::get<"timeout"_>(edu)?
-			json::get<"timeout"_>(edu):
-		json::get<"typing"_>(edu)?
-			milliseconds(timeout_max).count():
-			0L
-	};
-
-	const auto evid
-	{
-		send(user_room, user_id, "ircd.typing",
-		{
-			{ "room_id",  at<"room_id"_>(edu)         },
-			{ "typing",   json::get<"typing"_>(edu)   },
-			{ "timeout",  timeout                     },
-		})
-	};
-
-	char pbuf[32];
-	log::info
-	{
-		typing_log, "%s %s typing in %s timeout:%s",
-		string_view{user_id},
-		json::get<"typing"_>(edu)?
-			"started"_sv:
-			"stopped"_sv,
-		at<"room_id"_>(edu),
-		pretty(pbuf, milliseconds(long(timeout)), 1),
-	};
-
-	return evid;
-}
-
-bool
-update_state(const m::edu::m_typing &object)
-try
-{
-	const auto &user_id
-	{
-		at<"user_id"_>(object)
-	};
-
-	const auto &room_id
-	{
-		at<"room_id"_>(object)
-	};
-
-	const auto &typing
-	{
-		at<"typing"_>(object)
-	};
-
-	const milliseconds timeout
-	{
-		at<"timeout"_>(object)
-	};
-
-	const std::lock_guard lock
-	{
-		typists_mutex
-	};
-
-	auto it
-	{
-		typists.lower_bound(user_id)
-	};
-
-	const bool was_typing
-	{
-		it != end(typists) && it->user_id == user_id
-	};
-
-	if(typing && !was_typing)
-	{
-		typists.emplace_hint(it, typist
-		{
-			calc_timesout(timeout), user_id, room_id
-		});
-
-		timeout_dock.notify_one();
-	}
-	else if(typing && was_typing)
-	{
-		auto &t(const_cast<typist &>(*it));
-		t.timesout = calc_timesout(timeout);
-	}
-	else if(!typing && was_typing)
-	{
-		typists.erase(it);
-	}
-
-	const bool transmit
-	{
-		(typing && !was_typing) || (!typing && was_typing)
-	};
-
-	log::debug
-	{
-		typing_log, "Typing %s in %s now[%b] was[%b] xmit[%b]",
-		string_view{at<"user_id"_>(object)},
-		string_view{at<"room_id"_>(object)},
-		json::get<"typing"_>(object),
-		was_typing,
-		transmit
-	};
-
-	return transmit;
-}
-catch(const std::exception &e)
-{
-	log::error
-	{
-		typing_log, "Failed to update state :%s",
-		e.what(),
-	};
-
-	throw;
-}
-
-system_point
-calc_timesout(milliseconds timeout)
-{
-	timeout = std::max(timeout, milliseconds(timeout_min));
-	timeout = std::min(timeout, milliseconds(timeout_max));
-	return now<system_point>() + timeout;
-}
-
-//
 // typist struct
 //
 
 bool
-typist::operator()(const typist &a, const string_view &b)
-const
+ircd::m::typing::typist::operator()(const typist &a,
+                                    const string_view &b)
+const noexcept
 {
     return a.user_id < b;
 }
 
 bool
-typist::operator()(const string_view &a, const typist &b)
-const
+ircd::m::typing::typist::operator()(const string_view &a,
+                                    const typist &b)
+const noexcept
 {
     return a < b.user_id;
 }
 
 bool
-typist::operator()(const typist &a, const typist &b)
-const
+ircd::m::typing::typist::operator()(const typist &a,
+                                    const typist &b)
+const noexcept
 {
     return a.user_id < b.user_id;
 }
