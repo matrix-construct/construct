@@ -8,7 +8,73 @@
 // copyright notice and this permission notice is present in all copies. The
 // full license for this software is available in the LICENSE file.
 
-#include "sender.h"
+using namespace ircd;
+
+struct unit;
+struct txndata;
+struct txn;
+struct node;
+
+struct unit
+:std::enable_shared_from_this<unit>
+{
+	enum type { PDU, EDU, FAILURE };
+
+	enum type type;
+	std::string s;
+
+	unit(std::string s, const enum type &type);
+	unit(const m::event &event);
+};
+
+struct txndata
+{
+	std::string content;
+	string_view txnid;
+	char txnidbuf[64];
+
+	txndata(std::string content)
+	:content{std::move(content)}
+	,txnid{m::txn::create_id(txnidbuf, this->content)}
+	{}
+};
+
+struct txn
+:txndata
+,m::fed::send
+{
+	struct node *node;
+	steady_point timeout;
+	char headers[8_KiB];
+
+	txn(struct node &node,
+	    std::string content,
+	    m::fed::send::opts opts)
+	:txndata{std::move(content)}
+	,send{this->txnid, string_view{this->content}, this->headers, std::move(opts)}
+	,node{&node}
+	,timeout{now<steady_point>()} //TODO: conf
+	{}
+};
+
+struct node
+{
+	std::deque<std::shared_ptr<unit>> q;
+	std::array<char, rfc3986::DOMAIN_BUFSIZE> rembuf;
+	string_view remote;
+	m::node::room room;
+	server::request::opts sopts;
+	txn *curtxn {nullptr};
+	bool err {false};
+
+	bool flush();
+	void push(std::shared_ptr<unit>);
+
+	node(const string_view &remote)
+	:remote{ircd::strlcpy{mutable_buffer{rembuf}, remote}}
+	,room{this->remote}
+	{}
+};
 
 std::list<txn> txns;
 std::map<std::string, node, std::less<>> nodes;
@@ -44,8 +110,8 @@ receiver
 mapi::header
 IRCD_MODULE
 {
-	"federation sender",
-	nullptr, []
+	"federation sender", nullptr,
+	[]
 	{
 		sender.terminate();
 		receiver.terminate();
@@ -613,4 +679,48 @@ remove_node(const node &node)
 
 	assert(it != end(nodes));
 	nodes.erase(it);
+}
+
+//
+// unit
+//
+
+unit::unit(const m::event &event)
+:type
+{
+	event.event_id? PDU: EDU
+}
+,s{[this, &event]
+() -> std::string
+{
+	switch(this->type)
+	{
+		case PDU:
+			return json::strung{event};
+
+		case EDU:
+			return json::strung{json::members
+			{
+				{ "content",   json::get<"content"_>(event)  },
+				{ "edu_type",  json::get<"type"_>(event)     },
+			}};
+
+		default:
+			return {};
+	}
+}()}
+{
+}
+
+unit::unit(std::string s,
+           const enum type &type)
+:type
+{
+	type
+}
+,s
+{
+	std::move(s)
+}
+{
 }
