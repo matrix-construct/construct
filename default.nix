@@ -15,17 +15,28 @@
 
 , debug              ? false # Debug Build
 , useClang           ? false # Use Clang over GCC
-, useJemalloc        ? true # Use the Dynamic Memory Allocator
-, withGraphicsMagick ? true # Allow Media Thumbnails
+, useJemalloc        ? true  # Use the Dynamic Memory Allocator
+, withGraphicsMagick ? true  # Allow Media Thumbnails
 }:
 
 let
+  src = let
+    srcFilter = n: t: (lib.hasSuffix ".cc" n || lib.hasSuffix ".h" n || lib.hasSuffix ".S" n
+                    || lib.hasSuffix ".md" n || t == "directory") && lib.cleanSourceFilter n t;
+    repo = lib.cleanSourceWith { filter = srcFilter; src = ./.; };
+
+    buildFileWith = root: name: type: rec {
+      inherit name; file = "${root}/${name}";
+      path = if type == "directory" then buildFarmFrom name file else "${file}";
+    };
+    buildFarm = root: lib.mapAttrsToList (buildFileWith root) (builtins.readDir root);
+    buildFarmFrom = basename: root: pkgs.linkFarm (lib.strings.sanitizeDerivationName basename) (buildFarm root);
+  in buildFarmFrom "construct" repo;
+
   rocksdb-pinned = pkgs.rocksdb.overrideAttrs (super: rec {
     version = "5.16.6";
     src = pkgs.fetchFromGitHub {
-      owner = "facebook";
-      repo = "rocksdb";
-      rev = "v${version}";
+      owner = "facebook"; repo = "rocksdb"; rev = "v${version}";
       sha256 = "0yy09myzbi99qdmh2c2mxlddr12pwxzh66ym1y6raaqglrsmax66";
     };
     NIX_CFLAGS_COMPILE = "${super.NIX_CFLAGS_COMPILE} -Wno-error=redundant-move";
@@ -41,8 +52,7 @@ let
 in stdenv.mkDerivation rec {
   pname = "matrix-construct";
   version = "development";
-
-  src = lib.cleanSource ./.;
+  inherit src;
 
   configHeader = with pkgs; writeText "config.h" ''
     /* Current package */
