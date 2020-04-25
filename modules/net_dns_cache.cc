@@ -10,8 +10,6 @@
 
 namespace ircd::net::dns::cache
 {
-	static bool call_waiter(const string_view &, const string_view &, const json::array &, waiter &);
-	static size_t call_waiters(const string_view &, const string_view &, const json::array &);
 	static void handle(const m::event &, m::vm::eval &);
 
 	static bool put(const string_view &type, const string_view &state_key, const records &rrs);
@@ -200,7 +198,7 @@ catch(const http::error &e)
 
 	const json::value error_records{&error_value, 1};
 	const json::strung error{error_records};
-	call_waiters(type, state_key, error);
+	waiter::call(rfc1035::qtype.at(lstrip(type, "ircd.dns.rrs.")), state_key, error);
 	return false;
 }
 catch(const std::exception &e)
@@ -224,7 +222,7 @@ catch(const std::exception &e)
 	const json::value error_value{error_object};
 	const json::value error_records{&error_value, 1};
 	const json::strung error{error_records};
-	call_waiters(type, state_key, error);
+	waiter::call(rfc1035::qtype.at(lstrip(type, "ircd.dns.rrs.")), state_key, error);
 	return false;
 }
 
@@ -327,7 +325,7 @@ catch(const http::error &e)
 
 	const json::value error_records{&error_value, 1};
 	const json::strung error{error_records};
-	call_waiters(type, state_key, error);
+	waiter::call(rfc1035::qtype.at(lstrip(type, "ircd.dns.rrs.")), state_key, error);
 	return false;
 }
 catch(const std::exception &e)
@@ -350,7 +348,7 @@ catch(const std::exception &e)
 	const json::value error_value{error_object};
 	const json::value error_records{&error_value, 1};
 	const json::strung error{error_records};
-	call_waiters(type, state_key, error);
+	waiter::call(rfc1035::qtype.at(lstrip(type, "ircd.dns.rrs.")), state_key, error);
 	return false;
 }
 
@@ -536,7 +534,7 @@ try
 		json::get<"content"_>(event).get("")
 	};
 
-	call_waiters(type, state_key, rrs);
+	waiter::call(rfc1035::qtype.at(lstrip(type, "ircd.dns.rrs.")), state_key, rrs);
 }
 catch(const std::exception &e)
 {
@@ -544,82 +542,6 @@ catch(const std::exception &e)
 	{
 		log, "handle_cached() :%s", e.what()
 	};
-}
-
-/// Note complications due to reentrance and other factors:
-/// - This function is invoked from several different places on both the
-/// timeout and receive contexts, in addition to any evaluator context.
-/// - This function calls back to users making DNS queries, and they may
-/// conduct another query in their callback frame -- mid-loop in this
-/// function.
-size_t
-ircd::net::dns::cache::call_waiters(const string_view &type,
-                                    const string_view &state_key,
-                                    const json::array &rrs)
-{
-	const ctx::uninterruptible::nothrow ui;
-	size_t ret(0), last; do
-	{
-		const std::lock_guard lock
-		{
-			mutex
-		};
-
-		auto it(begin(waiting));
-		for(last = ret; it != end(waiting); ++it)
-			if(call_waiter(type, state_key, rrs, *it))
-			{
-				it = waiting.erase(it);
-				++ret;
-				break;
-			}
-	}
-	while(last < ret);
-
-	if(ret)
-		dock.notify_all();
-
-	return ret;
-}
-
-bool
-ircd::net::dns::cache::call_waiter(const string_view &type,
-                                   const string_view &state_key,
-                                   const json::array &rrs,
-                                   waiter &waiter)
-try
-{
-	if(state_key != waiter.key)
-		return false;
-
-	if(lstrip(type, "ircd.dns.rrs.") != rfc1035::rqtype.at(waiter.opts.qtype))
-		return false;
-
-	const hostport &target
-	{
-		waiter.opts.qtype == 33?
-			unmake_SRV_key(waiter.key):
-			waiter.key,
-
-		waiter.port
-	};
-
-	assert(waiter.callback);
-	waiter.callback(target, rrs);
-	return true;
-}
-catch(const std::exception &e)
-{
-	log::critical
-	{
-		log, "callback:%p %s,%s :%s",
-		(const void *)&waiter,
-		type,
-		state_key,
-		e.what(),
-	};
-
-	return true;
 }
 
 //

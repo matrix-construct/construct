@@ -234,3 +234,79 @@ ircd::net::dns::cache::waiter::waiter(const hostport &hp,
 	this->opts.proto = {};
 	assert(this->opts.qtype);
 }
+
+/// Note complications due to reentrance and other factors:
+/// - This function is invoked from several different places on both the
+/// timeout and receive contexts, in addition to any evaluator context.
+/// - This function calls back to users making DNS queries, and they may
+/// conduct another query in their callback frame -- mid-loop in this
+/// function.
+size_t
+ircd::net::dns::cache::waiter::call(const uint16_t &type,
+                                    const string_view &tgt,
+                                    const json::array &rrs)
+{
+	const ctx::uninterruptible::nothrow ui;
+	size_t ret(0), last; do
+	{
+		const std::lock_guard lock
+		{
+			mutex
+		};
+
+		auto it(begin(waiting));
+		for(last = ret; it != end(waiting); ++it)
+			if(call(*it, type, tgt, rrs))
+			{
+				it = waiting.erase(it);
+				++ret;
+				break;
+			}
+	}
+	while(last < ret);
+
+	if(ret)
+		dock.notify_all();
+
+	return ret;
+}
+
+bool
+ircd::net::dns::cache::waiter::call(waiter &waiter,
+                                    const uint16_t &type,
+                                    const string_view &tgt,
+                                    const json::array &rrs)
+try
+{
+	if(tgt != waiter.key)
+		return false;
+
+	if(type != waiter.opts.qtype)
+		return false;
+
+	const hostport &target
+	{
+		waiter.opts.qtype == 33?
+			unmake_SRV_key(waiter.key):
+			waiter.key,
+
+		waiter.port
+	};
+
+	assert(waiter.callback);
+	waiter.callback(target, rrs);
+	return true;
+}
+catch(const std::exception &e)
+{
+	log::critical
+	{
+		log, "callback:%p %s,%s :%s",
+		(const void *)&waiter,
+		type,
+		tgt,
+		e.what(),
+	};
+
+	return true;
+}

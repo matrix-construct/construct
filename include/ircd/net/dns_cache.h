@@ -11,11 +11,19 @@
 /// (internal) DNS cache
 namespace ircd::net::dns::cache
 {
+	struct waiter;
 	using closure = std::function<bool (const string_view &, const json::object &)>;
 
 	extern conf::item<seconds> min_ttl;
 	extern conf::item<seconds> error_ttl;
 	extern conf::item<seconds> nxdomain_ttl;
+
+	extern ctx::dock dock;
+	extern ctx::mutex mutex;
+	extern std::list<waiter> waiting;
+
+	bool operator==(const waiter &, const waiter &) noexcept;
+	bool operator!=(const waiter &, const waiter &) noexcept;
 
 	string_view make_type(const mutable_buffer &out, const string_view &);
 	string_view make_type(const mutable_buffer &out, const uint16_t &);
@@ -25,19 +33,6 @@ namespace ircd::net::dns::cache
 	bool get(const hostport &, const opts &, const callback &);
 	bool put(const hostport &, const opts &, const records &);
 	bool put(const hostport &, const opts &, const uint &code, const string_view &msg = {});
-}
-
-/// (internal) DNS cache
-namespace ircd::net::dns::cache
-{
-	struct waiter;
-
-	bool operator==(const waiter &, const waiter &) noexcept;
-	bool operator!=(const waiter &, const waiter &) noexcept;
-
-	extern std::list<waiter> waiting;
-	extern ctx::mutex mutex;
-	extern ctx::dock dock;
 }
 
 /// DNS cache result waiter
@@ -54,4 +49,7 @@ struct ircd::net::dns::cache::waiter
 	waiter(const waiter &) = delete;
 	waiter &operator=(waiter &&) = delete;
 	waiter &operator=(const waiter &) = delete;
+
+	static bool call(waiter &, const uint16_t &type, const string_view &tgt, const json::array &rrs);
+	static size_t call(const uint16_t &type, const string_view &tgt, const json::array &rrs);
 };
