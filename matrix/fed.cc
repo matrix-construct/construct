@@ -1779,6 +1779,9 @@ try
 		response["m.server"]
 	};
 
+	if(!m_server)
+		return origin;
+
 	// This construction validates we didn't get a junk string
 	volatile const net::hostport ret
 	{
