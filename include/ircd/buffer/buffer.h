@@ -324,6 +324,7 @@ ircd::buffer::copy(const mutable_buffer &dst,
 }
 
 inline char *&
+__attribute__((always_inline))
 ircd::buffer::move(char *&dest,
                    char *const &stop,
                    const const_buffer &src)
@@ -333,13 +334,18 @@ ircd::buffer::move(char *&dest,
 	const size_t cpsz(std::min(size(src), remain));
 	assert(cpsz <= size(src));
 	assert(cpsz <= remain);
-	__builtin_memmove(dest, data(src), cpsz);
+	#if __has_builtin(__builtin_memmove_inline) && !defined(RB_GENERIC)
+		__builtin_memmove_inline(dest, data(src), cpsz);
+	#else
+		__builtin_memmove(dest, data(src), cpsz);
+	#endif
 	dest += cpsz;
 	assert(dest <= stop);
 	return dest;
 }
 
 inline char *&
+__attribute__((always_inline))
 ircd::buffer::copy(char *&dest,
                    char *const &stop,
                    const const_buffer &src)
@@ -350,7 +356,11 @@ ircd::buffer::copy(char *&dest,
 	assert(!overlap(const_buffer(dest, cpsz), src));
 	assert(cpsz <= size(src));
 	assert(cpsz <= remain);
-	__builtin_memcpy(dest, data(src), cpsz);
+	#if __has_builtin(__builtin_memcpy_inline) && !defined(RB_GENERIC)
+		__builtin_memcpy_inline(dest, data(src), cpsz);
+	#else
+		__builtin_memcpy(dest, data(src), cpsz);
+	#endif
 	dest += cpsz;
 	assert(dest <= stop);
 	return dest;
