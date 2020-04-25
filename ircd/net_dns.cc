@@ -142,12 +142,13 @@ ircd::net::dns::resolve(const hostport &hp_,
 
 	// Remote query will be made; register this callback as waiting for reply
 	assert(cb);
+	const ctx::critical_assertion ca;
 	cache::waiting.emplace_back(hp, opts, std::move(cb));
 
 	// Check if there is already someone else waiting on the same query
-	const auto count
+	const auto existing
 	{
-		std::count_if(begin(cache::waiting), end(cache::waiting), []
+		std::find_if(begin(cache::waiting), end(cache::waiting), []
 		(const auto &a)
 		{
 			return a == cache::waiting.back();
@@ -155,8 +156,8 @@ ircd::net::dns::resolve(const hostport &hp_,
 	};
 
 	// When nobody else is already waiting on this query we have to submit it.
-	assert(count >= 1);
-	if(count == 1)
+	assert(existing != end(cache::waiting));
+	if(*existing == cache::waiting.back())
 		resolver_call(hp, opts);
 }
 
