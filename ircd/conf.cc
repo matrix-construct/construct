@@ -16,6 +16,14 @@ decltype(ircd::conf::on_init)
 ircd::conf::on_init
 {};
 
+decltype(ircd::defaults)
+ircd::defaults
+{
+	{ "name",     "ircd.defaults" },
+	{ "default",  false           },
+	{ "persist",  false           },
+};
+
 size_t
 ircd::conf::reset()
 {

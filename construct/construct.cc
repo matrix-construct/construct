@@ -38,6 +38,7 @@ bool write_avoid;
 bool soft_assert;
 bool nomatrix;
 bool matrix {true}; // matrix server by default.
+bool defaults;
 std::vector<std::string> execute;
 std::array<bool, 7> smoketest;
 
@@ -68,6 +69,7 @@ lgetopt opts[]
 	{ "sassert",    &soft_assert,   lgetopt::BOOL,    "Softens assertion effects in debug mode."},
 	{ "nomatrix",   &nomatrix,      lgetopt::BOOL,    "Prevent loading the matrix application module."},
 	{ "matrix",     &matrix,        lgetopt::BOOL,    "Allow loading the matrix application module."},
+	{ "defaults",   &defaults,      lgetopt::BOOL,    "Use configuration defaults without database load for this execution."},
 	{ nullptr,      nullptr,        lgetopt::STRING,  nullptr },
 };
 
@@ -454,6 +456,9 @@ applyargs()
 		write_avoid = true;
 		cmdline = true;
 	}
+
+	if(defaults)
+		ircd::defaults.set("true");
 
 	if(read_only)
 		ircd::read_only.set("true");

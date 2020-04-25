@@ -27,6 +27,13 @@ this simply replace the '.' characters with '_' in the name of the item when
 setting it in the environment. The name is otherwise the same, including its
 lower case.
 
+Otherwise, the program can be run with the option `-defaults`. This will
+prevent initial loading of the configuration from the database. It will
+not prevent environmental variable overrides (as mentioned above). Values
+will not be written back to the database unless they are explicitly set by
+the user in the console.
+
+
 ##### Recovering from database corruption
 
 In very rare cases after a hard crash the journal cannot completely restore

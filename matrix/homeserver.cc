@@ -256,7 +256,7 @@ ircd::m::homeserver::homeserver(const struct opts *const &opts)
 	if(primary == this)
 		vm = std::make_shared<vm::init>();
 
-	if(primary == this && conf)
+	if(primary == this && conf && !ircd::defaults)
 		conf->load();
 
 	if(primary == this && dbs::events && sequence(*dbs::events) == 0)

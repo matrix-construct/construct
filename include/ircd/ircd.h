@@ -111,6 +111,7 @@ namespace ircd
 	extern conf::item<bool> read_only;
 	extern conf::item<bool> write_avoid;
 	extern conf::item<bool> soft_assert;
+	extern conf::item<bool> defaults;
 
 	// Informational
 	seconds uptime();
