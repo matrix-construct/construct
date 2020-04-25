@@ -255,13 +255,14 @@ ircd::net::dns::cache::waiter::call(const uint16_t &type,
 		};
 
 		auto it(begin(waiting));
-		for(last = ret; it != end(waiting); ++it)
+		for(last = ret; it != end(waiting);)
 			if(call(*it, type, tgt, rrs))
 			{
 				it = waiting.erase(it);
 				++ret;
-				break;
+				continue;
 			}
+			else ++it;
 	}
 	while(last < ret);
 
