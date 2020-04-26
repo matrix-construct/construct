@@ -14,13 +14,21 @@
 /// Federation Interface
 namespace ircd::m::fed
 {
-	net::hostport matrix_service(net::hostport);
-
 	id::event::buf fetch_head(const id::room &room_id, const string_view &remote, const id::user &);
 	id::event::buf fetch_head(const id::room &room_id, const string_view &remote);
 
 	string_view fetch_well_known(const mutable_buffer &out, const string_view &origin);
 	string_view well_known(const mutable_buffer &out, const string_view &origin);
+
+	net::hostport matrix_service(net::hostport remote) noexcept;
+	net::hostport server(const mutable_buffer &out, const string_view &origin);
+
+	bool errant(const string_view &origin);
+	bool linked(const string_view &origin);
+	bool exists(const string_view &origin);
+	bool avail(const string_view &origin);
+
+	bool clear_error(const string_view &origin);
 }
 
 #include "request.h"
@@ -46,7 +54,10 @@ namespace ircd::m::fed
 
 inline ircd::net::hostport
 ircd::m::fed::matrix_service(net::hostport remote)
+noexcept
 {
-	net::service(remote) = net::service(remote)?: m::canon_service;
+	if(likely(!net::port(remote)))
+		net::service(remote) = net::service(remote)?: m::canon_service;
+
 	return remote;
 }

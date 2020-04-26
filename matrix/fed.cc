@@ -1448,6 +1448,93 @@ ircd::m::fed::request::request(const mutable_buffer &buf_,
 // fed/fed.h
 //
 
+namespace ircd::m::fed
+{
+	template<class closure>
+	static decltype(auto)
+	with_server(const string_view &,
+	            closure &&);
+}
+
+template<class closure>
+decltype(auto)
+ircd::m::fed::with_server(const string_view &origin,
+                          closure&& c)
+{
+	char buf[rfc3986::DOMAIN_BUFSIZE];
+	const auto remote
+	{
+		server(buf, origin)
+	};
+
+	return c(remote);
+}
+
+bool
+ircd::m::fed::clear_error(const string_view &origin)
+{
+	return with_server(origin, []
+	(const auto &remote)
+	{
+		return server::errclear(remote);
+	});
+}
+
+bool
+ircd::m::fed::avail(const string_view &origin)
+{
+	return with_server(origin, []
+	(const auto &remote)
+	{
+		return server::avail(remote);
+	});
+}
+
+bool
+ircd::m::fed::exists(const string_view &origin)
+{
+	return with_server(origin, []
+	(const auto &remote)
+	{
+		return server::exists(remote);
+	});
+}
+
+bool
+ircd::m::fed::linked(const string_view &origin)
+{
+	return with_server(origin, []
+	(const auto &remote)
+	{
+		return server::linked(remote);
+	});
+}
+
+bool
+ircd::m::fed::errant(const string_view &origin)
+{
+	return with_server(origin, []
+	(const auto &remote)
+	{
+		return server::errant(remote);
+	});
+}
+
+ircd::net::hostport
+ircd::m::fed::server(const mutable_buffer &buf,
+                     const string_view &origin)
+{
+	net::hostport remote
+	{
+		origin
+	};
+
+	if(likely(!port(remote)))
+		remote = well_known(buf, host(remote));
+
+	return matrix_service(remote);
+}
+
 //
 // fetch_head util
 //
