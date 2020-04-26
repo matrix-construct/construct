@@ -65,7 +65,6 @@ struct node
 	m::node::room room;
 	server::request::opts sopts;
 	txn *curtxn {nullptr};
-	bool err {false};
 
 	bool flush();
 	void push(std::shared_ptr<unit>);
@@ -278,18 +277,26 @@ send_to_room(const m::event &event,
 		if(my_host(origin))
 			return;
 
-		auto it{nodes.lower_bound(origin)};
-		if(it == end(nodes) || it->first != origin)
+		const auto remote
 		{
-			if(server::errant(m::fed::matrix_service(origin)))
-				return;
+			m::fed::matrix_service(origin)
+		};
 
-			it = nodes.emplace_hint(it, origin, origin);
-		}
-
-		auto &node{it->second};
-		if(node.err)
+		if(server::errant(remote))
 			return;
+
+		auto it
+		{
+			nodes.lower_bound(origin)
+		};
+
+		if(it == end(nodes) || it->first != origin)
+			it = nodes.emplace_hint(it, origin, origin);
+
+		auto &node
+		{
+			it->second
+		};
 
 		if(!unit)
 			unit = std::make_shared<struct unit>(event);
@@ -326,26 +333,34 @@ void
 send_to_user(const m::event &event,
              const m::user::id &user_id)
 {
-	const string_view &remote
+	const string_view &origin
 	{
 		user_id.host()
 	};
 
-	if(my_host(remote))
+	if(my_host(origin))
 		return;
 
-	auto it{nodes.lower_bound(remote)};
-	if(it == end(nodes) || it->first != remote)
+	const auto remote
 	{
-		if(server::errant(m::fed::matrix_service(remote)))
-			return;
+		m::fed::matrix_service(origin)
+	};
 
-		it = nodes.emplace_hint(it, remote, remote);
-	}
-
-	auto &node{it->second};
-	if(node.err)
+	if(server::errant(remote))
 		return;
+
+	auto it
+	{
+		nodes.lower_bound(origin)
+	};
+
+	if(it == end(nodes) || it->first != origin)
+		it = nodes.emplace_hint(it, origin, origin);
+
+	auto &node
+	{
+		it->second
+	};
 
 	auto unit
 	{
@@ -374,18 +389,26 @@ send_from_user(const m::event &event,
 		if(my_host(origin))
 			return true;
 
-		auto it{nodes.lower_bound(origin)};
-		if(it == end(nodes) || it->first != origin)
+		const auto remote
 		{
-			if(server::errant(m::fed::matrix_service(origin)))
-				return true;
+			m::fed::matrix_service(origin)
+		};
 
-			it = nodes.emplace_hint(it, origin, origin);
-		}
-
-		auto &node{it->second};
-		if(node.err)
+		if(server::errant(remote))
 			return true;
+
+		auto it
+		{
+			nodes.lower_bound(origin)
+		};
+
+		if(it == end(nodes) || it->first != origin)
+			it = nodes.emplace_hint(it, origin, origin);
+
+		auto &node
+		{
+			it->second
+		};
 
 		auto unit
 		{
@@ -480,7 +503,6 @@ catch(const std::exception &e)
 		"flush error to %s :%s", remote, e.what()
 	};
 
-	err = true;
 	return false;
 }
 
@@ -538,9 +560,6 @@ try
 	node.curtxn = nullptr;
 	txns.erase(it);
 
-	if(node.err)
-		return remove_node(node);
-
 	if(!ret)
 		return;
 
@@ -553,8 +572,6 @@ catch(const std::exception &e)
 		m::log, "Federation sender :recv worker unhandled :%s",
 		e.what(),
 	};
-
-	return false;
 }
 
 bool
@@ -616,7 +633,6 @@ catch(const http::error &e)
 		e.what()
 	};
 
-	node.err = true;
 	return false;
 }
 catch(const std::exception &e)
@@ -629,7 +645,6 @@ catch(const std::exception &e)
 		e.what()
 	};
 
-	node.err = true;
 	return false;
 }
 
@@ -646,9 +661,6 @@ recv_timeouts()
 	{
 		auto &txn(*it);
 		assert(txn.node);
-		if(txn.node->err)
-			continue;
-
 		if(txn.timeout + seconds(45) < now) //TODO: conf
 			recv_timeout(txn, *txn.node);
 	}
@@ -666,7 +678,6 @@ recv_timeout(txn &txn,
 	};
 
 	cancel(txn);
-	node.err = true;
 }
 
 void
