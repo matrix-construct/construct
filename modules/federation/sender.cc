@@ -482,7 +482,13 @@ try
 }
 catch(const std::exception &e)
 {
-	ircd::panicking(e);
+	log::critical
+	{
+		m::log, "Federation sender :recv worker unhandled :%s",
+		e.what(),
+	};
+
+	return false;
 }
 
 bool
