@@ -1400,18 +1400,20 @@ ircd::m::fed::request::request(const mutable_buffer &buf_,
 	// Perform well-known query; note that we hijack the user's buffer to make
 	// this query and receive the result at the front of it. When there's no
 	// well-known this fails silently by just returning the input (likely).
-	const string_view remote
+	const string_view &target
 	{
-		// We don't query for well-known if the origin has an explicit port.
-		!port(net::hostport(opts.remote))?
-			well_known(buf_, opts.remote):
-			opts.remote
+		fed::server(buf_, opts.remote)
 	};
 
 	// Devote the remaining buffer for HTTP as otherwise intended.
 	const mutable_buffer buf
 	{
-		buf_ + size(remote)
+		buf_ + size(target)
+	};
+
+	const net::hostport remote
+	{
+		target
 	};
 
 	// Generate the request head including the X-Matrix into buffer.
@@ -1419,7 +1421,7 @@ ircd::m::fed::request::request(const mutable_buffer &buf_,
 	{
 		// Note that we override the HTTP Host header with the well-known
 		// remote; otherwise default is the destination above which may differ.
-		{ "Host", remote }
+		{ "Host", service(remote)? host(remote) : target }
 	});
 
 	// Setup some buffering features which can optimize the server::request
@@ -1434,7 +1436,7 @@ ircd::m::fed::request::request(const mutable_buffer &buf_,
 	// Launch the request
 	return server::request
 	{
-		matrix_service(remote),
+		remote,
 		std::move(opts.out),
 		std::move(opts.in),
 		opts.sopts
@@ -1520,7 +1522,7 @@ ircd::m::fed::errant(const string_view &origin)
 	});
 }
 
-ircd::net::hostport
+ircd::string_view
 ircd::m::fed::server(const mutable_buffer &buf,
                      const string_view &origin)
 {
@@ -1529,10 +1531,21 @@ ircd::m::fed::server(const mutable_buffer &buf,
 		origin
 	};
 
-	if(likely(!port(remote)))
-		remote = well_known(buf, host(remote));
+	string_view target
+	{
+		!port(remote)?
+			well_known(buf, host(remote)):
+			origin
+	};
 
-	return matrix_service(remote);
+	remote = target;
+	if(!port(remote) && !service(remote))
+	{
+		service(remote) = m::canon_service;
+		target = net::canonize(buf, remote);
+	}
+
+	return target;
 }
 
 //

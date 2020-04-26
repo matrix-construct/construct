@@ -21,7 +21,7 @@ namespace ircd::m::fed
 	string_view well_known(const mutable_buffer &out, const string_view &origin);
 
 	net::hostport matrix_service(net::hostport remote) noexcept;
-	net::hostport server(const mutable_buffer &out, const string_view &origin);
+	string_view server(const mutable_buffer &out, const string_view &origin);
 
 	bool errant(const string_view &origin);
 	bool linked(const string_view &origin);
@@ -56,8 +56,8 @@ inline ircd::net::hostport
 ircd::m::fed::matrix_service(net::hostport remote)
 noexcept
 {
-	if(likely(!net::port(remote)))
-		net::service(remote) = net::service(remote)?: m::canon_service;
+	if(!net::port(remote) && !net::service(remote))
+		net::service(remote) = m::canon_service;
 
 	return remote;
 }
