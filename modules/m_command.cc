@@ -446,7 +446,7 @@ command__read(const mutable_buffer &buf,
 
 		// for_each returns true if it didn't break from the loop, which means
 		// no match and skip actions for this room.
-		if(match.expr != "*")
+		if(match.a != "*")
 			if(room_tags.for_each(without_match))
 				return;
 

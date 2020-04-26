@@ -53,3 +53,35 @@ const noexcept
 
 	return iequals(a.substr(ap), b.substr(bp));
 }
+
+bool
+ircd::globular_imatch::operator()(const string_view &b)
+const noexcept
+{
+	size_t ap(0), bp(0);
+	while(ap < a.size() && bp < b.size())
+	{
+		const auto ca(tolower(a.at(ap))),  cb(tolower(b.at(bp)));
+		const auto globa(ca == '*');
+		const auto wilda(ca == '?');
+
+		if(!globa && !wilda && ca != cb)
+			return false;
+
+		if(globa && ap + 1 >= a.size())
+			break;
+
+		if(globa && cb == tolower(a.at(ap + 1)))
+			ap += 2;
+
+		if(!globa)
+			++ap;
+
+		++bp;
+	}
+
+	if(bp < b.size() && !a.empty() && a.back() == '*')
+		return true;
+
+	return iequals(a.substr(ap), b.substr(bp));
+}

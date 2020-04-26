@@ -42,20 +42,11 @@ struct ircd::globular_iequals
 /// than globular_equals. Case insensitive.
 struct ircd::globular_imatch
 {
-	string_view expr;
+	string_view a;
 
-	template<class A>
-	bool operator()(A&& a) const noexcept
-	{
-		const globular_iequals globular_iequals
-		{
-			expr, std::forward<A>(a)
-		};
+	bool operator()(const string_view &b) const noexcept;
 
-		return bool(globular_iequals);
-	}
-
-	globular_imatch(const string_view &expr = {})
-	:expr{expr}
+	globular_imatch(const string_view &expr)
+	:a{expr}
 	{}
 };
