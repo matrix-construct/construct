@@ -15,6 +15,7 @@ namespace ircd::m::init::backfill
 	void worker();
 
 	extern std::unique_ptr<context> worker_context;
+	extern conf::item<seconds> delay;
 	extern conf::item<seconds> gossip_timeout;
 	extern conf::item<bool> gossip_enable;
 	extern conf::item<bool> local_joined_only;
@@ -62,6 +63,13 @@ ircd::m::init::backfill::gossip_timeout
 {
 	{ "name",     "ircd.m.init.backfill.gossip.timeout" },
 	{ "default",  5L                                    },
+};
+
+decltype(ircd::m::init::backfill::delay)
+ircd::m::init::backfill::delay
+{
+	{ "name",     "ircd.m.init.backfill.delay"  },
+	{ "default",  15L                           },
 };
 
 decltype(ircd::m::init::backfill::worker_context)
@@ -143,6 +151,9 @@ try
 
 	if(!estimate)
 		return;
+
+	// Wait a delay before starting.
+	ctx::sleep(seconds(delay));
 
 	log::notice
 	{
