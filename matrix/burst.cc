@@ -39,6 +39,8 @@ try
 		string_view{node.node_id},
 	};
 
+	fed::clear_error(node.node_id);
+
 	if(opts.cache_warming)
 		if(ircd::uptime() < seconds(cache_warmup_time))
 			cache_warming(node, opts);

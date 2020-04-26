@@ -117,7 +117,7 @@ const
 	size_t ret{0};
 	for_each([&ret](const string_view &server)
 	{
-		ret += server::errant(fed::matrix_service(server));
+		ret += fed::errant(server);
 	});
 
 	return ret;
@@ -132,9 +132,9 @@ const
 		0 - ssize_t(count_error())
 	};
 
-	for_each([&ret](const string_view &hostport)
+	for_each([&ret](const string_view &server)
 	{
-		ret += bool(server::exists(fed::matrix_service(hostport)));
+		ret += bool(fed::exists(server));
 	});
 
 	assert(ret >= 0L);

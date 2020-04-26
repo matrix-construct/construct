@@ -277,12 +277,7 @@ send_to_room(const m::event &event,
 		if(my_host(origin))
 			return;
 
-		const auto remote
-		{
-			m::fed::matrix_service(origin)
-		};
-
-		if(server::errant(remote))
+		if(m::fed::errant(origin))
 			return;
 
 		auto it
@@ -341,12 +336,7 @@ send_to_user(const m::event &event,
 	if(my_host(origin))
 		return;
 
-	const auto remote
-	{
-		m::fed::matrix_service(origin)
-	};
-
-	if(server::errant(remote))
+	if(m::fed::errant(origin))
 		return;
 
 	auto it
@@ -389,12 +379,7 @@ send_from_user(const m::event &event,
 		if(my_host(origin))
 			return true;
 
-		const auto remote
-		{
-			m::fed::matrix_service(origin)
-		};
-
-		if(server::errant(remote))
+		if(m::fed::errant(origin))
 			return true;
 
 		auto it

@@ -199,7 +199,7 @@ get__query_directory(client &client,
 			if(my_host(origin))
 				return true;
 
-			if(server::avail(m::fed::matrix_service(origin)))
+			if(m::fed::avail(origin))
 				return true;
 
 			servers.append(origin);

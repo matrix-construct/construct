@@ -5018,9 +5018,17 @@ console_cmd__peer(opt &out, const string_view &line)
 	const bool conn(has(line, "conn"));
 	if(hostport && !all && !active && !conn)
 	{
+		char buf[rfc3986::DOMAIN_BUFSIZE];
+		const auto remote
+		{
+			net::service(net::hostport(hostport)) == "matrix"?
+				m::fed::server(buf, hostport):
+				m::fed::matrix_service(hostport)
+		};
+
 		auto &peer
 		{
-			server::find(m::fed::matrix_service(hostport))
+			server::find(remote)
 		};
 
 		print_head();
@@ -5141,14 +5149,22 @@ console_cmd__peer__error__clear(opt &out, const string_view &line)
 	if(empty(line))
 		return console_cmd__peer__error__clear__all(out, line);
 
-	const net::hostport hp
+	const string_view &input
 	{
 		token(line, ' ', 0)
 	};
 
+	char buf[rfc3986::DOMAIN_BUFSIZE];
+	const net::hostport remote
+	{
+		service(net::hostport(input)) == "matrix"?
+			m::fed::server(buf, input):
+			m::fed::matrix_service(input)
+	};
+
 	const auto cleared
 	{
-		server::errclear(m::fed::matrix_service(hp))
+		server::errclear(remote)
 	};
 
 	out << std::boolalpha << cleared << std::endl;
@@ -5230,14 +5246,22 @@ try
 		"hostport"
 	}};
 
-	const auto &hostport
+	const auto &hp
 	{
-		param.at(0)
+		param["hostport"]
+	};
+
+	char buf[rfc3986::DOMAIN_BUFSIZE];
+	const net::hostport remote
+	{
+		service(net::hostport(hp)) == "matrix"?
+			m::fed::server(buf, hp):
+			m::fed::matrix_service(hp)
 	};
 
 	auto &peer
 	{
-		server::find(hostport)
+		server::find(remote)
 	};
 
 	peer.cancel();
@@ -9474,7 +9498,7 @@ console_cmd__room__origins__random(opt &out, const string_view &line)
 	const auto ok{[&noerror]
 	(const string_view &origin)
 	{
-		if(noerror && server::errant(m::fed::matrix_service(origin)))
+		if(noerror && m::fed::errant(origin))
 			return false;
 
 		return true;

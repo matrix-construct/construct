@@ -72,7 +72,7 @@ try
 
 	// If we have an error cached from previously not being able to
 	// contact this origin we can clear that now that they're alive.
-	if(request.node_id && server::errclear(fed::matrix_service(request.node_id)))
+	if(request.node_id && fed::errant(request.node_id))
 	{
 		m::burst::opts opts;
 		m::burst::burst

@@ -449,7 +449,7 @@ ircd::m::feds::for_each_in_room(const opts &opts,
 
 		const auto errant
 		{
-			server::errant(fed::matrix_service(origin))
+			fed::errant(origin)
 		};
 
 		if(opts.closure_cached_errors || !errant) try
@@ -490,7 +490,7 @@ ircd::m::feds::for_one(const string_view &origin,
 
 	const auto errant
 	{
-		server::errant(fed::matrix_service(origin))
+		fed::errant(origin)
 	};
 
 	if(opts.closure_cached_errors || !errant) try
