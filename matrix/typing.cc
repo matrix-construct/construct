@@ -75,6 +75,15 @@ ircd::m::typing::timeout_context
 	timeout_worker,
 };
 
+static const ircd::run::changed
+timeout_context_terminate
+{
+	ircd::run::level::QUIT, []
+	{
+		ircd::m::typing::timeout_context.terminate();
+	}
+};
+
 /// Hooks all federation typing edus from remote servers as well as
 /// the above commit from local clients. This hook rewrites the edu into
 /// a new event formatted for client /sync and then runs that through eval
