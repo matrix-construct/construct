@@ -236,6 +236,25 @@ noexcept
 }
 
 bool
+ircd::server::linked(const net::hostport &hostport)
+noexcept
+{
+	const auto hostcanon
+	{
+		server::canonize(hostport)
+	};
+
+	const auto it
+	{
+		peers.find(hostcanon)
+	};
+
+	return it != end(peers)?
+		it->second->link_count():
+		false;
+}
+
+bool
 ircd::server::errant(const net::hostport &hostport)
 noexcept
 {
