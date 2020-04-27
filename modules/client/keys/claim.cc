@@ -118,6 +118,13 @@ claim_timeout_max
 	{ "default",  30000L                               },
 };
 
+conf::item<size_t>
+claim_limit
+{
+	{ "name",     "ircd.client.keys.claim.limit" },
+	{ "default",  4096L                          },
+};
+
 m::resource::response
 post__keys_claim(client &client,
                  const m::resource::request &request)
@@ -281,7 +288,7 @@ try
 	static_assert(is_powerof2(buffer_unit_size));
 	const size_t buffer_size
 	{
-		buffer_unit_size * queries.size()
+		buffer_unit_size * std::min(queries.size(), size_t(claim_limit))
 	};
 
 	const auto &buffer

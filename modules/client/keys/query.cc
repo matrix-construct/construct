@@ -117,6 +117,13 @@ query_timeout_max
 	{ "default",  20000L                               },
 };
 
+conf::item<size_t>
+query_limit
+{
+	{ "name",     "ircd.client.keys.query.limit" },
+	{ "default",  4096L                          },
+};
+
 m::resource::response
 post__keys_query(client &client,
                  const m::resource::request &request)
@@ -330,7 +337,7 @@ try
 
 	const size_t buffer_size
 	{
-		buffer_unit_size * queries.size()
+		buffer_unit_size * std::min(queries.size(), size_t(query_limit))
 	};
 
 	const auto &buffer
