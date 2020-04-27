@@ -288,6 +288,7 @@ try
 	static_assert(is_powerof2(buffer_unit_size));
 	const size_t buffer_size
 	{
+		8_KiB + // headers
 		buffer_unit_size * std::min(queries.size(), size_t(claim_limit))
 	};
 

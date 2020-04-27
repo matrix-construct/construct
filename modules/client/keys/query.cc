@@ -337,6 +337,7 @@ try
 
 	const size_t buffer_size
 	{
+		8_KiB + // headers
 		buffer_unit_size * std::min(queries.size(), size_t(query_limit))
 	};
 
