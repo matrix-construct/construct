@@ -15327,7 +15327,9 @@ console_cmd__redact(opt &out, const string_view &line)
 
 	const m::user::id &sender
 	{
-		param.at("sender")
+		param["sender"]?
+			param["sender"]:
+			m::me()
 	};
 
 	const string_view reason
