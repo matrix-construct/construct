@@ -22,6 +22,10 @@
 	#define __has_builtin(x) 0
 #endif
 
+#ifndef __is_identifier
+	#define __is_identifier(x) 0
+#endif
+
 //
 // Common branch prediction macros
 //

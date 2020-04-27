@@ -148,6 +148,9 @@ namespace std
 
 namespace ircd
 {
+	using longlong = long long;
+	using ulonglong = unsigned long long;
+
 	using std::get;
 	using std::end;
 	using std::begin;
