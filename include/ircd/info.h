@@ -39,10 +39,16 @@ namespace ircd::info
 	extern const string_view branch;
 	extern const string_view commit;
 	extern const time_t configured_time;
-	extern const time_t startup_time;
 	extern const string_view configured;
 	extern const string_view compiled;
-	extern const string_view startup;
+
+	// Toolchain and library information
+	extern const versions gnuc_version;
+	extern const versions clang_version;
+	extern const versions glibc_version_api;
+	extern const versions glibc_version_abi;
+	extern const versions glibcxx_version_api;
+	extern const versions sd6_version;
 
 	// System configuration / information
 	extern const size_t page_size;
@@ -62,14 +68,16 @@ namespace ircd::info
 	extern const string_view kernel_name;
 	extern const string_view kernel_release;
 	extern const versions kernel_version;
+	extern const intptr_t vsyscall_p;
+	extern const intptr_t vdso_p;
 
-	// Toolchain and library information
-	extern const versions gnuc_version;
-	extern const versions clang_version;
-	extern const versions glibc_version_api;
-	extern const versions glibc_version_abi;
-	extern const versions glibcxx_version_api;
-	extern const versions sd6_version;
+	// Execution information
+	extern const time_t startup_time;
+	extern const string_view startup;
+	extern const uint64_t random;
+	extern const uint uid, euid;
+	extern const uint gid, egid;
+	extern const bool secure;
 }
 
 namespace ircd::info::hardware
@@ -78,17 +86,31 @@ namespace ircd::info::hardware
 	extern const size_t hardware_concurrency;
 	extern const size_t destructive_interference;
 	extern const size_t constructive_interference;
+	extern const size_t inst_blksz, data_blksz, uni_blksz;
+	extern const size_t l1i, l1i_line, l1i_tag, l1i_assoc;
+	extern const size_t l1i_tlb, l1i_tlb_assoc;
+	extern const size_t l1d, l1d_line, l1d_tag, l1d_assoc;
+	extern const size_t l1d_tlb, l1d_tlb_assoc;
+	extern const size_t l2, l2_line, l2_tag, l2_assoc;
+	extern const size_t l2_itlb, l2_itlb_assoc;
+	extern const size_t l2_dtlb, l2_dtlb_assoc;
+	extern const size_t l3, l3_line, l3_tag, l3_assoc;
+	extern const size_t page_size;
+	extern const ulonglong cap[2];
 }
 
 namespace ircd::info::hardware::x86
 {
-	uint128_t cpuid(const uint &leaf, const uint &subleaf);
+	uint8_t llc_assoc(const uint8_t) noexcept;
+	uint128_t cpuid(const uint &leaf, const uint &subleaf) noexcept;
 
 	extern const uint128_t manufact;
 	extern const uint128_t features;
 	extern const uint128_t extended_features;
 	extern const uint128_t _manufact;
 	extern const uint128_t _features;
+	extern const uint128_t _l1cache;
+	extern const uint128_t _llcache;
 	extern const uint128_t _apmi;
 	extern const uint128_t _lwp;
 

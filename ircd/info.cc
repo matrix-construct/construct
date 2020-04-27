@@ -10,6 +10,7 @@
 
 #include <RB_INC_UNISTD_H
 #include <RB_INC_CPUID_H
+#include <RB_INC_SYS_AUXV_H
 #include <RB_INC_SYS_SYSINFO_H
 #include <RB_INC_GNU_LIBC_VERSION_H
 
@@ -145,25 +146,89 @@ ircd::info::dump_cpu_info()
 	};
 	#endif
 
-	// This message flashes language standard information about this platform
-	#ifdef RB_DEBUG
-	log::logf
+	char pbuf[6][48];
+	log::info
 	{
-		log::star, log::DEBUG,
-		"max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu",
-		hardware::max_align,
-		hardware::hardware_concurrency,
-		hardware::destructive_interference,
-		hardware::constructive_interference,
+		log::star,
+		"L1i %s L1d %s L2 %s L3 %s RAM %s SWAP %s",
+		pretty(pbuf[0], iec(hardware::l1i)),
+		pretty(pbuf[1], iec(hardware::l1d)),
+		pretty(pbuf[2], iec(hardware::l2)),
+		pretty(pbuf[3], iec(hardware::l3)),
+		pretty(pbuf[4], iec(total_ram)),
+		pretty(pbuf[5], iec(total_swap)),
 	};
-	#endif
 
 	if(!ircd::debugmode)
 		return;
 
-	log::debug
+	log::logf
 	{
-		log::star,
+		log::star, log::DEBUG,
+		"L1i %s line=%u assoc=%u line/tag=%u tlb=%u assoc=%u ",
+		pretty(pbuf[0], iec(hardware::l1i)),
+		hardware::l1i_line,
+		hardware::l1i_assoc,
+		hardware::l1i_tag,
+		hardware::l1i_tlb,
+		hardware::l1i_tlb_assoc,
+	};
+
+	log::logf
+	{
+		log::star, log::DEBUG,
+		"L1d %s line=%u assoc=%u line/tag=%u tlb=%u assoc=%u",
+		pretty(pbuf[0], iec(hardware::l1d)),
+		hardware::l1d_line,
+		hardware::l1d_assoc,
+		hardware::l1d_tag,
+		hardware::l1d_tlb,
+		hardware::l1d_tlb_assoc,
+	};
+
+	log::logf
+	{
+		log::star, log::DEBUG,
+		"L2 %s line=%u assoc=%u line/tag=%u itlb=%u assoc=%u dtlb=%u assoc=%u",
+		pretty(pbuf[0], iec(hardware::l2)),
+		hardware::l2_line,
+		hardware::l2_assoc,
+		hardware::l2_tag,
+		hardware::l2_itlb,
+		hardware::l2_itlb_assoc,
+		hardware::l2_dtlb,
+		hardware::l2_dtlb_assoc,
+	};
+
+	log::logf
+	{
+		log::star, log::DEBUG,
+		"L3 %s line=%u assoc=%u line/tag=%u",
+		pretty(pbuf[0], iec(hardware::l3)),
+		hardware::l3_line,
+		hardware::l3_assoc,
+		hardware::l3_tag,
+	};
+
+	// This message flashes language standard information about this platform
+	log::logf
+	{
+		log::star, log::DEBUG,
+		"max_align=%zu hw_conc=%zu d_inter=%zu c_inter=%zu "
+		"inst_blksz=%zu data_blksz=%zu uni_blksz=%zu page_size=%zu",
+		hardware::max_align,
+		hardware::hardware_concurrency,
+		hardware::destructive_interference,
+		hardware::constructive_interference,
+		hardware::inst_blksz,
+		hardware::data_blksz,
+		hardware::uni_blksz,
+		hardware::page_size,
+	};
+
+	log::logf
+	{
+		log::star, log::DEBUG,
 		"0..00 STD MANUFAC [%08x|%08x|%08x|%08x] "
 		"0..01 STD FEATURE [%08x|%08x|%08x|%08x]",
 		uint32_t(hardware::x86::manufact >> 0),
@@ -176,9 +241,9 @@ ircd::info::dump_cpu_info()
 		uint32_t(hardware::x86::features >> 96),
 	};
 
-	log::debug
+	log::logf
 	{
-		log::star,
+		log::star, log::DEBUG,
 		"8..00 EXT MANUFAC [%08x|%08x|%08x|%08x] "
 		"8..01 EXT FEATURE [%08x|%08x|%08x|%08x]",
 		uint32_t(hardware::x86::_manufact >> 0),
@@ -191,9 +256,24 @@ ircd::info::dump_cpu_info()
 		uint32_t(hardware::x86::_features >> 96),
 	};
 
-	log::debug
+	log::logf
 	{
-		log::star,
+		log::star, log::DEBUG,
+		"8..05 EXT L1CACHE [%08x|%08x|%08x|%08x] "
+		"8..06 EXT LLCACHE [%08x|%08x|%08x|%08x]",
+		uint32_t(hardware::x86::_l1cache >> 0),
+		uint32_t(hardware::x86::_l1cache >> 32),
+		uint32_t(hardware::x86::_l1cache >> 64),
+		uint32_t(hardware::x86::_l1cache >> 96),
+		uint32_t(hardware::x86::_llcache >> 0),
+		uint32_t(hardware::x86::_llcache >> 32),
+		uint32_t(hardware::x86::_llcache >> 64),
+		uint32_t(hardware::x86::_llcache >> 96),
+	};
+
+	log::logf
+	{
+		log::star, log::DEBUG,
 		"8..07 EXT APMI    [%08x|%08x|%08x|%08x] "
 		"8..1C EXT LWPROF  [%08x|%08x|%08x|%08x]",
 		uint32_t(hardware::x86::_apmi >> 0),
@@ -206,38 +286,6 @@ ircd::info::dump_cpu_info()
 		uint32_t(hardware::x86::_lwp >> 96),
 	};
 }
-
-decltype(ircd::info::hardware::max_align)
-ircd::info::hardware::max_align
-{
-	alignof(std::max_align_t)
-};
-
-decltype(ircd::info::hardware::hardware_concurrency)
-ircd::info::hardware::hardware_concurrency
-{
-	std::thread::hardware_concurrency()
-};
-
-decltype(ircd::info::hardware::destructive_interference)
-ircd::info::hardware::destructive_interference
-{
-	#ifdef __cpp_lib_hardware_interference_size
-		std::hardware_destructive_interference_size
-	#else
-		0
-	#endif
-};
-
-decltype(ircd::info::hardware::constructive_interference)
-ircd::info::hardware::constructive_interference
-{
-	#ifdef __cpp_lib_hardware_interference_size
-		std::hardware_constructive_interference_size
-	#else
-		0
-	#endif
-};
 
 //
 // x86::x86
@@ -271,6 +319,18 @@ decltype(ircd::info::hardware::x86::_features)
 ircd::info::hardware::x86::_features
 {
 	cpuid(0x80000001U, 0)
+};
+
+decltype(ircd::info::hardware::x86::_l1cache)
+ircd::info::hardware::x86::_l1cache
+{
+	cpuid(0x80000005U, 0)
+};
+
+decltype(ircd::info::hardware::x86::_llcache)
+ircd::info::hardware::x86::_llcache
+{
+	cpuid(0x80000006U, 0)
 };
 
 decltype(ircd::info::hardware::x86::_apmi)
@@ -362,6 +422,7 @@ ircd::info::hardware::x86::avx2
 ircd::uint128_t
 ircd::info::hardware::x86::cpuid(const uint &leaf,
                                  const uint &subleaf)
+noexcept
 {
 	uint32_t reg[4];
 	asm volatile
@@ -387,10 +448,334 @@ ircd::info::hardware::x86::cpuid(const uint &leaf,
 ircd::uint128_t
 ircd::info::hardware::x86::cpuid(const uint &leaf,
                                  const uint &subleaf)
+noexcept
 {
 	return 0;
 }
 #endif
+
+/// AMD64 CPUID Rev. 2.34 (Sept 2010) - Table 4
+uint8_t
+ircd::info::hardware::x86::llc_assoc(const uint8_t a)
+noexcept
+{
+	switch(a)
+	{
+		default:
+		case 0x0:   return 0;
+		case 0x1:   return 1;
+		case 0x2:   return 2;
+		case 0x4:   return 4;
+		case 0x6:   return 8;
+		case 0x8:   return 16;
+		case 0xA:   return 32;
+		case 0xB:   return 48;
+		case 0xC:   return 64;
+		case 0xD:   return 96;
+		case 0xE:   return 128;
+		case 0xF:   return -1;
+	}
+}
+
+//
+// Generic / Standard
+//
+
+decltype(ircd::info::hardware::max_align)
+ircd::info::hardware::max_align
+{
+	alignof(std::max_align_t)
+};
+
+decltype(ircd::info::hardware::hardware_concurrency)
+ircd::info::hardware::hardware_concurrency
+{
+	std::thread::hardware_concurrency()
+};
+
+decltype(ircd::info::hardware::destructive_interference)
+ircd::info::hardware::destructive_interference
+{
+	#ifdef __cpp_lib_hardware_interference_size
+		std::hardware_destructive_interference_size
+	#else
+		0
+	#endif
+};
+
+decltype(ircd::info::hardware::constructive_interference)
+ircd::info::hardware::constructive_interference
+{
+	#ifdef __cpp_lib_hardware_interference_size
+		std::hardware_constructive_interference_size
+	#else
+		0
+	#endif
+};
+
+decltype(ircd::info::hardware::inst_blksz)
+ircd::info::hardware::inst_blksz
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_ICACHEBSIZE)
+		getauxval(AT_ICACHEBSIZE)
+	#endif
+};
+
+decltype(ircd::info::hardware::data_blksz)
+ircd::info::hardware::data_blksz
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_DCACHEBSIZE)
+		getauxval(AT_DCACHEBSIZE)
+	#endif
+};
+
+decltype(ircd::info::hardware::uni_blksz)
+ircd::info::hardware::uni_blksz
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_UCACHEBSIZE)
+		getauxval(AT_UCACHEBSIZE)
+	#endif
+};
+
+decltype(ircd::info::hardware::l1i)
+ircd::info::hardware::l1i
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (96 + 24)) & 0xffUL) * 1024UL
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L1I_CACHESIZE)
+		getauxval(AT_L1I_CACHESIZE)
+	#endif
+};
+
+decltype(ircd::info::hardware::l1i_line)
+ircd::info::hardware::l1i_line
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (96 + 0)) & 0xffUL)
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L1I_CACHEGEOMETRY)
+		getauxval(AT_L1I_CACHEGEOMETRY) & 0xffffUL
+	#endif
+};
+
+decltype(ircd::info::hardware::l1i_tag)
+ircd::info::hardware::l1i_tag
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (96 + 8)) & 0xffUL)
+	#endif
+};
+
+decltype(ircd::info::hardware::l1i_assoc)
+ircd::info::hardware::l1i_assoc
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (96 + 16)) & 0xffUL)
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L1I_CACHEGEOMETRY)
+		getauxval(AT_L1I_CACHEGEOMETRY) & 0xffff0000UL
+	#endif
+};
+
+decltype(ircd::info::hardware::l1i_tlb)
+ircd::info::hardware::l1i_tlb
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (32 + 0)) & 0xffUL)
+	#endif
+};
+
+decltype(ircd::info::hardware::l1i_tlb_assoc)
+ircd::info::hardware::l1i_tlb_assoc
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (32 + 8)) & 0xffUL)
+	#endif
+};
+
+decltype(ircd::info::hardware::l1d)
+ircd::info::hardware::l1d
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (64 + 24)) & 0xffUL) * 1024UL
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L1D_CACHESIZE)
+		getauxval(AT_L1D_CACHESIZE)
+	#endif
+};
+
+decltype(ircd::info::hardware::l1d_line)
+ircd::info::hardware::l1d_line
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (64 + 0)) & 0xffUL)
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L1D_CACHEGEOMETRY)
+		getauxval(AT_L1D_CACHEGEOMETRY) & 0xffffUL
+	#endif
+};
+
+decltype(ircd::info::hardware::l1d_tag)
+ircd::info::hardware::l1d_tag
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (64 + 8)) & 0xffUL)
+	#endif
+};
+
+decltype(ircd::info::hardware::l1d_assoc)
+ircd::info::hardware::l1d_assoc
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (64 + 16)) & 0xffUL)
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L1D_CACHEGEOMETRY)
+		getauxval(AT_L1D_CACHEGEOMETRY) & 0xffff0000UL
+	#endif
+};
+
+decltype(ircd::info::hardware::l1d_tlb)
+ircd::info::hardware::l1d_tlb
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (32 + 16)) & 0xffUL)
+	#endif
+};
+
+decltype(ircd::info::hardware::l1d_tlb_assoc)
+ircd::info::hardware::l1d_tlb_assoc
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_l1cache >> (32 + 24)) & 0xffUL)
+	#endif
+};
+
+decltype(ircd::info::hardware::l2)
+ircd::info::hardware::l2
+{
+	#ifdef __x86_64__
+		uint16_t((x86::_llcache >> (64 + 16)) & 0xffffUL) * 1024UL
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L2_CACHESIZE)
+		getauxval(AT_L2_CACHESIZE)
+	#endif
+};
+
+decltype(ircd::info::hardware::l2_line)
+ircd::info::hardware::l2_line
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_llcache >> (64 + 0)) & 0xffUL)
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L2_CACHEGEOMETRY)
+		getauxval(AT_L2_CACHEGEOMETRY) & 0xffffUL
+	#endif
+};
+
+decltype(ircd::info::hardware::l2_tag)
+ircd::info::hardware::l2_tag
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_llcache >> (64 + 8)) & 0x0fUL)
+	#endif
+};
+
+decltype(ircd::info::hardware::l2_assoc)
+ircd::info::hardware::l2_assoc
+{
+	#ifdef __x86_64__
+		x86::llc_assoc((x86::_llcache >> (64 + 12)) & 0x0fUL)
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L2_CACHEGEOMETRY)
+		getauxval(AT_L2_CACHEGEOMETRY) & 0xffff0000UL
+	#endif
+};
+
+decltype(ircd::info::hardware::l2_itlb)
+ircd::info::hardware::l2_itlb
+{
+	#ifdef __x86_64__
+		uint16_t((x86::_llcache >> (32 + 0)) & 0x0fffUL)
+	#endif
+};
+
+decltype(ircd::info::hardware::l2_itlb_assoc)
+ircd::info::hardware::l2_itlb_assoc
+{
+	#ifdef __x86_64__
+		x86::llc_assoc(uint8_t((x86::_llcache >> (32 + 12)) & 0x0fUL))
+	#endif
+};
+
+decltype(ircd::info::hardware::l2_dtlb)
+ircd::info::hardware::l2_dtlb
+{
+	#ifdef __x86_64__
+		uint16_t((x86::_llcache >> (32 + 16)) & 0x0fffUL)
+	#endif
+};
+
+decltype(ircd::info::hardware::l2_dtlb_assoc)
+ircd::info::hardware::l2_dtlb_assoc
+{
+	#ifdef __x86_64__
+		x86::llc_assoc(uint8_t((x86::_llcache >> (32 + 28)) & 0x0fUL))
+	#endif
+};
+
+decltype(ircd::info::hardware::l3)
+ircd::info::hardware::l3
+{
+	#ifdef __x86_64__
+		(uint16_t((x86::_llcache >> (96 + 16)) & 0xffffUL) >> 2) * 512_KiB
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L3_CACHESIZE)
+		getauxval(AT_L3_CACHESIZE)
+	#endif
+};
+
+decltype(ircd::info::hardware::l3_line)
+ircd::info::hardware::l3_line
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_llcache >> (96 + 0)) & 0xffUL)
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L3_CACHEGEOMETRY)
+		getauxval(AT_L3_CACHEGEOMETRY) & 0xffffUL
+	#endif
+};
+
+decltype(ircd::info::hardware::l3_tag)
+ircd::info::hardware::l3_tag
+{
+	#ifdef __x86_64__
+		uint8_t((x86::_llcache >> (96 + 8)) & 0x0fUL)
+	#endif
+};
+
+decltype(ircd::info::hardware::l3_assoc)
+ircd::info::hardware::l3_assoc
+{
+	#ifdef __x86_64__
+		x86::llc_assoc((x86::_llcache >> (96 + 12)) & 0x0fUL)
+	#elif __has_include(<sys/auxv.h>) && defined(AT_L3_CACHEGEOMETRY)
+		getauxval(AT_L3_CACHEGEOMETRY) & 0xffff0000UL
+	#endif
+};
+
+decltype(ircd::info::hardware::page_size)
+ircd::info::hardware::page_size
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_PAGESZ)
+		getauxval(AT_PAGESZ)
+	#endif
+};
+
+decltype(ircd::info::hardware::cap)
+ircd::info::hardware::cap
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_HWCAP)
+		getauxval(AT_HWCAP)
+	#else
+		0
+	#endif
+	,
+	#if __has_include(<sys/auxv.h>) && defined(AT_HWCAP2)
+		getauxval(AT_HWCAP2)
+	#else
+		0UL
+	#endif
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -452,7 +837,7 @@ decltype(ircd::info::kernel_name)
 ircd::info::kernel_name
 {
 	#ifdef HAVE_SYS_UTSNAME_H
-	utsname.sysname
+		utsname.sysname
 	#endif
 };
 
@@ -460,7 +845,7 @@ decltype(ircd::info::kernel_release)
 ircd::info::kernel_release
 {
 	#ifdef HAVE_SYS_UTSNAME_H
-	utsname.release
+		utsname.release
 	#endif
 };
 
@@ -497,6 +882,22 @@ ircd::info::kernel_version
 	}
 };
 
+decltype(ircd::info::vsyscall_p)
+ircd::info::vsyscall_p
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_SYSINFO)
+		intptr_t(getauxval(AT_SYSINFO))
+	#endif
+};
+
+decltype(ircd::info::vdso_p)
+ircd::info::vdso_p
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_SYSINFO_EHDR)
+		intptr_t(getauxval(AT_SYSINFO_EHDR))
+	#endif
+};
+
 //
 // System configuration
 //
@@ -519,7 +920,7 @@ decltype(ircd::info::aio_reqprio_max)
 ircd::info::aio_reqprio_max
 {
 	#ifdef _SC_AIO_PRIO_DELTA_MAX
-	size_t(syscall(::sysconf, _SC_AIO_PRIO_DELTA_MAX))
+		size_t(syscall(::sysconf, _SC_AIO_PRIO_DELTA_MAX))
 	#endif
 };
 
@@ -527,7 +928,7 @@ decltype(ircd::info::aio_max)
 ircd::info::aio_max
 {
 	#ifdef _SC_AIO_MAX
-	0 //size_t(syscall(::sysconf, _SC_AIO_MAX))
+		0 //size_t(syscall(::sysconf, _SC_AIO_MAX))
 	#endif
 };
 
@@ -535,7 +936,7 @@ decltype(ircd::info::iov_max)
 ircd::info::iov_max
 {
 	#ifdef _SC_IOV_MAX
-	size_t(syscall(::sysconf, _SC_IOV_MAX))
+		size_t(syscall(::sysconf, _SC_IOV_MAX))
 	#endif
 };
 
@@ -543,7 +944,7 @@ decltype(ircd::info::page_size)
 ircd::info::page_size
 {
 	#ifdef _SC_PAGESIZE
-	size_t(syscall(::sysconf, _SC_PAGESIZE))
+		size_t(syscall(::sysconf, _SC_PAGESIZE))
 	#endif
 };
 
@@ -572,7 +973,7 @@ decltype(ircd::info::total_ram)
 ircd::info::total_ram
 {
 	#ifdef HAVE_SYS_SYSINFO_H
-	sysinfo.totalram
+		sysinfo.totalram
 	#endif
 };
 
@@ -580,7 +981,7 @@ decltype(ircd::info::total_swap)
 ircd::info::total_swap
 {
 	#ifdef HAVE_SYS_SYSINFO_H
-	sysinfo.totalswap
+		sysinfo.totalswap
 	#endif
 };
 
@@ -795,19 +1196,6 @@ ircd::info::user_agent
 	server_agent
 };
 
-decltype(ircd::info::startup_time)
-ircd::info::startup_time
-{
-	std::time(nullptr)
-};
-
-static char ircd_info_startup[32];
-decltype(ircd::info::startup)
-ircd::info::startup
-{
-	rstrip(ctime_r(&startup_time, ircd_info_startup), '\n')
-};
-
 decltype(ircd::info::compiled)
 ircd::info::compiled
 {
@@ -843,4 +1231,65 @@ decltype(ircd::info::tag)
 ircd::info::tag
 {
 	RB_VERSION_TAG
+};
+
+decltype(ircd::info::startup_time)
+ircd::info::startup_time
+{
+	std::time(nullptr)
+};
+
+static char ircd_info_startup[32];
+decltype(ircd::info::startup)
+ircd::info::startup
+{
+	rstrip(ctime_r(&startup_time, ircd_info_startup), '\n')
+};
+
+decltype(ircd::info::random)
+ircd::info::random
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_RANDOM)
+		getauxval(AT_RANDOM)
+	#endif
+};
+
+decltype(ircd::info::uid)
+ircd::info::uid
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_UID)
+		uint(getauxval(AT_UID))
+	#endif
+};
+
+decltype(ircd::info::euid)
+ircd::info::euid
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_EUID)
+		uint(getauxval(AT_EUID))
+	#endif
+};
+
+decltype(ircd::info::gid)
+ircd::info::gid
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_GID)
+		uint(getauxval(AT_GID))
+	#endif
+};
+
+decltype(ircd::info::egid)
+ircd::info::egid
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_EGID)
+		uint(getauxval(AT_EGID))
+	#endif
+};
+
+decltype(ircd::info::secure)
+ircd::info::secure
+{
+	#if __has_include(<sys/auxv.h>) && defined(AT_SECURE)
+		bool(getauxval(AT_SECURE))
+	#endif
 };
