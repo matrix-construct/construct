@@ -311,6 +311,7 @@ try
 	vmopts.fetch_state = below_viewport;
 	vmopts.warnlog &= ~vm::fault::EXISTS;
 	vmopts.node_id = opts.hint;
+	vmopts.notify_servers = false;
 	m::vm::eval eval
 	{
 		event, vmopts
