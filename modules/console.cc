@@ -9977,7 +9977,7 @@ console_cmd__room__state__rebuild(opt &out, const string_view &line)
 		"room_id"
 	}};
 
-	const auto &room_id
+	const m::room::id::buf room_id
 	{
 		param.at("room_id") != "*" && param.at("room_id") != "remote_joined_only"?
 			m::room_id(param.at(0)):
