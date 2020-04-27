@@ -1728,9 +1728,14 @@ console_cmd__conf__list(opt &out, const string_view &line)
 		if(prefix && !startswith(key, prefix))
 			continue;
 
+		const string_view _key
+		{
+			fmt::sprintf{val, "%s ", key}
+		};
+
 		out
-		<< std::setw(64) << std::left << std::setfill('_') << key
-		<< " " << item_p->get(val)
+		<< std::setw(64) << std::left << std::setfill('_') << _key
+		<< " " << item_p->get(val + size(_key))
 		<< std::endl;
 	}
 
